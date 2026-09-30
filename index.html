@@ -66,6 +66,7 @@ button:hover{background:#ffe9a8}button:focus-visible{outline:2px solid #2f6fd6}
 .login-btn { width: 100%; padding: 8px; font-weight: bold; font-size: 14px; margin-top: 6px; }
 .login-err { color: #e5484d; font-size: 12px; margin-top: 8px; min-height: 16px; font-weight: bold; }
 .login-footer { margin-top: 14px; font-size: 12px; display: flex; justify-content: space-between; gap: 8px; }
+.job-card { background: #fffdf5; border: 2px solid var(--edge); border-radius: 6px; padding: 10px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; }
 </style>
 </head>
 <body>
@@ -137,21 +138,40 @@ const MOBS=[{n:'Poring',c:0xff9db8,shape:'blob'},{n:'Drops',c:0xffb45a,shape:'bl
 const BOSSES=[{n:'Golden Bug',c:0xf2c230,shape:'bug'},{n:'Eddga',c:0xe67a2e,shape:'cat'},{n:'Mistress',c:0x5ad1c8,shape:'bug'},{n:'Baphomet',c:0x6a3fa0,shape:'demon'}];
 const MOBS_PER_STAGE=5,BOSS_EVERY=5,BX_=7.5,Z0=-3,Z1=4;
 
+// Restored Class Hierarchy
 const CLASSES={
-  Novice:{aspd:1,atk:1,col:0xe8dcc0,cape:0,blade:[1,1],next:'Thief',lv:10},
-  Thief:{aspd:.9,atk:1.1,col:0x4a7c3a,cape:0x2e7d32,blade:[.6,1],next:'Assassin',lv:25},
-  Assassin:{aspd:.78,atk:1.25,col:0x2c2c3c,cape:0x1b1b28,blade:[.7,2.4],next:null}};
+  Novice:{aspd:1,atk:1,col:0xe8dcc0,cape:0,blade:[1,1],next:['Swordman','Mage','Archer','Thief','Acolyte','Merchant'],lv:10},
+  
+  // 1st Jobs
+  Swordman:{aspd:.95,atk:1.2,col:0xb83b3b,cape:0x8a2b2b,blade:[1.2,1.2],next:['Knight'],lv:25},
+  Mage:{aspd:1.1,atk:1.4,col:0x3b6fb5,cape:0x2b4f85,blade:[.8,.8],next:['Wizard'],lv:25},
+  Archer:{aspd:.85,atk:1.15,col:0x2e7d32,cape:0x1b4d1e,blade:[1,1],next:['Hunter'],lv:25},
+  Thief:{aspd:.75,atk:1.1,col:0x4a7c3a,cape:0x2e7d32,blade:[.6,1],next:['Assassin'],lv:25},
+  Acolyte:{aspd:1.0,atk:1.05,col:0xe0c870,cape:0xa08830,blade:[.9,.9],next:['Priest'],lv:25},
+  Merchant:{aspd:.9,atk:1.25,col:0xd08030,cape:0x905010,blade:[1.1,1],next:['Blacksmith'],lv:25},
+
+  // 2nd Jobs
+  Knight:{aspd:.85,atk:1.5,col:0x801010,cape:0x500000,blade:[1.5,1.5],next:[],lv:99},
+  Wizard:{aspd:1.0,atk:1.8,col:0x153075,cape:0x051045,blade:[1,1],next:[],lv:99},
+  Hunter:{aspd:.65,atk:1.4,col:0x105015,cape:0x003005,blade:[1.1,1.1],next:[],lv:99},
+  Assassin:{aspd:.6,atk:1.45,col:0x2c2c3c,cape:0x1b1b28,blade:[.7,2.4],next:[],lv:99},
+  Priest:{aspd:.9,atk:1.3,col:0xb09020,cape:0x705000,blade:[1,1],next:[],lv:99},
+  Blacksmith:{aspd:.8,atk:1.6,col:0xa05000,cape:0x602000,blade:[1.3,1.2],next:[],lv:99}
+};
+
 const STATS=[['str','STR','ATK'],['agi','AGI','ASPD, Flee'],['dex','DEX','Hit, min dmg'],['luk','LUK','Crit, drops'],['int','INT','SP, skill dmg']];
 const SKILLS=[
-  {id:'aid',n:'First Aid',cls:['Novice','Thief','Assassin'],max:5,sp:5,cd:6,d:L=>`Auto: heals ${10+5*L}% HP when below half.`},
-  {id:'dbl',n:'Double Attack',cls:['Thief','Assassin'],max:5,passive:1,d:L=>`${10+8*L}% chance to strike twice.`},
+  {id:'aid',n:'First Aid',cls:['Novice','Swordman','Mage','Archer','Thief','Acolyte','Merchant','Knight','Wizard','Hunter','Assassin','Priest','Blacksmith'],max:5,sp:5,cd:6,d:L=>`Auto: heals ${10+5*L}% HP when below half.`},
+  {id:'dbl',n:'Double Attack',cls:['Thief','Assassin','Merchant','Blacksmith'],max:5,passive:1,d:L=>`${10+8*L}% chance to strike twice.`},
   {id:'env',n:'Envenom',cls:['Thief','Assassin'],max:5,sp:8,cd:2.5,mul:L=>1.2+.3*L,hits:1,col:'#7dff7d',d:L=>`Auto: poison strike, ${Math.round((1.2+.3*L)*100)}% dmg.`},
+  {id:'bash',n:'Bash',cls:['Swordman','Knight'],max:5,sp:10,cd:2,mul:L=>1.4+.4*L,hits:1,col:'#ff5555',d:L=>`Auto: heavy strike, ${Math.round((1.4+.4*L)*100)}% dmg.`},
+  {id:'fb',n:'Fire Bolt',cls:['Mage','Wizard'],max:5,sp:12,cd:3,mul:L=>.6+.2*L,hits:5,col:'#ff9933',d:L=>`Auto: 5 fire strikes, ${Math.round((.6+.2*L)*100)}% each.`},
   {id:'sonic',n:'Sonic Blow',cls:['Assassin'],max:5,sp:20,cd:4,mul:L=>.5+.1*L,hits:6,col:'#ff9dff',d:L=>`Auto: 6 slashes, ${Math.round((.5+.1*L)*100)}% each.`}];
 
 let currentUser = null;
 let S,speed=1,floats=[],drops=[],t=0,shake=0,atkAnim=0,hitAnim=0,pend=[],barT=0;
 const pl={x:-3,z:1.5,ry:0,orb:0,run:0};
-const skCd={aid:0,env:0,sonic:0};
+const skCd={aid:0,env:0,bash:0,fb:0,sonic:0};
 const itemRegistry = new Map();
 
 const fresh=()=>({cls:'Novice',lv:1,exp:0,hp:100,sp:30,zeny:0,kills:0,stage:1,best:1,killsInStage:0,pts:10,skp:0,sk:{aid:1},auto:true,q:null,
@@ -233,7 +253,7 @@ if(savedSession){
 }
 
 const rnd=(a,b)=>a+Math.random()*(b-a),ri=(a,b)=>Math.floor(rnd(a,b+1)),cl=(v,a,b)=>Math.max(a,Math.min(b,v));
-const isBoss=()=>S.stage%BOSS_EVERY===0,eqv=k=>S.eq[k]?ev(S.eq[k]):0,C=()=>CLASSES[S.cls],st=k=>S.st[k];
+const isBoss=()=>S.stage%BOSS_EVERY===0,eqv=k=>S.eq[k]?ev(S.eq[k]):0,C=()=>CLASSES[S.cls]||CLASSES.Novice,st=k=>S.st[k];
 const maxHp=()=>80+S.lv*20+eqv('head')*4, maxSp=()=>20+S.lv*2+st('int')*3;
 const atk=()=>Math.round((4+S.lv*2+eqv('weapon')+st('str')*1.5+st('dex')*.3+st('luk')*.2)*C().atk);
 const aspd=()=>Math.max(.25,.85*C().aspd*(1-Math.min(.5,st('agi')*.006)));
@@ -258,7 +278,7 @@ function genItem(boss){
   if(boss&&tier<2)tier=2;
   const idx=Math.min(4,Math.floor((S.stage-1)/6)+ri(0,1)),base={weapon:3,armor:2,head:6}[slot]*(1+S.stage*.55);
   const icon=SLOTS[slot].icons[idx];
-  return{id:Date.now()+Math.random(),slot,tier,icon,val:Math.max(1,Math.round(base*RAR[tier].m*rnd(.9,1.15))),name:(tier?RAR[tier].n+' ':'')+SLOTS[slot].names[idx]};
+  return{id:Date.now()+Math.random(),slot,tier,r:0,icon,val:Math.max(1,Math.round(base*RAR[tier].m*rnd(.9,1.15))),name:(tier?RAR[tier].n+' ':'')+SLOTS[slot].names[idx]};
 }
 const addFloat=(x,y,z,txt,col,big)=>floats.push({x,y,z,txt,col,life:1,big});
 
@@ -272,7 +292,7 @@ function strike(mult,col){
 
 function playerAttack(){
   pAtkT=aspd();atkAnim=1;
-  let sk=null;for(const id of['sonic','env']){const s=SKILLS.find(x=>x.id===id);if(skillOn(id)&&skCd[id]<=0&&S.sp>=s.sp){sk=s;break}}
+  let sk=null;for(const id of['sonic','bash','fb','env']){const s=SKILLS.find(x=>x.id===id);if(skillOn(id)&&skCd[id]<=0&&S.sp>=s.sp){sk=s;break}}
   if(sk){S.sp-=sk.sp;skCd[sk.id]=sk.cd;addFloat(pl.x,3,pl.z,sk.n,sk.col);
     const m=sk.mul(lv(sk.id))*(1+st('int')*.01);strike(m,sk.col);for(let i=1;i<sk.hits;i++)pend.push({t:i*.09,m,col:sk.col})}
   else{strike(1);if(skillOn('dbl')&&Math.random()<.1+lv('dbl')*.08+st('dex')*.003){pend.push({t:.15,m:1,col:'#aef'});addFloat(pl.x,3,pl.z,'Double Attack','#aef')}}
@@ -299,23 +319,52 @@ function equip(id,quiet){const i=S.inv.findIndex(x=>x.id===id);if(i<0)return;con
   if(old)S.inv.push(old);S.eq[it.slot]=it;S.hp=Math.min(S.hp,maxHp());if(!quiet)log('Equipped '+it.name);ui();save()}
 function sell(id){const i=S.inv.findIndex(x=>x.id===id);if(i<0)return;const it=S.inv.splice(i,1)[0],z=Math.floor(it.val*(1+it.tier*2)*2);S.zeny+=z;log(`Sold ${it.name} for ${z}z`);ui();save()}
 
-const lv=id=>S.sk[id]||0,ev=it=>Math.round(it.val*(1+(it.r||0)*.12)),iname=it=>(it.r?'+'+it.r+' ':'')+it.name;
+const lv=id=>S.sk[id]||0,ev=it=>Math.round(it.val*(1+(it.r||0)*.15)),iname=it=>(it.r?'+'+it.r+' ':'')+it.name;
 const totalPts=()=>{let p=10;for(let l=2;l<=S.lv;l++)p+=3+Math.floor(l/5);return p},rcost=()=>S.lv*50;
 const refCost=it=>Math.round(120*((it.r||0)+1)*(1+it.tier*.6)*(1+S.stage*.15)),refCh=it=>[100,100,100,100,70,60,50,40,30,20][it.r||0];
 
 function checkLevel(){while(S.exp>=need()){S.exp-=need();S.lv++;const p=3+Math.floor(S.lv/5);S.pts+=p;S.skp++;S.hp=maxHp();S.sp=maxSp();
   log(`LEVEL UP! Lv ${S.lv}. +${p} stat points, +1 skill point`,'r4');addFloat(pl.x,3.6,pl.z,'LEVEL UP!','#fff',true);
-  if(C().next&&S.lv===C().lv)log(`You can now change class to ${C().next}!`,'r3')}}
+  const nextCls = C().next;
+  if(nextCls && nextCls.length && S.lv >= C().lv) log(`You can now advance your class!`,'r3');
+}}
 
 function newQuest(type){const L=S?S.lv:1,g=type==='kill'?12+L*2:type==='loot'?3+Math.floor(L/3):(S?S.best:1)+2;
   return{type,goal:g,prog:type==='stage'?Math.min(S?S.best:1,g):0,z:Math.round(g*(type==='kill'?10:type==='loot'?60:150)*(1+(S?S.stage:1)*.25)),xp:Math.floor(need()*(type==='stage'?.8:.35))}}
 const qTxt=q=>q.type==='kill'?`Defeat ${q.goal} monsters`:q.type==='loot'?`Collect ${q.goal} equipment drops`:`Reach stage ${q.goal}`;
 const syncQ=()=>S.q&&S.q.forEach(q=>{if(q.type==='stage')q.prog=Math.min(q.goal,S.best)});
 
-function refine(sl){const it=S.eq[sl];if(!it||(it.r||0)>=10)return;const c=refCost(it);if(S.zeny<c){log('Not enough Zeny.');return}
-  S.zeny-=c;if(Math.random()*100<refCh(it)){it.r=(it.r||0)+1;log(`Refine success! ${iname(it)}`,'r3');addFloat(pl.x,3,pl.z,'Refine +'+it.r,'#ffd23f')}
-  else{if(it.r>=5){it.r--;log(`Refine failed... ${it.name} dropped to +${it.r}.`,'r0')}else log('Refine failed.','r0');addFloat(pl.x,3,pl.z,'Failed','#ff6b6b')}
-  ui();save()}
+function refine(sl){
+  const it=S.eq[sl];
+  if(!it||(it.r||0)>=10)return;
+  const c=refCost(it);
+  if(S.zeny<c){log('Not enough Zeny.');return;}
+  S.zeny-=c;
+  if(Math.random()*100<refCh(it)){
+    it.r=(it.r||0)+1;
+    log(`Refine success! ${iname(it)}`,'r3');
+    addFloat(pl.x,3,pl.z,'Refine +'+it.r,'#ffd23f');
+  }else{
+    if((it.r||0)>=5){
+      it.r--;
+      log(`Refine failed... ${it.name} dropped to +${it.r}.`,'r0');
+    }else{
+      log('Refine failed.','r0');
+    }
+    addFloat(pl.x,3,pl.z,'Failed','#ff6b6b');
+  }
+  ui();
+  save();
+}
+
+function changeJob(targetJob){
+  if(!CLASSES[targetJob]) return;
+  S.cls = targetJob;
+  log(`Class changed to ${S.cls}!`, 'r4');
+  addFloat(pl.x, 3.6, pl.z, S.cls + '!', '#fff', true);
+  ui();
+  save();
+}
 
 let logs=[],tab=null;
 function log(m,cls){logs.push({m,cls});if(logs.length>80)logs.shift();
@@ -355,8 +404,20 @@ function renderItemHTML(it, actionsHtml) {
   </div>`;
 }
 
-const TABS={map:['🗺️','World Map','M'],status:['📊','Status','S'],skills:['✨','Skills','K'],bag:['🎒','Bag','B'],equip:['🛡️','Equipment','E'],quest:['📜','Quests','Q'],refine:['🔨','Refine','R'],log:['📃','Log','L'],set:['⚙️','Settings','O']};
-const dot=k=>!S?false:k==='status'?S.pts>0:k==='skills'?S.skp>0&&SKILLS.some(s=>s.cls.includes(S.cls)&&lv(s.id)<s.max):k==='quest'?!!(S.q&&S.q.some(q=>q.prog>=q.goal)):false;
+const TABS={
+  map:['🗺️','World Map','M'],
+  status:['📊','Status','S'],
+  job:['⚔️','Job Change','J'],
+  skills:['✨','Skills','K'],
+  bag:['🎒','Bag','B'],
+  equip:['🛡️','Equipment','E'],
+  quest:['📜','Quests','Q'],
+  refine:['🔨','Refine','R'],
+  log:['📃','Log','L'],
+  set:['⚙️','Settings','O']
+};
+
+const dot=k=>!S?false:k==='status'?S.pts>0:k==='skills'?S.skp>0&&SKILLS.some(s=>s.cls.includes(S.cls)&&lv(s.id)<s.max):k==='job'?C().next&&C().next.length>0&&S.lv>=C().lv:k==='quest'?!!(S.q&&S.q.some(q=>q.prog>=q.goal)):false;
 
 const V={
   map(){
@@ -376,11 +437,31 @@ const V={
       <div>Current Highest Unlocked Stage: <b>${S.best}</b></div>
       <div class="map-grid">${nodes}</div>`;
   },
-  status(){const c=C();return `<div class="hd">${S.cls} Lv ${S.lv} &middot; Stat points: <b>${S.pts}</b></div>`
+  status(){return `<div class="hd">${S.cls} Lv ${S.lv} &middot; Stat points: <b>${S.pts}</b></div>`
     +STATS.map(([k,l,d])=>`<div class="slot"><span><b>${l}</b> ${S.st[k]} <small>(${d})</small></span><button data-a="stat" data-v="${k}" ${S.pts>=cost(k)?'':'disabled'}>+ ${cost(k)}pt</button></div>`).join('')
     +`<div class="slot" style="flex-wrap:wrap"><span>ATK <b>${atk()}</b></span><span>DEF <b>${def()}</b></span><span>ASPD <b>${(1/aspd()).toFixed(2)}/s</b></span><span>Crit <b>${crit().toFixed(1)}%</b></span><span>Flee <b>${flee().toFixed(0)}%</b></span><span>HP <b>${maxHp()}</b></span><span>SP <b>${maxSp()}</b></span></div>`
-    +(c.next?(S.lv>=c.lv?`<button class="full" data-a="job">Change class to ${c.next}</button>`:`<small>Reach Lv ${c.lv} to become ${c.next}.</small>`):'<small>Max class reached.</small>')
     +`<button class="full" data-a="rstat">Reset stats (${rcost()}z)</button>`},
+  job(){
+    const current = C();
+    if(!current.next || current.next.length === 0){
+      return `<div class="hd">Current Class: <b>${S.cls}</b></div><p>You have reached the maximum job advancement tier!</p>`;
+    }
+    const canChange = S.lv >= current.lv;
+    let html = `<div class="hd">Class Advancement Path</div><p>Current Class: <b>${S.cls}</b> (Req Lv ${current.lv})</p>`;
+    if(!canChange) html += `<p style="color:#e5484d">Reach Lv ${current.lv} to advance to your next class!</p>`;
+    
+    current.next.forEach(j => {
+      const info = CLASSES[j];
+      html += `<div class="job-card">
+        <div>
+          <b>${j}</b><br>
+          <small>ATK Mult: x${info.atk} &middot; ASPD Mult: x${info.aspd}</small>
+        </div>
+        <button data-a="changeJob" data-v="${j}" ${canChange?'':'disabled'}>Choose Class</button>
+      </div>`;
+    });
+    return html;
+  },
   skills(){return `<div class="hd">Skill points: <b>${S.skp}</b></div>`+SKILLS.map(s=>{const L=lv(s.id),ok=s.cls.includes(S.cls);
     return `<div class="slot" style="opacity:${ok?1:.5}"><span><b>${s.n}</b> Lv ${L}/${s.max} ${s.passive?'(passive)':'&middot; SP '+s.sp}<br><small>${s.d(Math.max(1,L))}</small>${L&&L<s.max?`<br><small>Next: ${s.d(L+1)}</small>`:''}</span>${ok?`<button data-a="skill" data-v="${s.id}" ${S.skp>0&&L<s.max?'':'disabled'}>+</button>`:`<small>${s.cls[0]}</small>`}</div>`}).join('')
     +`<button class="full" data-a="rskill">Reset skills (${rcost()}z)</button>`},
@@ -393,13 +474,24 @@ const V={
     return renderItemHTML(e, `<small>${SLOTS[k].label}</small>`);
   }).join('')+`<small style="display:block;margin-top:6px;">Hover item icon to view stats.</small>`},
   quest(){return S.q.map((q,i)=>`<div class="slot" style="flex-direction:column;align-items:stretch"><b>${qTxt(q)}</b><div class="pbar"><i style="width:${q.prog/q.goal*100}%"></i></div><small>${q.prog}/${q.goal} &middot; Reward: ${q.z}z, ${q.xp} EXP</small><button data-a="claim" data-v="${i}" ${q.prog>=q.goal?'':'disabled'}>Claim reward</button></div>`).join('')},
-  refine(){return Object.keys(SLOTS).map(k=>{const it=S.eq[k];if(!it)return `<div class="slot"><span>${SLOTS[k].label}</span><small>empty</small></div>`;
+  refine(){return Object.keys(SLOTS).map(k=>{
+    const it=S.eq[k];
+    if(!it)return `<div class="slot"><span>${SLOTS[k].label}</span><small>empty</small></div>`;
     itemRegistry.set(it.id, it);
-    const r=it.r||0,c=refCost(it);return `<div class="slot" style="flex-direction:column;align-items:stretch"><div class="item-info"><div class="item-icon-box" onmouseenter="showTooltip(event, ${it.id})" onmousemove="moveTooltip(event)" onmouseleave="hideTooltip()">${it.icon||'⚔️'}</div><b class="r${it.tier}">${iname(it)}</b></div><small>${SLOTS[k].stat} +${ev(it)} &rarr; +${Math.round(it.val*(1+(r+1)*.12))} &middot; ${r>=10?'MAX':'Success '+refCh(it)+'%'}${r>=5?' (failure: -1)':''}</small><button data-a="refine" data-v="${k}" ${r>=10||S.zeny<c?'disabled':''}>Refine (${c}z)</button></div>`}).join('')},
+    const r=it.r||0,c=refCost(it);
+    return `<div class="slot" style="flex-direction:column;align-items:stretch">
+      <div class="item-info">
+        <div class="item-icon-box" onmouseenter="showTooltip(event, ${it.id})" onmousemove="moveTooltip(event)" onmouseleave="hideTooltip()">${it.icon||'⚔️'}</div>
+        <b class="r${it.tier}">${iname(it)}</b>
+      </div>
+      <small>${SLOTS[k].stat} +${ev(it)} &rarr; +${Math.round(it.val*(1+(r+1)*.15))} &middot; ${r>=10?'MAX':'Success '+refCh(it)+'%'}${r>=5?' (failure: -1)':''}</small>
+      <button data-a="refine" data-v="${k}" ${r>=10||S.zeny<c?'disabled':''}>Refine (${c}z)</button>
+    </div>`
+  }).join('')},
   log(){return logs.map(l=>`<div class="${l.cls||''}">${l.m}</div>`).join('')||'<i>No events yet.</i>'},
   set(){return `<label><input type="checkbox" data-a="auto" ${S.auto!==false?'checked':''}> Auto-equip better gear</label>
     <div class="slot" style="margin-top:8px"><span>Select Stage (1 to ${S.best})</span><span><button data-a="sdn">&minus;</button> <button data-a="sup">+</button></span></div>
-    <small>Drag the view to rotate, scroll to zoom. Hotkeys: M S K B E Q R L O, Esc to close.</small><button class="full" data-a="reset">Erase account save &amp; restart</button>`}};
+    <small>Drag the view to rotate, scroll to zoom. Hotkeys: M S J K B E Q R L O, Esc to close.</small><button class="full" data-a="reset">Erase account save &amp; restart</button>`}};
 
 function renderWin(){
   $('dock').innerHTML=Object.entries(TABS).map(([k,[ic,n,key]])=>`<button class="ib${tab===k?' on':''}" data-t="${k}" title="${n} (${key})">${ic}<span class="k">${key}</span>${dot(k)?'<i class="dot"></i>':''}</button>`).join('');
@@ -409,17 +501,18 @@ function renderWin(){
 const openTab=k=>{tab=tab===k?null:k;renderWin()};
 const ACT={
   setStage:st=>{const target=+st; if(target<=S.best){S.stage=target; S.killsInStage=0; mob=null; respawn=.3; ui(); save(); log(`Traveled to Stage ${target}.`); tab=null; renderWin();}},
-  stat:k=>{if(S.pts>=cost(k)){S.pts-=cost(k);S.st[k]++;S.hp=Math.min(S.hp,maxHp());ui();save()}},
-  job:()=>{if(C().next&&S.lv>=C().lv){S.cls=C().next;log(`Class change! You are now a ${S.cls}.`,'r4');addFloat(pl.x,3.6,pl.z,S.cls+'!','#fff',true);ui();save()}},
-  rstat:()=>{if(S.zeny<rcost())return log('Not enough Zeny to reset stats.');S.zeny-=rcost();for(const k in S.st)S.st[k]=1;S.pts=totalPts();S.hp=Math.min(S.hp,maxHp());log('Stats reset.');ui();save()},
-  skill:id=>{const s=SKILLS.find(x=>x.id===id);if(S.skp>0&&lv(id)<s.max&&s.cls.includes(S.cls)){S.skp--;S.sk[id]=lv(id)+1;ui();save()}},
-  rskill:()=>{if(S.zeny<rcost())return log('Not enough Zeny to reset skills.');S.zeny-=rcost();S.sk={};S.skp=S.lv;log('Skills reset.');ui();save()},
-  equip:id=>equip(+id),sell:id=>sell(+id),sellall:()=>{S.inv.slice().forEach(it=>sell(it.id))},refine:k=>refine(k),
-  claim:i=>{const q=S.q[i];if(q&&q.prog>=q.goal){S.zeny+=q.z;S.exp+=q.xp;log(`Quest complete! +${q.z}z, +${q.xp} EXP`,'r3');S.q[i]=newQuest(q.type);checkLevel();ui();save()}},
+  stat:k=>{if(S.pts>=cost(k)){S.pts-=cost(k);S.st[k]++;S.hp=Math.min(S.hp,maxHp());ui();save();renderWin()}},
+  changeJob:targetJob=>changeJob(targetJob),
+  rstat:()=>{if(S.zeny<rcost())return log('Not enough Zeny to reset stats.');S.zeny-=rcost();for(const k in S.st)S.st[k]=1;S.pts=totalPts();S.hp=Math.min(S.hp,maxHp());log('Stats reset.');ui();save();renderWin()},
+  skill:id=>{const s=SKILLS.find(x=>x.id===id);if(S.skp>0&&lv(id)<s.max&&s.cls.includes(S.cls)){S.skp--;S.sk[id]=lv(id)+1;ui();save();renderWin()}},
+  rskill:()=>{if(S.zeny<rcost())return log('Not enough Zeny to reset skills.');S.zeny-=rcost();S.sk={};S.skp=S.lv;log('Skills reset.');ui();save();renderWin()},
+  equip:id=>equip(+id),sell:id=>sell(+id),sellall:()=>{S.inv.slice().forEach(it=>sell(it.id))},
+  refine:k=>{refine(k);renderWin();},
+  claim:i=>{const q=S.q[i];if(q&&q.prog>=q.goal){S.zeny+=q.z;S.exp+=q.xp;log(`Quest complete! +${q.z}z, +${q.xp} EXP`,'r3');S.q[i]=newQuest(q.type);checkLevel();ui();save();renderWin()}},
   auto:()=>{S.auto=S.auto===false;ui()},
-  sup:()=>{if(S.stage<S.best){S.stage++;S.killsInStage=0;mob=null;respawn=.3;ui()}},
-  sdn:()=>{if(S.stage>1){S.stage--;S.killsInStage=0;mob=null;respawn=.3;ui()}},
-  reset:()=>{if(confirm('Erase your save for this account and start over?')){S=fresh();S.q=['kill','loot','stage'].map(newQuest);floats.forEach(f=>f.el&&f.el.remove());floats=[];drops=[];pend=[];mob=null;respawn=.3;logs=[];log('New adventure started.');ui();save()}}};
+  sup:()=>{if(S.stage<S.best){S.stage++;S.killsInStage=0;mob=null;respawn=.3;ui();renderWin()}},
+  sdn:()=>{if(S.stage>1){S.stage--;S.killsInStage=0;mob=null;respawn=.3;ui();renderWin()}},
+  reset:()=>{if(confirm('Erase your save for this account and start over?')){S=fresh();S.q=['kill','loot','stage'].map(newQuest);floats.forEach(f=>f.el&&f.el.remove());floats=[];drops=[];pend=[];mob=null;respawn=.3;logs=[];log('New adventure started.');ui();save();renderWin()}}};
 
 $('dock').onclick=e=>{const b=e.target.closest('[data-t]');if(b)openTab(b.dataset.t)};
 $('wx').onclick=()=>openTab(tab);$('wnd').onclick=e=>{const b=e.target.closest('[data-a]');if(b&&!b.disabled)ACT[b.dataset.a](b.dataset.v)};
@@ -434,7 +527,6 @@ function ui(){
   bars();
   $('stageTitle').textContent=`Stage ${S.stage} \u2014 ${isBoss()?'Boss Lair':'Prontera Field'}`;
   $('grindStatus').textContent = (S.stage < S.best) ? "🔄 Grinding Map" : "✨ Highest Map";
-  if(tab==='map') renderWin();
 }
 
 function update(dt){
