@@ -54,9 +54,45 @@ button:hover{background:#ffe9a8}button:focus-visible{outline:2px solid #2f6fd6}
 #tooltip { position: absolute; pointer-events: none; z-index: 100; display: none; width: 200px; padding: 8px; background: #1f1710f2; color: #fff; border: 2px solid var(--edge); border-radius: 6px; font-size: 12px; box-shadow: 0 4px 12px #0008; }
 #tooltip .tt-title { font-weight: bold; border-bottom: 1px solid #ffffff33; padding-bottom: 3px; margin-bottom: 4px; }
 #tooltip .tt-stat { color: #ffe08a; font-weight: bold; }
+
+/* Login Modal Overlay */
+#loginOverlay { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(6px); z-index: 999; display: flex; align-items: center; justify-content: center; }
+.login-card { width: min(340px, 90vw); padding: 20px; background: var(--panel); border: 3px solid var(--edge); border-radius: 8px; box-shadow: 0 0 0 2px var(--edge2), 0 10px 25px rgba(0,0,0,0.5); text-align: center; }
+.login-card h2 { margin: 0 0 4px 0; font-size: 20px; color: var(--ink); }
+.login-card p { font-size: 12px; margin-bottom: 16px; opacity: 0.8; }
+.form-group { margin-bottom: 12px; text-align: left; }
+.form-group label { display: block; font-size: 11px; font-weight: bold; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.5px; }
+.form-group input { width: 100%; padding: 8px 10px; border: 1px solid var(--edge2); border-radius: 4px; background: #fffdf5; font: inherit; font-size: 13px; }
+.login-btn { width: 100%; padding: 8px; font-weight: bold; font-size: 14px; margin-top: 6px; }
+.login-err { color: #e5484d; font-size: 12px; margin-top: 8px; min-height: 16px; font-weight: bold; }
+.login-footer { margin-top: 14px; font-size: 12px; display: flex; justify-content: space-between; gap: 8px; }
 </style>
 </head>
 <body>
+
+<!-- Login Modal -->
+<div id="loginOverlay">
+  <div class="login-card">
+    <h2>⚔️ Prontera Grind</h2>
+    <p>Sign in to load your adventure progress</p>
+    <form id="loginForm" onsubmit="handleLogin(event)">
+      <div class="form-group">
+        <label for="username">Account Name</label>
+        <input type="text" id="username" placeholder="Enter username..." required autocomplete="username">
+      </div>
+      <div class="form-group">
+        <label for="password">Password</label>
+        <input type="password" id="password" placeholder="Enter password..." required autocomplete="current-password">
+      </div>
+      <button type="submit" class="login-btn">Login / Register</button>
+      <div id="loginErr" class="login-err"></div>
+    </form>
+    <div class="login-footer">
+      <button type="button" onclick="playAsGuest()" style="flex:1;">Play as Guest</button>
+    </div>
+  </div>
+</div>
+
 <div id="wrap">
   <div class="title">
     <span id="stageTitle">Prontera Field</span>
@@ -79,7 +115,11 @@ button:hover{background:#ffe9a8}button:focus-visible{outline:2px solid #2f6fd6}
     <div>EXP <div class="bar"><i id="xpb" style="background:var(--exp)"></i></div></div>
     <div style="color:var(--gold)">&#9679; <b id="zeny">0</b> Zeny</div>
     <div>Kills <b id="kills">0</b></div>
-    <div style="margin-left:auto"><button id="spd">Speed x1</button></div>
+    <div style="margin-left:auto; display:flex; align-items:center; gap:8px;">
+      <span id="userBadge" style="font-weight:bold; font-size:12px; background:#e9d39a; padding:3px 8px; border-radius:4px; border:1px solid var(--edge2);">👤 Guest</span>
+      <button id="logoutBtn" onclick="logout()" style="display:none;">Logout</button>
+      <button id="spd">Speed x1</button>
+    </div>
   </div>
 </div>
 <div id="tooltip"></div>
@@ -108,6 +148,7 @@ const SKILLS=[
   {id:'env',n:'Envenom',cls:['Thief','Assassin'],max:5,sp:8,cd:2.5,mul:L=>1.2+.3*L,hits:1,col:'#7dff7d',d:L=>`Auto: poison strike, ${Math.round((1.2+.3*L)*100)}% dmg.`},
   {id:'sonic',n:'Sonic Blow',cls:['Assassin'],max:5,sp:20,cd:4,mul:L=>.5+.1*L,hits:6,col:'#ff9dff',d:L=>`Auto: 6 slashes, ${Math.round((.5+.1*L)*100)}% each.`}];
 
+let currentUser = null;
 let S,speed=1,floats=[],drops=[],t=0,shake=0,atkAnim=0,hitAnim=0,pend=[],barT=0;
 const pl={x:-3,z:1.5,ry:0,orb:0,run:0};
 const skCd={aid:0,env:0,sonic:0};
@@ -116,9 +157,80 @@ const itemRegistry = new Map();
 const fresh=()=>({cls:'Novice',lv:1,exp:0,hp:100,sp:30,zeny:0,kills:0,stage:1,best:1,killsInStage:0,pts:10,skp:0,sk:{aid:1},auto:true,q:null,
   st:{str:1,agi:1,dex:1,luk:1,int:1},eq:{weapon:null,armor:null,head:null},inv:[]});
 
-function load(){try{const s=JSON.parse(localStorage.getItem('pg_save'));if(s&&s.lv){const f=Object.assign(fresh(),s);f.st=Object.assign(fresh().st,s.st||{});if(!s.st)f.pts=10+(s.lv-1)*3;if(!s.sk){f.sk={aid:1};f.skp=Math.max(0,s.lv-1)}return f}}catch(e){}return fresh()}
-function save(){try{localStorage.setItem('pg_save',JSON.stringify(S))}catch(e){}}
-S=load();
+/* Authentication & Account Save System */
+function handleLogin(e){
+  e.preventDefault();
+  const u = $('username').value.trim();
+  const p = $('password').value.trim();
+  if(!u || !p) return;
+
+  const accounts = JSON.parse(localStorage.getItem('pg_accounts') || '{}');
+  if(accounts[u]){
+    if(accounts[u].password !== p){
+      $('loginErr').textContent = "Incorrect password.";
+      return;
+    }
+  } else {
+    accounts[u] = { password: p };
+    localStorage.setItem('pg_accounts', JSON.stringify(accounts));
+  }
+
+  currentUser = u;
+  localStorage.setItem('pg_session', currentUser);
+  initSession();
+}
+
+function playAsGuest(){
+  currentUser = 'Guest';
+  localStorage.setItem('pg_session', 'Guest');
+  initSession();
+}
+
+function logout(){
+  save();
+  localStorage.removeItem('pg_session');
+  location.reload();
+}
+
+function load(){
+  try{
+    const saveKey = currentUser ? `pg_save_${currentUser}` : 'pg_save';
+    const s = JSON.parse(localStorage.getItem(saveKey));
+    if(s && s.lv){
+      const f = Object.assign(fresh(), s);
+      f.st = Object.assign(fresh().st, s.st || {});
+      if(!s.st) f.pts = 10 + (s.lv - 1) * 3;
+      if(!s.sk){ f.sk = {aid:1}; f.skp = Math.max(0, s.lv - 1); }
+      return f;
+    }
+  } catch(e){}
+  return fresh();
+}
+
+function save(){
+  if(!currentUser) return;
+  try{
+    const saveKey = `pg_save_${currentUser}`;
+    localStorage.setItem(saveKey, JSON.stringify(S));
+  }catch(e){}
+}
+
+function initSession(){
+  $('loginOverlay').style.display = 'none';$('userBadge').textContent = '👤 ' + currentUser;
+  if(currentUser !== 'Guest') $('logoutBtn').style.display = 'inline-block';
+  
+  S = load();
+  if(!S.q) S.q = ['kill','loot','stage'].map(newQuest);
+  ui();
+  log(`Welcome back, ${currentUser}!`);
+}
+
+// Auto-login session check
+const savedSession = localStorage.getItem('pg_session');
+if(savedSession){
+  currentUser = savedSession;
+  setTimeout(initSession, 10);
+}
 
 const rnd=(a,b)=>a+Math.random()*(b-a),ri=(a,b)=>Math.floor(rnd(a,b+1)),cl=(v,a,b)=>Math.max(a,Math.min(b,v));
 const isBoss=()=>S.stage%BOSS_EVERY===0,eqv=k=>S.eq[k]?ev(S.eq[k]):0,C=()=>CLASSES[S.cls],st=k=>S.st[k];
@@ -131,6 +243,7 @@ const skillOn=id=>lv(id)>0&&SKILLS.find(s=>s.id===id).cls.includes(S.cls);
 
 let mob=null,pAtkT=0,mAtkT=0,respawn=0;
 function spawn(){
+  if(!S) return;
   const boss=isBoss()&&S.killsInStage>=MOBS_PER_STAGE,lvl=S.stage;
   if(boss){const b=BOSSES[(Math.floor(S.stage/BOSS_EVERY)-1)%BOSSES.length],hp=Math.floor(240*Math.pow(lvl,1.35));
     mob={...b,boss:true,hp,max:hp,atk:Math.floor(6+lvl*2.4),exp:60*lvl,zeny:ri(40,70)*lvl,size:1.9};
@@ -194,8 +307,8 @@ function checkLevel(){while(S.exp>=need()){S.exp-=need();S.lv++;const p=3+Math.f
   log(`LEVEL UP! Lv ${S.lv}. +${p} stat points, +1 skill point`,'r4');addFloat(pl.x,3.6,pl.z,'LEVEL UP!','#fff',true);
   if(C().next&&S.lv===C().lv)log(`You can now change class to ${C().next}!`,'r3')}}
 
-function newQuest(type){const L=S.lv,g=type==='kill'?12+L*2:type==='loot'?3+Math.floor(L/3):S.best+2;
-  return{type,goal:g,prog:type==='stage'?Math.min(S.best,g):0,z:Math.round(g*(type==='kill'?10:type==='loot'?60:150)*(1+S.stage*.25)),xp:Math.floor(need()*(type==='stage'?.8:.35))}}
+function newQuest(type){const L=S?S.lv:1,g=type==='kill'?12+L*2:type==='loot'?3+Math.floor(L/3):(S?S.best:1)+2;
+  return{type,goal:g,prog:type==='stage'?Math.min(S?S.best:1,g):0,z:Math.round(g*(type==='kill'?10:type==='loot'?60:150)*(1+(S?S.stage:1)*.25)),xp:Math.floor(need()*(type==='stage'?.8:.35))}}
 const qTxt=q=>q.type==='kill'?`Defeat ${q.goal} monsters`:q.type==='loot'?`Collect ${q.goal} equipment drops`:`Reach stage ${q.goal}`;
 const syncQ=()=>S.q&&S.q.forEach(q=>{if(q.type==='stage')q.prog=Math.min(q.goal,S.best)});
 
@@ -209,7 +322,6 @@ function log(m,cls){logs.push({m,cls});if(logs.length>80)logs.shift();
   const f=$('feed'),d=document.createElement('div');d.textContent=m;f.appendChild(d);while(f.children.length>4)f.removeChild(f.firstChild);setTimeout(()=>d.remove(),7000);
   if(tab==='log')renderWin()}
 
-// Interactive tooltips via itemRegistry lookup
 function showTooltip(e, itemId) {
   const it = itemRegistry.get(itemId);
   if(!it) return;
@@ -244,7 +356,7 @@ function renderItemHTML(it, actionsHtml) {
 }
 
 const TABS={map:['🗺️','World Map','M'],status:['📊','Status','S'],skills:['✨','Skills','K'],bag:['🎒','Bag','B'],equip:['🛡️','Equipment','E'],quest:['📜','Quests','Q'],refine:['🔨','Refine','R'],log:['📃','Log','L'],set:['⚙️','Settings','O']};
-const dot=k=>k==='status'?S.pts>0:k==='skills'?S.skp>0&&SKILLS.some(s=>s.cls.includes(S.cls)&&lv(s.id)<s.max):k==='quest'?!!(S.q&&S.q.some(q=>q.prog>=q.goal)):false;
+const dot=k=>!S?false:k==='status'?S.pts>0:k==='skills'?S.skp>0&&SKILLS.some(s=>s.cls.includes(S.cls)&&lv(s.id)<s.max):k==='quest'?!!(S.q&&S.q.some(q=>q.prog>=q.goal)):false;
 
 const V={
   map(){
@@ -287,7 +399,7 @@ const V={
   log(){return logs.map(l=>`<div class="${l.cls||''}">${l.m}</div>`).join('')||'<i>No events yet.</i>'},
   set(){return `<label><input type="checkbox" data-a="auto" ${S.auto!==false?'checked':''}> Auto-equip better gear</label>
     <div class="slot" style="margin-top:8px"><span>Select Stage (1 to ${S.best})</span><span><button data-a="sdn">&minus;</button> <button data-a="sup">+</button></span></div>
-    <small>Drag the view to rotate, scroll to zoom. Hotkeys: M S K B E Q R L O, Esc to close.</small><button class="full" data-a="reset">Erase save &amp; restart</button>`}};
+    <small>Drag the view to rotate, scroll to zoom. Hotkeys: M S K B E Q R L O, Esc to close.</small><button class="full" data-a="reset">Erase account save &amp; restart</button>`}};
 
 function renderWin(){
   $('dock').innerHTML=Object.entries(TABS).map(([k,[ic,n,key]])=>`<button class="ib${tab===k?' on':''}" data-t="${k}" title="${n} (${key})">${ic}<span class="k">${key}</span>${dot(k)?'<i class="dot"></i>':''}</button>`).join('');
@@ -307,17 +419,18 @@ const ACT={
   auto:()=>{S.auto=S.auto===false;ui()},
   sup:()=>{if(S.stage<S.best){S.stage++;S.killsInStage=0;mob=null;respawn=.3;ui()}},
   sdn:()=>{if(S.stage>1){S.stage--;S.killsInStage=0;mob=null;respawn=.3;ui()}},
-  reset:()=>{if(confirm('Erase your save and start over?')){S=fresh();S.q=['kill','loot','stage'].map(newQuest);floats.forEach(f=>f.el&&f.el.remove());floats=[];drops=[];pend=[];mob=null;respawn=.3;logs=[];log('New adventure started.');ui();save()}}};
+  reset:()=>{if(confirm('Erase your save for this account and start over?')){S=fresh();S.q=['kill','loot','stage'].map(newQuest);floats.forEach(f=>f.el&&f.el.remove());floats=[];drops=[];pend=[];mob=null;respawn=.3;logs=[];log('New adventure started.');ui();save()}}};
 
 $('dock').onclick=e=>{const b=e.target.closest('[data-t]');if(b)openTab(b.dataset.t)};
 $('wx').onclick=()=>openTab(tab);$('wnd').onclick=e=>{const b=e.target.closest('[data-a]');if(b&&!b.disabled)ACT[b.dataset.a](b.dataset.v)};
 addEventListener('keydown',e=>{if(e.ctrlKey||e.metaKey||e.altKey)return;const k=e.key.toUpperCase();if(k==='ESCAPE'){if(tab)openTab(tab);return}const f=Object.entries(TABS).find(([,v])=>v[2]===k);if(f)openTab(f[0])});
 $('spd').onclick=()=>{speed=speed===1?2:speed===2?4:1;$('spd').textContent='Speed x'+speed};
 
-function bars(){$('lv').textContent=S.lv;$('cls2').textContent=S.cls;$('zeny').textContent=S.zeny.toLocaleString();$('kills').textContent=S.kills;
+function bars(){if(!S) return; $('lv').textContent=S.lv;$('cls2').textContent=S.cls;$('zeny').textContent=S.zeny.toLocaleString();$('kills').textContent=S.kills;
   $('hpb').style.width=Math.max(0,S.hp/maxHp()*100)+'%';$('spb').style.width=S.sp/maxSp()*100+'\%';$('xpb').style.width=S.exp/need()*100+'%'}
 
 function ui(){
+  if(!S) return;
   bars();
   $('stageTitle').textContent=`Stage ${S.stage} \u2014 ${isBoss()?'Boss Lair':'Prontera Field'}`;
   $('grindStatus').textContent = (S.stage < S.best) ? "🔄 Grinding Map" : "✨ Highest Map";
@@ -325,6 +438,7 @@ function ui(){
 }
 
 function update(dt){
+  if(!S) return;
   t+=dt;atkAnim=Math.max(0,atkAnim-dt*4);hitAnim=Math.max(0,hitAnim-dt*4);shake=Math.max(0,shake-dt*20);
   S.sp=Math.min(maxSp(),S.sp+dt*(1+st('int')/12));for(const k in skCd)skCd[k]=Math.max(0,skCd[k]-dt);
   if(skillOn('aid')&&S.hp<maxHp()*.5&&S.sp>=5&&skCd.aid<=0){S.sp-=5;skCd.aid=6;const h=Math.ceil(maxHp()*(.1+.05*lv('aid')));S.hp=Math.min(maxHp(),S.hp+h);addFloat(pl.x,2.6,pl.z,'+'+h,'#7dff7d')}
@@ -445,6 +559,7 @@ dom.addEventListener('wheel',e=>{e.preventDefault();zoom=Math.min(2,Math.max(.6,
 
 const ct=new THREE.Vector3(0,.8,0);
 function draw(){
+  if(!S) return;
   const bn=isBoss()&&S.killsInStage>=MOBS_PER_STAGE;
   if(bn!==lastBoss){lastBoss=bn;const col=new THREE.Color(bn?0x8a6bb0:0x9ad7f5);scene.background=col;scene.fog=new THREE.Fog(col,35,80)}
   const c=C();
@@ -482,13 +597,10 @@ let last=performance.now();
 function loop(now){const dt=Math.min(0.1,(now-last)/1000);last=now;
   for(let i=0;i<speed;i++)update(dt);draw();requestAnimationFrame(loop)}
 
-if(!S.q)S.q=['kill','loot','stage'].map(newQuest);
-log('Welcome! Click the World Map (🗺️) to select maps.');
 resize();
-ui();
 respawn=0.3;
 requestAnimationFrame(loop);
-setInterval(save,10000);
+setInterval(save,5000);
 </script>
 </body>
 </html>
