@@ -32,26 +32,26 @@ button:hover{background:#ffe9a8}button:focus-visible{outline:2px solid #2f6fd6}
 .wide{grid-column:1/-1}small{opacity:.7}button:disabled{opacity:.4;cursor:default}
 #feed{position:absolute;left:12px;bottom:76px;font-size:13px;line-height:1.4;pointer-events:none;max-width:50%}
 #feed div{color:#fff;text-shadow:-1px -1px 0 #000,1px -1px 0 #000,-1px 1px 0 #000,1px 1px 0 #000}
-#dock{position:absolute;left:50%;bottom:12px;transform:translateX(-50%);display:flex;gap:8px;pointer-events:auto;background:#3b2a1acc;padding:6px 10px;border-radius:14px;border:2px solid var(--edge)}
-.ib{position:relative;width:46px;height:46px;font-size:22px;line-height:1;padding:0;background:linear-gradient(#fff8e6,#e9d39a);border:2px solid var(--edge2);border-radius:10px;transition:transform .12s}
+#dock{position:absolute;left:50%;bottom:12px;transform:translateX(-50%);display:flex;gap:6px;pointer-events:auto;background:#3b2a1acc;padding:6px 10px;border-radius:14px;border:2px solid var(--edge)}
+.ib{position:relative;width:42px;height:42px;font-size:20px;line-height:1;padding:0;background:linear-gradient(#fff8e6,#e9d39a);border:2px solid var(--edge2);border-radius:10px;transition:transform .12s}
 .ib:hover{transform:translateY(-2px)}.ib.on{background:#ffe08a;transform:translateY(-4px)}
-.ib .k{position:absolute;right:3px;bottom:0;font-size:9px;font-weight:bold;opacity:.7}
+.ib .k{position:absolute;right:3px;bottom:0;font-size:8px;font-weight:bold;opacity:.7}
 .ib .dot{position:absolute;top:-5px;right:-5px;width:12px;height:12px;background:#e5484d;border:2px solid #fff;border-radius:50%}
-#wnd{position:absolute;right:12px;top:12px;bottom:76px;width:min(380px,calc(100% - 24px));display:none;flex-direction:column;pointer-events:auto;overflow:hidden;z-index:20}
+#wnd{position:absolute;right:12px;top:12px;bottom:76px;width:min(420px,calc(100% - 24px));display:none;flex-direction:column;pointer-events:auto;overflow:hidden;z-index:20}
 #wb{overflow:auto;flex:1}
 .hd{font-weight:bold;margin-bottom:6px}.full{width:100%;margin-top:8px;padding:6px}
 .pbar{height:8px;background:#5b4a35;border-radius:4px;overflow:hidden;margin:4px 0}.pbar i{display:block;height:100%;background:#4aa3df}
 
 /* Map Grid & Item UI */
-.map-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 8px; margin-top: 8px; }
-.map-node { background: #fffdf5; border: 2px solid var(--edge); border-radius: 6px; padding: 10px 4px; text-align: center; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 4px; transition: all .15s; }
+.map-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(75px, 1fr)); gap: 8px; margin-top: 8px; }
+.map-node { background: #fffdf5; border: 2px solid var(--edge); border-radius: 6px; padding: 8px 4px; text-align: center; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 4px; transition: all .15s; }
 .map-node:hover { background: #ffe9a8; border-color: var(--edge2); transform: translateY(-2px); }
 .map-node.active { background: #ffe08a; border-color: var(--gold); box-shadow: 0 0 6px var(--gold); }
 .map-node.locked { opacity: 0.4; cursor: not-allowed; filter: grayscale(1); }
 .map-node.boss-node { border-color: #a23fd6; }
 .item-icon-box { position: relative; width: 32px; height: 32px; border-radius: 4px; border: 2px solid var(--edge2); background: #2b1f14; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; cursor: pointer; }
 .item-info { display: flex; align-items: center; gap: 8px; }
-#tooltip { position: absolute; pointer-events: none; z-index: 100; display: none; width: 200px; padding: 8px; background: #1f1710f2; color: #fff; border: 2px solid var(--edge); border-radius: 6px; font-size: 12px; box-shadow: 0 4px 12px #0008; }
+#tooltip { position: absolute; pointer-events: none; z-index: 100; display: none; width: 230px; padding: 10px; background: #1f1710f8; color: #fff; border: 2px solid var(--edge); border-radius: 6px; font-size: 12px; box-shadow: 0 4px 12px #0008; }
 #tooltip .tt-title { font-weight: bold; border-bottom: 1px solid #ffffff33; padding-bottom: 3px; margin-bottom: 4px; }
 #tooltip .tt-stat { color: #ffe08a; font-weight: bold; }
 
@@ -66,7 +66,9 @@ button:hover{background:#ffe9a8}button:focus-visible{outline:2px solid #2f6fd6}
 .login-btn { width: 100%; padding: 8px; font-weight: bold; font-size: 14px; margin-top: 6px; }
 .login-err { color: #e5484d; font-size: 12px; margin-top: 8px; min-height: 16px; font-weight: bold; }
 .login-footer { margin-top: 14px; font-size: 12px; display: flex; justify-content: space-between; gap: 8px; }
-.job-card { background: #fffdf5; border: 2px solid var(--edge); border-radius: 6px; padding: 10px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; }
+.job-card { background: #fffdf5; border: 2px solid var(--edge); border-radius: 6px; padding: 8px 10px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; }
+.gm-badge { background: #e5484d; color: #fff; font-size: 10px; padding: 2px 6px; border-radius: 3px; font-weight: bold; margin-left: 6px; }
+.mob-card { background: #fffdf5; border: 1px solid var(--edge); border-radius: 6px; padding: 8px; margin-bottom: 8px; }
 </style>
 </head>
 <body>
@@ -74,7 +76,7 @@ button:hover{background:#ffe9a8}button:focus-visible{outline:2px solid #2f6fd6}
 <!-- Login Modal -->
 <div id="loginOverlay">
   <div class="login-card">
-    <h2>⚔️ Prontera Grind</h2>
+    <h2>⚔️️ Prontera Grind</h2>
     <p>Sign in to load your adventure progress</p>
     <form id="loginForm" onsubmit="handleLogin(event)">
       <div class="form-group">
@@ -118,6 +120,7 @@ button:hover{background:#ffe9a8}button:focus-visible{outline:2px solid #2f6fd6}
     <div>Kills <b id="kills">0</b></div>
     <div style="margin-left:auto; display:flex; align-items:center; gap:8px;">
       <span id="userBadge" style="font-weight:bold; font-size:12px; background:#e9d39a; padding:3px 8px; border-radius:4px; border:1px solid var(--edge2);">👤 Guest</span>
+      <button id="gmBtn" onclick="toggleGM()" style="background:#e5484d; color:#fff; font-weight:bold;">GM Mode: OFF</button>
       <button id="logoutBtn" onclick="logout()" style="display:none;">Logout</button>
       <button id="spd">Speed x1</button>
     </div>
@@ -131,32 +134,44 @@ const $=id=>document.getElementById(id);
 const RAR=[{n:'Common',m:1,w:60},{n:'Fine',m:1.4,w:25},{n:'Rare',m:2,w:10},{n:'Epic',m:3,w:4},{n:'Legendary',m:5,w:1}];
 const SLOTS={
   weapon:{label:'Weapon',stat:'ATK',icons:['🔪','🗡️','⚔️','🗡️','🗡️'],names:['Knife','Sword','Katana','Claymore','Blade']},
-  armor:{label:'Armor',stat:'DEF',icons:['👕','🧥','🛡️','🛡️','🛡️'],names:['Cotton Shirt','Leather Coat','Chain Mail','Plate Mail','Full Plate']},
+  armor:{label:'Armor',stat:'DEF',icons:['👕','🧥','🛡️','🛡️','🛡️️'],names:['Cotton Shirt','Leather Coat','Chain Mail','Plate Mail','Full Plate']},
   head:{label:'Headgear',stat:'HP',icons:['🎀','🎩','🪖','👑','👑'],names:['Ribbon','Hat','Helm','Circlet','Crown']}
 };
-const MOBS=[{n:'Poring',c:0xff9db8,shape:'blob'},{n:'Drops',c:0xffb45a,shape:'blob'},{n:'Fabre',c:0x9ed35a,shape:'worm'},{n:'Lunatic',c:0xf4f4f4,shape:'bunny'},{n:'Willow',c:0x6fa84a,shape:'tree'}];
-const BOSSES=[{n:'Golden Bug',c:0xf2c230,shape:'bug'},{n:'Eddga',c:0xe67a2e,shape:'cat'},{n:'Mistress',c:0x5ad1c8,shape:'bug'},{n:'Baphomet',c:0x6a3fa0,shape:'demon'}];
+
+const MOBS=[
+  {n:'Poring',c:0xff9db8,shape:'blob',desc:'Cute gelatinous creature'},
+  {n:'Drops',c:0xffb45a,shape:'blob',desc:'Orange variant of Poring'},
+  {n:'Fabre',c:0x9ed35a,shape:'worm',desc:'Green caterpillar monster'},
+  {n:'Lunatic',c:0xf4f4f4,shape:'bunny',desc:'Fluffy white rabbit monster'},
+  {n:'Willow',c:0x6fa84a,shape:'tree',desc:'Living wooden log monster'}
+];
+const BOSSES=[
+  {n:'Golden Bug',c:0xf2c230,shape:'bug',desc:'Giant golden beetle boss'},
+  {n:'Eddga',c:0xe67a2e,shape:'cat',desc:'Ferocious fire tiger boss'},
+  {n:'Mistress',c:0x5ad1c8,shape:'bug',desc:'Giant queen bee boss'},
+  {n:'Baphomet',c:0x6a3fa0,shape:'demon',desc:'Lord of darkness boss'}
+];
 const MOBS_PER_STAGE=5,BOSS_EVERY=5,BX_=7.5,Z0=-3,Z1=4;
 
-// Restored Class Hierarchy
+// Class hierarchy with job levels and requirements
 const CLASSES={
-  Novice:{aspd:1,atk:1,col:0xe8dcc0,cape:0,blade:[1,1],next:['Swordman','Mage','Archer','Thief','Acolyte','Merchant'],lv:10},
+  Novice:{aspd:1,atk:1,col:0xe8dcc0,cape:0,blade:[1,1],tier:0,reqLv:1,next:['Swordman','Mage','Archer','Thief','Acolyte','Merchant']},
   
-  // 1st Jobs
-  Swordman:{aspd:.95,atk:1.2,col:0xb83b3b,cape:0x8a2b2b,blade:[1.2,1.2],next:['Knight'],lv:25},
-  Mage:{aspd:1.1,atk:1.4,col:0x3b6fb5,cape:0x2b4f85,blade:[.8,.8],next:['Wizard'],lv:25},
-  Archer:{aspd:.85,atk:1.15,col:0x2e7d32,cape:0x1b4d1e,blade:[1,1],next:['Hunter'],lv:25},
-  Thief:{aspd:.75,atk:1.1,col:0x4a7c3a,cape:0x2e7d32,blade:[.6,1],next:['Assassin'],lv:25},
-  Acolyte:{aspd:1.0,atk:1.05,col:0xe0c870,cape:0xa08830,blade:[.9,.9],next:['Priest'],lv:25},
-  Merchant:{aspd:.9,atk:1.25,col:0xd08030,cape:0x905010,blade:[1.1,1],next:['Blacksmith'],lv:25},
+  // 1st Jobs (Req Lv 10)
+  Swordman:{aspd:.95,atk:1.2,col:0xb83b3b,cape:0x8a2b2b,blade:[1.2,1.2],tier:1,reqLv:10,next:['Knight']},
+  Mage:{aspd:1.1,atk:1.4,col:0x3b6fb5,cape:0x2b4f85,blade:[.8,.8],tier:1,reqLv:10,next:['Wizard']},
+  Archer:{aspd:.85,atk:1.15,col:0x2e7d32,cape:0x1b4d1e,blade:[1,1],tier:1,reqLv:10,next:['Hunter']},
+  Thief:{aspd:.75,atk:1.1,col:0x4a7c3a,cape:0x2e7d32,blade:[.6,1],tier:1,reqLv:10,next:['Assassin']},
+  Acolyte:{aspd:1.0,atk:1.05,col:0xe0c870,cape:0xa08830,blade:[.9,.9],tier:1,reqLv:10,next:['Priest']},
+  Merchant:{aspd:.9,atk:1.25,col:0xd08030,cape:0x905010,blade:[1.1,1],tier:1,reqLv:10,next:['Blacksmith']},
 
-  // 2nd Jobs
-  Knight:{aspd:.85,atk:1.5,col:0x801010,cape:0x500000,blade:[1.5,1.5],next:[],lv:99},
-  Wizard:{aspd:1.0,atk:1.8,col:0x153075,cape:0x051045,blade:[1,1],next:[],lv:99},
-  Hunter:{aspd:.65,atk:1.4,col:0x105015,cape:0x003005,blade:[1.1,1.1],next:[],lv:99},
-  Assassin:{aspd:.6,atk:1.45,col:0x2c2c3c,cape:0x1b1b28,blade:[.7,2.4],next:[],lv:99},
-  Priest:{aspd:.9,atk:1.3,col:0xb09020,cape:0x705000,blade:[1,1],next:[],lv:99},
-  Blacksmith:{aspd:.8,atk:1.6,col:0xa05000,cape:0x602000,blade:[1.3,1.2],next:[],lv:99}
+  // 2nd Jobs (Req Lv 25)
+  Knight:{aspd:.85,atk:1.5,col:0x801010,cape:0x500000,blade:[1.5,1.5],tier:2,reqLv:25,next:[]},
+  Wizard:{aspd:1.0,atk:1.8,col:0x153075,cape:0x051045,blade:[1,1],tier:2,reqLv:25,next:[]},
+  Hunter:{aspd:.65,atk:1.4,col:0x105015,cape:0x003005,blade:[1.1,1.1],tier:2,reqLv:25,next:[]},
+  Assassin:{aspd:.6,atk:1.45,col:0x2c2c3c,cape:0x1b1b28,blade:[.7,2.4],tier:2,reqLv:25,next:[]},
+  Priest:{aspd:.9,atk:1.3,col:0xb09020,cape:0x705000,blade:[1,1],tier:2,reqLv:25,next:[]},
+  Blacksmith:{aspd:.8,atk:1.6,col:0xa05000,cape:0x602000,blade:[1.3,1.2],tier:2,reqLv:25,next:[]}
 };
 
 const STATS=[['str','STR','ATK'],['agi','AGI','ASPD, Flee'],['dex','DEX','Hit, min dmg'],['luk','LUK','Crit, drops'],['int','INT','SP, skill dmg']];
@@ -169,13 +184,32 @@ const SKILLS=[
   {id:'sonic',n:'Sonic Blow',cls:['Assassin'],max:5,sp:20,cd:4,mul:L=>.5+.1*L,hits:6,col:'#ff9dff',d:L=>`Auto: 6 slashes, ${Math.round((.5+.1*L)*100)}% each.`}];
 
 let currentUser = null;
-let S,speed=1,floats=[],drops=[],t=0,shake=0,atkAnim=0,hitAnim=0,pend=[],barT=0;
+let S,speed=1,gmMode=false,floats=[],drops=[],t=0,shake=0,atkAnim=0,hitAnim=0,pend=[],barT=0;
 const pl={x:-3,z:1.5,ry:0,orb:0,run:0};
 const skCd={aid:0,env:0,bash:0,fb:0,sonic:0};
 const itemRegistry = new Map();
 
-const fresh=()=>({cls:'Novice',lv:1,exp:0,hp:100,sp:30,zeny:0,kills:0,stage:1,best:1,killsInStage:0,pts:10,skp:0,sk:{aid:1},auto:true,q:null,
+const fresh=()=>({cls:'Novice',lv:1,exp:0,hp:100,sp:30,zeny:0,kills:0,stage:1,best:1,killsInStage:0,pts:10,skp:0,sk:{aid:1},auto:true,q:null,gm:false,
   st:{str:1,agi:1,dex:1,luk:1,int:1},eq:{weapon:null,armor:null,head:null},inv:[]});
+
+function toggleGM(){
+  gmMode = !gmMode;
+  if(S) S.gm = gmMode;
+  updateGMBadge();
+  log(`GM Mode ${gmMode?'ENABLED (100x EXP & Zeny)':'DISABLED'}.`, gmMode?'r4':'r0');
+  save();
+}
+
+function updateGMBadge(){
+  const btn = $('gmBtn');
+  if(gmMode){
+    btn.textContent = "GM Mode: 100x ON";
+    btn.style.background = "#e07b00";
+  } else {
+    btn.textContent = "GM Mode: OFF";
+    btn.style.background = "#e5484d";
+  }
+}
 
 /* Authentication & Account Save System */
 function handleLogin(e){
@@ -240,6 +274,8 @@ function initSession(){
   if(currentUser !== 'Guest') $('logoutBtn').style.display = 'inline-block';
   
   S = load();
+  gmMode = !!S.gm;
+  updateGMBadge();
   if(!S.q) S.q = ['kill','loot','stage'].map(newQuest);
   ui();
   log(`Welcome back, ${currentUser}!`);
@@ -265,10 +301,11 @@ let mob=null,pAtkT=0,mAtkT=0,respawn=0;
 function spawn(){
   if(!S) return;
   const boss=isBoss()&&S.killsInStage>=MOBS_PER_STAGE,lvl=S.stage;
+  const mult = gmMode ? 100 : 1;
   if(boss){const b=BOSSES[(Math.floor(S.stage/BOSS_EVERY)-1)%BOSSES.length],hp=Math.floor(240*Math.pow(lvl,1.35));
-    mob={...b,boss:true,hp,max:hp,atk:Math.floor(6+lvl*2.4),exp:60*lvl,zeny:ri(40,70)*lvl,size:1.9};
+    mob={...b,boss:true,hp,max:hp,atk:Math.floor(6+lvl*2.4),exp:60*lvl*mult,zeny:ri(40,70)*lvl*mult,size:1.9};
   }else{const m=MOBS[(S.stage-1+ri(0,2))%MOBS.length],hp=Math.floor(28*Math.pow(lvl,1.3));
-    mob={...m,boss:false,hp,max:hp,atk:Math.floor(3+lvl*1.6),exp:Math.floor(11.7*lvl),zeny:ri(4,9)*lvl,size:1}}
+    mob={...m,boss:false,hp,max:hp,atk:Math.floor(3+lvl*1.6),exp:Math.floor(11.7*lvl)*mult,zeny:ri(4,9)*lvl*mult,size:1}}
   mob.x=pl.x>0?rnd(-BX_,-4):rnd(4,BX_);mob.z=rnd(Z0,Z1);mob.spawn=0;mob.ry=0;pAtkT=.3;mAtkT=.6;
 }
 
@@ -325,14 +362,36 @@ const refCost=it=>Math.round(120*((it.r||0)+1)*(1+it.tier*.6)*(1+S.stage*.15)),r
 
 function checkLevel(){while(S.exp>=need()){S.exp-=need();S.lv++;const p=3+Math.floor(S.lv/5);S.pts+=p;S.skp++;S.hp=maxHp();S.sp=maxSp();
   log(`LEVEL UP! Lv ${S.lv}. +${p} stat points, +1 skill point`,'r4');addFloat(pl.x,3.6,pl.z,'LEVEL UP!','#fff',true);
-  const nextCls = C().next;
-  if(nextCls && nextCls.length && S.lv >= C().lv) log(`You can now advance your class!`,'r3');
 }}
 
-function newQuest(type){const L=S?S.lv:1,g=type==='kill'?12+L*2:type==='loot'?3+Math.floor(L/3):(S?S.best:1)+2;
-  return{type,goal:g,prog:type==='stage'?Math.min(S?S.best:1,g):0,z:Math.round(g*(type==='kill'?10:type==='loot'?60:150)*(1+(S?S.stage:1)*.25)),xp:Math.floor(need()*(type==='stage'?.8:.35))}}
+function newQuest(type){
+  const L=S?S.lv:1,g=type==='kill'?12+L*2:type==='loot'?3+Math.floor(L/3):(S?S.best:1)+1;
+  const mult = gmMode ? 100 : 1;
+  return{
+    type,
+    goal:g,
+    prog:type==='stage'?Math.min(S?S.best:1,g):0,
+    z:Math.round(g*(type==='kill'?10:type==='loot'?60:150)*(1+(S?S.stage:1)*.25))*mult,
+    xp:Math.floor(need()*(type==='stage'?.8:.35))*mult
+  };
+}
 const qTxt=q=>q.type==='kill'?`Defeat ${q.goal} monsters`:q.type==='loot'?`Collect ${q.goal} equipment drops`:`Reach stage ${q.goal}`;
 const syncQ=()=>S.q&&S.q.forEach(q=>{if(q.type==='stage')q.prog=Math.min(q.goal,S.best)});
+
+function claimQuest(index){
+  if(!S || !S.q || !S.q[index]) return;
+  const q = S.q[index];
+  if(q.prog < q.goal) return;
+  
+  S.zeny += q.z;
+  S.exp += q.xp;
+  log(`Quest Complete! +${q.z.toLocaleString()} Zeny, +${q.xp.toLocaleString()} EXP`, 'r3');
+  checkLevel();
+  S.q[index] = newQuest(q.type);
+  ui();
+  save();
+  renderWin();
+}
 
 function refine(sl){
   const it=S.eq[sl];
@@ -359,11 +418,17 @@ function refine(sl){
 
 function changeJob(targetJob){
   if(!CLASSES[targetJob]) return;
+  const target = CLASSES[targetJob];
+  if(S.lv < target.reqLv){
+    log(`Cannot change to ${targetJob}. Requires Level ${target.reqLv}.`, 'r0');
+    return;
+  }
   S.cls = targetJob;
   log(`Class changed to ${S.cls}!`, 'r4');
   addFloat(pl.x, 3.6, pl.z, S.cls + '!', '#fff', true);
   ui();
   save();
+  renderWin();
 }
 
 let logs=[],tab=null;
@@ -371,31 +436,45 @@ function log(m,cls){logs.push({m,cls});if(logs.length>80)logs.shift();
   const f=$('feed'),d=document.createElement('div');d.textContent=m;f.appendChild(d);while(f.children.length>4)f.removeChild(f.firstChild);setTimeout(()=>d.remove(),7000);
   if(tab==='log')renderWin()}
 
-function showTooltip(e, itemId) {
-  const it = itemRegistry.get(itemId);
-  if(!it) return;
+function showTooltip(e, content) {
   const tt = $('tooltip');
-  tt.innerHTML = `
-    <div class="tt-title r${it.tier}">${it.icon||'⚔️'} ${iname(it)}</div>
-    <div>Rarity: <b class="r${it.tier}">${RAR[it.tier].n}</b></div>
-    <div>Slot: ${SLOTS[it.slot].label}</div>
-    <div class="tt-stat">${SLOTS[it.slot].stat}: +${ev(it)}</div>
-  `;
+  tt.innerHTML = content;
   tt.style.display = 'block';
   moveTooltip(e);
 }
 function moveTooltip(e) {
   const tt = $('tooltip');
-  tt.style.left = (e.clientX + 12) + 'px';
-  tt.style.top = (e.clientY + 12) + 'px';
+  tt.style.left = (e.clientX + 14) + 'px';
+  tt.style.top = (e.clientY + 14) + 'px';
 }
 function hideTooltip() { $('tooltip').style.display = 'none'; }
 
+function showMapTooltip(e, stageNum) {
+  const boss = stageNum % BOSS_EVERY === 0;
+  const m1 = MOBS[(stageNum-1)%MOBS.length].n;
+  const m2 = MOBS[stageNum%MOBS.length].n;
+  const b = BOSSES[(Math.floor(stageNum/BOSS_EVERY)-1)%BOSSES.length];
+  
+  let html = `<div class="tt-title">📍 Stage ${stageNum} Info</div>`;
+  if(boss){
+    html += `<div><b>Boss Stage</b></div>
+    <div>Boss: <b class="r3">${b.n}</b></div>
+    <div>Minions: ${m1}, ${m2}</div>
+    <div class="tt-stat">Est. EXP: ~${(60*stageNum*(gmMode?100:1)).toLocaleString()}</div>`;
+  } else {
+    html += `<div>Monsters: <b>${m1}</b>, <b>${m2}</b></div>
+    <div>Target Kills: ${MOBS_PER_STAGE}</div>
+    <div class="tt-stat">Est. EXP: ~${(12*stageNum*(gmMode?100:1)).toLocaleString()} / kill</div>`;
+  }
+  showTooltip(e, html);
+}
+
 function renderItemHTML(it, actionsHtml) {
   itemRegistry.set(it.id, it);
+  const ttContent = `<div class="tt-title r${it.tier}">${it.icon||'⚔️'} ${iname(it)}</div><div>Rarity: <b class="r${it.tier}">${RAR[it.tier].n}</b></div><div>Slot: ${SLOTS[it.slot].label}</div><div class="tt-stat">${SLOTS[it.slot].stat}: +${ev(it)}</div>`;
   return `<div class="slot">
     <div class="item-info">
-      <div class="item-icon-box" onmouseenter="showTooltip(event, ${it.id})" onmousemove="moveTooltip(event)" onmouseleave="hideTooltip()">
+      <div class="item-icon-box" onmouseenter="showTooltip(event, \`${ttContent.replace(/"/g, '&quot;')}\`)" onmousemove="moveTooltip(event)" onmouseleave="hideTooltip()">
         ${it.icon || '⚔️'}
       </div>
       <span class="r${it.tier}">${iname(it)}</span>
@@ -406,6 +485,7 @@ function renderItemHTML(it, actionsHtml) {
 
 const TABS={
   map:['🗺️','World Map','M'],
+  bestiary:['👾','Bestiary','X'],
   status:['📊','Status','S'],
   job:['⚔️','Job Change','J'],
   skills:['✨','Skills','K'],
@@ -417,7 +497,7 @@ const TABS={
   set:['⚙️','Settings','O']
 };
 
-const dot=k=>!S?false:k==='status'?S.pts>0:k==='skills'?S.skp>0&&SKILLS.some(s=>s.cls.includes(S.cls)&&lv(s.id)<s.max):k==='job'?C().next&&C().next.length>0&&S.lv>=C().lv:k==='quest'?!!(S.q&&S.q.some(q=>q.prog>=q.goal)):false;
+const dot=k=>!S?false:k==='status'?S.pts>0:k==='skills'?S.skp>0&&SKILLS.some(s=>s.cls.includes(S.cls)&&lv(s.id)<s.max):k==='job'?Object.keys(CLASSES).some(j=>CLASSES[j].reqLv<=S.lv&&j!==S.cls):k==='quest'?!!(S.q&&S.q.some(q=>q.prog>=q.goal)):false;
 
 const V={
   map(){
@@ -427,39 +507,61 @@ const V={
       const locked = i > S.best;
       const isCurrent = i === S.stage;
       const boss = i % BOSS_EVERY === 0;
-      nodes += `<div class="map-node ${locked?'locked':''} ${isCurrent?'active':''} ${boss?'boss-node':''}" ${!locked?`data-a="setStage" data-v="${i}"`:''}>
+      nodes += `<div class="map-node ${locked?'locked':''} ${isCurrent?'active':''} ${boss?'boss-node':''}" 
+        ${!locked?`data-a="setStage" data-v="${i}"`:''} 
+        onmouseenter="showMapTooltip(event, ${i})" onmousemove="moveTooltip(event)" onmouseleave="hideTooltip()">
         <div style="font-size:18px">${boss?'💀':'🌲'}</div>
         <b>Stage ${i}</b>
         <small>${boss?'BOSS':'Field'}</small>
       </div>`;
     }
     return `<div class="hd">Select Map Stage to Grind</div>
-      <div>Current Highest Unlocked Stage: <b>${S.best}</b></div>
+      <div>Highest Unlocked Stage: <b>${S.best}</b></div>
       <div class="map-grid">${nodes}</div>`;
+  },
+  bestiary(){
+    let html = `<div class="hd">Monster Bestiary & Drop Rates</div>`;
+    html += `<h4>Regular Monsters (40% Drop Rate)</h4>`;
+    MOBS.forEach(m => {
+      html += `<div class="mob-card">
+        <b>${m.n}</b> - <small>${m.desc}</small>
+        <div>Drop Rates: 60% Common, 25% Fine, 10% Rare, 4% Epic, 1% Legendary</div>
+      </div>`;
+    });
+    html += `<h4>Bosses (100% Drop Rate - 2 to 3 Items)</h4>`;
+    BOSSES.forEach(b => {
+      html += `<div class="mob-card">
+        <b class="r3">${b.n} (BOSS)</b> - <small>${b.desc}</small>
+        <div>Guaranteed Rare or higher gear drops!</div>
+      </div>`;
+    });
+    return html;
   },
   status(){return `<div class="hd">${S.cls} Lv ${S.lv} &middot; Stat points: <b>${S.pts}</b></div>`
     +STATS.map(([k,l,d])=>`<div class="slot"><span><b>${l}</b> ${S.st[k]} <small>(${d})</small></span><button data-a="stat" data-v="${k}" ${S.pts>=cost(k)?'':'disabled'}>+ ${cost(k)}pt</button></div>`).join('')
     +`<div class="slot" style="flex-wrap:wrap"><span>ATK <b>${atk()}</b></span><span>DEF <b>${def()}</b></span><span>ASPD <b>${(1/aspd()).toFixed(2)}/s</b></span><span>Crit <b>${crit().toFixed(1)}%</b></span><span>Flee <b>${flee().toFixed(0)}%</b></span><span>HP <b>${maxHp()}</b></span><span>SP <b>${maxSp()}</b></span></div>`
     +`<button class="full" data-a="rstat">Reset stats (${rcost()}z)</button>`},
   job(){
-    const current = C();
-    if(!current.next || current.next.length === 0){
-      return `<div class="hd">Current Class: <b>${S.cls}</b></div><p>You have reached the maximum job advancement tier!</p>`;
-    }
-    const canChange = S.lv >= current.lv;
-    let html = `<div class="hd">Class Advancement Path</div><p>Current Class: <b>${S.cls}</b> (Req Lv ${current.lv})</p>`;
-    if(!canChange) html += `<p style="color:#e5484d">Reach Lv ${current.lv} to advance to your next class!</p>`;
+    let html = `<div class="hd">Class Advancement & Choice</div><p>Current Class: <b>${S.cls}</b> (Level ${S.lv})</p>`;
     
-    current.next.forEach(j => {
-      const info = CLASSES[j];
-      html += `<div class="job-card">
-        <div>
-          <b>${j}</b><br>
-          <small>ATK Mult: x${info.atk} &middot; ASPD Mult: x${info.aspd}</small>
-        </div>
-        <button data-a="changeJob" data-v="${j}" ${canChange?'':'disabled'}>Choose Class</button>
-      </div>`;
-    });
+    // Group classes by Tier
+    const tiers = { 'Novice Job': ['Novice'], '1st Jobs (Req Lv 10)': ['Swordman','Mage','Archer','Thief','Acolyte','Merchant'], '2nd Jobs (Req Lv 25)': ['Knight','Wizard','Hunter','Assassin','Priest','Blacksmith'] };
+    
+    for(const [tName, list] of Object.entries(tiers)){
+      html += `<div style="font-weight:bold;margin:10px 0 4px;border-bottom:1px solid var(--edge2);">${tName}</div>`;
+      list.forEach(j => {
+        const info = CLASSES[j];
+        const isCurrent = S.cls === j;
+        const canSwitch = S.lv >= info.reqLv;
+        html += `<div class="job-card">
+          <div>
+            <b>${j}</b> ${isCurrent?'<span style="color:var(--gold)">(Active)</span>':''}<br>
+            <small>Req Lv: ${info.reqLv} &middot; ATK: x${info.atk} &middot; ASPD: x${info.aspd}</small>
+          </div>
+          <button data-a="changeJob" data-v="${j}" ${canSwitch && !isCurrent ? '' : 'disabled'}>${isCurrent?'Active':'Switch'}</button>
+        </div>`;
+      });
+    }
     return html;
   },
   skills(){return `<div class="hd">Skill points: <b>${S.skp}</b></div>`+SKILLS.map(s=>{const L=lv(s.id),ok=s.cls.includes(S.cls);
@@ -473,7 +575,14 @@ const V={
     if(!e) return `<div class="slot"><span>${SLOTS[k].label}</span><span class="r0">&mdash; empty &mdash;</span></div>`;
     return renderItemHTML(e, `<small>${SLOTS[k].label}</small>`);
   }).join('')+`<small style="display:block;margin-top:6px;">Hover item icon to view stats.</small>`},
-  quest(){return S.q.map((q,i)=>`<div class="slot" style="flex-direction:column;align-items:stretch"><b>${qTxt(q)}</b><div class="pbar"><i style="width:${q.prog/q.goal*100}%"></i></div><small>${q.prog}/${q.goal} &middot; Reward: ${q.z}z, ${q.xp} EXP</small><button data-a="claim" data-v="${i}" ${q.prog>=q.goal?'':'disabled'}>Claim reward</button></div>`).join('')},
+  quest(){
+    return S.q.map((q,i)=>`<div class="slot" style="flex-direction:column;align-items:stretch">
+      <b>${qTxt(q)}</b>
+      <div class="pbar"><i style="width:${Math.min(100,(q.prog/q.goal)*100)}%"></i></div>
+      <small>${q.prog}/${q.goal} &middot; Reward: ${q.z.toLocaleString()}z, ${q.xp.toLocaleString()} EXP</small>
+      <button data-a="claim" data-v="${i}" ${q.prog>=q.goal?'':'disabled'}>Claim reward</button>
+    </div>`).join('');
+  },
   refine(){return Object.keys(SLOTS).map(k=>{
     const it=S.eq[k];
     if(!it)return `<div class="slot"><span>${SLOTS[k].label}</span><small>empty</small></div>`;
@@ -481,7 +590,7 @@ const V={
     const r=it.r||0,c=refCost(it);
     return `<div class="slot" style="flex-direction:column;align-items:stretch">
       <div class="item-info">
-        <div class="item-icon-box" onmouseenter="showTooltip(event, ${it.id})" onmousemove="moveTooltip(event)" onmouseleave="hideTooltip()">${it.icon||'⚔️'}</div>
+        <div class="item-icon-box" onmouseenter="showTooltip(event, \`<div class='tt-title r${it.tier}'>${it.icon\vert{}\vert{}'⚔️'} ${iname(it)}</div><div>${SLOTS[it.slot].stat}: +${ev(it)}</div>\`)" onmousemove="moveTooltip(event)" onmouseleave="hideTooltip()">${it.icon||'⚔️'}</div>
         <b class="r${it.tier}">${iname(it)}</b>
       </div>
       <small>${SLOTS[k].stat} +${ev(it)} &rarr; +${Math.round(it.val*(1+(r+1)*.15))} &middot; ${r>=10?'MAX':'Success '+refCh(it)+'%'}${r>=5?' (failure: -1)':''}</small>
@@ -490,8 +599,9 @@ const V={
   }).join('')},
   log(){return logs.map(l=>`<div class="${l.cls||''}">${l.m}</div>`).join('')||'<i>No events yet.</i>'},
   set(){return `<label><input type="checkbox" data-a="auto" ${S.auto!==false?'checked':''}> Auto-equip better gear</label>
+    <div style="margin-top:10px;"><button onclick="toggleGM()">${gmMode?'Disable GM Mode':'Enable GM Mode (100x EXP & Zeny)'}</button></div>
     <div class="slot" style="margin-top:8px"><span>Select Stage (1 to ${S.best})</span><span><button data-a="sdn">&minus;</button> <button data-a="sup">+</button></span></div>
-    <small>Drag the view to rotate, scroll to zoom. Hotkeys: M S J K B E Q R L O, Esc to close.</small><button class="full" data-a="reset">Erase account save &amp; restart</button>`}};
+    <small>Drag the view to rotate, scroll to zoom. Hotkeys: M X S J K B E Q R L O, Esc to close.</small><button class="full" data-a="reset">Erase account save &amp; restart</button>`}};
 
 function renderWin(){
   $('dock').innerHTML=Object.entries(TABS).map(([k,[ic,n,key]])=>`<button class="ib${tab===k?' on':''}" data-t="${k}" title="${n} (${key})">${ic}<span class="k">${key}</span>${dot(k)?'<i class="dot"></i>':''}</button>`).join('');
@@ -508,7 +618,7 @@ const ACT={
   rskill:()=>{if(S.zeny<rcost())return log('Not enough Zeny to reset skills.');S.zeny-=rcost();S.sk={};S.skp=S.lv;log('Skills reset.');ui();save();renderWin()},
   equip:id=>equip(+id),sell:id=>sell(+id),sellall:()=>{S.inv.slice().forEach(it=>sell(it.id))},
   refine:k=>{refine(k);renderWin();},
-  claim:i=>{const q=S.q[i];if(q&&q.prog>=q.goal){S.zeny+=q.z;S.exp+=q.xp;log(`Quest complete! +${q.z}z, +${q.xp} EXP`,'r3');S.q[i]=newQuest(q.type);checkLevel();ui();save();renderWin()}},
+  claim:i=>claimQuest(+i),
   auto:()=>{S.auto=S.auto===false;ui()},
   sup:()=>{if(S.stage<S.best){S.stage++;S.killsInStage=0;mob=null;respawn=.3;ui();renderWin()}},
   sdn:()=>{if(S.stage>1){S.stage--;S.killsInStage=0;mob=null;respawn=.3;ui();renderWin()}},
