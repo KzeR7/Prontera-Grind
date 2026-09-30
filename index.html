@@ -29,8 +29,6 @@ html, body { margin:0; padding:0; width:100vw; height:100vh; overflow:hidden; ba
 .r0{color:#555}.r1{color:#2a9d3f}.r2{color:#2f6fd6}.r3{color:#a23fd6}.r4{color:#e07b00;font-weight:bold}
 button{font:inherit;font-size:12px;background:linear-gradient(#fff,#efe0b8);border:1px solid var(--edge2);border-radius:3px;padding:3px 10px;cursor:pointer;color:var(--ink)}
 button:hover{background:#ffe9a8}button:focus-visible{outline:2px solid #2f6fd6}
-.btn-next{background:linear-gradient(#ffd700,#e6a100);font-weight:bold;border-color:#8a5e00}
-.btn-next:hover{background:#ffe44d}
 .wide{grid-column:1/-1}small{opacity:.7}button:disabled{opacity:.4;cursor:default}
 #feed{position:absolute;left:12px;bottom:76px;font-size:13px;line-height:1.4;pointer-events:none;max-width:50%}
 #feed div{color:#fff;text-shadow:-1px -1px 0 #000,1px -1px 0 #000,-1px 1px 0 #000,1px 1px 0 #000}
@@ -44,7 +42,13 @@ button:hover{background:#ffe9a8}button:focus-visible{outline:2px solid #2f6fd6}
 .hd{font-weight:bold;margin-bottom:6px}.full{width:100%;margin-top:8px;padding:6px}
 .pbar{height:8px;background:#5b4a35;border-radius:4px;overflow:hidden;margin:4px 0}.pbar i{display:block;height:100%;background:#4aa3df}
 
-/* Weapon Tooltip & Icon Styles */
+/* Map Grid & Item UI */
+.map-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 8px; margin-top: 8px; }
+.map-node { background: #fffdf5; border: 2px solid var(--edge); border-radius: 6px; padding: 10px 4px; text-align: center; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 4px; transition: all .15s; }
+.map-node:hover { background: #ffe9a8; border-color: var(--edge2); transform: translateY(-2px); }
+.map-node.active { background: #ffe08a; border-color: var(--gold); box-shadow: 0 0 6px var(--gold); }
+.map-node.locked { opacity: 0.4; cursor: not-allowed; filter: grayscale(1); }
+.map-node.boss-node { border-color: #a23fd6; }
 .item-icon-box { position: relative; width: 32px; height: 32px; border-radius: 4px; border: 2px solid var(--edge2); background: #2b1f14; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; cursor: pointer; }
 .item-info { display: flex; align-items: center; gap: 8px; }
 #tooltip { position: absolute; pointer-events: none; z-index: 100; display: none; width: 200px; padding: 8px; background: #1f1710f2; color: #fff; border: 2px solid var(--edge); border-radius: 6px; font-size: 12px; box-shadow: 0 4px 12px #0008; }
@@ -107,6 +111,8 @@ const SKILLS=[
 let S,speed=1,floats=[],drops=[],t=0,shake=0,atkAnim=0,hitAnim=0,pend=[],barT=0;
 const pl={x:-3,z:1.5,ry:0,orb:0,run:0};
 const skCd={aid:0,env:0,sonic:0};
+const itemRegistry = new Map();
+
 const fresh=()=>({cls:'Novice',lv:1,exp:0,hp:100,sp:30,zeny:0,kills:0,stage:1,best:1,killsInStage:0,pts:10,skp:0,sk:{aid:1},auto:true,q:null,
   st:{str:1,agi:1,dex:1,luk:1,int:1},eq:{weapon:null,armor:null,head:null},inv:[]});
 
@@ -168,7 +174,7 @@ function kill(){
   if(mob.boss||(!isBoss()&&S.killsInStage>=MOBS_PER_STAGE)){
     if(S.stage===S.best){
       S.best++;
-      log(`Stage ${S.stage} cleared! Unlocked Next Stage. Endless Grind mode active.`,'r3');
+      log(`Stage ${S.stage} cleared! Unlocked Stage ${S.best}.`,'r3');
     }
   }
   syncQ();mob=null;respawn=.7;save();ui();
@@ -203,11 +209,13 @@ function log(m,cls){logs.push({m,cls});if(logs.length>80)logs.shift();
   const f=$('feed'),d=document.createElement('div');d.textContent=m;f.appendChild(d);while(f.children.length>4)f.removeChild(f.firstChild);setTimeout(()=>d.remove(),7000);
   if(tab==='log')renderWin()}
 
-// Interactive tooltips on hovering icons
-function showTooltip(e, it) {
+// Interactive tooltips via itemRegistry lookup
+function showTooltip(e, itemId) {
+  const it = itemRegistry.get(itemId);
+  if(!it) return;
   const tt = $('tooltip');
   tt.innerHTML = `
-    <div class="tt-title class="r${it.tier}">${it.icon||'⚔️'} ${iname(it)}</div>
+    <div class="tt-title r${it.tier}">${it.icon||'⚔️'} ${iname(it)}</div>
     <div>Rarity: <b class="r${it.tier}">${RAR[it.tier].n}</b></div>
     <div>Slot: ${SLOTS[it.slot].label}</div>
     <div class="tt-stat">${SLOTS[it.slot].stat}: +${ev(it)}</div>
@@ -223,9 +231,10 @@ function moveTooltip(e) {
 function hideTooltip() { $('tooltip').style.display = 'none'; }
 
 function renderItemHTML(it, actionsHtml) {
+  itemRegistry.set(it.id, it);
   return `<div class="slot">
     <div class="item-info">
-      <div class="item-icon-box" onmouseenter='showTooltip(event, ${JSON.stringify(it)})' onmousemove='moveTooltip(event)' onmouseleave='hideTooltip()'>
+      <div class="item-icon-box" onmouseenter="showTooltip(event, ${it.id})" onmousemove="moveTooltip(event)" onmouseleave="hideTooltip()">
         ${it.icon || '⚔️'}
       </div>
       <span class="r${it.tier}">${iname(it)}</span>
@@ -234,10 +243,27 @@ function renderItemHTML(it, actionsHtml) {
   </div>`;
 }
 
-const TABS={status:['📊','Status','S'],skills:['✨','Skills','K'],bag:['🎒','Bag','B'],equip:['🛡️','Equipment','E'],quest:['📜','Quests','Q'],refine:['🔨','Refine','R'],log:['📃','Log','L'],set:['⚙️','Settings','O']};
+const TABS={map:['🗺️','World Map','M'],status:['📊','Status','S'],skills:['✨','Skills','K'],bag:['🎒','Bag','B'],equip:['🛡️','Equipment','E'],quest:['📜','Quests','Q'],refine:['🔨','Refine','R'],log:['📃','Log','L'],set:['⚙️','Settings','O']};
 const dot=k=>k==='status'?S.pts>0:k==='skills'?S.skp>0&&SKILLS.some(s=>s.cls.includes(S.cls)&&lv(s.id)<s.max):k==='quest'?!!(S.q&&S.q.some(q=>q.prog>=q.goal)):false;
 
 const V={
+  map(){
+    let nodes = '';
+    const totalToDisplay = Math.max(10, S.best + 2);
+    for(let i=1; i<=totalToDisplay; i++){
+      const locked = i > S.best;
+      const isCurrent = i === S.stage;
+      const boss = i % BOSS_EVERY === 0;
+      nodes += `<div class="map-node ${locked?'locked':''} ${isCurrent?'active':''} ${boss?'boss-node':''}" ${!locked?`data-a="setStage" data-v="${i}"`:''}>
+        <div style="font-size:18px">${boss?'💀':'🌲'}</div>
+        <b>Stage ${i}</b>
+        <small>${boss?'BOSS':'Field'}</small>
+      </div>`;
+    }
+    return `<div class="hd">Select Map Stage to Grind</div>
+      <div>Current Highest Unlocked Stage: <b>${S.best}</b></div>
+      <div class="map-grid">${nodes}</div>`;
+  },
   status(){const c=C();return `<div class="hd">${S.cls} Lv ${S.lv} &middot; Stat points: <b>${S.pts}</b></div>`
     +STATS.map(([k,l,d])=>`<div class="slot"><span><b>${l}</b> ${S.st[k]} <small>(${d})</small></span><button data-a="stat" data-v="${k}" ${S.pts>=cost(k)?'':'disabled'}>+ ${cost(k)}pt</button></div>`).join('')
     +`<div class="slot" style="flex-wrap:wrap"><span>ATK <b>${atk()}</b></span><span>DEF <b>${def()}</b></span><span>ASPD <b>${(1/aspd()).toFixed(2)}/s</b></span><span>Crit <b>${crit().toFixed(1)}%</b></span><span>Flee <b>${flee().toFixed(0)}%</b></span><span>HP <b>${maxHp()}</b></span><span>SP <b>${maxSp()}</b></span></div>`
@@ -253,14 +279,15 @@ const V={
     const e=S.eq[k];
     if(!e) return `<div class="slot"><span>${SLOTS[k].label}</span><span class="r0">&mdash; empty &mdash;</span></div>`;
     return renderItemHTML(e, `<small>${SLOTS[k].label}</small>`);
-  }).join('')+`<small style="display:block;margin-top:6px;">Hover weapon/gear icon to view full stats.</small>`},
+  }).join('')+`<small style="display:block;margin-top:6px;">Hover item icon to view stats.</small>`},
   quest(){return S.q.map((q,i)=>`<div class="slot" style="flex-direction:column;align-items:stretch"><b>${qTxt(q)}</b><div class="pbar"><i style="width:${q.prog/q.goal*100}%"></i></div><small>${q.prog}/${q.goal} &middot; Reward: ${q.z}z, ${q.xp} EXP</small><button data-a="claim" data-v="${i}" ${q.prog>=q.goal?'':'disabled'}>Claim reward</button></div>`).join('')},
   refine(){return Object.keys(SLOTS).map(k=>{const it=S.eq[k];if(!it)return `<div class="slot"><span>${SLOTS[k].label}</span><small>empty</small></div>`;
-    const r=it.r||0,c=refCost(it);return `<div class="slot" style="flex-direction:column;align-items:stretch"><div class="item-info"><div class="item-icon-box" onmouseenter='showTooltip(event, ${JSON.stringify(it)})' onmousemove='moveTooltip(event)' onmouseleave='hideTooltip()'>${it.icon||'⚔️'}</div><b class="r${it.tier}">${iname(it)}</b></div><small>${SLOTS[k].stat} +${ev(it)} &rarr; +${Math.round(it.val*(1+(r+1)*.12))} &middot; ${r>=10?'MAX':'Success '+refCh(it)+'%'}${r>=5?' (failure: -1)':''}</small><button data-a="refine" data-v="${k}" ${r>=10||S.zeny<c?'disabled':''}>Refine (${c}z)</button></div>`}).join('')},
+    itemRegistry.set(it.id, it);
+    const r=it.r||0,c=refCost(it);return `<div class="slot" style="flex-direction:column;align-items:stretch"><div class="item-info"><div class="item-icon-box" onmouseenter="showTooltip(event, ${it.id})" onmousemove="moveTooltip(event)" onmouseleave="hideTooltip()">${it.icon||'⚔️'}</div><b class="r${it.tier}">${iname(it)}</b></div><small>${SLOTS[k].stat} +${ev(it)} &rarr; +${Math.round(it.val*(1+(r+1)*.12))} &middot; ${r>=10?'MAX':'Success '+refCh(it)+'%'}${r>=5?' (failure: -1)':''}</small><button data-a="refine" data-v="${k}" ${r>=10||S.zeny<c?'disabled':''}>Refine (${c}z)</button></div>`}).join('')},
   log(){return logs.map(l=>`<div class="${l.cls||''}">${l.m}</div>`).join('')||'<i>No events yet.</i>'},
   set(){return `<label><input type="checkbox" data-a="auto" ${S.auto!==false?'checked':''}> Auto-equip better gear</label>
     <div class="slot" style="margin-top:8px"><span>Select Stage (1 to ${S.best})</span><span><button data-a="sdn">&minus;</button> <button data-a="sup">+</button></span></div>
-    <small>Drag the view to rotate, scroll to zoom. Hotkeys: S K B E Q R L O, Esc to close.</small><button class="full" data-a="reset">Erase save &amp; restart</button>`}};
+    <small>Drag the view to rotate, scroll to zoom. Hotkeys: M S K B E Q R L O, Esc to close.</small><button class="full" data-a="reset">Erase save &amp; restart</button>`}};
 
 function renderWin(){
   $('dock').innerHTML=Object.entries(TABS).map(([k,[ic,n,key]])=>`<button class="ib${tab===k?' on':''}" data-t="${k}" title="${n} (${key})">${ic}<span class="k">${key}</span>${dot(k)?'<i class="dot"></i>':''}</button>`).join('');
@@ -269,6 +296,7 @@ function renderWin(){
 }
 const openTab=k=>{tab=tab===k?null:k;renderWin()};
 const ACT={
+  setStage:st=>{const target=+st; if(target<=S.best){S.stage=target; S.killsInStage=0; mob=null; respawn=.3; ui(); save(); log(`Traveled to Stage ${target}.`); tab=null; renderWin();}},
   stat:k=>{if(S.pts>=cost(k)){S.pts-=cost(k);S.st[k]++;S.hp=Math.min(S.hp,maxHp());ui();save()}},
   job:()=>{if(C().next&&S.lv>=C().lv){S.cls=C().next;log(`Class change! You are now a ${S.cls}.`,'r4');addFloat(pl.x,3.6,pl.z,S.cls+'!','#fff',true);ui();save()}},
   rstat:()=>{if(S.zeny<rcost())return log('Not enough Zeny to reset stats.');S.zeny-=rcost();for(const k in S.st)S.st[k]=1;S.pts=totalPts();S.hp=Math.min(S.hp,maxHp());log('Stats reset.');ui();save()},
@@ -279,7 +307,6 @@ const ACT={
   auto:()=>{S.auto=S.auto===false;ui()},
   sup:()=>{if(S.stage<S.best){S.stage++;S.killsInStage=0;mob=null;respawn=.3;ui()}},
   sdn:()=>{if(S.stage>1){S.stage--;S.killsInStage=0;mob=null;respawn=.3;ui()}},
-  nextStage:()=>{if(S.stage < S.best){S.stage++;S.killsInStage=0;mob=null;respawn=.3;ui()}},
   reset:()=>{if(confirm('Erase your save and start over?')){S=fresh();S.q=['kill','loot','stage'].map(newQuest);floats.forEach(f=>f.el&&f.el.remove());floats=[];drops=[];pend=[];mob=null;respawn=.3;logs=[];log('New adventure started.');ui();save()}}};
 
 $('dock').onclick=e=>{const b=e.target.closest('[data-t]');if(b)openTab(b.dataset.t)};
@@ -293,8 +320,8 @@ function bars(){$('lv').textContent=S.lv;$('cls2').textContent=S.cls;$('zeny').t
 function ui(){
   bars();
   $('stageTitle').textContent=`Stage ${S.stage} \u2014 ${isBoss()?'Boss Lair':'Prontera Field'}`;
-  $('grindStatus').textContent = (S.stage < S.best) ? "🔄 Grinding Map" : "✨ Highest Unlocked Stage";
-  renderWin();
+  $('grindStatus').textContent = (S.stage < S.best) ? "🔄 Grinding Map" : "✨ Highest Map";
+  if(tab==='map') renderWin();
 }
 
 function update(dt){
@@ -318,7 +345,7 @@ function update(dt){
       if(mAtkT<=0){mAtkT=mob.boss?1.2:1.5;
         if(Math.random()*100<flee())addFloat(pl.x,2.4,pl.z,'Miss','#8cf');
         else{const d=Math.max(1,Math.round(mob.atk*rnd(.8,1.2)-def()*.6));S.hp-=d;hitAnim=1;addFloat(pl.x,2.4,pl.z,d,'#ff6b6b');
-          if(S.hp<=0){log('You were defeated... resting and retrying the stage.','r0');S.hp=maxHp();S.killsInStage=0;mob=null;respawn=1.5;pend=[];ui()}}}
+          if(S.hp<=0){log('You were defeated... resting and retrying stage.','r0');S.hp=maxHp();S.killsInStage=0;mob=null;respawn=1.5;pend=[];ui()}}}
     }
   }
   const px=tx-pl.x,pz=tz-pl.z,pd=Math.hypot(px,pz),spd=6.5+st('agi')*.05;pl.run=pd>.15;
@@ -332,7 +359,7 @@ function update(dt){
   for(let i=drops.length-1;i>=0;i--)if(drops[i].t>.9){collect(drops[i].it);drops.splice(i,1)}
 }
 
-// ---------- 3D scene (Three.js) ----------
+// 3D Scene setup
 const view=$('view'),ov=$('ov'),tag=$('tag'),prog=$('prog');
 const R=new THREE.WebGLRenderer({antialias:true});R.shadowMap.enabled=true;view.prepend(R.domElement);
 const scene=new THREE.Scene(),cam=new THREE.PerspectiveCamera(38,2,.1,200);
@@ -446,12 +473,8 @@ function draw(){
   floats.forEach(f=>{if(!f.el){const e=document.createElement('div');e.className='fl'+(f.big?' big':'');e.textContent=f.txt;e.style.color=f.col;ov.appendChild(e);f.el=e}
     const[a,b]=scr(f.x,f.y,f.z);f.el.style.left=a+'px';f.el.style.top=b+'px';f.el.style.opacity=Math.max(0,f.life)});
 
-  // Stage progress hud & next map button update
   const done=Math.min(S.killsInStage,MOBS_PER_STAGE);
   let pt=bn?'BOSS FIGHT':`Monsters Defeated: ${done}/${MOBS_PER_STAGE}`;
-  if(S.stage < S.best){
-    pt += ` &nbsp; <button class="btn-next" onclick="ACT.nextStage()">Go to Stage ${S.stage + 1} &rarr;</button>`;
-  }
   if(pt!==lastProg){lastProg=pt;prog.innerHTML=pt}
 }
 
@@ -460,7 +483,7 @@ function loop(now){const dt=Math.min(0.1,(now-last)/1000);last=now;
   for(let i=0;i<speed;i++)update(dt);draw();requestAnimationFrame(loop)}
 
 if(!S.q)S.q=['kill','loot','stage'].map(newQuest);
-log('Welcome! Your adventure continues in full screen.');
+log('Welcome! Click the World Map (🗺️) to select maps.');
 resize();
 ui();
 respawn=0.3;
