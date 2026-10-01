@@ -78,6 +78,20 @@ hr{border:0;border-top:1px dashed var(--edge);margin:6px 0}
 .tn.pick{outline:3px solid #2f6fd6}.legend{display:flex;gap:4px;margin:8px 0;font-size:10px}.legend .tn{cursor:default;padding:2px}
 @media(max-width:560px){.ib{width:32px;height:32px;font-size:16px}#dock{gap:3px;padding:4px 6px}.grid{grid-template-columns:repeat(5,1fr)}}
 .atabs{display:flex;gap:4px;margin-bottom:14px}.atabs button{flex:1;padding:8px;font-weight:bold;font-size:13px}.atabs button.on{background:#ffe08a;border-color:var(--gold)}
+#qp{position:absolute;right:12px;top:50%;transform:translateY(-50%);width:210px;background:rgba(30,20,10,.5);border:1px solid #ffffff44;border-radius:8px;padding:6px 8px;color:#fff;font:12px "Trebuchet MS",sans-serif;pointer-events:auto;z-index:5;line-height:1.3;display:none}#qp .pbar{margin:3px 0}
+.skg{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}.sk{border:2px solid;border-radius:6px;background:#fffdf5;text-align:center;padding:4px 2px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:1px;line-height:1.1}.sk.off{opacity:.55}.sk.sel{outline:3px solid #2f6fd6}.sk .si{font-size:22px}.sk small{font-size:10px;min-height:22px}.sk button{padding:0 8px}
+.doll{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;max-width:300px;margin:8px auto;padding:10px;border-radius:10px;background:radial-gradient(#ffe9a8,#e9d39a)}
+#modal{position:fixed;inset:0;background:#0009;z-index:900;display:none;align-items:center;justify-content:center}
+.bts{display:flex;align-items:center;gap:4px;flex:none}.bts small{width:34px;text-align:right}.bts button{width:42px;padding:3px 0;text-align:center}
+.chip{background:#fffdf5;border:2px solid var(--edge2);border-radius:14px;padding:2px 10px;font-size:12px}
+.trow .tn{font-size:10px;padding:3px 1px;word-break:break-word}.trow{gap:3px}.trunk{height:12px}
+.cell{background:#e9dcb8;border-width:3px;text-shadow:0 1px 2px #0005}.cell.empty{background:#d5c79f}
+.cell.b0{background:#eceae4;border-color:#8c8c8c}.cell.b1{background:#c9f2c9;border-color:#2e9e3e}.cell.b2{background:#c6dcff;border-color:#2f6fd6}.cell.b3{background:#e6c9ff;border-color:#9a3ae0}.cell.b4{background:#ffe3a0;border-color:#ff9a00;box-shadow:0 0 8px #ff9a00}
+.cell .rf{color:#fff;background:#000b;padding:0 3px;border-radius:3px;text-shadow:none}
+#qp{top:12px;transform:none}
+#wins{position:absolute;right:12px;top:12px;bottom:76px;display:none;flex-direction:row-reverse;gap:8px;max-width:calc(100% - 24px);pointer-events:none;z-index:20}
+.wp{pointer-events:auto;flex:0 1 380px;min-width:250px;display:flex;flex-direction:column;overflow:hidden}.wbody{overflow:auto;flex:1}
+.gt button{padding:2px 6px}.gt button.on{background:#ffe08a;border-color:var(--gold)}
 </style>
 </head>
 <body>
@@ -90,37 +104,37 @@ hr{border:0;border-top:1px dashed var(--edge);margin:6px 0}
 <button type="submit" id="authBtn" class="login-btn">Login</button><div id="loginErr" class="login-err"></div></form>
 <small>You must log in every time you open the game.</small></div></div>
 <div id="wrap"><div class="title"><span id="stageTitle">Prontera Lv 1</span><span id="grindStatus" style="font-size:12px;opacity:.85"></span></div>
-<div id="view"><div id="ov"><div id="prog"></div><div id="tag"><b id="tn"></b><div class="bar"><i id="th" style="background:var(--hp)"></i></div></div><div id="hint">Drag to rotate &middot; Scroll to zoom</div><div id="feed"></div><div id="dock"></div>
-<div id="wnd" class="win"><div class="title"><span id="wt"></span><button id="wx">&#10005;</button></div><div class="body" id="wb"></div></div></div></div>
+<div id="view"><div id="ov"><div id="prog"></div><div id="tag"><b id="tn"></b><div class="bar"><i id="th" style="background:var(--hp)"></i></div></div><div id="hint">Drag to rotate &middot; Scroll to zoom</div><div id="feed"></div><div id="qp"></div><div id="dock"></div>
+<div id="wins"></div></div></div>
 <div id="hud"><div><b id="cls2"></b> Lv <b id="lv">1</b> / Job <b id="jl">1</b></div><div>HP <div class="bar"><i id="hpb" style="background:var(--hp)"></i></div></div>
 <div>JOB <div class="bar"><i id="jb" style="background:#7a5ce0"></i></div></div><div>EXP <div class="bar"><i id="xpb" style="background:var(--exp)"></i></div></div>
 <div style="color:var(--gold)">&#9679; <b id="zeny">0</b> Zeny</div><div>Kills <b id="kills">0</b></div>
 <div style="margin-left:auto;display:flex;align-items:center;gap:8px"><span id="userBadge" style="font-weight:bold;font-size:12px;background:#e9d39a;padding:3px 8px;border-radius:4px;border:1px solid var(--edge2)"></span><button id="logoutBtn" onclick="logout()" style="display:none">Logout</button><button id="spd">Speed x1</button></div></div></div>
-<div id="tooltip"></div>
+<div id="modal"><div class="login-card"><p id="mt" style="font-size:14px;opacity:1;margin:0 0 12px"></p><div class="row" style="justify-content:center"><button id="my">Yes</button><button id="mn">Cancel</button></div></div></div><div id="tooltip"></div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
 const $=id=>document.getElementById(id);
 const RAR=[{n:'Common',m:1,w:60},{n:'Fine',m:1.35,w:25},{n:'Rare',m:1.9,w:10},{n:'Epic',m:2.8,w:4},{n:'Legendary',m:4.5,w:1}];
 const AM=[1,1.6,2.6,4,6.5],GRADE=['Common','Uncommon','Rare','Legendary'],GI=[0,1,2,4],CV=[1,2,3,5];
-const SLOTS={weapon:{label:'Weapon',stat:'ATK',ic:'⚔️'},armor:{label:'Armor',stat:'DEF',ic:'🛡️'},head:{label:'Headgear',stat:'HP',ic:'🎩'}};
+const SLOTS={weapon:{label:'Weapon',stat:'ATK',ic:'⚔️'},armor:{label:'Armor',stat:'DEF',ic:'🥼'},head:{label:'Headgear',stat:'HP',ic:'🎩'},off:{label:'Shield',stat:'DEF',ic:'🛡️'},leg:{label:'Legwear',stat:'DEF',ic:'👖'},acc:{label:'Accessory',stat:'HP',ic:'💍'}};
 const WICON={dagger:'🗡️',katar:'🔪',staff:'🪄',bow:'🏹',axe:'🪓',sword:'⚔️',mace:'🔨'},ORE={ori:'Oridecon',elu:'Elunium'},SECN=['Novice gear','1st-job gear','2nd-job gear','High-tier gear'];
-const STATS=[['str','STR','ATK'],['agi','AGI','ASPD, Flee'],['dex','DEX','Hit, min dmg'],['luk','LUK','Crit, drops'],['int','INT','Skill dmg']];
-const AFF=['str','agi','dex','luk','int','hp','atk','crit','aspd','flee'],AB={str:1,agi:1,dex:1,luk:1,int:1,hp:12,atk:.8,crit:.45,aspd:.6,flee:.8};
-const AL={str:'STR',agi:'AGI',dex:'DEX',luk:'LUK',int:'INT',hp:'Max HP',atk:'ATK %',crit:'Crit %',aspd:'ASPD %',flee:'Flee %'};
-const SU=k=>k.toUpperCase(),BX_=7.5,Z0=-3,Z1=4,MPS=5,K5=['str','agi','dex','luk','int'];
+const STATS=[['str','STR','ATK'],['agi','AGI','ASPD, Flee'],['int','INT','Skill dmg'],['dex','DEX','Hit, min dmg'],['vit','VIT','DEF, MDEF, HP'],['luk','LUK','Crit, drops']];
+const AFF=['str','agi','dex','luk','int','hp','atk','crit','aspd','flee','cdm'],AB={str:1,agi:1,dex:1,luk:1,int:1,hp:12,atk:.8,crit:.45,aspd:.6,flee:.8,cdm:1.5};
+const AL={str:'STR',agi:'AGI',dex:'DEX',luk:'LUK',int:'INT',hp:'Max HP',atk:'ATK %',crit:'Crit %',aspd:'ASPD %',flee:'Flee %',cdm:'Crit DMG %',vit:'VIT'};
+const SU=k=>k.toUpperCase(),BX_=7.5,Z0=-3,Z1=4,MPS=15,K5=['str','agi','dex','luk','int'];
 const GM_USER='GM',GM_PASS='gm1234';   // CHANGE THE GM PASSWORD before you publish
 
 // ---------- class tree: Novice -> 6 first jobs -> 6 second jobs -> 6 third jobs ----------
 const CD=[['Novice',0,1,1,1,'e8dcc0','',['dagger','sword'],'str',0],
 ['Swordman','Novice',.95,1.2,1.3,'b83b3b','8a2b2b',['sword'],'str',0],['Mage','Novice',1.1,1.3,.8,'3b6fb5','',['staff'],'int',1,'3b4fb5'],
 ['Archer','Novice',.85,1.15,.9,'2e7d32','1b4d1e',['bow'],'dex',1],['Thief','Novice',.8,1.1,.95,'4a7c3a','2e7d32',['dagger'],'agi',0],
-['Acolyte','Novice',1,1.05,1.05,'e0c870','a08830',['mace'],'int',0],['Merchant','Novice',.9,1.2,1.2,'d08030','905010',['axe'],'str',0],
+['Acolyte','Novice',1,1.05,1.05,'e0c870','a08830',['mace'],'int',0],['Merchant','Novice',.9,1.2,1.2,'d08030','905010',['axe','mace'],'str',0],
 ['Knight','Swordman',.85,1.5,1.5,'801010','500000',['sword'],'str',0],['Wizard','Mage',1,1.8,.85,'153075','',['staff'],'int',1,'1f2f70'],
 ['Hunter','Archer',.7,1.4,.95,'105015','003005',['bow'],'dex',1],['Assassin','Thief',.62,1.45,1,'2c2c3c','1b1b28',['dagger','katar'],'agi',0],
-['Priest','Acolyte',.9,1.3,1.1,'b09020','705000',['mace'],'int',0],['Blacksmith','Merchant',.8,1.6,1.4,'a05000','602000',['axe'],'str',0],
+['Priest','Acolyte',.9,1.3,1.1,'b09020','705000',['mace'],'int',0],['Blacksmith','Merchant',.8,1.6,1.4,'a05000','602000',['axe','mace'],'str',0],
 ['Lord Knight','Knight',.72,1.95,1.8,'600808','300000',['sword'],'str',0],['High Wizard','Wizard',.9,2.4,1,'0a1a55','',['staff'],'int',1,'0a1040'],
 ['Sniper','Hunter',.55,1.85,1.05,'0a3a0a','002000',['bow'],'dex',1],['Assassin Cross','Assassin',.5,1.9,1.15,'1a1a28','0a0a14',['dagger','katar'],'agi',0],
-['High Priest','Priest',.8,1.7,1.25,'c8a820','604000',['mace'],'int',0],['Whitesmith','Blacksmith',.7,2,1.6,'c06000','502000',['axe'],'str',0]];
+['High Priest','Priest',.8,1.7,1.25,'c8a820','604000',['mace'],'int',0],['Whitesmith','Blacksmith',.7,2,1.6,'c06000','502000',['axe','mace'],'str',0]];
 const CLASSES={};
 CD.forEach(([n,par,aspd,atk,hp,col,cape,wt,main,rng,hat])=>CLASSES[n]={n,par,aspd,atk,hp,col:parseInt(col,16),cape:cape?parseInt(cape,16):0,wt,main,rng,hat:hat?parseInt(hat,16):0,kids:[]});
 for(const c of Object.values(CLASSES)){c.tier=0;for(let p=c.par;p;p=CLASSES[p].par)c.tier++;c.mj=c.tier?50:10;c.rj=[0,10,40,50][c.tier];if(c.par)CLASSES[c.par].kids.push(c.n)}
@@ -149,8 +163,10 @@ const SKILLS=[
  act('hammer','Hammer Fall','Blacksmith',4,L=>2.4+.5*L,1,'#ff7a1a'),pas('adren','Adrenaline Rush','Blacksmith','aspd',L=>5*L,'ASPD +#%.'),pas('wperf','Weapon Perfection','Blacksmith','atk',L=>4*L,'ATK +#%.'),
  act('cart','Cart Termination','Whitesmith',5,L=>3+.6*L,1,'#ffa040'),pas('thrust','Power-Thrust','Whitesmith','atk',L=>6*L,'ATK +#%.'),pas('skin','Skin Tempering','Whitesmith','hpp',L=>6*L,'Max HP +#%.')];
 
+SKILLS.find(s=>s.id==='soulb').rng=1;SKILLS.find(s=>s.id==='mAss').aoe=1;SKILLS.find(s=>s.id==='soulb').d=L=>`Auto RANGED (up to 5 tiles): 2 hits of ${Math.round((1+.2*L)*100)}% dmg &middot; CD 3s`;SKILLS.find(s=>s.id==='mAss').d=L=>`Auto AREA: 4 hits of ${Math.round((.7+.15*L)*100)}% dmg, hits all nearby &middot; CD 5s`;
 // ---------- world: 5 maps x 10 levels. Lv1-3 novice gear, 4-7 1st job, 8-9 2nd job, 10 boss = high-tier ----------
 const pm=s=>{const[n,c,sh]=s.split(':');return{n,c:parseInt(c,16),shape:sh}};
+const NW=n=>({w:{sword:n+' Blade',dagger:n+' Dagger',katar:n+' Katar',staff:n+' Staff',bow:n+' Bow',axe:n+' Axe',mace:n+' Mace'},a:n+' Armor',h:n+' Helm'});
 const MAPS=[
 {n:'Prontera',t:'Swordman / Acolyte lines',ground:0x6cbf5a,sky:0x9ad7f5,boss:'Mastering:7ad46a:blob',
  mobs:['Poring:ff9db8:blob','Fabre:9ed35a:worm','Lunatic:f4f4f4:bunny','Drops:ffb45a:blob','Chonchon:6fa8dc:bug','Willow:6fa84a:tree','Rocker:9ac04a:bug','Poporing:8ad04a:blob','Savage Bebe:b08a5a:cat','Peco Peco:f0d060:bug'],
@@ -166,23 +182,41 @@ const MAPS=[
  g:[{w:{dagger:'Desert Knife',sword:'Scimitar'},a:'Desert Shirt',h:'Turban'},{w:{dagger:'Gladius'},a:'Thief Clothes',h:'Thief Hood'},{w:{dagger:'Sword Breaker',katar:'Jur'},a:'Assassin Garb',h:'Black Hood'},{w:{dagger:'Damascus',katar:'Bloody Roar'},a:'Shadow Cloak',h:'Shadow Mask'}]},
 {n:'Payon',t:'Archer / Hunter lines',ground:0x4f8f4a,sky:0x8fc8a0,boss:'Eddga:e67a2e:cat',
  mobs:['Spore:d06a6a:tree','Wolf:8a8a95:cat','Elder Willow:4a7a3a:tree','Hornet:e8c840:bug','Bigfoot:9a7a5a:demon','Zenorc:5a8a4a:demon','Skel Archer:d0d0c0:bunny','Ancient Worm:b0a080:worm','Orc Warrior:4a7a3a:demon','Orc Archer:6a8a3a:demon'],
- g:[{w:{dagger:'Hunter Knife',sword:'Hunting Sword'},a:'Leather Shirt',h:'Straw Hat'},{w:{bow:'Short Bow'},a:'Hunter Vest',h:'Feather Cap'},{w:{bow:'Composite Bow'},a:'Hunter Suit',h:'Archer Hat'},{w:{bow:'Gakkung Bow'},a:'Ranger Coat',h:'Elven Hat'}]}];
+ g:[{w:{dagger:'Hunter Knife',sword:'Hunting Sword'},a:'Leather Shirt',h:'Straw Hat'},{w:{bow:'Short Bow'},a:'Hunter Vest',h:'Feather Cap'},{w:{bow:'Composite Bow'},a:'Hunter Suit',h:'Archer Hat'},{w:{bow:'Gakkung Bow'},a:'Ranger Coat',h:'Elven Hat'}]},
+{n:'Comodo',t:'Coral beach (Lv 60-80)',ground:0x3fae9a,sky:0x7fe0e0,boss:'Kraken:2a6a9a:blob',mobs:['Merman:3a9ad0:demon','Sea Witch:9a5ac0:bunny','Coral Crab:ff7a6a:bug','Giant Eel:4a8aa0:worm','Siren:7ad0e0:cat','Deep Jelly:aa7aff:blob'],g:[NW('Comodo'),NW('Comodo'),NW('Comodo'),NW('Comodo')]},
+{n:'Louyang',t:'Bamboo valley (Lv 60-80)',ground:0x7aa85a,sky:0xc8e0a0,boss:'Dragon Lord:c04a2a:demon',mobs:['Jiangshi:8aa08a:demon','Bamboo Fox:e0a050:cat','Wild Boar:7a5a3a:cat','Stone Golem:9a9a8a:tree','Mantis:6ac04a:bug','Dragon Pup:e05a3a:worm'],g:[NW('Louyang'),NW('Louyang'),NW('Louyang'),NW('Louyang')]},
+{n:'Amatsu',t:'Sakura shrine (Lv 60-80)',ground:0xd88aa8,sky:0xf0c0d8,boss:'Shiranui:d03a5a:demon',mobs:['Oni:c03a3a:demon','Kappa:4aa07a:blob','Kitsune:ffd09a:cat','Tengu:a04a4a:bug','Yuki Onna:d0e8ff:bunny','Spirit Lantern:ffe08a:blob'],g:[NW('Amatsu'),NW('Amatsu'),NW('Amatsu'),NW('Amatsu')]},
+{n:'Niflheim',t:'Frozen underworld (Lv 80-99)',ground:0x6a6a8a,sky:0x4a3a5a,boss:'Lord of Death:3a1a5a:demon',mobs:['Ghost Hound:8a8ab0:cat','Banshee:c0c0ff:blob','Death Knight:4a3a6a:demon','Bone Worm:d0d0c0:worm','Frost Wraith:9ad0ff:bunny','Soul Eater:5a2a7a:bug'],g:[NW('Niflheim'),NW('Niflheim'),NW('Niflheim'),NW('Niflheim')]},
+{n:'Abyss',t:'Glast Heim Abyss (Lv 80-99)',ground:0x3a2a3a,sky:0x1a1020,boss:'Dark Lord:7a0a2a:demon',mobs:['Abyss Knight:5a1a3a:demon','Lava Slime:ff5a1a:blob','Chaos Imp:a02a6a:bug','Shadow Beast:2a1a3a:cat','Doom Tree:3a2a1a:tree','Hell Worm:c04a1a:worm'],g:[NW('Abyss'),NW('Abyss'),NW('Abyss'),NW('Abyss')]}];
 MAPS.forEach(mp=>{mp.mobs=mp.mobs.map(pm);mp.boss=pm(mp.boss)});
-const secOf=l=>l<=3?0:l<=7?1:l<=9?2:3;
-function fieldOf(m,l){const mp=MAPS[m],sec=secOf(l),sg=mp.g[sec],T=[];
-  for(const k in sg.w)T.push({k,n:sg.w[k]});T.push({k:'armor',n:sg.a},{k:'head',n:sg.h});const n=T.length;
-  const mobs=[0,1].map(j=>({...mp.mobs[(l-1+j)%10],drops:[[T[(l+2*j)%n],6],[T[(l+2*j+1)%n],5]],card:{n:mp.mobs[(l-1+j)%10].n+' Card',stat:K5[((m*10+l+j)*3+1)%5],g:l<=3?0:l<=7?1:2},cardCh:1.5,ore:l===10}));
-  return{m,l,sec,mobs,boss:l===10?{...mp.boss,drops:T.map(x=>[x,10]),card:{n:mp.boss.n+' Card',stat:K5[m%5],g:3},cardCh:10,ore:true}:null}}
-const dropTxt=([T,ch])=>`${T.n}${T.k==='armor'||T.k==='head'?'':' ('+T.k+')'} ${ch}%`;
+const REC=['Lv 1-12','Lv 10-24','Lv 20-34','Lv 32-46','Lv 44-60','Lv 60-67','Lv 67-74','Lv 74-80','Lv 80-90','Lv 90-99'];
+MAPS.forEach((m,i)=>{m.b=[0,9,19,31,43,59,66,73,79,89][i];m.rec=REC[i]});
+const pw=()=>MAPS[S.mp].b+S.lvl,DR=1;
+const secOf=l=>l<=3?0:l<=7?1:l<=9?2:3,secOf0=l=>l<=3?0:l<=7?1:l<=9?2:3;
+function fieldOf(m,l){const mp=MAPS[m],sec=m>=5?3:secOf(l),sg=mp.g[sec],T=[];
+  for(const k in sg.w)T.push({k,n:sg.w[k]});T.push({k:'armor',n:sg.a},{k:'head',n:sg.h},{k:'off',n:mp.n+' Shield'},{k:'leg',n:mp.n+' Greaves'},{k:'acc',n:mp.n+' Ring'});const n=T.length;
+  const mobs=[0,1].map(j=>({...mp.mobs[(l-1+j)%mp.mobs.length],drops:[[T[(l+2*j)%n],2.1],[T[(l+2*j+1)%n],1.75]],card:{n:mp.mobs[(l-1+j)%mp.mobs.length].n+' Card',stat:K5[((m*10+l+j)*3+1)%5],g:l<=3?0:l<=7?1:2},cardCh:.6,ore:l===10}));
+  return{m,l,sec,mobs,boss:l===10?{...mp.boss,drops:T.map(x=>[x,4]),card:{n:mp.boss.n+' Card',stat:K5[m%5],g:3},cardCh:.1,ore:true}:null}}
+const dropTxt=([T,ch])=>`${T.n}${['armor','head','off','leg','acc'].includes(T.k)?'':' ('+T.k+')'} ${ch}%`;
 
 // ---------- state ----------
 let currentUser=null,S=null,speed=1,floats=[],drops=[],t=0,shake=0,atkAnim=0,hitAnim=0,pend=[],shots=[],barT=0,logs=[],tab=null,selB=null,selC=null,selK=null,mapM=0,mapL=1;
-const pl={x:-3,z:1.5,ry:0,orb:0,run:0},skCd={};
+const pl={x:-3,z:1.5,ry:0,orb:0,run:0},skCd={},petR={};
+const PETS=[{n:'Poring',ic:'🟣',r:0,c:0xff9db8},{n:'Lunatic',ic:'🐰',r:0,c:0xf4f4f4},{n:'Wolf',ic:'🐺',r:1,c:0x8a8a95},{n:'Desert Wolf',ic:'🦊',r:1,c:0xe0a050},{n:'Peco Peco',ic:'🐤',r:2,c:0xf0d060},{n:'Dragon Whelp',ic:'🐲',r:2,c:0x4aa070},{n:'Baphomet Jr.',ic:'😈',r:3,c:0x6a3fa0},{n:'Angeling',ic:'👼',r:3,c:0xffffff}];
+const RN=['Common','Rare','Epic','Legendary'],RCL=[0,2,3,4],MUT=[1,2,4,6,8,20,40],MC=[0,0x6cd36c,0x4aa3ff,0xb05cff,0xffb020,0xff4d4d,0xffffff];
+const EGG=3000,RW=[70,22,7,1],GW=[50,30,16.5,2.5,.8,.2],PT=['Wooden','Iron','Silver','Gold','Mythril'];
+const PEQ=[{n:'Claw',d:t=>`+${t*12}% dmg`},{n:'Collar',d:t=>`+${t*8}% attack speed`},{n:'Charm',d:t=>`${t*6}% crit chance (x2 dmg)`}];
+const petDmg=p=>Math.round(atk()*[.2,.32,.55,1][PETS[p.sp].r]*MUT[p.mut]*(1+p.eq[0]*.12)),petInt=p=>Math.max(.4,1.7-PETS[p.sp].r*.15)/(1+p.eq[1]*.08),peqCost=t=>800*(t+1)*(t+1),rollCost=p=>2500*(1+PETS[p.sp].r);
+const rollingSet=new Set(),autoSet=new Set(),PW=[[90,9,1,0],[80,17,3,0],[70,24,5.5,.5],[60,30,9,1],[50,35,13,2],[40,38,18,4],[30,40,24,6],[22,40,30,8],[12,38,38,12],[5,30,45,20]],busy=p=>p.roll||rollingSet.has(p.id)||S.zeny<rollCost(p);
+function rollOnce(p,fast,done){const c=rollCost(p);if(S.zeny<c){autoSet.delete(p.id);log('Not enough Zeny to roll.');ui();return}S.zeny-=c;rollingSet.add(p.id);ui();const g=pickW(GW)+1,iv=setInterval(()=>{const e=$('rf'+p.id);if(e)e.textContent='🎲 Grade '+ri(1,6)+' ...'},70);
+  setTimeout(()=>{clearInterval(iv);rollingSet.delete(p.id);if(!gp(p.id))return;p.last=g;done(g)},fast?250:800)}
+function autoRoll(p){if(!autoSet.has(p.id)||!gp(p.id))return;rollOnce(p,true,g=>{if(!(p.sk||[1,2,3]).includes(g)){p.roll=g;autoSet.delete(p.id);log(`Auto-roll stopped on Grade ${g} (x${MUT[g]})!`,'r4')}ui();save();if(autoSet.has(p.id))setTimeout(()=>autoRoll(p),250)})}
+const pickW=w=>{let r=Math.random()*w.reduce((a,b)=>a+b,0);for(let i=0;i<w.length;i++){r-=w[i];if(r<0)return i}return w.length-1},gp=id=>S.pets.find(x=>String(x.id)===String(id));
 const uid=()=>Date.now()+Math.random(),rnd=(a,b)=>a+Math.random()*(b-a),ri=(a,b)=>Math.floor(rnd(a,b+1)),cl=(v,a,b)=>Math.max(a,Math.min(b,v));
-const fresh=()=>({cls:'Novice',lv:1,exp:0,hp:100,zeny:0,kills:0,pts:10,jobs:{Novice:{jl:1,jx:0}},sk:{aid:1},mp:0,lvl:1,prog:[1,1,1,1,1],kl:0,auto:true,adv:true,q:null,cards:[],ore:{ori:0,elu:0},gm:false,gmx:100,
-  st:{str:1,agi:1,dex:1,luk:1,int:1},eq:{weapon:{id:1,slot:'weapon',wt:'dagger',tier:0,val:5,name:'Novice Knife',aff:[],slots:1,cards:[],sec:0},armor:null,head:null},inv:[]});
+const fresh=()=>({pets:[],cls:'Novice',lv:1,exp:0,hp:100,zeny:0,kills:0,pts:10,jobs:{Novice:{jl:1,jx:0}},sk:{aid:1},mp:0,lvl:1,prog:[1,1,1,1,1],kl:0,auto:true,adv:true,q:null,cards:[],ore:{ori:0,elu:0},gm:false,gmx:100,
+  st:{str:1,agi:1,dex:1,luk:1,int:1,vit:1},eq:{weapon:{id:1,slot:'weapon',wt:'dagger',tier:0,val:5,name:'Novice Knife',aff:[],slots:1,cards:[],sec:0},armor:null,head:null,off:null,leg:null,acc1:null,acc2:null},inv:[]});
 const saveKey=()=>'pg_save3_'+currentUser;
-function load(){try{const s=JSON.parse(lsGet(saveKey()));if(s&&s.lv){const f=Object.assign(fresh(),s);f.st=Object.assign(fresh().st,s.st);if(!CLASSES[f.cls])f.cls='Novice';return f}}catch(e){}return fresh()}
+function load(){try{const s=JSON.parse(lsGet(saveKey()));if(s&&s.lv){const f=Object.assign(fresh(),s);f.st=Object.assign(fresh().st,s.st);if(!CLASSES[f.cls])f.cls='Novice';while(f.prog.length<MAPS.length)f.prog.push(1);const fx=c=>{c.v=CV[c.g]};(f.cards||[]).forEach(fx);(f.pets||[]).forEach((p,i)=>{if(p.on===undefined)p.on=i<3});Object.values(f.eq||{}).forEach(it=>it&&(it.cards||[]).forEach(fx));(f.inv||[]).forEach(it=>(it.cards||[]).forEach(fx));return f}}catch(e){}return fresh()}
 function save(){if(!currentUser||!S)return;lsPut(saveKey(),JSON.stringify(S))}
 
 // ---------- accounts (stored in this browser; real cross-device accounts need a server) ----------
@@ -220,7 +254,7 @@ function submitAuth(e){
 function logout(){save();location.reload()}
 function initSession(gm){
   try{
-    S=load();S.gm=gm;if(!S.q)S.q=['kill','loot','boss'].map(newQuest);if(S.mp>4||S.lvl>10){S.mp=0;S.lvl=1}
+    S=load();S.gm=gm;if(!S.q)S.q=['kill','loot','boss'].map(newQuest);if(S.mp>=MAPS.length||S.lvl>10){S.mp=0;S.lvl=1}
     $('userBadge').textContent=(gm?'🛠 ':'👤 ')+currentUser;$('logoutBtn').style.display='inline-block';ui();
     $('loginOverlay').style.display='none';log(`Welcome${gm?', Game Master':' back'}, ${currentUser}!`);
     try{localStorage.setItem('pg_probe','1')}catch(e){log('Browser storage is blocked: progress will NOT be saved.','r0')}
@@ -236,12 +270,12 @@ const skillOn=id=>lv(id)>0&&SKILLS.find(s=>s.id===id).cls.includes(S.cls);
 const pv=k=>SKILLS.reduce((a,s)=>a+(s.type==='pas'&&s.key===k&&skillOn(s.id)?s.f(lv(s.id)):0),0);
 const items=()=>Object.values(S.eq).filter(Boolean),ev=it=>Math.round(it.val*(1+(it.r||0)*.15)),iname=it=>(it.r?'+'+it.r+' ':'')+it.name,eqv=k=>S.eq[k]?ev(S.eq[k]):0;
 const bon=k=>{let v=0;for(const it of items()){for(const a of it.aff||[])if(a.k===k)v+=a.v;for(const c of it.cards||[])if(c.stat===k)v+=c.v}return v};
-const st=k=>S.st[k]+bon(k),canUse=it=>it.slot!=='weapon'||!it.wt||C().wt.includes(it.wt);
-const maxHp=()=>Math.round((80+S.lv*20+eqv('head')*4+bon('hp'))*C().hp*(1+pv('hpp')/100));
-const atk=()=>Math.round((4+S.lv*2+eqv('weapon')+st(C().main)*1.5+(st('dex')+st('luk'))*.25)*C().atk*(1+(pv('atk')+bon('atk'))/100));
+const st=k=>S.st[k]+bon(k),canUse=it=>it.slot==='off'?canShield():(it.slot!=='weapon'||!it.wt||C().wt.includes(it.wt));
+const maxHp=()=>Math.round((80+S.lv*20+eqv('head')*4+(eqv('acc1')+eqv('acc2'))*3+st('vit')*8+bon('hp'))*C().hp*(1+pv('hpp')/100));
+const atk=()=>Math.round((4+S.lv*2+eqv('weapon')+(S.eq.off&&S.eq.off.slot==='weapon'?eqv('off')*.6:0)+st(C().main)*1.5+(st('dex')+st('luk'))*.25)*C().atk*(1+(pv('atk')+bon('atk'))/100));
 const aspd=()=>Math.max(.2,.85*C().aspd*(1-Math.min(.5,st('agi')*.006))/(1+(pv('aspd')+bon('aspd'))/100));
 const crit=()=>Math.min(60,3+st('luk')*.4+pv('crit')+bon('crit')),flee=()=>Math.min(60,st('agi')*.5+S.lv*.1+pv('flee')+bon('flee')),missCh=()=>Math.max(0,15-st('dex')*.25);
-const def=()=>Math.floor(S.lv*.5+eqv('armor')+pv('def')),need=()=>Math.floor(20*Math.pow(S.lv,1.6)),cost=k=>1+Math.floor((S.st[k]-1)/10);
+const def=()=>Math.floor(S.lv*.5+st('vit')*.5+eqv('armor')+eqv('leg')+(S.eq.off&&S.eq.off.slot==='off'?eqv('off'):0)+pv('def')),mdef=()=>Math.floor(S.lv*.3+st('int')*.5+st('vit')*.4+eqv('head')*.3+pv('def')*.5),critD=()=>2+st('luk')*.01+st('dex')*.005+bon('cdm')/100,need=()=>Math.floor(38*Math.pow(S.lv,1.75)),cost=k=>1+Math.floor((S.st[k]-1)/10);
 const totalPts=()=>{let p=10;for(let l=2;l<=S.lv;l++)p+=3+Math.floor(l/5);return p},rcost=()=>S.lv*50;
 const skpAvail=()=>Object.values(S.jobs).reduce((a,j)=>a+j.jl-1,0)-(Object.values(S.sk).reduce((a,b)=>a+b,0)-(S.sk.aid?1:0));
 const refCost=it=>Math.round(200*((it.r||0)+1)*(1+(it.sec||0)*.5)),refCh=it=>[100,100,100,100,70,60,50,40,30,20][it.r||0];
@@ -250,17 +284,18 @@ const isBoss=()=>S.lvl===10,fieldName=()=>`${MAPS[S.mp].n} Lv ${S.lvl}`;
 const icon=it=>it.card?'🃏':it.ore?'💎':it.slot==='weapon'?(WICON[it.wt]||'⚔️'):SLOTS[it.slot].ic;
 
 // ---------- mobs & loot ----------
-let mob=null,pAtkT=0,mAtkT=0,respawn=0;
+let mobs=[],mob=null,pAtkT=0,mAtkT=0,respawn=0;
 function spawn(){
-  const F=fieldOf(S.mp,S.lvl),l=S.lvl;
-  if(F.boss&&S.kl>=MPS){const hp=Math.floor(260*Math.pow(l,1.8));mob={...F.boss,boss:true,hp,max:hp,atk:Math.floor(5+l*4.5),exp:Math.floor(80*Math.pow(l,1.5)),zeny:ri(40,70)*l,size:1.9,lvl:l,sec:F.sec}}
-  else{const m=F.mobs[ri(0,1)],hp=Math.floor(30*Math.pow(l,1.8));mob={...m,boss:false,hp,max:hp,atk:Math.floor(3+l*3.2),exp:Math.floor(10*Math.pow(l,1.5)),zeny:ri(4,9)*l,size:1,lvl:l,sec:F.sec}}
-  mob.x=pl.x>0?rnd(-BX_,-4):rnd(4,BX_);mob.z=rnd(Z0,Z1);mob.spawn=0;mob.ry=0;pAtkT=.3;mAtkT=.6;
+  const F=fieldOf(S.mp,S.lvl),l=pw(),mb=1+S.mp*.15+Math.max(0,S.mp-4)*.2;mobs=[];
+  if(F.boss&&S.kl>=MPS){const hp=Math.floor(500*mb*Math.pow(l,1.85));mobs.push({...F.boss,boss:true,hp,max:hp,atk:Math.floor((8+l*6.5)*mb),exp:Math.floor(50*Math.pow(l,1.5)),zeny:ri(20,35)*l,size:1.3,mag:true,lvl:l,sec:F.sec})}
+  else{const n=(S.lvl>=5||S.mp>=5)?ri(3,8):1;for(let i=0;i<n;i++){const m=F.mobs[ri(0,1)],hp=Math.floor(42*mb*Math.pow(l,1.85));mobs.push({...m,boss:false,hp,max:hp,atk:Math.floor((5+l*4.6)*mb),exp:Math.floor(6*Math.pow(l,1.5)),zeny:ri(2,5)*l,size:.6,mag:['demon','tree','blob'].includes(m.shape),lvl:l,sec:F.sec})}}
+  mobs.forEach((m,i)=>{m.x=pl.x>0?rnd(-BX_,-3):rnd(3,BX_);m.z=rnd(Z0,Z1);m.spawn=0;m.ry=0;m.at=rnd(.6,1.6);m.a=i*2.4});
+  mob=mobs[0];pAtkT=.3;
 }
 function genGear(T,l,sec,boss){
-  const slot=T.k==='armor'||T.k==='head'?T.k:'weapon';let roll=rnd(0,100)-(boss?25:0)-st('luk')*.15,tier=0,acc=0;
+  const slot=['armor','head','off','leg','acc'].includes(T.k)?T.k:'weapon';let roll=rnd(0,100)-(boss?25:0)-st('luk')*.15,tier=0,acc=0;
   for(let i=0;i<5;i++){acc+=RAR[i].w;if(roll<acc||i===4){tier=i;break}}if(boss&&tier<2)tier=2;
-  const val=Math.max(1,Math.round({weapon:6,armor:4,head:10}[slot]*[1,2.2,4,7][sec]*(1+l*.15)*RAR[tier].m*rnd(.9,1.12)));
+  const val=Math.max(1,Math.round({weapon:6,armor:4,head:10,off:3,leg:3,acc:5}[slot]*[1,2.2,4,7][sec]*(1+l*.15)*RAR[tier].m*rnd(.9,1.12)));
   const n=[1,1+ri(0,1),2,2+ri(0,1),3][tier],pool=AFF.slice(),aff=[],af=(1+sec)*AM[tier];
   for(let i=0;i<n;i++){const k=pool.splice(ri(0,pool.length-1),1)[0];aff.push({k,v:Math.max(1,Math.round(af*AB[k]*rnd(.8,1.25)))})}
   const slots=slot==='weapon'?Math.min(3,1+ri(0,1)+(tier>=3?1:0)):Math.min(1,ri(0,1)+(tier>=3?1:0));
@@ -269,55 +304,59 @@ function genGear(T,l,sec,boss){
 const mkDrop=it=>({it,wx:mob.x+rnd(-.7,.7),wz:mob.z+rnd(-.7,.7),y:0,vy:-220,t:0});
 const addFloat=(x,y,z,txt,col,big)=>floats.push({x,y,z,txt,col,life:1,big});
 function log(m,cls){logs.push({m,cls});if(logs.length>80)logs.shift();
-  const f=$('feed'),d=document.createElement('div');d.textContent=m;f.appendChild(d);while(f.children.length>4)f.removeChild(f.firstChild);setTimeout(()=>d.remove(),7000);if(tab==='log')renderWin()}
+  const f=$('feed'),d=document.createElement('div');d.textContent=m;f.appendChild(d);while(f.children.length>4)f.removeChild(f.firstChild);setTimeout(()=>d.remove(),7000);if(tabs.includes('log'))renderWin()}
 
 // ---------- combat ----------
-function shot(col){if(!C().rng||!mob)return;shots.push({x0:pl.x,z0:pl.z,x1:mob.x,z1:mob.z,t:0,col:col||'#fff',arrow:C().wt[0]==='bow'})}
+function shot(col,f){if(!(C().rng||f)||!mob)return;shots.push({x0:pl.x,z0:pl.z,x1:mob.x,z1:mob.z,t:0,col:col||'#fff',arrow:C().wt[0]==='bow'})}
+function hurt(o,d,col,c){o.hp-=d;o.flash=1;addFloat(o.x+rnd(-.4,.4),1.2+.8*o.size,o.z,c?d+'!':d,col||'#fff',c);if(o.hp<=0)kill(o)}
 function strike(mult,col){
   if(!mob)return;if(Math.random()*100<missCh()){addFloat(mob.x,1.8,mob.z,'Miss','#ccc');return}
-  const c=Math.random()*100<crit(),d=Math.max(1,Math.round(atk()*mult*rnd(Math.min(.95,.7+st('dex')*.004),1.15)*(c?2+st('luk')*.01:1)));
+  const c=Math.random()*100<crit(),d=Math.max(1,Math.round(atk()*mult*rnd(Math.min(.95,.7+st('dex')*.004),1.15)*(c?critD():1)));
   mob.hp-=d;mob.flash=1;shake=c?6:2;addFloat(mob.x+rnd(-.4,.4),1.5*Math.max(1,mob.size*.8)+.6,mob.z,c?d+'!':d,col||(c?'#ffe14d':'#fff'),c);
 }
 function playerAttack(){
-  pAtkT=aspd();atkAnim=1;let sk=null,best=-1;
-  for(const s of SKILLS)if(s.type==='act'&&skillOn(s.id)&&(skCd[s.id]||0)<=0){const pw=s.mul(lv(s.id))*s.hits;if(pw>best){sk=s;best=pw}}
+  pAtkT=aspd();atkAnim=1;let sk=null,best=-1;const far=mob&&Math.hypot(mob.x-pl.x,mob.z-pl.z)>(C().rng?3:1.2+.45*mob.size)+.6;
+  for(const s of SKILLS)if(s.type==='act'&&skillOn(s.id)&&(skCd[s.id]||0)<=0&&(!far||s.rng)){const pw=s.mul(lv(s.id))*s.hits;if(pw>best){sk=s;best=pw}}
   if(sk){skCd[sk.id]=sk.cd;addFloat(pl.x,3,pl.z,sk.n,sk.col);const m=sk.mul(lv(sk.id))*(1+st('int')*.01);
-    strike(m,sk.col);shot(sk.col);for(let i=1;i<sk.hits;i++)pend.push({t:i*.09,m,col:sk.col})}
-  else{strike(1);shot();const d=pv('dbl');if(d&&Math.random()<d/100+st('dex')*.003){pend.push({t:.15,m:1,col:'#aef'});addFloat(pl.x,3,pl.z,'Double Attack','#aef')}}
+    strike(m,sk.col);shot(sk.col,sk.rng);if(sk.aoe&&mob)for(const o of mobs.slice())if(o!==mob&&Math.hypot(o.x-mob.x,o.z-mob.z)<4)hurt(o,Math.max(1,Math.round(atk()*m*.8)),sk.col);for(let i=1;i<sk.hits;i++)pend.push({t:i*.09,m,col:sk.col})}
+  else if(far)return;else{strike(1);shot();const d=pv('dbl');if(d&&Math.random()<d/100+st('dex')*.003){pend.push({t:.15,m:1,col:'#aef'});addFloat(pl.x,3,pl.z,'Double Attack','#aef')}}
 }
 function addJob(x){const j=jobOf(),c=C();if(j.jl>=c.mj)return;j.jx+=x;
   while(j.jl<c.mj&&j.jx>=jneed(j.jl)){j.jx-=jneed(j.jl);j.jl++;log(`JOB LEVEL UP! ${S.cls} Job Lv ${j.jl} (+1 skill point)`,'r3');addFloat(pl.x,3.2,pl.z,'JOB UP!','#8fe9ff',true)}
   if(j.jl>=c.mj)j.jx=0}
-function checkLevel(){while(S.exp>=need()){S.exp-=need();S.lv++;const p=3+Math.floor(S.lv/5);S.pts+=p;S.hp=maxHp();
+function checkLevel(){while(S.lv<150&&S.exp>=need()){S.exp-=need();S.lv++;const p=3+Math.floor(S.lv/5);S.pts+=p;S.hp=maxHp();
   log(`LEVEL UP! Lv ${S.lv}. +${p} stat points`,'r4');addFloat(pl.x,3.6,pl.z,'LEVEL UP!','#fff',true)}}
 const qProg=type=>S.q&&S.q.forEach(q=>{if(q.type===type)q.prog=Math.min(q.goal,q.prog+1)});
-function kill(){
+function kill(o){const keep=mob;if(o)mob=o;if(!mob||!mobs.includes(mob)){mob=keep;return}
   const g=gx();S.kills++;S.kl++;qProg('kill');if(mob.boss)qProg('boss');
   const z=Math.round(mob.zeny*(1+pv('zeny')/100))*g,xp=mob.exp*g;S.zeny+=z;S.exp+=xp;addJob(Math.round(mob.exp*.7)*g);pend=[];
   addFloat(mob.x,2.4,mob.z,'+'+z+'z','#ffd23f');log(`${mob.n} defeated! +${xp.toLocaleString()} EXP, +${z.toLocaleString()} Zeny`);
   const lk=1+st('luk')*.008;
   for(const[T,ch]of mob.drops)if(Math.random()*100<ch*lk)drops.push(mkDrop(genGear(T,mob.lvl,mob.sec,mob.boss)));
   if(Math.random()*100<mob.cardCh*lk){const g2=mob.card.g;drops.push(mkDrop({card:1,id:uid(),n:mob.card.n,g:g2,stat:mob.card.stat,v:CV[g2]}))}
-  if(mob.ore)for(const o of['ori','elu'])if(Math.random()<.01)drops.push(mkDrop({ore:o,id:uid(),n:ORE[o]}));
+  if(mob.ore)for(const o of['ori','elu'])if(Math.random()<.004)drops.push(mkDrop({ore:o,id:uid(),n:ORE[o]}));
+  if(Math.random()*100<(mob.boss?5:.3)*lk){const r=pickW(PW[Math.min(S.mp,9)]),c=PETS.filter(x=>x.r===r),sp=PETS.indexOf(c[ri(0,c.length-1)]);
+    if(S.pets.length<40){S.pets.push({id:ri(1e6,9e6),sp,mut:0,eq:[0,0,0],on:S.pets.filter(x=>x.on).length<3});log(`A ${RN[r]} pet followed you: ${PETS[sp].n}!`,'r'+RCL[r]);addFloat(mob.x,3,mob.z,'PET!','#ff9dff',true)}
+    else{const z=Math.floor(EGG*(.3+r*.4));S.zeny+=z;log(`A ${RN[r]} ${PETS[sp].n} appeared but your pet collection is full (+${z}z).`)}}
   checkLevel();
-  if(mob.boss||(S.lvl<10&&S.kl>=MPS)){S.kl=0;if(S.lvl<10&&S.lvl>=S.prog[S.mp]){S.prog[S.mp]=S.lvl+1;log(`${fieldName()} cleared! Level ${S.lvl+1} unlocked.`,'r3');if(S.adv){S.lvl++;}}}
-  mob=null;respawn=.7;save();ui();
+  if(mob.boss||(S.lvl<10&&S.kl>=MPS)){mobs=[];S.kl=0;if(S.lvl<10&&S.lvl>=S.prog[S.mp]){S.prog[S.mp]=S.lvl+1;log(`${fieldName()} cleared! Level ${S.lvl+1} unlocked.`,'r3');if(S.adv&&S.lvl<10){S.lvl++}}}
+  mobs=mobs.filter(x=>x!==mob);mob=(o&&keep&&keep!==o&&mobs.includes(keep))?keep:(mobs[0]||null);respawn=.7;save();ui();
 }
 function collect(it){
   if(it.card){S.cards.push(it);log(`Got card: [${GRADE[it.g]}] ${cardTxt(it)}`,'r'+GI[it.g]);addFloat(pl.x,2.8,pl.z,'CARD!','#ffb020',true);ui();return}
   if(it.ore){S.ore[it.ore]++;log(`Got ${it.n}!`,'r4');addFloat(pl.x,2.8,pl.z,it.n+'!','#6cd3ff',true);ui();return}
   S.inv.push(it);qProg('loot');log(`Picked up [${RAR[it.tier].n}] ${it.name}`,'r'+it.tier);
-  if(S.auto!==false&&canUse(it)){const cur=S.eq[it.slot];if(!cur||ev(it)>ev(cur))equip(it.id,true)}ui();
+  if(S.auto!==false&&canUse(it)){const cur=S.eq[ekey(it)];if(!cur||ev(it)>ev(cur))equip(it.id,true)}ui();
 }
-function equip(id,quiet){const i=S.inv.findIndex(x=>x.id===id);if(i<0)return;const it=S.inv[i];if(!canUse(it)){log(`Your class cannot use ${it.wt}.`);return}
-  S.inv.splice(i,1);const old=S.eq[it.slot];if(old)S.inv.push(old);S.eq[it.slot]=it;S.hp=Math.min(S.hp,maxHp());if(!quiet)log('Equipped '+iname(it));selB=null;ui();save()}
+function equip(id,quiet){const i=S.inv.findIndex(x=>x.id===id);if(i<0)return;const it=S.inv[i];if(!canUse(it)){log(`Your class cannot use ${it.name}.`);return}
+  S.inv.splice(i,1);const k=ekey(it),old=S.eq[k];if(old)S.inv.push(old);S.eq[k]=it;S.hp=Math.min(S.hp,maxHp());if(!quiet)log('Equipped '+iname(it));selB=null;ui();save()}
 const sellVal=it=>Math.floor(ev(it)*(1+it.tier*2)*2);
 function sell(id){const i=S.inv.findIndex(x=>String(x.id)===String(id));if(i<0)return;const it=S.inv.splice(i,1)[0];S.zeny+=sellVal(it);(it.cards||[]).forEach(c=>S.cards.push(c));if(selB==it.id)selB=null;ui();save()}
 function newQuest(type){const L=S?S.lv:1,g=type==='kill'?12+L*2:type==='loot'?3+Math.floor(L/3):1+Math.floor(L/10),m=S?gx():1;
-  return{type,goal:g,prog:0,z:Math.round(g*(type==='kill'?10:type==='loot'?60:400)*(1+L*.1))*m,xp:Math.floor(Math.pow(L,1.6)*(type==='boss'?12:5))*m}}
+  return{type,goal:g,prog:0,z:Math.round(g*(type==='kill'?1.2:type==='loot'?8:50)*(1+L*.03))*m,xp:Math.floor(Math.pow(L,1.6)*(type==='boss'?3:1.2))*m}}
 const qTxt=q=>q.type==='kill'?`Defeat ${q.goal} monsters`:q.type==='loot'?`Collect ${q.goal} equipment drops`:`Defeat ${q.goal} boss${q.goal>1?'es':''}`;
-function refine(sl){const it=S.eq[sl];if(!it||(it.r||0)>=10)return;const o=sl==='weapon'?'ori':'elu',c=refCost(it);
-  if(S.ore[o]<1){log(`You need 1 ${ORE[o]}. (1% drop in Level 10 boss maps)`);return}if(S.zeny<c){log('Not enough Zeny.');return}
+function refine(sl){const it=S.eq[sl];if(!it||(it.r||0)>=10)return;const o=it.slot==='weapon'?'ori':'elu',c=refCost(it);
+  if(S.ore[o]<1){log(`You need 1 ${ORE[o]}. (0.4% drop in Level 10 boss maps)`);return}if(S.zeny<c){log('Not enough Zeny.');return}
   S.ore[o]--;S.zeny-=c;if(Math.random()*100<refCh(it)){it.r=(it.r||0)+1;log(`Refine success! ${iname(it)}`,'r3');addFloat(pl.x,3,pl.z,'Refine +'+it.r,'#ffd23f')}
   else{if(it.r>=5){it.r--;log(`Refine failed... dropped to +${it.r}.`,'r0')}else log('Refine failed.','r0');addFloat(pl.x,3,pl.z,'Failed','#ff6b6b')}ui();save()}
 
@@ -326,17 +365,19 @@ function classBlock(n){
   if(n===S.cls)return'Current class';if(n==='Novice')return'';
   for(let x=n;CLASSES[x].par;x=CLASSES[x].par){const p=CLASSES[x].par,pj=S.jobs[p];if(!pj||pj.jl<CLASSES[x].rj)return`Needs ${p} Job Lv ${CLASSES[x].rj}`}
   if(S.cls!=='Novice'&&S.cls!==CLASSES[n].par)return'Reset to Novice first';return''}
-function changeClass(n){if(classBlock(n))return;S.cls=n;jobOf();const w=S.eq.weapon;
+function changeClass(n){if(classBlock(n))return;
+  if(n==='Novice'){S.jobs={Novice:{jl:1,jx:0}};S.sk={aid:1};if(S.lv>25){S.lv=25;S.exp=0}for(const k in S.st)S.st[k]=1;S.pts=totalPts()}
+  S.cls=n;jobOf();{const o=S.eq.off;if(o&&!(o.slot==='off'?canShield():dualOk(o))){S.inv.push(o);S.eq.off=null}}const w=S.eq.weapon;
   if(w&&w.wt&&!C().wt.includes(w.wt)){S.inv.push(w);S.eq.weapon=null;log('Your weapon cannot be used by this class. Moved to Bag.')}
-  S.hp=Math.min(S.hp,maxHp());log(n==='Novice'?'Reset to Novice. Job levels are saved.':`Class: ${n} (Job Lv ${S.jobs[n].jl})`,'r4');addFloat(pl.x,3.6,pl.z,n+'!','#fff',true);ui();save()}
+  S.hp=Math.min(S.hp,maxHp());log(n==='Novice'?'Reset to Novice. Job levels reset; Base Lv kept (max 25).':`Class: ${n} (Job Lv ${S.jobs[n].jl})`,'r4');addFloat(pl.x,3.6,pl.z,n+'!','#fff',true);ui();save()}
 
 // ---------- UI ----------
-const TABS={map:['🗺️','World Map','M'],status:['📊','Status','S'],job:['🌳','Class Tree','J'],skills:['✨','Skills','K'],bag:['🎒','Bag','B'],equip:['🛡️','Equipment','E'],cards:['🃏','Cards','C'],quest:['📜','Quests','Q'],refine:['🔨','Refine','R'],log:['📃','Log','L'],set:['⚙️','Settings','O'],gm:['🛠️','GM Tools','G']};
+const TABS={map:['🗺️','World Map','M'],status:['📊','Character','S'],job:['🌳','Class Tree','J'],skills:['✨','Skills','K'],bag:['🎒','Inventory','B'],log:['📃','Log','L'],pet:['🐾','Pets','P'],set:['⚙️','Settings','O'],gm:['🛠️','GM Tools','G']};
 const dot=k=>!S?false:k==='status'?S.pts>0:k==='skills'?skpAvail()>0:k==='quest'?!!(S.q&&S.q.some(q=>q.prog>=q.goal)):k==='cards'?S.cards.length>0:false;
 const find=id=>[...S.inv,...items(),...S.cards].find(x=>String(x.id)===String(id));
 const cell=(it,sel,extra='')=>`<div class="cell b${dtier(it)}${sel?' sel':''}" data-tip="${it.id}" ${extra}>${icon(it)}${it.r?`<i class="rf">+${it.r}</i>`:''}</div>`;
 function itemMain(it){
-  if(it.card)return`<b class="r${GI[it.g]}">${it.n}</b><div>${GRADE[it.g]} card &middot; <b>${SU(it.stat)} +${it.v}</b></div>`;
+  if(it.card)return`<b class="r${GI[it.g]}">${it.n}</b><div>${GRADE[it.g]} card &middot; <b>${SU(it.stat)} +${it.v}</b></div><div><small>Fits: ${CFL[CFIT[it.stat]]} only</small></div>`;
   return`<b class="r${it.tier}">${iname(it)}</b><div><small>${RAR[it.tier].n} ${SLOTS[it.slot].label}${it.wt?' ('+it.wt+')':''} &middot; ${SECN[it.sec||0]}</small></div>
   <div><b>${SLOTS[it.slot].stat} +${ev(it)}</b>${it.r?` <small>(base ${it.val})</small>`:''}</div>${(it.aff||[]).map(a=>`<div class="r1">&#9670; ${affTxt(a)}</div>`).join('')}`}
 function itemDetail(it){if(it.card)return itemMain(it);const cs=it.cards||[];return itemMain(it)+Array.from({length:it.slots||0},(_,i)=>`<div><small>${cs[i]?'&#9670; '+cardTxt(cs[i]):'&#9671; empty card slot'}</small></div>`).join('')+(canUse(it)?'':'<div class="r0"><small>Your class cannot use this.</small></div>')}
@@ -345,75 +386,118 @@ const tnode=n=>{const c=CLASSES[n],pj=S.jobs[n],cur=n===S.cls,blk=classBlock(n);
 const V={
   map(){const F=fieldOf(mapM,mapL),mp=MAPS[mapM],pr=S.prog[mapM];
     return`<div class="row">${MAPS.map((m,i)=>`<button data-a="selm" data-v="${i}" ${i===mapM?'style="background:#ffe08a"':''}>${m.n}</button>`).join('')}</div>
-    <div class="hd">${mp.n} <small>&middot; ${mp.t}</small></div>
+    <div class="hd">${mp.n} <small>&middot; ${mp.t} &middot; Rec. ${mp.rec} (not a limit)</small></div>
     <div class="lvgrid">${Array.from({length:10},(_,i)=>{const l=i+1,lock=l>pr;return`<div class="map-node${lock?' locked':''}${S.mp===mapM&&S.lvl===l?' active':''}${mapL===l?' picked':''}${l===10?' boss-node':''}" data-a="sell_" data-v="${l}"><div>${l===10?'💀':'🌲'}</div><b>Lv ${l}</b><small>${secOf(l)===0?'Novice':secOf(l)===1?'1st job':secOf(l)===2?'2nd job':'Boss'}</small></div>`}).join('')}</div>
     <div class="mob-card"><div class="hd">&#128269; ${mp.n} Lv ${mapL} &mdash; ${SECN[F.sec]}</div>
-    ${F.mobs.map(m=>`<div><b>${m.n}</b><br><small>Drops: ${m.drops.map(dropTxt).join(', ')}</small><br><small class="r${GI[m.card.g]}">Card: ${m.card.n} (${SU(m.card.stat)} +${CV[m.card.g]}, ${GRADE[m.card.g]}) ${m.cardCh}%</small>${m.ore?'<br><small class="r4">Oridecon 1% &middot; Elunium 1%</small>':''}</div><hr>`).join('')}
-    ${F.boss?`<div><b class="r3">${F.boss.n} (BOSS)</b><br><small>Drops: ${F.boss.drops.map(dropTxt).join(', ')}</small><br><small class="r4">Card: ${F.boss.card.n} (${SU(F.boss.card.stat)} +5, Legendary) ${F.boss.cardCh}% &middot; Oridecon 1% &middot; Elunium 1%</small></div>`:`<small>Boss appears at Level 10.</small>`}
-    <button class="full" data-a="go" ${mapL>pr?'disabled':''}>${S.mp===mapM&&S.lvl===mapL?'You are here':'Travel to '+mp.n+' Lv '+mapL}</button></div>`},
-  status(){const c=C(),b=k=>bon(k)?` <small class="r1">+${bon(k)}</small>`:'';
-    return`<div class="hd">${S.cls} &middot; Base Lv ${S.lv} &middot; Job Lv ${jobOf().jl}/${c.mj}</div><div class="hd">Stat points: ${S.pts}</div>`
-    +STATS.map(([k,l,d])=>`<div class="slot"><span><b>${l}</b> ${S.st[k]}${b(k)} <small>(${d})</small></span><button data-a="stat" data-v="${k}" ${S.pts>=cost(k)?'':'disabled'}>+ ${cost(k)}pt</button></div>`).join('')
-    +`<div class="slot" style="flex-wrap:wrap"><span>ATK <b>${atk()}</b></span><span>DEF <b>${def()}</b></span><span>ASPD <b>${(1/aspd()).toFixed(2)}/s</b></span><span>Crit <b>${crit().toFixed(1)}%</b></span><span>Flee <b>${flee().toFixed(0)}%</b></span><span>HP <b>${maxHp()}</b></span></div>
+    ${F.mobs.map(m=>`<div><b>${m.n}</b><br><small>Drops: ${m.drops.map(dropTxt).join(', ')}</small><br><small class="r${GI[m.card.g]}">Card: ${m.card.n} (${SU(m.card.stat)} +${CV[m.card.g]}, ${GRADE[m.card.g]}) ${m.cardCh}%</small>${m.ore?'<br><small class="r4">Oridecon 0.4% &middot; Elunium 0.4%</small>':''}</div><hr>`).join('')}
+    ${F.boss?`<div><b class="r3">${F.boss.n} (BOSS)</b><br><small>Drops: ${F.boss.drops.map(dropTxt).join(', ')}</small><br><small class="r4">Card: ${F.boss.card.n} (${SU(F.boss.card.stat)} +${CV[3]}, Legendary) ${F.boss.cardCh}% &middot; Oridecon 0.4% &middot; Elunium 0.4%</small></div>`:`<small>Boss appears at Level 10.</small>`}
+    <div class="sec">🐾 Pet drops</div><small>0.3% per kill, 5% from bosses. Odds on ${mp.n}: ${PW[Math.min(mapM,9)].map((w,i)=>RN[i]+' '+w+'%').join(' &middot; ')}</small><button class="full" data-a="go" ${mapL>pr?'disabled':''}>${S.mp===mapM&&S.lvl===mapL?'You are here':'Travel to '+mp.n+' Lv '+mapL}</button></div>`},
+  stats(){const c=C(),b=k=>bon(k)?` <small class="r1">+${bon(k)}</small>`:'';
+    return`<div class="hd">${S.cls} &middot; Base Lv ${S.lv} &middot; Job Lv ${jobOf().jl}/${c.mj}</div><div class="hd">Stat points: ${S.pts} <small>(max 99 each &middot; max Base Lv 150)</small></div>`
+    +STATS.map(([k,l,d])=>`<div class="slot"><span><b>${l}</b> ${S.st[k]}${b(k)} <small>(${d})</small></span><span class="bts"><small>${cost(k)}pt</small><button data-a="stat" data-v="${k}" ${S.pts>=cost(k)&&S.st[k]<99?'':'disabled'}>+1</button><button data-a="stat5" data-v="${k}" ${S.pts>=cost(k)&&S.st[k]<99?'':'disabled'}>+5</button></span></div>`).join('')
+    +`<div class="slot" style="flex-wrap:wrap"><span>ATK <b>${atk()}</b></span><span>DEF <b>${def()}</b></span><span>ASPD <b>${(1/aspd()).toFixed(2)}/s</b></span><span>Crit <b>${crit().toFixed(1)}%</b></span><span>Crit DMG <b>x${critD().toFixed(2)}</b></span><span>MDEF <b>${mdef()}</b></span><span>Flee <b>${flee().toFixed(0)}%</b></span><span>HP <b>${maxHp()}</b></span></div>
     <small>Weapons: ${c.wt.join(', ')} &middot; Main stat: ${SU(c.main)}</small><button class="full" data-a="rstat">Reset stats (${rcost()}z)</button>`},
   job(){const lines=[['Swordman','Knight','Lord Knight'],['Mage','Wizard','High Wizard'],['Archer','Hunter','Sniper'],['Thief','Assassin','Assassin Cross'],['Acolyte','Priest','High Priest'],['Merchant','Blacksmith','Whitesmith']];
     const k=selK||S.cls,c=CLASSES[k],blk=classBlock(k),pj=S.jobs[k];
     return`<div class="tree"><div class="trow" style="justify-content:center">${tnode('Novice')}</div><div class="trunk"></div>
-    ${lines.map(ch=>`<div class="trow">${ch.map((n,i)=>(i?'<span class="arw">&#9654;</span>':'')+tnode(n)).join('')}</div>`).join('')}</div>
+    ${[0,1,2].map(i=>`<div class="trow">${lines.map(l=>tnode(l[i])).join('')}</div>${i<2?'<div class="trunk"></div>':''}`).join('')}</div>
     <div class="legend"><span class="tn cur">Current</span><span class="tn ok">Available</span><span class="tn played">Played</span><span class="tn lock">Locked</span></div>
     <div class="mob-card"><div class="hd">${k}</div><small>${c.par?'Before: <b>'+c.par+'</b>':'Starting class'}${c.kids.length?' &middot; Next: <b>'+c.kids.join(', ')+'</b>':''}</small><br>
     <small>${pj?`Saved Job Lv ${pj.jl}/${c.mj}`:'Not played yet'} &middot; ATK x${c.atk} &middot; ASPD x${c.aspd} &middot; HP x${c.hp}<br>Weapons: ${c.wt.join(', ')} &middot; Main stat ${SU(c.main)}</small>
     <div class="row" style="margin-top:6px"><button data-a="job" data-v="${k}" ${blk?'disabled':''}>${k===S.cls?'Current class':k==='Novice'?'Reset to Novice':'Change to '+k}</button>${blk&&k!==S.cls?`<small class="r0">${blk}</small>`:''}</div></div>
-    <button class="full" data-a="job" data-v="Novice" ${S.cls==='Novice'?'disabled':''}>Reset to Novice (keeps all saved Job Levels &amp; Base Lv)</button>`},
-  skills(){const line=lineOf(S.cls);return`<div class="hd">Skill points: ${skpAvail()} <small>(1 per Job Level, all classes)</small></div>`
-    +line.map(from=>{const ss=SKILLS.filter(s=>s.from===from);return ss.length?`<div class="sec">${from} skills</div>`+ss.map(s=>{const L=lv(s.id);
-      return`<div class="slot"><span><b>${s.n}</b> Lv ${L}/${s.max}${s.type==='pas'?' (passive)':''}<br><small>${s.d(Math.max(1,L))}</small>${L&&L<s.max?`<br><small>Next: ${s.d(L+1)}</small>`:''}</span><button data-a="skill" data-v="${s.id}" ${skpAvail()>0&&L<s.max?'':'disabled'}>+</button></div>`}).join(''):''}).join('')
+    <button class="full" data-a="job" data-v="Novice" ${S.cls==='Novice'?'disabled':''}>Reset to Novice (Job Lv &amp; skills reset, Base Lv becomes 25 if higher, stats refunded)</button>`},
+  skills(){const line=lineOf(S.cls),av=skpAvail(),sel=SKILLS.find(s=>s.id===selS);
+    return`<div class="hd">Skill points: ${av} <small>(1 per Job Level)</small></div>`+line.map(from=>{const ss=SKILLS.filter(s=>s.from===from);return ss.length?`<div class="sec">${from}</div><div class="skg">${ss.map(s=>{const L=lv(s.id);return`<div class="sk${L?'':' off'}${selS===s.id?' sel':''}" style="border-color:${s.col||'#8a6a2c'}" data-a="ssel" data-v="${s.id}"><div class="si">${s.type==='pas'?'📘':s.type==='heal'?'💚':'💥'}</div><small>${s.n}</small><div><b>${L}</b>/${s.max}</div><button data-a="skill" data-v="${s.id}" ${av>0&&L<s.max?'':'disabled'}>+</button></div>`}).join('')}</div>`:''}).join('')
+    +(sel?`<div class="mob-card" style="margin-top:8px"><b>${sel.n}</b> <small>${sel.type==='pas'?'Passive':sel.type==='heal'?'Auto-heal':'Active (auto-cast)'}${sel.rng?' &middot; RANGED':''}${sel.aoe?' &middot; AREA':''}</small><br><small>${sel.d(Math.max(1,lv(sel.id)))}</small>${lv(sel.id)&&lv(sel.id)<sel.max?`<br><small>Next: ${sel.d(lv(sel.id)+1)}</small>`:''}</div>`:'')
     +`<button class="full" data-a="rskill">Reset skills (${rcost()}z)</button>`},
-  bag(){const sel=selB&&S.inv.find(x=>String(x.id)===String(selB));const n=Math.max(30,Math.ceil(S.inv.length/6)*6);const inv=[...S.inv].sort((a,b)=>b.tier-a.tier||ev(b)-ev(a));
-    return`<div class="row"><small>${S.inv.length} items</small><button data-a="sellbelow" data-v="1">Sell Common/Fine</button><button data-a="sellbelow" data-v="2">Sell up to Rare</button></div>
+  bag0(){const sel=selB&&S.inv.find(x=>String(x.id)===String(selB));const n=Math.max(30,Math.ceil(S.inv.length/6)*6);const inv=[...S.inv].sort((a,b)=>b.tier-a.tier||ev(b)-ev(a));
+    return`<div class="row"><span class="chip">🔶 Oridecon <b>${S.ore.ori}</b></span><span class="chip">🔷 Elunium <b>${S.ore.elu}</b></span></div><div class="row" style="margin-top:4px"><small>${S.inv.length} items</small><button data-a="sellbelow" data-v="1">Sell Common/Fine</button><button data-a="sellbelow" data-v="2">Sell up to Rare</button></div>
     <div class="grid">${Array.from({length:n},(_,i)=>inv[i]?cell(inv[i],sel&&sel.id===inv[i].id,`data-a="selb" data-v="${inv[i].id}"`):'<div class="cell empty"></div>').join('')}</div>
     <div class="mob-card" style="margin-top:8px">${sel?itemDetail(sel)+`<div class="row" style="margin-top:6px"><button data-a="equip" data-v="${sel.id}" ${canUse(sel)?'':'disabled'}>Equip</button><button data-a="sell" data-v="${sel.id}">Sell ${sellVal(sel)}z</button></div>`:'<small>Click an item to see its stats. Hover for a quick tooltip.</small>'}</div>`},
-  equip(){return Object.keys(SLOTS).map(k=>{const e=S.eq[k];return`<div class="slot" style="align-items:flex-start;gap:10px">${e?cell(e,false):'<div class="cell empty"></div>'}<div style="flex:1"><small>${SLOTS[k].label}</small><br>${e?itemMain(e)+cardSlots(e,k):'<span>&mdash; empty &mdash;</span>'}</div></div>`}).join('')+'<small>Insert cards from the Cards window.</small>'},
+  equip(){const c=C(),sel=S.eq[selE],pos={head:'grid-column:2;grid-row:1',weapon:'grid-column:1;grid-row:2',armor:'grid-column:2;grid-row:2',off:'grid-column:3;grid-row:2',acc1:'grid-column:1;grid-row:3',leg:'grid-column:2;grid-row:3',acc2:'grid-column:3;grid-row:3'};
+    return`<div class="doll">${EQK.map(([k,l,ic])=>{const e=S.eq[k];return`<div class="cell b${e?dtier(e):0}${selE===k?' sel':''}" style="${pos[k]}" data-a="seleq" data-v="${k}" ${e?`data-tip="${e.id}"`:''}>${e?icon(e)+(e.r?`<i class="rf">+${e.r}</i>`:''):`<span style="opacity:.3">${ic}</span>`}<i class="rf" style="left:2px;right:auto;top:2px;bottom:auto;color:#fff;background:#3b2a1add;font-size:9px;font-style:normal">${l}</i></div>`}).join('')}</div>`
+    +`<div class="mob-card">${sel?itemMain(sel)+cardSlots(sel,selE)+insertUI(sel)+refineUI(sel,selE)+`<div class="row" style="margin-top:6px"><button data-a="unequip" data-v="${selE}">Unequip</button></div>`:'<small>Select a slot to inspect it. Remove cards here (costs Zeny).</small>'}</div>`
+    +`<small>Weapons: ${c.wt.join(', ')} &middot; ${canShield()?'Shield allowed':'No shield'}${dualOn()?' &middot; <b>Dual-wield: daggers/katars in both hands</b>':''}</small>`},
   cards(){const g={};S.cards.forEach(c=>(g[c.n]=g[c.n]||[]).push(c));const ks=Object.keys(g),sel=g[selC]?g[selC][0]:null;
     return`<div class="grid">${ks.map(n=>`<div class="cell b${GI[g[n][0].g]}${n===selC?' sel':''}" data-a="selc" data-v="${n}" data-tip="${g[n][0].id}">🃏<i class="rf">x${g[n].length}</i></div>`).join('')||'<small>No cards yet. Every monster drops its own card at a low chance.</small>'}</div>
-    ${sel?`<div class="mob-card" style="margin-top:8px">${itemDetail(sel)}<div class="row" style="margin-top:6px">${Object.keys(SLOTS).map(k=>{const e=S.eq[k];return e&&(e.cards||[]).length<(e.slots||0)?`<button data-a="sock" data-v="${sel.id}:${k}">&rarr; ${SLOTS[k].label}</button>`:''}).join('')}<button data-a="sellcard" data-v="${sel.id}">Sell ${sel.v*150}z</button></div></div>`:''}`},
-  quest(){return S.q.map((q,i)=>`<div class="slot" style="flex-direction:column;align-items:stretch"><b>${qTxt(q)}</b><div class="pbar"><i style="width:${Math.min(100,q.prog/q.goal*100)}%"></i></div><small>${q.prog}/${q.goal} &middot; ${q.z.toLocaleString()}z, ${q.xp.toLocaleString()} EXP</small><button data-a="claim" data-v="${i}" ${q.prog>=q.goal?'':'disabled'}>Claim reward</button></div>`).join('')},
-  refine(){return`<div class="hd">Oridecon: ${S.ore.ori} &middot; Elunium: ${S.ore.elu}</div><small>Weapons use Oridecon, armor/headgear use Elunium. Both drop at 1% in Level 10 boss maps.</small>`+Object.keys(SLOTS).map(k=>{const it=S.eq[k];if(!it)return`<div class="slot"><span>${SLOTS[k].label}</span><small>empty</small></div>`;
-    const r=it.r||0,o=k==='weapon'?'ori':'elu',c=refCost(it);return`<div class="slot" style="align-items:flex-start;gap:10px;margin-top:6px">${cell(it,false)}<div style="flex:1"><b class="r${it.tier}">${iname(it)}</b><br><small>${SLOTS[k].stat} +${ev(it)} &rarr; +${Math.round(it.val*(1+(r+1)*.15))} &middot; ${r>=10?'MAX':'Success '+refCh(it)+'%'}${r>=5?' (fail: -1)':''}</small><br><button data-a="refine" data-v="${k}" ${r>=10||S.zeny<c||S.ore[o]<1?'disabled':''}>Refine: 1 ${ORE[o]} + ${c}z</button></div></div>`}).join('')},
+    ${sel?`<div class="mob-card" style="margin-top:8px">${itemDetail(sel)}<div class="row" style="margin-top:6px">${EQK.map(([k,l])=>{const e=S.eq[k];return e&&(e.cards||[]).length<(e.slots||0)&&CFIT[sel.stat]===grp(e)?`<button data-a="sock" data-v="${sel.id}:${k}">&rarr; ${l}</button>`:''}).join('')}<button data-a="sellcard" data-v="${sel.id}">Sell ${sel.v*150}z</button></div></div>`:''}`},
+  refine(){return`<div class="hd">Oridecon: ${S.ore.ori} &middot; Elunium: ${S.ore.elu}</div><small>Weapons use Oridecon; armor, shield, legs, headgear and accessories use Elunium (0.4% drop from Level 10 bosses).</small>`
+    +EQK.map(([k,l])=>{const it=S.eq[k];if(!it)return'';const r=it.r||0,o=it.slot==='weapon'?'ori':'elu',c=refCost(it);
+      return`<div class="slot" style="align-items:flex-start;gap:10px;margin-top:6px">${cell(it,false)}<div style="flex:1"><b class="r${it.tier}">${iname(it)}</b> <small>${l}</small><br><small>${SLOTS[it.slot].stat} +${ev(it)} &rarr; +${Math.round(it.val*(1+(r+1)*.15))} &middot; ${r>=10?'MAX':'Success '+refCh(it)+'% &middot; '+c.toLocaleString()+'z + 1 '+ORE[o]}</small><br><button data-a="refine" data-v="${k}" ${r>=10||S.ore[o]<1||S.zeny<c?'disabled':''}>Refine</button></div></div>`}).join('')},
+  pet(){const P=S.pets,A=P.filter(p=>p.on).length,p=gp(selP);
+    return`<div class="hd">Pets <small>Fighting ${A}/3 &middot; Collection ${P.length}</small></div><small>Pets drop from monsters. Drop odds per map are on the World Map.</small><div class="grid" style="margin-top:6px">${P.map(q=>{const sp=PETS[q.sp];return`<div class="cell b${RCL[sp.r]}${selP===q.id?' sel':''}" style="font-size:30px" data-a="selp" data-v="${q.id}">${sp.ic}${q.on?'<i class="rf" style="left:2px;right:auto;top:2px;bottom:auto;font-style:normal">ON</i>':''}${q.mut?`<i class="rf">G${q.mut}</i>`:''}</div>`}).join('')||'<small>No pets yet.</small>'}</div>`+(p?petDetail(p):'<small>Select a pet to manage it.</small>')},
   log(){return logs.map(l=>`<div class="${l.cls||''}">${l.m}</div>`).join('')||'<i>No events yet.</i>'},
   set(){return`<label><input type="checkbox" data-a="auto" ${S.auto!==false?'checked':''}> Auto-equip better gear</label><br><label><input type="checkbox" data-a="adv" ${S.adv!==false?'checked':''}> Auto-advance to next level (turn off to farm)</label>
-    <p><small>Drag the view to rotate, scroll to zoom. Hotkeys: M S J K B E C Q R L O, Esc to close.</small></p><button class="full" data-a="reset">Erase this account's save &amp; restart</button><button class="full" data-a="logout">Logout</button>`},
+    <p><small>Drag the view to rotate, scroll to zoom. Hotkeys: M S J K B E C Q R L P O, Esc to close.</small></p><button class="full" data-a="reset">Erase this account's save &amp; restart</button><button class="full" data-a="logout">Logout</button>`},
   gm(){return`<div class="hd">GM multiplier (EXP, Job EXP, Zeny, quests)</div><div class="row">${[1,10,100,1000].map(x=>`<button data-a="gmx" data-v="${x}" ${S.gmx===x?'style="background:#ffe08a"':''}>x${x}</button>`).join('')}</div>
-    <div class="row" style="margin-top:8px"><button data-a="gmz">+1,000,000 Zeny</button><button data-a="gmo">+20 Oridecon &amp; Elunium</button><button data-a="gml">+10 Base Levels</button><button data-a="gmj">Max Job Lv (current class)</button><button data-a="gmu">Unlock all map levels</button></div>`}};
+    <div class="row" style="margin-top:8px"><button data-a="gmz">+1,000,000 Zeny</button><button data-a="gmo">+20 Oridecon &amp; Elunium</button><button data-a="gml">+10 Base Levels</button><button data-a="gmj">Max Job Lv (current class)</button><button data-a="gmu">Unlock all map levels</button></div><div class="hd" style="margin-top:10px">Test pets</div><div class="row">${RN.map((n,i)=>`<button data-a="gmp" data-v="${i}">+ ${n} pet</button>`).join('')}</div><div class="row" style="margin-top:6px"><button data-a="gmm" data-v="4">All pets G4</button><button data-a="gmm" data-v="6">All pets G6</button><button data-a="gmc">Clear pets</button></div>`}};
+const EQK=[['head','Head','🎩'],['weapon','R.Hand','⚔️'],['armor','Body','🥼'],['off','L.Hand','🛡️'],['acc1','Acc 1','💍'],['leg','Legs','👖'],['acc2','Acc 2','💍']];
+const CFIT={str:'weapon',dex:'weapon',agi:'armor',int:'head',luk:'acc'},CFL={weapon:'Weapons',armor:'Armor, Shield & Legwear',head:'Headgear',acc:'Accessories'};
+const grp=it=>it.slot==='weapon'?'weapon':it.slot==='head'?'head':it.slot==='acc'?'acc':'armor';
+function canShield(){return /^(Novice|Swordman|Knight|Lord Knight|Acolyte|Priest|High Priest|Merchant|Blacksmith|Whitesmith)$/.test(S.cls)}
+function dualOn(){return S.cls==='Assassin'||S.cls==='Assassin Cross'}
+function dualOk(it){return dualOn()&&(it.wt==='dagger'||it.wt==='katar')}
+function ekey(it){if(it.slot==='acc')return S.eq.acc1&&!S.eq.acc2?'acc2':'acc1';
+  if(it.slot==='weapon'&&dualOk(it)&&S.eq.weapon)return(!S.eq.off||S.eq.off.slot!=='weapon'||ev(S.eq.off)<=ev(S.eq.weapon))?'off':'weapon';return it.slot}
+const tabs=[];let selP=null,selS=null,selE='weapon',qOpen=true;const sub={status:'stats',bag:'bag'};
+const SUBS={status:[['stats','Stats'],['equip','Equipment']],bag:[['bag','Bag'],['cards','Cards']]};
+const subBar=t=>`<div class="atabs">${SUBS[t].map(([k,n])=>`<button data-a="sub" data-v="${t}:${k}" class="${sub[t]===k?'on':''}">${n}</button>`).join('')}</div>`;
+V.status=()=>subBar('status')+V[sub.status]();V.bag=()=>subBar('bag')+V[sub.bag==='bag'?'bag0':sub.bag]();
+function renderQ(){const e=$('qp');if(!S){e.style.display='none';return}e.style.display=tabs.length?'none':'block';
+  e.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:center;font-weight:bold"><span>📜 Quests</span><button data-q="t" style="padding:0 6px">${qOpen?'&minus;':'+'}</button></div>`+(qOpen?S.q.map((q,i)=>`<div style="margin-top:5px"><div>${qTxt(q)}</div><div class="pbar"><i style="width:${Math.min(100,q.prog/q.goal*100)}%"></i></div><div style="display:flex;justify-content:space-between;align-items:center"><small>${q.prog}/${q.goal} &middot; ${q.z.toLocaleString()}z &middot; ${q.xp.toLocaleString()}xp</small>${q.prog>=q.goal?`<button data-q="c${i}">Claim</button>`:''}</div></div>`).join(''):'')}
+$('qp').onclick=e=>{const b=e.target.closest('[data-q]');if(!b)return;const v=b.dataset.q;if(v==='t'){qOpen=!qOpen;renderQ()}else ACT.claim(v.slice(1))};
+function refineUI(it,k){const r=it.r||0,o=it.slot==='weapon'?'ori':'elu',c=refCost(it);return`<div class="sec">Refine</div><small>${SLOTS[it.slot].stat} +${ev(it)} &rarr; +${Math.round(it.val*(1+(r+1)*.15))} &middot; ${r>=10?'MAX':'Success '+refCh(it)+'% &middot; '+c.toLocaleString()+'z + 1 '+ORE[o]+' (you have '+S.ore[o]+')'}</small><div class="row" style="margin-top:4px"><button data-a="refine" data-v="${k}" ${r>=10||S.ore[o]<1||S.zeny<c?'disabled':''}>Refine</button></div>`}
+function petDetail(p){const sp=PETS[p.sp],g=p.mut,sk=p.sk||[1,2,3];
+  return`<div class="mob-card" style="margin-top:8px"><div class="hd r${RCL[sp.r]}">${sp.ic} ${sp.n} <small>${RN[sp.r]}</small></div><small>Mutation: <b>${g?'Grade '+g+' (x'+MUT[g]+' dmg)':'none (x1)'}</b> &middot; ${petDmg(p).toLocaleString()} dmg every ${petInt(p).toFixed(2)}s</small>`
+  +p.eq.map((t,i)=>`<div class="slot"><span>${PEQ[i].n}: <b>${t?PT[t-1]:'none'}</b> <small>${PEQ[i].d(t)}</small></span><button data-a="peq" data-v="${p.id}:${i}" ${t>=5||S.zeny<peqCost(t)?'disabled':''}>${t>=5?'MAX':'Upgrade '+peqCost(t).toLocaleString()+'z'}</button></div>`).join('')
+  +`<div class="row" style="margin-top:6px"><button data-a="pon" data-v="${p.id}">${p.on?'Remove from battle':'Send to battle'}</button><button data-a="prel" data-v="${p.id}">Release</button></div><div class="sec">Mutation</div>`
+  +`<div class="row"><button data-a="proll" data-v="${p.id}" ${busy(p)?'disabled':''}>🎲 Roll (${rollCost(p).toLocaleString()}z)</button><button data-a="pauto" data-v="${p.id}" ${p.roll||(rollingSet.has(p.id)&&!autoSet.has(p.id))?'disabled':''}>${autoSet.has(p.id)?'⏹ Stop auto':'🔁 Auto roll'}</button></div>`
+  +`<small>Auto-roll: tap a grade to skip it (✕) or stop on it (✓)</small><div class="row gt">${[1,2,3,4,5,6].map(x=>`<button data-a="psk" data-v="${p.id}:${x}" class="${sk.includes(x)?'':'on'}">G${x} ${sk.includes(x)?'✕':'✓'}</button>`).join('')}</div>`
+  +(rollingSet.has(p.id)?`<div class="slot" id="rf${p.id}">🎲 Rolling...</div>`:p.last?`<small>Last roll: Grade ${p.last}</small>`:'')
+  +(p.roll?`<div class="slot"><span>Rolled <b>Grade ${p.roll}</b> (x${MUT[p.roll]})</span><span><button data-a="pkeep" data-v="${p.id}">Keep new</button> <button data-a="pdisc" data-v="${p.id}">Keep old</button></span></div>`:'')
+  +`<small>Odds: G1 50% &middot; G2 30% &middot; G3 16.5% &middot; G4 2.5% &middot; G5 0.8% &middot; G6 0.2%</small></div>`}
+function ask(msg,yes){$('mt').textContent=msg;$('modal').style.display='flex';$('my').onclick=()=>{$('modal').style.display='none';yes()};$('mn').onclick=()=>{$('modal').style.display='none'}}
+function insertUI(sel){if(!(sel.slots>0))return'<small>No card slots on this item.</small>';if((sel.cards||[]).length>=sel.slots)return'';const fit=S.cards.filter(c=>CFIT[c.stat]===grp(sel));
+  return'<div class="sec">Insert card</div>'+([...new Map(fit.map(c=>[c.n,c])).values()].map(c=>`<div class="slot"><span class="r${GI[c.g]}">🃏 ${c.n} <small>${SU(c.stat)} +${CV[c.g]} &middot; x${fit.filter(x=>x.n===c.n).length}</small></span><button data-a="sock" data-v="${c.id}:${selE}">Insert</button></div>`).join('')||'<small>No compatible cards in your bag.</small>')}
 function renderWin(){
   if(!S)return;
-  $('dock').innerHTML=Object.entries(TABS).filter(([k])=>k!=='gm'||S.gm).map(([k,[ic,n,key]])=>`<button class="ib${tab===k?' on':''}" data-t="${k}" title="${n} (${key})">${ic}<span class="k">${key}</span>${dot(k)?'<i class="dot"></i>':''}</button>`).join('');
-  const w=$('wnd');w.style.display=tab?'flex':'none';if(!tab)return;const sc=$('wb').scrollTop;
-  $('wt').textContent=TABS[tab][1];$('wb').innerHTML=V[tab]();$('wb').scrollTop=tab==='log'?1e6:sc}
-const openTab=k=>{if(k==='gm'&&!S.gm)return;tab=tab===k?null:k;if(tab==='map'){mapM=S.mp;mapL=S.lvl}renderWin()};
-const gotoField=(m,l)=>{S.mp=m;S.lvl=l;S.kl=0;mob=null;respawn=.3;pend=[];ui();save()};
+  $('dock').innerHTML=Object.entries(TABS).filter(([k])=>k!=='gm'||S.gm).map(([k,[ic,n,key]])=>`<button class="ib${tabs.includes(k)?' on':''}" data-t="${k}" title="${n} (${key})">${ic}<span class="k">${key}</span>${dot(k)?'<i class="dot"></i>':''}</button>`).join('');
+  renderQ();const host=$('wins');host.style.display=tabs.length?'flex':'none';
+  const old={};host.querySelectorAll('[data-win]').forEach(e=>old[e.dataset.win]=e.querySelector('.wbody').scrollTop);
+  host.innerHTML=tabs.map(k=>`<div class="win wp" data-win="${k}"><div class="title"><span>${TABS[k][1]}</span><button data-x="${k}">&#10005;</button></div><div class="body wbody">${V[k]()}</div></div>`).join('');
+  host.querySelectorAll('[data-win]').forEach(e=>{e.querySelector('.wbody').scrollTop=e.dataset.win==='log'?1e6:(old[e.dataset.win]||0)})}
+const openTab=k=>{if(k==='gm'&&!S.gm)return;const i=tabs.indexOf(k);if(i>=0)tabs.splice(i,1);else{tabs.push(k);if(k==='map'){mapM=S.mp;mapL=S.lvl}}renderWin()};
+const gotoField=(m,l)=>{S.mp=m;S.lvl=l;S.kl=0;mobs=[];mob=null;respawn=.3;pend=[];ui();save()};
 const ACT={
   selm:v=>{mapM=+v;mapL=Math.min(mapL,Math.max(1,S.prog[mapM]));renderWin()},sell_:v=>{mapL=+v;renderWin()},go:()=>{if(mapL<=S.prog[mapM]){gotoField(mapM,mapL);log(`Traveled to ${fieldName()}.`)}},
-  stat:k=>{if(S.pts>=cost(k)){S.pts-=cost(k);S.st[k]++;S.hp=Math.min(S.hp,maxHp());ui();save()}},
-  selk:v=>{selK=v;renderWin()},job:n=>changeClass(n),
+  stat:k=>{if(S.pts>=cost(k)&&S.st[k]<99){S.pts-=cost(k);S.st[k]++;S.hp=Math.min(S.hp,maxHp());ui();save()}},
+  stat5:k=>{for(let i=0;i<5;i++)if(S.pts>=cost(k)&&S.st[k]<99){S.pts-=cost(k);S.st[k]++}S.hp=Math.min(S.hp,maxHp());ui();save()},
+  selk:v=>{selK=v;renderWin()},job:n=>{if(n==='Novice')ask('Reset to Novice? All Job Levels and skills reset, Base Lv drops to 25 if above it, stats are refunded.',()=>changeClass(n));else changeClass(n)},
   rstat:()=>{if(S.zeny<rcost())return log('Not enough Zeny to reset stats.');S.zeny-=rcost();for(const k in S.st)S.st[k]=1;S.pts=totalPts();S.hp=Math.min(S.hp,maxHp());log('Stats reset.');ui();save()},
   skill:id=>{const s=SKILLS.find(x=>x.id===id);if(skpAvail()>0&&lv(id)<s.max&&lineOf(S.cls).includes(s.from)){S.sk[id]=lv(id)+1;ui();save()}},
   rskill:()=>{if(S.zeny<rcost())return log('Not enough Zeny to reset skills.');S.zeny-=rcost();S.sk={aid:1};log('Skills reset.');ui();save()},
   selb:v=>{selB=v;renderWin()},equip:id=>equip(+id),sell:id=>sell(id),sellbelow:v=>{S.inv.filter(i=>i.tier<=+v).slice().forEach(i=>sell(i.id))},
   selc:v=>{selC=v;renderWin()},
-  sock:v=>{const[id,k]=v.split(':'),i=S.cards.findIndex(c=>String(c.id)===id),e=S.eq[k];if(i<0||!e||(e.cards||[]).length>=(e.slots||0))return;e.cards=e.cards||[];e.cards.push(S.cards.splice(i,1)[0]);S.hp=Math.min(S.hp,maxHp());ui();save()},
+  sock:v=>{const[id,k]=v.split(':'),i=S.cards.findIndex(c=>String(c.id)===id),e=S.eq[k];if(i<0||!e||(e.cards||[]).length>=(e.slots||0))return;if(CFIT[S.cards[i].stat]!==grp(e)){log('That card cannot be fitted into this type of equipment.');return}e.cards=e.cards||[];e.cards.push(S.cards.splice(i,1)[0]);S.hp=Math.min(S.hp,maxHp());ui();save()},
   unsock:v=>{const[k,i]=v.split(':'),e=S.eq[k];if(!e)return;const c=e.cards[+i],p=200*(c.g+1);if(S.zeny<p)return log('Not enough Zeny to remove the card.');S.zeny-=p;e.cards.splice(+i,1);S.cards.push(c);S.hp=Math.min(S.hp,maxHp());ui();save()},
   sellcard:id=>{const i=S.cards.findIndex(c=>String(c.id)===id);if(i<0)return;const c=S.cards.splice(i,1)[0];S.zeny+=c.v*150;ui();save()},
-  refine:k=>refine(k),
+  refine:k=>refine(k),sub:v=>{const[t,k]=v.split(':');sub[t]=k;renderWin()},selp:v=>{selP=+v;renderWin()},
+  pon:id=>{const p=gp(id);if(!p)return;if(p.on)p.on=false;else if(S.pets.filter(x=>x.on).length<3)p.on=true;else log('Only 3 pets can fight at once. Remove one first.');ui();save()},
+  psk:v=>{const[id,g]=v.split(':'),p=gp(id);if(!p)return;const a=(p.sk||[1,2,3]).slice(),i=a.indexOf(+g);if(i>=0)a.splice(i,1);else a.push(+g);p.sk=a;ui();save()},ssel:v=>{selS=v;renderWin()},seleq:v=>{selE=v;renderWin()},
+  unequip:k=>{const it=S.eq[k];if(!it)return;S.inv.push(it);S.eq[k]=null;S.hp=Math.min(S.hp,maxHp());ui();save()},
+  egg:()=>{if(S.pets.length>=3||S.zeny<EGG)return;S.zeny-=EGG;const r=pickW(RW),c=PETS.filter(x=>x.r===r),sp=PETS.indexOf(c[ri(0,c.length-1)]);S.pets.push({id:ri(1e6,9e6),sp,mut:0,eq:[0,0,0]});log(`A ${RN[r]} pet hatched: ${PETS[sp].n}!`,'r'+RCL[r]);ui();save()},
+  peq:v=>{const[id,i]=v.split(':'),p=gp(id);if(!p)return;const t=p.eq[+i];if(t>=5||S.zeny<peqCost(t))return;S.zeny-=peqCost(t);p.eq[+i]++;ui();save()},
+  proll:id=>{const p=gp(id);if(!p||p.roll||rollingSet.has(p.id))return;rollOnce(p,false,g=>{p.roll=g;log(`Mutation roll: Grade ${g} (x${MUT[g]})`,g>=4?'r4':'r0');ui();save()})},pauto:id=>{const p=gp(id);if(!p)return;if(autoSet.has(p.id)){autoSet.delete(p.id);ui();return}if(p.roll||rollingSet.has(p.id))return;if((p.sk||[1,2,3]).length>=6){log('Un-skip at least one grade to auto-roll.');return}autoSet.add(p.id);autoRoll(p)},ptg:v=>{const[id,d]=v.split(':'),p=gp(id);if(p){p.tg=cl((p.tg||4)+ +d,1,6);ui();save()}},
+  pkeep:id=>{const p=gp(id);if(p){p.mut=p.roll;p.roll=0;ui();save()}},pdisc:id=>{const p=gp(id);if(p){p.roll=0;ui();save()}},
+  prel:id=>{const p=gp(id);if(!p)return;const z=Math.floor(EGG*.3);ask(`Release ${PETS[p.sp].n}? You get ${z}z back.`,()=>{S.pets=S.pets.filter(x=>x!==p);autoSet.delete(p.id);S.zeny+=z;ui();save()})},
   claim:i=>{const q=S.q[+i];if(q&&q.prog>=q.goal){S.zeny+=q.z;S.exp+=q.xp;log(`Quest complete! +${q.z.toLocaleString()}z, +${q.xp.toLocaleString()} EXP`,'r3');S.q[+i]=newQuest(q.type);checkLevel();ui();save()}},
   auto:()=>{S.auto=S.auto===false;ui()},adv:()=>{S.adv=S.adv===false;ui()},logout:()=>logout(),
-  reset:()=>{if(confirm('Erase this account save and start over?')){const gm=S.gm;S=fresh();S.gm=gm;S.q=['kill','loot','boss'].map(newQuest);floats.forEach(f=>f.el&&f.el.remove());floats=[];drops=[];pend=[];mob=null;respawn=.3;logs=[];log('New adventure started.');ui();save()}},
-  gmx:v=>{S.gmx=+v;ui();save()},gmz:()=>{S.zeny+=1e6;ui();save()},gmo:()=>{S.ore.ori+=20;S.ore.elu+=20;ui();save()},gml:()=>{S.lv+=10;S.pts+=30;S.hp=maxHp();ui();save()},
-  gmj:()=>{const j=jobOf();j.jl=C().mj;j.jx=0;ui();save()},gmu:()=>{S.prog=[10,10,10,10,10];ui();save()}};
+  reset:()=>{ask('Erase this account save and start over?',()=>{const gm=S.gm;S=fresh();S.gm=gm;S.q=['kill','loot','boss'].map(newQuest);floats.forEach(f=>f.el&&f.el.remove());floats=[];drops=[];pend=[];mobs=[];mob=null;respawn=.3;logs=[];log('New adventure started.');ui();save()})},
+  gmx:v=>{S.gmx=+v;ui();save()},gmz:()=>{S.zeny+=1e6;ui();save()},gmo:()=>{S.ore.ori+=20;S.ore.elu+=20;ui();save()},gml:()=>{S.lv=Math.min(150,S.lv+10);S.pts+=30;S.hp=maxHp();ui();save()},
+  gmj:()=>{const j=jobOf();j.jl=C().mj;j.jx=0;ui();save()},gmu:()=>{S.prog=MAPS.map(()=>10);ui();save()},gmp:v=>{if(S.pets.length>=40)S.pets.shift();const c=PETS.filter(x=>x.r===+v);S.pets.push({id:ri(1e6,9e6),sp:PETS.indexOf(c[ri(0,c.length-1)]),mut:0,eq:[0,0,0],on:S.pets.filter(x=>x.on).length<3});ui();save()},gmm:v=>{S.pets.forEach(p=>p.mut=+v);ui();save()},gmc:()=>{S.pets=[];ui();save()}};
 $('dock').onclick=e=>{const b=e.target.closest('[data-t]');if(b)openTab(b.dataset.t)};
-$('wx').onclick=()=>openTab(tab);
-$('wnd').onclick=e=>{const b=e.target.closest('[data-a]');if(b&&!b.disabled&&ACT[b.dataset.a])ACT[b.dataset.a](b.dataset.v)};
-addEventListener('keydown',e=>{if(!S||e.ctrlKey||e.metaKey||e.altKey||/INPUT|TEXTAREA/.test(e.target.tagName))return;const k=e.key.toUpperCase();if(k==='ESCAPE'){if(tab)openTab(tab);return}const f=Object.entries(TABS).find(([,v])=>v[2]===k);if(f)openTab(f[0])});
+$('wins').onclick=e=>{const x=e.target.closest('[data-x]');if(x){openTab(x.dataset.x);return}const b=e.target.closest('[data-a]');if(b&&!b.disabled&&ACT[b.dataset.a])ACT[b.dataset.a](b.dataset.v)};
+addEventListener('keydown',e=>{if(!S||e.ctrlKey||e.metaKey||e.altKey||/INPUT|TEXTAREA/.test(e.target.tagName))return;const k=e.key.toUpperCase();if(k==='ESCAPE'){tabs.pop();renderWin();return}if(k==='Q'){qOpen=!qOpen;renderQ();return}const X={E:['status','equip'],C:['bag','cards'],R:['status','equip']}[k];if(X){const same=tabs.includes(X[0])&&sub[X[0]]===X[1];sub[X[0]]=X[1];if(same)openTab(X[0]);else{if(!tabs.includes(X[0]))tabs.push(X[0]);renderWin()}return}const f=Object.entries(TABS).find(([,v])=>v[2]===k);if(f)openTab(f[0])});
 $('spd').onclick=()=>{speed=speed===1?2:speed===2?4:1;$('spd').textContent='Speed x'+speed};
 const tip=$('tooltip');
 document.addEventListener('mouseover',e=>{const c=S&&e.target.closest&&e.target.closest('[data-tip]');if(!c){tip.style.display='none';return}const it=find(c.dataset.tip);if(!it){tip.style.display='none';return}
@@ -431,21 +515,29 @@ function update(dt){
   if(skillOn('aid')&&S.hp<maxHp()*.5&&(skCd.aid||0)<=0){skCd.aid=6;const h=Math.ceil(maxHp()*(.1+.05*lv('aid')));S.hp=Math.min(maxHp(),S.hp+h);addFloat(pl.x,2.6,pl.z,'+'+h,'#7dff7d')}
   for(let i=pend.length-1;i>=0;i--){const p=pend[i];p.t-=dt;if(p.t<=0){pend.splice(i,1);strike(p.m,p.col);shot(p.col);if(mob&&mob.hp<=0){kill();break}}}
   let tx=0,tz=1.5,reach=1.4;
-  if(!mob){respawn-=dt;if(respawn<=0)spawn()}
+  if(!mobs.length){respawn-=dt;if(respawn<=0)spawn()}
   else{
-    mob.spawn=Math.min(1,mob.spawn+dt*3);mob.flash=Math.max(0,(mob.flash||0)-dt*6);
-    const rng=C().rng;reach=rng?3:1.2+.45*mob.size;let dx=mob.x-pl.x,dz=mob.z-pl.z,dist=Math.hypot(dx,dz)||.01;
-    const mstop=2.6+.3*mob.size,MR=2.9+.3*mob.size;mob.ry=Math.atan2(-dz,dx);
-    if(dist>mstop){const v=dt*(mob.boss?1.2:1.6);mob.x-=dx/dist*v;mob.z-=dz/dist*v}
-    mob.x=cl(mob.x,-BX_,BX_);mob.z=cl(mob.z,Z0,Z1);
-    pl.orb+=dt*.8;const r=rng?3:reach*.8;tx=mob.x+Math.cos(pl.orb)*r;tz=mob.z+Math.sin(pl.orb)*r;
-    dx=mob.x-pl.x;dz=mob.z-pl.z;dist=Math.hypot(dx,dz)||.01;
-    if(dist<=reach+.6){pAtkT-=dt;if(pAtkT<=0){playerAttack();if(mob.hp<=0){kill();return}}}
-    if(dist<=MR){mAtkT-=dt;if(mAtkT<=0){mAtkT=mob.boss?1.2:1.5;
-      if(Math.random()*100<flee())addFloat(pl.x,2.4,pl.z,'Miss','#8cf');
-      else{const d=Math.max(1,Math.round(mob.atk*rnd(.8,1.2)-def()*.6));S.hp-=d;hitAnim=1;addFloat(pl.x,2.4,pl.z,d,'#ff6b6b');
-        if(S.hp<=0){log('You were defeated... resting and retrying.','r0');S.hp=maxHp();S.kl=0;mob=null;respawn=1.5;pend=[];ui()}}}}
+    const rng=C().rng;
+    for(const m of mobs){
+      m.spawn=Math.min(1,m.spawn+dt*3);m.flash=Math.max(0,(m.flash||0)-dt*6);
+      const ms=2.6+.3*m.size,gx2=pl.x+Math.cos(m.a)*ms,gz2=pl.z+Math.sin(m.a)*ms*.6,ex=gx2-m.x,ez=gz2-m.z,ed=Math.hypot(ex,ez);
+      if(ed>.1){const v=Math.min(ed,dt*(m.boss?1.2:1.6));m.x+=ex/ed*v;m.z+=ez/ed*v}
+      m.x=cl(m.x,-BX_,BX_);m.z=cl(m.z,Z0,Z1);m.ry=Math.atan2(pl.z-m.z,m.x-pl.x);
+      if(Math.hypot(pl.x-m.x,pl.z-m.z)<=ms+.4){m.at-=dt;if(m.at<=0){m.at=m.boss?1.2:1.5;
+        if(Math.random()*100<flee())addFloat(pl.x,2.4,pl.z,'Miss','#8cf');
+        else{const d=Math.max(1,Math.round(m.atk*rnd(.8,1.2)-(m.mag?mdef():def())*.6));S.hp-=d;hitAnim=1;addFloat(pl.x,2.4,pl.z,d,m.mag?'#c08cff':'#ff6b6b');
+          if(S.hp<=0){log('You were defeated... resting and retrying.','r0');S.hp=maxHp();S.kl=0;mobs=[];mob=null;respawn=1.5;pend=[];ui();return}}}}
+    }
+    if(!mob||!mobs.includes(mob)){mob=null;let bd=1e9;for(const m of mobs){const d=Math.hypot(m.x-pl.x,m.z-pl.z);if(d<bd){bd=d;mob=m}}}
+    if(mob){reach=rng?3:1.2+.45*mob.size;pl.orb+=dt*.8;const r=rng?3:reach*.8;tx=mob.x+Math.cos(pl.orb)*r;tz=mob.z+Math.sin(pl.orb)*r;
+      const dist=Math.hypot(mob.x-pl.x,mob.z-pl.z)||.01;
+      if(dist<=reach+.6||(dist<=5&&skillOn('soulb')&&(skCd.soulb||0)<=0)){pAtkT-=dt;if(pAtkT<=0){playerAttack();if(mob&&mob.hp<=0){kill();return}}}}
   }
+  const AP=S.pets.filter(p=>p.on);for(const p of AP){const r=petR[p.id]||(petR[p.id]={x:pl.x-1,z:pl.z+1,at:rnd(0,1)}),i=AP.indexOf(p);let o=null,bd=1e9;
+    for(const m of mobs){const d=Math.hypot(m.x-r.x,m.z-r.z);if(d<bd){bd=d;o=m}}
+    const ex=(o?o.x+(i-1)*.8:pl.x-1.2)-r.x,ez=(o?o.z+1.2:pl.z+(i-1)*1.1)-r.z,ed=Math.hypot(ex,ez);r.run=ed>.2;
+    if(ed>.05){const v=Math.min(ed,6*dt);r.x+=ex/ed*v;r.z+=ez/ed*v}r.x=cl(r.x,-BX_,BX_);r.z=cl(r.z,Z0-1,Z1+1);r.lunge=Math.max(0,(r.lunge||0)-dt*4);
+    if(o&&bd<2.4){r.at-=dt;if(r.at<=0){r.at=petInt(p);r.lunge=1;let d=petDmg(p)*rnd(.9,1.1);const c=Math.random()*100<p.eq[2]*6;if(c)d*=2;hurt(o,Math.max(1,Math.round(d)),MC[p.mut]?'#'+MC[p.mut].toString(16).padStart(6,'0'):'#ff9dff',c)}}}
   const px=tx-pl.x,pz=tz-pl.z,pd=Math.hypot(px,pz),spd=6.5+st('agi')*.05;pl.run=pd>.15;
   if(pd>.05){const s=Math.min(pd,spd*dt*(pd>3?1.4:1));pl.x+=px/pd*s;pl.z+=pz/pd*s}
   pl.x=cl(pl.x,-BX_,BX_);pl.z=cl(pl.z,Z0,Z1);
@@ -484,7 +576,7 @@ Object.assign(sun.shadow.camera,{left:-14,right:14,top:14,bottom:-14});scene.add
 
 const ground=new THREE.Mesh(new THREE.PlaneGeometry(90,90),M(0x6cbf5a));ground.rotation.x=-Math.PI/2;ground.receiveShadow=true;scene.add(ground);
 const road=new THREE.Mesh(new THREE.PlaneGeometry(22,10.5),M(0xd8cdb4));road.rotation.x=-Math.PI/2;road.position.set(0,.01,.4);road.receiveShadow=true;scene.add(road);
-let sd=7;const sr=()=>(sd=(sd*16807)%2147483647)/2147483647;
+const town0=scene.children.length;let sd=7;const sr=()=>(sd=(sd*16807)%2147483647)/2147483647;
 for(let i=0;i<70;i++){const x=(sr()-.5)*50,z=(sr()-.3)*30;if(Math.abs(x)<11.5||z<-3||z>14)continue;
   const T=new THREE.Group();mk(T,CY(.15,.22,1.3),0x6b4a2a,0,.65,0);mk(T,CN(1,2.3),sr()>.5?0x3f9b4a:0x4fae4f,0,2.3,0);T.position.set(x,0,z);T.scale.setScalar(.8+sr()*.7);scene.add(T)}
 for(let i=0;i<90;i++){const x=(sr()-.5)*44,z=(sr()-.4)*24;if(Math.abs(x)<11.2&&z>-5.1&&z<5.8)continue;
@@ -503,6 +595,19 @@ mk(scene,BX(30,1,.6),0x9a9a9a,0,.5,-5.2);
 for(let x=-14;x<=14;x+=4)mk(scene,BX(.8,1.6,.8),0x8a8a8a,x,.8,-5.2);
 const fnt=new THREE.Group();mk(fnt,CY(1.1,1.3,.5),0xbbbbbb,0,.25,0);mk(fnt,CY(.15,.15,1.4),0xcccccc,0,1,0);mk(fnt,CY(.7,.5,.2),0x7ec8f0,0,.45,0);fnt.position.set(0,0,-3.6);scene.add(fnt);
 
+const townObjs=scene.children.slice(town0),deco=new THREE.Group();scene.add(deco);
+// [kind,main colour,trunk colour]; kinds 0 round tree,1 conifer,2 tall pole,3 cactus,4 crystal,5 slab
+const TH=[0,[0,0x2e9d6a,0x6b4a2a],[5,0x7a7a99,0x555577],[3,0x4a9a4a,0],[1,0x2f7a3a,0x5a3a1a],[0,0x2fb59a,0x7a5a3a],[2,0x7ac060,0x4a8a3a],[0,0xf2a0c0,0x6a4a3a],[4,0xaee0ff,0],[4,0xb04aff,0x330044]];
+function buildDeco(m){while(deco.children.length)deco.remove(deco.children[0]);townObjs.forEach(o=>o.visible=m===0);road.visible=m===0;if(!m)return;
+  let q=m*977+13;const r=()=>(q=(q*16807)%2147483647)/2147483647,[k,c1,c2]=TH[m];
+  for(let i=0;i<75;i++){const x=(r()-.5)*50,z=(r()-.3)*30;if(Math.abs(x)<9&&z>-5&&z<6)continue;const G=new THREE.Group(),sc=.7+r()*.9;
+    if(k===0){mk(G,CY(.15,.22,1.3),c2,0,.65,0);mk(G,SP(.9),c1,0,2,0)}
+    else if(k===1){mk(G,CY(.12,.2,1),c2,0,.5,0);mk(G,CN(1,2.4),c1,0,2.1,0)}
+    else if(k===2){for(let j=0;j<3;j++)mk(G,CY(.07,.09,3.5+j),j%2?c1:c2,j*.35-.3,(3.5+j)/2,j*.2)}
+    else if(k===3){mk(G,CY(.25,.28,2),c1,0,1,0);mk(G,CY(.14,.14,.8),c1,.4,1.3,0);mk(G,CY(.14,.14,.7),c1,-.4,1,0)}
+    else if(k===4){const o=mk(G,CN(.4,2.2+r()*2),c1,0,1.3,0);o.material.emissive.setHex(c1).multiplyScalar(.5);if(c2){const p=mk(G,CN(.2,1),c1,.5,.5,.2);p.material.emissive.setHex(c1).multiplyScalar(.4)}}
+    else{mk(G,BX(1,1.6+r(),.3),c1,0,.9,0);mk(G,BX(1.2,.2,.5),c2,0,.1,0)}
+    G.position.set(x,0,z);G.scale.setScalar(sc);G.rotation.y=r()*6;deco.add(G)}}
 const P=new THREE.Group();scene.add(P);
 const pBody=mk(P,BX(.45,.9,.7),0x3b6fb5,0,1.1,0);
 mk(P,BX(.47,.16,.72),0xc94a4a,0,.82,0);
@@ -540,7 +645,7 @@ function buildMob(m){
   }
   scene.add(G);return{G,mats};
 }
-let curMob=null,mobG=null,mobMats=[],lastBoss=null,dmesh=new Map(),tmp=new THREE.Vector3(),lastProg='';
+const mobMesh=new Map(),petMesh=new Map();let curMob=null,mobG=null,mobMats=[],lastBoss=null,dmesh=new Map(),tmp=new THREE.Vector3(),lastProg='';
 function scr(x,y,z){tmp.set(x,y,z).project(cam);return[(tmp.x+1)/2*R.domElement.clientWidth,(1-tmp.y)/2*R.domElement.clientHeight]}
 
 let drag=null;const dom=R.domElement;
@@ -552,19 +657,21 @@ dom.addEventListener('wheel',e=>{e.preventDefault();zoom=Math.min(2,Math.max(.6,
 const ct=new THREE.Vector3(0,.8,0);let lastKey='';
 function draw(){
   if(!S)return;const bn=isBoss()&&S.kl>=MPS,key=S.mp+':'+bn,c=C(),mp=MAPS[S.mp];
-  if(key!==lastKey){lastKey=key;const col=new THREE.Color(bn?0x8a6bb0:mp.sky);scene.background=col;scene.fog=new THREE.Fog(col,35,80);ground.material.color.setHex(mp.ground);road.material.color.setHex(S.mp===3?0xe9d9a8:0xd8cdb4)}
+  if(key!==lastKey){lastKey=key;const col=new THREE.Color(bn?0x8a6bb0:mp.sky);scene.background=col;scene.fog=new THREE.Fog(col,35,80);ground.material.color.setHex(mp.ground);buildDeco(S.mp);road.material.color.setHex(S.mp===3?0xe9d9a8:0xd8cdb4)}
   P.position.set(pl.x,Math.abs(Math.sin(t*(pl.run?16:4)))*(pl.run?.14:.04),pl.z);P.rotation.set(pl.run?.12:0,pl.ry,0);
   arm.rotation.z=pl.run&&!atkAnim?-.9+Math.sin(t*16)*.5:-.25-Math.sin(atkAnim*Math.PI)*1.9;
   const w=S.eq.weapon,wt=w&&w.wt&&c.wt.includes(w.wt)?w.wt:c.wt[0];for(const k in WM)WM[k].visible=k===wt;WM[wt].userData.t.forEach(m=>m.color.setHex(w?TC[w.tier]:0xaaaaaa));
   hair.material.color.setHex(S.eq.head?TC[S.eq.head.tier]:0xd0492c);hat.visible=!!c.hat;if(c.hat)hat.material.color.setHex(c.hat);
   pBody.material.color.setHex(S.eq.armor?TC[S.eq.armor.tier]:c.col);pBody.material.emissive.setRGB(hitAnim*.8,0,0);
   cape.visible=!!c.cape;if(c.cape)cape.material.color.setHex(c.cape);
-  if(mob!==curMob){if(mobG)scene.remove(mobG);curMob=mob;mobG=null;if(mob){const b=buildMob(mob);mobG=b.G;mobMats=b.mats}}
-  if(mob&&mobG){const s=Math.max(.01,mob.size*mob.spawn);mobG.scale.set(s,s*(1+Math.sin(t*6)*.04),s);
-    mobG.position.set(mob.x,0,mob.z);mobG.rotation.y=mob.ry;mobMats.forEach(m=>m.emissive.setScalar(mob.flash||0));
-    const[px,py]=scr(mob.x,1.9*s+.5,mob.z);tag.style.display='block';tag.style.left=px+'px';tag.style.top=py+'px';
-    $('tn').textContent=mob.n+(mob.boss?' (BOSS)':'');$('th').style.width=Math.max(0,mob.hp/mob.max*100)+'%';
-  }else tag.style.display='none';
+  const alive=new Set(mobs);mobMesh.forEach((v,m)=>{if(!alive.has(m)){scene.remove(v.G);mobMesh.delete(m)}});
+  for(const m of mobs){let v=mobMesh.get(m);if(!v){v=buildMob(m);mobMesh.set(m,v)}const s=Math.max(.01,m.size*m.spawn);v.G.scale.set(s,s*(1+Math.sin(t*6)*.04),s);v.G.position.set(m.x,0,m.z);v.G.rotation.y=m.ry;v.mats.forEach(q=>q.emissive.setScalar(m.flash||0))}
+  if(mob){const s=Math.max(.01,mob.size*mob.spawn),[qx,qy]=scr(mob.x,1.9*s+.5,mob.z);tag.style.display='block';tag.style.left=qx+'px';tag.style.top=qy+'px';$('tn').textContent=mob.n+(mob.boss?' (BOSS)':'');$('th').style.width=Math.max(0,mob.hp/mob.max*100)+'%'}else tag.style.display='none';
+  const pids=new Set(S.pets.filter(p=>p.on).map(p=>p.id));petMesh.forEach((v,id)=>{if(!pids.has(id)){scene.remove(v);petMesh.delete(id)}});
+  S.pets.filter(p=>p.on).forEach(p=>{const sp=PETS[p.sp],r=petR[p.id];if(!r)return;let v=petMesh.get(p.id);
+    if(!v){v=new THREE.Group();mk(v,SP(.5),sp.c,0,.5,0);mk(v,SP(.07),0x111111,.38,.62,.16);mk(v,SP(.07),0x111111,.38,.62,-.16);v.scale.setScalar(.55+sp.r*.12);scene.add(v);petMesh.set(p.id,v)}
+    v.position.set(r.x,Math.abs(Math.sin(t*(r.run?14:3)))*(r.run?.25:.08)+(r.lunge||0)*.5,r.z);v.rotation.y=mob?-Math.atan2(mob.z-r.z,mob.x-r.x):0;
+    v.children[0].material.emissive.setHex(MC[p.mut]).multiplyScalar(p.mut?.7:0)});
   const live=new Set();
   drops.forEach(d=>{live.add(d);let m=dmesh.get(d);
     if(!m){const i=d.it,sl=i.card?'card':i.ore?'ore':i.slot,col=i.ore?(i.ore==='ori'?0xff9d3c:0x6cd3ff):TC[dtier(i)];
