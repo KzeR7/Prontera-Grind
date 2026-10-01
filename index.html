@@ -42,18 +42,6 @@ button:hover{background:#ffe9a8}button:focus-visible{outline:2px solid #2f6fd6}
 .hd{font-weight:bold;margin-bottom:6px}.full{width:100%;margin-top:8px;padding:6px}
 .pbar{height:8px;background:#5b4a35;border-radius:4px;overflow:hidden;margin:4px 0}.pbar i{display:block;height:100%;background:#4aa3df}
 
-/* Map Grid & Item UI */
-.map-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(75px, 1fr)); gap: 8px; margin-top: 8px; }
-.map-node { background: #fffdf5; border: 2px solid var(--edge); border-radius: 6px; padding: 8px 4px; text-align: center; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 4px; transition: all .15s; }
-.map-node:hover { background: #ffe9a8; border-color: var(--edge2); transform: translateY(-2px); }
-.map-node.active { background: #ffe08a; border-color: var(--gold); box-shadow: 0 0 6px var(--gold); }
-.map-node.locked { opacity: 0.4; cursor: not-allowed; filter: grayscale(1); }
-.map-node.boss-node { border-color: #a23fd6; }
-.item-icon-box { position: relative; width: 32px; height: 32px; border-radius: 4px; border: 2px solid var(--edge2); background: #2b1f14; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; cursor: pointer; }
-.item-info { display: flex; align-items: center; gap: 8px; }
-#tooltip { position: absolute; pointer-events: none; z-index: 100; display: none; width: 230px; padding: 10px; background: #1f1710f8; color: #fff; border: 2px solid var(--edge); border-radius: 6px; font-size: 12px; box-shadow: 0 4px 12px #0008; }
-#tooltip .tt-title { font-weight: bold; border-bottom: 1px solid #ffffff33; padding-bottom: 3px; margin-bottom: 4px; }
-#tooltip .tt-stat { color: #ffe08a; font-weight: bold; }
 
 /* Login Modal Overlay */
 #loginOverlay { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(6px); z-index: 999; display: flex; align-items: center; justify-content: center; }
@@ -69,600 +57,394 @@ button:hover{background:#ffe9a8}button:focus-visible{outline:2px solid #2f6fd6}
 .job-card { background: #fffdf5; border: 2px solid var(--edge); border-radius: 6px; padding: 8px 10px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; }
 .gm-badge { background: #e5484d; color: #fff; font-size: 10px; padding: 2px 6px; border-radius: 3px; font-weight: bold; margin-left: 6px; }
 .mob-card { background: #fffdf5; border: 1px solid var(--edge); border-radius: 6px; padding: 8px; margin-bottom: 8px; }
+
+#tooltip{position:fixed;pointer-events:none;z-index:1000;display:none;width:230px;padding:10px;background:#1f1710f8;color:#fff;border:2px solid var(--edge);border-radius:6px;font-size:12px;box-shadow:0 4px 12px #0008}
+.row{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.sec{font-weight:bold;margin:10px 0 4px;border-bottom:1px solid var(--edge2)}
+hr{border:0;border-top:1px dashed var(--edge);margin:6px 0}
+.grid{display:grid;grid-template-columns:repeat(6,1fr);gap:6px}
+.cell{aspect-ratio:1;border:2px solid var(--edge2);border-radius:6px;background:#2b1f14;display:flex;align-items:center;justify-content:center;font-size:22px;position:relative;cursor:pointer;min-width:0}
+.cell.empty{opacity:.35;cursor:default}.cell.sel{outline:3px solid #ffe08a}
+.cell.b1{border-color:#5cb85c}.cell.b2{border-color:#4a86e8}.cell.b3{border-color:#b05ce0}.cell.b4{border-color:#ffb020;box-shadow:0 0 7px #ffb020}
+.cell .rf{position:absolute;right:2px;bottom:0;font:bold 10px sans-serif;color:#ffe08a;font-style:normal;text-shadow:0 0 2px #000}
+.lvgrid{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin:6px 0}
+.map-node{background:#fffdf5;border:2px solid var(--edge);border-radius:6px;padding:5px 2px;text-align:center;cursor:pointer;font-size:12px}
+.map-node:hover{background:#ffe9a8}.map-node.active{background:#ffe08a;border-color:var(--gold)}.map-node.picked{outline:3px solid #2f6fd6}
+.map-node.locked{opacity:.4;filter:grayscale(1)}.map-node.boss-node{border-color:#a23fd6}
+.tree{display:flex;flex-direction:column;gap:6px}.trow{display:flex;align-items:center;gap:2px}.arw{font-size:9px;color:#8a6a2c}
+.trunk{width:2px;height:10px;background:#8a6a2c;margin:-4px auto}
+.tn{flex:1;min-width:0;text-align:center;border:2px solid var(--edge);border-radius:6px;padding:4px 2px;font-size:11px;background:#fffdf5;cursor:pointer;display:flex;flex-direction:column;line-height:1.2}
+.tn.cur{background:#ffe08a;border-color:var(--gold);box-shadow:0 0 6px var(--gold)}.tn.ok{background:#dff5d8;border-color:#5cb85c}.tn.played{background:#dce8ff;border-color:#4a86e8}.tn.lock{opacity:.5;filter:grayscale(.7)}
+.tn.pick{outline:3px solid #2f6fd6}.legend{display:flex;gap:4px;margin:8px 0;font-size:10px}.legend .tn{cursor:default;padding:2px}
+@media(max-width:560px){.ib{width:32px;height:32px;font-size:16px}#dock{gap:3px;padding:4px 6px}.grid{grid-template-columns:repeat(5,1fr)}}
+.atabs{display:flex;gap:4px;margin-bottom:14px}.atabs button{flex:1;padding:8px;font-weight:bold;font-size:13px}.atabs button.on{background:#ffe08a;border-color:var(--gold)}
 </style>
 </head>
 <body>
-
-<!-- Login Modal -->
-<div id="loginOverlay">
-  <div class="login-card">
-    <h2>⚔️️ Prontera Grind</h2>
-    <p>Sign in to load your adventure progress</p>
-    <form id="loginForm" onsubmit="handleLogin(event)">
-      <div class="form-group">
-        <label for="username">Account Name</label>
-        <input type="text" id="username" placeholder="Enter username..." required autocomplete="username">
-      </div>
-      <div class="form-group">
-        <label for="password">Password</label>
-        <input type="password" id="password" placeholder="Enter password..." required autocomplete="current-password">
-      </div>
-      <button type="submit" class="login-btn">Login / Register</button>
-      <div id="loginErr" class="login-err"></div>
-    </form>
-    <div class="login-footer">
-      <button type="button" onclick="playAsGuest()" style="flex:1;">Play as Guest</button>
-    </div>
-  </div>
-</div>
-
-<div id="wrap">
-  <div class="title">
-    <span id="stageTitle">Prontera Field</span>
-    <span id="grindStatus" style="font-size:12px;opacity:0.85;"></span>
-  </div>
-  <div id="view">
-    <div id="ov">
-      <div id="prog"></div>
-      <div id="tag"><b id="tn"></b><div class="bar"><i id="th" style="background:var(--hp)"></i></div></div>
-      <div id="hint">Drag to rotate &middot; Scroll to zoom</div>
-      <div id="feed"></div>
-      <div id="dock"></div>
-      <div id="wnd" class="win"><div class="title"><span id="wt"></span><button id="wx">&#10005;</button></div><div class="body" id="wb"></div></div>
-    </div>
-  </div>
-  <div id="hud">
-    <div><b id="cls2"></b> Lv <b id="lv">1</b></div>
-    <div>HP <div class="bar"><i id="hpb" style="background:var(--hp)"></i></div></div>
-    <div>SP <div class="bar"><i id="spb" style="background:#7a5ce0"></i></div></div>
-    <div>EXP <div class="bar"><i id="xpb" style="background:var(--exp)"></i></div></div>
-    <div style="color:var(--gold)">&#9679; <b id="zeny">0</b> Zeny</div>
-    <div>Kills <b id="kills">0</b></div>
-    <div style="margin-left:auto; display:flex; align-items:center; gap:8px;">
-      <span id="userBadge" style="font-weight:bold; font-size:12px; background:#e9d39a; padding:3px 8px; border-radius:4px; border:1px solid var(--edge2);">👤 Guest</span>
-      <button id="gmBtn" onclick="toggleGM()" style="background:#e5484d; color:#fff; font-weight:bold;">GM Mode: OFF</button>
-      <button id="logoutBtn" onclick="logout()" style="display:none;">Logout</button>
-      <button id="spd">Speed x1</button>
-    </div>
-  </div>
-</div>
+<div id="loginOverlay"><div class="login-card"><h2>⚔️ Prontera Grind</h2>
+<div class="atabs"><button type="button" id="tabLogin" class="on">Login</button><button type="button" id="tabReg">Register</button></div>
+<form id="loginForm" autocomplete="on">
+<div class="form-group"><label for="username">Account Name</label><input type="text" id="username" required autocomplete="username"></div>
+<div class="form-group"><label for="password">Password</label><input type="password" id="password" required autocomplete="current-password"></div>
+<div class="form-group" id="regRow" style="display:none"><label for="password2">Confirm Password</label><input type="password" id="password2" autocomplete="new-password"></div>
+<button type="submit" id="authBtn" class="login-btn">Login</button><div id="loginErr" class="login-err"></div></form>
+<small>You must log in every time you open the game.</small></div></div>
+<div id="wrap"><div class="title"><span id="stageTitle">Prontera Lv 1</span><span id="grindStatus" style="font-size:12px;opacity:.85"></span></div>
+<div id="view"><div id="ov"><div id="prog"></div><div id="tag"><b id="tn"></b><div class="bar"><i id="th" style="background:var(--hp)"></i></div></div><div id="hint">Drag to rotate &middot; Scroll to zoom</div><div id="feed"></div><div id="dock"></div>
+<div id="wnd" class="win"><div class="title"><span id="wt"></span><button id="wx">&#10005;</button></div><div class="body" id="wb"></div></div></div></div>
+<div id="hud"><div><b id="cls2"></b> Lv <b id="lv">1</b> / Job <b id="jl">1</b></div><div>HP <div class="bar"><i id="hpb" style="background:var(--hp)"></i></div></div>
+<div>JOB <div class="bar"><i id="jb" style="background:#7a5ce0"></i></div></div><div>EXP <div class="bar"><i id="xpb" style="background:var(--exp)"></i></div></div>
+<div style="color:var(--gold)">&#9679; <b id="zeny">0</b> Zeny</div><div>Kills <b id="kills">0</b></div>
+<div style="margin-left:auto;display:flex;align-items:center;gap:8px"><span id="userBadge" style="font-weight:bold;font-size:12px;background:#e9d39a;padding:3px 8px;border-radius:4px;border:1px solid var(--edge2)"></span><button id="logoutBtn" onclick="logout()" style="display:none">Logout</button><button id="spd">Speed x1</button></div></div></div>
 <div id="tooltip"></div>
-
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
 const $=id=>document.getElementById(id);
-const RAR=[{n:'Common',m:1,w:60},{n:'Fine',m:1.4,w:25},{n:'Rare',m:2,w:10},{n:'Epic',m:3,w:4},{n:'Legendary',m:5,w:1}];
-const SLOTS={
-  weapon:{label:'Weapon',stat:'ATK',icons:['🔪','🗡️','⚔️','🗡️','🗡️'],names:['Knife','Sword','Katana','Claymore','Blade']},
-  armor:{label:'Armor',stat:'DEF',icons:['👕','🧥','🛡️','🛡️','🛡️️'],names:['Cotton Shirt','Leather Coat','Chain Mail','Plate Mail','Full Plate']},
-  head:{label:'Headgear',stat:'HP',icons:['🎀','🎩','🪖','👑','👑'],names:['Ribbon','Hat','Helm','Circlet','Crown']}
-};
+const RAR=[{n:'Common',m:1,w:60},{n:'Fine',m:1.35,w:25},{n:'Rare',m:1.9,w:10},{n:'Epic',m:2.8,w:4},{n:'Legendary',m:4.5,w:1}];
+const AM=[1,1.6,2.6,4,6.5],GRADE=['Common','Uncommon','Rare','Legendary'],GI=[0,1,2,4],CV=[1,2,3,5];
+const SLOTS={weapon:{label:'Weapon',stat:'ATK',ic:'⚔️'},armor:{label:'Armor',stat:'DEF',ic:'🛡️'},head:{label:'Headgear',stat:'HP',ic:'🎩'}};
+const WICON={dagger:'🗡️',katar:'🔪',staff:'🪄',bow:'🏹',axe:'🪓',sword:'⚔️',mace:'🔨'},ORE={ori:'Oridecon',elu:'Elunium'},SECN=['Novice gear','1st-job gear','2nd-job gear','High-tier gear'];
+const STATS=[['str','STR','ATK'],['agi','AGI','ASPD, Flee'],['dex','DEX','Hit, min dmg'],['luk','LUK','Crit, drops'],['int','INT','Skill dmg']];
+const AFF=['str','agi','dex','luk','int','hp','atk','crit','aspd','flee'],AB={str:1,agi:1,dex:1,luk:1,int:1,hp:12,atk:.8,crit:.45,aspd:.6,flee:.8};
+const AL={str:'STR',agi:'AGI',dex:'DEX',luk:'LUK',int:'INT',hp:'Max HP',atk:'ATK %',crit:'Crit %',aspd:'ASPD %',flee:'Flee %'};
+const SU=k=>k.toUpperCase(),BX_=7.5,Z0=-3,Z1=4,MPS=5,K5=['str','agi','dex','luk','int'];
+const GM_USER='GM',GM_PASS='gm1234';   // CHANGE THE GM PASSWORD before you publish
 
-const MOBS=[
-  {n:'Poring',c:0xff9db8,shape:'blob',desc:'Cute gelatinous creature'},
-  {n:'Drops',c:0xffb45a,shape:'blob',desc:'Orange variant of Poring'},
-  {n:'Fabre',c:0x9ed35a,shape:'worm',desc:'Green caterpillar monster'},
-  {n:'Lunatic',c:0xf4f4f4,shape:'bunny',desc:'Fluffy white rabbit monster'},
-  {n:'Willow',c:0x6fa84a,shape:'tree',desc:'Living wooden log monster'}
-];
-const BOSSES=[
-  {n:'Golden Bug',c:0xf2c230,shape:'bug',desc:'Giant golden beetle boss'},
-  {n:'Eddga',c:0xe67a2e,shape:'cat',desc:'Ferocious fire tiger boss'},
-  {n:'Mistress',c:0x5ad1c8,shape:'bug',desc:'Giant queen bee boss'},
-  {n:'Baphomet',c:0x6a3fa0,shape:'demon',desc:'Lord of darkness boss'}
-];
-const MOBS_PER_STAGE=5,BOSS_EVERY=5,BX_=7.5,Z0=-3,Z1=4;
-
-// Class hierarchy with job levels and requirements
-const CLASSES={
-  Novice:{aspd:1,atk:1,col:0xe8dcc0,cape:0,blade:[1,1],tier:0,reqLv:1,next:['Swordman','Mage','Archer','Thief','Acolyte','Merchant']},
-  
-  // 1st Jobs (Req Lv 10)
-  Swordman:{aspd:.95,atk:1.2,col:0xb83b3b,cape:0x8a2b2b,blade:[1.2,1.2],tier:1,reqLv:10,next:['Knight']},
-  Mage:{aspd:1.1,atk:1.4,col:0x3b6fb5,cape:0x2b4f85,blade:[.8,.8],tier:1,reqLv:10,next:['Wizard']},
-  Archer:{aspd:.85,atk:1.15,col:0x2e7d32,cape:0x1b4d1e,blade:[1,1],tier:1,reqLv:10,next:['Hunter']},
-  Thief:{aspd:.75,atk:1.1,col:0x4a7c3a,cape:0x2e7d32,blade:[.6,1],tier:1,reqLv:10,next:['Assassin']},
-  Acolyte:{aspd:1.0,atk:1.05,col:0xe0c870,cape:0xa08830,blade:[.9,.9],tier:1,reqLv:10,next:['Priest']},
-  Merchant:{aspd:.9,atk:1.25,col:0xd08030,cape:0x905010,blade:[1.1,1],tier:1,reqLv:10,next:['Blacksmith']},
-
-  // 2nd Jobs (Req Lv 25)
-  Knight:{aspd:.85,atk:1.5,col:0x801010,cape:0x500000,blade:[1.5,1.5],tier:2,reqLv:25,next:[]},
-  Wizard:{aspd:1.0,atk:1.8,col:0x153075,cape:0x051045,blade:[1,1],tier:2,reqLv:25,next:[]},
-  Hunter:{aspd:.65,atk:1.4,col:0x105015,cape:0x003005,blade:[1.1,1.1],tier:2,reqLv:25,next:[]},
-  Assassin:{aspd:.6,atk:1.45,col:0x2c2c3c,cape:0x1b1b28,blade:[.7,2.4],tier:2,reqLv:25,next:[]},
-  Priest:{aspd:.9,atk:1.3,col:0xb09020,cape:0x705000,blade:[1,1],tier:2,reqLv:25,next:[]},
-  Blacksmith:{aspd:.8,atk:1.6,col:0xa05000,cape:0x602000,blade:[1.3,1.2],tier:2,reqLv:25,next:[]}
-};
-
-const STATS=[['str','STR','ATK'],['agi','AGI','ASPD, Flee'],['dex','DEX','Hit, min dmg'],['luk','LUK','Crit, drops'],['int','INT','SP, skill dmg']];
+// ---------- class tree: Novice -> 6 first jobs -> 6 second jobs -> 6 third jobs ----------
+const CD=[['Novice',0,1,1,1,'e8dcc0','',['dagger','sword'],'str',0],
+['Swordman','Novice',.95,1.2,1.3,'b83b3b','8a2b2b',['sword'],'str',0],['Mage','Novice',1.1,1.3,.8,'3b6fb5','',['staff'],'int',1,'3b4fb5'],
+['Archer','Novice',.85,1.15,.9,'2e7d32','1b4d1e',['bow'],'dex',1],['Thief','Novice',.8,1.1,.95,'4a7c3a','2e7d32',['dagger'],'agi',0],
+['Acolyte','Novice',1,1.05,1.05,'e0c870','a08830',['mace'],'int',0],['Merchant','Novice',.9,1.2,1.2,'d08030','905010',['axe'],'str',0],
+['Knight','Swordman',.85,1.5,1.5,'801010','500000',['sword'],'str',0],['Wizard','Mage',1,1.8,.85,'153075','',['staff'],'int',1,'1f2f70'],
+['Hunter','Archer',.7,1.4,.95,'105015','003005',['bow'],'dex',1],['Assassin','Thief',.62,1.45,1,'2c2c3c','1b1b28',['dagger','katar'],'agi',0],
+['Priest','Acolyte',.9,1.3,1.1,'b09020','705000',['mace'],'int',0],['Blacksmith','Merchant',.8,1.6,1.4,'a05000','602000',['axe'],'str',0],
+['Lord Knight','Knight',.72,1.95,1.8,'600808','300000',['sword'],'str',0],['High Wizard','Wizard',.9,2.4,1,'0a1a55','',['staff'],'int',1,'0a1040'],
+['Sniper','Hunter',.55,1.85,1.05,'0a3a0a','002000',['bow'],'dex',1],['Assassin Cross','Assassin',.5,1.9,1.15,'1a1a28','0a0a14',['dagger','katar'],'agi',0],
+['High Priest','Priest',.8,1.7,1.25,'c8a820','604000',['mace'],'int',0],['Whitesmith','Blacksmith',.7,2,1.6,'c06000','502000',['axe'],'str',0]];
+const CLASSES={};
+CD.forEach(([n,par,aspd,atk,hp,col,cape,wt,main,rng,hat])=>CLASSES[n]={n,par,aspd,atk,hp,col:parseInt(col,16),cape:cape?parseInt(cape,16):0,wt,main,rng,hat:hat?parseInt(hat,16):0,kids:[]});
+for(const c of Object.values(CLASSES)){c.tier=0;for(let p=c.par;p;p=CLASSES[p].par)c.tier++;c.mj=c.tier?50:10;c.rj=[0,10,40,50][c.tier];if(c.par)CLASSES[c.par].kids.push(c.n)}
+const lineOf=n=>{const a=[];for(;n;n=CLASSES[n].par)a.unshift(n);return a},down=n=>[n].concat(...CLASSES[n].kids.map(down));
+// ---------- skills (no SP: cooldown only) ----------
+const act=(id,n,from,cd,mul,hits,col)=>({id,n,from,cls:down(from),max:5,type:'act',cd,mul,hits,col,d:L=>`Auto: ${hits>1?hits+' hits of ':''}${Math.round(mul(L)*100)}% dmg &middot; CD ${cd}s`});
+const pas=(id,n,from,key,f,txt)=>({id,n,from,cls:down(from),max:5,type:'pas',key,f,d:L=>txt.replace('#',f(L))});
 const SKILLS=[
-  {id:'aid',n:'First Aid',cls:['Novice','Swordman','Mage','Archer','Thief','Acolyte','Merchant','Knight','Wizard','Hunter','Assassin','Priest','Blacksmith'],max:5,sp:5,cd:6,d:L=>`Auto: heals ${10+5*L}% HP when below half.`},
-  {id:'dbl',n:'Double Attack',cls:['Thief','Assassin','Merchant','Blacksmith'],max:5,passive:1,d:L=>`${10+8*L}% chance to strike twice.`},
-  {id:'env',n:'Envenom',cls:['Thief','Assassin'],max:5,sp:8,cd:2.5,mul:L=>1.2+.3*L,hits:1,col:'#7dff7d',d:L=>`Auto: poison strike, ${Math.round((1.2+.3*L)*100)}% dmg.`},
-  {id:'bash',n:'Bash',cls:['Swordman','Knight'],max:5,sp:10,cd:2,mul:L=>1.4+.4*L,hits:1,col:'#ff5555',d:L=>`Auto: heavy strike, ${Math.round((1.4+.4*L)*100)}% dmg.`},
-  {id:'fb',n:'Fire Bolt',cls:['Mage','Wizard'],max:5,sp:12,cd:3,mul:L=>.6+.2*L,hits:5,col:'#ff9933',d:L=>`Auto: 5 fire strikes, ${Math.round((.6+.2*L)*100)}% each.`},
-  {id:'sonic',n:'Sonic Blow',cls:['Assassin'],max:5,sp:20,cd:4,mul:L=>.5+.1*L,hits:6,col:'#ff9dff',d:L=>`Auto: 6 slashes, ${Math.round((.5+.1*L)*100)}% each.`}];
+ {id:'aid',n:'First Aid',from:'Novice',cls:Object.keys(CLASSES),max:5,type:'heal',cd:6,d:L=>`Auto: heals ${10+5*L}% HP when below half.`},
+ act('bash','Bash','Swordman',2,L=>1.4+.3*L,1,'#ffb347'),pas('endure','Endure','Swordman','def',L=>2*L,'DEF +#.'),pas('hprec','HP Recovery','Swordman','hpreg',L=>.3*L,'Regen +#% HP/s.'),
+ act('bowl','Bowling Bash','Knight',4,L=>.9+.2*L,2,'#ffe14d'),act('pierce','Pierce','Knight',2.5,L=>.7+.12*L,3,'#ff9d5c'),pas('quick','Two-Hand Quicken','Knight','aspd',L=>4*L,'ASPD +#%.'),
+ act('spiral','Spiral Pierce','Lord Knight',5,L=>.8+.15*L,6,'#ff7a5c'),pas('aura','Aura Blade','Lord Knight','atk',L=>5*L,'ATK +#%.'),pas('frenzy','Frenzy','Lord Knight','aspd',L=>4*L,'ASPD +#%.'),
+ act('fire','Fire Bolt','Mage',1.5,L=>.7+.15*L,3,'#ff8a3d'),act('nap','Napalm Beat','Mage',1.2,L=>.9+.2*L,1,'#c9a0ff'),pas('coat','Energy Coat','Mage','def',L=>2*L,'DEF +#.'),
+ act('storm','Storm Gust','Wizard',5,L=>.4+.1*L,8,'#8fe9ff'),act('jup','Jupitel Thunder','Wizard',3,L=>.8+.15*L,4,'#ffee55'),pas('amp','Amplify Magic','Wizard','atk',L=>5*L,'MATK +#%.'),
+ act('meteor','Meteor Storm','High Wizard',6,L=>.5+.1*L,10,'#ff5a2a'),act('grav','Gravitational Field','High Wizard',4,L=>.7+.12*L,5,'#b080ff'),pas('mystic','Mystical Amplification','High Wizard','atk',L=>6*L,'MATK +#%.'),
+ act('dstr','Double Strafe','Archer',1.5,L=>.8+.15*L,2,'#ffd28a'),pas('owl',"Owl's Eye",'Archer','atk',L=>3*L,'ATK +#%.'),pas('vult',"Vulture's Eye",'Archer','crit',L=>2*L,'Crit +#%.'),
+ act('blitz','Blitz Beat','Hunter',3,L=>.7+.12*L,3,'#ffd23f'),act('sharp','Sharp Shooting','Hunter',4,L=>2+.5*L,1,'#ff4d4d'),pas('beast','Beast Bane','Hunter','atk',L=>4*L,'ATK +#%.'),
+ act('falcon','Falcon Assault','Sniper',5,L=>3+.7*L,1,'#ffffff'),act('focus','Focused Arrow','Sniper',3.5,L=>.9+.15*L,3,'#ff9d3d'),pas('sight','True Sight','Sniper','crit',L=>3*L,'Crit +#%.'),
+ pas('dbl','Double Attack','Thief','dbl',L=>10+8*L,'#% chance to strike twice.'),act('env','Envenom','Thief',2.5,L=>1.2+.3*L,1,'#7dff7d'),pas('dodge','Improve Dodge','Thief','flee',L=>3*L,'Flee +#%.'),
+ act('sonic','Sonic Blow','Assassin',4,L=>.5+.1*L,6,'#ff9dff'),act('grim','Grimtooth','Assassin',2.5,L=>1.1+.25*L,2,'#ff6b6b'),pas('katm','Katar Mastery','Assassin','atk',L=>4*L,'ATK +#%.'),
+ act('mAss','Meteor Assault','Assassin Cross',5,L=>.7+.15*L,4,'#d08cff'),act('soulb','Soul Breaker','Assassin Cross',3,L=>1+.2*L,2,'#ff5a8a'),pas('dpois','Deadly Poison','Assassin Cross','crit',L=>3*L,'Crit +#%.'),
+ act('holy','Holy Light','Acolyte',2,L=>1.5+.3*L,1,'#fff3a0'),pas('heal','Heal','Acolyte','hpreg',L=>.3*L,'Regen +#% HP/s.'),pas('bless','Blessing','Acolyte','atk',L=>3*L,'ATK +#%.'),
+ act('magnus','Magnus Exorcismus','Priest',5,L=>.55+.1*L,6,'#ffe0ff'),pas('sanct','Sanctuary','Priest','hpreg',L=>.4*L,'Regen +#% HP/s.'),pas('asp','Aspersio','Priest','atk',L=>4*L,'ATK +#%.'),
+ act('judex','Judex','High Priest',3,L=>.8+.15*L,3,'#ffffff'),pas('assum','Assumptio','High Priest','def',L=>4*L,'DEF +#.'),pas('gloria','Gloria','High Priest','atk',L=>5*L,'ATK +#%.'),
+ act('mammo','Mammonite','Merchant',2.5,L=>1.6+.35*L,1,'#ffd23f'),pas('greed','Overcharge','Merchant','zeny',L=>8*L,'Zeny gain +#%.'),pas('phys','Physical Training','Merchant','hpp',L=>4*L,'Max HP +#%.'),
+ act('hammer','Hammer Fall','Blacksmith',4,L=>2.4+.5*L,1,'#ff7a1a'),pas('adren','Adrenaline Rush','Blacksmith','aspd',L=>5*L,'ASPD +#%.'),pas('wperf','Weapon Perfection','Blacksmith','atk',L=>4*L,'ATK +#%.'),
+ act('cart','Cart Termination','Whitesmith',5,L=>3+.6*L,1,'#ffa040'),pas('thrust','Power-Thrust','Whitesmith','atk',L=>6*L,'ATK +#%.'),pas('skin','Skin Tempering','Whitesmith','hpp',L=>6*L,'Max HP +#%.')];
 
-let currentUser = null;
-let S,speed=1,gmMode=false,floats=[],drops=[],t=0,shake=0,atkAnim=0,hitAnim=0,pend=[],barT=0;
-const pl={x:-3,z:1.5,ry:0,orb:0,run:0};
-const skCd={aid:0,env:0,bash:0,fb:0,sonic:0};
-const itemRegistry = new Map();
+// ---------- world: 5 maps x 10 levels. Lv1-3 novice gear, 4-7 1st job, 8-9 2nd job, 10 boss = high-tier ----------
+const pm=s=>{const[n,c,sh]=s.split(':');return{n,c:parseInt(c,16),shape:sh}};
+const MAPS=[
+{n:'Prontera',t:'Swordman / Acolyte lines',ground:0x6cbf5a,sky:0x9ad7f5,boss:'Mastering:7ad46a:blob',
+ mobs:['Poring:ff9db8:blob','Fabre:9ed35a:worm','Lunatic:f4f4f4:bunny','Drops:ffb45a:blob','Chonchon:6fa8dc:bug','Willow:6fa84a:tree','Rocker:9ac04a:bug','Poporing:8ad04a:blob','Savage Bebe:b08a5a:cat','Peco Peco:f0d060:bug'],
+ g:[{w:{dagger:'Knife',sword:'Short Sword'},a:'Cotton Shirt',h:'Ribbon'},{w:{sword:'Broad Sword',mace:'Club'},a:'Padded Armor',h:'Cap'},{w:{sword:'Claymore',mace:'Morning Star'},a:'Chain Mail',h:'Helm'},{w:{sword:'Excalibur',mace:'Holy Mace'},a:'Plate Armor',h:'Crown'}]},
+{n:'Izlude',t:'Merchant line',ground:0x6fc2b0,sky:0x8ee0f0,boss:'Drake:4a5a8a:demon',
+ mobs:['Marina:5ad1c8:blob','Pupa:e0c070:worm','Crab:e0605a:bug','Sea Otter:8a6a4a:cat','Muka:6aa84f:tree','Anacondaq:3f8a3f:worm','Thief Bug:3a3a55:bug','Marse:6a8ae0:blob','Ambernite:e07aa0:worm','Kukre:d98a3a:bug'],
+ g:[{w:{dagger:'Cutter',sword:'Sabre'},a:'Sailor Shirt',h:'Sailor Cap'},{w:{axe:'Hand Axe'},a:'Mariner Vest',h:'Bandana'},{w:{axe:'Battle Axe'},a:'Sea Mail',h:'Iron Cap'},{w:{axe:'Golden Axe'},a:'Admiral Coat',h:'Captain Hat'}]},
+{n:'Geffen',t:'Mage line',ground:0x8c8caa,sky:0x9a90c8,boss:'Baphomet:6a3fa0:demon',
+ mobs:['Skeleton:e8e8e8:bunny','Zombie:7a9a6a:worm','Ghoul:6a7a5a:demon','Poison Spore:8a5aa0:tree','Whisper:bfd0ff:blob','Bat Familiar:5a3a6a:bug','Dark Priest:3a2a4a:demon','Wraith:8a8ab0:blob','Evil Druid:4a3a5a:tree','Marionette:ff8ad0:bunny'],
+ g:[{w:{dagger:'Main Gauche',sword:'Rapier'},a:'Mage Shirt',h:'Hairband'},{w:{staff:'Rod'},a:'Silk Robe',h:'Wizard Cap'},{w:{staff:'Staff of Soul'},a:'Mage Robe',h:'Wizard Hat'},{w:{staff:'Arc Wand'},a:'Archmage Robe',h:'Mage Crown'}]},
+{n:'Morroc',t:'Thief / Assassin lines',ground:0xdcc78e,sky:0xf0d9a0,boss:'Phreeoni:c9a040:bug',
+ mobs:['Scorpion:d9a84a:bug','Sand Man:e0c78a:blob','Desert Wolf:c9a86a:cat','Cactus:5aa050:tree','Pasana:c94a2a:demon','Horn:a08050:bug','Mummy:d9d0b0:worm','Isis:ffcf6a:cat','Anubis:2a2a3a:demon','Minorous:8a4a2a:demon'],
+ g:[{w:{dagger:'Desert Knife',sword:'Scimitar'},a:'Desert Shirt',h:'Turban'},{w:{dagger:'Gladius'},a:'Thief Clothes',h:'Thief Hood'},{w:{dagger:'Sword Breaker',katar:'Jur'},a:'Assassin Garb',h:'Black Hood'},{w:{dagger:'Damascus',katar:'Bloody Roar'},a:'Shadow Cloak',h:'Shadow Mask'}]},
+{n:'Payon',t:'Archer / Hunter lines',ground:0x4f8f4a,sky:0x8fc8a0,boss:'Eddga:e67a2e:cat',
+ mobs:['Spore:d06a6a:tree','Wolf:8a8a95:cat','Elder Willow:4a7a3a:tree','Hornet:e8c840:bug','Bigfoot:9a7a5a:demon','Zenorc:5a8a4a:demon','Skel Archer:d0d0c0:bunny','Ancient Worm:b0a080:worm','Orc Warrior:4a7a3a:demon','Orc Archer:6a8a3a:demon'],
+ g:[{w:{dagger:'Hunter Knife',sword:'Hunting Sword'},a:'Leather Shirt',h:'Straw Hat'},{w:{bow:'Short Bow'},a:'Hunter Vest',h:'Feather Cap'},{w:{bow:'Composite Bow'},a:'Hunter Suit',h:'Archer Hat'},{w:{bow:'Gakkung Bow'},a:'Ranger Coat',h:'Elven Hat'}]}];
+MAPS.forEach(mp=>{mp.mobs=mp.mobs.map(pm);mp.boss=pm(mp.boss)});
+const secOf=l=>l<=3?0:l<=7?1:l<=9?2:3;
+function fieldOf(m,l){const mp=MAPS[m],sec=secOf(l),sg=mp.g[sec],T=[];
+  for(const k in sg.w)T.push({k,n:sg.w[k]});T.push({k:'armor',n:sg.a},{k:'head',n:sg.h});const n=T.length;
+  const mobs=[0,1].map(j=>({...mp.mobs[(l-1+j)%10],drops:[[T[(l+2*j)%n],6],[T[(l+2*j+1)%n],5]],card:{n:mp.mobs[(l-1+j)%10].n+' Card',stat:K5[((m*10+l+j)*3+1)%5],g:l<=3?0:l<=7?1:2},cardCh:1.5,ore:l===10}));
+  return{m,l,sec,mobs,boss:l===10?{...mp.boss,drops:T.map(x=>[x,10]),card:{n:mp.boss.n+' Card',stat:K5[m%5],g:3},cardCh:10,ore:true}:null}}
+const dropTxt=([T,ch])=>`${T.n}${T.k==='armor'||T.k==='head'?'':' ('+T.k+')'} ${ch}%`;
 
-const fresh=()=>({cls:'Novice',lv:1,exp:0,hp:100,sp:30,zeny:0,kills:0,stage:1,best:1,killsInStage:0,pts:10,skp:0,sk:{aid:1},auto:true,q:null,gm:false,
-  st:{str:1,agi:1,dex:1,luk:1,int:1},eq:{weapon:null,armor:null,head:null},inv:[]});
+// ---------- state ----------
+let currentUser=null,S=null,speed=1,floats=[],drops=[],t=0,shake=0,atkAnim=0,hitAnim=0,pend=[],shots=[],barT=0,logs=[],tab=null,selB=null,selC=null,selK=null,mapM=0,mapL=1;
+const pl={x:-3,z:1.5,ry:0,orb:0,run:0},skCd={};
+const uid=()=>Date.now()+Math.random(),rnd=(a,b)=>a+Math.random()*(b-a),ri=(a,b)=>Math.floor(rnd(a,b+1)),cl=(v,a,b)=>Math.max(a,Math.min(b,v));
+const fresh=()=>({cls:'Novice',lv:1,exp:0,hp:100,zeny:0,kills:0,pts:10,jobs:{Novice:{jl:1,jx:0}},sk:{aid:1},mp:0,lvl:1,prog:[1,1,1,1,1],kl:0,auto:true,adv:true,q:null,cards:[],ore:{ori:0,elu:0},gm:false,gmx:100,
+  st:{str:1,agi:1,dex:1,luk:1,int:1},eq:{weapon:{id:1,slot:'weapon',wt:'dagger',tier:0,val:5,name:'Novice Knife',aff:[],slots:1,cards:[],sec:0},armor:null,head:null},inv:[]});
+const saveKey=()=>'pg_save3_'+currentUser;
+function load(){try{const s=JSON.parse(lsGet(saveKey()));if(s&&s.lv){const f=Object.assign(fresh(),s);f.st=Object.assign(fresh().st,s.st);if(!CLASSES[f.cls])f.cls='Novice';return f}}catch(e){}return fresh()}
+function save(){if(!currentUser||!S)return;lsPut(saveKey(),JSON.stringify(S))}
 
-function toggleGM(){
-  gmMode = !gmMode;
-  if(S) S.gm = gmMode;
-  updateGMBadge();
-  log(`GM Mode ${gmMode?'ENABLED (100x EXP & Zeny)':'DISABLED'}.`, gmMode?'r4':'r0');
-  save();
-}
-
-function updateGMBadge(){
-  const btn = $('gmBtn');
-  if(gmMode){
-    btn.textContent = "GM Mode: 100x ON";
-    btn.style.background = "#e07b00";
-  } else {
-    btn.textContent = "GM Mode: OFF";
-    btn.style.background = "#e5484d";
-  }
-}
-
-/* Authentication & Account Save System */
-function handleLogin(e){
-  e.preventDefault();
-  const u = $('username').value.trim();
-  const p = $('password').value.trim();
-  if(!u || !p) return;
-
-  const accounts = JSON.parse(localStorage.getItem('pg_accounts') || '{}');
-  if(accounts[u]){
-    if(accounts[u].password !== p){
-      $('loginErr').textContent = "Incorrect password.";
-      return;
-    }
-  } else {
-    accounts[u] = { password: p };
-    localStorage.setItem('pg_accounts', JSON.stringify(accounts));
-  }
-
-  currentUser = u;
-  localStorage.setItem('pg_session', currentUser);
-  initSession();
-}
-
-function playAsGuest(){
-  currentUser = 'Guest';
-  localStorage.setItem('pg_session', 'Guest');
-  initSession();
-}
-
-function logout(){
-  save();
-  localStorage.removeItem('pg_session');
-  location.reload();
-}
-
-function load(){
+// ---------- accounts (stored in this browser; real cross-device accounts need a server) ----------
+const GM_USER_='GM',mem={};
+const lsGet=k=>{try{return localStorage.getItem(k)}catch(e){return mem[k]||null}},lsSet=k=>v=>0;
+function lsPut(k,v){try{localStorage.setItem(k,v)}catch(e){mem[k]=v}}
+const getAcc=()=>{try{return JSON.parse(lsGet('pg_acc4')||'{}')}catch(e){return{}}};
+const setAcc=a=>lsPut('pg_acc4',JSON.stringify(a));
+function hashPw(p){let h1=0xdeadbeef,h2=0x41c6ce57;const s='pg4:'+p;for(let i=0;i<s.length;i++){const c=s.charCodeAt(i);h1=Math.imul(h1^c,2654435761);h2=Math.imul(h2^c,1597334677)}
+  h1=Math.imul(h1^(h1>>>16),2246822507)^Math.imul(h2^(h2>>>13),3266489909);h2=Math.imul(h2^(h2>>>16),2246822507)^Math.imul(h1^(h1>>>13),3266489909);return(h2>>>0).toString(16).padStart(8,'0')+(h1>>>0).toString(16).padStart(8,'0')}
+let authMode='login';
+function showErr(m,ok){const e=$('loginErr');e.textContent=m;e.style.color=ok?'#2a9d3f':'#e5484d'}
+function setMode(m){authMode=m;$('tabLogin').classList.toggle('on',m==='login');$('tabReg').classList.toggle('on',m==='reg');$('regRow').style.display=m==='reg'?'block':'none';
+  $('authBtn').textContent=m==='reg'?'Create Account':'Login';$('password').autocomplete=m==='reg'?'new-password':'current-password';$('password2').required=m==='reg';showErr('')}
+function submitAuth(e){
+  if(e)e.preventDefault();
   try{
-    const saveKey = currentUser ? `pg_save_${currentUser}` : 'pg_save';
-    const s = JSON.parse(localStorage.getItem(saveKey));
-    if(s && s.lv){
-      const f = Object.assign(fresh(), s);
-      f.st = Object.assign(fresh().st, s.st || {});
-      if(!s.st) f.pts = 10 + (s.lv - 1) * 3;
-      if(!s.sk){ f.sk = {aid:1}; f.skp = Math.max(0, s.lv - 1); }
-      return f;
-    }
-  } catch(e){}
-  return fresh();
+    const u=$('username').value.trim(),p=$('password').value;if(!u||!p)return showErr('Enter a username and password.');
+    const isGM=u.toLowerCase()===GM_USER.toLowerCase();
+    if(authMode==='reg'){
+      if(isGM)return showErr('That name is reserved.');
+      if(!/^[A-Za-z0-9_.-]{2,16}$/.test(u))return showErr('Username: 2-16 letters, numbers, _ . -');
+      if(p.length<4)return showErr('Password must be at least 4 characters.');
+      if($('password2').value!==p)return showErr('Passwords do not match.');
+      const acc=getAcc();if(Object.keys(acc).some(k=>k.toLowerCase()===u.toLowerCase()))return showErr('That username is already taken.');
+      acc[u]=hashPw(p);setAcc(acc);if(!getAcc()[u])return showErr('Could not save the account (browser storage blocked).');
+      setMode('login');$('password').value='';$('password2').value='';showErr('Account created! Now log in.',true);return}
+    if(isGM){if(p!==GM_PASS)return showErr('Incorrect GM password.');currentUser=GM_USER;initSession(true);return}
+    const acc=getAcc(),key=Object.keys(acc).find(k=>k.toLowerCase()===u.toLowerCase());
+    if(!key)return showErr('Account not found. Use the Register tab first.');
+    if(acc[key]!==hashPw(p))return showErr('Incorrect password.');
+    currentUser=key;initSession(false);
+  }catch(err){showErr('Error: '+err.message)}
 }
-
-function save(){
-  if(!currentUser) return;
+function logout(){save();location.reload()}
+function initSession(gm){
   try{
-    const saveKey = `pg_save_${currentUser}`;
-    localStorage.setItem(saveKey, JSON.stringify(S));
-  }catch(e){}
+    S=load();S.gm=gm;if(!S.q)S.q=['kill','loot','boss'].map(newQuest);if(S.mp>4||S.lvl>10){S.mp=0;S.lvl=1}
+    $('userBadge').textContent=(gm?'🛠 ':'👤 ')+currentUser;$('logoutBtn').style.display='inline-block';ui();
+    $('loginOverlay').style.display='none';log(`Welcome${gm?', Game Master':' back'}, ${currentUser}!`);
+    try{localStorage.setItem('pg_probe','1')}catch(e){log('Browser storage is blocked: progress will NOT be saved.','r0')}
+  }catch(err){S=null;showErr('Could not start: '+err.message)}
 }
+$('loginForm').addEventListener('submit',submitAuth);$('tabLogin').onclick=()=>setMode('login');$('tabReg').onclick=()=>setMode('reg');
+addEventListener('load',()=>{if(typeof THREE==='undefined')showErr('3D engine failed to load. Check your internet connection and reload.')});
+const gx=()=>S.gm?(S.gmx||100):1;
 
-function initSession(){
-  $('loginOverlay').style.display = 'none';$('userBadge').textContent = '👤 ' + currentUser;
-  if(currentUser !== 'Guest') $('logoutBtn').style.display = 'inline-block';
-  
-  S = load();
-  gmMode = !!S.gm;
-  updateGMBadge();
-  if(!S.q) S.q = ['kill','loot','stage'].map(newQuest);
-  ui();
-  log(`Welcome back, ${currentUser}!`);
-}
-
-// Auto-login session check
-const savedSession = localStorage.getItem('pg_session');
-if(savedSession){
-  currentUser = savedSession;
-  setTimeout(initSession, 10);
-}
-
-const rnd=(a,b)=>a+Math.random()*(b-a),ri=(a,b)=>Math.floor(rnd(a,b+1)),cl=(v,a,b)=>Math.max(a,Math.min(b,v));
-const isBoss=()=>S.stage%BOSS_EVERY===0,eqv=k=>S.eq[k]?ev(S.eq[k]):0,C=()=>CLASSES[S.cls]||CLASSES.Novice,st=k=>S.st[k];
-const maxHp=()=>80+S.lv*20+eqv('head')*4, maxSp=()=>20+S.lv*2+st('int')*3;
-const atk=()=>Math.round((4+S.lv*2+eqv('weapon')+st('str')*1.5+st('dex')*.3+st('luk')*.2)*C().atk);
-const aspd=()=>Math.max(.25,.85*C().aspd*(1-Math.min(.5,st('agi')*.006)));
-const crit=()=>Math.min(60,3+st('luk')*.4),flee=()=>Math.min(60,st('agi')*.5+S.lv*.1),missCh=()=>Math.max(0,15-st('dex')*.25);
-const def=()=>Math.floor(S.lv*.5+eqv('armor')),need=()=>Math.floor(20*Math.pow(S.lv,1.6)),cost=k=>1+Math.floor((S.st[k]-1)/10);
+// ---------- derived stats ----------
+const C=()=>CLASSES[S.cls]||CLASSES.Novice,lv=id=>S.sk[id]||0,jobOf=()=>S.jobs[S.cls]||(S.jobs[S.cls]={jl:1,jx:0}),jneed=j=>Math.floor(25*Math.pow(j,1.7));
 const skillOn=id=>lv(id)>0&&SKILLS.find(s=>s.id===id).cls.includes(S.cls);
+const pv=k=>SKILLS.reduce((a,s)=>a+(s.type==='pas'&&s.key===k&&skillOn(s.id)?s.f(lv(s.id)):0),0);
+const items=()=>Object.values(S.eq).filter(Boolean),ev=it=>Math.round(it.val*(1+(it.r||0)*.15)),iname=it=>(it.r?'+'+it.r+' ':'')+it.name,eqv=k=>S.eq[k]?ev(S.eq[k]):0;
+const bon=k=>{let v=0;for(const it of items()){for(const a of it.aff||[])if(a.k===k)v+=a.v;for(const c of it.cards||[])if(c.stat===k)v+=c.v}return v};
+const st=k=>S.st[k]+bon(k),canUse=it=>it.slot!=='weapon'||!it.wt||C().wt.includes(it.wt);
+const maxHp=()=>Math.round((80+S.lv*20+eqv('head')*4+bon('hp'))*C().hp*(1+pv('hpp')/100));
+const atk=()=>Math.round((4+S.lv*2+eqv('weapon')+st(C().main)*1.5+(st('dex')+st('luk'))*.25)*C().atk*(1+(pv('atk')+bon('atk'))/100));
+const aspd=()=>Math.max(.2,.85*C().aspd*(1-Math.min(.5,st('agi')*.006))/(1+(pv('aspd')+bon('aspd'))/100));
+const crit=()=>Math.min(60,3+st('luk')*.4+pv('crit')+bon('crit')),flee=()=>Math.min(60,st('agi')*.5+S.lv*.1+pv('flee')+bon('flee')),missCh=()=>Math.max(0,15-st('dex')*.25);
+const def=()=>Math.floor(S.lv*.5+eqv('armor')+pv('def')),need=()=>Math.floor(20*Math.pow(S.lv,1.6)),cost=k=>1+Math.floor((S.st[k]-1)/10);
+const totalPts=()=>{let p=10;for(let l=2;l<=S.lv;l++)p+=3+Math.floor(l/5);return p},rcost=()=>S.lv*50;
+const skpAvail=()=>Object.values(S.jobs).reduce((a,j)=>a+j.jl-1,0)-(Object.values(S.sk).reduce((a,b)=>a+b,0)-(S.sk.aid?1:0));
+const refCost=it=>Math.round(200*((it.r||0)+1)*(1+(it.sec||0)*.5)),refCh=it=>[100,100,100,100,70,60,50,40,30,20][it.r||0];
+const affTxt=a=>`${AL[a.k]} +${a.v}`,cardTxt=c=>`${c.n} (${SU(c.stat)} +${c.v})`,dtier=it=>it.card?GI[it.g]:it.ore?3:it.tier;
+const isBoss=()=>S.lvl===10,fieldName=()=>`${MAPS[S.mp].n} Lv ${S.lvl}`;
+const icon=it=>it.card?'🃏':it.ore?'💎':it.slot==='weapon'?(WICON[it.wt]||'⚔️'):SLOTS[it.slot].ic;
 
+// ---------- mobs & loot ----------
 let mob=null,pAtkT=0,mAtkT=0,respawn=0;
 function spawn(){
-  if(!S) return;
-  const boss=isBoss()&&S.killsInStage>=MOBS_PER_STAGE,lvl=S.stage;
-  const mult = gmMode ? 100 : 1;
-  if(boss){const b=BOSSES[(Math.floor(S.stage/BOSS_EVERY)-1)%BOSSES.length],hp=Math.floor(240*Math.pow(lvl,1.35));
-    mob={...b,boss:true,hp,max:hp,atk:Math.floor(6+lvl*2.4),exp:60*lvl*mult,zeny:ri(40,70)*lvl*mult,size:1.9};
-  }else{const m=MOBS[(S.stage-1+ri(0,2))%MOBS.length],hp=Math.floor(28*Math.pow(lvl,1.3));
-    mob={...m,boss:false,hp,max:hp,atk:Math.floor(3+lvl*1.6),exp:Math.floor(11.7*lvl)*mult,zeny:ri(4,9)*lvl*mult,size:1}}
+  const F=fieldOf(S.mp,S.lvl),l=S.lvl;
+  if(F.boss&&S.kl>=MPS){const hp=Math.floor(260*Math.pow(l,1.8));mob={...F.boss,boss:true,hp,max:hp,atk:Math.floor(5+l*4.5),exp:Math.floor(80*Math.pow(l,1.5)),zeny:ri(40,70)*l,size:1.9,lvl:l,sec:F.sec}}
+  else{const m=F.mobs[ri(0,1)],hp=Math.floor(30*Math.pow(l,1.8));mob={...m,boss:false,hp,max:hp,atk:Math.floor(3+l*3.2),exp:Math.floor(10*Math.pow(l,1.5)),zeny:ri(4,9)*l,size:1,lvl:l,sec:F.sec}}
   mob.x=pl.x>0?rnd(-BX_,-4):rnd(4,BX_);mob.z=rnd(Z0,Z1);mob.spawn=0;mob.ry=0;pAtkT=.3;mAtkT=.6;
 }
-
-function genItem(boss){
-  const slot=['weapon','armor','head'][ri(0,2)];let roll=rnd(0,100)-(boss?25:0)-st('luk')*.15,tier=0,acc=0;
-  for(let i=0;i<5;i++){acc+=RAR[i].w;if(roll<acc||i==4){tier=i;break}}
-  if(boss&&tier<2)tier=2;
-  const idx=Math.min(4,Math.floor((S.stage-1)/6)+ri(0,1)),base={weapon:3,armor:2,head:6}[slot]*(1+S.stage*.55);
-  const icon=SLOTS[slot].icons[idx];
-  return{id:Date.now()+Math.random(),slot,tier,r:0,icon,val:Math.max(1,Math.round(base*RAR[tier].m*rnd(.9,1.15))),name:(tier?RAR[tier].n+' ':'')+SLOTS[slot].names[idx]};
+function genGear(T,l,sec,boss){
+  const slot=T.k==='armor'||T.k==='head'?T.k:'weapon';let roll=rnd(0,100)-(boss?25:0)-st('luk')*.15,tier=0,acc=0;
+  for(let i=0;i<5;i++){acc+=RAR[i].w;if(roll<acc||i===4){tier=i;break}}if(boss&&tier<2)tier=2;
+  const val=Math.max(1,Math.round({weapon:6,armor:4,head:10}[slot]*[1,2.2,4,7][sec]*(1+l*.15)*RAR[tier].m*rnd(.9,1.12)));
+  const n=[1,1+ri(0,1),2,2+ri(0,1),3][tier],pool=AFF.slice(),aff=[],af=(1+sec)*AM[tier];
+  for(let i=0;i<n;i++){const k=pool.splice(ri(0,pool.length-1),1)[0];aff.push({k,v:Math.max(1,Math.round(af*AB[k]*rnd(.8,1.25)))})}
+  const slots=slot==='weapon'?Math.min(3,1+ri(0,1)+(tier>=3?1:0)):Math.min(1,ri(0,1)+(tier>=3?1:0));
+  return{id:uid(),slot,wt:slot==='weapon'?T.k:undefined,tier,val,name:(tier?RAR[tier].n+' ':'')+T.n,aff,slots,cards:[],sec,lvl:l};
 }
+const mkDrop=it=>({it,wx:mob.x+rnd(-.7,.7),wz:mob.z+rnd(-.7,.7),y:0,vy:-220,t:0});
 const addFloat=(x,y,z,txt,col,big)=>floats.push({x,y,z,txt,col,life:1,big});
-
-function strike(mult,col){
-  if(!mob)return;
-  if(Math.random()*100<missCh()){addFloat(mob.x,1.8,mob.z,'Miss','#ccc');return}
-  const c=Math.random()*100<crit(),d=Math.max(1,Math.round(atk()*mult*rnd(Math.min(.95,.7+st('dex')*.004),1.15)*(c?2+st('luk')*.01:1)));
-  mob.hp-=d;mob.flash=1;shake=c?6:2;
-  addFloat(mob.x+rnd(-.4,.4),1.5*Math.max(1,mob.size*.8)+.6,mob.z,c?d+'!':d,col||(c?'#ffe14d':'#fff'),c);
-}
-
-function playerAttack(){
-  pAtkT=aspd();atkAnim=1;
-  let sk=null;for(const id of['sonic','bash','fb','env']){const s=SKILLS.find(x=>x.id===id);if(skillOn(id)&&skCd[id]<=0&&S.sp>=s.sp){sk=s;break}}
-  if(sk){S.sp-=sk.sp;skCd[sk.id]=sk.cd;addFloat(pl.x,3,pl.z,sk.n,sk.col);
-    const m=sk.mul(lv(sk.id))*(1+st('int')*.01);strike(m,sk.col);for(let i=1;i<sk.hits;i++)pend.push({t:i*.09,m,col:sk.col})}
-  else{strike(1);if(skillOn('dbl')&&Math.random()<.1+lv('dbl')*.08+st('dex')*.003){pend.push({t:.15,m:1,col:'#aef'});addFloat(pl.x,3,pl.z,'Double Attack','#aef')}}
-}
-
-function kill(){
-  S.kills++;S.killsInStage++;S.q&&S.q.forEach(q=>{if(q.type==='kill')q.prog=Math.min(q.goal,q.prog+1)});S.zeny+=mob.zeny;S.exp+=mob.exp;pend=[];
-  addFloat(mob.x,2.4,mob.z,'+'+mob.zeny+'z','#ffd23f');log(`${mob.n} defeated! +${mob.exp} EXP, +${mob.zeny} Zeny`);
-  const n=mob.boss?ri(2,3):(Math.random()<.4+st('luk')*.003?1:0);
-  for(let i=0;i<n;i++)drops.push({it:genItem(mob.boss),wx:mob.x+rnd(-.7,.7),wz:mob.z+rnd(-.7,.7),y:0,vy:-220,t:0});
-  checkLevel();
-  if(mob.boss||(!isBoss()&&S.killsInStage>=MOBS_PER_STAGE)){
-    if(S.stage===S.best){
-      S.best++;
-      log(`Stage ${S.stage} cleared! Unlocked Stage ${S.best}.`,'r3');
-    }
-  }
-  syncQ();mob=null;respawn=.7;save();ui();
-}
-
-function collect(it){S.inv.push(it);S.q&&S.q.forEach(q=>{if(q.type==='loot')q.prog=Math.min(q.goal,q.prog+1)});log(`Picked up [${RAR[it.tier].n}] ${it.name} (${SLOTS[it.slot].stat} +${it.val})`,'r'+it.tier);
-  if(S.auto!==false){const cur=S.eq[it.slot];if(!cur||ev(it)>ev(cur))equip(it.id,true)}ui()}
-function equip(id,quiet){const i=S.inv.findIndex(x=>x.id===id);if(i<0)return;const it=S.inv.splice(i,1)[0],old=S.eq[it.slot];
-  if(old)S.inv.push(old);S.eq[it.slot]=it;S.hp=Math.min(S.hp,maxHp());if(!quiet)log('Equipped '+it.name);ui();save()}
-function sell(id){const i=S.inv.findIndex(x=>x.id===id);if(i<0)return;const it=S.inv.splice(i,1)[0],z=Math.floor(it.val*(1+it.tier*2)*2);S.zeny+=z;log(`Sold ${it.name} for ${z}z`);ui();save()}
-
-const lv=id=>S.sk[id]||0,ev=it=>Math.round(it.val*(1+(it.r||0)*.15)),iname=it=>(it.r?'+'+it.r+' ':'')+it.name;
-const totalPts=()=>{let p=10;for(let l=2;l<=S.lv;l++)p+=3+Math.floor(l/5);return p},rcost=()=>S.lv*50;
-const refCost=it=>Math.round(120*((it.r||0)+1)*(1+it.tier*.6)*(1+S.stage*.15)),refCh=it=>[100,100,100,100,70,60,50,40,30,20][it.r||0];
-
-function checkLevel(){while(S.exp>=need()){S.exp-=need();S.lv++;const p=3+Math.floor(S.lv/5);S.pts+=p;S.skp++;S.hp=maxHp();S.sp=maxSp();
-  log(`LEVEL UP! Lv ${S.lv}. +${p} stat points, +1 skill point`,'r4');addFloat(pl.x,3.6,pl.z,'LEVEL UP!','#fff',true);
-}}
-
-function newQuest(type){
-  const L=S?S.lv:1,g=type==='kill'?12+L*2:type==='loot'?3+Math.floor(L/3):(S?S.best:1)+1;
-  const mult = gmMode ? 100 : 1;
-  return{
-    type,
-    goal:g,
-    prog:type==='stage'?Math.min(S?S.best:1,g):0,
-    z:Math.round(g*(type==='kill'?10:type==='loot'?60:150)*(1+(S?S.stage:1)*.25))*mult,
-    xp:Math.floor(need()*(type==='stage'?.8:.35))*mult
-  };
-}
-const qTxt=q=>q.type==='kill'?`Defeat ${q.goal} monsters`:q.type==='loot'?`Collect ${q.goal} equipment drops`:`Reach stage ${q.goal}`;
-const syncQ=()=>S.q&&S.q.forEach(q=>{if(q.type==='stage')q.prog=Math.min(q.goal,S.best)});
-
-function claimQuest(index){
-  if(!S || !S.q || !S.q[index]) return;
-  const q = S.q[index];
-  if(q.prog < q.goal) return;
-  
-  S.zeny += q.z;
-  S.exp += q.xp;
-  log(`Quest Complete! +${q.z.toLocaleString()} Zeny, +${q.xp.toLocaleString()} EXP`, 'r3');
-  checkLevel();
-  S.q[index] = newQuest(q.type);
-  ui();
-  save();
-  renderWin();
-}
-
-function refine(sl){
-  const it=S.eq[sl];
-  if(!it||(it.r||0)>=10)return;
-  const c=refCost(it);
-  if(S.zeny<c){log('Not enough Zeny.');return;}
-  S.zeny-=c;
-  if(Math.random()*100<refCh(it)){
-    it.r=(it.r||0)+1;
-    log(`Refine success! ${iname(it)}`,'r3');
-    addFloat(pl.x,3,pl.z,'Refine +'+it.r,'#ffd23f');
-  }else{
-    if((it.r||0)>=5){
-      it.r--;
-      log(`Refine failed... ${it.name} dropped to +${it.r}.`,'r0');
-    }else{
-      log('Refine failed.','r0');
-    }
-    addFloat(pl.x,3,pl.z,'Failed','#ff6b6b');
-  }
-  ui();
-  save();
-}
-
-function changeJob(targetJob){
-  if(!CLASSES[targetJob]) return;
-  const target = CLASSES[targetJob];
-  if(S.lv < target.reqLv){
-    log(`Cannot change to ${targetJob}. Requires Level ${target.reqLv}.`, 'r0');
-    return;
-  }
-  S.cls = targetJob;
-  log(`Class changed to ${S.cls}!`, 'r4');
-  addFloat(pl.x, 3.6, pl.z, S.cls + '!', '#fff', true);
-  ui();
-  save();
-  renderWin();
-}
-
-let logs=[],tab=null;
 function log(m,cls){logs.push({m,cls});if(logs.length>80)logs.shift();
-  const f=$('feed'),d=document.createElement('div');d.textContent=m;f.appendChild(d);while(f.children.length>4)f.removeChild(f.firstChild);setTimeout(()=>d.remove(),7000);
-  if(tab==='log')renderWin()}
+  const f=$('feed'),d=document.createElement('div');d.textContent=m;f.appendChild(d);while(f.children.length>4)f.removeChild(f.firstChild);setTimeout(()=>d.remove(),7000);if(tab==='log')renderWin()}
 
-function showTooltip(e, content) {
-  const tt = $('tooltip');
-  tt.innerHTML = content;
-  tt.style.display = 'block';
-  moveTooltip(e);
+// ---------- combat ----------
+function shot(col){if(!C().rng||!mob)return;shots.push({x0:pl.x,z0:pl.z,x1:mob.x,z1:mob.z,t:0,col:col||'#fff',arrow:C().wt[0]==='bow'})}
+function strike(mult,col){
+  if(!mob)return;if(Math.random()*100<missCh()){addFloat(mob.x,1.8,mob.z,'Miss','#ccc');return}
+  const c=Math.random()*100<crit(),d=Math.max(1,Math.round(atk()*mult*rnd(Math.min(.95,.7+st('dex')*.004),1.15)*(c?2+st('luk')*.01:1)));
+  mob.hp-=d;mob.flash=1;shake=c?6:2;addFloat(mob.x+rnd(-.4,.4),1.5*Math.max(1,mob.size*.8)+.6,mob.z,c?d+'!':d,col||(c?'#ffe14d':'#fff'),c);
 }
-function moveTooltip(e) {
-  const tt = $('tooltip');
-  tt.style.left = (e.clientX + 14) + 'px';
-  tt.style.top = (e.clientY + 14) + 'px';
+function playerAttack(){
+  pAtkT=aspd();atkAnim=1;let sk=null,best=-1;
+  for(const s of SKILLS)if(s.type==='act'&&skillOn(s.id)&&(skCd[s.id]||0)<=0){const pw=s.mul(lv(s.id))*s.hits;if(pw>best){sk=s;best=pw}}
+  if(sk){skCd[sk.id]=sk.cd;addFloat(pl.x,3,pl.z,sk.n,sk.col);const m=sk.mul(lv(sk.id))*(1+st('int')*.01);
+    strike(m,sk.col);shot(sk.col);for(let i=1;i<sk.hits;i++)pend.push({t:i*.09,m,col:sk.col})}
+  else{strike(1);shot();const d=pv('dbl');if(d&&Math.random()<d/100+st('dex')*.003){pend.push({t:.15,m:1,col:'#aef'});addFloat(pl.x,3,pl.z,'Double Attack','#aef')}}
 }
-function hideTooltip() { $('tooltip').style.display = 'none'; }
-
-function showMapTooltip(e, stageNum) {
-  const boss = stageNum % BOSS_EVERY === 0;
-  const m1 = MOBS[(stageNum-1)%MOBS.length].n;
-  const m2 = MOBS[stageNum%MOBS.length].n;
-  const b = BOSSES[(Math.floor(stageNum/BOSS_EVERY)-1)%BOSSES.length];
-  
-  let html = `<div class="tt-title">📍 Stage ${stageNum} Info</div>`;
-  if(boss){
-    html += `<div><b>Boss Stage</b></div>
-    <div>Boss: <b class="r3">${b.n}</b></div>
-    <div>Minions: ${m1}, ${m2}</div>
-    <div class="tt-stat">Est. EXP: ~${(60*stageNum*(gmMode?100:1)).toLocaleString()}</div>`;
-  } else {
-    html += `<div>Monsters: <b>${m1}</b>, <b>${m2}</b></div>
-    <div>Target Kills: ${MOBS_PER_STAGE}</div>
-    <div class="tt-stat">Est. EXP: ~${(12*stageNum*(gmMode?100:1)).toLocaleString()} / kill</div>`;
-  }
-  showTooltip(e, html);
+function addJob(x){const j=jobOf(),c=C();if(j.jl>=c.mj)return;j.jx+=x;
+  while(j.jl<c.mj&&j.jx>=jneed(j.jl)){j.jx-=jneed(j.jl);j.jl++;log(`JOB LEVEL UP! ${S.cls} Job Lv ${j.jl} (+1 skill point)`,'r3');addFloat(pl.x,3.2,pl.z,'JOB UP!','#8fe9ff',true)}
+  if(j.jl>=c.mj)j.jx=0}
+function checkLevel(){while(S.exp>=need()){S.exp-=need();S.lv++;const p=3+Math.floor(S.lv/5);S.pts+=p;S.hp=maxHp();
+  log(`LEVEL UP! Lv ${S.lv}. +${p} stat points`,'r4');addFloat(pl.x,3.6,pl.z,'LEVEL UP!','#fff',true)}}
+const qProg=type=>S.q&&S.q.forEach(q=>{if(q.type===type)q.prog=Math.min(q.goal,q.prog+1)});
+function kill(){
+  const g=gx();S.kills++;S.kl++;qProg('kill');if(mob.boss)qProg('boss');
+  const z=Math.round(mob.zeny*(1+pv('zeny')/100))*g,xp=mob.exp*g;S.zeny+=z;S.exp+=xp;addJob(Math.round(mob.exp*.7)*g);pend=[];
+  addFloat(mob.x,2.4,mob.z,'+'+z+'z','#ffd23f');log(`${mob.n} defeated! +${xp.toLocaleString()} EXP, +${z.toLocaleString()} Zeny`);
+  const lk=1+st('luk')*.008;
+  for(const[T,ch]of mob.drops)if(Math.random()*100<ch*lk)drops.push(mkDrop(genGear(T,mob.lvl,mob.sec,mob.boss)));
+  if(Math.random()*100<mob.cardCh*lk){const g2=mob.card.g;drops.push(mkDrop({card:1,id:uid(),n:mob.card.n,g:g2,stat:mob.card.stat,v:CV[g2]}))}
+  if(mob.ore)for(const o of['ori','elu'])if(Math.random()<.01)drops.push(mkDrop({ore:o,id:uid(),n:ORE[o]}));
+  checkLevel();
+  if(mob.boss||(S.lvl<10&&S.kl>=MPS)){S.kl=0;if(S.lvl<10&&S.lvl>=S.prog[S.mp]){S.prog[S.mp]=S.lvl+1;log(`${fieldName()} cleared! Level ${S.lvl+1} unlocked.`,'r3');if(S.adv){S.lvl++;}}}
+  mob=null;respawn=.7;save();ui();
 }
-
-function renderItemHTML(it, actionsHtml) {
-  itemRegistry.set(it.id, it);
-  const ttContent = `<div class="tt-title r${it.tier}">${it.icon||'⚔️'} ${iname(it)}</div><div>Rarity: <b class="r${it.tier}">${RAR[it.tier].n}</b></div><div>Slot: ${SLOTS[it.slot].label}</div><div class="tt-stat">${SLOTS[it.slot].stat}: +${ev(it)}</div>`;
-  return `<div class="slot">
-    <div class="item-info">
-      <div class="item-icon-box" onmouseenter="showTooltip(event, \`${ttContent.replace(/"/g, '&quot;')}\`)" onmousemove="moveTooltip(event)" onmouseleave="hideTooltip()">
-        ${it.icon || '⚔️'}
-      </div>
-      <span class="r${it.tier}">${iname(it)}</span>
-    </div>
-    <div>${actionsHtml}</div>
-  </div>`;
+function collect(it){
+  if(it.card){S.cards.push(it);log(`Got card: [${GRADE[it.g]}] ${cardTxt(it)}`,'r'+GI[it.g]);addFloat(pl.x,2.8,pl.z,'CARD!','#ffb020',true);ui();return}
+  if(it.ore){S.ore[it.ore]++;log(`Got ${it.n}!`,'r4');addFloat(pl.x,2.8,pl.z,it.n+'!','#6cd3ff',true);ui();return}
+  S.inv.push(it);qProg('loot');log(`Picked up [${RAR[it.tier].n}] ${it.name}`,'r'+it.tier);
+  if(S.auto!==false&&canUse(it)){const cur=S.eq[it.slot];if(!cur||ev(it)>ev(cur))equip(it.id,true)}ui();
 }
+function equip(id,quiet){const i=S.inv.findIndex(x=>x.id===id);if(i<0)return;const it=S.inv[i];if(!canUse(it)){log(`Your class cannot use ${it.wt}.`);return}
+  S.inv.splice(i,1);const old=S.eq[it.slot];if(old)S.inv.push(old);S.eq[it.slot]=it;S.hp=Math.min(S.hp,maxHp());if(!quiet)log('Equipped '+iname(it));selB=null;ui();save()}
+const sellVal=it=>Math.floor(ev(it)*(1+it.tier*2)*2);
+function sell(id){const i=S.inv.findIndex(x=>String(x.id)===String(id));if(i<0)return;const it=S.inv.splice(i,1)[0];S.zeny+=sellVal(it);(it.cards||[]).forEach(c=>S.cards.push(c));if(selB==it.id)selB=null;ui();save()}
+function newQuest(type){const L=S?S.lv:1,g=type==='kill'?12+L*2:type==='loot'?3+Math.floor(L/3):1+Math.floor(L/10),m=S?gx():1;
+  return{type,goal:g,prog:0,z:Math.round(g*(type==='kill'?10:type==='loot'?60:400)*(1+L*.1))*m,xp:Math.floor(Math.pow(L,1.6)*(type==='boss'?12:5))*m}}
+const qTxt=q=>q.type==='kill'?`Defeat ${q.goal} monsters`:q.type==='loot'?`Collect ${q.goal} equipment drops`:`Defeat ${q.goal} boss${q.goal>1?'es':''}`;
+function refine(sl){const it=S.eq[sl];if(!it||(it.r||0)>=10)return;const o=sl==='weapon'?'ori':'elu',c=refCost(it);
+  if(S.ore[o]<1){log(`You need 1 ${ORE[o]}. (1% drop in Level 10 boss maps)`);return}if(S.zeny<c){log('Not enough Zeny.');return}
+  S.ore[o]--;S.zeny-=c;if(Math.random()*100<refCh(it)){it.r=(it.r||0)+1;log(`Refine success! ${iname(it)}`,'r3');addFloat(pl.x,3,pl.z,'Refine +'+it.r,'#ffd23f')}
+  else{if(it.r>=5){it.r--;log(`Refine failed... dropped to +${it.r}.`,'r0')}else log('Refine failed.','r0');addFloat(pl.x,3,pl.z,'Failed','#ff6b6b')}ui();save()}
 
-const TABS={
-  map:['🗺️','World Map','M'],
-  bestiary:['👾','Bestiary','X'],
-  status:['📊','Status','S'],
-  job:['⚔️','Job Change','J'],
-  skills:['✨','Skills','K'],
-  bag:['🎒','Bag','B'],
-  equip:['🛡️','Equipment','E'],
-  quest:['📜','Quests','Q'],
-  refine:['🔨','Refine','R'],
-  log:['📃','Log','L'],
-  set:['⚙️','Settings','O']
-};
+// ---------- class change (job levels are saved per class; switching lines resets you to Novice, base level is kept) ----------
+function classBlock(n){
+  if(n===S.cls)return'Current class';if(n==='Novice')return'';
+  for(let x=n;CLASSES[x].par;x=CLASSES[x].par){const p=CLASSES[x].par,pj=S.jobs[p];if(!pj||pj.jl<CLASSES[x].rj)return`Needs ${p} Job Lv ${CLASSES[x].rj}`}
+  if(S.cls!=='Novice'&&S.cls!==CLASSES[n].par)return'Reset to Novice first';return''}
+function changeClass(n){if(classBlock(n))return;S.cls=n;jobOf();const w=S.eq.weapon;
+  if(w&&w.wt&&!C().wt.includes(w.wt)){S.inv.push(w);S.eq.weapon=null;log('Your weapon cannot be used by this class. Moved to Bag.')}
+  S.hp=Math.min(S.hp,maxHp());log(n==='Novice'?'Reset to Novice. Job levels are saved.':`Class: ${n} (Job Lv ${S.jobs[n].jl})`,'r4');addFloat(pl.x,3.6,pl.z,n+'!','#fff',true);ui();save()}
 
-const dot=k=>!S?false:k==='status'?S.pts>0:k==='skills'?S.skp>0&&SKILLS.some(s=>s.cls.includes(S.cls)&&lv(s.id)<s.max):k==='job'?Object.keys(CLASSES).some(j=>CLASSES[j].reqLv<=S.lv&&j!==S.cls):k==='quest'?!!(S.q&&S.q.some(q=>q.prog>=q.goal)):false;
-
+// ---------- UI ----------
+const TABS={map:['🗺️','World Map','M'],status:['📊','Status','S'],job:['🌳','Class Tree','J'],skills:['✨','Skills','K'],bag:['🎒','Bag','B'],equip:['🛡️','Equipment','E'],cards:['🃏','Cards','C'],quest:['📜','Quests','Q'],refine:['🔨','Refine','R'],log:['📃','Log','L'],set:['⚙️','Settings','O'],gm:['🛠️','GM Tools','G']};
+const dot=k=>!S?false:k==='status'?S.pts>0:k==='skills'?skpAvail()>0:k==='quest'?!!(S.q&&S.q.some(q=>q.prog>=q.goal)):k==='cards'?S.cards.length>0:false;
+const find=id=>[...S.inv,...items(),...S.cards].find(x=>String(x.id)===String(id));
+const cell=(it,sel,extra='')=>`<div class="cell b${dtier(it)}${sel?' sel':''}" data-tip="${it.id}" ${extra}>${icon(it)}${it.r?`<i class="rf">+${it.r}</i>`:''}</div>`;
+function itemMain(it){
+  if(it.card)return`<b class="r${GI[it.g]}">${it.n}</b><div>${GRADE[it.g]} card &middot; <b>${SU(it.stat)} +${it.v}</b></div>`;
+  return`<b class="r${it.tier}">${iname(it)}</b><div><small>${RAR[it.tier].n} ${SLOTS[it.slot].label}${it.wt?' ('+it.wt+')':''} &middot; ${SECN[it.sec||0]}</small></div>
+  <div><b>${SLOTS[it.slot].stat} +${ev(it)}</b>${it.r?` <small>(base ${it.val})</small>`:''}</div>${(it.aff||[]).map(a=>`<div class="r1">&#9670; ${affTxt(a)}</div>`).join('')}`}
+function itemDetail(it){if(it.card)return itemMain(it);const cs=it.cards||[];return itemMain(it)+Array.from({length:it.slots||0},(_,i)=>`<div><small>${cs[i]?'&#9670; '+cardTxt(cs[i]):'&#9671; empty card slot'}</small></div>`).join('')+(canUse(it)?'':'<div class="r0"><small>Your class cannot use this.</small></div>')}
+const cardSlots=(it,k)=>Array.from({length:it.slots||0},(_,i)=>{const c=(it.cards||[])[i];return c?`<div><small class="r${GI[c.g]}">&#9670; ${cardTxt(c)}</small> <button data-a="unsock" data-v="${k}:${i}">Remove ${200*(c.g+1)}z</button></div>`:'<div><small>&#9671; empty slot</small></div>'}).join('');
+const tnode=n=>{const c=CLASSES[n],pj=S.jobs[n],cur=n===S.cls,blk=classBlock(n);return`<div class="tn ${cur?'cur':blk?(pj?'played':'lock'):'ok'}${selK===n?' pick':''}" data-a="selk" data-v="${n}"><b>${n}</b><small>${pj?`Job ${pj.jl}/${c.mj}`:'Lv '+c.rj+' req'}</small></div>`};
 const V={
-  map(){
-    let nodes = '';
-    const totalToDisplay = Math.max(10, S.best + 2);
-    for(let i=1; i<=totalToDisplay; i++){
-      const locked = i > S.best;
-      const isCurrent = i === S.stage;
-      const boss = i % BOSS_EVERY === 0;
-      nodes += `<div class="map-node ${locked?'locked':''} ${isCurrent?'active':''} ${boss?'boss-node':''}" 
-        ${!locked?`data-a="setStage" data-v="${i}"`:''} 
-        onmouseenter="showMapTooltip(event, ${i})" onmousemove="moveTooltip(event)" onmouseleave="hideTooltip()">
-        <div style="font-size:18px">${boss?'💀':'🌲'}</div>
-        <b>Stage ${i}</b>
-        <small>${boss?'BOSS':'Field'}</small>
-      </div>`;
-    }
-    return `<div class="hd">Select Map Stage to Grind</div>
-      <div>Highest Unlocked Stage: <b>${S.best}</b></div>
-      <div class="map-grid">${nodes}</div>`;
-  },
-  bestiary(){
-    let html = `<div class="hd">Monster Bestiary & Drop Rates</div>`;
-    html += `<h4>Regular Monsters (40% Drop Rate)</h4>`;
-    MOBS.forEach(m => {
-      html += `<div class="mob-card">
-        <b>${m.n}</b> - <small>${m.desc}</small>
-        <div>Drop Rates: 60% Common, 25% Fine, 10% Rare, 4% Epic, 1% Legendary</div>
-      </div>`;
-    });
-    html += `<h4>Bosses (100% Drop Rate - 2 to 3 Items)</h4>`;
-    BOSSES.forEach(b => {
-      html += `<div class="mob-card">
-        <b class="r3">${b.n} (BOSS)</b> - <small>${b.desc}</small>
-        <div>Guaranteed Rare or higher gear drops!</div>
-      </div>`;
-    });
-    return html;
-  },
-  status(){return `<div class="hd">${S.cls} Lv ${S.lv} &middot; Stat points: <b>${S.pts}</b></div>`
-    +STATS.map(([k,l,d])=>`<div class="slot"><span><b>${l}</b> ${S.st[k]} <small>(${d})</small></span><button data-a="stat" data-v="${k}" ${S.pts>=cost(k)?'':'disabled'}>+ ${cost(k)}pt</button></div>`).join('')
-    +`<div class="slot" style="flex-wrap:wrap"><span>ATK <b>${atk()}</b></span><span>DEF <b>${def()}</b></span><span>ASPD <b>${(1/aspd()).toFixed(2)}/s</b></span><span>Crit <b>${crit().toFixed(1)}%</b></span><span>Flee <b>${flee().toFixed(0)}%</b></span><span>HP <b>${maxHp()}</b></span><span>SP <b>${maxSp()}</b></span></div>`
-    +`<button class="full" data-a="rstat">Reset stats (${rcost()}z)</button>`},
-  job(){
-    let html = `<div class="hd">Class Advancement & Choice</div><p>Current Class: <b>${S.cls}</b> (Level ${S.lv})</p>`;
-    
-    // Group classes by Tier
-    const tiers = { 'Novice Job': ['Novice'], '1st Jobs (Req Lv 10)': ['Swordman','Mage','Archer','Thief','Acolyte','Merchant'], '2nd Jobs (Req Lv 25)': ['Knight','Wizard','Hunter','Assassin','Priest','Blacksmith'] };
-    
-    for(const [tName, list] of Object.entries(tiers)){
-      html += `<div style="font-weight:bold;margin:10px 0 4px;border-bottom:1px solid var(--edge2);">${tName}</div>`;
-      list.forEach(j => {
-        const info = CLASSES[j];
-        const isCurrent = S.cls === j;
-        const canSwitch = S.lv >= info.reqLv;
-        html += `<div class="job-card">
-          <div>
-            <b>${j}</b> ${isCurrent?'<span style="color:var(--gold)">(Active)</span>':''}<br>
-            <small>Req Lv: ${info.reqLv} &middot; ATK: x${info.atk} &middot; ASPD: x${info.aspd}</small>
-          </div>
-          <button data-a="changeJob" data-v="${j}" ${canSwitch && !isCurrent ? '' : 'disabled'}>${isCurrent?'Active':'Switch'}</button>
-        </div>`;
-      });
-    }
-    return html;
-  },
-  skills(){return `<div class="hd">Skill points: <b>${S.skp}</b></div>`+SKILLS.map(s=>{const L=lv(s.id),ok=s.cls.includes(S.cls);
-    return `<div class="slot" style="opacity:${ok?1:.5}"><span><b>${s.n}</b> Lv ${L}/${s.max} ${s.passive?'(passive)':'&middot; SP '+s.sp}<br><small>${s.d(Math.max(1,L))}</small>${L&&L<s.max?`<br><small>Next: ${s.d(L+1)}</small>`:''}</span>${ok?`<button data-a="skill" data-v="${s.id}" ${S.skp>0&&L<s.max?'':'disabled'}>+</button>`:`<small>${s.cls[0]}</small>`}</div>`}).join('')
+  map(){const F=fieldOf(mapM,mapL),mp=MAPS[mapM],pr=S.prog[mapM];
+    return`<div class="row">${MAPS.map((m,i)=>`<button data-a="selm" data-v="${i}" ${i===mapM?'style="background:#ffe08a"':''}>${m.n}</button>`).join('')}</div>
+    <div class="hd">${mp.n} <small>&middot; ${mp.t}</small></div>
+    <div class="lvgrid">${Array.from({length:10},(_,i)=>{const l=i+1,lock=l>pr;return`<div class="map-node${lock?' locked':''}${S.mp===mapM&&S.lvl===l?' active':''}${mapL===l?' picked':''}${l===10?' boss-node':''}" data-a="sell_" data-v="${l}"><div>${l===10?'💀':'🌲'}</div><b>Lv ${l}</b><small>${secOf(l)===0?'Novice':secOf(l)===1?'1st job':secOf(l)===2?'2nd job':'Boss'}</small></div>`}).join('')}</div>
+    <div class="mob-card"><div class="hd">&#128269; ${mp.n} Lv ${mapL} &mdash; ${SECN[F.sec]}</div>
+    ${F.mobs.map(m=>`<div><b>${m.n}</b><br><small>Drops: ${m.drops.map(dropTxt).join(', ')}</small><br><small class="r${GI[m.card.g]}">Card: ${m.card.n} (${SU(m.card.stat)} +${CV[m.card.g]}, ${GRADE[m.card.g]}) ${m.cardCh}%</small>${m.ore?'<br><small class="r4">Oridecon 1% &middot; Elunium 1%</small>':''}</div><hr>`).join('')}
+    ${F.boss?`<div><b class="r3">${F.boss.n} (BOSS)</b><br><small>Drops: ${F.boss.drops.map(dropTxt).join(', ')}</small><br><small class="r4">Card: ${F.boss.card.n} (${SU(F.boss.card.stat)} +5, Legendary) ${F.boss.cardCh}% &middot; Oridecon 1% &middot; Elunium 1%</small></div>`:`<small>Boss appears at Level 10.</small>`}
+    <button class="full" data-a="go" ${mapL>pr?'disabled':''}>${S.mp===mapM&&S.lvl===mapL?'You are here':'Travel to '+mp.n+' Lv '+mapL}</button></div>`},
+  status(){const c=C(),b=k=>bon(k)?` <small class="r1">+${bon(k)}</small>`:'';
+    return`<div class="hd">${S.cls} &middot; Base Lv ${S.lv} &middot; Job Lv ${jobOf().jl}/${c.mj}</div><div class="hd">Stat points: ${S.pts}</div>`
+    +STATS.map(([k,l,d])=>`<div class="slot"><span><b>${l}</b> ${S.st[k]}${b(k)} <small>(${d})</small></span><button data-a="stat" data-v="${k}" ${S.pts>=cost(k)?'':'disabled'}>+ ${cost(k)}pt</button></div>`).join('')
+    +`<div class="slot" style="flex-wrap:wrap"><span>ATK <b>${atk()}</b></span><span>DEF <b>${def()}</b></span><span>ASPD <b>${(1/aspd()).toFixed(2)}/s</b></span><span>Crit <b>${crit().toFixed(1)}%</b></span><span>Flee <b>${flee().toFixed(0)}%</b></span><span>HP <b>${maxHp()}</b></span></div>
+    <small>Weapons: ${c.wt.join(', ')} &middot; Main stat: ${SU(c.main)}</small><button class="full" data-a="rstat">Reset stats (${rcost()}z)</button>`},
+  job(){const lines=[['Swordman','Knight','Lord Knight'],['Mage','Wizard','High Wizard'],['Archer','Hunter','Sniper'],['Thief','Assassin','Assassin Cross'],['Acolyte','Priest','High Priest'],['Merchant','Blacksmith','Whitesmith']];
+    const k=selK||S.cls,c=CLASSES[k],blk=classBlock(k),pj=S.jobs[k];
+    return`<div class="tree"><div class="trow" style="justify-content:center">${tnode('Novice')}</div><div class="trunk"></div>
+    ${lines.map(ch=>`<div class="trow">${ch.map((n,i)=>(i?'<span class="arw">&#9654;</span>':'')+tnode(n)).join('')}</div>`).join('')}</div>
+    <div class="legend"><span class="tn cur">Current</span><span class="tn ok">Available</span><span class="tn played">Played</span><span class="tn lock">Locked</span></div>
+    <div class="mob-card"><div class="hd">${k}</div><small>${c.par?'Before: <b>'+c.par+'</b>':'Starting class'}${c.kids.length?' &middot; Next: <b>'+c.kids.join(', ')+'</b>':''}</small><br>
+    <small>${pj?`Saved Job Lv ${pj.jl}/${c.mj}`:'Not played yet'} &middot; ATK x${c.atk} &middot; ASPD x${c.aspd} &middot; HP x${c.hp}<br>Weapons: ${c.wt.join(', ')} &middot; Main stat ${SU(c.main)}</small>
+    <div class="row" style="margin-top:6px"><button data-a="job" data-v="${k}" ${blk?'disabled':''}>${k===S.cls?'Current class':k==='Novice'?'Reset to Novice':'Change to '+k}</button>${blk&&k!==S.cls?`<small class="r0">${blk}</small>`:''}</div></div>
+    <button class="full" data-a="job" data-v="Novice" ${S.cls==='Novice'?'disabled':''}>Reset to Novice (keeps all saved Job Levels &amp; Base Lv)</button>`},
+  skills(){const line=lineOf(S.cls);return`<div class="hd">Skill points: ${skpAvail()} <small>(1 per Job Level, all classes)</small></div>`
+    +line.map(from=>{const ss=SKILLS.filter(s=>s.from===from);return ss.length?`<div class="sec">${from} skills</div>`+ss.map(s=>{const L=lv(s.id);
+      return`<div class="slot"><span><b>${s.n}</b> Lv ${L}/${s.max}${s.type==='pas'?' (passive)':''}<br><small>${s.d(Math.max(1,L))}</small>${L&&L<s.max?`<br><small>Next: ${s.d(L+1)}</small>`:''}</span><button data-a="skill" data-v="${s.id}" ${skpAvail()>0&&L<s.max?'':'disabled'}>+</button></div>`}).join(''):''}).join('')
     +`<button class="full" data-a="rskill">Reset skills (${rcost()}z)</button>`},
-  bag(){const inv=[...S.inv].sort((a,b)=>b.tier-a.tier||ev(b)-ev(a));
-    return `<button class="full" style="margin:0 0 6px" data-a="sellall">Sell all (${inv.length})</button>`
-    +(inv.length?inv.map(it=>renderItemHTML(it, `<button data-a="equip" data-v="${it.id}">Equip</button> <button data-a="sell" data-v="${it.id}">Sell</button>`)).join(''):'<i>Nothing yet. Defeat monsters to find loot.</i>')},
-  equip(){return Object.keys(SLOTS).map(k=>{
-    const e=S.eq[k];
-    if(!e) return `<div class="slot"><span>${SLOTS[k].label}</span><span class="r0">&mdash; empty &mdash;</span></div>`;
-    return renderItemHTML(e, `<small>${SLOTS[k].label}</small>`);
-  }).join('')+`<small style="display:block;margin-top:6px;">Hover item icon to view stats.</small>`},
-  quest(){
-    return S.q.map((q,i)=>`<div class="slot" style="flex-direction:column;align-items:stretch">
-      <b>${qTxt(q)}</b>
-      <div class="pbar"><i style="width:${Math.min(100,(q.prog/q.goal)*100)}%"></i></div>
-      <small>${q.prog}/${q.goal} &middot; Reward: ${q.z.toLocaleString()}z, ${q.xp.toLocaleString()} EXP</small>
-      <button data-a="claim" data-v="${i}" ${q.prog>=q.goal?'':'disabled'}>Claim reward</button>
-    </div>`).join('');
-  },
-  refine(){return Object.keys(SLOTS).map(k=>{
-    const it=S.eq[k];
-    if(!it)return `<div class="slot"><span>${SLOTS[k].label}</span><small>empty</small></div>`;
-    itemRegistry.set(it.id, it);
-    const r=it.r||0,c=refCost(it);
-    return `<div class="slot" style="flex-direction:column;align-items:stretch">
-      <div class="item-info">
-        <div class="item-icon-box" onmouseenter="showTooltip(event, \`<div class='tt-title r${it.tier}'>${it.icon\vert{}\vert{}'⚔️'} ${iname(it)}</div><div>${SLOTS[it.slot].stat}: +${ev(it)}</div>\`)" onmousemove="moveTooltip(event)" onmouseleave="hideTooltip()">${it.icon||'⚔️'}</div>
-        <b class="r${it.tier}">${iname(it)}</b>
-      </div>
-      <small>${SLOTS[k].stat} +${ev(it)} &rarr; +${Math.round(it.val*(1+(r+1)*.15))} &middot; ${r>=10?'MAX':'Success '+refCh(it)+'%'}${r>=5?' (failure: -1)':''}</small>
-      <button data-a="refine" data-v="${k}" ${r>=10||S.zeny<c?'disabled':''}>Refine (${c}z)</button>
-    </div>`
-  }).join('')},
+  bag(){const sel=selB&&S.inv.find(x=>String(x.id)===String(selB));const n=Math.max(30,Math.ceil(S.inv.length/6)*6);const inv=[...S.inv].sort((a,b)=>b.tier-a.tier||ev(b)-ev(a));
+    return`<div class="row"><small>${S.inv.length} items</small><button data-a="sellbelow" data-v="1">Sell Common/Fine</button><button data-a="sellbelow" data-v="2">Sell up to Rare</button></div>
+    <div class="grid">${Array.from({length:n},(_,i)=>inv[i]?cell(inv[i],sel&&sel.id===inv[i].id,`data-a="selb" data-v="${inv[i].id}"`):'<div class="cell empty"></div>').join('')}</div>
+    <div class="mob-card" style="margin-top:8px">${sel?itemDetail(sel)+`<div class="row" style="margin-top:6px"><button data-a="equip" data-v="${sel.id}" ${canUse(sel)?'':'disabled'}>Equip</button><button data-a="sell" data-v="${sel.id}">Sell ${sellVal(sel)}z</button></div>`:'<small>Click an item to see its stats. Hover for a quick tooltip.</small>'}</div>`},
+  equip(){return Object.keys(SLOTS).map(k=>{const e=S.eq[k];return`<div class="slot" style="align-items:flex-start;gap:10px">${e?cell(e,false):'<div class="cell empty"></div>'}<div style="flex:1"><small>${SLOTS[k].label}</small><br>${e?itemMain(e)+cardSlots(e,k):'<span>&mdash; empty &mdash;</span>'}</div></div>`}).join('')+'<small>Insert cards from the Cards window.</small>'},
+  cards(){const g={};S.cards.forEach(c=>(g[c.n]=g[c.n]||[]).push(c));const ks=Object.keys(g),sel=g[selC]?g[selC][0]:null;
+    return`<div class="grid">${ks.map(n=>`<div class="cell b${GI[g[n][0].g]}${n===selC?' sel':''}" data-a="selc" data-v="${n}" data-tip="${g[n][0].id}">🃏<i class="rf">x${g[n].length}</i></div>`).join('')||'<small>No cards yet. Every monster drops its own card at a low chance.</small>'}</div>
+    ${sel?`<div class="mob-card" style="margin-top:8px">${itemDetail(sel)}<div class="row" style="margin-top:6px">${Object.keys(SLOTS).map(k=>{const e=S.eq[k];return e&&(e.cards||[]).length<(e.slots||0)?`<button data-a="sock" data-v="${sel.id}:${k}">&rarr; ${SLOTS[k].label}</button>`:''}).join('')}<button data-a="sellcard" data-v="${sel.id}">Sell ${sel.v*150}z</button></div></div>`:''}`},
+  quest(){return S.q.map((q,i)=>`<div class="slot" style="flex-direction:column;align-items:stretch"><b>${qTxt(q)}</b><div class="pbar"><i style="width:${Math.min(100,q.prog/q.goal*100)}%"></i></div><small>${q.prog}/${q.goal} &middot; ${q.z.toLocaleString()}z, ${q.xp.toLocaleString()} EXP</small><button data-a="claim" data-v="${i}" ${q.prog>=q.goal?'':'disabled'}>Claim reward</button></div>`).join('')},
+  refine(){return`<div class="hd">Oridecon: ${S.ore.ori} &middot; Elunium: ${S.ore.elu}</div><small>Weapons use Oridecon, armor/headgear use Elunium. Both drop at 1% in Level 10 boss maps.</small>`+Object.keys(SLOTS).map(k=>{const it=S.eq[k];if(!it)return`<div class="slot"><span>${SLOTS[k].label}</span><small>empty</small></div>`;
+    const r=it.r||0,o=k==='weapon'?'ori':'elu',c=refCost(it);return`<div class="slot" style="align-items:flex-start;gap:10px;margin-top:6px">${cell(it,false)}<div style="flex:1"><b class="r${it.tier}">${iname(it)}</b><br><small>${SLOTS[k].stat} +${ev(it)} &rarr; +${Math.round(it.val*(1+(r+1)*.15))} &middot; ${r>=10?'MAX':'Success '+refCh(it)+'%'}${r>=5?' (fail: -1)':''}</small><br><button data-a="refine" data-v="${k}" ${r>=10||S.zeny<c||S.ore[o]<1?'disabled':''}>Refine: 1 ${ORE[o]} + ${c}z</button></div></div>`}).join('')},
   log(){return logs.map(l=>`<div class="${l.cls||''}">${l.m}</div>`).join('')||'<i>No events yet.</i>'},
-  set(){return `<label><input type="checkbox" data-a="auto" ${S.auto!==false?'checked':''}> Auto-equip better gear</label>
-    <div style="margin-top:10px;"><button onclick="toggleGM()">${gmMode?'Disable GM Mode':'Enable GM Mode (100x EXP & Zeny)'}</button></div>
-    <div class="slot" style="margin-top:8px"><span>Select Stage (1 to ${S.best})</span><span><button data-a="sdn">&minus;</button> <button data-a="sup">+</button></span></div>
-    <small>Drag the view to rotate, scroll to zoom. Hotkeys: M X S J K B E Q R L O, Esc to close.</small><button class="full" data-a="reset">Erase account save &amp; restart</button>`}};
-
+  set(){return`<label><input type="checkbox" data-a="auto" ${S.auto!==false?'checked':''}> Auto-equip better gear</label><br><label><input type="checkbox" data-a="adv" ${S.adv!==false?'checked':''}> Auto-advance to next level (turn off to farm)</label>
+    <p><small>Drag the view to rotate, scroll to zoom. Hotkeys: M S J K B E C Q R L O, Esc to close.</small></p><button class="full" data-a="reset">Erase this account's save &amp; restart</button><button class="full" data-a="logout">Logout</button>`},
+  gm(){return`<div class="hd">GM multiplier (EXP, Job EXP, Zeny, quests)</div><div class="row">${[1,10,100,1000].map(x=>`<button data-a="gmx" data-v="${x}" ${S.gmx===x?'style="background:#ffe08a"':''}>x${x}</button>`).join('')}</div>
+    <div class="row" style="margin-top:8px"><button data-a="gmz">+1,000,000 Zeny</button><button data-a="gmo">+20 Oridecon &amp; Elunium</button><button data-a="gml">+10 Base Levels</button><button data-a="gmj">Max Job Lv (current class)</button><button data-a="gmu">Unlock all map levels</button></div>`}};
 function renderWin(){
-  $('dock').innerHTML=Object.entries(TABS).map(([k,[ic,n,key]])=>`<button class="ib${tab===k?' on':''}" data-t="${k}" title="${n} (${key})">${ic}<span class="k">${key}</span>${dot(k)?'<i class="dot"></i>':''}</button>`).join('');
-  const w=$('wnd');w.style.display=tab?'flex':'none';if(!tab)return;
-  $('wt').textContent=TABS[tab][1];$('wb').innerHTML=V[tab]();if(tab==='log')$('wb').scrollTop=1e6;
-}
-const openTab=k=>{tab=tab===k?null:k;renderWin()};
+  if(!S)return;
+  $('dock').innerHTML=Object.entries(TABS).filter(([k])=>k!=='gm'||S.gm).map(([k,[ic,n,key]])=>`<button class="ib${tab===k?' on':''}" data-t="${k}" title="${n} (${key})">${ic}<span class="k">${key}</span>${dot(k)?'<i class="dot"></i>':''}</button>`).join('');
+  const w=$('wnd');w.style.display=tab?'flex':'none';if(!tab)return;const sc=$('wb').scrollTop;
+  $('wt').textContent=TABS[tab][1];$('wb').innerHTML=V[tab]();$('wb').scrollTop=tab==='log'?1e6:sc}
+const openTab=k=>{if(k==='gm'&&!S.gm)return;tab=tab===k?null:k;if(tab==='map'){mapM=S.mp;mapL=S.lvl}renderWin()};
+const gotoField=(m,l)=>{S.mp=m;S.lvl=l;S.kl=0;mob=null;respawn=.3;pend=[];ui();save()};
 const ACT={
-  setStage:st=>{const target=+st; if(target<=S.best){S.stage=target; S.killsInStage=0; mob=null; respawn=.3; ui(); save(); log(`Traveled to Stage ${target}.`); tab=null; renderWin();}},
-  stat:k=>{if(S.pts>=cost(k)){S.pts-=cost(k);S.st[k]++;S.hp=Math.min(S.hp,maxHp());ui();save();renderWin()}},
-  changeJob:targetJob=>changeJob(targetJob),
-  rstat:()=>{if(S.zeny<rcost())return log('Not enough Zeny to reset stats.');S.zeny-=rcost();for(const k in S.st)S.st[k]=1;S.pts=totalPts();S.hp=Math.min(S.hp,maxHp());log('Stats reset.');ui();save();renderWin()},
-  skill:id=>{const s=SKILLS.find(x=>x.id===id);if(S.skp>0&&lv(id)<s.max&&s.cls.includes(S.cls)){S.skp--;S.sk[id]=lv(id)+1;ui();save();renderWin()}},
-  rskill:()=>{if(S.zeny<rcost())return log('Not enough Zeny to reset skills.');S.zeny-=rcost();S.sk={};S.skp=S.lv;log('Skills reset.');ui();save();renderWin()},
-  equip:id=>equip(+id),sell:id=>sell(+id),sellall:()=>{S.inv.slice().forEach(it=>sell(it.id))},
-  refine:k=>{refine(k);renderWin();},
-  claim:i=>claimQuest(+i),
-  auto:()=>{S.auto=S.auto===false;ui()},
-  sup:()=>{if(S.stage<S.best){S.stage++;S.killsInStage=0;mob=null;respawn=.3;ui();renderWin()}},
-  sdn:()=>{if(S.stage>1){S.stage--;S.killsInStage=0;mob=null;respawn=.3;ui();renderWin()}},
-  reset:()=>{if(confirm('Erase your save for this account and start over?')){S=fresh();S.q=['kill','loot','stage'].map(newQuest);floats.forEach(f=>f.el&&f.el.remove());floats=[];drops=[];pend=[];mob=null;respawn=.3;logs=[];log('New adventure started.');ui();save();renderWin()}}};
-
+  selm:v=>{mapM=+v;mapL=Math.min(mapL,Math.max(1,S.prog[mapM]));renderWin()},sell_:v=>{mapL=+v;renderWin()},go:()=>{if(mapL<=S.prog[mapM]){gotoField(mapM,mapL);log(`Traveled to ${fieldName()}.`)}},
+  stat:k=>{if(S.pts>=cost(k)){S.pts-=cost(k);S.st[k]++;S.hp=Math.min(S.hp,maxHp());ui();save()}},
+  selk:v=>{selK=v;renderWin()},job:n=>changeClass(n),
+  rstat:()=>{if(S.zeny<rcost())return log('Not enough Zeny to reset stats.');S.zeny-=rcost();for(const k in S.st)S.st[k]=1;S.pts=totalPts();S.hp=Math.min(S.hp,maxHp());log('Stats reset.');ui();save()},
+  skill:id=>{const s=SKILLS.find(x=>x.id===id);if(skpAvail()>0&&lv(id)<s.max&&lineOf(S.cls).includes(s.from)){S.sk[id]=lv(id)+1;ui();save()}},
+  rskill:()=>{if(S.zeny<rcost())return log('Not enough Zeny to reset skills.');S.zeny-=rcost();S.sk={aid:1};log('Skills reset.');ui();save()},
+  selb:v=>{selB=v;renderWin()},equip:id=>equip(+id),sell:id=>sell(id),sellbelow:v=>{S.inv.filter(i=>i.tier<=+v).slice().forEach(i=>sell(i.id))},
+  selc:v=>{selC=v;renderWin()},
+  sock:v=>{const[id,k]=v.split(':'),i=S.cards.findIndex(c=>String(c.id)===id),e=S.eq[k];if(i<0||!e||(e.cards||[]).length>=(e.slots||0))return;e.cards=e.cards||[];e.cards.push(S.cards.splice(i,1)[0]);S.hp=Math.min(S.hp,maxHp());ui();save()},
+  unsock:v=>{const[k,i]=v.split(':'),e=S.eq[k];if(!e)return;const c=e.cards[+i],p=200*(c.g+1);if(S.zeny<p)return log('Not enough Zeny to remove the card.');S.zeny-=p;e.cards.splice(+i,1);S.cards.push(c);S.hp=Math.min(S.hp,maxHp());ui();save()},
+  sellcard:id=>{const i=S.cards.findIndex(c=>String(c.id)===id);if(i<0)return;const c=S.cards.splice(i,1)[0];S.zeny+=c.v*150;ui();save()},
+  refine:k=>refine(k),
+  claim:i=>{const q=S.q[+i];if(q&&q.prog>=q.goal){S.zeny+=q.z;S.exp+=q.xp;log(`Quest complete! +${q.z.toLocaleString()}z, +${q.xp.toLocaleString()} EXP`,'r3');S.q[+i]=newQuest(q.type);checkLevel();ui();save()}},
+  auto:()=>{S.auto=S.auto===false;ui()},adv:()=>{S.adv=S.adv===false;ui()},logout:()=>logout(),
+  reset:()=>{if(confirm('Erase this account save and start over?')){const gm=S.gm;S=fresh();S.gm=gm;S.q=['kill','loot','boss'].map(newQuest);floats.forEach(f=>f.el&&f.el.remove());floats=[];drops=[];pend=[];mob=null;respawn=.3;logs=[];log('New adventure started.');ui();save()}},
+  gmx:v=>{S.gmx=+v;ui();save()},gmz:()=>{S.zeny+=1e6;ui();save()},gmo:()=>{S.ore.ori+=20;S.ore.elu+=20;ui();save()},gml:()=>{S.lv+=10;S.pts+=30;S.hp=maxHp();ui();save()},
+  gmj:()=>{const j=jobOf();j.jl=C().mj;j.jx=0;ui();save()},gmu:()=>{S.prog=[10,10,10,10,10];ui();save()}};
 $('dock').onclick=e=>{const b=e.target.closest('[data-t]');if(b)openTab(b.dataset.t)};
-$('wx').onclick=()=>openTab(tab);$('wnd').onclick=e=>{const b=e.target.closest('[data-a]');if(b&&!b.disabled)ACT[b.dataset.a](b.dataset.v)};
-addEventListener('keydown',e=>{if(e.ctrlKey||e.metaKey||e.altKey)return;const k=e.key.toUpperCase();if(k==='ESCAPE'){if(tab)openTab(tab);return}const f=Object.entries(TABS).find(([,v])=>v[2]===k);if(f)openTab(f[0])});
+$('wx').onclick=()=>openTab(tab);
+$('wnd').onclick=e=>{const b=e.target.closest('[data-a]');if(b&&!b.disabled&&ACT[b.dataset.a])ACT[b.dataset.a](b.dataset.v)};
+addEventListener('keydown',e=>{if(!S||e.ctrlKey||e.metaKey||e.altKey||/INPUT|TEXTAREA/.test(e.target.tagName))return;const k=e.key.toUpperCase();if(k==='ESCAPE'){if(tab)openTab(tab);return}const f=Object.entries(TABS).find(([,v])=>v[2]===k);if(f)openTab(f[0])});
 $('spd').onclick=()=>{speed=speed===1?2:speed===2?4:1;$('spd').textContent='Speed x'+speed};
-
-function bars(){if(!S) return; $('lv').textContent=S.lv;$('cls2').textContent=S.cls;$('zeny').textContent=S.zeny.toLocaleString();$('kills').textContent=S.kills;
-  $('hpb').style.width=Math.max(0,S.hp/maxHp()*100)+'%';$('spb').style.width=S.sp/maxSp()*100+'\%';$('xpb').style.width=S.exp/need()*100+'%'}
-
-function ui(){
-  if(!S) return;
-  bars();
-  $('stageTitle').textContent=`Stage ${S.stage} \u2014 ${isBoss()?'Boss Lair':'Prontera Field'}`;
-  $('grindStatus').textContent = (S.stage < S.best) ? "🔄 Grinding Map" : "✨ Highest Map";
-}
+const tip=$('tooltip');
+document.addEventListener('mouseover',e=>{const c=S&&e.target.closest&&e.target.closest('[data-tip]');if(!c){tip.style.display='none';return}const it=find(c.dataset.tip);if(!it){tip.style.display='none';return}
+  tip.innerHTML=itemDetail(it);tip.style.display='block'});
+document.addEventListener('mousemove',e=>{tip.style.left=Math.min(innerWidth-240,e.clientX+14)+'px';tip.style.top=Math.min(innerHeight-200,e.clientY+14)+'px'});
+function bars(){if(!S)return;const j=jobOf(),c=C();$('lv').textContent=S.lv;$('cls2').textContent=S.cls;$('jl').textContent=j.jl;$('zeny').textContent=S.zeny.toLocaleString();$('kills').textContent=S.kills;
+  $('hpb').style.width=Math.max(0,S.hp/maxHp()*100)+'%';$('jb').style.width=(j.jl>=c.mj?100:j.jx/jneed(j.jl)*100)+'%';$('xpb').style.width=S.exp/need()*100+'%'}
+function ui(){if(!S)return;bars();$('stageTitle').textContent=fieldName()+(isBoss()?' (Boss map)':'');$('grindStatus').textContent=S.lvl<S.prog[S.mp]?'🔄 Farming':'✨ Frontier';renderWin()}
 
 function update(dt){
-  if(!S) return;
-  t+=dt;atkAnim=Math.max(0,atkAnim-dt*4);hitAnim=Math.max(0,hitAnim-dt*4);shake=Math.max(0,shake-dt*20);
-  S.sp=Math.min(maxSp(),S.sp+dt*(1+st('int')/12));for(const k in skCd)skCd[k]=Math.max(0,skCd[k]-dt);
-  if(skillOn('aid')&&S.hp<maxHp()*.5&&S.sp>=5&&skCd.aid<=0){S.sp-=5;skCd.aid=6;const h=Math.ceil(maxHp()*(.1+.05*lv('aid')));S.hp=Math.min(maxHp(),S.hp+h);addFloat(pl.x,2.6,pl.z,'+'+h,'#7dff7d')}
-  for(let i=pend.length-1;i>=0;i--){const p=pend[i];p.t-=dt;if(p.t<=0){pend.splice(i,1);strike(p.m,p.col);if(mob&&mob.hp<=0){kill();break}}}
+  if(!S)return;t+=dt;atkAnim=Math.max(0,atkAnim-dt*4);hitAnim=Math.max(0,hitAnim-dt*4);shake=Math.max(0,shake-dt*20);
+  for(const k in skCd)skCd[k]=Math.max(0,skCd[k]-dt);
+  if(pv('hpreg')&&S.hp<maxHp())S.hp=Math.min(maxHp(),S.hp+dt*maxHp()*pv('hpreg')/100);
+  shots.forEach(s=>s.t+=dt*7);shots=shots.filter(s=>{if(s.t<1)return true;if(s.m)scene.remove(s.m);return false});
+  if(skillOn('aid')&&S.hp<maxHp()*.5&&(skCd.aid||0)<=0){skCd.aid=6;const h=Math.ceil(maxHp()*(.1+.05*lv('aid')));S.hp=Math.min(maxHp(),S.hp+h);addFloat(pl.x,2.6,pl.z,'+'+h,'#7dff7d')}
+  for(let i=pend.length-1;i>=0;i--){const p=pend[i];p.t-=dt;if(p.t<=0){pend.splice(i,1);strike(p.m,p.col);shot(p.col);if(mob&&mob.hp<=0){kill();break}}}
   let tx=0,tz=1.5,reach=1.4;
   if(!mob){respawn-=dt;if(respawn<=0)spawn()}
   else{
     mob.spawn=Math.min(1,mob.spawn+dt*3);mob.flash=Math.max(0,(mob.flash||0)-dt*6);
-    reach=1.2+.45*mob.size;let dx=mob.x-pl.x,dz=mob.z-pl.z,dist=Math.hypot(dx,dz)||.01;
-    mob.ry=Math.atan2(-dz,dx);
-    if(dist>reach)mob.x-=dx/dist*dt*(mob.boss?1.2:1.6),mob.z-=dz/dist*dt*(mob.boss?1.2:1.6);
+    const rng=C().rng;reach=rng?3:1.2+.45*mob.size;let dx=mob.x-pl.x,dz=mob.z-pl.z,dist=Math.hypot(dx,dz)||.01;
+    const mstop=2.6+.3*mob.size,MR=2.9+.3*mob.size;mob.ry=Math.atan2(-dz,dx);
+    if(dist>mstop){const v=dt*(mob.boss?1.2:1.6);mob.x-=dx/dist*v;mob.z-=dz/dist*v}
     mob.x=cl(mob.x,-BX_,BX_);mob.z=cl(mob.z,Z0,Z1);
-    pl.orb+=dt*.8;tx=mob.x+Math.cos(pl.orb)*reach*.8;tz=mob.z+Math.sin(pl.orb)*reach*.8;
+    pl.orb+=dt*.8;const r=rng?3:reach*.8;tx=mob.x+Math.cos(pl.orb)*r;tz=mob.z+Math.sin(pl.orb)*r;
     dx=mob.x-pl.x;dz=mob.z-pl.z;dist=Math.hypot(dx,dz)||.01;
-    if(dist<=reach+.6){
-      pAtkT-=dt;mAtkT-=dt;
-      if(pAtkT<=0){playerAttack();if(mob.hp<=0){kill();return}}
-      if(mAtkT<=0){mAtkT=mob.boss?1.2:1.5;
-        if(Math.random()*100<flee())addFloat(pl.x,2.4,pl.z,'Miss','#8cf');
-        else{const d=Math.max(1,Math.round(mob.atk*rnd(.8,1.2)-def()*.6));S.hp-=d;hitAnim=1;addFloat(pl.x,2.4,pl.z,d,'#ff6b6b');
-          if(S.hp<=0){log('You were defeated... resting and retrying stage.','r0');S.hp=maxHp();S.killsInStage=0;mob=null;respawn=1.5;pend=[];ui()}}}
-    }
+    if(dist<=reach+.6){pAtkT-=dt;if(pAtkT<=0){playerAttack();if(mob.hp<=0){kill();return}}}
+    if(dist<=MR){mAtkT-=dt;if(mAtkT<=0){mAtkT=mob.boss?1.2:1.5;
+      if(Math.random()*100<flee())addFloat(pl.x,2.4,pl.z,'Miss','#8cf');
+      else{const d=Math.max(1,Math.round(mob.atk*rnd(.8,1.2)-def()*.6));S.hp-=d;hitAnim=1;addFloat(pl.x,2.4,pl.z,d,'#ff6b6b');
+        if(S.hp<=0){log('You were defeated... resting and retrying.','r0');S.hp=maxHp();S.kl=0;mob=null;respawn=1.5;pend=[];ui()}}}}
   }
   const px=tx-pl.x,pz=tz-pl.z,pd=Math.hypot(px,pz),spd=6.5+st('agi')*.05;pl.run=pd>.15;
   if(pd>.05){const s=Math.min(pd,spd*dt*(pd>3?1.4:1));pl.x+=px/pd*s;pl.z+=pz/pd*s}
@@ -731,7 +513,15 @@ const hair=mk(P,new THREE.SphereGeometry(.46,16,10,0,Math.PI*2,0,Math.PI*.55),0x
 mk(P,SP(.06),0x111111,.36,1.98,-.16);mk(P,SP(.06),0x111111,.36,1.98,.16);
 const arm=new THREE.Group();arm.position.set(.05,1.45,.5);P.add(arm);
 mk(arm,BX(.18,.5,.18),0xffd9b0,0,-.1,0);
-const blade=mk(arm,BX(.07,1.3,.14),0xaaaaaa,0,.95,0);mk(arm,BX(.1,.1,.4),0x7a4a1a,0,.28,0);
+const hat=mk(P,CN(.45,.8),0x5a3fa0,0,2.55,0);
+const WM={};function W(t,fn){const g=new THREE.Group();g.visible=false;arm.add(g);g.userData.t=[];const a=(geo,c,x,y,z,tint)=>{const m=mk(g,geo,c,x,y,z);if(tint)g.userData.t.push(m.material);return m};fn(a);WM[t]=g}
+W('sword',a=>{a(BX(.07,1.3,.14),0xaaaaaa,0,.95,0,1);a(BX(.1,.1,.4),0x7a4a1a,0,.28,0)});
+W('dagger',a=>{a(BX(.06,.6,.1),0xaaaaaa,0,.6,0,1);a(BX(.08,.08,.28),0x7a4a1a,0,.28,0)});
+W('katar',a=>{a(BX(.05,.75,.2),0xaaaaaa,0,.7,0,1);a(BX(.05,.35,.05),0x7a4a1a,0,.22,-.15);a(BX(.05,.08,.32),0x7a4a1a,0,.3,0)});
+W('staff',a=>{a(CY(.05,.05,1.9),0x7a4a1a,0,.75,0);a(SP(.2),0xaaaaaa,0,1.8,0,1)});
+W('bow',a=>{const b=a(new THREE.TorusGeometry(.55,.035,6,16,Math.PI),0x7a4a1a,0,.75,0,1);b.rotation.z=-Math.PI/2;a(BX(.02,1.1,.02),0xeeeeee,0,.75,0)});
+W('axe',a=>{a(CY(.04,.04,1.3),0x7a4a1a,0,.65,0);a(BX(.5,.42,.06),0xaaaaaa,.2,1.15,0,1)});
+W('mace',a=>{a(CY(.05,.05,1.2),0x7a4a1a,0,.6,0);a(SP(.22),0xaaaaaa,0,1.3,0,1)});
 
 function buildMob(m){
   const G=new THREE.Group(),mats=[],c=m.c;
@@ -759,16 +549,14 @@ dom.addEventListener('pointermove',e=>{if(!drag)return;az-=(e.clientX-drag[0])*.
 dom.addEventListener('pointerup',()=>drag=null);dom.addEventListener('pointercancel',()=>drag=null);
 dom.addEventListener('wheel',e=>{e.preventDefault();zoom=Math.min(2,Math.max(.6,zoom*(e.deltaY<0?1.1:.9)))},{passive:false});
 
-const ct=new THREE.Vector3(0,.8,0);
+const ct=new THREE.Vector3(0,.8,0);let lastKey='';
 function draw(){
-  if(!S) return;
-  const bn=isBoss()&&S.killsInStage>=MOBS_PER_STAGE;
-  if(bn!==lastBoss){lastBoss=bn;const col=new THREE.Color(bn?0x8a6bb0:0x9ad7f5);scene.background=col;scene.fog=new THREE.Fog(col,35,80)}
-  const c=C();
+  if(!S)return;const bn=isBoss()&&S.kl>=MPS,key=S.mp+':'+bn,c=C(),mp=MAPS[S.mp];
+  if(key!==lastKey){lastKey=key;const col=new THREE.Color(bn?0x8a6bb0:mp.sky);scene.background=col;scene.fog=new THREE.Fog(col,35,80);ground.material.color.setHex(mp.ground);road.material.color.setHex(S.mp===3?0xe9d9a8:0xd8cdb4)}
   P.position.set(pl.x,Math.abs(Math.sin(t*(pl.run?16:4)))*(pl.run?.14:.04),pl.z);P.rotation.set(pl.run?.12:0,pl.ry,0);
   arm.rotation.z=pl.run&&!atkAnim?-.9+Math.sin(t*16)*.5:-.25-Math.sin(atkAnim*Math.PI)*1.9;
-  hair.material.color.setHex(S.eq.head?TC[S.eq.head.tier]:0xd0492c);
-  blade.material.color.setHex(S.eq.weapon?TC[S.eq.weapon.tier]:0xaaaaaa);blade.scale.set(1,c.blade[0],c.blade[1]);blade.position.y=.28+.65*c.blade[0];
+  const w=S.eq.weapon,wt=w&&w.wt&&c.wt.includes(w.wt)?w.wt:c.wt[0];for(const k in WM)WM[k].visible=k===wt;WM[wt].userData.t.forEach(m=>m.color.setHex(w?TC[w.tier]:0xaaaaaa));
+  hair.material.color.setHex(S.eq.head?TC[S.eq.head.tier]:0xd0492c);hat.visible=!!c.hat;if(c.hat)hat.material.color.setHex(c.hat);
   pBody.material.color.setHex(S.eq.armor?TC[S.eq.armor.tier]:c.col);pBody.material.emissive.setRGB(hitAnim*.8,0,0);
   cape.visible=!!c.cape;if(c.cape)cape.material.color.setHex(c.cape);
   if(mob!==curMob){if(mobG)scene.remove(mobG);curMob=mob;mobG=null;if(mob){const b=buildMob(mob);mobG=b.G;mobMats=b.mats}}
@@ -779,30 +567,24 @@ function draw(){
   }else tag.style.display='none';
   const live=new Set();
   drops.forEach(d=>{live.add(d);let m=dmesh.get(d);
-    if(!m){const sl=d.it.slot;m=mk(scene,sl==='weapon'?BX(.14,.75,.14):sl==='armor'?BX(.45,.45,.25):SP(.24),TC[d.it.tier]);
-      m.material.emissive.setHex(TC[d.it.tier]).multiplyScalar(.45);dmesh.set(d,m)}
+    if(!m){const i=d.it,sl=i.card?'card':i.ore?'ore':i.slot,col=i.ore?(i.ore==='ori'?0xff9d3c:0x6cd3ff):TC[dtier(i)];
+      m=mk(scene,sl==='weapon'?BX(.14,.75,.14):sl==='armor'?BX(.45,.45,.25):sl==='card'?BX(.3,.42,.04):sl==='ore'?new THREE.OctahedronGeometry(.22):SP(.24),col);
+      m.material.emissive.setHex(col).multiplyScalar(.45);dmesh.set(d,m)}
     m.position.set(d.wx,.35+Math.max(0,-d.y)/60,d.wz);m.rotation.y=t*3});
   dmesh.forEach((m,d)=>{if(!live.has(d)){scene.remove(m);dmesh.delete(d)}});
+  shots.forEach(s=>{if(!s.m){s.m=mk(scene,s.arrow?BX(.5,.04,.04):SP(.14),s.col);s.m.material.emissive.set(s.col);s.m.castShadow=false;s.m.rotation.y=-Math.atan2(s.z1-s.z0,s.x1-s.x0)}
+    const k=Math.min(1,s.t);s.m.position.set(s.x0+(s.x1-s.x0)*k,1.4,s.z0+(s.z1-s.z0)*k)});
   ct.x+=(pl.x*.6-ct.x)*.05;ct.z+=(pl.z*.5-ct.z)*.05;
   const dd=(cam.aspect<1.5?21:14)/zoom,sk=shake*.03;
   cam.position.set(ct.x+Math.sin(az)*Math.cos(el)*dd+rnd(-sk,sk),Math.sin(el)*dd+.5,ct.z+Math.cos(az)*Math.cos(el)*dd+rnd(-sk,sk));
   cam.lookAt(ct);R.render(scene,cam);
   floats.forEach(f=>{if(!f.el){const e=document.createElement('div');e.className='fl'+(f.big?' big':'');e.textContent=f.txt;e.style.color=f.col;ov.appendChild(e);f.el=e}
     const[a,b]=scr(f.x,f.y,f.z);f.el.style.left=a+'px';f.el.style.top=b+'px';f.el.style.opacity=Math.max(0,f.life)});
-
-  const done=Math.min(S.killsInStage,MOBS_PER_STAGE);
-  let pt=bn?'BOSS FIGHT':`Monsters Defeated: ${done}/${MOBS_PER_STAGE}`;
-  if(pt!==lastProg){lastProg=pt;prog.innerHTML=pt}
+  const pt=bn?'BOSS FIGHT':`Monsters ${Math.min(S.kl,MPS)}/${MPS}${isBoss()?' → Boss':''}`;if(pt!==lastProg){lastProg=pt;prog.textContent=pt}
 }
-
 let last=performance.now();
-function loop(now){const dt=Math.min(0.1,(now-last)/1000);last=now;
-  for(let i=0;i<speed;i++)update(dt);draw();requestAnimationFrame(loop)}
-
-resize();
-respawn=0.3;
-requestAnimationFrame(loop);
-setInterval(save,5000);
+function loop(now){const dt=Math.min(.1,(now-last)/1000);last=now;try{for(let i=0;i<speed;i++)update(dt);draw()}catch(e){if(!loop.e){loop.e=1;console.error(e);log('Error: '+e.message,'r0')}}requestAnimationFrame(loop)}
+resize();respawn=.3;requestAnimationFrame(loop);setInterval(save,5000);
 </script>
 </body>
 </html>
