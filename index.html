@@ -115,7 +115,7 @@ hr{border:0;border-top:1px dashed var(--edge);margin:6px 0}
 <div style="margin-left:auto;display:flex;align-items:center;gap:8px"><span id="userBadge" style="font-weight:bold;font-size:12px;background:#e9d39a;padding:3px 8px;border-radius:4px;border:1px solid var(--edge2)"></span><button id="logoutBtn" onclick="logout()" style="display:none">Logout</button><button id="spd">Speed x1</button></div></div></div>
 <div id="modal"><div class="login-card"><p id="mt" style="font-size:14px;opacity:1;margin:0 0 12px"></p><div class="row" style="justify-content:center"><button id="my">Yes</button><button id="mn">Cancel</button></div></div></div><div id="tooltip"></div>
 <script src="assets/sprites_data.js?v=2"></script>
-<script src="assets/thief_sprites_data.js?v=1"></script>
+<script src="assets/sprite_pack_data.js?v=1"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
 const $=id=>document.getElementById(id);
@@ -128,7 +128,7 @@ const AFF=['str','agi','dex','luk','int','hp','atk','crit','aspd','flee','cdm'],
 const AL={str:'STR',agi:'AGI',dex:'DEX',luk:'LUK',int:'INT',hp:'Max HP',atk:'ATK %',crit:'Crit %',aspd:'ASPD %',flee:'Flee %',cdm:'Crit DMG %',vit:'VIT'};
 const SU=k=>k.toUpperCase(),BX_=7.5,Z0=-3,Z1=4,MPS=15,K5=['str','agi','dex','luk','int'];
 const GM_USER='GM',GM_PASS='gm1234';   // CHANGE THE GM PASSWORD before you publish
-const BUILD='2026-10-02 sprites-v3 thief-pack';   // shown on the login card - confirms which file you loaded
+const BUILD='2026-10-02 sprites-v4 full-class-pack';   // shown on the login card - confirms which file you loaded
 $('buildTag').textContent='build '+BUILD+' · atlases:'+Object.keys(window.SPRITE_ATLASES||{}).length;
 
 // ---------- class tree: Novice -> 6 first jobs -> 6 second jobs -> 6 third jobs ----------
@@ -463,7 +463,7 @@ const V={
     return`<div class="hd">Pets <small>Fighting ${A}/3 &middot; Collection ${P.length}</small></div><small>Pets drop from monsters. Drop odds per map are on the World Map.</small><div class="grid" style="margin-top:6px">${P.map(q=>{const sp=PETS[q.sp];return`<div class="cell b${RCL[sp.r]}${selP===q.id?' sel':''}" style="font-size:30px" data-a="selp" data-v="${q.id}">${sp.ic}${q.on?'<i class="rf" style="left:2px;right:auto;top:2px;bottom:auto;font-style:normal">ON</i>':''}${q.mut?`<i class="rf">G${q.mut}</i>`:''}</div>`}).join('')||'<small>No pets yet.</small>'}</div>`+(p?petDetail(p):'<small>Select a pet to manage it.</small>')},
   log(){return logs.map(l=>`<div class="${l.cls||''}">${l.m}</div>`).join('')||'<i>No events yet.</i>'},
   set(){return`<div class="hd">Appearance</div><div class="row"><button data-a="sex" data-v="m" style="${S.sex==='f'?'':'background:#ffe08a'}">♂ Male</button><button data-a="sex" data-v="f" style="${S.sex==='f'?'background:#ffe08a':''}">♀ Female</button></div>
-  <div class="row" style="margin-top:6px;align-items:center;gap:8px"><button data-a="hair" data-v="-1">◀</button><span>Hair style ${((S.hair|0)%19+19)%19+1} / 19</span><button data-a="hair" data-v="1">▶</button></div><small>Hair styles apply to the Thief, Assassin and Assassin Cross sprites.</small>
+  <div class="row" style="margin-top:6px;align-items:center;gap:8px"><button data-a="hair" data-v="-1">◀</button><span>Hair style ${((S.hair|0)%19+19)%19+1} / 19</span><button data-a="hair" data-v="1">▶</button></div><small>Hair styles apply to every class sprite.</small>
     <div class="hd" style="margin-top:10px">Gameplay</div><label><input type="checkbox" data-a="auto" ${S.auto!==false?'checked':''}> Auto-equip better gear</label><br><label><input type="checkbox" data-a="adv" ${S.adv!==false?'checked':''}> Auto-advance to next level (turn off to farm)</label>
     <p><small>Drag the view to rotate, scroll to zoom. Hotkeys: M S J K B E C Q R L P O, Esc to close.</small></p><button class="full" data-a="reset">Erase this account's save &amp; restart</button><button class="full" data-a="logout">Logout</button>`},
   gm(){return`<div class="hd">GM multiplier (EXP, Job EXP, Zeny, quests)</div><div class="row">${[1,10,100,1000].map(x=>`<button data-a="gmx" data-v="${x}" ${S.gmx===x?'style="background:#ffe08a"':''}>x${x}</button>`).join('')}</div>
@@ -800,14 +800,23 @@ function heroHeadKey(opt){
   if(opt.look==='hood')return 'herohead:'+(g==='f'?'ponytail_f':'spiky_m');
   return 'herohead:'+(g==='f'?'long_f':'bowl_m')}
 let heroSpr=null,heroHeadSpr=null,heroKey='',heroDirty=false;
-// ----- Thief-line sprite pack (Thief / Assassin / Assassin Cross) from assets/thief_sprites_data.js -----
+// ----- Class sprite packs (assets/sprite_pack_data.js, built by tools/make_sprite_pack.py) -----
+// (the older assets/thief_sprites_data.js is superseded by this file and kept for reference)
 // Body + head are composited once per (class, sex, hair) into a single atlas: 8 cols = frames, rows = anim*8+dir (idle,walk,attack x 8 dirs)
+// Every first job line ships its own body art; each line keeps one body through its whole tree.
+const PACK_BODY={Novice:'novice',
+  Swordman:'swordman',Knight:'swordman','Lord Knight':'swordman',
+  Mage:'mage',Wizard:'mage','High Wizard':'mage',
+  Archer:'archer',Hunter:'archer',Sniper:'archer',
+  Thief:'thief',Assassin:'assassin','Assassin Cross':'assassin_cross',
+  Acolyte:'aco',Priest:'aco','High Priest':'aco',
+  Merchant:'blacksmith',Blacksmith:'blacksmith',Whitesmith:'blacksmith'};
 const packImg={},packCache=new Map(),PACK_K=.03;let packReady=false;
-(function(){const PK=window.THIEF_PACK;if(!PK)return;let n=0,tot=0;
+(function(){const PK=window.SPRITE_PACK||window.THIEF_PACK;if(!PK)return;let n=0,tot=0;
   const ld=(k,u)=>{tot++;const i=new Image();i.onload=()=>{if(++n===tot){packReady=true;heroKey=''}};i.src=u;packImg[k]=i};
   for(const c in PK.bodies)ld('b:'+c,PK.bodies[c].atlas);for(const h in PK.heads)ld('h:'+h,PK.heads[h])})();
 function packTex(opt){
-  const PK=window.THIEF_PACK,body=opt.tier>=3?'assassin_cross':opt.tier>=2?'assassin':'thief',sex=opt.sex==='f'?'female':'male',hs=(((opt.hair|0)%PK.hairStyles)+PK.hairStyles)%PK.hairStyles,key=body+'|'+sex+'|'+hs;
+  const PK=window.SPRITE_PACK||window.THIEF_PACK,body=PACK_BODY[opt.cls]||(opt.tier>=3?'assassin_cross':opt.tier>=2?'assassin':'thief'),sex=opt.sex==='f'?'female':'male',hs=(((opt.hair|0)%PK.hairStyles)+PK.hairStyles)%PK.hairStyles,key=body+'|'+sex+'|'+hs;
   if(packCache.has(key))return packCache.get(key);
   const cv=document.createElement('canvas');cv.width=PK.cellW*8;cv.height=PK.cellH*24;
   const g=cv.getContext('2d');g.imageSmoothingEnabled=false;
@@ -818,7 +827,7 @@ function packTex(opt){
     const an=anc[a][d][f];g.drawImage(hi,d*64,hs*64,64,64,dx+an[0]-32,dy+an[1]-48,64,64)}
   const t=new THREE.CanvasTexture(cv);t.magFilter=t.minFilter=THREE.NearestFilter;t.generateMipmaps=false;packCache.set(key,t);return t}
 function mkPackHero(opt){
-  const PK=window.THIEF_PACK,t=packTex(opt).clone();t.needsUpdate=true;t.repeat.set(1/8,1/24);
+  const PK=window.SPRITE_PACK||window.THIEF_PACK,t=packTex(opt).clone();t.needsUpdate=true;t.repeat.set(1/8,1/24);
   const s=new THREE.Sprite(new THREE.SpriteMaterial({map:t,transparent:true,alphaTest:.12}));
   s.center.set(PK.pivotX/PK.cellW,(PK.cellH-PK.pivotY)/PK.cellH);s.scale.set(PK.cellW*PACK_K,PK.cellH*PACK_K,1);s.userData.pack=1;return s}
 function setPackCell(spr,dir,run,atk,clock){
@@ -826,7 +835,7 @@ function setPackCell(spr,dir,run,atk,clock){
   const t=spr.material.map;t.repeat.set(1/8,1/24);t.offset.set(f/8,1-(a*8+dir+1)/24)}
 function ensureHero(opt){const k=JSON.stringify(opt);if(heroKey===k&&heroSpr)return;heroKey=k;heroDirty=false;
   if(heroSpr){P.remove(heroSpr);heroSpr=null}if(heroHeadSpr){P.remove(heroHeadSpr);heroHeadSpr=null}
-  if(opt.look==='hood'&&packReady){heroSpr=mkPackHero(opt);P.add(heroSpr);return}
+  if(packReady&&PACK_BODY[opt.cls]&&packImg['b:'+PACK_BODY[opt.cls]]){heroSpr=mkPackHero(opt);P.add(heroSpr);return}
   const bk=heroBodyKey(opt),hk=heroHeadKey(opt);
   const btex=loadAtlas(bk),htex=loadAtlas(hk);
   if(btex&&htex){
@@ -834,9 +843,17 @@ function ensureHero(opt){const k=JSON.stringify(opt);if(heroKey===k&&heroSpr)ret
     heroHeadSpr=mkBillboard(htex,1.95,2.92);
     heroHeadSpr.material.depthTest=false;heroHeadSpr.renderOrder=1;P.add(heroHeadSpr);return}
   if(heroKindAvail(bk)&&heroKindAvail(hk)){return} // layered set loading, wait
-  let tex=loadAtlas(heroAtlasKey(opt))||getSheet('h:'+k,(ctx,x,y,d,kind,fr)=>drawHero(ctx,x,y,d,kind,fr,opt));
+  const ak=heroAtlasKey(opt);
+  // classes marked in window.CUSTOM_HEROES use imported art only: hold the
+  // slot until the sheet arrives instead of falling back to drawn sprites.
+  if(isCustomHero(ak)&&!loadAtlas(ak))return;
+  let tex=loadAtlas(ak)||getSheet('h:'+k,(ctx,x,y,d,kind,fr)=>drawHero(ctx,x,y,d,kind,fr,opt));
   heroSpr=mkBillboard(tex,1.95,2.92);P.add(heroSpr)}
-function heroKindAvail(bk){return (window.SPRITE_ATLASES||{})[bk]&&(window.SPRITE_ATLASES||{})[HERO_HEAD_FOR[bk.split(':')[1]]?('herohead:'+HERO_HEAD_FOR[bk.split(':')[1]]):'']?true:true}
+function isCustomHero(k){return (window.CUSTOM_HEROES||[]).indexOf(k)>=0}
+// true only when the layered body+head pair is actually present: lets a class
+// ship as a single pre-baked 'hero:*' atlas (custom art) and still build.
+function heroKindAvail(bk){const A=window.SPRITE_ATLASES||{},st=HERO_HEAD_FOR[bk.split(':')[1]];
+  return !!(A[bk]&&(st?A['herohead:'+st]:true))}
 function buildMob(m){
   const G=new THREE.Group(),key='mob:'+m.n;
   let tex=loadAtlas(key),pending=null;
@@ -864,7 +881,7 @@ function draw(){
   if(key!==lastKey){lastKey=key;const col=new THREE.Color(bn?0x8a6bb0:mp.sky);scene.background=col;scene.fog=new THREE.Fog(col,35,80);ground.material.color.setHex(mp.ground);buildDeco(S.mp);road.material.color.setHex(S.mp===3?0xe9d9a8:0xd8cdb4)}
   P.position.set(pl.x,0,pl.z);
   const w=S.eq.weapon,wt=w&&w.wt&&c.wt.includes(w.wt)?w.wt:c.wt[0],clothN=S.eq.armor?TC[S.eq.armor.tier]:c.col,hairN=S.eq.head?TC[S.eq.head.tier]:0xd0492c,metalN=w?TC[w.tier]:0xc0c0c0;
-  ensureHero({cloth:hx(clothN),clothN,cape:c.cape?hx(c.cape):'',hair:hx(hairN),hairN,hat:c.hat?hx(c.hat):'',wt,metal:hx(metalN),skin:'#ffd2a8',look:lookOf(c.n),tier:c.tier||0,sex:S.sex||'m',hair:S.hair|0,shield:!!(S.eq.off&&S.eq.off.slot==='off')});
+  ensureHero({cls:c.n,cloth:hx(clothN),clothN,cape:c.cape?hx(c.cape):'',hair:hx(hairN),hairN,hat:c.hat?hx(c.hat):'',wt,metal:hx(metalN),skin:'#ffd2a8',look:lookOf(c.n),tier:c.tier||0,sex:S.sex||'m',hair:S.hair|0,shield:!!(S.eq.off&&S.eq.off.slot==='off')});
   const pFace=mob?Math.atan2(mob.z-pl.z,mob.x-pl.x):pl.run?-pl.ry: -az+Math.PI;
   if(heroSpr){if(heroSpr.userData.pack)setPackCell(heroSpr,viewDir(pFace),pl.run,atkAnim,t);else setCell(heroSpr,viewDir(pFace),animRow(pl.run,atkAnim,t,10));
   heroSpr.material.color.setRGB(1,1-hitAnim*.75,1-hitAnim*.75)}
