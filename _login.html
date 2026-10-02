@@ -174,8 +174,8 @@ SKILLS.find(s=>s.id==='soulb').rng=1;SKILLS.find(s=>s.id==='mAss').aoe=1;SKILLS.
 const pm=s=>{const[n,c,sh]=s.split(':');return{n,c:parseInt(c,16),shape:sh}};
 const NW=n=>({w:{sword:n+' Blade',dagger:n+' Dagger',katar:n+' Katar',staff:n+' Staff',bow:n+' Bow',axe:n+' Axe',mace:n+' Mace'},a:n+' Armor',h:n+' Helm'});
 const MAPS=[
-{n:'Prontera',t:'Swordman / Acolyte lines',ground:0x7cc46a,sky:0x8ecff5,boss:'Mastering:7ae86a:blob',
- mobs:['Poring:ff9ec4:blob','Fabre:b8e05a:worm','Lunatic:fff4f4:bunny','Drops:ffb84a:blob','Chonchon:7ab8f0:bug','Willow:7ac04a:tree','Rocker:c86a3a:bug','Poporing:9ae84a:blob','Savage Bebe:c09a5a:cat','Peco Peco:ffd850:bug'],
+{n:'Prontera',t:'Swordman / Acolyte lines',ground:0x6cbf5a,sky:0x9ad7f5,boss:'Mastering:7ad46a:blob',
+ mobs:['Poring:ff9db8:blob','Fabre:9ed35a:worm','Lunatic:f4f4f4:bunny','Drops:ffb45a:blob','Chonchon:6fa8dc:bug','Willow:6fa84a:tree','Rocker:9ac04a:bug','Poporing:8ad04a:blob','Savage Bebe:b08a5a:cat','Peco Peco:f0d060:bug'],
  g:[{w:{dagger:'Knife',sword:'Short Sword'},a:'Cotton Shirt',h:'Ribbon'},{w:{sword:'Broad Sword',mace:'Club'},a:'Padded Armor',h:'Cap'},{w:{sword:'Claymore',mace:'Morning Star'},a:'Chain Mail',h:'Helm'},{w:{sword:'Excalibur',mace:'Holy Mace'},a:'Plate Armor',h:'Crown'}]},
 {n:'Izlude',t:'Merchant line',ground:0x6fc2b0,sky:0x8ee0f0,boss:'Drake:4a5a8a:demon',
  mobs:['Marina:5ad1c8:blob','Pupa:e0c070:worm','Crab:e0605a:bug','Sea Otter:8a6a4a:cat','Muka:6aa84f:tree','Anacondaq:3f8a3f:worm','Thief Bug:3a3a55:bug','Marse:6a8ae0:blob','Ambernite:e07aa0:worm','Kukre:d98a3a:bug'],
@@ -222,19 +222,7 @@ const uid=()=>Date.now()+Math.random(),rnd=(a,b)=>a+Math.random()*(b-a),ri=(a,b)
 const fresh=()=>({pets:[],cls:'Novice',sex:'m',lv:1,exp:0,hp:100,zeny:0,kills:0,pts:10,jobs:{Novice:{jl:1,jx:0}},sk:{aid:1},mp:0,lvl:1,prog:[1,1,1,1,1],kl:0,auto:true,adv:true,q:null,cards:[],ore:{ori:0,elu:0},gm:false,gmx:100,
   st:{str:1,agi:1,dex:1,luk:1,int:1,vit:1},eq:{weapon:{id:1,slot:'weapon',wt:'dagger',tier:0,val:5,name:'Novice Knife',aff:[],slots:1,cards:[],sec:0},armor:null,head:null,off:null,leg:null,acc1:null,acc2:null},inv:[]});
 const saveKey=()=>'pg_save3_'+currentUser;
-const num_= (v,d)=>{v=+v;return Number.isFinite(v)?v:d};
-function load(){try{const s=JSON.parse(lsGet(saveKey()));if(s&&s.lv){const F=fresh(),f=Object.assign(F,s);f.st=Object.assign(fresh().st,s.st||{});if(!CLASSES[f.cls])f.cls='Novice';
-// repair top-level numbers corrupted by older/test saves (null -> crash on .toLocaleString())
-  for(const k of['lv','exp','hp','zeny','kills','pts','mp','lvl','kl','gmx'])f[k]=num_(f[k],F[k]);
-  for(const k of['str','agi','dex','luk','int','vit'])f.st[k]=num_(f.st[k],1);
-  f.ore={ori:num_(f.ore&&f.ore.ori,0),elu:num_(f.ore&&f.ore.elu,0)};
-  if(!Array.isArray(f.prog)||!f.prog.length)f.prog=F.prog.slice();else f.prog=f.prog.map(v=>num_(v,1));
-  while(f.prog.length<MAPS.length)f.prog.push(1);
-  f.mp=Math.max(0,Math.min(MAPS.length-1,Math.floor(f.mp||0)));f.lvl=Math.max(1,Math.min(10,Math.floor(f.lvl||1)));
-  if(!f.jobs||typeof f.jobs!=='object')f.jobs=F.jobs;if(!f.sk||typeof f.sk!=='object')f.sk=F.sk;
-  if(!Array.isArray(f.pets))f.pets=[];if(!Array.isArray(f.inv))f.inv=[];if(!Array.isArray(f.cards))f.cards=[];
-  if(!f.eq||typeof f.eq!=='object')f.eq=F.eq;if(f.hp<=0)f.hp=F.hp;
-  const fx=c=>{c.v=CV[c.g]};(f.cards||[]).forEach(fx);(f.pets||[]).forEach((p,i)=>{if(p.on===undefined)p.on=i<3});Object.values(f.eq||{}).forEach(it=>it&&(it.cards||[]).forEach(fx));(f.inv||[]).forEach(it=>(it.cards||[]).forEach(fx));
+function load(){try{const s=JSON.parse(lsGet(saveKey()));if(s&&s.lv){const f=Object.assign(fresh(),s);f.st=Object.assign(fresh().st,s.st);if(!CLASSES[f.cls])f.cls='Novice';while(f.prog.length<MAPS.length)f.prog.push(1);const fx=c=>{c.v=CV[c.g]};(f.cards||[]).forEach(fx);(f.pets||[]).forEach((p,i)=>{if(p.on===undefined)p.on=i<3});Object.values(f.eq||{}).forEach(it=>it&&(it.cards||[]).forEach(fx));(f.inv||[]).forEach(it=>(it.cards||[]).forEach(fx));
   // repair quests saved by older builds: every field must be a real number
   if(!Array.isArray(f.q))f.q=null;
   else f.q=f.q.filter(q=>q&&typeof q==='object').map(q=>{
@@ -246,8 +234,8 @@ function load(){try{const s=JSON.parse(lsGet(saveKey()));if(s&&s.lv){const F=fre
 function save(){if(!currentUser||!S)return;lsPut(saveKey(),JSON.stringify(S))}
 
 // ---------- accounts (stored in this browser; real cross-device accounts need a server) ----------
-const mem={};
-const lsGet=k=>{try{return localStorage.getItem(k)}catch(e){return mem[k]||null}};
+const GM_USER_='GM',mem={};
+const lsGet=k=>{try{return localStorage.getItem(k)}catch(e){return mem[k]||null}},lsSet=k=>v=>0;
 function lsPut(k,v){try{localStorage.setItem(k,v)}catch(e){mem[k]=v}}
 const getAcc=()=>{try{return JSON.parse(lsGet('pg_acc4')||'{}')}catch(e){return{}}};
 const setAcc=a=>lsPut('pg_acc4',JSON.stringify(a));
@@ -260,17 +248,17 @@ function setMode(m){authMode=m;$('tabLogin').classList.toggle('on',m==='login');
 function submitAuth(e){
   if(e)e.preventDefault();
   try{
-    const u=$('username').value.trim(),p=$('password').value.trim();if(!u||!p)return showErr('Enter a username and password.');
-    const isGM=u.toLowerCase()===String(GM_USER).toLowerCase();
+    const u=$('username').value.trim(),p=$('password').value;if(!u||!p)return showErr('Enter a username and password.');
+    const isGM=u.toLowerCase()===GM_USER.toLowerCase();
     if(authMode==='reg'){
-      if(isGM){setMode('login');return showErr('That name is reserved. Switched to Login — use the GM password.')}
+      if(isGM)return showErr('That name is reserved.');
       if(!/^[A-Za-z0-9_.-]{2,16}$/.test(u))return showErr('Username: 2-16 letters, numbers, _ . -');
       if(p.length<4)return showErr('Password must be at least 4 characters.');
-      if($('password2').value.trim()!==p)return showErr('Passwords do not match.');
+      if($('password2').value!==p)return showErr('Passwords do not match.');
       const acc=getAcc();if(Object.keys(acc).some(k=>k.toLowerCase()===u.toLowerCase()))return showErr('That username is already taken.');
       acc[u]=hashPw(p);setAcc(acc);if(!getAcc()[u])return showErr('Could not save the account (browser storage blocked).');
       setMode('login');$('password').value='';$('password2').value='';showErr('Account created! Now log in.',true);return}
-    if(isGM){if(p!==String(GM_PASS))return showErr('Incorrect GM password.');currentUser=GM_USER;initSession(true);return}
+    if(isGM){if(p!==GM_PASS)return showErr('Incorrect GM password.');currentUser=GM_USER;initSession(true);return}
     const acc=getAcc(),key=Object.keys(acc).find(k=>k.toLowerCase()===u.toLowerCase());
     if(!key)return showErr('Account not found. Use the Register tab first.');
     if(acc[key]!==hashPw(p))return showErr('Incorrect password.');
@@ -386,23 +374,16 @@ function refine(sl){const it=S.eq[sl];if(!it||(it.r||0)>=10)return;const o=it.sl
   S.ore[o]--;S.zeny-=c;if(Math.random()*100<refCh(it)){it.r=(it.r||0)+1;log(`Refine success! ${iname(it)}`,'r3');addFloat(pl.x,3,pl.z,'Refine +'+it.r,'#ffd23f')}
   else{if(it.r>=5){it.r--;log(`Refine failed... dropped to +${it.r}.`,'r0')}else log('Refine failed.','r0');addFloat(pl.x,3,pl.z,'Failed','#ff6b6b')}ui();save()}
 
-// ---------- class change (job levels are saved per class; switching lines resets you to Novice) ----------
-// Reset to Novice: Base Lv capped to 25 (anything below stays), ALL Job Lv + skills reset, stats refunded.
+// ---------- class change (job levels are saved per class; switching lines resets you to Novice, base level is kept) ----------
 function classBlock(n){
   if(n===S.cls)return'Current class';if(n==='Novice')return'';
   for(let x=n;CLASSES[x].par;x=CLASSES[x].par){const p=CLASSES[x].par,pj=S.jobs[p];if(!pj||pj.jl<CLASSES[x].rj)return`Needs ${p} Job Lv ${CLASSES[x].rj}`}
   if(S.cls!=='Novice'&&S.cls!==CLASSES[n].par)return'Reset to Novice first';return''}
 function changeClass(n){if(classBlock(n))return;
-  if(n==='Novice'){
-    S.jobs={Novice:{jl:1,jx:0}};S.sk={aid:1};
-    if(S.lv>25){S.lv=25;S.exp=0}
-    for(const k in S.st)S.st[k]=1;S.pts=totalPts();
-    S.hp=maxHp();
-    // strip gear this Novice can no longer use (same rule as normal class change)
-  }
+  if(n==='Novice'){S.jobs={Novice:{jl:1,jx:0}};S.sk={aid:1};if(S.lv>25){S.lv=25;S.exp=0}for(const k in S.st)S.st[k]=1;S.pts=totalPts()}
   S.cls=n;jobOf();{const o=S.eq.off;if(o&&!(o.slot==='off'?canShield():dualOk(o))){S.inv.push(o);S.eq.off=null}}const w=S.eq.weapon;
   if(w&&w.wt&&!C().wt.includes(w.wt)){S.inv.push(w);S.eq.weapon=null;log('Your weapon cannot be used by this class. Moved to Bag.')}
-  S.hp=Math.min(S.hp,maxHp());log(n==='Novice'?`Reset to Novice. Job levels + skills reset · Base Lv ${S.lv} · stats refunded (${S.pts} pts).`:`Class: ${n} (Job Lv ${S.jobs[n].jl})`,'r4');addFloat(pl.x,3.6,pl.z,n+'!','#fff',true);ui();save()}
+  S.hp=Math.min(S.hp,maxHp());log(n==='Novice'?'Reset to Novice. Job levels reset; Base Lv kept (max 25).':`Class: ${n} (Job Lv ${S.jobs[n].jl})`,'r4');addFloat(pl.x,3.6,pl.z,n+'!','#fff',true);ui();save()}
 
 // ---------- UI ----------
 const TABS={map:['🗺️','World Map','M'],status:['📊','Character','S'],job:['🌳','Class Tree','J'],skills:['✨','Skills','K'],bag:['🎒','Inventory','B'],log:['📃','Log','L'],pet:['🐾','Pets','P'],set:['⚙️','Settings','O'],gm:['🛠️','GM Tools','G']};
@@ -539,7 +520,7 @@ const tip=$('tooltip');
 document.addEventListener('mouseover',e=>{const c=S&&e.target.closest&&e.target.closest('[data-tip]');if(!c){tip.style.display='none';return}const it=find(c.dataset.tip);if(!it){tip.style.display='none';return}
   tip.innerHTML=itemDetail(it);tip.style.display='block'});
 document.addEventListener('mousemove',e=>{tip.style.left=Math.min(innerWidth-240,e.clientX+14)+'px';tip.style.top=Math.min(innerHeight-200,e.clientY+14)+'px'});
-function bars(){if(!S)return;const j=jobOf(),c=C();$('lv').textContent=S.lv;$('cls2').textContent=S.cls;$('jl').textContent=j.jl;$('zeny').textContent=(+S.zeny||0).toLocaleString();$('kills').textContent=S.kills;
+function bars(){if(!S)return;const j=jobOf(),c=C();$('lv').textContent=S.lv;$('cls2').textContent=S.cls;$('jl').textContent=j.jl;$('zeny').textContent=S.zeny.toLocaleString();$('kills').textContent=S.kills;
   $('hpb').style.width=Math.max(0,S.hp/maxHp()*100)+'%';$('jb').style.width=(j.jl>=c.mj?100:j.jx/jneed(j.jl)*100)+'%';$('xpb').style.width=S.exp/need()*100+'%'}
 function ui(){if(!S)return;bars();$('stageTitle').textContent=fieldName()+(isBoss()?' (Boss map)':'');$('grindStatus').textContent=S.lvl<S.prog[S.mp]?'🔄 Farming':'✨ Frontier';renderWin()}
 
@@ -618,34 +599,18 @@ for(let i=0;i<70;i++){const x=(sr()-.5)*50,z=(sr()-.3)*30;if(Math.abs(x)<11.5||z
 for(let i=0;i<90;i++){const x=(sr()-.5)*44,z=(sr()-.4)*24;if(Math.abs(x)<11.2&&z>-5.1&&z<5.8)continue;
   mk(scene,SP(.09),[0xff9db8,0xffe066,0xffffff][i%3],x,.08,z).castShadow=false}
 
-// RO Prontera: cream walls + red tile roofs, blue-domed church, stone fountain plaza
 function bld(x,z,w,d,h,wall,roof,pk){const G=new THREE.Group();mk(G,BX(w,h,d),wall,0,h/2,0);
-  // RO roof: steep tile pyramid + ridge beam + eave trim
   const r=mk(G,new THREE.ConeGeometry(Math.max(w,d)*.78,pk||h*.6,4),roof,0,h+(pk||h*.6)/2,0);r.rotation.y=Math.PI/4;
-  const ridge=mk(G,BX(Math.max(w,d)*1.1,.18,.18),0x8a4a2a,0,h+(pk||h*.6)+.05,0);ridge.castShadow=false;
-  const eave=mk(G,BX(w+.5,.16,d+.5),0xf8f0dc,0,h+.02,0);eave.castShadow=false;
-  // RO door: arched wood door + stone step; windows with blue shutters
   mk(G,BX(.9,1.4,.1),0x6b4a2a,0,.7,d/2+.02);
-  mk(G,BX(1.2,.16,.4),0xb8b8c0,0,.08,d/2+.15);
-  for(const wx of[-w*.3,w*.3]){mk(G,BX(.6,.6,.1),0x9ad7f5,wx,h*.62,d/2+.02);mk(G,BX(.8,.12,.06),0xf8f0dc,wx,h*.62+.4,d/2+.02)}
+  for(const wx of[-w*.3,w*.3])mk(G,BX(.6,.6,.1),0x9ad7f5,wx,h*.62,d/2+.02);
   G.position.set(x,0,z);scene.add(G);return G}
-[[-15,-8.5,4,4,3,0xf6ead0,0xc03a2e],[-10.5,-7.6,3.6,3.6,4,0xf2e2c0,0xa82e26],[-6,-8,3.4,4,2.6,0xf8eed6,0xd04a3e],
- [6,-7.8,3.6,3.6,3.4,0xf6ead0,0xc03a2e],[10.5,-8.2,4,4,4.4,0xf2e2c0,0x3f6fb5],[15,-8.4,4,4,3,0xf8eed6,0xd04a3e]].forEach(a=>bld(...a));
-const cath=bld(0,-10.5,6,5,6,0xefe8dc,0x3f6fb5,3.6);
+[[-15,-8.5,4,4,3,0xf3e6c8,0xc0453a],[-10.5,-7.6,3.6,3.6,4,0xefe0bd,0xb3392f],[-6,-8,3.4,4,2.6,0xf6ecd4,0xd0574a],
+ [6,-7.8,3.6,3.6,3.4,0xf3e6c8,0xc0453a],[10.5,-8.2,4,4,4.4,0xefe0bd,0x3f6fb5],[15,-8.4,4,4,3,0xf6ecd4,0xd0574a]].forEach(a=>bld(...a));
+const cath=bld(0,-10.5,6,5,6,0xe9e4da,0x3f6fb5,3.6);
 for(const x of[-2.4,2.4]){mk(cath,BX(1.2,9,1.2),0xd8d2c4,x,4.5,3);const c=mk(cath,new THREE.ConeGeometry(1,2.2,4),0x3f6fb5,x,10.1,3);c.rotation.y=Math.PI/4}
-// RO Prontera church bell + cross on the roof peak
-mk(cath,SP(.45),0xd8b83a,0,10.6,0).castShadow=false;
-mk(cath,BX(.12,1.1,.12),0xd8b83a,0,11.4,0).castShadow=false;mk(cath,BX(.6,.12,.12),0xd8b83a,0,11.5,0).castShadow=false;
 mk(scene,BX(30,1,.6),0x9a9a9a,0,.5,-5.2);
 for(let x=-14;x<=14;x+=4)mk(scene,BX(.8,1.6,.8),0x8a8a8a,x,.8,-5.2);
-// RO fountain: 3-tier stone + bright blue water discs
-const fnt=new THREE.Group();mk(fnt,CY(1.3,1.5,.5),0xd8d4c8,0,.25,0);mk(fnt,CY(1.05,1.05,.12),0x5ab8f0,0,.52,0);
-mk(fnt,CY(.15,.18,1.6),0xc8c4b8,0,1,0);mk(fnt,CY(.85,.65,.22),0xd8d4c8,0,1.15,0);mk(fnt,CY(.7,.7,.1),0x5ab8f0,0,1.27,0);
-mk(fnt,CY(.4,.3,.18),0xd8d4c8,0,1.7,0);mk(fnt,CY(.32,.32,.08),0x5ab8f0,0,1.8,0);mk(fnt,SP(.12),0xd8d4c8,0,2.0,0);
-fnt.position.set(0,0,-3.6);scene.add(fnt);
-// Prontera plaza: cobble ring + 4 lantern posts around the fountain
-mk(scene,new THREE.CylinderGeometry(3.2,3.2,.04,24),0xd8cfb8,0,.02,-3.6).receiveShadow=true;
-for(const[lx,lz]of[[-3,-3.6],[3,-3.6],[0,-6.4],[0,-.8]]){mk(scene,CY(.07,.09,2.2),0x5a4a3a,lx,1.1,lz);mk(scene,SP(.16),0xffe08a,lx,2.3,lz).castShadow=false}
+const fnt=new THREE.Group();mk(fnt,CY(1.1,1.3,.5),0xbbbbbb,0,.25,0);mk(fnt,CY(.15,.15,1.4),0xcccccc,0,1,0);mk(fnt,CY(.7,.5,.2),0x7ec8f0,0,.45,0);fnt.position.set(0,0,-3.6);scene.add(fnt);
 
 const townObjs=scene.children.slice(town0),deco=new THREE.Group();scene.add(deco);
 // [kind,main colour,trunk colour]; kinds 0 round tree,1 conifer,2 tall pole,3 cactus,4 crystal,5 slab
@@ -776,39 +741,16 @@ function loadAtlas(key){
         mt.image=t.image;mt.needsUpdate=true}});
   },undefined,()=>{const i=ATLAS_PEND.indexOf(key);if(i>=0)ATLAS_PEND.splice(i,1)});
   return null}
-// which baked sprite set the hero uses: class line + gender.
-// Layered build: 'herobody:<class>_<sex>' + 'herohead:<style>' composited
-// at runtime (same layout as the RO client: separate body + head sheets).
-// Falls back to the legacy single-layer 'hero:*' atlas while it loads.
-const HERO_HEAD_FOR={nov_m:'bowl_m',nov_f:'long_f',thief_m:'spiky_m',thief_f:'ponytail_f',
-  assassin_m:'spiky_m',assassin_f:'ponytail_f',xcross_m:'spiky_m',xcross_f:'ponytail_f'};
-function heroBodyKey(opt){
-  const g=opt.sex==='f'?'f':'m';
-  if(opt.look==='hood')return 'herobody:'+(opt.tier>=3?'xcross':opt.tier>=2?'assassin':'thief')+'_'+g;
-  if(opt.look==='knight')return 'herobody:nov_'+g;// sword line reuses the novice set
-  return 'herobody:nov_'+g}
+// which baked sprite set the hero uses: class line + gender
 function heroAtlasKey(opt){
   const g=opt.sex==='f'?'f':'m';
   if(opt.look==='hood')return 'hero:'+(opt.tier>=3?'xcross':opt.tier>=2?'assassin':'thief')+'_'+g;
   if(opt.look==='knight')return 'hero:nov_'+g;// sword line reuses the novice set
   return 'hero:nov_'+g}
-function heroHeadKey(opt){
-  const g=opt.sex==='f'?'f':'m';
-  if(opt.look==='hood')return 'herohead:'+(g==='f'?'ponytail_f':'spiky_m');
-  return 'herohead:'+(g==='f'?'long_f':'bowl_m')}
-let heroSpr=null,heroHeadSpr=null,heroKey='',heroDirty=false;
-function ensureHero(opt){const k=JSON.stringify(opt);if(heroKey===k&&heroSpr)return;heroKey=k;heroDirty=false;
-  if(heroSpr){P.remove(heroSpr);heroSpr=null}if(heroHeadSpr){P.remove(heroHeadSpr);heroHeadSpr=null}
-  const bk=heroBodyKey(opt),hk=heroHeadKey(opt);
-  const btex=loadAtlas(bk),htex=loadAtlas(hk);
-  if(btex&&htex){
-    heroSpr=mkBillboard(btex,1.95,2.92);P.add(heroSpr);
-    heroHeadSpr=mkBillboard(htex,1.95,2.92);
-    heroHeadSpr.material.depthTest=false;heroHeadSpr.renderOrder=1;P.add(heroHeadSpr);return}
-  if(heroKindAvail(bk)&&heroKindAvail(hk)){return} // layered set loading, wait
+let heroSpr=null,heroKey='',heroDirty=false;
+function ensureHero(opt){const k=JSON.stringify(opt);if(heroKey===k&&heroSpr)return;heroKey=k;heroDirty=false;if(heroSpr)P.remove(heroSpr);
   let tex=loadAtlas(heroAtlasKey(opt))||getSheet('h:'+k,(ctx,x,y,d,kind,fr)=>drawHero(ctx,x,y,d,kind,fr,opt));
   heroSpr=mkBillboard(tex,1.95,2.92);P.add(heroSpr)}
-function heroKindAvail(bk){return (window.SPRITE_ATLASES||{})[bk]&&(window.SPRITE_ATLASES||{})[HERO_HEAD_FOR[bk.split(':')[1]]?('herohead:'+HERO_HEAD_FOR[bk.split(':')[1]]):'']?true:true}
 function buildMob(m){
   const G=new THREE.Group(),key='mob:'+m.n;
   let tex=loadAtlas(key),pending=null;
@@ -878,4 +820,91 @@ function loop(now){const dt=Math.min(.1,(now-last)/1000);last=now;try{for(let i=
 resize();respawn=.3;requestAnimationFrame(loop);setInterval(save,5000);
 </script>
 </body>
+<script>
+/* Verify quest repair: old save with missing z/xp must load cleanly. */
+function __vlog(){console.log('[GM] '+Array.prototype.join.call(arguments,' '))}
+function base(){
+  return {pets:[],cls:'Novice',sex:'m',lv:20,exp:500,hp:400,zeny:12345,kills:60,pts:10,
+    jobs:{Novice:{jl:1,jx:0}},sk:{aid:1},mp:0,lvl:3,prog:[1,1,1,1,1,1,1,1,1,1],kl:0,
+    auto:true,adv:true,cards:[],ore:{ori:3,elu:1},gm:false,gmx:100,
+    st:{str:1,agi:1,dex:1,luk:1,int:1,vit:1},
+    eq:{weapon:{id:1,slot:'weapon',wt:'dagger',tier:0,val:5,name:'Knife',aff:[],slots:1,cards:[],sec:0},
+        armor:null,head:null,off:null,leg:null,acc1:null,acc2:null},inv:[]};
+}
+function attempt(label,q,cb){
+  try{
+    localStorage.removeItem('pg_save3_GM');
+    var s=base(); if(q!==undefined)s.q=q;
+    localStorage.setItem('pg_save3_GM',JSON.stringify(s));
+    setMode('login');$('username').value='GM';$('password').value='gm1234';
+    submitAuth();
+    var err=$('loginErr').textContent;
+    __vlog(label+' -> err=['+err+'] loaded='+(S?'yes':'NO'));
+    if(S&&Array.isArray(S.q))__vlog(label+' quests='+JSON.stringify(S.q.map(function(q){return [q.type,q.goal,q.prog,q.z,q.xp]})));
+    cb&&cb();
+  }catch(e){__vlog(label+' THREW '+e.message)}
+}
+window.addEventListener('load',function(){
+ setTimeout(function(){
+  try{
+    __vlog('buildTag=['+$('buildTag').textContent+']');
+    attempt('OLD_NO_REWARD_FIELDS',[{type:'kill',goal:20,prog:3},{type:'loot',goal:5,prog:0},{type:'boss',goal:1,prog:1}]);
+    attempt('NULL_FIELDS',[{type:'kill',goal:20,prog:3,z:null,xp:null}]);
+    attempt('VALID_SAVE',[{type:'kill',goal:24,prog:5,z:500,xp:300},{type:'loot',goal:9,prog:0,z:800,xp:120}]);
+    attempt('JUNK_ENTRIES',[null,'x',{type:'nope'}]);
+    attempt('Q_NULL',null);
+    attempt('Q_NOT_ARRAY','oops');
+    attempt('NO_Q_FIELD',undefined);
+  }catch(e){__vlog('THROWN '+e.message)}
+ },700);
+});
+function __vlog(){console.log('[SHOT] '+Array.prototype.join.call(arguments,' '))}
+function __dump(tag){
+  R.render(scene,cam);
+  try{
+    var url=R.domElement.toDataURL('image/png');
+    __vlog('LEN '+tag+' '+url.length);
+    var CH=3000;
+    for(var c=0;c<url.length;c+=CH)
+      console.log('[CHUNK|'+tag+'|'+c+']'+url.slice(c,c+CH));
+  }catch(e){__vlog('toDataURL failed: '+e.message)}
+}
+window.addEventListener('load',function(){
+ setTimeout(function(){
+   try{document.getElementById('username').value='GM';
+        document.getElementById('password').value='gm1234';submitAuth();__vlog('login ok');}
+   catch(e){__vlog('ERR '+e.message)}
+ },40);
+ setTimeout(function(){
+  try{
+   var keys=Object.keys(window.SPRITE_ATLASES||{});keys.forEach(function(k){loadAtlas(k)});
+   var iv=setInterval(function(){
+     if(ATLAS_PEND.length)return;
+     clearInterval(iv);
+     mobs=[];
+     var names=['Poring','Fabre','Lunatic','Drops','Chonchon','Willow','Rocker','Poporing','Savage Bebe','Peco Peco'];
+     for(var i=0;i<names.length;i++)
+       mobs.push({n:names[i],shape:'blob',c:0xffffff,x:-4.2+i*0.92,z:4.8,
+                  hp:100,max:100,run:i%2,atkAnim:0,a:i*0.3,flash:0,size:1,spawn:1});
+     mob=mobs[0];
+     S.cls='Novice';S.sex='m';el=0.62;az=0;zoom=0.95;
+     /* mob in front of the player (larger z = nearer camera) -> facing view */
+     lastKey='';draw();
+     __dump('FRONT');
+     /* move the mobs behind the player -> the hero turns its back to us */
+     for(var q=0;q<mobs.length;q++)mobs[q].z=1.2;
+     mob=mobs[0];
+     lastKey='';draw();
+     __dump('BACK');
+     /* thief line, male and female */
+     mobs=[];mob=null;S.cls='Thief';S.sex='m';lastKey='';draw();__dump('THIEF_M');
+     S.cls='Assassin';S.sex='f';lastKey='';draw();__dump('ASSASSIN_F');
+     S.cls='Assassin Cross';S.sex='m';lastKey='';draw();__dump('XCROSS_M');
+     S.cls='Novice';S.sex='f';lastKey='';draw();__dump('NOVICE_F');
+     window.requestAnimationFrame=function(){return 0};
+   },150);
+  }catch(e){__vlog('ERR2 '+e.message)}
+ },400);
+});
+</script>
 </html>
