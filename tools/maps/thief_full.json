@@ -1,0 +1,9 @@
+{
+  "_comment": "Your thief.png used exactly as drawn - crop only, nothing redrawn. Both genders get this sheet.",
+  "mode": "full",
+  "sheet": "auto",
+  "row_map": null,
+  "resample": "lanczos",
+  "out": { "thief": "assets/hero_thief_m.png" },
+  "also_out": { "thief": "assets/hero_thief_f.png" }
+}

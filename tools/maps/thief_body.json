@@ -1,0 +1,7 @@
+{
+  "_comment": "Same crops, but your sprite's head is blanked so the game's two heads (spiky_m / ponytail_f) sit on your outfit.",
+  "mode": "body",
+  "sheet": "auto",
+  "out": { "thief": "assets/herobody_thief_m.png" },
+  "also_out": { "thief": "assets/herobody_thief_f.png" }
+}
