@@ -115,6 +115,7 @@ hr{border:0;border-top:1px dashed var(--edge);margin:6px 0}
 <div style="margin-left:auto;display:flex;align-items:center;gap:8px"><span id="userBadge" style="font-weight:bold;font-size:12px;background:#e9d39a;padding:3px 8px;border-radius:4px;border:1px solid var(--edge2)"></span><button id="logoutBtn" onclick="logout()" style="display:none">Logout</button><button id="spd">Speed x1</button></div></div></div>
 <div id="modal"><div class="login-card"><p id="mt" style="font-size:14px;opacity:1;margin:0 0 12px"></p><div class="row" style="justify-content:center"><button id="my">Yes</button><button id="mn">Cancel</button></div></div></div><div id="tooltip"></div>
 <script src="assets/sprites_data.js?v=2"></script>
+<script src="assets/thief_sprites_data.js?v=1"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
 const $=id=>document.getElementById(id);
@@ -127,7 +128,7 @@ const AFF=['str','agi','dex','luk','int','hp','atk','crit','aspd','flee','cdm'],
 const AL={str:'STR',agi:'AGI',dex:'DEX',luk:'LUK',int:'INT',hp:'Max HP',atk:'ATK %',crit:'Crit %',aspd:'ASPD %',flee:'Flee %',cdm:'Crit DMG %',vit:'VIT'};
 const SU=k=>k.toUpperCase(),BX_=7.5,Z0=-3,Z1=4,MPS=15,K5=['str','agi','dex','luk','int'];
 const GM_USER='GM',GM_PASS='gm1234';   // CHANGE THE GM PASSWORD before you publish
-const BUILD='2026-10-02 sprites-v2';   // shown on the login card - confirms which file you loaded
+const BUILD='2026-10-02 sprites-v3 thief-pack';   // shown on the login card - confirms which file you loaded
 $('buildTag').textContent='build '+BUILD+' · atlases:'+Object.keys(window.SPRITE_ATLASES||{}).length;
 
 // ---------- class tree: Novice -> 6 first jobs -> 6 second jobs -> 6 third jobs ----------
@@ -219,7 +220,7 @@ function rollOnce(p,fast,done){const c=rollCost(p);if(S.zeny<c){autoSet.delete(p
 function autoRoll(p){if(!autoSet.has(p.id)||!gp(p.id))return;rollOnce(p,true,g=>{if(!(p.sk||[1,2,3]).includes(g)){p.roll=g;autoSet.delete(p.id);log(`Auto-roll stopped on Grade ${g} (x${MUT[g]})!`,'r4')}ui();save();if(autoSet.has(p.id))setTimeout(()=>autoRoll(p),250)})}
 const pickW=w=>{let r=Math.random()*w.reduce((a,b)=>a+b,0);for(let i=0;i<w.length;i++){r-=w[i];if(r<0)return i}return w.length-1},gp=id=>S.pets.find(x=>String(x.id)===String(id));
 const uid=()=>Date.now()+Math.random(),rnd=(a,b)=>a+Math.random()*(b-a),ri=(a,b)=>Math.floor(rnd(a,b+1)),cl=(v,a,b)=>Math.max(a,Math.min(b,v));
-const fresh=()=>({pets:[],cls:'Novice',sex:'m',lv:1,exp:0,hp:100,zeny:0,kills:0,pts:10,jobs:{Novice:{jl:1,jx:0}},sk:{aid:1},mp:0,lvl:1,prog:[1,1,1,1,1],kl:0,auto:true,adv:true,q:null,cards:[],ore:{ori:0,elu:0},gm:false,gmx:100,
+const fresh=()=>({pets:[],cls:'Novice',sex:'m',hair:0,lv:1,exp:0,hp:100,zeny:0,kills:0,pts:10,jobs:{Novice:{jl:1,jx:0}},sk:{aid:1},mp:0,lvl:1,prog:[1,1,1,1,1],kl:0,auto:true,adv:true,q:null,cards:[],ore:{ori:0,elu:0},gm:false,gmx:100,
   st:{str:1,agi:1,dex:1,luk:1,int:1,vit:1},eq:{weapon:{id:1,slot:'weapon',wt:'dagger',tier:0,val:5,name:'Novice Knife',aff:[],slots:1,cards:[],sec:0},armor:null,head:null,off:null,leg:null,acc1:null,acc2:null},inv:[]});
 const saveKey=()=>'pg_save3_'+currentUser;
 const num_= (v,d)=>{v=+v;return Number.isFinite(v)?v:d};
@@ -461,7 +462,8 @@ const V={
   pet(){const P=S.pets,A=P.filter(p=>p.on).length,p=gp(selP);
     return`<div class="hd">Pets <small>Fighting ${A}/3 &middot; Collection ${P.length}</small></div><small>Pets drop from monsters. Drop odds per map are on the World Map.</small><div class="grid" style="margin-top:6px">${P.map(q=>{const sp=PETS[q.sp];return`<div class="cell b${RCL[sp.r]}${selP===q.id?' sel':''}" style="font-size:30px" data-a="selp" data-v="${q.id}">${sp.ic}${q.on?'<i class="rf" style="left:2px;right:auto;top:2px;bottom:auto;font-style:normal">ON</i>':''}${q.mut?`<i class="rf">G${q.mut}</i>`:''}</div>`}).join('')||'<small>No pets yet.</small>'}</div>`+(p?petDetail(p):'<small>Select a pet to manage it.</small>')},
   log(){return logs.map(l=>`<div class="${l.cls||''}">${l.m}</div>`).join('')||'<i>No events yet.</i>'},
-  set(){return`<div class="hd">Appearance</div><div class="row"><button data-a="sex" style="${S.sex==='f'?'background:#ffe08a':''}">♂ Male</button><button data-a="sex" style="${S.sex==='f'?'background:#ffe08a':''}">♀ Female</button></div>
+  set(){return`<div class="hd">Appearance</div><div class="row"><button data-a="sex" data-v="m" style="${S.sex==='f'?'':'background:#ffe08a'}">♂ Male</button><button data-a="sex" data-v="f" style="${S.sex==='f'?'background:#ffe08a':''}">♀ Female</button></div>
+  <div class="row" style="margin-top:6px;align-items:center;gap:8px"><button data-a="hair" data-v="-1">◀</button><span>Hair style ${((S.hair|0)%19+19)%19+1} / 19</span><button data-a="hair" data-v="1">▶</button></div><small>Hair styles apply to the Thief, Assassin and Assassin Cross sprites.</small>
     <div class="hd" style="margin-top:10px">Gameplay</div><label><input type="checkbox" data-a="auto" ${S.auto!==false?'checked':''}> Auto-equip better gear</label><br><label><input type="checkbox" data-a="adv" ${S.adv!==false?'checked':''}> Auto-advance to next level (turn off to farm)</label>
     <p><small>Drag the view to rotate, scroll to zoom. Hotkeys: M S J K B E C Q R L P O, Esc to close.</small></p><button class="full" data-a="reset">Erase this account's save &amp; restart</button><button class="full" data-a="logout">Logout</button>`},
   gm(){return`<div class="hd">GM multiplier (EXP, Job EXP, Zeny, quests)</div><div class="row">${[1,10,100,1000].map(x=>`<button data-a="gmx" data-v="${x}" ${S.gmx===x?'style="background:#ffe08a"':''}>x${x}</button>`).join('')}</div>
@@ -527,7 +529,8 @@ const ACT={
   prel:id=>{const p=gp(id);if(!p)return;const z=Math.floor(EGG*.3);ask(`Release ${PETS[p.sp].n}? You get ${z}z back.`,()=>{S.pets=S.pets.filter(x=>x!==p);autoSet.delete(p.id);S.zeny+=z;ui();save()})},
   claim:i=>{const q=S.q[+i];if(q&&q.prog>=q.goal){S.zeny+=(q.z||0);S.exp+=(q.xp||0);log(`Quest complete! +${(q.z||0).toLocaleString()}z, +${(q.xp||0).toLocaleString()} EXP`,'r3');S.q[+i]=newQuest(q.type);checkLevel();ui();save()}},
   auto:()=>{S.auto=S.auto===false;ui()},adv:()=>{S.adv=S.adv===false;ui()},logout:()=>logout(),
-  sex:v=>{S.sex=S.sex==='f'?'m':'f';heroKey='';log(`Appearance: ${S.sex==='f'?'female':'male'}.`);ui();save()},
+  hair:v=>{S.hair=(((S.hair|0)+(+v||1))%19+19)%19;heroKey='';ui();save()},
+  sex:v=>{S.sex=v==='f'?'f':v==='m'?'m':(S.sex==='f'?'m':'f');heroKey='';log(`Appearance: ${S.sex==='f'?'female':'male'}.`);ui();save()},
   reset:()=>{ask('Erase this account save and start over?',()=>{const gm=S.gm;S=fresh();S.gm=gm;S.q=['kill','loot','boss'].map(newQuest);floats.forEach(f=>f.el&&f.el.remove());floats=[];drops=[];pend=[];mobs=[];mob=null;respawn=.3;logs=[];log('New adventure started.');ui();save()})},
   gmx:v=>{S.gmx=+v;ui();save()},gmz:()=>{S.zeny+=1e6;ui();save()},gmo:()=>{S.ore.ori+=20;S.ore.elu+=20;ui();save()},gml:()=>{S.lv=Math.min(150,S.lv+10);S.pts+=30;S.hp=maxHp();ui();save()},
   gmj:()=>{const j=jobOf();j.jl=C().mj;j.jx=0;ui();save()},gmu:()=>{S.prog=MAPS.map(()=>10);ui();save()},gmp:v=>{if(S.pets.length>=40)S.pets.shift();const c=PETS.filter(x=>x.r===+v);S.pets.push({id:ri(1e6,9e6),sp:PETS.indexOf(c[ri(0,c.length-1)]),mut:0,eq:[0,0,0],on:S.pets.filter(x=>x.on).length<3});ui();save()},gmm:v=>{S.pets.forEach(p=>p.mut=+v);ui();save()},gmc:()=>{S.pets=[];ui();save()}};
@@ -797,8 +800,33 @@ function heroHeadKey(opt){
   if(opt.look==='hood')return 'herohead:'+(g==='f'?'ponytail_f':'spiky_m');
   return 'herohead:'+(g==='f'?'long_f':'bowl_m')}
 let heroSpr=null,heroHeadSpr=null,heroKey='',heroDirty=false;
+// ----- Thief-line sprite pack (Thief / Assassin / Assassin Cross) from assets/thief_sprites_data.js -----
+// Body + head are composited once per (class, sex, hair) into a single atlas: 8 cols = frames, rows = anim*8+dir (idle,walk,attack x 8 dirs)
+const packImg={},packCache=new Map(),PACK_K=.03;let packReady=false;
+(function(){const PK=window.THIEF_PACK;if(!PK)return;let n=0,tot=0;
+  const ld=(k,u)=>{tot++;const i=new Image();i.onload=()=>{if(++n===tot){packReady=true;heroKey=''}};i.src=u;packImg[k]=i};
+  for(const c in PK.bodies)ld('b:'+c,PK.bodies[c].atlas);for(const h in PK.heads)ld('h:'+h,PK.heads[h])})();
+function packTex(opt){
+  const PK=window.THIEF_PACK,body=opt.tier>=3?'assassin_cross':opt.tier>=2?'assassin':'thief',sex=opt.sex==='f'?'female':'male',hs=(((opt.hair|0)%PK.hairStyles)+PK.hairStyles)%PK.hairStyles,key=body+'|'+sex+'|'+hs;
+  if(packCache.has(key))return packCache.get(key);
+  const cv=document.createElement('canvas');cv.width=PK.cellW*8;cv.height=PK.cellH*24;
+  const g=cv.getContext('2d');g.imageSmoothingEnabled=false;
+  const bi=packImg['b:'+body],hi=packImg['h:'+sex],anc=PK.bodies[body].anchors;
+  for(let a=0;a<3;a++)for(let d=0;d<8;d++)for(let f=0;f<PK.frames[a];f++){
+    const dx=f*PK.cellW+PK.padL,dy=(a*8+d)*PK.cellH+PK.padT;
+    g.drawImage(bi,f*96,(a*8+d)*96,96,96,dx,dy,96,96);
+    const an=anc[a][d][f];g.drawImage(hi,d*64,hs*64,64,64,dx+an[0]-32,dy+an[1]-48,64,64)}
+  const t=new THREE.CanvasTexture(cv);t.magFilter=t.minFilter=THREE.NearestFilter;t.generateMipmaps=false;packCache.set(key,t);return t}
+function mkPackHero(opt){
+  const PK=window.THIEF_PACK,t=packTex(opt).clone();t.needsUpdate=true;t.repeat.set(1/8,1/24);
+  const s=new THREE.Sprite(new THREE.SpriteMaterial({map:t,transparent:true,alphaTest:.12}));
+  s.center.set(PK.pivotX/PK.cellW,(PK.cellH-PK.pivotY)/PK.cellH);s.scale.set(PK.cellW*PACK_K,PK.cellH*PACK_K,1);s.userData.pack=1;return s}
+function setPackCell(spr,dir,run,atk,clock){
+  let a=0,f=0;if(atk>0){a=2;f=Math.min(5,Math.floor((1-atk)*6))}else if(run){a=1;f=Math.floor(clock*10)%8}
+  const t=spr.material.map;t.repeat.set(1/8,1/24);t.offset.set(f/8,1-(a*8+dir+1)/24)}
 function ensureHero(opt){const k=JSON.stringify(opt);if(heroKey===k&&heroSpr)return;heroKey=k;heroDirty=false;
   if(heroSpr){P.remove(heroSpr);heroSpr=null}if(heroHeadSpr){P.remove(heroHeadSpr);heroHeadSpr=null}
+  if(opt.look==='hood'&&packReady){heroSpr=mkPackHero(opt);P.add(heroSpr);return}
   const bk=heroBodyKey(opt),hk=heroHeadKey(opt);
   const btex=loadAtlas(bk),htex=loadAtlas(hk);
   if(btex&&htex){
@@ -836,10 +864,10 @@ function draw(){
   if(key!==lastKey){lastKey=key;const col=new THREE.Color(bn?0x8a6bb0:mp.sky);scene.background=col;scene.fog=new THREE.Fog(col,35,80);ground.material.color.setHex(mp.ground);buildDeco(S.mp);road.material.color.setHex(S.mp===3?0xe9d9a8:0xd8cdb4)}
   P.position.set(pl.x,0,pl.z);
   const w=S.eq.weapon,wt=w&&w.wt&&c.wt.includes(w.wt)?w.wt:c.wt[0],clothN=S.eq.armor?TC[S.eq.armor.tier]:c.col,hairN=S.eq.head?TC[S.eq.head.tier]:0xd0492c,metalN=w?TC[w.tier]:0xc0c0c0;
-  ensureHero({cloth:hx(clothN),clothN,cape:c.cape?hx(c.cape):'',hair:hx(hairN),hairN,hat:c.hat?hx(c.hat):'',wt,metal:hx(metalN),skin:'#ffd2a8',look:lookOf(c.n),tier:c.tier||0,sex:S.sex||'m',shield:!!(S.eq.off&&S.eq.off.slot==='off')});
+  ensureHero({cloth:hx(clothN),clothN,cape:c.cape?hx(c.cape):'',hair:hx(hairN),hairN,hat:c.hat?hx(c.hat):'',wt,metal:hx(metalN),skin:'#ffd2a8',look:lookOf(c.n),tier:c.tier||0,sex:S.sex||'m',hair:S.hair|0,shield:!!(S.eq.off&&S.eq.off.slot==='off')});
   const pFace=mob?Math.atan2(mob.z-pl.z,mob.x-pl.x):pl.run?-pl.ry: -az+Math.PI;
-  setCell(heroSpr,viewDir(pFace),animRow(pl.run,atkAnim,t,10));
-  heroSpr.material.color.setRGB(1,1-hitAnim*.75,1-hitAnim*.75);
+  if(heroSpr){if(heroSpr.userData.pack)setPackCell(heroSpr,viewDir(pFace),pl.run,atkAnim,t);else setCell(heroSpr,viewDir(pFace),animRow(pl.run,atkAnim,t,10));
+  heroSpr.material.color.setRGB(1,1-hitAnim*.75,1-hitAnim*.75)}
   drawSlashFX(pl.x+Math.cos(pFace)*0.7,pl.z+Math.sin(pFace)*0.7);
   const alive=new Set(mobs);mobMesh.forEach((v,m)=>{if(!alive.has(m)){scene.remove(v.G);mobMesh.delete(m)}});
   for(const m of mobs){let v=mobMesh.get(m);if(!v){v=buildMob(m);mobMesh.set(m,v)}const s=Math.max(.05,m.size*m.spawn*(m.boss?1.25:1));
