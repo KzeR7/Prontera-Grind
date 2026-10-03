@@ -5,7 +5,12 @@ const fs = require('fs'), vm = require('vm'), assert = require('assert');
 const src = fs.readFileSync(__dirname + '/../../index.html', 'utf8');
 const grab = (a, b) => { const i = src.indexOf(a), j = src.indexOf(b, i); if (i < 0 || j < 0) throw new Error('missing ' + a); return src.slice(i, j); };
 const body = src.slice(src.indexOf('function load(){try{') + 19, src.indexOf('}catch(e){}return fresh()') + 1);
-const code = [grab('const CD=[', 'const fresh=()=>'), grab('const fresh=()=>', 'const saveKey='), 'function loadRaw(){' + body + '}'].join('\n');
+// Arena geometry (BX_/Z0/Z1/MPS/AGGRO) is pulled straight from index.html instead of being
+// stubbed: the 'const fresh=()=>' span happens to include pl's declaration, and pl's spawn
+// point is written as Z1-1.5. Hardcoding the field size here would silently drift from the
+// real one, and the vertical-arena check below reads the same constants.
+const arena = grab('const SU=k=>', ',K5=[') + ';';
+const code = [arena, grab('const CD=[', 'const fresh=()=>'), grab('const fresh=()=>', 'const saveKey='), 'function loadRaw(){' + body + '}'].join('\n');
 
 const save = {pets:[], cls:'Swordman', sex:'m', hair:2, lv:60, exp:12345, hp:999, zeny:1e6, kills:9, pts:7, mp:2, lvl:4, kl:1,
   jobs:{Novice:{jl:10,jx:0},Swordman:{jl:40,jx:5}}, sk:{aid:1,swd:3,two:2},
@@ -69,6 +74,16 @@ t('card values are repaired per stat, not flattened to CV[grade]', () => {
   assert.strictEqual(byId(1).v, 60, 'a Legendary HP card should repair to 5*12, not the stale 5');
   assert.strictEqual(byId(2).v, 3, 'a Rare STR card should repair to CV[2]');
   assert.strictEqual(byId(3).v, 2, 'an unknown stat should fall back to CV[grade], not crash');
+});
+
+t('the arena really is vertical: mobs hold the far end, the player the near end', () => {
+  const z0 = Number(src.match(/Z0=(-?\d+(?:\.\d+)?)/)[1]), z1 = Number(src.match(/Z1=(-?\d+(?:\.\d+)?)/)[1]);
+  assert.ok(z1 - z0 >= 14, `the field is only ${z1 - z0} deep - not the long vertical avenue`);
+  assert.ok(z0 < 0 && z1 > 0, 'the field should straddle the origin');
+  // the camera sits on +Z looking toward -Z, so low Z is the TOP of the screen
+  assert.ok(/m\.z=rnd\(Z0,Z0\+6\)/.test(src), 'mobs no longer spawn at the far (top) end');
+  assert.ok(/pl=\{x:0,z:Z1-1\.5/.test(src), 'the player no longer starts at the near (bottom) end');
+  console.log('       field depth ' + (z1 - z0) + ' units; player at Z1-1.5, mobs at Z0..Z0+6');
 });
 
 console.log(`\n${pass} passed, ${fail} failed`);

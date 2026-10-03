@@ -126,9 +126,12 @@ const WICON={dagger:'🗡️',katar:'🔪',staff:'🪄',bow:'🏹',axe:'🪓',sw
 const STATS=[['str','STR','ATK'],['agi','AGI','ASPD, Flee'],['int','INT','Skill dmg'],['dex','DEX','Hit, min dmg'],['vit','VIT','DEF, MDEF, HP'],['luk','LUK','Crit, drops']];
 const AFF=['str','agi','dex','luk','int','hp','atk','crit','aspd','flee','cdm'],AB={str:1,agi:1,dex:1,luk:1,int:1,hp:12,atk:.8,crit:.45,aspd:.6,flee:.8,cdm:1.5};
 const AL={str:'STR',agi:'AGI',dex:'DEX',luk:'LUK',int:'INT',hp:'Max HP',atk:'ATK %',crit:'Crit %',aspd:'ASPD %',flee:'Flee %',cdm:'Crit DMG %',vit:'VIT'};
-const SU=k=>k.toUpperCase(),BX_=7.5,Z0=-3,Z1=4,MPS=15,K5=['str','agi','dex','luk','int'];
+// The field is a vertical avenue: the player starts at the near end (high Z, bottom of the
+// screen) and mobs hold the far end (low Z, top of the screen), so you run up to engage.
+// AGGRO is how close you must get before a pack leaves its spawn to meet you; bosses ignore it.
+const SU=k=>k.toUpperCase(),BX_=5.5,Z0=-14,Z1=3,MPS=15,AGGRO=8.5,K5=['str','agi','dex','luk','int'];
 const GM_USER='GM',GM_PASS='gm1234';   // CHANGE THE GM PASSWORD before you publish
-const BUILD='2026-10-03 sprites-v7 all 19 classes';   // shown on the login card - confirms which file you loaded
+const BUILD='2026-10-03 balance-v8 economy stats cards pets skills arena';   // shown on the login card - confirms which file you loaded
 $('buildTag').textContent='build '+BUILD+' · atlases:'+Object.keys(window.SPRITE_ATLASES||{}).length;
 
 // ---------- class tree: Novice -> 6 first jobs -> 6 second jobs -> 6 third jobs ----------
@@ -317,7 +320,7 @@ const zenAt=p=>Math.max(1,Math.round(.011*p*p));   // reference zeny per kill at
 
 // ---------- state ----------
 let currentUser=null,S=null,speed=1,floats=[],drops=[],t=0,shake=0,atkAnim=0,hitAnim=0,pend=[],shots=[],barT=0,logs=[],tab=null,selB=null,selC=null,selK=null,mapM=0,mapL=1;
-const pl={x:-3,z:1.5,ry:0,orb:0,run:0},skCd={},petR={};
+const pl={x:0,z:Z1-1.5,ry:0,orb:0,run:0},skCd={},petR={};
 // tb holds the one tradeoff buff currently running (ATK up / DEF down and so on). It is
 // deliberately transient: it is never saved, so quitting mid-buff just drops the buff.
 let tb={};
@@ -445,7 +448,7 @@ function spawn(){
   const F=fieldOf(S.mp,S.lvl),l=pw(),mb=1+S.mp*.15+Math.max(0,S.mp-4)*.2;mobs=[];
   if(F.boss&&S.kl>=MPS){const hp=Math.floor(500*mb*Math.pow(l,1.85));mobs.push({...F.boss,boss:true,hp,max:hp,atk:Math.floor((8+l*6.5)*mb),exp:Math.max(1,Math.floor(BOSEK*Math.pow(l,1.5)/50)),zeny:Math.max(1,Math.floor(ri(BZK[0],BZK[1])*l*l/1000)),size:1.3,mag:true,lvl:l,sec:F.sec})}
   else{const n=(S.lvl>=5||S.mp>=5)?ri(3,8):1;for(let i=0;i<n;i++){const m=F.mobs[ri(0,1)],hp=Math.floor(42*mb*Math.pow(l,1.85));mobs.push({...m,boss:false,hp,max:hp,atk:Math.floor((5+l*4.6)*mb),exp:Math.max(1,Math.floor(EXPK*Math.pow(l,1.5)/50)),zeny:Math.max(1,Math.floor(ri(ZK[0],ZK[1])*l*l/1000)),size:.6,mag:['demon','tree','blob'].includes(m.shape),lvl:l,sec:F.sec})}}
-  mobs.forEach((m,i)=>{m.x=pl.x>0?rnd(-BX_,-3):rnd(3,BX_);m.z=rnd(Z0,Z1);m.spawn=0;m.ry=0;m.at=rnd(.6,1.6);m.a=i*2.4});
+  mobs.forEach((m,i)=>{m.x=rnd(-BX_+.8,BX_-.8);m.z=rnd(Z0,Z0+6);m.hx=m.x;m.hz=m.z;m.spawn=0;m.ry=0;m.at=rnd(.6,1.6);m.a=i*2.4});
   mob=mobs[0];pAtkT=.3;
 }
 function genGear(T,l,sec,boss){
@@ -768,14 +771,16 @@ function update(dt){
   for(const s of SKILLS)if(s.type==='to'&&skillOn(s.id)&&(skCd[s.id]||0)<=0&&tb.t<=0&&S.hp>maxHp()*(s.to.hp||.6)){
     skCd[s.id]=s.cd;tb={atk:s.to.atk||0,aspd:s.to.aspd||0,def:s.to.def||0,drain:s.to.drain||0,t:s.to.dur,n:s.n};
     log(s.n+'! '+s.d(lv(s.id)),'r4');addFloat(pl.x,3.2,pl.z,s.n,s.col,true);break}
-  let tx=0,tz=1.5,reach=1.4;
+  let tx=0,tz=Z1-1.5,reach=1.4;
   if(!mobs.length){respawn-=dt;if(respawn<=0)spawn()}
   else{
     const rng=C().rng;
     for(const m of mobs){
       m.spawn=Math.min(1,m.spawn+dt*3);m.flash=Math.max(0,(m.flash||0)-dt*6);m.atkAnim=Math.max(0,(m.atkAnim||0)-dt*2.35);
-      const ms=2.6+.3*m.size,gx2=pl.x+Math.cos(m.a)*ms,gz2=pl.z+Math.sin(m.a)*ms*.6,ex=gx2-m.x,ez=gz2-m.z,ed=Math.hypot(ex,ez);const stn=m.stun>0;m.run=ed>.12&&!stn;
-      if(ed>.1&&!stn){const v=Math.min(ed,dt*(m.boss?1.2:1.6));m.x+=ex/ed*v;m.z+=ez/ed*v}
+      const ms=2.6+.3*m.size,wake=m.boss||Math.hypot(pl.x-m.x,pl.z-m.z)<AGGRO;
+      const gx2=wake?pl.x+Math.cos(m.a)*ms:m.hx,gz2=wake?pl.z+Math.sin(m.a)*ms*.6:m.hz;
+      const ex=gx2-m.x,ez=gz2-m.z,ed=Math.hypot(ex,ez);const stn=m.stun>0;m.run=ed>.12&&!stn;
+      if(ed>.1&&!stn){const v=Math.min(ed,dt*(m.boss?1.2:1.6)*(wake?1:.55));m.x+=ex/ed*v;m.z+=ez/ed*v}
       m.x=cl(m.x,-BX_,BX_);m.z=cl(m.z,Z0,Z1);m.ry=Math.atan2(pl.z-m.z,m.x-pl.x);
       if(Math.hypot(pl.x-m.x,pl.z-m.z)<=ms+.4&&!stn){m.at-=dt;if(m.at<=0){m.at=m.boss?1.2:1.5;
         if(Math.random()*100<flee())addFloat(pl.x,2.4,pl.z,'Miss','#8cf');
@@ -825,8 +830,8 @@ const SP=(r=.5)=>new THREE.SphereGeometry(r,16,12),BX=(a,b,c)=>new THREE.BoxGeom
 function mk(p,geo,c,x=0,y=0,z=0){const m=new THREE.Mesh(geo,M(c));m.position.set(x,y,z);m.castShadow=true;p.add(m);return m}
 
 scene.add(new THREE.HemisphereLight(0xffffff,0x6a9a55,.8));
-const sun=new THREE.DirectionalLight(0xfff2cc,.9);sun.position.set(-6,12,6);sun.castShadow=true;sun.shadow.mapSize.set(1024,1024);
-Object.assign(sun.shadow.camera,{left:-14,right:14,top:14,bottom:-14});scene.add(sun);
+const sun=new THREE.DirectionalLight(0xfff2cc,.9);sun.position.set(-9,22,9);sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);
+Object.assign(sun.shadow.camera,{left:-22,right:22,top:28,bottom:-28});sun.target.position.set(0,0,-5);scene.add(sun.target);scene.add(sun);
 
 const ground=new THREE.Mesh(new THREE.PlaneGeometry(90,90),M(0x6cbf5a));ground.rotation.x=-Math.PI/2;ground.receiveShadow=true;scene.add(ground);
 const road=new THREE.Mesh(new THREE.PlaneGeometry(22,10.5),M(0xd8cdb4));road.rotation.x=-Math.PI/2;road.position.set(0,.01,.4);road.receiveShadow=true;scene.add(road);
@@ -866,11 +871,33 @@ mk(scene,new THREE.CylinderGeometry(3.2,3.2,.04,24),0xd8cfb8,0,.02,-3.6).receive
 for(const[lx,lz]of[[-3,-3.6],[3,-3.6],[0,-6.4],[0,-.8]]){mk(scene,CY(.07,.09,2.2),0x5a4a3a,lx,1.1,lz);mk(scene,SP(.16),0xffe08a,lx,2.3,lz).castShadow=false}
 
 const townObjs=scene.children.slice(town0),deco=new THREE.Group();scene.add(deco);
+// Prontera is scenery, not a maze: the whole set moves back behind the far edge so you run
+// up an open avenue with the city on the skyline instead of fighting inside the cathedral.
+const TZ=-18;townObjs.forEach(o=>{o.position.z+=TZ});road.position.z+=TZ;
 // [kind,main colour,trunk colour]; kinds 0 round tree,1 conifer,2 tall pole,3 cactus,4 crystal,5 slab
 const TH=[0,[0,0x2e9d6a,0x6b4a2a],[5,0x7a7a99,0x555577],[3,0x4a9a4a,0],[1,0x2f7a3a,0x5a3a1a],[0,0x2fb59a,0x7a5a3a],[2,0x7ac060,0x4a8a3a],[0,0xf2a0c0,0x6a4a3a],[4,0xaee0ff,0],[4,0xb04aff,0x330044]];
+// One big map-specific structure. Landmarks are what make a field read as a place instead of
+// a flat coloured plane: they sit outside the play width on both sides and frame the avenue
+// the player runs up, and each kind matches the biome the scatter props already use.
+function landmark(G,k,c1,c2,r){
+  if(k===0){mk(G,BX(3.2,3.4,3.2),c1,0,1.7,0);mk(G,CN(2.7,2.4),c2,0,4.6,0);mk(G,BX(.9,1.4,.2),c2,0,.7,1.66)}
+  else if(k===1){mk(G,CY(.5,.7,4.4),c2,0,2.2,0);mk(G,BX(2.6,.3,2.6),c1,0,4.5,0);mk(G,CN(1.9,1.8),c2,0,5.7,0)}
+  else if(k===2){for(let j=0;j<4;j++){const h=3+r()*2.6;mk(G,CY(.42,.5,h),c1,(j%2?1:-1)*1.1,h/2,(j<2?1:-1)*1.1)}mk(G,BX(4.4,.4,4.4),c2,0,.2,0)}
+  else if(k===3){mk(G,CN(2.9,2.2),c1,0,1.1,0);mk(G,CY(.18,.24,3),c2,0,2.6,0);mk(G,BX(3.4,.25,3.4),c2,0,.12,0)}
+  else if(k===4){const o=mk(G,CN(1.5,6+r()*3),c1,0,3.4,0);o.material.emissive.setHex(c1).multiplyScalar(.55);
+    const q=mk(G,CN(.9,3.4),c1,1.6,1.7,.6);q.material.emissive.setHex(c1).multiplyScalar(.4)}
+  else{mk(G,BX(3.6,5.2,1.4),c1,0,2.6,0);mk(G,BX(4.2,.5,1.9),c2,0,5.3,0);mk(G,BX(1,1.6,.4),c2,0,1,.85)}
+}
 function buildDeco(m){while(deco.children.length)deco.remove(deco.children[0]);townObjs.forEach(o=>o.visible=m===0);road.visible=m===0;if(!m)return;
   let q=m*977+13;const r=()=>(q=(q*16807)%2147483647)/2147483647,[k,c1,c2]=TH[m];
-  for(let i=0;i<75;i++){const x=(r()-.5)*50,z=(r()-.3)*30;if(Math.abs(x)<9&&z>-5&&z<6)continue;const G=new THREE.Group(),sc=.7+r()*.9;
+  // a worn track running the length of the avenue, so the run up the field reads as a road
+  const tr=new THREE.Mesh(new THREE.PlaneGeometry(BX_*1.2,(Z1-Z0)+10),M(0xd8cdb4));
+  tr.rotation.x=-Math.PI/2;tr.position.set(0,.012,(Z0+Z1)/2-1);tr.receiveShadow=true;
+  tr.material.transparent=true;tr.material.opacity=.45;deco.add(tr);
+  for(let i=0;i<7;i++)for(const sg of[-1,1]){const G=new THREE.Group();landmark(G,k,c1,c2,r);
+    G.position.set(sg*(BX_+4+r()*12),0,Z0+1+i*((Z1-Z0)/6)+r()*2);
+    G.scale.setScalar(.9+r()*.8);G.rotation.y=r()*6;deco.add(G)}
+  for(let i=0;i<85;i++){const x=(r()-.5)*52,z=(r()-.5)*46-5;if(Math.abs(x)<BX_+1.5&&z>Z0-1.5&&z<Z1+1.5)continue;const G=new THREE.Group(),sc=.7+r()*.9;
     if(k===0){mk(G,CY(.15,.22,1.3),c2,0,.65,0);mk(G,SP(.9),c1,0,2,0)}
     else if(k===1){mk(G,CY(.12,.2,1),c2,0,.5,0);mk(G,CN(1,2.4),c1,0,2.1,0)}
     else if(k===2){for(let j=0;j<3;j++)mk(G,CY(.07,.09,3.5+j),j%2?c1:c2,j*.35-.3,(3.5+j)/2,j*.2)}
@@ -1134,8 +1161,8 @@ function draw(){
   dmesh.forEach((m,d)=>{if(!live.has(d)){scene.remove(m);dmesh.delete(d)}});
   shots.forEach(s=>{if(!s.m){s.m=mk(scene,s.arrow?BX(.5,.04,.04):SP(.14),s.col);s.m.material.emissive.set(s.col);s.m.castShadow=false;s.m.rotation.y=-Math.atan2(s.z1-s.z0,s.x1-s.x0)}
     const k=Math.min(1,s.t);s.m.position.set(s.x0+(s.x1-s.x0)*k,1.4,s.z0+(s.z1-s.z0)*k)});
-  ct.x+=(pl.x*.6-ct.x)*.05;ct.z+=(pl.z*.5-ct.z)*.05;
-  const dd=(cam.aspect<1.5?21:14)/zoom,sk=shake*.03;
+  ct.x+=(pl.x*.6-ct.x)*.05;ct.z+=(pl.z-5-ct.z)*.05;
+  const dd=(cam.aspect<1.5?26:18)/zoom,sk=shake*.03;
   cam.position.set(ct.x+Math.sin(az)*Math.cos(el)*dd+rnd(-sk,sk),Math.sin(el)*dd+.5,ct.z+Math.cos(az)*Math.cos(el)*dd+rnd(-sk,sk));
   cam.lookAt(ct);R.render(scene,cam);
   floats.forEach(f=>{if(!f.el){const e=document.createElement('div');e.className='fl'+(f.big?' big':'');e.textContent=f.txt;e.style.color=f.col;ov.appendChild(e);f.el=e}
