@@ -8,6 +8,8 @@
 //     lines that tower over the player, saplings and bushes under them, rocky mountain edges) -
 //     the attached payon grid is no longer used for the field;
 //   * **Morocc is still the attached desert design**, cell for cell;
+//   * **all ten maps wear the kit**: the other eight are deterministic fieldPlan recipes out of
+//     the same crops (lane clear, water out of the spawn band, no prop art an atlas lacks);
 //   * **props are sized off the kit's own character** (80px frame, the hero stands 2.9 units), so a
 //     big tree is 3-4x the player and a bush is knee height - the exact complaint that started this;
 //   * no prop ever stands in the running lane, and the creek stays out of the monster spawn band;
@@ -104,15 +106,16 @@ const K = sb.__k, KIT = K.KIT;
 const plan = m => K.kitPlan(m);
 const hero = h => h / HERO;   // world units -> multiples of the hero's height
 
-t('nothing is built before the atlas is loaded, and map 0/7 never have a field', () => {
+t('all ten maps now have a field, but nothing is drawn before the art arrives', () => {
   assert.strictEqual(KIT.ok, 0);
-  assert.strictEqual(K.buildKit(4), null, 'no atlas yet -> nothing is drawn');
-  assert.strictEqual(plan(0), null, 'the town has no kit field');
-  assert.strictEqual(plan(7), null, 'Comodo has no kit field in this build');
+  assert.strictEqual(K.buildKit(4), null, 'no downloaded atlas yet -> nothing is drawn');
   assert.strictEqual(plan(3), null, 'Morocc needs its design json, which the loader fetches');
-  // Payon's layout is pure code, so it can be computed before any art arrives - it just cannot
-  // be drawn until buildKit clears the atlas check above
-  assert.ok(plan(4), 'the payon layout itself needs no atlas');
+  // the field recipes are pure code, so every plan exists before any art arrives - it just
+  // cannot be drawn until buildKit clears the atlas check above
+  for (const m of [0, 1, 2, 4, 5, 6, 7, 8, 9]) assert.ok(plan(m), 'map ' + m + ' has a recipe');
+  // Comodo paints from the morocc atlas, which the page itself generates - no download needed,
+  // so it is the one field that can already build before the loader comes back
+  assert.ok(K.buildKit(5), 'Comodo builds off the generated atlas alone');
 });
 
 // ---------------------------------------------------------------- Payon: the RO recipe
@@ -210,10 +213,64 @@ t('Morocc\'s palms and ruins are RO-sized too', () => {
   console.log('       palms ' + widest.palm_tall.toFixed(1) + 'x hero, cacti ' + widest.cactus_small.toFixed(2) + 'x, pillars ' + widest.ruin_pillar.toFixed(2) + 'x');
 });
 
-t('every prop type either map places is covered by the size table', () => {
+t('every prop type any map places is covered by the size table', () => {
   const missing = [];
-  for (const m of [3, 4]) for (const x of plan(m).props) if (K.KIT_PS[x.type] === undefined) missing.push(x.type);
+  for (let m = 0; m < 10; m++) { const p = plan(m); if (!p) continue;
+    for (const x of p.props) if (K.KIT_PS[x.type] === undefined) missing.push(m + ':' + x.type); }
   assert.deepStrictEqual([...new Set(missing)], [], 'props with no scale factor (they would default to 1.0): ' + [...new Set(missing)].join(','));
+});
+
+// ---------------------------------------------------------------- the eight field recipes
+const FIELD = [0, 1, 2, 5, 6, 7, 8, 9];
+const NAMES = { 0: 'prontera', 1: 'izlude', 2: 'geffen', 5: 'comodo', 6: 'louyang', 7: 'amatsu', 8: 'niflheim', 9: 'abyss' };
+const MOR_TILES = ['sand', 'sand_dark', 'ruin_cobble', 'cliff'];
+
+t('every field recipe paints ground, keeps the lane clear and is deterministic', () => {
+  for (const m of FIELD) {
+    const p = plan(m), again = plan(m);
+    assert.strictEqual(p.design, NAMES[m], 'map ' + m + ' wears its own recipe');
+    assert.strictEqual(JSON.stringify(p), JSON.stringify(again), 'map ' + m + ' must not reshuffle between respawns');
+    assert.ok(p.cells.length > 100, 'map ' + m + ' paints real ground (' + p.cells.length + ' cells)');
+    assert.ok(p.props.length >= 4, 'map ' + m + ' is dressed (' + p.props.length + ' props)');
+    p.props.forEach(x => assert.ok(Math.abs(x.x) >= BX_, 'map ' + m + ': ' + x.type + ' at x=' + x.x.toFixed(2) + ' blocks the lane'));
+    for (let i = 1; i < p.props.length; i++) assert.ok(p.props[i].z >= p.props[i - 1].z, 'map ' + m + ' props sorted far to near');
+    // ground crops come from the recipe's own atlas
+    const tiles = p.src === 'morocc' ? MOR_TILES : Object.keys(MAN.tiles);
+    for (const c of p.cells) assert.ok(tiles.includes(c.tile), 'map ' + m + ' paints ' + c.tile + ' from the ' + p.src + ' atlas');
+    assert.ok(tiles.includes(p.base) && tiles.includes(p.base2), 'map ' + m + ' base tiles exist');
+  }
+});
+
+t('every placed prop exists in the atlas it crops from', () => {
+  for (const m of FIELD) for (const x of plan(m).props) {
+    const have = x.src === 'morocc' ? K.MORBOX : MAN.sprites;
+    assert.ok(have[x.type], 'map ' + m + ' asks the ' + x.src + ' atlas for "' + x.type + '"');
+  }
+});
+
+t('water stays scenery: strips never reach the monster spawn band unless decked', () => {
+  for (const m of [1, 5, 7, 9]) {
+    const p = plan(m);
+    assert.ok(p.water.length > 0, 'map ' + m + ' carries water');
+    for (const r of p.water) {
+      const top = r.z + r.h / 2, bot = r.z - r.h / 2;
+      // safe = entirely beyond the spawn band (far side) or entirely short of it (near side);
+      // the one strip that crosses the field (Amatsu) carries its deck
+      assert.ok(top < Z0 || bot > Z0 + 6 || p.deck, 'map ' + m + ' water at z=' + r.z.toFixed(1) + ' floods the spawn band');
+    }
+    assert.ok(p.water.every(r => r.cx > 40 && r.cy === 1), 'map ' + m + ' water rows tile their length');
+  }
+  assert.strictEqual(plan(0).water.length, 0, 'Prontera is dry meadow');
+});
+
+t('the decks land where the recipe says: pier off-lane, bridges on the road', () => {
+  const iz = plan(1), am = plan(7);
+  assert.ok(iz.deck && Math.abs(iz.deck.x) > BX_, 'Izlude\'s pier stands off the lane at x=' + (iz.deck && iz.deck.x));
+  assert.ok(iz.water.some(r => Math.abs(iz.deck.z - r.z) < 4), 'and reaches into the sea');
+  assert.ok(am.deck && Math.abs(am.deck.x) <= 1.7, 'Amatsu\'s bridge sits on the road');
+  const stream = plan(7).water;
+  assert.ok(stream.length > 0 && am.deck.l >= stream[0].h * 2, 'the bridge spans the stream');
+  assert.ok(plan(0).deck === null && plan(8).deck === null, 'no deck where no water crosses');
 });
 
 // ---------------------------------------------------------------- the builders, for real
@@ -238,14 +295,31 @@ t('buildKit paints the ground, animates the creek, lays the deck and places ever
   K.kitTick(.6); assert.notStrictEqual(KIT.water[0].m.material.map, first, 'the second frame comes in on the tick');
 });
 
-t('Morocc builds from its design, and a map with no field builds nothing', () => {
+t('Morocc builds from its design, and a map with no recipe builds nothing', () => {
   K.setAssets();
   sb.__k.deco.children.length = 0;
   assert.ok(K.buildKit(3), 'morocc builds');
   assert.strictEqual(KIT.built.placed, MOR.sprites.length, 'all 34 design props placed');
   sb.__k.deco.children.length = 0;
-  assert.strictEqual(K.buildKit(7), null, 'Comodo has no design in this build');
+  assert.strictEqual(K.buildKit(10), null, 'there is no map 10');
   assert.strictEqual(sb.__k.deco.children.length, 0, 'nothing is added for a map with no field');
+});
+
+t('every one of the ten maps builds, and borrowed-atlas props are placed, not skipped', () => {
+  K.setAssets();
+  for (let m = 0; m < 10; m++) {
+    sb.__k.deco.children.length = 0; KIT.water.length = 0;
+    const p = K.buildKit(m);
+    assert.ok(p, 'map ' + m + ' builds');
+    assert.strictEqual(KIT.built.placed, p.props.length, 'map ' + m + ' placed every prop (' + KIT.built.placed + ')');
+    assert.deepStrictEqual(Object.keys(KIT.built.missing), [], 'map ' + m + ' asks for nothing its atlases lack');
+  }
+  // the cross-atlas crops really happened: Izlude beach palms come from the morocc atlas
+  const p = plan(1), palm = p.props.find(x => x.type === 'palm_tall');
+  assert.ok(palm && palm.src === 'morocc' && p.src === 'payon', 'palms on payon ground');
+  // and Comodo's sea animates with the payon sheet's two water frames
+  sb.__k.deco.children.length = 0; KIT.water.length = 0; K.buildKit(5);
+  assert.ok(KIT.water.length > 0 && KIT.water.every(w => w.maps.length === 2), 'Comodo water carries both frames');
 });
 
 t('the loader asks for files that exist, and a dead atlas falls back instead of half-building', () => {

@@ -141,7 +141,6 @@ hr{border:0;border-top:1px dashed var(--edge);margin:6px 0}
 <div style="color:var(--gold)">&#9679; <b id="zeny">0</b> Zeny</div><div>Kills <b id="kills">0</b></div>
 <div style="margin-left:auto;display:flex;align-items:center;gap:8px"><span id="userBadge" style="font-weight:bold;font-size:12px;background:#e9d39a;padding:3px 8px;border-radius:4px;border:1px solid var(--edge2)"></span><button id="logoutBtn" onclick="logout()" style="display:none">Logout</button><button id="spd">Speed x1</button></div></div></div>
 <div id="modal"><div class="login-card"><p id="mt" style="font-size:14px;opacity:1;margin:0 0 12px"></p><div class="row" style="justify-content:center"><button id="my">Yes</button><button id="mn">Cancel</button></div></div></div><div id="tooltip"></div>
-<script src="assets/sprites_data.js?v=2"></script>
 <script src="assets/sprite_pack_data.js?v=1"></script>
 <script src="assets/kit/morocc-atlas.js?v=1"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -164,8 +163,8 @@ const AL={str:'STR',agi:'AGI',dex:'DEX',luk:'LUK',int:'INT',hp:'Max HP',atk:'ATK
 // late maps in about five, with bosses still a ~12x fight. See tools/tests/economy_sim.js.
 const SU=k=>k.toUpperCase(),BX_=5.5,Z0=-14,Z1=3,MPS=15,AGGRO=8.5,HPK=42,HPE=1.3,K5=['str','agi','dex','luk','int'];
 const GM_USER='GM',GM_PASS='gm1234';   // CHANGE THE GM PASSWORD before you publish
-const BUILD='2026-10-03 pacing-v17 short-tail collection-nerf';   // shown on the login card - confirms which file you loaded
-$('buildTag').textContent='build '+BUILD+' · atlases:'+Object.keys(window.SPRITE_ATLASES||{}).length;
+const BUILD='2026-10-03 kit-v18 all-ten-maps skin-purge';   // shown on the login card - confirms which file you loaded
+$('buildTag').textContent='build '+BUILD;
 
 // ---------- class tree: Novice -> 6 first jobs -> 6 second jobs -> 6 third jobs ----------
 const CD=[['Novice',0,1,1,1,'e8dcc0','',['dagger','sword'],'str',0],
@@ -1256,10 +1255,56 @@ const KIT_PS={tree_ancient_large:.9,tree_ancient_variant:.9,tree_tall_cluster:.8
   palm_giant:.7,palm_tall:.75,palm_double:.72,cactus_flower:.75,cactus_small:.65,
   ruin_pillar:.8,ruin_column_fallen:.8,ruin_stump:.7,ruin_curb:.6,desert_bone:.5};
 function kitPropScale(type,scale){return KIT_PK*(KIT_PS[type]||1)*(scale||1)}
-// which arena map wears which design/layout, and what a design's cell types are called in the atlas
+// which arena map wears which design/layout, and what a design's cell types are called in the atlas.
+// v17: every map is dressed from the kit. 3 stays the attached Morocc design, 4 stays the RO Payon
+// recipe; the other eight are fieldPlan recipes out of the same crops. src = the atlas the GROUND
+// paints from; individual props may carry their own src (e.g. Morocc's palms on a beach town).
 const KIT_MAP={
+  0:{src:'payon',layout:'field',design:'prontera',seed:101,f:{base:'grass_olive',base2:'grass_forest',
+    cliff:{strip:4,side:21},road:{w:3.6,wander:.35},
+    trees:{near:6.6,step:2.3,types:['tree_ancient_large','tree_ancient_variant','tree_tall_cluster'],
+      sub:[['tree_sapling',.5],['tree_bush_bright',.45]]},
+    scatter:[{type:'river_stone_post',count:4,r0:6.6,r1:7.4,z0:-12,z1:8}]}},
+  1:{src:'payon',layout:'field',design:'izlude',seed:202,f:{base:'grass_olive',base2:'grass_forest',
+    cliff:{strip:2,side:22},water:[-23,-16],bank:1.8,road:{w:3.2,wander:.25},
+    deck:[10,-19.5,2.6,7],                        // the harbour pier, out of the lane
+    trees:{near:7,step:3.2,types:['tree_tall_cluster','tree_ancient_variant'],sub:[['tree_bush_bright',.4]]},
+    scatter:[{type:'palm_tall',src:'morocc',count:5,r0:8,r1:16,z0:-15.6,z1:-12},
+             {type:'river_stone_post',count:2,r0:6.8,r1:7.2,z0:-15.8,z1:-14.6}]}},
+  2:{src:'payon',layout:'field',design:'geffen',seed:303,f:{base:'grass_forest',base2:'grass_olive',
+    cliff:{strip:6,side:19},
+    trees:{near:7.2,step:3.4,types:['tree_ancient_large','tree_ancient_variant'],sub:[['tree_bush_bright',.3]]},
+    scatter:[{type:'ruin_pillar',src:'morocc',count:6,r0:9,r1:15,z0:-14,z1:6},
+             {type:'ruin_stump',src:'morocc',count:4,r0:8,r1:15,z0:-16,z1:8},
+             {type:'ruin_column_fallen',src:'morocc',count:2,r0:10,r1:16,z0:-12,z1:4}]}},
   3:{src:'morocc',design:'morocc',tile:t=>({sand:'sand',sand_dark:'sand_dark',ruin_cobble:'ruin_cobble',cliff:'cliff'}[t]||null)},
-  4:{src:'payon', layout:'payon'}};
+  4:{src:'payon', layout:'payon'},
+  5:{src:'morocc',layout:'field',design:'comodo',seed:505,f:{base:'sand',base2:'sand_dark',cliffTile:'cliff',
+    cliff:{strip:4,side:21},water:[-23,-17],bank:0,
+    trees:{near:7,step:2.6,types:['palm_giant','palm_tall','palm_double'],sub:[['cactus_small',.35]]},
+    scatter:[{type:'cactus_flower',count:6,r0:7.5,r1:17,z0:-16,z1:9},
+             {type:'desert_bone',count:3,r0:8,r1:16,z0:-15,z1:8}]}},
+  6:{src:'payon',layout:'field',design:'louyang',seed:606,f:{base:'grass_forest',base2:'grass_olive',
+    cliff:{strip:3,side:22},road:{w:3,wander:.5},
+    trees:{near:6.4,step:1.9,types:['tree_ancient_large','tree_tall_cluster','tree_ancient_variant'],
+      sub:[['tree_sapling',.55],['tree_bush_bright',.5]]},
+    scatter:[{type:'river_stone_post',count:4,r0:6.5,r1:7.2,z0:-12,z1:8}]}},
+  7:{src:'payon',layout:'field',design:'amatsu',seed:707,f:{base:'grass_olive',base2:'grass_forest',
+    cliff:{strip:3,side:21},road:{w:3.2,wander:.2},water:[-7.9,-6],bank:1.7,
+    deck:[0,-6.95,3.4,4.8],                       // the bridge on the road, over the stream
+    trees:{near:6.4,step:2.2,types:['tree_ancient_large','tree_ancient_variant'],
+      sub:[['tree_sapling',.5],['tree_bush_bright',.4]]},
+    scatter:[{type:'river_stone_post',count:2,r0:6.5,r1:7,z0:-9.4,z1:-4.8}]}},
+  8:{src:'payon',layout:'field',design:'niflheim',seed:808,f:{base:'dirt_path',base2:'grass_forest',
+    cliff:{strip:7,side:18},
+    scatter:[{type:'rock_cliff_crag',count:10,r0:7,r1:16,z0:-15,z1:9},
+             {type:'desert_bone',src:'morocc',count:6,r0:6.8,r1:15,z0:-14,z1:9},
+             {type:'ruin_stump',src:'morocc',count:3,r0:8,r1:14,z0:-12,z1:6}]}},
+  9:{src:'payon',layout:'field',design:'abyss',seed:909,f:{base:'cliff_rock',base2:'grass_forest',
+    cliff:{strip:5,side:19},water:[-23,-18],bank:0,
+    scatter:[{type:'rock_cliff_crag',count:12,r0:6.8,r1:16,z0:-17,z1:9},
+             {type:'river_stone_post',count:4,r0:6.6,r1:8,z0:-16,z1:8},
+             {type:'desert_bone',src:'morocc',count:4,r0:7,r1:14,z0:-16,z1:8}]}}};
 const KIT_TILE={grass:'grass_olive',grass_dark:'grass_forest',dirt:'dirt_path',cliff:'cliff_rock',bank:'riverbank_wall'};
 // cell types the kit itself draws in its animated pass / as a deck, not as ground texture
 const KIT_WET={water:1},KIT_DECK={bridge:1},KIT_SKIP={sky:1};
@@ -1352,10 +1397,52 @@ function payonPlan(spec){
   props.sort((p,n)=>p.z-n.z);
   return {src:spec.src,design:'payon',cells,water,props,deck,base:'grass_forest',base2:'grass_olive'};
 }
+// ----- the field builder: every other arena dresses from the same kit, by recipe ------------
+// One deterministic (seeded LCG) builder, one recipe per map in KIT_MAP. Rules are the same as
+// Payon's: props never stand in the running lane, nothing is placed that the prop's own atlas
+// does not carry, water strips stay scenery (the ones near the fight get their deck), and every
+// pixel is still a crop from the attached kit - never drawn.
+function fieldPlan(spec){
+  const f=spec.f,cells=[],water=[],props=[],st=.8,x0=-26,x1=26,z0=-23,z1=11;
+  let q=spec.seed|0;const rnd=()=>(q=(q*16807)%2147483647)/2147483647;
+  const cliffT=f.cliffTile||'cliff_rock',bankT=f.bankTile||'riverbank_wall',roadT=f.roadTile||'dirt_path';
+  const roadR=f.road?(z=>f.road.w/2+Math.sin(z*.19+spec.seed)*f.road.wander+Math.sin(z*.05)*f.road.wander*.7):null;
+  const wet=z=>f.water&&z>=f.water[0]&&z<f.water[1];
+  for(let z=z0;z<z1;z+=st){
+    if(wet(z)){water.push({x:(x0+x1)/2,z:z+st/2,w:x1-x0,h:st,cx:(x1-x0)/st,cy:1});continue}
+    const bank=f.water&&f.bank&&z>=f.water[0]-f.bank&&z<f.water[1]+f.bank;
+    for(let x=x0;x<x1;x+=st){
+      if(f.cliff&&(z<z0+f.cliff.strip||Math.abs(x)>f.cliff.side)){cells.push({x,z,tile:cliffT});continue}
+      if(bank){cells.push({x,z,tile:bankT});continue}
+      if(f.road&&Math.abs(x)<roadR(z)){cells.push({x,z,tile:roadT});continue}
+      const i=Math.round((x-x0)/st),j=Math.round((z-z0)/st);                 // grass/sand variation
+      if((i*7+j*13)%9===0)cells.push({x,z,tile:f.base2});
+    }
+  }
+  const deck=f.deck?{x:f.deck[0],z:f.deck[1],w:f.deck[2],l:f.deck[3],a:f.deck[4]||0}:null;
+  const lane=BX_+.9;
+  const put=(type,src,x,z,scale,flip)=>{if(Math.abs(x)<lane)x=(x<0?-1:1)*lane;
+    props.push({x,z,type,src,scale,flip,nudged:0,missing:0})};
+  if(f.trees){const T=f.trees;
+    for(const s of[-1,1])for(let z=z0+2;z<z1-2;z+=T.step+rnd()*1.2){
+      if(deck&&Math.abs(z-deck.z)<st*2.6)continue;                           // keep the crossing open
+      if(f.water&&z>=f.water[0]-(f.bank||0)&&z<f.water[1]+(f.bank||0))continue;   // trees do not grow in water
+      put(T.types[(rnd()*T.types.length)|0],spec.src,s*(T.near+rnd()*2.6),z+rnd()*.6,.84+rnd()*.32,rnd()>.5);
+      if(T.sub)for(const[t2,ch]of T.sub)if(rnd()<ch)put(t2,spec.src,s*(T.near+1.2+rnd()*5),z+rnd()*1.6,.8+rnd()*.5,rnd()>.5);
+    }}
+  if(f.scatter)for(const sc of f.scatter)for(let i=0;i<sc.count;i++){
+    const s=rnd()>.5?1:-1,x=s*(sc.r0+rnd()*(sc.r1-sc.r0)),z=sc.z0+rnd()*(sc.z1-sc.z0);
+    if(deck&&sc.clearDeck&&Math.abs(z-deck.z)<2)continue;
+    put(sc.type,sc.src||spec.src,x,z,(sc.s0||.8)+rnd()*((sc.s1||1.2)-(sc.s0||.8)),rnd()>.5);
+  }
+  props.sort((p,n)=>p.z-n.z);                       // far to near, so billboards overlap right
+  return {src:spec.src,design:spec.design,cells,water,props,deck,base:f.base,base2:f.base2};
+}
 // ----- pure plan: design + arena -> everything the painters need (no canvas, no THREE) -----
 function kitPlan(m){
   const spec=KIT_MAP[m]; if(!spec)return null;
   if(spec.layout==='payon')return payonPlan(spec);
+  if(spec.layout==='field')return fieldPlan(spec);
   const d=KIT.des[spec.design]; if(!d)return null;
   const W=d.meta.gridWidth,H=d.meta.gridHeight,cells=[],water=[],props=[];
   for(let gy=0;gy<H;gy++){
@@ -1413,7 +1500,10 @@ function kitGroundTex(plan){
   const t=new THREE.CanvasTexture(cv);t.minFilter=THREE.LinearMipMapLinearFilter;t.anisotropy=4;return t;
 }
 function kitWaterMeshes(plan,root){
-  const f=[kitCrop(plan.src,'tile','water_frame_0'),kitCrop(plan.src,'tile','water_frame_1')];
+  // the animated water frames ship on the payon sheet; a morocc-ground map borrows them rather
+  // than showing an untextured pool (same attached kit - nothing is drawn either way)
+  const wsrc=(kitAtlas(plan.src)&&kitAtlas(plan.src).tiles.water_frame_0)?plan.src:(kitAtlas('payon')?'payon':plan.src);
+  const f=[kitCrop(wsrc,'tile','water_frame_0'),kitCrop(wsrc,'tile','water_frame_1')];
   for(const r of plan.water){
     const m=new THREE.Mesh(new THREE.PlaneGeometry(r.w,r.h),new THREE.MeshLambertMaterial({map:null}));
     m.rotation.x=-Math.PI/2;m.position.set(r.x,.02,r.z);m.receiveShadow=true;root.add(m);
@@ -1432,9 +1522,11 @@ function kitDeckMesh(plan,root){
 function kitPropMeshes(plan,root){
   let placed=0;const missing={};
   for(const p of plan.props){
-    const a=kitAtlas(plan.src);if(!a)continue;
+    // a prop may borrow the other atlas (morocc palms on a payon-ground beach): check the
+    // prop's own atlas, not the ground's
+    const psrc=p.src||plan.src,a=kitAtlas(psrc);if(!a)continue;
     const e=a.sprites[p.type];if(!e){missing[p.type]=(missing[p.type]||0)+1;continue}
-    const tex=kitCrop(plan.src,'sprite',p.type,p.flip);if(!tex){missing[p.type]=(missing[p.type]||0)+1;continue}
+    const tex=kitCrop(psrc,'sprite',p.type,p.flip);if(!tex){missing[p.type]=(missing[p.type]||0)+1;continue}
     const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:tex,transparent:true,alphaTest:.18}));
     const k=kitPropScale(p.type,p.scale),w=e.w*k,h=e.h*k;
     sp.center.set(e.anchorX===undefined?.5:e.anchorX/e.w,1-(e.anchorY===undefined?e.h:e.anchorY)/e.h);
@@ -1557,46 +1649,8 @@ function animRow(run,atk,clock,spd){
   return Math.floor(clock*3)%SPR_IDLE}
 
 const P=new THREE.Group();scene.add(P);mkShadow(P,.4);
-// generated atlases: window.SPRITE_ATLASES = {'hero:nov_m':dataURI,...} (tools/build_atlas.py)
-const atlasTex=new Map(),atlasReady=new Set(),ATLAS_PEND=[];
-function loadAtlas(key){
-  if(atlasTex.has(key))return atlasTex.get(key);
-  const uri=(window.SPRITE_ATLASES||{})[key];if(!uri)return null;
-  atlasTex.set(key,null);atlasReady.delete(key);ATLAS_PEND.push(key);
-  new THREE.TextureLoader().load(uri,t=>{
-    t.magFilter=t.minFilter=THREE.NearestFilter;t.generateMipmaps=false;
-    atlasTex.set(key,t);atlasReady.add(key);
-    const i=ATLAS_PEND.indexOf(key);if(i>=0)ATLAS_PEND.splice(i,1);
-    if(key.indexOf('hero:')===0)heroKey='';          // force hero rebuild
-    else mobMesh.forEach(v=>{                        // swap mobs using the fallback
-      if(v.pending===key){v.pending=null;
-        const mt=v.spr.material.map;
-        mt.image=t.image;mt.needsUpdate=true}});
-  },undefined,()=>{const i=ATLAS_PEND.indexOf(key);if(i>=0)ATLAS_PEND.splice(i,1)});
-  return null}
-// which baked sprite set the hero uses: class line + gender.
-// Layered build: 'herobody:<class>_<sex>' + 'herohead:<style>' composited
-// at runtime (same layout as the RO client: separate body + head sheets).
-// Falls back to the legacy single-layer 'hero:*' atlas while it loads.
-const HERO_HEAD_FOR={nov_m:'bowl_m',nov_f:'long_f',thief_m:'spiky_m',thief_f:'ponytail_f',
-  assassin_m:'spiky_m',assassin_f:'ponytail_f',xcross_m:'spiky_m',xcross_f:'ponytail_f'};
-function heroBodyKey(opt){
-  const g=opt.sex==='f'?'f':'m';
-  if(opt.look==='hood')return 'herobody:'+(opt.tier>=3?'xcross':opt.tier>=2?'assassin':'thief')+'_'+g;
-  if(opt.look==='knight')return 'herobody:nov_'+g;// sword line reuses the novice set
-  return 'herobody:nov_'+g}
-function heroAtlasKey(opt){
-  const g=opt.sex==='f'?'f':'m';
-  if(opt.look==='hood')return 'hero:'+(opt.tier>=3?'xcross':opt.tier>=2?'assassin':'thief')+'_'+g;
-  if(opt.look==='knight')return 'hero:nov_'+g;// sword line reuses the novice set
-  return 'hero:nov_'+g}
-function heroHeadKey(opt){
-  const g=opt.sex==='f'?'f':'m';
-  if(opt.look==='hood')return 'herohead:'+(g==='f'?'ponytail_f':'spiky_m');
-  return 'herohead:'+(g==='f'?'long_f':'bowl_m')}
 let heroSpr=null,heroHeadSpr=null,heroKey='',heroDirty=false;
 // ----- Class sprite packs (assets/sprite_pack_data.js, built by tools/make_sprite_pack.py) -----
-// (the older assets/thief_sprites_data.js is superseded by this file and kept for reference)
 // Body + head are composited once per (class, sex, hair) into a single atlas: 8 cols = frames, rows = anim*8+dir (idle,walk,attack x 8 dirs)
 // Every first job line ships its own body art; each line keeps one body through its whole tree.
 const PACK_BODY={Novice:'novice',
@@ -1610,16 +1664,16 @@ const PACK_BODY={Novice:'novice',
 // (knight, lord_knight, wizard...): drop the sheet in Sprite/, run the tool, done.
 // Until then it keeps its first-job line's art, so every class always has a sprite.
 const packBodyName=c=>String(c||'').toLowerCase().replace(/[^a-z0-9]+/g,'_').replace(/^_+|_+$/g,'');
-function packBodyFor(cls,tier){const PK=window.SPRITE_PACK||window.THIEF_PACK;if(!PK)return null;
+function packBodyFor(cls,tier){const PK=window.SPRITE_PACK;if(!PK)return null;
   const n=packBodyName(cls);if(PK.bodies&&PK.bodies[n])return n;
   const b=PACK_BODY[cls];if(b&&PK.bodies[b])return b;
   const f=tier>=3?'assassin_cross':tier>=2?'assassin':'thief';return PK.bodies[f]?f:null}
 const packImg={},packCache=new Map(),PACK_K=.03;let packReady=false;
-(function(){const PK=window.SPRITE_PACK||window.THIEF_PACK;if(!PK)return;let n=0,tot=0;
+(function(){const PK=window.SPRITE_PACK;if(!PK)return;let n=0,tot=0;
   const ld=(k,u)=>{tot++;const i=new Image();i.onload=()=>{if(++n===tot){packReady=true;heroKey=''}};i.src=u;packImg[k]=i};
   for(const c in PK.bodies)ld('b:'+c,PK.bodies[c].atlas);for(const h in PK.heads)ld('h:'+h,PK.heads[h])})();
 function packTex(opt){
-  const PK=window.SPRITE_PACK||window.THIEF_PACK,body=packBodyFor(opt.cls,opt.tier)||'thief',sex=opt.sex==='f'?'female':'male',hs=(((opt.hair|0)%PK.hairStyles)+PK.hairStyles)%PK.hairStyles,key=body+'|'+sex+'|'+hs;
+  const PK=window.SPRITE_PACK,body=packBodyFor(opt.cls,opt.tier)||'thief',sex=opt.sex==='f'?'female':'male',hs=(((opt.hair|0)%PK.hairStyles)+PK.hairStyles)%PK.hairStyles,key=body+'|'+sex+'|'+hs;
   if(packCache.has(key))return packCache.get(key);
   const cv=document.createElement('canvas');cv.width=PK.cellW*8;cv.height=PK.cellH*24;
   const g=cv.getContext('2d');g.imageSmoothingEnabled=false;
@@ -1630,7 +1684,7 @@ function packTex(opt){
     const an=anc[a][d][f];g.drawImage(hi,d*64,hs*64,64,64,dx+an[0]-32,dy+an[1]-48,64,64)}
   const t=new THREE.CanvasTexture(cv);t.magFilter=t.minFilter=THREE.NearestFilter;t.generateMipmaps=false;packCache.set(key,t);return t}
 function mkPackHero(opt){
-  const PK=window.SPRITE_PACK||window.THIEF_PACK,t=packTex(opt).clone();t.needsUpdate=true;t.repeat.set(1/8,1/24);
+  const PK=window.SPRITE_PACK,t=packTex(opt).clone();t.needsUpdate=true;t.repeat.set(1/8,1/24);
   const s=new THREE.Sprite(new THREE.SpriteMaterial({map:t,transparent:true,alphaTest:.12}));
   s.center.set(PK.pivotX/PK.cellW,(PK.cellH-PK.pivotY)/PK.cellH);s.scale.set(PK.cellW*PACK_K,PK.cellH*PACK_K,1);s.userData.pack=1;return s}
 function setPackCell(spr,dir,run,atk,clock){
@@ -1640,30 +1694,15 @@ function ensureHero(opt){const k=JSON.stringify(opt);if(heroKey===k&&heroSpr)ret
   if(heroSpr){P.remove(heroSpr);heroSpr=null}if(heroHeadSpr){P.remove(heroHeadSpr);heroHeadSpr=null}
   const pb=packReady?packBodyFor(opt.cls,opt.tier):null;
   if(pb&&packImg['b:'+pb]){heroSpr=mkPackHero(opt);P.add(heroSpr);return}
-  const bk=heroBodyKey(opt),hk=heroHeadKey(opt);
-  const btex=loadAtlas(bk),htex=loadAtlas(hk);
-  if(btex&&htex){
-    heroSpr=mkBillboard(btex,1.95,2.92);P.add(heroSpr);
-    heroHeadSpr=mkBillboard(htex,1.95,2.92);
-    heroHeadSpr.material.depthTest=false;heroHeadSpr.renderOrder=1;P.add(heroHeadSpr);return}
-  if(heroKindAvail(bk)&&heroKindAvail(hk)){return} // layered set loading, wait
-  const ak=heroAtlasKey(opt);
-  // classes marked in window.CUSTOM_HEROES use imported art only: hold the
-  // slot until the sheet arrives instead of falling back to drawn sprites.
-  if(isCustomHero(ak)&&!loadAtlas(ak))return;
-  let tex=loadAtlas(ak)||getSheet('h:'+k,(ctx,x,y,d,kind,fr)=>drawHero(ctx,x,y,d,kind,fr,opt));
+  // the class pack is the only hero art; until it loads (or if a body is missing) the
+  // drawn hero keeps the game playable
+  const tex=getSheet('h:'+k,(ctx,x,y,d,kind,fr)=>drawHero(ctx,x,y,d,kind,fr,opt));
   heroSpr=mkBillboard(tex,1.95,2.92);P.add(heroSpr)}
-function isCustomHero(k){return (window.CUSTOM_HEROES||[]).indexOf(k)>=0}
-// true only when the layered body+head pair is actually present: lets a class
-// ship as a single pre-baked 'hero:*' atlas (custom art) and still build.
-function heroKindAvail(bk){const A=window.SPRITE_ATLASES||{},st=HERO_HEAD_FOR[bk.split(':')[1]];
-  return !!(A[bk]&&(st?A['herohead:'+st]:true))}
 function buildMob(m){
-  const G=new THREE.Group(),key='mob:'+m.n;
-  let tex=loadAtlas(key),pending=null;
-  if(!tex){pending=key;tex=getSheet('m:'+m.shape+':'+m.c,(ctx,x,y,d,kind,fr)=>drawCritter(ctx,x,y,d,kind,fr,m.shape,m.c))}
+  const G=new THREE.Group();
+  const tex=getSheet('m:'+m.shape+':'+m.c,(ctx,x,y,d,kind,fr)=>drawCritter(ctx,x,y,d,kind,fr,m.shape,m.c));
   const spr=mkBillboard(tex,2.05,3.05);G.add(spr);mkShadow(G,.42);scene.add(G);
-  return{G,spr,pending}}
+  return{G,spr,pending:null}}
 let slashM=null;
 function drawSlashFX(x,z){
   if(!slashM){const cv=document.createElement('canvas');cv.width=80;cv.height=80;const g=cv.getContext('2d');

@@ -124,7 +124,7 @@ def main():
         BAD += 1
 
     # missing inputs the pack tool reads (present on main, not on every branch)
-    for dep in ('assets/thief_sprites_data.js',):
+    for dep in ('assets/sprite_pack_data.js',):
         if not os.path.exists(dep):
             for ref in ('origin/main', 'origin/HEAD', 'b2bed6b'):
                 if sh(['git', 'checkout', ref, '--', dep], quiet=True) == 0 and os.path.exists(dep):

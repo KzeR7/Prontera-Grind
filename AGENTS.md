@@ -27,12 +27,11 @@ fights a boss once every 15 kills.
 | Where | What |
 |---|---|
 | `index.html` | the entire game (HTML, CSS, JS inline). This *is* the game. |
-| `assets/sprite_pack_data.js` | the built sprite pack: 19 class bodies + 2 heads, base64 atlases. ~5.8 MB. |
-| `assets/thief_sprites_data.js` | the *older* thief-only pack. Superseded, but `tools/make_sprite_pack.py` still reads it for shared pose data — do not delete. |
+| `assets/sprite_pack_data.js` | the built sprite pack: 19 class bodies + 2 heads, base64 atlases. ~5.8 MB. `tools/make_sprite_pack.py` also re-seeds from this file - it is the only source for shared heads/poses now. |
 | `Sprite/*.png` | the uploaded RO-style sprite sheets (21 of them). The **source art**. |
 | `tools/make_sprite_pack.py` | crops `Sprite/` → `assets/sprite_pack_data.js`. |
 | `tools/montage.py` | rebuilds the four montage sheets (see below). |
-| `tools/tests/` | the seven test suites. Run them before every push. |
+| `tools/tests/` | the eleven test suites. Run them before every push. |
 | `UPDATE-BOOTSTRAP.py` | one-shot: rebuilds the whole update from a fresh clone (see *Delivery*). |
 | `READ-ME-FIRST.md` | handover note for whoever pushes the current work. |
 
@@ -216,8 +215,10 @@ crossing: 48x32 cells with corner heights, 250 water cells, 24 bridge cells, the
 25.5/16.5, 30 placed props), `ro-map-morocc.json` and `morocc-atlas.js` (the Morocc desert ruins
 design, and the attachment's own generator that paints its atlas in the page, copied verbatim).
 
-* `KIT_MAP` says which arena map wears what: 3 → the attached **morocc** design, 4 → the
-  **payon** field. A design dresses the
+* `KIT_MAP` says which arena map wears what. **All ten maps wear the kit** (v18): 3 → the
+  attached **morocc** design, 4 → the **payon** recipe, and the other eight → `fieldPlan`
+  recipes - deterministic (seeded LCG) configs of ground tiles, cliff rings, roads, water
+  strips, decks and prop scatters, laid out in code from the same crops. A design dresses the
   **ground** (its tiles painted into one 2048x2048 texture over the 90x90 field), its **water**
   (merged row rectangles, animated by swapping the kit's two water frames) and its **props**
   (billboards, sized and anchored from the manifest).
@@ -234,6 +235,9 @@ design, and the attachment's own generator that paints its atlas in the page, co
   hero, saplings ~1x, bushes knee height (~0.3-0.7x), crags boulder-sized, palms 2.7-4x, cacti and
   ruins below the player. **Every prop type a field places must have a factor** - `kit_sim.js`
   fails on one that does not, because the default (1.0) makes player-sized trees again.
+* Field recipes may borrow props across atlases (a prop carries its own `src`: morocc palms
+  on the Izlude beach, desert bones in Niflheim), and maps painting morocc ground borrow the
+  payon sheet's two water frames for their sea - it is one attached kit either way.
 * Cell types map to tiles exactly as the kit's own engine maps them: grass→grass_olive,
   grass_dark→grass_forest, dirt→dirt_path, cliff→cliff_rock, bank→riverbank_wall. Water is the
   animated pass, bridge cells are the deck mesh, Morocc's tiles keep their own names (sand,
@@ -251,9 +255,10 @@ design, and the attachment's own generator that paints its atlas in the page, co
 * If the atlas cannot load, every map falls back to the v13 scenery (`buildKit` returns null and
   `buildDeco` continues). The kit must never be able to break the game.
 * `kit_sim.js` pins all of it: the Payon recipe (road, creek, bridge on the road, both banks
-  dressed, the creek out of the monster spawn band), Morocc's design cell for cell, the RO scale
-  table (trees ≥ 3x the hero, bushes knee height), the clear lane, both builders against a stubbed
-  canvas/THREE, and the fallback.
+  dressed, the creek out of the monster spawn band), Morocc's design cell for cell, the eight
+  field recipes (ground painted, lane clear, deterministic, water out of the spawn band, every
+  prop exists in the atlas it crops from), the RO scale table (trees ≥ 3x the hero, bushes knee
+  height), all ten maps building against a stubbed canvas/THREE, and the fallback.
 
 **What RO Payon actually looks like** (researched for this build, and the reason Payon was rebuilt):
 a *mountainous bamboo forest* - Payon village is built on a mountain edge with steep cliffs over a
@@ -972,6 +977,52 @@ assigned for feel rather than fidelity. While reworking that, two shipped bugs s
 * **Known limits / follow-ups:**
   * The v17 entry above described the +2%/19-class version; it was shipped and nerfed
     within the same session. Only this nerf is live.
+
+### 2026-10-03 — `kit-v18 all-ten-maps skin-purge`
+* **What changed for the player:**
+  * **All ten maps are now rebuilt from the attached map kit** (owner: the map-sprite agent
+    finished its work - rebuild everything). Morocc keeps the attached design and Payon keeps
+    the RO Forest recipe; the other eight arenas are new deterministic `fieldPlan` recipes
+    out of the same kit crops (nothing drawn):
+    | map | the look |
+    |---|---|
+    | Prontera | sunny meadow, dirt avenue, tree lines, stone posts |
+    | Izlude | harbour: sea strip + bank, off-lane pier, beach palms |
+    | Geffen | dark forest, deep cliff ring, standing ruin pillars/stumps |
+    | Comodo | beach: sand ground, sea strip, palm + cactus scatter |
+    | Louyang | lush forest, winding road, dense trees, shrine posts |
+    | Amatsu | meadow with a stream crossed by a plank bridge on the road |
+    | Niflheim | barren waste: dirt ground, crags, bones, ruin stumps |
+    | Abyss | cave rock, dark lake at the far end, crags and stone posts |
+    Recipes may borrow props across atlases (each prop carries its own `src`), and morocc-
+    ground seas animate with the payon sheet's water frames. Water stays scenery: strips never
+    reach the monster spawn band unless a deck crosses them; props never enter the lane; every
+    plan is seeded so respawns never reshuffle a map.
+  * **The old class skins are gone** (owner: "i dont need them delete those to avoid
+    confusion" - the green thief-era layered art). Deleted: `assets/sprites_data.js`
+    (layered hero atlases), `assets/thief_sprites_data.js` (THIEF_PACK), all 24
+    `hero_*/herobody_*/herohead_*` sheets and the three `_preview_*` images,
+    `tools/build_atlas.py`, `tools/import_sheet.py`, `tools/verify_sprites.js`. In the game:
+    the `sprites_data.js` script tag, `loadAtlas` + its queue, the layered `herobody:/herohead:`
+    and legacy `hero:` paths (`HERO_HEAD_FOR`, `heroBodyKey/heroAtlasKey/heroHeadKey`,
+    `isCustomHero`, `heroKindAvail`, `CUSTOM_HEROES`), and every `window.THIEF_PACK` fallback.
+    The hero is now: class pack, else the drawn hero - no third thing. `make_sprite_pack.py`
+    re-seeds from `sprite_pack_data.js` itself (heads/poses/unchanged bodies), and the
+    bootstrap dependency check follows.
+* **Files touched:** `index.html` (kit: `fieldPlan`, `KIT_MAP` x10, cross-atlas prop check,
+  water-frame borrow; hero/mob paths simplified; `BUILD`), `tools/tests/kit_sim.js`
+  (15 → 20 tests: ten-map plans, recipe pins, cross-atlas builds), `tools/make_sprite_pack.py`,
+  `UPDATE-BOOTSTRAP.py`, `AGENTS.md`.
+* **Art:** none added. 29 files deleted (see above); `tools/montage.py` not run.
+* **Tests:** pack_sim OK (19 bodies, unaffected by the purge), **kit 20** (was 15),
+  class_change 20, save_load 9, economy 18, stat 7, card 13, skill 37, gear 18, scene 8, ui 7
+  - all green.
+* **Branches / PR:** `arena/01a10154-prontera-grind` (updates PR #5).
+* **Known limits / follow-ups:**
+  * `_shot.html` / `_login.html` at the repo root are pre-pack legacy pages that referenced
+    the deleted atlases; they are kept as history but no longer run.
+  * The eight recipes are first passes - if a map's identity reads wrong in play, its recipe
+    in `KIT_MAP` is the single place to tune (ground, water, trees, scatter).
 
 <!-- template — copy this block, fill it in, paste it at the bottom of the log -->
 
