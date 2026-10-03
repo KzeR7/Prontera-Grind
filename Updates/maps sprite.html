@@ -1,0 +1,2530 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ragnarok Online 2.5D Sprite Map — Prontera City Park (Single-File Engine)</title>
+  <style>
+    :root {
+      --bg: #0f1210;
+      --panel: rgba(18, 24, 19, 0.94);
+      --border: rgba(150, 208, 132, 0.30);
+      --accent: #a8e06a;
+      --accent-green: #48e59a;
+      --text: #f0f5ea;
+      --muted: #a5b39a;
+      --danger: #ff6464;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      height: 100vh;
+      width: 100vw;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+    .topbar {
+      height: 50px;
+      background: linear-gradient(180deg, #1d2419 0%, #131810 100%);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 14px;
+      gap: 10px;
+      z-index: 20;
+    }
+    .brand { display: flex; align-items: center; gap: 10px; }
+    .badge {
+      background: linear-gradient(135deg, #3f7f4a, #22522c);
+      border: 1px solid #8fd08a;
+      color: #fff;
+      font-weight: 700;
+      font-size: 11px;
+      padding: 3px 8px;
+      border-radius: 4px;
+      white-space: nowrap;
+    }
+    .brand-title { font-size: 14px; font-weight: 700; color: #fff; }
+    .brand-sub { font-size: 11px; color: var(--muted); }
+    .tabs {
+      display: flex;
+      background: rgba(6, 10, 6, 0.75);
+      padding: 3px;
+      border-radius: 6px;
+      border: 1px solid rgba(255,255,255,0.08);
+      gap: 4px;
+    }
+    .tab {
+      background: transparent;
+      color: var(--muted);
+      border: none;
+      padding: 5px 12px;
+      font-size: 12px;
+      font-weight: 600;
+      border-radius: 4px;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .tab.active { background: linear-gradient(135deg, #3f8f4f, #256a34); color: #fff; }
+    .actions { display: flex; align-items: center; gap: 7px; }
+    .btn {
+      background: rgba(38, 46, 34, 0.88);
+      color: var(--text);
+      border: 1px solid var(--border);
+      padding: 6px 11px;
+      font-size: 12px;
+      font-weight: 600;
+      border-radius: 5px;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .btn:hover { border-color: var(--accent); background: rgba(54, 66, 48, 0.95); }
+    .btn-primary {
+      background: linear-gradient(135deg, #208c5c, #14613e);
+      border-color: var(--accent-green);
+      color: #fff;
+    }
+    .workspace { flex: 1; display: flex; overflow: hidden; position: relative; }
+    .viewport { flex: 1; position: relative; background: #2c7fb0; overflow: hidden; }
+    #mapCanvas { width: 100%; height: 100%; display: block; cursor: crosshair; }
+    .hud {
+      position: absolute;
+      top: 12px;
+      left: 12px;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      padding: 8px 12px;
+      font-size: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      pointer-events: none;
+    }
+    .hud-row { display: flex; gap: 12px; }
+    .stat { color: var(--accent); font-weight: 700; font-family: monospace; }
+    .hint {
+      position: absolute;
+      bottom: 12px;
+      left: 12px;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      padding: 6px 12px;
+      font-size: 11px;
+      color: var(--muted);
+      display: flex;
+      gap: 14px;
+      flex-wrap: wrap;
+      max-width: 70%;
+      pointer-events: none;
+    }
+    .hint b { color: var(--accent); }
+    .sidebar {
+      width: 306px;
+      background: var(--panel);
+      border-left: 1px solid var(--border);
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      overflow-y: auto;
+      z-index: 15;
+    }
+    .card {
+      background: rgba(8, 12, 8, 0.6);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 7px;
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .card-title {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      color: var(--accent);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .row { display: flex; align-items: center; justify-content: space-between; font-size: 12px; gap: 8px; }
+    .row label { color: var(--muted); }
+    .row input[type="range"] { flex: 1; accent-color: var(--accent); }
+    select {
+      background: #131a12;
+      color: #fff;
+      border: 1px solid var(--border);
+      padding: 4px 7px;
+      border-radius: 4px;
+      font-size: 12px;
+    }
+    .grid-palette { display: grid; grid-template-columns: repeat(2, 1fr); gap: 5px; }
+    .p-item {
+      background: rgba(30, 38, 28, 0.7);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 4px;
+      padding: 6px 8px;
+      font-size: 11px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .p-item.active {
+      background: rgba(168, 224, 106, 0.22);
+      border-color: var(--accent);
+      color: #fff;
+      font-weight: 600;
+    }
+    .swatch { width: 12px; height: 12px; border-radius: 2px; border: 1px solid rgba(255,255,255,0.3); flex: none; }
+    .modal-bg {
+      position: fixed;
+      inset: 0;
+      background: rgba(4, 8, 4, 0.85);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      padding: 20px;
+    }
+    .modal-bg.open { display: flex; }
+    .modal {
+      background: #141a13;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      width: 100%;
+      max-width: 900px;
+      max-height: 86vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .modal-head {
+      padding: 11px 15px;
+      background: #1b2318;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      font-size: 13px;
+    }
+    .modal-body { padding: 14px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
+    textarea.code {
+      width: 100%;
+      min-height: 280px;
+      background: #080b07;
+      color: #c8e88f;
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 5px;
+      padding: 10px;
+      font-family: monospace;
+      font-size: 12px;
+      user-select: text;
+      white-space: pre;
+    }
+    .atlas-box {
+      background: repeating-conic-gradient(#1b2318 0% 25%, #121711 0% 50%) 50% / 20px 20px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 8px;
+      text-align: center;
+      overflow: auto;
+    }
+    .atlas-box canvas { max-width: 100%; height: auto; }
+  </style>
+</head>
+<body>
+
+  <header class="topbar">
+    <div class="brand">
+      <span class="badge">SINGLE-FILE RO 2.5D</span>
+      <div>
+        <div class="brand-title">prontera — Prontera City Park (Capital of Rune-Midgard)</div>
+        <div class="brand-sub">All-in-One Procedural Sprite Sheet + 3D .GND Heightmap + .GAT Pathfinding</div>
+      </div>
+    </div>
+
+    <div class="tabs">
+      <button class="tab active" data-mode="play">Play / Walk (A*)</button>
+      <button class="tab" data-mode="terrain">Terrain & Height Brush</button>
+      <button class="tab" data-mode="sprites">Sprite Placer</button>
+    </div>
+
+    <div class="actions">
+      <button class="btn" id="btnShowAtlas">Sprite Sheet</button>
+      <button class="btn" id="btnShowJson">Map JSON</button>
+      <button class="btn btn-primary" id="btnCopyPasteCode">Copy Minimal Game Code</button>
+    </div>
+  </header>
+
+  <div class="workspace">
+    <div class="viewport" id="viewport">
+      <canvas id="mapCanvas" width="1100" height="700"></canvas>
+
+      <div class="hud">
+        <div class="hud-row">
+          <span>FPS: <span class="stat" id="hudFps">60</span></span>
+          <span>Cell: <span class="stat" id="hudCell">16, 13</span></span>
+          <span>Height: <span class="stat" id="hudH">1.42</span></span>
+        </div>
+        <div class="hud-row">
+          <span>Tile: <span class="stat" id="hudTile">grass</span></span>
+          <span>Walkable: <span class="stat" id="hudWalk">YES</span></span>
+          <span>Sprites: <span class="stat" id="hudSprites">71</span></span>
+        </div>
+      </div>
+
+      <div class="hint">
+        <span><b>Left-Click:</b> Walk / Paint / Place</span>
+        <span><b>Right-Drag:</b> Orbit 3D Camera</span>
+        <span><b>Wheel:</b> Zoom</span>
+        <span><b>WASD:</b> Pan</span>
+        <span><b>[G]:</b> Walk Grid</span>
+        <span><b>[R]:</b> Reset Angle</span>
+      </div>
+    </div>
+
+    <aside class="sidebar">
+      <div class="card">
+        <div class="card-title"><span>View & Layers</span></div>
+        <div class="row">
+          <label>Render Mode</label>
+          <select id="selRenderMode">
+            <option value="ro_25d">2.5D Sprite Map Engine</option>
+            <option value="split_ref">Split Compare vs Reference</option>
+          </select>
+        </div>
+        <div class="row" id="rowSplit" style="display:none;">
+          <label>Split Slider</label>
+          <input type="range" id="rngSplit" min="0.05" max="0.95" step="0.01" value="0.50" />
+        </div>
+        <label class="row" style="cursor:pointer;">
+          <span>Show .GAT Walkable Grid (G)</span>
+          <input type="checkbox" id="chkGrid" />
+        </label>
+        <label class="row" style="cursor:pointer;">
+          <span>Tree Canopy X-Ray Alpha</span>
+          <input type="checkbox" id="chkXray" checked />
+        </label>
+        <label class="row" style="cursor:pointer;">
+          <span>Leaves & Banners Wind Sway</span>
+          <input type="checkbox" id="chkWind" checked />
+        </label>
+      </div>
+
+      <div class="card">
+        <div class="card-title">
+          <span>3D Camera Angle</span>
+          <button class="btn" id="btnResetCam" style="padding:2px 7px;font-size:10px;">Reset (R)</button>
+        </div>
+        <div class="row">
+          <label>Orbit Yaw</label>
+          <input type="range" id="rngYaw" min="-1.5" max="1.5" step="0.01" value="0.00" />
+        </div>
+        <div class="row">
+          <label>Tilt Pitch</label>
+          <input type="range" id="rngPitch" min="0.42" max="1.10" step="0.01" value="0.99" />
+        </div>
+        <div class="row">
+          <label>Zoom</label>
+          <input type="range" id="rngZoom" min="0.55" max="2.10" step="0.02" value="0.86" />
+        </div>
+      </div>
+
+      <!-- Play Mode Panel -->
+      <div class="card" id="panelPlay">
+        <div class="card-title"><span>Quick Navigation</span></div>
+        <p style="font-size:11px;color:var(--muted);line-height:1.45;">
+          Click any lawn, kerb or cobblestone tile to walk the RO Adventurer around the park: past the benches,
+          up to the mana-crystal fountain, along the canal wall and out onto the plaza.
+        </p>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;">
+          <button class="btn" id="btnWalkFountain" style="flex:1;">Walk to Crystal Fountain</button>
+          <button class="btn" id="btnWalkPlaza" style="flex:1;">Walk to Lamp Post Plaza</button>
+        </div>
+      </div>
+
+      <!-- Terrain Brush Panel -->
+      <div class="card" id="panelTerrain" style="display:none;">
+        <div class="card-title"><span>Park Terrain Brush</span></div>
+        <div class="row">
+          <label>Brush Size</label>
+          <input type="range" id="rngBrush" min="1" max="4" step="1" value="1" />
+        </div>
+        <div class="grid-palette" id="terrainPalette">
+          <div class="p-item active" data-brush="grass"><span class="swatch" style="background:#4c5422;"></span>Park Lawn</div>
+          <div class="p-item" data-brush="grass_dark"><span class="swatch" style="background:#3f4a1d;"></span>Shaded Lawn</div>
+          <div class="p-item" data-brush="grass_light"><span class="swatch" style="background:#596226;"></span>Sunlit Lawn</div>
+          <div class="p-item" data-brush="cobble"><span class="swatch" style="background:#8a8682;"></span>Cobblestone</div>
+          <div class="p-item" data-brush="cobble_worn"><span class="swatch" style="background:#a5a19c;"></span>Worn Cobble</div>
+          <div class="p-item" data-brush="kerb_brick"><span class="swatch" style="background:#c8ab7c;"></span>Brick Kerb</div>
+          <div class="p-item" data-brush="stone_slab"><span class="swatch" style="background:#b2ac9e;"></span>Limestone Slab</div>
+          <div class="p-item" data-brush="water"><span class="swatch" style="background:#2b8cbb;"></span>Canal Water</div>
+          <div class="p-item" data-brush="raise"><span class="swatch" style="background:#48e59a;"></span>Raise Terrain +</div>
+          <div class="p-item" data-brush="lower"><span class="swatch" style="background:#ff6464;"></span>Lower Terrain -</div>
+          <div class="p-item" data-brush="walk_toggle"><span class="swatch" style="background:#a8e06a;"></span>Toggle Walkable</div>
+        </div>
+      </div>
+
+      <!-- Sprite Placer Panel -->
+      <div class="card" id="panelSprites" style="display:none;">
+        <div class="card-title"><span>Prontera Sprite Placer</span></div>
+        <div class="grid-palette" id="spritePalette">
+          <div class="p-item active" data-sprite="bench">Park Bench</div>
+          <div class="p-item" data-sprite="bush">Garden Bush</div>
+          <div class="p-item" data-sprite="flowerbed">Flower Bed</div>
+          <div class="p-item" data-sprite="hedge">Trimmed Hedge</div>
+          <div class="p-item" data-sprite="tree_round">Round Garden Tree</div>
+          <div class="p-item" data-sprite="tree_round_small">Small Round Tree</div>
+          <div class="p-item" data-sprite="tree_conifer">Dark Conifer</div>
+          <div class="p-item" data-sprite="tree_conifer_small">Small Conifer</div>
+          <div class="p-item" data-sprite="fountain_stone">Crystal Fountain</div>
+          <div class="p-item" data-sprite="fountain_pond">Stone Pond</div>
+          <div class="p-item" data-sprite="pillar_sunburst">Sunburst Pillar</div>
+          <div class="p-item" data-sprite="pillar_lantern">Lantern Pillar</div>
+          <div class="p-item" data-sprite="lamp_post">Banner Lamp Post</div>
+          <div class="p-item" data-sprite="banner_blue">Blue City Banner</div>
+          <div class="p-item" data-sprite="banner_green">Green City Banner</div>
+          <div class="p-item" data-sprite="postbox">Red Post Box</div>
+          <div class="p-item" data-sprite="rock_cliff">Mossy Boulder</div>
+          <div class="p-item" data-sprite="arch_gateway">Stone Arch Gate</div>
+          <div class="p-item" data-sprite="wall_brick">Brick Wall Segment</div>
+        </div>
+        <div class="row">
+          <label>Scale</label>
+          <input type="range" id="rngSpScale" min="0.55" max="1.65" step="0.05" value="1.00" />
+        </div>
+        <label class="row" style="cursor:pointer;">
+          <span>Flip Horizontal</span>
+          <input type="checkbox" id="chkSpFlip" />
+        </label>
+        <button class="btn" id="btnDelSprite" style="border-color:var(--danger);color:#ff9c9c;">Delete Last Placed Sprite</button>
+      </div>
+
+      <div class="card">
+        <div class="card-title"><span>Download Assets</span></div>
+        <div style="display:flex;gap:6px;">
+          <button class="btn" id="btnDlMapPng" style="flex:1;">Map (.PNG)</button>
+          <button class="btn" id="btnDlSheetPng" style="flex:1;">Sprites (.PNG)</button>
+        </div>
+      </div>
+    </aside>
+  </div>
+
+  <!-- Modal: Procedural Sprite Sheet Preview -->
+  <div class="modal-bg" id="modalAtlas">
+    <div class="modal">
+      <div class="modal-head">
+        <strong>Procedural Prontera Sprite Sheet Atlas (Generated in Pure JS — Zero External Images)</strong>
+        <div style="display:flex;gap:8px;">
+          <button class="btn btn-primary" id="btnModalDlSheet">Download Sprite Sheet (.PNG)</button>
+          <button class="btn" data-close="modalAtlas">Close</button>
+        </div>
+      </div>
+      <div class="modal-body">
+        <div class="atlas-box" id="atlasContainer"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Map Data JSON -->
+  <div class="modal-bg" id="modalJson">
+    <div class="modal">
+      <div class="modal-head">
+        <strong>Map Data JSON (Heightmap + Walkability + Sprites)</strong>
+        <div style="display:flex;gap:8px;">
+          <button class="btn btn-primary" id="btnCopyJson">Copy JSON</button>
+          <button class="btn" id="btnApplyJson">Apply JSON</button>
+          <button class="btn" data-close="modalJson">Close</button>
+        </div>
+      </div>
+      <div class="modal-body">
+        <textarea class="code" id="txtJson" spellcheck="false"></textarea>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Minimal Copy-Paste Code -->
+  <div class="modal-bg" id="modalCode">
+    <div class="modal">
+      <div class="modal-head">
+        <strong>All-in-One Copy-Paste Snippet for Your HTML Game</strong>
+        <div style="display:flex;gap:8px;">
+          <button class="btn btn-primary" id="btnCopySnippet">Copy Snippet</button>
+          <button class="btn" data-close="modalCode">Close</button>
+        </div>
+      </div>
+      <div class="modal-body">
+        <p style="font-size:12px;color:var(--muted);">
+          Everything in this project lives in <b>this single <code>index.html</code> file</b> — no external images, JSON or libraries.
+          Either copy <code>index.html</code> straight into your game, or paste this minimal bootstrap snippet:
+        </p>
+        <textarea class="code" id="txtSnippet" readonly></textarea>
+      </div>
+    </div>
+  </div>
+
+  <script>
+  // ============================================================================
+  // 1. PROCEDURAL RAGNAROK ONLINE PRONTERA CITY PARK SPRITE SHEET & TILE MAKER
+  //    Every seamless tile & 2.5D billboard sprite is painted in pure JS on one
+  //    canvas: zero external PNGs / JSON, so the whole game is one file.
+  //    Scale rule: 1 atlas pixel = 1/32 of one .gnd cell at sprite scale 1.0.
+  // ============================================================================
+  function createPronteraSpriteAtlas() {
+    const W = 1216, H = 1520;
+    const canvas = document.createElement('canvas');
+    canvas.width = W;
+    canvas.height = H;
+    const ctx = canvas.getContext('2d');
+
+    const manifest = {
+      tiles: {},
+      sprites: {},
+      character: { x: 0, y: 0, frameW: 64, frameH: 80, frames: 4 }
+    };
+
+    // Deterministic PRNG so Prontera always looks exactly the same
+    let seed = 90210;
+    const rand = () => {
+      seed = (seed * 16807) % 2147483647;
+      return (seed - 1) / 2147483646;
+    };
+    const R = (a, b) => a + rand() * (b - a);
+    const ell = (c, x, y, rx, ry, rot = 0) => {
+      c.beginPath();
+      c.ellipse(x, y, Math.abs(rx), Math.abs(ry), rot, 0, Math.PI * 2);
+    };
+    const shadow = (c, x, y, rx, ry, a = 0.28) => {
+      c.fillStyle = `rgba(16, 22, 8, ${a})`;
+      ell(c, x, y, rx, ry);
+      c.fill();
+    };
+    // Rounded stone disc with a visible side wall (fountains, plinths, pond rim)
+    const disc = (c, x, y, rx, ry, thick, topCol, sideCol) => {
+      c.fillStyle = sideCol;
+      c.beginPath();
+      c.moveTo(x + rx, y);
+      c.ellipse(x, y, rx, ry, 0, 0, Math.PI, false);
+      c.lineTo(x - rx, y + thick);
+      c.ellipse(x, y + thick, rx, ry, 0, Math.PI, 0, true);
+      c.closePath();
+      c.fill();
+      c.fillStyle = topCol;
+      ell(c, x, y, rx, ry);
+      c.fill();
+    };
+    // Wrap-aware noise blobs -> perfectly seamless 128px tiles
+    function speckle(c, w, h, n, cols, maxR) {
+      for (let i = 0; i < n; i++) {
+        const x = rand() * w, y = rand() * h;
+        const rr = R(1.2, maxR);
+        c.fillStyle = cols[(rand() * cols.length) | 0];
+        for (let ox = -1; ox <= 1; ox++) {
+          for (let oy = -1; oy <= 1; oy++) {
+            ell(c, x + ox * w, y + oy * h, rr * 1.5, rr, rand() * 3);
+            c.fill();
+          }
+        }
+      }
+    }
+
+    // ---------------------------------------------------------------- TILES ----
+    function makeTile(tx, ty, name, painterFn) {
+      const tc = document.createElement('canvas');
+      tc.width = 128;
+      tc.height = 128;
+      painterFn(tc.getContext('2d'), 128, 128);
+      ctx.drawImage(tc, tx, ty);
+      manifest.tiles[name] = { x: tx, y: ty, w: 128, h: 128, canvas: tc };
+    }
+
+    // Tile 1: Prontera park lawn (deep olive grass)
+    makeTile(16, 16, 'grass', (c, w, h) => {
+      c.fillStyle = '#4e5623';
+      c.fillRect(0, 0, w, h);
+      speckle(c, w, h, 460, ['rgba(96,108,44,0.26)', 'rgba(58,66,24,0.26)', 'rgba(74,86,32,0.22)'], 5);
+      c.strokeStyle = 'rgba(112,126,50,0.16)';
+      c.lineWidth = 1;
+      for (let i = 0; i < 420; i++) {
+        const x = rand() * w, y = rand() * h;
+        c.beginPath();
+        c.moveTo(x, y);
+        c.lineTo(x + R(-3, 3), y - R(2, 5));
+        c.stroke();
+      }
+    });
+
+    // Tile 2: Shaded lawn (under the city wall & the big trees)
+    makeTile(160, 16, 'grass_dark', (c, w, h) => {
+      c.fillStyle = '#454f1f';
+      c.fillRect(0, 0, w, h);
+      speckle(c, w, h, 400, ['rgba(78,90,34,0.24)', 'rgba(44,52,20,0.28)', 'rgba(34,42,16,0.24)'], 5);
+    });
+
+    // Tile 3: Sunlit lawn patch
+    makeTile(304, 16, 'grass_light', (c, w, h) => {
+      c.fillStyle = '#57642a';
+      c.fillRect(0, 0, w, h);
+      speckle(c, w, h, 400, ['rgba(124,136,56,0.22)', 'rgba(80,90,34,0.22)', 'rgba(102,114,44,0.20)'], 5);
+      c.strokeStyle = 'rgba(140,156,64,0.14)';
+      for (let i = 0; i < 300; i++) {
+        const x = rand() * w, y = rand() * h;
+        c.beginPath(); c.moveTo(x, y); c.lineTo(x + R(-3, 3), y - R(2, 5)); c.stroke();
+      }
+    });
+
+    // Irregular angular flagstone helper (packed pavement, thin grout)
+    function flagstones(c, w, h, opts) {
+      const { cols, rows, base, grout, warm, hi, lo } = opts;
+      c.fillStyle = grout;
+      c.fillRect(0, 0, w, h);
+      for (let r = 0; r < rows; r++) {
+        for (let k = -1; k <= cols; k++) {
+          const cx = (k + (r % 2) * 0.5) * (w / cols) + R(-6, 6);
+          const cy = r * (h / rows) + R(-5, 5);
+          const rx = (w / cols) * R(0.56, 0.80);
+          const ry = (h / rows) * R(0.52, 0.78);
+          const warmStone = rand() < warm;
+          const g = base + Math.floor(R(-20, 24));
+          const col = warmStone
+            ? `rgb(${g + 22},${g + 12},${g - 4})`
+            : `rgb(${g - 4},${g - 2},${g + 2})`;
+          for (let ox = -1; ox <= 1; ox++) {
+            const px = cx + ox * w;
+            // irregular polygon flagstone with jittered corners
+            const sides = 8;
+            const pts = [];
+            for (let i = 0; i < sides; i++) {
+              const a = (i / sides) * Math.PI * 2 + R(-0.14, 0.14);
+              const rr = R(0.86, 1.14);
+              pts.push([px + Math.cos(a) * rx * rr, cy + Math.sin(a) * ry * rr]);
+            }
+            c.fillStyle = col;
+            c.beginPath();
+            c.moveTo(pts[0][0], pts[0][1]);
+            for (const p of pts.slice(1)) c.lineTo(p[0], p[1]);
+            c.closePath();
+            c.fill();
+            c.strokeStyle = lo;
+            c.lineWidth = 1.6;
+            c.stroke();
+            // worn top light + bottom shade inside the stone
+            c.save();
+            c.clip();
+            c.fillStyle = hi;
+            ell(c, px - rx * 0.16, cy - ry * 0.34, rx * 0.72, ry * 0.44, -0.22);
+            c.fill();
+            c.fillStyle = 'rgba(38,36,32,0.16)';
+            ell(c, px + rx * 0.14, cy + ry * 0.42, rx * 0.7, ry * 0.3, 0.18);
+            c.fill();
+            for (let i = 0; i < 5; i++) {
+              c.fillStyle = `rgba(70,66,60,${R(0.05, 0.16).toFixed(2)})`;
+              ell(c, px + R(-rx, rx) * 0.7, cy + R(-ry, ry) * 0.7, R(1, 4), R(1, 3), R(0, 3));
+              c.fill();
+            }
+            c.restore();
+          }
+        }
+      }
+    }
+
+    // Tile 4: Grey Prontera cobblestone street (packed irregular flagstones)
+    makeTile(448, 16, 'cobble', (c, w, h) => {
+      flagstones(c, w, h, {
+        cols: 7, rows: 7, base: 140, warm: 0.09,
+        grout: '#79756f', hi: 'rgba(238,236,228,0.13)', lo: 'rgba(74,71,66,0.30)'
+      });
+    });
+
+    // Tile 5: Lighter worn cobble (the plaza strip beside the lawn)
+    makeTile(592, 16, 'cobble_worn', (c, w, h) => {
+      flagstones(c, w, h, {
+        cols: 5, rows: 5, base: 168, warm: 0.12,
+        grout: '#8b8781', hi: 'rgba(255,252,238,0.14)', lo: 'rgba(112,108,102,0.28)'
+      });
+    });
+
+    // Tile 6: Cream / tan brick kerb strips edging the lawn
+    makeTile(736, 16, 'kerb_brick', (c, w, h) => {
+      c.fillStyle = '#8a7a5e';
+      c.fillRect(0, 0, w, h);
+      const bw = 32, bh = 16;
+      for (let r = 0; r < h / bh; r++) {
+        for (let k = 0; k < w / bw; k++) {
+          const shade = [['#c5b18c', '#cdbb99', '#bcaa86'], ['#c1ad86', '#c9b795', '#b8a683']][r % 2][(r + k) % 3];
+          c.fillStyle = shade;
+          c.fillRect(k * bw + 1.5, r * bh + 1.5, bw - 3, bh - 3);
+          c.fillStyle = 'rgba(255,246,220,0.22)';
+          c.fillRect(k * bw + 1.5, r * bh + 1.5, bw - 3, 3);
+          c.fillStyle = 'rgba(70,56,36,0.18)';
+          c.fillRect(k * bw + 1.5, r * bh + bh - 4.5, bw - 3, 3);
+        }
+      }
+    });
+
+    // Tile 7: Prontera canal / moat water
+    makeTile(880, 16, 'water', (c, w, h) => {
+      const g = c.createLinearGradient(0, 0, 0, h);
+      g.addColorStop(0, '#1d6c99');
+      g.addColorStop(0.5, '#2b8cbb');
+      g.addColorStop(1, '#1a6089');
+      c.fillStyle = g;
+      c.fillRect(0, 0, w, h);
+      for (let i = 0; i < 30; i++) {
+        const y = rand() * h;
+        c.strokeStyle = `rgba(${140 + rand() * 80 | 0}, ${212 + rand() * 40 | 0}, 245, ${R(0.18, 0.44)})`;
+        c.lineWidth = R(1.2, 2.6);
+        c.beginPath();
+        c.moveTo(-10, y);
+        for (let x = 0; x <= w + 10; x += 16) {
+          c.lineTo(x, y + Math.sin((x + i * 30) * 0.12) * 3);
+        }
+        c.stroke();
+      }
+      speckle(c, w, h, 90, ['rgba(255,255,255,0.16)', 'rgba(120,200,235,0.22)'], 3);
+    });
+
+    // Tile 8: Light limestone slabs (fountain plaza / gate terrace)
+    makeTile(1024, 16, 'stone_slab', (c, w, h) => {
+      c.fillStyle = '#8d887c';
+      c.fillRect(0, 0, w, h);
+      const s = 64;
+      for (let r = 0; r < h / s; r++) {
+        for (let k = 0; k < w / s; k++) {
+          const g = 178 + Math.floor(R(-10, 10));
+          c.fillStyle = `rgb(${g},${g - 4},${g - 14})`;
+          c.fillRect(k * s + 2, r * s + 2, s - 4, s - 4);
+          c.fillStyle = 'rgba(255,252,236,0.20)';
+          c.fillRect(k * s + 2, r * s + 2, s - 4, 3);
+          c.fillStyle = 'rgba(90,86,74,0.16)';
+          c.fillRect(k * s + 2, r * s + s - 6, s - 4, 4);
+        }
+      }
+      speckle(c, w, h, 260, ['rgba(126,120,106,0.20)', 'rgba(226,220,202,0.20)'], 3);
+    });
+
+    // -------------------------------------------------------------- SPRITES ----
+    // Row packer: each sprite is painted on its own canvas, then blitted into
+    // the atlas, so the renderer can address it with a single drawImage().
+    let packX = 16, packY = 168, rowH = 0;
+
+    function sprite(name, w, h, ax, ay, painterFn) {
+      const sc = document.createElement('canvas');
+      sc.width = w;
+      sc.height = h;
+      painterFn(sc.getContext('2d'), w, h);
+      if (packX + w > W - 16) { packX = 16; packY += rowH + 10; rowH = 0; }
+      ctx.drawImage(sc, packX, packY);
+      manifest.sprites[name] = {
+        x: packX, y: packY, w, h,
+        anchorX: ax === undefined ? w / 2 : ax,
+        anchorY: ay === undefined ? h : ay
+      };
+      packX += w + 10;
+      rowH = Math.max(rowH, h);
+    }
+
+    // Shared painter: shallow stone fountain bowl filled with water
+    function paintBowl(c, x, y, rx, ry, stoneTop, stoneSide, water, depth) {
+      disc(c, x, y, rx, ry, depth, stoneTop, stoneSide);
+      c.fillStyle = water;
+      ell(c, x, y - 1, rx * 0.82, ry * 0.74);
+      c.fill();
+      c.strokeStyle = 'rgba(255,255,255,0.35)';
+      c.lineWidth = 1.4;
+      ell(c, x, y - 1, rx * 0.58, ry * 0.52);
+      c.stroke();
+    }
+
+    // ---- Sprite: park bench (green slatted RO bench) ----
+    sprite('bench', 100, 66, 50, 56, (c) => {
+      shadow(c, 50, 54, 36, 9, 0.26);
+      c.strokeStyle = '#123f22';
+      c.lineWidth = 4;
+      c.lineCap = 'round';
+      c.beginPath();
+      c.moveTo(26, 26); c.lineTo(22, 52);
+      c.moveTo(74, 26); c.lineTo(78, 52);
+      c.moveTo(30, 50); c.lineTo(70, 50);
+      c.stroke();
+      const slat = (x0, y0, x1, y1, col) => {
+        c.fillStyle = col;
+        c.beginPath();
+        c.moveTo(x0, y0); c.lineTo(x1, y1); c.lineTo(x1, y1 + 6); c.lineTo(x0, y0 + 6);
+        c.closePath();
+        c.fill();
+        c.strokeStyle = '#0d3b1e';
+        c.lineWidth = 1;
+        c.stroke();
+      };
+      slat(16, 32, 84, 33, '#2f8f4e');
+      slat(17, 38, 83, 39, '#1e6b3a');
+      slat(18, 44, 82, 45, '#175a30');
+      slat(15, 12, 85, 10, '#2f8f4e');
+      slat(16, 20, 84, 18, '#1e6b3a');
+      c.strokeStyle = '#123f22';
+      c.lineWidth = 3.5;
+      c.beginPath();
+      c.moveTo(20, 12); c.lineTo(16, 40);
+      c.moveTo(50, 10); c.lineTo(48, 40);
+      c.moveTo(80, 12); c.lineTo(84, 40);
+      c.stroke();
+      c.strokeStyle = 'rgba(130,235,170,0.35)';
+      c.lineWidth = 1.6;
+      c.beginPath(); c.moveTo(17, 32); c.lineTo(83, 33); c.stroke();
+    });
+
+    // ---- Sprite: leafy garden bush ----
+    sprite('bush', 104, 82, 52, 74, (c) => {
+      shadow(c, 52, 72, 32, 8, 0.24);
+      for (let i = 0; i < 30; i++) {
+        const x = 52 + R(-30, 30), y = 46 + R(-26, 16);
+        const r = R(8, 14);
+        c.fillStyle = y < 46 ? (rand() > 0.5 ? '#2f6b2c' : '#3d8a34') : (rand() > 0.5 ? '#1e4322' : '#274f26');
+        ell(c, x, y, r * 1.15, r * 0.95, R(-0.5, 0.5));
+        c.fill();
+      }
+      for (let i = 0; i < 16; i++) {
+        c.fillStyle = 'rgba(120,196,96,0.45)';
+        ell(c, 52 + R(-22, 18), 34 + R(-14, 8), R(3, 7), R(2, 4.5));
+        c.fill();
+      }
+    });
+
+    // ---- Sprite: flower bed of pink & white blooms ----
+    sprite('flowerbed', 148, 92, 74, 82, (c) => {
+      c.fillStyle = 'rgba(20,28,10,0.30)';
+      ell(c, 74, 78, 54, 13);
+      c.fill();
+      for (let i = 0; i < 40; i++) {
+        c.fillStyle = rand() > 0.5 ? '#2f6b2c' : '#3d8a34';
+        ell(c, 74 + R(-50, 50), 66 + R(-24, 10), R(5, 11), R(3, 6), R(-0.6, 0.6));
+        c.fill();
+      }
+      const pal = ['#f4efe2', '#f4efe2', '#f0a0d0', '#e070b8', '#f0d060', '#e0743a'];
+      for (let i = 0; i < 54; i++) {
+        const x = 74 + R(-52, 52), y = 62 + R(-28, 12);
+        c.fillStyle = pal[(rand() * pal.length) | 0];
+        ell(c, x, y, R(2.6, 5), R(2.2, 3.6), R(-0.4, 0.4));
+        c.fill();
+        c.fillStyle = 'rgba(255,255,255,0.55)';
+        ell(c, x - 1, y - 1, 1.3, 1.1);
+        c.fill();
+      }
+    });
+
+    // ---- Sprite: broad round garden tree in a stone planter ----
+    function paintRoundTree(c, cx, by, s) {
+      shadow(c, cx, by - 4 * s, 54 * s, 15 * s, 0.28);
+      const pw = 42 * s, ph = 22 * s;
+      c.fillStyle = '#8f8570';
+      c.beginPath();
+      c.moveTo(cx - pw, by - 10 * s - ph * 0.5);
+      c.lineTo(cx, by - 10 * s);
+      c.lineTo(cx + pw, by - 10 * s - ph * 0.5);
+      c.lineTo(cx + pw, by - 10 * s - ph * 0.5 + 9 * s);
+      c.lineTo(cx, by - 10 * s + 9 * s);
+      c.lineTo(cx - pw, by - 10 * s - ph * 0.5 + 9 * s);
+      c.closePath();
+      c.fill();
+      c.fillStyle = '#b3a992';
+      c.beginPath();
+      c.moveTo(cx, by - 10 * s - ph);
+      c.lineTo(cx + pw, by - 10 * s - ph * 0.5);
+      c.lineTo(cx, by - 10 * s);
+      c.lineTo(cx - pw, by - 10 * s - ph * 0.5);
+      c.closePath();
+      c.fill();
+      c.strokeStyle = '#6d6453';
+      c.lineWidth = 1.6 * s;
+      c.stroke();
+      c.fillStyle = '#3b3323';
+      ell(c, cx, by - 10 * s - ph * 0.5, pw * 0.72, ph * 0.34);
+      c.fill();
+      c.fillStyle = '#6b4a2f';
+      c.beginPath();
+      c.moveTo(cx - 11 * s, by - 18 * s);
+      c.lineTo(cx - 14 * s, by - 72 * s);
+      c.lineTo(cx + 14 * s, by - 74 * s);
+      c.lineTo(cx + 11 * s, by - 18 * s);
+      c.closePath();
+      c.fill();
+      c.fillStyle = 'rgba(30,18,8,0.34)';
+      c.fillRect(cx + 4 * s, by - 72 * s, 10 * s, 54 * s);
+      c.strokeStyle = 'rgba(40,26,12,0.45)';
+      c.lineWidth = 1.4 * s;
+      for (let k = -1; k <= 1; k++) {
+        c.beginPath();
+        c.moveTo(cx + k * 7 * s, by - 22 * s);
+        c.lineTo(cx + k * 9 * s, by - 68 * s);
+        c.stroke();
+      }
+      const cy = by - 128 * s;
+      for (let i = 0; i < 34; i++) {
+        const a = (i / 34) * Math.PI * 2 + R(-0.22, 0.22);
+        const rr = R(0.24, 1.0) * 62 * s;
+        const x = cx + Math.cos(a) * rr * 1.18;
+        const y = cy + Math.sin(a) * rr * 0.82;
+        c.fillStyle = y < cy - 6 * s
+          ? (x < cx ? '#5ea63c' : '#4c8f2f')
+          : (x < cx ? '#3d7526' : '#2b5a1f');
+        ell(c, x, y, 19 * s, 13 * s, R(-0.5, 0.5));
+        c.fill();
+      }
+      for (let i = 0; i < 14; i++) {
+        c.fillStyle = 'rgba(136,208,98,0.45)';
+        ell(c, cx + R(-42, 18) * s, cy + R(-42, -8) * s, R(6, 13) * s, R(4, 8) * s, R(-0.4, 0.4));
+        c.fill();
+      }
+    }
+    sprite('tree_round', 190, 220, 95, 212, (c) => paintRoundTree(c, 95, 212, 1.0));
+    sprite('tree_round_small', 140, 168, 70, 160, (c) => paintRoundTree(c, 70, 160, 0.72));
+
+    // ---- Sprite: dark conifer of the Prontera gardens ----
+    function paintConifer(c, cx, by, s) {
+      shadow(c, cx, by - 4 * s, 40 * s, 12 * s, 0.3);
+      c.fillStyle = '#5a4028';
+      c.fillRect(cx - 6 * s, by - 40 * s, 12 * s, 38 * s);
+      const tiers = 8;
+      for (let t = 0; t < tiers; t++) {
+        const ty = (by - 34 * s) - t * 24 * s;
+        const halfW = (66 - t * 7.2) * s;
+        const cols = ['#16351b', '#1e4322', '#26552a'];
+        for (let k = -1; k <= 1; k += 2) {
+          for (let i = 0; i < 7; i++) {
+            const t2 = i / 6;
+            const bx = cx + k * (5 + t2 * halfW) * s;
+            const byy = ty + t2 * 9 * s;
+            c.fillStyle = cols[(i + t) % 3];
+            c.beginPath();
+            c.moveTo(cx + k * 4 * s, ty - 22 * s);
+            c.lineTo(bx, byy);
+            c.lineTo(bx - k * 7 * s, byy + 7 * s);
+            c.lineTo(cx + k * 9 * s, ty - 6 * s);
+            c.closePath();
+            c.fill();
+          }
+        }
+        c.strokeStyle = 'rgba(112,182,92,0.42)';
+        c.lineWidth = 2 * s;
+        c.beginPath();
+        c.moveTo(cx - halfW * 0.85, ty + 2 * s);
+        c.lineTo(cx, ty - 24 * s);
+        c.lineTo(cx + halfW * 0.85, ty + 2 * s);
+        c.stroke();
+      }
+      c.fillStyle = '#1e4322';
+      c.beginPath();
+      c.moveTo(cx, by - 238 * s);
+      c.lineTo(cx + 12 * s, by - 200 * s);
+      c.lineTo(cx - 12 * s, by - 200 * s);
+      c.closePath();
+      c.fill();
+      for (let i = 0; i < 26; i++) {
+        c.fillStyle = 'rgba(110,190,86,0.32)';
+        ell(c, cx + R(-52, 20) * s, by - R(40, 200) * s, R(3, 7) * s, R(2, 4) * s);
+        c.fill();
+      }
+    }
+    sprite('tree_conifer', 168, 268, 84, 258, (c) => paintConifer(c, 84, 258, 1.0));
+    sprite('tree_conifer_small', 122, 196, 61, 189, (c) => paintConifer(c, 61, 189, 0.73));
+
+    // ---- Sprite: big stone city fountain crowned by a pink mana crystal ----
+    sprite('fountain_stone', 250, 286, 125, 274, (c) => {
+      shadow(c, 125, 264, 92, 22, 0.3);
+      paintBowl(c, 125, 250, 96, 30, '#cfc4a8', '#9d9276', '#3fa8d0', 14);
+      paintBowl(c, 125, 226, 74, 24, '#dbd0b4', '#a89d80', '#3fa8d0', 16);
+      paintBowl(c, 125, 204, 52, 18, '#dbd0b4', '#9d9276', '#4ab4da', 18);
+      c.fillStyle = 'rgba(255,255,255,0.30)';
+      ell(c, 118, 246, 74, 15);
+      c.fill();
+      c.fillStyle = '#d8cdb4';
+      c.beginPath();
+      c.moveTo(107, 200);
+      c.lineTo(143, 200);
+      c.lineTo(136, 118);
+      c.lineTo(114, 118);
+      c.closePath();
+      c.fill();
+      c.fillStyle = 'rgba(120,108,84,0.30)';
+      c.beginPath();
+      c.moveTo(125, 200);
+      c.lineTo(143, 200);
+      c.lineTo(136, 118);
+      c.lineTo(125, 118);
+      c.closePath();
+      c.fill();
+      c.strokeStyle = 'rgba(96,86,66,0.5)';
+      c.lineWidth = 1.2;
+      for (let y = 130; y < 200; y += 18) {
+        c.beginPath(); c.moveTo(110, y); c.lineTo(140, y); c.stroke();
+      }
+      c.strokeStyle = '#c6bba0';
+      c.lineWidth = 7;
+      c.lineCap = 'round';
+      for (let i = 0; i < 8; i++) {
+        const a = (i / 8) * Math.PI * 2;
+        c.beginPath();
+        c.moveTo(125, 112);
+        c.lineTo(125 + Math.cos(a) * 30, 112 + Math.sin(a) * 13);
+        c.stroke();
+      }
+      c.save();
+      c.shadowColor = 'rgba(255,120,240,0.85)';
+      c.shadowBlur = 22;
+      c.fillStyle = '#e878d8';
+      c.beginPath();
+      c.moveTo(125, 66);
+      c.lineTo(143, 96);
+      c.lineTo(136, 124);
+      c.lineTo(114, 124);
+      c.lineTo(107, 96);
+      c.closePath();
+      c.fill();
+      c.restore();
+      c.fillStyle = 'rgba(255,190,248,0.85)';
+      c.beginPath();
+      c.moveTo(125, 70);
+      c.lineTo(136, 96);
+      c.lineTo(125, 122);
+      c.lineTo(118, 100);
+      c.closePath();
+      c.fill();
+      c.fillStyle = 'rgba(255,255,255,0.65)';
+      c.beginPath();
+      c.moveTo(123, 76);
+      c.lineTo(129, 92);
+      c.lineTo(124, 108);
+      c.lineTo(120, 94);
+      c.closePath();
+      c.fill();
+      c.strokeStyle = 'rgba(150,50,140,0.9)';
+      c.lineWidth = 1.6;
+      c.beginPath();
+      c.moveTo(125, 66); c.lineTo(143, 96); c.lineTo(136, 124); c.lineTo(114, 124); c.lineTo(107, 96);
+      c.closePath();
+      c.stroke();
+      for (let i = 0; i < 7; i++) {
+        c.fillStyle = 'rgba(255,220,252,0.8)';
+        c.beginPath();
+        c.arc(125 + R(-40, 40), 60 + R(-20, 60), R(1.4, 2.8), 0, Math.PI * 2);
+        c.fill();
+      }
+    });
+
+    // ---- Sprite: round stone-block pond (the shrine pond in the north) ----
+    sprite('fountain_pond', 250, 156, 125, 126, (c) => {
+      shadow(c, 125, 108, 112, 26, 0.28);
+      disc(c, 125, 96, 110, 36, 18, '#b9ae95', '#8b8069');
+      c.strokeStyle = '#6f6654';
+      c.lineWidth = 1.4;
+      for (let i = 0; i < 16; i++) {
+        const a = (i / 16) * Math.PI * 2;
+        c.beginPath();
+        c.moveTo(125 + Math.cos(a) * 110, 96 + Math.sin(a) * 36);
+        c.lineTo(125 + Math.cos(a) * 88, 96 + Math.sin(a) * 27);
+        c.stroke();
+      }
+      c.fillStyle = '#2f9fd0';
+      ell(c, 125, 94, 92, 29);
+      c.fill();
+      for (let i = 0; i < 4; i++) {
+        c.strokeStyle = `rgba(${150 + i * 20},235,255,${0.5 - i * 0.1})`;
+        c.lineWidth = 1.6;
+        ell(c, 125, 94, 78 - i * 16, 25 - i * 5);
+        c.stroke();
+      }
+      c.fillStyle = 'rgba(230,255,255,0.55)';
+      ell(c, 104, 86, 22, 7, -0.3);
+      c.fill();
+      for (let i = 0; i < 10; i++) {
+        c.fillStyle = 'rgba(255,255,255,0.5)';
+        ell(c, 125 + R(-70, 70), 94 + R(-20, 20), R(3, 9), R(1, 2));
+        c.fill();
+      }
+    });
+
+    // ---- Sprite: tall pillar with the yellow sun-burst ring & blue orb ----
+    sprite('pillar_sunburst', 176, 452, 88, 440, (c) => {
+      shadow(c, 88, 428, 46, 15, 0.3);
+      disc(c, 88, 420, 44, 15, 12, '#cfc4a8', '#9d9276');
+      disc(c, 88, 404, 32, 12, 14, '#dbd0b4', '#a89d80');
+      const shaft = (x, y0, y1, w0, w1) => {
+        c.fillStyle = '#d8cdb4';
+        c.beginPath();
+        c.moveTo(x - w0 / 2, y0); c.lineTo(x + w0 / 2, y0);
+        c.lineTo(x + w1 / 2, y1); c.lineTo(x - w1 / 2, y1);
+        c.closePath();
+        c.fill();
+        c.fillStyle = 'rgba(122,110,84,0.32)';
+        c.beginPath();
+        c.moveTo(x + w0 * 0.10, y0); c.lineTo(x + w0 / 2, y0);
+        c.lineTo(x + w1 / 2, y1); c.lineTo(x + w1 * 0.10, y1);
+        c.closePath();
+        c.fill();
+      };
+      shaft(88, 404, 168, 42, 34);
+      c.strokeStyle = 'rgba(96,86,66,0.45)';
+      c.lineWidth = 1.3;
+      for (let y = 380; y > 176; y -= 22) {
+        c.beginPath(); c.moveTo(70, y); c.lineTo(106, y); c.stroke();
+      }
+      c.save();
+      c.translate(88, 150);
+      for (let i = 0; i < 12; i++) {
+        const a = (i / 12) * Math.PI * 2;
+        c.fillStyle = i % 2 ? '#e8c33c' : '#f5dd64';
+        c.beginPath();
+        c.moveTo(0, 0);
+        c.lineTo(Math.cos(a) * 74, Math.sin(a) * 26 + 4);
+        c.lineTo(Math.cos(a + 0.22) * 58, Math.sin(a + 0.22) * 20 + 14);
+        c.closePath();
+        c.fill();
+        c.strokeStyle = 'rgba(150,104,16,0.75)';
+        c.lineWidth = 1.2;
+        c.stroke();
+      }
+      c.fillStyle = '#f5dd64';
+      ell(c, 0, 6, 34, 13);
+      c.fill();
+      c.strokeStyle = 'rgba(150,104,16,0.8)';
+      c.stroke();
+      c.restore();
+      shaft(88, 168, 78, 34, 28);
+      disc(c, 88, 76, 26, 10, 30, '#5a4a90', '#3a2f60');
+      c.fillStyle = 'rgba(180,168,240,0.35)';
+      ell(c, 84, 74, 16, 6);
+      c.fill();
+      c.fillStyle = '#3a5ac8';
+      ell(c, 88, 40, 17, 16);
+      c.fill();
+      c.fillStyle = 'rgba(190,212,255,0.8)';
+      ell(c, 82, 34, 6, 5, -0.4);
+      c.fill();
+      c.strokeStyle = '#c8a838';
+      c.lineWidth = 3;
+      ell(c, 88, 54, 14, 5);
+      c.stroke();
+    });
+
+    // ---- Sprite: white stone lantern pillar beside the pond ----
+    sprite('pillar_lantern', 124, 320, 62, 310, (c) => {
+      shadow(c, 62, 300, 32, 11, 0.3);
+      disc(c, 62, 294, 30, 11, 10, '#cfc4a8', '#9d9276');
+      c.fillStyle = '#ddd3ba';
+      c.beginPath();
+      c.moveTo(48, 288); c.lineTo(76, 288); c.lineTo(70, 120); c.lineTo(54, 120);
+      c.closePath();
+      c.fill();
+      c.fillStyle = 'rgba(122,110,84,0.30)';
+      c.beginPath();
+      c.moveTo(62, 288); c.lineTo(76, 288); c.lineTo(70, 120); c.lineTo(62, 120);
+      c.closePath();
+      c.fill();
+      c.strokeStyle = 'rgba(96,86,66,0.4)';
+      c.lineWidth = 1.2;
+      for (let y = 270; y > 130; y -= 24) {
+        c.beginPath(); c.moveTo(52, y); c.lineTo(74, y); c.stroke();
+      }
+      c.fillStyle = '#e4dac2';
+      c.fillRect(46, 112, 32, 12);
+      c.fillStyle = '#2a2a48';
+      c.beginPath();
+      c.moveTo(42, 112); c.lineTo(82, 112); c.lineTo(74, 58); c.lineTo(50, 58);
+      c.closePath();
+      c.fill();
+      c.fillStyle = 'rgba(140,140,220,0.35)';
+      c.fillRect(48, 60, 8, 48);
+      c.strokeStyle = '#c8a838';
+      c.lineWidth = 3;
+      c.beginPath(); c.moveTo(44, 108); c.lineTo(80, 108); c.stroke();
+      c.fillStyle = '#3a5ac8';
+      ell(c, 62, 48, 11, 10);
+      c.fill();
+      c.fillStyle = 'rgba(190,212,255,0.85)';
+      ell(c, 58, 44, 4, 3.4);
+      c.fill();
+      c.fillStyle = '#e8c850';
+      c.beginPath();
+      c.moveTo(62, 26); c.lineTo(68, 38); c.lineTo(56, 38);
+      c.closePath();
+      c.fill();
+    });
+
+    // ---- Sprite: tall ornate lamp post that carries the two city banners ----
+    sprite('lamp_post', 156, 540, 78, 526, (c) => {
+      shadow(c, 78, 510, 46, 15, 0.3);
+      disc(c, 78, 504, 40, 14, 12, '#c9bda0', '#9a8f74');
+      c.fillStyle = '#ded4bc';
+      c.fillRect(42, 452, 72, 52);
+      c.fillStyle = 'rgba(126,114,88,0.28)';
+      c.fillRect(78, 452, 36, 52);
+      c.fillStyle = '#c2b69c';
+      c.fillRect(50, 462, 22, 34);
+      c.fillRect(82, 462, 22, 34);
+      c.strokeStyle = 'rgba(96,86,66,0.55)';
+      c.lineWidth = 1.2;
+      for (let y = 466; y < 496; y += 8) {
+        c.beginPath(); c.moveTo(50, y); c.lineTo(72, y); c.moveTo(82, y); c.lineTo(104, y); c.stroke();
+      }
+      c.fillStyle = '#cfc4a8';
+      c.fillRect(38, 444, 80, 12);
+      c.fillStyle = '#d8ae3c';
+      c.beginPath();
+      c.moveTo(78, 404); c.lineTo(96, 428); c.lineTo(78, 446); c.lineTo(60, 428);
+      c.closePath();
+      c.fill();
+      c.fillStyle = '#f0d878';
+      c.beginPath();
+      c.moveTo(78, 404); c.lineTo(88, 426); c.lineTo(78, 438); c.lineTo(72, 424);
+      c.closePath();
+      c.fill();
+      const poleTop = 96, poleBot = 424, lean = -14;
+      c.strokeStyle = '#d8cdb4';
+      c.lineWidth = 13;
+      c.lineCap = 'round';
+      c.beginPath();
+      c.moveTo(78, poleBot);
+      c.lineTo(78 + lean, poleTop);
+      c.stroke();
+      c.strokeStyle = 'rgba(120,108,84,0.30)';
+      c.lineWidth = 4;
+      c.beginPath();
+      c.moveTo(84, poleBot);
+      c.lineTo(84 + lean, poleTop);
+      c.stroke();
+      for (const [ay, len, dir] of [[352, 78, 1], [462, 66, -1]]) {
+        const px = 78 + (ay - poleBot) * (lean / (poleBot - poleTop));
+        c.strokeStyle = '#a9853f';
+        c.lineWidth = 11;
+        c.beginPath();
+        c.moveTo(px - (dir > 0 ? 0 : len), ay);
+        c.lineTo(px + (dir > 0 ? len : 0), ay);
+        c.stroke();
+        c.fillStyle = '#e8c850';
+        c.fillRect(px + (dir > 0 ? len - 8 : -len), ay - 8, 12, 16);
+      }
+      c.save();
+      c.translate(64, 96);
+      c.fillStyle = '#c0a06a';
+      c.beginPath();
+      c.moveTo(-40, -6); c.lineTo(40, -6); c.lineTo(28, -46); c.lineTo(-28, -46);
+      c.closePath();
+      c.fill();
+      c.fillStyle = '#8f7040';
+      c.beginPath();
+      c.moveTo(-40, -6); c.lineTo(40, -6); c.lineTo(36, 8); c.lineTo(-36, 8);
+      c.closePath();
+      c.fill();
+      c.fillStyle = '#efe9d8';
+      c.beginPath();
+      c.moveTo(-26, 10); c.lineTo(26, 10); c.lineTo(20, 74); c.lineTo(-20, 74);
+      c.closePath();
+      c.fill();
+      c.fillStyle = 'rgba(255,252,236,0.9)';
+      c.beginPath();
+      c.moveTo(-26, 10); c.lineTo(2, 10); c.lineTo(0, 74); c.lineTo(-20, 74);
+      c.closePath();
+      c.fill();
+      c.strokeStyle = '#c8a838';
+      c.lineWidth = 3;
+      c.beginPath();
+      c.moveTo(-26, 10); c.lineTo(26, 10); c.lineTo(20, 74); c.lineTo(-20, 74);
+      c.closePath();
+      c.stroke();
+      c.beginPath(); c.moveTo(-23, 42); c.lineTo(23, 42); c.stroke();
+      c.fillStyle = '#6d4a2c';
+      c.beginPath();
+      c.moveTo(-30, -6); c.lineTo(30, -6); c.lineTo(16, -20); c.lineTo(-16, -20);
+      c.closePath();
+      c.fill();
+      c.restore();
+      c.strokeStyle = '#b08c48';
+      c.lineWidth = 6;
+      c.beginPath();
+      c.moveTo(78, 330); c.lineTo(40, 322);
+      c.stroke();
+    });
+
+    // Shared painter: heraldic banner cloth (blue / green Prontera colours)
+    function paintBanner(c, w, h, colA, colB, colC) {
+      c.fillStyle = '#96703a';
+      c.fillRect(10, 16, w - 20, 9);
+      c.fillStyle = '#d8b45c';
+      c.fillRect(10, 16, 7, 9);
+      c.fillRect(w - 17, 16, 7, 9);
+      c.beginPath();
+      c.moveTo(16, 25);
+      c.lineTo(w - 16, 25);
+      c.quadraticCurveTo(w - 8, h * 0.55, w - 20, h - 24);
+      c.quadraticCurveTo(w * 0.5, h - 8, 20, h - 24);
+      c.quadraticCurveTo(6, h * 0.55, 16, 25);
+      c.closePath();
+      c.fillStyle = colA;
+      c.fill();
+      c.save();
+      c.clip();
+      const g = c.createLinearGradient(16, 0, w - 16, 0);
+      g.addColorStop(0, colB);
+      g.addColorStop(0.42, colA);
+      g.addColorStop(1, colC);
+      c.fillStyle = g;
+      c.fillRect(0, 0, w, h);
+      c.strokeStyle = 'rgba(216,180,92,0.95)';
+      c.lineWidth = 7;
+      c.beginPath();
+      c.moveTo(38, 20); c.lineTo(34, h - 18);
+      c.moveTo(w - 38, 20); c.lineTo(w - 34, h - 18);
+      c.stroke();
+      c.fillStyle = 'rgba(0,0,0,0.16)';
+      for (let i = 0; i < 5; i++) {
+        c.fillRect(24 + i * (w - 52) / 5, 20, 5, h);
+      }
+      c.fillStyle = 'rgba(255,255,255,0.13)';
+      c.fillRect(16, 20, w - 20, 10);
+      const cx = w * 0.5, cy = h * 0.5;
+      const s = w * 0.34;
+      c.fillStyle = '#8a2f28';
+      c.beginPath();
+      c.moveTo(cx - s * 1.06, cy - s * 1.12);
+      c.lineTo(cx + s * 1.06, cy - s * 1.12);
+      c.lineTo(cx, cy + s * 1.16);
+      c.closePath();
+      c.fill();
+      c.fillStyle = '#e9eef2';
+      c.beginPath();
+      c.moveTo(cx - s, cy - s);
+      c.lineTo(cx + s, cy - s);
+      c.lineTo(cx, cy + s * 1.02);
+      c.closePath();
+      c.fill();
+      c.fillStyle = '#2f5f9e';
+      c.beginPath();
+      c.moveTo(cx - s * 0.74, cy - s * 0.72);
+      c.lineTo(cx + s * 0.74, cy - s * 0.72);
+      c.lineTo(cx, cy + s * 0.74);
+      c.closePath();
+      c.fill();
+      c.fillStyle = '#f4f8fb';
+      c.beginPath();
+      c.moveTo(cx - s * 0.62, cy - s * 0.5);
+      c.lineTo(cx - s * 0.2, cy - s * 0.72);
+      c.lineTo(cx + s * 0.2, cy - s * 0.72);
+      c.lineTo(cx + s * 0.62, cy - s * 0.5);
+      c.lineTo(cx + s * 0.3, cy - s * 0.05);
+      c.lineTo(cx, cy + s * 0.5);
+      c.lineTo(cx - s * 0.3, cy - s * 0.05);
+      c.closePath();
+      c.fill();
+      c.fillStyle = '#3a5f96';
+      c.beginPath();
+      c.arc(cx - s * 0.26, cy - s * 0.34, s * 0.12, 0, Math.PI * 2);
+      c.arc(cx + s * 0.26, cy - s * 0.34, s * 0.12, 0, Math.PI * 2);
+      c.fill();
+      c.strokeStyle = 'rgba(120,160,200,0.85)';
+      c.lineWidth = 2;
+      c.beginPath();
+      c.moveTo(cx - s * 0.1, cy - s * 0.02);
+      c.lineTo(cx, cy + s * 0.34);
+      c.lineTo(cx + s * 0.1, cy - s * 0.02);
+      c.stroke();
+      c.restore();
+      c.strokeStyle = 'rgba(24,30,44,0.55)';
+      c.lineWidth = 2;
+      c.beginPath();
+      c.moveTo(16, 25);
+      c.lineTo(w - 16, 25);
+      c.quadraticCurveTo(w - 8, h * 0.55, w - 20, h - 24);
+      c.quadraticCurveTo(w * 0.5, h - 8, 20, h - 24);
+      c.quadraticCurveTo(6, h * 0.55, 16, 25);
+      c.closePath();
+      c.stroke();
+      c.fillStyle = '#c9a94e';
+      for (let x = 20; x < w - 18; x += 9) {
+        c.beginPath();
+        c.moveTo(x, h - 26);
+        c.lineTo(x + 5, h - 26);
+        c.lineTo(x + 3, h - 16);
+        c.closePath();
+        c.fill();
+      }
+    }
+    sprite('banner_blue', 148, 300, 74, 288, (c) => paintBanner(c, 148, 300, '#2f5f9e', '#5f8fd0', '#1c3f70'));
+    sprite('banner_green', 148, 300, 74, 288, (c) => paintBanner(c, 148, 300, '#3f7f4f', '#67b073', '#255c33'));
+
+    // ---- Sprite: red Prontera post box ----
+    sprite('postbox', 78, 126, 39, 120, (c) => {
+      shadow(c, 39, 112, 26, 8, 0.28);
+      c.fillStyle = '#2a2a2e';
+      c.fillRect(20, 98, 40, 16);
+      c.fillStyle = '#3c3c42';
+      c.fillRect(14, 110, 52, 9);
+      c.fillStyle = '#8a1a22';
+      c.beginPath();
+      c.moveTo(15, 44); c.lineTo(39, 54); c.lineTo(63, 44); c.lineTo(63, 100); c.lineTo(15, 100);
+      c.closePath();
+      c.fill();
+      c.fillStyle = '#c8303a';
+      c.beginPath();
+      c.moveTo(15, 44); c.lineTo(39, 54); c.lineTo(39, 100); c.lineTo(15, 100);
+      c.closePath();
+      c.fill();
+      c.fillStyle = '#8f2028';
+      c.beginPath();
+      c.moveTo(15, 44); c.lineTo(39, 30); c.lineTo(63, 44); c.lineTo(39, 54);
+      c.closePath();
+      c.fill();
+      c.fillStyle = '#e04a4a';
+      c.beginPath();
+      c.moveTo(15, 44); c.lineTo(39, 30); c.lineTo(39, 54);
+      c.closePath();
+      c.fill();
+      c.fillStyle = '#3a0f14';
+      c.fillRect(26, 60, 26, 5);
+      c.fillStyle = '#d8b45c';
+      c.fillRect(22, 76, 34, 12);
+      c.fillStyle = 'rgba(255,255,255,0.28)';
+      c.fillRect(22, 76, 34, 3);
+    });
+
+    // ---- Sprite: mossy dark boulder ----
+    sprite('rock_cliff', 210, 186, 105, 176, (c) => {
+      shadow(c, 105, 164, 78, 20, 0.3);
+      const hull = [[16, 160], [30, 92], [70, 40], [128, 30], [176, 66], [196, 128], [172, 162], [56, 172]];
+      c.fillStyle = '#464637';
+      c.beginPath();
+      c.moveTo(hull[0][0], hull[0][1]);
+      for (const p of hull.slice(1)) c.lineTo(p[0], p[1]);
+      c.closePath();
+      c.fill();
+      c.strokeStyle = '#25251a';
+      c.lineWidth = 2;
+      c.stroke();
+      const facet = (pts, col) => {
+        c.fillStyle = col;
+        c.beginPath();
+        c.moveTo(pts[0][0], pts[0][1]);
+        for (const p of pts.slice(1)) c.lineTo(p[0], p[1]);
+        c.closePath();
+        c.fill();
+      };
+      facet([[30, 92], [70, 40], [104, 62], [86, 120], [34, 138]], '#5c5c46');
+      facet([[104, 62], [128, 30], [176, 66], [162, 108], [96, 96]], '#6a6a50');
+      facet([[86, 120], [96, 96], [162, 108], [196, 128], [172, 162], [80, 158]], '#38382a');
+      facet([[34, 138], [86, 120], [80, 158], [56, 172], [16, 160]], '#2e2e22');
+      c.fillStyle = '#3f6a2a';
+      for (let i = 0; i < 26; i++) {
+        ell(c, R(40, 170), R(46, 120), R(6, 18), R(3, 8), R(-0.5, 0.5));
+        c.fill();
+      }
+      c.fillStyle = 'rgba(122,160,96,0.4)';
+      for (let i = 0; i < 12; i++) {
+        ell(c, R(46, 150), R(46, 96), R(3, 8), R(2, 4));
+        c.fill();
+      }
+      c.strokeStyle = 'rgba(24,24,16,0.6)';
+      c.lineWidth = 1.6;
+      for (let i = 0; i < 6; i++) {
+        c.beginPath();
+        c.moveTo(R(40, 150), R(50, 110));
+        c.lineTo(R(60, 170), R(90, 150));
+        c.stroke();
+      }
+    });
+
+    // ---- Sprite: carved stone city gate / arch ruin ----
+    sprite('arch_gateway', 300, 340, 150, 328, (c) => {
+      shadow(c, 150, 308, 116, 24, 0.3);
+      disc(c, 150, 300, 124, 34, 14, '#b5ab94', '#8b8069');
+      const stone = '#c8bda2', stoneDark = '#a1967c', joint = '#8f8468';
+      for (const x0 of [22, 218]) {
+        c.fillStyle = stone;
+        c.fillRect(x0, 60, 60, 246);
+        c.fillStyle = stoneDark;
+        c.fillRect(x0 + (x0 < 100 ? 34 : 0), 60, 26, 246);
+        c.strokeStyle = joint;
+        c.lineWidth = 1.6;
+        for (let y = 76; y < 306; y += 22) {
+          c.beginPath(); c.moveTo(x0, y); c.lineTo(x0 + 60, y); c.stroke();
+        }
+        c.fillStyle = '#3b3529';
+        c.fillRect(x0 + 14, 150, 32, 52);
+        c.fillRect(x0 + 14, 224, 32, 52);
+      }
+      c.fillStyle = stone;
+      c.beginPath();
+      c.moveTo(20, 74);
+      c.lineTo(70, 74);
+      c.quadraticCurveTo(150, -18, 230, 74);
+      c.lineTo(280, 74);
+      c.lineTo(280, 34);
+      c.lineTo(196, 30);
+      c.lineTo(150, 8);
+      c.lineTo(104, 30);
+      c.lineTo(20, 34);
+      c.closePath();
+      c.fill();
+      c.fillStyle = '#2a251c';
+      c.beginPath();
+      c.moveTo(82, 74);
+      c.quadraticCurveTo(150, 8, 218, 74);
+      c.lineTo(218, 306);
+      c.lineTo(82, 306);
+      c.closePath();
+      c.fill();
+      c.strokeStyle = stone;
+      c.lineWidth = 26;
+      c.beginPath();
+      c.moveTo(84, 300);
+      c.quadraticCurveTo(150, 4, 216, 300);
+      c.stroke();
+      c.strokeStyle = joint;
+      c.lineWidth = 2;
+      for (let i = 0; i <= 12; i++) {
+        const t = i / 12;
+        const ax = 150 + Math.cos(Math.PI * (1 - t)) * 66;
+        const ay = 300 - Math.sin(Math.PI * t) * 296;
+        c.beginPath();
+        c.moveTo(ax - 13, ay - 6);
+        c.lineTo(ax + 13, ay + 6);
+        c.stroke();
+      }
+      c.fillStyle = '#3b3529';
+      c.fillRect(118, 120, 64, 30);
+      c.fillStyle = 'rgba(255,250,232,0.18)';
+      c.fillRect(20, 34, 260, 8);
+    });
+
+    // ---- Sprite: brick city wall segment (tiles every 4 cells; 128px wide) ----
+    sprite('wall_brick', 128, 126, 64, 120, (c) => {
+      c.fillStyle = '#a8a094';
+      c.fillRect(0, 6, 128, 18);
+      c.fillStyle = '#c4beb0';
+      c.fillRect(0, 6, 128, 5);
+      c.fillStyle = '#726b60';
+      c.fillRect(0, 22, 128, 5);
+      c.fillStyle = '#8d8577';
+      c.fillRect(0, 27, 128, 84);
+      const bw = 32, bh = 14;
+      for (let r = 0; r < 6; r++) {
+        for (let k = 0; k < 4; k++) {
+          const x = k * bw + (r % 2 ? 16 : 0) - 16;
+          const y = 27 + r * bh;
+          const t = rand();
+          c.fillStyle = t > 0.86 ? '#9a8f74' : (t > 0.5 ? '#c6ba9e' : (t > 0.2 ? '#bcb094' : '#cfc3a8'));
+          c.fillRect(x + 1.4, y + 1.4, bw - 2.8, bh - 2.8);
+          c.fillStyle = 'rgba(255,248,228,0.20)';
+          c.fillRect(x + 1.4, y + 1.4, bw - 2.8, 3);
+          c.fillStyle = 'rgba(88,76,54,0.16)';
+          c.fillRect(x + 1.4, y + bh - 4.2, bw - 2.8, 2.8);
+        }
+      }
+      for (let i = 0; i < 40; i++) {
+        c.fillStyle = `rgba(70,60,42,${R(0.1, 0.3).toFixed(2)})`;
+        ell(c, rand() * 128, R(30, 108), R(1, 4), R(1, 3));
+        c.fill();
+      }
+      c.fillStyle = 'rgba(26,30,14,0.32)';
+      c.fillRect(0, 108, 128, 8);
+      c.fillStyle = '#9a9488';
+      c.fillRect(0, 116, 128, 10);
+    });
+
+    // ---- Sprite: trimmed garden hedge row ----
+    sprite('hedge', 128, 74, 64, 66, (c) => {
+      shadow(c, 64, 64, 62, 9, 0.24);
+      c.fillStyle = '#21501f';
+      c.fillRect(4, 26, 120, 36);
+      c.fillStyle = '#2c6a26';
+      for (let i = 0; i < 40; i++) {
+        ell(c, R(6, 122), R(20, 46), R(6, 12), R(4, 8), R(-0.5, 0.5));
+        c.fill();
+      }
+      c.fillStyle = 'rgba(126,200,98,0.45)';
+      for (let i = 0; i < 24; i++) {
+        ell(c, R(8, 120), R(18, 30), R(4, 8), R(2, 4));
+        c.fill();
+      }
+    });
+
+
+    // ---- Sprite 20: 4-Frame Ragnarok Online Adventurer Character ----
+    {
+      const fw = 64, fh = 80;
+      if (packX + fw * 4 > W - 16) { packX = 16; packY += rowH + 10; rowH = 0; }
+      manifest.character.x = packX;
+      manifest.character.y = packY;
+      manifest.character.frameW = fw;
+      manifest.character.frameH = fh;
+      manifest.character.frames = 4;
+    // Sprite 11: 4-Frame Ragnarok Online Adventurer Character
+    {
+      const chX = manifest.character.x, chY = manifest.character.y;
+      const cw = 64, ch = 80;
+      for (let f = 0; f < 4; f++) {
+        const ox = chX + f * cw + 32;
+        const oy = chY + ch - 10;
+        const bob = (f === 1 || f === 3) ? -2 : 0;
+        const swing = f === 1 ? -5 : (f === 3 ? 5 : 0);
+
+        ctx.fillStyle = 'rgba(20, 14, 8, 0.42)';
+        ctx.beginPath();
+        ctx.ellipse(ox, oy, 14, 6, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Boots
+        ctx.strokeStyle = '#4a331e';
+        ctx.lineWidth = 5;
+        ctx.beginPath();
+        ctx.moveTo(ox - 5, oy - 16); ctx.lineTo(ox - 5 + swing, oy - 2);
+        ctx.moveTo(ox + 5, oy - 16); ctx.lineTo(ox + 5 - swing, oy - 2);
+        ctx.stroke();
+
+        // Desert Assassin / Adventurer Cloak & Tunic
+        ctx.fillStyle = '#a8322d';
+        ctx.beginPath();
+        ctx.moveTo(ox - 13, oy - 14 + bob);
+        ctx.lineTo(ox - 9, oy - 38 + bob);
+        ctx.lineTo(ox + 9, oy - 38 + bob);
+        ctx.lineTo(ox + 13, oy - 14 + bob);
+        ctx.closePath();
+        ctx.fill();
+
+        ctx.fillStyle = '#e6dcc4';
+        ctx.fillRect(ox - 8, oy - 38 + bob, 16, 22);
+        ctx.fillStyle = '#b88e38';
+        ctx.fillRect(ox - 8, oy - 24 + bob, 16, 4);
+
+        // Head & Spiky Hair
+        ctx.fillStyle = '#f5cfa8';
+        ctx.beginPath();
+        ctx.arc(ox, oy - 45 + bob, 8.5, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = '#d48838';
+        ctx.beginPath();
+        ctx.moveTo(ox - 10, oy - 45 + bob);
+        ctx.lineTo(ox - 12, oy - 55 + bob);
+        ctx.lineTo(ox - 4, oy - 52 + bob);
+        ctx.lineTo(ox, oy - 60 + bob);
+        ctx.lineTo(ox + 5, oy - 52 + bob);
+        ctx.lineTo(ox + 12, oy - 55 + bob);
+        ctx.lineTo(ox + 10, oy - 45 + bob);
+        ctx.closePath();
+        ctx.fill();
+      }
+    }
+      packX += fw * 4 + 10;
+      rowH = Math.max(rowH, fh);
+    }
+
+    // Crop the atlas down to the used region and hand it to the renderer
+    const usedH = Math.min(H, packY + rowH + 16);
+    const out = document.createElement('canvas');
+    out.width = W;
+    out.height = usedH;
+    out.getContext('2d').drawImage(canvas, 0, 0);
+    return { canvas: out, manifest };
+  }
+  // ============================================================================
+  // 2. GENERATE DEFAULT PRONTERA CITY PARK MAP DATA (48x32 .GND + .GAT)
+  //    Reconstructs the attached Prontera park screenshot (uploads/image-1.png):
+  //    lawn + benches + crystal fountain, canal-side brick wall, cobble plaza.
+  // ============================================================================
+  function createPronteraMapData() {
+    const GW = 48, GH = 32;
+
+    // Right edge of the park lawn: straight along the wall, then it steps in
+    // toward the south-east plaza exactly like the reference screenshot.
+    function lawnRightEdge(gy) {
+      if (gy <= 4) return 35;
+      if (gy <= 13) return 36;
+      return Math.max(29, 36 - (gy - 13) * 0.8);
+    }
+
+    // Lawn painter choice -> reproduces the mown / shaded patches of the photo
+    function grassVariant(gx, gy) {
+      if (gy === 3 && gx >= 1 && gx <= 39) return 'grass_dark';   // city-wall shadow
+      if (gx >= 30 && gy <= 15) return 'grass_dark';              // big tree shade
+      if (gy >= 12 && gy <= 20 && gx >= 2 && gx <= 13) return 'grass_light';
+      if (((gx * 11 + gy * 7) % 29) === 0) return 'grass_dark';
+      if (((gx * 5 + gy * 3) % 23) === 0) return 'grass_light';
+      return 'grass';
+    }
+
+    function terrainAt(gx, gy) {
+      if (gy <= 1) return { type: 'water', walkable: false };                              // canal
+      if (gx >= 43 && gy <= 4) return { type: 'water', walkable: false };                   // canal corner
+      if (gx >= 43 && gy >= 5 && gy <= 8) return { type: 'cobble_worn', walkable: false };  // gate terrace
+      if (gy === 2 && gx <= 39) return { type: 'kerb_brick', walkable: false };             // city wall base
+      if (gy >= 22) return { type: 'cobble', walkable: true };                              // south plaza
+      const le = lawnRightEdge(gy);
+      if (gx > le + 1) return { type: 'cobble', walkable: true };                           // east plaza
+      if (gy === 21 && gx <= 30) return { type: 'kerb_brick', walkable: true };             // plaza kerb
+      if (gx > le) return { type: 'kerb_brick', walkable: true };                           // park kerb
+      return { type: grassVariant(gx, gy), walkable: true };                                // lawn
+    }
+
+    // ---- 3D vertex heights (.gnd) -------------------------------------------
+    const heights = Array.from({ length: GH + 1 }, () => new Float32Array(GW + 1));
+    const baseHeight = (type) => ({
+      water: 0.45, cobble: 0.96, kerb_brick: 1.10,
+      grass: 1.42, grass_dark: 1.42, grass_light: 1.42, stone_slab: 1.55
+    }[type] || 1.2);
+
+    for (let vy = 0; vy <= GH; vy++) {
+      for (let vx = 0; vx <= GW; vx++) {
+        let sum = 0, n = 0;
+        for (const [ox, oy] of [[-1, -1], [0, -1], [-1, 0], [0, 0]]) {
+          const gx = vx + ox, gy = vy + oy;
+          if (gx < 0 || gx >= GW || gy < 0 || gy >= GH) continue;
+          sum += baseHeight(terrainAt(gx, gy).type);
+          n++;
+        }
+        let h = n ? sum / n : 1.2;
+        h += Math.sin(vx * 0.35) * Math.cos(vy * 0.42) * 0.05;   // gentle lawn roll
+        if (vy <= 2) h += (3 - vy) * 0.12;                       // raised bank by the wall
+        if (vx >= 40 && vy >= 4 && vy <= 10) h += (10 - vy) * 0.05;
+        heights[vy][vx] = +h.toFixed(2);
+      }
+    }
+
+    const cells = [];
+    for (let gy = 0; gy < GH; gy++) {
+      const row = [];
+      for (let gx = 0; gx < GW; gx++) {
+        const t = terrainAt(gx, gy);
+        row.push({
+          x: gx, y: gy, type: t.type, walkable: t.walkable,
+          h: [heights[gy][gx], heights[gy][gx + 1], heights[gy + 1][gx + 1], heights[gy + 1][gx]]
+        });
+      }
+      cells.push(row);
+    }
+
+    // ---- Obstacle stamps (.gat): ponds, fountain, gateway & boulders block it
+    const blockers = [
+      { x: 16.4, y: 6.4,  rx: 2.6, ry: 1.7 },   // shrine pond
+      { x: 11.8, y: 12.6, rx: 1.8, ry: 1.5 },   // crystal fountain
+      { x: 42.6, y: 9.6,  rx: 1.7, ry: 2.3 },   // stone arch gateway
+      { x: 36.2, y: 19.8, rx: 0.8, ry: 0.8 },   // lamp post pedestal
+      { x: 44.6, y: 12.8, rx: 1.3, ry: 0.9 },   // boulders
+      { x: 40.4, y: 13.6, rx: 0.9, ry: 0.7 },
+      { x: 34.6, y: 14.2, rx: 0.9, ry: 0.7 }
+    ];
+    for (const b of blockers) {
+      for (let gy = Math.floor(b.y - b.ry); gy <= Math.ceil(b.y + b.ry); gy++) {
+        for (let gx = Math.floor(b.x - b.rx); gx <= Math.ceil(b.x + b.rx); gx++) {
+          if (gx < 0 || gx >= GW || gy < 0 || gy >= GH) continue;
+          const nx = (gx + 0.5 - b.x) / b.rx, ny = (gy + 0.5 - b.y) / b.ry;
+          if (nx * nx + ny * ny <= 1) cells[gy][gx].walkable = false;
+        }
+      }
+    }
+
+    // ---- Sprite layout (auto depth-sorted by the renderer) ------------------
+    const sprites = [
+      // ===== North pond, four carved pillars & flower beds (the shrine corner) =====
+      { id: 'pr01', type: 'fountain_pond',   x: 16.4, y: 6.4,  scale: 1.00 },
+      { id: 'pr02', type: 'pillar_sunburst', x: 12.3, y: 5.8,  scale: 0.74 },
+      { id: 'pr03', type: 'pillar_sunburst', x: 20.6, y: 5.6,  scale: 0.74, flip: true },
+      { id: 'pr04', type: 'pillar_lantern',  x: 14.7, y: 6.4,  scale: 0.64 },
+      { id: 'pr05', type: 'pillar_lantern',  x: 18.1, y: 6.4,  scale: 0.64 },
+      { id: 'pr06', type: 'flowerbed',       x: 13.5, y: 7.4,  scale: 1.00 },
+      { id: 'pr07', type: 'flowerbed',       x: 19.0, y: 7.2,  scale: 0.95, flip: true },
+      { id: 'pr08', type: 'flowerbed',       x: 11.9, y: 5.2,  scale: 0.80 },
+      { id: 'pr09', type: 'flowerbed',       x: 21.6, y: 5.0,  scale: 0.78, flip: true },
+      { id: 'pr10', type: 'flowerbed',       x: 1.8,  y: 6.6,  scale: 0.90 },
+      { id: 'pr11', type: 'flowerbed',       x: 5.2,  y: 5.4,  scale: 0.85, flip: true },
+      { id: 'pr12', type: 'flowerbed',       x: 7.6,  y: 9.0,  scale: 0.90 },
+      { id: 'pr13', type: 'flowerbed',       x: 8.4,  y: 14.0, scale: 0.95, flip: true },
+      { id: 'pr14', type: 'flowerbed',       x: 12.4, y: 15.0, scale: 0.90 },
+      { id: 'pr15', type: 'flowerbed',       x: 24.8, y: 8.4,  scale: 0.85, flip: true },
+
+      // ===== Central limestone fountain crowned by the pink mana crystal =====
+      { id: 'pr16', type: 'fountain_stone',  x: 11.8, y: 12.6, scale: 1.00 },
+
+      // ===== Park benches scattered over the lawn =====
+      { id: 'pr17', type: 'bench', x: 3.9,  y: 4.8,  scale: 1.05 },
+      { id: 'pr18', type: 'bench', x: 2.9,  y: 9.0,  scale: 1.00, flip: true },
+      { id: 'pr19', type: 'bench', x: 4.7,  y: 10.6, scale: 1.00 },
+      { id: 'pr20', type: 'bench', x: 9.4,  y: 7.6,  scale: 1.00, flip: true },
+      { id: 'pr21', type: 'bench', x: 13.7, y: 6.0,  scale: 1.00 },
+      { id: 'pr22', type: 'bench', x: 15.4, y: 8.8,  scale: 1.00, flip: true },
+      { id: 'pr23', type: 'bench', x: 17.4, y: 9.0,  scale: 1.00 },
+      { id: 'pr24', type: 'bench', x: 19.6, y: 10.2, scale: 1.00, flip: true },
+      { id: 'pr25', type: 'bench', x: 20.0, y: 12.2, scale: 1.00 },
+      { id: 'pr26', type: 'bench', x: 14.2, y: 13.4, scale: 1.00, flip: true },
+      { id: 'pr27', type: 'bench', x: 4.5,  y: 13.4, scale: 1.00 },
+      { id: 'pr28', type: 'bench', x: 6.3,  y: 14.2, scale: 1.00, flip: true },
+      { id: 'pr29', type: 'bench', x: 28.4, y: 10.8, scale: 1.00 },
+      { id: 'pr30', type: 'bench', x: 16.6, y: 19.6, scale: 1.00, flip: true },
+      { id: 'pr31', type: 'bench', x: 21.6, y: 20.2, scale: 1.00 },
+      { id: 'pr32', type: 'bench', x: 8.6,  y: 19.8, scale: 1.00 },
+
+      // ===== Broad round garden trees in stone planters =====
+      { id: 'pr33', type: 'tree_round',       x: 8.9,  y: 4.4, scale: 1.00 },
+      { id: 'pr34', type: 'tree_round',       x: 24.4, y: 2.4, scale: 0.88 },
+      { id: 'pr35', type: 'tree_round_small', x: 27.0, y: 2.0, scale: 0.95 },
+      { id: 'pr36', type: 'tree_round_small', x: 22.4, y: 3.6, scale: 0.80, flip: true },
+
+      // ===== Dark conifers lining the wall, the east plaza & the gate =====
+      { id: 'pr37', type: 'tree_conifer',       x: 29.8, y: 5.2,  scale: 0.86 },
+      { id: 'pr38', type: 'tree_conifer',       x: 33.4, y: 4.6,  scale: 0.80, flip: true },
+      { id: 'pr39', type: 'tree_conifer_small', x: 2.8,  y: 3.6,  scale: 1.00 },
+      { id: 'pr40', type: 'tree_conifer',       x: 35.4, y: 2.2,  scale: 0.72 },
+      { id: 'pr41', type: 'tree_conifer',       x: 36.9, y: 7.6,  scale: 0.88 },
+      { id: 'pr42', type: 'tree_conifer',       x: 41.6, y: 11.6, scale: 0.78, flip: true },
+      { id: 'pr43', type: 'tree_conifer_small', x: 40.9, y: 4.4,  scale: 0.90 },
+      { id: 'pr44', type: 'tree_conifer',       x: 31.9, y: 2.2,  scale: 0.66, flip: true },
+
+      // ===== Bushes & trimmed hedges =====
+      { id: 'pr45', type: 'bush',  x: 22.9, y: 6.6,  scale: 1.05 },
+      { id: 'pr46', type: 'bush',  x: 28.5, y: 7.0,  scale: 0.95 },
+      { id: 'pr47', type: 'bush',  x: 27.4, y: 13.2, scale: 1.00 },
+      { id: 'pr48', type: 'bush',  x: 30.6, y: 9.6,  scale: 0.85 },
+      { id: 'pr49', type: 'bush',  x: 12.4, y: 4.6,  scale: 0.85 },
+      { id: 'pr50', type: 'bush',  x: 20.8, y: 4.4,  scale: 0.90, flip: true },
+      { id: 'pr51', type: 'hedge', x: 4.6,  y: 3.6,  scale: 1.00 },
+      { id: 'pr52', type: 'hedge', x: 33.6, y: 8.4,  scale: 1.00 },
+      { id: 'pr53', type: 'hedge', x: 32.9, y: 10.8, scale: 0.95 },
+
+      // ===== Foreground lamp post carrying the two city banners =====
+      { id: 'pr54', type: 'lamp_post',    x: 36.2, y: 19.8, scale: 1.06 },
+      { id: 'pr55', type: 'banner_blue',  x: 37.95, y: 20.5, scale: 0.86 },
+      { id: 'pr56', type: 'banner_green', x: 34.5, y: 23.0, scale: 0.86 },
+      { id: 'pr57', type: 'postbox',      x: 31.6, y: 21.8, scale: 0.90 },
+
+      // ===== East gate house & mossy boulders =====
+      { id: 'pr58', type: 'arch_gateway', x: 42.6, y: 9.6,  scale: 0.85 },
+      { id: 'pr59', type: 'rock_cliff',   x: 44.6, y: 12.8, scale: 0.85 },
+      { id: 'pr60', type: 'rock_cliff',   x: 40.4, y: 13.6, scale: 0.62, flip: true }
+    ];
+
+    // Brick city wall along the canal bank: seamless 4-cell segments
+    for (let gx = -2; gx <= 40; gx += 4) {
+      sprites.push({ id: 'wall_' + gx, type: 'wall_brick', x: gx + 2, y: 2.98, scale: 1.0 });
+    }
+
+    return {
+      meta: {
+        name: 'prontera_city_park',
+        gridWidth: GW,
+        gridHeight: GH,
+        format: 'RO-2.5D-GND-GAT'
+      },
+      cameraDefault: { yaw: 0.0, pitch: 0.99, zoom: 0.86, panX: 0, panY: 2 },
+      cells,
+      sprites
+    };
+  }
+  class RagnarokMapRenderer {
+    constructor(canvas, atlasCanvas, manifest, mapData) {
+      this.canvas = canvas;
+      this.ctx = canvas.getContext('2d');
+      this.atlas = atlasCanvas;
+      this.manifest = manifest;
+      this.mapData = mapData;
+      this.refImage = null;
+
+      this.camera = Object.assign({}, mapData.cameraDefault);
+      this.options = {
+        renderMode: 'ro_25d',
+        splitRatio: 0.5,
+        showGrid: false,
+        xrayCanopy: true,
+        windSway: true,
+        brushSize: 1
+      };
+
+      this.hoveredCell = null;
+      this.selectedSprite = null;
+      this.character = {
+        x: 16.5, y: 13.5, z: 1.3,
+        frame: 0, animTimer: 0, speed: 5.0,
+        path: [], targetCell: null, ripple: 0
+      };
+
+      this.terrainCache = document.createElement('canvas');
+      this.terrainDirty = true;
+      this._camHash = '';
+      this.time = 0;
+      this.fps = 60;
+      this._frames = 0;
+      this._lastFps = performance.now();
+      this.syncCharHeight();
+    }
+
+    project3D(gx, gy, gz = 0) {
+      const gw = this.mapData.meta.gridWidth;
+      const gh = this.mapData.meta.gridHeight;
+      const W = this.canvas.width, H = this.canvas.height;
+      const baseScale = Math.min(W / (gw * 0.90), H / (gh * 0.72));
+      const scale = baseScale * this.camera.zoom;
+
+      const dx = gx - gw * 0.5;
+      const dy = gy - gh * 0.5;
+      const cosY = Math.cos(this.camera.yaw), sinY = Math.sin(this.camera.yaw);
+      const rx = dx * cosY - dy * sinY;
+      const ry = dx * sinY + dy * cosY;
+
+      // Ragnarok Online perspective foreshortening
+      const fov = 1.0 / Math.max(0.45, 1.0 - ry * 0.0082);
+      const sinP = Math.sin(this.camera.pitch), cosP = Math.cos(this.camera.pitch);
+
+      return {
+        x: W * 0.5 + this.camera.panX + rx * scale * fov,
+        y: H * 0.50 + this.camera.panY + (ry * sinP * scale * 0.92 - gz * scale * 0.36 * cosP) * fov,
+        depth: ry * cosP + gz * 0.12,
+        scale: scale * fov
+      };
+    }
+
+    getCell(gx, gy) {
+      const { gridWidth: gw, gridHeight: gh } = this.mapData.meta;
+      if (gx < 0 || gx >= gw || gy < 0 || gy >= gh) return null;
+      return this.mapData.cells[gy][gx];
+    }
+
+    getHeightAt(gx, gy) {
+      const cell = this.getCell(Math.floor(gx), Math.floor(gy));
+      if (!cell) return 0;
+      const fx = gx - Math.floor(gx), fy = gy - Math.floor(gy);
+      const [h00, h10, h11, h01] = cell.h;
+      return (h00 * (1 - fx) + h10 * fx) * (1 - fy) + (h01 * (1 - fx) + h11 * fx) * fy;
+    }
+
+    syncCharHeight() {
+      this.character.z = this.getHeightAt(this.character.x, this.character.y);
+    }
+
+    pickCellAtScreen(mx, my) {
+      const { gridWidth: gw, gridHeight: gh } = this.mapData.meta;
+      let best = null, bestD = -Infinity;
+      for (let gy = 0; gy < gh; gy++) {
+        for (let gx = 0; gx < gw; gx++) {
+          const cell = this.mapData.cells[gy][gx];
+          if (cell.type === 'sky') continue;
+          const p00 = this.project3D(gx, gy, cell.h[0]);
+          const p10 = this.project3D(gx + 1, gy, cell.h[1]);
+          const p11 = this.project3D(gx + 1, gy + 1, cell.h[2]);
+          const p01 = this.project3D(gx, gy + 1, cell.h[3]);
+          if (this._inQuad(mx, my, p00, p10, p11, p01)) {
+            const d = (p00.depth + p10.depth + p11.depth + p01.depth) * 0.25;
+            if (d >= bestD) { bestD = d; best = cell; }
+          }
+        }
+      }
+      return best;
+    }
+
+    _inQuad(px, py, a, b, c, d) {
+      const tri = (p1, p2, p3) => {
+        const d1 = (px - p2.x) * (p1.y - p2.y) - (p1.x - p2.x) * (py - p2.y);
+        const d2 = (px - p3.x) * (p2.y - p3.y) - (p2.x - p3.x) * (py - p3.y);
+        const d3 = (px - p1.x) * (p3.y - p1.y) - (p3.x - p1.x) * (py - p1.y);
+        return !((d1 < 0 || d2 < 0 || d3 < 0) && (d1 > 0 || d2 > 0 || d3 > 0));
+      };
+      return tri(a, b, c) || tri(a, c, d);
+    }
+
+    // 8-Directional A* Pathfinding on .GAT walkable grid
+    findPath(sx, sy, tx, ty) {
+      const { gridWidth: gw } = this.mapData.meta;
+      sx = Math.floor(sx); sy = Math.floor(sy);
+      tx = Math.floor(tx); ty = Math.floor(ty);
+      const goal = this.getCell(tx, ty);
+      if (!goal || !goal.walkable || (sx === tx && sy === ty)) return [];
+
+      const key = (x, y) => y * gw + x;
+      const open = [{ x: sx, y: sy, g: 0, f: Math.hypot(tx - sx, ty - sy) }];
+      const from = new Map(), gMap = new Map([[key(sx, sy), 0]]), closed = new Set();
+      const dirs = [[0,-1,1],[1,0,1],[0,1,1],[-1,0,1],[-1,-1,1.41],[1,-1,1.41],[1,1,1.41],[-1,1,1.41]];
+
+      let iter = 0;
+      while (open.length && iter++ < 2200) {
+        open.sort((a, b) => a.f - b.f);
+        const cur = open.shift();
+        const ck = key(cur.x, cur.y);
+        if (cur.x === tx && cur.y === ty) {
+          const path = [];
+          let k = ck;
+          while (from.has(k)) {
+            path.unshift({ x: (k % gw) + 0.5, y: Math.floor(k / gw) + 0.5 });
+            k = from.get(k);
+          }
+          return path;
+        }
+        closed.add(ck);
+        for (const [dx, dy, cost] of dirs) {
+          const nx = cur.x + dx, ny = cur.y + dy;
+          const nc = this.getCell(nx, ny);
+          if (!nc || !nc.walkable) continue;
+          const nk = key(nx, ny);
+          if (closed.has(nk)) continue;
+          const ng = gMap.get(ck) + cost;
+          if (!gMap.has(nk) || ng < gMap.get(nk)) {
+            from.set(nk, ck);
+            gMap.set(nk, ng);
+            const ex = open.find(o => o.x === nx && o.y === ny);
+            if (ex) { ex.g = ng; ex.f = ng + Math.hypot(tx - nx, ty - ny); }
+            else open.push({ x: nx, y: ny, g: ng, f: ng + Math.hypot(tx - nx, ty - ny) });
+          }
+        }
+      }
+      return [];
+    }
+
+    moveCharacterTo(gx, gy) {
+      const path = this.findPath(this.character.x, this.character.y, gx, gy);
+      if (path.length) {
+        this.character.path = path;
+        this.character.targetCell = { x: Math.floor(gx), y: Math.floor(gy) };
+        this.character.ripple = 1.0;
+      }
+    }
+
+    rebuildTerrainCache() {
+      const W = this.canvas.width, H = this.canvas.height;
+      this.terrainCache.width = W;
+      this.terrainCache.height = H;
+      const ctx = this.terrainCache.getContext('2d');
+
+      // Deep canal water behind the whole map (Prontera is ringed by moats)
+      ctx.fillStyle = '#2c7fb0';
+      ctx.fillRect(0, 0, W, H);
+
+      const { gridWidth: gw, gridHeight: gh } = this.mapData.meta;
+      const quads = [];
+      for (let gy = 0; gy < gh; gy++) {
+        for (let gx = 0; gx < gw; gx++) {
+          const cell = this.mapData.cells[gy][gx];
+          if (cell.type === 'sky') continue;
+          const p00 = this.project3D(gx, gy, cell.h[0]);
+          const p10 = this.project3D(gx + 1, gy, cell.h[1]);
+          const p11 = this.project3D(gx + 1, gy + 1, cell.h[2]);
+          const p01 = this.project3D(gx, gy + 1, cell.h[3]);
+          const avgD = (p00.depth + p10.depth + p11.depth + p01.depth) * 0.25;
+          quads.push({ cell, gx, gy, p00, p10, p11, p01, avgD });
+        }
+      }
+      quads.sort((a, b) => a.avgD - b.avgD);
+
+      const patterns = {};
+      for (const [k, t] of Object.entries(this.manifest.tiles)) {
+        patterns[k] = ctx.createPattern(t.canvas, 'repeat');
+      }
+
+      for (const { cell, gx, gy, p00, p10, p11, p01 } of quads) {
+        ctx.save();
+        ctx.beginPath();
+        ctx.moveTo(p00.x, p00.y);
+        ctx.lineTo(p10.x, p10.y);
+        ctx.lineTo(p11.x, p11.y);
+        ctx.lineTo(p01.x, p01.y);
+        ctx.closePath();
+
+        // Draw black RO horizon border along cells touching sky
+        const touchesSky = (gy === 0) || (this.getCell(gx - 1, gy)?.type === 'sky') || (this.getCell(gx, gy - 1)?.type === 'sky');
+        if (touchesSky) {
+          ctx.lineWidth = 5;
+          ctx.strokeStyle = '#080604';
+          ctx.stroke();
+        }
+
+        ctx.fillStyle = patterns[cell.type] || patterns.sand || '#92754b';
+        ctx.fill();
+
+        // 3D slope & RO tile lightmap variation
+        const [h00, h10, h11, h01] = cell.h;
+        const slopeX = ((h10 + h11) - (h00 + h01)) * 0.5;
+        const slopeY = ((h01 + h11) - (h00 + h10)) * 0.5;
+        const light = -(slopeX * -0.6 + slopeY * -0.5);
+
+        // Classic RO checkerboard/patch subtle tile lightmap variation on sand
+        const tileShade = ((gx * 13 + gy * 7) % 5 === 0) ? -0.05 : (((gx + gy) % 3 === 0) ? 0.03 : 0);
+        const totalLight = light * 0.22 + tileShade;
+
+        if (cell.type === 'cliff') {
+          ctx.fillStyle = light < 0 ? 'rgba(18, 12, 6, 0.42)' : 'rgba(200, 175, 135, 0.14)';
+          ctx.fill();
+        } else if (totalLight > 0.02) {
+          ctx.fillStyle = `rgba(245, 220, 165, ${Math.min(0.24, totalLight).toFixed(3)})`;
+          ctx.fill();
+        } else if (totalLight < -0.02) {
+          ctx.fillStyle = `rgba(34, 24, 12, ${Math.min(0.36, -totalLight).toFixed(3)})`;
+          ctx.fill();
+        }
+
+        // Subtle RO .gnd tile seam
+        ctx.strokeStyle = 'rgba(58, 44, 26, 0.18)';
+        ctx.lineWidth = 0.8;
+        ctx.stroke();
+        ctx.restore();
+      }
+      this.terrainDirty = false;
+    }
+
+    update(dt) {
+      this.time += dt;
+      const ch = this.character;
+      if (ch.ripple > 0) ch.ripple = Math.max(0, ch.ripple - dt * 1.5);
+      if (ch.path.length) {
+        const next = ch.path[0];
+        const dx = next.x - ch.x, dy = next.y - ch.y;
+        const dist = Math.hypot(dx, dy);
+        const step = ch.speed * dt;
+        if (dist <= step) {
+          ch.x = next.x; ch.y = next.y; ch.path.shift();
+        } else {
+          ch.x += (dx / dist) * step;
+          ch.y += (dy / dist) * step;
+        }
+        this.syncCharHeight();
+        ch.animTimer += dt * 9;
+        ch.frame = Math.floor(ch.animTimer) % 4;
+      } else {
+        ch.frame = 0;
+      }
+    }
+
+    render() {
+      const W = this.canvas.width, H = this.canvas.height;
+      const ctx = this.ctx;
+      const hash = `${W}x${H}_${this.camera.yaw.toFixed(3)}_${this.camera.pitch.toFixed(3)}_${this.camera.zoom.toFixed(3)}_${this.camera.panX.toFixed(1)}_${this.camera.panY.toFixed(1)}`;
+      if (this.terrainDirty || hash !== this._camHash) {
+        this.rebuildTerrainCache();
+        this._camHash = hash;
+      }
+
+      // 1. Draw cached 3D Desert Terrain Mesh
+      ctx.drawImage(this.terrainCache, 0, 0);
+
+      // 2. Draw Walkable .GAT Grid & Hovered Cell Cursor
+      this._renderGridAndCursor(ctx);
+
+      // 3. Draw Depth-Sorted 2.5D Desert Sprites & Adventurer Character
+      this._renderSprites(ctx);
+
+      // 4. Optional Split-Screen Comparison with Reference Screenshot
+      if (this.options.renderMode === 'split_ref' && this.refImage && this.refImage.complete) {
+        const sx = Math.floor(W * this.options.splitRatio);
+        ctx.save();
+        ctx.beginPath();
+        ctx.rect(0, 0, sx, H);
+        ctx.clip();
+        ctx.drawImage(this.refImage, 0, 0, W, H);
+        ctx.restore();
+
+        ctx.strokeStyle = '#f0b849';
+        ctx.lineWidth = 2.5;
+        ctx.beginPath();
+        ctx.moveTo(sx, 0); ctx.lineTo(sx, H);
+        ctx.stroke();
+      }
+    }
+
+    _renderGridAndCursor(ctx) {
+      const { gridWidth: gw, gridHeight: gh } = this.mapData.meta;
+      if (this.options.showGrid) {
+        ctx.save();
+        for (let gy = 0; gy < gh; gy++) {
+          for (let gx = 0; gx < gw; gx++) {
+            const cell = this.mapData.cells[gy][gx];
+            if (cell.type === 'sky') continue;
+            const p00 = this.project3D(gx, gy, cell.h[0]);
+            const p10 = this.project3D(gx + 1, gy, cell.h[1]);
+            const p11 = this.project3D(gx + 1, gy + 1, cell.h[2]);
+            const p01 = this.project3D(gx, gy + 1, cell.h[3]);
+            ctx.beginPath();
+            ctx.moveTo(p00.x, p00.y); ctx.lineTo(p10.x, p10.y);
+            ctx.lineTo(p11.x, p11.y); ctx.lineTo(p01.x, p01.y);
+            ctx.closePath();
+            ctx.fillStyle = cell.walkable ? 'rgba(72, 229, 154, 0.08)' : 'rgba(255, 80, 80, 0.14)';
+            ctx.strokeStyle = cell.walkable ? 'rgba(72, 229, 154, 0.28)' : 'rgba(255, 80, 80, 0.32)';
+            ctx.fill();
+            ctx.stroke();
+          }
+        }
+        ctx.restore();
+      }
+
+      // Click target ripple
+      if (this.character.targetCell && this.character.ripple > 0) {
+        const tc = this.character.targetCell;
+        const pt = this.project3D(tc.x + 0.5, tc.y + 0.5, this.getHeightAt(tc.x + 0.5, tc.y + 0.5));
+        const r = (1.1 - this.character.ripple * 0.7) * pt.scale * 0.7;
+        ctx.save();
+        ctx.strokeStyle = `rgba(72, 245, 168, ${this.character.ripple.toFixed(2)})`;
+        ctx.lineWidth = 2.4;
+        ctx.beginPath();
+        ctx.ellipse(pt.x, pt.y, r, r * 0.58, 0, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.restore();
+      }
+
+      // Hovered cell RO cursor quad
+      if (this.hoveredCell) {
+        const hc = this.hoveredCell;
+        const rad = Math.max(0, (this.options.brushSize || 1) - 1);
+        ctx.save();
+        for (let dy = -rad; dy <= rad; dy++) {
+          for (let dx = -rad; dx <= rad; dx++) {
+            const c = this.getCell(hc.x + dx, hc.y + dy);
+            if (!c || c.type === 'sky') continue;
+            const p00 = this.project3D(c.x, c.y, c.h[0]);
+            const p10 = this.project3D(c.x + 1, c.y, c.h[1]);
+            const p11 = this.project3D(c.x + 1, c.y + 1, c.h[2]);
+            const p01 = this.project3D(c.x, c.y + 1, c.h[3]);
+            ctx.beginPath();
+            ctx.moveTo(p00.x, p00.y); ctx.lineTo(p10.x, p10.y);
+            ctx.lineTo(p11.x, p11.y); ctx.lineTo(p01.x, p01.y);
+            ctx.closePath();
+            ctx.fillStyle = c.walkable ? 'rgba(72, 245, 168, 0.32)' : 'rgba(255, 80, 80, 0.32)';
+            ctx.strokeStyle = c.walkable ? '#82ffd2' : '#ff8282';
+            ctx.lineWidth = 2;
+            ctx.fill();
+            ctx.stroke();
+          }
+        }
+        ctx.restore();
+      }
+    }
+
+    _renderSprites(ctx) {
+      const items = [];
+      const charPt = this.project3D(this.character.x, this.character.y, this.character.z);
+      items.push({ kind: 'char', depth: charPt.depth, pt: charPt });
+
+      for (const sp of this.mapData.sprites) {
+        const gz = this.getHeightAt(sp.x, sp.y);
+        const pt = this.project3D(sp.x, sp.y, gz);
+        items.push({ kind: 'sprite', sp, pt, depth: pt.depth });
+      }
+      items.sort((a, b) => a.depth - b.depth);
+
+      for (const it of items) {
+        if (it.kind === 'char') {
+          const ch = this.manifest.character;
+          const sc = (it.pt.scale / 32) * 1.30;
+          const dw = ch.frameW * sc, dh = ch.frameH * sc;
+          ctx.drawImage(
+            this.atlas,
+            ch.x + (this.character.frame % ch.frames) * ch.frameW, ch.y, ch.frameW, ch.frameH,
+            it.pt.x - dw * 0.5, it.pt.y - dh * 0.88, dw, dh
+          );
+          // HP/SP bar
+          const bw = 32 * sc, bh = Math.max(3, 3.5 * sc);
+          ctx.fillStyle = '#0d131a';
+          ctx.fillRect(it.pt.x - bw * 0.5 - 1, it.pt.y - dh * 0.96 - 1, bw + 2, bh * 2 + 3);
+          ctx.fillStyle = '#28e860';
+          ctx.fillRect(it.pt.x - bw * 0.5, it.pt.y - dh * 0.96, bw, bh);
+          ctx.fillStyle = '#2898ff';
+          ctx.fillRect(it.pt.x - bw * 0.5, it.pt.y - dh * 0.96 + bh + 1, bw * 0.85, bh);
+        } else {
+          const { sp, pt } = it;
+          const rect = this.manifest.sprites[sp.type];
+          if (!rect) continue;
+          const sc = (pt.scale / 32) * (sp.scale || 1.0);
+          const dw = rect.w * sc, dh = rect.h * sc;
+          const ax = rect.anchorX * sc, ay = rect.anchorY * sc;
+
+          const isCanopy = sp.type.startsWith('tree_') || sp.type.startsWith('bush') ||
+                           sp.type.startsWith('hedge') || sp.type.startsWith('banner') || sp.sway === true;
+          let alpha = 1.0;
+          if (this.options.xrayCanopy && isCanopy) {
+            if (charPt.depth < pt.depth && Math.abs(charPt.x - pt.x) < dw * 0.4 && (pt.y - charPt.y) > 0 && (pt.y - charPt.y) < dh * 0.92) {
+              alpha = 0.45;
+            }
+          }
+          const sway = (this.options.windSway && isCanopy)
+            ? Math.sin(this.time * 1.7 + sp.x * 0.5 + sp.y * 0.4) * 0.022
+            : 0;
+
+          ctx.save();
+          ctx.translate(pt.x, pt.y);
+          if (sp.flip) ctx.scale(-1, 1);
+          if (sway) ctx.transform(1, 0, sway, 1, 0, 0);
+          ctx.globalAlpha = alpha;
+          ctx.drawImage(this.atlas, rect.x, rect.y, rect.w, rect.h, -ax, -ay, dw, dh);
+          ctx.restore();
+        }
+      }
+    }
+
+    start() {
+      let last = performance.now();
+      const loop = (now) => {
+        const dt = Math.min(0.05, (now - last) / 1000);
+        last = now;
+        this._frames++;
+        if (now - this._lastFps >= 500) {
+          this.fps = Math.round((this._frames * 1000) / (now - this._lastFps));
+          this._frames = 0;
+          this._lastFps = now;
+        }
+        this.update(dt);
+        this.render();
+        requestAnimationFrame(loop);
+      };
+      requestAnimationFrame(loop);
+    }
+  }
+
+  // ============================================================================
+  // 4. INITIALIZE THE PRONTERA 2.5D STUDIO & UI CONTROLS
+  // ============================================================================
+  (function initApp() {
+    const canvas = document.getElementById('mapCanvas');
+    const viewport = document.getElementById('viewport');
+
+    const { canvas: atlasCanvas, manifest } = createPronteraSpriteAtlas();
+    document.getElementById('atlasContainer').appendChild(atlasCanvas);
+
+    const mapData = createPronteraMapData();
+    const engine = new RagnarokMapRenderer(canvas, atlasCanvas, manifest, mapData);
+    document.getElementById('hudSprites').textContent = mapData.sprites.length;
+
+    // Optional reference image for Split Compare mode
+    const refImg = new Image();
+    refImg.src = './uploads/image-1.png';
+    engine.refImage = refImg;
+
+    let mode = 'play';
+    let brush = 'grass';
+    let spriteType = 'bench';
+    let leftDown = false, rightDown = false;
+    let lastM = { x: 0, y: 0 };
+
+    function resize() {
+      const r = viewport.getBoundingClientRect();
+      canvas.width = Math.max(640, Math.floor(r.width));
+      canvas.height = Math.max(400, Math.floor(r.height));
+      engine.terrainDirty = true;
+    }
+    window.addEventListener('resize', resize);
+    resize();
+    engine.start();
+
+    document.querySelectorAll('.tab').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        mode = btn.dataset.mode;
+        document.getElementById('panelPlay').style.display = mode === 'play' ? 'flex' : 'none';
+        document.getElementById('panelTerrain').style.display = mode === 'terrain' ? 'flex' : 'none';
+        document.getElementById('panelSprites').style.display = mode === 'sprites' ? 'flex' : 'none';
+        engine.options.brushSize = mode === 'terrain' ? +document.getElementById('rngBrush').value : 1;
+      });
+    });
+
+    document.querySelectorAll('#terrainPalette .p-item').forEach(el => {
+      el.addEventListener('click', () => {
+        document.querySelectorAll('#terrainPalette .p-item').forEach(i => i.classList.remove('active'));
+        el.classList.add('active');
+        brush = el.dataset.brush;
+      });
+    });
+
+    document.querySelectorAll('#spritePalette .p-item').forEach(el => {
+      el.addEventListener('click', () => {
+        document.querySelectorAll('#spritePalette .p-item').forEach(i => i.classList.remove('active'));
+        el.classList.add('active');
+        spriteType = el.dataset.sprite;
+      });
+    });
+
+    function paintAt(center) {
+      if (!center) return;
+      const rad = Math.max(0, (engine.options.brushSize || 1) - 1);
+      for (let dy = -rad; dy <= rad; dy++) {
+        for (let dx = -rad; dx <= rad; dx++) {
+          const c = engine.getCell(center.x + dx, center.y + dy);
+          if (!c) continue;
+          if (brush === 'raise') c.h = c.h.map(v => +(v + 0.20).toFixed(2));
+          else if (brush === 'lower') c.h = c.h.map(v => +(v - 0.20).toFixed(2));
+          else if (brush === 'walk_toggle') c.walkable = !c.walkable;
+          else {
+            c.type = brush;
+            c.walkable = brush !== 'water';
+          }
+        }
+      }
+      engine.syncCharHeight();
+      engine.terrainDirty = true;
+    }
+
+    canvas.addEventListener('contextmenu', e => e.preventDefault());
+    canvas.addEventListener('mousedown', e => {
+      const r = canvas.getBoundingClientRect();
+      const mx = e.clientX - r.left, my = e.clientY - r.top;
+      lastM = { x: mx, y: my };
+      if (e.button === 2) { rightDown = true; return; }
+      if (e.button === 0) {
+        leftDown = true;
+        const cell = engine.pickCellAtScreen(mx, my);
+        if (!cell) return;
+        if (mode === 'play') engine.moveCharacterTo(cell.x + 0.5, cell.y + 0.5);
+        else if (mode === 'terrain') paintAt(cell);
+        else if (mode === 'sprites') {
+          engine.mapData.sprites.push({
+            id: 'sp_' + Date.now(),
+            type: spriteType,
+            x: +(cell.x + 0.5).toFixed(2),
+            y: +(cell.y + 0.5).toFixed(2),
+            scale: +document.getElementById('rngSpScale').value,
+            flip: document.getElementById('chkSpFlip').checked
+          });
+          document.getElementById('hudSprites').textContent = engine.mapData.sprites.length;
+        }
+      }
+    });
+
+    window.addEventListener('mousemove', e => {
+      const r = canvas.getBoundingClientRect();
+      const mx = e.clientX - r.left, my = e.clientY - r.top;
+      const dx = mx - lastM.x, dy = my - lastM.y;
+      lastM = { x: mx, y: my };
+
+      if (rightDown) {
+        engine.camera.yaw = Math.max(-1.5, Math.min(1.5, engine.camera.yaw + dx * 0.0065));
+        engine.camera.pitch = Math.max(0.42, Math.min(1.10, engine.camera.pitch + dy * 0.005));
+        document.getElementById('rngYaw').value = engine.camera.yaw.toFixed(2);
+        document.getElementById('rngPitch').value = engine.camera.pitch.toFixed(2);
+        engine.terrainDirty = true;
+        return;
+      }
+
+      if (mx >= 0 && mx <= canvas.width && my >= 0 && my <= canvas.height) {
+        const cell = engine.pickCellAtScreen(mx, my);
+        engine.hoveredCell = cell;
+        if (cell) {
+          document.getElementById('hudCell').textContent = `${cell.x}, ${cell.y}`;
+          document.getElementById('hudH').textContent = cell.h[0].toFixed(2);
+          document.getElementById('hudTile').textContent = cell.type;
+          const wEl = document.getElementById('hudWalk');
+          wEl.textContent = cell.walkable ? 'YES' : 'NO';
+          wEl.style.color = cell.walkable ? '#48e59a' : '#ff6464';
+          if (leftDown && mode === 'terrain') paintAt(cell);
+        }
+      }
+    });
+
+    window.addEventListener('mouseup', () => { leftDown = false; rightDown = false; });
+    canvas.addEventListener('wheel', e => {
+      e.preventDefault();
+      engine.camera.zoom = Math.max(0.55, Math.min(2.10, engine.camera.zoom * (e.deltaY < 0 ? 1.08 : 0.92)));
+      document.getElementById('rngZoom').value = engine.camera.zoom.toFixed(2);
+      engine.terrainDirty = true;
+    }, { passive: false });
+
+    function resetCamera() {
+      Object.assign(engine.camera, engine.mapData.cameraDefault);
+      document.getElementById('rngYaw').value = engine.camera.yaw;
+      document.getElementById('rngPitch').value = engine.camera.pitch;
+      document.getElementById('rngZoom').value = engine.camera.zoom;
+      engine.terrainDirty = true;
+    }
+
+    window.addEventListener('keydown', e => {
+      if (['TEXTAREA', 'INPUT'].includes(e.target.tagName)) return;
+      const step = 22;
+      if (e.key === 'w' || e.key === 'ArrowUp') { engine.camera.panY += step; engine.terrainDirty = true; }
+      if (e.key === 's' || e.key === 'ArrowDown') { engine.camera.panY -= step; engine.terrainDirty = true; }
+      if (e.key === 'a' || e.key === 'ArrowLeft') { engine.camera.panX += step; engine.terrainDirty = true; }
+      if (e.key === 'd' || e.key === 'ArrowRight') { engine.camera.panX -= step; engine.terrainDirty = true; }
+      if (e.key.toLowerCase() === 'g') {
+        const chk = document.getElementById('chkGrid');
+        chk.checked = !chk.checked;
+        engine.options.showGrid = chk.checked;
+      }
+      if (e.key.toLowerCase() === 'r') resetCamera();
+    });
+
+    document.getElementById('selRenderMode').addEventListener('change', e => {
+      engine.options.renderMode = e.target.value;
+      document.getElementById('rowSplit').style.display = e.target.value === 'split_ref' ? 'flex' : 'none';
+    });
+    document.getElementById('rngSplit').addEventListener('input', e => engine.options.splitRatio = +e.target.value);
+    document.getElementById('chkGrid').addEventListener('change', e => engine.options.showGrid = e.target.checked);
+    document.getElementById('chkXray').addEventListener('change', e => engine.options.xrayCanopy = e.target.checked);
+    document.getElementById('chkWind').addEventListener('change', e => engine.options.windSway = e.target.checked);
+    document.getElementById('rngYaw').addEventListener('input', e => { engine.camera.yaw = +e.target.value; engine.terrainDirty = true; });
+    document.getElementById('rngPitch').addEventListener('input', e => { engine.camera.pitch = +e.target.value; engine.terrainDirty = true; });
+    document.getElementById('rngZoom').addEventListener('input', e => { engine.camera.zoom = +e.target.value; engine.terrainDirty = true; });
+    document.getElementById('rngBrush').addEventListener('input', e => engine.options.brushSize = +e.target.value);
+    document.getElementById('btnResetCam').addEventListener('click', resetCamera);
+
+    document.getElementById('btnWalkFountain').addEventListener('click', () => engine.moveCharacterTo(13.5, 15.5));
+    document.getElementById('btnWalkPlaza').addEventListener('click', () => engine.moveCharacterTo(35.5, 24.5));
+    document.getElementById('btnDelSprite').addEventListener('click', () => {
+      engine.mapData.sprites.pop();
+      document.getElementById('hudSprites').textContent = engine.mapData.sprites.length;
+    });
+
+    function dl(uri, name) {
+      const a = document.createElement('a');
+      a.href = uri; a.download = name; a.click();
+    }
+    document.getElementById('btnDlMapPng').addEventListener('click', () => dl(canvas.toDataURL('image/png'), 'prontera-city-park-map.png'));
+    document.getElementById('btnDlSheetPng').addEventListener('click', () => dl(atlasCanvas.toDataURL('image/png'), 'prontera-spritesheet.png'));
+    document.getElementById('btnModalDlSheet').addEventListener('click', () => dl(atlasCanvas.toDataURL('image/png'), 'prontera-spritesheet.png'));
+
+    document.getElementById('btnShowAtlas').addEventListener('click', () => document.getElementById('modalAtlas').classList.add('open'));
+    document.getElementById('btnShowJson').addEventListener('click', () => {
+      document.getElementById('txtJson').value = JSON.stringify(engine.mapData, null, 2);
+      document.getElementById('modalJson').classList.add('open');
+    });
+    document.getElementById('btnCopyPasteCode').addEventListener('click', () => {
+      document.getElementById('txtSnippet').value =
+`<!-- Minimal Drop-In Ragnarok 2.5D Prontera City Park Map -->
+<canvas id="gameCanvas" width="1024" height="640"></canvas>
+<script>
+${createPronteraSpriteAtlas.toString()}
+${createPronteraMapData.toString()}
+${RagnarokMapRenderer.toString()}
+
+const canvas = document.getElementById('gameCanvas');
+const { canvas: atlas, manifest } = createPronteraSpriteAtlas();
+const mapData = createPronteraMapData();
+const map = new RagnarokMapRenderer(canvas, atlas, manifest, mapData);
+
+canvas.addEventListener('click', e => {
+  const r = canvas.getBoundingClientRect();
+  const cell = map.pickCellAtScreen(e.clientX - r.left, e.clientY - r.top);
+  if (cell && cell.walkable) map.moveCharacterTo(cell.x + 0.5, cell.y + 0.5);
+});
+map.start();
+<\/script>`;
+      document.getElementById('modalCode').classList.add('open');
+    });
+
+    document.getElementById('btnCopyJson').addEventListener('click', () => navigator.clipboard.writeText(document.getElementById('txtJson').value));
+    document.getElementById('btnApplyJson').addEventListener('click', () => {
+      try {
+        engine.mapData = JSON.parse(document.getElementById('txtJson').value);
+        engine.terrainDirty = true;
+        document.getElementById('modalJson').classList.remove('open');
+      } catch (err) { alert('Invalid JSON: ' + err.message); }
+    });
+    document.getElementById('btnCopySnippet').addEventListener('click', () => navigator.clipboard.writeText(document.getElementById('txtSnippet').value));
+
+    document.querySelectorAll('[data-close]').forEach(b => {
+      b.addEventListener('click', () => document.getElementById(b.dataset.close).classList.remove('open'));
+    });
+
+    setInterval(() => { document.getElementById('hudFps').textContent = engine.fps; }, 500);
+  })();
+  </script>
+<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a44bc9bd6b2adc13',t:'MTc5MTAyODg0Mw=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><script type="module" src="https://static.cloudflareinsights.com/beacon.min.js/v31edd6df95cf4e85bb4c19e7a9bdbcba1788362987495" integrity="sha512-iIg7k2xntmwu6/uSb5tpc/hySgZc4eoL31yB29W6tJFo2akwjPWcEqnCEdJvGexCL0KEQwVYv5BlowfhVz26hg==" data-cf-beacon='{"version":"2024.11.0","token":"1954b47c125f43f8b4338b3c4f804e4f","spa":2}' crossorigin="anonymous"></script>
+</body>
+</html>
