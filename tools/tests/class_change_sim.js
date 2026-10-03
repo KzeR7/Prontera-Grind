@@ -29,7 +29,7 @@ const dualOk = it => dualOn() && (it.wt === 'dagger' || it.wt === 'katar');
 const C = () => CLASSES[S.cls] || CLASSES.Novice;
 const SKILLS = [{id:'aid',cls:['Novice']},{id:'hide',cls:['Thief','Assassin','Assassin Cross']},{id:'enb',cls:['Swordman','Knight','Lord Knight']}];
 const log = () => {}, ui = () => {}, save = () => {}, addFloat = () => {}, pl = {x:0, z:0};
-this.__h = {changeClass, classBlock, playedClass, classRec, snapClass, equipRec, noviceRun, clearClassSkills,
+this.__h = {changeClass, classBlock, playedClass, playedClasses, collDmg, classRec, snapClass, equipRec, noviceRun, clearClassSkills, CLASSES,
             set S(v){S=v}, get S(){return S}};
 `;
 const sb = { console };
@@ -217,6 +217,48 @@ t('an unplayed class still starts a fresh build at your own Base Lv', () => {
   assert.strictEqual(H.S.lv, 30, 'a new class carries on at your Base Lv');
   assert.strictEqual(H.S.jobs.Thief.jl, 1, 'and starts its job at level 1');
   assert.ok(H.S.pts > 0, 'stats are refunded for a new build');
+});
+
+// ---- the class-collection bonus (v17: play all classes, +2% damage each) ----------
+t('the collection counts the class being played plus every recorded class', () => {
+  H.S = mk();                                    // a fresh Novice
+  assert.strictEqual(H.playedClasses(), 1, 'the starting class counts as played');
+  assert.strictEqual(H.collDmg(), 2, '+2% per class played');
+  H.S.base.Swordman = {lv:30}; H.S.base.Mage = {lv:20};
+  assert.strictEqual(H.playedClasses(), 3, 'each S.base record adds one');
+  assert.strictEqual(H.collDmg(), 6);
+  H.S.cls = 'Swordman';                          // playing a recorded class again never double-counts
+  assert.strictEqual(H.playedClasses(), 2, 'Novice is gone from the set, Swordman dedupes');
+  assert.strictEqual(H.collDmg(), 4);
+});
+
+t('the collection survives odd save shapes and caps at all 19 classes', () => {
+  H.S = mk();
+  H.S.base.BROKEN = null;                        // malformed records never count
+  assert.strictEqual(H.playedClasses(), 1);
+  const all = Object.keys(H.CLASSES);
+  assert.strictEqual(all.length, 19, 'there are 19 classes to collect');
+  H.S.base = {}; all.forEach(n => H.S.base[n] = {lv:10});
+  H.S.cls = 'Novice';                            // current class also recorded -> no double count
+  assert.strictEqual(H.playedClasses(), 19);
+  assert.strictEqual(H.collDmg(), 38, 'the cap is 19 x 2%');
+});
+
+t('every class you leave leaves a record, so the collection grows by playing', () => {
+  H.S = mk({cls:'Novice', lv:15, jobs:{Novice:{jl:10,jx:0}}, base:{}});
+  H.S.pts = 0;
+  H.changeClass('Swordman');
+  assert.ok(H.S.base.Novice, 'stepping away records the old class');
+  H.S.jobs.Swordman = {jl:40, jx:0};
+  H.changeClass('Knight');
+  assert.ok(H.S.base.Swordman, 'and again on the next change');
+  assert.strictEqual(H.playedClasses(), 3, 'Novice + Swordman + the Knight being played');
+  assert.strictEqual(H.collDmg(), 6);
+});
+
+t('the collection bonus is wired into atk()', () => {
+  assert.ok(/const atk=\(\)=>[^\n]*\*\(1\+collDmg\(\)\/100\)\);/.test(src), 'atk() must carry the collection multiplier');
+  assert.ok(/const collDmg=\(\)=>2\*playedClasses\(\);/.test(src), 'the bonus is 2% per class played');
 });
 
 console.log(`\n${pass} passed, ${fail} failed`);

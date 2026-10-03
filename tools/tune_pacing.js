@@ -7,22 +7,26 @@
 // need(Lv)*QXP, so each level's kill count is self-consistent instead of assuming one
 // global quest share.
 //
-// Anchors (owner, v16): ~10 min to the 1st job change, ~2 h to the 2nd, ~48 h to the
-// transcendent line, then a long 100-150 endgame.
+// Anchors (owner, v16 + v17): ~10 min to the 1st job change, ~2 h to the 2nd, ~48 h to
+// the transcendent line, and **100-150 takes ~3 days (72 h)** - fast progress at the
+// bottom, the grind lives at the top. The 48h anchor pins needAt(99) high, and a monotone
+// curve cannot make 100+ cheaper than 99, so the tail needs a one-time **rebirth drop**:
+// at Base 100 (the transcendent tier) the requirement falls and ramps up again - RO
+// rebirth literally restarted your level, so the soft reset is on-brand.
 //
-// Curve family (three anchored power segments, continuous at the joins):
+// Curve family (continuous at 50/99, deliberate drop at 100):
 //   needAt(L) = cA*L^aA            (L <= 50)
 //   needAt(L) = n50*(L/50)^aB      (50 < L <= 99)
-//   needAt(L) = n99*(L/99)^aC      (L > 99)
+//   needAt(L) = n100*(L/100)^NE3   (L > 99)   <- rebirth drop at 100
 // Job costs mirror the base curve (lockstep): a job level j of tier t costs what the
 // base level it runs alongside pays in job exp, so each job bar fills next to the base
 // bar and the three job changes land on the anchors by construction.
 
 const EXPK = 5.5, BOSEK = 46, MPS = 15, KPH = 800;
-let QXP = { kill: 1 / 32, loot: 1 / 40, boss: 1 / 19 };
-// v16 shipping fractions: the v11 column scaled by 4/15 so quests can never carry more
-// than ~40% of a level on the steep high end of the new curve (verified at the bottom).
-const QXP_SHIP = { kill: 1 / 120, loot: 1 / 150, boss: 1 / 72 };
+// v16 shipping fractions (v11 column scaled by 4/15): on the steep high end, quests must
+// never carry more than ~40% of a level. Solved with these directly so the constants match.
+let QXP = { kill: 1 / 120, loot: 1 / 150, boss: 1 / 72 };
+const QXP_SHIP = QXP;
 const MAP_B = [0, 9, 19, 31, 43, 59, 66, 73, 79, 89];
 const BAND = [[12, 0], [24, 1], [34, 2], [46, 3], [60, 4], [67, 5], [74, 6], [80, 7], [90, 8], [99, 9]];
 const pwFor = lv => { for (const [cap, m] of BAND) if (lv <= cap) return MAP_B[m] + 10; return 99; };
@@ -36,12 +40,12 @@ let QSCALE = 1;
 const qrateAt = L => QSCALE * qrateRaw(L);
 const killsAt = (L, needAt) => needAt(L) / (expPerKill(pwFor(L)) + needAt(L) * qrateAt(L));
 
+const NE3 = 2.7;   // fixed tail ramp exponent; n100 is solved for the 72h tail
 function build(p) {
   const n50 = Math.floor(p.cA * Math.pow(50, p.aA));
-  const n99 = Math.floor(n50 * Math.pow(99 / 50, p.aB));
   return L => L <= 50 ? Math.floor(p.cA * Math.pow(L, p.aA))
     : L <= 99 ? Math.floor(n50 * Math.pow(L / 50, p.aB))
-      : Math.floor(n99 * Math.pow(L / 99, p.aC));
+      : Math.floor(p.n100 * Math.pow(L / 100, NE3));
 }
 
 const JOFF = [0, 9, 49, 98];
@@ -84,20 +88,20 @@ function simulate(p, clamp = true) {
   return { needAt, SHARE: questXp / totalNeed, maxShare, T, gate, T10: T[10], T50: T[50], T99: T[99], T150: hours };
 }
 
-// ---- verify mode: node tune_pacing.js cA,aA,aB,aC ------------------------------
+// ---- verify mode: node tune_pacing.js cA,aA,aB,n100 ----------------------------
 if (process.argv[2]) {
-  const [cA, aA, aB, aC] = process.argv[2].split(',').map(Number);
+  const [cA, aA, aB, n100] = process.argv[2].split(',').map(Number);
   QXP = QXP_SHIP;
-  const v = simulate({ cA, aA, aB, aC }, false);
-  console.log(`verify cA=${cA} aA=${aA} aB=${aB} aC=${aC}`);
-  console.log('T10', (v.T10 * 60).toFixed(1) + 'min', 'T50', v.T50.toFixed(2) + 'h', 'T99', v.T99.toFixed(1) + 'h', 'T150', v.T150.toFixed(0) + 'h');
+  const v = simulate({ cA, aA, aB, n100 }, false);
+  console.log(`verify cA=${cA} aA=${aA} aB=${aB} n100=${n100}`);
+  console.log('T10', (v.T10 * 60).toFixed(1) + 'min', 'T50', v.T50.toFixed(2) + 'h', 'T99', v.T99.toFixed(1) + 'h', 'tail', (v.T150 - v.T[100]).toFixed(1) + 'h', 'T150', v.T150.toFixed(0) + 'h');
   console.log('share', (v.SHARE * 100).toFixed(1) + '% worst', (v.maxShare * 100).toFixed(1) + '%');
   v.gate.forEach((g, i) => console.log('gate' + i, g ? `base ${g.base} @ ${g.hours.toFixed(2)}h` : '-'));
   process.exit(0);
 }
 
 // ---- sequential solve: each anchor pins one parameter -------------------------
-const TGT = { T10: 10 / 60, T50: 2, T99: 48, T150: 150 };
+const TGT = { T10: 10 / 60, T50: 2, T99: 48, TAIL: 72 };   // TAIL = hours for Base 100-150
 function bisect(lo, hi, f) {
   let flo = f(lo), fhi = f(hi);
   if (flo > 0 || fhi < 0) throw new Error('no root in [' + lo + ',' + hi + ']: ' + flo.toFixed(3) + ' .. ' + fhi.toFixed(3));
@@ -105,9 +109,9 @@ function bisect(lo, hi, f) {
   return (lo + hi) / 2;
 }
 
-function fit(aA, aB, aC) {
-  const cA = bisect(0.5, 1e5, x => simulate({ cA: x, aA, aB, aC }).T10 - TGT.T10);
-  const s = simulate({ cA, aA, aB, aC });
+function fit(aA, aB) {
+  const cA = bisect(0.5, 1e5, x => simulate({ cA: x, aA, aB, n100: 15e4 }).T10 - TGT.T10);
+  const s = simulate({ cA, aA, aB, n100: 15e4 });
   return { cA, s };
 }
 
@@ -115,7 +119,7 @@ let best = null;
 for (let aA = 1.2; aA <= 4.0; aA += 0.1) {
   for (let aB = 1.4; aB <= 12.0; aB += 0.2) {
     try {
-      const { cA, s } = fit(aA, aB, 2.5);
+      const { cA, s } = fit(aA, aB);
       const err = Math.abs(s.T50 - TGT.T50) + Math.abs(s.T99 - TGT.T99);
       if (!best || err < best.err) best = { err, cA, aA, aB, s };
     } catch (e) { }
@@ -126,40 +130,40 @@ console.log('coarse best', { cA: best.cA.toFixed(3), aA: best.aA.toFixed(2), aB:
 
 let { cA, aA, aB } = best;
 for (let it = 0; it < 4; it++) {
-  cA = bisect(0.5, 1e5, x => simulate({ cA: x, aA, aB, aC: 2.5 }).T10 - TGT.T10);
-  aA = bisect(1.0, 5.0, x => simulate({ cA, aA: x, aB, aC: 2.5 }).T50 - TGT.T50);
-  cA = bisect(0.5, 1e5, x => simulate({ cA: x, aA, aB, aC: 2.5 }).T10 - TGT.T10);
-  aB = bisect(1.0, 14.0, x => simulate({ cA, aA, aB: x, aC: 2.5 }).T99 - TGT.T99);
+  cA = bisect(0.5, 1e5, x => simulate({ cA: x, aA, aB, n100: 15e4 }).T10 - TGT.T10);
+  aA = bisect(1.0, 5.0, x => simulate({ cA, aA: x, aB, n100: 15e4 }).T50 - TGT.T50);
+  cA = bisect(0.5, 1e5, x => simulate({ cA: x, aA, aB, n100: 15e4 }).T10 - TGT.T10);
+  aB = bisect(1.0, 14.0, x => simulate({ cA, aA, aB: x, n100: 15e4 }).T99 - TGT.T99);
 }
-cA = bisect(0.5, 1e5, x => simulate({ cA: x, aA, aB, aC: 2.5 }).T10 - TGT.T10);
-// The 48h anchor at 99 forces needAt(99) high, and a monotone curve then needs ~200h+
-// for 100-150 no matter what - so the 100-150 stretch is an outcome to report, not an
-// anchor to solve. aC just shapes how gently it ramps.
-const aC = 1.6;
-const solved = simulate({ cA, aA, aB, aC });
+cA = bisect(0.5, 1e5, x => simulate({ cA: x, aA, aB, n100: 15e4 }).T10 - TGT.T10);
+// v17 tail: the rebirth drop n100 = needAt(100) is solved so 100-150 takes TAIL hours
+const n100 = bisect(1e3, 1e6, x => { const s = simulate({ cA, aA, aB, n100: x }); return (s.T150 - s.T[100]) - TGT.TAIL; });
+const solved = simulate({ cA, aA, aB, n100 });
 console.log('\nsolve: quest clamp QSCALE =', QSCALE.toFixed(4),
   '-> ship QXP kill 1/' + Math.round(32 / QSCALE) + ', loot 1/' + Math.round(40 / QSCALE) + ', boss 1/' + Math.round(19 / QSCALE));
 
 // final verification with the actual shipping constants (no clamp may bind)
 QXP = QXP_SHIP;
-const fin = simulate({ cA, aA, aB, aC }, false);
+const fin = simulate({ cA, aA, aB, n100 }, false);
 
 console.log('\n=== final curve (shipping QXP, no clamp) ===');
-console.log(`cA=${cA.toFixed(4)}  aA=${aA.toFixed(4)}  aB=${aB.toFixed(4)}  aC=${aC.toFixed(4)}`);
+console.log(`cA=${cA.toFixed(4)}  aA=${aA.toFixed(4)}  aB=${aB.toFixed(4)}  n100=${n100.toFixed(0)}  NE3=${NE3}`);
 console.log('global quest share', (fin.SHARE * 100).toFixed(1) + '%, worst single-level share', (fin.maxShare * 100).toFixed(1) + '%');
 for (const L of [1, 2, 5, 9, 10, 20, 30, 40, 50, 60, 70, 80, 90, 99, 100, 110, 120, 130, 140, 149])
   console.log(`  needAt(${L}) = ${fin.needAt(L).toLocaleString()}`);
 console.log('\nbase milestones (model hours):');
-for (const [L, tgt] of [[10, '10 min'], [50, '2 h'], [99, '48 h'], [150, '~150 h']]) {
+for (const [L, tgt] of [[10, '10 min'], [50, '2 h'], [99, '48 h'], [150, '~117 h']]) {
   const h = L === 150 ? fin.T150 : fin.T[L];
   console.log(`  Base ${L}: ${(h * 60).toFixed(0)} min / ${h.toFixed(2)} h  (target ${tgt})`);
 }
+console.log('tail 100-150:', (fin.T150 - fin.T[100]).toFixed(1) + ' h  (target 72 h), rebirth drop x' + (fin.needAt(99) / fin.needAt(100)).toFixed(1));
 console.log('\njob gates (lockstep):');
 const names = ['Novice -> 1st job', '1st -> 2nd job', '2nd -> transcendent'];
 fin.gate.forEach((g, i) => console.log(`  ${names[i]}: at Base Lv ${g ? g.base : '-'} after ${g ? g.hours.toFixed(2) : '-'} h`));
 let prev = 0, bad = [];
-for (let L = 1; L < 150; L++) { const n = fin.needAt(L); if (n <= prev) bad.push(L); prev = n; }
-console.log(bad.length ? 'NOT monotone at ' + bad : 'curve strictly increasing ✓');
+for (let L = 1; L < 150; L++) { if (L === 100) { prev = fin.needAt(L); continue; }   // rebirth drop is deliberate
+  const n = fin.needAt(L); if (n <= prev) bad.push(L); prev = n; }
+console.log(bad.length ? 'NOT monotone at ' + bad : 'monotone within both phases (drop at 100) \u2713');
 console.log('\nper-level time, hours (every 5th level + the joins):');
 let line = '';
 for (const L of [1, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80, 85, 90, 95, 96, 97, 98, 99, 100, 105, 110, 120, 130, 140, 149])

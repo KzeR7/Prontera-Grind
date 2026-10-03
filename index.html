@@ -164,7 +164,7 @@ const AL={str:'STR',agi:'AGI',dex:'DEX',luk:'LUK',int:'INT',hp:'Max HP',atk:'ATK
 // late maps in about five, with bosses still a ~12x fight. See tools/tests/economy_sim.js.
 const SU=k=>k.toUpperCase(),BX_=5.5,Z0=-14,Z1=3,MPS=15,AGGRO=8.5,HPK=42,HPE=1.3,K5=['str','agi','dex','luk','int'];
 const GM_USER='GM',GM_PASS='gm1234';   // CHANGE THE GM PASSWORD before you publish
-const BUILD='2026-10-03 pacing-v16 fast-early map-drops ore-buff';   // shown on the login card - confirms which file you loaded
+const BUILD='2026-10-03 pacing-v17 short-tail class-collection';   // shown on the login card - confirms which file you loaded
 $('buildTag').textContent='build '+BUILD+' · atlases:'+Object.keys(window.SPRITE_ATLASES||{}).length;
 
 // ---------- class tree: Novice -> 6 first jobs -> 6 second jobs -> 6 third jobs ----------
@@ -431,10 +431,11 @@ const dropTxt=([T,ch])=>`<div class="dropline"><span>${poolIc(T)} ${T.n}</span><
 const MAXST=120,BASECAP=99,ELITELV=100,statCap=()=>S.lv>=ELITELV?MAXST:BASECAP;
 
 // ---------- economy tuning ----------
-// Pacing anchors (owner, v16): ~10 min of play to the FIRST job change (Base Lv ~10),
+// Pacing anchors (owner, v16+v17): ~10 min of play to the FIRST job change (Base Lv ~10),
 // ~2 h to the SECOND job change (Base Lv ~49), ~2 days to the transcendent line
-// (Base Lv ~99) - fast progress at the bottom, the grind lives at the top. 100-150 is
-// the long endgame beyond that. exp = EXPK*pw^1.5/50, zeny = ri(ZK)*pw^2/1000, where
+// (Base Lv ~99), and Base 100-150 is a fresh ~3-day climb after a one-time "rebirth"
+// drop in the requirement at level 100 - fast progress at the bottom, the grind lives
+// at the top. exp = EXPK*pw^1.5/50, zeny = ri(ZK)*pw^2/1000, where
 // pw = the field's power level (MAPS[mp].b + lvl, max 99). A boss replaces the pack
 // every 16th kill (MPS), so the effective per-kill EXP is ~1.46x the mob figure.
 // Quest EXP is a fraction of need(Lv) so it scales with the level instead of drifting.
@@ -454,9 +455,12 @@ const pwOf=L=>{for(const[c,p]of PWB)if(L<=c)return p;return 99};
 const epkOf=L=>{const p=pwOf(L),m=Math.max(1,Math.floor(EXPK*Math.pow(p,1.5)/50)),b=Math.max(1,Math.floor(BOSEK*Math.pow(p,1.5)/50));return(MPS*m+b)/(MPS+1)};
 const qrOf=L=>QXP.kill/(12+2*L)+.0385*QXP.loot/(3+Math.floor(L/3))+(L>=12?QXP.boss/((MPS+1)*(1+Math.floor(L/10))):0);
 // Constants of the base-EXP curve (the curve itself is needAt, below with the stat
-// formulas): three continuous power segments, solved by tools/tune_pacing.js so the
-// three job changes land on the pacing anchors. Steep exponent at the top = the grind.
-const NA1=5.19,NE1=1.52,N50=Math.floor(NA1*Math.pow(50,NE1)),NE2=8.38,N99=Math.floor(N50*Math.pow(99/50,NE2)),NE3=1.6;
+// formulas): two continuous power segments up to 99, then the **rebirth drop** - at
+// Base 100 (the transcendent tier) the requirement falls ~6x and ramps up again, so
+// 100-150 is a fresh ~3-day climb instead of a wall (the 48h anchor at 99 forces
+// needAt(99) high, and a monotone curve could never make 100+ cheaper than 99).
+// Solved by tools/tune_pacing.js so the job changes land on the pacing anchors.
+const NA1=5.07,NE1=1.54,N50=Math.floor(NA1*Math.pow(50,NE1)),NE2=8.42,N100=111490,NE3=2.7;
 // Job levels run alongside base levels. JOFF[t] is the base level a job level of tier t
 // keeps pace with: Novice job j ~ base j, 1st job j ~ base j+9, 2nd job j ~ base j+49,
 // transcendent j ~ base j+98. That puts the 1st job change at ~Base 10 (~10 min), the
@@ -590,10 +594,10 @@ const items=()=>Object.values(S.eq).filter(Boolean),ev=it=>Math.round(it.val*(1+
 const bon=k=>{let v=0;for(const it of items()){for(const a of it.aff||[])if(a.k===k)v+=a.v;for(const c of it.cards||[])if(c.stat===k)v+=c.v}return v};
 const st=k=>S.st[k]+bon(k),canUse=it=>it.slot==='off'?canShield():(it.slot!=='weapon'||!it.wt||C().wt.includes(it.wt));
 const maxHp=()=>Math.round((80+S.lv*20+eqv('head')*4+(eqv('acc1')+eqv('acc2'))*3+st('vit')*8+bon('hp'))*C().hp*(1+pv('hpp')/100));
-const atk=()=>Math.round((4+S.lv*2+eqv('weapon')+(S.eq.off&&S.eq.off.slot==='weapon'?eqv('off')*.6:0)+st(C().main)*1.5+(st('dex')+st('luk'))*.25)*C().atk*(1+(pv('atk')+bon('atk')+(tb.atk||0))/100));
+const atk=()=>Math.round((4+S.lv*2+eqv('weapon')+(S.eq.off&&S.eq.off.slot==='weapon'?eqv('off')*.6:0)+st(C().main)*1.5+(st('dex')+st('luk'))*.25)*C().atk*(1+(pv('atk')+bon('atk')+(tb.atk||0))/100)*(1+collDmg()/100));
 const aspd=()=>Math.max(.2,.85*C().aspd*(1-Math.min(.5,st('agi')*.006))/(1+(pv('aspd')+bon('aspd')+(tb.aspd||0))/100));
 const crit=()=>Math.min(60,3+st('luk')*.4+pv('crit')+bon('crit')),flee=()=>Math.min(60,st('agi')*.5+S.lv*.1+pv('flee')+bon('flee')),missCh=()=>Math.max(0,15-st('dex')*.25);
-const def=()=>Math.floor(S.lv*.5+st('vit')*.5+eqv('armor')+eqv('leg')+(S.eq.off&&S.eq.off.slot==='off'?eqv('off'):0)+pv('def')+(tb.def||0)),mdef=()=>Math.floor(S.lv*.3+st('int')*.5+st('vit')*.4+eqv('head')*.3+pv('def')*.5),critD=()=>2+st('luk')*.01+st('dex')*.005+bon('cdm')/100,needAt=L=>L<=50?Math.floor(NA1*Math.pow(L,NE1)):L<=99?Math.floor(N50*Math.pow(L/50,NE2)):Math.floor(N99*Math.pow(L/99,NE3)),need=()=>needAt(S.lv),cost=k=>{const v=S.st[k];return v<ELITELV?1+Math.floor((v-1)/10):10+(v-ELITELV)};
+const def=()=>Math.floor(S.lv*.5+st('vit')*.5+eqv('armor')+eqv('leg')+(S.eq.off&&S.eq.off.slot==='off'?eqv('off'):0)+pv('def')+(tb.def||0)),mdef=()=>Math.floor(S.lv*.3+st('int')*.5+st('vit')*.4+eqv('head')*.3+pv('def')*.5),critD=()=>2+st('luk')*.01+st('dex')*.005+bon('cdm')/100,needAt=L=>L<=50?Math.floor(NA1*Math.pow(L,NE1)):L<=99?Math.floor(N50*Math.pow(L/50,NE2)):Math.floor(N100*Math.pow(L/100,NE3)),need=()=>needAt(S.lv),cost=k=>{const v=S.st[k];return v<ELITELV?1+Math.floor((v-1)/10):10+(v-ELITELV)};
 const totalPts=()=>{let p=10;for(let l=2;l<=S.lv;l++)p+=4+Math.floor(l/5);return p},rcost=()=>S.lv*50;
 // Skill points belong to the class LINE you are standing in, exactly like RO: the Novice level
 // you grinded, your first job and your second job all pool together, and only the skills your
@@ -778,6 +782,12 @@ function noviceRun(){                         // a real restart: 25 Base Lv, Job
 // re-earn - you just step back into it. The Novice reset gate and the parent job-level gate
 // only apply to a class you have never played.
 function playedClass(n){return !!(S.base&&S.base[n])}
+// Class collection: +2% damage for every class played (a record in S.base, plus the one
+// being played now) - the mission is to play all 19. Derived at runtime, so old saves get
+// credit for free. The job gates pace it: every 1st job to job 40 and every 2nd job to
+// job 50 must happen before its line's transcendent class can even be entered.
+const playedClasses=()=>{const s=new Set(S.cls?[S.cls]:[]);for(const k in(S.base||{}))if(S.base[k]&&typeof S.base[k]==='object')s.add(k);return s.size};
+const collDmg=()=>2*playedClasses();
 function classBlock(n){
   if(n===S.cls)return'Current class';if(n==='Novice')return'';
   if(playedClass(n))return'';
@@ -844,7 +854,7 @@ const V={
         </div>`:`<small>Boss appears at Level 10.</small>`}
         <div class="sec">🐾 Pet drops</div><small>0.3% per kill, 5% from bosses. Odds on ${mp.n}: ${PW[Math.min(mapM,9)].map((w,i)=>RN[i]+' '+w+'%').join(' &middot; ')}</small></div></div>`},
   stats(){const c=C(),b=k=>bon(k)?` <small class="r1">+${bon(k)}</small>`:'';
-    return`<div class="hd">${S.cls} &middot; Base Lv ${S.lv} &middot; Job Lv ${jobOf().jl}/${c.mj}</div><div class="hd">Stat points: ${S.pts} <small>(max ${statCap()} each${S.lv<ELITELV?' &middot; '+MAXST+' unlocks at Base Lv '+ELITELV:''} &middot; max Base Lv 150)</small></div>`
+    return`<div class="hd">${S.cls} &middot; Base Lv ${S.lv} &middot; Job Lv ${jobOf().jl}/${c.mj}</div><div class="hd">Stat points: ${S.pts} <small>(max ${statCap()} each${S.lv<ELITELV?' &middot; '+MAXST+' unlocks at Base Lv '+ELITELV:''} &middot; max Base Lv 150)</small></div><div class="hd">🏆 Class collection: ${playedClasses()}/19 played &middot; <b>+${collDmg()}% damage</b> <small>(+2% per class)</small></div>`
     +STATS.map(([k,l,d])=>`<div class="slot"><span><b>${l}</b> ${S.st[k]}${b(k)} <small>(${d})</small></span><span class="bts"><small>${cost(k)}pt</small><button data-a="stat" data-v="${k}" ${S.pts>=cost(k)&&S.st[k]<statCap()?'':'disabled'}>+1</button><button data-a="stat5" data-v="${k}" ${S.pts>=cost(k)&&S.st[k]<statCap()?'':'disabled'}>+5</button></span></div>`).join('')
     +`<div class="slot" style="flex-wrap:wrap"><span>ATK <b>${atk()}</b></span><span>DEF <b>${def()}</b></span><span>ASPD <b>${(1/aspd()).toFixed(2)}/s</b></span><span>Crit <b>${crit().toFixed(1)}%</b></span><span>Crit DMG <b>x${critD().toFixed(2)}</b></span><span>MDEF <b>${mdef()}</b></span><span>Flee <b>${flee().toFixed(0)}%</b></span><span>HP <b>${maxHp()}</b></span></div>
     <small>Weapons: ${c.wt.join(', ')} &middot; Main stat: ${SU(c.main)}</small><button class="full" data-a="rstat">Reset stats (${rcost()}z)</button>`},
@@ -853,6 +863,7 @@ const V={
     return`<div class="tree"><div class="trow" style="justify-content:center">${tnode('Novice')}</div><div class="trunk"></div>
     ${[0,1,2].map(i=>`<div class="trow">${lines.map(l=>tnode(l[i])).join('')}</div>${i<2?'<div class="trunk"></div>':''}`).join('')}</div>
     <div class="legend"><span class="tn cur">Current</span><span class="tn ok">Available</span><span class="tn played">Played</span><span class="tn lock">Locked</span></div>
+    <div class="hd" style="margin-top:4px">🏆 Class collection: ${playedClasses()}/19 played &middot; <b>+${collDmg()}% damage</b> <small>(+2% per class - play them all!)</small></div>
     <div class="mob-card"><div class="hd">${k}</div><small>${c.par?'Before: <b>'+c.par+'</b>':'Starting class'}${c.kids.length?' &middot; Next: <b>'+c.kids.join(', ')+'</b>':''}</small><br>
     <small>${pj?`Saved ${rec?`Base Lv ${rec.lv} &middot; `:''}Job Lv ${pj.jl}/${c.mj}`:'Not played yet'}${rec?' &middot; <b>waiting: your stats and gear are still on it</b>':''} &middot; ATK x${c.atk} &middot; ASPD x${c.aspd} &middot; HP x${c.hp}<br>Weapons: ${c.wt.join(', ')} &middot; Main stat ${SU(c.main)}</small>
     <div class="row" style="margin-top:6px"><button data-a="job" data-v="${k}" ${blk?'disabled':''}>${k===S.cls?'Current class':'Change to '+k}</button>${blk&&k!==S.cls?`<small class="r0">${blk}</small>`:''}</div></div>

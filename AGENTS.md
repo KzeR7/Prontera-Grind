@@ -907,6 +907,49 @@ assigned for feel rather than fidelity. While reworking that, two shipped bugs s
     per Prontera field) is what actually sets the first-job floor.
   * Gear tiers are still decorative (a section-0 drop can roll Epic) - unchanged from v11.
 
+### 2026-10-03 — `pacing-v17 short-tail class-collection`
+* **What changed for the player:**
+  * **The 100-150 tail is now ~3 days instead of ~7** (owner: "level 100-150 should maybe
+    take 3 days"). The three existing anchors are untouched - 10 min to 1st job, ~2 h to
+    2nd job, ~2 days (48 h) to the transcendent line at Base 99. Because a monotone curve
+    can never make level 100 cheaper than the 48 h anchor forces level 99 to be, the tail
+    uses a one-time **rebirth drop**: at Base 100 the requirement falls ~6x
+    (needAt(99)=659,647 → needAt(100)=111,490) and ramps back up with a gentler exponent.
+    `needAt(L)` is now: `⌊5.07·L^1.54⌋` ≤50, `⌊2096·(L/50)^8.42⌋` 50-99,
+    `⌊111490·(L/100)^2.7⌋` >99. Model outcome: tail = **72.0 h (3 days)**, T150 ≈ 123 h
+    total, quest share ~17% overall (the tail is kill-heavy) with the per-level ceiling
+    still ≤40% and QXP untouched. Solved + verified with `tools/tune_pacing.js`
+    (`node tools/tune_pacing.js 5.07,1.54,8.42,111490`).
+  * **Class collection bonus: +2% damage per class played** (owner: wants players to change
+    and play all classes, "maybe add a 2% damage bonus for each class they played before").
+    `playedClasses()` counts the class being played plus every record in `S.base` (derived
+    at runtime - old saves get credit for free, no migration); `collDmg() = 2 × count` is a
+    multiplier inside `atk()`, capped at 19 classes × 2% = +38%. The job gates pace the
+    mission: every 1st job to job 40 and every 2nd job to job 50 before its transcendent
+    class can be entered. Shown on the character panel and the class tree:
+    `🏆 Class collection: X/19 played · +Y% damage`.
+* **Files touched:** `index.html` (economy block: `NA1/NE1/N50/NE2/N100/NE3` constants +
+  `needAt` rebirth branch, pacing comment; `atk()` collection multiplier; `playedClasses`/
+  `collDmg` helpers; collection lines in the character + class-tree panels; `BUILD`),
+  `tools/tune_pacing.js` (**rewritten**: rebirth-tail family `⌊n100·(L/100)^NE3⌋`, NE3=2.7
+  fixed, n100 bisected for `TAIL = T150−T100 = 72 h`, verify mode `cA,aA,aB,n100`, shipping
+  QXP as base to kill the two-phase drift), `tools/tests/economy_sim.js` (phased
+  monotonicity + rebirth-drop assertions, new curve pins, boss-quest-xp@150 = 4627, tail
+  anchor 60-85 h, quest-share floor relaxed to 12%), `tools/tests/class_change_sim.js`
+  (+4 collection tests: counting, dedupe, cap at 19, atk wiring), `tools/tests/ui_sim.js`
+  (collection line on both panels; picks the two new helpers before `atk`), `AGENTS.md`.
+* **Art:** none. No sheets added or rebuilt; `tools/montage.py` not run.
+* **Tests:** pack_sim OK (19 bodies), **class_change 19** (was 15), save_load 9,
+  **economy 18** (rebirth anchors: T10 10.1 min / T50 1.99 h / T99 48.1 h / tail 72.0 h),
+  stat 7, card 13, skill 37, gear 18, scene 8, kit 15, **ui 7** (was 6) - all green.
+* **Branches / PR:** `arena/01a10154-prontera-grind` (updates PR #5).
+* **Known limits / follow-ups:**
+  * The rebirth drop reads as a soft reset at level 100; it is not surfaced to the player
+    with fanfare - the next level just feels faster. If it confuses anyone, a one-line
+    note on the level-up toast at 100 would explain it.
+  * The +38% collection cap is generous next to class ATK multipliers; if a future balance
+    pass tightens damage, `collDmg()` is the single knob.
+
 <!-- template — copy this block, fill it in, paste it at the bottom of the log -->
 
 ### YYYY-MM-DD — `<build tag>`

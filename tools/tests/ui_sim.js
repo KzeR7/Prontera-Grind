@@ -181,6 +181,19 @@ t('the skills panel renders for every class tier', () => {
   });
 });
 
+t('the character + class panels show the class-collection bonus', () => {
+  U.S = mkS('Knight');
+  let h = U.V.stats();
+  assert.ok(h.includes('Class collection'), 'collection progress must be visible on the character panel');
+  assert.ok(h.includes('+2% damage'), 'the class being played counts as +2% from the start');
+  U.S.base.Swordman = {lv:30}; U.S.base.Mage = {lv:20};
+  h = U.V.stats();
+  assert.ok(h.includes('3/19'), 'every recorded class adds to the collection');
+  assert.ok(h.includes('+6% damage'));
+  h = U.V.job();
+  assert.ok(h.includes('Class collection'), 'the class tree panel repeats the mission');
+});
+
 t('every panel a tab can open builds HTML without throwing', () => {
   U.S = mkS('Knight');
   const names = Object.keys(U.V);
