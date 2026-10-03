@@ -136,7 +136,7 @@ const AL={str:'STR',agi:'AGI',dex:'DEX',luk:'LUK',int:'INT',hp:'Max HP',atk:'ATK
 // late maps in about five, with bosses still a ~12x fight. See tools/tests/economy_sim.js.
 const SU=k=>k.toUpperCase(),BX_=5.5,Z0=-14,Z1=3,MPS=15,AGGRO=8.5,HPK=42,HPE=1.3,K5=['str','agi','dex','luk','int'];
 const GM_USER='GM',GM_PASS='gm1234';   // CHANGE THE GM PASSWORD before you publish
-const BUILD='2026-10-03 balance-v9 roam mobhp skill-points RO-accuracy';   // shown on the login card - confirms which file you loaded
+const BUILD='2026-10-03 balance-v10 tradeoffs-live mechanics-spread';   // shown on the login card - confirms which file you loaded
 $('buildTag').textContent='build '+BUILD+' · atlases:'+Object.keys(window.SPRITE_ATLASES||{}).length;
 
 // ---------- class tree: Novice -> 6 first jobs -> 6 second jobs -> 6 third jobs ----------
@@ -157,12 +157,18 @@ const lineOf=n=>{const a=[];for(;n;n=CLASSES[n].par)a.unshift(n);return a},down=
 // ---------- skills (no SP: cooldown only) ----------
 const act=(id,n,from,cd,mul,hits,col)=>({id,n,from,cls:down(from),max:5,type:'act',cd,mul,hits,col,d:L=>`Auto: ${hits>1?hits+' hits of ':''}${Math.round(mul(L)*100)}% dmg &middot; CD ${cd}s`});
 const pas=(id,n,from,key,f,txt)=>({id,n,from,cls:down(from),max:5,type:'pas',key,f,d:L=>txt.replace('#',f(L))});
+// Tradeoff: an auto-cast buff with a genuine cost. Declared up here next to act()/pas() so the
+// main SKILLS array can use it, not just the pushed additions.
+const Z=()=>0,tos=(id,n,from,cd,o,col)=>({id,n,from,cls:down(from),max:5,type:'to',cd,col,to:o,
+  d:L=>`Auto when above ${Math.round((o.hp||.6)*100)}% HP: ${o.txt(L)} for ${Math.round((o.dur||Z)(L))}s &middot; CD ${cd}s`});
 const SKILLS=[
  {id:'aid',n:'First Aid',from:'Novice',cls:Object.keys(CLASSES),max:5,type:'heal',cd:6,d:L=>`Auto: heals ${10+5*L}% HP when below half.`},
  act('bash','Bash','Swordman',2,L=>1.4+.3*L,1,'#ffb347'),pas('endure','Endure','Swordman','def',L=>2*L,'DEF +#.'),pas('hprec','HP Recovery','Swordman','hpreg',L=>.3*L,'Regen +#% HP/s.'),
- act('bowl','Bowling Bash','Knight',4,L=>.9+.2*L,2,'#ffe14d'),act('pierce','Pierce','Knight',2.5,L=>.7+.12*L,3,'#ff9d5c'),pas('quick','Two-Hand Quicken','Knight','aspd',L=>4*L,'ASPD +#%.'),
+ act('bowl','Bowling Bash','Knight',4,L=>.9+.2*L,2,'#ffe14d'),act('pierce','Pierce','Knight',2.5,L=>.7+.12*L,3,'#ff9d5c'),tos('quick','Two-Hand Quicken','Knight',26,{hp:.5,dur:L=>8+2*L,aspd:L=>15+7*L,def:L=>-(4+2*L),atk:Z,drain:Z,
+   txt:L=>`ASPD +${15+7*L}%, DEF ${-(4+2*L)}`},'#ffe14d'),
  act('spiral','Spiral Pierce','Lord Knight',5,L=>.8+.15*L,6,'#ff7a5c'),pas('aura','Aura Blade','Lord Knight','atk',L=>5*L,'ATK +#%.'),
- act('fire','Fire Bolt','Mage',1.5,L=>.7+.15*L,3,'#ff8a3d'),act('nap','Napalm Beat','Mage',1.2,L=>.9+.2*L,1,'#c9a0ff'),pas('coat','Energy Coat','Mage','def',L=>2*L,'DEF +#.'),
+ act('fire','Fire Bolt','Mage',1.5,L=>.7+.15*L,3,'#ff8a3d'),act('nap','Napalm Beat','Mage',1.2,L=>.9+.2*L,1,'#c9a0ff'),tos('coat','Energy Coat','Mage',30,{hp:.4,dur:L=>8+2*L,def:L=>15+8*L,atk:L=>-(6+3*L),aspd:Z,drain:Z,
+   txt:L=>`DEF +${15+8*L}, ATK ${-(6+3*L)}%`},'#8fd0ff'),
  act('storm','Storm Gust','Wizard',5,L=>.4+.1*L,8,'#8fe9ff'),act('jup','Jupitel Thunder','Wizard',3,L=>.8+.15*L,4,'#ffee55'),pas('amp','Amplify Magic','Wizard','atk',L=>5*L,'MATK +#%.'),
  act('meteor','Meteor Storm','High Wizard',6,L=>.5+.1*L,10,'#ff5a2a'),act('grav','Gravitational Field','High Wizard',4,L=>.7+.12*L,5,'#b080ff'),pas('mystic','Mystical Amplification','High Wizard','atk',L=>6*L,'MATK +#%.'),
  act('dstr','Double Strafe','Archer',1.5,L=>.8+.15*L,2,'#ffd28a'),pas('owl',"Owl's Eye",'Archer','atk',L=>3*L,'ATK +#%.'),pas('vult',"Vulture's Eye",'Archer','crit',L=>2*L,'Crit +#%.'),
@@ -191,49 +197,47 @@ const FX={
   bash:{},                                                        // single target
   bowl:{aoe:1},                                                   // Bowling Bash: 5x5 around the user
   pierce:{},                                                      // single target
-  spiral:{},                                                      // Clashing Spiral Pierce: single target
+  spiral:{stun:{dur:1}},                                                      // Clashing Spiral Pierce: single target
   fire:{dot:{pow:.05,dur:4,col:'#ff8a3d'}},                       // Fire Bolt: lingering burn
   nap:{dot:{pow:.04,dur:3,col:'#c9a0ff'}},
   storm:{aoe:1,stun:{dur:1}},                                     // Storm Gust: 7x7, chance to freeze
-  jup:{},                                                         // Jupitel Thunder: single target, multi-hit
+  jup:{chain:{n:2,pow:.4}},                                                         // Jupitel Thunder: single target, multi-hit
   meteor:{aoe:1,stun:{dur:.8},dot:{pow:.06,dur:5,col:'#ff5a2a'}}, // Meteor Storm: AoE + stun chance
   grav:{aoe:1,stun:{dur:.6}},                                     // Gravitational Field pins and damages
-  dstr:{},                                                        // Double Strafe: single target, 2 hits
+  dstr:{chain:{n:2,pow:.4}},                                                        // Double Strafe: single target, 2 hits
   blitz:{chain:{n:2,pow:.45}},                                    // Blitz Beat: the falcon hits nearby too
   sharp:{chain:{n:3,pow:.4}},                                     // Sharp Shooting: pierces a line
-  env:{dot:{pow:.07,dur:6,col:'#7dff7d'}},                        // Envenom: poison
-  sonic:{stun:{dur:1.1}},                                         // Sonic Blow: up to 30% stun
+  env:{dot:{pow:.07,dur:6,col:'#7dff7d'},chain:{n:2,pow:.35}},                        // Envenom: poison
+  sonic:{stun:{dur:1.1},chain:{n:2,pow:.4}},                                         // Sonic Blow: up to 30% stun
   grim:{aoe:1},                                                   // Grimtooth: 3x3 while hidden
   mAss:{aoe:1},                                                   // Meteor Assault: around the caster
-  holy:{},                                                        // Holy Light: single holy hit
-  magnus:{aoe:1},                                                 // Magnus Exorcismus: 7x7
-  judex:{aoe:1},                                                  // Judex: area holy damage
+  holy:{dot:{pow:.04,dur:3,col:'#fff3a0'}},                                                        // Holy Light: single holy hit
+  magnus:{aoe:1,dot:{pow:.05,dur:4,col:'#fff3a0'}},                                                 // Magnus Exorcismus: 7x7
+  judex:{aoe:1,dot:{pow:.05,dur:4,col:'#fff3a0'}},                                                  // Judex: area holy damage
   hammer:{aoe:1,stun:{dur:1}},                                    // Hammer Fall: 5x5, 30-70% stun
   cart:{aoe:1},                                                   // Cart Termination
-  mammo:{},                                                       // Mammonite: single target
-  mbrk:{aoe:1,dot:{pow:.06,dur:4,col:'#ff7a3d'}},                 // Magnum Break: 5x5 fire, then 20% fire property
+  mammo:{chain:{n:2,pow:.4}},                                                       // Mammonite: single target
+  mbrk:{aoe:1,dot:{pow:.06,dur:4,col:'#ff7a3d'},stun:{dur:.7}},                 // Magnum Break: 5x5 fire, then 20% fire property
   fdiver:{stun:{dur:.8}},                                         // Frost Diver: single target, freezes
   fnova:{aoe:1,stun:{dur:.9}},                                    // Frost Nova: 5x5 water, freezes
-  ashower:{aoe:1},                                                // Arrow Shower: area
+  ashower:{aoe:1,stun:{dur:.7}},                                                // Arrow Shower: area
   sandat:{stun:{dur:1.2}},                                        // Sand Attack: single target, blinds
-  signum:{aoe:1},                                                 // Signum Crucis: wide DEF-reduction
-  cartrev:{aoe:1},                                                // Cart Revolution: 9-cell splash
-  spearboom:{},                                                   // Spear Boomerang: single target
+  signum:{aoe:1,stun:{dur:.8}},                                                 // Signum Crucis: wide DEF-reduction
+  cartrev:{aoe:1,stun:{dur:.8}},                                                // Cart Revolution: 9-cell splash
+  spearboom:{chain:{n:2,pow:.45}},                                                   // Spear Boomerang: single target
   tblow:{dot:{pow:.09,dur:6,col:'#ff5a5a'}},                      // Traumatic Blow: causes bleeding
-  vermilion:{aoe:1},                                              // Lord of Vermilion: 9x9
-  landmine:{aoe:1},                                               // Land Mine: ground trap
-  fassault:{},                                                    // Falcon Assault: one heavy falcon hit
-  vsplash:{dot:{pow:.08,dur:5,col:'#7dff7d'}},                    // Venom Splasher: single target, delayed bomb
-  tundead:{aoe:1},                                                // Turn Undead: area obliteration
-  meltdown:{aoe:1,dot:{pow:.07,dur:5,col:'#ffa040'}},             // Meltdown: damages surrounding enemies
+  vermilion:{aoe:1,dot:{pow:.05,dur:4,col:'#ff6a8a'}},                                              // Lord of Vermilion: 9x9
+  landmine:{aoe:1,stun:{dur:1}},                                               // Land Mine: ground trap
+  falcon:{chain:{n:2,pow:.45}},                                                       // Falcon Assault: one heavy falcon hit
+  vsplash:{dot:{pow:.08,dur:5,col:'#7dff7d'},chain:{n:2,pow:.4}},                    // Venom Splasher: single target, delayed bomb
+  tundead:{aoe:1,stun:{dur:.8}},                                                // Turn Undead: area obliteration
+  meltdown:{aoe:1,dot:{pow:.07,dur:5,col:'#ffa040'},stun:{dur:.8}},             // Meltdown: damages surrounding enemies
 };
 
 // Tradeoff: an auto-cast buff with a genuine cost. It fires itself when off cooldown and your
 // HP is above to.hp, adds atk/aspd percentages and SUBTRACTS def, and can drain HP per second.
 // Every value scales with skill level, so a low-level tradeoff is a small bet and a maxed one
 // is a big swing. It never fires while another tradeoff is running.
-const Z=()=>0,tos=(id,n,from,cd,o,col)=>({id,n,from,cls:down(from),max:5,type:'to',cd,col,to:o,
-  d:L=>`Auto when above ${Math.round((o.hp||.6)*100)}% HP: ${o.txt(L)} for ${Math.round((o.dur||Z)(L))}s &middot; CD ${cd}s`});
 
 // ---------- new skills: one extra option per job, all real RO skills for that job ----------
 // Five inventions from the first pass have been replaced after checking iRO Wiki:
@@ -264,11 +268,13 @@ SKILLS.push(
  act('tblow','Traumatic Blow','Lord Knight',4,L=>1+.2*L,1,'#ff5a5a'),
  act('vermilion','Lord of Vermilion','High Wizard',6.5,L=>.5+.1*L,8,'#ff6a8a'),
  act('landmine','Land Mine','Hunter',4,L=>1.5+.3*L,1,'#c8a060'),
- act('fassault','Falcon Assault','Sniper',5,L=>1.6+.32*L,1,'#ffd28a'),
+ tos('wwalk','Wind Walk','Sniper',28,{hp:.5,dur:L=>8+2*L,aspd:L=>12+6*L,def:L=>-(5+3*L),atk:Z,drain:Z,
+   txt:L=>`ASPD +${12+6*L}%, DEF ${-(5+3*L)}`},'#d8ffb0'),
  act('vsplash','Venom Splasher','Assassin',4,L=>.9+.18*L,2,'#7dff7d'),
  pas('akatar','Advanced Katar Mastery','Assassin Cross','atk',L=>5*L,'ATK +#%.'),
  act('tundead','Turn Undead','Priest',5,L=>1.1+.22*L,2,'#fff3a0'),
- pas('basilica','Basilica','High Priest','atk',L=>5*L,'Holy damage +#%.'),
+ tos('basilica','Basilica','High Priest',30,{hp:.6,dur:L=>8+2*L,atk:L=>12+5*L,aspd:Z,def:L=>-(6+3*L),drain:Z,
+   txt:L=>`ATK +${12+5*L}%, DEF ${-(6+3*L)}`},'#fff3a0'),
  act('meltdown','Meltdown','Whitesmith',6,L=>1.4+.28*L,1,'#ffa040'));
 
 // Applied AFTER the push above: tagging before it silently skipped every new skill, because
@@ -792,7 +798,9 @@ function update(dt){
   if(skillOn('aid')&&S.hp<maxHp()*.5&&(skCd.aid||0)<=0){skCd.aid=6;const h=Math.ceil(maxHp()*(.1+.05*lv('aid')));S.hp=Math.min(maxHp(),S.hp+h);addFloat(pl.x,2.6,pl.z,'+'+h,'#7dff7d')}
   for(let i=pend.length-1;i>=0;i--){const p=pend[i];p.t-=dt;if(p.t<=0){pend.splice(i,1);strike(p.m,p.col);shot(p.col);if(mob&&mob.hp<=0){kill();break}}}
   // a timed tradeoff buff ticks down, drains HP if it says so, and clears when it expires
-  if(tb.t>0){tb.t-=dt;if(tb.drain)S.hp=Math.max(1,S.hp-dt*maxHp()*tb.drain/100);
+  // tb.t is undefined until the first cast, so every read of it defaults to 0. Without that,
+  // 'tb.t>0' is false and the buff never ticks, and 'tb.t<=0' is false and it never re-casts.
+  if((tb.t||0)>0){tb.t-=dt;if(tb.drain)S.hp=Math.max(1,S.hp-dt*maxHp()*tb.drain/100);
     if(tb.t<=0){const n=tb.n;tb={};log(n+' wears off.')}}
   // damage-over-time and stun on every mob still standing
   if(mobs.length)for(const m of mobs.slice()){
@@ -801,9 +809,18 @@ function update(dt){
       if(d.t>=.5){d.t-=.5;if(m.hp>0)hurt(m,Math.max(1,Math.round(d.dps*.5)),d.col)}
       if(d.dur<=0)ds.splice(i,1)}}
   // tradeoff skills cast themselves the moment they are ready and you are healthy enough
-  for(const s of SKILLS)if(s.type==='to'&&skillOn(s.id)&&(skCd[s.id]||0)<=0&&tb.t<=0&&S.hp>maxHp()*(s.to.hp||.6)){
-    skCd[s.id]=s.cd;tb={atk:s.to.atk||0,aspd:s.to.aspd||0,def:s.to.def||0,drain:s.to.drain||0,t:s.to.dur,n:s.n};
-    log(s.n+'! '+s.d(lv(s.id)),'r4');addFloat(pl.x,3.2,pl.z,s.n,s.col,true);break}
+  // The to.* fields are functions of skill level, so they must be CALLED here: storing them
+  // raw put a function into tb.atk, which made atk() return NaN and every hit deal NaN.
+  // When several tradeoffs are ready the strongest one wins; switch a rival off in the Skills
+  // panel to prefer a different one (a Lord Knight inherits both Two-Hand Quicken and Frenzy).
+  if((tb.t||0)<=0){
+    const gain=s=>(s.to.atk||Z)(lv(s.id))+(s.to.aspd||Z)(lv(s.id));
+    const cand=SKILLS.filter(s=>s.type==='to'&&skillOn(s.id)&&(skCd[s.id]||0)<=0&&S.hp>maxHp()*(s.to.hp||.6))
+      .sort((a,b)=>gain(b)-gain(a));
+    if(cand.length){const s=cand[0],L=lv(s.id);skCd[s.id]=s.cd;
+      tb={atk:(s.to.atk||Z)(L),aspd:(s.to.aspd||Z)(L),def:(s.to.def||Z)(L),drain:(s.to.drain||Z)(L),
+          t:(s.to.dur||Z)(L),n:s.n};
+      log(s.n+'! '+s.d(L),'r4');addFloat(pl.x,3.2,pl.z,s.n,s.col,true)}}
   let tx=0,tz=Z1-1.5,reach=1.4;
   if(!mobs.length){respawn-=dt;if(respawn<=0)spawn();
     // roam: pick a fresh spot when the timer runs out or the current one is reached

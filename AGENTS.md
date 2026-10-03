@@ -170,16 +170,27 @@ run. **The 3-vs-40 split is correct and is not a bug**: 3 is the equip limit, 40
   tree**, which is the point. At one point per level every line could, with 28-86 points left
   over. Removing or renaming a skill refunds its points through a repair in `load()`.
 
-**Skill accuracy.** Targeting follows Ragnarok Online, checked against iRO Wiki, not what would
-be most convenient. The Thief line has **no AoE at all** except Grimtooth and Meteor Assault
-(which are Assassin's own). Bowling Bash / Magnum Break / Hammer Fall / Storm Gust / Frost Nova /
-Lord of Vermilion / Magnus Exorcismus are the area skills; **chain is deliberately rare** (only
-Blitz Beat's falcon and Sharp Shooting's piercing line genuinely bounce), because in RO almost
-every multi-target skill is a true area rather than a bounce. Five invented or wrong-job skills
-were replaced: Throw Stone (not RO, and Novice), Rolling Cutter (Guillotine Cross, a 3rd job) ->
-Advanced Katar Mastery, Adoramus (Archbishop) -> Basilica, Charged Arrow (not RO) -> Falcon
-Assault, Head Crush (not RO) -> Traumatic Blow. Fire Wall moved off Wizard (it is a Mage spell)
-and Wizard got Frost Nova.
+**Skill feel, not skill accuracy.** This is an RO-*flavoured* game, not a clone, and the owner
+has said so explicitly. iRO Wiki was used to fix outright mistakes - skills belonging to 3rd
+jobs, skills that do not exist, and a duplicate display name on Sniper - but **mechanics are
+assigned for feel, not for fidelity**. The rule that is actually enforced (`skill_sim.js`) is
+coverage: *every job line must reach at least three of dot / stun / chain / AoE / tradeoff*, and
+`Bash` stays untagged as a baseline so the effects read as a difference. Current spread:
+dot 12, stun 16, chain 10, AoE 19, tradeoff 7 across 73 skills, with all six job lines holding
+a tradeoff. If you add a skill, check the line it lands on still clears three.
+
+Two identity choices worth keeping: the **Thief line has no AoE** (single-target burst and
+poison instead), and **only one tradeoff runs at a time** - when several are ready the highest
+`atk+aspd` payoff wins, so a Lord Knight gets Frenzy over the Two-Hand Quicken inherited from
+Knight. Switching a rival off in the Skills panel is how a player overrides that.
+
+> **Trap:** tradeoffs are easy to ship broken and hard to notice. `to.atk`, `to.aspd`, `to.def`,
+> `to.drain` and `to.dur` are **functions of skill level** and must be *called* when the buff
+> starts; storing them raw puts a function in `tb.atk`, `atk()` returns NaN and every hit deals
+> NaN. Separately `tb.t` is `undefined` until the first cast, so guards must read `(tb.t||0)` -
+> written as `tb.t<=0` they are false forever and no tradeoff ever fires at all. Both shipped in
+> v8 and v9. `skill_sim.js` now lifts the real activation and expiry blocks out of `update()` by
+> brace-matching and executes them, because a structural test cannot catch either bug.
 
 > **Trap:** the `FX` effect-tagging loop must run **after** `SKILLS.push(...)`. It used to sit
 > above it, so `SKILLS.find()` returned `undefined` for every new skill and the `if(s)` guard
@@ -245,7 +256,7 @@ node tools/tests/save_load_sim.js     # -> "9 passed, 0 failed"
 node tools/tests/economy_sim.js       # -> "10 passed, 0 failed"
 node tools/tests/stat_sim.js          # -> "7 passed, 0 failed"
 node tools/tests/card_sim.js          # -> "13 passed, 0 failed"
-node tools/tests/skill_sim.js         # -> "22 passed, 0 failed"
+node tools/tests/skill_sim.js         # -> "31 passed, 0 failed"
 ```
 
 Every suite pulls real code out of `index.html` by **string boundary**, so an edit that
@@ -258,6 +269,8 @@ moves a declaration can break a test without breaking the game. Traps, all hit o
   is grabbed rather than stubbed.
 * The `pl` declaration lives inside that second span. If you express the player spawn
   point in terms of an arena constant, the harness needs that constant too.
+* Two skills reachable by one class must not share a display **name** even if their ids differ -
+  Sniper shipped with two separate "Falcon Assault" entries. `skill_sim.js` checks every class.
 * Two constants share one line, so a regex for one returns both: `skOff` and `skillOn`.
   Check what you actually grabbed before declaring either in a harness.
 * A test that re-declares a game formula needs a **source pin** (a regex asserting the
@@ -366,7 +379,7 @@ Newest entry last. Template at the very bottom of this file.
   * `rng` on skills is still inert except for Soul Breaker (hardcoded 5-unit engagement check).
   * Shadow map raised to 2048 and landmarks added ~40 casters; watch frame rate.
 
-### 2026-10-03 - `balance-v9 roam mobhp skill-points RO-accuracy` (current)
+### 2026-10-03 - `balance-v9 roam mobhp skill-points RO-accuracy`
 Follow-up pass after the user played v8. Four complaints, all confirmed against the source.
 
 * **What changed for the player:**
@@ -429,6 +442,55 @@ Follow-up pass after the user played v8. Four complaints, all confirmed against 
   * Player HP still untouched, as instructed. The defeat path now also clears any running
     tradeoff buff (`tb={}`) so you cannot respawn mid-drain.
   * `rng` on skills is still inert except for Soul Breaker (hardcoded 5-unit engagement check).
+
+### 2026-10-03 - `balance-v10 tradeoffs-live mechanics-spread` (current)
+The owner clarified that this is an RO-*flavoured* game, not a clone, so skill mechanics are now
+assigned for feel rather than fidelity. While reworking that, two shipped bugs surfaced.
+
+* **What changed for the player:**
+  * **Tradeoffs now actually work.** They never fired in v8 or v9. `tb.t` was `undefined` until
+    the first cast, so the `tb.t<=0` guard was false forever; and the level-scaling functions
+    (`to.atk`, `to.dur`, ...) were stored in `tb` instead of being called, which would have made
+    `atk()` return NaN and every hit deal NaN the moment one did fire. Frenzy, Deadly Poison and
+    Overthrust were dead skills with a live-looking panel entry.
+  * **Seven tradeoffs now exist, one per job line** (was three). Two-Hand Quicken (Knight),
+    Energy Coat (Mage) and Basilica (High Priest) were passive stat sticks and are now timed
+    auto-cast buffs with a cost; Wind Walk (Sniper) is new. Energy Coat is deliberately
+    *defensive* - DEF +55 for ATK -21% - so tradeoffs are not all the same shape. Only one runs
+    at a time and the biggest payoff wins, so switching a rival off in the Skills panel is how
+    you steer it.
+  * **Mechanics reach every line.** Archer, Thief, Acolyte and Merchant were reaching only one or
+    two of the five mechanics. Double Strafe, Mammonite, Envenom, Sonic Blow, Venom Splasher,
+    Jupitel Thunder, Spear Boomerang and the pre-existing Falcon Assault gained chain; Arrow
+    Shower, Signum Crucis, Land Mine, Turn Undead, Cart Revolution, Magnum Break and Meltdown
+    gained stun; Lord of Vermilion, Holy Light, Magnus Exorcismus and Judex gained dot.
+    Spread is now dot 12 / stun 16 / chain 10 / AoE 19 / tradeoff 7, and **every job line
+    reaches at least three mechanics** (was: Archer reached one).
+  * **Sniper no longer shows "Falcon Assault" twice.** It already had `act('falcon',
+    'Falcon Assault')`; the v9 addition reused the name under a different id, so the tree showed
+    one label twice with different numbers behind it. The new slot is Wind Walk instead.
+* **Files touched:** `index.html`, `AGENTS.md`, `tools/tests/skill_sim.js`.
+* **Art:** none. No sheets added, removed or rebuilt; `tools/montage.py` not run.
+* **Tests:** `pack_sim` (19 bodies) / `class_change_sim` 11 / `save_load_sim` 9 / `economy_sim` 10
+  / `stat_sim` 7 / `card_sim` 13 / `skill_sim` **31** - all green.
+  `skill_sim.js` gained seven **behavioural** tradeoff tests that brace-match the real activation
+  and expiry blocks out of `update()` and execute them: a buff fires and fills `tb` with finite
+  numbers, it expires rather than lasting forever, Deadly Poison drains HP but floors at 1, the
+  HP gate blocks a cast, a running buff is never stacked, `skOff` suppresses it, and the strongest
+  of two ready tradeoffs wins. A structural test could not have caught either shipped bug. Also
+  added: no class may see two skills with the same display name.
+  Retargeted away from RO purity: the single-target-purity test became a coverage test (every
+  line reaches three mechanics, `Bash` stays untagged as a baseline), and the tradeoff test now
+  scores benefit and cost in both directions so a defensive tradeoff passes.
+* **Branches / PR:** `arena/01a0ff7d-prontera-grind`, pull request #3.
+* **Known limits / follow-ups:**
+  * Two shipped bugs (inert FX tags, dead tradeoffs) were both **silent**: a guard clause
+    (`if(s)`) and an `undefined<=0` comparison each swallowed the failure, and every structural
+    test still passed. Anything added to a roster by post-hoc mutation needs a test that reads
+    the value back off the live object, not off the source text.
+  * Kills/hour still needs a real playtest before `EXPK` is retuned - see the v9 entry.
+  * Player HP still untouched, as instructed.
+  * `rng` on skills is still inert except for Soul Breaker.
 
 <!-- template — copy this block, fill it in, paste it at the bottom of the log -->
 

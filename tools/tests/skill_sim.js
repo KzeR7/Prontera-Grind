@@ -21,14 +21,38 @@ const harness = `
 ${roster}
 ${helpers}
 // skOff and skillOn share one line in index.html, so the pick above already brought both in.
-let S = null;
+let S = null, tb = {}, skCd = {}, dt = 0;
 const lv = id => (S.sk && S.sk[id]) || 0;
+const maxHp = () => 1000, log = () => {}, addFloat = () => {}, pl = {x:0,z:0};
 this.__k = { SKILLS, CLASSES, SKSLOTS, SKFADE, skCost, applyDot, applyStun, skillOn, skOff, down,
-             set S(v){S=v}, get S(){return S} };
+             set S(v){S=v}, get S(){return S},
+             get tb(){return tb}, set tb(v){tb=v},
+             get skCd(){return skCd}, set skCd(v){skCd=v},
+             set dt(v){dt=v},
+             run: code => eval(code) };   // executes a real block lifted out of update()
 `;
 const sb = { console };
 vm.createContext(sb); vm.runInContext(harness, sb);
 const K = sb.__k;
+
+// Pull the tradeoff activation and expiry blocks out of update() by brace matching, so the
+// test runs the REAL code. A structural test cannot catch this class of bug: v8/v9 shipped
+// tradeoffs that stored level-scaling functions in tb instead of calling them, and guarded on
+// 'tb.t<=0' while tb.t was undefined - so no tradeoff ever fired, and had it fired, atk()
+// would have returned NaN and every hit would have dealt NaN.
+function block(marker){
+  const i = src.indexOf(marker);
+  if (i < 0) throw new Error('cannot find ' + marker);
+  const j = src.indexOf('{', i);
+  let d = 0;
+  for (let k = j; k < src.length; k++){
+    if (src[k] === '{') d++;
+    else if (src[k] === '}'){ d--; if (!d) return src.slice(i, k + 1); }
+  }
+  throw new Error('unbalanced braces after ' + marker);
+}
+const ACTIVATE = block('if((tb.t||0)<=0){');
+const TICK = block('if((tb.t||0)>0){');
 
 let pass = 0, fail = 0;
 const t = (n, f) => { try { f(); console.log('  ok   ' + n); pass++; } catch (e) { console.log('  FAIL ' + n + ' -> ' + e.message); fail++; } };
@@ -102,10 +126,11 @@ t('effects are actually attached to the new skills (tagging must run after the p
   // Regression: the FX tagging loop used to sit ABOVE SKILLS.push(), so SKILLS.find() returned
   // undefined for every new skill and the guard silently swallowed it. The roster looked right
   // in source and did nothing at runtime.
-  const want = { mbrk:['aoe','dot'], fdiver:['stun'], fnova:['aoe','stun'], ashower:['aoe'],
-                 sandat:['stun'], signum:['aoe'], cartrev:['aoe'], tblow:['dot'],
-                 vermilion:['aoe'], landmine:['aoe'], vsplash:['dot'], tundead:['aoe'],
-                 meltdown:['aoe','dot'], spearboom:[], fassault:[] };
+  const want = { mbrk:['aoe','dot','stun'], fdiver:['stun'], fnova:['aoe','stun'], ashower:['aoe','stun'],
+                 sandat:['stun'], signum:['aoe','stun'], cartrev:['aoe','stun'], tblow:['dot'],
+                 vermilion:['aoe','dot'], landmine:['aoe','stun'], vsplash:['dot','chain'],
+                 tundead:['aoe','stun'], meltdown:['aoe','dot','stun'],
+                 spearboom:['chain'], falcon:['chain'], dstr:['chain'], mammo:['chain'] };
   for (const [id, keys] of Object.entries(want)) {
     const s = byId(id);
     assert.ok(s, id + ' is missing from the roster');
@@ -130,29 +155,49 @@ t('invented and wrong-job skills are gone', () => {
   for (const n of ['Throw Stone', 'Rolling Cutter', 'Adoramus', 'Charged Arrow', 'Head Crush'])
     assert.ok(!names.includes(n), `"${n}" is not a skill for the job it was on`);
   // and their real replacements exist
-  for (const id of ['akatar', 'basilica', 'fassault', 'tblow', 'fnova'])
+  for (const id of ['akatar', 'basilica', 'wwalk', 'tblow', 'fnova'])
     assert.ok(byId(id), 'missing replacement ' + id);
   assert.strictEqual(byId('akatar').from, 'Assassin Cross');
   assert.strictEqual(byId('basilica').from, 'High Priest');
-  assert.strictEqual(byId('fassault').from, 'Sniper');
+  assert.strictEqual(byId('wwalk').from, 'Sniper');
+  assert.strictEqual(byId('wwalk').type, 'to', 'Wind Walk should be a tradeoff');
   assert.strictEqual(byId('tblow').from, 'Lord Knight');
   assert.strictEqual(byId('fnova').from, 'Wizard');
 });
 
-t('single-target RO skills do not carry area or bounce tags', () => {
-  // Bowling Bash is 5x5 (area) and Double Strafe / Jupitel Thunder / Spear Boomerang /
-  // Frost Diver / Lord of Vermilion hits one target or a fixed area - none of them bounce
-  const single = ['bash', 'pierce', 'spiral', 'dstr', 'jup', 'spearboom', 'fdiver', 'fassault',
-                  'sonic', 'mammo', 'holy', 'soulb', 'vsplash'];
-  for (const id of single) {
-    const s = byId(id);
-    assert.ok(s, id + ' missing');
-    assert.ok(!s.chain, `${s.n} bounces to other mobs but is single-target in RO`);
+t('the mechanics are spread far enough that every line feels them', () => {
+  // Accuracy is explicitly NOT the goal - this is an RO-flavoured game, not a clone. What
+  // matters is that dot/stun/chain/tradeoff are things a player actually meets, so no job
+  // line may reach fewer than three of them.
+  const kinds = s => ['dot','stun','chain','aoe'].filter(k => s[k]).concat(s.type === 'to' ? ['tradeoff'] : []);
+  for (const [name, c] of Object.entries(K.CLASSES)) {
+    if (name === 'Novice') continue;
+    const reach = K.SKILLS.filter(s => s.cls.includes(name));
+    const set = new Set(reach.flatMap(kinds));
+    assert.ok(set.size >= 3, `${name} only reaches ${set.size} mechanics: ${[...set].join('/') || 'none'}`);
   }
-  assert.ok(byId('bowl').aoe && !byId('bowl').chain, 'Bowling Bash is a 5x5 area, not a bounce');
-  assert.ok(byId('vermilion').aoe && !byId('vermilion').chain, 'Lord of Vermilion is a 9x9 area');
-  assert.ok(byId('sharp').chain, 'Sharp Shooting pierces a line and should bounce');
-  assert.ok(byId('blitz').chain, "Blitz Beat's falcon hits nearby mobs too");
+  const n = k => K.SKILLS.filter(s => s[k]).length;
+  assert.ok(n('chain') >= 5, `chain is on only ${n('chain')} skills - too rare to notice`);
+  assert.ok(n('dot') >= 8 && n('stun') >= 8, 'dot or stun is too thin');
+  assert.ok(K.SKILLS.filter(s => s.type === 'to').length >= 5, 'too few tradeoffs');
+});
+
+t('no class sees two skills with the same name', () => {
+  // Sniper shipped with both act('falcon','Falcon Assault') and a second 'Falcon Assault',
+  // so its tree showed the same label twice with different numbers behind it.
+  for (const name of Object.keys(K.CLASSES)) {
+    const names = K.SKILLS.filter(s => s.cls.includes(name)).map(s => s.n);
+    // Array.from: the vm hands back foreign-prototype arrays, which never deepStrictEqual a host []
+    const dup = Array.from(names).filter((n, i) => names.indexOf(n) !== i);
+    assert.strictEqual(dup.length, 0, `${name} shows a duplicate skill name: ${dup.join(', ')}`);
+  }
+});
+
+t('Bash stays a clean single-target nuke', () => {
+  // one baseline per line should stay untagged, so the effects read as a difference
+  const bash = byId('bash');
+  assert.ok(bash, 'Bash is missing');
+  for (const k of ['dot','stun','chain','aoe']) assert.ok(!bash[k], `Bash picked up ${k}`);
 });
 
 t('actives carry a cooldown and a damage multiplier that grows with level', () => {
@@ -194,17 +239,24 @@ t('effect parameters are in sane ranges', () => {
   }
 });
 
-t('a tradeoff always costs something - no free buffs', () => {
+t('a tradeoff always gives something and always costs something', () => {
+  // Energy Coat is deliberately defensive (DEF up, ATK down), so benefit and cost are scored
+  // in both directions instead of assuming every tradeoff is an ATK/ASPD buff.
   for (const s of K.SKILLS.filter(x => x.type === 'to')) {
-    const o = s.to;
-    assert.ok(o.dur(5) > 0 && o.dur(5) <= 30, s.id + ' duration out of range');
-    assert.ok(o.hp > 0 && o.hp <= 1, s.id + ' hp gate out of range');
-    assert.ok(s.cd > o.dur(5), `${s.id} cooldown ${s.cd}s must exceed its ${o.dur(5)}s duration or it never lapses`);
-    const gain = (o.atk(5) || 0) + (o.aspd(5) || 0);
-    const cost = Math.abs(o.def(5) || 0) + (o.drain(5) || 0) * o.dur(5);
-    assert.ok(gain > 0, s.id + ' grants nothing');
-    assert.ok(cost > 0, s.id + ' has no downside - it is not a tradeoff');
-    console.log(`       ${s.n}: gain ${gain.toFixed(0)} vs cost ${cost.toFixed(0)} over ${o.dur(5)}s`);
+    const o = s.to, L = s.max;
+    for (const f of ['atk','aspd','def','drain','dur'])
+      assert.strictEqual(typeof o[f], 'function', `${s.id}.to.${f} must be a function of level`);
+    const atk = o.atk(L), aspd = o.aspd(L), def = o.def(L), drain = o.drain(L), dur = o.dur(L);
+    for (const [k, v] of Object.entries({atk, aspd, def, drain, dur}))
+      assert.ok(Number.isFinite(v), `${s.id}.to.${k}(${L}) is not a number`);
+    const benefit = Math.max(0, atk) + Math.max(0, aspd) + Math.max(0, def);
+    const cost = Math.max(0, -atk) + Math.max(0, -aspd) + Math.max(0, -def) + drain * dur;
+    assert.ok(benefit > 0, s.n + ' grants nothing at max level');
+    assert.ok(cost > 0, s.n + ' has no downside - it is a free buff, not a tradeoff');
+    assert.ok(dur > 0 && dur <= 30, s.n + ' duration out of range');
+    assert.ok(o.hp > 0 && o.hp <= 1, s.n + ' hp gate out of range');
+    assert.ok(s.cd > dur, `${s.n} cooldown ${s.cd}s must exceed its ${dur}s duration or it never lapses`);
+    console.log(`       ${s.n} (${s.from}): +${benefit.toFixed(0)} for -${cost.toFixed(0)} over ${dur}s`);
   }
 });
 
@@ -277,6 +329,76 @@ t('an unknown skill id is simply unusable rather than a crash', () => {
 t('a save with no skOff at all still works', () => {
   K.S = { cls: 'High Wizard', sk: { meteor: 5 }, skOff: undefined };
   assert.ok(K.skillOn('meteor'), 'missing skOff broke skillOn');
+});
+
+t('a ready tradeoff actually fires and fills tb with NUMBERS', () => {
+  K.S = { cls:'Lord Knight', hp:1000, sk:{frenzy:5}, skOff:{} };
+  K.tb = {}; K.skCd = {};
+  K.run(ACTIVATE);
+  assert.ok(K.tb.n, 'no tradeoff fired - the activation guard is wrong');
+  assert.strictEqual(K.tb.n, 'Frenzy');
+  for (const k of ['atk','aspd','def','drain','t'])
+    assert.ok(Number.isFinite(K.tb[k]), `tb.${k} is ${typeof K.tb[k]}, not a finite number`);
+  assert.ok(K.tb.aspd > 0, 'Frenzy grants no attack speed');
+  assert.ok(K.tb.def < 0, 'Frenzy has no defence penalty');
+  assert.ok(K.tb.t > 0, 'the buff has no duration');
+  assert.strictEqual(K.skCd.frenzy, K.SKILLS.find(s=>s.id==='frenzy').cd, 'cooldown was not set');
+  console.log('       Frenzy L5: aspd +' + K.tb.aspd + '%, def ' + K.tb.def + ', ' + K.tb.t + 's');
+});
+
+t('the buff expires and clears instead of lasting forever', () => {
+  K.S = { cls:'Lord Knight', hp:1000, sk:{frenzy:5}, skOff:{} };
+  K.tb = {}; K.skCd = {}; K.run(ACTIVATE);
+  const dur = K.tb.t;
+  K.dt = dur + 1; K.run(TICK);
+  assert.deepStrictEqual({ ...K.tb }, {}, 'the tradeoff never expired');
+});
+
+t('a draining tradeoff actually drains HP, and never kills you outright', () => {
+  K.S = { cls:'Assassin Cross', hp:1000, sk:{dpois:5}, skOff:{} };
+  K.tb = {}; K.skCd = {}; K.run(ACTIVATE);
+  assert.strictEqual(K.tb.n, 'Deadly Poison');
+  assert.ok(K.tb.drain > 0, 'Deadly Poison has no HP drain');
+  const before = K.S.hp;
+  K.dt = 1; K.run(TICK);
+  assert.ok(K.S.hp < before, 'HP did not drop while Deadly Poison was running');
+  K.S.hp = 2; for (let i = 0; i < 400; i++) K.run(TICK);
+  assert.ok(K.S.hp >= 1, 'the drain killed the player outright - it should floor at 1 HP');
+});
+
+t('a tradeoff will not fire below its HP floor, or while one is running', () => {
+  const sk = K.SKILLS.find(s => s.id === 'coat');
+  K.S = { cls:'High Wizard', hp:Math.floor(1000 * sk.to.hp) - 1, sk:{coat:5}, skOff:{} };
+  K.tb = {}; K.skCd = {}; K.run(ACTIVATE);
+  assert.ok(!K.tb.n, 'Energy Coat fired below its ' + Math.round(sk.to.hp*100) + '% HP floor');
+  K.S.hp = 1000; K.run(ACTIVATE);
+  assert.strictEqual(K.tb.n, 'Energy Coat', 'a healthy caster should get the buff');
+  const first = { ...K.tb }; K.skCd = {}; K.run(ACTIVATE);
+  assert.deepStrictEqual({ ...K.tb }, first, 'a second tradeoff stacked on top of a running one');
+});
+
+t('switching a tradeoff off stops it firing', () => {
+  K.S = { cls:'Lord Knight', hp:1000, sk:{frenzy:5}, skOff:{frenzy:1} };
+  K.tb = {}; K.skCd = {}; K.run(ACTIVATE);
+  assert.ok(!K.tb.n, 'a switched-off tradeoff still fired');
+});
+
+t('a defensive tradeoff raises DEF and costs ATK', () => {
+  K.S = { cls:'High Wizard', hp:1000, sk:{coat:5}, skOff:{} };
+  K.tb = {}; K.skCd = {}; K.run(ACTIVATE);
+  assert.ok(K.tb.def > 0, 'Energy Coat grants no defence');
+  assert.ok(K.tb.atk < 0, 'Energy Coat has no attack cost');
+  console.log('       Energy Coat L5: def +' + K.tb.def + ', atk ' + K.tb.atk + '%');
+});
+
+t('when several tradeoffs are ready, the strongest one wins', () => {
+  // a Lord Knight inherits Two-Hand Quicken from Knight and has Frenzy of its own
+  K.S = { cls:'Lord Knight', hp:1000, sk:{quick:5,frenzy:1}, skOff:{} };
+  K.tb = {}; K.skCd = {}; K.run(ACTIVATE);
+  const q = K.SKILLS.find(s=>s.id==='quick'), f = K.SKILLS.find(s=>s.id==='frenzy');
+  const gq = q.to.aspd(5) + q.to.atk(5), gf = f.to.aspd(1) + f.to.atk(1);
+  const want = gq >= gf ? 'Two-Hand Quicken' : 'Frenzy';
+  assert.strictEqual(K.tb.n, want, `picked ${K.tb.n}, but ${want} has the bigger payoff`);
 });
 
 console.log(`\n${pass} passed, ${fail} failed`);
