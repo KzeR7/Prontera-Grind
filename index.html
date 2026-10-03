@@ -164,7 +164,7 @@ const AL={str:'STR',agi:'AGI',dex:'DEX',luk:'LUK',int:'INT',hp:'Max HP',atk:'ATK
 // late maps in about five, with bosses still a ~12x fight. See tools/tests/economy_sim.js.
 const SU=k=>k.toUpperCase(),BX_=5.5,Z0=-14,Z1=3,MPS=15,AGGRO=8.5,HPK=42,HPE=1.3,K5=['str','agi','dex','luk','int'];
 const GM_USER='GM',GM_PASS='gm1234';   // CHANGE THE GM PASSWORD before you publish
-const BUILD='2026-10-03 pacing-v17 short-tail class-collection';   // shown on the login card - confirms which file you loaded
+const BUILD='2026-10-03 pacing-v17 short-tail collection-nerf';   // shown on the login card - confirms which file you loaded
 $('buildTag').textContent='build '+BUILD+' · atlases:'+Object.keys(window.SPRITE_ATLASES||{}).length;
 
 // ---------- class tree: Novice -> 6 first jobs -> 6 second jobs -> 6 third jobs ----------
@@ -782,12 +782,13 @@ function noviceRun(){                         // a real restart: 25 Base Lv, Job
 // re-earn - you just step back into it. The Novice reset gate and the parent job-level gate
 // only apply to a class you have never played.
 function playedClass(n){return !!(S.base&&S.base[n])}
-// Class collection: +2% damage for every class played (a record in S.base, plus the one
-// being played now) - the mission is to play all 19. Derived at runtime, so old saves get
-// credit for free. The job gates pace it: every 1st job to job 40 and every 2nd job to
-// job 50 must happen before its line's transcendent class can even be entered.
-const playedClasses=()=>{const s=new Set(S.cls?[S.cls]:[]);for(const k in(S.base||{}))if(S.base[k]&&typeof S.base[k]==='object')s.add(k);return s.size};
-const collDmg=()=>2*playedClasses();
+// Class collection (v17b nerf): +1% damage per TRANSCENDENT (tier-3) class played, and
+// only once the rebirth grind starts (Base Lv 100+). Derived at runtime, so old saves get
+// credit for free, and both counts are data-driven - classes added later join in
+// automatically. Played = a tier-3 record in S.base, or being on one right now.
+const playedClasses=()=>{const s=new Set();if(CLASSES[S.cls]&&CLASSES[S.cls].tier===3)s.add(S.cls);for(const k in(S.base||{}))if(S.base[k]&&typeof S.base[k]==='object'&&CLASSES[k]&&CLASSES[k].tier===3)s.add(k);return s.size};
+const t3Total=()=>{let n=0;for(const k in CLASSES)if(CLASSES[k].tier===3)n++;return n};
+const collDmg=()=>S.lv>=100?playedClasses():0;
 function classBlock(n){
   if(n===S.cls)return'Current class';if(n==='Novice')return'';
   if(playedClass(n))return'';
@@ -854,7 +855,7 @@ const V={
         </div>`:`<small>Boss appears at Level 10.</small>`}
         <div class="sec">🐾 Pet drops</div><small>0.3% per kill, 5% from bosses. Odds on ${mp.n}: ${PW[Math.min(mapM,9)].map((w,i)=>RN[i]+' '+w+'%').join(' &middot; ')}</small></div></div>`},
   stats(){const c=C(),b=k=>bon(k)?` <small class="r1">+${bon(k)}</small>`:'';
-    return`<div class="hd">${S.cls} &middot; Base Lv ${S.lv} &middot; Job Lv ${jobOf().jl}/${c.mj}</div><div class="hd">Stat points: ${S.pts} <small>(max ${statCap()} each${S.lv<ELITELV?' &middot; '+MAXST+' unlocks at Base Lv '+ELITELV:''} &middot; max Base Lv 150)</small></div><div class="hd">🏆 Class collection: ${playedClasses()}/19 played &middot; <b>+${collDmg()}% damage</b> <small>(+2% per class)</small></div>`
+    return`<div class="hd">${S.cls} &middot; Base Lv ${S.lv} &middot; Job Lv ${jobOf().jl}/${c.mj}</div><div class="hd">Stat points: ${S.pts} <small>(max ${statCap()} each${S.lv<ELITELV?' &middot; '+MAXST+' unlocks at Base Lv '+ELITELV:''} &middot; max Base Lv 150)</small></div><div class="hd">🏆 Class collection: ${playedClasses()}/${t3Total()} transcendent classes &middot; <b>+${collDmg()}% damage</b> <small>(+1% each${S.lv<100?' &middot; activates at Base Lv 100':''})</small></div>`
     +STATS.map(([k,l,d])=>`<div class="slot"><span><b>${l}</b> ${S.st[k]}${b(k)} <small>(${d})</small></span><span class="bts"><small>${cost(k)}pt</small><button data-a="stat" data-v="${k}" ${S.pts>=cost(k)&&S.st[k]<statCap()?'':'disabled'}>+1</button><button data-a="stat5" data-v="${k}" ${S.pts>=cost(k)&&S.st[k]<statCap()?'':'disabled'}>+5</button></span></div>`).join('')
     +`<div class="slot" style="flex-wrap:wrap"><span>ATK <b>${atk()}</b></span><span>DEF <b>${def()}</b></span><span>ASPD <b>${(1/aspd()).toFixed(2)}/s</b></span><span>Crit <b>${crit().toFixed(1)}%</b></span><span>Crit DMG <b>x${critD().toFixed(2)}</b></span><span>MDEF <b>${mdef()}</b></span><span>Flee <b>${flee().toFixed(0)}%</b></span><span>HP <b>${maxHp()}</b></span></div>
     <small>Weapons: ${c.wt.join(', ')} &middot; Main stat: ${SU(c.main)}</small><button class="full" data-a="rstat">Reset stats (${rcost()}z)</button>`},
@@ -863,7 +864,7 @@ const V={
     return`<div class="tree"><div class="trow" style="justify-content:center">${tnode('Novice')}</div><div class="trunk"></div>
     ${[0,1,2].map(i=>`<div class="trow">${lines.map(l=>tnode(l[i])).join('')}</div>${i<2?'<div class="trunk"></div>':''}`).join('')}</div>
     <div class="legend"><span class="tn cur">Current</span><span class="tn ok">Available</span><span class="tn played">Played</span><span class="tn lock">Locked</span></div>
-    <div class="hd" style="margin-top:4px">🏆 Class collection: ${playedClasses()}/19 played &middot; <b>+${collDmg()}% damage</b> <small>(+2% per class - play them all!)</small></div>
+    <div class="hd" style="margin-top:4px">🏆 Class collection: ${playedClasses()}/${t3Total()} transcendent &middot; <b>+${collDmg()}% damage</b> <small>(+1% each${S.lv<100?' &middot; activates at Base Lv 100':''} - play them all!)</small></div>
     <div class="mob-card"><div class="hd">${k}</div><small>${c.par?'Before: <b>'+c.par+'</b>':'Starting class'}${c.kids.length?' &middot; Next: <b>'+c.kids.join(', ')+'</b>':''}</small><br>
     <small>${pj?`Saved ${rec?`Base Lv ${rec.lv} &middot; `:''}Job Lv ${pj.jl}/${c.mj}`:'Not played yet'}${rec?' &middot; <b>waiting: your stats and gear are still on it</b>':''} &middot; ATK x${c.atk} &middot; ASPD x${c.aspd} &middot; HP x${c.hp}<br>Weapons: ${c.wt.join(', ')} &middot; Main stat ${SU(c.main)}</small>
     <div class="row" style="margin-top:6px"><button data-a="job" data-v="${k}" ${blk?'disabled':''}>${k===S.cls?'Current class':'Change to '+k}</button>${blk&&k!==S.cls?`<small class="r0">${blk}</small>`:''}</div></div>

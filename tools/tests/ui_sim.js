@@ -182,16 +182,19 @@ t('the skills panel renders for every class tier', () => {
 });
 
 t('the character + class panels show the class-collection bonus', () => {
-  U.S = mkS('Knight');
+  U.S = mkS('Knight');                          // tier 2 at lv 60: bonus dormant
   let h = U.V.stats();
   assert.ok(h.includes('Class collection'), 'collection progress must be visible on the character panel');
-  assert.ok(h.includes('+2% damage'), 'the class being played counts as +2% from the start');
-  U.S.base.Swordman = {lv:30}; U.S.base.Mage = {lv:20};
+  assert.ok(h.includes('Class collection: 0/6 transcendent'), 'only transcendent classes count, and the total is data-driven');
+  assert.ok(h.includes('activates at Base Lv 100'), 'the gate is spelled out before the rebirth levels');
+  U.S.lv = 100; U.S.base['Lord Knight'] = {lv:110};
   h = U.V.stats();
-  assert.ok(h.includes('3/19'), 'every recorded class adds to the collection');
-  assert.ok(h.includes('+6% damage'));
+  assert.ok(h.includes('Class collection: 1/6 transcendent'), 'a played transcendent class joins the count');
+  assert.ok(h.includes('+1% damage'), 'and pays +1% once at Base Lv 100+');
+  assert.ok(!h.includes('activates at'), 'the note disappears once the bonus is live');
   h = U.V.job();
   assert.ok(h.includes('Class collection'), 'the class tree panel repeats the mission');
+  assert.ok(h.includes('+1% damage'));
 });
 
 t('every panel a tab can open builds HTML without throwing', () => {

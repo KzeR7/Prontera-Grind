@@ -950,6 +950,29 @@ assigned for feel rather than fidelity. While reworking that, two shipped bugs s
   * The +38% collection cap is generous next to class ATK multipliers; if a future balance
     pass tightens damage, `collDmg()` is the single knob.
 
+### 2026-10-03 — `pacing-v17 short-tail collection-nerf`
+* **What changed for the player:**
+  * **The class-collection bonus was too strong ("this is break the game") - nerfed on the
+    same day.** It is now **+1% damage per TRANSCENDENT (3rd-job) class played, and only at
+    Base Lv 100+** (was +2% per any of the 19 classes, always on). It is now a carrot for
+    the rebirth grind instead of an early-game power spike: max +6% today, and both the
+    count and the denominator are derived from the class data (`tier===3`), so **classes the
+    owner adds later join the collection automatically** - nothing is hardcoded to 19.
+    Panel lines now read `🏆 Class collection: X/Y transcendent classes · +Z% damage` and
+    spell out `activates at Base Lv 100` while dormant.
+* **Files touched:** `index.html` (`playedClasses` now counts tier-3 records only, new
+  `t3Total()`, `collDmg()` gated at `S.lv>=100`; panel lines; `BUILD`),
+  `tools/tests/class_change_sim.js` (5 collection tests rewritten: tier-3-only counting,
+  the lv-100 gate, the data-driven cap, record growth through real `changeClass` calls,
+  atk wiring pin), `tools/tests/ui_sim.js` (dormant note + 1/6 · +1% at lv 100), `AGENTS.md`.
+* **Art:** none.
+* **Tests:** pack_sim OK (19 bodies), **class_change 20** (was 19), save_load 9, economy 18,
+  stat 7, card 13, skill 37, gear 18, scene 8, kit 15, ui 7 - all green.
+* **Branches / PR:** `arena/01a10154-prontera-grind` (updates PR #5).
+* **Known limits / follow-ups:**
+  * The v17 entry above described the +2%/19-class version; it was shipped and nerfed
+    within the same session. Only this nerf is live.
+
 <!-- template — copy this block, fill it in, paste it at the bottom of the log -->
 
 ### YYYY-MM-DD — `<build tag>`
