@@ -1,0 +1,22 @@
+{
+  "format": "sprite-pack-v2",
+  "directions": [
+    "S",
+    "SW",
+    "W",
+    "NW",
+    "N",
+    "NE",
+    "E",
+    "SE"
+  ],
+  "bodies": {
+    "thief": "bodies/thief/thief.json",
+    "assassin": "bodies/assassin/assassin.json",
+    "assassin_cross": "bodies/assassin_cross/assassin_cross.json"
+  },
+  "heads": {
+    "female": "heads/female/female.json",
+    "male": "heads/male/male.json"
+  }
+}
