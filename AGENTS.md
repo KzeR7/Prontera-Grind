@@ -368,7 +368,7 @@ node tools/tests/card_sim.js          # -> "13 passed, 0 failed"
 node tools/tests/skill_sim.js         # -> "37 passed, 0 failed"
 node tools/tests/gear_sim.js          # -> "18 passed, 0 failed  (18 assertions groups)"
 node tools/tests/scene_sim.js         # -> "8 passed, 0 failed" (per-map scenery, water, clear lane)
-node tools/tests/kit_sim.js           # -> "11 passed, 0 failed" (attached designs, atlas crops, clear lane)
+node tools/tests/kit_sim.js           # -> "12 passed, 0 failed" (attached designs, atlas crops, clear lane, loader paths)
 node tools/tests/ui_sim.js            # -> "6 passed, 0 failed" 
 ```
 
@@ -764,13 +764,13 @@ assigned for feel rather than fidelity. While reworking that, two shipped bugs s
 * **Files added:** `assets/kit/ro-spritesheet.png` (227 KB, the owner's atlas),
   `assets/kit/ro-spritesheet.json`, `assets/kit/ro-map-payon.json`, `assets/kit/ro-map-morocc.json`,
   `assets/kit/morocc-atlas.js` (the attachment's generator, verbatim),
-  `tools/tests/kit_sim.js` (**new**, 11 tests).
+  `tools/tests/kit_sim.js` (**new**, 12 tests, including the loader's asset paths and the dead-atlas fallback).
 * **Files touched:** `index.html` (the kit layer: loader, `kitPlan`, ground painter, water/deck/prop
   builders, `kitTick`, the `buildDeco` hook, the script tag, `BUILD`), `AGENTS.md`.
 * **Art:** the atlas and the desert generator are the owner's, unedited. No sprite in `Sprite/` or
   in the pack was touched.
 * **Tests:** pack OK, class_change 15, save_load 9, economy 12, stat 7, card 13, skill 37, gear 18,
-  scene_sim 8, **kit_sim 11 (new)**, ui_sim 6.
+  scene_sim 8, **kit_sim 12 (new)**, ui_sim 6.
 * **Branches / PR:** `arena/01a100d8-prontera-grind`, pull request #4.
 * **Known limits / follow-ups:**
   * **The atlas is missing a billboard the Payon design asks for.** `ro-map-payon.json` places

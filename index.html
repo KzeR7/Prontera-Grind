@@ -1191,12 +1191,17 @@ const KIT_MAP={
 // cell types the kit itself draws in its animated pass / as a deck, not as ground texture
 const KIT_WET={water:1},KIT_DECK={bridge:1},KIT_SKIP={sky:1};
 function kitFetch(){
-  const j=n=>fetch('assets/kit/'+n).then(r=>r.ok?r.json():null).catch(()=>null);
-  Promise.all([j('ro-spritesheet.json'),j('ro-map-payon.json'),j('ro-map-morocc.json')]).then(([man,pay,mor])=>{
-    if(!man||!pay)return; KIT.man=man; KIT.des.payon=pay; if(mor)KIT.des.morocc=mor;
-    const img=new Image();
-    img.onload=()=>{KIT.png=img;KIT.ok=1;buildDeco(S.mp)};
-    img.src='assets/kit/ro-spritesheet.png';});
+  // The kit is an enhancement: no fetch, no atlas, no design - the game keeps its own scenery.
+  if(typeof fetch!=='function'||typeof Image!=='function')return;
+  try{
+    const j=n=>fetch('assets/kit/'+n).then(r=>r&&r.ok?r.json():null).catch(()=>null);
+    Promise.all([j('ro-spritesheet.json'),j('ro-map-payon.json'),j('ro-map-morocc.json')]).then(([man,pay,mor])=>{
+      if(!man||!pay)return; KIT.man=man; KIT.des.payon=pay; if(mor)KIT.des.morocc=mor;
+      const img=new Image();
+      img.onload=()=>{KIT.png=img;KIT.ok=1;buildDeco(S.mp)};
+      img.onerror=()=>{};
+      img.src='assets/kit/ro-spritesheet.png';}).catch(()=>{});
+  }catch(e){}
 }
 // the atlas a design crops from ("src" above), normalised: {img,tiles,sprites}
 function kitAtlas(name){
@@ -1326,6 +1331,7 @@ function kitTick(dt){
 }
 function buildKit(m){
   const plan=kitPlan(m);if(!plan)return null;
+  if(!kitAtlas(plan.src))return null;      // no atlas for this design (yet) -> v13 scenery stands in
   if(!KIT.ground){KIT.ground=new THREE.Mesh(new THREE.PlaneGeometry(KIT_FAR,KIT_FAR),new THREE.MeshLambertMaterial({map:null}));KIT.ground.rotation.x=-Math.PI/2;KIT.ground.position.y=.004;KIT.ground.receiveShadow=true;scene.add(KIT.ground)}
   KIT.ground.visible=true;KIT.ground.material.map=kitGroundTex(plan);KIT.ground.material.needsUpdate=true;
   KIT.water=[];kitWaterMeshes(plan,deco);kitDeckMesh(plan,deco);

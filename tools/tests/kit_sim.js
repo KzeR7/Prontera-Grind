@@ -206,6 +206,21 @@ t('a map with no design still builds, and switching maps swaps the kit layer out
   assert.ok(K.kitPlan(4) !== null && K.kitPlan(7) === null, 'plan only exists for dressed maps');
 });
 
+t('the loader asks for files that exist, and a dead atlas falls back instead of half-building', () => {
+  // every asset the loader names must really be in assets/kit - a renamed file would otherwise
+  // leave the player with a silent fallback and no error anywhere
+  const named = [...new Set([...code.matchAll(/'(?:assets\/kit\/)?(ro-[a-z0-9-]+\.(?:json|png))'/g)].map(m => m[1]))];
+  for (const f of named) assert.ok(fs.existsSync(R + '/assets/kit/' + f), 'the loader names a missing asset: ' + f);
+  for (const f of ['ro-spritesheet.json', 'ro-spritesheet.png', 'ro-map-payon.json', 'ro-map-morocc.json'])
+    assert.ok(named.includes(f), 'the loader never asks for ' + f);
+  // an atlas that cannot be built must abort the layer, not paint half a map
+  K.setAssets({});
+  const saved = KIT.srcMan.payon;
+  delete KIT.srcMan.payon; KIT.png = null; KIT.man = null;
+  assert.strictEqual(K.buildKit(4), null, 'no atlas -> no kit layer');
+  KIT.srcMan.payon = saved; KIT.png = {}; KIT.man = sb.__k.KIT.man || KIT.man;
+});
+
 t('with the kit ready, the arena bounds are still what they were', () => {
   // the kit lays scenery only: it must not move the play lane, the spawn row or the monster band
   const p = K.kitPlan(4);
