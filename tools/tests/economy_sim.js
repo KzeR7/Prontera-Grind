@@ -1,3 +1,5 @@
+// v22: the 1x time/quest-share model below is a baseline curve regression only, NOT live pacing.
+// Live rewards are 70x before Base 100 and 70/3 thereafter; kills/quest cadence prevent exact time scaling.
 // Economy: EXP / Zeny / quest rewards, against the real constants and formulas
 // pulled out of index.html.
 //   node tools/tests/economy_sim.js
@@ -51,7 +53,7 @@ const needAt=L=>L<=50?Math.floor(NA1*Math.pow(L,NE1)):L<=99?Math.floor(N50*Math.
 let S = null, PW = 1;
 const gx = () => S.gm ? (S.gmx || 100) : 1;
 const pw = () => PW;
-this.__e = { newQuest, needAt, EXPK, BOSEK, ZK, BZK, QXP, QZ, zenAt, pwOf, epkOf, qrOf, JOFF,
+this.__e = { expRate, qRefresh, newQuest, needAt, EXPK, BOSEK, ZK, BZK, QXP, QZ, zenAt, pwOf, epkOf, qrOf, JOFF,
              set S(v){S=v}, get S(){return S}, set PW(v){PW=v}, get PW(){return PW} };
 `;
 const sb = { console };
@@ -60,7 +62,7 @@ const E = sb.__e;
 
 let pass = 0, fail = 0;
 const t = (n, f) => { try { f(); console.log('  ok   ' + n); pass++; } catch (e) { console.log('  FAIL ' + n + ' -> ' + e.message); fail++; } };
-console.log('economy: v16 pacing anchors, quest share, Zeny scale\n');
+console.log('economy: legacy 1x curve anchors (not live timings), v22 reward multipliers, Zeny scale\n');
 
 // ---- the model the balance was solved with (same as tools/tune_pacing.js) ----------
 // The player camps the level-10 (boss) field of the map whose band covers them. A boss
@@ -139,13 +141,51 @@ t('the curve is strictly increasing within each phase, with the rebirth drop at 
   assert.strictEqual(E.needAt(150), 333182, 'level cap');
 });
 
+t('normal EXP is 70x below 100 and one-third thereafter; GM is unchanged', () => {
+  for(const lv of [1,10,60,99,100,150]){
+    E.S={lv,gm:false}; assert.strictEqual(E.expRate(),lv<100?70:70/3);
+    E.S.gm=true; assert.strictEqual(E.expRate(),100);
+    E.S.gmx=25; assert.strictEqual(E.expRate(),25);
+  }
+  assert.ok(src.includes('xp=Math.round(mob.exp*expRate())'), 'kill Base EXP wiring');
+  assert.ok(src.includes('addJob(Math.round(Math.round(mob.exp*.7)*expRate()))'), 'kill Job EXP wiring');
+  assert.ok(src.includes("mob.zeny*(1+pv('zeny')/100))*g"));
+});
+t('the real kill reward block boosts Base/Job EXP but leaves player Zeny unchanged', () => {
+  const rewards=grab('  const g=gx();S.kills++','  addFloat(mob.x,2.4,mob.z,');
+  for(const level of [1,99,100,150])for(const gm of [false,true]){
+    const world={};vm.createContext(world);
+    vm.runInContext(`
+      const S={lv:${level},gm:${gm},gmx:100,kills:0,kl:0,zeny:0,exp:0};
+      const gx=()=>S.gm?S.gmx:1;
+      ${src.match(/const expRate=[^;]+;/)[0]}
+      const mob={exp:100,zeny:10,boss:false},pv=()=>0,qProg=()=>{};
+      let jobXP=0,pend=[];const addJob=x=>jobXP+=x;
+      ${rewards}
+      this.result={xp:S.exp,z:S.zeny,jobXP};
+    `,world);
+    const rate=gm?100:level<100?70:70/3;
+    assert.strictEqual(world.result.xp,Math.round(100*rate));
+    assert.strictEqual(world.result.jobXP,Math.round(70*rate));
+    assert.strictEqual(world.result.z,gm?1000:10);
+  }
+});
+
+t('saved quests refresh to the new EXP rate without losing progress', () => {
+  E.S={lv:99,gm:false,q:[{type:'kill',goal:210,prog:12,xp:1,at:99}]};
+  E.qRefresh(); assert.strictEqual(E.S.q[0].prog,12);
+  assert.strictEqual(E.S.q[0].xp,Math.floor(E.needAt(99)*E.QXP.kill*70));
+  E.S.lv=100; E.qRefresh();
+  assert.strictEqual(E.S.q[0].xp,Math.floor(E.needAt(100)*E.QXP.kill*(70/3)));
+});
+
 t('quests pay a fraction of need(Lv), not a flat number', () => {
   E.S = { lv: 150, gm: false }; E.PW = 99;
   const n = E.needAt(150);
-  assert.strictEqual(E.newQuest('kill').xp, Math.floor(n * E.QXP.kill));
-  assert.strictEqual(E.newQuest('loot').xp, Math.floor(n * E.QXP.loot));
-  assert.strictEqual(E.newQuest('boss').xp, Math.floor(n * E.QXP.boss));
-  assert.strictEqual(E.newQuest('boss').xp, 4627, 'boss quest xp at Lv150');
+  assert.strictEqual(E.newQuest('kill').xp, Math.floor(n * E.QXP.kill * (70/3)));
+  assert.strictEqual(E.newQuest('loot').xp, Math.floor(n * E.QXP.loot * (70/3)));
+  assert.strictEqual(E.newQuest('boss').xp, Math.floor(n * E.QXP.boss * (70/3)));
+  assert.strictEqual(E.newQuest('boss').xp, 107975, 'boss quest xp at Lv150');
 });
 
 t('quest EXP scales with need(Lv) instead of drifting', () => {
@@ -154,8 +194,8 @@ t('quest EXP scales with need(Lv) instead of drifting', () => {
   E.S.lv = 100; E.PW = pwFor(100); const b = E.newQuest('kill').xp;
   // the v16 curve is deliberately steep, so "tracks the curve" replaces the old
   // fixed 2x-6x band: quest exp must grow at the curve's own rate (up to flooring)
-  const curve = E.needAt(100) / E.needAt(50);
-  assert.ok(b > a * 50, 'quest exp should track need(Lv) growth');
+  const curve = E.needAt(100) / E.needAt(50) / 3;
+  assert.ok(b > a * 15, 'quest exp should track need(Lv) growth');
   assert.ok(Math.abs(b / a - curve) / curve < 0.05, 'quest exp grew off-curve: ' + (b / a).toFixed(1) + ' vs ' + curve.toFixed(1));
 });
 
@@ -165,7 +205,7 @@ t('the old /100 bug is gone: a normal player is not paid 1% of the GM', () => {
   E.S = { lv: 150, gm: true, gmx: 100 }; const gm = E.newQuest('kill');
   // both are floored independently, so compare the ratio, not exact multiples
   const ratioXp = gm.xp / normal.xp, ratioZ = gm.z / normal.z;
-  assert.ok(ratioXp > 99 && ratioXp < 101, 'GM x100 should be ~100x exp, got ' + ratioXp.toFixed(2));
+  assert.ok(Math.abs(ratioXp - 100/(70/3)) < .01, 'GM should retain its own EXP multiplier, got ' + ratioXp.toFixed(2));
   assert.ok(ratioZ > 99 && ratioZ < 101, 'GM x100 should be ~100x zeny, got ' + ratioZ.toFixed(2));
   assert.ok(normal.xp > 1000, 'a Lv150 kill quest paying ' + normal.xp + 'xp is the old bug');
 });

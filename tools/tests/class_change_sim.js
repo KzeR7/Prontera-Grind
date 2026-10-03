@@ -45,6 +45,24 @@ let pass = 0, fail = 0;
 const t = (n, f) => { try { f(); console.log('  ok   ' + n); pass++; } catch (e) { console.log('  FAIL ' + n + ' -> ' + e.message); fail++; } };
 console.log('class change: restart on load, keep what you stepped away from\n');
 
+t('new second and transcendent jobs preserve every stat and unspent point', () => {
+  for(const [name,c] of Object.entries(H.CLASSES).filter(([,c])=>c.tier>=2)){
+    const jobs={}; for(let n=c.par;n;n=H.CLASSES[n].par)jobs[n]={jl:50,jx:0};
+    const stats=st({str:20,agi:17,dex:14,int:11,vit:8,luk:5});
+    H.S=mk({cls:c.par,lv:60,exp:123,pts:7,st:stats,jobs});
+    H.changeClass(name);
+    assert.strictEqual(H.S.cls,name);
+    assert.deepStrictEqual({...H.S.st},stats,name+' allocation changed');
+    assert.strictEqual(H.S.pts,7);assert.strictEqual(H.S.lv,60);assert.strictEqual(H.S.exp,123);
+    assert.strictEqual(H.S.jobs[name].jl,1);
+  }
+});
+t('leaving Novice for a new first job still refunds the build', () => {
+  H.S=mk({cls:'Novice',lv:10,st:st({str:10}),pts:2,jobs:{Novice:{jl:10,jx:0}}});
+  H.changeClass('Mage');
+  assert.deepStrictEqual(Object.values(H.S.st),[1,1,1,1,1,1]);assert.ok(H.S.pts>2);
+});
+
 t('the example: Assassin Cross 120/40 -> Novice -> Hunter 90 -> back to Cross = 120/40', () => {
   H.S = mk({cls:'Assassin Cross', lv:120, exp:5000, pts:3, st:st({str:60,agi:50,dex:30,vit:20,int:1,luk:30}), hp:4200,
     jobs:{Novice:{jl:10},Thief:{jl:40},Assassin:{jl:50},'Assassin Cross':{jl:40},Archer:{jl:50}}, sk:{aid:1,hide:7},
