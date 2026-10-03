@@ -1092,3 +1092,11 @@ assigned for feel rather than fidelity. While reworking that, two shipped bugs s
   * The selected EXP increase is deliberately large. No promise of exact hours: map unlock cadence, quests, overkill, gear income and job caps still affect pacing. Rewards use the character's Base Lv at award time; crossing 100 does not retroactively reprice already-earned EXP.
   * Preview server serves the new build (HTTP 200). Automated browser visual testing was blocked by unavailable Chromium downloads/system libraries; responsive layout is source/render tested, not screenshot-verified. Use the live preview to check the narrower map window and actual sustained farming.
   * Stats already refunded in an older build cannot be reconstructed automatically; spend those points once. Promotions from this build onward retain them.
+
+### 2026-10-04 — `balance-v22 delivery`
+* **What changed for the player:** no additional game changes; published the verified update for review/merge.
+* **Files touched:** `AGENTS.md` only.
+* **Art:** none; no montage rebuild.
+* **Tests:** all 13 suites, inline JavaScript syntax and whitespace checks passed before the game push; this entry is documentation only.
+* **Branches / PR:** `arena/01a1029e-prontera-grind` — https://github.com/KzeR7/Prontera-Grind/pull/7
+* **Known limits / follow-ups:** merge the PR to deploy through the normal GitHub/Cloudflare route; live visual/farming review remains recommended.
