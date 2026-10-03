@@ -26,6 +26,9 @@ import sys
 from PIL import Image, ImageOps
 import numpy as np
 
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import montage
+
 REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SPRITE_DIR = os.path.join(REPO, 'Sprite')
 ASSETS = os.path.join(REPO, 'assets')
@@ -57,6 +60,57 @@ SHEETS = {
     'assassin':   ('assasin.png',    'assassin'),
     'assassin_cross': ('assasin cross.png', 'assassin_cross'),
 }
+
+# Classes still waiting for art.  A sheet dropped in Sprite/ is picked up when its
+# file name matches the class name ignoring case, spaces, underscores and dots -
+# "Lord Knight.png", "lordknight.png" and "lord_knight.png" all work.  The body is
+# named after the class in the same normalised form ('lord_knight'), which is how
+# index.html looks for it, so no code change is needed when a sheet arrives.
+PENDING_CLASSES = ['Merchant',
+                   'Knight', 'Lord Knight', 'Wizard', 'High Wizard', 'Hunter',
+                   'Sniper', 'Priest', 'High Priest', 'Whitesmith']
+
+# class -> the class it evolves from (mirrors the game's class tree).  When a sheet
+# turns out to be a montage, this is how the tool finds the nearest sheet that is in
+# the normal one-row-per-direction layout, to rebuild the montage against.
+EVOLVES_FROM = {
+    'Swordman': 'Novice', 'Knight': 'Swordman', 'Lord Knight': 'Knight',
+    'Mage': 'Novice', 'Wizard': 'Mage', 'High Wizard': 'Wizard',
+    'Archer': 'Novice', 'Hunter': 'Archer', 'Sniper': 'Hunter',
+    'Thief': 'Novice', 'Assassin': 'Thief', 'Assassin Cross': 'Assassin',
+    'Acolyte': 'Novice', 'Priest': 'Acolyte', 'High Priest': 'Priest',
+    'Merchant': 'Novice', 'Blacksmith': 'Merchant', 'Whitesmith': 'Blacksmith',
+}
+
+
+def norm_key(text):
+    """Class name -> pack body name: 'Lord Knight' -> 'lord_knight'."""
+    return re.sub(r'[^a-z0-9]+', '_', str(text).lower()).strip('_')
+
+
+def flat_key(text):
+    """Everything but letters and digits removed, for matching file names."""
+    return re.sub(r'[^a-z0-9]', '', str(text).lower())
+
+
+def evolution():
+    """EVOLVES_FROM keyed by normalised name, as the tools use class keys."""
+    return {norm_key(k): norm_key(v) for k, v in EVOLVES_FROM.items()}
+
+
+def find_sheet(class_name):
+    """Sheet file for a class name, matched loosely; None when it is not there.
+
+    Compared with all spacing and punctuation removed, so 'White Smith.png',
+    'whitesmith.png' and 'white_smith.png' all serve the Whitesmith.
+    """
+    want = flat_key(class_name)
+    for fn in sorted(os.listdir(SPRITE_DIR)):
+        if not fn.lower().endswith(('.png', '.gif', '.webp')):
+            continue
+        if flat_key(os.path.splitext(fn)[0]) == want:
+            return fn
+    return None
 
 
 # --------------------------------------------------------------- sheet reading
@@ -116,53 +170,72 @@ def pasted(fig, scale):
     return fig
 
 
-def cell_bbox(atlas, a, d, f):
-    c = atlas.crop((f * CELL, (a * 8 + d) * CELL, (f + 1) * CELL, (a * 8 + d + 1) * CELL))
-    return c.getchannel('A').getbbox()
+def anchor_for(cell, band=4, y_bias=3):
+    """Head anchor for one body cell, measured off the body itself.
 
+    x = centre of mass of the alpha pixels in the top `band` rows, i.e. the cut
+    where the neck meets the head; y = that top edge + y_bias.  Measuring every
+    cell separately is what keeps the head welded to the shoulders through an
+    animation - the anchor follows the body's own lean instead of a fixed offset.
 
-def transfer_anchors(mine, anchors, ref_atlas, ref_anchors):
-    """Re-seat anchors onto a reference pack's placement.
-
-    The head only lines up if it sits where the reference art puts it, so each
-    reference anchor is shifted by however far this body moved inside its cell
-    (bbox centre / top).  Bodies are drawn to the same framing, so this keeps the
-    shipped placement where the art matches and follows the body everywhere else.
+    Checked against the shipped pack: this rule reproduces the hand-placed anchors
+    of thief / assassin / assassin cross exactly on all 3 anims x 8 dirs x frames
+    cells.  A span midpoint or a wider band drifts up to 16 px on attack poses.
     """
-    out = [[[] for _ in range(8)] for _ in range(3)]
-    n = 0
-    for a in range(3):
-        for d in range(8):
-            for f in range(len(anchors[a][d])):
-                an = anchors[a][d][f]
-                tr = fr = None
-                try:
-                    tr = ref_anchors[a][d][f]
-                except (KeyError, IndexError, TypeError):
-                    tr = None
-                mb = cell_bbox(mine, a, d, f)
-                rb = cell_bbox(ref_atlas, a, d, f)
-                if tr and mb and rb:
-                    dx = ((mb[0] + mb[2]) / 2) - ((rb[0] + rb[2]) / 2)
-                    dy = mb[1] - rb[1]
-                    out[a][d].append([int(round(tr[0] + dx)), int(round(tr[1] + dy))])
-                    n += 1
-                else:
-                    out[a][d].append(an)
-    return out, n
-
-
-def anchor_for(cell, y_bias=3):
-    """Head anchor for one body cell: neck centre x, shoulder top + bias."""
     a = np.array(cell.getchannel('A'))
     ys = np.where(a.max(axis=1) > 8)[0]
     if not len(ys):
         return None
     top = int(ys[0])
-    band = a[top:top + 4, :]
-    xs = np.where(band.max(axis=0) > 8)[0]
-    cx = int(round((xs[0] + xs[-1]) / 2)) if len(xs) else CELL // 2
+    rows = a[top:top + band, :]
+    yy, xs = np.where(rows > 8)
+    cx = int(round(xs.mean())) if len(xs) else CELL // 2
     return [cx, top + y_bias]
+
+
+def measure_anchors(atlas):
+    """anchors[3][8][frames] for a finished body atlas (used for kept bodies too)."""
+    out = [[[] for _ in range(8)] for _ in range(3)]
+    for a in range(3):
+        for d in range(8):
+            for f in range(FRAMES[a]):
+                cell = atlas.crop((f * CELL, (a * 8 + d) * CELL, (f + 1) * CELL, (a * 8 + d + 1) * CELL))
+                out[a][d].append(anchor_for(cell) or [CELL // 2, 24])
+    return out
+
+
+def layout_problem(rows):
+    """Why a sheet cannot be read as a row-per-direction sheet, or None if it can.
+
+    A usable sheet needs at least eight rows and six or more figures on each of the
+    walk rows (sheet rows 1..5).  Sheets built by pasting several separate strips
+    onto one canvas fail this: their rows either merge into one another or carry a
+    whole animation each.
+    """
+    if len(rows) < 8:
+        return 'only %d row(s) of poses; expected 9 (idle + 5 walk + attack)' % len(rows)
+    thin = [(i, len(rows[i][2])) for i in range(1, 6) if i < len(rows) and len(rows[i][2]) < 6]
+    if thin:
+        return 'row %d has only %d figure(s) where a walk cycle needs 6+' % thin[0]
+    return None
+
+
+def reference_sheet(class_name):
+    """Nearest sheet up the class line that is a normal sheet (not a montage)."""
+    seen, cur = set(), class_name
+    while cur and cur not in seen:
+        seen.add(cur)
+        fn = find_sheet(cur)
+        if fn:
+            path = os.path.join(SPRITE_DIR, fn)
+            try:
+                _, rows = sheet_figures(path)
+                if not layout_problem(rows):
+                    return path
+            except Exception:
+                pass
+        cur = evolution().get(cur)
+    return None
 
 
 def attack_indices(row):
@@ -279,32 +352,63 @@ def main():
         only = sys.argv[sys.argv.index('--only') + 1].split(',')
 
     base = load_existing()
-    ref_atlas = Image.open(io.BytesIO(base64.b64decode(base['bodies']['thief']['atlas'].split(',')[1]))).convert('RGBA')
-    ref_anchors = base['bodies']['thief']['anchors']
     pack = {k: base[k] for k in ('cellW', 'cellH', 'padL', 'padT', 'pivotX', 'pivotY',
                                  'frames', 'fps', 'hairStyles')}
     pack['bodies'] = dict(base['bodies'])      # keep thief / assassin / assassin cross as shipped
     pack['heads'] = base['heads']              # heads are shared by every class
 
     keep = set(pack['bodies']) if '--regenerate' not in sys.argv else set()
-    for key, (sheet, name) in SHEETS.items():
-        if only and key not in only:
+    skipped = []
+    jobs = list(SHEETS.items()) + [(norm_key(c), (find_sheet(c), norm_key(c))) for c in PENDING_CLASSES]
+    for key, (sheet, name) in jobs:
+        if only and key not in only and name not in only:
+            continue
+        if not sheet:
+            print('  %-16s no sheet yet in Sprite/ (add %s.png)' % (name, name))
             continue
         if name in keep:
-            print('  %-16s kept as shipped' % name)
+            # art stays exactly as shipped, but the anchors are re-measured with the
+            # same rule as the rebuilt bodies so every class animates alike
+            atlas = Image.open(io.BytesIO(base64.b64decode(pack['bodies'][name]['atlas'].split(',')[1]))).convert('RGBA')
+            old_a = pack['bodies'][name]['anchors']
+            new_a = measure_anchors(atlas)
+            shift = max(abs(new_a[a][d][f][i] - old_a[a][d][f][i])
+                        for a in range(3) for d in range(8) for f in range(FRAMES[a]) for i in (0, 1))
+            pack['bodies'][name]['anchors'] = new_a
+            print('  %-16s kept as shipped  (anchors re-measured, max shift %d px)' % (name, shift))
             continue
         path = os.path.join(SPRITE_DIR, sheet)
         if not os.path.exists(path):
             print('  ! missing sheet %s' % sheet)
             continue
         im, rows = sheet_figures(path)
-        atlas, est_anchors, missing, borrowed = build_body(im, rows)
-        anchors, n = transfer_anchors(atlas, est_anchors, ref_atlas, ref_anchors)
+        bad = layout_problem(rows)
+        note = ''
+        if bad:
+            # not one row per direction - try rebuilding it against the class line's sheet
+            ref = reference_sheet(name)
+            if ref:
+                rebuilt, rep = montage.rebuild(ref, path)
+                if rebuilt is not None:
+                    tmp = os.path.join('/tmp', 'rebuilt_%s.png' % name)
+                    rebuilt.save(tmp)
+                    im, rows = sheet_figures(tmp)
+                    note = ('  rebuilt from %s (%d/%d poses, median IoU %.2f)'
+                            % (os.path.basename(ref), rep['matched'], rep['poses'], rep['median_iou']))
+                    bad = layout_problem(rows)
+                else:
+                    bad = '%s; rebuild matched only %d/%d poses' % (bad, rep['matched'], rep['poses'])
+        if bad:
+            print('  %-16s SKIPPED (%s: %s) - montage sheet, not one row per direction'
+                  % (name, sheet, bad))
+            skipped.append((name, sheet, bad))
+            continue
+        atlas, anchors, missing, borrowed = build_body(im, rows)
         pack['bodies'][name] = {'atlas': data_uri(atlas), 'anchors': anchors}
         filled = sum(1 for a in anchors for row in a for x in row)
-        print('  %-16s rows=%-2d  cells=%d/120  missing=%d  anchors re-seated=%d  atlas=%dx%d%s' % (
-            name, len(rows), filled, len(missing), n, atlas.width, atlas.height,
-            ('  borrowed attack rows for dirs %s' % [b[0] for b in borrowed]) if borrowed else ''))
+        print('  %-16s rows=%-2d  cells=%d/120  missing=%d  atlas=%dx%d%s%s' % (
+            name, len(rows), filled, len(missing), atlas.width, atlas.height,
+            ('  borrowed attack rows for dirs %s' % [b[0] for b in borrowed]) if borrowed else '', note))
         if missing:
             print('     gaps: %s%s' % (missing[:6], ' ...' if len(missing) > 6 else ''))
 
@@ -315,6 +419,10 @@ def main():
     txt += 'window.SPRITE_PACK=%s;\n' % json.dumps(pack, separators=(',', ':'))
     with open(os.path.join(REPO, out), 'w') as f:
         f.write(txt)
+    if skipped:
+        print('\n  %d sheet(s) skipped as montages - these classes keep their first-job art:' % len(skipped))
+        for name, sheet, why in skipped:
+            print('    %-15s %s (%s)' % (name, sheet, why))
     print('wrote %s (%.1f MB, %d bodies)' % (out, os.path.getsize(os.path.join(REPO, out)) / 1e6, len(pack['bodies'])))
 
 

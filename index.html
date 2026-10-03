@@ -128,7 +128,7 @@ const AFF=['str','agi','dex','luk','int','hp','atk','crit','aspd','flee','cdm'],
 const AL={str:'STR',agi:'AGI',dex:'DEX',luk:'LUK',int:'INT',hp:'Max HP',atk:'ATK %',crit:'Crit %',aspd:'ASPD %',flee:'Flee %',cdm:'Crit DMG %',vit:'VIT'};
 const SU=k=>k.toUpperCase(),BX_=7.5,Z0=-3,Z1=4,MPS=15,K5=['str','agi','dex','luk','int'];
 const GM_USER='GM',GM_PASS='gm1234';   // CHANGE THE GM PASSWORD before you publish
-const BUILD='2026-10-02 sprites-v4 full-class-pack';   // shown on the login card - confirms which file you loaded
+const BUILD='2026-10-03 sprites-v7 all 19 classes';   // shown on the login card - confirms which file you loaded
 $('buildTag').textContent='build '+BUILD+' · atlases:'+Object.keys(window.SPRITE_ATLASES||{}).length;
 
 // ---------- class tree: Novice -> 6 first jobs -> 6 second jobs -> 6 third jobs ----------
@@ -220,7 +220,7 @@ function rollOnce(p,fast,done){const c=rollCost(p);if(S.zeny<c){autoSet.delete(p
 function autoRoll(p){if(!autoSet.has(p.id)||!gp(p.id))return;rollOnce(p,true,g=>{if(!(p.sk||[1,2,3]).includes(g)){p.roll=g;autoSet.delete(p.id);log(`Auto-roll stopped on Grade ${g} (x${MUT[g]})!`,'r4')}ui();save();if(autoSet.has(p.id))setTimeout(()=>autoRoll(p),250)})}
 const pickW=w=>{let r=Math.random()*w.reduce((a,b)=>a+b,0);for(let i=0;i<w.length;i++){r-=w[i];if(r<0)return i}return w.length-1},gp=id=>S.pets.find(x=>String(x.id)===String(id));
 const uid=()=>Date.now()+Math.random(),rnd=(a,b)=>a+Math.random()*(b-a),ri=(a,b)=>Math.floor(rnd(a,b+1)),cl=(v,a,b)=>Math.max(a,Math.min(b,v));
-const fresh=()=>({pets:[],cls:'Novice',sex:'m',hair:0,lv:1,exp:0,hp:100,zeny:0,kills:0,pts:10,jobs:{Novice:{jl:1,jx:0}},sk:{aid:1},mp:0,lvl:1,prog:[1,1,1,1,1],kl:0,auto:true,adv:true,q:null,cards:[],ore:{ori:0,elu:0},gm:false,gmx:100,
+const fresh=()=>({pets:[],cls:'Novice',sex:'m',hair:0,lv:1,exp:0,hp:100,zeny:0,kills:0,pts:10,jobs:{Novice:{jl:1,jx:0}},sk:{aid:1},base:{},mp:0,lvl:1,prog:[1,1,1,1,1],kl:0,auto:true,adv:true,q:null,cards:[],ore:{ori:0,elu:0},gm:false,gmx:100,
   st:{str:1,agi:1,dex:1,luk:1,int:1,vit:1},eq:{weapon:{id:1,slot:'weapon',wt:'dagger',tier:0,val:5,name:'Novice Knife',aff:[],slots:1,cards:[],sec:0},armor:null,head:null,off:null,leg:null,acc1:null,acc2:null},inv:[]});
 const saveKey=()=>'pg_save3_'+currentUser;
 const num_= (v,d)=>{v=+v;return Number.isFinite(v)?v:d};
@@ -233,6 +233,15 @@ function load(){try{const s=JSON.parse(lsGet(saveKey()));if(s&&s.lv){const F=fre
   while(f.prog.length<MAPS.length)f.prog.push(1);
   f.mp=Math.max(0,Math.min(MAPS.length-1,Math.floor(f.mp||0)));f.lvl=Math.max(1,Math.min(10,Math.floor(f.lvl||1)));
   if(!f.jobs||typeof f.jobs!=='object')f.jobs=F.jobs;if(!f.sk||typeof f.sk!=='object')f.sk=F.sk;
+  // per-class builds (Base Lv / stats / points / gear) - repair, drop anything malformed
+  if(!f.base||typeof f.base!=='object')f.base={};
+  for(const k in f.base){const r=f.base[k];
+    if(!r||typeof r!=='object'){delete f.base[k];continue}
+    r.lv=Math.max(1,Math.min(150,Math.floor(num_(r.lv,1))));r.exp=Math.max(0,num_(r.exp,0));
+    r.pts=Math.max(0,Math.floor(num_(r.pts,0)));r.hp=Math.max(1,num_(r.hp,1));
+    if(!r.st||typeof r.st!=='object')r.st={};
+    for(const s of['str','agi','dex','luk','int','vit'])r.st[s]=Math.max(1,num_(r.st[s],1));
+    if(!r.eq||typeof r.eq!=='object')r.eq={}}
   if(!Array.isArray(f.pets))f.pets=[];if(!Array.isArray(f.inv))f.inv=[];if(!Array.isArray(f.cards))f.cards=[];
   if(!f.eq||typeof f.eq!=='object')f.eq=F.eq;if(f.hp<=0)f.hp=F.hp;
   const fx=c=>{c.v=CV[c.g]};(f.cards||[]).forEach(fx);(f.pets||[]).forEach((p,i)=>{if(p.on===undefined)p.on=i<3});Object.values(f.eq||{}).forEach(it=>it&&(it.cards||[]).forEach(fx));(f.inv||[]).forEach(it=>(it.cards||[]).forEach(fx));
@@ -387,23 +396,51 @@ function refine(sl){const it=S.eq[sl];if(!it||(it.r||0)>=10)return;const o=it.sl
   S.ore[o]--;S.zeny-=c;if(Math.random()*100<refCh(it)){it.r=(it.r||0)+1;log(`Refine success! ${iname(it)}`,'r3');addFloat(pl.x,3,pl.z,'Refine +'+it.r,'#ffd23f')}
   else{if(it.r>=5){it.r--;log(`Refine failed... dropped to +${it.r}.`,'r0')}else log('Refine failed.','r0');addFloat(pl.x,3,pl.z,'Failed','#ff6b6b')}ui();save()}
 
-// ---------- class change (job levels are saved per class; switching lines resets you to Novice) ----------
-// Reset to Novice: Base Lv capped to 25 (anything below stays), ALL Job Lv + skills reset, stats refunded.
+// ---------- class change ----------
+// Changing job is a restart: a class's own levels are not kept, so loading it up again
+// starts it over (Base Lv as you are now, Job Lv 1, stats refunded).
+//
+// Stepping aside, though, remembers what you left: S.base[class] holds the Base Lv, EXP,
+// stat points, stats and worn gear you had when you left that class, so you can go back
+// to it later and pick up where you stopped.  Job Lv and skills are per class already.
+// Only the class you are leaving is stored; a class you have not played yet starts fresh,
+// and the Novice is a clean restart - 25 Base Lv, Job Lv 0, stats refunded, no memory.
+function classRec(n){return (S.base&&S.base[n])||null}
+function snapClass(){
+  if(!S.cls)return;S.base=S.base||{};
+  const eq={};for(const k in S.eq)eq[k]=S.eq[k]?S.eq[k].id:null;
+  S.base[S.cls]={lv:S.lv,exp:S.exp,pts:S.pts,hp:S.hp,st:Object.assign({},S.st),eq}}
+function equipRec(ids){                       // put the stored loadout back on, by id: never creates items
+  const off=[];for(const k in S.eq){const it=S.eq[k];S.eq[k]=null;if(it)off.push(it)}
+  if(off.length)S.inv.push(...off);
+  for(const k in ids){const id=ids[k];if(id==null||!(k in S.eq))continue;
+    const i=S.inv.findIndex(x=>x&&String(x.id)===String(id));if(i>=0)S.eq[k]=S.inv.splice(i,1)[0]}}
+function freshBuild(){for(const k in S.st)S.st[k]=1;S.pts=totalPts()}
+function clearClassSkills(n){for(const id in S.sk){const s=SKILLS.find(x=>x.id===id);if(id!=='aid'&&s&&s.cls.includes(n))delete S.sk[id]}}
+function noviceRun(){                         // a real restart: 25 Base Lv, Job Lv 0, stats refunded
+  S.jobs.Novice={jl:1,jx:0};clearClassSkills('Novice');
+  if(S.lv>25){S.lv=25;S.exp=0}
+  if(S.base)delete S.base.Novice;             // nothing carried out of a restart
+  freshBuild()}
 function classBlock(n){
   if(n===S.cls)return'Current class';if(n==='Novice')return'';
   for(let x=n;CLASSES[x].par;x=CLASSES[x].par){const p=CLASSES[x].par,pj=S.jobs[p];if(!pj||pj.jl<CLASSES[x].rj)return`Needs ${p} Job Lv ${CLASSES[x].rj}`}
   if(S.cls!=='Novice'&&S.cls!==CLASSES[n].par)return'Reset to Novice first';return''}
 function changeClass(n){if(classBlock(n))return;
-  if(n==='Novice'){
-    S.jobs={Novice:{jl:1,jx:0}};S.sk={aid:1};
-    if(S.lv>25){S.lv=25;S.exp=0}
-    for(const k in S.st)S.st[k]=1;S.pts=totalPts();
-    S.hp=maxHp();
-    // strip gear this Novice can no longer use (same rule as normal class change)
-  }
-  S.cls=n;jobOf();{const o=S.eq.off;if(o&&!(o.slot==='off'?canShield():dualOk(o))){S.inv.push(o);S.eq.off=null}}const w=S.eq.weapon;
+  snapClass();                                 // remember the class we are stepping away from
+  S.cls=n;jobOf();
+  const rec=n==='Novice'?null:classRec(n);     // a class you left earlier picks up where it stopped
+  if(rec){S.lv=rec.lv;S.exp=rec.exp;S.pts=rec.pts;S.st=Object.assign({},rec.st);equipRec(rec.eq)}
+  else if(n==='Novice')noviceRun();
+  else freshBuild();                           // never played this one: new build at your level
+  {const o=S.eq.off;if(o&&!(o.slot==='off'?canShield():dualOk(o))){S.inv.push(o);S.eq.off=null}}const w=S.eq.weapon;
   if(w&&w.wt&&!C().wt.includes(w.wt)){S.inv.push(w);S.eq.weapon=null;log('Your weapon cannot be used by this class. Moved to Bag.')}
-  S.hp=Math.min(S.hp,maxHp());log(n==='Novice'?`Reset to Novice. Job levels + skills reset · Base Lv ${S.lv} · stats refunded (${S.pts} pts).`:`Class: ${n} (Job Lv ${S.jobs[n].jl})`,'r4');addFloat(pl.x,3.6,pl.z,n+'!','#fff',true);ui();save()}
+  S.hp=Math.max(1,Math.min(rec&&rec.hp||maxHp(),maxHp()));
+  snapClass();                                 // so you can step away again right away
+  log(rec?`Class: ${n} · back to Base Lv ${S.lv} · Job Lv ${S.jobs[n].jl} · stats and gear restored.`
+    :n==='Novice'?`Restarted as Novice · Base Lv ${S.lv} · job levels cleared · ${S.pts} stat points to spend.`
+    :`Class: ${n} · Base Lv ${S.lv} · Job Lv 1 · ${S.pts} stat points to spend.`,'r4');
+  addFloat(pl.x,3.6,pl.z,n+'!','#fff',true);ui();save()}
 
 // ---------- UI ----------
 const TABS={map:['🗺️','World Map','M'],status:['📊','Character','S'],job:['🌳','Class Tree','J'],skills:['✨','Skills','K'],bag:['🎒','Inventory','B'],log:['📃','Log','L'],pet:['🐾','Pets','P'],set:['⚙️','Settings','O'],gm:['🛠️','GM Tools','G']};
@@ -433,14 +470,15 @@ const V={
     +`<div class="slot" style="flex-wrap:wrap"><span>ATK <b>${atk()}</b></span><span>DEF <b>${def()}</b></span><span>ASPD <b>${(1/aspd()).toFixed(2)}/s</b></span><span>Crit <b>${crit().toFixed(1)}%</b></span><span>Crit DMG <b>x${critD().toFixed(2)}</b></span><span>MDEF <b>${mdef()}</b></span><span>Flee <b>${flee().toFixed(0)}%</b></span><span>HP <b>${maxHp()}</b></span></div>
     <small>Weapons: ${c.wt.join(', ')} &middot; Main stat: ${SU(c.main)}</small><button class="full" data-a="rstat">Reset stats (${rcost()}z)</button>`},
   job(){const lines=[['Swordman','Knight','Lord Knight'],['Mage','Wizard','High Wizard'],['Archer','Hunter','Sniper'],['Thief','Assassin','Assassin Cross'],['Acolyte','Priest','High Priest'],['Merchant','Blacksmith','Whitesmith']];
-    const k=selK||S.cls,c=CLASSES[k],blk=classBlock(k),pj=S.jobs[k];
+    const k=selK||S.cls,c=CLASSES[k],blk=classBlock(k),pj=S.jobs[k],rec=classRec(k);
     return`<div class="tree"><div class="trow" style="justify-content:center">${tnode('Novice')}</div><div class="trunk"></div>
     ${[0,1,2].map(i=>`<div class="trow">${lines.map(l=>tnode(l[i])).join('')}</div>${i<2?'<div class="trunk"></div>':''}`).join('')}</div>
     <div class="legend"><span class="tn cur">Current</span><span class="tn ok">Available</span><span class="tn played">Played</span><span class="tn lock">Locked</span></div>
     <div class="mob-card"><div class="hd">${k}</div><small>${c.par?'Before: <b>'+c.par+'</b>':'Starting class'}${c.kids.length?' &middot; Next: <b>'+c.kids.join(', ')+'</b>':''}</small><br>
-    <small>${pj?`Saved Job Lv ${pj.jl}/${c.mj}`:'Not played yet'} &middot; ATK x${c.atk} &middot; ASPD x${c.aspd} &middot; HP x${c.hp}<br>Weapons: ${c.wt.join(', ')} &middot; Main stat ${SU(c.main)}</small>
-    <div class="row" style="margin-top:6px"><button data-a="job" data-v="${k}" ${blk?'disabled':''}>${k===S.cls?'Current class':k==='Novice'?'Reset to Novice':'Change to '+k}</button>${blk&&k!==S.cls?`<small class="r0">${blk}</small>`:''}</div></div>
-    <button class="full" data-a="job" data-v="Novice" ${S.cls==='Novice'?'disabled':''}>Reset to Novice (Job Lv &amp; skills reset, Base Lv becomes 25 if higher, stats refunded)</button>`},
+    <small>${pj?`Saved ${rec?`Base Lv ${rec.lv} &middot; `:''}Job Lv ${pj.jl}/${c.mj}`:'Not played yet'}${rec?' &middot; <b>waiting: your stats and gear are still on it</b>':''} &middot; ATK x${c.atk} &middot; ASPD x${c.aspd} &middot; HP x${c.hp}<br>Weapons: ${c.wt.join(', ')} &middot; Main stat ${SU(c.main)}</small>
+    <div class="row" style="margin-top:6px"><button data-a="job" data-v="${k}" ${blk?'disabled':''}>${k===S.cls?'Current class':'Change to '+k}</button>${blk&&k!==S.cls?`<small class="r0">${blk}</small>`:''}</div></div>
+    <small>Switching job restarts the class you load: Base Lv as you are now, job levels cleared, stats refunded &middot; classes you step away from keep their own Base Lv, stats and gear until you come back to them.</small>
+    <button class="full" data-a="job" data-v="Novice" ${S.cls==='Novice'?'disabled':''}>Restart as Novice (Base Lv 25, job levels cleared)</button>`},
   skills(){const line=lineOf(S.cls),av=skpAvail(),sel=SKILLS.find(s=>s.id===selS);
     return`<div class="hd">Skill points: ${av} <small>(1 per Job Level)</small></div>`+line.map(from=>{const ss=SKILLS.filter(s=>s.from===from);return ss.length?`<div class="sec">${from}</div><div class="skg">${ss.map(s=>{const L=lv(s.id);return`<div class="sk${L?'':' off'}${selS===s.id?' sel':''}" style="border-color:${s.col||'#8a6a2c'}" data-a="ssel" data-v="${s.id}"><div class="si">${s.type==='pas'?'📘':s.type==='heal'?'💚':'💥'}</div><small>${s.n}</small><div><b>${L}</b>/${s.max}</div><button data-a="skill" data-v="${s.id}" ${av>0&&L<s.max?'':'disabled'}>+</button></div>`}).join('')}</div>`:''}).join('')
     +(sel?`<div class="mob-card" style="margin-top:8px"><b>${sel.n}</b> <small>${sel.type==='pas'?'Passive':sel.type==='heal'?'Auto-heal':'Active (auto-cast)'}${sel.rng?' &middot; RANGED':''}${sel.aoe?' &middot; AREA':''}</small><br><small>${sel.d(Math.max(1,lv(sel.id)))}</small>${lv(sel.id)&&lv(sel.id)<sel.max?`<br><small>Next: ${sel.d(lv(sel.id)+1)}</small>`:''}</div>`:'')
@@ -509,7 +547,7 @@ const ACT={
   selm:v=>{mapM=+v;mapL=Math.min(mapL,Math.max(1,S.prog[mapM]));renderWin()},sell_:v=>{mapL=+v;renderWin()},go:()=>{if(mapL<=S.prog[mapM]){gotoField(mapM,mapL);log(`Traveled to ${fieldName()}.`)}},
   stat:k=>{if(S.pts>=cost(k)&&S.st[k]<99){S.pts-=cost(k);S.st[k]++;S.hp=Math.min(S.hp,maxHp());ui();save()}},
   stat5:k=>{for(let i=0;i<5;i++)if(S.pts>=cost(k)&&S.st[k]<99){S.pts-=cost(k);S.st[k]++}S.hp=Math.min(S.hp,maxHp());ui();save()},
-  selk:v=>{selK=v;renderWin()},job:n=>{if(n==='Novice')ask('Reset to Novice? All Job Levels and skills reset, Base Lv drops to 25 if above it, stats are refunded.',()=>changeClass(n));else changeClass(n)},
+  selk:v=>{selK=v;renderWin()},job:n=>{if(n==='Novice'&&S.cls!=='Novice')ask('Restart as Novice? You go back to Base Lv 25, job levels cleared, and your stats are refunded. Classes you leave keep their own Base Lv, stats and gear, so you can switch back to them later.',()=>changeClass(n));else changeClass(n)},
   rstat:()=>{if(S.zeny<rcost())return log('Not enough Zeny to reset stats.');S.zeny-=rcost();for(const k in S.st)S.st[k]=1;S.pts=totalPts();S.hp=Math.min(S.hp,maxHp());log('Stats reset.');ui();save()},
   skill:id=>{const s=SKILLS.find(x=>x.id===id);if(skpAvail()>0&&lv(id)<s.max&&lineOf(S.cls).includes(s.from)){S.sk[id]=lv(id)+1;ui();save()}},
   rskill:()=>{if(S.zeny<rcost())return log('Not enough Zeny to reset skills.');S.zeny-=rcost();S.sk={aid:1};log('Skills reset.');ui();save()},
@@ -811,12 +849,20 @@ const PACK_BODY={Novice:'novice',
   Thief:'thief',Assassin:'assassin','Assassin Cross':'assassin_cross',
   Acolyte:'aco',Priest:'aco','High Priest':'aco',
   Merchant:'blacksmith',Blacksmith:'blacksmith',Whitesmith:'blacksmith'};
+// A class uses its own art as soon as the pack has a body named after it
+// (knight, lord_knight, wizard...): drop the sheet in Sprite/, run the tool, done.
+// Until then it keeps its first-job line's art, so every class always has a sprite.
+const packBodyName=c=>String(c||'').toLowerCase().replace(/[^a-z0-9]+/g,'_').replace(/^_+|_+$/g,'');
+function packBodyFor(cls,tier){const PK=window.SPRITE_PACK||window.THIEF_PACK;if(!PK)return null;
+  const n=packBodyName(cls);if(PK.bodies&&PK.bodies[n])return n;
+  const b=PACK_BODY[cls];if(b&&PK.bodies[b])return b;
+  const f=tier>=3?'assassin_cross':tier>=2?'assassin':'thief';return PK.bodies[f]?f:null}
 const packImg={},packCache=new Map(),PACK_K=.03;let packReady=false;
 (function(){const PK=window.SPRITE_PACK||window.THIEF_PACK;if(!PK)return;let n=0,tot=0;
   const ld=(k,u)=>{tot++;const i=new Image();i.onload=()=>{if(++n===tot){packReady=true;heroKey=''}};i.src=u;packImg[k]=i};
   for(const c in PK.bodies)ld('b:'+c,PK.bodies[c].atlas);for(const h in PK.heads)ld('h:'+h,PK.heads[h])})();
 function packTex(opt){
-  const PK=window.SPRITE_PACK||window.THIEF_PACK,body=PACK_BODY[opt.cls]||(opt.tier>=3?'assassin_cross':opt.tier>=2?'assassin':'thief'),sex=opt.sex==='f'?'female':'male',hs=(((opt.hair|0)%PK.hairStyles)+PK.hairStyles)%PK.hairStyles,key=body+'|'+sex+'|'+hs;
+  const PK=window.SPRITE_PACK||window.THIEF_PACK,body=packBodyFor(opt.cls,opt.tier)||'thief',sex=opt.sex==='f'?'female':'male',hs=(((opt.hair|0)%PK.hairStyles)+PK.hairStyles)%PK.hairStyles,key=body+'|'+sex+'|'+hs;
   if(packCache.has(key))return packCache.get(key);
   const cv=document.createElement('canvas');cv.width=PK.cellW*8;cv.height=PK.cellH*24;
   const g=cv.getContext('2d');g.imageSmoothingEnabled=false;
@@ -835,7 +881,8 @@ function setPackCell(spr,dir,run,atk,clock){
   const t=spr.material.map;t.repeat.set(1/8,1/24);t.offset.set(f/8,1-(a*8+dir+1)/24)}
 function ensureHero(opt){const k=JSON.stringify(opt);if(heroKey===k&&heroSpr)return;heroKey=k;heroDirty=false;
   if(heroSpr){P.remove(heroSpr);heroSpr=null}if(heroHeadSpr){P.remove(heroHeadSpr);heroHeadSpr=null}
-  if(packReady&&PACK_BODY[opt.cls]&&packImg['b:'+PACK_BODY[opt.cls]]){heroSpr=mkPackHero(opt);P.add(heroSpr);return}
+  const pb=packReady?packBodyFor(opt.cls,opt.tier):null;
+  if(pb&&packImg['b:'+pb]){heroSpr=mkPackHero(opt);P.add(heroSpr);return}
   const bk=heroBodyKey(opt),hk=heroHeadKey(opt);
   const btex=loadAtlas(bk),htex=loadAtlas(hk);
   if(btex&&htex){
