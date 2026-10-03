@@ -206,12 +206,33 @@ t('effects are actually attached to the new skills (tagging must run after the p
   }
 });
 
-t('the Thief line has no AoE, as in Ragnarok Online', () => {
-  // iRO is explicit: "the Thief does not have any AOE skills to level with"
-  for (const cls of ['Thief', 'Assassin', 'Assassin Cross']) {
-    const aoe = K.SKILLS.filter(s => s.cls.includes(cls) && s.aoe).map(s => s.n);
-    const allowed = ['Grimtooth', 'Meteor Assault'];   // Assassin's own 3x3 / around-caster skills
-    for (const n of aoe) assert.ok(allowed.includes(n), `${cls} reached an AoE skill: ${n}`);
+t('every first job owns an active AoE at skill level 1', () => {
+  for (const [cls,c] of Object.entries(K.CLASSES).filter(([,c])=>c.tier===1)) {
+    const area=K.SKILLS.filter(s=>s.from===cls && s.aoe && s.type==='act');
+    assert.ok(area.length, cls+' needs a farming AoE');
+    for(const skill of area){
+      K.S={cls,sk:{[skill.id]:1},skOff:{}};
+      assert.ok(K.skillOn(skill.id), cls+' AoE is usable at level 1');
+      assert.strictEqual(K.skCost(1),1);
+    }
+  }
+});
+
+t('first-job AoEs damage a nearby secondary enemy, but not distant mobs', () => {
+  const cast=grab('function castSkill(sk,k){','function playerAttack(){');
+  for(const cls of Object.keys(K.CLASSES).filter(c=>K.CLASSES[c].tier===1)){
+    const sk=K.SKILLS.find(s=>s.from===cls&&s.aoe&&s.type==='act');
+    const context={sk};vm.createContext(context);
+    vm.runInContext(`
+      const mob={x:0,z:0,hp:10000},near={x:1,z:1,hp:10000},far={x:9,z:9,hp:10000};
+      const mobs=[mob,near,far],pend=[];
+      const lv=()=>1,st=()=>1,atk=()=>50,strike=()=>{},shot=()=>{},playSkillFx=()=>{},
+        chainHit=()=>{},applyDot=()=>{},applyStun=()=>{},hurt=(o,d)=>{o.hp-=d};
+      ${cast}
+      castSkill(sk,1);this.result={near:near.hp,far:far.hp};
+    `,context);
+    assert.ok(context.result.near<10000,cls+' area damage missing');
+    assert.strictEqual(context.result.far,10000,cls+' hit outside area');
   }
 });
 

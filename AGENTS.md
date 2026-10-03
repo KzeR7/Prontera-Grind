@@ -1074,3 +1074,29 @@ assigned for feel rather than fidelity. While reworking that, two shipped bugs s
   * These are skill-specific, in-battle RO-style geometry cues, not playback of the original layered `.str` effects. The researched effect assets require per-layer textures and blend modes; the current renderer intentionally does not flatten them into a skill icon.
   * Divine Pride weapon icons are external runtime images. Grip positioning is regression-tested mathematically, but the exact pixel hotspot of each remote family icon could not be independently inspected from this sandbox; use the live preview to judge any remaining family-specific offset.
   * Camera, head/body anchors and mob-hop behavior were left unchanged.
+
+### 2026-10-04 — `balance-v22 faster-exp starter-stages compact-map`
+* **What changed for the player:**
+  * Normal accounts earn **70× Base/Job and quest EXP below Base Lv 100**, then **70/3× (about 23.33×) at Lv 100–150**. The owner explicitly chose 70% of the default 100× GM rate, not a 70% increase, and chose one-third EXP at 100+, not three times the total levelling time. GM keeps its own configured rate. Zeny, gear/drop odds and level requirements are unchanged. Saved quests refresh their displayed rewards on login without losing progress. Earlier time targets in this document are superseded; the old 1× economy model remains a baseline regression, not a current playtime estimate.
+  * Map window desktop width is **450px instead of a growing 900px panel**. Compact wrapping map/stage buttons, stacked drop cards, and keyboard-operable stage buttons fit the narrower layout. Map levels are called **Stage 1–10** in map selection, travel, the arena name, unlock messages and refining text; character/job levels remain levels. Press **M** to see it. Locked-stage drop previews still work; travel stays gated.
+  * Advancing to a previously unplayed second/transcendent job **keeps allocated stats and unspent points**. Leaving Novice for a new class still refunds stats; previously played classes still restore their saved builds. The existing return-to-Novice hard restart (Base 25 cap and refunded stats) remains unchanged.
+  * Every first job now has an active AoE available to buy for one skill point: **Magnum Break, Napalm Beat, Arrow Shower, Envenom, Signum Crucis, Cart Revolution**. Mage's Napalm Beat and Thief's Envenom gained area damage; the others already had it. This intentionally supersedes the old “no Thief AoE” rule. Novice still has only First Aid, and no new effect types or extra skills were added.
+  * Prontera, Izlude, Geffen, Morroc and Payon **stages 1–5** use gentle combat values: HP capped at `floor(12*(6+5*(stage-1))^1.3)` and never above their old HP, ATK 6/9/12/15/18, and 2–3 enemies rather than stage 5 jumping to 3–8. Prontera Stage 1 retains one 42-HP enemy for new Novices. These are beginner farming routes (Base 10–60); gear strength/reward power remains map-specific. Stages 6–10, bosses and later maps retain their old formulas.
+* **Files touched:** `index.html`, `tools/tests/{class_change,economy,skill,ui}_sim.js`, new `tools/tests/starter_sim.js`, `AGENTS.md`.
+* **Art:** none added, removed, recoloured or rebuilt; `tools/montage.py` was not used.
+* **Tests:** pack (19 bodies), class change **22**, save/load **9**; economy **21**, stats **7**, cards **13**, skills **41**, gear **18**; scene **8**, kit **20**, UI **10**, sprites **8**, starter **4** — all green. Inline JavaScript syntax and `git diff --check` pass.
+  * New tests execute the actual kill-reward block at both EXP bands (including GM), refresh old quests, preserve all six stat allocations through all 12 promotions, and execute each first-job AoE against nearby/distant targets.
+  * Starter tests execute the real spawn/drop data for all 25 early stages, preserve later-stage/boss formulas, and check all six first jobs without gear/skills at Base 10/20/30/40/50 for stages 1/2/3/4/5. Seeded, conservative pack-damage budgets assume low outgoing damage, misses and maximum incoming damage, with no dodge, regeneration or level-up healing; all survive. This is not a real-time movement playtest.
+* **Branches / PR:** `arena/01a1029e-prontera-grind`; PR link recorded after publishing below.
+* **Known limits / follow-ups:**
+  * The selected EXP increase is deliberately large. No promise of exact hours: map unlock cadence, quests, overkill, gear income and job caps still affect pacing. Rewards use the character's Base Lv at award time; crossing 100 does not retroactively reprice already-earned EXP.
+  * Preview server serves the new build (HTTP 200). Automated browser visual testing was blocked by unavailable Chromium downloads/system libraries; responsive layout is source/render tested, not screenshot-verified. Use the live preview to check the narrower map window and actual sustained farming.
+  * Stats already refunded in an older build cannot be reconstructed automatically; spend those points once. Promotions from this build onward retain them.
+
+### 2026-10-04 — `balance-v22 delivery`
+* **What changed for the player:** no additional game changes; published the verified update for review/merge.
+* **Files touched:** `AGENTS.md` only.
+* **Art:** none; no montage rebuild.
+* **Tests:** all 13 suites, inline JavaScript syntax and whitespace checks passed before the game push; this entry is documentation only.
+* **Branches / PR:** `arena/01a1029e-prontera-grind` — https://github.com/KzeR7/Prontera-Grind/pull/7
+* **Known limits / follow-ups:** merge the PR to deploy through the normal GitHub/Cloudflare route; live visual/farming review remains recommended.

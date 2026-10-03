@@ -131,7 +131,7 @@ t('the map panel renders every map and field', () => {
   assert.ok(b.includes('2% each') && b.includes('5% each'), 'ore rates: 2% per monster, 5% per boss');
 });
 
-t('the map tab is a wide two-band panel: maps on top, that map\'s fields under them', () => {
+t('the map tab is a compact two-band panel: maps on top, that map\'s fields under them', () => {
   U.S = mkS('Knight'); U.mapM = 7; U.mapL = 4;   // Amatsu, a level 60+ map
   const h = U.V.map();
   // the map window is the wide one, so the panel gets the room to be horizontal
@@ -146,11 +146,14 @@ t('the map tab is a wide two-band panel: maps on top, that map\'s fields under t
   const fieldBand = h.slice(iFields, iCols);
   assert.strictEqual((fieldBand.match(/class="map-node/g) || []).length, 10, 'ten fields in the band');
   assert.ok(fieldBand.includes('data-a="go"'), 'travel sits with the fields, not in its own sticky bar');
-  assert.ok(fieldBand.includes('Lv 10'), 'the boss field is labelled');
-  // one row of ten when the window is wide, wrapping only when it is not
+  assert.ok(fieldBand.includes('Stage 10'), 'the boss field is labelled');
+  assert.ok(src.includes('.wp.wide{flex:0 1 450px;width:450px;min-width:0}'), 'map width is halved and does not grow');
+  assert.ok(!/>Lv \d/.test(fieldBand), 'stages are not character levels');
+  assert.strictEqual((fieldBand.match(/<button class="map-node/g)||[]).length, 10, 'stages are keyboard-accessible buttons');
+  // Compact wrapping rows rather than ten cramped columns.
   assert.ok(/\.lvgrid\{[^}]*repeat\(auto-fit,minmax\(min\(100%,\d+px\),1fr\)\)/.test(src), 'the field strip must shrink its tracks before overflowing');
   const min = +src.match(/\.lvgrid\{[^}]*minmax\(min\(100%,(\d+)px\)/)[1];
-  assert.ok(min * 10 <= 700, 'ten fields must fit one row in a ~900px window (min ' + min + 'px each)');
+  assert.ok(min * 5 <= 400, 'five stages must fit one row in a compact window (min ' + min + 'px each)');
   assert.ok(/\.mapcols\{[^}]*repeat\(auto-fit,minmax\(min\(100%,\d+px\),1fr\)\)/.test(src), 'tables must use min-width-safe column tracks');
   assert.ok(/\.mapband\.fields\{position:sticky/.test(src), 'the field band must stay pinned while the tables scroll');
   // v16: two cards (monsters / boss+pets) instead of three - the gear card was removed,
@@ -163,7 +166,7 @@ t('map and boss-field panels stay inside narrow viewports', () => {
   const wins = src.match(/#wins\{[^}]+\}/)[0], panel = src.match(/\.wp\{[^}]+\}/)[0];
   assert.ok(wins.includes('left:12px') && wins.includes('right:12px') && wins.includes('min-width:0'), 'the map window must be bounded on both sides');
   assert.ok(panel.includes('min-width:0') && panel.includes('max-width:100%'), 'panels must be allowed to shrink');
-  assert.ok(src.includes('grid-template-columns:repeat(auto-fill,minmax(min(100%,86px),1fr))'), 'map cards must shrink to their panel width');
+  assert.ok(src.includes('grid-template-columns:repeat(auto-fill,minmax(min(100%,76px),1fr))'), 'map cards must shrink to their panel width');
   assert.ok(src.includes('grid-template-columns:repeat(auto-fit,minmax(min(100%,280px),1fr))'), 'drop cards must not force a 280px overflow');
   assert.ok(src.includes('@media(max-width:900px){#wins{flex-direction:column;align-items:stretch}'), 'narrow screens stack map panels');
   assert.ok(src.includes('.mapband,.mapband.fields{position:static}'), 'the sticky field band must not clip in the stacked layout');
