@@ -29,7 +29,7 @@ const dualOk = it => dualOn() && (it.wt === 'dagger' || it.wt === 'katar');
 const C = () => CLASSES[S.cls] || CLASSES.Novice;
 const SKILLS = [{id:'aid',cls:['Novice']},{id:'hide',cls:['Thief','Assassin','Assassin Cross']},{id:'enb',cls:['Swordman','Knight','Lord Knight']}];
 const log = () => {}, ui = () => {}, save = () => {}, addFloat = () => {}, pl = {x:0, z:0};
-this.__h = {changeClass, classBlock, playedClass, classRec, snapClass, equipRec, noviceRun, clearClassSkills,
+this.__h = {changeClass, classBlock, playedClass, playedClasses, t3Total, collDmg, classRec, snapClass, equipRec, noviceRun, clearClassSkills, CLASSES,
             set S(v){S=v}, get S(){return S}};
 `;
 const sb = { console };
@@ -217,6 +217,62 @@ t('an unplayed class still starts a fresh build at your own Base Lv', () => {
   assert.strictEqual(H.S.lv, 30, 'a new class carries on at your Base Lv');
   assert.strictEqual(H.S.jobs.Thief.jl, 1, 'and starts its job at level 1');
   assert.ok(H.S.pts > 0, 'stats are refunded for a new build');
+});
+
+// ---- the class-collection bonus (v17b: +1% per transcendent class, at Base 100+) ----
+t('the collection counts transcendent classes only: current + recorded', () => {
+  H.S = mk();                                    // a fresh Novice at lv 1
+  assert.strictEqual(H.playedClasses(), 0, 'Novice is not a transcendent class');
+  H.S.base.Hunter = {lv:90};                     // tier-2 records never count
+  H.S.base.Priest = {lv:80};
+  assert.strictEqual(H.playedClasses(), 0, 'lower tiers never join the collection');
+  H.S.cls = 'Lord Knight';                       // being on a transcendent class counts it
+  assert.strictEqual(H.playedClasses(), 1);
+  H.S.base['High Wizard'] = {lv:105};            // a transcendent record counts too
+  assert.strictEqual(H.playedClasses(), 2, 'Lord Knight (current) + High Wizard (record)');
+});
+
+t('the bonus is gated at Base Lv 100 and pays 1% per transcendent class', () => {
+  H.S = mk();
+  H.S.cls = 'Lord Knight'; H.S.base['High Wizard'] = {lv:105};
+  H.S.lv = 99;
+  assert.strictEqual(H.collDmg(), 0, 'nothing below the rebirth levels');
+  H.S.lv = 100;
+  assert.strictEqual(H.collDmg(), 2, '+1% per transcendent class played');
+  H.S.lv = 150;
+  assert.strictEqual(H.collDmg(), 2, 'and it stays that way through the cap');
+});
+
+t('the cap follows the class data, so classes added later join automatically', () => {
+  H.S = mk();
+  const t3 = Object.keys(H.CLASSES).filter(n => H.CLASSES[n].tier === 3);
+  assert.strictEqual(t3.length, 6, 'there are 6 transcendent classes today');
+  assert.strictEqual(H.t3Total(), 6, 'the denominator is derived, not hardcoded');
+  H.S.cls = 'Novice'; H.S.lv = 150;
+  H.S.base = {}; t3.forEach(n => H.S.base[n] = {lv:110});
+  assert.strictEqual(H.playedClasses(), 6);
+  assert.strictEqual(H.collDmg(), 6, 'the cap is 1% per transcendent class');
+  H.S.base.Swordman = {lv:50};
+  assert.strictEqual(H.playedClasses(), 6, 'lower tiers never inflate the count');
+});
+
+t('records made while playing grow the transcendent collection', () => {
+  H.S = mk({cls:'Swordman', lv:101, jobs:{Novice:{jl:10,jx:0},Swordman:{jl:40,jx:0}}, base:{}});
+  assert.strictEqual(H.playedClasses(), 0, 'no transcendent class in play yet');
+  H.changeClass('Knight');
+  assert.ok(H.S.base.Swordman, 'stepping away records the old class');
+  assert.strictEqual(H.S.lv, 101, 'the new class carries on at your Base Lv');
+  H.S.cls = 'Lord Knight';                        // ...then the transcendent run itself
+  H.S.jobs['Lord Knight'] = {jl:50, jx:0};
+  H.changeClass('Swordman');                      // played classes are always reachable
+  assert.ok(H.S.base['Lord Knight'], 'the Lord Knight run was recorded on the way out');
+  assert.strictEqual(H.playedClasses(), 1, 'the recorded Lord Knight counts; the Swordman back does not');
+  assert.strictEqual(H.collDmg(), 1, 'lv 101 - the gate holds and the bonus is live');
+});
+
+t('the collection bonus is wired into atk()', () => {
+  assert.ok(/const atk=\(\)=>[^\n]*\*\(1\+collDmg\(\)\/100\)\);/.test(src), 'atk() must carry the collection multiplier');
+  assert.ok(/const collDmg=\(\)=>S\.lv>=100\?playedClasses\(\):0;/.test(src), 'the bonus is 1% per class, gated at Base Lv 100');
 });
 
 console.log(`\n${pass} passed, ${fail} failed`);

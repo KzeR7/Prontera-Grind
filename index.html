@@ -80,8 +80,16 @@ hr{border:0;border-top:1px dashed var(--edge);margin:6px 0}
 .mapband-t{display:flex;align-items:center;gap:6px;font-weight:bold;margin:2px 0 4px}
 .mapband-t small{font-weight:normal;opacity:.75}
 .mapband-t button.go{margin-left:auto;padding:5px 12px;font-weight:bold;white-space:nowrap}
-.mapcols{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:8px;align-items:start;margin-top:8px}
+.mapcols{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:8px;align-items:stretch;margin-top:8px}
 .mapcols .mob-card{margin-bottom:0;min-width:0}
+.dropline{display:flex;justify-content:space-between;align-items:baseline;gap:8px;padding:1px 0;font-size:12px}
+.dropline span{min-width:0}
+.dropline b{white-space:nowrap;font-weight:600}
+.dropline.ore b{color:#6cd3ff}
+.mobentry{margin-bottom:2px}
+.poollist{display:flex;flex-wrap:wrap;gap:3px;margin:3px 0}
+.poolitem{border:1px solid var(--edge2);border-radius:4px;padding:1px 5px;font-size:11px;background:rgba(0,0,0,.045)}
+.poolitem b{margin-left:4px;opacity:.75}
 @media(max-width:900px){.mapband,.mapband.fields{position:static}.mapcols{grid-template-columns:1fr}}
 .map-node{background:#fffdf5;border:2px solid var(--edge);border-radius:6px;padding:4px 1px;text-align:center;cursor:pointer;font-size:12px;line-height:1.15}
 .map-node:hover{background:#ffe9a8}.map-node.active{background:#ffe08a;border-color:var(--gold)}.map-node.picked{outline:3px solid #2f6fd6}
@@ -105,7 +113,7 @@ hr{border:0;border-top:1px dashed var(--edge);margin:6px 0}
 .cell .rf{color:#fff;background:#000b;padding:0 3px;border-radius:3px;text-shadow:none}
 #qp{top:12px;transform:none}
 #wins{position:absolute;right:12px;top:12px;bottom:76px;display:none;flex-direction:row-reverse;gap:8px;max-width:calc(100% - 24px);pointer-events:none;z-index:20}
-.wp{pointer-events:auto;flex:0 1 380px;min-width:250px;display:flex;flex-direction:column;overflow:hidden}.wbody{overflow:auto;flex:1}
+.wp{pointer-events:auto;flex:0 1 380px;min-width:250px;display:flex;flex-direction:column;overflow:hidden}.wbody{overflow:auto;flex:1;scrollbar-gutter:stable}
 .gt button{padding:2px 6px}.gt button.on{background:#ffe08a;border-color:var(--gold)}
 .chooser{border:2px solid #2f6fd6;box-shadow:0 0 0 2px #2f6fd655}
 .chooser>.hd{display:flex;align-items:center;gap:6px}
@@ -133,7 +141,6 @@ hr{border:0;border-top:1px dashed var(--edge);margin:6px 0}
 <div style="color:var(--gold)">&#9679; <b id="zeny">0</b> Zeny</div><div>Kills <b id="kills">0</b></div>
 <div style="margin-left:auto;display:flex;align-items:center;gap:8px"><span id="userBadge" style="font-weight:bold;font-size:12px;background:#e9d39a;padding:3px 8px;border-radius:4px;border:1px solid var(--edge2)"></span><button id="logoutBtn" onclick="logout()" style="display:none">Logout</button><button id="spd">Speed x1</button></div></div></div>
 <div id="modal"><div class="login-card"><p id="mt" style="font-size:14px;opacity:1;margin:0 0 12px"></p><div class="row" style="justify-content:center"><button id="my">Yes</button><button id="mn">Cancel</button></div></div></div><div id="tooltip"></div>
-<script src="assets/sprites_data.js?v=2"></script>
 <script src="assets/sprite_pack_data.js?v=1"></script>
 <script src="assets/kit/morocc-atlas.js?v=1"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -156,8 +163,8 @@ const AL={str:'STR',agi:'AGI',dex:'DEX',luk:'LUK',int:'INT',hp:'Max HP',atk:'ATK
 // late maps in about five, with bosses still a ~12x fight. See tools/tests/economy_sim.js.
 const SU=k=>k.toUpperCase(),BX_=5.5,Z0=-14,Z1=3,MPS=15,AGGRO=8.5,HPK=42,HPE=1.3,K5=['str','agi','dex','luk','int'];
 const GM_USER='GM',GM_PASS='gm1234';   // CHANGE THE GM PASSWORD before you publish
-const BUILD='2026-10-03 kit-v15 ro-payon-forest';   // shown on the login card - confirms which file you loaded
-$('buildTag').textContent='build '+BUILD+' · atlases:'+Object.keys(window.SPRITE_ATLASES||{}).length;
+const BUILD='2026-10-03 kit-v18 all-ten-maps skin-purge';   // shown on the login card - confirms which file you loaded
+$('buildTag').textContent='build '+BUILD;
 
 // ---------- class tree: Novice -> 6 first jobs -> 6 second jobs -> 6 third jobs ----------
 const CD=[['Novice',0,1,1,1,'e8dcc0','',['dagger','sword'],'str',0],
@@ -408,9 +415,11 @@ function fieldOf(m,l){const mp=MAPS[m],sec=m>=5?3:secOf(l),T=gearPool(m,l),n=T.l
   // three gear rolls per mob, spread across the pool so two mobs on one field do not pay out
   // the same item; gear is the common drop and a card is the rare one.
   const mobs=[0,1].map(j=>{const mm=mp.mobs[(l-1+j)%mp.mobs.length],cg=l<=3?0:l<=7?1:2;
-    return{...mm,drops:[[T[(l*3+2*j)%n],2.4],[T[(l*3+2*j+1)%n],2.0],[T[(l*3+2*j+2)%n],1.6]],card:{n:mm.n+' Card',stat:cardStat(cg,(m*10+l+j)*3+1),g:cg},cardCh:.45,ore:l===10}});
-  return{m,l,sec,mobs,boss:l===10?{...mp.boss,drops:T.map(x=>[x,1.2]),card:{n:mp.boss.n+' Card',stat:cardStat(3,m),g:3},cardCh:.08,ore:true}:null}}
-const dropTxt=([T,ch])=>`${T.n}${['armor','head','off','leg','acc'].includes(T.k)?'':' ('+T.k+')'} ${ch}%`;
+    return{...mm,drops:[[T[(l*3+2*j)%n],2.4],[T[(l*3+2*j+1)%n],2.0],[T[(l*3+2*j+2)%n],1.6]],card:{n:mm.n+' Card',stat:cardStat(cg,(m*10+l+j)*3+1),g:cg},cardCh:.45,ore:l===10,oreCh:l===10?.02:0}});
+  return{m,l,sec,mobs,boss:l===10?{...mp.boss,drops:T.map(x=>[x,1.2]),card:{n:mp.boss.n+' Card',stat:cardStat(3,m),g:3},cardCh:.08,ore:true,oreCh:.05}:null}}
+// One drop line for the map panel: icon + name on the left, the % on the right.
+const poolIc=T=>gearSlot(T)==='weapon'?(WICON[T.k]||'⚔️'):{armor:'🥼',head:'🎩',off:'🛡️',leg:'👖',acc:'💍'}[T.k];
+const dropTxt=([T,ch])=>`<div class="dropline"><span>${poolIc(T)} ${T.n}</span><b>${ch}%</b></div>`;
 
 // ---------- stat progression ----------
 // Stats cap at 99 until Base Lv 100, then the elite tier opens up to 120. Raising a stat
@@ -421,14 +430,41 @@ const dropTxt=([T,ch])=>`${T.n}${['armor','head','off','leg','acc'].includes(T.k
 const MAXST=120,BASECAP=99,ELITELV=100,statCap=()=>S.lv>=ELITELV?MAXST:BASECAP;
 
 // ---------- economy tuning ----------
-// Target: Base Lv 1 -> 150 in ~96 hours at ~800 kills/hour (77,000 kills), with quests
-// supplying ~32% of all EXP and mobs ~68%. exp = EXPK*pw^1.5/50, zeny = ri(ZK)*pw^2/1000,
-// where pw = the field's power level (MAPS[mp].b + lvl, max 99). A boss replaces the pack
+// Pacing anchors (owner, v16+v17): ~10 min of play to the FIRST job change (Base Lv ~10),
+// ~2 h to the SECOND job change (Base Lv ~49), ~2 days to the transcendent line
+// (Base Lv ~99), and Base 100-150 is a fresh ~3-day climb after a one-time "rebirth"
+// drop in the requirement at level 100 - fast progress at the bottom, the grind lives
+// at the top. exp = EXPK*pw^1.5/50, zeny = ri(ZK)*pw^2/1000, where
+// pw = the field's power level (MAPS[mp].b + lvl, max 99). A boss replaces the pack
 // every 16th kill (MPS), so the effective per-kill EXP is ~1.46x the mob figure.
 // Quest EXP is a fraction of need(Lv) so it scales with the level instead of drifting.
+// tools/tune_pacing.js solves the curve below against these anchors with the same model
+// the economy tests use (~800 kills/hour, camping the band map's boss field); if real
+// playtest kills/hour differ, re-run it rather than guessing at EXPK.
 const EXPK=5.5,BOSEK=46,ZK=[8,14],BZK=[150,250];
-const QXP={kill:1/32,loot:1/40,boss:1/19},QZ={kill:1.6,loot:9,boss:26};
+// The v11 quest fractions (1/32, 1/40, 1/19) scaled by 4/15: on the steep v16 curve
+// quests must never carry more than ~40% of a level, or the high levels would play as
+// quest errands instead of a grind.
+const QXP={kill:1/120,loot:1/150,boss:1/72},QZ={kill:1.6,loot:9,boss:26};
 const zenAt=p=>Math.max(1,Math.round(.011*p*p));   // reference zeny per kill at power level p
+// The canonical camp for a base level is its band map's boss field (the economy model's
+// pwFor); the job bar is priced off it, so job levels run alongside the base levels.
+const PWB=[[12,10],[24,19],[34,29],[46,41],[60,53],[67,69],[74,76],[80,82],[90,89],[150,99]];
+const pwOf=L=>{for(const[c,p]of PWB)if(L<=c)return p;return 99};
+const epkOf=L=>{const p=pwOf(L),m=Math.max(1,Math.floor(EXPK*Math.pow(p,1.5)/50)),b=Math.max(1,Math.floor(BOSEK*Math.pow(p,1.5)/50));return(MPS*m+b)/(MPS+1)};
+const qrOf=L=>QXP.kill/(12+2*L)+.0385*QXP.loot/(3+Math.floor(L/3))+(L>=12?QXP.boss/((MPS+1)*(1+Math.floor(L/10))):0);
+// Constants of the base-EXP curve (the curve itself is needAt, below with the stat
+// formulas): two continuous power segments up to 99, then the **rebirth drop** - at
+// Base 100 (the transcendent tier) the requirement falls ~6x and ramps up again, so
+// 100-150 is a fresh ~3-day climb instead of a wall (the 48h anchor at 99 forces
+// needAt(99) high, and a monotone curve could never make 100+ cheaper than 99).
+// Solved by tools/tune_pacing.js so the job changes land on the pacing anchors.
+const NA1=5.07,NE1=1.54,N50=Math.floor(NA1*Math.pow(50,NE1)),NE2=8.42,N100=111490,NE3=2.7;
+// Job levels run alongside base levels. JOFF[t] is the base level a job level of tier t
+// keeps pace with: Novice job j ~ base j, 1st job j ~ base j+9, 2nd job j ~ base j+49,
+// transcendent j ~ base j+98. That puts the 1st job change at ~Base 10 (~10 min), the
+// 2nd at ~Base 49 (~2 h) and the transcendent line at ~Base 99 (~2 days).
+const JOFF=[0,9,49,98];
 
 // ---------- state ----------
 let currentUser=null,S=null,speed=1,floats=[],drops=[],t=0,shake=0,atkAnim=0,hitAnim=0,pend=[],shots=[],barT=0,logs=[],tab=null,selB=null,selC=null,selK=null,mapM=0,mapL=1;
@@ -544,7 +580,11 @@ const gx=()=>S.gm?(S.gmx||100):1;
 // the tree cost more than a line ever earns (a transcendent job earns 107 and can reach 13
 // skills = 195), so builds have to choose. That scarcity is how RO itself works.
 const skCost=L=>Math.max(1,L);
-const C=()=>CLASSES[S.cls]||CLASSES.Novice,lv=id=>S.sk[id]||0,jobOf=()=>S.jobs[S.cls]||(S.jobs[S.cls]={jl:1,jx:0}),jneed=j=>Math.floor(25*Math.pow(j,1.7));
+const C=()=>CLASSES[S.cls]||CLASSES.Novice,lv=id=>S.sk[id]||0,jobOf=()=>S.jobs[S.cls]||(S.jobs[S.cls]={jl:1,jx:0});
+// Job level j of the current tier costs the job exp (70% of mob exp) that the mirrored
+// base level pays out, so each job bar fills in step with the base bar and the three job
+// changes land on the pacing anchors. Pinned by economy_sim.js.
+const jneed=j=>{const L=j+JOFF[C().tier||0],n=needAt(L),e=epkOf(L);return Math.max(1,Math.floor(.7*n*e/(e+n*qrOf(L))))};
 // A skill is usable when it has levels, the current class inherits it, and the player has
 // not switched its auto-cast off in the Skills panel.
 const skOff=id=>!!(S.skOff&&S.skOff[id]),skillOn=id=>lv(id)>0&&SKILLS.find(s=>s.id===id).cls.includes(S.cls)&&!skOff(id);
@@ -553,10 +593,10 @@ const items=()=>Object.values(S.eq).filter(Boolean),ev=it=>Math.round(it.val*(1+
 const bon=k=>{let v=0;for(const it of items()){for(const a of it.aff||[])if(a.k===k)v+=a.v;for(const c of it.cards||[])if(c.stat===k)v+=c.v}return v};
 const st=k=>S.st[k]+bon(k),canUse=it=>it.slot==='off'?canShield():(it.slot!=='weapon'||!it.wt||C().wt.includes(it.wt));
 const maxHp=()=>Math.round((80+S.lv*20+eqv('head')*4+(eqv('acc1')+eqv('acc2'))*3+st('vit')*8+bon('hp'))*C().hp*(1+pv('hpp')/100));
-const atk=()=>Math.round((4+S.lv*2+eqv('weapon')+(S.eq.off&&S.eq.off.slot==='weapon'?eqv('off')*.6:0)+st(C().main)*1.5+(st('dex')+st('luk'))*.25)*C().atk*(1+(pv('atk')+bon('atk')+(tb.atk||0))/100));
+const atk=()=>Math.round((4+S.lv*2+eqv('weapon')+(S.eq.off&&S.eq.off.slot==='weapon'?eqv('off')*.6:0)+st(C().main)*1.5+(st('dex')+st('luk'))*.25)*C().atk*(1+(pv('atk')+bon('atk')+(tb.atk||0))/100)*(1+collDmg()/100));
 const aspd=()=>Math.max(.2,.85*C().aspd*(1-Math.min(.5,st('agi')*.006))/(1+(pv('aspd')+bon('aspd')+(tb.aspd||0))/100));
 const crit=()=>Math.min(60,3+st('luk')*.4+pv('crit')+bon('crit')),flee=()=>Math.min(60,st('agi')*.5+S.lv*.1+pv('flee')+bon('flee')),missCh=()=>Math.max(0,15-st('dex')*.25);
-const def=()=>Math.floor(S.lv*.5+st('vit')*.5+eqv('armor')+eqv('leg')+(S.eq.off&&S.eq.off.slot==='off'?eqv('off'):0)+pv('def')+(tb.def||0)),mdef=()=>Math.floor(S.lv*.3+st('int')*.5+st('vit')*.4+eqv('head')*.3+pv('def')*.5),critD=()=>2+st('luk')*.01+st('dex')*.005+bon('cdm')/100,needAt=L=>Math.floor(38*Math.pow(L,1.75)),need=()=>needAt(S.lv),cost=k=>{const v=S.st[k];return v<ELITELV?1+Math.floor((v-1)/10):10+(v-ELITELV)};
+const def=()=>Math.floor(S.lv*.5+st('vit')*.5+eqv('armor')+eqv('leg')+(S.eq.off&&S.eq.off.slot==='off'?eqv('off'):0)+pv('def')+(tb.def||0)),mdef=()=>Math.floor(S.lv*.3+st('int')*.5+st('vit')*.4+eqv('head')*.3+pv('def')*.5),critD=()=>2+st('luk')*.01+st('dex')*.005+bon('cdm')/100,needAt=L=>L<=50?Math.floor(NA1*Math.pow(L,NE1)):L<=99?Math.floor(N50*Math.pow(L/50,NE2)):Math.floor(N100*Math.pow(L/100,NE3)),need=()=>needAt(S.lv),cost=k=>{const v=S.st[k];return v<ELITELV?1+Math.floor((v-1)/10):10+(v-ELITELV)};
 const totalPts=()=>{let p=10;for(let l=2;l<=S.lv;l++)p+=4+Math.floor(l/5);return p},rcost=()=>S.lv*50;
 // Skill points belong to the class LINE you are standing in, exactly like RO: the Novice level
 // you grinded, your first job and your second job all pool together, and only the skills your
@@ -671,7 +711,7 @@ function kill(o){const keep=mob;if(o)mob=o;if(!mob||!mobs.includes(mob)){mob=kee
   const lk=1+st('luk')*.008;
   for(const[T,ch]of mob.drops)if(Math.random()*100<ch*lk)drops.push(mkDrop(genGear(T,mob.lvl,mob.sec,mob.boss)));
   if(Math.random()*100<mob.cardCh*lk){const g2=mob.card.g;drops.push(mkDrop({card:1,id:uid(),n:mob.card.n,g:g2,stat:mob.card.stat,v:cardVal(g2,mob.card.stat)}))}
-  if(mob.ore)for(const o of['ori','elu'])if(Math.random()<.004)drops.push(mkDrop({ore:o,id:uid(),n:ORE[o]}));
+  if(mob.ore)for(const o of['ori','elu'])if(Math.random()<mob.oreCh)drops.push(mkDrop({ore:o,id:uid(),n:ORE[o]}));
   if(Math.random()*100<(mob.boss?5:.3)*lk){const r=pickW(PW[Math.min(S.mp,9)]),c=PETS.filter(x=>x.r===r),sp=PETS.indexOf(c[ri(0,c.length-1)]);
     if(S.pets.length<40){S.pets.push({id:ri(1e6,9e6),sp,mut:0,eq:[0,0,0],on:S.pets.filter(x=>x.on).length<3});log(`A ${RN[r]} pet followed you: ${PETS[sp].n}!`,'r'+RCL[r]);addFloat(mob.x,3,mob.z,'PET!','#ff9dff',true)}
     else{const z=Math.floor(EGG*(.3+r*.4));S.zeny+=z;log(`A ${RN[r]} ${PETS[sp].n} appeared but your pet collection is full (+${z}z).`)}}
@@ -706,7 +746,7 @@ function newQuest(type){return qScale({type,goal:1,prog:0})}
 function qRefresh(){if(!S||!Array.isArray(S.q))return;(S.q||[]).forEach(q=>{if(q&&q.type&&q.at!==S.lv)qScale(q)})}
 const qTxt=q=>q.type==='kill'?`Defeat ${q.goal} monsters`:q.type==='loot'?`Collect ${q.goal} equipment drops`:`Defeat ${q.goal} boss${q.goal>1?'es':''}`;
 function refine(sl){const it=S.eq[sl];if(!it||(it.r||0)>=10)return;const o=it.slot==='weapon'?'ori':'elu',c=refCost(it);
-  if(S.ore[o]<1){log(`You need 1 ${ORE[o]}. (0.4% drop in Level 10 boss maps)`);return}if(S.zeny<c){log('Not enough Zeny.');return}
+  if(S.ore[o]<1){log(`You need 1 ${ORE[o]}. (2% drop from Level 10 monsters, 5% from the boss)`);return}if(S.zeny<c){log('Not enough Zeny.');return}
   S.ore[o]--;S.zeny-=c;if(Math.random()*100<refCh(it)){it.r=(it.r||0)+1;log(`Refine success! ${iname(it)}`,'r3');addFloat(pl.x,3,pl.z,'Refine +'+it.r,'#ffd23f')}
   else{if(it.r>=5){it.r--;log(`Refine failed... dropped to +${it.r}.`,'r0')}else log('Refine failed.','r0');addFloat(pl.x,3,pl.z,'Failed','#ff6b6b')}ui();save()}
 
@@ -741,6 +781,13 @@ function noviceRun(){                         // a real restart: 25 Base Lv, Job
 // re-earn - you just step back into it. The Novice reset gate and the parent job-level gate
 // only apply to a class you have never played.
 function playedClass(n){return !!(S.base&&S.base[n])}
+// Class collection (v17b nerf): +1% damage per TRANSCENDENT (tier-3) class played, and
+// only once the rebirth grind starts (Base Lv 100+). Derived at runtime, so old saves get
+// credit for free, and both counts are data-driven - classes added later join in
+// automatically. Played = a tier-3 record in S.base, or being on one right now.
+const playedClasses=()=>{const s=new Set();if(CLASSES[S.cls]&&CLASSES[S.cls].tier===3)s.add(S.cls);for(const k in(S.base||{}))if(S.base[k]&&typeof S.base[k]==='object'&&CLASSES[k]&&CLASSES[k].tier===3)s.add(k);return s.size};
+const t3Total=()=>{let n=0;for(const k in CLASSES)if(CLASSES[k].tier===3)n++;return n};
+const collDmg=()=>S.lv>=100?playedClasses():0;
 function classBlock(n){
   if(n===S.cls)return'Current class';if(n==='Novice')return'';
   if(playedClass(n))return'';
@@ -775,12 +822,13 @@ function itemDetail(it){if(it.card)return itemMain(it);const cs=it.cards||[];ret
 const cardSlots=(it,k)=>Array.from({length:it.slots||0},(_,i)=>{const c=(it.cards||[])[i];return c?`<div><small class="r${GI[c.g]}">&#9670; ${cardTxt(c)}</small> <button data-a="unsock" data-v="${k}:${i}">Remove ${200*(c.g+1)}z</button></div>`:'<div><small>&#9671; empty slot</small></div>'}).join('');
 const tnode=n=>{const c=CLASSES[n],pj=S.jobs[n],cur=n===S.cls,blk=classBlock(n);return`<div class="tn ${cur?'cur':blk?(pj?'played':'lock'):'ok'}${selK===n?' pick':''}" data-a="selk" data-v="${n}"><b>${n}</b><small>${pj?`Job ${pj.jl}/${c.mj}`:'Lv '+c.rj+' req'}</small></div>`};
 const V={
-  map(){const F=fieldOf(mapM,mapL),mp=MAPS[mapM],pr=S.prog[mapM],T=gearPool(mapM,mapL);
+  map(){const F=fieldOf(mapM,mapL),mp=MAPS[mapM],pr=S.prog[mapM];
     // The map tab is a wide, two-band panel: pick a map on the top band, walk its fields on the
     // next one, read the drop tables underneath. The field band is sticky, so the level you are
     // choosing stays on screen while the tables below it scroll - no scrolling down to find it.
-    const groups=[['⚔️','Weapons','weapon'],['🥼','Body','armor'],['🎩','Headgear','head'],['🛡️','Shield','off'],['👖','Legwear','leg'],['💍','Accessory','acc']]
-      .map(([ic,lbl,k])=>[ic,lbl,T.filter(x=>gearSlot(x)===k)]).filter(([,,x])=>x.length);
+    // v16: the big "gear that drops here" card is gone (owner: too much space) - every drop is
+    // listed on the monster that drops it, with its own % line, so the two cards below stay the
+    // same size whichever map or field is picked.
     return`<div class="mapband">
       <div class="mapband-t">Maps <small>&middot; click one to see its fields below</small></div>
       <div class="mapgrid">${MAPS.map((m,i)=>{const cur=i===mapM,here=i===S.mp,open=S.prog[i]>1;
@@ -792,15 +840,21 @@ const V={
       <div class="lvgrid">${Array.from({length:10},(_,i)=>{const l=i+1,lock=l>pr;return`<div class="map-node${lock?' locked':''}${S.mp===mapM&&S.lvl===l?' active':''}${mapL===l?' picked':''}${l===10?' boss-node':''}" data-a="sell_" data-v="${l}" title="Lv ${l} - ${SECN[secOf(l)]}"><b>${l===10?'💀 ':''}Lv ${l}</b><small>${secOf(l)===0?'novice':secOf(l)===1?'1st job':secOf(l)===2?'2nd job':'boss'}</small></div>`}).join('')}</div></div>
     <div class="mapcols">
       <div class="mob-card"><div class="hd">${mp.n} Lv ${mapL} &mdash; ${SECN[F.sec]}</div>
-        <div class="sec">Gear that drops here</div>
-        ${groups.map(([ic,lbl,list])=>`<div class="slot"><span>${ic} ${lbl}</span><small>${list.map(x=>x.n).join(' &middot; ')}</small></div>`).join('')}</div>
-      <div class="mob-card"><div class="hd">Monsters</div>
-        ${F.mobs.map(m=>`<div><b>${m.n}</b><br><small>Drops: ${m.drops.map(dropTxt).join(', ')}</small><br><small class="r${GI[m.card.g]}">Card: ${m.card.n} (${SU(m.card.stat)} +${cardVal(m.card.g,m.card.stat)}, ${GRADE[m.card.g]}) ${m.cardCh}%</small>${m.ore?'<br><small class="r4">Oridecon 0.4% &middot; Elunium 0.4%</small>':''}</div><hr>`).join('')}</div>
+        <div class="sec">Monsters</div>
+        ${F.mobs.map(m=>`<div class="mobentry"><b>${m.n}</b>
+          ${m.drops.map(dropTxt).join('')}
+          <div class="dropline"><span>🃏 ${m.card.n} <small>(${SU(m.card.stat)} +${cardVal(m.card.g,m.card.stat)}, ${GRADE[m.card.g]})</small></span><b>${m.cardCh}%</b></div>
+          ${m.ore?`<div class="dropline ore"><span>🔶 Oridecon &middot; 🔷 Elunium</span><b>${m.oreCh*100}% each</b></div>`:''}
+        </div>`).join('<hr>')}</div>
       <div class="mob-card"><div class="hd">Boss &amp; pets</div>
-        ${F.boss?`<div><b class="r3">${F.boss.n} (BOSS)</b><br><small>Drops any of the ${F.boss.drops.length} items on the left at 1.2% each</small><br><small class="r4">Card: ${F.boss.card.n} (${SU(F.boss.card.stat)} +${cardVal(3,F.boss.card.stat)}, Legendary) ${F.boss.cardCh}% &middot; Oridecon 0.4% &middot; Elunium 0.4%</small></div>`:`<small>Boss appears at Level 10.</small>`}
+        ${F.boss?`<div class="mobentry"><b class="r3">${F.boss.n} (BOSS)</b>
+          <div class="poollist">${F.boss.drops.map(([T,ch])=>`<span class="poolitem">${poolIc(T)} ${T.n}<b>${ch}%</b></span>`).join('')}</div>
+          <div class="dropline"><span>🃏 ${F.boss.card.n} <small>(${SU(F.boss.card.stat)} +${cardVal(3,F.boss.card.stat)}, Legendary)</small></span><b>${F.boss.cardCh}%</b></div>
+          <div class="dropline ore"><span>🔶 Oridecon &middot; 🔷 Elunium</span><b>${F.boss.oreCh*100}% each</b></div>
+        </div>`:`<small>Boss appears at Level 10.</small>`}
         <div class="sec">🐾 Pet drops</div><small>0.3% per kill, 5% from bosses. Odds on ${mp.n}: ${PW[Math.min(mapM,9)].map((w,i)=>RN[i]+' '+w+'%').join(' &middot; ')}</small></div></div>`},
   stats(){const c=C(),b=k=>bon(k)?` <small class="r1">+${bon(k)}</small>`:'';
-    return`<div class="hd">${S.cls} &middot; Base Lv ${S.lv} &middot; Job Lv ${jobOf().jl}/${c.mj}</div><div class="hd">Stat points: ${S.pts} <small>(max ${statCap()} each${S.lv<ELITELV?' &middot; '+MAXST+' unlocks at Base Lv '+ELITELV:''} &middot; max Base Lv 150)</small></div>`
+    return`<div class="hd">${S.cls} &middot; Base Lv ${S.lv} &middot; Job Lv ${jobOf().jl}/${c.mj}</div><div class="hd">Stat points: ${S.pts} <small>(max ${statCap()} each${S.lv<ELITELV?' &middot; '+MAXST+' unlocks at Base Lv '+ELITELV:''} &middot; max Base Lv 150)</small></div><div class="hd">🏆 Class collection: ${playedClasses()}/${t3Total()} transcendent classes &middot; <b>+${collDmg()}% damage</b> <small>(+1% each${S.lv<100?' &middot; activates at Base Lv 100':''})</small></div>`
     +STATS.map(([k,l,d])=>`<div class="slot"><span><b>${l}</b> ${S.st[k]}${b(k)} <small>(${d})</small></span><span class="bts"><small>${cost(k)}pt</small><button data-a="stat" data-v="${k}" ${S.pts>=cost(k)&&S.st[k]<statCap()?'':'disabled'}>+1</button><button data-a="stat5" data-v="${k}" ${S.pts>=cost(k)&&S.st[k]<statCap()?'':'disabled'}>+5</button></span></div>`).join('')
     +`<div class="slot" style="flex-wrap:wrap"><span>ATK <b>${atk()}</b></span><span>DEF <b>${def()}</b></span><span>ASPD <b>${(1/aspd()).toFixed(2)}/s</b></span><span>Crit <b>${crit().toFixed(1)}%</b></span><span>Crit DMG <b>x${critD().toFixed(2)}</b></span><span>MDEF <b>${mdef()}</b></span><span>Flee <b>${flee().toFixed(0)}%</b></span><span>HP <b>${maxHp()}</b></span></div>
     <small>Weapons: ${c.wt.join(', ')} &middot; Main stat: ${SU(c.main)}</small><button class="full" data-a="rstat">Reset stats (${rcost()}z)</button>`},
@@ -809,6 +863,7 @@ const V={
     return`<div class="tree"><div class="trow" style="justify-content:center">${tnode('Novice')}</div><div class="trunk"></div>
     ${[0,1,2].map(i=>`<div class="trow">${lines.map(l=>tnode(l[i])).join('')}</div>${i<2?'<div class="trunk"></div>':''}`).join('')}</div>
     <div class="legend"><span class="tn cur">Current</span><span class="tn ok">Available</span><span class="tn played">Played</span><span class="tn lock">Locked</span></div>
+    <div class="hd" style="margin-top:4px">🏆 Class collection: ${playedClasses()}/${t3Total()} transcendent &middot; <b>+${collDmg()}% damage</b> <small>(+1% each${S.lv<100?' &middot; activates at Base Lv 100':''} - play them all!)</small></div>
     <div class="mob-card"><div class="hd">${k}</div><small>${c.par?'Before: <b>'+c.par+'</b>':'Starting class'}${c.kids.length?' &middot; Next: <b>'+c.kids.join(', ')+'</b>':''}</small><br>
     <small>${pj?`Saved ${rec?`Base Lv ${rec.lv} &middot; `:''}Job Lv ${pj.jl}/${c.mj}`:'Not played yet'}${rec?' &middot; <b>waiting: your stats and gear are still on it</b>':''} &middot; ATK x${c.atk} &middot; ASPD x${c.aspd} &middot; HP x${c.hp}<br>Weapons: ${c.wt.join(', ')} &middot; Main stat ${SU(c.main)}</small>
     <div class="row" style="margin-top:6px"><button data-a="job" data-v="${k}" ${blk?'disabled':''}>${k===S.cls?'Current class':'Change to '+k}</button>${blk&&k!==S.cls?`<small class="r0">${blk}</small>`:''}</div></div>
@@ -830,7 +885,7 @@ const V={
   cards(){const g={};S.cards.forEach(c=>(g[c.n]=g[c.n]||[]).push(c));const ks=Object.keys(g),sel=g[selC]?g[selC][0]:null;
     return`<div class="grid">${ks.map(n=>`<div class="cell b${GI[g[n][0].g]}${n===selC?' sel':''}" data-a="selc" data-v="${n}" data-tip="${g[n][0].id}">🃏<i class="rf">x${g[n].length}</i></div>`).join('')||'<small>No cards yet. Every monster drops its own card at a low chance.</small>'}</div>
     ${sel?`<div class="mob-card" style="margin-top:8px">${itemDetail(sel)}<div class="row" style="margin-top:6px">${EQK.map(([k,l])=>{const e=S.eq[k];return e&&(e.cards||[]).length<(e.slots||0)&&CFIT[sel.stat]===grp(e)?`<button data-a="sock" data-v="${sel.id}:${k}">&rarr; ${l}</button>`:''}).join('')}<button data-a="sellcard" data-v="${sel.id}">Sell ${sel.v*150}z</button></div></div>`:''}`},
-  refine(){return`<div class="hd">Oridecon: ${S.ore.ori} &middot; Elunium: ${S.ore.elu}</div><small>Weapons use Oridecon; armor, shield, legs, headgear and accessories use Elunium (0.4% drop from Level 10 bosses).</small>`
+  refine(){return`<div class="hd">Oridecon: ${S.ore.ori} &middot; Elunium: ${S.ore.elu}</div><small>Weapons use Oridecon; armor, shield, legs, headgear and accessories use Elunium (Level 10 fields: 2% per monster, 5% per boss).</small>`
     +EQK.map(([k,l])=>{const it=S.eq[k];if(!it)return'';const r=it.r||0,o=it.slot==='weapon'?'ori':'elu',c=refCost(it);
       return`<div class="slot" style="align-items:flex-start;gap:10px;margin-top:6px">${cell(it,false)}<div style="flex:1"><b class="r${it.tier}">${iname(it)}</b> <small>${l}</small><br><small>${SLOTS[it.slot].stat} +${ev(it)} &rarr; +${Math.round(it.val*(1+(r+1)*.15))} &middot; ${r>=10?'MAX':'Success '+refCh(it)+'% &middot; '+c.toLocaleString()+'z + 1 '+ORE[o]}</small><br><button data-a="refine" data-v="${k}" ${r>=10||S.ore[o]<1||S.zeny<c?'disabled':''}>Refine</button></div></div>`}).join('')},
   pet(){const P=S.pets,A=P.filter(p=>p.on).length,p=gp(selP);
@@ -1200,10 +1255,56 @@ const KIT_PS={tree_ancient_large:.9,tree_ancient_variant:.9,tree_tall_cluster:.8
   palm_giant:.7,palm_tall:.75,palm_double:.72,cactus_flower:.75,cactus_small:.65,
   ruin_pillar:.8,ruin_column_fallen:.8,ruin_stump:.7,ruin_curb:.6,desert_bone:.5};
 function kitPropScale(type,scale){return KIT_PK*(KIT_PS[type]||1)*(scale||1)}
-// which arena map wears which design/layout, and what a design's cell types are called in the atlas
+// which arena map wears which design/layout, and what a design's cell types are called in the atlas.
+// v17: every map is dressed from the kit. 3 stays the attached Morocc design, 4 stays the RO Payon
+// recipe; the other eight are fieldPlan recipes out of the same crops. src = the atlas the GROUND
+// paints from; individual props may carry their own src (e.g. Morocc's palms on a beach town).
 const KIT_MAP={
+  0:{src:'payon',layout:'field',design:'prontera',seed:101,f:{base:'grass_olive',base2:'grass_forest',
+    cliff:{strip:4,side:21},road:{w:3.6,wander:.35},
+    trees:{near:6.6,step:2.3,types:['tree_ancient_large','tree_ancient_variant','tree_tall_cluster'],
+      sub:[['tree_sapling',.5],['tree_bush_bright',.45]]},
+    scatter:[{type:'river_stone_post',count:4,r0:6.6,r1:7.4,z0:-12,z1:8}]}},
+  1:{src:'payon',layout:'field',design:'izlude',seed:202,f:{base:'grass_olive',base2:'grass_forest',
+    cliff:{strip:2,side:22},water:[-23,-16],bank:1.8,road:{w:3.2,wander:.25},
+    deck:[10,-19.5,2.6,7],                        // the harbour pier, out of the lane
+    trees:{near:7,step:3.2,types:['tree_tall_cluster','tree_ancient_variant'],sub:[['tree_bush_bright',.4]]},
+    scatter:[{type:'palm_tall',src:'morocc',count:5,r0:8,r1:16,z0:-15.6,z1:-12},
+             {type:'river_stone_post',count:2,r0:6.8,r1:7.2,z0:-15.8,z1:-14.6}]}},
+  2:{src:'payon',layout:'field',design:'geffen',seed:303,f:{base:'grass_forest',base2:'grass_olive',
+    cliff:{strip:6,side:19},
+    trees:{near:7.2,step:3.4,types:['tree_ancient_large','tree_ancient_variant'],sub:[['tree_bush_bright',.3]]},
+    scatter:[{type:'ruin_pillar',src:'morocc',count:6,r0:9,r1:15,z0:-14,z1:6},
+             {type:'ruin_stump',src:'morocc',count:4,r0:8,r1:15,z0:-16,z1:8},
+             {type:'ruin_column_fallen',src:'morocc',count:2,r0:10,r1:16,z0:-12,z1:4}]}},
   3:{src:'morocc',design:'morocc',tile:t=>({sand:'sand',sand_dark:'sand_dark',ruin_cobble:'ruin_cobble',cliff:'cliff'}[t]||null)},
-  4:{src:'payon', layout:'payon'}};
+  4:{src:'payon', layout:'payon'},
+  5:{src:'morocc',layout:'field',design:'comodo',seed:505,f:{base:'sand',base2:'sand_dark',cliffTile:'cliff',
+    cliff:{strip:4,side:21},water:[-23,-17],bank:0,
+    trees:{near:7,step:2.6,types:['palm_giant','palm_tall','palm_double'],sub:[['cactus_small',.35]]},
+    scatter:[{type:'cactus_flower',count:6,r0:7.5,r1:17,z0:-16,z1:9},
+             {type:'desert_bone',count:3,r0:8,r1:16,z0:-15,z1:8}]}},
+  6:{src:'payon',layout:'field',design:'louyang',seed:606,f:{base:'grass_forest',base2:'grass_olive',
+    cliff:{strip:3,side:22},road:{w:3,wander:.5},
+    trees:{near:6.4,step:1.9,types:['tree_ancient_large','tree_tall_cluster','tree_ancient_variant'],
+      sub:[['tree_sapling',.55],['tree_bush_bright',.5]]},
+    scatter:[{type:'river_stone_post',count:4,r0:6.5,r1:7.2,z0:-12,z1:8}]}},
+  7:{src:'payon',layout:'field',design:'amatsu',seed:707,f:{base:'grass_olive',base2:'grass_forest',
+    cliff:{strip:3,side:21},road:{w:3.2,wander:.2},water:[-7.9,-6],bank:1.7,
+    deck:[0,-6.95,3.4,4.8],                       // the bridge on the road, over the stream
+    trees:{near:6.4,step:2.2,types:['tree_ancient_large','tree_ancient_variant'],
+      sub:[['tree_sapling',.5],['tree_bush_bright',.4]]},
+    scatter:[{type:'river_stone_post',count:2,r0:6.5,r1:7,z0:-9.4,z1:-4.8}]}},
+  8:{src:'payon',layout:'field',design:'niflheim',seed:808,f:{base:'dirt_path',base2:'grass_forest',
+    cliff:{strip:7,side:18},
+    scatter:[{type:'rock_cliff_crag',count:10,r0:7,r1:16,z0:-15,z1:9},
+             {type:'desert_bone',src:'morocc',count:6,r0:6.8,r1:15,z0:-14,z1:9},
+             {type:'ruin_stump',src:'morocc',count:3,r0:8,r1:14,z0:-12,z1:6}]}},
+  9:{src:'payon',layout:'field',design:'abyss',seed:909,f:{base:'cliff_rock',base2:'grass_forest',
+    cliff:{strip:5,side:19},water:[-23,-18],bank:0,
+    scatter:[{type:'rock_cliff_crag',count:12,r0:6.8,r1:16,z0:-17,z1:9},
+             {type:'river_stone_post',count:4,r0:6.6,r1:8,z0:-16,z1:8},
+             {type:'desert_bone',src:'morocc',count:4,r0:7,r1:14,z0:-16,z1:8}]}}};
 const KIT_TILE={grass:'grass_olive',grass_dark:'grass_forest',dirt:'dirt_path',cliff:'cliff_rock',bank:'riverbank_wall'};
 // cell types the kit itself draws in its animated pass / as a deck, not as ground texture
 const KIT_WET={water:1},KIT_DECK={bridge:1},KIT_SKIP={sky:1};
@@ -1296,10 +1397,52 @@ function payonPlan(spec){
   props.sort((p,n)=>p.z-n.z);
   return {src:spec.src,design:'payon',cells,water,props,deck,base:'grass_forest',base2:'grass_olive'};
 }
+// ----- the field builder: every other arena dresses from the same kit, by recipe ------------
+// One deterministic (seeded LCG) builder, one recipe per map in KIT_MAP. Rules are the same as
+// Payon's: props never stand in the running lane, nothing is placed that the prop's own atlas
+// does not carry, water strips stay scenery (the ones near the fight get their deck), and every
+// pixel is still a crop from the attached kit - never drawn.
+function fieldPlan(spec){
+  const f=spec.f,cells=[],water=[],props=[],st=.8,x0=-26,x1=26,z0=-23,z1=11;
+  let q=spec.seed|0;const rnd=()=>(q=(q*16807)%2147483647)/2147483647;
+  const cliffT=f.cliffTile||'cliff_rock',bankT=f.bankTile||'riverbank_wall',roadT=f.roadTile||'dirt_path';
+  const roadR=f.road?(z=>f.road.w/2+Math.sin(z*.19+spec.seed)*f.road.wander+Math.sin(z*.05)*f.road.wander*.7):null;
+  const wet=z=>f.water&&z>=f.water[0]&&z<f.water[1];
+  for(let z=z0;z<z1;z+=st){
+    if(wet(z)){water.push({x:(x0+x1)/2,z:z+st/2,w:x1-x0,h:st,cx:(x1-x0)/st,cy:1});continue}
+    const bank=f.water&&f.bank&&z>=f.water[0]-f.bank&&z<f.water[1]+f.bank;
+    for(let x=x0;x<x1;x+=st){
+      if(f.cliff&&(z<z0+f.cliff.strip||Math.abs(x)>f.cliff.side)){cells.push({x,z,tile:cliffT});continue}
+      if(bank){cells.push({x,z,tile:bankT});continue}
+      if(f.road&&Math.abs(x)<roadR(z)){cells.push({x,z,tile:roadT});continue}
+      const i=Math.round((x-x0)/st),j=Math.round((z-z0)/st);                 // grass/sand variation
+      if((i*7+j*13)%9===0)cells.push({x,z,tile:f.base2});
+    }
+  }
+  const deck=f.deck?{x:f.deck[0],z:f.deck[1],w:f.deck[2],l:f.deck[3],a:f.deck[4]||0}:null;
+  const lane=BX_+.9;
+  const put=(type,src,x,z,scale,flip)=>{if(Math.abs(x)<lane)x=(x<0?-1:1)*lane;
+    props.push({x,z,type,src,scale,flip,nudged:0,missing:0})};
+  if(f.trees){const T=f.trees;
+    for(const s of[-1,1])for(let z=z0+2;z<z1-2;z+=T.step+rnd()*1.2){
+      if(deck&&Math.abs(z-deck.z)<st*2.6)continue;                           // keep the crossing open
+      if(f.water&&z>=f.water[0]-(f.bank||0)&&z<f.water[1]+(f.bank||0))continue;   // trees do not grow in water
+      put(T.types[(rnd()*T.types.length)|0],spec.src,s*(T.near+rnd()*2.6),z+rnd()*.6,.84+rnd()*.32,rnd()>.5);
+      if(T.sub)for(const[t2,ch]of T.sub)if(rnd()<ch)put(t2,spec.src,s*(T.near+1.2+rnd()*5),z+rnd()*1.6,.8+rnd()*.5,rnd()>.5);
+    }}
+  if(f.scatter)for(const sc of f.scatter)for(let i=0;i<sc.count;i++){
+    const s=rnd()>.5?1:-1,x=s*(sc.r0+rnd()*(sc.r1-sc.r0)),z=sc.z0+rnd()*(sc.z1-sc.z0);
+    if(deck&&sc.clearDeck&&Math.abs(z-deck.z)<2)continue;
+    put(sc.type,sc.src||spec.src,x,z,(sc.s0||.8)+rnd()*((sc.s1||1.2)-(sc.s0||.8)),rnd()>.5);
+  }
+  props.sort((p,n)=>p.z-n.z);                       // far to near, so billboards overlap right
+  return {src:spec.src,design:spec.design,cells,water,props,deck,base:f.base,base2:f.base2};
+}
 // ----- pure plan: design + arena -> everything the painters need (no canvas, no THREE) -----
 function kitPlan(m){
   const spec=KIT_MAP[m]; if(!spec)return null;
   if(spec.layout==='payon')return payonPlan(spec);
+  if(spec.layout==='field')return fieldPlan(spec);
   const d=KIT.des[spec.design]; if(!d)return null;
   const W=d.meta.gridWidth,H=d.meta.gridHeight,cells=[],water=[],props=[];
   for(let gy=0;gy<H;gy++){
@@ -1357,7 +1500,10 @@ function kitGroundTex(plan){
   const t=new THREE.CanvasTexture(cv);t.minFilter=THREE.LinearMipMapLinearFilter;t.anisotropy=4;return t;
 }
 function kitWaterMeshes(plan,root){
-  const f=[kitCrop(plan.src,'tile','water_frame_0'),kitCrop(plan.src,'tile','water_frame_1')];
+  // the animated water frames ship on the payon sheet; a morocc-ground map borrows them rather
+  // than showing an untextured pool (same attached kit - nothing is drawn either way)
+  const wsrc=(kitAtlas(plan.src)&&kitAtlas(plan.src).tiles.water_frame_0)?plan.src:(kitAtlas('payon')?'payon':plan.src);
+  const f=[kitCrop(wsrc,'tile','water_frame_0'),kitCrop(wsrc,'tile','water_frame_1')];
   for(const r of plan.water){
     const m=new THREE.Mesh(new THREE.PlaneGeometry(r.w,r.h),new THREE.MeshLambertMaterial({map:null}));
     m.rotation.x=-Math.PI/2;m.position.set(r.x,.02,r.z);m.receiveShadow=true;root.add(m);
@@ -1376,9 +1522,11 @@ function kitDeckMesh(plan,root){
 function kitPropMeshes(plan,root){
   let placed=0;const missing={};
   for(const p of plan.props){
-    const a=kitAtlas(plan.src);if(!a)continue;
+    // a prop may borrow the other atlas (morocc palms on a payon-ground beach): check the
+    // prop's own atlas, not the ground's
+    const psrc=p.src||plan.src,a=kitAtlas(psrc);if(!a)continue;
     const e=a.sprites[p.type];if(!e){missing[p.type]=(missing[p.type]||0)+1;continue}
-    const tex=kitCrop(plan.src,'sprite',p.type,p.flip);if(!tex){missing[p.type]=(missing[p.type]||0)+1;continue}
+    const tex=kitCrop(psrc,'sprite',p.type,p.flip);if(!tex){missing[p.type]=(missing[p.type]||0)+1;continue}
     const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:tex,transparent:true,alphaTest:.18}));
     const k=kitPropScale(p.type,p.scale),w=e.w*k,h=e.h*k;
     sp.center.set(e.anchorX===undefined?.5:e.anchorX/e.w,1-(e.anchorY===undefined?e.h:e.anchorY)/e.h);
@@ -1501,46 +1649,8 @@ function animRow(run,atk,clock,spd){
   return Math.floor(clock*3)%SPR_IDLE}
 
 const P=new THREE.Group();scene.add(P);mkShadow(P,.4);
-// generated atlases: window.SPRITE_ATLASES = {'hero:nov_m':dataURI,...} (tools/build_atlas.py)
-const atlasTex=new Map(),atlasReady=new Set(),ATLAS_PEND=[];
-function loadAtlas(key){
-  if(atlasTex.has(key))return atlasTex.get(key);
-  const uri=(window.SPRITE_ATLASES||{})[key];if(!uri)return null;
-  atlasTex.set(key,null);atlasReady.delete(key);ATLAS_PEND.push(key);
-  new THREE.TextureLoader().load(uri,t=>{
-    t.magFilter=t.minFilter=THREE.NearestFilter;t.generateMipmaps=false;
-    atlasTex.set(key,t);atlasReady.add(key);
-    const i=ATLAS_PEND.indexOf(key);if(i>=0)ATLAS_PEND.splice(i,1);
-    if(key.indexOf('hero:')===0)heroKey='';          // force hero rebuild
-    else mobMesh.forEach(v=>{                        // swap mobs using the fallback
-      if(v.pending===key){v.pending=null;
-        const mt=v.spr.material.map;
-        mt.image=t.image;mt.needsUpdate=true}});
-  },undefined,()=>{const i=ATLAS_PEND.indexOf(key);if(i>=0)ATLAS_PEND.splice(i,1)});
-  return null}
-// which baked sprite set the hero uses: class line + gender.
-// Layered build: 'herobody:<class>_<sex>' + 'herohead:<style>' composited
-// at runtime (same layout as the RO client: separate body + head sheets).
-// Falls back to the legacy single-layer 'hero:*' atlas while it loads.
-const HERO_HEAD_FOR={nov_m:'bowl_m',nov_f:'long_f',thief_m:'spiky_m',thief_f:'ponytail_f',
-  assassin_m:'spiky_m',assassin_f:'ponytail_f',xcross_m:'spiky_m',xcross_f:'ponytail_f'};
-function heroBodyKey(opt){
-  const g=opt.sex==='f'?'f':'m';
-  if(opt.look==='hood')return 'herobody:'+(opt.tier>=3?'xcross':opt.tier>=2?'assassin':'thief')+'_'+g;
-  if(opt.look==='knight')return 'herobody:nov_'+g;// sword line reuses the novice set
-  return 'herobody:nov_'+g}
-function heroAtlasKey(opt){
-  const g=opt.sex==='f'?'f':'m';
-  if(opt.look==='hood')return 'hero:'+(opt.tier>=3?'xcross':opt.tier>=2?'assassin':'thief')+'_'+g;
-  if(opt.look==='knight')return 'hero:nov_'+g;// sword line reuses the novice set
-  return 'hero:nov_'+g}
-function heroHeadKey(opt){
-  const g=opt.sex==='f'?'f':'m';
-  if(opt.look==='hood')return 'herohead:'+(g==='f'?'ponytail_f':'spiky_m');
-  return 'herohead:'+(g==='f'?'long_f':'bowl_m')}
 let heroSpr=null,heroHeadSpr=null,heroKey='',heroDirty=false;
 // ----- Class sprite packs (assets/sprite_pack_data.js, built by tools/make_sprite_pack.py) -----
-// (the older assets/thief_sprites_data.js is superseded by this file and kept for reference)
 // Body + head are composited once per (class, sex, hair) into a single atlas: 8 cols = frames, rows = anim*8+dir (idle,walk,attack x 8 dirs)
 // Every first job line ships its own body art; each line keeps one body through its whole tree.
 const PACK_BODY={Novice:'novice',
@@ -1554,16 +1664,16 @@ const PACK_BODY={Novice:'novice',
 // (knight, lord_knight, wizard...): drop the sheet in Sprite/, run the tool, done.
 // Until then it keeps its first-job line's art, so every class always has a sprite.
 const packBodyName=c=>String(c||'').toLowerCase().replace(/[^a-z0-9]+/g,'_').replace(/^_+|_+$/g,'');
-function packBodyFor(cls,tier){const PK=window.SPRITE_PACK||window.THIEF_PACK;if(!PK)return null;
+function packBodyFor(cls,tier){const PK=window.SPRITE_PACK;if(!PK)return null;
   const n=packBodyName(cls);if(PK.bodies&&PK.bodies[n])return n;
   const b=PACK_BODY[cls];if(b&&PK.bodies[b])return b;
   const f=tier>=3?'assassin_cross':tier>=2?'assassin':'thief';return PK.bodies[f]?f:null}
 const packImg={},packCache=new Map(),PACK_K=.03;let packReady=false;
-(function(){const PK=window.SPRITE_PACK||window.THIEF_PACK;if(!PK)return;let n=0,tot=0;
+(function(){const PK=window.SPRITE_PACK;if(!PK)return;let n=0,tot=0;
   const ld=(k,u)=>{tot++;const i=new Image();i.onload=()=>{if(++n===tot){packReady=true;heroKey=''}};i.src=u;packImg[k]=i};
   for(const c in PK.bodies)ld('b:'+c,PK.bodies[c].atlas);for(const h in PK.heads)ld('h:'+h,PK.heads[h])})();
 function packTex(opt){
-  const PK=window.SPRITE_PACK||window.THIEF_PACK,body=packBodyFor(opt.cls,opt.tier)||'thief',sex=opt.sex==='f'?'female':'male',hs=(((opt.hair|0)%PK.hairStyles)+PK.hairStyles)%PK.hairStyles,key=body+'|'+sex+'|'+hs;
+  const PK=window.SPRITE_PACK,body=packBodyFor(opt.cls,opt.tier)||'thief',sex=opt.sex==='f'?'female':'male',hs=(((opt.hair|0)%PK.hairStyles)+PK.hairStyles)%PK.hairStyles,key=body+'|'+sex+'|'+hs;
   if(packCache.has(key))return packCache.get(key);
   const cv=document.createElement('canvas');cv.width=PK.cellW*8;cv.height=PK.cellH*24;
   const g=cv.getContext('2d');g.imageSmoothingEnabled=false;
@@ -1574,7 +1684,7 @@ function packTex(opt){
     const an=anc[a][d][f];g.drawImage(hi,d*64,hs*64,64,64,dx+an[0]-32,dy+an[1]-48,64,64)}
   const t=new THREE.CanvasTexture(cv);t.magFilter=t.minFilter=THREE.NearestFilter;t.generateMipmaps=false;packCache.set(key,t);return t}
 function mkPackHero(opt){
-  const PK=window.SPRITE_PACK||window.THIEF_PACK,t=packTex(opt).clone();t.needsUpdate=true;t.repeat.set(1/8,1/24);
+  const PK=window.SPRITE_PACK,t=packTex(opt).clone();t.needsUpdate=true;t.repeat.set(1/8,1/24);
   const s=new THREE.Sprite(new THREE.SpriteMaterial({map:t,transparent:true,alphaTest:.12}));
   s.center.set(PK.pivotX/PK.cellW,(PK.cellH-PK.pivotY)/PK.cellH);s.scale.set(PK.cellW*PACK_K,PK.cellH*PACK_K,1);s.userData.pack=1;return s}
 function setPackCell(spr,dir,run,atk,clock){
@@ -1584,30 +1694,15 @@ function ensureHero(opt){const k=JSON.stringify(opt);if(heroKey===k&&heroSpr)ret
   if(heroSpr){P.remove(heroSpr);heroSpr=null}if(heroHeadSpr){P.remove(heroHeadSpr);heroHeadSpr=null}
   const pb=packReady?packBodyFor(opt.cls,opt.tier):null;
   if(pb&&packImg['b:'+pb]){heroSpr=mkPackHero(opt);P.add(heroSpr);return}
-  const bk=heroBodyKey(opt),hk=heroHeadKey(opt);
-  const btex=loadAtlas(bk),htex=loadAtlas(hk);
-  if(btex&&htex){
-    heroSpr=mkBillboard(btex,1.95,2.92);P.add(heroSpr);
-    heroHeadSpr=mkBillboard(htex,1.95,2.92);
-    heroHeadSpr.material.depthTest=false;heroHeadSpr.renderOrder=1;P.add(heroHeadSpr);return}
-  if(heroKindAvail(bk)&&heroKindAvail(hk)){return} // layered set loading, wait
-  const ak=heroAtlasKey(opt);
-  // classes marked in window.CUSTOM_HEROES use imported art only: hold the
-  // slot until the sheet arrives instead of falling back to drawn sprites.
-  if(isCustomHero(ak)&&!loadAtlas(ak))return;
-  let tex=loadAtlas(ak)||getSheet('h:'+k,(ctx,x,y,d,kind,fr)=>drawHero(ctx,x,y,d,kind,fr,opt));
+  // the class pack is the only hero art; until it loads (or if a body is missing) the
+  // drawn hero keeps the game playable
+  const tex=getSheet('h:'+k,(ctx,x,y,d,kind,fr)=>drawHero(ctx,x,y,d,kind,fr,opt));
   heroSpr=mkBillboard(tex,1.95,2.92);P.add(heroSpr)}
-function isCustomHero(k){return (window.CUSTOM_HEROES||[]).indexOf(k)>=0}
-// true only when the layered body+head pair is actually present: lets a class
-// ship as a single pre-baked 'hero:*' atlas (custom art) and still build.
-function heroKindAvail(bk){const A=window.SPRITE_ATLASES||{},st=HERO_HEAD_FOR[bk.split(':')[1]];
-  return !!(A[bk]&&(st?A['herohead:'+st]:true))}
 function buildMob(m){
-  const G=new THREE.Group(),key='mob:'+m.n;
-  let tex=loadAtlas(key),pending=null;
-  if(!tex){pending=key;tex=getSheet('m:'+m.shape+':'+m.c,(ctx,x,y,d,kind,fr)=>drawCritter(ctx,x,y,d,kind,fr,m.shape,m.c))}
+  const G=new THREE.Group();
+  const tex=getSheet('m:'+m.shape+':'+m.c,(ctx,x,y,d,kind,fr)=>drawCritter(ctx,x,y,d,kind,fr,m.shape,m.c));
   const spr=mkBillboard(tex,2.05,3.05);G.add(spr);mkShadow(G,.42);scene.add(G);
-  return{G,spr,pending}}
+  return{G,spr,pending:null}}
 let slashM=null;
 function drawSlashFX(x,z){
   if(!slashM){const cv=document.createElement('canvas');cv.width=80;cv.height=80;const g=cv.getContext('2d');

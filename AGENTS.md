@@ -27,12 +27,11 @@ fights a boss once every 15 kills.
 | Where | What |
 |---|---|
 | `index.html` | the entire game (HTML, CSS, JS inline). This *is* the game. |
-| `assets/sprite_pack_data.js` | the built sprite pack: 19 class bodies + 2 heads, base64 atlases. ~5.8 MB. |
-| `assets/thief_sprites_data.js` | the *older* thief-only pack. Superseded, but `tools/make_sprite_pack.py` still reads it for shared pose data — do not delete. |
+| `assets/sprite_pack_data.js` | the built sprite pack: 19 class bodies + 2 heads, base64 atlases. ~5.8 MB. `tools/make_sprite_pack.py` also re-seeds from this file - it is the only source for shared heads/poses now. |
 | `Sprite/*.png` | the uploaded RO-style sprite sheets (21 of them). The **source art**. |
 | `tools/make_sprite_pack.py` | crops `Sprite/` → `assets/sprite_pack_data.js`. |
 | `tools/montage.py` | rebuilds the four montage sheets (see below). |
-| `tools/tests/` | the seven test suites. Run them before every push. |
+| `tools/tests/` | the eleven test suites. Run them before every push. |
 | `UPDATE-BOOTSTRAP.py` | one-shot: rebuilds the whole update from a fresh clone (see *Delivery*). |
 | `READ-ME-FIRST.md` | handover note for whoever pushes the current work. |
 
@@ -117,26 +116,35 @@ class job level, and "reset to Novice first" for anything not directly under the
 are standing in.
 
 Formulas the tests pin down: `totalPts() = 10 + Σ(3+⌊l/5⌋)` for l = 2…lv;
-`need(lv) = ⌊38·lv^1.75⌋`; `jneed(j) = ⌊25·j^1.7⌋`.
+`need(lv)` = the three-segment v16 curve below; `jneed(j)` = the JOFF lockstep below.
 
 ## Balance - the numbers that matter
 
 All of this lives in `index.html`. Each block is commented in-source; this is the map.
 
-**Economy** (constants sit right after `const dropTxt=`, ~line 250):
-`needAt(L)=floor(38*L^1.75)`, `EXPK=5.5`, `BOSEK=46` (the boss stays 8.33x a mob),
-`ZK=[8,14]`, `BZK=[150,250]`, `QXP={kill:1/32,loot:1/40,boss:1/19}`,
-`QZ={kill:1.6,loot:9,boss:26}`, `zenAt(p)=max(1,round(.011*p*p))`.
-Summed level 1-149 that is **13,204,072 exp**; quests supply **31.7%** of it (the target was
-~30%), and the run takes **77,152 kills = 96.4 h at 800 kills/hour**. Zeny over a full run is
-**12,225,933**, enough for a +10 7-slot setup (~494k) several times over plus ~1,200 pet rolls.
+**Economy — v16 pacing** (constants sit under `// ---------- economy tuning ----------`):
+the owner's anchors are **~10 min to the first job change (Base Lv ~10), ~2 h to the second
+(Base Lv ~49), ~2 days to the transcendent line (Base Lv ~99)** — fast at the bottom, the
+grind lives at the top. `needAt(L)` is three continuous power segments
+(`NA1·L^NE1` ≤50, anchored powers to `NE2` ≤99 and `NE3` above), solved with
+`tools/tune_pacing.js` against the canonical model (~800 kills/hour, camping the band map's
+boss field): **Base 10 in 10 min, Base 49 in 1.9 h, Base 99 in 45 h**, then a long 100-150
+endgame (**~269 h total to Lv150 at the model rate** — an outcome, not an anchor; retune
+`aC` if the owner wants it shorter). `EXPK=5.5`, `BOSEK=46` (the boss stays 8.33x a mob),
+`ZK=[8,14]`, `BZK=[150,250]`, `QZ={kill:1.6,loot:9,boss:26}`, `zenAt(p)=max(1,round(.011*p*p))`
+are unchanged. **`QXP={kill:1/120,loot:1/150,boss:1/72}`** is the v11 column scaled by 4/15:
+on the steep new curve quests must never carry more than ~40% of a level (they supply ~35%
+overall). **Job bars mirror the base curve** (`JOFF=[0,9,49,98]`): job level j of a tier
+costs the job exp (70% of mob exp) that base level j+JOFF[tier] pays out, so each job bar
+fills in step with the base bar and the job gates (Novice 10 / 1st-job 40 / 2nd-job 50) land
+on the anchors by construction. Zeny over a full model run is **~46.5M**, enough for the
++10 7-slot setup and thousands of pet rolls.
 
-> **The 800 kills/hour figure is now stale - re-measure it.** It was measured before skills
-> could multi-cast. A second job now lands three skills per swing instead of one, plus dot,
-> chain and AoE pressure, so real throughput is higher and the run is correspondingly shorter
-> than 96 h. Do **not** pre-compensate by guessing a new `EXPK`: playtest, read the actual
-> kills/hour off the log, then adjust `EXPK` - it is a single constant and every other economy
-> number derives from it. `economy_sim.js` re-checks the total for you afterwards.
+> **The 800 kills/hour figure is still the model's assumption - re-measure it.** It was
+> measured before skills could multi-cast, so real throughput differs (and boss fights cost
+> real seconds). v16 anchored the curve to the owner's *time* targets inside that model; if
+> playtest says real pacing is off, re-run `node tools/tune_pacing.js` with a corrected
+> `KPH` (or move `EXPK`) instead of hand-nudging the curve - then re-check `economy_sim.js`.
 
 **Mob HP** is `HPK*mb*pw^HPE` (`HPK=42`, `HPE=1.3`; bosses use 500 instead of 42, so a boss is
 ~12x a mob). `pw` is the map's recommended base level plus the field level, and `mb` is a
@@ -163,11 +171,15 @@ as compact cards (`repeat(auto-fill,minmax(86px,1fr))`), name + recommended leve
 map is just another card. Second band: the picked map's ten fields as **one row**
 (`repeat(auto-fit,minmax(52px,1fr))`, so it only wraps when the window is genuinely narrow) with
 the travel button on the same line - and this band is `position:sticky;top:-1px`, so the field you
-are choosing stays on screen while the drop tables below it scroll. The tables (gear by slot /
-monsters / boss+pets) sit in `.mapcols`, `repeat(auto-fit,minmax(250px,1fr))`, side by side on a
-wide window and stacked under a 900px viewport. **Keep the order: map cards → field band → tables**
-- `ui_sim.js` asserts it, because the whole point is that clicking a map shows its fields
-immediately below, with no scrolling.
+are choosing stays on screen while the drop tables below it scroll. Underneath sit **two fixed-shape
+cards** in `.mapcols` (`repeat(auto-fit,minmax(280px,1fr))`, side by side on a wide window,
+stacked under 900px): **Monsters** and **Boss & pets**. Since v16 there is **no "gear that drops
+here" card** (the owner found it bulky): every drop is listed on the monster that drops it as a
+`.dropline` row (icon + name left, % right), the boss lists its whole pool as `.poolitem` chips at
+1.2% each, and both cards carry the card/ore lines. Two stable cards + the reserved scrollbar
+gutter (`.wbody{scrollbar-gutter:stable}`) are what keep the panel the same size when switching
+maps. **Keep the order: map cards → field band → tables** - `ui_sim.js` asserts it, because the
+whole point is that clicking a map shows its fields immediately below, with no scrolling.
 
 **Every map must look different - it is a rule, not a preference.** The arena scenery is data,
 not code: `TH[map]` is `[prop kind, main colour, accent, extras]` and one builder (`buildDeco`)
@@ -203,8 +215,10 @@ crossing: 48x32 cells with corner heights, 250 water cells, 24 bridge cells, the
 25.5/16.5, 30 placed props), `ro-map-morocc.json` and `morocc-atlas.js` (the Morocc desert ruins
 design, and the attachment's own generator that paints its atlas in the page, copied verbatim).
 
-* `KIT_MAP` says which arena map wears what: 3 → the attached **morocc** design, 4 → the
-  **payon** field. A design dresses the
+* `KIT_MAP` says which arena map wears what. **All ten maps wear the kit** (v18): 3 → the
+  attached **morocc** design, 4 → the **payon** recipe, and the other eight → `fieldPlan`
+  recipes - deterministic (seeded LCG) configs of ground tiles, cliff rings, roads, water
+  strips, decks and prop scatters, laid out in code from the same crops. A design dresses the
   **ground** (its tiles painted into one 2048x2048 texture over the 90x90 field), its **water**
   (merged row rectangles, animated by swapping the kit's two water frames) and its **props**
   (billboards, sized and anchored from the manifest).
@@ -221,6 +235,9 @@ design, and the attachment's own generator that paints its atlas in the page, co
   hero, saplings ~1x, bushes knee height (~0.3-0.7x), crags boulder-sized, palms 2.7-4x, cacti and
   ruins below the player. **Every prop type a field places must have a factor** - `kit_sim.js`
   fails on one that does not, because the default (1.0) makes player-sized trees again.
+* Field recipes may borrow props across atlases (a prop carries its own `src`: morocc palms
+  on the Izlude beach, desert bones in Niflheim), and maps painting morocc ground borrow the
+  payon sheet's two water frames for their sea - it is one attached kit either way.
 * Cell types map to tiles exactly as the kit's own engine maps them: grass→grass_olive,
   grass_dark→grass_forest, dirt→dirt_path, cliff→cliff_rock, bank→riverbank_wall. Water is the
   animated pass, bridge cells are the deck mesh, Morocc's tiles keep their own names (sand,
@@ -238,9 +255,10 @@ design, and the attachment's own generator that paints its atlas in the page, co
 * If the atlas cannot load, every map falls back to the v13 scenery (`buildKit` returns null and
   `buildDeco` continues). The kit must never be able to break the game.
 * `kit_sim.js` pins all of it: the Payon recipe (road, creek, bridge on the road, both banks
-  dressed, the creek out of the monster spawn band), Morocc's design cell for cell, the RO scale
-  table (trees ≥ 3x the hero, bushes knee height), the clear lane, both builders against a stubbed
-  canvas/THREE, and the fallback.
+  dressed, the creek out of the monster spawn band), Morocc's design cell for cell, the eight
+  field recipes (ground painted, lane clear, deterministic, water out of the spawn band, every
+  prop exists in the atlas it crops from), the RO scale table (trees ≥ 3x the hero, bushes knee
+  height), all ten maps building against a stubbed canvas/THREE, and the fallback.
 
 **What RO Payon actually looks like** (researched for this build, and the reason Payon was rebuilt):
 a *mountainous bamboo forest* - Payon village is built on a mountain edge with steep cliffs over a
@@ -262,8 +280,10 @@ bows, thieves daggers then katars). `gearPool(m,l)` is the whole pool; `fieldOf(
 mob **three** gear rolls (2.4 % / 2.0 % / 1.6 %) spread across the pool, and a card at **0.45 %**
 - gear outnumbers cards ~13:1 per mob, where the old field rolled two gear items and three
 mobs' worth of cards. Level 10 bosses drop the entire pool at 1.2 % each plus their Legendary
-card at 0.08 %. `gearSlot(x)` maps a pool entry to its UI group, because a weapon entry carries
-its *type* as `k`, not `'weapon'`.
+card at 0.08 %. **Refine ores** (Oridecon / Elunium) drop only on Level 10 fields: **2 % per
+ore per monster, 5 % per boss** (v16 buff, was a flat 0.4 %) - `fieldOf` carries the rates as
+`oreCh`, and `kill()` rolls `Math.random()<mob.oreCh` per ore. `gearSlot(x)` maps a pool entry
+to its UI group, because a weapon entry carries its *type* as `k`, not `'weapon'`.
 
 **Cards.** Grade gates the stat pool. `cardStat(g,seed)` draws from `K5` (the five base stats)
 for Common/Fine and from `AFF` (base stats + hp/atk/crit/aspd/flee/cdm) for Rare/Legendary,
@@ -354,13 +374,12 @@ props, and `landmark()` places the large structures that frame the avenue.
 
 ## What is needed going forward
 
-1. **Re-measure kills/hour** after a real playtest, then retune `EXPK`. This is now the single
-   biggest open number: `HPE` went 1.85 -> 1.3, so mobs die several times faster than the
-   800 kills/hour the 96.4 h estimate was solved against, and the run will come in **under**
-   96 h - possibly well under. Do not guess a correction. Playtest, read the real kills/hour,
-   then move `EXPK` (one constant, everything derives from it). If the pace feels right but the
-   run is too short, raising `EXPK` is the correct lever: the goal is *more* fast kills, not
-   slower ones.
+1. **Re-measure kills/hour** after a real playtest, then retune. v16 anchored the whole pacing
+   curve to the owner's time targets (10 min / 2 h / 2 days to the three job changes) *inside the
+   800 kills/hour model*, so the curve is right **for that model** - if real throughput differs,
+   re-run `node tools/tune_pacing.js` with the measured `KPH` and let it re-solve `needAt`
+   (then re-check `economy_sim.js`). Do not hand-nudge the curve, and do not guess `EXPK`:
+   playtest, read the real kills/hour, then re-solve.
 2. **Player HP is an open design question, deliberately untouched.** The user is still deciding
    whether to remove it. Nothing in the death path has been changed. If it is removed, the
    casualties are `def()`, `mdef()`, `flee()`, `maxHp()`, VIT, `bon('hp')`, the head/acc HP
@@ -841,7 +860,169 @@ assigned for feel rather than fidelity. While reworking that, two shipped bugs s
     new field does not use it).
   * The creek is wadeable - no collision, no slowdown. The bridge is the intended crossing.
   * Payon's ground is flat (the design heights are still unused); the mountain edge is rocky
-    texture, not raised terrain.
+  texture, not raised terrain.
+
+### 2026-10-03 — `pacing-v16 fast-early map-drops ore-buff`
+* **What changed for the player:**
+  * **Levelling is now fast at the bottom and a grind only at the top** - the owner's three
+    anchors, solved into the curve with `tools/tune_pacing.js` (the game's own economy model,
+    ~800 kills/hour):
+    | milestone | gate | model time |
+    |---|---|---|
+    | 1st job change | Novice Job 10 / Base 10 | **10 min** |
+    | 2nd job change | 1st-job Job 40 / Base 49 | **~1.9 h** |
+    | transcendent line | 2nd-job Job 50 / Base 99 | **~45 h (~2 days)** |
+    `needAt(L)` is now three continuous power segments (fast ≤50, steepening 50-99, long
+    100-150 endgame; Lv150 total ≈ 269 h at the model rate - an outcome, not an anchor).
+    **Job bars mirror the base curve** (`JOFF=[0,9,49,98]`): each job level costs the job exp
+    its mirrored base level pays out, so both bars fill together and the job changes land on
+    the anchors by construction. Quest EXP fractions were scaled to 1/120 / 1/150 / 1/72 so
+    quests can never carry more than ~40% of a level (they supply ~35% overall); stat points,
+    Zeny and drop odds per kill are untouched. In real play the first job change lands closer
+    to 10-15 min because the Prontera field-clear climb (~135 kills) is the floor.
+  * **The map tab no longer changes size when you switch maps, and the bulky "Gear that drops
+    here" card is gone** (owner: too huge, wasted space). Every drop is now listed on the
+    monster that drops it - one line per item, icon + name left, **% right** - and the boss
+    lists its whole pool as compact chips at 1.2% each. Two fixed-shape cards (Monsters /
+    Boss & pets) plus a reserved scrollbar gutter keep the panel stable across maps and fields.
+  * **Oridecon and Elunium drop 5x-12.5x more often on Level 10 fields: 2% per ore per
+    monster, 5% per boss** (was a flat 0.4%). Refine panel and map panel text show the new rates.
+* **Files touched:** `index.html` (economy block: `QXP`, `needAt` curve + `NA*` constants,
+  `JOFF`/`pwOf`/`epkOf`/`qrOf`, tier-aware `jneed`; `fieldOf` + `kill()` ore rates; the map
+  panel + its CSS; refine texts; `BUILD`), `tools/tests/economy_sim.js` (rewritten around the
+  v16 anchors: per-level self-consistent model, milestone + job-gate assertions, new pins),
+  `tools/tests/ui_sim.js` (two-card map panel, drop lines with %, ore text, stable-gutter pin),
+  `tools/tests/gear_sim.js` (ore-rate pins), `tools/tune_pacing.js` (**new** - the pacing
+  solver/verifier), `AGENTS.md`.
+* **Art:** none. No sheets added or rebuilt; `tools/montage.py` not run.
+* **Tests:** pack_sim OK (19 bodies), class_change 15, save_load 9, **economy 18** (was 12),
+  stat 7, card 13, skill 37, gear 18, scene 8, kit 15, **ui 6** - all green. economy_sim now
+  pins the three time anchors, the job gates (base 10/49/99), the quest-share ceiling
+  (no level >40% quests), the curve's monotonicity and its anchor values; gear_sim pins
+  oreCh 0.02/0.05.
+* **Branches / PR:** `arena/01a10154-prontera-grind`.
+* **Known limits / follow-ups:**
+  * **The anchors are calibrated to the 800 kills/hour model**, which predates multi-cast
+    skills and ignores boss-fight seconds. Playtest, read the real kills/hour, then re-run
+    `node tools/tune_pacing.js <KPH>` rather than hand-nudging - see *Balance*.
+  * The 100-150 endgame came out at ~220 h beyond the transcendent change (a monotone curve
+    cannot be cheaper at 100 than at 99). If the owner wants it shorter, the lever is `NE3`
+    (the third segment's exponent), re-solved by tune_pacing.
+  * Early levels 1-9 are cheaper than a handful of kills each; field-clear cadence (15 kills
+    per Prontera field) is what actually sets the first-job floor.
+  * Gear tiers are still decorative (a section-0 drop can roll Epic) - unchanged from v11.
+
+### 2026-10-03 — `pacing-v17 short-tail class-collection`
+* **What changed for the player:**
+  * **The 100-150 tail is now ~3 days instead of ~7** (owner: "level 100-150 should maybe
+    take 3 days"). The three existing anchors are untouched - 10 min to 1st job, ~2 h to
+    2nd job, ~2 days (48 h) to the transcendent line at Base 99. Because a monotone curve
+    can never make level 100 cheaper than the 48 h anchor forces level 99 to be, the tail
+    uses a one-time **rebirth drop**: at Base 100 the requirement falls ~6x
+    (needAt(99)=659,647 → needAt(100)=111,490) and ramps back up with a gentler exponent.
+    `needAt(L)` is now: `⌊5.07·L^1.54⌋` ≤50, `⌊2096·(L/50)^8.42⌋` 50-99,
+    `⌊111490·(L/100)^2.7⌋` >99. Model outcome: tail = **72.0 h (3 days)**, T150 ≈ 123 h
+    total, quest share ~17% overall (the tail is kill-heavy) with the per-level ceiling
+    still ≤40% and QXP untouched. Solved + verified with `tools/tune_pacing.js`
+    (`node tools/tune_pacing.js 5.07,1.54,8.42,111490`).
+  * **Class collection bonus: +2% damage per class played** (owner: wants players to change
+    and play all classes, "maybe add a 2% damage bonus for each class they played before").
+    `playedClasses()` counts the class being played plus every record in `S.base` (derived
+    at runtime - old saves get credit for free, no migration); `collDmg() = 2 × count` is a
+    multiplier inside `atk()`, capped at 19 classes × 2% = +38%. The job gates pace the
+    mission: every 1st job to job 40 and every 2nd job to job 50 before its transcendent
+    class can be entered. Shown on the character panel and the class tree:
+    `🏆 Class collection: X/19 played · +Y% damage`.
+* **Files touched:** `index.html` (economy block: `NA1/NE1/N50/NE2/N100/NE3` constants +
+  `needAt` rebirth branch, pacing comment; `atk()` collection multiplier; `playedClasses`/
+  `collDmg` helpers; collection lines in the character + class-tree panels; `BUILD`),
+  `tools/tune_pacing.js` (**rewritten**: rebirth-tail family `⌊n100·(L/100)^NE3⌋`, NE3=2.7
+  fixed, n100 bisected for `TAIL = T150−T100 = 72 h`, verify mode `cA,aA,aB,n100`, shipping
+  QXP as base to kill the two-phase drift), `tools/tests/economy_sim.js` (phased
+  monotonicity + rebirth-drop assertions, new curve pins, boss-quest-xp@150 = 4627, tail
+  anchor 60-85 h, quest-share floor relaxed to 12%), `tools/tests/class_change_sim.js`
+  (+4 collection tests: counting, dedupe, cap at 19, atk wiring), `tools/tests/ui_sim.js`
+  (collection line on both panels; picks the two new helpers before `atk`), `AGENTS.md`.
+* **Art:** none. No sheets added or rebuilt; `tools/montage.py` not run.
+* **Tests:** pack_sim OK (19 bodies), **class_change 19** (was 15), save_load 9,
+  **economy 18** (rebirth anchors: T10 10.1 min / T50 1.99 h / T99 48.1 h / tail 72.0 h),
+  stat 7, card 13, skill 37, gear 18, scene 8, kit 15, **ui 7** (was 6) - all green.
+* **Branches / PR:** `arena/01a10154-prontera-grind` (updates PR #5).
+* **Known limits / follow-ups:**
+  * The rebirth drop reads as a soft reset at level 100; it is not surfaced to the player
+    with fanfare - the next level just feels faster. If it confuses anyone, a one-line
+    note on the level-up toast at 100 would explain it.
+  * The +38% collection cap is generous next to class ATK multipliers; if a future balance
+    pass tightens damage, `collDmg()` is the single knob.
+
+### 2026-10-03 — `pacing-v17 short-tail collection-nerf`
+* **What changed for the player:**
+  * **The class-collection bonus was too strong ("this is break the game") - nerfed on the
+    same day.** It is now **+1% damage per TRANSCENDENT (3rd-job) class played, and only at
+    Base Lv 100+** (was +2% per any of the 19 classes, always on). It is now a carrot for
+    the rebirth grind instead of an early-game power spike: max +6% today, and both the
+    count and the denominator are derived from the class data (`tier===3`), so **classes the
+    owner adds later join the collection automatically** - nothing is hardcoded to 19.
+    Panel lines now read `🏆 Class collection: X/Y transcendent classes · +Z% damage` and
+    spell out `activates at Base Lv 100` while dormant.
+* **Files touched:** `index.html` (`playedClasses` now counts tier-3 records only, new
+  `t3Total()`, `collDmg()` gated at `S.lv>=100`; panel lines; `BUILD`),
+  `tools/tests/class_change_sim.js` (5 collection tests rewritten: tier-3-only counting,
+  the lv-100 gate, the data-driven cap, record growth through real `changeClass` calls,
+  atk wiring pin), `tools/tests/ui_sim.js` (dormant note + 1/6 · +1% at lv 100), `AGENTS.md`.
+* **Art:** none.
+* **Tests:** pack_sim OK (19 bodies), **class_change 20** (was 19), save_load 9, economy 18,
+  stat 7, card 13, skill 37, gear 18, scene 8, kit 15, ui 7 - all green.
+* **Branches / PR:** `arena/01a10154-prontera-grind` (updates PR #5).
+* **Known limits / follow-ups:**
+  * The v17 entry above described the +2%/19-class version; it was shipped and nerfed
+    within the same session. Only this nerf is live.
+
+### 2026-10-03 — `kit-v18 all-ten-maps skin-purge`
+* **What changed for the player:**
+  * **All ten maps are now rebuilt from the attached map kit** (owner: the map-sprite agent
+    finished its work - rebuild everything). Morocc keeps the attached design and Payon keeps
+    the RO Forest recipe; the other eight arenas are new deterministic `fieldPlan` recipes
+    out of the same kit crops (nothing drawn):
+    | map | the look |
+    |---|---|
+    | Prontera | sunny meadow, dirt avenue, tree lines, stone posts |
+    | Izlude | harbour: sea strip + bank, off-lane pier, beach palms |
+    | Geffen | dark forest, deep cliff ring, standing ruin pillars/stumps |
+    | Comodo | beach: sand ground, sea strip, palm + cactus scatter |
+    | Louyang | lush forest, winding road, dense trees, shrine posts |
+    | Amatsu | meadow with a stream crossed by a plank bridge on the road |
+    | Niflheim | barren waste: dirt ground, crags, bones, ruin stumps |
+    | Abyss | cave rock, dark lake at the far end, crags and stone posts |
+    Recipes may borrow props across atlases (each prop carries its own `src`), and morocc-
+    ground seas animate with the payon sheet's water frames. Water stays scenery: strips never
+    reach the monster spawn band unless a deck crosses them; props never enter the lane; every
+    plan is seeded so respawns never reshuffle a map.
+  * **The old class skins are gone** (owner: "i dont need them delete those to avoid
+    confusion" - the green thief-era layered art). Deleted: `assets/sprites_data.js`
+    (layered hero atlases), `assets/thief_sprites_data.js` (THIEF_PACK), all 24
+    `hero_*/herobody_*/herohead_*` sheets and the three `_preview_*` images,
+    `tools/build_atlas.py`, `tools/import_sheet.py`, `tools/verify_sprites.js`. In the game:
+    the `sprites_data.js` script tag, `loadAtlas` + its queue, the layered `herobody:/herohead:`
+    and legacy `hero:` paths (`HERO_HEAD_FOR`, `heroBodyKey/heroAtlasKey/heroHeadKey`,
+    `isCustomHero`, `heroKindAvail`, `CUSTOM_HEROES`), and every `window.THIEF_PACK` fallback.
+    The hero is now: class pack, else the drawn hero - no third thing. `make_sprite_pack.py`
+    re-seeds from `sprite_pack_data.js` itself (heads/poses/unchanged bodies), and the
+    bootstrap dependency check follows.
+* **Files touched:** `index.html` (kit: `fieldPlan`, `KIT_MAP` x10, cross-atlas prop check,
+  water-frame borrow; hero/mob paths simplified; `BUILD`), `tools/tests/kit_sim.js`
+  (15 → 20 tests: ten-map plans, recipe pins, cross-atlas builds), `tools/make_sprite_pack.py`,
+  `UPDATE-BOOTSTRAP.py`, `AGENTS.md`.
+* **Art:** none added. 29 files deleted (see above); `tools/montage.py` not run.
+* **Tests:** pack_sim OK (19 bodies, unaffected by the purge), **kit 20** (was 15),
+  class_change 20, save_load 9, economy 18, stat 7, card 13, skill 37, gear 18, scene 8, ui 7
+  - all green.
+* **Branches / PR:** `arena/01a10154-prontera-grind` (updates PR #5).
+* **Known limits / follow-ups:**
+  * `_shot.html` / `_login.html` at the repo root are pre-pack legacy pages that referenced
+    the deleted atlases; they are kept as history but no longer run.
+  * The eight recipes are first passes - if a map's identity reads wrong in play, its recipe
+    in `KIT_MAP` is the single place to tune (ground, water, trees, scatter).
 
 <!-- template — copy this block, fill it in, paste it at the bottom of the log -->
 

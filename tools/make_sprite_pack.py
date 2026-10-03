@@ -32,7 +32,10 @@ import montage
 REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SPRITE_DIR = os.path.join(REPO, 'Sprite')
 ASSETS = os.path.join(REPO, 'assets')
-EXISTING = os.path.join(ASSETS, 'thief_sprites_data.js')
+# The pack re-seeds from its own last output: unchanged bodies and the shared heads are
+# kept as shipped, everything else is rebuilt from Sprite/. (It once seeded from the
+# thief-only pack; that file is gone - the shipped pack is the only source now.)
+EXISTING = os.path.join(ASSETS, 'sprite_pack_data.js')
 
 CELL = 96                      # body cell size in the atlas
 HEAD_SEAT = 3                  # head anchor = stub top row + this (see anchors_for_body)
@@ -460,7 +463,7 @@ def data_uri(im):
 # --------------------------------------------------------- existing pack reuse
 def load_existing():
     txt = open(EXISTING).read()
-    i = txt.index('window.THIEF_PACK=')
+    i = txt.index('window.SPRITE_PACK=')
     j = txt.index('{', i)
     depth = 0
     for k in range(j, len(txt)):
@@ -486,7 +489,7 @@ def main():
     base = load_existing()
     pack = {k: base[k] for k in ('cellW', 'cellH', 'padL', 'padT', 'pivotX', 'pivotY',
                                  'frames', 'fps', 'hairStyles')}
-    pack['bodies'] = dict(base['bodies'])      # keep thief / assassin / assassin cross as shipped
+    pack['bodies'] = dict(base['bodies'])      # every body already in the pack stays as shipped
     pack['heads'] = base['heads']              # heads are shared by every class
 
     keep = set(pack['bodies']) if '--regenerate' not in sys.argv else set()
