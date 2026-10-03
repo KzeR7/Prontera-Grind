@@ -200,11 +200,27 @@ const REC=['Lv 1-12','Lv 10-24','Lv 20-34','Lv 32-46','Lv 44-60','Lv 60-67','Lv 
 MAPS.forEach((m,i)=>{m.b=[0,9,19,31,43,59,66,73,79,89][i];m.rec=REC[i]});
 const pw=()=>MAPS[S.mp].b+S.lvl,DR=1;
 const secOf=l=>l<=3?0:l<=7?1:l<=9?2:3,secOf0=l=>l<=3?0:l<=7?1:l<=9?2:3;
+// ---------- cards ----------
+// The two low grades (Common, Uncommon) roll the five base stats only. Rare and Legendary
+// unlock the wider affix pool - hp, atk, crit, aspd, flee, cdm - so the good grades are the
+// exciting ones. A card's value scales by its stat's own weight AB, so an HP card is worth
+// ~12x a STR card at the same grade; the five base stats keep exactly their old values.
+const cardVal=(g,st)=>Math.max(1,Math.round((CV[g]||1)*(AB[st]||1)));
+const cardStat=(g,seed)=>{const p=g>=2?AFF:K5;return p[((seed%p.length)+p.length)%p.length]};
 function fieldOf(m,l){const mp=MAPS[m],sec=m>=5?3:secOf(l),sg=mp.g[sec],T=[];
   for(const k in sg.w)T.push({k,n:sg.w[k]});T.push({k:'armor',n:sg.a},{k:'head',n:sg.h},{k:'off',n:mp.n+' Shield'},{k:'leg',n:mp.n+' Greaves'},{k:'acc',n:mp.n+' Ring'});const n=T.length;
-  const mobs=[0,1].map(j=>({...mp.mobs[(l-1+j)%mp.mobs.length],drops:[[T[(l+2*j)%n],2.1],[T[(l+2*j+1)%n],1.75]],card:{n:mp.mobs[(l-1+j)%mp.mobs.length].n+' Card',stat:K5[((m*10+l+j)*3+1)%5],g:l<=3?0:l<=7?1:2},cardCh:.6,ore:l===10}));
-  return{m,l,sec,mobs,boss:l===10?{...mp.boss,drops:T.map(x=>[x,4]),card:{n:mp.boss.n+' Card',stat:K5[m%5],g:3},cardCh:.1,ore:true}:null}}
+  const mobs=[0,1].map(j=>{const mm=mp.mobs[(l-1+j)%mp.mobs.length],cg=l<=3?0:l<=7?1:2;
+    return{...mm,drops:[[T[(l+2*j)%n],2.1],[T[(l+2*j+1)%n],1.75]],card:{n:mm.n+' Card',stat:cardStat(cg,(m*10+l+j)*3+1),g:cg},cardCh:.6,ore:l===10}});
+  return{m,l,sec,mobs,boss:l===10?{...mp.boss,drops:T.map(x=>[x,4]),card:{n:mp.boss.n+' Card',stat:cardStat(3,m),g:3},cardCh:.1,ore:true}:null}}
 const dropTxt=([T,ch])=>`${T.n}${['armor','head','off','leg','acc'].includes(T.k)?'':' ('+T.k+')'} ${ch}%`;
+
+// ---------- stat progression ----------
+// Stats cap at 99 until Base Lv 100, then the elite tier opens up to 120. Raising a stat
+// costs 1+floor((v-1)/10) below 100 and 10+(v-100) from 100 up, so one stat 1->120 costs
+// 930 points. The grant curve 4+floor(l/5) pays 1352 by Lv99 and 2811 by Lv150 - exactly
+// three stats at 120 with a handful of points left over. Pinned by tools/tests/stat_sim.js.
+// Declared here (before fresh()/load()) so the save repair can clamp to MAXST too.
+const MAXST=120,BASECAP=99,ELITELV=100,statCap=()=>S.lv>=ELITELV?MAXST:BASECAP;
 
 // ---------- economy tuning ----------
 // Target: Base Lv 1 -> 150 in ~96 hours at ~800 kills/hour (77,000 kills), with quests
@@ -237,7 +253,7 @@ const num_= (v,d)=>{v=+v;return Number.isFinite(v)?v:d};
 function load(){try{const s=JSON.parse(lsGet(saveKey()));if(s&&s.lv){const F=fresh(),f=Object.assign(F,s);f.st=Object.assign(fresh().st,s.st||{});if(!CLASSES[f.cls])f.cls='Novice';
 // repair top-level numbers corrupted by older/test saves (null -> crash on .toLocaleString())
   for(const k of['lv','exp','hp','zeny','kills','pts','mp','lvl','kl','gmx'])f[k]=num_(f[k],F[k]);
-  for(const k of['str','agi','dex','luk','int','vit'])f.st[k]=num_(f.st[k],1);
+  for(const k of['str','agi','dex','luk','int','vit'])f.st[k]=Math.max(1,Math.min(MAXST,num_(f.st[k],1)));
   f.ore={ori:num_(f.ore&&f.ore.ori,0),elu:num_(f.ore&&f.ore.elu,0)};
   if(!Array.isArray(f.prog)||!f.prog.length)f.prog=F.prog.slice();else f.prog=f.prog.map(v=>num_(v,1));
   while(f.prog.length<MAPS.length)f.prog.push(1);
@@ -250,11 +266,11 @@ function load(){try{const s=JSON.parse(lsGet(saveKey()));if(s&&s.lv){const F=fre
     r.lv=Math.max(1,Math.min(150,Math.floor(num_(r.lv,1))));r.exp=Math.max(0,num_(r.exp,0));
     r.pts=Math.max(0,Math.floor(num_(r.pts,0)));r.hp=Math.max(1,num_(r.hp,1));
     if(!r.st||typeof r.st!=='object')r.st={};
-    for(const s of['str','agi','dex','luk','int','vit'])r.st[s]=Math.max(1,num_(r.st[s],1));
+    for(const s of['str','agi','dex','luk','int','vit'])r.st[s]=Math.max(1,Math.min(MAXST,num_(r.st[s],1)));
     if(!r.eq||typeof r.eq!=='object')r.eq={}}
   if(!Array.isArray(f.pets))f.pets=[];if(!Array.isArray(f.inv))f.inv=[];if(!Array.isArray(f.cards))f.cards=[];
   if(!f.eq||typeof f.eq!=='object')f.eq=F.eq;if(f.hp<=0)f.hp=F.hp;
-  const fx=c=>{c.v=CV[c.g]};(f.cards||[]).forEach(fx);(f.pets||[]).forEach((p,i)=>{if(p.on===undefined)p.on=i<3});Object.values(f.eq||{}).forEach(it=>it&&(it.cards||[]).forEach(fx));(f.inv||[]).forEach(it=>(it.cards||[]).forEach(fx));
+  const fx=c=>{c.v=cardVal(c.g,c.stat)};(f.cards||[]).forEach(fx);(f.pets||[]).forEach((p,i)=>{if(p.on===undefined)p.on=i<3});Object.values(f.eq||{}).forEach(it=>it&&(it.cards||[]).forEach(fx));(f.inv||[]).forEach(it=>(it.cards||[]).forEach(fx));
   // repair quests saved by older builds: every field must be a real number
   if(!Array.isArray(f.q))f.q=null;
   else f.q=f.q.filter(q=>q&&typeof q==='object').map(q=>{
@@ -321,8 +337,8 @@ const maxHp=()=>Math.round((80+S.lv*20+eqv('head')*4+(eqv('acc1')+eqv('acc2'))*3
 const atk=()=>Math.round((4+S.lv*2+eqv('weapon')+(S.eq.off&&S.eq.off.slot==='weapon'?eqv('off')*.6:0)+st(C().main)*1.5+(st('dex')+st('luk'))*.25)*C().atk*(1+(pv('atk')+bon('atk'))/100));
 const aspd=()=>Math.max(.2,.85*C().aspd*(1-Math.min(.5,st('agi')*.006))/(1+(pv('aspd')+bon('aspd'))/100));
 const crit=()=>Math.min(60,3+st('luk')*.4+pv('crit')+bon('crit')),flee=()=>Math.min(60,st('agi')*.5+S.lv*.1+pv('flee')+bon('flee')),missCh=()=>Math.max(0,15-st('dex')*.25);
-const def=()=>Math.floor(S.lv*.5+st('vit')*.5+eqv('armor')+eqv('leg')+(S.eq.off&&S.eq.off.slot==='off'?eqv('off'):0)+pv('def')),mdef=()=>Math.floor(S.lv*.3+st('int')*.5+st('vit')*.4+eqv('head')*.3+pv('def')*.5),critD=()=>2+st('luk')*.01+st('dex')*.005+bon('cdm')/100,needAt=L=>Math.floor(38*Math.pow(L,1.75)),need=()=>needAt(S.lv),cost=k=>1+Math.floor((S.st[k]-1)/10);
-const totalPts=()=>{let p=10;for(let l=2;l<=S.lv;l++)p+=3+Math.floor(l/5);return p},rcost=()=>S.lv*50;
+const def=()=>Math.floor(S.lv*.5+st('vit')*.5+eqv('armor')+eqv('leg')+(S.eq.off&&S.eq.off.slot==='off'?eqv('off'):0)+pv('def')),mdef=()=>Math.floor(S.lv*.3+st('int')*.5+st('vit')*.4+eqv('head')*.3+pv('def')*.5),critD=()=>2+st('luk')*.01+st('dex')*.005+bon('cdm')/100,needAt=L=>Math.floor(38*Math.pow(L,1.75)),need=()=>needAt(S.lv),cost=k=>{const v=S.st[k];return v<ELITELV?1+Math.floor((v-1)/10):10+(v-ELITELV)};
+const totalPts=()=>{let p=10;for(let l=2;l<=S.lv;l++)p+=4+Math.floor(l/5);return p},rcost=()=>S.lv*50;
 const skpAvail=()=>Object.values(S.jobs).reduce((a,j)=>a+j.jl-1,0)-(Object.values(S.sk).reduce((a,b)=>a+b,0)-(S.sk.aid?1:0));
 const refCost=it=>Math.round(200*((it.r||0)+1)*(1+(it.sec||0)*.5)),refCh=it=>[100,100,100,100,70,60,50,40,30,20][it.r||0];
 const affTxt=a=>`${AL[a.k]} +${a.v}`,cardTxt=c=>`${c.n} (${SU(c.stat)} +${c.v})`,dtier=it=>it.card?GI[it.g]:it.ore?3:it.tier;
@@ -379,7 +395,7 @@ function kill(o){const keep=mob;if(o)mob=o;if(!mob||!mobs.includes(mob)){mob=kee
   addFloat(mob.x,2.4,mob.z,'+'+z+'z','#ffd23f');log(`${mob.n} defeated! +${xp.toLocaleString()} EXP, +${z.toLocaleString()} Zeny`);
   const lk=1+st('luk')*.008;
   for(const[T,ch]of mob.drops)if(Math.random()*100<ch*lk)drops.push(mkDrop(genGear(T,mob.lvl,mob.sec,mob.boss)));
-  if(Math.random()*100<mob.cardCh*lk){const g2=mob.card.g;drops.push(mkDrop({card:1,id:uid(),n:mob.card.n,g:g2,stat:mob.card.stat,v:CV[g2]}))}
+  if(Math.random()*100<mob.cardCh*lk){const g2=mob.card.g;drops.push(mkDrop({card:1,id:uid(),n:mob.card.n,g:g2,stat:mob.card.stat,v:cardVal(g2,mob.card.stat)}))}
   if(mob.ore)for(const o of['ori','elu'])if(Math.random()<.004)drops.push(mkDrop({ore:o,id:uid(),n:ORE[o]}));
   if(Math.random()*100<(mob.boss?5:.3)*lk){const r=pickW(PW[Math.min(S.mp,9)]),c=PETS.filter(x=>x.r===r),sp=PETS.indexOf(c[ri(0,c.length-1)]);
     if(S.pets.length<40){S.pets.push({id:ri(1e6,9e6),sp,mut:0,eq:[0,0,0],on:S.pets.filter(x=>x.on).length<3});log(`A ${RN[r]} pet followed you: ${PETS[sp].n}!`,'r'+RCL[r]);addFloat(mob.x,3,mob.z,'PET!','#ff9dff',true)}
@@ -471,12 +487,12 @@ const V={
     <div class="map-travel"><button data-a="go" ${mapL>pr?'disabled':''}>${S.mp===mapM&&S.lvl===mapL?'You are here':'Travel to '+mp.n+' Lv '+mapL}</button></div>
     <div class="lvgrid">${Array.from({length:10},(_,i)=>{const l=i+1,lock=l>pr;return`<div class="map-node${lock?' locked':''}${S.mp===mapM&&S.lvl===l?' active':''}${mapL===l?' picked':''}${l===10?' boss-node':''}" data-a="sell_" data-v="${l}"><div>${l===10?'💀':'🌲'}</div><b>Lv ${l}</b><small>${secOf(l)===0?'Novice':secOf(l)===1?'1st job':secOf(l)===2?'2nd job':'Boss'}</small></div>`}).join('')}</div>
     <div class="mob-card"><div class="hd">&#128269; ${mp.n} Lv ${mapL} &mdash; ${SECN[F.sec]}</div>
-    ${F.mobs.map(m=>`<div><b>${m.n}</b><br><small>Drops: ${m.drops.map(dropTxt).join(', ')}</small><br><small class="r${GI[m.card.g]}">Card: ${m.card.n} (${SU(m.card.stat)} +${CV[m.card.g]}, ${GRADE[m.card.g]}) ${m.cardCh}%</small>${m.ore?'<br><small class="r4">Oridecon 0.4% &middot; Elunium 0.4%</small>':''}</div><hr>`).join('')}
-    ${F.boss?`<div><b class="r3">${F.boss.n} (BOSS)</b><br><small>Drops: ${F.boss.drops.map(dropTxt).join(', ')}</small><br><small class="r4">Card: ${F.boss.card.n} (${SU(F.boss.card.stat)} +${CV[3]}, Legendary) ${F.boss.cardCh}% &middot; Oridecon 0.4% &middot; Elunium 0.4%</small></div>`:`<small>Boss appears at Level 10.</small>`}
+    ${F.mobs.map(m=>`<div><b>${m.n}</b><br><small>Drops: ${m.drops.map(dropTxt).join(', ')}</small><br><small class="r${GI[m.card.g]}">Card: ${m.card.n} (${SU(m.card.stat)} +${cardVal(m.card.g,m.card.stat)}, ${GRADE[m.card.g]}) ${m.cardCh}%</small>${m.ore?'<br><small class="r4">Oridecon 0.4% &middot; Elunium 0.4%</small>':''}</div><hr>`).join('')}
+    ${F.boss?`<div><b class="r3">${F.boss.n} (BOSS)</b><br><small>Drops: ${F.boss.drops.map(dropTxt).join(', ')}</small><br><small class="r4">Card: ${F.boss.card.n} (${SU(F.boss.card.stat)} +${cardVal(3,F.boss.card.stat)}, Legendary) ${F.boss.cardCh}% &middot; Oridecon 0.4% &middot; Elunium 0.4%</small></div>`:`<small>Boss appears at Level 10.</small>`}
     <div class="sec">🐾 Pet drops</div><small>0.3% per kill, 5% from bosses. Odds on ${mp.n}: ${PW[Math.min(mapM,9)].map((w,i)=>RN[i]+' '+w+'%').join(' &middot; ')}</small></div>`},
   stats(){const c=C(),b=k=>bon(k)?` <small class="r1">+${bon(k)}</small>`:'';
-    return`<div class="hd">${S.cls} &middot; Base Lv ${S.lv} &middot; Job Lv ${jobOf().jl}/${c.mj}</div><div class="hd">Stat points: ${S.pts} <small>(max 99 each &middot; max Base Lv 150)</small></div>`
-    +STATS.map(([k,l,d])=>`<div class="slot"><span><b>${l}</b> ${S.st[k]}${b(k)} <small>(${d})</small></span><span class="bts"><small>${cost(k)}pt</small><button data-a="stat" data-v="${k}" ${S.pts>=cost(k)&&S.st[k]<99?'':'disabled'}>+1</button><button data-a="stat5" data-v="${k}" ${S.pts>=cost(k)&&S.st[k]<99?'':'disabled'}>+5</button></span></div>`).join('')
+    return`<div class="hd">${S.cls} &middot; Base Lv ${S.lv} &middot; Job Lv ${jobOf().jl}/${c.mj}</div><div class="hd">Stat points: ${S.pts} <small>(max ${statCap()} each${S.lv<ELITELV?' &middot; '+MAXST+' unlocks at Base Lv '+ELITELV:''} &middot; max Base Lv 150)</small></div>`
+    +STATS.map(([k,l,d])=>`<div class="slot"><span><b>${l}</b> ${S.st[k]}${b(k)} <small>(${d})</small></span><span class="bts"><small>${cost(k)}pt</small><button data-a="stat" data-v="${k}" ${S.pts>=cost(k)&&S.st[k]<statCap()?'':'disabled'}>+1</button><button data-a="stat5" data-v="${k}" ${S.pts>=cost(k)&&S.st[k]<statCap()?'':'disabled'}>+5</button></span></div>`).join('')
     +`<div class="slot" style="flex-wrap:wrap"><span>ATK <b>${atk()}</b></span><span>DEF <b>${def()}</b></span><span>ASPD <b>${(1/aspd()).toFixed(2)}/s</b></span><span>Crit <b>${crit().toFixed(1)}%</b></span><span>Crit DMG <b>x${critD().toFixed(2)}</b></span><span>MDEF <b>${mdef()}</b></span><span>Flee <b>${flee().toFixed(0)}%</b></span><span>HP <b>${maxHp()}</b></span></div>
     <small>Weapons: ${c.wt.join(', ')} &middot; Main stat: ${SU(c.main)}</small><button class="full" data-a="rstat">Reset stats (${rcost()}z)</button>`},
   job(){const lines=[['Swordman','Knight','Lord Knight'],['Mage','Wizard','High Wizard'],['Archer','Hunter','Sniper'],['Thief','Assassin','Assassin Cross'],['Acolyte','Priest','High Priest'],['Merchant','Blacksmith','Whitesmith']];
@@ -517,7 +533,7 @@ const V={
   gm(){return`<div class="hd">GM multiplier (EXP, Job EXP, Zeny, quests)</div><div class="row">${[1,10,100,1000].map(x=>`<button data-a="gmx" data-v="${x}" ${S.gmx===x?'style="background:#ffe08a"':''}>x${x}</button>`).join('')}</div>
     <div class="row" style="margin-top:8px"><button data-a="gmz">+1,000,000 Zeny</button><button data-a="gmo">+20 Oridecon &amp; Elunium</button><button data-a="gml">+10 Base Levels</button><button data-a="gmj">Max Job Lv (current class)</button><button data-a="gmu">Unlock all map levels</button></div><div class="hd" style="margin-top:10px">Test pets</div><div class="row">${RN.map((n,i)=>`<button data-a="gmp" data-v="${i}">+ ${n} pet</button>`).join('')}</div><div class="row" style="margin-top:6px"><button data-a="gmm" data-v="4">All pets G4</button><button data-a="gmm" data-v="6">All pets G6</button><button data-a="gmc">Clear pets</button></div>`}};
 const EQK=[['head','Head','🎩'],['weapon','R.Hand','⚔️'],['armor','Body','🥼'],['off','L.Hand','🛡️'],['acc1','Acc 1','💍'],['leg','Legs','👖'],['acc2','Acc 2','💍']];
-const CFIT={str:'weapon',dex:'weapon',agi:'armor',int:'head',luk:'acc'},CFL={weapon:'Weapons',armor:'Armor, Shield & Legwear',head:'Headgear',acc:'Accessories'};
+const CFIT={str:'weapon',dex:'weapon',atk:'weapon',crit:'weapon',cdm:'weapon',agi:'armor',aspd:'armor',flee:'armor',vit:'armor',int:'head',hp:'head',luk:'acc'},CFL={weapon:'Weapons',armor:'Armor, Shield & Legwear',head:'Headgear',acc:'Accessories'};
 const grp=it=>it.slot==='weapon'?'weapon':it.slot==='head'?'head':it.slot==='acc'?'acc':'armor';
 function canShield(){return /^(Novice|Swordman|Knight|Lord Knight|Acolyte|Priest|High Priest|Merchant|Blacksmith|Whitesmith)$/.test(S.cls)}
 function dualOn(){return S.cls==='Assassin'||S.cls==='Assassin Cross'}
@@ -543,7 +559,7 @@ function petDetail(p){const sp=PETS[p.sp],g=p.mut,sk=p.sk||[1,2,3];
   +`<small>Odds: G1 50% &middot; G2 30% &middot; G3 16.5% &middot; G4 2.5% &middot; G5 0.8% &middot; G6 0.2%</small></div>`}
 function ask(msg,yes){$('mt').textContent=msg;$('modal').style.display='flex';$('my').onclick=()=>{$('modal').style.display='none';yes()};$('mn').onclick=()=>{$('modal').style.display='none'}}
 function insertUI(sel){if(!(sel.slots>0))return'<small>No card slots on this item.</small>';if((sel.cards||[]).length>=sel.slots)return'';const fit=S.cards.filter(c=>CFIT[c.stat]===grp(sel));
-  return'<div class="sec">Insert card</div>'+([...new Map(fit.map(c=>[c.n,c])).values()].map(c=>`<div class="slot"><span class="r${GI[c.g]}">🃏 ${c.n} <small>${SU(c.stat)} +${CV[c.g]} &middot; x${fit.filter(x=>x.n===c.n).length}</small></span><button data-a="sock" data-v="${c.id}:${selE}">Insert</button></div>`).join('')||'<small>No compatible cards in your bag.</small>')}
+  return'<div class="sec">Insert card</div>'+([...new Map(fit.map(c=>[c.n,c])).values()].map(c=>`<div class="slot"><span class="r${GI[c.g]}">🃏 ${c.n} <small>${SU(c.stat)} +${c.v} &middot; x${fit.filter(x=>x.n===c.n).length}</small></span><button data-a="sock" data-v="${c.id}:${selE}">Insert</button></div>`).join('')||'<small>No compatible cards in your bag.</small>')}
 function renderWin(){
   if(!S)return;
   $('dock').innerHTML=Object.entries(TABS).filter(([k])=>k!=='gm'||S.gm).map(([k,[ic,n,key]])=>`<button class="ib${tabs.includes(k)?' on':''}" data-t="${k}" title="${n} (${key})">${ic}<span class="k">${key}</span>${dot(k)?'<i class="dot"></i>':''}</button>`).join('');
@@ -555,8 +571,8 @@ const MAX_TABS=3;const openTab=k=>{if(k==='gm'&&!S.gm)return;const i=tabs.indexO
 const gotoField=(m,l)=>{S.mp=m;S.lvl=l;S.kl=0;mobs=[];mob=null;respawn=.3;pend=[];ui();save()};
 const ACT={
   selm:v=>{mapM=+v;mapL=Math.min(mapL,Math.max(1,S.prog[mapM]));renderWin()},sell_:v=>{mapL=+v;renderWin()},go:()=>{if(mapL<=S.prog[mapM]){gotoField(mapM,mapL);log(`Traveled to ${fieldName()}.`)}},
-  stat:k=>{if(S.pts>=cost(k)&&S.st[k]<99){S.pts-=cost(k);S.st[k]++;S.hp=Math.min(S.hp,maxHp());ui();save()}},
-  stat5:k=>{for(let i=0;i<5;i++)if(S.pts>=cost(k)&&S.st[k]<99){S.pts-=cost(k);S.st[k]++}S.hp=Math.min(S.hp,maxHp());ui();save()},
+  stat:k=>{if(S.pts>=cost(k)&&S.st[k]<statCap()){S.pts-=cost(k);S.st[k]++;S.hp=Math.min(S.hp,maxHp());ui();save()}},
+  stat5:k=>{for(let i=0;i<5;i++)if(S.pts>=cost(k)&&S.st[k]<statCap()){S.pts-=cost(k);S.st[k]++}S.hp=Math.min(S.hp,maxHp());ui();save()},
   selk:v=>{selK=v;renderWin()},job:n=>{if(n==='Novice'&&S.cls!=='Novice')ask('Restart as Novice? You go back to Base Lv 25, job levels cleared, and your stats are refunded. Classes you leave keep their own Base Lv, stats and gear, so you can switch back to them later.',()=>changeClass(n));else changeClass(n)},
   rstat:()=>{if(S.zeny<rcost())return log('Not enough Zeny to reset stats.');S.zeny-=rcost();for(const k in S.st)S.st[k]=1;S.pts=totalPts();S.hp=Math.min(S.hp,maxHp());log('Stats reset.');ui();save()},
   skill:id=>{const s=SKILLS.find(x=>x.id===id);if(skpAvail()>0&&lv(id)<s.max&&lineOf(S.cls).includes(s.from)){S.sk[id]=lv(id)+1;ui();save()}},

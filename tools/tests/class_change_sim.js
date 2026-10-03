@@ -12,10 +12,16 @@ const src = fs.readFileSync(__dirname + '/../../index.html', 'utf8');
 const grab = (a, b) => { const i = src.indexOf(a), j = src.indexOf(b, i); if (i < 0 || j < 0) throw new Error('missing ' + a); return src.slice(i, j); };
 const code = [grab('const CD=[', 'const lineOf='), grab('function classRec(', '// ---------- UI ----------')].join('\n');
 
+// totalPts() lives outside the grabbed range, so the harness re-declares it. Pin the real
+// formula here: if the grant curve in index.html changes, this fails instead of silently
+// testing a stale copy (it drifted once, on 2026-10-03, when the curve went 3->4 per level).
+if (!/const totalPts=\(\)=>\{let p=10;for\(let l=2;l<=S\.lv;l\+\+\)p\+=4\+Math\.floor\(l\/5\);return p\}/.test(src))
+  throw new Error('totalPts() grant curve changed in index.html - update the harness copy below it');
+
 const harness = `
 ${code}
 const jobOf = () => S.jobs[S.cls] || (S.jobs[S.cls] = {jl:1, jx:0});
-const totalPts = () => { let p = 10; for (let l = 2; l <= S.lv; l++) p += 3 + Math.floor(l/5); return p };
+const totalPts = () => { let p = 10; for (let l = 2; l <= S.lv; l++) p += 4 + Math.floor(l/5); return p };
 const maxHp = () => Math.round((80 + S.lv*20 + S.st.vit*8) * CLASSES[S.cls].hp);
 const canShield = () => /^(Novice|Swordman|Knight|Lord Knight|Acolyte|Priest|High Priest|Merchant|Blacksmith|Whitesmith)$/.test(S.cls);
 const dualOn = () => S.cls === 'Assassin' || S.cls === 'Assassin Cross';
@@ -99,7 +105,7 @@ t('loading a class you never played resets stats and refunds the points', () => 
   H.S = mk({cls:'Novice', lv:40, st:st({str:20,dex:12}), pts:0, jobs:{Novice:{jl:20}}});
   H.changeClass('Swordman');
   assert.deepStrictEqual(Object.values(H.S.st), [1,1,1,1,1,1]);
-  let earned = 10; for (let l = 2; l <= 40; l++) earned += 3 + Math.floor(l/5);
+  let earned = 10; for (let l = 2; l <= 40; l++) earned += 4 + Math.floor(l/5);
   assert.strictEqual(H.S.pts, earned, 'points should be fully refunded');
   assert.strictEqual(H.S.lv, 40, 'no levels lost on switching');
 });

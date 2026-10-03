@@ -14,7 +14,8 @@ const save = {pets:[], cls:'Swordman', sex:'m', hair:2, lv:60, exp:12345, hp:999
     Swordman:{lv:60,exp:12345,pts:7,hp:999,st:{str:40,agi:20,dex:15,luk:1,int:1,vit:25},eq:{weapon:77,armor:78,head:null,off:79,leg:null,acc1:null,acc2:null}},
     BROKEN:'not an object',
     Mage:{lv:'abc',exp:null,pts:undefined,hp:null,st:{str:null},eq:'nope'}},
-  prog:[1,1,1,1,1], auto:true, adv:true, q:null, cards:[], ore:{ori:3,elu:0}, gm:false, gmx:100,
+  prog:[1,1,1,1,1], auto:true, adv:true, q:null, ore:{ori:3,elu:0}, gm:false, gmx:100,
+  cards:[{id:1,n:'Poring Card',g:3,stat:'hp',v:5},{id:2,n:'Fabre Card',g:2,stat:'str',v:999},{id:3,n:'Junk Card',g:1,stat:'nope',v:null}],
   st:{str:40,agi:20,dex:15,luk:1,int:1,vit:25},
   eq:{weapon:{id:77,slot:'weapon',wt:'sword',name:'Cutlass',val:30,aff:[],slots:1,cards:[],sec:0,r:1},
       armor:null,head:null,off:null,leg:null,acc1:null,acc2:null},
@@ -24,6 +25,12 @@ const harness = `
 ${code}
 const num_ = (v,d) => { v = +v; return Number.isFinite(v) ? v : d };
 const CV = [1,2,3,5], GI = [0,1,2,4], SECN = ['a','b','c','d'];
+// load() repairs card values through cardVal(), which is inside the grabbed range and needs
+// the stat weight tables. Those live above 'const CD=[' so they must be supplied here -
+// without them a save that actually contains cards would crash the repair untested.
+const AFF = ['str','agi','dex','luk','int','hp','atk','crit','aspd','flee','cdm'];
+const AB = {str:1,agi:1,dex:1,luk:1,int:1,hp:12,atk:.8,crit:.45,aspd:.6,flee:.8,cdm:1.5};
+const K5 = ['str','agi','dex','luk','int'];
 const lsGet = () => ${JSON.stringify(JSON.stringify(save))};
 const saveKey = () => 'k';
 const newQuest = () => ({type:'kill', goal:1, prog:0, z:0, xp:0});
@@ -55,6 +62,13 @@ t('the live game state is untouched by the repair', () => {
   assert.strictEqual(f.jobs.Swordman.jl, 40);
   assert.strictEqual(f.base.Swordman.hp, 999);
   assert.strictEqual(f.eq.weapon.r, 1);
+});
+
+t('card values are repaired per stat, not flattened to CV[grade]', () => {
+  const byId = id => f.cards.find(c => c.id === id);
+  assert.strictEqual(byId(1).v, 60, 'a Legendary HP card should repair to 5*12, not the stale 5');
+  assert.strictEqual(byId(2).v, 3, 'a Rare STR card should repair to CV[2]');
+  assert.strictEqual(byId(3).v, 2, 'an unknown stat should fall back to CV[grade], not crash');
 });
 
 console.log(`\n${pass} passed, ${fail} failed`);
