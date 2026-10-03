@@ -206,6 +206,16 @@ function fieldOf(m,l){const mp=MAPS[m],sec=m>=5?3:secOf(l),sg=mp.g[sec],T=[];
   return{m,l,sec,mobs,boss:l===10?{...mp.boss,drops:T.map(x=>[x,4]),card:{n:mp.boss.n+' Card',stat:K5[m%5],g:3},cardCh:.1,ore:true}:null}}
 const dropTxt=([T,ch])=>`${T.n}${['armor','head','off','leg','acc'].includes(T.k)?'':' ('+T.k+')'} ${ch}%`;
 
+// ---------- economy tuning ----------
+// Target: Base Lv 1 -> 150 in ~96 hours at ~800 kills/hour (77,000 kills), with quests
+// supplying ~32% of all EXP and mobs ~68%. exp = EXPK*pw^1.5/50, zeny = ri(ZK)*pw^2/1000,
+// where pw = the field's power level (MAPS[mp].b + lvl, max 99). A boss replaces the pack
+// every 16th kill (MPS), so the effective per-kill EXP is ~1.46x the mob figure.
+// Quest EXP is a fraction of need(Lv) so it scales with the level instead of drifting.
+const EXPK=5.5,BOSEK=46,ZK=[8,14],BZK=[150,250];
+const QXP={kill:1/32,loot:1/40,boss:1/19},QZ={kill:1.6,loot:9,boss:26};
+const zenAt=p=>Math.max(1,Math.round(.011*p*p));   // reference zeny per kill at power level p
+
 // ---------- state ----------
 let currentUser=null,S=null,speed=1,floats=[],drops=[],t=0,shake=0,atkAnim=0,hitAnim=0,pend=[],shots=[],barT=0,logs=[],tab=null,selB=null,selC=null,selK=null,mapM=0,mapL=1;
 const pl={x:-3,z:1.5,ry:0,orb:0,run:0},skCd={},petR={};
@@ -311,7 +321,7 @@ const maxHp=()=>Math.round((80+S.lv*20+eqv('head')*4+(eqv('acc1')+eqv('acc2'))*3
 const atk=()=>Math.round((4+S.lv*2+eqv('weapon')+(S.eq.off&&S.eq.off.slot==='weapon'?eqv('off')*.6:0)+st(C().main)*1.5+(st('dex')+st('luk'))*.25)*C().atk*(1+(pv('atk')+bon('atk'))/100));
 const aspd=()=>Math.max(.2,.85*C().aspd*(1-Math.min(.5,st('agi')*.006))/(1+(pv('aspd')+bon('aspd'))/100));
 const crit=()=>Math.min(60,3+st('luk')*.4+pv('crit')+bon('crit')),flee=()=>Math.min(60,st('agi')*.5+S.lv*.1+pv('flee')+bon('flee')),missCh=()=>Math.max(0,15-st('dex')*.25);
-const def=()=>Math.floor(S.lv*.5+st('vit')*.5+eqv('armor')+eqv('leg')+(S.eq.off&&S.eq.off.slot==='off'?eqv('off'):0)+pv('def')),mdef=()=>Math.floor(S.lv*.3+st('int')*.5+st('vit')*.4+eqv('head')*.3+pv('def')*.5),critD=()=>2+st('luk')*.01+st('dex')*.005+bon('cdm')/100,need=()=>Math.floor(38*Math.pow(S.lv,1.75)),cost=k=>1+Math.floor((S.st[k]-1)/10);
+const def=()=>Math.floor(S.lv*.5+st('vit')*.5+eqv('armor')+eqv('leg')+(S.eq.off&&S.eq.off.slot==='off'?eqv('off'):0)+pv('def')),mdef=()=>Math.floor(S.lv*.3+st('int')*.5+st('vit')*.4+eqv('head')*.3+pv('def')*.5),critD=()=>2+st('luk')*.01+st('dex')*.005+bon('cdm')/100,needAt=L=>Math.floor(38*Math.pow(L,1.75)),need=()=>needAt(S.lv),cost=k=>1+Math.floor((S.st[k]-1)/10);
 const totalPts=()=>{let p=10;for(let l=2;l<=S.lv;l++)p+=3+Math.floor(l/5);return p},rcost=()=>S.lv*50;
 const skpAvail=()=>Object.values(S.jobs).reduce((a,j)=>a+j.jl-1,0)-(Object.values(S.sk).reduce((a,b)=>a+b,0)-(S.sk.aid?1:0));
 const refCost=it=>Math.round(200*((it.r||0)+1)*(1+(it.sec||0)*.5)),refCh=it=>[100,100,100,100,70,60,50,40,30,20][it.r||0];
@@ -323,8 +333,8 @@ const icon=it=>it.card?'🃏':it.ore?'💎':it.slot==='weapon'?(WICON[it.wt]||'�
 let mobs=[],mob=null,pAtkT=0,mAtkT=0,respawn=0;
 function spawn(){
   const F=fieldOf(S.mp,S.lvl),l=pw(),mb=1+S.mp*.15+Math.max(0,S.mp-4)*.2;mobs=[];
-  if(F.boss&&S.kl>=MPS){const hp=Math.floor(500*mb*Math.pow(l,1.85));mobs.push({...F.boss,boss:true,hp,max:hp,atk:Math.floor((8+l*6.5)*mb),exp:Math.max(1,Math.floor(50*Math.pow(l,1.5)/50)),zeny:Math.max(1,Math.floor(ri(20,35)*l/50)),size:1.3,mag:true,lvl:l,sec:F.sec})}
-  else{const n=(S.lvl>=5||S.mp>=5)?ri(3,8):1;for(let i=0;i<n;i++){const m=F.mobs[ri(0,1)],hp=Math.floor(42*mb*Math.pow(l,1.85));mobs.push({...m,boss:false,hp,max:hp,atk:Math.floor((5+l*4.6)*mb),exp:Math.max(1,Math.floor(6*Math.pow(l,1.5)/50)),zeny:Math.max(1,Math.floor(ri(2,5)*l/50)),size:.6,mag:['demon','tree','blob'].includes(m.shape),lvl:l,sec:F.sec})}}
+  if(F.boss&&S.kl>=MPS){const hp=Math.floor(500*mb*Math.pow(l,1.85));mobs.push({...F.boss,boss:true,hp,max:hp,atk:Math.floor((8+l*6.5)*mb),exp:Math.max(1,Math.floor(BOSEK*Math.pow(l,1.5)/50)),zeny:Math.max(1,Math.floor(ri(BZK[0],BZK[1])*l*l/1000)),size:1.3,mag:true,lvl:l,sec:F.sec})}
+  else{const n=(S.lvl>=5||S.mp>=5)?ri(3,8):1;for(let i=0;i<n;i++){const m=F.mobs[ri(0,1)],hp=Math.floor(42*mb*Math.pow(l,1.85));mobs.push({...m,boss:false,hp,max:hp,atk:Math.floor((5+l*4.6)*mb),exp:Math.max(1,Math.floor(EXPK*Math.pow(l,1.5)/50)),zeny:Math.max(1,Math.floor(ri(ZK[0],ZK[1])*l*l/1000)),size:.6,mag:['demon','tree','blob'].includes(m.shape),lvl:l,sec:F.sec})}}
   mobs.forEach((m,i)=>{m.x=pl.x>0?rnd(-BX_,-3):rnd(3,BX_);m.z=rnd(Z0,Z1);m.spawn=0;m.ry=0;m.at=rnd(.6,1.6);m.a=i*2.4});
   mob=mobs[0];pAtkT=.3;
 }
@@ -388,8 +398,8 @@ function equip(id,quiet){const i=S.inv.findIndex(x=>x.id===id);if(i<0)return;con
   S.inv.splice(i,1);const k=ekey(it),old=S.eq[k];if(old)S.inv.push(old);S.eq[k]=it;S.hp=Math.min(S.hp,maxHp());if(!quiet)log('Equipped '+iname(it));selB=null;ui();save()}
 const sellVal=it=>Math.floor(ev(it)*(1+it.tier*2)*2);
 function sell(id){const i=S.inv.findIndex(x=>String(x.id)===String(id));if(i<0)return;const it=S.inv.splice(i,1)[0];S.zeny+=sellVal(it);(it.cards||[]).forEach(c=>S.cards.push(c));if(selB==it.id)selB=null;ui();save()}
-function newQuest(type){const L=S?S.lv:1,g=type==='kill'?12+L*2:type==='loot'?3+Math.floor(L/3):1+Math.floor(L/10),m=S?gx():1;
-  return{type,goal:g,prog:0,z:Math.max(1,Math.floor(Math.round(g*(type==='kill'?1.2:type==='loot'?8:50)*(1+L*.03))*m/100)),xp:Math.max(1,Math.floor(Math.pow(L,1.6)*(type==='boss'?3:1.2)*m/100))}}
+function newQuest(type){const L=S?S.lv:1,g=type==='kill'?12+L*2:type==='loot'?3+Math.floor(L/3):1+Math.floor(L/10),m=S?gx():1,z0=S?zenAt(pw()):1;
+  return{type,goal:g,prog:0,z:Math.max(1,Math.floor(g*QZ[type]*z0*m)),xp:Math.max(1,Math.floor(needAt(L)*QXP[type]*m))}}
 const qTxt=q=>q.type==='kill'?`Defeat ${q.goal} monsters`:q.type==='loot'?`Collect ${q.goal} equipment drops`:`Defeat ${q.goal} boss${q.goal>1?'es':''}`;
 function refine(sl){const it=S.eq[sl];if(!it||(it.r||0)>=10)return;const o=it.slot==='weapon'?'ori':'elu',c=refCost(it);
   if(S.ore[o]<1){log(`You need 1 ${ORE[o]}. (0.4% drop in Level 10 boss maps)`);return}if(S.zeny<c){log('Not enough Zeny.');return}
