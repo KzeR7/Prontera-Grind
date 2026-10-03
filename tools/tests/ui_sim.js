@@ -122,6 +122,31 @@ t('the map panel renders every map and field', () => {
   assert.strictEqual((h.match(/class="map-node/g) || []).length, 10, 'one node per field');
 });
 
+t('the map tab is a wide two-band panel: maps on top, that map\'s fields under them', () => {
+  U.S = mkS('Knight'); U.mapM = 7; U.mapL = 4;   // Amatsu, a level 60+ map
+  const h = U.V.map();
+  // the map window is the wide one, so the panel gets the room to be horizontal
+  assert.ok(/class="win wp\$\{k==='map'\?' wide':''\}"/.test(src), 'the map window must carry the wide class');
+  // ordering: map cards, then the field band, then the drop tables - so clicking a map shows its
+  // fields immediately below it instead of making the player scroll past the tables to find them
+  const iCards = h.indexOf('class="mapgrid'), iFields = h.indexOf('class="mapband fields'),
+        iCols = h.indexOf('class="mapcols');
+  assert.ok(iCards >= 0 && iFields > iCards, 'the field band must come after the map cards');
+  assert.ok(iCols > iFields, 'the drop tables must come after the field band');
+  // the field strip holds all ten levels of the picked map and the travel button lives in it
+  const fieldBand = h.slice(iFields, iCols);
+  assert.strictEqual((fieldBand.match(/class="map-node/g) || []).length, 10, 'ten fields in the band');
+  assert.ok(fieldBand.includes('data-a="go"'), 'travel sits with the fields, not in its own sticky bar');
+  assert.ok(fieldBand.includes('Lv 10'), 'the boss field is labelled');
+  // one row of ten when the window is wide, wrapping only when it is not
+  assert.ok(/\.lvgrid\{display:grid;grid-template-columns:repeat\(auto-fit,minmax\(\d+px,1fr\)\)/.test(src), 'the field strip must be an auto-fit row');
+  const min = +src.match(/\.lvgrid\{[^}]*minmax\((\d+)px/)[1];
+  assert.ok(min * 10 <= 700, 'ten fields must fit one row in a ~900px window (min ' + min + 'px each)');
+  assert.ok(/\.mapcols\{[^}]*repeat\(auto-fit,minmax\(\d+px,1fr\)\)/.test(src), 'tables must be a column grid');
+  assert.ok(/\.mapband\.fields\{position:sticky/.test(src), 'the field band must stay pinned while the tables scroll');
+  assert.strictEqual((h.match(/class="mob-card"/g) || []).length, 3, 'gear / monsters / boss+pets');
+});
+
 t('the equipment panel renders with a chooser open and closed', () => {
   U.S = mkS('Swordman');
   U.selE = 'weapon'; U.eqPick = null;

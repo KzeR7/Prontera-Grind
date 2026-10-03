@@ -158,6 +158,17 @@ Base Lv 100. Grant is `4+floor(l/5)` per level; cost is `1+floor((v-1)/10)` belo
 three stats can be maxed, with 21 points spare**. Verified by simulation, not by ratio: the
 obvious `3+floor(l/5)` grant curve ends at 120/120/119, i.e. only two maxed.
 
+**The map tab** is a wide two-band panel (`.wp.wide`, `flex:2 2 900px`). Top band: the ten maps
+as compact cards (`repeat(auto-fill,minmax(86px,1fr))`), name + recommended level, so an eleventh
+map is just another card. Second band: the picked map's ten fields as **one row**
+(`repeat(auto-fit,minmax(52px,1fr))`, so it only wraps when the window is genuinely narrow) with
+the travel button on the same line - and this band is `position:sticky;top:-1px`, so the field you
+are choosing stays on screen while the drop tables below it scroll. The tables (gear by slot /
+monsters / boss+pets) sit in `.mapcols`, `repeat(auto-fit,minmax(250px,1fr))`, side by side on a
+wide window and stacked under a 900px viewport. **Keep the order: map cards → field band → tables**
+- `ui_sim.js` asserts it, because the whole point is that clicking a map shows its fields
+immediately below, with no scrolling.
+
 **Equipment database and drops.** `GEAR[map][section]` is the catalogue - 10 maps × 4 sections
 (Novice / 1st job / 2nd job / high tier), each section carrying 2-3 weapon types plus body,
 headgear, shield, legwear and two accessories (**96 weapon entries** in total; armour and
@@ -605,6 +616,42 @@ assigned for feel rather than fidelity. While reworking that, two shipped bugs s
   * The five level 60+ maps share one high-tier weapon set each; adding maps is cheap (append to
     `MAPS` + `GEAR`, add a `MAP_LINES` row in `gear_sim.js`).
   * Kills/hour still needs a real playtest before `EXPK` is retuned - see the v9 entry.
+
+### 2026-10-03 — `ui-v12 map-tab-wide`
+* **What changed for the player:**
+  * **The map tab is now a wide, horizontal panel.** The ten maps are a single compact card strip
+    at the top (previously three-line cards that wrapped into several rows and pushed everything
+    else down), and a second band shows the picked map's ten fields in **one row** with the Travel
+    button on the same line.
+  * **The fields are visible the moment you click a map.** The field band sits directly under the
+    map cards and is **pinned** while the rest of the panel scrolls, so you never scroll down to
+    find the level you want, and you never lose sight of it while reading the drop tables.
+  * The drop information is now three side-by-side cards on a wide window - gear by slot,
+    monsters (rolls + card odds), and boss + pet odds - instead of one long column.
+  * Pointed out on request: the old full-width sticky "Travel" bar ate a lot of vertical space and
+    is gone; travel now lives in the field band's header line.
+* **Files touched:** `index.html` (map panel markup, `.mapband/.mapband.fields/.mapcols` CSS, the
+  map window's width, `BUILD`), `tools/tests/ui_sim.js` (one new layout test), `AGENTS.md`.
+* **Art:** none. No sheets or images added or edited.
+* **Tests:** pack_sim OK, class_change_sim 15, save_load_sim 9, economy_sim 12, stat_sim 7,
+  card_sim 13, skill_sim 37, gear_sim 18, ui_sim **6** (was 5). The new ui_sim case pins the
+  panel order (cards → field band → tables), that the field band holds all ten levels and the
+  travel button, that ten 52px fields fit a ~900px window in one row, and that the field band is
+  the sticky one.
+* **Branches / PR:** `arena/01a100d8-prontera-grind`, pull request #4.
+* **Known limits / follow-ups:**
+  * **The Payon map redesign is NOT in this entry.** The owner attached a map kit
+    (`ro-map-engine.js`, `ro-map-data.json`, `ro-spritesheet.png` + `.json`, and an `index.html`
+    showing it working) but **nothing landed in the sandbox** - `/home/user/uploads/` does not
+    exist and a whole-disk search found no `ro-*` file. Asked the owner to re-attach. When it
+    arrives: the kit is tiles + separated props (two big trees, bamboo, small tree, bush, cliff,
+    pagoda, deep/shallow water, path, wooden wall), which is exactly the "mix and match per map"
+    shape wanted - wire it into the arena for Payon first, then give every map its own tileset
+    combination.
+  * The field band wraps to two rows below a ~900px window; the tables stack below 900px too.
+    Both are CSS media queries on the *viewport*, not the window, so a squeezed map window next to
+    two other tabs will stack a little earlier than the numbers suggest. Harmless, but if the
+    owner wants a true one-row field strip at any window size it needs a container query or JS.
 
 <!-- template — copy this block, fill it in, paste it at the bottom of the log -->
 
