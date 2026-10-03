@@ -1,0 +1,128 @@
+{
+  "meta": {
+    "image": "ro-spritesheet.png",
+    "size": {
+      "w": 1280,
+      "h": 512
+    },
+    "format": "RGBA8888",
+    "description": "Ragnarok Online 2.5D Modular Terrain Tiles, Environment Billboard Sprites & Character Sheet"
+  },
+  "tiles": {
+    "grass_olive": {
+      "x": 16,
+      "y": 16,
+      "w": 128,
+      "h": 128
+    },
+    "grass_forest": {
+      "x": 160,
+      "y": 16,
+      "w": 128,
+      "h": 128
+    },
+    "dirt_path": {
+      "x": 304,
+      "y": 16,
+      "w": 128,
+      "h": 128
+    },
+    "riverbank_wall": {
+      "x": 448,
+      "y": 16,
+      "w": 128,
+      "h": 128
+    },
+    "cliff_rock": {
+      "x": 592,
+      "y": 16,
+      "w": 128,
+      "h": 128
+    },
+    "water_frame_0": {
+      "x": 736,
+      "y": 16,
+      "w": 128,
+      "h": 128
+    },
+    "water_frame_1": {
+      "x": 880,
+      "y": 16,
+      "w": 128,
+      "h": 128
+    },
+    "bridge_planks": {
+      "x": 1024,
+      "y": 16,
+      "w": 128,
+      "h": 128
+    }
+  },
+  "sprites": {
+    "tree_ancient_large": {
+      "x": 16,
+      "y": 168,
+      "w": 280,
+      "h": 310,
+      "anchorX": 140,
+      "anchorY": 288
+    },
+    "tree_ancient_variant": {
+      "x": 312,
+      "y": 168,
+      "w": 280,
+      "h": 310,
+      "anchorX": 140,
+      "anchorY": 288
+    },
+    "tree_tall_cluster": {
+      "x": 608,
+      "y": 168,
+      "w": 240,
+      "h": 290,
+      "anchorX": 120,
+      "anchorY": 270
+    },
+    "tree_sapling": {
+      "x": 864,
+      "y": 168,
+      "w": 140,
+      "h": 130,
+      "anchorX": 70,
+      "anchorY": 116
+    },
+    "tree_bush_bright": {
+      "x": 1020,
+      "y": 168,
+      "w": 140,
+      "h": 110,
+      "anchorX": 70,
+      "anchorY": 96
+    },
+    "rock_cliff_crag": {
+      "x": 864,
+      "y": 312,
+      "w": 200,
+      "h": 160,
+      "anchorX": 100,
+      "anchorY": 148
+    },
+    "river_stone_post": {
+      "x": 1080,
+      "y": 312,
+      "w": 64,
+      "h": 96,
+      "anchorX": 32,
+      "anchorY": 86
+    }
+  },
+  "character": {
+    "ro_adventurer": {
+      "x": 980,
+      "y": 412,
+      "frameW": 64,
+      "frameH": 80,
+      "frames": 4
+    }
+  }
+}
