@@ -13,6 +13,7 @@ const roster = grab('const CD=[', 'const pm=s=>');
 const helpers = [
   grab('// ---------- skill effects: damage over time, stun, chain ----------', 'const mkDrop='),
   pick(/const SKSLOTS=[^;]+;/, 'SKSLOTS'),
+  pick(/const skCost=[^;]+;/, 'skCost()'),
   pick(/const skOff=[^;]+;/, 'skOff()'),
 ].join('\n');
 
@@ -22,7 +23,7 @@ ${helpers}
 // skOff and skillOn share one line in index.html, so the pick above already brought both in.
 let S = null;
 const lv = id => (S.sk && S.sk[id]) || 0;
-this.__k = { SKILLS, CLASSES, SKSLOTS, SKFADE, applyDot, applyStun, skillOn, skOff, down,
+this.__k = { SKILLS, CLASSES, SKSLOTS, SKFADE, skCost, applyDot, applyStun, skillOn, skOff, down,
              set S(v){S=v}, get S(){return S} };
 `;
 const sb = { console };
@@ -61,23 +62,97 @@ t('every skill type is one the engine understands', () => {
 
 t('every job line has skills to spend points on', () => {
   for (const name of Object.keys(K.CLASSES)) {
-    // the Novice is the starting class: Job Lv caps at 10, so it only ever earns 9 points.
-    // Two skills at max 5 is the intended ceiling there, not a gap to fill.
-    const min = name === 'Novice' ? 2 : 3;
+    // In RO the Novice has First Aid and nothing offensive, so one skill is correct here -
+    // not a gap to fill. Inventing a Novice attack skill is what leaked a bogus chain tag
+    // into every class tree, because every class inherits Novice.
+    const min = name === 'Novice' ? 1 : 3;
     const own = K.SKILLS.filter(s => s.from === name);
     assert.ok(own.length >= min, `${name} has only ${own.length} of its own skills`);
     const reach = K.SKILLS.filter(s => s.cls.includes(name));
-    assert.ok(reach.length >= (name === 'Novice' ? 2 : 4), `${name} can only reach ${reach.length} skills`);
+    assert.ok(reach.length >= (name === 'Novice' ? 1 : 4), `${name} can only reach ${reach.length} skills`);
   }
 });
 
-t('skill points available roughly match what each line can spend', () => {
-  // a second job earns 9 (Novice) + 49 + 49 + 49 = 156 points; make sure there is enough
-  // to buy without hundreds of points going permanently unspent
-  const lk = K.SKILLS.filter(s => s.cls.includes('Lord Knight'));
-  const spendable = lk.reduce((a, s) => a + s.max, 0);
-  assert.ok(spendable >= 60, `a Lord Knight can only ever spend ${spendable} of ~156 points`);
-  console.log('       Lord Knight can spend ' + spendable + ' of ~156 points across ' + lk.length + ' skills');
+t('every job line has the same number of its own skills', () => {
+  const byTier = {};
+  for (const [name, c] of Object.entries(K.CLASSES)) {
+    if (name === 'Novice') continue;
+    const n = K.SKILLS.filter(s => s.from === name).length;
+    (byTier[c.tier] = byTier[c.tier] || new Set()).add(n);
+  }
+  for (const [tier, set] of Object.entries(byTier))
+    assert.strictEqual(set.size, 1, `tier ${tier} job lines disagree on skill count: ${[...set]}`);
+  console.log('       ' + Object.entries(byTier).map(([t, s]) => 'tier ' + t + ': ' + [...s][0] + ' own skills').join(' | '));
+});
+
+t('no class can max its whole tree - the escalating cost has to bite', () => {
+  // buying level L costs L points, so maxing a 5-level skill costs 1+2+3+4+5 = 15
+  assert.strictEqual([1,2,3,4,5].reduce((a, L) => a + K.skCost(L), 0), 15, 'maxing a skill should cost 15');
+  const earned = t => 9 + (t >= 1 ? 49 : 0) + (t >= 2 ? 49 : 0) + (t >= 3 ? 49 : 0);
+  for (const [name, c] of Object.entries(K.CLASSES)) {
+    const reach = K.SKILLS.filter(s => s.cls.includes(name));
+    const need = reach.reduce((a, s) => { let x = 0; for (let L = 1; L <= s.max; L++) x += K.skCost(L); return a + x }, 0);
+    assert.ok(need > earned(c.tier),
+      `${name} can max all ${reach.length} skills for ${need} of ${earned(c.tier)} points - ${need - earned(c.tier)} spare`);
+  }
+  console.log('       Novice 9/15 | 1st job 58/75 | 2nd job 107/135 | transcendent 156/195');
+});
+
+t('effects are actually attached to the new skills (tagging must run after the push)', () => {
+  // Regression: the FX tagging loop used to sit ABOVE SKILLS.push(), so SKILLS.find() returned
+  // undefined for every new skill and the guard silently swallowed it. The roster looked right
+  // in source and did nothing at runtime.
+  const want = { mbrk:['aoe','dot'], fdiver:['stun'], fnova:['aoe','stun'], ashower:['aoe'],
+                 sandat:['stun'], signum:['aoe'], cartrev:['aoe'], tblow:['dot'],
+                 vermilion:['aoe'], landmine:['aoe'], vsplash:['dot'], tundead:['aoe'],
+                 meltdown:['aoe','dot'], spearboom:[], fassault:[] };
+  for (const [id, keys] of Object.entries(want)) {
+    const s = byId(id);
+    assert.ok(s, id + ' is missing from the roster');
+    for (const k of ['aoe','dot','stun','chain'])
+      assert.strictEqual(!!s[k], keys.includes(k), `${id} should${keys.includes(k)?'':' not'} have ${k}`);
+  }
+});
+
+t('the Thief line has no AoE, as in Ragnarok Online', () => {
+  // iRO is explicit: "the Thief does not have any AOE skills to level with"
+  for (const cls of ['Thief', 'Assassin', 'Assassin Cross']) {
+    const aoe = K.SKILLS.filter(s => s.cls.includes(cls) && s.aoe).map(s => s.n);
+    const allowed = ['Grimtooth', 'Meteor Assault'];   // Assassin's own 3x3 / around-caster skills
+    for (const n of aoe) assert.ok(allowed.includes(n), `${cls} reached an AoE skill: ${n}`);
+  }
+});
+
+t('invented and wrong-job skills are gone', () => {
+  const gone = ['tstone', 'rcutter', 'adoramus', 'chargearr', 'hcrush', 'firewall'];
+  for (const id of gone) assert.ok(!byId(id), id + ' is still in the roster');
+  const names = K.SKILLS.map(s => s.n);
+  for (const n of ['Throw Stone', 'Rolling Cutter', 'Adoramus', 'Charged Arrow', 'Head Crush'])
+    assert.ok(!names.includes(n), `"${n}" is not a skill for the job it was on`);
+  // and their real replacements exist
+  for (const id of ['akatar', 'basilica', 'fassault', 'tblow', 'fnova'])
+    assert.ok(byId(id), 'missing replacement ' + id);
+  assert.strictEqual(byId('akatar').from, 'Assassin Cross');
+  assert.strictEqual(byId('basilica').from, 'High Priest');
+  assert.strictEqual(byId('fassault').from, 'Sniper');
+  assert.strictEqual(byId('tblow').from, 'Lord Knight');
+  assert.strictEqual(byId('fnova').from, 'Wizard');
+});
+
+t('single-target RO skills do not carry area or bounce tags', () => {
+  // Bowling Bash is 5x5 (area) and Double Strafe / Jupitel Thunder / Spear Boomerang /
+  // Frost Diver / Lord of Vermilion hits one target or a fixed area - none of them bounce
+  const single = ['bash', 'pierce', 'spiral', 'dstr', 'jup', 'spearboom', 'fdiver', 'fassault',
+                  'sonic', 'mammo', 'holy', 'soulb', 'vsplash'];
+  for (const id of single) {
+    const s = byId(id);
+    assert.ok(s, id + ' missing');
+    assert.ok(!s.chain, `${s.n} bounces to other mobs but is single-target in RO`);
+  }
+  assert.ok(byId('bowl').aoe && !byId('bowl').chain, 'Bowling Bash is a 5x5 area, not a bounce');
+  assert.ok(byId('vermilion').aoe && !byId('vermilion').chain, 'Lord of Vermilion is a 9x9 area');
+  assert.ok(byId('sharp').chain, 'Sharp Shooting pierces a line and should bounce');
+  assert.ok(byId('blitz').chain, "Blitz Beat's falcon hits nearby mobs too");
 });
 
 t('actives carry a cooldown and a damage multiplier that grows with level', () => {
@@ -93,7 +168,10 @@ t('actives carry a cooldown and a damage multiplier that grows with level', () =
 t('the four new effects are all present in the roster', () => {
   const dot = K.SKILLS.filter(s => s.dot), stun = K.SKILLS.filter(s => s.stun);
   const chain = K.SKILLS.filter(s => s.chain), trade = K.SKILLS.filter(s => s.type === 'to');
-  for (const [label, list, min] of [['dot', dot, 8], ['stun', stun, 6], ['chain', chain, 6], ['tradeoff', trade, 3]])
+  // chain is deliberately the rarest: in RO almost every multi-target skill is a true area
+  // (Bowling Bash, Magnum Break, Storm Gust, Lord of Vermilion...). Only Blitz Beat's falcon
+  // and Sharp Shooting's piercing line genuinely bounce, so only those two carry it.
+  for (const [label, list, min] of [['dot', dot, 6], ['stun', stun, 6], ['chain', chain, 2], ['tradeoff', trade, 3]])
     assert.ok(list.length >= min, `only ${list.length} ${label} skills, expected at least ${min}`);
   console.log('       dot ' + dot.length + ' | stun ' + stun.length + ' | chain ' + chain.length +
               ' | tradeoff ' + trade.length + ' | aoe ' + K.SKILLS.filter(s => s.aoe).length);
@@ -167,9 +245,12 @@ t('job tier decides how many skills fire per swing', () => {
   assert.strictEqual(K.SKSLOTS(0), 1, 'Novice should cast one skill per swing');
   assert.strictEqual(K.SKSLOTS(1), 2, 'a first job should cast two');
   assert.strictEqual(K.SKSLOTS(2), 3, 'a second job should cast three');
+  // tier 3 is the transcendent job (Lord Knight, Assassin Cross, High Priest, ...)
+  assert.strictEqual(K.SKSLOTS(3), 4, 'a transcendent job should cast four');
   assert.strictEqual(K.SKSLOTS(undefined), 1, 'a missing tier must fall back to one');
-  assert.deepStrictEqual(Array.from(K.SKFADE), [1, .55, .3]);
-  assert.ok(K.SKFADE[0] > K.SKFADE[1] && K.SKFADE[1] > K.SKFADE[2], 'later casts should land softer');
+  assert.deepStrictEqual(Array.from(K.SKFADE), [1, .55, .3, .18], 'SKFADE needs a rung per tier');
+  for (let i = 1; i < K.SKFADE.length; i++)
+    assert.ok(K.SKFADE[i] < K.SKFADE[i - 1], `cast ${i + 1} should land softer than cast ${i}`);
 });
 
 t('switching a skill off stops it being usable, and back on restores it', () => {

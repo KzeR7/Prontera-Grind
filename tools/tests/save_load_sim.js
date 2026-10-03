@@ -44,6 +44,13 @@ this.__l = {loadRaw};
 const sb = { console };
 vm.createContext(sb); vm.runInContext(harness, sb);
 const f = sb.__l.loadRaw();
+const load = () => sb.__l.loadRaw();
+// act()/pas()/tos() build most skills, but First Aid is an inline object literal
+const SRC_SKILL_IDS = new Set([
+  ...[...src.matchAll(/(?:act|pas|tos)\('([a-zA-Z]+)'/g)].map(m => m[1]),
+  ...[...src.matchAll(/\{id:'([a-zA-Z]+)',n:'/g)].map(m => m[1]),
+]);
+assert.ok(SRC_SKILL_IDS.has('aid'), 'the id extraction missed First Aid');
 
 let pass = 0, fail = 0;
 const t = (n, fn) => { try { fn(); console.log('  ok   ' + n); pass++; } catch (e) { console.log('  FAIL ' + n + ' -> ' + e.message); fail++; } };
@@ -74,6 +81,53 @@ t('card values are repaired per stat, not flattened to CV[grade]', () => {
   assert.strictEqual(byId(1).v, 60, 'a Legendary HP card should repair to 5*12, not the stale 5');
   assert.strictEqual(byId(2).v, 3, 'a Rare STR card should repair to CV[2]');
   assert.strictEqual(byId(3).v, 2, 'an unknown stat should fall back to CV[grade], not crash');
+});
+
+t('skills that no longer exist are dropped, refunding their points', () => {
+  // the fixture carries sk:{aid:1,swd:3,two:2} and neither 'swd' nor 'two' is a real skill id.
+  // Five skills were renamed or removed outright (Throw Stone, Rolling Cutter, Adoramus,
+  // Charged Arrow, Head Crush); without this repair the points spent on them would vanish
+  // into an entry no panel renders, so the player would be short with nothing to show for it.
+  const f2 = load();
+  assert.strictEqual(f2.sk.aid, 1, 'First Aid should survive');
+  assert.ok(!('swd' in f2.sk), 'an orphaned skill id was kept');
+  assert.ok(!('two' in f2.sk), 'an orphaned skill id was kept');
+  const kept = Object.keys(f2.sk);
+  assert.ok(kept.every(id => SRC_SKILL_IDS.has(id)), 'a non-skill id survived: ' + kept);
+});
+
+t('the field is roamed, not marched back to the spawn point', () => {
+  // with no mobs the character wanders; only a defeat returns it to the entrance
+  assert.ok(/pl=\{x:0,z:Z1-1\.5,ry:0,orb:0,run:0,wt:0,wx:0,wz:Z1-1\.5\}/.test(src),
+    'pl lost its roam target fields');
+  assert.ok(/if\(!mobs\.length\)\{respawn-=dt;if\(respawn<=0\)spawn\(\);/.test(src),
+    'the empty-field branch changed shape');
+  assert.ok(/tx=pl\.wx;tz=pl\.wz/.test(src), 'the roam target is not fed into movement');
+  // the 'let tx=0,tz=Z1-1.5' default is fine: both branches overwrite it before it is used
+  assert.ok(/tx=pl\.wx;tz=pl\.wz\}/.test(src), 'the roam target does not close the empty-field branch');
+  // and defeat really does put you back at the entrance
+  assert.ok(/pl\.x=0;pl\.z=Z1-1\.5;pl\.wt=0;/.test(src), 'defeat no longer resets the position');
+  assert.ok(/S\.hp<=0[\s\S]{0,220}pl\.x=0;pl\.z=Z1-1\.5/.test(src),
+    'the position reset is not inside the defeat handler');
+});
+
+t('mob HP scales gently enough that early maps fall to a first job', () => {
+  // HP = HPK * mb * pw^HPE. At 1.85 a correctly-levelled character needed 26-102s per mob
+  // from Geffen onward; 1.3 brings that to roughly 1-10s while leaving bosses a real fight.
+  const k = Number(src.match(/HPK=(\d+(?:\.\d+)?)/)[1]);
+  const e = Number(src.match(/HPE=(\d+(?:\.\d+)?)/)[1]);
+  assert.ok(e <= 1.45, `HP exponent ${e} outruns player ATK again (ATK is ~linear in level)`);
+  assert.ok(e >= 1.05, `HP exponent ${e} leaves no difficulty curve across maps`);
+  const hp = (mp, l) => Math.floor(k * (1 + mp * .15 + Math.max(0, mp - 4) * .2) * Math.pow(l, e));
+  // Prontera is the novice farm; Payon is the last first-job map. Both must be cheap.
+  const prontera = hp(0, 0 + 1), payon = hp(4, 43 + 1);
+  assert.ok(prontera < 200, 'Prontera field 1 mob has ' + prontera + ' HP');
+  assert.ok(payon < 20000, 'Payon field 1 mob has ' + payon + ' HP - not a first-job farm');
+  // the boss stays roughly 12x a mob so it still reads as a boss
+  const boss = Math.floor(500 * (1 + 4 * .15) * Math.pow(43 + 10, e));
+  assert.ok(boss / hp(4, 53) > 8 && boss / hp(4, 53) < 16, 'boss HP is no longer ~12x a mob');
+  console.log('       HPK=' + k + ' HPE=' + e + ' | Prontera f1 ' + prontera +
+              ' HP | Payon f1 ' + payon + ' HP | Payon boss ' + boss + ' HP');
 });
 
 t('the arena really is vertical: mobs hold the far end, the player the near end', () => {

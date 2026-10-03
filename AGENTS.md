@@ -126,6 +126,20 @@ Summed level 1-149 that is **13,204,072 exp**; quests supply **31.7%** of it (th
 > kills/hour off the log, then adjust `EXPK` - it is a single constant and every other economy
 > number derives from it. `economy_sim.js` re-checks the total for you afterwards.
 
+**Mob HP** is `HPK*mb*pw^HPE` (`HPK=42`, `HPE=1.3`; bosses use 500 instead of 42, so a boss is
+~12x a mob). `pw` is the map's recommended base level plus the field level, and `mb` is a
+per-map multiplier from 1.0 to 3.35. **The exponent used to be 1.85 and that was the whole
+problem**: player ATK is roughly linear in level once stats cap at 99, so HP grew quadratically
+against it and time-to-kill ballooned per map - a correctly-levelled character needed ~26s per
+mob on Geffen, ~64s on Payon and ~102s on Amatsu, with bosses running to 25 minutes. At 1.3 the
+same builds see **1.3-9.5s per mob and 37-131s per boss**. Measured with `tools/tests`-style
+extraction of the real `atk()`/`aspd()`/`crit()`/`genGear()` rather than by hand; the numbers are
+in the *Balance* rationale of the v9 log entry.
+
+> **Changing `HPE` moves kills/hour far more than `EXPK` does.** Retune one, then re-check the
+> other. `save_load_sim.js` pins `HPE` into a safe band and asserts Prontera and Payon stay
+> cheap, so an accidental revert fails a test.
+
 **Stats.** `MAXST=120`, `BASECAP=99`, `ELITELV=100`, `statCap()` unlocks 100-120 only above
 Base Lv 100. Grant is `4+floor(l/5)` per level; cost is `1+floor((v-1)/10)` below 100 and
 `10+(v-100)` above. Reaching 120 costs 930 points, and Lv 150 grants 2,811 - so **exactly
@@ -144,6 +158,34 @@ the success chance by current tier and `GREAT=.1` makes one success in ten jump 
 `peqCost(t)=1200*(t+1)^2`. Expected cost to max all three pet stats is ~1.09M, about 9% of one
 run. **The 3-vs-40 split is correct and is not a bug**: 3 is the equip limit, 40 the collection cap.
 
+**Skills.** Two structural rules, both pinned by `skill_sim.js`:
+
+* **Parity.** Novice has exactly 1 skill, and *every* job line has exactly 4 of its own - 1st,
+  2nd and transcendent alike. Novice having only First Aid is correct, not a gap: in RO the
+  Novice has no offensive skills. Do not add one. Inventing a Novice attack skill is what put a
+  bogus chain tag in *every* class tree, because every class inherits Novice.
+* **Scarcity.** `skCost(L)=L`, so buying level L costs L points and maxing a 5-level skill costs
+  15. A line earns 9 (Novice) / 58 (1st) / 107 (2nd) / 156 (transcendent) and can reach
+  1 / 5 / 9 / 13 skills - i.e. 15 / 75 / 135 / 195 points of tree. **No line can max its own
+  tree**, which is the point. At one point per level every line could, with 28-86 points left
+  over. Removing or renaming a skill refunds its points through a repair in `load()`.
+
+**Skill accuracy.** Targeting follows Ragnarok Online, checked against iRO Wiki, not what would
+be most convenient. The Thief line has **no AoE at all** except Grimtooth and Meteor Assault
+(which are Assassin's own). Bowling Bash / Magnum Break / Hammer Fall / Storm Gust / Frost Nova /
+Lord of Vermilion / Magnus Exorcismus are the area skills; **chain is deliberately rare** (only
+Blitz Beat's falcon and Sharp Shooting's piercing line genuinely bounce), because in RO almost
+every multi-target skill is a true area rather than a bounce. Five invented or wrong-job skills
+were replaced: Throw Stone (not RO, and Novice), Rolling Cutter (Guillotine Cross, a 3rd job) ->
+Advanced Katar Mastery, Adoramus (Archbishop) -> Basilica, Charged Arrow (not RO) -> Falcon
+Assault, Head Crush (not RO) -> Traumatic Blow. Fire Wall moved off Wizard (it is a Mage spell)
+and Wizard got Frost Nova.
+
+> **Trap:** the `FX` effect-tagging loop must run **after** `SKILLS.push(...)`. It used to sit
+> above it, so `SKILLS.find()` returned `undefined` for every new skill and the `if(s)` guard
+> swallowed it silently - the roster looked correct in source and did nothing at runtime.
+> `skill_sim.js` has a regression test that reads the tags back off the pushed skills.
+
 **Skills.** Four effects, and only these four - `dot` (`pow` is the share of the triggering
 hit dealt **per second**), `stun` (a mob neither advances nor swings; halved on bosses, capped
 so nothing can be locked down), `chain` (bounces onto the nearest mobs) and `to` (tradeoff: an
@@ -152,7 +194,11 @@ Casts per swing scale with job tier via `SKSLOTS`/`SKFADE`: Novice 1, first job 
 later casts at 55% / 30%. Every castable skill can be switched off through `S.skOff`, which is
 persisted and repaired on load. **Do not add new effect types** without asking.
 
-**Arena.** Vertical, and deliberately so: `BX_=5.5`, `Z0=-14`, `Z1=3` (17 deep). The camera sits
+**Arena.** With no mobs on the field the character **roams** (picks a fresh spot every 2.2-4.5s
+via `pl.wt/wx/wz`); it does not march back to the entrance. **Only a defeat resets the position**
+to `x=0, z=Z1-1.5`. Both are pinned in `save_load_sim.js`.
+
+Vertical, and deliberately so: `BX_=5.5`, `Z0=-14`, `Z1=3` (17 deep). The camera sits
 on +Z looking toward -Z, which makes **low Z the top of the screen**. The player starts at
 `Z1-1.5` (bottom) and mobs hold `Z0..Z0+6` (top), so you run up the avenue to engage; `AGGRO=8.5`
 is how close you must get before a pack leaves its spawn, and bosses ignore it. `ct.z` tracks
@@ -165,7 +211,13 @@ props, and `landmark()` places the large structures that frame the avenue.
 
 ## What is needed going forward
 
-1. **Re-measure kills/hour** after a real playtest, then retune `EXPK`. See the note above.
+1. **Re-measure kills/hour** after a real playtest, then retune `EXPK`. This is now the single
+   biggest open number: `HPE` went 1.85 -> 1.3, so mobs die several times faster than the
+   800 kills/hour the 96.4 h estimate was solved against, and the run will come in **under**
+   96 h - possibly well under. Do not guess a correction. Playtest, read the real kills/hour,
+   then move `EXPK` (one constant, everything derives from it). If the pace feels right but the
+   run is too short, raising `EXPK` is the correct lever: the goal is *more* fast kills, not
+   slower ones.
 2. **Player HP is an open design question, deliberately untouched.** The user is still deciding
    whether to remove it. Nothing in the death path has been changed. If it is removed, the
    casualties are `def()`, `mdef()`, `flee()`, `maxHp()`, VIT, `bon('hp')`, the head/acc HP
@@ -189,11 +241,11 @@ open('/tmp/pack_block.js','w').write(h[h.index('const PACK_BODY='):h.index('func
 PY
 node tools/tests/pack_sim.js          # -> "bodies in pack (19): ..."
 node tools/tests/class_change_sim.js  # -> "11 passed, 0 failed"
-node tools/tests/save_load_sim.js     # -> "6 passed, 0 failed"
+node tools/tests/save_load_sim.js     # -> "9 passed, 0 failed"
 node tools/tests/economy_sim.js       # -> "10 passed, 0 failed"
 node tools/tests/stat_sim.js          # -> "7 passed, 0 failed"
 node tools/tests/card_sim.js          # -> "13 passed, 0 failed"
-node tools/tests/skill_sim.js         # -> "17 passed, 0 failed"
+node tools/tests/skill_sim.js         # -> "22 passed, 0 failed"
 ```
 
 Every suite pulls real code out of `index.html` by **string boundary**, so an edit that
@@ -275,7 +327,7 @@ Newest entry last. Template at the very bottom of this file.
   with no sheets; both produced `index.html` with sha256 `b6ec63ea…` and a pack whose 19
   atlases are byte-identical to the built one.
 
-### 2026-10-03 - `balance-v8 economy stats cards pets skills arena` (current)
+### 2026-10-03 - `balance-v8 economy stats cards pets skills arena`
 * **What changed for the player:**
   * **Levelling is ~1.35x faster and no longer broken.** The old `newQuest` multiplied quest
     rewards by `gx()/100`, and `gx()` is 1 for a normal account - so quests paid a *hundredth*
@@ -313,6 +365,70 @@ Newest entry last. Template at the very bottom of this file.
     changed. Options are written up in the session notes, not implemented.
   * `rng` on skills is still inert except for Soul Breaker (hardcoded 5-unit engagement check).
   * Shadow map raised to 2048 and landmarks added ~40 casters; watch frame rate.
+
+### 2026-10-03 - `balance-v9 roam mobhp skill-points RO-accuracy` (current)
+Follow-up pass after the user played v8. Four complaints, all confirmed against the source.
+
+* **What changed for the player:**
+  * **You no longer walk back down the field between packs.** With no mobs alive the character
+    roams (fresh spot every 2.2-4.5s). **Only a defeat returns you to the entrance**, which now
+    says "knocked back to the entrance" instead of "resting and retrying".
+  * **Mobs die several times faster, especially on the early maps.** HP was `42*mb*pw^1.85`;
+    the exponent is now **1.3**. Player ATK is roughly linear in level once stats cap, so 1.85
+    grew quadratically against it. Measured on real builds with the game's own `atk()`/`aspd()`/
+    `crit()`/`genGear()`:
+
+    | map | build | TTK before | TTK after | boss before | boss after |
+    |---|---|---|---|---|---|
+    | Prontera | Novice Lv10 | 0.3s | 0.3s | 281s | 79s |
+    | Izlude | Merchant Lv25 | 5.0s | 1.3s | 194s | 37s |
+    | Geffen | Mage Lv35 | 27.1s | 5.3s | 641s | 102s |
+    | Payon | Archer Lv55 | 63.5s | 7.9s | 1067s | 120s |
+    | Amatsu | High Wizard Lv85 | 102.1s | 9.5s | 1502s | 131s |
+    | Abyss | Whitesmith Lv99 | 52.5s | 4.4s | 745s | 59s |
+
+    Prontera is the Novice farm and Izlude/Geffen/Morroc/Payon now fall to a first job, as asked.
+    Bosses stay ~12x a mob so they still read as bosses.
+  * **You can no longer max the whole skill tree.** A skill level now costs *its own level* in
+    points (1,2,3,4,5 = 15 to max), where it used to cost 1. A line earns 9/58/107/156 and can
+    reach 15/75/135/195 points of tree, so every tier has to choose. The `+` button shows the
+    cost and greys out when you cannot afford it.
+  * **Skills checked against Ragnarok Online.** Throw Stone removed (not an RO skill - and
+    because every class inherits Novice, its chain tag was leaking an AoE-looking bounce into
+    every tree, which is the "thief throw stone is aoe" report). Rolling Cutter -> Advanced
+    Katar Mastery (Rolling Cutter is Guillotine Cross, a 3rd job), Adoramus -> Basilica
+    (Archbishop), Charged Arrow -> Falcon Assault, Head Crush -> Traumatic Blow, Fire Wall off
+    Wizard (a Mage spell) -> Frost Nova. Targeting retagged: Bowling Bash is a 5x5 area rather
+    than a bounce; Jupitel Thunder, Double Strafe, Spear Boomerang, Frost Diver, Lord of
+    Vermilion, Falcon Assault and Venom Splasher are single-target and no longer chain; Grimtooth
+    and Meltdown lost their invented DoT/stun; Meteor Storm gained its stun chance. The Thief
+    line now has **no AoE** except Grimtooth and Meteor Assault, matching the wiki.
+  * **Every job line has exactly 4 of its own skills** (Novice has 1 - First Aid - which is
+    correct: RO Novices have no offensive skills). Transcendent jobs now cast **4** skills per
+    swing, not 3; tier is 0/1/2/3 and `SKFADE` gained a fourth rung (100/55/30/18%).
+* **Files touched:** `index.html`, `AGENTS.md`, `tools/tests/skill_sim.js`,
+  `tools/tests/save_load_sim.js`.
+* **Art:** none. No sheets added, removed or rebuilt; `tools/montage.py` not run.
+* **Tests:** `pack_sim` (19 bodies) / `class_change_sim` 11 / `save_load_sim` 9 /
+  `economy_sim` 10 / `stat_sim` 7 / `card_sim` 13 / `skill_sim` 22 - all green.
+  New checks: per-tier skill parity, no line can max its tree, effect tags actually attached to
+  the pushed skills, the Thief line has no AoE, the invented skills are gone, single-target RO
+  skills carry no area/bounce tag, orphaned skill ids are refunded on load, roaming replaces the
+  march back to spawn, defeat resets position, and `HPE` stays in a safe band with Prontera and
+  Payon pinned cheap.
+* **Branches / PR:** `arena/01a0ff7d-prontera-grind`, pull request #3.
+* **Known limits / follow-ups:**
+  * **The 96.4 h run estimate is now stale in the other direction.** It was solved against
+    800 kills/hour on the old 1.85 exponent. With mobs dying several times faster the real
+    throughput is much higher and the run will finish **under** 96 h. Deliberately not
+    pre-compensated: playtest, read the actual kills/hour, then raise `EXPK` if the run is too
+    short. More fast kills is the intended feel - slower kills is not the fix.
+  * **A real bug was found and fixed here:** the `FX` tagging loop ran *above* `SKILLS.push()`,
+    so `SKILLS.find()` returned `undefined` for all 20 new skills and the `if(s)` guard
+    swallowed it. Dot/stun/chain/AoE did nothing on every new skill in v8. Regression test added.
+  * Player HP still untouched, as instructed. The defeat path now also clears any running
+    tradeoff buff (`tb={}`) so you cannot respawn mid-drain.
+  * `rng` on skills is still inert except for Soul Breaker (hardcoded 5-unit engagement check).
 
 <!-- template — copy this block, fill it in, paste it at the bottom of the log -->
 

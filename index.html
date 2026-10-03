@@ -129,9 +129,14 @@ const AL={str:'STR',agi:'AGI',dex:'DEX',luk:'LUK',int:'INT',hp:'Max HP',atk:'ATK
 // The field is a vertical avenue: the player starts at the near end (high Z, bottom of the
 // screen) and mobs hold the far end (low Z, top of the screen), so you run up to engage.
 // AGGRO is how close you must get before a pack leaves its spawn to meet you; bosses ignore it.
-const SU=k=>k.toUpperCase(),BX_=5.5,Z0=-14,Z1=3,MPS=15,AGGRO=8.5,K5=['str','agi','dex','luk','int'];
+// Mob HP is HPK*mb*pw^HPE where pw is the map's recommended level plus the field level.
+// The old exponent 1.85 grew far faster than player ATK (which is roughly linear in level
+// once stats cap), so a correctly-levelled character needed ~30-100s per mob from Geffen
+// onward. 1.3 keeps HP just ahead of ATK: early maps fall in a couple of swings and the
+// late maps in about five, with bosses still a ~12x fight. See tools/tests/economy_sim.js.
+const SU=k=>k.toUpperCase(),BX_=5.5,Z0=-14,Z1=3,MPS=15,AGGRO=8.5,HPK=42,HPE=1.3,K5=['str','agi','dex','luk','int'];
 const GM_USER='GM',GM_PASS='gm1234';   // CHANGE THE GM PASSWORD before you publish
-const BUILD='2026-10-03 balance-v8 economy stats cards pets skills arena';   // shown on the login card - confirms which file you loaded
+const BUILD='2026-10-03 balance-v9 roam mobhp skill-points RO-accuracy';   // shown on the login card - confirms which file you loaded
 $('buildTag').textContent='build '+BUILD+' · atlases:'+Object.keys(window.SPRITE_ATLASES||{}).length;
 
 // ---------- class tree: Novice -> 6 first jobs -> 6 second jobs -> 6 third jobs ----------
@@ -179,30 +184,49 @@ const SKILLS=[
 // chain.pow is the share each bounce deals, once per target; stun.dur is seconds at level 1
 // and grows 8% per level, halved on bosses.
 const FX={
-  bash:{},                                                   // a clean single-target nuke
-  bowl:{chain:{n:2,pow:.45}},                                 // Bowling Bash sweeps a pack
-  spiral:{stun:{dur:1.2}},                                    // Spiral Pierce pins them
-  fire:{dot:{pow:.05,dur:4,col:'#ff8a3d'}},                   // Fire Bolt sets a burn
+  // Targeting follows Ragnarok Online, not what would be most convenient. The iRO wiki is
+  // explicit that the Thief line has no AoE at all, and that Bowling Bash / Magnum Break /
+  // Hammer Fall / Storm Gust / Frost Nova / Lord of Vermilion / Magnus Exorcismus are the
+  // area ones - so chain is deliberately rare (Blitz Beat's falcon and Sharp Shooting's line).
+  bash:{},                                                        // single target
+  bowl:{aoe:1},                                                   // Bowling Bash: 5x5 around the user
+  pierce:{},                                                      // single target
+  spiral:{},                                                      // Clashing Spiral Pierce: single target
+  fire:{dot:{pow:.05,dur:4,col:'#ff8a3d'}},                       // Fire Bolt: lingering burn
   nap:{dot:{pow:.04,dur:3,col:'#c9a0ff'}},
-  storm:{aoe:1,stun:{dur:1}},                                 // Storm Gust freezes the area
-  jup:{chain:{n:3,pow:.45}},                                  // Jupitel Thunder arcs
-  meteor:{aoe:1,dot:{pow:.06,dur:5,col:'#ff5a2a'}},
-  grav:{aoe:1,stun:{dur:.6}},
-  dstr:{chain:{n:2,pow:.4}},
-  blitz:{chain:{n:2,pow:.45}},                                // the falcon carries the hit on
-  sharp:{chain:{n:3,pow:.4}},                                 // pierces a line of mobs
-  env:{dot:{pow:.07,dur:6,col:'#7dff7d'}},                    // Envenom poison
-  sonic:{stun:{dur:1.1}},                                     // Sonic Blow stuns
-  grim:{aoe:1,dot:{pow:.05,dur:4,col:'#ff6b6b'}},
-  mAss:{aoe:1},
-  holy:{dot:{pow:.04,dur:3,col:'#fff3a0'}},
-  magnus:{aoe:1},                                             // Magnus Exorcismus
-  judex:{aoe:1,chain:{n:2,pow:.35}},
-  hammer:{aoe:1,stun:{dur:1}},                                // Hammer Fall
-  cart:{aoe:1},
-  mammo:{},
+  storm:{aoe:1,stun:{dur:1}},                                     // Storm Gust: 7x7, chance to freeze
+  jup:{},                                                         // Jupitel Thunder: single target, multi-hit
+  meteor:{aoe:1,stun:{dur:.8},dot:{pow:.06,dur:5,col:'#ff5a2a'}}, // Meteor Storm: AoE + stun chance
+  grav:{aoe:1,stun:{dur:.6}},                                     // Gravitational Field pins and damages
+  dstr:{},                                                        // Double Strafe: single target, 2 hits
+  blitz:{chain:{n:2,pow:.45}},                                    // Blitz Beat: the falcon hits nearby too
+  sharp:{chain:{n:3,pow:.4}},                                     // Sharp Shooting: pierces a line
+  env:{dot:{pow:.07,dur:6,col:'#7dff7d'}},                        // Envenom: poison
+  sonic:{stun:{dur:1.1}},                                         // Sonic Blow: up to 30% stun
+  grim:{aoe:1},                                                   // Grimtooth: 3x3 while hidden
+  mAss:{aoe:1},                                                   // Meteor Assault: around the caster
+  holy:{},                                                        // Holy Light: single holy hit
+  magnus:{aoe:1},                                                 // Magnus Exorcismus: 7x7
+  judex:{aoe:1},                                                  // Judex: area holy damage
+  hammer:{aoe:1,stun:{dur:1}},                                    // Hammer Fall: 5x5, 30-70% stun
+  cart:{aoe:1},                                                   // Cart Termination
+  mammo:{},                                                       // Mammonite: single target
+  mbrk:{aoe:1,dot:{pow:.06,dur:4,col:'#ff7a3d'}},                 // Magnum Break: 5x5 fire, then 20% fire property
+  fdiver:{stun:{dur:.8}},                                         // Frost Diver: single target, freezes
+  fnova:{aoe:1,stun:{dur:.9}},                                    // Frost Nova: 5x5 water, freezes
+  ashower:{aoe:1},                                                // Arrow Shower: area
+  sandat:{stun:{dur:1.2}},                                        // Sand Attack: single target, blinds
+  signum:{aoe:1},                                                 // Signum Crucis: wide DEF-reduction
+  cartrev:{aoe:1},                                                // Cart Revolution: 9-cell splash
+  spearboom:{},                                                   // Spear Boomerang: single target
+  tblow:{dot:{pow:.09,dur:6,col:'#ff5a5a'}},                      // Traumatic Blow: causes bleeding
+  vermilion:{aoe:1},                                              // Lord of Vermilion: 9x9
+  landmine:{aoe:1},                                               // Land Mine: ground trap
+  fassault:{},                                                    // Falcon Assault: one heavy falcon hit
+  vsplash:{dot:{pow:.08,dur:5,col:'#7dff7d'}},                    // Venom Splasher: single target, delayed bomb
+  tundead:{aoe:1},                                                // Turn Undead: area obliteration
+  meltdown:{aoe:1,dot:{pow:.07,dur:5,col:'#ffa040'}},             // Meltdown: damages surrounding enemies
 };
-for(const k in FX){const s=SKILLS.find(x=>x.id===k);if(s)Object.assign(s,FX[k])}
 
 // Tradeoff: an auto-cast buff with a genuine cost. It fires itself when off cooldown and your
 // HP is above to.hp, adds atk/aspd percentages and SUBTRACTS def, and can drain HP per second.
@@ -211,7 +235,17 @@ for(const k in FX){const s=SKILLS.find(x=>x.id===k);if(s)Object.assign(s,FX[k])}
 const Z=()=>0,tos=(id,n,from,cd,o,col)=>({id,n,from,cls:down(from),max:5,type:'to',cd,col,to:o,
   d:L=>`Auto when above ${Math.round((o.hp||.6)*100)}% HP: ${o.txt(L)} for ${Math.round((o.dur||Z)(L))}s &middot; CD ${cd}s`});
 
-// ---------- new skills: one extra option per job, built on the effects above ----------
+// ---------- new skills: one extra option per job, all real RO skills for that job ----------
+// Five inventions from the first pass have been replaced after checking iRO Wiki:
+//   Throw Stone      - Novice has no offensive skills in RO, and since every class inherits
+//                      Novice, its chain tag leaked an AoE-looking bounce into every tree
+//                      (this is the "thief throw stone is aoe" bug). Removed outright.
+//   Rolling Cutter   - Guillotine Cross, a 3rd job. -> Advanced Katar Mastery (real AXC).
+//   Adoramus         - Archbishop, a 3rd job.      -> Basilica (real High Priest).
+//   Charged Arrow    - not an RO skill.            -> Falcon Assault (real Sniper).
+//   Head Crush       - not an RO skill.            -> Traumatic Blow (real Lord Knight, bleeds).
+// Fire Wall was sitting on Wizard; it is a Mage spell, so Wizard gets Frost Nova instead and
+// Mage keeps Fire Bolt / Napalm Beat / Frost Diver / Energy Coat.
 SKILLS.push(
  tos('frenzy','Frenzy','Lord Knight',22,{hp:.5,dur:L=>6+L,aspd:L=>20+8*L,def:L=>-(10+4*L),atk:Z,drain:Z,
    txt:L=>`ASPD +${20+8*L}%, DEF ${-(10+4*L)}`},'#ff4d4d'),
@@ -219,42 +253,27 @@ SKILLS.push(
    txt:L=>`ATK +${25+10*L}% but you lose ${(1+.4*L).toFixed(1)}% max HP per second`},'#b05cff'),
  tos('ovthrust','Overthrust','Blacksmith',24,{hp:.6,dur:L=>8+2*L,atk:L=>15+6*L,aspd:Z,def:L=>-(5+2*L),drain:Z,
    txt:L=>`ATK +${15+6*L}%, DEF ${-(5+2*L)}`},'#ff9d3c'),
- act('tstone','Throw Stone','Novice',3.5,L=>.8+.16*L,1,'#d8c8a8'),
  act('mbrk','Magnum Break','Swordman',4.5,L=>1.1+.22*L,1,'#ff7a3d'),
  act('fdiver','Frost Diver','Mage',3.5,L=>1+.2*L,2,'#8fe9ff'),
+ act('fnova','Frost Nova','Wizard',5,L=>.6+.12*L,4,'#8fe9ff'),
  act('ashower','Arrow Shower','Archer',4,L=>.7+.15*L,3,'#ffd28a'),
  act('sandat','Sand Attack','Thief',3,L=>.9+.18*L,1,'#e0c78a'),
  act('signum','Signum Crucis','Acolyte',5,L=>.8+.16*L,2,'#ffe0a0'),
  act('cartrev','Cart Revolution','Merchant',4.5,L=>1.2+.24*L,1,'#ffa040'),
  act('spearboom','Spear Boomerang','Knight',3.5,L=>1.3+.26*L,1,'#ffe14d'),
- act('hcrush','Head Crush','Lord Knight',4,L=>1+.2*L,1,'#ff5a5a'),
- act('firewall','Fire Wall','Wizard',5,L=>.6+.12*L,4,'#ff8a3d'),
+ act('tblow','Traumatic Blow','Lord Knight',4,L=>1+.2*L,1,'#ff5a5a'),
  act('vermilion','Lord of Vermilion','High Wizard',6.5,L=>.5+.1*L,8,'#ff6a8a'),
  act('landmine','Land Mine','Hunter',4,L=>1.5+.3*L,1,'#c8a060'),
- act('chargearr','Charged Arrow','Sniper',5,L=>1.6+.32*L,1,'#ffffff'),
- act('vsplash','Venom Splash','Assassin',4,L=>.9+.18*L,2,'#7dff7d'),
- act('rcutter','Rolling Cutter','Assassin Cross',4,L=>.8+.16*L,3,'#d08cff'),
+ act('fassault','Falcon Assault','Sniper',5,L=>1.6+.32*L,1,'#ffd28a'),
+ act('vsplash','Venom Splasher','Assassin',4,L=>.9+.18*L,2,'#7dff7d'),
+ pas('akatar','Advanced Katar Mastery','Assassin Cross','atk',L=>5*L,'ATK +#%.'),
  act('tundead','Turn Undead','Priest',5,L=>1.1+.22*L,2,'#fff3a0'),
- act('adoramus','Adoramus','High Priest',4,L=>.9+.18*L,3,'#ffffff'),
+ pas('basilica','Basilica','High Priest','atk',L=>5*L,'Holy damage +#%.'),
  act('meltdown','Meltdown','Whitesmith',6,L=>1.4+.28*L,1,'#ffa040'));
-Object.assign(SKILLS.find(s=>s.id==='tstone'),{chain:{n:1,pow:.5}});
-Object.assign(SKILLS.find(s=>s.id==='mbrk'),{aoe:1,dot:{pow:.06,dur:4,col:'#ff7a3d'}});
-Object.assign(SKILLS.find(s=>s.id==='fdiver'),{chain:{n:2,pow:.45},stun:{dur:.8}});
-Object.assign(SKILLS.find(s=>s.id==='ashower'),{aoe:1,chain:{n:2,pow:.4}});
-Object.assign(SKILLS.find(s=>s.id==='sandat'),{stun:{dur:1.2}});
-Object.assign(SKILLS.find(s=>s.id==='signum'),{aoe:1,stun:{dur:.7}});
-Object.assign(SKILLS.find(s=>s.id==='cartrev'),{aoe:1,stun:{dur:.8}});
-Object.assign(SKILLS.find(s=>s.id==='spearboom'),{chain:{n:2,pow:.5}});
-Object.assign(SKILLS.find(s=>s.id==='hcrush'),{dot:{pow:.09,dur:6,col:'#ff5a5a'}});
-Object.assign(SKILLS.find(s=>s.id==='firewall'),{aoe:1,dot:{pow:.07,dur:5,col:'#ff8a3d'}});
-Object.assign(SKILLS.find(s=>s.id==='vermilion'),{aoe:1,chain:{n:3,pow:.4}});
-Object.assign(SKILLS.find(s=>s.id==='landmine'),{aoe:1,stun:{dur:1.3}});
-Object.assign(SKILLS.find(s=>s.id==='chargearr'),{chain:{n:3,pow:.45},stun:{dur:.9}});
-Object.assign(SKILLS.find(s=>s.id==='vsplash'),{aoe:1,dot:{pow:.08,dur:5,col:'#7dff7d'}});
-Object.assign(SKILLS.find(s=>s.id==='rcutter'),{aoe:1,chain:{n:3,pow:.45}});
-Object.assign(SKILLS.find(s=>s.id==='tundead'),{aoe:1,stun:{dur:1}});
-Object.assign(SKILLS.find(s=>s.id==='adoramus'),{aoe:1,dot:{pow:.06,dur:4,col:'#ffffff'}});
-Object.assign(SKILLS.find(s=>s.id==='meltdown'),{aoe:1,dot:{pow:.07,dur:5,col:'#ffa040'},stun:{dur:.8}});
+
+// Applied AFTER the push above: tagging before it silently skipped every new skill, because
+// SKILLS.find() returned undefined and the guard swallowed it.
+for(const k in FX){const s=SKILLS.find(x=>x.id===k);if(s)Object.assign(s,FX[k])}
 
 SKILLS.find(s=>s.id==='soulb').rng=1;SKILLS.find(s=>s.id==='mAss').aoe=1;SKILLS.find(s=>s.id==='soulb').d=L=>`Auto RANGED (up to 5 tiles): 2 hits of ${Math.round((1+.2*L)*100)}% dmg &middot; CD 3s`;SKILLS.find(s=>s.id==='mAss').d=L=>`Auto AREA: 4 hits of ${Math.round((.7+.15*L)*100)}% dmg, hits all nearby &middot; CD 5s`;
 // ---------- world: 5 maps x 10 levels. Lv1-3 novice gear, 4-7 1st job, 8-9 2nd job, 10 boss = high-tier ----------
@@ -320,7 +339,9 @@ const zenAt=p=>Math.max(1,Math.round(.011*p*p));   // reference zeny per kill at
 
 // ---------- state ----------
 let currentUser=null,S=null,speed=1,floats=[],drops=[],t=0,shake=0,atkAnim=0,hitAnim=0,pend=[],shots=[],barT=0,logs=[],tab=null,selB=null,selC=null,selK=null,mapM=0,mapL=1;
-const pl={x:0,z:Z1-1.5,ry:0,orb:0,run:0},skCd={},petR={};
+// wt/wx/wz are the roam target: with no mobs on the field the character wanders instead of
+// trudging back to the spawn point. Only a defeat sends you home (see the death handler).
+const pl={x:0,z:Z1-1.5,ry:0,orb:0,run:0,wt:0,wx:0,wz:Z1-1.5},skCd={},petR={};
 // tb holds the one tradeoff buff currently running (ATK up / DEF down and so on). It is
 // deliberately transient: it is never saved, so quitting mid-buff just drops the buff.
 let tb={};
@@ -354,6 +375,9 @@ function load(){try{const s=JSON.parse(lsGet(saveKey()));if(s&&s.lv){const F=fre
   f.mp=Math.max(0,Math.min(MAPS.length-1,Math.floor(f.mp||0)));f.lvl=Math.max(1,Math.min(10,Math.floor(f.lvl||1)));
   if(!f.jobs||typeof f.jobs!=='object')f.jobs=F.jobs;if(!f.sk||typeof f.sk!=='object')f.sk=F.sk;
   if(!f.skOff||typeof f.skOff!=='object'||Array.isArray(f.skOff))f.skOff={};
+  // skills removed or renamed since the save was written must not strand the points spent on
+  // them: dropping the entry refunds the points, which is kinder than an invisible dead cost.
+  for(const k in f.sk)if(!SKILLS.some(x=>x.id===k))delete f.sk[k];
   // per-class builds (Base Lv / stats / points / gear) - repair, drop anything malformed
   if(!f.base||typeof f.base!=='object')f.base={};
   for(const k in f.base){const r=f.base[k];
@@ -422,6 +446,11 @@ addEventListener('load',()=>{if(typeof THREE==='undefined')showErr('3D engine fa
 const gx=()=>S.gm?(S.gmx||100):1;
 
 // ---------- derived stats ----------
+// Buying level L costs L points, so maxing a skill costs 1+2+3+4+5 = 15. At one point per
+// level every job line could max its whole tree with dozens of points left over; this makes
+// the tree cost more than a line ever earns (a transcendent job earns 107 and can reach 13
+// skills = 195), so builds have to choose. That scarcity is how RO itself works.
+const skCost=L=>Math.max(1,L);
 const C=()=>CLASSES[S.cls]||CLASSES.Novice,lv=id=>S.sk[id]||0,jobOf=()=>S.jobs[S.cls]||(S.jobs[S.cls]={jl:1,jx:0}),jneed=j=>Math.floor(25*Math.pow(j,1.7));
 // A skill is usable when it has levels, the current class inherits it, and the player has
 // not switched its auto-cast off in the Skills panel.
@@ -446,8 +475,8 @@ const icon=it=>it.card?'🃏':it.ore?'💎':it.slot==='weapon'?(WICON[it.wt]||'�
 let mobs=[],mob=null,pAtkT=0,mAtkT=0,respawn=0;
 function spawn(){
   const F=fieldOf(S.mp,S.lvl),l=pw(),mb=1+S.mp*.15+Math.max(0,S.mp-4)*.2;mobs=[];
-  if(F.boss&&S.kl>=MPS){const hp=Math.floor(500*mb*Math.pow(l,1.85));mobs.push({...F.boss,boss:true,hp,max:hp,atk:Math.floor((8+l*6.5)*mb),exp:Math.max(1,Math.floor(BOSEK*Math.pow(l,1.5)/50)),zeny:Math.max(1,Math.floor(ri(BZK[0],BZK[1])*l*l/1000)),size:1.3,mag:true,lvl:l,sec:F.sec})}
-  else{const n=(S.lvl>=5||S.mp>=5)?ri(3,8):1;for(let i=0;i<n;i++){const m=F.mobs[ri(0,1)],hp=Math.floor(42*mb*Math.pow(l,1.85));mobs.push({...m,boss:false,hp,max:hp,atk:Math.floor((5+l*4.6)*mb),exp:Math.max(1,Math.floor(EXPK*Math.pow(l,1.5)/50)),zeny:Math.max(1,Math.floor(ri(ZK[0],ZK[1])*l*l/1000)),size:.6,mag:['demon','tree','blob'].includes(m.shape),lvl:l,sec:F.sec})}}
+  if(F.boss&&S.kl>=MPS){const hp=Math.floor(500*mb*Math.pow(l,HPE));mobs.push({...F.boss,boss:true,hp,max:hp,atk:Math.floor((8+l*6.5)*mb),exp:Math.max(1,Math.floor(BOSEK*Math.pow(l,1.5)/50)),zeny:Math.max(1,Math.floor(ri(BZK[0],BZK[1])*l*l/1000)),size:1.3,mag:true,lvl:l,sec:F.sec})}
+  else{const n=(S.lvl>=5||S.mp>=5)?ri(3,8):1;for(let i=0;i<n;i++){const m=F.mobs[ri(0,1)],hp=Math.floor(HPK*mb*Math.pow(l,HPE));mobs.push({...m,boss:false,hp,max:hp,atk:Math.floor((5+l*4.6)*mb),exp:Math.max(1,Math.floor(EXPK*Math.pow(l,1.5)/50)),zeny:Math.max(1,Math.floor(ri(ZK[0],ZK[1])*l*l/1000)),size:.6,mag:['demon','tree','blob'].includes(m.shape),lvl:l,sec:F.sec})}}
   mobs.forEach((m,i)=>{m.x=rnd(-BX_+.8,BX_-.8);m.z=rnd(Z0,Z0+6);m.hx=m.x;m.hz=m.z;m.spawn=0;m.ry=0;m.at=rnd(.6,1.6);m.a=i*2.4});
   mob=mobs[0];pAtkT=.3;
 }
@@ -483,10 +512,11 @@ function strike(mult,col){
   const c=Math.random()*100<crit(),d=Math.max(1,Math.round(atk()*mult*rnd(Math.min(.95,.7+st('dex')*.004),1.15)*(c?critD():1)));
   mob.hp-=d;mob.flash=1;shake=c?6:2;addFloat(mob.x+rnd(-.4,.4),1.5*Math.max(1,mob.size*.8)+.6,mob.z,c?d+'!':d,col||(c?'#ffe14d':'#fff'),c);
 }
-// Higher job tiers get more casts per swing: a Novice throws one skill, a first job two, a
-// second job three. Every cast after the first lands softer (SKFADE), so the extra spam reads
-// as pressure rather than as a flat doubling of single-target damage.
-const SKSLOTS=t=>1+(t||0),SKFADE=[1,.55,.3];
+// Higher job tiers get more casts per swing: Novice 1, first job 2, second job 3, transcendent
+// 4 (tier is 0/1/2/3 - Assassin Cross and Lord Knight are tier 3, not 2). Every cast after the
+// first lands softer (SKFADE), so the extra spam reads as pressure rather than as a flat
+// doubling of single-target damage.
+const SKSLOTS=t=>1+(t||0),SKFADE=[1,.55,.3,.18];
 // dot.pow is the fraction of the triggering hit dealt PER SECOND, so a .05/4s dot adds 20% of
 // the hit spread over time. chain.pow is the fraction each bounce deals, once per target.
 function castSkill(sk,k){
@@ -638,7 +668,7 @@ const V={
     <small>Switching job restarts the class you load: Base Lv as you are now, job levels cleared, stats refunded &middot; classes you step away from keep their own Base Lv, stats and gear until you come back to them.</small>
     <button class="full" data-a="job" data-v="Novice" ${S.cls==='Novice'?'disabled':''}>Restart as Novice (Base Lv 25, job levels cleared)</button>`},
   skills(){const line=lineOf(S.cls),av=skpAvail(),sel=SKILLS.find(s=>s.id===selS);
-    return`<div class="hd">Skill points: ${av} <small>(1 per Job Level)</small></div><small>${SKSLOTS(C().tier)} skill${SKSLOTS(C().tier)>1?'s cast':''} per swing at this job tier &middot; later casts in the same swing land at ${Math.round(SKFADE[1]*100)}% / ${Math.round(SKFADE[2]*100)}% &middot; select a skill to switch its auto-cast off</small>`+line.map(from=>{const ss=SKILLS.filter(s=>s.from===from);return ss.length?`<div class="sec">${from}</div><div class="skg">${ss.map(s=>{const L=lv(s.id);return`<div class="sk${L?'':' off'}${selS===s.id?' sel':''}" style="border-color:${s.col||'#8a6a2c'}${L&&s.type!=='pas'&&skOff(s.id)?';opacity:.45':''}" data-a="ssel" data-v="${s.id}"><div class="si">${L&&s.type!=='pas'&&skOff(s.id)?'⏸':s.type==='pas'?'📘':s.type==='to'?'⚖️':s.type==='heal'?'💚':'💥'}</div><small>${s.n}</small><div><b>${L}</b>/${s.max}</div><button data-a="skill" data-v="${s.id}" ${av>0&&L<s.max?'':'disabled'}>+</button></div>`}).join('')}</div>`:''}).join('')
+    return`<div class="hd">Skill points: ${av} <small>(1 per Job Level)</small></div><small>Skill levels cost escalating points (1,2,3,4,5) so no line can max its whole tree &middot; ${SKSLOTS(C().tier)} skill${SKSLOTS(C().tier)>1?'s cast':''} per swing at this job tier &middot; later casts in the same swing land at ${SKFADE.slice(1).map(f=>Math.round(f*100)+'%').join(' / ')} &middot; select a skill to switch its auto-cast off</small>`+line.map(from=>{const ss=SKILLS.filter(s=>s.from===from);return ss.length?`<div class="sec">${from}</div><div class="skg">${ss.map(s=>{const L=lv(s.id);return`<div class="sk${L?'':' off'}${selS===s.id?' sel':''}" style="border-color:${s.col||'#8a6a2c'}${L&&s.type!=='pas'&&skOff(s.id)?';opacity:.45':''}" data-a="ssel" data-v="${s.id}"><div class="si">${L&&s.type!=='pas'&&skOff(s.id)?'⏸':s.type==='pas'?'📘':s.type==='to'?'⚖️':s.type==='heal'?'💚':'💥'}</div><small>${s.n}</small><div><b>${L}</b>/${s.max}</div><button data-a="skill" data-v="${s.id}" title="${L<s.max?'level '+(L+1)+' costs '+skCost(L+1)+' points':'max level'}" ${av>=skCost(L+1)&&L<s.max?'':'disabled'}>${L<s.max?'+'+skCost(L+1):'+'}</button></div>`}).join('')}</div>`:''}).join('')
     +(sel?`<div class="mob-card" style="margin-top:8px"><b>${sel.n}</b> <small>${sel.type==='pas'?'Passive':sel.type==='heal'?'Auto-heal':sel.type==='to'?'Tradeoff (auto-cast)':'Active (auto-cast)'}${sel.rng?' &middot; RANGED':''}${sel.aoe?' &middot; AREA':''}${sel.dot?' &middot; DOT':''}${sel.stun?' &middot; STUN':''}${sel.chain?' &middot; CHAIN':''}</small><br><small>${sel.d(Math.max(1,lv(sel.id)))}</small>${lv(sel.id)&&lv(sel.id)<sel.max?`<br><small>Next: ${sel.d(lv(sel.id)+1)}</small>`:''}${sel.type!=='pas'&&lv(sel.id)?`<div class="row" style="margin-top:6px"><button data-a="sktog" data-v="${sel.id}">${skOff(sel.id)?'▶ Turn auto-cast ON':'⏸ Turn auto-cast OFF'}</button></div>`:''}</div>`:'')
     +`<button class="full" data-a="rskill">Reset skills (${rcost()}z)</button>`},
   bag0(){const sel=selB&&S.inv.find(x=>String(x.id)===String(selB));const n=Math.max(30,Math.ceil(S.inv.length/6)*6);const inv=[...S.inv].sort((a,b)=>b.tier-a.tier||ev(b)-ev(a));
@@ -707,7 +737,10 @@ const ACT={
   stat5:k=>{for(let i=0;i<5;i++)if(S.pts>=cost(k)&&S.st[k]<statCap()){S.pts-=cost(k);S.st[k]++}S.hp=Math.min(S.hp,maxHp());ui();save()},
   selk:v=>{selK=v;renderWin()},job:n=>{if(n==='Novice'&&S.cls!=='Novice')ask('Restart as Novice? You go back to Base Lv 25, job levels cleared, and your stats are refunded. Classes you leave keep their own Base Lv, stats and gear, so you can switch back to them later.',()=>changeClass(n));else changeClass(n)},
   rstat:()=>{if(S.zeny<rcost())return log('Not enough Zeny to reset stats.');S.zeny-=rcost();for(const k in S.st)S.st[k]=1;S.pts=totalPts();S.hp=Math.min(S.hp,maxHp());log('Stats reset.');ui();save()},
-  skill:id=>{const s=SKILLS.find(x=>x.id===id);if(skpAvail()>0&&lv(id)<s.max&&lineOf(S.cls).includes(s.from)){S.sk[id]=lv(id)+1;ui();save()}},
+  skill:id=>{const s=SKILLS.find(x=>x.id===id);if(!s)return;const nx=lv(id)+1,c=skCost(nx);
+    if(nx>s.max||!lineOf(S.cls).includes(s.from))return;
+    if(skpAvail()<c)return log('Needs '+c+' skill points (you have '+skpAvail()+').','r0');
+    S.sk[id]=nx;ui();save()},
   rskill:()=>{if(S.zeny<rcost())return log('Not enough Zeny to reset skills.');S.zeny-=rcost();S.sk={aid:1};S.skOff={};log('Skills reset; every skill auto-casts again.');ui();save()},
   selb:v=>{selB=v;renderWin()},equip:id=>equip(+id),sell:id=>sell(id),sellbelow:v=>{S.inv.filter(i=>i.tier<=+v).slice().forEach(i=>sell(i.id))},
   selc:v=>{selC=v;renderWin()},
@@ -772,7 +805,10 @@ function update(dt){
     skCd[s.id]=s.cd;tb={atk:s.to.atk||0,aspd:s.to.aspd||0,def:s.to.def||0,drain:s.to.drain||0,t:s.to.dur,n:s.n};
     log(s.n+'! '+s.d(lv(s.id)),'r4');addFloat(pl.x,3.2,pl.z,s.n,s.col,true);break}
   let tx=0,tz=Z1-1.5,reach=1.4;
-  if(!mobs.length){respawn-=dt;if(respawn<=0)spawn()}
+  if(!mobs.length){respawn-=dt;if(respawn<=0)spawn();
+    // roam: pick a fresh spot when the timer runs out or the current one is reached
+    pl.wt-=dt;if(pl.wt<=0||Math.hypot(pl.x-pl.wx,pl.z-pl.wz)<1.2){pl.wt=rnd(2.2,4.5);pl.wx=rnd(-BX_+.8,BX_-.8);pl.wz=rnd(Z0+3,Z1-.8)}
+    tx=pl.wx;tz=pl.wz}
   else{
     const rng=C().rng;
     for(const m of mobs){
@@ -785,7 +821,9 @@ function update(dt){
       if(Math.hypot(pl.x-m.x,pl.z-m.z)<=ms+.4&&!stn){m.at-=dt;if(m.at<=0){m.at=m.boss?1.2:1.5;
         if(Math.random()*100<flee())addFloat(pl.x,2.4,pl.z,'Miss','#8cf');
         else{const d=Math.max(1,Math.round(m.atk*rnd(.8,1.2)-(m.mag?mdef():def())*.6));S.hp-=d;hitAnim=1;m.atkAnim=1;addFloat(pl.x,2.4,pl.z,d,m.mag?'#c08cff':'#ff6b6b');
-          if(S.hp<=0){log('You were defeated... resting and retrying.','r0');S.hp=maxHp();S.kl=0;mobs=[];mob=null;respawn=1.5;pend=[];ui();return}}}}
+          // Defeat is the ONE thing that puts you back at the spawn point.
+if(S.hp<=0){log('You were defeated... knocked back to the entrance.','r0');S.hp=maxHp();S.kl=0;mobs=[];mob=null;respawn=1.5;pend=[];tb={};
+          pl.x=0;pl.z=Z1-1.5;pl.wt=0;ui();return}}}}
     }
     if(!mob||!mobs.includes(mob)){mob=null;let bd=1e9;for(const m of mobs){const d=Math.hypot(m.x-pl.x,m.z-pl.z);if(d<bd){bd=d;mob=m}}}
     if(mob){reach=rng?3:1.2+.45*mob.size;pl.orb+=dt*.8;const r=rng?3:reach*.8;tx=mob.x+Math.cos(pl.orb)*r;tz=mob.z+Math.sin(pl.orb)*r;
