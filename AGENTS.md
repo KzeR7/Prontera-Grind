@@ -194,6 +194,39 @@ Hard rules that `scene_sim.js` enforces:
 * prop groups carry `userData.kind` so the scene can be inspected (and tested) without guessing
   from geometry.
 
+**The attached map kit — Payon and Morocc are drawn from the owner's designs.** The kit lives in
+`assets/kit/`: `ro-spritesheet.png` + `.json` (8 terrain tiles — grass_olive, grass_forest,
+dirt_path, riverbank_wall, cliff_rock, water_frame_0/1, bridge_planks — and 7 environment
+billboards — tree_ancient_large, tree_ancient_variant, tree_tall_cluster, tree_sapling,
+tree_bush_bright, rock_cliff_crag, river_stone_post), `ro-map-payon.json` (the Payon river
+crossing: 48x32 cells with corner heights, 250 water cells, 24 bridge cells, the bridge at
+25.5/16.5, 30 placed props), `ro-map-morocc.json` and `morocc-atlas.js` (the Morocc desert ruins
+design, and the attachment's own generator that paints its atlas in the page, copied verbatim).
+
+* `KIT_MAP` says which arena map wears which design (3 → morocc, 4 → payon). A design dresses the
+  **ground** (its tiles painted into one 2048x2048 texture over the 90x90 field), its **water**
+  (merged row rectangles, animated by swapping the kit's two water frames) and its **props**
+  (billboards, sized and anchored from the manifest).
+* Cell types map to tiles exactly as the kit's own engine maps them: grass→grass_olive,
+  grass_dark→grass_forest, dirt→dirt_path, cliff→cliff_rock, bank→riverbank_wall. Water is the
+  animated pass, bridge cells are the deck mesh, Morocc's tiles keep their own names (sand,
+  sand_dark, ruin_cobble, cliff) and its sky cells are off-map. **Keep the mapping in step with
+  `ro-map-engine.js`'s `_rebuildTerrainCache`** - that is where it comes from.
+* The design is anchored on the point it is built around (Payon's bridge, Morocc's grid centre)
+  and centred on the play band (`KIT_ZC`), one cell = `KIT_S` = 0.85 world units.
+* **Props never stand in the running lane** (`|x| < BX_`). Props a design puts there are moved to
+  the lane edge (their side and depth kept) - never dropped, so the design's prop count survives.
+  The one exception is a design asking for art the atlas does not carry: Payon asks for
+  `rock_boulder_mossy` and the sheet has no such billboard, so those 3 placements are **skipped and
+  reported, never substituted** (show the gap to the owner; do not invent art for it).
+* Nothing in the kit is drawn, traced, recoloured or substituted by this repo. The Morocc atlas is
+  painted by the attachment's own generator, verbatim, at load time.
+* If the atlas cannot load, every map falls back to the v13 scenery (`buildKit` returns null and
+  `buildDeco` continues). The kit must never be able to break the game.
+* `kit_sim.js` pins all of it: every cell accounted for, water area == the design's water cells,
+  the bridge inside the water and on the road, the clear lane, both builders against a stubbed
+  canvas/THREE, and the fallback.
+
 **Equipment database and drops.** `GEAR[map][section]` is the catalogue - 10 maps × 4 sections
 (Novice / 1st job / 2nd job / high tier), each section carrying 2-3 weapon types plus body,
 headgear, shield, legwear and two accessories (**96 weapon entries** in total; armour and
@@ -335,6 +368,7 @@ node tools/tests/card_sim.js          # -> "13 passed, 0 failed"
 node tools/tests/skill_sim.js         # -> "37 passed, 0 failed"
 node tools/tests/gear_sim.js          # -> "18 passed, 0 failed  (18 assertions groups)"
 node tools/tests/scene_sim.js         # -> "8 passed, 0 failed" (per-map scenery, water, clear lane)
+node tools/tests/kit_sim.js           # -> "11 passed, 0 failed" (attached designs, atlas crops, clear lane)
 node tools/tests/ui_sim.js            # -> "6 passed, 0 failed" 
 ```
 
@@ -709,6 +743,48 @@ assigned for feel rather than fidelity. While reworking that, two shipped bugs s
     match layer the kit plugs into.
   * Water pools are flat circles with a shore ring, not animated. Fine at the current camera
     distance; if the kit ships animated tiles, the `water()` layer is the one to replace.
+
+### 2026-10-03 — `kit-v14 attached-map-designs`
+
+* **What changed for the player:**
+  * **Payon is the attached river crossing.** The owner's design dresses the field: forest turf and
+    dirt, a **diagonal river** running through the play band with the **wooden bridge on the road**
+    (mid-lane at z -7.9..-3.1), the design's 27 drawable props around it - ancient trees, a tall
+    cluster, saplings, bright bushes, cliff crags, a river stone post - and the water animates
+    between the kit's two frames.
+  * **Morroc is the attached desert ruins**: sand, dark sand and ruin cobble terrain, cliff bands,
+    and the design's 34 palms, cacti, ruin pillars, fallen columns, stumps, curbs and bones -
+    cropped from the desert atlas the attachment's own generator paints at load.
+  * Both designs are cropped art: nothing was drawn, traced, recoloured or substituted. Terrain,
+    water and props all come from the attachments.
+  * The arena itself is untouched - lane, spawn and monster band are exactly as they were. Props a
+    design puts inside the running lane are moved to the lane edge, so nothing blocks the fight.
+  * Maps without a design keep the v13 scenery, and if the kit cannot load every map falls back to
+    it - the kit can never break the game.
+* **Files added:** `assets/kit/ro-spritesheet.png` (227 KB, the owner's atlas),
+  `assets/kit/ro-spritesheet.json`, `assets/kit/ro-map-payon.json`, `assets/kit/ro-map-morocc.json`,
+  `assets/kit/morocc-atlas.js` (the attachment's generator, verbatim),
+  `tools/tests/kit_sim.js` (**new**, 11 tests).
+* **Files touched:** `index.html` (the kit layer: loader, `kitPlan`, ground painter, water/deck/prop
+  builders, `kitTick`, the `buildDeco` hook, the script tag, `BUILD`), `AGENTS.md`.
+* **Art:** the atlas and the desert generator are the owner's, unedited. No sprite in `Sprite/` or
+  in the pack was touched.
+* **Tests:** pack OK, class_change 15, save_load 9, economy 12, stat 7, card 13, skill 37, gear 18,
+  scene_sim 8, **kit_sim 11 (new)**, ui_sim 6.
+* **Branches / PR:** `arena/01a100d8-prontera-grind`, pull request #4.
+* **Known limits / follow-ups:**
+  * **The atlas is missing a billboard the Payon design asks for.** `ro-map-payon.json` places
+    `rock_boulder_mossy` 3 times, but `ro-spritesheet.json` carries only 7 sprites and that is not
+    one of them. Those 3 placements are skipped and logged; they need either the missing crop in the
+    sheet or the design switching to `rock_cliff_crag`. **Do not draw a replacement.**
+  * The designs' cell **heights** are loaded but not used: the field stays flat so movement, mobs
+    and the arena bounds are unchanged. Lifting the cliffs (vertex displacement outside the lane)
+    is the obvious next step if the owner wants relief.
+  * Heights/props aside, the other seven maps still use the v13 scenery. The kit's tiles and props
+    are deliberately mix-and-match; dressing them from `KIT_MAP`-style specs is the next data-only
+    step.
+  * The 2.5D engine itself (`ro-map-engine.js`) is **not** part of the game - its camera, path
+    finding and character are a separate mini-game. What was ported is the art and the level data.
 
 <!-- template — copy this block, fill it in, paste it at the bottom of the log -->
 

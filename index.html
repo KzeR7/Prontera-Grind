@@ -135,6 +135,7 @@ hr{border:0;border-top:1px dashed var(--edge);margin:6px 0}
 <div id="modal"><div class="login-card"><p id="mt" style="font-size:14px;opacity:1;margin:0 0 12px"></p><div class="row" style="justify-content:center"><button id="my">Yes</button><button id="mn">Cancel</button></div></div></div><div id="tooltip"></div>
 <script src="assets/sprites_data.js?v=2"></script>
 <script src="assets/sprite_pack_data.js?v=1"></script>
+<script src="assets/kit/morocc-atlas.js?v=1"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
 const $=id=>document.getElementById(id);
@@ -155,7 +156,7 @@ const AL={str:'STR',agi:'AGI',dex:'DEX',luk:'LUK',int:'INT',hp:'Max HP',atk:'ATK
 // late maps in about five, with bosses still a ~12x fight. See tools/tests/economy_sim.js.
 const SU=k=>k.toUpperCase(),BX_=5.5,Z0=-14,Z1=3,MPS=15,AGGRO=8.5,HPK=42,HPE=1.3,K5=['str','agi','dex','luk','int'];
 const GM_USER='GM',GM_PASS='gm1234';   // CHANGE THE GM PASSWORD before you publish
-const BUILD='2026-10-03 ui-v13 per-map-scenery';   // shown on the login card - confirms which file you loaded
+const BUILD='2026-10-03 kit-v14 attached-map-designs';   // shown on the login card - confirms which file you loaded
 $('buildTag').textContent='build '+BUILD+' · atlases:'+Object.keys(window.SPRITE_ATLASES||{}).length;
 
 // ---------- class tree: Novice -> 6 first jobs -> 6 second jobs -> 6 third jobs ----------
@@ -1141,6 +1142,9 @@ function landmark(G,k,c1,c2,r){
   else{mk(G,BX(2.2,1.6,1.8),c1,0,.8,0);mk(G,BX(1.5,1.1,1.3),c1,1.1,1.5,.4);mk(G,BX(1.2,.9,1.1),c2,-.9,1.3,-.5)}
 }
 function buildDeco(m){while(deco.children.length)deco.remove(deco.children[0]);townObjs.forEach(o=>o.visible=m===0);road.visible=m===0;if(!m)return;
+  // a kit design dresses this map: paint its ground, water, bridge and props and stop here
+  if(KIT.ok&&buildKit(m))return;
+  if(KIT.ground)KIT.ground.visible=false;
   let q=m*977+13;const r=()=>(q=(q*16807)%2147483647)/2147483647,[k,c1,c2,ex]=TH[m],E=ex||{};
   if(E.w)water(deco,E.w[0],E.w[1],E.w[2],E.w[3],r);
   // a worn track running the length of the avenue, so the run up the field reads as a road
@@ -1163,6 +1167,173 @@ function buildDeco(m){while(deco.children.length)deco.remove(deco.children[0]);t
     else if(pk===8){mk(G,BX(1.4,1+r(),1.2),pc1,0,.6,0);mk(G,BX(1,.7,.9),pc2||pc1,.9,1,.3)}
     else{mk(G,BX(1,1.6+r(),.3),pc1,0,.9,0);mk(G,BX(1.2,.2,.5),pc2,0,.1,0)}
     G.position.set(x,0,z);G.scale.setScalar(sc);G.rotation.y=r()*6;deco.add(G)}}
+
+// ----- The attached map kit: terrains, water, bridges and props -------------------------
+// assets/kit/ro-spritesheet.png + .json is the owner's modular atlas (8 terrain tiles, 7
+// environment billboards: ancient trees, a tall cluster, a sapling, a bright bush, a cliff
+// crag, a mossy boulder, a river stone post). assets/kit/ro-map-payon.json and
+// ro-map-morocc.json are the two attached level designs: 48x32 grids of typed cells, each with
+// its own corner heights, plus the props the design places on top of them. Morocc's atlas is
+// painted at load by the attachment's own generator (assets/kit/morocc-atlas.js).
+//
+// Everything here is a CROP of that art. No tile, tree or rock in this layer is drawn, traced,
+// recoloured or substituted - if a crop is missing, the map falls back to the v13 scenery.
+//
+// The arena is untouched: a design dresses the ground (its tiles are painted into one texture)
+// and its props are billboards. Props a design puts inside the running lane are moved to the
+// lane edge and kept - the field must read as the design without scenery blocking the fight.
+const KIT={ok:0,png:null,man:null,des:{},mor:null,srcMan:{},tex:new Map(),water:[],wt:0,ground:null,built:null};
+const KIT_S=.85,KIT_ZC=(Z0+Z1)/2,KIT_PK=.0085,KIT_PX=2048,KIT_FAR=90;
+// which arena map wears which design, and what a design's cell types are called in the atlas
+const KIT_MAP={
+  3:{src:'morocc',design:'morocc',tile:t=>({sand:'sand',sand_dark:'sand_dark',ruin_cobble:'ruin_cobble',cliff:'cliff'}[t]||null)},
+  4:{src:'payon', design:'payon', tile:t=>({grass:'grass_olive',grass_dark:'grass_forest',dirt:'dirt_path',cliff:'cliff_rock',bank:'riverbank_wall'}[t]||null)}};
+// cell types the kit itself draws in its animated pass / as a deck, not as ground texture
+const KIT_WET={water:1},KIT_DECK={bridge:1},KIT_SKIP={sky:1};
+function kitFetch(){
+  const j=n=>fetch('assets/kit/'+n).then(r=>r.ok?r.json():null).catch(()=>null);
+  Promise.all([j('ro-spritesheet.json'),j('ro-map-payon.json'),j('ro-map-morocc.json')]).then(([man,pay,mor])=>{
+    if(!man||!pay)return; KIT.man=man; KIT.des.payon=pay; if(mor)KIT.des.morocc=mor;
+    const img=new Image();
+    img.onload=()=>{KIT.png=img;KIT.ok=1;buildDeco(S.mp)};
+    img.src='assets/kit/ro-spritesheet.png';});
+}
+// the atlas a design crops from ("src" above), normalised: {img,tiles,sprites}
+function kitAtlas(name){
+  if(KIT.srcMan[name])return KIT.srcMan[name];
+  let a=null;
+  if(name==='morocc'){try{if(!KIT.mor)KIT.mor=window.MOROCC_KIT.atlas();a={img:KIT.mor.canvas,tiles:KIT.mor.manifest.tiles,sprites:KIT.mor.manifest.sprites}}catch(e){}}
+  else if(name==='payon'&&KIT.png&&KIT.man)a={img:KIT.png,tiles:KIT.man.tiles,sprites:KIT.man.sprites};
+  if(a)KIT.srcMan[name]=a;
+  return a;
+}
+function kitCrop(src,kind,name,flip){
+  const key=src+':'+kind+':'+name+(flip?'@f':''); if(KIT.tex.has(key))return KIT.tex.get(key);
+  const a=kitAtlas(src); if(!a)return null;
+  const e=(kind==='tile'?a.tiles:a.sprites)[name]; if(!e)return null;
+  const cv=document.createElement('canvas');cv.width=e.w;cv.height=e.h;
+  const g=cv.getContext('2d');g.imageSmoothingEnabled=false;
+  if(e.canvas)g.drawImage(e.canvas,0,0);
+  else if(flip){g.translate(e.w,0);g.scale(-1,1);g.drawImage(a.img,e.x,e.y,e.w,e.h,0,0,e.w,e.h)}
+  else g.drawImage(a.img,e.x,e.y,e.w,e.h,0,0,e.w,e.h);
+  const t=new THREE.CanvasTexture(cv);
+  if(kind==='tile'){ // 128x128 tiles: mipmapped and repeating, so the ground and water can be tiled
+    t.magFilter=THREE.NearestFilter;t.minFilter=THREE.LinearMipMapLinearFilter;t.wrapS=t.wrapT=THREE.RepeatWrapping;t.anisotropy=4;
+  }else{ // billboards keep the game's own pixel-art filtering (crops are not power of two)
+    t.magFilter=t.minFilter=THREE.NearestFilter;t.generateMipmaps=false;
+  }
+  KIT.tex.set(key,t);return t;
+}
+// Where a design cell or a design prop sits in the arena. The design is anchored on the point
+// the map is built around (Payon's bridge, Morocc's plaza) and centred on the lane.
+function kitAnchor(d){return d.bridge?{x:d.bridge.x,y:d.bridge.y}:{x:d.meta.gridWidth/2,y:d.meta.gridHeight/2}}
+function kitX(d,g){return (g-kitAnchor(d).x)*KIT_S}
+function kitZ(d,g){return (g-kitAnchor(d).y)*KIT_S+KIT_ZC}
+// ----- pure plan: design + arena -> everything the painters need (no canvas, no THREE) -----
+function kitPlan(m){
+  const spec=KIT_MAP[m]; if(!spec)return null;
+  const d=KIT.des[spec.design]; if(!d)return null;
+  const W=d.meta.gridWidth,H=d.meta.gridHeight,cells=[],water=[],props=[];
+  for(let gy=0;gy<H;gy++){
+    let run=null;
+    for(let gx=0;gx<W;gx++){
+      const t=d.cells[gy][gx].type;
+      if(KIT_WET[t]){if(!run)run=[gx,gx];else run[1]=gx;continue}
+      if(run){water.push(kitRect(d,run[0],run[1],gy));run=null}
+      if(KIT_SKIP[t]||KIT_DECK[t])continue;
+      const tile=spec.tile(t); if(tile)cells.push({gx,gy,tile});
+    }
+    if(run)water.push(kitRect(d,run[0],run[1],gy));
+  }
+  // the bridge deck, straight from the design (Payon's is rotated a touch, as drawn)
+  const deck=d.bridge?{x:kitX(d,d.bridge.x),z:kitZ(d,d.bridge.y),w:d.bridge.width*KIT_S,l:d.bridge.length*KIT_S,a:d.bridge.angle||0}:null;
+  const lane=BX_+.9,a=kitAtlas(spec.src);
+  for(const sp of d.sprites){
+    // an atlas that does not carry a billboard the design asks for is a gap in the kit, not a
+    // licence to substitute art: the placement is reported and skipped, never replaced.
+    const missing=(a&&a.sprites&&!a.sprites[sp.type])?1:0;
+    let x=kitX(d,sp.x),z=kitZ(d,sp.y),nudged=0;
+    // scenery never stands in the running lane: the design's own props are moved to the lane
+    // edge (their side and depth are kept) rather than dropped, so the field still reads right
+    if(Math.abs(x)<lane){x=(x<0?-1:1)*lane;nudged=1}
+    props.push({x,z,type:sp.type,src:spec.src,scale:sp.scale||1,flip:!!sp.flip,nudged,missing});
+  }
+  props.sort((a,b)=>a.z-b.z);                       // far to near, so billboards overlap right
+  return {src:spec.src,design:spec.design,cells,water,props,deck,
+          base:spec.design==='morocc'?'sand':'grass_forest',
+          base2:spec.design==='morocc'?'sand_dark':'grass_olive'};
+}
+function kitRect(d,gx0,gx1,gy){
+  const x0=kitX(d,gx0),x1=kitX(d,gx1+1),z0=kitZ(d,gy),z1=kitZ(d,gy+1);
+  return {x:(x0+x1)/2,z:(z0+z1)/2,w:x1-x0,h:z1-z0,cx:gx1-gx0+1,cy:1};
+}
+// ----- painters -------------------------------------------------------------------------
+function kitGroundTex(plan){
+  const cv=document.createElement('canvas');cv.width=cv.height=KIT_PX;
+  const g=cv.getContext('2d'),step=KIT_S,cellPx=step*KIT_PX/KIT_FAR,px=KIT_PX/KIT_FAR,half=KIT_FAR/2;
+  const at=(x,z)=>[(x+half)*px,(z+half)*px];
+  // a scaled-down copy of a crop, for use as a repeating pattern (one fill call for the field)
+  const stamp=(tile,n)=>{const t=kitCrop(plan.src,'tile',tile);if(!t)return null;
+    const sc=document.createElement('canvas');sc.width=sc.height=n;const sg=sc.getContext('2d');
+    sg.imageSmoothingEnabled=true;sg.drawImage(t.image,0,0,n,n);return sc};
+  const base=(kitAtlas(plan.src)&&kitAtlas(plan.src).tiles[plan.base])?plan.base:plan.base2;
+  const bg=stamp(base,Math.max(8,Math.round(cellPx*4)));
+  if(bg){g.imageSmoothingEnabled=true;g.fillStyle=g.createPattern(bg,'repeat');g.fillRect(0,0,KIT_PX,KIT_PX)}
+  const drawn={};
+  for(const c of plan.cells){
+    if(!drawn[c.tile])drawn[c.tile]=kitCrop(plan.src,'tile',c.tile);
+    const t=drawn[c.tile];if(!t)continue;
+    const[x,z]=at(kitX(KIT.des[plan.design],c.gx),kitZ(KIT.des[plan.design],c.gy));
+    g.drawImage(t.image,x,z,cellPx+.6,cellPx+.6);
+  }
+  const t=new THREE.CanvasTexture(cv);t.minFilter=THREE.LinearMipMapLinearFilter;t.anisotropy=4;return t;
+}
+function kitWaterMeshes(plan,root){
+  const f=[kitCrop(plan.src,'tile','water_frame_0'),kitCrop(plan.src,'tile','water_frame_1')];
+  for(const r of plan.water){
+    const m=new THREE.Mesh(new THREE.PlaneGeometry(r.w,r.h),new THREE.MeshLambertMaterial({map:null}));
+    m.rotation.x=-Math.PI/2;m.position.set(r.x,.02,r.z);m.receiveShadow=true;root.add(m);
+    const set=f.filter(Boolean);
+    if(set.length){const maps=set.map(tx=>{const c=tx.clone();c.needsUpdate=true;c.repeat.set(r.cx,r.cy);return c});
+      m.material.map=maps[0];m.material.needsUpdate=true;KIT.water.push({m,maps})}
+  }
+}
+function kitDeckMesh(plan,root){
+  if(!plan.deck)return;
+  const t=kitCrop(plan.src,'tile','bridge_planks');if(!t)return;
+  const map=t.clone();map.needsUpdate=true;map.repeat.set(plan.deck.w/KIT_S,plan.deck.l/KIT_S);
+  const m=new THREE.Mesh(new THREE.PlaneGeometry(plan.deck.w,plan.deck.l),new THREE.MeshLambertMaterial({map}));
+  m.rotation.x=-Math.PI/2;m.rotation.z=plan.deck.a;m.position.set(plan.deck.x,.05,plan.deck.z);m.receiveShadow=true;root.add(m);
+}
+function kitPropMeshes(plan,root){
+  let placed=0;const missing={};
+  for(const p of plan.props){
+    const a=kitAtlas(plan.src);if(!a)continue;
+    const e=a.sprites[p.type];if(!e){missing[p.type]=(missing[p.type]||0)+1;continue}
+    const tex=kitCrop(plan.src,'sprite',p.type,p.flip);if(!tex){missing[p.type]=(missing[p.type]||0)+1;continue}
+    const mar=tex.clone();mar.needsUpdate=true;
+    const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:mar,transparent:true,alphaTest:.18}));
+    const w=e.w*KIT_PK*p.scale,h=e.h*KIT_PK*p.scale;
+    sp.center.set(e.anchorX===undefined?.5:e.anchorX/e.w,1-(e.anchorY===undefined?e.h:e.anchorY)/e.h);
+    sp.scale.set(w,h,1);sp.position.set(p.x,0,p.z);root.add(sp);placed++;
+  }
+  return {placed,missing};
+}
+function kitTick(dt){
+  if(!KIT.water.length)return;
+  KIT.wt+=dt;if(KIT.wt<.55)return;KIT.wt=0;
+  for(const w of KIT.water){if(w.maps.length<2)continue;w.m.material.map=w.m.material.map===w.maps[0]?w.maps[1]:w.maps[0]}
+}
+function buildKit(m){
+  const plan=kitPlan(m);if(!plan)return null;
+  if(!KIT.ground){KIT.ground=new THREE.Mesh(new THREE.PlaneGeometry(KIT_FAR,KIT_FAR),new THREE.MeshLambertMaterial({map:null}));KIT.ground.rotation.x=-Math.PI/2;KIT.ground.position.y=.004;KIT.ground.receiveShadow=true;scene.add(KIT.ground)}
+  KIT.ground.visible=true;KIT.ground.material.map=kitGroundTex(plan);KIT.ground.material.needsUpdate=true;
+  KIT.water=[];kitWaterMeshes(plan,deco);kitDeckMesh(plan,deco);
+  const r=kitPropMeshes(plan,deco);KIT.built={map:m,design:plan.design,placed:r.placed,missing:r.missing};
+  for(const n in r.missing)console.warn('kit: '+plan.design+' design asks for "'+n+'" but the atlas does not carry it - '+r.missing[n]+' placement(s) skipped, nothing substituted');
+  return plan;
+}
+
 // ----- Ragnarok-style 8-dir sprites (billboards in the 3D map) -----
 const SPR_W=64,SPR_H=96,SPR_DIRS=8,SPR_IDLE=2,SPR_WALK=4,SPR_ATK=4,SPR_ROWS=SPR_IDLE+SPR_WALK+SPR_ATK;
 const hx=n=>'#'+('00000'+(n>>>0).toString(16)).slice(-6);
@@ -1428,8 +1599,8 @@ function draw(){
   const pt=bn?'BOSS FIGHT':`Monsters ${Math.min(S.kl,MPS)}/${MPS}${isBoss()?' → Boss':''}`;if(pt!==lastProg){lastProg=pt;prog.textContent=pt}
 }
 let last=performance.now();
-function loop(now){const dt=Math.min(.1,(now-last)/1000);last=now;try{for(let i=0;i<speed;i++)update(dt);draw()}catch(e){if(!loop.e){loop.e=1;console.error(e);log('Error: '+e.message,'r0')}}requestAnimationFrame(loop)}
-resize();respawn=.3;requestAnimationFrame(loop);setInterval(save,5000);
+function loop(now){const dt=Math.min(.1,(now-last)/1000);last=now;try{for(let i=0;i<speed;i++){update(dt);kitTick(dt)}draw()}catch(e){if(!loop.e){loop.e=1;console.error(e);log('Error: '+e.message,'r0')}}requestAnimationFrame(loop)}
+resize();respawn=.3;requestAnimationFrame(loop);setInterval(save,5000);kitFetch();
 </script>
 </body>
 </html>
