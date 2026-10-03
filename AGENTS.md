@@ -1033,3 +1033,44 @@ assigned for feel rather than fidelity. While reworking that, two shipped bugs s
 * **Tests:** the three summary lines, plus any new test and what it covers.
 * **Branches / PR:** branch name and the pull-request link the user was given.
 * **Known limits / follow-ups:**
+
+### 2026-10-03 — `ui-v19 divine-pride sprites`
+* **What changed for the player:**
+  * The map window now stays inside the screen at narrow widths. Map and boss-field buttons remain selectable; the windows stack on small screens, and map/drop grids shrink instead of forcing horizontal overflow.
+  * Regular monsters and bosses now use one-facing Ragnarok sprites from Divine Pride across all ten maps. Game-themed names are matched to the closest named RO monster.
+  * During attacks, characters show a Divine Pride weapon-family item icon for their equipped weapon type. This covers all seven weapon families used by the 19 classes.
+* **Files touched:** `index.html` (responsive map panels, sprite mapping/loaders, attack weapon overlay, `BUILD`), `tools/tests/ui_sim.js` (responsive layout + boss field checks), `tools/tests/sprite_sim.js` (new mapping, weapon-family and fallback checks), `AGENTS.md`.
+* **Art:** no local sprite sheets were added, removed or rebuilt; `tools/montage.py` was not used. Divine Pride PNGs are requested at runtime; the game retains its original procedural mob art and weapon glyphs as fallbacks.
+* **Tests:** `pack_sim` (19 class bodies), `class_change` 20, `save_load` 9; `economy` 18, `stat` 7, `card` 13, `skill` 37, `gear` 18; `scene` 8, `kit` 20, `ui` 8, `sprite` 4 - all green. The new sprite suite checks every regular mob and boss on all ten maps plus all weapon families; the UI suite checks narrow-screen layout and the Abyss boss field.
+* **Branches / PR:** `arena/01a101dd-prontera-grind`; no PR opened.
+* **Known limits / follow-ups:**
+  * Divine Pride is an external runtime source. If its images are unavailable, the procedural mob art and existing weapon glyph remain visible.
+  * Game-specific monster names use the closest RO monster ID. Weapon icons represent each weapon family rather than each custom item name or an animated held weapon model.
+
+### 2026-10-03 — `ui-v20 combat hair preview`
+* **What changed for the player:**
+  * Moving official mob sprites now bounce as they travel; Poring-like blobs get a clear hop and squash/stretch, and other moving mobs get a lighter bob. Both the GPU and browser-image paths animate; the procedural fallback remains intact.
+  * The character's weapon icon stays at the hand while idle, walking and attacking, and follows the corresponding 8-way body pose. Archer, Hunter and Sniper use a bow and fire the existing arrow projectile; Mage, Wizard and High Wizard swing a staff without a generic bolt; Assassin and Assassin Cross show one katar, never a dagger. Bow and staff attacks do not get the generic melee slash; no new skill effects were added.
+  * Settings now shows a live front-view character preview using the selected class, gender and hairstyle. The 73 skill entries have unique pictograms, color accents, type labels and clearer level/auto-cast states.
+  * The head/body placement was rechecked in packed male and female style-0 samples across directions and idle/walk/attack poses. The sampled heads remained seated, so no art or head anchors were shifted. This is a visual spot-check, not every hair style and frame. The RO compositor notes also describe per-motion body/head attach points: https://github.com/kidmortal/ragnarok-sprite-generator/blob/main/docs/how-it-works.md
+* **Files touched:** `index.html` (mob motion, class weapon selection/pose mounting, Settings preview, skill cards, `BUILD`), `tools/tests/pack_sim.js` (packed hair-preview smoke check), `tools/tests/sprite_sim.js` (weapon anchors, class weapon rules and hopping), `tools/tests/ui_sim.js` (skill icons and Settings preview), `AGENTS.md`.
+* **Art:** no local sprite sheets or packed atlases were added, removed or rebuilt; `tools/montage.py` was not used. Weapon-family icons still load from Divine Pride, with the existing glyph fallback.
+* **Tests:** `pack_sim` (19 class atlases + selected female hairstyle preview), `class_change` 20, `save_load` 9; `economy` 18, `stat` 7, `card` 13, `skill` 37, `gear` 18; `scene` 8, `kit` 20, `ui` 10, `sprite` 7 - all green. The inline game JavaScript also passes `node --check`.
+* **Branches / PR:** `arena/01a101dd-prontera-grind`; no PR opened.
+* **Known limits / follow-ups:**
+  * Divine Pride weapon icons are external runtime images; if unavailable, the class still has its existing local/glyph fallback. Icons represent weapon families, not an animated per-item 3D sprite.
+  * The head audit covered representative styles/poses only. If a particular hair, gender, class or frame still looks off, it needs its own visual review before changing the crop-only anchors.
+
+### 2026-10-04 — `ui-v21 skill visuals & sprite alignment`
+* **What changed for the player:**
+  * Active attacks, First Aid and temporary tradeoff buffs now create short-lived battlefield effects: skill-specific cues for falling meteors, ice, lightning, holy marks, arrows, katar slashes, poison, impacts and buffs. The 73 skill cards remain icons/descriptions; combat now gets a separate rendered event.
+  * Weapon-family icons are positioned by a family grip anchor, so the icon's handhold—not its square image center—is held at the existing pose hand through swing rotation and scale. The Archer bow/arrow, Mage staff and single Assassin katar rules are unchanged.
+  * Re-audited packed heads across all 19 male class bodies in every idle/walk/attack cell and eight directions, plus the selected female hairstyles/directions. The displayed heads follow the existing per-cell measured anchors; no global shift or new unmeasured anchor was justified.
+* **Files touched:** `index.html` (skill-effect recipes/animation/disposal, weapon grip placement, `BUILD`), `tools/tests/skill_sim.js` (coverage and renderer lifecycle smoke tests for every mapped effect), `tools/tests/sprite_sim.js` (weapon-grip math regression), `tools/tests/pack_sim.js` (per-cell head-compositor anchor checks), `AGENTS.md`.
+* **Art:** no sprite sheets were drawn, recoloured, replaced or rebuilt; `tools/montage.py` was not used. Skill effects are Three.js geometry, not replacement sprite art; weapon and mob art still load from Divine Pride with the existing fallback paths.
+* **Tests:** `pack_sim` (19 class bodies; all 120 anchored head placements/body), `class_change` 20, `save_load` 9; `economy` 18, `stat` 7, `card` 13, `skill` 40, `gear` 18; `scene` 8, `kit` 20, `ui` 10, `sprite` 8 - all green. Inline game JavaScript passes `node --check`; `git diff --check` is clean.
+* **Branches / PR:** `arena/01a101dd-prontera-grind`; pushed after verification, no PR opened.
+* **Known limits / follow-ups:**
+  * These are skill-specific, in-battle RO-style geometry cues, not playback of the original layered `.str` effects. The researched effect assets require per-layer textures and blend modes; the current renderer intentionally does not flatten them into a skill icon.
+  * Divine Pride weapon icons are external runtime images. Grip positioning is regression-tested mathematically, but the exact pixel hotspot of each remote family icon could not be independently inspected from this sandbox; use the live preview to judge any remaining family-specific offset.
+  * Camera, head/body anchors and mob-hop behavior were left unchanged.

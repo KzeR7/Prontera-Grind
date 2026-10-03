@@ -50,6 +50,7 @@ const code = [
   pick(/const WICON=\{[^}]*\},ORE=\{[^}]*\},SECN=\[[^\]]*\];/, 'WICON/ORE/SECN'),
   pick(/const cell=\(it,sel,extra=''\)=>[^\n]*/, 'cell'),
   pick(/const STATS=\[[\s\S]*?\];/, 'STATS'),
+  pick(/const SKILL_ICON=\{[^}]*\};/, 'per-skill icon map'),
   pick(/const SKSLOTS=t=>[^;]+;/, 'SKSLOTS/SKFADE'),
   pick(/const tnode=n=>[^\n]*/, 'tnode'),
   pick(/const crit=\(\)=>[^\n]*/, 'crit/flee/missCh'),
@@ -86,7 +87,7 @@ const $=id=>({style:{},set innerHTML(v){globalThis['h_'+id]=v},get innerHTML(){r
 const dr=()=>1;
 ${code}
 const skpAvail=()=>5,skLine=()=>['Novice'],skEarned=()=>9,skSpent=()=>0,pv=()=>0,bon=()=>0,qTxt=q=>'quest';
-this.__u={ V, set S(v){S=v}, get S(){return S}, set eqPick(v){eqPick=v}, get eqPick(){return eqPick},
+this.__u={ V, SKILLS, SKILL_ICON, set S(v){S=v}, get S(){return S}, set eqPick(v){eqPick=v}, get eqPick(){return eqPick},
            set mapM(v){mapM=v}, set mapL(v){mapL=v}, set selE(v){selE=v}, set selS(v){selS=v} };
 `;
 const sb = { console };
@@ -98,7 +99,7 @@ const armor = { id: 2, name: 'Chain Mail', tier: 2, slot: 'armor', val: 50, r: 0
 const ring = { id: 3, name: 'Silver Ring', tier: 2, slot: 'acc', val: 20, r: 0, sec: 1, cards: [] };
 const card = { id: 4, n: 'Poring Card', stat: 'str', g: 1, v: 3, card: true };
 const mkS = (cls) => ({
-  cls, lv: 60, exp: 0, hp: 900, zeny: 5000, pts: 3, kills: 10, mp: 0, lvl: 5, kl: 3, gmx: 100, gm: false,
+  cls, sex: 'm', hair: 0, lv: 60, exp: 0, hp: 900, zeny: 5000, pts: 3, kills: 10, mp: 0, lvl: 5, kl: 3, gmx: 100, gm: false,
   st: { str: 30, agi: 20, dex: 20, luk: 5, int: 5, vit: 20 }, sk: { aid: 1 }, skOff: {}, jobs: { [cls]: { jl: 30, jx: 0 }, Novice: { jl: 10, jx: 0 } }, base: {},
   eq: { head: null, weapon: sword, armor, off: null, acc1: ring, leg: null, acc2: null },
   inv: [armor, ring, { id: 9, name: 'Broad Sword', tier: 2, slot: 'weapon', wt: 'sword', val: 70, r: 0, sec: 1, cards: [] }], cards: [card], pets: [], ore: { ori: 2, elu: 1 }, prog: [1, 1, 1, 10, 10, 5, 3, 1, 1, 1],
@@ -147,15 +148,29 @@ t('the map tab is a wide two-band panel: maps on top, that map\'s fields under t
   assert.ok(fieldBand.includes('data-a="go"'), 'travel sits with the fields, not in its own sticky bar');
   assert.ok(fieldBand.includes('Lv 10'), 'the boss field is labelled');
   // one row of ten when the window is wide, wrapping only when it is not
-  assert.ok(/\.lvgrid\{display:grid;grid-template-columns:repeat\(auto-fit,minmax\(\d+px,1fr\)\)/.test(src), 'the field strip must be an auto-fit row');
-  const min = +src.match(/\.lvgrid\{[^}]*minmax\((\d+)px/)[1];
+  assert.ok(/\.lvgrid\{[^}]*repeat\(auto-fit,minmax\(min\(100%,\d+px\),1fr\)\)/.test(src), 'the field strip must shrink its tracks before overflowing');
+  const min = +src.match(/\.lvgrid\{[^}]*minmax\(min\(100%,(\d+)px\)/)[1];
   assert.ok(min * 10 <= 700, 'ten fields must fit one row in a ~900px window (min ' + min + 'px each)');
-  assert.ok(/\.mapcols\{[^}]*repeat\(auto-fit,minmax\(\d+px,1fr\)\)/.test(src), 'tables must be a column grid');
+  assert.ok(/\.mapcols\{[^}]*repeat\(auto-fit,minmax\(min\(100%,\d+px\),1fr\)\)/.test(src), 'tables must use min-width-safe column tracks');
   assert.ok(/\.mapband\.fields\{position:sticky/.test(src), 'the field band must stay pinned while the tables scroll');
   // v16: two cards (monsters / boss+pets) instead of three - the gear card was removed,
   // and two fixed-shape cards are what keeps the panel the same size when switching maps
   assert.strictEqual((h.match(/class="mob-card"/g) || []).length, 2, 'monsters / boss+pets');
   assert.ok(/\.wbody\{[^}]*scrollbar-gutter:stable/.test(src), 'the scrollbar gutter is reserved so the panel width does not jump');
+});
+
+t('map and boss-field panels stay inside narrow viewports', () => {
+  const wins = src.match(/#wins\{[^}]+\}/)[0], panel = src.match(/\.wp\{[^}]+\}/)[0];
+  assert.ok(wins.includes('left:12px') && wins.includes('right:12px') && wins.includes('min-width:0'), 'the map window must be bounded on both sides');
+  assert.ok(panel.includes('min-width:0') && panel.includes('max-width:100%'), 'panels must be allowed to shrink');
+  assert.ok(src.includes('grid-template-columns:repeat(auto-fill,minmax(min(100%,86px),1fr))'), 'map cards must shrink to their panel width');
+  assert.ok(src.includes('grid-template-columns:repeat(auto-fit,minmax(min(100%,280px),1fr))'), 'drop cards must not force a 280px overflow');
+  assert.ok(src.includes('@media(max-width:900px){#wins{flex-direction:column;align-items:stretch}'), 'narrow screens stack map panels');
+  assert.ok(src.includes('.mapband,.mapband.fields{position:static}'), 'the sticky field band must not clip in the stacked layout');
+  U.S = mkS('Knight'); U.mapM = 9; U.mapL = 10;
+  const boss = U.V.map();
+  assert.ok(boss.includes('Dark Lord') && boss.includes('BOSS'), 'the last map and boss field still render after selection');
+  assert.ok(boss.includes('poolitem'), 'the selected boss field keeps its drop pool');
 });
 
 t('the equipment panel renders with a chooser open and closed', () => {
@@ -179,6 +194,30 @@ t('the skills panel renders for every class tier', () => {
     assert.ok(!/undefined/.test(h), cls + ' skills panel printed undefined');
     assert.ok(h.includes('Skill points'), cls + ' must show the pool');
   });
+});
+
+t('every skill has a distinct icon and upgraded card metadata', () => {
+  const missing = [...U.SKILLS].filter(s => !U.SKILL_ICON[s.id]).map(s => s.id);
+  assert.deepStrictEqual(missing, [], 'skills without a mapped glyph: ' + missing.join(', '));
+  assert.strictEqual(Object.keys(U.SKILL_ICON).length, U.SKILLS.length, 'the icon map must cover the whole roster without unused entries');
+  assert.strictEqual(new Set(U.SKILLS.map(s => U.SKILL_ICON[s.id])).size, U.SKILLS.length, 'each skill must have a visually distinct glyph');
+  U.S = mkS('Mage'); U.selS = null;
+  const h = U.V.skills();
+  assert.ok(h.includes('class="sk-head"') && h.includes('class="sk-kind"'), 'cards show the skill category');
+  assert.ok(h.includes('class="si" aria-hidden="true"') && h.includes('class="sk-level"'), 'cards show a pictogram and clear level');
+  assert.ok(h.includes('class="sk-name"') && h.includes('aria-label="Increase Fire Bolt"'), 'skill labels and upgrade buttons are accessible');
+  assert.ok(/\.skg\{[^}]*repeat\(4,minmax\(0,1fr\)\)/.test(src) && src.includes('.sk .si{width:40px;height:40px'), 'the icon tiles use a polished responsive card style');
+});
+
+t('Settings shows a live class, gender and hairstyle preview', () => {
+  U.S = mkS('Assassin Cross'); U.S.sex = 'f'; U.S.hair = 7;
+  const h = U.V.set();
+  assert.ok(h.includes('id="hairPreview"') && h.includes('id="hairPreviewLoading"'), 'a canvas preview has a loading fallback');
+  assert.ok(h.includes('Live female Assassin Cross hair preview'), 'the preview describes the current class and gender');
+  assert.ok(h.includes('Female &middot; front idle pose') && h.includes('Style 8 of 19'), 'gender and selected hair are reflected');
+  assert.ok(h.includes('aria-label="Previous hairstyle"') && h.includes('aria-label="Next hairstyle"'), 'hair controls have accessible names');
+  assert.ok(src.includes("if(tabs.includes('set'))drawHairPreview()"), 'opening or changing Settings redraws the canvas');
+  assert.ok(src.includes('function drawHairPreview()') && src.includes('ctx.drawImage(atlas,0,0,PK.cellW,PK.cellH,0,0,cv.width,cv.height)'), 'the preview crops the actual packed class-and-hair art');
 });
 
 t('the character + class panels show the class-collection bonus', () => {
