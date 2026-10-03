@@ -203,10 +203,24 @@ crossing: 48x32 cells with corner heights, 250 water cells, 24 bridge cells, the
 25.5/16.5, 30 placed props), `ro-map-morocc.json` and `morocc-atlas.js` (the Morocc desert ruins
 design, and the attachment's own generator that paints its atlas in the page, copied verbatim).
 
-* `KIT_MAP` says which arena map wears which design (3 → morocc, 4 → payon). A design dresses the
+* `KIT_MAP` says which arena map wears what: 3 → the attached **morocc** design, 4 → the
+  **payon** field. A design dresses the
   **ground** (its tiles painted into one 2048x2048 texture over the 90x90 field), its **water**
   (merged row rectangles, animated by swapping the kit's two water frames) and its **props**
   (billboards, sized and anchored from the manifest).
+* **Payon is laid out in code, not from the attached grid.** The owner rejected the attached
+  payon layout (a huge diagonal lake with player-sized trees) and asked for RO's Payon Forest, so
+  `payonPlan()` builds the field from the RO recipe out of the same kit tiles: a wide wandering
+  **dirt road** down the middle, a **creek** across it with a **plank bridge** on the road, tree
+  lines that **tower over the player** on both banks, saplings and bushes under them, and a rocky
+  mountain edge (Payon Forest is a mountainous forest). `ro-map-payon.json` stays in the repo as
+  the owner's design - it is just no longer the field. Morocc still uses its design cell for cell.
+* **Prop size is derived from the kit's own character, not guessed.** The kit ships an 80px
+  character frame; this game's hero stands 2.9 units, so `KIT_PK = 2.9/80` and a prop is
+  `crop height x KIT_PK x KIT_PS[type]`. `KIT_PS` is the RO Payon proportions: big trees 3-4x the
+  hero, saplings ~1x, bushes knee height (~0.3-0.7x), crags boulder-sized, palms 2.7-4x, cacti and
+  ruins below the player. **Every prop type a field places must have a factor** - `kit_sim.js`
+  fails on one that does not, because the default (1.0) makes player-sized trees again.
 * Cell types map to tiles exactly as the kit's own engine maps them: grass→grass_olive,
   grass_dark→grass_forest, dirt→dirt_path, cliff→cliff_rock, bank→riverbank_wall. Water is the
   animated pass, bridge cells are the deck mesh, Morocc's tiles keep their own names (sand,
@@ -223,9 +237,18 @@ design, and the attachment's own generator that paints its atlas in the page, co
   painted by the attachment's own generator, verbatim, at load time.
 * If the atlas cannot load, every map falls back to the v13 scenery (`buildKit` returns null and
   `buildDeco` continues). The kit must never be able to break the game.
-* `kit_sim.js` pins all of it: every cell accounted for, water area == the design's water cells,
-  the bridge inside the water and on the road, the clear lane, both builders against a stubbed
+* `kit_sim.js` pins all of it: the Payon recipe (road, creek, bridge on the road, both banks
+  dressed, the creek out of the monster spawn band), Morocc's design cell for cell, the RO scale
+  table (trees ≥ 3x the hero, bushes knee height), the clear lane, both builders against a stubbed
   canvas/THREE, and the fallback.
+
+**What RO Payon actually looks like** (researched for this build, and the reason Payon was rebuilt):
+a *mountainous bamboo forest* - Payon village is built on a mountain edge with steep cliffs over a
+river, and the forest fields are a dirt path cut through big dark trees. The reference screenshot
+(showed to the owner) has a **brown dirt/mud ground** with grass at the edges, a **tree trunk wider
+than the character** filling one side of the frame, small bright-green ferns at the tree bases, and
+the player tiny against it. That is the look `payonPlan()` is aiming at. The kit ships **no bamboo
+billboard** - if the owner wants the groves, that crop has to come from the kit, not be drawn.
 
 **Equipment database and drops.** `GEAR[map][section]` is the catalogue - 10 maps × 4 sections
 (Novice / 1st job / 2nd job / high tier), each section carrying 2-3 weapon types plus body,
@@ -368,7 +391,7 @@ node tools/tests/card_sim.js          # -> "13 passed, 0 failed"
 node tools/tests/skill_sim.js         # -> "37 passed, 0 failed"
 node tools/tests/gear_sim.js          # -> "18 passed, 0 failed  (18 assertions groups)"
 node tools/tests/scene_sim.js         # -> "8 passed, 0 failed" (per-map scenery, water, clear lane)
-node tools/tests/kit_sim.js           # -> "12 passed, 0 failed" (attached designs, atlas crops, clear lane, loader paths)
+node tools/tests/kit_sim.js           # -> "15 passed, 0 failed" (payon recipe + RO scale, morocc design, builders, loader)
 node tools/tests/ui_sim.js            # -> "6 passed, 0 failed" 
 ```
 
@@ -785,6 +808,40 @@ assigned for feel rather than fidelity. While reworking that, two shipped bugs s
     step.
   * The 2.5D engine itself (`ro-map-engine.js`) is **not** part of the game - its camera, path
     finding and character are a separate mini-game. What was ported is the art and the level data.
+
+### 2026-10-03 — `kit-v15 ro-payon-forest`
+
+* **What changed for the player:**
+  * **Every prop is now RO-sized.** The kit ships its own character frame (80px) and the hero here
+    stands 2.9 units, so one atlas pixel is 0.036 units. Trees went from player-height to **3.5-4x
+    the player**, saplings to player height, bushes to knee height, crags to boulder size, palms to
+    ~2.7-4x, cacti and ruins below the player. (v14's single 0.0085 factor made the forest look
+    like shrubbery - the owner spotted it immediately.)
+  * **Payon was rebuilt to look like RO's Payon Forest.** The attached grid was a 48x32 lake with a
+    diagonal river and it read nothing like Payon, so the field is now the RO recipe out of the same
+    kit art: a wide wandering **dirt road** up the middle, a **creek across it with a plank bridge
+    on the road**, dense **tree lines towering over the player on both banks** with saplings and
+    bushes under them, stone posts at the crossing, and a **rocky mountain edge** (Payon Forest is a
+    mountainous forest). The creek sits in front of the spawn and clear of the monster band, so you
+    cross the water on the bridge to reach the mobs.
+  * Morroc keeps its attached desert design - only its prop sizes changed.
+* **Files touched:** `index.html` (the `payonPlan()` layout, `KIT_PK`/`KIT_PS` scale table,
+  `kitPropScale`, the map table, ground painter cell coords, shared prop textures, `BUILD`),
+  `tools/tests/kit_sim.js` (rewritten around the two fields and the scale table, 15 tests),
+  `AGENTS.md` (the RO Payon notes + the scale rule).
+* **Art:** unchanged - the same crops. No tile, tree or rock was drawn, traced or recoloured, and
+  the reference screenshots used for the research were **deleted, not committed**.
+* **Tests:** pack OK, class_change 15, save_load 9, economy 12, stat 7, card 13, skill 37, gear 18,
+  scene_sim 8, **kit_sim 15**, ui_sim 6.
+* **Branches / PR:** `arena/01a100d8-prontera-grind`, pull request #4.
+* **Known limits / follow-ups:**
+  * **No bamboo.** The kit has no bamboo billboard, and Payon Forest is famous for its bamboo
+    groves. A crop from the owner's sheet is the only way to add them.
+  * The kit's atlas still lacks `rock_boulder_mossy` (the attached payon design asked for it; the
+    new field does not use it).
+  * The creek is wadeable - no collision, no slowdown. The bridge is the intended crossing.
+  * Payon's ground is flat (the design heights are still unused); the mountain edge is rocky
+    texture, not raised terrain.
 
 <!-- template — copy this block, fill it in, paste it at the bottom of the log -->
 

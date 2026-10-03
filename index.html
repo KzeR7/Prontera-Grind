@@ -156,7 +156,7 @@ const AL={str:'STR',agi:'AGI',dex:'DEX',luk:'LUK',int:'INT',hp:'Max HP',atk:'ATK
 // late maps in about five, with bosses still a ~12x fight. See tools/tests/economy_sim.js.
 const SU=k=>k.toUpperCase(),BX_=5.5,Z0=-14,Z1=3,MPS=15,AGGRO=8.5,HPK=42,HPE=1.3,K5=['str','agi','dex','luk','int'];
 const GM_USER='GM',GM_PASS='gm1234';   // CHANGE THE GM PASSWORD before you publish
-const BUILD='2026-10-03 kit-v14 attached-map-designs';   // shown on the login card - confirms which file you loaded
+const BUILD='2026-10-03 kit-v15 ro-payon-forest';   // shown on the login card - confirms which file you loaded
 $('buildTag').textContent='build '+BUILD+' · atlases:'+Object.keys(window.SPRITE_ATLASES||{}).length;
 
 // ---------- class tree: Novice -> 6 first jobs -> 6 second jobs -> 6 third jobs ----------
@@ -1182,12 +1182,29 @@ function buildDeco(m){while(deco.children.length)deco.remove(deco.children[0]);t
 // The arena is untouched: a design dresses the ground (its tiles are painted into one texture)
 // and its props are billboards. Props a design puts inside the running lane are moved to the
 // lane edge and kept - the field must read as the design without scenery blocking the fight.
+//
+// Payon is not the attached 48x32 grid any more: the owner rejected that layout (a huge diagonal
+// lake, trees the size of the player) and asked for Payon to look like RO's Payon Forest. Its
+// field is now laid out in code from the RO recipe - see `payonPlan` below - out of the same
+// kit tiles and billboards. Morocc still uses its attached design.
 const KIT={ok:0,png:null,man:null,des:{},mor:null,srcMan:{},tex:new Map(),water:[],wt:0,ground:null,built:null};
-const KIT_S=.85,KIT_ZC=(Z0+Z1)/2,KIT_PK=.0085,KIT_PX=2048,KIT_FAR=90;
-// which arena map wears which design, and what a design's cell types are called in the atlas
+const KIT_S=.85,KIT_ZC=(Z0+Z1)/2,KIT_PX=2048,KIT_FAR=90;
+// Prop size. The kit ships its own character: 80px per frame. This game's hero stands 2.9 world
+// units, so **one atlas pixel is 2.9/80 units** and a prop is (its crop height) x KIT_PK x its
+// factor. The factors are RO Payon forest proportions - the big trees tower over the player
+// (3.5x), a sapling is about player height, a bush is knee height. Tune the numbers here; the
+// builders only read them. Anything not listed is factor 1.
+const KIT_PK=2.9/80;
+const KIT_PS={tree_ancient_large:.9,tree_ancient_variant:.9,tree_tall_cluster:.85,tree_sapling:.55,
+  tree_bush_bright:.34,rock_cliff_crag:1,rock_boulder_mossy:.6,river_stone_post:.62,
+  palm_giant:.7,palm_tall:.75,palm_double:.72,cactus_flower:.75,cactus_small:.65,
+  ruin_pillar:.8,ruin_column_fallen:.8,ruin_stump:.7,ruin_curb:.6,desert_bone:.5};
+function kitPropScale(type,scale){return KIT_PK*(KIT_PS[type]||1)*(scale||1)}
+// which arena map wears which design/layout, and what a design's cell types are called in the atlas
 const KIT_MAP={
   3:{src:'morocc',design:'morocc',tile:t=>({sand:'sand',sand_dark:'sand_dark',ruin_cobble:'ruin_cobble',cliff:'cliff'}[t]||null)},
-  4:{src:'payon', design:'payon', tile:t=>({grass:'grass_olive',grass_dark:'grass_forest',dirt:'dirt_path',cliff:'cliff_rock',bank:'riverbank_wall'}[t]||null)}};
+  4:{src:'payon', layout:'payon'}};
+const KIT_TILE={grass:'grass_olive',grass_dark:'grass_forest',dirt:'dirt_path',cliff:'cliff_rock',bank:'riverbank_wall'};
 // cell types the kit itself draws in its animated pass / as a deck, not as ground texture
 const KIT_WET={water:1},KIT_DECK={bridge:1},KIT_SKIP={sky:1};
 function kitFetch(){
@@ -1234,9 +1251,55 @@ function kitCrop(src,kind,name,flip){
 function kitAnchor(d){return d.bridge?{x:d.bridge.x,y:d.bridge.y}:{x:d.meta.gridWidth/2,y:d.meta.gridHeight/2}}
 function kitX(d,g){return (g-kitAnchor(d).x)*KIT_S}
 function kitZ(d,g){return (g-kitAnchor(d).y)*KIT_S+KIT_ZC}
+// ----- Payon: the RO Payon Forest recipe, laid out in code ---------------------------------
+// A wide brown dirt road that wanders up the middle, a creek across it with a plank bridge, tree
+// lines that tower over the player on both banks (with saplings and bushes under them), and
+// rocky mountain edges - Payon Forest is a mountainous bamboo forest, and its fields read as a
+// dirt path cut through big dark trees. Layout is code; every pixel is still a crop.
+const PAY={road:3.6,creek:[-7.8,-5.0],field:[-26,26,-23,11],cell:.8,treeNear:5.9,treeFar:13.5};
+function payRoadR(z){return PAY.road/2+Math.sin(z*.19)*.45+Math.sin(z*.05)*.3}
+function payonPlan(spec){
+  const cells=[],water=[],props=[],a=kitAtlas(spec.src);
+  const[x0,x1,z0,z1]=PAY.field,st=PAY.cell,cz=PAY.creek,mid=(cz[0]+cz[1])/2;
+  let q=7;const rnd=()=>(q=(q*16807)%2147483647)/2147483647;
+  for(let z=z0;z<z1;z+=st){
+    for(let x=x0;x<x1;x+=st){
+      if(z<z0+5||Math.abs(x)>20){cells.push({x,z,tile:'cliff_rock'});continue}   // the mountain wall
+      if(z>cz[0]-st*2&&z<cz[1]+st*2){cells.push({x,z,tile:'riverbank_wall'});continue}   // creek banks
+      if(Math.abs(x)<payRoadR(z)){cells.push({x,z,tile:'dirt_path'});continue}   // the road
+      const i=Math.round((x-x0)/st),j=Math.round((z-z0)/st);                    // grass variation
+      if((i*7+j*13)%9===0)cells.push({x,z,tile:'grass_olive'});
+    }
+    if(z>cz[0]&&z<cz[1])water.push({x:0,z:z+st/2,w:x1-x0,h:st,cx:(x1-x0)/st,cy:1});
+  }
+  const deck={x:0,z:mid,w:payRoadR(mid)*2+2.2,l:(cz[1]-cz[0])+2.4,a:0};
+  // tree lines: dense, just off the lane on both sides, taller than the player by design
+  const big=['tree_ancient_large','tree_ancient_variant','tree_ancient_large','tree_tall_cluster'];
+  for(const s of[-1,1]){
+    for(let z=z0+2;z<z1-2;z+=2.1+rnd()*1.2){
+      if(Math.abs(z-mid)<st*2.6)continue;                              // keep the crossing open
+      props.push({x:s*(PAY.treeNear+rnd()*2.6),z:z+rnd()*.6,type:big[(rnd()*big.length)|0],
+        src:spec.src,scale:.84+rnd()*.32,flip:rnd()>.5,nudged:0});
+      if(rnd()>.45)props.push({x:s*(PAY.treeNear+1.2+rnd()*5),z:z+rnd()*1.6,type:'tree_sapling',
+        src:spec.src,scale:.8+rnd()*.5,flip:rnd()>.5,nudged:0});
+      if(rnd()>.4)props.push({x:s*(PAY.treeNear+.6+rnd()*5.5),z:z+rnd()*1.8,type:'tree_bush_bright',
+        src:spec.src,scale:.8+rnd()*.6,flip:rnd()>.5,nudged:0});
+    }
+    for(let i=0;i<4;i++)props.push({x:s*(PAY.treeFar+rnd()*8),z:z0+3+rnd()*(z1-z0-6),type:'rock_cliff_crag',
+      src:spec.src,scale:.9+rnd()*.35,flip:rnd()>.5,nudged:0});
+    for(let i=0;i<5;i++)props.push({x:s*(PAY.treeNear+.4+rnd()*7),z:z0+3+rnd()*(z1-z0-6),type:'tree_bush_bright',
+      src:spec.src,scale:.7+rnd()*.5,flip:rnd()>.5,nudged:0});
+    // a stone post on each bank, well clear of the lane, marking the crossing
+    props.push({x:s*(PAY.treeNear+.4),z:mid-(cz[1]-cz[0])/2-1.1,type:'river_stone_post',
+      src:spec.src,scale:.85,flip:s>0,nudged:0});
+  }
+  props.sort((p,n)=>p.z-n.z);
+  return {src:spec.src,design:'payon',cells,water,props,deck,base:'grass_forest',base2:'grass_olive'};
+}
 // ----- pure plan: design + arena -> everything the painters need (no canvas, no THREE) -----
 function kitPlan(m){
   const spec=KIT_MAP[m]; if(!spec)return null;
+  if(spec.layout==='payon')return payonPlan(spec);
   const d=KIT.des[spec.design]; if(!d)return null;
   const W=d.meta.gridWidth,H=d.meta.gridHeight,cells=[],water=[],props=[];
   for(let gy=0;gy<H;gy++){
@@ -1246,7 +1309,7 @@ function kitPlan(m){
       if(KIT_WET[t]){if(!run)run=[gx,gx];else run[1]=gx;continue}
       if(run){water.push(kitRect(d,run[0],run[1],gy));run=null}
       if(KIT_SKIP[t]||KIT_DECK[t])continue;
-      const tile=spec.tile(t); if(tile)cells.push({gx,gy,tile});
+      const tile=spec.tile(t); if(tile)cells.push({x:kitX(d,gx),z:kitZ(d,gy),tile});
     }
     if(run)water.push(kitRect(d,run[0],run[1],gy));
   }
@@ -1288,8 +1351,8 @@ function kitGroundTex(plan){
   for(const c of plan.cells){
     if(!drawn[c.tile])drawn[c.tile]=kitCrop(plan.src,'tile',c.tile);
     const t=drawn[c.tile];if(!t)continue;
-    const[x,z]=at(kitX(KIT.des[plan.design],c.gx),kitZ(KIT.des[plan.design],c.gy));
-    g.drawImage(t.image,x,z,cellPx+.6,cellPx+.6);
+    const[x,z]=at(c.x,c.z);
+    g.drawImage(t.image,x-.3,z-.3,cellPx+.6,cellPx+.6);   // +.6 so neighbours do not seam
   }
   const t=new THREE.CanvasTexture(cv);t.minFilter=THREE.LinearMipMapLinearFilter;t.anisotropy=4;return t;
 }
@@ -1316,9 +1379,8 @@ function kitPropMeshes(plan,root){
     const a=kitAtlas(plan.src);if(!a)continue;
     const e=a.sprites[p.type];if(!e){missing[p.type]=(missing[p.type]||0)+1;continue}
     const tex=kitCrop(plan.src,'sprite',p.type,p.flip);if(!tex){missing[p.type]=(missing[p.type]||0)+1;continue}
-    const mar=tex.clone();mar.needsUpdate=true;
-    const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:mar,transparent:true,alphaTest:.18}));
-    const w=e.w*KIT_PK*p.scale,h=e.h*KIT_PK*p.scale;
+    const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:tex,transparent:true,alphaTest:.18}));
+    const k=kitPropScale(p.type,p.scale),w=e.w*k,h=e.h*k;
     sp.center.set(e.anchorX===undefined?.5:e.anchorX/e.w,1-(e.anchorY===undefined?e.h:e.anchorY)/e.h);
     sp.scale.set(w,h,1);sp.position.set(p.x,0,p.z);root.add(sp);placed++;
   }
