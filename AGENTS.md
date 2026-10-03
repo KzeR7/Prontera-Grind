@@ -51,11 +51,19 @@ in-game and stored in `localStorage` under `pg_acc4`, saves under `pg_save3_<use
 2. **Both genders come from one body set.** Do not author a separate female body.
 3. **All 8 directions and all 3 animation rows** (idle 1 frame, walk 8, attack 6) must
    survive any change to the packing or compositing code.
-4. **Head anchors are measured per cell from the body art** — the *band-4 top row
-   centroid* rule. Never reuse `transfer_anchors()`-style offsets; they produce the
-   7–13 px head wobble that was fixed on 2026-10-03.
+4. **Head anchors are measured per cell from the body art** — the *stub + 3* rule:
+   `anchor = [round(stub_cx), stub_top + HEAD_SEAT]`, where the stub is the topmost
+   narrow run of the frame (≤18 px wide, ≤16 rows tall) and `HEAD_SEAT = 3`. That is the
+   frame's own hair/neck stub, so the head is welded to the neck in every pose. It
+   reproduces the hand-placed shipped anchors *exactly* (106/106 stub frames, max |dy| 0)
+   and beats the old "topmost silhouette pixel" rule, which anchored to a raised arm or
+   blade on attack frames and made the head slide off the body. Never reuse
+   `transfer_anchors()`-style offsets, and never add a global clamp: two attempts at
+   clamping were measured and both float the head (see the v11 log entry). x is always
+   the stub's own centre, never the silhouette centroid. Stub-less frames (the diving
+   lunge) fall back to the torso with that direction's median `stub_top − hips_y`.
 5. **Montage sheets only through `tools/montage.py`.** Never hand-split a montage.
-6. **All three test suites must be green before you push.** Add a test when you add
+6. **All nine test suites must be green before you push.** Add a test when you add
    behaviour. A change with no test is not finished.
 7. **Bump the `BUILD` tag** (`const BUILD='…'` in `index.html`) for anything a player can
    see, and **append to the log below**.
@@ -96,13 +104,17 @@ archer, aco, swordman, blacksmith, thief, assassin, assassin_cross. Head sheets:
 
 ## Class change — the rule as it stands
 
-Loading a class **restarts that class**: Base Lv stays as you are now, Job Lv goes back to
-1, stats are refunded to unspent points. The class you step *away* from keeps its own
-Base Lv, EXP, stat points, stats and worn gear in `S.base[class]` (ids only — items are
-matched back out of the bag, so nothing is ever duplicated or conjured). The Novice is a
-hard restart: Base Lv 25 (if higher), EXP 0, Novice job levels/skills cleared, stats
-refunded, and `S.base.Novice` deleted. Gates: parent class job level, and "reset to
-Novice first" for anything not directly under your current class.
+A class you have **never played** restarts: Base Lv stays as you are now, Job Lv goes back
+to 1, stats are refunded to unspent points. A class you **have played** (`S.base[class]`
+exists) is **one click away**: it keeps its Base Lv, EXP, stat points, stats, job level,
+skills and worn gear, so going back to it is a single click from anywhere in the tree with
+no Novice reset — that is what the user asked for, and `classBlock()` returns `''` for any
+played class before it checks anything else. Worn gear is stored as ids only and matched
+back out of the bag, so nothing is ever duplicated or conjured. The Novice is a hard
+restart: Base Lv 25 (if higher), EXP 0, Novice job levels/skills cleared, stats refunded,
+and `S.base.Novice` deleted. Gates that still apply, for **unplayed** classes only: parent
+class job level, and "reset to Novice first" for anything not directly under the class you
+are standing in.
 
 Formulas the tests pin down: `totalPts() = 10 + Σ(3+⌊l/5⌋)` for l = 2…lv;
 `need(lv) = ⌊38·lv^1.75⌋`; `jneed(j) = ⌊25·j^1.7⌋`.
@@ -146,6 +158,21 @@ Base Lv 100. Grant is `4+floor(l/5)` per level; cost is `1+floor((v-1)/10)` belo
 three stats can be maxed, with 21 points spare**. Verified by simulation, not by ratio: the
 obvious `3+floor(l/5)` grant curve ends at 120/120/119, i.e. only two maxed.
 
+**Equipment database and drops.** `GEAR[map][section]` is the catalogue - 10 maps × 4 sections
+(Novice / 1st job / 2nd job / high tier), each section carrying 2-3 weapon types plus body,
+headgear, shield, legwear and two accessories (**96 weapon entries** in total; armour and
+accessory names are unique across the whole game). The section a field rolls is
+`secOf(lvl)` - levels 1-3 / 4-7 / 8-9 / 10 - except the five level 60+ maps, which are pinned to
+their high-tier section. **A drop is always relevant**: every weapon in a map's pool is one a
+class that levels there can use, and the type a line trains in is never missing from its map
+(the five early maps are class-themed - merchants get axes and maces, mages staves, archers
+bows, thieves daggers then katars). `gearPool(m,l)` is the whole pool; `fieldOf(m,l)` gives each
+mob **three** gear rolls (2.4 % / 2.0 % / 1.6 %) spread across the pool, and a card at **0.45 %**
+- gear outnumbers cards ~13:1 per mob, where the old field rolled two gear items and three
+mobs' worth of cards. Level 10 bosses drop the entire pool at 1.2 % each plus their Legendary
+card at 0.08 %. `gearSlot(x)` maps a pool entry to its UI group, because a weapon entry carries
+its *type* as `k`, not `'weapon'`.
+
 **Cards.** Grade gates the stat pool. `cardStat(g,seed)` draws from `K5` (the five base stats)
 for Common/Fine and from `AFF` (base stats + hp/atk/crit/aspd/flee/cdm) for Rare/Legendary,
 because **the two lowest grades must not get the new effects**. `cardVal(g,st)=round(CV[g]*AB[st])`
@@ -153,10 +180,13 @@ so a Legendary HP card is worth 60 and a Legendary STR card 5 - percentages look
 purpose, they multiply the whole attack total. `CFIT` maps each stat to a gear slot.
 
 **Pets.** Drops only - **there is no hatching and no hatch button**; `ACT.egg` and `ACT.ptg`
-were dead code and have been deleted. Training is a gacha roll: `PTG=[.8,.6,.4,.25,.12]` is
-the success chance by current tier and `GREAT=.1` makes one success in ten jump two tiers.
-`peqCost(t)=1200*(t+1)^2`. Expected cost to max all three pet stats is ~1.09M, about 9% of one
-run. **The 3-vs-40 split is correct and is not a bug**: 3 is the equip limit, 40 the collection cap.
+were dead code and have been deleted. Training is a gacha roll: `PTG=[.4,.25,.15,.09,.05]` is
+the success chance by current tier and `GREAT=.05` makes one success in twenty jump two tiers.
+`peqCost(t)=1200*(t+1)^2`. **Nerfed in v11** - the old ladder (`[.8,.6,.4,.25,.12]`, `GREAT=.1`)
+maxed a stat in **16 rolls / 334k Zeny**; the new one takes **40 rolls / 802k per stat, and
+~2.4M for all three pieces** (measured by Monte-Carlo over the real ladder, `economy_sim.js`
+pins it). It is the last optional sink, so it is meant to be the priciest thing a maxed player
+buys. **The 3-vs-40 split is correct and is not a bug**: 3 is the equip limit, 40 the collection cap.
 
 **Skills.** Two structural rules, both pinned by `skill_sim.js`:
 
@@ -166,9 +196,19 @@ run. **The 3-vs-40 split is correct and is not a bug**: 3 is the equip limit, 40
   bogus chain tag in *every* class tree, because every class inherits Novice.
 * **Scarcity.** `skCost(L)=L`, so buying level L costs L points and maxing a 5-level skill costs
   15. A line earns 9 (Novice) / 58 (1st) / 107 (2nd) / 156 (transcendent) and can reach
-  1 / 5 / 9 / 13 skills - i.e. 15 / 75 / 135 / 195 points of tree. **No line can max its own
-  tree**, which is the point. At one point per level every line could, with 28-86 points left
-  over. Removing or renaming a skill refunds its points through a repair in `load()`.
+  1 / 5 / 9 / 13 skills - i.e. 14 / 74 / 134 / 194 points of tree after the free first point of
+  aid. **No line can max its own tree**, which is the point: the shortfall is 5 / 16 / 27 / 38
+  points. At one point per level every line could, with 28-86 points left over. Removing or
+  renaming a skill refunds its points through a repair in `load()`.
+* **The ledger is per line, and it counts what the + button charged.** `skLine()` is
+  `lineOf(S.cls)`, `skEarned()` sums only those classes' job levels, and
+  `skSpent()` sums `skCostOf(L)=L(L+1)/2` - the cumulative cost of reaching level L - not the
+  level itself. Both halves matter: the v10 code pooled **every class you had ever played**
+  against **one global `S.sk`**, and subtracted only the skill's *level*, so a purchase
+  refunded two thirds of its own price (maxing nine skills paid 134 points and the ledger
+  remembered 45). That is the skill-point overflow the owner kept seeing. `skpAvail()` clamps
+  at 0 so an over-spent save from an older build reads as "nothing spare" rather than
+  negative, and pays the deficit down as the line earns more job levels.
 
 **Skill feel, not skill accuracy.** This is an RO-*flavoured* game, not a clone, and the owner
 has said so explicitly. iRO Wiki was used to fix outright mistakes - skills belonging to 3rd
@@ -251,12 +291,14 @@ h=open('index.html').read()
 open('/tmp/pack_block.js','w').write(h[h.index('const PACK_BODY='):h.index('function ensureHero(')])
 PY
 node tools/tests/pack_sim.js          # -> "bodies in pack (19): ..."
-node tools/tests/class_change_sim.js  # -> "11 passed, 0 failed"
+node tools/tests/class_change_sim.js  # -> "15 passed, 0 failed"
 node tools/tests/save_load_sim.js     # -> "9 passed, 0 failed"
-node tools/tests/economy_sim.js       # -> "10 passed, 0 failed"
+node tools/tests/economy_sim.js       # -> "12 passed, 0 failed"
 node tools/tests/stat_sim.js          # -> "7 passed, 0 failed"
 node tools/tests/card_sim.js          # -> "13 passed, 0 failed"
-node tools/tests/skill_sim.js         # -> "31 passed, 0 failed"
+node tools/tests/skill_sim.js         # -> "37 passed, 0 failed"
+node tools/tests/gear_sim.js          # -> "18 passed, 0 failed  (18 assertions groups)"
+node tools/tests/ui_sim.js            # -> "5 passed, 0 failed" 
 ```
 
 Every suite pulls real code out of `index.html` by **string boundary**, so an edit that
@@ -276,6 +318,14 @@ moves a declaration can break a test without breaking the game. Traps, all hit o
 * A test that re-declares a game formula needs a **source pin** (a regex asserting the
   real formula is still there) or it will happily pass against a stale copy.
   `class_change_sim.js` and `save_load_sim.js` both have one.
+* `ui_sim.js` renders the **real** `V.*` panels against a fake save and fails on any
+  `undefined` in the HTML and on any `data-a="…"` that is not a key in `ACT`. That lint
+  is why the slot chooser's buttons are known to be wired; run it after touching a panel.
+  A panel that prints `undefined` (a pool entry with no `k`, a missing `SECN` index) is the
+  failure mode it exists for - the map panel shipped one such blank during v11 development.
+* `gear_sim.js` checks the equipment database and the slot chooser's filter. Its map-to-line
+  table is the **design intent** (which classes each map serves): if you add a weapon type to
+  a map, either that map's lines must be able to use it or the table is wrong.
 
 `pack_sim.js` reads the pack from the repo it lives in (`PACK_DATA=<path>` to override) and
 needs `/tmp/pack_block.js` (the command above writes it; `PACK_BLOCK=<path>` to override).
@@ -491,6 +541,70 @@ assigned for feel rather than fidelity. While reworking that, two shipped bugs s
   * Kills/hour still needs a real playtest before `EXPK` is retuned - see the v9 entry.
   * Player HP still untouched, as instructed.
   * `rng` on skills is still inert except for Soul Breaker.
+
+### 2026-10-03 — `balance-v11 gear-db map-grid slots skill-ledger pet-nerf class-return quest-live`
+* **What changed for the player:**
+  * **The head no longer wobbles off the body.** It was never the numbers, it was the *rule*:
+    anchors were taken from the topmost silhouette pixel, which on attack frames is a raised arm
+    or a blade, so the head slid off the neck. Anchors now sit on the frame's own hair/neck stub
+    (`stub_top + 3`), which reproduces the hand-placed shipped anchors **exactly** - 106/106
+    stub frames, `max|dy| = 0`. The whole pack was rebuilt (19 bodies, 120/120 cells each).
+  * **The map panel is a grid that scales.** Ten maps are now ten cards
+    (`repeat(auto-fill,minmax(104px,1fr))`) instead of a cramped one-row strip, in a wider window;
+    below them the ten fields, then a drop table that groups the field's gear by slot and lists
+    each mob's rolls and card odds. Adding an eleventh map adds a card and nothing else.
+  * **A real equipment database.** 40 sections (10 maps × 4 tiers), 96 weapon entries, and weapons
+    matched to the classes that actually level there - merchants get axes/maces, mages staves,
+    archers bows, thieves daggers then katars, and the five level 60+ mixed maps carry all seven
+    types across their sections. Armour and accessory names are unique game-wide.
+  * **Gear drops are relevant and outnumber cards.** Three gear rolls per mob (2.4/2.0/1.6 %)
+    drawn from that field's own pool, against a 0.45 % card - about 13:1, where the old field
+    rolled two gear items and three mobs' worth of cards.
+  * **Clicking an equipment slot opens the bag, filtered.** Weapon shows only weapons your class
+    can actually use, shield only if the class may hold one (otherwise the off-hand dagger/katar
+    for the dual-wielders), legwear/headgear/accessory only their own slot - cards and ores never
+    appear. Items are ranked by value with a "(+N better)" delta against what you are wearing.
+  * **The skill-point overflow is fixed at the root.** Two bugs, both in the ledger: it pooled the
+    job levels of *every class you had ever played* against one global skill table, and it
+    subtracted a skill's *level* while the + button charged the *cumulative* cost (1+2+3+4+5 = 15
+    to reach Lv5). Points now belong to the class line you are standing in, and the ledger counts
+    what was actually charged. No line can max its own tree (it is 5 / 16 / 27 / 38 points short
+    at Novice / 1st / 2nd / transcendent). Old saves that spent the phantom points read as
+    "nothing spare" instead of negative.
+  * **Going back to a class you have played is one click.** No Novice reset, no re-levelling:
+    Base Lv, EXP, stat points, stats, job level, skills and worn gear all come back where you left
+    them, from anywhere in the tree. The Novice gate and parent job-level gate still apply to
+    classes you have **never** played.
+  * **Pet training is a real grind.** `PTG` .8/.6/.4/.25/.12 → .4/.25/.15/.09/.05 and `GREAT`
+    .1 → .05: **16 → 40 rolls and 334k → 802k Zeny per stat, ~2.4M for all three pieces**
+    (Monte-Carlo over the real ladder).
+  * **Quest rewards are live.** A quest's goal *and* its reward are re-solved from your current
+    level on every level-up and every map move, so a quest picked up at Lv 10 and handed in at
+    Lv 50 pays the Lv 50 amount, and the Claim button pays exactly the number the panel stated.
+    Panel and claim are verified equal on the rendered HTML.
+* **Files touched:** `index.html` (equipment catalogue, `gearPool/fieldOf`, `gearSlot`, the map
+  panel, `equipChooser/equipIn/slotAccepts` + `eqPick`, `skLine/skEarned/skSpent/skCostOf/
+  skpAvail`, `playedClass/classBlock`, `qScale/qRefresh/newQuest`, pet constants, `BUILD`),
+  `assets/sprite_pack_data.js` (rebuilt pack), `tools/make_sprite_pack.py` (`HEAD_SEAT = 3`,
+  stub anchor rule), `tools/tests/{gear_sim,ui_sim}.js` (new),
+  `tools/tests/{skill_sim,class_change_sim,economy_sim}.js` (extended), `AGENTS.md`.
+* **Art:** no sheets added or hand-edited. The four montages were not re-cut; the pack was
+  regenerated from the existing `Sprite/*.png` with the new anchor rule (crop-only throughout).
+* **Tests:** pack_sim OK (19 bodies, 120/120 cells), class_change_sim **15**, save_load_sim **9**,
+  economy_sim **12**, stat_sim **7**, card_sim **13**, skill_sim **37**, gear_sim **18** (new),
+  ui_sim **5** (new). gear_sim covers the catalogue, per-map relevance, the drop mix and the slot
+  chooser filter; ui_sim renders every real panel and lints that each `data-a` action exists in
+  `ACT`; skill_sim now runs the actual purchase loop and compares the purse with the ledger.
+* **Branches / PR:** `arena/01a100d8-prontera-grind`.
+* **Known limits / follow-ups:**
+  * Item 8's quest *wording* is left alone: "Collect N equipment drops" counts equipment only, so
+    a player farming cards sees the counter stall - it is honest but it reads like a bug. Next
+    pass should rename it.
+  * Gear tiers are decorative today: a section-3 item has better base `val` but nothing stops a
+    section-0 drop from rolling Epic. Worth a look once drops are played with.
+  * The five level 60+ maps share one high-tier weapon set each; adding maps is cheap (append to
+    `MAPS` + `GEAR`, add a `MAP_LINES` row in `gear_sim.js`).
+  * Kills/hour still needs a real playtest before `EXPK` is retuned - see the v9 entry.
 
 <!-- template — copy this block, fill it in, paste it at the bottom of the log -->
 
