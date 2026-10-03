@@ -29,7 +29,7 @@ const dualOk = it => dualOn() && (it.wt === 'dagger' || it.wt === 'katar');
 const C = () => CLASSES[S.cls] || CLASSES.Novice;
 const SKILLS = [{id:'aid',cls:['Novice']},{id:'hide',cls:['Thief','Assassin','Assassin Cross']},{id:'enb',cls:['Swordman','Knight','Lord Knight']}];
 const log = () => {}, ui = () => {}, save = () => {}, addFloat = () => {}, pl = {x:0, z:0};
-this.__h = {changeClass, classBlock, classRec, snapClass, equipRec, noviceRun, clearClassSkills,
+this.__h = {changeClass, classBlock, playedClass, classRec, snapClass, equipRec, noviceRun, clearClassSkills,
             set S(v){S=v}, get S(){return S}};
 `;
 const sb = { console };
@@ -164,6 +164,59 @@ t('a save with no records at all still works', () => {
   H.S.jobs.Novice.jl = 10;
   H.changeClass('Acolyte');
   assert.strictEqual(H.S.lv, 44, 'level lost on a record-less save');
+});
+
+
+// ---- returning to a class you have already played (one click, no Novice reset) ----
+t('a class you have played before is offered directly, from anywhere in the tree', () => {
+  H.S = { cls: 'Thief', lv: 40, exp: 0, pts: 0, hp: 100, st: {}, eq: {}, jobs: { Novice: { jl: 10, jx: 0 }, Thief: { jl: 30, jx: 0 }, Knight: { jl: 22, jx: 0 } }, base: { Knight: { lv: 55, exp: 123, pts: 7, hp: 900, st: { str: 30, agi: 10, dex: 10, luk: 1, int: 1, vit: 20 }, eq: {} } } };
+  assert.ok(H.playedClass('Knight'), 'Knight is in S.base, so it has been played');
+  assert.strictEqual(H.classBlock('Knight'), '', 'a played class must not be blocked by the Novice gate');
+});
+
+t('a class you have never played is still gated', () => {
+  H.S = { cls: 'Thief', lv: 40, exp: 0, pts: 0, hp: 100, st: {}, eq: {}, jobs: { Novice: { jl: 10, jx: 0 }, Thief: { jl: 30, jx: 0 } }, base: {} };
+  assert.ok(!H.playedClass('Knight'));
+  assert.ok(H.classBlock('Knight'), 'an unplayed class must stay gated');
+  // with the parent gate satisfied but the wrong line current, the Novice reset is the gate
+  H.S.cls = 'Thief'; H.S.jobs.Swordman = { jl: 50, jx: 0 };
+  assert.strictEqual(H.classBlock('Knight'), 'Reset to Novice first', 'unplayed + wrong line = Novice first');
+  // standing in the parent line, the promotion is free
+  H.S.cls = 'Swordman';
+  assert.strictEqual(H.classBlock('Knight'), '', 'the parent line may promote');
+  // and a Novice may take any first job once its own job level allows it
+  H.S.cls = 'Novice'; H.S.jobs.Novice.jl = 10;
+  assert.strictEqual(H.classBlock('Thief'), '', 'the Novice may take a first job');
+});
+
+t('stepping back into a played class restores its stats, points and gear in one call', () => {
+  const sword = { id: 7, name: 'Claymore', slot: 'weapon', wt: 'sword', tier: 2, val: 90 };
+  H.S = { cls: 'Thief', lv: 40, exp: 5, pts: 3, hp: 100, zeny: 0, inv: [sword], cards: [], pets: [], q: [],
+          st: { str: 20, agi: 20, dex: 20, luk: 1, int: 1, vit: 1 }, eq: { weapon: null },
+          jobs: { Novice: { jl: 10, jx: 0 }, Thief: { jl: 30, jx: 0 }, Knight: { jl: 22, jx: 0 } },
+          base: { Knight: { lv: 55, exp: 123, pts: 7, hp: 900, st: { str: 30, agi: 12, dex: 14, luk: 1, int: 1, vit: 20 }, eq: { weapon: 7 } } } };
+  H.changeClass('Knight');
+  assert.strictEqual(H.S.cls, 'Knight', 'one call switches class');
+  assert.strictEqual(H.S.lv, 55, 'Base Lv comes back');
+  assert.strictEqual(H.S.exp, 123, 'EXP comes back');
+  assert.strictEqual(H.S.pts, 7, 'unspent stat points come back');
+  assert.strictEqual(H.S.st.str, 30, 'stats come back');
+  assert.strictEqual(H.S.jobs.Knight.jl, 22, 'job level is NOT reset - you are not re-levelling the job');
+  assert.strictEqual(H.S.eq.weapon && H.S.eq.weapon.id, 7, 'the weapon it was wearing comes back out of the bag');
+  H.changeClass('Thief');
+  assert.strictEqual(H.S.lv, 40, 'and the class you walked away from kept its own Base Lv');
+  assert.strictEqual(H.S.jobs.Thief.jl, 30, 'and its job level');
+});
+
+t('an unplayed class still starts a fresh build at your own Base Lv', () => {
+  H.S = { cls: 'Novice', lv: 30, exp: 0, pts: 0, hp: 100, zeny: 0, inv: [], cards: [], pets: [], q: [],
+          st: { str: 5, agi: 5, dex: 5, luk: 1, int: 1, vit: 1 }, eq: {},
+          jobs: { Novice: { jl: 10, jx: 0 } }, base: {} };
+  H.changeClass('Thief');
+  assert.strictEqual(H.S.cls, 'Thief');
+  assert.strictEqual(H.S.lv, 30, 'a new class carries on at your Base Lv');
+  assert.strictEqual(H.S.jobs.Thief.jl, 1, 'and starts its job at level 1');
+  assert.ok(H.S.pts > 0, 'stats are refunded for a new build');
 });
 
 console.log(`\n${pass} passed, ${fail} failed`);

@@ -15,15 +15,21 @@ const src = fs.readFileSync(__dirname + '/../../index.html', 'utf8');
 const grab = (a, b) => { const i = src.indexOf(a), j = src.indexOf(b, i); if (i < 0 || j < 0) throw new Error('missing ' + a); return src.slice(i, j); };
 
 const econ = grab('// ---------- economy tuning ----------', '// ---------- state ----------');
-const nq = grab('function newQuest(type){', '\nconst qTxt=');
+const nq = grab('function qScale(q){', '\nconst qTxt=');   // qScale + newQuest + qRefresh
 
 // needAt() is the curve the whole game levels by; pin it so a change is deliberate.
 if (!/needAt=L=>Math\.floor\(38\*Math\.pow\(L,1\.75\)\)/.test(src))
   throw new Error('needAt() formula changed - update this test deliberately');
 
+const petc = grab('const EGG=3000,', 'const petDmg=');
+const peq = (src.match(/peqCost=t=>[^,;]+/) || [null])[0];
+if (!peq) throw new Error('cannot find peqCost');
+
 const harness = `
 ${econ}
 ${nq}
+${petc}
+this.__pet = { PTG, GREAT, PT, peqCost: eval('(' + ${JSON.stringify('t=>' + peq.split('=>')[1])} + ')') };
 const needAt = L => Math.floor(38 * Math.pow(L, 1.75));
 let S = null, PW = 1;
 const gx = () => S.gm ? (S.gmx || 100) : 1;
@@ -156,6 +162,50 @@ t('low-level Zeny is not inflated (a Lv1 kill is still pocket change)', () => {
   assert.ok(mobZeny(1) < 1, 'pw1 should pay ~0 before the max(1,...) floor');
   E.S = { lv: 1, gm: false }; E.PW = 1;
   assert.ok(E.newQuest('kill').z < 200, 'a Lv1 quest should not pay endgame money');
+});
+
+
+// ---- pet equipment training (nerfed: it used to be an easy max-out) -----------
+const PET = sb.__pet;
+let seed = 12345;
+const rnd = () => (seed = (seed * 1103515245 + 12345) % 2147483648) / 2147483648;
+// Monte-Carlo the real ladder: roll until the stat is capped, paying the real cost per roll.
+function petCost(p, great, base, trials = 20000) {
+  let rolls = 0, zeny = 0, worst = 0;
+  for (let i = 0; i < trials; i++) {
+    let t = 0, r = 0, z = 0;
+    while (t < 5) { const c = base(t); r++; z += c; if (rnd() < p[t]) t += (rnd() < great && t + 2 <= 5) ? 2 : 1; }
+    rolls += r; zeny += z; worst = Math.max(worst, r);
+  }
+  return { rolls: rolls / trials, zeny: zeny / trials, worst };
+}
+const OLD = [.8, .6, .4, .25, .12], OLD_BASE = t => 1200 * (t + 1) * (t + 1);
+
+t('the training rates are a long grind, not an easy max', () => {
+  assert.strictEqual(PET.PTG.join(','), '0.4,0.25,0.15,0.09,0.05', 'PTG changed - update this test deliberately');
+  assert.strictEqual(PET.GREAT, 0.05, 'GREAT changed - update this test deliberately');
+  assert.strictEqual(PET.peqCost(0), 1200, 'peqCost base changed - update this test deliberately');
+  assert.strictEqual(PET.peqCost(4), 1200 * 25, 'peqCost must stay quadratic');
+  PET.PTG.forEach((v, i) => { if (i) assert.ok(v < PET.PTG[i - 1], 'rates must fall as the tier rises'); });
+  const now = petCost(PET.PTG, PET.GREAT, PET.peqCost);
+  const then = petCost(OLD, .1, OLD_BASE);
+  assert.ok(now.rolls > 30, 'one stat maxes in only ' + now.rolls.toFixed(1) + ' rolls');
+  assert.ok(now.rolls < 150, 'one stat takes ' + now.rolls.toFixed(1) + ' rolls - tedium, not a sink');
+  assert.ok(then.rolls < 20, 'the old ladder was ' + then.rolls.toFixed(1) + ' rolls - expected a short one');
+  assert.ok(now.rolls > then.rolls * 2, 'the nerf must be a big one: ' + then.rolls.toFixed(1) + ' -> ' + now.rolls.toFixed(1));
+  console.log('       ' + then.rolls.toFixed(1) + ' -> ' + now.rolls.toFixed(1) + ' rolls per stat (' +
+    Math.round(then.zeny).toLocaleString() + 'z -> ' + Math.round(now.zeny).toLocaleString() + 'z), ' +
+    Math.round(now.zeny * 3).toLocaleString() + 'z for all three');
+});
+
+t('maxing all three pet pieces is a real endgame sink', () => {
+  const now = petCost(PET.PTG, PET.GREAT, PET.peqCost);
+  assert.ok(now.zeny * 3 > 1000000, 'under 1M to max a pet is too cheap: ' + Math.round(now.zeny * 3));
+  assert.ok(now.zeny * 3 < 4000000, 'over 4M to max a pet is out of reach: ' + Math.round(now.zeny * 3));
+  // the last point is the one that should hurt, or a maxed pet is just a matter of time
+  for (let t = 0; t < 4; t++) assert.ok(PET.peqCost(4) > PET.peqCost(t), 'the top tier must be the priciest step');
+  const now2 = petCost(PET.PTG, PET.GREAT, PET.peqCost);
+  assert.ok(now2.worst > 30, 'even the luckiest ladder should take work: worst case ' + now2.worst + ' rolls');
 });
 
 console.log(`\n${pass} passed, ${fail} failed`);

@@ -67,8 +67,23 @@ hr{border:0;border-top:1px dashed var(--edge);margin:6px 0}
 .cell.empty{opacity:.35;cursor:default}.cell.sel{outline:3px solid #ffe08a}
 .cell.b1{border-color:#5cb85c}.cell.b2{border-color:#4a86e8}.cell.b3{border-color:#b05ce0}.cell.b4{border-color:#ffb020;box-shadow:0 0 7px #ffb020}
 .cell .rf{position:absolute;right:2px;bottom:0;font:bold 10px sans-serif;color:#ffe08a;font-style:normal;text-shadow:0 0 2px #000}
-.lvgrid{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin:6px 0}
-.map-node{background:#fffdf5;border:2px solid var(--edge);border-radius:6px;padding:5px 2px;text-align:center;cursor:pointer;font-size:12px}
+.lvgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(52px,1fr));gap:5px;margin:4px 0}
+.mapgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(86px,1fr));gap:5px;margin:4px 0}
+.mapcard{display:flex;flex-direction:column;align-items:flex-start;gap:0;padding:4px 6px;text-align:left;line-height:1.2;border:2px solid var(--edge);background:#fffdf5;border-radius:6px;cursor:pointer;overflow:hidden}
+.mapcard:hover{background:#ffe9a8}.mapcard b{font-size:11px;white-space:nowrap;text-overflow:ellipsis;max-width:100%;overflow:hidden}.mapcard small{font-size:9px;opacity:.7}
+.mapcard.on{background:#ffe08a;border-color:var(--gold)}
+.mapcard.here{box-shadow:inset 0 0 0 2px #2f6fd6}
+.wp.wide{flex:2 2 900px;min-width:320px}
+.mapband{padding:2px 0 6px}
+.mapband.fields{position:sticky;top:-1px;z-index:2;background:var(--panel);padding-top:4px;border-top:1px solid var(--edge2)}
+.mapband.fields .mapband-t{position:sticky;top:-1px;background:var(--panel)}
+.mapband-t{display:flex;align-items:center;gap:6px;font-weight:bold;margin:2px 0 4px}
+.mapband-t small{font-weight:normal;opacity:.75}
+.mapband-t button.go{margin-left:auto;padding:5px 12px;font-weight:bold;white-space:nowrap}
+.mapcols{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:8px;align-items:start;margin-top:8px}
+.mapcols .mob-card{margin-bottom:0;min-width:0}
+@media(max-width:900px){.mapband,.mapband.fields{position:static}.mapcols{grid-template-columns:1fr}}
+.map-node{background:#fffdf5;border:2px solid var(--edge);border-radius:6px;padding:4px 1px;text-align:center;cursor:pointer;font-size:12px;line-height:1.15}
 .map-node:hover{background:#ffe9a8}.map-node.active{background:#ffe08a;border-color:var(--gold)}.map-node.picked{outline:3px solid #2f6fd6}
 .map-node.locked{opacity:.4;filter:grayscale(1)}.map-node.boss-node{border-color:#a23fd6}
 .tree{display:flex;flex-direction:column;gap:6px}.trow{display:flex;align-items:center;gap:2px}.arw{font-size:9px;color:#8a6a2c}
@@ -92,7 +107,11 @@ hr{border:0;border-top:1px dashed var(--edge);margin:6px 0}
 #wins{position:absolute;right:12px;top:12px;bottom:76px;display:none;flex-direction:row-reverse;gap:8px;max-width:calc(100% - 24px);pointer-events:none;z-index:20}
 .wp{pointer-events:auto;flex:0 1 380px;min-width:250px;display:flex;flex-direction:column;overflow:hidden}.wbody{overflow:auto;flex:1}
 .gt button{padding:2px 6px}.gt button.on{background:#ffe08a;border-color:var(--gold)}
-.map-travel{position:sticky;top:0;z-index:3;margin:0 0 8px;padding:6px;background:var(--panel);border-bottom:2px solid var(--edge);box-shadow:0 3px 6px #0002}.map-travel button{width:100%;padding:7px 10px;font-weight:bold}
+.chooser{border:2px solid #2f6fd6;box-shadow:0 0 0 2px #2f6fd655}
+.chooser>.hd{display:flex;align-items:center;gap:6px}
+.chooser>.hd button.x{margin-left:auto;padding:0 7px}
+.chooser .slot{background:#fff7dd}
+.chooser .slot .cell{cursor:default}
 .roll-status{height:30px;min-height:30px;width:100%;display:flex;align-items:center;justify-content:center;overflow:hidden}.roll-status span{display:block;width:150px;text-align:center;font-variant-numeric:tabular-nums;white-space:nowrap}
 </style>
 </head>
@@ -116,6 +135,7 @@ hr{border:0;border-top:1px dashed var(--edge);margin:6px 0}
 <div id="modal"><div class="login-card"><p id="mt" style="font-size:14px;opacity:1;margin:0 0 12px"></p><div class="row" style="justify-content:center"><button id="my">Yes</button><button id="mn">Cancel</button></div></div></div><div id="tooltip"></div>
 <script src="assets/sprites_data.js?v=2"></script>
 <script src="assets/sprite_pack_data.js?v=1"></script>
+<script src="assets/kit/morocc-atlas.js?v=1"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
 const $=id=>document.getElementById(id);
@@ -136,7 +156,7 @@ const AL={str:'STR',agi:'AGI',dex:'DEX',luk:'LUK',int:'INT',hp:'Max HP',atk:'ATK
 // late maps in about five, with bosses still a ~12x fight. See tools/tests/economy_sim.js.
 const SU=k=>k.toUpperCase(),BX_=5.5,Z0=-14,Z1=3,MPS=15,AGGRO=8.5,HPK=42,HPE=1.3,K5=['str','agi','dex','luk','int'];
 const GM_USER='GM',GM_PASS='gm1234';   // CHANGE THE GM PASSWORD before you publish
-const BUILD='2026-10-03 balance-v10 tradeoffs-live mechanics-spread';   // shown on the login card - confirms which file you loaded
+const BUILD='2026-10-03 kit-v15 ro-payon-forest';   // shown on the login card - confirms which file you loaded
 $('buildTag').textContent='build '+BUILD+' · atlases:'+Object.keys(window.SPRITE_ATLASES||{}).length;
 
 // ---------- class tree: Novice -> 6 first jobs -> 6 second jobs -> 6 third jobs ----------
@@ -284,28 +304,84 @@ for(const k in FX){const s=SKILLS.find(x=>x.id===k);if(s)Object.assign(s,FX[k])}
 SKILLS.find(s=>s.id==='soulb').rng=1;SKILLS.find(s=>s.id==='mAss').aoe=1;SKILLS.find(s=>s.id==='soulb').d=L=>`Auto RANGED (up to 5 tiles): 2 hits of ${Math.round((1+.2*L)*100)}% dmg &middot; CD 3s`;SKILLS.find(s=>s.id==='mAss').d=L=>`Auto AREA: 4 hits of ${Math.round((.7+.15*L)*100)}% dmg, hits all nearby &middot; CD 5s`;
 // ---------- world: 5 maps x 10 levels. Lv1-3 novice gear, 4-7 1st job, 8-9 2nd job, 10 boss = high-tier ----------
 const pm=s=>{const[n,c,sh]=s.split(':');return{n,c:parseInt(c,16),shape:sh}};
-const NW=n=>({w:{sword:n+' Blade',dagger:n+' Dagger',katar:n+' Katar',staff:n+' Staff',bow:n+' Bow',axe:n+' Axe',mace:n+' Mace'},a:n+' Armor',h:n+' Helm'});
+// ---------- equipment database ----------
+// Four sections per map (Novice gear / 1st-job / 2nd-job / high tier), each a themed set:
+// 2-3 weapon types, body, headgear, shield, legwear and two accessories.  Every map's weapons
+// match the class lines that live there, so a drop is always something you can wear.
+// G(sec, w, a, h, o, l, ac, ac2): weapons are 'type:Name' pairs, the rest are names.
+const G=(w,a,h,o,l,ac,ac2)=>({w:Object.fromEntries(w.map(x=>[x.split(':')[0],x.split(':')[1]])),a,h,o,l,ac,ac2});
+const GEAR=[
+ // --- Prontera: Novice / Swordman / Acolyte (swords, daggers, maces) ---
+ [G(['sword:Short Sword','dagger:Knife','mace:Club'],'Cotton Shirt','Ribbon','Wooden Buckler','Cotton Pants','Novice Ring','Poring Band'),
+  G(['sword:Broad Sword','dagger:Cutter','mace:Morning Star'],'Padded Armor','Cap','Wooden Shield','Padded Trousers','Bronze Ring','Novice Necklace'),
+  G(['sword:Claymore','dagger:Main Gauche','mace:War Mace'],'Chain Mail','Helm','Kite Shield','Chain Leggings','Silver Ring','Pendant'),
+  G(['sword:Excalibur','dagger:Holy Dagger','mace:Holy Mace'],'Plate Armor','Crown','Cross Shield','Plate Greaves','Holy Ring','Sacred Pendant')],
+ // --- Izlude: Merchant / Blacksmith / Whitesmith (axes and maces are all they train in) ---
+ [G(['axe:Hand Axe','mace:Tide Mace'],'Sailor Shirt','Sailor Cap','Barn Shield','Canvas Trousers','Sailor Ring','Rope Belt'),
+  G(['axe:Battle Axe','mace:Flail'],'Mariner Vest','Bandana','Iron Shield','Mariner Slacks','Brass Ring','Coin Pendant'),
+  G(['axe:Great Axe','mace:Iron Mace'],'Sea Mail','Iron Cap','Tower Shield','Sea Greaves','Merchant Ring','Ledger Pendant'),
+  G(['axe:Golden Axe','mace:Loaded Mace'],'Admiral Coat','Captain Hat','Admiral Guard','Admiral Boots','Guild Ring','Guild Pendant')],
+ // --- Geffen: Mage line (staves only) ---
+ [G(['staff:Rod'],'Mage Shirt','Hairband','Novice Buckler','Mage Trousers','Apprentice Ring','Glass Bead'),
+  G(['staff:Staff of Soul'],'Silk Robe','Wizard Cap','Rune Shield','Silk Leggings','Apprentice Pendant','Moon Bead'),
+  G(['staff:Arc Wand'],'Mage Robe','Wizard Hat','Magic Guard','Rune Trousers','Mystic Ring','Star Bead'),
+  G(['staff:Wand of Hermes'],'Archmage Robe','Mage Crown','Arcane Guard','Archmage Boots','Archmage Ring','Mana Pendant')],
+ // --- Morroc: Thief / Assassin lines (daggers, then katars as they grow into the job) ---
+ [G(['dagger:Desert Knife','katar:Jur'],'Desert Shirt','Turban','Dune Buckler','Desert Pants','Sand Ring','Scorpion Charm'),
+  G(['dagger:Gladius','katar:Katar'],'Thief Clothes','Thief Hood','Shadow Shield','Thief Slacks','Thief Ring','Silent Charm'),
+  G(['dagger:Sword Breaker','katar:Jamadhar'],'Assassin Garb','Black Hood','Assassin Guard','Assassin Boots','Assassin Ring','Venom Charm'),
+  G(['dagger:Sandstorm Dagger','katar:Bloody Roar'],'Shadow Cloak','Shadow Mask','Night Guard','Shadow Boots','Cross Ring','Reaper Charm')],
+ // --- Payon: Archer / Hunter lines (bows only) ---
+ [G(['bow:Short Bow'],'Leather Shirt','Straw Hat','Quiver Guard','Leather Pants','Hunter Ring','Feather Charm'),
+  G(['bow:Composite Bow'],'Hunter Vest','Feather Cap','Leaf Shield','Hunter Slacks','Falcon Ring','Arrow Charm'),
+  G(['bow:Great Bow'],'Hunter Suit','Archer Hat','Falcon Guard','Hunter Boots','Eagle Ring','Falcon Charm'),
+  G(['bow:Gakkung Bow'],'Ranger Coat','Elven Hat','Elven Guard','Ranger Boots','Elven Ring','Wind Charm')],
+ // --- Comodo: coral beach, mixed - every class line is served here ---
+ [G(['dagger:Coral Knife','mace:Tide Mace','staff:Tide Rod'],'Coral Shirt','Shell Cap','Barnacle Buckler','Coral Shorts','Shell Ring','Sea Glass'),
+  G(['bow:Reef Bow','axe:Crab Axe','sword:Reef Sabre'],'Fishing Vest','Sea Breeze Band','Coral Shield','Reef Trousers','Pearl Ring','Mermaid Tear'),
+  G(['dagger:Pearl Dagger','katar:Crab Claw','staff:Abyss Rod'],'Tide Robe','Sailor Bandana','Kraken Guard','Tide Leggings','Kraken Ring','Deep Pendant'),
+  G(['bow:Trident Bow','axe:Anchor Axe','sword:Trident Blade'],'Abyssal Coat','Kraken Mask','Leviathan Guard','Abyssal Boots','Leviathan Ring','Tide Pendant')],
+ // --- Louyang: bamboo valley, mixed ---
+ [G(['sword:Bamboo Blade','dagger:Jade Knife','mace:Stone Club'],'Bamboo Shirt','Bamboo Hat','Bamboo Buckler','Bamboo Pants','Jade Ring','Bamboo Charm'),
+  G(['sword:Jian','axe:Golem Axe','mace:Iron Flail'],'Jiangshi Robe','Wide Bamboo Hat','Jade Shield','Silk Trousers','Jade Pendant','Fox Charm'),
+  G(['bow:Long Bow','katar:Mantis Claw','axe:Bamboo Axe'],'Mountain Armor','Stone Helm','Golem Guard','Mountain Greaves','Stone Ring','Mantis Charm'),
+  G(['bow:Dragon Bow','sword:Dragon Slayer','staff:Dragon Staff'],'Dragon Scale Mail','Dragon Mask','Dragon Guard','Dragon Boots','Dragon Ring','Dragon Charm')],
+ // --- Amatsu: sakura shrine, mixed ---
+ [G(['bow:Shrine Bow','dagger:Tanto','staff:Sakura Rod'],'Traveler Robe','Straw Kasa','Shrine Buckler','Traveler Trousers','Sakura Ring','Shrine Charm'),
+  G(['bow:Yumi','sword:Katana','mace:Oni Mace'],'Priest Robe','Oni Mask','Sakura Guard','Hakama','Spirit Ring','Oni Charm'),
+  G(['dagger:Kunai','katar:Neko Claw','axe:Kitsune Axe'],'Shinobi Garb','Fox Mask','Spirit Guard','Shinobi Boots','Kitsune Ring','Kitsune Charm'),
+  G(['bow:Tengu Bow','sword:Masamune','staff:Divine Staff'],'Kami Robe','Tengu Mask','Kami Guard','Kami Boots','Kami Ring','Kami Charm')],
+ // --- Niflheim: frozen underworld, mixed ---
+ [G(['sword:Frost Blade','dagger:Ice Pick','staff:Frost Rod'],'Fur Shirt','Fur Cap','Ice Buckler','Fur Trousers','Frost Ring','Ice Bead'),
+  G(['axe:Frost Axe','mace:Death Mace','bow:Frozen Bow'],'Frozen Mail','Bone Helm','Bone Shield','Frozen Greaves','Bone Ring','Soul Bead'),
+  G(['sword:Soul Edge','dagger:Ghost Fang','katar:Soul Claw'],'Wraith Robe','Wraith Mask','Soul Guard','Wraith Boots','Wraith Ring','Wraith Pendant'),
+  G(['sword:Deathbringer','katar:Soul Reaper','staff:Lord of Vermilion'],'Death Mail','Death Mask','Death Guard','Death Boots','Death Ring','Death Pendant')],
+ // --- Abyss: Glast Heim ---
+ [G(['dagger:Abyss Knife','sword:Dark Blade','axe:Rusty Axe'],'Torn Cloak','Rusty Helm','Cracked Shield','Torn Trousers','Imp Ring','Ash Charm'),
+  G(['dagger:Chaos Dagger','sword:Cursed Blade','bow:Cursed Bow'],'Abyss Mail','Shadow Beast Mask','Cursed Shield','Abyss Greaves','Chaos Ring','Doom Charm'),
+  G(['sword:Hell Slayer','katar:Bloody Tears','mace:Doom Mace'],'Lava Armor','Lava Mask','Lava Guard','Lava Boots','Lava Ring','Lava Pendant'),
+  G(['sword:Dark Lord Sword','katar:Guillotine Claw','staff:Dark Lord Staff'],'Dark Lord Mail','Dark Lord Mask','Dark Lord Guard','Dark Lord Boots','Dark Lord Ring','Dark Lord Pendant')]];
 const MAPS=[
 {n:'Prontera',t:'Swordman / Acolyte lines',ground:0x7cc46a,sky:0x8ecff5,boss:'Mastering:7ae86a:blob',
  mobs:['Poring:ff9ec4:blob','Fabre:b8e05a:worm','Lunatic:fff4f4:bunny','Drops:ffb84a:blob','Chonchon:7ab8f0:bug','Willow:7ac04a:tree','Rocker:c86a3a:bug','Poporing:9ae84a:blob','Savage Bebe:c09a5a:cat','Peco Peco:ffd850:bug'],
- g:[{w:{dagger:'Knife',sword:'Short Sword'},a:'Cotton Shirt',h:'Ribbon'},{w:{sword:'Broad Sword',mace:'Club'},a:'Padded Armor',h:'Cap'},{w:{sword:'Claymore',mace:'Morning Star'},a:'Chain Mail',h:'Helm'},{w:{sword:'Excalibur',mace:'Holy Mace'},a:'Plate Armor',h:'Crown'}]},
+ gear:GEAR[0]},
 {n:'Izlude',t:'Merchant line',ground:0x6fc2b0,sky:0x8ee0f0,boss:'Drake:4a5a8a:demon',
  mobs:['Marina:5ad1c8:blob','Pupa:e0c070:worm','Crab:e0605a:bug','Sea Otter:8a6a4a:cat','Muka:6aa84f:tree','Anacondaq:3f8a3f:worm','Thief Bug:3a3a55:bug','Marse:6a8ae0:blob','Ambernite:e07aa0:worm','Kukre:d98a3a:bug'],
- g:[{w:{dagger:'Cutter',sword:'Sabre'},a:'Sailor Shirt',h:'Sailor Cap'},{w:{axe:'Hand Axe'},a:'Mariner Vest',h:'Bandana'},{w:{axe:'Battle Axe'},a:'Sea Mail',h:'Iron Cap'},{w:{axe:'Golden Axe'},a:'Admiral Coat',h:'Captain Hat'}]},
+ gear:GEAR[1]},
 {n:'Geffen',t:'Mage line',ground:0x8c8caa,sky:0x9a90c8,boss:'Baphomet:6a3fa0:demon',
  mobs:['Skeleton:e8e8e8:bunny','Zombie:7a9a6a:worm','Ghoul:6a7a5a:demon','Poison Spore:8a5aa0:tree','Whisper:bfd0ff:blob','Bat Familiar:5a3a6a:bug','Dark Priest:3a2a4a:demon','Wraith:8a8ab0:blob','Evil Druid:4a3a5a:tree','Marionette:ff8ad0:bunny'],
- g:[{w:{dagger:'Main Gauche',sword:'Rapier'},a:'Mage Shirt',h:'Hairband'},{w:{staff:'Rod'},a:'Silk Robe',h:'Wizard Cap'},{w:{staff:'Staff of Soul'},a:'Mage Robe',h:'Wizard Hat'},{w:{staff:'Arc Wand'},a:'Archmage Robe',h:'Mage Crown'}]},
+ gear:GEAR[2]},
 {n:'Morroc',t:'Thief / Assassin lines',ground:0xdcc78e,sky:0xf0d9a0,boss:'Phreeoni:c9a040:bug',
  mobs:['Scorpion:d9a84a:bug','Sand Man:e0c78a:blob','Desert Wolf:c9a86a:cat','Cactus:5aa050:tree','Pasana:c94a2a:demon','Horn:a08050:bug','Mummy:d9d0b0:worm','Isis:ffcf6a:cat','Anubis:2a2a3a:demon','Minorous:8a4a2a:demon'],
- g:[{w:{dagger:'Desert Knife',sword:'Scimitar'},a:'Desert Shirt',h:'Turban'},{w:{dagger:'Gladius'},a:'Thief Clothes',h:'Thief Hood'},{w:{dagger:'Sword Breaker',katar:'Jur'},a:'Assassin Garb',h:'Black Hood'},{w:{dagger:'Damascus',katar:'Bloody Roar'},a:'Shadow Cloak',h:'Shadow Mask'}]},
+ gear:GEAR[3]},
 {n:'Payon',t:'Archer / Hunter lines',ground:0x4f8f4a,sky:0x8fc8a0,boss:'Eddga:e67a2e:cat',
  mobs:['Spore:d06a6a:tree','Wolf:8a8a95:cat','Elder Willow:4a7a3a:tree','Hornet:e8c840:bug','Bigfoot:9a7a5a:demon','Zenorc:5a8a4a:demon','Skel Archer:d0d0c0:bunny','Ancient Worm:b0a080:worm','Orc Warrior:4a7a3a:demon','Orc Archer:6a8a3a:demon'],
- g:[{w:{dagger:'Hunter Knife',sword:'Hunting Sword'},a:'Leather Shirt',h:'Straw Hat'},{w:{bow:'Short Bow'},a:'Hunter Vest',h:'Feather Cap'},{w:{bow:'Composite Bow'},a:'Hunter Suit',h:'Archer Hat'},{w:{bow:'Gakkung Bow'},a:'Ranger Coat',h:'Elven Hat'}]},
-{n:'Comodo',t:'Coral beach (Lv 60-80)',ground:0x3fae9a,sky:0x7fe0e0,boss:'Kraken:2a6a9a:blob',mobs:['Merman:3a9ad0:demon','Sea Witch:9a5ac0:bunny','Coral Crab:ff7a6a:bug','Giant Eel:4a8aa0:worm','Siren:7ad0e0:cat','Deep Jelly:aa7aff:blob'],g:[NW('Comodo'),NW('Comodo'),NW('Comodo'),NW('Comodo')]},
-{n:'Louyang',t:'Bamboo valley (Lv 60-80)',ground:0x7aa85a,sky:0xc8e0a0,boss:'Dragon Lord:c04a2a:demon',mobs:['Jiangshi:8aa08a:demon','Bamboo Fox:e0a050:cat','Wild Boar:7a5a3a:cat','Stone Golem:9a9a8a:tree','Mantis:6ac04a:bug','Dragon Pup:e05a3a:worm'],g:[NW('Louyang'),NW('Louyang'),NW('Louyang'),NW('Louyang')]},
-{n:'Amatsu',t:'Sakura shrine (Lv 60-80)',ground:0xd88aa8,sky:0xf0c0d8,boss:'Shiranui:d03a5a:demon',mobs:['Oni:c03a3a:demon','Kappa:4aa07a:blob','Kitsune:ffd09a:cat','Tengu:a04a4a:bug','Yuki Onna:d0e8ff:bunny','Spirit Lantern:ffe08a:blob'],g:[NW('Amatsu'),NW('Amatsu'),NW('Amatsu'),NW('Amatsu')]},
-{n:'Niflheim',t:'Frozen underworld (Lv 80-99)',ground:0x6a6a8a,sky:0x4a3a5a,boss:'Lord of Death:3a1a5a:demon',mobs:['Ghost Hound:8a8ab0:cat','Banshee:c0c0ff:blob','Death Knight:4a3a6a:demon','Bone Worm:d0d0c0:worm','Frost Wraith:9ad0ff:bunny','Soul Eater:5a2a7a:bug'],g:[NW('Niflheim'),NW('Niflheim'),NW('Niflheim'),NW('Niflheim')]},
-{n:'Abyss',t:'Glast Heim Abyss (Lv 80-99)',ground:0x3a2a3a,sky:0x1a1020,boss:'Dark Lord:7a0a2a:demon',mobs:['Abyss Knight:5a1a3a:demon','Lava Slime:ff5a1a:blob','Chaos Imp:a02a6a:bug','Shadow Beast:2a1a3a:cat','Doom Tree:3a2a1a:tree','Hell Worm:c04a1a:worm'],g:[NW('Abyss'),NW('Abyss'),NW('Abyss'),NW('Abyss')]}];
+ gear:GEAR[4]},
+{n:'Comodo',t:'Coral beach (Lv 60-80)',ground:0x3fae9a,sky:0x7fe0e0,boss:'Kraken:2a6a9a:blob',mobs:['Merman:3a9ad0:demon','Sea Witch:9a5ac0:bunny','Coral Crab:ff7a6a:bug','Giant Eel:4a8aa0:worm','Siren:7ad0e0:cat','Deep Jelly:aa7aff:blob'],gear:GEAR[5]},
+{n:'Louyang',t:'Bamboo valley (Lv 60-80)',ground:0x7aa85a,sky:0xc8e0a0,boss:'Dragon Lord:c04a2a:demon',mobs:['Jiangshi:8aa08a:demon','Bamboo Fox:e0a050:cat','Wild Boar:7a5a3a:cat','Stone Golem:9a9a8a:tree','Mantis:6ac04a:bug','Dragon Pup:e05a3a:worm'],gear:GEAR[6]},
+{n:'Amatsu',t:'Sakura shrine (Lv 60-80)',ground:0xd88aa8,sky:0xf0c0d8,boss:'Shiranui:d03a5a:demon',mobs:['Oni:c03a3a:demon','Kappa:4aa07a:blob','Kitsune:ffd09a:cat','Tengu:a04a4a:bug','Yuki Onna:d0e8ff:bunny','Spirit Lantern:ffe08a:blob'],gear:GEAR[7]},
+{n:'Niflheim',t:'Frozen underworld (Lv 80-99)',ground:0x6a6a8a,sky:0x4a3a5a,boss:'Lord of Death:3a1a5a:demon',mobs:['Ghost Hound:8a8ab0:cat','Banshee:c0c0ff:blob','Death Knight:4a3a6a:demon','Bone Worm:d0d0c0:worm','Frost Wraith:9ad0ff:bunny','Soul Eater:5a2a7a:bug'],gear:GEAR[8]},
+{n:'Abyss',t:'Glast Heim Abyss (Lv 80-99)',ground:0x3a2a3a,sky:0x1a1020,boss:'Dark Lord:7a0a2a:demon',mobs:['Abyss Knight:5a1a3a:demon','Lava Slime:ff5a1a:blob','Chaos Imp:a02a6a:bug','Shadow Beast:2a1a3a:cat','Doom Tree:3a2a1a:tree','Hell Worm:c04a1a:worm'],gear:GEAR[9]}];
 MAPS.forEach(mp=>{mp.mobs=mp.mobs.map(pm);mp.boss=pm(mp.boss)});
 const REC=['Lv 1-12','Lv 10-24','Lv 20-34','Lv 32-46','Lv 44-60','Lv 60-67','Lv 67-74','Lv 74-80','Lv 80-90','Lv 90-99'];
 MAPS.forEach((m,i)=>{m.b=[0,9,19,31,43,59,66,73,79,89][i];m.rec=REC[i]});
@@ -318,11 +394,22 @@ const secOf=l=>l<=3?0:l<=7?1:l<=9?2:3,secOf0=l=>l<=3?0:l<=7?1:l<=9?2:3;
 // ~12x a STR card at the same grade; the five base stats keep exactly their old values.
 const cardVal=(g,st)=>Math.max(1,Math.round((CV[g]||1)*(AB[st]||1)));
 const cardStat=(g,seed)=>{const p=g>=2?AFF:K5;return p[((seed%p.length)+p.length)%p.length]};
-function fieldOf(m,l){const mp=MAPS[m],sec=m>=5?3:secOf(l),sg=mp.g[sec],T=[];
-  for(const k in sg.w)T.push({k,n:sg.w[k]});T.push({k:'armor',n:sg.a},{k:'head',n:sg.h},{k:'off',n:mp.n+' Shield'},{k:'leg',n:mp.n+' Greaves'},{k:'acc',n:mp.n+' Ring'});const n=T.length;
+// A pool entry's k is its weapon type for weapons ('sword', 'bow', ...) and its slot for
+// everything else, so the UI asks gearSlot() which panel group an entry belongs to.
+const ARM=['armor','head','off','leg','acc'],gearSlot=x=>ARM.includes(x.k)?x.k:'weapon';
+// The field's gear pool: every item an equipment drop on this map+level can be. Weapons first
+// (they are the ones a player is hunting), then body, headgear, shield, legwear, two accessories.
+function gearPool(m,l){const sg=MAPS[m].gear[m>=5?3:secOf(l)],T=[];
+  for(const k in sg.w)T.push({k,n:sg.w[k]});
+  T.push({k:'armor',n:sg.a},{k:'head',n:sg.h},{k:'off',n:sg.o},{k:'leg',n:sg.l},{k:'acc',n:sg.ac});
+  if(sg.ac2)T.push({k:'acc',n:sg.ac2});
+  return T}
+function fieldOf(m,l){const mp=MAPS[m],sec=m>=5?3:secOf(l),T=gearPool(m,l),n=T.length;
+  // three gear rolls per mob, spread across the pool so two mobs on one field do not pay out
+  // the same item; gear is the common drop and a card is the rare one.
   const mobs=[0,1].map(j=>{const mm=mp.mobs[(l-1+j)%mp.mobs.length],cg=l<=3?0:l<=7?1:2;
-    return{...mm,drops:[[T[(l+2*j)%n],2.1],[T[(l+2*j+1)%n],1.75]],card:{n:mm.n+' Card',stat:cardStat(cg,(m*10+l+j)*3+1),g:cg},cardCh:.6,ore:l===10}});
-  return{m,l,sec,mobs,boss:l===10?{...mp.boss,drops:T.map(x=>[x,4]),card:{n:mp.boss.n+' Card',stat:cardStat(3,m),g:3},cardCh:.1,ore:true}:null}}
+    return{...mm,drops:[[T[(l*3+2*j)%n],2.4],[T[(l*3+2*j+1)%n],2.0],[T[(l*3+2*j+2)%n],1.6]],card:{n:mm.n+' Card',stat:cardStat(cg,(m*10+l+j)*3+1),g:cg},cardCh:.45,ore:l===10}});
+  return{m,l,sec,mobs,boss:l===10?{...mp.boss,drops:T.map(x=>[x,1.2]),card:{n:mp.boss.n+' Card',stat:cardStat(3,m),g:3},cardCh:.08,ore:true}:null}}
 const dropTxt=([T,ch])=>`${T.n}${['armor','head','off','leg','acc'].includes(T.k)?'':' ('+T.k+')'} ${ch}%`;
 
 // ---------- stat progression ----------
@@ -357,8 +444,8 @@ const RN=['Common','Rare','Epic','Legendary'],RCL=[0,2,3,4],MUT=[1,2,4,6,8,20,40
 // 5% from a boss). EGG survives as the price anchor for release refunds and for the Zeny
 // a full collection is paid instead of a drop.
 // PTG = chance a training roll succeeds, by the tier the stat is currently at. One roll in
-// ten that succeeds is a GREAT success and jumps two tiers instead of one.
-const EGG=3000,GW=[50,30,16.5,2.5,.8,.2],PT=['Wooden','Iron','Silver','Gold','Mythril'],PTG=[.8,.6,.4,.25,.12],GREAT=.1;
+// twenty that succeeds is a GREAT success and jumps two tiers instead of one.
+const EGG=3000,GW=[50,30,16.5,2.5,.8,.2],PT=['Wooden','Iron','Silver','Gold','Mythril'],PTG=[.4,.25,.15,.09,.05],GREAT=.05;
 const PEQ=[{n:'Claw',d:t=>`+${t*12}% dmg`},{n:'Collar',d:t=>`+${t*8}% attack speed`},{n:'Charm',d:t=>`${t*6}% crit chance (x2 dmg)`}];
 const petDmg=p=>Math.round(atk()*[.2,.32,.55,1][PETS[p.sp].r]*MUT[p.mut]*(1+p.eq[0]*.12)),petInt=p=>Math.max(.4,1.7-PETS[p.sp].r*.15)/(1+p.eq[1]*.08),peqCost=t=>1200*(t+1)*(t+1),rollCost=p=>2500*(1+PETS[p.sp].r);
 const rollingSet=new Set(),autoSet=new Set(),PW=[[90,9,1,0],[80,17,3,0],[70,24,5.5,.5],[60,30,9,1],[50,35,13,2],[40,38,18,4],[30,40,24,6],[22,40,30,8],[12,38,38,12],[5,30,45,20]],busy=p=>p.roll||rollingSet.has(p.id)||S.zeny<rollCost(p);
@@ -471,7 +558,26 @@ const aspd=()=>Math.max(.2,.85*C().aspd*(1-Math.min(.5,st('agi')*.006))/(1+(pv('
 const crit=()=>Math.min(60,3+st('luk')*.4+pv('crit')+bon('crit')),flee=()=>Math.min(60,st('agi')*.5+S.lv*.1+pv('flee')+bon('flee')),missCh=()=>Math.max(0,15-st('dex')*.25);
 const def=()=>Math.floor(S.lv*.5+st('vit')*.5+eqv('armor')+eqv('leg')+(S.eq.off&&S.eq.off.slot==='off'?eqv('off'):0)+pv('def')+(tb.def||0)),mdef=()=>Math.floor(S.lv*.3+st('int')*.5+st('vit')*.4+eqv('head')*.3+pv('def')*.5),critD=()=>2+st('luk')*.01+st('dex')*.005+bon('cdm')/100,needAt=L=>Math.floor(38*Math.pow(L,1.75)),need=()=>needAt(S.lv),cost=k=>{const v=S.st[k];return v<ELITELV?1+Math.floor((v-1)/10):10+(v-ELITELV)};
 const totalPts=()=>{let p=10;for(let l=2;l<=S.lv;l++)p+=4+Math.floor(l/5);return p},rcost=()=>S.lv*50;
-const skpAvail=()=>Object.values(S.jobs).reduce((a,j)=>a+j.jl-1,0)-(Object.values(S.sk).reduce((a,b)=>a+b,0)-(S.sk.aid?1:0));
+// Skill points belong to the class LINE you are standing in, exactly like RO: the Novice level
+// you grinded, your first job and your second job all pool together, and only the skills your
+// line can reach draw on that pool. The old code pooled the job levels of EVERY class you had
+// ever played against every skill you owned, so points kept piling up with nothing left to
+// spend them on (the "overflow") and a second line could fund the first.
+// The second half of the overflow was the ledger itself: skSpent() added up the skill's LEVEL
+// while ACT.skill charges skCost(level) for each step up (1+2+3+4+5 = 15 points to reach Lv5),
+// so every purchase refunded two thirds of its own cost - maxing nine skills paid 134 points
+// and the ledger only remembered 45. skCostOf() is what the + button actually charged.
+// Per line the numbers are the ones the balance was solved with: 9 / 58 / 107 / 156 points
+// against trees costing 14 / 74 / 134 / 194, so no line can max its own tree. Pinned by
+// skill_sim.js, which runs the real purchase loop and checks the purse against the ledger.
+const skLine=()=>lineOf(S.cls);
+const skCostOf=L=>L*(L+1)/2;   // what the + button has charged you, in total, for level L
+const skEarned=()=>skLine().reduce((a,n)=>a+Math.max(0,(((S.jobs[n]||{}).jl)||1)-1),0);
+const skSpent=()=>SKILLS.reduce((a,s)=>a+(skLine().includes(s.from)?skCostOf(S.sk[s.id]||0):0),0);
+// Clamped at zero: a save written by an older build can be over-spent in the new ledger (it was
+// buying skills with the phantom points), and it should read as "nothing spare" rather than as a
+// negative that breaks the + buttons. The deficit shrinks as the line earns more job levels.
+const skpAvail=()=>Math.max(0,skEarned()-Math.max(0,skSpent()-(S.sk.aid?1:0)));
 const refCost=it=>Math.round(200*((it.r||0)+1)*(1+(it.sec||0)*.5)),refCh=it=>[100,100,100,100,70,60,50,40,30,20][it.r||0];
 const affTxt=a=>`${AL[a.k]} +${a.v}`,cardTxt=c=>`${c.n} (${SU(c.stat)} +${c.v})`,dtier=it=>it.card?GI[it.g]:it.ore?3:it.tier;
 const isBoss=()=>S.lvl===10,fieldName=()=>`${MAPS[S.mp].n} Lv ${S.lvl}`;
@@ -555,7 +661,8 @@ function addJob(x){const j=jobOf(),c=C();if(j.jl>=c.mj)return;j.jx+=x;
   while(j.jl<c.mj&&j.jx>=jneed(j.jl)){j.jx-=jneed(j.jl);j.jl++;log(`JOB LEVEL UP! ${S.cls} Job Lv ${j.jl} (+1 skill point)`,'r3');addFloat(pl.x,3.2,pl.z,'JOB UP!','#8fe9ff',true)}
   if(j.jl>=c.mj)j.jx=0}
 function checkLevel(){while(S.lv<150&&S.exp>=need()){S.exp-=need();S.lv++;const p=3+Math.floor(S.lv/5);S.pts+=p;S.hp=maxHp();
-  log(`LEVEL UP! Lv ${S.lv}. +${p} stat points`,'r4');addFloat(pl.x,3.6,pl.z,'LEVEL UP!','#fff',true)}}
+  log(`LEVEL UP! Lv ${S.lv}. +${p} stat points`,'r4');addFloat(pl.x,3.6,pl.z,'LEVEL UP!','#fff',true)}
+  qRefresh()}
 const qProg=type=>S.q&&S.q.forEach(q=>{if(q.type===type)q.prog=Math.min(q.goal,q.prog+1)});
 function kill(o){const keep=mob;if(o)mob=o;if(!mob||!mobs.includes(mob)){mob=keep;return}
   const g=gx();S.kills++;S.kl++;qProg('kill');if(mob.boss)qProg('boss');
@@ -582,8 +689,21 @@ function equip(id,quiet){const i=S.inv.findIndex(x=>x.id===id);if(i<0)return;con
   S.inv.splice(i,1);const k=ekey(it),old=S.eq[k];if(old)S.inv.push(old);S.eq[k]=it;S.hp=Math.min(S.hp,maxHp());if(!quiet)log('Equipped '+iname(it));selB=null;ui();save()}
 const sellVal=it=>Math.floor(ev(it)*(1+it.tier*2)*2);
 function sell(id){const i=S.inv.findIndex(x=>String(x.id)===String(id));if(i<0)return;const it=S.inv.splice(i,1)[0];S.zeny+=sellVal(it);(it.cards||[]).forEach(c=>S.cards.push(c));if(selB==it.id)selB=null;ui();save()}
-function newQuest(type){const L=S?S.lv:1,g=type==='kill'?12+L*2:type==='loot'?3+Math.floor(L/3):1+Math.floor(L/10),m=S?gx():1,z0=S?zenAt(pw()):1;
-  return{type,goal:g,prog:0,z:Math.max(1,Math.floor(g*QZ[type]*z0*m)),xp:Math.max(1,Math.floor(needAt(L)*QXP[type]*m))}}
+// Quest goal AND reward are solved from the level you are standing at, by the one function the
+// panel and the Claim button both read - so what the quest panel states is exactly what you are
+// paid. The old code froze both at the level the quest was created, so a quest picked up at Lv 1
+// could be handed in at Lv 90 for a Lv 1 pittance, and a save repaired at a different level could
+// show one number and pay another. Every level-up and every map move re-solves the open quests
+// (qRefresh), keeping the progress you have already made.
+function qScale(q){const L=S?S.lv:1;
+  const g=q.type==='kill'?12+L*2:q.type==='loot'?3+Math.floor(L/3):1+Math.floor(L/10);
+  q.goal=Math.max(1,g);if(q.prog>q.goal)q.prog=q.goal;
+  const m=S?gx():1,z0=S?zenAt(pw()):1;
+  q.z=Math.max(1,Math.floor(q.goal*QZ[q.type]*z0*m));
+  q.xp=Math.max(1,Math.floor(needAt(L)*QXP[q.type]*m));
+  q.at=L;return q}
+function newQuest(type){return qScale({type,goal:1,prog:0})}
+function qRefresh(){if(!S||!Array.isArray(S.q))return;(S.q||[]).forEach(q=>{if(q&&q.type&&q.at!==S.lv)qScale(q)})}
 const qTxt=q=>q.type==='kill'?`Defeat ${q.goal} monsters`:q.type==='loot'?`Collect ${q.goal} equipment drops`:`Defeat ${q.goal} boss${q.goal>1?'es':''}`;
 function refine(sl){const it=S.eq[sl];if(!it||(it.r||0)>=10)return;const o=it.slot==='weapon'?'ori':'elu',c=refCost(it);
   if(S.ore[o]<1){log(`You need 1 ${ORE[o]}. (0.4% drop in Level 10 boss maps)`);return}if(S.zeny<c){log('Not enough Zeny.');return}
@@ -616,8 +736,14 @@ function noviceRun(){                         // a real restart: 25 Base Lv, Job
   if(S.lv>25){S.lv=25;S.exp=0}
   if(S.base)delete S.base.Novice;             // nothing carried out of a restart
   freshBuild()}
+// A class you have PLAYED before is always one click away: its Base Lv, EXP, stats, points,
+// job levels, skills and worn gear are all still on it (S.base[n]), so there is nothing to
+// re-earn - you just step back into it. The Novice reset gate and the parent job-level gate
+// only apply to a class you have never played.
+function playedClass(n){return !!(S.base&&S.base[n])}
 function classBlock(n){
   if(n===S.cls)return'Current class';if(n==='Novice')return'';
+  if(playedClass(n))return'';
   for(let x=n;CLASSES[x].par;x=CLASSES[x].par){const p=CLASSES[x].par,pj=S.jobs[p];if(!pj||pj.jl<CLASSES[x].rj)return`Needs ${p} Job Lv ${CLASSES[x].rj}`}
   if(S.cls!=='Novice'&&S.cls!==CLASSES[n].par)return'Reset to Novice first';return''}
 function changeClass(n){if(classBlock(n))return;
@@ -631,7 +757,7 @@ function changeClass(n){if(classBlock(n))return;
   if(w&&w.wt&&!C().wt.includes(w.wt)){S.inv.push(w);S.eq.weapon=null;log('Your weapon cannot be used by this class. Moved to Bag.')}
   S.hp=Math.max(1,Math.min(rec&&rec.hp||maxHp(),maxHp()));
   snapClass();                                 // so you can step away again right away
-  log(rec?`Class: ${n} · back to Base Lv ${S.lv} · Job Lv ${S.jobs[n].jl} · stats and gear restored.`
+  log(rec?`Class: ${n} · back to Base Lv ${S.lv} · Job Lv ${S.jobs[n].jl} · stats, skills and gear restored.`
     :n==='Novice'?`Restarted as Novice · Base Lv ${S.lv} · job levels cleared · ${S.pts} stat points to spend.`
     :`Class: ${n} · Base Lv ${S.lv} · Job Lv 1 · ${S.pts} stat points to spend.`,'r4');
   addFloat(pl.x,3.6,pl.z,n+'!','#fff',true);ui();save()}
@@ -649,15 +775,30 @@ function itemDetail(it){if(it.card)return itemMain(it);const cs=it.cards||[];ret
 const cardSlots=(it,k)=>Array.from({length:it.slots||0},(_,i)=>{const c=(it.cards||[])[i];return c?`<div><small class="r${GI[c.g]}">&#9670; ${cardTxt(c)}</small> <button data-a="unsock" data-v="${k}:${i}">Remove ${200*(c.g+1)}z</button></div>`:'<div><small>&#9671; empty slot</small></div>'}).join('');
 const tnode=n=>{const c=CLASSES[n],pj=S.jobs[n],cur=n===S.cls,blk=classBlock(n);return`<div class="tn ${cur?'cur':blk?(pj?'played':'lock'):'ok'}${selK===n?' pick':''}" data-a="selk" data-v="${n}"><b>${n}</b><small>${pj?`Job ${pj.jl}/${c.mj}`:'Lv '+c.rj+' req'}</small></div>`};
 const V={
-  map(){const F=fieldOf(mapM,mapL),mp=MAPS[mapM],pr=S.prog[mapM];
-    return`<div class="row">${MAPS.map((m,i)=>`<button data-a="selm" data-v="${i}" ${i===mapM?'style="background:#ffe08a"':''}>${m.n}</button>`).join('')}</div>
-    <div class="hd">${mp.n} <small>&middot; ${mp.t} &middot; Rec. ${mp.rec} (not a limit)</small></div>
-    <div class="map-travel"><button data-a="go" ${mapL>pr?'disabled':''}>${S.mp===mapM&&S.lvl===mapL?'You are here':'Travel to '+mp.n+' Lv '+mapL}</button></div>
-    <div class="lvgrid">${Array.from({length:10},(_,i)=>{const l=i+1,lock=l>pr;return`<div class="map-node${lock?' locked':''}${S.mp===mapM&&S.lvl===l?' active':''}${mapL===l?' picked':''}${l===10?' boss-node':''}" data-a="sell_" data-v="${l}"><div>${l===10?'💀':'🌲'}</div><b>Lv ${l}</b><small>${secOf(l)===0?'Novice':secOf(l)===1?'1st job':secOf(l)===2?'2nd job':'Boss'}</small></div>`}).join('')}</div>
-    <div class="mob-card"><div class="hd">&#128269; ${mp.n} Lv ${mapL} &mdash; ${SECN[F.sec]}</div>
-    ${F.mobs.map(m=>`<div><b>${m.n}</b><br><small>Drops: ${m.drops.map(dropTxt).join(', ')}</small><br><small class="r${GI[m.card.g]}">Card: ${m.card.n} (${SU(m.card.stat)} +${cardVal(m.card.g,m.card.stat)}, ${GRADE[m.card.g]}) ${m.cardCh}%</small>${m.ore?'<br><small class="r4">Oridecon 0.4% &middot; Elunium 0.4%</small>':''}</div><hr>`).join('')}
-    ${F.boss?`<div><b class="r3">${F.boss.n} (BOSS)</b><br><small>Drops: ${F.boss.drops.map(dropTxt).join(', ')}</small><br><small class="r4">Card: ${F.boss.card.n} (${SU(F.boss.card.stat)} +${cardVal(3,F.boss.card.stat)}, Legendary) ${F.boss.cardCh}% &middot; Oridecon 0.4% &middot; Elunium 0.4%</small></div>`:`<small>Boss appears at Level 10.</small>`}
-    <div class="sec">🐾 Pet drops</div><small>0.3% per kill, 5% from bosses. Odds on ${mp.n}: ${PW[Math.min(mapM,9)].map((w,i)=>RN[i]+' '+w+'%').join(' &middot; ')}</small></div>`},
+  map(){const F=fieldOf(mapM,mapL),mp=MAPS[mapM],pr=S.prog[mapM],T=gearPool(mapM,mapL);
+    // The map tab is a wide, two-band panel: pick a map on the top band, walk its fields on the
+    // next one, read the drop tables underneath. The field band is sticky, so the level you are
+    // choosing stays on screen while the tables below it scroll - no scrolling down to find it.
+    const groups=[['⚔️','Weapons','weapon'],['🥼','Body','armor'],['🎩','Headgear','head'],['🛡️','Shield','off'],['👖','Legwear','leg'],['💍','Accessory','acc']]
+      .map(([ic,lbl,k])=>[ic,lbl,T.filter(x=>gearSlot(x)===k)]).filter(([,,x])=>x.length);
+    return`<div class="mapband">
+      <div class="mapband-t">Maps <small>&middot; click one to see its fields below</small></div>
+      <div class="mapgrid">${MAPS.map((m,i)=>{const cur=i===mapM,here=i===S.mp,open=S.prog[i]>1;
+        return`<button class="mapcard${cur?' on':''}${here?' here':''}" data-a="selm" data-v="${i}" title="${m.n} - ${m.t}">
+          <b>${m.n}</b><small>${here?'● here':open?m.rec:'farming'}</small></button>`}).join('')}</div></div>
+    <div class="mapband fields">
+      <div class="mapband-t">${mp.n} <small>&middot; ${mp.t} &middot; rec. ${mp.rec} (not a limit) &middot; ${Math.min(pr-1,10)}/10 fields unlocked</small>
+        <button class="go" data-a="go" ${mapL>pr?'disabled':''}>${S.mp===mapM&&S.lvl===mapL?'You are here':'Travel to '+mp.n+' Lv '+mapL}</button></div>
+      <div class="lvgrid">${Array.from({length:10},(_,i)=>{const l=i+1,lock=l>pr;return`<div class="map-node${lock?' locked':''}${S.mp===mapM&&S.lvl===l?' active':''}${mapL===l?' picked':''}${l===10?' boss-node':''}" data-a="sell_" data-v="${l}" title="Lv ${l} - ${SECN[secOf(l)]}"><b>${l===10?'💀 ':''}Lv ${l}</b><small>${secOf(l)===0?'novice':secOf(l)===1?'1st job':secOf(l)===2?'2nd job':'boss'}</small></div>`}).join('')}</div></div>
+    <div class="mapcols">
+      <div class="mob-card"><div class="hd">${mp.n} Lv ${mapL} &mdash; ${SECN[F.sec]}</div>
+        <div class="sec">Gear that drops here</div>
+        ${groups.map(([ic,lbl,list])=>`<div class="slot"><span>${ic} ${lbl}</span><small>${list.map(x=>x.n).join(' &middot; ')}</small></div>`).join('')}</div>
+      <div class="mob-card"><div class="hd">Monsters</div>
+        ${F.mobs.map(m=>`<div><b>${m.n}</b><br><small>Drops: ${m.drops.map(dropTxt).join(', ')}</small><br><small class="r${GI[m.card.g]}">Card: ${m.card.n} (${SU(m.card.stat)} +${cardVal(m.card.g,m.card.stat)}, ${GRADE[m.card.g]}) ${m.cardCh}%</small>${m.ore?'<br><small class="r4">Oridecon 0.4% &middot; Elunium 0.4%</small>':''}</div><hr>`).join('')}</div>
+      <div class="mob-card"><div class="hd">Boss &amp; pets</div>
+        ${F.boss?`<div><b class="r3">${F.boss.n} (BOSS)</b><br><small>Drops any of the ${F.boss.drops.length} items on the left at 1.2% each</small><br><small class="r4">Card: ${F.boss.card.n} (${SU(F.boss.card.stat)} +${cardVal(3,F.boss.card.stat)}, Legendary) ${F.boss.cardCh}% &middot; Oridecon 0.4% &middot; Elunium 0.4%</small></div>`:`<small>Boss appears at Level 10.</small>`}
+        <div class="sec">🐾 Pet drops</div><small>0.3% per kill, 5% from bosses. Odds on ${mp.n}: ${PW[Math.min(mapM,9)].map((w,i)=>RN[i]+' '+w+'%').join(' &middot; ')}</small></div></div>`},
   stats(){const c=C(),b=k=>bon(k)?` <small class="r1">+${bon(k)}</small>`:'';
     return`<div class="hd">${S.cls} &middot; Base Lv ${S.lv} &middot; Job Lv ${jobOf().jl}/${c.mj}</div><div class="hd">Stat points: ${S.pts} <small>(max ${statCap()} each${S.lv<ELITELV?' &middot; '+MAXST+' unlocks at Base Lv '+ELITELV:''} &middot; max Base Lv 150)</small></div>`
     +STATS.map(([k,l,d])=>`<div class="slot"><span><b>${l}</b> ${S.st[k]}${b(k)} <small>(${d})</small></span><span class="bts"><small>${cost(k)}pt</small><button data-a="stat" data-v="${k}" ${S.pts>=cost(k)&&S.st[k]<statCap()?'':'disabled'}>+1</button><button data-a="stat5" data-v="${k}" ${S.pts>=cost(k)&&S.st[k]<statCap()?'':'disabled'}>+5</button></span></div>`).join('')
@@ -671,10 +812,10 @@ const V={
     <div class="mob-card"><div class="hd">${k}</div><small>${c.par?'Before: <b>'+c.par+'</b>':'Starting class'}${c.kids.length?' &middot; Next: <b>'+c.kids.join(', ')+'</b>':''}</small><br>
     <small>${pj?`Saved ${rec?`Base Lv ${rec.lv} &middot; `:''}Job Lv ${pj.jl}/${c.mj}`:'Not played yet'}${rec?' &middot; <b>waiting: your stats and gear are still on it</b>':''} &middot; ATK x${c.atk} &middot; ASPD x${c.aspd} &middot; HP x${c.hp}<br>Weapons: ${c.wt.join(', ')} &middot; Main stat ${SU(c.main)}</small>
     <div class="row" style="margin-top:6px"><button data-a="job" data-v="${k}" ${blk?'disabled':''}>${k===S.cls?'Current class':'Change to '+k}</button>${blk&&k!==S.cls?`<small class="r0">${blk}</small>`:''}</div></div>
-    <small>Switching job restarts the class you load: Base Lv as you are now, job levels cleared, stats refunded &middot; classes you step away from keep their own Base Lv, stats and gear until you come back to them.</small>
+    <small><b>A class you have played before is one click away</b> - its Base Lv, job level, skills, stats and gear are still on it, so there is no Novice reset needed to go back to it. A class you have <i>never</i> played still has to be unlocked from its parent (or from the Novice).</small>
     <button class="full" data-a="job" data-v="Novice" ${S.cls==='Novice'?'disabled':''}>Restart as Novice (Base Lv 25, job levels cleared)</button>`},
   skills(){const line=lineOf(S.cls),av=skpAvail(),sel=SKILLS.find(s=>s.id===selS);
-    return`<div class="hd">Skill points: ${av} <small>(1 per Job Level)</small></div><small>Skill levels cost escalating points (1,2,3,4,5) so no line can max its whole tree &middot; ${SKSLOTS(C().tier)} skill${SKSLOTS(C().tier)>1?'s cast':''} per swing at this job tier &middot; later casts in the same swing land at ${SKFADE.slice(1).map(f=>Math.round(f*100)+'%').join(' / ')} &middot; select a skill to switch its auto-cast off</small>`+line.map(from=>{const ss=SKILLS.filter(s=>s.from===from);return ss.length?`<div class="sec">${from}</div><div class="skg">${ss.map(s=>{const L=lv(s.id);return`<div class="sk${L?'':' off'}${selS===s.id?' sel':''}" style="border-color:${s.col||'#8a6a2c'}${L&&s.type!=='pas'&&skOff(s.id)?';opacity:.45':''}" data-a="ssel" data-v="${s.id}"><div class="si">${L&&s.type!=='pas'&&skOff(s.id)?'⏸':s.type==='pas'?'📘':s.type==='to'?'⚖️':s.type==='heal'?'💚':'💥'}</div><small>${s.n}</small><div><b>${L}</b>/${s.max}</div><button data-a="skill" data-v="${s.id}" title="${L<s.max?'level '+(L+1)+' costs '+skCost(L+1)+' points':'max level'}" ${av>=skCost(L+1)&&L<s.max?'':'disabled'}>${L<s.max?'+'+skCost(L+1):'+'}</button></div>`}).join('')}</div>`:''}).join('')
+    return`<div class="hd">Skill points: ${av} <small>(${skEarned()} earned on this line, ${Math.max(0,skSpent()-(S.sk.aid?1:0))} spent)</small></div><small>Skill levels cost escalating points (1,2,3,4,5) so no line can max its whole tree &middot; ${SKSLOTS(C().tier)} skill${SKSLOTS(C().tier)>1?'s cast':''} per swing at this job tier &middot; later casts in the same swing land at ${SKFADE.slice(1).map(f=>Math.round(f*100)+'%').join(' / ')} &middot; select a skill to switch its auto-cast off</small>`+line.map(from=>{const ss=SKILLS.filter(s=>s.from===from);return ss.length?`<div class="sec">${from}</div><div class="skg">${ss.map(s=>{const L=lv(s.id);return`<div class="sk${L?'':' off'}${selS===s.id?' sel':''}" style="border-color:${s.col||'#8a6a2c'}${L&&s.type!=='pas'&&skOff(s.id)?';opacity:.45':''}" data-a="ssel" data-v="${s.id}"><div class="si">${L&&s.type!=='pas'&&skOff(s.id)?'⏸':s.type==='pas'?'📘':s.type==='to'?'⚖️':s.type==='heal'?'💚':'💥'}</div><small>${s.n}</small><div><b>${L}</b>/${s.max}</div><button data-a="skill" data-v="${s.id}" title="${L<s.max?'level '+(L+1)+' costs '+skCost(L+1)+' points':'max level'}" ${av>=skCost(L+1)&&L<s.max?'':'disabled'}>${L<s.max?'+'+skCost(L+1):'+'}</button></div>`}).join('')}</div>`:''}).join('')
     +(sel?`<div class="mob-card" style="margin-top:8px"><b>${sel.n}</b> <small>${sel.type==='pas'?'Passive':sel.type==='heal'?'Auto-heal':sel.type==='to'?'Tradeoff (auto-cast)':'Active (auto-cast)'}${sel.rng?' &middot; RANGED':''}${sel.aoe?' &middot; AREA':''}${sel.dot?' &middot; DOT':''}${sel.stun?' &middot; STUN':''}${sel.chain?' &middot; CHAIN':''}</small><br><small>${sel.d(Math.max(1,lv(sel.id)))}</small>${lv(sel.id)&&lv(sel.id)<sel.max?`<br><small>Next: ${sel.d(lv(sel.id)+1)}</small>`:''}${sel.type!=='pas'&&lv(sel.id)?`<div class="row" style="margin-top:6px"><button data-a="sktog" data-v="${sel.id}">${skOff(sel.id)?'▶ Turn auto-cast ON':'⏸ Turn auto-cast OFF'}</button></div>`:''}</div>`:'')
     +`<button class="full" data-a="rskill">Reset skills (${rcost()}z)</button>`},
   bag0(){const sel=selB&&S.inv.find(x=>String(x.id)===String(selB));const n=Math.max(30,Math.ceil(S.inv.length/6)*6);const inv=[...S.inv].sort((a,b)=>b.tier-a.tier||ev(b)-ev(a));
@@ -683,7 +824,8 @@ const V={
     <div class="mob-card" style="margin-top:8px">${sel?itemDetail(sel)+`<div class="row" style="margin-top:6px"><button data-a="equip" data-v="${sel.id}" ${canUse(sel)?'':'disabled'}>Equip</button><button data-a="sell" data-v="${sel.id}">Sell ${sellVal(sel)}z</button></div>`:'<small>Click an item to see its stats. Hover for a quick tooltip.</small>'}</div>`},
   equip(){const c=C(),sel=S.eq[selE],pos={head:'grid-column:2;grid-row:1',weapon:'grid-column:1;grid-row:2',armor:'grid-column:2;grid-row:2',off:'grid-column:3;grid-row:2',acc1:'grid-column:1;grid-row:3',leg:'grid-column:2;grid-row:3',acc2:'grid-column:3;grid-row:3'};
     return`<div class="doll">${EQK.map(([k,l,ic])=>{const e=S.eq[k];return`<div class="cell b${e?dtier(e):0}${selE===k?' sel':''}" style="${pos[k]}" data-a="seleq" data-v="${k}" ${e?`data-tip="${e.id}"`:''}>${e?icon(e)+(e.r?`<i class="rf">+${e.r}</i>`:''):`<span style="opacity:.3">${ic}</span>`}<i class="rf" style="left:2px;right:auto;top:2px;bottom:auto;color:#fff;background:#3b2a1add;font-size:9px;font-style:normal">${l}</i></div>`}).join('')}</div>`
-    +`<div class="mob-card">${sel?itemMain(sel)+cardSlots(sel,selE)+insertUI(sel)+refineUI(sel,selE)+`<div class="row" style="margin-top:6px"><button data-a="unequip" data-v="${selE}">Unequip</button></div>`:'<small>Select a slot to inspect it. Remove cards here (costs Zeny).</small>'}</div>`
+    +(eqPick?equipChooser(eqPick):'')
+    +`<div class="mob-card">${sel?itemMain(sel)+cardSlots(sel,selE)+insertUI(sel)+refineUI(sel,selE)+`<div class="row" style="margin-top:6px"><button data-a="unequip" data-v="${selE}">Unequip</button></div>`:'<small>Click any slot above to choose what to wear there. Select one to inspect it, remove cards or refine.</small>'}</div>`
     +`<small>Weapons: ${c.wt.join(', ')} &middot; ${canShield()?'Shield allowed':'No shield'}${dualOn()?' &middot; <b>Dual-wield: daggers/katars in both hands</b>':''}</small>`},
   cards(){const g={};S.cards.forEach(c=>(g[c.n]=g[c.n]||[]).push(c));const ks=Object.keys(g),sel=g[selC]?g[selC][0]:null;
     return`<div class="grid">${ks.map(n=>`<div class="cell b${GI[g[n][0].g]}${n===selC?' sel':''}" data-a="selc" data-v="${n}" data-tip="${g[n][0].id}">🃏<i class="rf">x${g[n].length}</i></div>`).join('')||'<small>No cards yet. Every monster drops its own card at a low chance.</small>'}</div>
@@ -708,7 +850,28 @@ function dualOn(){return S.cls==='Assassin'||S.cls==='Assassin Cross'}
 function dualOk(it){return dualOn()&&(it.wt==='dagger'||it.wt==='katar')}
 function ekey(it){if(it.slot==='acc')return S.eq.acc1&&!S.eq.acc2?'acc2':'acc1';
   if(it.slot==='weapon'&&dualOk(it)&&S.eq.weapon)return(!S.eq.off||S.eq.off.slot!=='weapon'||ev(S.eq.off)<=ev(S.eq.weapon))?'off':'weapon';return it.slot}
-const tabs=[];let selP=null,selS=null,selE='weapon',qOpen=true;const sub={status:'stats',bag:'bag'};
+const tabs=[];let selP=null,selS=null,selE='weapon',qOpen=true,eqPick=null;const sub={status:'stats',bag:'bag'};
+// ---------- equipping from a slot ----------
+// Clicking a slot in the Equipment panel opens the bag right there, already filtered to what
+// that slot will take for THIS class: weapon type and class restrictions, shields only for the
+// classes that may hold one, accessories in either accessory slot, off-hand daggers/katars for
+// the dual-wielders. Nothing else is offered, so there is no way to pick an unusable item.
+function slotAccepts(k,it){if(!it||it.card||it.ore||!S.inv.includes(it))return false;
+  if(!canUse(it))return false;
+  if(k==='acc1'||k==='acc2')return it.slot==='acc';
+  if(k==='off')return it.slot==='off'?canShield():it.slot==='weapon'&&dualOk(it);
+  return it.slot===k}
+function equipChooser(k){
+  const cur=S.eq[k],list=S.inv.filter(it=>slotAccepts(k,it)).sort((a,b)=>ev(b)-ev(a));
+  const nm=EQK.find(x=>x[0]===k)||[,k,SLOTS.weapon.ic];
+  return`<div class="mob-card chooser"><div class="hd">${nm[2]} ${nm[1]} <small>&middot; ${list.length} ${nm[1].toLowerCase()} in your bag</small><button class="x" data-a="eqclose">&#10005;</button></div>
+  <small>${cur?`Now worn: <b class="r${cur.tier}">${iname(cur)}</b> (${SLOTS[cur.slot].stat} +${ev(cur)})`:'Nothing worn in this slot.'} &middot; your class may use ${C().wt.join(', ')}${k==='off'?(canShield()?' + shields':' + off-hand daggers/katars'):''}</small>
+  ${list.length?list.map(it=>{const d=ev(it)-ev(cur||{val:0});return`<div class="slot"><span class="cell b${dtier(it)}" style="width:30px;height:30px;font-size:16px;flex:none">${icon(it)}</span><span style="flex:1;min-width:0"><b class="r${it.tier}">${iname(it)}</b><br><small>${RAR[it.tier].n} ${SLOTS[it.slot].label}${it.wt?' ('+it.wt+')':''} &middot; ${SLOTS[it.slot].stat} +${ev(it)}${(it.cards||[]).length?' &middot; '+it.cards.length+' card(s)':''} ${d>0?`<b class="r1">(+${d} better)</b>`:d<0?`<b class="r0">(${d})</b>`:'<b class="r0">(same)</b>'}</small></span><button data-a="eqpick" data-v="${it.id}:${k}">Equip</button></div>`}).join(''):'<small>Nothing in your bag fits this slot.</small>'}
+  <div class="row" style="margin-top:6px">${cur?`<button data-a="unequip" data-v="${k}">Unequip ${nm[1].toLowerCase()}</button>`:''}<button data-a="eqopen" data-v="${k}">Open the Bag tab</button></div></div>`}
+function equipIn(k,id){const it=S.inv.find(x=>String(x.id)===String(id));
+  if(!it)return;if(!slotAccepts(k,it)){log('Your class cannot use that there.');return}
+  const old=S.eq[k];S.eq[k]=it;S.inv.splice(S.inv.indexOf(it),1);if(old)S.inv.push(old);
+  S.hp=Math.min(S.hp,maxHp());log('Equipped '+iname(it)+' ('+EQK.find(x=>x[0]===k)[1].toLowerCase()+').');ui();save()}
 const SUBS={status:[['stats','Stats'],['equip','Equipment']],bag:[['bag','Bag'],['cards','Cards']]};
 const subBar=t=>`<div class="atabs">${SUBS[t].map(([k,n])=>`<button data-a="sub" data-v="${t}:${k}" class="${sub[t]===k?'on':''}">${n}</button>`).join('')}</div>`;
 V.status=()=>subBar('status')+V[sub.status]();V.bag=()=>subBar('bag')+V[sub.bag==='bag'?'bag0':sub.bag]();
@@ -733,10 +896,10 @@ function renderWin(){
   $('dock').innerHTML=Object.entries(TABS).filter(([k])=>k!=='gm'||S.gm).map(([k,[ic,n,key]])=>`<button class="ib${tabs.includes(k)?' on':''}" data-t="${k}" title="${n} (${key})">${ic}<span class="k">${key}</span>${dot(k)?'<i class="dot"></i>':''}</button>`).join('');
   renderQ();const host=$('wins');host.style.display=tabs.length?'flex':'none';
   const old={};host.querySelectorAll('[data-win]').forEach(e=>old[e.dataset.win]=e.querySelector('.wbody').scrollTop);
-  host.innerHTML=tabs.map(k=>`<div class="win wp" data-win="${k}"><div class="title"><span>${TABS[k][1]}</span><button data-x="${k}">&#10005;</button></div><div class="body wbody">${V[k]()}</div></div>`).join('');
+  host.innerHTML=tabs.map(k=>`<div class="win wp${k==='map'?' wide':''}" data-win="${k}"><div class="title"><span>${TABS[k][1]}</span><button data-x="${k}">&#10005;</button></div><div class="body wbody">${V[k]()}</div></div>`).join('');
   host.querySelectorAll('[data-win]').forEach(e=>{e.querySelector('.wbody').scrollTop=e.dataset.win==='log'?1e6:(old[e.dataset.win]||0)})}
-const MAX_TABS=3;const openTab=k=>{if(k==='gm'&&!S.gm)return;const i=tabs.indexOf(k);if(i>=0)tabs.splice(i,1);else{if(tabs.length>=MAX_TABS)tabs.shift();tabs.push(k);if(k==='map'){mapM=S.mp;mapL=S.lvl}}renderWin()};
-const gotoField=(m,l)=>{S.mp=m;S.lvl=l;S.kl=0;mobs=[];mob=null;respawn=.3;pend=[];ui();save()};
+const MAX_TABS=3;const openTab=k=>{if(k==='gm'&&!S.gm)return;if(k!=='status')eqPick=null;const i=tabs.indexOf(k);if(i>=0)tabs.splice(i,1);else{if(tabs.length>=MAX_TABS)tabs.shift();tabs.push(k);if(k==='map'){mapM=S.mp;mapL=S.lvl}}renderWin()};
+const gotoField=(m,l)=>{S.mp=m;S.lvl=l;S.kl=0;mobs=[];mob=null;respawn=.3;pend=[];qRefresh();ui();save()};
 const ACT={
   selm:v=>{mapM=+v;mapL=Math.min(mapL,Math.max(1,S.prog[mapM]));renderWin()},sell_:v=>{mapL=+v;renderWin()},go:()=>{if(mapL<=S.prog[mapM]){gotoField(mapM,mapL);log(`Traveled to ${fieldName()}.`)}},
   stat:k=>{if(S.pts>=cost(k)&&S.st[k]<statCap()){S.pts-=cost(k);S.st[k]++;S.hp=Math.min(S.hp,maxHp());ui();save()}},
@@ -749,13 +912,16 @@ const ACT={
     S.sk[id]=nx;ui();save()},
   rskill:()=>{if(S.zeny<rcost())return log('Not enough Zeny to reset skills.');S.zeny-=rcost();S.sk={aid:1};S.skOff={};log('Skills reset; every skill auto-casts again.');ui();save()},
   selb:v=>{selB=v;renderWin()},equip:id=>equip(+id),sell:id=>sell(id),sellbelow:v=>{S.inv.filter(i=>i.tier<=+v).slice().forEach(i=>sell(i.id))},
+  eqpick:v=>{const[id,k]=v.split(':');equipIn(k,id)},
+  eqclose:()=>{eqPick=null;renderWin()},
+  eqopen:k=>{eqPick=null;sub.bag='bag';if(!tabs.includes('bag')){if(tabs.length>=MAX_TABS)tabs.shift();tabs.push('bag')}selB=S.eq[k]?S.eq[k].id:null;renderWin()},
   selc:v=>{selC=v;renderWin()},
   sock:v=>{const[id,k]=v.split(':'),i=S.cards.findIndex(c=>String(c.id)===id),e=S.eq[k];if(i<0||!e||(e.cards||[]).length>=(e.slots||0))return;if(CFIT[S.cards[i].stat]!==grp(e)){log('That card cannot be fitted into this type of equipment.');return}e.cards=e.cards||[];e.cards.push(S.cards.splice(i,1)[0]);S.hp=Math.min(S.hp,maxHp());ui();save()},
   unsock:v=>{const[k,i]=v.split(':'),e=S.eq[k];if(!e)return;const c=e.cards[+i],p=200*(c.g+1);if(S.zeny<p)return log('Not enough Zeny to remove the card.');S.zeny-=p;e.cards.splice(+i,1);S.cards.push(c);S.hp=Math.min(S.hp,maxHp());ui();save()},
   sellcard:id=>{const i=S.cards.findIndex(c=>String(c.id)===id);if(i<0)return;const c=S.cards.splice(i,1)[0];S.zeny+=c.v*150;ui();save()},
   refine:k=>refine(k),sub:v=>{const[t,k]=v.split(':');sub[t]=k;renderWin()},selp:v=>{selP=+v;renderWin()},
   pon:id=>{const p=gp(id);if(!p)return;if(p.on)p.on=false;else if(S.pets.filter(x=>x.on).length<3)p.on=true;else log('Only 3 pets can fight at once. Remove one first.');ui();save()},
-  psk:v=>{const[id,g]=v.split(':'),p=gp(id);if(!p)return;const a=(p.sk||[1,2,3]).slice(),i=a.indexOf(+g);if(i>=0)a.splice(i,1);else a.push(+g);p.sk=a;ui();save()},ssel:v=>{selS=v;renderWin()},seleq:v=>{selE=v;renderWin()},
+  psk:v=>{const[id,g]=v.split(':'),p=gp(id);if(!p)return;const a=(p.sk||[1,2,3]).slice(),i=a.indexOf(+g);if(i>=0)a.splice(i,1);else a.push(+g);p.sk=a;ui();save()},ssel:v=>{selS=v;renderWin()},seleq:v=>{selE=v;eqPick=v;renderWin()},
   sktog:id=>{if(!S.skOff)S.skOff={};const s=SKILLS.find(x=>x.id===id);if(!s)return;
     if(S.skOff[id])delete S.skOff[id];else S.skOff[id]=1;
     log(s.n+': auto-cast '+(S.skOff[id]?'OFF - you will not use it':'ON')+'.',S.skOff[id]?'r0':'r3');ui();save()},
@@ -771,7 +937,7 @@ const ACT={
   proll:id=>{const p=gp(id);if(!p||p.roll||rollingSet.has(p.id))return;rollOnce(p,false,g=>{p.roll=g;log(`Mutation roll: Grade ${g} (x${MUT[g]})`,g>=4?'r4':'r0');ui();save()})},pauto:id=>{const p=gp(id);if(!p)return;if(autoSet.has(p.id)){autoSet.delete(p.id);ui();return}if(p.roll||rollingSet.has(p.id))return;if((p.sk||[1,2,3]).length>=6){log('Un-skip at least one grade to auto-roll.');return}autoSet.add(p.id);autoRoll(p)},
   pkeep:id=>{const p=gp(id);if(p){p.mut=p.roll;p.roll=0;ui();save()}},pdisc:id=>{const p=gp(id);if(p){p.roll=0;ui();save()}},
   prel:id=>{const p=gp(id);if(!p)return;const z=Math.floor(EGG*.3);ask(`Release ${PETS[p.sp].n}? You get ${z}z back.`,()=>{S.pets=S.pets.filter(x=>x!==p);autoSet.delete(p.id);S.zeny+=z;ui();save()})},
-  claim:i=>{const q=S.q[+i];if(q&&q.prog>=q.goal){S.zeny+=(q.z||0);S.exp+=(q.xp||0);log(`Quest complete! +${(q.z||0).toLocaleString()}z, +${(q.xp||0).toLocaleString()} EXP`,'r3');S.q[+i]=newQuest(q.type);checkLevel();ui();save()}},
+  claim:i=>{const q=S.q[+i];if(q&&q.prog>=q.goal){qScale(q);S.zeny+=(q.z||0);S.exp+=(q.xp||0);log(`Quest complete! +${(q.z||0).toLocaleString()}z, +${(q.xp||0).toLocaleString()} EXP`,'r3');S.q[+i]=newQuest(q.type);checkLevel();ui();save()}},
   auto:()=>{S.auto=S.auto===false;ui()},adv:()=>{S.adv=S.adv===false;ui()},logout:()=>logout(),
   hair:v=>{S.hair=(((S.hair|0)+(+v||1))%19+19)%19;heroKey='';ui();save()},
   sex:v=>{S.sex=v==='f'?'f':v==='m'?'m':(S.sex==='f'?'m':'f');heroKey='';log(`Appearance: ${S.sex==='f'?'female':'male'}.`);ui();save()},
@@ -929,8 +1095,36 @@ const townObjs=scene.children.slice(town0),deco=new THREE.Group();scene.add(deco
 // Prontera is scenery, not a maze: the whole set moves back behind the far edge so you run
 // up an open avenue with the city on the skyline instead of fighting inside the cathedral.
 const TZ=-18;townObjs.forEach(o=>{o.position.z+=TZ});road.position.z+=TZ;
-// [kind,main colour,trunk colour]; kinds 0 round tree,1 conifer,2 tall pole,3 cactus,4 crystal,5 slab
-const TH=[0,[0,0x2e9d6a,0x6b4a2a],[5,0x7a7a99,0x555577],[3,0x4a9a4a,0],[1,0x2f7a3a,0x5a3a1a],[0,0x2fb59a,0x7a5a3a],[2,0x7ac060,0x4a8a3a],[0,0xf2a0c0,0x6a4a3a],[4,0xaee0ff,0],[4,0xb04aff,0x330044]];
+// [kind,main colour,trunk colour,extras]; kinds 0 round tree,1 conifer,2 tall pole,3 cactus,
+// 4 crystal,5 slab,6 bamboo cluster,7 bush,8 boulder.
+// `extras` is what makes each map a different PLACE rather than a different colour:
+//   w   - standing water: [colour, spots, radiusX, radiusZ]; the arena's ground and water are
+//         separate layers so maps mix and match them (a pond, a lagoon, a frozen lake, lava).
+//   mix - extra prop kinds that also scatter here (bamboo, bushes, boulders).
+//   n   - scatter count; `sz` scales the scatter.
+const ROCK=0x8d8b82;   // boulder grey; tinted per map below
+const TH=[0,
+ [0,0x2e9d6a,0x6b4a2a,{w:[0x4aa3df,1,9,5],mix:[7,8],n:80,sz:1}],                      // Izlude: harbour pond
+ [5,0x7a7a99,0x555577,{w:[0x2f6fd6,1,7,4],mix:[4,8],n:75,sz:1}],                      // Geffen: rune pond + crystals
+ [3,0x4a9a4a,0,{w:[0x3fb5a0,1,6,3],mix:[5,8],n:70,sz:1.05}],                          // Morroc: desert oasis + slabs
+ [1,0x2f7a3a,0x5a3a1a,{w:[0x4aa3df,2,8,4],mix:[6,7,8],n:120,sz:.95}],                 // Payon: forest + pond + bamboo
+ [0,0x2fb59a,0x7a5a3a,{w:[0x2fa8d0,2,11,6],mix:[8],n:80,sz:1}],                       // Comodo: lagoon
+ [2,0x7ac060,0x4a8a3a,{w:[0x55a8e0,1,10,3],mix:[6,7,8],n:95,sz:1}],                   // Louyang: river + bamboo
+ [0,0xf2a0c0,0x6a4a3a,{w:[0x7fd0e8,1,7,4],mix:[6,7],n:90,sz:1}],                      // Amatsu: shrine pond
+ [4,0xaee0ff,0,{w:[0xbfe8ff,2,12,6],mix:[8],n:70,sz:1.05}],                           // Niflheim: frozen lake
+ [4,0xb04aff,0x330044,{w:[0xff5a1a,2,9,4],mix:[5,8],n:80,sz:1.1}]];                   // Abyss: lava pools
+function water(G,col,spots,rx,rz,seed){const c=new THREE.Color(col);
+  for(let i=0;i<spots;i++){
+    // pools sit well outside the running lane (|x| > BX_+2), so they are scenery, never an obstacle
+    const side=(seed()>.5?1:-1),x=side*(BX_+3.5+rx+seed()*6),z=Z0+2+seed()*((Z1-Z0)-4);
+    const sh=new THREE.Mesh(new THREE.CircleGeometry(1,22),M(0x9a8a6a));   // shore ring
+    sh.rotation.x=-Math.PI/2;sh.position.set(x,.014,z);sh.scale.set(rx+1.1,rz+1.1,1);sh.receiveShadow=true;G.add(sh);
+    const w=new THREE.Mesh(new THREE.CircleGeometry(1,22),M(col));
+    w.rotation.x=-Math.PI/2;w.position.set(x,.02,z);w.scale.set(rx,rz,1);w.receiveShadow=true;G.add(w);
+    const gl=new THREE.Mesh(new THREE.CircleGeometry(.55,14),M(col));      // a lighter inner pool
+    gl.material.transparent=true;gl.material.opacity=.5;gl.material.color.lerp(new THREE.Color(0xffffff),.35);
+    gl.rotation.x=-Math.PI/2;gl.position.set(x+rx*.25,.025,z+rz*.2);gl.scale.set(rx,rz,1);G.add(gl);
+  }}
 // One big map-specific structure. Landmarks are what make a field read as a place instead of
 // a flat coloured plane: they sit outside the play width on both sides and frame the avenue
 // the player runs up, and each kind matches the biome the scatter props already use.
@@ -941,25 +1135,273 @@ function landmark(G,k,c1,c2,r){
   else if(k===3){mk(G,CN(2.9,2.2),c1,0,1.1,0);mk(G,CY(.18,.24,3),c2,0,2.6,0);mk(G,BX(3.4,.25,3.4),c2,0,.12,0)}
   else if(k===4){const o=mk(G,CN(1.5,6+r()*3),c1,0,3.4,0);o.material.emissive.setHex(c1).multiplyScalar(.55);
     const q=mk(G,CN(.9,3.4),c1,1.6,1.7,.6);q.material.emissive.setHex(c1).multiplyScalar(.4)}
-  else{mk(G,BX(3.6,5.2,1.4),c1,0,2.6,0);mk(G,BX(4.2,.5,1.9),c2,0,5.3,0);mk(G,BX(1,1.6,.4),c2,0,1,.85)}
+  else if(k===5){mk(G,BX(3.6,5.2,1.4),c1,0,2.6,0);mk(G,BX(4.2,.5,1.9),c2,0,5.3,0);mk(G,BX(1,1.6,.4),c2,0,1,.85)}
+  else if(k===6){for(let j=0;j<5;j++){const h=4.5+r()*3,ox=(j%3-1)*.55,oz=(j<2?-.5:.5);mk(G,CY(.16,.2,h),j%2?c2:c1,ox,h/2,oz);
+    mk(G,CN(.5,1.6),c1,ox,h+.6,oz)}mk(G,CY(.5,.7,.4),0x6b4a2a,0,.2,0)}
+  else if(k===7){mk(G,SP(1.1),c1,0,.9,0);mk(G,SP(.75),c1,.8,.7,.3);mk(G,SP(.6),c1,-.7,.6,-.3);mk(G,CY(.1,.14,.6),c2,0,.35,0)}
+  else{mk(G,BX(2.2,1.6,1.8),c1,0,.8,0);mk(G,BX(1.5,1.1,1.3),c1,1.1,1.5,.4);mk(G,BX(1.2,.9,1.1),c2,-.9,1.3,-.5)}
 }
 function buildDeco(m){while(deco.children.length)deco.remove(deco.children[0]);townObjs.forEach(o=>o.visible=m===0);road.visible=m===0;if(!m)return;
-  let q=m*977+13;const r=()=>(q=(q*16807)%2147483647)/2147483647,[k,c1,c2]=TH[m];
+  // a kit design dresses this map: paint its ground, water, bridge and props and stop here
+  if(KIT.ok&&buildKit(m))return;
+  if(KIT.ground)KIT.ground.visible=false;
+  let q=m*977+13;const r=()=>(q=(q*16807)%2147483647)/2147483647,[k,c1,c2,ex]=TH[m],E=ex||{};
+  if(E.w)water(deco,E.w[0],E.w[1],E.w[2],E.w[3],r);
   // a worn track running the length of the avenue, so the run up the field reads as a road
   const tr=new THREE.Mesh(new THREE.PlaneGeometry(BX_*1.2,(Z1-Z0)+10),M(0xd8cdb4));
   tr.rotation.x=-Math.PI/2;tr.position.set(0,.012,(Z0+Z1)/2-1);tr.receiveShadow=true;
   tr.material.transparent=true;tr.material.opacity=.45;deco.add(tr);
-  for(let i=0;i<7;i++)for(const sg of[-1,1]){const G=new THREE.Group();landmark(G,k,c1,c2,r);
+  for(let i=0;i<7;i++)for(const sg of[-1,1]){const G=new THREE.Group();landmark(G,k,c1,c2,r);G.userData={kind:k,landmark:1};
     G.position.set(sg*(BX_+4+r()*12),0,Z0+1+i*((Z1-Z0)/6)+r()*2);
     G.scale.setScalar(.9+r()*.8);G.rotation.y=r()*6;deco.add(G)}
-  for(let i=0;i<85;i++){const x=(r()-.5)*52,z=(r()-.5)*46-5;if(Math.abs(x)<BX_+1.5&&z>Z0-1.5&&z<Z1+1.5)continue;const G=new THREE.Group(),sc=.7+r()*.9;
-    if(k===0){mk(G,CY(.15,.22,1.3),c2,0,.65,0);mk(G,SP(.9),c1,0,2,0)}
-    else if(k===1){mk(G,CY(.12,.2,1),c2,0,.5,0);mk(G,CN(1,2.4),c1,0,2.1,0)}
-    else if(k===2){for(let j=0;j<3;j++)mk(G,CY(.07,.09,3.5+j),j%2?c1:c2,j*.35-.3,(3.5+j)/2,j*.2)}
-    else if(k===3){mk(G,CY(.25,.28,2),c1,0,1,0);mk(G,CY(.14,.14,.8),c1,.4,1.3,0);mk(G,CY(.14,.14,.7),c1,-.4,1,0)}
-    else if(k===4){const o=mk(G,CN(.4,2.2+r()*2),c1,0,1.3,0);o.material.emissive.setHex(c1).multiplyScalar(.5);if(c2){const p=mk(G,CN(.2,1),c1,.5,.5,.2);p.material.emissive.setHex(c1).multiplyScalar(.4)}}
-    else{mk(G,BX(1,1.6+r(),.3),c1,0,.9,0);mk(G,BX(1.2,.2,.5),c2,0,.1,0)}
+  const c2b=c2||c1, palette=[[k,c1,c2]].concat((E.mix||[]).map(x=>[x,x===8?ROCK:c1,c2b]));
+  for(let i=0;i<(E.n||85);i++){const x=(r()-.5)*52,z=(r()-.5)*46-5;if(Math.abs(x)<BX_+1.5&&z>Z0-1.5&&z<Z1+1.5)continue;const G=new THREE.Group(),sc=(.7+r()*.9)*(E.sz||1);
+    const[pk,pc1,pc2]=palette[(r()*palette.length)|0];G.userData={kind:pk};
+    if(pk===0){mk(G,CY(.15,.22,1.3),pc2,0,.65,0);mk(G,SP(.9),pc1,0,2,0)}
+    else if(pk===1){mk(G,CY(.12,.2,1),pc2,0,.5,0);mk(G,CN(1,2.4),pc1,0,2.1,0)}
+    else if(pk===2){for(let j=0;j<3;j++)mk(G,CY(.07,.09,3.5+j),j%2?pc1:pc2,j*.35-.3,(3.5+j)/2,j*.2)}
+    else if(pk===3){mk(G,CY(.25,.28,2),pc1,0,1,0);mk(G,CY(.14,.14,.8),pc1,.4,1.3,0);mk(G,CY(.14,.14,.7),pc1,-.4,1,0)}
+    else if(pk===4){const o=mk(G,CN(.4,2.2+r()*2),pc1,0,1.3,0);o.material.emissive.setHex(pc1).multiplyScalar(.5);if(pc2){const p=mk(G,CN(.2,1),pc1,.5,.5,.2);p.material.emissive.setHex(pc1).multiplyScalar(.4)}}
+    else if(pk===6){for(let j=0;j<4;j++){const h=4+r()*3;mk(G,CY(.13,.16,h),j%2?pc1:pc2,(j-1.5)*.4,h/2,(j%2?.35:-.35));mk(G,CN(.4,1.3),pc1,(j-1.5)*.4,h+.5,(j%2?.35:-.35))}}
+    else if(pk===7){mk(G,SP(.8),pc1,0,.7,0);mk(G,SP(.55),pc1,.6,.5,.2)}
+    else if(pk===8){mk(G,BX(1.4,1+r(),1.2),pc1,0,.6,0);mk(G,BX(1,.7,.9),pc2||pc1,.9,1,.3)}
+    else{mk(G,BX(1,1.6+r(),.3),pc1,0,.9,0);mk(G,BX(1.2,.2,.5),pc2,0,.1,0)}
     G.position.set(x,0,z);G.scale.setScalar(sc);G.rotation.y=r()*6;deco.add(G)}}
+
+// ----- The attached map kit: terrains, water, bridges and props -------------------------
+// assets/kit/ro-spritesheet.png + .json is the owner's modular atlas (8 terrain tiles, 7
+// environment billboards: ancient trees, a tall cluster, a sapling, a bright bush, a cliff
+// crag, a mossy boulder, a river stone post). assets/kit/ro-map-payon.json and
+// ro-map-morocc.json are the two attached level designs: 48x32 grids of typed cells, each with
+// its own corner heights, plus the props the design places on top of them. Morocc's atlas is
+// painted at load by the attachment's own generator (assets/kit/morocc-atlas.js).
+//
+// Everything here is a CROP of that art. No tile, tree or rock in this layer is drawn, traced,
+// recoloured or substituted - if a crop is missing, the map falls back to the v13 scenery.
+//
+// The arena is untouched: a design dresses the ground (its tiles are painted into one texture)
+// and its props are billboards. Props a design puts inside the running lane are moved to the
+// lane edge and kept - the field must read as the design without scenery blocking the fight.
+//
+// Payon is not the attached 48x32 grid any more: the owner rejected that layout (a huge diagonal
+// lake, trees the size of the player) and asked for Payon to look like RO's Payon Forest. Its
+// field is now laid out in code from the RO recipe - see `payonPlan` below - out of the same
+// kit tiles and billboards. Morocc still uses its attached design.
+const KIT={ok:0,png:null,man:null,des:{},mor:null,srcMan:{},tex:new Map(),water:[],wt:0,ground:null,built:null};
+const KIT_S=.85,KIT_ZC=(Z0+Z1)/2,KIT_PX=2048,KIT_FAR=90;
+// Prop size. The kit ships its own character: 80px per frame. This game's hero stands 2.9 world
+// units, so **one atlas pixel is 2.9/80 units** and a prop is (its crop height) x KIT_PK x its
+// factor. The factors are RO Payon forest proportions - the big trees tower over the player
+// (3.5x), a sapling is about player height, a bush is knee height. Tune the numbers here; the
+// builders only read them. Anything not listed is factor 1.
+const KIT_PK=2.9/80;
+const KIT_PS={tree_ancient_large:.9,tree_ancient_variant:.9,tree_tall_cluster:.85,tree_sapling:.55,
+  tree_bush_bright:.34,rock_cliff_crag:1,rock_boulder_mossy:.6,river_stone_post:.62,
+  palm_giant:.7,palm_tall:.75,palm_double:.72,cactus_flower:.75,cactus_small:.65,
+  ruin_pillar:.8,ruin_column_fallen:.8,ruin_stump:.7,ruin_curb:.6,desert_bone:.5};
+function kitPropScale(type,scale){return KIT_PK*(KIT_PS[type]||1)*(scale||1)}
+// which arena map wears which design/layout, and what a design's cell types are called in the atlas
+const KIT_MAP={
+  3:{src:'morocc',design:'morocc',tile:t=>({sand:'sand',sand_dark:'sand_dark',ruin_cobble:'ruin_cobble',cliff:'cliff'}[t]||null)},
+  4:{src:'payon', layout:'payon'}};
+const KIT_TILE={grass:'grass_olive',grass_dark:'grass_forest',dirt:'dirt_path',cliff:'cliff_rock',bank:'riverbank_wall'};
+// cell types the kit itself draws in its animated pass / as a deck, not as ground texture
+const KIT_WET={water:1},KIT_DECK={bridge:1},KIT_SKIP={sky:1};
+function kitFetch(){
+  // The kit is an enhancement: no fetch, no atlas, no design - the game keeps its own scenery.
+  if(typeof fetch!=='function'||typeof Image!=='function')return;
+  try{
+    const j=n=>fetch('assets/kit/'+n).then(r=>r&&r.ok?r.json():null).catch(()=>null);
+    Promise.all([j('ro-spritesheet.json'),j('ro-map-payon.json'),j('ro-map-morocc.json')]).then(([man,pay,mor])=>{
+      if(!man||!pay)return; KIT.man=man; KIT.des.payon=pay; if(mor)KIT.des.morocc=mor;
+      const img=new Image();
+      img.onload=()=>{KIT.png=img;KIT.ok=1;buildDeco(S.mp)};
+      img.onerror=()=>{};
+      img.src='assets/kit/ro-spritesheet.png';}).catch(()=>{});
+  }catch(e){}
+}
+// the atlas a design crops from ("src" above), normalised: {img,tiles,sprites}
+function kitAtlas(name){
+  if(KIT.srcMan[name])return KIT.srcMan[name];
+  let a=null;
+  if(name==='morocc'){try{if(!KIT.mor)KIT.mor=window.MOROCC_KIT.atlas();a={img:KIT.mor.canvas,tiles:KIT.mor.manifest.tiles,sprites:KIT.mor.manifest.sprites}}catch(e){}}
+  else if(name==='payon'&&KIT.png&&KIT.man)a={img:KIT.png,tiles:KIT.man.tiles,sprites:KIT.man.sprites};
+  if(a)KIT.srcMan[name]=a;
+  return a;
+}
+function kitCrop(src,kind,name,flip){
+  const key=src+':'+kind+':'+name+(flip?'@f':''); if(KIT.tex.has(key))return KIT.tex.get(key);
+  const a=kitAtlas(src); if(!a)return null;
+  const e=(kind==='tile'?a.tiles:a.sprites)[name]; if(!e)return null;
+  const cv=document.createElement('canvas');cv.width=e.w;cv.height=e.h;
+  const g=cv.getContext('2d');g.imageSmoothingEnabled=false;
+  if(e.canvas)g.drawImage(e.canvas,0,0);
+  else if(flip){g.translate(e.w,0);g.scale(-1,1);g.drawImage(a.img,e.x,e.y,e.w,e.h,0,0,e.w,e.h)}
+  else g.drawImage(a.img,e.x,e.y,e.w,e.h,0,0,e.w,e.h);
+  const t=new THREE.CanvasTexture(cv);
+  if(kind==='tile'){ // 128x128 tiles: mipmapped and repeating, so the ground and water can be tiled
+    t.magFilter=THREE.NearestFilter;t.minFilter=THREE.LinearMipMapLinearFilter;t.wrapS=t.wrapT=THREE.RepeatWrapping;t.anisotropy=4;
+  }else{ // billboards keep the game's own pixel-art filtering (crops are not power of two)
+    t.magFilter=t.minFilter=THREE.NearestFilter;t.generateMipmaps=false;
+  }
+  KIT.tex.set(key,t);return t;
+}
+// Where a design cell or a design prop sits in the arena. The design is anchored on the point
+// the map is built around (Payon's bridge, Morocc's plaza) and centred on the lane.
+function kitAnchor(d){return d.bridge?{x:d.bridge.x,y:d.bridge.y}:{x:d.meta.gridWidth/2,y:d.meta.gridHeight/2}}
+function kitX(d,g){return (g-kitAnchor(d).x)*KIT_S}
+function kitZ(d,g){return (g-kitAnchor(d).y)*KIT_S+KIT_ZC}
+// ----- Payon: the RO Payon Forest recipe, laid out in code ---------------------------------
+// A wide brown dirt road that wanders up the middle, a creek across it with a plank bridge, tree
+// lines that tower over the player on both banks (with saplings and bushes under them), and
+// rocky mountain edges - Payon Forest is a mountainous bamboo forest, and its fields read as a
+// dirt path cut through big dark trees. Layout is code; every pixel is still a crop.
+const PAY={road:3.6,creek:[-7.8,-5.0],field:[-26,26,-23,11],cell:.8,treeNear:5.9,treeFar:13.5};
+function payRoadR(z){return PAY.road/2+Math.sin(z*.19)*.45+Math.sin(z*.05)*.3}
+function payonPlan(spec){
+  const cells=[],water=[],props=[],a=kitAtlas(spec.src);
+  const[x0,x1,z0,z1]=PAY.field,st=PAY.cell,cz=PAY.creek,mid=(cz[0]+cz[1])/2;
+  let q=7;const rnd=()=>(q=(q*16807)%2147483647)/2147483647;
+  for(let z=z0;z<z1;z+=st){
+    for(let x=x0;x<x1;x+=st){
+      if(z<z0+5||Math.abs(x)>20){cells.push({x,z,tile:'cliff_rock'});continue}   // the mountain wall
+      if(z>cz[0]-st*2&&z<cz[1]+st*2){cells.push({x,z,tile:'riverbank_wall'});continue}   // creek banks
+      if(Math.abs(x)<payRoadR(z)){cells.push({x,z,tile:'dirt_path'});continue}   // the road
+      const i=Math.round((x-x0)/st),j=Math.round((z-z0)/st);                    // grass variation
+      if((i*7+j*13)%9===0)cells.push({x,z,tile:'grass_olive'});
+    }
+    if(z>cz[0]&&z<cz[1])water.push({x:0,z:z+st/2,w:x1-x0,h:st,cx:(x1-x0)/st,cy:1});
+  }
+  const deck={x:0,z:mid,w:payRoadR(mid)*2+2.2,l:(cz[1]-cz[0])+2.4,a:0};
+  // tree lines: dense, just off the lane on both sides, taller than the player by design
+  const big=['tree_ancient_large','tree_ancient_variant','tree_ancient_large','tree_tall_cluster'];
+  for(const s of[-1,1]){
+    for(let z=z0+2;z<z1-2;z+=2.1+rnd()*1.2){
+      if(Math.abs(z-mid)<st*2.6)continue;                              // keep the crossing open
+      props.push({x:s*(PAY.treeNear+rnd()*2.6),z:z+rnd()*.6,type:big[(rnd()*big.length)|0],
+        src:spec.src,scale:.84+rnd()*.32,flip:rnd()>.5,nudged:0});
+      if(rnd()>.45)props.push({x:s*(PAY.treeNear+1.2+rnd()*5),z:z+rnd()*1.6,type:'tree_sapling',
+        src:spec.src,scale:.8+rnd()*.5,flip:rnd()>.5,nudged:0});
+      if(rnd()>.4)props.push({x:s*(PAY.treeNear+.6+rnd()*5.5),z:z+rnd()*1.8,type:'tree_bush_bright',
+        src:spec.src,scale:.8+rnd()*.6,flip:rnd()>.5,nudged:0});
+    }
+    for(let i=0;i<4;i++)props.push({x:s*(PAY.treeFar+rnd()*8),z:z0+3+rnd()*(z1-z0-6),type:'rock_cliff_crag',
+      src:spec.src,scale:.9+rnd()*.35,flip:rnd()>.5,nudged:0});
+    for(let i=0;i<5;i++)props.push({x:s*(PAY.treeNear+.4+rnd()*7),z:z0+3+rnd()*(z1-z0-6),type:'tree_bush_bright',
+      src:spec.src,scale:.7+rnd()*.5,flip:rnd()>.5,nudged:0});
+    // a stone post on each bank, well clear of the lane, marking the crossing
+    props.push({x:s*(PAY.treeNear+.4),z:mid-(cz[1]-cz[0])/2-1.1,type:'river_stone_post',
+      src:spec.src,scale:.85,flip:s>0,nudged:0});
+  }
+  props.sort((p,n)=>p.z-n.z);
+  return {src:spec.src,design:'payon',cells,water,props,deck,base:'grass_forest',base2:'grass_olive'};
+}
+// ----- pure plan: design + arena -> everything the painters need (no canvas, no THREE) -----
+function kitPlan(m){
+  const spec=KIT_MAP[m]; if(!spec)return null;
+  if(spec.layout==='payon')return payonPlan(spec);
+  const d=KIT.des[spec.design]; if(!d)return null;
+  const W=d.meta.gridWidth,H=d.meta.gridHeight,cells=[],water=[],props=[];
+  for(let gy=0;gy<H;gy++){
+    let run=null;
+    for(let gx=0;gx<W;gx++){
+      const t=d.cells[gy][gx].type;
+      if(KIT_WET[t]){if(!run)run=[gx,gx];else run[1]=gx;continue}
+      if(run){water.push(kitRect(d,run[0],run[1],gy));run=null}
+      if(KIT_SKIP[t]||KIT_DECK[t])continue;
+      const tile=spec.tile(t); if(tile)cells.push({x:kitX(d,gx),z:kitZ(d,gy),tile});
+    }
+    if(run)water.push(kitRect(d,run[0],run[1],gy));
+  }
+  // the bridge deck, straight from the design (Payon's is rotated a touch, as drawn)
+  const deck=d.bridge?{x:kitX(d,d.bridge.x),z:kitZ(d,d.bridge.y),w:d.bridge.width*KIT_S,l:d.bridge.length*KIT_S,a:d.bridge.angle||0}:null;
+  const lane=BX_+.9,a=kitAtlas(spec.src);
+  for(const sp of d.sprites){
+    // an atlas that does not carry a billboard the design asks for is a gap in the kit, not a
+    // licence to substitute art: the placement is reported and skipped, never replaced.
+    const missing=(a&&a.sprites&&!a.sprites[sp.type])?1:0;
+    let x=kitX(d,sp.x),z=kitZ(d,sp.y),nudged=0;
+    // scenery never stands in the running lane: the design's own props are moved to the lane
+    // edge (their side and depth are kept) rather than dropped, so the field still reads right
+    if(Math.abs(x)<lane){x=(x<0?-1:1)*lane;nudged=1}
+    props.push({x,z,type:sp.type,src:spec.src,scale:sp.scale||1,flip:!!sp.flip,nudged,missing});
+  }
+  props.sort((a,b)=>a.z-b.z);                       // far to near, so billboards overlap right
+  return {src:spec.src,design:spec.design,cells,water,props,deck,
+          base:spec.design==='morocc'?'sand':'grass_forest',
+          base2:spec.design==='morocc'?'sand_dark':'grass_olive'};
+}
+function kitRect(d,gx0,gx1,gy){
+  const x0=kitX(d,gx0),x1=kitX(d,gx1+1),z0=kitZ(d,gy),z1=kitZ(d,gy+1);
+  return {x:(x0+x1)/2,z:(z0+z1)/2,w:x1-x0,h:z1-z0,cx:gx1-gx0+1,cy:1};
+}
+// ----- painters -------------------------------------------------------------------------
+function kitGroundTex(plan){
+  const cv=document.createElement('canvas');cv.width=cv.height=KIT_PX;
+  const g=cv.getContext('2d'),step=KIT_S,cellPx=step*KIT_PX/KIT_FAR,px=KIT_PX/KIT_FAR,half=KIT_FAR/2;
+  const at=(x,z)=>[(x+half)*px,(z+half)*px];
+  // a scaled-down copy of a crop, for use as a repeating pattern (one fill call for the field)
+  const stamp=(tile,n)=>{const t=kitCrop(plan.src,'tile',tile);if(!t)return null;
+    const sc=document.createElement('canvas');sc.width=sc.height=n;const sg=sc.getContext('2d');
+    sg.imageSmoothingEnabled=true;sg.drawImage(t.image,0,0,n,n);return sc};
+  const base=(kitAtlas(plan.src)&&kitAtlas(plan.src).tiles[plan.base])?plan.base:plan.base2;
+  const bg=stamp(base,Math.max(8,Math.round(cellPx*4)));
+  if(bg){g.imageSmoothingEnabled=true;g.fillStyle=g.createPattern(bg,'repeat');g.fillRect(0,0,KIT_PX,KIT_PX)}
+  const drawn={};
+  for(const c of plan.cells){
+    if(!drawn[c.tile])drawn[c.tile]=kitCrop(plan.src,'tile',c.tile);
+    const t=drawn[c.tile];if(!t)continue;
+    const[x,z]=at(c.x,c.z);
+    g.drawImage(t.image,x-.3,z-.3,cellPx+.6,cellPx+.6);   // +.6 so neighbours do not seam
+  }
+  const t=new THREE.CanvasTexture(cv);t.minFilter=THREE.LinearMipMapLinearFilter;t.anisotropy=4;return t;
+}
+function kitWaterMeshes(plan,root){
+  const f=[kitCrop(plan.src,'tile','water_frame_0'),kitCrop(plan.src,'tile','water_frame_1')];
+  for(const r of plan.water){
+    const m=new THREE.Mesh(new THREE.PlaneGeometry(r.w,r.h),new THREE.MeshLambertMaterial({map:null}));
+    m.rotation.x=-Math.PI/2;m.position.set(r.x,.02,r.z);m.receiveShadow=true;root.add(m);
+    const set=f.filter(Boolean);
+    if(set.length){const maps=set.map(tx=>{const c=tx.clone();c.needsUpdate=true;c.repeat.set(r.cx,r.cy);return c});
+      m.material.map=maps[0];m.material.needsUpdate=true;KIT.water.push({m,maps})}
+  }
+}
+function kitDeckMesh(plan,root){
+  if(!plan.deck)return;
+  const t=kitCrop(plan.src,'tile','bridge_planks');if(!t)return;
+  const map=t.clone();map.needsUpdate=true;map.repeat.set(plan.deck.w/KIT_S,plan.deck.l/KIT_S);
+  const m=new THREE.Mesh(new THREE.PlaneGeometry(plan.deck.w,plan.deck.l),new THREE.MeshLambertMaterial({map}));
+  m.rotation.x=-Math.PI/2;m.rotation.z=plan.deck.a;m.position.set(plan.deck.x,.05,plan.deck.z);m.receiveShadow=true;root.add(m);
+}
+function kitPropMeshes(plan,root){
+  let placed=0;const missing={};
+  for(const p of plan.props){
+    const a=kitAtlas(plan.src);if(!a)continue;
+    const e=a.sprites[p.type];if(!e){missing[p.type]=(missing[p.type]||0)+1;continue}
+    const tex=kitCrop(plan.src,'sprite',p.type,p.flip);if(!tex){missing[p.type]=(missing[p.type]||0)+1;continue}
+    const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:tex,transparent:true,alphaTest:.18}));
+    const k=kitPropScale(p.type,p.scale),w=e.w*k,h=e.h*k;
+    sp.center.set(e.anchorX===undefined?.5:e.anchorX/e.w,1-(e.anchorY===undefined?e.h:e.anchorY)/e.h);
+    sp.scale.set(w,h,1);sp.position.set(p.x,0,p.z);root.add(sp);placed++;
+  }
+  return {placed,missing};
+}
+function kitTick(dt){
+  if(!KIT.water.length)return;
+  KIT.wt+=dt;if(KIT.wt<.55)return;KIT.wt=0;
+  for(const w of KIT.water){if(w.maps.length<2)continue;w.m.material.map=w.m.material.map===w.maps[0]?w.maps[1]:w.maps[0]}
+}
+function buildKit(m){
+  const plan=kitPlan(m);if(!plan)return null;
+  if(!kitAtlas(plan.src))return null;      // no atlas for this design (yet) -> v13 scenery stands in
+  if(!KIT.ground){KIT.ground=new THREE.Mesh(new THREE.PlaneGeometry(KIT_FAR,KIT_FAR),new THREE.MeshLambertMaterial({map:null}));KIT.ground.rotation.x=-Math.PI/2;KIT.ground.position.y=.004;KIT.ground.receiveShadow=true;scene.add(KIT.ground)}
+  KIT.ground.visible=true;KIT.ground.material.map=kitGroundTex(plan);KIT.ground.material.needsUpdate=true;
+  KIT.water=[];kitWaterMeshes(plan,deco);kitDeckMesh(plan,deco);
+  const r=kitPropMeshes(plan,deco);KIT.built={map:m,design:plan.design,placed:r.placed,missing:r.missing};
+  for(const n in r.missing)console.warn('kit: '+plan.design+' design asks for "'+n+'" but the atlas does not carry it - '+r.missing[n]+' placement(s) skipped, nothing substituted');
+  return plan;
+}
+
 // ----- Ragnarok-style 8-dir sprites (billboards in the 3D map) -----
 const SPR_W=64,SPR_H=96,SPR_DIRS=8,SPR_IDLE=2,SPR_WALK=4,SPR_ATK=4,SPR_ROWS=SPR_IDLE+SPR_WALK+SPR_ATK;
 const hx=n=>'#'+('00000'+(n>>>0).toString(16)).slice(-6);
@@ -1225,8 +1667,8 @@ function draw(){
   const pt=bn?'BOSS FIGHT':`Monsters ${Math.min(S.kl,MPS)}/${MPS}${isBoss()?' → Boss':''}`;if(pt!==lastProg){lastProg=pt;prog.textContent=pt}
 }
 let last=performance.now();
-function loop(now){const dt=Math.min(.1,(now-last)/1000);last=now;try{for(let i=0;i<speed;i++)update(dt);draw()}catch(e){if(!loop.e){loop.e=1;console.error(e);log('Error: '+e.message,'r0')}}requestAnimationFrame(loop)}
-resize();respawn=.3;requestAnimationFrame(loop);setInterval(save,5000);
+function loop(now){const dt=Math.min(.1,(now-last)/1000);last=now;try{for(let i=0;i<speed;i++){update(dt);kitTick(dt)}draw()}catch(e){if(!loop.e){loop.e=1;console.error(e);log('Error: '+e.message,'r0')}}requestAnimationFrame(loop)}
+resize();respawn=.3;requestAnimationFrame(loop);setInterval(save,5000);kitFetch();
 </script>
 </body>
 </html>

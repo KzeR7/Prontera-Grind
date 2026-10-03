@@ -35,6 +35,7 @@ ASSETS = os.path.join(REPO, 'assets')
 EXISTING = os.path.join(ASSETS, 'thief_sprites_data.js')
 
 CELL = 96                      # body cell size in the atlas
+HEAD_SEAT = 3                  # head anchor = stub top row + this (see anchors_for_body)
 FEET_Y = 90                    # baseline: figure bottom sits here in every cell
 FRAMES = [1, 8, 6]             # idle, walk, attack
 
@@ -170,38 +171,168 @@ def pasted(fig, scale):
     return fig
 
 
-def anchor_for(cell, band=4, y_bias=3):
-    """Head anchor for one body cell, measured off the body itself.
+def _runs(row):
+    """[(start, end)] of the contiguous True runs in one row of a boolean mask."""
+    out, s = [], None
+    for i, v in enumerate(row):
+        if v and s is None:
+            s = i
+        elif not v and s is not None:
+            out.append((s, i - 1))
+            s = None
+    if s is not None:
+        out.append((s, len(row) - 1))
+    return out
 
-    x = centre of mass of the alpha pixels in the top `band` rows, i.e. the cut
-    where the neck meets the head; y = that top edge + y_bias.  Measuring every
-    cell separately is what keeps the head welded to the shoulders through an
-    animation - the anchor follows the body's own lean instead of a fixed offset.
 
-    Checked against the shipped pack: this rule reproduces the hand-placed anchors
-    of thief / assassin / assassin cross exactly on all 3 anims x 8 dirs x frames
-    cells.  A span midpoint or a wider band drifts up to 16 px on attack poses.
+def neck_for(cell, band=3, persist=3, min_width=8):
+    """-> (neck_top_y, neck_centre_x) for one body cell, or None.
+
+    The neck is the first row of the body's alpha that is wide *and stays wide*,
+    scanning down the middle of the figure.  `min_width` is what keeps the answer
+    off the outstretched arms and weapon: a raised sword or a thrown punch is a
+    thin run (6-12 px) where the shoulders/neck are 18-30 px.
+
+    The old rule took the topmost row with any pixel at all, so an attack pose
+    whose blade or fist reaches above the shoulders pulled the head up with it -
+    that is the head "wobbling out from the body" while attacking.
     """
-    a = np.array(cell.getchannel('A'))
-    ys = np.where(a.max(axis=1) > 8)[0]
+    a = np.array(cell.getchannel('A')) > 8
+    H, W = a.shape
+    for y in range(H):
+        if not a[y].any():
+            continue
+        ok = True
+        for k in range(persist):
+            if y + k >= H:
+                ok = False
+                break
+            rr = _runs(a[y + k])
+            if not rr or max(e - s + 1 for s, e in rr) < min_width:
+                ok = False
+                break
+        if ok:
+            sub = a[y:y + 4, :]
+            _, xs = np.where(sub)
+            cx = float(xs.mean()) if len(xs) else W / 2.0
+            return y, cx
+    ys = np.where(a.max(axis=1))[0]
     if not len(ys):
         return None
-    top = int(ys[0])
-    rows = a[top:top + band, :]
-    yy, xs = np.where(rows > 8)
-    cx = int(round(xs.mean())) if len(xs) else CELL // 2
-    return [cx, top + y_bias]
+    return int(ys[0]), W / 2.0
+
+
+def torso_frame(cell):
+    """-> (centre x, reference y) for the body's lower half (hips + legs).
+
+    The head is welded to the *torso*, not to the arms, so the seat is measured
+    once per direction against the hips and then only follows the hips through the
+    animation.  The lower half is the steadiest part of the silhouette: feet stay
+    planted while swords and fists swing past the face.
+    """
+    a = np.array(cell.getchannel('A')) > 8
+    ys = np.where(a.max(axis=1))[0]
+    if not len(ys):
+        return None
+    top, bot = int(ys[0]), int(ys[-1])
+    lo = top + int(round((bot - top) * 0.55))
+    sub = a[lo:bot + 1, :]
+    yy, xs = np.where(sub)
+    if not len(xs):
+        return None
+    return float(np.median(xs)), lo + float(np.mean(yy))
+
+
+def head_stub(cell, min_width=18, max_height=16):
+    """-> (top row, centre x) of the body's own hair/neck stub, or None.
+
+    The seat offset from that top row is HEAD_SEAT below.
+
+    The sheets ship a headless body whose hair stub sits on top of the shoulders.
+    The stub is NARROW compared with the shoulders and only a handful of rows tall,
+    which is what separates it from an outstretched arm (narrow but long), a raised
+    sword (narrow and long) or the shoulders themselves (wide).  It is the only part
+    of the silhouette that stays put while a weapon swings past the face.
+    """
+    a = np.array(cell.getchannel('A')) > 8
+    ys = np.where(a.max(axis=1))[0]
+    if not len(ys):
+        return None
+    top, H = int(ys[0]), a.shape[0]
+    if not a[top].any() or max(e - s + 1 for s, e in _runs(a[top])) > min_width:
+        return None
+    y2 = top
+    while y2 + 1 < H and a[y2 + 1].any() and max(e - s + 1 for s, e in _runs(a[y2 + 1])) <= min_width:
+        y2 += 1
+    if (y2 - top) > max_height:
+        return None
+    xs = np.where(a[top])[0]
+    return top, float(np.median(xs))
+
+
+def anchors_for_body(atlas):
+    """anchors[3][8][frames] for a finished body atlas (rebuilt and kept alike).
+
+    Seat rule (2026-10-03, replacing the "topmost pixel" rule):
+
+      * a frame's own hair stub is the seat, and the head is drawn with its bottom
+        edge just on top of it - the head rides the real body through the animation;
+      * stubs that are outliers for their direction (a blade tip that happens to be
+        the topmost thing in the cell) are rejected, and those frames use the same
+        stub-to-hips offset as the rest of the direction;
+      * x is the stub's own centre - never the whole silhouette's centre of mass -
+        so a swing cannot drag the head sideways off the shoulders.
+
+    The old rule took the topmost pixel of the entire silhouette and its centre of
+    mass, so a raised sword or fist lifted the head clear off the neck (up to 16 px
+    on attack frames) and slid it sideways with the weapon.  That is the reported
+    "head wobbles away from the body while attacking".
+    """
+    out = [[[] for _ in range(8)] for _ in range(3)]
+    for d in range(8):
+        cells, stubs = {}, {}
+        for a in range(3):
+            for f in range(FRAMES[a]):
+                cells[(a, f)] = atlas.crop((f * CELL, (a * 8 + d) * CELL,
+                                            (f + 1) * CELL, (a * 8 + d + 1) * CELL))
+                stubs[(a, f)] = head_stub(cells[(a, f)])
+        got = [v for v in stubs.values() if v]
+        if not got:
+            for a in range(3):
+                for f in range(FRAMES[a]):
+                    out[a][d].append([CELL // 2, 24])
+            continue
+        med_x = float(np.median([v[1] for v in got]))
+        med_y = float(np.median([v[0] for v in got]))
+        # drop blade tips: a real stub is near the direction's own head position
+        keep = {k: v for k, v in stubs.items()
+                if v and abs(v[1] - med_x) <= 14 and abs(v[0] - med_y) <= 20}
+        if not keep:
+            keep = {k: v for k, v in stubs.items() if v}
+        offs = []
+        for k, v in keep.items():
+            tf = torso_frame(cells[k])
+            if tf:
+                offs.append(v[0] - tf[1])
+        fallback = float(np.median(offs)) if offs else -26.0
+        for a in range(3):
+            for f in range(FRAMES[a]):
+                st = keep.get((a, f))
+                if st:
+                    # +3 is measured, not guessed: it reproduces the hand-placed anchors
+                    # of the shipped thief / assassin pack on every embedded frame
+                    out[a][d].append([int(round(st[1])), int(st[0]) + HEAD_SEAT])
+                    continue
+                tf = torso_frame(cells[(a, f)])
+                cx = tf[0] if tf else CELL / 2.0
+                hy = tf[1] if tf else 64.0
+                out[a][d].append([int(round(cx)), int(round(hy + fallback))])
+    return out
 
 
 def measure_anchors(atlas):
-    """anchors[3][8][frames] for a finished body atlas (used for kept bodies too)."""
-    out = [[[] for _ in range(8)] for _ in range(3)]
-    for a in range(3):
-        for d in range(8):
-            for f in range(FRAMES[a]):
-                cell = atlas.crop((f * CELL, (a * 8 + d) * CELL, (f + 1) * CELL, (a * 8 + d + 1) * CELL))
-                out[a][d].append(anchor_for(cell) or [CELL // 2, 24])
-    return out
+    """Back-compat name used by the kept-body path."""
+    return anchors_for_body(atlas)
 
 
 def layout_problem(rows):
@@ -271,8 +402,6 @@ def build_body(im, rows):
             y = FEET_Y - fig2.height
             cell.alpha_composite(fig2, (max(0, x), max(0, y)))
         atlas.alpha_composite(cell, (f * CELL, (anim * 8 + d) * CELL))
-        an = anchor_for(cell)
-        anchors[anim][d].append(an if an else [CELL // 2, 24])
         return fig is not None
 
     borrowed = []
@@ -316,6 +445,9 @@ def build_body(im, rows):
             if not place(2, d, f, fig):
                 missing.append(('attack', d, f))
         srcs[(2, d)] = ('row%d' % ri, idx, 'mirror' if d in MIRROR else '')
+    # anchors come from the finished atlas: the seat rule needs the whole
+    # direction (idle pose included) before it can place any single frame
+    anchors = anchors_for_body(atlas)
     return atlas, anchors, missing, borrowed
 
 

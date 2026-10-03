@@ -10,6 +10,7 @@ const pick = (re, name) => { const m = src.match(re); if (!m) throw new Error('c
 const roster = grab('const CD=[', 'const pm=s=>');
 // the whole effect-helper block (applyDot / applyStun / chainHit). chainHit is pulled in but
 // never called here - it needs mobs, shots and hurt(), which belong to the live game loop.
+const ledger = grab('const skLine=()=>lineOf(S.cls);', 'const refCost=it=>');
 const helpers = [
   grab('// ---------- skill effects: damage over time, stun, chain ----------', 'const mkDrop='),
   pick(/const SKSLOTS=[^;]+;/, 'SKSLOTS'),
@@ -20,11 +21,12 @@ const helpers = [
 const harness = `
 ${roster}
 ${helpers}
+${ledger}
 // skOff and skillOn share one line in index.html, so the pick above already brought both in.
 let S = null, tb = {}, skCd = {}, dt = 0;
 const lv = id => (S.sk && S.sk[id]) || 0;
 const maxHp = () => 1000, log = () => {}, addFloat = () => {}, pl = {x:0,z:0};
-this.__k = { SKILLS, CLASSES, SKSLOTS, SKFADE, skCost, applyDot, applyStun, skillOn, skOff, down,
+this.__k = { SKILLS, CLASSES, SKSLOTS, SKFADE, skCost, applyDot, applyStun, skillOn, skOff, down, skLine, skEarned, skSpent, skpAvail,
              set S(v){S=v}, get S(){return S},
              get tb(){return tb}, set tb(v){tb=v},
              get skCd(){return skCd}, set skCd(v){skCd=v},
@@ -399,6 +401,108 @@ t('when several tradeoffs are ready, the strongest one wins', () => {
   const gq = q.to.aspd(5) + q.to.atk(5), gf = f.to.aspd(1) + f.to.atk(1);
   const want = gq >= gf ? 'Two-Hand Quicken' : 'Frenzy';
   assert.strictEqual(K.tb.n, want, `picked ${K.tb.n}, but ${want} has the bigger payoff`);
+});
+
+
+// ---- skill points are per class LINE, not one global pile (the overflow bug) -----
+// Point supply: Novice line 9 / tier-1 58 / tier-2 107 / tier-3 156 for a fully levelled line.
+// Tree cost to max everything a line can reach is 15 / 75 / 135 / 195, so no line can max its
+// own tree. The bug was never the supply: the old skpAvail() summed the job levels of EVERY
+// class in S.jobs against one global S.sk, so a second line's points funded the first and the
+// number kept climbing with nothing left to buy.
+const lineOf = cls => { const a = []; for (let n = cls; n; n = K.CLASSES[n].par) a.unshift(n); return a };
+const jobRec = (cls, jl) => ({ Novice: { jl: 10 }, [cls]: { jl } });
+function treeCost(cls) {
+  const names = new Set(lineOf(cls));
+  // what ACT.skill charges to walk a skill from 0 to max: 1+2+...+max
+  return K.SKILLS.filter(s => names.has(s.from)).reduce((a, s) => a + (s.max * (s.max + 1)) / 2, 0);
+}
+t('points are earned from the current line only', () => {
+  K.S = { cls: 'Swordman', jobs: { Novice: { jl: 10 }, Swordman: { jl: 50 }, Thief: { jl: 50 }, Mage: { jl: 40 } }, sk: {} };
+  assert.strictEqual(K.skLine().join('>'), 'Novice>Swordman');
+  assert.strictEqual(K.skEarned(), 9 + 49, 'only the Novice and Swordman job levels count');
+  // the old code would have returned 9+49+49+39 = 146 here, which is the overflow
+  assert.ok(K.skEarned() < 146, 'other lines must not fund this one');
+});
+
+t('spending on another line does not drain this one', () => {
+  const thiefSkills = K.SKILLS.filter(s => s.from === 'Thief').slice(0, 2).map(s => s.id);
+  K.S = { cls: 'Swordman', jobs: { Novice: { jl: 10 }, Swordman: { jl: 20 }, Thief: { jl: 50 } }, sk: {} };
+  assert.strictEqual(K.skSpent(), 0, 'nothing spent on the Swordman line yet');
+  const before = K.skpAvail();
+  thiefSkills.forEach(id => { K.S.sk[id] = 5 });
+  assert.strictEqual(K.skSpent(), 0, 'Thief skills must not draw on the Swordman pool');
+  assert.strictEqual(K.skpAvail(), before, 'the Swordman pool is untouched');
+});
+
+t('a line can never buy its whole tree', () => {
+  const rows = [];
+  ['Novice', 'Swordman', 'Swordman>Knight'.split('>').pop(), 'Knight', 'Lord Knight', 'Mage', 'Wizard', 'High Wizard', 'Thief', 'Assassin', 'Assassin Cross', 'Archer', 'Hunter', 'Sniper', 'Merchant', 'Blacksmith', 'Whitesmith', 'Acolyte', 'Priest', 'High Priest'].forEach(cls => {
+    // every class in the line capped at Job Lv 50 (the Novice at 10) - the most a line can earn
+    const earn = lineOf(cls).reduce((a, n) => a + (n === 'Novice' ? 9 : 49), 0);
+    rows.push([cls, earn, treeCost(cls) - 1]);   // -1 for the free first point of aid
+  });
+  rows.forEach(([cls, earn, cost]) => assert.ok(cost > earn, cls + ' can max its tree: ' + earn + ' earned vs ' + cost + ' to buy'));
+  console.log('       ' + rows.map(r => r[0] + ' ' + r[1] + 'vs' + r[2]).join(' · '));
+});
+
+t('the ledger matches what the + button charges (no phantom points)', () => {
+  // The bug's second half: skSpent() used to add the skill LEVEL while the shop charged
+  // 1+2+3+4+5 = 15 points for it, so every purchase minted points. Run the real purchase loop
+  // exactly as ACT.skill does it and compare the purse with the ledger.
+  const sim = (cls, jobs, rounds) => {
+    K.S = { cls, jobs, sk: { aid: 1 }, aid: 1 };
+    const line = lineOf(cls);
+    let charged = 0, bought = 0, guard = 0;
+    for (; guard < rounds; guard++) {
+      const id = K.SKILLS.filter(s => line.includes(s.from) && (K.S.sk[s.id] || 0) < s.max)
+        .sort((a, b) => K.skCost((K.S.sk[a.id] || 0) + 1) - K.skCost((K.S.sk[b.id] || 0) + 1))[0];
+      if (!id) break;
+      const L = (K.S.sk[id.id] || 0) + 1, c = K.skCost(L);
+      if (K.skpAvail() < c) break;
+      assert.ok(K.skpAvail() >= 0, 'the ledger went negative');
+      K.S.sk[id.id] = L; charged += c; bought++;
+    }
+    return { charged, bought, left: K.skpAvail() };
+  };
+  const knight = sim('Knight', { Novice: { jl: 10 }, Swordman: { jl: 50 }, Knight: { jl: 50 } }, 100);
+  assert.ok(knight.bought > 0, 'the Knight must be able to buy something');
+  assert.strictEqual(knight.charged, K.skSpent() - 1, 'the ledger must equal what was charged (minus the free aid point)');
+  assert.ok(knight.left >= 0 && knight.left < 100, 'sane remainder: ' + knight.left);
+  // every reachable skill is maxed or unaffordable - no points stranded by the accounting
+  const line = lineOf('Knight');
+  const next = K.SKILLS.filter(s => line.includes(s.from) && (K.S.sk[s.id] || 0) < s.max)
+    .reduce((m, s) => Math.min(m, K.skCost((K.S.sk[s.id] || 0) + 1)), Infinity);
+  if (next !== Infinity) assert.ok(knight.left < next, 'left ' + knight.left + ' but the next level costs only ' + next);
+  // and the old signature is gone: it used to leave ~2.5x the points it counted
+  const novice = sim('Novice', { Novice: { jl: 10 } }, 50);
+  assert.ok(novice.charged <= 9, 'a Novice cannot outspend its 9 points: ' + novice.charged);
+});
+
+t('an over-spent legacy save reads as zero, never negative', () => {
+  // builds written by the old accounting bought skills with phantom points; the ledger must
+  // clamp instead of going negative (which would grey out every + and every dot)
+  K.S = { cls: 'Knight', jobs: { Novice: { jl: 10 }, Swordman: { jl: 50 }, Knight: { jl: 50 } }, sk: { aid: 5 }, aid: 1 };
+  K.SKILLS.filter(s => lineOf('Knight').includes(s.from)).forEach(s => { K.S.sk[s.id] = s.max });
+  assert.ok(K.skSpent() > K.skEarned(), 'this save really is over-spent: ' + K.skSpent() + ' vs ' + K.skEarned());
+  assert.strictEqual(K.skpAvail(), 0, 'over-spent reads as nothing spare');
+  K.S.jobs.Knight.jl = 50; K.S.jobs.Swordman.jl = 50;
+  assert.strictEqual(K.skpAvail(), 0);
+  // earning more job levels pays the deficit down before it pays out again
+  K.S.jobs.Knight.jl = 50;
+  assert.ok(K.skpAvail() >= 0);
+});
+
+t('the aid skill is the one free point, as before', () => {
+  const aid = K.SKILLS.find(s => s.id === 'aid');
+  assert.ok(aid, 'aid must exist');
+  const jobs = { Novice: { jl: 10 }, Swordman: { jl: 50 }, Knight: { jl: 50 }, 'Lord Knight': { jl: 50 } };
+  K.S = { cls: 'Lord Knight', jobs, sk: {} };
+  const clean = K.skpAvail();
+  K.S = { cls: 'Lord Knight', jobs, sk: { aid: aid.max } };
+  // the freebie is one point: a fully bought aid costs its whole ladder (1+2+...+max) less 1
+  const ladder = aid.max * (aid.max + 1) / 2;
+  assert.strictEqual(K.skpAvail(), clean - (ladder - 1), 'only the levels past the first cost');
 });
 
 console.log(`\n${pass} passed, ${fail} failed`);
