@@ -117,26 +117,35 @@ class job level, and "reset to Novice first" for anything not directly under the
 are standing in.
 
 Formulas the tests pin down: `totalPts() = 10 + Σ(3+⌊l/5⌋)` for l = 2…lv;
-`need(lv) = ⌊38·lv^1.75⌋`; `jneed(j) = ⌊25·j^1.7⌋`.
+`need(lv)` = the three-segment v16 curve below; `jneed(j)` = the JOFF lockstep below.
 
 ## Balance - the numbers that matter
 
 All of this lives in `index.html`. Each block is commented in-source; this is the map.
 
-**Economy** (constants sit right after `const dropTxt=`, ~line 250):
-`needAt(L)=floor(38*L^1.75)`, `EXPK=5.5`, `BOSEK=46` (the boss stays 8.33x a mob),
-`ZK=[8,14]`, `BZK=[150,250]`, `QXP={kill:1/32,loot:1/40,boss:1/19}`,
-`QZ={kill:1.6,loot:9,boss:26}`, `zenAt(p)=max(1,round(.011*p*p))`.
-Summed level 1-149 that is **13,204,072 exp**; quests supply **31.7%** of it (the target was
-~30%), and the run takes **77,152 kills = 96.4 h at 800 kills/hour**. Zeny over a full run is
-**12,225,933**, enough for a +10 7-slot setup (~494k) several times over plus ~1,200 pet rolls.
+**Economy — v16 pacing** (constants sit under `// ---------- economy tuning ----------`):
+the owner's anchors are **~10 min to the first job change (Base Lv ~10), ~2 h to the second
+(Base Lv ~49), ~2 days to the transcendent line (Base Lv ~99)** — fast at the bottom, the
+grind lives at the top. `needAt(L)` is three continuous power segments
+(`NA1·L^NE1` ≤50, anchored powers to `NE2` ≤99 and `NE3` above), solved with
+`tools/tune_pacing.js` against the canonical model (~800 kills/hour, camping the band map's
+boss field): **Base 10 in 10 min, Base 49 in 1.9 h, Base 99 in 45 h**, then a long 100-150
+endgame (**~269 h total to Lv150 at the model rate** — an outcome, not an anchor; retune
+`aC` if the owner wants it shorter). `EXPK=5.5`, `BOSEK=46` (the boss stays 8.33x a mob),
+`ZK=[8,14]`, `BZK=[150,250]`, `QZ={kill:1.6,loot:9,boss:26}`, `zenAt(p)=max(1,round(.011*p*p))`
+are unchanged. **`QXP={kill:1/120,loot:1/150,boss:1/72}`** is the v11 column scaled by 4/15:
+on the steep new curve quests must never carry more than ~40% of a level (they supply ~35%
+overall). **Job bars mirror the base curve** (`JOFF=[0,9,49,98]`): job level j of a tier
+costs the job exp (70% of mob exp) that base level j+JOFF[tier] pays out, so each job bar
+fills in step with the base bar and the job gates (Novice 10 / 1st-job 40 / 2nd-job 50) land
+on the anchors by construction. Zeny over a full model run is **~46.5M**, enough for the
++10 7-slot setup and thousands of pet rolls.
 
-> **The 800 kills/hour figure is now stale - re-measure it.** It was measured before skills
-> could multi-cast. A second job now lands three skills per swing instead of one, plus dot,
-> chain and AoE pressure, so real throughput is higher and the run is correspondingly shorter
-> than 96 h. Do **not** pre-compensate by guessing a new `EXPK`: playtest, read the actual
-> kills/hour off the log, then adjust `EXPK` - it is a single constant and every other economy
-> number derives from it. `economy_sim.js` re-checks the total for you afterwards.
+> **The 800 kills/hour figure is still the model's assumption - re-measure it.** It was
+> measured before skills could multi-cast, so real throughput differs (and boss fights cost
+> real seconds). v16 anchored the curve to the owner's *time* targets inside that model; if
+> playtest says real pacing is off, re-run `node tools/tune_pacing.js` with a corrected
+> `KPH` (or move `EXPK`) instead of hand-nudging the curve - then re-check `economy_sim.js`.
 
 **Mob HP** is `HPK*mb*pw^HPE` (`HPK=42`, `HPE=1.3`; bosses use 500 instead of 42, so a boss is
 ~12x a mob). `pw` is the map's recommended base level plus the field level, and `mb` is a
@@ -163,11 +172,15 @@ as compact cards (`repeat(auto-fill,minmax(86px,1fr))`), name + recommended leve
 map is just another card. Second band: the picked map's ten fields as **one row**
 (`repeat(auto-fit,minmax(52px,1fr))`, so it only wraps when the window is genuinely narrow) with
 the travel button on the same line - and this band is `position:sticky;top:-1px`, so the field you
-are choosing stays on screen while the drop tables below it scroll. The tables (gear by slot /
-monsters / boss+pets) sit in `.mapcols`, `repeat(auto-fit,minmax(250px,1fr))`, side by side on a
-wide window and stacked under a 900px viewport. **Keep the order: map cards → field band → tables**
-- `ui_sim.js` asserts it, because the whole point is that clicking a map shows its fields
-immediately below, with no scrolling.
+are choosing stays on screen while the drop tables below it scroll. Underneath sit **two fixed-shape
+cards** in `.mapcols` (`repeat(auto-fit,minmax(280px,1fr))`, side by side on a wide window,
+stacked under 900px): **Monsters** and **Boss & pets**. Since v16 there is **no "gear that drops
+here" card** (the owner found it bulky): every drop is listed on the monster that drops it as a
+`.dropline` row (icon + name left, % right), the boss lists its whole pool as `.poolitem` chips at
+1.2% each, and both cards carry the card/ore lines. Two stable cards + the reserved scrollbar
+gutter (`.wbody{scrollbar-gutter:stable}`) are what keep the panel the same size when switching
+maps. **Keep the order: map cards → field band → tables** - `ui_sim.js` asserts it, because the
+whole point is that clicking a map shows its fields immediately below, with no scrolling.
 
 **Every map must look different - it is a rule, not a preference.** The arena scenery is data,
 not code: `TH[map]` is `[prop kind, main colour, accent, extras]` and one builder (`buildDeco`)
@@ -262,8 +275,10 @@ bows, thieves daggers then katars). `gearPool(m,l)` is the whole pool; `fieldOf(
 mob **three** gear rolls (2.4 % / 2.0 % / 1.6 %) spread across the pool, and a card at **0.45 %**
 - gear outnumbers cards ~13:1 per mob, where the old field rolled two gear items and three
 mobs' worth of cards. Level 10 bosses drop the entire pool at 1.2 % each plus their Legendary
-card at 0.08 %. `gearSlot(x)` maps a pool entry to its UI group, because a weapon entry carries
-its *type* as `k`, not `'weapon'`.
+card at 0.08 %. **Refine ores** (Oridecon / Elunium) drop only on Level 10 fields: **2 % per
+ore per monster, 5 % per boss** (v16 buff, was a flat 0.4 %) - `fieldOf` carries the rates as
+`oreCh`, and `kill()` rolls `Math.random()<mob.oreCh` per ore. `gearSlot(x)` maps a pool entry
+to its UI group, because a weapon entry carries its *type* as `k`, not `'weapon'`.
 
 **Cards.** Grade gates the stat pool. `cardStat(g,seed)` draws from `K5` (the five base stats)
 for Common/Fine and from `AFF` (base stats + hp/atk/crit/aspd/flee/cdm) for Rare/Legendary,
@@ -354,13 +369,12 @@ props, and `landmark()` places the large structures that frame the avenue.
 
 ## What is needed going forward
 
-1. **Re-measure kills/hour** after a real playtest, then retune `EXPK`. This is now the single
-   biggest open number: `HPE` went 1.85 -> 1.3, so mobs die several times faster than the
-   800 kills/hour the 96.4 h estimate was solved against, and the run will come in **under**
-   96 h - possibly well under. Do not guess a correction. Playtest, read the real kills/hour,
-   then move `EXPK` (one constant, everything derives from it). If the pace feels right but the
-   run is too short, raising `EXPK` is the correct lever: the goal is *more* fast kills, not
-   slower ones.
+1. **Re-measure kills/hour** after a real playtest, then retune. v16 anchored the whole pacing
+   curve to the owner's time targets (10 min / 2 h / 2 days to the three job changes) *inside the
+   800 kills/hour model*, so the curve is right **for that model** - if real throughput differs,
+   re-run `node tools/tune_pacing.js` with the measured `KPH` and let it re-solve `needAt`
+   (then re-check `economy_sim.js`). Do not hand-nudge the curve, and do not guess `EXPK`:
+   playtest, read the real kills/hour, then re-solve.
 2. **Player HP is an open design question, deliberately untouched.** The user is still deciding
    whether to remove it. Nothing in the death path has been changed. If it is removed, the
    casualties are `def()`, `mdef()`, `flee()`, `maxHp()`, VIT, `bon('hp')`, the head/acc HP
@@ -841,7 +855,57 @@ assigned for feel rather than fidelity. While reworking that, two shipped bugs s
     new field does not use it).
   * The creek is wadeable - no collision, no slowdown. The bridge is the intended crossing.
   * Payon's ground is flat (the design heights are still unused); the mountain edge is rocky
-    texture, not raised terrain.
+  texture, not raised terrain.
+
+### 2026-10-03 — `pacing-v16 fast-early map-drops ore-buff`
+* **What changed for the player:**
+  * **Levelling is now fast at the bottom and a grind only at the top** - the owner's three
+    anchors, solved into the curve with `tools/tune_pacing.js` (the game's own economy model,
+    ~800 kills/hour):
+    | milestone | gate | model time |
+    |---|---|---|
+    | 1st job change | Novice Job 10 / Base 10 | **10 min** |
+    | 2nd job change | 1st-job Job 40 / Base 49 | **~1.9 h** |
+    | transcendent line | 2nd-job Job 50 / Base 99 | **~45 h (~2 days)** |
+    `needAt(L)` is now three continuous power segments (fast ≤50, steepening 50-99, long
+    100-150 endgame; Lv150 total ≈ 269 h at the model rate - an outcome, not an anchor).
+    **Job bars mirror the base curve** (`JOFF=[0,9,49,98]`): each job level costs the job exp
+    its mirrored base level pays out, so both bars fill together and the job changes land on
+    the anchors by construction. Quest EXP fractions were scaled to 1/120 / 1/150 / 1/72 so
+    quests can never carry more than ~40% of a level (they supply ~35% overall); stat points,
+    Zeny and drop odds per kill are untouched. In real play the first job change lands closer
+    to 10-15 min because the Prontera field-clear climb (~135 kills) is the floor.
+  * **The map tab no longer changes size when you switch maps, and the bulky "Gear that drops
+    here" card is gone** (owner: too huge, wasted space). Every drop is now listed on the
+    monster that drops it - one line per item, icon + name left, **% right** - and the boss
+    lists its whole pool as compact chips at 1.2% each. Two fixed-shape cards (Monsters /
+    Boss & pets) plus a reserved scrollbar gutter keep the panel stable across maps and fields.
+  * **Oridecon and Elunium drop 5x-12.5x more often on Level 10 fields: 2% per ore per
+    monster, 5% per boss** (was a flat 0.4%). Refine panel and map panel text show the new rates.
+* **Files touched:** `index.html` (economy block: `QXP`, `needAt` curve + `NA*` constants,
+  `JOFF`/`pwOf`/`epkOf`/`qrOf`, tier-aware `jneed`; `fieldOf` + `kill()` ore rates; the map
+  panel + its CSS; refine texts; `BUILD`), `tools/tests/economy_sim.js` (rewritten around the
+  v16 anchors: per-level self-consistent model, milestone + job-gate assertions, new pins),
+  `tools/tests/ui_sim.js` (two-card map panel, drop lines with %, ore text, stable-gutter pin),
+  `tools/tests/gear_sim.js` (ore-rate pins), `tools/tune_pacing.js` (**new** - the pacing
+  solver/verifier), `AGENTS.md`.
+* **Art:** none. No sheets added or rebuilt; `tools/montage.py` not run.
+* **Tests:** pack_sim OK (19 bodies), class_change 15, save_load 9, **economy 18** (was 12),
+  stat 7, card 13, skill 37, gear 18, scene 8, kit 15, **ui 6** - all green. economy_sim now
+  pins the three time anchors, the job gates (base 10/49/99), the quest-share ceiling
+  (no level >40% quests), the curve's monotonicity and its anchor values; gear_sim pins
+  oreCh 0.02/0.05.
+* **Branches / PR:** `arena/01a10154-prontera-grind`.
+* **Known limits / follow-ups:**
+  * **The anchors are calibrated to the 800 kills/hour model**, which predates multi-cast
+    skills and ignores boss-fight seconds. Playtest, read the real kills/hour, then re-run
+    `node tools/tune_pacing.js <KPH>` rather than hand-nudging - see *Balance*.
+  * The 100-150 endgame came out at ~220 h beyond the transcendent change (a monotone curve
+    cannot be cheaper at 100 than at 99). If the owner wants it shorter, the lever is `NE3`
+    (the third segment's exponent), re-solved by tune_pacing.
+  * Early levels 1-9 are cheaper than a handful of kills each; field-clear cadence (15 kills
+    per Prontera field) is what actually sets the first-job floor.
+  * Gear tiers are still decorative (a section-0 drop can roll Epic) - unchanged from v11.
 
 <!-- template — copy this block, fill it in, paste it at the bottom of the log -->
 

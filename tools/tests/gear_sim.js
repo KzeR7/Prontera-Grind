@@ -191,9 +191,14 @@ t('the level 10 boss and its card are the field ceiling', () => {
     assert.strictEqual(F.boss.card.g, 3, 'boss card must be Legendary');
     assert.ok(F.boss.cardCh < F.mobs[0].cardCh, 'boss card rarer than a mob card');
     assert.ok(F.boss.ore && F.mobs[0].ore, 'level 10 fields drop oridecon/elunium');
+    // v16 ore buff: 2% per monster, 5% per boss (was 0.4% flat)
+    assert.strictEqual(F.mobs[0].oreCh, 0.02, 'level 10 mobs drop ore at 2%');
+    assert.strictEqual(F.mobs[1].oreCh, 0.02, 'both mobs drop ore at 2%');
+    assert.strictEqual(F.boss.oreCh, 0.05, 'the boss drops ore at 5%');
   }
   const low = G.fieldOf(0, 1);
   assert.strictEqual(low.mobs[0].ore, false, 'low fields must not drop refine ores');
+  assert.ok(!low.mobs[0].oreCh, 'low fields roll no ore chance');
   assert.strictEqual(low.mobs[0].card.g, 0, 'low fields roll common cards');
 });
 

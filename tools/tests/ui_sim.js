@@ -116,10 +116,18 @@ t('the map panel renders every map and field', () => {
   U.mapM = 0; U.mapL = 1;
   const h = U.V.map();
   assert.ok(h.includes('Prontera') && h.includes('Abyss'), 'every map must be listed');
-  assert.ok(h.includes('Gear that drops here') && h.includes('Short Sword'), 'the field must name its gear');
+  assert.ok(!h.includes('Gear that drops here'), 'the bulky gear-by-slot card was removed in v16');
+  // every drop now sits on the monster that drops it, one % line each
+  assert.ok(h.includes('dropline') && h.includes('2.4%') && h.includes('2%') && h.includes('1.6%'), 'mob drops must list each item with its own %');
+  assert.ok(h.includes('0.45%'), 'the card chance stays visible on the monster');
   assert.ok(h.includes('mapcard'), 'the map selector must be the scalable grid');
   assert.strictEqual((h.match(/class="mapcard/g) || []).length, 10, 'one card per map');
   assert.strictEqual((h.match(/class="map-node/g) || []).length, 10, 'one node per field');
+  // the boss field lists the whole pool with odds, and the new ore rates
+  U.mapL = 10;
+  const b = U.V.map();
+  assert.ok(b.includes('1.2%') && b.includes('poolitem'), 'the boss must list its full pool at 1.2% each');
+  assert.ok(b.includes('2% each') && b.includes('5% each'), 'ore rates: 2% per monster, 5% per boss');
 });
 
 t('the map tab is a wide two-band panel: maps on top, that map\'s fields under them', () => {
@@ -144,7 +152,10 @@ t('the map tab is a wide two-band panel: maps on top, that map\'s fields under t
   assert.ok(min * 10 <= 700, 'ten fields must fit one row in a ~900px window (min ' + min + 'px each)');
   assert.ok(/\.mapcols\{[^}]*repeat\(auto-fit,minmax\(\d+px,1fr\)\)/.test(src), 'tables must be a column grid');
   assert.ok(/\.mapband\.fields\{position:sticky/.test(src), 'the field band must stay pinned while the tables scroll');
-  assert.strictEqual((h.match(/class="mob-card"/g) || []).length, 3, 'gear / monsters / boss+pets');
+  // v16: two cards (monsters / boss+pets) instead of three - the gear card was removed,
+  // and two fixed-shape cards are what keeps the panel the same size when switching maps
+  assert.strictEqual((h.match(/class="mob-card"/g) || []).length, 2, 'monsters / boss+pets');
+  assert.ok(/\.wbody\{[^}]*scrollbar-gutter:stable/.test(src), 'the scrollbar gutter is reserved so the panel width does not jump');
 });
 
 t('the equipment panel renders with a chooser open and closed', () => {
