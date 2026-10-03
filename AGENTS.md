@@ -169,6 +169,31 @@ wide window and stacked under a 900px viewport. **Keep the order: map cards → 
 - `ui_sim.js` asserts it, because the whole point is that clicking a map shows its fields
 immediately below, with no scrolling.
 
+**Every map must look different - it is a rule, not a preference.** The arena scenery is data,
+not code: `TH[map]` is `[prop kind, main colour, accent, extras]` and one builder (`buildDeco`)
+reads it. `extras` is where a map becomes a *place*:
+* `w:[colour, pools, radiusX, radiusZ]` - standing water, drawn as a shore ring + pool + a lighter
+  glint (the engine's **water** layer). Ground and water are separate, so any map can have a pond,
+  a lagoon, a frozen lake or lava by changing this one line.
+* `mix:[kinds]` - extra prop kinds that also scatter here, from the loose **tree** props: 6 bamboo,
+  7 bush, 8 boulder (0 round tree, 1 conifer, 2 pole, 3 cactus, 4 crystal, 5 slab are the biome
+  kinds). A prop kind is **not** a map index - indexing `TH` by prop kind is how Payon once came
+  out with Amatsu's palette. Loose props borrow the map's own colours (boulders use `ROCK`).
+* `n` scatter count and `sz` scatter scale - Niflheim is deliberately sparse (134 meshes) while
+  Payon is dense forest (421).
+
+Hard rules that `scene_sim.js` enforces:
+* water appears **only** where `w` asks for it, in the colour it asks for, and every pool is
+  clamped outside the running lane (`|x| >= BX_+3.5`) whatever its radius;
+* no prop group starts in the lane margin (`|x| < BX_+1.5` inside `Z0-1.5..Z1+1.5`), and **nothing
+  solid is drawn into the play lane** (`|x| < BX_`) once a prop is at full size - scenery is never
+  an obstacle;
+* every map has a distinct signature (palette + prop tally + water colour) and every map is built
+  from at least two prop kinds;
+* the builder is deterministic - a respawn must not reshuffle the map under the player;
+* prop groups carry `userData.kind` so the scene can be inspected (and tested) without guessing
+  from geometry.
+
 **Equipment database and drops.** `GEAR[map][section]` is the catalogue - 10 maps × 4 sections
 (Novice / 1st job / 2nd job / high tier), each section carrying 2-3 weapon types plus body,
 headgear, shield, legwear and two accessories (**96 weapon entries** in total; armour and
@@ -309,7 +334,8 @@ node tools/tests/stat_sim.js          # -> "7 passed, 0 failed"
 node tools/tests/card_sim.js          # -> "13 passed, 0 failed"
 node tools/tests/skill_sim.js         # -> "37 passed, 0 failed"
 node tools/tests/gear_sim.js          # -> "18 passed, 0 failed  (18 assertions groups)"
-node tools/tests/ui_sim.js            # -> "5 passed, 0 failed" 
+node tools/tests/scene_sim.js         # -> "8 passed, 0 failed" (per-map scenery, water, clear lane)
+node tools/tests/ui_sim.js            # -> "6 passed, 0 failed" 
 ```
 
 Every suite pulls real code out of `index.html` by **string boundary**, so an edit that
@@ -652,6 +678,37 @@ assigned for feel rather than fidelity. While reworking that, two shipped bugs s
     Both are CSS media queries on the *viewport*, not the window, so a squeezed map window next to
     two other tabs will stack a little earlier than the numbers suggest. Harmless, but if the
     owner wants a true one-row field strip at any window size it needs a container query or JS.
+
+### 2026-10-03 — `ui-v13 per-map-scenery`
+
+* **What changed for the player:**
+  * **Each map now looks like its own place.** The scenery is driven by one data row per map
+    (`TH`), and every map scatters a *different* prop mix - Payon is the dense forest (conifer +
+    bamboo + bushes + boulders), Comodo a boulder-ringed lagoon, Louyang a bamboo river valley,
+    Niflheim a sparse frozen waste, Abyss lava. Nine maps, nine distinct signatures.
+  * **Water is its own layer and can be mixed in anywhere.** Six maps carry standing water in
+    their own colour: Izlude's harbour pond, Geffen's rune pond, Morroc's green oasis, Payon's
+    pond, Comodo's wide lagoon, Louyang's river, Amatsu's shrine pond, Niflheim's frozen lake,
+    Abyss's lava pools. Ground and water are separate, so "swap the water" is a one-line change.
+  * **Three new loose props** (bamboo cluster, bush, boulder) join the tree/slab set - the
+    trees-versus-water split the attached map kit was built around.
+  * Nothing was moved into the player's running lane: pools and props all sit outside `|x| = BX_`.
+* **Files touched:** `index.html` (the `TH` table + `water()` + `landmark()` + `buildDeco()`),
+  `tools/tests/scene_sim.js` (**new**, 8 tests), `AGENTS.md` (the per-map scenery rule),
+  `BUILD` -> `ui-v13 per-map-scenery`.
+* **Art:** none drawn. No sheet, PNG or sprite touched - the new props are built from the same
+  primitives as the old ones.
+* **Tests:** pack_sim OK, class_change_sim 15, save_load_sim 9, economy_sim 12, stat_sim 7,
+  card_sim 13, skill_sim 37, gear_sim 18, **scene_sim 8 (new)**, ui_sim 6. `scene_sim.js` runs the
+  real `water()/landmark()/buildDeco()` against a faithful stubbed THREE for all nine maps.
+* **Branches / PR:** `arena/01a100d8-prontera-grind`, pull request #4.
+* **Known limits / follow-ups:**
+  * **Still waiting on the attached map kit** (`ro-map-engine.js`, `ro-map-data.json`,
+    `ro-spritesheet.png` + `.json`, the demo `index.html`): nothing landed in the sandbox, so the
+    Payon redesign is still not started. This entry is the engine-side groundwork - the mix-and-
+    match layer the kit plugs into.
+  * Water pools are flat circles with a shore ring, not animated. Fine at the current camera
+    distance; if the kit ships animated tiles, the `water()` layer is the one to replace.
 
 <!-- template — copy this block, fill it in, paste it at the bottom of the log -->
 

@@ -155,7 +155,7 @@ const AL={str:'STR',agi:'AGI',dex:'DEX',luk:'LUK',int:'INT',hp:'Max HP',atk:'ATK
 // late maps in about five, with bosses still a ~12x fight. See tools/tests/economy_sim.js.
 const SU=k=>k.toUpperCase(),BX_=5.5,Z0=-14,Z1=3,MPS=15,AGGRO=8.5,HPK=42,HPE=1.3,K5=['str','agi','dex','luk','int'];
 const GM_USER='GM',GM_PASS='gm1234';   // CHANGE THE GM PASSWORD before you publish
-const BUILD='2026-10-03 ui-v12 map-tab-wide';   // shown on the login card - confirms which file you loaded
+const BUILD='2026-10-03 ui-v13 per-map-scenery';   // shown on the login card - confirms which file you loaded
 $('buildTag').textContent='build '+BUILD+' · atlases:'+Object.keys(window.SPRITE_ATLASES||{}).length;
 
 // ---------- class tree: Novice -> 6 first jobs -> 6 second jobs -> 6 third jobs ----------
@@ -1094,8 +1094,36 @@ const townObjs=scene.children.slice(town0),deco=new THREE.Group();scene.add(deco
 // Prontera is scenery, not a maze: the whole set moves back behind the far edge so you run
 // up an open avenue with the city on the skyline instead of fighting inside the cathedral.
 const TZ=-18;townObjs.forEach(o=>{o.position.z+=TZ});road.position.z+=TZ;
-// [kind,main colour,trunk colour]; kinds 0 round tree,1 conifer,2 tall pole,3 cactus,4 crystal,5 slab
-const TH=[0,[0,0x2e9d6a,0x6b4a2a],[5,0x7a7a99,0x555577],[3,0x4a9a4a,0],[1,0x2f7a3a,0x5a3a1a],[0,0x2fb59a,0x7a5a3a],[2,0x7ac060,0x4a8a3a],[0,0xf2a0c0,0x6a4a3a],[4,0xaee0ff,0],[4,0xb04aff,0x330044]];
+// [kind,main colour,trunk colour,extras]; kinds 0 round tree,1 conifer,2 tall pole,3 cactus,
+// 4 crystal,5 slab,6 bamboo cluster,7 bush,8 boulder.
+// `extras` is what makes each map a different PLACE rather than a different colour:
+//   w   - standing water: [colour, spots, radiusX, radiusZ]; the arena's ground and water are
+//         separate layers so maps mix and match them (a pond, a lagoon, a frozen lake, lava).
+//   mix - extra prop kinds that also scatter here (bamboo, bushes, boulders).
+//   n   - scatter count; `sz` scales the scatter.
+const ROCK=0x8d8b82;   // boulder grey; tinted per map below
+const TH=[0,
+ [0,0x2e9d6a,0x6b4a2a,{w:[0x4aa3df,1,9,5],mix:[7,8],n:80,sz:1}],                      // Izlude: harbour pond
+ [5,0x7a7a99,0x555577,{w:[0x2f6fd6,1,7,4],mix:[4,8],n:75,sz:1}],                      // Geffen: rune pond + crystals
+ [3,0x4a9a4a,0,{w:[0x3fb5a0,1,6,3],mix:[5,8],n:70,sz:1.05}],                          // Morroc: desert oasis + slabs
+ [1,0x2f7a3a,0x5a3a1a,{w:[0x4aa3df,2,8,4],mix:[6,7,8],n:120,sz:.95}],                 // Payon: forest + pond + bamboo
+ [0,0x2fb59a,0x7a5a3a,{w:[0x2fa8d0,2,11,6],mix:[8],n:80,sz:1}],                       // Comodo: lagoon
+ [2,0x7ac060,0x4a8a3a,{w:[0x55a8e0,1,10,3],mix:[6,7,8],n:95,sz:1}],                   // Louyang: river + bamboo
+ [0,0xf2a0c0,0x6a4a3a,{w:[0x7fd0e8,1,7,4],mix:[6,7],n:90,sz:1}],                      // Amatsu: shrine pond
+ [4,0xaee0ff,0,{w:[0xbfe8ff,2,12,6],mix:[8],n:70,sz:1.05}],                           // Niflheim: frozen lake
+ [4,0xb04aff,0x330044,{w:[0xff5a1a,2,9,4],mix:[5,8],n:80,sz:1.1}]];                   // Abyss: lava pools
+function water(G,col,spots,rx,rz,seed){const c=new THREE.Color(col);
+  for(let i=0;i<spots;i++){
+    // pools sit well outside the running lane (|x| > BX_+2), so they are scenery, never an obstacle
+    const side=(seed()>.5?1:-1),x=side*(BX_+3.5+rx+seed()*6),z=Z0+2+seed()*((Z1-Z0)-4);
+    const sh=new THREE.Mesh(new THREE.CircleGeometry(1,22),M(0x9a8a6a));   // shore ring
+    sh.rotation.x=-Math.PI/2;sh.position.set(x,.014,z);sh.scale.set(rx+1.1,rz+1.1,1);sh.receiveShadow=true;G.add(sh);
+    const w=new THREE.Mesh(new THREE.CircleGeometry(1,22),M(col));
+    w.rotation.x=-Math.PI/2;w.position.set(x,.02,z);w.scale.set(rx,rz,1);w.receiveShadow=true;G.add(w);
+    const gl=new THREE.Mesh(new THREE.CircleGeometry(.55,14),M(col));      // a lighter inner pool
+    gl.material.transparent=true;gl.material.opacity=.5;gl.material.color.lerp(new THREE.Color(0xffffff),.35);
+    gl.rotation.x=-Math.PI/2;gl.position.set(x+rx*.25,.025,z+rz*.2);gl.scale.set(rx,rz,1);G.add(gl);
+  }}
 // One big map-specific structure. Landmarks are what make a field read as a place instead of
 // a flat coloured plane: they sit outside the play width on both sides and frame the avenue
 // the player runs up, and each kind matches the biome the scatter props already use.
@@ -1106,24 +1134,34 @@ function landmark(G,k,c1,c2,r){
   else if(k===3){mk(G,CN(2.9,2.2),c1,0,1.1,0);mk(G,CY(.18,.24,3),c2,0,2.6,0);mk(G,BX(3.4,.25,3.4),c2,0,.12,0)}
   else if(k===4){const o=mk(G,CN(1.5,6+r()*3),c1,0,3.4,0);o.material.emissive.setHex(c1).multiplyScalar(.55);
     const q=mk(G,CN(.9,3.4),c1,1.6,1.7,.6);q.material.emissive.setHex(c1).multiplyScalar(.4)}
-  else{mk(G,BX(3.6,5.2,1.4),c1,0,2.6,0);mk(G,BX(4.2,.5,1.9),c2,0,5.3,0);mk(G,BX(1,1.6,.4),c2,0,1,.85)}
+  else if(k===5){mk(G,BX(3.6,5.2,1.4),c1,0,2.6,0);mk(G,BX(4.2,.5,1.9),c2,0,5.3,0);mk(G,BX(1,1.6,.4),c2,0,1,.85)}
+  else if(k===6){for(let j=0;j<5;j++){const h=4.5+r()*3,ox=(j%3-1)*.55,oz=(j<2?-.5:.5);mk(G,CY(.16,.2,h),j%2?c2:c1,ox,h/2,oz);
+    mk(G,CN(.5,1.6),c1,ox,h+.6,oz)}mk(G,CY(.5,.7,.4),0x6b4a2a,0,.2,0)}
+  else if(k===7){mk(G,SP(1.1),c1,0,.9,0);mk(G,SP(.75),c1,.8,.7,.3);mk(G,SP(.6),c1,-.7,.6,-.3);mk(G,CY(.1,.14,.6),c2,0,.35,0)}
+  else{mk(G,BX(2.2,1.6,1.8),c1,0,.8,0);mk(G,BX(1.5,1.1,1.3),c1,1.1,1.5,.4);mk(G,BX(1.2,.9,1.1),c2,-.9,1.3,-.5)}
 }
 function buildDeco(m){while(deco.children.length)deco.remove(deco.children[0]);townObjs.forEach(o=>o.visible=m===0);road.visible=m===0;if(!m)return;
-  let q=m*977+13;const r=()=>(q=(q*16807)%2147483647)/2147483647,[k,c1,c2]=TH[m];
+  let q=m*977+13;const r=()=>(q=(q*16807)%2147483647)/2147483647,[k,c1,c2,ex]=TH[m],E=ex||{};
+  if(E.w)water(deco,E.w[0],E.w[1],E.w[2],E.w[3],r);
   // a worn track running the length of the avenue, so the run up the field reads as a road
   const tr=new THREE.Mesh(new THREE.PlaneGeometry(BX_*1.2,(Z1-Z0)+10),M(0xd8cdb4));
   tr.rotation.x=-Math.PI/2;tr.position.set(0,.012,(Z0+Z1)/2-1);tr.receiveShadow=true;
   tr.material.transparent=true;tr.material.opacity=.45;deco.add(tr);
-  for(let i=0;i<7;i++)for(const sg of[-1,1]){const G=new THREE.Group();landmark(G,k,c1,c2,r);
+  for(let i=0;i<7;i++)for(const sg of[-1,1]){const G=new THREE.Group();landmark(G,k,c1,c2,r);G.userData={kind:k,landmark:1};
     G.position.set(sg*(BX_+4+r()*12),0,Z0+1+i*((Z1-Z0)/6)+r()*2);
     G.scale.setScalar(.9+r()*.8);G.rotation.y=r()*6;deco.add(G)}
-  for(let i=0;i<85;i++){const x=(r()-.5)*52,z=(r()-.5)*46-5;if(Math.abs(x)<BX_+1.5&&z>Z0-1.5&&z<Z1+1.5)continue;const G=new THREE.Group(),sc=.7+r()*.9;
-    if(k===0){mk(G,CY(.15,.22,1.3),c2,0,.65,0);mk(G,SP(.9),c1,0,2,0)}
-    else if(k===1){mk(G,CY(.12,.2,1),c2,0,.5,0);mk(G,CN(1,2.4),c1,0,2.1,0)}
-    else if(k===2){for(let j=0;j<3;j++)mk(G,CY(.07,.09,3.5+j),j%2?c1:c2,j*.35-.3,(3.5+j)/2,j*.2)}
-    else if(k===3){mk(G,CY(.25,.28,2),c1,0,1,0);mk(G,CY(.14,.14,.8),c1,.4,1.3,0);mk(G,CY(.14,.14,.7),c1,-.4,1,0)}
-    else if(k===4){const o=mk(G,CN(.4,2.2+r()*2),c1,0,1.3,0);o.material.emissive.setHex(c1).multiplyScalar(.5);if(c2){const p=mk(G,CN(.2,1),c1,.5,.5,.2);p.material.emissive.setHex(c1).multiplyScalar(.4)}}
-    else{mk(G,BX(1,1.6+r(),.3),c1,0,.9,0);mk(G,BX(1.2,.2,.5),c2,0,.1,0)}
+  const c2b=c2||c1, palette=[[k,c1,c2]].concat((E.mix||[]).map(x=>[x,x===8?ROCK:c1,c2b]));
+  for(let i=0;i<(E.n||85);i++){const x=(r()-.5)*52,z=(r()-.5)*46-5;if(Math.abs(x)<BX_+1.5&&z>Z0-1.5&&z<Z1+1.5)continue;const G=new THREE.Group(),sc=(.7+r()*.9)*(E.sz||1);
+    const[pk,pc1,pc2]=palette[(r()*palette.length)|0];G.userData={kind:pk};
+    if(pk===0){mk(G,CY(.15,.22,1.3),pc2,0,.65,0);mk(G,SP(.9),pc1,0,2,0)}
+    else if(pk===1){mk(G,CY(.12,.2,1),pc2,0,.5,0);mk(G,CN(1,2.4),pc1,0,2.1,0)}
+    else if(pk===2){for(let j=0;j<3;j++)mk(G,CY(.07,.09,3.5+j),j%2?pc1:pc2,j*.35-.3,(3.5+j)/2,j*.2)}
+    else if(pk===3){mk(G,CY(.25,.28,2),pc1,0,1,0);mk(G,CY(.14,.14,.8),pc1,.4,1.3,0);mk(G,CY(.14,.14,.7),pc1,-.4,1,0)}
+    else if(pk===4){const o=mk(G,CN(.4,2.2+r()*2),pc1,0,1.3,0);o.material.emissive.setHex(pc1).multiplyScalar(.5);if(pc2){const p=mk(G,CN(.2,1),pc1,.5,.5,.2);p.material.emissive.setHex(pc1).multiplyScalar(.4)}}
+    else if(pk===6){for(let j=0;j<4;j++){const h=4+r()*3;mk(G,CY(.13,.16,h),j%2?pc1:pc2,(j-1.5)*.4,h/2,(j%2?.35:-.35));mk(G,CN(.4,1.3),pc1,(j-1.5)*.4,h+.5,(j%2?.35:-.35))}}
+    else if(pk===7){mk(G,SP(.8),pc1,0,.7,0);mk(G,SP(.55),pc1,.6,.5,.2)}
+    else if(pk===8){mk(G,BX(1.4,1+r(),1.2),pc1,0,.6,0);mk(G,BX(1,.7,.9),pc2||pc1,.9,1,.3)}
+    else{mk(G,BX(1,1.6+r(),.3),pc1,0,.9,0);mk(G,BX(1.2,.2,.5),pc2,0,.1,0)}
     G.position.set(x,0,z);G.scale.setScalar(sc);G.rotation.y=r()*6;deco.add(G)}}
 // ----- Ragnarok-style 8-dir sprites (billboards in the 3D map) -----
 const SPR_W=64,SPR_H=96,SPR_DIRS=8,SPR_IDLE=2,SPR_WALK=4,SPR_ATK=4,SPR_ROWS=SPR_IDLE+SPR_WALK+SPR_ATK;
