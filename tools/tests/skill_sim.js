@@ -25,8 +25,8 @@ ${ledger}
 // skOff and skillOn share one line in index.html, so the pick above already brought both in.
 let S = null, tb = {}, skCd = {}, dt = 0;
 const lv = id => (S.sk && S.sk[id]) || 0;
-const maxHp = () => 1000, log = () => {}, addFloat = () => {}, pl = {x:0,z:0};
-this.__k = { SKILLS, CLASSES, SKSLOTS, SKFADE, skCost, applyDot, applyStun, skillOn, skOff, down, skLine, skEarned, skSpent, skpAvail,
+const maxHp = () => 1000, log = () => {}, addFloat = () => {}, playSkillFx = () => {}, pl = {x:0,z:0};
+this.__k = { SKILLS, CLASSES, SKSLOTS, SKFADE, SKILL_VFX, skillFxSpec, skCost, applyDot, applyStun, skillOn, skOff, down, skLine, skEarned, skSpent, skpAvail,
              set S(v){S=v}, get S(){return S},
              get tb(){return tb}, set tb(v){tb=v},
              get skCd(){return skCd}, set skCd(v){skCd=v},
@@ -36,6 +36,28 @@ this.__k = { SKILLS, CLASSES, SKSLOTS, SKFADE, skCost, applyDot, applyStun, skil
 const sb = { console };
 vm.createContext(sb); vm.runInContext(harness, sb);
 const K = sb.__k;
+
+// Smoke-test the real visual recipes with minimal Three.js stand-ins. This catches a mapped
+// skill family that refers to a missing primitive, fails to animate, or leaks on expiry.
+class FakeVec3 { constructor(x=0,y=0,z=0){this.set(x,y,z)} set(x,y,z){this.x=x;this.y=y;this.z=z;return this} copy(v){return this.set(v.x||0,v.y||0,v.z||0)} }
+class FakeGeometry { constructor(...args){this.args=args} dispose(){this.disposed=true} }
+class FakeBufferGeometry extends FakeGeometry { setFromPoints(p){this.points=p;return this} }
+class FakeMaterial { constructor(o){Object.assign(this,o)} dispose(){this.disposed=true} }
+class FakeObject {
+  constructor(){this.position=new FakeVec3();this.scale=new FakeVec3(1,1,1);this.rotation={x:0,y:0,z:0,set(x,y,z){this.x=x;this.y=y;this.z=z}};this.quaternion={copy(){}};this.userData={};this.children=[]}
+  add(o){this.children.push(o)}
+  traverse(fn){fn(this);for(const o of this.children)o.traverse?o.traverse(fn):fn(o)}
+}
+class FakeMesh extends FakeObject { constructor(geometry,material){super();this.geometry=geometry;this.material=material} }
+class FakeLine extends FakeMesh {}
+const fakeThree={RingGeometry:FakeGeometry,TorusGeometry:FakeGeometry,IcosahedronGeometry:FakeGeometry,ConeGeometry:FakeGeometry,
+  BoxGeometry:FakeGeometry,CircleGeometry:FakeGeometry,MeshBasicMaterial:FakeMaterial,LineBasicMaterial:FakeMaterial,
+  Mesh:FakeMesh,Line:FakeLine,Group:FakeObject,BufferGeometry:FakeBufferGeometry,Vector3:FakeVec3,DoubleSide:2,AdditiveBlending:3};
+const vfxBox={THREE:fakeThree,removed:[],scene:{add(){},remove(o){vfxBox.removed.push(o)}},cam:{quaternion:{}},pl:{x:0,z:0},cl:(v,a,b)=>Math.max(a,Math.min(b,v)),
+  skillFx:[],SKILL_VFX:JSON.parse(JSON.stringify(K.SKILL_VFX))};
+vm.createContext(vfxBox);
+vm.runInContext(grab('function skillFxSpec(id,color)', '// ---------- world:')+'\n'+grab('const SKILL_FX_GEOMETRY=', 'let drag=null;const dom=R.domElement;')+
+  '\nthis.__renderer={playSkillFx,tickSkillFx,syncSkillFx,get effects(){return skillFx}};',vfxBox);
 
 // Pull the tradeoff activation and expiry blocks out of update() by brace matching, so the
 // test runs the REAL code. A structural test cannot catch this class of bug: v8/v9 shipped
@@ -84,6 +106,49 @@ t('every skill has a name, a class list, a level cap and a description function'
 t('every skill type is one the engine understands', () => {
   const known = new Set(['act', 'pas', 'heal', 'to']);
   for (const s of K.SKILLS) assert.ok(known.has(s.type), `${s.id} has type "${s.type}"`);
+});
+
+t('every active attack, automatic heal and temporary buff has a visible skill effect', () => {
+  const visualSkills = K.SKILLS.filter(s => ['act','heal','to'].includes(s.type));
+  const missing = Array.from(visualSkills.filter(s => !K.SKILL_VFX[s.id]).map(s => s.id));
+  assert.deepStrictEqual(missing, [], 'skills with no battlefield visual: ' + missing.join(', '));
+  for (const s of visualSkills) {
+    const spec = K.skillFxSpec(s.id, s.col);
+    assert.ok(spec, s.id + ' did not resolve a visual recipe');
+    assert.strictEqual(spec.kind, K.SKILL_VFX[s.id].kind, s.id + ' visual family changed');
+    assert.ok(spec.life >= .35 && spec.life <= 1.2, s.id + ' effect lifetime is not a short combat cue');
+    assert.ok(['caster','target','path'].includes(spec.at), s.id + ' has an unknown effect anchor');
+  }
+  for (const id of ['dstr','ashower']) assert.ok(K.SKILL_VFX[id].kind.includes('arrow'), id + ' should read as an Archer arrow skill');
+  for (const id of ['storm','fdiver','fnova']) assert.ok(/ice|frost/i.test(K.SKILL_VFX[id].kind), id + ' should use an ice visual');
+  for (const id of ['fire','meteor','mbrk']) assert.ok(/fire|meteor/i.test(K.SKILL_VFX[id].kind), id + ' should use a fire visual');
+});
+
+t('every mapped skill visual builds, animates and disposes through the renderer', () => {
+  const fxr=vfxBox.__renderer;
+  for(const id of Object.keys(K.SKILL_VFX)){
+    const before=fxr.effects.length;
+    fxr.playSkillFx(id,{x:1,z:-2},'#ffc94a');
+    const fx=fxr.effects[before];
+    assert.ok(fx, id+' was not queued');fxr.syncSkillFx();
+    assert.ok(fx.group && fx.parts.length, id+' made no renderable parts');
+    const group=fx.group;fx.age=fx.life*.4;fxr.syncSkillFx();
+    for(const part of fx.parts){
+      for(const scale of part.mesh.scale.toArray?part.mesh.scale.toArray():[part.mesh.scale.x,part.mesh.scale.y,part.mesh.scale.z]) assert.ok(Number.isFinite(scale),id+' produced a non-finite scale');
+      assert.ok(Number.isFinite(part.mesh.material.opacity),id+' produced a non-finite opacity');
+    }
+    fxr.tickSkillFx(fx.life);
+    assert.strictEqual(fxr.effects.length,before,id+' remained active after expiry');
+    assert.strictEqual(vfxBox.removed.pop(),group,id+' scene group was not removed');
+  }
+});
+
+t('the live combat loop starts and renders skill visuals from casts, buffs and First Aid', () => {
+  assert.ok(src.includes('playSkillFx(sk.id,mob,sk.col)'), 'offensive skills do not trigger their visual');
+  assert.ok(src.includes("playSkillFx('aid',null,'#7dff7d')"), 'First Aid does not show a heal pulse');
+  assert.ok(src.includes('playSkillFx(s.id,null,s.col)'), 'temporary auto-buffs do not show their cast cue');
+  assert.ok(src.includes('tickSkillFx(dt);') && src.includes('syncSkillFx();'), 'skill effects are advanced and drawn in the game loop');
+  assert.ok(src.includes('function disposeSkillFx(fx)'), 'finished effects release their scene objects');
 });
 
 t('every job line has skills to spend points on', () => {
