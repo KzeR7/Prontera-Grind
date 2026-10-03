@@ -153,7 +153,7 @@ const SKILLS=[
  {id:'aid',n:'First Aid',from:'Novice',cls:Object.keys(CLASSES),max:5,type:'heal',cd:6,d:L=>`Auto: heals ${10+5*L}% HP when below half.`},
  act('bash','Bash','Swordman',2,L=>1.4+.3*L,1,'#ffb347'),pas('endure','Endure','Swordman','def',L=>2*L,'DEF +#.'),pas('hprec','HP Recovery','Swordman','hpreg',L=>.3*L,'Regen +#% HP/s.'),
  act('bowl','Bowling Bash','Knight',4,L=>.9+.2*L,2,'#ffe14d'),act('pierce','Pierce','Knight',2.5,L=>.7+.12*L,3,'#ff9d5c'),pas('quick','Two-Hand Quicken','Knight','aspd',L=>4*L,'ASPD +#%.'),
- act('spiral','Spiral Pierce','Lord Knight',5,L=>.8+.15*L,6,'#ff7a5c'),pas('aura','Aura Blade','Lord Knight','atk',L=>5*L,'ATK +#%.'),pas('frenzy','Frenzy','Lord Knight','aspd',L=>4*L,'ASPD +#%.'),
+ act('spiral','Spiral Pierce','Lord Knight',5,L=>.8+.15*L,6,'#ff7a5c'),pas('aura','Aura Blade','Lord Knight','atk',L=>5*L,'ATK +#%.'),
  act('fire','Fire Bolt','Mage',1.5,L=>.7+.15*L,3,'#ff8a3d'),act('nap','Napalm Beat','Mage',1.2,L=>.9+.2*L,1,'#c9a0ff'),pas('coat','Energy Coat','Mage','def',L=>2*L,'DEF +#.'),
  act('storm','Storm Gust','Wizard',5,L=>.4+.1*L,8,'#8fe9ff'),act('jup','Jupitel Thunder','Wizard',3,L=>.8+.15*L,4,'#ffee55'),pas('amp','Amplify Magic','Wizard','atk',L=>5*L,'MATK +#%.'),
  act('meteor','Meteor Storm','High Wizard',6,L=>.5+.1*L,10,'#ff5a2a'),act('grav','Gravitational Field','High Wizard',4,L=>.7+.12*L,5,'#b080ff'),pas('mystic','Mystical Amplification','High Wizard','atk',L=>6*L,'MATK +#%.'),
@@ -162,13 +162,96 @@ const SKILLS=[
  act('falcon','Falcon Assault','Sniper',5,L=>3+.7*L,1,'#ffffff'),act('focus','Focused Arrow','Sniper',3.5,L=>.9+.15*L,3,'#ff9d3d'),pas('sight','True Sight','Sniper','crit',L=>3*L,'Crit +#%.'),
  pas('dbl','Double Attack','Thief','dbl',L=>10+8*L,'#% chance to strike twice.'),act('env','Envenom','Thief',2.5,L=>1.2+.3*L,1,'#7dff7d'),pas('dodge','Improve Dodge','Thief','flee',L=>3*L,'Flee +#%.'),
  act('sonic','Sonic Blow','Assassin',4,L=>.5+.1*L,6,'#ff9dff'),act('grim','Grimtooth','Assassin',2.5,L=>1.1+.25*L,2,'#ff6b6b'),pas('katm','Katar Mastery','Assassin','atk',L=>4*L,'ATK +#%.'),
- act('mAss','Meteor Assault','Assassin Cross',5,L=>.7+.15*L,4,'#d08cff'),act('soulb','Soul Breaker','Assassin Cross',3,L=>1+.2*L,2,'#ff5a8a'),pas('dpois','Deadly Poison','Assassin Cross','crit',L=>3*L,'Crit +#%.'),
+ act('mAss','Meteor Assault','Assassin Cross',5,L=>.7+.15*L,4,'#d08cff'),act('soulb','Soul Breaker','Assassin Cross',3,L=>1+.2*L,2,'#ff5a8a'),
  act('holy','Holy Light','Acolyte',2,L=>1.5+.3*L,1,'#fff3a0'),pas('heal','Heal','Acolyte','hpreg',L=>.3*L,'Regen +#% HP/s.'),pas('bless','Blessing','Acolyte','atk',L=>3*L,'ATK +#%.'),
  act('magnus','Magnus Exorcismus','Priest',5,L=>.55+.1*L,6,'#ffe0ff'),pas('sanct','Sanctuary','Priest','hpreg',L=>.4*L,'Regen +#% HP/s.'),pas('asp','Aspersio','Priest','atk',L=>4*L,'ATK +#%.'),
  act('judex','Judex','High Priest',3,L=>.8+.15*L,3,'#ffffff'),pas('assum','Assumptio','High Priest','def',L=>4*L,'DEF +#.'),pas('gloria','Gloria','High Priest','atk',L=>5*L,'ATK +#%.'),
  act('mammo','Mammonite','Merchant',2.5,L=>1.6+.35*L,1,'#ffd23f'),pas('greed','Overcharge','Merchant','zeny',L=>8*L,'Zeny gain +#%.'),pas('phys','Physical Training','Merchant','hpp',L=>4*L,'Max HP +#%.'),
  act('hammer','Hammer Fall','Blacksmith',4,L=>2.4+.5*L,1,'#ff7a1a'),pas('adren','Adrenaline Rush','Blacksmith','aspd',L=>5*L,'ASPD +#%.'),pas('wperf','Weapon Perfection','Blacksmith','atk',L=>4*L,'ATK +#%.'),
  act('cart','Cart Termination','Whitesmith',5,L=>3+.6*L,1,'#ffa040'),pas('thrust','Power-Thrust','Whitesmith','atk',L=>6*L,'ATK +#%.'),pas('skin','Skin Tempering','Whitesmith','hpp',L=>6*L,'Max HP +#%.')];
+
+// ---------- skill effects (2026-10-03) ----------
+// Tagged after the fact, the same way rng/aoe already were. dot.pow is the share of the
+// triggering hit dealt PER SECOND (so .05 over 4s adds 20% of the hit, spread out);
+// chain.pow is the share each bounce deals, once per target; stun.dur is seconds at level 1
+// and grows 8% per level, halved on bosses.
+const FX={
+  bash:{},                                                   // a clean single-target nuke
+  bowl:{chain:{n:2,pow:.45}},                                 // Bowling Bash sweeps a pack
+  spiral:{stun:{dur:1.2}},                                    // Spiral Pierce pins them
+  fire:{dot:{pow:.05,dur:4,col:'#ff8a3d'}},                   // Fire Bolt sets a burn
+  nap:{dot:{pow:.04,dur:3,col:'#c9a0ff'}},
+  storm:{aoe:1,stun:{dur:1}},                                 // Storm Gust freezes the area
+  jup:{chain:{n:3,pow:.45}},                                  // Jupitel Thunder arcs
+  meteor:{aoe:1,dot:{pow:.06,dur:5,col:'#ff5a2a'}},
+  grav:{aoe:1,stun:{dur:.6}},
+  dstr:{chain:{n:2,pow:.4}},
+  blitz:{chain:{n:2,pow:.45}},                                // the falcon carries the hit on
+  sharp:{chain:{n:3,pow:.4}},                                 // pierces a line of mobs
+  env:{dot:{pow:.07,dur:6,col:'#7dff7d'}},                    // Envenom poison
+  sonic:{stun:{dur:1.1}},                                     // Sonic Blow stuns
+  grim:{aoe:1,dot:{pow:.05,dur:4,col:'#ff6b6b'}},
+  mAss:{aoe:1},
+  holy:{dot:{pow:.04,dur:3,col:'#fff3a0'}},
+  magnus:{aoe:1},                                             // Magnus Exorcismus
+  judex:{aoe:1,chain:{n:2,pow:.35}},
+  hammer:{aoe:1,stun:{dur:1}},                                // Hammer Fall
+  cart:{aoe:1},
+  mammo:{},
+};
+for(const k in FX){const s=SKILLS.find(x=>x.id===k);if(s)Object.assign(s,FX[k])}
+
+// Tradeoff: an auto-cast buff with a genuine cost. It fires itself when off cooldown and your
+// HP is above to.hp, adds atk/aspd percentages and SUBTRACTS def, and can drain HP per second.
+// Every value scales with skill level, so a low-level tradeoff is a small bet and a maxed one
+// is a big swing. It never fires while another tradeoff is running.
+const Z=()=>0,tos=(id,n,from,cd,o,col)=>({id,n,from,cls:down(from),max:5,type:'to',cd,col,to:o,
+  d:L=>`Auto when above ${Math.round((o.hp||.6)*100)}% HP: ${o.txt(L)} for ${Math.round((o.dur||Z)(L))}s &middot; CD ${cd}s`});
+
+// ---------- new skills: one extra option per job, built on the effects above ----------
+SKILLS.push(
+ tos('frenzy','Frenzy','Lord Knight',22,{hp:.5,dur:L=>6+L,aspd:L=>20+8*L,def:L=>-(10+4*L),atk:Z,drain:Z,
+   txt:L=>`ASPD +${20+8*L}%, DEF ${-(10+4*L)}`},'#ff4d4d'),
+ tos('dpois','Deadly Poison','Assassin Cross',26,{hp:.7,dur:L=>5+L,atk:L=>25+10*L,aspd:Z,def:Z,drain:L=>1+.4*L,
+   txt:L=>`ATK +${25+10*L}% but you lose ${(1+.4*L).toFixed(1)}% max HP per second`},'#b05cff'),
+ tos('ovthrust','Overthrust','Blacksmith',24,{hp:.6,dur:L=>8+2*L,atk:L=>15+6*L,aspd:Z,def:L=>-(5+2*L),drain:Z,
+   txt:L=>`ATK +${15+6*L}%, DEF ${-(5+2*L)}`},'#ff9d3c'),
+ act('tstone','Throw Stone','Novice',3.5,L=>.8+.16*L,1,'#d8c8a8'),
+ act('mbrk','Magnum Break','Swordman',4.5,L=>1.1+.22*L,1,'#ff7a3d'),
+ act('fdiver','Frost Diver','Mage',3.5,L=>1+.2*L,2,'#8fe9ff'),
+ act('ashower','Arrow Shower','Archer',4,L=>.7+.15*L,3,'#ffd28a'),
+ act('sandat','Sand Attack','Thief',3,L=>.9+.18*L,1,'#e0c78a'),
+ act('signum','Signum Crucis','Acolyte',5,L=>.8+.16*L,2,'#ffe0a0'),
+ act('cartrev','Cart Revolution','Merchant',4.5,L=>1.2+.24*L,1,'#ffa040'),
+ act('spearboom','Spear Boomerang','Knight',3.5,L=>1.3+.26*L,1,'#ffe14d'),
+ act('hcrush','Head Crush','Lord Knight',4,L=>1+.2*L,1,'#ff5a5a'),
+ act('firewall','Fire Wall','Wizard',5,L=>.6+.12*L,4,'#ff8a3d'),
+ act('vermilion','Lord of Vermilion','High Wizard',6.5,L=>.5+.1*L,8,'#ff6a8a'),
+ act('landmine','Land Mine','Hunter',4,L=>1.5+.3*L,1,'#c8a060'),
+ act('chargearr','Charged Arrow','Sniper',5,L=>1.6+.32*L,1,'#ffffff'),
+ act('vsplash','Venom Splash','Assassin',4,L=>.9+.18*L,2,'#7dff7d'),
+ act('rcutter','Rolling Cutter','Assassin Cross',4,L=>.8+.16*L,3,'#d08cff'),
+ act('tundead','Turn Undead','Priest',5,L=>1.1+.22*L,2,'#fff3a0'),
+ act('adoramus','Adoramus','High Priest',4,L=>.9+.18*L,3,'#ffffff'),
+ act('meltdown','Meltdown','Whitesmith',6,L=>1.4+.28*L,1,'#ffa040'));
+Object.assign(SKILLS.find(s=>s.id==='tstone'),{chain:{n:1,pow:.5}});
+Object.assign(SKILLS.find(s=>s.id==='mbrk'),{aoe:1,dot:{pow:.06,dur:4,col:'#ff7a3d'}});
+Object.assign(SKILLS.find(s=>s.id==='fdiver'),{chain:{n:2,pow:.45},stun:{dur:.8}});
+Object.assign(SKILLS.find(s=>s.id==='ashower'),{aoe:1,chain:{n:2,pow:.4}});
+Object.assign(SKILLS.find(s=>s.id==='sandat'),{stun:{dur:1.2}});
+Object.assign(SKILLS.find(s=>s.id==='signum'),{aoe:1,stun:{dur:.7}});
+Object.assign(SKILLS.find(s=>s.id==='cartrev'),{aoe:1,stun:{dur:.8}});
+Object.assign(SKILLS.find(s=>s.id==='spearboom'),{chain:{n:2,pow:.5}});
+Object.assign(SKILLS.find(s=>s.id==='hcrush'),{dot:{pow:.09,dur:6,col:'#ff5a5a'}});
+Object.assign(SKILLS.find(s=>s.id==='firewall'),{aoe:1,dot:{pow:.07,dur:5,col:'#ff8a3d'}});
+Object.assign(SKILLS.find(s=>s.id==='vermilion'),{aoe:1,chain:{n:3,pow:.4}});
+Object.assign(SKILLS.find(s=>s.id==='landmine'),{aoe:1,stun:{dur:1.3}});
+Object.assign(SKILLS.find(s=>s.id==='chargearr'),{chain:{n:3,pow:.45},stun:{dur:.9}});
+Object.assign(SKILLS.find(s=>s.id==='vsplash'),{aoe:1,dot:{pow:.08,dur:5,col:'#7dff7d'}});
+Object.assign(SKILLS.find(s=>s.id==='rcutter'),{aoe:1,chain:{n:3,pow:.45}});
+Object.assign(SKILLS.find(s=>s.id==='tundead'),{aoe:1,stun:{dur:1}});
+Object.assign(SKILLS.find(s=>s.id==='adoramus'),{aoe:1,dot:{pow:.06,dur:4,col:'#ffffff'}});
+Object.assign(SKILLS.find(s=>s.id==='meltdown'),{aoe:1,dot:{pow:.07,dur:5,col:'#ffa040'},stun:{dur:.8}});
 
 SKILLS.find(s=>s.id==='soulb').rng=1;SKILLS.find(s=>s.id==='mAss').aoe=1;SKILLS.find(s=>s.id==='soulb').d=L=>`Auto RANGED (up to 5 tiles): 2 hits of ${Math.round((1+.2*L)*100)}% dmg &middot; CD 3s`;SKILLS.find(s=>s.id==='mAss').d=L=>`Auto AREA: 4 hits of ${Math.round((.7+.15*L)*100)}% dmg, hits all nearby &middot; CD 5s`;
 // ---------- world: 5 maps x 10 levels. Lv1-3 novice gear, 4-7 1st job, 8-9 2nd job, 10 boss = high-tier ----------
@@ -235,18 +318,26 @@ const zenAt=p=>Math.max(1,Math.round(.011*p*p));   // reference zeny per kill at
 // ---------- state ----------
 let currentUser=null,S=null,speed=1,floats=[],drops=[],t=0,shake=0,atkAnim=0,hitAnim=0,pend=[],shots=[],barT=0,logs=[],tab=null,selB=null,selC=null,selK=null,mapM=0,mapL=1;
 const pl={x:-3,z:1.5,ry:0,orb:0,run:0},skCd={},petR={};
+// tb holds the one tradeoff buff currently running (ATK up / DEF down and so on). It is
+// deliberately transient: it is never saved, so quitting mid-buff just drops the buff.
+let tb={};
 const PETS=[{n:'Poring',ic:'🟣',r:0,c:0xff9db8},{n:'Lunatic',ic:'🐰',r:0,c:0xf4f4f4},{n:'Wolf',ic:'🐺',r:1,c:0x8a8a95},{n:'Desert Wolf',ic:'🦊',r:1,c:0xe0a050},{n:'Peco Peco',ic:'🐤',r:2,c:0xf0d060},{n:'Dragon Whelp',ic:'🐲',r:2,c:0x4aa070},{n:'Baphomet Jr.',ic:'😈',r:3,c:0x6a3fa0},{n:'Angeling',ic:'👼',r:3,c:0xffffff}];
 const RN=['Common','Rare','Epic','Legendary'],RCL=[0,2,3,4],MUT=[1,2,4,6,8,20,40],MC=[0,0x6cd36c,0x4aa3ff,0xb05cff,0xffb020,0xff4d4d,0xffffff];
-const EGG=3000,RW=[70,22,7,1],GW=[50,30,16.5,2.5,.8,.2],PT=['Wooden','Iron','Silver','Gold','Mythril'];
+// Pets are found, never hatched: they only ever come from monster drops (0.3% per kill,
+// 5% from a boss). EGG survives as the price anchor for release refunds and for the Zeny
+// a full collection is paid instead of a drop.
+// PTG = chance a training roll succeeds, by the tier the stat is currently at. One roll in
+// ten that succeeds is a GREAT success and jumps two tiers instead of one.
+const EGG=3000,GW=[50,30,16.5,2.5,.8,.2],PT=['Wooden','Iron','Silver','Gold','Mythril'],PTG=[.8,.6,.4,.25,.12],GREAT=.1;
 const PEQ=[{n:'Claw',d:t=>`+${t*12}% dmg`},{n:'Collar',d:t=>`+${t*8}% attack speed`},{n:'Charm',d:t=>`${t*6}% crit chance (x2 dmg)`}];
-const petDmg=p=>Math.round(atk()*[.2,.32,.55,1][PETS[p.sp].r]*MUT[p.mut]*(1+p.eq[0]*.12)),petInt=p=>Math.max(.4,1.7-PETS[p.sp].r*.15)/(1+p.eq[1]*.08),peqCost=t=>800*(t+1)*(t+1),rollCost=p=>2500*(1+PETS[p.sp].r);
+const petDmg=p=>Math.round(atk()*[.2,.32,.55,1][PETS[p.sp].r]*MUT[p.mut]*(1+p.eq[0]*.12)),petInt=p=>Math.max(.4,1.7-PETS[p.sp].r*.15)/(1+p.eq[1]*.08),peqCost=t=>1200*(t+1)*(t+1),rollCost=p=>2500*(1+PETS[p.sp].r);
 const rollingSet=new Set(),autoSet=new Set(),PW=[[90,9,1,0],[80,17,3,0],[70,24,5.5,.5],[60,30,9,1],[50,35,13,2],[40,38,18,4],[30,40,24,6],[22,40,30,8],[12,38,38,12],[5,30,45,20]],busy=p=>p.roll||rollingSet.has(p.id)||S.zeny<rollCost(p);
 function rollOnce(p,fast,done){const c=rollCost(p);if(S.zeny<c){autoSet.delete(p.id);log('Not enough Zeny to roll.');ui();return}S.zeny-=c;rollingSet.add(p.id);ui();const g=pickW(GW)+1,iv=setInterval(()=>{const e=$('rf'+p.id)?.querySelector('span');if(e)e.textContent='🎲 Grade '+ri(1,6)+' ...'},70);
   setTimeout(()=>{clearInterval(iv);rollingSet.delete(p.id);if(!gp(p.id))return;p.last=g;done(g)},fast?250:800)}
 function autoRoll(p){if(!autoSet.has(p.id)||!gp(p.id))return;rollOnce(p,true,g=>{if(!(p.sk||[1,2,3]).includes(g)){p.roll=g;autoSet.delete(p.id);log(`Auto-roll stopped on Grade ${g} (x${MUT[g]})!`,'r4')}ui();save();if(autoSet.has(p.id))setTimeout(()=>autoRoll(p),250)})}
 const pickW=w=>{let r=Math.random()*w.reduce((a,b)=>a+b,0);for(let i=0;i<w.length;i++){r-=w[i];if(r<0)return i}return w.length-1},gp=id=>S.pets.find(x=>String(x.id)===String(id));
 const uid=()=>Date.now()+Math.random(),rnd=(a,b)=>a+Math.random()*(b-a),ri=(a,b)=>Math.floor(rnd(a,b+1)),cl=(v,a,b)=>Math.max(a,Math.min(b,v));
-const fresh=()=>({pets:[],cls:'Novice',sex:'m',hair:0,lv:1,exp:0,hp:100,zeny:0,kills:0,pts:10,jobs:{Novice:{jl:1,jx:0}},sk:{aid:1},base:{},mp:0,lvl:1,prog:[1,1,1,1,1],kl:0,auto:true,adv:true,q:null,cards:[],ore:{ori:0,elu:0},gm:false,gmx:100,
+const fresh=()=>({pets:[],cls:'Novice',sex:'m',hair:0,lv:1,exp:0,hp:100,zeny:0,kills:0,pts:10,jobs:{Novice:{jl:1,jx:0}},sk:{aid:1},skOff:{},base:{},mp:0,lvl:1,prog:[1,1,1,1,1],kl:0,auto:true,adv:true,q:null,cards:[],ore:{ori:0,elu:0},gm:false,gmx:100,
   st:{str:1,agi:1,dex:1,luk:1,int:1,vit:1},eq:{weapon:{id:1,slot:'weapon',wt:'dagger',tier:0,val:5,name:'Novice Knife',aff:[],slots:1,cards:[],sec:0},armor:null,head:null,off:null,leg:null,acc1:null,acc2:null},inv:[]});
 const saveKey=()=>'pg_save3_'+currentUser;
 const num_= (v,d)=>{v=+v;return Number.isFinite(v)?v:d};
@@ -259,6 +350,7 @@ function load(){try{const s=JSON.parse(lsGet(saveKey()));if(s&&s.lv){const F=fre
   while(f.prog.length<MAPS.length)f.prog.push(1);
   f.mp=Math.max(0,Math.min(MAPS.length-1,Math.floor(f.mp||0)));f.lvl=Math.max(1,Math.min(10,Math.floor(f.lvl||1)));
   if(!f.jobs||typeof f.jobs!=='object')f.jobs=F.jobs;if(!f.sk||typeof f.sk!=='object')f.sk=F.sk;
+  if(!f.skOff||typeof f.skOff!=='object'||Array.isArray(f.skOff))f.skOff={};
   // per-class builds (Base Lv / stats / points / gear) - repair, drop anything malformed
   if(!f.base||typeof f.base!=='object')f.base={};
   for(const k in f.base){const r=f.base[k];
@@ -328,16 +420,18 @@ const gx=()=>S.gm?(S.gmx||100):1;
 
 // ---------- derived stats ----------
 const C=()=>CLASSES[S.cls]||CLASSES.Novice,lv=id=>S.sk[id]||0,jobOf=()=>S.jobs[S.cls]||(S.jobs[S.cls]={jl:1,jx:0}),jneed=j=>Math.floor(25*Math.pow(j,1.7));
-const skillOn=id=>lv(id)>0&&SKILLS.find(s=>s.id===id).cls.includes(S.cls);
+// A skill is usable when it has levels, the current class inherits it, and the player has
+// not switched its auto-cast off in the Skills panel.
+const skOff=id=>!!(S.skOff&&S.skOff[id]),skillOn=id=>lv(id)>0&&SKILLS.find(s=>s.id===id).cls.includes(S.cls)&&!skOff(id);
 const pv=k=>SKILLS.reduce((a,s)=>a+(s.type==='pas'&&s.key===k&&skillOn(s.id)?s.f(lv(s.id)):0),0);
 const items=()=>Object.values(S.eq).filter(Boolean),ev=it=>Math.round(it.val*(1+(it.r||0)*.15)),iname=it=>(it.r?'+'+it.r+' ':'')+it.name,eqv=k=>S.eq[k]?ev(S.eq[k]):0;
 const bon=k=>{let v=0;for(const it of items()){for(const a of it.aff||[])if(a.k===k)v+=a.v;for(const c of it.cards||[])if(c.stat===k)v+=c.v}return v};
 const st=k=>S.st[k]+bon(k),canUse=it=>it.slot==='off'?canShield():(it.slot!=='weapon'||!it.wt||C().wt.includes(it.wt));
 const maxHp=()=>Math.round((80+S.lv*20+eqv('head')*4+(eqv('acc1')+eqv('acc2'))*3+st('vit')*8+bon('hp'))*C().hp*(1+pv('hpp')/100));
-const atk=()=>Math.round((4+S.lv*2+eqv('weapon')+(S.eq.off&&S.eq.off.slot==='weapon'?eqv('off')*.6:0)+st(C().main)*1.5+(st('dex')+st('luk'))*.25)*C().atk*(1+(pv('atk')+bon('atk'))/100));
-const aspd=()=>Math.max(.2,.85*C().aspd*(1-Math.min(.5,st('agi')*.006))/(1+(pv('aspd')+bon('aspd'))/100));
+const atk=()=>Math.round((4+S.lv*2+eqv('weapon')+(S.eq.off&&S.eq.off.slot==='weapon'?eqv('off')*.6:0)+st(C().main)*1.5+(st('dex')+st('luk'))*.25)*C().atk*(1+(pv('atk')+bon('atk')+(tb.atk||0))/100));
+const aspd=()=>Math.max(.2,.85*C().aspd*(1-Math.min(.5,st('agi')*.006))/(1+(pv('aspd')+bon('aspd')+(tb.aspd||0))/100));
 const crit=()=>Math.min(60,3+st('luk')*.4+pv('crit')+bon('crit')),flee=()=>Math.min(60,st('agi')*.5+S.lv*.1+pv('flee')+bon('flee')),missCh=()=>Math.max(0,15-st('dex')*.25);
-const def=()=>Math.floor(S.lv*.5+st('vit')*.5+eqv('armor')+eqv('leg')+(S.eq.off&&S.eq.off.slot==='off'?eqv('off'):0)+pv('def')),mdef=()=>Math.floor(S.lv*.3+st('int')*.5+st('vit')*.4+eqv('head')*.3+pv('def')*.5),critD=()=>2+st('luk')*.01+st('dex')*.005+bon('cdm')/100,needAt=L=>Math.floor(38*Math.pow(L,1.75)),need=()=>needAt(S.lv),cost=k=>{const v=S.st[k];return v<ELITELV?1+Math.floor((v-1)/10):10+(v-ELITELV)};
+const def=()=>Math.floor(S.lv*.5+st('vit')*.5+eqv('armor')+eqv('leg')+(S.eq.off&&S.eq.off.slot==='off'?eqv('off'):0)+pv('def')+(tb.def||0)),mdef=()=>Math.floor(S.lv*.3+st('int')*.5+st('vit')*.4+eqv('head')*.3+pv('def')*.5),critD=()=>2+st('luk')*.01+st('dex')*.005+bon('cdm')/100,needAt=L=>Math.floor(38*Math.pow(L,1.75)),need=()=>needAt(S.lv),cost=k=>{const v=S.st[k];return v<ELITELV?1+Math.floor((v-1)/10):10+(v-ELITELV)};
 const totalPts=()=>{let p=10;for(let l=2;l<=S.lv;l++)p+=4+Math.floor(l/5);return p},rcost=()=>S.lv*50;
 const skpAvail=()=>Object.values(S.jobs).reduce((a,j)=>a+j.jl-1,0)-(Object.values(S.sk).reduce((a,b)=>a+b,0)-(S.sk.aid?1:0));
 const refCost=it=>Math.round(200*((it.r||0)+1)*(1+(it.sec||0)*.5)),refCh=it=>[100,100,100,100,70,60,50,40,30,20][it.r||0];
@@ -363,6 +457,16 @@ function genGear(T,l,sec,boss){
   const slots=slot==='weapon'?Math.min(3,1+ri(0,1)+(tier>=3?1:0)):Math.min(1,ri(0,1)+(tier>=3?1:0));
   return{id:uid(),slot,wt:slot==='weapon'?T.k:undefined,tier,val,name:(tier?RAR[tier].n+' ':'')+T.n,aff,slots,cards:[],sec,lvl:l};
 }
+// ---------- skill effects: damage over time, stun, chain ----------
+// DoT ticks twice a second for its duration; the number stored is damage PER SECOND.
+function applyDot(o,dps,dur,col){if(!o||!(dur>0))return;(o.dots=o.dots||[]).push({dps,t:0,dur,col:col||'#7dff7d'})}
+// A stunned mob neither advances nor swings: its attack timer simply stops counting down.
+function applyStun(o,dur){if(!o||!(dur>0))return;
+  const d=dur*(o.boss?.5:1);o.stun=Math.min(o.boss?1:2,Math.max(o.stun||0,d))}
+// Chain bounces a share of the hit onto the nearest other mobs - the pack-clearing tool.
+function chainHit(src,dmg,col,n){if(!src||!(dmg>0)||mobs.length<2)return;
+  const near=mobs.filter(o=>o!==src&&o.hp>0).sort((a,b)=>Math.hypot(a.x-src.x,a.z-src.z)-Math.hypot(b.x-src.x,b.z-src.z)).slice(0,n||2);
+  for(const o of near){shots.push({x0:src.x,z0:src.z,x1:o.x,z1:o.z,t:0,col:col||'#fff'});hurt(o,Math.max(1,Math.round(dmg)),col)}}
 const mkDrop=it=>({it,wx:mob.x+rnd(-.7,.7),wz:mob.z+rnd(-.7,.7),y:0,vy:-220,t:0});
 const addFloat=(x,y,z,txt,col,big)=>floats.push({x,y,z,txt,col,life:1,big});
 function log(m,cls){logs.push({m,cls});if(logs.length>80)logs.shift();
@@ -376,12 +480,37 @@ function strike(mult,col){
   const c=Math.random()*100<crit(),d=Math.max(1,Math.round(atk()*mult*rnd(Math.min(.95,.7+st('dex')*.004),1.15)*(c?critD():1)));
   mob.hp-=d;mob.flash=1;shake=c?6:2;addFloat(mob.x+rnd(-.4,.4),1.5*Math.max(1,mob.size*.8)+.6,mob.z,c?d+'!':d,col||(c?'#ffe14d':'#fff'),c);
 }
+// Higher job tiers get more casts per swing: a Novice throws one skill, a first job two, a
+// second job three. Every cast after the first lands softer (SKFADE), so the extra spam reads
+// as pressure rather than as a flat doubling of single-target damage.
+const SKSLOTS=t=>1+(t||0),SKFADE=[1,.55,.3];
+// dot.pow is the fraction of the triggering hit dealt PER SECOND, so a .05/4s dot adds 20% of
+// the hit spread over time. chain.pow is the fraction each bounce deals, once per target.
+function castSkill(sk,k){
+  const m=sk.mul(lv(sk.id))*(1+st('int')*.01)*k;
+  strike(m,sk.col);shot(sk.col,sk.rng);
+  if(sk.aoe&&mob)for(const o of mobs.slice())if(o!==mob&&Math.hypot(o.x-mob.x,o.z-mob.z)<4)hurt(o,Math.max(1,Math.round(atk()*m*.8)),sk.col);
+  if(sk.chain&&mob)chainHit(mob,atk()*m*(sk.chain.pow||.5),sk.col,Math.min(4,(sk.chain.n||2)+Math.floor(lv(sk.id)/2)));
+  if(sk.dot&&mob&&mob.hp>0)applyDot(mob,atk()*m*(sk.dot.pow||.05),sk.dot.dur||4,sk.dot.col||sk.col);
+  if(sk.stun&&mob&&mob.hp>0)applyStun(mob,(sk.stun.dur||.8)*(1+lv(sk.id)*.08));
+  for(let i=1;i<sk.hits;i++)pend.push({t:i*.09,m,col:sk.col});
+}
 function playerAttack(){
-  pAtkT=aspd();atkAnim=1;let sk=null,best=-1;const far=mob&&Math.hypot(mob.x-pl.x,mob.z-pl.z)>(C().rng?3:1.2+.45*mob.size)+.6;
-  for(const s of SKILLS)if(s.type==='act'&&skillOn(s.id)&&(skCd[s.id]||0)<=0&&(!far||s.rng)){const pw=s.mul(lv(s.id))*s.hits;if(pw>best){sk=s;best=pw}}
-  if(sk){skCd[sk.id]=sk.cd;addFloat(pl.x,3,pl.z,sk.n,sk.col);const m=sk.mul(lv(sk.id))*(1+st('int')*.01);
-    strike(m,sk.col);shot(sk.col,sk.rng);if(sk.aoe&&mob)for(const o of mobs.slice())if(o!==mob&&Math.hypot(o.x-mob.x,o.z-mob.z)<4)hurt(o,Math.max(1,Math.round(atk()*m*.8)),sk.col);for(let i=1;i<sk.hits;i++)pend.push({t:i*.09,m,col:sk.col})}
-  else if(far)return;else{strike(1);shot();const d=pv('dbl');if(d&&Math.random()<d/100+st('dex')*.003){pend.push({t:.15,m:1,col:'#aef'});addFloat(pl.x,3,pl.z,'Double Attack','#aef')}}
+  pAtkT=aspd();atkAnim=1;
+  const far=mob&&Math.hypot(mob.x-pl.x,mob.z-pl.z)>(C().rng?3:1.2+.45*mob.size)+.6;
+  const ready=SKILLS.filter(s=>s.type==='act'&&skillOn(s.id)&&(skCd[s.id]||0)<=0&&(!far||s.rng))
+    .sort((a,b)=>b.mul(lv(b.id))*b.hits-a.mul(lv(a.id))*a.hits);
+  let cast=0;
+  for(const sk of ready){
+    if(cast>=SKSLOTS(C().tier))break;
+    const k=SKFADE[cast]||.3;cast++;
+    skCd[sk.id]=sk.cd;addFloat(pl.x,2.9+cast*.4,pl.z,sk.n,sk.col);
+    castSkill(sk,k);
+    if(!mob||mob.hp<=0)break;
+  }
+  if(cast||far)return;
+  strike(1);shot();const d=pv('dbl');
+  if(d&&Math.random()<d/100+st('dex')*.003){pend.push({t:.15,m:1,col:'#aef'});addFloat(pl.x,3,pl.z,'Double Attack','#aef')}
 }
 function addJob(x){const j=jobOf(),c=C();if(j.jl>=c.mj)return;j.jx+=x;
   while(j.jl<c.mj&&j.jx>=jneed(j.jl)){j.jx-=jneed(j.jl);j.jl++;log(`JOB LEVEL UP! ${S.cls} Job Lv ${j.jl} (+1 skill point)`,'r3');addFloat(pl.x,3.2,pl.z,'JOB UP!','#8fe9ff',true)}
@@ -506,8 +635,8 @@ const V={
     <small>Switching job restarts the class you load: Base Lv as you are now, job levels cleared, stats refunded &middot; classes you step away from keep their own Base Lv, stats and gear until you come back to them.</small>
     <button class="full" data-a="job" data-v="Novice" ${S.cls==='Novice'?'disabled':''}>Restart as Novice (Base Lv 25, job levels cleared)</button>`},
   skills(){const line=lineOf(S.cls),av=skpAvail(),sel=SKILLS.find(s=>s.id===selS);
-    return`<div class="hd">Skill points: ${av} <small>(1 per Job Level)</small></div>`+line.map(from=>{const ss=SKILLS.filter(s=>s.from===from);return ss.length?`<div class="sec">${from}</div><div class="skg">${ss.map(s=>{const L=lv(s.id);return`<div class="sk${L?'':' off'}${selS===s.id?' sel':''}" style="border-color:${s.col||'#8a6a2c'}" data-a="ssel" data-v="${s.id}"><div class="si">${s.type==='pas'?'📘':s.type==='heal'?'💚':'💥'}</div><small>${s.n}</small><div><b>${L}</b>/${s.max}</div><button data-a="skill" data-v="${s.id}" ${av>0&&L<s.max?'':'disabled'}>+</button></div>`}).join('')}</div>`:''}).join('')
-    +(sel?`<div class="mob-card" style="margin-top:8px"><b>${sel.n}</b> <small>${sel.type==='pas'?'Passive':sel.type==='heal'?'Auto-heal':'Active (auto-cast)'}${sel.rng?' &middot; RANGED':''}${sel.aoe?' &middot; AREA':''}</small><br><small>${sel.d(Math.max(1,lv(sel.id)))}</small>${lv(sel.id)&&lv(sel.id)<sel.max?`<br><small>Next: ${sel.d(lv(sel.id)+1)}</small>`:''}</div>`:'')
+    return`<div class="hd">Skill points: ${av} <small>(1 per Job Level)</small></div><small>${SKSLOTS(C().tier)} skill${SKSLOTS(C().tier)>1?'s cast':''} per swing at this job tier &middot; later casts in the same swing land at ${Math.round(SKFADE[1]*100)}% / ${Math.round(SKFADE[2]*100)}% &middot; select a skill to switch its auto-cast off</small>`+line.map(from=>{const ss=SKILLS.filter(s=>s.from===from);return ss.length?`<div class="sec">${from}</div><div class="skg">${ss.map(s=>{const L=lv(s.id);return`<div class="sk${L?'':' off'}${selS===s.id?' sel':''}" style="border-color:${s.col||'#8a6a2c'}${L&&s.type!=='pas'&&skOff(s.id)?';opacity:.45':''}" data-a="ssel" data-v="${s.id}"><div class="si">${L&&s.type!=='pas'&&skOff(s.id)?'⏸':s.type==='pas'?'📘':s.type==='to'?'⚖️':s.type==='heal'?'💚':'💥'}</div><small>${s.n}</small><div><b>${L}</b>/${s.max}</div><button data-a="skill" data-v="${s.id}" ${av>0&&L<s.max?'':'disabled'}>+</button></div>`}).join('')}</div>`:''}).join('')
+    +(sel?`<div class="mob-card" style="margin-top:8px"><b>${sel.n}</b> <small>${sel.type==='pas'?'Passive':sel.type==='heal'?'Auto-heal':sel.type==='to'?'Tradeoff (auto-cast)':'Active (auto-cast)'}${sel.rng?' &middot; RANGED':''}${sel.aoe?' &middot; AREA':''}${sel.dot?' &middot; DOT':''}${sel.stun?' &middot; STUN':''}${sel.chain?' &middot; CHAIN':''}</small><br><small>${sel.d(Math.max(1,lv(sel.id)))}</small>${lv(sel.id)&&lv(sel.id)<sel.max?`<br><small>Next: ${sel.d(lv(sel.id)+1)}</small>`:''}${sel.type!=='pas'&&lv(sel.id)?`<div class="row" style="margin-top:6px"><button data-a="sktog" data-v="${sel.id}">${skOff(sel.id)?'▶ Turn auto-cast ON':'⏸ Turn auto-cast OFF'}</button></div>`:''}</div>`:'')
     +`<button class="full" data-a="rskill">Reset skills (${rcost()}z)</button>`},
   bag0(){const sel=selB&&S.inv.find(x=>String(x.id)===String(selB));const n=Math.max(30,Math.ceil(S.inv.length/6)*6);const inv=[...S.inv].sort((a,b)=>b.tier-a.tier||ev(b)-ev(a));
     return`<div class="row"><span class="chip">🔶 Oridecon <b>${S.ore.ori}</b></span><span class="chip">🔷 Elunium <b>${S.ore.elu}</b></span></div><div class="row" style="margin-top:4px"><small>${S.inv.length} items</small><button data-a="sellbelow" data-v="1">Sell Common/Fine</button><button data-a="sellbelow" data-v="2">Sell up to Rare</button></div>
@@ -550,7 +679,7 @@ $('qp').onclick=e=>{const b=e.target.closest('[data-q]');if(!b)return;const v=b.
 function refineUI(it,k){const r=it.r||0,o=it.slot==='weapon'?'ori':'elu',c=refCost(it);return`<div class="sec">Refine</div><small>${SLOTS[it.slot].stat} +${ev(it)} &rarr; +${Math.round(it.val*(1+(r+1)*.15))} &middot; ${r>=10?'MAX':'Success '+refCh(it)+'% &middot; '+c.toLocaleString()+'z + 1 '+ORE[o]+' (you have '+S.ore[o]+')'}</small><div class="row" style="margin-top:4px"><button data-a="refine" data-v="${k}" ${r>=10||S.ore[o]<1||S.zeny<c?'disabled':''}>Refine</button></div>`}
 function petDetail(p){const sp=PETS[p.sp],g=p.mut,sk=p.sk||[1,2,3];
   return`<div class="mob-card" style="margin-top:8px"><div class="hd r${RCL[sp.r]}">${sp.ic} ${sp.n} <small>${RN[sp.r]}</small></div><small>Mutation: <b>${g?'Grade '+g+' (x'+MUT[g]+' dmg)':'none (x1)'}</b> &middot; ${petDmg(p).toLocaleString()} dmg every ${petInt(p).toFixed(2)}s</small>`
-  +p.eq.map((t,i)=>`<div class="slot"><span>${PEQ[i].n}: <b>${t?PT[t-1]:'none'}</b> <small>${PEQ[i].d(t)}</small></span><button data-a="peq" data-v="${p.id}:${i}" ${t>=5||S.zeny<peqCost(t)?'disabled':''}>${t>=5?'MAX':'Upgrade '+peqCost(t).toLocaleString()+'z'}</button></div>`).join('')
+  +p.eq.map((t,i)=>`<div class="slot"><span>${PEQ[i].n}: <b>${t?PT[t-1]:'none'}</b> <small>${PEQ[i].d(t)}</small>${t<PT.length?`<br><small class="r0">${Math.round(PTG[t]*100)}% to train &middot; ${Math.round(GREAT*100)}% of those are a great success (+2)</small>`:''}</span><button data-a="peq" data-v="${p.id}:${i}" ${t>=PT.length||S.zeny<peqCost(t)?'disabled':''}>${t>=PT.length?'MAX':'🎲 '+peqCost(t).toLocaleString()+'z'}</button></div>`).join('')
   +`<div class="row" style="margin-top:6px"><button data-a="pon" data-v="${p.id}">${p.on?'Remove from battle':'Send to battle'}</button><button data-a="prel" data-v="${p.id}">Release</button></div><div class="sec">Mutation</div>`
   +`<div class="row"><button data-a="proll" data-v="${p.id}" ${busy(p)?'disabled':''}>🎲 Roll (${rollCost(p).toLocaleString()}z)</button><button data-a="pauto" data-v="${p.id}" ${p.roll||(rollingSet.has(p.id)&&!autoSet.has(p.id))?'disabled':''}>${autoSet.has(p.id)?'⏹ Stop auto':'🔁 Auto roll'}</button></div>`
   +`<small>Auto-roll: tap a grade to skip it (✕) or stop on it (✓)</small><div class="row gt">${[1,2,3,4,5,6].map(x=>`<button data-a="psk" data-v="${p.id}:${x}" class="${sk.includes(x)?'':'on'}">G${x} ${sk.includes(x)?'✕':'✓'}</button>`).join('')}</div>`
@@ -576,7 +705,7 @@ const ACT={
   selk:v=>{selK=v;renderWin()},job:n=>{if(n==='Novice'&&S.cls!=='Novice')ask('Restart as Novice? You go back to Base Lv 25, job levels cleared, and your stats are refunded. Classes you leave keep their own Base Lv, stats and gear, so you can switch back to them later.',()=>changeClass(n));else changeClass(n)},
   rstat:()=>{if(S.zeny<rcost())return log('Not enough Zeny to reset stats.');S.zeny-=rcost();for(const k in S.st)S.st[k]=1;S.pts=totalPts();S.hp=Math.min(S.hp,maxHp());log('Stats reset.');ui();save()},
   skill:id=>{const s=SKILLS.find(x=>x.id===id);if(skpAvail()>0&&lv(id)<s.max&&lineOf(S.cls).includes(s.from)){S.sk[id]=lv(id)+1;ui();save()}},
-  rskill:()=>{if(S.zeny<rcost())return log('Not enough Zeny to reset skills.');S.zeny-=rcost();S.sk={aid:1};log('Skills reset.');ui();save()},
+  rskill:()=>{if(S.zeny<rcost())return log('Not enough Zeny to reset skills.');S.zeny-=rcost();S.sk={aid:1};S.skOff={};log('Skills reset; every skill auto-casts again.');ui();save()},
   selb:v=>{selB=v;renderWin()},equip:id=>equip(+id),sell:id=>sell(id),sellbelow:v=>{S.inv.filter(i=>i.tier<=+v).slice().forEach(i=>sell(i.id))},
   selc:v=>{selC=v;renderWin()},
   sock:v=>{const[id,k]=v.split(':'),i=S.cards.findIndex(c=>String(c.id)===id),e=S.eq[k];if(i<0||!e||(e.cards||[]).length>=(e.slots||0))return;if(CFIT[S.cards[i].stat]!==grp(e)){log('That card cannot be fitted into this type of equipment.');return}e.cards=e.cards||[];e.cards.push(S.cards.splice(i,1)[0]);S.hp=Math.min(S.hp,maxHp());ui();save()},
@@ -585,10 +714,19 @@ const ACT={
   refine:k=>refine(k),sub:v=>{const[t,k]=v.split(':');sub[t]=k;renderWin()},selp:v=>{selP=+v;renderWin()},
   pon:id=>{const p=gp(id);if(!p)return;if(p.on)p.on=false;else if(S.pets.filter(x=>x.on).length<3)p.on=true;else log('Only 3 pets can fight at once. Remove one first.');ui();save()},
   psk:v=>{const[id,g]=v.split(':'),p=gp(id);if(!p)return;const a=(p.sk||[1,2,3]).slice(),i=a.indexOf(+g);if(i>=0)a.splice(i,1);else a.push(+g);p.sk=a;ui();save()},ssel:v=>{selS=v;renderWin()},seleq:v=>{selE=v;renderWin()},
+  sktog:id=>{if(!S.skOff)S.skOff={};const s=SKILLS.find(x=>x.id===id);if(!s)return;
+    if(S.skOff[id])delete S.skOff[id];else S.skOff[id]=1;
+    log(s.n+': auto-cast '+(S.skOff[id]?'OFF - you will not use it':'ON')+'.',S.skOff[id]?'r0':'r3');ui();save()},
   unequip:k=>{const it=S.eq[k];if(!it)return;S.inv.push(it);S.eq[k]=null;S.hp=Math.min(S.hp,maxHp());ui();save()},
-  egg:()=>{if(S.pets.length>=3||S.zeny<EGG)return;S.zeny-=EGG;const r=pickW(RW),c=PETS.filter(x=>x.r===r),sp=PETS.indexOf(c[ri(0,c.length-1)]);S.pets.push({id:ri(1e6,9e6),sp,mut:0,eq:[0,0,0]});log(`A ${RN[r]} pet hatched: ${PETS[sp].n}!`,'r'+RCL[r]);ui();save()},
-  peq:v=>{const[id,i]=v.split(':'),p=gp(id);if(!p)return;const t=p.eq[+i];if(t>=5||S.zeny<peqCost(t))return;S.zeny-=peqCost(t);p.eq[+i]++;ui();save()},
-  proll:id=>{const p=gp(id);if(!p||p.roll||rollingSet.has(p.id))return;rollOnce(p,false,g=>{p.roll=g;log(`Mutation roll: Grade ${g} (x${MUT[g]})`,g>=4?'r4':'r0');ui();save()})},pauto:id=>{const p=gp(id);if(!p)return;if(autoSet.has(p.id)){autoSet.delete(p.id);ui();return}if(p.roll||rollingSet.has(p.id))return;if((p.sk||[1,2,3]).length>=6){log('Un-skip at least one grade to auto-roll.');return}autoSet.add(p.id);autoRoll(p)},ptg:v=>{const[id,d]=v.split(':'),p=gp(id);if(p){p.tg=cl((p.tg||4)+ +d,1,6);ui();save()}},
+  peq:v=>{const[id,i]=v.split(':'),p=gp(id);if(!p)return;const k=+i,t=p.eq[k];if(!(t<PT.length))return;const c=peqCost(t);
+    if(S.zeny<c){log('Not enough Zeny to train.');ui();return}
+    S.zeny-=c;
+    if(Math.random()<PTG[t]){const great=Math.random()<GREAT&&t+2<=PT.length,gain=great?2:1;p.eq[k]=t+gain;
+      log(`${great?'GREAT SUCCESS! ':''}${PEQ[k].n} trained to ${PT[p.eq[k]-1]}${great?' (+2)':' (+1)'}`,great?'r4':'r3');
+      addFloat(pl.x,3,pl.z,great?'GREAT!':'+'+gain,'#ffd23f',great)}
+    else log(`${PEQ[k].n} training failed (-${c.toLocaleString()}z).`,'r0');
+    ui();save()},
+  proll:id=>{const p=gp(id);if(!p||p.roll||rollingSet.has(p.id))return;rollOnce(p,false,g=>{p.roll=g;log(`Mutation roll: Grade ${g} (x${MUT[g]})`,g>=4?'r4':'r0');ui();save()})},pauto:id=>{const p=gp(id);if(!p)return;if(autoSet.has(p.id)){autoSet.delete(p.id);ui();return}if(p.roll||rollingSet.has(p.id))return;if((p.sk||[1,2,3]).length>=6){log('Un-skip at least one grade to auto-roll.');return}autoSet.add(p.id);autoRoll(p)},
   pkeep:id=>{const p=gp(id);if(p){p.mut=p.roll;p.roll=0;ui();save()}},pdisc:id=>{const p=gp(id);if(p){p.roll=0;ui();save()}},
   prel:id=>{const p=gp(id);if(!p)return;const z=Math.floor(EGG*.3);ask(`Release ${PETS[p.sp].n}? You get ${z}z back.`,()=>{S.pets=S.pets.filter(x=>x!==p);autoSet.delete(p.id);S.zeny+=z;ui();save()})},
   claim:i=>{const q=S.q[+i];if(q&&q.prog>=q.goal){S.zeny+=(q.z||0);S.exp+=(q.xp||0);log(`Quest complete! +${(q.z||0).toLocaleString()}z, +${(q.xp||0).toLocaleString()} EXP`,'r3');S.q[+i]=newQuest(q.type);checkLevel();ui();save()}},
@@ -617,16 +755,29 @@ function update(dt){
   shots.forEach(s=>s.t+=dt*7);shots=shots.filter(s=>{if(s.t<1)return true;if(s.m)scene.remove(s.m);return false});
   if(skillOn('aid')&&S.hp<maxHp()*.5&&(skCd.aid||0)<=0){skCd.aid=6;const h=Math.ceil(maxHp()*(.1+.05*lv('aid')));S.hp=Math.min(maxHp(),S.hp+h);addFloat(pl.x,2.6,pl.z,'+'+h,'#7dff7d')}
   for(let i=pend.length-1;i>=0;i--){const p=pend[i];p.t-=dt;if(p.t<=0){pend.splice(i,1);strike(p.m,p.col);shot(p.col);if(mob&&mob.hp<=0){kill();break}}}
+  // a timed tradeoff buff ticks down, drains HP if it says so, and clears when it expires
+  if(tb.t>0){tb.t-=dt;if(tb.drain)S.hp=Math.max(1,S.hp-dt*maxHp()*tb.drain/100);
+    if(tb.t<=0){const n=tb.n;tb={};log(n+' wears off.')}}
+  // damage-over-time and stun on every mob still standing
+  if(mobs.length)for(const m of mobs.slice()){
+    m.stun=Math.max(0,(m.stun||0)-dt);
+    const ds=m.dots;if(ds&&ds.length)for(let i=ds.length-1;i>=0;i--){const d=ds[i];d.dur-=dt;d.t+=dt;
+      if(d.t>=.5){d.t-=.5;if(m.hp>0)hurt(m,Math.max(1,Math.round(d.dps*.5)),d.col)}
+      if(d.dur<=0)ds.splice(i,1)}}
+  // tradeoff skills cast themselves the moment they are ready and you are healthy enough
+  for(const s of SKILLS)if(s.type==='to'&&skillOn(s.id)&&(skCd[s.id]||0)<=0&&tb.t<=0&&S.hp>maxHp()*(s.to.hp||.6)){
+    skCd[s.id]=s.cd;tb={atk:s.to.atk||0,aspd:s.to.aspd||0,def:s.to.def||0,drain:s.to.drain||0,t:s.to.dur,n:s.n};
+    log(s.n+'! '+s.d(lv(s.id)),'r4');addFloat(pl.x,3.2,pl.z,s.n,s.col,true);break}
   let tx=0,tz=1.5,reach=1.4;
   if(!mobs.length){respawn-=dt;if(respawn<=0)spawn()}
   else{
     const rng=C().rng;
     for(const m of mobs){
       m.spawn=Math.min(1,m.spawn+dt*3);m.flash=Math.max(0,(m.flash||0)-dt*6);m.atkAnim=Math.max(0,(m.atkAnim||0)-dt*2.35);
-      const ms=2.6+.3*m.size,gx2=pl.x+Math.cos(m.a)*ms,gz2=pl.z+Math.sin(m.a)*ms*.6,ex=gx2-m.x,ez=gz2-m.z,ed=Math.hypot(ex,ez);m.run=ed>.12;
-      if(ed>.1){const v=Math.min(ed,dt*(m.boss?1.2:1.6));m.x+=ex/ed*v;m.z+=ez/ed*v}
+      const ms=2.6+.3*m.size,gx2=pl.x+Math.cos(m.a)*ms,gz2=pl.z+Math.sin(m.a)*ms*.6,ex=gx2-m.x,ez=gz2-m.z,ed=Math.hypot(ex,ez);const stn=m.stun>0;m.run=ed>.12&&!stn;
+      if(ed>.1&&!stn){const v=Math.min(ed,dt*(m.boss?1.2:1.6));m.x+=ex/ed*v;m.z+=ez/ed*v}
       m.x=cl(m.x,-BX_,BX_);m.z=cl(m.z,Z0,Z1);m.ry=Math.atan2(pl.z-m.z,m.x-pl.x);
-      if(Math.hypot(pl.x-m.x,pl.z-m.z)<=ms+.4){m.at-=dt;if(m.at<=0){m.at=m.boss?1.2:1.5;
+      if(Math.hypot(pl.x-m.x,pl.z-m.z)<=ms+.4&&!stn){m.at-=dt;if(m.at<=0){m.at=m.boss?1.2:1.5;
         if(Math.random()*100<flee())addFloat(pl.x,2.4,pl.z,'Miss','#8cf');
         else{const d=Math.max(1,Math.round(m.atk*rnd(.8,1.2)-(m.mag?mdef():def())*.6));S.hp-=d;hitAnim=1;m.atkAnim=1;addFloat(pl.x,2.4,pl.z,d,m.mag?'#c08cff':'#ff6b6b');
           if(S.hp<=0){log('You were defeated... resting and retrying.','r0');S.hp=maxHp();S.kl=0;mobs=[];mob=null;respawn=1.5;pend=[];ui();return}}}}
