@@ -1629,3 +1629,22 @@ assigned for feel rather than fidelity. While reworking that, two shipped bugs s
 * **Tests:** all 15 suites green (the new one: weapon review **13** passed, 0 failed — every class/view/frame
   covered, weapons only on the armed views, drag never inverted, the exported nudges exact).
 * **Branches / PR:** `arena/01a1054b-prontera-grind` (PR #11).
+
+### 2026-10-04 — `tool-v36 a preview server in the repo, and a handover note for the next session` (no game change, no BUILD bump)
+* **Why:** the owner could not open any of the preview links ("i cant access any of the links u given",
+  then "not working"). The two things that could be fixed from this side are fixed.
+* **The server used to live in `/tmp`** and was wiped by every sandbox reset, and it answered the front
+  page with a **302 redirect** — a proxy in front of it can drop that and leave a blank page. It now
+  lives in the repo as `tools/preview_server.py`, answers every route with a **direct 200 (no redirects
+  anywhere)**, sends `Cache-Control: no-store`, and serves `/` (weapon review), `/review`, `/standalone`
+  (the review page as one offline file) and `/picker` (the pose + head picker). Run it from the repo root:
+  `python3 tools/preview_server.py 8000`.
+* **The fallback for the owner** — a single self-contained page that makes no external requests at all
+  (verified): `tools/weapon_review_standalone.html` on the branch, openable as a local file.
+* **The handover:** `tools/HANDOVER-weapon-review.md` — how a fresh session recovers the branch
+  (`git reset --mixed origin/arena/01a1054b-prontera-grind`, never `--hard`), starts the preview, and what
+  the owner is asked to do (drag the odd tile, "Copy my adjustments", or say "bake it"). The reviewed
+  state is tagged **`weapon-review-v35`** in the owner's GitHub as a fixed backup point.
+* **Files touched:** new `tools/preview_server.py`, `tools/HANDOVER-weapon-review.md`.
+* **Tests:** all 15 suites unchanged and green; the game is untouched.
+* **Branches / PR:** `arena/01a1054b-prontera-grind` (PR #11).
