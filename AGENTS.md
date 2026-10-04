@@ -2452,3 +2452,21 @@ assigned for feel rather than fidelity. While reworking that, two shipped bugs s
   scene 8, skill 50, gear 24, save_load 10, pet 11, class_change 22, economy 21, card 13, pack (19 bodies).
   Inline JS passes `node --check`; both picker builds boot.
 * **Branches / PR:** `arena/01a10755-prontera-grind`.
+
+### 2026-10-04 — `tool-v41 both pages carry a way to each other (the preview is one link, not three)` (no game change, no BUILD bump)
+
+* **Why:** the owner could not open the sandbox URL handed over in chat — the previews have to be reachable from
+  the Arena preview itself. One live preview now serves both pages and they link to each other.
+* **What changed:** `tools/weapon_review.html` and `tools/sprite_picker.html` each gain a small **"pages"** line
+  right under the header ("← Weapon review", "Head & pose picker →"). It is injected only when the page is
+  opened over http(s) (`window.location.protocol`), so a file opened straight from disk keeps the same markup
+  and shows no dead links. The standalone twin is built by `tools/inline_picker_standalone.js`, which now
+  **strips the nav block and its styles** - the one-file build is not served by the preview server, so its
+  links would point at the wrong host.
+* **Files touched:** `tools/weapon_review.html`, `tools/sprite_picker.html` (nav + its styles), regenerated
+  `tools/sprite_picker_standalone.html`, `tools/inline_picker_standalone.js` (strip step with a size sanity
+  check), `AGENTS.md`.
+* **Tests:** all suites unchanged and green (picker 21, weapon_review 13, head_seat 7, preview_server 11,
+  ui 18, sprite 12, ...); the pre-existing `kit_sim` 33/1 red is still there and still not from this work.
+  The nav reads `window.location` (not bare `location`) so the headless harnesses boot it unchanged.
+* **Branches / PR:** `arena/01a10755-prontera-grind`.

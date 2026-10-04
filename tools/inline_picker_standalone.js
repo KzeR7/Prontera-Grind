@@ -46,7 +46,14 @@ if (sizes.pack < 2e5 || sizes.pack > 8e5 ||
   console.error('a block is the wrong size - the extraction slipped: ' + JSON.stringify(sizes));
   process.exit(1);
 }
-const out = tmpl.replace(TAGS[0], pack[0]).replace(TAGS[1], data[0]).replace(TAGS[2], defs);
+let out = tmpl.replace(TAGS[0], pack[0]).replace(TAGS[1], data[0]).replace(TAGS[2], defs);
+// the served pages carry a small "pages" nav (added only over http); the one-file build is not
+// served by that preview server, so it ships without it - its links would point at the wrong host
+const nav = /<script>\/\* served preview only[\s\S]*?<\/script>\n/;
+if (!nav.test(out)) { console.error('the page source lost its preview nav block'); process.exit(1); }
+out = out.replace(nav, '');
+out = out.split('\n').filter(l => !/navline|navlink|navhint/.test(l)).join('\n');   // and its styles
+if (/served preview only|navline/.test(out)) { console.error('the nav survived into the standalone'); process.exit(1); }
 if (out.includes('src="sprite_picker') || out.includes('src="../assets/sprite_pack_data.js"')) {
   console.error('a data tag survived the inlining'); process.exit(1);
 }

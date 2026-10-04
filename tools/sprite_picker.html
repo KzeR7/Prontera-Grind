@@ -19,6 +19,10 @@ button:hover{border-color:var(--acc2)}
 button.primary{border-color:var(--acc);color:var(--acc)}
 label.f{display:flex;gap:5px;align-items:center;color:var(--dim)}
 .pill{background:var(--panel2);border:1px solid var(--line);border-radius:20px;padding:1px 8px;font-size:11px;color:var(--dim)}
+.navline{font-size:12px;padding:6px 14px;border-bottom:1px solid var(--line);background:#0d1016}
+.navline a.navlink{color:#9fd0ff;text-decoration:none;border-bottom:1px dotted #39506b}
+.navline a.navlink:hover{color:#d6ecff}
+.navline small.navhint{color:var(--dim);font-size:11px}
 main{display:grid;grid-template-columns:minmax(720px,1fr) 420px;gap:12px;padding:12px;align-items:start}
 @media (max-width:1200px){main{grid-template-columns:1fr}}
 .card{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:10px}
@@ -132,6 +136,17 @@ textarea{width:100%;height:74px;background:#0f1116;color:var(--ink);border:1px s
   </section>
 </main>
 
+<script>/* served preview only: a way between the pages of this preview (the file opened
+   straight from disk keeps the same markup but adds no nav) */
+(function(){if(String((window.location||{}).protocol||'').indexOf('http')!==0)return;
+  var d=document.createElement('div');d.className='line wrap navline';
+  d.innerHTML='<span class="pill">pages</span> '+
+    '<a class="navlink" href="/">&#8592; Weapon review</a> '+
+    '<a class="navlink" href="/picker">Head &amp; pose picker &#8594;</a>'+
+    '<small class="navhint">(the picker is where heads are set and copied back)</small>';
+  var h=document.querySelector('header');
+  if(h&&h.insertAdjacentElement)h.insertAdjacentElement('afterend',d);else document.body.insertBefore(d,document.body.firstChild)})();
+</script>
 <script src="../assets/sprite_pack_data.js"></script>
 <script src="sprite_picker_data.js"></script>
 <script src="sprite_picker_defaults.js"></script>
