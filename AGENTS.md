@@ -1187,3 +1187,44 @@ assigned for feel rather than fidelity. While reworking that, two shipped bugs s
     so a few slots there may have to inherit the parent class or be matched by hand.
   * Once the picks arrive: rebuild the pack from them, measure the weapon grip per cell, add
     the direction-aware weapon layer, then re-run the suites and bump `BUILD`.
+
+### 2026-10-04 — `ui-v26 attack-only weapon + simpler sprite picker`
+* **What changed for the player:**
+  * **The weapon now shows only while attacking.** Idle and walking are bare-handed — you asked
+    for it. The weapon icon (the game's own Divine Pride item art, with its existing glyph
+    fallback) still appears for the attack swing exactly as before.
+* **What changed for the sprite work (no game change):** `tools/sprite_picker.html` was rebuilt
+  simpler, after the first version was confusing to use.
+  * **Three tabs — Idle / Walk / Attack — one animation at a time**, instead of 24 mixed slots.
+  * **One card per camera view** (0 S, 1 SW, 2 W, 3 NW, 4 N + the three mirrored ones), each
+    showing the finished composite. The three mirrored views follow W/NW/SW automatically
+    (one checkbox if you want to fill them separately).
+  * **Whole cycles in one click**: "Use Attack N · sheet row 6 · 6 poses" fills every frame of
+    that view at once. Singly-clickable poses stay available to fix an individual frame, and
+    the frame strip (1…8 for walk, 1…6 for attack) shows which frames are still empty.
+  * **The weapon is the game's own weapon** — the real Divine Pride item icon for the family,
+    at the game's own hand/grip anchor, drawn only on the Attack tab. **Drag it in the preview**
+    to move it for that class + weapon + view; the offset is stored in the copied selection, and
+    ↺ puts it back. The vector weapon art remains the fallback if the icon cannot load.
+  * The pose tiles no longer carry the technical row/column/IoU labels; the head-seat marker on
+    a pose is in the tooltip, and every card preview shows where the head actually lands.
+* **Files touched:** `index.html` (`syncWeaponSprites` attack-only guard, `BUILD` v26),
+  `tools/tests/sprite_sim.js` (the weapon-visibility assertion now pins attack-only),
+  `tools/make_sprite_picker.py` (reads the weapon/attach constants straight out of
+  `index.html` so the picker can never drift; adds whole-cycle "strips"), 
+  `tools/sprite_picker.html` (rebuilt), `tools/sprite_picker_data.js` (regenerated, 266 KB),
+  `AGENTS.md`.
+* **Art:** none added, removed, recoloured or rebuilt; `tools/montage.py` was not run.
+* **Tests:** all 13 suites green (class change 22, save/load 10; economy 21, stat 7, card 13,
+  skill 48, gear 20; scene 8, kit 20, UI 13, sprite 10, starter 4; pack 19 bodies). Inline game
+  JS passes `node --check`; the picker's own inline JS passes `node --check` and boots under a
+  DOM/canvas stub, exercising all three tabs, auto-fill, the walkthrough, a view card, a
+  whole-cycle button and a candidate tile (assignment verified to land in the selection JSON).
+* **Branches / PR:** `arena/01a1054b-prontera-grind`; pushed for review.
+* **Known limits / follow-ups:**
+  * The weapon's *size* is not adjustable — only its position, which is what the owner asked for.
+  * Weapon drag offsets are stored per class + weapon family + view; they are not yet applied to
+    the game (`index.html` still uses its own `PACK_WEAPON_ADJUST` hand point). They will be
+    folded in when the pack is rebuilt from the picks.
+  * Divine Pride icons need network access in the browser; without it the picker draws the
+    vector fallback, exactly as the game does.

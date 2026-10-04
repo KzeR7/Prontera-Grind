@@ -180,7 +180,9 @@ t('official sprites are loaded over the procedural art with safe fallbacks', () 
   assert.ok(src.includes('const ready=!v.imageFailed&&im.complete&&im.naturalWidth>0'), 'the DOM sprite is used when the GPU image cannot load');
   assert.ok(src.includes("if(!v.official)setCell(v.spr"), 'the original animated procedural mob art remains the final fallback');
   assert.ok(src.includes('function syncWeaponSprites(pFace,c){\n  const packed=!!(heroSpr&&heroSpr.userData.pack)'), 'weapon art is mounted to the current packed hero pose');
-  assert.ok(src.includes("n.el.style.display='grid'"), 'the held weapon stays visible outside attack frames');
+  assert.ok(src.includes("if(pose.kind!==2){weaponNodes.forEach(n=>n.el.style.display='none');return}"),
+            'v26: the held weapon is drawn only on attack frames - idle and walking are bare-handed');
+  assert.ok(src.includes("n.el.style.display='grid'"), 'the weapon node is still shown while the attack animation plays');
   assert.ok(src.includes("if(!mob||heroWeaponType(C().n,C().wt,S.eq.weapon&&S.eq.weapon.wt)!=='bow')return"), 'only the Archer weapon family emits the basic arrow projectile');
   assert.ok(src.includes("slashM.visible=atkAnim>.12&&wt!=='bow'&&wt!=='staff'"), 'bow and staff attacks do not show a generic melee slash');
   assert.ok(src.includes('n.fallback.textContent=WICON[wt]'), 'the existing weapon glyph remains the icon fallback');

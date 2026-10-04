@@ -14,6 +14,7 @@ usage:  python3 tools/make_sprite_picker.py [--qc /tmp/picker_qc.png]
 import io
 import json
 import os
+import re
 import sys
 
 import numpy as np
@@ -123,6 +124,43 @@ def seat_for(crop):
     return [crop.width // 2, 24, 'none']
 
 
+def game_constants():
+    """The weapon/attach constants straight out of index.html, so the picker shows the
+    game's own weapon icon, at the game's own spot, and cannot drift from it."""
+    h = open(os.path.join(REPO, 'index.html')).read()
+
+    def literal(marker):
+        i = h.index(marker)
+        j = h.index('{', i)
+        depth = 0
+        for k in range(j, len(h)):
+            if h[k] == '{':
+                depth += 1
+            elif h[k] == '}':
+                depth -= 1
+                if depth == 0:
+                    break
+        txt = h[j:k + 1]
+        txt = re.sub(r"'([^']*)'", r'"\1"', txt)                             # JS strings
+        txt = re.sub(r'([{,\s])([A-Za-z_][A-Za-z0-9_]*)\s*:', r'\1"\2":', txt)   # bare keys
+        txt = re.sub(r'([\[{,:]\s*)\.(\d)', r'\g<1>0.\2', txt)                # JS .5 -> 0.5
+        return json.loads(txt)
+
+    url = re.search(r'weaponItemUrl=wt=>WEAPON_ITEM_IDS\[wt\]\?`([^`]+)`', h)
+    return {
+        'weaponItemIds': literal('WEAPON_ITEM_IDS={'),
+        'weaponIconSize': literal('WEAPON_ICON_SIZE={'),
+        'weaponIconAngle': literal('WEAPON_ICON_ANGLE={'),
+        'weaponIconGrip': literal('WEAPON_ICON_GRIP={'),
+        'classWeapon': literal('CLASS_WEAPON={'),
+        'packWeaponAdjust': literal('PACK_WEAPON_ADJUST={'),
+        # the page needs the prefix only; the id is appended per weapon family
+        'weaponUrl': (url.group(1).split('${')[0] if url else
+                      'https://www.divine-pride.net/img/items/item/dpRO/'),
+        'weaponOnlyAttack': 'if(pose.kind!==2){weaponNodes.forEach' in h,
+    }
+
+
 def build_class(class_name):
     path = sheet_path(class_name)
     if not path or not os.path.exists(path):
@@ -210,6 +248,18 @@ def build_class(class_name):
     for i, p in enumerate(poses):
         p['id'] = i
 
+    # whole cycles: the labelled poses of one animation+direction+sheet row, in frame
+    # order - one click fills a whole walk/attack view instead of eight
+    groups = {}
+    for p in poses:
+        if p.get('anim') is None:
+            continue
+        groups.setdefault((p['anim'], p['dir'], p['row']), []).append(p['id'])
+    strips = []
+    for (a, dd, r), ids in sorted(groups.items()):
+        ids.sort(key=lambda i: poses[i]['frame'])
+        strips.append({'anim': a, 'dir': dd, 'row': r, 'ids': ids})
+
     # the sheet's own guess at the 8 views x 3 animations, from the labels
     auto = {}
     for d in range(8):
@@ -229,6 +279,7 @@ def build_class(class_name):
         'kind': kind,
         'layoutNote': bad or 'one row per direction',
         'poses': poses,
+        'strips': strips,
         'auto': auto,
     }
 
@@ -236,7 +287,7 @@ def build_class(class_name):
 def main():
     data = {'cell': {'w': CELL_W, 'h': CELL_H, 'padL': PAD_L, 'padT': PAD_T,
                      'feet': FEET_Y, 'body': BODY},
-            'dirs': DIRS, 'anim': ANIM, 'classes': {}}
+            'dirs': DIRS, 'anim': ANIM, 'game': game_constants(), 'classes': {}}
     for name in CLASSES:
         d = build_class(name)
         if not d:
