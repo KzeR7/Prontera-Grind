@@ -231,7 +231,7 @@ const AL={str:'STR',agi:'AGI',dex:'DEX',luk:'LUK',int:'INT',hp:'Max HP',atk:'ATK
 // late maps in about five, with bosses still a ~12x fight. See tools/tests/economy_sim.js.
 const SU=k=>k.toUpperCase(),BX_=13,Z0=-28,Z1=12,MPS=15,AGGRO=6.5,BOSSZ=-4,BOSS_NEAR=2.2,BOSS_FAR=6,HPK=42,HPE=1.3,K5=['str','agi','dex','luk','int'];
 const GM_USER='GM',GM_PASS='gm1234';   // CHANGE THE GM PASSWORD before you publish
-const BUILD='2026-10-04 ui-v36 skill-max keep-class dps-meter boss-roam';   // shown on the login card - confirms which file you loaded
+const BUILD='2026-10-04 ui-v37 skills-fit dps-meter boss-roam';   // shown on the login card - confirms which file you loaded
 $('buildTag').textContent='build '+BUILD;
 
 // ---------- class tree: Novice -> 6 first jobs -> 6 second jobs -> 6 third jobs ----------
@@ -756,6 +756,24 @@ function load(){try{const s=JSON.parse(lsGet(saveKey()));if(s&&s.lv){const F=fre
   // skills removed or renamed since the save was written must not strand the points spent on
   // them: dropping the entry refunds the points, which is kinder than an invisible dead cost.
   for(const k in f.sk)if(!SKILLS.some(x=>x.id===k))delete f.sk[k];
+  // A save can carry more skill levels than its line has earned: the v35 shop charged an
+  // escalating ladder and kept its ledger in levels, so points were minted and could be spent
+  // past what the line ever earned. Repair it here (load) instead of letting skpAvail() clamp
+  // to zero for ever: trim levels in reverse roster order - the last-defined skills are the
+  // ones bought last - and record how many points came back so the Skills panel can say so.
+  // Pure arithmetic on SKILLS/CLASSES/f, so it stays inside this load() span.
+  {const line=[];for(let n=f.cls;CLASSES[n];n=CLASSES[n].par)line.unshift(n);
+   const paid=id=>{const s=SKILLS.find(x=>x.id===id);return s?Math.max(0,Math.floor(+((f.sk||{})[id])||0)):0};
+   const owed=()=>SKILLS.reduce((a,s)=>a+(line.includes(s.from)?paid(s.id):0),0);
+   const has=line.reduce((a,n)=>a+Math.max(0,((((f.jobs||{})[n]||{}).jl)||1)-1),0)+(f.sk.aid?1:0);
+   if(owed()>has){
+     let over=owed()-has,back=0;
+     for(const s of SKILLS.slice().reverse()){
+       if(over<=0||!line.includes(s.from))continue;
+       const L=Math.min(paid(s.id),s.max);if(!L)continue;
+       const cut=Math.min(L,over);f.sk[s.id]=L-cut;over-=cut;back+=cut;
+       if(f.sk[s.id]<=0)delete f.sk[s.id]}
+     f.skRepair=back}}
   // per-class builds (Base Lv / stats / points / gear) - repair, drop anything malformed
   if(!f.base||typeof f.base!=='object')f.base={};
   for(const k in f.base){const r=f.base[k];
@@ -830,15 +848,19 @@ const gx=()=>S.gm?(S.gmx||100):1;
 
 // ---------- derived stats ----------
 // Skill points: one per job level past the first (9 for a maxed Novice, 58 for a maxed 1st
-// job, 107 for a 2nd job, 156 for a transcendent), and a FLAT 2 points per skill level.
+// job, 107 for a 2nd job, 156 for a transcendent), and ONE point per skill level - 5 to max a
+// skill. Every line's whole tree therefore costs 4 / 24 / 44 / 64 points against 9 / 58 / 107 /
+// 156 earned, so a maxed job level can always finish its own tree, in every possible history.
 //
-// History: v35 charged the escalating ladder (level L cost L points, so 15 to max a skill),
-// which made the tree cost more than any line could ever earn - a maxed Lord Knight earned
-// 156 and its tree cost 195, so the last 39 points could never be bought and the panel looked
-// broken ("I can't max my skills at max job level"). Flat 2 fixes that: every line can now
-// finish its own tree at max job level, and the points left over are the build choice.
-//   Novice 8 of 9 · 1st job 48 of 58 · 2nd job 88 of 107 · transcendent 128 of 156 (spare 1/10/19/28)
-const skCost=()=>2;
+// History, because this number has been wrong twice:
+//   v35 charged the escalating ladder (level L cost L, so 15 to max a skill). A maxed Lord
+//       Knight earned 156 and the tree cost 195 - 39 points that could never be bought.
+//   v36 (one release) charged a flat 2. That fits on paper (spare 1/10/19/28) but only just:
+//       a Lord Knight promoted at the minimum gate (Swordman 40 -> Knight 40) who also
+//       restarted the Novice once earns 127 and the tree still cost 128 - one point short, so
+//       the panel could still strand a maxed character. The cushion is the fix: at 1 point per
+//       level the worst case in the game leaves 63 points spare.
+const skCost=()=>1;
 const C=()=>CLASSES[S.cls]||CLASSES.Novice,lv=id=>S.sk[id]||0,jobOf=()=>S.jobs[S.cls]||(S.jobs[S.cls]={jl:1,jx:0});
 // Job level j of the current tier costs the job exp (70% of mob exp) that the mirrored
 // base level pays out, so each job bar fills in step with the base bar and the three job
@@ -871,13 +893,17 @@ const totalPts=()=>{let p=10;for(let l=2;l<=S.lv;l++)p+=4+Math.floor(l/5);return
 // against trees costing 14 / 74 / 134 / 194, so no line can max its own tree. Pinned by
 // skill_sim.js, which runs the real purchase loop and checks the purse against the ledger.
 const skLine=()=>lineOf(S.cls);
-const skCostOf=L=>2*L;           // what the + button has charged you, in total, for level L
+const skCostOf=L=>L;             // what the + button has charged you, in total, for level L
 const skEarned=()=>skLine().reduce((a,n)=>a+Math.max(0,(((S.jobs[n]||{}).jl)||1)-1),0);
 const skSpent=()=>SKILLS.reduce((a,s)=>a+(skLine().includes(s.from)?skCostOf(S.sk[s.id]||0):0),0);
 // Clamped at zero: a save written by an older build can be over-spent in the new ledger (it was
 // buying skills with the phantom points), and it should read as "nothing spare" rather than as a
 // negative that breaks the + buttons. The deficit shrinks as the line earns more job levels.
-const skpAvail=()=>Math.max(0,skEarned()-Math.max(0,skSpent()-(S.sk.aid?2:0)));
+const skpAvail=()=>Math.max(0,skEarned()-Math.max(0,skSpent()-(S.sk.aid?1:0)));
+// The whole line, priced: what maxing every reachable skill costs, and what a fully
+// levelled line earns. The Skills panel prints both so "can I finish this?" is never a guess.
+const skTree=()=>Math.max(0,SKILLS.filter(s=>skLine().includes(s.from)).reduce((a,s)=>a+skCostOf(s.max),0)-(S.sk.aid?1:0));
+const skEarnedMax=()=>skLine().reduce((a,n)=>a+(CLASSES[n].mj-1),0);
 const refCost=it=>Math.round(200*((it.r||0)+1)*(1+(it.sec||0)*.5)),refCh=it=>[100,100,100,100,70,60,50,40,30,20][it.r||0];
 const affTxt=a=>`${AL[a.k]} +${a.v}`,cardTxt=c=>`${c.n} (${SU(c.stat)} +${c.v})`,dtier=it=>it.card?GI[it.g]:it.ore?3:it.tier;
 const isBoss=()=>S.lvl===10,fieldName=()=>`${MAPS[S.mp].n} Stage ${S.lvl}`;
@@ -1243,7 +1269,7 @@ const V={
     <small><b>A class you have played before is one click away</b> - its Base Lv, job level, skills, stats and gear are still on it, so there is no Novice reset needed to go back to it. A class you have <i>never</i> played still has to be unlocked from its parent (or from the Novice).</small>
     <button class="full" data-a="job" data-v="Novice" ${S.cls==='Novice'?'disabled':''}>Restart as Novice (Base Lv 25, job levels cleared)</button>`},
   skills(){const line=lineOf(S.cls),av=skpAvail(),sel=SKILLS.find(s=>s.id===selS);
-    return`<div class="hd">Skill points: ${av} <small>(${skEarned()} earned on this line, ${Math.max(0,skSpent()-(S.sk.aid?2:0))} spent)</small></div><small>Skill levels cost a flat 2 points (10 to max a skill), so a maxed job level can finish the line &middot; ${SKSLOTS(C().tier)} skill${SKSLOTS(C().tier)>1?'s cast':''} per swing at this job tier &middot; later casts in the same swing land at ${SKFADE.slice(1).map(f=>Math.round(f*100)+'%').join(' / ')} &middot; active skills auto-cast when learned; use the Auto cast checkbox on a skill to pause it</small>`
+    return`${S.skRepair?`<div class="row" style="margin-bottom:4px"><small class="r0"><b>Repaired an older save:</b> ${S.skRepair} skill point${S.skRepair>1?'s were':' was'} refunded - the old shop minted points, so this line was carrying levels it had never earned. Nothing else to do.</small></div>`:''}<div class="hd">Skill points: ${av} <small>(${skEarned()} earned on this line, ${Math.max(0,skSpent()-(S.sk.aid?1:0))} spent &middot; this line's tree costs ${skTree()}, a maxed line earns ${skEarnedMax()} - <b>${Math.max(0,skEarnedMax()-skTree())} to spare</b>)</small></div><small>Skill levels cost 1 point each (5 to max a skill), so a maxed job level can always finish this whole line &middot; ${SKSLOTS(C().tier)} skill${SKSLOTS(C().tier)>1?'s cast':''} per swing at this job tier &middot; later casts in the same swing land at ${SKFADE.slice(1).map(f=>Math.round(f*100)+'%').join(' / ')} &middot; active skills auto-cast when learned; use the Auto cast checkbox on a skill to pause it</small>`
     +line.map(from=>{const ss=SKILLS.filter(s=>s.from===from);return ss.length?`<div class="sec">${from}</div><div class="skg">${ss.map(s=>{const L=lv(s.id),off=!!(L&&s.type!=='pas'&&skOff(s.id)),kind=s.type==='pas'?'PASSIVE':s.type==='to'?'TRADEOFF':s.type==='heal'?'HEAL':'ACTIVE';
       return`<div class="sk${L?'':' off'}${off?' auto-off':''}${selS===s.id?' sel':''}" style="--sk-accent:${s.col||'#8a6a2c'}" data-a="ssel" data-v="${s.id}">
         <div class="sk-head"><span class="sk-kind">${kind}</span>${off?'<span class="sk-paused">OFF</span>':''}</div>
@@ -1366,8 +1392,8 @@ const ACT={
   skill:id=>{const s=SKILLS.find(x=>x.id===id);if(!s)return;const nx=lv(id)+1,c=skCost(nx);
     if(nx>s.max||!lineOf(S.cls).includes(s.from))return;
     if(skpAvail()<c)return log('Needs '+c+' skill points (you have '+skpAvail()+').','r0');
-    S.sk[id]=nx;ui();save()},
-  rskill:()=>{if(S.zeny<rcost())return log('Not enough Zeny to reset skills.');S.zeny-=rcost();S.sk={aid:1};S.skOff={};log('Skills reset; every skill auto-casts again.');ui();save()},
+    S.sk[id]=nx;S.skRepair=0;ui();save()},
+  rskill:()=>{if(S.zeny<rcost())return log('Not enough Zeny to reset skills.');S.zeny-=rcost();S.sk={aid:1};S.skOff={};S.skRepair=0;log('Skills reset; every skill auto-casts again.');ui();save()},
   selb:v=>{selB=v;renderWin()},equip:id=>equip(+id),sell:id=>sell(id),sellbelow:v=>{S.inv.filter(i=>i.tier<=+v).slice().forEach(i=>sell(i.id))},
   // Clicking a green bag tile wears it; the highlight mode stays on so several pieces can be
   // compared, and closing it is the ✕ on the banner (eqclose).

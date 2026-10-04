@@ -168,6 +168,41 @@ t('a boss stage keeps the roam by the boss, the field keeps roaming wide', () =>
   assert.ok(field.maxAbsX > 9, 'farming maps must still roam the whole field: ' + field.maxAbsX);
 });
 
+t('a save carrying more skill levels than its line earned is repaired on load', () => {
+  // The v35 shop minted points (it charged an escalating ladder but kept its ledger in levels),
+  // so an old save can hold levels its line never paid for. load() has to trim them instead of
+  // leaving the Skills panel clamped at "0 available" for ever. The ids come from the real
+  // roster, so this cannot drift when a skill is renamed.
+  const roster = {};
+  vm.createContext(roster);
+  vm.runInContext(grab('const CD=[', 'const pm=s=>') +
+    'this.__r={SKILLS,lineOf:cls=>{const a=[];for(let n=cls;n;n=CLASSES[n].par)a.unshift(n);return a}};', roster);
+  const R = roster.__r, line = R.lineOf('Swordman');
+  const ids = R.SKILLS.filter(s => line.includes(s.from)).map(s => s.id);
+  assert.ok(ids.length >= 4, 'the Swordman line should own several skills: ' + ids.join(','));
+  const sk = { aid: 5 }; ids.forEach(id => { sk[id] = 5 });
+  const owned = Object.values(sk).reduce((a, n) => a + n, 0);
+  const jobs = { Novice: { jl: 10, jx: 0 }, Swordman: { jl: 1, jx: 0 } };   // 9 earned, 0 on the Swordman
+  const bad = JSON.parse(JSON.stringify(save));
+  bad.cls = 'Swordman'; bad.jobs = jobs; bad.sk = sk; bad.base = {};
+  const box = {};
+  vm.createContext(box);
+  vm.runInContext(harness.replace(/const lsGet = \(\) => .*?;/, 'const lsGet = () => ' + JSON.stringify(JSON.stringify(bad)) + ';'), box);
+  const g = box.__l.loadRaw();
+  const left = R.SKILLS.filter(s => line.includes(s.from)).reduce((a, s) => a + Math.max(0, Math.floor(g.sk[s.id] || 0)), 0);
+  const earned = 9 + 0;                                        // Novice 10 + Swordman 1
+  assert.ok(left <= earned + 1, 'the line is still over-spent after load: ' + left + ' levels of ' + (earned + 1));
+  assert.strictEqual(g.skRepair, owned - left, 'the repair must report exactly the levels it removed');
+  assert.ok(g.skRepair > 0, 'this fixture really is over-spent (nothing was trimmed)');
+  // and every surviving level is a legal one
+  for (const s of R.SKILLS) { const L = g.sk[s.id]; if (L !== undefined) assert.ok(L >= 0 && L <= s.max, s.id + ' kept an illegal level ' + L); }
+  // a clean save is left completely alone
+  const box2 = {};
+  vm.createContext(box2);
+  vm.runInContext(harness, box2);
+  assert.ok(!box2.__l.loadRaw().skRepair, 'a healthy save must not be touched by the repair');
+});
+
 t('mob HP scales gently enough that early maps fall to a first job', () => {
   // HP = HPK * mb * pw^HPE. At 1.85 a correctly-levelled character needed 26-102s per mob
   // from Geffen onward; 1.3 brings that to roughly 1-10s while leaving bosses a real fight.

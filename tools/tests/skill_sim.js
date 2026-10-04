@@ -410,17 +410,19 @@ t('every job line has the same number of its own skills', () => {
   console.log('       ' + Object.entries(byTier).map(([t, s]) => 'tier ' + t + ': ' + [...s][0] + ' own skills').join(' | '));
 });
 
-t('a maxed job level can finish its whole tree, with a little left over', () => {
-  // v36: a skill level costs a flat 2 points, so maxing a 5-level skill costs 10 - and every
-  // line can afford its own tree at max job level instead of being stranded short of it.
-  assert.strictEqual([1,2,3,4,5].reduce((a, L) => a + K.skCost(L), 0), 10, 'maxing a skill should cost 10');
-  assert.strictEqual(K.skCost(1), 2, 'every level costs the same 2 points');
+t('a maxed job level can finish its whole tree, with plenty left over', () => {
+  // v37: a skill level costs ONE point, so maxing a 5-level skill costs 5. v36's flat 2 left
+  // only 1-28 points spare and the worst save in the game (a Lord Knight promoted at the
+  // minimum gate who also restarted the Novice) could not finish its tree at all - see the
+  // worst-case test below, which is the rule this price has to satisfy.
+  assert.strictEqual([1,2,3,4,5].reduce((a, L) => a + K.skCost(L), 0), 5, 'maxing a skill should cost 5');
+  assert.strictEqual(K.skCost(1), 1, 'every level costs the same single point');
   const rows = [];
   for (const [name, c] of Object.entries(K.CLASSES)) {
     const line = []; for (let x = name; x; x = K.CLASSES[x].par) line.unshift(x);
     const reach = K.SKILLS.filter(s => line.includes(s.from));
     // the ladder's cost, less the one free level of aid every line inherits
-    const need = reach.reduce((a, s) => a + 2 * s.max, 0) - 2;
+    const need = reach.reduce((a, s) => a + 1 * s.max, 0) - 1;
     const earned = line.reduce((a, n) => a + (K.CLASSES[n].mj - 1), 0);
     rows.push([name, c.tier, need, earned]);
     assert.ok(need <= earned,
@@ -433,6 +435,33 @@ t('a maxed job level can finish its whole tree, with a little left over', () => 
   }
   console.log('       ' + Object.entries(byTier).map(([t, r]) => 'tier ' + t + ': tree ' + r.need + ' of ' + r.earned + ' earned (' + (r.earned - r.need) + ' spare)').join(' | '));
   console.log('       ' + rows.map(r => r[0] + ' ' + r[3] + '/' + r[2]).join(' · '));
+});
+
+t('even the thinnest history in the game can finish its tree', () => {
+  // Every earlier price failed this. Two things shrink a line's point supply: promoting at the
+  // minimum gate (Swordman 40 -> Knight 40, never 50) and restarting the Novice, which clears
+  // the Novice's own job level while its skills stay bought. This is the floor the price has to
+  // clear, and it is computed from the real CLASSES/SKILLS rather than a hand-typed table.
+  const lines = { Novice: ['Novice'], '1st job': ['Novice','Swordman'], '2nd job': ['Novice','Swordman','Knight'],
+                  'Lord Knight': ['Novice','Swordman','Knight','Lord Knight'] };
+  const floor = 0;                       // the Novice restarted: no Novice job levels at all
+  const rows = [];
+  for (const [label, line] of Object.entries(lines)) {
+    const reach = K.SKILLS.filter(s => line.includes(s.from));
+    const tree = reach.reduce((a, s) => a + s.max, 0) - (reach.some(s => s.id === 'aid') ? 1 : 0);
+    // a Novice 10 for the first three (you cannot promote without it), then the minimum gates
+    const earn = label === 'Novice' ? 9
+      : label === '1st job' ? 9 + 49
+      : label === '2nd job' ? 9 + 39 + 49
+      : floor + 39 + 39 + 49;
+    rows.push([label, tree, earn]);
+    assert.ok(tree <= earn, `${label}: tree ${tree} of ${earn} earned on the thinnest history`);
+    // the Novice owns exactly one skill, so its cushion is naturally small; every real job line
+    // has to keep a real margin (30+), which is what the 2-point price failed to do.
+    assert.ok(label === 'Novice' ? earn - tree >= 1 : earn - tree >= 30,
+      `${label}: only ${earn - tree} points spare - too tight to trust`);
+  }
+  console.log('       thinnest history: ' + rows.map(r => r[0] + ' tree ' + r[1] + ' of ' + r[2] + ' (' + (r[2] - r[1]) + ' spare)').join(' · '));
 });
 
 t('effects are actually attached to the new skills (tagging must run after the push)', () => {
@@ -459,7 +488,7 @@ t('every first job owns an active AoE at skill level 1', () => {
     for(const skill of area){
       K.S={cls,sk:{[skill.id]:1},skOff:{}};
       assert.ok(K.skillOn(skill.id), cls+' AoE is usable at level 1');
-      assert.strictEqual(K.skCost(1),2);
+      assert.strictEqual(K.skCost(1),1);
     }
   }
 });
@@ -820,7 +849,7 @@ t('the ledger matches what the + button charges (no phantom points)', () => {
   };
   const knight = sim('Knight', { Novice: { jl: 10 }, Swordman: { jl: 50 }, Knight: { jl: 50 } }, 100);
   assert.ok(knight.bought > 0, 'the Knight must be able to buy something');
-  assert.strictEqual(knight.charged, K.skSpent() - 2, 'the ledger must equal what was charged (minus the free aid level)');
+  assert.strictEqual(knight.charged, K.skSpent() - 1, 'the ledger must equal what was charged (minus the free aid level)');
   assert.ok(knight.left >= 0 && knight.left < 100, 'sane remainder: ' + knight.left);
   // every reachable skill is maxed or unaffordable - no points stranded by the accounting
   const line = lineOf('Knight');
@@ -835,11 +864,11 @@ t('the ledger matches what the + button charges (no phantom points)', () => {
 t('an over-spent legacy save reads as zero, never negative', () => {
   // builds written by the old accounting bought skills with phantom points; the ledger must
   // clamp instead of going negative (which would grey out every + and every dot)
-  K.S = { cls: 'Knight', jobs: { Novice: { jl: 10 }, Swordman: { jl: 50 }, Knight: { jl: 2 } }, sk: { aid: 5 }, aid: 1 };
+  K.S = { cls: 'Knight', jobs: { Novice: { jl: 4 }, Swordman: { jl: 4 }, Knight: { jl: 4 } }, sk: { aid: 5 }, aid: 1 };
   K.SKILLS.filter(s => lineOf('Knight').includes(s.from)).forEach(s => { K.S.sk[s.id] = s.max });
   assert.ok(K.skSpent() > K.skEarned(), 'this save really is over-spent: ' + K.skSpent() + ' vs ' + K.skEarned());
   assert.strictEqual(K.skpAvail(), 0, 'over-spent reads as nothing spare');
-  K.S.jobs.Knight.jl = 5;
+  K.S.jobs.Knight.jl = 6;
   assert.strictEqual(K.skpAvail(), 0, 'still in deficit');
   // earning more job levels pays the deficit down before it pays out again
   K.S.jobs.Knight.jl = 50;
@@ -853,9 +882,9 @@ t('the aid skill is the one free point, as before', () => {
   K.S = { cls: 'Lord Knight', jobs, sk: {} };
   const clean = K.skpAvail();
   K.S = { cls: 'Lord Knight', jobs, sk: { aid: aid.max } };
-  // the freebie is exactly one flat level: a fully bought aid costs max*2 less the free 2
-  const ladder = aid.max * 2;
-  assert.strictEqual(K.skpAvail(), clean - (ladder - 2), 'only the levels past the first cost');
+  // the freebie is exactly one level: a fully bought aid costs max points less the free one
+  const ladder = aid.max;
+  assert.strictEqual(K.skpAvail(), clean - (ladder - 1), 'only the levels past the first cost');
 });
 
 console.log(`\n${pass} passed, ${fail} failed`);

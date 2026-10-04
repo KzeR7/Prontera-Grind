@@ -496,15 +496,15 @@ open('/tmp/pack_block.js','w').write(h[h.index('const PACK_BODY='):h.index('func
 PY
 node tools/tests/pack_sim.js          # -> "bodies in pack (19): ..."
 node tools/tests/class_change_sim.js  # -> "24 passed, 0 failed"
-node tools/tests/save_load_sim.js     # -> "11 passed, 0 failed"
+node tools/tests/save_load_sim.js     # -> "12 passed, 0 failed"
 node tools/tests/economy_sim.js       # -> "21 passed, 0 failed"
 node tools/tests/stat_sim.js          # -> "7 passed, 0 failed"
 node tools/tests/card_sim.js          # -> "13 passed, 0 failed"
-node tools/tests/skill_sim.js         # -> "50 passed, 0 failed"
+node tools/tests/skill_sim.js         # -> "51 passed, 0 failed"
 node tools/tests/gear_sim.js          # -> "24 passed, 0 failed  (24 assertions groups)"
 node tools/tests/scene_sim.js         # -> "8 passed, 0 failed" (per-map scenery, water, clear lane)
 node tools/tests/kit_sim.js           # -> "34 passed, 0 failed" (v2 atlas + KIT_PS, payon recipe, morocc design, ten identities, builders, loader)
-node tools/tests/ui_sim.js            # -> "19 passed, 0 failed"
+node tools/tests/ui_sim.js            # -> "20 passed, 0 failed"
 node tools/tests/sprite_sim.js        # -> "12 passed, 0 failed" (mob/weapon Divine Pride mapping, fallbacks)
 node tools/tests/starter_sim.js       # -> "7 passed, 0 failed" (the gentle starter stages)
 node tools/tests/pet_sim.js           # -> "11 passed, 0 failed" (+ the printed pet data, buff rules and the maxed-pet balance measurement)
@@ -2033,3 +2033,49 @@ assigned for feel rather than fidelity. While reworking that, two shipped bugs s
   * The variant table is auto-attack DPS on the audit fixture (Lv150 Lord Knight, +10 Legendary
     set, nine Legendary ATK cards, 200 seeded sets). Skill rotations multiply the same base.
   * `tuning-sheet.html` is a tool, not a player-facing file: it is not linked from the game.
+
+### 2026-10-04 — `ui-v37 skills-fit` (corrects the v36 skill price; the owner reported it was still unfixable)
+* **What changed for the player:**
+  * **Skills now really can all be maxed.** A skill level costs **1 point** (5 to max a skill), so a
+    line's whole tree costs **4 / 24 / 44 / 64** points against **9 / 58 / 107 / 156** earned by a
+    maxed Novice / 1st job / 2nd job / transcendent. The v36 entry said a flat 2 points per level
+    was enough and it is not: that left only 1-28 points spare, and a Lord Knight promoted at the
+    minimum gate (Swordman 40 -> Knight 40) who had also restarted the Novice once - which clears
+    the Novice's own job level while its skills stay bought - earned **127 against a 128-point
+    tree, one point short.** The owner was right; the fault was the price, not their save.
+  * **The Skills panel now shows the arithmetic** instead of asking you to trust it: "this line's
+    tree costs 64, a maxed line earns 156 - **92 to spare**". If a line ever cannot finish, the
+    panel says so in numbers.
+  * **Old saves that were over-spent repair themselves on load.** The v35 shop minted points (it
+    charged the escalating ladder but kept its ledger in levels), so a save could carry more skill
+    levels than its line ever earned and the panel clamped to "0 available" for ever, with the
+    tree out of reach at max job level. `load()` now trims the unearned levels (in reverse roster
+    order - the last-defined skills are the ones bought last) and the Skills panel explains:
+    "Repaired an older save: N skill points refunded". The note clears when you next buy or reset.
+  * Everything else from `ui-v36` is unchanged and still shipped: no hover tooltip on the EXP
+    bars, class switching that keeps Base Lv / job level / skills / stats / gear, the DPS readout
+    beside Kills/min, and the boss-stage roam that stays with the boss.
+* **Files touched:** `index.html` (skill price and ledger, `skTree()`/`skEarnedMax()` and the panel
+  readout, the `load()` over-spent repair + `S.skRepair`, `BUILD`), `tools/tests/skill_sim.js`
+  (1-point price, the "thinnest history" worst-case rule, aid freebie, over-spent fixture),
+  `tools/tests/save_load_sim.js` (the repair, built from the real roster), `tools/tests/ui_sim.js`
+  (the panel's tree/income readout and the guarantee line), `AGENTS.md`.
+* **Art:** none.
+* **Tests:** all fourteen green - `pack_sim` (19 bodies), `class_change` 24, `save_load` **12**,
+  `economy` 21, `stat` 7, `card` 13, `skill` **51**, `gear` 24, `scene` 8, `kit` 34, `ui` **20**,
+  `sprite` 12, `starter` 7, `pet` 11. The new skill test is the one that matters: it walks the
+  **thinnest possible history in the game** (minimum promotion gates + a Novice restart, the
+  Novice's own job level at 1) against the real `CLASSES`/`SKILLS` data and requires a 30+ point
+  margin on every job line: Novice 4 of 9, 1st job 24 of 58, 2nd job 44 of 97, Lord Knight
+  **64 of 127 (63 spare)**. A test that only checked a *fully* levelled line is what let v36 ship.
+* **Branches / PR:** `arena/01a106ae-prontera-grind`, same pull request as `ui-v36`
+  (https://github.com/KzeR7/Prontera-Grind/pull/15).
+* **Known limits / follow-ups:**
+  * With 1 point per level there is no longer any scarcity in the tree - every line maxes
+    everything. That is the owner's stated rule ("a full skill tree must be maxable at max job
+    level"), and `skCost()` is the single knob if that ever changes.
+  * The repair trims the *most recently defined* skills first. It only ever removes levels the
+    line cannot pay for, and it reports the number it removed; a save that is within budget is
+    not touched at all (pinned by a test).
+  * The game server started for the live preview serves the working copy, so a refresh picks this
+    up immediately; the deployed site only updates when the pull request is merged.

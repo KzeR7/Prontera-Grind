@@ -93,7 +93,7 @@ const mobs=[],drops=[],logs=[];
 const $=id=>({style:{},set innerHTML(v){globalThis['h_'+id]=v},get innerHTML(){return globalThis['h_'+id]||''},textContent:'',onclick:null});
 const dr=()=>1;
 ${code}
-const skpAvail=()=>5,skLine=()=>['Novice'],skEarned=()=>9,skSpent=()=>0,pv=()=>0,bon=()=>0,qTxt=q=>'quest';
+const skpAvail=()=>5,skTree=()=>4,skEarnedMax=()=>9,skLine=()=>['Novice'],skEarned=()=>9,skSpent=()=>0,pv=()=>0,bon=()=>0,qTxt=q=>'quest';
 this.__u={ V, SKILLS, SKILL_ICON, set S(v){S=v}, get S(){return S}, set eqPick(v){eqPick=v}, get eqPick(){return eqPick},
            set mapM(v){mapM=v}, set mapL(v){mapL=v}, set selE(v){selE=v}, set selS(v){selS=v}, set selP(v){selP=v} };
 `;
@@ -477,6 +477,38 @@ t('pet details show Ragnarok sprites, named upgrade levels, and gacha skill odds
   const h2=U.V.pet();
   assert.ok(h2.includes('Slot 1: <b class="r0">empty</b>')&&h2.includes('Slot 2: <b class="r0">empty</b>'),'both empty slots are offered');
   assert.ok(h2.includes('Gacha both skills'),'and the button says what it will do');
+});
+
+t('the Skills panel prints the whole tree against what a maxed line earns', () => {
+  assert.ok(src.includes('const skTree=()=>'), 'skTree() must exist - the panel needs the tree price');
+  assert.ok(src.includes('const skEarnedMax=()=>'), 'skEarnedMax() must exist');
+  assert.ok(src.includes('const skCost=()=>1;'), 'a skill level costs one point (v37)');
+  assert.ok(src.includes('this line\'s tree costs ${skTree()}, a maxed line earns ${skEarnedMax()}'),
+    'the panel must show the tree price and the maxed-line income side by side');
+  assert.ok(src.includes('Skill levels cost 1 point each (5 to max a skill), so a maxed job level can always finish this whole line'),
+    'the panel blurb must state the guarantee');
+  // and the arithmetic itself, on the real numbers
+  const box = {};
+  vm.createContext(box);
+  vm.runInContext(`
+    let S = {cls:'Lord Knight', jobs:{Novice:{jl:10,jx:0},Swordman:{jl:50,jx:0},Knight:{jl:40,jx:0},'Lord Knight':{jl:50,jx:0}}, sk:{aid:1}, skOff:{}};
+    ${grab('const CD=[', 'const pm=s=>')}
+    const skLine=()=>lineOf(S.cls);
+    const skCost=()=>1, skCostOf=L=>L;
+    const skEarned=()=>skLine().reduce((a,n)=>a+Math.max(0,(((S.jobs[n]||{}).jl)||1)-1),0);
+    const skSpent=()=>SKILLS.reduce((a,s)=>a+(skLine().includes(s.from)?skCostOf(S.sk[s.id]||0):0),0);
+    const skpAvail=()=>Math.max(0,skEarned()-Math.max(0,skSpent()-(S.sk.aid?1:0)));
+    const skTree=()=>Math.max(0,SKILLS.filter(s=>skLine().includes(s.from)).reduce((a,s)=>a+skCostOf(s.max),0)-(S.sk.aid?1:0));
+    const skEarnedMax=()=>skLine().reduce((a,n)=>a+(CLASSES[n].mj-1),0);
+    this.__s={skTree,skEarnedMax,skpAvail,SKILLS,lineOf};
+  `, box);
+  const K = box.__s, line = K.lineOf('Lord Knight');
+  const tree = K.skTree(), max = K.skEarnedMax();
+  assert.ok(max - tree >= 30, 'a maxed line must clear its tree by 30+ points: ' + tree + ' of ' + max);
+  // this fixture has the Knight at Job 40, so it has earned 146 - still far above the 64-point tree
+  assert.strictEqual(K.skpAvail(), 146, 'a fresh Lord Knight has its full purse (9+49+39+49)');
+  assert.ok(tree <= 146, 'the tree must fit inside a mid-promotion job history');
+  console.log('       Lord Knight: tree ' + tree + ' pts of ' + max + ' earned at max job level');
 });
 
 t('every panel a tab can open builds HTML without throwing', () => {
