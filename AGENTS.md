@@ -494,6 +494,21 @@ python3 - <<'PY'
 h=open('index.html').read()
 open('/tmp/pack_block.js','w').write(h[h.index('const PACK_BODY='):h.index('function ensureHero(')])
 PY
+node tools/tests/pack_sim.js           # -> "bodies in pack (19): ..."
+node tools/tests/class_change_sim.js   # -> "22 passed, 0 failed"
+node tools/tests/save_load_sim.js      # -> "10 passed, 0 failed"
+node tools/tests/economy_sim.js        # -> "21 passed, 0 failed"
+node tools/tests/stat_sim.js           # -> "7 passed, 0 failed"
+node tools/tests/card_sim.js           # -> "13 passed, 0 failed"
+node tools/tests/skill_sim.js          # -> "48 passed, 0 failed"
+node tools/tests/gear_sim.js           # -> "20 passed, 0 failed  (20 assertions groups)"
+node tools/tests/scene_sim.js          # -> "8 passed, 0 failed" (per-map scenery, water, clear lane)
+node tools/tests/kit_sim.js            # -> "20 passed, 0 failed" (payon recipe + RO scale, morocc design, builders, loader)
+node tools/tests/ui_sim.js             # -> "13 passed, 0 failed"
+node tools/tests/sprite_sim.js         # -> "10 passed, 0 failed" (mob art, weapon icons, view names)
+node tools/tests/starter_sim.js        # -> "4 passed, 0 failed"
+node tools/tests/weapon_joint_sim.js   # -> "7 passed, 0 failed" (measured hand joints, parked weapon)
+node tools/tests/picker_sim.js         # -> "13 passed, 0 failed" (the picker the owner uses, booted under a DOM stub)
 node tools/tests/pack_sim.js          # -> "bodies in pack (19): ..."
 node tools/tests/class_change_sim.js  # -> "24 passed, 0 failed"
 node tools/tests/save_load_sim.js     # -> "12 passed, 0 failed"
@@ -1281,6 +1296,508 @@ assigned for feel rather than fidelity. While reworking that, two shipped bugs s
 * **Branches / PR:** `arena/01a10466-prontera-grind`; updates existing PR #9: https://github.com/KzeR7/Prontera-Grind/pull/9
 * **Known limits / follow-ups:** the HUD rates reset at login or after starting a new adventure; the displayed Zeny rate is gross positive earnings over the recent window, not net profit after spending.
 
+### 2026-10-04 — `tool-v26 sprite-picker pose chooser` (no game change, no BUILD bump)
+* **What changed for the player:** nothing yet — this is the workbook the owner asked for
+  before the sprite redo, plus the RO research behind it. The game and the pack are untouched.
+* **New: `tools/sprite_picker.html`** — open it from a preview server rooted at the repo
+  (`python3 -m http.server 8000 --bind 0.0.0.0`, then `/tools/sprite_picker.html`).
+  For each of the 19 classes it shows all 8 camera views (S, SW, W, NW, N, NE, E, SE) with
+  idle / walk / attack slots; ticking a pose tile on the right fills the active slot (walk 8,
+  attack 6, idle 1, tick order = frame order); the preview under each view is the real
+  composite — the pose in its 96x96 cell, the chosen hair on that pose's **measured** head
+  seat, then the weapon at the game's own pixel. "Suggest 24 slots" seeds every view from the
+  sheet layout, "Copy my selection" hands the picks (and any weapon-grip corrections) back as
+  JSON. Picks are kept in localStorage between visits.
+* **New: `tools/make_sprite_picker.py`** — reads every sheet in `Sprite/`, segments the poses
+  (montages through the matcher in `tools/montage.py`), measures each pose's head seat with
+  the same stub rule the pack uses, and writes `tools/sprite_picker_data.js`.
+* **New: `tools/sprite-attachment-notes.md`** — the RO research: the head is parented to the
+  body *per frame* through stored attach points; weapons are unparented, aligned to the body
+  origin, and hand-corrected per class; draw order is a per-direction layer priority (a
+  weapon goes behind the body when the character faces away). Conclusion recorded there: the
+  game already bakes head+body at runtime, so the fix is measured attach points (the weapon
+  has none — `PACK_WEAPON_ADJUST` is one hard-coded offset per family for every class, pose
+  and frame) and a direction-aware draw order, not baking the head art in.
+* **Also recorded there:** the sheets are inconsistent — 15 are one row per direction with
+  knocked-down/sitting poses mixed into row 0, four are montages; `normal_labels()` is a
+  guess and that guess is where the wrong poses (and so the sliding heads) come in.
+* **Files touched:** `tools/make_sprite_picker.py` (new), `tools/sprite_picker.html` (new),
+  `tools/sprite_picker_data.js` (new, generated, 252 KB), `tools/sprite-attachment-notes.md`
+  (new), `AGENTS.md` (this entry). Nothing in `index.html`, `assets/` or `Sprite/`.
+* **Art:** none added, removed, recoloured or rebuilt; `tools/montage.py` was not run (its
+  matcher is imported read-only, to label montage poses).
+* **Tests:** all 13 suites green on the untouched tree (pack 19 bodies; class change 22,
+  save/load 10; economy 21, stat 7, card 13, skill 48, gear 20; scene 8, kit 20, UI 13,
+  sprite 10, starter 4). The picker itself: inline JS passes `node --check`, and it boots
+  under a DOM/canvas stub — 8 view cards, 111 tiles for Knight, auto-suggest 452/456 slots
+  across all 19 classes, selection JSON parses.
+* **Branches / PR:** `arena/01a1054b-prontera-grind`; pushed for the owner's review, no PR —
+  the sprite work itself starts once the owner sends the ticked selection back.
+* **Known limits / follow-ups:**
+  * The previews are canvas drawings, not browser screenshots — there is no browser in this
+    sandbox, so the owner's eyeball is the check.
+  * Auto-labels are hints from the sheet layout; the owner overrules them by ticking.
+  * Montage sheets only expose the poses the matcher could locate (Lord Knight 69 of ~112),
+    so a few slots there may have to inherit the parent class or be matched by hand.
+  * Once the picks arrive: rebuild the pack from them, measure the weapon grip per cell, add
+    the direction-aware weapon layer, then re-run the suites and bump `BUILD`.
+
+### 2026-10-04 — `ui-v26 attack-only weapon + simpler sprite picker`
+* **What changed for the player:**
+  * **The weapon now shows only while attacking.** Idle and walking are bare-handed — you asked
+    for it. The weapon icon (the game's own Divine Pride item art, with its existing glyph
+    fallback) still appears for the attack swing exactly as before.
+* **What changed for the sprite work (no game change):** `tools/sprite_picker.html` was rebuilt
+  simpler, after the first version was confusing to use.
+  * **Three tabs — Idle / Walk / Attack — one animation at a time**, instead of 24 mixed slots.
+  * **One card per camera view** (0 S, 1 SW, 2 W, 3 NW, 4 N + the three mirrored ones), each
+    showing the finished composite. The three mirrored views follow W/NW/SW automatically
+    (one checkbox if you want to fill them separately).
+  * **Whole cycles in one click**: "Use Attack N · sheet row 6 · 6 poses" fills every frame of
+    that view at once. Singly-clickable poses stay available to fix an individual frame, and
+    the frame strip (1…8 for walk, 1…6 for attack) shows which frames are still empty.
+  * **The weapon is the game's own weapon** — the real Divine Pride item icon for the family,
+    at the game's own hand/grip anchor, drawn only on the Attack tab. **Drag it in the preview**
+    to move it for that class + weapon + view; the offset is stored in the copied selection, and
+    ↺ puts it back. The vector weapon art remains the fallback if the icon cannot load.
+  * The pose tiles no longer carry the technical row/column/IoU labels; the head-seat marker on
+    a pose is in the tooltip, and every card preview shows where the head actually lands.
+* **Files touched:** `index.html` (`syncWeaponSprites` attack-only guard, `BUILD` v26),
+  `tools/tests/sprite_sim.js` (the weapon-visibility assertion now pins attack-only),
+  `tools/make_sprite_picker.py` (reads the weapon/attach constants straight out of
+  `index.html` so the picker can never drift; adds whole-cycle "strips"), 
+  `tools/sprite_picker.html` (rebuilt), `tools/sprite_picker_data.js` (regenerated, 266 KB),
+  `AGENTS.md`.
+* **Art:** none added, removed, recoloured or rebuilt; `tools/montage.py` was not run.
+* **Tests:** all 13 suites green (class change 22, save/load 10; economy 21, stat 7, card 13,
+  skill 48, gear 20; scene 8, kit 20, UI 13, sprite 10, starter 4; pack 19 bodies). Inline game
+  JS passes `node --check`; the picker's own inline JS passes `node --check` and boots under a
+  DOM/canvas stub, exercising all three tabs, auto-fill, the walkthrough, a view card, a
+  whole-cycle button and a candidate tile (assignment verified to land in the selection JSON).
+* **Branches / PR:** `arena/01a1054b-prontera-grind`; pushed for review.
+* **Known limits / follow-ups:**
+  * The weapon's *size* is not adjustable — only its position, which is what the owner asked for.
+  * Weapon drag offsets are stored per class + weapon family + view; they are not yet applied to
+    the game (`index.html` still uses its own `PACK_WEAPON_ADJUST` hand point). They will be
+    folded in when the pack is rebuilt from the picks.
+  * Divine Pride icons need network access in the browser; without it the picker draws the
+    vector fallback, exactly as the game does.
+
+### 2026-10-04 — `tool-v26 fix: self-contained picker` (no game change, no BUILD bump)
+* **What changed for the player:** nothing in the game. The sprite picker showed a black
+  screen for the owner: the page was opened somewhere that cannot serve the files next to it
+  (the file viewer), so `assets/sprite_pack_data.js` and `Sprite/*.png` never loaded and the
+  page had nothing to draw. Two fixes:
+  * **`tools/sprite_picker_standalone.html`** — the whole picker in ONE file: app + pose index
+    + all 21 sheets + both head atlases inlined (2.9 MB). It needs no other file, so it opens
+    anywhere: file viewer, preview server, phone, offline.
+  * **A visible failure banner.** If any of the three inputs (pose data, sprite pack, a class
+    sheet) is missing, or the page throws while drawing, the top of the page now says what is
+    missing and what to open instead — the black screen can no longer happen silently. A
+    global `window.onerror` handler reports any future drawing error with its line number.
+* **Also hardened:** view canvases and cards carry their own `data-dir` (drawing and the
+  weapon-drag repaint no longer rely on DOM order), so a stray element can never shift a view
+  onto the wrong direction.
+* **Files touched:** `tools/sprite_picker.html` (banner, per-class inlined-sheet support,
+  `data-dir`), `tools/make_sprite_picker.py` (writes the standalone next to the data file, so
+  the two can never drift), `tools/sprite_picker_standalone.html` (new, generated),
+  `tools/sprite_picker_data.js` (regenerated), `AGENTS.md`. `index.html` untouched.
+* **Art:** none added, removed, recoloured or rebuilt; `tools/montage.py` was not run.
+* **Tests:** game suites re-run and green (pack 19 bodies, sprite 10, UI 13, class change 22,
+  save/load 10). The picker was run end to end under a DOM/canvas stub in all three modes —
+  standalone (8 views drawn, tabs, auto-fill, walkthrough, whole-cycle assign, selection JSON
+  parses), served page (same), and served page with its sibling files blocked (shows the
+  banner instead of a blank page). Inline JS passes `node --check`.
+* **Branches / PR:** `arena/01a1054b-prontera-grind`; pushed for review.
+* **Known limits / follow-ups:** the standalone is generated - edit `tools/sprite_picker.html`
+  (and run `tools/make_sprite_picker.py`), never the standalone directly.
+
+### 2026-10-04 — `tool-v27 picker never fails silently`
+* **What changed for the player:** nothing in the game (the v26 attack-only weapon stands).
+  This is about the picker showing a black screen when the owner opened it.
+* **Why it was black:** the picker is a script-driven page. Opened as a *file* (a viewer or an
+  attachment preview) no scripts run, so nothing is ever drawn and the dark page reads as a
+  black screen. Evidence: the preview server's log shows **no request from the owner's browser**
+  — only my own health checks — so the page was not opened through the preview at all.
+* **What the pages do now instead of going quietly black:**
+  * a first-in-head error trap: any script error paints a red bar with the message and the
+    file:line, and a **6-second watchdog** reports "nothing was drawn" with full diagnostics;
+  * a `<noscript>` banner that says, in words, that scripts are blocked here and to use the
+    live preview panel instead;
+  * a header badge in the picker: `sheets n/19 · views n`;
+  * every camera view draws a readable "loading <class> sheet…" / "empty frame" label rather
+    than an empty black panel;
+  * `window.__pgDiag()` reports pose data, head atlases, sheets loaded and views drawn.
+* **New: `tools/picker_check.html`** — a small launcher. It states plainly whether JavaScript
+  runs where it was opened, whether localStorage is available, whether it is inside an iframe,
+  and links to both the normal and the single-file picker. The preview root now serves this
+  page, so "is this place able to run the picker at all?" is answered before anything else.
+* **Files touched:** `tools/picker_check.html` (new), `tools/sprite_picker.html`,
+  `tools/sprite_picker_standalone.html` (regenerated from the same source), `AGENTS.md`.
+* **Art:** none; `tools/montage.py` not run. Game files untouched by this entry.
+* **Tests:** the picker booted under a DOM/canvas stub in three shapes — standalone, served
+  page, and served page with the data file missing. First two: 8 view cards, 8 views drawn,
+  `__pgDiag` reports 19 classes + both head atlases + the active sheet, no error bar. Missing
+  data: no error bar, and the page prints the red "pose data did not load" banner (i.e. the
+  black screen is now an explained screen). All 13 game suites were green at `f2bed26`.
+* **Branches / PR:** `arena/01a1054b-prontera-grind`.
+* **Known limits / follow-ups:**
+  * There is no browser in this sandbox (Chromium downloads are blocked), so verification is
+    static + stub-based, not a screenshot. The launcher exists to make the owner's own
+    browser report the truth.
+  * A viewer that strips both `<script>` and `<noscript>` would still show only the dark
+    shell; the launcher and the header text are the fallback signal in that case.
+
+### 2026-10-04 — `ui-v27 attack poses only, no weapon when facing away`
+* **What changed for the player:**
+  * **The weapon no longer shows on the away-facing views (NW 3, N 4, NE 5).** The weapon art is a
+    front-view item icon, so on a back view it read as a ruined weapon stuck through the body.
+    Those three views now attack bare-handed; the other five keep the weapon. One constant,
+    `WEAPON_HIDDEN_DIRS=[3,4,5]`, so the owner's per-view choice can change it later.
+  * (v26 stands: the weapon only appears at all while attacking.)
+* **The picker is now attack-only** — `tools/sprite_picker.html` was cut down to what the owner asked
+  to manage:
+  * **Idle and walk are no longer shown or asked about.** They are filled automatically from the
+    sheet layout (the measured path the pack already uses), so there is nothing to click for them.
+  * **One row of 8 attack view cards**: pose + hair + weapon, a 6-frame strip each, and a
+    **weapon checkbox per view** — unticked by default for NW/N/NE, matching the game.
+  * Click a card → choose the view's attack frames: one whole attack set per sheet row in one
+    click, or single poses one at a time (clicking a pose fills the current frame and steps on).
+    ◀ back / next ▶ walk every frame of every view.
+  * Dragging inside a preview moves that class+weapon's weapon for that view (and the move is
+    recorded in the selection). A front-view icon cannot be rotated into a back view, which is
+    exactly why the back views default to no weapon.
+  * The copied selection carries only attack frames, the per-view weapon flags and the weapon
+    moves — nothing about idle or walk.
+* **Files touched:** `index.html` (`WEAPON_HIDDEN_DIRS`, weapon guard, `BUILD` v27),
+  `tools/tests/sprite_sim.js` (pins the hidden-direction list and its use),
+  `tools/sprite_picker.html` (attack-only rebuild), `tools/make_sprite_picker.py`
+  (reads `WEAPON_HIDDEN_DIRS` out of `index.html` so the picker's defaults cannot drift),
+  `tools/sprite_picker_data.js` + `tools/sprite_picker_standalone.html` (regenerated),
+  `AGENTS.md`.
+* **Art:** none added, removed, recoloured or rebuilt; `tools/montage.py` was not run.
+* **Tests:** all 13 suites green (class change 22, save/load 10; economy 21, stat 7, card 13,
+  skill 48, gear 20; scene 8, kit 20, UI 13, sprite 10, starter 4; pack 19 bodies). Inline game
+  JS passes `node --check`. The attack picker was booted under a DOM stub in both builds:
+  8 view cards, weapon defaults `[on,on,on,off,off,off,on,on]`, 5 cycle buttons, 54 pose tiles,
+  24 attack poses after auto-fill, and a payload with no idle/walk keys.
+* **Branches / PR:** `arena/01a1054b-prontera-grind`.
+* **Known limits / follow-ups:**
+  * Which views hide the weapon is a fixed list in `index.html` today; the picker's per-view
+    checkboxes are recorded but are not applied per class yet (one list for all classes).
+  * Idle and walk are still the sheet's own layout picks — if the owner ever wants to change
+    them, the pose index still carries them.
+
+### 2026-10-04 — `ui-v28 the weapon is pinned to the hand`
+* **The problem, and what the research says.** The weapon kept sliding out of the hand as the attack
+  frames advanced. Reason: it was placed by a *model* of the swing (an arm the code imagined), so it
+  sat near the hand, not on it. Ragnarok Online does not model that either — its act files carry a
+  weapon offset **for every single frame**, and the docs are explicit about the anchor:
+  *"Weapons = Body as base"* (rAthena Act Editor). The weapon is aligned to the **body's per-frame
+  anchor**, and somebody set those numbers frame by frame (`weapon_offsets.txt` in the RO-offline
+  tools is a hand-made table; the official editors ship a Weapon-offset control). So the fix is to
+  measure the hand in the art, per frame, and draw the weapon there — no model, nothing to drift.
+* **What changed for the player:** the weapon now sits **in the hand on the frame being played**, for
+  every attack frame of every class, and it cannot slide: the position is the measured hand.
+* **How it works.** `tools/make_weapon_joints.py` finds the bare-skin hand in every attack cell —
+  the neck-coloured blob furthest from the hips below the shoulders (bare hands get a pixel-exact
+  hit; gloved/wrapped classes fall back to the silhouette extremity, and one 27 px clamp exists so a
+  frame cannot jump). 912 joints: 19 bodies x 8 directions x 6 attack frames, all in range.
+  `assets/weapon_joints_data.js` carries them (`WEAPON_JOINTS[body][dir][frame]`, plus
+  `WEAPON_JOINTS_SRC`: `H` = bare hand, `E` = extremity). In game, `weaponSpritePixel()` asks
+  `weaponJointPixel()` first and uses it **with no extra offset** — the joint *is* the grip point,
+  so `PACK_WEAPON_ADJUST` (which existed only to correct the old model) is not applied on this path
+  and stays only as the fallback if the file is missing.
+* **Files touched:** `index.html` (script tag, `weaponJointPixel`, joints-first `weaponSpritePixel`,
+  `userData.body`, `BUILD` v28), `assets/weapon_joints_data.js` (new, 10.9 KB),
+  `tools/make_weapon_joints.py` (new; `--qc <out.png>` writes a contact sheet of every body/dir/frame
+  with the joint marked), `tools/sprite_picker.html` + `tools/make_sprite_picker.py` (the picker loads
+  the joints, draws the measured joint as a green cross on every preview, mirrors it on the mirrored
+  views, and places the weapon from it), `tools/sprite_picker_data.js` +
+  `tools/sprite_picker_standalone.html` (regenerated), new test `tools/tests/weapon_joint_sim.js`,
+  `AGENTS.md`.
+* **Art:** none added, removed, recoloured or rebuilt; `tools/montage.py` was not run.
+* **Tests:** all 14 suites green — the new `weapon_joint_sim.js` (7 checks) proves the joints cover
+  912/912 cells, that the hand never moves more than 28 px between attack frames, that the game's own
+  placement returns **exactly** the joint pixel for every body/dir/frame, and that the old model
+  really did slide (frame-to-frame gap spread > 6 px in most views, which is the bug the owner saw).
+  Then class change 22, save/load 10; economy 21, stat 7, card 13, skill 48, gear 20; scene 8, kit 20,
+  UI 13, sprite 10, starter 4; pack 19 bodies. Inline game JS passes `node --check`. The picker boots
+  under a DOM stub in both builds (`ATTACK PICKER OK`: 8 cards, defaults
+  `[on,on,on,off,off,off,on,on]`, 54 pose tiles, no idle/walk keys).
+* **Branches / PR:** `arena/01a1054b-prontera-grind`.
+* **Known limits / follow-ups:**
+  * The joint is a position, not a rotation: the weapon is not tilted with the hand. Rotation is not
+    what moves the weapon out of the hand, and the icon's grip already holds its own spin.
+  * Gloved classes use the silhouette extremity, so if one of those lands badly the fix is a tighter
+    sampling rule in `make_weapon_joints.py`, not a nudge in the game.
+  * The picker's per-view weapon checkboxes and drag offsets are still recorded in the selection
+    rather than read back by the game; whether the weapon hides per class is still one shared list.
+
+### 2026-10-04 — `ui-v29 weapon parked, heads you can seat, S and N spelled out`
+* **The owner's call, and the new order of work.** v28 (weapon pinned to the measured hand) was
+  rejected — *"this idea doesnt work"* — with an explicit sequence: **hold the weapon in one
+  position → the owner chooses the attack poses → the pose is confirmed → only then the weapon is
+  worked out** (the owner has an idea for it). v28's per-frame joints are **not** thrown away: the
+  measurement stays in the repo for the next step, the game just does not use it to move the weapon.
+* **What changed for the player:**
+  * **The weapon is parked.** It is held on one spot — the hand of the attack's *first* frame, with
+    the first frame's angle and no scale pulse — for the whole attack, so nothing about it can move
+    while the frames advance. Visibility is unchanged (attack only, v27: bare-handed on NW/N/NE).
+  * (`BUILD` -> `2026-10-04 ui-v29 weapon-held-in-one-position`.)
+* **The picker now says which way the character faces, in words.** The letters alone were the
+  confusion ("is north then front or the back view?"): **S = he faces you (front), N = he faces
+  away (back)** — verified from the art itself, not from convention: dir 0 shows the face, dir 4
+  shows the back of the head and the cape, dirs 3/4/5 are the three away views. Every card is
+  labelled *front - he faces you* / *back - he faces away* / *side - faces left*, and the header
+  explains it. (This also confirms v27's weapon rule: the three views that hide the weapon are the
+  three back views.)
+* **The heads are in the picker and can be seated by hand.** The head is drawn in every preview;
+  a **blue dashed box** marks the head on the selected view, and **dragging it** moves the head (per
+  class + view + attack frame). The panel shows *Head: as measured / moved +2,-3 px*, with
+  **↺ reset head** and **use this head on all 6 frames**. The export carries the result in the
+  game's own units: `headX/headY` = the head pivot inside the 96x96 cell (measured seat x the same
+  scale the pack builder uses, plus the drag), `headSource` becomes `manual` when dragged, and the
+  raw drags travel in `headAdjust`. Payload is now **version 4**.
+* **The picker is step 1: poses.** A **"hold the weapon in one position"** switch sits in the header
+  (on by default). With it on, the weapon does not move in the previews; untick it to see it follow
+  the hand. Dragging inside a picture now moves the **head**; the weapon drag moved to the selected
+  view only. The header says plainly that the weapon comes after the poses are confirmed.
+* **Files touched:** `index.html` (the parked weapon, `BUILD` v29), `tools/sprite_picker.html`
+  (view words, the pin switch, head drag + panel row, export v4, `window.__pgTest` for the tests),
+  `tools/make_sprite_picker.py` (unchanged behaviour - it rebuilds the standalone from the app
+  source), `tools/sprite_picker_data.js` + `tools/sprite_picker_standalone.html` (regenerated),
+  `tools/tests/weapon_joint_sim.js` (now pins the parked contract), **new**
+  `tools/tests/picker_sim.js` (boots the real picker page under a DOM stub and drives the head
+  drag, the park switch and the export), `AGENTS.md`.
+* **Art:** none added, removed, recoloured or rebuilt; `tools/montage.py` was not run.
+* **Tests:** all **15** suites green - the two new/pinned ones: `picker_sim.js` 9 checks (the page
+  boots with no error bar, 8 views, the S/N wording, the park switch really parks, a head drag moves
+  the head by exactly the dragged amount and lands in the export as `manual`, the payload still has
+  no idle/walk) and `weapon_joint_sim.js` 7 checks (912 joints intact, and the game now returns ONE
+  spot for all six attack frames). Then class change 22, save/load 10; economy 21, stat 7, card 13,
+  skill 48, gear 20; scene 8, kit 20, UI 13, sprite 10, starter 4; pack 19 bodies. Inline game JS
+  passes `node --check`, and both picker builds boot.
+* **Branches / PR:** `arena/01a1054b-prontera-grind` (PR #11).
+* **Known limits / follow-ups:**
+  * The picker's weapon toggle, drag offsets and the parked-flag still only travel in the export;
+    `index.html` reads none of them yet (one `WEAPON_HIDDEN_DIRS` list for every class).
+  * The head drag is per frame; a frame with "keep previous frame" carries no head of its own.
+  * Idle and walk remain the sheet's own layout picks.
+
+### 2026-10-04 — `tool-v30 picker: poses only, every pose offered, a head marker you can see`
+* **Three things the owner asked for, all in the picker (the game is untouched this round).**
+* **The weapon is off the page.** The weapon dropdown, the per-view weapon checkbox, the weapon in the
+  previews, the joint cross and the weapon drag are all gone - `tools/sprite_picker.html` no longer
+  loads `assets/weapon_joints_data.js` either, and `make_sprite_picker.py` no longer inlines it into
+  the standalone (2.9 MB -> 2.8 MB). The export is **version 5** and carries poses and heads only:
+  `{version, note, mirrorSide, attack, headAdjust}`. The game keeps its own weapon rules (attack only,
+  bare-handed on NW/N/NE, held in one position) until the owner's idea for it lands.
+* **"Some of the poses I want seem missing" — they were.** The tile grid only offered poses that
+  belonged to an attack set. It now lists **every figure in the sheet**, grouped under *Sheet row N*
+  headings (Knight: 97 tiles, was 54; the rows that carry no attack label included, e.g. the
+  `montage` row as *Other poses*). The sheet's own suggestion for the view still has the green border.
+* **Fewer than six frames is fine, and a pose can be repeated.** Nothing enforces six: an empty frame
+  holds the pose before it (a *leading* empty frame takes the first pose picked) - the export note says
+  so - and a new **repeat frame N on all 6** button fills the view with the pose already on the current
+  frame. Clicking the same picture twice repeats it as well.
+* **The head marker is now the head, not a big square.** The old guide was the whole 64x64 head cell,
+  which is mostly empty space, so there was nothing to aim at. The head's own pixels are scanned once
+  per sex + view + hair style (`headBox`, alpha > 8) and drawn as a shaded box, with a ring and cross
+  on the seat itself. **Dragging anywhere in a picture** seats that view's head (there is nothing else
+  to drag any more, so no small target to hit). If a browser refuses `getImageData`, the box is skipped
+  and the ring is still there.
+* **Files touched:** `tools/sprite_picker.html` (weapon UI and weapon code removed, all-poses grid,
+  repeat button, head marker, export v5), `tools/make_sprite_picker.py` (joints inlining removed),
+  `tools/sprite_picker_data.js` + `tools/sprite_picker_standalone.html` (regenerated),
+  `tools/tests/picker_sim.js` (11 checks - now proves there is no weapon control, that every pose in
+  the sheet gets a tile, that a cleared frame exports null and the repeat button fills six, and that
+  the head box is the head's pixels rather than the whole cell), `AGENTS.md`.
+* **Art:** none added, removed, recoloured or rebuilt; `tools/montage.py` was not run.
+* **Tests:** all 15 suites green (class change 22, save/load 10; economy 21, stat 7, card 13, skill 48,
+  gear 20; scene 8, kit 20, UI 13, sprite 10, starter 4; pack 19 bodies; weapon joints 7; picker 11).
+  Inline JS passes `node --check`, and both picker builds boot under the stub.
+* **Branches / PR:** `arena/01a1054b-prontera-grind` (PR #11).
+* **Known limits / follow-ups:**
+  * The picker's own weapon choices are gone for good; if the owner wants per-class weapon hiding
+    later it comes back as part of the weapon step, not as a checkbox here.
+  * The head drag is per frame and per view; a frame set to "keep the previous" carries no head of its own.
+  * Idle and walk remain the sheet's own layout picks, filled in by the build.
+
+### 2026-10-04 — `tool-v31 the head was never drawn (sex key), and one-click view copies`
+* **The bug the owner reported: "i still cant see a head, only a blue marker".** The head atlases are
+  keyed `male`/`female` in `assets/sprite_pack_data.js`, but the picker's gender select holds `m`/`f`,
+  so `headReady['m']` was always undefined and `packedCell` never drew a head at all. It also meant
+  `headBox` got nothing to scan, which is why the guide was only the blue ring: the shaded head box
+  could never appear. Fixed with one `sexKey()` mapping used by the drawing, the box scan and its cache
+  key. **This is why the owner could not "identify where is the head"** - there was no head on screen.
+  The harness now spies on `drawImage` and asserts a 64x64 head cell from the right atlas row/column
+  lands exactly on the seat, so this cannot come back silently.
+* **"Attacking pose should only need S & W, e.g. SW should be the same as W — am I right?"**
+  Measured, not guessed: the sheet draws S, SW, W, NW and N **separately** and the picker already
+  mirrors the other three (NE/E/SE) by itself, so five views is the floor the art gives you. SW and W
+  are *not* the same picture (mean channel difference SW-vs-W 86-113, the same order as S-vs-W 97-117);
+  SW is the three-quarter view and is closer to S than to W (S-vs-SW 66-83). So: you *may* reuse W's
+  poses for SW, but it is a choice, not what the art does.
+* **What was added so the owner can make that choice in one click:** the panel for a view now has a
+  **"Shortcut — use the attack poses of: S SW W NW N"** row; one click copies that view's six frames
+  onto the current view. A card whose frames match another view's says **"same as W"**, so the state of
+  the whole set is visible at a glance. (The export is unchanged: it carries the resolved ids, so a copy
+  is baked exactly like a hand-picked set.)
+* **Files touched:** `tools/sprite_picker.html` (`sexKey()`, the shortcut row, the "same as" note,
+  `paint` exposed to the harness), `tools/sprite_picker_standalone.html` (regenerated),
+  `tools/tests/picker_sim.js` (13 checks - the two new ones are "the head is actually painted, from the
+  right head cell" and "one view can take another view's poses in a single click"), `AGENTS.md`.
+* **Art:** none added, removed, recoloured or rebuilt; `tools/montage.py` was not run. The Knight S/SW/W
+  attack columns were rendered from the picker data only to measure the SW-vs-W difference above.
+* **Tests:** all 15 suites green (class change 22, save/load 10; economy 21, stat 7, card 13, skill 48,
+  gear 20; scene 8, kit 20, UI 13, sprite 10, starter 4; pack 19 bodies; weapon joints 7; picker 13).
+  Inline JS passes `node --check`; both picker builds boot.
+* **Branches / PR:** `arena/01a1054b-prontera-grind` (PR #11).
+* **Known limits / follow-ups:**
+  * A copy is a copy: changing the source view afterwards does not follow. (Re-click the shortcut, or
+    the card stops saying "same as ..." and that is the tell.)
+  * The head drag is per frame and per view; a frame set to "keep the previous" carries no head of its own.
+  * Idle and walk remain the sheet's own layout picks, filled in by the build.
+
+### 2026-10-04 — `tool-v32 NE/E/SE get their own head art, and the drag follows the pointer` (no game change, no BUILD bump)
+* **The two things the owner reported: "NE, E,SE the heads are not mirrored" and "when i move it
+  around the movement seems to be inverted".** Both were real and both came from one wrong idea in the
+  picker: it treated NE/E/SE as "the neighbouring view, flipped". The head sheet is not missing those
+  views - it draws all eight, and the game reads them by the view's own column (`packTex` draws head
+  column `d*64`). The picker drew the *source* view's head, unflipped, on a mirrored body - so the E
+  card showed a left-facing head on a right-facing body; and it added the pointer's movement *before*
+  mirroring the result, so on those three views dragging right pushed the head left.
+* **What changed:** the head now comes from the *drawn* view's own atlas column; the seat comes from the
+  pack's own anchor for the drawn direction (`anchors[anim][dir][frame]`), the exact number the game
+  reads out; the plain fallback (a pose the pack does not carry) mirrors x when the body is mirrored;
+  and the hand-drag offset is applied *after* mirroring, so the head follows the pointer on every view.
+  NE/E/SE are still seatable on their own - the drag keys stay per view.
+* **Also found while verifying: the export was still dropping the body offset.** It wrote the
+  crop-measured seat + drag instead of the game cell - about 24 px up and left of what the preview
+  showed and what the game needs (the "head & your blue marker are way off" numbers). The payload keeps
+  its version-5 shape, but `headX/headY` are now the same cell pixels the preview draws.
+* **Note for the owner:** head drags made before this fix were measured against the wrong seat. After
+  reloading, press "reset head" on a frame (or drag it again) and the head sits where you put it.
+* **Files touched:** `tools/sprite_picker.html` (head tile, seat, drag, export), `tools/sprite_picker_data.js`
+  and `tools/sprite_picker_standalone.html` (both regenerated), `tools/tests/picker_sim.js`.
+* **Tests:** all 15 suites green (class change 22, save/load 10; economy 21, stat 7, card 13, skill 48,
+  gear 20; scene 8, kit 20, UI 13, sprite 10, starter 4; pack 19 bodies; weapon joints 7; picker **16**).
+  The picker checks now pin the head rules: the view's own atlas column and no flip, E seated on the
+  pack's own E anchor, a +10 px drag moving the head +10 px right on every view (mirrored included), the
+  marker shade landing on the drawn tile inside the cell offset, and the export being cell pixels, not
+  crop pixels. Inline JavaScript passes `node --check`; both picker builds boot ("ATTACK PICKER OK").
+* **Branches / PR:** `arena/01a1054b-prontera-grind` (PR #11).
+
+### 2026-10-04 — `tool-v33 the owner's selection is the picker's standard, and it is backed up` (no game change, no BUILD bump)
+* **What the owner asked for:** "make a back up for this in my github. also what i tune in would be a standard
+  defult if i would like to adjust again. also this setting also make a back up. as i might add more classes
+  in the future. make notes for future ai agent to understand too."
+* **The backup.** The selection the owner sent back is saved byte for byte as `tools/attack_selection.json`
+  (the v5 payload: 18 classes x 5 drawn views x 6 frames = 540 pose cells, plus 862 head entries). It is the
+  source of truth for the attack poses and head seats from now on.
+* **The standard.** `tools/make_sprite_picker.py` turns that backup into
+  `tools/sprite_picker_defaults.js` (18 classes, 540 heads), which the picker loads. A fresh browser now opens
+  on the owner's own numbers instead of on the sheet's guesses, and a new button **"↺ Back to the standard"**
+  puts the page back to the saved selection after any editing. It restores only the classes the backup covers:
+  a class added later keeps the sheet's own picks until the owner tunes it. The old "Reset everything" (blank
+  the whole page) is gone - that is what this button replaces.
+* **Nothing is re-measured.** The payload stores the head as an absolute pivot in the game's 96x96 cell; the
+  loader turns it into a drag against whatever seat this build uses, so the owner's numbers survive future
+  changes to the seat rule. `picker_sim.js` now proves the whole thing comes back number for number
+  (3,240 numbers compared) and that the standalone carries the standard too.
+* **Notes for the next agent:** `tools/sprite_selection-notes.md` - the files, what every field means, how to
+  add a class later (the owner's "I might add more classes"), what is not covered yet (**Sniper has no
+  selection**), and the two mistakes this round found (`setHead` keyed by the on-screen class; the standalone
+  inliner stripping newlines so a `//` comment swallowed the standard).
+* **Files touched:** new `tools/attack_selection.json`, `tools/sprite_selection-notes.md`,
+  generated `tools/sprite_picker_defaults.js`; `tools/make_sprite_picker.py` (the defaults builder, the
+  inliner, and the anchors now travel in the standalone so its head maths matches the repo build),
+  `tools/sprite_picker.html` (`applyDefaults`/`resetAll`, the new button, the header note),
+  `tools/sprite_picker_data.js` + `tools/sprite_picker_standalone.html` (regenerated),
+  `tools/tests/picker_sim.js`.
+* **Tests:** all 15 suites green (class change 22, save/load 10; economy 21, stat 7, card 13, skill 48,
+  gear 20; scene 8, kit 20, UI 13, sprite 10, starter 4; pack 19 bodies; weapon joints 7; picker **19**).
+  The picker was also booted from the standalone build under the same harness (19/19) and the served page
+  was checked by hand. Inline JavaScript passes `node --check`.
+* **Branches / PR:** `arena/01a1054b-prontera-grind` (PR #11).
+
+### 2026-10-04 — `tool-v34 the owner's second selection is the standard, and the first one is kept` (no game change, no BUILD bump)
+* **What the owner sent back:** the picker's own v5 export again, this time with **Sniper tuned and all 19
+  classes filled in** — 570 pose cells (19 classes x 5 drawn views x 6 frames) and 912 head entries
+  (570 on the drawn views and 342 more on the mirrored ones).
+* **Backups, the way the owner asked ("redo the back up and the previous back up and all"):** the second
+  delivery replaced `tools/attack_selection.json`, and the first delivery is archived beside it as
+  `tools/attack_selection_prev.json` — read-only history, never overwritten by a later payload.
+  The standard was rebuilt from it: `tools/sprite_picker_defaults.js` now carries **19 classes / 570 heads**,
+  the picker and the standalone were regenerated, and a fresh browser opens on the new numbers.
+* **Coverage is now complete:** Sniper was the one class without a selection; it has one, so the "known gap"
+  note in `tools/sprite_selection-notes.md` is gone.
+* **Two traps found on the way:** the same crop box can name several poses (one per direction the sheet
+  draws), so a payload must be resolved through the picker's **id** path, never by re-matching (x,y,w,h)
+  rectangles — 456 of 912 boxes matched more than one pose; and the first delivery's head drags were tuned
+  while the mirrored-column and inverted-drag bugs were still live, which is another reason the newest
+  payload always wins.
+* **Tests:** all 15 suites green; the picker round-trip compares all 3,420 numbers of the new standard
+  (picker **19** passed, 0 failed).
+* **Files touched:** `tools/attack_selection.json` (new payload), new `tools/attack_selection_prev.json`,
+  generated `tools/sprite_picker_defaults.js` + `tools/sprite_picker_standalone.html`,
+  `tools/sprite_selection-notes.md`.
+* **Branches / PR:** `arena/01a1054b-prontera-grind` (PR #11).
+
+### 2026-10-04 — `tool-v35 the weapon side: measured, placed, and ready for the owner's review` (no game change, no BUILD bump)
+* **What the owner asked for:** "tell me how can we move in with the weapon side? maybe i pin point out the
+  hands for u?" plus the standing instruction to research first and hand over as little manual work as
+  possible. The answer: **they do not need to pin-point anything** — the hand is measured from their own
+  poses, and a page shows the result so only the odd tile needs a drag.
+* **Why v28's joints file was not the answer** (this is now written down in `tools/weapon-plan.md`):
+  it measures each frame on its own, so the point hops between the two arms (knight dir 0 ran
+  65, 67, 69, 45, 68, 45 px) — that is the flicker the owner saw; and it only knows the standard attack
+  rows, while **197 of the owner's 570 picked poses (35%) come from other rows** of the sheet. A second
+  idea — find the arm by what moves between frames — is a dead end too: the whole body lurches in an
+  attack, so motion lights up the whole silhouette.
+* **What is built instead:** `tools/weapon_bake.py` measures the hand from the picked cell itself (skin
+  taken from the body's own neck colour, hand-sized blobs below the shoulders, boots rejected, the pixel
+  farthest from the torso = the fist), then **tracks one arm across the six frames** — seed on the clearest
+  frame, chain the nearest candidate, and hold position when the arm is hidden rather than jumping. The
+  angle continues the forearm and a guard rotates the weapon until it clears the body (an axe head is
+  13 px wide); bows and staves get a small fixed tilt because they are carried upright.
+* **Result:** 570 of 570 armed cells have a grip; 315 measured from a bare hand, 255 inferred from the
+  glove/wrist/hidden arm (Mage 27/30 found, Knight 8/30 — the armoured classes are the ones worth a look).
+  NW/N/NE stay bare (the owner's v27 rule); idle and walk stay weaponless (v26).
+* **The owner's part:** `tools/weapon_review.html` (and the standalone twin) — every class, 8 views,
+  6 frames, weapon already placed, drag any tile that looks wrong (one drag carries the whole view by
+  default), arrow keys nudge 1 px, "Copy my adjustments" returns one small JSON block.
+  `tools/preview_weapon.png` is the contact sheet of the automatic pass, all 19 classes.
+* **Still the owner's call:** which art to bake (the item icons the game shows today — needs one online run
+  of `--fetch-icons` because this sandbox has no internet; real weapon sheets dropped into
+  `Sprite/weapons/`; or the game's own drawn shapes, which is what the preview uses), whether away-facing
+  views really stay bare, and the final "bake it" go-ahead.
+* **Files touched:** new `tools/weapon_bake.py`, `tools/weapon-plan.md`, `tools/weapon_review.html`,
+  `tools/weapon_review_data.js` + `tools/weapon_review_standalone.html` (generated),
+  `tools/weapon_grips.json`, `tools/preview_weapon.png`, `tools/tests/weapon_review_sim.js`.
+* **Tests:** all 15 suites green (the new one: weapon review **13** passed, 0 failed — every class/view/frame
+  covered, weapons only on the armed views, drag never inverted, the exported nudges exact).
+* **Branches / PR:** `arena/01a1054b-prontera-grind` (PR #11).
+
+### 2026-10-04 — `tool-v36 a preview server in the repo, and a handover note for the next session` (no game change, no BUILD bump)
+* **Why:** the owner could not open any of the preview links ("i cant access any of the links u given",
+  then "not working"). The two things that could be fixed from this side are fixed.
+* **The server used to live in `/tmp`** and was wiped by every sandbox reset, and it answered the front
+  page with a **302 redirect** — a proxy in front of it can drop that and leave a blank page. It now
+  lives in the repo as `tools/preview_server.py`, answers every route with a **direct 200 (no redirects
+  anywhere)**, sends `Cache-Control: no-store`, and serves `/` (weapon review), `/review`, `/standalone`
+  (the review page as one offline file) and `/picker` (the pose + head picker). Run it from the repo root:
+  `python3 tools/preview_server.py 8000`.
+* **The fallback for the owner** — a single self-contained page that makes no external requests at all
+  (verified): `tools/weapon_review_standalone.html` on the branch, openable as a local file.
+* **The handover:** `tools/HANDOVER-weapon-review.md` — how a fresh session recovers the branch
+  (`git reset --mixed origin/arena/01a1054b-prontera-grind`, never `--hard`), starts the preview, and what
+  the owner is asked to do (drag the odd tile, "Copy my adjustments", or say "bake it"). The reviewed
+  state is tagged **`weapon-review-v35`** in the owner's GitHub as a fixed backup point.
+* **Files touched:** new `tools/preview_server.py`, `tools/HANDOVER-weapon-review.md`.
+* **Tests:** all 15 suites unchanged and green; the game is untouched.
+* **Branches / PR:** `arena/01a1054b-prontera-grind` (PR #11).
 ### 2026-10-04 — `kit-v26 map-kit-v2 all-ten-maps`
 * **What changed for the player:**
   * **Every map is now drawn from Map Kit v2**, the higher-fidelity RO-style art set that arrived in
@@ -2233,3 +2750,22 @@ assigned for feel rather than fidelity. While reworking that, two shipped bugs s
     DPS while its owner is at x0.70 - the pet:character ratio the test asserts is unchanged, but
     pets gain nothing from the card layer, so a full-card character out-runs its pet sooner than
     it used to (0.74x -> 0.47x of a maxed character per pet). Retune `PETBAL` if that matters.
+
+### 2026-10-04 — merge: `main` (the weapon-review work) into the v38 branch, and the BUILD line that broke main
+
+* **Why:** PR #15 came back `CONFLICTING`. `origin/main` had gained the parallel session's weapon
+  work (v26-v29 rendering, the sprite/weapon pickers, `assets/weapon_joints_data.js`, dozens of new
+  tools) and, with it, a fatal defect: **two `const BUILD=` declarations in the same script block**
+  (`ui-v29` above `ui-v35`), a SyntaxError - main's game script did not run at all.
+* **Resolution:** that one line (plus its comment) was the whole conflict. The merged file keeps a
+  single `BUILD` = `'2026-10-04 ui-v38 weapon-cut cards-carry + weapon-hold'`, which names both
+  sides. Nothing else conflicted: main's rendering code, assets and tools merged untouched, and its
+  three new suites came with them.
+* **Verified on the merged tree:** `node --check` on the inline script; all **15 suites** green -
+  `skill` 51, `class_change` 24, `gear` 24, `economy` 21, `ui` 20, `picker` 19, `card` 13,
+  `weapon_review` 13, `save_load` 12, `sprite` 12, `pet` 11, `scene` 8, `starter` 7, `stat` 7,
+  `weapon_joint` 7, `pack` 19 bodies - and `audit.js` still measures the v38 target exactly:
+  438,133 -> **305,020** auto-DPS (x0.70), layers x2.96/x1.99/x3.70/x1.60.
+* **Known:** main's `index.html` also loads `assets/kit/morocc-atlas.js`, which exists in neither
+  tree (v1 was retired to `Updates/retired-v1-kit/` when map kit v2 landed), so it 404s in the
+  console; nothing depends on it and it was left exactly as main had it.

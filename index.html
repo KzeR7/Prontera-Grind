@@ -191,6 +191,8 @@ hr{border:0;border-top:1px dashed var(--edge);margin:6px 0}
 </div>
 <div id="modal"><div class="login-card"><p id="mt" style="font-size:14px;opacity:1;margin:0 0 12px"></p><div class="row" style="justify-content:center"><button id="my">Yes</button><button id="mn">Cancel</button></div></div></div><div id="tooltip"></div>
 <script src="assets/sprite_pack_data.js?v=1"></script>
+<script src="assets/weapon_joints_data.js?v=1"></script>
+<script src="assets/kit/morocc-atlas.js?v=1"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
 const $=id=>document.getElementById(id);
@@ -242,7 +244,11 @@ const AL={str:'STR',agi:'AGI',dex:'DEX',luk:'LUK',int:'INT',hp:'Max HP',atk:'ATK
 // late maps in about five, with bosses still a ~12x fight. See tools/tests/economy_sim.js.
 const SU=k=>k.toUpperCase(),BX_=13,Z0=-28,Z1=12,MPS=15,AGGRO=6.5,BOSSZ=-4,BOSS_NEAR=2.2,BOSS_FAR=6,HPK=42,HPE=1.3,K5=['str','agi','dex','luk','int'];
 const GM_USER='GM',GM_PASS='gm1234';   // CHANGE THE GM PASSWORD before you publish
-const BUILD='2026-10-04 ui-v38 weapon-cut cards-carry';   // shown on the login card - confirms which file you loaded
+// Merge resolution (2026-10-04): main carried two BUILD lines (ui-v29 + ui-v35) in this one
+// script block, which is a SyntaxError - the game did not run on main at all. One line wins, and
+// it names both sides of this merge: the v38 balance patch (the weapon cut, the affix/card
+// give-back) and main's weapon-hold rendering work.
+const BUILD='2026-10-04 ui-v38 weapon-cut cards-carry + weapon-hold';   // shown on the login card - confirms which file you loaded
 $('buildTag').textContent='build '+BUILD;
 
 // ---------- class tree: Novice -> 6 first jobs -> 6 second jobs -> 6 third jobs ----------
@@ -2529,8 +2535,31 @@ function weaponHandPoint(dir,p){
   const a=dir*Math.PI/4,ca=Math.cos(a),sa=Math.sin(a),hx2=11+Math.sin(p.arm)*6,hy=26-Math.cos(p.arm)*9+p.lift,hz=6+p.lunge*.15;
   const x=hx2+3,z=hz+4,wx=x*ca+z*sa,wz=-x*sa+z*ca;return[wx,-(hy-6+p.bob)+wz*.2,wz]}
 const PACK_WEAPON_ADJUST={bow:[-5,-40],staff:[-20,-40],katar:[-6,-34],dagger:[-6,-34],axe:[-6,-37],sword:[-6,-37],mace:[-6,-37]};
-function weaponSpritePixel(dir,kind,fr,wt,packed,frameCount){
-  const p=poseOf(kind,fr,wt,frameCount),hand=weaponHandPoint(dir,p);let x=SPR_W*.5+p.lunge*.15+hand[0],y=SPR_H-7+hand[1];
+// v29: the weapon is HELD IN ONE POSITION while the owner confirms the attack poses.  The
+// held spot is the hand joint measured from the attack's first frame (tools/make_weapon_joints.py
+// still measures all six per body and direction - they are kept for the next step), so nothing
+// about the weapon can move while the frames advance.  The old sine-wave model was the reason the
+// weapon slid: it animated a swing the drawn art never made (RO instead aligns weapon art to the
+// body's base anchor, per frame, in its act files).  Falls back to that model only if the joints
+// file is missing.
+function weaponJointPixel(body,dir,fr){
+  const J=window.WEAPON_JOINTS,PK=window.SPRITE_PACK;
+  if(!J||!PK)return null;
+  const b=J[body];
+  if(!b)return null;
+  const rows=b[dir]||b[String(dir)];
+  if(!rows)return null;
+  const j=rows[fr]||rows[rows.length-1];
+  return j?[PK.padL+j[0],PK.padT+j[1]]:null}
+function weaponSpritePixel(dir,kind,fr,wt,packed,frameCount,body){
+  const p=poseOf(kind,fr,wt,frameCount);
+  if(packed){
+    const j=weaponJointPixel(body||'thief',dir,0);
+    // held: one position, and the angle of the first frame, for the whole attack.
+    // The measured hand IS the grip point, so PACK_WEAPON_ADJUST is not applied here:
+    // those numbers only corrected the sine model's anchor (see the fallback below).
+    if(j)return[j[0],j[1],poseOf(kind,0,wt,frameCount)]}
+  const hand=weaponHandPoint(dir,p);let x=SPR_W*.5+p.lunge*.15+hand[0],y=SPR_H-7+hand[1];
   if(packed){const PK=window.SPRITE_PACK,[dx,dy]=PACK_WEAPON_ADJUST[wt]||[0,-36];
     x=PK.padL+x*96/SPR_W+dx*Math.cos(dir*Math.PI/4);y=PK.padT+y*96/SPR_H+dy}
   return[x,y,p]}
@@ -2660,7 +2689,7 @@ function drawHairPreview(){
 function mkPackHero(opt){
   const PK=window.SPRITE_PACK,t=packTex(opt).clone();t.needsUpdate=true;t.repeat.set(1/8,1/24);
   const s=new THREE.Sprite(new THREE.SpriteMaterial({map:t,transparent:true,alphaTest:.12}));
-  s.center.set(PK.pivotX/PK.cellW,(PK.cellH-PK.pivotY)/PK.cellH);s.scale.set(PK.cellW*PACK_K,PK.cellH*PACK_K,1);s.userData.pack=1;return s}
+  s.center.set(PK.pivotX/PK.cellW,(PK.cellH-PK.pivotY)/PK.cellH);s.scale.set(PK.cellW*PACK_K,PK.cellH*PACK_K,1);s.userData.pack=1;s.userData.body=packBodyFor(opt.cls,opt.tier)||'thief';return s}
 function setPackCell(spr,dir,run,atk,clock){
   const p=heroPoseFrame(run,atk,clock,true),t=spr.material.map;t.repeat.set(1/8,1/24);t.offset.set(p.frame/8,1-(p.kind*8+dir+1)/24)}
 function ensureHero(opt){const k=JSON.stringify(opt);if(heroKey===k&&heroSpr)return;heroKey=k;heroDirty=false;
@@ -2721,6 +2750,8 @@ const petFallbackShape=sp=>sp.n==='Lunatic'?'bunny':sp.n.includes('Wolf')?'cat':
 function disposeCreatureVisual(v){scene.remove(v.G);if(v.image)v.image.remove();if(v.official&&v.spr.material.map)v.spr.material.map.dispose();v.spr.material.dispose()}
 const mobMesh=new Map(),petMesh=new Map();let curMob=null,mobG=null,mobMats=[],lastBoss=null,dmesh=new Map(),tmp=new THREE.Vector3(),lastProg='';
 function scr(x,y,z){tmp.set(x,y,z).project(cam);return[(tmp.x+1)/2*R.domElement.clientWidth,(1-tmp.y)/2*R.domElement.clientHeight]}
+// Facing-away views (NW 3, N 4, NE 5): the item icon is front-view art and reads wrong there.
+const WEAPON_HIDDEN_DIRS=[3,4,5];
 const weaponNodes=new Map(),WEAPON_ICON_ANGLE={dagger:-35,katar:22,staff:-24,bow:18,axe:-30,sword:-35,mace:-28},WEAPON_ICON_SIZE={dagger:25,katar:30,staff:29,bow:34,axe:30,sword:29,mace:28};
 // Divine Pride supplies square item icons, not held-sprite pivots. These normalized grip
 // points keep the handle at the sprite's hand after the icon is rotated for the pose.
@@ -2739,14 +2770,22 @@ function weaponNode(slot,wt){let n=weaponNodes.get(slot);if(n&&n.type===wt)retur
 function syncWeaponSprites(pFace,c){
   const packed=!!(heroSpr&&heroSpr.userData.pack);if(!packed){weaponNodes.forEach(n=>n.el.style.display='none');return}
   const w=S.eq.weapon,wt=heroWeaponType(c.n,c.wt,w&&w.wt),pose=heroPoseFrame(pl.run,atkAnim,t,packed),dir=viewDir(pFace);
-  const[px,py,p]=weaponSpritePixel(dir,pose.kind,pose.frame,wt,packed,pose.count),PK=window.SPRITE_PACK;
+  // v26: the weapon shows only during an attack.  Idle and walking are bare-handed - the
+  // owner asked for it, and it also keeps the pack's own arm poses readable in those rows.
+  if(pose.kind!==2){weaponNodes.forEach(n=>n.el.style.display='none');return}
+  // v27: the weapon art is a front-view item icon, so an away-facing view (NW, N, NE) would
+  // show it from the wrong side - the owner reported it as a ruined weapon.  Those views go
+  // bare-handed; WHICH views is one list, so the picker's per-view choice can extend it.
+  if(WEAPON_HIDDEN_DIRS.indexOf(dir)>=0){weaponNodes.forEach(n=>n.el.style.display='none');return}
+  const body=(heroSpr&&heroSpr.userData.body)||packBodyFor(c.n,c.tier)||'thief';
+  const[px,py,p]=weaponSpritePixel(dir,pose.kind,pose.frame,wt,packed,pose.count,body),PK=window.SPRITE_PACK;
   const localScale=packed?PACK_K:2.92/SPR_H,pivotX=packed?PK.pivotX:SPR_W*.5,pivotY=packed?PK.pivotY:SPR_H;
   weaponRight.setFromMatrixColumn(cam.matrixWorld,0);weaponUp.setFromMatrixColumn(cam.matrixWorld,1);
   weaponWorld.copy(P.position).addScaledVector(weaponRight,(px-pivotX)*localScale).addScaledVector(weaponUp,(pivotY-py)*localScale);
   const[sx,sy]=scr(weaponWorld.x,weaponWorld.y,weaponWorld.z),base=scr(P.position.x,P.position.y,P.position.z),height=packed?PK.pivotY*PACK_K:2.92;
   weaponWorld.copy(P.position).addScaledVector(weaponUp,height);const top=scr(weaponWorld.x,weaponWorld.y,weaponWorld.z),pxPerWorld=Math.abs(base[1]-top[1])/height;
   const n=weaponNode('main',wt),raw=(WEAPON_ICON_SIZE[wt]||28)*localScale*pxPerWorld,size=Math.max(18,Math.min(42,raw));
-  const swing=pose.kind===2?Math.sin(pose.frame/Math.max(1,pose.count-1)*Math.PI):0;
+  const swing=0;   // v29: parked - not even a scale pulse, so the weapon cannot appear to move
   const stride=pose.kind===1?Math.sin(pose.frame/pose.count*Math.PI*2)*5:0;
   const angle=(WEAPON_ICON_ANGLE[wt]||-30)+p.weap*24+(wt==='bow'?p.bow*8:0)+stride,scale=1+swing*.06;
   const[iconX,iconY]=weaponIconCenterAtGrip(sx,sy,size*scale,angle,wt);
