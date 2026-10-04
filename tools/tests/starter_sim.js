@@ -70,7 +70,8 @@ t('stages 6–10 and later maps retain their previous combat formulas',()=>{
   assert.strictEqual(H.mobs[0].hp,Math.floor(500*mb*Math.pow(p,H.HPE)));
  }
 });
-t('three closer packs reroll on each spawn but stay separate and on dry ground',()=>{
+t('medium-distance packs reroll on each spawn but stay separate and on dry ground',()=>{
+ assert.strictEqual(H.PACK_GAP,13);assert.strictEqual(H.PACK_MAX,18.5);
  const positions=new Set();
  for(let m=0;m<10;m++)for(let l=1;l<=10;l++)for(let i=0;i<8;i++){
   const pack=spawn(m,l),groups=[0,1,2].map(k=>pack.filter(x=>x.pack===k));

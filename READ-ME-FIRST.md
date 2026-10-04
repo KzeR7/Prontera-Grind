@@ -38,7 +38,7 @@ done
 
 Expected tails: pack prints the 19 bodies; every other suite prints `N passed, 0 failed`
 (class_change 22, save_load 10, economy 21, stat 7, card 13, skill 49, gear 20, scene 8,
-**kit 34**, ui 13, sprite 10, starter 7). All suites pull the real code out of `index.html` by
+**kit 34**, ui 13, sprite 11, starter 7). All suites pull the real code out of `index.html` by
 string boundary, so moving a declaration can break a test without breaking the game — if a suite
 throws, read the boundary it grabs before assuming the game is at fault.
 
@@ -55,9 +55,10 @@ The map **layouts** (which tile goes where, how the scenery is clumped) are data
 independent layouts for stages 4–6, 7–9 and boss stage 10. `stageSpec()` chooses the recipe;
 `fieldPlan()` builds it. Later stages do **not** paint spawn pads or boss-floor rings: they
 change paths, water, vegetation and landmarks with the existing kit. The combat arena is
-26×40 units. `packSites()` rolls three closer dry locations anew on every respawn;
+26×40 units. `packSites()` rolls three dry locations 13–18.5 units apart anew on every respawn;
 `nearestPack()`, `spawn()`, `kill()` and `update()` choose the nearest surviving pack, not a
-numbered route. To look at a layout without a
+numbered route. `mobVisualScale()` makes regular mobs shorter than the player while leaving
+bosses at their previous size. To look at a layout without a
 browser:
 
 ```sh

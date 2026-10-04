@@ -190,7 +190,7 @@ const AL={str:'STR',agi:'AGI',dex:'DEX',luk:'LUK',int:'INT',hp:'Max HP',atk:'ATK
 // late maps in about five, with bosses still a ~12x fight. See tools/tests/economy_sim.js.
 const SU=k=>k.toUpperCase(),BX_=13,Z0=-28,Z1=12,MPS=15,AGGRO=6.5,HPK=42,HPE=1.3,K5=['str','agi','dex','luk','int'];
 const GM_USER='GM',GM_PASS='gm1234';   // CHANGE THE GM PASSWORD before you publish
-const BUILD='2026-10-04 kit-v29 themed-scenes roaming-packs';   // shown on the login card - confirms which file you loaded
+const BUILD='2026-10-04 kit-v30 pack-spacing smaller-mobs';   // shown on the login card - confirms which file you loaded
 $('buildTag').textContent='build '+BUILD;
 
 // ---------- class tree: Novice -> 6 first jobs -> 6 second jobs -> 6 third jobs ----------
@@ -403,10 +403,11 @@ const MOB_SPRITES={
   'Hell Worm':1215, // Stem Worm
   'Dark Lord':1272
 };
-// Divine Pride size classes, checked per unique sprite ID (including the final Familiar ID 1005)
-// on 2026-10-04. These are VISUAL scale factors against the 2.9-unit player, not combat hitboxes.
-// Small ≈ 65% of player height; Medium ≈ player height; Large ≈ 135%. The database's
-// Small/Medium/Large labels come from https://www.divine-pride.net/database/monster/{ID}.
+// Divine Pride size classes, checked per unique sprite ID (including Familiar ID 1005)
+// on 2026-10-04. These are source-art size classes, NOT combat hitboxes. Their base
+// factors are .62/.92/1.28; the render path below applies a regular-only multiplier so
+// even a medium Poring looks shorter than the player. Boss scale remains unchanged.
+// The size labels come from https://www.divine-pride.net/database/monster/{ID}.
 const MOB_SIZE_BY_ID={
   1001:'Small',1004:'Small',1005:'Small',1007:'Small',1008:'Small',1011:'Small',1051:'Small',1063:'Small',1070:'Small',1073:'Small',
   1141:'Small',1142:'Small',1143:'Small',1144:'Small',1167:'Small',1179:'Small',1837:'Small',1866:'Small',1869:'Small',2023:'Small',
@@ -419,6 +420,11 @@ const MOB_SIZE_BY_ID={
   1373:'Large',1405:'Large',1719:'Large',1775:'Large',1833:'Large',20843:'Large',2202:'Large'
 };
 const MOB_SIZE_SCALE={Small:.62,Medium:.92,Large:1.28};
+// Mob PNGs have different silhouette sizes inside their frames. Scale *regular* bodies
+// to 70% of their old height: Fabre ≈1.32 and Poring ≈1.96 units against a 2.92-unit
+// hero. Bosses keep the exact v29 height. This changes visual art only, not hitboxes.
+const MOB_REGULAR_VISUAL=.7;
+const mobVisualScale=m=>Math.max(.05,(m.spriteScale||.92)*(m.boss?1.18:MOB_REGULAR_VISUAL)*(m.spawn||0));
 const mobSpriteUrl=id=>Number.isInteger(+id)&&+id>0?`https://static.divine-pride.net/images/mobs/png/${+id}.png`:'';
 // ---------- equipment database ----------
 // Four sections per map (Novice gear / 1st-job / 2nd-job / high tier), each a themed set:
@@ -767,9 +773,9 @@ const icon=it=>it.card?'🃏':it.ore?'💎':it.slot==='weapon'?(WICON[it.wt]||'�
 // ---------- mobs & loot ----------
 let mobs=[],mob=null,pAtkT=0,mAtkT=0,respawn=0,activePack=0;
 // Pick three new sites on every respawn, within the clear 26x40 battle lane. They are
-// closer than v28 but still separated by 9.5-15.5 units centre-to-centre. A site on a
+// closer than v28 but still separated by 13-18.5 units centre-to-centre. A site on a
 // creek or sea strip is rejected; scenery/landmarks remain outside the running lane.
-const PACK_GAP=9.5,PACK_MAX=15.5,PACK_JITTER=.7;
+const PACK_GAP=13,PACK_MAX=18.5,PACK_JITTER=.7;
 function packSites(){
   const spec=stageSpec(S.mp,S.lvl),water=spec.f&&spec.f.water;
   // Restart the whole roll if a first site leaves no room for the other two (especially
@@ -2608,13 +2614,13 @@ function draw(){
   heroSpr.material.color.setRGB(1,1-hitAnim*.75,1-hitAnim*.75)}
   drawSlashFX(pl.x+Math.cos(pFace)*0.7,pl.z+Math.sin(pFace)*0.7,wt);
   const alive=new Set(mobs);mobMesh.forEach((v,m)=>{if(!alive.has(m)){scene.remove(v.G);if(v.image)v.image.remove();if(v.spr.material.map)v.spr.material.map.dispose();v.spr.material.dispose();mobMesh.delete(m)}});
-  for(const m of mobs){let v=mobMesh.get(m);if(!v){v=buildMob(m);mobMesh.set(m,v)}const s=Math.max(.05,(m.spriteScale||.92)*m.spawn*(m.boss?1.18:1));
+  for(const m of mobs){let v=mobMesh.get(m);if(!v){v=buildMob(m);mobMesh.set(m,v)}const s=mobVisualScale(m);
     const rec=v.spriteId&&mobTextureCache.get(v.spriteId);if(rec&&rec.state==='ready')useMobTexture(v,rec.texture);
     v.G.scale.set(s,s,s);v.G.position.set(m.x,0,m.z);
     const mFace=Math.atan2(pl.z-m.z,pl.x-m.x);
     if(!v.official)setCell(v.spr,viewDir(mFace),animRow(m.run,m.atkAnim||0,t+m.a,8));
     const fl=m.flash||0;v.spr.material.color.setRGB(1,1-fl*.8,1-fl*.8)}
-  if(mob){const s=Math.max(.05,(mob.spriteScale||.92)*mob.spawn*(mob.boss?1.18:1)),[qx,qy]=scr(mob.x,3.08*s+.15,mob.z);tag.style.display='block';tag.style.left=qx+'px';tag.style.top=qy+'px';$('tn').textContent=mob.n+(mob.boss?' (BOSS)':'');$('th').style.width=Math.max(0,mob.hp/mob.max*100)+'%'}else tag.style.display='none';
+  if(mob){const s=mobVisualScale(mob),[qx,qy]=scr(mob.x,3.08*s+.15,mob.z);tag.style.display='block';tag.style.left=qx+'px';tag.style.top=qy+'px';$('tn').textContent=mob.n+(mob.boss?' (BOSS)':'');$('th').style.width=Math.max(0,mob.hp/mob.max*100)+'%'}else tag.style.display='none';
   const pids=new Set(S.pets.filter(p=>p.on).map(p=>p.id));petMesh.forEach((v,id)=>{if(!pids.has(id)){scene.remove(v.G);petMesh.delete(id)}});
   S.pets.filter(p=>p.on).forEach(p=>{const sp=PETS[p.sp],r=petR[p.id];if(!r)return;let v=petMesh.get(p.id);
     if(!v){const tex=getSheet('p:'+sp.n+':'+sp.c,(ctx,x,y,d,kind,fr)=>drawCritter(ctx,x,y,d,kind,fr,sp.n==='Lunatic'?'bunny':sp.n.includes('Wolf')?'cat':sp.n.includes('Peco')?'bug':sp.n.includes('Dragon')||sp.n.includes('Baphomet')?'demon':'blob',sp.c));
@@ -2636,7 +2642,7 @@ function draw(){
   const dd=(cam.aspect<1.5?26:18)/zoom,sk=shake*.03;
   cam.position.set(ct.x+Math.sin(az)*Math.cos(el)*dd+rnd(-sk,sk),Math.sin(el)*dd+.5,ct.z+Math.cos(az)*Math.cos(el)*dd+rnd(-sk,sk));
   cam.lookAt(ct);cam.updateMatrixWorld(true);
-  for(const m of mobs){const v=mobMesh.get(m);if(v)syncMobImage(v,m,Math.max(.05,(m.spriteScale||.92)*m.spawn*(m.boss?1.18:1)))}
+  for(const m of mobs){const v=mobMesh.get(m);if(v)syncMobImage(v,m,mobVisualScale(m))}
   syncSkillFx();syncWeaponSprites(pFace,c);R.render(scene,cam);
   floats.forEach(f=>{if(!f.el){const e=document.createElement('div');e.className='fl'+(f.big?' big':'');e.textContent=f.txt;e.style.color=f.col;ov.appendChild(e);f.el=e}
     const[a,b]=scr(f.x,f.y,f.z);f.el.style.left=a+'px';f.el.style.top=b+'px';f.el.style.opacity=Math.max(0,f.life)});

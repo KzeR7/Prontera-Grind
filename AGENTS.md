@@ -410,13 +410,21 @@ to `x=0, z=Z1-1.5`. Both are pinned in `save_load_sim.js`.
 
 The battle arena is **26 wide by 40 deep**: `BX_=13`, `Z0=-28`, `Z1=12`. The
 camera sits on +Z looking toward -Z, which makes **low Z the top of the screen**. The
-player starts at `Z1-1.5` (bottom). v29 rerolls three pack sites every spawn in the dry,
-open field: 9.5-15.5 units apart rather than fixed points on a route. `AGGRO=6.5`, and only
+player starts at `Z1-1.5` (bottom). Every respawn rerolls three pack sites in the dry,
+open field: **13–18.5 units apart** (v30, between v28’s fixed ~18–23 and v29’s 9.5–15.5). `AGGRO=6.5`, and only
 the active pack can chase or attack; on each spawn and after each pack falls, `nearestPack()`
 chooses whichever surviving pack is closest to the player. Pets and skills stay on that
 pack; no 1 → 2 → 3 fixed order. On Stage 10 the boss appears alone after 15 normal kills.
 `ct.z` tracks `pl.z-5` to keep the player in the lower part of the frame. Prontera's
 fallback town stays beyond the far edge (`TZ=Z0-8`).
+
+**Monster render size (v30):** the Divine Pride Small/Medium/Large labels and base
+factors `.62/.92/1.28` are still intact, but normal monsters render at **70%** of their
+former visual height in *both* sprite paths (GPU and HTML fallback). Against the 2.92-unit
+hero, Fabre now appears ~1.32 units tall and Poring ~1.96; even Large regular mobs are
+below player height. Boss rendering is **unchanged** (`spriteScale * 1.18`). These are
+visual-only changes — `size` (combat reach), HP, stats, rewards and the monster art are not
+modified. `mobVisualScale()` is the shared helper for mob mesh, DOM sprite and target tag.
 
 **Stage scenes (v29):** `KIT_MAP` is the original map scene on stages 1–3; `STAGE_SCENES`
 is ten maps × three **independent, themed recipes** for 4–6, 7–9 and 10. `stageSpec(m,l)`
@@ -474,7 +482,7 @@ node tools/tests/gear_sim.js          # -> "20 passed, 0 failed  (20 assertions 
 node tools/tests/scene_sim.js         # -> "8 passed, 0 failed" (per-map scenery, water, clear lane)
 node tools/tests/kit_sim.js           # -> "34 passed, 0 failed" (v2 atlas + KIT_PS, payon recipe, morocc design, ten identities, builders, loader)
 node tools/tests/ui_sim.js            # -> "13 passed, 0 failed"
-node tools/tests/sprite_sim.js        # -> "10 passed, 0 failed" (mob/weapon Divine Pride mapping, fallbacks)
+node tools/tests/sprite_sim.js        # -> "11 passed, 0 failed" (mob/weapon Divine Pride mapping, fallbacks)
 node tools/tests/starter_sim.js       # -> "7 passed, 0 failed" (the gentle starter stages)
 ```
 
@@ -1496,3 +1504,27 @@ assigned for feel rather than fidelity. While reworking that, two shipped bugs s
 * **Known limit:** travel is shorter than v28, but the economy's 800-kills/hour assumption
   still needs a real gameplay measurement before any pacing retune. The boss-field landmarks
   use existing kit art rather than a custom boss sprite.
+
+### 2026-10-04 — `kit-v30 pack-spacing smaller-mobs`
+
+* **What changed for the player:** the three randomized pack sites are now **13–18.5
+  units apart**: halfway between v28's distant fixed positions and v29's close
+  9.5–15.5-unit rerolls. They still avoid water and engage by nearest pack, not number.
+  Ordinary monsters are visibly smaller than the hero: **Fabre ~1.32 vs hero 2.92
+  world units, Poring ~1.96 vs hero 2.92**. All regular mobs (including those with a
+  Large size label) are below the hero's height. Bosses keep their exact previous
+  on-screen scale — none were reduced.
+* **Files touched:** `index.html` (pack spacing, shared regular-mob visual scale, `BUILD`),
+  `tools/tests/{sprite,starter}_sim.js`, `AGENTS.md`, `READ-ME-FIRST.md`.
+* **Art and combat:** no sprite source, packed atlas or kit art changed. Both official
+  sprite routes (GPU and DOM fallback) follow the new scale. Monster hitboxes, aggro,
+  rewards, HP and all boss dimensions are unchanged.
+* **Tests:** all 13 suites green — pack 19 bodies, class change 22, save/load 10,
+  economy 21, stat 7, card 13, skill 49, gear 20, scene 8, kit 34, ui 13,
+  **sprite 11**, starter 7. New assertions pin Fabre/Poring's player-relative heights,
+  every regular monster below the hero, unchanged boss height, and both sprite paths;
+  spacing tests check the midpoint limits on repeated dry-site rolls. Inline game
+  JavaScript passes `node --check`.
+* **Known limit:** Divine Pride's PNGs have varied transparent margins; heights are based
+  on rendered frames, and a visual pass in the live preview is still useful to judge
+  individual silhouettes. The change is not a hitbox or balance change.
