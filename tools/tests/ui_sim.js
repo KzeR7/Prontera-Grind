@@ -86,7 +86,7 @@ const PW=[[90,9,1,0],[80,17,3,0],[70,24,5.5,.5],[60,30,9,1],[50,35,13,2],[40,38,
 const MAXST=99,ELITELV=100,Z0=-14;
 const statCap=()=>99,selK=null,gp=id=>S&&S.pets.find(x=>String(x.id)===String(id)),classRec=()=>null,tb={};
 const skCost=x=>x,skOff=id=>!!(S&&S.skOff&&S.skOff[id]);
-let petBuff={atk:0,matk:0,atkT:0,matkT:0},petSkillCd={};
+let petBuff={atk:0,matk:0,hp:0,leech:0,atkT:0,matkT:0,hpT:0,leechT:0},petBuffSrc={},petSkillCd={},petNote={};
 const rollingSet=new Set(),autoSet=new Set(),busy=()=>false;
 let S=null,mapM=0,mapL=1,selB=null,selC=null;   // remaining panel state comes in with the V grab
 const mobs=[],drops=[],logs=[];
@@ -130,6 +130,12 @@ t('the map panel renders every map and field', () => {
   assert.ok(h.includes('0.45%'), 'the card chance stays visible on the monster');
   assert.ok(h.includes('mapcard'), 'the map selector must be the scalable grid');
   assert.strictEqual((h.match(/class="mapcard/g) || []).length, 10, 'one card per map');
+  // Every map card shows its recommended level range under the name (the old build printed the
+  // word "farming" there instead). The current map keeps its dot marker.
+  const cards = h.slice(h.indexOf('class="mapgrid'), h.indexOf('class="mapband fields'));
+  assert.ok(!/>\s*farming\s*</.test(cards), 'no map card says "farming" any more');
+  assert.ok(cards.includes('● Lv 1-12') && cards.includes('Lv 10-24'), 'the level range is back under the name');
+  assert.ok(cards.includes('Lv 90-99'), 'and every map carries one');
   assert.strictEqual((h.match(/class="map-node/g) || []).length, 10, 'one node per field');
   // the boss field lists the whole pool with odds, and the new ore rates
   U.mapL = 10;
@@ -153,6 +159,9 @@ t('the map tab is a compact two-band panel: maps on top, that map\'s fields unde
   // the field strip holds all ten levels of the picked map and the travel button lives in it
   const fieldBand = h.slice(iFields, iCols);
   assert.strictEqual((fieldBand.match(/class="map-node/g) || []).length, 10, 'ten fields in the band');
+  assert.ok(!/>1st job</.test(fieldBand) && !/>2nd job</.test(fieldBand) && !/>novice</.test(fieldBand),
+    'stage buttons carry no job-tier description');
+  assert.ok(!/1st-job gear/.test(h), 'the stage header no longer names the gear section');
   assert.ok(fieldBand.includes('data-a="go"'), 'travel sits with the fields, not in its own sticky bar');
   assert.ok(fieldBand.includes('Stage 10'), 'the boss field is labelled');
   assert.ok(src.includes('.wp.wide{flex:0 1 450px;width:450px;min-width:0}'), 'map width is halved and does not grow');
@@ -184,18 +193,28 @@ t('map and boss-field panels stay inside narrow viewports', () => {
   assert.ok(boss.includes('poolitem'), 'the selected boss field keeps its drop pool');
 });
 
-t('the equipment panel renders with a chooser open and closed', () => {
+t('clicking a slot highlights the fit in the REAL bag tab - no extra pop-out', () => {
   U.S = mkS('Swordman');
-  U.selE = 'weapon'; U.eqPick = null;
+  U.selE = 'weapon'; U.eqPick = null; U.sub = 'bag';
   let h = U.V.equip();
   assert.ok(!/undefined/.test(h), 'equip panel printed undefined');
+  assert.ok(!h.includes('chooser'), 'the equipment panel itself never hosts the chooser any more');
+  // with a slot being chosen, the Bag window rings what fits and wires the click to equip
   U.eqPick = 'weapon';
-  h = U.V.equip();
-  assert.ok(h.includes('Broad Sword') && h.includes('chooser'), 'the chooser must list the spare sword');
-  assert.ok(h.includes('Equip'), 'and offer to wear it');
+  const bag = U.V.bag0();
+  assert.ok(bag.includes('class="mob-card chooser"'), 'the Bag window carries the choosing banner');
+  assert.ok(bag.includes('Choosing a r.hand') || bag.includes('Choosing a'), 'which names the slot');
+  assert.ok(bag.includes('aria-label="Broad Sword - fits this slot, click to equip"'), 'names the item it will wear');
+  assert.ok(bag.includes('cell b2 fit') && bag.includes('data-a="eqpick" data-v="9:weapon"'), 'the sword that fits is ringed and clickable');
+  assert.ok(!bag.includes('data-v="9:weapon" data-tip'), 'and is not also a plain select tile');
+  // the worn sword and the ring stay ordinary bag tiles (viewable, sellable)
+  assert.ok(bag.includes('data-a="selb" data-v="2"') && bag.includes('data-a="selb" data-v="3"'), 'everything else stays a normal bag item');
+  assert.ok(!/nofit/.test(bag), 'nothing in the bag is greyed out or disabled');
   U.eqPick = 'off';
-  h = U.V.equip();
-  assert.ok(h.includes('Shields') || h.includes('shield'), 'the off-hand chooser must explain what fits there');
+  assert.ok(/shield/i.test(U.V.bag0()), 'the off-hand banner must explain what fits there');
+  // and the actual slot click opens that window
+  assert.ok(src.includes("seleq:v=>{selE=v;eqPick=v;sub.bag='bag';if(!tabs.includes('bag'))"), 'clicking a doll slot opens the Bag tab');
+  assert.ok(src.includes("if(k==='status')sub.status='stats';if(k==='bag')sub.bag='bag';"), 'reopening a window resets its sub-tab');
 });
 
 t('the skills panel renders for every class tier', () => {
@@ -207,40 +226,160 @@ t('the skills panel renders for every class tier', () => {
   });
 });
 
-t('learned active skills use a checked Auto cast box by default', () => {
-  U.S = mkS('Mage'); U.S.sk.fire = 1; U.S.skOff = {}; U.selS = 'fire';
+t('Auto cast lives in the skill description card below the grid', () => {
+  U.S = mkS('Mage'); U.S.sk.fire = 1; U.S.skOff = {}; U.selS = null;
   let h = U.V.skills();
-  assert.ok(h.includes('<label class="sk-autocast"><input type="checkbox" data-a="sktog" data-v="fire" checked aria-label="Auto cast Fire Bolt"> Auto cast</label>'),
-    'a newly learned active skill should auto-cast by default');
-  assert.ok(!h.includes('Turn auto-cast ON') && !h.includes('Turn auto-cast OFF'), 'the old detail-panel toggle should be gone');
-  assert.ok(src.includes("b&&b.dataset.a==='ssel'&&e.target.closest('.sk-autocast')"), 'clicking the checkbox label should not select/re-render its parent card');
+  const tile = h.slice(h.indexOf('data-a="ssel" data-v="fire"'), h.indexOf('data-a="skill" data-v="fire"'));
+  assert.ok(tile.length > 0 && !tile.includes('sktog'), 'the skill tile must no longer carry the checkbox');
+  U.selS = 'fire';
+  h = U.V.skills();
+  assert.ok(h.includes('class="sk-detail-autocast"'), 'the description card holds the auto-cast control');
+  assert.ok(h.includes('<label class="sk-autocast"><input type="checkbox" data-a="sktog" data-v="fire" checked aria-label="Auto cast Fire Bolt"> Auto cast this skill</label>'),
+    'a newly learned active skill should auto-cast by default, from the description');
+  assert.ok(h.includes('Cast automatically every time you attack.'), 'and say what the checkbox means');
   U.S.skOff.fire = 1; h = U.V.skills();
-  assert.ok(/<label class="sk-autocast"><input type="checkbox" data-a="sktog" data-v="fire"\s+aria-label="Auto cast Fire Bolt"> Auto cast<\/label>/.test(h),
-    'unchecking Auto cast should render the skill as paused');
+  assert.ok(h.includes('Paused - it will not be used until you check this again.'), 'unchecking renders it as paused');
+  assert.ok(!h.includes('checked aria-label="Auto cast Fire Bolt"'), 'and the box renders unchecked');
+  // a passive or an unlearned skill has no auto-cast row to offer
+  U.selS = 'aid'; U.S.sk.aid = 0; h = U.V.skills();
+  assert.ok(h.includes('nothing to auto-cast'), 'an unlearned skill explains there is nothing to toggle');
 });
 
-t('the HUD shows Kills /Min and a rolling Zeny-per-minute hover rate', () => {
-  assert.ok(src.includes('<b id="zeny" title="Hover for earned Zeny per minute" tabindex="0" style="cursor:help">0</b>'), 'Zeny amount needs a hover hint');
-  assert.ok(src.includes('<div>Kills /Min <b id="kills" title="Kills per minute (rolling 60s)">0.0</b></div>'), 'HUD should display the rate instead of lifetime kills');
-  assert.ok(src.includes("$('zeny').title=`Zeny earned per minute (rolling 60s):"), 'hover title should show Zeny/min');
-  const box = {}; vm.createContext(box);
-  vm.runInContext(grab('const HUD_RATE_WINDOW=60000,HUD_RATE_SAMPLE=1000;', 'function bars(){') + ';this.stepHudRate=stepHudRate;', box);
-  let state = null, m = box.stepHudRate(state, 'player', 100, 4000, 0); state = m.state;
-  assert.strictEqual(m.kills, 0); assert.strictEqual(m.zeny, 0);
-  m = box.stepHudRate(state, 'player', 105, 4600, 30000); state = m.state;
-  assert.ok(Math.abs(m.kills - 10) < .001, '5 kills over 30 seconds should show 10/min');
-  assert.ok(Math.abs(m.zeny - 1200) < .001, '600 earned Zeny over 30 seconds should show 1,200/min');
-  m = box.stepHudRate(state, 'player', 105, 4100, 45000); state = m.state;
-  assert.ok(Math.abs(m.zeny - 800) < .001, 'spending Zeny must not count as negative earnings');
-  m = box.stepHudRate(state, 'player', 105, 4100, 90000); state = m.state;
-  assert.strictEqual(m.kills, 0, 'activity should age out of the rolling minute');
-  assert.strictEqual(m.zeny, 0, 'Zeny earnings should age out of the rolling minute');
-  m = box.stepHudRate(state, 'another-player', 20, 9000, 90000); state = m.state;
-  assert.strictEqual(m.kills, 0, 'a new login should start a fresh rate window');
-  assert.strictEqual(m.zeny, 0, 'a loaded balance should not count as new income');
-  m = box.stepHudRate(state, 'another-player', 30, 10000, 160001);
-  assert.strictEqual(m.kills, 0, 'a long idle gap should start a fresh rolling window');
-  assert.strictEqual(m.zeny, 0, 'earnings from before a long idle gap should not linger');
+t('HP flips at 30%; one split bar fills Base from left and Job from right with centred percentages', () => {
+  const markup=src.slice(src.indexOf('<div id="xp-dock"'),src.indexOf('<div id="modal"'));
+  assert.strictEqual((markup.match(/id="xp-track"/g)||[]).length,1,'the dock has exactly one XP track');
+  assert.ok(markup.indexOf('id="baseTrack"')<markup.indexOf('id="jobTrack"'),'Base must be left of Job');
+  assert.ok(markup.includes('Base Lv 1')&&markup.includes('Job Lv 1'),'both sides need labels');
+  assert.ok(src.includes('#xp-track{display:flex;width:100%;height:14px'),'track spans the screen');
+  assert.ok(src.includes('.xp-side{position:relative;flex:0 0 50%'),'the two parts share the single track equally');
+  assert.ok(src.includes('#jb{left:auto;right:0;'),'Job fill must originate at the right edge');
+  assert.ok(src.includes('.xp-pct{left:50%;transform:translateX(-50%)}'),'each percentage is centred within its half');
+  assert.ok(src.includes('#hpb.critical{background:linear-gradient('),'low HP must use a red treatment');
+  const box={};vm.createContext(box);
+  vm.runInContext(`
+    const nodes={};const $=id=>nodes[id]||(nodes[id]={style:{},textContent:'',title:'',attrs:{},
+      classList:{flags:{},toggle(k,v){this.flags[k]=v}},setAttribute(k,v){this.attrs[k]=v}});
+    let S={lv:20,exp:90,hp:31,kills:0,zeny:0},hudRate=null,zenyEarned=0,currentUser='A';
+    // the pet buff chips bars() now draws: no pet buff is running in this fixture
+    let petBuff={atk:0,matk:0,hp:0,leech:0,atkT:0,matkT:0,hpT:0,leechT:0},petBuffSrc={};
+    const performance={now:()=>1000},job={jl:10,jx:45},jobOf=()=>job,C=()=>({mj:50}),maxHp=()=>100,
+      jneed=()=>100,need=()=>200;
+    ${grab('const HUD_RATE_WINDOW=60000,HUD_IDLE_RESET=30000,HUD_RATE_REFRESH=1000;','function ui(){')}
+    bars();this.__h={nodes,S,job,bars};
+  `,box);
+  const h=box.__h,d=h.nodes;
+  assert.strictEqual(d.hpb.classList.flags.critical,false,'31% HP must stay green');
+  assert.strictEqual(d.jb.style.width,'45%');assert.strictEqual(d.xpb.style.width,'45%');
+  assert.strictEqual(d.jobPct.textContent,'45.0%');assert.strictEqual(d.basePct.textContent,'45.0%');
+  assert.ok(d.jobTrack.title.includes('45.0% to next level'));
+  assert.ok(d.baseTrack.title.includes('45.0% to next level'));
+  assert.strictEqual(d.jobTrack.attrs['aria-valuenow'],'45.0');
+  h.S.hp=30;h.bars();assert.strictEqual(d.hpb.classList.flags.critical,true,'30% HP must turn red');
+  h.job.jl=50;h.S.lv=150;h.bars();assert.strictEqual(d.jb.style.width,'100%');assert.strictEqual(d.xpb.style.width,'100%');
+});
+
+t('damage digits, critical burst and skill names use separate anchored combat overlays', () => {
+  assert.ok(src.includes('.fl.critical::before{')&&src.includes('clip-path:polygon('),
+    'critical damage needs a spiked red burst behind its number');
+  assert.ok(src.includes('color:#ffe643!important')&&src.includes('-webkit-text-stroke:'),
+    'ordinary damage needs RO-like gold outlined digits');
+  assert.ok(src.includes('#xp-track{display:flex;width:100%;height:14px')&&src.includes('#xp-dock{flex:none;width:100%;padding:3px 10px 4px'),
+    'the shared Base/Job bar must be slimmer than before');
+  assert.ok(src.includes('skillNameFloat(sk.n,cast-1)')&&src.includes("skillNameFloat('First Aid')")&&src.includes('skillNameFloat(s.n)'),
+    'active, healing and buff skills must show a name above the caster');
+  const box={};vm.createContext(box);
+  vm.runInContext(`
+    let S={dmgShort:true,dmgShow:true},floats=[],pl={x:2,z:4};
+    ${grab('const addFloat=(x,y,z,txt,col,big,kind=', 'function log(m,cls){')}
+    this.__f={floats,pl,damageFloat,skillNameFloat,shortNum,numTxt,get S(){return S},set full(v){S.dmgShort=!v},
+      get dmgShow(){return S.dmgShow!==false},set dmgShow(v){S.dmgShow=v==='on'||v===true}};
+  `,box);
+  const F=box.__f;
+  F.damageFloat(1,2,3,879,false);F.damageFloat(1,2,3,1896,true);
+  F.damageFloat(1,2,3,55,false,true);F.skillNameFloat('Bash',1);
+  assert.deepStrictEqual(Array.from(F.floats,f=>f.kind),['damage','critical','incoming','skill']);
+  assert.strictEqual(F.floats[1].txt,'1.9K','a critical number is shortened like any other, never replaced by a label');
+  assert.strictEqual(F.floats[0].txt,'879','numbers under a thousand keep every digit');
+  assert.strictEqual(F.floats[2].txt,'55','incoming damage follows the same setting');
+  // the Show toggle really hides the numbers; the style toggle only changes the digits
+  F.dmgShow=false;
+  F.damageFloat(1,2,3,4321,false);F.damageFloat(1,2,3,9000,true,true);
+  assert.strictEqual(F.floats.length,4,'with damage numbers switched off, no damage float is pushed at all');
+  F.dmgShow=true;
+  assert.strictEqual(F.numTxt(1250000),'1.3M','rewards and damage share one short formatter');
+  assert.strictEqual(F.numTxt(20500),'20.5K');
+  F.full=true;
+  assert.strictEqual(F.numTxt(1250000),'1250000','and the full style prints every digit');
+  assert.deepStrictEqual([100000,1000000,12500,999,1000,2500000,999999,1234567].map(F.shortNum),
+    ['100K','1M','12.5K','999','1K','2.5M','1M','1.2M'],'the short form ladder');
+  F.full=true;
+  F.damageFloat(1,2,3,1000000,false);F.damageFloat(1,2,3,1896,true);
+  assert.strictEqual(F.floats[4].txt,'1000000','the Settings switch shows every digit');
+  assert.strictEqual(F.floats[5].txt,'1896','critical digits come back too');
+  const strikeBox={};vm.createContext(strikeBox);
+  vm.runInContext(`
+    let mob={x:1,z:3,hp:10000,size:1},shake=0,hit=null;
+    const missCh=()=>0,crit=()=>100,atk=()=>100,matk=()=>200,st=()=>0,critD=()=>2,
+      rnd=(a,b)=>a,addFloat=()=>{},damageFloat=(...args)=>{hit=args};
+    ${grab('function strike(mult,col,magic=false){','// Higher job tiers get more casts per swing:')}
+    strike(1,'#fff');this.__hit={mob,hit,shake};
+  `,strikeBox);
+  assert.ok(strikeBox.__hit.hit[4]&&strikeBox.__hit.hit[3]>100&&strikeBox.__hit.shake===6,
+    'actual critical strike must send its numeric damage into the burst renderer');
+  assert.strictEqual(F.floats[3].anchor,'hero');assert.strictEqual(F.floats[3].y,3.53);
+  const draw=grab('  floats.forEach(f=>{if(!f.el)', '  const pt=bn?');
+  const scene={floats:F.floats,pl:F.pl,create:()=>({style:{}}),draw};
+  vm.createContext(scene);
+  vm.runInContext(`const document={createElement:()=>({style:{}})},ov={appendChild:()=>{}},scr=(x,y,z)=>[x*10,z*10];${draw}`,scene);
+  assert.strictEqual(F.floats[3].el.style.left,'20px');
+  F.pl.x=8;vm.runInContext(draw,scene);
+  assert.strictEqual(F.floats[3].el.style.left,'80px','skill names must track the moving hero');
+  assert.strictEqual(F.floats[1].el.className,'fl critical');
+});
+
+t('Zeny and kill rates refresh every second using a rolling minute and reset after stalls', () => {
+  assert.ok(src.includes('class="hud-zeny" id="zenyHover" tabindex="0"'),'hover area must include amount and label');
+  assert.ok(src.includes('.hud-zeny:hover .hud-flyout'),'Zeny tooltip must open on hover without browser title delays');
+  assert.ok(src.includes("$('zenyRate').textContent=`Zeny earned:"),'tooltip must display a live rate');
+  assert.ok(src.includes('Kills/min <b id="kills"'),'kills rate must replace lifetime count');
+  const box={};vm.createContext(box);
+  vm.runInContext(`
+    let S={zeny:200},zenyEarned=0;
+    ${grab('function earnZeny(amount){','function kill(o){')}
+    ${grab('const HUD_RATE_WINDOW=60000,HUD_IDLE_RESET=30000,HUD_RATE_REFRESH=1000;','const levelPct=')}
+    this.__r={stepHudRate,earnZeny,S,get earned(){return zenyEarned}};
+  `,box);
+  const R=box.__r;
+  R.earnZeny(600);R.S.zeny-=450;R.earnZeny(25);
+  assert.strictEqual(R.S.zeny,375);assert.strictEqual(R.earned,625,'spending must not erase income');
+  let state=null;
+  const sample=(user,k,z,time)=>{const m=R.stepHudRate(state,user,k,z,time);state=m.state;return m};
+  let m=sample('player',100,0,0);
+  m=sample('player',103,600,500);assert.strictEqual(m.kills,0);assert.strictEqual(m.zeny,0,'hold until first full second');
+  m=sample('player',103,600,1000);
+  assert.strictEqual(m.kills,180,'3 kills in the first second -> 180/min (early estimate)');
+  assert.strictEqual(m.zeny,36000,'600 Zeny in first second -> 36000/min');
+  assert.strictEqual(m.seconds,3);
+  m=sample('player',103,600,1500);assert.strictEqual(m.kills,180,'samples hold between whole seconds');
+  m=sample('player',103,600,2000);assert.strictEqual(m.kills,90,'rate decays every second, not every 30');
+  m=sample('player',104,650,30000);assert.strictEqual(m.kills,8,'four kills in 30 seconds -> 8/min');
+  assert.strictEqual(m.zeny,1300,'650 earned in 30s -> 1,300/min');
+  m=sample('player',104,650,60500);assert.strictEqual(m.kills,0);assert.strictEqual(m.zeny,0,
+    'after a browser stall longer than 30 seconds, old rates vanish instead of spiking');
+  m=sample('player',106,750,61500);assert.strictEqual(m.kills,120);assert.strictEqual(m.zeny,6000,
+    'new kills and credits after resume count against the new window');
+  m=sample('player',106,750,121501);assert.strictEqual(m.kills,0);assert.strictEqual(m.zeny,0,
+    'a 60-second inactive period resets rates to zero');
+  m=sample('player',10,100,122501);assert.strictEqual(m.kills,0);assert.strictEqual(m.zeny,0,
+    'counter changes that indicate a fresh save must reset');
+  m=sample('another-player',20,9000,123501);assert.strictEqual(m.kills,0);assert.strictEqual(m.zeny,0,
+    'a new login must start a clean window');
+  // A long uninterrupted session ages out past-minute events without requiring a pause.
+  let clock=123501;for(let i=0;i<61;i++){clock+=1000;m=sample('another-player',i<60?21:21,9000,clock)}
+  assert.strictEqual(m.kills,0,'old kills age out of the uninterrupted rolling minute');
+  m=sample('another-player',900,999999,clock+600000);
+  assert.strictEqual(m.kills,0);assert.strictEqual(m.zeny,0,
+    'ten minutes with no frames must not compress 879 accumulated kills into one second');
 });
 
 t('every skill has a distinct icon and upgraded card metadata', () => {
@@ -284,15 +423,26 @@ t('the character + class panels show the class-collection bonus', () => {
 });
 
 t('pet details show Ragnarok sprites, named upgrade levels, and gacha skill odds', () => {
-  U.S=mkS('Novice');U.S.pets=[{id:41,sp:0,mut:0,eq:[1,2,0],skill:'warcry',sk:[1,2,3],on:false}];U.selP=41;
+  U.S=mkS('Novice');U.S.pets=[{id:41,sp:0,mut:0,eq:[1,2,0],skills:['warcry','spiritbolt'],sk:[1,2,3],on:false}];U.selP=41;
   const h=U.V.pet();
   assert.ok(h.includes('src="https://static.divine-pride.net/images/mobs/png/1002.png"'),'the pet portrait must use its Divine Pride monster sprite');
   assert.ok(h.includes('Claw &middot; Level 1/5')&&h.includes('Collar &middot; Level 2/5')&&h.includes('Charm &middot; Level 0/5'),'each upgrade must name the slot and current level');
   assert.ok(h.includes('25% upgrade success')&&h.includes('15% upgrade success')&&h.includes('40% upgrade success'),'each upgrade must show its success chance');
   assert.ok(h.includes('5% double upgrade chance on success'),'the great-success chance must be explicit');
-  assert.ok(h.includes('Gacha pet skill')&&h.includes('War Cry')&&h.includes('Player ATK +20% for 8s'),'the rolled skill and its effect must be visible');
-  assert.ok(h.includes('Six equally weighted skills: 2 player buffs, 2 AoE attacks, 2 single-target attacks (1/6 each).'),'the requested gacha distribution must be clear');
+  // v35: TWO skill slots, both filled by one gacha
+  assert.ok(h.includes('Pet skills &middot; 2 slots'),'the panel must show two skill slots');
+  assert.ok(h.includes('War Cry')&&h.includes('Spirit Bolt'),'both rolled skills must be listed');
+  assert.ok(h.includes('Player ATK +20% for 30s, 60s cooldown'),'a buff must state its 30s/60s timing');
+  assert.ok(h.includes('Single target: 2.5× pet damage'),'an attack skill must state its multiplier');
+  assert.ok(h.includes('Reroll both skills'),'the gacha rerolls the whole loadout');
+  assert.ok(h.includes('Eight equally weighted skills: 4 player buffs, 2 AoE attacks, 2 single-target attacks.'),'the gacha distribution must be clear');
+  assert.ok(h.includes('never stack')&&h.includes('ATK and MATK buffs cannot run at the same time'),'the no-stacking rules must be on the panel');
   assert.ok(h.includes('data-a="pskill"'),'the pet skill gacha button must be present');
+  // and the empty-slot state on a pet that has not rolled yet
+  U.S.pets=[{id:42,sp:1,mut:0,eq:[0,0,0],skills:[],sk:[1,2,3],on:false}];U.selP=42;
+  const h2=U.V.pet();
+  assert.ok(h2.includes('Slot 1: <b class="r0">empty</b>')&&h2.includes('Slot 2: <b class="r0">empty</b>'),'both empty slots are offered');
+  assert.ok(h2.includes('Gacha both skills'),'and the button says what it will do');
 });
 
 t('every panel a tab can open builds HTML without throwing', () => {
@@ -303,6 +453,71 @@ t('every panel a tab can open builds HTML without throwing', () => {
     try { U.V[k](); } catch (e) { broken.push(k + ' (' + e.message + ')'); } });
   assert.deepStrictEqual(broken, [], 'panels that threw: ' + broken.join(', '));
   console.log('       ' + names.length + ' panels rendered');
+});
+
+t('the bag shows its 1000-item limit and refuses loot once it is full', () => {
+  U.S = mkS('Knight'); U.selB = null; U.S.inv = [];
+  let h = U.V.bag0();
+  assert.ok(h.includes('0/1000 items'), 'the bag states its capacity');
+  U.S.inv = new Array(1000).fill(0).map((_, i) => ({ id: 500 + i, name: 'Thing ' + i, tier: 1, slot: 'armor', val: 5, cards: [] }));
+  h = U.V.bag0();
+  assert.ok(h.includes('1000/1000 items') && h.includes('BAG FULL'), 'a full bag says so');
+  // execute the real pickup path
+  const box = {}; vm.createContext(box);
+  vm.runInContext(`
+    let S={inv:[],cards:[],ore:{ori:0,elu:0},auto:false},pl={x:1,z:2},msg='';
+    const GRADE=['Common','Uncommon','Rare','Legendary'],GI=[0,1,2,4],ORE={ori:'Oridecon',elu:'Elunium'},
+      RAR=[{n:'Common'},{n:'Fine'},{n:'Rare'},{n:'Epic'},{n:'Legendary'}];
+    const cardTxt=c=>c.n,addFloat=()=>{},ui=()=>{},log=m=>{msg=m},qProg=()=>{},canUse=()=>false,equip=()=>{};
+    ${pick(/const BAGMAX=\d+;/, 'BAGMAX')}
+    ${grab('function collect(it){', 'function equip(id,quiet){')}
+    this.__c={collect,S,BAGMAX,get msg(){return msg},clear(){msg=''}};
+  `, box);
+  const C = box.__c;
+  C.collect({ id: 1, name: 'Blade', tier: 4 });
+  assert.strictEqual(C.S.inv.length, 1, 'an item is picked up while there is room');
+  C.S.inv.length = C.BAGMAX; C.clear();
+  C.collect({ id: 2, name: 'Blade', tier: 4 });
+  assert.strictEqual(C.S.inv.length, C.BAGMAX, 'the bag never grows past its cap');
+  assert.ok(C.msg.includes('Bag full'), 'and the refusal is reported: ' + C.msg);
+  C.clear();
+  C.collect({ card: 1, id: 3, n: 'Poring Card', g: 1, stat: 'str', v: 3 });
+  assert.strictEqual(C.S.cards.length, 1, 'cards live in their own bag and are not capped by the item limit');
+});
+
+t('Settings carries BOTH damage-number toggles (show/hide and short/full) and remembers them', () => {
+  U.S = mkS('Knight'); U.S.dmgShort = true; U.S.dmgShow = true;
+  let h = U.V.set();
+  assert.ok(h.includes('data-a="dmgshow" data-v="on" class="on"') && h.includes('data-a="dmgshow" data-v="off"'),
+    'the on/off switch for the damage display is offered');
+  assert.ok(h.includes('data-a="dmgfmt" data-v="short" class="on"') && h.includes('data-a="dmgfmt" data-v="full"'),
+    'and the short/full style next to it');
+  assert.ok(h.includes('Short &middot; 100K / 1M') && h.includes('Full &middot; 100,000'), 'and labelled with an example');
+  U.S.dmgShort = false; U.S.dmgShow = false;
+  h = U.V.set();
+  assert.ok(h.includes('data-a="dmgfmt" data-v="full" class="on"'), 'the current style is highlighted');
+  assert.ok(h.includes('data-a="dmgshow" data-v="off" class="on"'), 'and so is the current visibility');
+  assert.ok(!h.includes('data-a="dmgfmt" data-v="short" class="on"') && !h.includes('data-a="dmgshow" data-v="on" class="on"'));
+  assert.ok(src.includes('if(f.dmgShort!==true&&f.dmgShort!==false)f.dmgShort=true;'), 'the save repair defaults old saves to short');
+  assert.ok(src.includes('if(f.dmgShow!==true&&f.dmgShow!==false)f.dmgShow=true;'), 'and old saves to showing them');
+  assert.ok(src.includes('dmgShort:true,dmgShow:true,base:{}'), 'a fresh save starts short and visible');
+  // the two switches really do reach the float code
+  assert.ok(src.includes("const numTxt=n=>fullNum()?String(Math.round(n)):shortNum(n);"), 'one formatter serves every number');
+  assert.ok(src.includes("damageFloat=(x,y,z,amount,critical=false,incoming=false)=>{if(S&&S.dmgShow===false)return;"), 'hiding skips the float entirely');
+});
+
+t('the map panel states the fixed rarity of the field it is showing', () => {
+  U.S = mkS('Novice'); U.mapM = 0; U.mapL = 1;
+  let h = U.V.map();
+  assert.ok(h.includes('every drop here is <b class="r0">Common</b>'), 'Prontera stage 1 is a Common field');
+  assert.ok(h.includes('<small class="r0">Common</small>'), 'and each drop line repeats the band');
+  U.mapM = 9; U.mapL = 10;
+  h = U.V.map();
+  assert.ok(h.includes('every drop here is <b class="r4">Legendary</b>'), 'the Abyss boss field is Legendary');
+  assert.ok(h.includes('Every boss drop is <b class="r4">Legendary</b>'), 'the boss card says so');
+  U.mapM = 5; U.mapL = 4;
+  h = U.V.map();
+  assert.ok(h.includes('every drop here is <b class="r2">Rare</b>'), 'Comodo stage 4 is a Rare field');
 });
 
 console.log(`\n${pass} passed, ${fail} failed`);

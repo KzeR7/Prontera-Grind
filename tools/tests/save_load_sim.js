@@ -13,8 +13,8 @@ const arena = grab('const SU=k=>', ',K5=[') + ';';
 const code = [arena, grab('const CD=[', 'const fresh=()=>'), grab('const fresh=()=>', 'const saveKey='), 'function loadRaw(){' + body + '}'].join('\n');
 
 const save = {pets:[
-    {id:1,sp:0,on:true,eq:[1,2,3],skill:'warcry'},
-    {id:2,sp:1,on:undefined,eq:null,skill:'removed-skill'},
+    {id:1,sp:0,on:true,eq:[1,2,3],skills:['warcry','spiritbolt']},
+    {id:2,sp:1,on:undefined,eq:null,skills:['removed-skill','vital']},
     {id:3,sp:3,on:false,eq:[99,-1,'not-a-number'],skill:'arcane'}
   ], cls:'Swordman', sex:'m', hair:2, lv:60, exp:12345, hp:999, zeny:1e6, kills:9, pts:7, mp:2, lvl:4, kl:1,
   jobs:{Novice:{jl:10,jx:0},Swordman:{jl:40,jx:5}}, sk:{aid:1,swd:3,two:2},
@@ -70,11 +70,12 @@ t('valid records survive a save/load', () => {
 t('pet upgrade levels and valid gacha skills survive load, while junk is normalized', () => {
   const p=id=>f.pets.find(x=>x.id===id);
   assert.deepStrictEqual(Array.from(p(1).eq),[1,2,3],'valid Claw/Collar/Charm upgrade levels must persist');
-  assert.strictEqual(p(1).skill,'warcry','a valid gacha skill must persist');
+  assert.deepStrictEqual(Array.from(p(1).skills),['warcry','spiritbolt'],'both skill slots must persist');
   assert.deepStrictEqual(Array.from(p(2).eq),[0,0,0],'a missing upgrade array should default to zero levels');
-  assert.strictEqual(p(2).skill,'','a removed skill id should be cleared');
+  assert.deepStrictEqual(Array.from(p(2).skills),['vital'],'a removed skill id must be dropped, the valid one kept');
   assert.deepStrictEqual(Array.from(p(3).eq),[5,0,0],'upgrade levels must clamp to 0..MAX and repair non-numbers');
-  assert.strictEqual(p(3).skill,'arcane','another valid gacha skill must persist');
+  assert.deepStrictEqual(Array.from(p(3).skills),['arcane'],'an old single p.skill save must migrate into slot 1');
+  assert.strictEqual(Object.keys(p(1)).includes('skill'),false,'the old single-slot field is retired after migration');
   assert.strictEqual(p(2).on,true,'legacy pets default to battle-ready for the first three slots');
 });
 t('a malformed record is dropped instead of crashing', () => { assert.strictEqual(f.base.BROKEN, undefined); });
@@ -149,9 +150,9 @@ t('the arena really is vertical: mobs hold the far end, the player the near end'
   assert.ok(z1 - z0 >= 14, `the field is only ${z1 - z0} deep - not the long vertical avenue`);
   assert.ok(z0 < 0 && z1 > 0, 'the field should straddle the origin');
   // the camera sits on +Z looking toward -Z, so low Z is the TOP of the screen
-  assert.ok(/m\.z=rnd\(Z0,Z0\+6\)/.test(src), 'mobs no longer spawn at the far (top) end');
+  assert.ok(/function packSites\(\)/.test(src) && /nearestPack\(\)/.test(src), 'the random closest-pack route is missing');
   assert.ok(/pl=\{x:0,z:Z1-1\.5/.test(src), 'the player no longer starts at the near (bottom) end');
-  console.log('       field depth ' + (z1 - z0) + ' units; player at Z1-1.5, mobs at Z0..Z0+6');
+  console.log('       field depth ' + (z1 - z0) + ' units; player at Z1-1.5, three randomized packs across the arena');
 });
 
 console.log(`\n${pass} passed, ${fail} failed`);

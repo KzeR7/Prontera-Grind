@@ -23,13 +23,38 @@ html, body { margin:0; padding:0; width:100vw; height:100vh; overflow:hidden; ba
 .weapon-sprite-fallback{position:absolute;inset:0;display:grid;place-items:center;font-size:calc(var(--weapon-size, 34px) * .76);line-height:1;text-shadow:0 1px 2px #000}
 .fl{position:absolute;transform:translate(-50%,-50%);font-weight:bold;font-size:16px;white-space:nowrap;text-shadow:-1px -1px 0 #000,1px -1px 0 #000,-1px 1px 0 #000,1px 1px 0 #000}
 .fl.big{font-size:24px}
+.fl{pointer-events:none}
+/* RO-style damage: outlined golden digits; crits sit on a red spiked bubble. */
+.fl.damage,.fl.critical,.fl.incoming{font-family:Verdana,"Trebuchet MS",sans-serif;font-size:22px;font-weight:900;font-variant-numeric:tabular-nums;letter-spacing:1px;color:#ffe643!important;-webkit-text-stroke:1.5px #30221e;paint-order:stroke fill;text-shadow:1px 2px 0 #120e0b,0 0 3px #140d08;z-index:24;animation:hit-pop .24s ease-out both}
+.fl.critical{font-size:26px;color:#fff264!important;isolation:isolate}
+.fl.critical::before{content:"";position:absolute;z-index:-1;inset:-13px -19px;background:radial-gradient(ellipse,#f79b50 5%,#d83e32 43%,#a6232f 66%,#711626 100%);clip-path:polygon(50% 0%,57% 18%,70% 5%,72% 24%,88% 12%,85% 32%,100% 29%,89% 46%,100% 55%,83% 62%,91% 81%,72% 74%,65% 100%,53% 79%,39% 97%,35% 77%,16% 88%,20% 66%,0% 64%,14% 48%,1% 36%,20% 33%,12% 13%,32% 24%,40% 4%)}
+.fl.incoming{color:#ff7772!important;font-size:18px}
+.fl.skill{font:bold 14px "Trebuchet MS",sans-serif;color:#fff!important;background:#262233d9;border:1px solid #ffda7a;border-radius:4px;padding:3px 9px;letter-spacing:.2px;text-shadow:0 1px 2px #000,0 0 5px #000;box-shadow:0 2px 8px #0008;z-index:25}
+@keyframes hit-pop{0%{transform:translate(-50%,-35%) scale(.65)}65%{transform:translate(-50%,-55%) scale(1.1)}100%{transform:translate(-50%,-50%) scale(1)}}
 #tag{position:absolute;transform:translate(-50%,-100%);text-align:center;color:#fff;font:bold 12px "Trebuchet MS",sans-serif;text-shadow:-1px -1px 0 #000,1px -1px 0 #000,-1px 1px 0 #000,1px 1px 0 #000;display:none}
 #tag .bar{width:90px;height:8px;margin:2px auto 0}
 #prog{position:absolute;left:12px;top:12px;background:#0008;color:#fff;font:bold 13px "Trebuchet MS",sans-serif;padding:6px 12px;border-radius:4px;border:1px solid #ffffff44;display:flex;align-items:center;gap:10px}
 #hint{position:absolute;left:12px;top:52px;color:#fff;font:11px "Trebuchet MS",sans-serif;opacity:.8;text-shadow:0 0 3px #000}
-#hud{display:flex;flex-wrap:wrap;gap:12px 20px;padding:8px 16px;font-size:14px;align-items:center;background:var(--panel);border-top:2px solid var(--edge2);z-index:10}
-.bar{width:140px;height:14px;background:#5b4a35;border:1px solid #3b2a1a;border-radius:3px;overflow:hidden;position:relative}
-.bar i{display:block;height:100%}
+#hud{display:flex;flex-wrap:wrap;gap:10px 22px;padding:9px 16px;font-size:13px;align-items:center;background:linear-gradient(180deg,#fff9e9,#f4e5c4);border-top:1px solid var(--edge);z-index:10;box-shadow:0 -4px 14px #241b1730}
+#hudBuffs{display:none;flex-wrap:wrap;gap:6px;flex-basis:100%}
+.pbf{font-size:11px;background:#ffe9a8;border:1px solid var(--edge2);border-radius:10px;padding:1px 8px}
+.pbf i{font-style:normal;opacity:.75}
+.bar{width:148px;height:14px;background:#3b302b;border:1px solid #574637;border-radius:999px;overflow:hidden;position:relative;box-shadow:inset 0 2px 4px #1e1617aa,0 1px 0 #fff9}
+.bar i{display:block;height:100%;border-radius:inherit;transition:width .3s ease,background .3s ease}
+.hud-health{display:flex;align-items:center;gap:7px;white-space:nowrap}.hud-health small{font-weight:bold;min-width:34px;text-align:right}
+#hpb{background:linear-gradient(180deg,#7cec8f,#20a74c 65%,#17883a);box-shadow:inset 0 1px #f3fff588,0 0 8px #30c75677}
+#hpb.critical{background:linear-gradient(180deg,#ff8e81,#ed4242 60%,#b92031);box-shadow:inset 0 1px #fff7,0 0 8px #e54949aa}
+.hud-zeny{position:relative;color:#a27200;font-weight:bold;cursor:help;white-space:nowrap}.hud-zeny:focus-visible,.xp-side:focus-visible{outline:2px solid #2f6fd6;outline-offset:-2px}
+.hud-flyout{position:absolute;bottom:calc(100% + 8px);left:0;z-index:90;background:#251f20;color:#fff;font-size:12px;font-weight:600;padding:7px 10px;border-radius:7px;white-space:nowrap;box-shadow:0 4px 14px #0008;opacity:0;visibility:hidden;pointer-events:none}
+.hud-zeny:hover .hud-flyout,.hud-zeny:focus .hud-flyout{opacity:1;visibility:visible}
+#xp-dock{flex:none;width:100%;padding:3px 10px 4px;background:linear-gradient(180deg,#413743,#26242f);box-shadow:inset 0 2px 6px #140f1899;z-index:9}
+/* One RO-style bar: Base fills toward the centre from the left, Job from the right. */
+#xp-track{display:flex;width:100%;height:14px;border:1px solid #756c77;border-radius:4px;background:#161820;overflow:hidden;box-shadow:inset 0 1px 4px #000a;color:#fff;font:bold 9px/12px "Trebuchet MS",sans-serif;text-shadow:0 1px 2px #000,0 0 4px #000}
+.xp-side{position:relative;flex:0 0 50%;min-width:0;cursor:help;overflow:hidden}.xp-side:first-child{border-right:2px solid #d6c2a6}.xp-side:hover{background:#ffffff12}
+.xp-fill{position:absolute;top:0;bottom:0;left:0;width:0;transition:width .3s ease}
+#jb{left:auto;right:0;background:linear-gradient(180deg,#bca0ff,#7452cb 70%,#493692)}#xpb{background:linear-gradient(180deg,#9ce6ff,#348fcc 70%,#246398)}
+.xp-label,.xp-pct{position:absolute;top:0;z-index:1;white-space:nowrap}.xp-label{left:8px}.xp-label.job{left:auto;right:8px}.xp-pct{left:50%;transform:translateX(-50%)}
+@media(max-width:560px){#hud{gap:6px 10px;padding:7px 10px;font-size:11px}.hud-health .bar{width:94px}.hud-health small{min-width:28px}#xp-track{height:22px}.xp-label,.xp-label.job{left:0;right:0;top:0;text-align:center;font-size:9px;line-height:10px}.xp-pct{top:10px;line-height:10px;font-size:9px}}
 .body{padding:8px;font-size:13px}
 .slot{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:5px 8px;border:1px solid var(--edge);background:#fffdf5;margin-bottom:4px;border-radius:4px;min-height:36px}
 .r0{color:#555}.r1{color:#2a9d3f}.r2{color:#2f6fd6}.r3{color:#a23fd6}.r4{color:#e07b00;font-weight:bold}
@@ -128,6 +153,17 @@ hr{border:0;border-top:1px dashed var(--edge);margin:6px 0}
 .chooser>.hd button.x{margin-left:auto;padding:0 7px}
 .chooser .slot{background:#fff7dd}
 .chooser .slot .cell{cursor:default}
+/* Choosing a slot does not open a second window: it highlights the fitting tiles in the real Bag
+   window (see V.bag0 / ACT.seleq), ringed green and clickable. */
+.row button.on{background:#ffe08a;border-color:var(--gold)}
+.cell.fit{outline:3px solid #2e9e3e;box-shadow:0 0 9px #2e9e3e99;cursor:pointer}
+.cell.fit::after{content:'\2713';position:absolute;top:-6px;right:-6px;background:#2e9e3e;color:#fff;font-size:9px;line-height:1;padding:1px 3px;border-radius:6px}
+/* The auto-cast control sits at the top of a skill's description card, large enough to hit. */
+.sk-detail-head{display:flex;align-items:baseline;gap:6px;flex-wrap:wrap}
+.sk-detail-autocast{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:7px 0;padding:7px 10px;border:2px solid var(--edge2);border-radius:9px;background:#fff7dd}
+.sk-detail-autocast .sk-autocast{font-size:14px;font-weight:700;gap:7px;color:#3b2a1a;min-height:20px}
+.sk-detail-autocast .sk-autocast input{width:19px;height:19px;accent-color:#2f6fd6}
+.sk-detail-autocast small{font-size:11px}
 .roll-status{height:30px;min-height:30px;width:100%;display:flex;align-items:center;justify-content:center;overflow:hidden}.roll-status span{display:block;width:150px;text-align:center;font-variant-numeric:tabular-nums;white-space:nowrap}
 </style>
 </head>
@@ -144,10 +180,15 @@ hr{border:0;border-top:1px dashed var(--edge);margin:6px 0}
 <div id="wrap"><div class="title"><span id="stageTitle">Prontera Lv 1</span><span id="grindStatus" style="font-size:12px;opacity:.85"></span></div>
 <div id="view"><div id="ov"><div id="mobSpriteLayer" aria-hidden="true"></div><div id="weaponSpriteLayer" aria-hidden="true"></div><div id="prog"></div><div id="tag"><b id="tn"></b><div class="bar"><i id="th" style="background:var(--hp)"></i></div></div><div id="hint">Drag to rotate &middot; Scroll to zoom</div><div id="feed"></div><div id="qp"></div><div id="dock"></div>
 <div id="wins"></div></div></div>
-<div id="hud"><div><b id="cls2"></b> Lv <b id="lv">1</b> / Job <b id="jl">1</b></div><div>HP <div class="bar"><i id="hpb" style="background:var(--hp)"></i></div></div>
-<div>JOB <div class="bar"><i id="jb" style="background:#7a5ce0"></i></div></div><div>EXP <div class="bar"><i id="xpb" style="background:var(--exp)"></i></div></div>
-<div style="color:var(--gold)">&#9679; <b id="zeny" title="Hover for earned Zeny per minute" tabindex="0" style="cursor:help">0</b> Zeny</div><div>Kills /Min <b id="kills" title="Kills per minute (rolling 60s)">0.0</b></div>
-<div style="margin-left:auto;display:flex;align-items:center;gap:8px"><span id="userBadge" style="font-weight:bold;font-size:12px;background:#e9d39a;padding:3px 8px;border-radius:4px;border:1px solid var(--edge2)"></span><button id="logoutBtn" onclick="logout()" style="display:none">Logout</button><button id="spd">Speed x1</button></div></div></div>
+<div id="hud"><div><b id="cls2"></b> Base Lv <b id="lv">1</b> / Job Lv <b id="jl">1</b></div>
+<div class="hud-health">HP <div class="bar" role="meter" aria-label="HP" aria-valuemin="0" aria-valuemax="100" id="hpMeter"><i id="hpb"></i></div><small id="hpPct">100%</small></div>
+<div class="hud-zeny" id="zenyHover" tabindex="0" aria-describedby="zenyRate">&#9679; <b id="zeny">0</b> Zeny<span class="hud-flyout" id="zenyRate" role="tooltip">Zeny earned: 0/min</span></div>
+<div>Kills/min <b id="kills" title="Recent kills per minute (last 60 seconds, refreshed each second)">0.0</b></div><div id="hudBuffs" role="status" aria-live="polite" title="Pet buffs: they never stack across pets, and ATK / MATK cannot both be active."></div><div style="margin-left:auto;display:flex;align-items:center;gap:8px"><span id="userBadge" style="font-weight:bold;font-size:12px;background:#e9d39a;padding:3px 8px;border-radius:4px;border:1px solid var(--edge2)"></span><button id="logoutBtn" onclick="logout()" style="display:none">Logout</button><button id="spd">Speed x1</button></div></div>
+<div id="xp-dock" aria-label="Level progress"><div id="xp-track">
+  <div class="xp-side" id="baseTrack" tabindex="0" role="progressbar" aria-label="Base Level" aria-valuemin="0" aria-valuemax="100" title="Base Level: 0% to next level"><div class="xp-fill" id="xpb"></div><span class="xp-label" id="baseLabel">Base Lv 1</span><span class="xp-pct" id="basePct">0%</span></div>
+  <div class="xp-side" id="jobTrack" tabindex="0" role="progressbar" aria-label="Job Level" aria-valuemin="0" aria-valuemax="100" title="Job Level: 0% to next level"><div class="xp-fill" id="jb"></div><span class="xp-pct" id="jobPct">0%</span><span class="xp-label job" id="jobLabel">Job Lv 1</span></div>
+</div></div>
+</div>
 <div id="modal"><div class="login-card"><p id="mt" style="font-size:14px;opacity:1;margin:0 0 12px"></p><div class="row" style="justify-content:center"><button id="my">Yes</button><button id="mn">Cancel</button></div></div></div><div id="tooltip"></div>
 <script src="assets/sprite_pack_data.js?v=1"></script>
 <script src="assets/weapon_joints_data.js?v=1"></script>
@@ -190,9 +231,10 @@ const AL={str:'STR',agi:'AGI',dex:'DEX',luk:'LUK',int:'INT',hp:'Max HP',atk:'ATK
 // once stats cap), so a correctly-levelled character needed ~30-100s per mob from Geffen
 // onward. 1.3 keeps HP just ahead of ATK: early maps fall in a couple of swings and the
 // late maps in about five, with bosses still a ~12x fight. See tools/tests/economy_sim.js.
-const SU=k=>k.toUpperCase(),BX_=5.5,Z0=-14,Z1=3,MPS=15,AGGRO=8.5,HPK=42,HPE=1.3,K5=['str','agi','dex','luk','int'];
+const SU=k=>k.toUpperCase(),BX_=13,Z0=-28,Z1=12,MPS=15,AGGRO=6.5,HPK=42,HPE=1.3,K5=['str','agi','dex','luk','int'];
 const GM_USER='GM',GM_PASS='gm1234';   // CHANGE THE GM PASSWORD before you publish
 const BUILD='2026-10-04 ui-v29 weapon-held-in-one-position';   // shown on the login card - confirms which file you loaded
+const BUILD='2026-10-04 ui-v35 pet-rework bag-highlight dmg-toggles map-rarity';   // shown on the login card - confirms which file you loaded
 $('buildTag').textContent='build '+BUILD;
 
 // ---------- class tree: Novice -> 6 first jobs -> 6 second jobs -> 6 third jobs ----------
@@ -405,10 +447,11 @@ const MOB_SPRITES={
   'Hell Worm':1215, // Stem Worm
   'Dark Lord':1272
 };
-// Divine Pride size classes, checked per unique sprite ID (including the final Familiar ID 1005)
-// on 2026-10-04. These are VISUAL scale factors against the 2.9-unit player, not combat hitboxes.
-// Small ≈ 65% of player height; Medium ≈ player height; Large ≈ 135%. The database's
-// Small/Medium/Large labels come from https://www.divine-pride.net/database/monster/{ID}.
+// Divine Pride size classes, checked per unique sprite ID (including Familiar ID 1005)
+// on 2026-10-04. These are source-art size classes, NOT combat hitboxes. Their base
+// factors are .62/.92/1.28; the render path below applies a regular-only multiplier so
+// even a medium Poring looks shorter than the player. Boss scale remains unchanged.
+// The size labels come from https://www.divine-pride.net/database/monster/{ID}.
 const MOB_SIZE_BY_ID={
   1001:'Small',1004:'Small',1005:'Small',1007:'Small',1008:'Small',1011:'Small',1051:'Small',1063:'Small',1070:'Small',1073:'Small',
   1141:'Small',1142:'Small',1143:'Small',1144:'Small',1167:'Small',1179:'Small',1837:'Small',1866:'Small',1869:'Small',2023:'Small',
@@ -421,6 +464,11 @@ const MOB_SIZE_BY_ID={
   1373:'Large',1405:'Large',1719:'Large',1775:'Large',1833:'Large',20843:'Large',2202:'Large'
 };
 const MOB_SIZE_SCALE={Small:.62,Medium:.92,Large:1.28};
+// Mob PNGs have different silhouette sizes inside their frames. Scale *regular* bodies
+// to 70% of their old height: Fabre ≈1.32 and Poring ≈1.96 units against a 2.92-unit
+// hero. Bosses keep the exact v29 height. This changes visual art only, not hitboxes.
+const MOB_REGULAR_VISUAL=.7;
+const mobVisualScale=m=>Math.max(.05,(m.spriteScale||.92)*(m.boss?1.18:MOB_REGULAR_VISUAL)*(m.spawn||0));
 const mobSpriteUrl=id=>Number.isInteger(+id)&&+id>0?`https://static.divine-pride.net/images/mobs/png/${+id}.png`:'';
 // ---------- equipment database ----------
 // Four sections per map (Novice gear / 1st-job / 2nd-job / high tier), each a themed set:
@@ -515,6 +563,18 @@ const cardStat=(g,seed)=>{const p=g>=2?AFF:K5;return p[((seed%p.length)+p.length
 // A pool entry's k is its weapon type for weapons ('sword', 'bow', ...) and its slot for
 // everything else, so the UI asks gearSlot() which panel group an entry belongs to.
 const ARM=['armor','head','off','leg','acc'],gearSlot=x=>ARM.includes(x.k)?x.k:'weapon';
+// ---------- bag capacity & fixed drop rarity ----------
+// The bag holds 1000 items. Loot is refused once it is full (the drop stays on the ground and
+// is reported) so a long farm cannot silently grow an unbounded save.
+const BAGMAX=1000;
+// Rarity is a property of WHERE an item drops, not of the roll - and the MAP decides it, at every
+// stage it has. A low map never rolls above its own band, so a Prontera field can never hand out
+// Rare or Epic gear; the only route to Legendary is a Stage 10 boss, on any map. Only the
+// affixes (and the refine/card slots) stay random, so two drops of the same item still differ.
+// Bands: maps 1-2 Common, 3-4 Fine, 5-6 Rare, 7-10 Epic, every Stage 10 boss Legendary.
+// Pinned by gear_sim.js.
+const MAPTIER=[0,0,1,1,2,2,3,3,3,3];
+const dropTier=(m,l)=>l>=10?4:MAPTIER[Math.max(0,Math.min(MAPTIER.length-1,m|0))];
 // The field's gear pool: every item an equipment drop on this map+level can be. Weapons first
 // (they are the ones a player is hunting), then body, headgear, shield, legwear, two accessories.
 function gearPool(m,l){const sg=MAPS[m].gear[m>=5?3:secOf(l)],T=[];
@@ -522,15 +582,15 @@ function gearPool(m,l){const sg=MAPS[m].gear[m>=5?3:secOf(l)],T=[];
   T.push({k:'armor',n:sg.a},{k:'head',n:sg.h},{k:'off',n:sg.o},{k:'leg',n:sg.l},{k:'acc',n:sg.ac});
   if(sg.ac2)T.push({k:'acc',n:sg.ac2});
   return T}
-function fieldOf(m,l){const mp=MAPS[m],sec=m>=5?3:secOf(l),T=gearPool(m,l),n=T.length;
+function fieldOf(m,l){const mp=MAPS[m],sec=m>=5?3:secOf(l),T=gearPool(m,l),n=T.length,ft=dropTier(m,l);
   // three gear rolls per mob, spread across the pool so two mobs on one field do not pay out
   // the same item; gear is the common drop and a card is the rare one.
   const mobs=[0,1].map(j=>{const mm=mp.mobs[(l-1+j)%mp.mobs.length],cg=l<=3?0:l<=7?1:2;
-    return{...mm,drops:[[T[(l*3+2*j)%n],4.8],[T[(l*3+2*j+1)%n],4.0],[T[(l*3+2*j+2)%n],3.2]],card:{n:mm.n+' Card',stat:cardStat(cg,(m*10+l+j)*3+1),g:cg},cardCh:.45,ore:l===10,oreCh:l===10?.02:0}});
-  return{m,l,sec,mobs,boss:l===10?{...mp.boss,drops:T.map(x=>[x,2.4]),card:{n:mp.boss.n+' Card',stat:cardStat(3,m),g:3},cardCh:.08,ore:true,oreCh:.05}:null}}
-// One drop line for the map panel: icon + name on the left, the % on the right.
+    return{...mm,tier:ft,drops:[[T[(l*3+2*j)%n],4.8],[T[(l*3+2*j+1)%n],4.0],[T[(l*3+2*j+2)%n],3.2]],card:{n:mm.n+' Card',stat:cardStat(cg,(m*10+l+j)*3+1),g:cg},cardCh:.45,ore:l===10,oreCh:l===10?.02:0}});
+  return{m,l,sec,tier:ft,mobs,boss:l===10?{...mp.boss,tier:ft,drops:T.map(x=>[x,2.4]),card:{n:mp.boss.n+' Card',stat:cardStat(3,m),g:3},cardCh:.08,ore:true,oreCh:.05}:null}}
+// One drop line for the map panel: icon + name + the fixed rarity on the left, the % on the right.
 const poolIc=T=>gearSlot(T)==='weapon'?(WICON[T.k]||'⚔️'):{armor:'🥼',head:'🎩',off:'🛡️',leg:'👖',acc:'💍'}[T.k];
-const dropTxt=([T,ch])=>`<div class="dropline"><span>${poolIc(T)} ${T.n}</span><b>${ch}%</b></div>`;
+const dropTxt=([T,ch],tier)=>`<div class="dropline"><span>${poolIc(T)} ${T.n} <small class="r${tier||0}">${RAR[tier||0].n}</small></span><b>${ch}%</b></div>`;
 
 // ---------- stat progression ----------
 // Stats cap at 99 until Base Lv 100, then the elite tier opens up to 120. Raising a stat
@@ -547,9 +607,11 @@ const MAXST=120,BASECAP=99,ELITELV=100,statCap=()=>S.lv>=ELITELV?MAXST:BASECAP;
 // The reset remains about 3.9x so the post-99 climb is still a distinct endgame phase.
 // Mob EXP is EXPK*pw^1.5/50, boss EXP is BOSEK*pw^1.5/50, and Zeny is based on pw^2;
 // pw is the field's power level (map recommendation + stage, max 99). A boss replaces
-// the pack every 16th kill (MPS). Normal Base/Job/quest EXP is 70x below Lv100 and 70/3x
+// old 15-kill boss cadence in the canonical pacing model (not the live Stage-10
+// boss-with-escorts encounter). Normal Base/Job/quest EXP is 70x below Lv100 and 70/3x
 // at Lv100+; GM keeps its configured multiplier. tools/tune_pacing.js and economy_sim.js
-// model these live rates at 800 kills/hour, camping the band map's Stage 10.
+// use a historical 800-kills/hour / 15-kill-boss cadence. Their time-to-level
+// projections must be re-measured for the immediate Stage-10 boss wave.
 const EXPK=5.5,BOSEK=46,ZK=[8,14],BZK=[150,250];
 // Quest rewards scale with need(Lv) and are retuned for this curve: about 23% of modeled
 // run EXP overall, with no single level funded by more than ~40%. Loot cadence uses .126
@@ -575,13 +637,13 @@ const NA1=132.99332769,NE1=1.87201222,N50=Math.floor(NA1*Math.pow(50,NE1)),NE2=3
 const JOFF=[0,9,49,98];
 
 // ---------- state ----------
-let currentUser=null,S=null,speed=1,floats=[],drops=[],t=0,shake=0,atkAnim=0,hitAnim=0,pend=[],shots=[],skillFx=[],barT=0,hudRate=null,logs=[],tab=null,selB=null,selC=null,selK=null,mapM=0,mapL=1;
+let currentUser=null,S=null,speed=1,zenyEarned=0,floats=[],drops=[],t=0,shake=0,atkAnim=0,hitAnim=0,pend=[],shots=[],skillFx=[],barT=0,hudRate=null,logs=[],tab=null,selB=null,selC=null,selK=null,mapM=0,mapL=1;
 // wt/wx/wz are the roam target: with no mobs on the field the character wanders instead of
 // trudging back to the spawn point. Only a defeat sends you home (see the death handler).
 const pl={x:0,z:Z1-1.5,ry:0,orb:0,run:0,wt:0,wx:0,wz:Z1-1.5},skCd={},petR={};
 // tb holds the one tradeoff buff currently running (ATK up / DEF down and so on). It is
 // deliberately transient: it is never saved, so quitting mid-buff just drops the buff.
-let tb={},petBuff={atk:0,matk:0,atkT:0,matkT:0},petSkillCd={};
+let tb={},petBuff={atk:0,matk:0,hp:0,leech:0,atkT:0,matkT:0,hpT:0,leechT:0},petBuffSrc={},petSkillCd={},petNote={};
 const PETS=[{n:'Poring',spriteId:1002,r:0,c:0xff9db8},{n:'Lunatic',spriteId:1063,r:0,c:0xf4f4f4},
   {n:'Wolf',spriteId:1013,r:1,c:0x8a8a95},{n:'Desert Wolf',spriteId:1106,r:1,c:0xe0a050},
   {n:'Peco Peco',spriteId:1019,r:2,c:0xf0d060},{n:'Dragon Whelp',spriteId:1155,r:2,c:0x4aa070},
@@ -595,34 +657,78 @@ const RN=['Common','Rare','Epic','Legendary'],RCL=[0,2,3,4],MUT=[1,2,4,6,8,20,40
 // twenty that succeeds is a GREAT success and jumps two tiers instead of one.
 const EGG=3000,GW=[50,30,16.5,2.5,.8,.2],PT=['Wooden','Iron','Silver','Gold','Mythril'],PTG=[.4,.25,.15,.09,.05],GREAT=.05;
 const PEQ=[{n:'Claw',d:t=>`+${t*12}% pet damage`},{n:'Collar',d:t=>`+${t*8}% pet attack speed`},{n:'Charm',d:t=>`${t*6}% pet crit chance (x2 damage)`}];
-// Six equally weighted gacha skills: two temporary player buffs, two area attacks, and
-// two single-target attacks. Buffs do not stack; each skill auto-casts when its pet attacks.
+// Eight equally weighted gacha skills: four temporary player buffs and four attacks. Every pet
+// has TWO skill slots and one gacha rolls both of them (never the same skill twice), so a reroll
+// replaces the whole loadout. A pet can also use only one skill every PETGAP seconds, on top of
+// that skill's own cooldown. Buff rules, all shown in the Pets panel: a buff never stacks - while
+// one copy is up, another pet's cast is ignored rather than refreshed - and ATK and MATK can
+// never run at the same time. Blood Siphon pays a share of whatever the pet hits for back to
+// you; Vital Aura raises your max HP, and the bar comes back down when it lapses.
+// PETBAL is the pet balance knob: at 2.18 a fully maxed pet (G6 + Mythril 5/5/5 + two attack
+// skills) measures about the same DPS as ONE fully maxed character playing their whole rotation.
+// tools/tests/pet_sim.js measures exactly that and fails if it drifts.
+const PETGAP=7,PETBAL=2.18;
 const PET_SKILLS=[
-  {id:'warcry',n:'War Cry',kind:'buff',stat:'atk',power:20,duration:8,cd:26,desc:'Player ATK +20% for 8s',vfx:'frenzy',color:'#ffd050',icon:'⚔️'},
-  {id:'arcane',n:'Arcane Blessing',kind:'buff',stat:'matk',power:20,duration:8,cd:26,desc:'Player MATK +20% for 8s',vfx:'magnus',color:'#a58bff',icon:'✦'},
+  {id:'warcry',n:'War Cry',kind:'buff',stat:'atk',power:20,duration:30,cd:60,desc:'Player ATK +20% for 30s, 60s cooldown. Never stacks with another pet, and cannot run next to MATK',vfx:'frenzy',color:'#ffd050',icon:'⚔️'},
+  {id:'arcane',n:'Arcane Blessing',kind:'buff',stat:'matk',power:20,duration:30,cd:60,desc:'Player MATK +20% for 30s, 60s cooldown. Never stacks with another pet, and cannot run next to ATK',vfx:'magnus',color:'#a58bff',icon:'✦'},
+  {id:'siphon',n:'Blood Siphon',kind:'buff',stat:'leech',power:5,duration:30,cd:60,desc:'For 30s, 5% of this pet damage heals you, 60s cooldown. Never stacks with another pet',vfx:'soulb',color:'#ff6b8a',icon:'🩸'},
+  {id:'vital',n:'Vital Aura',kind:'buff',stat:'hp',power:20,duration:30,cd:60,desc:'Player Max HP +20% for 30s, 60s cooldown. Never stacks with another pet',vfx:'magnus',color:'#7dff9d',icon:'💗'},
   {id:'flameburst',n:'Flame Burst',kind:'aoe',power:1.6,radius:4,cd:14,desc:'AoE: 1.6× pet damage to enemies within 4 units',vfx:'meteor',color:'#ff8142',icon:'🔥'},
   {id:'thunderclap',n:'Thunderclap',kind:'aoe',power:1.4,radius:4,cd:12,desc:'AoE: 1.4× pet damage to enemies within 4 units',vfx:'jup',color:'#8fe9ff',icon:'⚡'},
   {id:'piercingfang',n:'Piercing Fang',kind:'single',power:2.2,cd:10,desc:'Single target: 2.2× pet damage',vfx:'spiral',color:'#ff9dff',icon:'🗡️'},
   {id:'spiritbolt',n:'Spirit Bolt',kind:'single',power:2.5,cd:11,desc:'Single target: 2.5× pet damage',vfx:'soulb',color:'#fff3a0',icon:'✧'}
 ];
-const petDmg=p=>Math.round(atk()*[.2,.32,.55,1][PETS[p.sp].r]*MUT[p.mut]*(1+p.eq[0]*.12)),petInt=p=>Math.max(.4,1.7-PETS[p.sp].r*.15)/(1+p.eq[1]*.08),peqCost=t=>1200*(t+1)*(t+1),rollCost=p=>2500*(1+PETS[p.sp].r),petSkillCost=p=>2000*(1+PETS[p.sp].r);
+const petDmg=p=>Math.round(atk()*PETBAL*[.2,.32,.55,1][PETS[p.sp].r]*MUT[p.mut]*(1+p.eq[0]*.12)),petInt=p=>Math.max(.4,1.7-PETS[p.sp].r*.15)/(1+p.eq[1]*.08),peqCost=t=>1200*(t+1)*(t+1),rollCost=p=>2500*(1+PETS[p.sp].r),petSkillCost=p=>2000*(1+PETS[p.sp].r);
+const petSkills=p=>((p.skills)||[]).map(id=>PET_SKILLS.find(s=>s.id===id)).filter(Boolean);
+// Per-skill cooldowns live in the same map as the 7s gate, keyed petId|skillId. A pet that
+// rerolls or is released must not leave those timers behind.
+const clearPetCd=id=>{for(const k in petSkillCd)if(k===String(id)||k.indexOf(id+'|')===0)delete petSkillCd[k]};
+// Why this buff cannot be cast right now ('' = it can). One copy of each buff at a time across
+// the whole field, and ATK and MATK are mutually exclusive.
+function petBuffWhy(skill){
+  const s=skill.stat;
+  if(s==='atk'&&(petBuff.atk>0||petBuff.matk>0))return petBuff.atk>0?'the ATK buff is already up':'MATK cannot run next to ATK';
+  if(s==='matk'&&(petBuff.matk>0||petBuff.atk>0))return petBuff.matk>0?'the MATK buff is already up':'ATK cannot run next to MATK';
+  if(s==='hp'&&petBuff.hp>0)return 'the Max HP buff is already up';
+  if(s==='leech'&&petBuff.leech>0)return 'the life-leech buff is already up';
+  return '';
+}
+// Blood Siphon: while it runs, a share of every point this pet deals comes back to you.
+function petLeech(dealt){
+  if(!dealt||!(petBuff.leech>0))return;
+  const h=Math.max(1,Math.round(dealt*petBuff.leech/100));
+  S.hp=Math.min(maxHp(),S.hp+h);addFloat(pl.x,2.9,pl.z,'+'+numTxt(h),'#ff6b8a');
+}
 function petHit(p,target){
-  const skill=PET_SKILLS.find(s=>s.id===p.skill);
-  if(skill&&(petSkillCd[p.id]||0)<=0){
-    petSkillCd[p.id]=skill.cd;
-    if(skill.kind==='buff'){
-      petBuff[skill.stat]=skill.power;petBuff[skill.stat+'T']=skill.duration;
-      log(`${PETS[p.sp].n} uses ${skill.n}: ${skill.desc}.`,'r3');
-      addFloat(pl.x,3,pl.z,skill.n,skill.color,true);playSkillFx(skill.vfx,null,skill.color);
+  if((petSkillCd[p.id]||0)<=0){
+    const ready=petSkills(p).filter(s=>(petSkillCd[p.id+'|'+s.id]||0)<=0);
+    // an attack skill always beats a buff; among equals the stronger one goes first
+    let use=ready.filter(s=>s.kind!=='buff').sort((a,b)=>b.power-a.power)[0];
+    if(!use)use=ready.find(s=>!petBuffWhy(s));
+    if(!use){
+      // everything ready is a blocked buff: say why every so often instead of never
+      const held=ready.find(s=>s.kind==='buff');
+      if(held&&!(petNote[p.id]>0)){petNote[p.id]=12;log(`${PETS[p.sp].n} holds ${held.n}: ${petBuffWhy(held)} - pet buffs never stack.`,'r0')}
     }else{
-      const hitList=skill.kind==='aoe'?mobs.slice().filter(o=>Math.hypot(o.x-target.x,o.z-target.z)<=skill.radius):[target];
-      for(const o of hitList)if(o&&o.hp>0)hurt(o,Math.max(1,Math.round(petDmg(p)*skill.power)),skill.color);
-      addFloat(target.x,2.4,target.z,skill.n,skill.color,true);playSkillFx(skill.vfx,target,skill.color);
+      petSkillCd[p.id]=PETGAP;petSkillCd[p.id+'|'+use.id]=use.cd;
+      if(use.kind==='buff'){
+        petBuff[use.stat]=use.power;petBuff[use.stat+'T']=use.duration;petBuffSrc[use.stat]=PETS[p.sp].n;
+        log(`${PETS[p.sp].n} uses ${use.n}: ${use.desc}.`,'r3');
+        addFloat(pl.x,3,pl.z,use.n,use.color,true);playSkillFx(use.vfx,null,use.color);
+      }else{
+        const hitList=use.kind==='aoe'?mobs.slice().filter(o=>Math.hypot(o.x-target.x,o.z-target.z)<=use.radius):[target];
+        let dealt=0;
+        for(const o of hitList)if(o&&o.hp>0){const d=Math.max(1,Math.round(petDmg(p)*use.power));hurt(o,d,use.color);dealt+=d}
+        petLeech(dealt);
+        addFloat(target.x,2.4,target.z,use.n,use.color,true);playSkillFx(use.vfx,target,use.color);
+      }
+      return true;
     }
-    return true;
   }
   let d=petDmg(p)*rnd(.9,1.1);const c=Math.random()*100<p.eq[2]*6;if(c)d*=2;
-  hurt(target,Math.max(1,Math.round(d)),MC[p.mut]?'#'+MC[p.mut].toString(16).padStart(6,'0'):'#ff9dff',c);
+  const hit=Math.max(1,Math.round(d));
+  hurt(target,hit,MC[p.mut]?'#'+MC[p.mut].toString(16).padStart(6,'0'):'#ff9dff',c);
+  petLeech(hit);
   return false;
 }
 const rollingSet=new Set(),autoSet=new Set(),PW=[[90,9,1,0],[80,17,3,0],[70,24,5.5,.5],[60,30,9,1],[50,35,13,2],[40,38,18,4],[30,40,24,6],[22,40,30,8],[12,38,38,12],[5,30,45,20]],busy=p=>p.roll||rollingSet.has(p.id)||S.zeny<rollCost(p);
@@ -631,14 +737,18 @@ function rollOnce(p,fast,done){const c=rollCost(p);if(S.zeny<c){autoSet.delete(p
 function autoRoll(p){if(!autoSet.has(p.id)||!gp(p.id))return;rollOnce(p,true,g=>{if(!(p.sk||[1,2,3]).includes(g)){p.roll=g;autoSet.delete(p.id);log(`Auto-roll stopped on Grade ${g} (x${MUT[g]})!`,'r4')}ui();save();if(autoSet.has(p.id))setTimeout(()=>autoRoll(p),250)})}
 const pickW=w=>{let r=Math.random()*w.reduce((a,b)=>a+b,0);for(let i=0;i<w.length;i++){r-=w[i];if(r<0)return i}return w.length-1},gp=id=>S.pets.find(x=>String(x.id)===String(id));
 const uid=()=>Date.now()+Math.random(),rnd=(a,b)=>a+Math.random()*(b-a),ri=(a,b)=>Math.floor(rnd(a,b+1)),cl=(v,a,b)=>Math.max(a,Math.min(b,v));
-const PET_SKILL_WEIGHTS=PET_SKILLS.map(()=>1),rollPetSkill=()=>PET_SKILLS[pickW(PET_SKILL_WEIGHTS)];
-const fresh=()=>({pets:[],cls:'Novice',sex:'m',hair:0,lv:1,exp:0,hp:100,zeny:0,kills:0,pts:10,jobs:{Novice:{jl:1,jx:0}},sk:{aid:1},skOff:{},base:{},mp:0,lvl:1,prog:[1,1,1,1,1],kl:0,auto:true,adv:true,q:null,cards:[],ore:{ori:0,elu:0},gm:false,gmx:100,
+// One roll fills both slots. The second pick is made from the skills the first did not take, so
+// the two can never match and there is no retry loop to spin if the dice are pinned.
+const PET_SKILL_WEIGHTS=PET_SKILLS.map(()=>1),rollPetSkills=()=>{const a=pickW(PET_SKILL_WEIGHTS),rest=PET_SKILL_WEIGHTS.map((w,i)=>i).filter(i=>i!==a);return[PET_SKILLS[a].id,PET_SKILLS[rest[Math.floor(Math.random()*rest.length)]].id]};
+const fresh=()=>({pets:[],cls:'Novice',sex:'m',hair:0,lv:1,exp:0,hp:100,zeny:0,kills:0,pts:10,jobs:{Novice:{jl:1,jx:0}},sk:{aid:1},skOff:{},dmgShort:true,dmgShow:true,base:{},mp:0,lvl:1,prog:[1,1,1,1,1],kl:0,auto:true,adv:true,q:null,cards:[],ore:{ori:0,elu:0},gm:false,gmx:100,
   st:{str:1,agi:1,dex:1,luk:1,int:1,vit:1},eq:{weapon:{id:1,slot:'weapon',wt:'dagger',tier:0,val:5,name:'Novice Knife',aff:[],slots:1,cards:[],sec:0},armor:null,head:null,off:null,leg:null,acc1:null,acc2:null},inv:[]});
 const saveKey=()=>'pg_save3_'+currentUser;
 const num_= (v,d)=>{v=+v;return Number.isFinite(v)?v:d};
 function load(){try{const s=JSON.parse(lsGet(saveKey()));if(s&&s.lv){const F=fresh(),f=Object.assign(F,s);f.st=Object.assign(fresh().st,s.st||{});if(!CLASSES[f.cls])f.cls='Novice';
 // repair top-level numbers corrupted by older/test saves (null -> crash on .toLocaleString())
   for(const k of['lv','exp','hp','zeny','kills','pts','mp','lvl','kl','gmx'])f[k]=num_(f[k],F[k]);
+  if(f.dmgShort!==true&&f.dmgShort!==false)f.dmgShort=true;   // damage digits: short unless deliberately switched
+  if(f.dmgShow!==true&&f.dmgShow!==false)f.dmgShow=true;      // and the floats are shown unless switched off
   for(const k of['str','agi','dex','luk','int','vit'])f.st[k]=Math.max(1,Math.min(MAXST,num_(f.st[k],1)));
   f.ore={ori:num_(f.ore&&f.ore.ori,0),elu:num_(f.ore&&f.ore.elu,0)};
   if(!Array.isArray(f.prog)||!f.prog.length)f.prog=F.prog.slice();else f.prog=f.prog.map(v=>num_(v,1));
@@ -660,7 +770,12 @@ function load(){try{const s=JSON.parse(lsGet(saveKey()));if(s&&s.lv){const F=fre
     if(!r.eq||typeof r.eq!=='object')r.eq={}}
   if(!Array.isArray(f.pets))f.pets=[];f.pets=f.pets.filter(p=>p&&typeof p==='object');if(!Array.isArray(f.inv))f.inv=[];if(!Array.isArray(f.cards))f.cards=[];
   if(!f.eq||typeof f.eq!=='object')f.eq=F.eq;if(f.hp<=0)f.hp=F.hp;
-  const fx=c=>{c.v=cardVal(c.g,c.stat)};(f.cards||[]).forEach(fx);(f.pets||[]).forEach((p,i)=>{if(p.on===undefined)p.on=i<3;if(!Array.isArray(p.eq))p.eq=[0,0,0];p.eq=[0,1,2].map(k=>Math.max(0,Math.min(PT.length,Math.floor(num_(p.eq[k],0)))));if(!PET_SKILLS.some(s=>s.id===p.skill))p.skill=''});Object.values(f.eq||{}).forEach(it=>it&&(it.cards||[]).forEach(fx));(f.inv||[]).forEach(it=>(it.cards||[]).forEach(fx));
+  const fx=c=>{c.v=cardVal(c.g,c.stat)};(f.cards||[]).forEach(fx);(f.pets||[]).forEach((p,i)=>{if(p.on===undefined)p.on=i<3;if(!Array.isArray(p.eq))p.eq=[0,0,0];p.eq=[0,1,2].map(k=>Math.max(0,Math.min(PT.length,Math.floor(num_(p.eq[k],0)))));
+  // v35 gave every pet TWO skill slots. An old save's single skill becomes slot 1 and the next
+  // gacha fills both; nothing is thrown away and nothing is handed out for free.
+  if(!Array.isArray(p.skills))p.skills=PET_SKILLS.some(s=>s.id===p.skill)?[p.skill]:[];
+  p.skills=p.skills.filter(id=>PET_SKILLS.some(s=>s.id===id)).slice(0,2);
+  delete p.skill});Object.values(f.eq||{}).forEach(it=>it&&(it.cards||[]).forEach(fx));(f.inv||[]).forEach(it=>(it.cards||[]).forEach(fx));
   // repair quests saved by older builds: every field must be a real number
   if(!Array.isArray(f.q))f.q=null;
   else f.q=f.q.filter(q=>q&&typeof q==='object').map(q=>{
@@ -706,7 +821,7 @@ function submitAuth(e){
 function logout(){save();location.reload()}
 function initSession(gm){
   try{
-    hudRate=null;S=load();S.gm=gm;if(S.q)qRefresh();if(!S.q)S.q=['kill','loot','boss'].map(newQuest);if(S.mp>=MAPS.length||S.lvl>10){S.mp=0;S.lvl=1}
+    hudRate=null;zenyEarned=0;S=load();S.gm=gm;if(S.q)qRefresh();if(!S.q)S.q=['kill','loot','boss'].map(newQuest);if(S.mp>=MAPS.length||S.lvl>10){S.mp=0;S.lvl=1}
     $('userBadge').textContent=(gm?'🛠 ':'👤 ')+currentUser;$('logoutBtn').style.display='inline-block';ui();
     $('loginOverlay').style.display='none';log(`Welcome${gm?', Game Master':' back'}, ${currentUser}!`);
     try{localStorage.setItem('pg_probe','1')}catch(e){log('Browser storage is blocked: progress will NOT be saved.','r0')}
@@ -734,7 +849,7 @@ const pv=k=>SKILLS.reduce((a,s)=>a+(s.type==='pas'&&s.key===k&&skillOn(s.id)?s.f
 const items=()=>Object.values(S.eq).filter(Boolean),ev=it=>Math.round(it.val*(1+(it.r||0)*.15)),iname=it=>(it.r?'+'+it.r+' ':'')+it.name,eqv=k=>S.eq[k]?ev(S.eq[k]):0;
 const bon=k=>{let v=0;for(const it of items()){for(const a of it.aff||[])if(a.k===k)v+=a.v;for(const c of it.cards||[])if(c.stat===k)v+=c.v}return v};
 const st=k=>S.st[k]+bon(k),canUse=it=>it.slot==='off'?canShield():(it.slot!=='weapon'||!it.wt||C().wt.includes(it.wt));
-const maxHp=()=>Math.round((80+S.lv*20+eqv('head')*4+(eqv('acc1')+eqv('acc2'))*3+st('vit')*8+bon('hp'))*C().hp*(1+pv('hpp')/100));
+const maxHp=()=>Math.round((80+S.lv*20+eqv('head')*4+(eqv('acc1')+eqv('acc2'))*3+st('vit')*8+bon('hp'))*C().hp*(1+pv('hpp')/100)*(1+(petBuff.hp||0)/100));
 const atk=()=>Math.round((4+S.lv*2+eqv('weapon')+(S.eq.off&&S.eq.off.slot==='weapon'?eqv('off')*.6:0)+st(C().main)*1.5+(st('dex')+st('luk'))*.25)*C().atk*(1+(pv('atk')+bon('atk')+(tb.atk||0)+(petBuff.atk||0))/100)*(1+collDmg()/100));
 const matk=()=>Math.round((4+S.lv*2+eqv('weapon')*.8+st('int')*1.5+st('dex')*.25)*C().atk*(1+(pv('matk')+bon('matk')+(tb.matk||0)+(petBuff.matk||0))/100)*(1+collDmg()/100));
 const aspd=()=>Math.max(.2,.85*C().aspd*(1-Math.min(.5,st('agi')*.006))/(1+(pv('aspd')+bon('aspd')+(tb.aspd||0))/100));
@@ -767,26 +882,93 @@ const isBoss=()=>S.lvl===10,fieldName=()=>`${MAPS[S.mp].n} Stage ${S.lvl}`;
 const icon=it=>it.card?'🃏':it.ore?'💎':it.slot==='weapon'?(WICON[it.wt]||'⚔️'):SLOTS[it.slot].ic;
 
 // ---------- mobs & loot ----------
-let mobs=[],mob=null,pAtkT=0,mAtkT=0,respawn=0;
+let mobs=[],mob=null,pAtkT=0,mAtkT=0,respawn=0,activePack=0;
+// Pick three new sites on every respawn, within the clear 26x40 battle lane. They are
+// closer than v28 but still separated by 13-18.5 units centre-to-centre. A site on a
+// creek or sea strip is rejected; scenery/landmarks remain outside the running lane.
+const PACK_GAP=13,PACK_MAX=18.5,PACK_JITTER=.7;
+function packSites(){
+  const spec=stageSpec(S.mp,S.lvl),water=spec.f&&spec.f.water;
+  // Restart the whole roll if a first site leaves no room for the other two (especially
+  // across Payon/Amatsu creeks). Do not fall back to a fixed triangle in water.
+  for(let layout=0;layout<36;layout++){
+    const sites=[];
+    for(let i=0;i<3;i++){
+      for(let attempt=0;attempt<250;attempt++){
+        const x=rnd(i===0?-6:-9,i===0?6:9),z=rnd(i===0?-12:-16,i===0?4:8);
+        if(water&&z>=water[0]-2&&z<=water[1]+2)continue;
+        if(sites.some(p=>{const d=Math.hypot(p[0]-x,p[1]-z);return d<PACK_GAP||d>PACK_MAX}))continue;
+        sites.push([x,z]);break;
+      }
+      if(sites.length!==i+1)break;
+    }
+    if(sites.length===3)return sites;
+  }
+  // If a future map fills almost the whole field with water, retain dry, separated
+  // spawns even when the normal closeness cap cannot fit them.
+  const sites=[];
+  for(let i=0;i<3;i++)for(let attempt=0;attempt<10000;attempt++){
+    const x=rnd(-9,9),z=rnd(-16,8);
+    if(water&&z>=water[0]-2&&z<=water[1]+2)continue;
+    if(sites.some(p=>Math.hypot(p[0]-x,p[1]-z)<PACK_GAP))continue;
+    sites.push([x,z]);break;
+  }
+  return sites;
+}
+const nearestPack=()=>{
+  let id=0,dist=Infinity;
+  for(const m of mobs){const d=Math.hypot(pl.x-m.x,pl.z-m.z);if(d<dist){dist=d;id=m.pack}}
+  return id;
+};
+const packMob=()=>{
+  let target=null,dist=Infinity;
+  for(const m of mobs)if(m.pack===activePack){const d=Math.hypot(pl.x-m.x,pl.z-m.z);if(d<dist){dist=d;target=m}}
+  return target;
+};
 // Starter stages share combat strength across the first five maps; loot/reward power stays map-specific.
 const starterStage=(m,l)=>m<5&&l<=5;
 const starterHp=l=>Math.floor(12*Math.pow(6+5*(l-1),HPE));
 const starterAtk=l=>6+3*(l-1);
 function spawn(){
-  const F=fieldOf(S.mp,S.lvl),l=pw(),mb=1+S.mp*.15+Math.max(0,S.mp-4)*.2;mobs=[];
-  if(F.boss&&S.kl>=MPS){const hp=Math.floor(500*mb*Math.pow(l,HPE));mobs.push({...F.boss,boss:true,hp,max:hp,atk:Math.floor((8+l*6.5)*mb),exp:Math.max(1,Math.floor(BOSEK*Math.pow(l,1.5)/50)),zeny:Math.max(1,Math.floor(ri(BZK[0],BZK[1])*l*l/1000)),size:1.3,mag:true,lvl:l,sec:F.sec})}
-  else{const early=starterStage(S.mp,S.lvl),n=early?(S.mp===0&&S.lvl===1?1:S.lvl===1?2:ri(2,3)):(S.lvl>=5||S.mp>=5)?ri(3,8):1;for(let i=0;i<n;i++){const m=F.mobs[ri(0,1)],hp=early?Math.min(starterHp(S.lvl),Math.floor(HPK*mb*Math.pow(l,HPE))):Math.floor(HPK*mb*Math.pow(l,HPE));mobs.push({...m,boss:false,hp,max:hp,atk:early?starterAtk(S.lvl):Math.floor((5+l*4.6)*mb),exp:Math.max(1,Math.floor(EXPK*Math.pow(l,1.5)/50)),zeny:Math.max(1,Math.floor(ri(ZK[0],ZK[1])*l*l/1000)),size:.6,mag:['demon','tree','blob'].includes(m.shape),lvl:l,sec:F.sec})}}
-  mobs.forEach((m,i)=>{m.x=rnd(-BX_+.8,BX_-.8);m.z=rnd(Z0,Z0+6);m.hx=m.x;m.hz=m.z;m.spawn=0;m.ry=0;m.at=rnd(.6,1.6);m.a=i*2.4});
-  mob=mobs[0];pAtkT=.3;
+  const F=fieldOf(S.mp,S.lvl),l=pw(),mb=1+S.mp*.15+Math.max(0,S.mp-4)*.2;mobs=[];activePack=0;
+  const bossWave=!!F.boss,sites=bossWave?null:packSites();
+  const addMinion=pack=>{
+    const early=starterStage(S.mp,S.lvl),m=F.mobs[ri(0,1)];
+    const hp=early?Math.min(starterHp(S.lvl),Math.floor(HPK*mb*Math.pow(l,HPE))):Math.floor(HPK*mb*Math.pow(l,HPE));
+    mobs.push({...m,boss:false,pack,hp,max:hp,atk:early?starterAtk(S.lvl):Math.floor((5+l*4.6)*mb),
+      exp:Math.max(1,Math.floor(EXPK*Math.pow(l,1.5)/50)),zeny:Math.max(1,Math.floor(ri(ZK[0],ZK[1])*l*l/1000)),
+      size:.6,mag:['demon','tree','blob'].includes(m.shape),lvl:l,sec:F.sec});
+  };
+  if(bossWave){
+    const hp=Math.floor(500*mb*Math.pow(l,HPE));
+    mobs.push({...F.boss,boss:true,pack:0,hp,max:hp,atk:Math.floor((8+l*6.5)*mb),
+      exp:Math.max(1,Math.floor(BOSEK*Math.pow(l,1.5)/50)),zeny:Math.max(1,Math.floor(ri(BZK[0],BZK[1])*l*l/1000)),
+      size:1.3,mag:true,lvl:l,sec:F.sec});
+    // The first five maps bring three escorts; the five later maps bring five.
+    for(let i=0;i<(S.mp<5?3:5);i++)addMinion(0);
+  }else{
+    const early=starterStage(S.mp,S.lvl),perPack=early?(S.lvl===1?1:2):(S.lvl>=5||S.mp>=5)?ri(2,3):1;
+    for(let pack=0;pack<3;pack++)for(let i=0;i<perPack;i++)addMinion(pack);
+  }
+  mobs.forEach((m,i)=>{
+    const a=(i-1)*Math.PI*2/Math.max(1,mobs.length-1),r=2.3+(i%2)*.65;
+    const [x,z]=bossWave?(m.boss?[0,-4]:[Math.cos(a)*r,-4+Math.sin(a)*r]):sites[m.pack];
+    m.x=x+rnd(-PACK_JITTER,PACK_JITTER);m.z=z+rnd(-PACK_JITTER,PACK_JITTER);
+    m.hx=m.x;m.hz=m.z;m.spawn=0;m.ry=0;m.at=rnd(.6,1.6);m.a=i*2.4;
+  });
+  activePack=nearestPack();mob=bossWave?mobs[0]:packMob();pAtkT=.3;
 }
-function genGear(T,l,sec,boss){
-  const slot=['armor','head','off','leg','acc'].includes(T.k)?T.k:'weapon';let roll=rnd(0,100)-(boss?25:0)-st('luk')*.15,tier=0,acc=0;
-  for(let i=0;i<5;i++){acc+=RAR[i].w;if(roll<acc||i===4){tier=i;break}}if(boss&&tier<2)tier=2;
-  const val=Math.max(1,Math.round({weapon:6,armor:4,head:10,off:3,leg:3,acc:5}[slot]*[1,2.2,4,7][sec]*(1+l*.15)*RAR[tier].m*rnd(.9,1.12)));
-  const n=[1,1+ri(0,1),2,2+ri(0,1),3][tier],pool=AFF.slice(),aff=[],af=(1+sec)*AM[tier];
+function genGear(T,l,sec,boss,tier){
+  const slot=['armor','head','off','leg','acc'].includes(T.k)?T.k:'weapon';
+  // Rarity is fixed by the field (see dropTier): the roll only decides the AFFIXES, the refine
+  // room and the value inside that band. The drop loop still passes mob.boss and mob.tier - a
+  // Stage 10 boss field is the one place dropTier returns Legendary.
+  const t=Number.isFinite(tier)?tier:dropTier(S.mp,S.lvl);
+  const val=Math.max(1,Math.round({weapon:6,armor:4,head:10,off:3,leg:3,acc:5}[slot]*[1,2.2,4,7][sec]*(1+l*.15)*RAR[t].m*rnd(.9,1.12)));
+  const n=[1,1+ri(0,1),2,2+ri(0,1),3][t],pool=AFF.slice(),aff=[],af=(1+sec)*AM[t];
   for(let i=0;i<n;i++){const k=pool.splice(ri(0,pool.length-1),1)[0];aff.push({k,v:Math.max(1,Math.round(af*AB[k]*rnd(.8,1.25)))})}
-  const slots=slot==='weapon'?Math.min(3,1+ri(0,1)+(tier>=3?1:0)):Math.min(1,ri(0,1)+(tier>=3?1:0));
-  return{id:uid(),slot,wt:slot==='weapon'?T.k:undefined,tier,val,name:(tier?RAR[tier].n+' ':'')+T.n,aff,slots,cards:[],sec,lvl:l};
+  const slots=slot==='weapon'?Math.min(3,1+ri(0,1)+(t>=3?1:0)):Math.min(1,ri(0,1)+(t>=3?1:0));
+  return{id:uid(),slot,wt:slot==='weapon'?T.k:undefined,tier:t,val,name:(t?RAR[t].n+' ':'')+T.n,aff,slots,cards:[],sec,lvl:l};
 }
 // ---------- skill effects: damage over time, stun, chain ----------
 // DoT ticks twice a second for its duration; the number stored is damage PER SECOND.
@@ -796,21 +978,38 @@ function applyStun(o,dur){if(!o||!(dur>0))return;
   const d=dur*(o.boss?.5:1);o.stun=Math.min(o.boss?1:2,Math.max(o.stun||0,d))}
 // Chain bounces a share of the hit onto the nearest other mobs - the pack-clearing tool.
 function chainHit(src,dmg,col,n){if(!src||!(dmg>0)||mobs.length<2)return;
-  const near=mobs.filter(o=>o!==src&&o.hp>0).sort((a,b)=>Math.hypot(a.x-src.x,a.z-src.z)-Math.hypot(b.x-src.x,b.z-src.z)).slice(0,n||2);
+  const near=mobs.filter(o=>o!==src&&o.hp>0&&o.pack===src.pack).sort((a,b)=>Math.hypot(a.x-src.x,a.z-src.z)-Math.hypot(b.x-src.x,b.z-src.z)).slice(0,n||2);
   for(const o of near){shots.push({x0:src.x,z0:src.z,x1:o.x,z1:o.z,t:0,col:col||'#fff'});hurt(o,Math.max(1,Math.round(dmg)),col)}}
 const mkDrop=it=>({it,wx:mob.x+rnd(-.7,.7),wz:mob.z+rnd(-.7,.7),y:0,vy:-220,t:0});
-const addFloat=(x,y,z,txt,col,big)=>floats.push({x,y,z,txt,col,life:1,big});
+const addFloat=(x,y,z,txt,col,big,kind='text')=>floats.push({x,y,z,txt,col,life:1,big,kind});
+// Floating combat numbers are shortened by default: 100,000 reads "100K", 1,000,000 reads "1M".
+// The Settings panel switches every damage float (normal, critical and incoming) to full digits.
+// One decimal is kept only where it carries information (1.2M, 12.5K), and a K that rounds up
+// to 1000 is promoted to M so the label never reads "1000K".
+const shortNum=n=>{n=Math.round(Number(n)||0);const a=Math.abs(n),u=(v,s)=>{const r=Math.round(v*10)/10;return(Number.isInteger(r)?String(r):r.toFixed(1))+s};
+  if(a>=1e9)return u(n/1e9,'B');
+  if(a>=1e6)return u(n/1e6,'M');
+  if(a>=1e3)return Math.abs(Math.round(n/100)/10)>=1000?u(n/1e6,'M'):u(n/1e3,'K');
+  return String(n)};
+const fullNum=()=>typeof S!=='undefined'&&S&&S.dmgShort===false;
+// Two settings decide what a number looks like: 'Show damage numbers' (S.dmgShow) hides every
+// combat float when it is off, and 'Short form' (S.dmgShort) switches between 100K/1M and the
+// full digits. Reward floats (Zeny, EXP) follow the short/full style but are never hidden.
+const numTxt=n=>fullNum()?String(Math.round(n)):shortNum(n);
+const damageFloat=(x,y,z,amount,critical=false,incoming=false)=>{if(S&&S.dmgShow===false)return;addFloat(x,y,z,numTxt(amount),null,false,incoming?'incoming':critical?'critical':'damage')};
+// Skill labels track the moving player, rather than floating away from the cast location.
+const skillNameFloat=(name,slot=0)=>floats.push({x:pl.x,y:3.15+slot*.38,z:pl.z,txt:name,life:1.15,kind:'skill',anchor:'hero'});
 function log(m,cls){logs.push({m,cls});if(logs.length>80)logs.shift();
   const f=$('feed'),d=document.createElement('div');d.textContent=m;f.appendChild(d);while(f.children.length>4)f.removeChild(f.firstChild);setTimeout(()=>d.remove(),7000);if(tabs.includes('log'))renderWin()}
 
 // ---------- combat ----------
 function shot(col){if(!mob||heroWeaponType(C().n,C().wt,S.eq.weapon&&S.eq.weapon.wt)!=='bow')return;
   shots.push({x0:pl.x,z0:pl.z,x1:mob.x,z1:mob.z,t:0,col:col||'#fff',arrow:true})}
-function hurt(o,d,col,c){o.hp-=d;o.flash=1;addFloat(o.x+rnd(-.4,.4),1.2+.8*(o.spriteScale||o.size),o.z,c?d+'!':d,col||'#fff',c);if(o.hp<=0)kill(o)}
+function hurt(o,d,col,c){o.hp-=d;o.flash=1;damageFloat(o.x+rnd(-.4,.4),1.2+.8*(o.spriteScale||o.size),o.z,d,c);if(o.hp<=0)kill(o)}
 function strike(mult,col,magic=false){
   if(!mob)return;if(Math.random()*100<missCh()){addFloat(mob.x,1.8,mob.z,'Miss','#ccc');return}
   const c=Math.random()*100<crit(),base=magic?matk():atk(),d=Math.max(1,Math.round(base*mult*rnd(Math.min(.95,.7+st('dex')*.004),1.15)*(c?critD():1)));
-  mob.hp-=d;mob.flash=1;shake=c?6:2;addFloat(mob.x+rnd(-.4,.4),1.5*Math.max(1,(mob.spriteScale||mob.size)*.8)+.6,mob.z,c?d+'!':d,col||(c?'#ffe14d':'#fff'),c);
+  mob.hp-=d;mob.flash=1;shake=c?6:2;damageFloat(mob.x+rnd(-.4,.4),1.5*Math.max(1,(mob.spriteScale||mob.size)*.8)+.6,mob.z,d,c);
 }
 // Higher job tiers get more casts per swing: Novice 1, first job 2, second job 3, transcendent
 // 4 (tier is 0/1/2/3 - Assassin Cross and Lord Knight are tier 3, not 2). Every cast after the
@@ -820,31 +1019,33 @@ const SKSLOTS=t=>1+(t||0),SKFADE=[1,.55,.3,.18];
 // dot.pow is the fraction of the triggering hit dealt PER SECOND, so a .05/4s dot adds 20% of
 // the hit spread over time. chain.pow is the fraction each bounce deals, once per target.
 function castSkill(sk,k){
-  const base=sk.magic?matk():atk(),m=sk.mul(lv(sk.id))*(1+st('int')*.01)*k;
-  playSkillFx(sk.id,mob,sk.col);
+  // Hold the target fixed for this cast: an AoE kill can advance activePack while we are
+  // still iterating. The remaining effects must never spill into the next sleeping pack.
+  const target=mob,base=sk.magic?matk():atk(),m=sk.mul(lv(sk.id))*(1+st('int')*.01)*k;
+  playSkillFx(sk.id,target,sk.col);
   strike(m,sk.col,!!sk.magic);shot(sk.col,sk.rng);
-  if(sk.aoe&&mob)for(const o of mobs.slice())if(o!==mob&&Math.hypot(o.x-mob.x,o.z-mob.z)<4)hurt(o,Math.max(1,Math.round(base*m*.8)),sk.col);
-  if(sk.chain&&mob)chainHit(mob,base*m*(sk.chain.pow||.5),sk.col,Math.min(4,(sk.chain.n||2)+Math.floor(lv(sk.id)/2)));
-  if(sk.dot&&mob&&mob.hp>0)applyDot(mob,base*m*(sk.dot.pow||.05),sk.dot.dur||4,sk.dot.col||sk.col);
-  if(sk.stun&&mob&&mob.hp>0)applyStun(mob,(sk.stun.dur||.8)*(1+lv(sk.id)*.08));
-  for(let i=1;i<sk.hits;i++)pend.push({t:i*.09,m,col:sk.col,magic:!!sk.magic});
+  if(sk.aoe&&target)for(const o of mobs.slice())if(o!==target&&o.pack===target.pack&&Math.hypot(o.x-target.x,o.z-target.z)<4)hurt(o,Math.max(1,Math.round(base*m*.8)),sk.col);
+  if(sk.chain&&target&&mobs.includes(target))chainHit(target,base*m*(sk.chain.pow||.5),sk.col,Math.min(4,(sk.chain.n||2)+Math.floor(lv(sk.id)/2)));
+  if(sk.dot&&target&&target.hp>0)applyDot(target,base*m*(sk.dot.pow||.05),sk.dot.dur||4,sk.dot.col||sk.col);
+  if(sk.stun&&target&&target.hp>0)applyStun(target,(sk.stun.dur||.8)*(1+lv(sk.id)*.08));
+  if(target&&mobs.includes(target))for(let i=1;i<sk.hits;i++)pend.push({t:i*.09,m,col:sk.col,magic:!!sk.magic});
 }
 function playerAttack(){
   pAtkT=aspd();atkAnim=1;
   const far=mob&&Math.hypot(mob.x-pl.x,mob.z-pl.z)>(C().rng?3:1.2+.45*mob.size)+.6;
   const ready=SKILLS.filter(s=>s.type==='act'&&skillOn(s.id)&&(skCd[s.id]||0)<=0&&(!far||s.rng))
     .sort((a,b)=>b.mul(lv(b.id))*b.hits-a.mul(lv(a.id))*a.hits);
-  let cast=0;
+  const pack=mob&&mob.pack;let cast=0;
   for(const sk of ready){
     if(cast>=SKSLOTS(C().tier))break;
     const k=SKFADE[cast]||.3;cast++;
-    skCd[sk.id]=sk.cd;addFloat(pl.x,2.9+cast*.4,pl.z,sk.n,sk.col);
+    skCd[sk.id]=sk.cd;skillNameFloat(sk.n,cast-1);
     castSkill(sk,k);
-    if(!mob||mob.hp<=0)break;
+    if(!mob||mob.hp<=0||mob.pack!==pack)break;
   }
   if(cast||far)return;
   strike(1);shot();const d=pv('dbl');
-  if(d&&Math.random()<d/100+st('dex')*.003){pend.push({t:.15,m:1,col:'#aef'});addFloat(pl.x,3,pl.z,'Double Attack','#aef')}
+  if(d&&Math.random()<d/100+st('dex')*.003){pend.push({t:.15,m:1,col:'#aef'});skillNameFloat('Double Attack')}
 }
 function addJob(x){const j=jobOf(),c=C();if(j.jl>=c.mj)return;j.jx+=x;
   while(j.jl<c.mj&&j.jx>=jneed(j.jl)){j.jx-=jneed(j.jl);j.jl++;log(`JOB LEVEL UP! ${S.cls} Job Lv ${j.jl} (+1 skill point)`,'r3');addFloat(pl.x,3.2,pl.z,'JOB UP!','#8fe9ff',true)}
@@ -853,31 +1054,45 @@ function checkLevel(){while(S.lv<150&&S.exp>=need()){S.exp-=need();S.lv++;const 
   log(`LEVEL UP! Lv ${S.lv}. +${p} stat points`,'r4');addFloat(pl.x,3.6,pl.z,'LEVEL UP!','#fff',true)}
   qRefresh()}
 const qProg=type=>S.q&&S.q.forEach(q=>{if(q.type===type)q.prog=Math.min(q.goal,q.prog+1)});
+// A balance difference is not income: a purchase in the same frame can hide earned Zeny.
+// Count each credit directly for the live hover rate, without persisting session history.
+function earnZeny(amount){const n=Math.max(0,Number(amount)||0);S.zeny+=n;zenyEarned+=n}
 function kill(o){const keep=mob;if(o)mob=o;if(!mob||!mobs.includes(mob)){mob=keep;return}
   const g=gx();S.kills++;S.kl++;qProg('kill');if(mob.boss)qProg('boss');
-  const z=Math.round(mob.zeny*(1+pv('zeny')/100))*g,xp=Math.round(mob.exp*expRate());S.zeny+=z;S.exp+=xp;addJob(Math.round(Math.round(mob.exp*.7)*expRate()));pend=[];
-  addFloat(mob.x,2.4,mob.z,'+'+z+'z','#ffd23f');log(`${mob.n} defeated! +${xp.toLocaleString()} EXP, +${z.toLocaleString()} Zeny`);
-  const lk=1+st('luk')*.008;
-  for(const[T,ch]of mob.drops)if(Math.random()*100<ch*lk)drops.push(mkDrop(genGear(T,mob.lvl,mob.sec,mob.boss)));
-  if(Math.random()*100<mob.cardCh*lk){const g2=mob.card.g;drops.push(mkDrop({card:1,id:uid(),n:mob.card.n,g:g2,stat:mob.card.stat,v:cardVal(g2,mob.card.stat)}))}
+  const z=Math.round(mob.zeny*(1+pv('zeny')/100))*g,xp=Math.round(mob.exp*expRate());earnZeny(z);S.exp+=xp;addJob(Math.round(Math.round(mob.exp*.7)*expRate()));pend=[];
+  addFloat(mob.x,2.4,mob.z,'+'+numTxt(z)+'z','#ffd23f');log(`${mob.n} defeated! +${xp.toLocaleString()} EXP, +${z.toLocaleString()} Zeny`);
+  // Drop odds are the field's own numbers: nothing on the character scales them, so LUK cannot
+  // bend the tables (it still raises ATK through the crit/DEX side of the stat sheet, which is
+  // what it is for).
+  for(const[T,ch]of mob.drops)if(Math.random()*100<ch)drops.push(mkDrop(genGear(T,mob.lvl,mob.sec,mob.boss,mob.tier)));
+  if(Math.random()*100<mob.cardCh){const g2=mob.card.g;drops.push(mkDrop({card:1,id:uid(),n:mob.card.n,g:g2,stat:mob.card.stat,v:cardVal(g2,mob.card.stat)}))}
   if(mob.ore)for(const o of['ori','elu'])if(Math.random()<mob.oreCh)drops.push(mkDrop({ore:o,id:uid(),n:ORE[o]}));
-  if(Math.random()*100<(mob.boss?5:.3)*lk){const r=pickW(PW[Math.min(S.mp,9)]),c=PETS.filter(x=>x.r===r),sp=PETS.indexOf(c[ri(0,c.length-1)]);
-    if(S.pets.length<40){S.pets.push({id:ri(1e6,9e6),sp,mut:0,eq:[0,0,0],skill:'',on:S.pets.filter(x=>x.on).length<3});log(`A ${RN[r]} pet followed you: ${PETS[sp].n}!`,'r'+RCL[r]);addFloat(mob.x,3,mob.z,'PET!','#ff9dff',true)}
-    else{const z=Math.floor(EGG*(.3+r*.4));S.zeny+=z;log(`A ${RN[r]} ${PETS[sp].n} appeared but your pet collection is full (+${z}z).`)}}
+  if(Math.random()*100<(mob.boss?5:.3)){const r=pickW(PW[Math.min(S.mp,9)]),c=PETS.filter(x=>x.r===r),sp=PETS.indexOf(c[ri(0,c.length-1)]);
+    if(S.pets.length<40){S.pets.push({id:ri(1e6,9e6),sp,mut:0,eq:[0,0,0],skills:[],on:S.pets.filter(x=>x.on).length<3});log(`A ${RN[r]} pet followed you: ${PETS[sp].n}!`,'r'+RCL[r]);addFloat(mob.x,3,mob.z,'PET!','#ff9dff',true)}
+    else{const z=Math.floor(EGG*(.3+r*.4));earnZeny(z);log(`A ${RN[r]} ${PETS[sp].n} appeared but your pet collection is full (+${z}z).`)}}
   checkLevel();
   if(mob.boss||(S.lvl<10&&S.kl>=MPS)){mobs=[];S.kl=0;if(S.lvl<10&&S.lvl>=S.prog[S.mp]){S.prog[S.mp]=S.lvl+1;log(`${fieldName()} cleared! Stage ${S.lvl+1} unlocked.`,'r3');if(S.adv&&S.lvl<10){S.lvl++}}}
-  mobs=mobs.filter(x=>x!==mob);mob=(o&&keep&&keep!==o&&mobs.includes(keep))?keep:(mobs[0]||null);respawn=.7;save();ui();
+  mobs=mobs.filter(x=>x!==mob);
+  if(mobs.length&&!mobs.some(x=>x.pack===activePack))activePack=nearestPack();
+  mob=packMob();respawn=.7;save();ui();
 }
 function collect(it){
   if(it.card){S.cards.push(it);log(`Got card: [${GRADE[it.g]}] ${cardTxt(it)}`,'r'+GI[it.g]);addFloat(pl.x,2.8,pl.z,'CARD!','#ffb020',true);ui();return}
   if(it.ore){S.ore[it.ore]++;log(`Got ${it.n}!`,'r4');addFloat(pl.x,2.8,pl.z,it.n+'!','#6cd3ff',true);ui();return}
+  // The bag holds BAGMAX items. At capacity the loot is refused and stays where it fell, so a
+  // long farm can never grow the save past the cap.
+  if(S.inv.length>=BAGMAX){log(`Bag full (${BAGMAX} items): sold nothing, left ${it.name} on the ground.`,'r0');addFloat(pl.x,3,pl.z,'BAG FULL','#ff6b6b',true);ui();return}
   S.inv.push(it);qProg('loot');log(`Picked up [${RAR[it.tier].n}] ${it.name}`,'r'+it.tier);
   if(S.auto!==false&&canUse(it)){const cur=S.eq[ekey(it)];if(!cur||ev(it)>ev(cur))equip(it.id,true)}ui();
 }
 function equip(id,quiet){const i=S.inv.findIndex(x=>x.id===id);if(i<0)return;const it=S.inv[i];if(!canUse(it)){log(`Your class cannot use ${it.name}.`);return}
   S.inv.splice(i,1);const k=ekey(it),old=S.eq[k];if(old)S.inv.push(old);S.eq[k]=it;S.hp=Math.min(S.hp,maxHp());if(!quiet)log('Equipped '+iname(it));selB=null;ui();save()}
-const sellVal=it=>Math.floor(ev(it)*(1+it.tier*2)*2);
-function sell(id){const i=S.inv.findIndex(x=>String(x.id)===String(id));if(i<0)return;const it=S.inv.splice(i,1)[0];S.zeny+=sellVal(it);(it.cards||[]).forEach(c=>S.cards.push(c));if(selB==it.id)selB=null;ui();save()}
+// Selling is pocket money, deliberately: it scales with the item's rarity band, its stage
+// section and its level, but stays far below the Zeny a field actually pays - a Common starter
+// piece sells for ~50z and the best Legendary Abyss gear for under 2,000z, so dumping a full
+// bag never funds an upgrade. Pinned by gear_sim.js.
+const sellVal=it=>Math.max(1,Math.round(50*(1+.9*(it.sec||0))*(1+1.4*(it.tier||0))*(1+.005*(it.lvl||0))));
+function sell(id){const i=S.inv.findIndex(x=>String(x.id)===String(id));if(i<0)return;const it=S.inv.splice(i,1)[0];earnZeny(sellVal(it));(it.cards||[]).forEach(c=>S.cards.push(c));if(selB==it.id)selB=null;ui();save()}
 // Quest goal AND reward are solved from the level you are standing at, by the one function the
 // panel and the Claim button both read - so what the quest panel states is exactly what you are
 // paid. The old code froze both at the level the quest was created, so a quest picked up at Lv 1
@@ -966,7 +1181,7 @@ const cell=(it,sel,extra='')=>`<div class="cell b${dtier(it)}${sel?' sel':''}" d
 function itemMain(it){
   if(it.card)return`<b class="r${GI[it.g]}">${it.n}</b><div>${GRADE[it.g]} card &middot; <b>${SU(it.stat)} +${it.v}</b></div><div><small>Fits: ${CFL[CFIT[it.stat]]} only</small></div>`;
   return`<b class="r${it.tier}">${iname(it)}</b><div><small>${RAR[it.tier].n} ${SLOTS[it.slot].label}${it.wt?' ('+it.wt+')':''} &middot; ${SECN[it.sec||0]}</small></div>
-  <div><b>${SLOTS[it.slot].stat} +${ev(it)}</b>${it.r?` <small>(base ${it.val})</small>`:''}</div>${(it.aff||[]).map(a=>`<div class="r1">&#9670; ${affTxt(a)}</div>`).join('')}`}
+  <div><b>${SLOTS[it.slot].stat} +${ev(it)}</b>${it.r?` <small>(base ${it.val})</small>`:''}</div>${(it.aff||[]).length?`<div class="sec">Affixes <small>(${it.aff.length} random)</small></div>`:''}${(it.aff||[]).map(a=>`<div class="r1">&#9670; ${affTxt(a)}</div>`).join('')}`}
 function itemDetail(it){if(it.card)return itemMain(it);const cs=it.cards||[];return itemMain(it)+Array.from({length:it.slots||0},(_,i)=>`<div><small>${cs[i]?'&#9670; '+cardTxt(cs[i]):'&#9671; empty card slot'}</small></div>`).join('')+(canUse(it)?'':'<div class="r0"><small>Your class cannot use this.</small></div>')}
 const cardSlots=(it,k)=>Array.from({length:it.slots||0},(_,i)=>{const c=(it.cards||[])[i];return c?`<div><small class="r${GI[c.g]}">&#9670; ${cardTxt(c)}</small> <button data-a="unsock" data-v="${k}:${i}">Remove ${200*(c.g+1)}z</button></div>`:'<div><small>&#9671; empty slot</small></div>'}).join('');
 const tnode=n=>{const c=CLASSES[n],pj=S.jobs[n],cur=n===S.cls,blk=classBlock(n);return`<div class="tn ${cur?'cur':blk?(pj?'played':'lock'):'ok'}${selK===n?' pick':''}" data-a="selk" data-v="${n}"><b>${n}</b><small>${pj?`Job ${pj.jl}/${c.mj}`:'Lv '+c.rj+' req'}</small></div>`};
@@ -980,25 +1195,25 @@ const V={
     // same size whichever map or field is picked.
     return`<div class="mapband">
       <div class="mapband-t">Maps <small>&middot; click one to see its stages below</small></div>
-      <div class="mapgrid">${MAPS.map((m,i)=>{const cur=i===mapM,here=i===S.mp,open=S.prog[i]>1;
+      <div class="mapgrid">${MAPS.map((m,i)=>{const cur=i===mapM,here=i===S.mp;
         return`<button class="mapcard${cur?' on':''}${here?' here':''}" data-a="selm" data-v="${i}" title="${m.n} - ${m.t}">
-          <b>${m.n}</b><small>${here?'● here':open?m.rec:'farming'}</small></button>`}).join('')}</div></div>
+          <b>${m.n}</b><small>${here?'● ':''}${m.rec}</small></button>`}).join('')}</div></div>
     <div class="mapband fields">
       <div class="mapband-t">${mp.n} <small>&middot; ${mp.t} &middot; rec. ${mp.rec} (not a limit) &middot; ${Math.min(pr-1,10)}/10 stages unlocked</small>
         <button class="go" data-a="go" ${mapL>pr?'disabled':''}>${S.mp===mapM&&S.lvl===mapL?'You are here':'Travel to '+mp.n+' Stage '+mapL}</button></div>
-      <div class="lvgrid">${Array.from({length:10},(_,i)=>{const l=i+1,lock=l>pr;return`<button class="map-node${lock?' locked':''}${S.mp===mapM&&S.lvl===l?' active':''}${mapL===l?' picked':''}${l===10?' boss-node':''}" data-a="sell_" data-v="${l}" title="Stage ${l} - ${SECN[secOf(l)]}"><b>${l===10?'💀 ':''}Stage ${l}</b><small>${mapM<5&&l<=5?'1st job':secOf(l)===0?'novice':secOf(l)===1?'1st job':secOf(l)===2?'2nd job':'boss'}</small></button>`}).join('')}</div></div>
+      <div class="lvgrid">${Array.from({length:10},(_,i)=>{const l=i+1,lock=l>pr;return`<button class="map-node${lock?' locked':''}${S.mp===mapM&&S.lvl===l?' active':''}${mapL===l?' picked':''}${l===10?' boss-node':''}" data-a="sell_" data-v="${l}" title="Stage ${l}"><b>${l===10?'💀 ':''}Stage ${l}</b></button>`}).join('')}</div></div>
     <div class="mapcols">
-      <div class="mob-card"><div class="hd">${mp.n} Stage ${mapL} &mdash; ${SECN[F.sec]}${mapM<5&&mapL<=5?'<br><small>Starter farming · Base Lv 10–60 · gentle packs</small>':''}</div>
-        <div class="sec">Monsters</div>
+      <div class="mob-card"><div class="hd">${mp.n} Stage ${mapL}${mapM<5&&mapL<=5?'<br><small>Starter farming · Base Lv 10–60 · gentle packs</small>':''}</div>
+        <div class="sec">Monsters <small>&middot; every drop here is <b class="r${F.tier}">${RAR[F.tier].n}</b></small></div>
         ${F.mobs.map(m=>`<div class="mobentry"><b>${m.n}</b>
-          ${m.drops.map(dropTxt).join('')}
+          ${m.drops.map(d=>dropTxt(d,F.tier)).join('')}
           <div class="dropline"><span>🃏 ${m.card.n} <small>(${SU(m.card.stat)} +${cardVal(m.card.g,m.card.stat)}, ${GRADE[m.card.g]})</small></span><b>${m.cardCh}%</b></div>
           ${m.ore?`<div class="dropline ore"><span>🔶 Oridecon &middot; 🔷 Elunium</span><b>${m.oreCh*100}% each</b></div>`:''}
         </div>`).join('<hr>')}</div>
-      <div class="mob-card"><div class="hd">Boss &amp; pets</div>
-        ${F.boss?`<div class="mobentry"><b class="r3">${F.boss.n} (BOSS)</b>
+      <div class="mob-card"><div class="hd">Boss &amp; pets</div>${mapL===10?`<small>Boss fights immediately with ${mapM<5?3:5} monsters. Defeat the boss to reset the fight.</small>`:''}
+        ${F.boss?`<div class="mobentry"><b class="r4">${F.boss.n} (BOSS)</b>
           <div class="poollist">${F.boss.drops.map(([T,ch])=>`<span class="poolitem">${poolIc(T)} ${T.n}<b>${ch}%</b></span>`).join('')}</div>
-          <small>Each item rolls independently; a boss can drop zero or several pieces.</small>
+          <small>Every boss drop is <b class="r4">Legendary</b> with random affixes. Each item rolls independently; a boss can drop zero or several pieces.</small>
           <div class="dropline"><span>🃏 ${F.boss.card.n} <small>(${SU(F.boss.card.stat)} +${cardVal(3,F.boss.card.stat)}, Legendary)</small></span><b>${F.boss.cardCh}%</b></div>
           <div class="dropline ore"><span>🔶 Oridecon &middot; 🔷 Elunium</span><b>${F.boss.oreCh*100}% each</b></div>
         </div>`:`<small>Boss appears at Stage 10.</small>`}
@@ -1026,18 +1241,24 @@ const V={
         <div class="sk-head"><span class="sk-kind">${kind}</span>${off?'<span class="sk-paused">OFF</span>':''}</div>
         <div class="si" aria-hidden="true">${SKILL_ICON[s.id]||'✦'}</div><div class="sk-name">${s.n}</div>
         <div class="sk-level"><b>Lv ${L}</b> / ${s.max}</div>
-        ${L&&s.type!=='pas'?`<label class="sk-autocast"><input type="checkbox" data-a="sktog" data-v="${s.id}" ${off?'':'checked'} aria-label="Auto cast ${s.n}"> Auto cast</label>`:''}
         <button data-a="skill" data-v="${s.id}" aria-label="Increase ${s.n}" title="${L<s.max?'level '+(L+1)+' costs '+skCost(L+1)+' points':'max level'}" ${av>=skCost(L+1)&&L<s.max?'':'disabled'}>${L<s.max?'+'+skCost(L+1):'MAX'}</button></div>`}).join('')}</div>`:''}).join('')
-    +(sel?`<div class="mob-card" style="margin-top:8px"><b>${sel.n}</b> <small>${sel.type==='pas'?'Passive':sel.type==='heal'?'Auto-heal':sel.type==='to'?'Tradeoff (auto-cast)':'Active (auto-cast)'}${sel.rng?' &middot; RANGED':''}${sel.aoe?' &middot; AREA':''}${sel.dot?' &middot; DOT':''}${sel.stun?' &middot; STUN':''}${sel.chain?' &middot; CHAIN':''}</small><br><small>${sel.d(Math.max(1,lv(sel.id)))}</small>${lv(sel.id)&&lv(sel.id)<sel.max?`<br><small>Next: ${sel.d(lv(sel.id)+1)}</small>`:''}${sel.type!=='pas'&&lv(sel.id)?`<br><small>Use this skill's Auto cast checkbox to pause or resume it.</small>`:''}</div>`:'')
+    +(sel?(()=>{const SL=lv(sel.id),soff=!!(SL&&sel.type!=='pas'&&skOff(sel.id));return`<div class="mob-card" style="margin-top:8px"><div class="sk-detail-head"><b>${sel.n}</b> <small>${sel.type==='pas'?'Passive':sel.type==='heal'?'Auto-heal':sel.type==='to'?'Tradeoff (auto-cast)':'Active (auto-cast)'}${sel.rng?' &middot; RANGED':''}${sel.aoe?' &middot; AREA':''}${sel.dot?' &middot; DOT':''}${sel.stun?' &middot; STUN':''}${sel.chain?' &middot; CHAIN':''}</small></div><div class="sk-detail-autocast">${SL&&sel.type!=='pas'?`<label class="sk-autocast"><input type="checkbox" data-a="sktog" data-v="${sel.id}" ${soff?'':'checked'} aria-label="Auto cast ${sel.n}"> Auto cast this skill</label><small class="${soff?'r0':''}">${soff?'Paused - it will not be used until you check this again.':'Cast automatically every time you attack.'}</small>`:'<small>Passive or not learned yet - nothing to auto-cast.</small>'}</div><small>${sel.d(Math.max(1,SL))}</small>${SL&&SL<sel.max?`<br><small>Next: ${sel.d(SL+1)}</small>`:''}</div>`})():'')
     +`<button class="full" data-a="rskill">Reset skills (${rcost()}z)</button>`},
   bag0(){const sel=selB&&S.inv.find(x=>String(x.id)===String(selB));const n=Math.max(30,Math.ceil(S.inv.length/6)*6);const inv=[...S.inv].sort((a,b)=>b.tier-a.tier||ev(b)-ev(a));
-    return`<div class="row"><span class="chip">🔶 Oridecon <b>${S.ore.ori}</b></span><span class="chip">🔷 Elunium <b>${S.ore.elu}</b></span></div><div class="row" style="margin-top:4px"><small>${S.inv.length} items</small><button data-a="sellbelow" data-v="1">Sell Common/Fine</button><button data-a="sellbelow" data-v="2">Sell up to Rare</button></div>
-    <div class="grid">${Array.from({length:n},(_,i)=>inv[i]?cell(inv[i],sel&&sel.id===inv[i].id,`data-a="selb" data-v="${inv[i].id}"`):'<div class="cell empty"></div>').join('')}</div>
+    return (eqPick?equipChooser(eqPick):'')
+    +`<div class="row"><span class="chip">🔶 Oridecon <b>${S.ore.ori}</b></span><span class="chip">🔷 Elunium <b>${S.ore.elu}</b></span></div><div class="row" style="margin-top:4px"><small class="${S.inv.length>=BAGMAX?'r0':''}">${S.inv.length}/${BAGMAX} items${S.inv.length>=BAGMAX?' &middot; BAG FULL':''}</small><button data-a="sellbelow" data-v="1">Sell Common/Fine</button><button data-a="sellbelow" data-v="2">Sell up to Rare</button></div>
+    <small>Selling pays a small flat amount - a bag dump never funds an upgrade.</small>
+    <div class="grid">${Array.from({length:n},(_,i)=>{const it=inv[i];if(!it)return'<div class="cell empty"></div>';
+      const on=!!(sel&&sel.id===it.id),fits=!!eqPick&&slotAccepts(eqPick,it);
+      // While a slot is being chosen, every item that fits it is ringed in green and equips on
+      // a click. Everything else behaves exactly like the normal bag, so viewing, selling, the
+      // detail card and the tooltips all keep working.
+      return fits?`<div class="cell b${dtier(it)}${on?' sel':''} fit" data-tip="${it.id}" aria-label="${iname(it)} - fits this slot, click to equip" data-a="eqpick" data-v="${it.id}:${eqPick}">${icon(it)}${it.r?`<i class="rf">+${it.r}</i>`:''}</div>`
+        :cell(it,on,`data-a="selb" data-v="${it.id}"`)}).join('')}</div>
     <div class="mob-card" style="margin-top:8px">${sel?itemDetail(sel)+`<div class="row" style="margin-top:6px"><button data-a="equip" data-v="${sel.id}" ${canUse(sel)?'':'disabled'}>Equip</button><button data-a="sell" data-v="${sel.id}">Sell ${sellVal(sel)}z</button></div>`:'<small>Click an item to see its stats. Hover for a quick tooltip.</small>'}</div>`},
   equip(){const c=C(),sel=S.eq[selE],pos={head:'grid-column:2;grid-row:1',weapon:'grid-column:1;grid-row:2',armor:'grid-column:2;grid-row:2',off:'grid-column:3;grid-row:2',acc1:'grid-column:1;grid-row:3',leg:'grid-column:2;grid-row:3',acc2:'grid-column:3;grid-row:3'};
     return`<div class="doll">${EQK.map(([k,l,ic])=>{const e=S.eq[k];return`<div class="cell b${e?dtier(e):0}${selE===k?' sel':''}" style="${pos[k]}" data-a="seleq" data-v="${k}" ${e?`data-tip="${e.id}"`:''}>${e?icon(e)+(e.r?`<i class="rf">+${e.r}</i>`:''):`<span style="opacity:.3">${ic}</span>`}<i class="rf" style="left:2px;right:auto;top:2px;bottom:auto;color:#fff;background:#3b2a1add;font-size:9px;font-style:normal">${l}</i></div>`}).join('')}</div>`
-    +(eqPick?equipChooser(eqPick):'')
-    +`<div class="mob-card">${sel?itemMain(sel)+cardSlots(sel,selE)+insertUI(sel)+refineUI(sel,selE)+`<div class="row" style="margin-top:6px"><button data-a="unequip" data-v="${selE}">Unequip</button></div>`:'<small>Click any slot above to choose what to wear there. Select one to inspect it, remove cards or refine.</small>'}</div>`
+    +`<div class="mob-card">${sel?itemMain(sel)+cardSlots(sel,selE)+insertUI(sel)+refineUI(sel,selE)+`<div class="row" style="margin-top:6px"><button data-a="unequip" data-v="${selE}">Unequip</button></div>`:'<small>Click any slot above to choose what to wear there (the Bag opens with the items that fit already highlighted). Select one to inspect it, remove cards or refine.</small>'}</div>`
     +`<small>Weapons: ${c.wt.join(', ')} &middot; ${canShield()?'Shield allowed':'No shield'}${dualOn()?' &middot; <b>Dual-wield: daggers/katars in both hands</b>':''}</small>`},
   cards(){const g={};S.cards.forEach(c=>(g[c.n]=g[c.n]||[]).push(c));const ks=Object.keys(g),sel=g[selC]?g[selC][0]:null;
     return`<div class="grid">${ks.map(n=>`<div class="cell b${GI[g[n][0].g]}${n===selC?' sel':''}" data-a="selc" data-v="${n}" data-tip="${g[n][0].id}">🃏<i class="rf">x${g[n].length}</i></div>`).join('')||'<small>No cards yet. Every monster drops its own card at a low chance.</small>'}</div>
@@ -1051,6 +1272,10 @@ const V={
   set(){const hair=((S.hair|0)%19+19)%19+1,sex=S.sex==='f'?'Female':'Male';return`<div class="hd">Appearance</div><div class="row"><button data-a="sex" data-v="m" aria-label="Choose male sprite" style="${S.sex==='f'?'':'background:#ffe08a'}">♂ Male</button><button data-a="sex" data-v="f" aria-label="Choose female sprite" style="${S.sex==='f'?'background:#ffe08a':''}">♀ Female</button></div>
   <div class="hair-preview-card"><div class="hair-preview-stage"><canvas id="hairPreview" width="126" height="134" role="img" aria-label="Live ${sex.toLowerCase()} ${S.cls} hair preview"></canvas><span class="hair-preview-loading" id="hairPreviewLoading">Loading sprite…</span></div><div class="hair-preview-info"><span class="eyebrow">LIVE PREVIEW</span><b>${S.cls}</b><span>${sex} &middot; front idle pose</span><span class="hair-style-label">Style ${hair} of 19</span></div></div>
   <div class="row hair-controls" style="margin-top:4px;align-items:center;gap:8px"><button data-a="hair" data-v="-1" aria-label="Previous hairstyle" title="Previous hairstyle">◀</button><span>Hair style ${hair} / 19</span><button data-a="hair" data-v="1" aria-label="Next hairstyle" title="Next hairstyle">▶</button></div><small>Preview updates here and on your character as you change hair or gender.</small>
+    <div class="hd" style="margin-top:10px">Damage numbers</div>
+    <div class="row"><button data-a="dmgshow" data-v="on" class="${S.dmgShow!==false?'on':''}" aria-pressed="${S.dmgShow!==false}">Show: On</button><button data-a="dmgshow" data-v="off" class="${S.dmgShow===false?'on':''}" aria-pressed="${S.dmgShow===false}">Show: Off</button></div>
+    <div class="row" style="margin-top:4px"><button data-a="dmgfmt" data-v="short" class="${S.dmgShort!==false?'on':''}" aria-pressed="${S.dmgShort!==false}">Short &middot; 100K / 1M</button><button data-a="dmgfmt" data-v="full" class="${S.dmgShort===false?'on':''}" aria-pressed="${S.dmgShort===false}">Full &middot; 100,000</button></div>
+    <small>The first switch shows or hides the floating combat numbers; the second picks how they read (100K / 1M, or every digit). Normal, critical and incoming damage all follow both, and both are saved with your account.</small>
     <div class="hd" style="margin-top:10px">Gameplay</div><label><input type="checkbox" data-a="auto" ${S.auto!==false?'checked':''}> Auto-equip better gear</label><br><label><input type="checkbox" data-a="adv" ${S.adv!==false?'checked':''}> Auto-advance to next level (turn off to farm)</label>
     <p><small>Drag the view to rotate, scroll to zoom. Hotkeys: M S J K B E C Q R L P O, Esc to close.</small></p><button class="full" data-a="reset">Erase this account's save &amp; restart</button><button class="full" data-a="logout">Logout</button>`},
   gm(){return`<div class="hd">GM multiplier (EXP, Job EXP, Zeny, quests)</div><div class="row">${[1,10,100,1000].map(x=>`<button data-a="gmx" data-v="${x}" ${S.gmx===x?'style="background:#ffe08a"':''}>x${x}</button>`).join('')}</div>
@@ -1074,13 +1299,15 @@ function slotAccepts(k,it){if(!it||it.card||it.ore||!S.inv.includes(it))return f
   if(k==='acc1'||k==='acc2')return it.slot==='acc';
   if(k==='off')return it.slot==='off'?canShield():it.slot==='weapon'&&dualOk(it);
   return it.slot===k}
+// Choosing a slot does not open a second window: it switches to the real Bag tab and highlights
+// the items that fit that slot (see V.bag0, which rings them green and wires the click to equip).
+// This banner is the header of that mode - what is being chosen, what is worn now, and how out.
 function equipChooser(k){
-  const cur=S.eq[k],list=S.inv.filter(it=>slotAccepts(k,it)).sort((a,b)=>ev(b)-ev(a));
-  const nm=EQK.find(x=>x[0]===k)||[,k,SLOTS.weapon.ic];
-  return`<div class="mob-card chooser"><div class="hd">${nm[2]} ${nm[1]} <small>&middot; ${list.length} ${nm[1].toLowerCase()} in your bag</small><button class="x" data-a="eqclose">&#10005;</button></div>
-  <small>${cur?`Now worn: <b class="r${cur.tier}">${iname(cur)}</b> (${SLOTS[cur.slot].stat} +${ev(cur)})`:'Nothing worn in this slot.'} &middot; your class may use ${C().wt.join(', ')}${k==='off'?(canShield()?' + shields':' + off-hand daggers/katars'):''}</small>
-  ${list.length?list.map(it=>{const d=ev(it)-ev(cur||{val:0});return`<div class="slot"><span class="cell b${dtier(it)}" style="width:30px;height:30px;font-size:16px;flex:none">${icon(it)}</span><span style="flex:1;min-width:0"><b class="r${it.tier}">${iname(it)}</b><br><small>${RAR[it.tier].n} ${SLOTS[it.slot].label}${it.wt?' ('+it.wt+')':''} &middot; ${SLOTS[it.slot].stat} +${ev(it)}${(it.cards||[]).length?' &middot; '+it.cards.length+' card(s)':''} ${d>0?`<b class="r1">(+${d} better)</b>`:d<0?`<b class="r0">(${d})</b>`:'<b class="r0">(same)</b>'}</small></span><button data-a="eqpick" data-v="${it.id}:${k}">Equip</button></div>`}).join(''):'<small>Nothing in your bag fits this slot.</small>'}
-  <div class="row" style="margin-top:6px">${cur?`<button data-a="unequip" data-v="${k}">Unequip ${nm[1].toLowerCase()}</button>`:''}<button data-a="eqopen" data-v="${k}">Open the Bag tab</button></div></div>`}
+  const cur=S.eq[k],fit=S.inv.filter(it=>slotAccepts(k,it)),nm=EQK.find(x=>x[0]===k)||[,k,SLOTS.weapon.ic];
+  const deltas=fit.slice(0,6).map(it=>{const d=ev(it)-ev(cur||{val:0});return`<b class="r${it.tier}">${iname(it)}</b> <b class="${d>0?'r1':'r0'}">(${d>0?'+':''}${d})</b>`}).join(' &middot; ');
+  return`<div class="mob-card chooser"><div class="hd">${nm[2]} Choosing a ${nm[1].toLowerCase()} <small>&middot; ${fit.length} highlighted item${fit.length===1?'':'s'} fit${fit.length?' below':''}</small><button class="x" data-a="eqclose">&#10005;</button></div>
+  <small>${cur?`Now worn: <b class="r${cur.tier}">${iname(cur)}</b> (${SLOTS[cur.slot].stat} +${ev(cur)})`:'Nothing worn in this slot.'} &middot; your class may use ${C().wt.join(', ')}${k==='off'?(canShield()?' + shields':' + off-hand daggers/katars'):''} &middot; click a green item to wear it; everything else in the bag can still be inspected or sold.</small>
+  ${fit.length?`<small style="display:block;margin-top:4px">Compared to what you wear: ${deltas}${fit.length>6?` &middot; +${fit.length-6} more`:''}</small>`:'<small style="display:block;margin-top:4px">Nothing in your bag fits this slot.</small>'}</div>`}
 function equipIn(k,id){const it=S.inv.find(x=>String(x.id)===String(id));
   if(!it)return;if(!slotAccepts(k,it)){log('Your class cannot use that there.');return}
   const old=S.eq[k];S.eq[k]=it;S.inv.splice(S.inv.indexOf(it),1);if(old)S.inv.push(old);
@@ -1092,10 +1319,14 @@ function renderQ(){const e=$('qp');if(!S){e.style.display='none';return}e.style.
   e.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:center;font-weight:bold"><span>📜 Quests</span><button data-q="t" style="padding:0 6px">${qOpen?'&minus;':'+'}</button></div>`+(qOpen?(S.q||[]).map((q,i)=>`<div style="margin-top:5px"><div>${qTxt(q)}</div><div class="pbar"><i style="width:${Math.min(100,q.prog/q.goal*100)}%"></i></div><div style="display:flex;justify-content:space-between;align-items:center"><small>${q.prog}/${q.goal} &middot; ${(q.z||0).toLocaleString()}z &middot; ${(q.xp||0).toLocaleString()}xp</small>${q.prog>=q.goal?`<button data-q="c${i}">Claim</button>`:''}</div></div>`).join(''):'')}
 $('qp').onclick=e=>{const b=e.target.closest('[data-q]');if(!b)return;const v=b.dataset.q;if(v==='t'){qOpen=!qOpen;renderQ()}else ACT.claim(v.slice(1))};
 function refineUI(it,k){const r=it.r||0,o=it.slot==='weapon'?'ori':'elu',c=refCost(it);return`<div class="sec">Refine</div><small>${SLOTS[it.slot].stat} +${ev(it)} &rarr; +${Math.round(it.val*(1+(r+1)*.15))} &middot; ${r>=10?'MAX':'Success '+refCh(it)+'% &middot; '+c.toLocaleString()+'z + 1 '+ORE[o]+' (you have '+S.ore[o]+')'}</small><div class="row" style="margin-top:4px"><button data-a="refine" data-v="${k}" ${r>=10||S.ore[o]<1||S.zeny<c?'disabled':''}>Refine</button></div>`}
-function petDetail(p){const sp=PETS[p.sp],g=p.mut,sk=p.sk||[1,2,3],ps=PET_SKILLS.find(x=>x.id===p.skill);
+function petDetail(p){const sp=PETS[p.sp],g=p.mut,sk=p.sk||[1,2,3],SL=petSkills(p);
   return`<div class="mob-card" style="margin-top:8px"><div class="hd r${RCL[sp.r]}">${petIcon(sp,true)} ${sp.n} <small>${RN[sp.r]}</small></div><small>Mutation: <b>${g?'Grade '+g+' (x'+MUT[g]+' dmg)':'none (x1)'}</b> &middot; ${petDmg(p).toLocaleString()} dmg every ${petInt(p).toFixed(2)}s</small>`
   +p.eq.map((t,i)=>`<div class="slot"><span><b>${PEQ[i].n} &middot; Level ${t}/${PT.length}</b> <small>(${t?PT[t-1]:'Untrained'})</small><br><small>${PEQ[i].d(t)}</small>${t<PT.length?`<br><small class="r0">${Math.round(PTG[t]*100)}% upgrade success &middot; ${t+2<=PT.length?Math.round(GREAT*100)+'% double upgrade chance on success':'double upgrade unavailable at this level'}</small>`:''}</span><button data-a="peq" data-v="${p.id}:${i}" ${t>=PT.length||S.zeny<peqCost(t)?'disabled':''}>${t>=PT.length?'MAX':'🎲 '+peqCost(t).toLocaleString()+'z'}</button></div>`).join('')
-  +`<div class="sec">Gacha pet skill</div><small>${ps?`<b>${ps.icon} ${ps.n}</b> &middot; ${ps.kind==='buff'?'Player buff':ps.kind==='aoe'?'AoE attack':'Single-target attack'} &middot; ${ps.desc}`:'No skill yet. Roll one of six random pet skills.'}</small><div class="row" style="margin-top:4px"><button data-a="pskill" data-v="${p.id}" ${S.zeny<petSkillCost(p)?'disabled':''}>🎲 ${ps?'Reroll skill':'Gacha skill'} (${petSkillCost(p).toLocaleString()}z)</button></div><small>Six equally weighted skills: 2 player buffs, 2 AoE attacks, 2 single-target attacks (1/6 each).</small>`
+  +`<div class="sec">Pet skills &middot; 2 slots</div>`
+  +[0,1].map(i=>{const q=SL[i];return q?`<small><b>${q.icon} ${q.n}</b> &middot; ${q.kind==='buff'?'Player buff':q.kind==='aoe'?'AoE attack':'Single-target attack'} &middot; ${q.desc}</small>`:`<small>Slot ${i+1}: <b class="r0">empty</b> - one gacha fills both slots.</small>`}).join('<br>')
+  +`<div class="row" style="margin-top:4px"><button data-a="pskill" data-v="${p.id}" ${S.zeny<petSkillCost(p)?'disabled':''}>🎲 ${SL.length?'Reroll both skills':'Gacha both skills'} (${petSkillCost(p).toLocaleString()}z)</button></div>`
+  +`<small>Eight equally weighted skills: 4 player buffs, 2 AoE attacks, 2 single-target attacks. One roll fills both slots and never repeats a skill; a pet uses one skill every ${PETGAP}s.</small>`
+  +`<small style="display:block;margin-top:4px">Player buffs last 30s on a 60s cooldown and <b>never stack</b> - while one is up another pet's copy is ignored, and the ATK and MATK buffs cannot run at the same time.</small>`
   +`<div class="row" style="margin-top:6px"><button data-a="pon" data-v="${p.id}">${p.on?'Remove from battle':'Send to battle'}</button><button data-a="prel" data-v="${p.id}">Release</button></div><div class="sec">Mutation</div>`
   +`<div class="row"><button data-a="proll" data-v="${p.id}" ${busy(p)?'disabled':''}>🎲 Roll (${rollCost(p).toLocaleString()}z)</button><button data-a="pauto" data-v="${p.id}" ${p.roll||(rollingSet.has(p.id)&&!autoSet.has(p.id))?'disabled':''}>${autoSet.has(p.id)?'⏹ Stop auto':'🔁 Auto roll'}</button></div>`
   +`<small>Auto-roll: tap a grade to skip it (✕) or stop on it (✓)</small><div class="row gt">${[1,2,3,4,5,6].map(x=>`<button data-a="psk" data-v="${p.id}:${x}" class="${sk.includes(x)?'':'on'}">G${x} ${sk.includes(x)?'✕':'✓'}</button>`).join('')}</div>`
@@ -1113,7 +1344,10 @@ function renderWin(){
   host.innerHTML=tabs.map(k=>`<div class="win wp${k==='map'?' wide':''}" data-win="${k}"><div class="title"><span>${TABS[k][1]}</span><button data-x="${k}">&#10005;</button></div><div class="body wbody">${V[k]()}</div></div>`).join('');
   host.querySelectorAll('[data-win]').forEach(e=>{e.querySelector('.wbody').scrollTop=e.dataset.win==='log'?1e6:(old[e.dataset.win]||0)});
   if(tabs.includes('set'))drawHairPreview()}
-const MAX_TABS=3;const openTab=k=>{if(k==='gm'&&!S.gm)return;if(k!=='status')eqPick=null;const i=tabs.indexOf(k);if(i>=0)tabs.splice(i,1);else{if(tabs.length>=MAX_TABS)tabs.shift();tabs.push(k);if(k==='map'){mapM=S.mp;mapL=S.lvl}}renderWin()};
+const MAX_TABS=3;const openTab=k=>{if(k==='gm'&&!S.gm)return;if(k!=='status')eqPick=null;const i=tabs.indexOf(k);if(i>=0)tabs.splice(i,1);else{if(tabs.length>=MAX_TABS)tabs.shift();tabs.push(k);
+  // Reopening a window starts at its first sub-tab: Status shows Stats, Inventory shows Bag.
+  if(k==='status')sub.status='stats';if(k==='bag')sub.bag='bag';
+  if(k==='map'){mapM=S.mp;mapL=S.lvl}}renderWin()};
 const gotoField=(m,l)=>{S.mp=m;S.lvl=l;S.kl=0;mobs=[];mob=null;respawn=.3;pend=[];qRefresh();ui();save()};
 const ACT={
   selm:v=>{mapM=+v;mapL=Math.min(mapL,Math.max(1,S.prog[mapM]));renderWin()},sell_:v=>{mapL=+v;renderWin()},go:()=>{if(mapL<=S.prog[mapM]){gotoField(mapM,mapL);log(`Traveled to ${fieldName()}.`)}},
@@ -1127,17 +1361,25 @@ const ACT={
     S.sk[id]=nx;ui();save()},
   rskill:()=>{if(S.zeny<rcost())return log('Not enough Zeny to reset skills.');S.zeny-=rcost();S.sk={aid:1};S.skOff={};log('Skills reset; every skill auto-casts again.');ui();save()},
   selb:v=>{selB=v;renderWin()},equip:id=>equip(+id),sell:id=>sell(id),sellbelow:v=>{S.inv.filter(i=>i.tier<=+v).slice().forEach(i=>sell(i.id))},
+  // Clicking a green bag tile wears it; the highlight mode stays on so several pieces can be
+  // compared, and closing it is the ✕ on the banner (eqclose).
   eqpick:v=>{const[id,k]=v.split(':');equipIn(k,id)},
   eqclose:()=>{eqPick=null;renderWin()},
   eqopen:k=>{eqPick=null;sub.bag='bag';if(!tabs.includes('bag')){if(tabs.length>=MAX_TABS)tabs.shift();tabs.push('bag')}selB=S.eq[k]?S.eq[k].id:null;renderWin()},
   selc:v=>{selC=v;renderWin()},
   sock:v=>{const[id,k]=v.split(':'),i=S.cards.findIndex(c=>String(c.id)===id),e=S.eq[k];if(i<0||!e||(e.cards||[]).length>=(e.slots||0))return;if(CFIT[S.cards[i].stat]!==grp(e)){log('That card cannot be fitted into this type of equipment.');return}e.cards=e.cards||[];e.cards.push(S.cards.splice(i,1)[0]);S.hp=Math.min(S.hp,maxHp());ui();save()},
   unsock:v=>{const[k,i]=v.split(':'),e=S.eq[k];if(!e)return;const c=e.cards[+i],p=200*(c.g+1);if(S.zeny<p)return log('Not enough Zeny to remove the card.');S.zeny-=p;e.cards.splice(+i,1);S.cards.push(c);S.hp=Math.min(S.hp,maxHp());ui();save()},
-  sellcard:id=>{const i=S.cards.findIndex(c=>String(c.id)===id);if(i<0)return;const c=S.cards.splice(i,1)[0];S.zeny+=c.v*150;ui();save()},
+  sellcard:id=>{const i=S.cards.findIndex(c=>String(c.id)===id);if(i<0)return;const c=S.cards.splice(i,1)[0];earnZeny(c.v*150);ui();save()},
   refine:k=>refine(k),sub:v=>{const[t,k]=v.split(':');sub[t]=k;renderWin()},selp:v=>{selP=+v;renderWin()},
   pon:id=>{const p=gp(id);if(!p)return;if(p.on)p.on=false;else if(S.pets.filter(x=>x.on).length<3)p.on=true;else log('Only 3 pets can fight at once. Remove one first.');ui();save()},
-  pskill:id=>{const p=gp(id);if(!p)return;const c=petSkillCost(p);if(S.zeny<c){log('Not enough Zeny for a pet skill roll.');ui();return}S.zeny-=c;const skill=rollPetSkill();p.skill=skill.id;delete petSkillCd[p.id];log(`${PETS[p.sp].n} learned ${skill.n}: ${skill.desc}.`,'r3');ui();save()},
-  psk:v=>{const[id,g]=v.split(':'),p=gp(id);if(!p)return;const a=(p.sk||[1,2,3]).slice(),i=a.indexOf(+g);if(i>=0)a.splice(i,1);else a.push(+g);p.sk=a;ui();save()},ssel:v=>{selS=v;renderWin()},seleq:v=>{selE=v;eqPick=v;renderWin()},
+  pskill:id=>{const p=gp(id);if(!p)return;const c=petSkillCost(p);if(S.zeny<c){log('Not enough Zeny for a pet skill roll.');ui();return}S.zeny-=c;const[a,b]=rollPetSkills();p.skills=[a,b];
+    clearPetCd(p.id);
+    const na=PET_SKILLS.find(s=>s.id===a),nb=PET_SKILLS.find(s=>s.id===b);
+    log(`${PETS[p.sp].n} learned ${na.n} + ${nb.n} (one gacha rolls both slots).`,'r3');ui();save()},
+  psk:v=>{const[id,g]=v.split(':'),p=gp(id);if(!p)return;const a=(p.sk||[1,2,3]).slice(),i=a.indexOf(+g);if(i>=0)a.splice(i,1);else a.push(+g);p.sk=a;ui();save()},ssel:v=>{selS=v;renderWin()},
+  // Clicking an equipment slot highlights the fitting items in the REAL Bag window (it is opened
+  // if it is not already up) instead of popping a second list over the paper doll.
+  seleq:v=>{selE=v;eqPick=v;sub.bag='bag';if(!tabs.includes('bag')){if(tabs.length>=MAX_TABS)tabs.shift();tabs.push('bag')}renderWin()},
   sktog:id=>{if(!S.skOff)S.skOff={};const s=SKILLS.find(x=>x.id===id);if(!s)return;
     if(S.skOff[id])delete S.skOff[id];else S.skOff[id]=1;
     log(s.n+': auto-cast '+(S.skOff[id]?'OFF - you will not use it':'ON')+'.',S.skOff[id]?'r0':'r3');ui();save()},
@@ -1152,14 +1394,16 @@ const ACT={
     ui();save()},
   proll:id=>{const p=gp(id);if(!p||p.roll||rollingSet.has(p.id))return;rollOnce(p,false,g=>{p.roll=g;log(`Mutation roll: Grade ${g} (x${MUT[g]})`,g>=4?'r4':'r0');ui();save()})},pauto:id=>{const p=gp(id);if(!p)return;if(autoSet.has(p.id)){autoSet.delete(p.id);ui();return}if(p.roll||rollingSet.has(p.id))return;if((p.sk||[1,2,3]).length>=6){log('Un-skip at least one grade to auto-roll.');return}autoSet.add(p.id);autoRoll(p)},
   pkeep:id=>{const p=gp(id);if(p){p.mut=p.roll;p.roll=0;ui();save()}},pdisc:id=>{const p=gp(id);if(p){p.roll=0;ui();save()}},
-  prel:id=>{const p=gp(id);if(!p)return;const z=Math.floor(EGG*.3);ask(`Release ${PETS[p.sp].n}? You get ${z}z back.`,()=>{S.pets=S.pets.filter(x=>x!==p);autoSet.delete(p.id);delete petSkillCd[p.id];S.zeny+=z;ui();save()})},
-  claim:i=>{const q=S.q[+i];if(q&&q.prog>=q.goal){qScale(q);S.zeny+=(q.z||0);S.exp+=(q.xp||0);log(`Quest complete! +${(q.z||0).toLocaleString()}z, +${(q.xp||0).toLocaleString()} EXP`,'r3');S.q[+i]=newQuest(q.type);checkLevel();ui();save()}},
-  auto:()=>{S.auto=S.auto===false;ui()},adv:()=>{S.adv=S.adv===false;ui()},logout:()=>logout(),
+  prel:id=>{const p=gp(id);if(!p)return;const z=Math.floor(EGG*.3);ask(`Release ${PETS[p.sp].n}? You get ${z}z back.`,()=>{S.pets=S.pets.filter(x=>x!==p);autoSet.delete(p.id);clearPetCd(p.id);earnZeny(z);ui();save()})},
+  claim:i=>{const q=S.q[+i];if(q&&q.prog>=q.goal){qScale(q);earnZeny(q.z||0);S.exp+=(q.xp||0);log(`Quest complete! +${(q.z||0).toLocaleString()}z, +${(q.xp||0).toLocaleString()} EXP`,'r3');S.q[+i]=newQuest(q.type);checkLevel();ui();save()}},
+  auto:()=>{S.auto=S.auto===false;ui()},adv:()=>{S.adv=S.adv===false;ui()},
+  dmgfmt:v=>{S.dmgShort=v!=='full';log('Damage numbers: '+(S.dmgShort?'short (100K / 1M)':'full (100,000)'));ui();save()},
+  dmgshow:v=>{S.dmgShow=v!=='off';log('Damage numbers '+(S.dmgShow?'shown':'hidden')+'.');ui();save()},logout:()=>logout(),
   hair:v=>{S.hair=(((S.hair|0)+(+v||1))%19+19)%19;heroKey='';ui();save()},
   sex:v=>{S.sex=v==='f'?'f':v==='m'?'m':(S.sex==='f'?'m':'f');heroKey='';log(`Appearance: ${S.sex==='f'?'female':'male'}.`);ui();save()},
-  reset:()=>{ask('Erase this account save and start over?',()=>{const gm=S.gm;hudRate=null;S=fresh();S.gm=gm;S.q=['kill','loot','boss'].map(newQuest);floats.forEach(f=>f.el&&f.el.remove());floats=[];drops=[];pend=[];mobs=[];mob=null;respawn=.3;logs=[];log('New adventure started.');ui();save()})},
+  reset:()=>{ask('Erase this account save and start over?',()=>{const gm=S.gm;hudRate=null;zenyEarned=0;S=fresh();S.gm=gm;S.q=['kill','loot','boss'].map(newQuest);floats.forEach(f=>f.el&&f.el.remove());floats=[];drops=[];pend=[];mobs=[];mob=null;respawn=.3;logs=[];log('New adventure started.');ui();save()})},
   gmx:v=>{S.gmx=+v;ui();save()},gmz:()=>{S.zeny+=1e6;ui();save()},gmo:()=>{S.ore.ori+=20;S.ore.elu+=20;ui();save()},gml:()=>{S.lv=Math.min(150,S.lv+10);S.pts+=30;S.hp=maxHp();ui();save()},
-  gmj:()=>{const j=jobOf();j.jl=C().mj;j.jx=0;ui();save()},gmu:()=>{S.prog=MAPS.map(()=>10);ui();save()},gmp:v=>{if(S.pets.length>=40)S.pets.shift();const c=PETS.filter(x=>x.r===+v);S.pets.push({id:ri(1e6,9e6),sp:PETS.indexOf(c[ri(0,c.length-1)]),mut:0,eq:[0,0,0],skill:'',on:S.pets.filter(x=>x.on).length<3});ui();save()},gmm:v=>{S.pets.forEach(p=>p.mut=+v);ui();save()},gmc:()=>{S.pets=[];ui();save()}};
+  gmj:()=>{const j=jobOf();j.jl=C().mj;j.jx=0;ui();save()},gmu:()=>{S.prog=MAPS.map(()=>10);ui();save()},gmp:v=>{if(S.pets.length>=40)S.pets.shift();const c=PETS.filter(x=>x.r===+v);S.pets.push({id:ri(1e6,9e6),sp:PETS.indexOf(c[ri(0,c.length-1)]),mut:0,eq:[0,0,0],skills:[],on:S.pets.filter(x=>x.on).length<3});ui();save()},gmm:v=>{S.pets.forEach(p=>p.mut=+v);ui();save()},gmc:()=>{S.pets=[];ui();save()}};
 $('dock').onclick=e=>{const b=e.target.closest('[data-t]');if(b)openTab(b.dataset.t)};
 $('wins').onclick=e=>{const x=e.target.closest('[data-x]');if(x){openTab(x.dataset.x);return}const b=e.target.closest('[data-a]');if(b&&b.dataset.a==='ssel'&&e.target.closest('.sk-autocast'))return;if(b&&!b.disabled&&ACT[b.dataset.a])ACT[b.dataset.a](b.dataset.v)};
 addEventListener('keydown',e=>{if(!S||e.ctrlKey||e.metaKey||e.altKey||/INPUT|TEXTAREA/.test(e.target.tagName))return;const k=e.key.toUpperCase();if(k==='ESCAPE'){tabs.pop();renderWin();return}if(k==='Q'){qOpen=!qOpen;renderQ();return}const X={E:['status','equip'],C:['bag','cards'],R:['status','equip']}[k];if(X){const same=tabs.includes(X[0])&&sub[X[0]]===X[1];sub[X[0]]=X[1];if(same)openTab(X[0]);else{if(!tabs.includes(X[0])){if(tabs.length>=MAX_TABS)tabs.shift();tabs.push(X[0])}renderWin()}return}const f=Object.entries(TABS).find(([,v])=>v[2]===k);if(f)openTab(f[0])});
@@ -1168,42 +1412,65 @@ const tip=$('tooltip');
 document.addEventListener('mouseover',e=>{const c=S&&e.target.closest&&e.target.closest('[data-tip]');if(!c){tip.style.display='none';return}const it=find(c.dataset.tip);if(!it){tip.style.display='none';return}
   tip.innerHTML=itemDetail(it);tip.style.display='block'});
 document.addEventListener('mousemove',e=>{tip.style.left=Math.min(innerWidth-240,e.clientX+14)+'px';tip.style.top=Math.min(innerHeight-200,e.clientY+14)+'px'});
-// HUD rates use a rolling 60-second wall-clock window, independent of saved lifetime totals.
-// Positive Zeny changes count as earnings; spending does not make the displayed rate negative.
-const HUD_RATE_WINDOW=60000,HUD_RATE_SAMPLE=1000;
-function stepHudRate(rate,user,kills,zeny,now){
-  const k=Math.max(0,Math.floor(Number(kills)||0)),z=Math.max(0,Number(zeny)||0);
-  if(!rate||rate.user!==user||now<rate.lastSampleAt||now-rate.lastSampleAt>HUD_RATE_WINDOW)
-    rate={user,lastSampleAt:now,lastKills:k,lastZeny:z,totalKills:0,totalZeny:0,samples:[{at:now,kills:0,zeny:0}]};
+// Record positive kills and Zeny credits against real elapsed time. Display both rolling
+// 60-second rates once a second; on a long browser stall, discard stale history rather
+// than treating 10 minutes of paused frames as one second of furious combat.
+const HUD_RATE_WINDOW=60000,HUD_IDLE_RESET=30000,HUD_RATE_REFRESH=1000;
+function stepHudRate(rate,user,kills,earned,now){
+  const k=Math.max(0,Math.floor(Number(kills)||0)),z=Math.max(0,Number(earned)||0);
+  if(!rate||rate.user!==user||now<rate.lastAt||now-rate.lastAt>HUD_IDLE_RESET||k<rate.lastKills||z<rate.lastEarned)
+    rate={user,lastAt:now,lastSampleAt:now,lastKills:k,lastEarned:z,started:now,killsPerMin:0,zenyPerMin:0,killsEvents:[],events:[]};
   else{
-    rate.totalKills+=Math.max(0,k-rate.lastKills);rate.totalZeny+=Math.max(0,z-rate.lastZeny);
-    rate.lastKills=k;rate.lastZeny=z;
-    if(now-rate.lastSampleAt>=HUD_RATE_SAMPLE){rate.samples.push({at:now,kills:rate.totalKills,zeny:rate.totalZeny});rate.lastSampleAt=now}
+    const dk=k-rate.lastKills,dz=z-rate.lastEarned;
+    if(dk)rate.killsEvents.push({at:now,amount:dk});
+    if(dz)rate.events.push({at:now,amount:dz});
+    rate.lastKills=k;rate.lastEarned=z;rate.lastAt=now;
+    if(now-rate.lastSampleAt>=HUD_RATE_REFRESH){
+      while(rate.killsEvents.length&&rate.killsEvents[0].at<=now-HUD_RATE_WINDOW)rate.killsEvents.shift();
+      while(rate.events.length&&rate.events[0].at<=now-HUD_RATE_WINDOW)rate.events.shift();
+      const elapsed=Math.max(HUD_RATE_REFRESH,Math.min(HUD_RATE_WINDOW,now-rate.started));
+      rate.killsPerMin=rate.killsEvents.reduce((sum,e)=>sum+e.amount,0)*HUD_RATE_WINDOW/elapsed;
+      rate.zenyPerMin=rate.events.reduce((sum,e)=>sum+e.amount,0)*HUD_RATE_WINDOW/elapsed;
+      rate.lastSampleAt+=HUD_RATE_REFRESH*Math.floor((now-rate.lastSampleAt)/HUD_RATE_REFRESH);
+    }
   }
-  const cutoff=now-HUD_RATE_WINDOW;
-  while(rate.samples.length>1&&rate.samples[1].at<=cutoff)rate.samples.shift();
-  const base=rate.samples[0],elapsed=Math.max(1000,now-base.at);
-  return{state:rate,kills:(rate.totalKills-base.kills)*HUD_RATE_WINDOW/elapsed,zeny:(rate.totalZeny-base.zeny)*HUD_RATE_WINDOW/elapsed};
+  return{state:rate,kills:rate.killsPerMin,seconds:rate.killsPerMin/60,zeny:rate.zenyPerMin};
 }
-function bars(){if(!S)return;const rates=stepHudRate(hudRate,currentUser,S.kills,S.zeny,performance.now());hudRate=rates.state;const j=jobOf(),c=C();
+const levelPct=(value,required,maxed=false)=>maxed?100:Math.min(100,Math.max(0,(+value||0)/Math.max(1,+required||1)*100));
+function bars(){if(!S)return;
+  const rates=stepHudRate(hudRate,currentUser,S.kills,zenyEarned,performance.now());hudRate=rates.state;
+  const j=jobOf(),c=C(),hp=levelPct(S.hp,maxHp()),jp=levelPct(j.jx,jneed(j.jl),j.jl>=c.mj),bp=levelPct(S.exp,need(),S.lv>=150);
   $('lv').textContent=S.lv;$('cls2').textContent=S.cls;$('jl').textContent=j.jl;$('zeny').textContent=(+S.zeny||0).toLocaleString();
   $('kills').textContent=rates.kills.toFixed(1);
-  if(hudRate.titleAt!==hudRate.lastSampleAt){
-    $('zeny').title=`Zeny earned per minute (rolling 60s): ${Math.round(rates.zeny).toLocaleString()}z`;
-    $('kills').title=`Kills per minute (rolling 60s): ${rates.kills.toFixed(1)}`;hudRate.titleAt=hudRate.lastSampleAt;
+  $('kills').title=`Kills/min (last 60s, refreshed every second): ${rates.kills.toFixed(1)} · ${rates.seconds.toFixed(2)} kills/sec`;
+  $('zenyRate').textContent=`Zeny earned: ${Math.round(rates.zeny).toLocaleString()}/min (last 60s)`;
+  // One chip per active pet buff, naming the pet that cast it - this is where the no-stacking
+  // rule is visible, next to the countdown.
+  const pbf=[['atk','&#9876; ATK +20%'],['matk','&#10022; MATK +20%'],['hp','&#128156; Max HP +20%'],['leech','&#129704; 5% leech']].filter(([k])=>petBuff[k]>0)
+    .map(([k,l])=>`<span class="pbf">${l} <i>${petBuffSrc[k]||'pet'}</i> ${Math.ceil(petBuff[k+'T'])}s</span>`).join('');
+  const hb=$('hudBuffs');if(hb){hb.style.display=pbf?'flex':'none';hb.innerHTML=pbf}
+  $('hpb').style.width=hp+'%';$('hpb').classList.toggle('critical',hp<=30);
+  $('hpPct').textContent=Math.round(hp)+'%';$('hpMeter').setAttribute('aria-valuenow',Math.round(hp));
+  for(const[id,label,pct,lv]of[['job','Job Level',jp,j.jl],['base','Base Level',bp,S.lv]]){
+    const text=pct.toFixed(1)+'%',track=$(id+'Track');
+    $(id==='job'?'jb':'xpb').style.width=pct+'%';$(id+'Pct').textContent=text;$(id+'Label').textContent=(id==='job'?'Job':'Base')+' Lv '+lv;
+    track.title=label+' '+lv+': '+text+(pct>=100?' (MAX)':' to next level');
+    track.setAttribute('aria-valuenow',pct.toFixed(1));track.setAttribute('aria-valuetext',track.title);
   }
-  $('hpb').style.width=Math.max(0,S.hp/maxHp()*100)+'%';$('jb').style.width=(j.jl>=c.mj?100:j.jx/jneed(j.jl)*100)+'%';$('xpb').style.width=S.exp/need()*100+'%'}
+}
 function ui(){if(!S)return;bars();$('stageTitle').textContent=fieldName()+(isBoss()?' (Boss map)':'');$('grindStatus').textContent=S.lvl<S.prog[S.mp]?'🔄 Farming':'✨ Frontier';renderWin()}
 
 function update(dt){
   if(!S)return;t+=dt;atkAnim=Math.max(0,atkAnim-dt*2.35);hitAnim=Math.max(0,hitAnim-dt*4);shake=Math.max(0,shake-dt*20);
   for(const k in skCd)skCd[k]=Math.max(0,skCd[k]-dt);
   for(const id in petSkillCd)petSkillCd[id]=Math.max(0,petSkillCd[id]-dt);
-  for(const stat of['atk','matk']){const key=stat+'T';if(petBuff[key]>0){petBuff[key]=Math.max(0,petBuff[key]-dt);if(!petBuff[key])petBuff[stat]=0}}
+  for(const id in petNote)petNote[id]=Math.max(0,petNote[id]-dt);
+  for(const stat of['atk','matk','hp','leech']){const key=stat+'T';if(petBuff[key]>0){petBuff[key]=Math.max(0,petBuff[key]-dt);
+    if(!petBuff[key]){petBuff[stat]=0;petBuffSrc[stat]='';if(stat==='hp')S.hp=Math.min(S.hp,maxHp())}}}
   if(pv('hpreg')&&S.hp<maxHp())S.hp=Math.min(maxHp(),S.hp+dt*maxHp()*pv('hpreg')/100);
   shots.forEach(s=>s.t+=dt*7);shots=shots.filter(s=>{if(s.t<1)return true;if(s.m)scene.remove(s.m);return false});
   tickSkillFx(dt);
-  if(skillOn('aid')&&S.hp<maxHp()*.5&&(skCd.aid||0)<=0){skCd.aid=6;const h=Math.ceil(maxHp()*(.1+.05*lv('aid')));S.hp=Math.min(maxHp(),S.hp+h);playSkillFx('aid',null,'#7dff7d');addFloat(pl.x,2.6,pl.z,'+'+h,'#7dff7d')}
+  if(skillOn('aid')&&S.hp<maxHp()*.5&&(skCd.aid||0)<=0){skCd.aid=6;const h=Math.ceil(maxHp()*(.1+.05*lv('aid')));S.hp=Math.min(maxHp(),S.hp+h);playSkillFx('aid',null,'#7dff7d');skillNameFloat('First Aid');addFloat(pl.x,2.6,pl.z,'+'+h,'#7dff7d')}
   for(let i=pend.length-1;i>=0;i--){const p=pend[i];p.t-=dt;if(p.t<=0){pend.splice(i,1);strike(p.m,p.col,!!p.magic);shot(p.col);if(mob&&mob.hp<=0){kill();break}}}
   // a timed tradeoff buff ticks down, drains HP if it says so, and clears when it expires
   // tb.t is undefined until the first cast, so every read of it defaults to 0. Without that,
@@ -1228,7 +1495,7 @@ function update(dt){
     if(cand.length){const s=cand[0],L=lv(s.id);skCd[s.id]=s.cd;
       tb={atk:(s.to.atk||Z)(L),aspd:(s.to.aspd||Z)(L),def:(s.to.def||Z)(L),drain:(s.to.drain||Z)(L),
           t:(s.to.dur||Z)(L),n:s.n};
-      log(s.n+'! '+s.d(L),'r4');playSkillFx(s.id,null,s.col);addFloat(pl.x,3.2,pl.z,s.n,s.col,true)}}
+      log(s.n+'! '+s.d(L),'r4');playSkillFx(s.id,null,s.col);skillNameFloat(s.n)}}
   let tx=0,tz=Z1-1.5,reach=1.4;
   if(!mobs.length){respawn-=dt;if(respawn<=0)spawn();
     // roam: pick a fresh spot when the timer runs out or the current one is reached
@@ -1238,25 +1505,25 @@ function update(dt){
     const rng=C().rng;
     for(const m of mobs){
       m.spawn=Math.min(1,m.spawn+dt*3);m.flash=Math.max(0,(m.flash||0)-dt*6);m.atkAnim=Math.max(0,(m.atkAnim||0)-dt*2.35);
-      const ms=2.6+.3*m.size,wake=m.boss||Math.hypot(pl.x-m.x,pl.z-m.z)<AGGRO;
+      const ms=2.6+.3*m.size,wake=m.pack===activePack&&(isBoss()||Math.hypot(pl.x-m.x,pl.z-m.z)<AGGRO);
       const gx2=wake?pl.x+Math.cos(m.a)*ms:m.hx,gz2=wake?pl.z+Math.sin(m.a)*ms*.6:m.hz;
       const ex=gx2-m.x,ez=gz2-m.z,ed=Math.hypot(ex,ez);const stn=m.stun>0;m.run=ed>.12&&!stn;
       if(ed>.1&&!stn){const v=Math.min(ed,dt*(m.boss?1.2:1.6)*(wake?1:.55));m.x+=ex/ed*v;m.z+=ez/ed*v}
       m.x=cl(m.x,-BX_,BX_);m.z=cl(m.z,Z0,Z1);m.ry=Math.atan2(pl.z-m.z,m.x-pl.x);
-      if(Math.hypot(pl.x-m.x,pl.z-m.z)<=ms+.4&&!stn){m.at-=dt;if(m.at<=0){m.at=m.boss?1.2:1.5;
+      if(wake&&Math.hypot(pl.x-m.x,pl.z-m.z)<=ms+.4&&!stn){m.at-=dt;if(m.at<=0){m.at=m.boss?1.2:1.5;
         if(Math.random()*100<flee())addFloat(pl.x,2.4,pl.z,'Miss','#8cf');
-        else{const d=Math.max(1,Math.round(m.atk*rnd(.8,1.2)-(m.mag?mdef():def())*.6));S.hp-=d;hitAnim=1;m.atkAnim=1;addFloat(pl.x,2.4,pl.z,d,m.mag?'#c08cff':'#ff6b6b');
+        else{const d=Math.max(1,Math.round(m.atk*rnd(.8,1.2)-(m.mag?mdef():def())*.6));S.hp-=d;hitAnim=1;m.atkAnim=1;damageFloat(pl.x,2.4,pl.z,d,false,true);
           // Defeat is the ONE thing that puts you back at the spawn point.
 if(S.hp<=0){log('You were defeated... knocked back to the entrance.','r0');S.hp=maxHp();S.kl=0;mobs=[];mob=null;respawn=1.5;pend=[];tb={};
           pl.x=0;pl.z=Z1-1.5;pl.wt=0;ui();return}}}}
     }
-    if(!mob||!mobs.includes(mob)){mob=null;let bd=1e9;for(const m of mobs){const d=Math.hypot(m.x-pl.x,m.z-pl.z);if(d<bd){bd=d;mob=m}}}
+    if(!mob||!mobs.includes(mob)||mob.pack!==activePack)mob=mobs.find(m=>m.boss)||packMob();
     if(mob){reach=rng?3:1.2+.45*mob.size;pl.orb+=dt*.8;const r=rng?3:reach*.8;tx=mob.x+Math.cos(pl.orb)*r;tz=mob.z+Math.sin(pl.orb)*r;
       const dist=Math.hypot(mob.x-pl.x,mob.z-pl.z)||.01;
       if(dist<=reach+.6||(dist<=5&&skillOn('soulb')&&(skCd.soulb||0)<=0)){pAtkT-=dt;if(pAtkT<=0){playerAttack();if(mob&&mob.hp<=0){kill();return}}}}
   }
   const AP=S.pets.filter(p=>p.on);for(const p of AP){const r=petR[p.id]||(petR[p.id]={x:pl.x-1,z:pl.z+1,at:rnd(0,1)}),i=AP.indexOf(p);let o=null,bd=1e9;
-    for(const m of mobs){const d=Math.hypot(m.x-r.x,m.z-r.z);if(d<bd){bd=d;o=m}}
+    for(const m of mobs){if(m.pack!==activePack)continue;const d=Math.hypot(m.x-r.x,m.z-r.z);if(d<bd){bd=d;o=m}}
     const ex=(o?o.x+(i-1)*.8:pl.x-1.2)-r.x,ez=(o?o.z+1.2:pl.z+(i-1)*1.1)-r.z,ed=Math.hypot(ex,ez);r.run=ed>.2;
     if(ed>.05){const v=Math.min(ed,6*dt);r.x+=ex/ed*v;r.z+=ez/ed*v}r.x=cl(r.x,-BX_,BX_);r.z=cl(r.z,Z0-1,Z1+1);r.lunge=Math.max(0,(r.lunge||0)-dt*4);
     if(o&&bd<2.4){r.at-=dt;if(r.at<=0){r.at=petInt(p);r.lunge=1;petHit(p,o)}}}
@@ -1266,7 +1533,7 @@ if(S.hp<=0){log('You were defeated... knocked back to the entrance.','r0');S.hp=
   if(mob)pl.ry=-Math.atan2(mob.z-pl.z,mob.x-pl.x);else if(pl.run)pl.ry=-Math.atan2(pz,px);
   if(S.hp<maxHp()&&Math.floor(t*2)!==Math.floor((t-dt)*2))S.hp=Math.min(maxHp(),S.hp+Math.ceil(maxHp()*.008));
   barT-=dt;if(barT<=0){barT=.15;bars()}
-  floats.forEach(f=>{f.life-=dt*1.1;f.y+=dt*.8});floats=floats.filter(f=>{if(f.life>0)return true;if(f.el)f.el.remove();return false});
+  floats.forEach(f=>{f.life-=dt*1.1;if(f.kind!=='skill')f.y+=dt*(f.kind==='damage'||f.kind==='critical'||f.kind==='incoming' ? .3 : .8)});floats=floats.filter(f=>{if(f.life>0)return true;if(f.el)f.el.remove();return false});
   drops.forEach(d=>{d.t+=dt;d.vy+=700*dt;d.y+=d.vy*dt;if(d.y>0){d.y=0;d.vy=-d.vy*.4;if(Math.abs(d.vy)<40)d.vy=0}});
   for(let i=drops.length-1;i>=0;i--)if(drops[i].t>.9){collect(drops[i].it);drops.splice(i,1)}
 }
@@ -1294,7 +1561,7 @@ function mk(p,geo,c,x=0,y=0,z=0){const m=new THREE.Mesh(geo,M(c));m.position.set
 
 scene.add(new THREE.HemisphereLight(0xffffff,0x6a9a55,.8));
 const sun=new THREE.DirectionalLight(0xfff2cc,.9);sun.position.set(-9,22,9);sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);
-Object.assign(sun.shadow.camera,{left:-22,right:22,top:28,bottom:-28});sun.target.position.set(0,0,-5);scene.add(sun.target);scene.add(sun);
+Object.assign(sun.shadow.camera,{left:-38,right:38,top:45,bottom:-45});sun.target.position.set(0,0,-5);scene.add(sun.target);scene.add(sun);
 
 const ground=new THREE.Mesh(new THREE.PlaneGeometry(90,90),M(0x6cbf5a));ground.rotation.x=-Math.PI/2;ground.receiveShadow=true;scene.add(ground);
 const road=new THREE.Mesh(new THREE.PlaneGeometry(22,10.5),M(0xd8cdb4));road.rotation.x=-Math.PI/2;road.position.set(0,.01,.4);road.receiveShadow=true;scene.add(road);
@@ -1336,7 +1603,7 @@ for(const[lx,lz]of[[-3,-3.6],[3,-3.6],[0,-6.4],[0,-.8]]){mk(scene,CY(.07,.09,2.2
 const townObjs=scene.children.slice(town0),deco=new THREE.Group();scene.add(deco);
 // Prontera is scenery, not a maze: the whole set moves back behind the far edge so you run
 // up an open avenue with the city on the skyline instead of fighting inside the cathedral.
-const TZ=-18;townObjs.forEach(o=>{o.position.z+=TZ});road.position.z+=TZ;
+const TZ=Z0-8;townObjs.forEach(o=>{o.position.z+=TZ});road.position.z+=TZ;
 // [kind,main colour,trunk colour,extras]; kinds 0 round tree,1 conifer,2 tall pole,3 cactus,
 // 4 crystal,5 slab,6 bamboo cluster,7 bush,8 boulder.
 // `extras` is what makes each map a different PLACE rather than a different colour:
@@ -1383,9 +1650,12 @@ function landmark(G,k,c1,c2,r){
   else if(k===7){mk(G,SP(1.1),c1,0,.9,0);mk(G,SP(.75),c1,.8,.7,.3);mk(G,SP(.6),c1,-.7,.6,-.3);mk(G,CY(.1,.14,.6),c2,0,.35,0)}
   else{mk(G,BX(2.2,1.6,1.8),c1,0,.8,0);mk(G,BX(1.5,1.1,1.3),c1,1.1,1.5,.4);mk(G,BX(1.2,.9,1.1),c2,-.9,1.3,-.5)}
 }
-function buildDeco(m){while(deco.children.length)deco.remove(deco.children[0]);townObjs.forEach(o=>o.visible=m===0);road.visible=m===0;if(!m)return;
-  // a kit design dresses this map: paint its ground, water, bridge and props and stop here
-  if(KIT.ok&&buildKit(m))return;
+function buildDeco(m){while(deco.children.length)deco.remove(deco.children[0]);
+  // The kit dresses every map, Prontera included (v27). The block-built town, its cathedral and its
+  // fountain are the **no-atlas fallback** now, kept for the case where the sheet cannot be
+  // downloaded - that is why the owner used to see old buildings standing on the new field.
+  if(KIT.ok&&buildKit(m)){townObjs.forEach(o=>o.visible=false);road.visible=false;return}
+  townObjs.forEach(o=>o.visible=m===0);road.visible=m===0;if(!m)return;
   if(KIT.ground)KIT.ground.visible=false;
   let q=m*977+13;const r=()=>(q=(q*16807)%2147483647)/2147483647,[k,c1,c2,ex]=TH[m],E=ex||{};
   if(E.w)water(deco,E.w[0],E.w[1],E.w[2],E.w[3],r);
@@ -1410,13 +1680,14 @@ function buildDeco(m){while(deco.children.length)deco.remove(deco.children[0]);t
     else{mk(G,BX(1,1.6+r(),.3),pc1,0,.9,0);mk(G,BX(1.2,.2,.5),pc2,0,.1,0)}
     G.position.set(x,0,z);G.scale.setScalar(sc);G.rotation.y=r()*6;deco.add(G)}}
 
-// ----- The attached map kit: terrains, water, bridges and props -------------------------
-// assets/kit/ro-spritesheet.png + .json is the owner's modular atlas (8 terrain tiles, 7
-// environment billboards: ancient trees, a tall cluster, a sapling, a bright bush, a cliff
-// crag, a mossy boulder, a river stone post). assets/kit/ro-map-payon.json and
-// ro-map-morocc.json are the two attached level designs: 48x32 grids of typed cells, each with
-// its own corner heights, plus the props the design places on top of them. Morocc's atlas is
-// painted at load by the attachment's own generator (assets/kit/morocc-atlas.js).
+// ----- The map kit: terrains, water, bridges and props ----------------------------------
+// assets/kit/ro-spritesheet.png + .json is **map kit v2**: one 2048x2048 atlas of painted
+// RO-style art - 25 terrain tiles and 34 environment billboards - plus the character strip the
+// prop scale is measured from. assets/kit/ro-map-payon.json and ro-map-morocc.json are the two
+// attached level designs: 48x32 grids of typed cells, each with its own corner heights, plus the
+// props the design places on top of them. v1 painted Morocc's desert atlas at runtime with its own
+// generator (assets/kit/morocc-atlas.js); **v2 carries every one of those names on the one sheet**,
+// so the generator is retired (kept in Updates/retired-v1-kit/) and 'morocc' is now just an alias.
 //
 // Everything here is a CROP of that art. No tile, tree or rock in this layer is drawn, traced,
 // recoloured or substituted - if a crop is missing, the map falls back to the v13 scenery.
@@ -1425,73 +1696,267 @@ function buildDeco(m){while(deco.children.length)deco.remove(deco.children[0]);t
 // and its props are billboards. Props a design puts inside the running lane are moved to the
 // lane edge and kept - the field must read as the design without scenery blocking the fight.
 //
-// Payon is not the attached 48x32 grid any more: the owner rejected that layout (a huge diagonal
-// lake, trees the size of the player) and asked for Payon to look like RO's Payon Forest. Its
-// field is now laid out in code from the RO recipe - see `payonPlan` below - out of the same
-// kit tiles and billboards. Morocc still uses its attached design.
-const KIT={ok:0,png:null,man:null,des:{},mor:null,srcMan:{},tex:new Map(),water:[],wt:0,ground:null,built:null};
+// Payon is not the attached 48x32 grid: the owner rejected that layout (a huge diagonal lake,
+// trees the size of the player) and asked for Payon to look like RO's Payon Forest. Its field is
+// laid out in code from the RO recipe - see `payonPlan` below - out of the same kit tiles and
+// billboards. Morocc still uses its attached design. The other eight are `fieldPlan` recipes.
+const KIT={ok:0,png:null,man:null,des:{},srcMan:{},tex:new Map(),water:[],wt:0,ground:null,built:null};
 const KIT_S=.85,KIT_ZC=(Z0+Z1)/2,KIT_PX=2048,KIT_FAR=90;
-// Prop size. The kit ships its own character: 80px per frame. This game's hero stands 2.9 world
-// units, so **one atlas pixel is 2.9/80 units** and a prop is (its crop height) x KIT_PK x its
-// factor. The factors are RO Payon forest proportions - the big trees tower over the player
-// (3.5x), a sapling is about player height, a bush is knee height. Tune the numbers here; the
-// builders only read them. Anything not listed is factor 1.
+// Prop size. The kit ships its own character: 80px per frame (v2 kept the v1 strip pixel for
+// pixel, so this did not move). This game's hero stands 2.9 world units, so **one atlas pixel is
+// 2.9/80 units** and a prop is (its crop height) x KIT_PK x its factor. The factors below are the
+// art pass's own tuned table (`suggest.KIT_PS` in the manifest, which kit_sim.js compares against
+// this constant entry for entry) - v2 crops are taller and better proportioned than v1, so the
+// old factors were wrong for them. World heights they encode, in hero-multiples: big trees
+// 3.3-3.6x, cherry 3.0x, palms 2.6-3.1x, dead/gnarled trees 2.5-2.7x, the Geffen tower 5.1x (a
+// far landmark), torii 2.3x, houses ~2x, bamboo and saplings ~1-1.9x, bushes/curbs knee height.
+// Anything not listed is factor 1 - kit_sim.js fails on a prop a field places that is missing.
 const KIT_PK=2.9/80;
-const KIT_PS={tree_ancient_large:.9,tree_ancient_variant:.9,tree_tall_cluster:.85,tree_sapling:.55,
-  tree_bush_bright:.34,rock_cliff_crag:1,rock_boulder_mossy:.6,river_stone_post:.62,
-  palm_giant:.7,palm_tall:.75,palm_double:.72,cactus_flower:.75,cactus_small:.65,
-  ruin_pillar:.8,ruin_column_fallen:.8,ruin_stump:.7,ruin_curb:.6,desert_bone:.5};
+const KIT_PS={tree_ancient_large:1,tree_ancient_variant:1,tree_tall_cluster:.95,tree_sapling:.55,
+  tree_bush_bright:.4,rock_cliff_crag:.7,river_stone_post:.55,rock_boulder_mossy:.45,
+  palm_giant:.9,palm_tall:.85,palm_double:.9,cactus_flower:.45,cactus_small:.4,
+  ruin_pillar:.6,ruin_column_fallen:.4,ruin_stump:.45,ruin_curb:.35,desert_bone:.45,
+  bamboo_grove:.95,tree_dead:.7,tombstone:.45,house_ruin:.75,tree_cherry:.8,lantern_stone:.55,
+  bridge_red_arch:.7,torii_gate:.75,shrine_stone:.65,stalagmite:.6,crystal_cluster:.45,
+  standing_stone:.55,tree_dark_gnarled:1,house_prontera:.75,tower_geffen:1.2,pier_post:.45};
 function kitPropScale(type,scale){return KIT_PK*(KIT_PS[type]||1)*(scale||1)}
-// which arena map wears which design/layout, and what a design's cell types are called in the atlas.
-// v17: every map is dressed from the kit. 3 stays the attached Morocc design, 4 stays the RO Payon
-// recipe; the other eight are fieldPlan recipes out of the same crops. src = the atlas the GROUND
-// paints from; individual props may carry their own src (e.g. Morocc's palms on a beach town).
+
+// ----- organic layout: seeded noise, so a field is mottled and clumped, never a lattice ------
+// v26 drew its ground variation with `(i*7+j*13)%9===0` - a diagonal lattice of single cells that
+// reads as a printed pattern on screen (the owner called Izlude's "symmetric green patches" fake)
+// - and its trees were two mirrored lines hugging the lane, which boxed every map in. Both are
+// gone. Ground variation is value noise (soft patches with real, wandering edges) and scenery is
+// placed in clumps strewn over the whole field, near lane and far out. Everything is a pure
+// function of the recipe's seed, so a respawn rebuilds the identical map - scene_sim pins that.
+function kitHash(i,j,s){let h=Math.imul(i|0,374761393)^Math.imul(j|0,668265263)^Math.imul(s|0,1442695041);
+  h=Math.imul(h^(h>>>13),1274126177);h^=h>>>16;return (h>>>0)/4294967295}
+function kitNoise(x,z,s){const X=Math.floor(x),Z=Math.floor(z),fx=x-X,fz=z-Z,
+  u=fx*fx*(3-2*fx),v=fz*fz*(3-2*fz),a=kitHash(X,Z,s),b=kitHash(X+1,Z,s),c=kitHash(X,Z+1,s),d=kitHash(X+1,Z+1,s);
+  return a+(b-a)*u+(c-a)*v+(a-b-c+d)*u*v}
+function kitFbm(x,z,s,o){let v=0,a=.5,f=1,t=0;o=o||3;for(let i=0;i<o;i++){v+=a*kitNoise(x*f,z*f,s+i*131);t+=a;a*=.5;f*=2}return v/t}
+// the dressed field. The painted ground texture is 90x90 (KIT_FAR); cells are laid out here and
+// the base tile repeats beyond, so the far field is ground instead of a hard edge.
+const KIT_FIELD=[-30,30,-30,14];
+// The wild edge. Not a rim and never a rectangle: rock *probability* rises towards the field
+// border and past it, shaped by noise, so the ground turns wild in ragged tongues - some reach
+// deep into the field, some leave open grass right up to the corner - and beyond the field the
+// rock simply continues, so no straight line is ever visible. This is what stops every map
+// reading as "a box with the design in the middle".
+function kitEdge(f,x,z){
+  const E=f&&f.edge;if(!E)return 0;
+  const d=Math.min(x-KIT_FIELD[0],KIT_FIELD[1]-x,z-KIT_FIELD[2],KIT_FIELD[3]-z);
+  const at=E.at||6;
+  const n=kitFbm((x+(E.ox||0))/at,(z+(E.oz||0))/at,(E.seed||5)*13+3,4);
+  const c=(at-d)/at;                       // 0 in the middle of the field, 1 at the border, >1 outside
+  return c>0&&n>1-c*1.3?(E.tile||'cliff_rock'):0;
+}
+// a prop may never stand in the running lane: it is moved to the lane edge and kept (its side and
+// depth survive). `nudged` records it, so the lane rule is visible in the plan instead of silent.
+function kitPut(props,src,x,z,type,scale,flip,missing){
+  const lane=BX_+.9;let nudged=0;if(Math.abs(x)<lane){x=(x<0?-1:1)*lane;nudged=1}
+  props.push({x,z,type,src,scale,flip,nudged,missing:missing?1:0});return 1}
+
+// which arena map wears which recipe, and what a recipe's keys mean.
+// **v27**: every map is a recipe now, including Payon and Prontera. Morocc keeps its attached
+// desert design in the middle and gets the new far-field dressing around it. A recipe reads:
+//   f.base/base2   the ground tile and its second ground tone     f.patch  {tile,t,s,oct,tile2,t2}
+//                  organic ground variation: value noise, soft patches with real edges
+//   f.edge         {at,amp,s,tile} an irregular rocky rim along the field border - no rectangle
+//   f.road         {w,wander} + f.roadTile   a worn track down the lane
+//   f.plaza        {x,z,w,l,tile} paved ground (Prontera's brick square, off the avenue)
+//   f.water        [z0,z1] an animated strip; f.bank its shore band; f.bankTile the shore tile
+//   f.deck         [x,z,w,l] a plank bridge; f.deckTile which deck art (Amatsu's is red lacquer)
+//   f.waterFrames  which two frames animate (Abyss's lake is the kit's dark pair)
+//   f.bands        off-lane ground strips ({tile,z:[a,b],x0,x1,jit}) - never written into the lane
+//   f.outcrops     {tile,count,r:[a,b],b0,b1,z0,z1,prop,ps} rock blobs inland, each with a prop on it
+//   f.groves       clumps of scenery: {n,r,trees:[a,b],b0,b1,z0,z1,types,sub,s0,s1,gap}. `b0..b1`
+//                  is a |x| band, so a grove can hug the lane, sit mid-field or stand far out
+//   f.scatter      single props: {type,count,r0,r1,z0,z1,s0,s1,gap} - this is what dresses the far
+//                  field; `side` pins one side
+//   f.fixed        landmarks placed exactly (a tower in a corner, a torii on the approach)
+// Identities are the art pass's per-map notes (Updates/map-sprites-v2/RESEARCH.md), researched
+// against divine-pride map renders: one painted technique, ten moods.
 const KIT_MAP={
-  0:{src:'payon',layout:'field',design:'prontera',seed:101,f:{base:'grass_olive',base2:'grass_forest',
-    cliff:{strip:4,side:21},road:{w:3.6,wander:.35},
-    trees:{near:6.6,step:2.3,types:['tree_ancient_large','tree_ancient_variant','tree_tall_cluster'],
+  // 0 Prontera - the city: light green meadow, a brick cobble avenue and a paved square, the kit's
+  //   own painted cottages in a street row, and a stone fountain basin in the square (composed from
+  //   crops: a round water tile pool with a limestone curb and stone posts - no fountain crop exists
+  //   in the kit, and house rule 1 forbids drawing one). Sparse round trees, nothing near the lane.
+  0:{src:'payon',layout:'field',design:'prontera',seed:101,f:{
+    base:'grass_olive',base2:'grass_forest',patch:{tile:'grass_forest',cover:.2,s:7,oct:4},
+    road:{w:4.4,wander:.5},roadTile:'ruin_cobble',
+    plaza:{x:-15,z:-19,w:12,l:8},pool:{x:-15,z:-19,r:2.1,tile:'water_frame_0',curb:'limestone_pale'},
+    groves:[{n:3,r:4.6,trees:[1,2],b0:7.2,b1:16,z0:-26,z1:10,gap:5,
+      types:['tree_ancient_large','tree_ancient_variant','tree_tall_cluster']},
+      {n:3,r:5.4,trees:[1,2],b0:16,b1:30,z0:-30,z1:12,gap:5.2,
+      types:['tree_ancient_large','tree_tall_cluster','tree_sapling']}],
+    scatter:[{type:'tree_bush_bright',count:5,r0:7.4,r1:27,z0:-30,z1:11,s0:.8,s1:1.15,gap:5.2},
+      {type:'river_stone_post',count:4,r0:8,r1:26,z0:-28,z1:9,s0:.8,s1:1.05,gap:6.5},
+      {type:'tree_sapling',count:4,r0:8,r1:24,z0:-28,z1:10,s0:.7,s1:1,gap:5}],
+    far:[{type:'tree_ancient_large', count:14,r0:32,r1:44,z0:-44,z1:18,s0:.95,s1:1.3,gap:8.5},
+      {type:'tree_ancient_variant',count:6,r0:34,r1:46,z0:-44,z1:18,s0:.95,s1:1.25,gap:10}],
+    fixed:[{type:'house_prontera',x:-20,z:-22.5,scale:1,flip:true},{type:'house_prontera',x:-13,z:-23.5,scale:1.1},
+      {type:'house_prontera',x:-8,z:-20.5,scale:.95},{type:'house_prontera',x:9,z:-21.5,scale:1.05,flip:true},
+      {type:'house_prontera',x:15,z:-23.5,scale:.95},{type:'house_prontera',x:21,z:-20,scale:1.1},
+      {type:'ruin_stump',x:-15,z:-19,scale:.85},
+      {type:'river_stone_post',x:-15,z:-21.4,scale:.8},{type:'river_stone_post',x:-15,z:-16.6,scale:.8,flip:true},
+      {type:'river_stone_post',x:-17.4,z:-19,scale:.8},{type:'river_stone_post',x:-12.6,z:-19,scale:.8,flip:true},
+      {type:'lantern_stone',x:-6.4,z:-16.6,scale:1},{type:'lantern_stone',x:6.4,z:-16.6,scale:1,flip:true},
+      {type:'lantern_stone',x:-14,z:-13.6,scale:1},{type:'lantern_stone',x:14,z:-13.6,scale:1,flip:true}]}},
+  // 1 Izlude - Prontera's field by the sea: light green meadow, sparse round trees, a golden shore
+  //   band and teal water, palms at the waterline and the pier on its posts. Deliberately open -
+  //   the owner called the dense version a jungle.
+  1:{src:'payon',layout:'field',design:'izlude',seed:202,f:{
+    base:'grass_olive',base2:'grass_forest',patch:{tile:'grass_forest',cover:.18,s:7,oct:4},
+    road:{w:3.4,wander:.4},
+    water:[-30,-19],bank:1.4,bankTile:'sand_gold',
+    deck:[9.6,-19.5,2.8,7],
+    groves:[{n:2,r:4.6,trees:[1,2],b0:7.2,b1:16,z0:-15,z1:10,gap:5.2,types:['tree_tall_cluster','tree_ancient_variant']},
+      {n:2,r:5.4,trees:[1,2],b0:16,b1:30,z0:-16,z1:12,gap:5.4,types:['tree_tall_cluster','tree_ancient_large']}],
+    scatter:[{type:'palm_tall',count:4,r0:8.5,r1:27,z0:-16.6,z1:-13.8,s0:.85,s1:1.05,gap:5.6},
+      {type:'tree_bush_bright',count:5,r0:7.4,r1:26,z0:-15,z1:11,s0:.8,s1:1.15,gap:5.2},
+      {type:'tree_sapling',count:4,r0:8,r1:24,z0:-15,z1:10,s0:.7,s1:1,gap:5},
+      {type:'river_stone_post',count:3,r0:8,r1:22,z0:-16,z1:-10,s0:.8,s1:1,gap:6.5}],
+    far:[{type:'tree_ancient_large', count:12,r0:32,r1:44,z0:-40,z1:18,s0:.95,s1:1.3,gap:8.5},
+      {type:'palm_giant',count:5,r0:34,r1:46,z0:-40,z1:6,s0:1,s1:1.2,gap:10}],
+    fixed:[{type:'pier_post',x:8.5,z:-22.4,scale:1},{type:'pier_post',x:11.5,z:-22.4,scale:1},
+      {type:'pier_post',x:11.5,z:-17,scale:1}]}},
+  // 2 Geffen - moody blue-grey-green plains kept deliberately open: dark gnarled trees well spaced,
+  //   a few standing stones, the wizard tower on the far horizon. The owner wants room to grow the
+  //   battle field, so nothing crowds the middle and no rocky frame around the map.
+  2:{src:'payon',layout:'field',design:'geffen',seed:303,f:{
+    base:'grass_geffen',base2:'grass_forest',patch:{tile:'grass_olive',cover:.22,s:6,oct:4,tile2:'grass_forest',cover2:.08},
+    road:{w:3,wander:.4},
+    groves:[{n:3,r:5,trees:[1,2],b0:7.6,b1:17,z0:-26,z1:11,gap:5.4,types:['tree_dark_gnarled']},
+      {n:3,r:5.8,trees:[1,2],b0:17,b1:30,z0:-30,z1:13,gap:5.6,types:['tree_dark_gnarled','tree_dead']}],
+    scatter:[{type:'standing_stone',count:5,r0:9,r1:28,z0:-28,z1:12,s0:.9,s1:1.3,gap:6.5},
+      {type:'rock_cliff_crag',count:4,r0:9,r1:28,z0:-30,z1:12,s0:.85,s1:1.2,gap:6},
+      {type:'tree_bush_bright',count:5,r0:8,r1:26,z0:-28,z1:11,s0:.8,s1:1.1,gap:5.4},
+      {type:'tree_sapling',count:3,r0:8,r1:24,z0:-28,z1:11,s0:.7,s1:1,gap:5.2}],
+    far:[{type:'tree_dark_gnarled', count:14,r0:32,r1:44,z0:-44,z1:16,s0:.95,s1:1.3,gap:8.5},
+      {type:'tree_dead',count:5,r0:34,r1:46,z0:-44,z1:16,s0:.95,s1:1.25,gap:10}],
+    fixed:[{type:'tower_geffen',x:-24,z:-27,scale:1.1}]}},
+  // 3 Morocc - the attached desert-ruins design in the middle, unchanged, dressed all round it with
+  //   dunefields, mesas, palms, cacti, ruins and bones. Every far entry alternates sides (alt:1), so
+  //   both sides of the map are dressed - the owner found one side bare.
+  3:{src:'morocc',design:'morocc',
+    tile:t=>({sand:'sand',sand_dark:'sand_dark',ruin_cobble:'ruin_cobble',cliff:'cliff'}[t]||null),
+    f:{patch:{tile:'sand_dark',cover:.3,s:8,oct:4},
+      outcrops:{tile:'cliff_sand',count:3,r:[1.2,2.2],b0:22,b1:30,z0:-30,z1:10,prop:'rock_cliff_crag',ps:1.05},
+      groves:[{alt:1,n:5,r:4,trees:[1,2],b0:20,b1:30,z0:-28,z1:10,gap:5.6,
+        types:['palm_giant','palm_double','cactus_flower'],s0:.85,s1:1.05}],
+      scatter:[{alt:1,type:'palm_tall',count:6,r0:20,r1:30,z0:-28,z1:10,s0:.85,s1:1.1,gap:6},
+        {alt:1,type:'cactus_small',count:6,r0:20,r1:30,z0:-28,z1:10,s0:.8,s1:1.15,gap:5.4},
+        {alt:1,type:'desert_bone',count:5,r0:20,r1:30,z0:-28,z1:10,s0:.8,s1:1.1,gap:6.2},
+        {alt:1,type:'ruin_stump',count:4,r0:20,r1:29,z0:-28,z1:9,s0:.85,s1:1.1,gap:6},
+        {alt:1,type:'rock_cliff_crag',count:4,r0:21,r1:30,z0:-30,z1:10,s0:.9,s1:1.25,gap:6.2},
+        {alt:1,type:'cactus_flower',count:4,r0:20,r1:30,z0:-28,z1:10,s0:.85,s1:1.15,gap:5.6}],
+      far:[{alt:1,type:'palm_giant',count:8,r0:32,r1:44,z0:-40,z1:16,s0:.95,s1:1.25,gap:8.5},
+        {alt:1,type:'cactus_flower',count:5,r0:34,r1:46,z0:-40,z1:16,s0:.9,s1:1.2,gap:10}]}},
+  // 4 Payon - RO's Payon Forest, now roomy: the wandering mud trail, the creek with its plank
+  //   bridge, bamboo at the crossing and mossy boulders framing it, and the trees spaced out in
+  //   clumps instead of a wall, so the run up the field stays open.
+  4:{src:'payon',layout:'field',design:'payon',seed:404,f:{
+    base:'grass_forest',base2:'grass_olive',patch:{tile:'grass_olive',cover:.3,s:5,oct:4},
+    road:{w:4,wander:.6},roadTile:'dirt_payon',
+    water:[-7.8,-5],bank:1.8,
+    deck:[0,-6.4,4.2,4.4],
+    groves:[{n:4,r:4.6,trees:[1,2],b0:7,b1:16,z0:-26,z1:11,gap:5.2,
+      types:['tree_ancient_large','tree_ancient_variant','tree_tall_cluster'],
       sub:[['tree_sapling',.5],['tree_bush_bright',.45]]},
-    scatter:[{type:'river_stone_post',count:4,r0:6.6,r1:7.4,z0:-12,z1:8}]}},
-  1:{src:'payon',layout:'field',design:'izlude',seed:202,f:{base:'grass_olive',base2:'grass_forest',
-    cliff:{strip:2,side:22},water:[-23,-16],bank:1.8,road:{w:3.2,wander:.25},
-    deck:[10,-19.5,2.6,7],                        // the harbour pier, out of the lane
-    trees:{near:7,step:3.2,types:['tree_tall_cluster','tree_ancient_variant'],sub:[['tree_bush_bright',.4]]},
-    scatter:[{type:'palm_tall',src:'morocc',count:5,r0:8,r1:16,z0:-15.6,z1:-12},
-             {type:'river_stone_post',count:2,r0:6.8,r1:7.2,z0:-15.8,z1:-14.6}]}},
-  2:{src:'payon',layout:'field',design:'geffen',seed:303,f:{base:'grass_forest',base2:'grass_olive',
-    cliff:{strip:6,side:19},
-    trees:{near:7.2,step:3.4,types:['tree_ancient_large','tree_ancient_variant'],sub:[['tree_bush_bright',.3]]},
-    scatter:[{type:'ruin_pillar',src:'morocc',count:6,r0:9,r1:15,z0:-14,z1:6},
-             {type:'ruin_stump',src:'morocc',count:4,r0:8,r1:15,z0:-16,z1:8},
-             {type:'ruin_column_fallen',src:'morocc',count:2,r0:10,r1:16,z0:-12,z1:4}]}},
-  3:{src:'morocc',design:'morocc',tile:t=>({sand:'sand',sand_dark:'sand_dark',ruin_cobble:'ruin_cobble',cliff:'cliff'}[t]||null)},
-  4:{src:'payon', layout:'payon'},
-  5:{src:'morocc',layout:'field',design:'comodo',seed:505,f:{base:'sand',base2:'sand_dark',cliffTile:'cliff',
-    cliff:{strip:4,side:21},water:[-23,-17],bank:0,
-    trees:{near:7,step:2.6,types:['palm_giant','palm_tall','palm_double'],sub:[['cactus_small',.35]]},
-    scatter:[{type:'cactus_flower',count:6,r0:7.5,r1:17,z0:-16,z1:9},
-             {type:'desert_bone',count:3,r0:8,r1:16,z0:-15,z1:8}]}},
-  6:{src:'payon',layout:'field',design:'louyang',seed:606,f:{base:'grass_forest',base2:'grass_olive',
-    cliff:{strip:3,side:22},road:{w:3,wander:.5},
-    trees:{near:6.4,step:1.9,types:['tree_ancient_large','tree_tall_cluster','tree_ancient_variant'],
-      sub:[['tree_sapling',.55],['tree_bush_bright',.5]]},
-    scatter:[{type:'river_stone_post',count:4,r0:6.5,r1:7.2,z0:-12,z1:8}]}},
-  7:{src:'payon',layout:'field',design:'amatsu',seed:707,f:{base:'grass_olive',base2:'grass_forest',
-    cliff:{strip:3,side:21},road:{w:3.2,wander:.2},water:[-7.9,-6],bank:1.7,
-    deck:[0,-6.95,3.4,4.8],                       // the bridge on the road, over the stream
-    trees:{near:6.4,step:2.2,types:['tree_ancient_large','tree_ancient_variant'],
+      {n:4,r:5.6,trees:[1,2],b0:16,b1:30,z0:-30,z1:13,gap:5.4,
+      types:['tree_ancient_large','tree_tall_cluster','tree_ancient_variant'],
+      sub:[['tree_sapling',.4],['tree_bush_bright',.4]]},
+      {alt:1,n:2,r:3.6,trees:[1,2],b0:7,b1:18,z0:-13,z1:-1,gap:5,types:['bamboo_grove'],s0:.85,s1:1.05}],
+    scatter:[{alt:1,type:'bamboo_grove',count:5,r0:7.4,r1:24,z0:-28,z1:10,s0:.85,s1:1.1,gap:5.6},
+      {type:'tree_bush_bright',count:6,r0:7.2,r1:27,z0:-30,z1:12,s0:.75,s1:1.15,gap:5.2},
+      {type:'tree_sapling',count:4,r0:7.6,r1:25,z0:-28,z1:11,s0:.7,s1:1,gap:5},
+      {type:'rock_cliff_crag',count:4,r0:11,r1:29,z0:-30,z1:12,s0:.9,s1:1.3,gap:6.5}],
+    far:[{type:'tree_ancient_large', count:15,r0:32,r1:44,z0:-44,z1:18,s0:.95,s1:1.3,gap:8.5},
+      {type:'bamboo_grove',count:5,r0:34,r1:46,z0:-44,z1:18,s0:.95,s1:1.2,gap:10}],
+    fixed:[{type:'river_stone_post',x:-6.6,z:-8.6,scale:.85},{type:'river_stone_post',x:6.6,z:-8.6,scale:.85,flip:true},
+      {type:'rock_boulder_mossy',x:-6.8,z:-4,scale:1},{type:'rock_boulder_mossy',x:6.8,z:-4,scale:1,flip:true}]}},
+  // 5 Comodo - a golden beach: dune mottling, palms and cacti in loose clumps, the sea and its gold
+  //   shore beyond. The owner disliked the brown patchwork on the sand, so the rocky outcrop blobs
+  //   are gone from this map entirely - only loose props and the dunes remain.
+  5:{src:'payon',layout:'field',design:'comodo',seed:505,f:{
+    base:'sand_gold',base2:'sand_dark',patch:{tile:'sand_dark',cover:.14,s:10,oct:4},
+    cliffTile:'cliff_sand',
+    water:[-30,-19],bank:1.6,bankTile:'sand_gold',
+    groves:[{n:3,r:4.6,trees:[1,2],b0:7.2,b1:16,z0:-16,z1:11,gap:5.4,types:['palm_giant','palm_tall','palm_double'],s0:.85,s1:1.1},
+      {n:3,r:5.6,trees:[1,2],b0:16,b1:30,z0:-16,z1:12,gap:5.6,types:['palm_giant','palm_double','cactus_small']}],
+    scatter:[{type:'cactus_flower',count:5,r0:8,r1:28,z0:-16,z1:11,s0:.8,s1:1.15,gap:5.4},
+      {type:'cactus_small',count:5,r0:8,r1:28,z0:-16,z1:11,s0:.8,s1:1.2,gap:5.2},
+      {type:'desert_bone',count:3,r0:9,r1:27,z0:-15,z1:10,s0:.8,s1:1.1,gap:6.2},
+      {type:'ruin_curb',count:2,r0:9,r1:25,z0:-15,z1:10,s0:.8,s1:1,gap:6.2}],
+    far:[{type:'palm_giant', count:14,r0:32,r1:44,z0:-36,z1:18,s0:1,s1:1.3,gap:8.5},
+      {type:'palm_double',count:5,r0:34,r1:46,z0:-36,z1:18,s0:1,s1:1.25,gap:10}]}},
+  // 6 Louyang - a jade highland kept open for a bigger battle field: bamboo in loose clumps, the
+  //   terraced paddy water off the lane with wandering terrace edges, the stone shrine and its
+  //   lantern pairs on the approach. No rocky frame, no crowded trees.
+  6:{src:'payon',layout:'field',design:'louyang',seed:606,f:{
+    base:'grass_jade',base2:'grass_forest',patch:{tile:'grass_olive',cover:.2,s:6.5,oct:4,tile2:'grass_forest',cover2:.07},
+    road:{w:3.2,wander:.5},
+    bands:[{tile:'paddy_water',z:[-12,-9.6],x0:9,x1:25,jit:1.2},{tile:'paddy_water',z:[-12,-9.6],x0:-25,x1:-9,jit:1.2},
+      {tile:'paddy_water',z:[-5.2,-3.2],x0:10,x1:23,jit:1},{tile:'paddy_water',z:[-5.2,-3.2],x0:-23,x1:-10,jit:1}],
+    groves:[{n:3,r:5,trees:[1,2],b0:7.4,b1:17,z0:-26,z1:11,gap:5.4,types:['bamboo_grove','tree_tall_cluster'],
       sub:[['tree_sapling',.5],['tree_bush_bright',.4]]},
-    scatter:[{type:'river_stone_post',count:2,r0:6.5,r1:7,z0:-9.4,z1:-4.8}]}},
-  8:{src:'payon',layout:'field',design:'niflheim',seed:808,f:{base:'dirt_path',base2:'grass_forest',
-    cliff:{strip:7,side:18},
-    scatter:[{type:'rock_cliff_crag',count:10,r0:7,r1:16,z0:-15,z1:9},
-             {type:'desert_bone',src:'morocc',count:6,r0:6.8,r1:15,z0:-14,z1:9},
-             {type:'ruin_stump',src:'morocc',count:3,r0:8,r1:14,z0:-12,z1:6}]}},
-  9:{src:'payon',layout:'field',design:'abyss',seed:909,f:{base:'cliff_rock',base2:'grass_forest',
-    cliff:{strip:5,side:19},water:[-23,-18],bank:0,
-    scatter:[{type:'rock_cliff_crag',count:12,r0:6.8,r1:16,z0:-17,z1:9},
-             {type:'river_stone_post',count:4,r0:6.6,r1:8,z0:-16,z1:8},
-             {type:'desert_bone',src:'morocc',count:4,r0:7,r1:14,z0:-16,z1:8}]}}};
+      {n:3,r:5.8,trees:[1,2],b0:17,b1:30,z0:-30,z1:12,gap:5.6,types:['bamboo_grove','tree_tall_cluster','tree_sapling']}],
+    scatter:[{alt:1,type:'bamboo_grove',count:5,r0:8,r1:27,z0:-28,z1:11,s0:.85,s1:1.15,gap:5.8},
+      {type:'tree_bush_bright',count:5,r0:7.6,r1:26,z0:-28,z1:11,s0:.8,s1:1.15,gap:5.4},
+      {type:'tree_sapling',count:4,r0:8,r1:25,z0:-28,z1:11,s0:.7,s1:1.05,gap:5.2}],
+    far:[{type:'bamboo_grove', count:14,r0:32,r1:44,z0:-44,z1:16,s0:.95,s1:1.25,gap:8.5},
+      {type:'tree_tall_cluster',count:5,r0:34,r1:46,z0:-44,z1:16,s0:.95,s1:1.25,gap:10}],
+    fixed:[{type:'shrine_stone',x:-9.6,z:-16.4,scale:1},
+      {type:'lantern_stone',x:-15.8,z:-13.5,scale:1},{type:'lantern_stone',x:15.8,z:-13.5,scale:1,flip:true},
+      {type:'lantern_stone',x:-6.8,z:-.6,scale:1},{type:'lantern_stone',x:6.8,z:-.6,scale:1,flip:true}]}},
+  // 7 Amatsu - blossom fields, slightly thinned: cherry in loose clumps over the whole field, the
+  //   stream on the road with its red lacquer bridge, a torii on the approach, lantern pairs and
+  //   the great red arch far off. No frame around the map.
+  7:{src:'payon',layout:'field',design:'amatsu',seed:707,f:{
+    base:'grass_blossom',base2:'grass_olive',patch:{tile:'grass_olive',cover:.26,s:6.5,oct:4},
+    road:{w:3.4,wander:.3},
+    water:[-7.9,-6],bank:1.7,
+    deck:[0,-6.95,3.6,4.8],deckTile:'bridge_red',
+    groves:[{n:3,r:5,trees:[1,2],b0:7.2,b1:17,z0:-22,z1:11,gap:5.4,types:['tree_cherry','tree_ancient_variant'],
+      sub:[['tree_sapling',.5],['tree_bush_bright',.4]]},
+      {n:3,r:5.8,trees:[1,2],b0:17,b1:30,z0:-30,z1:12,gap:5.6,types:['tree_cherry','tree_ancient_large','tree_ancient_variant']}],
+    scatter:[{type:'tree_cherry',count:5,r0:8,r1:27,z0:-28,z1:11,s0:.85,s1:1.15,gap:5.8},
+      {type:'tree_bush_bright',count:5,r0:7.6,r1:26,z0:-28,z1:11,s0:.8,s1:1.15,gap:5.4},
+      {type:'river_stone_post',count:4,r0:7.6,r1:24,z0:-28,z1:10,s0:.8,s1:1.05,gap:6.5}],
+    far:[{type:'tree_cherry', count:14,r0:32,r1:44,z0:-44,z1:16,s0:.95,s1:1.3,gap:8.5},
+      {type:'tree_ancient_variant',count:5,r0:34,r1:46,z0:-44,z1:16,s0:.95,s1:1.25,gap:10}],
+    fixed:[{type:'torii_gate',x:6.6,z:-4.2,scale:1},
+      {type:'lantern_stone',x:-6.8,z:-1.4,scale:1},{type:'lantern_stone',x:6.8,z:-1.4,scale:1,flip:true},
+      {type:'lantern_stone',x:-6.8,z:-11.4,scale:1},{type:'lantern_stone',x:6.8,z:-11.4,scale:1,flip:true},
+      {type:'bridge_red_arch',x:20,z:-24,scale:1}]}},
+  // 8 Niflheim - the realm of the dead, thinned out: fewer dead trees and rocks, spaced wide, graves
+  //   and bones strewn into the fog, one ruined house. Still no bright colour anywhere.
+  8:{src:'payon',layout:'field',design:'niflheim',seed:808,f:{
+    base:'waste_nifl',base2:'rock_abyss',patch:{tile:'rock_abyss',cover:.2,s:7,oct:4,tile2:'waste_nifl',cover2:.07},
+    groves:[{n:2,r:5,trees:[1,2],b0:7.6,b1:17,z0:-26,z1:10,gap:5.8,types:['tree_dead']},
+      {n:3,r:5.8,trees:[1,2],b0:17,b1:30,z0:-30,z1:13,gap:6,types:['tree_dead']}],
+    scatter:[{type:'tombstone',count:6,r0:8,r1:28,z0:-30,z1:12,s0:.8,s1:1.2,gap:5.8},
+      {type:'rock_cliff_crag',count:5,r0:8,r1:29,z0:-30,z1:12,s0:.85,s1:1.25,gap:6.4},
+      {type:'desert_bone',count:5,r0:8,r1:27,z0:-29,z1:12,s0:.85,s1:1.2,gap:5.8},
+      {type:'standing_stone',count:3,r0:11,r1:27,z0:-28,z1:11,s0:.9,s1:1.2,gap:6.5}],
+    far:[{type:'tree_dead', count:14,r0:32,r1:44,z0:-44,z1:16,s0:.95,s1:1.3,gap:8.5},
+      {type:'tombstone',count:5,r0:34,r1:46,z0:-44,z1:16,s0:.9,s1:1.25,gap:10}],
+    fixed:[{type:'house_ruin',x:-18,z:-23,scale:1},{type:'tree_dead',x:16,z:-24.5,scale:1.15}]}},
+  // 9 Abyss - dark slate and the deep dark lake behind its pale limestone shore, opened up: fewer
+  //   stalagmites, crystals and rocks, spaced wide, so the field reads spacious rather than tight.
+  9:{src:'payon',layout:'field',design:'abyss',seed:909,f:{
+    base:'rock_abyss',base2:'cliff_rock',patch:{tile:'rock_abyss',cover:.2,s:7,oct:4,tile2:'cliff_rock',cover2:.07},
+    water:[-30,-18],bank:1.8,bankTile:'limestone_pale',
+    waterFrames:['water_dark_0','water_dark_1'],
+    groves:[{n:3,r:5,trees:[1,2],b0:7.6,b1:17,z0:-24,z1:11,gap:5.8,types:['stalagmite','crystal_cluster']},
+      {n:3,r:5.8,trees:[1,2],b0:17,b1:30,z0:-30,z1:13,gap:6,types:['stalagmite','crystal_cluster','standing_stone']}],
+    scatter:[{type:'stalagmite',count:5,r0:8,r1:29,z0:-30,z1:12,s0:.85,s1:1.2,gap:6.4},
+      {type:'crystal_cluster',count:4,r0:8,r1:29,z0:-30,z1:12,s0:.85,s1:1.15,gap:6.2},
+      {type:'rock_cliff_crag',count:4,r0:8,r1:30,z0:-30,z1:12,s0:.9,s1:1.3,gap:6.6},
+      {type:'standing_stone',count:3,r0:10,r1:28,z0:-29,z1:11,s0:.9,s1:1.25,gap:6.5},
+      {type:'tombstone',count:2,r0:10,r1:27,z0:-29,z1:11,s0:.85,s1:1.15,gap:6.4}],
+    far:[{type:'stalagmite', count:12,r0:32,r1:44,z0:-44,z1:16,s0:.95,s1:1.3,gap:8.5},
+      {type:'crystal_cluster',count:4,r0:34,r1:46,z0:-44,z1:16,s0:.95,s1:1.25,gap:10}]}}};
 const KIT_TILE={grass:'grass_olive',grass_dark:'grass_forest',dirt:'dirt_path',cliff:'cliff_rock',bank:'riverbank_wall'};
 // cell types the kit itself draws in its animated pass / as a deck, not as ground texture
 const KIT_WET={water:1},KIT_DECK={bridge:1},KIT_SKIP={sky:1};
@@ -1508,17 +1973,21 @@ function kitFetch(){
       img.src='assets/kit/ro-spritesheet.png';}).catch(()=>{});
   }catch(e){}
 }
+// v2 is ONE atlas, so every recipe's `src` resolves to it. 'payon' and 'morocc' were the two v1
+// atlases (the sheet, and the desert generator's canvas); both names stay valid as aliases so the
+// recipes and Morocc's attached design read unchanged, and one manifest object is shared, so a
+// crop is never made twice and there is nothing left to borrow between atlases.
+const KIT_SRC='kit',KIT_ALIAS={kit:KIT_SRC,payon:KIT_SRC,morocc:KIT_SRC};
+function kitSrc(name){return KIT_ALIAS[name]||null}
 // the atlas a design crops from ("src" above), normalised: {img,tiles,sprites}
 function kitAtlas(name){
-  if(KIT.srcMan[name])return KIT.srcMan[name];
-  let a=null;
-  if(name==='morocc'){try{if(!KIT.mor)KIT.mor=window.MOROCC_KIT.atlas();a={img:KIT.mor.canvas,tiles:KIT.mor.manifest.tiles,sprites:KIT.mor.manifest.sprites}}catch(e){}}
-  else if(name==='payon'&&KIT.png&&KIT.man)a={img:KIT.png,tiles:KIT.man.tiles,sprites:KIT.man.sprites};
-  if(a)KIT.srcMan[name]=a;
-  return a;
+  const key=kitSrc(name); if(!key)return null;
+  if(KIT.srcMan[key])return KIT.srcMan[key];
+  if(KIT.png&&KIT.man)KIT.srcMan[key]={img:KIT.png,tiles:KIT.man.tiles,sprites:KIT.man.sprites};
+  return KIT.srcMan[key]||null;
 }
 function kitCrop(src,kind,name,flip){
-  const key=src+':'+kind+':'+name+(flip?'@f':''); if(KIT.tex.has(key))return KIT.tex.get(key);
+  const key=(kitSrc(src)||src)+':'+kind+':'+name+(flip?'@f':''); if(KIT.tex.has(key))return KIT.tex.get(key);
   const a=kitAtlas(src); if(!a)return null;
   const e=(kind==='tile'?a.tiles:a.sprites)[name]; if(!e)return null;
   const cv=document.createElement('canvas');cv.width=e.w;cv.height=e.h;
@@ -1535,100 +2004,193 @@ function kitCrop(src,kind,name,flip){
   KIT.tex.set(key,t);return t;
 }
 // Where a design cell or a design prop sits in the arena. The design is anchored on the point
-// the map is built around (Payon's bridge, Morocc's plaza) and centred on the lane.
+// the map is built around (Morocc's plaza) and centred on the lane.
 function kitAnchor(d){return d.bridge?{x:d.bridge.x,y:d.bridge.y}:{x:d.meta.gridWidth/2,y:d.meta.gridHeight/2}}
 function kitX(d,g){return (g-kitAnchor(d).x)*KIT_S}
 function kitZ(d,g){return (g-kitAnchor(d).y)*KIT_S+KIT_ZC}
-// ----- Payon: the RO Payon Forest recipe, laid out in code ---------------------------------
-// A wide brown dirt road that wanders up the middle, a creek across it with a plank bridge, tree
-// lines that tower over the player on both banks (with saplings and bushes under them), and
-// rocky mountain edges - Payon Forest is a mountainous bamboo forest, and its fields read as a
-// dirt path cut through big dark trees. Layout is code; every pixel is still a crop.
-const PAY={road:3.6,creek:[-7.8,-5.0],field:[-26,26,-23,11],cell:.8,treeNear:5.9,treeFar:13.5};
-function payRoadR(z){return PAY.road/2+Math.sin(z*.19)*.45+Math.sin(z*.05)*.3}
-function payonPlan(spec){
-  const cells=[],water=[],props=[],a=kitAtlas(spec.src);
-  const[x0,x1,z0,z1]=PAY.field,st=PAY.cell,cz=PAY.creek,mid=(cz[0]+cz[1])/2;
-  let q=7;const rnd=()=>(q=(q*16807)%2147483647)/2147483647;
-  for(let z=z0;z<z1;z+=st){
-    for(let x=x0;x<x1;x+=st){
-      if(z<z0+5||Math.abs(x)>20){cells.push({x,z,tile:'cliff_rock'});continue}   // the mountain wall
-      if(z>cz[0]-st*2&&z<cz[1]+st*2){cells.push({x,z,tile:'riverbank_wall'});continue}   // creek banks
-      if(Math.abs(x)<payRoadR(z)){cells.push({x,z,tile:'dirt_path'});continue}   // the road
-      const i=Math.round((x-x0)/st),j=Math.round((z-z0)/st);                    // grass variation
-      if((i*7+j*13)%9===0)cells.push({x,z,tile:'grass_olive'});
-    }
-    if(z>cz[0]&&z<cz[1])water.push({x:0,z:z+st/2,w:x1-x0,h:st,cx:(x1-x0)/st,cy:1});
-  }
-  const deck={x:0,z:mid,w:payRoadR(mid)*2+2.2,l:(cz[1]-cz[0])+2.4,a:0};
-  // tree lines: dense, just off the lane on both sides, taller than the player by design
-  const big=['tree_ancient_large','tree_ancient_variant','tree_ancient_large','tree_tall_cluster'];
-  for(const s of[-1,1]){
-    for(let z=z0+2;z<z1-2;z+=2.1+rnd()*1.2){
-      if(Math.abs(z-mid)<st*2.6)continue;                              // keep the crossing open
-      props.push({x:s*(PAY.treeNear+rnd()*2.6),z:z+rnd()*.6,type:big[(rnd()*big.length)|0],
-        src:spec.src,scale:.84+rnd()*.32,flip:rnd()>.5,nudged:0});
-      if(rnd()>.45)props.push({x:s*(PAY.treeNear+1.2+rnd()*5),z:z+rnd()*1.6,type:'tree_sapling',
-        src:spec.src,scale:.8+rnd()*.5,flip:rnd()>.5,nudged:0});
-      if(rnd()>.4)props.push({x:s*(PAY.treeNear+.6+rnd()*5.5),z:z+rnd()*1.8,type:'tree_bush_bright',
-        src:spec.src,scale:.8+rnd()*.6,flip:rnd()>.5,nudged:0});
-    }
-    for(let i=0;i<4;i++)props.push({x:s*(PAY.treeFar+rnd()*8),z:z0+3+rnd()*(z1-z0-6),type:'rock_cliff_crag',
-      src:spec.src,scale:.9+rnd()*.35,flip:rnd()>.5,nudged:0});
-    for(let i=0;i<5;i++)props.push({x:s*(PAY.treeNear+.4+rnd()*7),z:z0+3+rnd()*(z1-z0-6),type:'tree_bush_bright',
-      src:spec.src,scale:.7+rnd()*.5,flip:rnd()>.5,nudged:0});
-    // a stone post on each bank, well clear of the lane, marking the crossing
-    props.push({x:s*(PAY.treeNear+.4),z:mid-(cz[1]-cz[0])/2-1.1,type:'river_stone_post',
-      src:spec.src,scale:.85,flip:s>0,nudged:0});
-  }
-  props.sort((p,n)=>p.z-n.z);
-  return {src:spec.src,design:'payon',cells,water,props,deck,base:'grass_forest',base2:'grass_olive'};
-}
-// ----- the field builder: every other arena dresses from the same kit, by recipe ------------
-// One deterministic (seeded LCG) builder, one recipe per map in KIT_MAP. Rules are the same as
-// Payon's: props never stand in the running lane, nothing is placed that the prop's own atlas
-// does not carry, water strips stay scenery (the ones near the fight get their deck), and every
-// pixel is still a crop from the attached kit - never drawn.
+// ----- the field builder: one deterministic builder, one recipe per map ----------------------
 function fieldPlan(spec){
-  const f=spec.f,cells=[],water=[],props=[],st=.8,x0=-26,x1=26,z0=-23,z1=11;
-  let q=spec.seed|0;const rnd=()=>(q=(q*16807)%2147483647)/2147483647;
-  const cliffT=f.cliffTile||'cliff_rock',bankT=f.bankTile||'riverbank_wall',roadT=f.roadTile||'dirt_path';
+  const f=spec.f||{},cells=[],water=[],props=[];
+  const[X0,X1,GZ0,GZ1]=KIT_FIELD,st=.8;
+  let q=(spec.seed|0)||1;const rnd=()=>(q=(q*16807)%2147483647)/2147483647;
+  const roadT=f.roadTile||'dirt_path',bankT=f.bankTile||'riverbank_wall';
   const roadR=f.road?(z=>f.road.w/2+Math.sin(z*.19+spec.seed)*f.road.wander+Math.sin(z*.05)*f.road.wander*.7):null;
   const wet=z=>f.water&&z>=f.water[0]&&z<f.water[1];
-  for(let z=z0;z<z1;z+=st){
-    if(wet(z)){water.push({x:(x0+x1)/2,z:z+st/2,w:x1-x0,h:st,cx:(x1-x0)/st,cy:1});continue}
-    const bank=f.water&&f.bank&&z>=f.water[0]-f.bank&&z<f.water[1]+f.bank;
-    for(let x=x0;x<x1;x+=st){
-      if(f.cliff&&(z<z0+f.cliff.strip||Math.abs(x)>f.cliff.side)){cells.push({x,z,tile:cliffT});continue}
+  const bands=f.bands||[],bandsAt=z=>bands.filter(b=>z>=b.z[0]&&z<b.z[1]);
+  const lane=BX_+.9,P=f.patch;
+  // Ground patches are driven by a **coverage fraction**, not a magic threshold: kitFbm is not
+  // centred on .5, so a hand-set `t` covered wildly different areas per map. Sample the noise over
+  // the whole field once, sort it, and take the quantile that yields the requested coverage.
+  const patchRaw=(x,z)=>kitFbm((x+(P.ox||0))/(P.s||6),(z+(P.oz||0))/(P.s||6),(spec.seed+(P.seed||0))|0,(P.oct||4))
+    +(kitHash(Math.round(x*2.1),Math.round(z*2.1),spec.seed+5)-.5)*.07;
+  let PTH=2,PTH2=2;
+  if(P){const vals=[];
+    for(let z=GZ0;z<GZ1;z+=1.6)for(let x=X0;x<X1;x+=1.6)vals.push(patchRaw(x,z));
+    vals.sort((a,b)=>a-b);
+    const q=c=>vals[Math.min(vals.length-1,Math.max(0,Math.round((1-c)*(vals.length-1))))];
+    PTH=q(P.cover===undefined?.3:P.cover);
+    PTH2=P.tile2?q(P.cover2===undefined?.1:P.cover2):2;}
+  // a fountain basin / decorative pool the recipe can ask for: a round painted pool, a stone curb
+  // ring, and a small animated shimmer that fits *inside* the circle so no square corners show.
+  // Declared before the ground loop, because the ground loop paints it.
+  const POOL=f.pool,poolD=(x,z)=>POOL?Math.hypot(x-POOL.x,z-POOL.z):99;
+  if(POOL)water.push({x:POOL.x,z:POOL.z,w:POOL.r*1.4,h:POOL.r*1.4,
+    cx:Math.max(1,Math.round(POOL.r/1.2)),cy:Math.max(1,Math.round(POOL.r/1.2))});
+  // organic ground variation: two value-noise octaves, so patches blend into each other
+  const patchT=(x,z)=>{if(!P)return null;
+    const v=patchRaw(x,z);
+    if(v>PTH2)return P.tile2;
+    if(v>PTH)return (P.tile||f.base2);
+    return null};
+  for(let z=GZ0;z<GZ1;z+=st){
+    if(wet(z)){water.push({x:0,z:z+st/2,w:KIT_FAR,h:st,cx:KIT_FAR/st,cy:1});continue}
+    const bank=f.water&&f.bank&&z>=f.water[0]-f.bank&&z<f.water[1]+f.bank,bds=bandsAt(z);
+    for(let x=X0;x<X1;x+=st){
+      const ed=kitEdge(f,x,z);if(ed){cells.push({x,z,tile:ed});continue}
+      if(bds.length&&Math.abs(x)>=lane){                 // ground bands stay out of the lane
+        let done=0;
+        for(const b of bds){const jx=b.jit?(kitFbm(x/3.1,z/3.1,spec.seed+3,2)-.5)*2*b.jit:0;
+          if(x+jx>=b.x0&&x+jx<b.x1){cells.push({x,z,tile:b.tile});done=1;break}}
+        if(done)continue;
+      }
       if(bank){cells.push({x,z,tile:bankT});continue}
-      if(f.road&&Math.abs(x)<roadR(z)){cells.push({x,z,tile:roadT});continue}
-      const i=Math.round((x-x0)/st),j=Math.round((z-z0)/st);                 // grass/sand variation
-      if((i*7+j*13)%9===0)cells.push({x,z,tile:f.base2});
+      if(POOL){const d=poolD(x,z);
+        if(d<POOL.r){cells.push({x,z,tile:POOL.tile||'water_frame_0'});continue}
+        if(d<POOL.r+.8){cells.push({x,z,tile:POOL.curb||'limestone_pale'});continue}}
+      if(f.plaza&&Math.abs(x-f.plaza.x)<f.plaza.w/2&&Math.abs(z-f.plaza.z)<f.plaza.l/2&&
+        kitFbm(x/3.6,z/3.6,spec.seed+7,2)>.24){cells.push({x,z,tile:f.plaza.tile||'ruin_cobble'});continue}
+      if(roadR&&Math.abs(x)<roadR(z)){cells.push({x,z,tile:roadT});continue}
+      const pt=patchT(x,z);if(pt){cells.push({x,z,tile:pt});continue}
     }
   }
-  const deck=f.deck?{x:f.deck[0],z:f.deck[1],w:f.deck[2],l:f.deck[3],a:f.deck[4]||0}:null;
-  const lane=BX_+.9;
-  const put=(type,src,x,z,scale,flip)=>{if(Math.abs(x)<lane)x=(x<0?-1:1)*lane;
-    props.push({x,z,type,src,scale,flip,nudged:0,missing:0})};
-  if(f.trees){const T=f.trees;
-    for(const s of[-1,1])for(let z=z0+2;z<z1-2;z+=T.step+rnd()*1.2){
-      if(deck&&Math.abs(z-deck.z)<st*2.6)continue;                           // keep the crossing open
-      if(f.water&&z>=f.water[0]-(f.bank||0)&&z<f.water[1]+(f.bank||0))continue;   // trees do not grow in water
-      put(T.types[(rnd()*T.types.length)|0],spec.src,s*(T.near+rnd()*2.6),z+rnd()*.6,.84+rnd()*.32,rnd()>.5);
-      if(T.sub)for(const[t2,ch]of T.sub)if(rnd()<ch)put(t2,spec.src,s*(T.near+1.2+rnd()*5),z+rnd()*1.6,.8+rnd()*.5,rnd()>.5);
-    }}
-  if(f.scatter)for(const sc of f.scatter)for(let i=0;i<sc.count;i++){
-    const s=rnd()>.5?1:-1,x=s*(sc.r0+rnd()*(sc.r1-sc.r0)),z=sc.z0+rnd()*(sc.z1-sc.z0);
-    if(deck&&sc.clearDeck&&Math.abs(z-deck.z)<2)continue;
-    put(sc.type,sc.src||spec.src,x,z,(sc.s0||.8)+rnd()*((sc.s1||1.2)-(sc.s0||.8)),rnd()>.5);
+  const wetZone=z=>f.water&&z>=f.water[0]-(f.bank||0)&&z<f.water[1]+(f.bank||0);
+  const inBand=(x,z)=>bands.some(b=>z>=b.z[0]&&z<b.z[1]&&x>=b.x0&&x<b.x1);
+  const blocked=(x,z)=>!!(wetZone(z)||inBand(x,z)||Math.abs(x)<BX_+.9||poolD(x,z)<(POOL?POOL.r+1.2:0));
+  // rocky outcrops stand off the lane (they are ground, but scenery never breaks the run) and
+  // never in water or a terrace
+  const oc=f.outcrops;
+  if(oc)for(let i=0;i<oc.count;i++){
+    const side=rnd()>.5?1:-1,cx=side*(oc.b0+rnd()*(oc.b1-oc.b0)),cz=oc.z0+rnd()*(oc.z1-oc.z0);
+    const rx=oc.r[0]+rnd()*(oc.r[1]-oc.r[0]),rz=rx*(.55+rnd()*.5);
+    for(let dz=-rz;dz<=rz;dz+=st)for(let dx=-rx;dx<=rx;dx+=st){
+      if((dx*dx)/(rx*rx)+(dz*dz)/(rz*rz)>1)continue;
+      const x=cx+dx+(kitFbm((cx+dx)/3.2,(cz+dz)/3.2,spec.seed+11,2)-.5)*1.5,z=cz+dz;
+      if(Math.abs(x)<BX_+1.4||wetZone(z)||inBand(x,z))continue;
+      if(x<X0||x>X1||z<GZ0||z>GZ1)continue;
+      cells.push({x,z,tile:oc.tile});
+    }
+    if(oc.prop&&!wetZone(cz))kitPut(props,spec.src,cx,cz,oc.prop,(oc.ps||1)*(.85+rnd()*.3),rnd()>.5,0);
   }
+  const occ=[];
+  const sideOf=(o,i)=>o.side||(o.alt?(i%2?-1:1):(rnd()>.5?1:-1));
+  const place=(type,x,z,scale,flip,gap)=>{const g=gap||1.5;
+    for(const o of occ)if(Math.abs(o.x-x)<g&&Math.abs(o.z-z)<g)return 0;
+    occ.push({x,z});return kitPut(props,spec.src,x,z,type,scale,flip,0)};
+  // groves: a clump of scenery at a random spot in its |x| band, its members jittered around the
+  // centre - no lines, no mirror between the sides, and the band can reach the far field. A spot
+  // the spacing rule refuses is retried, so a grove really does hold its members.
+  for(const g of (f.groves||[]))for(let i=0;i<g.n;i++){
+    const side=sideOf(g,i),cx=side*(g.b0+rnd()*(g.b1-g.b0)),cz=g.z0+rnd()*(g.z1-g.z0);
+    if(wetZone(cz))continue;
+    const n=g.trees?g.trees[0]+Math.floor(rnd()*(g.trees[1]-g.trees[0]+1)):3;
+    for(let k=0,t=0;k<n&&t<14;t++){
+      const a=rnd()*6.2832,rr=Math.sqrt(rnd())*(g.r||3);
+      const x=cx+Math.cos(a)*rr,z=cz+Math.sin(a)*rr*.6;
+      if(blocked(x,z))continue;
+      if(place(g.types[(rnd()*g.types.length)|0],x,z,(g.s0||.84)+rnd()*((g.s1||1.16)-(g.s0||.84)),rnd()>.5,g.gap||1.5))k++;
+    }
+    if(g.sub)for(const[t2,ch]of g.sub)if(rnd()<ch){
+      const a=rnd()*6.2832,rr=(.4+rnd())*(g.r||3),x=cx+Math.cos(a)*rr,z=cz+Math.sin(a)*rr*.6;
+      if(blocked(x,z))continue;
+      place(t2,x,z,.75+rnd()*.45,rnd()>.5,.95);
+    }
+  }
+  // singles, spread across their band - this is what dresses the far field out to |x| 29
+  for(const sc of (f.scatter||[]))for(let i=0,n=0;i<sc.count*6&&n<sc.count;i++){
+    const side=sideOf(sc,n),x=side*(sc.r0+rnd()*((sc.r1===undefined?sc.r0:sc.r1)-sc.r0));
+    const z=sc.z0+rnd()*(sc.z1-sc.z0);
+    if(blocked(x,z))continue;
+    if(place(sc.type,x,z,(sc.s0||.8)+rnd()*((sc.s1||1.2)-(sc.s0||.8)),rnd()>.5,sc.gap||1.6))n++;
+  }
+  // the far ring: the same crop at |x| 30-42, past the field border and well into the fog, so the
+  // world reads as continuing rather than stopping at the edge of the dressed field
+  for(const fc of (f.far||[]))for(let i=0,n=0;i<fc.count*8&&n<fc.count;i++){
+    const side=sideOf(fc,i),x=side*(fc.r0+rnd()*((fc.r1||fc.r0+8)-fc.r0));
+    const z=(fc.z0===undefined?-40:fc.z0)+rnd()*((fc.z1===undefined?16:fc.z1)-(fc.z0===undefined?-40:fc.z0));
+    if(place(fc.type,x,z,(fc.s0||.9)+rnd()*((fc.s1||1.3)-(fc.s0||.9)),rnd()>.5,fc.gap||3))n++;
+  }
+  // landmarks go exactly where the recipe says (a tower in a far corner, a torii on the approach)
+  for(const fx of (f.fixed||[]))kitPut(props,spec.src,spec.design==='izlude'&&fx.type==='pier_post'?fx.x+(BX_+3-9.6):fx.x,fx.z,fx.type,fx.scale===undefined?1:fx.scale,!!fx.flip,0);
+  const deck=f.deck?{x:spec.design==='izlude'?Math.max(BX_+3,f.deck[0]):f.deck[0],z:f.deck[1],w:f.deck[2],l:f.deck[3],a:f.deck[4]||0}:null;
   props.sort((p,n)=>p.z-n.z);                       // far to near, so billboards overlap right
-  return {src:spec.src,design:spec.design,cells,water,props,deck,base:f.base,base2:f.base2};
+  return {src:spec.src,design:spec.design,cells,water,props,deck,base:f.base,base2:f.base2,
+          waterFrames:f.waterFrames||null,deckTile:f.deckTile||null};
 }
-// ----- pure plan: design + arena -> everything the painters need (no canvas, no THREE) -----
-function kitPlan(m){
-  const spec=KIT_MAP[m]; if(!spec)return null;
-  if(spec.layout==='payon')return payonPlan(spec);
+// ----- Morocc: the attached design in the middle, the recipe's dressing all round it ---------
+function farDress(spec,plan,rect){
+  const f=spec.f||{},cells=plan.cells,props=plan.props;
+  const[X0,X1,GZ0,GZ1]=KIT_FIELD,P=f.patch;
+  let q=((spec.seed|0)||3)+77;const rnd=()=>(q=(q*16807)%2147483647)/2147483647;
+  const outside=(x,z)=>x<rect[0]||x>rect[1]||z<rect[2]||z>rect[3];
+  // the design's own ground, continued: the same sand with noise-driven dune patches
+  const patchRaw=(x,z)=>kitFbm((x+(P.ox||0))/(P.s||8),(z+(P.oz||0))/(P.s||8),(spec.seed|0),(P.oct||4))
+    +(kitHash(Math.round(x*2.1),Math.round(z*2.1),(spec.seed|0)+5)-.5)*.07;
+  let PTH=2,PTH2=2;
+  if(P){const vals=[];
+    for(let z=GZ0;z<GZ1;z+=1.6)for(let x=X0;x<X1;x+=1.6)vals.push(patchRaw(x,z));
+    vals.sort((a,b)=>a-b);
+    const q=c=>vals[Math.min(vals.length-1,Math.max(0,Math.round((1-c)*(vals.length-1))))];
+    PTH=q(P.cover===undefined?.3:P.cover);PTH2=P.tile2?q(P.cover2===undefined?.1:P.cover2):2;}
+  if(P)for(let z=GZ0;z<GZ1;z+=.8)for(let x=X0;x<X1;x+=.8){
+    if(!outside(x,z))continue;
+    const v=patchRaw(x,z);
+    if(v>PTH2)cells.push({x,z,tile:P.tile2});
+    else if(v>PTH)cells.push({x,z,tile:P.tile});
+  }
+  const oc=f.outcrops;
+  if(oc)for(let i=0;i<oc.count;i++){
+    const side=rnd()>.5?1:-1,cx=side*(oc.b0+rnd()*(oc.b1-oc.b0)),cz=oc.z0+rnd()*(oc.z1-oc.z0);
+    const rx=oc.r[0]+rnd()*(oc.r[1]-oc.r[0]),rz=rx*(.55+rnd()*.5);
+    for(let dz=-rz;dz<=rz;dz+=1)for(let dx=-rx;dx<=rx;dx+=1){
+      if((dx*dx)/(rx*rx)+(dz*dz)/(rz*rz)>1)continue;
+      const x=cx+dx+(kitFbm((cx+dx)/3.4,(cz+dz)/3.4,(spec.seed|0)+11,2)-.5)*1.6,z=cz+dz;
+      if(!outside(x,z))continue;
+      cells.push({x,z,tile:oc.tile});
+    }
+    if(oc.prop)kitPut(props,spec.src,cx,cz,oc.prop,(oc.ps||1)*(.85+rnd()*.3),rnd()>.5,0);
+  }
+  const occ=props.map(p=>({x:p.x,z:p.z}));
+  const sideOf=(o,i)=>o.side||(o.alt?(i%2?-1:1):(rnd()>.5?1:-1));
+  const place=(type,x,z,scale,flip,gap)=>{const g=gap||1.5;
+    for(const o of occ)if(Math.abs(o.x-x)<g&&Math.abs(o.z-z)<g)return 0;
+    occ.push({x,z});return kitPut(props,spec.src,x,z,type,scale,flip,0)};
+  for(const g of (f.groves||[]))for(let i=0;i<g.n;i++){
+    const side=sideOf(g,i),cx=side*(g.b0+rnd()*(g.b1-g.b0)),cz=g.z0+rnd()*(g.z1-g.z0);
+    const n=g.trees?g.trees[0]+Math.floor(rnd()*(g.trees[1]-g.trees[0]+1)):3;
+    for(let k=0;k<n;k++){
+      const a=rnd()*6.2832,rr=Math.sqrt(rnd())*(g.r||3),x=cx+Math.cos(a)*rr,z=cz+Math.sin(a)*rr*.6;
+      if(!outside(x,z))continue;
+      place(g.types[(rnd()*g.types.length)|0],x,z,(g.s0||.84)+rnd()*((g.s1||1.16)-(g.s0||.84)),rnd()>.5,g.gap||1.5);
+    }
+  }
+  for(const sc of (f.scatter||[]))for(let i=0;i<sc.count;i++){
+    const side=sideOf(sc,i),x=side*(sc.r0+rnd()*((sc.r1===undefined?sc.r0:sc.r1)-sc.r0));
+    const z=sc.z0+rnd()*(sc.z1-sc.z0);
+    if(!outside(x,z))continue;
+    place(sc.type,x,z,(sc.s0||.8)+rnd()*((sc.s1||1.2)-(sc.s0||.8)),rnd()>.5,sc.gap||1.6);
+  }
+  for(const fc of (f.far||[]))for(let i=0,n=0;i<fc.count*8&&n<fc.count;i++){
+    const side=sideOf(fc,i),x=side*(fc.r0+rnd()*((fc.r1||fc.r0+8)-fc.r0));
+    const z=(fc.z0===undefined?-40:fc.z0)+rnd()*((fc.z1===undefined?16:fc.z1)-(fc.z0===undefined?-40:fc.z0));
+    if(!outside(x,z))continue;
+    if(place(fc.type,x,z,(fc.s0||.9)+rnd()*((fc.s1||1.3)-(fc.s0||.9)),rnd()>.5,fc.gap||3))n++;
+  }
+  props.sort((p,n)=>p.z-n.z);
+  return plan;
+}
+// ----- pure plan: recipe + arena -> everything the painters need (no canvas, no THREE) -----
+function kitPlan(m,stage=1){
+  const spec=stageSpec(m,stage); if(!spec)return null;
   if(spec.layout==='field')return fieldPlan(spec);
   const d=KIT.des[spec.design]; if(!d)return null;
   const W=d.meta.gridWidth,H=d.meta.gridHeight,cells=[],water=[],props=[];
@@ -1643,7 +2205,7 @@ function kitPlan(m){
     }
     if(run)water.push(kitRect(d,run[0],run[1],gy));
   }
-  // the bridge deck, straight from the design (Payon's is rotated a touch, as drawn)
+  // the bridge deck, straight from the design (Morocc's grid has none, but a design may carry one)
   const deck=d.bridge?{x:kitX(d,d.bridge.x),z:kitZ(d,d.bridge.y),w:d.bridge.width*KIT_S,l:d.bridge.length*KIT_S,a:d.bridge.angle||0}:null;
   const lane=BX_+.9,a=kitAtlas(spec.src);
   for(const sp of d.sprites){
@@ -1656,10 +2218,125 @@ function kitPlan(m){
     if(Math.abs(x)<lane){x=(x<0?-1:1)*lane;nudged=1}
     props.push({x,z,type:sp.type,src:spec.src,scale:sp.scale||1,flip:!!sp.flip,nudged,missing});
   }
-  props.sort((a,b)=>a.z-b.z);                       // far to near, so billboards overlap right
-  return {src:spec.src,design:spec.design,cells,water,props,deck,
-          base:spec.design==='morocc'?'sand':'grass_forest',
-          base2:spec.design==='morocc'?'sand_dark':'grass_olive'};
+  const plan={src:spec.src,design:spec.design,cells,water,props,deck,
+    base:spec.design==='morocc'?'sand':'grass_forest',
+    base2:spec.design==='morocc'?'sand_dark':'grass_olive',
+    waterFrames:spec.waterFrames||null,deckTile:spec.deckTile||null};
+  // the design dresses the middle of the field; the recipe dresses the field around it
+  if(spec.f){
+    const x0=kitX(d,0),x1=kitX(d,W),z0=kitZ(d,0),z1=kitZ(d,H);
+    farDress(spec,plan,[Math.min(x0,x1),Math.max(x0,x1),Math.min(z0,z1),Math.max(z0,z1)]);
+  }
+  return plan;
+}
+// Stages 4-6, 7-9 and 10 are separate *places*, not decals laid over the old field.
+// Each scene specifies its own ground, path, water, tree mix and landmarks, all cropped
+// from the existing kit. There are no spawn circles, floor patches or boss-floor stamps.
+// Stages 1-3 continue to use KIT_MAP (including Morocc's attached desert design).
+const STAGE_SCENES=[
+  [ // Prontera: homestead -> village avenue -> guarded city approach
+    {base:'grass_olive',road:[2.6,.9,'dirt_path'],trees:['tree_ancient_variant','tree_sapling'],detail:['tree_bush_bright','river_stone_post'],
+      fixed:[['house_prontera',-23,-14],['house_prontera',23,1],['tree_ancient_large',-22,7]]},
+    {base:'grass_olive',road:[3.5,.5,'ruin_cobble'],trees:['tree_ancient_large','tree_tall_cluster'],detail:['river_stone_post','tree_bush_bright'],
+      fixed:[['house_prontera',-21,-22],['house_prontera',20,-6],['house_prontera',-21,7],['lantern_stone',16,-12]]},
+    {base:'grass_olive',road:[5,.2,'ruin_cobble'],trees:['tree_ancient_variant'],detail:['river_stone_post'],
+      fixed:[['house_prontera',-21,-21],['house_prontera',21,-21],['house_prontera',-21,7],['house_prontera',21,7],
+        ['lantern_stone',-16,-5],['lantern_stone',16,-5],['river_stone_post',-16,-12],['river_stone_post',16,-12]]}
+  ],
+  [ // Izlude: grassy coast -> pier district -> harbour headland
+    {base:'grass_olive',road:[2.5,.8,'dirt_path'],water:[-32,-24],bank:['sand_gold',1.4],trees:['tree_ancient_variant','palm_tall'],detail:['palm_double','tree_bush_bright'],
+      fixed:[['palm_giant',-20,-19],['pier_post',20,-23]]},
+    {base:'grass_olive',road:[3,.4,'sand_gold'],water:[-32,-21],bank:['sand_gold',2],deck:[18,-21,3,6,'bridge_planks'],trees:['palm_tall','tree_tall_cluster'],detail:['pier_post','palm_double'],
+      fixed:[['pier_post',17,-23],['pier_post',19,-23],['pier_post',18,-19],['palm_giant',-22,-17]]},
+    {base:'grass_olive',road:[3.5,.3,'sand_gold'],water:[-32,-24],bank:['sand_gold',2],deck:[18,-24,3.5,6,'bridge_planks'],trees:['palm_giant','palm_tall'],detail:['pier_post','river_stone_post'],
+      fixed:[['pier_post',17,-26],['pier_post',19,-26],['pier_post',18,-22],['palm_giant',-21,-17],['palm_giant',22,5],['river_stone_post',-16,-5],['river_stone_post',16,-5]]}
+  ],
+  [ // Geffen: gnarled woods -> rune stones -> tower approach
+    {base:'grass_geffen',road:[2.5,.9,'dirt_path'],trees:['tree_dark_gnarled','tree_dead'],detail:['standing_stone','tree_sapling'],
+      fixed:[['standing_stone',-18,-20],['standing_stone',19,5]]},
+    {base:'grass_geffen',road:[2,.4,'ruin_cobble'],trees:['tree_dark_gnarled'],detail:['standing_stone','crystal_cluster'],
+      fixed:[['tower_geffen',-25,-24],['standing_stone',18,-16],['standing_stone',-18,2],['standing_stone',19,8]]},
+    {base:'grass_geffen',road:[3.5,.25,'ruin_cobble'],trees:['tree_dark_gnarled'],detail:['standing_stone','crystal_cluster'],
+      fixed:[['tower_geffen',-25,-23],['tower_geffen',25,9],['standing_stone',-16,-12],['standing_stone',16,-12],['crystal_cluster',-17,4],['crystal_cluster',17,4]]}
+  ],
+  [ // Morocc: caravan dunes -> scattered ruins -> buried temple approach
+    {base:'sand',road:[2,.9,'sand_dark'],trees:['palm_double','cactus_flower'],detail:['desert_bone','cactus_small'],
+      fixed:[['palm_giant',-23,-18],['ruin_stump',21,6]]},
+    {base:'sand',road:[3,.5,'ruin_cobble'],trees:['palm_tall','cactus_small'],detail:['ruin_stump','ruin_curb'],
+      fixed:[['house_ruin',-24,-21],['standing_stone',22,-9],['ruin_stump',-18,8]]},
+    {base:'sand_dark',road:[4,.2,'ruin_cobble'],trees:['palm_tall','cactus_flower'],detail:['ruin_stump','ruin_curb'],
+      fixed:[['house_ruin',-24,-22],['house_ruin',24,8],['standing_stone',-17,-13],['standing_stone',17,-13],['ruin_stump',-16,4],['ruin_stump',16,4]]}
+  ],
+  [ // Payon: bamboo forest -> steep mud trail -> forest shrine
+    {base:'grass_forest',road:[3.5,.9,'dirt_payon'],water:[-11,-9],bank:['riverbank_wall',1],deck:[0,-10,4.5,4.5,'bridge_planks'],trees:['bamboo_grove','tree_tall_cluster'],detail:['tree_bush_bright','rock_boulder_mossy'],
+      fixed:[['rock_boulder_mossy',-17,-14],['rock_boulder_mossy',17,-7]]},
+    {base:'grass_forest',road:[2.5,1,'dirt_payon'],trees:['tree_ancient_large','tree_ancient_variant'],detail:['bamboo_grove','rock_boulder_mossy'],
+      fixed:[['rock_boulder_mossy',-20,-19],['rock_cliff_crag',21,-6],['bamboo_grove',-18,7]]},
+    {base:'grass_forest',road:[3.3,.4,'dirt_payon'],trees:['tree_ancient_large','bamboo_grove'],detail:['rock_boulder_mossy','tree_bush_bright'],
+      fixed:[['shrine_stone',-23,-21],['lantern_stone',20,8],['lantern_stone',-16,-12],['lantern_stone',16,-12],['rock_boulder_mossy',-17,2],['rock_boulder_mossy',17,2]]}
+  ],
+  [ // Comodo: palm lagoon -> dune trail -> cave cove
+    {base:'sand_gold',water:[-32,-23],bank:['sand_gold',1],trees:['palm_double','palm_tall'],detail:['cactus_flower','desert_bone'],
+      fixed:[['palm_giant',-22,-18],['palm_giant',23,4]]},
+    {base:'sand_gold',road:[2.6,.8,'sand_dark'],trees:['cactus_flower','palm_tall'],detail:['desert_bone','cactus_small'],
+      fixed:[['rock_cliff_crag',-25,-22],['palm_double',22,6],['desert_bone',-18,4]]},
+    {base:'sand_gold',road:[2.5,.4,'sand_dark'],water:[-32,-24],bank:['sand_gold',1.5],trees:['palm_giant','palm_double'],detail:['rock_cliff_crag','desert_bone'],
+      fixed:[['rock_cliff_crag',-24,-19],['rock_cliff_crag',24,-19],['palm_giant',-21,6],['palm_giant',21,6],['desert_bone',-16,-7],['desert_bone',16,-7]]}
+  ],
+  [ // Louyang: bamboo path -> rice terraces -> stone sanctuary
+    {base:'grass_jade',road:[2.7,.9,'dirt_path'],trees:['bamboo_grove','tree_tall_cluster'],detail:['tree_sapling','tree_bush_bright'],
+      fixed:[['lantern_stone',-18,-18],['bamboo_grove',21,6]]},
+    {base:'grass_jade',road:[2,.4,'dirt_path'],bands:[[-24,-17,-27,-16],[-9,-5,16,27]],trees:['bamboo_grove','tree_sapling'],detail:['lantern_stone','tree_bush_bright'],
+      fixed:[['shrine_stone',-23,3],['lantern_stone',18,-18],['lantern_stone',-18,8]]},
+    {base:'grass_jade',road:[3,.3,'dirt_path'],bands:[[-25,-21,-27,-17]],trees:['bamboo_grove','tree_tall_cluster'],detail:['lantern_stone','river_stone_post'],
+      fixed:[['shrine_stone',-23,-22],['shrine_stone',23,7],['lantern_stone',-16,-11],['lantern_stone',16,-11],['lantern_stone',-16,4],['lantern_stone',16,4]]}
+  ],
+  [ // Amatsu: cherry orchard -> red bridge valley -> shrine procession
+    {base:'grass_blossom',road:[2.8,.7,'dirt_path'],trees:['tree_cherry','tree_ancient_variant'],detail:['tree_sapling','tree_bush_bright'],
+      fixed:[['lantern_stone',-19,-18],['tree_cherry',21,7]]},
+    {base:'grass_blossom',road:[3.2,.4,'dirt_path'],water:[-11,-9],bank:['riverbank_wall',1],deck:[0,-10,4.2,4.5,'bridge_red'],trees:['tree_cherry','bamboo_grove'],detail:['lantern_stone','tree_bush_bright'],
+      fixed:[['torii_gate',19,7],['bridge_red_arch',-24,-20],['lantern_stone',-17,-14]]},
+    {base:'grass_blossom',road:[3.5,.2,'dirt_path'],trees:['tree_cherry','bamboo_grove'],detail:['lantern_stone','river_stone_post'],
+      fixed:[['torii_gate',-20,-21],['bridge_red_arch',23,8],['lantern_stone',-16,-13],['lantern_stone',16,-13],['lantern_stone',-16,4],['lantern_stone',16,4]]}
+  ],
+  [ // Niflheim: grave wood -> ruined street -> crypt approach
+    {base:'waste_nifl',trees:['tree_dead'],detail:['tombstone','desert_bone'],
+      fixed:[['tombstone',-17,-19],['tree_dead',21,7]]},
+    {base:'waste_nifl',road:[2.2,.5,'ruin_cobble'],trees:['tree_dead'],detail:['tombstone','rock_cliff_crag'],
+      fixed:[['house_ruin',-24,-22],['tombstone',20,5],['standing_stone',-18,6]]},
+    {base:'rock_abyss',road:[3,.25,'ruin_cobble'],trees:['tree_dead'],detail:['tombstone','standing_stone'],
+      fixed:[['house_ruin',-24,-22],['house_ruin',24,8],['tombstone',-16,-10],['tombstone',16,-10],['standing_stone',-16,4],['standing_stone',16,4]]}
+  ],
+  [ // Abyss: crystal tunnels -> dark shore -> cavern heart
+    {base:'rock_abyss',trees:['stalagmite','crystal_cluster'],detail:['rock_cliff_crag','standing_stone'],
+      fixed:[['crystal_cluster',-20,-18],['stalagmite',21,7]]},
+    {base:'rock_abyss',water:[-32,-23],bank:['limestone_pale',1.5],dark:1,trees:['crystal_cluster','stalagmite'],detail:['standing_stone','rock_cliff_crag'],
+      fixed:[['crystal_cluster',-21,-18],['rock_cliff_crag',22,7]]},
+    {base:'rock_abyss',water:[-32,-24],bank:['limestone_pale',1.7],dark:1,trees:['stalagmite','crystal_cluster'],detail:['standing_stone','rock_cliff_crag'],
+      fixed:[['crystal_cluster',-24,-20],['crystal_cluster',24,-20],['stalagmite',-18,6],['stalagmite',18,6],['standing_stone',-16,-10],['standing_stone',16,-10]]}
+  ]
+];
+function stageSpec(m,stage){
+  const original=KIT_MAP[m];
+  if(stage<=3)return original;
+  const tier=stage<=6?0:stage<=9?1:2,c=STAGE_SCENES[m][tier],f={base:c.base,base2:c.base};
+  if(c.road){f.road={w:c.road[0],wander:c.road[1]};f.roadTile=c.road[2]}
+  if(c.water){f.water=c.water;f.bank=c.bank[1];f.bankTile=c.bank[0]}
+  if(c.dark)f.waterFrames=['water_dark_0','water_dark_1'];
+  if(c.deck){f.deck=c.deck.slice(0,4);f.deckTile=c.deck[4]}
+  if(c.bands)f.bands=c.bands.map(([z0,z1,x0,x1])=>({tile:'paddy_water',z:[z0,z1],x0,x1,jit:1}));
+  const z0=tier===2?-23:-27,z1=tier===2?9:12;
+  f.groves=[{n:tier===2?4:5,r:4.5,trees:[1,2],b0:BX_+2,b1:29,z0,z1,gap:5.3,types:c.trees}];
+  f.scatter=c.detail.map((type,i)=>({type,count:tier===2?5:4,r0:BX_+2+i,r1:29,z0,z1,s0:.8,s1:1.1,gap:5}));
+  f.far=[{type:c.trees[0],count:12,r0:33,r1:44,z0:-43,z1:18,s0:.9,s1:1.2,gap:8}];
+  f.fixed=c.fixed.map(([type,x,z])=>({type,x,z,scale:1}));
+  // The boss field is special through its *scenery*, not a painted arena floor: a pair
+  // of tall, map-native landmarks frames the encounter, with the far landmarks behind it.
+  if(tier===2){const frame=['house_prontera','palm_giant','standing_stone','house_ruin','tree_ancient_large',
+      'rock_cliff_crag','shrine_stone','torii_gate','tree_dead','crystal_cluster'][m];
+    f.fixed.push({type:frame,x:-BX_-4,z:-4,scale:1.2},{type:frame,x:BX_+4,z:-4,scale:1.2,flip:true})}
+
+  return {src:original.src,layout:'field',design:original.design+'-'+(tier+1),seed:1047+m*757+tier*1739,f};
 }
 function kitRect(d,gx0,gx1,gy){
   const x0=kitX(d,gx0),x1=kitX(d,gx1+1),z0=kitZ(d,gy),z1=kitZ(d,gy+1);
@@ -1687,10 +2364,12 @@ function kitGroundTex(plan){
   const t=new THREE.CanvasTexture(cv);t.minFilter=THREE.LinearMipMapLinearFilter;t.anisotropy=4;return t;
 }
 function kitWaterMeshes(plan,root){
-  // the animated water frames ship on the payon sheet; a morocc-ground map borrows them rather
-  // than showing an untextured pool (same attached kit - nothing is drawn either way)
-  const wsrc=(kitAtlas(plan.src)&&kitAtlas(plan.src).tiles.water_frame_0)?plan.src:(kitAtlas('payon')?'payon':plan.src);
-  const f=[kitCrop(wsrc,'tile','water_frame_0'),kitCrop(wsrc,'tile','water_frame_1')];
+  // The animated frame pair is the recipe's choice: the kit ships a bright pair (the default, the
+  // teal sea and creek water) and a dark pair (Abyss's deep lake). v1 hardcoded the bright names
+  // and made a morocc-ground map borrow them from the payon sheet - with one v2 atlas there is
+  // nothing left to borrow, so the pair is simply read off the plan.
+  const pair=(plan.waterFrames&&plan.waterFrames.length===2)?plan.waterFrames:['water_frame_0','water_frame_1'];
+  const f=pair.map(n=>kitCrop(plan.src,'tile',n));
   for(const r of plan.water){
     const m=new THREE.Mesh(new THREE.PlaneGeometry(r.w,r.h),new THREE.MeshLambertMaterial({map:null}));
     m.rotation.x=-Math.PI/2;m.position.set(r.x,.02,r.z);m.receiveShadow=true;root.add(m);
@@ -1701,7 +2380,8 @@ function kitWaterMeshes(plan,root){
 }
 function kitDeckMesh(plan,root){
   if(!plan.deck)return;
-  const t=kitCrop(plan.src,'tile','bridge_planks');if(!t)return;
+  // plank by default; Amatsu lacquers its shrine bridge red (deckTile in the recipe)
+  const t=kitCrop(plan.src,'tile',plan.deckTile||'bridge_planks');if(!t)return;
   const map=t.clone();map.needsUpdate=true;map.repeat.set(plan.deck.w/KIT_S,plan.deck.l/KIT_S);
   const m=new THREE.Mesh(new THREE.PlaneGeometry(plan.deck.w,plan.deck.l),new THREE.MeshLambertMaterial({map}));
   m.rotation.x=-Math.PI/2;m.rotation.z=plan.deck.a;m.position.set(plan.deck.x,.05,plan.deck.z);m.receiveShadow=true;root.add(m);
@@ -1727,12 +2407,15 @@ function kitTick(dt){
   for(const w of KIT.water){if(w.maps.length<2)continue;w.m.material.map=w.m.material.map===w.maps[0]?w.maps[1]:w.maps[0]}
 }
 function buildKit(m){
-  const plan=kitPlan(m);if(!plan)return null;
+  const plan=kitPlan(m,S.lvl);if(!plan)return null;
   if(!kitAtlas(plan.src))return null;      // no atlas for this design (yet) -> v13 scenery stands in
   if(!KIT.ground){KIT.ground=new THREE.Mesh(new THREE.PlaneGeometry(KIT_FAR,KIT_FAR),new THREE.MeshLambertMaterial({map:null}));KIT.ground.rotation.x=-Math.PI/2;KIT.ground.position.y=.004;KIT.ground.receiveShadow=true;scene.add(KIT.ground)}
-  KIT.ground.visible=true;KIT.ground.material.map=kitGroundTex(plan);KIT.ground.material.needsUpdate=true;
+  KIT.ground.visible=true;
+  if(KIT.ground.material.map&&KIT.ground.material.map.dispose)KIT.ground.material.map.dispose();
+  KIT.ground.material.map=kitGroundTex(plan);KIT.ground.material.needsUpdate=true;
+  for(const w of KIT.water)for(const tex of w.maps)if(tex.dispose)tex.dispose();
   KIT.water=[];kitWaterMeshes(plan,deco);kitDeckMesh(plan,deco);
-  const r=kitPropMeshes(plan,deco);KIT.built={map:m,design:plan.design,placed:r.placed,missing:r.missing};
+  const r=kitPropMeshes(plan,deco);KIT.built={map:m,stage:S.lvl,design:plan.design,placed:r.placed,missing:r.missing};
   for(const n in r.missing)console.warn('kit: '+plan.design+' design asks for "'+n+'" but the atlas does not carry it - '+r.missing[n]+' placement(s) skipped, nothing substituted');
   return plan;
 }
@@ -1973,6 +2656,11 @@ function drawSlashFX(x,z,wt){
     slashM=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(cv),transparent:true,depthWrite:false}));slashM.center.set(.5,.25);scene.add(slashM)}
   slashM.visible=atkAnim>.12&&wt!=='bow'&&wt!=='staff';if(!slashM.visible)return;
   slashM.position.set(x,1.15,z);slashM.material.opacity=Math.min(1,atkAnim*1.6)*.9;slashM.scale.set(1.6+atkAnim*1.2,1.6+atkAnim*1.2,1)}
+// Pets use the same official Divine Pride renderer as field mobs, but every species
+// stays well below the hero regardless of the monster's size or mutation grade.
+const PET_VISUAL_SCALE=.42;
+const petFallbackShape=sp=>sp.n==='Lunatic'?'bunny':sp.n.includes('Wolf')?'cat':sp.n.includes('Peco')?'bug':sp.n.includes('Dragon')||sp.n.includes('Baphomet')?'demon':'blob';
+function disposeCreatureVisual(v){scene.remove(v.G);if(v.image)v.image.remove();if(v.official&&v.spr.material.map)v.spr.material.map.dispose();v.spr.material.dispose()}
 const mobMesh=new Map(),petMesh=new Map();let curMob=null,mobG=null,mobMats=[],lastBoss=null,dmesh=new Map(),tmp=new THREE.Vector3(),lastProg='';
 function scr(x,y,z){tmp.set(x,y,z).project(cam);return[(tmp.x+1)/2*R.domElement.clientWidth,(1-tmp.y)/2*R.domElement.clientHeight]}
 // Facing-away views (NW 3, N 4, NE 5): the item icon is front-view art and reads wrong there.
@@ -2166,7 +2854,7 @@ dom.addEventListener('wheel',e=>{e.preventDefault();zoom=Math.min(2,Math.max(.6,
 
 const ct=new THREE.Vector3(0,.8,0);let lastKey='';
 function draw(){
-  if(!S)return;const bn=isBoss()&&S.kl>=MPS,key=S.mp+':'+bn,c=C(),mp=MAPS[S.mp];
+  if(!S)return;const bn=isBoss(),key=S.mp+':'+S.lvl+':'+bn,c=C(),mp=MAPS[S.mp];
   if(key!==lastKey){lastKey=key;const col=new THREE.Color(bn?0x8a6bb0:mp.sky);scene.background=col;scene.fog=new THREE.Fog(col,35,80);ground.material.color.setHex(mp.ground);buildDeco(S.mp);road.material.color.setHex(S.mp===3?0xe9d9a8:0xd8cdb4)}
   P.position.set(pl.x,0,pl.z);
   const w=S.eq.weapon,wt=heroWeaponType(c.n,c.wt,w&&w.wt),clothN=S.eq.armor?TC[S.eq.armor.tier]:c.col,hairN=S.eq.head?TC[S.eq.head.tier]:0xd0492c,metalN=w?TC[w.tier]:0xc0c0c0;
@@ -2175,22 +2863,24 @@ function draw(){
   if(heroSpr){if(heroSpr.userData.pack)setPackCell(heroSpr,viewDir(pFace),pl.run,atkAnim,t);else setCell(heroSpr,viewDir(pFace),animRow(pl.run,atkAnim,t,10));
   heroSpr.material.color.setRGB(1,1-hitAnim*.75,1-hitAnim*.75)}
   drawSlashFX(pl.x+Math.cos(pFace)*0.7,pl.z+Math.sin(pFace)*0.7,wt);
-  const alive=new Set(mobs);mobMesh.forEach((v,m)=>{if(!alive.has(m)){scene.remove(v.G);if(v.image)v.image.remove();if(v.spr.material.map)v.spr.material.map.dispose();v.spr.material.dispose();mobMesh.delete(m)}});
-  for(const m of mobs){let v=mobMesh.get(m);if(!v){v=buildMob(m);mobMesh.set(m,v)}const s=Math.max(.05,(m.spriteScale||.92)*m.spawn*(m.boss?1.18:1));
+  const alive=new Set(mobs);mobMesh.forEach((v,m)=>{if(!alive.has(m)){disposeCreatureVisual(v);mobMesh.delete(m)}});
+  for(const m of mobs){let v=mobMesh.get(m);if(!v){v=buildMob(m);mobMesh.set(m,v)}const s=mobVisualScale(m);
     const rec=v.spriteId&&mobTextureCache.get(v.spriteId);if(rec&&rec.state==='ready')useMobTexture(v,rec.texture);
     v.G.scale.set(s,s,s);v.G.position.set(m.x,0,m.z);
     const mFace=Math.atan2(pl.z-m.z,pl.x-m.x);
     if(!v.official)setCell(v.spr,viewDir(mFace),animRow(m.run,m.atkAnim||0,t+m.a,8));
     const fl=m.flash||0;v.spr.material.color.setRGB(1,1-fl*.8,1-fl*.8)}
-  if(mob){const s=Math.max(.05,(mob.spriteScale||.92)*mob.spawn*(mob.boss?1.18:1)),[qx,qy]=scr(mob.x,3.08*s+.15,mob.z);tag.style.display='block';tag.style.left=qx+'px';tag.style.top=qy+'px';$('tn').textContent=mob.n+(mob.boss?' (BOSS)':'');$('th').style.width=Math.max(0,mob.hp/mob.max*100)+'%'}else tag.style.display='none';
-  const pids=new Set(S.pets.filter(p=>p.on).map(p=>p.id));petMesh.forEach((v,id)=>{if(!pids.has(id)){scene.remove(v.G);petMesh.delete(id)}});
-  S.pets.filter(p=>p.on).forEach(p=>{const sp=PETS[p.sp],r=petR[p.id];if(!r)return;let v=petMesh.get(p.id);
-    if(!v){const tex=getSheet('p:'+sp.n+':'+sp.c,(ctx,x,y,d,kind,fr)=>drawCritter(ctx,x,y,d,kind,fr,sp.n==='Lunatic'?'bunny':sp.n.includes('Wolf')?'cat':sp.n.includes('Peco')?'bug':sp.n.includes('Dragon')||sp.n.includes('Baphomet')?'demon':'blob',sp.c));
-      v={G:new THREE.Group(),spr:mkBillboard(tex,1.35,2)};v.G.add(v.spr);mkShadow(v.G,.28);scene.add(v.G);petMesh.set(p.id,v)}
-    v.G.position.set(r.x,0,r.z);v.G.scale.setScalar(.7+sp.r*.12);
+  if(mob){const s=mobVisualScale(mob),[qx,qy]=scr(mob.x,3.08*s+.15,mob.z);tag.style.display='block';tag.style.left=qx+'px';tag.style.top=qy+'px';$('tn').textContent=mob.n+(mob.boss?' (BOSS)':'');$('th').style.width=Math.max(0,mob.hp/mob.max*100)+'%'}else tag.style.display='none';
+  const pids=new Set(S.pets.filter(p=>p.on).map(p=>p.id));petMesh.forEach((v,id)=>{if(!pids.has(id)){disposeCreatureVisual(v);petMesh.delete(id)}});
+  S.pets.filter(p=>p.on).forEach(p=>{const sp=PETS[p.sp],r=petR[p.id];if(!sp||!r)return;let v=petMesh.get(p.id);
+    const pet={x:r.x,z:r.z,run:r.run,a:p.id,shape:petFallbackShape(sp),c:sp.c,spriteId:sp.spriteId,flash:0};
+    if(!v){v=buildMob(pet);petMesh.set(p.id,v)}
+    const rec=mobTextureCache.get(sp.spriteId);if(rec&&rec.state==='ready')useMobTexture(v,rec.texture);
+    v.G.position.set(r.x,0,r.z);v.G.scale.setScalar(PET_VISUAL_SCALE);
     const pf=mob?Math.atan2(mob.z-r.z,mob.x-r.x):pFace;
-    setCell(v.spr,viewDir(pf),animRow(r.run,r.lunge||0,t,12));
-    if(p.mut)v.spr.material.color.set(MC[p.mut]);else v.spr.material.color.set(0xffffff)});
+    if(!v.official)setCell(v.spr,viewDir(pf),animRow(r.run,r.lunge||0,t,12));
+    v.spr.material.color.set(0xffffff); // keep the original RO art even when mutated
+  });
   const live=new Set();
   drops.forEach(d=>{live.add(d);let m=dmesh.get(d);
     if(!m){const i=d.it,sl=i.card?'card':i.ore?'ore':i.slot,col=i.ore?(i.ore==='ori'?0xff9d3c:0x6cd3ff):TC[dtier(i)];
@@ -2204,11 +2894,13 @@ function draw(){
   const dd=(cam.aspect<1.5?26:18)/zoom,sk=shake*.03;
   cam.position.set(ct.x+Math.sin(az)*Math.cos(el)*dd+rnd(-sk,sk),Math.sin(el)*dd+.5,ct.z+Math.cos(az)*Math.cos(el)*dd+rnd(-sk,sk));
   cam.lookAt(ct);cam.updateMatrixWorld(true);
-  for(const m of mobs){const v=mobMesh.get(m);if(v)syncMobImage(v,m,Math.max(.05,(m.spriteScale||.92)*m.spawn*(m.boss?1.18:1)))}
+  for(const m of mobs){const v=mobMesh.get(m);if(v)syncMobImage(v,m,mobVisualScale(m))}
+  for(const p of S.pets.filter(p=>p.on)){const v=petMesh.get(p.id),r=petR[p.id],sp=PETS[p.sp];
+    if(v&&r&&sp)syncMobImage(v,{x:r.x,z:r.z,run:r.run,a:p.id,shape:petFallbackShape(sp),flash:0},PET_VISUAL_SCALE)}
   syncSkillFx();syncWeaponSprites(pFace,c);R.render(scene,cam);
-  floats.forEach(f=>{if(!f.el){const e=document.createElement('div');e.className='fl'+(f.big?' big':'');e.textContent=f.txt;e.style.color=f.col;ov.appendChild(e);f.el=e}
-    const[a,b]=scr(f.x,f.y,f.z);f.el.style.left=a+'px';f.el.style.top=b+'px';f.el.style.opacity=Math.max(0,f.life)});
-  const pt=bn?'BOSS FIGHT':`Monsters ${Math.min(S.kl,MPS)}/${MPS}${isBoss()?' → Boss':''}`;if(pt!==lastProg){lastProg=pt;prog.textContent=pt}
+  floats.forEach(f=>{if(!f.el){const e=document.createElement('div');e.className='fl'+(f.big?' big':'')+(f.kind&&f.kind!=='text'?' '+f.kind:'');e.textContent=f.txt;if(f.col)e.style.color=f.col;ov.appendChild(e);f.el=e}
+    const[a,b]=scr(f.anchor==='hero'?pl.x:f.x,f.y,f.anchor==='hero'?pl.z:f.z);f.el.style.left=a+'px';f.el.style.top=b+'px';f.el.style.opacity=Math.max(0,f.life)});
+  const pt=bn?`BOSS FIGHT · ${mobs.filter(m=>!m.boss).length} minions`:`Pack ${activePack+1}/3 · Monsters ${Math.min(S.kl,MPS)}/${MPS}`;if(pt!==lastProg){lastProg=pt;prog.textContent=pt}
 }
 let last=performance.now();
 function loop(now){const dt=Math.min(.1,(now-last)/1000);last=now;try{for(let i=0;i<speed;i++){update(dt);kitTick(dt)}draw()}catch(e){if(!loop.e){loop.e=1;console.error(e);log('Error: '+e.message,'r0')}}requestAnimationFrame(loop)}

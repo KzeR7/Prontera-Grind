@@ -40,7 +40,7 @@ const THREE={Group,Mesh,Color:Col,MeshLambertMaterial:Mat,SphereGeometry:class e
   PlaneGeometry:class extends Geo{constructor(w,h){super('plane',w,h)}}};
 const scene=new Group(),deco=new Group();scene.add(deco);
 const townObjs=[],road={visible:true,position:new V3()};
-const BX_=5.5,Z0=-14,Z1=3;
+const BX_=13,Z0=-28,Z1=12;
 ${code}
 this.__s={TH,buildDeco,deco,water,landmark,scene,BX_,Z0,Z1,townObjs,road,Group,Mesh,Geo,Col};
 `;

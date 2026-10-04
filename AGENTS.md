@@ -22,7 +22,7 @@
 Three.js from a CDN, no build step. The player picks a class line, grinds monsters across
 10 maps, levels up, spends stat and job points, wears gear, collects pets **from drops
 only** (there is no hatching), trains them by gambling Zeny, rolls for cards and ores, and
-fights a boss once every 15 kills.
+fights an immediate boss plus escorts on each Stage 10 map.
 
 | Where | What |
 |---|---|
@@ -31,9 +31,9 @@ fights a boss once every 15 kills.
 | `Sprite/*.png` | the uploaded RO-style sprite sheets (21 of them). The **source art**. |
 | `tools/make_sprite_pack.py` | crops `Sprite/` → `assets/sprite_pack_data.js`. |
 | `tools/montage.py` | rebuilds the four montage sheets (see below). |
-| `tools/tests/` | the eleven test suites. Run them before every push. |
-| `UPDATE-BOOTSTRAP.py` | one-shot: rebuilds the whole update from a fresh clone (see *Delivery*). |
-| `READ-ME-FIRST.md` | handover note for whoever pushes the current work. |
+| `tools/tests/` | the thirteen test suites. Run them before every push. |
+| `tools/preview/` | dev-only: dumps the ten plans out of the game and paints them top-down, so a layout can be judged without a browser (`node tools/preview/dump_plans.js` then `python3 tools/preview/render_plans.py`). Nothing here ships to the player. |
+| `READ-ME-FIRST.md` | handover note: what this repo is, how to run it and how to recover after a workspace reset. |
 
 Ships by committing to `main` on GitHub (`KzeR7/Prontera-Grind`); Cloudflare Pages
 rebuilds from the repo. **The two files the game actually needs are `index.html` and
@@ -62,7 +62,7 @@ in-game and stored in `localStorage` under `pg_acc4`, saves under `pg_save3_<use
    the stub's own centre, never the silhouette centroid. Stub-less frames (the diving
    lunge) fall back to the torso with that direction's median `stub_top − hips_y`.
 5. **Montage sheets only through `tools/montage.py`.** Never hand-split a montage.
-6. **All nine test suites must be green before you push.** Add a test when you add
+6. **All thirteen test suites must be green before you push.** Add a test when you add
    behaviour. A change with no test is not finished.
 7. **Bump the `BUILD` tag** (`const BUILD='…'` in `index.html`) for anything a player can
    see, and **append to the log below**.
@@ -129,15 +129,15 @@ grind lives at the top. `needAt(L)` is three continuous power segments
 (`NA1·L^NE1` ≤50, anchored powers to `NE2` ≤99 and `NE3` above), solved with
 `tools/tune_pacing.js` against the canonical model (~800 kills/hour, camping the band map's
 boss field): **Base 10 in 10 min, Base 49 in 1.9 h, Base 99 in 45 h**, then a long 100-150
-endgame (**~269 h total to Lv150 at the model rate** — an outcome, not an anchor; retune
+endgame (**~269 h total to Lv150 at the historical model rate** — an outcome, not an anchor; retune
 `aC` if the owner wants it shorter). `EXPK=5.5`, `BOSEK=46` (the boss stays 8.33x a mob),
 `ZK=[8,14]`, `BZK=[150,250]`, `QZ={kill:1.6,loot:9,boss:26}`, `zenAt(p)=max(1,round(.011*p*p))`
 are unchanged. **`QXP={kill:1/120,loot:1/150,boss:1/72}`** is the v11 column scaled by 4/15:
 on the steep new curve quests must never carry more than ~40% of a level (they supply ~35%
-overall). **Job bars mirror the base curve** (`JOFF=[0,9,49,98]`): job level j of a tier
+overall in the historical v16 model). **Job bars mirror the base curve** (`JOFF=[0,9,49,98]`): job level j of a tier
 costs the job exp (70% of mob exp) that base level j+JOFF[tier] pays out, so each job bar
 fills in step with the base bar and the job gates (Novice 10 / 1st-job 40 / 2nd-job 50) land
-on the anchors by construction. Zeny over a full model run is **~46.5M**, enough for the
+on the anchors by construction. Zeny over a historical model run is **~46.5M**, enough for the
 +10 7-slot setup and thousands of pet rolls.
 
 > **The 800 kills/hour figure is still the model's assumption - re-measure it.** It was
@@ -206,38 +206,79 @@ Hard rules that `scene_sim.js` enforces:
 * prop groups carry `userData.kind` so the scene can be inspected (and tested) without guessing
   from geometry.
 
-**The attached map kit — Payon and Morocc are drawn from the owner's designs.** The kit lives in
-`assets/kit/`: `ro-spritesheet.png` + `.json` (8 terrain tiles — grass_olive, grass_forest,
-dirt_path, riverbank_wall, cliff_rock, water_frame_0/1, bridge_planks — and 7 environment
-billboards — tree_ancient_large, tree_ancient_variant, tree_tall_cluster, tree_sapling,
-tree_bush_bright, rock_cliff_crag, river_stone_post), `ro-map-payon.json` (the Payon river
-crossing: 48x32 cells with corner heights, 250 water cells, 24 bridge cells, the bridge at
-25.5/16.5, 30 placed props), `ro-map-morocc.json` and `morocc-atlas.js` (the Morocc desert ruins
-design, and the attachment's own generator that paints its atlas in the page, copied verbatim).
+**The map kit is v2 — one painted RO-style atlas for all ten maps.** The kit lives in
+`assets/kit/`: `ro-spritesheet.png` + `.json` — a 2048×2048 sheet with **25 terrain tiles**
+(grass_olive/forest/geffen/jade/blossom, dirt_path, dirt_payon, riverbank_wall, cliff_rock,
+cliff_sand with the alias `cliff`, sand/sand_dark/sand_gold, limestone_pale, waste_nifl,
+rock_abyss, ruin_cobble, paddy_water, water_frame_0/1, water_dark_0/1, bridge_planks,
+bridge_red) and **34 environment billboards** (the v1 seven, three palms, two cacti, five desert
+ruins and a desert bone, plus the v2 additions: bamboo_grove, tree_cherry, tree_dark_gnarled,
+tree_dead, tower_geffen, house_prontera, house_ruin, torii_gate, bridge_red_arch, lantern_stone,
+shrine_stone, standing_stone, tombstone, stalagmite, crystal_cluster, pier_post) — plus
+`ro-map-payon.json` and `ro-map-morocc.json`, the two attached 48x32 level designs. The manifest
+is a **superset of every v1 name and of every name the retired Morocc generator painted**, so it
+is a drop-in; its `character.ro_adventurer` strip is v1's pixel for pixel (verified against the
+v1 sheet), which is what `KIT_PK` is measured from; and it carries a `suggest.KIT_PS` table that
+the game copies verbatim — `kit_sim.js` compares the two entry for entry. **The runtime desert
+generator is retired**: v1 painted Morocc's atlas in the page from `assets/kit/morocc-atlas.js`;
+v2 carries all of those names on the one sheet, so `'morocc'` is now only an alias and the file
+lives on in `Updates/retired-v1-kit/` as history. The art is original painted work researched
+against divine-pride map renders for palette and landmarks
+(`Updates/map-sprites-v2/RESEARCH.md`); nothing is traced or ripped from the RO client, and the
+pipeline that built it (`process_tiles.py`, `cut_props.py`, `derive_props.py`, `pack_atlas.py`)
+is in `Updates/map-sprites-v2/work/` with every processed asset individually, so repacking with
+additions is a five-minute job.
 
 * `KIT_MAP` says which arena map wears what. **All ten maps wear the kit** (v18): 3 → the
   attached **morocc** design, 4 → the **payon** recipe, and the other eight → `fieldPlan`
-  recipes - deterministic (seeded LCG) configs of ground tiles, cliff rings, roads, water
-  strips, decks and prop scatters, laid out in code from the same crops. A design dresses the
-  **ground** (its tiles painted into one 2048x2048 texture over the 90x90 field), its **water**
-  (merged row rectangles, animated by swapping the kit's two water frames) and its **props**
-  (billboards, sized and anchored from the manifest).
+  recipes - deterministic (seeded LCG) configs of ground tiles, cliff rings, roads, water strips,
+  ground bands, decks and prop scatters/fixed landmarks, laid out in code from the same crops. A
+  plan dresses the **ground** (its tiles painted into one 2048x2048 texture over the 90x90 field),
+  its **water** (merged row rectangles, animated by swapping the frame pair the recipe asks for -
+  the bright pair by default, `water_dark_0/1` for Abyss), its **deck** (`bridge_planks` by
+  default, `bridge_red` for Amatsu) and its **props** (billboards, sized and anchored from the
+  manifest).
+* **Every map has its own v2 identity, and it is a rule, not a preference.** Researched map by map
+  against divine-pride renders - one painted technique, ten moods - and pinned per map by
+  `kit_sim.js` (ground tile + cell tiles + landmark props, and no two maps may share a signature):
+
+  | # | map | the look |
+  |---|---|---|
+  | 0 | Prontera | olive meadow, warm dirt avenue, round green trees, one cottage far off-lane |
+  | 1 | Izlude | teal sea, **golden sand shore band**, palms at the waterline, a pier on three posts |
+  | 2 | Geffen | moody blue-grey-green plains, dark gnarled clumps, standing stones, the wizard tower in a far corner |
+  | 3 | Morocc | the attached desert-ruins design, cell for cell (its pixels are v2's now) |
+  | 4 | Payon | near-black forest, **red-brown mud trail**, bamboo groves on the banks, mossy boulders at the crossing |
+  | 5 | Comodo | golden beach, palms, dark cave-mouth crags behind the sand |
+  | 6 | Louyang | jade highland, **terraced paddy water off the lane**, bamboo, a stone shrine, lantern pairs |
+  | 7 | Amatsu | blossom fields, **red lacquer bridge** on the road, a torii on the approach, lantern pairs, the great red arch far off-lane |
+  | 8 | Niflheim | purple-grey waste, dead trees, graves, bones, one ruined house; no bright colour anywhere |
+  | 9 | Abyss | dark slate, pale limestone shore around a **deep dark lake**, stalagmites, crystals |
 * **Payon is laid out in code, not from the attached grid.** The owner rejected the attached
   payon layout (a huge diagonal lake with player-sized trees) and asked for RO's Payon Forest, so
   `payonPlan()` builds the field from the RO recipe out of the same kit tiles: a wide wandering
-  **dirt road** down the middle, a **creek** across it with a **plank bridge** on the road, tree
-  lines that **tower over the player** on both banks, saplings and bushes under them, and a rocky
-  mountain edge (Payon Forest is a mountainous forest). `ro-map-payon.json` stays in the repo as
-  the owner's design - it is just no longer the field. Morocc still uses its design cell for cell.
+  **mud road** (`dirt_payon`) down the middle, a **creek** across it with a **plank bridge** on the
+  road, tree lines that **tower over the player** on both banks, saplings, bushes and **bamboo
+  groves** under them, a stone post and a mossy boulder on each bank at the crossing, and a rocky
+  mountain edge. `ro-map-payon.json` stays in the repo as the owner's design - it is just no
+  longer the field. Morocc still uses its design cell for cell.
 * **Prop size is derived from the kit's own character, not guessed.** The kit ships an 80px
   character frame; this game's hero stands 2.9 units, so `KIT_PK = 2.9/80` and a prop is
-  `crop height x KIT_PK x KIT_PS[type]`. `KIT_PS` is the RO Payon proportions: big trees 3-4x the
-  hero, saplings ~1x, bushes knee height (~0.3-0.7x), crags boulder-sized, palms 2.7-4x, cacti and
-  ruins below the player. **Every prop type a field places must have a factor** - `kit_sim.js`
-  fails on one that does not, because the default (1.0) makes player-sized trees again.
-* Field recipes may borrow props across atlases (a prop carries its own `src`: morocc palms
-  on the Izlude beach, desert bones in Niflheim), and maps painting morocc ground borrow the
-  payon sheet's two water frames for their sea - it is one attached kit either way.
+  `crop height x KIT_PK x KIT_PS[type]`. `KIT_PS` is the art pass's tuned table - v2 crops are
+  taller and better proportioned than v1's, so the v1 factors were wrong for them: big trees
+  3.3-3.6x the hero, cherry 3.0x, palms 2.6-3.1x, dead/gnarled 2.5-2.7x, the Geffen tower 5.1x (a
+  far landmark), torii 2.3x, houses ~2x, bamboo ~1.9x, saplings ~1x, bushes/curbs knee height.
+  **Every prop type a field places must have a factor** - `kit_sim.js` fails on one that does
+  not, because the default (1.0) makes player-sized trees again - and it also fails if the game's
+  table drifts from the manifest's.
+* Recipes place props three ways: `trees` (the two tree lines), `scatter` (randomised; `side`
+  pins one side) and `fixed` (a landmark exactly where the brief says - a tower in a far corner,
+  a torii on the approach). `bands` paint a ground tile across a depth range and an x range: the
+  lane check is in the builder, so no band can ever be written into the run whatever a recipe
+  says, and neither the tree line nor the scatter lands inside one.
+* With one atlas there is nothing left to borrow between atlases: `'payon'`, `'morocc'` and
+  `'kit'` are aliases of one manifest object, so a crop is never made twice and the v1
+  cross-atlas `src` field is now a label, not a second download.
 * Cell types map to tiles exactly as the kit's own engine maps them: grass→grass_olive,
   grass_dark→grass_forest, dirt→dirt_path, cliff→cliff_rock, bank→riverbank_wall. Water is the
   animated pass, bridge cells are the deck mesh, Morocc's tiles keep their own names (sand,
@@ -246,27 +287,45 @@ design, and the attachment's own generator that paints its atlas in the page, co
 * The design is anchored on the point it is built around (Payon's bridge, Morocc's grid centre)
   and centred on the play band (`KIT_ZC`), one cell = `KIT_S` = 0.85 world units.
 * **Props never stand in the running lane** (`|x| < BX_`). Props a design puts there are moved to
-  the lane edge (their side and depth kept) - never dropped, so the design's prop count survives.
-  The one exception is a design asking for art the atlas does not carry: Payon asks for
-  `rock_boulder_mossy` and the sheet has no such billboard, so those 3 placements are **skipped and
-  reported, never substituted** (show the gap to the owner; do not invent art for it).
-* Nothing in the kit is drawn, traced, recoloured or substituted by this repo. The Morocc atlas is
-  painted by the attachment's own generator, verbatim, at load time.
+  the lane edge (their side and depth kept) - never dropped, so the design's prop count survives -
+  and the plan counts them as `nudged`, so the rule is visible in the plan instead of silent.
+  Billboards may overhang the lane *visually* (a torii's arch spans part of the road, as the tree
+  canopies always have); nothing is *placed* there. If a crop a design asks for is missing from
+  the atlas, the placement is **skipped and reported, never substituted** - v2 closed the last
+  such gap (`rock_boulder_mossy`, skipped and reported since kit-v14, now renders).
+* Nothing in the kit is drawn, traced, recoloured or substituted by this repo.
 * If the atlas cannot load, every map falls back to the v13 scenery (`buildKit` returns null and
   `buildDeco` continues). The kit must never be able to break the game.
-* `kit_sim.js` pins all of it: the Payon recipe (road, creek, bridge on the road, both banks
-  dressed, the creek out of the monster spawn band), Morocc's design cell for cell, the eight
-  field recipes (ground painted, lane clear, deterministic, water out of the spawn band, every
-  prop exists in the atlas it crops from), the RO scale table (trees ≥ 3x the hero, bushes knee
-  height), all ten maps building against a stubbed canvas/THREE, and the fallback.
+* `kit_sim.js` pins all of it (30 tests): the v2 manifest (25 tiles / 34 billboards, crops inside
+  the sheet, anchors at the feet, the 80px character strip), the drop-in superset and the retired
+  generator, `KIT_PS` equal to the manifest's table and covering every billboard, the alias
+  unification, the Payon recipe (mud road, creek, bridge on the road, bamboo on both banks,
+  boulders at the crossing, both tree lines, the creek out of the monster spawn band), Morocc's
+  design cell for cell off v2's crops, each map's identity and unique signature, the landmarks
+  (one each, off-lane, RO-scaled), the red deck and the lantern pairs, the dark water pair and
+  its animation, the paddies off-lane with nothing standing in them, water out of the spawn band
+  unless decked, the decks where the recipe says, the RO scale (trees ≥ 3x the hero, bushes knee
+  height, a crag boulder-*shaped*), all ten maps building against a stubbed canvas/THREE with
+  every crop shared between placements, and the dead-atlas fallback.
 
-**What RO Payon actually looks like** (researched for this build, and the reason Payon was rebuilt):
-a *mountainous bamboo forest* - Payon village is built on a mountain edge with steep cliffs over a
-river, and the forest fields are a dirt path cut through big dark trees. The reference screenshot
-(showed to the owner) has a **brown dirt/mud ground** with grass at the edges, a **tree trunk wider
-than the character** filling one side of the frame, small bright-green ferns at the tree bases, and
-the player tiny against it. That is the look `payonPlan()` is aiming at. The kit ships **no bamboo
-billboard** - if the owner wants the groves, that crop has to come from the kit, not be drawn.
+**What RO Payon actually looks like** (researched for kit-v15, and the look v2 finally has art
+for): a *mountainous bamboo forest* - Payon village is built on a mountain edge with steep cliffs
+over a river, and the forest fields are a dirt path cut through big dark trees: brown mud ground
+with grass at the edges, a trunk wider than the character, ferns at its base, the player tiny
+against it. `payonPlan()` lays that out; v2 ships the **bamboo groves and the mossy boulder** the
+v1 kit lacked - both were reported as gaps rather than drawn, and both now come from the sheet.
+
+**Drop rarity is FIXED; the affixes are not (v34).** `dropTier(map, stage)` is a property of
+*where* an item falls, not of the roll: each map sits on a rarity band (`MAPTIER`, maps 1-2
+Common / 3-4 Fine / 5-6 Rare / 7-10 Epic), stages 8-9 walk that band one step up, no regular drop
+is ever Legendary, and **every Stage 10 boss drop is Legendary**. The map panel states the band
+on the drop lines, and `genGear()` only rolls the random half of the item - its **affixes**, its
+refine room and its value inside the band - so two drops of the same name still differ. LUK no
+longer nudges the rarity roll (there is no roll to nudge); it still lifts the drop *odds*.
+`gear_sim.js` pins the whole ladder. Selling is pocket money by the same rule: `sellVal()` runs
+~50z for a Common starter piece to ~1,825z for the best Legendary Abyss gear, so a bag dump
+never funds an upgrade. The bag itself holds `BAGMAX = 1000` items; at capacity loot is refused
+and stays on the ground (cards live in their own, uncapped bag).
 
 **Equipment database and drops.** `GEAR[map][section]` is the catalogue - 10 maps × 4 sections
 (Novice / 1st job / 2nd job / high tier), each section carrying 2-3 weapon types plus body,
@@ -299,6 +358,15 @@ maxed a stat in **16 rolls / 334k Zeny**; the new one takes **40 rolls / 802k pe
 ~2.4M for all three pieces** (measured by Monte-Carlo over the real ladder, `economy_sim.js`
 pins it). It is the last optional sink, so it is meant to be the priciest thing a maxed player
 buys. **The 3-vs-40 split is correct and is not a bug**: 3 is the equip limit, 40 the collection cap.
+**Measured power (v34, `tools/tests/pet_sim.js`)**: a maxed G6 Legendary pet (Mythril 5/5/5,
+Spirit Bolt) deals **~2.2M per hit / ~3.4M DPS** against an endgame Lord Knight's ~377k auto-attack
+DPS - **9.0x the owner's plain swings, 0.45x a fully maxed skill rotation, and 1.34x that player
+with three pets on the field**; it alone kills an Abyss Stage-10 boss (658k HP) in ~0.2s. Even the
+weakest maxed pet (a Common Poring) is 1.4x the owner's auto-attacks. The multiplier is flat
+(`petDmg = atk x rarity x mutation x Claw`), so **the ratio is the same at every level and every
+gear tier** - a maxed pet carries a fresh character exactly as hard as a Lv150 one. The audit is
+printed by the suite; no pet number was changed in v34 - the owner has the measurement and the
+call.
 
 **Skills.** Two structural rules, both pinned by `skill_sim.js`:
 
@@ -361,12 +429,37 @@ persisted and repaired on load. **Do not add new effect types** without asking.
 via `pl.wt/wx/wz`); it does not march back to the entrance. **Only a defeat resets the position**
 to `x=0, z=Z1-1.5`. Both are pinned in `save_load_sim.js`.
 
-Vertical, and deliberately so: `BX_=5.5`, `Z0=-14`, `Z1=3` (17 deep). The camera sits
-on +Z looking toward -Z, which makes **low Z the top of the screen**. The player starts at
-`Z1-1.5` (bottom) and mobs hold `Z0..Z0+6` (top), so you run up the avenue to engage; `AGGRO=8.5`
-is how close you must get before a pack leaves its spawn, and bosses ignore it. `ct.z` tracks
-`pl.z-5` to keep the player in the lower part of the frame. Prontera's buildings are scenery, not
-a maze - the whole town set is offset by `TZ=-18` so it sits behind the far edge.
+The battle arena is **26 wide by 40 deep**: `BX_=13`, `Z0=-28`, `Z1=12`. The
+camera sits on +Z looking toward -Z, which makes **low Z the top of the screen**. The
+player starts at `Z1-1.5` (bottom). Every respawn rerolls three pack sites in the dry,
+open field: **13–18.5 units apart** (v30, between v28’s fixed ~18–23 and v29’s 9.5–15.5). `AGGRO=6.5`, and only
+the active pack can chase or attack; on each spawn and after each pack falls, `nearestPack()`
+chooses whichever surviving pack is closest to the player. Pets and skills stay on that
+pack; no 1 → 2 → 3 fixed order. On Stage 10 the boss appears immediately
+with three regular escorts on maps 1–5 or five on maps 6–10. Defeat the boss to
+clear its remaining escorts; the whole boss wave respawns without a kill prerequisite.
+`ct.z` tracks `pl.z-5` to keep the player in the lower part of the frame. Prontera's
+fallback town stays beyond the far edge (`TZ=Z0-8`).
+
+**Monster render size (v30):** the Divine Pride Small/Medium/Large labels and base
+factors `.62/.92/1.28` are still intact, but normal monsters render at **70%** of their
+former visual height in *both* sprite paths (GPU and HTML fallback). Against the 2.92-unit
+hero, Fabre now appears ~1.32 units tall and Poring ~1.96; even Large regular mobs are
+below player height. Boss rendering is **unchanged** (`spriteScale * 1.18`). These are
+visual-only changes — `size` (combat reach), HP, stats, rewards and the monster art are not
+modified. `mobVisualScale()` is the shared helper for mob mesh, DOM sprite and target tag.
+
+**Stage scenes (v29):** `KIT_MAP` is the original map scene on stages 1–3; `STAGE_SCENES`
+is ten maps × three **independent, themed recipes** for 4–6, 7–9 and 10. `stageSpec(m,l)`
+selects the recipe, `kitPlan(m,l)` builds it, and the draw key includes the stage. Later
+recipes set their own base, path, water, decks, vegetation and landmarks; even Morocc uses a
+new field layout rather than stamping its original attached design with extras. **No later
+scene uses a noise patch, monster floor pad, boss-floor ring, plaza or round stamp.** Boss
+stages stand out through paired map-native landmarks *outside* the lane, not floor paint.
+Water is still allowed where it belongs to the map (sea, creek, dark lake), and randomized
+pack sites reject water. Stages 1–3 retain their v27 scene and its original organic ground
+variation; nothing was added around their spawn sites. All pixels remain the existing kit.
+
 
 **Art.** No map or terrain sheets exist in `Sprite/`, and house rule 1 forbids inventing art, so
 all map visuals are procedural: `TH[m]` picks a biome kind and two colours, `buildDeco` scatters
@@ -416,6 +509,20 @@ node tools/tests/sprite_sim.js         # -> "10 passed, 0 failed" (mob art, weap
 node tools/tests/starter_sim.js        # -> "4 passed, 0 failed"
 node tools/tests/weapon_joint_sim.js   # -> "7 passed, 0 failed" (measured hand joints, parked weapon)
 node tools/tests/picker_sim.js         # -> "13 passed, 0 failed" (the picker the owner uses, booted under a DOM stub)
+node tools/tests/pack_sim.js          # -> "bodies in pack (19): ..."
+node tools/tests/class_change_sim.js  # -> "22 passed, 0 failed"
+node tools/tests/save_load_sim.js     # -> "10 passed, 0 failed"
+node tools/tests/economy_sim.js       # -> "21 passed, 0 failed"
+node tools/tests/stat_sim.js          # -> "7 passed, 0 failed"
+node tools/tests/card_sim.js          # -> "13 passed, 0 failed"
+node tools/tests/skill_sim.js         # -> "50 passed, 0 failed"
+node tools/tests/gear_sim.js          # -> "24 passed, 0 failed  (24 assertions groups)"
+node tools/tests/scene_sim.js         # -> "8 passed, 0 failed" (per-map scenery, water, clear lane)
+node tools/tests/kit_sim.js           # -> "34 passed, 0 failed" (v2 atlas + KIT_PS, payon recipe, morocc design, ten identities, builders, loader)
+node tools/tests/ui_sim.js            # -> "18 passed, 0 failed"
+node tools/tests/sprite_sim.js        # -> "11 passed, 0 failed" (mob/weapon Divine Pride mapping, fallbacks)
+node tools/tests/starter_sim.js       # -> "7 passed, 0 failed" (the gentle starter stages)
+node tools/tests/pet_sim.js           # -> "11 passed, 0 failed" (+ the printed pet data, buff rules and the maxed-pet balance measurement)
 ```
 
 Every suite pulls real code out of `index.html` by **string boundary**, so an edit that
@@ -464,9 +571,13 @@ function name changes.
   `git` rewinds to the base commit, `/tmp` is emptied, background servers die. Keep work
   committed, re-check `git log` after every few tool calls, and never run
   `git checkout -f` / `git reset --hard` over modified files — it silently reverts them.
-* Recovery path if a reset lands: `UPDATE-BOOTSTRAP.py` (rebuilds `index.html` + the pack
-  from the sheets that are already on main), `tools/v7-index.patch` +
-  `tools/restore_v7.sh`, and `READ-ME-FIRST.md`.
+* Recovery path if a reset lands: the repo **is** the backup. `index.html`, the sprite pack and
+  the map kit are all committed, so a fresh clone plus `git pull` on the working branch is the
+  whole recovery - then re-run the thirteen suites to prove the tree is sane (`READ-ME-FIRST.md`
+  has the commands). **There is no bootstrap script any more**: `UPDATE-BOOTSTRAP.py` was deleted
+  in v27 because it was a v7-era self-installer that overwrote `index.html` and `tools/` with a
+  compressed 2026-10-02 build - running it would have thrown a week of work away. It is in git
+  history if anyone ever wants to read it; do not bring it back.
 * Network egress from the sandbox is **GitHub only** — every file host tested (transfer.sh,
   0x0.st, catbox, filebin, …) is unreachable. `pip` works.
 
@@ -1105,6 +1216,45 @@ assigned for feel rather than fidelity. While reworking that, two shipped bugs s
 * **Branches / PR:** `arena/01a1029e-prontera-grind` — https://github.com/KzeR7/Prontera-Grind/pull/7
 * **Known limits / follow-ups:** merge the PR to deploy through the normal GitHub/Cloudflare route; live visual/farming review remains recommended.
 
+### 2026-10-04 — `kit-v2-art map-sprite-brief-v2 deliverable`
+* **What changed for the player:** nothing yet — this is the **art deliverable** for Map Sprite
+  Brief v2 ("closer to real RO"), waiting in `Updates/map-sprites-v2/` for the implementing
+  agent. The game still runs on the v1 kit until it is wired in. The owner found the v1 map
+  sprites below standard and asked for higher-fidelity art researched against divine-pride.net.
+* **What the deliverable is:** a new 2048×2048 atlas (v1 was 1280×512) with **25 terrain tiles
+  (was 8) and 34 environment billboards (was 7)**, one painterly RO-style technique across ten
+  per-map identities: Prontera cottage + big green trees, Izlude golden shore + pier posts,
+  Geffen moody grass + gnarled trees + standing stones + wizard tower, Morocc full desert-ruin
+  set, Payon forest mud + **bamboo groves** + the long-missing `rock_boulder_mossy`, Comodo
+  golden beach palms, Louyang jade grass + paddy water + stone shrine + lantern, Amatsu petal
+  grass + cherry tree + **torii gate + red arch bridge + red deck tile**, Niflheim purple-grey
+  waste + dead tree + tombstone + ruined house, Abyss dark slate + limestone shore + **dark
+  water frames** + stalagmite + crystals. Manifest is a **superset of every v1/morocc name**
+  (drop-in), keeps the v1 character strip pixel-for-pixel (scale reference), and carries a
+  `suggest` block: a complete tuned `KIT_PS` table + per-map recipe suggestions.
+* **Files touched:** `Updates/map-sprites-v2/` (new: atlas, manifest, `README-IMPLEMENTATION.md`
+  for the next agent, `RESEARCH.md` divine-pride notes, `preview.html`, `work/` pipeline +
+  individual assets), `AGENTS.md`. **`index.html` untouched, no `BUILD` bump** — nothing is
+  player-visible until implementation.
+* **Art:** all original painted art (AI-generated to this brief, then processed: seamless-tiled,
+  chroma-keyed, trimmed, measured anchors). divine-pride.net renders were style/palette
+  **reference only**; nothing traced or ripped from the RO client. Variants derived from this
+  kit's own art are documented in RESEARCH.md. Class sprites, `Sprite/`, the pack and
+  `tools/montage.py` untouched.
+* **Tests:** no game code changed, so the 13 suites are unaffected (verified the repo still has
+  no `index.html` diff). The implementing agent must run the full battery after wiring
+  (`kit_sim.js` pins will need moving — the README lists which ones, including the
+  `rock_boulder_mossy` skipped-placement assertion that now inverts).
+* **Branches / PR:** `arena/01a1047a-prontera-grind` — PR link recorded below after publishing.
+* **Known limits / follow-ups:**
+  * Implementation is deliberately left to the next agent: copy the two files over
+    `assets/kit/`, update `KIT_PS`, apply the per-map recipe suggestions, optionally retire
+    `morocc-atlas.js` (all its names are in the v2 manifest), move the kit_sim pins, bump
+    `BUILD`. Full steps in `Updates/map-sprites-v2/README-IMPLEMENTATION.md`.
+  * The Abyss dark-water pair needs one small code change (recipe-selectable water frames);
+    everything else is data.
+  * `standing_stone` was generated as a three-menhir row; the packed sprite is the best single
+    stone (the full row sits in `work/props/` source history if ever wanted).
 ### 2026-10-04 — `balance-v23 curve pets sprite-sizes`
 * **What changed for the player:**
   * The tuned EXP curve puts Base Lv 1–10 at about 7 minutes, Base 50 at about 2 hours, and Base 99 at about 48 hours in the canonical 800-kills/hour model. Base 100–150 is a much harder 336-hour (~14-day) climb after the rebirth reset; a full 1–150 run models to ~387 hours.
@@ -1648,3 +1798,552 @@ assigned for feel rather than fidelity. While reworking that, two shipped bugs s
 * **Files touched:** new `tools/preview_server.py`, `tools/HANDOVER-weapon-review.md`.
 * **Tests:** all 15 suites unchanged and green; the game is untouched.
 * **Branches / PR:** `arena/01a1054b-prontera-grind` (PR #11).
+### 2026-10-04 — `kit-v26 map-kit-v2 all-ten-maps`
+* **What changed for the player:**
+  * **Every map is now drawn from Map Kit v2**, the higher-fidelity RO-style art set that arrived in
+    `Updates/map-sprites-v2/` with a note for the implementing agent (that is this entry). The old
+    sheet carried 8 ground tiles and 7 trees; the new one carries **25 ground tiles and 34 props**,
+    painted in one style with ten different moods. Nothing about how the game plays changes - the
+    arena, the lane, the spawn band, mobs, drops and fights are untouched. What changes is what you
+    see when you travel.
+  * **Each map now looks like its own place**, researched against Ragnarok Online's fields:
+    Prontera a sunny meadow with a dirt avenue and a cottage in the distance; Izlude a teal sea
+    over a **golden sand shore**, palms at the waterline and its pier standing on posts; Geffen
+    moody blue-grey grass with dark gnarled trees, standing stones and **the wizard tower on the
+    horizon**; Comodo a golden beach with cave-mouth crags behind the sand; Louyang a jade highland
+    with **terraced rice paddies** beside the road, bamboo, a stone shrine and lantern pairs;
+    Amatsu a blossom field with a **red lacquer bridge** over its stream, a red torii gate on the
+    approach and the great red arch bridge far off; Niflheim a purple-grey waste of dead trees,
+    graves and one ruined house; the Abyss dark slate with a pale limestone shore around a **deep
+    dark-blue lake** full of stalagmites and crystals. Morocc keeps its attached desert design,
+    cell for cell, now painted from the sharper desert tiles.
+  * **Payon finally reads as RO's Payon Forest**: its road is the kit's dark red-brown mud trail
+    instead of the generic dirt tile, and both creek banks carry **bamboo groves** - the old kit
+    had no bamboo crop at all, which is why the groves were impossible until now - plus the mossy
+    boulders at the crossing the old atlas was missing.
+  * **The in-page desert-atlas generator is gone.** v1 painted Morocc's sand and ruins in the
+    browser at load; v2 ships every one of those names on the one sheet, so there is nothing left
+    to generate and one less thing that can fail. Morocc's layout is exactly as it was.
+  * If the new sheet cannot be downloaded, every map quietly falls back to the old procedural
+    scenery, exactly as before - the kit can never break the game.
+* **Files touched:** `index.html` (the kit layer: the v2 size table, the ten per-map recipes,
+  Payon's mud road/bamboo/boulders, ground bands, recipe-selectable water frames and deck tile,
+  one-atlas aliases, retired-generator removal, `BUILD`), `assets/kit/ro-spritesheet.png` and
+  `.json` (replaced by the v2 sheet and manifest), `assets/kit/morocc-atlas.js` moved to
+  `Updates/retired-v1-kit/morocc-atlas.js` and its `<script>` tag removed, `tools/tests/kit_sim.js`
+  (rewritten around v2: 20 pins moved to 30), `AGENTS.md` (the kit section of the map above, the
+  expected-output table, this entry).
+* **Art:** nothing was drawn, traced, recoloured or substituted by this implementation - the v2 art
+  is the delivered deliverable, copied verbatim into `assets/kit/`. `tools/montage.py` was not run;
+  `Sprite/`, the class pack and the class bodies are untouched. The manifest's own tuned size
+  table (`suggest.KIT_PS`) is now the game's `KIT_PS`, compared entry for entry by a test, and the
+  80px character strip the prop scale is measured from was checked **byte-identical to v1's**
+  (0 differing channel values), so `KIT_PK = 2.9/80` did not move.
+* **Tests:** all 13 suites green - pack (19 bodies), class_change 22, save_load 10, economy 21,
+  stat 7, card 13, skill 48, gear 20, scene 8, **kit 30** (was 20), ui 13, sprite 10, starter 4;
+  inline JS passes `node --check`. `kit_sim.js` moved its pins, not its rules: the
+  rock_boulder_mossy skipped-placement gap inverted (the crop exists now - Payon's field places
+  two boulders at the crossing and the three the attached payon design asks for would all render),
+  the size table is pinned against the manifest's own table, and the retired-generator test
+  replaces the old "the generator still paints these names" test. New tests pin each map's identity
+  and unique signature, the landmarks (one each, off-lane, RO-scaled), the red deck and lantern
+  pairs, the Abyss dark water pair and its animation, the Louyang paddies off-lane with nothing
+  standing in them, and the shared-crop cache. **Two real builder bugs were found and fixed while
+  writing them**: a ground band at a depth painted only its first matching x range (Louyang's
+  left-hand terraces were silently missing), and a tree's undergrowth could land in a band the
+  tree itself had skipped.
+* **Branches / PR:** `arena/01a10549-prontera-grind`; the pull-request link is recorded in the
+  delivery entry below.
+* **Known limits / follow-ups:**
+  * **The torii gate stands at the lane edge, not astride the road.** Scenery may never stand in
+    the running lane, so its anchor sits at the lane edge and only its painted arch overhangs the
+    road. If you want it centred over the road, that needs an explicit "a gate may span the lane"
+    exception in the lane rule - ask for it and it is a small, tested change.
+  * **`grass_jade` and `paddy_water` are the kit's two brightest tiles** (the jade highland and
+    RO's ripple-grid water). They look saturated in the atlas; in game the lighting and fog tone
+    them down. If they read too neon in play, the lever is the palette remap in the art pipeline
+    (`Updates/map-sprites-v2/work/process_tiles.py`), not a recolour in the game - house rule 1
+    covers the kit's pixels too.
+  * **The atlas is now the game's largest download** (2.8 MB, was 227 KB), fetched once and shared
+    by all ten maps; every crop is cached once, so switching maps re-cuts nothing.
+  * **`UPDATE-BOOTSTRAP.py` is a v7-era one-shot that would overwrite today's game with the v7
+    build if anyone ran it** - when its patches no longer apply (they have not applied since v8) it
+    restores `index.html` from an old commit and patches that. `READ-ME-FIRST.md` still tells a
+    fresh agent to run it. Both are stale and dangerous; they should be deleted or rewritten, and
+    this entry deliberately does not touch them.
+  * `Updates/map-sprites-v2/preview.html` still shows every prop at its shipped size next to the
+    hero, and is the quickest way to judge the art outside the game.
+
+### 2026-10-04 — `kit-v26 delivery`
+* **What changed for the player:** no additional game changes; published the verified v26 map-kit
+  update for review and merge.
+* **Files touched:** `AGENTS.md` only.
+* **Art:** none; no sheets added, removed or rebuilt by this entry, and `tools/montage.py` was not
+  run.
+* **Tests:** documentation-only follow-up; the 13-suite results are listed in the `kit-v26` update
+  entry immediately above, and were re-run green before the game push.
+* **Branches / PR:** `arena/01a10549-prontera-grind` — https://github.com/KzeR7/Prontera-Grind/pull/10
+* **Known limits / follow-ups:** merge the PR to deploy through the normal GitHub/Cloudflare route;
+  then a real playtest pass over all ten maps is the thing the tests cannot do - judge Payon's
+  bamboo and mud trail, Amatsu's red bridge and torii, the Abyss dark lake and Louyang's jade
+  paddies in the live preview, and flag anything that reads wrong so the art pipeline (not the
+  game) can be re-run.
+
+### 2026-10-04 — `kit-v27 organic-field` **(checkpoint — work in progress, not finished)**
+
+* **What changed for the player:** the owner's map feedback is being worked through. The ten maps
+  no longer dress themselves in two mirrored tree lines or paint their ground with a
+  mathematical lattice (`(i*7+j*13)%9`), which is what made the green patches look printed and
+  every field look boxed in. Ground now varies in **organic noise patches**, scenery stands in
+  **clumps spread across the whole field** (near the lane and far out), the map border turns wild
+  in **ragged tongues** instead of a rectangle, and **Morocc keeps its attached design but is now
+  dressed all round it**. **Prontera is the big visible change**: its floor is a **paved brick
+  cobble avenue and square** through a green meadow and its buildings are the kit's own painted
+  cottages — the old block-built town (THREE-box buildings, not kit art) is retired to fallback.
+  **This is not finished**: the far-field ring and the per-map tuning are still owed, and the
+  login card says `wip` on purpose.
+* **Files touched:** `index.html` (the kit layout layer: seeded value noise, `KIT_FIELD`,
+  `kitEdge`, the rewritten `fieldPlan`, the new `farDress`, `kitPlan` dispatch, all ten recipes,
+  `BUILD`), `tools/preview/` (new dev-only tool: `dump_plans.js` + `render_plans.py`, top-down
+  plan previews), `Updates/v27-organic-field/CHECKPOINT.md` (the handover instruction sheet),
+  `image-search/` (RO reference renders kept with the repo's other research), `AGENTS.md`.
+* **Art:** none. No tile, prop or pixel was drawn, traced, recoloured or substituted; `Sprite/`,
+  the class pack and `assets/kit/` are untouched, and `tools/montage.py` was not run.
+* **Tests:** 12 of 13 suites green at this checkpoint (class_change 22, save_load 10, economy 21,
+  stat 7, card 13, skill 48, gear 20, scene 8, ui 13, sprite 10, starter 4). **`kit_sim.js` does
+  not run yet** — its harness still binds the removed `PAY` constant and its pins describe the old
+  layouts; rewriting it around v27 is item 3 of the checkpoint's to-do list. Inline game JS passes
+  `node --check`.
+* **Branches / PR:** `arena/01a1057c-prontera-grind`; checkpoint pushed as a draft pull request, so
+  the work is safe on GitHub before the tuning pass.
+* **Known limits / follow-ups:** **read `Updates/v27-organic-field/CHECKPOINT.md` before touching
+  this** — it lists the root causes, what is done, what is owed (far-ring data per map,
+  `kit_sim.js` rewrite, final `BUILD`, final log entry) and the house rules that must not break.
+
+### 2026-10-04 — `kit-v27 organic-field all-ten-maps` (finished)
+
+* **What changed for the player:** all ten arena maps were rebuilt from the owner's walk-through
+  notes, and **Prontera finally wears the kit**. Details, map by map:
+  * **Prontera** — the old block-built town was still showing because `buildDeco` returned early for
+    map 0, so the kit never dressed it. That is fixed: the block town (and its procedural fountain)
+    is now the *no-atlas fallback* only, and the map is the kit's own art — a **brick cobble avenue
+    and paved square** in a light green meadow, the kit's painted cottages in a street row, and a
+    **round fountain basin** in the square: a pool of the kit's water tile, a limestone curb ring,
+    four stone posts on the rim and a **plinth at the centre**. There is no fountain crop on the
+    sheet, so the basin is composed from crops — nothing drawn (house rule 1).
+  * **Izlude** — de-jungled. It is now Prontera's field by the sea: light green meadow, sparse round
+    trees, golden shore, palms at the waterline, the pier on its posts, and the sea running to the
+    field edge so the far side is water instead of bare ground.
+  * **Geffen / Louyang / Abyss** — the three the owner wants room to grow the battle field on:
+    fewer, wider-spaced props, no rocky blobs in the middle, far sparser than before.
+  * **Morocc** — the attached design is untouched, cell for cell, and is now **dressed all round
+    it**: dunefields, mesas, palms, cacti, ruins and bones, alternating sides so **both sides** are
+    dressed (the owner found one side bare).
+  * **Payon / Comodo / Niflheim / Amatsu** — thinned and spaced; Comodo lost its rocky brown blobs
+    entirely; Niflheim's trees and rocks are fewer; Amatsu's blossom is lighter.
+  * **No more brown square**: the v26 rocky surround (and the inland rock blobs) is gone from every
+    recipe. `kitEdge()` still exists as an opt-in wild edge, but **no map uses it** - the owner
+    asked for open fields, and `kit_sim.js` pins that no map frames itself.
+  * **The ground is organic now.** v26 painted its variation with `(i*7+j*13)%9===0` - a diagonal
+    lattice of single cells that read as printed wallpaper (the owner's "symmetric green patches",
+    "repeats of boxes"). Ground variation is **seeded value noise** with a **requested coverage
+    fraction** solved from the noise's own distribution, so a recipe says "25% dark patches" and
+    gets 25%, wherever the seed puts them. Scenery is placed in **clumps** spread over the whole
+    field, with rejection sampling so the density really lands, and a **far ring** past the field
+    border into the fog.
+* **Files touched:** `index.html` (the kit layout layer: `kitHash/kitNoise/kitFbm`, `KIT_FIELD`,
+  `kitEdge`, the rewritten `fieldPlan` with pools/outcrops/groves/bands/far, `farDress`, `kitPlan`,
+  all ten `KIT_MAP` recipes, `buildDeco`'s Prontera fix, `BUILD`), `tools/tests/kit_sim.js`
+  (rewritten around v27 - 33 pins), `tools/preview/` (new dev-only plan previewer: `dump_plans.js`
+  + `render_plans.py`), `READ-ME-FIRST.md` (rewritten as a real handover), `AGENTS.md` (the map
+  table's tool rows, the delivery recovery bullet, this entry).
+* **Deleted:** `UPDATE-BOOTSTRAP.py`. It was a v7-era self-installer holding a compressed
+  2026-10-02 build of `index.html` and `tools/`, and by v26 its patches no longer applied, so it
+  would have restored that old build **over the current game** if anyone had run it (the v26 entry
+  below flagged it; this entry is the fix). It is in git history. The recovery path is git itself:
+  everything the game needs is committed.
+* **Art:** nothing was drawn, traced, recoloured or substituted. Every pixel is a crop of the v2
+  sheet; `tools/montage.py` was not run and `Sprite/`, the pack and `assets/kit/` are untouched.
+  The fountain is five existing crops arranged, not new art.
+* **Tests:** **all 13 suites green** — pack (19 bodies), class_change 22, save_load 10, economy 21,
+  stat 7, card 13, skill 48, gear 20, scene 8, **kit 33** (was 30 at v26 and thrown out of date by
+  this work - it now pins the organic layout: coverage fractions, no lattice period, no frame, both
+  sides dressed, canopy spacing, the far ring, the fountain, Morocc's far dressing, and the ten
+  identities), ui 13, sprite 10, starter 4. Inline game JS passes `node --check`.
+* **Branches / PR:** `arena/01a1057c-prontera-grind` — https://github.com/KzeR7/Prontera-Grind/pull/12
+* **Known limits / follow-ups:**
+  * `kitEdge()` is unused by every recipe (that is the owner's call, not an oversight) - if a map
+    ever wants a wild rocky border again, add `edge:{at,amp,s,...}` to its recipe and the test will
+    start judging it for raggedness.
+  * The fountain is composed from crops: a pool tile, a limestone curb, four stone posts and a
+    plinth. It reads as a fountain basin from the arena camera; a real fountain crop would be
+    better and is a job for the art pipeline, not the game.
+  * The battle field is still `BX_` 5.5 wide; the owner wants to grow it later. The maps are now
+    deliberately open, but widening the lane is a balance change (spawn band, AGGRO, camera) and
+    was not touched here.
+  * Prontera's old block town is still in `index.html` as the fallback if the kit cannot load, and
+    still has no test of its own; `scene_sim.js` covers the fallback scenery path, not the town.
+
+### 2026-10-04 — `kit-v28 stage-variants three-packs`
+
+* **What changed for the player:** each map now has four visual stage bands. Stages 1–3 keep
+  their existing recipe and kit artwork. Stages 4–6 add that map's first set of painted
+  clearings and kit props; stages 7–9 switch to a stronger set of markings and landmarks.
+  Stage 10 has its own large boss altar with a contrasting centre, outer ring and sentinels.
+  All ten maps use their own palette, and switching stages rebuilds the scene immediately.
+* **Combat field:** expanded from 11×17 to **26×40** world units, with wider shadow coverage.
+  Three separated packs spawn together. The player and pets fight only pack 1, move to pack 2
+  and then pack 3, and repeat from pack 1 when all are cleared. Sleeping packs cannot chase or
+  hit the player; area and chain skills cannot reach across packs. Stage 10 still summons its
+  lone boss after 15 kills, now on the marked altar. Starter fights still have only one or two
+  monsters per encounter (three separated encounters); loot, boss rewards and unlock rules
+  are unchanged. The town fallback was moved behind the larger arena.
+* **Files touched:** `index.html` (arena, spawn/target loop, stage kit treatment, build tag),
+  `tools/tests/{starter,kit,scene,save_load,skill}_sim.js`, `tools/preview/dump_plans.js`,
+  `READ-ME-FIRST.md`, `AGENTS.md`.
+* **Art:** no new sprite sheet, pixels, recolouring or substitute art. The three later bands
+  reuse the existing painted kit tiles and billboards. The stage 1–3 layouts are left intact,
+  except that scenery in the newly enlarged running lane moves to the safe edge (and Izlude's
+  pier moves with its posts); no placed sprite is deleted. The old atlas and class sprites are
+  untouched.
+* **Tests:** all 13 suites green — pack 19 bodies, class change 22, save/load 10, economy 21,
+  stat 7, card 13, skills **49**, gear 20, scene 8, kit **34**, ui 13, sprite 10, starter **7**.
+  Kit tests cover the four stage bands on all ten maps and restored original layouts; skill tests
+  exercise an area hit when the target switches mid-cast; starter
+  tests execute real spawn and kill transitions, starter damage budgets, pack spacing, isolation,
+  and boss placement. Inline game JavaScript passes `node --check`; the stage layouts were
+  previewed top-down with the kit's own tile crops.
+* **Known limits / follow-ups:** movement across the bigger field changes real kills/hour.
+  The economy's 800 kills/hour pacing remains a model assumption, so time-to-job-change needs
+  a real playtest before retuning the EXP curve. The new boss altar uses arranged existing
+  crops, not a purpose-made boss-arena sprite.
+
+### 2026-10-04 — `kit-v29 themed-scenes roaming-packs` (owner feedback on v28)
+
+* **What changed for the player:** the stage 4–6 and 7–9 spawn pads and the stage 10 boss
+  floor disc/ring added in v28 are **removed**. They were not the requested variation. Each
+  of the ten maps now has three genuinely new layouts alongside its unchanged stage 1–3
+  layout: new paths/water where the biome calls for them, different vegetation and distinct
+  landmarks using the same kit crops. Boss stages have map-native landmark pairs framing the
+  fight instead of anything painted on the floor. Morocc's original attached design remains
+  on stages 1–3; later stages use different desert and ruin designs. No sprite was painted,
+  recoloured, borrowed from another game or replaced.
+* **Combat:** packs reroll on each respawn in the open battle area rather than staying on
+  three marked positions. Their sites are roughly **9.5–15.5 units apart** (previously ~18–23),
+  avoid water, and remain isolated. The player begins with the nearest pack to their current
+  position; after that pack falls, the nearest *surviving* pack is chosen. No fixed 1–2–3
+  route. Pets, area skills and chained hits remain limited to the active pack. The three-pack
+  count, 15-kill boss, arena dimensions, rewards and save format are unchanged.
+* **Files touched:** `index.html`, `tools/tests/{starter,kit,save_load}_sim.js`,
+  `tools/preview/dump_plans.js`, `READ-ME-FIRST.md`, `AGENTS.md`.
+* **Tests:** all 13 suites green — pack 19 bodies, class change 22, save/load 10, economy 21,
+  stat 7, card 13, skill 49, gear 20, scene 8, kit 34, ui 13, sprite 10, starter 7.
+  Kit tests compare all four complete scenes for every map and ban the v28 floor overlays;
+  starter tests reroll hundreds of waves, check separation and dry sites, and execute the
+  real nearest-pack selection and kill transition. Inline game JS passes `node --check`.
+  The new plans were rendered top-down for visual review using the original kit atlas.
+* **Known limit:** travel is shorter than v28, but the economy's 800-kills/hour assumption
+  still needs a real gameplay measurement before any pacing retune. The boss-field landmarks
+  use existing kit art rather than a custom boss sprite.
+
+### 2026-10-04 — `kit-v30 pack-spacing smaller-mobs`
+
+* **What changed for the player:** the three randomized pack sites are now **13–18.5
+  units apart**: halfway between v28's distant fixed positions and v29's close
+  9.5–15.5-unit rerolls. They still avoid water and engage by nearest pack, not number.
+  Ordinary monsters are visibly smaller than the hero: **Fabre ~1.32 vs hero 2.92
+  world units, Poring ~1.96 vs hero 2.92**. All regular mobs (including those with a
+  Large size label) are below the hero's height. Bosses keep their exact previous
+  on-screen scale — none were reduced.
+* **Files touched:** `index.html` (pack spacing, shared regular-mob visual scale, `BUILD`),
+  `tools/tests/{sprite,starter}_sim.js`, `AGENTS.md`, `READ-ME-FIRST.md`.
+* **Art and combat:** no sprite source, packed atlas or kit art changed. Both official
+  sprite routes (GPU and DOM fallback) follow the new scale. Monster hitboxes, aggro,
+  rewards, HP and all boss dimensions are unchanged.
+* **Tests:** all 13 suites green — pack 19 bodies, class change 22, save/load 10,
+  economy 21, stat 7, card 13, skill 49, gear 20, scene 8, kit 34, ui 13,
+  **sprite 11**, starter 7. New assertions pin Fabre/Poring's player-relative heights,
+  every regular monster below the hero, unchanged boss height, and both sprite paths;
+  spacing tests check the midpoint limits on repeated dry-site rolls. Inline game
+  JavaScript passes `node --check`.
+* **Known limit:** Divine Pride's PNGs have varied transparent margins; heights are based
+  on rendered frames, and a visual pass in the live preview is still useful to judge
+  individual silhouettes. The change is not a hitbox or balance change.
+
+### 2026-10-04 — `ui-v31 levels rates boss-escorts`
+
+* **What changed for the player:** the HP bar is modern green above 30% and red at or below
+  30%. Full-width Job Level and Base Level progress bars sit at the bottom; hover or focus
+  either for its exact percentage. Hover or focus Zeny to see *earned* Zeny/min, including
+  quest and sale income but not purchases or GM grants. Kills/min refreshes every 30 seconds
+  (hover it for kills/sec). The rates reset on login or a new adventure.
+* **Stage 10:** the boss is present from the first spawn with three ordinary escorts on the
+  first five maps and five on the last five. They engage together. Killing the boss clears
+  the wave, and the next wave again includes the boss; no 15-kill gate remains. Normal
+  stages still have randomized, nearest-selected three packs. The larger arena and all
+  scene art, mob visual sizes, rewards, save data and boss scale are unchanged.
+* **Files touched:** `index.html`, `tools/tests/{starter,economy,skill,ui}_sim.js`,
+  `READ-ME-FIRST.md`, `AGENTS.md`. `BUILD` is now ui-v31.
+* **Checks:** all 13 suites green (pack 19 bodies; class change 22; save/load 10;
+  economy 21; stat 7; card 13; skill 49; gear 20; scene 8; kit 34; ui 14;
+  sprite 11; starter 7). Inline JavaScript passes `node --check`; diff is clean.
+* **Balance caveat:** `tools/tune_pacing.js` and `economy_sim.js` still use the old
+  one-boss-per-15-kills model for their pacing projections. Those historical time and
+  income estimates are **not** predictions for this new Stage-10 encounter. Re-measure
+  kills/hour and boss-wave duration before retuning, rather than extrapolating the old
+  800-kills/hour model. No in-browser visual playtest was run.
+
+### 2026-10-04 — `ui-v32 split-exp live-rates` (owner correction to v31)
+
+* **What changed for the player:** corrected the bottom XP dock from two stacked full-width
+  bars to **one full-width bar split exactly in half**, as requested and informed by the
+  left-Base/right-Job bottom-bar arrangement in Ragnarok X screenshots. Base occupies the
+  left half and fills rightward; Job occupies the right half and fills leftward. Each
+  half has a centered percentage, a level label, and its own hover/focus details; on
+  narrow screens the labels sit above the percentages in the same single bar.
+* **Rates:** the Zeny/min tooltip and Kills/min display now refresh once a second using
+  events in the last 60 seconds rather than holding kill rate for 30 seconds. If the
+  browser stops updating for more than 30 seconds (e.g. a 10-minute hang), the old
+  samples and any aggregate delta during the stall are discarded, so resuming cannot
+  display a huge, misleading per-minute rate. The next observed kills/credits start
+  a fresh window. Early-window values are extrapolated to per-minute units.
+* **Files touched:** `index.html` (`BUILD` ui-v32), `tools/tests/ui_sim.js`,
+  `READ-ME-FIRST.md`, `AGENTS.md`. Stage-10 encounter, HP threshold, save format and
+  battle/map visuals are unchanged.
+* **Tests:** all 13 suites pass (ui 14), plus inline script `node --check` and
+  `git diff --check`. UI tests cover fill direction/centering, per-second updates,
+  a 60-second rolling window, and a 10-minute stalled frame gap. No in-browser
+  automated screenshot comparison was available.
+
+### 2026-10-04 — `combat-v33 hit-fx pet-sprites`
+
+* **What changed for the player:** the combined bottom XP bar is slimmer: 14px high on
+  desktop, 22px on small screens, with less dock padding. Active skills, First Aid and
+  timed self-buffs show a name tag anchored above the moving hero for the short cast.
+  Outgoing hits are gold with a dark RO-style outline; critical numbers sit on a jagged
+  red burst inspired by the user's example. Incoming damage is red; miss/loot/level
+  messages keep their own styles. Combat values and critical chance are not changed.
+* **Pets:** all eight already have verified Divine Pride monster IDs in `PETS`, so no
+  new invented art is needed. Field pets now pass through the same official PNG WebGL
+  texture and HTML image fallback path as the mobs, instead of always using the
+  procedural critter. Every pet, including Baphomet Jr. and Angeling, renders at a
+  fixed small scale of .42 (~1.28 world units high against a 2.92-unit hero);
+  mutations do not tint the official sprite. Existing procedural art is shown if the
+  remote PNG is unavailable. Deactivating pets removes their mesh and HTML image.
+* **Files touched:** `index.html` (`BUILD` v33), `tools/tests/{ui,skill,sprite}_sim.js`,
+  `READ-ME-FIRST.md`, `AGENTS.md`. Save data, pet damage, mob and boss visual scales,
+  Stage-10 encounter and map designs are unchanged.
+* **Verification:** all 13 suites pass (ui 15, sprite 12); the inline script passes
+  `node --check` and `git diff --check` is clean. UI tests execute the critical-hit
+  routing and hero-anchored labels; sprite tests build all eight pet visuals using
+  their real IDs and check both rendering paths and size. The Divine Pride CDN was
+  unreachable from this sandbox, so live image availability and appearance still
+  need visual confirmation in the browser preview.
+
+### 2026-10-04 — `ui-v34 affix-rarity bag-popup damage-short pet-audit`
+
+* **What changed for the player:** the owner's seven-item list, in order.
+  * **Combat numbers are shorter.** Floating damage reads `100K` instead of `100,000` and `1M`
+    instead of `1,000,000`; normal, critical and incoming damage all use the same rule. A new
+    **Settings → Damage numbers** row switches between `Short · 100K / 1M` (the default) and
+    `Full · 100,000`, and the choice is saved with the account.
+  * **Stage buttons lost their job-tier label.** The small "novice / 1st job / 2nd job / boss"
+    text under Stage 1-10 is gone, and the stage header no longer says "— 1st-job gear". The
+    drop tables and item cards still name their gear section, as the owner asked.
+  * **Clicking an equipment slot now pops the bag out over the panel.** The whole bag renders as
+    the familiar tile grid: everything that fits that slot is ringed green and equips on click,
+    everything that cannot go there is greyed out and inert, and the tiles keep their hover
+    tooltips. The card under the paper doll (worn item, refine, card slots, Unequip) is unchanged.
+  * **Gear rarity is fixed by where it drops; only the affixes roll.** One glance at a map tells
+    you the band: maps 1-2 Common, 3-4 Fine, 5-6 Rare, 7-10 Epic; stages 8-9 step one band up; no
+    regular drop is ever Legendary, and **every Stage 10 boss drop is Legendary** - so Abyss Dark
+    Lord gear from the boss is all Legendary with random affixes. The map panel prints the band
+    on every drop line ("Common", "Rare"...) and item tooltips now label their random stats
+    "Affixes (n random)". Luck no longer nudges the rarity roll (there is no roll left to nudge);
+    it still lifts the drop odds.
+  * **The bag holds 1000 items** (`n/1000` in the panel). At capacity, loot is refused, reported
+    and left on the ground instead of quietly growing the save; cards live in their own bag and
+    are not capped. **Selling is pocket money now**: roughly 50z for a Common starter piece and
+    under 2,000z even for the best Legendary Abyss gear, so a bag dump never funds an upgrade.
+  * **Auto cast moved to where the skill is explained.** The checkbox is no longer on the skill
+    tile; it sits in the skill description card below the grid ("Auto cast this skill", with a
+    line saying whether it is live or paused).
+* **Pet audit (the owner asked for the data and whether a maxed pet is overpowered).**
+  `tools/tests/pet_sim.js` prints the whole set and measures it. Roster: 8 pets, two per rarity -
+  Common Poring/Lunatic (x.2 damage), Rare Wolf/Desert Wolf (x.32), Epic Peco Peco/Dragon Whelp
+  (x.55), Legendary Baphomet Jr./Angeling (x1). Mutation grades G1-G6 = x2/4/6/8/20/40, rolled at
+  2,500-10,000z. Three training pieces, five tiers (Wooden -> Mythril) at 40/25/15/9/5% success,
+  5% double-ups, 1,200-30,000z per roll: Claw +12%/tier damage, Collar +8%/tier speed, Charm
+  +6%/tier crit (x2). Six equally weighted skills: War Cry and Arcane Blessing (+20% ATK/MATK for
+  8s, 26s cooldown), Flame Burst and Thunderclap (1.6x / 1.4x pet damage to everything within 4
+  units, 14s/12s), Piercing Fang and Spirit Bolt (2.2x / 2.5x single target, 10s/11s).
+  **Measured:** a maxed G6 Legendary pet with Mythril 5/5/5 deals ~2.2M per hit and ~3.4M DPS
+  against an endgame Lord Knight's ~377k auto-attack DPS - **9.0x the owner's plain swings, 0.45x
+  a fully maxed skill rotation, 1.34x that player with three pets out**; one pet alone kills an
+  Abyss Stage-10 boss (658k HP) in ~0.2s, and even the weakest maxed pet (Poring) is 1.4x the
+  player's auto-attacks. Because `petDmg` is a flat multiplier on `atk()`, that ratio is the same
+  at level 1 and level 150 - a maxed pet carries a fresh character exactly as hard as a maxed
+  one. **Verdict: yes, pets are overpowered as a sidekick; no pet number was changed in v34** -
+  the measurement is the deliverable and the retune is the owner's call (the levers are the
+  rarity factors, `MUT`, and Claw's +12%/tier).
+* **Files touched:** `index.html` (damage formatting + Settings row, `BAGMAX`, `MAPTIER`/
+  `dropTier`, `genGear` rarity, `fieldOf`/`dropTxt` band display, `collect` cap, `sellVal`, the
+  bag pop-out (`equipChooser` + CSS), skills panel, map panel labels, `itemMain` affixes, `BUILD`),
+  `tools/tests/ui_sim.js` (13 -> 18), `tools/tests/gear_sim.js` (20 -> 23), new
+  `tools/tests/pet_sim.js` (8), `READ-ME-FIRST.md` (suite list + pet suite), `AGENTS.md` (the
+  fixed-rarity block, the measured-pet numbers, the suite table, this entry).
+* **Art:** none. No sheet, atlas or pixel was drawn, traced, recoloured or substituted;
+  `Sprite/`, the class pack and `assets/kit/` are untouched and `tools/montage.py` was not run.
+* **Tests:** **all 14 suites green** - pack (19 bodies), class_change 22, save_load 10, economy 21,
+  stat 7, card 13, skill 49, gear **23**, scene 8, kit 34, ui **18**, sprite 12, starter 7,
+  **pet 8**; inline game JS passes `node --check`, `git diff --check` is clean. New coverage: the
+  full rarity ladder per map and stage plus "a Legendary field never rolls lower and the affixes
+  still differ between two drops", the 50z-2,000z sell window, the 1000-item cap executing the
+  real `collect()` (with cards explicitly uncapped), the damage short-form ladder and the full
+  switch, the bag pop-out (fitting tiles ringed/clickable, others greyed and inert, no inline
+  list left), the stage buttons carrying no job text, and the pet roster/ladder/skill table with
+  the maxed-pet measurement printed by the suite.
+* **Branches / PR:** `arena/01a10643-prontera-grind` - https://github.com/KzeR7/Prontera-Grind/pull/14
+* **Known limits / follow-ups:**
+  * **The pet balance question is answered but not acted on** - see the audit above. If the owner
+    wants pets pulled back, the cheapest lever that keeps the feel is Claw's +12%/tier and the
+    Legendary x1 factor (both are single numbers in `PET_SKILLS`/`petDmg`), then re-run `pet_sim.js`.
+  * Rarity being fixed means a field's drops are worth the same band every time, so a Common-band
+    map can no longer "get lucky" with an Epic piece. That is the requested behaviour; the
+    compensating knob if it ever feels flat is the item `val` spread inside the band (`rnd(.9,1.12)`).
+  * The map panel's drop lines are longer by one word per line; on a very narrow phone the
+    monster card wraps a little more. Judged acceptable, but worth an eyeball in the preview.
+  * Old saves keep the names and rarities of items they already own; the new ladder applies to
+    drops from now on. `sellVal()` reprices every item, old ones included.
+  * The bag cap is enforced at pickup only: equipping/unequipping swaps items in place, so the
+    count cannot exceed `BAGMAX` through normal play, but a save that somehow arrives over the cap
+    is not truncated (nothing is deleted behind the owner's back).
+
+### 2026-10-04 — `ui-v35 bag-highlight subtab-reset map-levels luk-drops autocast` **(checkpoint — pet rework still to come)**
+
+* **What changed for the player:** five of the owner's six follow-up notes, delivered while the
+  pet rework is agreed.
+  * **The map cards show their level range again.** Each card under a map's name printed the word
+    "farming" after v26; it now prints the recommended range (`Lv 1-12`, `Lv 90-99`) again, with a
+    `●` in front of the map you are standing on.
+  * **Reopening a window starts at its first sub-tab.** Status → Equipment used to stay on the
+    Equipment sub-tab after the window was closed and reopened; it now opens on **Stats** every
+    time (and Inventory opens on **Bag**).
+  * **Choosing a slot highlights the real Bag tab instead of popping a list.** Clicking an
+    equipment slot on the paper doll now switches to the actual Bag window, with every item that
+    fits that slot ringed green and wired to equip on a click and a banner naming the slot, what
+    is worn now and the (+N) deltas. Nothing else in the bag is greyed or disabled, so inspecting,
+    selling, tooltips, refine and card work all keep behaving normally, and the equipment panel
+    keeps the worn item's card under the doll. The separate pop-out window and its CSS are gone.
+  * **LUK no longer bends the drop tables.** Drop odds are the field's own numbers again: gear,
+    card, ore and pet rolls all use their printed percentages with nothing scaling them. LUK still
+    does its real job on the character sheet (crit and the DEX/LUK side of attack).
+  * **The Auto cast control moved to the top of the skill description card and got bigger** - a
+    14px bold label with a 19px checkbox in its own highlighted row, above the effect text instead
+    of below it.
+* **Files touched (so far):** `index.html` (`BUILD` v35, the map-card label, `openTab`'s sub-tab
+  reset, `ACT.seleq`/`V.bag0`/`equipChooser`/`V.equip`, the kill-loop drop rolls, the skill detail
+  card + its CSS), `tools/tests/ui_sim.js` (the equip test now pins the Bag-tab highlight model
+  and the map-card level ranges), `tools/tests/gear_sim.js` (drop-loop markers + a new LUK pin),
+  `AGENTS.md`.
+* **Art:** none; `Sprite/`, the class pack, `assets/kit/` and `tools/montage.py` untouched.
+* **Tests:** all 14 suites green at this checkpoint - pack (19 bodies), class_change 22, save_load
+  10, economy 21, stat 7, card 13, skill 49, gear **24**, scene 8, kit 34, ui 18, sprite 12,
+  starter 7, pet 8; inline game JS passes `node --check`; `git diff --check` clean. New pins: no
+  map card may say "farming" and every card carries a level range; a slot click opens the Bag tab
+  and resets the sub-tabs on reopen; the bag rings the fitting sword and leaves the rest of the
+  bag as ordinary tiles; LUK 0 vs 99 must land the same three gear rolls and the same card gate.
+* **Branches / PR:** `arena/01a10643-prontera-grind` (the same branch as the v34 entry above, PR
+  https://github.com/KzeR7/Prontera-Grind/pull/14).
+* **Known limits / follow-ups:** the pet rework (one maxed pet = one maxed character, two skill
+  slots per pet, 7s skill spacing, non-stacking ATK/MATK buffs, two new buffs) is **not in this
+  checkpoint** - the build tag already says `pet-rework` for the commit that follows.
+
+### 2026-10-04 — `ui-v35 pet-rework bag-highlight dmg-toggles map-rarity` (follow-up round 2)
+
+* **What changed for the player:** the seven notes from the second follow-up round.
+  * **Damage numbers are switchable twice over.** Settings carries a **Show: On / Off** pair that
+    hides every floating combat number outright, and next to it the existing **Short (100K / 1M) /
+    Full (100,000)** style picker. Defaults are On + Short, both survive a save/load, and old saves
+    are repaired to that default. Zeny reward floats follow the same short/full style; `Miss` and
+    the floating skill names are never hidden.
+  * **The map cards print their level range again.** v26 had replaced the range under a map name
+    with the word "farming"; every card now shows `● Lv 1-12` / `Lv 10-24` ... `Lv 90-99` again,
+    with the dot marking the map you are standing on.
+  * **Reopening a window starts at its first sub-tab.** Status → Equipment used to stick after the
+    window was closed and reopened; `openTab` now resets Status to **Stats** and Inventory to
+    **Bag** every time it opens.
+  * **Choosing a slot highlights the REAL Bag window.** The separate pop-out window is gone: an
+    equipment slot click opens the actual Bag tab (evicted by the usual 3-window rule if needed)
+    with a banner naming the slot, what is worn and how many bag items fit, every fitting item
+    ringed green with a ✓ badge and wired to equip on click. Everything else in the bag stays an
+    ordinary tile - inspecting, selling, tooltips, refine and cards all keep working - and the
+    equipment panel keeps the worn item's card (stats, refine, card slots, Unequip) under the doll.
+  * **LUK is out of the drop tables.** `lk` is gone from the kill loop: gear, card, ore and pet
+    odds are the field's own printed percentages again, whatever the character's LUK. LUK still
+    feeds ATK (crit and the DEX/LUK stat term) - that is what it is for.
+  * **The Auto cast control sits at the TOP of the skill description card and is bigger:** its own
+    bordered row with a 14px bold label and a 19px checkbox, above the effect text.
+  * **Fixed drop rarity is now MAP-driven.** Rarity comes from the map alone (`MAPTIER`), at every
+    stage it has, so a Prontera or Izlude field can never drop Rare or Epic; **only a Stage 10
+    boss is Legendary** (on any map), and stages 1-9 never are. The 8-9 step-up is gone, which is
+    what the owner was still seeing on low maps. Affixes, refine room and value inside the band
+    still roll.
+  * **The pet rework** (see the block below): two skill slots, eight gacha skills, one 7s skill
+    gap, 30s/60s buffs that never stack with ATK/MATK mutually exclusive, a life-leech and a
+    max-HP buff, and a full damage retune so one maxed pet equals one maxed character.
+* **The pet model, as shipped:** every pet has TWO skill slots; one 🎲 gacha (`petSkillCost`) fills
+  both with two *distinct* skills out of eight equally weighted ones (4 player buffs, 2 AoE, 2
+  single-target). A pet may use one skill per **PETGAP** (7s) on top of that skill's own cooldown,
+  so two attack skills alternate at most every 7s. Attack skills always beat buffs and the
+  strongest ready attack goes first; if every ready skill is a blocked buff the pet says why (once
+  per 12s per pet) and swings normally instead. Buff rules: **a buff never stacks** - while one
+  copy runs, another pet's cast is ignored, not refreshed - and **ATK and MATK can never run at the
+  same time**. All four buffs last **30s on a 60s cooldown**. The new two are **Blood Siphon** (5%
+  of the pet's damage heals you) and **Vital Aura** (+20% max HP; the bar is clamped back down when
+  it lapses). The HUD draws one chip per active buff with the pet's name and the countdown, and the
+  Pets panel spells the rules out. Old saves migrate `p.skill` into slot 1 and reroll to fill both.
+* **The pet rebalance (this is the owner's requested target, and it is ASSERTED):** `PETBAL` is the
+  single knob. At **2.18** a fully maxed pet (G6 mutation, all three pieces at Mythril 5/5, two
+  attack skills) measures **7,610,598 DPS against a maxed character's 7,613,119 DPS rotation =
+  1.000x**. Measured side by side on an endgame Lord Knight (ATK 33,987, 4.18 swings/s, 60% crit at
+  x3.75): player auto-attack 377,171 DPS, whole maxed rotation 7,613,119 DPS; maxed pets ->
+  Poring/Lunatic 1,156,605 (0.15x), Wolf/Desert Wolf 2,007,779 (0.26x), Peco Peco/Dragon Whelp
+  3,778,976 (0.50x), Baphomet Jr./Angeling 7,610,598 (1.00x). Three pets at the top = 22.8M DPS.
+  A maxed pet hits for 4,741,866 and one alone deletes the 658,173 HP Abyss Stage-10 boss in 0.09s.
+  The stepped simulation (120s of the real `petHit()` with crits pinned off) tracks the analytic
+  model the balance number is computed from to within 0.3%.
+* **Files touched:** `index.html` (`BUILD` v35; the Settings show/format pairs; `numTxt` +
+  `damageFloat` gating; the map-card level ranges; `openTab`'s sub-tab reset; `ACT.seleq`/`V.bag0`/
+  `equipChooser`; the kill loop's LUK term; `dropTier`/`MAPTIER` comments; the skill detail card +
+  its CSS; `petBuff`/`petBuffSrc`/`petNote`, `PETGAP`/`PETBAL`, the 8-skill table, `petSkills`/
+  `petBuffWhy`/`petLeech`/`petHit`, `clearPetCd`, `rollPetSkills`, `maxHp`, the buff countdown, the
+  load migration, `petDetail`, the `pskill` action, the HUD buff strip + CSS),
+  `tools/tests/pet_sim.js` (rewritten: 8 skills, the buff rules, the two measurements, 11 pins),
+  `tools/tests/skill_sim.js` (two-slot gacha + combat rules, 50 pins), `tools/tests/ui_sim.js`
+  (the slot-click model, both damage toggles, the pet panel, the bars() fixture),
+  `tools/tests/gear_sim.js` (map-driven rarity), `tools/tests/save_load_sim.js` (two slots +
+  migration), `tools/tests/starter_sim.js` (`numTxt` stub), `AGENTS.md`, `READ-ME-FIRST.md`.
+* **Art:** none; `Sprite/`, the class pack, `assets/kit/` and `tools/montage.py` untouched.
+* **Tests:** all 14 suites green - pack (19 bodies), class_change 22, save_load 10, economy 21,
+  stat 7, card 13, skill **50**, gear **24**, scene 8, kit 34, ui 18, sprite 12, starter 7,
+  **pet 11**; inline game JS passes `node --check`; `git diff --check` clean. New pins: no map card
+  may say "farming" and every card carries a level range; a slot click opens the Bag tab and a
+  reopen resets the sub-tabs; the bag rings the fitting sword and leaves the rest ordinary; LUK 0
+  and 99 must land the same three gear rolls and the same card gate; both damage toggles render,
+  persist and reach `damageFloat`/`numTxt`; rarity is one band per map for stages 1-9 with bosses
+  Legendary; the pet gacha fills two distinct slots and reaches all eight skills; buff no-stacking
+  and ATK/MATK exclusivity are enforced *and logged*; the 7s gate holds; attack-first priority
+  alternates two attack skills; leech heals exactly 5% and the max-HP cap returns on expiry; and
+  **the balance target itself** (maxed pet within 12% of the maxed rotation).
+* **Branches / PR:** `arena/01a10643-prontera-grind`, PR
+  https://github.com/KzeR7/Prontera-Grind/pull/14 (the same PR as v34/v35).
+* **Known limits / follow-ups:** (1) the balance target now makes THREE pets worth three characters
+  - that is what "1 max pet = 1 maxed character" implies, so if pets should instead be sidekicks,
+  lower `PETBAL` (0.5 = half a character each) and rerun `pet_sim.js`; (2) a gacha can hand a pet
+  two buffs and no attack skill (21% of pairs) - deliberate, since support builds are real, but a
+  "always at least one attack" guarantee is a one-line change if the owner wants it; (3) the 7s gap
+  plus 10-14s attack cooldowns means a pet casts about once per 7s, not twice; (4) the damage
+  `Show: Off` switch hides damage floats only - Miss and skill-name labels still appear; (5) the
+  `pet-sim` balance pins are tied to the Lord Knight endgame fixture, so a class whose maxed
+  rotation differs from 7.61M will show a different pet-vs-character ratio.
