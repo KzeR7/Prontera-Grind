@@ -119,6 +119,16 @@ const t = (name, fn) => {
 console.log('attack picker: what the owner clicks\n');
 global.__draw = [];
 
+// A RETURNING BROWSER: park a session saved against an older build (which is what every owner's
+// browser holds after a pack anchor is re-measured, a seat rule changes, or a newer standard
+// ships).  It must NOT open on that state - the shipped standard wins, or the head comes back
+// seated against a seat this build no longer uses.  The exact-standard checks below prove it.
+global.localStorage.setItem('pg_attack_picker_v1', JSON.stringify({
+  cls: 'Wizard', sex: 'f', hair: 11, sel: { dir: 5, frame: 3 }, mirrorSide: false, std: 'std-old-build',
+  atk: { Knight: { 0: [7, 7, 7, 7, 7, 7] } },
+  head: { 'Knight|0|0': [9, 9], 'Wizard|3|2': [-40, -40] }
+}));
+
 let bootError = null;
 try { blocks.forEach((b, i) => vm.runInThisContext(b, { filename: 'inline' + i + '.js' })); }
 catch (e) { bootError = e; }
@@ -158,6 +168,32 @@ catch (e) { bootError = e; }
     assert.ok(cells > 3000, 'expected the whole selection, saw ' + cells + ' numbers');
     assert.strictEqual(worst, 0, 'the standard must come back exactly; worst difference ' + worst +
       ' px: ' + bad.slice(0, 4).join(' | '));
+  });
+
+  t('a browser saved against an older build opens on the standard again, not on its old session', () => {
+    assert.strictEqual(T.bootState({ std: 'std-old-build' }), 'standard',
+      'a save from an older build must lose to the shipped standard');
+    assert.strictEqual(T.bootState(null), 'standard', 'a first visit opens on the standard');
+    assert.strictEqual(T.bootState({ std: T.stdFingerprint() }), 'saved',
+      'a save made against this very build is kept');
+    assert.notDeepStrictEqual(T.st.head['Knight|0|0'], [9, 9], 'the stale drag survived the boot');
+    assert.notDeepStrictEqual(T.st.head['Wizard|3|2'], [-40, -40], 'the stale drag survived the boot');
+    assert.strictEqual(T.st.mirrorSide, true, 'the standard restores the mirrored side');
+    assert.strictEqual(T.st.hair, 11, 'the class on screen and the preview hair are view state, not the standard');
+    assert.strictEqual(T.st.atk.Knight[0][0] === 7, false, 'the stale pose picks must be gone');
+    const bar = byId['status'] && byId['status'].textContent;
+    assert.ok(/standard changed/i.test(String(bar)), 'the page must say the standard replaced the old session, said: ' + bar);
+    T.save();
+    const saved = JSON.parse(global.localStorage.getItem('pg_attack_picker_v1'));
+    assert.strictEqual(saved.std, T.stdFingerprint(), 'the session it writes must be marked with this build');
+  });
+
+  t('the standard on screen is the shipped one, number for number (fingerprint and all)', () => {
+    const DF = global.window.SPRITE_PICKER_DEFAULTS;
+    assert.strictEqual(Object.keys(DF.head).length, 570, 'the standard must carry 570 head pivots');
+    assert.strictEqual(Object.keys(DF.headDragMirror || {}).length, 342, 'and 342 mirrored drags');
+    assert.strictEqual(global.localStorage.getItem('pg_attack_picker_v1').indexOf('std-old-build'), -1,
+      'the stale fingerprint must be gone from what this browser now holds');
   });
 
   t('the mirrored views keep the heads the standard saved for them', () => {

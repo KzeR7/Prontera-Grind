@@ -165,6 +165,20 @@ function packBodyName(){
 var CAP=6, ZOOM=1.55, BODY=CELL.body||96;
 var LSK='pg_attack_picker_v1';          // localStorage key (old weapon fields are ignored on load)
 
+// Which state does this page open on: the SHIPPED standard, or the session this browser saved?
+//
+// Every head seat is stored as a drag measured against the seat this build computes, so a save
+// made against an older build (a re-measured pack anchor, a changed seat rule, a newer standard)
+// is a wrong seat - the head comes back off the body. The shipped standard therefore always wins
+// unless the save was made against the very same build; the owner's numbers are never lost,
+// because they are what the standard carries.
+function stdFingerprint(){
+  var s=JSON.stringify(window.SPRITE_PICKER_DEFAULTS||null),PK=window.SPRITE_PACK;
+  if(PK&&PK.bodies)for(var b in PK.bodies)s+='|'+b+'='+JSON.stringify(PK.bodies[b].anchors);
+  var h=5381;for(var i=0;i<s.length;i++)h=(((h<<5)+h)^s.charCodeAt(i))>>>0;
+  return 'std-'+h.toString(36)+'-'+s.length}
+function bootState(saved){return (saved&&saved.std===stdFingerprint())?'saved':'standard'}
+
 // ---------- state ----------
 var st={cls:'Knight',sex:'m',hair:0,sel:{dir:0,frame:0},mirrorSide:true,atk:{},head:{}};
 try{var s0=JSON.parse(localStorage.getItem(LSK)||'null');
@@ -172,6 +186,7 @@ try{var s0=JSON.parse(localStorage.getItem(LSK)||'null');
     st.atk=s0.atk||{};st.head=s0.head||{};delete st.weap;delete st.grips}}
 catch(e){}
 var hadSaved=!!s0;
+var bootNote='';                        // a note that survives every repaint (dump() appends it)
 // The owner's approved selection, shipped with the picker: it is the starting state on a
 // fresh browser, and the "load the owner's standard" button puts it back after any editing.
 // Poses come as ids; heads come as ABSOLUTE pivots in the game cell, so each is stored as a
@@ -208,7 +223,7 @@ function resetAll(){
   for(var cn in D.classes)if(!DF.attack[cn])autoFillClass(cn);
   st.mirrorSide=true;var mc=document.getElementById('mirrorSide');if(mc)mc.checked=true;
   save()}
-function save(){try{localStorage.setItem(LSK,JSON.stringify(st))}catch(e){}}
+function save(){try{st.std=stdFingerprint();localStorage.setItem(LSK,JSON.stringify(st))}catch(e){}}
 function atk(cls){if(!st.atk[cls]){var o={};for(var d=0;d<8;d++)o[d]=[];st.atk[cls]=o}return st.atk[cls]}
 function srcDir(d){return (st.mirrorSide&&d>=5)?MIRRORSRC[d]:d}
 function isMirrored(d){return !!(st.mirrorSide&&d>=5)}
@@ -553,7 +568,8 @@ function dump(){
   var heads={};for(var hk in st.head)heads[hk]=st.head[hk];
   out.headAdjust=heads;                            // {class|dir|frame:[dx,dy]} - the drags themselves
   document.getElementById('out').value=JSON.stringify(out);
-  statusEl.textContent=n+' class(es) set · idle & walk filled automatically · heads included'}
+  statusEl.textContent=n+' class(es) set · idle & walk filled automatically · heads included'+
+    (bootNote?' · '+bootNote:'')}
 function copy(){
   var t=document.getElementById('out'),m=document.getElementById('copyMsg');
   t.select();t.setSelectionRange(0,t.value.length);
@@ -575,6 +591,7 @@ window.__pgDiag=function(){var n=0,tot=0,k;for(k in D.classes){tot++;if(sheetRea
 window.__pgTest={headSpot:headSpot,headAdj:headAdj,setHead:setHead,dirWord:dirWord,st:st,paint:paint,
   headTile:headTile,baseSeat:baseSeat,packBodyName:packBodyName,packedCell:packedCell,
   save:save,applyDefaults:applyDefaults,resetAll:resetAll,
+  stdFingerprint:stdFingerprint,bootState:bootState,
   poses:function(cls){return D.classes[cls].poses},poseOf:poseOfId,headBox:headBox,
   payload:function(){dump();var t=document.getElementById('out');return JSON.parse(t.value||'{}')}};
 function paint(){
@@ -613,8 +630,12 @@ function paint(){
   sheetFor(st.cls);
   setInterval(function(){tick++;if(drag!==null)return;
     var cvs=viewsEl.querySelectorAll('canvas.big');for(var v=0;v<cvs.length;v++)drawView(cvs[v],v)},160);
-  if(hadSaved)paint();                     // the browser has its own state - never overwrite it
-  else{resetAll();paint()}                 // first visit: the owner's standard, filled out
+  if(bootState(s0)==='saved')paint();      // saved against this very build: keep the browser's state
+  else{                                    // otherwise the shipped standard is what opens
+    resetAll();paint();
+    // sticky: every later repaint (a sheet finishing loading, a click) reports it too
+    if(hadSaved)bootNote='the shipped standard changed, so the owner\u2019s numbers opened again '+
+      '(this browser\u2019s old session was saved against an older build)'}
 })();
 })();
 </script>

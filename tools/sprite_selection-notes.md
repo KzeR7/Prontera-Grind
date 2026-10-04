@@ -19,15 +19,20 @@ the next person opens the page on the owner's own numbers instead of on guesses.
 | `tools/attack_selection.json` | **The backup.** The v5 payload exactly as the owner delivered it. The current one is the **second** delivery (2026-10-04, later the same day): 19 classes × 5 drawn views × 6 frames = 570 pose cells, 570 head entries, 912 head entries counting the mirrored views. | Yes — this is the source of truth for the selection. |
 | `tools/attack_selection_prev.json` | **The first delivery**, kept for reference (18 classes; the head numbers were tuned while the mirrored-column bug was still live, so it is *not* a good base). | Read-only history. |
 | `tools/sprite_picker_defaults.js` | **Generated** from that JSON by `tools/make_sprite_picker.py`. The picker loads it and starts from it. | **No** — rebuild it (below). |
-| `tools/sprite_picker.html` | The picker. `applyDefaults()` / `resetAll()` load the standard; "↺ Back to the standard" puts the page back to it. | Yes, it is the app. |
+| `tools/sprite_picker.html` | The picker. `applyDefaults()` / `resetAll()` load the standard; "↺ Back to the standard" puts the page back to it. On boot the standard wins unless the browser's saved session was made against this very build (`stdFingerprint()` / `bootState()`) — a save from an older build is a head measured against an older seat, so it is not opened. | Yes, it is the app. |
 | `tools/sprite_picker_standalone.html` | The same app with the sheets, the pose index and the standard inlined. | No — rebuild it. |
-| `tools/tests/picker_sim.js` | Proves the standard comes back number for number, and that the export round-trips it. | Yes. |
+| `tools/tests/picker_sim.js` | Proves the standard comes back number for number, that a stale saved session loses to it, and that the export round-trips it. | Yes. |
+| `tools/inline_picker_standalone.js` | Rebuilds the standalone from the page source without Pillow (carries the pack/pose blocks over, re-inlines the standard). | Run it. |
+| `tools/check_standard.js` | Compares the shipped defaults + `head_seats.json` against the payload, number for number (1710). | Run it. |
+| `tools/align_sheet.js` | Draws the same frames twice — the review art (owner's pivots) vs the game's pack cell + pack anchor — into `tools/align_sheet.png`, to eyeball the seat. | Run it. |
 
 Rebuild everything that is generated:
 
 ```sh
-/tmp/venv/bin/python tools/make_sprite_picker.py     # pose index + defaults + standalone
-node tools/tests/picker_sim.js                       # 19 checks, one of them the round trip
+/tmp/venv/bin/python tools/make_sprite_picker.py     # pose index + defaults + standalone (needs Pillow)
+node tools/inline_picker_standalone.js               # ...or just refresh the standalone, no Pillow
+node tools/check_standard.js                         # the standard vs the payload, number for number
+node tools/tests/picker_sim.js                       # 21 checks, incl. the round trip and the boot rule
 ```
 
 ## What the numbers mean

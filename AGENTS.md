@@ -2405,3 +2405,50 @@ assigned for feel rather than fidelity. While reworking that, two shipped bugs s
 * **Art:** none; `Sprite/`, the class pack, `assets/kit/` and `tools/montage.py` untouched. No head number was re-derived - the owner's own pivots are what the page now draws.
 * **Tests:** 19 suites - head_seat **7**, preview_server 11, weapon_review 13, picker 19, weapon_joint 7, ui 18, sprite 12, starter 7, stat 7, scene 8, skill 50, gear 24, save_load 10, pet 11, pack (19 bodies), class_change 22, economy 21, card 13, and the pre-existing `kit_sim` red (see tool-v37).
 * **Branches / PR:** `arena/01a10755-prontera-grind`.
+
+### 2026-10-04 — `tool-v40 the standard always opens the page again (a saved session no longer wins)` (no game change, no BUILD bump)
+
+* **What the owner asked for:** "please check the log ... set the standard again ... i will use it to add more
+  classes." The standard itself was never lost - `tools/attack_selection.json` is intact and every number
+  matches. The gap was in **what the page opens on**: `tools/sprite_picker.html` booted with
+  `if(hadSaved)paint()` - the browser's own `localStorage` session always won, so a returning browser (the
+  owner's, with a session saved before the pack anchors were re-measured) never saw the shipped standard
+  again, and its head drags stayed measured against a seat the current build no longer uses. That is exactly
+  "head and body not aligned again".
+* **The fix:** every save is now stamped with `stdFingerprint()` - a hash of `SPRITE_PICKER_DEFAULTS` plus
+  every pack body's anchors - and boot is `bootState(s0)==='saved' ? paint() : resetAll()+paint()`. Only a
+  session saved against *this very build* is kept; otherwise the shipped standard opens, the page says so in
+  the status line (sticky, appended by `dump()` so a late sheet load cannot wipe it), and the save it writes
+  is re-stamped. The owner's numbers are never lost: they are what the standard carries. A fresh browser, a
+  new build (v32's anchor change, v33's standard, a re-measured pack) or a cleared cache all land on the
+  standard; "↺ Back to the standard" is unchanged.
+* **The head/body question, measured:** the pack's own anchors (`make_sprite_pack.py`, hair-stub rule) sit the
+  hair-head **into the art's own head stub** (median 19 px, >10 px on 2254 of 2280 pack cells, all bodies) and
+  on weapon frames they float or slide (Knight NW attack: anchor `[53,19]`, the owner's own pivot `[26,13]`).
+  The owner's tuning pass seats the head to cover the stub (median delta +5 px into the figure, |delta|>6 on
+  122 of 362 comparable cells). `tools/align_sheet.js` (new, `node tools/align_sheet.js` -> `tools/align_sheet.png`)
+  draws the two side by side; it is why the owner's numbers are the standard and why the page must open on them.
+* **The standard, re-verified:** `tools/check_standard.js` (new) compares `sprite_picker_defaults.js` and
+  `tools/head_seats.json` against the payload cell by cell - **1710 numbers, everything matches** (570 drawn
+  pivots, 342 mirrored drags, 912 headAdjust entries, all 19 classes, all 8 views). Nothing was re-measured;
+  the artifacts in the commit are the owner's own numbers.
+* **The offline twin is rebuilt without Pillow:** new `tools/inline_picker_standalone.js` refreshes
+  `tools/sprite_picker_standalone.html` from the page source, carrying over the pack/pose blocks already
+  inlined in the shipped file and re-inlining `sprite_picker_defaults.js` - the same app, the same standard,
+  no Python needed. (The first cut of it over-matched the standard block by megabytes; it now reads the
+  defaults file straight from disk and fails on a wrong-sized block.)
+* **New pin:** `tools/tests/picker_sim.js` now seeds a stale session (`std:'std-old-build'`, Wizard drags) before
+  boot and proves the standard wins: the stale drags and pose picks are gone, the fingerprint is rewritten,
+  the `mirrorSide`/hair view state survives, the status line explains it, and the shipped standard still
+  compares number for number (3,240 numbers). Picker **21** checks.
+* **Files touched:** `tools/sprite_picker.html` (`stdFingerprint`/`bootState`, the boot branch, the sticky
+  note, the save stamp), regenerated `tools/sprite_picker_standalone.html`, new `tools/inline_picker_standalone.js`,
+  new `tools/check_standard.js`, new `tools/align_sheet.js` + `tools/align_sheet.png`,
+  `tools/tests/picker_sim.js`, `tools/sprite_selection-notes.md`, `AGENTS.md`.
+* **Art:** none; `Sprite/`, the class pack, `assets/kit/` and `tools/montage.py` untouched. No head number
+  was changed.
+* **Tests:** all suites green except the pre-existing `kit_sim` 33/1 (see tool-v37): picker **21**,
+  head_seat 7, weapon_review 13, preview_server 11, weapon_joint 7, ui 18, sprite 12, starter 7, stat 7,
+  scene 8, skill 50, gear 24, save_load 10, pet 11, class_change 22, economy 21, card 13, pack (19 bodies).
+  Inline JS passes `node --check`; both picker builds boot.
+* **Branches / PR:** `arena/01a10755-prontera-grind`.
