@@ -2376,3 +2376,21 @@ assigned for feel rather than fidelity. While reworking that, two shipped bugs s
   `Updates/retired-v1-kit/morocc-atlas.js`. Reported, not fixed: that belongs to the kit work, not
   the weapon review.
 * **Branches / PR:** `arena/01a10755-prontera-grind`.
+
+### 2026-10-04 — `tool-v38 a cut-off download no longer prints a traceback in the preview` (no game change, no BUILD bump)
+
+* **What happened:** serving the review data (2.5 MB) or the pack (5.8 MB) to a visitor who stops
+  early - a closed tab, a browser that gives up, a proxy that truncates the body - made the stock
+  file handler raise `ConnectionResetError` and print a whole stack into the preview log. The
+  visitor saw nothing wrong; the log filled with red.
+* **Fix:** `tools/preview_server.py` overrides `copyfile` and swallows `ConnectionResetError` /
+  `BrokenPipeError`. Everything else about the server is unchanged (direct 200s, no redirects,
+  `no-store`, and the side files resolving - tool-v37).
+* **Test:** `tools/tests/preview_server_sim.js` gained one check (now **11**): a raw TCP client asks
+  for the review data, reads 2 KB and drops the socket; the server must still answer and must not
+  print a traceback. Without the guard that check fails (10 passed, 1 failed); with it, 11/0.
+* **Files touched:** `tools/preview_server.py`, `tools/tests/preview_server_sim.js`, `AGENTS.md`.
+* **Art:** none; `Sprite/`, the class pack, `assets/kit/` and `tools/montage.py` untouched.
+* **Tests:** preview server **11**; every other suite is as green as the tool-v37 entry above
+  (including the same single pre-existing `kit_sim` red, still not from this work).
+* **Branches / PR:** `arena/01a10755-prontera-grind`.

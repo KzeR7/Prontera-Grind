@@ -5,16 +5,24 @@
 //   node tools/tests/preview_server_sim.js
 //
 // This one starts the real server on a spare port and talks HTTP to it, then kills it.
-const { spawn } = require('child_process'), path = require('path'), assert = require('assert');
+const { spawn } = require('child_process'), path = require('path'), net = require('net'), assert = require('assert');
 const ROOT = path.join(__dirname, '..', '..');
 const PORT = 8800 + Math.floor(Math.random() * 150);
 const BASE = 'http://127.0.0.1:' + PORT;
 
 let pass = 0, fail = 0;
-const t = (name, fn) => {
-  try { fn(); console.log('  ok   ' + name); pass++; }
-  catch (e) { console.log('  FAIL ' + name + ' -> ' + e.message); fail++; }
+const settle = (name, e) => {
+  if (e) { console.log('  FAIL ' + name + ' -> ' + e.message); fail++; }
+  else { console.log('  ok   ' + name); pass++; }
 };
+const t = (name, fn) => {
+  try {
+    const r = fn();
+    if (r && typeof r.then === 'function') throw new Error('async check passed to t() - use ta()');
+    settle(name);
+  } catch (e) { settle(name, e); }
+};
+const ta = async (name, fn) => { try { await fn(); settle(name); } catch (e) { settle(name, e); } };
 console.log('preview server: direct 200s, and every page can load its own side files  [tools/preview_server.py]\n');
 
 const sleep = ms => new Promise(r => setTimeout(r, ms));
@@ -100,6 +108,26 @@ async function grab(route) {
       const missing = ['/weapon_review_data.js', '/sprite_picker_data.js', '/sprite_picker_defaults.js']
         .filter(r => seen[r].status !== 200);
       assert.deepStrictEqual(missing, [], 'still 404: ' + missing.join(', '));
+    });
+
+    // the pages are megabytes; a visitor who stops the download halfway is normal traffic
+    // (a closed tab does exactly this: ask, read a little, drop the connection).  A raw TCP
+    // socket, so the server really gets a reset mid-write and not a polite end of stream.
+    await ta('a download cut off halfway does not crash the server or print a traceback', async () => {
+      const got = await new Promise(resolve => {
+        const sock = net.connect(PORT, '127.0.0.1', () => {
+          sock.write('GET /weapon_review_data.js HTTP/1.1\r\nHost: 127.0.0.1\r\nConnection: close\r\n\r\n');
+        });
+        let n = 0;
+        sock.on('data', d => { n += d.length; if (n > 2000) { sock.destroy(); resolve(n); } });
+        sock.on('error', () => resolve(n));
+        setTimeout(() => { sock.destroy(); resolve(n); }, 3000);
+      });
+      assert.ok(got > 0, 'never read a byte before the cut-off');
+      await sleep(800);
+      const after = await fetch(BASE + '/');
+      assert.strictEqual(after.status, 200, 'server stopped answering: ' + after.status);
+      assert.ok(!/Traceback/.test(err), 'a cut-off download printed a traceback');
     });
   } finally {
     child.kill('SIGTERM');

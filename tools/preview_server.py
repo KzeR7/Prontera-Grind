@@ -70,6 +70,18 @@ class Handler(http.server.SimpleHTTPRequestHandler):
                 return alt
         return p
 
+    def copyfile(self, source, outputfile):
+        """A visitor who walks away mid-download must not print a traceback.
+
+        These pages are megabytes (the review data is 2.5 MB, the pack is 5.8 MB), so a closed
+        tab, a truncated proxy fetch or a browser that stops early is normal - and the default
+        handler turns it into a ConnectionResetError stack in the preview log. Swallow it.
+        """
+        try:
+            super().copyfile(source, outputfile)
+        except (ConnectionResetError, BrokenPipeError):
+            pass
+
     def do_GET(self):
         path = self.path.split('?')[0]
         if path in PAGES:
