@@ -2470,3 +2470,50 @@ assigned for feel rather than fidelity. While reworking that, two shipped bugs s
   ui 18, sprite 12, ...); the pre-existing `kit_sim` 33/1 red is still there and still not from this work.
   The nav reads `window.location` (not bare `location`) so the headless harnesses boot it unchanged.
 * **Branches / PR:** `arena/01a10755-prontera-grind`.
+
+### 2026-10-04 — `tool-v42 the SIMPLE set: attack 2 frames, walk 3 frames, front + back, no standing pose` (new picker + bake, no game change yet)
+
+* **What the owner asked for:** "make attack only 2 frame. front & back. dont need NW, SW and others. then no
+  standing stance. make 3 frame walking front & back. make a script and picking like u did earlier and let me
+  choose. make it accurate this time." So: ten cells per class, no mirrored views, no idle - and a page to
+  pick them on, with the numbers verified from end to end.
+* **The new data:** `tools/anim_build.js` -> `tools/anim_picker_data.js` (19 classes x 10 cells, and it carries
+  its own head atlases + the walk/attack anchors + the owner's pivots, so the page needs no other file).
+  Defaults come from the owner first: the attack cells are **their own picks** for the front (their view-0
+  frames) and back (view-4) with **their exact pivots** (76 cells), in the frame order they tuned; the walk
+  cells use **the game's own anchor** for the pack's own figure (114 cells). Nothing was re-measured.
+* **The page:** `tools/sprite_picker`'s sibling `tools/anim_picker.html` - one tile per cell (a picture you can
+  drag to seat the head, `‹ ›` to walk the poses of that row, a dropdown for anything else), an animated
+  preview of each cycle, "↺ Back to the standard", "Copy my selection". On the four rebuilt sheets (Lord
+  Knight, High Wizard, High Priest, Whitesmith) it warns in-page that the row labels are unreliable, because
+  they are: their attack picks include walk-row crops and the labeller cannot see the difference.
+* **The bake, without Pillow:** `tools/png_io.js` gained a **palette decoder** (colour type 3 + tRNS, depths
+  1/2/4/8) - the Sprite/ sheets ship as 8-bit palette, and this is what lets the whole pipeline run here.
+  `tools/anim_bake.js` renders every cell (crop -> nearest scale -> place -> head alpha over) into
+  `tools/anim_preview.png` (contact sheet) and `tools/anim_pack_data.js` (ten 96x96 cells per class, one
+  atlas row + the pivots) for the game to load when it is wired.
+* **The accuracy checks, in order of strength:**
+  * the palette decoder reproduces the pack's PIL-built cells **100%** on walk figures in Novice, Knight,
+    Sniper, Priest;
+  * **97 of 114** walk cells bake **pixel-identical to the art the game draws today**; the 17 that differ are
+    cells where the pack's shipped art no longer matches the sheet it was built from (Thief, Lord Knight,
+    High Wizard, Whitesmith, Assassin, Assassin Cross - best sheet match 15-48%, so the pack is stale there,
+    not the new bake);
+  * every number the page shows is the number the bake draws - `tools/tests/anim_picker_sim.js` (**15 checks**)
+    pins the set (10 cells, no idle, no mirror), the owner's pivots cell for cell (76/76), the pack anchors
+    (114/114), the page's default rule against the generated data (190 cells), the crop maths, the head at
+    `pivot-32/-48`, a drag moving the head by the pointer, a new pose carrying its own seat, "back to the
+    standard", the payload shape and an export->import->export round trip. The standalone twin runs the same
+    suite.
+* **Files touched:** new `tools/anim_build.js`, `tools/anim_picker_data.js`, `tools/anim_picker.html`,
+  `tools/anim_picker_standalone.html`, `tools/anim_bake.js`, `tools/anim_preview.png`,
+  `tools/anim_pack_data.js`, `tools/tests/anim_picker_sim.js`; `tools/png_io.js` (palette decoder),
+  `tools/inline_picker_standalone.js` (builds both standalones now), `tools/preview_server.py` (`/picks`),
+  `tools/tests/preview_server_sim.js` (**13**), the nav lines of `tools/weapon_review.html` and
+  `tools/sprite_picker.html`, `AGENTS.md`.
+* **Art:** `Sprite/`, the class pack, `assets/kit/` untouched; the game itself is not wired to the new set yet -
+  `tools/anim_pack_data.js` is the artifact it will load when the owner is happy with the picks.
+* **Tests:** all green except the pre-existing `kit_sim` 33/1 (see tool-v37): anim_picker **15**, picker 21,
+  weapon_review 13, head_seat 7, preview_server 13, ui 18, sprite 12, starter 7, stat 7, scene 8, skill 50,
+  gear 24, save_load 10, pet 11, class_change 22, economy 21, card 13, pack (19 bodies).
+* **Branches / PR:** `arena/01a10755-prontera-grind`.

@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Animations · Prontera Grind</title>
+<style>
+  :root{--bg:#0b0d12;--panel:#141821;--panel2:#1b2130;--line:#2b3242;--txt:#e8edf6;--dim:#9aa6bd;--good:#7ee0a1;--warn:#ffd479;--bad:#ff8a8a;--acc:#9fd0ff}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--txt);font:14px/1.45 system-ui,Segoe UI,Roboto,sans-serif}
+  header{position:sticky;top:0;z-index:6;background:var(--panel);border-bottom:1px solid var(--line);padding:8px 12px}
+  header .line{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center}
+  h1{font-size:16px;margin:0 8px 0 0;font-weight:650}
+  h1 small{color:var(--dim);font-weight:400}
+  label.f{color:var(--dim);font-size:12px}
+  select,button{background:var(--panel2);color:var(--txt);border:1px solid var(--line);border-radius:8px;padding:5px 9px;font:inherit}
+  button{cursor:pointer}
+  button.primary{background:#20406b;border-color:#2f5d99}
+  button:hover{border-color:#42506a}
+  .pill{background:var(--panel2);border:1px solid var(--line);border-radius:20px;padding:1px 8px;font-size:11px;color:var(--dim)}
+  .navline{font-size:12px;padding:6px 14px;border-bottom:1px solid var(--line);background:#0d1016}
+  .navline a.navlink{color:#9fd0ff;text-decoration:none;border-bottom:1px dotted #39506b}
+  .navline a.navlink:hover{color:#d6ecff}
+  .navline small.navhint{color:var(--dim);font-size:11px}
+  main{max-width:1500px;margin:0 auto;padding:14px}
+  section{margin:0 0 18px}
+  h2{font-size:14px;margin:0 0 8px;color:#cfd9ea}
+  h2 small{color:var(--dim);font-weight:400;margin-left:6px}
+  .tiles{display:flex;flex-wrap:wrap;gap:14px}
+  .tile{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:8px;width:270px}
+  .tile canvas.big{display:block;background:#0f1116;border-radius:8px;image-rendering:pixelated;cursor:grab;touch-action:none}
+  .tile canvas.big.drag{cursor:grabbing}
+  .trow{display:flex;gap:6px;align-items:center;margin-top:6px}
+  .trow select{flex:1;min-width:0;font-size:12px;padding:3px 6px}
+  .trow button{padding:3px 8px;font-size:12px}
+  .lab{font-size:11px;color:var(--dim);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .src{font-size:10px;border-radius:20px;padding:1px 7px;border:1px solid var(--line)}
+  .src.yours{color:#9ff0c8;border-color:#2f6b4d}
+  .src.pack{color:#9fd0ff;border-color:#2f5d99}
+  .src.measured{color:#cfd9ea}
+  .src.check{color:#ffd479;border-color:#6b5a2f}
+  .src.manual{color:#ffb1f0;border-color:#6b2f63}
+  .stage{display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap}
+  .stage canvas{background:#0f1116;border:1px solid var(--line);border-radius:10px;image-rendering:pixelated}
+  .modes{display:flex;flex-direction:column;gap:6px}
+  .modes button.on{background:#20406b;border-color:#2f5d99}
+  .out{display:flex;gap:10px;align-items:flex-start}
+  textarea{flex:1;min-height:90px;background:var(--panel);color:var(--txt);border:1px solid var(--line);border-radius:10px;padding:8px;font:12px/1.4 ui-monospace,Menlo,Consolas,monospace}
+  .hint{color:var(--dim);font-size:12px}
+  .warnbar{background:#3a2f12;border:1px solid #6b5a2f;color:#ffe6ad;border-radius:10px;padding:8px 10px;margin:0 0 12px;font-size:12.5px}
+  .infobar{background:#12202e;border:1px solid #2f5d99;color:#cfe6ff;border-radius:10px;padding:8px 10px;margin:0 0 12px;font-size:12.5px}
+</style>
+</head>
+<body>
+<header>
+  <div class="line">
+    <h1>Animations <small>· Prontera Grind</small></h1>
+    <label class="f">Class <select id="cls"></select></label>
+    <label class="f">Hair <select id="hair"></select></label>
+    <button id="btnStd">↺ Back to the standard</button>
+    <button id="btnCopy" class="primary">Copy my selection</button>
+    <span class="pill" id="status">loading…</span>
+  </div>
+</header>
+<main>
+  <div id="warn"></div>
+  <div id="note"></div>
+  <section>
+    <h2>Attack <small>2 frames · front is the sheet's S row, back its N row</small></h2>
+    <div class="tiles" id="g_atkF"></div>
+  </section>
+  <section>
+    <h2>Attack · back</h2>
+    <div class="tiles" id="g_atkB"></div>
+  </section>
+  <section>
+    <h2>Walk <small>3 frames</small></h2>
+    <div class="tiles" id="g_walkF"></div>
+  </section>
+  <section>
+    <h2>Walk · back</h2>
+    <div class="tiles" id="g_walkB"></div>
+  </section>
+  <section class="stage">
+    <div>
+      <h2>Preview <small>the cycle as the game plays it (no standing pose: frame 1 of the front walk is what stands)</small></h2>
+      <canvas id="stage" width="384" height="384"></canvas>
+    </div>
+    <div class="modes" id="modes">
+      <button data-mode="walkF" class="on">walk · front</button>
+      <button data-mode="walkB">walk · back</button>
+      <button data-mode="atkF">attack · front</button>
+      <button data-mode="atkB">attack · back</button>
+      <span class="hint" id="stageHint"></span>
+    </div>
+  </section>
+  <section>
+    <h2>What you chose <small>drag a picture to seat its head; then “Copy my selection” and paste it back</small></h2>
+    <div class="out"><textarea id="out" readonly></textarea><button id="btnCopy2" class="primary">Copy</button></div>
+    <p class="hint" id="copyMsg"></p>
+  </section>
+</main>
+<script>
+/* served preview only: a way between the pages of this preview (the file opened
+   straight from disk keeps the same markup but adds no nav) */
+(function(){if(String((window.location||{}).protocol||'').indexOf('http')!==0)return;
+  var d=document.createElement('div');d.className='line wrap navline';
+  d.innerHTML='<span class="pill">pages</span> '+
+    '<a class="navlink" href="/">&#8592; Weapon review</a> '+
+    '<a class="navlink" href="/picker">Head &amp; pose picker</a> '+
+    '<a class="navlink" href="/picks">Simple animation picker</a>';
+  var h=document.querySelector('header');
+  if(h&&h.insertAdjacentElement)h.insertAdjacentElement('afterend',d);else document.body.insertBefore(d,document.body.firstChild)})();
+</script>
+
+<script src="sprite_picker_data.js"></script>
+<script src="anim_picker_data.js"></script>
+<script>
+/* =====================================================================================
+   The SIMPLE picker: attack 2 frames, walk 3 frames, front + back, no standing pose.
+   10 cells per class.  A cell = a crop from the class sheet + the head's pivot.  The
+   drawing maths is the game's own (see tools/anim_bake.js, which renders the same cells
+   from the same numbers):
+       scale  = min(1, 90/w, 88/h)      ox = floor((96-w)/2)      oy = 90 - h
+       body   drawn at (ox, oy)         head drawn at (pivot - 32, pivot - 48)
+   ===================================================================================== */
+var D = window.SPRITE_PICKER_DATA, A = window.ANIM_PICKER_DATA;
+var BODY = 96, FEET = 90, ZOOM = 2.6, LSK = 'pg_anim_picker_v1';
+var GROUPS = A.meta.groups;                                  // [[key, frames, dir, label], ...]
+var CLASSES = A.meta.classes;
+
+function $(id){return document.getElementById(id)}
+function status(msg){var e=$('status');if(e)e.textContent=msg}
+function fatal(t){var w=$('warn');if(w)w.innerHTML='<div class="warnbar">'+t+'</div>'}
+window.onerror=function(m,s,l){fatal('This page hit an error while drawing: '+m+' ('+String(s||'').split('/').pop()+':'+l+')')};
+
+/* ---------------- geometry (identical to the pack builder and the game) ---------------- */
+function cropOf(p){
+  var s=Math.min(1,90/p.w,88/p.h), w=Math.max(1,Math.round(p.w*s)), h=Math.max(1,Math.round(p.h*s));
+  return {s:s,w:w,h:h,ox:Math.floor((BODY-w)/2),oy:FEET-h}}
+function stubSeat(p){
+  var c=cropOf(p), sx=p.seat?p.seat[0]:c.w/2, sy=p.seat?p.seat[1]:0;
+  return [c.ox+Math.round(sx*c.s), c.oy+Math.round(sy*c.s)]}
+function anchorsFor(p){return (A.pack.anchors[p.body]||{})[p.anim+'|'+p.dir]||null}
+/* the same priority rule the generator used - see tools/anim_build.js */
+function defaultPivot(cls,grp,poseId){
+  var dir=groupOf(grp).dir, p=poseOf(cls,poseId), walk=grp.charAt(0)==='w';
+  if(!p)return {pivot:[48,48],src:'check',p:null};
+  p=p; p.body=A.classes[cls].body;
+  if(!walk){
+    var m=(A.owner[cls]||{})[dir]||{}, pv=m[poseId];
+    if(pv)return {pivot:[pv[0],pv[1]],src:'yours',p:p}}
+  var row=(p.anim===1&&p.dir===dir)?anchorsFor(p):null, an=row&&p.frame!=null?row[p.frame]:null;
+  if(an)return {pivot:[an[0],an[1]],src:'pack',p:p};
+  if(p.seat&&p.seat[2]==='stub')return {pivot:stubSeat(p),src:'measured',p:p};
+  return {pivot:stubSeat(p),src:'check',p:p}}
+function groupOf(key){for(var i=0;i<GROUPS.length;i++)if(GROUPS[i][0]===key)return {key:GROUPS[i][0],n:GROUPS[i][1],dir:GROUPS[i][2],label:GROUPS[i][3]};
+  return null}
+function poseOf(cls,id){var d=D.classes[cls];return (id==null||!d)?null:(d.poses[id]||null)}
+function poseIdOf(cls,pose){var ps=D.classes[cls].poses;for(var i=0;i<ps.length;i++)if(ps[i]===pose)return i;return -1}
+function rowWord(p){return p?((p.label||'').trim()||('row '+(p.row==null?'?':p.row)+' col '+(p.col==null?'?':p.col))):'no pose'}
+
+/* ---------------- the sheet + the head atlas ---------------- */
+var sheetImg={}, sheetReady={}, headImg={}, headReady={};
+function sheetFor(cls){
+  if(sheetImg[cls])return sheetImg[cls];
+  if(!D.classes[cls])return null;
+  var c=D.classes[cls], im=new Image();
+  im.onload=function(){sheetReady[cls]=1;paint()};
+  im.onerror=function(){fatal('The sheet for '+cls+' did not load ('+(c.img?'inline':c.file)+').')};
+  im.src=c.img||c.file; sheetImg[cls]=im; return im}
+Object.keys(D.classes).forEach(function(c){sheetImg[c]=null});
+function headTile(dir){
+  var sx=(st.sex==='f')?'female':'male', key=sx+'|'+dir+'|'+st.hair;
+  if(headTile.cache[key])return headTile.cache[key];
+  var im=headImg[sx]; if(!im||!im.complete||!im.naturalWidth)return null;
+  var c=document.createElement('canvas');c.width=64;c.height=64;
+  var g=c.getContext('2d');g.imageSmoothingEnabled=false;
+  g.drawImage(im,(dir|0)*64,st.hair*64,64,64,0,0,64,64);
+  headTile.cache[key]=c;return c}
+headTile.cache={};
+['male','female'].forEach(function(sx){var im=new Image();im.onload=function(){headReady[sx]=1;paint()};
+  im.src=A.pack.heads[sx];headImg[sx]=im});
+
+/* ---------------- state ---------------- */
+var st={cls:CLASSES[0],sex:'m',hair:0,sel:{}};
+function cellsOf(cls){return A.classes[cls].cells}
+function cellState(cls,grp,i){
+  if(!st.sel[cls])st.sel[cls]={};
+  if(!st.sel[cls][grp])st.sel[cls][grp]=cellsOf(cls)[grp].map(function(c){
+    return {p:c.p,pivot:[c.pivot[0],c.pivot[1]],src:c.src,dragged:false}});
+  return st.sel[cls][grp][i]}
+function ensure(cls){GROUPS.forEach(function(g){for(var i=0;i<g[1];i++)cellState(cls,g[0],i)})}
+function resetClass(cls){
+  st.sel[cls]={};
+  GROUPS.forEach(function(g){for(var i=0;i<g[1];i++){
+    var c=cellsOf(cls)[g[0]][i];
+    st.sel[cls][g[0]]=st.sel[cls][g[0]]||[];
+    st.sel[cls][g[0]][i]={p:c.p,pivot:[c.pivot[0],c.pivot[1]],src:c.src,dragged:false}}})}
+function resetAll(){
+  st.sel={};CLASSES.forEach(ensure);save()}
+function save(){try{st.stamp=A.meta.stamp;localStorage.setItem(LSK,JSON.stringify(st))}catch(e){}}
+function loadSaved(){
+  try{var s=JSON.parse(localStorage.getItem(LSK)||'null');
+    if(!s)return false;
+    if(s.stamp!==A.meta.stamp){st.stale=true;return true}      // a rebuilt data file: ignore the old session
+    if(s.cls&&CLASSES.indexOf(s.cls)>=0)st.cls=s.cls;
+    if(s.hair!=null)st.hair=s.hair|0; if(s.sex)s.sex=s.sex;
+    st.sel=s.sel||{}; CLASSES.forEach(ensure); return true}catch(e){return false}}
+
+/* ---------------- drawing one cell ---------------- */
+function drawCell(g,cls,grp,i,big){
+  var cell=cellState(cls,grp,i), p=poseOf(cls,cell.p), dir=groupOf(grp).dir;
+  g.clearRect(0,0,BODY,BODY);
+  if(!p)return;
+  var c=cropOf(p), im=sheetImg[cls];
+  if(im&&im.complete&&im.naturalWidth)g.drawImage(im,p.x,p.y,p.w,p.h,c.ox,c.oy,c.w,c.h);
+  var ht=headTile(dir);
+  if(ht)g.drawImage(ht,Math.round(cell.pivot[0]-32),Math.round(cell.pivot[1]-48),64,64);
+  if(big){                                                    // the marker you aim at
+    var x=Math.round(cell.pivot[0])+.5,y=Math.round(cell.pivot[1])+.5;
+    g.save();g.setLineDash([]);g.lineWidth=1;
+    g.strokeStyle='rgba(0,0,0,.65)';g.beginPath();g.ellipse(x,y,5,4,0,0,6.2832);g.stroke();
+    g.strokeStyle='rgba(159,208,255,.95)';g.beginPath();g.ellipse(x,y,4,3,0,0,6.2832);g.stroke();
+    g.beginPath();g.moveTo(x-7,y);g.lineTo(x+7,y);g.moveTo(x,y-7);g.lineTo(x,y+7);g.stroke();
+    g.strokeStyle='rgba(159,208,255,.25)';g.beginPath();g.moveTo(0,FEET+.5);g.lineTo(BODY,FEET+.5);g.stroke();
+    g.restore()}}
+
+/* ---------------- the tiles ---------------- */
+var tiles={};
+function buildTile(cls,grp,i){
+  var g=groupOf(grp);
+  var el=document.createElement('div');el.className='tile';
+  var cv=document.createElement('canvas');cv.className='big';
+  cv.width=BODY*ZOOM;cv.height=BODY*ZOOM;
+  cv.getContext('2d').imageSmoothingEnabled=false;
+  el.appendChild(cv);
+  var r1=document.createElement('div');r1.className='trow';
+  var prev=document.createElement('button');prev.textContent='‹';prev.title='previous pose in the row';
+  var sel=document.createElement('select');
+  var next=document.createElement('button');next.textContent='›';next.title='next pose';
+  r1.appendChild(prev);r1.appendChild(sel);r1.appendChild(next);el.appendChild(r1);
+  var r2=document.createElement('div');r2.className='trow';
+  var lab=document.createElement('span');lab.className='lab';
+  var src=document.createElement('span');src.className='src';
+  var rst=document.createElement('button');rst.textContent='⟲ head';rst.title='put the head back where the standard has it';
+  r2.appendChild(lab);r2.appendChild(src);r2.appendChild(rst);el.appendChild(r2);
+  tiles[grp+'|'+i]={cv:cv,sel:sel,lab:lab,src:src};
+  // ---- pick a pose
+  function fillSelect(){
+    var cand=A.classes[cls].cand[grp], cur=cellState(cls,grp,i).p, lastRow=null, og=null;
+    sel.innerHTML='';
+    cand.forEach(function(id){
+      var p=poseOf(cls,id); if(!p)return;
+      var rl=(p.anim==null)?('row '+(p.row==null?'?':p.row)):('anim'+p.anim+' dir'+p.dir);
+      if(rl!==lastRow){og=document.createElement('optgroup');og.label=rl;sel.appendChild(og);lastRow=rl}
+      var o=document.createElement('option');o.value=String(id);
+      o.textContent='#'+id+'  '+rowWord(p)+'  ['+p.w+'x'+p.h+']';
+      og.appendChild(o)});
+    sel.value=String(cur)}
+  sel.onchange=function(){setPose(cls,grp,i,+sel.value)};
+  prev.onclick=function(){step(cls,grp,i,-1)};
+  next.onclick=function(){step(cls,grp,i,1)};
+  rst.onclick=function(){
+    var c=cellState(cls,grp,i), d=defaultPivot(cls,grp,c.p);
+    c.pivot=[d.pivot[0],d.pivot[1]];c.src=d.src;c.dragged=false;save();paint()};
+  // ---- drag to seat the head
+  var drag=null;
+  cv.addEventListener('mousedown',start); cv.addEventListener('touchstart',start,{passive:false});
+  function at(ev){var r=cv.getBoundingClientRect();var t=ev.touches?ev.touches[0]:ev;
+    return [(t.clientX-r.left)/ZOOM,(t.clientY-r.top)/ZOOM]}
+  function start(ev){
+    if(ev.button!==undefined&&ev.button!==0)return;
+    ev.preventDefault();
+    var c=cellState(cls,grp,i), p0=at(ev), base=[c.pivot[0],c.pivot[1]];
+    drag={p0:p0,base:base};
+    cv.classList.add('drag');
+    window.addEventListener('mousemove',move);window.addEventListener('mouseup',up);
+    window.addEventListener('touchmove',move,{passive:false});window.addEventListener('touchend',up)}
+  function move(ev){
+    if(!drag)return; ev.preventDefault();
+    var p=at(ev), c=cellState(cls,grp,i);
+    c.pivot=[Math.round(drag.base[0]+(p[0]-drag.p0[0])),Math.round(drag.base[1]+(p[1]-drag.p0[1]))];
+    c.dragged=true;c.src='manual';
+    drawTileNow();drawStage();drawOut()}
+  function up(){if(!drag)return;drag=null;cv.classList.remove('drag');
+    window.removeEventListener('mousemove',move);window.removeEventListener('mouseup',up);
+    window.removeEventListener('touchmove',move);window.removeEventListener('touchend',up);save();paint()}
+  el._fill=fillSelect;
+  return el}
+function step(cls,grp,i,d){
+  var cand=A.classes[cls].cand[grp], cur=cellState(cls,grp,i).p, k=cand.indexOf(cur);
+  if(k<0)k=0; var nx=cand[(k+d+cand.length)%cand.length];
+  setPose(cls,grp,i,nx)}
+function setPose(cls,grp,i,id){
+  var d=defaultPivot(cls,grp,id), c=cellState(cls,grp,i);
+  c.p=id;c.pivot=[d.pivot[0],d.pivot[1]];c.src=d.src;c.dragged=false;     // a new pose carries its own seat
+  save();paint()}
+function drawTileNow(){GROUPS.forEach(function(g){for(var i=0;i<g[1];i++)drawTile(st.cls,g[0],i)})}
+function drawTile(cls,grp,i){
+  var t=tiles[grp+'|'+i];if(!t)return;
+  var g=t.cv.getContext('2d');g.imageSmoothingEnabled=false;g.setTransform(1,0,0,1,0,0);g.scale(ZOOM,ZOOM);
+  g.fillStyle='#0f1116';g.fillRect(0,0,BODY,BODY);
+  drawCell(g,cls,grp,i,true);g.setTransform(1,0,0,1,0,0);
+  var c=cellState(cls,grp,i), p=poseOf(cls,c.p), gd=groupOf(grp);
+  t.lab.textContent=(gd.dir===0?'front':'back')+' f'+(i+1)+' · '+rowWord(p);
+  t.src.className='src '+c.src;t.src.textContent=c.src;
+  t.sel.value=String(c.p)}
+
+/* ---------------- the animated preview ---------------- */
+var stageMode='walkF', stageTick=0;
+function drawStage(){
+  var cv=$('stage');if(!cv)return;
+  var g=cv.getContext('2d'), gd=groupOf(stageMode), n=gd.n, dir=gd.dir;
+  g.imageSmoothingEnabled=false;g.setTransform(1,0,0,1,0,0);
+  g.fillStyle='#0f1116';g.fillRect(0,0,cv.width,cv.height);
+  var z=cv.width/BODY;g.scale(z,z);
+  var i=stageTick%n;
+  drawCell(g,st.cls,stageMode,i,false);
+  g.setTransform(1,0,0,1,0,0);
+  var h=$('stageHint');
+  if(h)h.textContent=gd.label+' · frame '+(i+1)+' of '+n}
+function setStageMode(m){stageMode=m;stageTick=0;
+  Array.prototype.forEach.call($('modes').querySelectorAll('button'),function(b){b.className=(b.dataset.mode===m)?'on':''});
+  drawStage()}
+
+/* ---------------- the payload ---------------- */
+function payload(){
+  var out={version:6,kind:'anim-2dir',note:'attack 2 frames + walk 3 frames, front and back only, '+
+    'no standing pose. cells are [x,y,w,h,headX,headY,poseId,source]: x/y/w/h in the class sheet, '+
+    'headX/headY the head pivot in the 96x96 game cell, poseId indexes sprite_picker_data.js. '+
+    'headAdjust lists the cells whose head was dragged, as [dx,dy] away from the standard.',
+    mirrorSide:false,built:A.meta.stamp,anim:{},headAdjust:{}};
+  CLASSES.forEach(function(cls){
+    ensure(cls);                                    // every class in the payload, not only the one on screen
+    var c={};
+    GROUPS.forEach(function(grp){
+      var g=groupOf(grp[0]);
+      c[grp[0]]=st.sel[cls][grp[0]].map(function(cell,i){
+        var p=poseOf(cls,cell.p), d=defaultPivot(cls,grp[0],cell.p);
+        if(cell.dragged)out.headAdjust[cls+'|'+grp[0]+'|'+i]=[cell.pivot[0]-d.pivot[0],cell.pivot[1]-d.pivot[1]];
+        return [p.x,p.y,p.w,p.h,cell.pivot[0],cell.pivot[1],cell.p,(cell.dragged?'manual':d.src)]})});
+    out.anim[cls]=c});
+  return out}
+function drawOut(){var t=$('out');if(t)t.value=JSON.stringify(payload())}
+function copy(){
+  var t=$('out'),m=$('copyMsg');t.select();
+  function ok(){if(m)m.textContent='copied — paste it back to me'}
+  function bad(){if(m)m.textContent='select the box and copy it manually'}
+  try{ if(navigator.clipboard&&navigator.clipboard.writeText)
+        navigator.clipboard.writeText(t.value).then(ok,bad);
+      else ok(); }catch(e){bad()}}
+
+/* ---------------- paint everything ---------------- */
+function paint(){
+  var cls=st.cls;
+  if(!sheetImg[cls])sheetFor(cls);
+  // the four rebuilt sheets (Lord Knight, High Wizard, High Priest, Whitesmith) are collages whose
+  // row labels the labeller cannot trust - say so instead of letting a wrong-looking picture pass
+  var flagged=0;
+  GROUPS.forEach(function(grp){for(var fi=0;fi<grp[1];fi++){
+    var pp=poseOf(cls,cellState(cls,grp[0],fi).p); if(pp&&pp.anim==null)flagged++}});
+  var nb=$('note');
+  if(nb)nb.innerHTML=flagged?('<div class="infobar">This sheet is a <b>rebuild</b> ('+flagged+
+    ' of the pictures here carry no row label), so the small print under a picture can be wrong. '+
+    'If a picture faces the wrong way, use &#8249; &#8250; to pick another pose \u2014 the walking '+
+    'front should face you, the walking back should face away.</div>'):'';
+  GROUPS.forEach(function(grp){
+    var host=$('g_'+grp[0]); if(!host)return;
+    var want=grp[1];
+    if(host._cls!==cls){                                   // a class change rebuilds every tile
+      host.innerHTML='';host._cls=cls;
+      for(var i=0;i<want;i++){var el=buildTile(cls,grp[0],i);host.appendChild(el);el._fill()}}
+    for(var k=0;k<want;k++)drawTile(cls,grp[0],k)});
+  drawStage();drawOut();
+  status(CLASSES.length+' classes · '+(Object.keys(A.classes).length*10)+' cells · heads: '+
+    ((headReady.male&&headReady.female)?'loaded':'loading')+
+    (st.bootNote?(' · '+st.bootNote):''))}
+
+/* ---------------- boot ---------------- */
+(function boot(){
+  if(!D||!A||!D.classes||!A.classes){fatal('The data files did not load (sprite_picker_data.js / anim_picker_data.js).');return}
+  var cs=$('cls'); CLASSES.forEach(function(c){var o=document.createElement('option');o.value=c;o.textContent=c;cs.appendChild(o)});
+  cs.value=st.cls; cs.onchange=function(e){st.cls=e.target.value;ensure(st.cls);save();paint()};
+  var hs=$('hair'); for(var i=0;i<(A.pack.hairStyles||1);i++){var o2=document.createElement('option');o2.value=i;o2.textContent='style '+i;hs.appendChild(o2)}
+  hs.value=st.hair; hs.onchange=function(e){st.hair=+e.target.value;headTile.cache={};save();paint()};
+  var sx=$('sex'); if(sx){sx.value=st.sex;sx.onchange=function(e){st.sex=e.target.value;headTile.cache={};save();paint()}}
+  $('btnStd').onclick=function(){resetAll();st.bootNote='';paint()};
+  $('btnCopy').onclick=copy; $('btnCopy2').onclick=copy;
+  Array.prototype.forEach.call($('modes').querySelectorAll('button'),function(b){b.onclick=function(){setStageMode(b.dataset.mode)}});
+  var had=loadSaved();
+  if(had&&st.stale){resetAll();st.bootNote='the data was rebuilt, so this page opened on the shipped standard again';st.stale=false}
+  else ensure(st.cls);
+  sheetFor(st.cls);
+  setInterval(function(){stageTick++;drawStage()},170);
+  if(had&&!st.bootNote)status('your saved session on this browser, made against this same build');
+  paint();
+  window.__apReady=true})();
+
+/* Test hook (tools/tests/anim_picker_sim.js drives the same parts the owner touches). */
+window.__apTest={st:st,A:A,D:D,cropOf:cropOf,stubSeat:stubSeat,defaultPivot:defaultPivot,rowWord:rowWord,
+  cellsOf:cellsOf,cellState:cellState,setPose:setPose,step:step,resetAll:resetAll,paint:paint,save:save,
+  payload:payload,drawCell:drawCell,groupOf:groupOf,poseOf:poseOf,drawStage:drawStage,
+  load:function(p){st.sel={};CLASSES.forEach(function(cls){st.sel[cls]={};
+      GROUPS.forEach(function(g){st.sel[cls][g[0]]=p.anim[cls][g[0]].map(function(r,i){
+        var had=p.headAdjust&&p.headAdjust[cls+'|'+g[0]+'|'+i];
+        return {p:r[6],pivot:[r[4],r[5]],src:had?'manual':r[7],dragged:!!had}})})});paint();return st}};
+</script>
+</body>
+</html>

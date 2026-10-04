@@ -51,9 +51,9 @@ async function grab(route) {
   try {
     assert.ok(up, 'server never came up on port ' + PORT + (err ? ' - ' + err.trim() : ''));
 
-    for (const r of ['/', '/review', '/standalone', '/picker', '/weapon_review_data.js',
+    for (const r of ['/', '/review', '/standalone', '/picker', '/picks', '/weapon_review_data.js',
                      '/sprite_picker_data.js', '/sprite_picker_defaults.js',
-                     '/assets/sprite_pack_data.js', '/tools/weapon_bake.py']) await grab(r);
+                     '/anim_picker_data.js', '/assets/sprite_pack_data.js', '/tools/weapon_bake.py']) await grab(r);
 
     t('every route answers 200 directly, with no redirect anywhere', () => {
       for (const [route, r] of Object.entries(seen)) {
@@ -128,6 +128,24 @@ async function grab(route) {
       const after = await fetch(BASE + '/');
       assert.strictEqual(after.status, 200, 'server stopped answering: ' + after.status);
       assert.ok(!/Traceback/.test(err), 'a cut-off download printed a traceback');
+    });
+
+    t('/picks serves the SIMPLE picker (attack 2 / walk 3), directly and complete', () => {
+      const r = seen['/picks'];
+      assert.ok(r, '/picks was not fetched');
+      assert.strictEqual(r.status, 200, '/picks -> ' + r.status);
+      assert.ok(!r.redirected && r.url === BASE + '/picks', '/picks must not redirect (got ' + r.url + ')');
+      assert.ok(/anim_picker_data\.js/.test(r.body), 'the page must load its own data file');
+      assert.ok(/__apTest/.test(r.body), 'the page must be the animation picker');
+      assert.ok(/attack 2 frames/i.test(r.body), 'the page must say what the set is');
+    });
+
+    t('/anim_picker_data.js and /sprite_picker_data.js resolve from the root (the page asks there)', () => {
+      for (const f of ['anim_picker_data.js', 'sprite_picker_data.js']) {
+        const r = seen['/' + f];
+        if (!r) continue;
+        assert.strictEqual(r.status, 200, f + ' -> ' + r.status);
+      }
     });
   } finally {
     child.kill('SIGTERM');

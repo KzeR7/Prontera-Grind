@@ -7,16 +7,52 @@ const zlib = require('zlib');
 
 // colour types 6 (RGBA) and 2 (RGB, alpha filled in) both come back as 4-channel pixels
 function decodePNG(buf) {
-  let p = 8, w = 0, h = 0, ct = 0, bd = 0; const idat = [];
+  let p = 8, w = 0, h = 0, ct = 0, bd = 0, inter = 0; const idat = [];
+  let plte = null, trns = null;
   while (p < buf.length) {
     const len = buf.readUInt32BE(p), type = buf.toString('ascii', p + 4, p + 8);
     const data = buf.slice(p + 8, p + 8 + len);
-    if (type === 'IHDR') { w = data.readUInt32BE(0); h = data.readUInt32BE(4); bd = data[8]; ct = data[9]; }
+    if (type === 'IHDR') { w = data.readUInt32BE(0); h = data.readUInt32BE(4); bd = data[8]; ct = data[9]; inter = data[12]; }
+    else if (type === 'PLTE') plte = Buffer.from(data);
+    else if (type === 'tRNS') trns = Buffer.from(data);
     else if (type === 'IDAT') idat.push(data);
     else if (type === 'IEND') break;
     p += 12 + len;
   }
-  if (bd !== 8 || (ct !== 6 && ct !== 2)) throw new Error('png_io: expected 8-bit RGB(A), got depth ' + bd + ' type ' + ct);
+  if (inter) throw new Error('png_io: interlaced PNGs are not supported');
+  // colour type 3 (palette): the artwork in Sprite/ ships this way and there is no Pillow here
+  if (ct === 3) {
+    if (!plte) throw new Error('png_io: palette PNG without PLTE');
+    const ch = 1, per = 8 / bd;                                 // indices per byte at this depth
+    const stride = Math.ceil(w * (bd / 8));
+    const raw = zlib.inflateSync(Buffer.concat(idat));
+    const src = Buffer.alloc(h * stride);
+    for (let y = 0; y < h; y++) {                               // unfilter (bpp = 1 byte)
+      const ft = raw[y * (stride + 1)];
+      const line = raw.slice(y * (stride + 1) + 1, y * (stride + 1) + 1 + stride);
+      const cur = src.slice(y * stride, (y + 1) * stride), prev = y ? src.slice((y - 1) * stride, y * stride) : null;
+      for (let x = 0; x < stride; x++) {
+        const a = x >= ch ? cur[x - ch] : 0, b = prev ? prev[x] : 0, c = (prev && x >= ch) ? prev[x - ch] : 0;
+        let v = line[x];
+        if (ft === 1) v += a; else if (ft === 2) v += b; else if (ft === 3) v += (a + b) >> 1;
+        else if (ft === 4) { const pa = Math.abs(b - c), pb = Math.abs(a - c), pc = Math.abs(a + b - 2 * c);
+          v += (pa <= pb && pa <= pc) ? a : (pb <= pc ? b : c); }
+        cur[x] = v & 255;
+      }
+    }
+    const out = Buffer.alloc(w * h * 4);
+    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+      let idx;
+      if (bd === 8) idx = src[y * stride + x];
+      else { const byte = src[y * stride + Math.floor(x / per)];        // 1, 2 or 4 bits
+        const shift = 8 - bd * ((x % per) + 1); idx = (byte >> shift) & ((1 << bd) - 1); }
+      const o = (y * w + x) * 4;
+      if (idx * 3 + 2 < plte.length) { out[o] = plte[idx * 3]; out[o + 1] = plte[idx * 3 + 1]; out[o + 2] = plte[idx * 3 + 2]; }
+      out[o + 3] = (trns && idx < trns.length) ? trns[idx] : 255;
+    }
+    return { w, h, px: out, palette: true };
+  }
+  if (bd !== 8 || (ct !== 6 && ct !== 2)) throw new Error('png_io: expected 8-bit RGB(A) or palette, got depth ' + bd + ' type ' + ct);
   const ch = ct === 6 ? 4 : 3;
   const raw = zlib.inflateSync(Buffer.concat(idat)), bpp = ch, stride = w * bpp;
   const src = Buffer.alloc(h * stride);
