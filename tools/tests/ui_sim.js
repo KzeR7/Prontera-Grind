@@ -6,6 +6,8 @@
 //     builds its HTML from a real save shape without throwing and without printing "undefined";
 //   * the map panel lists every map and every field, so adding a map cannot silently vanish;
 //   * clicking a slot produces a chooser whose list is exactly the equippable items;
+//   * learned skills render a checked Auto cast checkbox by default, and the HUD's Kills/min
+//     and rolling Zeny/min indicators are calculated from the current session;
 //   * every data-a="..." action a panel can emit is a key in ACT - a typo there is a dead button
 //     (a previous build shipped one: the GM panel's action was never wired).
 //
@@ -14,6 +16,7 @@ const fs = require('fs'), vm = require('vm'), assert = require('assert');
 const src = fs.readFileSync(__dirname + '/../../index.html', 'utf8');
 const grab = (a, b) => { const i = src.indexOf(a), j = src.indexOf(b, i); if (i < 0 || j < 0) throw new Error('missing ' + a); return src.slice(i, j); };
 const pick = (re, name) => { const m = src.match(re); if (!m) throw new Error('cannot find ' + name); return m[0]; };
+const petData = grab('const PETS=[', 'const rollingSet=new Set');
 
 // ---- static: every action a panel emits must exist in ACT --------------------
 const actions = new Set([...src.matchAll(/data-a="([a-z_]+)"/g)].map(m => m[1]));
@@ -37,8 +40,10 @@ const code = [
   pick(/const st=k=>[^\n]*canUse=it=>[^;]+;/, 'canUse'),
   pick(/const maxHp=\(\)=>[^\n]*/, 'maxHp'),
   pick(/const atk=\(\)=>[^\n]*/, 'atk'),
+  pick(/const matk=\(\)=>[^\n]*/, 'matk'),
   pick(/const aspd=\(\)=>[^\n]*/, 'aspd'),
   grab('const pm=s=>', 'const pw=()=>'),          // maps + their REC bands
+  petData,                                             // pet roster, Divine Pride icons and gacha skills
   pick(/const secOf=[^;]+;/, 'secOf'),
   pick(/const AM=\[[^\]]*\],GRADE=\[[^\]]*\],GI=\[[^\]]*\],CV=\[[^\]]*\];/, 'rarity tables'),
   pick(/const AFF=\[[^\]]*\],AB=\{[^}]*\};/, 'AFF/AB'),
@@ -77,18 +82,20 @@ const harness = `
 // stubs the pulled-in code needs at load time and when a panel renders
 const SLOTS={weapon:{label:'Weapon',stat:'ATK',ic:'sw'},armor:{label:'Armor',stat:'DEF',ic:'ar'},head:{label:'Headgear',stat:'HP',ic:'hd'},off:{label:'Shield',stat:'DEF',ic:'sh'},leg:{label:'Legwear',stat:'DEF',ic:'lg'},acc:{label:'Accessory',stat:'HP',ic:'ac'}};
 const RAR=[{n:'Common',m:1,w:60},{n:'Fine',m:1.35,w:25},{n:'Rare',m:1.9,w:10},{n:'Epic',m:2.8,w:4},{n:'Legendary',m:4.5,w:1}];
-const PW=[[90,9,1,0],[80,17,3,0],[70,24,5.5,.5],[60,30,9,1],[50,35,13,2],[40,38,18,4],[30,40,24,6],[22,40,30,8],[12,38,38,12],[5,30,45,20]],RN=['Cute','Cool','Rare','Epic','Legend'];
+const PW=[[90,9,1,0],[80,17,3,0],[70,24,5.5,.5],[60,30,9,1],[50,35,13,2],[40,38,18,4],[30,40,24,6],[22,40,30,8],[12,38,38,12],[5,30,45,20]];
 const MAXST=99,ELITELV=100,Z0=-14;
-const statCap=()=>99,selK=null,gp=()=>null,classRec=()=>null,tb={};
-const skCost=x=>x,skOff=()=>true;
-let S=null,mapM=0,mapL=1,selB=null,selC=null;   // selE/selS/selP/qOpen/eqPick come in with the V grab
+const statCap=()=>99,selK=null,gp=id=>S&&S.pets.find(x=>String(x.id)===String(id)),classRec=()=>null,tb={};
+const skCost=x=>x,skOff=id=>!!(S&&S.skOff&&S.skOff[id]);
+let petBuff={atk:0,matk:0,atkT:0,matkT:0},petSkillCd={};
+const rollingSet=new Set(),autoSet=new Set(),busy=()=>false;
+let S=null,mapM=0,mapL=1,selB=null,selC=null;   // remaining panel state comes in with the V grab
 const mobs=[],drops=[],logs=[];
 const $=id=>({style:{},set innerHTML(v){globalThis['h_'+id]=v},get innerHTML(){return globalThis['h_'+id]||''},textContent:'',onclick:null});
 const dr=()=>1;
 ${code}
 const skpAvail=()=>5,skLine=()=>['Novice'],skEarned=()=>9,skSpent=()=>0,pv=()=>0,bon=()=>0,qTxt=q=>'quest';
 this.__u={ V, SKILLS, SKILL_ICON, set S(v){S=v}, get S(){return S}, set eqPick(v){eqPick=v}, get eqPick(){return eqPick},
-           set mapM(v){mapM=v}, set mapL(v){mapL=v}, set selE(v){selE=v}, set selS(v){selS=v} };
+           set mapM(v){mapM=v}, set mapL(v){mapL=v}, set selE(v){selE=v}, set selS(v){selS=v}, set selP(v){selP=v} };
 `;
 const sb = { console };
 vm.createContext(sb); vm.runInContext(harness, sb);
@@ -119,7 +126,7 @@ t('the map panel renders every map and field', () => {
   assert.ok(h.includes('Prontera') && h.includes('Abyss'), 'every map must be listed');
   assert.ok(!h.includes('Gear that drops here'), 'the bulky gear-by-slot card was removed in v16');
   // every drop now sits on the monster that drops it, one % line each
-  assert.ok(h.includes('dropline') && h.includes('2.4%') && h.includes('2%') && h.includes('1.6%'), 'mob drops must list each item with its own %');
+  assert.ok(h.includes('dropline') && h.includes('4.8%') && h.includes('4%') && h.includes('3.2%'), 'mob gear odds must each be doubled and visible');
   assert.ok(h.includes('0.45%'), 'the card chance stays visible on the monster');
   assert.ok(h.includes('mapcard'), 'the map selector must be the scalable grid');
   assert.strictEqual((h.match(/class="mapcard/g) || []).length, 10, 'one card per map');
@@ -127,7 +134,8 @@ t('the map panel renders every map and field', () => {
   // the boss field lists the whole pool with odds, and the new ore rates
   U.mapL = 10;
   const b = U.V.map();
-  assert.ok(b.includes('1.2%') && b.includes('poolitem'), 'the boss must list its full pool at 1.2% each');
+  assert.ok(b.includes('2.4%') && b.includes('poolitem') && b.includes('Each item rolls independently'), 'the boss must list the doubled independent equipment rolls');
+  assert.ok(b.includes('0.08%'), 'boss card odds must remain unchanged');
   assert.ok(b.includes('2% each') && b.includes('5% each'), 'ore rates: 2% per monster, 5% per boss');
 });
 
@@ -199,6 +207,42 @@ t('the skills panel renders for every class tier', () => {
   });
 });
 
+t('learned active skills use a checked Auto cast box by default', () => {
+  U.S = mkS('Mage'); U.S.sk.fire = 1; U.S.skOff = {}; U.selS = 'fire';
+  let h = U.V.skills();
+  assert.ok(h.includes('<label class="sk-autocast"><input type="checkbox" data-a="sktog" data-v="fire" checked aria-label="Auto cast Fire Bolt"> Auto cast</label>'),
+    'a newly learned active skill should auto-cast by default');
+  assert.ok(!h.includes('Turn auto-cast ON') && !h.includes('Turn auto-cast OFF'), 'the old detail-panel toggle should be gone');
+  assert.ok(src.includes("b&&b.dataset.a==='ssel'&&e.target.closest('.sk-autocast')"), 'clicking the checkbox label should not select/re-render its parent card');
+  U.S.skOff.fire = 1; h = U.V.skills();
+  assert.ok(/<label class="sk-autocast"><input type="checkbox" data-a="sktog" data-v="fire"\s+aria-label="Auto cast Fire Bolt"> Auto cast<\/label>/.test(h),
+    'unchecking Auto cast should render the skill as paused');
+});
+
+t('the HUD shows Kills /Min and a rolling Zeny-per-minute hover rate', () => {
+  assert.ok(src.includes('<b id="zeny" title="Hover for earned Zeny per minute" tabindex="0" style="cursor:help">0</b>'), 'Zeny amount needs a hover hint');
+  assert.ok(src.includes('<div>Kills /Min <b id="kills" title="Kills per minute (rolling 60s)">0.0</b></div>'), 'HUD should display the rate instead of lifetime kills');
+  assert.ok(src.includes("$('zeny').title=`Zeny earned per minute (rolling 60s):"), 'hover title should show Zeny/min');
+  const box = {}; vm.createContext(box);
+  vm.runInContext(grab('const HUD_RATE_WINDOW=60000,HUD_RATE_SAMPLE=1000;', 'function bars(){') + ';this.stepHudRate=stepHudRate;', box);
+  let state = null, m = box.stepHudRate(state, 'player', 100, 4000, 0); state = m.state;
+  assert.strictEqual(m.kills, 0); assert.strictEqual(m.zeny, 0);
+  m = box.stepHudRate(state, 'player', 105, 4600, 30000); state = m.state;
+  assert.ok(Math.abs(m.kills - 10) < .001, '5 kills over 30 seconds should show 10/min');
+  assert.ok(Math.abs(m.zeny - 1200) < .001, '600 earned Zeny over 30 seconds should show 1,200/min');
+  m = box.stepHudRate(state, 'player', 105, 4100, 45000); state = m.state;
+  assert.ok(Math.abs(m.zeny - 800) < .001, 'spending Zeny must not count as negative earnings');
+  m = box.stepHudRate(state, 'player', 105, 4100, 90000); state = m.state;
+  assert.strictEqual(m.kills, 0, 'activity should age out of the rolling minute');
+  assert.strictEqual(m.zeny, 0, 'Zeny earnings should age out of the rolling minute');
+  m = box.stepHudRate(state, 'another-player', 20, 9000, 90000); state = m.state;
+  assert.strictEqual(m.kills, 0, 'a new login should start a fresh rate window');
+  assert.strictEqual(m.zeny, 0, 'a loaded balance should not count as new income');
+  m = box.stepHudRate(state, 'another-player', 30, 10000, 160001);
+  assert.strictEqual(m.kills, 0, 'a long idle gap should start a fresh rolling window');
+  assert.strictEqual(m.zeny, 0, 'earnings from before a long idle gap should not linger');
+});
+
 t('every skill has a distinct icon and upgraded card metadata', () => {
   const missing = [...U.SKILLS].filter(s => !U.SKILL_ICON[s.id]).map(s => s.id);
   assert.deepStrictEqual(missing, [], 'skills without a mapped glyph: ' + missing.join(', '));
@@ -237,6 +281,18 @@ t('the character + class panels show the class-collection bonus', () => {
   h = U.V.job();
   assert.ok(h.includes('Class collection'), 'the class tree panel repeats the mission');
   assert.ok(h.includes('+1% damage'));
+});
+
+t('pet details show Ragnarok sprites, named upgrade levels, and gacha skill odds', () => {
+  U.S=mkS('Novice');U.S.pets=[{id:41,sp:0,mut:0,eq:[1,2,0],skill:'warcry',sk:[1,2,3],on:false}];U.selP=41;
+  const h=U.V.pet();
+  assert.ok(h.includes('src="https://static.divine-pride.net/images/mobs/png/1002.png"'),'the pet portrait must use its Divine Pride monster sprite');
+  assert.ok(h.includes('Claw &middot; Level 1/5')&&h.includes('Collar &middot; Level 2/5')&&h.includes('Charm &middot; Level 0/5'),'each upgrade must name the slot and current level');
+  assert.ok(h.includes('25% upgrade success')&&h.includes('15% upgrade success')&&h.includes('40% upgrade success'),'each upgrade must show its success chance');
+  assert.ok(h.includes('5% double upgrade chance on success'),'the great-success chance must be explicit');
+  assert.ok(h.includes('Gacha pet skill')&&h.includes('War Cry')&&h.includes('Player ATK +20% for 8s'),'the rolled skill and its effect must be visible');
+  assert.ok(h.includes('Six equally weighted skills: 2 player buffs, 2 AoE attacks, 2 single-target attacks (1/6 each).'),'the requested gacha distribution must be clear');
+  assert.ok(h.includes('data-a="pskill"'),'the pet skill gacha button must be present');
 });
 
 t('every panel a tab can open builds HTML without throwing', () => {
