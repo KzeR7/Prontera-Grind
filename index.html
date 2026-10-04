@@ -150,7 +150,6 @@ hr{border:0;border-top:1px dashed var(--edge);margin:6px 0}
 <div style="margin-left:auto;display:flex;align-items:center;gap:8px"><span id="userBadge" style="font-weight:bold;font-size:12px;background:#e9d39a;padding:3px 8px;border-radius:4px;border:1px solid var(--edge2)"></span><button id="logoutBtn" onclick="logout()" style="display:none">Logout</button><button id="spd">Speed x1</button></div></div></div>
 <div id="modal"><div class="login-card"><p id="mt" style="font-size:14px;opacity:1;margin:0 0 12px"></p><div class="row" style="justify-content:center"><button id="my">Yes</button><button id="mn">Cancel</button></div></div></div><div id="tooltip"></div>
 <script src="assets/sprite_pack_data.js?v=1"></script>
-<script src="assets/kit/morocc-atlas.js?v=1"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
 const $=id=>document.getElementById(id);
@@ -191,7 +190,7 @@ const AL={str:'STR',agi:'AGI',dex:'DEX',luk:'LUK',int:'INT',hp:'Max HP',atk:'ATK
 // late maps in about five, with bosses still a ~12x fight. See tools/tests/economy_sim.js.
 const SU=k=>k.toUpperCase(),BX_=5.5,Z0=-14,Z1=3,MPS=15,AGGRO=8.5,HPK=42,HPE=1.3,K5=['str','agi','dex','luk','int'];
 const GM_USER='GM',GM_PASS='gm1234';   // CHANGE THE GM PASSWORD before you publish
-const BUILD='2026-10-04 ui-v25 hud-rates skill-autocast-checkbox';   // shown on the login card - confirms which file you loaded
+const BUILD='2026-10-04 kit-v26 map-kit-v2 all-ten-maps';   // shown on the login card - confirms which file you loaded
 $('buildTag').textContent='build '+BUILD;
 
 // ---------- class tree: Novice -> 6 first jobs -> 6 second jobs -> 6 third jobs ----------
@@ -1409,13 +1408,14 @@ function buildDeco(m){while(deco.children.length)deco.remove(deco.children[0]);t
     else{mk(G,BX(1,1.6+r(),.3),pc1,0,.9,0);mk(G,BX(1.2,.2,.5),pc2,0,.1,0)}
     G.position.set(x,0,z);G.scale.setScalar(sc);G.rotation.y=r()*6;deco.add(G)}}
 
-// ----- The attached map kit: terrains, water, bridges and props -------------------------
-// assets/kit/ro-spritesheet.png + .json is the owner's modular atlas (8 terrain tiles, 7
-// environment billboards: ancient trees, a tall cluster, a sapling, a bright bush, a cliff
-// crag, a mossy boulder, a river stone post). assets/kit/ro-map-payon.json and
-// ro-map-morocc.json are the two attached level designs: 48x32 grids of typed cells, each with
-// its own corner heights, plus the props the design places on top of them. Morocc's atlas is
-// painted at load by the attachment's own generator (assets/kit/morocc-atlas.js).
+// ----- The map kit: terrains, water, bridges and props ----------------------------------
+// assets/kit/ro-spritesheet.png + .json is **map kit v2**: one 2048x2048 atlas of painted
+// RO-style art - 25 terrain tiles and 34 environment billboards - plus the character strip the
+// prop scale is measured from. assets/kit/ro-map-payon.json and ro-map-morocc.json are the two
+// attached level designs: 48x32 grids of typed cells, each with its own corner heights, plus the
+// props the design places on top of them. v1 painted Morocc's desert atlas at runtime with its own
+// generator (assets/kit/morocc-atlas.js); **v2 carries every one of those names on the one sheet**,
+// so the generator is retired (kept in Updates/retired-v1-kit/) and 'morocc' is now just an alias.
 //
 // Everything here is a CROP of that art. No tile, tree or rock in this layer is drawn, traced,
 // recoloured or substituted - if a crop is missing, the map falls back to the v13 scenery.
@@ -1424,73 +1424,124 @@ function buildDeco(m){while(deco.children.length)deco.remove(deco.children[0]);t
 // and its props are billboards. Props a design puts inside the running lane are moved to the
 // lane edge and kept - the field must read as the design without scenery blocking the fight.
 //
-// Payon is not the attached 48x32 grid any more: the owner rejected that layout (a huge diagonal
-// lake, trees the size of the player) and asked for Payon to look like RO's Payon Forest. Its
-// field is now laid out in code from the RO recipe - see `payonPlan` below - out of the same
-// kit tiles and billboards. Morocc still uses its attached design.
-const KIT={ok:0,png:null,man:null,des:{},mor:null,srcMan:{},tex:new Map(),water:[],wt:0,ground:null,built:null};
+// Payon is not the attached 48x32 grid: the owner rejected that layout (a huge diagonal lake,
+// trees the size of the player) and asked for Payon to look like RO's Payon Forest. Its field is
+// laid out in code from the RO recipe - see `payonPlan` below - out of the same kit tiles and
+// billboards. Morocc still uses its attached design. The other eight are `fieldPlan` recipes.
+const KIT={ok:0,png:null,man:null,des:{},srcMan:{},tex:new Map(),water:[],wt:0,ground:null,built:null};
 const KIT_S=.85,KIT_ZC=(Z0+Z1)/2,KIT_PX=2048,KIT_FAR=90;
-// Prop size. The kit ships its own character: 80px per frame. This game's hero stands 2.9 world
-// units, so **one atlas pixel is 2.9/80 units** and a prop is (its crop height) x KIT_PK x its
-// factor. The factors are RO Payon forest proportions - the big trees tower over the player
-// (3.5x), a sapling is about player height, a bush is knee height. Tune the numbers here; the
-// builders only read them. Anything not listed is factor 1.
+// Prop size. The kit ships its own character: 80px per frame (v2 kept the v1 strip pixel for
+// pixel, so this did not move). This game's hero stands 2.9 world units, so **one atlas pixel is
+// 2.9/80 units** and a prop is (its crop height) x KIT_PK x its factor. The factors below are the
+// art pass's own tuned table (`suggest.KIT_PS` in the manifest, which kit_sim.js compares against
+// this constant entry for entry) - v2 crops are taller and better proportioned than v1, so the
+// old factors were wrong for them. World heights they encode, in hero-multiples: big trees
+// 3.3-3.6x, cherry 3.0x, palms 2.6-3.1x, dead/gnarled trees 2.5-2.7x, the Geffen tower 5.1x (a
+// far landmark), torii 2.3x, houses ~2x, bamboo and saplings ~1-1.9x, bushes/curbs knee height.
+// Anything not listed is factor 1 - kit_sim.js fails on a prop a field places that is missing.
 const KIT_PK=2.9/80;
-const KIT_PS={tree_ancient_large:.9,tree_ancient_variant:.9,tree_tall_cluster:.85,tree_sapling:.55,
-  tree_bush_bright:.34,rock_cliff_crag:1,rock_boulder_mossy:.6,river_stone_post:.62,
-  palm_giant:.7,palm_tall:.75,palm_double:.72,cactus_flower:.75,cactus_small:.65,
-  ruin_pillar:.8,ruin_column_fallen:.8,ruin_stump:.7,ruin_curb:.6,desert_bone:.5};
+const KIT_PS={tree_ancient_large:1,tree_ancient_variant:1,tree_tall_cluster:.95,tree_sapling:.55,
+  tree_bush_bright:.4,rock_cliff_crag:.7,river_stone_post:.55,rock_boulder_mossy:.45,
+  palm_giant:.9,palm_tall:.85,palm_double:.9,cactus_flower:.45,cactus_small:.4,
+  ruin_pillar:.6,ruin_column_fallen:.4,ruin_stump:.45,ruin_curb:.35,desert_bone:.45,
+  bamboo_grove:.95,tree_dead:.7,tombstone:.45,house_ruin:.75,tree_cherry:.8,lantern_stone:.55,
+  bridge_red_arch:.7,torii_gate:.75,shrine_stone:.65,stalagmite:.6,crystal_cluster:.45,
+  standing_stone:.55,tree_dark_gnarled:1,house_prontera:.75,tower_geffen:1.2,pier_post:.45};
 function kitPropScale(type,scale){return KIT_PK*(KIT_PS[type]||1)*(scale||1)}
+
 // which arena map wears which design/layout, and what a design's cell types are called in the atlas.
-// v17: every map is dressed from the kit. 3 stays the attached Morocc design, 4 stays the RO Payon
-// recipe; the other eight are fieldPlan recipes out of the same crops. src = the atlas the GROUND
-// paints from; individual props may carry their own src (e.g. Morocc's palms on a beach town).
+// Every map is dressed from the kit. 3 stays the attached Morocc design, 4 stays the RO Payon
+// recipe; the other eight are fieldPlan recipes out of the same crops. `src` names the atlas the
+// GROUND paints from - in v2 all three names resolve to the one sheet (see kitAtlas), so it is a
+// label, not a second download. A recipe reads:
+//   f.base/base2   the ground tile and its 1-in-9 variation      f.cliff  {strip,side} rocky frame
+//   f.road         {w,wander} a worn track down the lane         f.water  [z0,z1] an animated strip
+//   f.bank/bankTile the shore band around water                  f.deck   [x,z,w,l] a plank bridge
+//   f.deckTile     which deck art (Amatsu lacquers its bridge red)
+//   f.waterFrames  which two frames animate (Abyss's lake is the kit's dark water)
+//   f.bands        off-lane ground strips, e.g. Louyang's terraced paddies - never in the lane
+//   f.trees        {near,step,types,sub} the tree lines both sides of the avenue
+//   f.scatter      randomised props in a |x| band and a depth band (`side` pins one side)
+//   f.fixed        landmarks placed exactly (a tower in a corner, a torii on the approach)
+// Identities are the art pass's per-map notes (Updates/map-sprites-v2/RESEARCH.md), researched
+// against divine-pride map renders: one painted technique, ten moods.
 const KIT_MAP={
+  // 0 Prontera - prt_fild08: olive meadow, a wide warm dirt road, round green trees, one cottage
   0:{src:'payon',layout:'field',design:'prontera',seed:101,f:{base:'grass_olive',base2:'grass_forest',
     cliff:{strip:4,side:21},road:{w:3.6,wander:.35},
     trees:{near:6.6,step:2.3,types:['tree_ancient_large','tree_ancient_variant','tree_tall_cluster'],
       sub:[['tree_sapling',.5],['tree_bush_bright',.45]]},
-    scatter:[{type:'river_stone_post',count:4,r0:6.6,r1:7.4,z0:-12,z1:8}]}},
+    scatter:[{type:'river_stone_post',count:4,r0:6.6,r1:7.4,z0:-12,z1:8}],
+    fixed:[{type:'house_prontera',x:-15.5,z:-19.5,scale:1}]}},
+  // 1 Izlude - teal sea with a sparkle grid, a golden shore band, palms and a pier on posts
   1:{src:'payon',layout:'field',design:'izlude',seed:202,f:{base:'grass_olive',base2:'grass_forest',
-    cliff:{strip:2,side:22},water:[-23,-16],bank:1.8,road:{w:3.2,wander:.25},
+    cliff:{strip:2,side:22},water:[-23,-16],bank:1.8,bankTile:'sand_gold',road:{w:3.2,wander:.25},
     deck:[10,-19.5,2.6,7],                        // the harbour pier, out of the lane
     trees:{near:7,step:3.2,types:['tree_tall_cluster','tree_ancient_variant'],sub:[['tree_bush_bright',.4]]},
-    scatter:[{type:'palm_tall',src:'morocc',count:5,r0:8,r1:16,z0:-15.6,z1:-12},
-             {type:'river_stone_post',count:2,r0:6.8,r1:7.2,z0:-15.8,z1:-14.6}]}},
-  2:{src:'payon',layout:'field',design:'geffen',seed:303,f:{base:'grass_forest',base2:'grass_olive',
+    scatter:[{type:'palm_tall',count:5,r0:8,r1:16,z0:-16.4,z1:-13},   // palms at the waterline
+             {type:'river_stone_post',count:2,r0:6.8,r1:7.2,z0:-15.8,z1:-14.6}],
+    fixed:[{type:'pier_post',x:8.5,z:-22.4,scale:1},{type:'pier_post',x:11.5,z:-22.4,scale:1},
+           {type:'pier_post',x:11.5,z:-17,scale:1}]}},
+  // 2 Geffen - gef_fild04: moody blue-grey-green plains, dark gnarled clumps, standing stones,
+  //   the wizard tower on the far horizon
+  2:{src:'payon',layout:'field',design:'geffen',seed:303,f:{base:'grass_geffen',base2:'grass_forest',
     cliff:{strip:6,side:19},
-    trees:{near:7.2,step:3.4,types:['tree_ancient_large','tree_ancient_variant'],sub:[['tree_bush_bright',.3]]},
-    scatter:[{type:'ruin_pillar',src:'morocc',count:6,r0:9,r1:15,z0:-14,z1:6},
-             {type:'ruin_stump',src:'morocc',count:4,r0:8,r1:15,z0:-16,z1:8},
-             {type:'ruin_column_fallen',src:'morocc',count:2,r0:10,r1:16,z0:-12,z1:4}]}},
+    trees:{near:7.2,step:3.4,types:['tree_dark_gnarled'],sub:[['tree_bush_bright',.3]]},
+    scatter:[{type:'standing_stone',count:4,r0:9,r1:16,z0:-14,z1:6},
+             {type:'rock_cliff_crag',count:5,r0:8,r1:17,z0:-16,z1:8}],
+    fixed:[{type:'tower_geffen',x:-19,z:-20,scale:1}]}},
+  // 3 Morocc - the attached desert-ruins design, cell for cell (its pixels are v2's now)
   3:{src:'morocc',design:'morocc',tile:t=>({sand:'sand',sand_dark:'sand_dark',ruin_cobble:'ruin_cobble',cliff:'cliff'}[t]||null)},
+  // 4 Payon - the RO Payon Forest recipe, laid out in code below
   4:{src:'payon', layout:'payon'},
-  5:{src:'morocc',layout:'field',design:'comodo',seed:505,f:{base:'sand',base2:'sand_dark',cliffTile:'cliff',
+  // 5 Comodo - cmd_fild01: golden beach, warm light, palms, dark cave-mouth crags behind the sand
+  5:{src:'payon',layout:'field',design:'comodo',seed:505,f:{base:'sand_gold',base2:'sand_dark',cliffTile:'cliff_sand',
     cliff:{strip:4,side:21},water:[-23,-17],bank:0,
     trees:{near:7,step:2.6,types:['palm_giant','palm_tall','palm_double'],sub:[['cactus_small',.35]]},
     scatter:[{type:'cactus_flower',count:6,r0:7.5,r1:17,z0:-16,z1:9},
-             {type:'desert_bone',count:3,r0:8,r1:16,z0:-15,z1:8}]}},
-  6:{src:'payon',layout:'field',design:'louyang',seed:606,f:{base:'grass_forest',base2:'grass_olive',
+             {type:'desert_bone',count:3,r0:8,r1:16,z0:-15,z1:8},
+             {type:'rock_cliff_crag',count:4,r0:10,r1:19,z0:-21,z1:-14}]}},
+  // 6 Louyang - lou_fild01: jade highland, terraced paddy water off the road, bamboo, a stone
+  //   shrine with lanterns along the approach
+  6:{src:'payon',layout:'field',design:'louyang',seed:606,f:{base:'grass_jade',base2:'grass_forest',
     cliff:{strip:3,side:22},road:{w:3,wander:.5},
-    trees:{near:6.4,step:1.9,types:['tree_ancient_large','tree_tall_cluster','tree_ancient_variant'],
-      sub:[['tree_sapling',.55],['tree_bush_bright',.5]]},
-    scatter:[{type:'river_stone_post',count:4,r0:6.5,r1:7.2,z0:-12,z1:8}]}},
-  7:{src:'payon',layout:'field',design:'amatsu',seed:707,f:{base:'grass_olive',base2:'grass_forest',
+    bands:[{tile:'paddy_water',z:[-12,-9.6],x0:8,x1:22},{tile:'paddy_water',z:[-12,-9.6],x0:-22,x1:-8},
+           {tile:'paddy_water',z:[-5.2,-3.2],x0:9,x1:20},{tile:'paddy_water',z:[-5.2,-3.2],x0:-20,x1:-9}],
+    trees:{near:6.4,step:1.9,types:['bamboo_grove','tree_tall_cluster'],sub:[['tree_sapling',.55]]},
+    scatter:[{type:'bamboo_grove',count:5,r0:9,r1:17,z0:-16,z1:8}],
+    fixed:[{type:'shrine_stone',x:-9.6,z:-7.4,scale:1},
+           {type:'lantern_stone',x:-6.8,z:-11,scale:1},{type:'lantern_stone',x:6.8,z:-11,scale:1,flip:true},
+           {type:'lantern_stone',x:-6.8,z:-.6,scale:1},{type:'lantern_stone',x:6.8,z:-.6,scale:1,flip:true}]}},
+  // 7 Amatsu - ama_fild01: blossom fields, a red lacquer shrine bridge over the stream, a torii
+  //   on the approach, lantern pairs, and the great red arch bridge as far scenery
+  7:{src:'payon',layout:'field',design:'amatsu',seed:707,f:{base:'grass_blossom',base2:'grass_olive',
     cliff:{strip:3,side:21},road:{w:3.2,wander:.2},water:[-7.9,-6],bank:1.7,
-    deck:[0,-6.95,3.4,4.8],                       // the bridge on the road, over the stream
-    trees:{near:6.4,step:2.2,types:['tree_ancient_large','tree_ancient_variant'],
+    deck:[0,-6.95,3.4,4.8],deckTile:'bridge_red',  // the shrine bridge, on the road over the stream
+    trees:{near:6.4,step:2.2,types:['tree_cherry','tree_ancient_variant'],
       sub:[['tree_sapling',.5],['tree_bush_bright',.4]]},
-    scatter:[{type:'river_stone_post',count:2,r0:6.5,r1:7,z0:-9.4,z1:-4.8}]}},
-  8:{src:'payon',layout:'field',design:'niflheim',seed:808,f:{base:'dirt_path',base2:'grass_forest',
-    cliff:{strip:7,side:18},
-    scatter:[{type:'rock_cliff_crag',count:10,r0:7,r1:16,z0:-15,z1:9},
-             {type:'desert_bone',src:'morocc',count:6,r0:6.8,r1:15,z0:-14,z1:9},
-             {type:'ruin_stump',src:'morocc',count:3,r0:8,r1:14,z0:-12,z1:6}]}},
-  9:{src:'payon',layout:'field',design:'abyss',seed:909,f:{base:'cliff_rock',base2:'grass_forest',
-    cliff:{strip:5,side:19},water:[-23,-18],bank:0,
-    scatter:[{type:'rock_cliff_crag',count:12,r0:6.8,r1:16,z0:-17,z1:9},
-             {type:'river_stone_post',count:4,r0:6.6,r1:8,z0:-16,z1:8},
-             {type:'desert_bone',src:'morocc',count:4,r0:7,r1:14,z0:-16,z1:8}]}}};
+    scatter:[{type:'river_stone_post',count:2,r0:6.5,r1:7,z0:-9.4,z1:-4.8}],
+    fixed:[{type:'torii_gate',x:6.6,z:-4.2,scale:1},          // the lane rule keeps it at the roadside
+           {type:'lantern_stone',x:-6.8,z:-1.4,scale:1},{type:'lantern_stone',x:6.8,z:-1.4,scale:1,flip:true},
+           {type:'lantern_stone',x:-6.8,z:-11.4,scale:1},{type:'lantern_stone',x:6.8,z:-11.4,scale:1,flip:true},
+           {type:'bridge_red_arch',x:17,z:-19.5,scale:1}]}},
+  // 8 Niflheim - nif_fild01: the realm of the dead. Purple-grey waste, dead trees, graves, bones,
+  //   one ruined house; no bright colour anywhere
+  8:{src:'payon',layout:'field',design:'niflheim',seed:808,f:{base:'waste_nifl',base2:'rock_abyss',
+    cliff:{strip:7,side:18},cliffTile:'cliff_rock',
+    trees:{near:7.4,step:3.6,types:['tree_dead'],sub:[]},
+    scatter:[{type:'tombstone',count:6,r0:7,r1:16,z0:-14,z1:8},
+             {type:'rock_cliff_crag',count:8,r0:7,r1:16,z0:-15,z1:9},
+             {type:'desert_bone',count:6,r0:6.8,r1:15,z0:-14,z1:9}],
+    fixed:[{type:'house_ruin',x:-14,z:-18,scale:1},{type:'tree_dead',x:13.5,z:-19.5,scale:1.15}]}},
+  // 9 Abyss - hu_fild05 + the caves: dark slate, a pale limestone shore around a deep dark lake,
+  //   stalagmites and crystal clusters
+  9:{src:'payon',layout:'field',design:'abyss',seed:909,f:{base:'rock_abyss',base2:'cliff_rock',
+    cliff:{strip:5,side:19},water:[-23,-18],bank:1.6,bankTile:'limestone_pale',
+    waterFrames:['water_dark_0','water_dark_1'],   // the kit's dark pair, not the bright default
+    scatter:[{type:'stalagmite',count:8,r0:7,r1:17,z0:-16,z1:9},
+             {type:'crystal_cluster',count:6,r0:6.8,r1:16,z0:-15,z1:9},
+             {type:'rock_cliff_crag',count:9,r0:6.8,r1:16,z0:-17,z1:9},
+             {type:'standing_stone',count:3,r0:9,r1:17,z0:-16,z1:6}]}}};
 const KIT_TILE={grass:'grass_olive',grass_dark:'grass_forest',dirt:'dirt_path',cliff:'cliff_rock',bank:'riverbank_wall'};
 // cell types the kit itself draws in its animated pass / as a deck, not as ground texture
 const KIT_WET={water:1},KIT_DECK={bridge:1},KIT_SKIP={sky:1};
@@ -1507,17 +1558,21 @@ function kitFetch(){
       img.src='assets/kit/ro-spritesheet.png';}).catch(()=>{});
   }catch(e){}
 }
+// v2 is ONE atlas, so every recipe's `src` resolves to it. 'payon' and 'morocc' were the two v1
+// atlases (the sheet, and the desert generator's canvas); both names stay valid as aliases so the
+// recipes and Morocc's attached design read unchanged, and one manifest object is shared, so a
+// crop is never made twice and there is nothing left to borrow between atlases.
+const KIT_SRC='kit',KIT_ALIAS={kit:KIT_SRC,payon:KIT_SRC,morocc:KIT_SRC};
+function kitSrc(name){return KIT_ALIAS[name]||null}
 // the atlas a design crops from ("src" above), normalised: {img,tiles,sprites}
 function kitAtlas(name){
-  if(KIT.srcMan[name])return KIT.srcMan[name];
-  let a=null;
-  if(name==='morocc'){try{if(!KIT.mor)KIT.mor=window.MOROCC_KIT.atlas();a={img:KIT.mor.canvas,tiles:KIT.mor.manifest.tiles,sprites:KIT.mor.manifest.sprites}}catch(e){}}
-  else if(name==='payon'&&KIT.png&&KIT.man)a={img:KIT.png,tiles:KIT.man.tiles,sprites:KIT.man.sprites};
-  if(a)KIT.srcMan[name]=a;
-  return a;
+  const key=kitSrc(name); if(!key)return null;
+  if(KIT.srcMan[key])return KIT.srcMan[key];
+  if(KIT.png&&KIT.man)KIT.srcMan[key]={img:KIT.png,tiles:KIT.man.tiles,sprites:KIT.man.sprites};
+  return KIT.srcMan[key]||null;
 }
 function kitCrop(src,kind,name,flip){
-  const key=src+':'+kind+':'+name+(flip?'@f':''); if(KIT.tex.has(key))return KIT.tex.get(key);
+  const key=(kitSrc(src)||src)+':'+kind+':'+name+(flip?'@f':''); if(KIT.tex.has(key))return KIT.tex.get(key);
   const a=kitAtlas(src); if(!a)return null;
   const e=(kind==='tile'?a.tiles:a.sprites)[name]; if(!e)return null;
   const cv=document.createElement('canvas');cv.width=e.w;cv.height=e.h;
@@ -1539,10 +1594,11 @@ function kitAnchor(d){return d.bridge?{x:d.bridge.x,y:d.bridge.y}:{x:d.meta.grid
 function kitX(d,g){return (g-kitAnchor(d).x)*KIT_S}
 function kitZ(d,g){return (g-kitAnchor(d).y)*KIT_S+KIT_ZC}
 // ----- Payon: the RO Payon Forest recipe, laid out in code ---------------------------------
-// A wide brown dirt road that wanders up the middle, a creek across it with a plank bridge, tree
-// lines that tower over the player on both banks (with saplings and bushes under them), and
-// rocky mountain edges - Payon Forest is a mountainous bamboo forest, and its fields read as a
-// dirt path cut through big dark trees. Layout is code; every pixel is still a crop.
+// A wide red-brown mud road that wanders up the middle, a creek across it with a plank bridge,
+// tree lines that tower over the player on both banks (with saplings and bushes under them),
+// **bamboo groves along the banks** and mossy boulders at the crossing, and rocky mountain edges -
+// Payon Forest is a mountainous bamboo forest, and its fields read as a dirt trail cut through a
+// near-black canopy. Layout is code; every pixel is still a crop.
 const PAY={road:3.6,creek:[-7.8,-5.0],field:[-26,26,-23,11],cell:.8,treeNear:5.9,treeFar:13.5};
 function payRoadR(z){return PAY.road/2+Math.sin(z*.19)*.45+Math.sin(z*.05)*.3}
 function payonPlan(spec){
@@ -1553,7 +1609,7 @@ function payonPlan(spec){
     for(let x=x0;x<x1;x+=st){
       if(z<z0+5||Math.abs(x)>20){cells.push({x,z,tile:'cliff_rock'});continue}   // the mountain wall
       if(z>cz[0]-st*2&&z<cz[1]+st*2){cells.push({x,z,tile:'riverbank_wall'});continue}   // creek banks
-      if(Math.abs(x)<payRoadR(z)){cells.push({x,z,tile:'dirt_path'});continue}   // the road
+      if(Math.abs(x)<payRoadR(z)){cells.push({x,z,tile:'dirt_payon'});continue}   // the road
       const i=Math.round((x-x0)/st),j=Math.round((z-z0)/st);                    // grass variation
       if((i*7+j*13)%9===0)cells.push({x,z,tile:'grass_olive'});
     }
@@ -1576,12 +1632,25 @@ function payonPlan(spec){
       src:spec.src,scale:.9+rnd()*.35,flip:rnd()>.5,nudged:0});
     for(let i=0;i<5;i++)props.push({x:s*(PAY.treeNear+.4+rnd()*7),z:z0+3+rnd()*(z1-z0-6),type:'tree_bush_bright',
       src:spec.src,scale:.7+rnd()*.5,flip:rnd()>.5,nudged:0});
+    // bamboo groves along both banks - the groves RO's Payon is famous for. v1 had no bamboo crop
+    // at all, so this is the first time Payon Forest can actually look like Payon Forest.
+    for(let i=0;i<5;i++){
+      const z=z0+3+rnd()*(z1-z0-6);
+      if(Math.abs(z-mid)<st*3.2)continue;                              // keep the crossing open
+      props.push({x:s*(PAY.treeNear+.2+rnd()*4.5),z:z+rnd()*.8,type:'bamboo_grove',
+        src:spec.src,scale:.8+rnd()*.4,flip:rnd()>.5,nudged:0});
+    }
     // a stone post on each bank, well clear of the lane, marking the crossing
     props.push({x:s*(PAY.treeNear+.4),z:mid-(cz[1]-cz[0])/2-1.1,type:'river_stone_post',
       src:spec.src,scale:.85,flip:s>0,nudged:0});
+    // mossy boulders on the far bank: kit v2 finally carries the crop the attached Payon design
+    // asked for and v1 had to skip-and-report, so the crossing is framed the way it was drawn
+    props.push({x:s*(PAY.treeNear+.5),z:mid+(cz[1]-cz[0])/2+1.5,type:'rock_boulder_mossy',
+      src:spec.src,scale:.9+rnd()*.3,flip:s<0,nudged:0});
   }
   props.sort((p,n)=>p.z-n.z);
-  return {src:spec.src,design:'payon',cells,water,props,deck,base:'grass_forest',base2:'grass_olive'};
+  return {src:spec.src,design:'payon',cells,water,props,deck,base:'grass_forest',base2:'grass_olive',
+          waterFrames:null,deckTile:null};
 }
 // ----- the field builder: every other arena dresses from the same kit, by recipe ------------
 // One deterministic (seeded LCG) builder, one recipe per map in KIT_MAP. Rules are the same as
@@ -1594,11 +1663,19 @@ function fieldPlan(spec){
   const cliffT=f.cliffTile||'cliff_rock',bankT=f.bankTile||'riverbank_wall',roadT=f.roadTile||'dirt_path';
   const roadR=f.road?(z=>f.road.w/2+Math.sin(z*.19+spec.seed)*f.road.wander+Math.sin(z*.05)*f.road.wander*.7):null;
   const wet=z=>f.water&&z>=f.water[0]&&z<f.water[1];
+  const lane=BX_+.9;
+  // ground bands (Louyang's terraced paddies): a tile painted across a depth range and an x range.
+  // A depth can carry more than one band (one per side of the road), so this is a filter, not a
+  // find. The lane check is in the builder, not the recipe, so no band can ever be written into
+  // the run whatever its x range says.
+  const bands=f.bands||[],bandsAt=z=>bands.filter(b=>z>=b.z[0]&&z<b.z[1]);
   for(let z=z0;z<z1;z+=st){
     if(wet(z)){water.push({x:(x0+x1)/2,z:z+st/2,w:x1-x0,h:st,cx:(x1-x0)/st,cy:1});continue}
-    const bank=f.water&&f.bank&&z>=f.water[0]-f.bank&&z<f.water[1]+f.bank;
+    const bank=f.water&&f.bank&&z>=f.water[0]-f.bank&&z<f.water[1]+f.bank,bds=bandsAt(z);
     for(let x=x0;x<x1;x+=st){
       if(f.cliff&&(z<z0+f.cliff.strip||Math.abs(x)>f.cliff.side)){cells.push({x,z,tile:cliffT});continue}
+      if(bds.length&&Math.abs(x)>=lane){const bd=bds.find(b=>x>=b.x0&&x<b.x1);
+        if(bd){cells.push({x,z,tile:bd.tile});continue}}
       if(bank){cells.push({x,z,tile:bankT});continue}
       if(f.road&&Math.abs(x)<roadR(z)){cells.push({x,z,tile:roadT});continue}
       const i=Math.round((x-x0)/st),j=Math.round((z-z0)/st);                 // grass/sand variation
@@ -1606,23 +1683,34 @@ function fieldPlan(spec){
     }
   }
   const deck=f.deck?{x:f.deck[0],z:f.deck[1],w:f.deck[2],l:f.deck[3],a:f.deck[4]||0}:null;
-  const lane=BX_+.9;
-  const put=(type,src,x,z,scale,flip)=>{if(Math.abs(x)<lane)x=(x<0?-1:1)*lane;
-    props.push({x,z,type,src,scale,flip,nudged:0,missing:0})};
+  // scenery never stands in the running lane: a prop the recipe puts there is moved to the lane
+  // edge and kept (its side and depth survive), never dropped - and it is counted as nudged, so
+  // the lane rule is visible in the plan instead of silent.
+  const put=(type,src,x,z,scale,flip)=>{let nudged=0;if(Math.abs(x)<lane){x=(x<0?-1:1)*lane;nudged=1}
+    props.push({x,z,type,src,scale,flip,nudged,missing:0})};
   if(f.trees){const T=f.trees;
     for(const s of[-1,1])for(let z=z0+2;z<z1-2;z+=T.step+rnd()*1.2){
       if(deck&&Math.abs(z-deck.z)<st*2.6)continue;                           // keep the crossing open
       if(f.water&&z>=f.water[0]-(f.bank||0)&&z<f.water[1]+(f.bank||0))continue;   // trees do not grow in water
+      if(bandsAt(z).length)continue;                                         // or in the paddies
       put(T.types[(rnd()*T.types.length)|0],spec.src,s*(T.near+rnd()*2.6),z+rnd()*.6,.84+rnd()*.32,rnd()>.5);
-      if(T.sub)for(const[t2,ch]of T.sub)if(rnd()<ch)put(t2,spec.src,s*(T.near+1.2+rnd()*5),z+rnd()*1.6,.8+rnd()*.5,rnd()>.5);
+      // the undergrowth is rolled at its own depth, so it is checked against the bands separately
+      if(T.sub)for(const[t2,ch]of T.sub)if(rnd()<ch){
+        const ux=s*(T.near+1.2+rnd()*5),uz=z+rnd()*1.6,us=.8+rnd()*.5,uf=rnd()>.5;
+        if(!bandsAt(uz).length)put(t2,spec.src,ux,uz,us,uf);
+      }
     }}
   if(f.scatter)for(const sc of f.scatter)for(let i=0;i<sc.count;i++){
-    const s=rnd()>.5?1:-1,x=s*(sc.r0+rnd()*(sc.r1-sc.r0)),z=sc.z0+rnd()*(sc.z1-sc.z0);
+    const s=sc.side||(rnd()>.5?1:-1),x=s*(sc.r0+rnd()*(sc.r1-sc.r0)),z=sc.z0+rnd()*(sc.z1-sc.z0);
     if(deck&&sc.clearDeck&&Math.abs(z-deck.z)<2)continue;
+    if(bandsAt(z).length)continue;                  // a band is ground the recipe reserved
     put(sc.type,sc.src||spec.src,x,z,(sc.s0||.8)+rnd()*((sc.s1||1.2)-(sc.s0||.8)),rnd()>.5);
   }
+  // landmarks go exactly where the recipe says (a tower in a far corner, a torii on the approach)
+  if(f.fixed)for(const fx of f.fixed)put(fx.type,fx.src||spec.src,fx.x,fx.z,fx.scale===undefined?1:fx.scale,!!fx.flip);
   props.sort((p,n)=>p.z-n.z);                       // far to near, so billboards overlap right
-  return {src:spec.src,design:spec.design,cells,water,props,deck,base:f.base,base2:f.base2};
+  return {src:spec.src,design:spec.design,cells,water,props,deck,base:f.base,base2:f.base2,
+          waterFrames:f.waterFrames||null,deckTile:f.deckTile||null};
 }
 // ----- pure plan: design + arena -> everything the painters need (no canvas, no THREE) -----
 function kitPlan(m){
@@ -1658,7 +1746,8 @@ function kitPlan(m){
   props.sort((a,b)=>a.z-b.z);                       // far to near, so billboards overlap right
   return {src:spec.src,design:spec.design,cells,water,props,deck,
           base:spec.design==='morocc'?'sand':'grass_forest',
-          base2:spec.design==='morocc'?'sand_dark':'grass_olive'};
+          base2:spec.design==='morocc'?'sand_dark':'grass_olive',
+          waterFrames:spec.waterFrames||null,deckTile:spec.deckTile||null};
 }
 function kitRect(d,gx0,gx1,gy){
   const x0=kitX(d,gx0),x1=kitX(d,gx1+1),z0=kitZ(d,gy),z1=kitZ(d,gy+1);
@@ -1686,10 +1775,12 @@ function kitGroundTex(plan){
   const t=new THREE.CanvasTexture(cv);t.minFilter=THREE.LinearMipMapLinearFilter;t.anisotropy=4;return t;
 }
 function kitWaterMeshes(plan,root){
-  // the animated water frames ship on the payon sheet; a morocc-ground map borrows them rather
-  // than showing an untextured pool (same attached kit - nothing is drawn either way)
-  const wsrc=(kitAtlas(plan.src)&&kitAtlas(plan.src).tiles.water_frame_0)?plan.src:(kitAtlas('payon')?'payon':plan.src);
-  const f=[kitCrop(wsrc,'tile','water_frame_0'),kitCrop(wsrc,'tile','water_frame_1')];
+  // The animated frame pair is the recipe's choice: the kit ships a bright pair (the default, the
+  // teal sea and creek water) and a dark pair (Abyss's deep lake). v1 hardcoded the bright names
+  // and made a morocc-ground map borrow them from the payon sheet - with one v2 atlas there is
+  // nothing left to borrow, so the pair is simply read off the plan.
+  const pair=(plan.waterFrames&&plan.waterFrames.length===2)?plan.waterFrames:['water_frame_0','water_frame_1'];
+  const f=pair.map(n=>kitCrop(plan.src,'tile',n));
   for(const r of plan.water){
     const m=new THREE.Mesh(new THREE.PlaneGeometry(r.w,r.h),new THREE.MeshLambertMaterial({map:null}));
     m.rotation.x=-Math.PI/2;m.position.set(r.x,.02,r.z);m.receiveShadow=true;root.add(m);
@@ -1700,7 +1791,8 @@ function kitWaterMeshes(plan,root){
 }
 function kitDeckMesh(plan,root){
   if(!plan.deck)return;
-  const t=kitCrop(plan.src,'tile','bridge_planks');if(!t)return;
+  // plank by default; Amatsu lacquers its shrine bridge red (deckTile in the recipe)
+  const t=kitCrop(plan.src,'tile',plan.deckTile||'bridge_planks');if(!t)return;
   const map=t.clone();map.needsUpdate=true;map.repeat.set(plan.deck.w/KIT_S,plan.deck.l/KIT_S);
   const m=new THREE.Mesh(new THREE.PlaneGeometry(plan.deck.w,plan.deck.l),new THREE.MeshLambertMaterial({map}));
   m.rotation.x=-Math.PI/2;m.rotation.z=plan.deck.a;m.position.set(plan.deck.x,.05,plan.deck.z);m.receiveShadow=true;root.add(m);

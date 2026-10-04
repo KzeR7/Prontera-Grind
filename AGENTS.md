@@ -206,38 +206,79 @@ Hard rules that `scene_sim.js` enforces:
 * prop groups carry `userData.kind` so the scene can be inspected (and tested) without guessing
   from geometry.
 
-**The attached map kit — Payon and Morocc are drawn from the owner's designs.** The kit lives in
-`assets/kit/`: `ro-spritesheet.png` + `.json` (8 terrain tiles — grass_olive, grass_forest,
-dirt_path, riverbank_wall, cliff_rock, water_frame_0/1, bridge_planks — and 7 environment
-billboards — tree_ancient_large, tree_ancient_variant, tree_tall_cluster, tree_sapling,
-tree_bush_bright, rock_cliff_crag, river_stone_post), `ro-map-payon.json` (the Payon river
-crossing: 48x32 cells with corner heights, 250 water cells, 24 bridge cells, the bridge at
-25.5/16.5, 30 placed props), `ro-map-morocc.json` and `morocc-atlas.js` (the Morocc desert ruins
-design, and the attachment's own generator that paints its atlas in the page, copied verbatim).
+**The map kit is v2 — one painted RO-style atlas for all ten maps.** The kit lives in
+`assets/kit/`: `ro-spritesheet.png` + `.json` — a 2048×2048 sheet with **25 terrain tiles**
+(grass_olive/forest/geffen/jade/blossom, dirt_path, dirt_payon, riverbank_wall, cliff_rock,
+cliff_sand with the alias `cliff`, sand/sand_dark/sand_gold, limestone_pale, waste_nifl,
+rock_abyss, ruin_cobble, paddy_water, water_frame_0/1, water_dark_0/1, bridge_planks,
+bridge_red) and **34 environment billboards** (the v1 seven, three palms, two cacti, five desert
+ruins and a desert bone, plus the v2 additions: bamboo_grove, tree_cherry, tree_dark_gnarled,
+tree_dead, tower_geffen, house_prontera, house_ruin, torii_gate, bridge_red_arch, lantern_stone,
+shrine_stone, standing_stone, tombstone, stalagmite, crystal_cluster, pier_post) — plus
+`ro-map-payon.json` and `ro-map-morocc.json`, the two attached 48x32 level designs. The manifest
+is a **superset of every v1 name and of every name the retired Morocc generator painted**, so it
+is a drop-in; its `character.ro_adventurer` strip is v1's pixel for pixel (verified against the
+v1 sheet), which is what `KIT_PK` is measured from; and it carries a `suggest.KIT_PS` table that
+the game copies verbatim — `kit_sim.js` compares the two entry for entry. **The runtime desert
+generator is retired**: v1 painted Morocc's atlas in the page from `assets/kit/morocc-atlas.js`;
+v2 carries all of those names on the one sheet, so `'morocc'` is now only an alias and the file
+lives on in `Updates/retired-v1-kit/` as history. The art is original painted work researched
+against divine-pride map renders for palette and landmarks
+(`Updates/map-sprites-v2/RESEARCH.md`); nothing is traced or ripped from the RO client, and the
+pipeline that built it (`process_tiles.py`, `cut_props.py`, `derive_props.py`, `pack_atlas.py`)
+is in `Updates/map-sprites-v2/work/` with every processed asset individually, so repacking with
+additions is a five-minute job.
 
 * `KIT_MAP` says which arena map wears what. **All ten maps wear the kit** (v18): 3 → the
   attached **morocc** design, 4 → the **payon** recipe, and the other eight → `fieldPlan`
-  recipes - deterministic (seeded LCG) configs of ground tiles, cliff rings, roads, water
-  strips, decks and prop scatters, laid out in code from the same crops. A design dresses the
-  **ground** (its tiles painted into one 2048x2048 texture over the 90x90 field), its **water**
-  (merged row rectangles, animated by swapping the kit's two water frames) and its **props**
-  (billboards, sized and anchored from the manifest).
+  recipes - deterministic (seeded LCG) configs of ground tiles, cliff rings, roads, water strips,
+  ground bands, decks and prop scatters/fixed landmarks, laid out in code from the same crops. A
+  plan dresses the **ground** (its tiles painted into one 2048x2048 texture over the 90x90 field),
+  its **water** (merged row rectangles, animated by swapping the frame pair the recipe asks for -
+  the bright pair by default, `water_dark_0/1` for Abyss), its **deck** (`bridge_planks` by
+  default, `bridge_red` for Amatsu) and its **props** (billboards, sized and anchored from the
+  manifest).
+* **Every map has its own v2 identity, and it is a rule, not a preference.** Researched map by map
+  against divine-pride renders - one painted technique, ten moods - and pinned per map by
+  `kit_sim.js` (ground tile + cell tiles + landmark props, and no two maps may share a signature):
+
+  | # | map | the look |
+  |---|---|---|
+  | 0 | Prontera | olive meadow, warm dirt avenue, round green trees, one cottage far off-lane |
+  | 1 | Izlude | teal sea, **golden sand shore band**, palms at the waterline, a pier on three posts |
+  | 2 | Geffen | moody blue-grey-green plains, dark gnarled clumps, standing stones, the wizard tower in a far corner |
+  | 3 | Morocc | the attached desert-ruins design, cell for cell (its pixels are v2's now) |
+  | 4 | Payon | near-black forest, **red-brown mud trail**, bamboo groves on the banks, mossy boulders at the crossing |
+  | 5 | Comodo | golden beach, palms, dark cave-mouth crags behind the sand |
+  | 6 | Louyang | jade highland, **terraced paddy water off the lane**, bamboo, a stone shrine, lantern pairs |
+  | 7 | Amatsu | blossom fields, **red lacquer bridge** on the road, a torii on the approach, lantern pairs, the great red arch far off-lane |
+  | 8 | Niflheim | purple-grey waste, dead trees, graves, bones, one ruined house; no bright colour anywhere |
+  | 9 | Abyss | dark slate, pale limestone shore around a **deep dark lake**, stalagmites, crystals |
 * **Payon is laid out in code, not from the attached grid.** The owner rejected the attached
   payon layout (a huge diagonal lake with player-sized trees) and asked for RO's Payon Forest, so
   `payonPlan()` builds the field from the RO recipe out of the same kit tiles: a wide wandering
-  **dirt road** down the middle, a **creek** across it with a **plank bridge** on the road, tree
-  lines that **tower over the player** on both banks, saplings and bushes under them, and a rocky
-  mountain edge (Payon Forest is a mountainous forest). `ro-map-payon.json` stays in the repo as
-  the owner's design - it is just no longer the field. Morocc still uses its design cell for cell.
+  **mud road** (`dirt_payon`) down the middle, a **creek** across it with a **plank bridge** on the
+  road, tree lines that **tower over the player** on both banks, saplings, bushes and **bamboo
+  groves** under them, a stone post and a mossy boulder on each bank at the crossing, and a rocky
+  mountain edge. `ro-map-payon.json` stays in the repo as the owner's design - it is just no
+  longer the field. Morocc still uses its design cell for cell.
 * **Prop size is derived from the kit's own character, not guessed.** The kit ships an 80px
   character frame; this game's hero stands 2.9 units, so `KIT_PK = 2.9/80` and a prop is
-  `crop height x KIT_PK x KIT_PS[type]`. `KIT_PS` is the RO Payon proportions: big trees 3-4x the
-  hero, saplings ~1x, bushes knee height (~0.3-0.7x), crags boulder-sized, palms 2.7-4x, cacti and
-  ruins below the player. **Every prop type a field places must have a factor** - `kit_sim.js`
-  fails on one that does not, because the default (1.0) makes player-sized trees again.
-* Field recipes may borrow props across atlases (a prop carries its own `src`: morocc palms
-  on the Izlude beach, desert bones in Niflheim), and maps painting morocc ground borrow the
-  payon sheet's two water frames for their sea - it is one attached kit either way.
+  `crop height x KIT_PK x KIT_PS[type]`. `KIT_PS` is the art pass's tuned table - v2 crops are
+  taller and better proportioned than v1's, so the v1 factors were wrong for them: big trees
+  3.3-3.6x the hero, cherry 3.0x, palms 2.6-3.1x, dead/gnarled 2.5-2.7x, the Geffen tower 5.1x (a
+  far landmark), torii 2.3x, houses ~2x, bamboo ~1.9x, saplings ~1x, bushes/curbs knee height.
+  **Every prop type a field places must have a factor** - `kit_sim.js` fails on one that does
+  not, because the default (1.0) makes player-sized trees again - and it also fails if the game's
+  table drifts from the manifest's.
+* Recipes place props three ways: `trees` (the two tree lines), `scatter` (randomised; `side`
+  pins one side) and `fixed` (a landmark exactly where the brief says - a tower in a far corner,
+  a torii on the approach). `bands` paint a ground tile across a depth range and an x range: the
+  lane check is in the builder, so no band can ever be written into the run whatever a recipe
+  says, and neither the tree line nor the scatter lands inside one.
+* With one atlas there is nothing left to borrow between atlases: `'payon'`, `'morocc'` and
+  `'kit'` are aliases of one manifest object, so a crop is never made twice and the v1
+  cross-atlas `src` field is now a label, not a second download.
 * Cell types map to tiles exactly as the kit's own engine maps them: grass→grass_olive,
   grass_dark→grass_forest, dirt→dirt_path, cliff→cliff_rock, bank→riverbank_wall. Water is the
   animated pass, bridge cells are the deck mesh, Morocc's tiles keep their own names (sand,
@@ -246,27 +287,33 @@ design, and the attachment's own generator that paints its atlas in the page, co
 * The design is anchored on the point it is built around (Payon's bridge, Morocc's grid centre)
   and centred on the play band (`KIT_ZC`), one cell = `KIT_S` = 0.85 world units.
 * **Props never stand in the running lane** (`|x| < BX_`). Props a design puts there are moved to
-  the lane edge (their side and depth kept) - never dropped, so the design's prop count survives.
-  The one exception is a design asking for art the atlas does not carry: Payon asks for
-  `rock_boulder_mossy` and the sheet has no such billboard, so those 3 placements are **skipped and
-  reported, never substituted** (show the gap to the owner; do not invent art for it).
-* Nothing in the kit is drawn, traced, recoloured or substituted by this repo. The Morocc atlas is
-  painted by the attachment's own generator, verbatim, at load time.
+  the lane edge (their side and depth kept) - never dropped, so the design's prop count survives -
+  and the plan counts them as `nudged`, so the rule is visible in the plan instead of silent.
+  Billboards may overhang the lane *visually* (a torii's arch spans part of the road, as the tree
+  canopies always have); nothing is *placed* there. If a crop a design asks for is missing from
+  the atlas, the placement is **skipped and reported, never substituted** - v2 closed the last
+  such gap (`rock_boulder_mossy`, skipped and reported since kit-v14, now renders).
+* Nothing in the kit is drawn, traced, recoloured or substituted by this repo.
 * If the atlas cannot load, every map falls back to the v13 scenery (`buildKit` returns null and
   `buildDeco` continues). The kit must never be able to break the game.
-* `kit_sim.js` pins all of it: the Payon recipe (road, creek, bridge on the road, both banks
-  dressed, the creek out of the monster spawn band), Morocc's design cell for cell, the eight
-  field recipes (ground painted, lane clear, deterministic, water out of the spawn band, every
-  prop exists in the atlas it crops from), the RO scale table (trees ≥ 3x the hero, bushes knee
-  height), all ten maps building against a stubbed canvas/THREE, and the fallback.
+* `kit_sim.js` pins all of it (30 tests): the v2 manifest (25 tiles / 34 billboards, crops inside
+  the sheet, anchors at the feet, the 80px character strip), the drop-in superset and the retired
+  generator, `KIT_PS` equal to the manifest's table and covering every billboard, the alias
+  unification, the Payon recipe (mud road, creek, bridge on the road, bamboo on both banks,
+  boulders at the crossing, both tree lines, the creek out of the monster spawn band), Morocc's
+  design cell for cell off v2's crops, each map's identity and unique signature, the landmarks
+  (one each, off-lane, RO-scaled), the red deck and the lantern pairs, the dark water pair and
+  its animation, the paddies off-lane with nothing standing in them, water out of the spawn band
+  unless decked, the decks where the recipe says, the RO scale (trees ≥ 3x the hero, bushes knee
+  height, a crag boulder-*shaped*), all ten maps building against a stubbed canvas/THREE with
+  every crop shared between placements, and the dead-atlas fallback.
 
-**What RO Payon actually looks like** (researched for this build, and the reason Payon was rebuilt):
-a *mountainous bamboo forest* - Payon village is built on a mountain edge with steep cliffs over a
-river, and the forest fields are a dirt path cut through big dark trees. The reference screenshot
-(showed to the owner) has a **brown dirt/mud ground** with grass at the edges, a **tree trunk wider
-than the character** filling one side of the frame, small bright-green ferns at the tree bases, and
-the player tiny against it. That is the look `payonPlan()` is aiming at. The kit ships **no bamboo
-billboard** - if the owner wants the groves, that crop has to come from the kit, not be drawn.
+**What RO Payon actually looks like** (researched for kit-v15, and the look v2 finally has art
+for): a *mountainous bamboo forest* - Payon village is built on a mountain edge with steep cliffs
+over a river, and the forest fields are a dirt path cut through big dark trees: brown mud ground
+with grass at the edges, a trunk wider than the character, ferns at its base, the player tiny
+against it. `payonPlan()` lays that out; v2 ships the **bamboo groves and the mossy boulder** the
+v1 kit lacked - both were reported as gaps rather than drawn, and both now come from the sheet.
 
 **Equipment database and drops.** `GEAR[map][section]` is the catalogue - 10 maps × 4 sections
 (Novice / 1st job / 2nd job / high tier), each section carrying 2-3 weapon types plus body,
@@ -402,16 +449,18 @@ h=open('index.html').read()
 open('/tmp/pack_block.js','w').write(h[h.index('const PACK_BODY='):h.index('function ensureHero(')])
 PY
 node tools/tests/pack_sim.js          # -> "bodies in pack (19): ..."
-node tools/tests/class_change_sim.js  # -> "15 passed, 0 failed"
-node tools/tests/save_load_sim.js     # -> "9 passed, 0 failed"
-node tools/tests/economy_sim.js       # -> "12 passed, 0 failed"
+node tools/tests/class_change_sim.js  # -> "22 passed, 0 failed"
+node tools/tests/save_load_sim.js     # -> "10 passed, 0 failed"
+node tools/tests/economy_sim.js       # -> "21 passed, 0 failed"
 node tools/tests/stat_sim.js          # -> "7 passed, 0 failed"
 node tools/tests/card_sim.js          # -> "13 passed, 0 failed"
-node tools/tests/skill_sim.js         # -> "37 passed, 0 failed"
-node tools/tests/gear_sim.js          # -> "18 passed, 0 failed  (18 assertions groups)"
+node tools/tests/skill_sim.js         # -> "48 passed, 0 failed"
+node tools/tests/gear_sim.js          # -> "20 passed, 0 failed  (20 assertions groups)"
 node tools/tests/scene_sim.js         # -> "8 passed, 0 failed" (per-map scenery, water, clear lane)
-node tools/tests/kit_sim.js           # -> "15 passed, 0 failed" (payon recipe + RO scale, morocc design, builders, loader)
-node tools/tests/ui_sim.js            # -> "6 passed, 0 failed" 
+node tools/tests/kit_sim.js           # -> "30 passed, 0 failed" (v2 atlas + KIT_PS, payon recipe, morocc design, ten identities, builders, loader)
+node tools/tests/ui_sim.js            # -> "13 passed, 0 failed"
+node tools/tests/sprite_sim.js        # -> "10 passed, 0 failed" (mob/weapon Divine Pride mapping, fallbacks)
+node tools/tests/starter_sim.js       # -> "4 passed, 0 failed" (the gentle starter stages)
 ```
 
 Every suite pulls real code out of `index.html` by **string boundary**, so an edit that
@@ -1180,3 +1229,94 @@ assigned for feel rather than fidelity. While reworking that, two shipped bugs s
 * **Tests:** all 13 suites pass; the UI regression tests rolling rates, the hover title and checkbox defaults, and the skill regression pins default auto-cast behavior. Inline game JavaScript syntax and `git diff --check` pass.
 * **Branches / PR:** `arena/01a10466-prontera-grind`; updates existing PR #9: https://github.com/KzeR7/Prontera-Grind/pull/9
 * **Known limits / follow-ups:** the HUD rates reset at login or after starting a new adventure; the displayed Zeny rate is gross positive earnings over the recent window, not net profit after spending.
+
+### 2026-10-04 — `kit-v26 map-kit-v2 all-ten-maps`
+* **What changed for the player:**
+  * **Every map is now drawn from Map Kit v2**, the higher-fidelity RO-style art set that arrived in
+    `Updates/map-sprites-v2/` with a note for the implementing agent (that is this entry). The old
+    sheet carried 8 ground tiles and 7 trees; the new one carries **25 ground tiles and 34 props**,
+    painted in one style with ten different moods. Nothing about how the game plays changes - the
+    arena, the lane, the spawn band, mobs, drops and fights are untouched. What changes is what you
+    see when you travel.
+  * **Each map now looks like its own place**, researched against Ragnarok Online's fields:
+    Prontera a sunny meadow with a dirt avenue and a cottage in the distance; Izlude a teal sea
+    over a **golden sand shore**, palms at the waterline and its pier standing on posts; Geffen
+    moody blue-grey grass with dark gnarled trees, standing stones and **the wizard tower on the
+    horizon**; Comodo a golden beach with cave-mouth crags behind the sand; Louyang a jade highland
+    with **terraced rice paddies** beside the road, bamboo, a stone shrine and lantern pairs;
+    Amatsu a blossom field with a **red lacquer bridge** over its stream, a red torii gate on the
+    approach and the great red arch bridge far off; Niflheim a purple-grey waste of dead trees,
+    graves and one ruined house; the Abyss dark slate with a pale limestone shore around a **deep
+    dark-blue lake** full of stalagmites and crystals. Morocc keeps its attached desert design,
+    cell for cell, now painted from the sharper desert tiles.
+  * **Payon finally reads as RO's Payon Forest**: its road is the kit's dark red-brown mud trail
+    instead of the generic dirt tile, and both creek banks carry **bamboo groves** - the old kit
+    had no bamboo crop at all, which is why the groves were impossible until now - plus the mossy
+    boulders at the crossing the old atlas was missing.
+  * **The in-page desert-atlas generator is gone.** v1 painted Morocc's sand and ruins in the
+    browser at load; v2 ships every one of those names on the one sheet, so there is nothing left
+    to generate and one less thing that can fail. Morocc's layout is exactly as it was.
+  * If the new sheet cannot be downloaded, every map quietly falls back to the old procedural
+    scenery, exactly as before - the kit can never break the game.
+* **Files touched:** `index.html` (the kit layer: the v2 size table, the ten per-map recipes,
+  Payon's mud road/bamboo/boulders, ground bands, recipe-selectable water frames and deck tile,
+  one-atlas aliases, retired-generator removal, `BUILD`), `assets/kit/ro-spritesheet.png` and
+  `.json` (replaced by the v2 sheet and manifest), `assets/kit/morocc-atlas.js` moved to
+  `Updates/retired-v1-kit/morocc-atlas.js` and its `<script>` tag removed, `tools/tests/kit_sim.js`
+  (rewritten around v2: 20 pins moved to 30), `AGENTS.md` (the kit section of the map above, the
+  expected-output table, this entry).
+* **Art:** nothing was drawn, traced, recoloured or substituted by this implementation - the v2 art
+  is the delivered deliverable, copied verbatim into `assets/kit/`. `tools/montage.py` was not run;
+  `Sprite/`, the class pack and the class bodies are untouched. The manifest's own tuned size
+  table (`suggest.KIT_PS`) is now the game's `KIT_PS`, compared entry for entry by a test, and the
+  80px character strip the prop scale is measured from was checked **byte-identical to v1's**
+  (0 differing channel values), so `KIT_PK = 2.9/80` did not move.
+* **Tests:** all 13 suites green - pack (19 bodies), class_change 22, save_load 10, economy 21,
+  stat 7, card 13, skill 48, gear 20, scene 8, **kit 30** (was 20), ui 13, sprite 10, starter 4;
+  inline JS passes `node --check`. `kit_sim.js` moved its pins, not its rules: the
+  rock_boulder_mossy skipped-placement gap inverted (the crop exists now - Payon's field places
+  two boulders at the crossing and the three the attached payon design asks for would all render),
+  the size table is pinned against the manifest's own table, and the retired-generator test
+  replaces the old "the generator still paints these names" test. New tests pin each map's identity
+  and unique signature, the landmarks (one each, off-lane, RO-scaled), the red deck and lantern
+  pairs, the Abyss dark water pair and its animation, the Louyang paddies off-lane with nothing
+  standing in them, and the shared-crop cache. **Two real builder bugs were found and fixed while
+  writing them**: a ground band at a depth painted only its first matching x range (Louyang's
+  left-hand terraces were silently missing), and a tree's undergrowth could land in a band the
+  tree itself had skipped.
+* **Branches / PR:** `arena/01a10549-prontera-grind`; the pull-request link is recorded in the
+  delivery entry below.
+* **Known limits / follow-ups:**
+  * **The torii gate stands at the lane edge, not astride the road.** Scenery may never stand in
+    the running lane, so its anchor sits at the lane edge and only its painted arch overhangs the
+    road. If you want it centred over the road, that needs an explicit "a gate may span the lane"
+    exception in the lane rule - ask for it and it is a small, tested change.
+  * **`grass_jade` and `paddy_water` are the kit's two brightest tiles** (the jade highland and
+    RO's ripple-grid water). They look saturated in the atlas; in game the lighting and fog tone
+    them down. If they read too neon in play, the lever is the palette remap in the art pipeline
+    (`Updates/map-sprites-v2/work/process_tiles.py`), not a recolour in the game - house rule 1
+    covers the kit's pixels too.
+  * **The atlas is now the game's largest download** (2.8 MB, was 227 KB), fetched once and shared
+    by all ten maps; every crop is cached once, so switching maps re-cuts nothing.
+  * **`UPDATE-BOOTSTRAP.py` is a v7-era one-shot that would overwrite today's game with the v7
+    build if anyone ran it** - when its patches no longer apply (they have not applied since v8) it
+    restores `index.html` from an old commit and patches that. `READ-ME-FIRST.md` still tells a
+    fresh agent to run it. Both are stale and dangerous; they should be deleted or rewritten, and
+    this entry deliberately does not touch them.
+  * `Updates/map-sprites-v2/preview.html` still shows every prop at its shipped size next to the
+    hero, and is the quickest way to judge the art outside the game.
+
+### 2026-10-04 — `kit-v26 delivery`
+* **What changed for the player:** no additional game changes; published the verified v26 map-kit
+  update for review and merge.
+* **Files touched:** `AGENTS.md` only.
+* **Art:** none; no sheets added, removed or rebuilt by this entry, and `tools/montage.py` was not
+  run.
+* **Tests:** documentation-only follow-up; the 13-suite results are listed in the `kit-v26` update
+  entry immediately above, and were re-run green before the game push.
+* **Branches / PR:** `arena/01a10549-prontera-grind` — https://github.com/KzeR7/Prontera-Grind/pull/10
+* **Known limits / follow-ups:** merge the PR to deploy through the normal GitHub/Cloudflare route;
+  then a real playtest pass over all ten maps is the thing the tests cannot do - judge Payon's
+  bamboo and mud trail, Amatsu's red bridge and torii, the Abyss dark lake and Louyang's jade
+  paddies in the live preview, and flag anything that reads wrong so the art pipeline (not the
+  game) can be re-run.
