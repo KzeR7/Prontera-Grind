@@ -19,9 +19,21 @@ function Ctx() {
     arc: noop, ellipse: noop, fill: noop, stroke: noop, closePath: noop, rect: noop, clip: noop,
     rotate: noop, fillText: noop, strokeText: noop, setLineDash: noop, measureText: () => ({ width: 10 }),
     imageSmoothingEnabled: true, globalAlpha: 1,
-    drawImage: (img, sx, sy, sw, sh, dx, dy, dw, dh) => {
-      (global.__draw = global.__draw || []).push({ src: img && img.src, sx, sy, sw, sh, dx, dy, dw, dh });
+    drawImage: (...a) => {
+      const img = a[0];
+      const rec = { src: img && img.src, iw: img && img.width, ih: img && img.height, n: a.length === undefined ? 1 : a.length };
+      if (a.length >= 8) Object.assign(rec, { sx: a[1], sy: a[2], sw: a[3], sh: a[4], dx: a[5], dy: a[6], dw: a[7], dh: a[8] });
+      else Object.assign(rec, { dx: a[1], dy: a[2], dw: a[3], dh: a[4] });   // 3- or 5-arg form
+      (global.__draw = global.__draw || []).push(rec);
     },
+    translate: (x, y) => { (global.__calls = global.__calls || []).push(['translate', x, y]); },
+    scale: (x, y) => { (global.__calls = global.__calls || []).push(['scale', x, y]); },
+    rect: (x, y, w, h) => { (global.__calls = global.__calls || []).push(['rect', x, y, w, h]); },
+    fillRect: (x, y, w, h) => { (global.__calls = global.__calls || []).push(['fillRect', x, y, w, h]); },
+    strokeRect: (x, y, w, h) => { (global.__calls = global.__calls || []).push(['strokeRect', x, y, w, h]); },
+    arc: (x, y, r) => { (global.__calls = global.__calls || []).push(['arc', x, y, r]); },
+    moveTo: (x, y) => { (global.__calls = global.__calls || []).push(['moveTo', x, y]); },
+    lineTo: (x, y) => { (global.__calls = global.__calls || []).push(['lineTo', x, y]); },
     getImageData: () => {
       const data = new Uint8ClampedArray(64 * 64 * 4);
       for (let y = HEAD_PX.y0; y <= HEAD_PX.y1; y++) for (let x = HEAD_PX.x0; x <= HEAD_PX.x1; x++)
@@ -163,25 +175,33 @@ catch (e) { bootError = e; }
     assert.ok(heads.length >= 5, 'poses should be grouped by sheet row (got ' + heads.length + ' groups)');
   });
 
-  t('the head is actually PAINTED, from the right head cell', () => {
-    const cls = T.st.cls;
-    const frame = Math.min(T.st.sel.frame, 5);
-    const id = T.st.atk[cls][0][frame];
-    assert.ok(id != null, 'no pose on the selected frame');
-    const pose = T.poses(cls)[id];
-    const hs = T.headSpot(pose, 0, frame);
+  t('the head is painted from the VIEW\'s own atlas column, on the seat', () => {
+    const cls = T.st.cls, atlas = global.window.SPRITE_PACK.heads[T.st.sex === 'f' ? 'female' : 'male'];
+    // a hair row this boot has not built yet, so the tile is really built right now
+    T.st.hair = (T.st.hair + 1) % 19;
+    global.__draw.length = 0; global.__calls = [];
+    T.headTile(6);                                   // E: the game reads head column 6 for this view
+    const built = global.__draw.filter(c => c.src === atlas && c.sw === 64 && c.sh === 64);
+    assert.strictEqual(built.length, 1, 'a head tile must be built from exactly one atlas cell');
+    assert.strictEqual(built[0].sx, 6 * 64,
+      'NE/E/SE must use THEIR OWN head column (the game draws d*64), not the source view\'s');
+    assert.strictEqual(built[0].sy, T.st.hair * 64, 'the hair style row');
+    assert.ok(!(global.__calls || []).some(c => c[0] === 'scale' && c[1] < 0),
+      'the atlas already has the mirrored columns - flipping one is a different picture');
+    T.headTile(0);
+    const zero = global.__draw.filter(c => c.src === atlas && c.sw === 64 && c.sh === 64).pop();
+    assert.strictEqual(zero.sx, 0, 'view 0 must use head column 0');
+    // and the tile lands on the seat the preview and the game agree on
+    const fr = T.st.atk[cls][2].findIndex(x => x != null);
+    assert.ok(fr >= 0, 'view 2 has no pose to draw');
+    const pose = T.poses(cls)[T.st.atk[cls][2][fr]];
+    const hs = T.headSpot(pose, 6, fr);
     global.__draw.length = 0;
-    T.paint();
-    const headCalls = global.__draw.filter(c => c.sw === 64 && c.sh === 64 && c.dw === 64 && c.dh === 64);
-    assert.ok(headCalls.length > 0,
-      'no head was drawn at all (' + global.__draw.length + ' drawImage calls, none 64x64)');
-    const call = headCalls[0];
-    assert.strictEqual(call.src, global.window.SPRITE_PACK.heads[T.st.sex === 'f' ? 'female' : 'male'],
-      'the head must come from the head atlas for the chosen gender');
-    assert.strictEqual(call.sy, T.st.hair * 64, 'the hair style row');
-    assert.strictEqual(call.sx, 0, 'view 0 must use head column 0');
-    assert.strictEqual(call.dx, Math.round(hs[0] - 32), 'the head must land on the seat (x)');
-    assert.strictEqual(call.dy, Math.round(hs[1] - 48), 'the head must land on the seat (y)');
+    T.packedCell(pose, 6, fr, false);
+    const tile = global.__draw.find(c => c.iw === 64 && c.ih === 64 && c.sx === undefined &&
+      c.dx === Math.round(hs[0] - 32) && c.dy === Math.round(hs[1] - 48));
+    assert.ok(tile, 'the head tile must be drawn at the seat: want ' +
+      [Math.round(hs[0] - 32), Math.round(hs[1] - 48)]);
   });
 
   t('the head marker hugs the head instead of drawing a 64x64 square', () => {
@@ -192,36 +212,98 @@ catch (e) { bootError = e; }
     assert.ok(w < 64 && h < 64, 'the box is still the whole cell');
   });
 
-  t('the head sits where the sheet measures it, and a drag moves it exactly', () => {
-    const cls = T.st.cls, id = (T.st.atk[cls][0] || []).find(x => x != null);
-    assert.ok(id != null, 'no attack pose is filled for view 0');
-    const pose = T.poses(cls)[id];
-    const s = Math.min(1, 90 / pose.w, 88 / pose.h);
-    const w = Math.max(1, Math.round(pose.w * s)), h = Math.max(1, Math.round(pose.h * s));
-    const want = [Math.floor((96 - w) / 2) + pose.seat[0] * s, 90 - h + pose.seat[1] * s];
-    const got = T.headSpot(pose, 0, 0);
-    assert.ok(Math.abs(got[0] - want[0]) < 1e-6 && Math.abs(got[1] - want[1]) < 1e-6,
-      'measured seat: got ' + got + ' want ' + want);
-    T.setHead(0, 0, [3, -2]);
-    const moved = T.headSpot(pose, 0, 0);
-    assert.ok(Math.abs(moved[0] - (want[0] + 3)) < 1e-6 && Math.abs(moved[1] - (want[1] - 2)) < 1e-6,
-      'drag: got ' + moved + ' want ' + [want[0] + 3, want[1] - 2]);
-    assert.deepStrictEqual(T.headAdj(0, 0), [3, -2], 'the drag is not remembered');
+  t('the head sits on the GAME\'s own anchor, and a drag moves it exactly', () => {
+    const cls = T.st.cls;
+    const frame = T.st.atk[cls][0].findIndex(x => x != null);
+    assert.ok(frame >= 0, 'no attack pose is filled for view 0');
+    const pose = T.poses(cls)[T.st.atk[cls][0][frame]];
+    assert.ok(pose.anim != null, 'the pose must be labelled for this test to be meaningful');
+    const body = T.packBodyName();
+    const an = global.window.SPRITE_PACK.bodies[body].anchors[pose.anim][0][pose.frame];
+    assert.deepStrictEqual(T.baseSeat(pose, 0), an,
+      'the picker must seat the head with the pack anchor the game uses, got ' +
+      JSON.stringify(T.baseSeat(pose, 0)) + ' want ' + JSON.stringify(an));
+    T.setHead(0, frame, [3, -2]);
+    assert.deepStrictEqual(T.headSpot(pose, 0, frame), [an[0] + 3, an[1] - 2],
+      'the drag must move the seat by exactly what was dragged');
+    assert.deepStrictEqual(T.headAdj(0, frame), [3, -2], 'the drag is not remembered');
+  });
+
+  t('a mirrored view takes the pack\'s own mirrored anchor, and can be moved on its own', () => {
+    const cls = T.st.cls;
+    const fr = T.st.atk[cls][2].findIndex(x => x != null);      // view 6 (E) mirrors W
+    assert.ok(fr >= 0, 'view 2 has no pose');
+    const pose = T.poses(cls)[T.st.atk[cls][2][fr]];
+    const body = T.packBodyName();
+    const an6 = global.window.SPRITE_PACK.bodies[body].anchors[pose.anim][6][pose.frame];
+    assert.deepStrictEqual(T.baseSeat(pose, 6), an6,
+      'E must sit on the anchor the game uses for E, got ' + JSON.stringify(T.baseSeat(pose, 6)) +
+      ' want ' + JSON.stringify(an6));
+    assert.notStrictEqual(T.headTile(6), T.headTile(2), 'E must not draw W\'s head tile');
+    const a0 = T.baseSeat(pose, 6)[0], before = T.headAdj(2, fr);
+    T.setHead(6, fr, [10, 3]);
+    assert.deepStrictEqual(T.headAdj(6, fr), [10, 3], 'NE/E/SE must be seatable on their own');
+    assert.strictEqual(T.headSpot(pose, 6, fr)[0], a0 + 10,
+      'dragging +10 px right must move the head +10 px right, not left');
+    assert.deepStrictEqual(T.headAdj(2, fr), before, 'and must not disturb the view they mirror');
+    T.setHead(6, fr, [0, 0]);
+  });
+
+  t('dragging right moves the head right on every view, mirrored or not', () => {
+    const cls = T.st.cls;
+    [[0, 0], [1, 1], [3, 3], [5, 3], [6, 2], [7, 1]].forEach(([view, src]) => {
+      const fr = T.st.atk[cls][src].findIndex(x => x != null);
+      assert.ok(fr >= 0, 'view ' + src + ' has no pose');
+      const pose = T.poses(cls)[T.st.atk[cls][src][fr]];
+      T.setHead(view, fr, [0, 0]);
+      const a = T.headSpot(pose, view, fr);
+      T.setHead(view, fr, [10, -4]);
+      const b = T.headSpot(pose, view, fr);
+      assert.strictEqual(b[0] - a[0], 10, 'view ' + view + ': a +10 px drag must move the head right');
+      assert.strictEqual(b[1] - a[1], -4, 'view ' + view + ': the vertical drag must follow too');
+      T.setHead(view, fr, [0, 0]);
+    });
+  });
+
+  t('the blue marker is drawn in the same pixels as the head', () => {
+    const cls = T.st.cls;
+    const fr = T.st.atk[cls][0].findIndex(x => x != null);
+    const pose = T.poses(cls)[T.st.atk[cls][0][fr]];
+    const hs = T.headSpot(pose, 0, fr), box = T.headBox(0, fr);
+    assert.ok(box, 'the head box must be measurable');
+    T.st.sel = { dir: 0, frame: fr };
+    global.__draw.length = 0; global.__calls = [];
+    T.paint();
+    const w = box[2] - box[0] + 1, h = box[3] - box[1] + 1;
+    const shade = global.__calls.find(c => c[0] === 'fillRect' && c[3] === w && c[4] === h);
+    assert.ok(shade, 'the marker must shade exactly the head pixels');
+    assert.strictEqual(shade[1], Math.round(hs[0] - 32 + box[0]), 'the shade must sit on the drawn head (x)');
+    assert.strictEqual(shade[2], Math.round(hs[1] - 48 + box[1]), 'the shade must sit on the drawn head (y)');
+    const tile = global.__draw.find(c => c.iw === 64 && c.ih === 64 && c.sx === undefined &&
+      c.dx === Math.round(hs[0] - 32) && c.dy === Math.round(hs[1] - 48));
+    assert.ok(tile, 'the head tile must be drawn at the same seat');
+    const tr = global.__calls.findIndex(c => c[0] === 'translate' && c[1] === 15 && c[2] === 38);
+    assert.ok(tr >= 0 && global.__calls.indexOf(shade) > tr,
+      'the marker must be drawn inside the cell offset, not in sheet pixels');
   });
 
   t('the export carries the head in the game cell pixels, and the drags with it', () => {
-    const cls = T.st.cls, j = T.payload();
+    const cls = T.st.cls;
     const idx = T.st.atk[cls][0].findIndex(x => x != null);
     assert.ok(idx >= 0, 'view 0 has no pose to export');
+    const pose = T.poses(cls)[T.st.atk[cls][0][idx]];
+    T.setHead(0, idx, [3, -2]);                       // a manual nudge, so the export must carry it
+    const j = T.payload();
     const cell = j.attack[cls][0][idx];
     assert.ok(cell && cell.length === 7, 'the pose cell must be [x,y,w,h,headX,headY,headSource]');
-    const pose = T.poses(cls)[T.st.atk[cls][0][idx]];
-    const s = Math.min(1, 90 / pose.w, 88 / pose.h);
-    assert.strictEqual(cell[4], Math.round(pose.seat[0] * s + 3), 'headX');
-    assert.strictEqual(cell[5], Math.round(pose.seat[1] * s - 2), 'headY');
+    const hs = T.headSpot(pose, 0, idx);
+    assert.strictEqual(cell[4], Math.round(hs[0]), 'headX must be the game cell pixel');
+    assert.strictEqual(cell[5], Math.round(hs[1]), 'headY must be the game cell pixel');
+    assert.notStrictEqual(cell[4], Math.round(pose.seat[0] * Math.min(1, 90 / pose.w, 88 / pose.h)),
+      'the export must not drop the body offset (crop pixels) again');
     assert.strictEqual(cell[6], 'manual', 'a dragged head must be flagged manual');
     assert.strictEqual(j.version, 5, 'payload version');
-    assert.deepStrictEqual(j.headAdjust[cls + '|0|0'], [3, -2], 'headAdjust must carry the raw drag');
+    assert.deepStrictEqual(j.headAdjust[cls + '|0|' + idx], [3, -2], 'headAdjust must carry the raw drag');
     assert.deepStrictEqual([cell[0], cell[1], cell[2], cell[3]],
       [pose.x, pose.y, pose.w, pose.h], 'the pose itself must be untouched');
   });

@@ -1509,3 +1509,32 @@ assigned for feel rather than fidelity. While reworking that, two shipped bugs s
     the card stops saying "same as ..." and that is the tell.)
   * The head drag is per frame and per view; a frame set to "keep the previous" carries no head of its own.
   * Idle and walk remain the sheet's own layout picks, filled in by the build.
+
+### 2026-10-04 — `tool-v32 NE/E/SE get their own head art, and the drag follows the pointer` (no game change, no BUILD bump)
+* **The two things the owner reported: "NE, E,SE the heads are not mirrored" and "when i move it
+  around the movement seems to be inverted".** Both were real and both came from one wrong idea in the
+  picker: it treated NE/E/SE as "the neighbouring view, flipped". The head sheet is not missing those
+  views - it draws all eight, and the game reads them by the view's own column (`packTex` draws head
+  column `d*64`). The picker drew the *source* view's head, unflipped, on a mirrored body - so the E
+  card showed a left-facing head on a right-facing body; and it added the pointer's movement *before*
+  mirroring the result, so on those three views dragging right pushed the head left.
+* **What changed:** the head now comes from the *drawn* view's own atlas column; the seat comes from the
+  pack's own anchor for the drawn direction (`anchors[anim][dir][frame]`), the exact number the game
+  reads out; the plain fallback (a pose the pack does not carry) mirrors x when the body is mirrored;
+  and the hand-drag offset is applied *after* mirroring, so the head follows the pointer on every view.
+  NE/E/SE are still seatable on their own - the drag keys stay per view.
+* **Also found while verifying: the export was still dropping the body offset.** It wrote the
+  crop-measured seat + drag instead of the game cell - about 24 px up and left of what the preview
+  showed and what the game needs (the "head & your blue marker are way off" numbers). The payload keeps
+  its version-5 shape, but `headX/headY` are now the same cell pixels the preview draws.
+* **Note for the owner:** head drags made before this fix were measured against the wrong seat. After
+  reloading, press "reset head" on a frame (or drag it again) and the head sits where you put it.
+* **Files touched:** `tools/sprite_picker.html` (head tile, seat, drag, export), `tools/sprite_picker_data.js`
+  and `tools/sprite_picker_standalone.html` (both regenerated), `tools/tests/picker_sim.js`.
+* **Tests:** all 15 suites green (class change 22, save/load 10; economy 21, stat 7, card 13, skill 48,
+  gear 20; scene 8, kit 20, UI 13, sprite 10, starter 4; pack 19 bodies; weapon joints 7; picker **16**).
+  The picker checks now pin the head rules: the view's own atlas column and no flip, E seated on the
+  pack's own E anchor, a +10 px drag moving the head +10 px right on every view (mirrored included), the
+  marker shade landing on the drawn tile inside the cell offset, and the export being cell pixels, not
+  crop pixels. Inline JavaScript passes `node --check`; both picker builds boot ("ATTACK PICKER OK").
+* **Branches / PR:** `arena/01a1054b-prontera-grind` (PR #11).

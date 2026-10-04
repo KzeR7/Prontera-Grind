@@ -150,6 +150,15 @@ function dirWord(d){return SEE[DIRS[d]]||DIRS[d]}
 // The head atlases are keyed 'male'/'female'; the gender select holds 'm'/'f'.  Without this
 // mapping headReady['m'] was always undefined and no head was ever drawn.
 function sexKey(){return st.sex==='f'?'female':'male'}
+// which pack body this class draws from (same order the game's packBodyFor uses)
+function packBodyName(){
+  var n=st.cls.toLowerCase().replace(/[^a-z0-9]+/g,'_').replace(/^_+|_+$/g,'');
+  if(window.SPRITE_PACK&&window.SPRITE_PACK.bodies&&window.SPRITE_PACK.bodies[n])return n;
+  var LINE={Novice:'novice',Swordman:'swordman',Knight:'swordman','Lord Knight':'swordman',
+    Mage:'mage',Wizard:'mage','High Wizard':'mage',Archer:'archer',Hunter:'archer',Sniper:'archer',
+    Thief:'thief',Assassin:'assassin','Assassin Cross':'assassin_cross',Acolyte:'aco',
+    Priest:'aco','High Priest':'aco',Merchant:'blacksmith',Blacksmith:'blacksmith',Whitesmith:'whitesmith'};
+  return LINE[st.cls]||'thief'}
 var CAP=6, ZOOM=1.55, BODY=CELL.body||96;
 var LSK='pg_attack_picker_v1';          // localStorage key (old weapon fields are ignored on load)
 
@@ -166,9 +175,11 @@ function isMirrored(d){return !!(st.mirrorSide&&d>=5)}
 function editable(d){return !isMirrored(d)}
 // head seat: the owner drags the head in a picture, stored per class + view + attack frame.
 // Keyed on the DRAWN direction, so a mirrored view follows the view it mirrors.
+// Keyed per VIEW (not per drawn direction), so the mirrored views NE/E/SE can be seated on
+// their own without touching the view they mirror.
 function headAdjOf(cls,dir,fr){return st.head[cls+'|'+dir+'|'+fr]||[0,0]}
-function headAdj(dir,fr){return headAdjOf(st.cls,srcDir(dir),fr)}
-function setHead(dir,fr,v){var k=st.cls+'|'+srcDir(dir)+'|'+fr;
+function headAdj(dir,fr){return headAdjOf(st.cls,dir,fr)}
+function setHead(dir,fr,v){var k=st.cls+'|'+dir+'|'+fr;
   if(v[0]||v[1])st.head[k]=[v[0],v[1]];else delete st.head[k]}
 
 // ---------- images ----------
@@ -184,15 +195,27 @@ function poseOfId(cls,id){var d=D.classes[cls];return(id==null||!d)?null:d.poses
 
 // The head's own pixels, in cell coordinates: a box you can actually see, instead of a
 // 64x64 square that is mostly empty space.  Scanned once per sex+view+hair style.
-var headBoxCache={};
+// The head art for a view: the head atlas draws all 8 directions itself, NE/E/SE included,
+// and the game reads that same column (index.html: g.drawImage(head, d*64, ...)), so we read
+// it too.  Do NOT flip the source view's head instead - the sheet's mirrored columns are
+// separate art (measured: mean channel diff 3.4-6.6 against a pixel flip), and a left-facing
+// W head sitting on a right-facing E body is exactly what made NE/E/SE look wrong.
+function headTile(dir){
+  var key=sexKey()+'|'+dir+'|'+st.hair;
+  if(headTileCache[key])return headTileCache[key];
+  var c=document.createElement('canvas');c.width=64;c.height=64;
+  var g=c.getContext('2d');g.imageSmoothingEnabled=false;
+  g.drawImage(headImg[sexKey()],(dir|0)*64,st.hair*64,64,64,0,0,64,64);
+  headTileCache[key]=c;return c}
+var headBoxCache={},headTileCache={};
 function headBox(dir,fr){
-  var sq=srcDir(dir),key=sexKey()+'|'+sq+'|'+st.hair;
+  var key=sexKey()+'|'+dir+'|'+st.hair;
   if(headBoxCache[key]!==undefined)return headBoxCache[key];
   var out=null;
   try{
     var c=document.createElement('canvas');c.width=64;c.height=64;
     var g=c.getContext('2d');g.imageSmoothingEnabled=false;
-    g.drawImage(headImg[sexKey()],(sq|0)*64,st.hair*64,64,64,0,0,64,64);
+    g.drawImage(headTile(dir),0,0,64,64,0,0,64,64);
     var px=g.getImageData(0,0,64,64).data,x0=64,y0=64,x1=-1,y1=-1;
     for(var y=0;y<64;y++)for(var x=0;x<64;x++){if(px[(y*64+x)*4+3]>8){
       if(x<x0)x0=x;if(x>x1)x1=x;if(y<y0)y0=y;if(y>y1)y1=y}}
@@ -214,15 +237,29 @@ function markHead(g,pose,dir,fr,hs){
   g.moveTo(Math.round(hs[0])+.5,Math.round(hs[1])-9);g.lineTo(Math.round(hs[0])+.5,Math.round(hs[1])+9);g.stroke();
   g.restore()}
 
-// where the head pivot sits in the 96x96 cell: the measured seat, scaled the same way the pack
-// builder scales it, plus whatever the owner dragged.  This is the number the game needs.
+// Where the head pivot sits in the game's 96x96 cell.
+//
+// For a pose the game pack also carries, this is the pack's OWN anchor for the DRAWN
+// direction - the exact number the game seats the head with, NE/E/SE included (the pack
+// anchors those on its own mirrored art, so we read that out instead of mirroring the source
+// number ourselves; the pack rejects stub readings that are outliers for their direction, and
+// a raised fist had been mistaken for the neck here, which is why the head sat ~11 px off on
+// attack poses).
+// Anything else falls back to the measured seat, scaled and mirrored the way the pack does it.
+function baseSeat(pose,dir){
+  var PK=window.SPRITE_PACK, body=packBodyName(), drawn=srcDir(dir);
+  if(PK&&PK.bodies&&PK.bodies[body]&&pose.anim!=null&&pose.frame!=null&&pose.dir===drawn){
+    var rows=PK.bodies[body].anchors[pose.anim];
+    var an=rows&&rows[dir]&&rows[dir][pose.frame];       // the drawn view's own anchor (game math)
+    if(an)return an.slice()}
+  var s=Math.min(1,90/pose.w,88/pose.h),w=Math.max(1,Math.round(pose.w*s)),h=Math.max(1,Math.round(pose.h*s)),
+      x=Math.floor((BODY-w)/2)+pose.seat[0]*s;
+  if(isMirrored(dir))x=BODY-x;                           // a mirrored body takes a mirrored seat
+  return [x, CELL.feet-h+pose.seat[1]*s]}
 function headSpot(pose,dir,fr){
   if(!pose)return null;
-  var s=Math.min(1,90/pose.w,88/pose.h),w=Math.max(1,Math.round(pose.w*s)),h=Math.max(1,Math.round(pose.h*s)),
-      adj=headAdj(dir,fr),
-      ax=Math.floor((BODY-w)/2)+pose.seat[0]*s+adj[0], ay=CELL.feet-h+pose.seat[1]*s+adj[1];
-  if(isMirrored(dir))ax=BODY-ax;
-  return[ax,ay]}
+  var a=baseSeat(pose,dir), adj=headAdj(dir,fr);
+  return[a[0]+adj[0], a[1]+adj[1]]}
 function packedCell(pose,dir,fr,plain){
   var c=document.createElement('canvas');c.width=BODY;c.height=BODY;
   var g=c.getContext('2d');g.imageSmoothingEnabled=false;
@@ -235,7 +272,7 @@ function packedCell(pose,dir,fr,plain){
     c=m}
   var hs=headSpot(pose,dir,fr);
   if(!plain&&headReady[sexKey()]&&hs){g=c.getContext('2d');
-    g.drawImage(headImg[sexKey()],(srcDir(dir)|0)*64,st.hair*64,64,64,Math.round(hs[0]-32),Math.round(hs[1]-48),64,64)}
+    g.drawImage(headTile(dir),Math.round(hs[0]-32),Math.round(hs[1]-48))}
   return c}
 
 // ---------- the view preview ----------
@@ -249,13 +286,14 @@ function drawView(cv,dir){
     g.fillStyle='#3d465a';g.font='12px system-ui,Segoe UI,sans-serif';g.textAlign='center';
     g.fillText(sheetFail[st.cls]?'sheet did not load':(safe(st.cls)?'no pose — pick one':'loading sheet…'),CELL.w/2,CELL.h/2);
     g.textAlign='left';g.restore();return}
-  g.drawImage(packedCell(pose,dir,frame,false),CELL.padL,CELL.padT);
+  g.save();g.translate(CELL.padL,CELL.padT);        // everything below is in body-cell pixels
+  g.drawImage(packedCell(pose,dir,frame,false),0,0);
   var hs=headSpot(pose,dir,frame);
   if(hs&&st.sel.dir===dir)markHead(g,pose,dir,frame,hs);      // so you can see what you are moving
   g.strokeStyle='#2b3242';g.lineWidth=1;
   g.beginPath();g.moveTo(0,CELL.pivotY+.5);g.lineTo(CELL.w,CELL.pivotY+.5);g.stroke();
   g.beginPath();g.moveTo(CELL.pivotX+.5,0);g.lineTo(CELL.pivotX+.5,CELL.pivotY);g.stroke();
-  g.restore()}
+  g.restore();g.restore()}
 
 // ---------- views grid ----------
 var viewsEl=document.getElementById('views');
@@ -314,8 +352,7 @@ function redrawCard(dir){
 // Dragging anywhere in a picture seats that view's head - there is nothing else to drag, so
 // there is no small target to hit.  The ring in the picture is the spot that moves.
 function startDrag(ev,dir,cv){
-  if(!editable(dir))return;
-  if(ev.button!==undefined&&ev.button!==0)return;
+  if(ev.button!==undefined&&ev.button!==0)return;      // the head can be seated on ANY view
   var frame=(st.sel.dir===dir?st.sel.frame:0);
   if(poseOfId(st.cls,atk(st.cls)[srcDir(dir)][frame])==null)return;
   ev.preventDefault();
@@ -339,7 +376,7 @@ function renderPanel(){
   var head=document.createElement('h3');
   head.textContent='Attack · '+DIRS[dir]+' ('+dirWord(dir)+')'+(isMirrored(dir)?'  (mirrors '+DIRS[sd]+')':'')+' — frame '+(frame+1)+' of '+CAP;
   panelBody.appendChild(head);
-  if(editable(dir)){                                    // the head the owner can seat by hand
+  {                                                    // the head the owner can seat by hand
     var hv=headAdj(dir,frame),mvd=!!(hv[0]||hv[1]);
     var hrow=document.createElement('div');hrow.className='headrow';
     var hl=document.createElement('span');
@@ -353,6 +390,9 @@ function renderPanel(){
     var ha=document.createElement('button');ha.textContent='use this head on all 6 frames';
     ha.onclick=function(){var v=headAdj(dir,frame).slice();for(var f=0;f<CAP;f++)setHead(dir,f,v);save();paint()};
     hrow.appendChild(ha);
+    if(isMirrored(dir)){var mm=document.createElement('div');mm.className='hint';
+      mm.innerHTML='Its poses come from <b>'+DIRS[sd]+'</b> (mirrored) — pick them there. The head below is this view\'s own: move it and only '+DIRS[dir]+' changes.';
+      panelBody.appendChild(mm)}
     panelBody.appendChild(hrow)}
   if(!editable(dir)){var m=document.createElement('div');m.className='hint';
     m.textContent='This view reuses '+DIRS[sd]+' mirrored. Untick “mirror the art” in the header row to fill it separately, or just leave it — it follows '+DIRS[sd]+'.';
@@ -460,8 +500,8 @@ function dump(){
     for(var d=0;d<8;d++){var arr=st.atk[cls][d]||[];
       rows[d]=arr.map(function(id,i){if(id==null)return null;var p=D.classes[cls].poses[id];
         if(!p)return null;
-        var sc=Math.min(1,90/p.w,88/p.h),a=headAdjOf(cls,d,i);
-        return [p.x,p.y,p.w,p.h,Math.round(p.seat[0]*sc+a[0]),Math.round(p.seat[1]*sc+a[1]),
+        var a=headAdjOf(cls,d,i),hs=headSpot(p,d,i);     // the seat the preview draws = the seat the game wants
+        return [p.x,p.y,p.w,p.h,Math.round(hs[0]),Math.round(hs[1]),
                 (a[0]||a[1])?'manual':p.seat[2]]});
       if(arr.some(function(x){return x!=null}))any=true}
     if(any){out.attack[cls]=rows;n++}}
@@ -488,6 +528,7 @@ window.__pgDiag=function(){var n=0,tot=0,k;for(k in D.classes){tot++;if(sheetRea
 // Test hook: the harness in tools/tests/picker_sim.js drives the parts the owner touches
 // (the poses, the head seating, the export) without a browser.
 window.__pgTest={headSpot:headSpot,headAdj:headAdj,setHead:setHead,dirWord:dirWord,st:st,paint:paint,
+  headTile:headTile,baseSeat:baseSeat,packBodyName:packBodyName,packedCell:packedCell,
   poses:function(cls){return D.classes[cls].poses},poseOf:poseOfId,headBox:headBox,
   payload:function(){dump();var t=document.getElementById('out');return JSON.parse(t.value||'{}')}};
 function paint(){
