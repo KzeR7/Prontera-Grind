@@ -177,3 +177,44 @@ kills, max HP unchanged, DEF capped at 75%, and bosses can actually kill a geare
    drop cut is meant to protect rather than worsen.
 5. **Field drops stay exactly as shipped** (4.8% / 4.0% / 3.2%). The sheet's 5/5/3 was a +8% raise
    nobody asked for; the owner's instruction was to cut *boss* drops.
+
+---
+
+# Round 2 (2026-10-04, later)
+
+**Drop rates revised:** boss equipment 2.4% -> **1%** per pool item (one Legendary item per ~11
+boss kills; 4.6 today), boss card 0.08% -> **0.1%** (one per 1,000 boss kills). Ores unchanged at
+5% (boss) / 2% (minion) - correct, because refining is the long game and one +10 is still ~513
+waves. Field rolls also stay as shipped.
+
+**Why the sheet loses 52% of endgame DPS, and what "same DPS" would cost.** The flat-gear layer is
+a **x6.87 multiplier** on the whole character, so cutting it is expensive to undo. The weapon /3
+brings it to **x2.96**; the sheet's +30% give-back returns only **x1.26**, because affixes and cards
+share one *additive* percentage pool. Measured give-back scale vs endgame DPS (weapon /3, nothing
+else cut):
+
+| give-back scale | AM (Common -> Legendary) | CV | endgame DPS | vs today |
+|---|---|---|---|---|
+| x1.0 (no give-back) | 1 / 1.6 / 2.6 / 4 / 6.5 | 1 / 2 / 3 / 5 | 167,962 | x0.38 |
+| **x1.3 (your sheet)** | 1 / 2.1 / 3.4 / 5.2 / 8.5 | 1 / 2.6 / 3.9 / 6.5 | 211,174 | **x0.48** |
+| x2.0 | 2 / 3.2 / 5.2 / 8 / 13 | 2 / 4 / 6 / 10 | 332,651 | x0.76 |
+| **x2.53 (DPS-neutral)** | 2.53 / 4.05 / 6.57 / 10.11 / 16.43 | 2.53 / 5.06 / 7.59 / 12.64 | 437,867 | **x1.00** |
+
+**The catch: "same DPS" and "balanced layers" cannot both happen** - the layers multiply, so the
+layers that absorb the cut must be much bigger than the layer that was cut. Own multiplier per
+layer (from the waterfall):
+
+| layer | today | your sheet (x0.48) | neutral (x1.00) |
+|---|---|---|---|
+| gear flat value | **x6.87** | x2.96 | x2.96 |
+| refine +10 | x2.28 | x1.99 | x1.99 |
+| affixes | x2.63 | x3.28 | **x6.10** |
+| cards (9x ATK) | x1.22 | x1.25 | x1.40 |
+| **total** | **x62.8** | x30.3 | x62.8 |
+
+So the neutral setting does not balance anything - it moves dominance from flat gear to **affixes**.
+It also makes the loot lottery harsher (worst of 200 seeded sets = **26%** of the best, vs 40% on
+the sheet and 46% today) and leaves the endgame exactly as trivial as today (mobs die in 0.13 s),
+which was the problem the audit started from. **The sheet's own x1.3 setting is the one with the
+flattest layer profile (1.25 - 3.28).** A middle setting of x2.0 (= x0.76 DPS) is the compromise if
+the cut feels too deep.
