@@ -15,7 +15,7 @@ ${grab('const maxHp=()=>','const totalPts=')}
 ${grab('const KIT_MAP={','const KIT_TILE=')}
 ${grab('const STAGE_SCENES=[','function kitRect(d,gx0,gx1,gy){')}
 ${grab('let mobs=[],mob=null','function genGear(')}
-const gx=()=>1,addJob=()=>{},checkLevel=()=>{},qProg=()=>{},addFloat=()=>{},log=()=>{},save=()=>{},ui=()=>{};
+const gx=()=>1,addJob=()=>{},checkLevel=()=>{},qProg=()=>{},addFloat=()=>{},log=()=>{},save=()=>{},ui=()=>{},numTxt=n=>String(Math.round(n));
 const mkDrop=()=>null,genGear=()=>null;
 ${grab('function earnZeny(amount){','function collect(it){')}
 this.H={fresh,CLASSES,spawn,kill,atk,aspd,maxHp,def,mdef,starterStage,HPK,HPE,MAPS,AGGRO,PACK_GAP,PACK_MAX,PACK_JITTER,packSites,stageSpec,nearestPack,pl,

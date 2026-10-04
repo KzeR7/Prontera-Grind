@@ -315,6 +315,18 @@ with grass at the edges, a trunk wider than the character, ferns at its base, th
 against it. `payonPlan()` lays that out; v2 ships the **bamboo groves and the mossy boulder** the
 v1 kit lacked - both were reported as gaps rather than drawn, and both now come from the sheet.
 
+**Drop rarity is FIXED; the affixes are not (v34).** `dropTier(map, stage)` is a property of
+*where* an item falls, not of the roll: each map sits on a rarity band (`MAPTIER`, maps 1-2
+Common / 3-4 Fine / 5-6 Rare / 7-10 Epic), stages 8-9 walk that band one step up, no regular drop
+is ever Legendary, and **every Stage 10 boss drop is Legendary**. The map panel states the band
+on the drop lines, and `genGear()` only rolls the random half of the item - its **affixes**, its
+refine room and its value inside the band - so two drops of the same name still differ. LUK no
+longer nudges the rarity roll (there is no roll to nudge); it still lifts the drop *odds*.
+`gear_sim.js` pins the whole ladder. Selling is pocket money by the same rule: `sellVal()` runs
+~50z for a Common starter piece to ~1,825z for the best Legendary Abyss gear, so a bag dump
+never funds an upgrade. The bag itself holds `BAGMAX = 1000` items; at capacity loot is refused
+and stays on the ground (cards live in their own, uncapped bag).
+
 **Equipment database and drops.** `GEAR[map][section]` is the catalogue - 10 maps × 4 sections
 (Novice / 1st job / 2nd job / high tier), each section carrying 2-3 weapon types plus body,
 headgear, shield, legwear and two accessories (**96 weapon entries** in total; armour and
@@ -346,6 +358,15 @@ maxed a stat in **16 rolls / 334k Zeny**; the new one takes **40 rolls / 802k pe
 ~2.4M for all three pieces** (measured by Monte-Carlo over the real ladder, `economy_sim.js`
 pins it). It is the last optional sink, so it is meant to be the priciest thing a maxed player
 buys. **The 3-vs-40 split is correct and is not a bug**: 3 is the equip limit, 40 the collection cap.
+**Measured power (v34, `tools/tests/pet_sim.js`)**: a maxed G6 Legendary pet (Mythril 5/5/5,
+Spirit Bolt) deals **~2.2M per hit / ~3.4M DPS** against an endgame Lord Knight's ~377k auto-attack
+DPS - **9.0x the owner's plain swings, 0.45x a fully maxed skill rotation, and 1.34x that player
+with three pets on the field**; it alone kills an Abyss Stage-10 boss (658k HP) in ~0.2s. Even the
+weakest maxed pet (a Common Poring) is 1.4x the owner's auto-attacks. The multiplier is flat
+(`petDmg = atk x rarity x mutation x Claw`), so **the ratio is the same at every level and every
+gear tier** - a maxed pet carries a fresh character exactly as hard as a Lv150 one. The audit is
+printed by the suite; no pet number was changed in v34 - the owner has the measurement and the
+call.
 
 **Skills.** Two structural rules, both pinned by `skill_sim.js`:
 
@@ -479,13 +500,14 @@ node tools/tests/save_load_sim.js     # -> "10 passed, 0 failed"
 node tools/tests/economy_sim.js       # -> "21 passed, 0 failed"
 node tools/tests/stat_sim.js          # -> "7 passed, 0 failed"
 node tools/tests/card_sim.js          # -> "13 passed, 0 failed"
-node tools/tests/skill_sim.js         # -> "48 passed, 0 failed"
-node tools/tests/gear_sim.js          # -> "20 passed, 0 failed  (20 assertions groups)"
+node tools/tests/skill_sim.js         # -> "50 passed, 0 failed"
+node tools/tests/gear_sim.js          # -> "24 passed, 0 failed  (24 assertions groups)"
 node tools/tests/scene_sim.js         # -> "8 passed, 0 failed" (per-map scenery, water, clear lane)
 node tools/tests/kit_sim.js           # -> "34 passed, 0 failed" (v2 atlas + KIT_PS, payon recipe, morocc design, ten identities, builders, loader)
-node tools/tests/ui_sim.js            # -> "13 passed, 0 failed"
+node tools/tests/ui_sim.js            # -> "18 passed, 0 failed"
 node tools/tests/sprite_sim.js        # -> "11 passed, 0 failed" (mob/weapon Divine Pride mapping, fallbacks)
 node tools/tests/starter_sim.js       # -> "7 passed, 0 failed" (the gentle starter stages)
+node tools/tests/pet_sim.js           # -> "11 passed, 0 failed" (+ the printed pet data, buff rules and the maxed-pet balance measurement)
 ```
 
 Every suite pulls real code out of `index.html` by **string boundary**, so an edit that
@@ -1600,3 +1622,211 @@ assigned for feel rather than fidelity. While reworking that, two shipped bugs s
   their real IDs and check both rendering paths and size. The Divine Pride CDN was
   unreachable from this sandbox, so live image availability and appearance still
   need visual confirmation in the browser preview.
+
+### 2026-10-04 — `ui-v34 affix-rarity bag-popup damage-short pet-audit`
+
+* **What changed for the player:** the owner's seven-item list, in order.
+  * **Combat numbers are shorter.** Floating damage reads `100K` instead of `100,000` and `1M`
+    instead of `1,000,000`; normal, critical and incoming damage all use the same rule. A new
+    **Settings → Damage numbers** row switches between `Short · 100K / 1M` (the default) and
+    `Full · 100,000`, and the choice is saved with the account.
+  * **Stage buttons lost their job-tier label.** The small "novice / 1st job / 2nd job / boss"
+    text under Stage 1-10 is gone, and the stage header no longer says "— 1st-job gear". The
+    drop tables and item cards still name their gear section, as the owner asked.
+  * **Clicking an equipment slot now pops the bag out over the panel.** The whole bag renders as
+    the familiar tile grid: everything that fits that slot is ringed green and equips on click,
+    everything that cannot go there is greyed out and inert, and the tiles keep their hover
+    tooltips. The card under the paper doll (worn item, refine, card slots, Unequip) is unchanged.
+  * **Gear rarity is fixed by where it drops; only the affixes roll.** One glance at a map tells
+    you the band: maps 1-2 Common, 3-4 Fine, 5-6 Rare, 7-10 Epic; stages 8-9 step one band up; no
+    regular drop is ever Legendary, and **every Stage 10 boss drop is Legendary** - so Abyss Dark
+    Lord gear from the boss is all Legendary with random affixes. The map panel prints the band
+    on every drop line ("Common", "Rare"...) and item tooltips now label their random stats
+    "Affixes (n random)". Luck no longer nudges the rarity roll (there is no roll left to nudge);
+    it still lifts the drop odds.
+  * **The bag holds 1000 items** (`n/1000` in the panel). At capacity, loot is refused, reported
+    and left on the ground instead of quietly growing the save; cards live in their own bag and
+    are not capped. **Selling is pocket money now**: roughly 50z for a Common starter piece and
+    under 2,000z even for the best Legendary Abyss gear, so a bag dump never funds an upgrade.
+  * **Auto cast moved to where the skill is explained.** The checkbox is no longer on the skill
+    tile; it sits in the skill description card below the grid ("Auto cast this skill", with a
+    line saying whether it is live or paused).
+* **Pet audit (the owner asked for the data and whether a maxed pet is overpowered).**
+  `tools/tests/pet_sim.js` prints the whole set and measures it. Roster: 8 pets, two per rarity -
+  Common Poring/Lunatic (x.2 damage), Rare Wolf/Desert Wolf (x.32), Epic Peco Peco/Dragon Whelp
+  (x.55), Legendary Baphomet Jr./Angeling (x1). Mutation grades G1-G6 = x2/4/6/8/20/40, rolled at
+  2,500-10,000z. Three training pieces, five tiers (Wooden -> Mythril) at 40/25/15/9/5% success,
+  5% double-ups, 1,200-30,000z per roll: Claw +12%/tier damage, Collar +8%/tier speed, Charm
+  +6%/tier crit (x2). Six equally weighted skills: War Cry and Arcane Blessing (+20% ATK/MATK for
+  8s, 26s cooldown), Flame Burst and Thunderclap (1.6x / 1.4x pet damage to everything within 4
+  units, 14s/12s), Piercing Fang and Spirit Bolt (2.2x / 2.5x single target, 10s/11s).
+  **Measured:** a maxed G6 Legendary pet with Mythril 5/5/5 deals ~2.2M per hit and ~3.4M DPS
+  against an endgame Lord Knight's ~377k auto-attack DPS - **9.0x the owner's plain swings, 0.45x
+  a fully maxed skill rotation, 1.34x that player with three pets out**; one pet alone kills an
+  Abyss Stage-10 boss (658k HP) in ~0.2s, and even the weakest maxed pet (Poring) is 1.4x the
+  player's auto-attacks. Because `petDmg` is a flat multiplier on `atk()`, that ratio is the same
+  at level 1 and level 150 - a maxed pet carries a fresh character exactly as hard as a maxed
+  one. **Verdict: yes, pets are overpowered as a sidekick; no pet number was changed in v34** -
+  the measurement is the deliverable and the retune is the owner's call (the levers are the
+  rarity factors, `MUT`, and Claw's +12%/tier).
+* **Files touched:** `index.html` (damage formatting + Settings row, `BAGMAX`, `MAPTIER`/
+  `dropTier`, `genGear` rarity, `fieldOf`/`dropTxt` band display, `collect` cap, `sellVal`, the
+  bag pop-out (`equipChooser` + CSS), skills panel, map panel labels, `itemMain` affixes, `BUILD`),
+  `tools/tests/ui_sim.js` (13 -> 18), `tools/tests/gear_sim.js` (20 -> 23), new
+  `tools/tests/pet_sim.js` (8), `READ-ME-FIRST.md` (suite list + pet suite), `AGENTS.md` (the
+  fixed-rarity block, the measured-pet numbers, the suite table, this entry).
+* **Art:** none. No sheet, atlas or pixel was drawn, traced, recoloured or substituted;
+  `Sprite/`, the class pack and `assets/kit/` are untouched and `tools/montage.py` was not run.
+* **Tests:** **all 14 suites green** - pack (19 bodies), class_change 22, save_load 10, economy 21,
+  stat 7, card 13, skill 49, gear **23**, scene 8, kit 34, ui **18**, sprite 12, starter 7,
+  **pet 8**; inline game JS passes `node --check`, `git diff --check` is clean. New coverage: the
+  full rarity ladder per map and stage plus "a Legendary field never rolls lower and the affixes
+  still differ between two drops", the 50z-2,000z sell window, the 1000-item cap executing the
+  real `collect()` (with cards explicitly uncapped), the damage short-form ladder and the full
+  switch, the bag pop-out (fitting tiles ringed/clickable, others greyed and inert, no inline
+  list left), the stage buttons carrying no job text, and the pet roster/ladder/skill table with
+  the maxed-pet measurement printed by the suite.
+* **Branches / PR:** `arena/01a10643-prontera-grind` - https://github.com/KzeR7/Prontera-Grind/pull/14
+* **Known limits / follow-ups:**
+  * **The pet balance question is answered but not acted on** - see the audit above. If the owner
+    wants pets pulled back, the cheapest lever that keeps the feel is Claw's +12%/tier and the
+    Legendary x1 factor (both are single numbers in `PET_SKILLS`/`petDmg`), then re-run `pet_sim.js`.
+  * Rarity being fixed means a field's drops are worth the same band every time, so a Common-band
+    map can no longer "get lucky" with an Epic piece. That is the requested behaviour; the
+    compensating knob if it ever feels flat is the item `val` spread inside the band (`rnd(.9,1.12)`).
+  * The map panel's drop lines are longer by one word per line; on a very narrow phone the
+    monster card wraps a little more. Judged acceptable, but worth an eyeball in the preview.
+  * Old saves keep the names and rarities of items they already own; the new ladder applies to
+    drops from now on. `sellVal()` reprices every item, old ones included.
+  * The bag cap is enforced at pickup only: equipping/unequipping swaps items in place, so the
+    count cannot exceed `BAGMAX` through normal play, but a save that somehow arrives over the cap
+    is not truncated (nothing is deleted behind the owner's back).
+
+### 2026-10-04 — `ui-v35 bag-highlight subtab-reset map-levels luk-drops autocast` **(checkpoint — pet rework still to come)**
+
+* **What changed for the player:** five of the owner's six follow-up notes, delivered while the
+  pet rework is agreed.
+  * **The map cards show their level range again.** Each card under a map's name printed the word
+    "farming" after v26; it now prints the recommended range (`Lv 1-12`, `Lv 90-99`) again, with a
+    `●` in front of the map you are standing on.
+  * **Reopening a window starts at its first sub-tab.** Status → Equipment used to stay on the
+    Equipment sub-tab after the window was closed and reopened; it now opens on **Stats** every
+    time (and Inventory opens on **Bag**).
+  * **Choosing a slot highlights the real Bag tab instead of popping a list.** Clicking an
+    equipment slot on the paper doll now switches to the actual Bag window, with every item that
+    fits that slot ringed green and wired to equip on a click and a banner naming the slot, what
+    is worn now and the (+N) deltas. Nothing else in the bag is greyed or disabled, so inspecting,
+    selling, tooltips, refine and card work all keep behaving normally, and the equipment panel
+    keeps the worn item's card under the doll. The separate pop-out window and its CSS are gone.
+  * **LUK no longer bends the drop tables.** Drop odds are the field's own numbers again: gear,
+    card, ore and pet rolls all use their printed percentages with nothing scaling them. LUK still
+    does its real job on the character sheet (crit and the DEX/LUK side of attack).
+  * **The Auto cast control moved to the top of the skill description card and got bigger** - a
+    14px bold label with a 19px checkbox in its own highlighted row, above the effect text instead
+    of below it.
+* **Files touched (so far):** `index.html` (`BUILD` v35, the map-card label, `openTab`'s sub-tab
+  reset, `ACT.seleq`/`V.bag0`/`equipChooser`/`V.equip`, the kill-loop drop rolls, the skill detail
+  card + its CSS), `tools/tests/ui_sim.js` (the equip test now pins the Bag-tab highlight model
+  and the map-card level ranges), `tools/tests/gear_sim.js` (drop-loop markers + a new LUK pin),
+  `AGENTS.md`.
+* **Art:** none; `Sprite/`, the class pack, `assets/kit/` and `tools/montage.py` untouched.
+* **Tests:** all 14 suites green at this checkpoint - pack (19 bodies), class_change 22, save_load
+  10, economy 21, stat 7, card 13, skill 49, gear **24**, scene 8, kit 34, ui 18, sprite 12,
+  starter 7, pet 8; inline game JS passes `node --check`; `git diff --check` clean. New pins: no
+  map card may say "farming" and every card carries a level range; a slot click opens the Bag tab
+  and resets the sub-tabs on reopen; the bag rings the fitting sword and leaves the rest of the
+  bag as ordinary tiles; LUK 0 vs 99 must land the same three gear rolls and the same card gate.
+* **Branches / PR:** `arena/01a10643-prontera-grind` (the same branch as the v34 entry above, PR
+  https://github.com/KzeR7/Prontera-Grind/pull/14).
+* **Known limits / follow-ups:** the pet rework (one maxed pet = one maxed character, two skill
+  slots per pet, 7s skill spacing, non-stacking ATK/MATK buffs, two new buffs) is **not in this
+  checkpoint** - the build tag already says `pet-rework` for the commit that follows.
+
+### 2026-10-04 — `ui-v35 pet-rework bag-highlight dmg-toggles map-rarity` (follow-up round 2)
+
+* **What changed for the player:** the seven notes from the second follow-up round.
+  * **Damage numbers are switchable twice over.** Settings carries a **Show: On / Off** pair that
+    hides every floating combat number outright, and next to it the existing **Short (100K / 1M) /
+    Full (100,000)** style picker. Defaults are On + Short, both survive a save/load, and old saves
+    are repaired to that default. Zeny reward floats follow the same short/full style; `Miss` and
+    the floating skill names are never hidden.
+  * **The map cards print their level range again.** v26 had replaced the range under a map name
+    with the word "farming"; every card now shows `● Lv 1-12` / `Lv 10-24` ... `Lv 90-99` again,
+    with the dot marking the map you are standing on.
+  * **Reopening a window starts at its first sub-tab.** Status → Equipment used to stick after the
+    window was closed and reopened; `openTab` now resets Status to **Stats** and Inventory to
+    **Bag** every time it opens.
+  * **Choosing a slot highlights the REAL Bag window.** The separate pop-out window is gone: an
+    equipment slot click opens the actual Bag tab (evicted by the usual 3-window rule if needed)
+    with a banner naming the slot, what is worn and how many bag items fit, every fitting item
+    ringed green with a ✓ badge and wired to equip on click. Everything else in the bag stays an
+    ordinary tile - inspecting, selling, tooltips, refine and cards all keep working - and the
+    equipment panel keeps the worn item's card (stats, refine, card slots, Unequip) under the doll.
+  * **LUK is out of the drop tables.** `lk` is gone from the kill loop: gear, card, ore and pet
+    odds are the field's own printed percentages again, whatever the character's LUK. LUK still
+    feeds ATK (crit and the DEX/LUK stat term) - that is what it is for.
+  * **The Auto cast control sits at the TOP of the skill description card and is bigger:** its own
+    bordered row with a 14px bold label and a 19px checkbox, above the effect text.
+  * **Fixed drop rarity is now MAP-driven.** Rarity comes from the map alone (`MAPTIER`), at every
+    stage it has, so a Prontera or Izlude field can never drop Rare or Epic; **only a Stage 10
+    boss is Legendary** (on any map), and stages 1-9 never are. The 8-9 step-up is gone, which is
+    what the owner was still seeing on low maps. Affixes, refine room and value inside the band
+    still roll.
+  * **The pet rework** (see the block below): two skill slots, eight gacha skills, one 7s skill
+    gap, 30s/60s buffs that never stack with ATK/MATK mutually exclusive, a life-leech and a
+    max-HP buff, and a full damage retune so one maxed pet equals one maxed character.
+* **The pet model, as shipped:** every pet has TWO skill slots; one 🎲 gacha (`petSkillCost`) fills
+  both with two *distinct* skills out of eight equally weighted ones (4 player buffs, 2 AoE, 2
+  single-target). A pet may use one skill per **PETGAP** (7s) on top of that skill's own cooldown,
+  so two attack skills alternate at most every 7s. Attack skills always beat buffs and the
+  strongest ready attack goes first; if every ready skill is a blocked buff the pet says why (once
+  per 12s per pet) and swings normally instead. Buff rules: **a buff never stacks** - while one
+  copy runs, another pet's cast is ignored, not refreshed - and **ATK and MATK can never run at the
+  same time**. All four buffs last **30s on a 60s cooldown**. The new two are **Blood Siphon** (5%
+  of the pet's damage heals you) and **Vital Aura** (+20% max HP; the bar is clamped back down when
+  it lapses). The HUD draws one chip per active buff with the pet's name and the countdown, and the
+  Pets panel spells the rules out. Old saves migrate `p.skill` into slot 1 and reroll to fill both.
+* **The pet rebalance (this is the owner's requested target, and it is ASSERTED):** `PETBAL` is the
+  single knob. At **2.18** a fully maxed pet (G6 mutation, all three pieces at Mythril 5/5, two
+  attack skills) measures **7,610,598 DPS against a maxed character's 7,613,119 DPS rotation =
+  1.000x**. Measured side by side on an endgame Lord Knight (ATK 33,987, 4.18 swings/s, 60% crit at
+  x3.75): player auto-attack 377,171 DPS, whole maxed rotation 7,613,119 DPS; maxed pets ->
+  Poring/Lunatic 1,156,605 (0.15x), Wolf/Desert Wolf 2,007,779 (0.26x), Peco Peco/Dragon Whelp
+  3,778,976 (0.50x), Baphomet Jr./Angeling 7,610,598 (1.00x). Three pets at the top = 22.8M DPS.
+  A maxed pet hits for 4,741,866 and one alone deletes the 658,173 HP Abyss Stage-10 boss in 0.09s.
+  The stepped simulation (120s of the real `petHit()` with crits pinned off) tracks the analytic
+  model the balance number is computed from to within 0.3%.
+* **Files touched:** `index.html` (`BUILD` v35; the Settings show/format pairs; `numTxt` +
+  `damageFloat` gating; the map-card level ranges; `openTab`'s sub-tab reset; `ACT.seleq`/`V.bag0`/
+  `equipChooser`; the kill loop's LUK term; `dropTier`/`MAPTIER` comments; the skill detail card +
+  its CSS; `petBuff`/`petBuffSrc`/`petNote`, `PETGAP`/`PETBAL`, the 8-skill table, `petSkills`/
+  `petBuffWhy`/`petLeech`/`petHit`, `clearPetCd`, `rollPetSkills`, `maxHp`, the buff countdown, the
+  load migration, `petDetail`, the `pskill` action, the HUD buff strip + CSS),
+  `tools/tests/pet_sim.js` (rewritten: 8 skills, the buff rules, the two measurements, 11 pins),
+  `tools/tests/skill_sim.js` (two-slot gacha + combat rules, 50 pins), `tools/tests/ui_sim.js`
+  (the slot-click model, both damage toggles, the pet panel, the bars() fixture),
+  `tools/tests/gear_sim.js` (map-driven rarity), `tools/tests/save_load_sim.js` (two slots +
+  migration), `tools/tests/starter_sim.js` (`numTxt` stub), `AGENTS.md`, `READ-ME-FIRST.md`.
+* **Art:** none; `Sprite/`, the class pack, `assets/kit/` and `tools/montage.py` untouched.
+* **Tests:** all 14 suites green - pack (19 bodies), class_change 22, save_load 10, economy 21,
+  stat 7, card 13, skill **50**, gear **24**, scene 8, kit 34, ui 18, sprite 12, starter 7,
+  **pet 11**; inline game JS passes `node --check`; `git diff --check` clean. New pins: no map card
+  may say "farming" and every card carries a level range; a slot click opens the Bag tab and a
+  reopen resets the sub-tabs; the bag rings the fitting sword and leaves the rest ordinary; LUK 0
+  and 99 must land the same three gear rolls and the same card gate; both damage toggles render,
+  persist and reach `damageFloat`/`numTxt`; rarity is one band per map for stages 1-9 with bosses
+  Legendary; the pet gacha fills two distinct slots and reaches all eight skills; buff no-stacking
+  and ATK/MATK exclusivity are enforced *and logged*; the 7s gate holds; attack-first priority
+  alternates two attack skills; leech heals exactly 5% and the max-HP cap returns on expiry; and
+  **the balance target itself** (maxed pet within 12% of the maxed rotation).
+* **Branches / PR:** `arena/01a10643-prontera-grind`, PR
+  https://github.com/KzeR7/Prontera-Grind/pull/14 (the same PR as v34/v35).
+* **Known limits / follow-ups:** (1) the balance target now makes THREE pets worth three characters
+  - that is what "1 max pet = 1 maxed character" implies, so if pets should instead be sidekicks,
+  lower `PETBAL` (0.5 = half a character each) and rerun `pet_sim.js`; (2) a gacha can hand a pet
+  two buffs and no attack skill (21% of pairs) - deliberate, since support builds are real, but a
+  "always at least one attack" guarantee is a one-line change if the owner wants it; (3) the 7s gap
+  plus 10-14s attack cooldowns means a pet casts about once per 7s, not twice; (4) the damage
+  `Show: Off` switch hides damage floats only - Miss and skill-name labels still appear; (5) the
+  `pet-sim` balance pins are tied to the Lord Knight endgame fixture, so a class whose maxed
+  rotation differs from 7.61M will show a different pet-vs-character ratio.

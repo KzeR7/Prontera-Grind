@@ -36,6 +36,9 @@ html, body { margin:0; padding:0; width:100vw; height:100vh; overflow:hidden; ba
 #prog{position:absolute;left:12px;top:12px;background:#0008;color:#fff;font:bold 13px "Trebuchet MS",sans-serif;padding:6px 12px;border-radius:4px;border:1px solid #ffffff44;display:flex;align-items:center;gap:10px}
 #hint{position:absolute;left:12px;top:52px;color:#fff;font:11px "Trebuchet MS",sans-serif;opacity:.8;text-shadow:0 0 3px #000}
 #hud{display:flex;flex-wrap:wrap;gap:10px 22px;padding:9px 16px;font-size:13px;align-items:center;background:linear-gradient(180deg,#fff9e9,#f4e5c4);border-top:1px solid var(--edge);z-index:10;box-shadow:0 -4px 14px #241b1730}
+#hudBuffs{display:none;flex-wrap:wrap;gap:6px;flex-basis:100%}
+.pbf{font-size:11px;background:#ffe9a8;border:1px solid var(--edge2);border-radius:10px;padding:1px 8px}
+.pbf i{font-style:normal;opacity:.75}
 .bar{width:148px;height:14px;background:#3b302b;border:1px solid #574637;border-radius:999px;overflow:hidden;position:relative;box-shadow:inset 0 2px 4px #1e1617aa,0 1px 0 #fff9}
 .bar i{display:block;height:100%;border-radius:inherit;transition:width .3s ease,background .3s ease}
 .hud-health{display:flex;align-items:center;gap:7px;white-space:nowrap}.hud-health small{font-weight:bold;min-width:34px;text-align:right}
@@ -150,6 +153,17 @@ hr{border:0;border-top:1px dashed var(--edge);margin:6px 0}
 .chooser>.hd button.x{margin-left:auto;padding:0 7px}
 .chooser .slot{background:#fff7dd}
 .chooser .slot .cell{cursor:default}
+/* Choosing a slot does not open a second window: it highlights the fitting tiles in the real Bag
+   window (see V.bag0 / ACT.seleq), ringed green and clickable. */
+.row button.on{background:#ffe08a;border-color:var(--gold)}
+.cell.fit{outline:3px solid #2e9e3e;box-shadow:0 0 9px #2e9e3e99;cursor:pointer}
+.cell.fit::after{content:'\2713';position:absolute;top:-6px;right:-6px;background:#2e9e3e;color:#fff;font-size:9px;line-height:1;padding:1px 3px;border-radius:6px}
+/* The auto-cast control sits at the top of a skill's description card, large enough to hit. */
+.sk-detail-head{display:flex;align-items:baseline;gap:6px;flex-wrap:wrap}
+.sk-detail-autocast{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:7px 0;padding:7px 10px;border:2px solid var(--edge2);border-radius:9px;background:#fff7dd}
+.sk-detail-autocast .sk-autocast{font-size:14px;font-weight:700;gap:7px;color:#3b2a1a;min-height:20px}
+.sk-detail-autocast .sk-autocast input{width:19px;height:19px;accent-color:#2f6fd6}
+.sk-detail-autocast small{font-size:11px}
 .roll-status{height:30px;min-height:30px;width:100%;display:flex;align-items:center;justify-content:center;overflow:hidden}.roll-status span{display:block;width:150px;text-align:center;font-variant-numeric:tabular-nums;white-space:nowrap}
 </style>
 </head>
@@ -169,7 +183,7 @@ hr{border:0;border-top:1px dashed var(--edge);margin:6px 0}
 <div id="hud"><div><b id="cls2"></b> Base Lv <b id="lv">1</b> / Job Lv <b id="jl">1</b></div>
 <div class="hud-health">HP <div class="bar" role="meter" aria-label="HP" aria-valuemin="0" aria-valuemax="100" id="hpMeter"><i id="hpb"></i></div><small id="hpPct">100%</small></div>
 <div class="hud-zeny" id="zenyHover" tabindex="0" aria-describedby="zenyRate">&#9679; <b id="zeny">0</b> Zeny<span class="hud-flyout" id="zenyRate" role="tooltip">Zeny earned: 0/min</span></div>
-<div>Kills/min <b id="kills" title="Recent kills per minute (last 60 seconds, refreshed each second)">0.0</b></div><div style="margin-left:auto;display:flex;align-items:center;gap:8px"><span id="userBadge" style="font-weight:bold;font-size:12px;background:#e9d39a;padding:3px 8px;border-radius:4px;border:1px solid var(--edge2)"></span><button id="logoutBtn" onclick="logout()" style="display:none">Logout</button><button id="spd">Speed x1</button></div></div>
+<div>Kills/min <b id="kills" title="Recent kills per minute (last 60 seconds, refreshed each second)">0.0</b></div><div id="hudBuffs" role="status" aria-live="polite" title="Pet buffs: they never stack across pets, and ATK / MATK cannot both be active."></div><div style="margin-left:auto;display:flex;align-items:center;gap:8px"><span id="userBadge" style="font-weight:bold;font-size:12px;background:#e9d39a;padding:3px 8px;border-radius:4px;border:1px solid var(--edge2)"></span><button id="logoutBtn" onclick="logout()" style="display:none">Logout</button><button id="spd">Speed x1</button></div></div>
 <div id="xp-dock" aria-label="Level progress"><div id="xp-track">
   <div class="xp-side" id="baseTrack" tabindex="0" role="progressbar" aria-label="Base Level" aria-valuemin="0" aria-valuemax="100" title="Base Level: 0% to next level"><div class="xp-fill" id="xpb"></div><span class="xp-label" id="baseLabel">Base Lv 1</span><span class="xp-pct" id="basePct">0%</span></div>
   <div class="xp-side" id="jobTrack" tabindex="0" role="progressbar" aria-label="Job Level" aria-valuemin="0" aria-valuemax="100" title="Job Level: 0% to next level"><div class="xp-fill" id="jb"></div><span class="xp-pct" id="jobPct">0%</span><span class="xp-label job" id="jobLabel">Job Lv 1</span></div>
@@ -217,7 +231,7 @@ const AL={str:'STR',agi:'AGI',dex:'DEX',luk:'LUK',int:'INT',hp:'Max HP',atk:'ATK
 // late maps in about five, with bosses still a ~12x fight. See tools/tests/economy_sim.js.
 const SU=k=>k.toUpperCase(),BX_=13,Z0=-28,Z1=12,MPS=15,AGGRO=6.5,HPK=42,HPE=1.3,K5=['str','agi','dex','luk','int'];
 const GM_USER='GM',GM_PASS='gm1234';   // CHANGE THE GM PASSWORD before you publish
-const BUILD='2026-10-04 combat-v33 hit-fx pet-sprites';   // shown on the login card - confirms which file you loaded
+const BUILD='2026-10-04 ui-v35 pet-rework bag-highlight dmg-toggles map-rarity';   // shown on the login card - confirms which file you loaded
 $('buildTag').textContent='build '+BUILD;
 
 // ---------- class tree: Novice -> 6 first jobs -> 6 second jobs -> 6 third jobs ----------
@@ -546,6 +560,18 @@ const cardStat=(g,seed)=>{const p=g>=2?AFF:K5;return p[((seed%p.length)+p.length
 // A pool entry's k is its weapon type for weapons ('sword', 'bow', ...) and its slot for
 // everything else, so the UI asks gearSlot() which panel group an entry belongs to.
 const ARM=['armor','head','off','leg','acc'],gearSlot=x=>ARM.includes(x.k)?x.k:'weapon';
+// ---------- bag capacity & fixed drop rarity ----------
+// The bag holds 1000 items. Loot is refused once it is full (the drop stays on the ground and
+// is reported) so a long farm cannot silently grow an unbounded save.
+const BAGMAX=1000;
+// Rarity is a property of WHERE an item drops, not of the roll - and the MAP decides it, at every
+// stage it has. A low map never rolls above its own band, so a Prontera field can never hand out
+// Rare or Epic gear; the only route to Legendary is a Stage 10 boss, on any map. Only the
+// affixes (and the refine/card slots) stay random, so two drops of the same item still differ.
+// Bands: maps 1-2 Common, 3-4 Fine, 5-6 Rare, 7-10 Epic, every Stage 10 boss Legendary.
+// Pinned by gear_sim.js.
+const MAPTIER=[0,0,1,1,2,2,3,3,3,3];
+const dropTier=(m,l)=>l>=10?4:MAPTIER[Math.max(0,Math.min(MAPTIER.length-1,m|0))];
 // The field's gear pool: every item an equipment drop on this map+level can be. Weapons first
 // (they are the ones a player is hunting), then body, headgear, shield, legwear, two accessories.
 function gearPool(m,l){const sg=MAPS[m].gear[m>=5?3:secOf(l)],T=[];
@@ -553,15 +579,15 @@ function gearPool(m,l){const sg=MAPS[m].gear[m>=5?3:secOf(l)],T=[];
   T.push({k:'armor',n:sg.a},{k:'head',n:sg.h},{k:'off',n:sg.o},{k:'leg',n:sg.l},{k:'acc',n:sg.ac});
   if(sg.ac2)T.push({k:'acc',n:sg.ac2});
   return T}
-function fieldOf(m,l){const mp=MAPS[m],sec=m>=5?3:secOf(l),T=gearPool(m,l),n=T.length;
+function fieldOf(m,l){const mp=MAPS[m],sec=m>=5?3:secOf(l),T=gearPool(m,l),n=T.length,ft=dropTier(m,l);
   // three gear rolls per mob, spread across the pool so two mobs on one field do not pay out
   // the same item; gear is the common drop and a card is the rare one.
   const mobs=[0,1].map(j=>{const mm=mp.mobs[(l-1+j)%mp.mobs.length],cg=l<=3?0:l<=7?1:2;
-    return{...mm,drops:[[T[(l*3+2*j)%n],4.8],[T[(l*3+2*j+1)%n],4.0],[T[(l*3+2*j+2)%n],3.2]],card:{n:mm.n+' Card',stat:cardStat(cg,(m*10+l+j)*3+1),g:cg},cardCh:.45,ore:l===10,oreCh:l===10?.02:0}});
-  return{m,l,sec,mobs,boss:l===10?{...mp.boss,drops:T.map(x=>[x,2.4]),card:{n:mp.boss.n+' Card',stat:cardStat(3,m),g:3},cardCh:.08,ore:true,oreCh:.05}:null}}
-// One drop line for the map panel: icon + name on the left, the % on the right.
+    return{...mm,tier:ft,drops:[[T[(l*3+2*j)%n],4.8],[T[(l*3+2*j+1)%n],4.0],[T[(l*3+2*j+2)%n],3.2]],card:{n:mm.n+' Card',stat:cardStat(cg,(m*10+l+j)*3+1),g:cg},cardCh:.45,ore:l===10,oreCh:l===10?.02:0}});
+  return{m,l,sec,tier:ft,mobs,boss:l===10?{...mp.boss,tier:ft,drops:T.map(x=>[x,2.4]),card:{n:mp.boss.n+' Card',stat:cardStat(3,m),g:3},cardCh:.08,ore:true,oreCh:.05}:null}}
+// One drop line for the map panel: icon + name + the fixed rarity on the left, the % on the right.
 const poolIc=T=>gearSlot(T)==='weapon'?(WICON[T.k]||'⚔️'):{armor:'🥼',head:'🎩',off:'🛡️',leg:'👖',acc:'💍'}[T.k];
-const dropTxt=([T,ch])=>`<div class="dropline"><span>${poolIc(T)} ${T.n}</span><b>${ch}%</b></div>`;
+const dropTxt=([T,ch],tier)=>`<div class="dropline"><span>${poolIc(T)} ${T.n} <small class="r${tier||0}">${RAR[tier||0].n}</small></span><b>${ch}%</b></div>`;
 
 // ---------- stat progression ----------
 // Stats cap at 99 until Base Lv 100, then the elite tier opens up to 120. Raising a stat
@@ -614,7 +640,7 @@ let currentUser=null,S=null,speed=1,zenyEarned=0,floats=[],drops=[],t=0,shake=0,
 const pl={x:0,z:Z1-1.5,ry:0,orb:0,run:0,wt:0,wx:0,wz:Z1-1.5},skCd={},petR={};
 // tb holds the one tradeoff buff currently running (ATK up / DEF down and so on). It is
 // deliberately transient: it is never saved, so quitting mid-buff just drops the buff.
-let tb={},petBuff={atk:0,matk:0,atkT:0,matkT:0},petSkillCd={};
+let tb={},petBuff={atk:0,matk:0,hp:0,leech:0,atkT:0,matkT:0,hpT:0,leechT:0},petBuffSrc={},petSkillCd={},petNote={};
 const PETS=[{n:'Poring',spriteId:1002,r:0,c:0xff9db8},{n:'Lunatic',spriteId:1063,r:0,c:0xf4f4f4},
   {n:'Wolf',spriteId:1013,r:1,c:0x8a8a95},{n:'Desert Wolf',spriteId:1106,r:1,c:0xe0a050},
   {n:'Peco Peco',spriteId:1019,r:2,c:0xf0d060},{n:'Dragon Whelp',spriteId:1155,r:2,c:0x4aa070},
@@ -628,34 +654,78 @@ const RN=['Common','Rare','Epic','Legendary'],RCL=[0,2,3,4],MUT=[1,2,4,6,8,20,40
 // twenty that succeeds is a GREAT success and jumps two tiers instead of one.
 const EGG=3000,GW=[50,30,16.5,2.5,.8,.2],PT=['Wooden','Iron','Silver','Gold','Mythril'],PTG=[.4,.25,.15,.09,.05],GREAT=.05;
 const PEQ=[{n:'Claw',d:t=>`+${t*12}% pet damage`},{n:'Collar',d:t=>`+${t*8}% pet attack speed`},{n:'Charm',d:t=>`${t*6}% pet crit chance (x2 damage)`}];
-// Six equally weighted gacha skills: two temporary player buffs, two area attacks, and
-// two single-target attacks. Buffs do not stack; each skill auto-casts when its pet attacks.
+// Eight equally weighted gacha skills: four temporary player buffs and four attacks. Every pet
+// has TWO skill slots and one gacha rolls both of them (never the same skill twice), so a reroll
+// replaces the whole loadout. A pet can also use only one skill every PETGAP seconds, on top of
+// that skill's own cooldown. Buff rules, all shown in the Pets panel: a buff never stacks - while
+// one copy is up, another pet's cast is ignored rather than refreshed - and ATK and MATK can
+// never run at the same time. Blood Siphon pays a share of whatever the pet hits for back to
+// you; Vital Aura raises your max HP, and the bar comes back down when it lapses.
+// PETBAL is the pet balance knob: at 2.18 a fully maxed pet (G6 + Mythril 5/5/5 + two attack
+// skills) measures about the same DPS as ONE fully maxed character playing their whole rotation.
+// tools/tests/pet_sim.js measures exactly that and fails if it drifts.
+const PETGAP=7,PETBAL=2.18;
 const PET_SKILLS=[
-  {id:'warcry',n:'War Cry',kind:'buff',stat:'atk',power:20,duration:8,cd:26,desc:'Player ATK +20% for 8s',vfx:'frenzy',color:'#ffd050',icon:'⚔️'},
-  {id:'arcane',n:'Arcane Blessing',kind:'buff',stat:'matk',power:20,duration:8,cd:26,desc:'Player MATK +20% for 8s',vfx:'magnus',color:'#a58bff',icon:'✦'},
+  {id:'warcry',n:'War Cry',kind:'buff',stat:'atk',power:20,duration:30,cd:60,desc:'Player ATK +20% for 30s, 60s cooldown. Never stacks with another pet, and cannot run next to MATK',vfx:'frenzy',color:'#ffd050',icon:'⚔️'},
+  {id:'arcane',n:'Arcane Blessing',kind:'buff',stat:'matk',power:20,duration:30,cd:60,desc:'Player MATK +20% for 30s, 60s cooldown. Never stacks with another pet, and cannot run next to ATK',vfx:'magnus',color:'#a58bff',icon:'✦'},
+  {id:'siphon',n:'Blood Siphon',kind:'buff',stat:'leech',power:5,duration:30,cd:60,desc:'For 30s, 5% of this pet damage heals you, 60s cooldown. Never stacks with another pet',vfx:'soulb',color:'#ff6b8a',icon:'🩸'},
+  {id:'vital',n:'Vital Aura',kind:'buff',stat:'hp',power:20,duration:30,cd:60,desc:'Player Max HP +20% for 30s, 60s cooldown. Never stacks with another pet',vfx:'magnus',color:'#7dff9d',icon:'💗'},
   {id:'flameburst',n:'Flame Burst',kind:'aoe',power:1.6,radius:4,cd:14,desc:'AoE: 1.6× pet damage to enemies within 4 units',vfx:'meteor',color:'#ff8142',icon:'🔥'},
   {id:'thunderclap',n:'Thunderclap',kind:'aoe',power:1.4,radius:4,cd:12,desc:'AoE: 1.4× pet damage to enemies within 4 units',vfx:'jup',color:'#8fe9ff',icon:'⚡'},
   {id:'piercingfang',n:'Piercing Fang',kind:'single',power:2.2,cd:10,desc:'Single target: 2.2× pet damage',vfx:'spiral',color:'#ff9dff',icon:'🗡️'},
   {id:'spiritbolt',n:'Spirit Bolt',kind:'single',power:2.5,cd:11,desc:'Single target: 2.5× pet damage',vfx:'soulb',color:'#fff3a0',icon:'✧'}
 ];
-const petDmg=p=>Math.round(atk()*[.2,.32,.55,1][PETS[p.sp].r]*MUT[p.mut]*(1+p.eq[0]*.12)),petInt=p=>Math.max(.4,1.7-PETS[p.sp].r*.15)/(1+p.eq[1]*.08),peqCost=t=>1200*(t+1)*(t+1),rollCost=p=>2500*(1+PETS[p.sp].r),petSkillCost=p=>2000*(1+PETS[p.sp].r);
+const petDmg=p=>Math.round(atk()*PETBAL*[.2,.32,.55,1][PETS[p.sp].r]*MUT[p.mut]*(1+p.eq[0]*.12)),petInt=p=>Math.max(.4,1.7-PETS[p.sp].r*.15)/(1+p.eq[1]*.08),peqCost=t=>1200*(t+1)*(t+1),rollCost=p=>2500*(1+PETS[p.sp].r),petSkillCost=p=>2000*(1+PETS[p.sp].r);
+const petSkills=p=>((p.skills)||[]).map(id=>PET_SKILLS.find(s=>s.id===id)).filter(Boolean);
+// Per-skill cooldowns live in the same map as the 7s gate, keyed petId|skillId. A pet that
+// rerolls or is released must not leave those timers behind.
+const clearPetCd=id=>{for(const k in petSkillCd)if(k===String(id)||k.indexOf(id+'|')===0)delete petSkillCd[k]};
+// Why this buff cannot be cast right now ('' = it can). One copy of each buff at a time across
+// the whole field, and ATK and MATK are mutually exclusive.
+function petBuffWhy(skill){
+  const s=skill.stat;
+  if(s==='atk'&&(petBuff.atk>0||petBuff.matk>0))return petBuff.atk>0?'the ATK buff is already up':'MATK cannot run next to ATK';
+  if(s==='matk'&&(petBuff.matk>0||petBuff.atk>0))return petBuff.matk>0?'the MATK buff is already up':'ATK cannot run next to MATK';
+  if(s==='hp'&&petBuff.hp>0)return 'the Max HP buff is already up';
+  if(s==='leech'&&petBuff.leech>0)return 'the life-leech buff is already up';
+  return '';
+}
+// Blood Siphon: while it runs, a share of every point this pet deals comes back to you.
+function petLeech(dealt){
+  if(!dealt||!(petBuff.leech>0))return;
+  const h=Math.max(1,Math.round(dealt*petBuff.leech/100));
+  S.hp=Math.min(maxHp(),S.hp+h);addFloat(pl.x,2.9,pl.z,'+'+numTxt(h),'#ff6b8a');
+}
 function petHit(p,target){
-  const skill=PET_SKILLS.find(s=>s.id===p.skill);
-  if(skill&&(petSkillCd[p.id]||0)<=0){
-    petSkillCd[p.id]=skill.cd;
-    if(skill.kind==='buff'){
-      petBuff[skill.stat]=skill.power;petBuff[skill.stat+'T']=skill.duration;
-      log(`${PETS[p.sp].n} uses ${skill.n}: ${skill.desc}.`,'r3');
-      addFloat(pl.x,3,pl.z,skill.n,skill.color,true);playSkillFx(skill.vfx,null,skill.color);
+  if((petSkillCd[p.id]||0)<=0){
+    const ready=petSkills(p).filter(s=>(petSkillCd[p.id+'|'+s.id]||0)<=0);
+    // an attack skill always beats a buff; among equals the stronger one goes first
+    let use=ready.filter(s=>s.kind!=='buff').sort((a,b)=>b.power-a.power)[0];
+    if(!use)use=ready.find(s=>!petBuffWhy(s));
+    if(!use){
+      // everything ready is a blocked buff: say why every so often instead of never
+      const held=ready.find(s=>s.kind==='buff');
+      if(held&&!(petNote[p.id]>0)){petNote[p.id]=12;log(`${PETS[p.sp].n} holds ${held.n}: ${petBuffWhy(held)} - pet buffs never stack.`,'r0')}
     }else{
-      const hitList=skill.kind==='aoe'?mobs.slice().filter(o=>Math.hypot(o.x-target.x,o.z-target.z)<=skill.radius):[target];
-      for(const o of hitList)if(o&&o.hp>0)hurt(o,Math.max(1,Math.round(petDmg(p)*skill.power)),skill.color);
-      addFloat(target.x,2.4,target.z,skill.n,skill.color,true);playSkillFx(skill.vfx,target,skill.color);
+      petSkillCd[p.id]=PETGAP;petSkillCd[p.id+'|'+use.id]=use.cd;
+      if(use.kind==='buff'){
+        petBuff[use.stat]=use.power;petBuff[use.stat+'T']=use.duration;petBuffSrc[use.stat]=PETS[p.sp].n;
+        log(`${PETS[p.sp].n} uses ${use.n}: ${use.desc}.`,'r3');
+        addFloat(pl.x,3,pl.z,use.n,use.color,true);playSkillFx(use.vfx,null,use.color);
+      }else{
+        const hitList=use.kind==='aoe'?mobs.slice().filter(o=>Math.hypot(o.x-target.x,o.z-target.z)<=use.radius):[target];
+        let dealt=0;
+        for(const o of hitList)if(o&&o.hp>0){const d=Math.max(1,Math.round(petDmg(p)*use.power));hurt(o,d,use.color);dealt+=d}
+        petLeech(dealt);
+        addFloat(target.x,2.4,target.z,use.n,use.color,true);playSkillFx(use.vfx,target,use.color);
+      }
+      return true;
     }
-    return true;
   }
   let d=petDmg(p)*rnd(.9,1.1);const c=Math.random()*100<p.eq[2]*6;if(c)d*=2;
-  hurt(target,Math.max(1,Math.round(d)),MC[p.mut]?'#'+MC[p.mut].toString(16).padStart(6,'0'):'#ff9dff',c);
+  const hit=Math.max(1,Math.round(d));
+  hurt(target,hit,MC[p.mut]?'#'+MC[p.mut].toString(16).padStart(6,'0'):'#ff9dff',c);
+  petLeech(hit);
   return false;
 }
 const rollingSet=new Set(),autoSet=new Set(),PW=[[90,9,1,0],[80,17,3,0],[70,24,5.5,.5],[60,30,9,1],[50,35,13,2],[40,38,18,4],[30,40,24,6],[22,40,30,8],[12,38,38,12],[5,30,45,20]],busy=p=>p.roll||rollingSet.has(p.id)||S.zeny<rollCost(p);
@@ -664,14 +734,18 @@ function rollOnce(p,fast,done){const c=rollCost(p);if(S.zeny<c){autoSet.delete(p
 function autoRoll(p){if(!autoSet.has(p.id)||!gp(p.id))return;rollOnce(p,true,g=>{if(!(p.sk||[1,2,3]).includes(g)){p.roll=g;autoSet.delete(p.id);log(`Auto-roll stopped on Grade ${g} (x${MUT[g]})!`,'r4')}ui();save();if(autoSet.has(p.id))setTimeout(()=>autoRoll(p),250)})}
 const pickW=w=>{let r=Math.random()*w.reduce((a,b)=>a+b,0);for(let i=0;i<w.length;i++){r-=w[i];if(r<0)return i}return w.length-1},gp=id=>S.pets.find(x=>String(x.id)===String(id));
 const uid=()=>Date.now()+Math.random(),rnd=(a,b)=>a+Math.random()*(b-a),ri=(a,b)=>Math.floor(rnd(a,b+1)),cl=(v,a,b)=>Math.max(a,Math.min(b,v));
-const PET_SKILL_WEIGHTS=PET_SKILLS.map(()=>1),rollPetSkill=()=>PET_SKILLS[pickW(PET_SKILL_WEIGHTS)];
-const fresh=()=>({pets:[],cls:'Novice',sex:'m',hair:0,lv:1,exp:0,hp:100,zeny:0,kills:0,pts:10,jobs:{Novice:{jl:1,jx:0}},sk:{aid:1},skOff:{},base:{},mp:0,lvl:1,prog:[1,1,1,1,1],kl:0,auto:true,adv:true,q:null,cards:[],ore:{ori:0,elu:0},gm:false,gmx:100,
+// One roll fills both slots. The second pick is made from the skills the first did not take, so
+// the two can never match and there is no retry loop to spin if the dice are pinned.
+const PET_SKILL_WEIGHTS=PET_SKILLS.map(()=>1),rollPetSkills=()=>{const a=pickW(PET_SKILL_WEIGHTS),rest=PET_SKILL_WEIGHTS.map((w,i)=>i).filter(i=>i!==a);return[PET_SKILLS[a].id,PET_SKILLS[rest[Math.floor(Math.random()*rest.length)]].id]};
+const fresh=()=>({pets:[],cls:'Novice',sex:'m',hair:0,lv:1,exp:0,hp:100,zeny:0,kills:0,pts:10,jobs:{Novice:{jl:1,jx:0}},sk:{aid:1},skOff:{},dmgShort:true,dmgShow:true,base:{},mp:0,lvl:1,prog:[1,1,1,1,1],kl:0,auto:true,adv:true,q:null,cards:[],ore:{ori:0,elu:0},gm:false,gmx:100,
   st:{str:1,agi:1,dex:1,luk:1,int:1,vit:1},eq:{weapon:{id:1,slot:'weapon',wt:'dagger',tier:0,val:5,name:'Novice Knife',aff:[],slots:1,cards:[],sec:0},armor:null,head:null,off:null,leg:null,acc1:null,acc2:null},inv:[]});
 const saveKey=()=>'pg_save3_'+currentUser;
 const num_= (v,d)=>{v=+v;return Number.isFinite(v)?v:d};
 function load(){try{const s=JSON.parse(lsGet(saveKey()));if(s&&s.lv){const F=fresh(),f=Object.assign(F,s);f.st=Object.assign(fresh().st,s.st||{});if(!CLASSES[f.cls])f.cls='Novice';
 // repair top-level numbers corrupted by older/test saves (null -> crash on .toLocaleString())
   for(const k of['lv','exp','hp','zeny','kills','pts','mp','lvl','kl','gmx'])f[k]=num_(f[k],F[k]);
+  if(f.dmgShort!==true&&f.dmgShort!==false)f.dmgShort=true;   // damage digits: short unless deliberately switched
+  if(f.dmgShow!==true&&f.dmgShow!==false)f.dmgShow=true;      // and the floats are shown unless switched off
   for(const k of['str','agi','dex','luk','int','vit'])f.st[k]=Math.max(1,Math.min(MAXST,num_(f.st[k],1)));
   f.ore={ori:num_(f.ore&&f.ore.ori,0),elu:num_(f.ore&&f.ore.elu,0)};
   if(!Array.isArray(f.prog)||!f.prog.length)f.prog=F.prog.slice();else f.prog=f.prog.map(v=>num_(v,1));
@@ -693,7 +767,12 @@ function load(){try{const s=JSON.parse(lsGet(saveKey()));if(s&&s.lv){const F=fre
     if(!r.eq||typeof r.eq!=='object')r.eq={}}
   if(!Array.isArray(f.pets))f.pets=[];f.pets=f.pets.filter(p=>p&&typeof p==='object');if(!Array.isArray(f.inv))f.inv=[];if(!Array.isArray(f.cards))f.cards=[];
   if(!f.eq||typeof f.eq!=='object')f.eq=F.eq;if(f.hp<=0)f.hp=F.hp;
-  const fx=c=>{c.v=cardVal(c.g,c.stat)};(f.cards||[]).forEach(fx);(f.pets||[]).forEach((p,i)=>{if(p.on===undefined)p.on=i<3;if(!Array.isArray(p.eq))p.eq=[0,0,0];p.eq=[0,1,2].map(k=>Math.max(0,Math.min(PT.length,Math.floor(num_(p.eq[k],0)))));if(!PET_SKILLS.some(s=>s.id===p.skill))p.skill=''});Object.values(f.eq||{}).forEach(it=>it&&(it.cards||[]).forEach(fx));(f.inv||[]).forEach(it=>(it.cards||[]).forEach(fx));
+  const fx=c=>{c.v=cardVal(c.g,c.stat)};(f.cards||[]).forEach(fx);(f.pets||[]).forEach((p,i)=>{if(p.on===undefined)p.on=i<3;if(!Array.isArray(p.eq))p.eq=[0,0,0];p.eq=[0,1,2].map(k=>Math.max(0,Math.min(PT.length,Math.floor(num_(p.eq[k],0)))));
+  // v35 gave every pet TWO skill slots. An old save's single skill becomes slot 1 and the next
+  // gacha fills both; nothing is thrown away and nothing is handed out for free.
+  if(!Array.isArray(p.skills))p.skills=PET_SKILLS.some(s=>s.id===p.skill)?[p.skill]:[];
+  p.skills=p.skills.filter(id=>PET_SKILLS.some(s=>s.id===id)).slice(0,2);
+  delete p.skill});Object.values(f.eq||{}).forEach(it=>it&&(it.cards||[]).forEach(fx));(f.inv||[]).forEach(it=>(it.cards||[]).forEach(fx));
   // repair quests saved by older builds: every field must be a real number
   if(!Array.isArray(f.q))f.q=null;
   else f.q=f.q.filter(q=>q&&typeof q==='object').map(q=>{
@@ -767,7 +846,7 @@ const pv=k=>SKILLS.reduce((a,s)=>a+(s.type==='pas'&&s.key===k&&skillOn(s.id)?s.f
 const items=()=>Object.values(S.eq).filter(Boolean),ev=it=>Math.round(it.val*(1+(it.r||0)*.15)),iname=it=>(it.r?'+'+it.r+' ':'')+it.name,eqv=k=>S.eq[k]?ev(S.eq[k]):0;
 const bon=k=>{let v=0;for(const it of items()){for(const a of it.aff||[])if(a.k===k)v+=a.v;for(const c of it.cards||[])if(c.stat===k)v+=c.v}return v};
 const st=k=>S.st[k]+bon(k),canUse=it=>it.slot==='off'?canShield():(it.slot!=='weapon'||!it.wt||C().wt.includes(it.wt));
-const maxHp=()=>Math.round((80+S.lv*20+eqv('head')*4+(eqv('acc1')+eqv('acc2'))*3+st('vit')*8+bon('hp'))*C().hp*(1+pv('hpp')/100));
+const maxHp=()=>Math.round((80+S.lv*20+eqv('head')*4+(eqv('acc1')+eqv('acc2'))*3+st('vit')*8+bon('hp'))*C().hp*(1+pv('hpp')/100)*(1+(petBuff.hp||0)/100));
 const atk=()=>Math.round((4+S.lv*2+eqv('weapon')+(S.eq.off&&S.eq.off.slot==='weapon'?eqv('off')*.6:0)+st(C().main)*1.5+(st('dex')+st('luk'))*.25)*C().atk*(1+(pv('atk')+bon('atk')+(tb.atk||0)+(petBuff.atk||0))/100)*(1+collDmg()/100));
 const matk=()=>Math.round((4+S.lv*2+eqv('weapon')*.8+st('int')*1.5+st('dex')*.25)*C().atk*(1+(pv('matk')+bon('matk')+(tb.matk||0)+(petBuff.matk||0))/100)*(1+collDmg()/100));
 const aspd=()=>Math.max(.2,.85*C().aspd*(1-Math.min(.5,st('agi')*.006))/(1+(pv('aspd')+bon('aspd')+(tb.aspd||0))/100));
@@ -876,14 +955,17 @@ function spawn(){
   });
   activePack=nearestPack();mob=bossWave?mobs[0]:packMob();pAtkT=.3;
 }
-function genGear(T,l,sec,boss){
-  const slot=['armor','head','off','leg','acc'].includes(T.k)?T.k:'weapon';let roll=rnd(0,100)-(boss?25:0)-st('luk')*.15,tier=0,acc=0;
-  for(let i=0;i<5;i++){acc+=RAR[i].w;if(roll<acc||i===4){tier=i;break}}if(boss&&tier<2)tier=2;
-  const val=Math.max(1,Math.round({weapon:6,armor:4,head:10,off:3,leg:3,acc:5}[slot]*[1,2.2,4,7][sec]*(1+l*.15)*RAR[tier].m*rnd(.9,1.12)));
-  const n=[1,1+ri(0,1),2,2+ri(0,1),3][tier],pool=AFF.slice(),aff=[],af=(1+sec)*AM[tier];
+function genGear(T,l,sec,boss,tier){
+  const slot=['armor','head','off','leg','acc'].includes(T.k)?T.k:'weapon';
+  // Rarity is fixed by the field (see dropTier): the roll only decides the AFFIXES, the refine
+  // room and the value inside that band. The drop loop still passes mob.boss and mob.tier - a
+  // Stage 10 boss field is the one place dropTier returns Legendary.
+  const t=Number.isFinite(tier)?tier:dropTier(S.mp,S.lvl);
+  const val=Math.max(1,Math.round({weapon:6,armor:4,head:10,off:3,leg:3,acc:5}[slot]*[1,2.2,4,7][sec]*(1+l*.15)*RAR[t].m*rnd(.9,1.12)));
+  const n=[1,1+ri(0,1),2,2+ri(0,1),3][t],pool=AFF.slice(),aff=[],af=(1+sec)*AM[t];
   for(let i=0;i<n;i++){const k=pool.splice(ri(0,pool.length-1),1)[0];aff.push({k,v:Math.max(1,Math.round(af*AB[k]*rnd(.8,1.25)))})}
-  const slots=slot==='weapon'?Math.min(3,1+ri(0,1)+(tier>=3?1:0)):Math.min(1,ri(0,1)+(tier>=3?1:0));
-  return{id:uid(),slot,wt:slot==='weapon'?T.k:undefined,tier,val,name:(tier?RAR[tier].n+' ':'')+T.n,aff,slots,cards:[],sec,lvl:l};
+  const slots=slot==='weapon'?Math.min(3,1+ri(0,1)+(t>=3?1:0)):Math.min(1,ri(0,1)+(t>=3?1:0));
+  return{id:uid(),slot,wt:slot==='weapon'?T.k:undefined,tier:t,val,name:(t?RAR[t].n+' ':'')+T.n,aff,slots,cards:[],sec,lvl:l};
 }
 // ---------- skill effects: damage over time, stun, chain ----------
 // DoT ticks twice a second for its duration; the number stored is damage PER SECOND.
@@ -897,7 +979,21 @@ function chainHit(src,dmg,col,n){if(!src||!(dmg>0)||mobs.length<2)return;
   for(const o of near){shots.push({x0:src.x,z0:src.z,x1:o.x,z1:o.z,t:0,col:col||'#fff'});hurt(o,Math.max(1,Math.round(dmg)),col)}}
 const mkDrop=it=>({it,wx:mob.x+rnd(-.7,.7),wz:mob.z+rnd(-.7,.7),y:0,vy:-220,t:0});
 const addFloat=(x,y,z,txt,col,big,kind='text')=>floats.push({x,y,z,txt,col,life:1,big,kind});
-const damageFloat=(x,y,z,amount,critical=false,incoming=false)=>addFloat(x,y,z,String(Math.round(amount)),null,false,incoming?'incoming':critical?'critical':'damage');
+// Floating combat numbers are shortened by default: 100,000 reads "100K", 1,000,000 reads "1M".
+// The Settings panel switches every damage float (normal, critical and incoming) to full digits.
+// One decimal is kept only where it carries information (1.2M, 12.5K), and a K that rounds up
+// to 1000 is promoted to M so the label never reads "1000K".
+const shortNum=n=>{n=Math.round(Number(n)||0);const a=Math.abs(n),u=(v,s)=>{const r=Math.round(v*10)/10;return(Number.isInteger(r)?String(r):r.toFixed(1))+s};
+  if(a>=1e9)return u(n/1e9,'B');
+  if(a>=1e6)return u(n/1e6,'M');
+  if(a>=1e3)return Math.abs(Math.round(n/100)/10)>=1000?u(n/1e6,'M'):u(n/1e3,'K');
+  return String(n)};
+const fullNum=()=>typeof S!=='undefined'&&S&&S.dmgShort===false;
+// Two settings decide what a number looks like: 'Show damage numbers' (S.dmgShow) hides every
+// combat float when it is off, and 'Short form' (S.dmgShort) switches between 100K/1M and the
+// full digits. Reward floats (Zeny, EXP) follow the short/full style but are never hidden.
+const numTxt=n=>fullNum()?String(Math.round(n)):shortNum(n);
+const damageFloat=(x,y,z,amount,critical=false,incoming=false)=>{if(S&&S.dmgShow===false)return;addFloat(x,y,z,numTxt(amount),null,false,incoming?'incoming':critical?'critical':'damage')};
 // Skill labels track the moving player, rather than floating away from the cast location.
 const skillNameFloat=(name,slot=0)=>floats.push({x:pl.x,y:3.15+slot*.38,z:pl.z,txt:name,life:1.15,kind:'skill',anchor:'hero'});
 function log(m,cls){logs.push({m,cls});if(logs.length>80)logs.shift();
@@ -961,13 +1057,15 @@ function earnZeny(amount){const n=Math.max(0,Number(amount)||0);S.zeny+=n;zenyEa
 function kill(o){const keep=mob;if(o)mob=o;if(!mob||!mobs.includes(mob)){mob=keep;return}
   const g=gx();S.kills++;S.kl++;qProg('kill');if(mob.boss)qProg('boss');
   const z=Math.round(mob.zeny*(1+pv('zeny')/100))*g,xp=Math.round(mob.exp*expRate());earnZeny(z);S.exp+=xp;addJob(Math.round(Math.round(mob.exp*.7)*expRate()));pend=[];
-  addFloat(mob.x,2.4,mob.z,'+'+z+'z','#ffd23f');log(`${mob.n} defeated! +${xp.toLocaleString()} EXP, +${z.toLocaleString()} Zeny`);
-  const lk=1+st('luk')*.008;
-  for(const[T,ch]of mob.drops)if(Math.random()*100<ch*lk)drops.push(mkDrop(genGear(T,mob.lvl,mob.sec,mob.boss)));
-  if(Math.random()*100<mob.cardCh*lk){const g2=mob.card.g;drops.push(mkDrop({card:1,id:uid(),n:mob.card.n,g:g2,stat:mob.card.stat,v:cardVal(g2,mob.card.stat)}))}
+  addFloat(mob.x,2.4,mob.z,'+'+numTxt(z)+'z','#ffd23f');log(`${mob.n} defeated! +${xp.toLocaleString()} EXP, +${z.toLocaleString()} Zeny`);
+  // Drop odds are the field's own numbers: nothing on the character scales them, so LUK cannot
+  // bend the tables (it still raises ATK through the crit/DEX side of the stat sheet, which is
+  // what it is for).
+  for(const[T,ch]of mob.drops)if(Math.random()*100<ch)drops.push(mkDrop(genGear(T,mob.lvl,mob.sec,mob.boss,mob.tier)));
+  if(Math.random()*100<mob.cardCh){const g2=mob.card.g;drops.push(mkDrop({card:1,id:uid(),n:mob.card.n,g:g2,stat:mob.card.stat,v:cardVal(g2,mob.card.stat)}))}
   if(mob.ore)for(const o of['ori','elu'])if(Math.random()<mob.oreCh)drops.push(mkDrop({ore:o,id:uid(),n:ORE[o]}));
-  if(Math.random()*100<(mob.boss?5:.3)*lk){const r=pickW(PW[Math.min(S.mp,9)]),c=PETS.filter(x=>x.r===r),sp=PETS.indexOf(c[ri(0,c.length-1)]);
-    if(S.pets.length<40){S.pets.push({id:ri(1e6,9e6),sp,mut:0,eq:[0,0,0],skill:'',on:S.pets.filter(x=>x.on).length<3});log(`A ${RN[r]} pet followed you: ${PETS[sp].n}!`,'r'+RCL[r]);addFloat(mob.x,3,mob.z,'PET!','#ff9dff',true)}
+  if(Math.random()*100<(mob.boss?5:.3)){const r=pickW(PW[Math.min(S.mp,9)]),c=PETS.filter(x=>x.r===r),sp=PETS.indexOf(c[ri(0,c.length-1)]);
+    if(S.pets.length<40){S.pets.push({id:ri(1e6,9e6),sp,mut:0,eq:[0,0,0],skills:[],on:S.pets.filter(x=>x.on).length<3});log(`A ${RN[r]} pet followed you: ${PETS[sp].n}!`,'r'+RCL[r]);addFloat(mob.x,3,mob.z,'PET!','#ff9dff',true)}
     else{const z=Math.floor(EGG*(.3+r*.4));earnZeny(z);log(`A ${RN[r]} ${PETS[sp].n} appeared but your pet collection is full (+${z}z).`)}}
   checkLevel();
   if(mob.boss||(S.lvl<10&&S.kl>=MPS)){mobs=[];S.kl=0;if(S.lvl<10&&S.lvl>=S.prog[S.mp]){S.prog[S.mp]=S.lvl+1;log(`${fieldName()} cleared! Stage ${S.lvl+1} unlocked.`,'r3');if(S.adv&&S.lvl<10){S.lvl++}}}
@@ -978,12 +1076,19 @@ function kill(o){const keep=mob;if(o)mob=o;if(!mob||!mobs.includes(mob)){mob=kee
 function collect(it){
   if(it.card){S.cards.push(it);log(`Got card: [${GRADE[it.g]}] ${cardTxt(it)}`,'r'+GI[it.g]);addFloat(pl.x,2.8,pl.z,'CARD!','#ffb020',true);ui();return}
   if(it.ore){S.ore[it.ore]++;log(`Got ${it.n}!`,'r4');addFloat(pl.x,2.8,pl.z,it.n+'!','#6cd3ff',true);ui();return}
+  // The bag holds BAGMAX items. At capacity the loot is refused and stays where it fell, so a
+  // long farm can never grow the save past the cap.
+  if(S.inv.length>=BAGMAX){log(`Bag full (${BAGMAX} items): sold nothing, left ${it.name} on the ground.`,'r0');addFloat(pl.x,3,pl.z,'BAG FULL','#ff6b6b',true);ui();return}
   S.inv.push(it);qProg('loot');log(`Picked up [${RAR[it.tier].n}] ${it.name}`,'r'+it.tier);
   if(S.auto!==false&&canUse(it)){const cur=S.eq[ekey(it)];if(!cur||ev(it)>ev(cur))equip(it.id,true)}ui();
 }
 function equip(id,quiet){const i=S.inv.findIndex(x=>x.id===id);if(i<0)return;const it=S.inv[i];if(!canUse(it)){log(`Your class cannot use ${it.name}.`);return}
   S.inv.splice(i,1);const k=ekey(it),old=S.eq[k];if(old)S.inv.push(old);S.eq[k]=it;S.hp=Math.min(S.hp,maxHp());if(!quiet)log('Equipped '+iname(it));selB=null;ui();save()}
-const sellVal=it=>Math.floor(ev(it)*(1+it.tier*2)*2);
+// Selling is pocket money, deliberately: it scales with the item's rarity band, its stage
+// section and its level, but stays far below the Zeny a field actually pays - a Common starter
+// piece sells for ~50z and the best Legendary Abyss gear for under 2,000z, so dumping a full
+// bag never funds an upgrade. Pinned by gear_sim.js.
+const sellVal=it=>Math.max(1,Math.round(50*(1+.9*(it.sec||0))*(1+1.4*(it.tier||0))*(1+.005*(it.lvl||0))));
 function sell(id){const i=S.inv.findIndex(x=>String(x.id)===String(id));if(i<0)return;const it=S.inv.splice(i,1)[0];earnZeny(sellVal(it));(it.cards||[]).forEach(c=>S.cards.push(c));if(selB==it.id)selB=null;ui();save()}
 // Quest goal AND reward are solved from the level you are standing at, by the one function the
 // panel and the Claim button both read - so what the quest panel states is exactly what you are
@@ -1073,7 +1178,7 @@ const cell=(it,sel,extra='')=>`<div class="cell b${dtier(it)}${sel?' sel':''}" d
 function itemMain(it){
   if(it.card)return`<b class="r${GI[it.g]}">${it.n}</b><div>${GRADE[it.g]} card &middot; <b>${SU(it.stat)} +${it.v}</b></div><div><small>Fits: ${CFL[CFIT[it.stat]]} only</small></div>`;
   return`<b class="r${it.tier}">${iname(it)}</b><div><small>${RAR[it.tier].n} ${SLOTS[it.slot].label}${it.wt?' ('+it.wt+')':''} &middot; ${SECN[it.sec||0]}</small></div>
-  <div><b>${SLOTS[it.slot].stat} +${ev(it)}</b>${it.r?` <small>(base ${it.val})</small>`:''}</div>${(it.aff||[]).map(a=>`<div class="r1">&#9670; ${affTxt(a)}</div>`).join('')}`}
+  <div><b>${SLOTS[it.slot].stat} +${ev(it)}</b>${it.r?` <small>(base ${it.val})</small>`:''}</div>${(it.aff||[]).length?`<div class="sec">Affixes <small>(${it.aff.length} random)</small></div>`:''}${(it.aff||[]).map(a=>`<div class="r1">&#9670; ${affTxt(a)}</div>`).join('')}`}
 function itemDetail(it){if(it.card)return itemMain(it);const cs=it.cards||[];return itemMain(it)+Array.from({length:it.slots||0},(_,i)=>`<div><small>${cs[i]?'&#9670; '+cardTxt(cs[i]):'&#9671; empty card slot'}</small></div>`).join('')+(canUse(it)?'':'<div class="r0"><small>Your class cannot use this.</small></div>')}
 const cardSlots=(it,k)=>Array.from({length:it.slots||0},(_,i)=>{const c=(it.cards||[])[i];return c?`<div><small class="r${GI[c.g]}">&#9670; ${cardTxt(c)}</small> <button data-a="unsock" data-v="${k}:${i}">Remove ${200*(c.g+1)}z</button></div>`:'<div><small>&#9671; empty slot</small></div>'}).join('');
 const tnode=n=>{const c=CLASSES[n],pj=S.jobs[n],cur=n===S.cls,blk=classBlock(n);return`<div class="tn ${cur?'cur':blk?(pj?'played':'lock'):'ok'}${selK===n?' pick':''}" data-a="selk" data-v="${n}"><b>${n}</b><small>${pj?`Job ${pj.jl}/${c.mj}`:'Lv '+c.rj+' req'}</small></div>`};
@@ -1087,25 +1192,25 @@ const V={
     // same size whichever map or field is picked.
     return`<div class="mapband">
       <div class="mapband-t">Maps <small>&middot; click one to see its stages below</small></div>
-      <div class="mapgrid">${MAPS.map((m,i)=>{const cur=i===mapM,here=i===S.mp,open=S.prog[i]>1;
+      <div class="mapgrid">${MAPS.map((m,i)=>{const cur=i===mapM,here=i===S.mp;
         return`<button class="mapcard${cur?' on':''}${here?' here':''}" data-a="selm" data-v="${i}" title="${m.n} - ${m.t}">
-          <b>${m.n}</b><small>${here?'● here':open?m.rec:'farming'}</small></button>`}).join('')}</div></div>
+          <b>${m.n}</b><small>${here?'● ':''}${m.rec}</small></button>`}).join('')}</div></div>
     <div class="mapband fields">
       <div class="mapband-t">${mp.n} <small>&middot; ${mp.t} &middot; rec. ${mp.rec} (not a limit) &middot; ${Math.min(pr-1,10)}/10 stages unlocked</small>
         <button class="go" data-a="go" ${mapL>pr?'disabled':''}>${S.mp===mapM&&S.lvl===mapL?'You are here':'Travel to '+mp.n+' Stage '+mapL}</button></div>
-      <div class="lvgrid">${Array.from({length:10},(_,i)=>{const l=i+1,lock=l>pr;return`<button class="map-node${lock?' locked':''}${S.mp===mapM&&S.lvl===l?' active':''}${mapL===l?' picked':''}${l===10?' boss-node':''}" data-a="sell_" data-v="${l}" title="Stage ${l} - ${SECN[secOf(l)]}"><b>${l===10?'💀 ':''}Stage ${l}</b><small>${mapM<5&&l<=5?'1st job':secOf(l)===0?'novice':secOf(l)===1?'1st job':secOf(l)===2?'2nd job':'boss'}</small></button>`}).join('')}</div></div>
+      <div class="lvgrid">${Array.from({length:10},(_,i)=>{const l=i+1,lock=l>pr;return`<button class="map-node${lock?' locked':''}${S.mp===mapM&&S.lvl===l?' active':''}${mapL===l?' picked':''}${l===10?' boss-node':''}" data-a="sell_" data-v="${l}" title="Stage ${l}"><b>${l===10?'💀 ':''}Stage ${l}</b></button>`}).join('')}</div></div>
     <div class="mapcols">
-      <div class="mob-card"><div class="hd">${mp.n} Stage ${mapL} &mdash; ${SECN[F.sec]}${mapM<5&&mapL<=5?'<br><small>Starter farming · Base Lv 10–60 · gentle packs</small>':''}</div>
-        <div class="sec">Monsters</div>
+      <div class="mob-card"><div class="hd">${mp.n} Stage ${mapL}${mapM<5&&mapL<=5?'<br><small>Starter farming · Base Lv 10–60 · gentle packs</small>':''}</div>
+        <div class="sec">Monsters <small>&middot; every drop here is <b class="r${F.tier}">${RAR[F.tier].n}</b></small></div>
         ${F.mobs.map(m=>`<div class="mobentry"><b>${m.n}</b>
-          ${m.drops.map(dropTxt).join('')}
+          ${m.drops.map(d=>dropTxt(d,F.tier)).join('')}
           <div class="dropline"><span>🃏 ${m.card.n} <small>(${SU(m.card.stat)} +${cardVal(m.card.g,m.card.stat)}, ${GRADE[m.card.g]})</small></span><b>${m.cardCh}%</b></div>
           ${m.ore?`<div class="dropline ore"><span>🔶 Oridecon &middot; 🔷 Elunium</span><b>${m.oreCh*100}% each</b></div>`:''}
         </div>`).join('<hr>')}</div>
       <div class="mob-card"><div class="hd">Boss &amp; pets</div>${mapL===10?`<small>Boss fights immediately with ${mapM<5?3:5} monsters. Defeat the boss to reset the fight.</small>`:''}
-        ${F.boss?`<div class="mobentry"><b class="r3">${F.boss.n} (BOSS)</b>
+        ${F.boss?`<div class="mobentry"><b class="r4">${F.boss.n} (BOSS)</b>
           <div class="poollist">${F.boss.drops.map(([T,ch])=>`<span class="poolitem">${poolIc(T)} ${T.n}<b>${ch}%</b></span>`).join('')}</div>
-          <small>Each item rolls independently; a boss can drop zero or several pieces.</small>
+          <small>Every boss drop is <b class="r4">Legendary</b> with random affixes. Each item rolls independently; a boss can drop zero or several pieces.</small>
           <div class="dropline"><span>🃏 ${F.boss.card.n} <small>(${SU(F.boss.card.stat)} +${cardVal(3,F.boss.card.stat)}, Legendary)</small></span><b>${F.boss.cardCh}%</b></div>
           <div class="dropline ore"><span>🔶 Oridecon &middot; 🔷 Elunium</span><b>${F.boss.oreCh*100}% each</b></div>
         </div>`:`<small>Boss appears at Stage 10.</small>`}
@@ -1133,18 +1238,24 @@ const V={
         <div class="sk-head"><span class="sk-kind">${kind}</span>${off?'<span class="sk-paused">OFF</span>':''}</div>
         <div class="si" aria-hidden="true">${SKILL_ICON[s.id]||'✦'}</div><div class="sk-name">${s.n}</div>
         <div class="sk-level"><b>Lv ${L}</b> / ${s.max}</div>
-        ${L&&s.type!=='pas'?`<label class="sk-autocast"><input type="checkbox" data-a="sktog" data-v="${s.id}" ${off?'':'checked'} aria-label="Auto cast ${s.n}"> Auto cast</label>`:''}
         <button data-a="skill" data-v="${s.id}" aria-label="Increase ${s.n}" title="${L<s.max?'level '+(L+1)+' costs '+skCost(L+1)+' points':'max level'}" ${av>=skCost(L+1)&&L<s.max?'':'disabled'}>${L<s.max?'+'+skCost(L+1):'MAX'}</button></div>`}).join('')}</div>`:''}).join('')
-    +(sel?`<div class="mob-card" style="margin-top:8px"><b>${sel.n}</b> <small>${sel.type==='pas'?'Passive':sel.type==='heal'?'Auto-heal':sel.type==='to'?'Tradeoff (auto-cast)':'Active (auto-cast)'}${sel.rng?' &middot; RANGED':''}${sel.aoe?' &middot; AREA':''}${sel.dot?' &middot; DOT':''}${sel.stun?' &middot; STUN':''}${sel.chain?' &middot; CHAIN':''}</small><br><small>${sel.d(Math.max(1,lv(sel.id)))}</small>${lv(sel.id)&&lv(sel.id)<sel.max?`<br><small>Next: ${sel.d(lv(sel.id)+1)}</small>`:''}${sel.type!=='pas'&&lv(sel.id)?`<br><small>Use this skill's Auto cast checkbox to pause or resume it.</small>`:''}</div>`:'')
+    +(sel?(()=>{const SL=lv(sel.id),soff=!!(SL&&sel.type!=='pas'&&skOff(sel.id));return`<div class="mob-card" style="margin-top:8px"><div class="sk-detail-head"><b>${sel.n}</b> <small>${sel.type==='pas'?'Passive':sel.type==='heal'?'Auto-heal':sel.type==='to'?'Tradeoff (auto-cast)':'Active (auto-cast)'}${sel.rng?' &middot; RANGED':''}${sel.aoe?' &middot; AREA':''}${sel.dot?' &middot; DOT':''}${sel.stun?' &middot; STUN':''}${sel.chain?' &middot; CHAIN':''}</small></div><div class="sk-detail-autocast">${SL&&sel.type!=='pas'?`<label class="sk-autocast"><input type="checkbox" data-a="sktog" data-v="${sel.id}" ${soff?'':'checked'} aria-label="Auto cast ${sel.n}"> Auto cast this skill</label><small class="${soff?'r0':''}">${soff?'Paused - it will not be used until you check this again.':'Cast automatically every time you attack.'}</small>`:'<small>Passive or not learned yet - nothing to auto-cast.</small>'}</div><small>${sel.d(Math.max(1,SL))}</small>${SL&&SL<sel.max?`<br><small>Next: ${sel.d(SL+1)}</small>`:''}</div>`})():'')
     +`<button class="full" data-a="rskill">Reset skills (${rcost()}z)</button>`},
   bag0(){const sel=selB&&S.inv.find(x=>String(x.id)===String(selB));const n=Math.max(30,Math.ceil(S.inv.length/6)*6);const inv=[...S.inv].sort((a,b)=>b.tier-a.tier||ev(b)-ev(a));
-    return`<div class="row"><span class="chip">🔶 Oridecon <b>${S.ore.ori}</b></span><span class="chip">🔷 Elunium <b>${S.ore.elu}</b></span></div><div class="row" style="margin-top:4px"><small>${S.inv.length} items</small><button data-a="sellbelow" data-v="1">Sell Common/Fine</button><button data-a="sellbelow" data-v="2">Sell up to Rare</button></div>
-    <div class="grid">${Array.from({length:n},(_,i)=>inv[i]?cell(inv[i],sel&&sel.id===inv[i].id,`data-a="selb" data-v="${inv[i].id}"`):'<div class="cell empty"></div>').join('')}</div>
+    return (eqPick?equipChooser(eqPick):'')
+    +`<div class="row"><span class="chip">🔶 Oridecon <b>${S.ore.ori}</b></span><span class="chip">🔷 Elunium <b>${S.ore.elu}</b></span></div><div class="row" style="margin-top:4px"><small class="${S.inv.length>=BAGMAX?'r0':''}">${S.inv.length}/${BAGMAX} items${S.inv.length>=BAGMAX?' &middot; BAG FULL':''}</small><button data-a="sellbelow" data-v="1">Sell Common/Fine</button><button data-a="sellbelow" data-v="2">Sell up to Rare</button></div>
+    <small>Selling pays a small flat amount - a bag dump never funds an upgrade.</small>
+    <div class="grid">${Array.from({length:n},(_,i)=>{const it=inv[i];if(!it)return'<div class="cell empty"></div>';
+      const on=!!(sel&&sel.id===it.id),fits=!!eqPick&&slotAccepts(eqPick,it);
+      // While a slot is being chosen, every item that fits it is ringed in green and equips on
+      // a click. Everything else behaves exactly like the normal bag, so viewing, selling, the
+      // detail card and the tooltips all keep working.
+      return fits?`<div class="cell b${dtier(it)}${on?' sel':''} fit" data-tip="${it.id}" aria-label="${iname(it)} - fits this slot, click to equip" data-a="eqpick" data-v="${it.id}:${eqPick}">${icon(it)}${it.r?`<i class="rf">+${it.r}</i>`:''}</div>`
+        :cell(it,on,`data-a="selb" data-v="${it.id}"`)}).join('')}</div>
     <div class="mob-card" style="margin-top:8px">${sel?itemDetail(sel)+`<div class="row" style="margin-top:6px"><button data-a="equip" data-v="${sel.id}" ${canUse(sel)?'':'disabled'}>Equip</button><button data-a="sell" data-v="${sel.id}">Sell ${sellVal(sel)}z</button></div>`:'<small>Click an item to see its stats. Hover for a quick tooltip.</small>'}</div>`},
   equip(){const c=C(),sel=S.eq[selE],pos={head:'grid-column:2;grid-row:1',weapon:'grid-column:1;grid-row:2',armor:'grid-column:2;grid-row:2',off:'grid-column:3;grid-row:2',acc1:'grid-column:1;grid-row:3',leg:'grid-column:2;grid-row:3',acc2:'grid-column:3;grid-row:3'};
     return`<div class="doll">${EQK.map(([k,l,ic])=>{const e=S.eq[k];return`<div class="cell b${e?dtier(e):0}${selE===k?' sel':''}" style="${pos[k]}" data-a="seleq" data-v="${k}" ${e?`data-tip="${e.id}"`:''}>${e?icon(e)+(e.r?`<i class="rf">+${e.r}</i>`:''):`<span style="opacity:.3">${ic}</span>`}<i class="rf" style="left:2px;right:auto;top:2px;bottom:auto;color:#fff;background:#3b2a1add;font-size:9px;font-style:normal">${l}</i></div>`}).join('')}</div>`
-    +(eqPick?equipChooser(eqPick):'')
-    +`<div class="mob-card">${sel?itemMain(sel)+cardSlots(sel,selE)+insertUI(sel)+refineUI(sel,selE)+`<div class="row" style="margin-top:6px"><button data-a="unequip" data-v="${selE}">Unequip</button></div>`:'<small>Click any slot above to choose what to wear there. Select one to inspect it, remove cards or refine.</small>'}</div>`
+    +`<div class="mob-card">${sel?itemMain(sel)+cardSlots(sel,selE)+insertUI(sel)+refineUI(sel,selE)+`<div class="row" style="margin-top:6px"><button data-a="unequip" data-v="${selE}">Unequip</button></div>`:'<small>Click any slot above to choose what to wear there (the Bag opens with the items that fit already highlighted). Select one to inspect it, remove cards or refine.</small>'}</div>`
     +`<small>Weapons: ${c.wt.join(', ')} &middot; ${canShield()?'Shield allowed':'No shield'}${dualOn()?' &middot; <b>Dual-wield: daggers/katars in both hands</b>':''}</small>`},
   cards(){const g={};S.cards.forEach(c=>(g[c.n]=g[c.n]||[]).push(c));const ks=Object.keys(g),sel=g[selC]?g[selC][0]:null;
     return`<div class="grid">${ks.map(n=>`<div class="cell b${GI[g[n][0].g]}${n===selC?' sel':''}" data-a="selc" data-v="${n}" data-tip="${g[n][0].id}">🃏<i class="rf">x${g[n].length}</i></div>`).join('')||'<small>No cards yet. Every monster drops its own card at a low chance.</small>'}</div>
@@ -1158,6 +1269,10 @@ const V={
   set(){const hair=((S.hair|0)%19+19)%19+1,sex=S.sex==='f'?'Female':'Male';return`<div class="hd">Appearance</div><div class="row"><button data-a="sex" data-v="m" aria-label="Choose male sprite" style="${S.sex==='f'?'':'background:#ffe08a'}">♂ Male</button><button data-a="sex" data-v="f" aria-label="Choose female sprite" style="${S.sex==='f'?'background:#ffe08a':''}">♀ Female</button></div>
   <div class="hair-preview-card"><div class="hair-preview-stage"><canvas id="hairPreview" width="126" height="134" role="img" aria-label="Live ${sex.toLowerCase()} ${S.cls} hair preview"></canvas><span class="hair-preview-loading" id="hairPreviewLoading">Loading sprite…</span></div><div class="hair-preview-info"><span class="eyebrow">LIVE PREVIEW</span><b>${S.cls}</b><span>${sex} &middot; front idle pose</span><span class="hair-style-label">Style ${hair} of 19</span></div></div>
   <div class="row hair-controls" style="margin-top:4px;align-items:center;gap:8px"><button data-a="hair" data-v="-1" aria-label="Previous hairstyle" title="Previous hairstyle">◀</button><span>Hair style ${hair} / 19</span><button data-a="hair" data-v="1" aria-label="Next hairstyle" title="Next hairstyle">▶</button></div><small>Preview updates here and on your character as you change hair or gender.</small>
+    <div class="hd" style="margin-top:10px">Damage numbers</div>
+    <div class="row"><button data-a="dmgshow" data-v="on" class="${S.dmgShow!==false?'on':''}" aria-pressed="${S.dmgShow!==false}">Show: On</button><button data-a="dmgshow" data-v="off" class="${S.dmgShow===false?'on':''}" aria-pressed="${S.dmgShow===false}">Show: Off</button></div>
+    <div class="row" style="margin-top:4px"><button data-a="dmgfmt" data-v="short" class="${S.dmgShort!==false?'on':''}" aria-pressed="${S.dmgShort!==false}">Short &middot; 100K / 1M</button><button data-a="dmgfmt" data-v="full" class="${S.dmgShort===false?'on':''}" aria-pressed="${S.dmgShort===false}">Full &middot; 100,000</button></div>
+    <small>The first switch shows or hides the floating combat numbers; the second picks how they read (100K / 1M, or every digit). Normal, critical and incoming damage all follow both, and both are saved with your account.</small>
     <div class="hd" style="margin-top:10px">Gameplay</div><label><input type="checkbox" data-a="auto" ${S.auto!==false?'checked':''}> Auto-equip better gear</label><br><label><input type="checkbox" data-a="adv" ${S.adv!==false?'checked':''}> Auto-advance to next level (turn off to farm)</label>
     <p><small>Drag the view to rotate, scroll to zoom. Hotkeys: M S J K B E C Q R L P O, Esc to close.</small></p><button class="full" data-a="reset">Erase this account's save &amp; restart</button><button class="full" data-a="logout">Logout</button>`},
   gm(){return`<div class="hd">GM multiplier (EXP, Job EXP, Zeny, quests)</div><div class="row">${[1,10,100,1000].map(x=>`<button data-a="gmx" data-v="${x}" ${S.gmx===x?'style="background:#ffe08a"':''}>x${x}</button>`).join('')}</div>
@@ -1181,13 +1296,15 @@ function slotAccepts(k,it){if(!it||it.card||it.ore||!S.inv.includes(it))return f
   if(k==='acc1'||k==='acc2')return it.slot==='acc';
   if(k==='off')return it.slot==='off'?canShield():it.slot==='weapon'&&dualOk(it);
   return it.slot===k}
+// Choosing a slot does not open a second window: it switches to the real Bag tab and highlights
+// the items that fit that slot (see V.bag0, which rings them green and wires the click to equip).
+// This banner is the header of that mode - what is being chosen, what is worn now, and how out.
 function equipChooser(k){
-  const cur=S.eq[k],list=S.inv.filter(it=>slotAccepts(k,it)).sort((a,b)=>ev(b)-ev(a));
-  const nm=EQK.find(x=>x[0]===k)||[,k,SLOTS.weapon.ic];
-  return`<div class="mob-card chooser"><div class="hd">${nm[2]} ${nm[1]} <small>&middot; ${list.length} ${nm[1].toLowerCase()} in your bag</small><button class="x" data-a="eqclose">&#10005;</button></div>
-  <small>${cur?`Now worn: <b class="r${cur.tier}">${iname(cur)}</b> (${SLOTS[cur.slot].stat} +${ev(cur)})`:'Nothing worn in this slot.'} &middot; your class may use ${C().wt.join(', ')}${k==='off'?(canShield()?' + shields':' + off-hand daggers/katars'):''}</small>
-  ${list.length?list.map(it=>{const d=ev(it)-ev(cur||{val:0});return`<div class="slot"><span class="cell b${dtier(it)}" style="width:30px;height:30px;font-size:16px;flex:none">${icon(it)}</span><span style="flex:1;min-width:0"><b class="r${it.tier}">${iname(it)}</b><br><small>${RAR[it.tier].n} ${SLOTS[it.slot].label}${it.wt?' ('+it.wt+')':''} &middot; ${SLOTS[it.slot].stat} +${ev(it)}${(it.cards||[]).length?' &middot; '+it.cards.length+' card(s)':''} ${d>0?`<b class="r1">(+${d} better)</b>`:d<0?`<b class="r0">(${d})</b>`:'<b class="r0">(same)</b>'}</small></span><button data-a="eqpick" data-v="${it.id}:${k}">Equip</button></div>`}).join(''):'<small>Nothing in your bag fits this slot.</small>'}
-  <div class="row" style="margin-top:6px">${cur?`<button data-a="unequip" data-v="${k}">Unequip ${nm[1].toLowerCase()}</button>`:''}<button data-a="eqopen" data-v="${k}">Open the Bag tab</button></div></div>`}
+  const cur=S.eq[k],fit=S.inv.filter(it=>slotAccepts(k,it)),nm=EQK.find(x=>x[0]===k)||[,k,SLOTS.weapon.ic];
+  const deltas=fit.slice(0,6).map(it=>{const d=ev(it)-ev(cur||{val:0});return`<b class="r${it.tier}">${iname(it)}</b> <b class="${d>0?'r1':'r0'}">(${d>0?'+':''}${d})</b>`}).join(' &middot; ');
+  return`<div class="mob-card chooser"><div class="hd">${nm[2]} Choosing a ${nm[1].toLowerCase()} <small>&middot; ${fit.length} highlighted item${fit.length===1?'':'s'} fit${fit.length?' below':''}</small><button class="x" data-a="eqclose">&#10005;</button></div>
+  <small>${cur?`Now worn: <b class="r${cur.tier}">${iname(cur)}</b> (${SLOTS[cur.slot].stat} +${ev(cur)})`:'Nothing worn in this slot.'} &middot; your class may use ${C().wt.join(', ')}${k==='off'?(canShield()?' + shields':' + off-hand daggers/katars'):''} &middot; click a green item to wear it; everything else in the bag can still be inspected or sold.</small>
+  ${fit.length?`<small style="display:block;margin-top:4px">Compared to what you wear: ${deltas}${fit.length>6?` &middot; +${fit.length-6} more`:''}</small>`:'<small style="display:block;margin-top:4px">Nothing in your bag fits this slot.</small>'}</div>`}
 function equipIn(k,id){const it=S.inv.find(x=>String(x.id)===String(id));
   if(!it)return;if(!slotAccepts(k,it)){log('Your class cannot use that there.');return}
   const old=S.eq[k];S.eq[k]=it;S.inv.splice(S.inv.indexOf(it),1);if(old)S.inv.push(old);
@@ -1199,10 +1316,14 @@ function renderQ(){const e=$('qp');if(!S){e.style.display='none';return}e.style.
   e.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:center;font-weight:bold"><span>📜 Quests</span><button data-q="t" style="padding:0 6px">${qOpen?'&minus;':'+'}</button></div>`+(qOpen?(S.q||[]).map((q,i)=>`<div style="margin-top:5px"><div>${qTxt(q)}</div><div class="pbar"><i style="width:${Math.min(100,q.prog/q.goal*100)}%"></i></div><div style="display:flex;justify-content:space-between;align-items:center"><small>${q.prog}/${q.goal} &middot; ${(q.z||0).toLocaleString()}z &middot; ${(q.xp||0).toLocaleString()}xp</small>${q.prog>=q.goal?`<button data-q="c${i}">Claim</button>`:''}</div></div>`).join(''):'')}
 $('qp').onclick=e=>{const b=e.target.closest('[data-q]');if(!b)return;const v=b.dataset.q;if(v==='t'){qOpen=!qOpen;renderQ()}else ACT.claim(v.slice(1))};
 function refineUI(it,k){const r=it.r||0,o=it.slot==='weapon'?'ori':'elu',c=refCost(it);return`<div class="sec">Refine</div><small>${SLOTS[it.slot].stat} +${ev(it)} &rarr; +${Math.round(it.val*(1+(r+1)*.15))} &middot; ${r>=10?'MAX':'Success '+refCh(it)+'% &middot; '+c.toLocaleString()+'z + 1 '+ORE[o]+' (you have '+S.ore[o]+')'}</small><div class="row" style="margin-top:4px"><button data-a="refine" data-v="${k}" ${r>=10||S.ore[o]<1||S.zeny<c?'disabled':''}>Refine</button></div>`}
-function petDetail(p){const sp=PETS[p.sp],g=p.mut,sk=p.sk||[1,2,3],ps=PET_SKILLS.find(x=>x.id===p.skill);
+function petDetail(p){const sp=PETS[p.sp],g=p.mut,sk=p.sk||[1,2,3],SL=petSkills(p);
   return`<div class="mob-card" style="margin-top:8px"><div class="hd r${RCL[sp.r]}">${petIcon(sp,true)} ${sp.n} <small>${RN[sp.r]}</small></div><small>Mutation: <b>${g?'Grade '+g+' (x'+MUT[g]+' dmg)':'none (x1)'}</b> &middot; ${petDmg(p).toLocaleString()} dmg every ${petInt(p).toFixed(2)}s</small>`
   +p.eq.map((t,i)=>`<div class="slot"><span><b>${PEQ[i].n} &middot; Level ${t}/${PT.length}</b> <small>(${t?PT[t-1]:'Untrained'})</small><br><small>${PEQ[i].d(t)}</small>${t<PT.length?`<br><small class="r0">${Math.round(PTG[t]*100)}% upgrade success &middot; ${t+2<=PT.length?Math.round(GREAT*100)+'% double upgrade chance on success':'double upgrade unavailable at this level'}</small>`:''}</span><button data-a="peq" data-v="${p.id}:${i}" ${t>=PT.length||S.zeny<peqCost(t)?'disabled':''}>${t>=PT.length?'MAX':'🎲 '+peqCost(t).toLocaleString()+'z'}</button></div>`).join('')
-  +`<div class="sec">Gacha pet skill</div><small>${ps?`<b>${ps.icon} ${ps.n}</b> &middot; ${ps.kind==='buff'?'Player buff':ps.kind==='aoe'?'AoE attack':'Single-target attack'} &middot; ${ps.desc}`:'No skill yet. Roll one of six random pet skills.'}</small><div class="row" style="margin-top:4px"><button data-a="pskill" data-v="${p.id}" ${S.zeny<petSkillCost(p)?'disabled':''}>🎲 ${ps?'Reroll skill':'Gacha skill'} (${petSkillCost(p).toLocaleString()}z)</button></div><small>Six equally weighted skills: 2 player buffs, 2 AoE attacks, 2 single-target attacks (1/6 each).</small>`
+  +`<div class="sec">Pet skills &middot; 2 slots</div>`
+  +[0,1].map(i=>{const q=SL[i];return q?`<small><b>${q.icon} ${q.n}</b> &middot; ${q.kind==='buff'?'Player buff':q.kind==='aoe'?'AoE attack':'Single-target attack'} &middot; ${q.desc}</small>`:`<small>Slot ${i+1}: <b class="r0">empty</b> - one gacha fills both slots.</small>`}).join('<br>')
+  +`<div class="row" style="margin-top:4px"><button data-a="pskill" data-v="${p.id}" ${S.zeny<petSkillCost(p)?'disabled':''}>🎲 ${SL.length?'Reroll both skills':'Gacha both skills'} (${petSkillCost(p).toLocaleString()}z)</button></div>`
+  +`<small>Eight equally weighted skills: 4 player buffs, 2 AoE attacks, 2 single-target attacks. One roll fills both slots and never repeats a skill; a pet uses one skill every ${PETGAP}s.</small>`
+  +`<small style="display:block;margin-top:4px">Player buffs last 30s on a 60s cooldown and <b>never stack</b> - while one is up another pet's copy is ignored, and the ATK and MATK buffs cannot run at the same time.</small>`
   +`<div class="row" style="margin-top:6px"><button data-a="pon" data-v="${p.id}">${p.on?'Remove from battle':'Send to battle'}</button><button data-a="prel" data-v="${p.id}">Release</button></div><div class="sec">Mutation</div>`
   +`<div class="row"><button data-a="proll" data-v="${p.id}" ${busy(p)?'disabled':''}>🎲 Roll (${rollCost(p).toLocaleString()}z)</button><button data-a="pauto" data-v="${p.id}" ${p.roll||(rollingSet.has(p.id)&&!autoSet.has(p.id))?'disabled':''}>${autoSet.has(p.id)?'⏹ Stop auto':'🔁 Auto roll'}</button></div>`
   +`<small>Auto-roll: tap a grade to skip it (✕) or stop on it (✓)</small><div class="row gt">${[1,2,3,4,5,6].map(x=>`<button data-a="psk" data-v="${p.id}:${x}" class="${sk.includes(x)?'':'on'}">G${x} ${sk.includes(x)?'✕':'✓'}</button>`).join('')}</div>`
@@ -1220,7 +1341,10 @@ function renderWin(){
   host.innerHTML=tabs.map(k=>`<div class="win wp${k==='map'?' wide':''}" data-win="${k}"><div class="title"><span>${TABS[k][1]}</span><button data-x="${k}">&#10005;</button></div><div class="body wbody">${V[k]()}</div></div>`).join('');
   host.querySelectorAll('[data-win]').forEach(e=>{e.querySelector('.wbody').scrollTop=e.dataset.win==='log'?1e6:(old[e.dataset.win]||0)});
   if(tabs.includes('set'))drawHairPreview()}
-const MAX_TABS=3;const openTab=k=>{if(k==='gm'&&!S.gm)return;if(k!=='status')eqPick=null;const i=tabs.indexOf(k);if(i>=0)tabs.splice(i,1);else{if(tabs.length>=MAX_TABS)tabs.shift();tabs.push(k);if(k==='map'){mapM=S.mp;mapL=S.lvl}}renderWin()};
+const MAX_TABS=3;const openTab=k=>{if(k==='gm'&&!S.gm)return;if(k!=='status')eqPick=null;const i=tabs.indexOf(k);if(i>=0)tabs.splice(i,1);else{if(tabs.length>=MAX_TABS)tabs.shift();tabs.push(k);
+  // Reopening a window starts at its first sub-tab: Status shows Stats, Inventory shows Bag.
+  if(k==='status')sub.status='stats';if(k==='bag')sub.bag='bag';
+  if(k==='map'){mapM=S.mp;mapL=S.lvl}}renderWin()};
 const gotoField=(m,l)=>{S.mp=m;S.lvl=l;S.kl=0;mobs=[];mob=null;respawn=.3;pend=[];qRefresh();ui();save()};
 const ACT={
   selm:v=>{mapM=+v;mapL=Math.min(mapL,Math.max(1,S.prog[mapM]));renderWin()},sell_:v=>{mapL=+v;renderWin()},go:()=>{if(mapL<=S.prog[mapM]){gotoField(mapM,mapL);log(`Traveled to ${fieldName()}.`)}},
@@ -1234,6 +1358,8 @@ const ACT={
     S.sk[id]=nx;ui();save()},
   rskill:()=>{if(S.zeny<rcost())return log('Not enough Zeny to reset skills.');S.zeny-=rcost();S.sk={aid:1};S.skOff={};log('Skills reset; every skill auto-casts again.');ui();save()},
   selb:v=>{selB=v;renderWin()},equip:id=>equip(+id),sell:id=>sell(id),sellbelow:v=>{S.inv.filter(i=>i.tier<=+v).slice().forEach(i=>sell(i.id))},
+  // Clicking a green bag tile wears it; the highlight mode stays on so several pieces can be
+  // compared, and closing it is the ✕ on the banner (eqclose).
   eqpick:v=>{const[id,k]=v.split(':');equipIn(k,id)},
   eqclose:()=>{eqPick=null;renderWin()},
   eqopen:k=>{eqPick=null;sub.bag='bag';if(!tabs.includes('bag')){if(tabs.length>=MAX_TABS)tabs.shift();tabs.push('bag')}selB=S.eq[k]?S.eq[k].id:null;renderWin()},
@@ -1243,8 +1369,14 @@ const ACT={
   sellcard:id=>{const i=S.cards.findIndex(c=>String(c.id)===id);if(i<0)return;const c=S.cards.splice(i,1)[0];earnZeny(c.v*150);ui();save()},
   refine:k=>refine(k),sub:v=>{const[t,k]=v.split(':');sub[t]=k;renderWin()},selp:v=>{selP=+v;renderWin()},
   pon:id=>{const p=gp(id);if(!p)return;if(p.on)p.on=false;else if(S.pets.filter(x=>x.on).length<3)p.on=true;else log('Only 3 pets can fight at once. Remove one first.');ui();save()},
-  pskill:id=>{const p=gp(id);if(!p)return;const c=petSkillCost(p);if(S.zeny<c){log('Not enough Zeny for a pet skill roll.');ui();return}S.zeny-=c;const skill=rollPetSkill();p.skill=skill.id;delete petSkillCd[p.id];log(`${PETS[p.sp].n} learned ${skill.n}: ${skill.desc}.`,'r3');ui();save()},
-  psk:v=>{const[id,g]=v.split(':'),p=gp(id);if(!p)return;const a=(p.sk||[1,2,3]).slice(),i=a.indexOf(+g);if(i>=0)a.splice(i,1);else a.push(+g);p.sk=a;ui();save()},ssel:v=>{selS=v;renderWin()},seleq:v=>{selE=v;eqPick=v;renderWin()},
+  pskill:id=>{const p=gp(id);if(!p)return;const c=petSkillCost(p);if(S.zeny<c){log('Not enough Zeny for a pet skill roll.');ui();return}S.zeny-=c;const[a,b]=rollPetSkills();p.skills=[a,b];
+    clearPetCd(p.id);
+    const na=PET_SKILLS.find(s=>s.id===a),nb=PET_SKILLS.find(s=>s.id===b);
+    log(`${PETS[p.sp].n} learned ${na.n} + ${nb.n} (one gacha rolls both slots).`,'r3');ui();save()},
+  psk:v=>{const[id,g]=v.split(':'),p=gp(id);if(!p)return;const a=(p.sk||[1,2,3]).slice(),i=a.indexOf(+g);if(i>=0)a.splice(i,1);else a.push(+g);p.sk=a;ui();save()},ssel:v=>{selS=v;renderWin()},
+  // Clicking an equipment slot highlights the fitting items in the REAL Bag window (it is opened
+  // if it is not already up) instead of popping a second list over the paper doll.
+  seleq:v=>{selE=v;eqPick=v;sub.bag='bag';if(!tabs.includes('bag')){if(tabs.length>=MAX_TABS)tabs.shift();tabs.push('bag')}renderWin()},
   sktog:id=>{if(!S.skOff)S.skOff={};const s=SKILLS.find(x=>x.id===id);if(!s)return;
     if(S.skOff[id])delete S.skOff[id];else S.skOff[id]=1;
     log(s.n+': auto-cast '+(S.skOff[id]?'OFF - you will not use it':'ON')+'.',S.skOff[id]?'r0':'r3');ui();save()},
@@ -1259,14 +1391,16 @@ const ACT={
     ui();save()},
   proll:id=>{const p=gp(id);if(!p||p.roll||rollingSet.has(p.id))return;rollOnce(p,false,g=>{p.roll=g;log(`Mutation roll: Grade ${g} (x${MUT[g]})`,g>=4?'r4':'r0');ui();save()})},pauto:id=>{const p=gp(id);if(!p)return;if(autoSet.has(p.id)){autoSet.delete(p.id);ui();return}if(p.roll||rollingSet.has(p.id))return;if((p.sk||[1,2,3]).length>=6){log('Un-skip at least one grade to auto-roll.');return}autoSet.add(p.id);autoRoll(p)},
   pkeep:id=>{const p=gp(id);if(p){p.mut=p.roll;p.roll=0;ui();save()}},pdisc:id=>{const p=gp(id);if(p){p.roll=0;ui();save()}},
-  prel:id=>{const p=gp(id);if(!p)return;const z=Math.floor(EGG*.3);ask(`Release ${PETS[p.sp].n}? You get ${z}z back.`,()=>{S.pets=S.pets.filter(x=>x!==p);autoSet.delete(p.id);delete petSkillCd[p.id];earnZeny(z);ui();save()})},
+  prel:id=>{const p=gp(id);if(!p)return;const z=Math.floor(EGG*.3);ask(`Release ${PETS[p.sp].n}? You get ${z}z back.`,()=>{S.pets=S.pets.filter(x=>x!==p);autoSet.delete(p.id);clearPetCd(p.id);earnZeny(z);ui();save()})},
   claim:i=>{const q=S.q[+i];if(q&&q.prog>=q.goal){qScale(q);earnZeny(q.z||0);S.exp+=(q.xp||0);log(`Quest complete! +${(q.z||0).toLocaleString()}z, +${(q.xp||0).toLocaleString()} EXP`,'r3');S.q[+i]=newQuest(q.type);checkLevel();ui();save()}},
-  auto:()=>{S.auto=S.auto===false;ui()},adv:()=>{S.adv=S.adv===false;ui()},logout:()=>logout(),
+  auto:()=>{S.auto=S.auto===false;ui()},adv:()=>{S.adv=S.adv===false;ui()},
+  dmgfmt:v=>{S.dmgShort=v!=='full';log('Damage numbers: '+(S.dmgShort?'short (100K / 1M)':'full (100,000)'));ui();save()},
+  dmgshow:v=>{S.dmgShow=v!=='off';log('Damage numbers '+(S.dmgShow?'shown':'hidden')+'.');ui();save()},logout:()=>logout(),
   hair:v=>{S.hair=(((S.hair|0)+(+v||1))%19+19)%19;heroKey='';ui();save()},
   sex:v=>{S.sex=v==='f'?'f':v==='m'?'m':(S.sex==='f'?'m':'f');heroKey='';log(`Appearance: ${S.sex==='f'?'female':'male'}.`);ui();save()},
   reset:()=>{ask('Erase this account save and start over?',()=>{const gm=S.gm;hudRate=null;zenyEarned=0;S=fresh();S.gm=gm;S.q=['kill','loot','boss'].map(newQuest);floats.forEach(f=>f.el&&f.el.remove());floats=[];drops=[];pend=[];mobs=[];mob=null;respawn=.3;logs=[];log('New adventure started.');ui();save()})},
   gmx:v=>{S.gmx=+v;ui();save()},gmz:()=>{S.zeny+=1e6;ui();save()},gmo:()=>{S.ore.ori+=20;S.ore.elu+=20;ui();save()},gml:()=>{S.lv=Math.min(150,S.lv+10);S.pts+=30;S.hp=maxHp();ui();save()},
-  gmj:()=>{const j=jobOf();j.jl=C().mj;j.jx=0;ui();save()},gmu:()=>{S.prog=MAPS.map(()=>10);ui();save()},gmp:v=>{if(S.pets.length>=40)S.pets.shift();const c=PETS.filter(x=>x.r===+v);S.pets.push({id:ri(1e6,9e6),sp:PETS.indexOf(c[ri(0,c.length-1)]),mut:0,eq:[0,0,0],skill:'',on:S.pets.filter(x=>x.on).length<3});ui();save()},gmm:v=>{S.pets.forEach(p=>p.mut=+v);ui();save()},gmc:()=>{S.pets=[];ui();save()}};
+  gmj:()=>{const j=jobOf();j.jl=C().mj;j.jx=0;ui();save()},gmu:()=>{S.prog=MAPS.map(()=>10);ui();save()},gmp:v=>{if(S.pets.length>=40)S.pets.shift();const c=PETS.filter(x=>x.r===+v);S.pets.push({id:ri(1e6,9e6),sp:PETS.indexOf(c[ri(0,c.length-1)]),mut:0,eq:[0,0,0],skills:[],on:S.pets.filter(x=>x.on).length<3});ui();save()},gmm:v=>{S.pets.forEach(p=>p.mut=+v);ui();save()},gmc:()=>{S.pets=[];ui();save()}};
 $('dock').onclick=e=>{const b=e.target.closest('[data-t]');if(b)openTab(b.dataset.t)};
 $('wins').onclick=e=>{const x=e.target.closest('[data-x]');if(x){openTab(x.dataset.x);return}const b=e.target.closest('[data-a]');if(b&&b.dataset.a==='ssel'&&e.target.closest('.sk-autocast'))return;if(b&&!b.disabled&&ACT[b.dataset.a])ACT[b.dataset.a](b.dataset.v)};
 addEventListener('keydown',e=>{if(!S||e.ctrlKey||e.metaKey||e.altKey||/INPUT|TEXTAREA/.test(e.target.tagName))return;const k=e.key.toUpperCase();if(k==='ESCAPE'){tabs.pop();renderWin();return}if(k==='Q'){qOpen=!qOpen;renderQ();return}const X={E:['status','equip'],C:['bag','cards'],R:['status','equip']}[k];if(X){const same=tabs.includes(X[0])&&sub[X[0]]===X[1];sub[X[0]]=X[1];if(same)openTab(X[0]);else{if(!tabs.includes(X[0])){if(tabs.length>=MAX_TABS)tabs.shift();tabs.push(X[0])}renderWin()}return}const f=Object.entries(TABS).find(([,v])=>v[2]===k);if(f)openTab(f[0])});
@@ -1307,6 +1441,11 @@ function bars(){if(!S)return;
   $('kills').textContent=rates.kills.toFixed(1);
   $('kills').title=`Kills/min (last 60s, refreshed every second): ${rates.kills.toFixed(1)} · ${rates.seconds.toFixed(2)} kills/sec`;
   $('zenyRate').textContent=`Zeny earned: ${Math.round(rates.zeny).toLocaleString()}/min (last 60s)`;
+  // One chip per active pet buff, naming the pet that cast it - this is where the no-stacking
+  // rule is visible, next to the countdown.
+  const pbf=[['atk','&#9876; ATK +20%'],['matk','&#10022; MATK +20%'],['hp','&#128156; Max HP +20%'],['leech','&#129704; 5% leech']].filter(([k])=>petBuff[k]>0)
+    .map(([k,l])=>`<span class="pbf">${l} <i>${petBuffSrc[k]||'pet'}</i> ${Math.ceil(petBuff[k+'T'])}s</span>`).join('');
+  const hb=$('hudBuffs');if(hb){hb.style.display=pbf?'flex':'none';hb.innerHTML=pbf}
   $('hpb').style.width=hp+'%';$('hpb').classList.toggle('critical',hp<=30);
   $('hpPct').textContent=Math.round(hp)+'%';$('hpMeter').setAttribute('aria-valuenow',Math.round(hp));
   for(const[id,label,pct,lv]of[['job','Job Level',jp,j.jl],['base','Base Level',bp,S.lv]]){
@@ -1322,7 +1461,9 @@ function update(dt){
   if(!S)return;t+=dt;atkAnim=Math.max(0,atkAnim-dt*2.35);hitAnim=Math.max(0,hitAnim-dt*4);shake=Math.max(0,shake-dt*20);
   for(const k in skCd)skCd[k]=Math.max(0,skCd[k]-dt);
   for(const id in petSkillCd)petSkillCd[id]=Math.max(0,petSkillCd[id]-dt);
-  for(const stat of['atk','matk']){const key=stat+'T';if(petBuff[key]>0){petBuff[key]=Math.max(0,petBuff[key]-dt);if(!petBuff[key])petBuff[stat]=0}}
+  for(const id in petNote)petNote[id]=Math.max(0,petNote[id]-dt);
+  for(const stat of['atk','matk','hp','leech']){const key=stat+'T';if(petBuff[key]>0){petBuff[key]=Math.max(0,petBuff[key]-dt);
+    if(!petBuff[key]){petBuff[stat]=0;petBuffSrc[stat]='';if(stat==='hp')S.hp=Math.min(S.hp,maxHp())}}}
   if(pv('hpreg')&&S.hp<maxHp())S.hp=Math.min(maxHp(),S.hp+dt*maxHp()*pv('hpreg')/100);
   shots.forEach(s=>s.t+=dt*7);shots=shots.filter(s=>{if(s.t<1)return true;if(s.m)scene.remove(s.m);return false});
   tickSkillFx(dt);
