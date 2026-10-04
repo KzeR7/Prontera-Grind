@@ -191,7 +191,7 @@ const AL={str:'STR',agi:'AGI',dex:'DEX',luk:'LUK',int:'INT',hp:'Max HP',atk:'ATK
 // late maps in about five, with bosses still a ~12x fight. See tools/tests/economy_sim.js.
 const SU=k=>k.toUpperCase(),BX_=5.5,Z0=-14,Z1=3,MPS=15,AGGRO=8.5,HPK=42,HPE=1.3,K5=['str','agi','dex','luk','int'];
 const GM_USER='GM',GM_PASS='gm1234';   // CHANGE THE GM PASSWORD before you publish
-const BUILD='2026-10-04 ui-v26 attack-only-weapon simpler-sprite-picker';   // shown on the login card - confirms which file you loaded
+const BUILD='2026-10-04 ui-v27 attack-poses-only no-weapon-when-facing-away';   // shown on the login card - confirms which file you loaded
 $('buildTag').textContent='build '+BUILD;
 
 // ---------- class tree: Novice -> 6 first jobs -> 6 second jobs -> 6 third jobs ----------
@@ -1951,6 +1951,8 @@ function drawSlashFX(x,z,wt){
   slashM.position.set(x,1.15,z);slashM.material.opacity=Math.min(1,atkAnim*1.6)*.9;slashM.scale.set(1.6+atkAnim*1.2,1.6+atkAnim*1.2,1)}
 const mobMesh=new Map(),petMesh=new Map();let curMob=null,mobG=null,mobMats=[],lastBoss=null,dmesh=new Map(),tmp=new THREE.Vector3(),lastProg='';
 function scr(x,y,z){tmp.set(x,y,z).project(cam);return[(tmp.x+1)/2*R.domElement.clientWidth,(1-tmp.y)/2*R.domElement.clientHeight]}
+// Facing-away views (NW 3, N 4, NE 5): the item icon is front-view art and reads wrong there.
+const WEAPON_HIDDEN_DIRS=[3,4,5];
 const weaponNodes=new Map(),WEAPON_ICON_ANGLE={dagger:-35,katar:22,staff:-24,bow:18,axe:-30,sword:-35,mace:-28},WEAPON_ICON_SIZE={dagger:25,katar:30,staff:29,bow:34,axe:30,sword:29,mace:28};
 // Divine Pride supplies square item icons, not held-sprite pivots. These normalized grip
 // points keep the handle at the sprite's hand after the icon is rotated for the pose.
@@ -1972,6 +1974,10 @@ function syncWeaponSprites(pFace,c){
   // v26: the weapon shows only during an attack.  Idle and walking are bare-handed - the
   // owner asked for it, and it also keeps the pack's own arm poses readable in those rows.
   if(pose.kind!==2){weaponNodes.forEach(n=>n.el.style.display='none');return}
+  // v27: the weapon art is a front-view item icon, so an away-facing view (NW, N, NE) would
+  // show it from the wrong side - the owner reported it as a ruined weapon.  Those views go
+  // bare-handed; WHICH views is one list, so the picker's per-view choice can extend it.
+  if(WEAPON_HIDDEN_DIRS.indexOf(dir)>=0){weaponNodes.forEach(n=>n.el.style.display='none');return}
   const[px,py,p]=weaponSpritePixel(dir,pose.kind,pose.frame,wt,packed,pose.count),PK=window.SPRITE_PACK;
   const localScale=packed?PACK_K:2.92/SPR_H,pivotX=packed?PK.pivotX:SPR_W*.5,pivotY=packed?PK.pivotY:SPR_H;
   weaponRight.setFromMatrixColumn(cam.matrixWorld,0);weaponUp.setFromMatrixColumn(cam.matrixWorld,1);

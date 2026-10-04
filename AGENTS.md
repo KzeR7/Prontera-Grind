@@ -1293,3 +1293,43 @@ assigned for feel rather than fidelity. While reworking that, two shipped bugs s
     browser report the truth.
   * A viewer that strips both `<script>` and `<noscript>` would still show only the dark
     shell; the launcher and the header text are the fallback signal in that case.
+
+### 2026-10-04 — `ui-v27 attack poses only, no weapon when facing away`
+* **What changed for the player:**
+  * **The weapon no longer shows on the away-facing views (NW 3, N 4, NE 5).** The weapon art is a
+    front-view item icon, so on a back view it read as a ruined weapon stuck through the body.
+    Those three views now attack bare-handed; the other five keep the weapon. One constant,
+    `WEAPON_HIDDEN_DIRS=[3,4,5]`, so the owner's per-view choice can change it later.
+  * (v26 stands: the weapon only appears at all while attacking.)
+* **The picker is now attack-only** — `tools/sprite_picker.html` was cut down to what the owner asked
+  to manage:
+  * **Idle and walk are no longer shown or asked about.** They are filled automatically from the
+    sheet layout (the measured path the pack already uses), so there is nothing to click for them.
+  * **One row of 8 attack view cards**: pose + hair + weapon, a 6-frame strip each, and a
+    **weapon checkbox per view** — unticked by default for NW/N/NE, matching the game.
+  * Click a card → choose the view's attack frames: one whole attack set per sheet row in one
+    click, or single poses one at a time (clicking a pose fills the current frame and steps on).
+    ◀ back / next ▶ walk every frame of every view.
+  * Dragging inside a preview moves that class+weapon's weapon for that view (and the move is
+    recorded in the selection). A front-view icon cannot be rotated into a back view, which is
+    exactly why the back views default to no weapon.
+  * The copied selection carries only attack frames, the per-view weapon flags and the weapon
+    moves — nothing about idle or walk.
+* **Files touched:** `index.html` (`WEAPON_HIDDEN_DIRS`, weapon guard, `BUILD` v27),
+  `tools/tests/sprite_sim.js` (pins the hidden-direction list and its use),
+  `tools/sprite_picker.html` (attack-only rebuild), `tools/make_sprite_picker.py`
+  (reads `WEAPON_HIDDEN_DIRS` out of `index.html` so the picker's defaults cannot drift),
+  `tools/sprite_picker_data.js` + `tools/sprite_picker_standalone.html` (regenerated),
+  `AGENTS.md`.
+* **Art:** none added, removed, recoloured or rebuilt; `tools/montage.py` was not run.
+* **Tests:** all 13 suites green (class change 22, save/load 10; economy 21, stat 7, card 13,
+  skill 48, gear 20; scene 8, kit 20, UI 13, sprite 10, starter 4; pack 19 bodies). Inline game
+  JS passes `node --check`. The attack picker was booted under a DOM stub in both builds:
+  8 view cards, weapon defaults `[on,on,on,off,off,off,on,on]`, 5 cycle buttons, 54 pose tiles,
+  24 attack poses after auto-fill, and a payload with no idle/walk keys.
+* **Branches / PR:** `arena/01a1054b-prontera-grind`.
+* **Known limits / follow-ups:**
+  * Which views hide the weapon is a fixed list in `index.html` today; the picker's per-view
+    checkboxes are recorded but are not applied per class yet (one list for all classes).
+  * Idle and walk are still the sheet's own layout picks — if the owner ever wants to change
+    them, the pose index still carries them.

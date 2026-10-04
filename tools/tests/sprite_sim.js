@@ -182,6 +182,10 @@ t('official sprites are loaded over the procedural art with safe fallbacks', () 
   assert.ok(src.includes('function syncWeaponSprites(pFace,c){\n  const packed=!!(heroSpr&&heroSpr.userData.pack)'), 'weapon art is mounted to the current packed hero pose');
   assert.ok(src.includes("if(pose.kind!==2){weaponNodes.forEach(n=>n.el.style.display='none');return}"),
             'v26: the held weapon is drawn only on attack frames - idle and walking are bare-handed');
+  assert.ok(src.includes('const WEAPON_HIDDEN_DIRS=[3,4,5];'),
+            'v27: the away-facing views (NW, N, NE) hide the weapon - a front-view item icon reads wrong there');
+  assert.ok(src.includes("if(WEAPON_HIDDEN_DIRS.indexOf(dir)>=0){weaponNodes.forEach(n=>n.el.style.display='none');return}"),
+            'v27: the hidden-view list is what the weapon code consults');
   assert.ok(src.includes("n.el.style.display='grid'"), 'the weapon node is still shown while the attack animation plays');
   assert.ok(src.includes("if(!mob||heroWeaponType(C().n,C().wt,S.eq.weapon&&S.eq.weapon.wt)!=='bow')return"), 'only the Archer weapon family emits the basic arrow projectile');
   assert.ok(src.includes("slashM.visible=atkAnim>.12&&wt!=='bow'&&wt!=='staff'"), 'bow and staff attacks do not show a generic melee slash');

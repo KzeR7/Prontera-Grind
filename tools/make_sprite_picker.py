@@ -148,7 +148,11 @@ def game_constants():
         return json.loads(txt)
 
     url = re.search(r'weaponItemUrl=wt=>WEAPON_ITEM_IDS\[wt\]\?`([^`]+)`', h)
+    hidden = re.search(r'WEAPON_HIDDEN_DIRS=\[([^\]]*)\]', h)
+    dirs = [int(x) for x in hidden.group(1).split(',') if x.strip()] if hidden else []
     return {
+        # views where the game keeps the weapon hidden (front-view item art on a back view)
+        'weaponHiddenDirs': dirs,
         'weaponItemIds': literal('WEAPON_ITEM_IDS={'),
         'weaponIconSize': literal('WEAPON_ICON_SIZE={'),
         'weaponIconAngle': literal('WEAPON_ICON_ANGLE={'),
