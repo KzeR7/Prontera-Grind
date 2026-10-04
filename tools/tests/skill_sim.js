@@ -1,5 +1,5 @@
-// Skills: the roster, the four new effects (dot / stun / chain / tradeoff), the per-skill
-// auto-cast switch, and how many skills fire per swing at each job tier.
+// Skills: the roster, the four new effects (dot / stun / chain / tradeoff), default-on
+// auto-cast behavior and per-skill toggles, plus casts per swing at each job tier.
 //   node tools/tests/skill_sim.js
 const fs = require('fs'), vm = require('vm'), assert = require('assert');
 const src = fs.readFileSync(__dirname + '/../../index.html', 'utf8');
@@ -113,7 +113,7 @@ function makePetHarness(){
 
 let pass = 0, fail = 0;
 const t = (n, f) => { try { f(); console.log('  ok   ' + n); pass++; } catch (e) { console.log('  FAIL ' + n + ' -> ' + e.message); fail++; } };
-console.log('skills: roster, effects, auto-cast switch, casts per swing\n');
+console.log('skills: roster, effects, auto-cast defaults and switches, casts per swing\n');
 
 const byId = id => K.SKILLS.find(s => s.id === id);
 
@@ -565,10 +565,12 @@ t('job tier decides how many skills fire per swing', () => {
     assert.ok(K.SKFADE[i] < K.SKFADE[i - 1], `cast ${i + 1} should land softer than cast ${i}`);
 });
 
-t('switching a skill off stops it being usable, and back on restores it', () => {
+t('learned active skills auto-cast by default; unchecking one pauses only that skill', () => {
   K.S = { cls: 'Lord Knight', sk: { frenzy: 5, spiral: 5 }, skOff: {} };
+  assert.strictEqual(K.skOff('frenzy'), false, 'a newly learned skill should start with Auto cast checked');
   assert.ok(K.skillOn('frenzy'), 'frenzy should be usable at level 5');
   K.S.skOff.frenzy = 1;
+  assert.strictEqual(K.skOff('frenzy'), true, 'the unchecked state was not saved');
   assert.ok(!K.skillOn('frenzy'), 'frenzy still fires after being switched off');
   assert.ok(K.skillOn('spiral'), 'switching one skill off must not affect another');
   delete K.S.skOff.frenzy;

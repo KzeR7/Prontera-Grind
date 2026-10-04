@@ -6,6 +6,8 @@
 //     builds its HTML from a real save shape without throwing and without printing "undefined";
 //   * the map panel lists every map and every field, so adding a map cannot silently vanish;
 //   * clicking a slot produces a chooser whose list is exactly the equippable items;
+//   * learned skills render a checked Auto cast checkbox by default, and the HUD's Kills/min
+//     and rolling Zeny/min indicators are calculated from the current session;
 //   * every data-a="..." action a panel can emit is a key in ACT - a typo there is a dead button
 //     (a previous build shipped one: the GM panel's action was never wired).
 //
@@ -83,7 +85,7 @@ const RAR=[{n:'Common',m:1,w:60},{n:'Fine',m:1.35,w:25},{n:'Rare',m:1.9,w:10},{n
 const PW=[[90,9,1,0],[80,17,3,0],[70,24,5.5,.5],[60,30,9,1],[50,35,13,2],[40,38,18,4],[30,40,24,6],[22,40,30,8],[12,38,38,12],[5,30,45,20]];
 const MAXST=99,ELITELV=100,Z0=-14;
 const statCap=()=>99,selK=null,gp=id=>S&&S.pets.find(x=>String(x.id)===String(id)),classRec=()=>null,tb={};
-const skCost=x=>x,skOff=()=>true;
+const skCost=x=>x,skOff=id=>!!(S&&S.skOff&&S.skOff[id]);
 let petBuff={atk:0,matk:0,atkT:0,matkT:0},petSkillCd={};
 const rollingSet=new Set(),autoSet=new Set(),busy=()=>false;
 let S=null,mapM=0,mapL=1,selB=null,selC=null;   // remaining panel state comes in with the V grab
@@ -203,6 +205,42 @@ t('the skills panel renders for every class tier', () => {
     assert.ok(!/undefined/.test(h), cls + ' skills panel printed undefined');
     assert.ok(h.includes('Skill points'), cls + ' must show the pool');
   });
+});
+
+t('learned active skills use a checked Auto cast box by default', () => {
+  U.S = mkS('Mage'); U.S.sk.fire = 1; U.S.skOff = {}; U.selS = 'fire';
+  let h = U.V.skills();
+  assert.ok(h.includes('<label class="sk-autocast"><input type="checkbox" data-a="sktog" data-v="fire" checked aria-label="Auto cast Fire Bolt"> Auto cast</label>'),
+    'a newly learned active skill should auto-cast by default');
+  assert.ok(!h.includes('Turn auto-cast ON') && !h.includes('Turn auto-cast OFF'), 'the old detail-panel toggle should be gone');
+  assert.ok(src.includes("b&&b.dataset.a==='ssel'&&e.target.closest('.sk-autocast')"), 'clicking the checkbox label should not select/re-render its parent card');
+  U.S.skOff.fire = 1; h = U.V.skills();
+  assert.ok(/<label class="sk-autocast"><input type="checkbox" data-a="sktog" data-v="fire"\s+aria-label="Auto cast Fire Bolt"> Auto cast<\/label>/.test(h),
+    'unchecking Auto cast should render the skill as paused');
+});
+
+t('the HUD shows Kills /Min and a rolling Zeny-per-minute hover rate', () => {
+  assert.ok(src.includes('<b id="zeny" title="Hover for earned Zeny per minute" tabindex="0" style="cursor:help">0</b>'), 'Zeny amount needs a hover hint');
+  assert.ok(src.includes('<div>Kills /Min <b id="kills" title="Kills per minute (rolling 60s)">0.0</b></div>'), 'HUD should display the rate instead of lifetime kills');
+  assert.ok(src.includes("$('zeny').title=`Zeny earned per minute (rolling 60s):"), 'hover title should show Zeny/min');
+  const box = {}; vm.createContext(box);
+  vm.runInContext(grab('const HUD_RATE_WINDOW=60000,HUD_RATE_SAMPLE=1000;', 'function bars(){') + ';this.stepHudRate=stepHudRate;', box);
+  let state = null, m = box.stepHudRate(state, 'player', 100, 4000, 0); state = m.state;
+  assert.strictEqual(m.kills, 0); assert.strictEqual(m.zeny, 0);
+  m = box.stepHudRate(state, 'player', 105, 4600, 30000); state = m.state;
+  assert.ok(Math.abs(m.kills - 10) < .001, '5 kills over 30 seconds should show 10/min');
+  assert.ok(Math.abs(m.zeny - 1200) < .001, '600 earned Zeny over 30 seconds should show 1,200/min');
+  m = box.stepHudRate(state, 'player', 105, 4100, 45000); state = m.state;
+  assert.ok(Math.abs(m.zeny - 800) < .001, 'spending Zeny must not count as negative earnings');
+  m = box.stepHudRate(state, 'player', 105, 4100, 90000); state = m.state;
+  assert.strictEqual(m.kills, 0, 'activity should age out of the rolling minute');
+  assert.strictEqual(m.zeny, 0, 'Zeny earnings should age out of the rolling minute');
+  m = box.stepHudRate(state, 'another-player', 20, 9000, 90000); state = m.state;
+  assert.strictEqual(m.kills, 0, 'a new login should start a fresh rate window');
+  assert.strictEqual(m.zeny, 0, 'a loaded balance should not count as new income');
+  m = box.stepHudRate(state, 'another-player', 30, 10000, 160001);
+  assert.strictEqual(m.kills, 0, 'a long idle gap should start a fresh rolling window');
+  assert.strictEqual(m.zeny, 0, 'earnings from before a long idle gap should not linger');
 });
 
 t('every skill has a distinct icon and upgraded card metadata', () => {

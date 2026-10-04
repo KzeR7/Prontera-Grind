@@ -1131,3 +1131,13 @@ assigned for feel rather than fidelity. While reworking that, two shipped bugs s
 * **Tests:** all 13 suites pass; inline game JavaScript syntax and `git diff --check` pass. The economy regression now separately asserts the 5-hour Base 50–99 interval and 48-hour Base 100–150 tail.
 * **Branches / PR:** `arena/01a10466-prontera-grind`; updated existing PR #9: https://github.com/KzeR7/Prontera-Grind/pull/9
 * **Known limits / follow-ups:** the times are still model estimates at 800 kills/hour, not measured player playtime; playtest the faster upper curve before merging.
+
+### 2026-10-04 — `ui-v25 HUD rates & skill auto-cast`
+* **What changed for the player:**
+  * The HUD now displays Kills /Min instead of the lifetime kill count. Hover the Zeny total to see earned Zeny per minute. Both are rolling recent rates measured in real time during the current login; the Zeny rate counts gains, not purchases.
+  * Each learned active skill now has a simple Auto cast checkbox on its card. New skills remain enabled by default; uncheck one to pause it and check it again to resume.
+* **Files touched:** `index.html` (`BUILD` v25, HUD and Skills panel), `tools/tests/ui_sim.js`, `tools/tests/skill_sim.js`, `AGENTS.md`.
+* **Art:** none; no sprite sheets or atlases changed.
+* **Tests:** all 13 suites pass; the UI regression tests rolling rates, the hover title and checkbox defaults, and the skill regression pins default auto-cast behavior. Inline game JavaScript syntax and `git diff --check` pass.
+* **Branches / PR:** `arena/01a10466-prontera-grind`; updates existing PR #9: https://github.com/KzeR7/Prontera-Grind/pull/9
+* **Known limits / follow-ups:** the HUD rates reset at login or after starting a new adventure; the displayed Zeny rate is gross positive earnings over the recent window, not net profit after spending.
