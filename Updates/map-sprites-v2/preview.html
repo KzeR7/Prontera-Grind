@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Map Kit v2 — preview (tiles, props at game scale, ten map moods)</title>
+<style>
+ body{background:#14171c;color:#cfd6e0;font:14px/1.5 system-ui,sans-serif;margin:0;padding:24px}
+ h1{font-size:20px;color:#fff} h2{font-size:16px;color:#9fc2ff;margin:28px 0 10px}
+ .note{color:#8a93a3;max-width:900px}
+ .grid{display:flex;flex-wrap:wrap;gap:10px}
+ .cell{background:#1d222b;border:1px solid #2c3442;border-radius:8px;padding:8px;text-align:center}
+ .cell span{display:block;font-size:11px;color:#8a93a3;margin-top:5px}
+ .mapcard{background:#1d222b;border:1px solid #2c3442;border-radius:10px;padding:12px;margin:14px 0}
+ .mapcard h3{margin:0 0 8px;font-size:15px;color:#ffd27a}
+ .stage{position:relative;border-radius:6px;overflow:hidden;border:1px solid #000}
+ .stage canvas{display:block}
+ .leg{font-size:11px;color:#8a93a3;margin-top:6px}
+</style>
+</head>
+<body>
+<h1>Prontera Grind — Map Kit v2 preview</h1>
+<p class="note">Everything on this page is drawn live from <code>ro-spritesheet.png</code> +
+<code>ro-spritesheet.json</code>. Tiles are shown 2×2-repeated to prove they are seamless; props are shown
+<b>at in-game scale</b> next to the kit's own 80&nbsp;px character (the scale reference the game uses:
+world&nbsp;height = crop&nbsp;h × 2.9/80 × KIT_PS). Water animates with the kit's two frames, exactly like in game.</p>
+<h2>Terrain tiles (25)</h2><div class="grid" id="tiles"></div>
+<h2>Ten map moods — ground + props at game scale</h2>
+<div id="maps"></div>
+<h2>All billboards (34)</h2><div class="grid" id="props"></div>
+<script>
+(async()=>{
+const man=await (await fetch('ro-spritesheet.json')).json();
+const img=new Image(); img.src=man.meta.image;
+await new Promise(r=>img.onload=r);
+const PS=man.suggest.KIT_PS, PPU=26, HERO=2.9, PK=HERO/80;
+function tileCanvas(n,sz){const t=man.tiles[n],c=document.createElement('canvas');c.width=c.height=sz;
+ const x=c.getContext('2d');x.imageSmoothingEnabled=true;
+ for(let i=0;i<2;i++)for(let j=0;j<2;j++)x.drawImage(img,t.x,t.y,t.w,t.h,i*sz/2,j*sz/2,sz/2,sz/2);return c}
+function propCanvas(n,scale){const s=man.sprites[n];const h=Math.max(8,s.h*PK*(PS[n]||1)*PPU*(scale||1));
+ const w=h*s.w/s.h;const c=document.createElement('canvas');c.width=Math.ceil(w);c.height=Math.ceil(h);
+ c.getContext('2d').drawImage(img,s.x,s.y,s.w,s.h,0,0,w,h);return c}
+function heroCanvas(){const ch=man.character.ro_adventurer,h=HERO*PPU,w=h*ch.frameW/ch.frameH;
+ const c=document.createElement('canvas');c.width=Math.ceil(w);c.height=Math.ceil(h);
+ c.getContext('2d').drawImage(img,ch.x,ch.y,ch.frameW,ch.frameH,0,0,w,h);return c}
+// tiles
+for(const n of Object.keys(man.tiles)){if(n==='cliff')continue;
+ const d=document.createElement('div');d.className='cell';
+ d.appendChild(tileCanvas(n,96));const s=document.createElement('span');s.textContent=n;d.appendChild(s);
+ document.getElementById('tiles').appendChild(d)}
+// props gallery
+for(const n of Object.keys(man.sprites).sort()){
+ const d=document.createElement('div');d.className='cell';d.appendChild(propCanvas(n));
+ const s=document.createElement('span');s.textContent=n+' · '+( (man.sprites[n].h*PK*(PS[n]||1)/HERO).toFixed(1))+'× hero';
+ d.appendChild(s);document.getElementById('props').appendChild(d)}
+// map mood cards
+const waterAnims=[];
+for(const [name,m] of Object.entries(man.suggest.maps)){
+ const card=document.createElement('div');card.className='mapcard';
+ const h3=document.createElement('h3');h3.textContent=name;card.appendChild(h3);
+ const stage=document.createElement('div');stage.className='stage';
+ const W=Math.min(1100,innerWidth-80),H=210;
+ const cv=document.createElement('canvas');cv.width=W;cv.height=H;stage.appendChild(cv);card.appendChild(stage);
+ const leg=document.createElement('div');leg.className='leg';
+ leg.textContent='ground: '+(m.ground||m.tiles||[]).join(', ')+(m.water?' · water: '+m.water[0].replace('_0',''):'')+(m.deck?' · deck: '+m.deck:'')+' · props: '+(m.props||[]).join(', ');
+ card.appendChild(leg);document.getElementById('maps').appendChild(card);
+ const g=cv.getContext('2d');
+ const base=(m.ground||m.tiles)[0].split(' ')[0], base2=((m.ground||m.tiles)[1]||base).split(' ')[0];
+ const draw=(wf)=>{
+   const ts=52;
+   for(let ix=0;ix<W/ts;ix++)for(let iy=0;iy<H/ts;iy++){
+     const t=man.tiles[((ix*7+iy*13)%5===0)?base2:base]||man.tiles[base];
+     g.drawImage(img,t.x,t.y,t.w,t.h,ix*ts,iy*ts,ts,ts);}
+   if(m.road){const t=man.tiles[m.road.split(' ')[0]];
+     for(let ix=0;ix<W/ts;ix++)g.drawImage(img,t.x,t.y,t.w,t.h,ix*ts,H-78,ts,ts);}
+   if(m.paddy){const t=man.tiles['paddy_water'];
+     for(let ix=0;ix<3;ix++)g.drawImage(img,t.x,t.y,t.w,t.h,W-230+ix*56,18,52,52);}
+   if(m.water){const t=man.tiles[m.water[wf]];
+     for(let ix=0;ix<W/ts;ix++)g.drawImage(img,t.x,t.y,t.w,t.h,ix*ts,0,ts,ts);
+     if(m.deck){const d=man.tiles[m.deck.split(' ')[0]];
+       for(let k=0;k<2;k++)g.drawImage(img,d.x,d.y,d.w,d.h,W*0.46+k*40,2,40,56);}}
+   let px=14;
+   for(const pn of (m.props||[])){const s=man.sprites[pn];if(!s)continue;
+     const c=propCanvas(pn);g.drawImage(c,px,H-14-c.height);px+=c.width+16;if(px>W-80)break}
+   const hc=heroCanvas();g.drawImage(hc,px+6,H-12-hc.height);
+   g.fillStyle='rgba(255,255,255,.75)';g.font='10px sans-serif';g.fillText('hero',px+6,H-4)};
+ draw(0);
+ if(m.water)waterAnims.push({draw});
+}
+let wf=0;setInterval(()=>{wf=1-wf;for(const a of waterAnims)a.draw(wf)},600);
+})();
+</script>
+</body>
+</html>

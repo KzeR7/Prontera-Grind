@@ -1100,3 +1100,43 @@ assigned for feel rather than fidelity. While reworking that, two shipped bugs s
 * **Tests:** all 13 suites, inline JavaScript syntax and whitespace checks passed before the game push; this entry is documentation only.
 * **Branches / PR:** `arena/01a1029e-prontera-grind` — https://github.com/KzeR7/Prontera-Grind/pull/7
 * **Known limits / follow-ups:** merge the PR to deploy through the normal GitHub/Cloudflare route; live visual/farming review remains recommended.
+
+### 2026-10-04 — `kit-v2-art map-sprite-brief-v2 deliverable`
+* **What changed for the player:** nothing yet — this is the **art deliverable** for Map Sprite
+  Brief v2 ("closer to real RO"), waiting in `Updates/map-sprites-v2/` for the implementing
+  agent. The game still runs on the v1 kit until it is wired in. The owner found the v1 map
+  sprites below standard and asked for higher-fidelity art researched against divine-pride.net.
+* **What the deliverable is:** a new 2048×2048 atlas (v1 was 1280×512) with **25 terrain tiles
+  (was 8) and 34 environment billboards (was 7)**, one painterly RO-style technique across ten
+  per-map identities: Prontera cottage + big green trees, Izlude golden shore + pier posts,
+  Geffen moody grass + gnarled trees + standing stones + wizard tower, Morocc full desert-ruin
+  set, Payon forest mud + **bamboo groves** + the long-missing `rock_boulder_mossy`, Comodo
+  golden beach palms, Louyang jade grass + paddy water + stone shrine + lantern, Amatsu petal
+  grass + cherry tree + **torii gate + red arch bridge + red deck tile**, Niflheim purple-grey
+  waste + dead tree + tombstone + ruined house, Abyss dark slate + limestone shore + **dark
+  water frames** + stalagmite + crystals. Manifest is a **superset of every v1/morocc name**
+  (drop-in), keeps the v1 character strip pixel-for-pixel (scale reference), and carries a
+  `suggest` block: a complete tuned `KIT_PS` table + per-map recipe suggestions.
+* **Files touched:** `Updates/map-sprites-v2/` (new: atlas, manifest, `README-IMPLEMENTATION.md`
+  for the next agent, `RESEARCH.md` divine-pride notes, `preview.html`, `work/` pipeline +
+  individual assets), `AGENTS.md`. **`index.html` untouched, no `BUILD` bump** — nothing is
+  player-visible until implementation.
+* **Art:** all original painted art (AI-generated to this brief, then processed: seamless-tiled,
+  chroma-keyed, trimmed, measured anchors). divine-pride.net renders were style/palette
+  **reference only**; nothing traced or ripped from the RO client. Variants derived from this
+  kit's own art are documented in RESEARCH.md. Class sprites, `Sprite/`, the pack and
+  `tools/montage.py` untouched.
+* **Tests:** no game code changed, so the 13 suites are unaffected (verified the repo still has
+  no `index.html` diff). The implementing agent must run the full battery after wiring
+  (`kit_sim.js` pins will need moving — the README lists which ones, including the
+  `rock_boulder_mossy` skipped-placement assertion that now inverts).
+* **Branches / PR:** `arena/01a1047a-prontera-grind` — PR link recorded below after publishing.
+* **Known limits / follow-ups:**
+  * Implementation is deliberately left to the next agent: copy the two files over
+    `assets/kit/`, update `KIT_PS`, apply the per-map recipe suggestions, optionally retire
+    `morocc-atlas.js` (all its names are in the v2 manifest), move the kit_sim pins, bump
+    `BUILD`. Full steps in `Updates/map-sprites-v2/README-IMPLEMENTATION.md`.
+  * The Abyss dark-water pair needs one small code change (recipe-selectable water frames);
+    everything else is data.
+  * `standing_stone` was generated as a three-menhir row; the packed sprite is the best single
+    stone (the full row sits in `work/props/` source history if ever wanted).

@@ -142,5 +142,65 @@
   "h": 71,
   "anchorX": 57,
   "anchorY": 67
+ },
+ "bridge_red_arch": {
+  "w": 320,
+  "h": 150,
+  "anchorX": 160,
+  "anchorY": 144
+ },
+ "torii_gate": {
+  "w": 260,
+  "h": 242,
+  "anchorX": 130,
+  "anchorY": 238
+ },
+ "shrine_stone": {
+  "w": 170,
+  "h": 178,
+  "anchorX": 85,
+  "anchorY": 173
+ },
+ "stalagmite": {
+  "w": 133,
+  "h": 260,
+  "anchorX": 66,
+  "anchorY": 256
+ },
+ "crystal_cluster": {
+  "w": 170,
+  "h": 170,
+  "anchorX": 85,
+  "anchorY": 166
+ },
+ "standing_stone": {
+  "w": 112,
+  "h": 230,
+  "anchorX": 56,
+  "anchorY": 226
+ },
+ "tree_dark_gnarled": {
+  "w": 280,
+  "h": 202,
+  "anchorX": 140,
+  "anchorY": 193
+ },
+ "house_prontera": {
+  "w": 280,
+  "h": 234,
+  "anchorX": 140,
+  "anchorY": 227
+ },
+ "tower_geffen": {
+  "w": 90,
+  "h": 340,
+  "anchorX": 45,
+  "anchorY": 336
+ },
+ "pier_post": {
+  "w": 69,
+  "h": 130,
+  "anchorX": 34,
+  "anchorY": 126
  }
 }
