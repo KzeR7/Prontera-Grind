@@ -20,12 +20,15 @@ const src = fs.readFileSync(__dirname + '/../../index.html', 'utf8');
 const grab = (a, b) => { const i = src.indexOf(a), j = src.indexOf(b, i); if (i < 0 || j < 0) throw new Error('missing ' + a); return src.slice(i, j); };
 const pick = (re, name) => { const m = src.match(re); if (!m) throw new Error('cannot find ' + name); return m[0]; };
 
+const gearDropLoop = grab('  for(const[T,ch]of mob.drops)', '  if(Math.random()*100<mob.cardCh*lk)');
 const code = [
+  'const bon=()=>0;',
   grab('const CD=[', 'const pm=s=>'),                       // class roster: CLASSES, lineOf
   pick(/const C=\(\)=>[^;]+;/, 'C()'),
   pick(/const st=k=>[^\n]*canUse=it=>[^;]+;/, 'canUse'),
   grab('const pm=s=>', 'const REC='),                        // pm() + MAPS
   pick(/const secOf=[^;]+;/, 'secOf'),
+  pick(/const RAR=\[[^\]]*\];/, 'RAR'),
   pick(/const AM=\[[^\]]*\],GRADE=\[[^\]]*\],GI=\[[^\]]*\],CV=\[[^\]]*\];/, 'rarity tables'),
   pick(/const AFF=\[[^\]]*\],AB=\{[^}]*\};/, 'AFF/AB'),
   pick(/K5=\[[^\]]*\];/, 'K5'),
@@ -33,6 +36,8 @@ const code = [
   pick(/const cardStat=\(g,seed\)=>\{[^}]*\};/, 'cardStat'),
   pick(/const SU=k=>[^,]+/, 'SU'),
   grab('function gearPool(m,l){', 'const dropTxt='),
+  grab('function genGear(T,l,sec,boss){', '// ---------- skill effects'),
+  `function executeGearRoll(mob,roll){const old=Math.random;Math.random=()=>roll;const drops=[],lk=1,mkDrop=it=>({it});try{${gearDropLoop}}finally{Math.random=old}return drops}`,
   grab('function canShield(){', 'function ekey(it)'),        // canShield / dualOn / dualOk
   grab('function slotAccepts(k,it){', 'function equipChooser(k){'),
 ].join('\n');
@@ -41,8 +46,9 @@ const harness = `
 ${code}
 const SECN=['Novice gear','1st-job gear','2nd-job gear','High-tier gear'];
 const SLOTS={weapon:{label:'Weapon',stat:'ATK',ic:'A'},armor:{label:'Armor',stat:'DEF',ic:'B'},head:{label:'Headgear',stat:'HP',ic:'C'},off:{label:'Shield',stat:'DEF',ic:'D'},leg:{label:'Legwear',stat:'DEF',ic:'E'},acc:{label:'Accessory',stat:'HP',ic:'F'}};
+const rnd=(a,b)=>a+Math.random()*(b-a),ri=(a,b)=>Math.floor(rnd(a,b+1)),uid=()=>1;
 let S=null;
-this.__g={ MAPS, GEAR, gearPool, fieldOf, slotAccepts, canUse, canShield, dualOk, CLASSES, lineOf, secOf, SLOTS,
+this.__g={ MAPS, GEAR, gearPool, fieldOf, genGear, executeGearRoll, slotAccepts, canUse, canShield, dualOk, CLASSES, lineOf, secOf, SLOTS,
            set S(v){S=v}, get S(){return S} };
 `;
 const sb = { console };
@@ -171,6 +177,36 @@ t('gear outnumbers cards on every field', () => {
     const [x, y] = F.mobs.map(mob => mob.drops.map(d => d[0].n).join('|'));
     assert.notStrictEqual(x, y, G.MAPS[m].n + ' Lv' + l + ': both mobs drop the same three items');
   }
+});
+
+t('equipment rolls are doubled on mobs and bosses while card odds stay unchanged', () => {
+  for (let m = 0; m < G.MAPS.length; m++) for (let l = 1; l <= 10; l++) {
+    const F = G.fieldOf(m, l);
+    F.mobs.forEach(mob => {
+      assert.deepStrictEqual(Array.from(mob.drops, d => d[1]), [4.8, 4.0, 3.2]);
+      assert.strictEqual(mob.cardCh, .45, 'regular-mob card chance changed');
+    });
+    if (l === 10) {
+      F.boss.drops.forEach(([, ch]) => assert.strictEqual(ch, 2.4, 'boss equipment chance was not doubled'));
+      assert.strictEqual(F.boss.cardCh, .08, 'boss card chance changed');
+    }
+  }
+});
+
+t('the real equipment-drop loop creates boss gear when an independent roll succeeds', () => {
+  G.S = {st:{luk:0},eq:{}};
+  const F = G.fieldOf(0, 10), boss = {...F.boss,boss:true,lvl:10,sec:F.sec};
+  assert.strictEqual(boss.drops.length, 9, 'expected a roll for every boss-pool item');
+  // A 1.8% roll fails the old 1.2% gate but passes the doubled 2.4% gate.
+  const drops = G.executeGearRoll(boss, .018);
+  assert.strictEqual(drops.length, boss.drops.length, 'the actual boss gear loop did not emit items');
+  assert.ok(drops.every(d => d.it && d.it.tier >= 2), 'boss flag must reach genGear() and guarantee at least Rare');
+  assert.ok(drops.every(d => d.it.slot), 'successful boss rolls must be real equipment objects');
+  // The regular-mob branch is also the live loop: 3.5% clears the new first two gates,
+  // but misses the old rates and the new 3.2% third roll.
+  const mob = {...G.fieldOf(0,1).mobs[0],boss:false,lvl:1,sec:0};
+  const mobDrops = G.executeGearRoll(mob, .035);
+  assert.strictEqual(mobDrops.length, 2, 'doubled regular-mob equipment gates did not execute');
 });
 
 t('fieldOf only hands out items from that field pool', () => {

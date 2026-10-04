@@ -1100,3 +1100,16 @@ assigned for feel rather than fidelity. While reworking that, two shipped bugs s
 * **Tests:** all 13 suites, inline JavaScript syntax and whitespace checks passed before the game push; this entry is documentation only.
 * **Branches / PR:** `arena/01a1029e-prontera-grind` — https://github.com/KzeR7/Prontera-Grind/pull/7
 * **Known limits / follow-ups:** merge the PR to deploy through the normal GitHub/Cloudflare route; live visual/farming review remains recommended.
+
+### 2026-10-04 — `balance-v23 curve pets sprite-sizes`
+* **What changed for the player:**
+  * The tuned EXP curve puts Base Lv 1–10 at about 7 minutes, Base 50 at about 2 hours, and Base 99 at about 48 hours in the canonical 800-kills/hour model. Base 100–150 is a much harder 336-hour (~14-day) climb after the rebirth reset; a full 1–150 run models to ~387 hours.
+  * Equipment odds are doubled: regular mobs roll 4.8%/4.0%/3.2% gear entries, and each boss-pool item rolls at 2.4%. Card chances remain 0.45% on regular mobs and 0.08% on bosses. The extracted live kill loop is regression-tested; it passes boss gear through the boss generator and can create actual equipment.
+  * Pet portraits now use Divine Pride monster PNGs. Claw, Collar and Charm each show their current upgrade level and success/double-upgrade chances. The six equally weighted gacha skills are two player buffs (ATK and MATK), two AoE attacks and two single-target attacks; magical player skills now use MATK.
+  * The size labels for all 85 unique mob/boss sprite IDs were checked against Divine Pride; the visuals use Small/Medium/Large factors of .62/.92/1.28 relative to the player. Save loading repairs missing/out-of-range pet upgrades and invalid skill IDs.
+* **Files touched:** `index.html` (`BUILD` v23), `tools/tune_pacing.js`, `tools/tests/{economy,gear,save_load,skill,sprite,ui}_sim.js`, `AGENTS.md`.
+* **Art:** no local sprite sheets or packed atlases were changed. Monster and pet PNGs remain externally hosted by Divine Pride with the existing procedural fallbacks.
+* **Tests:** all 13 suites pass: pack (19 class bodies + Settings preview), class change **22**, save/load **10**, economy **21**, stats **7**, cards **13**, skills **48**, gear **20**, scene **8**, kit **20**, UI **11**, sprites **10**, starter **4**. Inline game JavaScript passes `node --check`; `git diff --check` is clean.
+  * New checks execute the live boss equipment-drop loop, pet skill gacha and combat effects, pet upgrade success/double/failure, MATK damage and buffs, save normalization, pet release cleanup, UI upgrade labels, and every audited sprite-size class.
+* **Branches / PR:** `arena/01a10466-prontera-grind`; the PR link is recorded in the delivery entry immediately below.
+* **Known limits / follow-ups:** EXP hours are model estimates, not a real-time playtest; the model assumes 800 kills/hour. Divine Pride sprites require network access. The live preview is available for visual review and actual pacing checks.
