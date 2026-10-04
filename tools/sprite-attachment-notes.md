@@ -76,6 +76,52 @@ Consequence for the reader in `tools/make_sprite_pack.py`: `normal_labels()` is 
 and the guess is exactly where wrong poses enter the pack. The picker shows every pose with
 this guess attached and lets the owner overrule it.
 
+## The weapon pass (2026-10-04, `tools/weapon_bake.py`)
+
+Everything below was measured on the owner's own 19-class selection; numbers live in
+`tools/weapon_grips.json` and the reasoning in `tools/weapon-plan.md`.
+
+* **The sheets are bare-handed.** No pose of any of the 21 sheets draws a weapon, and there is no
+  weapon art in the repo (`assets/kit/ro-spritesheet.png` is terrain). Weapons are composited, as
+  in real RO. A "weapon" in this project is one of seven silhouettes: `sword, dagger, katar,
+  staff, bow, axe, mace`.
+* **`assets/weapon_joints_data.js` cannot drive the bake.** It is measured per frame in isolation
+  ("the skin blob furthest from the hip"), which hops between the two arms
+  (`knight dir 0 → 65, 67, 69, 45, 68, 45`), and it only covers the standard attack rows while
+  **197 of the owner's 570 picked poses come from other rows**. Keep the file for the legacy
+  runtime path; never use it as the grip source for a bake.
+* **Frame differencing is a dead end.** An attack moves the whole body, so motion highlights the
+  entire silhouette instead of the swinging arm. Tried and rejected.
+* **What works** (all of it in `weapon_bake.py`):
+  1. take the cell exactly as the picker does (nearest-neighbour, `ox=floor((96-w)/2)`,
+     `oy=90-h`, mirrored views mirrored);
+  2. skin mask from the body's own neck colour (`make_sprite_pack.head_stub`), candidates =
+     hand-sized blobs below the shoulder line, rejecting blobs that are large **and** reach the
+     ground line (those are legs/boots);
+  3. per blob use the pixel **farthest from the torso** — the fist, not the elbow;
+  4. **track one arm across the six frames**: seed on the frame whose best candidate is farthest
+     from the torso, then chain the candidate nearest the previous frame's fist (≤ 30 px); if
+     nothing chains, take the silhouette extremity on the same side (cutting the bottom 30 % of
+     the shoulder→ground span so boots never win); if even that fails, **hold the previous point**
+     so the weapon never jumps;
+  5. angle = the forearm axis (shoulder → hand); rotate it away from the body in 2° steps until the
+     blade clears the torso by `6 + half the weapon's width` (an axe head is 13 px wide); bows and
+     staves are `UPRIGHT` and get a small fixed tilt instead.
+* **Coverage on the owner's selection: 570/570 armed cells.** 315 measured from a bare hand; 255
+  inferred from the glove/wrist/hidden arm — concentrated in the armoured classes (Knight 8/30
+  found, Lord Knight 9/30, High Wizard 10/30 … Mage 27/30, Thief 25/30). The review page marks
+  those tiles "inferred", so the owner's eye is spent where it matters.
+* **Views 3/4/5 (NW/N/NE) stay bare** (the owner's v27 rule) and idle/walk stay weaponless (v26);
+  the bake only fills views 0,1,2,6,7. Any future weapon on an away-facing view needs art per
+  direction — front-view art cannot be turned into a back-view grip honestly.
+* **Review loop:** `tools/weapon_bake.py --review tools/weapon_review_data.js` writes the pictures
+  the page shows; the owner's paste-back JSON (`{"version":1,"adjust":{"Class|view|frame":[dx,dy]}}`)
+  goes straight into `--adjust`, so nobody re-measures anything.
+* **Art sources, in order:** `Sprite/weapons/<type>.png` (plus optional `grip.json`) →
+  `assets/weapons/<type>.png` (the game's item icons, fetched by `--fetch-icons` — the sandbox has
+  no outbound internet for that host) → the shapes the game draws itself (`drawWep`). Placement is
+  independent of the art, so swapping art never needs a re-measure.
+
 ## Sources
 
 * rAthena wiki, *Acts* — layer list, per-frame X/Y offsets, flip, direction control:

@@ -1571,3 +1571,61 @@ assigned for feel rather than fidelity. While reworking that, two shipped bugs s
   The picker was also booted from the standalone build under the same harness (19/19) and the served page
   was checked by hand. Inline JavaScript passes `node --check`.
 * **Branches / PR:** `arena/01a1054b-prontera-grind` (PR #11).
+
+### 2026-10-04 — `tool-v34 the owner's second selection is the standard, and the first one is kept` (no game change, no BUILD bump)
+* **What the owner sent back:** the picker's own v5 export again, this time with **Sniper tuned and all 19
+  classes filled in** — 570 pose cells (19 classes x 5 drawn views x 6 frames) and 912 head entries
+  (570 on the drawn views and 342 more on the mirrored ones).
+* **Backups, the way the owner asked ("redo the back up and the previous back up and all"):** the second
+  delivery replaced `tools/attack_selection.json`, and the first delivery is archived beside it as
+  `tools/attack_selection_prev.json` — read-only history, never overwritten by a later payload.
+  The standard was rebuilt from it: `tools/sprite_picker_defaults.js` now carries **19 classes / 570 heads**,
+  the picker and the standalone were regenerated, and a fresh browser opens on the new numbers.
+* **Coverage is now complete:** Sniper was the one class without a selection; it has one, so the "known gap"
+  note in `tools/sprite_selection-notes.md` is gone.
+* **Two traps found on the way:** the same crop box can name several poses (one per direction the sheet
+  draws), so a payload must be resolved through the picker's **id** path, never by re-matching (x,y,w,h)
+  rectangles — 456 of 912 boxes matched more than one pose; and the first delivery's head drags were tuned
+  while the mirrored-column and inverted-drag bugs were still live, which is another reason the newest
+  payload always wins.
+* **Tests:** all 15 suites green; the picker round-trip compares all 3,420 numbers of the new standard
+  (picker **19** passed, 0 failed).
+* **Files touched:** `tools/attack_selection.json` (new payload), new `tools/attack_selection_prev.json`,
+  generated `tools/sprite_picker_defaults.js` + `tools/sprite_picker_standalone.html`,
+  `tools/sprite_selection-notes.md`.
+* **Branches / PR:** `arena/01a1054b-prontera-grind` (PR #11).
+
+### 2026-10-04 — `tool-v35 the weapon side: measured, placed, and ready for the owner's review` (no game change, no BUILD bump)
+* **What the owner asked for:** "tell me how can we move in with the weapon side? maybe i pin point out the
+  hands for u?" plus the standing instruction to research first and hand over as little manual work as
+  possible. The answer: **they do not need to pin-point anything** — the hand is measured from their own
+  poses, and a page shows the result so only the odd tile needs a drag.
+* **Why v28's joints file was not the answer** (this is now written down in `tools/weapon-plan.md`):
+  it measures each frame on its own, so the point hops between the two arms (knight dir 0 ran
+  65, 67, 69, 45, 68, 45 px) — that is the flicker the owner saw; and it only knows the standard attack
+  rows, while **197 of the owner's 570 picked poses (35%) come from other rows** of the sheet. A second
+  idea — find the arm by what moves between frames — is a dead end too: the whole body lurches in an
+  attack, so motion lights up the whole silhouette.
+* **What is built instead:** `tools/weapon_bake.py` measures the hand from the picked cell itself (skin
+  taken from the body's own neck colour, hand-sized blobs below the shoulders, boots rejected, the pixel
+  farthest from the torso = the fist), then **tracks one arm across the six frames** — seed on the clearest
+  frame, chain the nearest candidate, and hold position when the arm is hidden rather than jumping. The
+  angle continues the forearm and a guard rotates the weapon until it clears the body (an axe head is
+  13 px wide); bows and staves get a small fixed tilt because they are carried upright.
+* **Result:** 570 of 570 armed cells have a grip; 315 measured from a bare hand, 255 inferred from the
+  glove/wrist/hidden arm (Mage 27/30 found, Knight 8/30 — the armoured classes are the ones worth a look).
+  NW/N/NE stay bare (the owner's v27 rule); idle and walk stay weaponless (v26).
+* **The owner's part:** `tools/weapon_review.html` (and the standalone twin) — every class, 8 views,
+  6 frames, weapon already placed, drag any tile that looks wrong (one drag carries the whole view by
+  default), arrow keys nudge 1 px, "Copy my adjustments" returns one small JSON block.
+  `tools/preview_weapon.png` is the contact sheet of the automatic pass, all 19 classes.
+* **Still the owner's call:** which art to bake (the item icons the game shows today — needs one online run
+  of `--fetch-icons` because this sandbox has no internet; real weapon sheets dropped into
+  `Sprite/weapons/`; or the game's own drawn shapes, which is what the preview uses), whether away-facing
+  views really stay bare, and the final "bake it" go-ahead.
+* **Files touched:** new `tools/weapon_bake.py`, `tools/weapon-plan.md`, `tools/weapon_review.html`,
+  `tools/weapon_review_data.js` + `tools/weapon_review_standalone.html` (generated),
+  `tools/weapon_grips.json`, `tools/preview_weapon.png`, `tools/tests/weapon_review_sim.js`.
+* **Tests:** all 15 suites green (the new one: weapon review **13** passed, 0 failed — every class/view/frame
+  covered, weapons only on the armed views, drag never inverted, the exported nudges exact).
+* **Branches / PR:** `arena/01a1054b-prontera-grind` (PR #11).
