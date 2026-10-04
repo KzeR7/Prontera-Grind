@@ -1622,3 +1622,82 @@ assigned for feel rather than fidelity. While reworking that, two shipped bugs s
   their real IDs and check both rendering paths and size. The Divine Pride CDN was
   unreachable from this sandbox, so live image availability and appearance still
   need visual confirmation in the browser preview.
+
+### 2026-10-04 — `ui-v34 affix-rarity bag-popup damage-short pet-audit`
+
+* **What changed for the player:** the owner's seven-item list, in order.
+  * **Combat numbers are shorter.** Floating damage reads `100K` instead of `100,000` and `1M`
+    instead of `1,000,000`; normal, critical and incoming damage all use the same rule. A new
+    **Settings → Damage numbers** row switches between `Short · 100K / 1M` (the default) and
+    `Full · 100,000`, and the choice is saved with the account.
+  * **Stage buttons lost their job-tier label.** The small "novice / 1st job / 2nd job / boss"
+    text under Stage 1-10 is gone, and the stage header no longer says "— 1st-job gear". The
+    drop tables and item cards still name their gear section, as the owner asked.
+  * **Clicking an equipment slot now pops the bag out over the panel.** The whole bag renders as
+    the familiar tile grid: everything that fits that slot is ringed green and equips on click,
+    everything that cannot go there is greyed out and inert, and the tiles keep their hover
+    tooltips. The card under the paper doll (worn item, refine, card slots, Unequip) is unchanged.
+  * **Gear rarity is fixed by where it drops; only the affixes roll.** One glance at a map tells
+    you the band: maps 1-2 Common, 3-4 Fine, 5-6 Rare, 7-10 Epic; stages 8-9 step one band up; no
+    regular drop is ever Legendary, and **every Stage 10 boss drop is Legendary** - so Abyss Dark
+    Lord gear from the boss is all Legendary with random affixes. The map panel prints the band
+    on every drop line ("Common", "Rare"...) and item tooltips now label their random stats
+    "Affixes (n random)". Luck no longer nudges the rarity roll (there is no roll left to nudge);
+    it still lifts the drop odds.
+  * **The bag holds 1000 items** (`n/1000` in the panel). At capacity, loot is refused, reported
+    and left on the ground instead of quietly growing the save; cards live in their own bag and
+    are not capped. **Selling is pocket money now**: roughly 50z for a Common starter piece and
+    under 2,000z even for the best Legendary Abyss gear, so a bag dump never funds an upgrade.
+  * **Auto cast moved to where the skill is explained.** The checkbox is no longer on the skill
+    tile; it sits in the skill description card below the grid ("Auto cast this skill", with a
+    line saying whether it is live or paused).
+* **Pet audit (the owner asked for the data and whether a maxed pet is overpowered).**
+  `tools/tests/pet_sim.js` prints the whole set and measures it. Roster: 8 pets, two per rarity -
+  Common Poring/Lunatic (x.2 damage), Rare Wolf/Desert Wolf (x.32), Epic Peco Peco/Dragon Whelp
+  (x.55), Legendary Baphomet Jr./Angeling (x1). Mutation grades G1-G6 = x2/4/6/8/20/40, rolled at
+  2,500-10,000z. Three training pieces, five tiers (Wooden -> Mythril) at 40/25/15/9/5% success,
+  5% double-ups, 1,200-30,000z per roll: Claw +12%/tier damage, Collar +8%/tier speed, Charm
+  +6%/tier crit (x2). Six equally weighted skills: War Cry and Arcane Blessing (+20% ATK/MATK for
+  8s, 26s cooldown), Flame Burst and Thunderclap (1.6x / 1.4x pet damage to everything within 4
+  units, 14s/12s), Piercing Fang and Spirit Bolt (2.2x / 2.5x single target, 10s/11s).
+  **Measured:** a maxed G6 Legendary pet with Mythril 5/5/5 deals ~2.2M per hit and ~3.4M DPS
+  against an endgame Lord Knight's ~377k auto-attack DPS - **9.0x the owner's plain swings, 0.45x
+  a fully maxed skill rotation, 1.34x that player with three pets out**; one pet alone kills an
+  Abyss Stage-10 boss (658k HP) in ~0.2s, and even the weakest maxed pet (Poring) is 1.4x the
+  player's auto-attacks. Because `petDmg` is a flat multiplier on `atk()`, that ratio is the same
+  at level 1 and level 150 - a maxed pet carries a fresh character exactly as hard as a maxed
+  one. **Verdict: yes, pets are overpowered as a sidekick; no pet number was changed in v34** -
+  the measurement is the deliverable and the retune is the owner's call (the levers are the
+  rarity factors, `MUT`, and Claw's +12%/tier).
+* **Files touched:** `index.html` (damage formatting + Settings row, `BAGMAX`, `MAPTIER`/
+  `dropTier`, `genGear` rarity, `fieldOf`/`dropTxt` band display, `collect` cap, `sellVal`, the
+  bag pop-out (`equipChooser` + CSS), skills panel, map panel labels, `itemMain` affixes, `BUILD`),
+  `tools/tests/ui_sim.js` (13 -> 18), `tools/tests/gear_sim.js` (20 -> 23), new
+  `tools/tests/pet_sim.js` (8), `READ-ME-FIRST.md` (suite list + pet suite), `AGENTS.md` (the
+  fixed-rarity block, the measured-pet numbers, the suite table, this entry).
+* **Art:** none. No sheet, atlas or pixel was drawn, traced, recoloured or substituted;
+  `Sprite/`, the class pack and `assets/kit/` are untouched and `tools/montage.py` was not run.
+* **Tests:** **all 14 suites green** - pack (19 bodies), class_change 22, save_load 10, economy 21,
+  stat 7, card 13, skill 49, gear **23**, scene 8, kit 34, ui **18**, sprite 12, starter 7,
+  **pet 8**; inline game JS passes `node --check`, `git diff --check` is clean. New coverage: the
+  full rarity ladder per map and stage plus "a Legendary field never rolls lower and the affixes
+  still differ between two drops", the 50z-2,000z sell window, the 1000-item cap executing the
+  real `collect()` (with cards explicitly uncapped), the damage short-form ladder and the full
+  switch, the bag pop-out (fitting tiles ringed/clickable, others greyed and inert, no inline
+  list left), the stage buttons carrying no job text, and the pet roster/ladder/skill table with
+  the maxed-pet measurement printed by the suite.
+* **Branches / PR:** `arena/01a10643-prontera-grind` - https://github.com/KzeR7/Prontera-Grind/pull/14
+* **Known limits / follow-ups:**
+  * **The pet balance question is answered but not acted on** - see the audit above. If the owner
+    wants pets pulled back, the cheapest lever that keeps the feel is Claw's +12%/tier and the
+    Legendary x1 factor (both are single numbers in `PET_SKILLS`/`petDmg`), then re-run `pet_sim.js`.
+  * Rarity being fixed means a field's drops are worth the same band every time, so a Common-band
+    map can no longer "get lucky" with an Epic piece. That is the requested behaviour; the
+    compensating knob if it ever feels flat is the item `val` spread inside the band (`rnd(.9,1.12)`).
+  * The map panel's drop lines are longer by one word per line; on a very narrow phone the
+    monster card wraps a little more. Judged acceptable, but worth an eyeball in the preview.
+  * Old saves keep the names and rarities of items they already own; the new ladder applies to
+    drops from now on. `sellVal()` reprices every item, old ones included.
+  * The bag cap is enforced at pickup only: equipping/unequipping swaps items in place, so the
+    count cannot exceed `BAGMAX` through normal play, but a save that somehow arrives over the cap
+    is not truncated (nothing is deleted behind the owner's back).
