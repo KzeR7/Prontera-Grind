@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sprite picker — Prontera Grind</title>
+<style>
+:root{--bg:#14161c;--panel:#1c1f28;--panel2:#232733;--line:#333a49;--ink:#e8ecf4;--dim:#9aa4b8;
+      --acc:#ffcf6b;--acc2:#7ad3ff;--ok:#7ee08a;--bad:#ff8080}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:13px/1.45 system-ui,Segoe UI,Roboto,sans-serif}
+header{position:sticky;top:0;z-index:5;background:var(--panel);border-bottom:1px solid var(--line);
+       padding:8px 12px;display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center}
+h1{font-size:14px;margin:0 10px 0 0;font-weight:700;letter-spacing:.3px}
+h1 small{font-weight:400;color:var(--dim)}
+select,button{border-radius:5px;border:1px solid var(--line);background:var(--panel2);color:var(--ink);font:inherit;padding:3px 6px}
+button{cursor:pointer}
+button:hover{border-color:var(--acc2)}
+button.primary{border-color:var(--acc);color:var(--acc)}
+label.f{display:flex;gap:5px;align-items:center;color:var(--dim)}
+main{display:grid;grid-template-columns:minmax(700px,1fr) 440px;gap:12px;padding:12px;align-items:start}
+@media (max-width:1250px){main{grid-template-columns:1fr}}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:10px}
+.dirs{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+@media (max-width:1000px){.dirs{grid-template-columns:repeat(2,1fr)}}
+.dir{background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:8px}
+.dir h3{margin:0 0 6px;font-size:12px;display:flex;justify-content:space-between;gap:6px;color:var(--acc)}
+.dir h3 em{font-style:normal;color:var(--dim);font-size:11px}
+.slot{border:1px dashed var(--line);border-radius:6px;padding:4px;margin-bottom:5px;cursor:pointer}
+.slot.active{border-color:var(--acc);background:#2a2618}
+.slot b{font-size:11px;color:var(--dim);display:inline-block;width:42px;vertical-align:middle}
+.slot .thumbs{display:inline-flex;flex-wrap:wrap;gap:4px;vertical-align:middle}
+.slot .th{position:relative;background:#0f1116;border:1px solid var(--line);border-radius:4px}
+.slot .th canvas{display:block;image-rendering:pixelated}
+.slot .th span{position:absolute;left:1px;bottom:0;font-size:9px;color:var(--acc);background:#0009;padding:0 2px;border-radius:3px}
+.slot .th button{position:absolute;right:-5px;top:-5px;font-size:9px;line-height:1;padding:0 3px;border-radius:8px;
+                 background:#40202a;border-color:#7a3b48;color:#ffd9df}
+.slot .empty{color:var(--dim);font-size:11px;vertical-align:middle}
+.foot{display:flex;justify-content:space-between;align-items:flex-end;gap:6px}
+.preview{background:#0f1116;border:1px solid var(--line);border-radius:6px;display:block}
+.mirror{font-size:11px;color:var(--dim);display:flex;gap:4px;align-items:center}
+.board{max-height:52vh;overflow:auto;padding-right:4px}
+.rowline{display:flex;align-items:center;gap:6px;margin:8px 0 4px;color:var(--dim);font-size:11px}
+.rowline hr{flex:1;border:0;border-top:1px solid var(--line);margin:0}
+.tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(60px,1fr));gap:6px}
+.tile{position:relative;background:#0f1116;border:1px solid var(--line);border-radius:6px;padding:2px;cursor:pointer;text-align:center}
+.tile:hover{border-color:var(--acc2)}
+.tile.sel{border-color:var(--ok);background:#16241a}
+.tile.mir canvas{transform:scaleX(-1)}
+.tile canvas{display:block;image-rendering:pixelated;margin:0 auto}
+.tile i{display:block;font-style:normal;font-size:9px;color:var(--acc2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tile u{display:block;text-decoration:none;font-size:9px;color:var(--dim)}
+.tile .chk{position:absolute;left:3px;top:3px;width:12px;height:12px;border:1px solid var(--dim);border-radius:3px;background:#0008}
+.tile.sel .chk{background:var(--ok);border-color:var(--ok)}
+textarea{width:100%;height:96px;background:#0f1116;color:var(--ink);border:1px solid var(--line);border-radius:6px;
+          font:11px/1.4 ui-monospace,Menlo,monospace;padding:6px}
+.hint{color:var(--dim);font-size:11px;margin:2px 0 6px}
+.hint b{color:var(--ink)}
+.bad{color:var(--bad)}.ok{color:var(--ok)}
+.pill{background:var(--panel2);border:1px solid var(--line);border-radius:20px;padding:1px 8px;font-size:11px;color:var(--dim)}
+</style>
+</head>
+<body>
+<header>
+  <h1>Sprite picker <small>Prontera Grind</small></h1>
+  <label class="f">Class <select id="cls"></select></label>
+  <label class="f">Gender <select id="sex"><option value="m">male</option><option value="f">female</option></select></label>
+  <label class="f">Hairstyle <select id="hair"></select></label>
+  <label class="f">Weapon <select id="weapon"></select></label>
+  <label class="f"><input type="checkbox" id="showWep" checked> weapon</label>
+  <label class="f" title="then click a preview to move that class's weapon grip"><input type="checkbox" id="nudge"> fix grip by clicking</label>
+  <label class="f">Tiles <select id="filter"><option value="all">all poses</option><option value="lab">labelled only</option></select></label>
+  <button id="btnAuto">Suggest 24 slots</button>
+  <button id="btnClear">Clear class</button>
+  <button id="btnCopy" class="primary">Copy my selection</button>
+  <span class="pill" id="status">loading…</span>
+</header>
+
+<main>
+  <section class="card">
+    <div class="hint">
+      <b>8 camera views</b> — the game's direction order is 0&nbsp;S, 1&nbsp;SW, 2&nbsp;W, 3&nbsp;NW, 4&nbsp;N, 5&nbsp;NE, 6&nbsp;E, 7&nbsp;SE.
+      <b>Click a slot</b> (idle / walk / attack) to make it active, then <b>tick poses</b> on the right; walk takes up to 8 in tick order,
+      attack up to 6, idle 1. The preview under each view is the real composite: the pose put in its 96×96 cell, the chosen hair seat
+      on its measured anchor, then the weapon at the game's own pixel. <b>Click the preview to nudge the weapon grip</b> for this
+      class+weapon (that is how RO tools fix a weapon that grips a few pixels out).
+    </div>
+    <div class="dirs" id="dirs"></div>
+  </section>
+
+  <section class="card">
+    <div class="hint" id="sheetHint">…</div>
+    <div class="board" id="board"></div>
+    <h3 style="margin:10px 0 4px;font-size:12px">Selection — copy this back to me</h3>
+    <textarea id="out" spellcheck="false"></textarea>
+    <div style="display:flex;gap:8px;margin-top:6px;align-items:center">
+      <button id="btnCopy2" class="primary">Copy</button>
+      <button id="btnReset">Reset everything</button>
+      <span class="hint" id="copyMsg"></span>
+    </div>
+  </section>
+</main>
+
+<script src="../assets/sprite_pack_data.js"></script>
+<script src="sprite_picker_data.js"></script>
+<script>
+(function(){
+'use strict';
+var D=window.SPRITE_PICKER_DATA, PK=window.SPRITE_PACK;
+var statusEl=document.getElementById('status');
+if(!D||!PK){statusEl.textContent='missing data files';return}
+var CELL=D.cell, DIRS=D.dirs, ANIM=D.anim, MIRRORSRC={5:3,6:2,7:1};
+var BODY=CELL.body||96, ZOOM=1.5, TZOOM=0.6;
+var KINDS=['sword','bow','staff','axe','mace','dagger','katar'];
+var LSK='pg_sprite_picker_v1';
+
+// ---------------------------------------------------------------- game rules
+// lifted from index.html so the preview is the game's placement, not a lookalike
+var SPR_W=64,SPR_H=96;
+var PACK_WEAPON_ADJUST={bow:[-5,-40],staff:[-20,-40],katar:[-6,-34],dagger:[-6,-34],axe:[-6,-37],sword:[-6,-37],mace:[-6,-37]};
+function poseOf(kind,fr,wt,frameCount){
+  var p={bob:0,lx:0,rx:0,arm:.4,weap:-.4,lunge:0,bow:0,lift:0};
+  var count=Math.max(1,frameCount||(kind===2?6:kind===1?8:1));
+  if(kind===0)p.bob=Math.sin(fr/count*Math.PI*2)*1.6;
+  if(kind===1){var u1=fr/count*Math.PI*2;p.bob=Math.abs(Math.sin(u1))*3.2;p.lx=Math.sin(u1)*8;p.rx=-Math.sin(u1)*8;p.arm=.4+Math.sin(u1)*.5}
+  if(kind===2){var u=fr/Math.max(1,count-1);
+    if(wt==='bow'){p.arm=-.15;p.bow=u;p.lunge=u<.75?u*7:(1-u)*12;p.lift=6+Math.sin(u*Math.PI)*4;p.weap=.2}
+    else if(wt==='staff'){p.arm=-1.1+u*2.6;p.lift=8+Math.sin(u*Math.PI)*10;p.weap=-1.4+u*2.8;p.lunge=5}
+    else if(wt==='katar'||wt==='dagger'){p.arm=-.2;p.lunge=u<.45?u*22:22*(1-u);p.weap=.8;p.lift=u<.4?-6:4}
+    else{if(u<.28){p.arm=.5-u*4;p.weap=-1.2;p.lunge=u*10;p.lift=u*8}
+      else if(u<.55){p.arm=-.6+(u-.28)*8;p.weap=2.5;p.lunge=10;p.lift=2}
+      else{p.arm=1.3*(1-u);p.weap=1.6*(1-u);p.lunge=8*(1-u)}}}
+  return p}
+function weaponHandPoint(dir,p){
+  var a=dir*Math.PI/4,ca=Math.cos(a),sa=Math.sin(a),
+      hx=11+Math.sin(p.arm)*6,hy=26-Math.cos(p.arm)*9+p.lift,hz=6+p.lunge*.15,
+      x=hx+3,z=hz+4,wx=x*ca+z*sa,wz=-x*sa+z*ca;
+  return[wx,-(hy-6+p.bob)+wz*.2,wz]}
+function weaponPixel(dir,kind,fr,wt,frameCount,grip){
+  var p=poseOf(kind,fr,wt,frameCount),hand=weaponHandPoint(dir,p);
+  var x=SPR_W*.5+p.lunge*.15+hand[0], y=SPR_H-7+hand[1];
+  var adj=grip||PACK_WEAPON_ADJUST[wt]||[0,-36];
+  x=CELL.padL+x*BODY/SPR_W+adj[0]*Math.cos(dir*Math.PI/4);
+  y=CELL.padT+y*BODY/SPR_H+adj[1];
+  return[x,y,p]}
+function oval(ctx,x,y,rx,ry,col){ctx.beginPath();ctx.ellipse(x,y,rx,ry,0,0,Math.PI*2);ctx.fillStyle=col;ctx.fill()}
+function drawWep(ctx,q){
+  ctx.save();ctx.translate(q.x,q.y);ctx.rotate(q.ang);
+  var m=q.metal,h='#6b3a18',u=q.bow||0;
+  if(q.slash){ctx.strokeStyle='rgba(255,236,170,.85)';ctx.lineWidth=4;ctx.beginPath();ctx.arc(4,-6,26,-1.35,.95);ctx.stroke();
+    ctx.strokeStyle='rgba(255,255,255,.55)';ctx.lineWidth=2;ctx.beginPath();ctx.arc(4,-6,22,-1.2,.7);ctx.stroke()}
+  ctx.fillStyle=h;
+  if(q.wt==='sword'){ctx.fillRect(-2.2,2,4.4,9);ctx.fillRect(-7,1,14,3.2);ctx.fillStyle=m;ctx.fillRect(-2.4,-30,4.8,34);ctx.fillStyle='#e8e8e8';ctx.fillRect(-1.1,-28,1.4,28)}
+  else if(q.wt==='dagger'){ctx.fillRect(-1.6,2,3.2,7);ctx.fillStyle=m;ctx.fillRect(-1.7,-16,3.4,20)}
+  else if(q.wt==='katar'){ctx.fillStyle=m;ctx.fillRect(-8,-16,4.2,22);ctx.fillRect(3,-16,4.2,22);ctx.fillStyle=h;ctx.fillRect(-8,2,15,4)}
+  else if(q.wt==='staff'){ctx.fillRect(-1.6,-34,3.2,40);oval(ctx,0,-36,6,6,m);oval(ctx,0,-36,3.2,3.2,'#d8b8ff')}
+  else if(q.wt==='bow'){ctx.strokeStyle=h;ctx.lineWidth=2.4;ctx.beginPath();ctx.arc(8,-6,17,-1.25,1.25);ctx.stroke();
+    ctx.strokeStyle='#f4f0e4';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(8,-22);ctx.lineTo(8,10);ctx.stroke();
+    ctx.fillStyle=m;ctx.fillRect(8,-8,4+u*16,1.8);if(u>.35){ctx.fillStyle='#c9a86a';ctx.fillRect(10+u*16,-9,10,3)}}
+  else if(q.wt==='axe'){ctx.fillRect(-1.7,-22,3.4,28);ctx.fillStyle=m;ctx.beginPath();ctx.moveTo(1,-24);ctx.lineTo(18,-18);ctx.lineTo(18,-8);ctx.lineTo(1,-11);ctx.fill()}
+  else{ctx.fillRect(-1.6,-16,3.2,24);oval(ctx,0,-20,7.5,7.5,m);oval(ctx,0,-20,3,3,'#888')}
+  ctx.restore()}
+
+// ---------------------------------------------------------------- state
+var st={cls:'Knight',sex:'m',hair:0,weapon:'sword',showWep:true,nudge:false,filter:'all',
+        slots:{},grips:{},active:{dir:0,anim:'idle'}};
+try{var saved=JSON.parse(localStorage.getItem(LSK)||'null');if(saved){
+  for(var k in saved)if(k!=='slots'&&k!=='grips'&&k!=='active')st[k]=saved[k];
+  st.slots=saved.slots||{};st.grips=saved.grips||{};st.active=saved.active||st.active;
+}}catch(e){}
+function save(){try{localStorage.setItem(LSK,JSON.stringify(st))}catch(e){}}
+function slots(cls){
+  if(!st.slots[cls]){var s={};for(var d=0;d<8;d++){s[d]={};for(var i=0;i<ANIM.length;i++)s[d][ANIM[i]]={ids:[],mirror:d>=5}}st.slots[cls]=s}
+  return st.slots[cls]}
+function gripKey(){return st.cls+'|'+st.weapon}
+function grip(){return st.grips[gripKey()]||null}
+
+// ---------------------------------------------------------------- images
+var headImg={},headReady={};
+['male','female'].forEach(function(sex){
+  var im=new Image();im.onload=function(){headReady[sex]=1;paintAll()};im.src=PK.heads[sex];headImg[sex]=im});
+var sheetImg={},sheetReady={};
+function sheetFor(cls){
+  var d=D.classes[cls];if(!d)return null;
+  if(!sheetImg[cls]){var im=new Image();im.onload=function(){sheetReady[cls]=1;paintAll()};im.src='../'+d.file;sheetImg[cls]=im}
+  return sheetImg[cls]}
+function safe(cls){return !!(D.classes[cls]&&sheetReady[cls])}
+function poseOfId(cls,id){var d=D.classes[cls];return(d&&d.poses[id])||null}
+
+// one pose packed into the game's 96x96 body cell, head included when asked
+function packedCell(cls,pose,mirror,withHead,dir){
+  var c=document.createElement('canvas');c.width=BODY;c.height=BODY;
+  var g=c.getContext('2d');g.imageSmoothingEnabled=false;
+  if(!pose||!safe(cls))return c;
+  var s=Math.min(1,90/pose.w,88/pose.h);
+  var w=Math.max(1,Math.round(pose.w*s)),h=Math.max(1,Math.round(pose.h*s));
+  var ox=Math.floor((BODY-w)/2), oy=CELL.feet-h;
+  g.drawImage(sheetImg[cls],pose.x,pose.y,pose.w,pose.h,ox,oy,w,h);
+  if(withHead&&headReady[st.sex]){
+    var ax=ox+pose.seat[0]*s, ay=oy+pose.seat[1]*s;                  // seat in cell space (crop -> cell)
+    g.drawImage(headImg[st.sex],(dir|0)*64,st.hair*64,64,64,
+                Math.round(ax-32),Math.round(ay-48),64,64);
+  }
+  if(mirror){var m=document.createElement('canvas');m.width=BODY;m.height=BODY;
+    var mg=m.getContext('2d');mg.imageSmoothingEnabled=false;mg.translate(BODY,0);mg.scale(-1,1);
+    mg.drawImage(c,0,0);return m}
+  return c}
+
+
+// ---------------------------------------------------------------- preview
+var tick=0;
+function drawPreview(cv,dir){
+  var g=cv.getContext('2d');g.imageSmoothingEnabled=false;
+  g.setTransform(1,0,0,1,0,0);g.clearRect(0,0,cv.width,cv.height);
+  g.save();g.scale(ZOOM,ZOOM);
+  g.fillStyle='#0f1116';g.fillRect(0,0,CELL.w,CELL.h);
+  var S=slots(st.cls)[dir], anim=st.active.anim;
+  if(!S[anim].ids.length)anim=S.idle.ids.length?'idle':(S.walk.ids.length?'walk':'attack');
+  var ids=S[anim].ids, kind=ANIM.indexOf(anim);
+  var frame=ids.length?Math.floor(tick/4)%ids.length:0;
+  var pose=ids.length?poseOfId(st.cls,ids[frame]):null;
+  g.drawImage(packedCell(st.cls,pose,S[anim].mirror,true,dir),CELL.padL,CELL.padT);
+  if(st.showWep&&pose){
+    var wp=weaponPixel(dir,kind,frame,st.weapon,ids.length,grip());
+    var front=(dir<=2||dir>=6);
+    if(front||kind!==2){
+      drawWep(g,{x:wp[0],y:wp[1],
+        ang:-1.05+wp[2].weap+(dir===2||dir===3?.4:(dir===6||dir===5?-.4:0)),
+        wt:st.weapon,metal:metalOf(st.cls),
+        slash:kind===2&&frame>=2&&frame<=5&&st.weapon!=='bow'&&st.weapon!=='staff',bow:wp[2].bow})
+    }
+  }
+  // ground / pivot guides
+  g.strokeStyle='#2b3242';g.lineWidth=1;
+  g.beginPath();g.moveTo(0,CELL.pivotY+.5);g.lineTo(CELL.w,CELL.pivotY+.5);g.stroke();
+  g.beginPath();g.moveTo(CELL.pivotX+.5,0);g.lineTo(CELL.pivotX+.5,CELL.pivotY);g.stroke();
+  g.restore()}
+function metalOf(cls){var n=String(cls).toLowerCase();
+  if(n.indexOf('knight')>=0||n.indexOf('smith')>=0||n.indexOf('merchant')>=0)return '#c9d2dd';
+  if(n.indexOf('assassin')>=0||n.indexOf('thief')>=0)return '#b6bec9';
+  if(n.indexOf('wizard')>=0||n.indexOf('mage')>=0)return '#b98cff';
+  return '#c2c9d4'}
+
+// ---------------------------------------------------------------- views board
+var dirsEl=document.getElementById('dirs'),boardEl=document.getElementById('board');
+function smallThumb(cls,pose,mirror,size){
+  var cv=document.createElement('canvas');
+  var s=Math.min(1,size/pose.w,size/pose.h);
+  cv.width=Math.max(8,Math.round(pose.w*s));cv.height=Math.max(8,Math.round(pose.h*s));
+  var g=cv.getContext('2d');g.imageSmoothingEnabled=false;
+  if(safe(cls))g.drawImage(sheetImg[cls],pose.x,pose.y,pose.w,pose.h,0,0,cv.width,cv.height);
+  if(mirror){cv.style.transform='scaleX(-1)'}
+  return cv}
+function slotRow(S,dir,anim){
+  var div=document.createElement('div');
+  div.className='slot'+((st.active.dir===dir&&st.active.anim===anim)?' active':'');
+  var b=document.createElement('b');b.textContent=anim;div.appendChild(b);
+  var th=document.createElement('span');th.className='thumbs';div.appendChild(th);
+  var ids=S[anim].ids;
+  if(!ids.length){var e=document.createElement('span');e.className='empty';e.textContent='— tick a pose —';th.appendChild(e)}
+  ids.forEach(function(id,i){
+    var pose=poseOfId(st.cls,id);if(!pose)return;
+    var t=document.createElement('span');t.className='th';
+    t.title=(pose.label||('pose #'+id))+'  (frame '+i+')';
+    t.appendChild(smallThumb(st.cls,pose,S[anim].mirror,26));
+    var lab=document.createElement('span');lab.textContent=i;t.appendChild(lab);
+    var x=document.createElement('button');x.textContent='×';x.title='remove this pose';
+    x.onclick=function(ev){ev.stopPropagation();ids.splice(i,1);save();paintAll()};
+    t.appendChild(x);th.appendChild(t)});
+  div.onclick=function(){st.active={dir:dir,anim:anim};save();paintAll()};
+  return div}
+function renderDirs(){
+  dirsEl.innerHTML='';
+  var S=slots(st.cls);
+  for(var d=0;d<8;d++){
+    var box=document.createElement('div');box.className='dir';
+    var h=document.createElement('h3');
+    h.innerHTML='<span>'+d+' · '+DIRS[d]+'</span><em>'+(d>=5?('mirrors '+DIRS[MIRRORSRC[d]]):'as drawn')+'</em>';
+    box.appendChild(h);
+    for(var i=0;i<ANIM.length;i++)box.appendChild(slotRow(S[d],d,ANIM[i]));
+    var foot=document.createElement('div');foot.className='foot';
+    var left=document.createElement('span');left.className='mirror';
+    var cb=document.createElement('input');cb.type='checkbox';cb.checked=!!S[d].walk.mirror;cb.title='mirror the art for every animation in this view';
+    cb.onchange=function(dd){return function(){var s=slots(st.cls)[dd];for(var j=0;j<ANIM.length;j++)s[ANIM[j]].mirror=cb.checked;save();paintAll()}}(d);
+    left.appendChild(cb);left.appendChild(document.createTextNode('mirror art'));
+    var gk=gripKey(),gv=st.grips[gk];
+    var gr=document.createElement('span');gr.className='hint';gr.style.margin='0';
+    gr.innerHTML='grip '+(gv?(gv[0]+','+gv[1]):'default')+(gv?' <button title="reset grip">↺</button>':'');
+    if(gv){gr.querySelector('button').onclick=function(ev){ev.stopPropagation();delete st.grips[gk];save();paintAll()}}
+    foot.appendChild(left);foot.appendChild(gr);
+    var cv=document.createElement('canvas');cv.width=CELL.w*ZOOM;cv.height=CELL.h*ZOOM;cv.className='preview';
+    cv.title=st.cls+' + '+st.weapon+(st.nudge?' — click where the hand is to move the grip':' (tick "fix grip by clicking" to correct the weapon)');
+    cv.onclick=function(dd){return function(ev){
+      if(!st.nudge)return;
+      var r=cv.getBoundingClientRect(),cx=(ev.clientX-r.left)/ZOOM,cy=(ev.clientY-r.top)/ZOOM;
+      var S2=slots(st.cls)[dd],anim=st.active.anim,ids=S2[anim].ids,kind=ANIM.indexOf(anim);
+      var wp=weaponPixel(dd,kind,0,st.weapon,ids.length||1,grip());
+      st.grips[st.cls+'|'+st.weapon]=[Math.round(cx-wp[0]),Math.round(cy-wp[1])];save();paintAll()}}(d);
+    var wrap=document.createElement('div');wrap.style.marginTop='4px';
+    wrap.appendChild(cv);wrap.appendChild(foot);box.appendChild(wrap);
+    dirsEl.appendChild(box)}
+  paintPreviews()}
+function paintPreviews(){
+  var cvs=dirsEl.querySelectorAll('canvas.preview');
+  for(var d=0;d<cvs.length;d++)drawPreview(cvs[d],d)}
+
+// ---------------------------------------------------------------- sheet board
+function renderBoard(){
+  var d=D.classes[st.cls];boardEl.innerHTML='';
+  if(!d){document.getElementById('sheetHint').textContent='no sheet for '+st.cls;return}
+  var labelled=0;d.poses.forEach(function(p){if(p.label)labelled++});
+  var seat={};d.poses.forEach(function(p){seat[p.seat[2]]=(seat[p.seat[2]]||0)+1});
+  var seatTxt=Object.keys(seat).map(function(k){return seat[k]+' '+k}).join(', ');
+  document.getElementById('sheetHint').innerHTML=
+    '<b>'+st.cls+'</b> — '+d.sheet+' · '+d.poses.length+' poses, '+labelled+' auto-labelled ('+
+    (d.kind==='montage'?'montage sheet: only poses the matcher could locate are listed':'one row per direction')+'). '+
+    'Labels come from the sheet layout and are only a hint — <b>you are the judge</b>. Head-seat source of this sheet\'s poses: '+
+    seatTxt+' (<span class="ok">stub</span> = measured from the neck, <span class="bad">torso</span> = no neck stub, placed from the hips).'+
+    '<br>Active slot: <b>'+st.active.dir+' · '+DIRS[st.active.dir]+' · '+st.active.anim+'</b> — tick the pose that belongs there.';
+  var filter=document.getElementById('filter').value;
+  var S=slots(st.cls)[st.active.dir][st.active.anim];
+  var grid=null,lastRow=null;
+  d.poses.forEach(function(p){
+    if(filter==='lab'&&!p.label)return;
+    if(p.row!==lastRow||!grid){
+      lastRow=p.row;
+      var rl=document.createElement('div');rl.className='rowline';
+      rl.innerHTML='<span>sheet row '+(p.row>=0?p.row:'—')+'</span><hr>';boardEl.appendChild(rl);
+      grid=document.createElement('div');grid.className='tiles';boardEl.appendChild(grid)}
+    var sel=S.ids.indexOf(p.id)>=0;
+    var t=document.createElement('div');t.className='tile'+(sel?' sel':'')+(S.mirror?' mir':'');
+    var s=Math.min(56/p.w,56/p.h,1.3);
+    var cv=document.createElement('canvas');
+    cv.width=Math.max(16,Math.round(p.w*s));cv.height=Math.max(16,Math.round(p.h*s));
+    var g=cv.getContext('2d');g.imageSmoothingEnabled=false;
+    if(safe(st.cls))g.drawImage(sheetImg[st.cls],p.x,p.y,p.w,p.h,0,0,cv.width,cv.height);
+    if(p.seat){g.strokeStyle=p.seat[2]==='stub'?'#7ee08a':'#ffbd5c';g.lineWidth=1;
+      var sx=p.seat[0]*s,sy=p.seat[1]*s;
+      g.beginPath();g.moveTo(sx-4,sy);g.lineTo(sx+4,sy);g.moveTo(sx,sy-4);g.lineTo(sx,sy+4);g.stroke()}
+    t.appendChild(cv);
+    var chk=document.createElement('div');chk.className='chk';t.appendChild(chk);
+    var i=document.createElement('i');i.textContent=p.label||('#'+p.id);t.appendChild(i);
+    var u=document.createElement('u');u.textContent='r'+(p.row>=0?p.row:'-')+' c'+(p.col>=0?p.col:'-')+' '+p.w+'×'+p.h+(p.iou?' iou'+p.iou:'');
+    t.appendChild(u);
+    t.title=(p.label||('pose #'+p.id))+' — head seat '+p.seat[0]+','+p.seat[1]+' ('+p.seat[2]+')';
+    t.onclick=function(){
+      var arr=slots(st.cls)[st.active.dir][st.active.anim].ids;
+      var k=arr.indexOf(p.id);
+      if(k>=0){arr.splice(k,1)}else{
+        var cap=st.active.anim==='idle'?1:(st.active.anim==='walk'?8:6);
+        if(arr.length>=cap)arr.shift();
+        arr.push(p.id)}
+      save();paintAll()};
+    grid.appendChild(t)})}
+
+// ---------------------------------------------------------------- export
+function dump(){
+  var out={version:1,note:'Prontera Grind sprite picker selection — poses are [x,y,w,h] inside the class sheet',classes:{},grips:st.grips};
+  for(var cls in st.slots){
+    if(!D.classes[cls])continue;
+    var c={};
+    for(var d=0;d<8;d++){c[d]={};
+      for(var i=0;i<ANIM.length;i++){var a=ANIM[i],s=st.slots[cls][d][a];
+        c[d][a]={ids:s.ids.slice(),mirror:!!s.mirror,
+                 cells:s.ids.map(function(id){var p=D.classes[cls].poses[id];
+                   return p?[p.x,p.y,p.w,p.h,p.seat[0],p.seat[1],p.seat[2]]:null})}}}
+    out.classes[cls]=c}
+  document.getElementById('out').value=JSON.stringify(out);
+  var n=0;for(var k2 in st.slots)if(D.classes[k2]){
+    var touched=0;for(var d2=0;d2<8;d2++)for(var j=0;j<ANIM.length;j++)if(st.slots[k2][d2][ANIM[j]].ids.length)touched++;
+    if(touched)n++}
+  statusEl.textContent=n+' class(es) with picks'}
+
+// ---------------------------------------------------------------- boot
+function paintAll(){renderDirs();renderBoard();dump()}
+function copy(){
+  var t=document.getElementById('out');t.select();t.setSelectionRange(0,t.value.length);
+  var msg=document.getElementById('copyMsg');
+  try{navigator.clipboard.writeText(t.value).then(function(){msg.textContent='copied — paste it back to me'},function(){msg.textContent='select the box and copy manually'})}
+  catch(e){msg.textContent='select the box and copy manually'}
+  setTimeout(function(){msg.textContent=''},4000)}
+(function boot(){
+  var clsSel=document.getElementById('cls');
+  Object.keys(D.classes).forEach(function(n){var o=document.createElement('option');o.value=n;o.textContent=n;clsSel.appendChild(o)});
+  var hairSel=document.getElementById('hair');
+  for(var i=0;i<PK.hairStyles;i++){var o=document.createElement('option');o.value=i;o.textContent='style '+i;hairSel.appendChild(o)}
+  var wSel=document.getElementById('weapon');
+  KINDS.forEach(function(k){var o=document.createElement('option');o.value=k;o.textContent=k;wSel.appendChild(o)});
+  if(!D.classes[st.cls])st.cls=Object.keys(D.classes)[0];
+  clsSel.value=st.cls;document.getElementById('sex').value=st.sex;hairSel.value=st.hair;wSel.value=st.weapon;
+  document.getElementById('showWep').checked=st.showWep!==false;
+  document.getElementById('nudge').checked=!!st.nudge;
+  document.getElementById('filter').value=st.filter||'all';
+  clsSel.onchange=function(){st.cls=clsSel.value;sheetFor(st.cls);save();paintAll()};
+  document.getElementById('sex').onchange=function(e){st.sex=e.target.value;save();paintAll()};
+  hairSel.onchange=function(e){st.hair=+e.target.value;save();paintAll()};
+  wSel.onchange=function(e){st.weapon=e.target.value;save();paintAll()};
+  document.getElementById('showWep').onchange=function(e){st.showWep=e.target.checked;save();paintAll()};
+  document.getElementById('nudge').onchange=function(e){st.nudge=e.target.checked;save()};
+  document.getElementById('filter').onchange=function(e){st.filter=e.target.value;save();renderBoard()};
+  document.getElementById('btnAuto').onclick=function(){
+    var d=D.classes[st.cls],S=slots(st.cls);
+    for(var dir=0;dir<8;dir++)for(var a=0;a<ANIM.length;a++){
+      var w=S[dir][ANIM[a]],src=d.auto[dir][ANIM[a]];
+      w.ids=(src.ids||[]).slice();w.mirror=!!src.mirror}
+    save();paintAll()};
+  document.getElementById('btnClear').onclick=function(){
+    var S=slots(st.cls);for(var dir=0;dir<8;dir++)for(var a=0;a<ANIM.length;a++)S[dir][ANIM[a]].ids=[];
+    save();paintAll()};
+  document.getElementById('btnReset').onclick=function(){
+    if(!confirm('Throw away every pick and grip for every class?'))return;
+    st.slots={};st.grips={};save();paintAll()};
+  document.getElementById('btnCopy').onclick=copy;
+  document.getElementById('btnCopy2').onclick=copy;
+  sheetFor(st.cls);
+  setInterval(function(){tick++;paintPreviews()},140);
+  paintAll();
+  window.addEventListener('resize',paintPreviews);
+})();
+})();
+</script>
+</body>
+</html>

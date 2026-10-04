@@ -1141,3 +1141,49 @@ assigned for feel rather than fidelity. While reworking that, two shipped bugs s
 * **Tests:** all 13 suites pass; the UI regression tests rolling rates, the hover title and checkbox defaults, and the skill regression pins default auto-cast behavior. Inline game JavaScript syntax and `git diff --check` pass.
 * **Branches / PR:** `arena/01a10466-prontera-grind`; updates existing PR #9: https://github.com/KzeR7/Prontera-Grind/pull/9
 * **Known limits / follow-ups:** the HUD rates reset at login or after starting a new adventure; the displayed Zeny rate is gross positive earnings over the recent window, not net profit after spending.
+
+### 2026-10-04 — `tool-v26 sprite-picker pose chooser` (no game change, no BUILD bump)
+* **What changed for the player:** nothing yet — this is the workbook the owner asked for
+  before the sprite redo, plus the RO research behind it. The game and the pack are untouched.
+* **New: `tools/sprite_picker.html`** — open it from a preview server rooted at the repo
+  (`python3 -m http.server 8000 --bind 0.0.0.0`, then `/tools/sprite_picker.html`).
+  For each of the 19 classes it shows all 8 camera views (S, SW, W, NW, N, NE, E, SE) with
+  idle / walk / attack slots; ticking a pose tile on the right fills the active slot (walk 8,
+  attack 6, idle 1, tick order = frame order); the preview under each view is the real
+  composite — the pose in its 96x96 cell, the chosen hair on that pose's **measured** head
+  seat, then the weapon at the game's own pixel. "Suggest 24 slots" seeds every view from the
+  sheet layout, "Copy my selection" hands the picks (and any weapon-grip corrections) back as
+  JSON. Picks are kept in localStorage between visits.
+* **New: `tools/make_sprite_picker.py`** — reads every sheet in `Sprite/`, segments the poses
+  (montages through the matcher in `tools/montage.py`), measures each pose's head seat with
+  the same stub rule the pack uses, and writes `tools/sprite_picker_data.js`.
+* **New: `tools/sprite-attachment-notes.md`** — the RO research: the head is parented to the
+  body *per frame* through stored attach points; weapons are unparented, aligned to the body
+  origin, and hand-corrected per class; draw order is a per-direction layer priority (a
+  weapon goes behind the body when the character faces away). Conclusion recorded there: the
+  game already bakes head+body at runtime, so the fix is measured attach points (the weapon
+  has none — `PACK_WEAPON_ADJUST` is one hard-coded offset per family for every class, pose
+  and frame) and a direction-aware draw order, not baking the head art in.
+* **Also recorded there:** the sheets are inconsistent — 15 are one row per direction with
+  knocked-down/sitting poses mixed into row 0, four are montages; `normal_labels()` is a
+  guess and that guess is where the wrong poses (and so the sliding heads) come in.
+* **Files touched:** `tools/make_sprite_picker.py` (new), `tools/sprite_picker.html` (new),
+  `tools/sprite_picker_data.js` (new, generated, 252 KB), `tools/sprite-attachment-notes.md`
+  (new), `AGENTS.md` (this entry). Nothing in `index.html`, `assets/` or `Sprite/`.
+* **Art:** none added, removed, recoloured or rebuilt; `tools/montage.py` was not run (its
+  matcher is imported read-only, to label montage poses).
+* **Tests:** all 13 suites green on the untouched tree (pack 19 bodies; class change 22,
+  save/load 10; economy 21, stat 7, card 13, skill 48, gear 20; scene 8, kit 20, UI 13,
+  sprite 10, starter 4). The picker itself: inline JS passes `node --check`, and it boots
+  under a DOM/canvas stub — 8 view cards, 111 tiles for Knight, auto-suggest 452/456 slots
+  across all 19 classes, selection JSON parses.
+* **Branches / PR:** `arena/01a1054b-prontera-grind`; pushed for the owner's review, no PR —
+  the sprite work itself starts once the owner sends the ticked selection back.
+* **Known limits / follow-ups:**
+  * The previews are canvas drawings, not browser screenshots — there is no browser in this
+    sandbox, so the owner's eyeball is the check.
+  * Auto-labels are hints from the sheet layout; the owner overrules them by ticking.
+  * Montage sheets only expose the poses the matcher could locate (Lord Knight 69 of ~112),
+    so a few slots there may have to inherit the parent class or be matched by hand.
+  * Once the picks arrive: rebuild the pack from them, measure the weapon grip per cell, add
+    the direction-aware weapon layer, then re-run the suites and bump `BUILD`.
