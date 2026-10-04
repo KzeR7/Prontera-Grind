@@ -36,7 +36,11 @@ const code = [
   pick(/const cardStat=\(g,seed\)=>\{[^}]*\};/, 'cardStat'),
   pick(/const SU=k=>[^,]+/, 'SU'),
   grab('function gearPool(m,l){', 'const dropTxt='),
-  grab('function genGear(T,l,sec,boss){', '// ---------- skill effects'),
+  pick(/const BAGMAX=\d+;/, 'BAGMAX'),
+  pick(/const MAPTIER=\[[^\]]*\];/, 'MAPTIER'),
+  pick(/const dropTier=\(m,l\)=>[^;]+;/, 'dropTier'),
+  pick(/const sellVal=it=>[^;]+;/, 'sellVal'),
+  grab('function genGear(T,l,sec,boss,tier){', '// ---------- skill effects'),
   `function executeGearRoll(mob,roll){const old=Math.random;Math.random=()=>roll;const drops=[],lk=1,mkDrop=it=>({it});try{${gearDropLoop}}finally{Math.random=old}return drops}`,
   grab('function canShield(){', 'function ekey(it)'),        // canShield / dualOn / dualOk
   grab('function slotAccepts(k,it){', 'function equipChooser(k){'),
@@ -48,7 +52,7 @@ const SECN=['Novice gear','1st-job gear','2nd-job gear','High-tier gear'];
 const SLOTS={weapon:{label:'Weapon',stat:'ATK',ic:'A'},armor:{label:'Armor',stat:'DEF',ic:'B'},head:{label:'Headgear',stat:'HP',ic:'C'},off:{label:'Shield',stat:'DEF',ic:'D'},leg:{label:'Legwear',stat:'DEF',ic:'E'},acc:{label:'Accessory',stat:'HP',ic:'F'}};
 const rnd=(a,b)=>a+Math.random()*(b-a),ri=(a,b)=>Math.floor(rnd(a,b+1)),uid=()=>1;
 let S=null;
-this.__g={ MAPS, GEAR, gearPool, fieldOf, genGear, executeGearRoll, slotAccepts, canUse, canShield, dualOk, CLASSES, lineOf, secOf, SLOTS,
+this.__g={ MAPS, GEAR, gearPool, fieldOf, genGear, executeGearRoll, slotAccepts, canUse, canShield, dualOk, CLASSES, lineOf, secOf, SLOTS, BAGMAX, MAPTIER, dropTier, sellVal,
            set S(v){S=v}, get S(){return S} };
 `;
 const sb = { console };
@@ -200,7 +204,7 @@ t('the real equipment-drop loop creates boss gear when an independent roll succe
   // A 1.8% roll fails the old 1.2% gate but passes the doubled 2.4% gate.
   const drops = G.executeGearRoll(boss, .018);
   assert.strictEqual(drops.length, boss.drops.length, 'the actual boss gear loop did not emit items');
-  assert.ok(drops.every(d => d.it && d.it.tier >= 2), 'boss flag must reach genGear() and guarantee at least Rare');
+  assert.ok(drops.every(d => d.it && d.it.tier === 4), 'every Stage 10 boss drop must be Legendary');
   assert.ok(drops.every(d => d.it.slot), 'successful boss rolls must be real equipment objects');
   // The regular-mob branch is also the live loop: 3.5% clears the new first two gates,
   // but misses the old rates and the new 3.2% third roll.
@@ -322,6 +326,52 @@ t('every slot is offered exactly what the class may wear, and nothing else', () 
   // a class that cannot hold a shield is offered none, even with a full bag
   bag('Assassin', inv);
   assert.strictEqual(inv.filter(it => G.slotAccepts('off', it) && it.slot === 'off').length, 0);
+});
+
+t('drop rarity is FIXED by map and stage: regular drops never Legendary, bosses always', () => {
+  const bands = G.MAPTIER;
+  assert.deepStrictEqual(Array.from(bands), [0, 0, 1, 1, 2, 2, 3, 3, 3, 3], 'the per-map rarity ladder changed');
+  assert.strictEqual(G.BAGMAX, 1000, 'the bag holds 1000 items');
+  for (let m = 0; m < G.MAPS.length; m++) for (let l = 1; l <= 10; l++) {
+    const want = l >= 10 ? 4 : Math.min(3, bands[m] + (l >= 8 ? 1 : 0));
+    assert.strictEqual(G.dropTier(m, l), want, G.MAPS[m].n + ' stage ' + l + ' band');
+    assert.ok(want < 4 || l === 10, G.MAPS[m].n + ' stage ' + l + ' must not be Legendary');
+    const F = G.fieldOf(m, l);
+    assert.strictEqual(F.tier, want, G.MAPS[m].n + ' stage ' + l + ' field tier');
+    F.mobs.forEach(mo => assert.strictEqual(mo.tier, want, 'every mob carries its field tier'));
+    if (l === 10) assert.strictEqual(F.boss.tier, 4, 'the boss is always Legendary');
+    // and the real kill-loop roll lands on that band whatever the dice do
+    G.S = { st: { luk: 99 }, eq: {} };
+    for (const roll of [0, .01, .4, .99]) {
+      const mob = { ...F.mobs[0], boss: false, lvl: l, sec: F.sec, tier: F.tier };
+      G.executeGearRoll(mob, roll).forEach(d => assert.strictEqual(d.it.tier, want, G.MAPS[m].n + ' roll ' + roll));
+    }
+  }
+});
+
+t('the rarity band is fixed but the affixes are rolled every time', () => {
+  const T = { k: 'sword', n: 'Test Blade' }, seen = new Set();
+  for (let i = 0; i < 40; i++) {
+    const it = G.genGear(T, 99, 3, true, 4);
+    assert.strictEqual(it.tier, 4, 'a Legendary field must never hand out a lower band');
+    assert.strictEqual(it.aff.length, 3, 'Legendary gear rolls three affixes');
+    seen.add(it.aff.map(a => a.k + ':' + a.v).join(','));
+  }
+  assert.ok(seen.size > 1, 'two drops of the same item must differ in their affixes');
+  const mid = G.genGear(T, 40, 1, false, 1);
+  assert.strictEqual(mid.tier, 1);
+  assert.ok(mid.aff.length >= 1 && mid.aff.length <= 2, 'Fine gear rolls one or two affixes');
+  assert.ok(mid.name.startsWith('Fine '), 'the item name states its fixed band: ' + mid.name);
+});
+
+t('selling gear is pocket money and never funds an upgrade', () => {
+  assert.strictEqual(G.sellVal({ tier: 0, sec: 0, lvl: 1 }), 50, 'a starter Common piece sells for 50z');
+  const best = G.sellVal({ tier: 4, sec: 3, lvl: 99 });
+  assert.ok(best > 1000 && best < 2000, 'the best Legendary Abyss gear sells for under 2,000z (got ' + best + ')');
+  for (let t = 0; t < 5; t++) for (let s = 0; s < 4; s++) {
+    const v = G.sellVal({ tier: t, sec: s, lvl: 99 });
+    assert.ok(v <= 2000, 'no item may be worth more than 2,000z (tier ' + t + ' sec ' + s + ' = ' + v + ')');
+  }
 });
 
 const total = pass + fail;

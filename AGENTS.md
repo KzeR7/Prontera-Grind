@@ -315,6 +315,18 @@ with grass at the edges, a trunk wider than the character, ferns at its base, th
 against it. `payonPlan()` lays that out; v2 ships the **bamboo groves and the mossy boulder** the
 v1 kit lacked - both were reported as gaps rather than drawn, and both now come from the sheet.
 
+**Drop rarity is FIXED; the affixes are not (v34).** `dropTier(map, stage)` is a property of
+*where* an item falls, not of the roll: each map sits on a rarity band (`MAPTIER`, maps 1-2
+Common / 3-4 Fine / 5-6 Rare / 7-10 Epic), stages 8-9 walk that band one step up, no regular drop
+is ever Legendary, and **every Stage 10 boss drop is Legendary**. The map panel states the band
+on the drop lines, and `genGear()` only rolls the random half of the item - its **affixes**, its
+refine room and its value inside the band - so two drops of the same name still differ. LUK no
+longer nudges the rarity roll (there is no roll to nudge); it still lifts the drop *odds*.
+`gear_sim.js` pins the whole ladder. Selling is pocket money by the same rule: `sellVal()` runs
+~50z for a Common starter piece to ~1,825z for the best Legendary Abyss gear, so a bag dump
+never funds an upgrade. The bag itself holds `BAGMAX = 1000` items; at capacity loot is refused
+and stays on the ground (cards live in their own, uncapped bag).
+
 **Equipment database and drops.** `GEAR[map][section]` is the catalogue - 10 maps × 4 sections
 (Novice / 1st job / 2nd job / high tier), each section carrying 2-3 weapon types plus body,
 headgear, shield, legwear and two accessories (**96 weapon entries** in total; armour and
@@ -346,6 +358,15 @@ maxed a stat in **16 rolls / 334k Zeny**; the new one takes **40 rolls / 802k pe
 ~2.4M for all three pieces** (measured by Monte-Carlo over the real ladder, `economy_sim.js`
 pins it). It is the last optional sink, so it is meant to be the priciest thing a maxed player
 buys. **The 3-vs-40 split is correct and is not a bug**: 3 is the equip limit, 40 the collection cap.
+**Measured power (v34, `tools/tests/pet_sim.js`)**: a maxed G6 Legendary pet (Mythril 5/5/5,
+Spirit Bolt) deals **~2.2M per hit / ~3.4M DPS** against an endgame Lord Knight's ~377k auto-attack
+DPS - **9.0x the owner's plain swings, 0.45x a fully maxed skill rotation, and 1.34x that player
+with three pets on the field**; it alone kills an Abyss Stage-10 boss (658k HP) in ~0.2s. Even the
+weakest maxed pet (a Common Poring) is 1.4x the owner's auto-attacks. The multiplier is flat
+(`petDmg = atk x rarity x mutation x Claw`), so **the ratio is the same at every level and every
+gear tier** - a maxed pet carries a fresh character exactly as hard as a Lv150 one. The audit is
+printed by the suite; no pet number was changed in v34 - the owner has the measurement and the
+call.
 
 **Skills.** Two structural rules, both pinned by `skill_sim.js`:
 
@@ -479,13 +500,14 @@ node tools/tests/save_load_sim.js     # -> "10 passed, 0 failed"
 node tools/tests/economy_sim.js       # -> "21 passed, 0 failed"
 node tools/tests/stat_sim.js          # -> "7 passed, 0 failed"
 node tools/tests/card_sim.js          # -> "13 passed, 0 failed"
-node tools/tests/skill_sim.js         # -> "48 passed, 0 failed"
-node tools/tests/gear_sim.js          # -> "20 passed, 0 failed  (20 assertions groups)"
+node tools/tests/skill_sim.js         # -> "49 passed, 0 failed"
+node tools/tests/gear_sim.js          # -> "23 passed, 0 failed  (23 assertions groups)"
 node tools/tests/scene_sim.js         # -> "8 passed, 0 failed" (per-map scenery, water, clear lane)
 node tools/tests/kit_sim.js           # -> "34 passed, 0 failed" (v2 atlas + KIT_PS, payon recipe, morocc design, ten identities, builders, loader)
-node tools/tests/ui_sim.js            # -> "13 passed, 0 failed"
+node tools/tests/ui_sim.js            # -> "18 passed, 0 failed"
 node tools/tests/sprite_sim.js        # -> "11 passed, 0 failed" (mob/weapon Divine Pride mapping, fallbacks)
 node tools/tests/starter_sim.js       # -> "7 passed, 0 failed" (the gentle starter stages)
+node tools/tests/pet_sim.js           # -> "8 passed, 0 failed" (+ the printed pet data and the maxed-pet audit)
 ```
 
 Every suite pulls real code out of `index.html` by **string boundary**, so an edit that

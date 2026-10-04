@@ -150,6 +150,14 @@ hr{border:0;border-top:1px dashed var(--edge);margin:6px 0}
 .chooser>.hd button.x{margin-left:auto;padding:0 7px}
 .chooser .slot{background:#fff7dd}
 .chooser .slot .cell{cursor:default}
+/* Equipment slot click = a pop-out of the bag: ringed tiles fit the slot, greyed tiles cannot. */
+.row button.on{background:#ffe08a;border-color:var(--gold)}
+.bagpop{position:fixed;inset:0;background:#0009;z-index:880;display:flex;align-items:center;justify-content:center;padding:14px}
+.bagpop>.card{width:min(470px,94vw);max-height:84vh;overflow:auto;background:#fdf6e4;border-radius:10px;padding:10px;box-shadow:0 12px 34px #0008}
+.bagpop .legend{display:flex;align-items:center;gap:6px;font-size:10px;margin:6px 0 4px;flex-wrap:wrap}
+.cell.fit{outline:3px solid #2e9e3e;box-shadow:0 0 9px #2e9e3e99;cursor:pointer}
+.cell.nofit{opacity:.34;filter:grayscale(1);cursor:not-allowed}
+.cell.demo{width:16px;height:16px;aspect-ratio:auto;font-size:9px;cursor:default;outline-offset:0}
 .roll-status{height:30px;min-height:30px;width:100%;display:flex;align-items:center;justify-content:center;overflow:hidden}.roll-status span{display:block;width:150px;text-align:center;font-variant-numeric:tabular-nums;white-space:nowrap}
 </style>
 </head>
@@ -217,7 +225,7 @@ const AL={str:'STR',agi:'AGI',dex:'DEX',luk:'LUK',int:'INT',hp:'Max HP',atk:'ATK
 // late maps in about five, with bosses still a ~12x fight. See tools/tests/economy_sim.js.
 const SU=k=>k.toUpperCase(),BX_=13,Z0=-28,Z1=12,MPS=15,AGGRO=6.5,HPK=42,HPE=1.3,K5=['str','agi','dex','luk','int'];
 const GM_USER='GM',GM_PASS='gm1234';   // CHANGE THE GM PASSWORD before you publish
-const BUILD='2026-10-04 combat-v33 hit-fx pet-sprites';   // shown on the login card - confirms which file you loaded
+const BUILD='2026-10-04 ui-v34 affix-rarity bag-popup damage-short';   // shown on the login card - confirms which file you loaded
 $('buildTag').textContent='build '+BUILD;
 
 // ---------- class tree: Novice -> 6 first jobs -> 6 second jobs -> 6 third jobs ----------
@@ -546,6 +554,17 @@ const cardStat=(g,seed)=>{const p=g>=2?AFF:K5;return p[((seed%p.length)+p.length
 // A pool entry's k is its weapon type for weapons ('sword', 'bow', ...) and its slot for
 // everything else, so the UI asks gearSlot() which panel group an entry belongs to.
 const ARM=['armor','head','off','leg','acc'],gearSlot=x=>ARM.includes(x.k)?x.k:'weapon';
+// ---------- bag capacity & fixed drop rarity ----------
+// The bag holds 1000 items. Loot is refused once it is full (the drop stays on the ground and
+// is reported) so a long farm cannot silently grow an unbounded save.
+const BAGMAX=1000;
+// Rarity is a property of WHERE an item drops, not of the roll. Each map sits on a rarity band
+// and stages 8-9 walk it one step up; no regular drop is ever Legendary, and every Stage 10
+// boss drop is. Only the affixes (and the refine/card slots) stay random, so two drops of the
+// same item still differ. Bands: maps 1-2 Common, 3-4 Fine, 5-6 Rare, 7-10 Epic.
+// Pinned by gear_sim.js.
+const MAPTIER=[0,0,1,1,2,2,3,3,3,3];
+const dropTier=(m,l)=>l>=10?4:Math.min(3,MAPTIER[Math.max(0,Math.min(MAPTIER.length-1,m|0))]+(l>=8?1:0));
 // The field's gear pool: every item an equipment drop on this map+level can be. Weapons first
 // (they are the ones a player is hunting), then body, headgear, shield, legwear, two accessories.
 function gearPool(m,l){const sg=MAPS[m].gear[m>=5?3:secOf(l)],T=[];
@@ -553,15 +572,15 @@ function gearPool(m,l){const sg=MAPS[m].gear[m>=5?3:secOf(l)],T=[];
   T.push({k:'armor',n:sg.a},{k:'head',n:sg.h},{k:'off',n:sg.o},{k:'leg',n:sg.l},{k:'acc',n:sg.ac});
   if(sg.ac2)T.push({k:'acc',n:sg.ac2});
   return T}
-function fieldOf(m,l){const mp=MAPS[m],sec=m>=5?3:secOf(l),T=gearPool(m,l),n=T.length;
+function fieldOf(m,l){const mp=MAPS[m],sec=m>=5?3:secOf(l),T=gearPool(m,l),n=T.length,ft=dropTier(m,l);
   // three gear rolls per mob, spread across the pool so two mobs on one field do not pay out
   // the same item; gear is the common drop and a card is the rare one.
   const mobs=[0,1].map(j=>{const mm=mp.mobs[(l-1+j)%mp.mobs.length],cg=l<=3?0:l<=7?1:2;
-    return{...mm,drops:[[T[(l*3+2*j)%n],4.8],[T[(l*3+2*j+1)%n],4.0],[T[(l*3+2*j+2)%n],3.2]],card:{n:mm.n+' Card',stat:cardStat(cg,(m*10+l+j)*3+1),g:cg},cardCh:.45,ore:l===10,oreCh:l===10?.02:0}});
-  return{m,l,sec,mobs,boss:l===10?{...mp.boss,drops:T.map(x=>[x,2.4]),card:{n:mp.boss.n+' Card',stat:cardStat(3,m),g:3},cardCh:.08,ore:true,oreCh:.05}:null}}
-// One drop line for the map panel: icon + name on the left, the % on the right.
+    return{...mm,tier:ft,drops:[[T[(l*3+2*j)%n],4.8],[T[(l*3+2*j+1)%n],4.0],[T[(l*3+2*j+2)%n],3.2]],card:{n:mm.n+' Card',stat:cardStat(cg,(m*10+l+j)*3+1),g:cg},cardCh:.45,ore:l===10,oreCh:l===10?.02:0}});
+  return{m,l,sec,tier:ft,mobs,boss:l===10?{...mp.boss,tier:ft,drops:T.map(x=>[x,2.4]),card:{n:mp.boss.n+' Card',stat:cardStat(3,m),g:3},cardCh:.08,ore:true,oreCh:.05}:null}}
+// One drop line for the map panel: icon + name + the fixed rarity on the left, the % on the right.
 const poolIc=T=>gearSlot(T)==='weapon'?(WICON[T.k]||'⚔️'):{armor:'🥼',head:'🎩',off:'🛡️',leg:'👖',acc:'💍'}[T.k];
-const dropTxt=([T,ch])=>`<div class="dropline"><span>${poolIc(T)} ${T.n}</span><b>${ch}%</b></div>`;
+const dropTxt=([T,ch],tier)=>`<div class="dropline"><span>${poolIc(T)} ${T.n} <small class="r${tier||0}">${RAR[tier||0].n}</small></span><b>${ch}%</b></div>`;
 
 // ---------- stat progression ----------
 // Stats cap at 99 until Base Lv 100, then the elite tier opens up to 120. Raising a stat
@@ -665,13 +684,14 @@ function autoRoll(p){if(!autoSet.has(p.id)||!gp(p.id))return;rollOnce(p,true,g=>
 const pickW=w=>{let r=Math.random()*w.reduce((a,b)=>a+b,0);for(let i=0;i<w.length;i++){r-=w[i];if(r<0)return i}return w.length-1},gp=id=>S.pets.find(x=>String(x.id)===String(id));
 const uid=()=>Date.now()+Math.random(),rnd=(a,b)=>a+Math.random()*(b-a),ri=(a,b)=>Math.floor(rnd(a,b+1)),cl=(v,a,b)=>Math.max(a,Math.min(b,v));
 const PET_SKILL_WEIGHTS=PET_SKILLS.map(()=>1),rollPetSkill=()=>PET_SKILLS[pickW(PET_SKILL_WEIGHTS)];
-const fresh=()=>({pets:[],cls:'Novice',sex:'m',hair:0,lv:1,exp:0,hp:100,zeny:0,kills:0,pts:10,jobs:{Novice:{jl:1,jx:0}},sk:{aid:1},skOff:{},base:{},mp:0,lvl:1,prog:[1,1,1,1,1],kl:0,auto:true,adv:true,q:null,cards:[],ore:{ori:0,elu:0},gm:false,gmx:100,
+const fresh=()=>({pets:[],cls:'Novice',sex:'m',hair:0,lv:1,exp:0,hp:100,zeny:0,kills:0,pts:10,jobs:{Novice:{jl:1,jx:0}},sk:{aid:1},skOff:{},dmgShort:true,base:{},mp:0,lvl:1,prog:[1,1,1,1,1],kl:0,auto:true,adv:true,q:null,cards:[],ore:{ori:0,elu:0},gm:false,gmx:100,
   st:{str:1,agi:1,dex:1,luk:1,int:1,vit:1},eq:{weapon:{id:1,slot:'weapon',wt:'dagger',tier:0,val:5,name:'Novice Knife',aff:[],slots:1,cards:[],sec:0},armor:null,head:null,off:null,leg:null,acc1:null,acc2:null},inv:[]});
 const saveKey=()=>'pg_save3_'+currentUser;
 const num_= (v,d)=>{v=+v;return Number.isFinite(v)?v:d};
 function load(){try{const s=JSON.parse(lsGet(saveKey()));if(s&&s.lv){const F=fresh(),f=Object.assign(F,s);f.st=Object.assign(fresh().st,s.st||{});if(!CLASSES[f.cls])f.cls='Novice';
 // repair top-level numbers corrupted by older/test saves (null -> crash on .toLocaleString())
   for(const k of['lv','exp','hp','zeny','kills','pts','mp','lvl','kl','gmx'])f[k]=num_(f[k],F[k]);
+  if(f.dmgShort!==true&&f.dmgShort!==false)f.dmgShort=true;   // damage digits: short unless deliberately switched
   for(const k of['str','agi','dex','luk','int','vit'])f.st[k]=Math.max(1,Math.min(MAXST,num_(f.st[k],1)));
   f.ore={ori:num_(f.ore&&f.ore.ori,0),elu:num_(f.ore&&f.ore.elu,0)};
   if(!Array.isArray(f.prog)||!f.prog.length)f.prog=F.prog.slice();else f.prog=f.prog.map(v=>num_(v,1));
@@ -876,14 +896,17 @@ function spawn(){
   });
   activePack=nearestPack();mob=bossWave?mobs[0]:packMob();pAtkT=.3;
 }
-function genGear(T,l,sec,boss){
-  const slot=['armor','head','off','leg','acc'].includes(T.k)?T.k:'weapon';let roll=rnd(0,100)-(boss?25:0)-st('luk')*.15,tier=0,acc=0;
-  for(let i=0;i<5;i++){acc+=RAR[i].w;if(roll<acc||i===4){tier=i;break}}if(boss&&tier<2)tier=2;
-  const val=Math.max(1,Math.round({weapon:6,armor:4,head:10,off:3,leg:3,acc:5}[slot]*[1,2.2,4,7][sec]*(1+l*.15)*RAR[tier].m*rnd(.9,1.12)));
-  const n=[1,1+ri(0,1),2,2+ri(0,1),3][tier],pool=AFF.slice(),aff=[],af=(1+sec)*AM[tier];
+function genGear(T,l,sec,boss,tier){
+  const slot=['armor','head','off','leg','acc'].includes(T.k)?T.k:'weapon';
+  // Rarity is fixed by the field (see dropTier): the roll only decides the AFFIXES, the refine
+  // room and the item's own value inside its band. `boss` is kept as an argument because the
+  // boss pool is the one place a Legendary band is reached.
+  const t=Number.isFinite(tier)?tier:dropTier(S.mp,S.lvl);
+  const val=Math.max(1,Math.round({weapon:6,armor:4,head:10,off:3,leg:3,acc:5}[slot]*[1,2.2,4,7][sec]*(1+l*.15)*RAR[t].m*rnd(.9,1.12)));
+  const n=[1,1+ri(0,1),2,2+ri(0,1),3][t],pool=AFF.slice(),aff=[],af=(1+sec)*AM[t];
   for(let i=0;i<n;i++){const k=pool.splice(ri(0,pool.length-1),1)[0];aff.push({k,v:Math.max(1,Math.round(af*AB[k]*rnd(.8,1.25)))})}
-  const slots=slot==='weapon'?Math.min(3,1+ri(0,1)+(tier>=3?1:0)):Math.min(1,ri(0,1)+(tier>=3?1:0));
-  return{id:uid(),slot,wt:slot==='weapon'?T.k:undefined,tier,val,name:(tier?RAR[tier].n+' ':'')+T.n,aff,slots,cards:[],sec,lvl:l};
+  const slots=slot==='weapon'?Math.min(3,1+ri(0,1)+(t>=3?1:0)):Math.min(1,ri(0,1)+(t>=3?1:0));
+  return{id:uid(),slot,wt:slot==='weapon'?T.k:undefined,tier:t,val,name:(t?RAR[t].n+' ':'')+T.n,aff,slots,cards:[],sec,lvl:l};
 }
 // ---------- skill effects: damage over time, stun, chain ----------
 // DoT ticks twice a second for its duration; the number stored is damage PER SECOND.
@@ -897,7 +920,17 @@ function chainHit(src,dmg,col,n){if(!src||!(dmg>0)||mobs.length<2)return;
   for(const o of near){shots.push({x0:src.x,z0:src.z,x1:o.x,z1:o.z,t:0,col:col||'#fff'});hurt(o,Math.max(1,Math.round(dmg)),col)}}
 const mkDrop=it=>({it,wx:mob.x+rnd(-.7,.7),wz:mob.z+rnd(-.7,.7),y:0,vy:-220,t:0});
 const addFloat=(x,y,z,txt,col,big,kind='text')=>floats.push({x,y,z,txt,col,life:1,big,kind});
-const damageFloat=(x,y,z,amount,critical=false,incoming=false)=>addFloat(x,y,z,String(Math.round(amount)),null,false,incoming?'incoming':critical?'critical':'damage');
+// Floating combat numbers are shortened by default: 100,000 reads "100K", 1,000,000 reads "1M".
+// The Settings panel switches every damage float (normal, critical and incoming) to full digits.
+// One decimal is kept only where it carries information (1.2M, 12.5K), and a K that rounds up
+// to 1000 is promoted to M so the label never reads "1000K".
+const shortNum=n=>{n=Math.round(Number(n)||0);const a=Math.abs(n),u=(v,s)=>{const r=Math.round(v*10)/10;return(Number.isInteger(r)?String(r):r.toFixed(1))+s};
+  if(a>=1e9)return u(n/1e9,'B');
+  if(a>=1e6)return u(n/1e6,'M');
+  if(a>=1e3)return Math.abs(Math.round(n/100)/10)>=1000?u(n/1e6,'M'):u(n/1e3,'K');
+  return String(n)};
+const fullNum=()=>typeof S!=='undefined'&&S&&S.dmgShort===false;
+const damageFloat=(x,y,z,amount,critical=false,incoming=false)=>addFloat(x,y,z,fullNum()?String(Math.round(amount)):shortNum(amount),null,false,incoming?'incoming':critical?'critical':'damage');
 // Skill labels track the moving player, rather than floating away from the cast location.
 const skillNameFloat=(name,slot=0)=>floats.push({x:pl.x,y:3.15+slot*.38,z:pl.z,txt:name,life:1.15,kind:'skill',anchor:'hero'});
 function log(m,cls){logs.push({m,cls});if(logs.length>80)logs.shift();
@@ -963,7 +996,7 @@ function kill(o){const keep=mob;if(o)mob=o;if(!mob||!mobs.includes(mob)){mob=kee
   const z=Math.round(mob.zeny*(1+pv('zeny')/100))*g,xp=Math.round(mob.exp*expRate());earnZeny(z);S.exp+=xp;addJob(Math.round(Math.round(mob.exp*.7)*expRate()));pend=[];
   addFloat(mob.x,2.4,mob.z,'+'+z+'z','#ffd23f');log(`${mob.n} defeated! +${xp.toLocaleString()} EXP, +${z.toLocaleString()} Zeny`);
   const lk=1+st('luk')*.008;
-  for(const[T,ch]of mob.drops)if(Math.random()*100<ch*lk)drops.push(mkDrop(genGear(T,mob.lvl,mob.sec,mob.boss)));
+  for(const[T,ch]of mob.drops)if(Math.random()*100<ch*lk)drops.push(mkDrop(genGear(T,mob.lvl,mob.sec,mob.boss,mob.tier)));
   if(Math.random()*100<mob.cardCh*lk){const g2=mob.card.g;drops.push(mkDrop({card:1,id:uid(),n:mob.card.n,g:g2,stat:mob.card.stat,v:cardVal(g2,mob.card.stat)}))}
   if(mob.ore)for(const o of['ori','elu'])if(Math.random()<mob.oreCh)drops.push(mkDrop({ore:o,id:uid(),n:ORE[o]}));
   if(Math.random()*100<(mob.boss?5:.3)*lk){const r=pickW(PW[Math.min(S.mp,9)]),c=PETS.filter(x=>x.r===r),sp=PETS.indexOf(c[ri(0,c.length-1)]);
@@ -978,12 +1011,19 @@ function kill(o){const keep=mob;if(o)mob=o;if(!mob||!mobs.includes(mob)){mob=kee
 function collect(it){
   if(it.card){S.cards.push(it);log(`Got card: [${GRADE[it.g]}] ${cardTxt(it)}`,'r'+GI[it.g]);addFloat(pl.x,2.8,pl.z,'CARD!','#ffb020',true);ui();return}
   if(it.ore){S.ore[it.ore]++;log(`Got ${it.n}!`,'r4');addFloat(pl.x,2.8,pl.z,it.n+'!','#6cd3ff',true);ui();return}
+  // The bag holds BAGMAX items. At capacity the loot is refused and stays where it fell, so a
+  // long farm can never grow the save past the cap.
+  if(S.inv.length>=BAGMAX){log(`Bag full (${BAGMAX} items): sold nothing, left ${it.name} on the ground.`,'r0');addFloat(pl.x,3,pl.z,'BAG FULL','#ff6b6b',true);ui();return}
   S.inv.push(it);qProg('loot');log(`Picked up [${RAR[it.tier].n}] ${it.name}`,'r'+it.tier);
   if(S.auto!==false&&canUse(it)){const cur=S.eq[ekey(it)];if(!cur||ev(it)>ev(cur))equip(it.id,true)}ui();
 }
 function equip(id,quiet){const i=S.inv.findIndex(x=>x.id===id);if(i<0)return;const it=S.inv[i];if(!canUse(it)){log(`Your class cannot use ${it.name}.`);return}
   S.inv.splice(i,1);const k=ekey(it),old=S.eq[k];if(old)S.inv.push(old);S.eq[k]=it;S.hp=Math.min(S.hp,maxHp());if(!quiet)log('Equipped '+iname(it));selB=null;ui();save()}
-const sellVal=it=>Math.floor(ev(it)*(1+it.tier*2)*2);
+// Selling is pocket money, deliberately: it scales with the item's rarity band, its stage
+// section and its level, but stays far below the Zeny a field actually pays - a Common starter
+// piece sells for ~50z and the best Legendary Abyss gear for under 2,000z, so dumping a full
+// bag never funds an upgrade. Pinned by gear_sim.js.
+const sellVal=it=>Math.max(1,Math.round(50*(1+.9*(it.sec||0))*(1+1.4*(it.tier||0))*(1+.005*(it.lvl||0))));
 function sell(id){const i=S.inv.findIndex(x=>String(x.id)===String(id));if(i<0)return;const it=S.inv.splice(i,1)[0];earnZeny(sellVal(it));(it.cards||[]).forEach(c=>S.cards.push(c));if(selB==it.id)selB=null;ui();save()}
 // Quest goal AND reward are solved from the level you are standing at, by the one function the
 // panel and the Claim button both read - so what the quest panel states is exactly what you are
@@ -1073,7 +1113,7 @@ const cell=(it,sel,extra='')=>`<div class="cell b${dtier(it)}${sel?' sel':''}" d
 function itemMain(it){
   if(it.card)return`<b class="r${GI[it.g]}">${it.n}</b><div>${GRADE[it.g]} card &middot; <b>${SU(it.stat)} +${it.v}</b></div><div><small>Fits: ${CFL[CFIT[it.stat]]} only</small></div>`;
   return`<b class="r${it.tier}">${iname(it)}</b><div><small>${RAR[it.tier].n} ${SLOTS[it.slot].label}${it.wt?' ('+it.wt+')':''} &middot; ${SECN[it.sec||0]}</small></div>
-  <div><b>${SLOTS[it.slot].stat} +${ev(it)}</b>${it.r?` <small>(base ${it.val})</small>`:''}</div>${(it.aff||[]).map(a=>`<div class="r1">&#9670; ${affTxt(a)}</div>`).join('')}`}
+  <div><b>${SLOTS[it.slot].stat} +${ev(it)}</b>${it.r?` <small>(base ${it.val})</small>`:''}</div>${(it.aff||[]).length?`<div class="sec">Affixes <small>(${it.aff.length} random)</small></div>`:''}${(it.aff||[]).map(a=>`<div class="r1">&#9670; ${affTxt(a)}</div>`).join('')}`}
 function itemDetail(it){if(it.card)return itemMain(it);const cs=it.cards||[];return itemMain(it)+Array.from({length:it.slots||0},(_,i)=>`<div><small>${cs[i]?'&#9670; '+cardTxt(cs[i]):'&#9671; empty card slot'}</small></div>`).join('')+(canUse(it)?'':'<div class="r0"><small>Your class cannot use this.</small></div>')}
 const cardSlots=(it,k)=>Array.from({length:it.slots||0},(_,i)=>{const c=(it.cards||[])[i];return c?`<div><small class="r${GI[c.g]}">&#9670; ${cardTxt(c)}</small> <button data-a="unsock" data-v="${k}:${i}">Remove ${200*(c.g+1)}z</button></div>`:'<div><small>&#9671; empty slot</small></div>'}).join('');
 const tnode=n=>{const c=CLASSES[n],pj=S.jobs[n],cur=n===S.cls,blk=classBlock(n);return`<div class="tn ${cur?'cur':blk?(pj?'played':'lock'):'ok'}${selK===n?' pick':''}" data-a="selk" data-v="${n}"><b>${n}</b><small>${pj?`Job ${pj.jl}/${c.mj}`:'Lv '+c.rj+' req'}</small></div>`};
@@ -1093,19 +1133,19 @@ const V={
     <div class="mapband fields">
       <div class="mapband-t">${mp.n} <small>&middot; ${mp.t} &middot; rec. ${mp.rec} (not a limit) &middot; ${Math.min(pr-1,10)}/10 stages unlocked</small>
         <button class="go" data-a="go" ${mapL>pr?'disabled':''}>${S.mp===mapM&&S.lvl===mapL?'You are here':'Travel to '+mp.n+' Stage '+mapL}</button></div>
-      <div class="lvgrid">${Array.from({length:10},(_,i)=>{const l=i+1,lock=l>pr;return`<button class="map-node${lock?' locked':''}${S.mp===mapM&&S.lvl===l?' active':''}${mapL===l?' picked':''}${l===10?' boss-node':''}" data-a="sell_" data-v="${l}" title="Stage ${l} - ${SECN[secOf(l)]}"><b>${l===10?'💀 ':''}Stage ${l}</b><small>${mapM<5&&l<=5?'1st job':secOf(l)===0?'novice':secOf(l)===1?'1st job':secOf(l)===2?'2nd job':'boss'}</small></button>`}).join('')}</div></div>
+      <div class="lvgrid">${Array.from({length:10},(_,i)=>{const l=i+1,lock=l>pr;return`<button class="map-node${lock?' locked':''}${S.mp===mapM&&S.lvl===l?' active':''}${mapL===l?' picked':''}${l===10?' boss-node':''}" data-a="sell_" data-v="${l}" title="Stage ${l}"><b>${l===10?'💀 ':''}Stage ${l}</b></button>`}).join('')}</div></div>
     <div class="mapcols">
-      <div class="mob-card"><div class="hd">${mp.n} Stage ${mapL} &mdash; ${SECN[F.sec]}${mapM<5&&mapL<=5?'<br><small>Starter farming · Base Lv 10–60 · gentle packs</small>':''}</div>
-        <div class="sec">Monsters</div>
+      <div class="mob-card"><div class="hd">${mp.n} Stage ${mapL}${mapM<5&&mapL<=5?'<br><small>Starter farming · Base Lv 10–60 · gentle packs</small>':''}</div>
+        <div class="sec">Monsters <small>&middot; every drop here is <b class="r${F.tier}">${RAR[F.tier].n}</b></small></div>
         ${F.mobs.map(m=>`<div class="mobentry"><b>${m.n}</b>
-          ${m.drops.map(dropTxt).join('')}
+          ${m.drops.map(d=>dropTxt(d,F.tier)).join('')}
           <div class="dropline"><span>🃏 ${m.card.n} <small>(${SU(m.card.stat)} +${cardVal(m.card.g,m.card.stat)}, ${GRADE[m.card.g]})</small></span><b>${m.cardCh}%</b></div>
           ${m.ore?`<div class="dropline ore"><span>🔶 Oridecon &middot; 🔷 Elunium</span><b>${m.oreCh*100}% each</b></div>`:''}
         </div>`).join('<hr>')}</div>
       <div class="mob-card"><div class="hd">Boss &amp; pets</div>${mapL===10?`<small>Boss fights immediately with ${mapM<5?3:5} monsters. Defeat the boss to reset the fight.</small>`:''}
-        ${F.boss?`<div class="mobentry"><b class="r3">${F.boss.n} (BOSS)</b>
+        ${F.boss?`<div class="mobentry"><b class="r4">${F.boss.n} (BOSS)</b>
           <div class="poollist">${F.boss.drops.map(([T,ch])=>`<span class="poolitem">${poolIc(T)} ${T.n}<b>${ch}%</b></span>`).join('')}</div>
-          <small>Each item rolls independently; a boss can drop zero or several pieces.</small>
+          <small>Every boss drop is <b class="r4">Legendary</b> with random affixes. Each item rolls independently; a boss can drop zero or several pieces.</small>
           <div class="dropline"><span>🃏 ${F.boss.card.n} <small>(${SU(F.boss.card.stat)} +${cardVal(3,F.boss.card.stat)}, Legendary)</small></span><b>${F.boss.cardCh}%</b></div>
           <div class="dropline ore"><span>🔶 Oridecon &middot; 🔷 Elunium</span><b>${F.boss.oreCh*100}% each</b></div>
         </div>`:`<small>Boss appears at Stage 10.</small>`}
@@ -1133,12 +1173,12 @@ const V={
         <div class="sk-head"><span class="sk-kind">${kind}</span>${off?'<span class="sk-paused">OFF</span>':''}</div>
         <div class="si" aria-hidden="true">${SKILL_ICON[s.id]||'✦'}</div><div class="sk-name">${s.n}</div>
         <div class="sk-level"><b>Lv ${L}</b> / ${s.max}</div>
-        ${L&&s.type!=='pas'?`<label class="sk-autocast"><input type="checkbox" data-a="sktog" data-v="${s.id}" ${off?'':'checked'} aria-label="Auto cast ${s.n}"> Auto cast</label>`:''}
         <button data-a="skill" data-v="${s.id}" aria-label="Increase ${s.n}" title="${L<s.max?'level '+(L+1)+' costs '+skCost(L+1)+' points':'max level'}" ${av>=skCost(L+1)&&L<s.max?'':'disabled'}>${L<s.max?'+'+skCost(L+1):'MAX'}</button></div>`}).join('')}</div>`:''}).join('')
-    +(sel?`<div class="mob-card" style="margin-top:8px"><b>${sel.n}</b> <small>${sel.type==='pas'?'Passive':sel.type==='heal'?'Auto-heal':sel.type==='to'?'Tradeoff (auto-cast)':'Active (auto-cast)'}${sel.rng?' &middot; RANGED':''}${sel.aoe?' &middot; AREA':''}${sel.dot?' &middot; DOT':''}${sel.stun?' &middot; STUN':''}${sel.chain?' &middot; CHAIN':''}</small><br><small>${sel.d(Math.max(1,lv(sel.id)))}</small>${lv(sel.id)&&lv(sel.id)<sel.max?`<br><small>Next: ${sel.d(lv(sel.id)+1)}</small>`:''}${sel.type!=='pas'&&lv(sel.id)?`<br><small>Use this skill's Auto cast checkbox to pause or resume it.</small>`:''}</div>`:'')
+    +(sel?(()=>{const SL=lv(sel.id),soff=!!(SL&&sel.type!=='pas'&&skOff(sel.id));return`<div class="mob-card" style="margin-top:8px"><b>${sel.n}</b> <small>${sel.type==='pas'?'Passive':sel.type==='heal'?'Auto-heal':sel.type==='to'?'Tradeoff (auto-cast)':'Active (auto-cast)'}${sel.rng?' &middot; RANGED':''}${sel.aoe?' &middot; AREA':''}${sel.dot?' &middot; DOT':''}${sel.stun?' &middot; STUN':''}${sel.chain?' &middot; CHAIN':''}</small><br><small>${sel.d(Math.max(1,SL))}</small>${SL&&SL<sel.max?`<br><small>Next: ${sel.d(SL+1)}</small>`:''}<div class="sk-detail-autocast">${SL&&sel.type!=='pas'?`<label class="sk-autocast"><input type="checkbox" data-a="sktog" data-v="${sel.id}" ${soff?'':'checked'} aria-label="Auto cast ${sel.n}"> Auto cast this skill</label><small>${soff?'Paused - it will not be used until you check this again.':'Cast automatically every time you attack.'}</small>`:'<small>Passive or not learned yet - nothing to auto-cast.</small>'}</div></div>`})():'')
     +`<button class="full" data-a="rskill">Reset skills (${rcost()}z)</button>`},
   bag0(){const sel=selB&&S.inv.find(x=>String(x.id)===String(selB));const n=Math.max(30,Math.ceil(S.inv.length/6)*6);const inv=[...S.inv].sort((a,b)=>b.tier-a.tier||ev(b)-ev(a));
-    return`<div class="row"><span class="chip">🔶 Oridecon <b>${S.ore.ori}</b></span><span class="chip">🔷 Elunium <b>${S.ore.elu}</b></span></div><div class="row" style="margin-top:4px"><small>${S.inv.length} items</small><button data-a="sellbelow" data-v="1">Sell Common/Fine</button><button data-a="sellbelow" data-v="2">Sell up to Rare</button></div>
+    return`<div class="row"><span class="chip">🔶 Oridecon <b>${S.ore.ori}</b></span><span class="chip">🔷 Elunium <b>${S.ore.elu}</b></span></div><div class="row" style="margin-top:4px"><small class="${S.inv.length>=BAGMAX?'r0':''}">${S.inv.length}/${BAGMAX} items${S.inv.length>=BAGMAX?' &middot; BAG FULL':''}</small><button data-a="sellbelow" data-v="1">Sell Common/Fine</button><button data-a="sellbelow" data-v="2">Sell up to Rare</button></div>
+    <small>Selling pays a small flat amount - a bag dump never funds an upgrade.</small>
     <div class="grid">${Array.from({length:n},(_,i)=>inv[i]?cell(inv[i],sel&&sel.id===inv[i].id,`data-a="selb" data-v="${inv[i].id}"`):'<div class="cell empty"></div>').join('')}</div>
     <div class="mob-card" style="margin-top:8px">${sel?itemDetail(sel)+`<div class="row" style="margin-top:6px"><button data-a="equip" data-v="${sel.id}" ${canUse(sel)?'':'disabled'}>Equip</button><button data-a="sell" data-v="${sel.id}">Sell ${sellVal(sel)}z</button></div>`:'<small>Click an item to see its stats. Hover for a quick tooltip.</small>'}</div>`},
   equip(){const c=C(),sel=S.eq[selE],pos={head:'grid-column:2;grid-row:1',weapon:'grid-column:1;grid-row:2',armor:'grid-column:2;grid-row:2',off:'grid-column:3;grid-row:2',acc1:'grid-column:1;grid-row:3',leg:'grid-column:2;grid-row:3',acc2:'grid-column:3;grid-row:3'};
@@ -1158,6 +1198,9 @@ const V={
   set(){const hair=((S.hair|0)%19+19)%19+1,sex=S.sex==='f'?'Female':'Male';return`<div class="hd">Appearance</div><div class="row"><button data-a="sex" data-v="m" aria-label="Choose male sprite" style="${S.sex==='f'?'':'background:#ffe08a'}">♂ Male</button><button data-a="sex" data-v="f" aria-label="Choose female sprite" style="${S.sex==='f'?'background:#ffe08a':''}">♀ Female</button></div>
   <div class="hair-preview-card"><div class="hair-preview-stage"><canvas id="hairPreview" width="126" height="134" role="img" aria-label="Live ${sex.toLowerCase()} ${S.cls} hair preview"></canvas><span class="hair-preview-loading" id="hairPreviewLoading">Loading sprite…</span></div><div class="hair-preview-info"><span class="eyebrow">LIVE PREVIEW</span><b>${S.cls}</b><span>${sex} &middot; front idle pose</span><span class="hair-style-label">Style ${hair} of 19</span></div></div>
   <div class="row hair-controls" style="margin-top:4px;align-items:center;gap:8px"><button data-a="hair" data-v="-1" aria-label="Previous hairstyle" title="Previous hairstyle">◀</button><span>Hair style ${hair} / 19</span><button data-a="hair" data-v="1" aria-label="Next hairstyle" title="Next hairstyle">▶</button></div><small>Preview updates here and on your character as you change hair or gender.</small>
+    <div class="hd" style="margin-top:10px">Damage numbers</div>
+    <div class="row"><button data-a="dmgfmt" data-v="short" class="${S.dmgShort!==false?'on':''}" aria-pressed="${S.dmgShort!==false}">Short &middot; 100K / 1M</button><button data-a="dmgfmt" data-v="full" class="${S.dmgShort===false?'on':''}" aria-pressed="${S.dmgShort===false}">Full &middot; 100,000</button></div>
+    <small>How the floating combat numbers read. Normal, critical and incoming damage all follow this setting; it is saved with your account.</small>
     <div class="hd" style="margin-top:10px">Gameplay</div><label><input type="checkbox" data-a="auto" ${S.auto!==false?'checked':''}> Auto-equip better gear</label><br><label><input type="checkbox" data-a="adv" ${S.adv!==false?'checked':''}> Auto-advance to next level (turn off to farm)</label>
     <p><small>Drag the view to rotate, scroll to zoom. Hotkeys: M S J K B E C Q R L P O, Esc to close.</small></p><button class="full" data-a="reset">Erase this account's save &amp; restart</button><button class="full" data-a="logout">Logout</button>`},
   gm(){return`<div class="hd">GM multiplier (EXP, Job EXP, Zeny, quests)</div><div class="row">${[1,10,100,1000].map(x=>`<button data-a="gmx" data-v="${x}" ${S.gmx===x?'style="background:#ffe08a"':''}>x${x}</button>`).join('')}</div>
@@ -1181,13 +1224,21 @@ function slotAccepts(k,it){if(!it||it.card||it.ore||!S.inv.includes(it))return f
   if(k==='acc1'||k==='acc2')return it.slot==='acc';
   if(k==='off')return it.slot==='off'?canShield():it.slot==='weapon'&&dualOk(it);
   return it.slot===k}
+// The chooser is a POP-OUT of the bag, not a list under the paper doll: it renders the whole
+// bag as the tile grid the Bag tab uses, rings every item that fits this slot in green, greys
+// out (and disables) everything that cannot go there, and equips on a click of a ringed tile.
+// Hovering any tile still opens the full item tooltip.
 function equipChooser(k){
-  const cur=S.eq[k],list=S.inv.filter(it=>slotAccepts(k,it)).sort((a,b)=>ev(b)-ev(a));
+  const cur=S.eq[k],fit=S.inv.filter(it=>slotAccepts(k,it)).sort((a,b)=>ev(b)-ev(a)),
+        rest=S.inv.filter(it=>!slotAccepts(k,it)).sort((a,b)=>ev(b)-ev(a)),all=[...fit,...rest];
   const nm=EQK.find(x=>x[0]===k)||[,k,SLOTS.weapon.ic];
-  return`<div class="mob-card chooser"><div class="hd">${nm[2]} ${nm[1]} <small>&middot; ${list.length} ${nm[1].toLowerCase()} in your bag</small><button class="x" data-a="eqclose">&#10005;</button></div>
+  const deltas=fit.slice(0,8).map(it=>{const d=ev(it)-ev(cur||{val:0});return`<b class="r${it.tier}">${iname(it)}</b> <b class="${d>0?'r1':'r0'}">(${d>0?'+':''}${d})</b>`}).join(' &middot; ');
+  return`<div class="bagpop"><div class="card chooser"><div class="hd">${nm[2]} ${nm[1]} <small>&middot; ${fit.length} of ${S.inv.length} bag items fit</small><button class="x" data-a="eqclose">&#10005;</button></div>
   <small>${cur?`Now worn: <b class="r${cur.tier}">${iname(cur)}</b> (${SLOTS[cur.slot].stat} +${ev(cur)})`:'Nothing worn in this slot.'} &middot; your class may use ${C().wt.join(', ')}${k==='off'?(canShield()?' + shields':' + off-hand daggers/katars'):''}</small>
-  ${list.length?list.map(it=>{const d=ev(it)-ev(cur||{val:0});return`<div class="slot"><span class="cell b${dtier(it)}" style="width:30px;height:30px;font-size:16px;flex:none">${icon(it)}</span><span style="flex:1;min-width:0"><b class="r${it.tier}">${iname(it)}</b><br><small>${RAR[it.tier].n} ${SLOTS[it.slot].label}${it.wt?' ('+it.wt+')':''} &middot; ${SLOTS[it.slot].stat} +${ev(it)}${(it.cards||[]).length?' &middot; '+it.cards.length+' card(s)':''} ${d>0?`<b class="r1">(+${d} better)</b>`:d<0?`<b class="r0">(${d})</b>`:'<b class="r0">(same)</b>'}</small></span><button data-a="eqpick" data-v="${it.id}:${k}">Equip</button></div>`}).join(''):'<small>Nothing in your bag fits this slot.</small>'}
-  <div class="row" style="margin-top:6px">${cur?`<button data-a="unequip" data-v="${k}">Unequip ${nm[1].toLowerCase()}</button>`:''}<button data-a="eqopen" data-v="${k}">Open the Bag tab</button></div></div>`}
+  ${all.length?`<div class="legend"><span class="cell fit demo">✓</span><span>fits this slot &mdash; click to equip</span><span class="cell nofit demo">✕</span><span>cannot go here</span></div>
+  <div class="grid">${all.map(it=>{const ok=slotAccepts(k,it);return`<div class="cell b${dtier(it)}${ok?' fit':' nofit'}" data-tip="${it.id}" title="${iname(it)}" aria-label="${iname(it)}" ${ok?`data-a="eqpick" data-v="${it.id}:${k}"`:''}>${icon(it)}${it.r?`<i class="rf">+${it.r}</i>`:''}</div>`}).join('')}</div>
+  ${fit.length?`<small style="display:block;margin-top:6px">Compared to what you wear: ${deltas}${fit.length>8?` &middot; +${fit.length-8} more`:''}</small>`:'<small>Nothing in your bag fits this slot.</small>'}`:'<small>Your bag is empty.</small>'}
+  <div class="row" style="margin-top:6px">${cur?`<button data-a="unequip" data-v="${k}">Unequip ${nm[1].toLowerCase()}</button>`:''}<button data-a="eqopen" data-v="${k}">Open the Bag tab</button></div></div></div>`}
 function equipIn(k,id){const it=S.inv.find(x=>String(x.id)===String(id));
   if(!it)return;if(!slotAccepts(k,it)){log('Your class cannot use that there.');return}
   const old=S.eq[k];S.eq[k]=it;S.inv.splice(S.inv.indexOf(it),1);if(old)S.inv.push(old);
@@ -1261,7 +1312,8 @@ const ACT={
   pkeep:id=>{const p=gp(id);if(p){p.mut=p.roll;p.roll=0;ui();save()}},pdisc:id=>{const p=gp(id);if(p){p.roll=0;ui();save()}},
   prel:id=>{const p=gp(id);if(!p)return;const z=Math.floor(EGG*.3);ask(`Release ${PETS[p.sp].n}? You get ${z}z back.`,()=>{S.pets=S.pets.filter(x=>x!==p);autoSet.delete(p.id);delete petSkillCd[p.id];earnZeny(z);ui();save()})},
   claim:i=>{const q=S.q[+i];if(q&&q.prog>=q.goal){qScale(q);earnZeny(q.z||0);S.exp+=(q.xp||0);log(`Quest complete! +${(q.z||0).toLocaleString()}z, +${(q.xp||0).toLocaleString()} EXP`,'r3');S.q[+i]=newQuest(q.type);checkLevel();ui();save()}},
-  auto:()=>{S.auto=S.auto===false;ui()},adv:()=>{S.adv=S.adv===false;ui()},logout:()=>logout(),
+  auto:()=>{S.auto=S.auto===false;ui()},adv:()=>{S.adv=S.adv===false;ui()},
+  dmgfmt:v=>{S.dmgShort=v!=='full';log('Damage numbers: '+(S.dmgShort?'short (100K / 1M)':'full (100,000)'));ui();save()},logout:()=>logout(),
   hair:v=>{S.hair=(((S.hair|0)+(+v||1))%19+19)%19;heroKey='';ui();save()},
   sex:v=>{S.sex=v==='f'?'f':v==='m'?'m':(S.sex==='f'?'m':'f');heroKey='';log(`Appearance: ${S.sex==='f'?'female':'male'}.`);ui();save()},
   reset:()=>{ask('Erase this account save and start over?',()=>{const gm=S.gm;hudRate=null;zenyEarned=0;S=fresh();S.gm=gm;S.q=['kill','loot','boss'].map(newQuest);floats.forEach(f=>f.el&&f.el.remove());floats=[];drops=[];pend=[];mobs=[];mob=null;respawn=.3;logs=[];log('New adventure started.');ui();save()})},

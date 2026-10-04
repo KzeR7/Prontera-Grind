@@ -153,6 +153,9 @@ t('the map tab is a compact two-band panel: maps on top, that map\'s fields unde
   // the field strip holds all ten levels of the picked map and the travel button lives in it
   const fieldBand = h.slice(iFields, iCols);
   assert.strictEqual((fieldBand.match(/class="map-node/g) || []).length, 10, 'ten fields in the band');
+  assert.ok(!/>1st job</.test(fieldBand) && !/>2nd job</.test(fieldBand) && !/>novice</.test(fieldBand),
+    'stage buttons carry no job-tier description');
+  assert.ok(!/1st-job gear/.test(h), 'the stage header no longer names the gear section');
   assert.ok(fieldBand.includes('data-a="go"'), 'travel sits with the fields, not in its own sticky bar');
   assert.ok(fieldBand.includes('Stage 10'), 'the boss field is labelled');
   assert.ok(src.includes('.wp.wide{flex:0 1 450px;width:450px;min-width:0}'), 'map width is halved and does not grow');
@@ -184,18 +187,24 @@ t('map and boss-field panels stay inside narrow viewports', () => {
   assert.ok(boss.includes('poolitem'), 'the selected boss field keeps its drop pool');
 });
 
-t('the equipment panel renders with a chooser open and closed', () => {
+t('clicking a slot pops out the bag with the fitting items ringed', () => {
   U.S = mkS('Swordman');
   U.selE = 'weapon'; U.eqPick = null;
   let h = U.V.equip();
   assert.ok(!/undefined/.test(h), 'equip panel printed undefined');
+  assert.ok(!h.includes('bagpop'), 'nothing pops out until a slot is clicked');
   U.eqPick = 'weapon';
   h = U.V.equip();
-  assert.ok(h.includes('Broad Sword') && h.includes('chooser'), 'the chooser must list the spare sword');
-  assert.ok(h.includes('Equip'), 'and offer to wear it');
+  assert.ok(h.includes('class="bagpop"') && h.includes('chooser'), 'clicking a slot opens the bag pop-out');
+  assert.ok(h.includes('title="Broad Sword"'), 'every bag tile keeps its item name');
+  assert.ok(h.includes('cell b2 fit') && h.includes('data-a="eqpick"'), 'the sword that fits is ringed and clickable');
+  assert.ok(h.includes('cell b2 nofit'), 'the armour and accessory tiles are greyed out for the weapon slot');
+  assert.ok(!/Equip<\/button>/.test(h), 'the old inline candidate list is gone');
+  assert.ok(h.includes('4 of 4 bag items fit') || h.includes('bag items fit'), 'the pop-out counts what fits');
   U.eqPick = 'off';
   h = U.V.equip();
-  assert.ok(h.includes('Shields') || h.includes('shield'), 'the off-hand chooser must explain what fits there');
+  assert.ok(/shield/i.test(h), 'the off-hand pop-out must explain what fits there');
+  assert.ok(h.includes('nothing') || h.includes('cannot go here'), 'and what cannot');
 });
 
 t('the skills panel renders for every class tier', () => {
@@ -207,16 +216,23 @@ t('the skills panel renders for every class tier', () => {
   });
 });
 
-t('learned active skills use a checked Auto cast box by default', () => {
-  U.S = mkS('Mage'); U.S.sk.fire = 1; U.S.skOff = {}; U.selS = 'fire';
+t('Auto cast lives in the skill description card below the grid', () => {
+  U.S = mkS('Mage'); U.S.sk.fire = 1; U.S.skOff = {}; U.selS = null;
   let h = U.V.skills();
-  assert.ok(h.includes('<label class="sk-autocast"><input type="checkbox" data-a="sktog" data-v="fire" checked aria-label="Auto cast Fire Bolt"> Auto cast</label>'),
-    'a newly learned active skill should auto-cast by default');
-  assert.ok(!h.includes('Turn auto-cast ON') && !h.includes('Turn auto-cast OFF'), 'the old detail-panel toggle should be gone');
-  assert.ok(src.includes("b&&b.dataset.a==='ssel'&&e.target.closest('.sk-autocast')"), 'clicking the checkbox label should not select/re-render its parent card');
+  const tile = h.slice(h.indexOf('data-a="ssel" data-v="fire"'), h.indexOf('data-a="skill" data-v="fire"'));
+  assert.ok(tile.length > 0 && !tile.includes('sktog'), 'the skill tile must no longer carry the checkbox');
+  U.selS = 'fire';
+  h = U.V.skills();
+  assert.ok(h.includes('class="sk-detail-autocast"'), 'the description card holds the auto-cast control');
+  assert.ok(h.includes('<label class="sk-autocast"><input type="checkbox" data-a="sktog" data-v="fire" checked aria-label="Auto cast Fire Bolt"> Auto cast this skill</label>'),
+    'a newly learned active skill should auto-cast by default, from the description');
+  assert.ok(h.includes('Cast automatically every time you attack.'), 'and say what the checkbox means');
   U.S.skOff.fire = 1; h = U.V.skills();
-  assert.ok(/<label class="sk-autocast"><input type="checkbox" data-a="sktog" data-v="fire"\s+aria-label="Auto cast Fire Bolt"> Auto cast<\/label>/.test(h),
-    'unchecking Auto cast should render the skill as paused');
+  assert.ok(h.includes('Paused - it will not be used until you check this again.'), 'unchecking renders it as paused');
+  assert.ok(!h.includes('checked aria-label="Auto cast Fire Bolt"'), 'and the box renders unchecked');
+  // a passive or an unlearned skill has no auto-cast row to offer
+  U.selS = 'aid'; U.S.sk.aid = 0; h = U.V.skills();
+  assert.ok(h.includes('nothing to auto-cast'), 'an unlearned skill explains there is nothing to toggle');
 });
 
 t('HP flips at 30%; one split bar fills Base from left and Job from right with centred percentages', () => {
@@ -261,15 +277,23 @@ t('damage digits, critical burst and skill names use separate anchored combat ov
     'active, healing and buff skills must show a name above the caster');
   const box={};vm.createContext(box);
   vm.runInContext(`
-    let floats=[],pl={x:2,z:4};
+    let S={dmgShort:true},floats=[],pl={x:2,z:4};
     ${grab('const addFloat=(x,y,z,txt,col,big,kind=', 'function log(m,cls){')}
-    this.__f={floats,pl,damageFloat,skillNameFloat};
+    this.__f={floats,pl,damageFloat,skillNameFloat,shortNum,get S(){return S},set full(v){S.dmgShort=!v}};
   `,box);
   const F=box.__f;
   F.damageFloat(1,2,3,879,false);F.damageFloat(1,2,3,1896,true);
   F.damageFloat(1,2,3,55,false,true);F.skillNameFloat('Bash',1);
   assert.deepStrictEqual(Array.from(F.floats,f=>f.kind),['damage','critical','incoming','skill']);
-  assert.strictEqual(F.floats[1].txt,'1896','crit value should not be replaced by a CRIT label');
+  assert.strictEqual(F.floats[1].txt,'1.9K','a critical number is shortened like any other, never replaced by a label');
+  assert.strictEqual(F.floats[0].txt,'879','numbers under a thousand keep every digit');
+  assert.strictEqual(F.floats[2].txt,'55','incoming damage follows the same setting');
+  assert.deepStrictEqual([100000,1000000,12500,999,1000,2500000,999999,1234567].map(F.shortNum),
+    ['100K','1M','12.5K','999','1K','2.5M','1M','1.2M'],'the short form ladder');
+  F.full=true;
+  F.damageFloat(1,2,3,1000000,false);F.damageFloat(1,2,3,1896,true);
+  assert.strictEqual(F.floats[4].txt,'1000000','the Settings switch shows every digit');
+  assert.strictEqual(F.floats[5].txt,'1896','critical digits come back too');
   const strikeBox={};vm.createContext(strikeBox);
   vm.runInContext(`
     let mob={x:1,z:3,hp:10000,size:1},shake=0,hit=null;
@@ -396,6 +420,64 @@ t('every panel a tab can open builds HTML without throwing', () => {
     try { U.V[k](); } catch (e) { broken.push(k + ' (' + e.message + ')'); } });
   assert.deepStrictEqual(broken, [], 'panels that threw: ' + broken.join(', '));
   console.log('       ' + names.length + ' panels rendered');
+});
+
+t('the bag shows its 1000-item limit and refuses loot once it is full', () => {
+  U.S = mkS('Knight'); U.selB = null; U.S.inv = [];
+  let h = U.V.bag0();
+  assert.ok(h.includes('0/1000 items'), 'the bag states its capacity');
+  U.S.inv = new Array(1000).fill(0).map((_, i) => ({ id: 500 + i, name: 'Thing ' + i, tier: 1, slot: 'armor', val: 5, cards: [] }));
+  h = U.V.bag0();
+  assert.ok(h.includes('1000/1000 items') && h.includes('BAG FULL'), 'a full bag says so');
+  // execute the real pickup path
+  const box = {}; vm.createContext(box);
+  vm.runInContext(`
+    let S={inv:[],cards:[],ore:{ori:0,elu:0},auto:false},pl={x:1,z:2},msg='';
+    const GRADE=['Common','Uncommon','Rare','Legendary'],GI=[0,1,2,4],ORE={ori:'Oridecon',elu:'Elunium'},
+      RAR=[{n:'Common'},{n:'Fine'},{n:'Rare'},{n:'Epic'},{n:'Legendary'}];
+    const cardTxt=c=>c.n,addFloat=()=>{},ui=()=>{},log=m=>{msg=m},qProg=()=>{},canUse=()=>false,equip=()=>{};
+    ${pick(/const BAGMAX=\d+;/, 'BAGMAX')}
+    ${grab('function collect(it){', 'function equip(id,quiet){')}
+    this.__c={collect,S,BAGMAX,get msg(){return msg},clear(){msg=''}};
+  `, box);
+  const C = box.__c;
+  C.collect({ id: 1, name: 'Blade', tier: 4 });
+  assert.strictEqual(C.S.inv.length, 1, 'an item is picked up while there is room');
+  C.S.inv.length = C.BAGMAX; C.clear();
+  C.collect({ id: 2, name: 'Blade', tier: 4 });
+  assert.strictEqual(C.S.inv.length, C.BAGMAX, 'the bag never grows past its cap');
+  assert.ok(C.msg.includes('Bag full'), 'and the refusal is reported: ' + C.msg);
+  C.clear();
+  C.collect({ card: 1, id: 3, n: 'Poring Card', g: 1, stat: 'str', v: 3 });
+  assert.strictEqual(C.S.cards.length, 1, 'cards live in their own bag and are not capped by the item limit');
+});
+
+t('Settings carries the damage-number switch and remembers it', () => {
+  U.S = mkS('Knight'); U.S.dmgShort = true;
+  let h = U.V.set();
+  assert.ok(h.includes('data-a="dmgfmt" data-v="short" class="on"') && h.includes('data-a="dmgfmt" data-v="full"'),
+    'both damage-number styles are offered');
+  assert.ok(h.includes('Short &middot; 100K / 1M') && h.includes('Full &middot; 100,000'), 'and labelled with an example');
+  U.S.dmgShort = false;
+  h = U.V.set();
+  assert.ok(h.includes('data-a="dmgfmt" data-v="full" class="on"'), 'the current choice is highlighted');
+  assert.ok(!h.includes('data-a="dmgfmt" data-v="short" class="on"'));
+  assert.ok(src.includes('if(f.dmgShort!==true&&f.dmgShort!==false)f.dmgShort=true;'), 'the save repair defaults old saves to short');
+  assert.ok(src.includes('dmgShort:true,base:{}'), 'and a fresh save starts short');
+});
+
+t('the map panel states the fixed rarity of the field it is showing', () => {
+  U.S = mkS('Novice'); U.mapM = 0; U.mapL = 1;
+  let h = U.V.map();
+  assert.ok(h.includes('every drop here is <b class="r0">Common</b>'), 'Prontera stage 1 is a Common field');
+  assert.ok(h.includes('<small class="r0">Common</small>'), 'and each drop line repeats the band');
+  U.mapM = 9; U.mapL = 10;
+  h = U.V.map();
+  assert.ok(h.includes('every drop here is <b class="r4">Legendary</b>'), 'the Abyss boss field is Legendary');
+  assert.ok(h.includes('Every boss drop is <b class="r4">Legendary</b>'), 'the boss card says so');
+  U.mapM = 5; U.mapL = 4;
+  h = U.V.map();
+  assert.ok(h.includes('every drop here is <b class="r2">Rare</b>'), 'Comodo stage 4 is a Rare field');
 });
 
 console.log(`\n${pass} passed, ${fail} failed`);
