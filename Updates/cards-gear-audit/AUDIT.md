@@ -73,13 +73,20 @@ Every item carries **two things**: one flat stat, and 1-3 random affixes.
 
 | affix | value | affix | value |
 |---|---|---|---|
-| ATK % | **+22%** | Max HP | +240 |
-| Crit DMG % | +30% | Crit % | +9 |
-| ASPD % | +12% | LUK/STR/etc. | +20 |
+| ATK % | **+21%** | Max HP | +320 |
+| Crit DMG % | +40% | Crit % | +12 |
+| ASPD % | +16% | LUK/STR/etc. | +27 |
 
-**Each of the seven slots rolls from the same pool independently**, so a Legendary set averages
-**+42% ATK and +42% ASPD**, and the ceiling (all seven roll ATK) is **+182%**. That is the
-multiplier that makes gear feel enormous — affixes alone are worth more than a second full set.
+**Each of the seven slots rolls from the same pool independently**, so a Legendary set (21 affix
+draws from an 11-stat pool) averages ~1.9 ATK affixes (**+40% ATK**), ~1.9 Crit-DMG affixes
+(**+76% Crit DMG**) and ~1.9 ASPD affixes (**+30% ASPD**); the ceiling — every one of the 21 draws
+an ATK roll — is **+441%**. Those multiply together, which is the **x2.6 DPS** the waterfall
+measures: affixes alone are worth more than a second full set.
+
+*(Corrected 2026-10-04: this table used to read +22% / +240 / +30% / +9 / +12% / +20, because the
+audit tool computed the affix scale as `AM x section` instead of `AM x (1 + section)`. The single
+affix is `round((1+section) x AM[grade] x weight x rnd(0.8,1.25))`; at section 3 + Legendary that is
+a scale of 26, so a max-roll ATK affix is +26% and the expected roll is +21%.)*
 
 ### c) Refine
 
@@ -102,6 +109,14 @@ gear already multiplied.
 ---
 
 # 4. Suggested nerf — staged, pick how far
+
+> **The owner has since chosen a different shape: flat base / 3, with the power handed back through
+> affixes and cards.** That variant is measured at the bottom of `audit-output.txt` (section 7) and is
+> what `tuning-sheet.html` is built from: flat base ÷3 = **x0.38** of today's DPS on its own; plus
+> affix magnitude ×1.3 and card values ×1.3 it lands at **x0.48** (a 52% nerf, mobs still die in
+> 0.26s). The one catch is max HP: the flat value of **headgear and accessories is the HP**, so
+> dividing those two slots cuts max HP 166,508 → 60,099 — the sheet's default is to keep those two
+> slots (same damage nerf, HP untouched). The staged plan below stays as the reference scale.
 
 Each stage includes the one above. Same maxed character, measured:
 

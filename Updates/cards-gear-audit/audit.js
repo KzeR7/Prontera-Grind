@@ -223,7 +223,10 @@ console.log('\naffix value = round(af x AB[stat] x rnd(0.8,1.25)); expected valu
 console.log('stat         ' + ['sec0-3 Common', 'sec1-2', 'sec2-3 Rare', 'sec3 Epic', 'sec3 Legendary'].map(s => s.padStart(15)).join(''));
 [['atk', .8], ['aspd', .6], ['crit', .45], ['lux1', 1], ['cdm', 1.5], ['hp', 12]].forEach(([k, w]) => {
   const name = k === 'lux1' ? 'luk' : k;
-  const cells = [Math.round(1 * 1 * w * 1.025), Math.round(1.6 * 2 * w * 1.025), Math.round(2.6 * 2 * w * 1.025), Math.round(4 * 3 * w * 1.025), Math.round(6.5 * 3 * w * 1.025)];
+  // af = (1 + section) x AM[tier] -- the (1 + ...) is easy to drop: writing 'AM * sec' instead
+  // understated the top three columns by 50% until 2026-10-04.
+  const cells = [[0, 1], [1, 1.6], [2, 2.6], [3, 4], [3, 6.5]]
+    .map(([sec, am]) => Math.round((1 + sec) * am * w * 1.025));
   console.log('  ' + X.AL[name].padEnd(11) + cells.map(c => f(c).padStart(15)).join(''));
 });
 console.log('  ("sec3 Epic" = Amatsu/Niflheim/Abyss field drop; "sec3 Legendary" = Stage-10 boss drop)');
@@ -468,5 +471,57 @@ const hitPct = (atk, d, k) => Math.max(1, Math.round(atk * .8 * (1 - cut(d, k)))
   console.log('  with the cap the endgame takes ~25% of the raw hit and the naked character barely moves (3% cut).');
   console.log('  one line:  index.html:1512   -(m.mag?mdef():def())*.6   ->   * (1 - min(.75, def/(def+4000)))');
 }
+
+
+// ---- section 7: the owner's ask - equipment flat base / 3, power handed back ----------------
+console.log('\n' + '='.repeat(100));
+console.log("7. THE OWNER'S ASK: flat base / 3, with the power returned through affixes and cards");
+console.log('='.repeat(100));
+const BASE3   = ['{weapon:6,armor:4,head:10,off:3,leg:3,acc:5}[slot]',
+                 '{weapon:2,armor:4/3,head:10/3,off:1,leg:1,acc:5/3}[slot]', 'flat base /3'];
+const BASE2   = ['{weapon:6,armor:4,head:10,off:3,leg:3,acc:5}[slot]',
+                 '{weapon:3,armor:2,head:5,off:1.5,leg:1.5,acc:2.5}[slot]', 'flat base /2'];
+// the two slots that feed max HP (head x4, acc x3) are the ones the /3 hurts most: a character
+// that loses two thirds of its flat value loses two thirds of its HP, not just its damage.
+const BASE3_HP = ['{weapon:6,armor:4,head:10,off:3,leg:3,acc:5}[slot]',
+                  '{weapon:2,armor:4/3,head:10,off:1,leg:1,acc:5}[slot]', 'flat base /3 on ATK slots, HP slots kept'];
+const AM_BACK = ['AM=[1,1.6,2.6,4,6.5]', 'AM=[1,2.1,3.4,5.2,8.5]', 'AM +30% (affix give-back)'];
+const CV_BACK = ['CV=[1,2,3,5]', 'CV=[1,2.6,3.9,6.5]', 'CV +30% (card give-back)'];
+const VARIANTS = [
+  ['today (no change)', []],
+  ['A  flat base / 3 only', [BASE3]],
+  ['A2  flat base / 2 only', [BASE2]],
+  ['A3  /3 on ATK slots, HP slots kept', [BASE3_HP]],
+  ['B  A + affixes x1.3 (AM up)', [BASE3, AM_BACK]],
+  ['C  B + cards x1.3 (CV up)', [BASE3, AM_BACK, CV_BACK]],
+  ['D  A + cards x1.3 (CV up only)', [BASE3, CV_BACK]],
+];
+console.log('variant                                                  auto-DPS   vs today      ATK   mob TTK   boss TTK   max HP');
+const varRows = {};
+VARIANTS.forEach(([label, patches]) => {
+  try {
+    const Y = build(patches);
+    const m = measure(Y, 99, 3, 4, 10, cardsIn(Y, 3, 'atk'), 200);
+    varRows[label] = m;
+    console.log('  ' + label.padEnd(50) + f(Math.round(m.dps)).padStart(10) + ('x' + (m.dps / top.dps).toFixed(2)).padStart(10) +
+      f(Math.round(m.atk)).padStart(9) + (mobE.hp / m.dps).toFixed(2).padStart(10) + 's' + (bossE.hp / m.dps).toFixed(1).padStart(9) + 's' +
+      f(Math.round(m.hp)).padStart(11));
+  } catch (e) { console.log('  ' + label.padEnd(50) + '  -> ' + e.message); }
+});
+const vA = varRows['A  flat base / 3 only'], vC = varRows['C  B + cards x1.3 (CV up)'];
+if (vA) console.log('  the /3 alone leaves endgame at x' + (vA.dps / top.dps).toFixed(2) +
+  ' of today; the same /3 hits every level equally (it is a plain multiplier on val), unlike the' + '\n  level-term change in stage 2, which only bites at the top.');
+if (vA && vC) console.log('  handing a third of it back (affix magnitude +30%, card values +30%): x' + (vC.dps / top.dps).toFixed(2) +
+  ' - i.e. the nerf is worth x' + ((vC.dps - top.dps) / top.dps * 100).toFixed(0) + '% after the give-back.');
+console.log('\nboss HP per map at its Stage 10 (500 x mapMult x lvl^1.3) - and what it would need to be so');
+console.log('that this swap does NOT change how long a boss takes to kill (today-DPS / variant-DPS):');
+console.log('map            lvl     boss HP today    keep TTK: A    keep TTK: C');
+[0,1,2,3,4,5,6,7,8,9].forEach(m => {
+  const b = bossStat(X, m, 10);
+  const kA = vA ? b.hp * top.dps / vA.dps : 0, kC = vC ? b.hp * top.dps / vC.dps : 0;
+  console.log('  ' + X.MAPS[m].n.padEnd(13) + String(b.l).padStart(4) + f(b.hp).padStart(17) + f(Math.round(kA)).padStart(16) + f(Math.round(kC)).padStart(16));
+});
+if (vC) console.log('  (left alone, an endgame boss just takes x' + (top.dps / vC.dps).toFixed(1) +
+  ' longer under variant C - boss HP only needs a nudge if that reads as too slow.)');
 
 console.log('\n(dps is auto-attacks only - skills multiply the same base, so the ratios carry over)');

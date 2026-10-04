@@ -1991,3 +1991,45 @@ assigned for feel rather than fidelity. While reworking that, two shipped bugs s
     the tuning sheet (`Updates/cards-gear-audit/tuning-sheet.html`) first.
   * Old saves gain `S.dmg` on the next save; `load()` repairs it to 0, so the first DPS sample
     after loading always starts from a clean window.
+
+### 2026-10-04 — `tuning-sheet` (the nerf fill-in form; no game change, no BUILD bump)
+* **What changed for the player:** nothing in the game yet — this is the form the nerf gets written
+  from. `Updates/cards-gear-audit/tuning-sheet.html` is a self-contained page (open it in any
+  browser, no internet needed) with **53 rows** in 7 sections: the six equipment flat-base values,
+  the affix count/magnitude and all 11 affix weights, the card values and the two card drop rates,
+  the three field and two boss drop rates, mob/boss HP, and the two either/or decisions (the two
+  HP-carrying slots, and the DEF change). Every row shows the current number, my recommendation
+  (already typed into the box) and what it does; the bottom is a measured table of what the ÷3
+  actually does. **Copy answers** puts a JSON block on the clipboard to paste back in chat.
+* **What the sheet recommends, in one line:** flat base ÷3 = **x0.38** of today's endgame DPS, then
+  hand power back with affix magnitude +30% (AM `1/2.1/3.4/5.2/8.5`) and card values +30%
+  (CV `1/2.6/3.9/6.5`) → **x0.48, a 52% nerf**; keep the headgear/accessory base so max HP does not
+  fall from 166,508 to 60,099; halve the Stage-10 boss gear rate (2.4% → 1.2%); take the Legendary
+  boss card from 0.08% to 0.05%; leave mob and boss HP alone (bosses go from a 1.5s to a 3.1s kill).
+* **Correction (an older entry's numbers):** the affix magnitude table in `AUDIT.md` and
+  `audit-output.txt` was wrong — `audit.js` computed the affix scale as `AM x section` instead of
+  `AM x (1 + section)`, understating the top three columns by 50%. The real endgame Legendary
+  affix is **+21% ATK / +320 HP / +40% Crit DMG / +16% ASPD / +12 Crit / +27 stat**, not
+  +22/+240/+30/+12/+9/+20. The tool is fixed (with a comment naming the trap), both files carry the
+  corrected table, and the DPS numbers in the `balance-audit v2` entry are unaffected — those are
+  measured through the real `genGear()`, not through this table.
+* **Files touched:** `Updates/cards-gear-audit/tuning-sheet.html` (new),
+  `Updates/cards-gear-audit/audit.js` (new section 7: the ÷3 variant, four give-back combinations,
+  the per-map boss HP table; affix table fix), `Updates/cards-gear-audit/audit-output.txt`
+  (regenerated), `Updates/cards-gear-audit/AUDIT.md` (corrected affix table + a pointer to the
+  sheet from the nerf section), `AGENTS.md`. No game file, no art.
+* **Art:** none. `Sprite/`, the class pack and `assets/kit/` are untouched; `tools/montage.py` was
+  not used.
+* **Tests:** none run — no game code changed. The sheet is validated by a throwaway harness that
+  runs its script against a stub DOM: all 53 rows render, every input is pre-filled with the
+  recommendation, the built HTML contains no `undefined`, and the file makes **zero external
+  requests** (so it renders inside the preview sandbox). Regenerate the numbers with
+  `node Updates/cards-gear-audit/audit.js > Updates/cards-gear-audit/audit-output.txt`.
+* **Branches / PR:** `arena/01a106ae-prontera-grind` - see the reply for the pull-request link.
+* **Known limits / follow-ups:**
+  * The sheet does not change the game. When the numbers come back, they become one code change
+    (`index.html` constants + `genGear()`/`fieldOf()` + the DEF line) with `gear_sim.js`,
+    `card_sim.js` and `economy_sim.js` pins moved to match.
+  * The variant table is auto-attack DPS on the audit fixture (Lv150 Lord Knight, +10 Legendary
+    set, nine Legendary ATK cards, 200 seeded sets). Skill rotations multiply the same base.
+  * `tuning-sheet.html` is a tool, not a player-facing file: it is not linked from the game.
