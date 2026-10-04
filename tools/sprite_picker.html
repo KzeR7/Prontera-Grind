@@ -96,7 +96,9 @@ textarea{width:100%;height:74px;background:#0f1116;color:var(--ink);border:1px s
       <b>You only choose the attack poses.</b> Idle and walk are filled automatically from the sheets
       (they are already measured and stable). Click a view to pick its attack poses; on a view you can also
       <b>untick “weapon”</b> — the weapon art is a front-view item icon, so the away-facing views
-      (NW, N, NE) start with it off, and dragging the weapon moves it for the view you drag in.
+      (NW, N, NE) start with it off. The <b>green cross</b> in each picture is the hand joint I
+      measured from the art — the weapon is pinned to it on every frame, so it stays in the hand as the
+      attack animates. Dragging still nudges it if you want it a pixel or two off that.
     </span>
   </div>
 </header>
@@ -122,6 +124,7 @@ textarea{width:100%;height:74px;background:#0f1116;color:var(--ink);border:1px s
 </main>
 
 <script src="../assets/sprite_pack_data.js"></script>
+<script src="../assets/weapon_joints_data.js"></script>
 <script src="sprite_picker_data.js"></script>
 <script>
 (function(){
@@ -154,15 +157,39 @@ function poseOf(kind,fr,wt,count){
       else if(u<.55){p.arm=-.6+(u-.28)*8;p.weap=2.5;p.lunge=10;p.lift=2}
       else{p.arm=1.3*(1-u);p.weap=1.6*(1-u);p.lunge=8*(1-u)}}}
   return p}
+// v28: the weapon is pinned to the hand joint measured from the art (tools/make_weapon_joints.py),
+// exactly as index.html does - so the preview cannot drift from the game.
+function jointPixel(body,dir,fr,mirror){
+  var J=window.WEAPON_JOINTS,PK=window.SPRITE_PACK;
+  if(!J||!PK)return null;
+  var b=J[body];if(!b)return null;
+  var rows=b[dir]||b[String(dir)];if(!rows)return null;
+  var j=rows[fr]||rows[rows.length-1];
+  if(!j)return null;
+  var x=mirror?(BODY-j[0]):j[0];           // a mirrored view mirrors the hand as well
+  return[PK.padL+x,PK.padT+j[1]]}
 function weaponPixel(dir,fr,wt,count,extra){
-  var p=poseOf(2,fr,wt,count),a=dir*Math.PI/4,ca=Math.cos(a),sa=Math.sin(a),
+  var p=poseOf(2,fr,wt,count),a=dir*Math.PI/4,
+      body=packBodyName(), j=jointPixel(body,srcDir(dir),fr,isMirrored(dir));
+  if(j){                                            // measured hand: the grip point itself
+    return[j[0]+(extra?extra[0]:0),j[1]+(extra?extra[1]:0),p]}
+  var ca=Math.cos(a),sa=Math.sin(a),
       hx=11+Math.sin(p.arm)*6,hy=26-Math.cos(p.arm)*9+p.lift,hz=6+p.lunge*.15,
-      x=hx+3,z=hz+4,x2=(x*ca+z*sa),wx=x2+(p.bob?0:0),adj=G.packWeaponAdjust[wt]||[0,-36];
+      x=hx+3,z=hz+4,wx=(x*ca+z*sa),adj=G.packWeaponAdjust[wt]||[0,-36];
   var hpx=SPR_W*.5+p.lunge*.15+wx, hpy=SPR_H-7+(-(hy-6+p.bob)+(-x*sa+z*ca)*.2);
   hpx=CELL.padL+hpx*BODY/SPR_W+adj[0]*Math.cos(a);
   hpy=CELL.padT+hpy*BODY/SPR_H+adj[1];
   if(extra){hpx+=extra[0];hpy+=extra[1]}
   return[hpx,hpy,p]}
+// which pack body the picked class wears (same order the game's packBodyFor uses)
+function packBodyName(){
+  var n=st.cls.toLowerCase().replace(/[^a-z0-9]+/g,'_').replace(/^_+|_+$/g,'');
+  if(window.SPRITE_PACK&&window.SPRITE_PACK.bodies&&window.SPRITE_PACK.bodies[n])return n;
+  var LINE={Novice:'novice',Swordman:'swordman',Knight:'swordman','Lord Knight':'swordman',
+    Mage:'mage',Wizard:'mage','High Wizard':'mage',Archer:'archer',Hunter:'archer',Sniper:'archer',
+    Thief:'thief',Assassin:'assassin','Assassin Cross':'assassin_cross',Acolyte:'aco',
+    Priest:'aco','High Priest':'aco',Merchant:'blacksmith',Blacksmith:'blacksmith',Whitesmith:'whitesmith'};
+  return LINE[st.cls]||'thief'}
 function weaponIconSpot(dir,fr,wt,count,extra){
   var q=weaponPixel(dir,fr,wt,count,extra),size=G.weaponIconSize[wt]||28,
       swing=Math.sin(fr/Math.max(1,count-1)*Math.PI),
@@ -246,6 +273,11 @@ function drawView(cv,dir){
     g.fillText(sheetFail[st.cls]?'sheet did not load':(safe(st.cls)?'no pose — pick one':'loading sheet…'),CELL.w/2,CELL.h/2);
     g.textAlign='left';g.restore();return}
   g.drawImage(packedCell(st.cls,pose,isMirrored(dir),sd,false),CELL.padL,CELL.padT);
+  var jp=jointPixel(packBodyName(),sd,frame,isMirrored(dir));
+  if(jp){g.strokeStyle='rgba(126,224,138,.95)';g.lineWidth=1.4;
+    g.beginPath();g.moveTo(jp[0]-4,jp[1]);g.lineTo(jp[0]+4,jp[1]);
+    g.moveTo(jp[0],jp[1]-4);g.lineTo(jp[0],jp[1]+4);g.stroke();
+    g.beginPath();g.arc(jp[0],jp[1],2.2,0,7);g.stroke()}
   if(wep(st.cls)[dir]){
     var spot=weaponIconSpot(sd,frame,wt(),CAP,grip(dir)),im=weaponImage();
     g.save();g.translate(spot.cx,spot.cy);g.rotate(spot.angle*Math.PI/180);g.scale(spot.scale,spot.scale);

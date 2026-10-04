@@ -1333,3 +1333,49 @@ assigned for feel rather than fidelity. While reworking that, two shipped bugs s
     checkboxes are recorded but are not applied per class yet (one list for all classes).
   * Idle and walk are still the sheet's own layout picks — if the owner ever wants to change
     them, the pose index still carries them.
+
+### 2026-10-04 — `ui-v28 the weapon is pinned to the hand`
+* **The problem, and what the research says.** The weapon kept sliding out of the hand as the attack
+  frames advanced. Reason: it was placed by a *model* of the swing (an arm the code imagined), so it
+  sat near the hand, not on it. Ragnarok Online does not model that either — its act files carry a
+  weapon offset **for every single frame**, and the docs are explicit about the anchor:
+  *"Weapons = Body as base"* (rAthena Act Editor). The weapon is aligned to the **body's per-frame
+  anchor**, and somebody set those numbers frame by frame (`weapon_offsets.txt` in the RO-offline
+  tools is a hand-made table; the official editors ship a Weapon-offset control). So the fix is to
+  measure the hand in the art, per frame, and draw the weapon there — no model, nothing to drift.
+* **What changed for the player:** the weapon now sits **in the hand on the frame being played**, for
+  every attack frame of every class, and it cannot slide: the position is the measured hand.
+* **How it works.** `tools/make_weapon_joints.py` finds the bare-skin hand in every attack cell —
+  the neck-coloured blob furthest from the hips below the shoulders (bare hands get a pixel-exact
+  hit; gloved/wrapped classes fall back to the silhouette extremity, and one 27 px clamp exists so a
+  frame cannot jump). 912 joints: 19 bodies x 8 directions x 6 attack frames, all in range.
+  `assets/weapon_joints_data.js` carries them (`WEAPON_JOINTS[body][dir][frame]`, plus
+  `WEAPON_JOINTS_SRC`: `H` = bare hand, `E` = extremity). In game, `weaponSpritePixel()` asks
+  `weaponJointPixel()` first and uses it **with no extra offset** — the joint *is* the grip point,
+  so `PACK_WEAPON_ADJUST` (which existed only to correct the old model) is not applied on this path
+  and stays only as the fallback if the file is missing.
+* **Files touched:** `index.html` (script tag, `weaponJointPixel`, joints-first `weaponSpritePixel`,
+  `userData.body`, `BUILD` v28), `assets/weapon_joints_data.js` (new, 10.9 KB),
+  `tools/make_weapon_joints.py` (new; `--qc <out.png>` writes a contact sheet of every body/dir/frame
+  with the joint marked), `tools/sprite_picker.html` + `tools/make_sprite_picker.py` (the picker loads
+  the joints, draws the measured joint as a green cross on every preview, mirrors it on the mirrored
+  views, and places the weapon from it), `tools/sprite_picker_data.js` +
+  `tools/sprite_picker_standalone.html` (regenerated), new test `tools/tests/weapon_joint_sim.js`,
+  `AGENTS.md`.
+* **Art:** none added, removed, recoloured or rebuilt; `tools/montage.py` was not run.
+* **Tests:** all 14 suites green — the new `weapon_joint_sim.js` (7 checks) proves the joints cover
+  912/912 cells, that the hand never moves more than 28 px between attack frames, that the game's own
+  placement returns **exactly** the joint pixel for every body/dir/frame, and that the old model
+  really did slide (frame-to-frame gap spread > 6 px in most views, which is the bug the owner saw).
+  Then class change 22, save/load 10; economy 21, stat 7, card 13, skill 48, gear 20; scene 8, kit 20,
+  UI 13, sprite 10, starter 4; pack 19 bodies. Inline game JS passes `node --check`. The picker boots
+  under a DOM stub in both builds (`ATTACK PICKER OK`: 8 cards, defaults
+  `[on,on,on,off,off,off,on,on]`, 54 pose tiles, no idle/walk keys).
+* **Branches / PR:** `arena/01a1054b-prontera-grind`.
+* **Known limits / follow-ups:**
+  * The joint is a position, not a rotation: the weapon is not tilted with the hand. Rotation is not
+    what moves the weapon out of the hand, and the icon's grip already holds its own spin.
+  * Gloved classes use the silhouette extremity, so if one of those lands badly the fix is a tighter
+    sampling rule in `make_weapon_joints.py`, not a nudge in the game.
+  * The picker's per-view weapon checkboxes and drag offsets are still recorded in the selection
+    rather than read back by the game; whether the weapon hides per class is still one shared list.
