@@ -2774,3 +2774,123 @@ assigned for feel rather than fidelity. While reworking that, two shipped bugs s
   438,133 -> **305,020** auto-DPS (x0.70), layers x2.96/x1.99/x3.70/x1.60.
   (The first pass after the merge missed `kit_sim`, which is the one suite that would have caught
   the dead tag. Run the whole `tools/tests/` directory, not a hand-typed list.)
+
+### 2026-10-05 — `ui-v39 buff-icons sell-tools log-filter`
+
+* **What changed for the player** — four things, all from the owner's list:
+  * **Pet buffs are icons now, parked above the status bar on the far right.** They used to be text
+    chips *inside* the status bar. Each running buff is now one tile with the skill's own icon and
+    the seconds left; **hovering (or focusing) it opens the full description** - skill name, which
+    pet cast it, what it does and how long it has left. Attack skills never had a chip and still do
+    not; only the four buffs (War Cry, Arcane Blessing, Blood Siphon, Vital Aura) can be running.
+  * **A master auto-cast switch on the Skills tab**, at the far right of the Novice row beside
+    First Aid, because that row is the one every class shares. Ticked = every learned skill of the
+    current line auto-casts; it **unticks itself the moment any single skill is switched off**, and
+    one click switches them all on or all off. Passives are not part of it (they never auto-cast).
+  * **The Bag sells for you.** A new "Selling tools" card: a tick per rarity
+    (Common/Fine/Rare/Epic/Legendary) **auto-sells that rarity the moment it drops** - it is paid
+    exactly what a manual sale pays, it still counts toward loot quests, and because the sale runs
+    before the bag cap a ticked band can never be lost to a full bag. "Sell matching now" purges
+    what is already in the bag, and **Click-sell: ON/OFF** turns a single click in the grid into an
+    instant sale (hover still shows what the item is). The old "Sell Common/Fine" / "Sell up to
+    Rare" buttons are gone; the ticks + purge do the same job. Nothing is ticked by default.
+  * **Logs, two ways.** The on-screen log on the left now has its **own tab to fold it away** (the
+    tab stays, and the history keeps collecting). The Log window gained a **filter bar** pinned to
+    its top: Zeny / Equipment / Kills / Cards / Pets / Levels / Skills / Quests / Other, each with a
+    tick, plus All and None. Tick only Zeny to see only Zeny, etc. A line that belongs to two
+    categories (a kill also pays Zeny) shows while *either* is ticked. Filtering hides lines from
+    the **window** only - the on-screen feed deliberately keeps showing everything - and the newest
+    80 lines are always kept, so unticking and re-ticking brings the history straight back.
+* **Files touched:** `index.html` (the v39 CSS block; `#hudBuffs` moved out of `#hud` into `#ov`;
+  `feedWrap`/`feedTab` in the markup; `LOGCATS` + `logCats/logOn/logShown` + the 3-argument
+  `log(m,cls,cat)` with 25 call sites categorised; `feedOn/feedTab` + `ACT.feed/logf/logfall`;
+  `bars()` pet-buff icon tiles + flyout; `skTog/skAllOn/skSetAll/skMasterTile` + `ACT.skall` and the
+  Novice-row tile; `autoSellOn/clickSellOn` + the auto-sell branch in `collect()` +
+  `ACT.autosell/sellnow/clicksell/quicksell` (replacing `sellbelow`); `fresh()` fields
+  `feed/clickSell/autoSell/logOff` + their `load()` repairs; `BUILD`),
+  `tools/tests/ui_sim.js` (the `log()` boundary, five new harness grabs, 4 new tests + 2 extended),
+  `tools/tests/save_load_sim.js` (its harness grew `setRaw()`; one new repair test), `AGENTS.md`.
+* **Art:** none.
+* **Tests:** all **seventeen** green - `ui` 24, `skill` 51, `kit` 34, `class_change` 24, `gear` 24,
+  `economy` 21, `picker` 19, `card` 13, `save_load` 13, `weapon_review` 13, `sprite` 12, `pet` 11,
+  `scene` 8, `starter` 7, `stat` 7, `weapon_joint` 7, `pack` 19 bodies - plus `node --check` on the
+  inline script. The new ui tests run the real `bars()`, the real `skSetAll/skAllOn`, the real
+  `collect()` auto-sell path and the real `feedOn/feedTab`, against real state.
+* **Branches / PR:** `arena/01a107bd-prontera-grind`. **Not pushed yet** - the owner's standing rule
+  is to be told before a push.
+* **Known limits / follow-ups:**
+  * Auto-sell is deliberately **strict on repair**: only a real `true`/`1` in the save arms a
+    rarity, because a corrupt entry must never silently start selling something the player did not
+    tick.
+  * Auto-sell and click-sell cover **equipment** (that is what the Bag holds). Cards and ores were
+    never bag items - cards go to the Cards tab, ores to their own counters - so there is nothing to
+    auto-sell there.
+  * The log filter is a **view**: lines are never deleted, only hidden, and the checked set is
+    saved. A ticked "All" state is `logOff:{}` (nothing hidden), so an old save needs no migration
+    beyond the repair above.
+  * The master tile lives in the **Novice row only**. Every class shares that row (First Aid is the
+    one skill every line keeps), so it is always reachable - it is not repeated per section.
+  * `ui_sim.js` grabs the combat-overlay span up to `function log(m,cls,cat){`: the signature grew a
+    third parameter, and the boundary string had to move with it. Any future change to `log()`'s
+    signature must update that grab or the test's `addFloat` block silently goes missing.
+
+### 2026-10-05 — `ui-v40 feed-follows-filter translucent-log-tab`
+
+* **What changed for the player** (the owner asked for the on-screen log to be filtered too, but
+  kept minimal, and for the log tab to be semi transparent):
+  * **The on-screen log now follows the same ticks as the Log window.** No second set of filter
+    controls was added to the play screen - one filter state drives both views, so ticking "Zeny"
+    in the Log window leaves only Zeny lines on the left. Unticking brings the history straight
+    back (the newest 80 lines are still kept), and the feed still shows only its four newest lines
+    and still fades each one after 7 seconds.
+  * **The log tab is semi transparent at rest** (`rgba(59,42,26,.42)`, muted text, hairline border)
+    and only becomes solid on hover or keyboard focus. It is deliberately quiet furniture.
+  * **One quiet mark when a filter is hiding something:** a 7px amber dot on the tab, no text. Its
+    tooltip says what it is ("the Log window is hiding N categories from it"). That is the whole
+    on-screen cost of filtering.
+  * The Log window's own line now reads "the on-screen log follows the same ticks" instead of the
+    v39 wording.
+* **This corrects the v39 entry above**, which said the on-screen feed deliberately keeps showing
+  everything. That was the v39 behaviour; the owner asked for it to change, so it changed.
+* **Files touched:** `index.html` (`#feedTab` CSS + `#feedTab.filt::after`, `feedHidden/feedLive/
+  feedPass/feedDraw` and the rewritten `log()`, `feedDraw()` after `ACT.logf`/`ACT.logfall`, the
+  Log panel blurb, `BUILD`), `tools/tests/ui_sim.js` (the log test gained the tab appearance, the
+  dot and a real `feedDraw` run against a stub DOM), `AGENTS.md`.
+* **Art:** none.
+* **Tests:** all **seventeen** green again - `ui` 24, `skill` 51, `kit` 34, `class_change` 24,
+  `gear` 24, `economy` 21, `picker` 19, `card` 13, `save_load` 13, `weapon_review` 13, `sprite` 12,
+  `pet` 11, `scene` 8, `starter` 7, `stat` 7, `weapon_joint` 7, `pack` 19 bodies - plus
+  `node --check` on the inline script.
+* **Branches / PR:** `arena/01a107bd-prontera-grind`. **Not pushed yet.**
+* **Known limits / follow-ups:** the dot is the only on-screen hint that a filter is active, so a
+  player who forgets a tick can wonder where their kill lines went - the tooltip explains it and
+  the Log window shows every tick at a glance. If the owner would rather have direct controls on
+  the play screen, the minimal version would be a single small "funnel" button on the log tab that
+  opens the same tick row for five seconds; that is not built, deliberately.
+
+### 2026-10-05 — `ui-v41 log-funnel self-folding-filter`
+
+* **What changed for the player** (the owner picked the funnel option): a small **funnel button
+  (▽) sits on the Logs tab**, next to the fold label. Pressing it opens the **same tick row the
+  Log window uses**, immediately above the tab - Zeny / Equipment / Kills / Cards / Pets / Levels /
+  Skills / Quests / Other plus All and None - and the row **folds itself away after 7 seconds**.
+  Hovering, focusing or clicking inside holds it open and restarts the countdown, and Escape
+  closes it before it closes any window. The row opens *upward*, so the log lines and the tab do
+  not move while it is up. Both places flip the same filter state, so a tick changed in the row
+  shows up in the Log window and the on-screen feed at once.
+* **Files touched:** `index.html` (`#feedTabs` / `#feedFil` / `#feedFilter` CSS, the markup inside
+  `#feedWrap`, `FEED_FIL_MS` + `feedFilHide/feedFilArm/renderFeedFilter/feedFilShow/feedFilToggle`,
+  the `mouseenter/mouseleave/focusin/focusout` hold handlers, the delegated click on the row, the
+  Escape branch, `feedTab()` folding the row with the log, `ACT.logf`/`ACT.logfall` re-rendering an
+  open row, `BUILD`), `tools/tests/ui_sim.js` (one new test: markup order, the life span, the hold
+  and Escape wiring, and the real open/self-fold run against a stub DOM, including that the row
+  and the window offer exactly the same ticks), `AGENTS.md`.
+* **Art:** none.
+* **Tests:** all **seventeen** green - `ui` 25, `skill` 51, `kit` 34, `class_change` 24, `gear` 24,
+  `economy` 21, `picker` 19, `card` 13, `save_load` 13, `weapon_review` 13, `sprite` 12, `pet` 11,
+  `scene` 8, `starter` 7, `stat` 7, `weapon_joint` 7, `pack` 19 bodies - plus `node --check` on the
+  inline script.
+* **Branches / PR:** `arena/01a107bd-prontera-grind` - pushed for review; the pull request opened
+  from it is linked in the session reply. This entry covers everything since the v38 merge:
+  pet-buff icon tiles, the master auto-cast switch, the bag selling tools, the log filter, the feed
+  following the filter, the translucent tab, and this funnel.
