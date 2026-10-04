@@ -201,6 +201,10 @@ t('the real pet skill gacha action charges Zeny, saves the roll and respects the
     ${PET_SKILL_SRC}
     ${PICKW_CODE}
     ${PET_SKILL_ROLL}
+    // the real pet-combat helpers, so the action's clearPetCd() runs as shipped
+    let petBuff={atk:0,matk:0,hp:0,leech:0,atkT:0,matkT:0,hpT:0,leechT:0},petBuffSrc={},petNote={},mobs=[],pl={x:0,z:0};
+    const numTxt=String,maxHp=()=>100,hurt=()=>{},addFloat=()=>{},playSkillFx=()=>{};
+    ${PET_HIT_SRC}
     const ${PET_SKILL_COST_SRC};
     let S={zeny:5000,pets:[{id:7,sp:0,skills:[]}]},petSkillCd={7:4,'7|warcry':9},logRows=[],uiCount=0,saveCount=0;
     const gp=id=>S.pets.find(p=>String(p.id)===String(id)),log=(...x)=>logRows.push(x),ui=()=>uiCount++,save=()=>saveCount++;
@@ -246,7 +250,11 @@ t('releasing a pet clears its auto-roll and skill-cooldown state', () => {
   const action=PET_RELEASE_ACTION.slice('prel:'.length),box={};vm.createContext(box);
   vm.runInContext(`
     ${PET_DATA_SRC}
-    const EGG=3000;let S={zeny:100,pets:[{id:7,sp:0}]},petSkillCd={7:8},autoSet=new Set([7]),pending=null,saveCount=0,uiCount=0;
+    ${PET_SKILL_SRC}
+    let petBuff={atk:0,matk:0,hp:0,leech:0,atkT:0,matkT:0,hpT:0,leechT:0},petBuffSrc={},petNote={},mobs=[],pl={x:0,z:0};
+    const numTxt=String,maxHp=()=>100,hurt=()=>{},addFloat=()=>{},playSkillFx=()=>{},log=()=>{};
+    ${PET_HIT_SRC}
+    const EGG=3000;let S={zeny:100,pets:[{id:7,sp:0}]},petSkillCd={7:8,'7|warcry':3},autoSet=new Set([7]),pending=null,saveCount=0,uiCount=0;
     const gp=id=>S.pets.find(p=>String(p.id)===String(id)),ask=(msg,fn)=>{pending=fn},save=()=>saveCount++,ui=()=>uiCount++;
     let zenyEarned=0;${grab('function earnZeny(amount){','function kill(o){')}
     const release=${action};
@@ -258,6 +266,7 @@ t('releasing a pet clears its auto-roll and skill-cooldown state', () => {
   P.confirm();
   assert.strictEqual(P.S.pets.length,0,'confirmed release should remove the pet');
   assert.strictEqual(P.petSkillCd[7],undefined,'released pet cooldown must not leak');
+  assert.strictEqual(P.petSkillCd['7|warcry'],undefined,'nor may its per-skill cooldowns linger');
   assert.strictEqual(P.autoSet.has(7),false,'released pet auto-roll state must not leak');
   assert.strictEqual(P.S.zeny,100+900,'the established 30% egg-value refund is paid');
   assert.strictEqual(P.saveCount,1,'release must save');
