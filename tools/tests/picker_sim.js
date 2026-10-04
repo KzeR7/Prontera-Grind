@@ -19,6 +19,9 @@ function Ctx() {
     arc: noop, ellipse: noop, fill: noop, stroke: noop, closePath: noop, rect: noop, clip: noop,
     rotate: noop, fillText: noop, strokeText: noop, setLineDash: noop, measureText: () => ({ width: 10 }),
     imageSmoothingEnabled: true, globalAlpha: 1,
+    drawImage: (img, sx, sy, sw, sh, dx, dy, dw, dh) => {
+      (global.__draw = global.__draw || []).push({ src: img && img.src, sx, sy, sw, sh, dx, dy, dw, dh });
+    },
     getImageData: () => {
       const data = new Uint8ClampedArray(64 * 64 * 4);
       for (let y = HEAD_PX.y0; y <= HEAD_PX.y1; y++) for (let x = HEAD_PX.x0; x <= HEAD_PX.x1; x++)
@@ -102,6 +105,7 @@ const t = (name, fn) => {
   catch (e) { console.log('  FAIL ' + name + ' -> ' + e.message); fail++; }
 };
 console.log('attack picker: what the owner clicks\n');
+global.__draw = [];
 
 let bootError = null;
 try { blocks.forEach((b, i) => vm.runInThisContext(b, { filename: 'inline' + i + '.js' })); }
@@ -159,6 +163,27 @@ catch (e) { bootError = e; }
     assert.ok(heads.length >= 5, 'poses should be grouped by sheet row (got ' + heads.length + ' groups)');
   });
 
+  t('the head is actually PAINTED, from the right head cell', () => {
+    const cls = T.st.cls;
+    const frame = Math.min(T.st.sel.frame, 5);
+    const id = T.st.atk[cls][0][frame];
+    assert.ok(id != null, 'no pose on the selected frame');
+    const pose = T.poses(cls)[id];
+    const hs = T.headSpot(pose, 0, frame);
+    global.__draw.length = 0;
+    T.paint();
+    const headCalls = global.__draw.filter(c => c.sw === 64 && c.sh === 64 && c.dw === 64 && c.dh === 64);
+    assert.ok(headCalls.length > 0,
+      'no head was drawn at all (' + global.__draw.length + ' drawImage calls, none 64x64)');
+    const call = headCalls[0];
+    assert.strictEqual(call.src, global.window.SPRITE_PACK.heads[T.st.sex === 'f' ? 'female' : 'male'],
+      'the head must come from the head atlas for the chosen gender');
+    assert.strictEqual(call.sy, T.st.hair * 64, 'the hair style row');
+    assert.strictEqual(call.sx, 0, 'view 0 must use head column 0');
+    assert.strictEqual(call.dx, Math.round(hs[0] - 32), 'the head must land on the seat (x)');
+    assert.strictEqual(call.dy, Math.round(hs[1] - 48), 'the head must land on the seat (y)');
+  });
+
   t('the head marker hugs the head instead of drawing a 64x64 square', () => {
     const box = T.headBox(0, 0);
     assert.deepStrictEqual(box, [HEAD_PX.x0, HEAD_PX.y0, HEAD_PX.x1, HEAD_PX.y1],
@@ -199,6 +224,22 @@ catch (e) { bootError = e; }
     assert.deepStrictEqual(j.headAdjust[cls + '|0|0'], [3, -2], 'headAdjust must carry the raw drag');
     assert.deepStrictEqual([cell[0], cell[1], cell[2], cell[3]],
       [pose.x, pose.y, pose.w, pose.h], 'the pose itself must be untouched');
+  });
+
+  t('one view can take another view\'s poses in a single click', () => {
+    const cls = T.st.cls;
+    T.st.sel = { dir: 0, frame: 0 };
+    T.paint();
+    const btn = all(byId['panelBody']).find(c => c.tagName === 'button' && c.textContent === 'W');
+    assert.ok(btn, 'the shortcut row must offer the other drawn views (S SW W NW N)');
+    btn.onclick();
+    assert.deepStrictEqual(T.st.atk[cls][0].slice(0, 6), T.st.atk[cls][2].slice(0, 6),
+      'view S must now hold exactly W\'s six frames');
+    T.paint();
+    const cards = all(byId['views']).filter(c => String(c.className || '').indexOf('view') === 0);
+    const says = cards.map(c => JSON.stringify(all(c).map(x => x.innerHTML || '').join(' ')));
+    assert.ok(/same as W/.test(all(cards[0]).map(x => x.innerHTML || '').join(' ')),
+      'the card must say the view is a copy of W');
   });
 
   t('a frame may be empty, and the same pose can be repeated on all 6', () => {

@@ -146,6 +146,9 @@ var SEE={'S':'front - he faces you','SW':'front, turned left - faces you','W':'s
   'NW':'back-left - faces away','N':'back - he faces away','NE':'back-right - faces away',
   'E':'side - faces right','SE':'front, turned right - faces you'};
 function dirWord(d){return SEE[DIRS[d]]||DIRS[d]}
+// The head atlases are keyed 'male'/'female'; the gender select holds 'm'/'f'.  Without this
+// mapping headReady['m'] was always undefined and no head was ever drawn.
+function sexKey(){return st.sex==='f'?'female':'male'}
 var CAP=6, ZOOM=1.55, BODY=CELL.body||96;
 var LSK='pg_attack_picker_v1';          // localStorage key (old weapon fields are ignored on load)
 
@@ -182,13 +185,13 @@ function poseOfId(cls,id){var d=D.classes[cls];return(id==null||!d)?null:d.poses
 // 64x64 square that is mostly empty space.  Scanned once per sex+view+hair style.
 var headBoxCache={};
 function headBox(dir,fr){
-  var sq=srcDir(dir),key=st.sex+'|'+sq+'|'+st.hair;
+  var sq=srcDir(dir),key=sexKey()+'|'+sq+'|'+st.hair;
   if(headBoxCache[key]!==undefined)return headBoxCache[key];
   var out=null;
   try{
     var c=document.createElement('canvas');c.width=64;c.height=64;
     var g=c.getContext('2d');g.imageSmoothingEnabled=false;
-    g.drawImage(headImg[st.sex],(sq|0)*64,st.hair*64,64,64,0,0,64,64);
+    g.drawImage(headImg[sexKey()],(sq|0)*64,st.hair*64,64,64,0,0,64,64);
     var px=g.getImageData(0,0,64,64).data,x0=64,y0=64,x1=-1,y1=-1;
     for(var y=0;y<64;y++)for(var x=0;x<64;x++){if(px[(y*64+x)*4+3]>8){
       if(x<x0)x0=x;if(x>x1)x1=x;if(y<y0)y0=y;if(y>y1)y1=y}}
@@ -230,8 +233,8 @@ function packedCell(pose,dir,fr,plain){
     var mg=m.getContext('2d');mg.imageSmoothingEnabled=false;mg.translate(BODY,0);mg.scale(-1,1);mg.drawImage(c,0,0);
     c=m}
   var hs=headSpot(pose,dir,fr);
-  if(!plain&&headReady[st.sex]&&hs){g=c.getContext('2d');
-    g.drawImage(headImg[st.sex],(srcDir(dir)|0)*64,st.hair*64,64,64,Math.round(hs[0]-32),Math.round(hs[1]-48),64,64)}
+  if(!plain&&headReady[sexKey()]&&hs){g=c.getContext('2d');
+    g.drawImage(headImg[sexKey()],(srcDir(dir)|0)*64,st.hair*64,64,64,Math.round(hs[0]-32),Math.round(hs[1]-48),64,64)}
   return c}
 
 // ---------- the view preview ----------
@@ -284,8 +287,14 @@ function renderViews(){
     card.appendChild(fr);
     var row=document.createElement('div');row.className='wrow';
     var info=document.createElement('span');
-    info.innerHTML=set?(set+' of '+CAP+' frames picked'):
-      '<span class="off">nothing picked — the sheet\'s own picks are used</span>';
+    var sameAs='';
+    for(var d3=0;d3<5;d3++){
+      if(d3===srcDir(d)||!editable(d3))continue;
+      var other=atk(st.cls)[d3];
+      if(other.length&&JSON.stringify(other.slice(0,CAP))===JSON.stringify(A[srcDir(d)].slice(0,CAP))){sameAs=DIRS[d3];break}}
+    info.innerHTML=(set?(set+' of '+CAP+' frames picked'):
+      '<span class="off">nothing picked — the sheet\'s own picks are used</span>')+
+      (sameAs?' · <b>same as '+sameAs+'</b>':'');
     row.appendChild(info);
     card.appendChild(row);
     card.onclick=function(dd){return function(){
@@ -347,6 +356,20 @@ function renderPanel(){
   if(!editable(dir)){var m=document.createElement('div');m.className='hint';
     m.textContent='This view reuses '+DIRS[sd]+' mirrored. Untick “mirror the art” in the header row to fill it separately, or just leave it — it follows '+DIRS[sd]+'.';
     panelBody.appendChild(m);return}
+  // Shortcut: the sheet draws S, SW, W, NW, N separately, so you can copy one view's six
+  // frames onto another instead of picking them twice (the game mirrors NE/E/SE by itself).
+  var copyRow=document.createElement('div');copyRow.className='headrow';
+  var cl=document.createElement('span');cl.innerHTML='<b>Shortcut</b> — use the attack poses of:';
+  copyRow.appendChild(cl);
+  [0,1,2,3,4].forEach(function(d3){
+    if(d3===sd)return;
+    var b=document.createElement('button');b.textContent=DIRS[d3];
+    b.title='copy '+DIRS[d3]+'\'s six frames onto '+DIRS[sd];
+    b.onclick=function(){var src=atk(st.cls)[d3].slice(0,CAP),arr=atk(st.cls)[sd];
+      for(var i2=0;i2<CAP;i2++)arr[i2]=(src[i2]==null?null:src[i2]);
+      arr.length=CAP;st.sel={dir:dir,frame:frame};save();paint()};
+    copyRow.appendChild(b)});
+  panelBody.appendChild(copyRow);
   var cyc=(D.classes[st.cls].strips||[]).filter(function(s){return s.dir===sd||s.ids.length>=CAP});
   cyc.sort(function(a,b){return (b.dir===sd?1:0)-(a.dir===sd?1:0)||b.ids.length-a.ids.length});
   if(cyc.length){
@@ -463,7 +486,7 @@ window.__pgDiag=function(){var n=0,tot=0,k;for(k in D.classes){tot++;if(sheetRea
     ' - attack views drawn: '+drew+(Object.keys(sheetFail).length?(' - failed: '+Object.keys(sheetFail)):'')};
 // Test hook: the harness in tools/tests/picker_sim.js drives the parts the owner touches
 // (the poses, the head seating, the export) without a browser.
-window.__pgTest={headSpot:headSpot,headAdj:headAdj,setHead:setHead,dirWord:dirWord,st:st,
+window.__pgTest={headSpot:headSpot,headAdj:headAdj,setHead:setHead,dirWord:dirWord,st:st,paint:paint,
   poses:function(cls){return D.classes[cls].poses},poseOf:poseOfId,headBox:headBox,
   payload:function(){dump();var t=document.getElementById('out');return JSON.parse(t.value||'{}')}};
 function paint(){

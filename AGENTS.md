@@ -415,7 +415,7 @@ node tools/tests/ui_sim.js             # -> "13 passed, 0 failed"
 node tools/tests/sprite_sim.js         # -> "10 passed, 0 failed" (mob art, weapon icons, view names)
 node tools/tests/starter_sim.js        # -> "4 passed, 0 failed"
 node tools/tests/weapon_joint_sim.js   # -> "7 passed, 0 failed" (measured hand joints, parked weapon)
-node tools/tests/picker_sim.js         # -> "11 passed, 0 failed" (the picker the owner uses, booted under a DOM stub)
+node tools/tests/picker_sim.js         # -> "13 passed, 0 failed" (the picker the owner uses, booted under a DOM stub)
 ```
 
 Every suite pulls real code out of `index.html` by **string boundary**, so an edit that
@@ -1471,5 +1471,41 @@ assigned for feel rather than fidelity. While reworking that, two shipped bugs s
 * **Known limits / follow-ups:**
   * The picker's own weapon choices are gone for good; if the owner wants per-class weapon hiding
     later it comes back as part of the weapon step, not as a checkbox here.
+  * The head drag is per frame and per view; a frame set to "keep the previous" carries no head of its own.
+  * Idle and walk remain the sheet's own layout picks, filled in by the build.
+
+### 2026-10-04 — `tool-v31 the head was never drawn (sex key), and one-click view copies`
+* **The bug the owner reported: "i still cant see a head, only a blue marker".** The head atlases are
+  keyed `male`/`female` in `assets/sprite_pack_data.js`, but the picker's gender select holds `m`/`f`,
+  so `headReady['m']` was always undefined and `packedCell` never drew a head at all. It also meant
+  `headBox` got nothing to scan, which is why the guide was only the blue ring: the shaded head box
+  could never appear. Fixed with one `sexKey()` mapping used by the drawing, the box scan and its cache
+  key. **This is why the owner could not "identify where is the head"** - there was no head on screen.
+  The harness now spies on `drawImage` and asserts a 64x64 head cell from the right atlas row/column
+  lands exactly on the seat, so this cannot come back silently.
+* **"Attacking pose should only need S & W, e.g. SW should be the same as W — am I right?"**
+  Measured, not guessed: the sheet draws S, SW, W, NW and N **separately** and the picker already
+  mirrors the other three (NE/E/SE) by itself, so five views is the floor the art gives you. SW and W
+  are *not* the same picture (mean channel difference SW-vs-W 86-113, the same order as S-vs-W 97-117);
+  SW is the three-quarter view and is closer to S than to W (S-vs-SW 66-83). So: you *may* reuse W's
+  poses for SW, but it is a choice, not what the art does.
+* **What was added so the owner can make that choice in one click:** the panel for a view now has a
+  **"Shortcut — use the attack poses of: S SW W NW N"** row; one click copies that view's six frames
+  onto the current view. A card whose frames match another view's says **"same as W"**, so the state of
+  the whole set is visible at a glance. (The export is unchanged: it carries the resolved ids, so a copy
+  is baked exactly like a hand-picked set.)
+* **Files touched:** `tools/sprite_picker.html` (`sexKey()`, the shortcut row, the "same as" note,
+  `paint` exposed to the harness), `tools/sprite_picker_standalone.html` (regenerated),
+  `tools/tests/picker_sim.js` (13 checks - the two new ones are "the head is actually painted, from the
+  right head cell" and "one view can take another view's poses in a single click"), `AGENTS.md`.
+* **Art:** none added, removed, recoloured or rebuilt; `tools/montage.py` was not run. The Knight S/SW/W
+  attack columns were rendered from the picker data only to measure the SW-vs-W difference above.
+* **Tests:** all 15 suites green (class change 22, save/load 10; economy 21, stat 7, card 13, skill 48,
+  gear 20; scene 8, kit 20, UI 13, sprite 10, starter 4; pack 19 bodies; weapon joints 7; picker 13).
+  Inline JS passes `node --check`; both picker builds boot.
+* **Branches / PR:** `arena/01a1054b-prontera-grind` (PR #11).
+* **Known limits / follow-ups:**
+  * A copy is a copy: changing the source view afterwards does not follow. (Re-click the shortcut, or
+    the card stops saying "same as ..." and that is the tell.)
   * The head drag is per frame and per view; a frame set to "keep the previous" carries no head of its own.
   * Idle and walk remain the sheet's own layout picks, filled in by the build.
