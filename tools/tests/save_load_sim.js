@@ -40,10 +40,11 @@ const CV = [3.2,6.4,9.6,16], GI = [0,1,2,4], SECN = ['a','b','c','d'];
 const AFF = ['str','agi','dex','luk','int','hp','atk','crit','aspd','flee','cdm'];
 const AB = {str:1,agi:1,dex:1,luk:1,int:1,hp:12,atk:.8,crit:.45,aspd:.6,flee:.8,cdm:.7};
 const K5 = ['str','agi','dex','luk','int'];
-const lsGet = () => ${JSON.stringify(JSON.stringify(save))};
+let RAW = ${JSON.stringify(JSON.stringify(save))};
+const lsGet = () => RAW;
 const saveKey = () => 'k';
 const newQuest = () => ({type:'kill', goal:1, prog:0, z:0, xp:0});
-this.__l = {loadRaw};
+this.__l = {loadRaw, setRaw: v => { RAW = JSON.stringify(v) }};
 `;
 const sb = { console };
 vm.createContext(sb); vm.runInContext(harness, sb);
@@ -230,6 +231,32 @@ t('the arena really is vertical: mobs hold the far end, the player the near end'
   assert.ok(/function packSites\(\)/.test(src) && /nearestPack\(\)/.test(src), 'the random closest-pack route is missing');
   assert.ok(/pl=\{x:0,z:Z1-1\.5/.test(src), 'the player no longer starts at the near (bottom) end');
   console.log('       field depth ' + (z1 - z0) + ' units; player at Z1-1.5, three randomized packs across the arena');
+});
+
+t('the v39 tool settings repair: old saves get the quiet defaults', () => {
+  // a save written before v39 knows none of the four fields
+  sb.__l.setRaw({ lv: 5, cls: 'Novice', sk: { aid: 1 }, jobs: { Novice: { jl: 1, jx: 0 } } });
+  const g = load();
+  assert.strictEqual(g.feed, true, 'the on-screen log starts unfolded');
+  assert.strictEqual(g.clickSell, false, 'a bag click inspects - it never sells - by default');
+  assert.deepStrictEqual(Array.from(g.autoSell), [false, false, false, false, false], 'nothing is auto-sold');
+  assert.deepStrictEqual(Object.keys(g.logOff), [], 'every log filter starts ticked');
+  // junk of every shape must be repaired, not carried
+  sb.__l.setRaw({ lv: 5, cls: 'Novice', sk: { aid: 1 }, jobs: { Novice: { jl: 1, jx: 0 } },
+    feed: 'no', clickSell: 'yes', autoSell: 'junk', logOff: [] });
+  const r = load();
+  assert.strictEqual(r.feed, true, 'a junk fold flag falls back to open');
+  assert.strictEqual(r.clickSell, false, 'a junk click-sell flag falls back to off');
+  assert.deepStrictEqual(Array.from(r.autoSell), [false, false, false, false, false], 'a junk auto-sell list falls back to nothing ticked');
+  assert.deepStrictEqual(Object.keys(r.logOff), [], 'a junk filter list falls back to an empty object');
+  // and deliberate choices survive the round trip, index by index
+  sb.__l.setRaw({ lv: 5, cls: 'Novice', sk: { aid: 1 }, jobs: { Novice: { jl: 1, jx: 0 } },
+    feed: false, clickSell: true, autoSell: [1, 0, 'x', null, 1], logOff: { gear: 1 } });
+  const k = load();
+  assert.strictEqual(k.feed, false, 'a deliberately folded log stays folded');
+  assert.strictEqual(k.clickSell, true, 'a deliberately armed click-sell stays armed');
+  assert.deepStrictEqual(Array.from(k.autoSell), [true, false, false, false, true], 'every tick is read as a boolean, position by position');
+  assert.deepStrictEqual(Object.keys(k.logOff), ['gear'], 'a switched-off filter survives');
 });
 
 console.log(`\n${pass} passed, ${fail} failed`);

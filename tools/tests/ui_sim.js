@@ -76,6 +76,13 @@ const code = [
   pick(/const refCost=it=>[^;]+;/, 'refCost/refCh'),
   pick(/const affTxt=a=>[^;]+;/, 'affTxt/cardTxt/dtier'),
   grab('const V={', 'const ACT={'),                            // the panels themselves
+  // v39: the Log window's filter table and its two readers, the on-screen log's fold helper, the
+  // master auto-cast switch, and the Bag's two sell-tool readers.
+  pick(/const LOGCATS=\[[\s\S]*?\];/, 'log category table'),
+  grab('const logCats=', 'const feedOn='),
+  grab('const feedOn=', 'function log('),
+  grab('const skTog=', 'const pv=k=>'),
+  pick(/const autoSellOn=[^\n]*/, 'auto-sell / click-sell readers'),
 ].join('\n');
 
 const harness = `
@@ -94,7 +101,7 @@ const $=id=>({style:{},set innerHTML(v){globalThis['h_'+id]=v},get innerHTML(){r
 const dr=()=>1;
 ${code}
 const skpAvail=()=>5,skTree=()=>4,skEarnedMax=()=>9,skLine=()=>['Novice'],skEarned=()=>9,skSpent=()=>0,pv=()=>0,bon=()=>0,qTxt=q=>'quest';
-this.__u={ V, SKILLS, SKILL_ICON, set S(v){S=v}, get S(){return S}, set eqPick(v){eqPick=v}, get eqPick(){return eqPick},
+this.__u={ V, SKILLS, SKILL_ICON, logs, set S(v){S=v}, get S(){return S}, set eqPick(v){eqPick=v}, get eqPick(){return eqPick},
            set mapM(v){mapM=v}, set mapL(v){mapL=v}, set selE(v){selE=v}, set selS(v){selS=v}, set selP(v){selP=v} };
 `;
 const sb = { console };
@@ -110,7 +117,7 @@ const mkS = (cls) => ({
   st: { str: 30, agi: 20, dex: 20, luk: 5, int: 5, vit: 20 }, sk: { aid: 1 }, skOff: {}, jobs: { [cls]: { jl: 30, jx: 0 }, Novice: { jl: 10, jx: 0 } }, base: {},
   eq: { head: null, weapon: sword, armor, off: null, acc1: ring, leg: null, acc2: null },
   inv: [armor, ring, { id: 9, name: 'Broad Sword', tier: 2, slot: 'weapon', wt: 'sword', val: 70, r: 0, sec: 1, cards: [] }], cards: [card], pets: [], ore: { ori: 2, elu: 1 }, prog: [1, 1, 1, 10, 10, 5, 3, 1, 1, 1],
-  q: [], kills_: 0, buff: 0, auto: true,
+  q: [], kills_: 0, buff: 0, auto: true, feed: true, clickSell: false, autoSell: [false, false, false, false, false], logOff: {},
 });
 
 t('the map panel renders every map and field', () => {
@@ -265,6 +272,7 @@ t('HP flips at 30%; one split bar fills Base from left and Job from right with c
     let S={lv:20,exp:90,hp:31,kills:0,zeny:0},hudRate=null,zenyEarned=0,currentUser='A';
     // the pet buff chips bars() now draws: no pet buff is running in this fixture
     let petBuff={atk:0,matk:0,hp:0,leech:0,atkT:0,matkT:0,hpT:0,leechT:0},petBuffSrc={};
+    ${grab('const PET_SKILLS=[', 'const petDmg=')}
     const performance={now:()=>1000},job={jl:10,jx:45},jobOf=()=>job,C=()=>({mj:50}),maxHp=()=>100,
       jneed=()=>100,need=()=>200;
     ${grab('const HUD_RATE_WINDOW=60000,HUD_IDLE_RESET=30000,HUD_RATE_REFRESH=1000;','function ui(){')}
@@ -297,7 +305,7 @@ t('damage digits, critical burst and skill names use separate anchored combat ov
   const box={};vm.createContext(box);
   vm.runInContext(`
     let S={dmgShort:true,dmgShow:true},floats=[],pl={x:2,z:4};
-    ${grab('const addFloat=(x,y,z,txt,col,big,kind=', 'function log(m,cls){')}
+    ${grab('const addFloat=(x,y,z,txt,col,big,kind=', 'function log(m,cls,cat){')}
     this.__f={floats,pl,damageFloat,skillNameFloat,shortNum,numTxt,get S(){return S},set full(v){S.dmgShort=!v},
       get dmgShow(){return S.dmgShow!==false},set dmgShow(v){S.dmgShow=v==='on'||v===true}};
   `,box);
@@ -531,13 +539,16 @@ t('the bag shows its 1000-item limit and refuses loot once it is full', () => {
   // execute the real pickup path
   const box = {}; vm.createContext(box);
   vm.runInContext(`
-    let S={inv:[],cards:[],ore:{ori:0,elu:0},auto:false},pl={x:1,z:2},msg='';
+    let S={inv:[],cards:[],ore:{ori:0,elu:0},auto:false,zeny:0,autoSell:[false,false,false,false,false],clickSell:false},pl={x:1,z:2},msg='';
     const GRADE=['Common','Uncommon','Rare','Legendary'],GI=[0,1,2,4],ORE={ori:'Oridecon',elu:'Elunium'},
       RAR=[{n:'Common'},{n:'Fine'},{n:'Rare'},{n:'Epic'},{n:'Legendary'}];
     const cardTxt=c=>c.n,addFloat=()=>{},ui=()=>{},log=m=>{msg=m},qProg=()=>{},canUse=()=>false,equip=()=>{};
+    const earnZeny=a=>{S.zeny+=a},save=()=>{};
     ${pick(/const BAGMAX=\d+;/, 'BAGMAX')}
+    ${pick(/const autoSellOn=[^\n]*/, 'auto-sell / click-sell readers')}
+    ${pick(/const sellVal=it=>[^;]+;/, 'sellVal')}
     ${grab('function collect(it){', 'function equip(id,quiet){')}
-    this.__c={collect,S,BAGMAX,get msg(){return msg},clear(){msg=''}};
+    this.__c={collect,sellVal,S,BAGMAX,get msg(){return msg},clear(){msg=''}};
   `, box);
   const C = box.__c;
   C.collect({ id: 1, name: 'Blade', tier: 4 });
@@ -549,6 +560,16 @@ t('the bag shows its 1000-item limit and refuses loot once it is full', () => {
   C.clear();
   C.collect({ card: 1, id: 3, n: 'Poring Card', g: 1, stat: 'str', v: 3 });
   assert.strictEqual(C.S.cards.length, 1, 'cards live in their own bag and are not capped by the item limit');
+  // v39: a ticked rarity is sold the moment it drops - the full bag never sees it
+  C.S.autoSell = [false, false, true, false, false]; C.S.zeny = 0; C.clear();
+  C.collect({ id: 7, name: 'Blue Robe', tier: 2, slot: 'armor', val: 40, sec: 1, lvl: 10, cards: [] });
+  assert.strictEqual(C.S.inv.length, C.BAGMAX, 'an auto-sold band never enters the bag, even at the cap');
+  assert.strictEqual(C.S.zeny, C.sellVal({ tier: 2, sec: 1, lvl: 10 }), 'it pays exactly the sale value');
+  assert.ok(C.msg.includes('Auto-sold') && C.msg.includes('Blue Robe'), 'and says so: ' + C.msg);
+  C.S.inv.length = 0; C.clear();
+  C.collect({ id: 8, name: 'Abyss Blade', tier: 4, slot: 'weapon', val: 90, sec: 3, lvl: 99, cards: [] });
+  assert.ok(C.S.inv.some(i => i && i.id === 8), 'an unticked rarity still lands in the bag');
+  assert.ok(!C.msg.includes('Auto-sold'), 'and is not reported as sold');
 });
 
 t('Settings carries BOTH damage-number toggles (show/hide and short/full) and remembers them', () => {
@@ -584,6 +605,272 @@ t('the map panel states the fixed rarity of the field it is showing', () => {
   U.mapM = 5; U.mapL = 4;
   h = U.V.map();
   assert.ok(h.includes('every drop here is <b class="r2">Rare</b>'), 'Comodo stage 4 is a Rare field');
+});
+
+
+t('pet buffs are icon tiles above the status bar, and the description waits for a hover', () => {
+  // markup: the strip moved out of the status bar to the bottom right of the play area
+  const play = src.slice(src.indexOf('<div id="view">'), src.indexOf('<div id="hud">'));
+  const bar = src.slice(src.indexOf('<div id="hud">'), src.indexOf('<div id="xp-dock"'));
+  assert.ok(play.includes('id="hudBuffs"'), 'the pet buff strip must live in the play area, above the status bar');
+  assert.ok(!bar.includes('hudBuffs'), 'the status bar itself must not carry buff chips any more');
+  assert.ok(src.includes('#hudBuffs{position:absolute;right:12px;bottom:12px'),
+    'the strip is pinned to the far right, directly above the status bar');
+  assert.ok(!/\.pbf\b/.test(src), 'the old text chips are gone');
+  assert.ok(src.includes('.pbx-fly{') && src.includes('.pbx:hover .pbx-fly,.pbx:focus .pbx-fly{opacity:1;visibility:visible}'),
+    'the tile is an icon, and the description is hidden until it is hovered or focused');
+  // the real bars(), with two buffs running and two not
+  const box = {}; vm.createContext(box);
+  vm.runInContext(`
+    const nodes={};const $=id=>nodes[id]||(nodes[id]={style:{},textContent:'',title:'',attrs:{},
+      classList:{flags:{},toggle(k,v){this.flags[k]=v}},setAttribute(k,v){this.attrs[k]=v}});
+    let S={lv:20,exp:90,hp:80,kills:0,zeny:0},hudRate=null,zenyEarned=0,currentUser='A';
+    let petBuff={atk:20,matk:0,hp:20,leech:0,atkT:12.4,matkT:0,hpT:3.2,leechT:0},petBuffSrc={atk:'Poring',hp:'Drops'};
+    const performance={now:()=>1000},job={jl:10,jx:45},jobOf=()=>job,C=()=>({mj:50}),maxHp=()=>100,
+      jneed=()=>100,need=()=>200;
+    ${grab('const PET_SKILLS=[', 'const petDmg=')}
+    ${grab('const HUD_RATE_WINDOW=60000,HUD_IDLE_RESET=30000,HUD_RATE_REFRESH=1000;', 'function ui(){')}
+    bars();this.__b={nodes};
+  `, box);
+  const html = box.__b.nodes.hudBuffs.innerHTML;
+  assert.strictEqual((html.match(/class="pbx"/g) || []).length, 2, 'one tile per running buff, no text rows');
+  assert.ok(html.includes('War Cry') && html.includes('Vital Aura'), 'the flyout names the skill: ' + html);
+  assert.ok(html.includes('Player ATK +20% for 30s, 60s cooldown') && html.includes('Max HP +20%'),
+    'and carries the skill description');
+  assert.ok(html.includes('Poring') && html.includes('Drops'), 'the flyout names the pet that cast it');
+  assert.ok(html.includes('>13<') && html.includes('>4<'), 'the tile counts the seconds down (rounded up)');
+  assert.ok(html.includes('role="status"') && html.includes('aria-label="War Cry'), 'and is readable to a screen reader');
+  assert.strictEqual(box.__b.nodes.hudBuffs.style.display, 'flex', 'the strip shows while a buff runs');
+});
+
+t('the ALL switch beside First Aid pauses or resumes the whole line at once', () => {
+  assert.ok(src.includes('data-a="skall"') && src.includes('skMasterTile()'), 'the master tile must be home in the Skills panel');
+  // a Knight with three learned auto-cast skills, one of them already paused
+  U.S = mkS('Knight'); U.S.sk = { aid: 1, bash: 3, endure: 2 }; U.S.skOff = { bash: 1 }; U.selS = null;
+  let h = U.V.skills();
+  const noviceRow = h.slice(h.indexOf('<div class="sec">Novice</div>'), h.indexOf('data-a="ssel" data-v="bash"'));
+  assert.ok(noviceRow.includes('sk-master'), 'the master tile sits in the Novice row, beside First Aid');
+  assert.ok(noviceRow.includes('sk-master off'), 'one paused skill must untick the master box');
+  assert.ok(!h.includes('checked aria-label="Auto-cast every learned skill"'),
+    'and it renders unticked, without anyone clicking it');
+  U.S.skOff = {}; h = U.V.skills();
+  assert.ok(h.includes('class="sk-master"') && h.includes('checked aria-label="Auto-cast every learned skill"'),
+    'with every skill on, the box is ticked');
+  assert.ok(h.includes('2 skills on this line'), 'and tells you how many it covers (passives are not auto-cast)');
+  // the real switch, on a real skill roster
+  const box = {}; vm.createContext(box);
+  vm.runInContext(`
+    let S={cls:'Knight',sk:{aid:1,bash:2},skOff:{}};
+    ${grab('const CD=[', 'const pm=s=>')}
+    const lv=id=>S.sk[id]||0,skOff=id=>!!(S.skOff&&S.skOff[id]);
+    ${grab('const skTog=', 'const pv=k=>')}
+    this.__k={skTog,skAllOn,skSetAll,get S(){return S}};
+  `, box);
+  const K = box.__k;
+  assert.strictEqual(K.skAllOn(), true, 'everything on reads as all-on');
+  K.S.skOff.bash = 1;
+  assert.strictEqual(K.skAllOn(), false, 'one skill off clears the master box by itself');
+  K.skSetAll(false);
+  assert.deepStrictEqual(Object.keys(K.S.skOff).sort(), ['aid', 'bash'], 'switching off pauses every learned skill');
+  K.skSetAll(true);
+  assert.deepStrictEqual(Object.keys(K.S.skOff), [], 'switching on resumes every learned skill');
+  K.S.sk = {}; assert.strictEqual(K.skAllOn(), false, 'nothing learned = nothing to switch on');
+  assert.ok(src.includes('skall:()=>{const on=!skAllOn(),n=skTog().length;skSetAll(on);'),
+    'the action really flips every skill, not just the one you clicked');
+});
+
+t('the Bag sells by rarity, on the drop or on a click', () => {
+  U.S = mkS('Knight'); U.selB = null;
+  let h = U.V.bag0();
+  assert.ok(h.includes('Selling tools'), 'the bag carries the selling tools');
+  const RAR_NAMES = ['Common', 'Fine', 'Rare', 'Epic', 'Legendary'];
+  RAR_NAMES.forEach((n, i) => assert.ok(h.includes(`data-a="autosell" data-v="${i}"`), 'a tick for ' + n));
+  assert.ok(h.includes('data-a="clicksell"') && h.includes('Click-sell: OFF'), 'click-sell starts OFF');
+  assert.ok(h.includes('data-a="sellnow" ') || h.includes('data-a="sellnow"'), 'and the matching purge is offered');
+  const purgeOff = h.slice(h.indexOf('data-a="sellnow"'), h.indexOf('data-a="sellnow"') + 40);
+  assert.ok(purgeOff.includes('disabled'), 'with nothing ticked, "Sell matching now" is disabled');
+  U.S.autoSell[2] = true;                        // Rare items: the fixture has Rare gear in the bag
+  h = U.V.bag0();
+  assert.ok(h.includes('class="tick on" data-a="autosell" data-v="2"'), 'a ticked rarity is highlighted');
+  assert.ok(!h.slice(h.indexOf('data-a="sellnow"'), h.indexOf('data-a="sellnow"') + 40).includes('disabled'),
+    'and the purge button wakes up when a ticked item is in the bag');
+  // click-sell turns every plain tile into an instant sale, and says so before you press it
+  U.S.clickSell = true; h = U.V.bag0();
+  assert.ok(h.includes('class="grid sellmode"'), 'the grid is flagged in sell mode');
+  assert.ok(h.includes('Click-sell: ON') && h.includes('sold instantly'), 'and warns what a click will do');
+  assert.ok(h.includes('data-a="quicksell" data-v="2"') && !h.includes('data-a="selb" data-v="2"'),
+    'plain tiles sell instead of selecting');
+  assert.ok(h.includes('data-tip="2"'), 'the hover tooltip still says what the item is');
+  assert.ok(src.includes('quicksell:id=>{const it=S.inv.find(x=>String(x.id)===String(id));if(!it)return;const v=sellVal(it);sell(id);'),
+    'and the action really sells, at the sale value');
+  // an inspect click still works when the mode is off
+  U.S.clickSell = false; h = U.V.bag0();
+  assert.ok(h.includes('data-a="selb" data-v="2"') && !h.includes('data-a="quicksell"'), 'OFF restores inspecting');
+  assert.ok(!src.includes('data-a="sellbelow"'), 'the old two purge buttons are gone');
+});
+
+t('the Log window filters by category, and the on-screen feed folds away', () => {
+  U.S = mkS('Knight'); U.S.logOff = {};
+  U.logs.length = 0;
+  U.logs.push({ m: 'Poring defeated! +10 EXP, +50 Zeny', cls: '', cat: 'kills,zeny' },
+    { m: 'Picked up [Rare] Blue Robe', cls: 'r2', cat: 'gear' },
+    { m: 'Got card: [Rare] Poring Card', cls: 'r2', cat: 'card' },
+    { m: 'Something else happened', cls: '' });
+  let h = U.V.log();
+  ['zeny', 'gear', 'kills', 'card', 'pet', 'lvl', 'skill', 'quest', 'misc'].forEach(c =>
+    assert.ok(h.includes(`data-a="logf" data-v="${c}"`), 'a tick for the ' + c + ' category'));
+  assert.ok(h.includes('data-a="logfall" data-v="on"') && h.includes('data-a="logfall" data-v="off"'), 'All and None');
+  assert.ok(h.includes('4 of 4 events shown'), 'everything is shown by default');
+  assert.ok(h.includes('the on-screen log follows the same ticks'), 'and the panel says the feed follows the ticks');
+  assert.ok(h.includes('Got card') && h.includes('Something else happened'), 'and every line is printed');
+  U.S.logOff = { gear: 1 };
+  h = U.V.log();
+  assert.ok(h.includes('3 of 4 events shown'), 'unticking one box hides exactly its lines');
+  assert.ok(!h.includes('Picked up [Rare] Blue Robe') && h.includes('Got card'), 'the card line survives');
+  U.S.logOff = { zeny: 1 };
+  h = U.V.log();
+  assert.ok(h.includes('defeated!'), 'a kill line is also a zeny line, so unticking Zeny alone keeps it (Kills is on)');
+  U.S.logOff = { kills: 1, zeny: 1 };
+  assert.ok(!U.V.log().includes('defeated!'), 'untick both of its categories and it goes');
+  U.S.logOff = { kills: 1, zeny: 1, gear: 1, card: 1, misc: 1 };
+  assert.ok(U.V.log().includes('0 of 4 events shown'), 'hiding everything says so');
+  // the tags really are on the real call sites
+  assert.ok(src.includes("log(`Picked up [${RAR[it.tier].n}] ${it.name}`,'r'+it.tier,'gear')"), 'pickups are tagged');
+  assert.ok(src.includes(",'kills,zeny');"), 'a kill is tagged as kills AND zeny');
+  assert.ok(src.includes("log(`Got card: [${GRADE[it.g]}] ${cardTxt(it)}`,'r'+GI[it.g],'card')"), 'cards are tagged');
+  // the on-screen log's own tab
+  assert.ok(src.includes('id="feedTab"') && src.includes('id="feedWrap"'), 'the on-screen log gets a tab');
+  assert.ok(src.includes("$('feedTab').onclick=()=>ACT.feed();"), 'the tab is wired');
+  assert.ok(src.includes('const feedOn=()=>!(S&&S.feed===false);'), 'the fold state lives in the save, open by default');
+  assert.ok(src.includes('#feedWrap.hid #feed{display:none}'), 'folding hides the lines and keeps the tab');
+  // v40: the tab is deliberately quiet - semi transparent until it is hovered or focused
+  assert.ok(src.includes('#feedTab{position:relative;pointer-events:auto;') && src.includes('background:rgba(59,42,26,.42)'),
+    'the log tab is semi transparent while nothing is happening');
+  assert.ok(src.includes('#feedTab:hover,#feedTab:focus-visible{background:rgba(59,42,26,.9);color:#ffe9a8;border-color:var(--edge)}'),
+    'and reads clearly on hover or focus');
+  assert.ok(src.includes('#feedTab.filt::after{'), 'a quiet dot marks a filter that is hiding lines');
+  assert.ok(src.includes("b.classList.toggle('filt',hid>0);"), 'and the dot is driven by the real filter state');
+  assert.ok(src.includes("feedTab();$('stageTitle')"), 'every redraw keeps the tab label honest');
+  assert.ok(src.includes("feed:()=>{S.feed=!feedOn();feedTab();ui();save()}"), 'toggling it saves');
+  const box = {}; vm.createContext(box);
+  vm.runInContext(`
+    let S={feed:true,logOff:{}};
+    const $=()=>({style:{},classList:{toggle(){}},setAttribute(){},textContent:'',title:''});
+    ${grab('const LOGCATS=', 'const feedOn=')}
+    ${grab('const feedOn=', 'function log(')}
+    this.__f={feedOn,feedTab,get S(){return S},set feed(v){S.feed=v}};
+  `, box);
+  assert.strictEqual(box.__f.feedOn(), true, 'the log starts unfolded');
+  box.__f.feed = false;
+  assert.strictEqual(box.__f.feedOn(), false, 'and stays folded once folded');
+  let thrown = null; try { box.__f.feedTab(); } catch (e) { thrown = e.message; }   // LOGCATS is in scope in the real file
+  assert.strictEqual(thrown, null, 'feedTab must survive a DOM without the elements: ' + thrown);
+  // and the real feedDraw hides and restores lines as the ticks change
+  const fbox = {}; vm.createContext(fbox);
+  vm.runInContext(`
+    let S={logOff:{}};
+    const mk=id=>({id,children:[],appendChild(n){this.children.push(n)},set innerHTML(v){this.children=[]},get innerHTML(){return this.children.map(c=>c.textContent).join('|')}});
+    const nodes={feed:mk('feed'),feedTab:Object.assign(mk('tab'),{classList:{toggle(){},contains(){}},setAttribute(){}})};
+    const $=id=>nodes[id];
+    ${grab('const LOGCATS=', 'const feedOn=')}
+    ${grab('const feedOn=', 'function log(')}
+    this.__f={draw:feedDraw,hidden:feedHidden,pass:feedPass,feedHtml:()=>nodes.feed.innerHTML,
+      push:(m,cat)=>{const e={m,cls:'',cat,d:{textContent:m,remove(){}}};feedLive.push(e);feedDraw()},
+      set off(v){S.logOff=v},get off(){return S.logOff}};
+  `, fbox);
+  const F = fbox.__f;
+  F.push('Picked up [Rare] Blue Robe', 'gear');
+  F.push('Poring defeated! +50 Zeny', 'kills,zeny');
+  F.push('Something else happened', 'misc');
+  assert.strictEqual(F.feedHtml(), 'Picked up [Rare] Blue Robe|Poring defeated! +50 Zeny|Something else happened',
+    'everything reaches the on-screen feed by default');
+  assert.strictEqual(F.hidden(), 0, 'nothing is hidden by default');
+  F.off = { gear: 1 }; F.draw();          // ACT.logf redraws right after the tick flips
+  assert.strictEqual(F.feedHtml(), 'Poring defeated! +50 Zeny|Something else happened', 'a tick hides its lines from the feed too');
+  assert.strictEqual(F.hidden(), 1, 'and the dot has something to report');
+  F.off = { gear: 1, kills: 1 }; F.draw();
+  assert.strictEqual(F.feedHtml(), 'Poring defeated! +50 Zeny|Something else happened',
+    'a two-category line survives while either of its ticks is on');
+  F.off = { gear: 1, kills: 1, zeny: 1 }; F.draw();
+  assert.strictEqual(F.feedHtml(), 'Something else happened', 'and goes when every one of them is off');
+  F.off = {}; F.draw();
+  assert.strictEqual(F.feedHtml(), 'Picked up [Rare] Blue Robe|Poring defeated! +50 Zeny|Something else happened',
+    'unticking brings the history straight back');
+  assert.strictEqual(F.pass({ cat: undefined }), true, 'an untagged line counts as Other and shows unless Other is hidden');
+});
+
+t('the funnel on the Logs tab opens the same tick row and folds itself away', () => {
+  // markup: the row lives inside the feed wrapper, ABOVE the tab - so opening it pushes nothing
+  assert.ok(src.includes('id="feedFil"') && src.includes('id="feedFilter"'), 'the funnel and its row exist');
+  assert.ok(src.indexOf('id="feedFilter"') < src.indexOf('id="feedTab"'),
+    'the row sits before the tab in the markup, so it opens upward and the log lines stay put');
+  assert.ok(src.includes('aria-controls="feedFilter"') && src.includes('aria-expanded="false"'),
+    'the funnel is a real disclosure control');
+  // it really is the same row: built from the same category table as the Log window's
+  const panel = src.slice(src.indexOf('function renderFeedFilter(){'), src.indexOf('const feedFilShow='));
+  assert.ok(panel.includes('p.innerHTML=LOGCATS.map('), 'the row must be built from the one category table');
+  assert.ok(panel.includes('data-a="logf" data-v="${k}"') && panel.includes('data-a="logfall" data-v="on"')
+    && panel.includes('data-a="logfall" data-v="off"'), 'with the same ticks and the same All/None shortcuts');
+  U.S = mkS('Knight'); U.S.logOff = {};
+  const win = U.V.log();
+  const ACTIONS = ['zeny', 'gear', 'kills', 'card', 'pet', 'lvl', 'skill', 'quest', 'misc'].map(c => `data-a="logf" data-v="${c}"`);
+  ACTIONS.forEach(a => assert.ok(win.includes(a), 'the Log window prints ' + a));
+  // it folds away by itself, holds while you interact, and Escape closes it
+  assert.ok(src.includes('const FEED_FIL_MS=7000;'), 'the row has a life span');
+  assert.ok(src.includes('feedFilTimer=setTimeout(feedFilHide,FEED_FIL_MS)'), 'opening arms the fold');
+  assert.ok(src.includes("$('feedFilter').addEventListener('mouseenter',()=>{if(feedFilTimer)clearTimeout(feedFilTimer)})"),
+    'hovering the row holds it open');
+  assert.ok(src.includes("$('feedFilter').addEventListener('mouseleave',()=>{if(feedFilShown)feedFilArm()})"),
+    'and leaving restarts the countdown');
+  assert.ok(src.includes("$('feedFilter').addEventListener('focusin'") && src.includes("$('feedFilter').addEventListener('focusout'"),
+    'keyboard focus holds it open too');
+  assert.ok(src.includes("if(k==='ESCAPE'){if(feedFilShown){feedFilHide();return}tabs.pop();renderWin();return}"),
+    'Escape closes the row before it closes a window');
+  assert.ok(src.includes("$('feedFilter').onclick=e=>{feedFilArm();const b=e.target.closest('[data-a]');if(b&&!b.disabled&&ACT[b.dataset.a])ACT[b.dataset.a](b.dataset.v)}"),
+    'the row delegates to the same actions as the window');
+  assert.ok(src.includes('if(feedFilShown)renderFeedFilter();feedDraw();ui();save()'),
+    'flipping a tick from either row re-renders both');
+  assert.ok(src.includes('if(!on&&feedFilShown)feedFilHide()}'), 'folding the log hides the row with it');
+  // and the whole thing, run for real against a stub DOM
+  const box = {}; vm.createContext(box);
+  vm.runInContext(`
+    let S={logOff:{gear:1}};
+    const mk=()=>{const o={style:{},attrs:{},cls:{},innerHTML:''};
+      o.classList={toggle(k,v){o.cls[k]=v},add(k){o.cls[k]=true},remove(k){o.cls[k]=false}};
+      o.setAttribute=(k,v)=>{o.attrs[k]=v};o.addEventListener=()=>{};return o};
+    const nodes={feedFilter:mk(),feedFil:mk()};
+    const $=id=>nodes[id];
+    let timers=[];const clearTimeout=()=>{timers=[]};const setTimeout=(f,ms)=>{timers.push({f,ms});return 1};
+    ${grab('const LOGCATS=', 'function log(m,cls,cat){')}
+    this.__p={toggle:feedFilToggle,show:feedFilShow,hide:feedFilHide,arm:feedFilArm,
+      shown:()=>feedFilShown,fil:nodes.feedFil,panel:nodes.feedFilter,timers:()=>timers,
+      set off(v){S.logOff=v}};
+  `, box);
+  const P = box.__p;
+  assert.notStrictEqual(P.panel.style.display, 'flex', 'the row starts folded away (the CSS keeps it hidden until inline style overrides it)');
+  assert.strictEqual(P.shown(), false, 'and says so');
+  P.toggle();
+  assert.strictEqual(P.panel.style.display, 'flex', 'the funnel opens the row');
+  assert.strictEqual(P.shown(), true, 'and it stays open until the timer fires');
+  assert.strictEqual(P.fil.attrs['aria-expanded'], 'true', 'the funnel reports it is open');
+  assert.strictEqual(P.fil.cls.on, true, 'and lights up while it is');
+  assert.strictEqual(P.timers().length, 1, 'exactly one fold is armed');
+  assert.strictEqual(P.timers()[0].ms, 7000, 'after seven seconds');
+  assert.ok(P.panel.innerHTML.includes('data-v="gear"'), 'the row carries the ticks: ' + P.panel.innerHTML.slice(0, 80));
+  assert.ok(P.panel.innerHTML.includes('All') && P.panel.innerHTML.includes('None'), 'and the two shortcuts');
+  ACTIONS.forEach(a => assert.ok(P.panel.innerHTML.includes(a), 'the funnel row prints the same tick: ' + a));
+  assert.strictEqual((P.panel.innerHTML.match(/data-a="logf"/g) || []).length,
+    (win.match(/data-a="logf"/g) || []).length, 'the row and the window offer exactly the same number of ticks');
+  // the ticks mirror the saved filter: gear is hidden in this fixture, everything else shows
+  const gear = P.panel.innerHTML.slice(P.panel.innerHTML.indexOf('data-v="gear"'), P.panel.innerHTML.indexOf('data-v="gear"') + 90);
+  assert.ok(!gear.includes('checked'), 'a hidden category renders unticked');
+  assert.ok(/data-v="card"[^>]*checked/.test(P.panel.innerHTML), 'and a shown one renders ticked');
+  P.timers()[0].f();                       // the self-fold, fired by hand
+  assert.strictEqual(P.panel.style.display, 'none', 'after the timeout the row folds itself away');
+  assert.strictEqual(P.shown(), false, 'and stops reporting as open');
+  assert.strictEqual(P.fil.attrs['aria-expanded'], 'false', 'the funnel goes quiet again');
+  P.toggle(); P.hide();
+  assert.strictEqual(P.panel.style.display, 'none', 'and the funnel itself closes it too');
 });
 
 console.log(`\n${pass} passed, ${fail} failed`);
