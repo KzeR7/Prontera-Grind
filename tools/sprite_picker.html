@@ -44,6 +44,7 @@ main{display:grid;grid-template-columns:minmax(720px,1fr) 420px;gap:12px;padding
 .hint b{color:var(--ink)}
 .headrow{display:flex;gap:6px;align-items:center;flex-wrap:wrap;font-size:11px;color:var(--dim);margin-top:8px}
 .headrow b{color:var(--ink)}
+.rowhead{font-size:11px;color:var(--dim);margin:8px 0 4px;border-top:1px solid var(--line);padding-top:6px}
 .cands{display:flex;flex-wrap:wrap;gap:6px}
 .cand{border:1px solid var(--line);border-radius:6px;background:#0f1116;padding:2px;cursor:pointer;text-align:center;position:relative}
 .cand:hover{border-color:var(--acc2)}
@@ -86,7 +87,6 @@ textarea{width:100%;height:74px;background:#0f1116;color:var(--ink);border:1px s
     <label class="f">Class <select id="cls"></select></label>
     <label class="f">Gender <select id="sex"><option value="m">male</option><option value="f">female</option></select></label>
     <label class="f">Hair <select id="hair"></select></label>
-    <label class="f">Weapon <select id="weapon"></select></label>
     <button id="btnAuto">Fill from sheet</button>
     <button id="btnCopy" class="primary">Copy my selection</button>
     <span class="pill" id="status">loading…</span>
@@ -94,17 +94,17 @@ textarea{width:100%;height:74px;background:#0f1116;color:var(--ink);border:1px s
   </div>
   <div class="line" style="margin-top:6px">
     <span class="f" id="mirrorSlot"></span>
-    <label class="f" id="pinSlot"></label>
     <span class="hint" style="margin:0">
-      <b>Step 1: choose the attack poses.</b> Click a view to pick its poses, and <b>drag the head</b>
-      in the picture to seat it where you want — the head is per frame (“use this head on all 6 frames”
-      copies it). Idle and walk are filled from the sheets automatically, so there is nothing to pick for
-      them.
-      <br><b>S = he faces you (front). N = he faces away (back).</b> He walks up the screen as N, so that is
-      where you see his back — and the weapon art is a front-view item icon, which is why NW, N and NE start
-      with “weapon” unticked.
-      <br>The weapon itself is <b>parked</b> while you do this: it is held in one position and only shows on
-      a view whose “weapon” box is ticked. Once the poses are confirmed we do the weapon together.
+      <b>Choose the attack poses.</b> Click a view, then click the picture you want: it fills that frame and
+      steps to the next one. <b>Click the same picture again to repeat it</b>, and leaving a frame empty is
+      fine — it holds the pose before it. Every figure in the sheet is offered, even ones that are not part
+      of an attack set.
+      <br><b>Heads:</b> the head is drawn in every picture and you can seat it by hand —
+      <b>drag anywhere in a picture</b>; the blue ring is the spot that moves, and the shaded box on the
+      selected view is the head's own pixels. This is per frame; “use this head on all 6 frames” copies it.
+      <br><b>S = he faces you (front). N = he faces away (back)</b> — he walks up the screen as N, so that is
+      where you see his back. The weapon is not part of this page: it is parked until the poses are
+      confirmed.
     </span>
   </div>
 </header>
@@ -118,7 +118,7 @@ textarea{width:100%;height:74px;background:#0f1116;color:var(--ink);border:1px s
   </section>
   <section class="card" style="grid-column:1/-1">
     <div class="hint">Idle &amp; walk: filled from the sheet by me — nothing to do here.
-      Copy the box and send it back; only your attack picks and weapon settings travel in it.</div>
+      Copy the box and send it back; only your attack poses and your head drags travel in it.</div>
     <textarea id="out" spellcheck="false"></textarea>
     <div style="display:flex;gap:8px;margin-top:6px;align-items:center">
       <button id="btnCopy2" class="primary">Copy</button>
@@ -130,7 +130,6 @@ textarea{width:100%;height:74px;background:#0f1116;color:var(--ink);border:1px s
 </main>
 
 <script src="../assets/sprite_pack_data.js"></script>
-<script src="../assets/weapon_joints_data.js"></script>
 <script src="sprite_picker_data.js"></script>
 <script>
 (function(){
@@ -141,106 +140,26 @@ if(!D||!PK){window.__pgFatal&&window.__pgFatal('The picker data did not load.\n'
   (D?'':'Missing pose data (sprite_picker_data.js). ')+(PK?'':'Missing head atlas (assets/sprite_pack_data.js). ')+
   '\nUse tools/sprite_picker_standalone.html (everything in one file) or open from the preview.');
   window.__pgReady=true;return}
-var G=D.game, CELL=D.cell, DIRS=D.dirs, MIRRORSRC={5:3,6:2,7:1};
+var CELL=D.cell, DIRS=D.dirs, MIRRORSRC={5:3,6:2,7:1};
 // What you actually see in each view - the letters alone are the confusing part.
 var SEE={'S':'front - he faces you','SW':'front, turned left - faces you','W':'side - faces left',
   'NW':'back-left - faces away','N':'back - he faces away','NE':'back-right - faces away',
   'E':'side - faces right','SE':'front, turned right - faces you'};
 function dirWord(d){return SEE[DIRS[d]]||DIRS[d]}
 var CAP=6, ZOOM=1.55, BODY=CELL.body||96;
-var KINDS=['sword','bow','staff','axe','mace','dagger','katar'];
-var LSK='pg_attack_picker_v1';
-// the game hides the weapon on these views (index.html WEAPON_HIDDEN_DIRS) - same default here
-var HIDDEN_DEFAULT=G.weaponHiddenDirs||[3,4,5];
-
-// ---------- game rules (lifted from index.html so the preview is the game's placement) ----------
-var SPR_W=64,SPR_H=96;
-function poseOf(kind,fr,wt,count){
-  var p={bob:0,lx:0,rx:0,arm:.4,weap:-.4,lunge:0,bow:0,lift:0};
-  count=Math.max(1,count||CAP);
-  if(kind===0)p.bob=Math.sin(fr/count*Math.PI*2)*1.6;
-  if(kind===1){var u1=fr/count*Math.PI*2;p.bob=Math.abs(Math.sin(u1))*3.2;p.lx=Math.sin(u1)*8;p.rx=-Math.sin(u1)*8;p.arm=.4+Math.sin(u1)*.5}
-  if(kind===2){var u=fr/Math.max(1,count-1);
-    if(wt==='bow'){p.arm=-.15;p.bow=u;p.lunge=u<.75?u*7:(1-u)*12;p.lift=6+Math.sin(u*Math.PI)*4;p.weap=.2}
-    else if(wt==='staff'){p.arm=-1.1+u*2.6;p.lift=8+Math.sin(u*Math.PI)*10;p.weap=-1.4+u*2.8;p.lunge=5}
-    else if(wt==='katar'||wt==='dagger'){p.arm=-.2;p.lunge=u<.45?u*22:22*(1-u);p.weap=.8;p.lift=u<.4?-6:4}
-    else{if(u<.28){p.arm=.5-u*4;p.weap=-1.2;p.lunge=u*10;p.lift=u*8}
-      else if(u<.55){p.arm=-.6+(u-.28)*8;p.weap=2.5;p.lunge=10;p.lift=2}
-      else{p.arm=1.3*(1-u);p.weap=1.6*(1-u);p.lunge=8*(1-u)}}}
-  return p}
-// v28: the weapon is pinned to the hand joint measured from the art (tools/make_weapon_joints.py),
-// exactly as index.html does - so the preview cannot drift from the game.
-function jointPixel(body,dir,fr,mirror){
-  var J=window.WEAPON_JOINTS,PK=window.SPRITE_PACK;
-  if(!J||!PK)return null;
-  var b=J[body];if(!b)return null;
-  var rows=b[dir]||b[String(dir)];if(!rows)return null;
-  var j=rows[fr]||rows[rows.length-1];
-  if(!j)return null;
-  var x=mirror?(BODY-j[0]):j[0];           // a mirrored view mirrors the hand as well
-  return[PK.padL+x,PK.padT+j[1]]}
-function weaponPixel(dir,fr,wt,count,extra){
-  var held=st.pinned!==false, use=held?0:fr,           // parked: the held spot is frame 0's hand
-      p=poseOf(2,use,wt,count),a=dir*Math.PI/4,
-      body=packBodyName(), j=jointPixel(body,srcDir(dir),use,isMirrored(dir));
-  if(j){                                            // measured hand: the grip point itself
-    return[j[0]+(extra?extra[0]:0),j[1]+(extra?extra[1]:0),p]}
-  var ca=Math.cos(a),sa=Math.sin(a),
-      hx=11+Math.sin(p.arm)*6,hy=26-Math.cos(p.arm)*9+p.lift,hz=6+p.lunge*.15,
-      x=hx+3,z=hz+4,wx=(x*ca+z*sa),adj=G.packWeaponAdjust[wt]||[0,-36];
-  var hpx=SPR_W*.5+p.lunge*.15+wx, hpy=SPR_H-7+(-(hy-6+p.bob)+(-x*sa+z*ca)*.2);
-  hpx=CELL.padL+hpx*BODY/SPR_W+adj[0]*Math.cos(a);
-  hpy=CELL.padT+hpy*BODY/SPR_H+adj[1];
-  if(extra){hpx+=extra[0];hpy+=extra[1]}
-  return[hpx,hpy,p]}
-// which pack body the picked class wears (same order the game's packBodyFor uses)
-function packBodyName(){
-  var n=st.cls.toLowerCase().replace(/[^a-z0-9]+/g,'_').replace(/^_+|_+$/g,'');
-  if(window.SPRITE_PACK&&window.SPRITE_PACK.bodies&&window.SPRITE_PACK.bodies[n])return n;
-  var LINE={Novice:'novice',Swordman:'swordman',Knight:'swordman','Lord Knight':'swordman',
-    Mage:'mage',Wizard:'mage','High Wizard':'mage',Archer:'archer',Hunter:'archer',Sniper:'archer',
-    Thief:'thief',Assassin:'assassin','Assassin Cross':'assassin_cross',Acolyte:'aco',
-    Priest:'aco','High Priest':'aco',Merchant:'blacksmith',Blacksmith:'blacksmith',Whitesmith:'whitesmith'};
-  return LINE[st.cls]||'thief'}
-function weaponIconSpot(dir,fr,wt,count,extra){
-  var q=weaponPixel(dir,fr,wt,count,extra),size=G.weaponIconSize[wt]||28,
-      swing=Math.sin(fr/Math.max(1,count-1)*Math.PI),
-      angle=(G.weaponIconAngle[wt]||-30)+q[2].weap*24+(wt==='bow'?q[2].bow*8:0),
-      grip=G.weaponIconGrip[wt]||[.5,.75],r=angle*Math.PI/180,dx=(grip[0]-.5)*size,dy=(grip[1]-.5)*size;
-  return{cx:q[0]-(dx*Math.cos(r)-dy*Math.sin(r)),cy:q[1]-(dx*Math.sin(r)+dy*Math.cos(r)),
-         size:size,angle:angle,scale:1+swing*.06,pose:q[2]}}
-function oval(ctx,x,y,rx,ry,col){ctx.beginPath();ctx.ellipse(x,y,rx,ry,0,0,Math.PI*2);ctx.fillStyle=col;ctx.fill()}
-function drawWepFallback(ctx,q){                          // the game's vector weapon, its fallback
-  ctx.save();ctx.translate(q.x,q.y);ctx.rotate(q.ang*Math.PI/180);ctx.scale(.8,.8);
-  var m='#c9d2dd',h='#6b3a18',u=q.bow||0,wt=q.wt;ctx.fillStyle=h;
-  if(wt==='sword'){ctx.fillRect(-2.2,2,4.4,9);ctx.fillRect(-7,1,14,3.2);ctx.fillStyle=m;ctx.fillRect(-2.4,-30,4.8,34);ctx.fillStyle='#e8e8e8';ctx.fillRect(-1.1,-28,1.4,28)}
-  else if(wt==='dagger'){ctx.fillRect(-1.6,2,3.2,7);ctx.fillStyle=m;ctx.fillRect(-1.7,-16,3.4,20)}
-  else if(wt==='katar'){ctx.fillStyle=m;ctx.fillRect(-8,-16,4.2,22);ctx.fillRect(3,-16,4.2,22);ctx.fillStyle=h;ctx.fillRect(-8,2,15,4)}
-  else if(wt==='staff'){ctx.fillRect(-1.6,-34,3.2,40);oval(ctx,0,-36,6,6,m);oval(ctx,0,-36,3.2,3.2,'#d8b8ff')}
-  else if(wt==='bow'){ctx.strokeStyle=h;ctx.lineWidth=2.4;ctx.beginPath();ctx.arc(8,-6,17,-1.25,1.25);ctx.stroke();
-    ctx.strokeStyle='#f4f0e4';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(8,-22);ctx.lineTo(8,10);ctx.stroke();
-    ctx.fillStyle=m;ctx.fillRect(8,-8,4+u*16,1.8)}
-  else if(wt==='axe'){ctx.fillRect(-1.7,-22,3.4,28);ctx.fillStyle=m;ctx.beginPath();ctx.moveTo(1,-24);ctx.lineTo(18,-18);ctx.lineTo(18,-8);ctx.lineTo(1,-11);ctx.fill()}
-  else{ctx.fillRect(-1.6,-16,3.2,24);oval(ctx,0,-20,7.5,7.5,m);oval(ctx,0,-20,3,3,'#888')}
-  ctx.restore()}
+var LSK='pg_attack_picker_v1';          // localStorage key (old weapon fields are ignored on load)
 
 // ---------- state ----------
-var st={cls:'Knight',sex:'m',hair:0,weapon:'',sel:{dir:0,frame:0},mirrorSide:true,pinned:true,
-        atk:{},weap:{},grips:{},head:{}};
+var st={cls:'Knight',sex:'m',hair:0,sel:{dir:0,frame:0},mirrorSide:true,atk:{},head:{}};
 try{var s0=JSON.parse(localStorage.getItem(LSK)||'null');
-  if(s0){for(var k in s0){if(k==='atk'||k==='weap'||k==='grips'||k==='head')continue;st[k]=s0[k]}
-    st.atk=s0.atk||{};st.weap=s0.weap||{};st.grips=s0.grips||{};st.head=s0.head||{}}}
+  if(s0){for(var k in s0){if(k==='atk'||k==='head'||k==='weap'||k==='grips'||k==='weapon'||k==='pinned')continue;st[k]=s0[k]}
+    st.atk=s0.atk||{};st.head=s0.head||{};delete st.weap;delete st.grips}}
 catch(e){}
 function save(){try{localStorage.setItem(LSK,JSON.stringify(st))}catch(e){}}
 function atk(cls){if(!st.atk[cls]){var o={};for(var d=0;d<8;d++)o[d]=[];st.atk[cls]=o}return st.atk[cls]}
-function wep(cls){if(!st.weap[cls]){var o={};for(var d=0;d<8;d++)o[d]=HIDDEN_DEFAULT.indexOf(d)<0;st.weap[cls]=o}return st.weap[cls]}
-function defaultWeapon(){return G.classWeapon[st.cls]||'sword'}
-function wt(){return st.weapon||defaultWeapon()}
 function srcDir(d){return (st.mirrorSide&&d>=5)?MIRRORSRC[d]:d}
 function isMirrored(d){return !!(st.mirrorSide&&d>=5)}
 function editable(d){return !isMirrored(d)}
-function gripKeyFor(d){return st.cls+'|'+wt()+'|'+d}
-function grip(d){return st.grips[gripKeyFor(d)]||null}
 // head seat: the owner drags the head in a picture, stored per class + view + attack frame.
 // Keyed on the DRAWN direction, so a mirrored view follows the view it mirrors.
 function headAdjOf(cls,dir,fr){return st.head[cls+'|'+dir+'|'+fr]||[0,0]}
@@ -258,11 +177,38 @@ function sheetFor(cls){var d=D.classes[cls];if(!d)return;
     im.src=d.img?d.img:('../'+d.file);sheetImg[cls]=im}}
 function safe(cls){return !!(D.classes[cls]&&sheetReady[cls])}
 function poseOfId(cls,id){var d=D.classes[cls];return(id==null||!d)?null:d.poses[id]||null}
-var wepImg={},wepState={};
-function weaponImage(){var w=wt(),id=G.weaponItemIds[w];if(!id)return null;
-  if(!wepImg[w]){var im=new Image();im.onload=function(){wepState[w]='ok';paint()};
-    im.onerror=function(){wepState[w]='failed';paint()};im.src=G.weaponUrl+id;wepImg[w]=im}
-  return wepState[w]==='ok'?wepImg[w]:null}
+
+// The head's own pixels, in cell coordinates: a box you can actually see, instead of a
+// 64x64 square that is mostly empty space.  Scanned once per sex+view+hair style.
+var headBoxCache={};
+function headBox(dir,fr){
+  var sq=srcDir(dir),key=st.sex+'|'+sq+'|'+st.hair;
+  if(headBoxCache[key]!==undefined)return headBoxCache[key];
+  var out=null;
+  try{
+    var c=document.createElement('canvas');c.width=64;c.height=64;
+    var g=c.getContext('2d');g.imageSmoothingEnabled=false;
+    g.drawImage(headImg[st.sex],(sq|0)*64,st.hair*64,64,64,0,0,64,64);
+    var px=g.getImageData(0,0,64,64).data,x0=64,y0=64,x1=-1,y1=-1;
+    for(var y=0;y<64;y++)for(var x=0;x<64;x++){if(px[(y*64+x)*4+3]>8){
+      if(x<x0)x0=x;if(x>x1)x1=x;if(y<y0)y0=y;if(y>y1)y1=y}}
+    if(x1>=x0&&y1>=y0)out=[x0,y0,x1,y1]}
+  catch(e){out=null}                                  // no getImageData: fall back to the pivot only
+  headBoxCache[key]=out;return out}
+function markHead(g,pose,dir,fr,hs){
+  var box=headBox(dir,fr),hm=headAdj(dir,fr),
+      col=(hm[0]||hm[1])?'rgba(122,211,255,.95)':'rgba(122,211,255,.55)';
+  g.save();g.setLineDash([]);g.lineWidth=1;g.strokeStyle='#0b0d12';
+  if(box){
+    var x=Math.round(hs[0]-32+box[0]),y=Math.round(hs[1]-48+box[1]),
+        w=box[2]-box[0]+1,h=box[3]-box[1]+1;
+    g.globalAlpha=.35;g.fillStyle='#7ad3ff';g.fillRect(x,y,w,h);g.globalAlpha=1;
+    g.strokeRect(x-.5,y-.5,w,h)}
+  // the seat itself: a ring, plus a cross you can aim at
+  g.strokeStyle=col;g.beginPath();g.arc(Math.round(hs[0])+.5,Math.round(hs[1])+.5,5,0,7);g.stroke();
+  g.beginPath();g.moveTo(Math.round(hs[0])-9,Math.round(hs[1])+.5);g.lineTo(Math.round(hs[0])+9,Math.round(hs[1])+.5);
+  g.moveTo(Math.round(hs[0])+.5,Math.round(hs[1])-9);g.lineTo(Math.round(hs[0])+.5,Math.round(hs[1])+9);g.stroke();
+  g.restore()}
 
 // where the head pivot sits in the 96x96 cell: the measured seat, scaled the same way the pack
 // builder scales it, plus whatever the owner dragged.  This is the number the game needs.
@@ -301,22 +247,7 @@ function drawView(cv,dir){
     g.textAlign='left';g.restore();return}
   g.drawImage(packedCell(pose,dir,frame,false),CELL.padL,CELL.padT);
   var hs=headSpot(pose,dir,frame);
-  if(hs&&st.sel.dir===dir){                                  // the head you can drag
-    var hm=headAdj(dir,frame);
-    g.save();g.setLineDash([3,3]);g.lineWidth=1;
-    g.strokeStyle=(hm[0]||hm[1])?'rgba(122,211,255,.8)':'rgba(122,211,255,.3)';
-    g.beginPath();g.rect(Math.round(hs[0]-32)+.5,Math.round(hs[1]-48)+.5,64,64);g.stroke();g.restore()}
-  if(wep(st.cls)[dir]){
-    var jp=jointPixel(packBodyName(),sd,st.pinned!==false?0:frame,isMirrored(dir));
-    if(jp){g.strokeStyle='rgba(126,224,138,.95)';g.lineWidth=1.4;
-      g.beginPath();g.moveTo(jp[0]-4,jp[1]);g.lineTo(jp[0]+4,jp[1]);
-      g.moveTo(jp[0],jp[1]-4);g.lineTo(jp[0],jp[1]+4);g.stroke();
-      g.beginPath();g.arc(jp[0],jp[1],2.2,0,7);g.stroke()}
-    var spot=weaponIconSpot(sd,frame,wt(),CAP,grip(dir)),im=weaponImage();
-    g.save();g.translate(spot.cx,spot.cy);g.rotate(spot.angle*Math.PI/180);g.scale(spot.scale,spot.scale);
-    if(im)g.drawImage(im,-spot.size/2,-spot.size/2,spot.size,spot.size);
-    else drawWepFallback(g,{x:0,y:0,ang:0,wt:wt(),bow:spot.pose.bow});
-    g.restore()}
+  if(hs&&st.sel.dir===dir)markHead(g,pose,dir,frame,hs);      // so you can see what you are moving
   g.strokeStyle='#2b3242';g.lineWidth=1;
   g.beginPath();g.moveTo(0,CELL.pivotY+.5);g.lineTo(CELL.w,CELL.pivotY+.5);g.stroke();
   g.beginPath();g.moveTo(CELL.pivotX+.5,0);g.lineTo(CELL.pivotX+.5,CELL.pivotY);g.stroke();
@@ -326,7 +257,7 @@ function drawView(cv,dir){
 var viewsEl=document.getElementById('views');
 function renderViews(){
   viewsEl.innerHTML='';
-  var A=atk(st.cls), W=wep(st.cls);
+  var A=atk(st.cls);
   for(var d=0;d<8;d++){
     var card=document.createElement('div');
     card.className='view'+((st.sel.dir===d)?' on':'')+(isMirrored(d)?' mirrored':'');
@@ -352,18 +283,10 @@ function renderViews(){
       fr.appendChild(el)}
     card.appendChild(fr);
     var row=document.createElement('div');row.className='wrow';
-    var wl=document.createElement('label');
-    var cb=document.createElement('input');cb.type='checkbox';cb.checked=!!W[srcDir(d)];cb.title='hold a weapon in this view';
-    cb.onclick=function(ev){ev.stopPropagation()};
-    cb.onchange=function(dd){return function(){W[srcDir(dd)]=cb.checked;save();paint()}}(d);
-    wl.appendChild(cb);wl.appendChild(document.createTextNode('weapon'));
-    row.appendChild(wl);
     var info=document.createElement('span');
-    info.innerHTML=(set?set+'/'+CAP+' poses':'<span class="off">no poses yet</span>')+
-      (W[srcDir(d)]?(grip(d)?' · moved '+grip(d)[0]+','+grip(d)[1]+' <button title="reset position">↺</button>':''):'');
+    info.innerHTML=set?(set+' of '+CAP+' frames picked'):
+      '<span class="off">nothing picked — the sheet\'s own picks are used</span>';
     row.appendChild(info);
-    if(W[srcDir(d)]&&grip(d)){info.querySelector('button').onclick=function(dd){return function(ev){
-      ev.stopPropagation();delete st.grips[gripKeyFor(dd)];save();paint()}}(d)}
     card.appendChild(row);
     card.onclick=function(dd){return function(){
       if(!editable(dd)){statusEl.textContent='view '+dd+' reuses '+DIRS[srcDir(dd)]+' — untick “mirror” to edit it separately';return}
@@ -378,27 +301,21 @@ var drag=null;
 function redrawCard(dir){
   var cvs=viewsEl.querySelectorAll('canvas.big');
   if(cvs[dir])drawView(cvs[dir],dir)}
+// Dragging anywhere in a picture seats that view's head - there is nothing else to drag, so
+// there is no small target to hit.  The ring in the picture is the spot that moves.
 function startDrag(ev,dir,cv){
   if(!editable(dir))return;
   if(ev.button!==undefined&&ev.button!==0)return;
-  var sd=srcDir(dir), frame=(st.sel.dir===dir?st.sel.frame:0),
-      pose=poseOfId(st.cls,atk(st.cls)[sd][frame]);
-  if(!pose||!safe(st.cls))return;
-  var rect=cv.getBoundingClientRect(),
-      mx=(ev.clientX-rect.left)/ZOOM, my=(ev.clientY-rect.top)/ZOOM,   // cell pixels
-      hs=headSpot(pose,dir,frame),
-      onHead=!!(hs&&Math.abs(mx-hs[0])<34&&Math.abs(my-hs[1])<34);
-  if(onHead)st.sel={dir:dir,frame:frame};                 // adjusting a head selects that view
-  if(!onHead&&!(wep(st.cls)[dir]&&st.sel.dir===dir))return;    // weapon drag only on the shown view
+  var frame=(st.sel.dir===dir?st.sel.frame:0);
+  if(poseOfId(st.cls,atk(st.cls)[srcDir(dir)][frame])==null)return;
   ev.preventDefault();
-  var base=onHead?headAdj(dir,frame):(grip(dir)||[0,0]),x0=ev.clientX,y0=ev.clientY;
-  drag=onHead?'head':'weapon';
+  st.sel={dir:dir,frame:frame};
+  var base=headAdj(dir,frame),x0=ev.clientX,y0=ev.clientY;
+  drag='head';
   function move(e){
     var dx=Math.round(base[0]+(e.clientX-x0)/ZOOM), dy=Math.round(base[1]+(e.clientY-y0)/ZOOM);
-    if(onHead){setHead(dir,frame,[dx,dy]);redrawCard(dir);
-      statusEl.textContent='head '+(dx>=0?'+':'')+dx+','+(dy>=0?'+':'')+dy+' px on frame '+(frame+1)}
-    else{st.grips[gripKeyFor(dir)]=[dx,dy];redrawCard(dir);
-      statusEl.textContent='weapon moved '+dx+','+dy+' px'}
+    setHead(dir,frame,[dx,dy]);redrawCard(dir);
+    statusEl.textContent='head '+(dx>=0?'+':'')+dx+','+(dy>=0?'+':'')+dy+' px on frame '+(frame+1);
   }
   function up(){window.removeEventListener('mousemove',move);window.removeEventListener('mouseup',up);drag=null;save();paint()}
   window.addEventListener('mousemove',move);window.addEventListener('mouseup',up);
@@ -417,7 +334,7 @@ function renderPanel(){
     var hrow=document.createElement('div');hrow.className='headrow';
     var hl=document.createElement('span');
     hl.innerHTML='<b>Head</b> '+(mvd?('moved '+(hv[0]>0?'+':'')+hv[0]+', '+(hv[1]>0?'+':'')+hv[1]+' px'):'as measured')+
-      ' — drag the head in the picture to seat it';
+      ' — <b>drag anywhere in the picture</b> to seat the head; the ring marks the spot that moves';
     hrow.appendChild(hl);
     var hr=document.createElement('button');hr.textContent='↺ reset head';
     hr.title='put this frame head back where the sheet measures it';
@@ -445,19 +362,28 @@ function renderPanel(){
         st.sel={dir:dir,frame:Math.min(s.ids.length,CAP)-1};save();paint()};
       wrap.appendChild(b)});
     panelBody.appendChild(wrap)}
-  var h3=document.createElement('h3');h3.textContent='One pose → frame '+(frame+1);
+  var h3=document.createElement('h3');h3.textContent='All poses in this sheet — put one on frame '+(frame+1);
   panelBody.appendChild(h3);
   var hint=document.createElement('div');hint.className='hint';
-  hint.innerHTML='Green border = the sheet\'s own suggestion for this view. Clicking fills frame '+(frame+1)+' and steps to the next frame. Idle &amp; walk are already filled in.';
+  hint.innerHTML='Some poses are not part of any attack set, so <b>every figure in the sheet is here</b> '+
+    '(grouped by the row it came from). Green border = the sheet\'s own suggestion for this view. '+
+    'Clicking fills frame '+(frame+1)+' and steps to the next frame — click the same picture again to repeat it. '+
+    'Leaving a frame empty is fine: it holds the pose before it.';
   panelBody.appendChild(hint);
-  var box=document.createElement('div');box.className='cands';
-  var seen={};
-  (D.classes[st.cls].strips||[]).forEach(function(s){
-    if(s.ids.length<1)return;
-    s.ids.forEach(function(id){
-      if(seen[id])return;seen[id]=1;
-      var pose=poseOfId(st.cls,id);if(!pose)return;
-      var el=document.createElement('div');el.className='cand'+(s.dir===sd?' sug':'');
+  var poses=D.classes[st.cls].poses||[], sug={};
+  (D.classes[st.cls].strips||[]).forEach(function(st2){
+    if(st2.dir===sd)st2.ids.forEach(function(id){sug[id]=1})});
+  var byRow={};
+  poses.forEach(function(p){var r=(p.row==null||p.row<0)?'extra':p.row;(byRow[r]=byRow[r]||[]).push(p)});
+  Object.keys(byRow).sort(function(a,b){
+    if(a==='extra')return 1;if(b==='extra')return -1;return a-b}).forEach(function(r){
+    var rh=document.createElement('div');rh.className='rowhead';
+    rh.textContent=(r==='extra'?'Other poses from the sheet':'Sheet row '+r)+' · '+byRow[r].length+' poses';
+    panelBody.appendChild(rh);
+    var box=document.createElement('div');box.className='cands';
+    byRow[r].forEach(function(pose){
+      var id=pose.id;
+      var el=document.createElement('div');el.className='cand'+(sug[id]?' sug':'');
       var s2=Math.min(1,58/pose.h,50/pose.w);
       var cv=document.createElement('canvas');
       cv.width=Math.max(12,Math.round(pose.w*s2));cv.height=Math.max(12,Math.round(pose.h*s2));
@@ -465,20 +391,24 @@ function renderPanel(){
       if(safe(st.cls))g.drawImage(sheetImg[st.cls],pose.x,pose.y,pose.w,pose.h,0,0,cv.width,cv.height);
       if(isMirrored(dir))cv.style.transform='scaleX(-1)';
       el.appendChild(cv);
-      var i=document.createElement('i');i.textContent='#'+id;el.appendChild(i);
-      el.title=(pose.label||('pose #'+id))+' — head seat '+pose.seat[0]+','+pose.seat[1]+' ('+pose.seat[2]+')';
+      el.title=(pose.label||('pose '+id))+(sug[id]?' — suggested for this view':'');
       el.onclick=function(){var arr=atk(st.cls)[sd];while(arr.length<=frame)arr.push(null);arr[frame]=id;
         st.sel={dir:dir,frame:Math.min(frame+1,CAP-1)};save();paint()};
-      box.appendChild(el)})});
-  panelBody.appendChild(box);
+      box.appendChild(el)});
+    panelBody.appendChild(box)});
   var ctl=document.createElement('div');ctl.style.cssText='display:flex;gap:6px;align-items:center;margin-top:10px;flex-wrap:wrap';
   var prev=document.createElement('button');prev.textContent='◀ back';prev.onclick=function(){step(-1)};
   var next=document.createElement('button');next.textContent='next ▶';next.className='primary';next.onclick=function(){step(1)};
+  var rep6=document.createElement('button');rep6.textContent='repeat frame '+(frame+1)+' on all 6';
+  rep6.title='use the pose already on this frame for every frame of the view';
+  rep6.onclick=function(){var id=atk(st.cls)[sd][frame];if(id==null){
+      statusEl.textContent='pick a pose on frame '+(frame+1)+' first';return}
+    var arr=atk(st.cls)[sd];for(var f2=0;f2<CAP;f2++)arr[f2]=id;save();paint()};
   var clr=document.createElement('button');clr.textContent='clear this frame';
   clr.onclick=function(){atk(st.cls)[sd][frame]=null;save();paint()};
   var all=document.createElement('button');all.textContent='clear this view';
   all.onclick=function(){atk(st.cls)[sd].length=0;save();paint()};
-  [prev,next,clr,all].forEach(function(b){ctl.appendChild(b)});
+  [prev,next,rep6,clr,all].forEach(function(b){ctl.appendChild(b)});
   var sp=document.createElement('span');sp.className='hint';sp.style.margin='0';
   sp.textContent='back / next move through all 6 frames of every view';ctl.appendChild(sp);
   panelBody.appendChild(ctl);
@@ -497,8 +427,8 @@ function autoFill(){
   for(var dir=0;dir<5;dir++)A[dir]=(d.auto[dir].attack.ids||[]).slice(0,CAP);
   st.mirrorSide=true;var mc=document.getElementById('mirrorSide');if(mc)mc.checked=true;save();paint()}
 function dump(){
-  var out={version:4,note:'Prontera Grind attack-pose selection. cells are [x,y,w,h,headX,headY,headSource]: x/y/w/h in the class sheet, headX/headY = the head pivot inside the game 96x96 cell (measured seat + your drag); null = keep previous frame',
-           mirrorSide:!!st.mirrorSide,attack:{},weapon:{},weaponOffsets:{},weaponPinned:st.pinned!==false};
+  var out={version:5,note:'Prontera Grind attack-pose + head selection. cells are [x,y,w,h,headX,headY,headSource]: x/y/w/h in the class sheet, headX/headY = the head pivot inside the game 96x96 cell (measured seat + your drag); null = keep the previous frame (and a leading null = the first pose you picked)',
+           mirrorSide:!!st.mirrorSide,attack:{}};
   var n=0;
   for(var cls in st.atk){
     if(!D.classes[cls])continue;
@@ -510,13 +440,11 @@ function dump(){
         return [p.x,p.y,p.w,p.h,Math.round(p.seat[0]*sc+a[0]),Math.round(p.seat[1]*sc+a[1]),
                 (a[0]||a[1])?'manual':p.seat[2]]});
       if(arr.some(function(x){return x!=null}))any=true}
-    var w={},sorted={};for(var d2=0;d2<8;d2++){w[d2]=wep(cls)[d2]!==false;sorted[d2]=w[d2]}
-    if(any||Object.keys(st.weap[cls]||{}).length){out.attack[cls]=rows;out.weapon[cls]=sorted;n++}}
-  for(var k in st.grips)out.weaponOffsets[k]=st.grips[k];
+    if(any){out.attack[cls]=rows;n++}}
   var heads={};for(var hk in st.head)heads[hk]=st.head[hk];
   out.headAdjust=heads;                            // {class|dir|frame:[dx,dy]} - the drags themselves
   document.getElementById('out').value=JSON.stringify(out);
-  statusEl.textContent=n+' class(es) set · idle & walk filled automatically'}
+  statusEl.textContent=n+' class(es) set · idle & walk filled automatically · heads included'}
 function copy(){
   var t=document.getElementById('out'),m=document.getElementById('copyMsg');
   t.select();t.setSelectionRange(0,t.value.length);
@@ -534,9 +462,9 @@ window.__pgDiag=function(){var n=0,tot=0,k;for(k in D.classes){tot++;if(sheetRea
     ((headReady.male&&headReady.female)?'loaded':'not loaded')+' - class sheets: '+n+'/'+tot+
     ' - attack views drawn: '+drew+(Object.keys(sheetFail).length?(' - failed: '+Object.keys(sheetFail)):'')};
 // Test hook: the harness in tools/tests/picker_sim.js drives the parts the owner touches
-// (head seating, the parked weapon, the export) without a browser.
+// (the poses, the head seating, the export) without a browser.
 window.__pgTest={headSpot:headSpot,headAdj:headAdj,setHead:setHead,dirWord:dirWord,st:st,
-  poses:function(cls){return D.classes[cls].poses},poseOf:poseOfId,weaponPixel:weaponPixel,
+  poses:function(cls){return D.classes[cls].poses},poseOf:poseOfId,headBox:headBox,
   payload:function(){dump();var t=document.getElementById('out');return JSON.parse(t.value||'{}')}};
 function paint(){
   var n=0,tot=0,k;for(k in D.classes){tot++;if(sheetReady[k])n++}
@@ -547,11 +475,8 @@ function paint(){
   Object.keys(D.classes).forEach(function(n){var o=document.createElement('option');o.value=n;o.textContent=n;clsSel.appendChild(o)});
   var hairSel=document.getElementById('hair');
   for(var i=0;i<PK.hairStyles;i++){var o=document.createElement('option');o.value=i;o.textContent='style '+i;hairSel.appendChild(o)}
-  var wSel=document.getElementById('weapon');
-  KINDS.forEach(function(k){var o=document.createElement('option');o.value=k;o.textContent=k;wSel.appendChild(o)});
   if(!D.classes[st.cls])st.cls=Object.keys(D.classes)[0];
-  st.weapon=st.weapon||defaultWeapon();
-  clsSel.value=st.cls;document.getElementById('sex').value=st.sex;hairSel.value=st.hair;wSel.value=st.weapon;
+  clsSel.value=st.cls;document.getElementById('sex').value=st.sex;hairSel.value=st.hair;
   // the mirror toggle sits in the header row (explicit id - never depends on a selector finding it)
   var slot=document.getElementById('mirrorSlot'), ml=document.createElement('label');
   ml.className='f';ml.title='NE / E / SE reuse the NW / W / SW poses, mirrored';
@@ -559,30 +484,21 @@ function paint(){
   ml.appendChild(mc);ml.appendChild(document.createTextNode('mirror the side art'));
   slot.appendChild(ml);
   mc.onchange=function(){st.mirrorSide=mc.checked;save();paint()};
-  // parked weapon switch (explicit id: the boot must never depend on a selector finding it)
-  var pslot=document.getElementById('pinSlot'), pl=document.createElement('label');
-  pl.className='f';pl.title='The weapon is held in one position while you pick the poses';
-  var pc=document.createElement('input');pc.type='checkbox';pc.id='pinWep';pc.checked=st.pinned!==false;
-  pl.appendChild(pc);pl.appendChild(document.createTextNode('hold the weapon in one position'));
-  pslot.appendChild(pl);
-  pc.onchange=function(){st.pinned=pc.checked;save();paint()};
-  clsSel.onchange=function(){st.cls=clsSel.value;st.weapon=defaultWeapon();wSel.value=st.weapon;
+  clsSel.onchange=function(){st.cls=clsSel.value;
     st.sel={dir:0,frame:0};sheetFor(st.cls);save();paint()};
   document.getElementById('sex').onchange=function(e){st.sex=e.target.value;save();paint()};
   hairSel.onchange=function(e){st.hair=+e.target.value;save();paint()};
-  wSel.onchange=function(e){st.weapon=e.target.value;save();paint()};
   document.getElementById('btnAuto').onclick=autoFill;
   document.getElementById('btnCopy').onclick=copy;
   document.getElementById('btnCopy2').onclick=copy;
   document.getElementById('btnClearCls').onclick=function(){
-    if(!confirm('Clear the attack poses and weapon settings for '+st.cls+'?'))return;
-    delete st.atk[st.cls];delete st.weap[st.cls];
-    for(var k in st.grips)if(k.indexOf(st.cls+'|')===0)delete st.grips[k];
+    if(!confirm('Clear the attack poses and head drags for '+st.cls+'?'))return;
+    delete st.atk[st.cls];
     for(var k2 in st.head)if(k2.indexOf(st.cls+'|')===0)delete st.head[k2];
     save();paint()};
   document.getElementById('btnReset').onclick=function(){
-    if(!confirm('Throw away every attack pick, weapon toggle, weapon position and head drag for every class?'))return;
-    st.atk={};st.weap={};st.grips={};st.head={};save();paint()};
+    if(!confirm('Throw away every attack pick and head drag for every class?'))return;
+    st.atk={};st.head={};save();paint()};
   sheetFor(st.cls);
   setInterval(function(){tick++;if(drag!==null)return;
     var cvs=viewsEl.querySelectorAll('canvas.big');for(var v=0;v<cvs.length;v++)drawView(cvs[v],v)},160);

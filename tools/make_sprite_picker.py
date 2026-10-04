@@ -324,7 +324,8 @@ def write_standalone(data):
     """One file with everything inside it: the app, the pose index, all 21 sheets as
     data URIs and the two head atlases.  This is the build that opens anywhere - the
     Arena file viewer, a phone, a USB stick - with no repository files beside it.
-    Same app source as tools/sprite_picker.html, so the two cannot drift."""
+    Same app source as tools/sprite_picker.html, so the two cannot drift.  The weapon
+    is not part of the picker, so the joints file is not inlined here."""
     pack = m.load_existing()
     pack_light = {'hairStyles': pack['hairStyles'],
                   'heads': pack['heads'],
@@ -339,12 +340,7 @@ def write_standalone(data):
     tmpl = open(os.path.join(REPO, 'tools', 'sprite_picker.html')).read()
     if '<script src="../assets/sprite_pack_data.js"></script>' not in tmpl:
         raise SystemExit('standalone build: the template changed - update the inliner')
-    joints = open(os.path.join(REPO, 'assets', 'weapon_joints_data.js')).read()
-    joints = '\n'.join(l for l in joints.splitlines() if not l.startswith('//'))   # comments stay out
     out = tmpl.replace(
-        '<script src="../assets/weapon_joints_data.js"></script>',
-        '<script>%s</script>' % joints)
-    out = out.replace(
         '<script src="../assets/sprite_pack_data.js"></script>',
         '<!-- standalone build: everything below is inside this one file -->\n'
         '<script>window.SPRITE_PACK=%s;</script>' % json.dumps(pack_light, separators=(',', ':')))

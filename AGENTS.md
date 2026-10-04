@@ -415,7 +415,7 @@ node tools/tests/ui_sim.js             # -> "13 passed, 0 failed"
 node tools/tests/sprite_sim.js         # -> "10 passed, 0 failed" (mob art, weapon icons, view names)
 node tools/tests/starter_sim.js        # -> "4 passed, 0 failed"
 node tools/tests/weapon_joint_sim.js   # -> "7 passed, 0 failed" (measured hand joints, parked weapon)
-node tools/tests/picker_sim.js         # -> "9 passed, 0 failed" (the picker the owner uses, booted under a DOM stub)
+node tools/tests/picker_sim.js         # -> "11 passed, 0 failed" (the picker the owner uses, booted under a DOM stub)
 ```
 
 Every suite pulls real code out of `index.html` by **string boundary**, so an edit that
@@ -1434,3 +1434,42 @@ assigned for feel rather than fidelity. While reworking that, two shipped bugs s
     `index.html` reads none of them yet (one `WEAPON_HIDDEN_DIRS` list for every class).
   * The head drag is per frame; a frame with "keep previous frame" carries no head of its own.
   * Idle and walk remain the sheet's own layout picks.
+
+### 2026-10-04 — `tool-v30 picker: poses only, every pose offered, a head marker you can see`
+* **Three things the owner asked for, all in the picker (the game is untouched this round).**
+* **The weapon is off the page.** The weapon dropdown, the per-view weapon checkbox, the weapon in the
+  previews, the joint cross and the weapon drag are all gone - `tools/sprite_picker.html` no longer
+  loads `assets/weapon_joints_data.js` either, and `make_sprite_picker.py` no longer inlines it into
+  the standalone (2.9 MB -> 2.8 MB). The export is **version 5** and carries poses and heads only:
+  `{version, note, mirrorSide, attack, headAdjust}`. The game keeps its own weapon rules (attack only,
+  bare-handed on NW/N/NE, held in one position) until the owner's idea for it lands.
+* **"Some of the poses I want seem missing" — they were.** The tile grid only offered poses that
+  belonged to an attack set. It now lists **every figure in the sheet**, grouped under *Sheet row N*
+  headings (Knight: 97 tiles, was 54; the rows that carry no attack label included, e.g. the
+  `montage` row as *Other poses*). The sheet's own suggestion for the view still has the green border.
+* **Fewer than six frames is fine, and a pose can be repeated.** Nothing enforces six: an empty frame
+  holds the pose before it (a *leading* empty frame takes the first pose picked) - the export note says
+  so - and a new **repeat frame N on all 6** button fills the view with the pose already on the current
+  frame. Clicking the same picture twice repeats it as well.
+* **The head marker is now the head, not a big square.** The old guide was the whole 64x64 head cell,
+  which is mostly empty space, so there was nothing to aim at. The head's own pixels are scanned once
+  per sex + view + hair style (`headBox`, alpha > 8) and drawn as a shaded box, with a ring and cross
+  on the seat itself. **Dragging anywhere in a picture** seats that view's head (there is nothing else
+  to drag any more, so no small target to hit). If a browser refuses `getImageData`, the box is skipped
+  and the ring is still there.
+* **Files touched:** `tools/sprite_picker.html` (weapon UI and weapon code removed, all-poses grid,
+  repeat button, head marker, export v5), `tools/make_sprite_picker.py` (joints inlining removed),
+  `tools/sprite_picker_data.js` + `tools/sprite_picker_standalone.html` (regenerated),
+  `tools/tests/picker_sim.js` (11 checks - now proves there is no weapon control, that every pose in
+  the sheet gets a tile, that a cleared frame exports null and the repeat button fills six, and that
+  the head box is the head's pixels rather than the whole cell), `AGENTS.md`.
+* **Art:** none added, removed, recoloured or rebuilt; `tools/montage.py` was not run.
+* **Tests:** all 15 suites green (class change 22, save/load 10; economy 21, stat 7, card 13, skill 48,
+  gear 20; scene 8, kit 20, UI 13, sprite 10, starter 4; pack 19 bodies; weapon joints 7; picker 11).
+  Inline JS passes `node --check`, and both picker builds boot under the stub.
+* **Branches / PR:** `arena/01a1054b-prontera-grind` (PR #11).
+* **Known limits / follow-ups:**
+  * The picker's own weapon choices are gone for good; if the owner wants per-class weapon hiding
+    later it comes back as part of the weapon step, not as a checkbox here.
+  * The head drag is per frame and per view; a frame set to "keep the previous" carries no head of its own.
+  * Idle and walk remain the sheet's own layout picks, filled in by the build.
