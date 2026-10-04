@@ -1,46 +1,72 @@
-# Prontera Grind — finished update, ready to push
+# Prontera Grind — read me first
 
-`index.html` in this repo is the finished v7 build (`BUILD='2026-10-03 sprites-v7 all 19 classes'`)
-and `assets/sprite_pack_data.js` is the matching 19-body sprite pack. The three test suites
-pass. All that is left is to commit and push.
+A browser Ragnarok-Online-flavoured idle/grind game. **One file is the game**: `index.html`
+(HTML, CSS and JavaScript inline, Three.js from a CDN, no build step). Cloudflare Pages serves
+the repo, so pushing to `main` is the deploy.
 
-## If anything is missing — run the bootstrap
+* `index.html` — the whole game. `const BUILD='…'` near the top is the tag shown on the login card.
+* `assets/sprite_pack_data.js` — the built class pack: 19 class bodies + 2 heads, base64 atlases (~5.8 MB).
+* `assets/kit/` — **map kit v2**: `ro-spritesheet.png` + `.json` (25 terrain tiles, 34 billboards)
+  and the two attached level designs (`ro-map-payon.json`, `ro-map-morocc.json`).
+* `Sprite/*.png` — the uploaded class sheets, the source art for the pack.
+* `tools/` — the art pipelines (`make_sprite_pack.py`, `montage.py`), the test suites (`tools/tests/`)
+  and a dev-only plan previewer (`tools/preview/`).
+* `AGENTS.md` — **the project's rules and its full update log**. Read it before changing anything:
+  it carries the house rules (crop only, never draw art; all 8 directions and 3 animation rows
+  survive; append to the log; bump `BUILD` for anything a player can see) and the history.
 
-    python3 UPDATE-BOOTSTRAP.py
+Login for testing: **`GM` / `gm1234`**. Normal accounts are made in-game and stored in the
+browser (`pg_acc4`; saves under `pg_save3_<user>`).
 
-It writes the finished `index.html` and `tools/`, recovers the sprite sheets from
-`origin/main` if they are not in the working tree, rebuilds `assets/sprite_pack_data.js`
-from `Sprite/*.png`, and runs the test suites. It is safe to run twice. Then:
+## Run it
 
-    git add -A
-    git commit -m "All 19 classes on their own sprite art + class change is a restart"
-    git push -u origin HEAD
-    gh pr create --base main --fill
+```sh
+python3 -m http.server 8000 --bind 0.0.0.0     # then open the preview on port 8000
+```
 
-Send the user the pull-request link. That link is the only thing they need.
+## Test it — before every push
 
-## What the update does
+```sh
+python3 - <<'PY'
+h=open('index.html').read()
+open('/tmp/pack_block.js','w').write(h[h.index('const PACK_BODY='):h.index('function ensureHero(')])
+PY
+for t in pack class_change save_load economy stat card skill gear scene kit ui sprite starter; do
+  node tools/tests/${t}_sim.js || echo "FAILED: $t"
+done
+```
 
-* **All 19 classes on their own sprite art**, cropped from the sheets in `Sprite/`
-  (nothing drawn or substituted). Novice, Swordman, Mage, Archer, Acolyte, Thief,
-  Merchant, Knight, Lord Knight, Wizard, High Wizard, Hunter, Sniper, Priest,
-  High Priest, Blacksmith, Whitesmith, Assassin, Assassin Cross. Merchant moved off
-  the blacksmith sheet. The four montage sheets (lord knight, white smith, high wizard,
-  high priest) are rebuilt automatically — every pose matched, IoU 0.90–0.94.
-* **Head wobble fixed**: per-cell head anchors measured from each body — 0.16–0.38 px
-  seating (was 7–13 px; the shipped art measures 0.24).
-* **Class change is a restart** (AXC 120/40 → Novice → Hunter example): loading a class
-  starts it over at your current Base Lv with job levels cleared and stats refunded;
-  the Novice restart drops you to Base Lv 25. Stepping away from a class keeps its own
-  Base Lv, EXP, stats, points and gear in `S.base[class]`, so you can switch back to it.
-* `tools/make_sprite_pack.py` rebuilds the pack after new sheets are dropped into `Sprite/`;
-  `tools/montage.py` rebuilds the four montage sheets; `tools/tests/` holds the suites.
+Expected tails: pack prints the 19 bodies; every other suite prints `N passed, 0 failed`
+(class_change 22, save_load 10, economy 21, stat 7, card 13, skill 48, gear 20, scene 8,
+**kit 33**, ui 13, sprite 10, starter 4). All suites pull the real code out of `index.html` by
+string boundary, so moving a declaration can break a test without breaking the game — if a suite
+throws, read the boundary it grabs before assuming the game is at fault.
 
-## Facts to verify after the rebuild
+## Change the map art
 
-* 19 bodies in the pack, ~5.8 MB file.
-* `node tools/tests/pack_sim.js` → all 19 classes composite a full 120 + 120 tile atlas
-  (needs `/tmp/pack_block.js`, which the bootstrap writes).
-* `node tools/tests/class_change_sim.js` → 11 passed, 0 failed.
-* `node tools/tests/save_load_sim.js` → 4 passed, 0 failed.
-* Login for the game: `GM` / `gm1234`.
+```sh
+python3 -m venv /tmp/venv && /tmp/venv/bin/pip install pillow numpy scipy    # once
+/tmp/venv/bin/python tools/make_sprite_pack.py      # Sprite/ -> assets/sprite_pack_data.js
+/tmp/venv/bin/python tools/montage.py               # the four montage sheets, only if re-cutting them
+```
+
+The map **layouts** (which tile goes where, how the scenery is clumped) are data in `index.html`:
+`const KIT_MAP` holds one recipe per map and `fieldPlan()` builds it. To look at a layout without a
+browser:
+
+```sh
+node tools/preview/dump_plans.js /tmp/plans.json
+/tmp/venv/bin/python tools/preview/render_plans.py /tmp/plans.json /tmp/out --px=1400 --box=-38,-38,38,20
+```
+
+## If the workspace resets
+
+Nothing is lost and nothing has to be rebuilt: `index.html`, the sprite pack and the map kit are
+all committed. Re-clone or `git pull` the working branch, read the newest entry in `AGENTS.md`
+(it says what was finished last and what is still owed), and run the suites above to prove the
+tree is sane.
+
+**Do not resurrect `UPDATE-BOOTSTRAP.py`.** It was a one-shot that shipped a compressed
+2026-10-02 (v7) build of `index.html` and `tools/`, and by v26 its patches no longer applied, so
+running it would restore that old build over the current game. It was deleted in v27; it is in
+git history if anyone ever wants to read it. The recovery path is git, not a script.
