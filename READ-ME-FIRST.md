@@ -37,8 +37,8 @@ done
 ```
 
 Expected tails: pack prints the 19 bodies; every other suite prints `N passed, 0 failed`
-(class_change 22, save_load 10, economy 21, stat 7, card 13, skill 48, gear 20, scene 8,
-**kit 33**, ui 13, sprite 10, starter 4). All suites pull the real code out of `index.html` by
+(class_change 22, save_load 10, economy 21, stat 7, card 13, skill 49, gear 20, scene 8,
+**kit 34**, ui 13, sprite 10, starter 7). All suites pull the real code out of `index.html` by
 string boundary, so moving a declaration can break a test without breaking the game — if a suite
 throws, read the boundary it grabs before assuming the game is at fault.
 
@@ -51,11 +51,14 @@ python3 -m venv /tmp/venv && /tmp/venv/bin/pip install pillow numpy scipy    # o
 ```
 
 The map **layouts** (which tile goes where, how the scenery is clumped) are data in `index.html`:
-`const KIT_MAP` holds one recipe per map and `fieldPlan()` builds it. To look at a layout without a
+`const KIT_MAP` holds one recipe per map and `fieldPlan()` builds it. `stageDress()` uses only
+existing atlas crops to add variants for stages 4–6, 7–9 and the stage 10 boss altar; stages
+1–3 use the original plan. The combat arena is 26×40 units, with three isolated packs at
+`PACK_SPOTS`; `spawn()`, `kill()` and `update()` coordinate the 1 → 2 → 3 loop. To look at a layout without a
 browser:
 
 ```sh
-node tools/preview/dump_plans.js /tmp/plans.json
+node tools/preview/dump_plans.js /tmp/plans.json 10    # third arg: stage, defaults to 1
 /tmp/venv/bin/python tools/preview/render_plans.py /tmp/plans.json /tmp/out --px=1400 --box=-38,-38,38,20
 ```
 

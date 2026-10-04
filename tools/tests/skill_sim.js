@@ -316,7 +316,7 @@ t('every mapped skill visual builds, animates and disposes through the renderer'
 });
 
 t('the live combat loop starts and renders skill visuals from casts, buffs and First Aid', () => {
-  assert.ok(src.includes('playSkillFx(sk.id,mob,sk.col)'), 'offensive skills do not trigger their visual');
+  assert.ok(src.includes('playSkillFx(sk.id,target,sk.col)'), 'offensive skills do not trigger their visual');
   assert.ok(src.includes("playSkillFx('aid',null,'#7dff7d')"), 'First Aid does not show a heal pulse');
   assert.ok(src.includes('playSkillFx(s.id,null,s.col)'), 'temporary auto-buffs do not show their cast cue');
   assert.ok(src.includes('tickSkillFx(dt);') && src.includes('syncSkillFx();'), 'skill effects are advanced and drawn in the game loop');
@@ -406,6 +406,25 @@ t('first-job AoEs damage a nearby secondary enemy, but not distant mobs', () => 
     assert.ok(context.result.near<10000,cls+' area damage missing');
     assert.strictEqual(context.result.far,10000,cls+' hit outside area');
   }
+});
+
+t('area casts cannot spill into a different pack when a kill changes target mid-cast', () => {
+  const cast=grab('function castSkill(sk,k){','function playerAttack(){');
+  const sk=K.SKILLS.find(s=>s.aoe&&s.type==='act');assert.ok(sk);
+  const context={sk};vm.createContext(context);
+  vm.runInContext(`
+    const first={x:0,z:0,hp:100,pack:0},near={x:1,z:1,hp:1,pack:0},waiting={x:1,z:2,hp:100,pack:1};
+    let mob=first;const mobs=[first,near,waiting],pend=[];let dots=0,stuns=0,chains=0;
+    const lv=()=>1,st=()=>1,atk=()=>50,matk=()=>50,strike=()=>{},shot=()=>{},playSkillFx=()=>{},
+      chainHit=()=>{chains++},applyDot=()=>{dots++},applyStun=()=>{stuns++},
+      hurt=(o,d)=>{o.hp-=d;if(o.hp<=0){mobs.splice(mobs.indexOf(o),1);mob=waiting}};
+    ${cast}
+    castSkill(sk,1);this.result={waiting:waiting.hp,near:near.hp,mob:mob.pack};
+  `,context);
+  assert.ok(context.result.near<=0,'the first pack should take the area hit');
+  assert.strictEqual(context.result.mob,1,'the test must switch targets during the cast');
+  assert.strictEqual(context.result.waiting,100,'the waiting pack must not be hit despite being nearby');
+  assert.ok(/mob.pack!==pack/.test(src), 'multi-cast swings must stop at pack boundaries');
 });
 
 t('invented and wrong-job skills are gone', () => {

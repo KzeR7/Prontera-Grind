@@ -188,9 +188,9 @@ const AL={str:'STR',agi:'AGI',dex:'DEX',luk:'LUK',int:'INT',hp:'Max HP',atk:'ATK
 // once stats cap), so a correctly-levelled character needed ~30-100s per mob from Geffen
 // onward. 1.3 keeps HP just ahead of ATK: early maps fall in a couple of swings and the
 // late maps in about five, with bosses still a ~12x fight. See tools/tests/economy_sim.js.
-const SU=k=>k.toUpperCase(),BX_=5.5,Z0=-14,Z1=3,MPS=15,AGGRO=8.5,HPK=42,HPE=1.3,K5=['str','agi','dex','luk','int'];
+const SU=k=>k.toUpperCase(),BX_=13,Z0=-28,Z1=12,MPS=15,AGGRO=6.5,HPK=42,HPE=1.3,K5=['str','agi','dex','luk','int'];
 const GM_USER='GM',GM_PASS='gm1234';   // CHANGE THE GM PASSWORD before you publish
-const BUILD='2026-10-04 kit-v27 organic-field all-ten-maps';   // shown on the login card - confirms which file you loaded
+const BUILD='2026-10-04 kit-v28 stage-variants three-packs';   // shown on the login card - confirms which file you loaded
 $('buildTag').textContent='build '+BUILD;
 
 // ---------- class tree: Novice -> 6 first jobs -> 6 second jobs -> 6 third jobs ----------
@@ -765,17 +765,25 @@ const isBoss=()=>S.lvl===10,fieldName=()=>`${MAPS[S.mp].n} Stage ${S.lvl}`;
 const icon=it=>it.card?'🃏':it.ore?'💎':it.slot==='weapon'?(WICON[it.wt]||'⚔️'):SLOTS[it.slot].ic;
 
 // ---------- mobs & loot ----------
-let mobs=[],mob=null,pAtkT=0,mAtkT=0,respawn=0;
+let mobs=[],mob=null,pAtkT=0,mAtkT=0,respawn=0,activePack=0;
+// Pack 1 starts near the entrance, then combat crosses the open field to packs 2 and 3.
+// The 18+ unit centre spacing leaves room for each pack's jitter and the 6.5-unit aggro radius.
+const PACK_SPOTS=[[-8,6],[8,-2],[-8,-16]];
+const packMob=()=>mobs.find(m=>m.pack===activePack)||null;
 // Starter stages share combat strength across the first five maps; loot/reward power stays map-specific.
 const starterStage=(m,l)=>m<5&&l<=5;
 const starterHp=l=>Math.floor(12*Math.pow(6+5*(l-1),HPE));
 const starterAtk=l=>6+3*(l-1);
 function spawn(){
-  const F=fieldOf(S.mp,S.lvl),l=pw(),mb=1+S.mp*.15+Math.max(0,S.mp-4)*.2;mobs=[];
-  if(F.boss&&S.kl>=MPS){const hp=Math.floor(500*mb*Math.pow(l,HPE));mobs.push({...F.boss,boss:true,hp,max:hp,atk:Math.floor((8+l*6.5)*mb),exp:Math.max(1,Math.floor(BOSEK*Math.pow(l,1.5)/50)),zeny:Math.max(1,Math.floor(ri(BZK[0],BZK[1])*l*l/1000)),size:1.3,mag:true,lvl:l,sec:F.sec})}
-  else{const early=starterStage(S.mp,S.lvl),n=early?(S.mp===0&&S.lvl===1?1:S.lvl===1?2:ri(2,3)):(S.lvl>=5||S.mp>=5)?ri(3,8):1;for(let i=0;i<n;i++){const m=F.mobs[ri(0,1)],hp=early?Math.min(starterHp(S.lvl),Math.floor(HPK*mb*Math.pow(l,HPE))):Math.floor(HPK*mb*Math.pow(l,HPE));mobs.push({...m,boss:false,hp,max:hp,atk:early?starterAtk(S.lvl):Math.floor((5+l*4.6)*mb),exp:Math.max(1,Math.floor(EXPK*Math.pow(l,1.5)/50)),zeny:Math.max(1,Math.floor(ri(ZK[0],ZK[1])*l*l/1000)),size:.6,mag:['demon','tree','blob'].includes(m.shape),lvl:l,sec:F.sec})}}
-  mobs.forEach((m,i)=>{m.x=rnd(-BX_+.8,BX_-.8);m.z=rnd(Z0,Z0+6);m.hx=m.x;m.hz=m.z;m.spawn=0;m.ry=0;m.at=rnd(.6,1.6);m.a=i*2.4});
-  mob=mobs[0];pAtkT=.3;
+  const F=fieldOf(S.mp,S.lvl),l=pw(),mb=1+S.mp*.15+Math.max(0,S.mp-4)*.2;mobs=[];activePack=0;
+  if(F.boss&&S.kl>=MPS){const hp=Math.floor(500*mb*Math.pow(l,HPE));mobs.push({...F.boss,boss:true,pack:0,hp,max:hp,atk:Math.floor((8+l*6.5)*mb),exp:Math.max(1,Math.floor(BOSEK*Math.pow(l,1.5)/50)),zeny:Math.max(1,Math.floor(ri(BZK[0],BZK[1])*l*l/1000)),size:1.3,mag:true,lvl:l,sec:F.sec})}
+  else{const early=starterStage(S.mp,S.lvl),perPack=early?(S.lvl===1?1:2):(S.lvl>=5||S.mp>=5)?ri(2,3):1;
+    for(let pack=0;pack<3;pack++)for(let i=0;i<perPack;i++){
+      const m=F.mobs[ri(0,1)],hp=early?Math.min(starterHp(S.lvl),Math.floor(HPK*mb*Math.pow(l,HPE))):Math.floor(HPK*mb*Math.pow(l,HPE));
+      mobs.push({...m,boss:false,pack,hp,max:hp,atk:early?starterAtk(S.lvl):Math.floor((5+l*4.6)*mb),exp:Math.max(1,Math.floor(EXPK*Math.pow(l,1.5)/50)),zeny:Math.max(1,Math.floor(ri(ZK[0],ZK[1])*l*l/1000)),size:.6,mag:['demon','tree','blob'].includes(m.shape),lvl:l,sec:F.sec})}}
+  mobs.forEach((m,i)=>{const [x,z]=m.boss?[0,3]:PACK_SPOTS[m.pack];
+    m.x=x+rnd(-1,1);m.z=z+rnd(-1,1);m.hx=m.x;m.hz=m.z;m.spawn=0;m.ry=0;m.at=rnd(.6,1.6);m.a=i*2.4});
+  mob=packMob();pAtkT=.3;
 }
 function genGear(T,l,sec,boss){
   const slot=['armor','head','off','leg','acc'].includes(T.k)?T.k:'weapon';let roll=rnd(0,100)-(boss?25:0)-st('luk')*.15,tier=0,acc=0;
@@ -794,7 +802,7 @@ function applyStun(o,dur){if(!o||!(dur>0))return;
   const d=dur*(o.boss?.5:1);o.stun=Math.min(o.boss?1:2,Math.max(o.stun||0,d))}
 // Chain bounces a share of the hit onto the nearest other mobs - the pack-clearing tool.
 function chainHit(src,dmg,col,n){if(!src||!(dmg>0)||mobs.length<2)return;
-  const near=mobs.filter(o=>o!==src&&o.hp>0).sort((a,b)=>Math.hypot(a.x-src.x,a.z-src.z)-Math.hypot(b.x-src.x,b.z-src.z)).slice(0,n||2);
+  const near=mobs.filter(o=>o!==src&&o.hp>0&&o.pack===src.pack).sort((a,b)=>Math.hypot(a.x-src.x,a.z-src.z)-Math.hypot(b.x-src.x,b.z-src.z)).slice(0,n||2);
   for(const o of near){shots.push({x0:src.x,z0:src.z,x1:o.x,z1:o.z,t:0,col:col||'#fff'});hurt(o,Math.max(1,Math.round(dmg)),col)}}
 const mkDrop=it=>({it,wx:mob.x+rnd(-.7,.7),wz:mob.z+rnd(-.7,.7),y:0,vy:-220,t:0});
 const addFloat=(x,y,z,txt,col,big)=>floats.push({x,y,z,txt,col,life:1,big});
@@ -818,27 +826,29 @@ const SKSLOTS=t=>1+(t||0),SKFADE=[1,.55,.3,.18];
 // dot.pow is the fraction of the triggering hit dealt PER SECOND, so a .05/4s dot adds 20% of
 // the hit spread over time. chain.pow is the fraction each bounce deals, once per target.
 function castSkill(sk,k){
-  const base=sk.magic?matk():atk(),m=sk.mul(lv(sk.id))*(1+st('int')*.01)*k;
-  playSkillFx(sk.id,mob,sk.col);
+  // Hold the target fixed for this cast: an AoE kill can advance activePack while we are
+  // still iterating. The remaining effects must never spill into the next sleeping pack.
+  const target=mob,base=sk.magic?matk():atk(),m=sk.mul(lv(sk.id))*(1+st('int')*.01)*k;
+  playSkillFx(sk.id,target,sk.col);
   strike(m,sk.col,!!sk.magic);shot(sk.col,sk.rng);
-  if(sk.aoe&&mob)for(const o of mobs.slice())if(o!==mob&&Math.hypot(o.x-mob.x,o.z-mob.z)<4)hurt(o,Math.max(1,Math.round(base*m*.8)),sk.col);
-  if(sk.chain&&mob)chainHit(mob,base*m*(sk.chain.pow||.5),sk.col,Math.min(4,(sk.chain.n||2)+Math.floor(lv(sk.id)/2)));
-  if(sk.dot&&mob&&mob.hp>0)applyDot(mob,base*m*(sk.dot.pow||.05),sk.dot.dur||4,sk.dot.col||sk.col);
-  if(sk.stun&&mob&&mob.hp>0)applyStun(mob,(sk.stun.dur||.8)*(1+lv(sk.id)*.08));
-  for(let i=1;i<sk.hits;i++)pend.push({t:i*.09,m,col:sk.col,magic:!!sk.magic});
+  if(sk.aoe&&target)for(const o of mobs.slice())if(o!==target&&o.pack===target.pack&&Math.hypot(o.x-target.x,o.z-target.z)<4)hurt(o,Math.max(1,Math.round(base*m*.8)),sk.col);
+  if(sk.chain&&target&&mobs.includes(target))chainHit(target,base*m*(sk.chain.pow||.5),sk.col,Math.min(4,(sk.chain.n||2)+Math.floor(lv(sk.id)/2)));
+  if(sk.dot&&target&&target.hp>0)applyDot(target,base*m*(sk.dot.pow||.05),sk.dot.dur||4,sk.dot.col||sk.col);
+  if(sk.stun&&target&&target.hp>0)applyStun(target,(sk.stun.dur||.8)*(1+lv(sk.id)*.08));
+  if(target&&mobs.includes(target))for(let i=1;i<sk.hits;i++)pend.push({t:i*.09,m,col:sk.col,magic:!!sk.magic});
 }
 function playerAttack(){
   pAtkT=aspd();atkAnim=1;
   const far=mob&&Math.hypot(mob.x-pl.x,mob.z-pl.z)>(C().rng?3:1.2+.45*mob.size)+.6;
   const ready=SKILLS.filter(s=>s.type==='act'&&skillOn(s.id)&&(skCd[s.id]||0)<=0&&(!far||s.rng))
     .sort((a,b)=>b.mul(lv(b.id))*b.hits-a.mul(lv(a.id))*a.hits);
-  let cast=0;
+  const pack=mob&&mob.pack;let cast=0;
   for(const sk of ready){
     if(cast>=SKSLOTS(C().tier))break;
     const k=SKFADE[cast]||.3;cast++;
     skCd[sk.id]=sk.cd;addFloat(pl.x,2.9+cast*.4,pl.z,sk.n,sk.col);
     castSkill(sk,k);
-    if(!mob||mob.hp<=0)break;
+    if(!mob||mob.hp<=0||mob.pack!==pack)break;
   }
   if(cast||far)return;
   strike(1);shot();const d=pv('dbl');
@@ -864,7 +874,9 @@ function kill(o){const keep=mob;if(o)mob=o;if(!mob||!mobs.includes(mob)){mob=kee
     else{const z=Math.floor(EGG*(.3+r*.4));S.zeny+=z;log(`A ${RN[r]} ${PETS[sp].n} appeared but your pet collection is full (+${z}z).`)}}
   checkLevel();
   if(mob.boss||(S.lvl<10&&S.kl>=MPS)){mobs=[];S.kl=0;if(S.lvl<10&&S.lvl>=S.prog[S.mp]){S.prog[S.mp]=S.lvl+1;log(`${fieldName()} cleared! Stage ${S.lvl+1} unlocked.`,'r3');if(S.adv&&S.lvl<10){S.lvl++}}}
-  mobs=mobs.filter(x=>x!==mob);mob=(o&&keep&&keep!==o&&mobs.includes(keep))?keep:(mobs[0]||null);respawn=.7;save();ui();
+  mobs=mobs.filter(x=>x!==mob);
+  if(mobs.length&&!mobs.some(x=>x.pack===activePack))activePack=mobs[0].pack;
+  mob=packMob();respawn=.7;save();ui();
 }
 function collect(it){
   if(it.card){S.cards.push(it);log(`Got card: [${GRADE[it.g]}] ${cardTxt(it)}`,'r'+GI[it.g]);addFloat(pl.x,2.8,pl.z,'CARD!','#ffb020',true);ui();return}
@@ -1236,25 +1248,25 @@ function update(dt){
     const rng=C().rng;
     for(const m of mobs){
       m.spawn=Math.min(1,m.spawn+dt*3);m.flash=Math.max(0,(m.flash||0)-dt*6);m.atkAnim=Math.max(0,(m.atkAnim||0)-dt*2.35);
-      const ms=2.6+.3*m.size,wake=m.boss||Math.hypot(pl.x-m.x,pl.z-m.z)<AGGRO;
+      const ms=2.6+.3*m.size,wake=m.pack===activePack&&(m.boss||Math.hypot(pl.x-m.x,pl.z-m.z)<AGGRO);
       const gx2=wake?pl.x+Math.cos(m.a)*ms:m.hx,gz2=wake?pl.z+Math.sin(m.a)*ms*.6:m.hz;
       const ex=gx2-m.x,ez=gz2-m.z,ed=Math.hypot(ex,ez);const stn=m.stun>0;m.run=ed>.12&&!stn;
       if(ed>.1&&!stn){const v=Math.min(ed,dt*(m.boss?1.2:1.6)*(wake?1:.55));m.x+=ex/ed*v;m.z+=ez/ed*v}
       m.x=cl(m.x,-BX_,BX_);m.z=cl(m.z,Z0,Z1);m.ry=Math.atan2(pl.z-m.z,m.x-pl.x);
-      if(Math.hypot(pl.x-m.x,pl.z-m.z)<=ms+.4&&!stn){m.at-=dt;if(m.at<=0){m.at=m.boss?1.2:1.5;
+      if(wake&&Math.hypot(pl.x-m.x,pl.z-m.z)<=ms+.4&&!stn){m.at-=dt;if(m.at<=0){m.at=m.boss?1.2:1.5;
         if(Math.random()*100<flee())addFloat(pl.x,2.4,pl.z,'Miss','#8cf');
         else{const d=Math.max(1,Math.round(m.atk*rnd(.8,1.2)-(m.mag?mdef():def())*.6));S.hp-=d;hitAnim=1;m.atkAnim=1;addFloat(pl.x,2.4,pl.z,d,m.mag?'#c08cff':'#ff6b6b');
           // Defeat is the ONE thing that puts you back at the spawn point.
 if(S.hp<=0){log('You were defeated... knocked back to the entrance.','r0');S.hp=maxHp();S.kl=0;mobs=[];mob=null;respawn=1.5;pend=[];tb={};
           pl.x=0;pl.z=Z1-1.5;pl.wt=0;ui();return}}}}
     }
-    if(!mob||!mobs.includes(mob)){mob=null;let bd=1e9;for(const m of mobs){const d=Math.hypot(m.x-pl.x,m.z-pl.z);if(d<bd){bd=d;mob=m}}}
+    if(!mob||!mobs.includes(mob)||mob.pack!==activePack)mob=packMob();
     if(mob){reach=rng?3:1.2+.45*mob.size;pl.orb+=dt*.8;const r=rng?3:reach*.8;tx=mob.x+Math.cos(pl.orb)*r;tz=mob.z+Math.sin(pl.orb)*r;
       const dist=Math.hypot(mob.x-pl.x,mob.z-pl.z)||.01;
       if(dist<=reach+.6||(dist<=5&&skillOn('soulb')&&(skCd.soulb||0)<=0)){pAtkT-=dt;if(pAtkT<=0){playerAttack();if(mob&&mob.hp<=0){kill();return}}}}
   }
   const AP=S.pets.filter(p=>p.on);for(const p of AP){const r=petR[p.id]||(petR[p.id]={x:pl.x-1,z:pl.z+1,at:rnd(0,1)}),i=AP.indexOf(p);let o=null,bd=1e9;
-    for(const m of mobs){const d=Math.hypot(m.x-r.x,m.z-r.z);if(d<bd){bd=d;o=m}}
+    for(const m of mobs){if(m.pack!==activePack)continue;const d=Math.hypot(m.x-r.x,m.z-r.z);if(d<bd){bd=d;o=m}}
     const ex=(o?o.x+(i-1)*.8:pl.x-1.2)-r.x,ez=(o?o.z+1.2:pl.z+(i-1)*1.1)-r.z,ed=Math.hypot(ex,ez);r.run=ed>.2;
     if(ed>.05){const v=Math.min(ed,6*dt);r.x+=ex/ed*v;r.z+=ez/ed*v}r.x=cl(r.x,-BX_,BX_);r.z=cl(r.z,Z0-1,Z1+1);r.lunge=Math.max(0,(r.lunge||0)-dt*4);
     if(o&&bd<2.4){r.at-=dt;if(r.at<=0){r.at=petInt(p);r.lunge=1;petHit(p,o)}}}
@@ -1292,7 +1304,7 @@ function mk(p,geo,c,x=0,y=0,z=0){const m=new THREE.Mesh(geo,M(c));m.position.set
 
 scene.add(new THREE.HemisphereLight(0xffffff,0x6a9a55,.8));
 const sun=new THREE.DirectionalLight(0xfff2cc,.9);sun.position.set(-9,22,9);sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);
-Object.assign(sun.shadow.camera,{left:-22,right:22,top:28,bottom:-28});sun.target.position.set(0,0,-5);scene.add(sun.target);scene.add(sun);
+Object.assign(sun.shadow.camera,{left:-38,right:38,top:45,bottom:-45});sun.target.position.set(0,0,-5);scene.add(sun.target);scene.add(sun);
 
 const ground=new THREE.Mesh(new THREE.PlaneGeometry(90,90),M(0x6cbf5a));ground.rotation.x=-Math.PI/2;ground.receiveShadow=true;scene.add(ground);
 const road=new THREE.Mesh(new THREE.PlaneGeometry(22,10.5),M(0xd8cdb4));road.rotation.x=-Math.PI/2;road.position.set(0,.01,.4);road.receiveShadow=true;scene.add(road);
@@ -1334,7 +1346,7 @@ for(const[lx,lz]of[[-3,-3.6],[3,-3.6],[0,-6.4],[0,-.8]]){mk(scene,CY(.07,.09,2.2
 const townObjs=scene.children.slice(town0),deco=new THREE.Group();scene.add(deco);
 // Prontera is scenery, not a maze: the whole set moves back behind the far edge so you run
 // up an open avenue with the city on the skyline instead of fighting inside the cathedral.
-const TZ=-18;townObjs.forEach(o=>{o.position.z+=TZ});road.position.z+=TZ;
+const TZ=Z0-8;townObjs.forEach(o=>{o.position.z+=TZ});road.position.z+=TZ;
 // [kind,main colour,trunk colour,extras]; kinds 0 round tree,1 conifer,2 tall pole,3 cactus,
 // 4 crystal,5 slab,6 bamboo cluster,7 bush,8 boulder.
 // `extras` is what makes each map a different PLACE rather than a different colour:
@@ -1598,7 +1610,7 @@ const KIT_MAP={
       types:['tree_ancient_large','tree_tall_cluster','tree_ancient_variant'],
       sub:[['tree_sapling',.4],['tree_bush_bright',.4]]},
       {alt:1,n:2,r:3.6,trees:[1,2],b0:7,b1:18,z0:-13,z1:-1,gap:5,types:['bamboo_grove'],s0:.85,s1:1.05}],
-    scatter:[{type:'bamboo_grove',count:5,r0:7.4,r1:24,z0:-28,z1:10,s0:.85,s1:1.1,gap:5.6},
+    scatter:[{alt:1,type:'bamboo_grove',count:5,r0:7.4,r1:24,z0:-28,z1:10,s0:.85,s1:1.1,gap:5.6},
       {type:'tree_bush_bright',count:6,r0:7.2,r1:27,z0:-30,z1:12,s0:.75,s1:1.15,gap:5.2},
       {type:'tree_sapling',count:4,r0:7.6,r1:25,z0:-28,z1:11,s0:.7,s1:1,gap:5},
       {type:'rock_cliff_crag',count:4,r0:11,r1:29,z0:-30,z1:12,s0:.9,s1:1.3,gap:6.5}],
@@ -1632,13 +1644,13 @@ const KIT_MAP={
     groves:[{n:3,r:5,trees:[1,2],b0:7.4,b1:17,z0:-26,z1:11,gap:5.4,types:['bamboo_grove','tree_tall_cluster'],
       sub:[['tree_sapling',.5],['tree_bush_bright',.4]]},
       {n:3,r:5.8,trees:[1,2],b0:17,b1:30,z0:-30,z1:12,gap:5.6,types:['bamboo_grove','tree_tall_cluster','tree_sapling']}],
-    scatter:[{type:'bamboo_grove',count:5,r0:8,r1:27,z0:-28,z1:11,s0:.85,s1:1.15,gap:5.8},
+    scatter:[{alt:1,type:'bamboo_grove',count:5,r0:8,r1:27,z0:-28,z1:11,s0:.85,s1:1.15,gap:5.8},
       {type:'tree_bush_bright',count:5,r0:7.6,r1:26,z0:-28,z1:11,s0:.8,s1:1.15,gap:5.4},
       {type:'tree_sapling',count:4,r0:8,r1:25,z0:-28,z1:11,s0:.7,s1:1.05,gap:5.2}],
     far:[{type:'bamboo_grove', count:14,r0:32,r1:44,z0:-44,z1:16,s0:.95,s1:1.25,gap:8.5},
       {type:'tree_tall_cluster',count:5,r0:34,r1:46,z0:-44,z1:16,s0:.95,s1:1.25,gap:10}],
     fixed:[{type:'shrine_stone',x:-9.6,z:-16.4,scale:1},
-      {type:'lantern_stone',x:-6.8,z:-11,scale:1},{type:'lantern_stone',x:6.8,z:-11,scale:1,flip:true},
+      {type:'lantern_stone',x:-15.8,z:-13.5,scale:1},{type:'lantern_stone',x:15.8,z:-13.5,scale:1,flip:true},
       {type:'lantern_stone',x:-6.8,z:-.6,scale:1},{type:'lantern_stone',x:6.8,z:-.6,scale:1,flip:true}]}},
   // 7 Amatsu - blossom fields, slightly thinned: cherry in loose clumps over the whole field, the
   //   stream on the road with its red lacquer bridge, a torii on the approach, lantern pairs and
@@ -1838,7 +1850,7 @@ function fieldPlan(spec){
   }
   // singles, spread across their band - this is what dresses the far field out to |x| 29
   for(const sc of (f.scatter||[]))for(let i=0,n=0;i<sc.count*6&&n<sc.count;i++){
-    const side=sideOf(sc,i),x=side*(sc.r0+rnd()*((sc.r1===undefined?sc.r0:sc.r1)-sc.r0));
+    const side=sideOf(sc,n),x=side*(sc.r0+rnd()*((sc.r1===undefined?sc.r0:sc.r1)-sc.r0));
     const z=sc.z0+rnd()*(sc.z1-sc.z0);
     if(blocked(x,z))continue;
     if(place(sc.type,x,z,(sc.s0||.8)+rnd()*((sc.s1||1.2)-(sc.s0||.8)),rnd()>.5,sc.gap||1.6))n++;
@@ -1851,8 +1863,8 @@ function fieldPlan(spec){
     if(place(fc.type,x,z,(fc.s0||.9)+rnd()*((fc.s1||1.3)-(fc.s0||.9)),rnd()>.5,fc.gap||3))n++;
   }
   // landmarks go exactly where the recipe says (a tower in a far corner, a torii on the approach)
-  for(const fx of (f.fixed||[]))kitPut(props,spec.src,fx.x,fx.z,fx.type,fx.scale===undefined?1:fx.scale,!!fx.flip,0);
-  const deck=f.deck?{x:f.deck[0],z:f.deck[1],w:f.deck[2],l:f.deck[3],a:f.deck[4]||0}:null;
+  for(const fx of (f.fixed||[]))kitPut(props,spec.src,spec.design==='izlude'&&fx.type==='pier_post'?fx.x+(BX_+3-9.6):fx.x,fx.z,fx.type,fx.scale===undefined?1:fx.scale,!!fx.flip,0);
+  const deck=f.deck?{x:spec.design==='izlude'?Math.max(BX_+3,f.deck[0]):f.deck[0],z:f.deck[1],w:f.deck[2],l:f.deck[3],a:f.deck[4]||0}:null;
   props.sort((p,n)=>p.z-n.z);                       // far to near, so billboards overlap right
   return {src:spec.src,design:spec.design,cells,water,props,deck,base:f.base,base2:f.base2,
           waterFrames:f.waterFrames||null,deckTile:f.deckTile||null};
@@ -1960,6 +1972,55 @@ function kitPlan(m){
   }
   return plan;
 }
+// Stage art is layout, not new sprite art. The same 25 kit terrain crops and existing
+// billboards dress three new field moods per map. Stages 1-3 return the original plan untouched.
+const STAGE_ART=[
+  ['ruin_cobble','limestone_pale','ruin_cobble','river_stone_post'],  // Prontera: paved outskirts / citadel
+  ['sand_gold','limestone_pale','ruin_cobble','pier_post'],          // Izlude: shore / harbour
+  ['grass_geffen','ruin_cobble','limestone_pale','standing_stone'], // Geffen: runes / tower stones
+  ['sand_dark','ruin_cobble','limestone_pale','ruin_stump'],         // Morocc: dunes / ruins
+  ['dirt_payon','riverbank_wall','ruin_cobble','rock_boulder_mossy'],// Payon: forest / creek stones
+  ['sand_dark','limestone_pale','ruin_cobble','palm_tall'],         // Comodo: dunes / coast
+  ['grass_jade','limestone_pale','ruin_cobble','lantern_stone'],    // Louyang: terraces / shrine
+  ['grass_blossom','ruin_cobble','limestone_pale','lantern_stone'], // Amatsu: blossom / temple
+  ['rock_abyss','ruin_cobble','limestone_pale','tombstone'],        // Niflheim: wasteland / crypt
+  ['cliff_rock','limestone_pale','ruin_cobble','crystal_cluster']   // Abyss: cavern / altar
+];
+function stageDress(plan,m,stage){
+  if(stage<=3)return plan;
+  const tier=stage<=6?1:stage<=9?2:3,[first,late,boss,prop]=STAGE_ART[m];
+  const tile=tier===1?first:tier===2?late:boss;
+  // Copy the plan, not the recipe: a stage change must not alter the original 1-3 layout.
+  plan={...plan,cells:plan.cells.slice(),props:plan.props.slice(),stageTier:tier};
+  const paint=(cx,cz,r,kind)=>{
+    for(let z=cz-r;z<=cz+r;z+=.8)for(let x=cx-r;x<=cx+r;x+=.8){
+      const d=Math.hypot(x-cx,z-cz),n=kitFbm(x/2.5,z/2.5,991+m*37+tier*71,3);
+      if(kind==='ring'?(d<r-.95||d>r-.25):(d>r*(.76+n*.38)))continue;
+      if(Math.abs(x)>=KIT_FAR/2-1||Math.abs(z)>=KIT_FAR/2-1)continue;
+      plan.cells.push({x,z,tile});
+    }
+  };
+  if(tier<3){
+    PACK_SPOTS.forEach(([x,z],i)=>{
+      paint(x,z,tier===1?3.3:5.1);
+      // Late stages gain an outer stone trace and kit landmarks on both sides of the arena.
+      if(tier===2)paint(x,z,6.3,'ring');
+    });
+    for(const side of [-1,1])for(const z of (tier===1?[5,-15]:[7,-2,-16]))
+      kitPut(plan.props,plan.src,side*(BX_+3+(tier===2?1:0)),z,prop,tier===1?.8:1,side<0,0);
+  }else{
+    // A dedicated boss dais: a large cobbled disc, contrasting inner seal and broken
+    // outer ring; paired landmark sentinels frame it from outside the running lane.
+    paint(0,3,7.2);paint(0,3,8.6,'ring');
+    const inner=m===8?'rock_abyss':m===9?'limestone_pale':late;
+    for(let z=-.2;z<=6.2;z+=.8)for(let x=-3.2;x<=3.2;x+=.8)
+      if(Math.hypot(x,z-3)<3.2)plan.cells.push({x,z,tile:inner});
+    for(const side of [-1,1])for(const z of [-3,3,9])
+      kitPut(plan.props,plan.src,side*(BX_+2.5),z,prop,1.25,side<0,0);
+  }
+  plan.props.sort((a,b)=>a.z-b.z);
+  return plan;
+}
 function kitRect(d,gx0,gx1,gy){
   const x0=kitX(d,gx0),x1=kitX(d,gx1+1),z0=kitZ(d,gy),z1=kitZ(d,gy+1);
   return {x:(x0+x1)/2,z:(z0+z1)/2,w:x1-x0,h:z1-z0,cx:gx1-gx0+1,cy:1};
@@ -2029,12 +2090,16 @@ function kitTick(dt){
   for(const w of KIT.water){if(w.maps.length<2)continue;w.m.material.map=w.m.material.map===w.maps[0]?w.maps[1]:w.maps[0]}
 }
 function buildKit(m){
-  const plan=kitPlan(m);if(!plan)return null;
+  const raw=kitPlan(m);if(!raw)return null;
+  const plan=stageDress(raw,m,S.lvl);
   if(!kitAtlas(plan.src))return null;      // no atlas for this design (yet) -> v13 scenery stands in
   if(!KIT.ground){KIT.ground=new THREE.Mesh(new THREE.PlaneGeometry(KIT_FAR,KIT_FAR),new THREE.MeshLambertMaterial({map:null}));KIT.ground.rotation.x=-Math.PI/2;KIT.ground.position.y=.004;KIT.ground.receiveShadow=true;scene.add(KIT.ground)}
-  KIT.ground.visible=true;KIT.ground.material.map=kitGroundTex(plan);KIT.ground.material.needsUpdate=true;
+  KIT.ground.visible=true;
+  if(KIT.ground.material.map&&KIT.ground.material.map.dispose)KIT.ground.material.map.dispose();
+  KIT.ground.material.map=kitGroundTex(plan);KIT.ground.material.needsUpdate=true;
+  for(const w of KIT.water)for(const tex of w.maps)if(tex.dispose)tex.dispose();
   KIT.water=[];kitWaterMeshes(plan,deco);kitDeckMesh(plan,deco);
-  const r=kitPropMeshes(plan,deco);KIT.built={map:m,design:plan.design,placed:r.placed,missing:r.missing};
+  const r=kitPropMeshes(plan,deco);KIT.built={map:m,stage:S.lvl,design:plan.design,placed:r.placed,missing:r.missing};
   for(const n in r.missing)console.warn('kit: '+plan.design+' design asks for "'+n+'" but the atlas does not carry it - '+r.missing[n]+' placement(s) skipped, nothing substituted');
   return plan;
 }
@@ -2435,7 +2500,7 @@ dom.addEventListener('wheel',e=>{e.preventDefault();zoom=Math.min(2,Math.max(.6,
 
 const ct=new THREE.Vector3(0,.8,0);let lastKey='';
 function draw(){
-  if(!S)return;const bn=isBoss()&&S.kl>=MPS,key=S.mp+':'+bn,c=C(),mp=MAPS[S.mp];
+  if(!S)return;const bn=isBoss()&&S.kl>=MPS,key=S.mp+':'+S.lvl+':'+bn,c=C(),mp=MAPS[S.mp];
   if(key!==lastKey){lastKey=key;const col=new THREE.Color(bn?0x8a6bb0:mp.sky);scene.background=col;scene.fog=new THREE.Fog(col,35,80);ground.material.color.setHex(mp.ground);buildDeco(S.mp);road.material.color.setHex(S.mp===3?0xe9d9a8:0xd8cdb4)}
   P.position.set(pl.x,0,pl.z);
   const w=S.eq.weapon,wt=heroWeaponType(c.n,c.wt,w&&w.wt),clothN=S.eq.armor?TC[S.eq.armor.tier]:c.col,hairN=S.eq.head?TC[S.eq.head.tier]:0xd0492c,metalN=w?TC[w.tier]:0xc0c0c0;
@@ -2477,7 +2542,7 @@ function draw(){
   syncSkillFx();syncWeaponSprites(pFace,c);R.render(scene,cam);
   floats.forEach(f=>{if(!f.el){const e=document.createElement('div');e.className='fl'+(f.big?' big':'');e.textContent=f.txt;e.style.color=f.col;ov.appendChild(e);f.el=e}
     const[a,b]=scr(f.x,f.y,f.z);f.el.style.left=a+'px';f.el.style.top=b+'px';f.el.style.opacity=Math.max(0,f.life)});
-  const pt=bn?'BOSS FIGHT':`Monsters ${Math.min(S.kl,MPS)}/${MPS}${isBoss()?' → Boss':''}`;if(pt!==lastProg){lastProg=pt;prog.textContent=pt}
+  const pt=bn?'BOSS FIGHT':`Pack ${activePack+1}/3 · Monsters ${Math.min(S.kl,MPS)}/${MPS}${isBoss()?' → Boss':''}`;if(pt!==lastProg){lastProg=pt;prog.textContent=pt}
 }
 let last=performance.now();
 function loop(now){const dt=Math.min(.1,(now-last)/1000);last=now;try{for(let i=0;i<speed;i++){update(dt);kitTick(dt)}draw()}catch(e){if(!loop.e){loop.e=1;console.error(e);log('Error: '+e.message,'r0')}}requestAnimationFrame(loop)}

@@ -30,19 +30,20 @@ const fakeCanvas=()=>({width:0,height:0,getContext:()=>({imageSmoothingEnabled:t
   createPattern:()=>({pat:1}),fillRect(){},drawImage(){},translate(){},scale(){},save(){},restore(){}})});
 const document={createElement:()=>fakeCanvas()};
 const scene=new Obj(),deco=new Obj();scene.add(deco);
-const BX_=5.5,Z0=-14,Z1=3;
+const BX_=13,Z0=-28,Z1=12;
+${grab('const PACK_SPOTS=', ';')};
 ${code}
 KIT.png={};KIT.man=MANJ;KIT.des={payon:PAYJ,morocc:MORJ};KIT.ok=1;
-this.__p={plan:m=>kitPlan(m),KIT,KIT_MAP};
+this.__p={plan:(m,l=1)=>stageDress(kitPlan(m),m,l),KIT,KIT_MAP};
 `;
 const sb = { console, Promise, Image: function () { this.onload = null; this.onerror = null; }, fetch: () => ({ then: () => ({ catch: () => ({}) }) }) };
 vm.createContext(sb);
 vm.runInContext(harness.replace('__MAN__', JSON.stringify(MAN)).replace('__MOR__', JSON.stringify(MOR))
   .replace('__PAY__', JSON.stringify(PAY)), sb);
 
-const out = { arena: { BX: 5.5, Z0: -14, Z1: 3, far: 90 }, maps: {} };
+const out = { arena: { BX: 13, Z0: -28, Z1: 12, far: 90 }, maps: {} };
 for (let m = 0; m < 10; m++) {
-  const p = sb.__p.plan(m);
+  const p = sb.__p.plan(m, Number(process.argv[3] || 1));
   if (!p) { console.error('map ' + m + ' has no plan'); process.exit(1); }
   out.maps[m] = { base: p.base, base2: p.base2, cells: p.cells, water: p.water, props: p.props, deck: p.deck };
 }

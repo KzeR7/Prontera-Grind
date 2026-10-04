@@ -62,7 +62,7 @@ in-game and stored in `localStorage` under `pg_acc4`, saves under `pg_save3_<use
    the stub's own centre, never the silhouette centroid. Stub-less frames (the diving
    lunge) fall back to the torso with that direction's median `stub_top − hips_y`.
 5. **Montage sheets only through `tools/montage.py`.** Never hand-split a montage.
-6. **All nine test suites must be green before you push.** Add a test when you add
+6. **All thirteen test suites must be green before you push.** Add a test when you add
    behaviour. A change with no test is not finished.
 7. **Bump the `BUILD` tag** (`const BUILD='…'` in `index.html`) for anything a player can
    see, and **append to the log below**.
@@ -408,12 +408,15 @@ persisted and repaired on load. **Do not add new effect types** without asking.
 via `pl.wt/wx/wz`); it does not march back to the entrance. **Only a defeat resets the position**
 to `x=0, z=Z1-1.5`. Both are pinned in `save_load_sim.js`.
 
-Vertical, and deliberately so: `BX_=5.5`, `Z0=-14`, `Z1=3` (17 deep). The camera sits
-on +Z looking toward -Z, which makes **low Z the top of the screen**. The player starts at
-`Z1-1.5` (bottom) and mobs hold `Z0..Z0+6` (top), so you run up the avenue to engage; `AGGRO=8.5`
-is how close you must get before a pack leaves its spawn, and bosses ignore it. `ct.z` tracks
-`pl.z-5` to keep the player in the lower part of the frame. Prontera's buildings are scenery, not
-a maze - the whole town set is offset by `TZ=-18` so it sits behind the far edge.
+The v28 battle arena is **26 wide by 40 deep**: `BX_=13`, `Z0=-28`, `Z1=12`. The camera
+sits on +Z looking toward -Z, which makes **low Z the top of the screen**. The player starts at
+`Z1-1.5` (bottom). Three packs spawn at `PACK_SPOTS=[[-8,6],[8,-2],[-8,-16]]`. Only the active
+pack wakes and can attack (`AGGRO=6.5`); the player and pets target it, then move to the next
+pack when it is cleared. After pack 3 is cleared, all three respawn and the cycle starts again
+at pack 1. Chain and area skills cannot hit across packs. On Stage 10 the boss appears alone
+at the altar after 15 normal kills; stage unlocks and per-kill rewards are unchanged. `ct.z`
+tracks `pl.z-5` to keep the player in the lower part of the frame. Prontera's fallback town
+stays beyond the far edge (`TZ=Z0-8`).
 
 **Art.** No map or terrain sheets exist in `Sprite/`, and house rule 1 forbids inventing art, so
 all map visuals are procedural: `TH[m]` picks a biome kind and two colours, `buildDeco` scatters
@@ -457,10 +460,10 @@ node tools/tests/card_sim.js          # -> "13 passed, 0 failed"
 node tools/tests/skill_sim.js         # -> "48 passed, 0 failed"
 node tools/tests/gear_sim.js          # -> "20 passed, 0 failed  (20 assertions groups)"
 node tools/tests/scene_sim.js         # -> "8 passed, 0 failed" (per-map scenery, water, clear lane)
-node tools/tests/kit_sim.js           # -> "30 passed, 0 failed" (v2 atlas + KIT_PS, payon recipe, morocc design, ten identities, builders, loader)
+node tools/tests/kit_sim.js           # -> "34 passed, 0 failed" (v2 atlas + KIT_PS, payon recipe, morocc design, ten identities, builders, loader)
 node tools/tests/ui_sim.js            # -> "13 passed, 0 failed"
 node tools/tests/sprite_sim.js        # -> "10 passed, 0 failed" (mob/weapon Divine Pride mapping, fallbacks)
-node tools/tests/starter_sim.js       # -> "4 passed, 0 failed" (the gentle starter stages)
+node tools/tests/starter_sim.js       # -> "7 passed, 0 failed" (the gentle starter stages)
 ```
 
 Every suite pulls real code out of `index.html` by **string boundary**, so an edit that
@@ -1419,3 +1422,37 @@ assigned for feel rather than fidelity. While reworking that, two shipped bugs s
     was not touched here.
   * Prontera's old block town is still in `index.html` as the fallback if the kit cannot load, and
     still has no test of its own; `scene_sim.js` covers the fallback scenery path, not the town.
+
+### 2026-10-04 — `kit-v28 stage-variants three-packs`
+
+* **What changed for the player:** each map now has four visual stage bands. Stages 1–3 keep
+  their existing recipe and kit artwork. Stages 4–6 add that map's first set of painted
+  clearings and kit props; stages 7–9 switch to a stronger set of markings and landmarks.
+  Stage 10 has its own large boss altar with a contrasting centre, outer ring and sentinels.
+  All ten maps use their own palette, and switching stages rebuilds the scene immediately.
+* **Combat field:** expanded from 11×17 to **26×40** world units, with wider shadow coverage.
+  Three separated packs spawn together. The player and pets fight only pack 1, move to pack 2
+  and then pack 3, and repeat from pack 1 when all are cleared. Sleeping packs cannot chase or
+  hit the player; area and chain skills cannot reach across packs. Stage 10 still summons its
+  lone boss after 15 kills, now on the marked altar. Starter fights still have only one or two
+  monsters per encounter (three separated encounters); loot, boss rewards and unlock rules
+  are unchanged. The town fallback was moved behind the larger arena.
+* **Files touched:** `index.html` (arena, spawn/target loop, stage kit treatment, build tag),
+  `tools/tests/{starter,kit,scene,save_load,skill}_sim.js`, `tools/preview/dump_plans.js`,
+  `READ-ME-FIRST.md`, `AGENTS.md`.
+* **Art:** no new sprite sheet, pixels, recolouring or substitute art. The three later bands
+  reuse the existing painted kit tiles and billboards. The stage 1–3 layouts are left intact,
+  except that scenery in the newly enlarged running lane moves to the safe edge (and Izlude's
+  pier moves with its posts); no placed sprite is deleted. The old atlas and class sprites are
+  untouched.
+* **Tests:** all 13 suites green — pack 19 bodies, class change 22, save/load 10, economy 21,
+  stat 7, card 13, skills **49**, gear 20, scene 8, kit **34**, ui 13, sprite 10, starter **7**.
+  Kit tests cover the four stage bands on all ten maps and restored original layouts; skill tests
+  exercise an area hit when the target switches mid-cast; starter
+  tests execute real spawn and kill transitions, starter damage budgets, pack spacing, isolation,
+  and boss placement. Inline game JavaScript passes `node --check`; the stage layouts were
+  previewed top-down with the kit's own tile crops.
+* **Known limits / follow-ups:** movement across the bigger field changes real kills/hour.
+  The economy's 800 kills/hour pacing remains a model assumption, so time-to-job-change needs
+  a real playtest before retuning the EXP curve. The new boss altar uses arranged existing
+  crops, not a purpose-made boss-arena sprite.
