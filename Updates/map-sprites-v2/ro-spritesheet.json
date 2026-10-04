@@ -1,0 +1,652 @@
+{
+ "meta": {
+  "image": "ro-spritesheet.png",
+  "size": {
+   "w": 2048,
+   "h": 2048
+  },
+  "format": "RGBA8888",
+  "description": "Prontera Grind map kit v2 - RO-style terrain tiles, environment billboards & character. Original painted art; divine-pride map renders used as style/palette reference only."
+ },
+ "tiles": {
+  "bridge_planks": {
+   "x": 4,
+   "y": 4,
+   "w": 128,
+   "h": 128
+  },
+  "bridge_red": {
+   "x": 136,
+   "y": 4,
+   "w": 128,
+   "h": 128
+  },
+  "cliff_rock": {
+   "x": 268,
+   "y": 4,
+   "w": 128,
+   "h": 128
+  },
+  "cliff_sand": {
+   "x": 400,
+   "y": 4,
+   "w": 128,
+   "h": 128
+  },
+  "dirt_path": {
+   "x": 532,
+   "y": 4,
+   "w": 128,
+   "h": 128
+  },
+  "dirt_payon": {
+   "x": 664,
+   "y": 4,
+   "w": 128,
+   "h": 128
+  },
+  "grass_blossom": {
+   "x": 796,
+   "y": 4,
+   "w": 128,
+   "h": 128
+  },
+  "grass_forest": {
+   "x": 928,
+   "y": 4,
+   "w": 128,
+   "h": 128
+  },
+  "grass_geffen": {
+   "x": 1060,
+   "y": 4,
+   "w": 128,
+   "h": 128
+  },
+  "grass_jade": {
+   "x": 1192,
+   "y": 4,
+   "w": 128,
+   "h": 128
+  },
+  "grass_olive": {
+   "x": 1324,
+   "y": 4,
+   "w": 128,
+   "h": 128
+  },
+  "limestone_pale": {
+   "x": 1456,
+   "y": 4,
+   "w": 128,
+   "h": 128
+  },
+  "paddy_water": {
+   "x": 1588,
+   "y": 4,
+   "w": 128,
+   "h": 128
+  },
+  "riverbank_wall": {
+   "x": 1720,
+   "y": 4,
+   "w": 128,
+   "h": 128
+  },
+  "rock_abyss": {
+   "x": 1852,
+   "y": 4,
+   "w": 128,
+   "h": 128
+  },
+  "ruin_cobble": {
+   "x": 4,
+   "y": 136,
+   "w": 128,
+   "h": 128
+  },
+  "sand": {
+   "x": 136,
+   "y": 136,
+   "w": 128,
+   "h": 128
+  },
+  "sand_dark": {
+   "x": 268,
+   "y": 136,
+   "w": 128,
+   "h": 128
+  },
+  "sand_gold": {
+   "x": 400,
+   "y": 136,
+   "w": 128,
+   "h": 128
+  },
+  "waste_nifl": {
+   "x": 532,
+   "y": 136,
+   "w": 128,
+   "h": 128
+  },
+  "water_dark_0": {
+   "x": 664,
+   "y": 136,
+   "w": 128,
+   "h": 128
+  },
+  "water_dark_1": {
+   "x": 796,
+   "y": 136,
+   "w": 128,
+   "h": 128
+  },
+  "water_frame_0": {
+   "x": 928,
+   "y": 136,
+   "w": 128,
+   "h": 128
+  },
+  "water_frame_1": {
+   "x": 1060,
+   "y": 136,
+   "w": 128,
+   "h": 128
+  },
+  "cliff": {
+   "x": 400,
+   "y": 4,
+   "w": 128,
+   "h": 128
+  }
+ },
+ "sprites": {
+  "tower_geffen": {
+   "x": 1192,
+   "y": 136,
+   "w": 90,
+   "h": 340,
+   "anchorX": 45,
+   "anchorY": 336
+  },
+  "tree_dead": {
+   "x": 1286,
+   "y": 136,
+   "w": 226,
+   "h": 310,
+   "anchorX": 113,
+   "anchorY": 305
+  },
+  "tree_tall_cluster": {
+   "x": 1516,
+   "y": 136,
+   "w": 188,
+   "h": 300,
+   "anchorX": 94,
+   "anchorY": 295
+  },
+  "tree_cherry": {
+   "x": 1708,
+   "y": 136,
+   "w": 290,
+   "h": 296,
+   "anchorX": 145,
+   "anchorY": 290
+  },
+  "palm_giant": {
+   "x": 4,
+   "y": 480,
+   "w": 240,
+   "h": 278,
+   "anchorX": 120,
+   "anchorY": 274
+  },
+  "tree_ancient_large": {
+   "x": 248,
+   "y": 480,
+   "w": 300,
+   "h": 267,
+   "anchorX": 150,
+   "anchorY": 260
+  },
+  "tree_ancient_variant": {
+   "x": 552,
+   "y": 480,
+   "w": 300,
+   "h": 267,
+   "anchorX": 150,
+   "anchorY": 260
+  },
+  "palm_tall": {
+   "x": 856,
+   "y": 480,
+   "w": 158,
+   "h": 264,
+   "anchorX": 79,
+   "anchorY": 260
+  },
+  "ruin_pillar": {
+   "x": 1018,
+   "y": 480,
+   "w": 97,
+   "h": 260,
+   "anchorX": 48,
+   "anchorY": 256
+  },
+  "stalagmite": {
+   "x": 1119,
+   "y": 480,
+   "w": 133,
+   "h": 260,
+   "anchorX": 66,
+   "anchorY": 256
+  },
+  "torii_gate": {
+   "x": 1256,
+   "y": 480,
+   "w": 260,
+   "h": 242,
+   "anchorX": 130,
+   "anchorY": 238
+  },
+  "house_prontera": {
+   "x": 1520,
+   "y": 480,
+   "w": 280,
+   "h": 234,
+   "anchorX": 140,
+   "anchorY": 227
+  },
+  "standing_stone": {
+   "x": 1804,
+   "y": 480,
+   "w": 112,
+   "h": 230,
+   "anchorX": 56,
+   "anchorY": 226
+  },
+  "palm_double": {
+   "x": 4,
+   "y": 762,
+   "w": 250,
+   "h": 227,
+   "anchorX": 125,
+   "anchorY": 223
+  },
+  "tree_dark_gnarled": {
+   "x": 258,
+   "y": 762,
+   "w": 280,
+   "h": 202,
+   "anchorX": 140,
+   "anchorY": 193
+  },
+  "house_ruin": {
+   "x": 542,
+   "y": 762,
+   "w": 280,
+   "h": 201,
+   "anchorX": 140,
+   "anchorY": 196
+  },
+  "shrine_stone": {
+   "x": 826,
+   "y": 762,
+   "w": 170,
+   "h": 178,
+   "anchorX": 85,
+   "anchorY": 173
+  },
+  "cactus_flower": {
+   "x": 1000,
+   "y": 762,
+   "w": 115,
+   "h": 170,
+   "anchorX": 57,
+   "anchorY": 166
+  },
+  "crystal_cluster": {
+   "x": 1119,
+   "y": 762,
+   "w": 170,
+   "h": 170,
+   "anchorX": 85,
+   "anchorY": 166
+  },
+  "bamboo_grove": {
+   "x": 1293,
+   "y": 762,
+   "w": 230,
+   "h": 160,
+   "anchorX": 115,
+   "anchorY": 155
+  },
+  "lantern_stone": {
+   "x": 1527,
+   "y": 762,
+   "w": 87,
+   "h": 160,
+   "anchorX": 43,
+   "anchorY": 156
+  },
+  "tree_sapling": {
+   "x": 1618,
+   "y": 762,
+   "w": 100,
+   "h": 150,
+   "anchorX": 50,
+   "anchorY": 144
+  },
+  "bridge_red_arch": {
+   "x": 1722,
+   "y": 762,
+   "w": 320,
+   "h": 150,
+   "anchorX": 160,
+   "anchorY": 144
+  },
+  "tombstone": {
+   "x": 4,
+   "y": 993,
+   "w": 100,
+   "h": 140,
+   "anchorX": 50,
+   "anchorY": 136
+  },
+  "ruin_stump": {
+   "x": 108,
+   "y": 993,
+   "w": 100,
+   "h": 130,
+   "anchorX": 50,
+   "anchorY": 126
+  },
+  "pier_post": {
+   "x": 212,
+   "y": 993,
+   "w": 69,
+   "h": 130,
+   "anchorX": 34,
+   "anchorY": 126
+  },
+  "rock_cliff_crag": {
+   "x": 285,
+   "y": 993,
+   "w": 220,
+   "h": 126,
+   "anchorX": 110,
+   "anchorY": 121
+  },
+  "river_stone_post": {
+   "x": 509,
+   "y": 993,
+   "w": 73,
+   "h": 110,
+   "anchorX": 36,
+   "anchorY": 106
+  },
+  "rock_boulder_mossy": {
+   "x": 586,
+   "y": 993,
+   "w": 160,
+   "h": 110,
+   "anchorX": 80,
+   "anchorY": 106
+  },
+  "cactus_small": {
+   "x": 750,
+   "y": 993,
+   "w": 71,
+   "h": 105,
+   "anchorX": 35,
+   "anchorY": 101
+  },
+  "desert_bone": {
+   "x": 825,
+   "y": 993,
+   "w": 190,
+   "h": 91,
+   "anchorX": 95,
+   "anchorY": 87
+  },
+  "tree_bush_bright": {
+   "x": 1019,
+   "y": 993,
+   "w": 150,
+   "h": 90,
+   "anchorX": 75,
+   "anchorY": 85
+  },
+  "ruin_curb": {
+   "x": 1173,
+   "y": 993,
+   "w": 114,
+   "h": 71,
+   "anchorX": 57,
+   "anchorY": 67
+  },
+  "ruin_column_fallen": {
+   "x": 1291,
+   "y": 993,
+   "w": 260,
+   "h": 67,
+   "anchorX": 130,
+   "anchorY": 63
+  }
+ },
+ "character": {
+  "ro_adventurer": {
+   "x": 1555,
+   "y": 993,
+   "frameW": 64,
+   "frameH": 80,
+   "frames": 4
+  }
+ },
+ "suggest": {
+  "KIT_PS": {
+   "tree_ancient_large": 1.0,
+   "tree_ancient_variant": 1.0,
+   "tree_tall_cluster": 0.95,
+   "tree_sapling": 0.55,
+   "tree_bush_bright": 0.4,
+   "rock_cliff_crag": 0.7,
+   "river_stone_post": 0.55,
+   "rock_boulder_mossy": 0.45,
+   "palm_giant": 0.9,
+   "palm_tall": 0.85,
+   "palm_double": 0.9,
+   "cactus_flower": 0.45,
+   "cactus_small": 0.4,
+   "ruin_pillar": 0.6,
+   "ruin_column_fallen": 0.4,
+   "ruin_stump": 0.45,
+   "ruin_curb": 0.35,
+   "desert_bone": 0.45,
+   "bamboo_grove": 0.95,
+   "tree_dead": 0.7,
+   "tombstone": 0.45,
+   "house_ruin": 0.75,
+   "tree_cherry": 0.8,
+   "lantern_stone": 0.55,
+   "bridge_red_arch": 0.7,
+   "torii_gate": 0.75,
+   "shrine_stone": 0.65,
+   "stalagmite": 0.6,
+   "crystal_cluster": 0.45,
+   "standing_stone": 0.55,
+   "tree_dark_gnarled": 1.0,
+   "house_prontera": 0.75,
+   "tower_geffen": 1.2,
+   "pier_post": 0.45
+  },
+  "maps": {
+   "0 Prontera": {
+    "ground": [
+     "grass_olive",
+     "grass_forest"
+    ],
+    "road": "dirt_path",
+    "props": [
+     "tree_ancient_large",
+     "tree_ancient_variant",
+     "tree_sapling",
+     "tree_bush_bright",
+     "river_stone_post",
+     "house_prontera"
+    ]
+   },
+   "1 Izlude": {
+    "ground": [
+     "grass_olive",
+     "sand_gold shore"
+    ],
+    "water": [
+     "water_frame_0",
+     "water_frame_1"
+    ],
+    "deck": "bridge_planks pier",
+    "props": [
+     "palm_tall",
+     "palm_giant",
+     "pier_post",
+     "tree_bush_bright"
+    ]
+   },
+   "2 Geffen": {
+    "ground": [
+     "grass_geffen",
+     "grass_forest"
+    ],
+    "cliff": "cliff_rock",
+    "props": [
+     "tree_dark_gnarled",
+     "standing_stone",
+     "tower_geffen",
+     "rock_cliff_crag",
+     "tree_bush_bright"
+    ]
+   },
+   "3 Morocc": {
+    "design": "attached ro-map-morocc.json, cell for cell",
+    "tiles": [
+     "sand",
+     "sand_dark",
+     "ruin_cobble",
+     "cliff"
+    ],
+    "props": [
+     "palm_giant",
+     "palm_tall",
+     "palm_double",
+     "cactus_flower",
+     "cactus_small",
+     "ruin_pillar",
+     "ruin_column_fallen",
+     "ruin_stump",
+     "ruin_curb",
+     "desert_bone"
+    ]
+   },
+   "4 Payon": {
+    "ground": [
+     "dirt_payon road",
+     "grass_forest"
+    ],
+    "water": [
+     "water_frame_0",
+     "water_frame_1"
+    ],
+    "deck": "bridge_planks",
+    "bank": "riverbank_wall",
+    "props": [
+     "tree_ancient_large",
+     "tree_tall_cluster",
+     "bamboo_grove",
+     "rock_boulder_mossy",
+     "tree_sapling",
+     "tree_bush_bright"
+    ]
+   },
+   "5 Comodo": {
+    "ground": [
+     "sand_gold",
+     "sand_dark"
+    ],
+    "water": [
+     "water_frame_0",
+     "water_frame_1"
+    ],
+    "props": [
+     "palm_giant",
+     "palm_double",
+     "rock_cliff_crag",
+     "cactus_small",
+     "desert_bone"
+    ]
+   },
+   "6 Louyang": {
+    "ground": [
+     "grass_jade",
+     "grass_forest"
+    ],
+    "road": "dirt_path",
+    "paddy": "paddy_water strips off-lane",
+    "props": [
+     "bamboo_grove",
+     "shrine_stone",
+     "lantern_stone",
+     "tree_tall_cluster",
+     "tree_sapling"
+    ]
+   },
+   "7 Amatsu": {
+    "ground": [
+     "grass_blossom",
+     "grass_olive"
+    ],
+    "water": [
+     "water_frame_0",
+     "water_frame_1"
+    ],
+    "deck": "bridge_red",
+    "props": [
+     "tree_cherry",
+     "torii_gate",
+     "lantern_stone",
+     "bridge_red_arch",
+     "tree_sapling"
+    ]
+   },
+   "8 Niflheim": {
+    "ground": [
+     "waste_nifl",
+     "rock_abyss"
+    ],
+    "props": [
+     "tree_dead",
+     "tombstone",
+     "house_ruin",
+     "desert_bone",
+     "rock_cliff_crag"
+    ]
+   },
+   "9 Abyss": {
+    "ground": [
+     "rock_abyss",
+     "limestone_pale shore"
+    ],
+    "water": [
+     "water_dark_0",
+     "water_dark_1"
+    ],
+    "props": [
+     "stalagmite",
+     "crystal_cluster",
+     "standing_stone",
+     "rock_cliff_crag"
+    ]
+   }
+  }
+ }
+}

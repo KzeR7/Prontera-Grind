@@ -1,0 +1,206 @@
+{
+ "palm_giant": {
+  "w": 240,
+  "h": 278,
+  "anchorX": 120,
+  "anchorY": 274
+ },
+ "river_stone_post": {
+  "w": 73,
+  "h": 110,
+  "anchorX": 36,
+  "anchorY": 106
+ },
+ "rock_boulder_mossy": {
+  "w": 160,
+  "h": 110,
+  "anchorX": 80,
+  "anchorY": 106
+ },
+ "rock_cliff_crag": {
+  "w": 220,
+  "h": 126,
+  "anchorX": 110,
+  "anchorY": 121
+ },
+ "tree_ancient_large": {
+  "w": 300,
+  "h": 267,
+  "anchorX": 150,
+  "anchorY": 260
+ },
+ "tree_bush_bright": {
+  "w": 150,
+  "h": 90,
+  "anchorX": 75,
+  "anchorY": 85
+ },
+ "tree_sapling": {
+  "w": 100,
+  "h": 150,
+  "anchorX": 50,
+  "anchorY": 144
+ },
+ "tree_tall_cluster": {
+  "w": 188,
+  "h": 300,
+  "anchorX": 94,
+  "anchorY": 295
+ },
+ "tree_ancient_variant": {
+  "w": 300,
+  "h": 267,
+  "anchorX": 150,
+  "anchorY": 260
+ },
+ "palm_tall": {
+  "w": 158,
+  "h": 264,
+  "anchorX": 79,
+  "anchorY": 260
+ },
+ "palm_double": {
+  "w": 250,
+  "h": 227,
+  "anchorX": 125,
+  "anchorY": 223
+ },
+ "cactus_flower": {
+  "w": 115,
+  "h": 170,
+  "anchorX": 57,
+  "anchorY": 166
+ },
+ "ruin_pillar": {
+  "w": 97,
+  "h": 260,
+  "anchorX": 48,
+  "anchorY": 256
+ },
+ "ruin_stump": {
+  "w": 100,
+  "h": 130,
+  "anchorX": 50,
+  "anchorY": 126
+ },
+ "desert_bone": {
+  "w": 190,
+  "h": 91,
+  "anchorX": 95,
+  "anchorY": 87
+ },
+ "bamboo_grove": {
+  "w": 230,
+  "h": 160,
+  "anchorX": 115,
+  "anchorY": 155
+ },
+ "tree_dead": {
+  "w": 226,
+  "h": 310,
+  "anchorX": 113,
+  "anchorY": 305
+ },
+ "tombstone": {
+  "w": 100,
+  "h": 140,
+  "anchorX": 50,
+  "anchorY": 136
+ },
+ "house_ruin": {
+  "w": 280,
+  "h": 201,
+  "anchorX": 140,
+  "anchorY": 196
+ },
+ "tree_cherry": {
+  "w": 290,
+  "h": 296,
+  "anchorX": 145,
+  "anchorY": 290
+ },
+ "lantern_stone": {
+  "w": 87,
+  "h": 160,
+  "anchorX": 43,
+  "anchorY": 156
+ },
+ "cactus_small": {
+  "w": 71,
+  "h": 105,
+  "anchorX": 35,
+  "anchorY": 101
+ },
+ "ruin_column_fallen": {
+  "w": 260,
+  "h": 67,
+  "anchorX": 130,
+  "anchorY": 63
+ },
+ "ruin_curb": {
+  "w": 114,
+  "h": 71,
+  "anchorX": 57,
+  "anchorY": 67
+ },
+ "bridge_red_arch": {
+  "w": 320,
+  "h": 150,
+  "anchorX": 160,
+  "anchorY": 144
+ },
+ "torii_gate": {
+  "w": 260,
+  "h": 242,
+  "anchorX": 130,
+  "anchorY": 238
+ },
+ "shrine_stone": {
+  "w": 170,
+  "h": 178,
+  "anchorX": 85,
+  "anchorY": 173
+ },
+ "stalagmite": {
+  "w": 133,
+  "h": 260,
+  "anchorX": 66,
+  "anchorY": 256
+ },
+ "crystal_cluster": {
+  "w": 170,
+  "h": 170,
+  "anchorX": 85,
+  "anchorY": 166
+ },
+ "standing_stone": {
+  "w": 112,
+  "h": 230,
+  "anchorX": 56,
+  "anchorY": 226
+ },
+ "tree_dark_gnarled": {
+  "w": 280,
+  "h": 202,
+  "anchorX": 140,
+  "anchorY": 193
+ },
+ "house_prontera": {
+  "w": 280,
+  "h": 234,
+  "anchorX": 140,
+  "anchorY": 227
+ },
+ "tower_geffen": {
+  "w": 90,
+  "h": 340,
+  "anchorX": 45,
+  "anchorY": 336
+ },
+ "pier_post": {
+  "w": 69,
+  "h": 130,
+  "anchorX": 34,
+  "anchorY": 126
+ }
+}
