@@ -2347,3 +2347,32 @@ assigned for feel rather than fidelity. While reworking that, two shipped bugs s
   `Show: Off` switch hides damage floats only - Miss and skill-name labels still appear; (5) the
   `pet-sim` balance pins are tied to the Lord Knight endgame fixture, so a class whose maxed
   rotation differs from 7.61M will show a different pet-vs-character ratio.
+
+### 2026-10-04 — `tool-v37 the preview pages can finally load their own data` (no game change, no BUILD bump)
+
+* **Why:** even when the link opened, the weapon review page could not draw anything. The page is
+  served from the route `/` while its file lives in `tools/`, so the browser resolved its
+  `weapon_review_data.js` against the route, asked the server for `/weapon_review_data.js`, got a
+  **404**, and the page booted with an empty board. The pose picker had the same hole
+  (`/sprite_picker_data.js` and `/sprite_picker_defaults.js` were 404 too, so it booted with no
+  poses and no heads). v36 had fixed the redirect and the caching; this was still open, and it is
+  the likeliest reason the owner's previews looked dead.
+* **Fix:** `tools/preview_server.py` now resolves a path the repo root does not have under `tools/`
+  before answering 404. Nothing else moved: the pages, the data files and the routes are the same
+  bytes as before, every route is still a direct 200 with no redirect and `no-store`, and
+  `/tools/...` and `/assets/...` still work.
+* **Test:** new `tools/tests/preview_server_sim.js` - it starts the real server on a spare port and
+  speaks HTTP to it: every route answers 200 directly with no redirect and `no-store`, `/` and
+  `/review` are the same page, `/standalone` pulls no side file, and the review data, both picker
+  data files and the picker's pack all resolve. Run against the previous server it fails **4**
+  checks - that is the bug it pins.
+* **Files touched:** `tools/preview_server.py`, new `tools/tests/preview_server_sim.js`, `AGENTS.md`.
+* **Art:** none; `Sprite/`, the class pack, `assets/kit/` and `tools/montage.py` untouched.
+* **Tests:** preview server **10**. The rest unchanged: pack (19 bodies), class_change 22, save_load
+  10, economy 21, stat 7, card 13, skill 50, gear 24, scene 8, ui 18, sprite 12, starter 7, pet 11,
+  picker 19, weapon_joint 7, weapon_review 13. **One suite is red and it is not from this change:**
+  `kit_sim` 33/1 - "the retired generator is not loaded by the page any more", because `index.html`
+  still carries `<script src="assets/kit/morocc-atlas.js?v=1">` while the file sits in
+  `Updates/retired-v1-kit/morocc-atlas.js`. Reported, not fixed: that belongs to the kit work, not
+  the weapon review.
+* **Branches / PR:** `arena/01a10755-prontera-grind`.

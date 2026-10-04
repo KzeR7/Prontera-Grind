@@ -54,6 +54,22 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(body)
 
+    def translate_path(self, path):
+        """Resolve a URL to a file on disk.
+
+        The pages are served from route names (`/`, `/picker`), but their side files
+        (`weapon_review_data.js`, `sprite_picker_data.js`, `sprite_picker_defaults.js`) sit next
+        to them in `tools/`. A browser resolves those relative to the ROUTE, so it asks for them
+        at the repo root and used to get a 404 - the page then booted with no data on it. Fall
+        back to `tools/` whenever the root does not have the file.
+        """
+        p = super().translate_path(path)
+        if not os.path.exists(p):
+            alt = os.path.join(ROOT, 'tools', os.path.relpath(p, ROOT))
+            if os.path.exists(alt):
+                return alt
+        return p
+
     def do_GET(self):
         path = self.path.split('?')[0]
         if path in PAGES:
