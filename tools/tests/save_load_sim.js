@@ -149,9 +149,9 @@ t('the arena really is vertical: mobs hold the far end, the player the near end'
   assert.ok(z1 - z0 >= 14, `the field is only ${z1 - z0} deep - not the long vertical avenue`);
   assert.ok(z0 < 0 && z1 > 0, 'the field should straddle the origin');
   // the camera sits on +Z looking toward -Z, so low Z is the TOP of the screen
-  assert.ok(/PACK_SPOTS=\[\[-8,6\],\[8,-2\],\[-8,-16\]\]/.test(src), 'the three pack locations no longer span the field');
+  assert.ok(/function packSites\(\)/.test(src) && /nearestPack\(\)/.test(src), 'the random closest-pack route is missing');
   assert.ok(/pl=\{x:0,z:Z1-1\.5/.test(src), 'the player no longer starts at the near (bottom) end');
-  console.log('       field depth ' + (z1 - z0) + ' units; player at Z1-1.5, three packs across the arena');
+  console.log('       field depth ' + (z1 - z0) + ' units; player at Z1-1.5, three randomized packs across the arena');
 });
 
 console.log(`\n${pass} passed, ${fail} failed`);

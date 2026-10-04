@@ -112,9 +112,9 @@ const fakeCanvas=()=>({width:0,height:0,getContext:()=>({imageSmoothingEnabled:t
 const document={createElement:()=>fakeCanvas()};
 const scene=new Obj(),deco=new Obj();scene.add(deco);
 const BX_=13,Z0=-28,Z1=12;
-${grab('const PACK_SPOTS=', ';')};const S={lvl:1};
+const S={lvl:1};
 ${code}
-this.__k={KIT,KIT_S,KIT_ZC,KIT_PK,KIT_PS,KIT_MAP,KIT_FIELD,kitPlan,stageDress,STAGE_ART,kitPropScale,kitTick,buildKit,deco,kitAtlas,kitSrc,kitFbm,kitHash,
+this.__k={KIT,KIT_S,KIT_ZC,KIT_PK,KIT_PS,KIT_MAP,KIT_FIELD,kitPlan,stageSpec,STAGE_SCENES,kitPropScale,kitTick,buildKit,deco,kitAtlas,kitSrc,kitFbm,kitHash,
   setAssets:()=>{KIT.png={};KIT.man=MANJ;KIT.des={payon:__PAYJ__,morocc:MORJ};KIT.ok=1},setStage:n=>{S.lvl=n}};
 `;
 const sb = { console, Promise, Image: function () { this.onload = null; this.onerror = null; }, fetch: () => ({ then: () => ({ catch: () => ({}) }) }) };
@@ -648,30 +648,34 @@ t('the loader asks for files that exist, and a dead atlas falls back instead of 
   assert.ok(K.buildKit(4), 'and builds again once the sheet is back');
 });
 
-t('all ten maps keep their stage 1-3 artwork and get distinct 4-6, 7-9 and boss layouts', () => {
+t('all ten maps have four complete themed scenes and no spawn or boss floor stamps', () => {
   K.setAssets();
   assert.ok(/key=S.mp\+':'\+S.lvl\+':'\+bn/.test(src), 'stage changes must rebuild the scene');
+  assert.ok(!/function stageDress/.test(src), 'old spawn pads/boss floor layer must be removed');
   for(let m=0;m<10;m++){
-    const original=plan(m),snapshot=JSON.stringify(original);
-    for(const stage of [1,2,3])assert.strictEqual(K.stageDress(original,m,stage),original,
-      'map '+m+' stage '+stage+' must keep the original plan');
-    const next=[4,5,6,7,8,9,10].map(l=>K.stageDress(original,m,l));
-    assert.strictEqual(JSON.stringify(original),snapshot,'a variant mutated the original recipe');
-    for(const [a,b] of [[0,1],[1,2],[3,4],[4,5]])
-      assert.strictEqual(JSON.stringify(next[a]),JSON.stringify(next[b]), 'same-stage-band layouts changed');
-    const signatures=[original,next[0],next[3],next[6]].map(p=>JSON.stringify({c:p.cells,props:p.props}));
-    assert.strictEqual(new Set(signatures).size,4,'map '+m+' does not change in all four stage bands');
-    for(const v of [next[0],next[3],next[6]]){
-      assert.ok(v.props.every(p=>Math.abs(p.x)>=BX_), 'stage prop entered the enlarged play lane');
-      assert.ok(v.cells.every(c=>MAN.tiles[c.tile]), 'stage paints art missing from the kit');
-      assert.ok(v.props.every(p=>MAN.sprites[p.type]), 'stage places a prop missing from the kit');
+    const old=plan(m),original=JSON.stringify(old);
+    for(const stage of [1,2,3])assert.strictEqual(JSON.stringify(K.kitPlan(m,stage)),original,
+      'map '+m+' stage '+stage+' must keep the original design');
+    const a=K.kitPlan(m,4),b=K.kitPlan(m,7),boss=K.kitPlan(m,10);
+    for(const [p,stage] of [[a,4],[b,7],[boss,10]]){
+      assert.ok(p.props.every(x=>Math.abs(x.x)>=BX_), 'scenery inside enlarged play lane');
+      assert.ok(p.props.every(x=>MAN.sprites[x.type]), 'variant places nonexistent art');
+      assert.ok(p.cells.every(x=>MAN.tiles[x.tile]), 'variant paints nonexistent art');
+      assert.ok(p.props.length>=15, 'variant is only a token decoration');
+      assert.ok(!K.stageSpec(m,stage).f.patch, 'no new floor patches');
+      assert.ok(!K.stageSpec(m,stage).f.plaza && !K.stageSpec(m,stage).f.pool, 'no arena floor or circles');
+      assert.ok(!p.cells.some(c=>Math.hypot(c.x,c.z-3)<2.5&&c.tile==='limestone_pale'&&m===0),
+        'Prontera boss floor stamp came back');
     }
-    const seal=next[6].cells.filter(c=>Math.hypot(c.x,c.z-3)<3.2);
-    assert.ok(seal.length>35,'boss stage needs a visible inner seal');
-    assert.ok(next[6].cells.filter(c=>Math.hypot(c.x,c.z-3)>7.5&&Math.hypot(c.x,c.z-3)<8.7).length>40, 'boss stage needs an outer ring');
+    const sig=p=>JSON.stringify({base:p.base,water:p.water.length,deck:p.deck,props:p.props.map(x=>[x.type,Math.round(x.x),Math.round(x.z)]),tiles:tilesOf(p)});
+    assert.strictEqual(new Set([old,a,b,boss].map(sig)).size,4, 'map '+m+' stage bands share the same layout');
+    for(const [stage,p] of [[5,a],[6,a],[8,b],[9,b]])
+      assert.strictEqual(JSON.stringify(K.kitPlan(m,stage)),JSON.stringify(p),'stage band layout changed');
+    assert.strictEqual(JSON.stringify(plan(m)),original,'variants mutated the original scene');
     K.setStage(10);const built=K.buildKit(m);
-    assert.strictEqual(KIT.built.stage,10);assert.ok(built.stageTier===3,'boss layout did not build');
-    K.setStage(1);assert.ok(K.buildKit(m).stageTier===undefined,'stage 1 did not restore the old field');
+    assert.ok(built.design.endsWith('-3'),'boss scene did not build');
+    assert.strictEqual(KIT.built.stage,10);
+    K.setStage(1);assert.strictEqual(K.buildKit(m).design,old.design,'original stage did not restore');
   }
 });
 

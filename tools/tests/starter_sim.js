@@ -12,11 +12,13 @@ ${grab('const CD=[','const saveKey=')}
 ${src.match(/const AFF=\[[^\]]*\],AB=\{[^}]*\};/)[0]}
 const C=()=>CLASSES[S.cls],st=k=>S.st[k],eqv=()=>0,bon=()=>0,pv=()=>0,collDmg=()=>0;
 ${grab('const maxHp=()=>','const totalPts=')}
+${grab('const KIT_MAP={','const KIT_TILE=')}
+${grab('const STAGE_SCENES=[','function kitRect(d,gx0,gx1,gy){')}
 ${grab('let mobs=[],mob=null','function genGear(')}
 const gx=()=>1,addJob=()=>{},checkLevel=()=>{},qProg=()=>{},addFloat=()=>{},log=()=>{},save=()=>{},ui=()=>{};
 const mkDrop=()=>null,genGear=()=>null;
 ${grab('function kill(o){','function collect(it){')}
-this.H={fresh,CLASSES,spawn,kill,atk,aspd,maxHp,def,mdef,starterStage,HPK,HPE,MAPS,AGGRO,PACK_SPOTS,
+this.H={fresh,CLASSES,spawn,kill,atk,aspd,maxHp,def,mdef,starterStage,HPK,HPE,MAPS,AGGRO,PACK_GAP,PACK_MAX,PACK_JITTER,packSites,stageSpec,nearestPack,pl,
 set S(v){S=v},get S(){return S},get mobs(){return mobs},get mob(){return mob},get activePack(){return activePack}};
 `,ctx);
 const H=ctx.H;
@@ -68,35 +70,55 @@ t('stages 6–10 and later maps retain their previous combat formulas',()=>{
   assert.strictEqual(H.mobs[0].hp,Math.floor(500*mb*Math.pow(p,H.HPE)));
  }
 });
-t('three separate pack locations cannot pull each other, even with spawn jitter',()=>{
- for(let m=0;m<10;m++)for(let l=1;l<=10;l++)for(let i=0;i<5;i++){
-  const pack=spawn(m,l);const groups=[0,1,2].map(k=>pack.filter(x=>x.pack===k));
+t('three closer packs reroll on each spawn but stay separate and on dry ground',()=>{
+ const positions=new Set();
+ for(let m=0;m<10;m++)for(let l=1;l<=10;l++)for(let i=0;i<8;i++){
+  const pack=spawn(m,l),groups=[0,1,2].map(k=>pack.filter(x=>x.pack===k));
   assert.ok(groups.every(g=>g.length), 'all three packs must spawn');
   for(let a=0;a<3;a++)for(let b=a+1;b<3;b++)for(const u of groups[a])for(const v of groups[b])
-   assert.ok(Math.hypot(u.x-v.x,u.z-v.z)>H.AGGRO+5, 'inactive pack is too close');
+   assert.ok(Math.hypot(u.x-v.x,u.z-v.z)>H.AGGRO+.5, 'packs too close to stay apart');
+  for(let a=0;a<3;a++)for(let b=a+1;b<3;b++)
+    assert.ok(Math.hypot(groups[a][0].x-groups[b][0].x,groups[a][0].z-groups[b][0].z)<H.PACK_MAX+2, 'packs too far apart');
+  if(m===4&&l===4)positions.add(groups.map(g=>g[0].x.toFixed(1)+','+g[0].z.toFixed(1)).join('|'));
+  assert.ok(pack.every(x=>Math.abs(x.x)<10.5&&x.z>-18&&x.z<10), 'pack outside the play area');
+  const water=H.stageSpec(m,l).f&&H.stageSpec(m,l).f.water;
+  if(water)assert.ok(pack.every(x=>x.z<water[0]-1||x.z>water[1]+1), 'map '+m+' stage '+l+' water '+water+' packs '+pack.map(x=>x.z.toFixed(1)).join(','));
  }
+ assert.ok(positions.size>5,'respawns keep reusing the same pack positions');
+ const firstPacks=new Set();
+ for(let k=0;k<60;k++){H.pl.x=0;H.pl.z=0;spawn(1,6);firstPacks.add(H.activePack);
+  assert.strictEqual(H.activePack,H.nearestPack(),'initial pack is not the closest one')}
+ assert.ok(firstPacks.size>1,'player always starts on numbered pack 1');
+ assert.ok(!/PACK_SPOTS/.test(src),'fixed pack points came back');
  assert.ok(/m.pack===activePack&&\(m.boss\|\|Math.hypot/.test(src), 'only the active pack should wake');
  assert.ok(/if\(wake&&Math.hypot/.test(src), 'sleeping packs must not attack');
  assert.ok(/if\(m.pack!==activePack\)continue/.test(src), 'pets should follow the active pack');
  assert.ok(/o.pack===src.pack/.test(src) && /o.pack===target.pack/.test(src), 'area and chain hits cannot wake remote packs');
 });
-t('killing each encounter routes 1 → 2 → 3 and a new spawn restarts at 1',()=>{
- const group=spawn(0,4);assert.ok(group.length>=6);
- const all=group.length;
- for(let pack=0;pack<3;pack++){
-  while(H.mobs.some(x=>x.pack===pack)){
-   const current=H.mob;assert.strictEqual(current.pack,pack);
-   current.drops=[];current.cardCh=0;current.ore=false;
-   H.kill(current);
+t('clearing a pack selects the nearest surviving pack, regardless of its number',()=>{
+ const group=spawn(0,4),all=group.length;assert.ok(all>=6);
+ const seen=[];
+ while(H.mobs.length){
+  const current=H.activePack;
+  if(!seen.includes(current))seen.push(current);
+  assert.strictEqual(current,H.nearestPack(),'target is not nearest from player position');
+  // Move player beside a waiting pack before the current pack dies: routing must
+  // choose that pack instead of the next numbered one.
+  const waiting=H.mobs.find(x=>x.pack!==current);
+  if(waiting){H.pl.x=waiting.x;H.pl.z=waiting.z}
+  while(H.mobs.some(x=>x.pack===current)){
+   const victim=H.mob;assert.strictEqual(victim.pack,current);
+   victim.drops=[];victim.cardCh=0;victim.ore=false;H.kill(victim);
   }
-  if(pack<2){assert.strictEqual(H.activePack,pack+1);assert.strictEqual(H.mob.pack,pack+1)}
+  if(H.mobs.length){assert.strictEqual(H.activePack,H.nearestPack());
+    assert.strictEqual(H.mob.pack,H.activePack)}
  }
- assert.strictEqual(H.mobs.length,0);assert.strictEqual(H.S.kl,all);
- H.spawn();assert.strictEqual(H.activePack,0);assert.strictEqual(H.mob.pack,0);
+ assert.strictEqual(new Set(seen).size,3);assert.strictEqual(H.S.kl,all);
+ H.spawn();assert.strictEqual(H.activePack,H.nearestPack());assert.strictEqual(H.mob.pack,H.activePack);
 });
-t('stage 10 spawns a lone boss on its marked dais after 15 kills',()=>{
+t('stage 10 spawns a lone boss without any special floor stamp',()=>{
  spawn(4,10);H.S.kl=15;H.spawn();assert.strictEqual(H.mobs.length,1);
  assert.strictEqual(H.mobs[0].boss,true);assert.strictEqual(H.mobs[0].pack,0);
- assert.ok(Math.hypot(H.mobs[0].x,H.mobs[0].z-3)<1.5);
+ assert.ok(Math.hypot(H.mobs[0].x,H.mobs[0].z+4)<1.5);
 });
 console.log(`\n${pass} passed, ${fail} failed`);process.exitCode=fail?1:0;

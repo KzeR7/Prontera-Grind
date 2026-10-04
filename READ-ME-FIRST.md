@@ -51,10 +51,13 @@ python3 -m venv /tmp/venv && /tmp/venv/bin/pip install pillow numpy scipy    # o
 ```
 
 The map **layouts** (which tile goes where, how the scenery is clumped) are data in `index.html`:
-`const KIT_MAP` holds one recipe per map and `fieldPlan()` builds it. `stageDress()` uses only
-existing atlas crops to add variants for stages 4–6, 7–9 and the stage 10 boss altar; stages
-1–3 use the original plan. The combat arena is 26×40 units, with three isolated packs at
-`PACK_SPOTS`; `spawn()`, `kill()` and `update()` coordinate the 1 → 2 → 3 loop. To look at a layout without a
+`const KIT_MAP` holds the original recipe for each map and `STAGE_SCENES` holds three
+independent layouts for stages 4–6, 7–9 and boss stage 10. `stageSpec()` chooses the recipe;
+`fieldPlan()` builds it. Later stages do **not** paint spawn pads or boss-floor rings: they
+change paths, water, vegetation and landmarks with the existing kit. The combat arena is
+26×40 units. `packSites()` rolls three closer dry locations anew on every respawn;
+`nearestPack()`, `spawn()`, `kill()` and `update()` choose the nearest surviving pack, not a
+numbered route. To look at a layout without a
 browser:
 
 ```sh

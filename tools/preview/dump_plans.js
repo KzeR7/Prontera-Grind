@@ -1,8 +1,8 @@
 // tools/preview/dump_plans.js — dump the ten map plans the game really builds.
-//   node tools/preview/dump_plans.js [out.json]
+//   node tools/preview/dump_plans.js [out.json] [stage=1]
 //
 // It pulls the kit block straight out of `index.html` (the same string-boundary grab the test
-// suites use) and runs `kitPlan(m)` in a VM with only the geometry the plan needs. The JSON it
+// suites use) and runs `kitPlan(m, stage)` in a VM with only the geometry the plan needs. The JSON it
 // writes is what `render_plans.py` paints into a top-down PNG so a layout change can be looked at
 // without a browser. Nothing here is shipped to the player and nothing here draws art.
 const fs = require('fs'), vm = require('vm'), path = require('path');
@@ -31,10 +31,10 @@ const fakeCanvas=()=>({width:0,height:0,getContext:()=>({imageSmoothingEnabled:t
 const document={createElement:()=>fakeCanvas()};
 const scene=new Obj(),deco=new Obj();scene.add(deco);
 const BX_=13,Z0=-28,Z1=12;
-${grab('const PACK_SPOTS=', ';')};
+
 ${code}
 KIT.png={};KIT.man=MANJ;KIT.des={payon:PAYJ,morocc:MORJ};KIT.ok=1;
-this.__p={plan:(m,l=1)=>stageDress(kitPlan(m),m,l),KIT,KIT_MAP};
+this.__p={plan:(m,l=1)=>kitPlan(m,l),KIT,KIT_MAP};
 `;
 const sb = { console, Promise, Image: function () { this.onload = null; this.onerror = null; }, fetch: () => ({ then: () => ({ catch: () => ({}) }) }) };
 vm.createContext(sb);

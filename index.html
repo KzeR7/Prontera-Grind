@@ -190,7 +190,7 @@ const AL={str:'STR',agi:'AGI',dex:'DEX',luk:'LUK',int:'INT',hp:'Max HP',atk:'ATK
 // late maps in about five, with bosses still a ~12x fight. See tools/tests/economy_sim.js.
 const SU=k=>k.toUpperCase(),BX_=13,Z0=-28,Z1=12,MPS=15,AGGRO=6.5,HPK=42,HPE=1.3,K5=['str','agi','dex','luk','int'];
 const GM_USER='GM',GM_PASS='gm1234';   // CHANGE THE GM PASSWORD before you publish
-const BUILD='2026-10-04 kit-v28 stage-variants three-packs';   // shown on the login card - confirms which file you loaded
+const BUILD='2026-10-04 kit-v29 themed-scenes roaming-packs';   // shown on the login card - confirms which file you loaded
 $('buildTag').textContent='build '+BUILD;
 
 // ---------- class tree: Novice -> 6 first jobs -> 6 second jobs -> 6 third jobs ----------
@@ -766,24 +766,63 @@ const icon=it=>it.card?'🃏':it.ore?'💎':it.slot==='weapon'?(WICON[it.wt]||'�
 
 // ---------- mobs & loot ----------
 let mobs=[],mob=null,pAtkT=0,mAtkT=0,respawn=0,activePack=0;
-// Pack 1 starts near the entrance, then combat crosses the open field to packs 2 and 3.
-// The 18+ unit centre spacing leaves room for each pack's jitter and the 6.5-unit aggro radius.
-const PACK_SPOTS=[[-8,6],[8,-2],[-8,-16]];
-const packMob=()=>mobs.find(m=>m.pack===activePack)||null;
+// Pick three new sites on every respawn, within the clear 26x40 battle lane. They are
+// closer than v28 but still separated by 9.5-15.5 units centre-to-centre. A site on a
+// creek or sea strip is rejected; scenery/landmarks remain outside the running lane.
+const PACK_GAP=9.5,PACK_MAX=15.5,PACK_JITTER=.7;
+function packSites(){
+  const spec=stageSpec(S.mp,S.lvl),water=spec.f&&spec.f.water;
+  // Restart the whole roll if a first site leaves no room for the other two (especially
+  // across Payon/Amatsu creeks). Do not fall back to a fixed triangle in water.
+  for(let layout=0;layout<36;layout++){
+    const sites=[];
+    for(let i=0;i<3;i++){
+      for(let attempt=0;attempt<250;attempt++){
+        const x=rnd(i===0?-6:-9,i===0?6:9),z=rnd(i===0?-12:-16,i===0?4:8);
+        if(water&&z>=water[0]-2&&z<=water[1]+2)continue;
+        if(sites.some(p=>{const d=Math.hypot(p[0]-x,p[1]-z);return d<PACK_GAP||d>PACK_MAX}))continue;
+        sites.push([x,z]);break;
+      }
+      if(sites.length!==i+1)break;
+    }
+    if(sites.length===3)return sites;
+  }
+  // If a future map fills almost the whole field with water, retain dry, separated
+  // spawns even when the normal closeness cap cannot fit them.
+  const sites=[];
+  for(let i=0;i<3;i++)for(let attempt=0;attempt<10000;attempt++){
+    const x=rnd(-9,9),z=rnd(-16,8);
+    if(water&&z>=water[0]-2&&z<=water[1]+2)continue;
+    if(sites.some(p=>Math.hypot(p[0]-x,p[1]-z)<PACK_GAP))continue;
+    sites.push([x,z]);break;
+  }
+  return sites;
+}
+const nearestPack=()=>{
+  let id=0,dist=Infinity;
+  for(const m of mobs){const d=Math.hypot(pl.x-m.x,pl.z-m.z);if(d<dist){dist=d;id=m.pack}}
+  return id;
+};
+const packMob=()=>{
+  let target=null,dist=Infinity;
+  for(const m of mobs)if(m.pack===activePack){const d=Math.hypot(pl.x-m.x,pl.z-m.z);if(d<dist){dist=d;target=m}}
+  return target;
+};
 // Starter stages share combat strength across the first five maps; loot/reward power stays map-specific.
 const starterStage=(m,l)=>m<5&&l<=5;
 const starterHp=l=>Math.floor(12*Math.pow(6+5*(l-1),HPE));
 const starterAtk=l=>6+3*(l-1);
 function spawn(){
   const F=fieldOf(S.mp,S.lvl),l=pw(),mb=1+S.mp*.15+Math.max(0,S.mp-4)*.2;mobs=[];activePack=0;
-  if(F.boss&&S.kl>=MPS){const hp=Math.floor(500*mb*Math.pow(l,HPE));mobs.push({...F.boss,boss:true,pack:0,hp,max:hp,atk:Math.floor((8+l*6.5)*mb),exp:Math.max(1,Math.floor(BOSEK*Math.pow(l,1.5)/50)),zeny:Math.max(1,Math.floor(ri(BZK[0],BZK[1])*l*l/1000)),size:1.3,mag:true,lvl:l,sec:F.sec})}
+  const bossWave=!!(F.boss&&S.kl>=MPS),sites=bossWave?null:packSites();
+  if(bossWave){const hp=Math.floor(500*mb*Math.pow(l,HPE));mobs.push({...F.boss,boss:true,pack:0,hp,max:hp,atk:Math.floor((8+l*6.5)*mb),exp:Math.max(1,Math.floor(BOSEK*Math.pow(l,1.5)/50)),zeny:Math.max(1,Math.floor(ri(BZK[0],BZK[1])*l*l/1000)),size:1.3,mag:true,lvl:l,sec:F.sec})}
   else{const early=starterStage(S.mp,S.lvl),perPack=early?(S.lvl===1?1:2):(S.lvl>=5||S.mp>=5)?ri(2,3):1;
     for(let pack=0;pack<3;pack++)for(let i=0;i<perPack;i++){
       const m=F.mobs[ri(0,1)],hp=early?Math.min(starterHp(S.lvl),Math.floor(HPK*mb*Math.pow(l,HPE))):Math.floor(HPK*mb*Math.pow(l,HPE));
       mobs.push({...m,boss:false,pack,hp,max:hp,atk:early?starterAtk(S.lvl):Math.floor((5+l*4.6)*mb),exp:Math.max(1,Math.floor(EXPK*Math.pow(l,1.5)/50)),zeny:Math.max(1,Math.floor(ri(ZK[0],ZK[1])*l*l/1000)),size:.6,mag:['demon','tree','blob'].includes(m.shape),lvl:l,sec:F.sec})}}
-  mobs.forEach((m,i)=>{const [x,z]=m.boss?[0,3]:PACK_SPOTS[m.pack];
-    m.x=x+rnd(-1,1);m.z=z+rnd(-1,1);m.hx=m.x;m.hz=m.z;m.spawn=0;m.ry=0;m.at=rnd(.6,1.6);m.a=i*2.4});
-  mob=packMob();pAtkT=.3;
+  mobs.forEach((m,i)=>{const [x,z]=m.boss?[0,-4]:sites[m.pack];
+    m.x=x+rnd(-PACK_JITTER,PACK_JITTER);m.z=z+rnd(-PACK_JITTER,PACK_JITTER);m.hx=m.x;m.hz=m.z;m.spawn=0;m.ry=0;m.at=rnd(.6,1.6);m.a=i*2.4});
+  activePack=nearestPack();mob=packMob();pAtkT=.3;
 }
 function genGear(T,l,sec,boss){
   const slot=['armor','head','off','leg','acc'].includes(T.k)?T.k:'weapon';let roll=rnd(0,100)-(boss?25:0)-st('luk')*.15,tier=0,acc=0;
@@ -875,7 +914,7 @@ function kill(o){const keep=mob;if(o)mob=o;if(!mob||!mobs.includes(mob)){mob=kee
   checkLevel();
   if(mob.boss||(S.lvl<10&&S.kl>=MPS)){mobs=[];S.kl=0;if(S.lvl<10&&S.lvl>=S.prog[S.mp]){S.prog[S.mp]=S.lvl+1;log(`${fieldName()} cleared! Stage ${S.lvl+1} unlocked.`,'r3');if(S.adv&&S.lvl<10){S.lvl++}}}
   mobs=mobs.filter(x=>x!==mob);
-  if(mobs.length&&!mobs.some(x=>x.pack===activePack))activePack=mobs[0].pack;
+  if(mobs.length&&!mobs.some(x=>x.pack===activePack))activePack=nearestPack();
   mob=packMob();respawn=.7;save();ui();
 }
 function collect(it){
@@ -1932,8 +1971,8 @@ function farDress(spec,plan,rect){
   return plan;
 }
 // ----- pure plan: recipe + arena -> everything the painters need (no canvas, no THREE) -----
-function kitPlan(m){
-  const spec=KIT_MAP[m]; if(!spec)return null;
+function kitPlan(m,stage=1){
+  const spec=stageSpec(m,stage); if(!spec)return null;
   if(spec.layout==='field')return fieldPlan(spec);
   const d=KIT.des[spec.design]; if(!d)return null;
   const W=d.meta.gridWidth,H=d.meta.gridHeight,cells=[],water=[],props=[];
@@ -1972,54 +2011,114 @@ function kitPlan(m){
   }
   return plan;
 }
-// Stage art is layout, not new sprite art. The same 25 kit terrain crops and existing
-// billboards dress three new field moods per map. Stages 1-3 return the original plan untouched.
-const STAGE_ART=[
-  ['ruin_cobble','limestone_pale','ruin_cobble','river_stone_post'],  // Prontera: paved outskirts / citadel
-  ['sand_gold','limestone_pale','ruin_cobble','pier_post'],          // Izlude: shore / harbour
-  ['grass_geffen','ruin_cobble','limestone_pale','standing_stone'], // Geffen: runes / tower stones
-  ['sand_dark','ruin_cobble','limestone_pale','ruin_stump'],         // Morocc: dunes / ruins
-  ['dirt_payon','riverbank_wall','ruin_cobble','rock_boulder_mossy'],// Payon: forest / creek stones
-  ['sand_dark','limestone_pale','ruin_cobble','palm_tall'],         // Comodo: dunes / coast
-  ['grass_jade','limestone_pale','ruin_cobble','lantern_stone'],    // Louyang: terraces / shrine
-  ['grass_blossom','ruin_cobble','limestone_pale','lantern_stone'], // Amatsu: blossom / temple
-  ['rock_abyss','ruin_cobble','limestone_pale','tombstone'],        // Niflheim: wasteland / crypt
-  ['cliff_rock','limestone_pale','ruin_cobble','crystal_cluster']   // Abyss: cavern / altar
+// Stages 4-6, 7-9 and 10 are separate *places*, not decals laid over the old field.
+// Each scene specifies its own ground, path, water, tree mix and landmarks, all cropped
+// from the existing kit. There are no spawn circles, floor patches or boss-floor stamps.
+// Stages 1-3 continue to use KIT_MAP (including Morocc's attached desert design).
+const STAGE_SCENES=[
+  [ // Prontera: homestead -> village avenue -> guarded city approach
+    {base:'grass_olive',road:[2.6,.9,'dirt_path'],trees:['tree_ancient_variant','tree_sapling'],detail:['tree_bush_bright','river_stone_post'],
+      fixed:[['house_prontera',-23,-14],['house_prontera',23,1],['tree_ancient_large',-22,7]]},
+    {base:'grass_olive',road:[3.5,.5,'ruin_cobble'],trees:['tree_ancient_large','tree_tall_cluster'],detail:['river_stone_post','tree_bush_bright'],
+      fixed:[['house_prontera',-21,-22],['house_prontera',20,-6],['house_prontera',-21,7],['lantern_stone',16,-12]]},
+    {base:'grass_olive',road:[5,.2,'ruin_cobble'],trees:['tree_ancient_variant'],detail:['river_stone_post'],
+      fixed:[['house_prontera',-21,-21],['house_prontera',21,-21],['house_prontera',-21,7],['house_prontera',21,7],
+        ['lantern_stone',-16,-5],['lantern_stone',16,-5],['river_stone_post',-16,-12],['river_stone_post',16,-12]]}
+  ],
+  [ // Izlude: grassy coast -> pier district -> harbour headland
+    {base:'grass_olive',road:[2.5,.8,'dirt_path'],water:[-32,-24],bank:['sand_gold',1.4],trees:['tree_ancient_variant','palm_tall'],detail:['palm_double','tree_bush_bright'],
+      fixed:[['palm_giant',-20,-19],['pier_post',20,-23]]},
+    {base:'grass_olive',road:[3,.4,'sand_gold'],water:[-32,-21],bank:['sand_gold',2],deck:[18,-21,3,6,'bridge_planks'],trees:['palm_tall','tree_tall_cluster'],detail:['pier_post','palm_double'],
+      fixed:[['pier_post',17,-23],['pier_post',19,-23],['pier_post',18,-19],['palm_giant',-22,-17]]},
+    {base:'grass_olive',road:[3.5,.3,'sand_gold'],water:[-32,-24],bank:['sand_gold',2],deck:[18,-24,3.5,6,'bridge_planks'],trees:['palm_giant','palm_tall'],detail:['pier_post','river_stone_post'],
+      fixed:[['pier_post',17,-26],['pier_post',19,-26],['pier_post',18,-22],['palm_giant',-21,-17],['palm_giant',22,5],['river_stone_post',-16,-5],['river_stone_post',16,-5]]}
+  ],
+  [ // Geffen: gnarled woods -> rune stones -> tower approach
+    {base:'grass_geffen',road:[2.5,.9,'dirt_path'],trees:['tree_dark_gnarled','tree_dead'],detail:['standing_stone','tree_sapling'],
+      fixed:[['standing_stone',-18,-20],['standing_stone',19,5]]},
+    {base:'grass_geffen',road:[2,.4,'ruin_cobble'],trees:['tree_dark_gnarled'],detail:['standing_stone','crystal_cluster'],
+      fixed:[['tower_geffen',-25,-24],['standing_stone',18,-16],['standing_stone',-18,2],['standing_stone',19,8]]},
+    {base:'grass_geffen',road:[3.5,.25,'ruin_cobble'],trees:['tree_dark_gnarled'],detail:['standing_stone','crystal_cluster'],
+      fixed:[['tower_geffen',-25,-23],['tower_geffen',25,9],['standing_stone',-16,-12],['standing_stone',16,-12],['crystal_cluster',-17,4],['crystal_cluster',17,4]]}
+  ],
+  [ // Morocc: caravan dunes -> scattered ruins -> buried temple approach
+    {base:'sand',road:[2,.9,'sand_dark'],trees:['palm_double','cactus_flower'],detail:['desert_bone','cactus_small'],
+      fixed:[['palm_giant',-23,-18],['ruin_stump',21,6]]},
+    {base:'sand',road:[3,.5,'ruin_cobble'],trees:['palm_tall','cactus_small'],detail:['ruin_stump','ruin_curb'],
+      fixed:[['house_ruin',-24,-21],['standing_stone',22,-9],['ruin_stump',-18,8]]},
+    {base:'sand_dark',road:[4,.2,'ruin_cobble'],trees:['palm_tall','cactus_flower'],detail:['ruin_stump','ruin_curb'],
+      fixed:[['house_ruin',-24,-22],['house_ruin',24,8],['standing_stone',-17,-13],['standing_stone',17,-13],['ruin_stump',-16,4],['ruin_stump',16,4]]}
+  ],
+  [ // Payon: bamboo forest -> steep mud trail -> forest shrine
+    {base:'grass_forest',road:[3.5,.9,'dirt_payon'],water:[-11,-9],bank:['riverbank_wall',1],deck:[0,-10,4.5,4.5,'bridge_planks'],trees:['bamboo_grove','tree_tall_cluster'],detail:['tree_bush_bright','rock_boulder_mossy'],
+      fixed:[['rock_boulder_mossy',-17,-14],['rock_boulder_mossy',17,-7]]},
+    {base:'grass_forest',road:[2.5,1,'dirt_payon'],trees:['tree_ancient_large','tree_ancient_variant'],detail:['bamboo_grove','rock_boulder_mossy'],
+      fixed:[['rock_boulder_mossy',-20,-19],['rock_cliff_crag',21,-6],['bamboo_grove',-18,7]]},
+    {base:'grass_forest',road:[3.3,.4,'dirt_payon'],trees:['tree_ancient_large','bamboo_grove'],detail:['rock_boulder_mossy','tree_bush_bright'],
+      fixed:[['shrine_stone',-23,-21],['lantern_stone',20,8],['lantern_stone',-16,-12],['lantern_stone',16,-12],['rock_boulder_mossy',-17,2],['rock_boulder_mossy',17,2]]}
+  ],
+  [ // Comodo: palm lagoon -> dune trail -> cave cove
+    {base:'sand_gold',water:[-32,-23],bank:['sand_gold',1],trees:['palm_double','palm_tall'],detail:['cactus_flower','desert_bone'],
+      fixed:[['palm_giant',-22,-18],['palm_giant',23,4]]},
+    {base:'sand_gold',road:[2.6,.8,'sand_dark'],trees:['cactus_flower','palm_tall'],detail:['desert_bone','cactus_small'],
+      fixed:[['rock_cliff_crag',-25,-22],['palm_double',22,6],['desert_bone',-18,4]]},
+    {base:'sand_gold',road:[2.5,.4,'sand_dark'],water:[-32,-24],bank:['sand_gold',1.5],trees:['palm_giant','palm_double'],detail:['rock_cliff_crag','desert_bone'],
+      fixed:[['rock_cliff_crag',-24,-19],['rock_cliff_crag',24,-19],['palm_giant',-21,6],['palm_giant',21,6],['desert_bone',-16,-7],['desert_bone',16,-7]]}
+  ],
+  [ // Louyang: bamboo path -> rice terraces -> stone sanctuary
+    {base:'grass_jade',road:[2.7,.9,'dirt_path'],trees:['bamboo_grove','tree_tall_cluster'],detail:['tree_sapling','tree_bush_bright'],
+      fixed:[['lantern_stone',-18,-18],['bamboo_grove',21,6]]},
+    {base:'grass_jade',road:[2,.4,'dirt_path'],bands:[[-24,-17,-27,-16],[-9,-5,16,27]],trees:['bamboo_grove','tree_sapling'],detail:['lantern_stone','tree_bush_bright'],
+      fixed:[['shrine_stone',-23,3],['lantern_stone',18,-18],['lantern_stone',-18,8]]},
+    {base:'grass_jade',road:[3,.3,'dirt_path'],bands:[[-25,-21,-27,-17]],trees:['bamboo_grove','tree_tall_cluster'],detail:['lantern_stone','river_stone_post'],
+      fixed:[['shrine_stone',-23,-22],['shrine_stone',23,7],['lantern_stone',-16,-11],['lantern_stone',16,-11],['lantern_stone',-16,4],['lantern_stone',16,4]]}
+  ],
+  [ // Amatsu: cherry orchard -> red bridge valley -> shrine procession
+    {base:'grass_blossom',road:[2.8,.7,'dirt_path'],trees:['tree_cherry','tree_ancient_variant'],detail:['tree_sapling','tree_bush_bright'],
+      fixed:[['lantern_stone',-19,-18],['tree_cherry',21,7]]},
+    {base:'grass_blossom',road:[3.2,.4,'dirt_path'],water:[-11,-9],bank:['riverbank_wall',1],deck:[0,-10,4.2,4.5,'bridge_red'],trees:['tree_cherry','bamboo_grove'],detail:['lantern_stone','tree_bush_bright'],
+      fixed:[['torii_gate',19,7],['bridge_red_arch',-24,-20],['lantern_stone',-17,-14]]},
+    {base:'grass_blossom',road:[3.5,.2,'dirt_path'],trees:['tree_cherry','bamboo_grove'],detail:['lantern_stone','river_stone_post'],
+      fixed:[['torii_gate',-20,-21],['bridge_red_arch',23,8],['lantern_stone',-16,-13],['lantern_stone',16,-13],['lantern_stone',-16,4],['lantern_stone',16,4]]}
+  ],
+  [ // Niflheim: grave wood -> ruined street -> crypt approach
+    {base:'waste_nifl',trees:['tree_dead'],detail:['tombstone','desert_bone'],
+      fixed:[['tombstone',-17,-19],['tree_dead',21,7]]},
+    {base:'waste_nifl',road:[2.2,.5,'ruin_cobble'],trees:['tree_dead'],detail:['tombstone','rock_cliff_crag'],
+      fixed:[['house_ruin',-24,-22],['tombstone',20,5],['standing_stone',-18,6]]},
+    {base:'rock_abyss',road:[3,.25,'ruin_cobble'],trees:['tree_dead'],detail:['tombstone','standing_stone'],
+      fixed:[['house_ruin',-24,-22],['house_ruin',24,8],['tombstone',-16,-10],['tombstone',16,-10],['standing_stone',-16,4],['standing_stone',16,4]]}
+  ],
+  [ // Abyss: crystal tunnels -> dark shore -> cavern heart
+    {base:'rock_abyss',trees:['stalagmite','crystal_cluster'],detail:['rock_cliff_crag','standing_stone'],
+      fixed:[['crystal_cluster',-20,-18],['stalagmite',21,7]]},
+    {base:'rock_abyss',water:[-32,-23],bank:['limestone_pale',1.5],dark:1,trees:['crystal_cluster','stalagmite'],detail:['standing_stone','rock_cliff_crag'],
+      fixed:[['crystal_cluster',-21,-18],['rock_cliff_crag',22,7]]},
+    {base:'rock_abyss',water:[-32,-24],bank:['limestone_pale',1.7],dark:1,trees:['stalagmite','crystal_cluster'],detail:['standing_stone','rock_cliff_crag'],
+      fixed:[['crystal_cluster',-24,-20],['crystal_cluster',24,-20],['stalagmite',-18,6],['stalagmite',18,6],['standing_stone',-16,-10],['standing_stone',16,-10]]}
+  ]
 ];
-function stageDress(plan,m,stage){
-  if(stage<=3)return plan;
-  const tier=stage<=6?1:stage<=9?2:3,[first,late,boss,prop]=STAGE_ART[m];
-  const tile=tier===1?first:tier===2?late:boss;
-  // Copy the plan, not the recipe: a stage change must not alter the original 1-3 layout.
-  plan={...plan,cells:plan.cells.slice(),props:plan.props.slice(),stageTier:tier};
-  const paint=(cx,cz,r,kind)=>{
-    for(let z=cz-r;z<=cz+r;z+=.8)for(let x=cx-r;x<=cx+r;x+=.8){
-      const d=Math.hypot(x-cx,z-cz),n=kitFbm(x/2.5,z/2.5,991+m*37+tier*71,3);
-      if(kind==='ring'?(d<r-.95||d>r-.25):(d>r*(.76+n*.38)))continue;
-      if(Math.abs(x)>=KIT_FAR/2-1||Math.abs(z)>=KIT_FAR/2-1)continue;
-      plan.cells.push({x,z,tile});
-    }
-  };
-  if(tier<3){
-    PACK_SPOTS.forEach(([x,z],i)=>{
-      paint(x,z,tier===1?3.3:5.1);
-      // Late stages gain an outer stone trace and kit landmarks on both sides of the arena.
-      if(tier===2)paint(x,z,6.3,'ring');
-    });
-    for(const side of [-1,1])for(const z of (tier===1?[5,-15]:[7,-2,-16]))
-      kitPut(plan.props,plan.src,side*(BX_+3+(tier===2?1:0)),z,prop,tier===1?.8:1,side<0,0);
-  }else{
-    // A dedicated boss dais: a large cobbled disc, contrasting inner seal and broken
-    // outer ring; paired landmark sentinels frame it from outside the running lane.
-    paint(0,3,7.2);paint(0,3,8.6,'ring');
-    const inner=m===8?'rock_abyss':m===9?'limestone_pale':late;
-    for(let z=-.2;z<=6.2;z+=.8)for(let x=-3.2;x<=3.2;x+=.8)
-      if(Math.hypot(x,z-3)<3.2)plan.cells.push({x,z,tile:inner});
-    for(const side of [-1,1])for(const z of [-3,3,9])
-      kitPut(plan.props,plan.src,side*(BX_+2.5),z,prop,1.25,side<0,0);
-  }
-  plan.props.sort((a,b)=>a.z-b.z);
-  return plan;
+function stageSpec(m,stage){
+  const original=KIT_MAP[m];
+  if(stage<=3)return original;
+  const tier=stage<=6?0:stage<=9?1:2,c=STAGE_SCENES[m][tier],f={base:c.base,base2:c.base};
+  if(c.road){f.road={w:c.road[0],wander:c.road[1]};f.roadTile=c.road[2]}
+  if(c.water){f.water=c.water;f.bank=c.bank[1];f.bankTile=c.bank[0]}
+  if(c.dark)f.waterFrames=['water_dark_0','water_dark_1'];
+  if(c.deck){f.deck=c.deck.slice(0,4);f.deckTile=c.deck[4]}
+  if(c.bands)f.bands=c.bands.map(([z0,z1,x0,x1])=>({tile:'paddy_water',z:[z0,z1],x0,x1,jit:1}));
+  const z0=tier===2?-23:-27,z1=tier===2?9:12;
+  f.groves=[{n:tier===2?4:5,r:4.5,trees:[1,2],b0:BX_+2,b1:29,z0,z1,gap:5.3,types:c.trees}];
+  f.scatter=c.detail.map((type,i)=>({type,count:tier===2?5:4,r0:BX_+2+i,r1:29,z0,z1,s0:.8,s1:1.1,gap:5}));
+  f.far=[{type:c.trees[0],count:12,r0:33,r1:44,z0:-43,z1:18,s0:.9,s1:1.2,gap:8}];
+  f.fixed=c.fixed.map(([type,x,z])=>({type,x,z,scale:1}));
+  // The boss field is special through its *scenery*, not a painted arena floor: a pair
+  // of tall, map-native landmarks frames the encounter, with the far landmarks behind it.
+  if(tier===2){const frame=['house_prontera','palm_giant','standing_stone','house_ruin','tree_ancient_large',
+      'rock_cliff_crag','shrine_stone','torii_gate','tree_dead','crystal_cluster'][m];
+    f.fixed.push({type:frame,x:-BX_-4,z:-4,scale:1.2},{type:frame,x:BX_+4,z:-4,scale:1.2,flip:true})}
+
+  return {src:original.src,layout:'field',design:original.design+'-'+(tier+1),seed:1047+m*757+tier*1739,f};
 }
 function kitRect(d,gx0,gx1,gy){
   const x0=kitX(d,gx0),x1=kitX(d,gx1+1),z0=kitZ(d,gy),z1=kitZ(d,gy+1);
@@ -2090,8 +2189,7 @@ function kitTick(dt){
   for(const w of KIT.water){if(w.maps.length<2)continue;w.m.material.map=w.m.material.map===w.maps[0]?w.maps[1]:w.maps[0]}
 }
 function buildKit(m){
-  const raw=kitPlan(m);if(!raw)return null;
-  const plan=stageDress(raw,m,S.lvl);
+  const plan=kitPlan(m,S.lvl);if(!plan)return null;
   if(!kitAtlas(plan.src))return null;      // no atlas for this design (yet) -> v13 scenery stands in
   if(!KIT.ground){KIT.ground=new THREE.Mesh(new THREE.PlaneGeometry(KIT_FAR,KIT_FAR),new THREE.MeshLambertMaterial({map:null}));KIT.ground.rotation.x=-Math.PI/2;KIT.ground.position.y=.004;KIT.ground.receiveShadow=true;scene.add(KIT.ground)}
   KIT.ground.visible=true;

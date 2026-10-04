@@ -408,15 +408,27 @@ persisted and repaired on load. **Do not add new effect types** without asking.
 via `pl.wt/wx/wz`); it does not march back to the entrance. **Only a defeat resets the position**
 to `x=0, z=Z1-1.5`. Both are pinned in `save_load_sim.js`.
 
-The v28 battle arena is **26 wide by 40 deep**: `BX_=13`, `Z0=-28`, `Z1=12`. The camera
-sits on +Z looking toward -Z, which makes **low Z the top of the screen**. The player starts at
-`Z1-1.5` (bottom). Three packs spawn at `PACK_SPOTS=[[-8,6],[8,-2],[-8,-16]]`. Only the active
-pack wakes and can attack (`AGGRO=6.5`); the player and pets target it, then move to the next
-pack when it is cleared. After pack 3 is cleared, all three respawn and the cycle starts again
-at pack 1. Chain and area skills cannot hit across packs. On Stage 10 the boss appears alone
-at the altar after 15 normal kills; stage unlocks and per-kill rewards are unchanged. `ct.z`
-tracks `pl.z-5` to keep the player in the lower part of the frame. Prontera's fallback town
-stays beyond the far edge (`TZ=Z0-8`).
+The battle arena is **26 wide by 40 deep**: `BX_=13`, `Z0=-28`, `Z1=12`. The
+camera sits on +Z looking toward -Z, which makes **low Z the top of the screen**. The
+player starts at `Z1-1.5` (bottom). v29 rerolls three pack sites every spawn in the dry,
+open field: 9.5-15.5 units apart rather than fixed points on a route. `AGGRO=6.5`, and only
+the active pack can chase or attack; on each spawn and after each pack falls, `nearestPack()`
+chooses whichever surviving pack is closest to the player. Pets and skills stay on that
+pack; no 1 → 2 → 3 fixed order. On Stage 10 the boss appears alone after 15 normal kills.
+`ct.z` tracks `pl.z-5` to keep the player in the lower part of the frame. Prontera's
+fallback town stays beyond the far edge (`TZ=Z0-8`).
+
+**Stage scenes (v29):** `KIT_MAP` is the original map scene on stages 1–3; `STAGE_SCENES`
+is ten maps × three **independent, themed recipes** for 4–6, 7–9 and 10. `stageSpec(m,l)`
+selects the recipe, `kitPlan(m,l)` builds it, and the draw key includes the stage. Later
+recipes set their own base, path, water, decks, vegetation and landmarks; even Morocc uses a
+new field layout rather than stamping its original attached design with extras. **No later
+scene uses a noise patch, monster floor pad, boss-floor ring, plaza or round stamp.** Boss
+stages stand out through paired map-native landmarks *outside* the lane, not floor paint.
+Water is still allowed where it belongs to the map (sea, creek, dark lake), and randomized
+pack sites reject water. Stages 1–3 retain their v27 scene and its original organic ground
+variation; nothing was added around their spawn sites. All pixels remain the existing kit.
+
 
 **Art.** No map or terrain sheets exist in `Sprite/`, and house rule 1 forbids inventing art, so
 all map visuals are procedural: `TH[m]` picks a biome kind and two colours, `buildDeco` scatters
@@ -1456,3 +1468,31 @@ assigned for feel rather than fidelity. While reworking that, two shipped bugs s
   The economy's 800 kills/hour pacing remains a model assumption, so time-to-job-change needs
   a real playtest before retuning the EXP curve. The new boss altar uses arranged existing
   crops, not a purpose-made boss-arena sprite.
+
+### 2026-10-04 — `kit-v29 themed-scenes roaming-packs` (owner feedback on v28)
+
+* **What changed for the player:** the stage 4–6 and 7–9 spawn pads and the stage 10 boss
+  floor disc/ring added in v28 are **removed**. They were not the requested variation. Each
+  of the ten maps now has three genuinely new layouts alongside its unchanged stage 1–3
+  layout: new paths/water where the biome calls for them, different vegetation and distinct
+  landmarks using the same kit crops. Boss stages have map-native landmark pairs framing the
+  fight instead of anything painted on the floor. Morocc's original attached design remains
+  on stages 1–3; later stages use different desert and ruin designs. No sprite was painted,
+  recoloured, borrowed from another game or replaced.
+* **Combat:** packs reroll on each respawn in the open battle area rather than staying on
+  three marked positions. Their sites are roughly **9.5–15.5 units apart** (previously ~18–23),
+  avoid water, and remain isolated. The player begins with the nearest pack to their current
+  position; after that pack falls, the nearest *surviving* pack is chosen. No fixed 1–2–3
+  route. Pets, area skills and chained hits remain limited to the active pack. The three-pack
+  count, 15-kill boss, arena dimensions, rewards and save format are unchanged.
+* **Files touched:** `index.html`, `tools/tests/{starter,kit,save_load}_sim.js`,
+  `tools/preview/dump_plans.js`, `READ-ME-FIRST.md`, `AGENTS.md`.
+* **Tests:** all 13 suites green — pack 19 bodies, class change 22, save/load 10, economy 21,
+  stat 7, card 13, skill 49, gear 20, scene 8, kit 34, ui 13, sprite 10, starter 7.
+  Kit tests compare all four complete scenes for every map and ban the v28 floor overlays;
+  starter tests reroll hundreds of waves, check separation and dry sites, and execute the
+  real nearest-pack selection and kill transition. Inline game JS passes `node --check`.
+  The new plans were rendered top-down for visual review using the original kit atlas.
+* **Known limit:** travel is shorter than v28, but the economy's 800-kills/hour assumption
+  still needs a real gameplay measurement before any pacing retune. The boss-field landmarks
+  use existing kit art rather than a custom boss sprite.
