@@ -105,6 +105,9 @@ textarea{width:100%;height:74px;background:#0f1116;color:var(--ink);border:1px s
       <br><b>S = he faces you (front). N = he faces away (back)</b> — he walks up the screen as N, so that is
       where you see his back. The weapon is not part of this page: it is parked until the poses are
       confirmed.
+      <br><b>This page starts from the owner’s saved standard</b> (the 2026-10-04 selection, backed up in
+      <code>tools/attack_selection.json</code>). Change anything you like — it is kept in this browser —
+      and <b>“↺ Back to the standard”</b> puts the whole page back to the saved selection.
     </span>
   </div>
 </header>
@@ -123,7 +126,7 @@ textarea{width:100%;height:74px;background:#0f1116;color:var(--ink);border:1px s
     <div style="display:flex;gap:8px;margin-top:6px;align-items:center">
       <button id="btnCopy2" class="primary">Copy</button>
       <button id="btnClearCls">Clear this class</button>
-      <button id="btnReset">Reset everything</button>
+      <button id="btnReset">↺ Back to the standard</button>
       <span class="hint" id="copyMsg"></span>
     </div>
   </section>
@@ -131,6 +134,7 @@ textarea{width:100%;height:74px;background:#0f1116;color:var(--ink);border:1px s
 
 <script src="../assets/sprite_pack_data.js"></script>
 <script src="sprite_picker_data.js"></script>
+<script src="sprite_picker_defaults.js"></script>
 <script>
 (function(){
 'use strict';
@@ -167,6 +171,43 @@ try{var s0=JSON.parse(localStorage.getItem(LSK)||'null');
   if(s0){for(var k in s0){if(k==='atk'||k==='head'||k==='weap'||k==='grips'||k==='weapon'||k==='pinned')continue;st[k]=s0[k]}
     st.atk=s0.atk||{};st.head=s0.head||{};delete st.weap;delete st.grips}}
 catch(e){}
+var hadSaved=!!s0;
+// The owner's approved selection, shipped with the picker: it is the starting state on a
+// fresh browser, and the "load the owner's standard" button puts it back after any editing.
+// Poses come as ids; heads come as ABSOLUTE pivots in the game cell, so each is stored as a
+// drag away from whatever seat this build measures (v32's pack-anchor seat included).
+function applyDefaults(){
+  var DF=window.SPRITE_PICKER_DEFAULTS;
+  if(!DF||!DF.attack)return 0;
+  st.mirrorSide=true;var mc=document.getElementById('mirrorSide');if(mc)mc.checked=true;
+  var hits=0;
+  for(var cls in DF.attack){
+    var rows=DF.attack[cls],o={};
+    for(var d=0;d<8;d++)o[d]=[];
+    for(var v2=0;v2<5;v2++){
+      var ids=rows[String(v2)];if(!ids)continue;
+      o[v2]=ids.slice(0,CAP);
+      for(var i=0;i<o[v2].length;i++)if(o[v2][i]!=null)hits++;
+    }
+    st.atk[cls]=o;
+    for(var hk in st.head)if(hk.indexOf(cls+'|')===0)delete st.head[hk]      // this class starts clean
+  }
+  for(var k in DF.head){
+    var pr=k.split('|'),c2=pr[0],v3=+pr[1],f2=+pr[2],
+        pose=poseOfId(c2,st.atk[c2]&&st.atk[c2][v3]&&st.atk[c2][v3][f2]);
+    if(!pose)continue;                                    // no pose on that frame: nothing to seat
+    var b=baseSeat(pose,v3),hs=DF.head[k];
+    setHead(v3,f2,[hs[0]-Math.round(b[0]),hs[1]-Math.round(b[1])],c2)}
+  for(var k2 in DF.headDragMirror||{}){var p2=k2.split('|');
+    setHead(+p2[1],+p2[2],DF.headDragMirror[k2].slice(),p2[0])}
+  save();return hits}
+// put the page back to the shipped state: the owner's standard where there is one, and the
+// sheet's own suggestion for every class the standard does not cover yet (a new sheet, say).
+function resetAll(){
+  var std=applyDefaults(),DF=window.SPRITE_PICKER_DEFAULTS||{attack:{}};
+  for(var cn in D.classes)if(!DF.attack[cn])autoFillClass(cn);
+  st.mirrorSide=true;var mc=document.getElementById('mirrorSide');if(mc)mc.checked=true;
+  save()}
 function save(){try{localStorage.setItem(LSK,JSON.stringify(st))}catch(e){}}
 function atk(cls){if(!st.atk[cls]){var o={};for(var d=0;d<8;d++)o[d]=[];st.atk[cls]=o}return st.atk[cls]}
 function srcDir(d){return (st.mirrorSide&&d>=5)?MIRRORSRC[d]:d}
@@ -178,7 +219,9 @@ function editable(d){return !isMirrored(d)}
 // their own without touching the view they mirror.
 function headAdjOf(cls,dir,fr){return st.head[cls+'|'+dir+'|'+fr]||[0,0]}
 function headAdj(dir,fr){return headAdjOf(st.cls,dir,fr)}
-function setHead(dir,fr,v){var k=st.cls+'|'+dir+'|'+fr;
+// cls is optional: a drag belongs to the class on screen, but the shipped defaults seat
+// every class at once and must name each one (st.cls is just whatever is selected).
+function setHead(dir,fr,v,cls){var k=(cls||st.cls)+'|'+dir+'|'+fr;
   if(v[0]||v[1])st.head[k]=[v[0],v[1]];else delete st.head[k]}
 
 // ---------- images ----------
@@ -255,9 +298,9 @@ function baseSeat(pose,dir){
       x=Math.floor((BODY-w)/2)+pose.seat[0]*s;
   if(isMirrored(dir))x=BODY-x;                           // a mirrored body takes a mirrored seat
   return [x, CELL.feet-h+pose.seat[1]*s]}
-function headSpot(pose,dir,fr){
+function headSpot(pose,dir,fr,cls){
   if(!pose)return null;
-  var a=baseSeat(pose,dir), adj=headAdj(dir,fr);
+  var a=baseSeat(pose,dir), adj=headAdjOf(cls||st.cls,dir,fr);   // cls: exporting another class
   return[a[0]+adj[0], a[1]+adj[1]]}
 function packedCell(pose,dir,fr,plain){
   var c=document.createElement('canvas');c.width=BODY;c.height=BODY;
@@ -485,9 +528,12 @@ function step(delta){
   statusEl.textContent='frame '+((cur+delta+order.length)%order.length+1)+' of '+order.length}
 
 // ---------- fill / export ----------
+function autoFillClass(cls){
+  var d=D.classes[cls];if(!d)return;
+  var A=atk(cls);
+  for(var dir=0;dir<5;dir++)A[dir]=(d.auto[dir].attack.ids||[]).slice(0,CAP)}
 function autoFill(){
-  var d=D.classes[st.cls], A=atk(st.cls);
-  for(var dir=0;dir<5;dir++)A[dir]=(d.auto[dir].attack.ids||[]).slice(0,CAP);
+  autoFillClass(st.cls);
   st.mirrorSide=true;var mc=document.getElementById('mirrorSide');if(mc)mc.checked=true;save();paint()}
 function dump(){
   var out={version:5,note:'Prontera Grind attack-pose + head selection. cells are [x,y,w,h,headX,headY,headSource]: x/y/w/h in the class sheet, headX/headY = the head pivot inside the game 96x96 cell (measured seat + your drag); null = keep the previous frame (and a leading null = the first pose you picked)',
@@ -499,7 +545,7 @@ function dump(){
     for(var d=0;d<8;d++){var arr=st.atk[cls][d]||[];
       rows[d]=arr.map(function(id,i){if(id==null)return null;var p=D.classes[cls].poses[id];
         if(!p)return null;
-        var a=headAdjOf(cls,d,i),hs=headSpot(p,d,i);     // the seat the preview draws = the seat the game wants
+        var a=headAdjOf(cls,d,i),hs=headSpot(p,d,i,cls); // the seat the preview draws = the seat the game wants
         return [p.x,p.y,p.w,p.h,Math.round(hs[0]),Math.round(hs[1]),
                 (a[0]||a[1])?'manual':p.seat[2]]});
       if(arr.some(function(x){return x!=null}))any=true}
@@ -528,6 +574,7 @@ window.__pgDiag=function(){var n=0,tot=0,k;for(k in D.classes){tot++;if(sheetRea
 // (the poses, the head seating, the export) without a browser.
 window.__pgTest={headSpot:headSpot,headAdj:headAdj,setHead:setHead,dirWord:dirWord,st:st,paint:paint,
   headTile:headTile,baseSeat:baseSeat,packBodyName:packBodyName,packedCell:packedCell,
+  save:save,applyDefaults:applyDefaults,resetAll:resetAll,
   poses:function(cls){return D.classes[cls].poses},poseOf:poseOfId,headBox:headBox,
   payload:function(){dump();var t=document.getElementById('out');return JSON.parse(t.value||'{}')}};
 function paint(){
@@ -561,13 +608,13 @@ function paint(){
     for(var k2 in st.head)if(k2.indexOf(st.cls+'|')===0)delete st.head[k2];
     save();paint()};
   document.getElementById('btnReset').onclick=function(){
-    if(!confirm('Throw away every attack pick and head drag for every class?'))return;
-    st.atk={};st.head={};save();paint()};
+    if(!confirm('Go back to the owner\u2019s standard? Every class in it is restored; classes it does not cover get the sheet\u2019s own picks.'))return;
+    resetAll();paint()};
   sheetFor(st.cls);
   setInterval(function(){tick++;if(drag!==null)return;
     var cvs=viewsEl.querySelectorAll('canvas.big');for(var v=0;v<cvs.length;v++)drawView(cvs[v],v)},160);
-  autoFill();                                                   // start with the sheet's own picks
-  paint();
+  if(hadSaved)paint();                     // the browser has its own state - never overwrite it
+  else{resetAll();paint()}                 // first visit: the owner's standard, filled out
 })();
 })();
 </script>

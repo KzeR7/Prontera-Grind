@@ -135,6 +135,62 @@ catch (e) { bootError = e; }
     assert.strictEqual(global.window.__pgReady, true, 'the page never finished a render pass');
   });
 
+  t('a fresh browser opens on the owner\'s saved standard, number for number', () => {
+    const SEL = JSON.parse(fs.readFileSync(path.join(ROOT, 'tools', 'attack_selection.json'), 'utf8'));
+    const j = T.payload();
+    let cells = 0, worst = 0, bad = [];
+    for (const cls in SEL.attack) {
+      assert.ok(j.attack[cls], 'class ' + cls + ' from the standard is missing from the export');
+      for (let view = 0; view < 5; view++) {
+        const want = SEL.attack[cls][String(view)] || [];
+        for (let f = 0; f < want.length; f++) {
+          if (!want[f]) continue;
+          const got = j.attack[cls][view][f];
+          assert.ok(got, cls + ' ' + view + ' f' + f + ' must be filled');
+          for (let i = 0; i < 6; i++) {
+            cells++;
+            const d = Math.abs(got[i] - want[f][i]);
+            if (d) { worst = Math.max(worst, d); bad.push(cls + ' ' + view + '/' + f + ' i' + i + ' got ' + got[i] + ' want ' + want[f][i]); }
+          }
+        }
+      }
+    }
+    assert.ok(cells > 3000, 'expected the whole selection, saw ' + cells + ' numbers');
+    assert.strictEqual(worst, 0, 'the standard must come back exactly; worst difference ' + worst +
+      ' px: ' + bad.slice(0, 4).join(' | '));
+  });
+
+  t('the mirrored views keep the heads the standard saved for them', () => {
+    const SEL = JSON.parse(fs.readFileSync(path.join(ROOT, 'tools', 'attack_selection.json'), 'utf8'));
+    let seen = 0;
+    for (const k in SEL.headAdjust) {
+      const view = +k.split('|')[1];
+      if (view < 5) continue;                       // 0-4 come from the exported head pixels
+      const want = SEL.headAdjust[k];
+      assert.deepStrictEqual(T.st.head[k], want, 'mirrored-view head ' + k + ' was not restored');
+      assert.ok(T.st.atk[k.split('|')[0]], k.split('|')[0] + ' must carry the standard too');
+      seen++;
+    }
+    assert.ok(seen > 200, 'expected the mirrored head drags, saw ' + seen);
+  });
+
+  t('"Back to the standard" puts back whatever was changed', () => {
+    const cls = T.st.cls;
+    T.st.sel = { dir: 0, frame: 0 };
+    T.st.atk[cls][0] = [null, null, null, null, null, null];      // wreck it
+    T.setHead(0, 0, [40, -30]);
+    T.save();
+    byId['btnReset'].onclick();
+    const SEL = JSON.parse(fs.readFileSync(path.join(ROOT, 'tools', 'attack_selection.json'), 'utf8'));
+    const j = T.payload(), want = SEL.attack[cls]['0'];
+    for (let f = 0; f < want.length; f++) {
+      if (!want[f]) continue;
+      assert.deepStrictEqual([j.attack[cls][0][f][0], j.attack[cls][0][f][1], j.attack[cls][0][f][2], j.attack[cls][0][f][3],
+                              j.attack[cls][0][f][4], j.attack[cls][0][f][5]],
+        want[f].slice(0, 6), 'frame ' + (f + 1) + ' did not come back');
+    }
+  });
+
   t('the picker loads its own data, and there is NO weapon control anywhere', () => {
     assert.ok(T && typeof T.headSpot === 'function', 'window.__pgTest missing');
     assert.ok(global.window.SPRITE_PICKER_DATA && global.window.SPRITE_PACK,
@@ -212,21 +268,31 @@ catch (e) { bootError = e; }
     assert.ok(w < 64 && h < 64, 'the box is still the whole cell');
   });
 
-  t('the head sits on the GAME\'s own anchor, and a drag moves it exactly', () => {
-    const cls = T.st.cls;
-    const frame = T.st.atk[cls][0].findIndex(x => x != null);
-    assert.ok(frame >= 0, 'no attack pose is filled for view 0');
-    const pose = T.poses(cls)[T.st.atk[cls][0][frame]];
-    assert.ok(pose.anim != null, 'the pose must be labelled for this test to be meaningful');
-    const body = T.packBodyName();
-    const an = global.window.SPRITE_PACK.bodies[body].anchors[pose.anim][0][pose.frame];
-    assert.deepStrictEqual(T.baseSeat(pose, 0), an,
-      'the picker must seat the head with the pack anchor the game uses, got ' +
-      JSON.stringify(T.baseSeat(pose, 0)) + ' want ' + JSON.stringify(an));
-    T.setHead(0, frame, [3, -2]);
-    assert.deepStrictEqual(T.headSpot(pose, 0, frame), [an[0] + 3, an[1] - 2],
+  t('the head seat follows the game\'s own anchor, and a drag moves it exactly', () => {
+    const cls = T.st.cls, body = T.packBodyName();
+    const anchors = global.window.SPRITE_PACK.bodies[body].anchors;
+    // a pose the sheet draws in this very direction: the seat IS the game's anchor
+    const labelled = T.poses(cls).find(p => p.anim != null && p.frame != null && p.dir === 0 &&
+      anchors[p.anim] && anchors[p.anim][0] && anchors[p.anim][0][p.frame]);
+    assert.ok(labelled, 'no pose labelled for view 0 - the test cannot prove the rule');
+    assert.deepStrictEqual(T.baseSeat(labelled, 0), anchors[labelled.anim][0][labelled.frame],
+      'a pose drawn in this direction must sit on the pack anchor the game uses');
+    // a pose from another direction (the standard may reuse any figure): the measured seat
+    const other = T.poses(cls).find(p => p.dir !== 0 && p.anim != null);
+    if (other) {
+      const s = Math.min(1, 90 / other.w, 88 / other.h);
+      const w = Math.max(1, Math.round(other.w * s)), h = Math.max(1, Math.round(other.h * s));
+      assert.deepStrictEqual(T.baseSeat(other, 0),
+        [Math.floor((96 - w) / 2) + other.seat[0] * s, 90 - h + other.seat[1] * s],
+        'a pose borrowed from another direction falls back to its measured seat');
+    }
+    // and a drag moves the drawn head by exactly what was dragged
+    T.setHead(0, 0, [3, -2]);
+    const base = T.baseSeat(labelled, 0);
+    assert.deepStrictEqual(T.headSpot(labelled, 0, 0), [base[0] + 3, base[1] - 2],
       'the drag must move the seat by exactly what was dragged');
-    assert.deepStrictEqual(T.headAdj(0, frame), [3, -2], 'the drag is not remembered');
+    assert.deepStrictEqual(T.headAdj(0, 0), [3, -2], 'the drag is not remembered');
+    T.setHead(0, 0, [0, 0]);
   });
 
   t('a mirrored view takes the pack\'s own mirrored anchor, and can be moved on its own', () => {
@@ -358,6 +424,10 @@ catch (e) { bootError = e; }
     assert.ok(!st.includes('window.WEAPON_JOINTS='), 'the standalone must not inline the joints any more');
     assert.ok(st.includes('window.__pgTest='), 'the standalone is built from the app source');
     assert.ok(st.includes('All poses in this sheet'), 'the standalone is stale - rebuild it');
+    assert.ok(!st.includes('src="sprite_picker_defaults.js"'),
+      'the standalone must inline the standard, not link it');
+    assert.ok(st.includes('window.SPRITE_PICKER_DEFAULTS={'),
+      'the standalone is stale - the owner\'s standard is not inside it');
   });
 
   console.log('\n' + pass + ' passed, ' + fail + ' failed');

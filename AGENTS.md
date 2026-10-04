@@ -1538,3 +1538,36 @@ assigned for feel rather than fidelity. While reworking that, two shipped bugs s
   marker shade landing on the drawn tile inside the cell offset, and the export being cell pixels, not
   crop pixels. Inline JavaScript passes `node --check`; both picker builds boot ("ATTACK PICKER OK").
 * **Branches / PR:** `arena/01a1054b-prontera-grind` (PR #11).
+
+### 2026-10-04 — `tool-v33 the owner's selection is the picker's standard, and it is backed up` (no game change, no BUILD bump)
+* **What the owner asked for:** "make a back up for this in my github. also what i tune in would be a standard
+  defult if i would like to adjust again. also this setting also make a back up. as i might add more classes
+  in the future. make notes for future ai agent to understand too."
+* **The backup.** The selection the owner sent back is saved byte for byte as `tools/attack_selection.json`
+  (the v5 payload: 18 classes x 5 drawn views x 6 frames = 540 pose cells, plus 862 head entries). It is the
+  source of truth for the attack poses and head seats from now on.
+* **The standard.** `tools/make_sprite_picker.py` turns that backup into
+  `tools/sprite_picker_defaults.js` (18 classes, 540 heads), which the picker loads. A fresh browser now opens
+  on the owner's own numbers instead of on the sheet's guesses, and a new button **"↺ Back to the standard"**
+  puts the page back to the saved selection after any editing. It restores only the classes the backup covers:
+  a class added later keeps the sheet's own picks until the owner tunes it. The old "Reset everything" (blank
+  the whole page) is gone - that is what this button replaces.
+* **Nothing is re-measured.** The payload stores the head as an absolute pivot in the game's 96x96 cell; the
+  loader turns it into a drag against whatever seat this build uses, so the owner's numbers survive future
+  changes to the seat rule. `picker_sim.js` now proves the whole thing comes back number for number
+  (3,240 numbers compared) and that the standalone carries the standard too.
+* **Notes for the next agent:** `tools/sprite_selection-notes.md` - the files, what every field means, how to
+  add a class later (the owner's "I might add more classes"), what is not covered yet (**Sniper has no
+  selection**), and the two mistakes this round found (`setHead` keyed by the on-screen class; the standalone
+  inliner stripping newlines so a `//` comment swallowed the standard).
+* **Files touched:** new `tools/attack_selection.json`, `tools/sprite_selection-notes.md`,
+  generated `tools/sprite_picker_defaults.js`; `tools/make_sprite_picker.py` (the defaults builder, the
+  inliner, and the anchors now travel in the standalone so its head maths matches the repo build),
+  `tools/sprite_picker.html` (`applyDefaults`/`resetAll`, the new button, the header note),
+  `tools/sprite_picker_data.js` + `tools/sprite_picker_standalone.html` (regenerated),
+  `tools/tests/picker_sim.js`.
+* **Tests:** all 15 suites green (class change 22, save/load 10; economy 21, stat 7, card 13, skill 48,
+  gear 20; scene 8, kit 20, UI 13, sprite 10, starter 4; pack 19 bodies; weapon joints 7; picker **19**).
+  The picker was also booted from the standalone build under the same harness (19/19) and the served page
+  was checked by hand. Inline JavaScript passes `node --check`.
+* **Branches / PR:** `arena/01a1054b-prontera-grind` (PR #11).
