@@ -2079,3 +2079,21 @@ assigned for feel rather than fidelity. While reworking that, two shipped bugs s
     not touched at all (pinned by a test).
   * The game server started for the live preview serves the working copy, so a refresh picks this
     up immediately; the deployed site only updates when the pull request is merged.
+
+### 2026-10-04 — `tuning-sheet` made live + copy-safe (tooling only, no game change, no BUILD bump)
+* **What changed for the owner:** the tuning sheet is now served as its own live preview, and its
+  answers can always be recovered even inside a sandboxed preview frame. **Copy answers** writes
+  the JSON into a visible box under the buttons as well as trying the clipboard, there is a
+  **Download JSON** button, and the decisions section falls back to the recommendation instead of
+  dropping out if a radio group is not found. Nothing else about the form changed.
+* **Files touched:** `Updates/cards-gear-audit/tuning-sheet.html`, `AGENTS.md`. No game file.
+* **Art:** none.
+* **Tests:** none needed for the game. The sheet is checked by a throwaway stub-DOM harness: 53
+  rows render, every input is pre-filled with the recommendation, the answers box fills with all
+  seven sections, the built HTML contains no `undefined`, and the file makes **zero external
+  requests** (which is what lets it render inside the preview). The 14 game suites are untouched
+  and were green on `5a81578`.
+* **Branches / PR:** `arena/01a106ae-prontera-grind`, same pull request as `ui-v36`/`ui-v37`.
+* **Known limits / follow-ups:**
+  * Two live previews are running from this workspace: the game (`index.html`) and the sheet. Both
+    serve the working copy of the branch; the deployed site still updates only on merge.

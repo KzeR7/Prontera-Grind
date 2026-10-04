@@ -38,6 +38,10 @@
     background:#fffdf7;color:var(--ink);cursor:pointer}
   button.primary{background:var(--rec);color:#fff;border-color:#14532d}
   #status{font-size:13px;color:var(--rec)}
+  #outWrap{display:none;margin-top:10px}
+  #outWrap.on{display:block}
+  #out{width:100%;min-height:130px;font:12px/1.45 ui-monospace,Menlo,Consolas,monospace;
+    background:#2b2418;color:#f6efdf;border:1px solid var(--edge2);border-radius:6px;padding:10px}
   pre{background:#2b2418;color:#f6efdf;padding:12px;border-radius:6px;overflow:auto;font-size:12px}
   .grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
   @media(max-width:900px){.grid{grid-template-columns:1fr}}
@@ -92,8 +96,14 @@
 <div id="bar">
   <button id="copy" class="primary">Copy answers</button>
   <button id="reset">Restore my recommendations</button>
+  <button id="download">Download JSON</button>
   <button id="restoreCur">Use current values everywhere</button>
   <span id="status"></span>
+</div>
+<div id="outWrap" style="position:fixed;left:0;right:0;bottom:56px;background:#efe3c8;border-top:1px solid var(--edge);padding:10px 22px;z-index:6">
+  <div style="font-size:12.5px;color:#5d5240;margin-bottom:6px">Answers — select all and copy, or use the button above:
+    <button id="hideout" style="padding:2px 8px;font-size:12px">hide</button></div>
+  <textarea id="out" readonly></textarea>
 </div>
 
 <script>
@@ -251,7 +261,7 @@ const answers = () => {
       let v;
       if (r.choice) {
         const c = document.querySelector('input[name="' + r.id + '"]:checked');
-        v = c ? c.value : null;
+        v = c ? c.value : r.rec;     // never drop a decision: fall back to the recommendation
       } else {
         const box = document.getElementById('in_' + r.id);
         v = r.long || r.text ? (box ? box.value : '') : val(r.id);
@@ -263,14 +273,34 @@ const answers = () => {
   return out;
 };
 function setStatus(m){document.getElementById('status').textContent = m; setTimeout(() => document.getElementById('status').textContent = '', 4000)}
+function answersJson(){
+  return JSON.stringify({ sheet:'cards-gear-audit/tuning-sheet', build:'ui-v37',
+    filled: new Date().toISOString().slice(0,10), answers: answers() }, null, 2);
+}
+function showOut(js, msg){
+  const w = document.getElementById('outWrap'), t = document.getElementById('out');
+  t.value = js; w.classList.add('on');
+  setStatus(msg);
+}
+document.getElementById('hideout').onclick = () => document.getElementById('outWrap').classList.remove('on');
 document.getElementById('copy').onclick = async () => {
-  const js = JSON.stringify({ sheet:'cards-gear-audit/tuning-sheet', filled: new Date().toISOString().slice(0,10), answers: answers() }, null, 2);
-  try { await navigator.clipboard.writeText(js); setStatus('Copied — paste it back in chat.'); }
+  const js = answersJson();
+  showOut(js, 'Answers ready below — copied to the clipboard if your browser allowed it.');
+  try { await navigator.clipboard.writeText(js); }
   catch (e) {
-    const ta = document.createElement('textarea'); ta.value = js; ta.style.cssText = 'position:fixed;top:20%;left:50%;width:70%;height:40%';
-    document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove();
-    prompt('Clipboard was blocked — the answers are selected below, copy them:', js);
+    try { const t = document.getElementById('out'); t.focus(); t.select(); document.execCommand('copy'); }
+    catch (e2) { /* the box is visible: select all + copy by hand */ }
   }
+};
+document.getElementById('download').onclick = () => {
+  const js = answersJson();
+  try {
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([js], {type:'application/json'}));
+    a.download = 'tuning-answers.json';
+    document.body.appendChild(a); a.click(); a.remove();
+    setStatus('Downloaded tuning-answers.json — send it back in chat.');
+  } catch (e) { showOut(js, 'Download was blocked — select all and copy the box below.'); }
 };
 document.getElementById('reset').onclick = () => { render(); setStatus('Recommendations restored.'); };
 document.getElementById('restoreCur').onclick = () => {
