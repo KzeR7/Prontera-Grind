@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Prontera Grind — nerf tuning sheet</title>
+<style>
+  :root{--edge:#cbb894;--edge2:#8a7a5c;--ink:#2b2418;--bg:#f6efdf;--card:#fffdf7;--rec:#1d6f42;--cur:#8a7a5c;
+        --num:#a0541b;--ok:#1d6f42;--bad:#b3261e}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.5 "Segoe UI",Tahoma,Verdana,sans-serif}
+  header{background:#efe3c8;border-bottom:2px solid var(--edge);padding:18px 22px}
+  h1{margin:0 0 4px;font-size:22px}
+  h2{font-size:17px;margin:0 0 6px}
+  .sub{color:#5d5240;font-size:13px}
+  main{max-width:1180px;margin:0 auto;padding:18px 22px 140px}
+  section{background:var(--card);border:1px solid var(--edge);border-radius:8px;padding:14px 16px;margin:0 0 16px}
+  .note{color:#5d5240;font-size:12.5px;margin:6px 0 0}
+  table{width:100%;border-collapse:collapse;margin-top:10px;font-size:13px}
+  th,td{border-bottom:1px solid #e6dcc6;padding:6px 8px;text-align:left;vertical-align:top}
+  th{background:#f2e9d5;font-size:12px;text-transform:uppercase;letter-spacing:.03em;color:#5d5240}
+  td.n{text-align:right;font-variant-numeric:tabular-nums}
+  .cur{color:var(--cur);font-variant-numeric:tabular-nums}
+  .rec{color:var(--rec);font-weight:600;font-variant-numeric:tabular-nums}
+  input[type=number],input[type=text],textarea{font:inherit;padding:4px 6px;border:1px solid var(--edge);
+    border-radius:5px;background:#fff;color:var(--ink)}
+  input[type=number]{width:110px;text-align:right}
+  input[type=text]{width:210px}
+  textarea{width:100%;min-height:70px}
+  .choices{display:flex;gap:14px;flex-wrap:wrap}
+  label.ch{display:flex;gap:6px;align-items:flex-start;max-width:420px;font-size:13px}
+  .badge{display:inline-block;background:#e9d39a;border:1px solid var(--edge2);border-radius:4px;
+    padding:1px 6px;font-size:11px;margin-left:6px}
+  .warn{color:var(--num);font-weight:600}
+  #bar{position:fixed;left:0;right:0;bottom:0;background:#efe3c8;border-top:2px solid var(--edge);
+    padding:10px 22px;display:flex;gap:12px;align-items:center;flex-wrap:wrap;z-index:5}
+  button{font:inherit;font-weight:600;padding:7px 14px;border-radius:6px;border:1px solid var(--edge2);
+    background:#fffdf7;color:var(--ink);cursor:pointer}
+  button.primary{background:var(--rec);color:#fff;border-color:#14532d}
+  #status{font-size:13px;color:var(--rec)}
+  #outWrap{display:none;margin-top:10px}
+  #outWrap.on{display:block}
+  #out{width:100%;min-height:130px;font:12px/1.45 ui-monospace,Menlo,Consolas,monospace;
+    background:#2b2418;color:#f6efdf;border:1px solid var(--edge2);border-radius:6px;padding:10px}
+  pre{background:#2b2418;color:#f6efdf;padding:12px;border-radius:6px;overflow:auto;font-size:12px}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  @media(max-width:900px){.grid{grid-template-columns:1fr}}
+  .k{color:var(--num);font-variant-numeric:tabular-nums}
+  footer{color:#5d5240;font-size:12px;text-align:center;padding:8px 0 0}
+</style>
+</head>
+<body>
+<header>
+  <h1>Nerf tuning sheet <span class="badge">Prontera Grind · ui-v36</span></h1>
+  <div class="sub">Every row shows the <b class="cur">current value in the game</b>, <b class="rec">my recommended value</b> (already
+  filled in the box) and a note explaining what it does. Change any box you disagree with, click
+  <b>Copy answers</b>, and paste the JSON back in chat. Nothing here changes the game by itself —
+  this is the form the code change gets written from.</div>
+</header>
+
+<main>
+  <section>
+    <h2>How to use it</h2>
+    <p class="note" style="font-size:13px">
+      1. Read the <b>Measured impact</b> section first (bottom) — it is what the flat-base ÷3 does, measured on the real
+      endgame fixture. 2. Go row by row: leave my number, or type yours. Rows marked <span class="warn">choose one</span> are
+      either/or. 3. Add anything you want in the free-text box. 4. <b>Copy answers</b> → paste back.
+      Values in <span class="k">orange</span> are code constants; the ones you edit are only recommendations until they are coded.
+    </p>
+  </section>
+
+  <div id="sections"></div>
+
+  <section id="impact">
+    <h2>Measured impact of the ÷3 (auto-attack DPS, Lv150 Lord Knight, +10 Legendary set, 9 Legendary ATK cards, avg of 200 sets)</h2>
+    <table>
+      <tr><th>variant</th><th class="n">auto-DPS</th><th class="n">vs today</th><th class="n">ATK</th><th class="n">max HP</th><th class="n">mob kill</th><th class="n">boss kill</th></tr>
+      <tr><td>today</td><td class="n">438,133</td><td class="n">×1.00</td><td class="n">32,291</td><td class="n">166,508</td><td class="n">0.13 s</td><td class="n">1.5 s</td></tr>
+      <tr><td><b>A — flat base ÷3</b> (everything, as asked)</td><td class="n">167,925</td><td class="n">×0.38</td><td class="n">12,379</td><td class="n warn">60,099</td><td class="n">0.33 s</td><td class="n">3.9 s</td></tr>
+      <tr><td>÷3 <b>only</b> on weapon/armor/shield/legwear, head+accessory kept (A3)</td><td class="n">167,925</td><td class="n">×0.38</td><td class="n">12,379</td><td class="n">166,508</td><td class="n">0.33 s</td><td class="n">3.9 s</td></tr>
+      <tr><td>flat base ÷2 instead</td><td class="n">235,475</td><td class="n">×0.54</td><td class="n">17,357</td><td class="n">86,701</td><td class="n">0.23 s</td><td class="n">2.8 s</td></tr>
+      <tr><td>A + affix magnitude ×1.3 (AM up) — power handed back</td><td class="n">203,463</td><td class="n">×0.46</td><td class="n">13,289</td><td class="n">60,442</td><td class="n">0.27 s</td><td class="n">3.2 s</td></tr>
+      <tr><td>A + affixes ×1.3 + cards ×1.3 (CV up)</td><td class="n">212,029</td><td class="n">×0.48</td><td class="n">13,844</td><td class="n">60,442</td><td class="n">0.26 s</td><td class="n">3.1 s</td></tr>
+    </table>
+    <p class="note">
+      The ÷3 is a <b>flat multiplier on every drop's value</b>, so it hits level 1 and level 150 equally — unlike the audit's
+      earlier "level term .15 → .10" idea, which only bit at the top. Handing power back through affixes (+30% magnitude) and
+      cards (+30% values) lands the endgame at <b>×0.48</b> — i.e. a <b>52% nerf</b>, not a 72% one, and mobs still die in
+      under a third of a second. Max HP is the one casualty: the flat values on <b>headgear (×4) and accessories (×3)</b> are
+      the HP, so dividing those two slots cuts max HP to 36%. Affix/card give-backs do <b>not</b> restore HP (60,099 → 60,442).
+      That is why the HP-slot question below defaults to <b>keep them</b>.
+    </p>
+  </section>
+</main>
+
+<div id="bar">
+  <button id="copy" class="primary">Copy answers</button>
+  <button id="reset">Restore my recommendations</button>
+  <button id="download">Download JSON</button>
+  <button id="restoreCur">Use current values everywhere</button>
+  <span id="status"></span>
+</div>
+<div id="outWrap" style="position:fixed;left:0;right:0;bottom:56px;background:#efe3c8;border-top:1px solid var(--edge);padding:10px 22px;z-index:6">
+  <div style="font-size:12.5px;color:#5d5240;margin-bottom:6px">Answers — select all and copy, or use the button above:
+    <button id="hideout" style="padding:2px 8px;font-size:12px">hide</button></div>
+  <textarea id="out" readonly></textarea>
+</div>
+
+<script>
+const MODEL = [
+ {id:'equipment_base', title:'1. Equipment flat base (the number the ÷3 applies to)', note:
+  'Every drop\'s value is: <b>base[slot] × section[1/2.2/4/7] × (1 + itemLvl×0.15) × rarity multiplier</b>. '+
+  'At the endgame (item level 99, high-tier section, Legendary) that is base × 7 × 15.85 × 4.5. Dividing the base '+
+  'divides the whole value, at every level, on every map.',
+  rows:[
+   {id:'base_weapon',  label:'Weapon',    cur:6,  rec:2,    note:'feeds ATK; one +10 Legendary weapon = 6,990 ATK today'},
+   {id:'base_armor',   label:'Armor',     cur:4,  rec:1.33, note:'feeds DEF'},
+   {id:'base_head',    label:'Headgear',  cur:10, rec:3.33, note:'<span class="warn">the max-HP slot (×4)</span> — dividing it cuts HP; see the choice in section 6'},
+   {id:'base_off',     label:'Shield',    cur:3,  rec:1,    note:'feeds DEF'},
+   {id:'base_leg',     label:'Legwear',   cur:3,  rec:1,    note:'feeds DEF'},
+   {id:'base_acc',     label:'Accessory', cur:5,  rec:1.67, note:'<span class="warn">the max-HP slot (×3)</span>'},
+   {id:'section_ladder',label:'Section ladder', cur:'1, 2.2, 4, 7', rec:'1, 2.2, 4, 7', text:true,
+     note:'Novice / 1st-job / 2nd-job / high-tier gear. Kept — the ÷3 already scales everything down and this ladder is what makes later maps feel better.'},
+   {id:'level_term',   label:'Level term (per item level)', cur:0.15, rec:0.15,
+     note:'value ×(1 + itemLvl×0.15). Kept, because ÷3 is uniform; the audit\'s stage 2 changed this to 0.10 — a much bigger endgame-only nerf.'},
+   {id:'rarity_mult',  label:'Rarity multipliers', cur:'1, 1.35, 1.9, 2.8, 4.5', rec:'1, 1.35, 1.9, 2.8, 4.5', text:true,
+     note:'Common → Legendary. Kept; the audit\'s stage 2 proposed Legendary 3.5 — optional if you want a second lever.'},
+   {id:'comodo_cliff', label:'Comodo section cliff', cur:'map ≥ 5 → always high-tier gear', rec:'map ≥ 5 → high-tier only from field level 3', text:true,
+     note:'On maps 5-10 today a level-1 field drop is already high-tier gear (a ×3.2 value step the moment you arrive). Gating it to field level 3 keeps Comodo an upgrade without the jump.'},
+  ]},
+
+ {id:'affixes', title:'2. Affixes (the main "give some power back" channel)', note:
+  'Each item rolls its own affixes from the 11-stat pool. Affix value = <b>(1 + section) × AM[r rarity] × weight(stat) × rnd(0.8, 1.25)</b>, '+
+  'and by the endgame every one of the seven slots rolls from the same pool, so the same stat can stack seven times.',
+  rows:[
+   {id:'affix_count_common', label:'Affixes per item — Common', cur:'1', rec:'1', text:true, note:'count is fixed on Common/Fine/Rare and a 50/50 roll on Epic/Legendary'},
+   {id:'affix_count_fine',   label:'Affixes per item — Fine',   cur:'1 or 2', rec:'1 or 2', text:true, note:''},
+   {id:'affix_count_rare',   label:'Affixes per item — Rare',   cur:'2', rec:'2', text:true, note:''},
+   {id:'affix_count_epic',   label:'Affixes per item — Epic',   cur:'2 or 3', rec:'2 or 3', text:true, note:''},
+   {id:'affix_count_legend', label:'Affixes per item — Legendary', cur:'3', rec:'3', text:true,
+     note:'<b>kept on purpose:</b> 3 affixes per Legendary item is the biggest give-back channel after the ÷3 (cutting it to 2 was the audit\'s stage 1).'},
+   {id:'am_common', label:'Affix magnitude AM — Common', cur:1,   rec:1,   note:''},
+   {id:'am_fine',   label:'Affix magnitude AM — Fine',   cur:1.6, rec:2.1, note:'+31% on affix values'},
+   {id:'am_rare',   label:'Affix magnitude AM — Rare',   cur:2.6, rec:3.4, note:'+31%'},
+   {id:'am_epic',   label:'Affix magnitude AM — Epic',   cur:4,   rec:5.2, note:'+30%'},
+   {id:'am_legend', label:'Affix magnitude AM — Legendary', cur:6.5, rec:8.5, note:'+31%; this is what lifts the endgame from ×0.38 to ×0.46 of today'},
+  ]},
+
+ {id:'weights', title:'2b. The 11 affixes — what one point of each is worth', note:
+  'These weights decide how strong each affix is relative to the others (value = AM × weight). They are also the card weights (section 3). '+
+  'The notes carry the average roll on one section-3 Legendary item today, and the same roll at my recommended AM.',
+  rows:[
+   {id:'w_str',  label:'STR (w 1)',    cur:1,   rec:1,   note:'+27 stat points on one endgame item today · +35 at my recommended AM'},
+   {id:'w_agi',  label:'AGI (w 1)',    cur:1,   rec:1,   note:'+27 → +35'},
+   {id:'w_dex',  label:'DEX (w 1)',    cur:1,   rec:1,   note:'+20 → +26'},
+   {id:'w_luk',  label:'LUK (w 1)',    cur:1,   rec:1,   note:'+20 → +26'},
+   {id:'w_int',  label:'INT (w 1)',    cur:1,   rec:1,   note:'+20 → +26'},
+   {id:'w_hp',   label:'Max HP (w 12)',cur:12,  rec:12,  note:'+320 HP on one item today · +418 recommended (flat HP comes mostly from the two HP slots, not from affixes)'},
+   {id:'w_atk',  label:'ATK % (w 0.8)',cur:0.8, rec:0.8, note:'+21% ATK today · +28% recommended — the affix that matters most'},
+   {id:'w_crit', label:'Crit (w 0.45)',cur:0.45,rec:0.45,note:'+12 crit chance today · +16 recommended (total crit caps at 60%)'},
+   {id:'w_aspd', label:'Attack speed % (w 0.6)', cur:0.6, rec:0.6, note:'+16% ASPD today · +21% recommended'},
+   {id:'w_flee', label:'Flee (w 0.8)', cur:0.8, rec:0.8, note:'+21 dodge today, +28 recommended — flee is the least valuable roll'},
+   {id:'w_cdm',  label:'Crit damage % (w 1.5)', cur:1.5, rec:1.5, note:'+40% CDM today · +52% recommended — the strongest single affix in the pool'},
+  ]},
+
+ {id:'cards', title:'3. Cards', note:
+  'Card value = <b>round(CV[grade] × weight(stat))</b>. Cards are the smallest endgame layer today (×1.22 of DPS), which is why they are the '+
+  'second give-back channel. Grade by where it drops: stages 1-3 Common, 4-7 Uncommon, 8-9 Rare, Stage-10 boss Legendary.',
+  rows:[
+   {id:'cv_common',     label:'Card value CV — Common', cur:1, rec:1,   note:''},
+   {id:'cv_uncommon',   label:'Card value CV — Uncommon', cur:2, rec:2.6, note:'+30%'},
+   {id:'cv_rare',       label:'Card value CV — Rare', cur:3, rec:3.9, note:'+30%'},
+   {id:'cv_legend',     label:'Card value CV — Legendary', cur:5, rec:6.5, note:'+30%; a Legendary ATK card goes +4% → +5% ATK — nine of them = +30% → +39% ATK'},
+   {id:'slots_weapon',  label:'Card slots — weapon', cur:'2 or 3 (Rare+)', rec:'2 or 3 (Rare+)', text:true, note:'kept'},
+   {id:'slots_other',   label:'Card slots — other six slots', cur:'1 from Epic', rec:'1 from Epic', text:true, note:'kept'},
+   {id:'card_field',    label:'Field card drop rate', cur:0.45, rec:0.45, note:'% per kill, any stage — grade depends on the stage. Kept: these are the Common/Rare cards.'},
+   {id:'card_boss',     label:'Stage-10 boss card drop rate (always Legendary)', cur:0.08, rec:0.05,
+     note:'% per boss kill — and the boss card is fixed per map, so it is a 10-card collection. 0.08% ≈ one card per 1,250 boss kills; 0.05% ≈ one per 2,000.'},
+  ]},
+
+ {id:'drops', title:'4. Drop rates', note:
+  'The field always pays out ~12% per kill (three rolls across the map\'s pool, so a specific item is ~4.8-1.3%). A Stage-10 boss rolls '+
+  '<b>every item in its pool</b> at the listed rate, and every boss drop is Legendary — that is the whole non-crafting route to endgame gear.',
+  rows:[
+   {id:'field_roll_1', label:'Field gear roll 1', cur:4.8, rec:4.8, note:'% per kill — kept'},
+   {id:'field_roll_2', label:'Field gear roll 2', cur:4.0, rec:4.0, note:'% per kill — kept'},
+   {id:'field_roll_3', label:'Field gear roll 3', cur:3.2, rec:3.2, note:'% per kill — kept'},
+   {id:'boss_gear',    label:'Stage-10 boss gear, per pool item', cur:2.4, rec:1.2,
+     note:'8-9 items in a boss pool: 21.6% per boss kill today (≈ one Legendary item every 4.6 kills) → 10.8% (≈ one every 9). Halved as you asked.'},
+   {id:'boss_ore',     label:'Stage-10 boss ore rate', cur:5, rec:5, note:'% per boss kill — kept: the +10 refine grind (154 ores for one item) is already the long pole'},
+   {id:'mob_ore',      label:'Stage-10 minion ore rate', cur:2, rec:2, note:'% per minion kill — kept'},
+  ]},
+
+ {id:'hp', title:'5. Mob and boss HP', note:
+  'Mob HP = <b>42 × mapMultiplier × (mapBase + fieldLevel)^1.3</b>. Boss HP = <b>500 × mapMultiplier × (mapBase + 10)^1.3</b>. '+
+  'Bosses die in 1.5 s of auto-attacks today; after the ÷3 they take ~3.1 s. Leaving HP alone is a free extra bit of nerf — '+
+  'use the global multiplier only if boss fights feel too slow.',
+  rows:[
+   {id:'hpk',        label:'Mob HP unit (HPK)', cur:42, rec:42, note:'kept — mobs still die in 0.26 s at the endgame after the ÷3'},
+   {id:'hpe',        label:'Mob HP exponent (HPE)', cur:1.3, rec:1.3, note:'kept — changing this reshapes the whole level curve'},
+   {id:'boss_base',  label:'Boss HP base', cur:500, rec:500, note:'kept (recommended). Per-map HP is in the table below.'},
+   {id:'boss_hp_mult', label:'Boss HP — global multiplier', cur:1, rec:1,
+     note:'one knob for all ten bosses. 0.48 would hold today\'s fight length exactly; 1.0 keeps the fights ~2.1× longer than today.'},
+   {id:'boss_atk_base', label:'Boss ATK multiplier (8 + lvl×6.5) × map', cur:'8 / 6.5', rec:'8 / 6.5', text:true,
+     note:'kept — boss threat is a separate lever; the DEF question in section 6 is what decides whether boss hits actually land.'},
+  ]},
+
+ {id:'decisions', title:'6. Two choices that are not a number', rows:[
+   {id:'hp_slots', label:'Flat base ÷3 and the two max-HP slots', choice:true, cur:'divided too (pure ÷3)', rec:'kept',
+     options:[
+      ['kept','Keep headgear + accessory at today\'s value (A3)','Same damage nerf (×0.38), max HP untouched at 166,508. Recommended.'],
+      ['divided','Divide all six slots, headgear and accessory too','Exactly the ÷3 you asked for, but max HP drops to 60,099 (36%) unless HP is handed back another way.']]},
+   {id:'def_fix', label:'Incoming damage: the DEF immunity bug', cur:'flat subtraction: hit − def×0.6, floor 1', rec:'capped percentage: hit × (1 − min(75%, def/(def+4000)))',
+     choice:true,
+     options:[
+      ['capped','Fix it with the capped percentage (recommended)','Today a geared character takes exactly <b>1</b> damage from every mob and every boss in the game. This leaves the naked game within 0-2% of today and puts endgame at 60-75% reduction.'],
+      ['keep','Leave it alone for now','Gear keeps making you immune; the ÷3 will not change that.']]},
+   {id:'free_notes', label:'Anything else you want changed', text:true, cur:'', rec:'', long:true,
+     note:'e.g. numbers I have not listed, a different drop rate, an order to code things in, or "wait for another round".'},
+  ]},
+];
+
+const byId = {};
+MODEL.forEach(sec => sec.rows.forEach(r => byId[r.id] = r));
+const val = id => parseFloat(document.getElementById('in_'+id).value);
+const txt = id => document.getElementById(id).in_ ? document.getElementById('in_'+id).value : '';
+function field(r){
+  if(r.choice){
+    return '<div class="choices">' + r.options.map(([v,label,desc]) =>
+      `<label class="ch"><input type="radio" name="${r.id}" value="${v}" ${v===r.rec?'checked':''}>
+       <span><b>${label}</b><br><span class="sub">${desc}</span></span></label>`).join('') + '</div>';
+  }
+  if(r.long) return `<textarea id="in_${r.id}" placeholder="your notes / corrections / anything I missed"></textarea>`;
+  const type = r.text ? 'text' : 'number';
+  const step = !r.text && String(r.cur).includes('.') ? ' step="0.01"' : (!r.text ? ' step="1"' : '');
+  const w = String(r.cur).length > 12 ? ' style="width:220px"' : '';
+  return `<input type="${type}"${step}${w} id="in_${r.id}" value="${r.rec}">`;
+}
+const curTxt = r => r.choice ? r.cur : (r.text ? r.cur : r.cur);
+function render(){
+  document.getElementById('sections').innerHTML = MODEL.map(sec => `
+    <section>
+      <h2>${sec.title}</h2>
+      ${sec.note ? `<p class="note">${sec.note}</p>` : ''}
+      <table>
+        <tr><th>what it is</th><th style="width:150px">current</th><th style="width:170px">my recommendation → your value</th><th>why / what it does</th></tr>
+        ${sec.rows.map(r => `<tr>
+          <td><b>${r.label}</b></td>
+          <td class="cur">${curTxt(r)}</td>
+          <td>${field(r)}</td>
+          <td class="note" style="margin:0">${r.note || ''}</td>
+        </tr>`).join('')}
+      </table>
+    </section>`).join('');
+}
+const answers = () => {
+  const out = {};
+  for (const sec of MODEL) {
+    const bag = {};
+    for (const r of sec.rows) {
+      let v;
+      if (r.choice) {
+        const c = document.querySelector('input[name="' + r.id + '"]:checked');
+        v = c ? c.value : r.rec;     // never drop a decision: fall back to the recommendation
+      } else {
+        const box = document.getElementById('in_' + r.id);
+        v = r.long || r.text ? (box ? box.value : '') : val(r.id);
+      }
+      if (v !== undefined && v !== null && v !== '') bag[r.id] = v;
+    }
+    if (Object.keys(bag).length) out[sec.id] = bag;
+  }
+  return out;
+};
+function setStatus(m){document.getElementById('status').textContent = m; setTimeout(() => document.getElementById('status').textContent = '', 4000)}
+function answersJson(){
+  return JSON.stringify({ sheet:'cards-gear-audit/tuning-sheet', build:'ui-v37',
+    filled: new Date().toISOString().slice(0,10), answers: answers() }, null, 2);
+}
+function showOut(js, msg){
+  const w = document.getElementById('outWrap'), t = document.getElementById('out');
+  t.value = js; w.classList.add('on');
+  setStatus(msg);
+}
+document.getElementById('hideout').onclick = () => document.getElementById('outWrap').classList.remove('on');
+document.getElementById('copy').onclick = async () => {
+  const js = answersJson();
+  showOut(js, 'Answers ready below — copied to the clipboard if your browser allowed it.');
+  try { await navigator.clipboard.writeText(js); }
+  catch (e) {
+    try { const t = document.getElementById('out'); t.focus(); t.select(); document.execCommand('copy'); }
+    catch (e2) { /* the box is visible: select all + copy by hand */ }
+  }
+};
+document.getElementById('download').onclick = () => {
+  const js = answersJson();
+  try {
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([js], {type:'application/json'}));
+    a.download = 'tuning-answers.json';
+    document.body.appendChild(a); a.click(); a.remove();
+    setStatus('Downloaded tuning-answers.json — send it back in chat.');
+  } catch (e) { showOut(js, 'Download was blocked — select all and copy the box below.'); }
+};
+document.getElementById('reset').onclick = () => { render(); setStatus('Recommendations restored.'); };
+document.getElementById('restoreCur').onclick = () => {
+  MODEL.forEach(sec => sec.rows.forEach(r => {
+    if(r.choice){ const c = document.querySelector(`input[name="${r.id}"][value="${r.rec}"]`); if(c) c.checked = false; }
+    else document.getElementById('in_'+r.id).value = r.cur;
+  }));
+  setStatus('Every box now holds today\'s value — change only what you want to move.');
+};
+render();
+</script>
+<footer>Prontera Grind · tuning sheet · generated from the ui-v36 code and <code>Updates/cards-gear-audit/audit-output.txt</code></footer>
+</body>
+</html>

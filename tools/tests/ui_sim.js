@@ -93,7 +93,7 @@ const mobs=[],drops=[],logs=[];
 const $=id=>({style:{},set innerHTML(v){globalThis['h_'+id]=v},get innerHTML(){return globalThis['h_'+id]||''},textContent:'',onclick:null});
 const dr=()=>1;
 ${code}
-const skpAvail=()=>5,skLine=()=>['Novice'],skEarned=()=>9,skSpent=()=>0,pv=()=>0,bon=()=>0,qTxt=q=>'quest';
+const skpAvail=()=>5,skTree=()=>4,skEarnedMax=()=>9,skLine=()=>['Novice'],skEarned=()=>9,skSpent=()=>0,pv=()=>0,bon=()=>0,qTxt=q=>'quest';
 this.__u={ V, SKILLS, SKILL_ICON, set S(v){S=v}, get S(){return S}, set eqPick(v){eqPick=v}, get eqPick(){return eqPick},
            set mapM(v){mapM=v}, set mapL(v){mapL=v}, set selE(v){selE=v}, set selS(v){selS=v}, set selP(v){selP=v} };
 `;
@@ -140,8 +140,8 @@ t('the map panel renders every map and field', () => {
   // the boss field lists the whole pool with odds, and the new ore rates
   U.mapL = 10;
   const b = U.V.map();
-  assert.ok(b.includes('2.4%') && b.includes('poolitem') && b.includes('Each item rolls independently'), 'the boss must list the doubled independent equipment rolls');
-  assert.ok(b.includes('0.08%'), 'boss card odds must remain unchanged');
+  assert.ok(b.includes('<b>1%</b>') && b.includes('poolitem') && b.includes('Each item rolls independently'), 'the boss must list its whole pool at 1% each');
+  assert.ok(b.includes('0.1%'), 'boss card odds must read 0.1% (v38)');
   assert.ok(b.includes('2% each') && b.includes('5% each'), 'ore rates: 2% per monster, 5% per boss');
 });
 
@@ -252,6 +252,9 @@ t('HP flips at 30%; one split bar fills Base from left and Job from right with c
   assert.ok(markup.includes('Base Lv 1')&&markup.includes('Job Lv 1'),'both sides need labels');
   assert.ok(src.includes('#xp-track{display:flex;width:100%;height:14px'),'track spans the screen');
   assert.ok(src.includes('.xp-side{position:relative;flex:0 0 50%'),'the two parts share the single track equally');
+  assert.ok(src.includes('.xp-side{position:relative;flex:0 0 50%;min-width:0;cursor:default;'),
+    'no help cursor on the EXP bars');
+  assert.ok(!/class="xp-side"[^>]*title=/.test(src),'neither EXP bar may carry a title');
   assert.ok(src.includes('#jb{left:auto;right:0;'),'Job fill must originate at the right edge');
   assert.ok(src.includes('.xp-pct{left:50%;transform:translateX(-50%)}'),'each percentage is centred within its half');
   assert.ok(src.includes('#hpb.critical{background:linear-gradient('),'low HP must use a red treatment');
@@ -271,11 +274,15 @@ t('HP flips at 30%; one split bar fills Base from left and Job from right with c
   assert.strictEqual(d.hpb.classList.flags.critical,false,'31% HP must stay green');
   assert.strictEqual(d.jb.style.width,'45%');assert.strictEqual(d.xpb.style.width,'45%');
   assert.strictEqual(d.jobPct.textContent,'45.0%');assert.strictEqual(d.basePct.textContent,'45.0%');
-  assert.ok(d.jobTrack.title.includes('45.0% to next level'));
-  assert.ok(d.baseTrack.title.includes('45.0% to next level'));
+  assert.strictEqual(d.jobTrack.title,'','v36 removed the hover tooltip from the Job bar');
+  assert.strictEqual(d.baseTrack.title,'','v36 removed the hover tooltip from the Base bar');
+  assert.ok(d.jobTrack.attrs['aria-valuetext'].includes('45.0% to next level'),
+    'the sentence still reaches screen readers through aria-valuetext');
   assert.strictEqual(d.jobTrack.attrs['aria-valuenow'],'45.0');
   h.S.hp=30;h.bars();assert.strictEqual(d.hpb.classList.flags.critical,true,'30% HP must turn red');
   h.job.jl=50;h.S.lv=150;h.bars();assert.strictEqual(d.jb.style.width,'100%');assert.strictEqual(d.xpb.style.width,'100%');
+  assert.ok(d.dps&&d.dps.title.includes('Damage per second'),'bars() writes the DPS readout every second');
+  assert.strictEqual(d.dps.textContent,'0','no damage banked means no DPS');
 });
 
 t('damage digits, critical burst and skill names use separate anchored combat overlays', () => {
@@ -318,7 +325,7 @@ t('damage digits, critical burst and skill names use separate anchored combat ov
   assert.strictEqual(F.floats[5].txt,'1896','critical digits come back too');
   const strikeBox={};vm.createContext(strikeBox);
   vm.runInContext(`
-    let mob={x:1,z:3,hp:10000,size:1},shake=0,hit=null;
+    let mob={x:1,z:3,hp:10000,size:1},shake=0,hit=null,S={dmg:0};
     const missCh=()=>0,crit=()=>100,atk=()=>100,matk=()=>200,st=()=>0,critD=()=>2,
       rnd=(a,b)=>a,addFloat=()=>{},damageFloat=(...args)=>{hit=args};
     ${grab('function strike(mult,col,magic=false){','// Higher job tiers get more casts per swing:')}
@@ -326,6 +333,8 @@ t('damage digits, critical burst and skill names use separate anchored combat ov
   `,strikeBox);
   assert.ok(strikeBox.__hit.hit[4]&&strikeBox.__hit.hit[3]>100&&strikeBox.__hit.shake===6,
     'actual critical strike must send its numeric damage into the burst renderer');
+  assert.strictEqual(vm.runInContext('S.dmg',strikeBox)>0,true,
+    'every player hit must add to the lifetime damage counter the DPS meter reads');
   assert.strictEqual(F.floats[3].anchor,'hero');assert.strictEqual(F.floats[3].y,3.53);
   const draw=grab('  floats.forEach(f=>{if(!f.el)', '  const pt=bn?');
   const scene={floats:F.floats,pl:F.pl,create:()=>({style:{}}),draw};
@@ -342,6 +351,9 @@ t('Zeny and kill rates refresh every second using a rolling minute and reset aft
   assert.ok(src.includes('.hud-zeny:hover .hud-flyout'),'Zeny tooltip must open on hover without browser title delays');
   assert.ok(src.includes("$('zenyRate').textContent=`Zeny earned:"),'tooltip must display a live rate');
   assert.ok(src.includes('Kills/min <b id="kills"'),'kills rate must replace lifetime count');
+  assert.ok(src.includes('<div>DPS <b id="dps"'),'a DPS readout must sit beside the kill rate');
+  assert.ok(src.includes("dpsEl.title=`Damage per second"),'the DPS readout needs a live tooltip');
+  assert.ok(src.includes('S.dmg=(S.dmg||0)+d'),'strike() and hurt() must bank every point of damage');
   const box={};vm.createContext(box);
   vm.runInContext(`
     let S={zeny:200},zenyEarned=0;
@@ -380,6 +392,28 @@ t('Zeny and kill rates refresh every second using a rolling minute and reset aft
   m=sample('another-player',900,999999,clock+600000);
   assert.strictEqual(m.kills,0);assert.strictEqual(m.zeny,0,
     'ten minutes with no frames must not compress 879 accumulated kills into one second');
+});
+
+t('the DPS meter shares the rolling minute and resets with the save', () => {
+  const box={};vm.createContext(box);
+  vm.runInContext(`
+    let S={zeny:0},zenyEarned=0;
+    ${grab('function earnZeny(amount){','function kill(o){')}
+    ${grab('const HUD_RATE_WINDOW=60000,HUD_IDLE_RESET=30000,HUD_RATE_REFRESH=1000;','const levelPct=')}
+    this.__r={stepHudRate,S};
+  `,box);
+  const R=box.__r;
+  let state=null;
+  const s=(user,k,z,dmg,time)=>{const m=R.stepHudRate(state,user,k,z,time,dmg);state=m.state;return m};
+  s('p',0,0,0,0);
+  let m=s('p',0,0,10000,1000);
+  assert.strictEqual(m.dps,10000,'10,000 damage in the first second reads 10,000 dps');
+  m=s('p',0,0,10000,1500);assert.strictEqual(m.dps,10000,'the reading holds between whole seconds');
+  m=s('p',0,0,30000,2000);assert.strictEqual(m.dps,15000,'30,000 over two seconds reads 15,000 dps');
+  // a browser stall longer than 30s throws the old window away instead of spiking the meter
+  m=s('p',0,0,40000,78000);assert.strictEqual(m.dps,0,'a stall longer than 30s wipes the old rate');
+  m=s('p',0,0,50000,79000);assert.strictEqual(m.dps,10000,'and damage after the resume starts a new window');
+  m=s('p',0,0,0,80000);assert.strictEqual(m.dps,0,'a fresh save (damage counter reset) starts at zero');
 });
 
 t('every skill has a distinct icon and upgraded card metadata', () => {
@@ -443,6 +477,38 @@ t('pet details show Ragnarok sprites, named upgrade levels, and gacha skill odds
   const h2=U.V.pet();
   assert.ok(h2.includes('Slot 1: <b class="r0">empty</b>')&&h2.includes('Slot 2: <b class="r0">empty</b>'),'both empty slots are offered');
   assert.ok(h2.includes('Gacha both skills'),'and the button says what it will do');
+});
+
+t('the Skills panel prints the whole tree against what a maxed line earns', () => {
+  assert.ok(src.includes('const skTree=()=>'), 'skTree() must exist - the panel needs the tree price');
+  assert.ok(src.includes('const skEarnedMax=()=>'), 'skEarnedMax() must exist');
+  assert.ok(src.includes('const skCost=()=>1;'), 'a skill level costs one point (v37)');
+  assert.ok(src.includes('this line\'s tree costs ${skTree()}, a maxed line earns ${skEarnedMax()}'),
+    'the panel must show the tree price and the maxed-line income side by side');
+  assert.ok(src.includes('Skill levels cost 1 point each (5 to max a skill), so a maxed job level can always finish this whole line'),
+    'the panel blurb must state the guarantee');
+  // and the arithmetic itself, on the real numbers
+  const box = {};
+  vm.createContext(box);
+  vm.runInContext(`
+    let S = {cls:'Lord Knight', jobs:{Novice:{jl:10,jx:0},Swordman:{jl:50,jx:0},Knight:{jl:40,jx:0},'Lord Knight':{jl:50,jx:0}}, sk:{aid:1}, skOff:{}};
+    ${grab('const CD=[', 'const pm=s=>')}
+    const skLine=()=>lineOf(S.cls);
+    const skCost=()=>1, skCostOf=L=>L;
+    const skEarned=()=>skLine().reduce((a,n)=>a+Math.max(0,(((S.jobs[n]||{}).jl)||1)-1),0);
+    const skSpent=()=>SKILLS.reduce((a,s)=>a+(skLine().includes(s.from)?skCostOf(S.sk[s.id]||0):0),0);
+    const skpAvail=()=>Math.max(0,skEarned()-Math.max(0,skSpent()-(S.sk.aid?1:0)));
+    const skTree=()=>Math.max(0,SKILLS.filter(s=>skLine().includes(s.from)).reduce((a,s)=>a+skCostOf(s.max),0)-(S.sk.aid?1:0));
+    const skEarnedMax=()=>skLine().reduce((a,n)=>a+(CLASSES[n].mj-1),0);
+    this.__s={skTree,skEarnedMax,skpAvail,SKILLS,lineOf};
+  `, box);
+  const K = box.__s, line = K.lineOf('Lord Knight');
+  const tree = K.skTree(), max = K.skEarnedMax();
+  assert.ok(max - tree >= 30, 'a maxed line must clear its tree by 30+ points: ' + tree + ' of ' + max);
+  // this fixture has the Knight at Job 40, so it has earned 146 - still far above the 64-point tree
+  assert.strictEqual(K.skpAvail(), 146, 'a fresh Lord Knight has its full purse (9+49+39+49)');
+  assert.ok(tree <= 146, 'the tree must fit inside a mid-promotion job history');
+  console.log('       Lord Knight: tree ' + tree + ' pts of ' + max + ' earned at max job level');
 });
 
 t('every panel a tab can open builds HTML without throwing', () => {

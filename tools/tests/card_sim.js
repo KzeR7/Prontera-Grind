@@ -82,18 +82,25 @@ t('cardStat tolerates negative and large seeds without returning undefined', () 
       assert.ok(C.AFF.includes(C.cardStat(g, seed)), `seed ${seed} grade ${g} -> ${C.cardStat(g, seed)}`);
 });
 
-t('the five base stats keep exactly their old flat value', () => {
+t('the five base stats are CV[g] flat and rounded, never AB-weighted', () => {
+  // v38 raised CV x3.2 (a Legendary base-stat card is +16, was +5), so the pin is the table
+  // itself, rounded - not the number 5 it used to be.
   for (let g = 0; g < 4; g++)
     for (const s of C.K5)
-      assert.strictEqual(C.cardVal(g, s), C.CV[g], `${s} card grade ${g} changed value`);
-  assert.strictEqual(C.cardVal(0, 'str'), 1);
-  assert.strictEqual(C.cardVal(3, 'str'), 5);
+      assert.strictEqual(C.cardVal(g, s), Math.max(1, Math.round(C.CV[g])), `${s} card grade ${g} changed value`);
+  assert.strictEqual(C.cardVal(0, 'str'), 3);
+  assert.strictEqual(C.cardVal(3, 'str'), 16);
 });
 
 t('wider stats scale by their AB weight instead of a flat CV[g]', () => {
-  assert.strictEqual(C.cardVal(3, 'hp'), 60, 'a Legendary HP card should be 5*12');
-  assert.strictEqual(C.cardVal(2, 'hp'), 36, 'a Rare HP card should be 3*12');
-  assert.ok(C.cardVal(3, 'cdm') > C.cardVal(3, 'str'), 'crit-dmg card should beat a STR card at the same grade');
+  // 16*12 = 192 and round(9.6*12) = 115 under v38's CV = [3.2, 6.4, 9.6, 16].
+  assert.strictEqual(C.cardVal(3, 'hp'), 192, 'a Legendary HP card should be 16*12');
+  assert.strictEqual(C.cardVal(2, 'hp'), 115, 'a Rare HP card should be round(9.6*12)');
+  // v38 cut the crit-damage weight (AB.cdm 1.5 -> 0.7), so a Legendary CDM card is +11% and now
+  // sits BELOW a Legendary STR card's +16: a percentage card is worth fewer points than a flat
+  // one, and crit damage is no longer the shortcut it was. Pinned as a deliberate relation.
+  assert.strictEqual(C.cardVal(3, 'cdm'), 11, 'a Legendary CDM card is +11%');
+  assert.ok(C.cardVal(3, 'cdm') < C.cardVal(3, 'str'), 'the cdm weight must not out-value a flat stat card');
   // Percentage stats deliberately show SMALLER numbers than flat stats: +4% ATK is worth far
   // more than +5 STR at endgame because it multiplies the whole attack total. Pin the ratio
   // so the relationship is intentional rather than accidental.
@@ -136,8 +143,8 @@ t('every equipment group has at least one card stat that fits it', () => {
 t('the load() repair is stat-aware, not the old flat CV[g]', () => {
   const hp = { g: 3, stat: 'hp' }, str = { g: 3, stat: 'str' };
   C.cardVal2(hp); C.cardVal2(str);
-  assert.strictEqual(hp.v, 60, 'repair flattened the HP card back to CV[g]');
-  assert.strictEqual(str.v, 5, 'repair changed a base-stat card');
+  assert.strictEqual(hp.v, 192, 'repair flattened the HP card back to CV[g]');
+  assert.strictEqual(str.v, 16, 'repair changed a base-stat card');
   const junk = { g: 3 };
   C.cardVal2(junk);
   assert.ok(Number.isFinite(junk.v) && junk.v >= 1, 'a card with no stat crashed the repair');

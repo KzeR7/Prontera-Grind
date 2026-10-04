@@ -44,13 +44,13 @@ html, body { margin:0; padding:0; width:100vw; height:100vh; overflow:hidden; ba
 .hud-health{display:flex;align-items:center;gap:7px;white-space:nowrap}.hud-health small{font-weight:bold;min-width:34px;text-align:right}
 #hpb{background:linear-gradient(180deg,#7cec8f,#20a74c 65%,#17883a);box-shadow:inset 0 1px #f3fff588,0 0 8px #30c75677}
 #hpb.critical{background:linear-gradient(180deg,#ff8e81,#ed4242 60%,#b92031);box-shadow:inset 0 1px #fff7,0 0 8px #e54949aa}
-.hud-zeny{position:relative;color:#a27200;font-weight:bold;cursor:help;white-space:nowrap}.hud-zeny:focus-visible,.xp-side:focus-visible{outline:2px solid #2f6fd6;outline-offset:-2px}
+.hud-zeny{position:relative;color:#a27200;font-weight:bold;cursor:default;white-space:nowrap}.hud-zeny:focus-visible,.xp-side:focus-visible{outline:2px solid #2f6fd6;outline-offset:-2px}
 .hud-flyout{position:absolute;bottom:calc(100% + 8px);left:0;z-index:90;background:#251f20;color:#fff;font-size:12px;font-weight:600;padding:7px 10px;border-radius:7px;white-space:nowrap;box-shadow:0 4px 14px #0008;opacity:0;visibility:hidden;pointer-events:none}
 .hud-zeny:hover .hud-flyout,.hud-zeny:focus .hud-flyout{opacity:1;visibility:visible}
 #xp-dock{flex:none;width:100%;padding:3px 10px 4px;background:linear-gradient(180deg,#413743,#26242f);box-shadow:inset 0 2px 6px #140f1899;z-index:9}
 /* One RO-style bar: Base fills toward the centre from the left, Job from the right. */
 #xp-track{display:flex;width:100%;height:14px;border:1px solid #756c77;border-radius:4px;background:#161820;overflow:hidden;box-shadow:inset 0 1px 4px #000a;color:#fff;font:bold 9px/12px "Trebuchet MS",sans-serif;text-shadow:0 1px 2px #000,0 0 4px #000}
-.xp-side{position:relative;flex:0 0 50%;min-width:0;cursor:help;overflow:hidden}.xp-side:first-child{border-right:2px solid #d6c2a6}.xp-side:hover{background:#ffffff12}
+.xp-side{position:relative;flex:0 0 50%;min-width:0;cursor:default;overflow:hidden}.xp-side:first-child{border-right:2px solid #d6c2a6}.xp-side:hover{background:#ffffff12}
 .xp-fill{position:absolute;top:0;bottom:0;left:0;width:0;transition:width .3s ease}
 #jb{left:auto;right:0;background:linear-gradient(180deg,#bca0ff,#7452cb 70%,#493692)}#xpb{background:linear-gradient(180deg,#9ce6ff,#348fcc 70%,#246398)}
 .xp-label,.xp-pct{position:absolute;top:0;z-index:1;white-space:nowrap}.xp-label{left:8px}.xp-label.job{left:auto;right:8px}.xp-pct{left:50%;transform:translateX(-50%)}
@@ -183,21 +183,31 @@ hr{border:0;border-top:1px dashed var(--edge);margin:6px 0}
 <div id="hud"><div><b id="cls2"></b> Base Lv <b id="lv">1</b> / Job Lv <b id="jl">1</b></div>
 <div class="hud-health">HP <div class="bar" role="meter" aria-label="HP" aria-valuemin="0" aria-valuemax="100" id="hpMeter"><i id="hpb"></i></div><small id="hpPct">100%</small></div>
 <div class="hud-zeny" id="zenyHover" tabindex="0" aria-describedby="zenyRate">&#9679; <b id="zeny">0</b> Zeny<span class="hud-flyout" id="zenyRate" role="tooltip">Zeny earned: 0/min</span></div>
-<div>Kills/min <b id="kills" title="Recent kills per minute (last 60 seconds, refreshed each second)">0.0</b></div><div id="hudBuffs" role="status" aria-live="polite" title="Pet buffs: they never stack across pets, and ATK / MATK cannot both be active."></div><div style="margin-left:auto;display:flex;align-items:center;gap:8px"><span id="userBadge" style="font-weight:bold;font-size:12px;background:#e9d39a;padding:3px 8px;border-radius:4px;border:1px solid var(--edge2)"></span><button id="logoutBtn" onclick="logout()" style="display:none">Logout</button><button id="spd">Speed x1</button></div></div>
+<div>Kills/min <b id="kills" title="Recent kills per minute (last 60 seconds, refreshed each second)">0.0</b></div><div>DPS <b id="dps" title="Damage per second you dealt (last 60 seconds, refreshed each second)">0</b></div><div id="hudBuffs" role="status" aria-live="polite" title="Pet buffs: they never stack across pets, and ATK / MATK cannot both be active."></div><div style="margin-left:auto;display:flex;align-items:center;gap:8px"><span id="userBadge" style="font-weight:bold;font-size:12px;background:#e9d39a;padding:3px 8px;border-radius:4px;border:1px solid var(--edge2)"></span><button id="logoutBtn" onclick="logout()" style="display:none">Logout</button><button id="spd">Speed x1</button></div></div>
 <div id="xp-dock" aria-label="Level progress"><div id="xp-track">
-  <div class="xp-side" id="baseTrack" tabindex="0" role="progressbar" aria-label="Base Level" aria-valuemin="0" aria-valuemax="100" title="Base Level: 0% to next level"><div class="xp-fill" id="xpb"></div><span class="xp-label" id="baseLabel">Base Lv 1</span><span class="xp-pct" id="basePct">0%</span></div>
-  <div class="xp-side" id="jobTrack" tabindex="0" role="progressbar" aria-label="Job Level" aria-valuemin="0" aria-valuemax="100" title="Job Level: 0% to next level"><div class="xp-fill" id="jb"></div><span class="xp-pct" id="jobPct">0%</span><span class="xp-label job" id="jobLabel">Job Lv 1</span></div>
+  <div class="xp-side" id="baseTrack" tabindex="0" role="progressbar" aria-label="Base Level" aria-valuemin="0" aria-valuemax="100"><div class="xp-fill" id="xpb"></div><span class="xp-label" id="baseLabel">Base Lv 1</span><span class="xp-pct" id="basePct">0%</span></div>
+  <div class="xp-side" id="jobTrack" tabindex="0" role="progressbar" aria-label="Job Level" aria-valuemin="0" aria-valuemax="100"><div class="xp-fill" id="jb"></div><span class="xp-pct" id="jobPct">0%</span><span class="xp-label job" id="jobLabel">Job Lv 1</span></div>
 </div></div>
 </div>
 <div id="modal"><div class="login-card"><p id="mt" style="font-size:14px;opacity:1;margin:0 0 12px"></p><div class="row" style="justify-content:center"><button id="my">Yes</button><button id="mn">Cancel</button></div></div></div><div id="tooltip"></div>
 <script src="assets/sprite_pack_data.js?v=1"></script>
 <script src="assets/weapon_joints_data.js?v=1"></script>
-<script src="assets/kit/morocc-atlas.js?v=1"></script>
+<!-- v1 Morocc atlas generator deleted (2026-10-04): retired to Updates/retired-v1-kit/ when map
+     kit v2 shipped, and this tag pointed at a file that no longer exists in the tree. kit_sim
+     asserts it is never loaded again. -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
 const $=id=>document.getElementById(id);
 const RAR=[{n:'Common',m:1,w:60},{n:'Fine',m:1.35,w:25},{n:'Rare',m:1.9,w:10},{n:'Epic',m:2.8,w:4},{n:'Legendary',m:4.5,w:1}];
-const AM=[1,1.6,2.6,4,6.5],GRADE=['Common','Uncommon','Rare','Legendary'],GI=[0,1,2,4],CV=[1,2,3,5];
+// v38 balance, three constants at once:
+//   AM x1.7 - affix magnitude, the first give-back for the weapon cut (a Legendary ATK
+//             affix goes +21% -> +36%)
+//   CV x3.2 - card values, the main give-back, because a card is something you FARM for:
+//             a Legendary ATK card goes +4% -> +13%, a full set of nine +36% -> +115%
+//   the flat weapon cut plus these two = x0.70 of yesterday's endgame DPS, with the layers
+//   spread x2.0/x3.7/x1.6 (flat/affix/card) instead of x6.9/x2.6/x1.2. Pinned by gear_sim.js
+//   and card_sim.js; measured in Updates/cards-gear-audit/.
+const AM=[1.7,2.72,4.42,6.8,11.05],GRADE=['Common','Uncommon','Rare','Legendary'],GI=[0,1,2,4],CV=[3.2,6.4,9.6,16];
 const SLOTS={weapon:{label:'Weapon',stat:'ATK',ic:'⚔️'},armor:{label:'Armor',stat:'DEF',ic:'🥼'},head:{label:'Headgear',stat:'HP',ic:'🎩'},off:{label:'Shield',stat:'DEF',ic:'🛡️'},leg:{label:'Legwear',stat:'DEF',ic:'👖'},acc:{label:'Accessory',stat:'HP',ic:'💍'}};
 const WICON={dagger:'🗡️',katar:'🔪',staff:'🪄',bow:'🏹',axe:'🪓',sword:'⚔️',mace:'🔨'},ORE={ori:'Oridecon',elu:'Elunium'},SECN=['Novice gear','1st-job gear','2nd-job gear','High-tier gear'];
 // Canonical item-database sprites by weapon family. These display the same recognizable
@@ -221,7 +231,10 @@ const SKILL_ICON={aid:'💚',bash:'👊',endure:'🛡️',hprec:'❤️‍🩹',
   frenzy:'🦾',dpois:'🧪',ovthrust:'📈',mbrk:'🧱',fdiver:'🧊',fnova:'🌨️',ashower:'🌧️',sandat:'🏜️',
   signum:'☦️',cartrev:'🚚',spearboom:'🔱',tblow:'💢',vermilion:'🌋',landmine:'💣',wwalk:'🌬️',
   vsplash:'🧨',akatar:'🔪',tundead:'⚰️',basilica:'🏛️',meltdown:'⚒️'};
-const AFF=['str','agi','dex','luk','int','hp','atk','crit','aspd','flee','cdm'],AB={str:1,agi:1,dex:1,luk:1,int:1,hp:12,atk:.8,crit:.45,aspd:.6,flee:.8,cdm:1.5};
+// cdm's weight is 0.7, down from 1.5: one point of crit damage buys less than half of what it
+// used to (a Legendary CDM affix is +32%, was +40%), so crit-damage stacking is no longer the
+// shortcut it was - the power moved into cards, which you collect by playing.
+const AFF=['str','agi','dex','luk','int','hp','atk','crit','aspd','flee','cdm'],AB={str:1,agi:1,dex:1,luk:1,int:1,hp:12,atk:.8,crit:.45,aspd:.6,flee:.8,cdm:.7};
 const AL={str:'STR',agi:'AGI',dex:'DEX',luk:'LUK',int:'INT',hp:'Max HP',atk:'ATK %',crit:'Crit %',aspd:'ASPD %',flee:'Flee %',cdm:'Crit DMG %',vit:'VIT'};
 // The field is a vertical avenue: the player starts at the near end (high Z, bottom of the
 // screen) and mobs hold the far end (low Z, top of the screen), so you run up to engage.
@@ -231,10 +244,13 @@ const AL={str:'STR',agi:'AGI',dex:'DEX',luk:'LUK',int:'INT',hp:'Max HP',atk:'ATK
 // once stats cap), so a correctly-levelled character needed ~30-100s per mob from Geffen
 // onward. 1.3 keeps HP just ahead of ATK: early maps fall in a couple of swings and the
 // late maps in about five, with bosses still a ~12x fight. See tools/tests/economy_sim.js.
-const SU=k=>k.toUpperCase(),BX_=13,Z0=-28,Z1=12,MPS=15,AGGRO=6.5,HPK=42,HPE=1.3,K5=['str','agi','dex','luk','int'];
+const SU=k=>k.toUpperCase(),BX_=13,Z0=-28,Z1=12,MPS=15,AGGRO=6.5,BOSSZ=-4,BOSS_NEAR=2.2,BOSS_FAR=6,HPK=42,HPE=1.3,K5=['str','agi','dex','luk','int'];
 const GM_USER='GM',GM_PASS='gm1234';   // CHANGE THE GM PASSWORD before you publish
-const BUILD='2026-10-04 ui-v29 weapon-held-in-one-position';   // shown on the login card - confirms which file you loaded
-const BUILD='2026-10-04 ui-v35 pet-rework bag-highlight dmg-toggles map-rarity';   // shown on the login card - confirms which file you loaded
+// Merge resolution (2026-10-04): main carried two BUILD lines (ui-v29 + ui-v35) in this one
+// script block, which is a SyntaxError - the game did not run on main at all. One line wins, and
+// it names both sides of this merge: the v38 balance patch (the weapon cut, the affix/card
+// give-back) and main's weapon-hold rendering work.
+const BUILD='2026-10-04 ui-v38 weapon-cut cards-carry + weapon-hold';   // shown on the login card - confirms which file you loaded
 $('buildTag').textContent='build '+BUILD;
 
 // ---------- class tree: Novice -> 6 first jobs -> 6 second jobs -> 6 third jobs ----------
@@ -577,17 +593,22 @@ const MAPTIER=[0,0,1,1,2,2,3,3,3,3];
 const dropTier=(m,l)=>l>=10?4:MAPTIER[Math.max(0,Math.min(MAPTIER.length-1,m|0))];
 // The field's gear pool: every item an equipment drop on this map+level can be. Weapons first
 // (they are the ones a player is hunting), then body, headgear, shield, legwear, two accessories.
-function gearPool(m,l){const sg=MAPS[m].gear[m>=5?3:secOf(l)],T=[];
+// v38: maps 5-10 used to hand out high-tier gear from field level 1, a x3.2 value step the moment
+// you arrived. Now the high tier starts at field level 3 and stages 1-2 hand out 2nd-job gear -
+// but the drop's *section* is floored at 2, not taken from secOf(l), which for stages 1-2 is 0
+// (Novice gear: fine on Prontera, vendor trash on Abyss at level 90). Pinned by gear_sim.js.
+const secField=(m,l)=>m>=5?(l>=3?3:2):secOf(l);
+function gearPool(m,l){const sg=MAPS[m].gear[secField(m,l)],T=[];
   for(const k in sg.w)T.push({k,n:sg.w[k]});
   T.push({k:'armor',n:sg.a},{k:'head',n:sg.h},{k:'off',n:sg.o},{k:'leg',n:sg.l},{k:'acc',n:sg.ac});
   if(sg.ac2)T.push({k:'acc',n:sg.ac2});
   return T}
-function fieldOf(m,l){const mp=MAPS[m],sec=m>=5?3:secOf(l),T=gearPool(m,l),n=T.length,ft=dropTier(m,l);
+function fieldOf(m,l){const mp=MAPS[m],sec=secField(m,l),T=gearPool(m,l),n=T.length,ft=dropTier(m,l);
   // three gear rolls per mob, spread across the pool so two mobs on one field do not pay out
   // the same item; gear is the common drop and a card is the rare one.
   const mobs=[0,1].map(j=>{const mm=mp.mobs[(l-1+j)%mp.mobs.length],cg=l<=3?0:l<=7?1:2;
     return{...mm,tier:ft,drops:[[T[(l*3+2*j)%n],4.8],[T[(l*3+2*j+1)%n],4.0],[T[(l*3+2*j+2)%n],3.2]],card:{n:mm.n+' Card',stat:cardStat(cg,(m*10+l+j)*3+1),g:cg},cardCh:.45,ore:l===10,oreCh:l===10?.02:0}});
-  return{m,l,sec,tier:ft,mobs,boss:l===10?{...mp.boss,tier:ft,drops:T.map(x=>[x,2.4]),card:{n:mp.boss.n+' Card',stat:cardStat(3,m),g:3},cardCh:.08,ore:true,oreCh:.05}:null}}
+  return{m,l,sec,tier:ft,mobs,boss:l===10?{...mp.boss,tier:ft,drops:T.map(x=>[x,1]),card:{n:mp.boss.n+' Card',stat:cardStat(3,m),g:3},cardCh:.1,ore:true,oreCh:.05}:null}}
 // One drop line for the map panel: icon + name + the fixed rarity on the left, the % on the right.
 const poolIc=T=>gearSlot(T)==='weapon'?(WICON[T.k]||'⚔️'):{armor:'🥼',head:'🎩',off:'🛡️',leg:'👖',acc:'💍'}[T.k];
 const dropTxt=([T,ch],tier)=>`<div class="dropline"><span>${poolIc(T)} ${T.n} <small class="r${tier||0}">${RAR[tier||0].n}</small></span><b>${ch}%</b></div>`;
@@ -664,10 +685,14 @@ const PEQ=[{n:'Claw',d:t=>`+${t*12}% pet damage`},{n:'Collar',d:t=>`+${t*8}% pet
 // one copy is up, another pet's cast is ignored rather than refreshed - and ATK and MATK can
 // never run at the same time. Blood Siphon pays a share of whatever the pet hits for back to
 // you; Vital Aura raises your max HP, and the bar comes back down when it lapses.
-// PETBAL is the pet balance knob: at 2.18 a fully maxed pet (G6 + Mythril 5/5/5 + two attack
+// PETBAL is the pet balance knob: at 3.4 a fully maxed pet (G6 + Mythril 5/5/5 + two attack
 // skills) measures about the same DPS as ONE fully maxed character playing their whole rotation.
 // tools/tests/pet_sim.js measures exactly that and fails if it drifts.
-const PETGAP=7,PETBAL=2.18;
+// v38 took it 2.18 -> 3.4: a pet's damage is petDmg = your ATK x PETBAL x ..., so cutting the
+// weapon's flat value cut pet damage with it. Without this the pet would silently lose a third
+// of its power relative to its owner - the owner asked for a weapon/affix/card rebalance, not a
+// pet nerf, and the pet's zeny price did not move either.
+const PETGAP=7,PETBAL=3.4;
 const PET_SKILLS=[
   {id:'warcry',n:'War Cry',kind:'buff',stat:'atk',power:20,duration:30,cd:60,desc:'Player ATK +20% for 30s, 60s cooldown. Never stacks with another pet, and cannot run next to MATK',vfx:'frenzy',color:'#ffd050',icon:'⚔️'},
   {id:'arcane',n:'Arcane Blessing',kind:'buff',stat:'matk',power:20,duration:30,cd:60,desc:'Player MATK +20% for 30s, 60s cooldown. Never stacks with another pet, and cannot run next to ATK',vfx:'magnus',color:'#a58bff',icon:'✦'},
@@ -740,13 +765,13 @@ const uid=()=>Date.now()+Math.random(),rnd=(a,b)=>a+Math.random()*(b-a),ri=(a,b)
 // One roll fills both slots. The second pick is made from the skills the first did not take, so
 // the two can never match and there is no retry loop to spin if the dice are pinned.
 const PET_SKILL_WEIGHTS=PET_SKILLS.map(()=>1),rollPetSkills=()=>{const a=pickW(PET_SKILL_WEIGHTS),rest=PET_SKILL_WEIGHTS.map((w,i)=>i).filter(i=>i!==a);return[PET_SKILLS[a].id,PET_SKILLS[rest[Math.floor(Math.random()*rest.length)]].id]};
-const fresh=()=>({pets:[],cls:'Novice',sex:'m',hair:0,lv:1,exp:0,hp:100,zeny:0,kills:0,pts:10,jobs:{Novice:{jl:1,jx:0}},sk:{aid:1},skOff:{},dmgShort:true,dmgShow:true,base:{},mp:0,lvl:1,prog:[1,1,1,1,1],kl:0,auto:true,adv:true,q:null,cards:[],ore:{ori:0,elu:0},gm:false,gmx:100,
+const fresh=()=>({pets:[],cls:'Novice',sex:'m',hair:0,lv:1,exp:0,hp:100,zeny:0,kills:0,dmg:0,pts:10,jobs:{Novice:{jl:1,jx:0}},sk:{aid:1},skOff:{},dmgShort:true,dmgShow:true,base:{},mp:0,lvl:1,prog:[1,1,1,1,1],kl:0,auto:true,adv:true,q:null,cards:[],ore:{ori:0,elu:0},gm:false,gmx:100,
   st:{str:1,agi:1,dex:1,luk:1,int:1,vit:1},eq:{weapon:{id:1,slot:'weapon',wt:'dagger',tier:0,val:5,name:'Novice Knife',aff:[],slots:1,cards:[],sec:0},armor:null,head:null,off:null,leg:null,acc1:null,acc2:null},inv:[]});
 const saveKey=()=>'pg_save3_'+currentUser;
 const num_= (v,d)=>{v=+v;return Number.isFinite(v)?v:d};
 function load(){try{const s=JSON.parse(lsGet(saveKey()));if(s&&s.lv){const F=fresh(),f=Object.assign(F,s);f.st=Object.assign(fresh().st,s.st||{});if(!CLASSES[f.cls])f.cls='Novice';
 // repair top-level numbers corrupted by older/test saves (null -> crash on .toLocaleString())
-  for(const k of['lv','exp','hp','zeny','kills','pts','mp','lvl','kl','gmx'])f[k]=num_(f[k],F[k]);
+  for(const k of['lv','exp','hp','zeny','kills','dmg','pts','mp','lvl','kl','gmx'])f[k]=num_(f[k],F[k]);
   if(f.dmgShort!==true&&f.dmgShort!==false)f.dmgShort=true;   // damage digits: short unless deliberately switched
   if(f.dmgShow!==true&&f.dmgShow!==false)f.dmgShow=true;      // and the floats are shown unless switched off
   for(const k of['str','agi','dex','luk','int','vit'])f.st[k]=Math.max(1,Math.min(MAXST,num_(f.st[k],1)));
@@ -759,6 +784,24 @@ function load(){try{const s=JSON.parse(lsGet(saveKey()));if(s&&s.lv){const F=fre
   // skills removed or renamed since the save was written must not strand the points spent on
   // them: dropping the entry refunds the points, which is kinder than an invisible dead cost.
   for(const k in f.sk)if(!SKILLS.some(x=>x.id===k))delete f.sk[k];
+  // A save can carry more skill levels than its line has earned: the v35 shop charged an
+  // escalating ladder and kept its ledger in levels, so points were minted and could be spent
+  // past what the line ever earned. Repair it here (load) instead of letting skpAvail() clamp
+  // to zero for ever: trim levels in reverse roster order - the last-defined skills are the
+  // ones bought last - and record how many points came back so the Skills panel can say so.
+  // Pure arithmetic on SKILLS/CLASSES/f, so it stays inside this load() span.
+  {const line=[];for(let n=f.cls;CLASSES[n];n=CLASSES[n].par)line.unshift(n);
+   const paid=id=>{const s=SKILLS.find(x=>x.id===id);return s?Math.max(0,Math.floor(+((f.sk||{})[id])||0)):0};
+   const owed=()=>SKILLS.reduce((a,s)=>a+(line.includes(s.from)?paid(s.id):0),0);
+   const has=line.reduce((a,n)=>a+Math.max(0,((((f.jobs||{})[n]||{}).jl)||1)-1),0)+(f.sk.aid?1:0);
+   if(owed()>has){
+     let over=owed()-has,back=0;
+     for(const s of SKILLS.slice().reverse()){
+       if(over<=0||!line.includes(s.from))continue;
+       const L=Math.min(paid(s.id),s.max);if(!L)continue;
+       const cut=Math.min(L,over);f.sk[s.id]=L-cut;over-=cut;back+=cut;
+       if(f.sk[s.id]<=0)delete f.sk[s.id]}
+     f.skRepair=back}}
   // per-class builds (Base Lv / stats / points / gear) - repair, drop anything malformed
   if(!f.base||typeof f.base!=='object')f.base={};
   for(const k in f.base){const r=f.base[k];
@@ -767,7 +810,7 @@ function load(){try{const s=JSON.parse(lsGet(saveKey()));if(s&&s.lv){const F=fre
     r.pts=Math.max(0,Math.floor(num_(r.pts,0)));r.hp=Math.max(1,num_(r.hp,1));
     if(!r.st||typeof r.st!=='object')r.st={};
     for(const s of['str','agi','dex','luk','int','vit'])r.st[s]=Math.max(1,Math.min(MAXST,num_(r.st[s],1)));
-    if(!r.eq||typeof r.eq!=='object')r.eq={}}
+    if(!r.eq||typeof r.eq!=='object')r.eq=null}   // null = loadout unknown: keep what is worn
   if(!Array.isArray(f.pets))f.pets=[];f.pets=f.pets.filter(p=>p&&typeof p==='object');if(!Array.isArray(f.inv))f.inv=[];if(!Array.isArray(f.cards))f.cards=[];
   if(!f.eq||typeof f.eq!=='object')f.eq=F.eq;if(f.hp<=0)f.hp=F.hp;
   const fx=c=>{c.v=cardVal(c.g,c.stat)};(f.cards||[]).forEach(fx);(f.pets||[]).forEach((p,i)=>{if(p.on===undefined)p.on=i<3;if(!Array.isArray(p.eq))p.eq=[0,0,0];p.eq=[0,1,2].map(k=>Math.max(0,Math.min(PT.length,Math.floor(num_(p.eq[k],0)))));
@@ -832,11 +875,20 @@ addEventListener('load',()=>{if(typeof THREE==='undefined')showErr('3D engine fa
 const gx=()=>S.gm?(S.gmx||100):1;
 
 // ---------- derived stats ----------
-// Buying level L costs L points, so maxing a skill costs 1+2+3+4+5 = 15. At one point per
-// level every job line could max its whole tree with dozens of points left over; this makes
-// the tree cost more than a line ever earns (a transcendent job earns 107 and can reach 13
-// skills = 195), so builds have to choose. That scarcity is how RO itself works.
-const skCost=L=>Math.max(1,L);
+// Skill points: one per job level past the first (9 for a maxed Novice, 58 for a maxed 1st
+// job, 107 for a 2nd job, 156 for a transcendent), and ONE point per skill level - 5 to max a
+// skill. Every line's whole tree therefore costs 4 / 24 / 44 / 64 points against 9 / 58 / 107 /
+// 156 earned, so a maxed job level can always finish its own tree, in every possible history.
+//
+// History, because this number has been wrong twice:
+//   v35 charged the escalating ladder (level L cost L, so 15 to max a skill). A maxed Lord
+//       Knight earned 156 and the tree cost 195 - 39 points that could never be bought.
+//   v36 (one release) charged a flat 2. That fits on paper (spare 1/10/19/28) but only just:
+//       a Lord Knight promoted at the minimum gate (Swordman 40 -> Knight 40) who also
+//       restarted the Novice once earns 127 and the tree still cost 128 - one point short, so
+//       the panel could still strand a maxed character. The cushion is the fix: at 1 point per
+//       level the worst case in the game leaves 63 points spare.
+const skCost=()=>1;
 const C=()=>CLASSES[S.cls]||CLASSES.Novice,lv=id=>S.sk[id]||0,jobOf=()=>S.jobs[S.cls]||(S.jobs[S.cls]={jl:1,jx:0});
 // Job level j of the current tier costs the job exp (70% of mob exp) that the mirrored
 // base level pays out, so each job bar fills in step with the base bar and the three job
@@ -869,13 +921,17 @@ const totalPts=()=>{let p=10;for(let l=2;l<=S.lv;l++)p+=4+Math.floor(l/5);return
 // against trees costing 14 / 74 / 134 / 194, so no line can max its own tree. Pinned by
 // skill_sim.js, which runs the real purchase loop and checks the purse against the ledger.
 const skLine=()=>lineOf(S.cls);
-const skCostOf=L=>L*(L+1)/2;   // what the + button has charged you, in total, for level L
+const skCostOf=L=>L;             // what the + button has charged you, in total, for level L
 const skEarned=()=>skLine().reduce((a,n)=>a+Math.max(0,(((S.jobs[n]||{}).jl)||1)-1),0);
 const skSpent=()=>SKILLS.reduce((a,s)=>a+(skLine().includes(s.from)?skCostOf(S.sk[s.id]||0):0),0);
 // Clamped at zero: a save written by an older build can be over-spent in the new ledger (it was
 // buying skills with the phantom points), and it should read as "nothing spare" rather than as a
 // negative that breaks the + buttons. The deficit shrinks as the line earns more job levels.
 const skpAvail=()=>Math.max(0,skEarned()-Math.max(0,skSpent()-(S.sk.aid?1:0)));
+// The whole line, priced: what maxing every reachable skill costs, and what a fully
+// levelled line earns. The Skills panel prints both so "can I finish this?" is never a guess.
+const skTree=()=>Math.max(0,SKILLS.filter(s=>skLine().includes(s.from)).reduce((a,s)=>a+skCostOf(s.max),0)-(S.sk.aid?1:0));
+const skEarnedMax=()=>skLine().reduce((a,n)=>a+(CLASSES[n].mj-1),0);
 const refCost=it=>Math.round(200*((it.r||0)+1)*(1+(it.sec||0)*.5)),refCh=it=>[100,100,100,100,70,60,50,40,30,20][it.r||0];
 const affTxt=a=>`${AL[a.k]} +${a.v}`,cardTxt=c=>`${c.n} (${SU(c.stat)} +${c.v})`,dtier=it=>it.card?GI[it.g]:it.ore?3:it.tier;
 const isBoss=()=>S.lvl===10,fieldName=()=>`${MAPS[S.mp].n} Stage ${S.lvl}`;
@@ -952,7 +1008,7 @@ function spawn(){
   }
   mobs.forEach((m,i)=>{
     const a=(i-1)*Math.PI*2/Math.max(1,mobs.length-1),r=2.3+(i%2)*.65;
-    const [x,z]=bossWave?(m.boss?[0,-4]:[Math.cos(a)*r,-4+Math.sin(a)*r]):sites[m.pack];
+    const [x,z]=bossWave?(m.boss?[0,BOSSZ]:[Math.cos(a)*r,BOSSZ+Math.sin(a)*r]):sites[m.pack];
     m.x=x+rnd(-PACK_JITTER,PACK_JITTER);m.z=z+rnd(-PACK_JITTER,PACK_JITTER);
     m.hx=m.x;m.hz=m.z;m.spawn=0;m.ry=0;m.at=rnd(.6,1.6);m.a=i*2.4;
   });
@@ -964,7 +1020,11 @@ function genGear(T,l,sec,boss,tier){
   // room and the value inside that band. The drop loop still passes mob.boss and mob.tier - a
   // Stage 10 boss field is the one place dropTier returns Legendary.
   const t=Number.isFinite(tier)?tier:dropTier(S.mp,S.lvl);
-  const val=Math.max(1,Math.round({weapon:6,armor:4,head:10,off:3,leg:3,acc:5}[slot]*[1,2.2,4,7][sec]*(1+l*.15)*RAR[t].m*rnd(.9,1.12)));
+  // v38 balance: the weapon's flat value is divided by 3 (6 -> 2). Weapons are the single
+  // biggest power source a character owns, and dividing the base divides it at every level.
+  // Armor/head/shield/legwear/accessory keep their value: headgear (maxHp x4) and accessory
+  // (maxHp x3) are the HP slots and armour/legs/shield carry DEF, which is the anti-death stat.
+  const val=Math.max(1,Math.round({weapon:2,armor:4,head:10,off:3,leg:3,acc:5}[slot]*[1,2.2,4,7][sec]*(1+l*.15)*RAR[t].m*rnd(.9,1.12)));
   const n=[1,1+ri(0,1),2,2+ri(0,1),3][t],pool=AFF.slice(),aff=[],af=(1+sec)*AM[t];
   for(let i=0;i<n;i++){const k=pool.splice(ri(0,pool.length-1),1)[0];aff.push({k,v:Math.max(1,Math.round(af*AB[k]*rnd(.8,1.25)))})}
   const slots=slot==='weapon'?Math.min(3,1+ri(0,1)+(t>=3?1:0)):Math.min(1,ri(0,1)+(t>=3?1:0));
@@ -1005,11 +1065,11 @@ function log(m,cls){logs.push({m,cls});if(logs.length>80)logs.shift();
 // ---------- combat ----------
 function shot(col){if(!mob||heroWeaponType(C().n,C().wt,S.eq.weapon&&S.eq.weapon.wt)!=='bow')return;
   shots.push({x0:pl.x,z0:pl.z,x1:mob.x,z1:mob.z,t:0,col:col||'#fff',arrow:true})}
-function hurt(o,d,col,c){o.hp-=d;o.flash=1;damageFloat(o.x+rnd(-.4,.4),1.2+.8*(o.spriteScale||o.size),o.z,d,c);if(o.hp<=0)kill(o)}
+function hurt(o,d,col,c){S.dmg=(S.dmg||0)+d;o.hp-=d;o.flash=1;damageFloat(o.x+rnd(-.4,.4),1.2+.8*(o.spriteScale||o.size),o.z,d,c);if(o.hp<=0)kill(o)}
 function strike(mult,col,magic=false){
   if(!mob)return;if(Math.random()*100<missCh()){addFloat(mob.x,1.8,mob.z,'Miss','#ccc');return}
   const c=Math.random()*100<crit(),base=magic?matk():atk(),d=Math.max(1,Math.round(base*mult*rnd(Math.min(.95,.7+st('dex')*.004),1.15)*(c?critD():1)));
-  mob.hp-=d;mob.flash=1;shake=c?6:2;damageFloat(mob.x+rnd(-.4,.4),1.5*Math.max(1,(mob.spriteScale||mob.size)*.8)+.6,mob.z,d,c);
+  S.dmg=(S.dmg||0)+d;mob.hp-=d;mob.flash=1;shake=c?6:2;damageFloat(mob.x+rnd(-.4,.4),1.5*Math.max(1,(mob.spriteScale||mob.size)*.8)+.6,mob.z,d,c);
 }
 // Higher job tiers get more casts per swing: Novice 1, first job 2, second job 3, transcendent
 // 4 (tier is 0/1/2/3 - Assassin Cross and Lord Knight are tier 3, not 2). Every cast after the
@@ -1144,12 +1204,18 @@ function noviceRun(){                         // a real restart: 25 Base Lv, Job
 // job levels, skills and worn gear are all still on it (S.base[n]), so there is nothing to
 // re-earn - you just step back into it. The Novice reset gate and the parent job-level gate
 // only apply to a class you have never played.
-function playedClass(n){return !!(S.base&&S.base[n])}
+// A class counts as PLAYED when there is either a per-class record (the usual case) or a
+// career: job levels above 1, or job EXP, on that class. Without the second test a save that
+// predates S.base (or whose records were repaired away) treated its own played classes as
+// never played - the class-change gate then forced a Novice restart, which is what silently
+// wiped Base Lv, stats and points when a player switched back to a class they had played.
+function playedClass(n){return !!((S.base&&S.base[n])||classCareer(n))}
+const classCareer=n=>{const j=S.jobs&&S.jobs[n];return !!(j&&((+j.jl||1)>1||(+j.jx||0)>0))};
 // Class collection (v17b nerf): +1% damage per TRANSCENDENT (tier-3) class played, and
 // only once the rebirth grind starts (Base Lv 100+). Derived at runtime, so old saves get
 // credit for free, and both counts are data-driven - classes added later join in
 // automatically. Played = a tier-3 record in S.base, or being on one right now.
-const playedClasses=()=>{const s=new Set();if(CLASSES[S.cls]&&CLASSES[S.cls].tier===3)s.add(S.cls);for(const k in(S.base||{}))if(S.base[k]&&typeof S.base[k]==='object'&&CLASSES[k]&&CLASSES[k].tier===3)s.add(k);return s.size};
+const playedClasses=()=>{const s=new Set();if(CLASSES[S.cls]&&CLASSES[S.cls].tier===3)s.add(S.cls);for(const k in CLASSES)if(CLASSES[k].tier===3&&playedClass(k))s.add(k);return s.size};
 const t3Total=()=>{let n=0;for(const k in CLASSES)if(CLASSES[k].tier===3)n++;return n};
 const collDmg=()=>S.lv>=100?playedClasses():0;
 function classBlock(n){
@@ -1161,7 +1227,7 @@ function changeClass(n){if(classBlock(n))return;
   snapClass();                                 // remember the class we are stepping away from
   const from=S.cls;S.cls=n;jobOf();
   const rec=n==='Novice'?null:classRec(n);     // a class you left earlier picks up where it stopped
-  if(rec){S.lv=rec.lv;S.exp=rec.exp;S.pts=rec.pts;S.st=Object.assign({},rec.st);equipRec(rec.eq)}
+  if(rec){S.lv=rec.lv;S.exp=rec.exp;S.pts=rec.pts;S.st=Object.assign({},rec.st);if(rec.eq)equipRec(rec.eq)}
   else if(n==='Novice')noviceRun();
   else if(from==='Novice')freshBuild();       // promotions preserve allocated stats and unspent points
   {const o=S.eq.off;if(o&&!(o.slot==='off'?canShield():dualOk(o))){S.inv.push(o);S.eq.off=null}}const w=S.eq.weapon;
@@ -1230,12 +1296,12 @@ const V={
     <div class="legend"><span class="tn cur">Current</span><span class="tn ok">Available</span><span class="tn played">Played</span><span class="tn lock">Locked</span></div>
     <div class="hd" style="margin-top:4px">🏆 Class collection: ${playedClasses()}/${t3Total()} transcendent &middot; <b>+${collDmg()}% damage</b> <small>(+1% each${S.lv<100?' &middot; activates at Base Lv 100':''} - play them all!)</small></div>
     <div class="mob-card"><div class="hd">${k}</div><small>${c.par?'Before: <b>'+c.par+'</b>':'Starting class'}${c.kids.length?' &middot; Next: <b>'+c.kids.join(', ')+'</b>':''}</small><br>
-    <small>${pj?`Saved ${rec?`Base Lv ${rec.lv} &middot; `:''}Job Lv ${pj.jl}/${c.mj}`:'Not played yet'}${rec?' &middot; <b>waiting: your stats and gear are still on it</b>':''} &middot; ATK x${c.atk} &middot; ASPD x${c.aspd} &middot; HP x${c.hp}<br>Weapons: ${c.wt.join(', ')} &middot; Main stat ${SU(c.main)}</small>
+    <small>${pj?`Saved ${rec?`Base Lv ${rec.lv} &middot; `:''}Job Lv ${pj.jl}/${c.mj}`:'Not played yet'}${playedClass(k)&&k!==S.cls?' &middot; <b>waiting: your stats, skills and gear are still on it</b>':''} &middot; ATK x${c.atk} &middot; ASPD x${c.aspd} &middot; HP x${c.hp}<br>Weapons: ${c.wt.join(', ')} &middot; Main stat ${SU(c.main)}</small>
     <div class="row" style="margin-top:6px"><button data-a="job" data-v="${k}" ${blk?'disabled':''}>${k===S.cls?'Current class':'Change to '+k}</button>${blk&&k!==S.cls?`<small class="r0">${blk}</small>`:''}</div></div>
     <small><b>A class you have played before is one click away</b> - its Base Lv, job level, skills, stats and gear are still on it, so there is no Novice reset needed to go back to it. A class you have <i>never</i> played still has to be unlocked from its parent (or from the Novice).</small>
     <button class="full" data-a="job" data-v="Novice" ${S.cls==='Novice'?'disabled':''}>Restart as Novice (Base Lv 25, job levels cleared)</button>`},
   skills(){const line=lineOf(S.cls),av=skpAvail(),sel=SKILLS.find(s=>s.id===selS);
-    return`<div class="hd">Skill points: ${av} <small>(${skEarned()} earned on this line, ${Math.max(0,skSpent()-(S.sk.aid?1:0))} spent)</small></div><small>Skill levels cost escalating points (1,2,3,4,5) so no line can max its whole tree &middot; ${SKSLOTS(C().tier)} skill${SKSLOTS(C().tier)>1?'s cast':''} per swing at this job tier &middot; later casts in the same swing land at ${SKFADE.slice(1).map(f=>Math.round(f*100)+'%').join(' / ')} &middot; active skills auto-cast when learned; use the Auto cast checkbox on a skill to pause it</small>`
+    return`${S.skRepair?`<div class="row" style="margin-bottom:4px"><small class="r0"><b>Repaired an older save:</b> ${S.skRepair} skill point${S.skRepair>1?'s were':' was'} refunded - the old shop minted points, so this line was carrying levels it had never earned. Nothing else to do.</small></div>`:''}<div class="hd">Skill points: ${av} <small>(${skEarned()} earned on this line, ${Math.max(0,skSpent()-(S.sk.aid?1:0))} spent &middot; this line's tree costs ${skTree()}, a maxed line earns ${skEarnedMax()} - <b>${Math.max(0,skEarnedMax()-skTree())} to spare</b>)</small></div><small>Skill levels cost 1 point each (5 to max a skill), so a maxed job level can always finish this whole line &middot; ${SKSLOTS(C().tier)} skill${SKSLOTS(C().tier)>1?'s cast':''} per swing at this job tier &middot; later casts in the same swing land at ${SKFADE.slice(1).map(f=>Math.round(f*100)+'%').join(' / ')} &middot; active skills auto-cast when learned; use the Auto cast checkbox on a skill to pause it</small>`
     +line.map(from=>{const ss=SKILLS.filter(s=>s.from===from);return ss.length?`<div class="sec">${from}</div><div class="skg">${ss.map(s=>{const L=lv(s.id),off=!!(L&&s.type!=='pas'&&skOff(s.id)),kind=s.type==='pas'?'PASSIVE':s.type==='to'?'TRADEOFF':s.type==='heal'?'HEAL':'ACTIVE';
       return`<div class="sk${L?'':' off'}${off?' auto-off':''}${selS===s.id?' sel':''}" style="--sk-accent:${s.col||'#8a6a2c'}" data-a="ssel" data-v="${s.id}">
         <div class="sk-head"><span class="sk-kind">${kind}</span>${off?'<span class="sk-paused">OFF</span>':''}</div>
@@ -1358,8 +1424,8 @@ const ACT={
   skill:id=>{const s=SKILLS.find(x=>x.id===id);if(!s)return;const nx=lv(id)+1,c=skCost(nx);
     if(nx>s.max||!lineOf(S.cls).includes(s.from))return;
     if(skpAvail()<c)return log('Needs '+c+' skill points (you have '+skpAvail()+').','r0');
-    S.sk[id]=nx;ui();save()},
-  rskill:()=>{if(S.zeny<rcost())return log('Not enough Zeny to reset skills.');S.zeny-=rcost();S.sk={aid:1};S.skOff={};log('Skills reset; every skill auto-casts again.');ui();save()},
+    S.sk[id]=nx;S.skRepair=0;ui();save()},
+  rskill:()=>{if(S.zeny<rcost())return log('Not enough Zeny to reset skills.');S.zeny-=rcost();S.sk={aid:1};S.skOff={};S.skRepair=0;log('Skills reset; every skill auto-casts again.');ui();save()},
   selb:v=>{selB=v;renderWin()},equip:id=>equip(+id),sell:id=>sell(id),sellbelow:v=>{S.inv.filter(i=>i.tier<=+v).slice().forEach(i=>sell(i.id))},
   // Clicking a green bag tile wears it; the highlight mode stays on so several pieces can be
   // compared, and closing it is the ✕ on the banner (eqclose).
@@ -1416,33 +1482,38 @@ document.addEventListener('mousemove',e=>{tip.style.left=Math.min(innerWidth-240
 // 60-second rates once a second; on a long browser stall, discard stale history rather
 // than treating 10 minutes of paused frames as one second of furious combat.
 const HUD_RATE_WINDOW=60000,HUD_IDLE_RESET=30000,HUD_RATE_REFRESH=1000;
-function stepHudRate(rate,user,kills,earned,now){
-  const k=Math.max(0,Math.floor(Number(kills)||0)),z=Math.max(0,Number(earned)||0);
-  if(!rate||rate.user!==user||now<rate.lastAt||now-rate.lastAt>HUD_IDLE_RESET||k<rate.lastKills||z<rate.lastEarned)
-    rate={user,lastAt:now,lastSampleAt:now,lastKills:k,lastEarned:z,started:now,killsPerMin:0,zenyPerMin:0,killsEvents:[],events:[]};
+function stepHudRate(rate,user,kills,earned,now,damage){
+  const k=Math.max(0,Math.floor(Number(kills)||0)),z=Math.max(0,Number(earned)||0),d=Math.max(0,Number(damage)||0);
+  if(!rate||rate.user!==user||now<rate.lastAt||now-rate.lastAt>HUD_IDLE_RESET||k<rate.lastKills||z<rate.lastEarned||d<rate.lastDmg)
+    rate={user,lastAt:now,lastSampleAt:now,lastKills:k,lastEarned:z,lastDmg:d,started:now,killsPerMin:0,zenyPerMin:0,dps:0,killsEvents:[],events:[],dmgEvents:[]};
   else{
-    const dk=k-rate.lastKills,dz=z-rate.lastEarned;
+    const dk=k-rate.lastKills,dz=z-rate.lastEarned,dd=d-rate.lastDmg;
     if(dk)rate.killsEvents.push({at:now,amount:dk});
     if(dz)rate.events.push({at:now,amount:dz});
-    rate.lastKills=k;rate.lastEarned=z;rate.lastAt=now;
+    if(dd)rate.dmgEvents.push({at:now,amount:dd});
+    rate.lastKills=k;rate.lastEarned=z;rate.lastDmg=d;rate.lastAt=now;
     if(now-rate.lastSampleAt>=HUD_RATE_REFRESH){
       while(rate.killsEvents.length&&rate.killsEvents[0].at<=now-HUD_RATE_WINDOW)rate.killsEvents.shift();
       while(rate.events.length&&rate.events[0].at<=now-HUD_RATE_WINDOW)rate.events.shift();
+      while(rate.dmgEvents.length&&rate.dmgEvents[0].at<=now-HUD_RATE_WINDOW)rate.dmgEvents.shift();
       const elapsed=Math.max(HUD_RATE_REFRESH,Math.min(HUD_RATE_WINDOW,now-rate.started));
       rate.killsPerMin=rate.killsEvents.reduce((sum,e)=>sum+e.amount,0)*HUD_RATE_WINDOW/elapsed;
       rate.zenyPerMin=rate.events.reduce((sum,e)=>sum+e.amount,0)*HUD_RATE_WINDOW/elapsed;
+      rate.dps=rate.dmgEvents.reduce((sum,e)=>sum+e.amount,0)*1000/elapsed;
       rate.lastSampleAt+=HUD_RATE_REFRESH*Math.floor((now-rate.lastSampleAt)/HUD_RATE_REFRESH);
     }
   }
-  return{state:rate,kills:rate.killsPerMin,seconds:rate.killsPerMin/60,zeny:rate.zenyPerMin};
+  return{state:rate,kills:rate.killsPerMin,seconds:rate.killsPerMin/60,zeny:rate.zenyPerMin,dps:rate.dps};
 }
 const levelPct=(value,required,maxed=false)=>maxed?100:Math.min(100,Math.max(0,(+value||0)/Math.max(1,+required||1)*100));
 function bars(){if(!S)return;
-  const rates=stepHudRate(hudRate,currentUser,S.kills,zenyEarned,performance.now());hudRate=rates.state;
+  const rates=stepHudRate(hudRate,currentUser,S.kills,zenyEarned,performance.now(),S.dmg);hudRate=rates.state;
   const j=jobOf(),c=C(),hp=levelPct(S.hp,maxHp()),jp=levelPct(j.jx,jneed(j.jl),j.jl>=c.mj),bp=levelPct(S.exp,need(),S.lv>=150);
   $('lv').textContent=S.lv;$('cls2').textContent=S.cls;$('jl').textContent=j.jl;$('zeny').textContent=(+S.zeny||0).toLocaleString();
   $('kills').textContent=rates.kills.toFixed(1);
   $('kills').title=`Kills/min (last 60s, refreshed every second): ${rates.kills.toFixed(1)} · ${rates.seconds.toFixed(2)} kills/sec`;
+  const dpsEl=$('dps');if(dpsEl){dpsEl.textContent=Math.round(rates.dps).toLocaleString();
+    dpsEl.title=`Damage per second (last 60s, refreshed every second): ${Math.round(rates.dps).toLocaleString()} damage/sec`}
   $('zenyRate').textContent=`Zeny earned: ${Math.round(rates.zeny).toLocaleString()}/min (last 60s)`;
   // One chip per active pet buff, naming the pet that cast it - this is where the no-stacking
   // rule is visible, next to the countdown.
@@ -1454,8 +1525,12 @@ function bars(){if(!S)return;
   for(const[id,label,pct,lv]of[['job','Job Level',jp,j.jl],['base','Base Level',bp,S.lv]]){
     const text=pct.toFixed(1)+'%',track=$(id+'Track');
     $(id==='job'?'jb':'xpb').style.width=pct+'%';$(id+'Pct').textContent=text;$(id+'Label').textContent=(id==='job'?'Job':'Base')+' Lv '+lv;
-    track.title=label+' '+lv+': '+text+(pct>=100?' (MAX)':' to next level');
-    track.setAttribute('aria-valuenow',pct.toFixed(1));track.setAttribute('aria-valuetext',track.title);
+    // v36: no title on the XP bars - hovering used to pop a native tooltip and the help
+    // cursor, which players read as a broken "?" on their own EXP. The percentage is already
+    // written inside the bar; screen readers get the sentence through aria-valuetext.
+    track.title='';
+    track.setAttribute('aria-valuenow',pct.toFixed(1));
+    track.setAttribute('aria-valuetext',label+' '+lv+': '+text+(pct>=100?' (MAX)':' to next level'));
   }
 }
 function ui(){if(!S)return;bars();$('stageTitle').textContent=fieldName()+(isBoss()?' (Boss map)':'');$('grindStatus').textContent=S.lvl<S.prog[S.mp]?'🔄 Farming':'✨ Frontier';renderWin()}
@@ -1498,8 +1573,16 @@ function update(dt){
       log(s.n+'! '+s.d(L),'r4');playSkillFx(s.id,null,s.col);skillNameFloat(s.n)}}
   let tx=0,tz=Z1-1.5,reach=1.4;
   if(!mobs.length){respawn-=dt;if(respawn<=0)spawn();
-    // roam: pick a fresh spot when the timer runs out or the current one is reached
-    pl.wt-=dt;if(pl.wt<=0||Math.hypot(pl.x-pl.wx,pl.z-pl.wz)<1.2){pl.wt=rnd(2.2,4.5);pl.wx=rnd(-BX_+.8,BX_-.8);pl.wz=rnd(Z0+3,Z1-.8)}
+    // Roam: pick a fresh spot when the timer runs out or the current one is reached.
+    // Stage 10 is the boss arena, and there the roam has to stay with the boss: the old
+    // field-wide wander sent the character off to the far corners, where the freshly spawned
+    // wave had to walk the whole field to reach them (and looked like the game had stalled).
+    // The boss spot is a ring 2.2-6 units out from the boss's spawn point - still inside the
+    // 6.5 aggro range, so the pack comes to you - and it is clamped to the arena.
+    pl.wt-=dt;if(pl.wt<=0||Math.hypot(pl.x-pl.wx,pl.z-pl.wz)<1.2){pl.wt=rnd(2.2,4.5);
+      if(isBoss()){const a=rnd(0,Math.PI*2),rr=rnd(BOSS_NEAR,BOSS_FAR);
+        pl.wx=cl(Math.cos(a)*rr,-BX_+.8,BX_-.8);pl.wz=cl(BOSSZ+Math.sin(a)*rr,Z0+3,Z1-.8)}
+      else{pl.wx=rnd(-BX_+.8,BX_-.8);pl.wz=rnd(Z0+3,Z1-.8)}}
     tx=pl.wx;tz=pl.wz}
   else{
     const rng=C().rng;
@@ -1512,7 +1595,13 @@ function update(dt){
       m.x=cl(m.x,-BX_,BX_);m.z=cl(m.z,Z0,Z1);m.ry=Math.atan2(pl.z-m.z,m.x-pl.x);
       if(wake&&Math.hypot(pl.x-m.x,pl.z-m.z)<=ms+.4&&!stn){m.at-=dt;if(m.at<=0){m.at=m.boss?1.2:1.5;
         if(Math.random()*100<flee())addFloat(pl.x,2.4,pl.z,'Miss','#8cf');
-        else{const d=Math.max(1,Math.round(m.atk*rnd(.8,1.2)-(m.mag?mdef():def())*.6));S.hp-=d;hitAnim=1;m.atkAnim=1;damageFloat(pl.x,2.4,pl.z,d,false,true);
+        // Incoming damage: a capped percentage cut, not a flat subtraction. The old line took
+        // def*0.6 off every hit with a floor of 1, so a geared character took exactly 1 damage
+        // from every monster and every boss in the game. def/(def+4000) caps at 75%: the naked
+        // game is within a few percent of before, mid-gear cuts ~64%, endgame sits at the cap.
+        // Pinned by ui_sim.js / save_load_sim.js (this is a game-loop line, not a constant).
+        else{const md=m.mag?mdef():def(),cut=Math.min(.75,md/(md+4000));
+          const d=Math.max(1,Math.round(m.atk*rnd(.8,1.2)*(1-cut)));S.hp-=d;hitAnim=1;m.atkAnim=1;damageFloat(pl.x,2.4,pl.z,d,false,true);
           // Defeat is the ONE thing that puts you back at the spawn point.
 if(S.hp<=0){log('You were defeated... knocked back to the entrance.','r0');S.hp=maxHp();S.kl=0;mobs=[];mob=null;respawn=1.5;pend=[];tb={};
           pl.x=0;pl.z=Z1-1.5;pl.wt=0;ui();return}}}}

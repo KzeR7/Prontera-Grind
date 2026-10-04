@@ -28,6 +28,7 @@ const code = [
   pick(/const st=k=>[^\n]*canUse=it=>[^;]+;/, 'canUse'),
   grab('const pm=s=>', 'const REC='),                        // pm() + MAPS
   pick(/const secOf=[^;]+;/, 'secOf'),
+  pick(/const secField=\(m,l\)=>[^;]+;/, 'secField'),
   pick(/const RAR=\[[^\]]*\];/, 'RAR'),
   pick(/const AM=\[[^\]]*\],GRADE=\[[^\]]*\],GI=\[[^\]]*\],CV=\[[^\]]*\];/, 'rarity tables'),
   pick(/const AFF=\[[^\]]*\],AB=\{[^}]*\};/, 'AFF/AB'),
@@ -52,7 +53,7 @@ const SECN=['Novice gear','1st-job gear','2nd-job gear','High-tier gear'];
 const SLOTS={weapon:{label:'Weapon',stat:'ATK',ic:'A'},armor:{label:'Armor',stat:'DEF',ic:'B'},head:{label:'Headgear',stat:'HP',ic:'C'},off:{label:'Shield',stat:'DEF',ic:'D'},leg:{label:'Legwear',stat:'DEF',ic:'E'},acc:{label:'Accessory',stat:'HP',ic:'F'}};
 const rnd=(a,b)=>a+Math.random()*(b-a),ri=(a,b)=>Math.floor(rnd(a,b+1)),uid=()=>1;
 let S=null;
-this.__g={ MAPS, GEAR, gearPool, fieldOf, genGear, executeGearRoll, slotAccepts, canUse, canShield, dualOk, CLASSES, lineOf, secOf, SLOTS, BAGMAX, MAPTIER, dropTier, sellVal,
+this.__g={ MAPS, GEAR, gearPool, fieldOf, genGear, executeGearRoll, slotAccepts, canUse, canShield, dualOk, CLASSES, lineOf, secOf, secField, SLOTS, BAGMAX, MAPTIER, dropTier, sellVal,
            set S(v){S=v}, get S(){return S} };
 `;
 const sb = { console };
@@ -183,7 +184,7 @@ t('gear outnumbers cards on every field', () => {
   }
 });
 
-t('equipment rolls are doubled on mobs and bosses while card odds stay unchanged', () => {
+t('the drop table: mobs roll three gear chances, the boss rolls its whole pool at 1%', () => {
   for (let m = 0; m < G.MAPS.length; m++) for (let l = 1; l <= 10; l++) {
     const F = G.fieldOf(m, l);
     F.mobs.forEach(mob => {
@@ -191,8 +192,10 @@ t('equipment rolls are doubled on mobs and bosses while card odds stay unchanged
       assert.strictEqual(mob.cardCh, .45, 'regular-mob card chance changed');
     });
     if (l === 10) {
-      F.boss.drops.forEach(([, ch]) => assert.strictEqual(ch, 2.4, 'boss equipment chance was not doubled'));
-      assert.strictEqual(F.boss.cardCh, .08, 'boss card chance changed');
+      // v38 took the boss pool from 2.4% per item to 1% per item (still one independent roll
+      // per pool entry) and its card from 0.08% to 0.1%.
+      F.boss.drops.forEach(([, ch]) => assert.strictEqual(ch, 1, 'boss equipment chance changed'));
+      assert.strictEqual(F.boss.cardCh, .1, 'boss card chance changed');
     }
   }
 });
@@ -201,8 +204,10 @@ t('the real equipment-drop loop creates boss gear when an independent roll succe
   G.S = {st:{luk:0},eq:{}};
   const F = G.fieldOf(0, 10), boss = {...F.boss,boss:true,lvl:10,sec:F.sec};
   assert.strictEqual(boss.drops.length, 9, 'expected a roll for every boss-pool item');
-  // A 1.8% roll fails the old 1.2% gate but passes the doubled 2.4% gate.
-  const drops = G.executeGearRoll(boss, .018);
+  // The gate is empirically 1%, not the old 2.4%: a 1.5% roll would have paid out the whole
+  // pool before v38 and must pay out nothing now, while a 0.8% roll still clears every entry.
+  assert.strictEqual(G.executeGearRoll(boss, .015).length, 0, 'the boss gate is no longer 1%');
+  const drops = G.executeGearRoll(boss, .008);
   assert.strictEqual(drops.length, boss.drops.length, 'the actual boss gear loop did not emit items');
   assert.ok(drops.every(d => d.it && d.it.tier === 4), 'every Stage 10 boss drop must be Legendary');
   assert.ok(drops.every(d => d.it.slot), 'successful boss rolls must be real equipment objects');
@@ -246,7 +251,7 @@ t('the pool is exactly the section set and only grows as you climb', () => {
   G.MAPS.forEach((mp, m) => {
     let prev = 0;
     for (let l = 1; l <= 10; l++) {
-      const pool = G.gearPool(m, l), sec = mp.gear[m >= 5 ? 3 : G.secOf(l)];
+      const pool = G.gearPool(m, l), sec = mp.gear[G.secField(m, l)];
       const names = Object.keys(sec.w).map(k => sec.w[k]).concat([sec.a, sec.h, sec.o, sec.l, sec.ac, sec.ac2]);
       assert.strictEqual(pool.map(x => x.n).join('|'), names.join('|'), mp.n + ' Lv' + l + ' pool must be the section set');
       assert.ok(pool.length >= prev, mp.n + ' Lv' + l + ' pool shrank');
@@ -260,8 +265,14 @@ t('the pool is exactly the section set and only grows as you climb', () => {
       const s0 = G.gearPool(m, 1).map(x => x.n);
       [4, 8, 10].forEach(l => assert.ok(G.gearPool(m, l).some(n => !s0.includes(n.n)), mp.n + ' later sections add nothing'));
     } else {
-      assert.strictEqual(G.gearPool(m, 1).map(x => x.n).join('|'), G.gearPool(m, 10).map(x => x.n).join('|'),
-        mp.n + ' is a Lv 60+ map: every field must use the high-tier set');
+      // v38: the high tier starts at field level 3, and stages 1-2 hand out section 2 (the
+      // Comodo cliff floor) instead of the old "high tier from level 1".
+      const top = G.gearPool(m, 3).map(x => x.n).join('|');
+      assert.strictEqual(G.gearPool(m, 10).map(x => x.n).join('|'), top, mp.n + ' Lv10 must use the high-tier set');
+      assert.strictEqual(G.gearPool(m, 2).map(x => x.n).join('|'), G.gearPool(m, 1).map(x => x.n).join('|'),
+        mp.n + ' stages 1 and 2 must share the floored section');
+      assert.notStrictEqual(G.gearPool(m, 1).map(x => x.n).join('|'), top,
+        mp.n + ' stages 1-2 must not already hand out the top section');
     }
   });
 });

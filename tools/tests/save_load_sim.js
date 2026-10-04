@@ -33,12 +33,12 @@ const save = {pets:[
 const harness = `
 ${code}
 const num_ = (v,d) => { v = +v; return Number.isFinite(v) ? v : d };
-const CV = [1,2,3,5], GI = [0,1,2,4], SECN = ['a','b','c','d'];
+const CV = [3.2,6.4,9.6,16], GI = [0,1,2,4], SECN = ['a','b','c','d'];
 // load() repairs card values through cardVal(), which is inside the grabbed range and needs
 // the stat weight tables. Those live above 'const CD=[' so they must be supplied here -
 // without them a save that actually contains cards would crash the repair untested.
 const AFF = ['str','agi','dex','luk','int','hp','atk','crit','aspd','flee','cdm'];
-const AB = {str:1,agi:1,dex:1,luk:1,int:1,hp:12,atk:.8,crit:.45,aspd:.6,flee:.8,cdm:1.5};
+const AB = {str:1,agi:1,dex:1,luk:1,int:1,hp:12,atk:.8,crit:.45,aspd:.6,flee:.8,cdm:.7};
 const K5 = ['str','agi','dex','luk','int'];
 const lsGet = () => ${JSON.stringify(JSON.stringify(save))};
 const saveKey = () => 'k';
@@ -93,9 +93,9 @@ t('the live game state is untouched by the repair', () => {
 
 t('card values are repaired per stat, not flattened to CV[grade]', () => {
   const byId = id => f.cards.find(c => c.id === id);
-  assert.strictEqual(byId(1).v, 60, 'a Legendary HP card should repair to 5*12, not the stale 5');
-  assert.strictEqual(byId(2).v, 3, 'a Rare STR card should repair to CV[2]');
-  assert.strictEqual(byId(3).v, 2, 'an unknown stat should fall back to CV[grade], not crash');
+  assert.strictEqual(byId(1).v, 192, 'a Legendary HP card should repair to 16*12, not the stale 5');
+  assert.strictEqual(byId(2).v, 10, 'a Rare STR card should repair to round(CV[2]) = 10');
+  assert.strictEqual(byId(3).v, 6, 'an unknown stat should fall back to round(CV[grade 1]) = 6, not crash');
 });
 
 t('skills that no longer exist are dropped, refunding their points', () => {
@@ -124,6 +124,83 @@ t('the field is roamed, not marched back to the spawn point', () => {
   assert.ok(/pl\.x=0;pl\.z=Z1-1\.5;pl\.wt=0;/.test(src), 'defeat no longer resets the position');
   assert.ok(/S\.hp<=0[\s\S]{0,220}pl\.x=0;pl\.z=Z1-1\.5/.test(src),
     'the position reset is not inside the defeat handler');
+});
+
+t('a boss stage keeps the roam by the boss, the field keeps roaming wide', () => {
+  // v36: stage 10 used the same field-wide roam as the farming maps, so when a wave spawned
+  // the character was often at the far corner and the pack had to walk the whole arena to
+  // reach them. The boss stage now roams a ring around the boss spawn.
+  const roam = grab('    pl.wt-=dt;if(pl.wt<=0||Math.hypot(pl.x-pl.wx,pl.z-pl.wz)<1.2){pl.wt=rnd(2.2,4.5);',
+                    '    tx=pl.wx;tz=pl.wz}') + '    tx=pl.wx;tz=pl.wz;';
+  const arenaLine = src.match(/const SU=k=>k\.toUpperCase\(\),BX_=[^;]+;/)[0];
+  const arenaBox = {};
+  vm.createContext(arenaBox);
+  vm.runInContext(arenaLine + ';this.__a={BX_,Z0,Z1,BOSSZ,BOSS_NEAR,BOSS_FAR};', arenaBox);
+  const { BX_, Z0, Z1, BOSSZ, BOSS_NEAR, BOSS_FAR } = arenaBox.__a;
+  const sample = boss => {
+    const box = {};
+    vm.createContext(box);
+    vm.runInContext(`
+      ${arenaLine}
+      let pl={x:0,z:Z1-1.5,wt:0,wx:0,wz:Z1-1.5},mobs=[],respawn=1,dt=1/60,tx=0,tz=0;
+      const isBoss=()=>${boss},rnd=(a,b)=>a+Math.random()*(b-a),cl=(v,a,b)=>Math.max(a,Math.min(b,v)),spawn=()=>{};
+      this.__step=()=>{ ${roam} return [tx,tz] };
+      this.__pl=pl;
+    `, box);
+    let minD = Infinity, maxD = 0, maxAbsX = 0;
+    for (let i = 0; i < 400; i++) {
+      box.__pl.wt = -1;                 // force a fresh spot every iteration, as the timer would
+      const [x, z] = box.__step();
+      minD = Math.min(minD, Math.hypot(x, z - BOSSZ));
+      maxD = Math.max(maxD, Math.hypot(x, z - BOSSZ));
+      maxAbsX = Math.max(maxAbsX, Math.abs(x));
+      assert.ok(Math.abs(x) <= BX_ - 0.8 + 1e-9 && z >= Z0 + 3 - 1e-9 && z <= Z1 - 0.8 + 1e-9,
+        'roam target left the arena: ' + x + ',' + z);
+    }
+    return { minD, maxD, maxAbsX };
+  };
+  const boss = sample('true');
+  assert.ok(boss.minD >= BOSS_NEAR - 1e-9, 'boss roam must not stand inside the boss: ' + boss.minD);
+  assert.ok(boss.maxD <= BOSS_FAR + 1e-9, 'boss roam must stay near the boss, not across the field: ' + boss.maxD);
+  assert.ok(boss.maxD < 6.5, 'boss roam must stay inside the 6.5 aggro range');
+  console.log('       boss roam ' + boss.minD.toFixed(1) + '-' + boss.maxD.toFixed(1) + ' units from the boss');
+  const field = sample('false');
+  assert.ok(field.maxAbsX > 9, 'farming maps must still roam the whole field: ' + field.maxAbsX);
+});
+
+t('a save carrying more skill levels than its line earned is repaired on load', () => {
+  // The v35 shop minted points (it charged an escalating ladder but kept its ledger in levels),
+  // so an old save can hold levels its line never paid for. load() has to trim them instead of
+  // leaving the Skills panel clamped at "0 available" for ever. The ids come from the real
+  // roster, so this cannot drift when a skill is renamed.
+  const roster = {};
+  vm.createContext(roster);
+  vm.runInContext(grab('const CD=[', 'const pm=s=>') +
+    'this.__r={SKILLS,lineOf:cls=>{const a=[];for(let n=cls;n;n=CLASSES[n].par)a.unshift(n);return a}};', roster);
+  const R = roster.__r, line = R.lineOf('Swordman');
+  const ids = R.SKILLS.filter(s => line.includes(s.from)).map(s => s.id);
+  assert.ok(ids.length >= 4, 'the Swordman line should own several skills: ' + ids.join(','));
+  const sk = { aid: 5 }; ids.forEach(id => { sk[id] = 5 });
+  const owned = Object.values(sk).reduce((a, n) => a + n, 0);
+  const jobs = { Novice: { jl: 10, jx: 0 }, Swordman: { jl: 1, jx: 0 } };   // 9 earned, 0 on the Swordman
+  const bad = JSON.parse(JSON.stringify(save));
+  bad.cls = 'Swordman'; bad.jobs = jobs; bad.sk = sk; bad.base = {};
+  const box = {};
+  vm.createContext(box);
+  vm.runInContext(harness.replace(/const lsGet = \(\) => .*?;/, 'const lsGet = () => ' + JSON.stringify(JSON.stringify(bad)) + ';'), box);
+  const g = box.__l.loadRaw();
+  const left = R.SKILLS.filter(s => line.includes(s.from)).reduce((a, s) => a + Math.max(0, Math.floor(g.sk[s.id] || 0)), 0);
+  const earned = 9 + 0;                                        // Novice 10 + Swordman 1
+  assert.ok(left <= earned + 1, 'the line is still over-spent after load: ' + left + ' levels of ' + (earned + 1));
+  assert.strictEqual(g.skRepair, owned - left, 'the repair must report exactly the levels it removed');
+  assert.ok(g.skRepair > 0, 'this fixture really is over-spent (nothing was trimmed)');
+  // and every surviving level is a legal one
+  for (const s of R.SKILLS) { const L = g.sk[s.id]; if (L !== undefined) assert.ok(L >= 0 && L <= s.max, s.id + ' kept an illegal level ' + L); }
+  // a clean save is left completely alone
+  const box2 = {};
+  vm.createContext(box2);
+  vm.runInContext(harness, box2);
+  assert.ok(!box2.__l.loadRaw().skRepair, 'a healthy save must not be touched by the repair');
 });
 
 t('mob HP scales gently enough that early maps fall to a first job', () => {

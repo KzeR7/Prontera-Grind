@@ -12,8 +12,8 @@
 // reset, Lv 100->150 takes about 48 hours (2 days) at the model rate. The curve remains
 // monotone within each side of Lv100; the reset keeps the post-99 tail on its own target.
 //
-// The 0.126 loot-quest completion rate models the doubled gear table: three regular-mob
-// rolls total 12% expected drops, plus nine boss-pool items at 2.4% each once per 16 kills.
+// The 0.118 loot-quest completion rate models the gear table as of v38: three regular-mob
+// rolls total 12% expected drops, plus nine boss-pool items at 1% each once per 16 kills.
 // Card and ore pickups are not counted by the loot quest in the live game.
 
 const EXPK = 5.5, BOSEK = 46, MPS = 15, KPH = 800;
@@ -26,8 +26,9 @@ const mobExp = p => Math.max(1, Math.floor(EXPK * Math.pow(p, 1.5) / 50));
 const bossExp = p => Math.max(1, Math.floor(BOSEK * Math.pow(p, 1.5) / 50));
 const expPerKill = p => (MPS * mobExp(p) + bossExp(p)) / (MPS + 1);
 // Per-kill quest XP, from qScale() in index.html. A boss comes every MPS+1 kills:
-// (15*.12 + 9*.024)/16 = .126 expected gear pickups per kill at neutral LUK.
-const qrateRaw = L => (QXP.kill / (12 + 2 * L) + .126 * QXP.loot / (3 + Math.floor(L / 3))
+// (15*.12 + 9*.01)/16 = .118 expected gear pickups per kill at neutral LUK (v38: the boss pool
+// went 2.4% -> 1% per item; the shipped curve was solved against .126, so expect a sub-1% drift).
+const qrateRaw = L => (QXP.kill / (12 + 2 * L) + .118 * QXP.loot / (3 + Math.floor(L / 3))
   + (L >= 12 ? QXP.boss / ((MPS + 1) * (1 + Math.floor(L / 10))) : 0));
 let QSCALE = 1;
 const qrateAt = L => QSCALE * qrateRaw(L) * rateAt(L);
@@ -144,7 +145,7 @@ const NE3 = bisect(3, 14, ne3 => {
 const n100 = n100At(NE3);
 const fin = simulate({ cA, aA, aB, n100, ne3: NE3 }, false);
 
-console.log('\n=== tuned production curve (70x / 70/3x rates; doubled-gear loot cadence) ===');
+console.log('\n=== tuned production curve (70x / 70/3x rates; v38 loot cadence) ===');
 console.log(`cA=${cA.toFixed(8)}  aA=${aA.toFixed(8)}  aB=${aB.toFixed(8)}  n100=${n100.toFixed(0)}  NE3=${NE3.toFixed(8)}`);
 console.log('shipping QXP', Object.entries(QXP).map(([k, v]) => `${k}=1/${(1/v).toFixed(0)}`).join(', '));
 console.log('quest share', (fin.SHARE * 100).toFixed(1) + '% global,', (fin.maxShare * 100).toFixed(1) + '% worst level');
