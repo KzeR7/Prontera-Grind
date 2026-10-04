@@ -88,10 +88,10 @@ points at a different cause.
 * Heads in the review page come from `tools/head_seats.json` (all 8 views): `node tools/head_seats.js`
   refreshes it from the picker, `tools/tests/head_seat_sim.js` (7) pins every cell, and
   `tools/patch_review_heads.js` re-seats the shipped artifacts without Pillow if the bake ran stale.
-  `pack_sim.js` needs `/tmp/pack_block.js` (a slice of `index.html`, `const PACK_BODY=` →
-  `function ensureHero(`) recreated after a sandbox reset:
-  `python3 -c "s=open('index.html').read();open('/tmp/pack_block.js','w').write(s[s.index('const PACK_BODY='):s.index('function ensureHero(')])"`
+  `pack_sim.js` extracts its own slice of `index.html` (`const PACK_BODY=` → `function ensureHero(`)
+  by itself now, so a sandbox reset no longer needs the old `/tmp/pack_block.js` dance.
 * `/tmp/venv` (pillow + numpy + scipy) is wiped by resets; rebuild before any PIL work.
-* The game itself is untouched: `index.html` is still v29 and nothing is baked until the owner says
-  so. Do not bake, and do not add a weapon UI to the picker.
+* The game has moved on since: `tool-v42/v43` wired `index.html` to the owner's SIMPLE set
+  (`attack 2 frames / walk 3 frames, front + back`, artifact `assets/anim_pack_data.js`). Read the
+  newest AGENTS.md entry before touching hero art.
 * Append to `AGENTS.md` and bump `BUILD` only if a player-visible change is actually made.

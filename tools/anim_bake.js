@@ -7,8 +7,8 @@
 // It writes:
 //   tools/anim_preview.png   every class, all 10 cells, body + head composed exactly as the game
 //                            will draw them (a 2x contact sheet for the eye)
-//   tools/anim_pack_data.js  window.ANIM_PACK - the game artifact: ten 96x96 body cells per class
-//                            (one atlas row) + the head pivot for each cell
+//   assets/anim_pack_data.js  window.ANIM_PACK - the game artifact: per body, ten 96x96 body cells
+//                            (one atlas row) + the head pivot of each cell + the cell map the game reads
 //
 // No Pillow here, so the sheet PNGs (8-bit palette, colour type 3) are decoded in tools/png_io.js.
 // The crop maths is the picker's and the pack builder's, to the pixel:
@@ -100,8 +100,19 @@ const classes = A.meta.classes;
 const tilesW = 10 * PITCH + 4, tilesH = classes.length * (BODY * Z + GAPY) + GAPY;
 const sheet = Buffer.alloc(tilesW * tilesH * 4, 0);
 for (let i = 0; i < sheet.length; i += 4) { sheet[i] = 24; sheet[i + 1] = 26; sheet[i + 2] = 32; sheet[i + 3] = 255; }
-const packOut = { meta: { cell: BODY, feet: FEET, order: CELLS, classes: classes,
-  viewMap: A.meta.viewMap, source: 'tools/anim_bake.js', note: A.meta.note }, classes: {} };
+// The game artifact: per class BODY (the pack's own names, so packBodyFor() finds it) one atlas
+// with the ten cells in a row, the head pivot of each cell, and the map the game reads to pick a
+// cell for a drawn direction.  The head is NOT composited in: the game draws the head itself, from
+// its own hair-style atlas, at these pivots - that is what keeps every hair style and both sexes
+// working while the poses and the seat come from the owner's numbers.
+const packOut = { meta: { cell: BODY, feet: FEET, cols: 8, rows: 24, order: CELLS,
+  counts: { idle: 1, walk: 3, attack: 2 },
+  side: { 0: 'F', 1: 'F', 2: 'F', 3: 'B', 4: 'B', 5: 'B', 6: 'F', 7: 'F' },
+  idle: { front: 5, back: 8 },                       // no standing pose: walk frame 2 (index 1) stands
+  walk: { front: [4, 5, 6], back: [7, 8, 9] },
+  attack: { front: [0, 1], back: [2, 3] },
+  viewMap: A.meta.viewMap, source: 'tools/anim_bake.js', note: A.meta.note,
+  poses: 'idle = walk frame 2; front art covers dirs 0,1,2,6,7; back art covers 3,4,5' }, classes: {} };
 const report = { yours: 0, pack: 0, measured: 0, check: [], manual: [], offgrid: [], cells: 0 };
 
 for (let ci = 0; ci < classes.length; ci++) {
@@ -114,11 +125,10 @@ for (let ci = 0; ci < classes.length; ci++) {
     const tmp = Buffer.alloc(BODY * BODY * 4);
     if (p) blitNearest(im, p, tmp, BODY);
     else blitNearest(im, { x: c.x, y: c.y, w: c.w, h: c.h }, tmp, BODY);
+    const tmpBody = Buffer.from(tmp);                       // the game gets the body alone
     const hx = Math.round(c.pivot[0]) - 32, hy = Math.round(c.pivot[1]) - 48;
     over(tmp, BODY, HEAD, hx, hy, KEYS[i][0] === 'atkF' || KEYS[i][0] === 'walkF' ? 0 : 4, 0);
-    // into the class atlas
-    for (let y = 0; y < BODY; y++) tmp.copy(atlas, (y * BODY) * 4 + i * BODY * BODY * 4 * 0 + (i * BODY) * 4 + y * BODY * BODY * 4);
-    // ... and into the contact sheet at 2x
+    // into the contact sheet at 2x
     const tx = 4 + i * PITCH, ty = GAPY + ci * (BODY * Z + GAPY);
     for (let y = 0; y < BODY; y++) for (let x = 0; x < BODY; x++) {
       const si = (y * BODY + x) * 4, a = tmp[si + 3];
@@ -131,7 +141,7 @@ for (let ci = 0; ci < classes.length; ci++) {
       }
     }
     anchors.push([Math.round(c.pivot[0]), Math.round(c.pivot[1])]);
-    row.push(Buffer.from(tmp));
+    row.push(tmpBody);
     report.cells++;
     if (report[c.src] !== undefined) report[c.src]++;
     else if (c.src === 'manual') report.manual.push(cls + ' ' + CELLS[i]);
@@ -142,7 +152,9 @@ for (let ci = 0; ci < classes.length; ci++) {
   const atlasRow = Buffer.alloc(BODY * CELLS.length * BODY * 4);
   for (let i = 0; i < CELLS.length; i++) for (let y = 0; y < BODY; y++)
     row[i].copy(atlasRow, (y * CELLS.length + i) * BODY * 4, y * BODY * 4, (y + 1) * BODY * 4);
-  packOut.classes[cls] = { atlas: 'data:image/png;base64,' + encodePNG(BODY * CELLS.length, BODY, atlasRow).toString('base64'), anchors };
+  const bodyName = A.classes[cls].body;
+  packOut.classes[bodyName] = { cls: cls, atlas: 'data:image/png;base64,' + encodePNG(BODY * CELLS.length, BODY, atlasRow).toString('base64'),
+    pivots: anchors };
 }
 const png = encodePNG(tilesW, tilesH, sheet, { rgb: true });
 fs.writeFileSync(path.join(ROOT, 'tools', 'anim_preview.png'), png);
@@ -151,11 +163,14 @@ console.log('  columns: ' + CELLS.join(' '));
 if (previewOnly) { console.log('  (--preview-only: the game artifact was not written)'); }
 else {
   const js = '// Attack 2 frames / walk 3 frames, front + back - the SIMPLE set, baked by tools/anim_bake.js.\n' +
-    '// Per class: one 960x96 atlas (ten 96x96 cells, see meta.order) + the head pivot for each cell,\n' +
-    '// both in the same 96x96 space the picker uses (feet at x48,y90).\n' +
+    '// Per body: one 960x96 atlas (ten 96x96 BODY cells, no head - the game draws the head itself at\n' +
+    '// pivots[], so every hair style still works), the pivots in the same 96x96 space the picker uses\n' +
+    '// (feet at x48,y90), and meta.* = which cell to draw for a direction + kind + frame.\n' +
     'window.ANIM_PACK=' + JSON.stringify(packOut) + ';\n';
-  fs.writeFileSync(path.join(ROOT, 'tools', 'anim_pack_data.js'), js);
-  console.log('wrote tools/anim_pack_data.js  (' + (js.length / 1e6).toFixed(2) + ' MB, ' + classes.length + ' class atlases)');
+  fs.writeFileSync(path.join(ROOT, 'assets', 'anim_pack_data.js'), js);
+  console.log('wrote assets/anim_pack_data.js  (' + (js.length / 1e6).toFixed(2) + ' MB, ' + classes.length + ' class atlases)');
+  const stray = path.join(ROOT, 'tools', 'anim_pack_data.js');
+  if (fs.existsSync(stray)) { fs.unlinkSync(stray); console.log('removed the old tools/anim_pack_data.js (the game artifact lives in assets/)'); }
 }
 console.log('cells: ' + report.cells + '   heads from the owner: ' + report.yours + '   from the pack: ' + report.pack +
   '   measured: ' + report.measured + '   dragged in the picker: ' + report.manual.length +

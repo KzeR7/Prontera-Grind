@@ -10,6 +10,7 @@ Routes:
     /standalone  the weapon review page with its data inlined (one file, no side requests)
     /picker      the attack pose + head picker (the 8-view page)
     /picks       the SIMPLE picker (attack 2 / walk 3, front + back)
+    /game        the game itself (index.html)
     /<path>      anything else, served from the repo, so /tools/... and /assets/... work
 
 Every page is answered DIRECTLY with 200 - no redirects anywhere.  A proxy sitting in
@@ -27,7 +28,8 @@ PAGES = {'/': 'tools/weapon_review.html',
          '/review': 'tools/weapon_review.html',
          '/standalone': 'tools/weapon_review_standalone.html',
          '/picker': 'tools/sprite_picker.html',
-         '/picks': 'tools/anim_picker.html'}
+         '/picks': 'tools/anim_picker.html',
+         '/game': 'index.html'}
 
 
 class Handler(http.server.SimpleHTTPRequestHandler):
@@ -109,6 +111,6 @@ class Handler(http.server.SimpleHTTPRequestHandler):
 if __name__ == '__main__':
     port = int(sys.argv[1]) if len(sys.argv) > 1 else int(os.environ.get('PORT', '8000'))
     handler = functools.partial(Handler, directory=ROOT)
-    print('serving %s on 0.0.0.0:%d   ( / weapon review, /picker 8-view picker, /picks simple picker )'
+    print('serving %s on 0.0.0.0:%d   ( / weapon review, /picker 8-view picker, /picks simple picker, /game the game )'
           % (ROOT, port), file=sys.stderr, flush=True)
     http.server.ThreadingHTTPServer(('0.0.0.0', port), handler).serve_forever()

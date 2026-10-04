@@ -2517,3 +2517,51 @@ assigned for feel rather than fidelity. While reworking that, two shipped bugs s
   weapon_review 13, head_seat 7, preview_server 13, ui 18, sprite 12, starter 7, stat 7, scene 8, skill 50,
   gear 24, save_load 10, pet 11, class_change 22, economy 21, card 13, pack (19 bodies).
 * **Branches / PR:** `arena/01a10755-prontera-grind`.
+
+### 2026-10-04 — `tool-v43 the game runs the SIMPLE set (and two silent blockers were found and fixed)` (game change, BUILD ui-v36)
+
+* **What changed:** `index.html` now loads `assets/anim_pack_data.js` (the bake of the simple set) and
+  the hero is drawn from it: **attack 2 frames, walk 3 frames, front + back art, and no standing pose**
+  (idle is one cell - walk frame 2 - so the hero does not "stand"; that is what the owner asked for).
+  The cell map lives in the artifact (`ANIM_PACK.meta.side/idle/walk/attack/counts`) and the game reads
+  it through one new function, `animPackCell(AP,dir,kind,frame)`; `heroPoseFrame`'s packed counts come
+  from the same meta (1 / 3 / 2) so no frame index can run off a two-frame attack.
+* **Why the artifact is body-only:** the head is drawn by the game itself from the pack's own hair-style
+  atlas, at the pivot each cell carries - that is what keeps **every hair style and both sexes** working
+  while the poses and the seat come from the owner's numbers. Everything else (weapon sprites, the
+  Settings hair preview, the sprite scale and pivot) is untouched, because the cells keep the pack's
+  96x96 space (feet at x48,y90) inside the usual 126x134 layout.
+* **Two silent blockers, both pre-existing:**
+  * `index.html` carried **two `const BUILD=` lines** (both in `main` since ui-v35). Two `const`s of the
+    same name in one script are a hard SyntaxError: a browser ran **no game code at all** - the login
+    card showed with no behaviour. The duplicate is gone, the string is now `ui-v36 simple-set-2dir`, and
+    new `tools/tests/game_boot_sim.js` (**6 checks**) parses the whole inline script, refuses a duplicate
+    top-level name, checks every `<script src>` in the repo exists, and checks the artifact is loaded and
+    is the set.
+  * `index.html` still loaded `assets/kit/morocc-atlas.js?v=1`, a file that lives in
+    `Updates/retired-v1-kit/` and whose global nothing reads - the reason `kit_sim` had been red for
+    several tools. The tag is removed: **the whole suite is green now, `kit_sim` 34/0**.
+  * `pack_sim.js` used to need an agent to write `/tmp/pack_block.js` by hand (and simply crashed after a
+    sandbox reset). It extracts its own slice of `index.html` now.
+* **The wiring is pinned end to end** by new `tools/tests/anim_wire_sim.js` (**8 checks**), which runs the
+  game's own code the way `pack_sim` does: the artifact's ten cells/pivots/map agree with
+  `tools/anim_picker_data.js` cell for cell (190 numbers); the game's own `animPackCell` answers the same
+  for all 8 directions x 3 kinds x 8 frames; `heroPoseFrame` hands out exactly 1/3/2 with the walk cycling
+  0,1,2 and the attack 0,1; `packTex` composites 240 tiles with the body from the mapped artifact cell and
+  the head landing at exactly `pivot-32/-48`; and without the artifact the old class pack still draws
+  (fallback intact).
+* **Preview:** the server gains `/game` (the game itself) next to `/`, `/picker`, `/picks`, and every
+  page's "pages" line links to all of them. `preview_server_sim` is **14** now (it fetches `/game` and
+  checks the artifact rides along).
+* **Files touched:** `index.html` (script tag, `animPackCell`, `heroPoseFrame` counts, `packTex`, the
+  BUILD fix, the retired kit tag, BUILD -> ui-v36), new `assets/anim_pack_data.js` (the artifact; the
+  build wrote it to `tools/` in v42 - it lives in `assets/` now), `tools/anim_bake.js` (body-only cells +
+  meta + `assets/` output), new `tools/tests/anim_wire_sim.js`, new `tools/tests/game_boot_sim.js`,
+  `tools/tests/pack_sim.js` (self-extracting), `tools/tests/preview_server_sim.js`, `tools/preview_server.py`,
+  the nav lines of the three tool pages, regenerated standalones, `READ-ME-FIRST.md`,
+  `tools/HANDOVER-weapon-review.md`, `AGENTS.md`.
+* **Tests:** **all 21 suites green** (first time in this line): anim_picker 15, anim_wire 8, game_boot 6,
+  picker 21, weapon_review 13, head_seat 7, preview_server 14, kit **34** (was 33/1), pack (19 bodies),
+  ui 18, sprite 12, skill 50, gear 24, economy 21, class_change 22, card 13, save_load 10, pet 11,
+  scene 8, starter 7, stat 7, weapon_joint 7.
+* **Branches / PR:** `arena/01a10755-prontera-grind`.

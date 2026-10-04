@@ -1,7 +1,14 @@
 // Runs the game's real pack code against the real pack data, outside a browser.
 //   node tools/tests/pack_sim.js   (expects the inline JS + pack block extracted first)
-const fs=require('fs'),vm=require('vm'),assert=require('assert');
-const block=fs.readFileSync(process.env.PACK_BLOCK || '/tmp/pack_block.js','utf8');
+const fs=require('fs'),vm=require('vm'),assert=require('assert'),path=require('path');
+// The slice of index.html this runs: it used to be a /tmp file an agent had to remember to write,
+// which meant the suite simply crashed when /tmp was fresh.  Extract it here instead (PACK_BLOCK
+// still overrides, for anyone pinning a specific revision).
+const block=process.env.PACK_BLOCK?fs.readFileSync(process.env.PACK_BLOCK,'utf8'):
+  (()=>{const h=fs.readFileSync(path.join(__dirname,'..','..','index.html'),'utf8');
+    const i=h.indexOf('const PACK_BODY='),j=h.indexOf('function ensureHero(');
+    if(i<0||j<0)throw new Error('index.html no longer carries the pack block (const PACK_BODY= .. function ensureHero()');
+    return h.slice(i,j)})();
 const draws=[];
 class FakeImage{constructor(){this.width=0;this.height=0}set src(u){this._src=u;if(this.onload)this.onload()}}
 const ctx={imageSmoothingEnabled:true,drawImage(){draws.push(arguments)}};

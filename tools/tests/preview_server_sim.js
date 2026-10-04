@@ -51,7 +51,7 @@ async function grab(route) {
   try {
     assert.ok(up, 'server never came up on port ' + PORT + (err ? ' - ' + err.trim() : ''));
 
-    for (const r of ['/', '/review', '/standalone', '/picker', '/picks', '/weapon_review_data.js',
+    for (const r of ['/', '/review', '/standalone', '/picker', '/picks', '/game', '/weapon_review_data.js',
                      '/sprite_picker_data.js', '/sprite_picker_defaults.js',
                      '/anim_picker_data.js', '/assets/sprite_pack_data.js', '/tools/weapon_bake.py']) await grab(r);
 
@@ -138,6 +138,15 @@ async function grab(route) {
       assert.ok(/anim_picker_data\.js/.test(r.body), 'the page must load its own data file');
       assert.ok(/__apTest/.test(r.body), 'the page must be the animation picker');
       assert.ok(/attack 2 frames/i.test(r.body), 'the page must say what the set is');
+    });
+
+    t('/game serves the game itself (index.html), directly', () => {
+      const r = seen['/game'];
+      assert.ok(r, '/game was not fetched');
+      assert.strictEqual(r.status, 200, '/game -> ' + r.status);
+      assert.ok(!r.redirected && r.url === BASE + '/game', '/game must not redirect (got ' + r.url + ')');
+      assert.ok(/id="buildTag"/.test(r.body), 'that must be the game (its login card has the build tag)');
+      assert.ok(/anim_pack_data\.js/.test(r.body), 'the game must load the SIMPLE set artifact');
     });
 
     t('/anim_picker_data.js and /sprite_picker_data.js resolve from the root (the page asks there)', () => {

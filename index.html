@@ -191,8 +191,8 @@ hr{border:0;border-top:1px dashed var(--edge);margin:6px 0}
 </div>
 <div id="modal"><div class="login-card"><p id="mt" style="font-size:14px;opacity:1;margin:0 0 12px"></p><div class="row" style="justify-content:center"><button id="my">Yes</button><button id="mn">Cancel</button></div></div></div><div id="tooltip"></div>
 <script src="assets/sprite_pack_data.js?v=1"></script>
+<script src="assets/anim_pack_data.js?v=1"></script>
 <script src="assets/weapon_joints_data.js?v=1"></script>
-<script src="assets/kit/morocc-atlas.js?v=1"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
 const $=id=>document.getElementById(id);
@@ -233,8 +233,7 @@ const AL={str:'STR',agi:'AGI',dex:'DEX',luk:'LUK',int:'INT',hp:'Max HP',atk:'ATK
 // late maps in about five, with bosses still a ~12x fight. See tools/tests/economy_sim.js.
 const SU=k=>k.toUpperCase(),BX_=13,Z0=-28,Z1=12,MPS=15,AGGRO=6.5,HPK=42,HPE=1.3,K5=['str','agi','dex','luk','int'];
 const GM_USER='GM',GM_PASS='gm1234';   // CHANGE THE GM PASSWORD before you publish
-const BUILD='2026-10-04 ui-v29 weapon-held-in-one-position';   // shown on the login card - confirms which file you loaded
-const BUILD='2026-10-04 ui-v35 pet-rework bag-highlight dmg-toggles map-rarity';   // shown on the login card - confirms which file you loaded
+const BUILD='2026-10-04 ui-v36 simple-set-2dir';   // shown on the login card - confirms which file you loaded
 $('buildTag').textContent='build '+BUILD;
 
 // ---------- class tree: Novice -> 6 first jobs -> 6 second jobs -> 6 third jobs ----------
@@ -2439,8 +2438,17 @@ function poseOf(kind,fr,wt,frameCount){
     else if(wt==='katar'||wt==='dagger'){p.arm=-.2;p.lunge=u<.45?u*22:22*(1-u);p.weap=.8;p.lift=u<.4?-6:4}
     else{if(u<.28){p.arm=.5-u*4;p.weap=-1.2;p.lunge=u*10;p.lift=u*8}else if(u<.55){p.arm=-.6+(u-.28)*8;p.weap=2.5;p.lunge=10;p.lift=2}else{p.arm=1.3*(1-u);p.weap=1.6*(1-u);p.lunge=8*(1-u)}}}
   return p}
+// The SIMPLE set (assets/anim_pack_data.js): attack 2 frames, walk 3 frames, front + back only,
+// and no standing pose - a walk frame is what stands, which is why idle's count is 1.  The map
+// lives in the data (ANIM_PACK.meta), so the picker's bake is the only place these numbers exist.
+function animPackCell(AP,dir,kind,frame){
+  const m=AP.meta,side=((m.side&&m.side[dir])||'F')==='B'?'back':'front';
+  if(kind===0)return m.idle[side];
+  const list=kind===1?m.walk[side]:m.attack[side];
+  return list[Math.min(Math.max(frame|0,0),list.length-1)]}
 function heroPoseFrame(run,atk,clock,packed){
-  const idle=packed?1:SPR_IDLE,walk=packed?8:SPR_WALK,attack=packed?6:SPR_ATK;
+  const AP=packed?window.ANIM_PACK:null,m=AP&&AP.meta;
+  const idle=packed?(m?m.counts.idle:1):SPR_IDLE,walk=packed?(m?m.counts.walk:8):SPR_WALK,attack=packed?(m?m.counts.attack:6):SPR_ATK;
   if(atk>0)return{kind:2,frame:Math.min(attack-1,Math.floor((1-atk)*attack)),count:attack};
   if(run)return{kind:1,frame:Math.floor(clock*10)%walk,count:walk};
   return{kind:0,frame:packed?0:Math.floor(clock*3)%idle,count:idle}}
@@ -2580,15 +2588,25 @@ function packBodyFor(cls,tier){const PK=window.SPRITE_PACK;if(!PK)return null;
 const packImg={},packCache=new Map(),PACK_K=.03;let packReady=false;
 (function(){const PK=window.SPRITE_PACK;if(!PK)return;let n=0,tot=0;
   const ld=(k,u)=>{tot++;const i=new Image();i.onload=()=>{if(++n===tot){packReady=true;heroKey='';drawHairPreview()}};i.src=u;packImg[k]=i};
-  for(const c in PK.bodies)ld('b:'+c,PK.bodies[c].atlas);for(const h in PK.heads)ld('h:'+h,PK.heads[h])})();
+  for(const c in PK.bodies)ld('b:'+c,PK.bodies[c].atlas);for(const h in PK.heads)ld('h:'+h,PK.heads[h])
+  const AP=window.ANIM_PACK;if(AP&&AP.classes)for(const c in AP.classes)ld('a:'+c,AP.classes[c].atlas)})();
 function packTex(opt){
   const PK=window.SPRITE_PACK,body=packBodyFor(opt.cls,opt.tier)||'thief',sex=opt.sex==='f'?'female':'male',hs=(((opt.hair|0)%PK.hairStyles)+PK.hairStyles)%PK.hairStyles,key=body+'|'+sex+'|'+hs;
   if(packCache.has(key))return packCache.get(key);
   const cv=document.createElement('canvas');cv.width=PK.cellW*8;cv.height=PK.cellH*24;
   const g=cv.getContext('2d');g.imageSmoothingEnabled=false;
   const bi=packImg['b:'+body],hi=packImg['h:'+sex],anc=PK.bodies[body].anchors;
+  const AP=window.ANIM_PACK,ap=AP&&AP.classes&&AP.classes[body],ai=ap&&packImg['a:'+body];
   for(let a=0;a<3;a++)for(let d=0;d<8;d++)for(let f=0;f<PK.frames[a];f++){
     const dx=f*PK.cellW+PK.padL,dy=(a*8+d)*PK.cellH+PK.padT;
+    // the owner's own set takes over as soon as the artifact is loaded: ten body cells per class,
+    // the head drawn from the hair atlas at that cell's pivot.  Without the file the old class
+    // pack draws exactly as before.
+    let px,py,src,sx,sy;
+    if(ap&&ai&&ai.complete&&ai.naturalWidth){const cell=animPackCell(AP,d,a,f);
+      sx=cell*96;sy=0;px=f*PK.cellW+PK.padL;py=(a*8+d)*PK.cellH+PK.padT;
+      const pv=ap.pivots[cell];g.drawImage(ai,sx,sy,96,96,px,py,96,96);
+      g.drawImage(hi,d*64,hs*64,64,64,px+pv[0]-32,py+pv[1]-48,64,64);continue}
     g.drawImage(bi,f*96,(a*8+d)*96,96,96,dx,dy,96,96);
     const an=anc[a][d][f];g.drawImage(hi,d*64,hs*64,64,64,dx+an[0]-32,dy+an[1]-48,64,64)}
   const t=new THREE.CanvasTexture(cv);t.magFilter=t.minFilter=THREE.NearestFilter;t.generateMipmaps=false;packCache.set(key,t);return t}

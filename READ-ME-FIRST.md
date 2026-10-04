@@ -29,7 +29,7 @@ python3 -m http.server 8000 --bind 0.0.0.0     # then open the preview on port 8
 ```sh
 python3 - <<'PY'
 h=open('index.html').read()
-open('/tmp/pack_block.js','w').write(h[h.index('const PACK_BODY='):h.index('function ensureHero(')])
+# (pack_sim extracts its own slice of index.html now - nothing to write by hand)
 PY
 for t in pack class_change save_load economy stat card skill gear scene kit ui sprite starter pet; do
   node tools/tests/${t}_sim.js || echo "FAILED: $t"
