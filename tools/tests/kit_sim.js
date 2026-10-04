@@ -26,7 +26,7 @@ const R = __dirname + '/../..';
 const src = fs.readFileSync(R + '/index.html', 'utf8');
 const grab = (a, b) => { const i = src.indexOf(a), j = src.indexOf(b, i); if (i < 0 || j < 0) throw new Error('missing ' + a); return src.slice(i, j); };
 
-const BX_ = 5.5, Z0 = -14, Z1 = 3;      // the arena, as grab()ed into the harness below
+const BX_ = 13, Z0 = -28, Z1 = 12;      // the arena, as grab()ed into the harness below
 const HERO = 2.9;                        // the hero billboard stands this tall on screen
 const KIT_S = .85;
 const PAY = JSON.parse(fs.readFileSync(R + '/assets/kit/ro-map-payon.json', 'utf8'));
@@ -111,10 +111,11 @@ const fakeCanvas=()=>({width:0,height:0,getContext:()=>({imageSmoothingEnabled:t
   createPattern:()=>({pat:1}),fillRect(){},drawImage(){},translate(){},scale(){},save(){},restore(){}})});
 const document={createElement:()=>fakeCanvas()};
 const scene=new Obj(),deco=new Obj();scene.add(deco);
-const BX_=5.5,Z0=-14,Z1=3;
+const BX_=13,Z0=-28,Z1=12;
+const S={lvl:1};
 ${code}
-this.__k={KIT,KIT_S,KIT_ZC,KIT_PK,KIT_PS,KIT_MAP,KIT_FIELD,kitPlan,kitPropScale,kitTick,buildKit,deco,kitAtlas,kitSrc,kitFbm,kitHash,
-  setAssets:()=>{KIT.png={};KIT.man=MANJ;KIT.des={payon:__PAYJ__,morocc:MORJ};KIT.ok=1}};
+this.__k={KIT,KIT_S,KIT_ZC,KIT_PK,KIT_PS,KIT_MAP,KIT_FIELD,kitPlan,stageSpec,STAGE_SCENES,kitPropScale,kitTick,buildKit,deco,kitAtlas,kitSrc,kitFbm,kitHash,
+  setAssets:()=>{KIT.png={};KIT.man=MANJ;KIT.des={payon:__PAYJ__,morocc:MORJ};KIT.ok=1},setStage:n=>{S.lvl=n}};
 `;
 const sb = { console, Promise, Image: function () { this.onload = null; this.onerror = null; }, fetch: () => ({ then: () => ({ catch: () => ({}) }) }) };
 vm.createContext(sb);
@@ -285,10 +286,10 @@ t('no map is a box: the edge is ragged and never a frame or a rectangle', () => 
 t('scenery is spread over the whole field, near the lane and far out, with a far ring', () => {
   for (const m of FIELD) {
     const p = plan(m);
-    const near = p.props.filter(x => Math.abs(x.x) < 14).length;
+    const near = p.props.filter(x => Math.abs(x.x) < BX_ + 3).length;
     const out = p.props.filter(x => Math.abs(x.x) >= 20).length;
     const ring = p.props.filter(x => Math.abs(x.x) > 30).length;
-    assert.ok(near >= 3, 'map ' + m + ' has nothing near the lane (' + near + ')');
+    assert.ok(near >= 1, 'map ' + m + ' has nothing near the lane (' + near + ')');
     assert.ok(out >= 5, 'map ' + m + ' has nothing far out (' + out + ') - the owner\'s "everything in the centre"');
     assert.ok(ring >= 5, 'map ' + m + ' has no far ring (' + ring + ')');
     const span = Math.max(...p.props.map(x => Math.abs(x.x)));
@@ -340,7 +341,8 @@ t('water stays scenery: strips never reach the monster spawn band unless decked'
     assert.ok(p.water.length > 0, 'map ' + m + ' carries water');
     for (const r of p.water) {
       const top = r.z + r.h / 2, bot = r.z - r.h / 2;
-      assert.ok(top < Z0 || bot > Z0 + 6 || p.deck, 'map ' + m + ' water at z=' + r.z.toFixed(1) + ' floods the spawn band');
+      assert.ok([[-8,6],[8,-2],[-8,-16]].every(([,z]) => top < z-1 || bot > z+1 || p.deck),
+        'map ' + m + ' water at z=' + r.z.toFixed(1) + ' floods a pack');
     }
   }
   // the seas reach the field border, so the far side of a coastal map is water, not bare ground
@@ -369,7 +371,7 @@ t('the decks land where the recipe says: pier off-lane on its posts, bridges on 
   assert.ok(pa.deck && Math.abs(pa.deck.x) < .05, 'Payon\'s plank bridge is on the mud road');
   const minZ = Math.min(...pa.water.map(r => r.z - r.h / 2)), maxZ = Math.max(...pa.water.map(r => r.z + r.h / 2));
   assert.ok(pa.deck.z - pa.deck.l / 2 <= minZ && pa.deck.z + pa.deck.l / 2 >= maxZ, 'and covers the creek end to end');
-  assert.ok(minZ > Z0 + 6, 'the creek must not reach the monster spawn band');
+  assert.ok(minZ > -16 + 1 && maxZ < -2 - 1, 'the creek must not reach either neighbouring pack');
   assert.ok(plan(8).deck === null, 'no deck where no water crosses');
 });
 
@@ -577,10 +579,10 @@ t('the landmarks are where the brief puts them: one each, off-lane, RO-scaled', 
   const one = (m, ty) => { const p = plan(m), f = p.props.filter(x => x.type === ty);
     assert.strictEqual(f.length, 1, 'map ' + m + ' should carry exactly one ' + ty + ' (got ' + f.length + ')'); return f[0] };
   const tower = one(2, 'tower_geffen');
-  assert.ok(Math.abs(tower.x) > 15 && tower.z < Z0 - 4, 'the tower is a far-corner landmark');
+  assert.ok(Math.abs(tower.x) > 15 && tower.z < Z0 + 3, 'the tower is a far-corner landmark');
   assert.ok(sizeOf(tower) > 4, 'and towers over everything else (' + sizeOf(tower).toFixed(2) + 'x)');
   const ruin = one(8, 'house_ruin');
-  assert.ok(Math.abs(ruin.x) > 12 && ruin.z < Z0, 'Niflheim\'s ruined house stands off in the waste');
+  assert.ok(Math.abs(ruin.x) > BX_ && ruin.z < Z0 + 6, 'Niflheim\'s ruined house stands off in the waste');
   const shrine = one(6, 'shrine_stone');
   assert.ok(Math.abs(shrine.x) > BX_, 'Louyang\'s shrine is off the lane');
   const house = plan(0).props.filter(x => x.type === 'house_prontera');
@@ -646,9 +648,41 @@ t('the loader asks for files that exist, and a dead atlas falls back instead of 
   assert.ok(K.buildKit(4), 'and builds again once the sheet is back');
 });
 
-t('with the kit ready, the arena bounds are still what they were', () => {
+t('all ten maps have four complete themed scenes and no spawn or boss floor stamps', () => {
+  K.setAssets();
+  assert.ok(/key=S.mp\+':'\+S.lvl\+':'\+bn/.test(src), 'stage changes must rebuild the scene');
+  assert.ok(!/function stageDress/.test(src), 'old spawn pads/boss floor layer must be removed');
+  for(let m=0;m<10;m++){
+    const old=plan(m),original=JSON.stringify(old);
+    for(const stage of [1,2,3])assert.strictEqual(JSON.stringify(K.kitPlan(m,stage)),original,
+      'map '+m+' stage '+stage+' must keep the original design');
+    const a=K.kitPlan(m,4),b=K.kitPlan(m,7),boss=K.kitPlan(m,10);
+    for(const [p,stage] of [[a,4],[b,7],[boss,10]]){
+      assert.ok(p.props.every(x=>Math.abs(x.x)>=BX_), 'scenery inside enlarged play lane');
+      assert.ok(p.props.every(x=>MAN.sprites[x.type]), 'variant places nonexistent art');
+      assert.ok(p.cells.every(x=>MAN.tiles[x.tile]), 'variant paints nonexistent art');
+      assert.ok(p.props.length>=15, 'variant is only a token decoration');
+      assert.ok(!K.stageSpec(m,stage).f.patch, 'no new floor patches');
+      assert.ok(!K.stageSpec(m,stage).f.plaza && !K.stageSpec(m,stage).f.pool, 'no arena floor or circles');
+      assert.ok(!p.cells.some(c=>Math.hypot(c.x,c.z-3)<2.5&&c.tile==='limestone_pale'&&m===0),
+        'Prontera boss floor stamp came back');
+    }
+    const sig=p=>JSON.stringify({base:p.base,water:p.water.length,deck:p.deck,props:p.props.map(x=>[x.type,Math.round(x.x),Math.round(x.z)]),tiles:tilesOf(p)});
+    assert.strictEqual(new Set([old,a,b,boss].map(sig)).size,4, 'map '+m+' stage bands share the same layout');
+    for(const [stage,p] of [[5,a],[6,a],[8,b],[9,b]])
+      assert.strictEqual(JSON.stringify(K.kitPlan(m,stage)),JSON.stringify(p),'stage band layout changed');
+    assert.strictEqual(JSON.stringify(plan(m)),original,'variants mutated the original scene');
+    K.setStage(10);const built=K.buildKit(m);
+    assert.ok(built.design.endsWith('-3'),'boss scene did not build');
+    assert.strictEqual(KIT.built.stage,10);
+    K.setStage(1);assert.strictEqual(K.buildKit(m).design,old.design,'original stage did not restore');
+  }
+});
+
+t('the enlarged arena keeps kit props out of its running lane', () => {
+  assert.ok(/BX_=13,Z0=-28,Z1=12,MPS=15,AGGRO=6\.5/.test(src), 'the kit harness no longer matches the real arena');
   const p = plan(4);
-  assert.strictEqual(BX_, 5.5); assert.strictEqual(Z0, -14); assert.strictEqual(Z1, 3);
+  assert.strictEqual(BX_, 13); assert.strictEqual(Z0, -28); assert.strictEqual(Z1, 12);
   assert.strictEqual(K.KIT_ZC, (Z0 + Z1) / 2, 'the field is centred on the play band');
   assert.strictEqual(K.KIT_PK, 2.9 / 80, 'the prop scale is still measured off the kit\'s own 80px character');
   assert.ok(p.props.every(x => Math.abs(x.x) >= BX_), 'props outside the lane');

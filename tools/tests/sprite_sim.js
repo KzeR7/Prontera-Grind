@@ -21,9 +21,10 @@ const petRosterSrc = src.match(/const PETS=\[[\s\S]*?\];/)?.[0];
 if (!petRosterSrc) throw new Error('cannot find pet monster sprite roster');
 const mapBox = {};
 vm.createContext(mapBox);
-vm.runInContext(mapCode + '\n' + petRosterSrc + '\n' + grab('const petIcon=', 'const RN=') + '\nthis.__data={MAPS,MOB_SPRITES,MOB_SIZE_BY_ID,MOB_SIZE_SCALE,mobSpriteUrl,PETS,petIcon};', mapBox);
+vm.runInContext(mapCode + '\n' + petRosterSrc + '\n' + grab('const petIcon=', 'const RN=') + '\nthis.__data={MAPS,MOB_SPRITES,MOB_SIZE_BY_ID,MOB_SIZE_SCALE,MOB_REGULAR_VISUAL,mobVisualScale,mobSpriteUrl,PETS,petIcon};', mapBox);
 const MAPS = mapBox.__data.MAPS, MOB_SPRITES = mapBox.__data.MOB_SPRITES, MOB_SIZE_BY_ID = mapBox.__data.MOB_SIZE_BY_ID,
-      MOB_SIZE_SCALE = mapBox.__data.MOB_SIZE_SCALE, mobSpriteUrl = mapBox.__data.mobSpriteUrl, PETS = mapBox.__data.PETS,
+      MOB_SIZE_SCALE = mapBox.__data.MOB_SIZE_SCALE, MOB_REGULAR_VISUAL = mapBox.__data.MOB_REGULAR_VISUAL,
+      mobVisualScale = mapBox.__data.mobVisualScale, mobSpriteUrl = mapBox.__data.mobSpriteUrl, PETS = mapBox.__data.PETS,
       petIcon = mapBox.__data.petIcon;
 
 const weaponCode = grab('const WEAPON_ITEM_IDS=', 'const STATS=');
@@ -86,6 +87,40 @@ t('every pet portrait is a real Divine Pride monster PNG, not an emoji placehold
   }
 });
 
+t('all pets use the same official mob sprite loader and remain uniformly small', () => {
+  const petDraw=grab('const PET_VISUAL_SCALE=.42;', 'function disposeCreatureVisual(v){');
+  const box={};vm.createContext(box);
+  vm.runInContext(petDraw+'\nthis.__pet={PET_VISUAL_SCALE,petFallbackShape};',box);
+  const P=box.__pet;
+  assert.strictEqual(P.PET_VISUAL_SCALE,.42);
+  assert.ok(3.05*P.PET_VISUAL_SCALE<2.92*.5,'even a Baphomet Jr. pet should be less than half the hero height');
+  for(const sp of PETS)assert.ok(P.petFallbackShape(sp),'no pet fallback if official art fails');
+  const draw=grab('  const pids=new Set(S.pets.filter(p=>p.on)', '  const live=new Set();');
+  assert.ok(draw.includes('v=buildMob(pet)')&&draw.includes('spriteId:sp.spriteId'),
+    'active pets must use the mob renderer and the verified monster sprite ID');
+  assert.ok(draw.includes("rec.state==='ready')useMobTexture(v,rec.texture)"),
+    'pets must switch to official GPU textures when available');
+  assert.ok(draw.includes('v.G.scale.setScalar(PET_VISUAL_SCALE)')&&src.includes('syncMobImage(v,{x:r.x'),
+    'both the GPU and DOM sprite paths must use the same small size');
+  assert.ok(draw.includes('disposeCreatureVisual(v)')&&src.includes('if(v.image)v.image.remove()'),
+    'unequipping a pet must remove its DOM image as well as its 3D group');
+  assert.ok(draw.includes('v.spr.material.color.set(0xffffff)'),
+    'mutation should not recolour official pixel art');
+  // Actually build the pet using the same function as a monster, verifying its URL is
+  // requested and the DOM fallback exists for every species if WebGL texture loading fails.
+  const ctx={requested:[],images:[],groups:[],THREE:{Group:class{add(){} }},getSheet:()=>({}),
+    drawCritter:()=>{},mkBillboard:()=>({material:{map:{},dispose(){}}}),mkShadow:()=>{},
+    scene:{add(g){ctx.groups.push(g)}},mobSpriteUrl,document:{createElement:()=>({style:{}})},
+    mobSpriteLayer:{appendChild(im){ctx.images.push(im)}},requestMobTexture:id=>ctx.requested.push(id)};
+  vm.createContext(ctx);
+  vm.runInContext(grab('function buildMob(m){','let slashM=null;')+'\nthis.build=buildMob;',ctx);
+  for(const sp of PETS){
+    const v=ctx.build({shape:P.petFallbackShape(sp),c:sp.c,spriteId:sp.spriteId});
+    assert.strictEqual(v.spriteId,sp.spriteId);assert.strictEqual(v.image.src,mobSpriteUrl(sp.spriteId));
+  }
+  assert.strictEqual(ctx.images.length,8);assert.strictEqual(ctx.requested.length,8);
+});
+
 t('all 85 unique Divine Pride mob IDs match their database size class and player-relative scale', () => {
   // Reference list transcribed from the Small/Medium/Large labels on the corresponding
   // Divine Pride monster pages; index.html documents the common URL pattern and audit date.
@@ -105,6 +140,30 @@ t('all 85 unique Divine Pride mob IDs match their database size class and player
     assert.strictEqual(mob.spriteScale,MOB_SIZE_SCALE[mob.spriteSize],mob.n+' does not use the size-class scale');
   }
   console.log('       20 Small / 38 Medium / 27 Large; scale factors .62 / .92 / 1.28 vs player');
+});
+
+t('Poring, Fabre and all regular mobs render below player height while bosses keep their old size', () => {
+  const hero=2.92,frame=3.05;
+  assert.strictEqual(MOB_REGULAR_VISUAL,.7,'the regular-only visual multiplier changed');
+  const height=(m,boss=false)=>frame*mobVisualScale({...m,boss,spawn:1});
+  const poring=MAPS[0].mobs.find(m=>m.n==='Poring');
+  const fabre=MAPS[0].mobs.find(m=>m.n==='Fabre');
+  assert.ok(fabre && poring,'starter monster samples not found');
+  assert.ok(height(fabre)<height(poring) && height(poring)<hero,
+    'Fabre and Poring should be visibly shorter than the player');
+  assert.ok(height(fabre)<hero*.55,'Fabre is still oversized');
+  assert.ok(height(poring)<hero*.75,'Poring is still oversized');
+  for(const map of MAPS){
+    for(const m of map.mobs)assert.ok(height(m)<hero, map.n+': '+m.n+' exceeds player height');
+    const boss=map.boss;
+    assert.ok(Math.abs(height(boss,true)-frame*boss.spriteScale*1.18)<1e-9,
+      map.n+' boss size was changed');
+  }
+  // The same scale must reach the GPU group, DOM sprite, target tag and sync path.
+  assert.ok(src.includes('const s=mobVisualScale(m)') && src.includes('const s=mobVisualScale(mob)'),
+    'rendered mobs or target tag still use the old scale');
+  assert.ok(src.includes('v.G.scale.set(s,s,s)') && src.includes('syncMobImage(v,m,mobVisualScale(m))'),
+    'GPU and HTML sprite paths must agree on size');
 });
 
 t('Divine Pride item icons cover every weapon type used by all 19 classes', () => {

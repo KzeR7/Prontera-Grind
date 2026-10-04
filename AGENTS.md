@@ -22,7 +22,7 @@
 Three.js from a CDN, no build step. The player picks a class line, grinds monsters across
 10 maps, levels up, spends stat and job points, wears gear, collects pets **from drops
 only** (there is no hatching), trains them by gambling Zeny, rolls for cards and ores, and
-fights a boss once every 15 kills.
+fights an immediate boss plus escorts on each Stage 10 map.
 
 | Where | What |
 |---|---|
@@ -62,7 +62,7 @@ in-game and stored in `localStorage` under `pg_acc4`, saves under `pg_save3_<use
    the stub's own centre, never the silhouette centroid. Stub-less frames (the diving
    lunge) fall back to the torso with that direction's median `stub_top − hips_y`.
 5. **Montage sheets only through `tools/montage.py`.** Never hand-split a montage.
-6. **All nine test suites must be green before you push.** Add a test when you add
+6. **All thirteen test suites must be green before you push.** Add a test when you add
    behaviour. A change with no test is not finished.
 7. **Bump the `BUILD` tag** (`const BUILD='…'` in `index.html`) for anything a player can
    see, and **append to the log below**.
@@ -129,15 +129,15 @@ grind lives at the top. `needAt(L)` is three continuous power segments
 (`NA1·L^NE1` ≤50, anchored powers to `NE2` ≤99 and `NE3` above), solved with
 `tools/tune_pacing.js` against the canonical model (~800 kills/hour, camping the band map's
 boss field): **Base 10 in 10 min, Base 49 in 1.9 h, Base 99 in 45 h**, then a long 100-150
-endgame (**~269 h total to Lv150 at the model rate** — an outcome, not an anchor; retune
+endgame (**~269 h total to Lv150 at the historical model rate** — an outcome, not an anchor; retune
 `aC` if the owner wants it shorter). `EXPK=5.5`, `BOSEK=46` (the boss stays 8.33x a mob),
 `ZK=[8,14]`, `BZK=[150,250]`, `QZ={kill:1.6,loot:9,boss:26}`, `zenAt(p)=max(1,round(.011*p*p))`
 are unchanged. **`QXP={kill:1/120,loot:1/150,boss:1/72}`** is the v11 column scaled by 4/15:
 on the steep new curve quests must never carry more than ~40% of a level (they supply ~35%
-overall). **Job bars mirror the base curve** (`JOFF=[0,9,49,98]`): job level j of a tier
+overall in the historical v16 model). **Job bars mirror the base curve** (`JOFF=[0,9,49,98]`): job level j of a tier
 costs the job exp (70% of mob exp) that base level j+JOFF[tier] pays out, so each job bar
 fills in step with the base bar and the job gates (Novice 10 / 1st-job 40 / 2nd-job 50) land
-on the anchors by construction. Zeny over a full model run is **~46.5M**, enough for the
+on the anchors by construction. Zeny over a historical model run is **~46.5M**, enough for the
 +10 7-slot setup and thousands of pet rolls.
 
 > **The 800 kills/hour figure is still the model's assumption - re-measure it.** It was
@@ -408,12 +408,37 @@ persisted and repaired on load. **Do not add new effect types** without asking.
 via `pl.wt/wx/wz`); it does not march back to the entrance. **Only a defeat resets the position**
 to `x=0, z=Z1-1.5`. Both are pinned in `save_load_sim.js`.
 
-Vertical, and deliberately so: `BX_=5.5`, `Z0=-14`, `Z1=3` (17 deep). The camera sits
-on +Z looking toward -Z, which makes **low Z the top of the screen**. The player starts at
-`Z1-1.5` (bottom) and mobs hold `Z0..Z0+6` (top), so you run up the avenue to engage; `AGGRO=8.5`
-is how close you must get before a pack leaves its spawn, and bosses ignore it. `ct.z` tracks
-`pl.z-5` to keep the player in the lower part of the frame. Prontera's buildings are scenery, not
-a maze - the whole town set is offset by `TZ=-18` so it sits behind the far edge.
+The battle arena is **26 wide by 40 deep**: `BX_=13`, `Z0=-28`, `Z1=12`. The
+camera sits on +Z looking toward -Z, which makes **low Z the top of the screen**. The
+player starts at `Z1-1.5` (bottom). Every respawn rerolls three pack sites in the dry,
+open field: **13–18.5 units apart** (v30, between v28’s fixed ~18–23 and v29’s 9.5–15.5). `AGGRO=6.5`, and only
+the active pack can chase or attack; on each spawn and after each pack falls, `nearestPack()`
+chooses whichever surviving pack is closest to the player. Pets and skills stay on that
+pack; no 1 → 2 → 3 fixed order. On Stage 10 the boss appears immediately
+with three regular escorts on maps 1–5 or five on maps 6–10. Defeat the boss to
+clear its remaining escorts; the whole boss wave respawns without a kill prerequisite.
+`ct.z` tracks `pl.z-5` to keep the player in the lower part of the frame. Prontera's
+fallback town stays beyond the far edge (`TZ=Z0-8`).
+
+**Monster render size (v30):** the Divine Pride Small/Medium/Large labels and base
+factors `.62/.92/1.28` are still intact, but normal monsters render at **70%** of their
+former visual height in *both* sprite paths (GPU and HTML fallback). Against the 2.92-unit
+hero, Fabre now appears ~1.32 units tall and Poring ~1.96; even Large regular mobs are
+below player height. Boss rendering is **unchanged** (`spriteScale * 1.18`). These are
+visual-only changes — `size` (combat reach), HP, stats, rewards and the monster art are not
+modified. `mobVisualScale()` is the shared helper for mob mesh, DOM sprite and target tag.
+
+**Stage scenes (v29):** `KIT_MAP` is the original map scene on stages 1–3; `STAGE_SCENES`
+is ten maps × three **independent, themed recipes** for 4–6, 7–9 and 10. `stageSpec(m,l)`
+selects the recipe, `kitPlan(m,l)` builds it, and the draw key includes the stage. Later
+recipes set their own base, path, water, decks, vegetation and landmarks; even Morocc uses a
+new field layout rather than stamping its original attached design with extras. **No later
+scene uses a noise patch, monster floor pad, boss-floor ring, plaza or round stamp.** Boss
+stages stand out through paired map-native landmarks *outside* the lane, not floor paint.
+Water is still allowed where it belongs to the map (sea, creek, dark lake), and randomized
+pack sites reject water. Stages 1–3 retain their v27 scene and its original organic ground
+variation; nothing was added around their spawn sites. All pixels remain the existing kit.
+
 
 **Art.** No map or terrain sheets exist in `Sprite/`, and house rule 1 forbids inventing art, so
 all map visuals are procedural: `TH[m]` picks a biome kind and two colours, `buildDeco` scatters
@@ -457,10 +482,10 @@ node tools/tests/card_sim.js          # -> "13 passed, 0 failed"
 node tools/tests/skill_sim.js         # -> "48 passed, 0 failed"
 node tools/tests/gear_sim.js          # -> "20 passed, 0 failed  (20 assertions groups)"
 node tools/tests/scene_sim.js         # -> "8 passed, 0 failed" (per-map scenery, water, clear lane)
-node tools/tests/kit_sim.js           # -> "30 passed, 0 failed" (v2 atlas + KIT_PS, payon recipe, morocc design, ten identities, builders, loader)
+node tools/tests/kit_sim.js           # -> "34 passed, 0 failed" (v2 atlas + KIT_PS, payon recipe, morocc design, ten identities, builders, loader)
 node tools/tests/ui_sim.js            # -> "13 passed, 0 failed"
-node tools/tests/sprite_sim.js        # -> "10 passed, 0 failed" (mob/weapon Divine Pride mapping, fallbacks)
-node tools/tests/starter_sim.js       # -> "4 passed, 0 failed" (the gentle starter stages)
+node tools/tests/sprite_sim.js        # -> "11 passed, 0 failed" (mob/weapon Divine Pride mapping, fallbacks)
+node tools/tests/starter_sim.js       # -> "7 passed, 0 failed" (the gentle starter stages)
 ```
 
 Every suite pulls real code out of `index.html` by **string boundary**, so an edit that
@@ -1419,3 +1444,159 @@ assigned for feel rather than fidelity. While reworking that, two shipped bugs s
     was not touched here.
   * Prontera's old block town is still in `index.html` as the fallback if the kit cannot load, and
     still has no test of its own; `scene_sim.js` covers the fallback scenery path, not the town.
+
+### 2026-10-04 — `kit-v28 stage-variants three-packs`
+
+* **What changed for the player:** each map now has four visual stage bands. Stages 1–3 keep
+  their existing recipe and kit artwork. Stages 4–6 add that map's first set of painted
+  clearings and kit props; stages 7–9 switch to a stronger set of markings and landmarks.
+  Stage 10 has its own large boss altar with a contrasting centre, outer ring and sentinels.
+  All ten maps use their own palette, and switching stages rebuilds the scene immediately.
+* **Combat field:** expanded from 11×17 to **26×40** world units, with wider shadow coverage.
+  Three separated packs spawn together. The player and pets fight only pack 1, move to pack 2
+  and then pack 3, and repeat from pack 1 when all are cleared. Sleeping packs cannot chase or
+  hit the player; area and chain skills cannot reach across packs. Stage 10 still summons its
+  lone boss after 15 kills, now on the marked altar. Starter fights still have only one or two
+  monsters per encounter (three separated encounters); loot, boss rewards and unlock rules
+  are unchanged. The town fallback was moved behind the larger arena.
+* **Files touched:** `index.html` (arena, spawn/target loop, stage kit treatment, build tag),
+  `tools/tests/{starter,kit,scene,save_load,skill}_sim.js`, `tools/preview/dump_plans.js`,
+  `READ-ME-FIRST.md`, `AGENTS.md`.
+* **Art:** no new sprite sheet, pixels, recolouring or substitute art. The three later bands
+  reuse the existing painted kit tiles and billboards. The stage 1–3 layouts are left intact,
+  except that scenery in the newly enlarged running lane moves to the safe edge (and Izlude's
+  pier moves with its posts); no placed sprite is deleted. The old atlas and class sprites are
+  untouched.
+* **Tests:** all 13 suites green — pack 19 bodies, class change 22, save/load 10, economy 21,
+  stat 7, card 13, skills **49**, gear 20, scene 8, kit **34**, ui 13, sprite 10, starter **7**.
+  Kit tests cover the four stage bands on all ten maps and restored original layouts; skill tests
+  exercise an area hit when the target switches mid-cast; starter
+  tests execute real spawn and kill transitions, starter damage budgets, pack spacing, isolation,
+  and boss placement. Inline game JavaScript passes `node --check`; the stage layouts were
+  previewed top-down with the kit's own tile crops.
+* **Known limits / follow-ups:** movement across the bigger field changes real kills/hour.
+  The economy's 800 kills/hour pacing remains a model assumption, so time-to-job-change needs
+  a real playtest before retuning the EXP curve. The new boss altar uses arranged existing
+  crops, not a purpose-made boss-arena sprite.
+
+### 2026-10-04 — `kit-v29 themed-scenes roaming-packs` (owner feedback on v28)
+
+* **What changed for the player:** the stage 4–6 and 7–9 spawn pads and the stage 10 boss
+  floor disc/ring added in v28 are **removed**. They were not the requested variation. Each
+  of the ten maps now has three genuinely new layouts alongside its unchanged stage 1–3
+  layout: new paths/water where the biome calls for them, different vegetation and distinct
+  landmarks using the same kit crops. Boss stages have map-native landmark pairs framing the
+  fight instead of anything painted on the floor. Morocc's original attached design remains
+  on stages 1–3; later stages use different desert and ruin designs. No sprite was painted,
+  recoloured, borrowed from another game or replaced.
+* **Combat:** packs reroll on each respawn in the open battle area rather than staying on
+  three marked positions. Their sites are roughly **9.5–15.5 units apart** (previously ~18–23),
+  avoid water, and remain isolated. The player begins with the nearest pack to their current
+  position; after that pack falls, the nearest *surviving* pack is chosen. No fixed 1–2–3
+  route. Pets, area skills and chained hits remain limited to the active pack. The three-pack
+  count, 15-kill boss, arena dimensions, rewards and save format are unchanged.
+* **Files touched:** `index.html`, `tools/tests/{starter,kit,save_load}_sim.js`,
+  `tools/preview/dump_plans.js`, `READ-ME-FIRST.md`, `AGENTS.md`.
+* **Tests:** all 13 suites green — pack 19 bodies, class change 22, save/load 10, economy 21,
+  stat 7, card 13, skill 49, gear 20, scene 8, kit 34, ui 13, sprite 10, starter 7.
+  Kit tests compare all four complete scenes for every map and ban the v28 floor overlays;
+  starter tests reroll hundreds of waves, check separation and dry sites, and execute the
+  real nearest-pack selection and kill transition. Inline game JS passes `node --check`.
+  The new plans were rendered top-down for visual review using the original kit atlas.
+* **Known limit:** travel is shorter than v28, but the economy's 800-kills/hour assumption
+  still needs a real gameplay measurement before any pacing retune. The boss-field landmarks
+  use existing kit art rather than a custom boss sprite.
+
+### 2026-10-04 — `kit-v30 pack-spacing smaller-mobs`
+
+* **What changed for the player:** the three randomized pack sites are now **13–18.5
+  units apart**: halfway between v28's distant fixed positions and v29's close
+  9.5–15.5-unit rerolls. They still avoid water and engage by nearest pack, not number.
+  Ordinary monsters are visibly smaller than the hero: **Fabre ~1.32 vs hero 2.92
+  world units, Poring ~1.96 vs hero 2.92**. All regular mobs (including those with a
+  Large size label) are below the hero's height. Bosses keep their exact previous
+  on-screen scale — none were reduced.
+* **Files touched:** `index.html` (pack spacing, shared regular-mob visual scale, `BUILD`),
+  `tools/tests/{sprite,starter}_sim.js`, `AGENTS.md`, `READ-ME-FIRST.md`.
+* **Art and combat:** no sprite source, packed atlas or kit art changed. Both official
+  sprite routes (GPU and DOM fallback) follow the new scale. Monster hitboxes, aggro,
+  rewards, HP and all boss dimensions are unchanged.
+* **Tests:** all 13 suites green — pack 19 bodies, class change 22, save/load 10,
+  economy 21, stat 7, card 13, skill 49, gear 20, scene 8, kit 34, ui 13,
+  **sprite 11**, starter 7. New assertions pin Fabre/Poring's player-relative heights,
+  every regular monster below the hero, unchanged boss height, and both sprite paths;
+  spacing tests check the midpoint limits on repeated dry-site rolls. Inline game
+  JavaScript passes `node --check`.
+* **Known limit:** Divine Pride's PNGs have varied transparent margins; heights are based
+  on rendered frames, and a visual pass in the live preview is still useful to judge
+  individual silhouettes. The change is not a hitbox or balance change.
+
+### 2026-10-04 — `ui-v31 levels rates boss-escorts`
+
+* **What changed for the player:** the HP bar is modern green above 30% and red at or below
+  30%. Full-width Job Level and Base Level progress bars sit at the bottom; hover or focus
+  either for its exact percentage. Hover or focus Zeny to see *earned* Zeny/min, including
+  quest and sale income but not purchases or GM grants. Kills/min refreshes every 30 seconds
+  (hover it for kills/sec). The rates reset on login or a new adventure.
+* **Stage 10:** the boss is present from the first spawn with three ordinary escorts on the
+  first five maps and five on the last five. They engage together. Killing the boss clears
+  the wave, and the next wave again includes the boss; no 15-kill gate remains. Normal
+  stages still have randomized, nearest-selected three packs. The larger arena and all
+  scene art, mob visual sizes, rewards, save data and boss scale are unchanged.
+* **Files touched:** `index.html`, `tools/tests/{starter,economy,skill,ui}_sim.js`,
+  `READ-ME-FIRST.md`, `AGENTS.md`. `BUILD` is now ui-v31.
+* **Checks:** all 13 suites green (pack 19 bodies; class change 22; save/load 10;
+  economy 21; stat 7; card 13; skill 49; gear 20; scene 8; kit 34; ui 14;
+  sprite 11; starter 7). Inline JavaScript passes `node --check`; diff is clean.
+* **Balance caveat:** `tools/tune_pacing.js` and `economy_sim.js` still use the old
+  one-boss-per-15-kills model for their pacing projections. Those historical time and
+  income estimates are **not** predictions for this new Stage-10 encounter. Re-measure
+  kills/hour and boss-wave duration before retuning, rather than extrapolating the old
+  800-kills/hour model. No in-browser visual playtest was run.
+
+### 2026-10-04 — `ui-v32 split-exp live-rates` (owner correction to v31)
+
+* **What changed for the player:** corrected the bottom XP dock from two stacked full-width
+  bars to **one full-width bar split exactly in half**, as requested and informed by the
+  left-Base/right-Job bottom-bar arrangement in Ragnarok X screenshots. Base occupies the
+  left half and fills rightward; Job occupies the right half and fills leftward. Each
+  half has a centered percentage, a level label, and its own hover/focus details; on
+  narrow screens the labels sit above the percentages in the same single bar.
+* **Rates:** the Zeny/min tooltip and Kills/min display now refresh once a second using
+  events in the last 60 seconds rather than holding kill rate for 30 seconds. If the
+  browser stops updating for more than 30 seconds (e.g. a 10-minute hang), the old
+  samples and any aggregate delta during the stall are discarded, so resuming cannot
+  display a huge, misleading per-minute rate. The next observed kills/credits start
+  a fresh window. Early-window values are extrapolated to per-minute units.
+* **Files touched:** `index.html` (`BUILD` ui-v32), `tools/tests/ui_sim.js`,
+  `READ-ME-FIRST.md`, `AGENTS.md`. Stage-10 encounter, HP threshold, save format and
+  battle/map visuals are unchanged.
+* **Tests:** all 13 suites pass (ui 14), plus inline script `node --check` and
+  `git diff --check`. UI tests cover fill direction/centering, per-second updates,
+  a 60-second rolling window, and a 10-minute stalled frame gap. No in-browser
+  automated screenshot comparison was available.
+
+### 2026-10-04 — `combat-v33 hit-fx pet-sprites`
+
+* **What changed for the player:** the combined bottom XP bar is slimmer: 14px high on
+  desktop, 22px on small screens, with less dock padding. Active skills, First Aid and
+  timed self-buffs show a name tag anchored above the moving hero for the short cast.
+  Outgoing hits are gold with a dark RO-style outline; critical numbers sit on a jagged
+  red burst inspired by the user's example. Incoming damage is red; miss/loot/level
+  messages keep their own styles. Combat values and critical chance are not changed.
+* **Pets:** all eight already have verified Divine Pride monster IDs in `PETS`, so no
+  new invented art is needed. Field pets now pass through the same official PNG WebGL
+  texture and HTML image fallback path as the mobs, instead of always using the
+  procedural critter. Every pet, including Baphomet Jr. and Angeling, renders at a
+  fixed small scale of .42 (~1.28 world units high against a 2.92-unit hero);
+  mutations do not tint the official sprite. Existing procedural art is shown if the
+  remote PNG is unavailable. Deactivating pets removes their mesh and HTML image.
+* **Files touched:** `index.html` (`BUILD` v33), `tools/tests/{ui,skill,sprite}_sim.js`,
+  `READ-ME-FIRST.md`, `AGENTS.md`. Save data, pet damage, mob and boss visual scales,
+  Stage-10 encounter and map designs are unchanged.
+* **Verification:** all 13 suites pass (ui 15, sprite 12); the inline script passes
+  `node --check` and `git diff --check` is clean. UI tests execute the critical-hit
+  routing and hero-anchored labels; sprite tests build all eight pet visuals using
+  their real IDs and check both rendering paths and size. The Divine Pride CDN was
+  unreachable from this sandbox, so live image availability and appearance still
+  need visual confirmation in the browser preview.

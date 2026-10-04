@@ -160,7 +160,8 @@ t('the real kill reward block boosts Base/Job EXP but leaves player Zeny unchang
       const gx=()=>S.gm?S.gmx:1;
       ${src.match(/const expRate=[^;]+;/)[0]}
       const mob={exp:100,zeny:10,boss:false},pv=()=>0,qProg=()=>{};
-      let jobXP=0,pend=[];const addJob=x=>jobXP+=x;
+      let jobXP=0,pend=[],zenyEarned=0;const addJob=x=>jobXP+=x;
+      ${grab('function earnZeny(amount){','function kill(o){')}
       ${rewards}
       this.result={xp:S.exp,z:S.zeny,jobXP};
     `,world);

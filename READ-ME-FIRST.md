@@ -37,8 +37,8 @@ done
 ```
 
 Expected tails: pack prints the 19 bodies; every other suite prints `N passed, 0 failed`
-(class_change 22, save_load 10, economy 21, stat 7, card 13, skill 48, gear 20, scene 8,
-**kit 33**, ui 13, sprite 10, starter 4). All suites pull the real code out of `index.html` by
+(class_change 22, save_load 10, economy 21, stat 7, card 13, skill 49, gear 20, scene 8,
+**kit 34**, ui 15, sprite 12, starter 7). All suites pull the real code out of `index.html` by
 string boundary, so moving a declaration can break a test without breaking the game — if a suite
 throws, read the boundary it grabs before assuming the game is at fault.
 
@@ -51,11 +51,33 @@ python3 -m venv /tmp/venv && /tmp/venv/bin/pip install pillow numpy scipy    # o
 ```
 
 The map **layouts** (which tile goes where, how the scenery is clumped) are data in `index.html`:
-`const KIT_MAP` holds one recipe per map and `fieldPlan()` builds it. To look at a layout without a
+`const KIT_MAP` holds the original recipe for each map and `STAGE_SCENES` holds three
+independent layouts for stages 4–6, 7–9 and boss stage 10. `stageSpec()` chooses the recipe;
+`fieldPlan()` builds it. Later stages do **not** paint spawn pads or boss-floor rings: they
+change paths, water, vegetation and landmarks with the existing kit. The combat arena is
+26×40 units. `packSites()` rolls three dry locations 13–18.5 units apart anew on every respawn;
+`nearestPack()`, `spawn()`, `kill()` and `update()` choose the nearest surviving pack, not a
+numbered route. `mobVisualScale()` makes regular mobs shorter than the player while leaving
+bosses at their previous size. Stage 10 starts with the boss and three regular escorts
+on maps 1–5 or five on maps 6–10; defeating the boss clears the wave and immediately
+allows another boss wave after the respawn delay. The HUD shows green HP above 30%
+(red at or below 30%), one full-width bottom XP bar split into a left Base half (filling rightward) and a
+right Job half (filling leftward), with percentages centered in their own halves and
+detailed hover percentages. Earned Zeny/min is shown on hover; Kills/min and Zeny/min
+use rolling 60-second activity, refreshed every second (kills/sec on hover). After a
+browser stall longer than 30 seconds, the rates reset instead of compressing the
+paused time into a false burst. The shared Base/Job bar is now 14px high on desktop
+(22px on narrow screens). Skills display their names over the moving player; gold
+outgoing damage numbers and red spiked critical bubbles follow the supplied RO example.
+Active pets use their eight existing Divine Pride monster sprite IDs in the same
+WebGL/DOM renderer as mobs, all at one small scale (with a drawn fallback if an
+official remote PNG cannot load). Samples also reset at login or on a new adventure. The economy pacing
+tests still model the former 15-kill boss cadence, so their time-to-level projections
+are historical until a real Stage-10 boss-wave playtest. To look at a layout without a
 browser:
 
 ```sh
-node tools/preview/dump_plans.js /tmp/plans.json
+node tools/preview/dump_plans.js /tmp/plans.json 10    # third arg: stage, defaults to 1
 /tmp/venv/bin/python tools/preview/render_plans.py /tmp/plans.json /tmp/out --px=1400 --box=-38,-38,38,20
 ```
 

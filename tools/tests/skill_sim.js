@@ -25,7 +25,7 @@ ${ledger}
 // skOff and skillOn share one line in index.html, so the pick above already brought both in.
 let S = null, tb = {}, skCd = {}, dt = 0;
 const lv = id => (S.sk && S.sk[id]) || 0;
-const maxHp = () => 1000, log = () => {}, addFloat = () => {}, playSkillFx = () => {}, pl = {x:0,z:0};
+const maxHp = () => 1000, log = () => {}, addFloat = () => {}, skillNameFloat = () => {}, playSkillFx = () => {}, pl = {x:0,z:0};
 this.__k = { SKILLS, CLASSES, SKSLOTS, SKFADE, SKILL_VFX, skillFxSpec, skCost, applyDot, applyStun, skillOn, skOff, down, skLine, skEarned, skSpent, skpAvail,
              set S(v){S=v}, get S(){return S},
              get tb(){return tb}, set tb(v){tb=v},
@@ -162,7 +162,7 @@ t('player ATK and MATK formulas consume only their matching pet buffs and passiv
   const strikeBox={};vm.createContext(strikeBox);
   vm.runInContext(`
     let mob={x:0,z:0,hp:10000,size:.6,spriteScale:1},shake=0;
-    const atk=()=>100,matk=()=>200,missCh=()=>0,crit=()=>0,st=()=>0,critD=()=>2,rnd=(a,b)=>a,addFloat=()=>{};
+    const atk=()=>100,matk=()=>200,missCh=()=>0,crit=()=>0,st=()=>0,critD=()=>2,rnd=(a,b)=>a,addFloat=()=>{},damageFloat=()=>{};
     ${STRIKE_SRC}
     const hp=mob.hp;strike(1,'#fff',false);const physical=hp-mob.hp;mob.hp=hp;strike(1,'#fff',true);this.damage={physical,magical:hp-mob.hp};
   `,strikeBox);
@@ -235,6 +235,7 @@ t('releasing a pet clears its auto-roll and skill-cooldown state', () => {
     ${PET_DATA_SRC}
     const EGG=3000;let S={zeny:100,pets:[{id:7,sp:0}]},petSkillCd={7:8},autoSet=new Set([7]),pending=null,saveCount=0,uiCount=0;
     const gp=id=>S.pets.find(p=>String(p.id)===String(id)),ask=(msg,fn)=>{pending=fn},save=()=>saveCount++,ui=()=>uiCount++;
+    let zenyEarned=0;${grab('function earnZeny(amount){','function kill(o){')}
     const release=${action};
     this.__rel={S,petSkillCd,autoSet,release,get pending(){return pending},get saveCount(){return saveCount},get uiCount(){return uiCount},confirm:()=>pending()};
   `,box);
@@ -316,7 +317,7 @@ t('every mapped skill visual builds, animates and disposes through the renderer'
 });
 
 t('the live combat loop starts and renders skill visuals from casts, buffs and First Aid', () => {
-  assert.ok(src.includes('playSkillFx(sk.id,mob,sk.col)'), 'offensive skills do not trigger their visual');
+  assert.ok(src.includes('playSkillFx(sk.id,target,sk.col)'), 'offensive skills do not trigger their visual');
   assert.ok(src.includes("playSkillFx('aid',null,'#7dff7d')"), 'First Aid does not show a heal pulse');
   assert.ok(src.includes('playSkillFx(s.id,null,s.col)'), 'temporary auto-buffs do not show their cast cue');
   assert.ok(src.includes('tickSkillFx(dt);') && src.includes('syncSkillFx();'), 'skill effects are advanced and drawn in the game loop');
@@ -406,6 +407,25 @@ t('first-job AoEs damage a nearby secondary enemy, but not distant mobs', () => 
     assert.ok(context.result.near<10000,cls+' area damage missing');
     assert.strictEqual(context.result.far,10000,cls+' hit outside area');
   }
+});
+
+t('area casts cannot spill into a different pack when a kill changes target mid-cast', () => {
+  const cast=grab('function castSkill(sk,k){','function playerAttack(){');
+  const sk=K.SKILLS.find(s=>s.aoe&&s.type==='act');assert.ok(sk);
+  const context={sk};vm.createContext(context);
+  vm.runInContext(`
+    const first={x:0,z:0,hp:100,pack:0},near={x:1,z:1,hp:1,pack:0},waiting={x:1,z:2,hp:100,pack:1};
+    let mob=first;const mobs=[first,near,waiting],pend=[];let dots=0,stuns=0,chains=0;
+    const lv=()=>1,st=()=>1,atk=()=>50,matk=()=>50,strike=()=>{},shot=()=>{},playSkillFx=()=>{},
+      chainHit=()=>{chains++},applyDot=()=>{dots++},applyStun=()=>{stuns++},
+      hurt=(o,d)=>{o.hp-=d;if(o.hp<=0){mobs.splice(mobs.indexOf(o),1);mob=waiting}};
+    ${cast}
+    castSkill(sk,1);this.result={waiting:waiting.hp,near:near.hp,mob:mob.pack};
+  `,context);
+  assert.ok(context.result.near<=0,'the first pack should take the area hit');
+  assert.strictEqual(context.result.mob,1,'the test must switch targets during the cast');
+  assert.strictEqual(context.result.waiting,100,'the waiting pack must not be hit despite being nearby');
+  assert.ok(/mob.pack!==pack/.test(src), 'multi-cast swings must stop at pack boundaries');
 });
 
 t('invented and wrong-job skills are gone', () => {

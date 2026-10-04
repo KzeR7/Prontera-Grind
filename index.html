@@ -23,13 +23,35 @@ html, body { margin:0; padding:0; width:100vw; height:100vh; overflow:hidden; ba
 .weapon-sprite-fallback{position:absolute;inset:0;display:grid;place-items:center;font-size:calc(var(--weapon-size, 34px) * .76);line-height:1;text-shadow:0 1px 2px #000}
 .fl{position:absolute;transform:translate(-50%,-50%);font-weight:bold;font-size:16px;white-space:nowrap;text-shadow:-1px -1px 0 #000,1px -1px 0 #000,-1px 1px 0 #000,1px 1px 0 #000}
 .fl.big{font-size:24px}
+.fl{pointer-events:none}
+/* RO-style damage: outlined golden digits; crits sit on a red spiked bubble. */
+.fl.damage,.fl.critical,.fl.incoming{font-family:Verdana,"Trebuchet MS",sans-serif;font-size:22px;font-weight:900;font-variant-numeric:tabular-nums;letter-spacing:1px;color:#ffe643!important;-webkit-text-stroke:1.5px #30221e;paint-order:stroke fill;text-shadow:1px 2px 0 #120e0b,0 0 3px #140d08;z-index:24;animation:hit-pop .24s ease-out both}
+.fl.critical{font-size:26px;color:#fff264!important;isolation:isolate}
+.fl.critical::before{content:"";position:absolute;z-index:-1;inset:-13px -19px;background:radial-gradient(ellipse,#f79b50 5%,#d83e32 43%,#a6232f 66%,#711626 100%);clip-path:polygon(50% 0%,57% 18%,70% 5%,72% 24%,88% 12%,85% 32%,100% 29%,89% 46%,100% 55%,83% 62%,91% 81%,72% 74%,65% 100%,53% 79%,39% 97%,35% 77%,16% 88%,20% 66%,0% 64%,14% 48%,1% 36%,20% 33%,12% 13%,32% 24%,40% 4%)}
+.fl.incoming{color:#ff7772!important;font-size:18px}
+.fl.skill{font:bold 14px "Trebuchet MS",sans-serif;color:#fff!important;background:#262233d9;border:1px solid #ffda7a;border-radius:4px;padding:3px 9px;letter-spacing:.2px;text-shadow:0 1px 2px #000,0 0 5px #000;box-shadow:0 2px 8px #0008;z-index:25}
+@keyframes hit-pop{0%{transform:translate(-50%,-35%) scale(.65)}65%{transform:translate(-50%,-55%) scale(1.1)}100%{transform:translate(-50%,-50%) scale(1)}}
 #tag{position:absolute;transform:translate(-50%,-100%);text-align:center;color:#fff;font:bold 12px "Trebuchet MS",sans-serif;text-shadow:-1px -1px 0 #000,1px -1px 0 #000,-1px 1px 0 #000,1px 1px 0 #000;display:none}
 #tag .bar{width:90px;height:8px;margin:2px auto 0}
 #prog{position:absolute;left:12px;top:12px;background:#0008;color:#fff;font:bold 13px "Trebuchet MS",sans-serif;padding:6px 12px;border-radius:4px;border:1px solid #ffffff44;display:flex;align-items:center;gap:10px}
 #hint{position:absolute;left:12px;top:52px;color:#fff;font:11px "Trebuchet MS",sans-serif;opacity:.8;text-shadow:0 0 3px #000}
-#hud{display:flex;flex-wrap:wrap;gap:12px 20px;padding:8px 16px;font-size:14px;align-items:center;background:var(--panel);border-top:2px solid var(--edge2);z-index:10}
-.bar{width:140px;height:14px;background:#5b4a35;border:1px solid #3b2a1a;border-radius:3px;overflow:hidden;position:relative}
-.bar i{display:block;height:100%}
+#hud{display:flex;flex-wrap:wrap;gap:10px 22px;padding:9px 16px;font-size:13px;align-items:center;background:linear-gradient(180deg,#fff9e9,#f4e5c4);border-top:1px solid var(--edge);z-index:10;box-shadow:0 -4px 14px #241b1730}
+.bar{width:148px;height:14px;background:#3b302b;border:1px solid #574637;border-radius:999px;overflow:hidden;position:relative;box-shadow:inset 0 2px 4px #1e1617aa,0 1px 0 #fff9}
+.bar i{display:block;height:100%;border-radius:inherit;transition:width .3s ease,background .3s ease}
+.hud-health{display:flex;align-items:center;gap:7px;white-space:nowrap}.hud-health small{font-weight:bold;min-width:34px;text-align:right}
+#hpb{background:linear-gradient(180deg,#7cec8f,#20a74c 65%,#17883a);box-shadow:inset 0 1px #f3fff588,0 0 8px #30c75677}
+#hpb.critical{background:linear-gradient(180deg,#ff8e81,#ed4242 60%,#b92031);box-shadow:inset 0 1px #fff7,0 0 8px #e54949aa}
+.hud-zeny{position:relative;color:#a27200;font-weight:bold;cursor:help;white-space:nowrap}.hud-zeny:focus-visible,.xp-side:focus-visible{outline:2px solid #2f6fd6;outline-offset:-2px}
+.hud-flyout{position:absolute;bottom:calc(100% + 8px);left:0;z-index:90;background:#251f20;color:#fff;font-size:12px;font-weight:600;padding:7px 10px;border-radius:7px;white-space:nowrap;box-shadow:0 4px 14px #0008;opacity:0;visibility:hidden;pointer-events:none}
+.hud-zeny:hover .hud-flyout,.hud-zeny:focus .hud-flyout{opacity:1;visibility:visible}
+#xp-dock{flex:none;width:100%;padding:3px 10px 4px;background:linear-gradient(180deg,#413743,#26242f);box-shadow:inset 0 2px 6px #140f1899;z-index:9}
+/* One RO-style bar: Base fills toward the centre from the left, Job from the right. */
+#xp-track{display:flex;width:100%;height:14px;border:1px solid #756c77;border-radius:4px;background:#161820;overflow:hidden;box-shadow:inset 0 1px 4px #000a;color:#fff;font:bold 9px/12px "Trebuchet MS",sans-serif;text-shadow:0 1px 2px #000,0 0 4px #000}
+.xp-side{position:relative;flex:0 0 50%;min-width:0;cursor:help;overflow:hidden}.xp-side:first-child{border-right:2px solid #d6c2a6}.xp-side:hover{background:#ffffff12}
+.xp-fill{position:absolute;top:0;bottom:0;left:0;width:0;transition:width .3s ease}
+#jb{left:auto;right:0;background:linear-gradient(180deg,#bca0ff,#7452cb 70%,#493692)}#xpb{background:linear-gradient(180deg,#9ce6ff,#348fcc 70%,#246398)}
+.xp-label,.xp-pct{position:absolute;top:0;z-index:1;white-space:nowrap}.xp-label{left:8px}.xp-label.job{left:auto;right:8px}.xp-pct{left:50%;transform:translateX(-50%)}
+@media(max-width:560px){#hud{gap:6px 10px;padding:7px 10px;font-size:11px}.hud-health .bar{width:94px}.hud-health small{min-width:28px}#xp-track{height:22px}.xp-label,.xp-label.job{left:0;right:0;top:0;text-align:center;font-size:9px;line-height:10px}.xp-pct{top:10px;line-height:10px;font-size:9px}}
 .body{padding:8px;font-size:13px}
 .slot{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:5px 8px;border:1px solid var(--edge);background:#fffdf5;margin-bottom:4px;border-radius:4px;min-height:36px}
 .r0{color:#555}.r1{color:#2a9d3f}.r2{color:#2f6fd6}.r3{color:#a23fd6}.r4{color:#e07b00;font-weight:bold}
@@ -144,10 +166,15 @@ hr{border:0;border-top:1px dashed var(--edge);margin:6px 0}
 <div id="wrap"><div class="title"><span id="stageTitle">Prontera Lv 1</span><span id="grindStatus" style="font-size:12px;opacity:.85"></span></div>
 <div id="view"><div id="ov"><div id="mobSpriteLayer" aria-hidden="true"></div><div id="weaponSpriteLayer" aria-hidden="true"></div><div id="prog"></div><div id="tag"><b id="tn"></b><div class="bar"><i id="th" style="background:var(--hp)"></i></div></div><div id="hint">Drag to rotate &middot; Scroll to zoom</div><div id="feed"></div><div id="qp"></div><div id="dock"></div>
 <div id="wins"></div></div></div>
-<div id="hud"><div><b id="cls2"></b> Lv <b id="lv">1</b> / Job <b id="jl">1</b></div><div>HP <div class="bar"><i id="hpb" style="background:var(--hp)"></i></div></div>
-<div>JOB <div class="bar"><i id="jb" style="background:#7a5ce0"></i></div></div><div>EXP <div class="bar"><i id="xpb" style="background:var(--exp)"></i></div></div>
-<div style="color:var(--gold)">&#9679; <b id="zeny" title="Hover for earned Zeny per minute" tabindex="0" style="cursor:help">0</b> Zeny</div><div>Kills /Min <b id="kills" title="Kills per minute (rolling 60s)">0.0</b></div>
-<div style="margin-left:auto;display:flex;align-items:center;gap:8px"><span id="userBadge" style="font-weight:bold;font-size:12px;background:#e9d39a;padding:3px 8px;border-radius:4px;border:1px solid var(--edge2)"></span><button id="logoutBtn" onclick="logout()" style="display:none">Logout</button><button id="spd">Speed x1</button></div></div></div>
+<div id="hud"><div><b id="cls2"></b> Base Lv <b id="lv">1</b> / Job Lv <b id="jl">1</b></div>
+<div class="hud-health">HP <div class="bar" role="meter" aria-label="HP" aria-valuemin="0" aria-valuemax="100" id="hpMeter"><i id="hpb"></i></div><small id="hpPct">100%</small></div>
+<div class="hud-zeny" id="zenyHover" tabindex="0" aria-describedby="zenyRate">&#9679; <b id="zeny">0</b> Zeny<span class="hud-flyout" id="zenyRate" role="tooltip">Zeny earned: 0/min</span></div>
+<div>Kills/min <b id="kills" title="Recent kills per minute (last 60 seconds, refreshed each second)">0.0</b></div><div style="margin-left:auto;display:flex;align-items:center;gap:8px"><span id="userBadge" style="font-weight:bold;font-size:12px;background:#e9d39a;padding:3px 8px;border-radius:4px;border:1px solid var(--edge2)"></span><button id="logoutBtn" onclick="logout()" style="display:none">Logout</button><button id="spd">Speed x1</button></div></div>
+<div id="xp-dock" aria-label="Level progress"><div id="xp-track">
+  <div class="xp-side" id="baseTrack" tabindex="0" role="progressbar" aria-label="Base Level" aria-valuemin="0" aria-valuemax="100" title="Base Level: 0% to next level"><div class="xp-fill" id="xpb"></div><span class="xp-label" id="baseLabel">Base Lv 1</span><span class="xp-pct" id="basePct">0%</span></div>
+  <div class="xp-side" id="jobTrack" tabindex="0" role="progressbar" aria-label="Job Level" aria-valuemin="0" aria-valuemax="100" title="Job Level: 0% to next level"><div class="xp-fill" id="jb"></div><span class="xp-pct" id="jobPct">0%</span><span class="xp-label job" id="jobLabel">Job Lv 1</span></div>
+</div></div>
+</div>
 <div id="modal"><div class="login-card"><p id="mt" style="font-size:14px;opacity:1;margin:0 0 12px"></p><div class="row" style="justify-content:center"><button id="my">Yes</button><button id="mn">Cancel</button></div></div></div><div id="tooltip"></div>
 <script src="assets/sprite_pack_data.js?v=1"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -188,9 +215,9 @@ const AL={str:'STR',agi:'AGI',dex:'DEX',luk:'LUK',int:'INT',hp:'Max HP',atk:'ATK
 // once stats cap), so a correctly-levelled character needed ~30-100s per mob from Geffen
 // onward. 1.3 keeps HP just ahead of ATK: early maps fall in a couple of swings and the
 // late maps in about five, with bosses still a ~12x fight. See tools/tests/economy_sim.js.
-const SU=k=>k.toUpperCase(),BX_=5.5,Z0=-14,Z1=3,MPS=15,AGGRO=8.5,HPK=42,HPE=1.3,K5=['str','agi','dex','luk','int'];
+const SU=k=>k.toUpperCase(),BX_=13,Z0=-28,Z1=12,MPS=15,AGGRO=6.5,HPK=42,HPE=1.3,K5=['str','agi','dex','luk','int'];
 const GM_USER='GM',GM_PASS='gm1234';   // CHANGE THE GM PASSWORD before you publish
-const BUILD='2026-10-04 kit-v27 organic-field all-ten-maps';   // shown on the login card - confirms which file you loaded
+const BUILD='2026-10-04 combat-v33 hit-fx pet-sprites';   // shown on the login card - confirms which file you loaded
 $('buildTag').textContent='build '+BUILD;
 
 // ---------- class tree: Novice -> 6 first jobs -> 6 second jobs -> 6 third jobs ----------
@@ -403,10 +430,11 @@ const MOB_SPRITES={
   'Hell Worm':1215, // Stem Worm
   'Dark Lord':1272
 };
-// Divine Pride size classes, checked per unique sprite ID (including the final Familiar ID 1005)
-// on 2026-10-04. These are VISUAL scale factors against the 2.9-unit player, not combat hitboxes.
-// Small ≈ 65% of player height; Medium ≈ player height; Large ≈ 135%. The database's
-// Small/Medium/Large labels come from https://www.divine-pride.net/database/monster/{ID}.
+// Divine Pride size classes, checked per unique sprite ID (including Familiar ID 1005)
+// on 2026-10-04. These are source-art size classes, NOT combat hitboxes. Their base
+// factors are .62/.92/1.28; the render path below applies a regular-only multiplier so
+// even a medium Poring looks shorter than the player. Boss scale remains unchanged.
+// The size labels come from https://www.divine-pride.net/database/monster/{ID}.
 const MOB_SIZE_BY_ID={
   1001:'Small',1004:'Small',1005:'Small',1007:'Small',1008:'Small',1011:'Small',1051:'Small',1063:'Small',1070:'Small',1073:'Small',
   1141:'Small',1142:'Small',1143:'Small',1144:'Small',1167:'Small',1179:'Small',1837:'Small',1866:'Small',1869:'Small',2023:'Small',
@@ -419,6 +447,11 @@ const MOB_SIZE_BY_ID={
   1373:'Large',1405:'Large',1719:'Large',1775:'Large',1833:'Large',20843:'Large',2202:'Large'
 };
 const MOB_SIZE_SCALE={Small:.62,Medium:.92,Large:1.28};
+// Mob PNGs have different silhouette sizes inside their frames. Scale *regular* bodies
+// to 70% of their old height: Fabre ≈1.32 and Poring ≈1.96 units against a 2.92-unit
+// hero. Bosses keep the exact v29 height. This changes visual art only, not hitboxes.
+const MOB_REGULAR_VISUAL=.7;
+const mobVisualScale=m=>Math.max(.05,(m.spriteScale||.92)*(m.boss?1.18:MOB_REGULAR_VISUAL)*(m.spawn||0));
 const mobSpriteUrl=id=>Number.isInteger(+id)&&+id>0?`https://static.divine-pride.net/images/mobs/png/${+id}.png`:'';
 // ---------- equipment database ----------
 // Four sections per map (Novice gear / 1st-job / 2nd-job / high tier), each a themed set:
@@ -545,9 +578,11 @@ const MAXST=120,BASECAP=99,ELITELV=100,statCap=()=>S.lv>=ELITELV?MAXST:BASECAP;
 // The reset remains about 3.9x so the post-99 climb is still a distinct endgame phase.
 // Mob EXP is EXPK*pw^1.5/50, boss EXP is BOSEK*pw^1.5/50, and Zeny is based on pw^2;
 // pw is the field's power level (map recommendation + stage, max 99). A boss replaces
-// the pack every 16th kill (MPS). Normal Base/Job/quest EXP is 70x below Lv100 and 70/3x
+// old 15-kill boss cadence in the canonical pacing model (not the live Stage-10
+// boss-with-escorts encounter). Normal Base/Job/quest EXP is 70x below Lv100 and 70/3x
 // at Lv100+; GM keeps its configured multiplier. tools/tune_pacing.js and economy_sim.js
-// model these live rates at 800 kills/hour, camping the band map's Stage 10.
+// use a historical 800-kills/hour / 15-kill-boss cadence. Their time-to-level
+// projections must be re-measured for the immediate Stage-10 boss wave.
 const EXPK=5.5,BOSEK=46,ZK=[8,14],BZK=[150,250];
 // Quest rewards scale with need(Lv) and are retuned for this curve: about 23% of modeled
 // run EXP overall, with no single level funded by more than ~40%. Loot cadence uses .126
@@ -573,7 +608,7 @@ const NA1=132.99332769,NE1=1.87201222,N50=Math.floor(NA1*Math.pow(50,NE1)),NE2=3
 const JOFF=[0,9,49,98];
 
 // ---------- state ----------
-let currentUser=null,S=null,speed=1,floats=[],drops=[],t=0,shake=0,atkAnim=0,hitAnim=0,pend=[],shots=[],skillFx=[],barT=0,hudRate=null,logs=[],tab=null,selB=null,selC=null,selK=null,mapM=0,mapL=1;
+let currentUser=null,S=null,speed=1,zenyEarned=0,floats=[],drops=[],t=0,shake=0,atkAnim=0,hitAnim=0,pend=[],shots=[],skillFx=[],barT=0,hudRate=null,logs=[],tab=null,selB=null,selC=null,selK=null,mapM=0,mapL=1;
 // wt/wx/wz are the roam target: with no mobs on the field the character wanders instead of
 // trudging back to the spawn point. Only a defeat sends you home (see the death handler).
 const pl={x:0,z:Z1-1.5,ry:0,orb:0,run:0,wt:0,wx:0,wz:Z1-1.5},skCd={},petR={};
@@ -704,7 +739,7 @@ function submitAuth(e){
 function logout(){save();location.reload()}
 function initSession(gm){
   try{
-    hudRate=null;S=load();S.gm=gm;if(S.q)qRefresh();if(!S.q)S.q=['kill','loot','boss'].map(newQuest);if(S.mp>=MAPS.length||S.lvl>10){S.mp=0;S.lvl=1}
+    hudRate=null;zenyEarned=0;S=load();S.gm=gm;if(S.q)qRefresh();if(!S.q)S.q=['kill','loot','boss'].map(newQuest);if(S.mp>=MAPS.length||S.lvl>10){S.mp=0;S.lvl=1}
     $('userBadge').textContent=(gm?'🛠 ':'👤 ')+currentUser;$('logoutBtn').style.display='inline-block';ui();
     $('loginOverlay').style.display='none';log(`Welcome${gm?', Game Master':' back'}, ${currentUser}!`);
     try{localStorage.setItem('pg_probe','1')}catch(e){log('Browser storage is blocked: progress will NOT be saved.','r0')}
@@ -765,17 +800,81 @@ const isBoss=()=>S.lvl===10,fieldName=()=>`${MAPS[S.mp].n} Stage ${S.lvl}`;
 const icon=it=>it.card?'🃏':it.ore?'💎':it.slot==='weapon'?(WICON[it.wt]||'⚔️'):SLOTS[it.slot].ic;
 
 // ---------- mobs & loot ----------
-let mobs=[],mob=null,pAtkT=0,mAtkT=0,respawn=0;
+let mobs=[],mob=null,pAtkT=0,mAtkT=0,respawn=0,activePack=0;
+// Pick three new sites on every respawn, within the clear 26x40 battle lane. They are
+// closer than v28 but still separated by 13-18.5 units centre-to-centre. A site on a
+// creek or sea strip is rejected; scenery/landmarks remain outside the running lane.
+const PACK_GAP=13,PACK_MAX=18.5,PACK_JITTER=.7;
+function packSites(){
+  const spec=stageSpec(S.mp,S.lvl),water=spec.f&&spec.f.water;
+  // Restart the whole roll if a first site leaves no room for the other two (especially
+  // across Payon/Amatsu creeks). Do not fall back to a fixed triangle in water.
+  for(let layout=0;layout<36;layout++){
+    const sites=[];
+    for(let i=0;i<3;i++){
+      for(let attempt=0;attempt<250;attempt++){
+        const x=rnd(i===0?-6:-9,i===0?6:9),z=rnd(i===0?-12:-16,i===0?4:8);
+        if(water&&z>=water[0]-2&&z<=water[1]+2)continue;
+        if(sites.some(p=>{const d=Math.hypot(p[0]-x,p[1]-z);return d<PACK_GAP||d>PACK_MAX}))continue;
+        sites.push([x,z]);break;
+      }
+      if(sites.length!==i+1)break;
+    }
+    if(sites.length===3)return sites;
+  }
+  // If a future map fills almost the whole field with water, retain dry, separated
+  // spawns even when the normal closeness cap cannot fit them.
+  const sites=[];
+  for(let i=0;i<3;i++)for(let attempt=0;attempt<10000;attempt++){
+    const x=rnd(-9,9),z=rnd(-16,8);
+    if(water&&z>=water[0]-2&&z<=water[1]+2)continue;
+    if(sites.some(p=>Math.hypot(p[0]-x,p[1]-z)<PACK_GAP))continue;
+    sites.push([x,z]);break;
+  }
+  return sites;
+}
+const nearestPack=()=>{
+  let id=0,dist=Infinity;
+  for(const m of mobs){const d=Math.hypot(pl.x-m.x,pl.z-m.z);if(d<dist){dist=d;id=m.pack}}
+  return id;
+};
+const packMob=()=>{
+  let target=null,dist=Infinity;
+  for(const m of mobs)if(m.pack===activePack){const d=Math.hypot(pl.x-m.x,pl.z-m.z);if(d<dist){dist=d;target=m}}
+  return target;
+};
 // Starter stages share combat strength across the first five maps; loot/reward power stays map-specific.
 const starterStage=(m,l)=>m<5&&l<=5;
 const starterHp=l=>Math.floor(12*Math.pow(6+5*(l-1),HPE));
 const starterAtk=l=>6+3*(l-1);
 function spawn(){
-  const F=fieldOf(S.mp,S.lvl),l=pw(),mb=1+S.mp*.15+Math.max(0,S.mp-4)*.2;mobs=[];
-  if(F.boss&&S.kl>=MPS){const hp=Math.floor(500*mb*Math.pow(l,HPE));mobs.push({...F.boss,boss:true,hp,max:hp,atk:Math.floor((8+l*6.5)*mb),exp:Math.max(1,Math.floor(BOSEK*Math.pow(l,1.5)/50)),zeny:Math.max(1,Math.floor(ri(BZK[0],BZK[1])*l*l/1000)),size:1.3,mag:true,lvl:l,sec:F.sec})}
-  else{const early=starterStage(S.mp,S.lvl),n=early?(S.mp===0&&S.lvl===1?1:S.lvl===1?2:ri(2,3)):(S.lvl>=5||S.mp>=5)?ri(3,8):1;for(let i=0;i<n;i++){const m=F.mobs[ri(0,1)],hp=early?Math.min(starterHp(S.lvl),Math.floor(HPK*mb*Math.pow(l,HPE))):Math.floor(HPK*mb*Math.pow(l,HPE));mobs.push({...m,boss:false,hp,max:hp,atk:early?starterAtk(S.lvl):Math.floor((5+l*4.6)*mb),exp:Math.max(1,Math.floor(EXPK*Math.pow(l,1.5)/50)),zeny:Math.max(1,Math.floor(ri(ZK[0],ZK[1])*l*l/1000)),size:.6,mag:['demon','tree','blob'].includes(m.shape),lvl:l,sec:F.sec})}}
-  mobs.forEach((m,i)=>{m.x=rnd(-BX_+.8,BX_-.8);m.z=rnd(Z0,Z0+6);m.hx=m.x;m.hz=m.z;m.spawn=0;m.ry=0;m.at=rnd(.6,1.6);m.a=i*2.4});
-  mob=mobs[0];pAtkT=.3;
+  const F=fieldOf(S.mp,S.lvl),l=pw(),mb=1+S.mp*.15+Math.max(0,S.mp-4)*.2;mobs=[];activePack=0;
+  const bossWave=!!F.boss,sites=bossWave?null:packSites();
+  const addMinion=pack=>{
+    const early=starterStage(S.mp,S.lvl),m=F.mobs[ri(0,1)];
+    const hp=early?Math.min(starterHp(S.lvl),Math.floor(HPK*mb*Math.pow(l,HPE))):Math.floor(HPK*mb*Math.pow(l,HPE));
+    mobs.push({...m,boss:false,pack,hp,max:hp,atk:early?starterAtk(S.lvl):Math.floor((5+l*4.6)*mb),
+      exp:Math.max(1,Math.floor(EXPK*Math.pow(l,1.5)/50)),zeny:Math.max(1,Math.floor(ri(ZK[0],ZK[1])*l*l/1000)),
+      size:.6,mag:['demon','tree','blob'].includes(m.shape),lvl:l,sec:F.sec});
+  };
+  if(bossWave){
+    const hp=Math.floor(500*mb*Math.pow(l,HPE));
+    mobs.push({...F.boss,boss:true,pack:0,hp,max:hp,atk:Math.floor((8+l*6.5)*mb),
+      exp:Math.max(1,Math.floor(BOSEK*Math.pow(l,1.5)/50)),zeny:Math.max(1,Math.floor(ri(BZK[0],BZK[1])*l*l/1000)),
+      size:1.3,mag:true,lvl:l,sec:F.sec});
+    // The first five maps bring three escorts; the five later maps bring five.
+    for(let i=0;i<(S.mp<5?3:5);i++)addMinion(0);
+  }else{
+    const early=starterStage(S.mp,S.lvl),perPack=early?(S.lvl===1?1:2):(S.lvl>=5||S.mp>=5)?ri(2,3):1;
+    for(let pack=0;pack<3;pack++)for(let i=0;i<perPack;i++)addMinion(pack);
+  }
+  mobs.forEach((m,i)=>{
+    const a=(i-1)*Math.PI*2/Math.max(1,mobs.length-1),r=2.3+(i%2)*.65;
+    const [x,z]=bossWave?(m.boss?[0,-4]:[Math.cos(a)*r,-4+Math.sin(a)*r]):sites[m.pack];
+    m.x=x+rnd(-PACK_JITTER,PACK_JITTER);m.z=z+rnd(-PACK_JITTER,PACK_JITTER);
+    m.hx=m.x;m.hz=m.z;m.spawn=0;m.ry=0;m.at=rnd(.6,1.6);m.a=i*2.4;
+  });
+  activePack=nearestPack();mob=bossWave?mobs[0]:packMob();pAtkT=.3;
 }
 function genGear(T,l,sec,boss){
   const slot=['armor','head','off','leg','acc'].includes(T.k)?T.k:'weapon';let roll=rnd(0,100)-(boss?25:0)-st('luk')*.15,tier=0,acc=0;
@@ -794,21 +893,24 @@ function applyStun(o,dur){if(!o||!(dur>0))return;
   const d=dur*(o.boss?.5:1);o.stun=Math.min(o.boss?1:2,Math.max(o.stun||0,d))}
 // Chain bounces a share of the hit onto the nearest other mobs - the pack-clearing tool.
 function chainHit(src,dmg,col,n){if(!src||!(dmg>0)||mobs.length<2)return;
-  const near=mobs.filter(o=>o!==src&&o.hp>0).sort((a,b)=>Math.hypot(a.x-src.x,a.z-src.z)-Math.hypot(b.x-src.x,b.z-src.z)).slice(0,n||2);
+  const near=mobs.filter(o=>o!==src&&o.hp>0&&o.pack===src.pack).sort((a,b)=>Math.hypot(a.x-src.x,a.z-src.z)-Math.hypot(b.x-src.x,b.z-src.z)).slice(0,n||2);
   for(const o of near){shots.push({x0:src.x,z0:src.z,x1:o.x,z1:o.z,t:0,col:col||'#fff'});hurt(o,Math.max(1,Math.round(dmg)),col)}}
 const mkDrop=it=>({it,wx:mob.x+rnd(-.7,.7),wz:mob.z+rnd(-.7,.7),y:0,vy:-220,t:0});
-const addFloat=(x,y,z,txt,col,big)=>floats.push({x,y,z,txt,col,life:1,big});
+const addFloat=(x,y,z,txt,col,big,kind='text')=>floats.push({x,y,z,txt,col,life:1,big,kind});
+const damageFloat=(x,y,z,amount,critical=false,incoming=false)=>addFloat(x,y,z,String(Math.round(amount)),null,false,incoming?'incoming':critical?'critical':'damage');
+// Skill labels track the moving player, rather than floating away from the cast location.
+const skillNameFloat=(name,slot=0)=>floats.push({x:pl.x,y:3.15+slot*.38,z:pl.z,txt:name,life:1.15,kind:'skill',anchor:'hero'});
 function log(m,cls){logs.push({m,cls});if(logs.length>80)logs.shift();
   const f=$('feed'),d=document.createElement('div');d.textContent=m;f.appendChild(d);while(f.children.length>4)f.removeChild(f.firstChild);setTimeout(()=>d.remove(),7000);if(tabs.includes('log'))renderWin()}
 
 // ---------- combat ----------
 function shot(col){if(!mob||heroWeaponType(C().n,C().wt,S.eq.weapon&&S.eq.weapon.wt)!=='bow')return;
   shots.push({x0:pl.x,z0:pl.z,x1:mob.x,z1:mob.z,t:0,col:col||'#fff',arrow:true})}
-function hurt(o,d,col,c){o.hp-=d;o.flash=1;addFloat(o.x+rnd(-.4,.4),1.2+.8*(o.spriteScale||o.size),o.z,c?d+'!':d,col||'#fff',c);if(o.hp<=0)kill(o)}
+function hurt(o,d,col,c){o.hp-=d;o.flash=1;damageFloat(o.x+rnd(-.4,.4),1.2+.8*(o.spriteScale||o.size),o.z,d,c);if(o.hp<=0)kill(o)}
 function strike(mult,col,magic=false){
   if(!mob)return;if(Math.random()*100<missCh()){addFloat(mob.x,1.8,mob.z,'Miss','#ccc');return}
   const c=Math.random()*100<crit(),base=magic?matk():atk(),d=Math.max(1,Math.round(base*mult*rnd(Math.min(.95,.7+st('dex')*.004),1.15)*(c?critD():1)));
-  mob.hp-=d;mob.flash=1;shake=c?6:2;addFloat(mob.x+rnd(-.4,.4),1.5*Math.max(1,(mob.spriteScale||mob.size)*.8)+.6,mob.z,c?d+'!':d,col||(c?'#ffe14d':'#fff'),c);
+  mob.hp-=d;mob.flash=1;shake=c?6:2;damageFloat(mob.x+rnd(-.4,.4),1.5*Math.max(1,(mob.spriteScale||mob.size)*.8)+.6,mob.z,d,c);
 }
 // Higher job tiers get more casts per swing: Novice 1, first job 2, second job 3, transcendent
 // 4 (tier is 0/1/2/3 - Assassin Cross and Lord Knight are tier 3, not 2). Every cast after the
@@ -818,31 +920,33 @@ const SKSLOTS=t=>1+(t||0),SKFADE=[1,.55,.3,.18];
 // dot.pow is the fraction of the triggering hit dealt PER SECOND, so a .05/4s dot adds 20% of
 // the hit spread over time. chain.pow is the fraction each bounce deals, once per target.
 function castSkill(sk,k){
-  const base=sk.magic?matk():atk(),m=sk.mul(lv(sk.id))*(1+st('int')*.01)*k;
-  playSkillFx(sk.id,mob,sk.col);
+  // Hold the target fixed for this cast: an AoE kill can advance activePack while we are
+  // still iterating. The remaining effects must never spill into the next sleeping pack.
+  const target=mob,base=sk.magic?matk():atk(),m=sk.mul(lv(sk.id))*(1+st('int')*.01)*k;
+  playSkillFx(sk.id,target,sk.col);
   strike(m,sk.col,!!sk.magic);shot(sk.col,sk.rng);
-  if(sk.aoe&&mob)for(const o of mobs.slice())if(o!==mob&&Math.hypot(o.x-mob.x,o.z-mob.z)<4)hurt(o,Math.max(1,Math.round(base*m*.8)),sk.col);
-  if(sk.chain&&mob)chainHit(mob,base*m*(sk.chain.pow||.5),sk.col,Math.min(4,(sk.chain.n||2)+Math.floor(lv(sk.id)/2)));
-  if(sk.dot&&mob&&mob.hp>0)applyDot(mob,base*m*(sk.dot.pow||.05),sk.dot.dur||4,sk.dot.col||sk.col);
-  if(sk.stun&&mob&&mob.hp>0)applyStun(mob,(sk.stun.dur||.8)*(1+lv(sk.id)*.08));
-  for(let i=1;i<sk.hits;i++)pend.push({t:i*.09,m,col:sk.col,magic:!!sk.magic});
+  if(sk.aoe&&target)for(const o of mobs.slice())if(o!==target&&o.pack===target.pack&&Math.hypot(o.x-target.x,o.z-target.z)<4)hurt(o,Math.max(1,Math.round(base*m*.8)),sk.col);
+  if(sk.chain&&target&&mobs.includes(target))chainHit(target,base*m*(sk.chain.pow||.5),sk.col,Math.min(4,(sk.chain.n||2)+Math.floor(lv(sk.id)/2)));
+  if(sk.dot&&target&&target.hp>0)applyDot(target,base*m*(sk.dot.pow||.05),sk.dot.dur||4,sk.dot.col||sk.col);
+  if(sk.stun&&target&&target.hp>0)applyStun(target,(sk.stun.dur||.8)*(1+lv(sk.id)*.08));
+  if(target&&mobs.includes(target))for(let i=1;i<sk.hits;i++)pend.push({t:i*.09,m,col:sk.col,magic:!!sk.magic});
 }
 function playerAttack(){
   pAtkT=aspd();atkAnim=1;
   const far=mob&&Math.hypot(mob.x-pl.x,mob.z-pl.z)>(C().rng?3:1.2+.45*mob.size)+.6;
   const ready=SKILLS.filter(s=>s.type==='act'&&skillOn(s.id)&&(skCd[s.id]||0)<=0&&(!far||s.rng))
     .sort((a,b)=>b.mul(lv(b.id))*b.hits-a.mul(lv(a.id))*a.hits);
-  let cast=0;
+  const pack=mob&&mob.pack;let cast=0;
   for(const sk of ready){
     if(cast>=SKSLOTS(C().tier))break;
     const k=SKFADE[cast]||.3;cast++;
-    skCd[sk.id]=sk.cd;addFloat(pl.x,2.9+cast*.4,pl.z,sk.n,sk.col);
+    skCd[sk.id]=sk.cd;skillNameFloat(sk.n,cast-1);
     castSkill(sk,k);
-    if(!mob||mob.hp<=0)break;
+    if(!mob||mob.hp<=0||mob.pack!==pack)break;
   }
   if(cast||far)return;
   strike(1);shot();const d=pv('dbl');
-  if(d&&Math.random()<d/100+st('dex')*.003){pend.push({t:.15,m:1,col:'#aef'});addFloat(pl.x,3,pl.z,'Double Attack','#aef')}
+  if(d&&Math.random()<d/100+st('dex')*.003){pend.push({t:.15,m:1,col:'#aef'});skillNameFloat('Double Attack')}
 }
 function addJob(x){const j=jobOf(),c=C();if(j.jl>=c.mj)return;j.jx+=x;
   while(j.jl<c.mj&&j.jx>=jneed(j.jl)){j.jx-=jneed(j.jl);j.jl++;log(`JOB LEVEL UP! ${S.cls} Job Lv ${j.jl} (+1 skill point)`,'r3');addFloat(pl.x,3.2,pl.z,'JOB UP!','#8fe9ff',true)}
@@ -851,9 +955,12 @@ function checkLevel(){while(S.lv<150&&S.exp>=need()){S.exp-=need();S.lv++;const 
   log(`LEVEL UP! Lv ${S.lv}. +${p} stat points`,'r4');addFloat(pl.x,3.6,pl.z,'LEVEL UP!','#fff',true)}
   qRefresh()}
 const qProg=type=>S.q&&S.q.forEach(q=>{if(q.type===type)q.prog=Math.min(q.goal,q.prog+1)});
+// A balance difference is not income: a purchase in the same frame can hide earned Zeny.
+// Count each credit directly for the live hover rate, without persisting session history.
+function earnZeny(amount){const n=Math.max(0,Number(amount)||0);S.zeny+=n;zenyEarned+=n}
 function kill(o){const keep=mob;if(o)mob=o;if(!mob||!mobs.includes(mob)){mob=keep;return}
   const g=gx();S.kills++;S.kl++;qProg('kill');if(mob.boss)qProg('boss');
-  const z=Math.round(mob.zeny*(1+pv('zeny')/100))*g,xp=Math.round(mob.exp*expRate());S.zeny+=z;S.exp+=xp;addJob(Math.round(Math.round(mob.exp*.7)*expRate()));pend=[];
+  const z=Math.round(mob.zeny*(1+pv('zeny')/100))*g,xp=Math.round(mob.exp*expRate());earnZeny(z);S.exp+=xp;addJob(Math.round(Math.round(mob.exp*.7)*expRate()));pend=[];
   addFloat(mob.x,2.4,mob.z,'+'+z+'z','#ffd23f');log(`${mob.n} defeated! +${xp.toLocaleString()} EXP, +${z.toLocaleString()} Zeny`);
   const lk=1+st('luk')*.008;
   for(const[T,ch]of mob.drops)if(Math.random()*100<ch*lk)drops.push(mkDrop(genGear(T,mob.lvl,mob.sec,mob.boss)));
@@ -861,10 +968,12 @@ function kill(o){const keep=mob;if(o)mob=o;if(!mob||!mobs.includes(mob)){mob=kee
   if(mob.ore)for(const o of['ori','elu'])if(Math.random()<mob.oreCh)drops.push(mkDrop({ore:o,id:uid(),n:ORE[o]}));
   if(Math.random()*100<(mob.boss?5:.3)*lk){const r=pickW(PW[Math.min(S.mp,9)]),c=PETS.filter(x=>x.r===r),sp=PETS.indexOf(c[ri(0,c.length-1)]);
     if(S.pets.length<40){S.pets.push({id:ri(1e6,9e6),sp,mut:0,eq:[0,0,0],skill:'',on:S.pets.filter(x=>x.on).length<3});log(`A ${RN[r]} pet followed you: ${PETS[sp].n}!`,'r'+RCL[r]);addFloat(mob.x,3,mob.z,'PET!','#ff9dff',true)}
-    else{const z=Math.floor(EGG*(.3+r*.4));S.zeny+=z;log(`A ${RN[r]} ${PETS[sp].n} appeared but your pet collection is full (+${z}z).`)}}
+    else{const z=Math.floor(EGG*(.3+r*.4));earnZeny(z);log(`A ${RN[r]} ${PETS[sp].n} appeared but your pet collection is full (+${z}z).`)}}
   checkLevel();
   if(mob.boss||(S.lvl<10&&S.kl>=MPS)){mobs=[];S.kl=0;if(S.lvl<10&&S.lvl>=S.prog[S.mp]){S.prog[S.mp]=S.lvl+1;log(`${fieldName()} cleared! Stage ${S.lvl+1} unlocked.`,'r3');if(S.adv&&S.lvl<10){S.lvl++}}}
-  mobs=mobs.filter(x=>x!==mob);mob=(o&&keep&&keep!==o&&mobs.includes(keep))?keep:(mobs[0]||null);respawn=.7;save();ui();
+  mobs=mobs.filter(x=>x!==mob);
+  if(mobs.length&&!mobs.some(x=>x.pack===activePack))activePack=nearestPack();
+  mob=packMob();respawn=.7;save();ui();
 }
 function collect(it){
   if(it.card){S.cards.push(it);log(`Got card: [${GRADE[it.g]}] ${cardTxt(it)}`,'r'+GI[it.g]);addFloat(pl.x,2.8,pl.z,'CARD!','#ffb020',true);ui();return}
@@ -875,7 +984,7 @@ function collect(it){
 function equip(id,quiet){const i=S.inv.findIndex(x=>x.id===id);if(i<0)return;const it=S.inv[i];if(!canUse(it)){log(`Your class cannot use ${it.name}.`);return}
   S.inv.splice(i,1);const k=ekey(it),old=S.eq[k];if(old)S.inv.push(old);S.eq[k]=it;S.hp=Math.min(S.hp,maxHp());if(!quiet)log('Equipped '+iname(it));selB=null;ui();save()}
 const sellVal=it=>Math.floor(ev(it)*(1+it.tier*2)*2);
-function sell(id){const i=S.inv.findIndex(x=>String(x.id)===String(id));if(i<0)return;const it=S.inv.splice(i,1)[0];S.zeny+=sellVal(it);(it.cards||[]).forEach(c=>S.cards.push(c));if(selB==it.id)selB=null;ui();save()}
+function sell(id){const i=S.inv.findIndex(x=>String(x.id)===String(id));if(i<0)return;const it=S.inv.splice(i,1)[0];earnZeny(sellVal(it));(it.cards||[]).forEach(c=>S.cards.push(c));if(selB==it.id)selB=null;ui();save()}
 // Quest goal AND reward are solved from the level you are standing at, by the one function the
 // panel and the Claim button both read - so what the quest panel states is exactly what you are
 // paid. The old code froze both at the level the quest was created, so a quest picked up at Lv 1
@@ -993,7 +1102,7 @@ const V={
           <div class="dropline"><span>🃏 ${m.card.n} <small>(${SU(m.card.stat)} +${cardVal(m.card.g,m.card.stat)}, ${GRADE[m.card.g]})</small></span><b>${m.cardCh}%</b></div>
           ${m.ore?`<div class="dropline ore"><span>🔶 Oridecon &middot; 🔷 Elunium</span><b>${m.oreCh*100}% each</b></div>`:''}
         </div>`).join('<hr>')}</div>
-      <div class="mob-card"><div class="hd">Boss &amp; pets</div>
+      <div class="mob-card"><div class="hd">Boss &amp; pets</div>${mapL===10?`<small>Boss fights immediately with ${mapM<5?3:5} monsters. Defeat the boss to reset the fight.</small>`:''}
         ${F.boss?`<div class="mobentry"><b class="r3">${F.boss.n} (BOSS)</b>
           <div class="poollist">${F.boss.drops.map(([T,ch])=>`<span class="poolitem">${poolIc(T)} ${T.n}<b>${ch}%</b></span>`).join('')}</div>
           <small>Each item rolls independently; a boss can drop zero or several pieces.</small>
@@ -1131,7 +1240,7 @@ const ACT={
   selc:v=>{selC=v;renderWin()},
   sock:v=>{const[id,k]=v.split(':'),i=S.cards.findIndex(c=>String(c.id)===id),e=S.eq[k];if(i<0||!e||(e.cards||[]).length>=(e.slots||0))return;if(CFIT[S.cards[i].stat]!==grp(e)){log('That card cannot be fitted into this type of equipment.');return}e.cards=e.cards||[];e.cards.push(S.cards.splice(i,1)[0]);S.hp=Math.min(S.hp,maxHp());ui();save()},
   unsock:v=>{const[k,i]=v.split(':'),e=S.eq[k];if(!e)return;const c=e.cards[+i],p=200*(c.g+1);if(S.zeny<p)return log('Not enough Zeny to remove the card.');S.zeny-=p;e.cards.splice(+i,1);S.cards.push(c);S.hp=Math.min(S.hp,maxHp());ui();save()},
-  sellcard:id=>{const i=S.cards.findIndex(c=>String(c.id)===id);if(i<0)return;const c=S.cards.splice(i,1)[0];S.zeny+=c.v*150;ui();save()},
+  sellcard:id=>{const i=S.cards.findIndex(c=>String(c.id)===id);if(i<0)return;const c=S.cards.splice(i,1)[0];earnZeny(c.v*150);ui();save()},
   refine:k=>refine(k),sub:v=>{const[t,k]=v.split(':');sub[t]=k;renderWin()},selp:v=>{selP=+v;renderWin()},
   pon:id=>{const p=gp(id);if(!p)return;if(p.on)p.on=false;else if(S.pets.filter(x=>x.on).length<3)p.on=true;else log('Only 3 pets can fight at once. Remove one first.');ui();save()},
   pskill:id=>{const p=gp(id);if(!p)return;const c=petSkillCost(p);if(S.zeny<c){log('Not enough Zeny for a pet skill roll.');ui();return}S.zeny-=c;const skill=rollPetSkill();p.skill=skill.id;delete petSkillCd[p.id];log(`${PETS[p.sp].n} learned ${skill.n}: ${skill.desc}.`,'r3');ui();save()},
@@ -1150,12 +1259,12 @@ const ACT={
     ui();save()},
   proll:id=>{const p=gp(id);if(!p||p.roll||rollingSet.has(p.id))return;rollOnce(p,false,g=>{p.roll=g;log(`Mutation roll: Grade ${g} (x${MUT[g]})`,g>=4?'r4':'r0');ui();save()})},pauto:id=>{const p=gp(id);if(!p)return;if(autoSet.has(p.id)){autoSet.delete(p.id);ui();return}if(p.roll||rollingSet.has(p.id))return;if((p.sk||[1,2,3]).length>=6){log('Un-skip at least one grade to auto-roll.');return}autoSet.add(p.id);autoRoll(p)},
   pkeep:id=>{const p=gp(id);if(p){p.mut=p.roll;p.roll=0;ui();save()}},pdisc:id=>{const p=gp(id);if(p){p.roll=0;ui();save()}},
-  prel:id=>{const p=gp(id);if(!p)return;const z=Math.floor(EGG*.3);ask(`Release ${PETS[p.sp].n}? You get ${z}z back.`,()=>{S.pets=S.pets.filter(x=>x!==p);autoSet.delete(p.id);delete petSkillCd[p.id];S.zeny+=z;ui();save()})},
-  claim:i=>{const q=S.q[+i];if(q&&q.prog>=q.goal){qScale(q);S.zeny+=(q.z||0);S.exp+=(q.xp||0);log(`Quest complete! +${(q.z||0).toLocaleString()}z, +${(q.xp||0).toLocaleString()} EXP`,'r3');S.q[+i]=newQuest(q.type);checkLevel();ui();save()}},
+  prel:id=>{const p=gp(id);if(!p)return;const z=Math.floor(EGG*.3);ask(`Release ${PETS[p.sp].n}? You get ${z}z back.`,()=>{S.pets=S.pets.filter(x=>x!==p);autoSet.delete(p.id);delete petSkillCd[p.id];earnZeny(z);ui();save()})},
+  claim:i=>{const q=S.q[+i];if(q&&q.prog>=q.goal){qScale(q);earnZeny(q.z||0);S.exp+=(q.xp||0);log(`Quest complete! +${(q.z||0).toLocaleString()}z, +${(q.xp||0).toLocaleString()} EXP`,'r3');S.q[+i]=newQuest(q.type);checkLevel();ui();save()}},
   auto:()=>{S.auto=S.auto===false;ui()},adv:()=>{S.adv=S.adv===false;ui()},logout:()=>logout(),
   hair:v=>{S.hair=(((S.hair|0)+(+v||1))%19+19)%19;heroKey='';ui();save()},
   sex:v=>{S.sex=v==='f'?'f':v==='m'?'m':(S.sex==='f'?'m':'f');heroKey='';log(`Appearance: ${S.sex==='f'?'female':'male'}.`);ui();save()},
-  reset:()=>{ask('Erase this account save and start over?',()=>{const gm=S.gm;hudRate=null;S=fresh();S.gm=gm;S.q=['kill','loot','boss'].map(newQuest);floats.forEach(f=>f.el&&f.el.remove());floats=[];drops=[];pend=[];mobs=[];mob=null;respawn=.3;logs=[];log('New adventure started.');ui();save()})},
+  reset:()=>{ask('Erase this account save and start over?',()=>{const gm=S.gm;hudRate=null;zenyEarned=0;S=fresh();S.gm=gm;S.q=['kill','loot','boss'].map(newQuest);floats.forEach(f=>f.el&&f.el.remove());floats=[];drops=[];pend=[];mobs=[];mob=null;respawn=.3;logs=[];log('New adventure started.');ui();save()})},
   gmx:v=>{S.gmx=+v;ui();save()},gmz:()=>{S.zeny+=1e6;ui();save()},gmo:()=>{S.ore.ori+=20;S.ore.elu+=20;ui();save()},gml:()=>{S.lv=Math.min(150,S.lv+10);S.pts+=30;S.hp=maxHp();ui();save()},
   gmj:()=>{const j=jobOf();j.jl=C().mj;j.jx=0;ui();save()},gmu:()=>{S.prog=MAPS.map(()=>10);ui();save()},gmp:v=>{if(S.pets.length>=40)S.pets.shift();const c=PETS.filter(x=>x.r===+v);S.pets.push({id:ri(1e6,9e6),sp:PETS.indexOf(c[ri(0,c.length-1)]),mut:0,eq:[0,0,0],skill:'',on:S.pets.filter(x=>x.on).length<3});ui();save()},gmm:v=>{S.pets.forEach(p=>p.mut=+v);ui();save()},gmc:()=>{S.pets=[];ui();save()}};
 $('dock').onclick=e=>{const b=e.target.closest('[data-t]');if(b)openTab(b.dataset.t)};
@@ -1166,31 +1275,47 @@ const tip=$('tooltip');
 document.addEventListener('mouseover',e=>{const c=S&&e.target.closest&&e.target.closest('[data-tip]');if(!c){tip.style.display='none';return}const it=find(c.dataset.tip);if(!it){tip.style.display='none';return}
   tip.innerHTML=itemDetail(it);tip.style.display='block'});
 document.addEventListener('mousemove',e=>{tip.style.left=Math.min(innerWidth-240,e.clientX+14)+'px';tip.style.top=Math.min(innerHeight-200,e.clientY+14)+'px'});
-// HUD rates use a rolling 60-second wall-clock window, independent of saved lifetime totals.
-// Positive Zeny changes count as earnings; spending does not make the displayed rate negative.
-const HUD_RATE_WINDOW=60000,HUD_RATE_SAMPLE=1000;
-function stepHudRate(rate,user,kills,zeny,now){
-  const k=Math.max(0,Math.floor(Number(kills)||0)),z=Math.max(0,Number(zeny)||0);
-  if(!rate||rate.user!==user||now<rate.lastSampleAt||now-rate.lastSampleAt>HUD_RATE_WINDOW)
-    rate={user,lastSampleAt:now,lastKills:k,lastZeny:z,totalKills:0,totalZeny:0,samples:[{at:now,kills:0,zeny:0}]};
+// Record positive kills and Zeny credits against real elapsed time. Display both rolling
+// 60-second rates once a second; on a long browser stall, discard stale history rather
+// than treating 10 minutes of paused frames as one second of furious combat.
+const HUD_RATE_WINDOW=60000,HUD_IDLE_RESET=30000,HUD_RATE_REFRESH=1000;
+function stepHudRate(rate,user,kills,earned,now){
+  const k=Math.max(0,Math.floor(Number(kills)||0)),z=Math.max(0,Number(earned)||0);
+  if(!rate||rate.user!==user||now<rate.lastAt||now-rate.lastAt>HUD_IDLE_RESET||k<rate.lastKills||z<rate.lastEarned)
+    rate={user,lastAt:now,lastSampleAt:now,lastKills:k,lastEarned:z,started:now,killsPerMin:0,zenyPerMin:0,killsEvents:[],events:[]};
   else{
-    rate.totalKills+=Math.max(0,k-rate.lastKills);rate.totalZeny+=Math.max(0,z-rate.lastZeny);
-    rate.lastKills=k;rate.lastZeny=z;
-    if(now-rate.lastSampleAt>=HUD_RATE_SAMPLE){rate.samples.push({at:now,kills:rate.totalKills,zeny:rate.totalZeny});rate.lastSampleAt=now}
+    const dk=k-rate.lastKills,dz=z-rate.lastEarned;
+    if(dk)rate.killsEvents.push({at:now,amount:dk});
+    if(dz)rate.events.push({at:now,amount:dz});
+    rate.lastKills=k;rate.lastEarned=z;rate.lastAt=now;
+    if(now-rate.lastSampleAt>=HUD_RATE_REFRESH){
+      while(rate.killsEvents.length&&rate.killsEvents[0].at<=now-HUD_RATE_WINDOW)rate.killsEvents.shift();
+      while(rate.events.length&&rate.events[0].at<=now-HUD_RATE_WINDOW)rate.events.shift();
+      const elapsed=Math.max(HUD_RATE_REFRESH,Math.min(HUD_RATE_WINDOW,now-rate.started));
+      rate.killsPerMin=rate.killsEvents.reduce((sum,e)=>sum+e.amount,0)*HUD_RATE_WINDOW/elapsed;
+      rate.zenyPerMin=rate.events.reduce((sum,e)=>sum+e.amount,0)*HUD_RATE_WINDOW/elapsed;
+      rate.lastSampleAt+=HUD_RATE_REFRESH*Math.floor((now-rate.lastSampleAt)/HUD_RATE_REFRESH);
+    }
   }
-  const cutoff=now-HUD_RATE_WINDOW;
-  while(rate.samples.length>1&&rate.samples[1].at<=cutoff)rate.samples.shift();
-  const base=rate.samples[0],elapsed=Math.max(1000,now-base.at);
-  return{state:rate,kills:(rate.totalKills-base.kills)*HUD_RATE_WINDOW/elapsed,zeny:(rate.totalZeny-base.zeny)*HUD_RATE_WINDOW/elapsed};
+  return{state:rate,kills:rate.killsPerMin,seconds:rate.killsPerMin/60,zeny:rate.zenyPerMin};
 }
-function bars(){if(!S)return;const rates=stepHudRate(hudRate,currentUser,S.kills,S.zeny,performance.now());hudRate=rates.state;const j=jobOf(),c=C();
+const levelPct=(value,required,maxed=false)=>maxed?100:Math.min(100,Math.max(0,(+value||0)/Math.max(1,+required||1)*100));
+function bars(){if(!S)return;
+  const rates=stepHudRate(hudRate,currentUser,S.kills,zenyEarned,performance.now());hudRate=rates.state;
+  const j=jobOf(),c=C(),hp=levelPct(S.hp,maxHp()),jp=levelPct(j.jx,jneed(j.jl),j.jl>=c.mj),bp=levelPct(S.exp,need(),S.lv>=150);
   $('lv').textContent=S.lv;$('cls2').textContent=S.cls;$('jl').textContent=j.jl;$('zeny').textContent=(+S.zeny||0).toLocaleString();
   $('kills').textContent=rates.kills.toFixed(1);
-  if(hudRate.titleAt!==hudRate.lastSampleAt){
-    $('zeny').title=`Zeny earned per minute (rolling 60s): ${Math.round(rates.zeny).toLocaleString()}z`;
-    $('kills').title=`Kills per minute (rolling 60s): ${rates.kills.toFixed(1)}`;hudRate.titleAt=hudRate.lastSampleAt;
+  $('kills').title=`Kills/min (last 60s, refreshed every second): ${rates.kills.toFixed(1)} · ${rates.seconds.toFixed(2)} kills/sec`;
+  $('zenyRate').textContent=`Zeny earned: ${Math.round(rates.zeny).toLocaleString()}/min (last 60s)`;
+  $('hpb').style.width=hp+'%';$('hpb').classList.toggle('critical',hp<=30);
+  $('hpPct').textContent=Math.round(hp)+'%';$('hpMeter').setAttribute('aria-valuenow',Math.round(hp));
+  for(const[id,label,pct,lv]of[['job','Job Level',jp,j.jl],['base','Base Level',bp,S.lv]]){
+    const text=pct.toFixed(1)+'%',track=$(id+'Track');
+    $(id==='job'?'jb':'xpb').style.width=pct+'%';$(id+'Pct').textContent=text;$(id+'Label').textContent=(id==='job'?'Job':'Base')+' Lv '+lv;
+    track.title=label+' '+lv+': '+text+(pct>=100?' (MAX)':' to next level');
+    track.setAttribute('aria-valuenow',pct.toFixed(1));track.setAttribute('aria-valuetext',track.title);
   }
-  $('hpb').style.width=Math.max(0,S.hp/maxHp()*100)+'%';$('jb').style.width=(j.jl>=c.mj?100:j.jx/jneed(j.jl)*100)+'%';$('xpb').style.width=S.exp/need()*100+'%'}
+}
 function ui(){if(!S)return;bars();$('stageTitle').textContent=fieldName()+(isBoss()?' (Boss map)':'');$('grindStatus').textContent=S.lvl<S.prog[S.mp]?'🔄 Farming':'✨ Frontier';renderWin()}
 
 function update(dt){
@@ -1201,7 +1326,7 @@ function update(dt){
   if(pv('hpreg')&&S.hp<maxHp())S.hp=Math.min(maxHp(),S.hp+dt*maxHp()*pv('hpreg')/100);
   shots.forEach(s=>s.t+=dt*7);shots=shots.filter(s=>{if(s.t<1)return true;if(s.m)scene.remove(s.m);return false});
   tickSkillFx(dt);
-  if(skillOn('aid')&&S.hp<maxHp()*.5&&(skCd.aid||0)<=0){skCd.aid=6;const h=Math.ceil(maxHp()*(.1+.05*lv('aid')));S.hp=Math.min(maxHp(),S.hp+h);playSkillFx('aid',null,'#7dff7d');addFloat(pl.x,2.6,pl.z,'+'+h,'#7dff7d')}
+  if(skillOn('aid')&&S.hp<maxHp()*.5&&(skCd.aid||0)<=0){skCd.aid=6;const h=Math.ceil(maxHp()*(.1+.05*lv('aid')));S.hp=Math.min(maxHp(),S.hp+h);playSkillFx('aid',null,'#7dff7d');skillNameFloat('First Aid');addFloat(pl.x,2.6,pl.z,'+'+h,'#7dff7d')}
   for(let i=pend.length-1;i>=0;i--){const p=pend[i];p.t-=dt;if(p.t<=0){pend.splice(i,1);strike(p.m,p.col,!!p.magic);shot(p.col);if(mob&&mob.hp<=0){kill();break}}}
   // a timed tradeoff buff ticks down, drains HP if it says so, and clears when it expires
   // tb.t is undefined until the first cast, so every read of it defaults to 0. Without that,
@@ -1226,7 +1351,7 @@ function update(dt){
     if(cand.length){const s=cand[0],L=lv(s.id);skCd[s.id]=s.cd;
       tb={atk:(s.to.atk||Z)(L),aspd:(s.to.aspd||Z)(L),def:(s.to.def||Z)(L),drain:(s.to.drain||Z)(L),
           t:(s.to.dur||Z)(L),n:s.n};
-      log(s.n+'! '+s.d(L),'r4');playSkillFx(s.id,null,s.col);addFloat(pl.x,3.2,pl.z,s.n,s.col,true)}}
+      log(s.n+'! '+s.d(L),'r4');playSkillFx(s.id,null,s.col);skillNameFloat(s.n)}}
   let tx=0,tz=Z1-1.5,reach=1.4;
   if(!mobs.length){respawn-=dt;if(respawn<=0)spawn();
     // roam: pick a fresh spot when the timer runs out or the current one is reached
@@ -1236,25 +1361,25 @@ function update(dt){
     const rng=C().rng;
     for(const m of mobs){
       m.spawn=Math.min(1,m.spawn+dt*3);m.flash=Math.max(0,(m.flash||0)-dt*6);m.atkAnim=Math.max(0,(m.atkAnim||0)-dt*2.35);
-      const ms=2.6+.3*m.size,wake=m.boss||Math.hypot(pl.x-m.x,pl.z-m.z)<AGGRO;
+      const ms=2.6+.3*m.size,wake=m.pack===activePack&&(isBoss()||Math.hypot(pl.x-m.x,pl.z-m.z)<AGGRO);
       const gx2=wake?pl.x+Math.cos(m.a)*ms:m.hx,gz2=wake?pl.z+Math.sin(m.a)*ms*.6:m.hz;
       const ex=gx2-m.x,ez=gz2-m.z,ed=Math.hypot(ex,ez);const stn=m.stun>0;m.run=ed>.12&&!stn;
       if(ed>.1&&!stn){const v=Math.min(ed,dt*(m.boss?1.2:1.6)*(wake?1:.55));m.x+=ex/ed*v;m.z+=ez/ed*v}
       m.x=cl(m.x,-BX_,BX_);m.z=cl(m.z,Z0,Z1);m.ry=Math.atan2(pl.z-m.z,m.x-pl.x);
-      if(Math.hypot(pl.x-m.x,pl.z-m.z)<=ms+.4&&!stn){m.at-=dt;if(m.at<=0){m.at=m.boss?1.2:1.5;
+      if(wake&&Math.hypot(pl.x-m.x,pl.z-m.z)<=ms+.4&&!stn){m.at-=dt;if(m.at<=0){m.at=m.boss?1.2:1.5;
         if(Math.random()*100<flee())addFloat(pl.x,2.4,pl.z,'Miss','#8cf');
-        else{const d=Math.max(1,Math.round(m.atk*rnd(.8,1.2)-(m.mag?mdef():def())*.6));S.hp-=d;hitAnim=1;m.atkAnim=1;addFloat(pl.x,2.4,pl.z,d,m.mag?'#c08cff':'#ff6b6b');
+        else{const d=Math.max(1,Math.round(m.atk*rnd(.8,1.2)-(m.mag?mdef():def())*.6));S.hp-=d;hitAnim=1;m.atkAnim=1;damageFloat(pl.x,2.4,pl.z,d,false,true);
           // Defeat is the ONE thing that puts you back at the spawn point.
 if(S.hp<=0){log('You were defeated... knocked back to the entrance.','r0');S.hp=maxHp();S.kl=0;mobs=[];mob=null;respawn=1.5;pend=[];tb={};
           pl.x=0;pl.z=Z1-1.5;pl.wt=0;ui();return}}}}
     }
-    if(!mob||!mobs.includes(mob)){mob=null;let bd=1e9;for(const m of mobs){const d=Math.hypot(m.x-pl.x,m.z-pl.z);if(d<bd){bd=d;mob=m}}}
+    if(!mob||!mobs.includes(mob)||mob.pack!==activePack)mob=mobs.find(m=>m.boss)||packMob();
     if(mob){reach=rng?3:1.2+.45*mob.size;pl.orb+=dt*.8;const r=rng?3:reach*.8;tx=mob.x+Math.cos(pl.orb)*r;tz=mob.z+Math.sin(pl.orb)*r;
       const dist=Math.hypot(mob.x-pl.x,mob.z-pl.z)||.01;
       if(dist<=reach+.6||(dist<=5&&skillOn('soulb')&&(skCd.soulb||0)<=0)){pAtkT-=dt;if(pAtkT<=0){playerAttack();if(mob&&mob.hp<=0){kill();return}}}}
   }
   const AP=S.pets.filter(p=>p.on);for(const p of AP){const r=petR[p.id]||(petR[p.id]={x:pl.x-1,z:pl.z+1,at:rnd(0,1)}),i=AP.indexOf(p);let o=null,bd=1e9;
-    for(const m of mobs){const d=Math.hypot(m.x-r.x,m.z-r.z);if(d<bd){bd=d;o=m}}
+    for(const m of mobs){if(m.pack!==activePack)continue;const d=Math.hypot(m.x-r.x,m.z-r.z);if(d<bd){bd=d;o=m}}
     const ex=(o?o.x+(i-1)*.8:pl.x-1.2)-r.x,ez=(o?o.z+1.2:pl.z+(i-1)*1.1)-r.z,ed=Math.hypot(ex,ez);r.run=ed>.2;
     if(ed>.05){const v=Math.min(ed,6*dt);r.x+=ex/ed*v;r.z+=ez/ed*v}r.x=cl(r.x,-BX_,BX_);r.z=cl(r.z,Z0-1,Z1+1);r.lunge=Math.max(0,(r.lunge||0)-dt*4);
     if(o&&bd<2.4){r.at-=dt;if(r.at<=0){r.at=petInt(p);r.lunge=1;petHit(p,o)}}}
@@ -1264,7 +1389,7 @@ if(S.hp<=0){log('You were defeated... knocked back to the entrance.','r0');S.hp=
   if(mob)pl.ry=-Math.atan2(mob.z-pl.z,mob.x-pl.x);else if(pl.run)pl.ry=-Math.atan2(pz,px);
   if(S.hp<maxHp()&&Math.floor(t*2)!==Math.floor((t-dt)*2))S.hp=Math.min(maxHp(),S.hp+Math.ceil(maxHp()*.008));
   barT-=dt;if(barT<=0){barT=.15;bars()}
-  floats.forEach(f=>{f.life-=dt*1.1;f.y+=dt*.8});floats=floats.filter(f=>{if(f.life>0)return true;if(f.el)f.el.remove();return false});
+  floats.forEach(f=>{f.life-=dt*1.1;if(f.kind!=='skill')f.y+=dt*(f.kind==='damage'||f.kind==='critical'||f.kind==='incoming' ? .3 : .8)});floats=floats.filter(f=>{if(f.life>0)return true;if(f.el)f.el.remove();return false});
   drops.forEach(d=>{d.t+=dt;d.vy+=700*dt;d.y+=d.vy*dt;if(d.y>0){d.y=0;d.vy=-d.vy*.4;if(Math.abs(d.vy)<40)d.vy=0}});
   for(let i=drops.length-1;i>=0;i--)if(drops[i].t>.9){collect(drops[i].it);drops.splice(i,1)}
 }
@@ -1292,7 +1417,7 @@ function mk(p,geo,c,x=0,y=0,z=0){const m=new THREE.Mesh(geo,M(c));m.position.set
 
 scene.add(new THREE.HemisphereLight(0xffffff,0x6a9a55,.8));
 const sun=new THREE.DirectionalLight(0xfff2cc,.9);sun.position.set(-9,22,9);sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);
-Object.assign(sun.shadow.camera,{left:-22,right:22,top:28,bottom:-28});sun.target.position.set(0,0,-5);scene.add(sun.target);scene.add(sun);
+Object.assign(sun.shadow.camera,{left:-38,right:38,top:45,bottom:-45});sun.target.position.set(0,0,-5);scene.add(sun.target);scene.add(sun);
 
 const ground=new THREE.Mesh(new THREE.PlaneGeometry(90,90),M(0x6cbf5a));ground.rotation.x=-Math.PI/2;ground.receiveShadow=true;scene.add(ground);
 const road=new THREE.Mesh(new THREE.PlaneGeometry(22,10.5),M(0xd8cdb4));road.rotation.x=-Math.PI/2;road.position.set(0,.01,.4);road.receiveShadow=true;scene.add(road);
@@ -1334,7 +1459,7 @@ for(const[lx,lz]of[[-3,-3.6],[3,-3.6],[0,-6.4],[0,-.8]]){mk(scene,CY(.07,.09,2.2
 const townObjs=scene.children.slice(town0),deco=new THREE.Group();scene.add(deco);
 // Prontera is scenery, not a maze: the whole set moves back behind the far edge so you run
 // up an open avenue with the city on the skyline instead of fighting inside the cathedral.
-const TZ=-18;townObjs.forEach(o=>{o.position.z+=TZ});road.position.z+=TZ;
+const TZ=Z0-8;townObjs.forEach(o=>{o.position.z+=TZ});road.position.z+=TZ;
 // [kind,main colour,trunk colour,extras]; kinds 0 round tree,1 conifer,2 tall pole,3 cactus,
 // 4 crystal,5 slab,6 bamboo cluster,7 bush,8 boulder.
 // `extras` is what makes each map a different PLACE rather than a different colour:
@@ -1598,7 +1723,7 @@ const KIT_MAP={
       types:['tree_ancient_large','tree_tall_cluster','tree_ancient_variant'],
       sub:[['tree_sapling',.4],['tree_bush_bright',.4]]},
       {alt:1,n:2,r:3.6,trees:[1,2],b0:7,b1:18,z0:-13,z1:-1,gap:5,types:['bamboo_grove'],s0:.85,s1:1.05}],
-    scatter:[{type:'bamboo_grove',count:5,r0:7.4,r1:24,z0:-28,z1:10,s0:.85,s1:1.1,gap:5.6},
+    scatter:[{alt:1,type:'bamboo_grove',count:5,r0:7.4,r1:24,z0:-28,z1:10,s0:.85,s1:1.1,gap:5.6},
       {type:'tree_bush_bright',count:6,r0:7.2,r1:27,z0:-30,z1:12,s0:.75,s1:1.15,gap:5.2},
       {type:'tree_sapling',count:4,r0:7.6,r1:25,z0:-28,z1:11,s0:.7,s1:1,gap:5},
       {type:'rock_cliff_crag',count:4,r0:11,r1:29,z0:-30,z1:12,s0:.9,s1:1.3,gap:6.5}],
@@ -1632,13 +1757,13 @@ const KIT_MAP={
     groves:[{n:3,r:5,trees:[1,2],b0:7.4,b1:17,z0:-26,z1:11,gap:5.4,types:['bamboo_grove','tree_tall_cluster'],
       sub:[['tree_sapling',.5],['tree_bush_bright',.4]]},
       {n:3,r:5.8,trees:[1,2],b0:17,b1:30,z0:-30,z1:12,gap:5.6,types:['bamboo_grove','tree_tall_cluster','tree_sapling']}],
-    scatter:[{type:'bamboo_grove',count:5,r0:8,r1:27,z0:-28,z1:11,s0:.85,s1:1.15,gap:5.8},
+    scatter:[{alt:1,type:'bamboo_grove',count:5,r0:8,r1:27,z0:-28,z1:11,s0:.85,s1:1.15,gap:5.8},
       {type:'tree_bush_bright',count:5,r0:7.6,r1:26,z0:-28,z1:11,s0:.8,s1:1.15,gap:5.4},
       {type:'tree_sapling',count:4,r0:8,r1:25,z0:-28,z1:11,s0:.7,s1:1.05,gap:5.2}],
     far:[{type:'bamboo_grove', count:14,r0:32,r1:44,z0:-44,z1:16,s0:.95,s1:1.25,gap:8.5},
       {type:'tree_tall_cluster',count:5,r0:34,r1:46,z0:-44,z1:16,s0:.95,s1:1.25,gap:10}],
     fixed:[{type:'shrine_stone',x:-9.6,z:-16.4,scale:1},
-      {type:'lantern_stone',x:-6.8,z:-11,scale:1},{type:'lantern_stone',x:6.8,z:-11,scale:1,flip:true},
+      {type:'lantern_stone',x:-15.8,z:-13.5,scale:1},{type:'lantern_stone',x:15.8,z:-13.5,scale:1,flip:true},
       {type:'lantern_stone',x:-6.8,z:-.6,scale:1},{type:'lantern_stone',x:6.8,z:-.6,scale:1,flip:true}]}},
   // 7 Amatsu - blossom fields, slightly thinned: cherry in loose clumps over the whole field, the
   //   stream on the road with its red lacquer bridge, a torii on the approach, lantern pairs and
@@ -1838,7 +1963,7 @@ function fieldPlan(spec){
   }
   // singles, spread across their band - this is what dresses the far field out to |x| 29
   for(const sc of (f.scatter||[]))for(let i=0,n=0;i<sc.count*6&&n<sc.count;i++){
-    const side=sideOf(sc,i),x=side*(sc.r0+rnd()*((sc.r1===undefined?sc.r0:sc.r1)-sc.r0));
+    const side=sideOf(sc,n),x=side*(sc.r0+rnd()*((sc.r1===undefined?sc.r0:sc.r1)-sc.r0));
     const z=sc.z0+rnd()*(sc.z1-sc.z0);
     if(blocked(x,z))continue;
     if(place(sc.type,x,z,(sc.s0||.8)+rnd()*((sc.s1||1.2)-(sc.s0||.8)),rnd()>.5,sc.gap||1.6))n++;
@@ -1851,8 +1976,8 @@ function fieldPlan(spec){
     if(place(fc.type,x,z,(fc.s0||.9)+rnd()*((fc.s1||1.3)-(fc.s0||.9)),rnd()>.5,fc.gap||3))n++;
   }
   // landmarks go exactly where the recipe says (a tower in a far corner, a torii on the approach)
-  for(const fx of (f.fixed||[]))kitPut(props,spec.src,fx.x,fx.z,fx.type,fx.scale===undefined?1:fx.scale,!!fx.flip,0);
-  const deck=f.deck?{x:f.deck[0],z:f.deck[1],w:f.deck[2],l:f.deck[3],a:f.deck[4]||0}:null;
+  for(const fx of (f.fixed||[]))kitPut(props,spec.src,spec.design==='izlude'&&fx.type==='pier_post'?fx.x+(BX_+3-9.6):fx.x,fx.z,fx.type,fx.scale===undefined?1:fx.scale,!!fx.flip,0);
+  const deck=f.deck?{x:spec.design==='izlude'?Math.max(BX_+3,f.deck[0]):f.deck[0],z:f.deck[1],w:f.deck[2],l:f.deck[3],a:f.deck[4]||0}:null;
   props.sort((p,n)=>p.z-n.z);                       // far to near, so billboards overlap right
   return {src:spec.src,design:spec.design,cells,water,props,deck,base:f.base,base2:f.base2,
           waterFrames:f.waterFrames||null,deckTile:f.deckTile||null};
@@ -1920,8 +2045,8 @@ function farDress(spec,plan,rect){
   return plan;
 }
 // ----- pure plan: recipe + arena -> everything the painters need (no canvas, no THREE) -----
-function kitPlan(m){
-  const spec=KIT_MAP[m]; if(!spec)return null;
+function kitPlan(m,stage=1){
+  const spec=stageSpec(m,stage); if(!spec)return null;
   if(spec.layout==='field')return fieldPlan(spec);
   const d=KIT.des[spec.design]; if(!d)return null;
   const W=d.meta.gridWidth,H=d.meta.gridHeight,cells=[],water=[],props=[];
@@ -1959,6 +2084,115 @@ function kitPlan(m){
     farDress(spec,plan,[Math.min(x0,x1),Math.max(x0,x1),Math.min(z0,z1),Math.max(z0,z1)]);
   }
   return plan;
+}
+// Stages 4-6, 7-9 and 10 are separate *places*, not decals laid over the old field.
+// Each scene specifies its own ground, path, water, tree mix and landmarks, all cropped
+// from the existing kit. There are no spawn circles, floor patches or boss-floor stamps.
+// Stages 1-3 continue to use KIT_MAP (including Morocc's attached desert design).
+const STAGE_SCENES=[
+  [ // Prontera: homestead -> village avenue -> guarded city approach
+    {base:'grass_olive',road:[2.6,.9,'dirt_path'],trees:['tree_ancient_variant','tree_sapling'],detail:['tree_bush_bright','river_stone_post'],
+      fixed:[['house_prontera',-23,-14],['house_prontera',23,1],['tree_ancient_large',-22,7]]},
+    {base:'grass_olive',road:[3.5,.5,'ruin_cobble'],trees:['tree_ancient_large','tree_tall_cluster'],detail:['river_stone_post','tree_bush_bright'],
+      fixed:[['house_prontera',-21,-22],['house_prontera',20,-6],['house_prontera',-21,7],['lantern_stone',16,-12]]},
+    {base:'grass_olive',road:[5,.2,'ruin_cobble'],trees:['tree_ancient_variant'],detail:['river_stone_post'],
+      fixed:[['house_prontera',-21,-21],['house_prontera',21,-21],['house_prontera',-21,7],['house_prontera',21,7],
+        ['lantern_stone',-16,-5],['lantern_stone',16,-5],['river_stone_post',-16,-12],['river_stone_post',16,-12]]}
+  ],
+  [ // Izlude: grassy coast -> pier district -> harbour headland
+    {base:'grass_olive',road:[2.5,.8,'dirt_path'],water:[-32,-24],bank:['sand_gold',1.4],trees:['tree_ancient_variant','palm_tall'],detail:['palm_double','tree_bush_bright'],
+      fixed:[['palm_giant',-20,-19],['pier_post',20,-23]]},
+    {base:'grass_olive',road:[3,.4,'sand_gold'],water:[-32,-21],bank:['sand_gold',2],deck:[18,-21,3,6,'bridge_planks'],trees:['palm_tall','tree_tall_cluster'],detail:['pier_post','palm_double'],
+      fixed:[['pier_post',17,-23],['pier_post',19,-23],['pier_post',18,-19],['palm_giant',-22,-17]]},
+    {base:'grass_olive',road:[3.5,.3,'sand_gold'],water:[-32,-24],bank:['sand_gold',2],deck:[18,-24,3.5,6,'bridge_planks'],trees:['palm_giant','palm_tall'],detail:['pier_post','river_stone_post'],
+      fixed:[['pier_post',17,-26],['pier_post',19,-26],['pier_post',18,-22],['palm_giant',-21,-17],['palm_giant',22,5],['river_stone_post',-16,-5],['river_stone_post',16,-5]]}
+  ],
+  [ // Geffen: gnarled woods -> rune stones -> tower approach
+    {base:'grass_geffen',road:[2.5,.9,'dirt_path'],trees:['tree_dark_gnarled','tree_dead'],detail:['standing_stone','tree_sapling'],
+      fixed:[['standing_stone',-18,-20],['standing_stone',19,5]]},
+    {base:'grass_geffen',road:[2,.4,'ruin_cobble'],trees:['tree_dark_gnarled'],detail:['standing_stone','crystal_cluster'],
+      fixed:[['tower_geffen',-25,-24],['standing_stone',18,-16],['standing_stone',-18,2],['standing_stone',19,8]]},
+    {base:'grass_geffen',road:[3.5,.25,'ruin_cobble'],trees:['tree_dark_gnarled'],detail:['standing_stone','crystal_cluster'],
+      fixed:[['tower_geffen',-25,-23],['tower_geffen',25,9],['standing_stone',-16,-12],['standing_stone',16,-12],['crystal_cluster',-17,4],['crystal_cluster',17,4]]}
+  ],
+  [ // Morocc: caravan dunes -> scattered ruins -> buried temple approach
+    {base:'sand',road:[2,.9,'sand_dark'],trees:['palm_double','cactus_flower'],detail:['desert_bone','cactus_small'],
+      fixed:[['palm_giant',-23,-18],['ruin_stump',21,6]]},
+    {base:'sand',road:[3,.5,'ruin_cobble'],trees:['palm_tall','cactus_small'],detail:['ruin_stump','ruin_curb'],
+      fixed:[['house_ruin',-24,-21],['standing_stone',22,-9],['ruin_stump',-18,8]]},
+    {base:'sand_dark',road:[4,.2,'ruin_cobble'],trees:['palm_tall','cactus_flower'],detail:['ruin_stump','ruin_curb'],
+      fixed:[['house_ruin',-24,-22],['house_ruin',24,8],['standing_stone',-17,-13],['standing_stone',17,-13],['ruin_stump',-16,4],['ruin_stump',16,4]]}
+  ],
+  [ // Payon: bamboo forest -> steep mud trail -> forest shrine
+    {base:'grass_forest',road:[3.5,.9,'dirt_payon'],water:[-11,-9],bank:['riverbank_wall',1],deck:[0,-10,4.5,4.5,'bridge_planks'],trees:['bamboo_grove','tree_tall_cluster'],detail:['tree_bush_bright','rock_boulder_mossy'],
+      fixed:[['rock_boulder_mossy',-17,-14],['rock_boulder_mossy',17,-7]]},
+    {base:'grass_forest',road:[2.5,1,'dirt_payon'],trees:['tree_ancient_large','tree_ancient_variant'],detail:['bamboo_grove','rock_boulder_mossy'],
+      fixed:[['rock_boulder_mossy',-20,-19],['rock_cliff_crag',21,-6],['bamboo_grove',-18,7]]},
+    {base:'grass_forest',road:[3.3,.4,'dirt_payon'],trees:['tree_ancient_large','bamboo_grove'],detail:['rock_boulder_mossy','tree_bush_bright'],
+      fixed:[['shrine_stone',-23,-21],['lantern_stone',20,8],['lantern_stone',-16,-12],['lantern_stone',16,-12],['rock_boulder_mossy',-17,2],['rock_boulder_mossy',17,2]]}
+  ],
+  [ // Comodo: palm lagoon -> dune trail -> cave cove
+    {base:'sand_gold',water:[-32,-23],bank:['sand_gold',1],trees:['palm_double','palm_tall'],detail:['cactus_flower','desert_bone'],
+      fixed:[['palm_giant',-22,-18],['palm_giant',23,4]]},
+    {base:'sand_gold',road:[2.6,.8,'sand_dark'],trees:['cactus_flower','palm_tall'],detail:['desert_bone','cactus_small'],
+      fixed:[['rock_cliff_crag',-25,-22],['palm_double',22,6],['desert_bone',-18,4]]},
+    {base:'sand_gold',road:[2.5,.4,'sand_dark'],water:[-32,-24],bank:['sand_gold',1.5],trees:['palm_giant','palm_double'],detail:['rock_cliff_crag','desert_bone'],
+      fixed:[['rock_cliff_crag',-24,-19],['rock_cliff_crag',24,-19],['palm_giant',-21,6],['palm_giant',21,6],['desert_bone',-16,-7],['desert_bone',16,-7]]}
+  ],
+  [ // Louyang: bamboo path -> rice terraces -> stone sanctuary
+    {base:'grass_jade',road:[2.7,.9,'dirt_path'],trees:['bamboo_grove','tree_tall_cluster'],detail:['tree_sapling','tree_bush_bright'],
+      fixed:[['lantern_stone',-18,-18],['bamboo_grove',21,6]]},
+    {base:'grass_jade',road:[2,.4,'dirt_path'],bands:[[-24,-17,-27,-16],[-9,-5,16,27]],trees:['bamboo_grove','tree_sapling'],detail:['lantern_stone','tree_bush_bright'],
+      fixed:[['shrine_stone',-23,3],['lantern_stone',18,-18],['lantern_stone',-18,8]]},
+    {base:'grass_jade',road:[3,.3,'dirt_path'],bands:[[-25,-21,-27,-17]],trees:['bamboo_grove','tree_tall_cluster'],detail:['lantern_stone','river_stone_post'],
+      fixed:[['shrine_stone',-23,-22],['shrine_stone',23,7],['lantern_stone',-16,-11],['lantern_stone',16,-11],['lantern_stone',-16,4],['lantern_stone',16,4]]}
+  ],
+  [ // Amatsu: cherry orchard -> red bridge valley -> shrine procession
+    {base:'grass_blossom',road:[2.8,.7,'dirt_path'],trees:['tree_cherry','tree_ancient_variant'],detail:['tree_sapling','tree_bush_bright'],
+      fixed:[['lantern_stone',-19,-18],['tree_cherry',21,7]]},
+    {base:'grass_blossom',road:[3.2,.4,'dirt_path'],water:[-11,-9],bank:['riverbank_wall',1],deck:[0,-10,4.2,4.5,'bridge_red'],trees:['tree_cherry','bamboo_grove'],detail:['lantern_stone','tree_bush_bright'],
+      fixed:[['torii_gate',19,7],['bridge_red_arch',-24,-20],['lantern_stone',-17,-14]]},
+    {base:'grass_blossom',road:[3.5,.2,'dirt_path'],trees:['tree_cherry','bamboo_grove'],detail:['lantern_stone','river_stone_post'],
+      fixed:[['torii_gate',-20,-21],['bridge_red_arch',23,8],['lantern_stone',-16,-13],['lantern_stone',16,-13],['lantern_stone',-16,4],['lantern_stone',16,4]]}
+  ],
+  [ // Niflheim: grave wood -> ruined street -> crypt approach
+    {base:'waste_nifl',trees:['tree_dead'],detail:['tombstone','desert_bone'],
+      fixed:[['tombstone',-17,-19],['tree_dead',21,7]]},
+    {base:'waste_nifl',road:[2.2,.5,'ruin_cobble'],trees:['tree_dead'],detail:['tombstone','rock_cliff_crag'],
+      fixed:[['house_ruin',-24,-22],['tombstone',20,5],['standing_stone',-18,6]]},
+    {base:'rock_abyss',road:[3,.25,'ruin_cobble'],trees:['tree_dead'],detail:['tombstone','standing_stone'],
+      fixed:[['house_ruin',-24,-22],['house_ruin',24,8],['tombstone',-16,-10],['tombstone',16,-10],['standing_stone',-16,4],['standing_stone',16,4]]}
+  ],
+  [ // Abyss: crystal tunnels -> dark shore -> cavern heart
+    {base:'rock_abyss',trees:['stalagmite','crystal_cluster'],detail:['rock_cliff_crag','standing_stone'],
+      fixed:[['crystal_cluster',-20,-18],['stalagmite',21,7]]},
+    {base:'rock_abyss',water:[-32,-23],bank:['limestone_pale',1.5],dark:1,trees:['crystal_cluster','stalagmite'],detail:['standing_stone','rock_cliff_crag'],
+      fixed:[['crystal_cluster',-21,-18],['rock_cliff_crag',22,7]]},
+    {base:'rock_abyss',water:[-32,-24],bank:['limestone_pale',1.7],dark:1,trees:['stalagmite','crystal_cluster'],detail:['standing_stone','rock_cliff_crag'],
+      fixed:[['crystal_cluster',-24,-20],['crystal_cluster',24,-20],['stalagmite',-18,6],['stalagmite',18,6],['standing_stone',-16,-10],['standing_stone',16,-10]]}
+  ]
+];
+function stageSpec(m,stage){
+  const original=KIT_MAP[m];
+  if(stage<=3)return original;
+  const tier=stage<=6?0:stage<=9?1:2,c=STAGE_SCENES[m][tier],f={base:c.base,base2:c.base};
+  if(c.road){f.road={w:c.road[0],wander:c.road[1]};f.roadTile=c.road[2]}
+  if(c.water){f.water=c.water;f.bank=c.bank[1];f.bankTile=c.bank[0]}
+  if(c.dark)f.waterFrames=['water_dark_0','water_dark_1'];
+  if(c.deck){f.deck=c.deck.slice(0,4);f.deckTile=c.deck[4]}
+  if(c.bands)f.bands=c.bands.map(([z0,z1,x0,x1])=>({tile:'paddy_water',z:[z0,z1],x0,x1,jit:1}));
+  const z0=tier===2?-23:-27,z1=tier===2?9:12;
+  f.groves=[{n:tier===2?4:5,r:4.5,trees:[1,2],b0:BX_+2,b1:29,z0,z1,gap:5.3,types:c.trees}];
+  f.scatter=c.detail.map((type,i)=>({type,count:tier===2?5:4,r0:BX_+2+i,r1:29,z0,z1,s0:.8,s1:1.1,gap:5}));
+  f.far=[{type:c.trees[0],count:12,r0:33,r1:44,z0:-43,z1:18,s0:.9,s1:1.2,gap:8}];
+  f.fixed=c.fixed.map(([type,x,z])=>({type,x,z,scale:1}));
+  // The boss field is special through its *scenery*, not a painted arena floor: a pair
+  // of tall, map-native landmarks frames the encounter, with the far landmarks behind it.
+  if(tier===2){const frame=['house_prontera','palm_giant','standing_stone','house_ruin','tree_ancient_large',
+      'rock_cliff_crag','shrine_stone','torii_gate','tree_dead','crystal_cluster'][m];
+    f.fixed.push({type:frame,x:-BX_-4,z:-4,scale:1.2},{type:frame,x:BX_+4,z:-4,scale:1.2,flip:true})}
+
+  return {src:original.src,layout:'field',design:original.design+'-'+(tier+1),seed:1047+m*757+tier*1739,f};
 }
 function kitRect(d,gx0,gx1,gy){
   const x0=kitX(d,gx0),x1=kitX(d,gx1+1),z0=kitZ(d,gy),z1=kitZ(d,gy+1);
@@ -2029,12 +2263,15 @@ function kitTick(dt){
   for(const w of KIT.water){if(w.maps.length<2)continue;w.m.material.map=w.m.material.map===w.maps[0]?w.maps[1]:w.maps[0]}
 }
 function buildKit(m){
-  const plan=kitPlan(m);if(!plan)return null;
+  const plan=kitPlan(m,S.lvl);if(!plan)return null;
   if(!kitAtlas(plan.src))return null;      // no atlas for this design (yet) -> v13 scenery stands in
   if(!KIT.ground){KIT.ground=new THREE.Mesh(new THREE.PlaneGeometry(KIT_FAR,KIT_FAR),new THREE.MeshLambertMaterial({map:null}));KIT.ground.rotation.x=-Math.PI/2;KIT.ground.position.y=.004;KIT.ground.receiveShadow=true;scene.add(KIT.ground)}
-  KIT.ground.visible=true;KIT.ground.material.map=kitGroundTex(plan);KIT.ground.material.needsUpdate=true;
+  KIT.ground.visible=true;
+  if(KIT.ground.material.map&&KIT.ground.material.map.dispose)KIT.ground.material.map.dispose();
+  KIT.ground.material.map=kitGroundTex(plan);KIT.ground.material.needsUpdate=true;
+  for(const w of KIT.water)for(const tex of w.maps)if(tex.dispose)tex.dispose();
   KIT.water=[];kitWaterMeshes(plan,deco);kitDeckMesh(plan,deco);
-  const r=kitPropMeshes(plan,deco);KIT.built={map:m,design:plan.design,placed:r.placed,missing:r.missing};
+  const r=kitPropMeshes(plan,deco);KIT.built={map:m,stage:S.lvl,design:plan.design,placed:r.placed,missing:r.missing};
   for(const n in r.missing)console.warn('kit: '+plan.design+' design asks for "'+n+'" but the atlas does not carry it - '+r.missing[n]+' placement(s) skipped, nothing substituted');
   return plan;
 }
@@ -2252,6 +2489,11 @@ function drawSlashFX(x,z,wt){
     slashM=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(cv),transparent:true,depthWrite:false}));slashM.center.set(.5,.25);scene.add(slashM)}
   slashM.visible=atkAnim>.12&&wt!=='bow'&&wt!=='staff';if(!slashM.visible)return;
   slashM.position.set(x,1.15,z);slashM.material.opacity=Math.min(1,atkAnim*1.6)*.9;slashM.scale.set(1.6+atkAnim*1.2,1.6+atkAnim*1.2,1)}
+// Pets use the same official Divine Pride renderer as field mobs, but every species
+// stays well below the hero regardless of the monster's size or mutation grade.
+const PET_VISUAL_SCALE=.42;
+const petFallbackShape=sp=>sp.n==='Lunatic'?'bunny':sp.n.includes('Wolf')?'cat':sp.n.includes('Peco')?'bug':sp.n.includes('Dragon')||sp.n.includes('Baphomet')?'demon':'blob';
+function disposeCreatureVisual(v){scene.remove(v.G);if(v.image)v.image.remove();if(v.official&&v.spr.material.map)v.spr.material.map.dispose();v.spr.material.dispose()}
 const mobMesh=new Map(),petMesh=new Map();let curMob=null,mobG=null,mobMats=[],lastBoss=null,dmesh=new Map(),tmp=new THREE.Vector3(),lastProg='';
 function scr(x,y,z){tmp.set(x,y,z).project(cam);return[(tmp.x+1)/2*R.domElement.clientWidth,(1-tmp.y)/2*R.domElement.clientHeight]}
 const weaponNodes=new Map(),WEAPON_ICON_ANGLE={dagger:-35,katar:22,staff:-24,bow:18,axe:-30,sword:-35,mace:-28},WEAPON_ICON_SIZE={dagger:25,katar:30,staff:29,bow:34,axe:30,sword:29,mace:28};
@@ -2435,7 +2677,7 @@ dom.addEventListener('wheel',e=>{e.preventDefault();zoom=Math.min(2,Math.max(.6,
 
 const ct=new THREE.Vector3(0,.8,0);let lastKey='';
 function draw(){
-  if(!S)return;const bn=isBoss()&&S.kl>=MPS,key=S.mp+':'+bn,c=C(),mp=MAPS[S.mp];
+  if(!S)return;const bn=isBoss(),key=S.mp+':'+S.lvl+':'+bn,c=C(),mp=MAPS[S.mp];
   if(key!==lastKey){lastKey=key;const col=new THREE.Color(bn?0x8a6bb0:mp.sky);scene.background=col;scene.fog=new THREE.Fog(col,35,80);ground.material.color.setHex(mp.ground);buildDeco(S.mp);road.material.color.setHex(S.mp===3?0xe9d9a8:0xd8cdb4)}
   P.position.set(pl.x,0,pl.z);
   const w=S.eq.weapon,wt=heroWeaponType(c.n,c.wt,w&&w.wt),clothN=S.eq.armor?TC[S.eq.armor.tier]:c.col,hairN=S.eq.head?TC[S.eq.head.tier]:0xd0492c,metalN=w?TC[w.tier]:0xc0c0c0;
@@ -2444,22 +2686,24 @@ function draw(){
   if(heroSpr){if(heroSpr.userData.pack)setPackCell(heroSpr,viewDir(pFace),pl.run,atkAnim,t);else setCell(heroSpr,viewDir(pFace),animRow(pl.run,atkAnim,t,10));
   heroSpr.material.color.setRGB(1,1-hitAnim*.75,1-hitAnim*.75)}
   drawSlashFX(pl.x+Math.cos(pFace)*0.7,pl.z+Math.sin(pFace)*0.7,wt);
-  const alive=new Set(mobs);mobMesh.forEach((v,m)=>{if(!alive.has(m)){scene.remove(v.G);if(v.image)v.image.remove();if(v.spr.material.map)v.spr.material.map.dispose();v.spr.material.dispose();mobMesh.delete(m)}});
-  for(const m of mobs){let v=mobMesh.get(m);if(!v){v=buildMob(m);mobMesh.set(m,v)}const s=Math.max(.05,(m.spriteScale||.92)*m.spawn*(m.boss?1.18:1));
+  const alive=new Set(mobs);mobMesh.forEach((v,m)=>{if(!alive.has(m)){disposeCreatureVisual(v);mobMesh.delete(m)}});
+  for(const m of mobs){let v=mobMesh.get(m);if(!v){v=buildMob(m);mobMesh.set(m,v)}const s=mobVisualScale(m);
     const rec=v.spriteId&&mobTextureCache.get(v.spriteId);if(rec&&rec.state==='ready')useMobTexture(v,rec.texture);
     v.G.scale.set(s,s,s);v.G.position.set(m.x,0,m.z);
     const mFace=Math.atan2(pl.z-m.z,pl.x-m.x);
     if(!v.official)setCell(v.spr,viewDir(mFace),animRow(m.run,m.atkAnim||0,t+m.a,8));
     const fl=m.flash||0;v.spr.material.color.setRGB(1,1-fl*.8,1-fl*.8)}
-  if(mob){const s=Math.max(.05,(mob.spriteScale||.92)*mob.spawn*(mob.boss?1.18:1)),[qx,qy]=scr(mob.x,3.08*s+.15,mob.z);tag.style.display='block';tag.style.left=qx+'px';tag.style.top=qy+'px';$('tn').textContent=mob.n+(mob.boss?' (BOSS)':'');$('th').style.width=Math.max(0,mob.hp/mob.max*100)+'%'}else tag.style.display='none';
-  const pids=new Set(S.pets.filter(p=>p.on).map(p=>p.id));petMesh.forEach((v,id)=>{if(!pids.has(id)){scene.remove(v.G);petMesh.delete(id)}});
-  S.pets.filter(p=>p.on).forEach(p=>{const sp=PETS[p.sp],r=petR[p.id];if(!r)return;let v=petMesh.get(p.id);
-    if(!v){const tex=getSheet('p:'+sp.n+':'+sp.c,(ctx,x,y,d,kind,fr)=>drawCritter(ctx,x,y,d,kind,fr,sp.n==='Lunatic'?'bunny':sp.n.includes('Wolf')?'cat':sp.n.includes('Peco')?'bug':sp.n.includes('Dragon')||sp.n.includes('Baphomet')?'demon':'blob',sp.c));
-      v={G:new THREE.Group(),spr:mkBillboard(tex,1.35,2)};v.G.add(v.spr);mkShadow(v.G,.28);scene.add(v.G);petMesh.set(p.id,v)}
-    v.G.position.set(r.x,0,r.z);v.G.scale.setScalar(.7+sp.r*.12);
+  if(mob){const s=mobVisualScale(mob),[qx,qy]=scr(mob.x,3.08*s+.15,mob.z);tag.style.display='block';tag.style.left=qx+'px';tag.style.top=qy+'px';$('tn').textContent=mob.n+(mob.boss?' (BOSS)':'');$('th').style.width=Math.max(0,mob.hp/mob.max*100)+'%'}else tag.style.display='none';
+  const pids=new Set(S.pets.filter(p=>p.on).map(p=>p.id));petMesh.forEach((v,id)=>{if(!pids.has(id)){disposeCreatureVisual(v);petMesh.delete(id)}});
+  S.pets.filter(p=>p.on).forEach(p=>{const sp=PETS[p.sp],r=petR[p.id];if(!sp||!r)return;let v=petMesh.get(p.id);
+    const pet={x:r.x,z:r.z,run:r.run,a:p.id,shape:petFallbackShape(sp),c:sp.c,spriteId:sp.spriteId,flash:0};
+    if(!v){v=buildMob(pet);petMesh.set(p.id,v)}
+    const rec=mobTextureCache.get(sp.spriteId);if(rec&&rec.state==='ready')useMobTexture(v,rec.texture);
+    v.G.position.set(r.x,0,r.z);v.G.scale.setScalar(PET_VISUAL_SCALE);
     const pf=mob?Math.atan2(mob.z-r.z,mob.x-r.x):pFace;
-    setCell(v.spr,viewDir(pf),animRow(r.run,r.lunge||0,t,12));
-    if(p.mut)v.spr.material.color.set(MC[p.mut]);else v.spr.material.color.set(0xffffff)});
+    if(!v.official)setCell(v.spr,viewDir(pf),animRow(r.run,r.lunge||0,t,12));
+    v.spr.material.color.set(0xffffff); // keep the original RO art even when mutated
+  });
   const live=new Set();
   drops.forEach(d=>{live.add(d);let m=dmesh.get(d);
     if(!m){const i=d.it,sl=i.card?'card':i.ore?'ore':i.slot,col=i.ore?(i.ore==='ori'?0xff9d3c:0x6cd3ff):TC[dtier(i)];
@@ -2473,11 +2717,13 @@ function draw(){
   const dd=(cam.aspect<1.5?26:18)/zoom,sk=shake*.03;
   cam.position.set(ct.x+Math.sin(az)*Math.cos(el)*dd+rnd(-sk,sk),Math.sin(el)*dd+.5,ct.z+Math.cos(az)*Math.cos(el)*dd+rnd(-sk,sk));
   cam.lookAt(ct);cam.updateMatrixWorld(true);
-  for(const m of mobs){const v=mobMesh.get(m);if(v)syncMobImage(v,m,Math.max(.05,(m.spriteScale||.92)*m.spawn*(m.boss?1.18:1)))}
+  for(const m of mobs){const v=mobMesh.get(m);if(v)syncMobImage(v,m,mobVisualScale(m))}
+  for(const p of S.pets.filter(p=>p.on)){const v=petMesh.get(p.id),r=petR[p.id],sp=PETS[p.sp];
+    if(v&&r&&sp)syncMobImage(v,{x:r.x,z:r.z,run:r.run,a:p.id,shape:petFallbackShape(sp),flash:0},PET_VISUAL_SCALE)}
   syncSkillFx();syncWeaponSprites(pFace,c);R.render(scene,cam);
-  floats.forEach(f=>{if(!f.el){const e=document.createElement('div');e.className='fl'+(f.big?' big':'');e.textContent=f.txt;e.style.color=f.col;ov.appendChild(e);f.el=e}
-    const[a,b]=scr(f.x,f.y,f.z);f.el.style.left=a+'px';f.el.style.top=b+'px';f.el.style.opacity=Math.max(0,f.life)});
-  const pt=bn?'BOSS FIGHT':`Monsters ${Math.min(S.kl,MPS)}/${MPS}${isBoss()?' → Boss':''}`;if(pt!==lastProg){lastProg=pt;prog.textContent=pt}
+  floats.forEach(f=>{if(!f.el){const e=document.createElement('div');e.className='fl'+(f.big?' big':'')+(f.kind&&f.kind!=='text'?' '+f.kind:'');e.textContent=f.txt;if(f.col)e.style.color=f.col;ov.appendChild(e);f.el=e}
+    const[a,b]=scr(f.anchor==='hero'?pl.x:f.x,f.y,f.anchor==='hero'?pl.z:f.z);f.el.style.left=a+'px';f.el.style.top=b+'px';f.el.style.opacity=Math.max(0,f.life)});
+  const pt=bn?`BOSS FIGHT · ${mobs.filter(m=>!m.boss).length} minions`:`Pack ${activePack+1}/3 · Monsters ${Math.min(S.kl,MPS)}/${MPS}`;if(pt!==lastProg){lastProg=pt;prog.textContent=pt}
 }
 let last=performance.now();
 function loop(now){const dt=Math.min(.1,(now-last)/1000);last=now;try{for(let i=0;i<speed;i++){update(dt);kitTick(dt)}draw()}catch(e){if(!loop.e){loop.e=1;console.error(e);log('Error: '+e.message,'r0')}}requestAnimationFrame(loop)}
