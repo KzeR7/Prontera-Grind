@@ -152,3 +152,28 @@ economy alone, and gives cards and affixes a reason to exist again.
 **Net effect if implemented as recommended:** endgame DPS x0.48, mob TTK 0.13 → 0.26 s, boss TTK
 1.50 → 3.10 s, boss Legendary items 1-in-4.6 → 1-in-22 kills, boss card 1-in-1,250 → 1-in-2,000
 kills, max HP unchanged, DEF capped at 75%, and bosses can actually kill a geared character.
+
+---
+
+# Decisions (2026-10-04, after the owner's reply)
+
+1. **Accessory base stays 5** (was typed 1.67). Max HP untouched at 166,508; the DPS figure is
+   identical either way, so the ÷3 would have cost 27% of HP for nothing.
+2. **Comodo cliff: softened, not disabled.** `sec = m>=5 ? (l>=3 ? 3 : 2) : secOf(l)` and the same
+   floor in `gearPool()` - field levels 1-2 on maps 5-10 hand out section-2 gear (x0.33 of today)
+   instead of Novice-tier gear (x0.12).
+3. **Boss "% of max HP" hit: dropped - it would not have done anything.** Measured: the endgame
+   boss dies in 3.1 s of auto-attacks (2 swings), so a 4%-of-max-HP swing removes 8% of HP while
+   regen restores 5% in the same time - net -3% per boss wave, fully refilled while walking to the
+   next wave. It would take **58 s of continuous boss contact** to kill a geared character, and
+   even then death in this game only teleports the hero to the arena entrance and resets the wave
+   (~5 s lost), so there is nothing there to buy with a slower boss fight. The DEF cap stays - it
+   fixes the "1 damage from every monster" absurdity and restores real danger while levelling -
+   but geared immortality is accepted as normal for the genre.
+4. **Boss drops cut, ores kept** - the split the owner asked for: boss gear 2.4% -> 0.5% per pool
+   item (one Legendary item per 22 boss kills) and boss card 0.08% -> 0.05% (one card per ~2,000
+   boss kills, a long-term collection goal). Ore rates stay at 5% (boss) / 2% (minion), because
+   refining is the long game: one +10 is still ~513 waves / ~3.6 h, and that is the pacing the
+   drop cut is meant to protect rather than worsen.
+5. **Field drops stay exactly as shipped** (4.8% / 4.0% / 3.2%). The sheet's 5/5/3 was a +8% raise
+   nobody asked for; the owner's instruction was to cut *boss* drops.
