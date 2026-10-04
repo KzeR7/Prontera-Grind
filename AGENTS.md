@@ -2097,3 +2097,51 @@ assigned for feel rather than fidelity. While reworking that, two shipped bugs s
 * **Known limits / follow-ups:**
   * Two live previews are running from this workspace: the game (`index.html`) and the sheet. Both
     serve the working copy of the branch; the deployed site still updates only on merge.
+
+### 2026-10-04 — `picks-review` (review of the owner's filled-in tuning sheet; analysis only, no game change, no BUILD bump)
+* **What changed for the player:** nothing - `index.html` is untouched and the live preview still
+  runs `ui-v37`. This entry records the measurement of the tuning sheet the owner returned, so the
+  numbers exist in the repo instead of only in the conversation.
+* **New dev tool:** `Updates/cards-gear-audit/picks-check.js`. It reads `audit.js` up to the point
+  where that script starts printing, reuses its extraction/harness verbatim, applies the owner's
+  answers as source patches and re-measures. Run: `node Updates/cards-gear-audit/picks-check.js`.
+  A review in plain language is in `Updates/cards-gear-audit/PICKS-REVIEW.md`.
+* **The answers, measured:** weapon base ÷3 + accessory ÷3 + affix magnitude `1/2.1/3.4/5.2/8.5` +
+  card values `1/2.6/3.9/6.5` + boss gear 2.4%→0.5% + boss card 0.08%→0.05% + field rolls 5/5/3 =
+  **endgame DPS x0.48** (438,133 → 212,029), max HP **x0.73** (166,508 → 121,330, because the
+  accessory base was divided while the sheet's own radio said "HP slots kept"), naked and early game
+  **x0.79-0.81**, mid game x0.76, late game x0.55-0.61, DEF unchanged at 12,719, mob TTK 0.13 → 0.26 s,
+  boss TTK 1.50 → 3.10 s.
+* **Three findings worth the owner's attention:**
+  1. **The Comodo cliff is not where the audit said it was.** The high-tier cliff lives in
+     `gearPool()` (item *names*) and in `fieldOf()`'s `sec` (the drop's *numbers*). The first only
+     renames loot. Patching the second is what changes value - and the sheet's "from field level 3"
+     reading falls into `secOf()`'s first band on late maps, i.e. **section 0 / Novice gear** at
+     Abyss stage 1-2 (gear value 1,044 → 162, geared DPS x0.12). Flooring the section at 2 instead
+     gives x0.33 for the same intent.
+  2. **The DEF cap does not create danger above mid-gear.** With `def/(def+4000)` + the 75% cap the
+     endgame takes 308 per mob hit and 436 per boss hit, while the game's own regen is 1.6%/s of max
+     HP (1,941/s) - net negative, so a geared character still cannot die. Only the naked/low-gear
+     game (currently 1 damage per hit) becomes lethal (8 s / 4 s to die). A `max(flat, 4% of maxHp)`
+     boss hit is the one-line fix that keeps danger real.
+  3. **Boss drop rates are no longer the pacing bottleneck.** 0.5% per pool item is one Legendary
+     item per 22 boss kills (~9 min), while one +10 refine is still ~513 waves (~3.6 h). Cutting the
+     drop rate barely changes time-to-power; the ore faucet is the real knob.
+* **Research used (external):** RO card rate 0.01% (west-games, 99porings); RO refine tables (iRO
+  Wiki classic, NovaRO); `def/(def+k)` as the standard diminishing-returns formula with "k = the
+  armour of a fully geared character" (CalculatorHub, r/gamedesign); and a same-shaped report from
+  another idle RPG that defence builds become meaningless when regen out-heals incoming damage
+  (r/incremental_games).
+* **Files touched:** `Updates/cards-gear-audit/picks-check.js` (new),
+  `Updates/cards-gear-audit/PICKS-REVIEW.md` (new), `AGENTS.md`. No game file, no art, no test change.
+* **Art:** none.
+* **Tests:** none run for the game (nothing in it changed; the 14 suites were green on `5a81578`).
+  `picks-check.js` is the test for this turn and its output is reproducible from the fixed LCG seed.
+* **Branches / PR:** `arena/01a106ae-prontera-grind`. **Committed locally only - deliberately NOT
+  pushed**, as the owner asked ("dont push pr first"). PR #15 is unchanged and still holds
+  `ui-v36` + `ui-v37` + the sheet.
+* **Known limits / follow-ups:**
+  * The Comodo-cliff and HP-slot findings change what the sheet means, so the sheet is not yet the
+    final spec. Waiting on the owner's call for the four items in §6 of `PICKS-REVIEW.md`.
+  * Nothing in this review is a balance commitment: the numbers are auto-attack DPS on the audit
+    fixture (Lv150 Lord Knight, +10 Legendary set, nine Legendary ATK cards, 200 seeded sets).
