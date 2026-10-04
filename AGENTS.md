@@ -1320,3 +1320,34 @@ assigned for feel rather than fidelity. While reworking that, two shipped bugs s
   bamboo and mud trail, Amatsu's red bridge and torii, the Abyss dark lake and Louyang's jade
   paddies in the live preview, and flag anything that reads wrong so the art pipeline (not the
   game) can be re-run.
+
+### 2026-10-04 — `kit-v27 organic-field` **(checkpoint — work in progress, not finished)**
+
+* **What changed for the player:** the owner's map feedback is being worked through. The ten maps
+  no longer dress themselves in two mirrored tree lines or paint their ground with a
+  mathematical lattice (`(i*7+j*13)%9`), which is what made the green patches look printed and
+  every field look boxed in. Ground now varies in **organic noise patches**, scenery stands in
+  **clumps spread across the whole field** (near the lane and far out), the map border turns wild
+  in **ragged tongues** instead of a rectangle, and **Morocc keeps its attached design but is now
+  dressed all round it**. **Prontera is the big visible change**: its floor is a **paved brick
+  cobble avenue and square** through a green meadow and its buildings are the kit's own painted
+  cottages — the old block-built town (THREE-box buildings, not kit art) is retired to fallback.
+  **This is not finished**: the far-field ring and the per-map tuning are still owed, and the
+  login card says `wip` on purpose.
+* **Files touched:** `index.html` (the kit layout layer: seeded value noise, `KIT_FIELD`,
+  `kitEdge`, the rewritten `fieldPlan`, the new `farDress`, `kitPlan` dispatch, all ten recipes,
+  `BUILD`), `tools/preview/` (new dev-only tool: `dump_plans.js` + `render_plans.py`, top-down
+  plan previews), `Updates/v27-organic-field/CHECKPOINT.md` (the handover instruction sheet),
+  `image-search/` (RO reference renders kept with the repo's other research), `AGENTS.md`.
+* **Art:** none. No tile, prop or pixel was drawn, traced, recoloured or substituted; `Sprite/`,
+  the class pack and `assets/kit/` are untouched, and `tools/montage.py` was not run.
+* **Tests:** 12 of 13 suites green at this checkpoint (class_change 22, save_load 10, economy 21,
+  stat 7, card 13, skill 48, gear 20, scene 8, ui 13, sprite 10, starter 4). **`kit_sim.js` does
+  not run yet** — its harness still binds the removed `PAY` constant and its pins describe the old
+  layouts; rewriting it around v27 is item 3 of the checkpoint's to-do list. Inline game JS passes
+  `node --check`.
+* **Branches / PR:** `arena/01a1057c-prontera-grind`; checkpoint pushed as a draft pull request, so
+  the work is safe on GitHub before the tuning pass.
+* **Known limits / follow-ups:** **read `Updates/v27-organic-field/CHECKPOINT.md` before touching
+  this** — it lists the root causes, what is done, what is owed (far-ring data per map,
+  `kit_sim.js` rewrite, final `BUILD`, final log entry) and the house rules that must not break.
