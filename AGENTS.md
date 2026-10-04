@@ -2761,11 +2761,16 @@ assigned for feel rather than fidelity. While reworking that, two shipped bugs s
   single `BUILD` = `'2026-10-04 ui-v38 weapon-cut cards-carry + weapon-hold'`, which names both
   sides. Nothing else conflicted: main's rendering code, assets and tools merged untouched, and its
   three new suites came with them.
-* **Verified on the merged tree:** `node --check` on the inline script; all **15 suites** green -
-  `skill` 51, `class_change` 24, `gear` 24, `economy` 21, `ui` 20, `picker` 19, `card` 13,
+* **The retired v1 kit is deleted for good.** main's `index.html` had brought back
+  `<script src="assets/kit/morocc-atlas.js">`, pointing at a file that exists in neither tree (v1
+  was retired to `Updates/retired-v1-kit/` when map kit v2 landed). It 404'd in the console *and*
+  it failed `kit_sim`'s own pin ("the retired generator is not loaded by the page any more", 33 of
+  34). The tag is gone, with a comment saying why. The archived attachment itself stays in
+  `Updates/retired-v1-kit/morocc-atlas.js` - it is the owner's original file, kept as history.
+* **Verified on the merged tree:** `node --check` on the inline script; all **17 suites** green -
+  `skill` 51, `kit` 34, `class_change` 24, `gear` 24, `economy` 21, `ui` 20, `picker` 19, `card` 13,
   `weapon_review` 13, `save_load` 12, `sprite` 12, `pet` 11, `scene` 8, `starter` 7, `stat` 7,
   `weapon_joint` 7, `pack` 19 bodies - and `audit.js` still measures the v38 target exactly:
   438,133 -> **305,020** auto-DPS (x0.70), layers x2.96/x1.99/x3.70/x1.60.
-* **Known:** main's `index.html` also loads `assets/kit/morocc-atlas.js`, which exists in neither
-  tree (v1 was retired to `Updates/retired-v1-kit/` when map kit v2 landed), so it 404s in the
-  console; nothing depends on it and it was left exactly as main had it.
+  (The first pass after the merge missed `kit_sim`, which is the one suite that would have caught
+  the dead tag. Run the whole `tools/tests/` directory, not a hand-typed list.)
