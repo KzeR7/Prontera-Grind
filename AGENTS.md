@@ -1701,3 +1701,43 @@ assigned for feel rather than fidelity. While reworking that, two shipped bugs s
   * The bag cap is enforced at pickup only: equipping/unequipping swaps items in place, so the
     count cannot exceed `BAGMAX` through normal play, but a save that somehow arrives over the cap
     is not truncated (nothing is deleted behind the owner's back).
+
+### 2026-10-04 — `ui-v35 bag-highlight subtab-reset map-levels luk-drops autocast` **(checkpoint — pet rework still to come)**
+
+* **What changed for the player:** five of the owner's six follow-up notes, delivered while the
+  pet rework is agreed.
+  * **The map cards show their level range again.** Each card under a map's name printed the word
+    "farming" after v26; it now prints the recommended range (`Lv 1-12`, `Lv 90-99`) again, with a
+    `●` in front of the map you are standing on.
+  * **Reopening a window starts at its first sub-tab.** Status → Equipment used to stay on the
+    Equipment sub-tab after the window was closed and reopened; it now opens on **Stats** every
+    time (and Inventory opens on **Bag**).
+  * **Choosing a slot highlights the real Bag tab instead of popping a list.** Clicking an
+    equipment slot on the paper doll now switches to the actual Bag window, with every item that
+    fits that slot ringed green and wired to equip on a click and a banner naming the slot, what
+    is worn now and the (+N) deltas. Nothing else in the bag is greyed or disabled, so inspecting,
+    selling, tooltips, refine and card work all keep behaving normally, and the equipment panel
+    keeps the worn item's card under the doll. The separate pop-out window and its CSS are gone.
+  * **LUK no longer bends the drop tables.** Drop odds are the field's own numbers again: gear,
+    card, ore and pet rolls all use their printed percentages with nothing scaling them. LUK still
+    does its real job on the character sheet (crit and the DEX/LUK side of attack).
+  * **The Auto cast control moved to the top of the skill description card and got bigger** - a
+    14px bold label with a 19px checkbox in its own highlighted row, above the effect text instead
+    of below it.
+* **Files touched (so far):** `index.html` (`BUILD` v35, the map-card label, `openTab`'s sub-tab
+  reset, `ACT.seleq`/`V.bag0`/`equipChooser`/`V.equip`, the kill-loop drop rolls, the skill detail
+  card + its CSS), `tools/tests/ui_sim.js` (the equip test now pins the Bag-tab highlight model
+  and the map-card level ranges), `tools/tests/gear_sim.js` (drop-loop markers + a new LUK pin),
+  `AGENTS.md`.
+* **Art:** none; `Sprite/`, the class pack, `assets/kit/` and `tools/montage.py` untouched.
+* **Tests:** all 14 suites green at this checkpoint - pack (19 bodies), class_change 22, save_load
+  10, economy 21, stat 7, card 13, skill 49, gear **24**, scene 8, kit 34, ui 18, sprite 12,
+  starter 7, pet 8; inline game JS passes `node --check`; `git diff --check` clean. New pins: no
+  map card may say "farming" and every card carries a level range; a slot click opens the Bag tab
+  and resets the sub-tabs on reopen; the bag rings the fitting sword and leaves the rest of the
+  bag as ordinary tiles; LUK 0 vs 99 must land the same three gear rolls and the same card gate.
+* **Branches / PR:** `arena/01a10643-prontera-grind` (the same branch as the v34 entry above, PR
+  https://github.com/KzeR7/Prontera-Grind/pull/14).
+* **Known limits / follow-ups:** the pet rework (one maxed pet = one maxed character, two skill
+  slots per pet, 7s skill spacing, non-stacking ATK/MATK buffs, two new buffs) is **not in this
+  checkpoint** - the build tag already says `pet-rework` for the commit that follows.

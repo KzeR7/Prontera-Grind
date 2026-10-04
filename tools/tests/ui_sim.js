@@ -130,6 +130,12 @@ t('the map panel renders every map and field', () => {
   assert.ok(h.includes('0.45%'), 'the card chance stays visible on the monster');
   assert.ok(h.includes('mapcard'), 'the map selector must be the scalable grid');
   assert.strictEqual((h.match(/class="mapcard/g) || []).length, 10, 'one card per map');
+  // Every map card shows its recommended level range under the name (the old build printed the
+  // word "farming" there instead). The current map keeps its dot marker.
+  const cards = h.slice(h.indexOf('class="mapgrid'), h.indexOf('class="mapband fields'));
+  assert.ok(!/>\s*farming\s*</.test(cards), 'no map card says "farming" any more');
+  assert.ok(cards.includes('● Lv 1-12') && cards.includes('Lv 10-24'), 'the level range is back under the name');
+  assert.ok(cards.includes('Lv 90-99'), 'and every map carries one');
   assert.strictEqual((h.match(/class="map-node/g) || []).length, 10, 'one node per field');
   // the boss field lists the whole pool with odds, and the new ore rates
   U.mapL = 10;
@@ -187,24 +193,28 @@ t('map and boss-field panels stay inside narrow viewports', () => {
   assert.ok(boss.includes('poolitem'), 'the selected boss field keeps its drop pool');
 });
 
-t('clicking a slot pops out the bag with the fitting items ringed', () => {
+t('clicking a slot highlights the fit in the REAL bag tab - no extra pop-out', () => {
   U.S = mkS('Swordman');
-  U.selE = 'weapon'; U.eqPick = null;
+  U.selE = 'weapon'; U.eqPick = null; U.sub = 'bag';
   let h = U.V.equip();
   assert.ok(!/undefined/.test(h), 'equip panel printed undefined');
-  assert.ok(!h.includes('bagpop'), 'nothing pops out until a slot is clicked');
+  assert.ok(!h.includes('chooser'), 'the equipment panel itself never hosts the chooser any more');
+  // with a slot being chosen, the Bag window rings what fits and wires the click to equip
   U.eqPick = 'weapon';
-  h = U.V.equip();
-  assert.ok(h.includes('class="bagpop"') && h.includes('chooser'), 'clicking a slot opens the bag pop-out');
-  assert.ok(h.includes('title="Broad Sword"'), 'every bag tile keeps its item name');
-  assert.ok(h.includes('cell b2 fit') && h.includes('data-a="eqpick"'), 'the sword that fits is ringed and clickable');
-  assert.ok(h.includes('cell b2 nofit'), 'the armour and accessory tiles are greyed out for the weapon slot');
-  assert.ok(!/Equip<\/button>/.test(h), 'the old inline candidate list is gone');
-  assert.ok(h.includes('4 of 4 bag items fit') || h.includes('bag items fit'), 'the pop-out counts what fits');
+  const bag = U.V.bag0();
+  assert.ok(bag.includes('class="mob-card chooser"'), 'the Bag window carries the choosing banner');
+  assert.ok(bag.includes('Choosing a r.hand') || bag.includes('Choosing a'), 'which names the slot');
+  assert.ok(bag.includes('aria-label="Broad Sword - fits this slot, click to equip"'), 'names the item it will wear');
+  assert.ok(bag.includes('cell b2 fit') && bag.includes('data-a="eqpick" data-v="9:weapon"'), 'the sword that fits is ringed and clickable');
+  assert.ok(!bag.includes('data-v="9:weapon" data-tip'), 'and is not also a plain select tile');
+  // the worn sword and the ring stay ordinary bag tiles (viewable, sellable)
+  assert.ok(bag.includes('data-a="selb" data-v="2"') && bag.includes('data-a="selb" data-v="3"'), 'everything else stays a normal bag item');
+  assert.ok(!/nofit/.test(bag), 'nothing in the bag is greyed out or disabled');
   U.eqPick = 'off';
-  h = U.V.equip();
-  assert.ok(/shield/i.test(h), 'the off-hand pop-out must explain what fits there');
-  assert.ok(h.includes('nothing') || h.includes('cannot go here'), 'and what cannot');
+  assert.ok(/shield/i.test(U.V.bag0()), 'the off-hand banner must explain what fits there');
+  // and the actual slot click opens that window
+  assert.ok(src.includes("seleq:v=>{selE=v;eqPick=v;sub.bag='bag';if(!tabs.includes('bag'))"), 'clicking a doll slot opens the Bag tab');
+  assert.ok(src.includes("if(k==='status')sub.status='stats';if(k==='bag')sub.bag='bag';"), 'reopening a window resets its sub-tab');
 });
 
 t('the skills panel renders for every class tier', () => {

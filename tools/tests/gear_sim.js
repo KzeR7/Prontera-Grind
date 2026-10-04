@@ -20,7 +20,7 @@ const src = fs.readFileSync(__dirname + '/../../index.html', 'utf8');
 const grab = (a, b) => { const i = src.indexOf(a), j = src.indexOf(b, i); if (i < 0 || j < 0) throw new Error('missing ' + a); return src.slice(i, j); };
 const pick = (re, name) => { const m = src.match(re); if (!m) throw new Error('cannot find ' + name); return m[0]; };
 
-const gearDropLoop = grab('  for(const[T,ch]of mob.drops)', '  if(Math.random()*100<mob.cardCh*lk)');
+const gearDropLoop = grab('  for(const[T,ch]of mob.drops)', '  if(Math.random()*100<mob.cardCh)');
 const code = [
   'const bon=()=>0;',
   grab('const CD=[', 'const pm=s=>'),                       // class roster: CLASSES, lineOf
@@ -41,7 +41,7 @@ const code = [
   pick(/const dropTier=\(m,l\)=>[^;]+;/, 'dropTier'),
   pick(/const sellVal=it=>[^;]+;/, 'sellVal'),
   grab('function genGear(T,l,sec,boss,tier){', '// ---------- skill effects'),
-  `function executeGearRoll(mob,roll){const old=Math.random;Math.random=()=>roll;const drops=[],lk=1,mkDrop=it=>({it});try{${gearDropLoop}}finally{Math.random=old}return drops}`,
+  `function executeGearRoll(mob,roll){const old=Math.random;Math.random=()=>roll;const drops=[],mkDrop=it=>({it});try{${gearDropLoop}}finally{Math.random=old}return drops}`,
   grab('function canShield(){', 'function ekey(it)'),        // canShield / dualOn / dualOk
   grab('function slotAccepts(k,it){', 'function equipChooser(k){'),
 ].join('\n');
@@ -371,6 +371,17 @@ t('selling gear is pocket money and never funds an upgrade', () => {
   for (let t = 0; t < 5; t++) for (let s = 0; s < 4; s++) {
     const v = G.sellVal({ tier: t, sec: s, lvl: 99 });
     assert.ok(v <= 2000, 'no item may be worth more than 2,000z (tier ' + t + ' sec ' + s + ' = ' + v + ')');
+  }
+});
+
+t('LUK does not touch drop odds, cards, ores or pets any more', () => {
+  for (const l of [0, 99]) {
+    const F = G.fieldOf(2, 5), mob = { ...F.mobs[0], boss: false, lvl: 5, sec: F.sec, tier: F.tier };
+    G.S = { st: { luk: l }, eq: {} };
+    // A die of .02 (2%) clears all three gear gates (4.8/4.0/3.2%) under both builds.
+    const drops = G.executeGearRoll(mob, .02);
+    assert.strictEqual(drops.length, 3, 'LUK ' + l + ' must not change which gear rolls land (' + drops.length + ')');
+    assert.ok(!drops.some(d => d.it && d.it.card), 'and the 0.45% card gate is untouched too');
   }
 });
 

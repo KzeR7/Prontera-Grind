@@ -150,14 +150,15 @@ hr{border:0;border-top:1px dashed var(--edge);margin:6px 0}
 .chooser>.hd button.x{margin-left:auto;padding:0 7px}
 .chooser .slot{background:#fff7dd}
 .chooser .slot .cell{cursor:default}
-/* Equipment slot click = a pop-out of the bag: ringed tiles fit the slot, greyed tiles cannot. */
+/* Choosing a slot highlights the fitting tiles in the real Bag window - no second pop-out. */
 .row button.on{background:#ffe08a;border-color:var(--gold)}
-.bagpop{position:fixed;inset:0;background:#0009;z-index:880;display:flex;align-items:center;justify-content:center;padding:14px}
-.bagpop>.card{width:min(470px,94vw);max-height:84vh;overflow:auto;background:#fdf6e4;border-radius:10px;padding:10px;box-shadow:0 12px 34px #0008}
-.bagpop .legend{display:flex;align-items:center;gap:6px;font-size:10px;margin:6px 0 4px;flex-wrap:wrap}
 .cell.fit{outline:3px solid #2e9e3e;box-shadow:0 0 9px #2e9e3e99;cursor:pointer}
-.cell.nofit{opacity:.34;filter:grayscale(1);cursor:not-allowed}
-.cell.demo{width:16px;height:16px;aspect-ratio:auto;font-size:9px;cursor:default;outline-offset:0}
+/* The auto-cast control sits at the top of a skill's description card, large enough to hit. */
+.sk-detail-head{display:flex;align-items:baseline;gap:6px;flex-wrap:wrap}
+.sk-detail-autocast{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:7px 0;padding:7px 10px;border:2px solid var(--edge2);border-radius:9px;background:#fff7dd}
+.sk-detail-autocast .sk-autocast{font-size:14px;font-weight:700;gap:7px;color:#3b2a1a;min-height:20px}
+.sk-detail-autocast .sk-autocast input{width:19px;height:19px;accent-color:#2f6fd6}
+.sk-detail-autocast small{font-size:11px}
 .roll-status{height:30px;min-height:30px;width:100%;display:flex;align-items:center;justify-content:center;overflow:hidden}.roll-status span{display:block;width:150px;text-align:center;font-variant-numeric:tabular-nums;white-space:nowrap}
 </style>
 </head>
@@ -225,7 +226,7 @@ const AL={str:'STR',agi:'AGI',dex:'DEX',luk:'LUK',int:'INT',hp:'Max HP',atk:'ATK
 // late maps in about five, with bosses still a ~12x fight. See tools/tests/economy_sim.js.
 const SU=k=>k.toUpperCase(),BX_=13,Z0=-28,Z1=12,MPS=15,AGGRO=6.5,HPK=42,HPE=1.3,K5=['str','agi','dex','luk','int'];
 const GM_USER='GM',GM_PASS='gm1234';   // CHANGE THE GM PASSWORD before you publish
-const BUILD='2026-10-04 ui-v34 affix-rarity bag-popup damage-short';   // shown on the login card - confirms which file you loaded
+const BUILD='2026-10-04 ui-v35 bag-highlight pet-rework';   // shown on the login card - confirms which file you loaded
 $('buildTag').textContent='build '+BUILD;
 
 // ---------- class tree: Novice -> 6 first jobs -> 6 second jobs -> 6 third jobs ----------
@@ -995,11 +996,13 @@ function kill(o){const keep=mob;if(o)mob=o;if(!mob||!mobs.includes(mob)){mob=kee
   const g=gx();S.kills++;S.kl++;qProg('kill');if(mob.boss)qProg('boss');
   const z=Math.round(mob.zeny*(1+pv('zeny')/100))*g,xp=Math.round(mob.exp*expRate());earnZeny(z);S.exp+=xp;addJob(Math.round(Math.round(mob.exp*.7)*expRate()));pend=[];
   addFloat(mob.x,2.4,mob.z,'+'+z+'z','#ffd23f');log(`${mob.n} defeated! +${xp.toLocaleString()} EXP, +${z.toLocaleString()} Zeny`);
-  const lk=1+st('luk')*.008;
-  for(const[T,ch]of mob.drops)if(Math.random()*100<ch*lk)drops.push(mkDrop(genGear(T,mob.lvl,mob.sec,mob.boss,mob.tier)));
-  if(Math.random()*100<mob.cardCh*lk){const g2=mob.card.g;drops.push(mkDrop({card:1,id:uid(),n:mob.card.n,g:g2,stat:mob.card.stat,v:cardVal(g2,mob.card.stat)}))}
+  // Drop odds are the field's own numbers: nothing on the character scales them, so LUK cannot
+  // bend the tables (it still raises ATK through the crit/DEX side of the stat sheet, which is
+  // what it is for).
+  for(const[T,ch]of mob.drops)if(Math.random()*100<ch)drops.push(mkDrop(genGear(T,mob.lvl,mob.sec,mob.boss,mob.tier)));
+  if(Math.random()*100<mob.cardCh){const g2=mob.card.g;drops.push(mkDrop({card:1,id:uid(),n:mob.card.n,g:g2,stat:mob.card.stat,v:cardVal(g2,mob.card.stat)}))}
   if(mob.ore)for(const o of['ori','elu'])if(Math.random()<mob.oreCh)drops.push(mkDrop({ore:o,id:uid(),n:ORE[o]}));
-  if(Math.random()*100<(mob.boss?5:.3)*lk){const r=pickW(PW[Math.min(S.mp,9)]),c=PETS.filter(x=>x.r===r),sp=PETS.indexOf(c[ri(0,c.length-1)]);
+  if(Math.random()*100<(mob.boss?5:.3)){const r=pickW(PW[Math.min(S.mp,9)]),c=PETS.filter(x=>x.r===r),sp=PETS.indexOf(c[ri(0,c.length-1)]);
     if(S.pets.length<40){S.pets.push({id:ri(1e6,9e6),sp,mut:0,eq:[0,0,0],skill:'',on:S.pets.filter(x=>x.on).length<3});log(`A ${RN[r]} pet followed you: ${PETS[sp].n}!`,'r'+RCL[r]);addFloat(mob.x,3,mob.z,'PET!','#ff9dff',true)}
     else{const z=Math.floor(EGG*(.3+r*.4));earnZeny(z);log(`A ${RN[r]} ${PETS[sp].n} appeared but your pet collection is full (+${z}z).`)}}
   checkLevel();
@@ -1127,9 +1130,9 @@ const V={
     // same size whichever map or field is picked.
     return`<div class="mapband">
       <div class="mapband-t">Maps <small>&middot; click one to see its stages below</small></div>
-      <div class="mapgrid">${MAPS.map((m,i)=>{const cur=i===mapM,here=i===S.mp,open=S.prog[i]>1;
+      <div class="mapgrid">${MAPS.map((m,i)=>{const cur=i===mapM,here=i===S.mp;
         return`<button class="mapcard${cur?' on':''}${here?' here':''}" data-a="selm" data-v="${i}" title="${m.n} - ${m.t}">
-          <b>${m.n}</b><small>${here?'● here':open?m.rec:'farming'}</small></button>`}).join('')}</div></div>
+          <b>${m.n}</b><small>${here?'● ':''}${m.rec}</small></button>`}).join('')}</div></div>
     <div class="mapband fields">
       <div class="mapband-t">${mp.n} <small>&middot; ${mp.t} &middot; rec. ${mp.rec} (not a limit) &middot; ${Math.min(pr-1,10)}/10 stages unlocked</small>
         <button class="go" data-a="go" ${mapL>pr?'disabled':''}>${S.mp===mapM&&S.lvl===mapL?'You are here':'Travel to '+mp.n+' Stage '+mapL}</button></div>
@@ -1174,17 +1177,23 @@ const V={
         <div class="si" aria-hidden="true">${SKILL_ICON[s.id]||'✦'}</div><div class="sk-name">${s.n}</div>
         <div class="sk-level"><b>Lv ${L}</b> / ${s.max}</div>
         <button data-a="skill" data-v="${s.id}" aria-label="Increase ${s.n}" title="${L<s.max?'level '+(L+1)+' costs '+skCost(L+1)+' points':'max level'}" ${av>=skCost(L+1)&&L<s.max?'':'disabled'}>${L<s.max?'+'+skCost(L+1):'MAX'}</button></div>`}).join('')}</div>`:''}).join('')
-    +(sel?(()=>{const SL=lv(sel.id),soff=!!(SL&&sel.type!=='pas'&&skOff(sel.id));return`<div class="mob-card" style="margin-top:8px"><b>${sel.n}</b> <small>${sel.type==='pas'?'Passive':sel.type==='heal'?'Auto-heal':sel.type==='to'?'Tradeoff (auto-cast)':'Active (auto-cast)'}${sel.rng?' &middot; RANGED':''}${sel.aoe?' &middot; AREA':''}${sel.dot?' &middot; DOT':''}${sel.stun?' &middot; STUN':''}${sel.chain?' &middot; CHAIN':''}</small><br><small>${sel.d(Math.max(1,SL))}</small>${SL&&SL<sel.max?`<br><small>Next: ${sel.d(SL+1)}</small>`:''}<div class="sk-detail-autocast">${SL&&sel.type!=='pas'?`<label class="sk-autocast"><input type="checkbox" data-a="sktog" data-v="${sel.id}" ${soff?'':'checked'} aria-label="Auto cast ${sel.n}"> Auto cast this skill</label><small>${soff?'Paused - it will not be used until you check this again.':'Cast automatically every time you attack.'}</small>`:'<small>Passive or not learned yet - nothing to auto-cast.</small>'}</div></div>`})():'')
+    +(sel?(()=>{const SL=lv(sel.id),soff=!!(SL&&sel.type!=='pas'&&skOff(sel.id));return`<div class="mob-card" style="margin-top:8px"><div class="sk-detail-head"><b>${sel.n}</b> <small>${sel.type==='pas'?'Passive':sel.type==='heal'?'Auto-heal':sel.type==='to'?'Tradeoff (auto-cast)':'Active (auto-cast)'}${sel.rng?' &middot; RANGED':''}${sel.aoe?' &middot; AREA':''}${sel.dot?' &middot; DOT':''}${sel.stun?' &middot; STUN':''}${sel.chain?' &middot; CHAIN':''}</small></div><div class="sk-detail-autocast">${SL&&sel.type!=='pas'?`<label class="sk-autocast"><input type="checkbox" data-a="sktog" data-v="${sel.id}" ${soff?'':'checked'} aria-label="Auto cast ${sel.n}"> Auto cast this skill</label><small class="${soff?'r0':''}">${soff?'Paused - it will not be used until you check this again.':'Cast automatically every time you attack.'}</small>`:'<small>Passive or not learned yet - nothing to auto-cast.</small>'}</div><small>${sel.d(Math.max(1,SL))}</small>${SL&&SL<sel.max?`<br><small>Next: ${sel.d(SL+1)}</small>`:''}</div>`})():'')
     +`<button class="full" data-a="rskill">Reset skills (${rcost()}z)</button>`},
   bag0(){const sel=selB&&S.inv.find(x=>String(x.id)===String(selB));const n=Math.max(30,Math.ceil(S.inv.length/6)*6);const inv=[...S.inv].sort((a,b)=>b.tier-a.tier||ev(b)-ev(a));
-    return`<div class="row"><span class="chip">🔶 Oridecon <b>${S.ore.ori}</b></span><span class="chip">🔷 Elunium <b>${S.ore.elu}</b></span></div><div class="row" style="margin-top:4px"><small class="${S.inv.length>=BAGMAX?'r0':''}">${S.inv.length}/${BAGMAX} items${S.inv.length>=BAGMAX?' &middot; BAG FULL':''}</small><button data-a="sellbelow" data-v="1">Sell Common/Fine</button><button data-a="sellbelow" data-v="2">Sell up to Rare</button></div>
+    return (eqPick?equipChooser(eqPick):'')
+    +`<div class="row"><span class="chip">🔶 Oridecon <b>${S.ore.ori}</b></span><span class="chip">🔷 Elunium <b>${S.ore.elu}</b></span></div><div class="row" style="margin-top:4px"><small class="${S.inv.length>=BAGMAX?'r0':''}">${S.inv.length}/${BAGMAX} items${S.inv.length>=BAGMAX?' &middot; BAG FULL':''}</small><button data-a="sellbelow" data-v="1">Sell Common/Fine</button><button data-a="sellbelow" data-v="2">Sell up to Rare</button></div>
     <small>Selling pays a small flat amount - a bag dump never funds an upgrade.</small>
-    <div class="grid">${Array.from({length:n},(_,i)=>inv[i]?cell(inv[i],sel&&sel.id===inv[i].id,`data-a="selb" data-v="${inv[i].id}"`):'<div class="cell empty"></div>').join('')}</div>
+    <div class="grid">${Array.from({length:n},(_,i)=>{const it=inv[i];if(!it)return'<div class="cell empty"></div>';
+      const on=!!(sel&&sel.id===it.id),fits=!!eqPick&&slotAccepts(eqPick,it);
+      // While a slot is being chosen, every item that fits it is ringed in green and equips on
+      // a click. Everything else behaves exactly like the normal bag, so viewing, selling, the
+      // detail card and the tooltips all keep working.
+      return fits?`<div class="cell b${dtier(it)}${on?' sel':''} fit" data-tip="${it.id}" aria-label="${iname(it)} - fits this slot, click to equip" data-a="eqpick" data-v="${it.id}:${eqPick}">${icon(it)}${it.r?`<i class="rf">+${it.r}</i>`:''}</div>`
+        :cell(it,on,`data-a="selb" data-v="${it.id}"`)}).join('')}</div>
     <div class="mob-card" style="margin-top:8px">${sel?itemDetail(sel)+`<div class="row" style="margin-top:6px"><button data-a="equip" data-v="${sel.id}" ${canUse(sel)?'':'disabled'}>Equip</button><button data-a="sell" data-v="${sel.id}">Sell ${sellVal(sel)}z</button></div>`:'<small>Click an item to see its stats. Hover for a quick tooltip.</small>'}</div>`},
   equip(){const c=C(),sel=S.eq[selE],pos={head:'grid-column:2;grid-row:1',weapon:'grid-column:1;grid-row:2',armor:'grid-column:2;grid-row:2',off:'grid-column:3;grid-row:2',acc1:'grid-column:1;grid-row:3',leg:'grid-column:2;grid-row:3',acc2:'grid-column:3;grid-row:3'};
     return`<div class="doll">${EQK.map(([k,l,ic])=>{const e=S.eq[k];return`<div class="cell b${e?dtier(e):0}${selE===k?' sel':''}" style="${pos[k]}" data-a="seleq" data-v="${k}" ${e?`data-tip="${e.id}"`:''}>${e?icon(e)+(e.r?`<i class="rf">+${e.r}</i>`:''):`<span style="opacity:.3">${ic}</span>`}<i class="rf" style="left:2px;right:auto;top:2px;bottom:auto;color:#fff;background:#3b2a1add;font-size:9px;font-style:normal">${l}</i></div>`}).join('')}</div>`
-    +(eqPick?equipChooser(eqPick):'')
-    +`<div class="mob-card">${sel?itemMain(sel)+cardSlots(sel,selE)+insertUI(sel)+refineUI(sel,selE)+`<div class="row" style="margin-top:6px"><button data-a="unequip" data-v="${selE}">Unequip</button></div>`:'<small>Click any slot above to choose what to wear there. Select one to inspect it, remove cards or refine.</small>'}</div>`
+    +`<div class="mob-card">${sel?itemMain(sel)+cardSlots(sel,selE)+insertUI(sel)+refineUI(sel,selE)+`<div class="row" style="margin-top:6px"><button data-a="unequip" data-v="${selE}">Unequip</button></div>`:'<small>Click any slot above to choose what to wear there (the Bag opens with the items that fit already highlighted). Select one to inspect it, remove cards or refine.</small>'}</div>`
     +`<small>Weapons: ${c.wt.join(', ')} &middot; ${canShield()?'Shield allowed':'No shield'}${dualOn()?' &middot; <b>Dual-wield: daggers/katars in both hands</b>':''}</small>`},
   cards(){const g={};S.cards.forEach(c=>(g[c.n]=g[c.n]||[]).push(c));const ks=Object.keys(g),sel=g[selC]?g[selC][0]:null;
     return`<div class="grid">${ks.map(n=>`<div class="cell b${GI[g[n][0].g]}${n===selC?' sel':''}" data-a="selc" data-v="${n}" data-tip="${g[n][0].id}">🃏<i class="rf">x${g[n].length}</i></div>`).join('')||'<small>No cards yet. Every monster drops its own card at a low chance.</small>'}</div>
@@ -1224,21 +1233,15 @@ function slotAccepts(k,it){if(!it||it.card||it.ore||!S.inv.includes(it))return f
   if(k==='acc1'||k==='acc2')return it.slot==='acc';
   if(k==='off')return it.slot==='off'?canShield():it.slot==='weapon'&&dualOk(it);
   return it.slot===k}
-// The chooser is a POP-OUT of the bag, not a list under the paper doll: it renders the whole
-// bag as the tile grid the Bag tab uses, rings every item that fits this slot in green, greys
-// out (and disables) everything that cannot go there, and equips on a click of a ringed tile.
-// Hovering any tile still opens the full item tooltip.
+// Choosing a slot does not open a second window: it switches to the real Bag tab and highlights
+// the items that fit that slot (see V.bag0, which rings them green and wires the click to equip).
+// This banner is the header of that mode - what is being chosen, what is worn now, and how out.
 function equipChooser(k){
-  const cur=S.eq[k],fit=S.inv.filter(it=>slotAccepts(k,it)).sort((a,b)=>ev(b)-ev(a)),
-        rest=S.inv.filter(it=>!slotAccepts(k,it)).sort((a,b)=>ev(b)-ev(a)),all=[...fit,...rest];
-  const nm=EQK.find(x=>x[0]===k)||[,k,SLOTS.weapon.ic];
-  const deltas=fit.slice(0,8).map(it=>{const d=ev(it)-ev(cur||{val:0});return`<b class="r${it.tier}">${iname(it)}</b> <b class="${d>0?'r1':'r0'}">(${d>0?'+':''}${d})</b>`}).join(' &middot; ');
-  return`<div class="bagpop"><div class="card chooser"><div class="hd">${nm[2]} ${nm[1]} <small>&middot; ${fit.length} of ${S.inv.length} bag items fit</small><button class="x" data-a="eqclose">&#10005;</button></div>
-  <small>${cur?`Now worn: <b class="r${cur.tier}">${iname(cur)}</b> (${SLOTS[cur.slot].stat} +${ev(cur)})`:'Nothing worn in this slot.'} &middot; your class may use ${C().wt.join(', ')}${k==='off'?(canShield()?' + shields':' + off-hand daggers/katars'):''}</small>
-  ${all.length?`<div class="legend"><span class="cell fit demo">✓</span><span>fits this slot &mdash; click to equip</span><span class="cell nofit demo">✕</span><span>cannot go here</span></div>
-  <div class="grid">${all.map(it=>{const ok=slotAccepts(k,it);return`<div class="cell b${dtier(it)}${ok?' fit':' nofit'}" data-tip="${it.id}" title="${iname(it)}" aria-label="${iname(it)}" ${ok?`data-a="eqpick" data-v="${it.id}:${k}"`:''}>${icon(it)}${it.r?`<i class="rf">+${it.r}</i>`:''}</div>`}).join('')}</div>
-  ${fit.length?`<small style="display:block;margin-top:6px">Compared to what you wear: ${deltas}${fit.length>8?` &middot; +${fit.length-8} more`:''}</small>`:'<small>Nothing in your bag fits this slot.</small>'}`:'<small>Your bag is empty.</small>'}
-  <div class="row" style="margin-top:6px">${cur?`<button data-a="unequip" data-v="${k}">Unequip ${nm[1].toLowerCase()}</button>`:''}<button data-a="eqopen" data-v="${k}">Open the Bag tab</button></div></div></div>`}
+  const cur=S.eq[k],fit=S.inv.filter(it=>slotAccepts(k,it)),nm=EQK.find(x=>x[0]===k)||[,k,SLOTS.weapon.ic];
+  const deltas=fit.slice(0,6).map(it=>{const d=ev(it)-ev(cur||{val:0});return`<b class="r${it.tier}">${iname(it)}</b> <b class="${d>0?'r1':'r0'}">(${d>0?'+':''}${d})</b>`}).join(' &middot; ');
+  return`<div class="mob-card chooser"><div class="hd">${nm[2]} Choosing a ${nm[1].toLowerCase()} <small>&middot; ${fit.length} highlighted item${fit.length===1?'':'s'} fit${fit.length?' below':''}</small><button class="x" data-a="eqclose">&#10005;</button></div>
+  <small>${cur?`Now worn: <b class="r${cur.tier}">${iname(cur)}</b> (${SLOTS[cur.slot].stat} +${ev(cur)})`:'Nothing worn in this slot.'} &middot; your class may use ${C().wt.join(', ')}${k==='off'?(canShield()?' + shields':' + off-hand daggers/katars'):''} &middot; click a green item to wear it; everything else in the bag can still be inspected or sold.</small>
+  ${fit.length?`<small style="display:block;margin-top:4px">Compared to what you wear: ${deltas}${fit.length>6?` &middot; +${fit.length-6} more`:''}</small>`:'<small style="display:block;margin-top:4px">Nothing in your bag fits this slot.</small>'}</div>`}
 function equipIn(k,id){const it=S.inv.find(x=>String(x.id)===String(id));
   if(!it)return;if(!slotAccepts(k,it)){log('Your class cannot use that there.');return}
   const old=S.eq[k];S.eq[k]=it;S.inv.splice(S.inv.indexOf(it),1);if(old)S.inv.push(old);
@@ -1271,7 +1274,10 @@ function renderWin(){
   host.innerHTML=tabs.map(k=>`<div class="win wp${k==='map'?' wide':''}" data-win="${k}"><div class="title"><span>${TABS[k][1]}</span><button data-x="${k}">&#10005;</button></div><div class="body wbody">${V[k]()}</div></div>`).join('');
   host.querySelectorAll('[data-win]').forEach(e=>{e.querySelector('.wbody').scrollTop=e.dataset.win==='log'?1e6:(old[e.dataset.win]||0)});
   if(tabs.includes('set'))drawHairPreview()}
-const MAX_TABS=3;const openTab=k=>{if(k==='gm'&&!S.gm)return;if(k!=='status')eqPick=null;const i=tabs.indexOf(k);if(i>=0)tabs.splice(i,1);else{if(tabs.length>=MAX_TABS)tabs.shift();tabs.push(k);if(k==='map'){mapM=S.mp;mapL=S.lvl}}renderWin()};
+const MAX_TABS=3;const openTab=k=>{if(k==='gm'&&!S.gm)return;if(k!=='status')eqPick=null;const i=tabs.indexOf(k);if(i>=0)tabs.splice(i,1);else{if(tabs.length>=MAX_TABS)tabs.shift();tabs.push(k);
+  // Reopening a window starts at its first sub-tab: Status shows Stats, Inventory shows Bag.
+  if(k==='status')sub.status='stats';if(k==='bag')sub.bag='bag';
+  if(k==='map'){mapM=S.mp;mapL=S.lvl}}renderWin()};
 const gotoField=(m,l)=>{S.mp=m;S.lvl=l;S.kl=0;mobs=[];mob=null;respawn=.3;pend=[];qRefresh();ui();save()};
 const ACT={
   selm:v=>{mapM=+v;mapL=Math.min(mapL,Math.max(1,S.prog[mapM]));renderWin()},sell_:v=>{mapL=+v;renderWin()},go:()=>{if(mapL<=S.prog[mapM]){gotoField(mapM,mapL);log(`Traveled to ${fieldName()}.`)}},
@@ -1285,6 +1291,8 @@ const ACT={
     S.sk[id]=nx;ui();save()},
   rskill:()=>{if(S.zeny<rcost())return log('Not enough Zeny to reset skills.');S.zeny-=rcost();S.sk={aid:1};S.skOff={};log('Skills reset; every skill auto-casts again.');ui();save()},
   selb:v=>{selB=v;renderWin()},equip:id=>equip(+id),sell:id=>sell(id),sellbelow:v=>{S.inv.filter(i=>i.tier<=+v).slice().forEach(i=>sell(i.id))},
+  // Clicking a green bag tile wears it; the highlight mode stays on so several pieces can be
+  // compared, and closing it is the ✕ on the banner (eqclose).
   eqpick:v=>{const[id,k]=v.split(':');equipIn(k,id)},
   eqclose:()=>{eqPick=null;renderWin()},
   eqopen:k=>{eqPick=null;sub.bag='bag';if(!tabs.includes('bag')){if(tabs.length>=MAX_TABS)tabs.shift();tabs.push('bag')}selB=S.eq[k]?S.eq[k].id:null;renderWin()},
@@ -1295,7 +1303,10 @@ const ACT={
   refine:k=>refine(k),sub:v=>{const[t,k]=v.split(':');sub[t]=k;renderWin()},selp:v=>{selP=+v;renderWin()},
   pon:id=>{const p=gp(id);if(!p)return;if(p.on)p.on=false;else if(S.pets.filter(x=>x.on).length<3)p.on=true;else log('Only 3 pets can fight at once. Remove one first.');ui();save()},
   pskill:id=>{const p=gp(id);if(!p)return;const c=petSkillCost(p);if(S.zeny<c){log('Not enough Zeny for a pet skill roll.');ui();return}S.zeny-=c;const skill=rollPetSkill();p.skill=skill.id;delete petSkillCd[p.id];log(`${PETS[p.sp].n} learned ${skill.n}: ${skill.desc}.`,'r3');ui();save()},
-  psk:v=>{const[id,g]=v.split(':'),p=gp(id);if(!p)return;const a=(p.sk||[1,2,3]).slice(),i=a.indexOf(+g);if(i>=0)a.splice(i,1);else a.push(+g);p.sk=a;ui();save()},ssel:v=>{selS=v;renderWin()},seleq:v=>{selE=v;eqPick=v;renderWin()},
+  psk:v=>{const[id,g]=v.split(':'),p=gp(id);if(!p)return;const a=(p.sk||[1,2,3]).slice(),i=a.indexOf(+g);if(i>=0)a.splice(i,1);else a.push(+g);p.sk=a;ui();save()},ssel:v=>{selS=v;renderWin()},
+  // Clicking an equipment slot highlights the fitting items in the REAL Bag window (it is opened
+  // if it is not already up) instead of popping a second list over the paper doll.
+  seleq:v=>{selE=v;eqPick=v;sub.bag='bag';if(!tabs.includes('bag')){if(tabs.length>=MAX_TABS)tabs.shift();tabs.push('bag')}renderWin()},
   sktog:id=>{if(!S.skOff)S.skOff={};const s=SKILLS.find(x=>x.id===id);if(!s)return;
     if(S.skOff[id])delete S.skOff[id];else S.skOff[id]=1;
     log(s.n+': auto-cast '+(S.skOff[id]?'OFF - you will not use it':'ON')+'.',S.skOff[id]?'r0':'r3');ui();save()},
