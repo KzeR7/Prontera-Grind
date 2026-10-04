@@ -495,8 +495,8 @@ h=open('index.html').read()
 open('/tmp/pack_block.js','w').write(h[h.index('const PACK_BODY='):h.index('function ensureHero(')])
 PY
 node tools/tests/pack_sim.js          # -> "bodies in pack (19): ..."
-node tools/tests/class_change_sim.js  # -> "22 passed, 0 failed"
-node tools/tests/save_load_sim.js     # -> "10 passed, 0 failed"
+node tools/tests/class_change_sim.js  # -> "24 passed, 0 failed"
+node tools/tests/save_load_sim.js     # -> "11 passed, 0 failed"
 node tools/tests/economy_sim.js       # -> "21 passed, 0 failed"
 node tools/tests/stat_sim.js          # -> "7 passed, 0 failed"
 node tools/tests/card_sim.js          # -> "13 passed, 0 failed"
@@ -504,8 +504,8 @@ node tools/tests/skill_sim.js         # -> "50 passed, 0 failed"
 node tools/tests/gear_sim.js          # -> "24 passed, 0 failed  (24 assertions groups)"
 node tools/tests/scene_sim.js         # -> "8 passed, 0 failed" (per-map scenery, water, clear lane)
 node tools/tests/kit_sim.js           # -> "34 passed, 0 failed" (v2 atlas + KIT_PS, payon recipe, morocc design, ten identities, builders, loader)
-node tools/tests/ui_sim.js            # -> "18 passed, 0 failed"
-node tools/tests/sprite_sim.js        # -> "11 passed, 0 failed" (mob/weapon Divine Pride mapping, fallbacks)
+node tools/tests/ui_sim.js            # -> "19 passed, 0 failed"
+node tools/tests/sprite_sim.js        # -> "12 passed, 0 failed" (mob/weapon Divine Pride mapping, fallbacks)
 node tools/tests/starter_sim.js       # -> "7 passed, 0 failed" (the gentle starter stages)
 node tools/tests/pet_sim.js           # -> "11 passed, 0 failed" (+ the printed pet data, buff rules and the maxed-pet balance measurement)
 ```
@@ -1830,3 +1830,164 @@ assigned for feel rather than fidelity. While reworking that, two shipped bugs s
   `Show: Off` switch hides damage floats only - Miss and skill-name labels still appear; (5) the
   `pet-sim` balance pins are tied to the Lord Knight endgame fixture, so a class whose maxed
   rotation differs from 7.61M will show a different pet-vs-character ratio.
+
+### 2026-10-04 — `balance-audit cards-gear` (analysis only - no game change, no BUILD bump)
+
+* **What changed for the player:** nothing. This entry records a **measurement pass the owner
+  asked for**: the card and equipment numbers, and what a nerf would do to them. `index.html` was
+  not touched and `BUILD` is still `ui-v35`.
+* **The delivery:** `Updates/cards-gear-audit/AUDIT.md` (the report, written for the owner),
+  `Updates/cards-gear-audit/audit.js` (the reproducible tool - it lifts the live formulas out of
+  `index.html` by string boundary exactly like the test suites, then drives 200 seeded gear sets),
+  `Updates/cards-gear-audit/audit-output.txt` (the raw run). Re-run with
+  `node Updates/cards-gear-audit/audit.js`.
+* **What it found** (Lord Knight Lv150, 120/120/120, Abyss Stage-10 field, auto-attacks only;
+  skills multiply the same base by ~x17, pets ride `atk()` so they scale identically):
+  * **Equipment is the outlier, not the cards.** vs the same character naked: Epic field set +0
+    = x9.6 DPS, Epic +10 = x20.8, Legendary +5 = x34.8, Legendary +10 = x48.2, plus nine
+    Legendary ATK cards = x58.7.
+  * **The weapon's flat `val` is 92.6% of the ATK before the class/percentage multipliers** -
+    level + all stats + 150 levels contribute 556, one +10 Legendary weapon contributes 6,990.
+  * **Affixes stack across all seven slots** (one affix of each stat per item): a Legendary set
+    averages **+42% ATK, ceiling +182%**, plus a similar ASPD and Crit DMG layer, which is where
+    the big multiplier comes from.
+  * **Cards are individually small:** one Legendary ATK or ASPD card is **+2.7% DPS**, Crit DMG
+    +1.5%, LUK +0.9%, and Crit is worth 0% because the 60% cap is already reached; a full
+    nine-card Legendary set is +21.7% (x1.24-1.29 at *every* level from Base 6 to 150).
+  * **DEF makes you un-killable before it makes you strong:** `def()*0.6` is subtracted from every
+    incoming hit with a floor of 1, so a full set takes **1 damage from every mob and every boss
+    on the hardest map** (`index.html:1512`).
+  * **Refine is already a real ore sink** at the top: +0->+5 is 5.4 ores, +0->+10 averages **154
+    ores** (the +9->+10 rung alone is ~107), i.e. ~514 Stage-10 waves for one item and ~3,600 for
+    a seven-slot set - a failure at +5 or above drops the item a level and the ore is always spent.
+  * **A gear cliff sits at Comodo:** maps 1-5 use section 0-2 by level, but every map from Comodo
+    up is pinned to section 3 (`m>=5?3:secOf(l)`), which is a 3.2x step in `val` at one map
+    boundary - gear goes from x2.8 (Payon) to x8.0 (Comodo) to x17 (Louyang) while the naked
+    character barely moves.
+* **Suggested nerf bundle, measured:** cards `CV 1,2,3,5 -> 1,1.5,2,2.5`, affixes capped at 2 per
+  item, `AM -> 1,1.5,2.2,3,4.5`, val level term `.15 -> .10`, refine `15%/lvl -> 10%/lvl` =
+  **endgame DPS x0.33** (still ~x16 naked, mobs still die in ~0.4s, bosses in ~4s). Each lever and
+  its individual effect is tabulated in the report; card-only nerfs move very little (x0.91).
+* **Files touched:** `Updates/cards-gear-audit/{AUDIT.md,audit.js,audit-output.txt}` (new),
+  `AGENTS.md`. No game file, no art, no atlas.
+* **Art:** none. `Sprite/`, the class pack, `assets/kit/` and `tools/montage.py` are untouched.
+* **Tests:** none run and none needed - no game code changed, so the 14 suites are unaffected. The
+  audit is a dev tool; it is not part of the test battery. When a nerf is chosen, `gear_sim.js`,
+  `card_sim.js` and `economy_sim.js` pins will need moving (the report lists them).
+* **Branches / PR:** `arena/01a106ae-prontera-grind`; committed for safekeeping, **no PR** - the
+  owner is still choosing what to change.
+* **Known limits / follow-ups:**
+  * The owner asked for data + suggestions; **no nerf has been chosen or applied**. Awaiting the
+    decision before `index.html` moves.
+  * The fixtures are the repo's own endgame Lord Knight; other classes' maxed rotations differ, so
+    the absolute DPS numbers move by class but every ratio holds.
+  * Two suggested changes need code, not constants, and are therefore **not** in the measured
+    table: converting DEF from a flat subtraction (floored at 1) into a capped percentage
+    reduction, and the section cliff at map 5.
+  * House-rule text still says "the thirteen test suites" in three places (lines 34/65/561) while
+    `pet_sim.js` has made it fourteen since v34 - worth a one-line fix in a future pass.
+
+### 2026-10-04 — `balance-audit v2 layer-waterfall def-immunity` (analysis only - no game change)
+
+* **What changed for the player:** nothing. Second, corrected pass on the card/equipment audit the
+  owner asked for. `index.html` was not touched and `BUILD` is still `ui-v35`.
+* **What was wrong with the first pass (v1 entry above):** its fixture spent stat points
+  round-robin (every stat rose together) instead of the real build the stat suite pins, so every
+  endgame number was ~2-3% off and the "level+stats" line understated the character. The fixture now
+  fills main stat -> LUK -> AGI -> spares, i.e. **STR/AGI/LUK 120 at Lv150**, matching
+  `stat_sim.js`. The report's own figures were regenerated; the conclusions did not move.
+* **The delivery:** `Updates/cards-gear-audit/AUDIT.md` is now the **simplified** report the owner
+  asked for (one waterfall table, one stats table, one staged nerf table, one straight-answer
+  section). `audit.js` gained two sections: **3b, the layer waterfall**, and a DEF-immunity block.
+  New dev tool `Updates/cards-gear-audit/def-scan.js` prints real DEF along the curve (it is what
+  the DEF constant below was chosen from). `audit-output.txt` regenerated.
+* **The waterfall** (Lord Knight Lv150, one layer at a time, auto-attack DPS):
+  | layer | DPS | total | layer's own value |
+  |---|---|---|---|
+  | level 150 + stats only | 6,972 | x1.0 | - |
+  | + skill passives | 8,717 | x1.3 | x1.25 |
+  | + equipment flat stats (+0) | 59,873 | x8.6 | **x6.9** |
+  | + refine to +10 | 136,610 | x19.6 | x2.3 |
+  | + affixes | 359,856 | x51.6 | **x2.6** |
+  | + nine Legendary ATK cards | 438,133 | x62.8 | x1.2 |
+  So **cards are the smallest layer** and the two gear layers are the outliers - the opposite of
+  the owner's first instinct, and now measured end to end.
+* **Level and stats are worth ~581 ATK** at Lv150 (they are mostly crit, 51%, and attack speed,
+  both near their caps); **one +10 Legendary weapon is 6,990 ATK - 12x the whole stat
+  contribution.** That is the root cause: grinding cannot keep pace with drops.
+* **New finding - the defensive half deletes combat.** `index.html:1512` subtracts `def*0.6` per
+  hit with a floor of 1, so a geared character takes **exactly 1 damage from every mob and every
+  boss in the game**. Measured fix: `def/(def+4000)` capped at 75% leaves the naked game within
+  0-2% of today (naked DEF is 93), puts mid-gear at 26-46% reduction and endgame at 60-75%.
+* **The staged nerf, measured** (each stage includes the one above): STAGE 1 affix cap 2/item +
+  `AM -> 1,1.5,2.2,3,4.5` = **x0.66**; STAGE 2 + flat value down (level term `.10`, Legendary
+  `4.5 -> 3.5`) = **x0.37**; STAGE 3 + refine `15% -> 10%` = x0.31; STAGE 4 + cards `CV -> 2.5` =
+  x0.28. **Recommendation: STAGE 2 + the DEF line** - five constants and one formula, gear goes
+  from x60 to x18, endgame mob TTK stays at 0.34s.
+* **Files touched:** `Updates/cards-gear-audit/{AUDIT.md,audit.js,audit-output.txt,def-scan.js}`,
+  `AGENTS.md`. No game file, no art, no atlas.
+* **Art:** none. `Sprite/`, the class pack, `assets/kit/` and `tools/montage.py` are untouched.
+* **Tests:** none run and none needed - no game code changed. When a stage is chosen, `gear_sim.js`,
+  `card_sim.js` and `economy_sim.js` pins need moving (the report names them).
+* **Branches / PR:** `arena/01a106ae-prontera-grind`; committed for safekeeping, **no PR** - the
+  owner is still choosing which stage to ship.
+* **Known limits / follow-ups:**
+  * Still no nerf chosen. The report now recommends STAGE 2 + DEF; awaiting the owner's call.
+  * The v1 entry's bundle numbers (`x0.33` etc.) were measured on the round-robin fixture. They are
+    superseded by this entry's staged table; the ordering of the levers is unchanged.
+  * The DEF fix touches the damage line inside `update()`, so `save_load_sim.js`/`scene_sim.js`
+    boundary grabbers must be re-checked when it is implemented - it is a game-loop line, not a
+    constant.
+
+### 2026-10-04 — `ui-v36 skill-max keep-class dps-meter boss-roam`
+* **What changed for the player:**
+  * **You can now max your skills.** A skill level costs a flat **2 points** instead of the old
+    escalating ladder (1,2,3,4,5). At max job level every class can finish its whole tree - the
+    old curve left a maxed Lord Knight 39 points short of his own skills with no way to buy
+    them, which read as a broken panel. A Novice finishes with 1 point spare, a 1st job 10, a
+    2nd job 19, a transcendent 28, so there is still a build choice but never a dead tree.
+  * **The "?" on the EXP bars is gone.** Hovering Base/Job EXP no longer swaps in the help
+    cursor or pops a native tooltip; the percentage is already written on the bar, and screen
+    readers still get "Base Level 42: 45.0% to next level" through `aria-valuetext`. The Zeny
+    chip keeps its own live rate flyout, just without the help cursor.
+  * **A class you have played keeps everything when you switch back to it:** Base Lv, EXP, job
+    level, skills, stats and its gear. Two holes were closed: a save with no per-class records
+    (anything written before those records existed) used to treat its own played classes as
+    never played, which forced the Novice restart and dropped Base Lv to 25 - job levels above
+    1 now count as proof a class was played. And returning to a class whose record carries no
+    stored loadout no longer strips the equipment you are wearing into the Bag.
+  * **A DPS readout sits next to Kills/min** in the HUD. It uses the same rolling 60-second
+    window and the same stall/reset rules as the kill and Zeny rates, and every point of damage
+    you deal (hits, skills, DoTs, pets) is banked in the save as `S.dmg`, so it survives a
+    reload like the lifetime kill count does.
+  * **Stage 10 stays with the boss.** The character used to roam the whole arena between waves,
+    so a fresh boss wave spawned at the far end and walked the field; the roam now orbits the
+    boss's own spawn point at 2.2-6.0 units, inside the 6.5 aggro range, still clamped to the
+    arena. Farming maps keep the field-wide roam.
+* **Files touched:** `index.html` (skill cost/ledger, EXP-bar tooltips, played-class detection,
+  class-record loadout repair, damage counter + HUD rate stepper + DPS readout, boss roam,
+  `BUILD`), `tools/tests/skill_sim.js` (flat-cost pins, the "every line can finish its tree"
+  rule, the aid freebie), `tools/tests/ui_sim.js` (DPS markup/rate/format pins, EXP-bar
+  no-title pins), `tools/tests/class_change_sim.js` (career counts as played, unknown loadout
+  keeps gear), `tools/tests/save_load_sim.js` (functional boss-roam test), `AGENTS.md`.
+* **Art:** none. `Sprite/`, the class pack and `assets/kit/` are untouched; `tools/montage.py`
+  was not used.
+* **Tests:** `pack_sim` (19 class bodies), `class_change` 24, `save_load` 11; `economy` 21,
+  `stat` 7, `card` 13, `skill` 50, `gear` 24; `scene` 8, `kit` 34, `ui` 19, `sprite` 12;
+  `starter` 7, `pet` 11 - all green. New coverage: every class line can afford its own tree at
+  max job level (was pinned as "no line can"), the DPS window/stall/reset behaviour and the
+  formatted HUD value, the EXP bars carry no `title` and keep their aria sentence, a save with
+  job levels but no records keeps its played classes and does not lose Base Lv, an unknown
+  loadout does not strip gear, and the boss roam stays 2.2-6.0 units from the boss while a
+  farming map still roams wider than 9 units.
+* **Branches / PR:** `arena/01a106ae-prontera-grind` - see the reply for the pull-request link.
+* **Known limits / follow-ups:**
+  * The flat 2-point curve is deliberately generous (spare points, listed above). If builds
+    should be tighter, the single knob is `skCost()` in `index.html`.
+  * The DPS meter counts **your** whole output, including pet hits and damage-over-time ticks -
+    it is not a strict "auto-attack only" number.
+  * The balance nerf is still undecided. The DEF one-liner (`def/(def+4000)`, cap 75%) and the
+    staged gear plan are unchanged from the `balance-audit v2` entry; the owner is filling in
+    the tuning sheet (`Updates/cards-gear-audit/tuning-sheet.html`) first.
+  * Old saves gain `S.dmg` on the next save; `load()` repairs it to 0, so the first DPS sample
+    after loading always starts from a clean window.

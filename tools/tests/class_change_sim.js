@@ -185,6 +185,34 @@ t('a save with no records at all still works', () => {
 });
 
 
+// ---- a played class must stay "played" even when its per-class record is gone ----
+t('a career alone marks a class as played (saves from before S.base, and repaired saves)', () => {
+  H.S = { cls: 'Thief', lv: 40, exp: 0, pts: 0, hp: 100, zeny: 0, inv: [], cards: [], pets: [], q: [],
+          st: { str: 20, agi: 20, dex: 20, luk: 1, int: 1, vit: 1 }, eq: {},
+          jobs: { Novice: { jl: 10, jx: 0 }, Thief: { jl: 30, jx: 0 }, Acolyte: { jl: 42, jx: 88 } }, base: {} };
+  assert.ok(H.playedClass('Acolyte'), 'Job Lv 42 is proof the Acolyte was played');
+  assert.ok(!H.playedClass('Knight'), 'a class with no job levels and no record is still unplayed');
+  // switching back must not be forced through the Novice (which would drop Base Lv to 25)
+  H.S.base.Acolyte = { lv: 40, exp: 0, pts: 0, hp: 100, st: { str: 20, agi: 20, dex: 20, luk: 1, int: 1, vit: 1 }, eq: null };
+  H.changeClass('Acolyte');
+  assert.strictEqual(H.S.cls, 'Acolyte');
+  assert.strictEqual(H.S.lv, 40, 'Base Lv kept');
+  assert.strictEqual(H.S.jobs.Acolyte.jl, 42, 'Job Lv kept');
+  assert.strictEqual(H.S.st.str, 20, 'stats kept');
+});
+
+t('a record with no stored loadout keeps what you are wearing', () => {
+  const sword = { id: 12, name: 'Saber', slot: 'weapon', wt: 'sword', tier: 2, val: 50 };
+  H.S = { cls: 'Thief', lv: 30, exp: 0, pts: 0, hp: 100, zeny: 0, inv: [], cards: [], pets: [], q: [],
+          st: { str: 20, agi: 1, dex: 1, luk: 1, int: 1, vit: 1 },
+          eq: { weapon: sword, armor: null, head: null, off: null, leg: null, acc1: null, acc2: null },
+          jobs: { Novice: { jl: 10, jx: 0 }, Thief: { jl: 20, jx: 0 }, Knight: { jl: 15, jx: 0 } },
+          base: { Knight: { lv: 44, exp: 0, pts: 0, hp: 100, st: { str: 25, agi: 1, dex: 1, luk: 1, int: 1, vit: 1 }, eq: null } } };
+  H.changeClass('Knight');
+  assert.strictEqual(H.S.eq.weapon && H.S.eq.weapon.id, 12, 'an unknown loadout must not strip the character');
+  assert.ok(!H.S.inv.some(i => i.id === 12), 'and must not bag the weapon either');
+});
+
 // ---- returning to a class you have already played (one click, no Novice reset) ----
 t('a class you have played before is offered directly, from anywhere in the tree', () => {
   H.S = { cls: 'Thief', lv: 40, exp: 0, pts: 0, hp: 100, st: {}, eq: {}, jobs: { Novice: { jl: 10, jx: 0 }, Thief: { jl: 30, jx: 0 }, Knight: { jl: 22, jx: 0 } }, base: { Knight: { lv: 55, exp: 123, pts: 7, hp: 900, st: { str: 30, agi: 10, dex: 10, luk: 1, int: 1, vit: 20 }, eq: {} } } };

@@ -126,6 +126,48 @@ t('the field is roamed, not marched back to the spawn point', () => {
     'the position reset is not inside the defeat handler');
 });
 
+t('a boss stage keeps the roam by the boss, the field keeps roaming wide', () => {
+  // v36: stage 10 used the same field-wide roam as the farming maps, so when a wave spawned
+  // the character was often at the far corner and the pack had to walk the whole arena to
+  // reach them. The boss stage now roams a ring around the boss spawn.
+  const roam = grab('    pl.wt-=dt;if(pl.wt<=0||Math.hypot(pl.x-pl.wx,pl.z-pl.wz)<1.2){pl.wt=rnd(2.2,4.5);',
+                    '    tx=pl.wx;tz=pl.wz}') + '    tx=pl.wx;tz=pl.wz;';
+  const arenaLine = src.match(/const SU=k=>k\.toUpperCase\(\),BX_=[^;]+;/)[0];
+  const arenaBox = {};
+  vm.createContext(arenaBox);
+  vm.runInContext(arenaLine + ';this.__a={BX_,Z0,Z1,BOSSZ,BOSS_NEAR,BOSS_FAR};', arenaBox);
+  const { BX_, Z0, Z1, BOSSZ, BOSS_NEAR, BOSS_FAR } = arenaBox.__a;
+  const sample = boss => {
+    const box = {};
+    vm.createContext(box);
+    vm.runInContext(`
+      ${arenaLine}
+      let pl={x:0,z:Z1-1.5,wt:0,wx:0,wz:Z1-1.5},mobs=[],respawn=1,dt=1/60,tx=0,tz=0;
+      const isBoss=()=>${boss},rnd=(a,b)=>a+Math.random()*(b-a),cl=(v,a,b)=>Math.max(a,Math.min(b,v)),spawn=()=>{};
+      this.__step=()=>{ ${roam} return [tx,tz] };
+      this.__pl=pl;
+    `, box);
+    let minD = Infinity, maxD = 0, maxAbsX = 0;
+    for (let i = 0; i < 400; i++) {
+      box.__pl.wt = -1;                 // force a fresh spot every iteration, as the timer would
+      const [x, z] = box.__step();
+      minD = Math.min(minD, Math.hypot(x, z - BOSSZ));
+      maxD = Math.max(maxD, Math.hypot(x, z - BOSSZ));
+      maxAbsX = Math.max(maxAbsX, Math.abs(x));
+      assert.ok(Math.abs(x) <= BX_ - 0.8 + 1e-9 && z >= Z0 + 3 - 1e-9 && z <= Z1 - 0.8 + 1e-9,
+        'roam target left the arena: ' + x + ',' + z);
+    }
+    return { minD, maxD, maxAbsX };
+  };
+  const boss = sample('true');
+  assert.ok(boss.minD >= BOSS_NEAR - 1e-9, 'boss roam must not stand inside the boss: ' + boss.minD);
+  assert.ok(boss.maxD <= BOSS_FAR + 1e-9, 'boss roam must stay near the boss, not across the field: ' + boss.maxD);
+  assert.ok(boss.maxD < 6.5, 'boss roam must stay inside the 6.5 aggro range');
+  console.log('       boss roam ' + boss.minD.toFixed(1) + '-' + boss.maxD.toFixed(1) + ' units from the boss');
+  const field = sample('false');
+  assert.ok(field.maxAbsX > 9, 'farming maps must still roam the whole field: ' + field.maxAbsX);
+});
+
 t('mob HP scales gently enough that early maps fall to a first job', () => {
   // HP = HPK * mb * pw^HPE. At 1.85 a correctly-levelled character needed 26-102s per mob
   // from Geffen onward; 1.3 brings that to roughly 1-10s while leaving bosses a real fight.

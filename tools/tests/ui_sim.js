@@ -252,6 +252,9 @@ t('HP flips at 30%; one split bar fills Base from left and Job from right with c
   assert.ok(markup.includes('Base Lv 1')&&markup.includes('Job Lv 1'),'both sides need labels');
   assert.ok(src.includes('#xp-track{display:flex;width:100%;height:14px'),'track spans the screen');
   assert.ok(src.includes('.xp-side{position:relative;flex:0 0 50%'),'the two parts share the single track equally');
+  assert.ok(src.includes('.xp-side{position:relative;flex:0 0 50%;min-width:0;cursor:default;'),
+    'no help cursor on the EXP bars');
+  assert.ok(!/class="xp-side"[^>]*title=/.test(src),'neither EXP bar may carry a title');
   assert.ok(src.includes('#jb{left:auto;right:0;'),'Job fill must originate at the right edge');
   assert.ok(src.includes('.xp-pct{left:50%;transform:translateX(-50%)}'),'each percentage is centred within its half');
   assert.ok(src.includes('#hpb.critical{background:linear-gradient('),'low HP must use a red treatment');
@@ -271,11 +274,15 @@ t('HP flips at 30%; one split bar fills Base from left and Job from right with c
   assert.strictEqual(d.hpb.classList.flags.critical,false,'31% HP must stay green');
   assert.strictEqual(d.jb.style.width,'45%');assert.strictEqual(d.xpb.style.width,'45%');
   assert.strictEqual(d.jobPct.textContent,'45.0%');assert.strictEqual(d.basePct.textContent,'45.0%');
-  assert.ok(d.jobTrack.title.includes('45.0% to next level'));
-  assert.ok(d.baseTrack.title.includes('45.0% to next level'));
+  assert.strictEqual(d.jobTrack.title,'','v36 removed the hover tooltip from the Job bar');
+  assert.strictEqual(d.baseTrack.title,'','v36 removed the hover tooltip from the Base bar');
+  assert.ok(d.jobTrack.attrs['aria-valuetext'].includes('45.0% to next level'),
+    'the sentence still reaches screen readers through aria-valuetext');
   assert.strictEqual(d.jobTrack.attrs['aria-valuenow'],'45.0');
   h.S.hp=30;h.bars();assert.strictEqual(d.hpb.classList.flags.critical,true,'30% HP must turn red');
   h.job.jl=50;h.S.lv=150;h.bars();assert.strictEqual(d.jb.style.width,'100%');assert.strictEqual(d.xpb.style.width,'100%');
+  assert.ok(d.dps&&d.dps.title.includes('Damage per second'),'bars() writes the DPS readout every second');
+  assert.strictEqual(d.dps.textContent,'0','no damage banked means no DPS');
 });
 
 t('damage digits, critical burst and skill names use separate anchored combat overlays', () => {
@@ -318,7 +325,7 @@ t('damage digits, critical burst and skill names use separate anchored combat ov
   assert.strictEqual(F.floats[5].txt,'1896','critical digits come back too');
   const strikeBox={};vm.createContext(strikeBox);
   vm.runInContext(`
-    let mob={x:1,z:3,hp:10000,size:1},shake=0,hit=null;
+    let mob={x:1,z:3,hp:10000,size:1},shake=0,hit=null,S={dmg:0};
     const missCh=()=>0,crit=()=>100,atk=()=>100,matk=()=>200,st=()=>0,critD=()=>2,
       rnd=(a,b)=>a,addFloat=()=>{},damageFloat=(...args)=>{hit=args};
     ${grab('function strike(mult,col,magic=false){','// Higher job tiers get more casts per swing:')}
@@ -326,6 +333,8 @@ t('damage digits, critical burst and skill names use separate anchored combat ov
   `,strikeBox);
   assert.ok(strikeBox.__hit.hit[4]&&strikeBox.__hit.hit[3]>100&&strikeBox.__hit.shake===6,
     'actual critical strike must send its numeric damage into the burst renderer');
+  assert.strictEqual(vm.runInContext('S.dmg',strikeBox)>0,true,
+    'every player hit must add to the lifetime damage counter the DPS meter reads');
   assert.strictEqual(F.floats[3].anchor,'hero');assert.strictEqual(F.floats[3].y,3.53);
   const draw=grab('  floats.forEach(f=>{if(!f.el)', '  const pt=bn?');
   const scene={floats:F.floats,pl:F.pl,create:()=>({style:{}}),draw};
@@ -342,6 +351,9 @@ t('Zeny and kill rates refresh every second using a rolling minute and reset aft
   assert.ok(src.includes('.hud-zeny:hover .hud-flyout'),'Zeny tooltip must open on hover without browser title delays');
   assert.ok(src.includes("$('zenyRate').textContent=`Zeny earned:"),'tooltip must display a live rate');
   assert.ok(src.includes('Kills/min <b id="kills"'),'kills rate must replace lifetime count');
+  assert.ok(src.includes('<div>DPS <b id="dps"'),'a DPS readout must sit beside the kill rate');
+  assert.ok(src.includes("dpsEl.title=`Damage per second"),'the DPS readout needs a live tooltip');
+  assert.ok(src.includes('S.dmg=(S.dmg||0)+d'),'strike() and hurt() must bank every point of damage');
   const box={};vm.createContext(box);
   vm.runInContext(`
     let S={zeny:200},zenyEarned=0;
@@ -380,6 +392,28 @@ t('Zeny and kill rates refresh every second using a rolling minute and reset aft
   m=sample('another-player',900,999999,clock+600000);
   assert.strictEqual(m.kills,0);assert.strictEqual(m.zeny,0,
     'ten minutes with no frames must not compress 879 accumulated kills into one second');
+});
+
+t('the DPS meter shares the rolling minute and resets with the save', () => {
+  const box={};vm.createContext(box);
+  vm.runInContext(`
+    let S={zeny:0},zenyEarned=0;
+    ${grab('function earnZeny(amount){','function kill(o){')}
+    ${grab('const HUD_RATE_WINDOW=60000,HUD_IDLE_RESET=30000,HUD_RATE_REFRESH=1000;','const levelPct=')}
+    this.__r={stepHudRate,S};
+  `,box);
+  const R=box.__r;
+  let state=null;
+  const s=(user,k,z,dmg,time)=>{const m=R.stepHudRate(state,user,k,z,time,dmg);state=m.state;return m};
+  s('p',0,0,0,0);
+  let m=s('p',0,0,10000,1000);
+  assert.strictEqual(m.dps,10000,'10,000 damage in the first second reads 10,000 dps');
+  m=s('p',0,0,10000,1500);assert.strictEqual(m.dps,10000,'the reading holds between whole seconds');
+  m=s('p',0,0,30000,2000);assert.strictEqual(m.dps,15000,'30,000 over two seconds reads 15,000 dps');
+  // a browser stall longer than 30s throws the old window away instead of spiking the meter
+  m=s('p',0,0,40000,78000);assert.strictEqual(m.dps,0,'a stall longer than 30s wipes the old rate');
+  m=s('p',0,0,50000,79000);assert.strictEqual(m.dps,10000,'and damage after the resume starts a new window');
+  m=s('p',0,0,0,80000);assert.strictEqual(m.dps,0,'a fresh save (damage counter reset) starts at zero');
 });
 
 t('every skill has a distinct icon and upgraded card metadata', () => {
