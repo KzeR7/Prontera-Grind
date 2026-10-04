@@ -515,7 +515,34 @@ def load_adjust(path):
     return out
 
 
-def write_review(picker, defaults, grip_points, head, adjust, out_js, art_dir=None):
+def load_head_seats():
+    """Every cell's absolute head pivot, all 8 views: tools/head_seats.json.
+
+    Written by `node tools/head_seats.js`, which asks the PICKER itself for the seat
+    (`headSpot = baseSeat(pose, view) + that view's own drag`), so the review page can seat the
+    head exactly where the owner sees it in the picker.
+    """
+    try:
+        return json.load(open(os.path.join(REPO, 'tools', 'head_seats.json')))['seats']
+    except Exception:                                                 # noqa: BLE001
+        return None
+
+
+def head_seat(cls, view, frame, defaults, seats):
+    """The head pivot for one cell, in game-cell pixels.
+
+    `seats` covers all 8 views and is the source of truth. Without it we fall back to the
+    drawn-view pivots shipped with the picker - which is exactly the bug the owner caught on
+    2026-10-04: NE, E and SE live in `headDragMirror`, were never read here, and got baked
+    with no head at all. Keep the fallback working (a bare checkout has no seats file), but a
+    real run must carry the seats file.
+    """
+    if seats and seats.get(cls) and seats[cls][view] and seats[cls][view][frame]:
+        return seats[cls][view][frame]
+    return defaults['head'].get('%s|%d|%d' % (cls, view, frame))
+
+
+def write_review(picker, defaults, grip_points, head, adjust, out_js, art_dir=None, seats=None):
     """tools/weapon_review_data.js - every class, one image pair per class, ready to nudge.
 
     Per class TWO images, both 6x8 tiles of 96 px (column = frame, row = view 0..7):
@@ -540,9 +567,9 @@ def write_review(picker, defaults, grip_points, head, adjust, out_js, art_dir=No
                 im, p, box = cell_of(cls, view, f, picker['classes'][cls], defaults)
                 if im is None:
                     continue
-                key = '%s|%d|%d' % (cls, view, f)
-                if head is not None and key in defaults['head']:
-                    hx, hy = defaults['head'][key]
+                seat = head_seat(cls, view, f, defaults, seats)
+                if head is not None and seat:
+                    hx, hy = seat
                     tile = head.crop((view * 64, 0, view * 64 + 64, 64))
                     im.alpha_composite(tile, (round(hx - 32), round(hy - 48)))
                 grid.alpha_composite(im, (f * BODY, view * BODY))
@@ -615,9 +642,13 @@ def main():
     print('grips ->', a.grips)
     if a.review:
         head = load_head_atlas()
+        seats = load_head_seats()
+        if head is not None and seats is None:
+            print('WARNING: tools/head_seats.json is missing - run `node tools/head_seats.js`; '
+                  'the mirrored views (NE/E/SE) will be baked WITHOUT a head')
         write_review(picker, defaults, grips, head, adjust,
                      os.path.join(REPO, a.review) if not os.path.isabs(a.review) else a.review,
-                     a.art or None)
+                     a.art or None, seats)
     if a.standalone:
         write_standalone(os.path.join(REPO, a.review) if not os.path.isabs(a.review) else a.review,
                          os.path.join(REPO, a.standalone) if not os.path.isabs(a.standalone) else a.standalone)
@@ -630,6 +661,7 @@ def main():
         return
     want = [c for c in a.classes.split(',') if c] or list(picker['classes'].keys())
     head = load_head_atlas()
+    seats = load_head_seats()
     if head is None:
         print('heads unavailable for the proof')
     Z = 2
@@ -648,9 +680,9 @@ def main():
                 if seat:
                     dx, dy = adjust.get((cls, view, f), (0.0, 0.0))
                     draw_weapon_into(im, wt, (seat[0] + dx, seat[1] + dy), seat[2], a.art or None)
-                key = '%s|%d|%d' % (cls, view, f)
-                if head is not None and key in defaults['head']:
-                    hx, hy = defaults['head'][key]
+                seat = head_seat(cls, view, f, defaults, seats)
+                if head is not None and seat:
+                    hx, hy = seat
                     tile = head.crop((view * 64, 0, view * 64 + 64, 64))
                     im.alpha_composite(tile, (round(hx - 32), round(hy - 48)))
                 tiles.append(im.convert('RGB').resize((BODY * Z, BODY * Z), Image.NEAREST))

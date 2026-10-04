@@ -73,6 +73,22 @@ own artists would have nudged by hand.
 The automatic placement is in `tools/weapon_grips.json` (numbers) and
 `tools/weapon_review_data.js` (the pictures the page shows).
 
+## 3b. Heads: one pivot per cell, all 8 views (fixed 2026-10-04)
+
+The review page draws body + head + weapon in one cell, and the head pivot comes from
+`tools/head_seats.json` - one absolute pivot per class/view/frame (912 of them), dumped by
+`node tools/head_seats.js`, which runs the **picker itself** (`headSpot = baseSeat(pose, view)
++ that view's own drag`) so the page seats the head exactly where you see it in the picker.
+
+That indirection matters: the picker ships the five *drawn* views' pivots in
+`sprite_picker_defaults.js`, but NE/E/SE live in `headDragMirror`. The first bake read only the
+drawn views, so those three views shipped with **no head at all** (the owner caught it). The
+drawn views were always pixel-exact - 570/570 match your numbers - and are not re-derived here.
+
+If `tools/head_seats.json` is missing, `weapon_bake.py` still runs but warns and bakes the
+mirrored views headless; `node tools/head_seats.js` regenerates it, and
+`node tools/patch_review_heads.js` can re-seat the shipped artifacts without Pillow.
+
 ## 4. Your part: a page, and only the tiles that look wrong
 
 Open **`tools/weapon_review.html`** (or `weapon_review_standalone.html` for a plain file —

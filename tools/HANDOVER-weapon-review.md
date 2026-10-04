@@ -81,7 +81,13 @@ points at a different cause.
 
 ## Housekeeping
 
-* `node tools/tests/*.js` — 15 suites, all green (the new one: `weapon_review_sim.js`, 13 checks).
+* `node tools/tests/*.js` — **19 suites**. All green except `kit_sim` (33/1, "the retired
+  generator is not loaded by the page any more"): `index.html` still carries the
+  `assets/kit/morocc-atlas.js` script tag while the file lives in `Updates/retired-v1-kit/`.
+  That is kit work, not weapon work - it was already red before this handover.
+* Heads in the review page come from `tools/head_seats.json` (all 8 views): `node tools/head_seats.js`
+  refreshes it from the picker, `tools/tests/head_seat_sim.js` (7) pins every cell, and
+  `tools/patch_review_heads.js` re-seats the shipped artifacts without Pillow if the bake ran stale.
   `pack_sim.js` needs `/tmp/pack_block.js` (a slice of `index.html`, `const PACK_BODY=` →
   `function ensureHero(`) recreated after a sandbox reset:
   `python3 -c "s=open('index.html').read();open('/tmp/pack_block.js','w').write(s[s.index('const PACK_BODY='):s.index('function ensureHero(')])"`
