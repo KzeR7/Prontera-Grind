@@ -17,10 +17,14 @@ const t = (name, fn) => {
 console.log('sprites: Divine Pride monster and weapon art\n');
 
 const mapCode = grab('const pm=s=>', 'const pw=()=>');
+const petRosterSrc = src.match(/const PETS=\[[\s\S]*?\];/)?.[0];
+if (!petRosterSrc) throw new Error('cannot find pet monster sprite roster');
 const mapBox = {};
 vm.createContext(mapBox);
-vm.runInContext(mapCode + '\nthis.__data={MAPS,MOB_SPRITES,mobSpriteUrl};', mapBox);
-const MAPS = mapBox.__data.MAPS, MOB_SPRITES = mapBox.__data.MOB_SPRITES, mobSpriteUrl = mapBox.__data.mobSpriteUrl;
+vm.runInContext(mapCode + '\n' + petRosterSrc + '\n' + grab('const petIcon=', 'const RN=') + '\nthis.__data={MAPS,MOB_SPRITES,MOB_SIZE_BY_ID,MOB_SIZE_SCALE,mobSpriteUrl,PETS,petIcon};', mapBox);
+const MAPS = mapBox.__data.MAPS, MOB_SPRITES = mapBox.__data.MOB_SPRITES, MOB_SIZE_BY_ID = mapBox.__data.MOB_SIZE_BY_ID,
+      MOB_SIZE_SCALE = mapBox.__data.MOB_SIZE_SCALE, mobSpriteUrl = mapBox.__data.mobSpriteUrl, PETS = mapBox.__data.PETS,
+      petIcon = mapBox.__data.petIcon;
 
 const weaponCode = grab('const WEAPON_ITEM_IDS=', 'const STATS=');
 const weaponBox = {};
@@ -70,6 +74,37 @@ t('monster IDs include the intentional RO-name aliases and point at the PNG endp
   assert.strictEqual(mobSpriteUrl(1002), 'https://static.divine-pride.net/images/mobs/png/1002.png');
   assert.strictEqual(mobSpriteUrl(0), '');
   assert.ok(src.includes('One-facing RO monster PNGs'), 'the one-direction art choice is documented');
+});
+
+t('every pet portrait is a real Divine Pride monster PNG, not an emoji placeholder', () => {
+  const expected={Poring:1002,Lunatic:1063,Wolf:1013,'Desert Wolf':1106,'Peco Peco':1019,'Dragon Whelp':1155,'Baphomet Jr.':1101,Angeling:1096};
+  assert.strictEqual(PETS.length,8,'pet roster changed');
+  for(const p of PETS){
+    assert.strictEqual(p.spriteId,expected[p.n],p.n+' lost its verified monster ID');
+    const html=petIcon(p);
+    assert.ok(html.includes(`src="${mobSpriteUrl(p.spriteId)}"`)&&html.includes(`alt="${p.n}"`),p.n+' does not render an accessible official sprite');
+  }
+});
+
+t('all 85 unique Divine Pride mob IDs match their database size class and player-relative scale', () => {
+  // Reference list transcribed from the Small/Medium/Large labels on the corresponding
+  // Divine Pride monster pages; index.html documents the common URL pattern and audit date.
+  const dpSize={
+    Small:[1001,1004,1005,1007,1008,1011,1051,1063,1070,1073,1141,1142,1143,1144,1167,1179,1837,1866,1869,2023],
+    Medium:[1002,1010,1013,1014,1015,1016,1023,1030,1031,1033,1036,1041,1044,1052,1076,1077,1090,1106,1108,1112,1113,1128,1139,1154,1155,1165,1177,1180,1189,1198,1204,1215,1264,1323,1406,1517,1867,1880],
+    Large:[1019,1029,1039,1055,1060,1094,1098,1115,1117,1149,1159,1166,1192,1219,1268,1272,1278,1302,1305,1366,1373,1405,1719,1775,1833,20843,2202]
+  };
+  const allIds=[...new Set(Object.values(MOB_SPRITES))].sort((a,b)=>a-b),classified=Object.keys(MOB_SIZE_BY_ID).map(Number).sort((a,b)=>a-b);
+  assert.strictEqual(allIds.length,85,'expected 85 unique sprite IDs across the ten-map roster');
+  assert.deepStrictEqual(classified,allIds,'size table must cover exactly the sprites used by map mobs and bosses');
+  for(const [size,ids] of Object.entries(dpSize))for(const id of ids)assert.strictEqual(MOB_SIZE_BY_ID[id],size,'Divine Pride size for sprite '+id);
+  assert.strictEqual(Object.values(dpSize).reduce((n,ids)=>n+ids.length,0),85,'the cited size reference list must account for every ID once');
+  assert.strictEqual(MOB_SIZE_SCALE.Small,.62);assert.strictEqual(MOB_SIZE_SCALE.Medium,.92);assert.strictEqual(MOB_SIZE_SCALE.Large,1.28);
+  for(const map of MAPS)for(const mob of [map.boss,...map.mobs]){
+    assert.ok(['Small','Medium','Large'].includes(mob.spriteSize),mob.n+' missing size class');
+    assert.strictEqual(mob.spriteScale,MOB_SIZE_SCALE[mob.spriteSize],mob.n+' does not use the size-class scale');
+  }
+  console.log('       20 Small / 38 Medium / 27 Large; scale factors .62 / .92 / 1.28 vs player');
 });
 
 t('Divine Pride item icons cover every weapon type used by all 19 classes', () => {

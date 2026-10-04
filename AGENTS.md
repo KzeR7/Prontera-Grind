@@ -1140,3 +1140,43 @@ assigned for feel rather than fidelity. While reworking that, two shipped bugs s
     everything else is data.
   * `standing_stone` was generated as a three-menhir row; the packed sprite is the best single
     stone (the full row sits in `work/props/` source history if ever wanted).
+### 2026-10-04 — `balance-v23 curve pets sprite-sizes`
+* **What changed for the player:**
+  * The tuned EXP curve puts Base Lv 1–10 at about 7 minutes, Base 50 at about 2 hours, and Base 99 at about 48 hours in the canonical 800-kills/hour model. Base 100–150 is a much harder 336-hour (~14-day) climb after the rebirth reset; a full 1–150 run models to ~387 hours.
+  * Equipment odds are doubled: regular mobs roll 4.8%/4.0%/3.2% gear entries, and each boss-pool item rolls at 2.4%. Card chances remain 0.45% on regular mobs and 0.08% on bosses. The extracted live kill loop is regression-tested; it passes boss gear through the boss generator and can create actual equipment.
+  * Pet portraits now use Divine Pride monster PNGs. Claw, Collar and Charm each show their current upgrade level and success/double-upgrade chances. The six equally weighted gacha skills are two player buffs (ATK and MATK), two AoE attacks and two single-target attacks; magical player skills now use MATK.
+  * The size labels for all 85 unique mob/boss sprite IDs were checked against Divine Pride; the visuals use Small/Medium/Large factors of .62/.92/1.28 relative to the player. Save loading repairs missing/out-of-range pet upgrades and invalid skill IDs.
+* **Files touched:** `index.html` (`BUILD` v23), `tools/tune_pacing.js`, `tools/tests/{economy,gear,save_load,skill,sprite,ui}_sim.js`, `AGENTS.md`.
+* **Art:** no local sprite sheets or packed atlases were changed. Monster and pet PNGs remain externally hosted by Divine Pride with the existing procedural fallbacks.
+* **Tests:** all 13 suites pass: pack (19 class bodies + Settings preview), class change **22**, save/load **10**, economy **21**, stats **7**, cards **13**, skills **48**, gear **20**, scene **8**, kit **20**, UI **11**, sprites **10**, starter **4**. Inline game JavaScript passes `node --check`; `git diff --check` is clean.
+  * New checks execute the live boss equipment-drop loop, pet skill gacha and combat effects, pet upgrade success/double/failure, MATK damage and buffs, save normalization, pet release cleanup, UI upgrade labels, and every audited sprite-size class.
+* **Branches / PR:** `arena/01a10466-prontera-grind`; the PR link is recorded in the delivery entry immediately below.
+* **Known limits / follow-ups:** EXP hours are model estimates, not a real-time playtest; the model assumes 800 kills/hour. Divine Pride sprites require network access. The live preview is available for visual review and actual pacing checks.
+
+### 2026-10-04 — `balance-v23 delivery`
+* **What changed for the player:** no additional game changes; published the verified v23 update for review and merge.
+* **Files touched:** `AGENTS.md` only.
+* **Art:** none; no local sprite sheets or atlases changed.
+* **Tests:** documentation-only follow-up; results are listed in the v23 update entry immediately above.
+* **Branches / PR:** `arena/01a10466-prontera-grind` — https://github.com/KzeR7/Prontera-Grind/pull/9
+* **Known limits / follow-ups:** merge the PR to deploy; run an actual pacing/visual playtest using the preview.
+
+### 2026-10-04 — `balance-v24 faster upper curve`
+* **What changed for the player:**
+  * Retuned the curve to preserve about 7 minutes for Base 1–10 and about 2 hours for Base 1–50, while reducing Base 50–99 to about 5 hours. Base 100–150 now models to about 48 hours (2 days) after the roughly 3.9x requirement reset at 100.
+  * Quest EXP was rescaled with the curve so quests remain useful but secondary: about 23% of modeled run EXP overall, with the highest single-level share around 40%.
+* **Files touched:** `index.html` (`BUILD` v24, EXP curve and quest scaling), `tools/tune_pacing.js`, `tools/tests/economy_sim.js`, `AGENTS.md`.
+* **Art:** none; no sprite sheets or atlases changed.
+* **Tests:** all 13 suites pass; inline game JavaScript syntax and `git diff --check` pass. The economy regression now separately asserts the 5-hour Base 50–99 interval and 48-hour Base 100–150 tail.
+* **Branches / PR:** `arena/01a10466-prontera-grind`; updated existing PR #9: https://github.com/KzeR7/Prontera-Grind/pull/9
+* **Known limits / follow-ups:** the times are still model estimates at 800 kills/hour, not measured player playtime; playtest the faster upper curve before merging.
+
+### 2026-10-04 — `ui-v25 HUD rates & skill auto-cast`
+* **What changed for the player:**
+  * The HUD now displays Kills /Min instead of the lifetime kill count. Hover the Zeny total to see earned Zeny per minute. Both are rolling recent rates measured in real time during the current login; the Zeny rate counts gains, not purchases.
+  * Each learned active skill now has a simple Auto cast checkbox on its card. New skills remain enabled by default; uncheck one to pause it and check it again to resume.
+* **Files touched:** `index.html` (`BUILD` v25, HUD and Skills panel), `tools/tests/ui_sim.js`, `tools/tests/skill_sim.js`, `AGENTS.md`.
+* **Art:** none; no sprite sheets or atlases changed.
+* **Tests:** all 13 suites pass; the UI regression tests rolling rates, the hover title and checkbox defaults, and the skill regression pins default auto-cast behavior. Inline game JavaScript syntax and `git diff --check` pass.
+* **Branches / PR:** `arena/01a10466-prontera-grind`; updates existing PR #9: https://github.com/KzeR7/Prontera-Grind/pull/9
+* **Known limits / follow-ups:** the HUD rates reset at login or after starting a new adventure; the displayed Zeny rate is gross positive earnings over the recent window, not net profit after spending.

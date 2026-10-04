@@ -1,5 +1,5 @@
-// Skills: the roster, the four new effects (dot / stun / chain / tradeoff), the per-skill
-// auto-cast switch, and how many skills fire per swing at each job tier.
+// Skills: the roster, the four new effects (dot / stun / chain / tradeoff), default-on
+// auto-cast behavior and per-skill toggles, plus casts per swing at each job tier.
 //   node tools/tests/skill_sim.js
 const fs = require('fs'), vm = require('vm'), assert = require('assert');
 const src = fs.readFileSync(__dirname + '/../../index.html', 'utf8');
@@ -77,10 +77,43 @@ function block(marker){
 }
 const ACTIVATE = block('if((tb.t||0)<=0){');
 const TICK = block('if((tb.t||0)>0){');
+const PET_SKILL_SRC = pick(/const PET_SKILLS=\[[\s\S]*?\n\];/, 'six pet gacha skills');
+const PET_DATA_SRC = pick(/const PETS=\[[\s\S]*?\];/, 'Divine Pride pet sprite data');
+const PET_SKILL_COST_SRC = pick(/petSkillCost=p=>[^,;]+/, 'pet skill gacha cost');
+const PET_TRAINING_SRC = pick(/const EGG=3000,GW=\[[^\]]*\],PT=\[[^\]]*\],PTG=\[[^\]]*\],GREAT=[^;]+;/, 'pet training odds');
+const PET_UPGRADE_DATA = pick(/const PEQ=\[[\s\S]*?\];/, 'Claw/Collar/Charm names');
+const PET_UPGRADE_COST_SRC = pick(/peqCost=t=>[^,;]+/, 'pet upgrade cost');
+const PET_UPGRADE_ACTION = block('peq:v=>');
+const PET_RELEASE_ACTION = block('prel:id=>');
+const PET_SKILL_ROLL = pick(/const PET_SKILL_WEIGHTS=PET_SKILLS\.map\(\(\)=>1\),rollPetSkill=\(\)=>PET_SKILLS\[pickW\(PET_SKILL_WEIGHTS\)\];/, 'equal pet skill gacha odds');
+const pickWMatch = src.match(/const pickW=w=>\{[\s\S]*?\},gp=/);
+if (!pickWMatch) throw new Error('cannot extract weighted gacha picker');
+const PICKW_CODE = pickWMatch[0].slice(0, -',gp='.length) + ';';
+const PET_HIT_SRC = grab('function petHit(p,target){', 'const rollingSet=new Set');
+const PET_GACHA_ACTION = block('pskill:id=>');
+const STRIKE_SRC = grab('function strike(mult,col,magic=false){', '// Higher job tiers');
+function makePetHarness(){
+  const box={};vm.createContext(box);
+  vm.runInContext(`
+    ${PET_DATA_SRC}
+    ${PET_SKILL_SRC}
+    const MUT=[1,2,4,6,8,20,40],MC=[0];
+    let petBuff={atk:0,matk:0,atkT:0,matkT:0},petSkillCd={},mobs=[];
+    const petDmg=()=>100,pl={x:0,z:0},rnd=(a,b)=>(a+b)/2;
+    const logs=[],log=(...x)=>logs.push(x),addFloat=()=>{},playSkillFx=()=>{},hurt=(o,d)=>{o.hp-=d};
+    ${PICKW_CODE}
+    ${PET_SKILL_ROLL}
+    ${PET_HIT_SRC}
+    this.__pet={PET_SKILLS,petHit,logs,get buff(){return petBuff},set buff(v){petBuff=v},
+      get cooldowns(){return petSkillCd},set cooldowns(v){petSkillCd=v},get mobs(){return mobs},set mobs(v){mobs=v},
+      rollAll(){const a=[.01,.18,.34,.51,.68,.84];let i=0;Math.random=()=>a[i++];return Array.from({length:6},()=>rollPetSkill().id)}};
+  `,box);
+  return box.__pet;
+}
 
 let pass = 0, fail = 0;
 const t = (n, f) => { try { f(); console.log('  ok   ' + n); pass++; } catch (e) { console.log('  FAIL ' + n + ' -> ' + e.message); fail++; } };
-console.log('skills: roster, effects, auto-cast switch, casts per swing\n');
+console.log('skills: roster, effects, auto-cast defaults and switches, casts per swing\n');
 
 const byId = id => K.SKILLS.find(s => s.id === id);
 
@@ -91,6 +124,145 @@ t('every skill id is unique (a duplicate would strand spent points)', () => {
     seen.set(s.id, s.n);
   }
   console.log('       ' + K.SKILLS.length + ' skills');
+});
+
+t('magical class skills route through MATK, while physical classes remain ATK-based', () => {
+  const magicLines = new Set(['Mage','Wizard','High Wizard','Acolyte','Priest','High Priest']);
+  for (const s of K.SKILLS.filter(x=>x.type==='act')) assert.strictEqual(!!s.magic,magicLines.has(s.from),s.n+' has the wrong damage stat');
+  for (const id of ['fire','nap','storm','holy','magnus','judex','tundead']) assert.ok(byId(id).magic,id+' should deal MATK damage');
+  for (const id of ['bash','dstr','mammo','env']) assert.ok(!byId(id).magic,id+' should deal physical ATK damage');
+  assert.strictEqual(byId('amp').key,'matk','Amplify Magic must raise MATK, not physical ATK');
+  assert.strictEqual(byId('mystic').key,'matk','Mystical Amplification must raise MATK, not physical ATK');
+  assert.ok(src.includes('strike(m,sk.col,!!sk.magic)')&&src.includes('magic:!!sk.magic')&&src.includes('strike(p.m,p.col,!!p.magic)'),
+    'multi-hit spells must preserve the MATK path through their delayed strikes');
+});
+
+t('player ATK and MATK formulas consume only their matching pet buffs and passives', () => {
+  const atkLine=pick(/const atk=\(\)=>[^\n]*/, 'atk formula');
+  const matkLine=pick(/const matk=\(\)=>[^\n]*/, 'matk formula');
+  const box={};vm.createContext(box);
+  vm.runInContext(`
+    const S={lv:20,st:{str:10,agi:10,dex:10,luk:10,int:20},eq:{off:null}};
+    const C=()=>({main:'str',atk:1}),eqv=()=>0,st=k=>S.st[k],bon=()=>0,collDmg=()=>0;
+    let matkp=10,petBuff={atk:0,matk:0},tb={};const pv=k=>k==='matk'?matkp:0;
+    ${atkLine};${matkLine}
+    this.measure=()=>{
+      const a0=atk(),m0=matk();matkp=0;const aNoPassive=atk(),mNoPassive=matk();matkp=10;
+      petBuff.atk=20;const aBuff=atk(),mAfterAtk=matk();petBuff.atk=0;petBuff.matk=20;
+      const mBuff=matk(),aAfterMatk=atk();return{a0,m0,aNoPassive,mNoPassive,aBuff,mAfterAtk,mBuff,aAfterMatk};
+    };
+  `,box);
+  const v=box.measure();
+  assert.strictEqual(v.a0,v.aNoPassive,'a MATK passive must not inflate physical ATK');
+  assert.ok(v.m0>v.mNoPassive,'the Wizard MATK passive must raise magical power');
+  assert.ok(v.aBuff>v.a0,'the pet ATK buff did not change ATK');
+  assert.strictEqual(v.mAfterAtk,v.m0,'the pet ATK buff leaked into MATK');
+  assert.ok(v.mBuff>v.m0,'the pet MATK buff did not change MATK');
+  assert.strictEqual(v.aAfterMatk,v.a0,'the pet MATK buff leaked into physical ATK');
+  const strikeBox={};vm.createContext(strikeBox);
+  vm.runInContext(`
+    let mob={x:0,z:0,hp:10000,size:.6,spriteScale:1},shake=0;
+    const atk=()=>100,matk=()=>200,missCh=()=>0,crit=()=>0,st=()=>0,critD=()=>2,rnd=(a,b)=>a,addFloat=()=>{};
+    ${STRIKE_SRC}
+    const hp=mob.hp;strike(1,'#fff',false);const physical=hp-mob.hp;mob.hp=hp;strike(1,'#fff',true);this.damage={physical,magical:hp-mob.hp};
+  `,strikeBox);
+  assert.strictEqual(strikeBox.damage.magical,strikeBox.damage.physical*2,'the real strike() ignored its magic flag');
+});
+
+t('the gacha contains exactly two buffs, two AoE attacks and two single-target attacks', () => {
+  const P=makePetHarness(),skills=Array.from(P.PET_SKILLS);
+  assert.strictEqual(skills.length,6,'the pet skill pool must contain exactly six skills');
+  assert.strictEqual(skills.filter(s=>s.kind==='buff').length,2,'need two player buffs');
+  assert.deepStrictEqual(skills.filter(s=>s.kind==='buff').map(s=>s.stat).sort(),['atk','matk']);
+  assert.strictEqual(skills.filter(s=>s.kind==='aoe').length,2,'need two AoE attacks');
+  assert.strictEqual(skills.filter(s=>s.kind==='single').length,2,'need two single-target attacks');
+  assert.ok(skills.every(s=>s.cd>0&&s.desc&&K.SKILL_VFX[s.vfx]),'every gacha skill needs cooldown, description and visible effect');
+  const rolled=Array.from(P.rollAll());assert.strictEqual(new Set(rolled).size,6,'equal-weight gacha rolls must reach every skill');
+  assert.deepStrictEqual(rolled,skills.map(s=>s.id),'seeded 1/6 rolls did not cover the six skills in order');
+});
+
+t('the real pet skill gacha action charges Zeny, saves the roll and respects the balance', () => {
+  const action=PET_GACHA_ACTION.slice('pskill:'.length),box={};vm.createContext(box);
+  vm.runInContext(`
+    ${PET_DATA_SRC}
+    ${PET_SKILL_SRC}
+    ${PICKW_CODE}
+    ${PET_SKILL_ROLL}
+    const ${PET_SKILL_COST_SRC};
+    let S={zeny:5000,pets:[{id:7,sp:0,skill:''}]},petSkillCd={7:4},logRows=[],uiCount=0,saveCount=0;
+    const gp=id=>S.pets.find(p=>String(p.id)===String(id)),log=(...x)=>logRows.push(x),ui=()=>uiCount++,save=()=>saveCount++;
+    const pskillAction=${action};
+    this.__g={S,logRows,get uiCount(){return uiCount},get saveCount(){return saveCount},get petSkillCd(){return petSkillCd},run:id=>pskillAction(id)};
+  `,box);
+  vm.runInContext('Math.random=()=>.01;this.__g.run(7);',box);
+  assert.strictEqual(box.__g.S.zeny,3000,'gacha cost should be charged once');
+  assert.strictEqual(box.__g.S.pets[0].skill,'warcry','the real action did not store its skill roll');
+  assert.strictEqual(box.__g.petSkillCd[7],undefined,'rerolled pets should begin off cooldown');
+  assert.strictEqual(box.__g.saveCount,1,'gacha result must be saved');
+  box.__g.S.zeny=0;vm.runInContext('this.__g.run(7);',box);
+  assert.strictEqual(box.__g.saveCount,1,'an unaffordable roll should not save or reroll');
+});
+
+t('the live pet upgrade handler applies its 40%/15% odds, cost and 5% double success', () => {
+  const action=PET_UPGRADE_ACTION.slice('peq:'.length),box={};vm.createContext(box);
+  vm.runInContext(`
+    ${PET_TRAINING_SRC}
+    ${PET_UPGRADE_DATA}
+    const ${PET_UPGRADE_COST_SRC};
+    let S={zeny:50000,pets:[{id:7,sp:0,eq:[0,2,0]}]},rows=[],uiCount=0,saveCount=0,rolls=[],ri=0;
+    const gp=id=>S.pets.find(p=>String(p.id)===String(id)),log=(...x)=>rows.push(x),ui=()=>uiCount++,save=()=>saveCount++,addFloat=()=>{},pl={x:0,z:0};
+    const upgrade=${action};
+    this.__up={S,rows,get uiCount(){return uiCount},get saveCount(){return saveCount},run:(r,v)=>{rolls=r;ri=0;Math.random=()=>rolls[ri++]??.99;upgrade(v)}};
+  `,box);
+  const P=box.__up;P.run([.2,.9],'7:0');
+  assert.strictEqual(P.S.pets[0].eq[0],1,'a successful Claw roll should gain one level');
+  assert.strictEqual(P.S.zeny,48800,'Claw level 0 cost should be 1,200 Zeny');
+  assert.ok(P.rows.at(-1)[0].includes('Claw trained to Wooden'),'success feedback should name the upgrade');
+  P.run([.1,.01],'7:1');
+  assert.strictEqual(P.S.pets[0].eq[1],4,'a 5% great-success roll should advance Collar two levels');
+  assert.strictEqual(P.S.zeny,38000,'Collar level 2 cost should be 10,800 Zeny');
+  assert.ok(P.rows.at(-1)[0].includes('GREAT SUCCESS! Collar trained to Gold (+2)'),'double-upgrade feedback');
+  P.run([.99],'7:2');
+  assert.strictEqual(P.S.pets[0].eq[2],0,'a failed Charm roll must not grant a level');
+  assert.strictEqual(P.S.zeny,36800,'failed rolls still charge the 1,200 Zeny attempt');
+  assert.ok(P.rows.at(-1)[0].includes('Charm training failed'),'failure feedback should name the upgrade');
+  assert.strictEqual(P.saveCount,3,'each attempt should persist its result');
+});
+
+t('releasing a pet clears its auto-roll and skill-cooldown state', () => {
+  const action=PET_RELEASE_ACTION.slice('prel:'.length),box={};vm.createContext(box);
+  vm.runInContext(`
+    ${PET_DATA_SRC}
+    const EGG=3000;let S={zeny:100,pets:[{id:7,sp:0}]},petSkillCd={7:8},autoSet=new Set([7]),pending=null,saveCount=0,uiCount=0;
+    const gp=id=>S.pets.find(p=>String(p.id)===String(id)),ask=(msg,fn)=>{pending=fn},save=()=>saveCount++,ui=()=>uiCount++;
+    const release=${action};
+    this.__rel={S,petSkillCd,autoSet,release,get pending(){return pending},get saveCount(){return saveCount},get uiCount(){return uiCount},confirm:()=>pending()};
+  `,box);
+  const P=box.__rel;P.release(7);
+  assert.strictEqual(P.S.pets.length,1,'the confirmation prompt should leave the pet intact');
+  assert.strictEqual(P.petSkillCd[7],8,'cooldown is only cleared after confirmed release');
+  P.confirm();
+  assert.strictEqual(P.S.pets.length,0,'confirmed release should remove the pet');
+  assert.strictEqual(P.petSkillCd[7],undefined,'released pet cooldown must not leak');
+  assert.strictEqual(P.autoSet.has(7),false,'released pet auto-roll state must not leak');
+  assert.strictEqual(P.S.zeny,100+900,'the established 30% egg-value refund is paid');
+  assert.strictEqual(P.saveCount,1,'release must save');
+});
+
+t('pet skills execute their buff, AoE and single-target effects in combat', () => {
+  const P=makePetHarness(),pet=id=>({id:1,sp:0,mut:0,eq:[0,0,0],skill:id}),target=()=>({x:0,z:0,hp:1000}),near=()=>({x:1,z:1,hp:1000}),far=()=>({x:9,z:9,hp:1000});
+  let a=target();P.mobs=[a];P.cooldowns={};P.petHit(pet('warcry'),a);
+  assert.strictEqual(P.buff.atk,20,'War Cry must buff player ATK by 20%');assert.strictEqual(P.buff.atkT,8,'War Cry duration');assert.strictEqual(a.hp,1000,'a player buff is not an attack');
+  P.buff={atk:0,matk:0,atkT:0,matkT:0};P.cooldowns={};P.petHit(pet('arcane'),a);
+  assert.strictEqual(P.buff.matk,20,'Arcane Blessing must buff player MATK by 20%');
+  for(const [id,power] of [['flameburst',1.6],['thunderclap',1.4]]){
+    a=target();const b=near(),c=far();P.cooldowns={};P.mobs=[a,b,c];P.petHit(pet(id),a);
+    assert.strictEqual(a.hp,1000-100*power,id+' missed its target');assert.strictEqual(b.hp,1000-100*power,id+' missed a nearby AoE target');assert.strictEqual(c.hp,1000,id+' hit outside the AoE radius');
+  }
+  for(const [id,power] of [['piercingfang',2.2],['spiritbolt',2.5]]){
+    a=target();const b=near(),c=far();P.cooldowns={};P.mobs=[a,b,c];P.petHit(pet(id),a);
+    assert.strictEqual(a.hp,1000-100*power,id+' missed its single target');assert.strictEqual(b.hp,1000,id+' spilled onto a nearby mob');assert.strictEqual(c.hp,1000,id+' spilled onto a distant mob');
+  }
 });
 
 t('every skill has a name, a class list, a level cap and a description function', () => {
@@ -226,7 +398,7 @@ t('first-job AoEs damage a nearby secondary enemy, but not distant mobs', () => 
     vm.runInContext(`
       const mob={x:0,z:0,hp:10000},near={x:1,z:1,hp:10000},far={x:9,z:9,hp:10000};
       const mobs=[mob,near,far],pend=[];
-      const lv=()=>1,st=()=>1,atk=()=>50,strike=()=>{},shot=()=>{},playSkillFx=()=>{},
+      const lv=()=>1,st=()=>1,atk=()=>50,matk=()=>50,strike=()=>{},shot=()=>{},playSkillFx=()=>{},
         chainHit=()=>{},applyDot=()=>{},applyStun=()=>{},hurt=(o,d)=>{o.hp-=d};
       ${cast}
       castSkill(sk,1);this.result={near:near.hp,far:far.hp};
@@ -393,10 +565,12 @@ t('job tier decides how many skills fire per swing', () => {
     assert.ok(K.SKFADE[i] < K.SKFADE[i - 1], `cast ${i + 1} should land softer than cast ${i}`);
 });
 
-t('switching a skill off stops it being usable, and back on restores it', () => {
+t('learned active skills auto-cast by default; unchecking one pauses only that skill', () => {
   K.S = { cls: 'Lord Knight', sk: { frenzy: 5, spiral: 5 }, skOff: {} };
+  assert.strictEqual(K.skOff('frenzy'), false, 'a newly learned skill should start with Auto cast checked');
   assert.ok(K.skillOn('frenzy'), 'frenzy should be usable at level 5');
   K.S.skOff.frenzy = 1;
+  assert.strictEqual(K.skOff('frenzy'), true, 'the unchecked state was not saved');
   assert.ok(!K.skillOn('frenzy'), 'frenzy still fires after being switched off');
   assert.ok(K.skillOn('spiral'), 'switching one skill off must not affect another');
   delete K.S.skOff.frenzy;
