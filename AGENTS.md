@@ -1121,3 +1121,13 @@ assigned for feel rather than fidelity. While reworking that, two shipped bugs s
 * **Tests:** documentation-only follow-up; results are listed in the v23 update entry immediately above.
 * **Branches / PR:** `arena/01a10466-prontera-grind` — https://github.com/KzeR7/Prontera-Grind/pull/9
 * **Known limits / follow-ups:** merge the PR to deploy; run an actual pacing/visual playtest using the preview.
+
+### 2026-10-04 — `balance-v24 faster upper curve`
+* **What changed for the player:**
+  * Retuned the curve to preserve about 7 minutes for Base 1–10 and about 2 hours for Base 1–50, while reducing Base 50–99 to about 5 hours. Base 100–150 now models to about 48 hours (2 days) after the roughly 3.9x requirement reset at 100.
+  * Quest EXP was rescaled with the curve so quests remain useful but secondary: about 23% of modeled run EXP overall, with the highest single-level share around 40%.
+* **Files touched:** `index.html` (`BUILD` v24, EXP curve and quest scaling), `tools/tune_pacing.js`, `tools/tests/economy_sim.js`, `AGENTS.md`.
+* **Art:** none; no sprite sheets or atlases changed.
+* **Tests:** all 13 suites pass; inline game JavaScript syntax and `git diff --check` pass. The economy regression now separately asserts the 5-hour Base 50–99 interval and 48-hour Base 100–150 tail.
+* **Branches / PR:** `arena/01a10466-prontera-grind`; updated existing PR #9: https://github.com/KzeR7/Prontera-Grind/pull/9
+* **Known limits / follow-ups:** the times are still model estimates at 800 kills/hour, not measured player playtime; playtest the faster upper curve before merging.

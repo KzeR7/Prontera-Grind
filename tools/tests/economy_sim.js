@@ -5,9 +5,9 @@
 //   node tools/tests/economy_sim.js
 //
 // The rules being tested:
-//   * live pacing anchors hold (owner): about 7 min to Base Lv10, 2 h to Lv50, 48 h to
-//     Lv99, then a much harder 336 h (14-day) Lv100-150 tail after the one-time reset;
-//     solved with tools/tune_pacing.js at ~800 kills/hour on the band map's boss field;
+//   * live pacing anchors hold (owner): about 7 min to Base Lv10, 2 h to Lv50, about
+//     5 more hours from Lv50 to Lv99, then a much harder 48 h (2-day) Lv100-150 tail
+//     after the one-time reset; solved at ~800 kills/hour on the band map's boss field;
 //   * job bars mirror the base curve (JOFF lockstep), so the job gates land on those
 //     same anchors;
 //   * quests pay a fraction of need(Lv) and can never carry more than ~40% of a level
@@ -25,13 +25,13 @@ const arena = grab('const SU=k=>', ',K5=[') + ';';
 
 // The curve the whole game levels by is pinned so a change is deliberate. It is two
 // continuous power segments up to 99, then the deliberate reset at 100 and steep 100-150 tail.
-if (!/const NA1=139\.61484176,NE1=1\.82629607,N50=Math\.floor\(NA1\*Math\.pow\(50,NE1\)\),NE2=7\.92142109,N100=10270437,NE3=3\.434944;/.test(src))
+if (!/const NA1=132\.99332769,NE1=1\.87201222,N50=Math\.floor\(NA1\*Math\.pow\(50,NE1\)\),NE2=3\.05002160,N100=419344,NE3=8\.40337760;/.test(src))
   throw new Error('needAt() curve constants changed - update this test deliberately');
 if (!/needAt=L=>L<=50\?Math\.floor\(NA1\*Math\.pow\(L,NE1\)\):L<=99\?Math\.floor\(N50\*Math\.pow\(L\/50,NE2\)\):Math\.floor\(N100\*Math\.pow\(L\/100,NE3\)\)/.test(src))
   throw new Error('needAt() formula changed - update this test deliberately');
 if (!/const JOFF=\[0,9,49,98\];/.test(src))
   throw new Error('JOFF job/base lockstep offsets changed - update this test deliberately');
-if (!/const QXP=\{kill:1\/13500,loot:1\/16860,boss:1\/8100\}/.test(src))
+if (!/const QXP=\{kill:1\/1400,loot:1\/1750,boss:1\/840\}/.test(src))
   throw new Error('QXP quest fractions changed - update this test deliberately');
 if (!/Math\.random\(\)<mob\.oreCh\)/.test(src))
   throw new Error('ore drop gate changed - update gear_sim deliberately');
@@ -130,14 +130,15 @@ t('the curve is strictly increasing within each phase, with the rebirth drop at 
     if (L === 100) { prev = E.needAt(L); continue; }   // the one deliberate drop
     const n = E.needAt(L); assert.ok(n > prev, 'needAt(' + L + ') = ' + n + ' <= ' + prev); prev = n;
   }
-  assert.strictEqual(E.needAt(10), 9358, 'early requirement anchor');
-  assert.strictEqual(E.needAt(99), 39606118, 'Base 99 anchor');
-  // The level-100 reset is deliberate; the hard climb ramps up again through 150.
+  assert.strictEqual(E.needAt(10), 9904, 'early requirement anchor');
+  assert.strictEqual(E.needAt(50), 201521, 'Base 50 anchor');
+  assert.strictEqual(E.needAt(99), 1618659, 'Base 99 anchor');
+  // The level-100 reset is deliberate; the much steeper endgame ramp climbs through 150.
   assert.ok(E.needAt(100) < E.needAt(99), 'level 100 must be cheaper than 99 at the reset');
   const drop = E.needAt(99) / E.needAt(100);
   assert.ok(drop > 3 && drop < 5, 'the reset should be about 3.9x, got x' + drop.toFixed(1));
-  assert.strictEqual(E.needAt(100), 10270437, 'Base 100 reset floor');
-  assert.strictEqual(E.needAt(150), 41347812, 'level cap');
+  assert.strictEqual(E.needAt(100), 419344, 'Base 100 reset floor');
+  assert.strictEqual(E.needAt(150), 12657029, 'level cap');
 });
 
 t('normal EXP is 70x below 100 and one-third thereafter; GM is unchanged', () => {
@@ -184,18 +185,18 @@ t('quests pay a fraction of need(Lv), not a flat number', () => {
   assert.strictEqual(E.newQuest('kill').xp, Math.floor(n * E.QXP.kill * (70/3)));
   assert.strictEqual(E.newQuest('loot').xp, Math.floor(n * E.QXP.loot * (70/3)));
   assert.strictEqual(E.newQuest('boss').xp, Math.floor(n * E.QXP.boss * (70/3)));
-  assert.strictEqual(E.newQuest('boss').xp, 119108, 'boss quest xp at Lv150');
+  assert.strictEqual(E.newQuest('boss').xp, 351584, 'boss quest xp at Lv150');
 });
 
 t('quest EXP scales with need(Lv) instead of drifting', () => {
   E.S = { gm: false };
   E.S.lv = 50; E.PW = pwFor(50); const a = E.newQuest('kill').xp;
   E.S.lv = 100; E.PW = pwFor(100); const b = E.newQuest('kill').xp;
-  // the v16 curve is deliberately steep, so "tracks the curve" replaces the old
-  // fixed 2x-6x band: quest exp must grow at the curve's own rate (up to flooring)
+  // At rebirth, both the requirement curve and the live EXP multiplier reset; the
+  // quest reward should follow need(Lv) and that one-third post-99 rate exactly.
   const curve = E.needAt(100) / E.needAt(50) / 3;
-  assert.ok(b > a * 15, 'quest exp should track need(Lv) growth');
-  assert.ok(Math.abs(b / a - curve) / curve < 0.05, 'quest exp grew off-curve: ' + (b / a).toFixed(1) + ' vs ' + curve.toFixed(1));
+  assert.ok(b > 0 && a > 0, 'quest rewards must stay positive across the reset');
+  assert.ok(Math.abs(b / a - curve) / curve < 0.05, 'quest exp grew off-curve: ' + (b / a).toFixed(2) + ' vs ' + curve.toFixed(2));
 });
 
 t('the old /100 bug is gone: a normal player is not paid 1% of the GM', () => {
@@ -230,16 +231,18 @@ t('pacing anchor: Base Lv 50 in about 2 h (got ' + TL.T[50].toFixed(2) + ' h)', 
   assert.ok(TL.T[50] < 2.6, 'too slow: ' + TL.T[50].toFixed(2) + ' h');
 });
 
-t('pacing anchor: Base Lv 99 (transcendent) in ~2 days (got ' + TL.T[99].toFixed(1) + ' h)', () => {
-  assert.ok(TL.T[99] > 38, 'too fast: ' + TL.T[99].toFixed(1) + ' h');
-  assert.ok(TL.T[99] < 58, 'too slow: ' + TL.T[99].toFixed(1) + ' h');
+t('pacing anchor: Base Lv 50 to 99 takes about 5 h (got ' + (TL.T[99] - TL.T[50]).toFixed(2) + ' h)', () => {
+  const midgame = TL.T[99] - TL.T[50];
+  assert.ok(midgame > 4.3, 'too fast: ' + midgame.toFixed(2) + ' h');
+  assert.ok(midgame < 5.7, 'too slow: ' + midgame.toFixed(2) + ' h');
+  assert.ok(TL.T[99] > 6.4 && TL.T[99] < 7.8, 'Base 99 total should be around 7 h: ' + TL.T[99].toFixed(2) + ' h');
 });
 
-t('pacing anchor: Base 100-150 is a hard ~14-day climb after the reset (got ' + (TL.hours - TL.T[100]).toFixed(1) + ' h)', () => {
+t('pacing anchor: Base 100-150 is a hard ~2-day climb after the reset (got ' + (TL.hours - TL.T[100]).toFixed(1) + ' h)', () => {
   const tail = TL.hours - TL.T[100];
-  assert.ok(tail > 300, 'tail too short: ' + tail.toFixed(1) + ' h');
-  assert.ok(tail < 370, 'tail too long: ' + tail.toFixed(1) + ' h');
-  console.log('       1->150 total: ' + TL.hours.toFixed(0) + ' h (' + TL.T[99].toFixed(1) + ' h to 99 + ' +
+  assert.ok(tail > 42, 'tail too short: ' + tail.toFixed(1) + ' h');
+  assert.ok(tail < 54, 'tail too long: ' + tail.toFixed(1) + ' h');
+  console.log('       1->150 total: ' + TL.hours.toFixed(1) + ' h (' + TL.T[99].toFixed(1) + ' h to 99 + ' +
     tail.toFixed(1) + ' h tail) at ' + KILLS_PER_HOUR + ' kills/h');
 });
 
@@ -250,7 +253,7 @@ t('job gates land on the anchors: base ' + GATES.map(g => g && g.base).join('/')
   assert.ok(Math.abs(GATES[2].base - 99) <= 2, 'transcendent gate at base ' + GATES[2].base);
   assert.ok(GATES[0].hours < 0.4, '1st job after ' + GATES[0].hours.toFixed(2) + ' h');
   assert.ok(GATES[1].hours > 1.2 && GATES[1].hours < 3, '2nd job after ' + GATES[1].hours.toFixed(2) + ' h');
-  assert.ok(GATES[2].hours > 34 && GATES[2].hours < 62, 'transcendent after ' + GATES[2].hours.toFixed(2) + ' h');
+  assert.ok(GATES[2].hours > 6 && GATES[2].hours < 8.5, 'transcendent after ' + GATES[2].hours.toFixed(2) + ' h');
 });
 
 t('a full run earns enough Zeny for the endgame sinks', () => {

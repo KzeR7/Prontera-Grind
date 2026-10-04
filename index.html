@@ -191,7 +191,7 @@ const AL={str:'STR',agi:'AGI',dex:'DEX',luk:'LUK',int:'INT',hp:'Max HP',atk:'ATK
 // late maps in about five, with bosses still a ~12x fight. See tools/tests/economy_sim.js.
 const SU=k=>k.toUpperCase(),BX_=5.5,Z0=-14,Z1=3,MPS=15,AGGRO=8.5,HPK=42,HPE=1.3,K5=['str','agi','dex','luk','int'];
 const GM_USER='GM',GM_PASS='gm1234';   // CHANGE THE GM PASSWORD before you publish
-const BUILD='2026-10-04 balance-v23 curve pets sprite-sizes';   // shown on the login card - confirms which file you loaded
+const BUILD='2026-10-04 balance-v24 exp-retune pets sprite-sizes';   // shown on the login card - confirms which file you loaded
 $('buildTag').textContent='build '+BUILD;
 
 // ---------- class tree: Novice -> 6 first jobs -> 6 second jobs -> 6 third jobs ----------
@@ -540,20 +540,20 @@ const dropTxt=([T,ch])=>`<div class="dropline"><span>${poolIc(T)} ${T.n}</span><
 const MAXST=120,BASECAP=99,ELITELV=100,statCap=()=>S.lv>=ELITELV?MAXST:BASECAP;
 
 // ---------- economy tuning ----------
-// Live pacing model (owner): Base Lv 1-10 takes about 7 minutes, Lv 1-50 about 2 hours,
-// and Lv 1-99 about 48 hours. Base 100-150 is deliberately much harder: a 336-hour
-// (14-day) tail at the canonical model rate. The one-time requirement reset at Lv100 is
-// retained so the endgame can be very steep without moving the Lv99 anchor.
+// Live pacing model (owner): Base Lv 1-10 takes about 7 minutes and Lv 1-50 about 2 hours;
+// Lv 50-99 takes about 5 more hours (about 7 hours total to 99). After the one-time Lv100
+// requirement reset, Base 100-150 takes about 48 hours (2 days) at the canonical model rate.
+// The reset remains about 3.9x so the post-99 climb is still a distinct endgame phase.
 // Mob EXP is EXPK*pw^1.5/50, boss EXP is BOSEK*pw^1.5/50, and Zeny is based on pw^2;
 // pw is the field's power level (map recommendation + stage, max 99). A boss replaces
 // the pack every 16th kill (MPS). Normal Base/Job/quest EXP is 70x below Lv100 and 70/3x
 // at Lv100+; GM keeps its configured multiplier. tools/tune_pacing.js and economy_sim.js
 // model these live rates at 800 kills/hour, camping the band map's Stage 10.
 const EXPK=5.5,BOSEK=46,ZK=[8,14],BZK=[150,250];
-// Quest rewards are deliberately modest at the live rates. Their per-kill completion
-// model uses the real kill/loot/boss goals; loot cadence is .126 expected equipment
-// pickups per kill after the 2x equipment changes (cards do not count as loot).
-const QXP={kill:1/13500,loot:1/16860,boss:1/8100},QZ={kill:1.6,loot:9,boss:26};
+// Quest rewards scale with need(Lv) and are retuned for this curve: about 23% of modeled
+// run EXP overall, with no single level funded by more than ~40%. Loot cadence uses .126
+// expected equipment pickups per kill after the 2x equipment changes (cards do not count).
+const QXP={kill:1/1400,loot:1/1750,boss:1/840},QZ={kill:1.6,loot:9,boss:26};
 const zenAt=p=>Math.max(1,Math.round(.011*p*p));   // reference zeny per kill at power level p
 // The canonical camp for a base level is its band map's boss field (the economy model's
 // pwFor); the job bar is priced off it, so job levels run alongside the base levels.
@@ -566,11 +566,11 @@ const expRate=()=>S.gm?gx():(S.lv<100?70:70/3);
 // Base-EXP requirement curve: continuous power segments through Lv99, a deliberate reset
 // at Lv100, then a much steeper post-99 ramp. The reset is intentional, not a display bug.
 // Tuned with the live EXP multipliers and shipped quest rewards in tools/tune_pacing.js.
-const NA1=139.61484176,NE1=1.82629607,N50=Math.floor(NA1*Math.pow(50,NE1)),NE2=7.92142109,N100=10270437,NE3=3.434944;
+const NA1=132.99332769,NE1=1.87201222,N50=Math.floor(NA1*Math.pow(50,NE1)),NE2=3.05002160,N100=419344,NE3=8.40337760;
 // Job levels run alongside base levels. JOFF[t] is the base level a job level of tier t
 // keeps pace with: Novice job j ~ base j, 1st job j ~ base j+9, 2nd job j ~ base j+49,
 // transcendent j ~ base j+98. That puts the 1st job change at ~Base 10 (~7 min), the
-// 2nd at ~Base 49 (~2 h) and the transcendent line at ~Base 99 (~48 h).
+// 2nd at ~Base 49 (~2 h) and the transcendent line at ~Base 99 (~7 h).
 const JOFF=[0,9,49,98];
 
 // ---------- state ----------
