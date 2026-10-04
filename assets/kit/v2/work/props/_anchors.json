@@ -1,0 +1,68 @@
+{
+ "palm_giant": {
+  "w": 240,
+  "h": 278,
+  "anchorX": 120,
+  "anchorY": 274
+ },
+ "river_stone_post": {
+  "w": 73,
+  "h": 110,
+  "anchorX": 36,
+  "anchorY": 106
+ },
+ "rock_boulder_mossy": {
+  "w": 160,
+  "h": 110,
+  "anchorX": 80,
+  "anchorY": 106
+ },
+ "rock_cliff_crag": {
+  "w": 220,
+  "h": 126,
+  "anchorX": 110,
+  "anchorY": 121
+ },
+ "tree_ancient_large": {
+  "w": 300,
+  "h": 267,
+  "anchorX": 150,
+  "anchorY": 260
+ },
+ "tree_bush_bright": {
+  "w": 150,
+  "h": 90,
+  "anchorX": 75,
+  "anchorY": 85
+ },
+ "tree_sapling": {
+  "w": 100,
+  "h": 150,
+  "anchorX": 50,
+  "anchorY": 144
+ },
+ "tree_tall_cluster": {
+  "w": 188,
+  "h": 300,
+  "anchorX": 94,
+  "anchorY": 295
+ },
+ "tree_ancient_variant": {
+  "w": 300,
+  "h": 267,
+  "anchorX": 150,
+  "anchorY": 260
+ },
+ "palm_tall": {
+  "w": 158,
+  "h": 264,
+  "anchorX": 79,
+  "anchorY": 260
+ },
+ "palm_double": {
+  "w": 250,
+  "h": 227,
+  "anchorX": 125,
+  "anchorY": 223
+ }
+}
