@@ -16,7 +16,8 @@ the next person opens the page on the owner's own numbers instead of on guesses.
 
 | File | What it is | Hand-edit? |
 |---|---|---|
-| `tools/attack_selection.json` | **The backup.** The v5 payload exactly as the owner delivered it, 2026-10-04. 18 classes × 5 drawn views × 6 frames = 540 pose cells, plus 862 head entries. | Yes — this is the source of truth for the selection. |
+| `tools/attack_selection.json` | **The backup.** The v5 payload exactly as the owner delivered it. The current one is the **second** delivery (2026-10-04, later the same day): 19 classes × 5 drawn views × 6 frames = 570 pose cells, 570 head entries, 912 head entries counting the mirrored views. | Yes — this is the source of truth for the selection. |
+| `tools/attack_selection_prev.json` | **The first delivery**, kept for reference (18 classes; the head numbers were tuned while the mirrored-column bug was still live, so it is *not* a good base). | Read-only history. |
 | `tools/sprite_picker_defaults.js` | **Generated** from that JSON by `tools/make_sprite_picker.py`. The picker loads it and starts from it. | **No** — rebuild it (below). |
 | `tools/sprite_picker.html` | The picker. `applyDefaults()` / `resetAll()` load the standard; "↺ Back to the standard" puts the page back to it. | Yes, it is the app. |
 | `tools/sprite_picker_standalone.html` | The same app with the sheets, the pose index and the standard inlined. | No — rebuild it. |
@@ -78,9 +79,8 @@ changed later: the absolute number is what is stored, the drag is derived.
    `tools/attack_selection.json` (replacing the old object) and rebuild: the whole repo —
    backup, picker default and standalone — moves to the new selection in one step.
 
-**Known gap:** the delivered selection covers 18 classes. **Sniper has no selection yet**
-(the class exists in the picker and in the pack); it runs on the sheet's own picks until the
-owner tunes it.
+**Coverage:** the current backup covers **all 19 classes**, Sniper included. Every view
+0–4 is picked and the mirrored views 5–7 carry their own head drags.
 
 ## What is *not* here
 
@@ -96,6 +96,12 @@ it. The next step after this selection is the weapon, then baking the poses into
   the owner sees and what the game bakes do not depend on which of the look-alikes is chosen.
 * Do not "fix" head numbers by re-measuring: they are the owner's own judgement. The
   round-trip test in `picker_sim.js` fails loudly if any number drifts.
+* **Head drags from the first delivery were tuned against a buggy build** (mirrored views
+  read the neighbouring column and the drag was mirrored the wrong way). The second
+  delivery replaced them wholesale — always take the newest payload as the truth.
+* The same crop box can name several poses (one per direction the sheet draws); the picker
+  resolves by **id**, so when in doubt rebuild the defaults from the payload and read the
+  ids out of `sprite_picker_defaults.js` instead of re-matching boxes.
 * `setHead(dir, frame, value, cls)` takes the class as an optional **fourth** argument —
   without it, a drag is written under whichever class is on screen, which is how the first
   version of the loader scattered one class's heads over another's.
