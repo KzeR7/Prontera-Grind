@@ -1,6 +1,7 @@
-// The weapon is held in the hand: every attack frame of every class body has a hand joint
-// measured from the art (assets/weapon_joints_data.js), and the game's own placement code
-// must put the weapon exactly there - on the frame being played, so it cannot slide.
+// The weapon is parked while the owner confirms the attack poses: every class body has a hand
+// joint measured from the art (assets/weapon_joints_data.js, all six attack frames per
+// direction), and the game must hold the weapon on ONE spot - the first frame's hand - so
+// nothing about it can move as the frames advance.
 //   node tools/tests/weapon_joint_sim.js
 const fs = require('fs'), vm = require('vm'), assert = require('assert');
 const root = __dirname + '/../..';
@@ -74,19 +75,25 @@ t('every joint was found on the drawn body (a hand, or a gloved extremity)', () 
   }
 });
 
-t('the game places the weapon exactly on the joint for the frame being played', () => {
-  for (const b of BODIES) for (let d = 0; d < DIRS; d++) for (let f = 0; f < FRAMES; f++) {
-    // packed:true -> the game must use the measured joint, mapped into the packed cell
-    const got = P.weaponSpritePixel(d, 2, f, 'sword', true, FRAMES, b);
-    const want = [pack.padL + JOINTS[b][d][f][0], pack.padT + JOINTS[b][d][f][1]];
-    assert.deepStrictEqual([got[0], got[1]], want, b + ' ' + d + '/' + f + ' -> ' + JSON.stringify(got.slice(0, 2)));
+t('the game holds the weapon on one spot for every attack frame (parked)', () => {
+  for (const b of BODIES) for (let d = 0; d < DIRS; d++) {
+    const want = [pack.padL + JOINTS[b][d][0][0], pack.padT + JOINTS[b][d][0][1]];   // frame 0's hand
+    for (let f = 0; f < FRAMES; f++) {
+      const got = P.weaponSpritePixel(d, 2, f, 'sword', true, FRAMES, b);
+      assert.deepStrictEqual([got[0], got[1]], want,
+        b + ' ' + d + '/' + f + ' -> ' + JSON.stringify(got.slice(0, 2)));
+      assert.deepStrictEqual([got[2].weap, got[2].lift], [P.weaponSpritePixel(d, 2, 0, 'sword', true, FRAMES, b)[2].weap,
+        P.weaponSpritePixel(d, 2, 0, 'sword', true, FRAMES, b)[2].lift],
+        b + ' ' + d + ' frame ' + f + ': the held weapon must also keep frame 0\'s angle');
+    }
   }
 });
 
-t('the weapon follows the hand through the swing instead of a fixed offset from it', () => {
-  // the old model put the grip at the same arm-model anchor shifted by PACK_WEAPON_ADJUST;
-  // measure how far that drifts from the measured hand, frame by frame.  A constant gap
-  // would mean no improvement; the fix is worth it when the gap CHANGES across the swing.
+t('the old sine model did move the weapon between frames (why it is parked)', () => {
+  // The model put the grip at one arm anchor shifted by PACK_WEAPON_ADJUST.  Measure how far
+  // that sits from the measured hand, frame by frame: if the gap changes across the swing, the
+  // weapon visibly slid - which is exactly what the owner reported.  Kept as the reason the
+  // weapon is now held in one position until it is redone.
   let drifting = 0, checked = 0, worstSpread = 0;
   for (const b of BODIES) for (let d = 0; d < DIRS; d++) {
     const gaps = [];
@@ -110,8 +117,12 @@ t('the game loads the joints file and consults it (source pins)', () => {
   assert.ok(src.includes('function weaponJointPixel(body,dir,fr){') &&
             src.includes('const J=window.WEAPON_JOINTS,PK=window.SPRITE_PACK;'),
     'the placement helper must read window.WEAPON_JOINTS');
-  assert.ok(src.includes('const j=weaponJointPixel(body||\'thief\',dir,fr);'),
-    'weaponSpritePixel must ask for the measured joint');
+  assert.ok(src.includes('const j=weaponJointPixel(body||\'thief\',dir,0);'),
+    'weaponSpritePixel must hold the joint of the first attack frame');
+  assert.ok(src.includes('if(j)return[j[0],j[1],poseOf(kind,0,wt,frameCount)]}'),
+    'the held weapon keeps frame 0\'s angle as well as its position');
+  assert.ok(src.includes('const swing=0;'),
+    'the parked weapon must not pulse in size while the frames advance');
   assert.ok(src.includes('s.userData.body=packBodyFor(opt.cls,opt.tier)'),
     'the hero sprite must remember which body it wears');
   assert.ok(src.includes("const PACK_WEAPON_ADJUST={bow:[-5,-40]"),

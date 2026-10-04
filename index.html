@@ -192,7 +192,7 @@ const AL={str:'STR',agi:'AGI',dex:'DEX',luk:'LUK',int:'INT',hp:'Max HP',atk:'ATK
 // late maps in about five, with bosses still a ~12x fight. See tools/tests/economy_sim.js.
 const SU=k=>k.toUpperCase(),BX_=5.5,Z0=-14,Z1=3,MPS=15,AGGRO=8.5,HPK=42,HPE=1.3,K5=['str','agi','dex','luk','int'];
 const GM_USER='GM',GM_PASS='gm1234';   // CHANGE THE GM PASSWORD before you publish
-const BUILD='2026-10-04 ui-v28 weapon-locked-to-measured-hand';   // shown on the login card - confirms which file you loaded
+const BUILD='2026-10-04 ui-v29 weapon-held-in-one-position';   // shown on the login card - confirms which file you loaded
 $('buildTag').textContent='build '+BUILD;
 
 // ---------- class tree: Novice -> 6 first jobs -> 6 second jobs -> 6 third jobs ----------
@@ -1765,11 +1765,13 @@ function weaponHandPoint(dir,p){
   const a=dir*Math.PI/4,ca=Math.cos(a),sa=Math.sin(a),hx2=11+Math.sin(p.arm)*6,hy=26-Math.cos(p.arm)*9+p.lift,hz=6+p.lunge*.15;
   const x=hx2+3,z=hz+4,wx=x*ca+z*sa,wz=-x*sa+z*ca;return[wx,-(hy-6+p.bob)+wz*.2,wz]}
 const PACK_WEAPON_ADJUST={bow:[-5,-40],staff:[-20,-40],katar:[-6,-34],dagger:[-6,-34],axe:[-6,-37],sword:[-6,-37],mace:[-6,-37]};
-// v28: the weapon is held at the hand joint MEASURED FROM THE ART for this frame
-// (tools/make_weapon_joints.py).  The old sine-wave model swung the weapon while the drawn
-// hand stayed put, which is the "weapon moves when the frame changes" the owner reported.
-// RO does the same thing: weapon sheets align to the body's base anchor per frame
-// ("Weapons = Body as base").  Falls back to the old model if the joints file is missing.
+// v29: the weapon is HELD IN ONE POSITION while the owner confirms the attack poses.  The
+// held spot is the hand joint measured from the attack's first frame (tools/make_weapon_joints.py
+// still measures all six per body and direction - they are kept for the next step), so nothing
+// about the weapon can move while the frames advance.  The old sine-wave model was the reason the
+// weapon slid: it animated a swing the drawn art never made (RO instead aligns weapon art to the
+// body's base anchor, per frame, in its act files).  Falls back to that model only if the joints
+// file is missing.
 function weaponJointPixel(body,dir,fr){
   const J=window.WEAPON_JOINTS,PK=window.SPRITE_PACK;
   if(!J||!PK)return null;
@@ -1782,10 +1784,11 @@ function weaponJointPixel(body,dir,fr){
 function weaponSpritePixel(dir,kind,fr,wt,packed,frameCount,body){
   const p=poseOf(kind,fr,wt,frameCount);
   if(packed){
-    const j=weaponJointPixel(body||'thief',dir,fr);
-    // the measured hand IS the grip point, so PACK_WEAPON_ADJUST is not applied here:
+    const j=weaponJointPixel(body||'thief',dir,0);
+    // held: one position, and the angle of the first frame, for the whole attack.
+    // The measured hand IS the grip point, so PACK_WEAPON_ADJUST is not applied here:
     // those numbers only corrected the sine model's anchor (see the fallback below).
-    if(j)return[j[0],j[1],p]}
+    if(j)return[j[0],j[1],poseOf(kind,0,wt,frameCount)]}
   const hand=weaponHandPoint(dir,p);let x=SPR_W*.5+p.lunge*.15+hand[0],y=SPR_H-7+hand[1];
   if(packed){const PK=window.SPRITE_PACK,[dx,dy]=PACK_WEAPON_ADJUST[wt]||[0,-36];
     x=PK.padL+x*96/SPR_W+dx*Math.cos(dir*Math.PI/4);y=PK.padT+y*96/SPR_H+dy}
@@ -2007,7 +2010,7 @@ function syncWeaponSprites(pFace,c){
   const[sx,sy]=scr(weaponWorld.x,weaponWorld.y,weaponWorld.z),base=scr(P.position.x,P.position.y,P.position.z),height=packed?PK.pivotY*PACK_K:2.92;
   weaponWorld.copy(P.position).addScaledVector(weaponUp,height);const top=scr(weaponWorld.x,weaponWorld.y,weaponWorld.z),pxPerWorld=Math.abs(base[1]-top[1])/height;
   const n=weaponNode('main',wt),raw=(WEAPON_ICON_SIZE[wt]||28)*localScale*pxPerWorld,size=Math.max(18,Math.min(42,raw));
-  const swing=pose.kind===2?Math.sin(pose.frame/Math.max(1,pose.count-1)*Math.PI):0;
+  const swing=0;   // v29: parked - not even a scale pulse, so the weapon cannot appear to move
   const stride=pose.kind===1?Math.sin(pose.frame/pose.count*Math.PI*2)*5:0;
   const angle=(WEAPON_ICON_ANGLE[wt]||-30)+p.weap*24+(wt==='bow'?p.bow*8:0)+stride,scale=1+swing*.06;
   const[iconX,iconY]=weaponIconCenterAtGrip(sx,sy,size*scale,angle,wt);

@@ -401,17 +401,21 @@ python3 - <<'PY'
 h=open('index.html').read()
 open('/tmp/pack_block.js','w').write(h[h.index('const PACK_BODY='):h.index('function ensureHero(')])
 PY
-node tools/tests/pack_sim.js          # -> "bodies in pack (19): ..."
-node tools/tests/class_change_sim.js  # -> "15 passed, 0 failed"
-node tools/tests/save_load_sim.js     # -> "9 passed, 0 failed"
-node tools/tests/economy_sim.js       # -> "12 passed, 0 failed"
-node tools/tests/stat_sim.js          # -> "7 passed, 0 failed"
-node tools/tests/card_sim.js          # -> "13 passed, 0 failed"
-node tools/tests/skill_sim.js         # -> "37 passed, 0 failed"
-node tools/tests/gear_sim.js          # -> "18 passed, 0 failed  (18 assertions groups)"
-node tools/tests/scene_sim.js         # -> "8 passed, 0 failed" (per-map scenery, water, clear lane)
-node tools/tests/kit_sim.js           # -> "15 passed, 0 failed" (payon recipe + RO scale, morocc design, builders, loader)
-node tools/tests/ui_sim.js            # -> "6 passed, 0 failed" 
+node tools/tests/pack_sim.js           # -> "bodies in pack (19): ..."
+node tools/tests/class_change_sim.js   # -> "22 passed, 0 failed"
+node tools/tests/save_load_sim.js      # -> "10 passed, 0 failed"
+node tools/tests/economy_sim.js        # -> "21 passed, 0 failed"
+node tools/tests/stat_sim.js           # -> "7 passed, 0 failed"
+node tools/tests/card_sim.js           # -> "13 passed, 0 failed"
+node tools/tests/skill_sim.js          # -> "48 passed, 0 failed"
+node tools/tests/gear_sim.js           # -> "20 passed, 0 failed  (20 assertions groups)"
+node tools/tests/scene_sim.js          # -> "8 passed, 0 failed" (per-map scenery, water, clear lane)
+node tools/tests/kit_sim.js            # -> "20 passed, 0 failed" (payon recipe + RO scale, morocc design, builders, loader)
+node tools/tests/ui_sim.js             # -> "13 passed, 0 failed"
+node tools/tests/sprite_sim.js         # -> "10 passed, 0 failed" (mob art, weapon icons, view names)
+node tools/tests/starter_sim.js        # -> "4 passed, 0 failed"
+node tools/tests/weapon_joint_sim.js   # -> "7 passed, 0 failed" (measured hand joints, parked weapon)
+node tools/tests/picker_sim.js         # -> "9 passed, 0 failed" (the picker the owner uses, booted under a DOM stub)
 ```
 
 Every suite pulls real code out of `index.html` by **string boundary**, so an edit that
@@ -1379,3 +1383,54 @@ assigned for feel rather than fidelity. While reworking that, two shipped bugs s
     sampling rule in `make_weapon_joints.py`, not a nudge in the game.
   * The picker's per-view weapon checkboxes and drag offsets are still recorded in the selection
     rather than read back by the game; whether the weapon hides per class is still one shared list.
+
+### 2026-10-04 — `ui-v29 weapon parked, heads you can seat, S and N spelled out`
+* **The owner's call, and the new order of work.** v28 (weapon pinned to the measured hand) was
+  rejected — *"this idea doesnt work"* — with an explicit sequence: **hold the weapon in one
+  position → the owner chooses the attack poses → the pose is confirmed → only then the weapon is
+  worked out** (the owner has an idea for it). v28's per-frame joints are **not** thrown away: the
+  measurement stays in the repo for the next step, the game just does not use it to move the weapon.
+* **What changed for the player:**
+  * **The weapon is parked.** It is held on one spot — the hand of the attack's *first* frame, with
+    the first frame's angle and no scale pulse — for the whole attack, so nothing about it can move
+    while the frames advance. Visibility is unchanged (attack only, v27: bare-handed on NW/N/NE).
+  * (`BUILD` -> `2026-10-04 ui-v29 weapon-held-in-one-position`.)
+* **The picker now says which way the character faces, in words.** The letters alone were the
+  confusion ("is north then front or the back view?"): **S = he faces you (front), N = he faces
+  away (back)** — verified from the art itself, not from convention: dir 0 shows the face, dir 4
+  shows the back of the head and the cape, dirs 3/4/5 are the three away views. Every card is
+  labelled *front - he faces you* / *back - he faces away* / *side - faces left*, and the header
+  explains it. (This also confirms v27's weapon rule: the three views that hide the weapon are the
+  three back views.)
+* **The heads are in the picker and can be seated by hand.** The head is drawn in every preview;
+  a **blue dashed box** marks the head on the selected view, and **dragging it** moves the head (per
+  class + view + attack frame). The panel shows *Head: as measured / moved +2,-3 px*, with
+  **↺ reset head** and **use this head on all 6 frames**. The export carries the result in the
+  game's own units: `headX/headY` = the head pivot inside the 96x96 cell (measured seat x the same
+  scale the pack builder uses, plus the drag), `headSource` becomes `manual` when dragged, and the
+  raw drags travel in `headAdjust`. Payload is now **version 4**.
+* **The picker is step 1: poses.** A **"hold the weapon in one position"** switch sits in the header
+  (on by default). With it on, the weapon does not move in the previews; untick it to see it follow
+  the hand. Dragging inside a picture now moves the **head**; the weapon drag moved to the selected
+  view only. The header says plainly that the weapon comes after the poses are confirmed.
+* **Files touched:** `index.html` (the parked weapon, `BUILD` v29), `tools/sprite_picker.html`
+  (view words, the pin switch, head drag + panel row, export v4, `window.__pgTest` for the tests),
+  `tools/make_sprite_picker.py` (unchanged behaviour - it rebuilds the standalone from the app
+  source), `tools/sprite_picker_data.js` + `tools/sprite_picker_standalone.html` (regenerated),
+  `tools/tests/weapon_joint_sim.js` (now pins the parked contract), **new**
+  `tools/tests/picker_sim.js` (boots the real picker page under a DOM stub and drives the head
+  drag, the park switch and the export), `AGENTS.md`.
+* **Art:** none added, removed, recoloured or rebuilt; `tools/montage.py` was not run.
+* **Tests:** all **15** suites green - the two new/pinned ones: `picker_sim.js` 9 checks (the page
+  boots with no error bar, 8 views, the S/N wording, the park switch really parks, a head drag moves
+  the head by exactly the dragged amount and lands in the export as `manual`, the payload still has
+  no idle/walk) and `weapon_joint_sim.js` 7 checks (912 joints intact, and the game now returns ONE
+  spot for all six attack frames). Then class change 22, save/load 10; economy 21, stat 7, card 13,
+  skill 48, gear 20; scene 8, kit 20, UI 13, sprite 10, starter 4; pack 19 bodies. Inline game JS
+  passes `node --check`, and both picker builds boot.
+* **Branches / PR:** `arena/01a1054b-prontera-grind` (PR #11).
+* **Known limits / follow-ups:**
+  * The picker's weapon toggle, drag offsets and the parked-flag still only travel in the export;
+    `index.html` reads none of them yet (one `WEAPON_HIDDEN_DIRS` list for every class).
+  * The head drag is per frame; a frame with "keep previous frame" carries no head of its own.
+  * Idle and walk remain the sheet's own layout picks.
