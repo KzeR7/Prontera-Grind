@@ -37,12 +37,14 @@ done
 ```
 
 Expected tails: pack prints the 19 bodies; every other suite prints `N passed, 0 failed`
-(class_change 22, save_load 10, economy 21, stat 7, card 13, skill 49, gear 23, scene 8,
-**kit 34**, ui 18, sprite 12, starter 7, **pet 8**). All suites pull the real code out of
+(class_change 22, save_load 10, economy 21, stat 7, card 13, skill 50, gear 24, scene 8,
+**kit 34**, ui 18, sprite 12, starter 7, **pet 11**). All suites pull the real code out of
 `index.html` by string boundary, so moving a declaration can break a test without breaking the
 game — if a suite throws, read the boundary it grabs before assuming the game is at fault.
-`pet_sim.js` also PRINTS the pet roster, the training ladder, the six gacha skills and the
-maxed-pet power measurement — run it on its own when pet numbers are being discussed.
+`pet_sim.js` also PRINTS the pet roster, the training ladder, the eight gacha skills, the buff
+rules and the maxed-pet balance measurement — run it on its own when pet numbers are being
+discussed. One of its assertions IS the balance target: one fully maxed pet must land within 12%
+of one fully maxed character's whole rotation, so a retune that drifts is a red suite.
 
 ## Change the map art
 

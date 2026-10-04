@@ -86,7 +86,7 @@ const PW=[[90,9,1,0],[80,17,3,0],[70,24,5.5,.5],[60,30,9,1],[50,35,13,2],[40,38,
 const MAXST=99,ELITELV=100,Z0=-14;
 const statCap=()=>99,selK=null,gp=id=>S&&S.pets.find(x=>String(x.id)===String(id)),classRec=()=>null,tb={};
 const skCost=x=>x,skOff=id=>!!(S&&S.skOff&&S.skOff[id]);
-let petBuff={atk:0,matk:0,atkT:0,matkT:0},petSkillCd={};
+let petBuff={atk:0,matk:0,hp:0,leech:0,atkT:0,matkT:0,hpT:0,leechT:0},petBuffSrc={},petSkillCd={},petNote={};
 const rollingSet=new Set(),autoSet=new Set(),busy=()=>false;
 let S=null,mapM=0,mapL=1,selB=null,selC=null;   // remaining panel state comes in with the V grab
 const mobs=[],drops=[],logs=[];
@@ -260,6 +260,8 @@ t('HP flips at 30%; one split bar fills Base from left and Job from right with c
     const nodes={};const $=id=>nodes[id]||(nodes[id]={style:{},textContent:'',title:'',attrs:{},
       classList:{flags:{},toggle(k,v){this.flags[k]=v}},setAttribute(k,v){this.attrs[k]=v}});
     let S={lv:20,exp:90,hp:31,kills:0,zeny:0},hudRate=null,zenyEarned=0,currentUser='A';
+    // the pet buff chips bars() now draws: no pet buff is running in this fixture
+    let petBuff={atk:0,matk:0,hp:0,leech:0,atkT:0,matkT:0,hpT:0,leechT:0},petBuffSrc={};
     const performance={now:()=>1000},job={jl:10,jx:45},jobOf=()=>job,C=()=>({mj:50}),maxHp=()=>100,
       jneed=()=>100,need=()=>200;
     ${grab('const HUD_RATE_WINDOW=60000,HUD_IDLE_RESET=30000,HUD_RATE_REFRESH=1000;','function ui(){')}
@@ -287,9 +289,10 @@ t('damage digits, critical burst and skill names use separate anchored combat ov
     'active, healing and buff skills must show a name above the caster');
   const box={};vm.createContext(box);
   vm.runInContext(`
-    let S={dmgShort:true},floats=[],pl={x:2,z:4};
+    let S={dmgShort:true,dmgShow:true},floats=[],pl={x:2,z:4};
     ${grab('const addFloat=(x,y,z,txt,col,big,kind=', 'function log(m,cls){')}
-    this.__f={floats,pl,damageFloat,skillNameFloat,shortNum,get S(){return S},set full(v){S.dmgShort=!v}};
+    this.__f={floats,pl,damageFloat,skillNameFloat,shortNum,numTxt,get S(){return S},set full(v){S.dmgShort=!v},
+      get dmgShow(){return S.dmgShow!==false},set dmgShow(v){S.dmgShow=v==='on'||v===true}};
   `,box);
   const F=box.__f;
   F.damageFloat(1,2,3,879,false);F.damageFloat(1,2,3,1896,true);
@@ -298,6 +301,15 @@ t('damage digits, critical burst and skill names use separate anchored combat ov
   assert.strictEqual(F.floats[1].txt,'1.9K','a critical number is shortened like any other, never replaced by a label');
   assert.strictEqual(F.floats[0].txt,'879','numbers under a thousand keep every digit');
   assert.strictEqual(F.floats[2].txt,'55','incoming damage follows the same setting');
+  // the Show toggle really hides the numbers; the style toggle only changes the digits
+  F.dmgShow=false;
+  F.damageFloat(1,2,3,4321,false);F.damageFloat(1,2,3,9000,true,true);
+  assert.strictEqual(F.floats.length,4,'with damage numbers switched off, no damage float is pushed at all');
+  F.dmgShow=true;
+  assert.strictEqual(F.numTxt(1250000),'1.3M','rewards and damage share one short formatter');
+  assert.strictEqual(F.numTxt(20500),'20.5K');
+  F.full=true;
+  assert.strictEqual(F.numTxt(1250000),'1250000','and the full style prints every digit');
   assert.deepStrictEqual([100000,1000000,12500,999,1000,2500000,999999,1234567].map(F.shortNum),
     ['100K','1M','12.5K','999','1K','2.5M','1M','1.2M'],'the short form ladder');
   F.full=true;
@@ -411,15 +423,26 @@ t('the character + class panels show the class-collection bonus', () => {
 });
 
 t('pet details show Ragnarok sprites, named upgrade levels, and gacha skill odds', () => {
-  U.S=mkS('Novice');U.S.pets=[{id:41,sp:0,mut:0,eq:[1,2,0],skill:'warcry',sk:[1,2,3],on:false}];U.selP=41;
+  U.S=mkS('Novice');U.S.pets=[{id:41,sp:0,mut:0,eq:[1,2,0],skills:['warcry','spiritbolt'],sk:[1,2,3],on:false}];U.selP=41;
   const h=U.V.pet();
   assert.ok(h.includes('src="https://static.divine-pride.net/images/mobs/png/1002.png"'),'the pet portrait must use its Divine Pride monster sprite');
   assert.ok(h.includes('Claw &middot; Level 1/5')&&h.includes('Collar &middot; Level 2/5')&&h.includes('Charm &middot; Level 0/5'),'each upgrade must name the slot and current level');
   assert.ok(h.includes('25% upgrade success')&&h.includes('15% upgrade success')&&h.includes('40% upgrade success'),'each upgrade must show its success chance');
   assert.ok(h.includes('5% double upgrade chance on success'),'the great-success chance must be explicit');
-  assert.ok(h.includes('Gacha pet skill')&&h.includes('War Cry')&&h.includes('Player ATK +20% for 8s'),'the rolled skill and its effect must be visible');
-  assert.ok(h.includes('Six equally weighted skills: 2 player buffs, 2 AoE attacks, 2 single-target attacks (1/6 each).'),'the requested gacha distribution must be clear');
+  // v35: TWO skill slots, both filled by one gacha
+  assert.ok(h.includes('Pet skills &middot; 2 slots'),'the panel must show two skill slots');
+  assert.ok(h.includes('War Cry')&&h.includes('Spirit Bolt'),'both rolled skills must be listed');
+  assert.ok(h.includes('Player ATK +20% for 30s, 60s cooldown'),'a buff must state its 30s/60s timing');
+  assert.ok(h.includes('Single target: 2.5× pet damage'),'an attack skill must state its multiplier');
+  assert.ok(h.includes('Reroll both skills'),'the gacha rerolls the whole loadout');
+  assert.ok(h.includes('Eight equally weighted skills: 4 player buffs, 2 AoE attacks, 2 single-target attacks.'),'the gacha distribution must be clear');
+  assert.ok(h.includes('never stack')&&h.includes('ATK and MATK buffs cannot run at the same time'),'the no-stacking rules must be on the panel');
   assert.ok(h.includes('data-a="pskill"'),'the pet skill gacha button must be present');
+  // and the empty-slot state on a pet that has not rolled yet
+  U.S.pets=[{id:42,sp:1,mut:0,eq:[0,0,0],skills:[],sk:[1,2,3],on:false}];U.selP=42;
+  const h2=U.V.pet();
+  assert.ok(h2.includes('Slot 1: <b class="r0">empty</b>')&&h2.includes('Slot 2: <b class="r0">empty</b>'),'both empty slots are offered');
+  assert.ok(h2.includes('Gacha both skills'),'and the button says what it will do');
 });
 
 t('every panel a tab can open builds HTML without throwing', () => {
@@ -462,18 +485,25 @@ t('the bag shows its 1000-item limit and refuses loot once it is full', () => {
   assert.strictEqual(C.S.cards.length, 1, 'cards live in their own bag and are not capped by the item limit');
 });
 
-t('Settings carries the damage-number switch and remembers it', () => {
-  U.S = mkS('Knight'); U.S.dmgShort = true;
+t('Settings carries BOTH damage-number toggles (show/hide and short/full) and remembers them', () => {
+  U.S = mkS('Knight'); U.S.dmgShort = true; U.S.dmgShow = true;
   let h = U.V.set();
+  assert.ok(h.includes('data-a="dmgshow" data-v="on" class="on"') && h.includes('data-a="dmgshow" data-v="off"'),
+    'the on/off switch for the damage display is offered');
   assert.ok(h.includes('data-a="dmgfmt" data-v="short" class="on"') && h.includes('data-a="dmgfmt" data-v="full"'),
-    'both damage-number styles are offered');
+    'and the short/full style next to it');
   assert.ok(h.includes('Short &middot; 100K / 1M') && h.includes('Full &middot; 100,000'), 'and labelled with an example');
-  U.S.dmgShort = false;
+  U.S.dmgShort = false; U.S.dmgShow = false;
   h = U.V.set();
-  assert.ok(h.includes('data-a="dmgfmt" data-v="full" class="on"'), 'the current choice is highlighted');
-  assert.ok(!h.includes('data-a="dmgfmt" data-v="short" class="on"'));
+  assert.ok(h.includes('data-a="dmgfmt" data-v="full" class="on"'), 'the current style is highlighted');
+  assert.ok(h.includes('data-a="dmgshow" data-v="off" class="on"'), 'and so is the current visibility');
+  assert.ok(!h.includes('data-a="dmgfmt" data-v="short" class="on"') && !h.includes('data-a="dmgshow" data-v="on" class="on"'));
   assert.ok(src.includes('if(f.dmgShort!==true&&f.dmgShort!==false)f.dmgShort=true;'), 'the save repair defaults old saves to short');
-  assert.ok(src.includes('dmgShort:true,base:{}'), 'and a fresh save starts short');
+  assert.ok(src.includes('if(f.dmgShow!==true&&f.dmgShow!==false)f.dmgShow=true;'), 'and old saves to showing them');
+  assert.ok(src.includes('dmgShort:true,dmgShow:true,base:{}'), 'a fresh save starts short and visible');
+  // the two switches really do reach the float code
+  assert.ok(src.includes("const numTxt=n=>fullNum()?String(Math.round(n)):shortNum(n);"), 'one formatter serves every number');
+  assert.ok(src.includes("damageFloat=(x,y,z,amount,critical=false,incoming=false)=>{if(S&&S.dmgShow===false)return;"), 'hiding skips the float entirely');
 });
 
 t('the map panel states the fixed rarity of the field it is showing', () => {

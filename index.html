@@ -36,6 +36,9 @@ html, body { margin:0; padding:0; width:100vw; height:100vh; overflow:hidden; ba
 #prog{position:absolute;left:12px;top:12px;background:#0008;color:#fff;font:bold 13px "Trebuchet MS",sans-serif;padding:6px 12px;border-radius:4px;border:1px solid #ffffff44;display:flex;align-items:center;gap:10px}
 #hint{position:absolute;left:12px;top:52px;color:#fff;font:11px "Trebuchet MS",sans-serif;opacity:.8;text-shadow:0 0 3px #000}
 #hud{display:flex;flex-wrap:wrap;gap:10px 22px;padding:9px 16px;font-size:13px;align-items:center;background:linear-gradient(180deg,#fff9e9,#f4e5c4);border-top:1px solid var(--edge);z-index:10;box-shadow:0 -4px 14px #241b1730}
+#hudBuffs{display:none;flex-wrap:wrap;gap:6px;flex-basis:100%}
+.pbf{font-size:11px;background:#ffe9a8;border:1px solid var(--edge2);border-radius:10px;padding:1px 8px}
+.pbf i{font-style:normal;opacity:.75}
 .bar{width:148px;height:14px;background:#3b302b;border:1px solid #574637;border-radius:999px;overflow:hidden;position:relative;box-shadow:inset 0 2px 4px #1e1617aa,0 1px 0 #fff9}
 .bar i{display:block;height:100%;border-radius:inherit;transition:width .3s ease,background .3s ease}
 .hud-health{display:flex;align-items:center;gap:7px;white-space:nowrap}.hud-health small{font-weight:bold;min-width:34px;text-align:right}
@@ -150,9 +153,11 @@ hr{border:0;border-top:1px dashed var(--edge);margin:6px 0}
 .chooser>.hd button.x{margin-left:auto;padding:0 7px}
 .chooser .slot{background:#fff7dd}
 .chooser .slot .cell{cursor:default}
-/* Choosing a slot highlights the fitting tiles in the real Bag window - no second pop-out. */
+/* Choosing a slot does not open a second window: it highlights the fitting tiles in the real Bag
+   window (see V.bag0 / ACT.seleq), ringed green and clickable. */
 .row button.on{background:#ffe08a;border-color:var(--gold)}
 .cell.fit{outline:3px solid #2e9e3e;box-shadow:0 0 9px #2e9e3e99;cursor:pointer}
+.cell.fit::after{content:'\2713';position:absolute;top:-6px;right:-6px;background:#2e9e3e;color:#fff;font-size:9px;line-height:1;padding:1px 3px;border-radius:6px}
 /* The auto-cast control sits at the top of a skill's description card, large enough to hit. */
 .sk-detail-head{display:flex;align-items:baseline;gap:6px;flex-wrap:wrap}
 .sk-detail-autocast{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:7px 0;padding:7px 10px;border:2px solid var(--edge2);border-radius:9px;background:#fff7dd}
@@ -178,7 +183,7 @@ hr{border:0;border-top:1px dashed var(--edge);margin:6px 0}
 <div id="hud"><div><b id="cls2"></b> Base Lv <b id="lv">1</b> / Job Lv <b id="jl">1</b></div>
 <div class="hud-health">HP <div class="bar" role="meter" aria-label="HP" aria-valuemin="0" aria-valuemax="100" id="hpMeter"><i id="hpb"></i></div><small id="hpPct">100%</small></div>
 <div class="hud-zeny" id="zenyHover" tabindex="0" aria-describedby="zenyRate">&#9679; <b id="zeny">0</b> Zeny<span class="hud-flyout" id="zenyRate" role="tooltip">Zeny earned: 0/min</span></div>
-<div>Kills/min <b id="kills" title="Recent kills per minute (last 60 seconds, refreshed each second)">0.0</b></div><div style="margin-left:auto;display:flex;align-items:center;gap:8px"><span id="userBadge" style="font-weight:bold;font-size:12px;background:#e9d39a;padding:3px 8px;border-radius:4px;border:1px solid var(--edge2)"></span><button id="logoutBtn" onclick="logout()" style="display:none">Logout</button><button id="spd">Speed x1</button></div></div>
+<div>Kills/min <b id="kills" title="Recent kills per minute (last 60 seconds, refreshed each second)">0.0</b></div><div id="hudBuffs" role="status" aria-live="polite" title="Pet buffs: they never stack across pets, and ATK / MATK cannot both be active."></div><div style="margin-left:auto;display:flex;align-items:center;gap:8px"><span id="userBadge" style="font-weight:bold;font-size:12px;background:#e9d39a;padding:3px 8px;border-radius:4px;border:1px solid var(--edge2)"></span><button id="logoutBtn" onclick="logout()" style="display:none">Logout</button><button id="spd">Speed x1</button></div></div>
 <div id="xp-dock" aria-label="Level progress"><div id="xp-track">
   <div class="xp-side" id="baseTrack" tabindex="0" role="progressbar" aria-label="Base Level" aria-valuemin="0" aria-valuemax="100" title="Base Level: 0% to next level"><div class="xp-fill" id="xpb"></div><span class="xp-label" id="baseLabel">Base Lv 1</span><span class="xp-pct" id="basePct">0%</span></div>
   <div class="xp-side" id="jobTrack" tabindex="0" role="progressbar" aria-label="Job Level" aria-valuemin="0" aria-valuemax="100" title="Job Level: 0% to next level"><div class="xp-fill" id="jb"></div><span class="xp-pct" id="jobPct">0%</span><span class="xp-label job" id="jobLabel">Job Lv 1</span></div>
@@ -226,7 +231,7 @@ const AL={str:'STR',agi:'AGI',dex:'DEX',luk:'LUK',int:'INT',hp:'Max HP',atk:'ATK
 // late maps in about five, with bosses still a ~12x fight. See tools/tests/economy_sim.js.
 const SU=k=>k.toUpperCase(),BX_=13,Z0=-28,Z1=12,MPS=15,AGGRO=6.5,HPK=42,HPE=1.3,K5=['str','agi','dex','luk','int'];
 const GM_USER='GM',GM_PASS='gm1234';   // CHANGE THE GM PASSWORD before you publish
-const BUILD='2026-10-04 ui-v35 bag-highlight pet-rework';   // shown on the login card - confirms which file you loaded
+const BUILD='2026-10-04 ui-v35 pet-rework bag-highlight dmg-toggles map-rarity';   // shown on the login card - confirms which file you loaded
 $('buildTag').textContent='build '+BUILD;
 
 // ---------- class tree: Novice -> 6 first jobs -> 6 second jobs -> 6 third jobs ----------
@@ -559,13 +564,14 @@ const ARM=['armor','head','off','leg','acc'],gearSlot=x=>ARM.includes(x.k)?x.k:'
 // The bag holds 1000 items. Loot is refused once it is full (the drop stays on the ground and
 // is reported) so a long farm cannot silently grow an unbounded save.
 const BAGMAX=1000;
-// Rarity is a property of WHERE an item drops, not of the roll. Each map sits on a rarity band
-// and stages 8-9 walk it one step up; no regular drop is ever Legendary, and every Stage 10
-// boss drop is. Only the affixes (and the refine/card slots) stay random, so two drops of the
-// same item still differ. Bands: maps 1-2 Common, 3-4 Fine, 5-6 Rare, 7-10 Epic.
+// Rarity is a property of WHERE an item drops, not of the roll - and the MAP decides it, at every
+// stage it has. A low map never rolls above its own band, so a Prontera field can never hand out
+// Rare or Epic gear; the only route to Legendary is a Stage 10 boss, on any map. Only the
+// affixes (and the refine/card slots) stay random, so two drops of the same item still differ.
+// Bands: maps 1-2 Common, 3-4 Fine, 5-6 Rare, 7-10 Epic, every Stage 10 boss Legendary.
 // Pinned by gear_sim.js.
 const MAPTIER=[0,0,1,1,2,2,3,3,3,3];
-const dropTier=(m,l)=>l>=10?4:Math.min(3,MAPTIER[Math.max(0,Math.min(MAPTIER.length-1,m|0))]+(l>=8?1:0));
+const dropTier=(m,l)=>l>=10?4:MAPTIER[Math.max(0,Math.min(MAPTIER.length-1,m|0))];
 // The field's gear pool: every item an equipment drop on this map+level can be. Weapons first
 // (they are the ones a player is hunting), then body, headgear, shield, legwear, two accessories.
 function gearPool(m,l){const sg=MAPS[m].gear[m>=5?3:secOf(l)],T=[];
@@ -634,7 +640,7 @@ let currentUser=null,S=null,speed=1,zenyEarned=0,floats=[],drops=[],t=0,shake=0,
 const pl={x:0,z:Z1-1.5,ry:0,orb:0,run:0,wt:0,wx:0,wz:Z1-1.5},skCd={},petR={};
 // tb holds the one tradeoff buff currently running (ATK up / DEF down and so on). It is
 // deliberately transient: it is never saved, so quitting mid-buff just drops the buff.
-let tb={},petBuff={atk:0,matk:0,atkT:0,matkT:0},petSkillCd={};
+let tb={},petBuff={atk:0,matk:0,hp:0,leech:0,atkT:0,matkT:0,hpT:0,leechT:0},petBuffSrc={},petSkillCd={},petNote={};
 const PETS=[{n:'Poring',spriteId:1002,r:0,c:0xff9db8},{n:'Lunatic',spriteId:1063,r:0,c:0xf4f4f4},
   {n:'Wolf',spriteId:1013,r:1,c:0x8a8a95},{n:'Desert Wolf',spriteId:1106,r:1,c:0xe0a050},
   {n:'Peco Peco',spriteId:1019,r:2,c:0xf0d060},{n:'Dragon Whelp',spriteId:1155,r:2,c:0x4aa070},
@@ -648,34 +654,78 @@ const RN=['Common','Rare','Epic','Legendary'],RCL=[0,2,3,4],MUT=[1,2,4,6,8,20,40
 // twenty that succeeds is a GREAT success and jumps two tiers instead of one.
 const EGG=3000,GW=[50,30,16.5,2.5,.8,.2],PT=['Wooden','Iron','Silver','Gold','Mythril'],PTG=[.4,.25,.15,.09,.05],GREAT=.05;
 const PEQ=[{n:'Claw',d:t=>`+${t*12}% pet damage`},{n:'Collar',d:t=>`+${t*8}% pet attack speed`},{n:'Charm',d:t=>`${t*6}% pet crit chance (x2 damage)`}];
-// Six equally weighted gacha skills: two temporary player buffs, two area attacks, and
-// two single-target attacks. Buffs do not stack; each skill auto-casts when its pet attacks.
+// Eight equally weighted gacha skills: four temporary player buffs and four attacks. Every pet
+// has TWO skill slots and one gacha rolls both of them (never the same skill twice), so a reroll
+// replaces the whole loadout. A pet can also use only one skill every PETGAP seconds, on top of
+// that skill's own cooldown. Buff rules, all shown in the Pets panel: a buff never stacks - while
+// one copy is up, another pet's cast is ignored rather than refreshed - and ATK and MATK can
+// never run at the same time. Blood Siphon pays a share of whatever the pet hits for back to
+// you; Vital Aura raises your max HP, and the bar comes back down when it lapses.
+// PETBAL is the pet balance knob: at 2.18 a fully maxed pet (G6 + Mythril 5/5/5 + two attack
+// skills) measures about the same DPS as ONE fully maxed character playing their whole rotation.
+// tools/tests/pet_sim.js measures exactly that and fails if it drifts.
+const PETGAP=7,PETBAL=2.18;
 const PET_SKILLS=[
-  {id:'warcry',n:'War Cry',kind:'buff',stat:'atk',power:20,duration:8,cd:26,desc:'Player ATK +20% for 8s',vfx:'frenzy',color:'#ffd050',icon:'⚔️'},
-  {id:'arcane',n:'Arcane Blessing',kind:'buff',stat:'matk',power:20,duration:8,cd:26,desc:'Player MATK +20% for 8s',vfx:'magnus',color:'#a58bff',icon:'✦'},
+  {id:'warcry',n:'War Cry',kind:'buff',stat:'atk',power:20,duration:30,cd:60,desc:'Player ATK +20% for 30s, 60s cooldown. Never stacks with another pet, and cannot run next to MATK',vfx:'frenzy',color:'#ffd050',icon:'⚔️'},
+  {id:'arcane',n:'Arcane Blessing',kind:'buff',stat:'matk',power:20,duration:30,cd:60,desc:'Player MATK +20% for 30s, 60s cooldown. Never stacks with another pet, and cannot run next to ATK',vfx:'magnus',color:'#a58bff',icon:'✦'},
+  {id:'siphon',n:'Blood Siphon',kind:'buff',stat:'leech',power:5,duration:30,cd:60,desc:'For 30s, 5% of this pet damage heals you, 60s cooldown. Never stacks with another pet',vfx:'soulb',color:'#ff6b8a',icon:'🩸'},
+  {id:'vital',n:'Vital Aura',kind:'buff',stat:'hp',power:20,duration:30,cd:60,desc:'Player Max HP +20% for 30s, 60s cooldown. Never stacks with another pet',vfx:'magnus',color:'#7dff9d',icon:'💗'},
   {id:'flameburst',n:'Flame Burst',kind:'aoe',power:1.6,radius:4,cd:14,desc:'AoE: 1.6× pet damage to enemies within 4 units',vfx:'meteor',color:'#ff8142',icon:'🔥'},
   {id:'thunderclap',n:'Thunderclap',kind:'aoe',power:1.4,radius:4,cd:12,desc:'AoE: 1.4× pet damage to enemies within 4 units',vfx:'jup',color:'#8fe9ff',icon:'⚡'},
   {id:'piercingfang',n:'Piercing Fang',kind:'single',power:2.2,cd:10,desc:'Single target: 2.2× pet damage',vfx:'spiral',color:'#ff9dff',icon:'🗡️'},
   {id:'spiritbolt',n:'Spirit Bolt',kind:'single',power:2.5,cd:11,desc:'Single target: 2.5× pet damage',vfx:'soulb',color:'#fff3a0',icon:'✧'}
 ];
-const petDmg=p=>Math.round(atk()*[.2,.32,.55,1][PETS[p.sp].r]*MUT[p.mut]*(1+p.eq[0]*.12)),petInt=p=>Math.max(.4,1.7-PETS[p.sp].r*.15)/(1+p.eq[1]*.08),peqCost=t=>1200*(t+1)*(t+1),rollCost=p=>2500*(1+PETS[p.sp].r),petSkillCost=p=>2000*(1+PETS[p.sp].r);
+const petDmg=p=>Math.round(atk()*PETBAL*[.2,.32,.55,1][PETS[p.sp].r]*MUT[p.mut]*(1+p.eq[0]*.12)),petInt=p=>Math.max(.4,1.7-PETS[p.sp].r*.15)/(1+p.eq[1]*.08),peqCost=t=>1200*(t+1)*(t+1),rollCost=p=>2500*(1+PETS[p.sp].r),petSkillCost=p=>2000*(1+PETS[p.sp].r);
+const petSkills=p=>((p.skills)||[]).map(id=>PET_SKILLS.find(s=>s.id===id)).filter(Boolean);
+// Per-skill cooldowns live in the same map as the 7s gate, keyed petId|skillId. A pet that
+// rerolls or is released must not leave those timers behind.
+const clearPetCd=id=>{for(const k in petSkillCd)if(k===String(id)||k.indexOf(id+'|')===0)delete petSkillCd[k]};
+// Why this buff cannot be cast right now ('' = it can). One copy of each buff at a time across
+// the whole field, and ATK and MATK are mutually exclusive.
+function petBuffWhy(skill){
+  const s=skill.stat;
+  if(s==='atk'&&(petBuff.atk>0||petBuff.matk>0))return petBuff.atk>0?'the ATK buff is already up':'MATK cannot run next to ATK';
+  if(s==='matk'&&(petBuff.matk>0||petBuff.atk>0))return petBuff.matk>0?'the MATK buff is already up':'ATK cannot run next to MATK';
+  if(s==='hp'&&petBuff.hp>0)return 'the Max HP buff is already up';
+  if(s==='leech'&&petBuff.leech>0)return 'the life-leech buff is already up';
+  return '';
+}
+// Blood Siphon: while it runs, a share of every point this pet deals comes back to you.
+function petLeech(dealt){
+  if(!dealt||!(petBuff.leech>0))return;
+  const h=Math.max(1,Math.round(dealt*petBuff.leech/100));
+  S.hp=Math.min(maxHp(),S.hp+h);addFloat(pl.x,2.9,pl.z,'+'+numTxt(h),'#ff6b8a');
+}
 function petHit(p,target){
-  const skill=PET_SKILLS.find(s=>s.id===p.skill);
-  if(skill&&(petSkillCd[p.id]||0)<=0){
-    petSkillCd[p.id]=skill.cd;
-    if(skill.kind==='buff'){
-      petBuff[skill.stat]=skill.power;petBuff[skill.stat+'T']=skill.duration;
-      log(`${PETS[p.sp].n} uses ${skill.n}: ${skill.desc}.`,'r3');
-      addFloat(pl.x,3,pl.z,skill.n,skill.color,true);playSkillFx(skill.vfx,null,skill.color);
+  if((petSkillCd[p.id]||0)<=0){
+    const ready=petSkills(p).filter(s=>(petSkillCd[p.id+'|'+s.id]||0)<=0);
+    // an attack skill always beats a buff; among equals the stronger one goes first
+    let use=ready.filter(s=>s.kind!=='buff').sort((a,b)=>b.power-a.power)[0];
+    if(!use)use=ready.find(s=>!petBuffWhy(s));
+    if(!use){
+      // everything ready is a blocked buff: say why every so often instead of never
+      const held=ready.find(s=>s.kind==='buff');
+      if(held&&!(petNote[p.id]>0)){petNote[p.id]=12;log(`${PETS[p.sp].n} holds ${held.n}: ${petBuffWhy(held)} - pet buffs never stack.`,'r0')}
     }else{
-      const hitList=skill.kind==='aoe'?mobs.slice().filter(o=>Math.hypot(o.x-target.x,o.z-target.z)<=skill.radius):[target];
-      for(const o of hitList)if(o&&o.hp>0)hurt(o,Math.max(1,Math.round(petDmg(p)*skill.power)),skill.color);
-      addFloat(target.x,2.4,target.z,skill.n,skill.color,true);playSkillFx(skill.vfx,target,skill.color);
+      petSkillCd[p.id]=PETGAP;petSkillCd[p.id+'|'+use.id]=use.cd;
+      if(use.kind==='buff'){
+        petBuff[use.stat]=use.power;petBuff[use.stat+'T']=use.duration;petBuffSrc[use.stat]=PETS[p.sp].n;
+        log(`${PETS[p.sp].n} uses ${use.n}: ${use.desc}.`,'r3');
+        addFloat(pl.x,3,pl.z,use.n,use.color,true);playSkillFx(use.vfx,null,use.color);
+      }else{
+        const hitList=use.kind==='aoe'?mobs.slice().filter(o=>Math.hypot(o.x-target.x,o.z-target.z)<=use.radius):[target];
+        let dealt=0;
+        for(const o of hitList)if(o&&o.hp>0){const d=Math.max(1,Math.round(petDmg(p)*use.power));hurt(o,d,use.color);dealt+=d}
+        petLeech(dealt);
+        addFloat(target.x,2.4,target.z,use.n,use.color,true);playSkillFx(use.vfx,target,use.color);
+      }
+      return true;
     }
-    return true;
   }
   let d=petDmg(p)*rnd(.9,1.1);const c=Math.random()*100<p.eq[2]*6;if(c)d*=2;
-  hurt(target,Math.max(1,Math.round(d)),MC[p.mut]?'#'+MC[p.mut].toString(16).padStart(6,'0'):'#ff9dff',c);
+  const hit=Math.max(1,Math.round(d));
+  hurt(target,hit,MC[p.mut]?'#'+MC[p.mut].toString(16).padStart(6,'0'):'#ff9dff',c);
+  petLeech(hit);
   return false;
 }
 const rollingSet=new Set(),autoSet=new Set(),PW=[[90,9,1,0],[80,17,3,0],[70,24,5.5,.5],[60,30,9,1],[50,35,13,2],[40,38,18,4],[30,40,24,6],[22,40,30,8],[12,38,38,12],[5,30,45,20]],busy=p=>p.roll||rollingSet.has(p.id)||S.zeny<rollCost(p);
@@ -684,8 +734,10 @@ function rollOnce(p,fast,done){const c=rollCost(p);if(S.zeny<c){autoSet.delete(p
 function autoRoll(p){if(!autoSet.has(p.id)||!gp(p.id))return;rollOnce(p,true,g=>{if(!(p.sk||[1,2,3]).includes(g)){p.roll=g;autoSet.delete(p.id);log(`Auto-roll stopped on Grade ${g} (x${MUT[g]})!`,'r4')}ui();save();if(autoSet.has(p.id))setTimeout(()=>autoRoll(p),250)})}
 const pickW=w=>{let r=Math.random()*w.reduce((a,b)=>a+b,0);for(let i=0;i<w.length;i++){r-=w[i];if(r<0)return i}return w.length-1},gp=id=>S.pets.find(x=>String(x.id)===String(id));
 const uid=()=>Date.now()+Math.random(),rnd=(a,b)=>a+Math.random()*(b-a),ri=(a,b)=>Math.floor(rnd(a,b+1)),cl=(v,a,b)=>Math.max(a,Math.min(b,v));
-const PET_SKILL_WEIGHTS=PET_SKILLS.map(()=>1),rollPetSkill=()=>PET_SKILLS[pickW(PET_SKILL_WEIGHTS)];
-const fresh=()=>({pets:[],cls:'Novice',sex:'m',hair:0,lv:1,exp:0,hp:100,zeny:0,kills:0,pts:10,jobs:{Novice:{jl:1,jx:0}},sk:{aid:1},skOff:{},dmgShort:true,base:{},mp:0,lvl:1,prog:[1,1,1,1,1],kl:0,auto:true,adv:true,q:null,cards:[],ore:{ori:0,elu:0},gm:false,gmx:100,
+// One roll fills both slots. The second pick is made from the skills the first did not take, so
+// the two can never match and there is no retry loop to spin if the dice are pinned.
+const PET_SKILL_WEIGHTS=PET_SKILLS.map(()=>1),rollPetSkills=()=>{const a=pickW(PET_SKILL_WEIGHTS),rest=PET_SKILL_WEIGHTS.map((w,i)=>i).filter(i=>i!==a);return[PET_SKILLS[a].id,PET_SKILLS[rest[Math.floor(Math.random()*rest.length)]].id]};
+const fresh=()=>({pets:[],cls:'Novice',sex:'m',hair:0,lv:1,exp:0,hp:100,zeny:0,kills:0,pts:10,jobs:{Novice:{jl:1,jx:0}},sk:{aid:1},skOff:{},dmgShort:true,dmgShow:true,base:{},mp:0,lvl:1,prog:[1,1,1,1,1],kl:0,auto:true,adv:true,q:null,cards:[],ore:{ori:0,elu:0},gm:false,gmx:100,
   st:{str:1,agi:1,dex:1,luk:1,int:1,vit:1},eq:{weapon:{id:1,slot:'weapon',wt:'dagger',tier:0,val:5,name:'Novice Knife',aff:[],slots:1,cards:[],sec:0},armor:null,head:null,off:null,leg:null,acc1:null,acc2:null},inv:[]});
 const saveKey=()=>'pg_save3_'+currentUser;
 const num_= (v,d)=>{v=+v;return Number.isFinite(v)?v:d};
@@ -693,6 +745,7 @@ function load(){try{const s=JSON.parse(lsGet(saveKey()));if(s&&s.lv){const F=fre
 // repair top-level numbers corrupted by older/test saves (null -> crash on .toLocaleString())
   for(const k of['lv','exp','hp','zeny','kills','pts','mp','lvl','kl','gmx'])f[k]=num_(f[k],F[k]);
   if(f.dmgShort!==true&&f.dmgShort!==false)f.dmgShort=true;   // damage digits: short unless deliberately switched
+  if(f.dmgShow!==true&&f.dmgShow!==false)f.dmgShow=true;      // and the floats are shown unless switched off
   for(const k of['str','agi','dex','luk','int','vit'])f.st[k]=Math.max(1,Math.min(MAXST,num_(f.st[k],1)));
   f.ore={ori:num_(f.ore&&f.ore.ori,0),elu:num_(f.ore&&f.ore.elu,0)};
   if(!Array.isArray(f.prog)||!f.prog.length)f.prog=F.prog.slice();else f.prog=f.prog.map(v=>num_(v,1));
@@ -714,7 +767,12 @@ function load(){try{const s=JSON.parse(lsGet(saveKey()));if(s&&s.lv){const F=fre
     if(!r.eq||typeof r.eq!=='object')r.eq={}}
   if(!Array.isArray(f.pets))f.pets=[];f.pets=f.pets.filter(p=>p&&typeof p==='object');if(!Array.isArray(f.inv))f.inv=[];if(!Array.isArray(f.cards))f.cards=[];
   if(!f.eq||typeof f.eq!=='object')f.eq=F.eq;if(f.hp<=0)f.hp=F.hp;
-  const fx=c=>{c.v=cardVal(c.g,c.stat)};(f.cards||[]).forEach(fx);(f.pets||[]).forEach((p,i)=>{if(p.on===undefined)p.on=i<3;if(!Array.isArray(p.eq))p.eq=[0,0,0];p.eq=[0,1,2].map(k=>Math.max(0,Math.min(PT.length,Math.floor(num_(p.eq[k],0)))));if(!PET_SKILLS.some(s=>s.id===p.skill))p.skill=''});Object.values(f.eq||{}).forEach(it=>it&&(it.cards||[]).forEach(fx));(f.inv||[]).forEach(it=>(it.cards||[]).forEach(fx));
+  const fx=c=>{c.v=cardVal(c.g,c.stat)};(f.cards||[]).forEach(fx);(f.pets||[]).forEach((p,i)=>{if(p.on===undefined)p.on=i<3;if(!Array.isArray(p.eq))p.eq=[0,0,0];p.eq=[0,1,2].map(k=>Math.max(0,Math.min(PT.length,Math.floor(num_(p.eq[k],0)))));
+  // v35 gave every pet TWO skill slots. An old save's single skill becomes slot 1 and the next
+  // gacha fills both; nothing is thrown away and nothing is handed out for free.
+  if(!Array.isArray(p.skills))p.skills=PET_SKILLS.some(s=>s.id===p.skill)?[p.skill]:[];
+  p.skills=p.skills.filter(id=>PET_SKILLS.some(s=>s.id===id)).slice(0,2);
+  delete p.skill});Object.values(f.eq||{}).forEach(it=>it&&(it.cards||[]).forEach(fx));(f.inv||[]).forEach(it=>(it.cards||[]).forEach(fx));
   // repair quests saved by older builds: every field must be a real number
   if(!Array.isArray(f.q))f.q=null;
   else f.q=f.q.filter(q=>q&&typeof q==='object').map(q=>{
@@ -788,7 +846,7 @@ const pv=k=>SKILLS.reduce((a,s)=>a+(s.type==='pas'&&s.key===k&&skillOn(s.id)?s.f
 const items=()=>Object.values(S.eq).filter(Boolean),ev=it=>Math.round(it.val*(1+(it.r||0)*.15)),iname=it=>(it.r?'+'+it.r+' ':'')+it.name,eqv=k=>S.eq[k]?ev(S.eq[k]):0;
 const bon=k=>{let v=0;for(const it of items()){for(const a of it.aff||[])if(a.k===k)v+=a.v;for(const c of it.cards||[])if(c.stat===k)v+=c.v}return v};
 const st=k=>S.st[k]+bon(k),canUse=it=>it.slot==='off'?canShield():(it.slot!=='weapon'||!it.wt||C().wt.includes(it.wt));
-const maxHp=()=>Math.round((80+S.lv*20+eqv('head')*4+(eqv('acc1')+eqv('acc2'))*3+st('vit')*8+bon('hp'))*C().hp*(1+pv('hpp')/100));
+const maxHp=()=>Math.round((80+S.lv*20+eqv('head')*4+(eqv('acc1')+eqv('acc2'))*3+st('vit')*8+bon('hp'))*C().hp*(1+pv('hpp')/100)*(1+(petBuff.hp||0)/100));
 const atk=()=>Math.round((4+S.lv*2+eqv('weapon')+(S.eq.off&&S.eq.off.slot==='weapon'?eqv('off')*.6:0)+st(C().main)*1.5+(st('dex')+st('luk'))*.25)*C().atk*(1+(pv('atk')+bon('atk')+(tb.atk||0)+(petBuff.atk||0))/100)*(1+collDmg()/100));
 const matk=()=>Math.round((4+S.lv*2+eqv('weapon')*.8+st('int')*1.5+st('dex')*.25)*C().atk*(1+(pv('matk')+bon('matk')+(tb.matk||0)+(petBuff.matk||0))/100)*(1+collDmg()/100));
 const aspd=()=>Math.max(.2,.85*C().aspd*(1-Math.min(.5,st('agi')*.006))/(1+(pv('aspd')+bon('aspd')+(tb.aspd||0))/100));
@@ -931,7 +989,11 @@ const shortNum=n=>{n=Math.round(Number(n)||0);const a=Math.abs(n),u=(v,s)=>{cons
   if(a>=1e3)return Math.abs(Math.round(n/100)/10)>=1000?u(n/1e6,'M'):u(n/1e3,'K');
   return String(n)};
 const fullNum=()=>typeof S!=='undefined'&&S&&S.dmgShort===false;
-const damageFloat=(x,y,z,amount,critical=false,incoming=false)=>addFloat(x,y,z,fullNum()?String(Math.round(amount)):shortNum(amount),null,false,incoming?'incoming':critical?'critical':'damage');
+// Two settings decide what a number looks like: 'Show damage numbers' (S.dmgShow) hides every
+// combat float when it is off, and 'Short form' (S.dmgShort) switches between 100K/1M and the
+// full digits. Reward floats (Zeny, EXP) follow the short/full style but are never hidden.
+const numTxt=n=>fullNum()?String(Math.round(n)):shortNum(n);
+const damageFloat=(x,y,z,amount,critical=false,incoming=false)=>{if(S&&S.dmgShow===false)return;addFloat(x,y,z,numTxt(amount),null,false,incoming?'incoming':critical?'critical':'damage')};
 // Skill labels track the moving player, rather than floating away from the cast location.
 const skillNameFloat=(name,slot=0)=>floats.push({x:pl.x,y:3.15+slot*.38,z:pl.z,txt:name,life:1.15,kind:'skill',anchor:'hero'});
 function log(m,cls){logs.push({m,cls});if(logs.length>80)logs.shift();
@@ -995,7 +1057,7 @@ function earnZeny(amount){const n=Math.max(0,Number(amount)||0);S.zeny+=n;zenyEa
 function kill(o){const keep=mob;if(o)mob=o;if(!mob||!mobs.includes(mob)){mob=keep;return}
   const g=gx();S.kills++;S.kl++;qProg('kill');if(mob.boss)qProg('boss');
   const z=Math.round(mob.zeny*(1+pv('zeny')/100))*g,xp=Math.round(mob.exp*expRate());earnZeny(z);S.exp+=xp;addJob(Math.round(Math.round(mob.exp*.7)*expRate()));pend=[];
-  addFloat(mob.x,2.4,mob.z,'+'+z+'z','#ffd23f');log(`${mob.n} defeated! +${xp.toLocaleString()} EXP, +${z.toLocaleString()} Zeny`);
+  addFloat(mob.x,2.4,mob.z,'+'+numTxt(z)+'z','#ffd23f');log(`${mob.n} defeated! +${xp.toLocaleString()} EXP, +${z.toLocaleString()} Zeny`);
   // Drop odds are the field's own numbers: nothing on the character scales them, so LUK cannot
   // bend the tables (it still raises ATK through the crit/DEX side of the stat sheet, which is
   // what it is for).
@@ -1003,7 +1065,7 @@ function kill(o){const keep=mob;if(o)mob=o;if(!mob||!mobs.includes(mob)){mob=kee
   if(Math.random()*100<mob.cardCh){const g2=mob.card.g;drops.push(mkDrop({card:1,id:uid(),n:mob.card.n,g:g2,stat:mob.card.stat,v:cardVal(g2,mob.card.stat)}))}
   if(mob.ore)for(const o of['ori','elu'])if(Math.random()<mob.oreCh)drops.push(mkDrop({ore:o,id:uid(),n:ORE[o]}));
   if(Math.random()*100<(mob.boss?5:.3)){const r=pickW(PW[Math.min(S.mp,9)]),c=PETS.filter(x=>x.r===r),sp=PETS.indexOf(c[ri(0,c.length-1)]);
-    if(S.pets.length<40){S.pets.push({id:ri(1e6,9e6),sp,mut:0,eq:[0,0,0],skill:'',on:S.pets.filter(x=>x.on).length<3});log(`A ${RN[r]} pet followed you: ${PETS[sp].n}!`,'r'+RCL[r]);addFloat(mob.x,3,mob.z,'PET!','#ff9dff',true)}
+    if(S.pets.length<40){S.pets.push({id:ri(1e6,9e6),sp,mut:0,eq:[0,0,0],skills:[],on:S.pets.filter(x=>x.on).length<3});log(`A ${RN[r]} pet followed you: ${PETS[sp].n}!`,'r'+RCL[r]);addFloat(mob.x,3,mob.z,'PET!','#ff9dff',true)}
     else{const z=Math.floor(EGG*(.3+r*.4));earnZeny(z);log(`A ${RN[r]} ${PETS[sp].n} appeared but your pet collection is full (+${z}z).`)}}
   checkLevel();
   if(mob.boss||(S.lvl<10&&S.kl>=MPS)){mobs=[];S.kl=0;if(S.lvl<10&&S.lvl>=S.prog[S.mp]){S.prog[S.mp]=S.lvl+1;log(`${fieldName()} cleared! Stage ${S.lvl+1} unlocked.`,'r3');if(S.adv&&S.lvl<10){S.lvl++}}}
@@ -1208,8 +1270,9 @@ const V={
   <div class="hair-preview-card"><div class="hair-preview-stage"><canvas id="hairPreview" width="126" height="134" role="img" aria-label="Live ${sex.toLowerCase()} ${S.cls} hair preview"></canvas><span class="hair-preview-loading" id="hairPreviewLoading">Loading sprite…</span></div><div class="hair-preview-info"><span class="eyebrow">LIVE PREVIEW</span><b>${S.cls}</b><span>${sex} &middot; front idle pose</span><span class="hair-style-label">Style ${hair} of 19</span></div></div>
   <div class="row hair-controls" style="margin-top:4px;align-items:center;gap:8px"><button data-a="hair" data-v="-1" aria-label="Previous hairstyle" title="Previous hairstyle">◀</button><span>Hair style ${hair} / 19</span><button data-a="hair" data-v="1" aria-label="Next hairstyle" title="Next hairstyle">▶</button></div><small>Preview updates here and on your character as you change hair or gender.</small>
     <div class="hd" style="margin-top:10px">Damage numbers</div>
-    <div class="row"><button data-a="dmgfmt" data-v="short" class="${S.dmgShort!==false?'on':''}" aria-pressed="${S.dmgShort!==false}">Short &middot; 100K / 1M</button><button data-a="dmgfmt" data-v="full" class="${S.dmgShort===false?'on':''}" aria-pressed="${S.dmgShort===false}">Full &middot; 100,000</button></div>
-    <small>How the floating combat numbers read. Normal, critical and incoming damage all follow this setting; it is saved with your account.</small>
+    <div class="row"><button data-a="dmgshow" data-v="on" class="${S.dmgShow!==false?'on':''}" aria-pressed="${S.dmgShow!==false}">Show: On</button><button data-a="dmgshow" data-v="off" class="${S.dmgShow===false?'on':''}" aria-pressed="${S.dmgShow===false}">Show: Off</button></div>
+    <div class="row" style="margin-top:4px"><button data-a="dmgfmt" data-v="short" class="${S.dmgShort!==false?'on':''}" aria-pressed="${S.dmgShort!==false}">Short &middot; 100K / 1M</button><button data-a="dmgfmt" data-v="full" class="${S.dmgShort===false?'on':''}" aria-pressed="${S.dmgShort===false}">Full &middot; 100,000</button></div>
+    <small>The first switch shows or hides the floating combat numbers; the second picks how they read (100K / 1M, or every digit). Normal, critical and incoming damage all follow both, and both are saved with your account.</small>
     <div class="hd" style="margin-top:10px">Gameplay</div><label><input type="checkbox" data-a="auto" ${S.auto!==false?'checked':''}> Auto-equip better gear</label><br><label><input type="checkbox" data-a="adv" ${S.adv!==false?'checked':''}> Auto-advance to next level (turn off to farm)</label>
     <p><small>Drag the view to rotate, scroll to zoom. Hotkeys: M S J K B E C Q R L P O, Esc to close.</small></p><button class="full" data-a="reset">Erase this account's save &amp; restart</button><button class="full" data-a="logout">Logout</button>`},
   gm(){return`<div class="hd">GM multiplier (EXP, Job EXP, Zeny, quests)</div><div class="row">${[1,10,100,1000].map(x=>`<button data-a="gmx" data-v="${x}" ${S.gmx===x?'style="background:#ffe08a"':''}>x${x}</button>`).join('')}</div>
@@ -1253,10 +1316,14 @@ function renderQ(){const e=$('qp');if(!S){e.style.display='none';return}e.style.
   e.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:center;font-weight:bold"><span>📜 Quests</span><button data-q="t" style="padding:0 6px">${qOpen?'&minus;':'+'}</button></div>`+(qOpen?(S.q||[]).map((q,i)=>`<div style="margin-top:5px"><div>${qTxt(q)}</div><div class="pbar"><i style="width:${Math.min(100,q.prog/q.goal*100)}%"></i></div><div style="display:flex;justify-content:space-between;align-items:center"><small>${q.prog}/${q.goal} &middot; ${(q.z||0).toLocaleString()}z &middot; ${(q.xp||0).toLocaleString()}xp</small>${q.prog>=q.goal?`<button data-q="c${i}">Claim</button>`:''}</div></div>`).join(''):'')}
 $('qp').onclick=e=>{const b=e.target.closest('[data-q]');if(!b)return;const v=b.dataset.q;if(v==='t'){qOpen=!qOpen;renderQ()}else ACT.claim(v.slice(1))};
 function refineUI(it,k){const r=it.r||0,o=it.slot==='weapon'?'ori':'elu',c=refCost(it);return`<div class="sec">Refine</div><small>${SLOTS[it.slot].stat} +${ev(it)} &rarr; +${Math.round(it.val*(1+(r+1)*.15))} &middot; ${r>=10?'MAX':'Success '+refCh(it)+'% &middot; '+c.toLocaleString()+'z + 1 '+ORE[o]+' (you have '+S.ore[o]+')'}</small><div class="row" style="margin-top:4px"><button data-a="refine" data-v="${k}" ${r>=10||S.ore[o]<1||S.zeny<c?'disabled':''}>Refine</button></div>`}
-function petDetail(p){const sp=PETS[p.sp],g=p.mut,sk=p.sk||[1,2,3],ps=PET_SKILLS.find(x=>x.id===p.skill);
+function petDetail(p){const sp=PETS[p.sp],g=p.mut,sk=p.sk||[1,2,3],SL=petSkills(p);
   return`<div class="mob-card" style="margin-top:8px"><div class="hd r${RCL[sp.r]}">${petIcon(sp,true)} ${sp.n} <small>${RN[sp.r]}</small></div><small>Mutation: <b>${g?'Grade '+g+' (x'+MUT[g]+' dmg)':'none (x1)'}</b> &middot; ${petDmg(p).toLocaleString()} dmg every ${petInt(p).toFixed(2)}s</small>`
   +p.eq.map((t,i)=>`<div class="slot"><span><b>${PEQ[i].n} &middot; Level ${t}/${PT.length}</b> <small>(${t?PT[t-1]:'Untrained'})</small><br><small>${PEQ[i].d(t)}</small>${t<PT.length?`<br><small class="r0">${Math.round(PTG[t]*100)}% upgrade success &middot; ${t+2<=PT.length?Math.round(GREAT*100)+'% double upgrade chance on success':'double upgrade unavailable at this level'}</small>`:''}</span><button data-a="peq" data-v="${p.id}:${i}" ${t>=PT.length||S.zeny<peqCost(t)?'disabled':''}>${t>=PT.length?'MAX':'🎲 '+peqCost(t).toLocaleString()+'z'}</button></div>`).join('')
-  +`<div class="sec">Gacha pet skill</div><small>${ps?`<b>${ps.icon} ${ps.n}</b> &middot; ${ps.kind==='buff'?'Player buff':ps.kind==='aoe'?'AoE attack':'Single-target attack'} &middot; ${ps.desc}`:'No skill yet. Roll one of six random pet skills.'}</small><div class="row" style="margin-top:4px"><button data-a="pskill" data-v="${p.id}" ${S.zeny<petSkillCost(p)?'disabled':''}>🎲 ${ps?'Reroll skill':'Gacha skill'} (${petSkillCost(p).toLocaleString()}z)</button></div><small>Six equally weighted skills: 2 player buffs, 2 AoE attacks, 2 single-target attacks (1/6 each).</small>`
+  +`<div class="sec">Pet skills &middot; 2 slots</div>`
+  +[0,1].map(i=>{const q=SL[i];return q?`<small><b>${q.icon} ${q.n}</b> &middot; ${q.kind==='buff'?'Player buff':q.kind==='aoe'?'AoE attack':'Single-target attack'} &middot; ${q.desc}</small>`:`<small>Slot ${i+1}: <b class="r0">empty</b> - one gacha fills both slots.</small>`}).join('<br>')
+  +`<div class="row" style="margin-top:4px"><button data-a="pskill" data-v="${p.id}" ${S.zeny<petSkillCost(p)?'disabled':''}>🎲 ${SL.length?'Reroll both skills':'Gacha both skills'} (${petSkillCost(p).toLocaleString()}z)</button></div>`
+  +`<small>Eight equally weighted skills: 4 player buffs, 2 AoE attacks, 2 single-target attacks. One roll fills both slots and never repeats a skill; a pet uses one skill every ${PETGAP}s.</small>`
+  +`<small style="display:block;margin-top:4px">Player buffs last 30s on a 60s cooldown and <b>never stack</b> - while one is up another pet's copy is ignored, and the ATK and MATK buffs cannot run at the same time.</small>`
   +`<div class="row" style="margin-top:6px"><button data-a="pon" data-v="${p.id}">${p.on?'Remove from battle':'Send to battle'}</button><button data-a="prel" data-v="${p.id}">Release</button></div><div class="sec">Mutation</div>`
   +`<div class="row"><button data-a="proll" data-v="${p.id}" ${busy(p)?'disabled':''}>🎲 Roll (${rollCost(p).toLocaleString()}z)</button><button data-a="pauto" data-v="${p.id}" ${p.roll||(rollingSet.has(p.id)&&!autoSet.has(p.id))?'disabled':''}>${autoSet.has(p.id)?'⏹ Stop auto':'🔁 Auto roll'}</button></div>`
   +`<small>Auto-roll: tap a grade to skip it (✕) or stop on it (✓)</small><div class="row gt">${[1,2,3,4,5,6].map(x=>`<button data-a="psk" data-v="${p.id}:${x}" class="${sk.includes(x)?'':'on'}">G${x} ${sk.includes(x)?'✕':'✓'}</button>`).join('')}</div>`
@@ -1302,7 +1369,10 @@ const ACT={
   sellcard:id=>{const i=S.cards.findIndex(c=>String(c.id)===id);if(i<0)return;const c=S.cards.splice(i,1)[0];earnZeny(c.v*150);ui();save()},
   refine:k=>refine(k),sub:v=>{const[t,k]=v.split(':');sub[t]=k;renderWin()},selp:v=>{selP=+v;renderWin()},
   pon:id=>{const p=gp(id);if(!p)return;if(p.on)p.on=false;else if(S.pets.filter(x=>x.on).length<3)p.on=true;else log('Only 3 pets can fight at once. Remove one first.');ui();save()},
-  pskill:id=>{const p=gp(id);if(!p)return;const c=petSkillCost(p);if(S.zeny<c){log('Not enough Zeny for a pet skill roll.');ui();return}S.zeny-=c;const skill=rollPetSkill();p.skill=skill.id;delete petSkillCd[p.id];log(`${PETS[p.sp].n} learned ${skill.n}: ${skill.desc}.`,'r3');ui();save()},
+  pskill:id=>{const p=gp(id);if(!p)return;const c=petSkillCost(p);if(S.zeny<c){log('Not enough Zeny for a pet skill roll.');ui();return}S.zeny-=c;const[a,b]=rollPetSkills();p.skills=[a,b];
+    clearPetCd(p.id);
+    const na=PET_SKILLS.find(s=>s.id===a),nb=PET_SKILLS.find(s=>s.id===b);
+    log(`${PETS[p.sp].n} learned ${na.n} + ${nb.n} (one gacha rolls both slots).`,'r3');ui();save()},
   psk:v=>{const[id,g]=v.split(':'),p=gp(id);if(!p)return;const a=(p.sk||[1,2,3]).slice(),i=a.indexOf(+g);if(i>=0)a.splice(i,1);else a.push(+g);p.sk=a;ui();save()},ssel:v=>{selS=v;renderWin()},
   // Clicking an equipment slot highlights the fitting items in the REAL Bag window (it is opened
   // if it is not already up) instead of popping a second list over the paper doll.
@@ -1321,10 +1391,11 @@ const ACT={
     ui();save()},
   proll:id=>{const p=gp(id);if(!p||p.roll||rollingSet.has(p.id))return;rollOnce(p,false,g=>{p.roll=g;log(`Mutation roll: Grade ${g} (x${MUT[g]})`,g>=4?'r4':'r0');ui();save()})},pauto:id=>{const p=gp(id);if(!p)return;if(autoSet.has(p.id)){autoSet.delete(p.id);ui();return}if(p.roll||rollingSet.has(p.id))return;if((p.sk||[1,2,3]).length>=6){log('Un-skip at least one grade to auto-roll.');return}autoSet.add(p.id);autoRoll(p)},
   pkeep:id=>{const p=gp(id);if(p){p.mut=p.roll;p.roll=0;ui();save()}},pdisc:id=>{const p=gp(id);if(p){p.roll=0;ui();save()}},
-  prel:id=>{const p=gp(id);if(!p)return;const z=Math.floor(EGG*.3);ask(`Release ${PETS[p.sp].n}? You get ${z}z back.`,()=>{S.pets=S.pets.filter(x=>x!==p);autoSet.delete(p.id);delete petSkillCd[p.id];earnZeny(z);ui();save()})},
+  prel:id=>{const p=gp(id);if(!p)return;const z=Math.floor(EGG*.3);ask(`Release ${PETS[p.sp].n}? You get ${z}z back.`,()=>{S.pets=S.pets.filter(x=>x!==p);autoSet.delete(p.id);clearPetCd(p.id);earnZeny(z);ui();save()})},
   claim:i=>{const q=S.q[+i];if(q&&q.prog>=q.goal){qScale(q);earnZeny(q.z||0);S.exp+=(q.xp||0);log(`Quest complete! +${(q.z||0).toLocaleString()}z, +${(q.xp||0).toLocaleString()} EXP`,'r3');S.q[+i]=newQuest(q.type);checkLevel();ui();save()}},
   auto:()=>{S.auto=S.auto===false;ui()},adv:()=>{S.adv=S.adv===false;ui()},
-  dmgfmt:v=>{S.dmgShort=v!=='full';log('Damage numbers: '+(S.dmgShort?'short (100K / 1M)':'full (100,000)'));ui();save()},logout:()=>logout(),
+  dmgfmt:v=>{S.dmgShort=v!=='full';log('Damage numbers: '+(S.dmgShort?'short (100K / 1M)':'full (100,000)'));ui();save()},
+  dmgshow:v=>{S.dmgShow=v!=='off';log('Damage numbers '+(S.dmgShow?'shown':'hidden')+'.');ui();save()},logout:()=>logout(),
   hair:v=>{S.hair=(((S.hair|0)+(+v||1))%19+19)%19;heroKey='';ui();save()},
   sex:v=>{S.sex=v==='f'?'f':v==='m'?'m':(S.sex==='f'?'m':'f');heroKey='';log(`Appearance: ${S.sex==='f'?'female':'male'}.`);ui();save()},
   reset:()=>{ask('Erase this account save and start over?',()=>{const gm=S.gm;hudRate=null;zenyEarned=0;S=fresh();S.gm=gm;S.q=['kill','loot','boss'].map(newQuest);floats.forEach(f=>f.el&&f.el.remove());floats=[];drops=[];pend=[];mobs=[];mob=null;respawn=.3;logs=[];log('New adventure started.');ui();save()})},
@@ -1370,6 +1441,11 @@ function bars(){if(!S)return;
   $('kills').textContent=rates.kills.toFixed(1);
   $('kills').title=`Kills/min (last 60s, refreshed every second): ${rates.kills.toFixed(1)} · ${rates.seconds.toFixed(2)} kills/sec`;
   $('zenyRate').textContent=`Zeny earned: ${Math.round(rates.zeny).toLocaleString()}/min (last 60s)`;
+  // One chip per active pet buff, naming the pet that cast it - this is where the no-stacking
+  // rule is visible, next to the countdown.
+  const pbf=[['atk','&#9876; ATK +20%'],['matk','&#10022; MATK +20%'],['hp','&#128156; Max HP +20%'],['leech','&#129704; 5% leech']].filter(([k])=>petBuff[k]>0)
+    .map(([k,l])=>`<span class="pbf">${l} <i>${petBuffSrc[k]||'pet'}</i> ${Math.ceil(petBuff[k+'T'])}s</span>`).join('');
+  const hb=$('hudBuffs');if(hb){hb.style.display=pbf?'flex':'none';hb.innerHTML=pbf}
   $('hpb').style.width=hp+'%';$('hpb').classList.toggle('critical',hp<=30);
   $('hpPct').textContent=Math.round(hp)+'%';$('hpMeter').setAttribute('aria-valuenow',Math.round(hp));
   for(const[id,label,pct,lv]of[['job','Job Level',jp,j.jl],['base','Base Level',bp,S.lv]]){
@@ -1385,7 +1461,9 @@ function update(dt){
   if(!S)return;t+=dt;atkAnim=Math.max(0,atkAnim-dt*2.35);hitAnim=Math.max(0,hitAnim-dt*4);shake=Math.max(0,shake-dt*20);
   for(const k in skCd)skCd[k]=Math.max(0,skCd[k]-dt);
   for(const id in petSkillCd)petSkillCd[id]=Math.max(0,petSkillCd[id]-dt);
-  for(const stat of['atk','matk']){const key=stat+'T';if(petBuff[key]>0){petBuff[key]=Math.max(0,petBuff[key]-dt);if(!petBuff[key])petBuff[stat]=0}}
+  for(const id in petNote)petNote[id]=Math.max(0,petNote[id]-dt);
+  for(const stat of['atk','matk','hp','leech']){const key=stat+'T';if(petBuff[key]>0){petBuff[key]=Math.max(0,petBuff[key]-dt);
+    if(!petBuff[key]){petBuff[stat]=0;petBuffSrc[stat]='';if(stat==='hp')S.hp=Math.min(S.hp,maxHp())}}}
   if(pv('hpreg')&&S.hp<maxHp())S.hp=Math.min(maxHp(),S.hp+dt*maxHp()*pv('hpreg')/100);
   shots.forEach(s=>s.t+=dt*7);shots=shots.filter(s=>{if(s.t<1)return true;if(s.m)scene.remove(s.m);return false});
   tickSkillFx(dt);

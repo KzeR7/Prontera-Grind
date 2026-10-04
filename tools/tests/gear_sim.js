@@ -328,18 +328,26 @@ t('every slot is offered exactly what the class may wear, and nothing else', () 
   assert.strictEqual(inv.filter(it => G.slotAccepts('off', it) && it.slot === 'off').length, 0);
 });
 
-t('drop rarity is FIXED by map and stage: regular drops never Legendary, bosses always', () => {
+t('drop rarity is FIXED by MAP: a low map never rolls above its band, bosses are Legendary', () => {
   const bands = G.MAPTIER;
   assert.deepStrictEqual(Array.from(bands), [0, 0, 1, 1, 2, 2, 3, 3, 3, 3], 'the per-map rarity ladder changed');
   assert.strictEqual(G.BAGMAX, 1000, 'the bag holds 1000 items');
+  for (let m = 0; m < G.MAPS.length; m++) {
+    // every stage 1-9 of a map drops ONE rarity, the map's own: a stage can never climb
+    const perMap = [...new Set([1, 2, 3, 4, 5, 6, 7, 8, 9].map(l => G.dropTier(m, l)))];
+    assert.strictEqual(perMap.length, 1, G.MAPS[m].n + ' stages 1-9 must all sit on one band');
+    assert.strictEqual(perMap[0], bands[m], G.MAPS[m].n + ' stages 1-9 must be the map band');
+    assert.ok(bands[m] < 4, G.MAPS[m].n + ' can never be a Legendary field');
+  }
   for (let m = 0; m < G.MAPS.length; m++) for (let l = 1; l <= 10; l++) {
-    const want = l >= 10 ? 4 : Math.min(3, bands[m] + (l >= 8 ? 1 : 0));
+    const want = l >= 10 ? 4 : bands[m];
     assert.strictEqual(G.dropTier(m, l), want, G.MAPS[m].n + ' stage ' + l + ' band');
     assert.ok(want < 4 || l === 10, G.MAPS[m].n + ' stage ' + l + ' must not be Legendary');
     const F = G.fieldOf(m, l);
     assert.strictEqual(F.tier, want, G.MAPS[m].n + ' stage ' + l + ' field tier');
     F.mobs.forEach(mo => assert.strictEqual(mo.tier, want, 'every mob carries its field tier'));
     if (l === 10) assert.strictEqual(F.boss.tier, 4, 'the boss is always Legendary');
+    if (l < 10) assert.ok(F.tier <= bands[m], 'a stage cannot out-roll its own map');
     // and the real kill-loop roll lands on that band whatever the dice do
     G.S = { st: { luk: 99 }, eq: {} };
     for (const roll of [0, .01, .4, .99]) {
