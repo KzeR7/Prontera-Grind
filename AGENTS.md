@@ -1113,3 +1113,11 @@ assigned for feel rather than fidelity. While reworking that, two shipped bugs s
   * New checks execute the live boss equipment-drop loop, pet skill gacha and combat effects, pet upgrade success/double/failure, MATK damage and buffs, save normalization, pet release cleanup, UI upgrade labels, and every audited sprite-size class.
 * **Branches / PR:** `arena/01a10466-prontera-grind`; the PR link is recorded in the delivery entry immediately below.
 * **Known limits / follow-ups:** EXP hours are model estimates, not a real-time playtest; the model assumes 800 kills/hour. Divine Pride sprites require network access. The live preview is available for visual review and actual pacing checks.
+
+### 2026-10-04 — `balance-v23 delivery`
+* **What changed for the player:** no additional game changes; published the verified v23 update for review and merge.
+* **Files touched:** `AGENTS.md` only.
+* **Art:** none; no local sprite sheets or atlases changed.
+* **Tests:** documentation-only follow-up; results are listed in the v23 update entry immediately above.
+* **Branches / PR:** `arena/01a10466-prontera-grind` — https://github.com/KzeR7/Prontera-Grind/pull/9
+* **Known limits / follow-ups:** merge the PR to deploy; run an actual pacing/visual playtest using the preview.
