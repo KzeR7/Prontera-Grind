@@ -1305,3 +1305,18 @@ assigned for feel rather than fidelity. While reworking that, two shipped bugs s
     this entry deliberately does not touch them.
   * `Updates/map-sprites-v2/preview.html` still shows every prop at its shipped size next to the
     hero, and is the quickest way to judge the art outside the game.
+
+### 2026-10-04 — `kit-v26 delivery`
+* **What changed for the player:** no additional game changes; published the verified v26 map-kit
+  update for review and merge.
+* **Files touched:** `AGENTS.md` only.
+* **Art:** none; no sheets added, removed or rebuilt by this entry, and `tools/montage.py` was not
+  run.
+* **Tests:** documentation-only follow-up; the 13-suite results are listed in the `kit-v26` update
+  entry immediately above, and were re-run green before the game push.
+* **Branches / PR:** `arena/01a10549-prontera-grind` — https://github.com/KzeR7/Prontera-Grind/pull/10
+* **Known limits / follow-ups:** merge the PR to deploy through the normal GitHub/Cloudflare route;
+  then a real playtest pass over all ten maps is the thing the tests cannot do - judge Payon's
+  bamboo and mud trail, Amatsu's red bridge and torii, the Abyss dark lake and Louyang's jade
+  paddies in the live preview, and flag anything that reads wrong so the art pipeline (not the
+  game) can be re-run.
