@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Attack poses — Prontera Grind</title>
+<style>
+:root{--bg:#14161c;--panel:#1c1f28;--panel2:#232733;--line:#333a49;--ink:#e8ecf4;--dim:#9aa4b8;
+      --acc:#ffcf6b;--acc2:#7ad3ff;--ok:#7ee08a;--bad:#ff8f8f}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:13px/1.45 system-ui,Segoe UI,Roboto,sans-serif}
+header{position:sticky;top:0;z-index:6;background:var(--panel);border-bottom:1px solid var(--line);padding:8px 12px}
+header .line{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center}
+h1{font-size:15px;margin:0 12px 0 0;font-weight:700}
+h1 small{font-weight:400;color:var(--dim)}
+select,button{border-radius:5px;border:1px solid var(--line);background:var(--panel2);color:var(--ink);font:inherit;padding:3px 7px}
+button{cursor:pointer}
+button:hover{border-color:var(--acc2)}
+button.primary{border-color:var(--acc);color:var(--acc)}
+label.f{display:flex;gap:5px;align-items:center;color:var(--dim)}
+.pill{background:var(--panel2);border:1px solid var(--line);border-radius:20px;padding:1px 8px;font-size:11px;color:var(--dim)}
+main{display:grid;grid-template-columns:minmax(720px,1fr) 420px;gap:12px;padding:12px;align-items:start}
+@media (max-width:1200px){main{grid-template-columns:1fr}}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:10px}
+.views{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+@media (max-width:980px){.views{grid-template-columns:repeat(2,1fr)}}
+.view{background:var(--panel2);border:2px solid var(--line);border-radius:8px;padding:8px;cursor:pointer}
+.view.on{border-color:var(--acc)}
+.view.mirrored{opacity:.6}
+.view h3{margin:0 0 5px;font-size:13px;display:flex;justify-content:space-between;gap:4px;align-items:baseline}
+.view h3 em{font-style:normal;font-size:10px;color:var(--dim);font-weight:400}
+.view canvas.big{display:block;background:#0f1116;border:1px solid var(--line);border-radius:6px;image-rendering:pixelated;margin:0 auto;cursor:crosshair}
+.frames{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px;justify-content:center}
+.frames .fs{position:relative;border:2px solid var(--line);border-radius:5px;padding:1px;background:#0f1116;cursor:pointer}
+.frames .fs.on{border-color:var(--acc)}
+.frames .fs.empty{border-style:dashed}
+.frames .fs canvas{display:block;image-rendering:pixelated}
+.frames .fs i{position:absolute;left:0;bottom:0;font-style:normal;font-size:9px;color:var(--acc);background:#000a;padding:0 2px;border-radius:3px}
+.wrow{display:flex;justify-content:space-between;align-items:center;gap:6px;margin-top:5px;font-size:11px;color:var(--dim)}
+.wrow label{display:flex;gap:4px;align-items:center;cursor:pointer}
+.wrow .off{color:var(--bad)}
+.panel h3{margin:0 0 6px;font-size:13px}
+.hint{color:var(--dim);font-size:11px;margin:2px 0 8px}
+.hint b{color:var(--ink)}
+.headrow{display:flex;gap:6px;align-items:center;flex-wrap:wrap;font-size:11px;color:var(--dim);margin-top:8px}
+.headrow b{color:var(--ink)}
+.rowhead{font-size:11px;color:var(--dim);margin:8px 0 4px;border-top:1px solid var(--line);padding-top:6px}
+.cands{display:flex;flex-wrap:wrap;gap:6px}
+.cand{border:1px solid var(--line);border-radius:6px;background:#0f1116;padding:2px;cursor:pointer;text-align:center;position:relative}
+.cand:hover{border-color:var(--acc2)}
+.cand.sug{border-color:var(--ok)}
+.cand canvas{display:block;image-rendering:pixelated;margin:0 auto}
+.cand i{display:block;font-style:normal;font-size:10px;color:var(--acc2)}
+.cycle{border:1px solid var(--acc);color:var(--acc);border-radius:6px;padding:4px 8px;margin:0 6px 6px 0;background:#241f10}
+textarea{width:100%;height:74px;background:#0f1116;color:var(--ink);border:1px solid var(--line);border-radius:6px;
+          font:11px/1.4 ui-monospace,Menlo,monospace;padding:6px}
+</style>
+</head>
+<body>
+<script>
+// Runs first. Any script error - or a page that never draws - says so on screen instead of
+// leaving a black page.  (A file viewer does not run scripts at all; this reports that too.)
+(function(){
+  function paint(msg){
+    var host=document.body||document.documentElement,el=document.getElementById('pgFatal');
+    if(!el){el=document.createElement('div');el.id='pgFatal';
+      el.style.cssText='position:fixed;left:0;right:0;top:0;z-index:9999;background:#4a1620;color:#ffd9df;'+
+        'border-bottom:2px solid #ff8f8f;padding:10px 14px;font:13px/1.6 system-ui,Segoe UI,sans-serif;white-space:pre-wrap';
+      if(host.insertBefore)host.insertBefore(el,host.firstChild);else host.appendChild(el)}
+    el.textContent=msg;return el}
+  window.__pgFatal=paint;
+  window.onerror=function(m,src,l){
+    paint('This page hit an error while drawing:\n'+m+'   ('+String(src||'').split('/').pop()+':'+l+
+      ')\nSend this line back and it will be fixed.');return false};
+  window.addEventListener('DOMContentLoaded',function(){
+    setTimeout(function(){
+      if(window.__pgReady)return;
+      var d=(typeof window.__pgDiag==='function')?window.__pgDiag():'(no diagnostics)';
+      paint('This page is running, but nothing was drawn after 6 seconds.\n'+d+
+        '\nIf you are reading this inside a file viewer, it does not run scripts - open the page from the live preview instead.');},6000)});
+})();
+</script>
+
+<header>
+  <div class="line">
+    <h1>Attack poses <small>· Prontera Grind</small></h1>
+    <label class="f">Class <select id="cls"></select></label>
+    <label class="f">Gender <select id="sex"><option value="m">male</option><option value="f">female</option></select></label>
+    <label class="f">Hair <select id="hair"></select></label>
+    <button id="btnAuto">Fill from sheet</button>
+    <button id="btnCopy" class="primary">Copy my selection</button>
+    <span class="pill" id="status">loading…</span>
+    <span class="pill" id="diag"></span>
+  </div>
+  <div class="line" style="margin-top:6px">
+    <span class="f" id="mirrorSlot"></span>
+    <span class="hint" style="margin:0">
+      <b>Choose the attack poses.</b> Click a view, then click the picture you want: it fills that frame and
+      steps to the next one. <b>Click the same picture again to repeat it</b>, and leaving a frame empty is
+      fine — it holds the pose before it. Every figure in the sheet is offered, even ones that are not part
+      of an attack set.
+      <br><b>Heads:</b> the head is drawn in every picture and you can seat it by hand —
+      <b>drag anywhere in a picture</b>; the blue ring is the spot that moves, and the shaded box on the
+      selected view is the head's own pixels. This is per frame; “use this head on all 6 frames” copies it.
+      <br><b>S = he faces you (front). N = he faces away (back)</b> — he walks up the screen as N, so that is
+      where you see his back. The weapon is not part of this page: it is parked until the poses are
+      confirmed.
+      <br><b>This page starts from the owner’s saved standard</b> (the 2026-10-04 selection, backed up in
+      <code>tools/attack_selection.json</code>). Change anything you like — it is kept in this browser —
+      and <b>“↺ Back to the standard”</b> puts the whole page back to the saved selection.
+    </span>
+  </div>
+</header>
+
+<main>
+  <section class="card">
+    <div class="views" id="views"></div>
+  </section>
+  <section class="card panel" id="panel">
+    <div id="panelBody"></div>
+  </section>
+  <section class="card" style="grid-column:1/-1">
+    <div class="hint">Idle &amp; walk: filled from the sheet by me — nothing to do here.
+      Copy the box and send it back; only your attack poses and your head drags travel in it.</div>
+    <textarea id="out" spellcheck="false"></textarea>
+    <div style="display:flex;gap:8px;margin-top:6px;align-items:center">
+      <button id="btnCopy2" class="primary">Copy</button>
+      <button id="btnClearCls">Clear this class</button>
+      <button id="btnReset">↺ Back to the standard</button>
+      <span class="hint" id="copyMsg"></span>
+    </div>
+  </section>
+</main>
+
+<script src="../assets/sprite_pack_data.js"></script>
+<script src="sprite_picker_data.js"></script>
+<script src="sprite_picker_defaults.js"></script>
+<script>
+(function(){
+'use strict';
+var D=window.SPRITE_PICKER_DATA, PK=window.SPRITE_PACK;
+var statusEl=document.getElementById('status');
+if(!D||!PK){window.__pgFatal&&window.__pgFatal('The picker data did not load.\n'+
+  (D?'':'Missing pose data (sprite_picker_data.js). ')+(PK?'':'Missing head atlas (assets/sprite_pack_data.js). ')+
+  '\nUse tools/sprite_picker_standalone.html (everything in one file) or open from the preview.');
+  window.__pgReady=true;return}
+var CELL=D.cell, DIRS=D.dirs, MIRRORSRC={5:3,6:2,7:1};
+// What you actually see in each view - the letters alone are the confusing part.
+var SEE={'S':'front - he faces you','SW':'front, turned left - faces you','W':'side - faces left',
+  'NW':'back-left - faces away','N':'back - he faces away','NE':'back-right - faces away',
+  'E':'side - faces right','SE':'front, turned right - faces you'};
+function dirWord(d){return SEE[DIRS[d]]||DIRS[d]}
+// The head atlases are keyed 'male'/'female'; the gender select holds 'm'/'f'.  Without this
+// mapping headReady['m'] was always undefined and no head was ever drawn.
+function sexKey(){return st.sex==='f'?'female':'male'}
+// which pack body this class draws from (same order the game's packBodyFor uses)
+function packBodyName(){
+  var n=st.cls.toLowerCase().replace(/[^a-z0-9]+/g,'_').replace(/^_+|_+$/g,'');
+  if(window.SPRITE_PACK&&window.SPRITE_PACK.bodies&&window.SPRITE_PACK.bodies[n])return n;
+  var LINE={Novice:'novice',Swordman:'swordman',Knight:'swordman','Lord Knight':'swordman',
+    Mage:'mage',Wizard:'mage','High Wizard':'mage',Archer:'archer',Hunter:'archer',Sniper:'archer',
+    Thief:'thief',Assassin:'assassin','Assassin Cross':'assassin_cross',Acolyte:'aco',
+    Priest:'aco','High Priest':'aco',Merchant:'blacksmith',Blacksmith:'blacksmith',Whitesmith:'whitesmith'};
+  return LINE[st.cls]||'thief'}
+var CAP=6, ZOOM=1.55, BODY=CELL.body||96;
+var LSK='pg_attack_picker_v1';          // localStorage key (old weapon fields are ignored on load)
+
+// ---------- state ----------
+var st={cls:'Knight',sex:'m',hair:0,sel:{dir:0,frame:0},mirrorSide:true,atk:{},head:{}};
+try{var s0=JSON.parse(localStorage.getItem(LSK)||'null');
+  if(s0){for(var k in s0){if(k==='atk'||k==='head'||k==='weap'||k==='grips'||k==='weapon'||k==='pinned')continue;st[k]=s0[k]}
+    st.atk=s0.atk||{};st.head=s0.head||{};delete st.weap;delete st.grips}}
+catch(e){}
+var hadSaved=!!s0;
+// The owner's approved selection, shipped with the picker: it is the starting state on a
+// fresh browser, and the "load the owner's standard" button puts it back after any editing.
+// Poses come as ids; heads come as ABSOLUTE pivots in the game cell, so each is stored as a
+// drag away from whatever seat this build measures (v32's pack-anchor seat included).
+function applyDefaults(){
+  var DF=window.SPRITE_PICKER_DEFAULTS;
+  if(!DF||!DF.attack)return 0;
+  st.mirrorSide=true;var mc=document.getElementById('mirrorSide');if(mc)mc.checked=true;
+  var hits=0;
+  for(var cls in DF.attack){
+    var rows=DF.attack[cls],o={};
+    for(var d=0;d<8;d++)o[d]=[];
+    for(var v2=0;v2<5;v2++){
+      var ids=rows[String(v2)];if(!ids)continue;
+      o[v2]=ids.slice(0,CAP);
+      for(var i=0;i<o[v2].length;i++)if(o[v2][i]!=null)hits++;
+    }
+    st.atk[cls]=o;
+    for(var hk in st.head)if(hk.indexOf(cls+'|')===0)delete st.head[hk]      // this class starts clean
+  }
+  for(var k in DF.head){
+    var pr=k.split('|'),c2=pr[0],v3=+pr[1],f2=+pr[2],
+        pose=poseOfId(c2,st.atk[c2]&&st.atk[c2][v3]&&st.atk[c2][v3][f2]);
+    if(!pose)continue;                                    // no pose on that frame: nothing to seat
+    var b=baseSeat(pose,v3),hs=DF.head[k];
+    setHead(v3,f2,[hs[0]-Math.round(b[0]),hs[1]-Math.round(b[1])],c2)}
+  for(var k2 in DF.headDragMirror||{}){var p2=k2.split('|');
+    setHead(+p2[1],+p2[2],DF.headDragMirror[k2].slice(),p2[0])}
+  save();return hits}
+// put the page back to the shipped state: the owner's standard where there is one, and the
+// sheet's own suggestion for every class the standard does not cover yet (a new sheet, say).
+function resetAll(){
+  var std=applyDefaults(),DF=window.SPRITE_PICKER_DEFAULTS||{attack:{}};
+  for(var cn in D.classes)if(!DF.attack[cn])autoFillClass(cn);
+  st.mirrorSide=true;var mc=document.getElementById('mirrorSide');if(mc)mc.checked=true;
+  save()}
+function save(){try{localStorage.setItem(LSK,JSON.stringify(st))}catch(e){}}
+function atk(cls){if(!st.atk[cls]){var o={};for(var d=0;d<8;d++)o[d]=[];st.atk[cls]=o}return st.atk[cls]}
+function srcDir(d){return (st.mirrorSide&&d>=5)?MIRRORSRC[d]:d}
+function isMirrored(d){return !!(st.mirrorSide&&d>=5)}
+function editable(d){return !isMirrored(d)}
+// head seat: the owner drags the head in a picture, stored per class + view + attack frame.
+// Keyed on the DRAWN direction, so a mirrored view follows the view it mirrors.
+// Keyed per VIEW (not per drawn direction), so the mirrored views NE/E/SE can be seated on
+// their own without touching the view they mirror.
+function headAdjOf(cls,dir,fr){return st.head[cls+'|'+dir+'|'+fr]||[0,0]}
+function headAdj(dir,fr){return headAdjOf(st.cls,dir,fr)}
+// cls is optional: a drag belongs to the class on screen, but the shipped defaults seat
+// every class at once and must name each one (st.cls is just whatever is selected).
+function setHead(dir,fr,v,cls){var k=(cls||st.cls)+'|'+dir+'|'+fr;
+  if(v[0]||v[1])st.head[k]=[v[0],v[1]];else delete st.head[k]}
+
+// ---------- images ----------
+var headImg={},headReady={},sheetImg={},sheetReady={},sheetFail={};
+['male','female'].forEach(function(sx){var im=new Image();im.onload=function(){headReady[sx]=1;paint()};
+  im.src=PK.heads[sx];headImg[sx]=im});
+function sheetFor(cls){var d=D.classes[cls];if(!d)return;
+  if(!sheetImg[cls]){var im=new Image();im.onload=function(){sheetReady[cls]=1;paint()};
+    im.onerror=function(){sheetFail[cls]=d.file;paint()};
+    im.src=d.img?d.img:('../'+d.file);sheetImg[cls]=im}}
+function safe(cls){return !!(D.classes[cls]&&sheetReady[cls])}
+function poseOfId(cls,id){var d=D.classes[cls];return(id==null||!d)?null:d.poses[id]||null}
+
+// The head's own pixels, in cell coordinates: a box you can actually see, instead of a
+// 64x64 square that is mostly empty space.  Scanned once per sex+view+hair style.
+// The head art for a view: the head atlas draws all 8 directions itself, NE/E/SE included,
+// and the game reads that same column (index.html: g.drawImage(head, d*64, ...)), so we read
+// it too.  Do NOT flip the source view's head instead - the sheet's mirrored columns are
+// separate art (measured: mean channel diff 3.4-6.6 against a pixel flip), and a left-facing
+// W head sitting on a right-facing E body is exactly what made NE/E/SE look wrong.
+function headTile(dir){
+  var key=sexKey()+'|'+dir+'|'+st.hair;
+  if(headTileCache[key])return headTileCache[key];
+  var c=document.createElement('canvas');c.width=64;c.height=64;
+  var g=c.getContext('2d');g.imageSmoothingEnabled=false;
+  g.drawImage(headImg[sexKey()],(dir|0)*64,st.hair*64,64,64,0,0,64,64);
+  headTileCache[key]=c;return c}
+var headBoxCache={},headTileCache={};
+function headBox(dir,fr){
+  var key=sexKey()+'|'+dir+'|'+st.hair;
+  if(headBoxCache[key]!==undefined)return headBoxCache[key];
+  var out=null;
+  try{
+    var c=document.createElement('canvas');c.width=64;c.height=64;
+    var g=c.getContext('2d');g.imageSmoothingEnabled=false;
+    g.drawImage(headTile(dir),0,0,64,64,0,0,64,64);
+    var px=g.getImageData(0,0,64,64).data,x0=64,y0=64,x1=-1,y1=-1;
+    for(var y=0;y<64;y++)for(var x=0;x<64;x++){if(px[(y*64+x)*4+3]>8){
+      if(x<x0)x0=x;if(x>x1)x1=x;if(y<y0)y0=y;if(y>y1)y1=y}}
+    if(x1>=x0&&y1>=y0)out=[x0,y0,x1,y1]}
+  catch(e){out=null}                                  // no getImageData: fall back to the pivot only
+  headBoxCache[key]=out;return out}
+function markHead(g,pose,dir,fr,hs){
+  var box=headBox(dir,fr),hm=headAdj(dir,fr),
+      col=(hm[0]||hm[1])?'rgba(122,211,255,.95)':'rgba(122,211,255,.55)';
+  g.save();g.setLineDash([]);g.lineWidth=1;g.strokeStyle='#0b0d12';
+  if(box){
+    var x=Math.round(hs[0]-32+box[0]),y=Math.round(hs[1]-48+box[1]),
+        w=box[2]-box[0]+1,h=box[3]-box[1]+1;
+    g.globalAlpha=.35;g.fillStyle='#7ad3ff';g.fillRect(x,y,w,h);g.globalAlpha=1;
+    g.strokeRect(x-.5,y-.5,w,h)}
+  // the seat itself: a ring, plus a cross you can aim at
+  g.strokeStyle=col;g.beginPath();g.arc(Math.round(hs[0])+.5,Math.round(hs[1])+.5,5,0,7);g.stroke();
+  g.beginPath();g.moveTo(Math.round(hs[0])-9,Math.round(hs[1])+.5);g.lineTo(Math.round(hs[0])+9,Math.round(hs[1])+.5);
+  g.moveTo(Math.round(hs[0])+.5,Math.round(hs[1])-9);g.lineTo(Math.round(hs[0])+.5,Math.round(hs[1])+9);g.stroke();
+  g.restore()}
+
+// Where the head pivot sits in the game's 96x96 cell.
+//
+// For a pose the game pack also carries, this is the pack's OWN anchor for the DRAWN
+// direction - the exact number the game seats the head with, NE/E/SE included (the pack
+// anchors those on its own mirrored art, so we read that out instead of mirroring the source
+// number ourselves; the pack rejects stub readings that are outliers for their direction, and
+// a raised fist had been mistaken for the neck here, which is why the head sat ~11 px off on
+// attack poses).
+// Anything else falls back to the measured seat, scaled and mirrored the way the pack does it.
+function baseSeat(pose,dir){
+  var PK=window.SPRITE_PACK, body=packBodyName(), drawn=srcDir(dir);
+  if(PK&&PK.bodies&&PK.bodies[body]&&pose.anim!=null&&pose.frame!=null&&pose.dir===drawn){
+    var rows=PK.bodies[body].anchors[pose.anim];
+    var an=rows&&rows[dir]&&rows[dir][pose.frame];       // the drawn view's own anchor (game math)
+    if(an)return an.slice()}
+  var s=Math.min(1,90/pose.w,88/pose.h),w=Math.max(1,Math.round(pose.w*s)),h=Math.max(1,Math.round(pose.h*s)),
+      x=Math.floor((BODY-w)/2)+pose.seat[0]*s;
+  if(isMirrored(dir))x=BODY-x;                           // a mirrored body takes a mirrored seat
+  return [x, CELL.feet-h+pose.seat[1]*s]}
+function headSpot(pose,dir,fr,cls){
+  if(!pose)return null;
+  var a=baseSeat(pose,dir), adj=headAdjOf(cls||st.cls,dir,fr);   // cls: exporting another class
+  return[a[0]+adj[0], a[1]+adj[1]]}
+function packedCell(pose,dir,fr,plain){
+  var c=document.createElement('canvas');c.width=BODY;c.height=BODY;
+  var g=c.getContext('2d');g.imageSmoothingEnabled=false;
+  if(!pose||!safe(st.cls))return c;
+  var s=Math.min(1,90/pose.w,88/pose.h),w=Math.max(1,Math.round(pose.w*s)),h=Math.max(1,Math.round(pose.h*s)),
+      ox=Math.floor((BODY-w)/2),oy=CELL.feet-h;
+  g.drawImage(sheetImg[st.cls],pose.x,pose.y,pose.w,pose.h,ox,oy,w,h);
+  if(isMirrored(dir)){var m=document.createElement('canvas');m.width=BODY;m.height=BODY;
+    var mg=m.getContext('2d');mg.imageSmoothingEnabled=false;mg.translate(BODY,0);mg.scale(-1,1);mg.drawImage(c,0,0);
+    c=m}
+  var hs=headSpot(pose,dir,fr);
+  if(!plain&&headReady[sexKey()]&&hs){g=c.getContext('2d');
+    g.drawImage(headTile(dir),Math.round(hs[0]-32),Math.round(hs[1]-48))}
+  return c}
+
+// ---------- the view preview ----------
+var tick=0;
+function drawView(cv,dir){
+  var g=cv.getContext('2d');g.setTransform(1,0,0,1,0,0);g.imageSmoothingEnabled=false;
+  g.fillStyle='#0f1116';g.fillRect(0,0,cv.width,cv.height);g.save();g.scale(ZOOM,ZOOM);
+  var sd=srcDir(dir), ids=atk(st.cls)[sd], frame=Math.min(st.sel.dir===dir?st.sel.frame:0,CAP-1),
+      pose=poseOfId(st.cls,ids[frame]);
+  if(!safe(st.cls)||!pose){
+    g.fillStyle='#3d465a';g.font='12px system-ui,Segoe UI,sans-serif';g.textAlign='center';
+    g.fillText(sheetFail[st.cls]?'sheet did not load':(safe(st.cls)?'no pose — pick one':'loading sheet…'),CELL.w/2,CELL.h/2);
+    g.textAlign='left';g.restore();return}
+  g.save();g.translate(CELL.padL,CELL.padT);        // everything below is in body-cell pixels
+  g.drawImage(packedCell(pose,dir,frame,false),0,0);
+  var hs=headSpot(pose,dir,frame);
+  if(hs&&st.sel.dir===dir)markHead(g,pose,dir,frame,hs);      // so you can see what you are moving
+  g.strokeStyle='#2b3242';g.lineWidth=1;
+  g.beginPath();g.moveTo(0,CELL.pivotY+.5);g.lineTo(CELL.w,CELL.pivotY+.5);g.stroke();
+  g.beginPath();g.moveTo(CELL.pivotX+.5,0);g.lineTo(CELL.pivotX+.5,CELL.pivotY);g.stroke();
+  g.restore();g.restore()}
+
+// ---------- views grid ----------
+var viewsEl=document.getElementById('views');
+function renderViews(){
+  viewsEl.innerHTML='';
+  var A=atk(st.cls);
+  for(var d=0;d<8;d++){
+    var card=document.createElement('div');
+    card.className='view'+((st.sel.dir===d)?' on':'')+(isMirrored(d)?' mirrored':'');
+    var set=0;for(var i=0;i<CAP;i++)if(A[srcDir(d)][i]!=null)set++;
+    var h=document.createElement('h3');
+    h.innerHTML='<span>'+d+' · '+DIRS[d]+'</span><em>'+dirWord(d)+(isMirrored(d)?(' · mirror of '+DIRS[srcDir(d)]):'')+'</em>';
+    card.appendChild(h);
+    var cv=document.createElement('canvas');cv.className='big';
+    cv.width=CELL.w*ZOOM;cv.height=CELL.h*ZOOM;
+    card.appendChild(cv);
+    var fr=document.createElement('div');fr.className='frames';
+    for(var f2=0;f2<CAP;f2++){
+      var el=document.createElement('div');
+      el.className='fs'+(f2===(st.sel.dir===d?st.sel.frame:0)?' on':'')+(A[srcDir(d)][f2]==null?' empty':'');
+      var cv2=document.createElement('canvas');cv2.width=20;cv2.height=27;
+      var g2=cv2.getContext('2d');g2.imageSmoothingEnabled=false;
+      var p2=poseOfId(st.cls,A[srcDir(d)][f2]);
+      if(p2&&safe(st.cls))g2.drawImage(sheetImg[st.cls],p2.x,p2.y,p2.w,p2.h,0,0,20,27);
+      el.appendChild(cv2);
+      var n2=document.createElement('i');n2.textContent=f2+1;el.appendChild(n2);
+      el.title=A[srcDir(d)][f2]==null?'frame '+(f2+1)+' — empty (keeps the previous frame)':'frame '+(f2+1);
+      el.onclick=function(dd,ff){return function(ev){ev.stopPropagation();st.sel={dir:dd,frame:ff};save();paint()}}(d,f2);
+      fr.appendChild(el)}
+    card.appendChild(fr);
+    var row=document.createElement('div');row.className='wrow';
+    var info=document.createElement('span');
+    var sameAs='';
+    for(var d3=0;d3<5;d3++){
+      if(d3===srcDir(d)||!editable(d3))continue;
+      var other=atk(st.cls)[d3];
+      if(other.length&&JSON.stringify(other.slice(0,CAP))===JSON.stringify(A[srcDir(d)].slice(0,CAP))){sameAs=DIRS[d3];break}}
+    info.innerHTML=(set?(set+' of '+CAP+' frames picked'):
+      '<span class="off">nothing picked — the sheet\'s own picks are used</span>')+
+      (sameAs?' · <b>same as '+sameAs+'</b>':'');
+    row.appendChild(info);
+    card.appendChild(row);
+    card.onclick=function(dd){return function(){
+      if(!editable(dd)){statusEl.textContent='view '+dd+' reuses '+DIRS[srcDir(dd)]+' — untick “mirror” to edit it separately';return}
+      st.sel={dir:dd,frame:st.sel.dir===dd?st.sel.frame:0};save();paint()}}(d);
+    viewsEl.appendChild(card)}
+  var cvs=viewsEl.querySelectorAll('canvas.big');
+  for(var v=0;v<cvs.length;v++){
+    drawView(cvs[v],v);
+    (function(cv2,dd){cv2.addEventListener('mousedown',function(ev){startDrag(ev,dd,cv2)})})(cvs[v],v)}
+}
+var drag=null;
+function redrawCard(dir){
+  var cvs=viewsEl.querySelectorAll('canvas.big');
+  if(cvs[dir])drawView(cvs[dir],dir)}
+// Dragging anywhere in a picture seats that view's head - there is nothing else to drag, so
+// there is no small target to hit.  The ring in the picture is the spot that moves.
+function startDrag(ev,dir,cv){
+  if(ev.button!==undefined&&ev.button!==0)return;      // the head can be seated on ANY view
+  var frame=(st.sel.dir===dir?st.sel.frame:0);
+  if(poseOfId(st.cls,atk(st.cls)[srcDir(dir)][frame])==null)return;
+  ev.preventDefault();
+  st.sel={dir:dir,frame:frame};
+  var base=headAdj(dir,frame),x0=ev.clientX,y0=ev.clientY;
+  drag='head';
+  function move(e){
+    var dx=Math.round(base[0]+(e.clientX-x0)/ZOOM), dy=Math.round(base[1]+(e.clientY-y0)/ZOOM);
+    setHead(dir,frame,[dx,dy]);redrawCard(dir);
+    statusEl.textContent='head '+(dx>=0?'+':'')+dx+','+(dy>=0?'+':'')+dy+' px on frame '+(frame+1);
+  }
+  function up(){window.removeEventListener('mousemove',move);window.removeEventListener('mouseup',up);drag=null;save();paint()}
+  window.addEventListener('mousemove',move);window.addEventListener('mouseup',up);
+}
+
+// ---------- pose picker ----------
+var panelBody=document.getElementById('panelBody');
+function renderPanel(){
+  panelBody.innerHTML='';
+  var dir=st.sel.dir, sd=srcDir(dir), A=atk(st.cls)[sd], frame=Math.min(st.sel.frame,CAP-1);
+  var head=document.createElement('h3');
+  head.textContent='Attack · '+DIRS[dir]+' ('+dirWord(dir)+')'+(isMirrored(dir)?'  (mirrors '+DIRS[sd]+')':'')+' — frame '+(frame+1)+' of '+CAP;
+  panelBody.appendChild(head);
+  {                                                    // the head the owner can seat by hand
+    var hv=headAdj(dir,frame),mvd=!!(hv[0]||hv[1]);
+    var hrow=document.createElement('div');hrow.className='headrow';
+    var hl=document.createElement('span');
+    hl.innerHTML='<b>Head</b> '+(mvd?('moved '+(hv[0]>0?'+':'')+hv[0]+', '+(hv[1]>0?'+':'')+hv[1]+' px'):'as measured')+
+      ' — <b>drag anywhere in the picture</b> to seat the head; the ring marks the spot that moves';
+    hrow.appendChild(hl);
+    var hr=document.createElement('button');hr.textContent='↺ reset head';
+    hr.title='put this frame head back where the sheet measures it';
+    hr.onclick=function(){setHead(dir,frame,[0,0]);save();paint()};
+    hrow.appendChild(hr);
+    var ha=document.createElement('button');ha.textContent='use this head on all 6 frames';
+    ha.onclick=function(){var v=headAdj(dir,frame).slice();for(var f=0;f<CAP;f++)setHead(dir,f,v);save();paint()};
+    hrow.appendChild(ha);
+    if(isMirrored(dir)){var mm=document.createElement('div');mm.className='hint';
+      mm.innerHTML='Its poses come from <b>'+DIRS[sd]+'</b> (mirrored) — pick them there. The head below is this view\'s own: move it and only '+DIRS[dir]+' changes.';
+      panelBody.appendChild(mm)}
+    panelBody.appendChild(hrow)}
+  if(!editable(dir)){var m=document.createElement('div');m.className='hint';
+    m.textContent='This view reuses '+DIRS[sd]+' mirrored. Untick “mirror the art” in the header row to fill it separately, or just leave it — it follows '+DIRS[sd]+'.';
+    panelBody.appendChild(m);return}
+  // Shortcut: the sheet draws S, SW, W, NW, N separately, so you can copy one view's six
+  // frames onto another instead of picking them twice (the game mirrors NE/E/SE by itself).
+  var copyRow=document.createElement('div');copyRow.className='headrow';
+  var cl=document.createElement('span');cl.innerHTML='<b>Shortcut</b> — use the attack poses of:';
+  copyRow.appendChild(cl);
+  [0,1,2,3,4].forEach(function(d3){
+    if(d3===sd)return;
+    var b=document.createElement('button');b.textContent=DIRS[d3];
+    b.title='copy '+DIRS[d3]+'\'s six frames onto '+DIRS[sd];
+    b.onclick=function(){var src=atk(st.cls)[d3].slice(0,CAP),arr=atk(st.cls)[sd];
+      for(var i2=0;i2<CAP;i2++)arr[i2]=(src[i2]==null?null:src[i2]);
+      arr.length=CAP;st.sel={dir:dir,frame:frame};save();paint()};
+    copyRow.appendChild(b)});
+  panelBody.appendChild(copyRow);
+  var cyc=(D.classes[st.cls].strips||[]).filter(function(s){return s.dir===sd||s.ids.length>=CAP});
+  cyc.sort(function(a,b){return (b.dir===sd?1:0)-(a.dir===sd?1:0)||b.ids.length-a.ids.length});
+  if(cyc.length){
+    var h2=document.createElement('h3');h2.textContent='Whole attack set — one click fills all 6 frames';
+    panelBody.appendChild(h2);
+    var wrap=document.createElement('div');
+    cyc.slice(0,5).forEach(function(s){
+      var b=document.createElement('button');b.className='cycle';
+      b.textContent=(s.dir===sd?'Use this view\'s ':'Use ')+DIRS[s.dir]+' '+(s.ids.length>=CAP?'attack':'attack (partly)')+
+        ' · '+(s.row>=0?('sheet row '+s.row+' · '):'')+s.ids.length+' poses';
+      b.onclick=function(){var arr=atk(st.cls)[sd];for(var i=0;i<s.ids.length&&i<CAP;i++)arr[i]=s.ids[i];
+        arr.length=Math.max(arr.length,Math.min(s.ids.length,CAP));
+        st.sel={dir:dir,frame:Math.min(s.ids.length,CAP)-1};save();paint()};
+      wrap.appendChild(b)});
+    panelBody.appendChild(wrap)}
+  var h3=document.createElement('h3');h3.textContent='All poses in this sheet — put one on frame '+(frame+1);
+  panelBody.appendChild(h3);
+  var hint=document.createElement('div');hint.className='hint';
+  hint.innerHTML='Some poses are not part of any attack set, so <b>every figure in the sheet is here</b> '+
+    '(grouped by the row it came from). Green border = the sheet\'s own suggestion for this view. '+
+    'Clicking fills frame '+(frame+1)+' and steps to the next frame — click the same picture again to repeat it. '+
+    'Leaving a frame empty is fine: it holds the pose before it.';
+  panelBody.appendChild(hint);
+  var poses=D.classes[st.cls].poses||[], sug={};
+  (D.classes[st.cls].strips||[]).forEach(function(st2){
+    if(st2.dir===sd)st2.ids.forEach(function(id){sug[id]=1})});
+  var byRow={};
+  poses.forEach(function(p){var r=(p.row==null||p.row<0)?'extra':p.row;(byRow[r]=byRow[r]||[]).push(p)});
+  Object.keys(byRow).sort(function(a,b){
+    if(a==='extra')return 1;if(b==='extra')return -1;return a-b}).forEach(function(r){
+    var rh=document.createElement('div');rh.className='rowhead';
+    rh.textContent=(r==='extra'?'Other poses from the sheet':'Sheet row '+r)+' · '+byRow[r].length+' poses';
+    panelBody.appendChild(rh);
+    var box=document.createElement('div');box.className='cands';
+    byRow[r].forEach(function(pose){
+      var id=pose.id;
+      var el=document.createElement('div');el.className='cand'+(sug[id]?' sug':'');
+      var s2=Math.min(1,58/pose.h,50/pose.w);
+      var cv=document.createElement('canvas');
+      cv.width=Math.max(12,Math.round(pose.w*s2));cv.height=Math.max(12,Math.round(pose.h*s2));
+      var g=cv.getContext('2d');g.imageSmoothingEnabled=false;
+      if(safe(st.cls))g.drawImage(sheetImg[st.cls],pose.x,pose.y,pose.w,pose.h,0,0,cv.width,cv.height);
+      if(isMirrored(dir))cv.style.transform='scaleX(-1)';
+      el.appendChild(cv);
+      el.title=(pose.label||('pose '+id))+(sug[id]?' — suggested for this view':'');
+      el.onclick=function(){var arr=atk(st.cls)[sd];while(arr.length<=frame)arr.push(null);arr[frame]=id;
+        st.sel={dir:dir,frame:Math.min(frame+1,CAP-1)};save();paint()};
+      box.appendChild(el)});
+    panelBody.appendChild(box)});
+  var ctl=document.createElement('div');ctl.style.cssText='display:flex;gap:6px;align-items:center;margin-top:10px;flex-wrap:wrap';
+  var prev=document.createElement('button');prev.textContent='◀ back';prev.onclick=function(){step(-1)};
+  var next=document.createElement('button');next.textContent='next ▶';next.className='primary';next.onclick=function(){step(1)};
+  var rep6=document.createElement('button');rep6.textContent='repeat frame '+(frame+1)+' on all 6';
+  rep6.title='use the pose already on this frame for every frame of the view';
+  rep6.onclick=function(){var id=atk(st.cls)[sd][frame];if(id==null){
+      statusEl.textContent='pick a pose on frame '+(frame+1)+' first';return}
+    var arr=atk(st.cls)[sd];for(var f2=0;f2<CAP;f2++)arr[f2]=id;save();paint()};
+  var clr=document.createElement('button');clr.textContent='clear this frame';
+  clr.onclick=function(){atk(st.cls)[sd][frame]=null;save();paint()};
+  var all=document.createElement('button');all.textContent='clear this view';
+  all.onclick=function(){atk(st.cls)[sd].length=0;save();paint()};
+  [prev,next,rep6,clr,all].forEach(function(b){ctl.appendChild(b)});
+  var sp=document.createElement('span');sp.className='hint';sp.style.margin='0';
+  sp.textContent='back / next move through all 6 frames of every view';ctl.appendChild(sp);
+  panelBody.appendChild(ctl);
+}
+function step(delta){
+  var dirs=[];for(var d=0;d<8;d++)if(editable(d))dirs.push(d);
+  var order=[];dirs.forEach(function(d){for(var f=0;f<CAP;f++)order.push({dir:d,frame:f})});
+  var cur=0;order.forEach(function(o,i){if(o.dir===st.sel.dir&&o.frame===st.sel.frame)cur=i});
+  var n=order[(cur+delta+order.length)%order.length];
+  st.sel={dir:n.dir,frame:n.frame};save();paint();
+  statusEl.textContent='frame '+((cur+delta+order.length)%order.length+1)+' of '+order.length}
+
+// ---------- fill / export ----------
+function autoFillClass(cls){
+  var d=D.classes[cls];if(!d)return;
+  var A=atk(cls);
+  for(var dir=0;dir<5;dir++)A[dir]=(d.auto[dir].attack.ids||[]).slice(0,CAP)}
+function autoFill(){
+  autoFillClass(st.cls);
+  st.mirrorSide=true;var mc=document.getElementById('mirrorSide');if(mc)mc.checked=true;save();paint()}
+function dump(){
+  var out={version:5,note:'Prontera Grind attack-pose + head selection. cells are [x,y,w,h,headX,headY,headSource]: x/y/w/h in the class sheet, headX/headY = the head pivot inside the game 96x96 cell (measured seat + your drag); null = keep the previous frame (and a leading null = the first pose you picked)',
+           mirrorSide:!!st.mirrorSide,attack:{}};
+  var n=0;
+  for(var cls in st.atk){
+    if(!D.classes[cls])continue;
+    var rows={},any=false;
+    for(var d=0;d<8;d++){var arr=st.atk[cls][d]||[];
+      rows[d]=arr.map(function(id,i){if(id==null)return null;var p=D.classes[cls].poses[id];
+        if(!p)return null;
+        var a=headAdjOf(cls,d,i),hs=headSpot(p,d,i,cls); // the seat the preview draws = the seat the game wants
+        return [p.x,p.y,p.w,p.h,Math.round(hs[0]),Math.round(hs[1]),
+                (a[0]||a[1])?'manual':p.seat[2]]});
+      if(arr.some(function(x){return x!=null}))any=true}
+    if(any){out.attack[cls]=rows;n++}}
+  var heads={};for(var hk in st.head)heads[hk]=st.head[hk];
+  out.headAdjust=heads;                            // {class|dir|frame:[dx,dy]} - the drags themselves
+  document.getElementById('out').value=JSON.stringify(out);
+  statusEl.textContent=n+' class(es) set · idle & walk filled automatically · heads included'}
+function copy(){
+  var t=document.getElementById('out'),m=document.getElementById('copyMsg');
+  t.select();t.setSelectionRange(0,t.value.length);
+  function ok(){m.textContent='copied — paste it back to me'}
+  function bad(){m.textContent='select the box and copy it manually'}
+  try{if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(t.value).then(ok,bad);
+      else{document.execCommand('copy');ok()}}
+  catch(e){try{document.execCommand('copy');ok()}catch(e2){bad()}}
+  setTimeout(function(){m.textContent=''},4000)}
+
+// ---------- boot ----------
+window.__pgDiag=function(){var n=0,tot=0,k;for(k in D.classes){tot++;if(sheetReady[k])n++}
+  var drew=viewsEl?viewsEl.querySelectorAll('canvas.big').length:0;
+  return 'pose data: loaded ('+Object.keys(D.classes).length+' classes) - head atlases: '+
+    ((headReady.male&&headReady.female)?'loaded':'not loaded')+' - class sheets: '+n+'/'+tot+
+    ' - attack views drawn: '+drew+(Object.keys(sheetFail).length?(' - failed: '+Object.keys(sheetFail)):'')};
+// Test hook: the harness in tools/tests/picker_sim.js drives the parts the owner touches
+// (the poses, the head seating, the export) without a browser.
+window.__pgTest={headSpot:headSpot,headAdj:headAdj,setHead:setHead,dirWord:dirWord,st:st,paint:paint,
+  headTile:headTile,baseSeat:baseSeat,packBodyName:packBodyName,packedCell:packedCell,
+  save:save,applyDefaults:applyDefaults,resetAll:resetAll,
+  poses:function(cls){return D.classes[cls].poses},poseOf:poseOfId,headBox:headBox,
+  payload:function(){dump();var t=document.getElementById('out');return JSON.parse(t.value||'{}')}};
+function paint(){
+  var n=0,tot=0,k;for(k in D.classes){tot++;if(sheetReady[k])n++}
+  var dp=document.getElementById('diag');if(dp)dp.textContent='sheets '+n+'/'+tot+' · views '+viewsEl.querySelectorAll('canvas.big').length;
+  renderViews();renderPanel();dump();window.__pgReady=true}
+(function boot(){
+  var clsSel=document.getElementById('cls');
+  Object.keys(D.classes).forEach(function(n){var o=document.createElement('option');o.value=n;o.textContent=n;clsSel.appendChild(o)});
+  var hairSel=document.getElementById('hair');
+  for(var i=0;i<PK.hairStyles;i++){var o=document.createElement('option');o.value=i;o.textContent='style '+i;hairSel.appendChild(o)}
+  if(!D.classes[st.cls])st.cls=Object.keys(D.classes)[0];
+  clsSel.value=st.cls;document.getElementById('sex').value=st.sex;hairSel.value=st.hair;
+  // the mirror toggle sits in the header row (explicit id - never depends on a selector finding it)
+  var slot=document.getElementById('mirrorSlot'), ml=document.createElement('label');
+  ml.className='f';ml.title='NE / E / SE reuse the NW / W / SW poses, mirrored';
+  var mc=document.createElement('input');mc.type='checkbox';mc.id='mirrorSide';mc.checked=st.mirrorSide!==false;
+  ml.appendChild(mc);ml.appendChild(document.createTextNode('mirror the side art'));
+  slot.appendChild(ml);
+  mc.onchange=function(){st.mirrorSide=mc.checked;save();paint()};
+  clsSel.onchange=function(){st.cls=clsSel.value;
+    st.sel={dir:0,frame:0};sheetFor(st.cls);save();paint()};
+  document.getElementById('sex').onchange=function(e){st.sex=e.target.value;save();paint()};
+  hairSel.onchange=function(e){st.hair=+e.target.value;save();paint()};
+  document.getElementById('btnAuto').onclick=autoFill;
+  document.getElementById('btnCopy').onclick=copy;
+  document.getElementById('btnCopy2').onclick=copy;
+  document.getElementById('btnClearCls').onclick=function(){
+    if(!confirm('Clear the attack poses and head drags for '+st.cls+'?'))return;
+    delete st.atk[st.cls];
+    for(var k2 in st.head)if(k2.indexOf(st.cls+'|')===0)delete st.head[k2];
+    save();paint()};
+  document.getElementById('btnReset').onclick=function(){
+    if(!confirm('Go back to the owner\u2019s standard? Every class in it is restored; classes it does not cover get the sheet\u2019s own picks.'))return;
+    resetAll();paint()};
+  sheetFor(st.cls);
+  setInterval(function(){tick++;if(drag!==null)return;
+    var cvs=viewsEl.querySelectorAll('canvas.big');for(var v=0;v<cvs.length;v++)drawView(cvs[v],v)},160);
+  if(hadSaved)paint();                     // the browser has its own state - never overwrite it
+  else{resetAll();paint()}                 // first visit: the owner's standard, filled out
+})();
+})();
+</script>
+</body>
+</html>
