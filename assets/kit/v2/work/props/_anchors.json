@@ -64,5 +64,83 @@
   "h": 227,
   "anchorX": 125,
   "anchorY": 223
+ },
+ "cactus_flower": {
+  "w": 115,
+  "h": 170,
+  "anchorX": 57,
+  "anchorY": 166
+ },
+ "ruin_pillar": {
+  "w": 97,
+  "h": 260,
+  "anchorX": 48,
+  "anchorY": 256
+ },
+ "ruin_stump": {
+  "w": 100,
+  "h": 130,
+  "anchorX": 50,
+  "anchorY": 126
+ },
+ "desert_bone": {
+  "w": 190,
+  "h": 91,
+  "anchorX": 95,
+  "anchorY": 87
+ },
+ "bamboo_grove": {
+  "w": 230,
+  "h": 160,
+  "anchorX": 115,
+  "anchorY": 155
+ },
+ "tree_dead": {
+  "w": 226,
+  "h": 310,
+  "anchorX": 113,
+  "anchorY": 305
+ },
+ "tombstone": {
+  "w": 100,
+  "h": 140,
+  "anchorX": 50,
+  "anchorY": 136
+ },
+ "house_ruin": {
+  "w": 280,
+  "h": 201,
+  "anchorX": 140,
+  "anchorY": 196
+ },
+ "tree_cherry": {
+  "w": 290,
+  "h": 296,
+  "anchorX": 145,
+  "anchorY": 290
+ },
+ "lantern_stone": {
+  "w": 87,
+  "h": 160,
+  "anchorX": 43,
+  "anchorY": 156
+ },
+ "cactus_small": {
+  "w": 71,
+  "h": 105,
+  "anchorX": 35,
+  "anchorY": 101
+ },
+ "ruin_column_fallen": {
+  "w": 260,
+  "h": 67,
+  "anchorX": 130,
+  "anchorY": 63
+ },
+ "ruin_curb": {
+  "w": 114,
+  "h": 71,
+  "anchorX": 57,
+  "anchorY": 67
  }
 }
