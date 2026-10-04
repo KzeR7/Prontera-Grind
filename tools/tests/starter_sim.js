@@ -17,7 +17,7 @@ ${grab('const STAGE_SCENES=[','function kitRect(d,gx0,gx1,gy){')}
 ${grab('let mobs=[],mob=null','function genGear(')}
 const gx=()=>1,addJob=()=>{},checkLevel=()=>{},qProg=()=>{},addFloat=()=>{},log=()=>{},save=()=>{},ui=()=>{};
 const mkDrop=()=>null,genGear=()=>null;
-${grab('function kill(o){','function collect(it){')}
+${grab('function earnZeny(amount){','function collect(it){')}
 this.H={fresh,CLASSES,spawn,kill,atk,aspd,maxHp,def,mdef,starterStage,HPK,HPE,MAPS,AGGRO,PACK_GAP,PACK_MAX,PACK_JITTER,packSites,stageSpec,nearestPack,pl,
 set S(v){S=v},get S(){return S},get mobs(){return mobs},get mob(){return mob},get activePack(){return activePack}};
 `,ctx);
@@ -58,22 +58,28 @@ t('Novice encounters stay one low-HP monster at a time, in three separate packs'
  const pack=spawn(0,1,'Novice',1);assert.strictEqual(pack.length,3);
  for(const m of pack)assert.strictEqual(m.hp,42);
 });
-t('stages 6–10 and later maps retain their previous combat formulas',()=>{
- for(let m=0;m<10;m++)for(let l=1;l<=10;l++)if(!H.starterStage(m,l)){
+t('non-boss stages retain their combat formulas and boss escorts use normal mob stats',()=>{
+ for(let m=0;m<10;m++)for(let l=1;l<10;l++)if(!H.starterStage(m,l)){
   const pack=spawn(m,l),p=H.MAPS[m].b+l,mb=1+m*.15+Math.max(0,m-4)*.2;
   for(const mob of pack){assert.strictEqual(mob.hp,Math.floor(H.HPK*mb*Math.pow(p,H.HPE)));assert.strictEqual(mob.atk,Math.floor((5+p*4.6)*mb))}
   assert.ok(pack.length>=3&&pack.length<=9);
  }
  for(let m=0;m<10;m++){
-  spawn(m,10);H.S.kl=15;H.spawn();assert.strictEqual(H.mobs.length,1);assert.ok(H.mobs[0].boss);
+  const wave=spawn(m,10);assert.strictEqual(wave.length,1+(m<5?3:5));
+  assert.strictEqual(wave.filter(x=>x.boss).length,1,'one boss from the first spawn');
+  assert.ok(wave.every(x=>x.pack===0),'boss and escorts should fight together');
+  assert.ok(wave.slice(1).every(x=>!x.boss),'escorts must have normal drops');
+  H.S.kl=15;H.spawn();assert.strictEqual(H.mobs.length,wave.length,'no separate 15-kill boss gate');
   const p=H.MAPS[m].b+10,mb=1+m*.15+Math.max(0,m-4)*.2;
   assert.strictEqual(H.mobs[0].hp,Math.floor(500*mb*Math.pow(p,H.HPE)));
+  for(const escort of wave.slice(1)){assert.strictEqual(escort.hp,Math.floor(H.HPK*mb*Math.pow(p,H.HPE)));
+   assert.strictEqual(escort.atk,Math.floor((5+p*4.6)*mb))}
  }
 });
 t('medium-distance packs reroll on each spawn but stay separate and on dry ground',()=>{
  assert.strictEqual(H.PACK_GAP,13);assert.strictEqual(H.PACK_MAX,18.5);
  const positions=new Set();
- for(let m=0;m<10;m++)for(let l=1;l<=10;l++)for(let i=0;i<8;i++){
+ for(let m=0;m<10;m++)for(let l=1;l<10;l++)for(let i=0;i<8;i++){
   const pack=spawn(m,l),groups=[0,1,2].map(k=>pack.filter(x=>x.pack===k));
   assert.ok(groups.every(g=>g.length), 'all three packs must spawn');
   for(let a=0;a<3;a++)for(let b=a+1;b<3;b++)for(const u of groups[a])for(const v of groups[b])
@@ -91,7 +97,7 @@ t('medium-distance packs reroll on each spawn but stay separate and on dry groun
   assert.strictEqual(H.activePack,H.nearestPack(),'initial pack is not the closest one')}
  assert.ok(firstPacks.size>1,'player always starts on numbered pack 1');
  assert.ok(!/PACK_SPOTS/.test(src),'fixed pack points came back');
- assert.ok(/m.pack===activePack&&\(m.boss\|\|Math.hypot/.test(src), 'only the active pack should wake');
+ assert.ok(/m.pack===activePack&&\(isBoss\(\)\|\|Math.hypot/.test(src), 'only the active pack should wake');
  assert.ok(/if\(wake&&Math.hypot/.test(src), 'sleeping packs must not attack');
  assert.ok(/if\(m.pack!==activePack\)continue/.test(src), 'pets should follow the active pack');
  assert.ok(/o.pack===src.pack/.test(src) && /o.pack===target.pack/.test(src), 'area and chain hits cannot wake remote packs');
@@ -117,9 +123,16 @@ t('clearing a pack selects the nearest surviving pack, regardless of its number'
  assert.strictEqual(new Set(seen).size,3);assert.strictEqual(H.S.kl,all);
  H.spawn();assert.strictEqual(H.activePack,H.nearestPack());assert.strictEqual(H.mob.pack,H.activePack);
 });
-t('stage 10 spawns a lone boss without any special floor stamp',()=>{
- spawn(4,10);H.S.kl=15;H.spawn();assert.strictEqual(H.mobs.length,1);
- assert.strictEqual(H.mobs[0].boss,true);assert.strictEqual(H.mobs[0].pack,0);
- assert.ok(Math.hypot(H.mobs[0].x,H.mobs[0].z+4)<1.5);
+t('stage 10 starts with boss plus 3 or 5 escorts and boss defeat resets the whole fight',()=>{
+ for(const m of [0,4,5,9]){
+  spawn(m,10);assert.strictEqual(H.mobs.length,m<5?4:6);
+  const boss=H.mobs.find(x=>x.boss);assert.ok(Math.hypot(boss.x,boss.z+4)<1.5);
+  assert.ok(H.mobs.every(x=>Math.hypot(x.x-boss.x,x.z-boss.z)<5));
+  boss.drops=[];boss.cardCh=0;boss.ore=false;H.kill(boss);
+  assert.strictEqual(H.mobs.length,0,'escorts should clear when boss falls');
+  assert.strictEqual(H.S.kl,0,'boss kill resets wave progress');
+  H.spawn();assert.strictEqual(H.mobs.length,m<5?4:6,'boss should respawn immediately without fifteen more kills');
+ }
+ assert.ok(/m.pack===activePack&&\(isBoss\(\)\|\|/.test(src),'all boss escorts should engage with the boss');
 });
 console.log(`\n${pass} passed, ${fail} failed`);process.exitCode=fail?1:0;

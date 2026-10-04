@@ -27,9 +27,21 @@ html, body { margin:0; padding:0; width:100vw; height:100vh; overflow:hidden; ba
 #tag .bar{width:90px;height:8px;margin:2px auto 0}
 #prog{position:absolute;left:12px;top:12px;background:#0008;color:#fff;font:bold 13px "Trebuchet MS",sans-serif;padding:6px 12px;border-radius:4px;border:1px solid #ffffff44;display:flex;align-items:center;gap:10px}
 #hint{position:absolute;left:12px;top:52px;color:#fff;font:11px "Trebuchet MS",sans-serif;opacity:.8;text-shadow:0 0 3px #000}
-#hud{display:flex;flex-wrap:wrap;gap:12px 20px;padding:8px 16px;font-size:14px;align-items:center;background:var(--panel);border-top:2px solid var(--edge2);z-index:10}
-.bar{width:140px;height:14px;background:#5b4a35;border:1px solid #3b2a1a;border-radius:3px;overflow:hidden;position:relative}
-.bar i{display:block;height:100%}
+#hud{display:flex;flex-wrap:wrap;gap:10px 22px;padding:9px 16px;font-size:13px;align-items:center;background:linear-gradient(180deg,#fff9e9,#f4e5c4);border-top:1px solid var(--edge);z-index:10;box-shadow:0 -4px 14px #241b1730}
+.bar{width:148px;height:14px;background:#3b302b;border:1px solid #574637;border-radius:999px;overflow:hidden;position:relative;box-shadow:inset 0 2px 4px #1e1617aa,0 1px 0 #fff9}
+.bar i{display:block;height:100%;border-radius:inherit;transition:width .3s ease,background .3s ease}
+.hud-health{display:flex;align-items:center;gap:7px;white-space:nowrap}.hud-health small{font-weight:bold;min-width:34px;text-align:right}
+#hpb{background:linear-gradient(180deg,#7cec8f,#20a74c 65%,#17883a);box-shadow:inset 0 1px #f3fff588,0 0 8px #30c75677}
+#hpb.critical{background:linear-gradient(180deg,#ff8e81,#ed4242 60%,#b92031);box-shadow:inset 0 1px #fff7,0 0 8px #e54949aa}
+.hud-zeny{position:relative;color:#a27200;font-weight:bold;cursor:help;white-space:nowrap}.hud-zeny:focus-visible,.xp-row:focus-visible{outline:2px solid #2f6fd6;outline-offset:2px}
+.hud-flyout{position:absolute;bottom:calc(100% + 8px);left:0;z-index:90;background:#251f20;color:#fff;font-size:12px;font-weight:600;padding:7px 10px;border-radius:7px;white-space:nowrap;box-shadow:0 4px 14px #0008;opacity:0;visibility:hidden;pointer-events:none}
+.hud-zeny:hover .hud-flyout,.hud-zeny:focus .hud-flyout{opacity:1;visibility:visible}
+#xp-dock{flex:none;display:grid;gap:4px;width:100%;padding:6px 10px 8px;background:linear-gradient(180deg,#413743,#26242f);box-shadow:inset 0 2px 6px #140f1899;z-index:9}
+.xp-row{position:relative;height:20px;width:100%;border:1px solid #756c77;border-radius:4px;background:#161820;overflow:hidden;cursor:help;box-shadow:inset 0 1px 4px #000a;color:#fff;font:bold 11px/18px "Trebuchet MS",sans-serif;text-shadow:0 1px 2px #000,0 0 4px #000}
+.xp-row:hover{border-color:#e9d39a}.xp-fill{position:absolute;inset:0 auto 0 0;width:0;transition:width .3s ease}
+#jb{background:linear-gradient(180deg,#bca0ff,#7452cb 70%,#493692)}#xpb{background:linear-gradient(180deg,#9ce6ff,#348fcc 70%,#246398)}
+.xp-label,.xp-pct{position:absolute;top:0;z-index:1}.xp-label{left:10px}.xp-pct{right:10px}
+@media(max-width:560px){#hud{gap:6px 10px;padding:7px 10px;font-size:11px}.hud-health .bar{width:94px}.hud-health small{min-width:28px}}
 .body{padding:8px;font-size:13px}
 .slot{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:5px 8px;border:1px solid var(--edge);background:#fffdf5;margin-bottom:4px;border-radius:4px;min-height:36px}
 .r0{color:#555}.r1{color:#2a9d3f}.r2{color:#2f6fd6}.r3{color:#a23fd6}.r4{color:#e07b00;font-weight:bold}
@@ -144,10 +156,15 @@ hr{border:0;border-top:1px dashed var(--edge);margin:6px 0}
 <div id="wrap"><div class="title"><span id="stageTitle">Prontera Lv 1</span><span id="grindStatus" style="font-size:12px;opacity:.85"></span></div>
 <div id="view"><div id="ov"><div id="mobSpriteLayer" aria-hidden="true"></div><div id="weaponSpriteLayer" aria-hidden="true"></div><div id="prog"></div><div id="tag"><b id="tn"></b><div class="bar"><i id="th" style="background:var(--hp)"></i></div></div><div id="hint">Drag to rotate &middot; Scroll to zoom</div><div id="feed"></div><div id="qp"></div><div id="dock"></div>
 <div id="wins"></div></div></div>
-<div id="hud"><div><b id="cls2"></b> Lv <b id="lv">1</b> / Job <b id="jl">1</b></div><div>HP <div class="bar"><i id="hpb" style="background:var(--hp)"></i></div></div>
-<div>JOB <div class="bar"><i id="jb" style="background:#7a5ce0"></i></div></div><div>EXP <div class="bar"><i id="xpb" style="background:var(--exp)"></i></div></div>
-<div style="color:var(--gold)">&#9679; <b id="zeny" title="Hover for earned Zeny per minute" tabindex="0" style="cursor:help">0</b> Zeny</div><div>Kills /Min <b id="kills" title="Kills per minute (rolling 60s)">0.0</b></div>
-<div style="margin-left:auto;display:flex;align-items:center;gap:8px"><span id="userBadge" style="font-weight:bold;font-size:12px;background:#e9d39a;padding:3px 8px;border-radius:4px;border:1px solid var(--edge2)"></span><button id="logoutBtn" onclick="logout()" style="display:none">Logout</button><button id="spd">Speed x1</button></div></div></div>
+<div id="hud"><div><b id="cls2"></b> Base Lv <b id="lv">1</b> / Job Lv <b id="jl">1</b></div>
+<div class="hud-health">HP <div class="bar" role="meter" aria-label="HP" aria-valuemin="0" aria-valuemax="100" id="hpMeter"><i id="hpb"></i></div><small id="hpPct">100%</small></div>
+<div class="hud-zeny" id="zenyHover" tabindex="0" aria-describedby="zenyRate">&#9679; <b id="zeny">0</b> Zeny<span class="hud-flyout" id="zenyRate" role="tooltip">Zeny earned: 0/min</span></div>
+<div>Kills/min <b id="kills" title="Updated every 30 seconds (last 30s)">0.0</b></div><div style="margin-left:auto;display:flex;align-items:center;gap:8px"><span id="userBadge" style="font-weight:bold;font-size:12px;background:#e9d39a;padding:3px 8px;border-radius:4px;border:1px solid var(--edge2)"></span><button id="logoutBtn" onclick="logout()" style="display:none">Logout</button><button id="spd">Speed x1</button></div></div>
+<div id="xp-dock" aria-label="Level progress">
+  <div class="xp-row" id="jobTrack" tabindex="0" role="progressbar" aria-label="Job Level" aria-valuemin="0" aria-valuemax="100" title="Job Level: 0% to next level"><div class="xp-fill" id="jb"></div><span class="xp-label" id="jobLabel">Job Level 1</span><span class="xp-pct" id="jobPct">0%</span></div>
+  <div class="xp-row" id="baseTrack" tabindex="0" role="progressbar" aria-label="Base Level" aria-valuemin="0" aria-valuemax="100" title="Base Level: 0% to next level"><div class="xp-fill" id="xpb"></div><span class="xp-label" id="baseLabel">Base Level 1</span><span class="xp-pct" id="basePct">0%</span></div>
+</div>
+</div>
 <div id="modal"><div class="login-card"><p id="mt" style="font-size:14px;opacity:1;margin:0 0 12px"></p><div class="row" style="justify-content:center"><button id="my">Yes</button><button id="mn">Cancel</button></div></div></div><div id="tooltip"></div>
 <script src="assets/sprite_pack_data.js?v=1"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -190,7 +207,7 @@ const AL={str:'STR',agi:'AGI',dex:'DEX',luk:'LUK',int:'INT',hp:'Max HP',atk:'ATK
 // late maps in about five, with bosses still a ~12x fight. See tools/tests/economy_sim.js.
 const SU=k=>k.toUpperCase(),BX_=13,Z0=-28,Z1=12,MPS=15,AGGRO=6.5,HPK=42,HPE=1.3,K5=['str','agi','dex','luk','int'];
 const GM_USER='GM',GM_PASS='gm1234';   // CHANGE THE GM PASSWORD before you publish
-const BUILD='2026-10-04 kit-v30 pack-spacing smaller-mobs';   // shown on the login card - confirms which file you loaded
+const BUILD='2026-10-04 ui-v31 levels rates boss-escorts';   // shown on the login card - confirms which file you loaded
 $('buildTag').textContent='build '+BUILD;
 
 // ---------- class tree: Novice -> 6 first jobs -> 6 second jobs -> 6 third jobs ----------
@@ -551,9 +568,11 @@ const MAXST=120,BASECAP=99,ELITELV=100,statCap=()=>S.lv>=ELITELV?MAXST:BASECAP;
 // The reset remains about 3.9x so the post-99 climb is still a distinct endgame phase.
 // Mob EXP is EXPK*pw^1.5/50, boss EXP is BOSEK*pw^1.5/50, and Zeny is based on pw^2;
 // pw is the field's power level (map recommendation + stage, max 99). A boss replaces
-// the pack every 16th kill (MPS). Normal Base/Job/quest EXP is 70x below Lv100 and 70/3x
+// old 15-kill boss cadence in the canonical pacing model (not the live Stage-10
+// boss-with-escorts encounter). Normal Base/Job/quest EXP is 70x below Lv100 and 70/3x
 // at Lv100+; GM keeps its configured multiplier. tools/tune_pacing.js and economy_sim.js
-// model these live rates at 800 kills/hour, camping the band map's Stage 10.
+// use a historical 800-kills/hour / 15-kill-boss cadence. Their time-to-level
+// projections must be re-measured for the immediate Stage-10 boss wave.
 const EXPK=5.5,BOSEK=46,ZK=[8,14],BZK=[150,250];
 // Quest rewards scale with need(Lv) and are retuned for this curve: about 23% of modeled
 // run EXP overall, with no single level funded by more than ~40%. Loot cadence uses .126
@@ -579,7 +598,7 @@ const NA1=132.99332769,NE1=1.87201222,N50=Math.floor(NA1*Math.pow(50,NE1)),NE2=3
 const JOFF=[0,9,49,98];
 
 // ---------- state ----------
-let currentUser=null,S=null,speed=1,floats=[],drops=[],t=0,shake=0,atkAnim=0,hitAnim=0,pend=[],shots=[],skillFx=[],barT=0,hudRate=null,logs=[],tab=null,selB=null,selC=null,selK=null,mapM=0,mapL=1;
+let currentUser=null,S=null,speed=1,zenyEarned=0,floats=[],drops=[],t=0,shake=0,atkAnim=0,hitAnim=0,pend=[],shots=[],skillFx=[],barT=0,hudRate=null,logs=[],tab=null,selB=null,selC=null,selK=null,mapM=0,mapL=1;
 // wt/wx/wz are the roam target: with no mobs on the field the character wanders instead of
 // trudging back to the spawn point. Only a defeat sends you home (see the death handler).
 const pl={x:0,z:Z1-1.5,ry:0,orb:0,run:0,wt:0,wx:0,wz:Z1-1.5},skCd={},petR={};
@@ -710,7 +729,7 @@ function submitAuth(e){
 function logout(){save();location.reload()}
 function initSession(gm){
   try{
-    hudRate=null;S=load();S.gm=gm;if(S.q)qRefresh();if(!S.q)S.q=['kill','loot','boss'].map(newQuest);if(S.mp>=MAPS.length||S.lvl>10){S.mp=0;S.lvl=1}
+    hudRate=null;zenyEarned=0;S=load();S.gm=gm;if(S.q)qRefresh();if(!S.q)S.q=['kill','loot','boss'].map(newQuest);if(S.mp>=MAPS.length||S.lvl>10){S.mp=0;S.lvl=1}
     $('userBadge').textContent=(gm?'🛠 ':'👤 ')+currentUser;$('logoutBtn').style.display='inline-block';ui();
     $('loginOverlay').style.display='none';log(`Welcome${gm?', Game Master':' back'}, ${currentUser}!`);
     try{localStorage.setItem('pg_probe','1')}catch(e){log('Browser storage is blocked: progress will NOT be saved.','r0')}
@@ -820,15 +839,32 @@ const starterHp=l=>Math.floor(12*Math.pow(6+5*(l-1),HPE));
 const starterAtk=l=>6+3*(l-1);
 function spawn(){
   const F=fieldOf(S.mp,S.lvl),l=pw(),mb=1+S.mp*.15+Math.max(0,S.mp-4)*.2;mobs=[];activePack=0;
-  const bossWave=!!(F.boss&&S.kl>=MPS),sites=bossWave?null:packSites();
-  if(bossWave){const hp=Math.floor(500*mb*Math.pow(l,HPE));mobs.push({...F.boss,boss:true,pack:0,hp,max:hp,atk:Math.floor((8+l*6.5)*mb),exp:Math.max(1,Math.floor(BOSEK*Math.pow(l,1.5)/50)),zeny:Math.max(1,Math.floor(ri(BZK[0],BZK[1])*l*l/1000)),size:1.3,mag:true,lvl:l,sec:F.sec})}
-  else{const early=starterStage(S.mp,S.lvl),perPack=early?(S.lvl===1?1:2):(S.lvl>=5||S.mp>=5)?ri(2,3):1;
-    for(let pack=0;pack<3;pack++)for(let i=0;i<perPack;i++){
-      const m=F.mobs[ri(0,1)],hp=early?Math.min(starterHp(S.lvl),Math.floor(HPK*mb*Math.pow(l,HPE))):Math.floor(HPK*mb*Math.pow(l,HPE));
-      mobs.push({...m,boss:false,pack,hp,max:hp,atk:early?starterAtk(S.lvl):Math.floor((5+l*4.6)*mb),exp:Math.max(1,Math.floor(EXPK*Math.pow(l,1.5)/50)),zeny:Math.max(1,Math.floor(ri(ZK[0],ZK[1])*l*l/1000)),size:.6,mag:['demon','tree','blob'].includes(m.shape),lvl:l,sec:F.sec})}}
-  mobs.forEach((m,i)=>{const [x,z]=m.boss?[0,-4]:sites[m.pack];
-    m.x=x+rnd(-PACK_JITTER,PACK_JITTER);m.z=z+rnd(-PACK_JITTER,PACK_JITTER);m.hx=m.x;m.hz=m.z;m.spawn=0;m.ry=0;m.at=rnd(.6,1.6);m.a=i*2.4});
-  activePack=nearestPack();mob=packMob();pAtkT=.3;
+  const bossWave=!!F.boss,sites=bossWave?null:packSites();
+  const addMinion=pack=>{
+    const early=starterStage(S.mp,S.lvl),m=F.mobs[ri(0,1)];
+    const hp=early?Math.min(starterHp(S.lvl),Math.floor(HPK*mb*Math.pow(l,HPE))):Math.floor(HPK*mb*Math.pow(l,HPE));
+    mobs.push({...m,boss:false,pack,hp,max:hp,atk:early?starterAtk(S.lvl):Math.floor((5+l*4.6)*mb),
+      exp:Math.max(1,Math.floor(EXPK*Math.pow(l,1.5)/50)),zeny:Math.max(1,Math.floor(ri(ZK[0],ZK[1])*l*l/1000)),
+      size:.6,mag:['demon','tree','blob'].includes(m.shape),lvl:l,sec:F.sec});
+  };
+  if(bossWave){
+    const hp=Math.floor(500*mb*Math.pow(l,HPE));
+    mobs.push({...F.boss,boss:true,pack:0,hp,max:hp,atk:Math.floor((8+l*6.5)*mb),
+      exp:Math.max(1,Math.floor(BOSEK*Math.pow(l,1.5)/50)),zeny:Math.max(1,Math.floor(ri(BZK[0],BZK[1])*l*l/1000)),
+      size:1.3,mag:true,lvl:l,sec:F.sec});
+    // The first five maps bring three escorts; the five later maps bring five.
+    for(let i=0;i<(S.mp<5?3:5);i++)addMinion(0);
+  }else{
+    const early=starterStage(S.mp,S.lvl),perPack=early?(S.lvl===1?1:2):(S.lvl>=5||S.mp>=5)?ri(2,3):1;
+    for(let pack=0;pack<3;pack++)for(let i=0;i<perPack;i++)addMinion(pack);
+  }
+  mobs.forEach((m,i)=>{
+    const a=(i-1)*Math.PI*2/Math.max(1,mobs.length-1),r=2.3+(i%2)*.65;
+    const [x,z]=bossWave?(m.boss?[0,-4]:[Math.cos(a)*r,-4+Math.sin(a)*r]):sites[m.pack];
+    m.x=x+rnd(-PACK_JITTER,PACK_JITTER);m.z=z+rnd(-PACK_JITTER,PACK_JITTER);
+    m.hx=m.x;m.hz=m.z;m.spawn=0;m.ry=0;m.at=rnd(.6,1.6);m.a=i*2.4;
+  });
+  activePack=nearestPack();mob=bossWave?mobs[0]:packMob();pAtkT=.3;
 }
 function genGear(T,l,sec,boss){
   const slot=['armor','head','off','leg','acc'].includes(T.k)?T.k:'weapon';let roll=rnd(0,100)-(boss?25:0)-st('luk')*.15,tier=0,acc=0;
@@ -906,9 +942,12 @@ function checkLevel(){while(S.lv<150&&S.exp>=need()){S.exp-=need();S.lv++;const 
   log(`LEVEL UP! Lv ${S.lv}. +${p} stat points`,'r4');addFloat(pl.x,3.6,pl.z,'LEVEL UP!','#fff',true)}
   qRefresh()}
 const qProg=type=>S.q&&S.q.forEach(q=>{if(q.type===type)q.prog=Math.min(q.goal,q.prog+1)});
+// A balance difference is not income: a purchase in the same frame can hide earned Zeny.
+// Count each credit directly for the live hover rate, without persisting session history.
+function earnZeny(amount){const n=Math.max(0,Number(amount)||0);S.zeny+=n;zenyEarned+=n}
 function kill(o){const keep=mob;if(o)mob=o;if(!mob||!mobs.includes(mob)){mob=keep;return}
   const g=gx();S.kills++;S.kl++;qProg('kill');if(mob.boss)qProg('boss');
-  const z=Math.round(mob.zeny*(1+pv('zeny')/100))*g,xp=Math.round(mob.exp*expRate());S.zeny+=z;S.exp+=xp;addJob(Math.round(Math.round(mob.exp*.7)*expRate()));pend=[];
+  const z=Math.round(mob.zeny*(1+pv('zeny')/100))*g,xp=Math.round(mob.exp*expRate());earnZeny(z);S.exp+=xp;addJob(Math.round(Math.round(mob.exp*.7)*expRate()));pend=[];
   addFloat(mob.x,2.4,mob.z,'+'+z+'z','#ffd23f');log(`${mob.n} defeated! +${xp.toLocaleString()} EXP, +${z.toLocaleString()} Zeny`);
   const lk=1+st('luk')*.008;
   for(const[T,ch]of mob.drops)if(Math.random()*100<ch*lk)drops.push(mkDrop(genGear(T,mob.lvl,mob.sec,mob.boss)));
@@ -916,7 +955,7 @@ function kill(o){const keep=mob;if(o)mob=o;if(!mob||!mobs.includes(mob)){mob=kee
   if(mob.ore)for(const o of['ori','elu'])if(Math.random()<mob.oreCh)drops.push(mkDrop({ore:o,id:uid(),n:ORE[o]}));
   if(Math.random()*100<(mob.boss?5:.3)*lk){const r=pickW(PW[Math.min(S.mp,9)]),c=PETS.filter(x=>x.r===r),sp=PETS.indexOf(c[ri(0,c.length-1)]);
     if(S.pets.length<40){S.pets.push({id:ri(1e6,9e6),sp,mut:0,eq:[0,0,0],skill:'',on:S.pets.filter(x=>x.on).length<3});log(`A ${RN[r]} pet followed you: ${PETS[sp].n}!`,'r'+RCL[r]);addFloat(mob.x,3,mob.z,'PET!','#ff9dff',true)}
-    else{const z=Math.floor(EGG*(.3+r*.4));S.zeny+=z;log(`A ${RN[r]} ${PETS[sp].n} appeared but your pet collection is full (+${z}z).`)}}
+    else{const z=Math.floor(EGG*(.3+r*.4));earnZeny(z);log(`A ${RN[r]} ${PETS[sp].n} appeared but your pet collection is full (+${z}z).`)}}
   checkLevel();
   if(mob.boss||(S.lvl<10&&S.kl>=MPS)){mobs=[];S.kl=0;if(S.lvl<10&&S.lvl>=S.prog[S.mp]){S.prog[S.mp]=S.lvl+1;log(`${fieldName()} cleared! Stage ${S.lvl+1} unlocked.`,'r3');if(S.adv&&S.lvl<10){S.lvl++}}}
   mobs=mobs.filter(x=>x!==mob);
@@ -932,7 +971,7 @@ function collect(it){
 function equip(id,quiet){const i=S.inv.findIndex(x=>x.id===id);if(i<0)return;const it=S.inv[i];if(!canUse(it)){log(`Your class cannot use ${it.name}.`);return}
   S.inv.splice(i,1);const k=ekey(it),old=S.eq[k];if(old)S.inv.push(old);S.eq[k]=it;S.hp=Math.min(S.hp,maxHp());if(!quiet)log('Equipped '+iname(it));selB=null;ui();save()}
 const sellVal=it=>Math.floor(ev(it)*(1+it.tier*2)*2);
-function sell(id){const i=S.inv.findIndex(x=>String(x.id)===String(id));if(i<0)return;const it=S.inv.splice(i,1)[0];S.zeny+=sellVal(it);(it.cards||[]).forEach(c=>S.cards.push(c));if(selB==it.id)selB=null;ui();save()}
+function sell(id){const i=S.inv.findIndex(x=>String(x.id)===String(id));if(i<0)return;const it=S.inv.splice(i,1)[0];earnZeny(sellVal(it));(it.cards||[]).forEach(c=>S.cards.push(c));if(selB==it.id)selB=null;ui();save()}
 // Quest goal AND reward are solved from the level you are standing at, by the one function the
 // panel and the Claim button both read - so what the quest panel states is exactly what you are
 // paid. The old code froze both at the level the quest was created, so a quest picked up at Lv 1
@@ -1050,7 +1089,7 @@ const V={
           <div class="dropline"><span>🃏 ${m.card.n} <small>(${SU(m.card.stat)} +${cardVal(m.card.g,m.card.stat)}, ${GRADE[m.card.g]})</small></span><b>${m.cardCh}%</b></div>
           ${m.ore?`<div class="dropline ore"><span>🔶 Oridecon &middot; 🔷 Elunium</span><b>${m.oreCh*100}% each</b></div>`:''}
         </div>`).join('<hr>')}</div>
-      <div class="mob-card"><div class="hd">Boss &amp; pets</div>
+      <div class="mob-card"><div class="hd">Boss &amp; pets</div>${mapL===10?`<small>Boss fights immediately with ${mapM<5?3:5} monsters. Defeat the boss to reset the fight.</small>`:''}
         ${F.boss?`<div class="mobentry"><b class="r3">${F.boss.n} (BOSS)</b>
           <div class="poollist">${F.boss.drops.map(([T,ch])=>`<span class="poolitem">${poolIc(T)} ${T.n}<b>${ch}%</b></span>`).join('')}</div>
           <small>Each item rolls independently; a boss can drop zero or several pieces.</small>
@@ -1188,7 +1227,7 @@ const ACT={
   selc:v=>{selC=v;renderWin()},
   sock:v=>{const[id,k]=v.split(':'),i=S.cards.findIndex(c=>String(c.id)===id),e=S.eq[k];if(i<0||!e||(e.cards||[]).length>=(e.slots||0))return;if(CFIT[S.cards[i].stat]!==grp(e)){log('That card cannot be fitted into this type of equipment.');return}e.cards=e.cards||[];e.cards.push(S.cards.splice(i,1)[0]);S.hp=Math.min(S.hp,maxHp());ui();save()},
   unsock:v=>{const[k,i]=v.split(':'),e=S.eq[k];if(!e)return;const c=e.cards[+i],p=200*(c.g+1);if(S.zeny<p)return log('Not enough Zeny to remove the card.');S.zeny-=p;e.cards.splice(+i,1);S.cards.push(c);S.hp=Math.min(S.hp,maxHp());ui();save()},
-  sellcard:id=>{const i=S.cards.findIndex(c=>String(c.id)===id);if(i<0)return;const c=S.cards.splice(i,1)[0];S.zeny+=c.v*150;ui();save()},
+  sellcard:id=>{const i=S.cards.findIndex(c=>String(c.id)===id);if(i<0)return;const c=S.cards.splice(i,1)[0];earnZeny(c.v*150);ui();save()},
   refine:k=>refine(k),sub:v=>{const[t,k]=v.split(':');sub[t]=k;renderWin()},selp:v=>{selP=+v;renderWin()},
   pon:id=>{const p=gp(id);if(!p)return;if(p.on)p.on=false;else if(S.pets.filter(x=>x.on).length<3)p.on=true;else log('Only 3 pets can fight at once. Remove one first.');ui();save()},
   pskill:id=>{const p=gp(id);if(!p)return;const c=petSkillCost(p);if(S.zeny<c){log('Not enough Zeny for a pet skill roll.');ui();return}S.zeny-=c;const skill=rollPetSkill();p.skill=skill.id;delete petSkillCd[p.id];log(`${PETS[p.sp].n} learned ${skill.n}: ${skill.desc}.`,'r3');ui();save()},
@@ -1207,12 +1246,12 @@ const ACT={
     ui();save()},
   proll:id=>{const p=gp(id);if(!p||p.roll||rollingSet.has(p.id))return;rollOnce(p,false,g=>{p.roll=g;log(`Mutation roll: Grade ${g} (x${MUT[g]})`,g>=4?'r4':'r0');ui();save()})},pauto:id=>{const p=gp(id);if(!p)return;if(autoSet.has(p.id)){autoSet.delete(p.id);ui();return}if(p.roll||rollingSet.has(p.id))return;if((p.sk||[1,2,3]).length>=6){log('Un-skip at least one grade to auto-roll.');return}autoSet.add(p.id);autoRoll(p)},
   pkeep:id=>{const p=gp(id);if(p){p.mut=p.roll;p.roll=0;ui();save()}},pdisc:id=>{const p=gp(id);if(p){p.roll=0;ui();save()}},
-  prel:id=>{const p=gp(id);if(!p)return;const z=Math.floor(EGG*.3);ask(`Release ${PETS[p.sp].n}? You get ${z}z back.`,()=>{S.pets=S.pets.filter(x=>x!==p);autoSet.delete(p.id);delete petSkillCd[p.id];S.zeny+=z;ui();save()})},
-  claim:i=>{const q=S.q[+i];if(q&&q.prog>=q.goal){qScale(q);S.zeny+=(q.z||0);S.exp+=(q.xp||0);log(`Quest complete! +${(q.z||0).toLocaleString()}z, +${(q.xp||0).toLocaleString()} EXP`,'r3');S.q[+i]=newQuest(q.type);checkLevel();ui();save()}},
+  prel:id=>{const p=gp(id);if(!p)return;const z=Math.floor(EGG*.3);ask(`Release ${PETS[p.sp].n}? You get ${z}z back.`,()=>{S.pets=S.pets.filter(x=>x!==p);autoSet.delete(p.id);delete petSkillCd[p.id];earnZeny(z);ui();save()})},
+  claim:i=>{const q=S.q[+i];if(q&&q.prog>=q.goal){qScale(q);earnZeny(q.z||0);S.exp+=(q.xp||0);log(`Quest complete! +${(q.z||0).toLocaleString()}z, +${(q.xp||0).toLocaleString()} EXP`,'r3');S.q[+i]=newQuest(q.type);checkLevel();ui();save()}},
   auto:()=>{S.auto=S.auto===false;ui()},adv:()=>{S.adv=S.adv===false;ui()},logout:()=>logout(),
   hair:v=>{S.hair=(((S.hair|0)+(+v||1))%19+19)%19;heroKey='';ui();save()},
   sex:v=>{S.sex=v==='f'?'f':v==='m'?'m':(S.sex==='f'?'m':'f');heroKey='';log(`Appearance: ${S.sex==='f'?'female':'male'}.`);ui();save()},
-  reset:()=>{ask('Erase this account save and start over?',()=>{const gm=S.gm;hudRate=null;S=fresh();S.gm=gm;S.q=['kill','loot','boss'].map(newQuest);floats.forEach(f=>f.el&&f.el.remove());floats=[];drops=[];pend=[];mobs=[];mob=null;respawn=.3;logs=[];log('New adventure started.');ui();save()})},
+  reset:()=>{ask('Erase this account save and start over?',()=>{const gm=S.gm;hudRate=null;zenyEarned=0;S=fresh();S.gm=gm;S.q=['kill','loot','boss'].map(newQuest);floats.forEach(f=>f.el&&f.el.remove());floats=[];drops=[];pend=[];mobs=[];mob=null;respawn=.3;logs=[];log('New adventure started.');ui();save()})},
   gmx:v=>{S.gmx=+v;ui();save()},gmz:()=>{S.zeny+=1e6;ui();save()},gmo:()=>{S.ore.ori+=20;S.ore.elu+=20;ui();save()},gml:()=>{S.lv=Math.min(150,S.lv+10);S.pts+=30;S.hp=maxHp();ui();save()},
   gmj:()=>{const j=jobOf();j.jl=C().mj;j.jx=0;ui();save()},gmu:()=>{S.prog=MAPS.map(()=>10);ui();save()},gmp:v=>{if(S.pets.length>=40)S.pets.shift();const c=PETS.filter(x=>x.r===+v);S.pets.push({id:ri(1e6,9e6),sp:PETS.indexOf(c[ri(0,c.length-1)]),mut:0,eq:[0,0,0],skill:'',on:S.pets.filter(x=>x.on).length<3});ui();save()},gmm:v=>{S.pets.forEach(p=>p.mut=+v);ui();save()},gmc:()=>{S.pets=[];ui();save()}};
 $('dock').onclick=e=>{const b=e.target.closest('[data-t]');if(b)openTab(b.dataset.t)};
@@ -1223,31 +1262,45 @@ const tip=$('tooltip');
 document.addEventListener('mouseover',e=>{const c=S&&e.target.closest&&e.target.closest('[data-tip]');if(!c){tip.style.display='none';return}const it=find(c.dataset.tip);if(!it){tip.style.display='none';return}
   tip.innerHTML=itemDetail(it);tip.style.display='block'});
 document.addEventListener('mousemove',e=>{tip.style.left=Math.min(innerWidth-240,e.clientX+14)+'px';tip.style.top=Math.min(innerHeight-200,e.clientY+14)+'px'});
-// HUD rates use a rolling 60-second wall-clock window, independent of saved lifetime totals.
-// Positive Zeny changes count as earnings; spending does not make the displayed rate negative.
-const HUD_RATE_WINDOW=60000,HUD_RATE_SAMPLE=1000;
-function stepHudRate(rate,user,kills,zeny,now){
-  const k=Math.max(0,Math.floor(Number(kills)||0)),z=Math.max(0,Number(zeny)||0);
-  if(!rate||rate.user!==user||now<rate.lastSampleAt||now-rate.lastSampleAt>HUD_RATE_WINDOW)
-    rate={user,lastSampleAt:now,lastKills:k,lastZeny:z,totalKills:0,totalZeny:0,samples:[{at:now,kills:0,zeny:0}]};
+// Kill rate is a completed 30-second sample (one display update each interval).
+// Zeny/min is a rolling 60-second *income* rate, counted when credited, not inferred
+// from balance changes: refining or pet rolls cannot hide Zeny earned in the same tick.
+const HUD_RATE_WINDOW=60000,HUD_KILL_REFRESH=30000;
+function stepHudRate(rate,user,kills,earned,now){
+  const k=Math.max(0,Math.floor(Number(kills)||0)),z=Math.max(0,Number(earned)||0);
+  if(!rate||rate.user!==user||now<rate.lastAt||now-rate.lastAt>HUD_RATE_WINDOW)
+    rate={user,lastAt:now,killAt:now,killStart:k,killsPerMin:0,lastEarned:z,started:now,events:[]};
   else{
-    rate.totalKills+=Math.max(0,k-rate.lastKills);rate.totalZeny+=Math.max(0,z-rate.lastZeny);
-    rate.lastKills=k;rate.lastZeny=z;
-    if(now-rate.lastSampleAt>=HUD_RATE_SAMPLE){rate.samples.push({at:now,kills:rate.totalKills,zeny:rate.totalZeny});rate.lastSampleAt=now}
+    const delta=Math.max(0,z-rate.lastEarned);
+    if(delta)rate.events.push({at:now,amount:delta});
+    rate.lastEarned=z;rate.lastAt=now;
+    if(now-rate.killAt>=HUD_KILL_REFRESH){
+      rate.killsPerMin=Math.max(0,k-rate.killStart)*HUD_RATE_WINDOW/(now-rate.killAt);
+      rate.killAt=now;rate.killStart=k;
+    }
   }
-  const cutoff=now-HUD_RATE_WINDOW;
-  while(rate.samples.length>1&&rate.samples[1].at<=cutoff)rate.samples.shift();
-  const base=rate.samples[0],elapsed=Math.max(1000,now-base.at);
-  return{state:rate,kills:(rate.totalKills-base.kills)*HUD_RATE_WINDOW/elapsed,zeny:(rate.totalZeny-base.zeny)*HUD_RATE_WINDOW/elapsed};
+  while(rate.events.length&&rate.events[0].at<=now-HUD_RATE_WINDOW)rate.events.shift();
+  const elapsed=Math.max(1000,Math.min(HUD_RATE_WINDOW,now-rate.started));
+  const zeny=rate.events.reduce((sum,e)=>sum+e.amount,0)*HUD_RATE_WINDOW/elapsed;
+  return{state:rate,kills:rate.killsPerMin,seconds:rate.killsPerMin/60,zeny};
 }
-function bars(){if(!S)return;const rates=stepHudRate(hudRate,currentUser,S.kills,S.zeny,performance.now());hudRate=rates.state;const j=jobOf(),c=C();
+const levelPct=(value,required,maxed=false)=>maxed?100:Math.min(100,Math.max(0,(+value||0)/Math.max(1,+required||1)*100));
+function bars(){if(!S)return;
+  const rates=stepHudRate(hudRate,currentUser,S.kills,zenyEarned,performance.now());hudRate=rates.state;
+  const j=jobOf(),c=C(),hp=levelPct(S.hp,maxHp()),jp=levelPct(j.jx,jneed(j.jl),j.jl>=c.mj),bp=levelPct(S.exp,need(),S.lv>=150);
   $('lv').textContent=S.lv;$('cls2').textContent=S.cls;$('jl').textContent=j.jl;$('zeny').textContent=(+S.zeny||0).toLocaleString();
   $('kills').textContent=rates.kills.toFixed(1);
-  if(hudRate.titleAt!==hudRate.lastSampleAt){
-    $('zeny').title=`Zeny earned per minute (rolling 60s): ${Math.round(rates.zeny).toLocaleString()}z`;
-    $('kills').title=`Kills per minute (rolling 60s): ${rates.kills.toFixed(1)}`;hudRate.titleAt=hudRate.lastSampleAt;
+  $('kills').title=`Kills/min (last 30s, refreshed every 30s): ${rates.kills.toFixed(1)} · ${rates.seconds.toFixed(2)} kills/sec`;
+  $('zenyRate').textContent=`Zeny earned: ${Math.round(rates.zeny).toLocaleString()}/min (last 60s)`;
+  $('hpb').style.width=hp+'%';$('hpb').classList.toggle('critical',hp<=30);
+  $('hpPct').textContent=Math.round(hp)+'%';$('hpMeter').setAttribute('aria-valuenow',Math.round(hp));
+  for(const[id,label,pct,lv]of[['job','Job Level',jp,j.jl],['base','Base Level',bp,S.lv]]){
+    const text=pct.toFixed(1)+'%',track=$(id+'Track');
+    $(id==='job'?'jb':'xpb').style.width=pct+'%';$(id+'Pct').textContent=text;$(id+'Label').textContent=label+' '+lv;
+    track.title=label+' '+lv+': '+text+(pct>=100?' (MAX)':' to next level');
+    track.setAttribute('aria-valuenow',pct.toFixed(1));track.setAttribute('aria-valuetext',track.title);
   }
-  $('hpb').style.width=Math.max(0,S.hp/maxHp()*100)+'%';$('jb').style.width=(j.jl>=c.mj?100:j.jx/jneed(j.jl)*100)+'%';$('xpb').style.width=S.exp/need()*100+'%'}
+}
 function ui(){if(!S)return;bars();$('stageTitle').textContent=fieldName()+(isBoss()?' (Boss map)':'');$('grindStatus').textContent=S.lvl<S.prog[S.mp]?'🔄 Farming':'✨ Frontier';renderWin()}
 
 function update(dt){
@@ -1293,7 +1346,7 @@ function update(dt){
     const rng=C().rng;
     for(const m of mobs){
       m.spawn=Math.min(1,m.spawn+dt*3);m.flash=Math.max(0,(m.flash||0)-dt*6);m.atkAnim=Math.max(0,(m.atkAnim||0)-dt*2.35);
-      const ms=2.6+.3*m.size,wake=m.pack===activePack&&(m.boss||Math.hypot(pl.x-m.x,pl.z-m.z)<AGGRO);
+      const ms=2.6+.3*m.size,wake=m.pack===activePack&&(isBoss()||Math.hypot(pl.x-m.x,pl.z-m.z)<AGGRO);
       const gx2=wake?pl.x+Math.cos(m.a)*ms:m.hx,gz2=wake?pl.z+Math.sin(m.a)*ms*.6:m.hz;
       const ex=gx2-m.x,ez=gz2-m.z,ed=Math.hypot(ex,ez);const stn=m.stun>0;m.run=ed>.12&&!stn;
       if(ed>.1&&!stn){const v=Math.min(ed,dt*(m.boss?1.2:1.6)*(wake?1:.55));m.x+=ex/ed*v;m.z+=ez/ed*v}
@@ -1305,7 +1358,7 @@ function update(dt){
 if(S.hp<=0){log('You were defeated... knocked back to the entrance.','r0');S.hp=maxHp();S.kl=0;mobs=[];mob=null;respawn=1.5;pend=[];tb={};
           pl.x=0;pl.z=Z1-1.5;pl.wt=0;ui();return}}}}
     }
-    if(!mob||!mobs.includes(mob)||mob.pack!==activePack)mob=packMob();
+    if(!mob||!mobs.includes(mob)||mob.pack!==activePack)mob=mobs.find(m=>m.boss)||packMob();
     if(mob){reach=rng?3:1.2+.45*mob.size;pl.orb+=dt*.8;const r=rng?3:reach*.8;tx=mob.x+Math.cos(pl.orb)*r;tz=mob.z+Math.sin(pl.orb)*r;
       const dist=Math.hypot(mob.x-pl.x,mob.z-pl.z)||.01;
       if(dist<=reach+.6||(dist<=5&&skillOn('soulb')&&(skCd.soulb||0)<=0)){pAtkT-=dt;if(pAtkT<=0){playerAttack();if(mob&&mob.hp<=0){kill();return}}}}
@@ -2604,7 +2657,7 @@ dom.addEventListener('wheel',e=>{e.preventDefault();zoom=Math.min(2,Math.max(.6,
 
 const ct=new THREE.Vector3(0,.8,0);let lastKey='';
 function draw(){
-  if(!S)return;const bn=isBoss()&&S.kl>=MPS,key=S.mp+':'+S.lvl+':'+bn,c=C(),mp=MAPS[S.mp];
+  if(!S)return;const bn=isBoss(),key=S.mp+':'+S.lvl+':'+bn,c=C(),mp=MAPS[S.mp];
   if(key!==lastKey){lastKey=key;const col=new THREE.Color(bn?0x8a6bb0:mp.sky);scene.background=col;scene.fog=new THREE.Fog(col,35,80);ground.material.color.setHex(mp.ground);buildDeco(S.mp);road.material.color.setHex(S.mp===3?0xe9d9a8:0xd8cdb4)}
   P.position.set(pl.x,0,pl.z);
   const w=S.eq.weapon,wt=heroWeaponType(c.n,c.wt,w&&w.wt),clothN=S.eq.armor?TC[S.eq.armor.tier]:c.col,hairN=S.eq.head?TC[S.eq.head.tier]:0xd0492c,metalN=w?TC[w.tier]:0xc0c0c0;
@@ -2646,7 +2699,7 @@ function draw(){
   syncSkillFx();syncWeaponSprites(pFace,c);R.render(scene,cam);
   floats.forEach(f=>{if(!f.el){const e=document.createElement('div');e.className='fl'+(f.big?' big':'');e.textContent=f.txt;e.style.color=f.col;ov.appendChild(e);f.el=e}
     const[a,b]=scr(f.x,f.y,f.z);f.el.style.left=a+'px';f.el.style.top=b+'px';f.el.style.opacity=Math.max(0,f.life)});
-  const pt=bn?'BOSS FIGHT':`Pack ${activePack+1}/3 · Monsters ${Math.min(S.kl,MPS)}/${MPS}${isBoss()?' → Boss':''}`;if(pt!==lastProg){lastProg=pt;prog.textContent=pt}
+  const pt=bn?`BOSS FIGHT · ${mobs.filter(m=>!m.boss).length} minions`:`Pack ${activePack+1}/3 · Monsters ${Math.min(S.kl,MPS)}/${MPS}`;if(pt!==lastProg){lastProg=pt;prog.textContent=pt}
 }
 let last=performance.now();
 function loop(now){const dt=Math.min(.1,(now-last)/1000);last=now;try{for(let i=0;i<speed;i++){update(dt);kitTick(dt)}draw()}catch(e){if(!loop.e){loop.e=1;console.error(e);log('Error: '+e.message,'r0')}}requestAnimationFrame(loop)}

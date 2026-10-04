@@ -219,28 +219,64 @@ t('learned active skills use a checked Auto cast box by default', () => {
     'unchecking Auto cast should render the skill as paused');
 });
 
-t('the HUD shows Kills /Min and a rolling Zeny-per-minute hover rate', () => {
-  assert.ok(src.includes('<b id="zeny" title="Hover for earned Zeny per minute" tabindex="0" style="cursor:help">0</b>'), 'Zeny amount needs a hover hint');
-  assert.ok(src.includes('<div>Kills /Min <b id="kills" title="Kills per minute (rolling 60s)">0.0</b></div>'), 'HUD should display the rate instead of lifetime kills');
-  assert.ok(src.includes("$('zeny').title=`Zeny earned per minute (rolling 60s):"), 'hover title should show Zeny/min');
-  const box = {}; vm.createContext(box);
-  vm.runInContext(grab('const HUD_RATE_WINDOW=60000,HUD_RATE_SAMPLE=1000;', 'function bars(){') + ';this.stepHudRate=stepHudRate;', box);
-  let state = null, m = box.stepHudRate(state, 'player', 100, 4000, 0); state = m.state;
-  assert.strictEqual(m.kills, 0); assert.strictEqual(m.zeny, 0);
-  m = box.stepHudRate(state, 'player', 105, 4600, 30000); state = m.state;
-  assert.ok(Math.abs(m.kills - 10) < .001, '5 kills over 30 seconds should show 10/min');
-  assert.ok(Math.abs(m.zeny - 1200) < .001, '600 earned Zeny over 30 seconds should show 1,200/min');
-  m = box.stepHudRate(state, 'player', 105, 4100, 45000); state = m.state;
-  assert.ok(Math.abs(m.zeny - 800) < .001, 'spending Zeny must not count as negative earnings');
-  m = box.stepHudRate(state, 'player', 105, 4100, 90000); state = m.state;
-  assert.strictEqual(m.kills, 0, 'activity should age out of the rolling minute');
-  assert.strictEqual(m.zeny, 0, 'Zeny earnings should age out of the rolling minute');
-  m = box.stepHudRate(state, 'another-player', 20, 9000, 90000); state = m.state;
-  assert.strictEqual(m.kills, 0, 'a new login should start a fresh rate window');
-  assert.strictEqual(m.zeny, 0, 'a loaded balance should not count as new income');
-  m = box.stepHudRate(state, 'another-player', 30, 10000, 160001);
-  assert.strictEqual(m.kills, 0, 'a long idle gap should start a fresh rolling window');
-  assert.strictEqual(m.zeny, 0, 'earnings from before a long idle gap should not linger');
+t('the HP meter switches at 30%, and full-width Job/Base bars expose exact level percentages', () => {
+  assert.ok(src.includes('id="xp-dock"') && src.includes('id="jobTrack"') && src.includes('id="baseTrack"'));
+  assert.ok(src.indexOf('id="xp-dock"')>src.indexOf('id="hud"'),'level bars must sit below the HUD');
+  assert.ok(src.includes('Job Level 1')&&src.includes('Base Level 1'),'both bars need full labels');
+  assert.ok(src.includes('.xp-row{position:relative;height:20px;width:100%'),'progress rows must span the screen');
+  assert.ok(src.includes('#hpb.critical{background:linear-gradient('),'low HP must use a red treatment');
+  const box={};vm.createContext(box);
+  vm.runInContext(`
+    const nodes={};const $=id=>nodes[id]||(nodes[id]={style:{},textContent:'',title:'',attrs:{},
+      classList:{flags:{},toggle(k,v){this.flags[k]=v}},setAttribute(k,v){this.attrs[k]=v}});
+    let S={lv:20,exp:90,hp:31,kills:0,zeny:0},hudRate=null,zenyEarned=0,currentUser='A';
+    const performance={now:()=>1000},job={jl:10,jx:45},jobOf=()=>job,C=()=>({mj:50}),maxHp=()=>100,
+      jneed=()=>100,need=()=>200;
+    ${grab('const HUD_RATE_WINDOW=60000,HUD_KILL_REFRESH=30000;','function ui(){')}
+    bars();this.__h={nodes,S,job,bars};
+  `,box);
+  const h=box.__h,d=h.nodes;
+  assert.strictEqual(d.hpb.classList.flags.critical,false,'31% HP must stay green');
+  assert.strictEqual(d.jb.style.width,'45%');assert.strictEqual(d.xpb.style.width,'45%');
+  assert.ok(d.jobTrack.title.includes('45.0% to next level'));
+  assert.ok(d.baseTrack.title.includes('45.0% to next level'));
+  assert.strictEqual(d.jobTrack.attrs['aria-valuenow'],'45.0');
+  h.S.hp=30;h.bars();assert.strictEqual(d.hpb.classList.flags.critical,true,'30% HP must turn red');
+  h.job.jl=50;h.S.lv=150;h.bars();assert.strictEqual(d.jb.style.width,'100%');assert.strictEqual(d.xpb.style.width,'100%');
+});
+
+t('Zeny hover shows actual earned income, and kills/min refreshes in 30-second samples', () => {
+  assert.ok(src.includes('class="hud-zeny" id="zenyHover" tabindex="0"'),'hover area must include amount and label');
+  assert.ok(src.includes('.hud-zeny:hover .hud-flyout'),'Zeny tooltip must open on hover without relying on browser title delays');
+  assert.ok(src.includes("$('zenyRate').textContent=`Zeny earned:"),'tooltip must display a live rate');
+  assert.ok(src.includes('Kills/min <b id="kills"'),'kills rate must replace lifetime count');
+  const box={};vm.createContext(box);
+  vm.runInContext(`
+    let S={zeny:200},zenyEarned=0;
+    ${grab('function earnZeny(amount){','function kill(o){')}
+    ${grab('const HUD_RATE_WINDOW=60000,HUD_KILL_REFRESH=30000;','const levelPct=')}
+    this.__r={stepHudRate,earnZeny,S,get earned(){return zenyEarned}};
+  `,box);
+  const R=box.__r;
+  R.earnZeny(600);R.S.zeny-=450;R.earnZeny(25);
+  assert.strictEqual(R.S.zeny,375);assert.strictEqual(R.earned,625,'spending must not erase income');
+  let state=null,m=R.stepHudRate(state,'player',100,0,0);state=m.state;
+  m=R.stepHudRate(state,'player',105,600,15000);state=m.state;
+  assert.strictEqual(m.kills,0,'kills/min must not change until 30 seconds have passed');
+  m=R.stepHudRate(state,'player',105,600,30000);state=m.state;
+  assert.ok(Math.abs(m.kills-10)<.001,'5 kills in 30s -> 10 kills/min');
+  assert.ok(Math.abs(m.seconds-1/6)<.001,'10/min is one kill every 6 seconds');
+  assert.ok(Math.abs(m.zeny-1200)<.001,'600 earned over 30s -> 1,200/min');
+  m=R.stepHudRate(state,'player',105,600,45000);state=m.state;
+  assert.strictEqual(m.kills,10,'kills/min holds steady until the next 30s refresh');
+  assert.ok(Math.abs(m.zeny-800)<.001,'spending must not count as negative income');
+  m=R.stepHudRate(state,'player',105,600,90000);state=m.state;
+  assert.strictEqual(m.kills,0,'next 30s window had no kills');
+  assert.strictEqual(m.zeny,0,'old income must age out at 60s');
+  m=R.stepHudRate(state,'another-player',20,9000,90000);state=m.state;
+  assert.strictEqual(m.kills,0);assert.strictEqual(m.zeny,0,'a new login must start a clean window');
+  m=R.stepHudRate(state,'another-player',30,10000,160001);
+  assert.strictEqual(m.kills,0);assert.strictEqual(m.zeny,0,'a long idle gap resets the samples');
 });
 
 t('every skill has a distinct icon and upgraded card metadata', () => {

@@ -235,6 +235,7 @@ t('releasing a pet clears its auto-roll and skill-cooldown state', () => {
     ${PET_DATA_SRC}
     const EGG=3000;let S={zeny:100,pets:[{id:7,sp:0}]},petSkillCd={7:8},autoSet=new Set([7]),pending=null,saveCount=0,uiCount=0;
     const gp=id=>S.pets.find(p=>String(p.id)===String(id)),ask=(msg,fn)=>{pending=fn},save=()=>saveCount++,ui=()=>uiCount++;
+    let zenyEarned=0;${grab('function earnZeny(amount){','function kill(o){')}
     const release=${action};
     this.__rel={S,petSkillCd,autoSet,release,get pending(){return pending},get saveCount(){return saveCount},get uiCount(){return uiCount},confirm:()=>pending()};
   `,box);

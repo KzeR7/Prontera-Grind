@@ -38,7 +38,7 @@ done
 
 Expected tails: pack prints the 19 bodies; every other suite prints `N passed, 0 failed`
 (class_change 22, save_load 10, economy 21, stat 7, card 13, skill 49, gear 20, scene 8,
-**kit 34**, ui 13, sprite 11, starter 7). All suites pull the real code out of `index.html` by
+**kit 34**, ui 14, sprite 11, starter 7). All suites pull the real code out of `index.html` by
 string boundary, so moving a declaration can break a test without breaking the game — if a suite
 throws, read the boundary it grabs before assuming the game is at fault.
 
@@ -58,7 +58,14 @@ change paths, water, vegetation and landmarks with the existing kit. The combat 
 26×40 units. `packSites()` rolls three dry locations 13–18.5 units apart anew on every respawn;
 `nearestPack()`, `spawn()`, `kill()` and `update()` choose the nearest surviving pack, not a
 numbered route. `mobVisualScale()` makes regular mobs shorter than the player while leaving
-bosses at their previous size. To look at a layout without a
+bosses at their previous size. Stage 10 starts with the boss and three regular escorts
+on maps 1–5 or five on maps 6–10; defeating the boss clears the wave and immediately
+allows another boss wave after the respawn delay. The HUD shows green HP above 30%
+(red at or below 30%), bottom-width Job and Base progress bars with hover percentages,
+earned Zeny/min on hover, and Kills/min sampled every 30 seconds (kills/sec on hover).
+Income and kill-rate samples reset at login or on a new adventure. The economy pacing
+tests still model the former 15-kill boss cadence, so their time-to-level projections
+are historical until a real Stage-10 boss-wave playtest. To look at a layout without a
 browser:
 
 ```sh

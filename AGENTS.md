@@ -22,7 +22,7 @@
 Three.js from a CDN, no build step. The player picks a class line, grinds monsters across
 10 maps, levels up, spends stat and job points, wears gear, collects pets **from drops
 only** (there is no hatching), trains them by gambling Zeny, rolls for cards and ores, and
-fights a boss once every 15 kills.
+fights an immediate boss plus escorts on each Stage 10 map.
 
 | Where | What |
 |---|---|
@@ -129,15 +129,15 @@ grind lives at the top. `needAt(L)` is three continuous power segments
 (`NA1·L^NE1` ≤50, anchored powers to `NE2` ≤99 and `NE3` above), solved with
 `tools/tune_pacing.js` against the canonical model (~800 kills/hour, camping the band map's
 boss field): **Base 10 in 10 min, Base 49 in 1.9 h, Base 99 in 45 h**, then a long 100-150
-endgame (**~269 h total to Lv150 at the model rate** — an outcome, not an anchor; retune
+endgame (**~269 h total to Lv150 at the historical model rate** — an outcome, not an anchor; retune
 `aC` if the owner wants it shorter). `EXPK=5.5`, `BOSEK=46` (the boss stays 8.33x a mob),
 `ZK=[8,14]`, `BZK=[150,250]`, `QZ={kill:1.6,loot:9,boss:26}`, `zenAt(p)=max(1,round(.011*p*p))`
 are unchanged. **`QXP={kill:1/120,loot:1/150,boss:1/72}`** is the v11 column scaled by 4/15:
 on the steep new curve quests must never carry more than ~40% of a level (they supply ~35%
-overall). **Job bars mirror the base curve** (`JOFF=[0,9,49,98]`): job level j of a tier
+overall in the historical v16 model). **Job bars mirror the base curve** (`JOFF=[0,9,49,98]`): job level j of a tier
 costs the job exp (70% of mob exp) that base level j+JOFF[tier] pays out, so each job bar
 fills in step with the base bar and the job gates (Novice 10 / 1st-job 40 / 2nd-job 50) land
-on the anchors by construction. Zeny over a full model run is **~46.5M**, enough for the
+on the anchors by construction. Zeny over a historical model run is **~46.5M**, enough for the
 +10 7-slot setup and thousands of pet rolls.
 
 > **The 800 kills/hour figure is still the model's assumption - re-measure it.** It was
@@ -414,7 +414,9 @@ player starts at `Z1-1.5` (bottom). Every respawn rerolls three pack sites in th
 open field: **13–18.5 units apart** (v30, between v28’s fixed ~18–23 and v29’s 9.5–15.5). `AGGRO=6.5`, and only
 the active pack can chase or attack; on each spawn and after each pack falls, `nearestPack()`
 chooses whichever surviving pack is closest to the player. Pets and skills stay on that
-pack; no 1 → 2 → 3 fixed order. On Stage 10 the boss appears alone after 15 normal kills.
+pack; no 1 → 2 → 3 fixed order. On Stage 10 the boss appears immediately
+with three regular escorts on maps 1–5 or five on maps 6–10. Defeat the boss to
+clear its remaining escorts; the whole boss wave respawns without a kill prerequisite.
 `ct.z` tracks `pl.z-5` to keep the player in the lower part of the frame. Prontera's
 fallback town stays beyond the far edge (`TZ=Z0-8`).
 
@@ -1528,3 +1530,26 @@ assigned for feel rather than fidelity. While reworking that, two shipped bugs s
 * **Known limit:** Divine Pride's PNGs have varied transparent margins; heights are based
   on rendered frames, and a visual pass in the live preview is still useful to judge
   individual silhouettes. The change is not a hitbox or balance change.
+
+### 2026-10-04 — `ui-v31 levels rates boss-escorts`
+
+* **What changed for the player:** the HP bar is modern green above 30% and red at or below
+  30%. Full-width Job Level and Base Level progress bars sit at the bottom; hover or focus
+  either for its exact percentage. Hover or focus Zeny to see *earned* Zeny/min, including
+  quest and sale income but not purchases or GM grants. Kills/min refreshes every 30 seconds
+  (hover it for kills/sec). The rates reset on login or a new adventure.
+* **Stage 10:** the boss is present from the first spawn with three ordinary escorts on the
+  first five maps and five on the last five. They engage together. Killing the boss clears
+  the wave, and the next wave again includes the boss; no 15-kill gate remains. Normal
+  stages still have randomized, nearest-selected three packs. The larger arena and all
+  scene art, mob visual sizes, rewards, save data and boss scale are unchanged.
+* **Files touched:** `index.html`, `tools/tests/{starter,economy,skill,ui}_sim.js`,
+  `READ-ME-FIRST.md`, `AGENTS.md`. `BUILD` is now ui-v31.
+* **Checks:** all 13 suites green (pack 19 bodies; class change 22; save/load 10;
+  economy 21; stat 7; card 13; skill 49; gear 20; scene 8; kit 34; ui 14;
+  sprite 11; starter 7). Inline JavaScript passes `node --check`; diff is clean.
+* **Balance caveat:** `tools/tune_pacing.js` and `economy_sim.js` still use the old
+  one-boss-per-15-kills model for their pacing projections. Those historical time and
+  income estimates are **not** predictions for this new Stage-10 encounter. Re-measure
+  kills/hour and boss-wave duration before retuning, rather than extrapolating the old
+  800-kills/hour model. No in-browser visual playtest was run.
