@@ -31,9 +31,9 @@ fights a boss once every 15 kills.
 | `Sprite/*.png` | the uploaded RO-style sprite sheets (21 of them). The **source art**. |
 | `tools/make_sprite_pack.py` | crops `Sprite/` → `assets/sprite_pack_data.js`. |
 | `tools/montage.py` | rebuilds the four montage sheets (see below). |
-| `tools/tests/` | the eleven test suites. Run them before every push. |
-| `UPDATE-BOOTSTRAP.py` | one-shot: rebuilds the whole update from a fresh clone (see *Delivery*). |
-| `READ-ME-FIRST.md` | handover note for whoever pushes the current work. |
+| `tools/tests/` | the thirteen test suites. Run them before every push. |
+| `tools/preview/` | dev-only: dumps the ten plans out of the game and paints them top-down, so a layout can be judged without a browser (`node tools/preview/dump_plans.js` then `python3 tools/preview/render_plans.py`). Nothing here ships to the player. |
+| `READ-ME-FIRST.md` | handover note: what this repo is, how to run it and how to recover after a workspace reset. |
 
 Ships by committing to `main` on GitHub (`KzeR7/Prontera-Grind`); Cloudflare Pages
 rebuilds from the repo. **The two files the game actually needs are `index.html` and
@@ -509,9 +509,13 @@ function name changes.
   `git` rewinds to the base commit, `/tmp` is emptied, background servers die. Keep work
   committed, re-check `git log` after every few tool calls, and never run
   `git checkout -f` / `git reset --hard` over modified files — it silently reverts them.
-* Recovery path if a reset lands: `UPDATE-BOOTSTRAP.py` (rebuilds `index.html` + the pack
-  from the sheets that are already on main), `tools/v7-index.patch` +
-  `tools/restore_v7.sh`, and `READ-ME-FIRST.md`.
+* Recovery path if a reset lands: the repo **is** the backup. `index.html`, the sprite pack and
+  the map kit are all committed, so a fresh clone plus `git pull` on the working branch is the
+  whole recovery - then re-run the thirteen suites to prove the tree is sane (`READ-ME-FIRST.md`
+  has the commands). **There is no bootstrap script any more**: `UPDATE-BOOTSTRAP.py` was deleted
+  in v27 because it was a v7-era self-installer that overwrote `index.html` and `tools/` with a
+  compressed 2026-10-02 build - running it would have thrown a week of work away. It is in git
+  history if anyone ever wants to read it; do not bring it back.
 * Network egress from the sandbox is **GitHub only** — every file host tested (transfer.sh,
   0x0.st, catbox, filebin, …) is unreachable. `pip` works.
 
@@ -1320,3 +1324,98 @@ assigned for feel rather than fidelity. While reworking that, two shipped bugs s
   bamboo and mud trail, Amatsu's red bridge and torii, the Abyss dark lake and Louyang's jade
   paddies in the live preview, and flag anything that reads wrong so the art pipeline (not the
   game) can be re-run.
+
+### 2026-10-04 — `kit-v27 organic-field` **(checkpoint — work in progress, not finished)**
+
+* **What changed for the player:** the owner's map feedback is being worked through. The ten maps
+  no longer dress themselves in two mirrored tree lines or paint their ground with a
+  mathematical lattice (`(i*7+j*13)%9`), which is what made the green patches look printed and
+  every field look boxed in. Ground now varies in **organic noise patches**, scenery stands in
+  **clumps spread across the whole field** (near the lane and far out), the map border turns wild
+  in **ragged tongues** instead of a rectangle, and **Morocc keeps its attached design but is now
+  dressed all round it**. **Prontera is the big visible change**: its floor is a **paved brick
+  cobble avenue and square** through a green meadow and its buildings are the kit's own painted
+  cottages — the old block-built town (THREE-box buildings, not kit art) is retired to fallback.
+  **This is not finished**: the far-field ring and the per-map tuning are still owed, and the
+  login card says `wip` on purpose.
+* **Files touched:** `index.html` (the kit layout layer: seeded value noise, `KIT_FIELD`,
+  `kitEdge`, the rewritten `fieldPlan`, the new `farDress`, `kitPlan` dispatch, all ten recipes,
+  `BUILD`), `tools/preview/` (new dev-only tool: `dump_plans.js` + `render_plans.py`, top-down
+  plan previews), `Updates/v27-organic-field/CHECKPOINT.md` (the handover instruction sheet),
+  `image-search/` (RO reference renders kept with the repo's other research), `AGENTS.md`.
+* **Art:** none. No tile, prop or pixel was drawn, traced, recoloured or substituted; `Sprite/`,
+  the class pack and `assets/kit/` are untouched, and `tools/montage.py` was not run.
+* **Tests:** 12 of 13 suites green at this checkpoint (class_change 22, save_load 10, economy 21,
+  stat 7, card 13, skill 48, gear 20, scene 8, ui 13, sprite 10, starter 4). **`kit_sim.js` does
+  not run yet** — its harness still binds the removed `PAY` constant and its pins describe the old
+  layouts; rewriting it around v27 is item 3 of the checkpoint's to-do list. Inline game JS passes
+  `node --check`.
+* **Branches / PR:** `arena/01a1057c-prontera-grind`; checkpoint pushed as a draft pull request, so
+  the work is safe on GitHub before the tuning pass.
+* **Known limits / follow-ups:** **read `Updates/v27-organic-field/CHECKPOINT.md` before touching
+  this** — it lists the root causes, what is done, what is owed (far-ring data per map,
+  `kit_sim.js` rewrite, final `BUILD`, final log entry) and the house rules that must not break.
+
+### 2026-10-04 — `kit-v27 organic-field all-ten-maps` (finished)
+
+* **What changed for the player:** all ten arena maps were rebuilt from the owner's walk-through
+  notes, and **Prontera finally wears the kit**. Details, map by map:
+  * **Prontera** — the old block-built town was still showing because `buildDeco` returned early for
+    map 0, so the kit never dressed it. That is fixed: the block town (and its procedural fountain)
+    is now the *no-atlas fallback* only, and the map is the kit's own art — a **brick cobble avenue
+    and paved square** in a light green meadow, the kit's painted cottages in a street row, and a
+    **round fountain basin** in the square: a pool of the kit's water tile, a limestone curb ring,
+    four stone posts on the rim and a **plinth at the centre**. There is no fountain crop on the
+    sheet, so the basin is composed from crops — nothing drawn (house rule 1).
+  * **Izlude** — de-jungled. It is now Prontera's field by the sea: light green meadow, sparse round
+    trees, golden shore, palms at the waterline, the pier on its posts, and the sea running to the
+    field edge so the far side is water instead of bare ground.
+  * **Geffen / Louyang / Abyss** — the three the owner wants room to grow the battle field on:
+    fewer, wider-spaced props, no rocky blobs in the middle, far sparser than before.
+  * **Morocc** — the attached design is untouched, cell for cell, and is now **dressed all round
+    it**: dunefields, mesas, palms, cacti, ruins and bones, alternating sides so **both sides** are
+    dressed (the owner found one side bare).
+  * **Payon / Comodo / Niflheim / Amatsu** — thinned and spaced; Comodo lost its rocky brown blobs
+    entirely; Niflheim's trees and rocks are fewer; Amatsu's blossom is lighter.
+  * **No more brown square**: the v26 rocky surround (and the inland rock blobs) is gone from every
+    recipe. `kitEdge()` still exists as an opt-in wild edge, but **no map uses it** - the owner
+    asked for open fields, and `kit_sim.js` pins that no map frames itself.
+  * **The ground is organic now.** v26 painted its variation with `(i*7+j*13)%9===0` - a diagonal
+    lattice of single cells that read as printed wallpaper (the owner's "symmetric green patches",
+    "repeats of boxes"). Ground variation is **seeded value noise** with a **requested coverage
+    fraction** solved from the noise's own distribution, so a recipe says "25% dark patches" and
+    gets 25%, wherever the seed puts them. Scenery is placed in **clumps** spread over the whole
+    field, with rejection sampling so the density really lands, and a **far ring** past the field
+    border into the fog.
+* **Files touched:** `index.html` (the kit layout layer: `kitHash/kitNoise/kitFbm`, `KIT_FIELD`,
+  `kitEdge`, the rewritten `fieldPlan` with pools/outcrops/groves/bands/far, `farDress`, `kitPlan`,
+  all ten `KIT_MAP` recipes, `buildDeco`'s Prontera fix, `BUILD`), `tools/tests/kit_sim.js`
+  (rewritten around v27 - 33 pins), `tools/preview/` (new dev-only plan previewer: `dump_plans.js`
+  + `render_plans.py`), `READ-ME-FIRST.md` (rewritten as a real handover), `AGENTS.md` (the map
+  table's tool rows, the delivery recovery bullet, this entry).
+* **Deleted:** `UPDATE-BOOTSTRAP.py`. It was a v7-era self-installer holding a compressed
+  2026-10-02 build of `index.html` and `tools/`, and by v26 its patches no longer applied, so it
+  would have restored that old build **over the current game** if anyone had run it (the v26 entry
+  below flagged it; this entry is the fix). It is in git history. The recovery path is git itself:
+  everything the game needs is committed.
+* **Art:** nothing was drawn, traced, recoloured or substituted. Every pixel is a crop of the v2
+  sheet; `tools/montage.py` was not run and `Sprite/`, the pack and `assets/kit/` are untouched.
+  The fountain is five existing crops arranged, not new art.
+* **Tests:** **all 13 suites green** — pack (19 bodies), class_change 22, save_load 10, economy 21,
+  stat 7, card 13, skill 48, gear 20, scene 8, **kit 33** (was 30 at v26 and thrown out of date by
+  this work - it now pins the organic layout: coverage fractions, no lattice period, no frame, both
+  sides dressed, canopy spacing, the far ring, the fountain, Morocc's far dressing, and the ten
+  identities), ui 13, sprite 10, starter 4. Inline game JS passes `node --check`.
+* **Branches / PR:** `arena/01a1057c-prontera-grind` — https://github.com/KzeR7/Prontera-Grind/pull/12
+* **Known limits / follow-ups:**
+  * `kitEdge()` is unused by every recipe (that is the owner's call, not an oversight) - if a map
+    ever wants a wild rocky border again, add `edge:{at,amp,s,...}` to its recipe and the test will
+    start judging it for raggedness.
+  * The fountain is composed from crops: a pool tile, a limestone curb, four stone posts and a
+    plinth. It reads as a fountain basin from the arena camera; a real fountain crop would be
+    better and is a job for the art pipeline, not the game.
+  * The battle field is still `BX_` 5.5 wide; the owner wants to grow it later. The maps are now
+    deliberately open, but widening the lane is a balance change (spawn band, AGGRO, camera) and
+    was not touched here.
+  * Prontera's old block town is still in `index.html` as the fallback if the kit cannot load, and
+    still has no test of its own; `scene_sim.js` covers the fallback scenery path, not the town.
