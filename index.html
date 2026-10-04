@@ -1381,9 +1381,12 @@ function landmark(G,k,c1,c2,r){
   else if(k===7){mk(G,SP(1.1),c1,0,.9,0);mk(G,SP(.75),c1,.8,.7,.3);mk(G,SP(.6),c1,-.7,.6,-.3);mk(G,CY(.1,.14,.6),c2,0,.35,0)}
   else{mk(G,BX(2.2,1.6,1.8),c1,0,.8,0);mk(G,BX(1.5,1.1,1.3),c1,1.1,1.5,.4);mk(G,BX(1.2,.9,1.1),c2,-.9,1.3,-.5)}
 }
-function buildDeco(m){while(deco.children.length)deco.remove(deco.children[0]);townObjs.forEach(o=>o.visible=m===0);road.visible=m===0;if(!m)return;
-  // a kit design dresses this map: paint its ground, water, bridge and props and stop here
-  if(KIT.ok&&buildKit(m))return;
+function buildDeco(m){while(deco.children.length)deco.remove(deco.children[0]);
+  // The kit dresses every map, Prontera included (v27). The block-built town, its cathedral and its
+  // fountain are the **no-atlas fallback** now, kept for the case where the sheet cannot be
+  // downloaded - that is why the owner used to see old buildings standing on the new field.
+  if(KIT.ok&&buildKit(m)){townObjs.forEach(o=>o.visible=false);road.visible=false;return}
+  townObjs.forEach(o=>o.visible=m===0);road.visible=m===0;if(!m)return;
   if(KIT.ground)KIT.ground.visible=false;
   let q=m*977+13;const r=()=>(q=(q*16807)%2147483647)/2147483647,[k,c1,c2,ex]=TH[m],E=ex||{};
   if(E.w)water(deco,E.w[0],E.w[1],E.w[2],E.w[3],r);
@@ -1505,179 +1508,186 @@ function kitPut(props,src,x,z,type,scale,flip,missing){
 // Identities are the art pass's per-map notes (Updates/map-sprites-v2/RESEARCH.md), researched
 // against divine-pride map renders: one painted technique, ten moods.
 const KIT_MAP={
-  // 0 Prontera - the city: a brick avenue and a paved square in an open green field, round green
-  //   trees, and the kit's own painted cottages in a street row. The old block-built town is now
-  //   the no-atlas fallback only - the owner asked for the kit's graphics and a brick floor.
+  // 0 Prontera - the city: light green meadow, a brick cobble avenue and a paved square, the kit's
+  //   own painted cottages in a street row, and a stone fountain basin in the square (composed from
+  //   crops: a round water tile pool with a limestone curb and stone posts - no fountain crop exists
+  //   in the kit, and house rule 1 forbids drawing one). Sparse round trees, nothing near the lane.
   0:{src:'payon',layout:'field',design:'prontera',seed:101,f:{
-    base:'grass_olive',base2:'grass_forest',patch:{tile:'grass_forest',t:.54,s:6.5,oct:3},
-    road:{w:4.4,wander:.55},roadTile:'ruin_cobble',
-    plaza:{x:-15,z:-19,w:13,l:9},
-    edge:{at:8,amp:.5,s:12},
-    groves:[{n:10,r:3.4,trees:[2,4],b0:6.2,b1:14,z0:-24,z1:9,
-      types:['tree_ancient_large','tree_ancient_variant','tree_tall_cluster'],
-      sub:[['tree_bush_bright',.5],['tree_sapling',.5]]},
-      {n:10,r:4.4,trees:[2,3],b0:14,b1:28,z0:-28,z1:11,
+    base:'grass_olive',base2:'grass_forest',patch:{tile:'grass_forest',cover:.2,s:7,oct:4},
+    road:{w:4.4,wander:.5},roadTile:'ruin_cobble',
+    plaza:{x:-15,z:-19,w:12,l:8},pool:{x:-15,z:-19,r:1.9,tile:'water_frame_0',curb:'limestone_pale'},
+    groves:[{n:3,r:4.6,trees:[1,2],b0:7.2,b1:16,z0:-26,z1:10,gap:5,
+      types:['tree_ancient_large','tree_ancient_variant','tree_tall_cluster']},
+      {n:3,r:5.4,trees:[1,2],b0:16,b1:30,z0:-30,z1:12,gap:5.2,
       types:['tree_ancient_large','tree_tall_cluster','tree_sapling']}],
-    scatter:[{type:'tree_bush_bright',count:18,r0:6.6,r1:26,z0:-28,z1:10,s0:.8,s1:1.25,gap:2.2},
-      {type:'river_stone_post',count:12,r0:7,r1:24,z0:-26,z1:8,s0:.8,s1:1.1,gap:3.4},
-      {type:'tree_sapling',count:12,r0:7,r1:22,z0:-26,z1:9,s0:.7,s1:1.05,gap:1.6}],
+    scatter:[{type:'tree_bush_bright',count:5,r0:7.4,r1:27,z0:-30,z1:11,s0:.8,s1:1.15,gap:5.2},
+      {type:'river_stone_post',count:4,r0:8,r1:26,z0:-28,z1:9,s0:.8,s1:1.05,gap:6.5},
+      {type:'tree_sapling',count:4,r0:8,r1:24,z0:-28,z1:10,s0:.7,s1:1,gap:5}],
+    far:[{type:'tree_ancient_large', count:14,r0:32,r1:44,z0:-44,z1:18,s0:.95,s1:1.3,gap:8.5},
+      {type:'tree_ancient_variant',count:6,r0:34,r1:46,z0:-44,z1:18,s0:.95,s1:1.25,gap:10}],
     fixed:[{type:'house_prontera',x:-20,z:-22.5,scale:1,flip:true},{type:'house_prontera',x:-13,z:-23.5,scale:1.1},
       {type:'house_prontera',x:-8,z:-20.5,scale:.95},{type:'house_prontera',x:9,z:-21.5,scale:1.05,flip:true},
       {type:'house_prontera',x:15,z:-23.5,scale:.95},{type:'house_prontera',x:21,z:-20,scale:1.1},
-      {type:'shrine_stone',x:-24,z:-17,scale:.85},
+      {type:'ruin_stump',x:-15,z:-19,scale:.85},
+      {type:'river_stone_post',x:-15,z:-21.4,scale:.8},{type:'river_stone_post',x:-15,z:-16.6,scale:.8,flip:true},
+      {type:'river_stone_post',x:-17.4,z:-19,scale:.8},{type:'river_stone_post',x:-12.6,z:-19,scale:.8,flip:true},
       {type:'lantern_stone',x:-6.4,z:-16.6,scale:1},{type:'lantern_stone',x:6.4,z:-16.6,scale:1,flip:true},
-      {type:'lantern_stone',x:-14,z:-14.6,scale:1},{type:'lantern_stone',x:14,z:-14.6,scale:1,flip:true},
-      {type:'ruin_curb',x:-6.4,z:-18.6,scale:1},{type:'ruin_curb',x:6.4,z:-18.6,scale:1},
-      {type:'ruin_pillar',x:-11,z:-16.5,scale:.9},{type:'ruin_pillar',x:11,z:-16.5,scale:.9}]}},
-  // 1 Izlude - a harbour field: teal sea and a golden shore at the far side, the pier on its posts,
-  //   palms at the waterline, and green scattered right across the field instead of two lines
+      {type:'lantern_stone',x:-14,z:-13.6,scale:1},{type:'lantern_stone',x:14,z:-13.6,scale:1,flip:true}]}},
+  // 1 Izlude - Prontera's field by the sea: light green meadow, sparse round trees, a golden shore
+  //   band and teal water, palms at the waterline and the pier on its posts. Deliberately open -
+  //   the owner called the dense version a jungle.
   1:{src:'payon',layout:'field',design:'izlude',seed:202,f:{
-    base:'grass_olive',base2:'grass_forest',patch:{tile:'grass_forest',t:.53,s:6,oct:3,tile2:'grass_olive',t2:.72},
+    base:'grass_olive',base2:'grass_forest',patch:{tile:'grass_forest',cover:.18,s:7,oct:4},
     road:{w:3.4,wander:.4},
-    water:[-23,-16],bank:2.2,bankTile:'sand_gold',
+    water:[-30,-19],bank:1.4,bankTile:'sand_gold',
     deck:[9.6,-19.5,2.8,7],
-    edge:{at:9,amp:.55,s:13},
-    groves:[{n:11,r:3.4,trees:[2,4],b0:6.4,b1:14,z0:-14,z1:9,types:['tree_tall_cluster','tree_ancient_variant'],
-      sub:[['tree_bush_bright',.45]]},
-      {n:10,r:4.2,trees:[2,3],b0:14,b1:28,z0:-15,z1:11,types:['tree_tall_cluster','tree_ancient_large']},
-      {n:5,r:3,trees:[2,3],b0:8,b1:22,z0:-16.4,z1:-14.4,types:['palm_tall','palm_double'],s0:.85,s1:1.05}],
-    scatter:[{type:'palm_tall',count:12,r0:8,r1:26,z0:-16.4,z1:-13.6,s0:.85,s1:1.1,gap:2.4},
-      {type:'river_stone_post',count:8,r0:7,r1:20,z0:-15.5,z1:-10,s0:.8,s1:1,gap:3},
-      {type:'tree_bush_bright',count:18,r0:6.6,r1:26,z0:-14,z1:10,s0:.8,s1:1.2,gap:2},
-      {type:'tree_sapling',count:10,r0:7,r1:20,z0:-14,z1:9,s0:.7,s1:1,gap:1.6}],
+    groves:[{n:2,r:4.6,trees:[1,2],b0:7.2,b1:16,z0:-15,z1:10,gap:5.2,types:['tree_tall_cluster','tree_ancient_variant']},
+      {n:2,r:5.4,trees:[1,2],b0:16,b1:30,z0:-16,z1:12,gap:5.4,types:['tree_tall_cluster','tree_ancient_large']}],
+    scatter:[{type:'palm_tall',count:4,r0:8.5,r1:27,z0:-16.6,z1:-13.8,s0:.85,s1:1.05,gap:5.6},
+      {type:'tree_bush_bright',count:5,r0:7.4,r1:26,z0:-15,z1:11,s0:.8,s1:1.15,gap:5.2},
+      {type:'tree_sapling',count:4,r0:8,r1:24,z0:-15,z1:10,s0:.7,s1:1,gap:5},
+      {type:'river_stone_post',count:3,r0:8,r1:22,z0:-16,z1:-10,s0:.8,s1:1,gap:6.5}],
+    far:[{type:'tree_ancient_large', count:12,r0:32,r1:44,z0:-40,z1:18,s0:.95,s1:1.3,gap:8.5},
+      {type:'palm_giant',count:5,r0:34,r1:46,z0:-40,z1:6,s0:1,s1:1.2,gap:10}],
     fixed:[{type:'pier_post',x:8.5,z:-22.4,scale:1},{type:'pier_post',x:11.5,z:-22.4,scale:1},
       {type:'pier_post',x:11.5,z:-17,scale:1}]}},
-  // 2 Geffen - moody blue-grey-green plains: dark gnarled clumps scattered wide, standing stones
-  //   and rocky outcrops all through the field, the wizard tower on the far horizon
+  // 2 Geffen - moody blue-grey-green plains kept deliberately open: dark gnarled trees well spaced,
+  //   a few standing stones, the wizard tower on the far horizon. The owner wants room to grow the
+  //   battle field, so nothing crowds the middle and no rocky frame around the map.
   2:{src:'payon',layout:'field',design:'geffen',seed:303,f:{
-    base:'grass_geffen',base2:'grass_forest',patch:{tile:'grass_forest',t:.5,s:5.5,oct:3,tile2:'grass_olive',t2:.74},
+    base:'grass_geffen',base2:'grass_forest',patch:{tile:'grass_olive',cover:.22,s:6,oct:4,tile2:'grass_forest',cover2:.08},
     road:{w:3,wander:.4},
-    edge:{at:10,amp:.6,s:14},
-    outcrops:{tile:'cliff_rock',count:14,r:[1.6,3.4],b0:9,b1:28,z0:-28,z1:12,prop:'rock_cliff_crag',ps:1.05},
-    groves:[{n:11,r:3.6,trees:[2,4],b0:6.4,b1:15,z0:-24,z1:10,types:['tree_dark_gnarled'],
-      sub:[['tree_bush_bright',.35]]},
-      {n:10,r:4.4,trees:[2,3],b0:15,b1:28,z0:-28,z1:12,types:['tree_dark_gnarled','tree_dead']}],
-    scatter:[{type:'standing_stone',count:14,r0:8,r1:27,z0:-26,z1:11,s0:.9,s1:1.35,gap:3.4},
-      {type:'rock_cliff_crag',count:16,r0:8,r1:28,z0:-28,z1:11,s0:.85,s1:1.25,gap:2.6},
-      {type:'tree_bush_bright',count:16,r0:7,r1:25,z0:-26,z1:10,s0:.8,s1:1.1,gap:2.2},
-      {type:'tree_sapling',count:10,r0:7,r1:22,z0:-26,z1:10,s0:.7,s1:1,gap:1.6}],
+    groves:[{n:3,r:5,trees:[1,2],b0:7.6,b1:17,z0:-26,z1:11,gap:5.4,types:['tree_dark_gnarled']},
+      {n:3,r:5.8,trees:[1,2],b0:17,b1:30,z0:-30,z1:13,gap:5.6,types:['tree_dark_gnarled','tree_dead']}],
+    scatter:[{type:'standing_stone',count:5,r0:9,r1:28,z0:-28,z1:12,s0:.9,s1:1.3,gap:6.5},
+      {type:'rock_cliff_crag',count:4,r0:9,r1:28,z0:-30,z1:12,s0:.85,s1:1.2,gap:6},
+      {type:'tree_bush_bright',count:5,r0:8,r1:26,z0:-28,z1:11,s0:.8,s1:1.1,gap:5.4},
+      {type:'tree_sapling',count:3,r0:8,r1:24,z0:-28,z1:11,s0:.7,s1:1,gap:5.2}],
+    far:[{type:'tree_dark_gnarled', count:14,r0:32,r1:44,z0:-44,z1:16,s0:.95,s1:1.3,gap:8.5},
+      {type:'tree_dead',count:5,r0:34,r1:46,z0:-44,z1:16,s0:.95,s1:1.25,gap:10}],
     fixed:[{type:'tower_geffen',x:-24,z:-27,scale:1.1}]}},
-  // 3 Morocc - the attached desert-ruins design in the middle (unchanged, cell for cell) and, new
-  //   in v27, desert dressed all round it: dunes, mesas, palms, cacti, ruins and bones out to the
-  //   horizon instead of everything crowded into the centre
+  // 3 Morocc - the attached desert-ruins design in the middle, unchanged, dressed all round it with
+  //   dunefields, mesas, palms, cacti, ruins and bones. Every far entry alternates sides (alt:1), so
+  //   both sides of the map are dressed - the owner found one side bare.
   3:{src:'morocc',design:'morocc',
     tile:t=>({sand:'sand',sand_dark:'sand_dark',ruin_cobble:'ruin_cobble',cliff:'cliff'}[t]||null),
-    f:{patch:{tile:'sand_dark',t:.5,s:7,oct:3,tile2:'sand',t2:.7},
-      outcrops:{tile:'cliff_sand',count:12,r:[1.8,3.8],b0:21,b1:29,z0:-28,z1:9,prop:'rock_cliff_crag',ps:1.1},
-      groves:[{n:8,r:3.4,trees:[2,3],b0:21,b1:29,z0:-27,z1:8,types:['palm_giant','palm_double','cactus_flower'],s0:.85,s1:1.1}],
-      scatter:[{type:'palm_tall',count:12,r0:20,r1:29,z0:-27,z1:9,s0:.85,s1:1.1,gap:2.6},
-        {type:'cactus_small',count:12,r0:20,r1:29,z0:-27,z1:9,s0:.8,s1:1.15,gap:2},
-        {type:'desert_bone',count:10,r0:20,r1:29,z0:-27,z1:9,s0:.8,s1:1.1,gap:2.4},
-        {type:'ruin_stump',count:8,r0:20,r1:28,z0:-27,z1:8,s0:.85,s1:1.1,gap:2.4},
-        {type:'rock_cliff_crag',count:10,r0:20,r1:29,z0:-28,z1:9,s0:.9,s1:1.3,gap:2.6},
-        {type:'cactus_flower',count:8,r0:20,r1:29,z0:-27,z1:9,s0:.85,s1:1.15,gap:2}]}},
-  // 4 Payon - RO's Payon Forest: a wide red-brown mud trail that wanders, a creek across it with a
-  //   plank bridge, and near-black forest in clumps over the whole field (banks of bamboo at the
-  //   crossing, mossy boulders framing it, a rocky mountain edge all round)
+    f:{patch:{tile:'sand_dark',cover:.3,s:8,oct:4},
+      outcrops:{tile:'cliff_sand',count:3,r:[1.2,2.2],b0:22,b1:30,z0:-30,z1:10,prop:'rock_cliff_crag',ps:1.05},
+      groves:[{alt:1,n:5,r:4,trees:[1,2],b0:20,b1:30,z0:-28,z1:10,gap:5.6,
+        types:['palm_giant','palm_double','cactus_flower'],s0:.85,s1:1.05}],
+      scatter:[{alt:1,type:'palm_tall',count:6,r0:20,r1:30,z0:-28,z1:10,s0:.85,s1:1.1,gap:6},
+        {alt:1,type:'cactus_small',count:6,r0:20,r1:30,z0:-28,z1:10,s0:.8,s1:1.15,gap:5.4},
+        {alt:1,type:'desert_bone',count:5,r0:20,r1:30,z0:-28,z1:10,s0:.8,s1:1.1,gap:6.2},
+        {alt:1,type:'ruin_stump',count:4,r0:20,r1:29,z0:-28,z1:9,s0:.85,s1:1.1,gap:6},
+        {alt:1,type:'rock_cliff_crag',count:4,r0:21,r1:30,z0:-30,z1:10,s0:.9,s1:1.25,gap:6.2},
+        {alt:1,type:'cactus_flower',count:4,r0:20,r1:30,z0:-28,z1:10,s0:.85,s1:1.15,gap:5.6}],
+      far:[{alt:1,type:'palm_giant',count:8,r0:32,r1:44,z0:-40,z1:16,s0:.95,s1:1.25,gap:8.5},
+        {alt:1,type:'cactus_flower',count:5,r0:34,r1:46,z0:-40,z1:16,s0:.9,s1:1.2,gap:10}]}},
+  // 4 Payon - RO's Payon Forest, now roomy: the wandering mud trail, the creek with its plank
+  //   bridge, bamboo at the crossing and mossy boulders framing it, and the trees spaced out in
+  //   clumps instead of a wall, so the run up the field stays open.
   4:{src:'payon',layout:'field',design:'payon',seed:404,f:{
-    base:'grass_forest',base2:'grass_olive',patch:{tile:'grass_olive',t:.58,s:4.5,oct:3},
+    base:'grass_forest',base2:'grass_olive',patch:{tile:'grass_olive',cover:.3,s:5,oct:4},
     road:{w:4,wander:.6},roadTile:'dirt_payon',
     water:[-7.8,-5],bank:1.8,
     deck:[0,-6.4,4.2,4.4],
-    edge:{at:9,amp:.55,s:11},
-    groves:[{n:13,r:3.2,trees:[2,4],b0:6,b1:14,z0:-24,z1:10,
+    groves:[{n:4,r:4.6,trees:[1,2],b0:7,b1:16,z0:-26,z1:11,gap:5.2,
       types:['tree_ancient_large','tree_ancient_variant','tree_tall_cluster'],
       sub:[['tree_sapling',.5],['tree_bush_bright',.45]]},
-      {n:11,r:4.4,trees:[2,4],b0:14,b1:28,z0:-28,z1:12,
+      {n:4,r:5.6,trees:[1,2],b0:16,b1:30,z0:-30,z1:13,gap:5.4,
       types:['tree_ancient_large','tree_tall_cluster','tree_ancient_variant'],
       sub:[['tree_sapling',.4],['tree_bush_bright',.4]]},
-      {n:6,r:2.6,trees:[2,3],b0:6,b1:16,z0:-12,z1:-1,types:['bamboo_grove'],s0:.85,s1:1.1}],
-    scatter:[{type:'bamboo_grove',count:12,r0:7,r1:22,z0:-24,z1:9,s0:.85,s1:1.15,gap:2.2},
-      {type:'tree_bush_bright',count:20,r0:6.6,r1:26,z0:-28,z1:11,s0:.75,s1:1.2,gap:2},
-      {type:'tree_sapling',count:14,r0:7,r1:24,z0:-26,z1:10,s0:.7,s1:1.05,gap:1.6},
-      {type:'rock_cliff_crag',count:12,r0:10,r1:28,z0:-28,z1:11,s0:.9,s1:1.35,gap:2.6}],
+      {alt:1,n:2,r:3.6,trees:[1,2],b0:7,b1:18,z0:-13,z1:-1,gap:5,types:['bamboo_grove'],s0:.85,s1:1.05}],
+    scatter:[{type:'bamboo_grove',count:5,r0:7.4,r1:24,z0:-28,z1:10,s0:.85,s1:1.1,gap:5.6},
+      {type:'tree_bush_bright',count:6,r0:7.2,r1:27,z0:-30,z1:12,s0:.75,s1:1.15,gap:5.2},
+      {type:'tree_sapling',count:4,r0:7.6,r1:25,z0:-28,z1:11,s0:.7,s1:1,gap:5},
+      {type:'rock_cliff_crag',count:4,r0:11,r1:29,z0:-30,z1:12,s0:.9,s1:1.3,gap:6.5}],
+    far:[{type:'tree_ancient_large', count:15,r0:32,r1:44,z0:-44,z1:18,s0:.95,s1:1.3,gap:8.5},
+      {type:'bamboo_grove',count:5,r0:34,r1:46,z0:-44,z1:18,s0:.95,s1:1.2,gap:10}],
     fixed:[{type:'river_stone_post',x:-6.6,z:-8.6,scale:.85},{type:'river_stone_post',x:6.6,z:-8.6,scale:.85,flip:true},
       {type:'rock_boulder_mossy',x:-6.8,z:-4,scale:1},{type:'rock_boulder_mossy',x:6.8,z:-4,scale:1,flip:true}]}},
-  // 5 Comodo - a golden beach: dunes instead of repeated boxes, palms and cacti in clumps right
-  //   across the sand, dark cave-mouth crags behind it, the sea and its gold shore beyond
+  // 5 Comodo - a golden beach: dune mottling, palms and cacti in loose clumps, the sea and its gold
+  //   shore beyond. The owner disliked the brown patchwork on the sand, so the rocky outcrop blobs
+  //   are gone from this map entirely - only loose props and the dunes remain.
   5:{src:'payon',layout:'field',design:'comodo',seed:505,f:{
-    base:'sand_gold',base2:'sand_dark',patch:{tile:'sand_dark',t:.5,s:9,oct:3,tile2:'sand_gold',t2:.72},
+    base:'sand_gold',base2:'sand_dark',patch:{tile:'sand_dark',cover:.14,s:10,oct:4},
     cliffTile:'cliff_sand',
-    water:[-23,-17],bank:2.4,bankTile:'sand_gold',
-    edge:{at:7,amp:.6,s:15,tile:'cliff_sand'},
-    outcrops:{tile:'cliff_sand',count:12,r:[1.6,3.4],b0:10,b1:28,z0:-16,z1:11,prop:'rock_cliff_crag',ps:1.15},
-    groves:[{n:10,r:3.4,trees:[2,3],b0:6.4,b1:15,z0:-16,z1:10,types:['palm_giant','palm_tall','palm_double'],s0:.85,s1:1.1},
-      {n:8,r:4.2,trees:[2,3],b0:15,b1:28,z0:-16,z1:11,types:['palm_giant','palm_double','cactus_small']}],
-    scatter:[{type:'cactus_flower',count:14,r0:7.5,r1:27,z0:-16,z1:10,s0:.8,s1:1.15,gap:2.4},
-      {type:'cactus_small',count:14,r0:7.5,r1:27,z0:-16,z1:10,s0:.8,s1:1.2,gap:1.8},
-      {type:'desert_bone',count:8,r0:8,r1:26,z0:-15,z1:9,s0:.8,s1:1.1,gap:2.6},
-      {type:'rock_cliff_crag',count:14,r0:10,r1:28,z0:-21,z1:11,s0:.9,s1:1.35,gap:2.6},
-      {type:'ruin_curb',count:6,r0:8,r1:24,z0:-15,z1:9,s0:.8,s1:1,gap:2.4}]}},
-  // 6 Louyang - a jade highland: bamboo in clumps all over, terraced paddy water off the lane with
-  //   wandering terrace edges, a stone shrine and lantern pairs on the approach
+    water:[-30,-19],bank:1.6,bankTile:'sand_gold',
+    groves:[{n:3,r:4.6,trees:[1,2],b0:7.2,b1:16,z0:-16,z1:11,gap:5.4,types:['palm_giant','palm_tall','palm_double'],s0:.85,s1:1.1},
+      {n:3,r:5.6,trees:[1,2],b0:16,b1:30,z0:-16,z1:12,gap:5.6,types:['palm_giant','palm_double','cactus_small']}],
+    scatter:[{type:'cactus_flower',count:5,r0:8,r1:28,z0:-16,z1:11,s0:.8,s1:1.15,gap:5.4},
+      {type:'cactus_small',count:5,r0:8,r1:28,z0:-16,z1:11,s0:.8,s1:1.2,gap:5.2},
+      {type:'desert_bone',count:3,r0:9,r1:27,z0:-15,z1:10,s0:.8,s1:1.1,gap:6.2},
+      {type:'ruin_curb',count:2,r0:9,r1:25,z0:-15,z1:10,s0:.8,s1:1,gap:6.2}],
+    far:[{type:'palm_giant', count:14,r0:32,r1:44,z0:-36,z1:18,s0:1,s1:1.3,gap:8.5},
+      {type:'palm_double',count:5,r0:34,r1:46,z0:-36,z1:18,s0:1,s1:1.25,gap:10}]}},
+  // 6 Louyang - a jade highland kept open for a bigger battle field: bamboo in loose clumps, the
+  //   terraced paddy water off the lane with wandering terrace edges, the stone shrine and its
+  //   lantern pairs on the approach. No rocky frame, no crowded trees.
   6:{src:'payon',layout:'field',design:'louyang',seed:606,f:{
-    base:'grass_jade',base2:'grass_forest',patch:{tile:'grass_forest',t:.5,s:6,oct:3,tile2:'grass_olive',t2:.74},
+    base:'grass_jade',base2:'grass_forest',patch:{tile:'grass_olive',cover:.2,s:6.5,oct:4,tile2:'grass_forest',cover2:.07},
     road:{w:3.2,wander:.5},
-    edge:{at:9,amp:.55,s:12},
-    outcrops:{tile:'cliff_rock',count:8,r:[1.4,3],b0:12,b1:28,z0:-26,z1:10,prop:'rock_cliff_crag',ps:1},
-    bands:[{tile:'paddy_water',z:[-12,-9.6],x0:8,x1:24,jit:1.2},{tile:'paddy_water',z:[-12,-9.6],x0:-24,x1:-8,jit:1.2},
-      {tile:'paddy_water',z:[-5.2,-3.2],x0:9,x1:22,jit:1},{tile:'paddy_water',z:[-5.2,-3.2],x0:-22,x1:-9,jit:1},
-      {tile:'paddy_water',z:[-21,-19],x0:10,x1:26,jit:1.2},{tile:'paddy_water',z:[-21,-19],x0:-26,x1:-10,jit:1.2}],
-    groves:[{n:11,r:3.2,trees:[2,4],b0:6.2,b1:15,z0:-24,z1:10,types:['bamboo_grove','tree_tall_cluster'],
-      sub:[['tree_sapling',.55],['tree_bush_bright',.4]]},
-      {n:8,r:4,trees:[2,3],b0:15,b1:28,z0:-28,z1:11,types:['bamboo_grove','tree_tall_cluster','tree_sapling']}],
-    scatter:[{type:'bamboo_grove',count:16,r0:7,r1:25,z0:-26,z1:10,s0:.85,s1:1.15,gap:2.2},
-      {type:'tree_bush_bright',count:14,r0:6.6,r1:24,z0:-26,z1:10,s0:.8,s1:1.15,gap:2},
-      {type:'tree_sapling',count:10,r0:7,r1:23,z0:-26,z1:10,s0:.7,s1:1.05,gap:1.6}],
+    bands:[{tile:'paddy_water',z:[-12,-9.6],x0:9,x1:25,jit:1.2},{tile:'paddy_water',z:[-12,-9.6],x0:-25,x1:-9,jit:1.2},
+      {tile:'paddy_water',z:[-5.2,-3.2],x0:10,x1:23,jit:1},{tile:'paddy_water',z:[-5.2,-3.2],x0:-23,x1:-10,jit:1}],
+    groves:[{n:3,r:5,trees:[1,2],b0:7.4,b1:17,z0:-26,z1:11,gap:5.4,types:['bamboo_grove','tree_tall_cluster'],
+      sub:[['tree_sapling',.5],['tree_bush_bright',.4]]},
+      {n:3,r:5.8,trees:[1,2],b0:17,b1:30,z0:-30,z1:12,gap:5.6,types:['bamboo_grove','tree_tall_cluster','tree_sapling']}],
+    scatter:[{type:'bamboo_grove',count:5,r0:8,r1:27,z0:-28,z1:11,s0:.85,s1:1.15,gap:5.8},
+      {type:'tree_bush_bright',count:5,r0:7.6,r1:26,z0:-28,z1:11,s0:.8,s1:1.15,gap:5.4},
+      {type:'tree_sapling',count:4,r0:8,r1:25,z0:-28,z1:11,s0:.7,s1:1.05,gap:5.2}],
+    far:[{type:'bamboo_grove', count:14,r0:32,r1:44,z0:-44,z1:16,s0:.95,s1:1.25,gap:8.5},
+      {type:'tree_tall_cluster',count:5,r0:34,r1:46,z0:-44,z1:16,s0:.95,s1:1.25,gap:10}],
     fixed:[{type:'shrine_stone',x:-9.6,z:-16.4,scale:1},
       {type:'lantern_stone',x:-6.8,z:-11,scale:1},{type:'lantern_stone',x:6.8,z:-11,scale:1,flip:true},
       {type:'lantern_stone',x:-6.8,z:-.6,scale:1},{type:'lantern_stone',x:6.8,z:-.6,scale:1,flip:true}]}},
-  // 7 Amatsu - blossom fields: cherry in clumps over the whole field, the stream on the road with
-  //   its red lacquer bridge, a torii on the approach, lantern pairs, the great red arch far off
+  // 7 Amatsu - blossom fields, slightly thinned: cherry in loose clumps over the whole field, the
+  //   stream on the road with its red lacquer bridge, a torii on the approach, lantern pairs and
+  //   the great red arch far off. No frame around the map.
   7:{src:'payon',layout:'field',design:'amatsu',seed:707,f:{
-    base:'grass_blossom',base2:'grass_olive',patch:{tile:'grass_olive',t:.52,s:6,oct:3},
+    base:'grass_blossom',base2:'grass_olive',patch:{tile:'grass_olive',cover:.26,s:6.5,oct:4},
     road:{w:3.4,wander:.3},
     water:[-7.9,-6],bank:1.7,
     deck:[0,-6.95,3.6,4.8],deckTile:'bridge_red',
-    edge:{at:9,amp:.55,s:12},
-    groves:[{n:11,r:3.4,trees:[2,4],b0:6.2,b1:15,z0:-20,z1:10,types:['tree_cherry','tree_ancient_variant'],
+    groves:[{n:3,r:5,trees:[1,2],b0:7.2,b1:17,z0:-22,z1:11,gap:5.4,types:['tree_cherry','tree_ancient_variant'],
       sub:[['tree_sapling',.5],['tree_bush_bright',.4]]},
-      {n:10,r:4.2,trees:[2,4],b0:15,b1:28,z0:-28,z1:11,types:['tree_cherry','tree_ancient_large','tree_ancient_variant']}],
-    scatter:[{type:'tree_cherry',count:14,r0:7,r1:26,z0:-26,z1:10,s0:.85,s1:1.15,gap:2.6},
-      {type:'tree_bush_bright',count:16,r0:6.6,r1:24,z0:-26,z1:10,s0:.8,s1:1.15,gap:2},
-      {type:'river_stone_post',count:10,r0:6.5,r1:22,z0:-26,z1:9,s0:.8,s1:1.05,gap:3}],
+      {n:3,r:5.8,trees:[1,2],b0:17,b1:30,z0:-30,z1:12,gap:5.6,types:['tree_cherry','tree_ancient_large','tree_ancient_variant']}],
+    scatter:[{type:'tree_cherry',count:5,r0:8,r1:27,z0:-28,z1:11,s0:.85,s1:1.15,gap:5.8},
+      {type:'tree_bush_bright',count:5,r0:7.6,r1:26,z0:-28,z1:11,s0:.8,s1:1.15,gap:5.4},
+      {type:'river_stone_post',count:4,r0:7.6,r1:24,z0:-28,z1:10,s0:.8,s1:1.05,gap:6.5}],
+    far:[{type:'tree_cherry', count:14,r0:32,r1:44,z0:-44,z1:16,s0:.95,s1:1.3,gap:8.5},
+      {type:'tree_ancient_variant',count:5,r0:34,r1:46,z0:-44,z1:16,s0:.95,s1:1.25,gap:10}],
     fixed:[{type:'torii_gate',x:6.6,z:-4.2,scale:1},
       {type:'lantern_stone',x:-6.8,z:-1.4,scale:1},{type:'lantern_stone',x:6.8,z:-1.4,scale:1,flip:true},
       {type:'lantern_stone',x:-6.8,z:-11.4,scale:1},{type:'lantern_stone',x:6.8,z:-11.4,scale:1,flip:true},
       {type:'bridge_red_arch',x:20,z:-24,scale:1}]}},
-  // 8 Niflheim - the realm of the dead: purple-grey waste, dead trees and graves strewn out into
-  //   the fog, bones, one ruined house; no bright colour anywhere
+  // 8 Niflheim - the realm of the dead, thinned out: fewer dead trees and rocks, spaced wide, graves
+  //   and bones strewn into the fog, one ruined house. Still no bright colour anywhere.
   8:{src:'payon',layout:'field',design:'niflheim',seed:808,f:{
-    base:'waste_nifl',base2:'rock_abyss',patch:{tile:'rock_abyss',t:.52,s:6.5,oct:3,tile2:'waste_nifl',t2:.72},
-    edge:{at:10,amp:.6,s:13},
-    outcrops:{tile:'rock_abyss',count:12,r:[1.6,3.4],b0:10,b1:28,z0:-28,z1:11,prop:'rock_cliff_crag',ps:1},
-    groves:[{n:8,r:3.6,trees:[2,3],b0:7,b1:15,z0:-24,z1:9,types:['tree_dead']},
-      {n:10,r:4.4,trees:[2,3],b0:15,b1:29,z0:-29,z1:12,types:['tree_dead']}],
-    scatter:[{type:'tombstone',count:18,r0:7,r1:27,z0:-27,z1:11,s0:.8,s1:1.2,gap:2.4},
-      {type:'rock_cliff_crag',count:18,r0:7,r1:28,z0:-28,z1:11,s0:.85,s1:1.3,gap:2.4},
-      {type:'desert_bone',count:14,r0:6.8,r1:26,z0:-27,z1:11,s0:.85,s1:1.2,gap:2.2},
-      {type:'standing_stone',count:8,r0:10,r1:26,z0:-26,z1:10,s0:.9,s1:1.25,gap:3.4}],
+    base:'waste_nifl',base2:'rock_abyss',patch:{tile:'rock_abyss',cover:.2,s:7,oct:4,tile2:'waste_nifl',cover2:.07},
+    groves:[{n:2,r:5,trees:[1,2],b0:7.6,b1:17,z0:-26,z1:10,gap:5.8,types:['tree_dead']},
+      {n:3,r:5.8,trees:[1,2],b0:17,b1:30,z0:-30,z1:13,gap:6,types:['tree_dead']}],
+    scatter:[{type:'tombstone',count:6,r0:8,r1:28,z0:-30,z1:12,s0:.8,s1:1.2,gap:5.8},
+      {type:'rock_cliff_crag',count:5,r0:8,r1:29,z0:-30,z1:12,s0:.85,s1:1.25,gap:6.4},
+      {type:'desert_bone',count:5,r0:8,r1:27,z0:-29,z1:12,s0:.85,s1:1.2,gap:5.8},
+      {type:'standing_stone',count:3,r0:11,r1:27,z0:-28,z1:11,s0:.9,s1:1.2,gap:6.5}],
+    far:[{type:'tree_dead', count:14,r0:32,r1:44,z0:-44,z1:16,s0:.95,s1:1.3,gap:8.5},
+      {type:'tombstone',count:5,r0:34,r1:46,z0:-44,z1:16,s0:.9,s1:1.25,gap:10}],
     fixed:[{type:'house_ruin',x:-18,z:-23,scale:1},{type:'tree_dead',x:16,z:-24.5,scale:1.15}]}},
-  // 9 Abyss - dark slate and a deep dark lake behind its pale limestone shore: stalagmites and
-  //   crystal clusters in clumps out to the horizon, standing stones, nothing soft anywhere
+  // 9 Abyss - dark slate and the deep dark lake behind its pale limestone shore, opened up: fewer
+  //   stalagmites, crystals and rocks, spaced wide, so the field reads spacious rather than tight.
   9:{src:'payon',layout:'field',design:'abyss',seed:909,f:{
-    base:'rock_abyss',base2:'cliff_rock',patch:{tile:'cliff_rock',t:.52,s:6,oct:3,tile2:'rock_abyss',t2:.72},
-    water:[-23,-18],bank:1.8,bankTile:'limestone_pale',
+    base:'rock_abyss',base2:'cliff_rock',patch:{tile:'rock_abyss',cover:.2,s:7,oct:4,tile2:'cliff_rock',cover2:.07},
+    water:[-30,-18],bank:1.8,bankTile:'limestone_pale',
     waterFrames:['water_dark_0','water_dark_1'],
-    edge:{at:9,amp:.6,s:12},
-    outcrops:{tile:'cliff_rock',count:12,r:[1.8,3.6],b0:10,b1:28,z0:-28,z1:11,prop:'stalagmite',ps:1},
-    groves:[{n:11,r:3.2,trees:[2,4],b0:6.6,b1:15,z0:-22,z1:10,types:['stalagmite','crystal_cluster']},
-      {n:11,r:4.4,trees:[2,4],b0:15,b1:29,z0:-29,z1:12,types:['stalagmite','crystal_cluster','standing_stone']}],
-    scatter:[{type:'stalagmite',count:18,r0:7,r1:28,z0:-27,z1:11,s0:.85,s1:1.25,gap:2.4},
-      {type:'crystal_cluster',count:16,r0:6.8,r1:28,z0:-27,z1:11,s0:.85,s1:1.2,gap:2.2},
-      {type:'rock_cliff_crag',count:18,r0:6.8,r1:29,z0:-28,z1:11,s0:.9,s1:1.35,gap:2.4},
-      {type:'standing_stone',count:10,r0:9,r1:28,z0:-27,z1:10,s0:.9,s1:1.3,gap:3.4},
-      {type:'tombstone',count:8,r0:9,r1:26,z0:-27,z1:10,s0:.85,s1:1.15,gap:2.6}]}}};
+    groves:[{n:3,r:5,trees:[1,2],b0:7.6,b1:17,z0:-24,z1:11,gap:5.8,types:['stalagmite','crystal_cluster']},
+      {n:3,r:5.8,trees:[1,2],b0:17,b1:30,z0:-30,z1:13,gap:6,types:['stalagmite','crystal_cluster','standing_stone']}],
+    scatter:[{type:'stalagmite',count:5,r0:8,r1:29,z0:-30,z1:12,s0:.85,s1:1.2,gap:6.4},
+      {type:'crystal_cluster',count:4,r0:8,r1:29,z0:-30,z1:12,s0:.85,s1:1.15,gap:6.2},
+      {type:'rock_cliff_crag',count:4,r0:8,r1:30,z0:-30,z1:12,s0:.9,s1:1.3,gap:6.6},
+      {type:'standing_stone',count:3,r0:10,r1:28,z0:-29,z1:11,s0:.9,s1:1.25,gap:6.5},
+      {type:'tombstone',count:2,r0:10,r1:27,z0:-29,z1:11,s0:.85,s1:1.15,gap:6.4}],
+    far:[{type:'stalagmite', count:12,r0:32,r1:44,z0:-44,z1:16,s0:.95,s1:1.3,gap:8.5},
+      {type:'crystal_cluster',count:4,r0:34,r1:46,z0:-44,z1:16,s0:.95,s1:1.25,gap:10}]}}};
 const KIT_TILE={grass:'grass_olive',grass_dark:'grass_forest',dirt:'dirt_path',cliff:'cliff_rock',bank:'riverbank_wall'};
 // cell types the kit itself draws in its animated pass / as a deck, not as ground texture
 const KIT_WET={water:1},KIT_DECK={bridge:1},KIT_SKIP={sky:1};
@@ -1739,11 +1749,29 @@ function fieldPlan(spec){
   const wet=z=>f.water&&z>=f.water[0]&&z<f.water[1];
   const bands=f.bands||[],bandsAt=z=>bands.filter(b=>z>=b.z[0]&&z<b.z[1]);
   const lane=BX_+.9,P=f.patch;
+  // Ground patches are driven by a **coverage fraction**, not a magic threshold: kitFbm is not
+  // centred on .5, so a hand-set `t` covered wildly different areas per map. Sample the noise over
+  // the whole field once, sort it, and take the quantile that yields the requested coverage.
+  const patchRaw=(x,z)=>kitFbm((x+(P.ox||0))/(P.s||6),(z+(P.oz||0))/(P.s||6),(spec.seed+(P.seed||0))|0,(P.oct||4))
+    +(kitHash(Math.round(x*2.1),Math.round(z*2.1),spec.seed+5)-.5)*.07;
+  let PTH=2,PTH2=2;
+  if(P){const vals=[];
+    for(let z=GZ0;z<GZ1;z+=1.6)for(let x=X0;x<X1;x+=1.6)vals.push(patchRaw(x,z));
+    vals.sort((a,b)=>a-b);
+    const q=c=>vals[Math.min(vals.length-1,Math.max(0,Math.round((1-c)*(vals.length-1))))];
+    PTH=q(P.cover===undefined?.3:P.cover);
+    PTH2=P.tile2?q(P.cover2===undefined?.1:P.cover2):2;}
+  // a fountain basin / decorative pool the recipe can ask for: a round painted pool, a stone curb
+  // ring, and a small animated shimmer that fits *inside* the circle so no square corners show.
+  // Declared before the ground loop, because the ground loop paints it.
+  const POOL=f.pool,poolD=(x,z)=>POOL?Math.hypot(x-POOL.x,z-POOL.z):99;
+  if(POOL)water.push({x:POOL.x,z:POOL.z,w:POOL.r*1.4,h:POOL.r*1.4,
+    cx:Math.max(1,Math.round(POOL.r/1.2)),cy:Math.max(1,Math.round(POOL.r/1.2))});
   // organic ground variation: two value-noise octaves, so patches blend into each other
   const patchT=(x,z)=>{if(!P)return null;
-    const n=kitFbm((x+(P.ox||0))/(P.s||6),(z+(P.oz||0))/(P.s||6),(spec.seed+(P.seed||0))|0,(P.oct||4))
-      +(kitHash(Math.round(x*2.1),Math.round(z*2.1),spec.seed+5)-.5)*.07;
-    if(n>(P.t===undefined?.55:P.t))return (P.tile2&&n>(P.t2===undefined?.75:P.t2))?P.tile2:(P.tile||f.base2);
+    const v=patchRaw(x,z);
+    if(v>PTH2)return P.tile2;
+    if(v>PTH)return (P.tile||f.base2);
     return null};
   for(let z=GZ0;z<GZ1;z+=st){
     if(wet(z)){water.push({x:0,z:z+st/2,w:KIT_FAR,h:st,cx:KIT_FAR/st,cy:1});continue}
@@ -1757,6 +1785,9 @@ function fieldPlan(spec){
         if(done)continue;
       }
       if(bank){cells.push({x,z,tile:bankT});continue}
+      if(POOL){const d=poolD(x,z);
+        if(d<POOL.r){cells.push({x,z,tile:POOL.tile||'water_frame_0'});continue}
+        if(d<POOL.r+.8){cells.push({x,z,tile:POOL.curb||'limestone_pale'});continue}}
       if(f.plaza&&Math.abs(x-f.plaza.x)<f.plaza.w/2&&Math.abs(z-f.plaza.z)<f.plaza.l/2&&
         kitFbm(x/3.6,z/3.6,spec.seed+7,2)>.24){cells.push({x,z,tile:f.plaza.tile||'ruin_cobble'});continue}
       if(roadR&&Math.abs(x)<roadR(z)){cells.push({x,z,tile:roadT});continue}
@@ -1765,7 +1796,7 @@ function fieldPlan(spec){
   }
   const wetZone=z=>f.water&&z>=f.water[0]-(f.bank||0)&&z<f.water[1]+(f.bank||0);
   const inBand=(x,z)=>bands.some(b=>z>=b.z[0]&&z<b.z[1]&&x>=b.x0&&x<b.x1);
-  const blocked=(x,z)=>!!(wetZone(z)||inBand(x,z)||Math.abs(x)<BX_+.9);
+  const blocked=(x,z)=>!!(wetZone(z)||inBand(x,z)||Math.abs(x)<BX_+.9||poolD(x,z)<(POOL?POOL.r+1.2:0));
   // rocky outcrops stand off the lane (they are ground, but scenery never breaks the run) and
   // never in water or a terrace
   const oc=f.outcrops;
@@ -1782,6 +1813,7 @@ function fieldPlan(spec){
     if(oc.prop&&!wetZone(cz))kitPut(props,spec.src,cx,cz,oc.prop,(oc.ps||1)*(.85+rnd()*.3),rnd()>.5,0);
   }
   const occ=[];
+  const sideOf=(o,i)=>o.side||(o.alt?(i%2?-1:1):(rnd()>.5?1:-1));
   const place=(type,x,z,scale,flip,gap)=>{const g=gap||1.5;
     for(const o of occ)if(Math.abs(o.x-x)<g&&Math.abs(o.z-z)<g)return 0;
     occ.push({x,z});return kitPut(props,spec.src,x,z,type,scale,flip,0)};
@@ -1789,7 +1821,7 @@ function fieldPlan(spec){
   // centre - no lines, no mirror between the sides, and the band can reach the far field. A spot
   // the spacing rule refuses is retried, so a grove really does hold its members.
   for(const g of (f.groves||[]))for(let i=0;i<g.n;i++){
-    const side=g.side||(rnd()>.5?1:-1),cx=side*(g.b0+rnd()*(g.b1-g.b0)),cz=g.z0+rnd()*(g.z1-g.z0);
+    const side=sideOf(g,i),cx=side*(g.b0+rnd()*(g.b1-g.b0)),cz=g.z0+rnd()*(g.z1-g.z0);
     if(wetZone(cz))continue;
     const n=g.trees?g.trees[0]+Math.floor(rnd()*(g.trees[1]-g.trees[0]+1)):3;
     for(let k=0,t=0;k<n&&t<14;t++){
@@ -1806,7 +1838,7 @@ function fieldPlan(spec){
   }
   // singles, spread across their band - this is what dresses the far field out to |x| 29
   for(const sc of (f.scatter||[]))for(let i=0,n=0;i<sc.count*6&&n<sc.count;i++){
-    const side=sc.side||(rnd()>.5?1:-1),x=side*(sc.r0+rnd()*((sc.r1===undefined?sc.r0:sc.r1)-sc.r0));
+    const side=sideOf(sc,i),x=side*(sc.r0+rnd()*((sc.r1===undefined?sc.r0:sc.r1)-sc.r0));
     const z=sc.z0+rnd()*(sc.z1-sc.z0);
     if(blocked(x,z))continue;
     if(place(sc.type,x,z,(sc.s0||.8)+rnd()*((sc.s1||1.2)-(sc.s0||.8)),rnd()>.5,sc.gap||1.6))n++;
@@ -1814,7 +1846,7 @@ function fieldPlan(spec){
   // the far ring: the same crop at |x| 30-42, past the field border and well into the fog, so the
   // world reads as continuing rather than stopping at the edge of the dressed field
   for(const fc of (f.far||[]))for(let i=0,n=0;i<fc.count*8&&n<fc.count;i++){
-    const side=fc.side||(rnd()>.5?1:-1),x=side*(fc.r0+rnd()*((fc.r1||fc.r0+8)-fc.r0));
+    const side=sideOf(fc,i),x=side*(fc.r0+rnd()*((fc.r1||fc.r0+8)-fc.r0));
     const z=(fc.z0===undefined?-40:fc.z0)+rnd()*((fc.z1===undefined?16:fc.z1)-(fc.z0===undefined?-40:fc.z0));
     if(place(fc.type,x,z,(fc.s0||.9)+rnd()*((fc.s1||1.3)-(fc.s0||.9)),rnd()>.5,fc.gap||3))n++;
   }
@@ -1832,11 +1864,19 @@ function farDress(spec,plan,rect){
   let q=((spec.seed|0)||3)+77;const rnd=()=>(q=(q*16807)%2147483647)/2147483647;
   const outside=(x,z)=>x<rect[0]||x>rect[1]||z<rect[2]||z>rect[3];
   // the design's own ground, continued: the same sand with noise-driven dune patches
+  const patchRaw=(x,z)=>kitFbm((x+(P.ox||0))/(P.s||8),(z+(P.oz||0))/(P.s||8),(spec.seed|0),(P.oct||4))
+    +(kitHash(Math.round(x*2.1),Math.round(z*2.1),(spec.seed|0)+5)-.5)*.07;
+  let PTH=2,PTH2=2;
+  if(P){const vals=[];
+    for(let z=GZ0;z<GZ1;z+=1.6)for(let x=X0;x<X1;x+=1.6)vals.push(patchRaw(x,z));
+    vals.sort((a,b)=>a-b);
+    const q=c=>vals[Math.min(vals.length-1,Math.max(0,Math.round((1-c)*(vals.length-1))))];
+    PTH=q(P.cover===undefined?.3:P.cover);PTH2=P.tile2?q(P.cover2===undefined?.1:P.cover2):2;}
   if(P)for(let z=GZ0;z<GZ1;z+=.8)for(let x=X0;x<X1;x+=.8){
     if(!outside(x,z))continue;
-    const n=kitFbm((x+(P.ox||0))/(P.s||8),(z+(P.oz||0))/(P.s||8),(spec.seed|0),(P.oct||4))
-      +(kitHash(Math.round(x*2.1),Math.round(z*2.1),(spec.seed|0)+5)-.5)*.07;
-    if(n>(P.t===undefined?.5:P.t))cells.push({x,z,tile:(P.tile2&&n>(P.t2===undefined?.72:P.t2))?P.tile2:P.tile});
+    const v=patchRaw(x,z);
+    if(v>PTH2)cells.push({x,z,tile:P.tile2});
+    else if(v>PTH)cells.push({x,z,tile:P.tile});
   }
   const oc=f.outcrops;
   if(oc)for(let i=0;i<oc.count;i++){
@@ -1851,11 +1891,12 @@ function farDress(spec,plan,rect){
     if(oc.prop)kitPut(props,spec.src,cx,cz,oc.prop,(oc.ps||1)*(.85+rnd()*.3),rnd()>.5,0);
   }
   const occ=props.map(p=>({x:p.x,z:p.z}));
+  const sideOf=(o,i)=>o.side||(o.alt?(i%2?-1:1):(rnd()>.5?1:-1));
   const place=(type,x,z,scale,flip,gap)=>{const g=gap||1.5;
     for(const o of occ)if(Math.abs(o.x-x)<g&&Math.abs(o.z-z)<g)return 0;
     occ.push({x,z});return kitPut(props,spec.src,x,z,type,scale,flip,0)};
   for(const g of (f.groves||[]))for(let i=0;i<g.n;i++){
-    const side=g.side||(rnd()>.5?1:-1),cx=side*(g.b0+rnd()*(g.b1-g.b0)),cz=g.z0+rnd()*(g.z1-g.z0);
+    const side=sideOf(g,i),cx=side*(g.b0+rnd()*(g.b1-g.b0)),cz=g.z0+rnd()*(g.z1-g.z0);
     const n=g.trees?g.trees[0]+Math.floor(rnd()*(g.trees[1]-g.trees[0]+1)):3;
     for(let k=0;k<n;k++){
       const a=rnd()*6.2832,rr=Math.sqrt(rnd())*(g.r||3),x=cx+Math.cos(a)*rr,z=cz+Math.sin(a)*rr*.6;
@@ -1864,13 +1905,13 @@ function farDress(spec,plan,rect){
     }
   }
   for(const sc of (f.scatter||[]))for(let i=0;i<sc.count;i++){
-    const side=sc.side||(rnd()>.5?1:-1),x=side*(sc.r0+rnd()*((sc.r1===undefined?sc.r0:sc.r1)-sc.r0));
+    const side=sideOf(sc,i),x=side*(sc.r0+rnd()*((sc.r1===undefined?sc.r0:sc.r1)-sc.r0));
     const z=sc.z0+rnd()*(sc.z1-sc.z0);
     if(!outside(x,z))continue;
     place(sc.type,x,z,(sc.s0||.8)+rnd()*((sc.s1||1.2)-(sc.s0||.8)),rnd()>.5,sc.gap||1.6);
   }
   for(const fc of (f.far||[]))for(let i=0,n=0;i<fc.count*8&&n<fc.count;i++){
-    const side=fc.side||(rnd()>.5?1:-1),x=side*(fc.r0+rnd()*((fc.r1||fc.r0+8)-fc.r0));
+    const side=sideOf(fc,i),x=side*(fc.r0+rnd()*((fc.r1||fc.r0+8)-fc.r0));
     const z=(fc.z0===undefined?-40:fc.z0)+rnd()*((fc.z1===undefined?16:fc.z1)-(fc.z0===undefined?-40:fc.z0));
     if(!outside(x,z))continue;
     if(place(fc.type,x,z,(fc.s0||.9)+rnd()*((fc.s1||1.3)-(fc.s0||.9)),rnd()>.5,fc.gap||3))n++;
