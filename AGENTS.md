@@ -1257,3 +1257,39 @@ assigned for feel rather than fidelity. While reworking that, two shipped bugs s
 * **Branches / PR:** `arena/01a1054b-prontera-grind`; pushed for review.
 * **Known limits / follow-ups:** the standalone is generated - edit `tools/sprite_picker.html`
   (and run `tools/make_sprite_picker.py`), never the standalone directly.
+
+### 2026-10-04 — `tool-v27 picker never fails silently`
+* **What changed for the player:** nothing in the game (the v26 attack-only weapon stands).
+  This is about the picker showing a black screen when the owner opened it.
+* **Why it was black:** the picker is a script-driven page. Opened as a *file* (a viewer or an
+  attachment preview) no scripts run, so nothing is ever drawn and the dark page reads as a
+  black screen. Evidence: the preview server's log shows **no request from the owner's browser**
+  — only my own health checks — so the page was not opened through the preview at all.
+* **What the pages do now instead of going quietly black:**
+  * a first-in-head error trap: any script error paints a red bar with the message and the
+    file:line, and a **6-second watchdog** reports "nothing was drawn" with full diagnostics;
+  * a `<noscript>` banner that says, in words, that scripts are blocked here and to use the
+    live preview panel instead;
+  * a header badge in the picker: `sheets n/19 · views n`;
+  * every camera view draws a readable "loading <class> sheet…" / "empty frame" label rather
+    than an empty black panel;
+  * `window.__pgDiag()` reports pose data, head atlases, sheets loaded and views drawn.
+* **New: `tools/picker_check.html`** — a small launcher. It states plainly whether JavaScript
+  runs where it was opened, whether localStorage is available, whether it is inside an iframe,
+  and links to both the normal and the single-file picker. The preview root now serves this
+  page, so "is this place able to run the picker at all?" is answered before anything else.
+* **Files touched:** `tools/picker_check.html` (new), `tools/sprite_picker.html`,
+  `tools/sprite_picker_standalone.html` (regenerated from the same source), `AGENTS.md`.
+* **Art:** none; `tools/montage.py` not run. Game files untouched by this entry.
+* **Tests:** the picker booted under a DOM/canvas stub in three shapes — standalone, served
+  page, and served page with the data file missing. First two: 8 view cards, 8 views drawn,
+  `__pgDiag` reports 19 classes + both head atlases + the active sheet, no error bar. Missing
+  data: no error bar, and the page prints the red "pose data did not load" banner (i.e. the
+  black screen is now an explained screen). All 13 game suites were green at `f2bed26`.
+* **Branches / PR:** `arena/01a1054b-prontera-grind`.
+* **Known limits / follow-ups:**
+  * There is no browser in this sandbox (Chromium downloads are blocked), so verification is
+    static + stub-based, not a screenshot. The launcher exists to make the owner's own
+    browser report the truth.
+  * A viewer that strips both `<script>` and `<noscript>` would still show only the dark
+    shell; the launcher and the header text are the fallback signal in that case.

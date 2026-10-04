@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sprite picker — launcher</title>
+<style>
+body{margin:0;background:#14161c;color:#e8ecf4;font:14px/1.6 system-ui,Segoe UI,Roboto,sans-serif}
+.wrap{max-width:720px;margin:0 auto;padding:28px 20px}
+h1{font-size:20px;margin:0 0 4px}
+p{color:#9aa4b8;margin:6px 0 14px}
+.card{background:#1c1f28;border:1px solid #333a49;border-radius:10px;padding:16px;margin:14px 0}
+.big{display:block;text-align:center;text-decoration:none;font-size:17px;font-weight:700;color:#14161c;
+     background:#ffcf6b;border-radius:8px;padding:14px}
+.big.alt{background:#232733;color:#e8ecf4;border:1px solid #333a49;font-weight:600;font-size:15px;padding:10px}
+.ok{color:#7ee08a;font-weight:700}.bad{color:#ff8f8f;font-weight:700}
+code{background:#0f1116;border:1px solid #333a49;border-radius:4px;padding:1px 5px;font-size:12px}
+ul{margin:8px 0 0 18px;padding:0;color:#9aa4b8}
+li{margin:3px 0}
+</style>
+</head>
+<body>
+<noscript>
+  <div style="background:#4a1620;color:#ffd9df;border-bottom:2px solid #ff8f8f;padding:12px 16px;font:14px/1.6 system-ui">
+    <b>JavaScript is NOT running here.</b> This page (and the picker behind it) cannot work in a
+    file viewer or with scripts blocked — that is exactly why you would see a black screen.
+    Open the page from the <b>live preview panel</b> instead.
+  </div>
+</noscript>
+<div class="wrap">
+  <h1>Sprite picker</h1>
+  <p>Choose the pose that fills each camera view, then send the selection back.</p>
+
+  <div class="card" id="jsCheck">
+    <div id="jsLine">Checking whether JavaScript runs here…</div>
+    <ul id="facts"></ul>
+  </div>
+
+  <a class="big" href="sprite_picker.html">Open the picker</a>
+  <div style="height:10px"></div>
+  <a class="big alt" href="sprite_picker_standalone.html">Single-file build (2.9 MB — every sheet inside one file)</a>
+
+  <div class="card">
+    <b>If a page ever looks completely black</b>
+    <ul>
+      <li>The picker and both builds need JavaScript. A <b>file viewer</b> (clicking the file in a chat or an
+        attachment preview) does not run scripts — use the <b>live preview panel</b>, which serves the real page.</li>
+      <li>Every picker page now prints a red bar at the top naming what failed, instead of staying silent.</li>
+      <li>The <code>sheets n/n · views n</code> badge in the picker header shows how much loaded.</li>
+    </ul>
+  </div>
+</div>
+<script>
+(function(){
+  var js=document.getElementById('jsLine'), facts=document.getElementById('facts');
+  js.innerHTML='<span class="ok">JavaScript is running here.</span> This is the right kind of place to open the picker.';
+  function row(k,v,bad){var li=document.createElement('li');li.innerHTML=k+': <b class="'+(bad?'bad':'ok')+'">'+v+'</b>';facts.appendChild(li)}
+  row('Page', location.pathname);
+  row('Inside an iframe', window.top===window.self?'no (top-level page)':'yes (embedded)');
+  row('Viewport', window.innerWidth+' × '+window.innerHeight);
+  try{localStorage.setItem('pg_check','1');localStorage.removeItem('pg_check');
+      row('localStorage (saves your picks)','available')}
+  catch(e){row('localStorage (saves your picks)','blocked - picks will not persist between visits, the picker still works',true)}
+  row('Ready for the picker','yes — press the yellow button above');
+})();
+</script>
+</body>
+</html>
