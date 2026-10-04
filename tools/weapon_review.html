@@ -88,7 +88,7 @@
 <script>
 (function(){
 var R=window.WEAPON_REVIEW;
-var ZOOM=3, BODY=96, CAP=6, STORE='pg_weapon_review_v1';
+var ZOOM=2, BODY=96, CAP=6, STORE='pg_weapon_review_v1';
 var st={cls:null,adj:{},together:true};
 var viewNames=['S','SW','W','NW','N','NE','E','SE'];
 function dirWord(d){return d===0?'faces you':(d===4?'faces away':(d<4?'front-left':'front-right'))}
@@ -256,7 +256,7 @@ function resetAll(){st.adj={};save();paint()}
     for(var i=0;i<cvs.length;i++)tile(cvs[i],cvs[i].dataset.cls,+cvs[i].dataset.v,+cvs[i].dataset.f)},200);
   paint()})();
 
-window.__pgTest={state:st,paint:paint,tile:tile,renderViews:renderViews,exportJSON:exportJSON,adjOf:adjOf,setAdj:setAdj,nudge:nudge,handOf:handOf,
+window.__pgTest={state:st,paint:paint,tile:tile,ZOOM:ZOOM,BODY:BODY,renderViews:renderViews,exportJSON:exportJSON,adjOf:adjOf,setAdj:setAdj,nudge:nudge,handOf:handOf,
   sourceOf:sourceOf,resetClass:resetClass,resetAll:resetAll,armed:armed,hasWeapon:hasWeapon,
   viewNames:viewNames,adjustedCount:adjustedCount,meta:R.meta,review:R};
 })();

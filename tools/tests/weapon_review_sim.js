@@ -168,7 +168,7 @@ t('a drag moves the weapon exactly with the pointer (never inverted)', () => {
   assert.ok(cv, 'no canvas for ' + cls + ' S f0');
   const before = T.adjOf(cls, 0, 0);
   fire('pointerdown', { target: cv, clientX: 100, clientY: 100, pointerId: 1 });
-  fire('pointermove', { clientX: 100 + 3 * 3, clientY: 100 - 2 * 3, pointerId: 1 });   // ZOOM = 3
+  fire('pointermove', { clientX: 100 + 3 * T.ZOOM, clientY: 100 - 2 * T.ZOOM, pointerId: 1 });
   fire('pointerup', { pointerId: 1 });
   const after = T.adjOf(cls, 0, 0);
   assert.deepStrictEqual([after[0] - before[0], after[1] - before[1]], [3, -2],
@@ -187,8 +187,8 @@ t('the weapon layer is drawn at the same scale as the body, shifted by the nudge
   const draws = global.__draw.slice();
   const body = draws[0], wep = draws[1];
   assert.ok(body && wep, 'the tile did not draw both layers: ' + draws.length);
-  assert.strictEqual(wep.dx, 2 * 3, 'weapon x offset not scaled to the canvas: ' + wep.dx);
-  assert.strictEqual(wep.dy, -3 * 3, 'weapon y offset not scaled to the canvas: ' + wep.dy);
+  assert.strictEqual(wep.dx, 2 * T.ZOOM, 'weapon x offset not scaled to the canvas: ' + wep.dx);
+  assert.strictEqual(wep.dy, -3 * T.ZOOM, 'weapon y offset not scaled to the canvas: ' + wep.dy);
   T.resetClass(cls);
 });
 
