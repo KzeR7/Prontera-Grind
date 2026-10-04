@@ -2145,3 +2145,91 @@ assigned for feel rather than fidelity. While reworking that, two shipped bugs s
     final spec. Waiting on the owner's call for the four items in §6 of `PICKS-REVIEW.md`.
   * Nothing in this review is a balance commitment: the numbers are auto-attack DPS on the audit
     fixture (Lv150 Lord Knight, +10 Legendary set, nine Legendary ATK cards, 200 seeded sets).
+
+### 2026-10-04 — `ui-v38 weapon-cut cards-carry` (balance round 3: ~70% of endgame damage, power moved into affixes and cards)
+
+* **What changed for the player** (all of it from the owner's round-3 brief: keep clears fast, keep
+  damage high, but make *playing* the progression):
+  * **Weapons carry far less flat power.** The weapon's base drop value is **6 -> 2** (so the
+    weapon is **78.8%** of the pre-multiplier ATK at the endgame, was 92.3%); armour,
+    headgear, shield, legwear and accessory keep theirs (4 / 10 / 3 / 3 / 5). A weapon is the
+    single biggest flat power source a character owns, so dividing its base divides it at every
+    level and every rarity.
+  * **Affixes got ~1.7x fatter** (`AM` = 1.7 / 2.72 / 4.42 / 6.8 / 11.05). A Legendary ATK affix
+    is **+36%** (was +21%), and it still rolls 2-3 affixes per Legendary item.
+  * **Cards are the give-back, because a card is something you farm** (`CV` = 3.2 / 6.4 / 9.6 / 16,
+    x3.2). A Legendary ATK card is **+13% ATK, was +4%**: nine of them take the endgame character
+    from ATK 12,227 to 19,524 (**+60%**, was **+22%**) and are worth **x1.60** of whole DPS
+    (+71% to +92% at the milestone rows; they were +24% to +29%).
+  * **Crit damage no longer stacks as a shortcut** (`AB.cdm` 1.5 -> **0.7**): a Legendary CDM
+    *affix* is **+32%** (was +40%) and every point of crit damage buys less than half what it did.
+    The 60% crit-rate cap is untouched.
+  * **The Comodo cliff is softened into a ramp.** On maps 5-10 the high tier now starts at **field
+    level 3** and levels 1-2 hand out 2nd-job gear instead of high-tier gear from level 1, but the
+    drop's *section* is **floored at section 2** - so a Lv70 character farming Abyss stage 1 gets
+    section-2 item names/values, not Novice-section trash (that was the sheet's own cliff).
+  * **Bosses pay out less often.** The Stage-10 boss drops its whole pool at **1% per item, was
+    2.4%** (one Legendary item per ~11 boss kills, was ~4.6; one *specific* item is 1 in 100 boss
+    kills) and its card is **0.1%, was 0.08%** (1 in 1,000 boss kills). Field rolls (4.8/4/3.2%)
+    and the ores (5% boss / 2% minion) are unchanged - the owner explicitly kept those.
+  * **You can be hit again.** Incoming damage is a capped percentage cut,
+    `atk * (1 - min(.75, def/(def+4000)))`, floored at 1, instead of `atk - def*0.6` floored at 1.
+    The old line made every geared character take exactly **1** from every monster and every boss
+    in the game; now the naked game is within 2% of before, mid-gear takes 26-46% and endgame takes
+    the 75% cap (endgame mobs hit for ~308-463, bosses ~436-655).
+  * **Pets keep their place** (`PETBAL` 2.18 -> **3.4**). A pet's damage is `your ATK x PETBAL x
+    ...`, so the weapon cut cut pet damage with it; without the knob a maxed pet would have
+    silently dropped to 0.64x a maxed character. It now measures **1.005x** again.
+* **The result, measured by `audit.js` on the shipped file itself** (section 3b, Lord Knight Lv150
+  + 120/120/120 + a +10 Legendary set + nine Legendary ATK cards, mean of 200 seeded sets):
+  **438,133 -> 305,020 auto-DPS = x0.70**, ATK 32,291 -> 19,524, max HP 166,508 -> 167,289 (the HP
+  slots were deliberately left alone), crit rate 60% (the cap) and crit damage x4.67 -> x5.08 in
+  the audit's own card-less endgame set. The layer profile moved from
+  flat x6.87 / refine x2.28 / affix x2.63 / cards x1.22 to **flat x2.96 / refine x1.99 / affix
+  x3.70 / cards x1.60** (total x62.8 -> x43.7): the biggest layer is now the one you roll, the
+  second biggest the one you farm, and flat drops are the smallest of the three.
+* **Every band moves, the top moves least** (section 4, stage-5 field at the middle of the map's
+  level band, x of the old geared DPS): Prontera x0.84, Izlude x0.84, Geffen x0.83, Morroc x0.82,
+  Payon x0.82, Comodo x0.69, Louyang x0.76, Amatsu x0.73, Niflheim x0.71, Abyss x0.63. Early mobs
+  die in 1.3s geared (was 1.1), mid-game 0.4-0.7s (was 0.3-0.6), the endgame still under a second.
+* **Files touched:** `index.html` (`AM`/`CV` + the balance comment block, `AB.cdm`, the `genGear`
+  flat-value map, `secField()` + `gearPool`/`fieldOf`, the boss `drops`/`cardCh`, the game-loop
+  incoming-damage line, `PETBAL`, `BUILD`), `tools/tests/gear_sim.js` (secField in the harness, the
+  1% boss gate proved by a 1.5% roll that now pays nothing, the pool/section rules),
+  `tools/tests/ui_sim.js` (panel strings 1% / 0.1%), `tools/tests/card_sim.js` (CV-derived card
+  values, the cdm-below-STR relation), `tools/tests/save_load_sim.js` (its duplicated CV/AB stubs),
+  `Updates/cards-gear-audit/audit.js` (secField extraction + fallback, `AUDIT_HTML` override, the
+  DEF/faucet sections relabelled to the shipped line, the historical sections marked as such),
+  `Updates/cards-gear-audit/picks-check.js` + `neutral.js` (baseline guard + `AUDIT_HTML`),
+  `Updates/cards-gear-audit/PICKS-REVIEW.md` ("What shipped (v38)"), `tools/tune_pacing.js` (loot
+  cadence .126 -> .118), `AGENTS.md`.
+* **Art:** none.
+* **Tests:** all fourteen green - `skill` 51, `class_change` 24, `gear` 24, `economy` 21, `ui` 20,
+  `pack` 19 bodies, `card` 13, `save_load` 12, `sprite` 12, `pet` 11, `scene` 8, `starter` 7,
+  `stat` 7. `node --check` on the extracted inline script.
+* **Branches / PR:** `arena/01a106ae-prontera-grind`, same pull request as `ui-v36`/`ui-v37`
+  (https://github.com/KzeR7/Prontera-Grind/pull/15). **Not pushed yet**: the owner's standing rule
+  is to be told before a push.
+* **Known limits / follow-ups:**
+  * `audit.js` sections 6 and 7 are the *pre-v38* simulations (their patch sources are pre-v38
+    strings, and they print "patch target not found" against this build); they are run against a
+    pre-v38 copy with `AUDIT_HTML=<file> node Updates/cards-gear-audit/audit.js`. The live tables
+    are sections 1-5 and 3b.
+  * `tools/tune_pacing.js` now models the v38 loot cadence (0.118 expected gear pickups per kill,
+    was 0.126). Re-solving with it moves the shipped curve constants by well under 1% (cA 132.993
+    -> 132.851, NE2 3.05002 -> 3.04976, N100 419,344 -> 418,891, NE3 8.40338 -> 8.39503), so the
+    shipped EXP curve was left alone; the level milestones still solve to 7 min / 2 h / 7 h / 48 h.
+  * **Crit damage, measured the way the owner asked for it.** The *route* is nerfed and the
+    numbers say so: a Legendary CDM affix is +40% -> **+32%**, and nine Legendary CDM cards now
+    add **x1.17** DPS against the **x1.60** nine ATK cards add - i.e. the CDM set sits **36.7%
+    behind** the ATK set, where before v38 it was only 7.4% behind. Two honest footnotes: (a) a
+    Legendary CDM *card* is +8% -> +11% in displayed value, because the x3.2 CV give-back applies
+    to every card - the per-point weight is what fell; (b) the raw crit multiplier in a *card-less*
+    endgame set is slightly higher than before (x4.67 -> x5.08, and x5.01 -> x5.21 on the seeded
+    set) because `critD()` also feeds on LUK/DEX, and AM x1.7 fattens every stat affix. If the
+    owner wants the multiplier itself down as well, the knobs are `AB.cdm` (further down), or
+    removing the LUK/DEX terms from `critD()`, or a crit-damage cap.
+  * In the audit's card-heavy endgame fixture a maxed pet sits at **x0.94** of its old absolute
+    DPS while its owner is at x0.70 - the pet:character ratio the test asserts is unchanged, but
+    pets gain nothing from the card layer, so a full-card character out-runs its pet sooner than
+    it used to (0.74x -> 0.47x of a maxed character per pet). Retune `PETBAL` if that matters.

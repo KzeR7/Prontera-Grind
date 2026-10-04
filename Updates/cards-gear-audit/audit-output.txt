@@ -1,13 +1,15 @@
-cards & equipment power audit  -  formulas lifted from index.html
+cards & equipment power audit - raw run against the SHIPPED v38 build (index.html, BUILD 'ui-v38 weapon-cut cards-carry')
+generated 2026-10-04 by: node Updates/cards-gear-audit/audit.js
+sections 1-5 (+3b) are the live game; sections 6-7 are the pre-v38 simulations (see PICKS-REVIEW.md, 'What shipped')
 
 ====================================================================================================
 1. CARD VALUES  (cardVal(g,stat) = round(CV[g] * AB[stat]))
 ====================================================================================================
 grade       CV         STR         AGI         DEX         LUK         INT      Max HP       ATK %      Crit %      ASPD %      Flee %  Crit DMG %
-Common     1            1         1         1         1         1        12         1         1         1         1         2
-Uncommon   2            2         2         2         2         2        24         2         1         1         2         3
-Rare       3            3         3         3         3         3        36         2         1         2         2         5
-Legendary  5            5         5         5         5         5        60         4         2         3         4         8
+Common     3.2          3         3         3         3         3        38         3         1         2         3         2
+Uncommon   6.4          6         6         6         6         6        77         5         3         4         5         4
+Rare       9.6         10        10        10        10        10       115         8         4         6         8         7
+Legendary  16          16        16        16        16        16       192        13         7        10        13        11
 
 pool: Common/Uncommon roll only str/agi/dex/luk/int   |   Rare/Legendary roll all 11 stats
 a card fits ONE group (CFIT): str->weapon dex->weapon atk->weapon crit->weapon cdm->weapon agi->armor aspd->armor flee->armor vit->armor int->head hp->head luk->acc
@@ -15,7 +17,7 @@ a card fits ONE group (CFIT): str->weapon dex->weapon atk->weapon crit->weapon c
 where each grade drops (fieldOf): stages 1-3 Common, 4-7 Uncommon, 8-9 Rare; Stage-10 boss Legendary
   field card: Common     0.45% per kill
   field card: Rare       0.45% per kill
-  boss  card: Legendary  0.08% per boss kill
+  boss  card: Legendary  0.1% per boss kill
   the rate never changes with stage or map - only the grade does
 
 what stat each map's boss card actually rolls (cardStat(3,m) - it is FIXED per map):
@@ -23,20 +25,20 @@ what stat each map's boss card actually rolls (cardStat(3,m) - it is FIXED per m
   field (mob) cards are fixed too: per map + stage + mob, e.g. map 6 stage 8 mobs roll 11 stat slots seeded by (map*10+stage+mob).
 
 one card, measured on a Lv150 +10 Legendary set (auto-attack DPS change, same set each time):
-  base (no cards): DPS 254,624, ATK 21,554, maxHP 168,044, crit 60% at x4.67 crit damage
+  base (no cards): DPS 127,599, ATK 9,282, maxHP 169,250, crit 60% at x5.08 crit damage
 
   stat        fits      g0      g1      g2      g3    the g3 card is
-  STR        weapon     +0.0%  +0.0%  +0.1%  +0.1%   +5 STR
-  AGI        armor      +0.0%  +0.0%  +0.0%  +0.0%   +5 AGI
-  DEX        weapon     +0.1%  +0.2%  +0.3%  +0.5%   +5 DEX
-  LUK        acc1       +0.2%  +0.4%  +0.6%  +1.0%   +5 LUK
-  INT        head       +0.0%  +0.0%  +0.0%  +0.0%   +5 INT
-  Max HP     head       +0.0%  +0.0%  +0.0%  +0.0%   +60 max HP (that is 0.0% of the bar)
-  ATK %      weapon     +0.7%  +1.4%  +1.4%  +2.7%   +4 ATK %
-  Crit %     weapon     +0.0%  +0.0%  +0.0%  +0.0%   +2 crit, but the 60% cap is already reached
-  ASPD %     armor      +0.9%  +0.9%  +1.8%  +2.7%   +3 ASPD %
-  Flee %     armor      +0.0%  +0.0%  +0.0%  +0.0%   +4 Flee %
-  Crit DMG % weapon     +0.4%  +0.6%  +0.9%  +1.5%   +8 Crit DMG %
+  STR        weapon     +0.2%  +0.3%  +0.5%  +0.8%   +16 STR
+  AGI        armor      +0.0%  +0.0%  +0.0%  +0.0%   +16 AGI
+  DEX        weapon     +0.3%  +0.6%  +1.0%  +1.5%   +16 DEX
+  LUK        acc1       +0.5%  +1.1%  +1.8%  +2.9%   +16 LUK
+  INT        head       +0.0%  +0.0%  +0.0%  +0.0%   +16 INT
+  Max HP     head       +0.0%  +0.0%  +0.0%  +0.0%   +192 max HP (that is 0.1% of the bar)
+  ATK %      weapon     +1.9%  +3.1%  +5.0%  +8.1%   +13 ATK %
+  Crit %     weapon     +0.0%  +0.0%  +0.0%  +0.0%   +7 crit, but the 60% cap is already reached
+  ASPD %     armor      +1.6%  +3.3%  +4.9%  +8.2%   +10 ASPD %
+  Flee %     armor      +0.0%  +0.0%  +0.0%  +0.0%   +13 Flee %
+  Crit DMG % weapon     +0.3%  +0.7%  +1.2%  +1.9%   +11 Crit DMG %
   (the g3 column here is the SAME 9-slot set with seven cards missing - the first three rows are
    a single card in the weapon; see section 3 for a full set of nine)
 
@@ -47,7 +49,7 @@ val = base x section[1/2.2/4/7] x (1 + lvl*0.15) x RAR[tier].m   ->   ev() = val
 
 flat "val" of one drop, level 99, high-tier section (3), before refine:
 slot      base        Common x1     Fine x1.35      Rare x1.9      Epic x2.8 Legendary x4.5
-  weapon  6                 666            899          1,265          1,864          2,996
+  weapon  2                 222            300            422            621            999
   head    10              1,110          1,498          2,108          3,107          4,993
   acc     5                 555            749          1,054          1,553          2,496
   armor   4                 444            599            843          1,243          1,997
@@ -57,20 +59,20 @@ slot      base        Common x1     Fine x1.35      Rare x1.9      Epic x2.8 Leg
 
 AFFIX scale af = (1 + section) x AM[tier]:
 tier        AM        sec0     sec1     sec2     sec3   affixes per item
-  Common     1         1.00     2.00     3.00     4.00   1
-  Fine       1.6       1.60     3.20     4.80     6.40   1-2
-  Rare       2.6       2.60     5.20     7.80    10.40   2
-  Epic       4         4.00     8.00    12.00    16.00   2-3
-  Legendary  6.5       6.50    13.00    19.50    26.00   3
+  Common     1.7       1.70     3.40     5.10     6.80   1
+  Fine       2.72      2.72     5.44     8.16    10.88   1-2
+  Rare       4.42      4.42     8.84    13.26    17.68   2
+  Epic       6.8       6.80    13.60    20.40    27.20   2-3
+  Legendary  11.05    11.05    22.10    33.15    44.20   3
 
 affix value = round(af x AB[stat] x rnd(0.8,1.25)); expected value shown (x1.025):
 stat           sec0-3 Common         sec1-2    sec2-3 Rare      sec3 Epic sec3 Legendary
-  ATK %                    1              3              6             13             21
-  ASPD %                   1              2              5             10             16
-  Crit %                   0              1              4              7             12
-  LUK                      1              3              8             16             27
-  Crit DMG %               2              5             12             25             40
-  Max HP                  12             39             96            197            320
+  ATK %                    1              4             11             22             36
+  ASPD %                   1              3              8             17             27
+  Crit %                   1              3              6             13             20
+  LUK                      2              6             14             28             45
+  Crit DMG %               1              4             10             20             32
+  Max HP                  21             67            163            335            544
   ("sec3 Epic" = Amatsu/Niflheim/Abyss field drop; "sec3 Legendary" = Stage-10 boss drop)
 
 => ONE endgame legendary drop can carry 3 affixes, and every one of the seven slots
@@ -81,48 +83,48 @@ stat           sec0-3 Common         sec1-2    sec2-3 Rare      sec3 Epic sec3 L
 ====================================================================================================
 scenario                            ATK       DEF      MAX HP    crit  auto-DPS      gear val  affix ATK%
   naked (no gear, no cards)           1,254        93       5,774   51%       8,717          0        +0%
-  Epic field set, +0                  7,056     3,232      45,947   60%      73,442     11,295       +23%
-  Epic field set, +10                15,199     7,941     105,315   60%     158,213     28,240       +23%
-  Legendary boss set, +5             19,191     8,931     118,622   60%     259,979     31,853       +42%
-  Legendary boss set, +10            26,562    12,719     166,508   60%     359,856     45,504       +42%
-    + 9 Legendary ATK cards          32,291    12,719     166,508   60%     438,133     45,504       +78%
-    + 9 Legendary ASPD cards         26,562    12,719     166,508   60%     411,118     45,504       +42%
-    + 9 Legendary CRIT cards         26,562    12,719     166,508   60%     360,650     45,504       +42%
-    + 9 Legendary CDM cards          26,562    12,719     166,508   60%     408,132     45,504       +42%
+  Epic field set, +0                  3,923     3,232      46,365   60%      45,899     10,043       +39%
+  Epic field set, +10                 6,935     7,941     105,733   60%      81,148     25,109       +39%
+  Legendary boss set, +5              9,339     8,931     119,402   60%     145,269     28,330       +71%
+  Legendary boss set, +10            12,227    12,719     167,289   60%     190,217     40,472       +71%
+    + 9 Legendary ATK cards          19,524    12,719     167,289   60%     305,020     40,472      +188%
+    + 9 Legendary ASPD cards         12,227    12,719     167,289   60%     210,062     40,472       +71%
+    + 9 Legendary CRIT cards         12,227    12,719     167,289   60%     190,635     40,472       +71%
+    + 9 Legendary CDM cards          12,227    12,719     167,289   60%     223,128     40,472       +71%
 
 vs naked:
-  Epic field set, +0               ATK x  5.6   auto-DPS x  8.4   maxHP x  8.0   DEF +   3,139
-  Epic field set, +10              ATK x 12.1   auto-DPS x 18.2   maxHP x 18.2   DEF +   7,848
-  Legendary boss set, +5           ATK x 15.3   auto-DPS x 29.8   maxHP x 20.5   DEF +   8,838
-  Legendary boss set, +10          ATK x 21.2   auto-DPS x 41.3   maxHP x 28.8   DEF +  12,626
-    + 9 Legendary ATK cards        ATK x 25.8   auto-DPS x 50.3   maxHP x 28.8   DEF +  12,626
-    + 9 Legendary ASPD cards       ATK x 21.2   auto-DPS x 47.2   maxHP x 28.8   DEF +  12,626
-    + 9 Legendary CRIT cards       ATK x 21.2   auto-DPS x 41.4   maxHP x 28.8   DEF +  12,626
-    + 9 Legendary CDM cards        ATK x 21.2   auto-DPS x 46.8   maxHP x 28.8   DEF +  12,626
+  Epic field set, +0               ATK x  3.1   auto-DPS x  5.3   maxHP x  8.0   DEF +   3,139
+  Epic field set, +10              ATK x  5.5   auto-DPS x  9.3   maxHP x 18.3   DEF +   7,848
+  Legendary boss set, +5           ATK x  7.4   auto-DPS x 16.7   maxHP x 20.7   DEF +   8,838
+  Legendary boss set, +10          ATK x  9.8   auto-DPS x 21.8   maxHP x 29.0   DEF +  12,626
+    + 9 Legendary ATK cards        ATK x 15.6   auto-DPS x 35.0   maxHP x 29.0   DEF +  12,626
+    + 9 Legendary ASPD cards       ATK x  9.8   auto-DPS x 24.1   maxHP x 29.0   DEF +  12,626
+    + 9 Legendary CRIT cards       ATK x  9.8   auto-DPS x 21.9   maxHP x 29.0   DEF +  12,626
+    + 9 Legendary CDM cards        ATK x  9.8   auto-DPS x 25.6   maxHP x 29.0   DEF +  12,626
 
-spread across the 200 rolled sets (the affix lottery, Epic field set +10): ATK 11,582 - 20,774  (mean 15,199)
+spread across the 200 rolled sets (the affix lottery, Epic field set +10): ATK 4,808 - 11,023  (mean 6,935)
 
 where the ATK comes from at the top end (one seeded Legendary set, no cards, then with the cards):
-  level + stats (no gear)                  581
-  weapon flat val (ev at +10)            6,990   <- 19x the whole stat contribution
+  level + stats (no gear)                  627
+  weapon flat val (ev at +10)            2,330   <- 19x the whole stat contribution
   class multiplier                       x1.95   Lord Knight
   passive skills                          +25%
-  gear affixes (7 slots)                  +21%
+  gear affixes (7 slots)                  +36%
   legendary ATK cards (9)                  +0%
-  -> ATK 21,554 -> 26,869 with the nine legendary ATK cards (+24.7%)
-     the weapon alone is 92.3% of the ATK before the class/percentage multipliers
-     crit 60% at x4.67 crit damage, 3.69 swings/s
+  -> ATK 9,282 -> 16,027 with the nine legendary ATK cards (+72.7%)
+     the weapon alone is 78.8% of the ATK before the class/percentage multipliers
+     crit 60% at x5.08 crit damage, 3.99 swings/s
 
 combat effect on the Abyss stage-10 field: mob HP 55,286, boss HP 658,173   (auto-attacks only; mob ATK 1,542, boss ATK 2,182)
   naked (no gear, no cards)     mob dies in   6.34s   pack of 3 in  19.0s   boss in   75.5s   (0.16 mobs/s)
-  Epic field set, +10           mob dies in   0.35s   pack of 3 in   1.0s   boss in    4.2s   (2.86 mobs/s)
-  Legendary boss set, +10       mob dies in   0.15s   pack of 3 in   0.5s   boss in    1.8s   (6.51 mobs/s)
-    + 9 Legendary ATK cards     mob dies in   0.13s   pack of 3 in   0.4s   boss in    1.5s   (7.92 mobs/s)
+  Epic field set, +10           mob dies in   0.68s   pack of 3 in   2.0s   boss in    8.1s   (1.47 mobs/s)
+  Legendary boss set, +10       mob dies in   0.29s   pack of 3 in   0.9s   boss in    3.5s   (3.44 mobs/s)
+    + 9 Legendary ATK cards     mob dies in   0.18s   pack of 3 in   0.5s   boss in    2.2s   (5.52 mobs/s)
 
-incoming damage (DEF removes 60% of itself, floored at 1):
-  naked (no gear, no cards)     DEF      93  mob hits for 1178-1795   boss hits for 1690-2563
-  Epic field set, +10           DEF   7,941  mob hits for       1-1   boss hits for 1-1
-  Legendary boss set, +10       DEF  12,719  mob hits for       1-1   boss hits for 1-1
+incoming damage (the SHIPPED v38 line: def/(def+4000) capped at 75%, floored at 1):
+  naked (no gear, no cards)     DEF      93  mob hits for 1206-1808   boss hits for 1706-2559
+  Epic field set, +10           DEF   7,941  mob hits for   413-620   boss hits for 585-877
+  Legendary boss set, +10       DEF  12,719  mob hits for   308-463   boss hits for 436-655
 
 ====================================================================================================
 3b. THE WATERFALL  (Lord Knight Lv150 + 120/120/120, one layer at a time, avg of 200 sets)
@@ -130,29 +132,29 @@ incoming damage (DEF removes 60% of itself, floored at 1):
 step                                         auto-DPS   x step 1        ATK        DEF      MAX HP
   1. level 150 + stats only (no skills, no gear)     6,972      x1.0      1,003         83       5,774
   2. + skill passives                              8,717      x1.3      1,254         93       5,774   this layer x1.25
-  3. + gear flat value (+0, affixes removed)      59,873      x8.6      8,613      5,143      69,620   this layer x6.87
-  4. + refine to +10                             136,610     x19.6     19,652     12,719     165,392   this layer x2.28
-  5. + affixes (2-3 per item)                    359,856     x51.6     26,562     12,719     166,508   this layer x2.63
-  6. + nine Legendary ATK cards                  438,133     x62.8     32,291     12,719     166,508   this layer x1.22
+  3. + gear flat value (+0, affixes removed)      25,770      x3.7      3,707      5,143      69,620   this layer x2.96
+  4. + refine to +10                              51,351      x7.4      7,387     12,719     165,392   this layer x1.99
+  5. + affixes (2-3 per item)                    190,217     x27.3     12,227     12,719     167,289   this layer x3.70
+  6. + nine Legendary ATK cards                  305,020     x43.7     19,524     12,719     167,289   this layer x1.60
 
-  level + stats = 1 unit of power; everything you DROP adds 63 units on top of it.
-  gear flat value x6.9  ->  refine x2.3  ->  affixes x2.63  ->  cards x1.22
+  level + stats = 1 unit of power; everything you DROP adds 44 units on top of it.
+  gear flat value x3.0  ->  refine x2.0  ->  affixes x3.70  ->  cards x1.60
   (DEF is why nothing can hurt you: every hit subtracts def*0.6, floored at 1)
 
 ====================================================================================================
 4. MILESTONES  (stage-5 field, level = middle of the map band, drops at that field level)
 ====================================================================================================
 map          lvl  sec  tier        ATK naked   ATK geared  DPS naked   DPS geared   gear x   +9 lg cards  cards x   mob HP     kills in (naked/geared)s
-  Prontera   6    1    Common            118          183         202          323     x1.6          416    x1.29        340        1.7 / 1.1
-  Izlude     17   1    Common            241          352         413          620     x1.5          797    x1.29        829        2.0 / 1.3
-  Geffen     27   1    Fine              347          576         603        1,075     x1.8        1,380    x1.28        829        1.4 / 0.8
-  Morroc     39   1    Fine              472          783         824        1,470     x1.8        1,886    x1.28        829        1.0 / 0.6
-  Payon      52   1    Rare              606        1,193       1,073        2,450     x2.3        3,127    x1.28        829        0.8 / 0.3
-  Comodo     63   3    Rare              705        3,094       1,495        9,177     x6.1       11,614    x1.27     18,252       12.2 / 2.0
-  Louyang    70   3    Epic              752        5,075       1,817       24,348    x13.4       30,219    x1.24     24,638       13.6 / 1.0
-  Amatsu     77   3    Epic              796        5,492       2,161       29,352    x13.6       36,429    x1.24     32,078       14.8 / 1.1
-  Niflheim   85   3    Epic              846        5,862       2,586       34,189    x13.2       42,433    x1.24     39,988       15.5 / 1.2
-  Abyss      95   3    Epic              896        6,441       4,192       57,438    x13.7       71,287    x1.24     51,684       12.3 / 0.9
+  Prontera   6    1    Common            118          151         202          271     x1.3          522    x1.92        340        1.7 / 1.3
+  Izlude     17   1    Common            241          291         413          523     x1.3        1,006    x1.92        829        2.0 / 1.6
+  Geffen     27   1    Fine              347          457         603          894     x1.5        1,705    x1.91        829        1.4 / 0.9
+  Morroc     39   1    Fine              472          613         824        1,205     x1.5        2,298    x1.91        829        1.0 / 0.7
+  Payon      52   1    Rare              606          892       1,073        2,016     x1.9        3,776    x1.87        829        0.8 / 0.4
+  Comodo     63   3    Rare              705        1,731       1,495        6,301     x4.2       11,472    x1.82     18,252       12.2 / 2.9
+  Louyang    70   3    Epic              752        2,776       1,817       18,536    x10.2       31,630    x1.71     24,638       13.6 / 1.3
+  Amatsu     77   3    Epic              796        2,970       2,161       21,409     x9.9       36,530    x1.71     32,078       14.8 / 1.5
+  Niflheim   85   3    Epic              846        3,152       2,586       24,168     x9.3       41,230    x1.71     39,988       15.5 / 1.7
+  Abyss      95   3    Epic              896        3,411       4,192       35,924     x8.6       61,285    x1.71     51,684       12.3 / 1.4
 
 ====================================================================================================
 5. THE DROP FAUCET
@@ -161,71 +163,71 @@ map          lvl  sec  tier        ATK naked   ATK geared  DPS naked   DPS geare
   Payon     stage 1:  7 items in the pool, 3 gear rolls per kill at 4.8%/4%/3.2% = 12.0% per kill
   Louyang   stage 1:  9 items in the pool, 3 gear rolls per kill at 4.8%/4%/3.2% = 12.0% per kill
   Abyss     stage 1:  9 items in the pool, 3 gear rolls per kill at 4.8%/4%/3.2% = 12.0% per kill
-  Abyss      stage 10: boss drops the whole pool (9 items) at 2.4% each = 21.6% per boss for a Legendary item, plus 5 escorts at 4.8/4.0/3.2% each
+  Abyss      stage 10: boss drops the whole pool (9 items) at 1% each = 9.0% per boss for a Legendary item (its card is 0.1%), plus 5 escorts at 4.8%/4%/3.2% each
   every stage-10 boss drop is Legendary (tier 4) whichever map it is on
   sell: 1,825z for an item that is worth more than any drop on maps 1-6
   refine: 200z (r0) -> 5,000z (r9) + 1 ore per ATTEMPT, success 100%/100%/70%/60%/40%/20% for r0/r3/r4/r5/r7/r9
   a failure consumes the ore and the Zeny; at +5 and above it also drops the item one level (it never breaks)
 
   expected cost to FIRST reach each refine level (high-tier item, one sample per item):
-    +5:    5.4 ores       8,579z
-    +6:    8.1 ores      15,977z
-    +7:   12.7 ores      30,339z
-    +8:   22.1 ores      62,036z
-    +9:   47.7 ores     151,437z
-    +10:  152.6 ores     526,326z
-  one stage-10 wave pays ~0.30 ore (of either kind), so +10 on ONE item = 509 boss waves; a whole 7-slot +10 set = 3562 waves.
-  (+0..+4 is ~11 ores total - that part is cheap. The +9 -> +10 rung alone averages 105 ores.)
+    +5:    5.4 ores       8,559z
+    +6:    8.1 ores      15,999z
+    +7:   12.7 ores      30,429z
+    +8:   22.2 ores      62,198z
+    +9:   47.6 ores     151,011z
+    +10:  153.9 ores     530,549z
+  one stage-10 wave pays ~0.30 ore (of either kind), so +10 on ONE item = 513 boss waves; a whole 7-slot +10 set = 3590 waves.
+  (+0..+4 is ~11 ores total - that part is cheap. The +9 -> +10 rung alone averages 106 ores.)
 
 ====================================================================================================
 6. CANDIDATE NERFS  (same fixture as section 3: Lv150, +10 Legendary set, 9 legendary ATK cards)
+   HISTORICAL: the variants below patch PRE-v38 source strings, which the shipped file no
+   longer contains, so every row reads "patch target not found" unless you point AUDIT_HTML
+   at a pre-v38 index.html copy. What shipped is in section 3b (the live waterfall).
 ====================================================================================================
 stage                                                   auto-DPS   vs today      ATK   mob TTK   boss TTK   max HP
-  today                                                  438,133     x1.00   32,291      0.13s      1.5s    166,508
-  STAGE 1  affixes: cap 2 per item + AM 4.5              289,248     x0.66   28,568      0.19s      2.3s    165,286
-  STAGE 2  + flat value down (level .10, Legendary 3.5)   164,025     x0.37   16,201      0.34s      4.0s     91,358
-  STAGE 3  + refine 10%/level                            135,216     x0.31   13,356      0.41s      4.9s     74,351
-  STAGE 4  + cards CV 2.5 (the full plan)                121,704     x0.28   12,025      0.45s      5.4s     74,351
+  today                                                  305,020     x1.00   19,524      0.18s      2.2s    167,289
+  STAGE 1  affixes: cap 2 per item + AM 4.5             -> patch target not found: AM down
+  STAGE 2  + flat value down (level .10, Legendary 3.5)  -> patch target not found: AM down
+  STAGE 3  + refine 10%/level                           -> patch target not found: AM down
+  STAGE 4  + cards CV 2.5 (the full plan)               -> patch target not found: AM down
   (mob/boss TTK are auto-attacks only; the real game is ~17x faster with a skill rotation,
    so even STAGE 4 keeps the endgame farming loop at well under a second per mob.)
 
-incoming damage - today (flat subtraction, floor 1) vs a capped percentage reduction:
-  DEF            mob hit today   mob hit capped   boss hit today   boss hit capped
+incoming damage - pre-v38 (flat subtraction, floor 1) vs v38 (capped percentage cut, SHIPPED):
+  DEF            mob hit pre-v38  mob hit shipped  boss hit pre-v38  boss hit shipped
        93  naked (Lv150, no gear)        1178           1206             1690           1706
     7,112  mid-game +10 (Abyss field)       1            444                1            628
    12,719  endgame +10 (Legendary)          1            308                1            436
-  today a geared character takes 1 from every mob AND every boss on the hardest map;
-  with the cap the endgame takes ~25% of the raw hit and the naked character barely moves (3% cut).
-  one line:  index.html:1512   -(m.mag?mdef():def())*.6   ->   * (1 - min(.75, def/(def+4000)))
+  BEFORE v38 a geared character took 1 from every mob AND every boss on the hardest map;
+  the shipped cap: endgame takes ~25% of the raw hit, the naked character barely moves (3% cut).
+  shipped line:  const md=m.mag?mdef():def(), cut=Math.min(.75,md/(md+4000));  d=round(atk*rand*(1-cut))
 
 ====================================================================================================
 7. THE OWNER'S ASK: flat base / 3, with the power returned through affixes and cards
+   HISTORICAL (pre-v38 baseline; these patches no longer match the shipped file - see 3b).
 ====================================================================================================
 variant                                                  auto-DPS   vs today      ATK   mob TTK   boss TTK   max HP
-  today (no change)                                    438,133     x1.00   32,291      0.13s      1.5s    166,508
-  A  flat base / 3 only                                167,925     x0.38   12,379      0.33s      3.9s     60,099
-  A2  flat base / 2 only                               235,475     x0.54   17,357      0.23s      2.8s     86,701
-  A3  /3 on ATK slots, HP slots kept                   167,925     x0.38   12,379      0.33s      3.9s    166,508
-  B  A + affixes x1.3 (AM up)                          203,463     x0.46   13,289      0.27s      3.2s     60,442
-  C  B + cards x1.3 (CV up)                            212,029     x0.48   13,844      0.26s      3.1s     60,442
-  D  A + cards x1.3 (CV up only)                       175,425     x0.40   12,928      0.32s      3.8s     60,099
-  the /3 alone leaves endgame at x0.38 of today; the same /3 hits every level equally (it is a plain multiplier on val), unlike the
-  level-term change in stage 2, which only bites at the top.
-  handing a third of it back (affix magnitude +30%, card values +30%): x0.48 - i.e. the nerf is worth x-52% after the give-back.
+  today (no change)                                    305,020     x1.00   19,524      0.18s      2.2s    167,289
+  A  flat base / 3 only                               -> patch target not found: flat base /3
+  A2  flat base / 2 only                              -> patch target not found: flat base /2
+  A3  /3 on ATK slots, HP slots kept                  -> patch target not found: flat base /3 on ATK slots, HP slots kept
+  B  A + affixes x1.3 (AM up)                         -> patch target not found: flat base /3
+  C  B + cards x1.3 (CV up)                           -> patch target not found: flat base /3
+  D  A + cards x1.3 (CV up only)                      -> patch target not found: flat base /3
 
 boss HP per map at its Stage 10 (500 x mapMult x lvl^1.3) - and what it would need to be so
 that this swap does NOT change how long a boss takes to kill (today-DPS / variant-DPS):
 map            lvl     boss HP today    keep TTK: A    keep TTK: C
-  Prontera       10            9,976          26,028          20,614
-  Izlude         19           26,426          68,948          54,606
-  Geffen         29           51,764         135,058         106,964
-  Morroc         41           90,564         236,291         187,140
-  Payon          53          139,523         364,030         288,308
-  Comodo         69          239,611         625,170         495,128
-  Louyang        76          320,446         836,077         662,164
-  Amatsu         83          414,016       1,080,211         855,515
-  Niflheim       89          513,213       1,339,026       1,060,494
-  Abyss          99          658,173       1,717,241       1,360,037
-  (left alone, an endgame boss just takes x2.1 longer under variant C - boss HP only needs a nudge if that reads as too slow.)
+  Prontera       10            9,976               0               0
+  Izlude         19           26,426               0               0
+  Geffen         29           51,764               0               0
+  Morroc         41           90,564               0               0
+  Payon          53          139,523               0               0
+  Comodo         69          239,611               0               0
+  Louyang        76          320,446               0               0
+  Amatsu         83          414,016               0               0
+  Niflheim       89          513,213               0               0
+  Abyss          99          658,173               0               0
 
 (dps is auto-attacks only - skills multiply the same base, so the ratios carry over)

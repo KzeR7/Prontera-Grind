@@ -33,12 +33,12 @@ const save = {pets:[
 const harness = `
 ${code}
 const num_ = (v,d) => { v = +v; return Number.isFinite(v) ? v : d };
-const CV = [1,2,3,5], GI = [0,1,2,4], SECN = ['a','b','c','d'];
+const CV = [3.2,6.4,9.6,16], GI = [0,1,2,4], SECN = ['a','b','c','d'];
 // load() repairs card values through cardVal(), which is inside the grabbed range and needs
 // the stat weight tables. Those live above 'const CD=[' so they must be supplied here -
 // without them a save that actually contains cards would crash the repair untested.
 const AFF = ['str','agi','dex','luk','int','hp','atk','crit','aspd','flee','cdm'];
-const AB = {str:1,agi:1,dex:1,luk:1,int:1,hp:12,atk:.8,crit:.45,aspd:.6,flee:.8,cdm:1.5};
+const AB = {str:1,agi:1,dex:1,luk:1,int:1,hp:12,atk:.8,crit:.45,aspd:.6,flee:.8,cdm:.7};
 const K5 = ['str','agi','dex','luk','int'];
 const lsGet = () => ${JSON.stringify(JSON.stringify(save))};
 const saveKey = () => 'k';
@@ -93,9 +93,9 @@ t('the live game state is untouched by the repair', () => {
 
 t('card values are repaired per stat, not flattened to CV[grade]', () => {
   const byId = id => f.cards.find(c => c.id === id);
-  assert.strictEqual(byId(1).v, 60, 'a Legendary HP card should repair to 5*12, not the stale 5');
-  assert.strictEqual(byId(2).v, 3, 'a Rare STR card should repair to CV[2]');
-  assert.strictEqual(byId(3).v, 2, 'an unknown stat should fall back to CV[grade], not crash');
+  assert.strictEqual(byId(1).v, 192, 'a Legendary HP card should repair to 16*12, not the stale 5');
+  assert.strictEqual(byId(2).v, 10, 'a Rare STR card should repair to round(CV[2]) = 10');
+  assert.strictEqual(byId(3).v, 6, 'an unknown stat should fall back to round(CV[grade 1]) = 6, not crash');
 });
 
 t('skills that no longer exist are dropped, refunding their points', () => {

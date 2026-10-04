@@ -140,8 +140,8 @@ t('the map panel renders every map and field', () => {
   // the boss field lists the whole pool with odds, and the new ore rates
   U.mapL = 10;
   const b = U.V.map();
-  assert.ok(b.includes('2.4%') && b.includes('poolitem') && b.includes('Each item rolls independently'), 'the boss must list the doubled independent equipment rolls');
-  assert.ok(b.includes('0.08%'), 'boss card odds must remain unchanged');
+  assert.ok(b.includes('<b>1%</b>') && b.includes('poolitem') && b.includes('Each item rolls independently'), 'the boss must list its whole pool at 1% each');
+  assert.ok(b.includes('0.1%'), 'boss card odds must read 0.1% (v38)');
   assert.ok(b.includes('2% each') && b.includes('5% each'), 'ore rates: 2% per monster, 5% per boss');
 });
 

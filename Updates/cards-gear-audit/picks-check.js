@@ -3,7 +3,8 @@
 //
 // Everything is measured with the same extraction the audit uses (audit.js is read in and its
 // harness reused verbatim - no formula is copied here), so these numbers are the live game's.
-// "today" = shipped values, "picks" = the answer sheet as filled in on 2026-10-04.
+// "today" = the PRE-v38 shipped values, "picks" = the answer sheet as filled in on 2026-10-04.
+// Since v38 shipped, run it against a pre-v38 copy: AUDIT_HTML=/path/to/pre-v38/index.html node ...
 const fs = require('fs'), path = require('path');
 
 // ---- reuse audit.js up to the point where it starts printing ---------------------------------
@@ -13,6 +14,18 @@ const api = new Function('require', '__dirname', 'console', head +
   '\nreturn {build, X, f, pct, measure, fixture, autoDps, mobStat, bossStat, cardsIn, mkSet, alloc};'
 )(require, __dirname, console);
 const { build, X, f, pct, measure, fixture, autoDps, mobStat, bossStat, cardsIn } = api;
+
+// ---- baseline guard -------------------------------------------------------------------------
+// Both tools patched the PRE-v38 build forward: every patch source string below is that build's
+// source. On the shipped v38 file they have nothing to measure, so say so instead of throwing.
+const htmlPath = process.env.AUDIT_HTML || path.join(__dirname, '..', '..', 'index.html');
+if (!fs.readFileSync(htmlPath, 'utf8').includes('drops:T.map(x=>[x,2.4])')) {
+  console.log('this build is not the pre-v38 baseline these patches describe.');
+  console.log('re-run against a copy of the pre-v38 index.html, e.g.');
+  console.log('  AUDIT_HTML=/path/to/pre-v38/index.html node Updates/cards-gear-audit/' + path.basename(__filename));
+  console.log('what shipped in v38 is in PICKS-REVIEW.md ("What shipped") and in audit.js section 3b.');
+  process.exit(0);
+}
 
 // ---- the sheet, verbatim ---------------------------------------------------------------------
 const PICKS = [

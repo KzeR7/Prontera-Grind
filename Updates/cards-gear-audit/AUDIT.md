@@ -1,5 +1,10 @@
 # Cards & equipment — the simple version
 
+> **Historical as of 2026-10-04:** this report measured the **pre-v38** build (`BUILD ui-v35`).
+> v38 shipped the changes below (see `PICKS-REVIEW.md`, "What shipped (v38)"), and
+> `audit-output.txt` now holds a raw run against the v38 file, whose sections 1-5 (+3b) are the
+> live game.
+
 **No game code was touched.** `BUILD` is still `ui-v35`. This is a measurement report.
 Every number comes from `audit.js`, which lifts the real formulas out of `index.html` and runs
 them over 200 rolled gear sets. Raw run: `audit-output.txt`. Re-run: `node Updates/cards-gear-audit/audit.js`.

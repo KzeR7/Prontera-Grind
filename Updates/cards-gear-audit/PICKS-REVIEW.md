@@ -218,3 +218,111 @@ the sheet and 46% today) and leaves the endgame exactly as trivial as today (mob
 which was the problem the audit started from. **The sheet's own x1.3 setting is the one with the
 flattest layer profile (1.25 - 3.28).** A middle setting of x2.0 (= x0.76 DPS) is the compromise if
 the cut feels too deep.
+
+# What shipped (v38, 2026-10-04)
+
+`index.html` is `ui-v38 weapon-cut cards-carry`. Every number below is measured by
+`node Updates/cards-gear-audit/audit.js` **against the shipped file itself** (section references
+are that tool's sections). This is the round-3 brief applied: keep clears fast, keep damage high,
+make *playing* the progression - at ~70% of the old endgame damage, with the power moved out of
+flat drops and into affixes and cards.
+
+## The knobs
+
+| knob | was | shipped |
+|---|---|---|
+| weapon flat base | 6 | **2** (armour 4 / head 10 / shield 3 / legwear 3 / accessory 5 unchanged) |
+| `AM` affix magnitude | 1 / 1.6 / 2.6 / 4 / 6.5 | **1.7 / 2.72 / 4.42 / 6.8 / 11.05** (x1.7) |
+| `CV` card values | 1 / 2 / 3 / 5 | **3.2 / 6.4 / 9.6 / 16** (x3.2) |
+| `AB.cdm` crit damage per point | 1.5 | **0.7** |
+| Comodo cliff | high tier from field level 1 | high tier from **field level 3**, the drop's section floored at **2** |
+| boss equipment | 2.4% per pool item | **1%** per pool item |
+| boss card | 0.08% | **0.1%** |
+| incoming damage | `atk - def*0.6`, floor 1 | **`atk * (1 - min(.75, def/(def+4000)))`**, floor 1 |
+| `PETBAL` pets | 2.18 | **3.4** |
+| field rolls, ores, accessory base, crit-rate cap | - | **unchanged** (4.8/4/3.2%, 5%/2%, 5, 60%) |
+
+## The target, met (section 3b)
+
+| | before | v38 |
+|---|---|---|
+| auto-DPS | 438,133 | **305,020 (x0.70)** |
+| ATK | 32,291 | 19,524 |
+| max HP | 166,508 | 167,289 |
+| gear flat layer | x6.87 | **x2.96** |
+| refine +10 layer | x2.28 | x1.99 |
+| affix layer | x2.63 | **x3.70** |
+| nine Legendary ATK cards | x1.22 | **x1.60** |
+| everything on top of level+stats | x62.8 | x43.7 |
+
+The weapon is now **78.8%** of the pre-multiplier ATK at the endgame (was 92.3%), one Legendary
+ATK affix is **+36%** (was +21%), one Legendary ATK card is **+13%** (was +4%) and nine of them are
+worth +60% ATK / x1.60 DPS (was +22% / x1.22).
+
+## Every band moves, the top moves least (section 4)
+
+x of the old geared DPS, stage-5 field at the middle of each map's level band:
+
+| map | before DPS | v38 DPS | x |
+|---|---|---|---|
+| Prontera | 323 | 271 | 0.84 |
+| Izlude | 620 | 523 | 0.84 |
+| Geffen | 1,075 | 894 | 0.83 |
+| Morroc | 1,470 | 1,205 | 0.82 |
+| Payon | 2,450 | 2,016 | 0.82 |
+| Comodo | 9,177 | 6,301 | **0.69** |
+| Louyang | 24,348 | 18,536 | 0.76 |
+| Amatsu | 29,352 | 21,409 | 0.73 |
+| Niflheim | 34,189 | 24,168 | 0.71 |
+| Abyss | 57,438 | 35,924 | **0.63** |
+
+Comodo takes the hardest hit because that is where the cliff was: stages 1-2 of maps 5-10 now hand
+out section-2 gear instead of high-tier gear. In exchange the endgame mob still dies in under a
+second and a mid-game mob in 0.4-0.7 s, so the loop stays fast. The **card layer** column moved the
+other way everywhere: +24-29% before, **+71-92%** now.
+
+## Crit damage, the way the request was worded (section 1 + 3)
+
+**Nerfed:** a Legendary CDM affix is **+40% -> +32%**, every point of crit damage buys 53% less than
+it did, and nine Legendary CDM cards now add x1.17 DPS against the x1.60 that nine ATK cards add -
+the CDM set sits **36.7% behind** the ATK set, where before v38 it was 7.4% behind. Crit-damage
+stacking is no longer a shortcut; farming ATK cards is.
+
+**Two footnotes so nothing is hidden:** a Legendary CDM *card* is +8% -> +11% in displayed value
+(the x3.2 card give-back applies to every card - the per-point weight is what fell), and the raw
+crit multiplier of a card-less endgame set is a little *higher* than before (x4.67 -> x5.08)
+because `critD()` also feeds on LUK/DEX, and AM x1.7 fattens every stat affix. If the multiplier
+itself should come down as well the knobs are `AB.cdm`, the LUK/DEX terms in `critD()`, or a cap.
+
+## Pets (pet_sim, asserted)
+
+`PETBAL` 2.18 -> **3.4**, because `petDmg = your ATK x PETBAL x ...` and the weapon cut cut pet
+damage with it. At 3.4 a maxed pet measures **1.005x** a maxed character again (it was 1.000x), so
+the pet:character rule the owner asked for still holds. In absolute terms a maxed Angeling is
+7.61M -> 5.92M DPS in the suite's card-less fixture (x0.78) and x0.94 in the audit's card-heavy
+endgame set: pets do not benefit from the card layer, so a full-card character out-runs its pet
+sooner than it used to (0.74x -> 0.47x of a maxed character per pet). `PETBAL` is the one knob.
+
+## What the drops do now (section 5)
+
+* Boss: the whole 9-item pool at **1% each = 9% per boss** (was 21.6%) - about **1 Legendary item
+  per 11 boss kills**, and 1 in 100 boss kills for one *specific* item. Card 0.1% = 1/1,000.
+* Field mobs and both escorts: unchanged (4.8 / 4.0 / 3.2% per kill = 12%).
+* Ores unchanged: +10 still costs ~154 ores / ~532k zeny, one stage-10 wave still pays ~0.30 ore,
+  so +10 on one item is still ~511 boss waves (a 7-slot set ~3,576).
+
+## Re-running the tools
+
+* The full raw run is saved as `audit-output.txt` (header says which build it measured).
+* `audit.js` runs against the shipped file (it now lifts `secField` and reads the flat bases and
+  the `AB` weights out of `index.html`, so its tables cannot go stale again). Sections **6 and 7 are
+  the pre-v38 simulations** and print "patch target not found" on this build - run them against a
+  pre-v38 copy: `AUDIT_HTML=/path/to/pre-v38/index.html node Updates/cards-gear-audit/audit.js`.
+* `picks-check.js` and `neutral.js` model the **pre-v38 baseline** on purpose (their patch sources
+  are that build's strings); they now refuse politely on the shipped file and tell you to pass
+  `AUDIT_HTML`. With it they reproduce the x0.48 sheet run and the give-back sweep exactly as
+  before.
+* `tools/tune_pacing.js` models the v38 loot cadence (.118 gear pickups per kill, was .126).
+  Re-solving moves the shipped constants by **under 1%** (cA 132.993 -> 132.851, NE2 3.05002 ->
+  3.04976, N100 419,344 -> 418,891, NE3 8.40338 -> 8.39503), so the EXP curve was left alone; the
+  milestones still solve to 7 min / 2 h / 7 h / 48 h.

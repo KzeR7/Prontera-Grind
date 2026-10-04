@@ -1,9 +1,10 @@
 // "Same DPS, different distribution": how far do affixes and cards have to go to undo the
 // flat-base cut?   node Updates/cards-gear-audit/neutral.js
 //
-// The answer to "why did it drop 50%": the flat gear layer is a x6.87 multiplier on the whole
+// The answer to "why did it drop 50%": the flat gear layer was a x6.87 multiplier on the whole
 // character, so cutting it is expensive to undo. This script finds the exact give-back that
-// restores today's endgame DPS, and prints what the layers look like when it does.
+// restores the pre-v38 endgame DPS, and prints what the layers look like when it does. It models
+// the PRE-v38 baseline: run it against a pre-v38 copy with AUDIT_HTML=/path/to/index.html.
 const fs = require('fs'), path = require('path');
 const auditSrc = fs.readFileSync(path.join(__dirname, 'audit.js'), 'utf8');
 const head = auditSrc.slice(0, auditSrc.indexOf("console.log('cards & equipment power audit"));
@@ -11,6 +12,18 @@ const api = new Function('require', '__dirname', 'console', head +
   '\nreturn {build, X, f, measure, fixture, autoDps, mobStat, bossStat, cardsIn, mkSet, alloc};'
 )(require, __dirname, console);
 const { build, X, f, measure, fixture, autoDps, cardsIn, mkSet, mobStat, bossStat } = api;
+
+// ---- baseline guard -------------------------------------------------------------------------
+// Both tools patched the PRE-v38 build forward: every patch source string below is that build's
+// source. On the shipped v38 file they have nothing to measure, so say so instead of throwing.
+const htmlPath = process.env.AUDIT_HTML || path.join(__dirname, '..', '..', 'index.html');
+if (!fs.readFileSync(htmlPath, 'utf8').includes('drops:T.map(x=>[x,2.4])')) {
+  console.log('this build is not the pre-v38 baseline these patches describe.');
+  console.log('re-run against a copy of the pre-v38 index.html, e.g.');
+  console.log('  AUDIT_HTML=/path/to/pre-v38/index.html node Updates/cards-gear-audit/' + path.basename(__filename));
+  console.log('what shipped in v38 is in PICKS-REVIEW.md ("What shipped") and in audit.js section 3b.');
+  process.exit(0);
+}
 const N = 200;
 
 // ---- the decided shape (weapon /3, everything else kept; AM/CV = the give-back) --------------

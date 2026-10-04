@@ -17,7 +17,10 @@
 //   5. what the drop faucet actually feeds the player
 //   6. what a set of candidate nerfs would do (PATCHES rewrites the extracted source)
 const fs = require('fs'), vm = require('vm'), path = require('path');
-const FILE = path.join(__dirname, '..', '..', 'index.html');
+// Defaults to the working copy. Set AUDIT_HTML to measure another build - that is how the
+// historical sheets (picks-check.js / neutral.js) are re-run against a pre-v38 index.html copy,
+// because their patch list describes that build's source strings.
+const FILE = process.env.AUDIT_HTML || path.join(__dirname, '..', '..', 'index.html');
 const src = fs.readFileSync(FILE, 'utf8');
 const grab = (a, b) => { const i = src.indexOf(a), j = src.indexOf(b, i); if (i < 0 || j < 0) throw new Error('missing ' + a); return src.slice(i, j); };
 const pick = (re, name) => { const m = src.match(re); if (!m) throw new Error('cannot find ' + name); return m[0]; };
@@ -42,6 +45,9 @@ const code = [
   pick(/const MAPTIER=\[[^\]]*\];/, 'MAPTIER'),
   pick(/const dropTier=\(m,l\)=>[^;]+;/, 'dropTier'),
   pick(/const secOf=[^;]+;/, 'secOf'),
+  // secField() is v38 (the Comodo cliff floor). A pre-v38 file has no such function and does not
+  // call one, so the fallback keeps the historical AUDIT_HTML baselines runnable.
+  /const secField=\(m,l\)=>[^;]+;/.test(src) ? src.match(/const secField=\(m,l\)=>[^;]+;/)[0] : 'const secField=(m,l)=>secOf(l);',
   pick(/const sellVal=it=>[^;]+;/, 'sellVal'),
   pick(/const refCost=it=>[^;,]+/, 'refCost'),
   pick(/refCh=it=>\[[^\]]*\]\[it\.r\|\|0\]/, 'refCh'),
@@ -203,7 +209,8 @@ console.log('\none card, measured on a Lv150 +10 Legendary set (auto-attack DPS 
 console.log('\n' + '='.repeat(100));
 console.log('2. EQUIPMENT: flat value and affixes');
 console.log('='.repeat(100));
-const base = { weapon: 6, armor: 4, head: 10, off: 3, leg: 3, acc: 5 };
+// The flat bases are lifted from genGear() itself, so this table can never drift from the game.
+const base = JSON.parse(src.match(/\{weapon:\d+,armor:\d+,head:\d+,off:\d+,leg:\d+,acc:\d+\}/)[0].replace(/([a-z]+):/g, '"$1":'));
 console.log('val = base x section[1/2.2/4/7] x (1 + lvl*0.15) x RAR[tier].m   ->   ev() = val x (1 + refine*0.15)');
 console.log('\nflat "val" of one drop, level 99, high-tier section (3), before refine:');
 console.log('slot      base  ' + X.RAR.map(r => (r.n + ' x' + r.m).padStart(15)).join(''));
@@ -221,11 +228,12 @@ X.AM.forEach((am, t) => {
 });
 console.log('\naffix value = round(af x AB[stat] x rnd(0.8,1.25)); expected value shown (x1.025):');
 console.log('stat         ' + ['sec0-3 Common', 'sec1-2', 'sec2-3 Rare', 'sec3 Epic', 'sec3 Legendary'].map(s => s.padStart(15)).join(''));
-[['atk', .8], ['aspd', .6], ['crit', .45], ['lux1', 1], ['cdm', 1.5], ['hp', 12]].forEach(([k, w]) => {
-  const name = k === 'lux1' ? 'luk' : k;
+// Weights come from the file's own AB table (v38 cut cdm 1.5 -> 0.7) and the magnitudes from AM.
+['atk', 'aspd', 'crit', 'luk', 'cdm', 'hp'].forEach(name => {
+  const w = X.AB[name];
   // af = (1 + section) x AM[tier] -- the (1 + ...) is easy to drop: writing 'AM * sec' instead
   // understated the top three columns by 50% until 2026-10-04.
-  const cells = [[0, 1], [1, 1.6], [2, 2.6], [3, 4], [3, 6.5]]
+  const cells = [[0, X.AM[0]], [1, X.AM[1]], [2, X.AM[2]], [3, X.AM[3]], [3, X.AM[4]]]
     .map(([sec, am]) => Math.round((1 + sec) * am * w * 1.025));
   console.log('  ' + X.AL[name].padEnd(11) + cells.map(c => f(c).padStart(15)).join(''));
 });
@@ -302,10 +310,11 @@ const secs = (hp, dps) => (hp / dps);
     '   boss in ' + secs(boss.hp, r.dps).toFixed(1).padStart(6) + 's   (' + (r.dps / mob.hp).toFixed(2) + ' mobs/s)');
 });
 
-console.log('\nincoming damage (DEF removes 60% of itself, floored at 1):');
+console.log('\nincoming damage (the SHIPPED v38 line: def/(def+4000) capped at 75%, floored at 1):');
 [at('naked (no gear, no cards)'), at('Epic field set, +10'), at('Legendary boss set, +10')].forEach(i => {
   const r = res[i], mob = mobStat(X, 9, 10), boss = bossStat(X, 9, 10);
-  const inc = atk => { const d = r.def * .6; return [Math.max(1, Math.round(atk * .8 - d)), Math.max(1, Math.round(atk * 1.2 - d))]; };
+  // pre-v38 this was `atk - def*.6` floored at 1, which made every geared character immune.
+  const inc = atk => { const c = Math.min(.75, r.def / (r.def + 4000)); return [Math.max(1, Math.round(atk * .8 * (1 - c))), Math.max(1, Math.round(atk * 1.2 * (1 - c)))]; };
   console.log('  ' + r.label.padEnd(30) + 'DEF ' + f(Math.round(r.def)).padStart(7) + '  mob hits for ' +
     inc(mob.atk).join('-').padStart(9) + '   boss hits for ' + inc(boss.atk).join('-'));
 });
@@ -389,8 +398,10 @@ console.log('='.repeat(100));
   console.log('  ' + X.MAPS[m].n.padEnd(10) + 'stage 1: ' + String(X.gearPool(m, 1).length).padStart(2) + ' items in the pool, 3 gear rolls per kill at ' +
     F.mobs[0].drops.map(d => d[1] + '%').join('/') + ' = ' + F.mobs[0].drops.reduce((a, d) => a + d[1], 0).toFixed(1) + '% per kill');
 });
-{ const F = X.fieldOf(9, 10); console.log('  Abyss      stage 10: boss drops the whole pool (' + F.boss.drops.length + ' items) at 2.4% each = ' +
-  F.boss.drops.reduce((a, d) => a + d[1], 0).toFixed(1) + '% per boss for a Legendary item, plus 5 escorts at 4.8/4.0/3.2% each'); }
+{ const F = X.fieldOf(9, 10);
+  console.log('  Abyss      stage 10: boss drops the whole pool (' + F.boss.drops.length + ' items) at ' + F.boss.drops[0][1] + '% each = ' +
+    F.boss.drops.reduce((a, d) => a + d[1], 0).toFixed(1) + '% per boss for a Legendary item (its card is ' + F.boss.cardCh + '%), plus 5 escorts at ' +
+    F.mobs[0].drops.map(d => d[1] + '%').join('/') + ' each'); }
 console.log('  every stage-10 boss drop is Legendary (tier 4) whichever map it is on');
 console.log('  sell: ' + f(X.sellVal({ sec: 3, tier: 4, lvl: 99 })) + 'z for an item that is worth more than any drop on maps 1-6');
 console.log('  refine: 200z (r0) -> ' + f(X.refCost({ r: 9, sec: 3 })) + 'z (r9) + 1 ore per ATTEMPT, success ' +
@@ -421,6 +432,9 @@ console.log('  a failure consumes the ore and the Zeny; at +5 and above it also 
 // ============================================================ 6. nerf options
 console.log('\n' + '='.repeat(100));
 console.log('6. CANDIDATE NERFS  (same fixture as section 3: Lv150, +10 Legendary set, 9 legendary ATK cards)');
+console.log('   HISTORICAL: the variants below patch PRE-v38 source strings, which the shipped file no');
+console.log('   longer contains, so every row reads "patch target not found" unless you point AUDIT_HTML');
+console.log('   at a pre-v38 index.html copy. What shipped is in section 3b (the live waterfall).');
 const top = res[at('  + 9 Legendary ATK cards')];
 console.log('='.repeat(100));
 // ---- the staged plan: each stage ADDS to the one above it -------------------------------------
@@ -453,29 +467,31 @@ console.log('  (mob/boss TTK are auto-attacks only; the real game is ~17x faster
 console.log('   so even STAGE 4 keeps the endgame farming loop at well under a second per mob.)');
 
 // ---- the one change that is not a constant: DEF is a flat subtraction --------------------------
-console.log('\nincoming damage - today (flat subtraction, floor 1) vs a capped percentage reduction:');
+console.log('\nincoming damage - pre-v38 (flat subtraction, floor 1) vs v38 (capped percentage cut, SHIPPED):');
 // def/(def+4000), capped at 75%. Chosen from Updates/cards-gear-audit/def-scan.js: it leaves the
-// naked game within 0-2% of today, gives mid-gear 26-46% and endgame 60-75%.
+// naked game within 0-2% of the old line, gives mid-gear 26-46% and endgame 60-75%.
+// v38 replaced the game-loop line with exactly this, so the right-hand pair is the live game.
 const cut = (d, k) => Math.min(.75, d / (d + k));
 const hitNow = (atk, d) => Math.max(1, Math.round(atk * .8 - d * .6));
 const hitPct = (atk, d, k) => Math.max(1, Math.round(atk * .8 * (1 - cut(d, k))));
 {
   const Sn = fixture(X, 150, 'Lord Knight', null); X.S = Sn; const dNaked = X.def();
   const rows = [['naked (Lv150, no gear)', dNaked], ['mid-game +10 (Abyss field)', 7112], ['endgame +10 (Legendary)', measure(X, 99, 3, 4, 10, null, 200).def]];
-  console.log('  DEF            mob hit today   mob hit capped   boss hit today   boss hit capped');
+  console.log('  DEF            mob hit pre-v38  mob hit shipped  boss hit pre-v38  boss hit shipped');
   rows.forEach(([label, d]) => {
     console.log('  ' + f(Math.round(d)).padStart(7) + '  ' + label.padEnd(26) + hitNow(mobE.atk, d).toString().padStart(8) +
       hitPct(mobE.atk, d, 4000).toString().padStart(15) + hitNow(bossE.atk, d).toString().padStart(17) + hitPct(bossE.atk, d, 4000).toString().padStart(15));
   });
-  console.log('  today a geared character takes 1 from every mob AND every boss on the hardest map;');
-  console.log('  with the cap the endgame takes ~25% of the raw hit and the naked character barely moves (3% cut).');
-  console.log('  one line:  index.html:1512   -(m.mag?mdef():def())*.6   ->   * (1 - min(.75, def/(def+4000)))');
+  console.log('  BEFORE v38 a geared character took 1 from every mob AND every boss on the hardest map;');
+  console.log('  the shipped cap: endgame takes ~25% of the raw hit, the naked character barely moves (3% cut).');
+  console.log('  shipped line:  const md=m.mag?mdef():def(), cut=Math.min(.75,md/(md+4000));  d=round(atk*rand*(1-cut))');
 }
 
 
 // ---- section 7: the owner's ask - equipment flat base / 3, power handed back ----------------
 console.log('\n' + '='.repeat(100));
 console.log("7. THE OWNER'S ASK: flat base / 3, with the power returned through affixes and cards");
+console.log('   HISTORICAL (pre-v38 baseline; these patches no longer match the shipped file - see 3b).');
 console.log('='.repeat(100));
 const BASE3   = ['{weapon:6,armor:4,head:10,off:3,leg:3,acc:5}[slot]',
                  '{weapon:2,armor:4/3,head:10/3,off:1,leg:1,acc:5/3}[slot]', 'flat base /3'];
