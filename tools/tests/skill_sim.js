@@ -25,7 +25,7 @@ ${ledger}
 // skOff and skillOn share one line in index.html, so the pick above already brought both in.
 let S = null, tb = {}, skCd = {}, dt = 0;
 const lv = id => (S.sk && S.sk[id]) || 0;
-const maxHp = () => 1000, log = () => {}, addFloat = () => {}, playSkillFx = () => {}, pl = {x:0,z:0};
+const maxHp = () => 1000, log = () => {}, addFloat = () => {}, skillNameFloat = () => {}, playSkillFx = () => {}, pl = {x:0,z:0};
 this.__k = { SKILLS, CLASSES, SKSLOTS, SKFADE, SKILL_VFX, skillFxSpec, skCost, applyDot, applyStun, skillOn, skOff, down, skLine, skEarned, skSpent, skpAvail,
              set S(v){S=v}, get S(){return S},
              get tb(){return tb}, set tb(v){tb=v},
@@ -162,7 +162,7 @@ t('player ATK and MATK formulas consume only their matching pet buffs and passiv
   const strikeBox={};vm.createContext(strikeBox);
   vm.runInContext(`
     let mob={x:0,z:0,hp:10000,size:.6,spriteScale:1},shake=0;
-    const atk=()=>100,matk=()=>200,missCh=()=>0,crit=()=>0,st=()=>0,critD=()=>2,rnd=(a,b)=>a,addFloat=()=>{};
+    const atk=()=>100,matk=()=>200,missCh=()=>0,crit=()=>0,st=()=>0,critD=()=>2,rnd=(a,b)=>a,addFloat=()=>{},damageFloat=()=>{};
     ${STRIKE_SRC}
     const hp=mob.hp;strike(1,'#fff',false);const physical=hp-mob.hp;mob.hp=hp;strike(1,'#fff',true);this.damage={physical,magical:hp-mob.hp};
   `,strikeBox);

@@ -87,6 +87,40 @@ t('every pet portrait is a real Divine Pride monster PNG, not an emoji placehold
   }
 });
 
+t('all pets use the same official mob sprite loader and remain uniformly small', () => {
+  const petDraw=grab('const PET_VISUAL_SCALE=.42;', 'function disposeCreatureVisual(v){');
+  const box={};vm.createContext(box);
+  vm.runInContext(petDraw+'\nthis.__pet={PET_VISUAL_SCALE,petFallbackShape};',box);
+  const P=box.__pet;
+  assert.strictEqual(P.PET_VISUAL_SCALE,.42);
+  assert.ok(3.05*P.PET_VISUAL_SCALE<2.92*.5,'even a Baphomet Jr. pet should be less than half the hero height');
+  for(const sp of PETS)assert.ok(P.petFallbackShape(sp),'no pet fallback if official art fails');
+  const draw=grab('  const pids=new Set(S.pets.filter(p=>p.on)', '  const live=new Set();');
+  assert.ok(draw.includes('v=buildMob(pet)')&&draw.includes('spriteId:sp.spriteId'),
+    'active pets must use the mob renderer and the verified monster sprite ID');
+  assert.ok(draw.includes("rec.state==='ready')useMobTexture(v,rec.texture)"),
+    'pets must switch to official GPU textures when available');
+  assert.ok(draw.includes('v.G.scale.setScalar(PET_VISUAL_SCALE)')&&src.includes('syncMobImage(v,{x:r.x'),
+    'both the GPU and DOM sprite paths must use the same small size');
+  assert.ok(draw.includes('disposeCreatureVisual(v)')&&src.includes('if(v.image)v.image.remove()'),
+    'unequipping a pet must remove its DOM image as well as its 3D group');
+  assert.ok(draw.includes('v.spr.material.color.set(0xffffff)'),
+    'mutation should not recolour official pixel art');
+  // Actually build the pet using the same function as a monster, verifying its URL is
+  // requested and the DOM fallback exists for every species if WebGL texture loading fails.
+  const ctx={requested:[],images:[],groups:[],THREE:{Group:class{add(){} }},getSheet:()=>({}),
+    drawCritter:()=>{},mkBillboard:()=>({material:{map:{},dispose(){}}}),mkShadow:()=>{},
+    scene:{add(g){ctx.groups.push(g)}},mobSpriteUrl,document:{createElement:()=>({style:{}})},
+    mobSpriteLayer:{appendChild(im){ctx.images.push(im)}},requestMobTexture:id=>ctx.requested.push(id)};
+  vm.createContext(ctx);
+  vm.runInContext(grab('function buildMob(m){','let slashM=null;')+'\nthis.build=buildMob;',ctx);
+  for(const sp of PETS){
+    const v=ctx.build({shape:P.petFallbackShape(sp),c:sp.c,spriteId:sp.spriteId});
+    assert.strictEqual(v.spriteId,sp.spriteId);assert.strictEqual(v.image.src,mobSpriteUrl(sp.spriteId));
+  }
+  assert.strictEqual(ctx.images.length,8);assert.strictEqual(ctx.requested.length,8);
+});
+
 t('all 85 unique Divine Pride mob IDs match their database size class and player-relative scale', () => {
   // Reference list transcribed from the Small/Medium/Large labels on the corresponding
   // Divine Pride monster pages; index.html documents the common URL pattern and audit date.

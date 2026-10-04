@@ -23,6 +23,14 @@ html, body { margin:0; padding:0; width:100vw; height:100vh; overflow:hidden; ba
 .weapon-sprite-fallback{position:absolute;inset:0;display:grid;place-items:center;font-size:calc(var(--weapon-size, 34px) * .76);line-height:1;text-shadow:0 1px 2px #000}
 .fl{position:absolute;transform:translate(-50%,-50%);font-weight:bold;font-size:16px;white-space:nowrap;text-shadow:-1px -1px 0 #000,1px -1px 0 #000,-1px 1px 0 #000,1px 1px 0 #000}
 .fl.big{font-size:24px}
+.fl{pointer-events:none}
+/* RO-style damage: outlined golden digits; crits sit on a red spiked bubble. */
+.fl.damage,.fl.critical,.fl.incoming{font-family:Verdana,"Trebuchet MS",sans-serif;font-size:22px;font-weight:900;font-variant-numeric:tabular-nums;letter-spacing:1px;color:#ffe643!important;-webkit-text-stroke:1.5px #30221e;paint-order:stroke fill;text-shadow:1px 2px 0 #120e0b,0 0 3px #140d08;z-index:24;animation:hit-pop .24s ease-out both}
+.fl.critical{font-size:26px;color:#fff264!important;isolation:isolate}
+.fl.critical::before{content:"";position:absolute;z-index:-1;inset:-13px -19px;background:radial-gradient(ellipse,#f79b50 5%,#d83e32 43%,#a6232f 66%,#711626 100%);clip-path:polygon(50% 0%,57% 18%,70% 5%,72% 24%,88% 12%,85% 32%,100% 29%,89% 46%,100% 55%,83% 62%,91% 81%,72% 74%,65% 100%,53% 79%,39% 97%,35% 77%,16% 88%,20% 66%,0% 64%,14% 48%,1% 36%,20% 33%,12% 13%,32% 24%,40% 4%)}
+.fl.incoming{color:#ff7772!important;font-size:18px}
+.fl.skill{font:bold 14px "Trebuchet MS",sans-serif;color:#fff!important;background:#262233d9;border:1px solid #ffda7a;border-radius:4px;padding:3px 9px;letter-spacing:.2px;text-shadow:0 1px 2px #000,0 0 5px #000;box-shadow:0 2px 8px #0008;z-index:25}
+@keyframes hit-pop{0%{transform:translate(-50%,-35%) scale(.65)}65%{transform:translate(-50%,-55%) scale(1.1)}100%{transform:translate(-50%,-50%) scale(1)}}
 #tag{position:absolute;transform:translate(-50%,-100%);text-align:center;color:#fff;font:bold 12px "Trebuchet MS",sans-serif;text-shadow:-1px -1px 0 #000,1px -1px 0 #000,-1px 1px 0 #000,1px 1px 0 #000;display:none}
 #tag .bar{width:90px;height:8px;margin:2px auto 0}
 #prog{position:absolute;left:12px;top:12px;background:#0008;color:#fff;font:bold 13px "Trebuchet MS",sans-serif;padding:6px 12px;border-radius:4px;border:1px solid #ffffff44;display:flex;align-items:center;gap:10px}
@@ -36,14 +44,14 @@ html, body { margin:0; padding:0; width:100vw; height:100vh; overflow:hidden; ba
 .hud-zeny{position:relative;color:#a27200;font-weight:bold;cursor:help;white-space:nowrap}.hud-zeny:focus-visible,.xp-side:focus-visible{outline:2px solid #2f6fd6;outline-offset:-2px}
 .hud-flyout{position:absolute;bottom:calc(100% + 8px);left:0;z-index:90;background:#251f20;color:#fff;font-size:12px;font-weight:600;padding:7px 10px;border-radius:7px;white-space:nowrap;box-shadow:0 4px 14px #0008;opacity:0;visibility:hidden;pointer-events:none}
 .hud-zeny:hover .hud-flyout,.hud-zeny:focus .hud-flyout{opacity:1;visibility:visible}
-#xp-dock{flex:none;width:100%;padding:6px 10px 8px;background:linear-gradient(180deg,#413743,#26242f);box-shadow:inset 0 2px 6px #140f1899;z-index:9}
+#xp-dock{flex:none;width:100%;padding:3px 10px 4px;background:linear-gradient(180deg,#413743,#26242f);box-shadow:inset 0 2px 6px #140f1899;z-index:9}
 /* One RO-style bar: Base fills toward the centre from the left, Job from the right. */
-#xp-track{display:flex;width:100%;height:24px;border:1px solid #756c77;border-radius:4px;background:#161820;overflow:hidden;box-shadow:inset 0 1px 4px #000a;color:#fff;font:bold 11px/22px "Trebuchet MS",sans-serif;text-shadow:0 1px 2px #000,0 0 4px #000}
+#xp-track{display:flex;width:100%;height:14px;border:1px solid #756c77;border-radius:4px;background:#161820;overflow:hidden;box-shadow:inset 0 1px 4px #000a;color:#fff;font:bold 9px/12px "Trebuchet MS",sans-serif;text-shadow:0 1px 2px #000,0 0 4px #000}
 .xp-side{position:relative;flex:0 0 50%;min-width:0;cursor:help;overflow:hidden}.xp-side:first-child{border-right:2px solid #d6c2a6}.xp-side:hover{background:#ffffff12}
 .xp-fill{position:absolute;top:0;bottom:0;left:0;width:0;transition:width .3s ease}
 #jb{left:auto;right:0;background:linear-gradient(180deg,#bca0ff,#7452cb 70%,#493692)}#xpb{background:linear-gradient(180deg,#9ce6ff,#348fcc 70%,#246398)}
 .xp-label,.xp-pct{position:absolute;top:0;z-index:1;white-space:nowrap}.xp-label{left:8px}.xp-label.job{left:auto;right:8px}.xp-pct{left:50%;transform:translateX(-50%)}
-@media(max-width:560px){#hud{gap:6px 10px;padding:7px 10px;font-size:11px}.hud-health .bar{width:94px}.hud-health small{min-width:28px}#xp-track{height:32px}.xp-label,.xp-label.job{left:0;right:0;top:0;text-align:center;font-size:9px;line-height:12px}.xp-pct{top:12px;line-height:18px;font-size:10px}}
+@media(max-width:560px){#hud{gap:6px 10px;padding:7px 10px;font-size:11px}.hud-health .bar{width:94px}.hud-health small{min-width:28px}#xp-track{height:22px}.xp-label,.xp-label.job{left:0;right:0;top:0;text-align:center;font-size:9px;line-height:10px}.xp-pct{top:10px;line-height:10px;font-size:9px}}
 .body{padding:8px;font-size:13px}
 .slot{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:5px 8px;border:1px solid var(--edge);background:#fffdf5;margin-bottom:4px;border-radius:4px;min-height:36px}
 .r0{color:#555}.r1{color:#2a9d3f}.r2{color:#2f6fd6}.r3{color:#a23fd6}.r4{color:#e07b00;font-weight:bold}
@@ -209,7 +217,7 @@ const AL={str:'STR',agi:'AGI',dex:'DEX',luk:'LUK',int:'INT',hp:'Max HP',atk:'ATK
 // late maps in about five, with bosses still a ~12x fight. See tools/tests/economy_sim.js.
 const SU=k=>k.toUpperCase(),BX_=13,Z0=-28,Z1=12,MPS=15,AGGRO=6.5,HPK=42,HPE=1.3,K5=['str','agi','dex','luk','int'];
 const GM_USER='GM',GM_PASS='gm1234';   // CHANGE THE GM PASSWORD before you publish
-const BUILD='2026-10-04 ui-v32 split-exp live-rates';   // shown on the login card - confirms which file you loaded
+const BUILD='2026-10-04 combat-v33 hit-fx pet-sprites';   // shown on the login card - confirms which file you loaded
 $('buildTag').textContent='build '+BUILD;
 
 // ---------- class tree: Novice -> 6 first jobs -> 6 second jobs -> 6 third jobs ----------
@@ -888,18 +896,21 @@ function chainHit(src,dmg,col,n){if(!src||!(dmg>0)||mobs.length<2)return;
   const near=mobs.filter(o=>o!==src&&o.hp>0&&o.pack===src.pack).sort((a,b)=>Math.hypot(a.x-src.x,a.z-src.z)-Math.hypot(b.x-src.x,b.z-src.z)).slice(0,n||2);
   for(const o of near){shots.push({x0:src.x,z0:src.z,x1:o.x,z1:o.z,t:0,col:col||'#fff'});hurt(o,Math.max(1,Math.round(dmg)),col)}}
 const mkDrop=it=>({it,wx:mob.x+rnd(-.7,.7),wz:mob.z+rnd(-.7,.7),y:0,vy:-220,t:0});
-const addFloat=(x,y,z,txt,col,big)=>floats.push({x,y,z,txt,col,life:1,big});
+const addFloat=(x,y,z,txt,col,big,kind='text')=>floats.push({x,y,z,txt,col,life:1,big,kind});
+const damageFloat=(x,y,z,amount,critical=false,incoming=false)=>addFloat(x,y,z,String(Math.round(amount)),null,false,incoming?'incoming':critical?'critical':'damage');
+// Skill labels track the moving player, rather than floating away from the cast location.
+const skillNameFloat=(name,slot=0)=>floats.push({x:pl.x,y:3.15+slot*.38,z:pl.z,txt:name,life:1.15,kind:'skill',anchor:'hero'});
 function log(m,cls){logs.push({m,cls});if(logs.length>80)logs.shift();
   const f=$('feed'),d=document.createElement('div');d.textContent=m;f.appendChild(d);while(f.children.length>4)f.removeChild(f.firstChild);setTimeout(()=>d.remove(),7000);if(tabs.includes('log'))renderWin()}
 
 // ---------- combat ----------
 function shot(col){if(!mob||heroWeaponType(C().n,C().wt,S.eq.weapon&&S.eq.weapon.wt)!=='bow')return;
   shots.push({x0:pl.x,z0:pl.z,x1:mob.x,z1:mob.z,t:0,col:col||'#fff',arrow:true})}
-function hurt(o,d,col,c){o.hp-=d;o.flash=1;addFloat(o.x+rnd(-.4,.4),1.2+.8*(o.spriteScale||o.size),o.z,c?d+'!':d,col||'#fff',c);if(o.hp<=0)kill(o)}
+function hurt(o,d,col,c){o.hp-=d;o.flash=1;damageFloat(o.x+rnd(-.4,.4),1.2+.8*(o.spriteScale||o.size),o.z,d,c);if(o.hp<=0)kill(o)}
 function strike(mult,col,magic=false){
   if(!mob)return;if(Math.random()*100<missCh()){addFloat(mob.x,1.8,mob.z,'Miss','#ccc');return}
   const c=Math.random()*100<crit(),base=magic?matk():atk(),d=Math.max(1,Math.round(base*mult*rnd(Math.min(.95,.7+st('dex')*.004),1.15)*(c?critD():1)));
-  mob.hp-=d;mob.flash=1;shake=c?6:2;addFloat(mob.x+rnd(-.4,.4),1.5*Math.max(1,(mob.spriteScale||mob.size)*.8)+.6,mob.z,c?d+'!':d,col||(c?'#ffe14d':'#fff'),c);
+  mob.hp-=d;mob.flash=1;shake=c?6:2;damageFloat(mob.x+rnd(-.4,.4),1.5*Math.max(1,(mob.spriteScale||mob.size)*.8)+.6,mob.z,d,c);
 }
 // Higher job tiers get more casts per swing: Novice 1, first job 2, second job 3, transcendent
 // 4 (tier is 0/1/2/3 - Assassin Cross and Lord Knight are tier 3, not 2). Every cast after the
@@ -929,13 +940,13 @@ function playerAttack(){
   for(const sk of ready){
     if(cast>=SKSLOTS(C().tier))break;
     const k=SKFADE[cast]||.3;cast++;
-    skCd[sk.id]=sk.cd;addFloat(pl.x,2.9+cast*.4,pl.z,sk.n,sk.col);
+    skCd[sk.id]=sk.cd;skillNameFloat(sk.n,cast-1);
     castSkill(sk,k);
     if(!mob||mob.hp<=0||mob.pack!==pack)break;
   }
   if(cast||far)return;
   strike(1);shot();const d=pv('dbl');
-  if(d&&Math.random()<d/100+st('dex')*.003){pend.push({t:.15,m:1,col:'#aef'});addFloat(pl.x,3,pl.z,'Double Attack','#aef')}
+  if(d&&Math.random()<d/100+st('dex')*.003){pend.push({t:.15,m:1,col:'#aef'});skillNameFloat('Double Attack')}
 }
 function addJob(x){const j=jobOf(),c=C();if(j.jl>=c.mj)return;j.jx+=x;
   while(j.jl<c.mj&&j.jx>=jneed(j.jl)){j.jx-=jneed(j.jl);j.jl++;log(`JOB LEVEL UP! ${S.cls} Job Lv ${j.jl} (+1 skill point)`,'r3');addFloat(pl.x,3.2,pl.z,'JOB UP!','#8fe9ff',true)}
@@ -1315,7 +1326,7 @@ function update(dt){
   if(pv('hpreg')&&S.hp<maxHp())S.hp=Math.min(maxHp(),S.hp+dt*maxHp()*pv('hpreg')/100);
   shots.forEach(s=>s.t+=dt*7);shots=shots.filter(s=>{if(s.t<1)return true;if(s.m)scene.remove(s.m);return false});
   tickSkillFx(dt);
-  if(skillOn('aid')&&S.hp<maxHp()*.5&&(skCd.aid||0)<=0){skCd.aid=6;const h=Math.ceil(maxHp()*(.1+.05*lv('aid')));S.hp=Math.min(maxHp(),S.hp+h);playSkillFx('aid',null,'#7dff7d');addFloat(pl.x,2.6,pl.z,'+'+h,'#7dff7d')}
+  if(skillOn('aid')&&S.hp<maxHp()*.5&&(skCd.aid||0)<=0){skCd.aid=6;const h=Math.ceil(maxHp()*(.1+.05*lv('aid')));S.hp=Math.min(maxHp(),S.hp+h);playSkillFx('aid',null,'#7dff7d');skillNameFloat('First Aid');addFloat(pl.x,2.6,pl.z,'+'+h,'#7dff7d')}
   for(let i=pend.length-1;i>=0;i--){const p=pend[i];p.t-=dt;if(p.t<=0){pend.splice(i,1);strike(p.m,p.col,!!p.magic);shot(p.col);if(mob&&mob.hp<=0){kill();break}}}
   // a timed tradeoff buff ticks down, drains HP if it says so, and clears when it expires
   // tb.t is undefined until the first cast, so every read of it defaults to 0. Without that,
@@ -1340,7 +1351,7 @@ function update(dt){
     if(cand.length){const s=cand[0],L=lv(s.id);skCd[s.id]=s.cd;
       tb={atk:(s.to.atk||Z)(L),aspd:(s.to.aspd||Z)(L),def:(s.to.def||Z)(L),drain:(s.to.drain||Z)(L),
           t:(s.to.dur||Z)(L),n:s.n};
-      log(s.n+'! '+s.d(L),'r4');playSkillFx(s.id,null,s.col);addFloat(pl.x,3.2,pl.z,s.n,s.col,true)}}
+      log(s.n+'! '+s.d(L),'r4');playSkillFx(s.id,null,s.col);skillNameFloat(s.n)}}
   let tx=0,tz=Z1-1.5,reach=1.4;
   if(!mobs.length){respawn-=dt;if(respawn<=0)spawn();
     // roam: pick a fresh spot when the timer runs out or the current one is reached
@@ -1357,7 +1368,7 @@ function update(dt){
       m.x=cl(m.x,-BX_,BX_);m.z=cl(m.z,Z0,Z1);m.ry=Math.atan2(pl.z-m.z,m.x-pl.x);
       if(wake&&Math.hypot(pl.x-m.x,pl.z-m.z)<=ms+.4&&!stn){m.at-=dt;if(m.at<=0){m.at=m.boss?1.2:1.5;
         if(Math.random()*100<flee())addFloat(pl.x,2.4,pl.z,'Miss','#8cf');
-        else{const d=Math.max(1,Math.round(m.atk*rnd(.8,1.2)-(m.mag?mdef():def())*.6));S.hp-=d;hitAnim=1;m.atkAnim=1;addFloat(pl.x,2.4,pl.z,d,m.mag?'#c08cff':'#ff6b6b');
+        else{const d=Math.max(1,Math.round(m.atk*rnd(.8,1.2)-(m.mag?mdef():def())*.6));S.hp-=d;hitAnim=1;m.atkAnim=1;damageFloat(pl.x,2.4,pl.z,d,false,true);
           // Defeat is the ONE thing that puts you back at the spawn point.
 if(S.hp<=0){log('You were defeated... knocked back to the entrance.','r0');S.hp=maxHp();S.kl=0;mobs=[];mob=null;respawn=1.5;pend=[];tb={};
           pl.x=0;pl.z=Z1-1.5;pl.wt=0;ui();return}}}}
@@ -1378,7 +1389,7 @@ if(S.hp<=0){log('You were defeated... knocked back to the entrance.','r0');S.hp=
   if(mob)pl.ry=-Math.atan2(mob.z-pl.z,mob.x-pl.x);else if(pl.run)pl.ry=-Math.atan2(pz,px);
   if(S.hp<maxHp()&&Math.floor(t*2)!==Math.floor((t-dt)*2))S.hp=Math.min(maxHp(),S.hp+Math.ceil(maxHp()*.008));
   barT-=dt;if(barT<=0){barT=.15;bars()}
-  floats.forEach(f=>{f.life-=dt*1.1;f.y+=dt*.8});floats=floats.filter(f=>{if(f.life>0)return true;if(f.el)f.el.remove();return false});
+  floats.forEach(f=>{f.life-=dt*1.1;if(f.kind!=='skill')f.y+=dt*(f.kind==='damage'||f.kind==='critical'||f.kind==='incoming' ? .3 : .8)});floats=floats.filter(f=>{if(f.life>0)return true;if(f.el)f.el.remove();return false});
   drops.forEach(d=>{d.t+=dt;d.vy+=700*dt;d.y+=d.vy*dt;if(d.y>0){d.y=0;d.vy=-d.vy*.4;if(Math.abs(d.vy)<40)d.vy=0}});
   for(let i=drops.length-1;i>=0;i--)if(drops[i].t>.9){collect(drops[i].it);drops.splice(i,1)}
 }
@@ -2478,6 +2489,11 @@ function drawSlashFX(x,z,wt){
     slashM=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(cv),transparent:true,depthWrite:false}));slashM.center.set(.5,.25);scene.add(slashM)}
   slashM.visible=atkAnim>.12&&wt!=='bow'&&wt!=='staff';if(!slashM.visible)return;
   slashM.position.set(x,1.15,z);slashM.material.opacity=Math.min(1,atkAnim*1.6)*.9;slashM.scale.set(1.6+atkAnim*1.2,1.6+atkAnim*1.2,1)}
+// Pets use the same official Divine Pride renderer as field mobs, but every species
+// stays well below the hero regardless of the monster's size or mutation grade.
+const PET_VISUAL_SCALE=.42;
+const petFallbackShape=sp=>sp.n==='Lunatic'?'bunny':sp.n.includes('Wolf')?'cat':sp.n.includes('Peco')?'bug':sp.n.includes('Dragon')||sp.n.includes('Baphomet')?'demon':'blob';
+function disposeCreatureVisual(v){scene.remove(v.G);if(v.image)v.image.remove();if(v.official&&v.spr.material.map)v.spr.material.map.dispose();v.spr.material.dispose()}
 const mobMesh=new Map(),petMesh=new Map();let curMob=null,mobG=null,mobMats=[],lastBoss=null,dmesh=new Map(),tmp=new THREE.Vector3(),lastProg='';
 function scr(x,y,z){tmp.set(x,y,z).project(cam);return[(tmp.x+1)/2*R.domElement.clientWidth,(1-tmp.y)/2*R.domElement.clientHeight]}
 const weaponNodes=new Map(),WEAPON_ICON_ANGLE={dagger:-35,katar:22,staff:-24,bow:18,axe:-30,sword:-35,mace:-28},WEAPON_ICON_SIZE={dagger:25,katar:30,staff:29,bow:34,axe:30,sword:29,mace:28};
@@ -2670,7 +2686,7 @@ function draw(){
   if(heroSpr){if(heroSpr.userData.pack)setPackCell(heroSpr,viewDir(pFace),pl.run,atkAnim,t);else setCell(heroSpr,viewDir(pFace),animRow(pl.run,atkAnim,t,10));
   heroSpr.material.color.setRGB(1,1-hitAnim*.75,1-hitAnim*.75)}
   drawSlashFX(pl.x+Math.cos(pFace)*0.7,pl.z+Math.sin(pFace)*0.7,wt);
-  const alive=new Set(mobs);mobMesh.forEach((v,m)=>{if(!alive.has(m)){scene.remove(v.G);if(v.image)v.image.remove();if(v.spr.material.map)v.spr.material.map.dispose();v.spr.material.dispose();mobMesh.delete(m)}});
+  const alive=new Set(mobs);mobMesh.forEach((v,m)=>{if(!alive.has(m)){disposeCreatureVisual(v);mobMesh.delete(m)}});
   for(const m of mobs){let v=mobMesh.get(m);if(!v){v=buildMob(m);mobMesh.set(m,v)}const s=mobVisualScale(m);
     const rec=v.spriteId&&mobTextureCache.get(v.spriteId);if(rec&&rec.state==='ready')useMobTexture(v,rec.texture);
     v.G.scale.set(s,s,s);v.G.position.set(m.x,0,m.z);
@@ -2678,14 +2694,16 @@ function draw(){
     if(!v.official)setCell(v.spr,viewDir(mFace),animRow(m.run,m.atkAnim||0,t+m.a,8));
     const fl=m.flash||0;v.spr.material.color.setRGB(1,1-fl*.8,1-fl*.8)}
   if(mob){const s=mobVisualScale(mob),[qx,qy]=scr(mob.x,3.08*s+.15,mob.z);tag.style.display='block';tag.style.left=qx+'px';tag.style.top=qy+'px';$('tn').textContent=mob.n+(mob.boss?' (BOSS)':'');$('th').style.width=Math.max(0,mob.hp/mob.max*100)+'%'}else tag.style.display='none';
-  const pids=new Set(S.pets.filter(p=>p.on).map(p=>p.id));petMesh.forEach((v,id)=>{if(!pids.has(id)){scene.remove(v.G);petMesh.delete(id)}});
-  S.pets.filter(p=>p.on).forEach(p=>{const sp=PETS[p.sp],r=petR[p.id];if(!r)return;let v=petMesh.get(p.id);
-    if(!v){const tex=getSheet('p:'+sp.n+':'+sp.c,(ctx,x,y,d,kind,fr)=>drawCritter(ctx,x,y,d,kind,fr,sp.n==='Lunatic'?'bunny':sp.n.includes('Wolf')?'cat':sp.n.includes('Peco')?'bug':sp.n.includes('Dragon')||sp.n.includes('Baphomet')?'demon':'blob',sp.c));
-      v={G:new THREE.Group(),spr:mkBillboard(tex,1.35,2)};v.G.add(v.spr);mkShadow(v.G,.28);scene.add(v.G);petMesh.set(p.id,v)}
-    v.G.position.set(r.x,0,r.z);v.G.scale.setScalar(.7+sp.r*.12);
+  const pids=new Set(S.pets.filter(p=>p.on).map(p=>p.id));petMesh.forEach((v,id)=>{if(!pids.has(id)){disposeCreatureVisual(v);petMesh.delete(id)}});
+  S.pets.filter(p=>p.on).forEach(p=>{const sp=PETS[p.sp],r=petR[p.id];if(!sp||!r)return;let v=petMesh.get(p.id);
+    const pet={x:r.x,z:r.z,run:r.run,a:p.id,shape:petFallbackShape(sp),c:sp.c,spriteId:sp.spriteId,flash:0};
+    if(!v){v=buildMob(pet);petMesh.set(p.id,v)}
+    const rec=mobTextureCache.get(sp.spriteId);if(rec&&rec.state==='ready')useMobTexture(v,rec.texture);
+    v.G.position.set(r.x,0,r.z);v.G.scale.setScalar(PET_VISUAL_SCALE);
     const pf=mob?Math.atan2(mob.z-r.z,mob.x-r.x):pFace;
-    setCell(v.spr,viewDir(pf),animRow(r.run,r.lunge||0,t,12));
-    if(p.mut)v.spr.material.color.set(MC[p.mut]);else v.spr.material.color.set(0xffffff)});
+    if(!v.official)setCell(v.spr,viewDir(pf),animRow(r.run,r.lunge||0,t,12));
+    v.spr.material.color.set(0xffffff); // keep the original RO art even when mutated
+  });
   const live=new Set();
   drops.forEach(d=>{live.add(d);let m=dmesh.get(d);
     if(!m){const i=d.it,sl=i.card?'card':i.ore?'ore':i.slot,col=i.ore?(i.ore==='ori'?0xff9d3c:0x6cd3ff):TC[dtier(i)];
@@ -2700,9 +2718,11 @@ function draw(){
   cam.position.set(ct.x+Math.sin(az)*Math.cos(el)*dd+rnd(-sk,sk),Math.sin(el)*dd+.5,ct.z+Math.cos(az)*Math.cos(el)*dd+rnd(-sk,sk));
   cam.lookAt(ct);cam.updateMatrixWorld(true);
   for(const m of mobs){const v=mobMesh.get(m);if(v)syncMobImage(v,m,mobVisualScale(m))}
+  for(const p of S.pets.filter(p=>p.on)){const v=petMesh.get(p.id),r=petR[p.id],sp=PETS[p.sp];
+    if(v&&r&&sp)syncMobImage(v,{x:r.x,z:r.z,run:r.run,a:p.id,shape:petFallbackShape(sp),flash:0},PET_VISUAL_SCALE)}
   syncSkillFx();syncWeaponSprites(pFace,c);R.render(scene,cam);
-  floats.forEach(f=>{if(!f.el){const e=document.createElement('div');e.className='fl'+(f.big?' big':'');e.textContent=f.txt;e.style.color=f.col;ov.appendChild(e);f.el=e}
-    const[a,b]=scr(f.x,f.y,f.z);f.el.style.left=a+'px';f.el.style.top=b+'px';f.el.style.opacity=Math.max(0,f.life)});
+  floats.forEach(f=>{if(!f.el){const e=document.createElement('div');e.className='fl'+(f.big?' big':'')+(f.kind&&f.kind!=='text'?' '+f.kind:'');e.textContent=f.txt;if(f.col)e.style.color=f.col;ov.appendChild(e);f.el=e}
+    const[a,b]=scr(f.anchor==='hero'?pl.x:f.x,f.y,f.anchor==='hero'?pl.z:f.z);f.el.style.left=a+'px';f.el.style.top=b+'px';f.el.style.opacity=Math.max(0,f.life)});
   const pt=bn?`BOSS FIGHT · ${mobs.filter(m=>!m.boss).length} minions`:`Pack ${activePack+1}/3 · Monsters ${Math.min(S.kl,MPS)}/${MPS}`;if(pt!==lastProg){lastProg=pt;prog.textContent=pt}
 }
 let last=performance.now();

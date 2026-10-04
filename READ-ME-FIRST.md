@@ -38,7 +38,7 @@ done
 
 Expected tails: pack prints the 19 bodies; every other suite prints `N passed, 0 failed`
 (class_change 22, save_load 10, economy 21, stat 7, card 13, skill 49, gear 20, scene 8,
-**kit 34**, ui 14, sprite 11, starter 7). All suites pull the real code out of `index.html` by
+**kit 34**, ui 15, sprite 12, starter 7). All suites pull the real code out of `index.html` by
 string boundary, so moving a declaration can break a test without breaking the game — if a suite
 throws, read the boundary it grabs before assuming the game is at fault.
 
@@ -66,7 +66,12 @@ right Job half (filling leftward), with percentages centered in their own halves
 detailed hover percentages. Earned Zeny/min is shown on hover; Kills/min and Zeny/min
 use rolling 60-second activity, refreshed every second (kills/sec on hover). After a
 browser stall longer than 30 seconds, the rates reset instead of compressing the
-paused time into a false burst. Samples also reset at login or on a new adventure. The economy pacing
+paused time into a false burst. The shared Base/Job bar is now 14px high on desktop
+(22px on narrow screens). Skills display their names over the moving player; gold
+outgoing damage numbers and red spiked critical bubbles follow the supplied RO example.
+Active pets use their eight existing Divine Pride monster sprite IDs in the same
+WebGL/DOM renderer as mobs, all at one small scale (with a drawn fallback if an
+official remote PNG cannot load). Samples also reset at login or on a new adventure. The economy pacing
 tests still model the former 15-kill boss cadence, so their time-to-level projections
 are historical until a real Stage-10 boss-wave playtest. To look at a layout without a
 browser:

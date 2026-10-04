@@ -224,7 +224,7 @@ t('HP flips at 30%; one split bar fills Base from left and Job from right with c
   assert.strictEqual((markup.match(/id="xp-track"/g)||[]).length,1,'the dock has exactly one XP track');
   assert.ok(markup.indexOf('id="baseTrack"')<markup.indexOf('id="jobTrack"'),'Base must be left of Job');
   assert.ok(markup.includes('Base Lv 1')&&markup.includes('Job Lv 1'),'both sides need labels');
-  assert.ok(src.includes('#xp-track{display:flex;width:100%;height:24px'),'track spans the screen');
+  assert.ok(src.includes('#xp-track{display:flex;width:100%;height:14px'),'track spans the screen');
   assert.ok(src.includes('.xp-side{position:relative;flex:0 0 50%'),'the two parts share the single track equally');
   assert.ok(src.includes('#jb{left:auto;right:0;'),'Job fill must originate at the right edge');
   assert.ok(src.includes('.xp-pct{left:50%;transform:translateX(-50%)}'),'each percentage is centred within its half');
@@ -248,6 +248,47 @@ t('HP flips at 30%; one split bar fills Base from left and Job from right with c
   assert.strictEqual(d.jobTrack.attrs['aria-valuenow'],'45.0');
   h.S.hp=30;h.bars();assert.strictEqual(d.hpb.classList.flags.critical,true,'30% HP must turn red');
   h.job.jl=50;h.S.lv=150;h.bars();assert.strictEqual(d.jb.style.width,'100%');assert.strictEqual(d.xpb.style.width,'100%');
+});
+
+t('damage digits, critical burst and skill names use separate anchored combat overlays', () => {
+  assert.ok(src.includes('.fl.critical::before{')&&src.includes('clip-path:polygon('),
+    'critical damage needs a spiked red burst behind its number');
+  assert.ok(src.includes('color:#ffe643!important')&&src.includes('-webkit-text-stroke:'),
+    'ordinary damage needs RO-like gold outlined digits');
+  assert.ok(src.includes('#xp-track{display:flex;width:100%;height:14px')&&src.includes('#xp-dock{flex:none;width:100%;padding:3px 10px 4px'),
+    'the shared Base/Job bar must be slimmer than before');
+  assert.ok(src.includes('skillNameFloat(sk.n,cast-1)')&&src.includes("skillNameFloat('First Aid')")&&src.includes('skillNameFloat(s.n)'),
+    'active, healing and buff skills must show a name above the caster');
+  const box={};vm.createContext(box);
+  vm.runInContext(`
+    let floats=[],pl={x:2,z:4};
+    ${grab('const addFloat=(x,y,z,txt,col,big,kind=', 'function log(m,cls){')}
+    this.__f={floats,pl,damageFloat,skillNameFloat};
+  `,box);
+  const F=box.__f;
+  F.damageFloat(1,2,3,879,false);F.damageFloat(1,2,3,1896,true);
+  F.damageFloat(1,2,3,55,false,true);F.skillNameFloat('Bash',1);
+  assert.deepStrictEqual(Array.from(F.floats,f=>f.kind),['damage','critical','incoming','skill']);
+  assert.strictEqual(F.floats[1].txt,'1896','crit value should not be replaced by a CRIT label');
+  const strikeBox={};vm.createContext(strikeBox);
+  vm.runInContext(`
+    let mob={x:1,z:3,hp:10000,size:1},shake=0,hit=null;
+    const missCh=()=>0,crit=()=>100,atk=()=>100,matk=()=>200,st=()=>0,critD=()=>2,
+      rnd=(a,b)=>a,addFloat=()=>{},damageFloat=(...args)=>{hit=args};
+    ${grab('function strike(mult,col,magic=false){','// Higher job tiers get more casts per swing:')}
+    strike(1,'#fff');this.__hit={mob,hit,shake};
+  `,strikeBox);
+  assert.ok(strikeBox.__hit.hit[4]&&strikeBox.__hit.hit[3]>100&&strikeBox.__hit.shake===6,
+    'actual critical strike must send its numeric damage into the burst renderer');
+  assert.strictEqual(F.floats[3].anchor,'hero');assert.strictEqual(F.floats[3].y,3.53);
+  const draw=grab('  floats.forEach(f=>{if(!f.el)', '  const pt=bn?');
+  const scene={floats:F.floats,pl:F.pl,create:()=>({style:{}}),draw};
+  vm.createContext(scene);
+  vm.runInContext(`const document={createElement:()=>({style:{}})},ov={appendChild:()=>{}},scr=(x,y,z)=>[x*10,z*10];${draw}`,scene);
+  assert.strictEqual(F.floats[3].el.style.left,'20px');
+  F.pl.x=8;vm.runInContext(draw,scene);
+  assert.strictEqual(F.floats[3].el.style.left,'80px','skill names must track the moving hero');
+  assert.strictEqual(F.floats[1].el.className,'fl critical');
 });
 
 t('Zeny and kill rates refresh every second using a rolling minute and reset after stalls', () => {

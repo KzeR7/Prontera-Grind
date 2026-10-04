@@ -1575,3 +1575,28 @@ assigned for feel rather than fidelity. While reworking that, two shipped bugs s
   `git diff --check`. UI tests cover fill direction/centering, per-second updates,
   a 60-second rolling window, and a 10-minute stalled frame gap. No in-browser
   automated screenshot comparison was available.
+
+### 2026-10-04 — `combat-v33 hit-fx pet-sprites`
+
+* **What changed for the player:** the combined bottom XP bar is slimmer: 14px high on
+  desktop, 22px on small screens, with less dock padding. Active skills, First Aid and
+  timed self-buffs show a name tag anchored above the moving hero for the short cast.
+  Outgoing hits are gold with a dark RO-style outline; critical numbers sit on a jagged
+  red burst inspired by the user's example. Incoming damage is red; miss/loot/level
+  messages keep their own styles. Combat values and critical chance are not changed.
+* **Pets:** all eight already have verified Divine Pride monster IDs in `PETS`, so no
+  new invented art is needed. Field pets now pass through the same official PNG WebGL
+  texture and HTML image fallback path as the mobs, instead of always using the
+  procedural critter. Every pet, including Baphomet Jr. and Angeling, renders at a
+  fixed small scale of .42 (~1.28 world units high against a 2.92-unit hero);
+  mutations do not tint the official sprite. Existing procedural art is shown if the
+  remote PNG is unavailable. Deactivating pets removes their mesh and HTML image.
+* **Files touched:** `index.html` (`BUILD` v33), `tools/tests/{ui,skill,sprite}_sim.js`,
+  `READ-ME-FIRST.md`, `AGENTS.md`. Save data, pet damage, mob and boss visual scales,
+  Stage-10 encounter and map designs are unchanged.
+* **Verification:** all 13 suites pass (ui 15, sprite 12); the inline script passes
+  `node --check` and `git diff --check` is clean. UI tests execute the critical-hit
+  routing and hero-anchored labels; sprite tests build all eight pet visuals using
+  their real IDs and check both rendering paths and size. The Divine Pride CDN was
+  unreachable from this sandbox, so live image availability and appearance still
+  need visual confirmation in the browser preview.
