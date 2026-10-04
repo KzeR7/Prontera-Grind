@@ -31,13 +31,34 @@ fights an immediate boss plus escorts on each Stage 10 map.
 | `Sprite/*.png` | the uploaded RO-style sprite sheets (21 of them). The **source art**. |
 | `tools/make_sprite_pack.py` | crops `Sprite/` → `assets/sprite_pack_data.js`. |
 | `tools/montage.py` | rebuilds the four montage sheets (see below). |
-| `tools/tests/` | the thirteen test suites. Run them before every push. |
+| `tools/tests/` | the twenty-two test suites (including `game_boot_sim.js`, which parses `index.html` whole). Run them before every push. |
 | `tools/preview/` | dev-only: dumps the ten plans out of the game and paints them top-down, so a layout can be judged without a browser (`node tools/preview/dump_plans.js` then `python3 tools/preview/render_plans.py`). Nothing here ships to the player. |
 | `READ-ME-FIRST.md` | handover note: what this repo is, how to run it and how to recover after a workspace reset. |
 
 Ships by committing to `main` on GitHub (`KzeR7/Prontera-Grind`); Cloudflare Pages
-rebuilds from the repo. **The two files the game actually needs are `index.html` and
-`assets/sprite_pack_data.js`.** Everything else is tools, tests and docs.
+rebuilds from the repo. **The three files the game actually needs are `index.html`,
+`assets/sprite_pack_data.js` and `assets/anim_pack_data.js`** (the owner's simple hero set;
+see tool-v42/v43 below). Everything else is tools, tests and docs.
+
+### The hero's animations (the owner's simple set, from tool-v42/v43)
+
+The owner asked for a *simple* hero set - **attack 2 frames, walk 3 frames, front and back
+only, no other views and no standing pose** - and chose every pose and head seat on a page
+(`/picks`). `tools/anim_picker_data.js` is what that page shows; `tools/anim_bake.js` turns it
+into `assets/anim_pack_data.js` and `tools/anim_preview.png`.
+
+* The artifact is **body-only** cells (ten per class, in one 960x96 atlas) plus the ten pivots
+  and the cell map. The game draws the **head itself** from `assets/sprite_pack_data.js`'s hair
+  atlases at those pivots, so every hair style, both sexes, weapons and the Settings preview
+  keep working.
+* `index.html` reads the map through one function (`animPackCell`) and takes its frame counts
+  from `ANIM_PACK.meta` (1 / 3 / 2), so no frame index can run off a two-frame attack.
+* The eight-direction pack is **not** rebuilt or trimmed: `tools/make_sprite_pack.py`, `Sprite/`
+  and `assets/sprite_pack_data.js` still hold all 8 directions and 3 rows, exactly as the house
+  rules require. The simple set is a *selection* of that art for the hero to draw.
+* Change the hero set only through the picker then the bake (`node tools/anim_bake.js <payload>`
+  or with no payload for the picker's own data) - never by hand-editing the artifact. Cells that
+  came from the owner's saved numbers must not be overwritten by a rebuild of the defaults.
 
 Login for testing: user `GM`, password `gm1234` (GM account; normal accounts are created
 in-game and stored in `localStorage` under `pg_acc4`, saves under `pg_save3_<user>`).
@@ -2560,8 +2581,12 @@ assigned for feel rather than fidelity. While reworking that, two shipped bugs s
   `tools/tests/pack_sim.js` (self-extracting), `tools/tests/preview_server_sim.js`, `tools/preview_server.py`,
   the nav lines of the three tool pages, regenerated standalones, `READ-ME-FIRST.md`,
   `tools/HANDOVER-weapon-review.md`, `AGENTS.md`.
-* **Tests:** **all 21 suites green** (first time in this line): anim_picker 15, anim_wire 8, game_boot 6,
-  picker 21, weapon_review 13, head_seat 7, preview_server 14, kit **34** (was 33/1), pack (19 bodies),
-  ui 18, sprite 12, skill 50, gear 24, economy 21, class_change 22, card 13, save_load 10, pet 11,
-  scene 8, starter 7, stat 7, weapon_joint 7.
+* **Tests:** **every suite green** (first time in this line, and the first full run since tool-v36 that
+  could even reach the end): anim_picker 15, anim_wire 8, game_boot 6, picker 21, weapon_review 13,
+  head_seat 7, preview_server 14, kit **34** (was 33/1), pack (19 bodies), ui 18, sprite 12, skill 50,
+  gear 24, economy 21, class_change 22, card 13, save_load 10, pet 11, scene 8, starter 7, stat 7,
+  weapon_joint 7. The artifact's 190 body cells were also compared to the picker's own crops one pixel
+  at a time: **190 checked, 0 differing**, so the game draws exactly the art that was reviewed.
+  `READ-ME-FIRST.md` gained a "Where the hero's animations come from now" section and the current
+  suite list; its run command is `python3 tools/preview_server.py 8000` now, not a bare http.server.
 * **Branches / PR:** `arena/01a10755-prontera-grind`.

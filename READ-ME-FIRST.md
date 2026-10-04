@@ -6,6 +6,9 @@ the repo, so pushing to `main` is the deploy.
 
 * `index.html` — the whole game. `const BUILD='…'` near the top is the tag shown on the login card.
 * `assets/sprite_pack_data.js` — the built class pack: 19 class bodies + 2 heads, base64 atlases (~5.8 MB).
+* `assets/anim_pack_data.js` — the owner's **simple hero set** (walk 3 frames, attack 2, front + back
+  only, no standing pose): ten body-only cells per body plus their pivots and the cell map (~0.3 MB).
+  See "Where the hero's animations come from now" below.
 * `assets/kit/` — **map kit v2**: `ro-spritesheet.png` + `.json` (25 terrain tiles, 34 billboards)
   and the two attached level designs (`ro-map-payon.json`, `ro-map-morocc.json`).
 * `Sprite/*.png` — the uploaded class sheets, the source art for the pack.
@@ -21,24 +24,48 @@ browser (`pg_acc4`; saves under `pg_save3_<user>`).
 ## Run it
 
 ```sh
-python3 -m http.server 8000 --bind 0.0.0.0     # then open the preview on port 8000
+python3 tools/preview_server.py 8000             # then open the preview on port 8000
+# / the weapon review - /picker the 8-view picker - /picks the simple picker - /game the game
 ```
+
+## Where the hero's animations come from now
+
+The hero does **not** use the pack's full 8-direction, 3-row animation set. The owner tuned a
+**simple set** on a page and it is what the game draws: **walk 3 frames, attack 2 frames, front
+and back only, and no standing pose** (standing is one walk frame).
+
+* `assets/anim_pack_data.js` — the built artifact the game loads: for each of the 19 bodies, ten
+  **body-only** cells (96x96 each, in one 960x96 atlas) plus the ten pivots and the cell map
+  (`idle` / `walk` / `attack`, front and back).
+* `index.html` draws the body from that atlas and the **head from the normal pack** at the cell's
+  pivot, so hair, sex, weapons and the Settings preview are untouched.
+* The page the owner picks on is served at **`/picks`** (live cycles at 170 ms, drag a tile to seat
+  its head, "Copy my selection" pastes back; a line saying `bake it` bakes as-is). The game itself is
+  served at **`/game`**, the eight-view picker at `/picker`, the weapon review at `/`.
+* To bake: `node tools/anim_bake.js <payload>` (or with no payload, to use the picker's own data).
+  It rewrites `assets/anim_pack_data.js` and `tools/anim_preview.png` (the contact sheet) and prints
+  `cells / yours / pack / measured / dragged / to check`. Never hand-edit the artifact, and never let
+  a rebuild of the defaults overwrite a cell that came from the owner's saved numbers.
+* `tools/anim_picker.html` warns, on the four montage-rebuilt sheets (Lord Knight, High Wizard, High
+  Priest, Whitesmith), that their row labels can be wrong. That is a real limitation of those sheets,
+  not a bug in the page.
 
 ## Test it — before every push
 
 ```sh
-python3 - <<'PY'
-h=open('index.html').read()
-# (pack_sim extracts its own slice of index.html now - nothing to write by hand)
-PY
-for t in pack class_change save_load economy stat card skill gear scene kit ui sprite starter pet; do
+for t in pack anim_picker anim_wire game_boot preview_server picker weapon_review head_seat \
+         class_change save_load economy stat card skill gear scene kit ui sprite starter pet \
+         weapon_joint; do
   node tools/tests/${t}_sim.js || echo "FAILED: $t"
 done
 ```
 
-Expected tails: pack prints the 19 bodies; every other suite prints `N passed, 0 failed`
-(class_change 22, save_load 10, economy 21, stat 7, card 13, skill 50, gear 24, scene 8,
-**kit 34**, ui 18, sprite 12, starter 7, **pet 11**). All suites pull the real code out of
+All twenty-two suites are green. `pack_sim` prints the 19 bodies; the rest print `N passed, 0 failed`
+(anim_picker 15, anim_wire 8, game_boot 6, preview_server 14, picker 21, weapon_review 13, head_seat 7,
+class_change 22, save_load 10, economy 21, stat 7, card 13, skill 50, gear 24, scene 8, kit 34, ui 18,
+sprite 12, starter 7, pet 11, weapon_joint 7). `game_boot_sim.js` is the one that catches a page which
+cannot parse at all — two `const BUILD=` lines once sat in `index.html` and stopped the game from
+running without breaking any other suite. All suites pull the real code out of
 `index.html` by string boundary, so moving a declaration can break a test without breaking the
 game — if a suite throws, read the boundary it grabs before assuming the game is at fault.
 `pet_sim.js` also PRINTS the pet roster, the training ladder, the eight gacha skills, the buff
