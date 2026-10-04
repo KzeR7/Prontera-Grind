@@ -1228,3 +1228,32 @@ assigned for feel rather than fidelity. While reworking that, two shipped bugs s
     folded in when the pack is rebuilt from the picks.
   * Divine Pride icons need network access in the browser; without it the picker draws the
     vector fallback, exactly as the game does.
+
+### 2026-10-04 — `tool-v26 fix: self-contained picker` (no game change, no BUILD bump)
+* **What changed for the player:** nothing in the game. The sprite picker showed a black
+  screen for the owner: the page was opened somewhere that cannot serve the files next to it
+  (the file viewer), so `assets/sprite_pack_data.js` and `Sprite/*.png` never loaded and the
+  page had nothing to draw. Two fixes:
+  * **`tools/sprite_picker_standalone.html`** — the whole picker in ONE file: app + pose index
+    + all 21 sheets + both head atlases inlined (2.9 MB). It needs no other file, so it opens
+    anywhere: file viewer, preview server, phone, offline.
+  * **A visible failure banner.** If any of the three inputs (pose data, sprite pack, a class
+    sheet) is missing, or the page throws while drawing, the top of the page now says what is
+    missing and what to open instead — the black screen can no longer happen silently. A
+    global `window.onerror` handler reports any future drawing error with its line number.
+* **Also hardened:** view canvases and cards carry their own `data-dir` (drawing and the
+  weapon-drag repaint no longer rely on DOM order), so a stray element can never shift a view
+  onto the wrong direction.
+* **Files touched:** `tools/sprite_picker.html` (banner, per-class inlined-sheet support,
+  `data-dir`), `tools/make_sprite_picker.py` (writes the standalone next to the data file, so
+  the two can never drift), `tools/sprite_picker_standalone.html` (new, generated),
+  `tools/sprite_picker_data.js` (regenerated), `AGENTS.md`. `index.html` untouched.
+* **Art:** none added, removed, recoloured or rebuilt; `tools/montage.py` was not run.
+* **Tests:** game suites re-run and green (pack 19 bodies, sprite 10, UI 13, class change 22,
+  save/load 10). The picker was run end to end under a DOM/canvas stub in all three modes —
+  standalone (8 views drawn, tabs, auto-fill, walkthrough, whole-cycle assign, selection JSON
+  parses), served page (same), and served page with its sibling files blocked (shows the
+  banner instead of a blank page). Inline JS passes `node --check`.
+* **Branches / PR:** `arena/01a1054b-prontera-grind`; pushed for review.
+* **Known limits / follow-ups:** the standalone is generated - edit `tools/sprite_picker.html`
+  (and run `tools/make_sprite_picker.py`), never the standalone directly.

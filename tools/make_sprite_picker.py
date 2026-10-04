@@ -11,6 +11,7 @@ tools/sprite_picker_data.js (plus a QC contact sheet in /tmp when asked).
 
 usage:  python3 tools/make_sprite_picker.py [--qc /tmp/picker_qc.png]
 """
+import base64
 import io
 import json
 import os
@@ -305,10 +306,46 @@ def main():
     with open(OUT, 'w') as f:
         f.write(txt)
     print('wrote %s (%.1f KB)' % (os.path.relpath(OUT, REPO), os.path.getsize(OUT) / 1024))
+    write_standalone(data)
 
     if '--qc' in sys.argv:
         qc_path = sys.argv[sys.argv.index('--qc') + 1]
         qc(data, qc_path)
+
+
+STANDALONE = os.path.join(REPO, 'tools', 'sprite_picker_standalone.html')
+
+
+def write_standalone(data):
+    """One file with everything inside it: the app, the pose index, all 21 sheets as
+    data URIs and the two head atlases.  This is the build that opens anywhere - the
+    Arena file viewer, a phone, a USB stick - with no repository files beside it.
+    Same app source as tools/sprite_picker.html, so the two cannot drift."""
+    pack = m.load_existing()
+    pack_light = {'hairStyles': pack['hairStyles'],
+                  'heads': pack['heads'],
+                  'cellW': pack['cellW'], 'cellH': pack['cellH'],
+                  'padL': pack['padL'], 'padT': pack['padT'],
+                  'pivotX': pack['pivotX'], 'pivotY': pack['pivotY'],
+                  'frames': pack['frames']}
+    d2 = json.loads(json.dumps(data))                      # deep copy
+    for name, c in d2['classes'].items():
+        with open(os.path.join(REPO, c['file']), 'rb') as f:
+            c['img'] = 'data:image/png;base64,' + base64.b64encode(f.read()).decode()
+    tmpl = open(os.path.join(REPO, 'tools', 'sprite_picker.html')).read()
+    if '<script src="../assets/sprite_pack_data.js"></script>' not in tmpl:
+        raise SystemExit('standalone build: the template changed - update the inliner')
+    out = tmpl.replace(
+        '<script src="../assets/sprite_pack_data.js"></script>',
+        '<!-- standalone build: everything below is inside this one file -->\n'
+        '<script>window.SPRITE_PACK=%s;</script>' % json.dumps(pack_light, separators=(',', ':')))
+    out = out.replace(
+        '<script src="sprite_picker_data.js"></script>',
+        '<script>window.SPRITE_PICKER_DATA=%s;</script>' % json.dumps(d2, separators=(',', ':')))
+    with open(STANDALONE, 'w') as f:
+        f.write(out)
+    print('wrote %s (%.1f MB, self-contained)' % (os.path.relpath(STANDALONE, REPO),
+                                                 os.path.getsize(STANDALONE) / 1e6))
 
 
 def qc(data, out_path):

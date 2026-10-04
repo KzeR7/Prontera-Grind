@@ -57,6 +57,10 @@ textarea{width:100%;height:88px;background:#0f1116;color:var(--ink);border:1px s
 .wbadge{font-size:11px;color:var(--dim)}
 .wbadge b{color:var(--acc)}
 pre.legend{margin:0;color:var(--dim);font:11px/1.5 ui-monospace,Menlo,monospace;white-space:pre-wrap}
+.banner{background:#3a1d22;border:1px solid #7a3b48;color:#ffd9df;border-radius:8px;padding:10px 12px;font-size:12px;line-height:1.6}
+.banner b{color:#fff}
+.banner code{background:#00000055;padding:0 4px;border-radius:3px}
+.banner button{margin:6px 6px 0 0}
 </style>
 </head>
 <body>
@@ -82,6 +86,9 @@ pre.legend{margin:0;color:var(--dim);font:11px/1.5 ui-monospace,Menlo,monospace;
 </header>
 
 <main>
+  <section class="card" id="bootCard" style="display:none">
+    <div class="banner" id="boot"></div>
+  </section>
   <section class="card">
     <div class="views" id="views"></div>
   </section>
@@ -119,7 +126,16 @@ pre.legend{margin:0;color:var(--dim);font:11px/1.5 ui-monospace,Menlo,monospace;
 'use strict';
 var D=window.SPRITE_PICKER_DATA, PK=window.SPRITE_PACK;
 var statusEl=document.getElementById('status');
-if(!D||!PK){statusEl.textContent='missing data files';return}
+function banner(html){var b=document.getElementById('boot');if(!b)return;
+  b.innerHTML=html;document.getElementById('bootCard').style.display='block'}
+window.onerror=function(m,src,line){banner('<b>The picker hit an error while drawing.</b><br>'+m+
+  ' <span style="color:#ffb4bc">('+String(src||'').split('/').pop()+':'+line+')</span><br>'+
+  'Please send this line back and it will be fixed.');return false};
+if(!D){banner('<b>The pose data did not load.</b><br>This page needs <code>tools/sprite_picker_data.js</code> next to it. '+
+  'Use the standalone build (<code>tools/sprite_picker_standalone.html</code>, everything inside one file) '+
+  'or open this page from the preview server.');return}
+if(!PK){banner('<b>The sprite pack did not load.</b><br>This page needs <code>assets/sprite_pack_data.js</code> '+
+  '(the head atlases). Use <code>tools/sprite_picker_standalone.html</code> or open the page from the preview server.');return}
 var G=D.game, CELL=D.cell, DIRS=D.dirs, MIRRORSRC={5:3,6:2,7:1}, ANIM=['idle','walk','attack'];
 var CAP={idle:1,walk:8,attack:6};
 var BODY=CELL.body||96, ZOOM=1.55;
@@ -206,8 +222,17 @@ var headImg={},headReady={};
 ['male','female'].forEach(function(sx){var im=new Image();im.onload=function(){headReady[sx]=1;paint()};
   im.src=PK.heads[sx];headImg[sx]=im});
 var sheetImg={},sheetReady={};
+var sheetFail={};
 function sheetFor(cls){var d=D.classes[cls];if(!d)return null;
-  if(!sheetImg[cls]){var im=new Image();im.onload=function(){sheetReady[cls]=1;paint()};im.src='../'+d.file;sheetImg[cls]=im}
+  if(!sheetImg[cls]){var im=new Image();
+    im.onload=function(){sheetReady[cls]=1;paint()};
+    im.onerror=function(){if(sheetFail[cls])return;sheetFail[cls]=d.file;
+      var names=Object.keys(sheetFail).map(function(k){return sheetFail[k]});
+      banner('<b>Some class sheets could not be loaded.</b><br>Missing: <code>'+names.join('</code>, <code>')+
+        '</code><br>'+(d.img?'':'This happens when the page is opened on its own, without the repository files next to it. '+
+        'Use <code>tools/sprite_picker_standalone.html</code> (all 21 sheets are inside that one file) '+
+        'or open the page from the preview server.'))};
+    im.src=d.img?d.img:('../'+d.file);sheetImg[cls]=im}
   return sheetImg[cls]}
 function safe(cls){return !!(D.classes[cls]&&sheetReady[cls])}
 function poseOfId(cls,id){var d=D.classes[cls];return(id==null||!d)?null:d.poses[id]||null}
@@ -287,6 +312,7 @@ function renderViews(){
     card.appendChild(h);
     var cv=document.createElement('canvas');cv.className='big';
     cv.width=CELL.w*ZOOM;cv.height=CELL.h*ZOOM;
+    cv.dataset.dir=String(d);card.dataset.dir=String(d);
     card.appendChild(cv);
     var meta=document.createElement('div');meta.className='meta';
     meta.innerHTML='<span><b>'+(set?set+'/'+cap:'none')+'</b> frames</span>'+
@@ -306,13 +332,24 @@ function renderViews(){
       save();paint()}}(d);
     viewsEl.appendChild(card);
   }
-  var cvs=viewsEl.querySelectorAll('canvas.big');
-  for(var v=0;v<cvs.length;v++)drawView(cvs[v],v);
-  viewsEl.querySelectorAll('canvas.big').forEach(function(c,w){
-    c.style.cursor='grab';
-    c.addEventListener('mousedown',function(ev){startDrag(ev,w,c)})});
+  var cvs=viewCanvases();
+  for(var v=0;v<cvs.length;v++)drawView(cvs[v],dirOf(cvs[v]));
+  var cvs2=viewsEl.querySelectorAll('canvas.big');
+  for(var w2=0;w2<cvs2.length;w2++){(function(c,w){c.style.cursor='grab';
+    c.addEventListener('mousedown',function(ev){startDrag(ev,w,c)})})(cvs2[w2],w2)}
+  if(!cvs.length)banner('<b>No camera views were drawn.</b><br>Send this back and it will be fixed.');
 }
 function gripKeyFor(dir){return st.cls+'|'+wt()+'|'+dir}
+function viewCanvases(){
+  var out=[],kids=viewsEl.children;
+  for(var i=0;i<kids.length;i++){
+    var cs=kids[i].getElementsByTagName('canvas');
+    for(var j=0;j<cs.length;j++)if(cs[j].className==='big')out.push(cs[j])}
+  return out}
+function viewCard(dir){var kids=viewsEl.children;
+  for(var i=0;i<kids.length;i++)if(+kids[i].dataset.dir===dir)return kids[i];
+  return null}
+function dirOf(cv){return cv.dataset.dir!=null?(+cv.dataset.dir):0}
 // drag the weapon to where it belongs for this class + weapon + view
 var drag=null;
 function startDrag(ev,dir,cv){
@@ -325,11 +362,10 @@ function startDrag(ev,dir,cv){
   function move(e){
     var dx=Math.round(base[0]+(e.clientX-drag.x0)/scale), dy=Math.round(base[1]+(e.clientY-drag.y0)/scale);
     st.grips[gripKeyFor(drag.dir)]=[dx,dy];
-    var cards=viewsEl.querySelectorAll('canvas.big');
-    if(cards[drag.dir])drawView(cards[drag.dir],drag.dir);
-    if(cards[srcDir(drag.dir)])drawView(cards[srcDir(drag.dir)],srcDir(drag.dir));
-    var badge=viewsEl.children[drag.dir];
-    if(badge){var wb=badge.querySelector('.wbadge');if(wb)wb.innerHTML='weapon moved <b>'+dx+','+dy+'</b>'}
+    var own=viewCard(drag.dir),mir=viewCard(srcDir(drag.dir));
+    if(own){var c0=own.getElementsByTagName('canvas')[0];if(c0)drawView(c0,drag.dir)}
+    if(mir&&mir!==own){var c1=mir.getElementsByTagName('canvas')[0];if(c1)drawView(c1,srcDir(drag.dir))}
+    if(own){var wb=own.querySelector('.wbadge');if(wb)wb.innerHTML='weapon moved <b>'+dx+','+dy+'</b>'}
   }
   function up(){window.removeEventListener('mousemove',move);window.removeEventListener('mouseup',up);
     drag=null;save();paint()}
@@ -537,8 +573,8 @@ function paint(){
     if(!confirm('Throw away every pick, weapon move and grip for every class?'))return;
     st.slots={};st.grips={};st.sel=null;save();paint()};
   sheetFor(st.cls);
-  setInterval(function(){tick++;var cvs=viewsEl.querySelectorAll('canvas.big');
-    if(!drag)for(var v=0;v<cvs.length;v++)drawView(cvs[v],v)},140);
+  setInterval(function(){tick++;var cvs=viewCanvases();
+    if(!drag)for(var v=0;v<cvs.length;v++)drawView(cvs[v],dirOf(cvs[v]))},140);
   paint();
 })();
 })();
