@@ -219,11 +219,15 @@ t('learned active skills use a checked Auto cast box by default', () => {
     'unchecking Auto cast should render the skill as paused');
 });
 
-t('the HP meter switches at 30%, and full-width Job/Base bars expose exact level percentages', () => {
-  assert.ok(src.includes('id="xp-dock"') && src.includes('id="jobTrack"') && src.includes('id="baseTrack"'));
-  assert.ok(src.indexOf('id="xp-dock"')>src.indexOf('id="hud"'),'level bars must sit below the HUD');
-  assert.ok(src.includes('Job Level 1')&&src.includes('Base Level 1'),'both bars need full labels');
-  assert.ok(src.includes('.xp-row{position:relative;height:20px;width:100%'),'progress rows must span the screen');
+t('HP flips at 30%; one split bar fills Base from left and Job from right with centred percentages', () => {
+  const markup=src.slice(src.indexOf('<div id="xp-dock"'),src.indexOf('<div id="modal"'));
+  assert.strictEqual((markup.match(/id="xp-track"/g)||[]).length,1,'the dock has exactly one XP track');
+  assert.ok(markup.indexOf('id="baseTrack"')<markup.indexOf('id="jobTrack"'),'Base must be left of Job');
+  assert.ok(markup.includes('Base Lv 1')&&markup.includes('Job Lv 1'),'both sides need labels');
+  assert.ok(src.includes('#xp-track{display:flex;width:100%;height:24px'),'track spans the screen');
+  assert.ok(src.includes('.xp-side{position:relative;flex:0 0 50%'),'the two parts share the single track equally');
+  assert.ok(src.includes('#jb{left:auto;right:0;'),'Job fill must originate at the right edge');
+  assert.ok(src.includes('.xp-pct{left:50%;transform:translateX(-50%)}'),'each percentage is centred within its half');
   assert.ok(src.includes('#hpb.critical{background:linear-gradient('),'low HP must use a red treatment');
   const box={};vm.createContext(box);
   vm.runInContext(`
@@ -232,12 +236,13 @@ t('the HP meter switches at 30%, and full-width Job/Base bars expose exact level
     let S={lv:20,exp:90,hp:31,kills:0,zeny:0},hudRate=null,zenyEarned=0,currentUser='A';
     const performance={now:()=>1000},job={jl:10,jx:45},jobOf=()=>job,C=()=>({mj:50}),maxHp=()=>100,
       jneed=()=>100,need=()=>200;
-    ${grab('const HUD_RATE_WINDOW=60000,HUD_KILL_REFRESH=30000;','function ui(){')}
+    ${grab('const HUD_RATE_WINDOW=60000,HUD_IDLE_RESET=30000,HUD_RATE_REFRESH=1000;','function ui(){')}
     bars();this.__h={nodes,S,job,bars};
   `,box);
   const h=box.__h,d=h.nodes;
   assert.strictEqual(d.hpb.classList.flags.critical,false,'31% HP must stay green');
   assert.strictEqual(d.jb.style.width,'45%');assert.strictEqual(d.xpb.style.width,'45%');
+  assert.strictEqual(d.jobPct.textContent,'45.0%');assert.strictEqual(d.basePct.textContent,'45.0%');
   assert.ok(d.jobTrack.title.includes('45.0% to next level'));
   assert.ok(d.baseTrack.title.includes('45.0% to next level'));
   assert.strictEqual(d.jobTrack.attrs['aria-valuenow'],'45.0');
@@ -245,38 +250,49 @@ t('the HP meter switches at 30%, and full-width Job/Base bars expose exact level
   h.job.jl=50;h.S.lv=150;h.bars();assert.strictEqual(d.jb.style.width,'100%');assert.strictEqual(d.xpb.style.width,'100%');
 });
 
-t('Zeny hover shows actual earned income, and kills/min refreshes in 30-second samples', () => {
+t('Zeny and kill rates refresh every second using a rolling minute and reset after stalls', () => {
   assert.ok(src.includes('class="hud-zeny" id="zenyHover" tabindex="0"'),'hover area must include amount and label');
-  assert.ok(src.includes('.hud-zeny:hover .hud-flyout'),'Zeny tooltip must open on hover without relying on browser title delays');
+  assert.ok(src.includes('.hud-zeny:hover .hud-flyout'),'Zeny tooltip must open on hover without browser title delays');
   assert.ok(src.includes("$('zenyRate').textContent=`Zeny earned:"),'tooltip must display a live rate');
   assert.ok(src.includes('Kills/min <b id="kills"'),'kills rate must replace lifetime count');
   const box={};vm.createContext(box);
   vm.runInContext(`
     let S={zeny:200},zenyEarned=0;
     ${grab('function earnZeny(amount){','function kill(o){')}
-    ${grab('const HUD_RATE_WINDOW=60000,HUD_KILL_REFRESH=30000;','const levelPct=')}
+    ${grab('const HUD_RATE_WINDOW=60000,HUD_IDLE_RESET=30000,HUD_RATE_REFRESH=1000;','const levelPct=')}
     this.__r={stepHudRate,earnZeny,S,get earned(){return zenyEarned}};
   `,box);
   const R=box.__r;
   R.earnZeny(600);R.S.zeny-=450;R.earnZeny(25);
   assert.strictEqual(R.S.zeny,375);assert.strictEqual(R.earned,625,'spending must not erase income');
-  let state=null,m=R.stepHudRate(state,'player',100,0,0);state=m.state;
-  m=R.stepHudRate(state,'player',105,600,15000);state=m.state;
-  assert.strictEqual(m.kills,0,'kills/min must not change until 30 seconds have passed');
-  m=R.stepHudRate(state,'player',105,600,30000);state=m.state;
-  assert.ok(Math.abs(m.kills-10)<.001,'5 kills in 30s -> 10 kills/min');
-  assert.ok(Math.abs(m.seconds-1/6)<.001,'10/min is one kill every 6 seconds');
-  assert.ok(Math.abs(m.zeny-1200)<.001,'600 earned over 30s -> 1,200/min');
-  m=R.stepHudRate(state,'player',105,600,45000);state=m.state;
-  assert.strictEqual(m.kills,10,'kills/min holds steady until the next 30s refresh');
-  assert.ok(Math.abs(m.zeny-800)<.001,'spending must not count as negative income');
-  m=R.stepHudRate(state,'player',105,600,90000);state=m.state;
-  assert.strictEqual(m.kills,0,'next 30s window had no kills');
-  assert.strictEqual(m.zeny,0,'old income must age out at 60s');
-  m=R.stepHudRate(state,'another-player',20,9000,90000);state=m.state;
-  assert.strictEqual(m.kills,0);assert.strictEqual(m.zeny,0,'a new login must start a clean window');
-  m=R.stepHudRate(state,'another-player',30,10000,160001);
-  assert.strictEqual(m.kills,0);assert.strictEqual(m.zeny,0,'a long idle gap resets the samples');
+  let state=null;
+  const sample=(user,k,z,time)=>{const m=R.stepHudRate(state,user,k,z,time);state=m.state;return m};
+  let m=sample('player',100,0,0);
+  m=sample('player',103,600,500);assert.strictEqual(m.kills,0);assert.strictEqual(m.zeny,0,'hold until first full second');
+  m=sample('player',103,600,1000);
+  assert.strictEqual(m.kills,180,'3 kills in the first second -> 180/min (early estimate)');
+  assert.strictEqual(m.zeny,36000,'600 Zeny in first second -> 36000/min');
+  assert.strictEqual(m.seconds,3);
+  m=sample('player',103,600,1500);assert.strictEqual(m.kills,180,'samples hold between whole seconds');
+  m=sample('player',103,600,2000);assert.strictEqual(m.kills,90,'rate decays every second, not every 30');
+  m=sample('player',104,650,30000);assert.strictEqual(m.kills,8,'four kills in 30 seconds -> 8/min');
+  assert.strictEqual(m.zeny,1300,'650 earned in 30s -> 1,300/min');
+  m=sample('player',104,650,60500);assert.strictEqual(m.kills,0);assert.strictEqual(m.zeny,0,
+    'after a browser stall longer than 30 seconds, old rates vanish instead of spiking');
+  m=sample('player',106,750,61500);assert.strictEqual(m.kills,120);assert.strictEqual(m.zeny,6000,
+    'new kills and credits after resume count against the new window');
+  m=sample('player',106,750,121501);assert.strictEqual(m.kills,0);assert.strictEqual(m.zeny,0,
+    'a 60-second inactive period resets rates to zero');
+  m=sample('player',10,100,122501);assert.strictEqual(m.kills,0);assert.strictEqual(m.zeny,0,
+    'counter changes that indicate a fresh save must reset');
+  m=sample('another-player',20,9000,123501);assert.strictEqual(m.kills,0);assert.strictEqual(m.zeny,0,
+    'a new login must start a clean window');
+  // A long uninterrupted session ages out past-minute events without requiring a pause.
+  let clock=123501;for(let i=0;i<61;i++){clock+=1000;m=sample('another-player',i<60?21:21,9000,clock)}
+  assert.strictEqual(m.kills,0,'old kills age out of the uninterrupted rolling minute');
+  m=sample('another-player',900,999999,clock+600000);
+  assert.strictEqual(m.kills,0);assert.strictEqual(m.zeny,0,
+    'ten minutes with no frames must not compress 879 accumulated kills into one second');
 });
 
 t('every skill has a distinct icon and upgraded card metadata', () => {

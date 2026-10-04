@@ -1553,3 +1553,25 @@ assigned for feel rather than fidelity. While reworking that, two shipped bugs s
   income estimates are **not** predictions for this new Stage-10 encounter. Re-measure
   kills/hour and boss-wave duration before retuning, rather than extrapolating the old
   800-kills/hour model. No in-browser visual playtest was run.
+
+### 2026-10-04 — `ui-v32 split-exp live-rates` (owner correction to v31)
+
+* **What changed for the player:** corrected the bottom XP dock from two stacked full-width
+  bars to **one full-width bar split exactly in half**, as requested and informed by the
+  left-Base/right-Job bottom-bar arrangement in Ragnarok X screenshots. Base occupies the
+  left half and fills rightward; Job occupies the right half and fills leftward. Each
+  half has a centered percentage, a level label, and its own hover/focus details; on
+  narrow screens the labels sit above the percentages in the same single bar.
+* **Rates:** the Zeny/min tooltip and Kills/min display now refresh once a second using
+  events in the last 60 seconds rather than holding kill rate for 30 seconds. If the
+  browser stops updating for more than 30 seconds (e.g. a 10-minute hang), the old
+  samples and any aggregate delta during the stall are discarded, so resuming cannot
+  display a huge, misleading per-minute rate. The next observed kills/credits start
+  a fresh window. Early-window values are extrapolated to per-minute units.
+* **Files touched:** `index.html` (`BUILD` ui-v32), `tools/tests/ui_sim.js`,
+  `READ-ME-FIRST.md`, `AGENTS.md`. Stage-10 encounter, HP threshold, save format and
+  battle/map visuals are unchanged.
+* **Tests:** all 13 suites pass (ui 14), plus inline script `node --check` and
+  `git diff --check`. UI tests cover fill direction/centering, per-second updates,
+  a 60-second rolling window, and a 10-minute stalled frame gap. No in-browser
+  automated screenshot comparison was available.

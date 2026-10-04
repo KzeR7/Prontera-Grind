@@ -61,9 +61,12 @@ numbered route. `mobVisualScale()` makes regular mobs shorter than the player wh
 bosses at their previous size. Stage 10 starts with the boss and three regular escorts
 on maps 1–5 or five on maps 6–10; defeating the boss clears the wave and immediately
 allows another boss wave after the respawn delay. The HUD shows green HP above 30%
-(red at or below 30%), bottom-width Job and Base progress bars with hover percentages,
-earned Zeny/min on hover, and Kills/min sampled every 30 seconds (kills/sec on hover).
-Income and kill-rate samples reset at login or on a new adventure. The economy pacing
+(red at or below 30%), one full-width bottom XP bar split into a left Base half (filling rightward) and a
+right Job half (filling leftward), with percentages centered in their own halves and
+detailed hover percentages. Earned Zeny/min is shown on hover; Kills/min and Zeny/min
+use rolling 60-second activity, refreshed every second (kills/sec on hover). After a
+browser stall longer than 30 seconds, the rates reset instead of compressing the
+paused time into a false burst. Samples also reset at login or on a new adventure. The economy pacing
 tests still model the former 15-kill boss cadence, so their time-to-level projections
 are historical until a real Stage-10 boss-wave playtest. To look at a layout without a
 browser:

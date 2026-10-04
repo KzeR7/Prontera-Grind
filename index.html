@@ -33,15 +33,17 @@ html, body { margin:0; padding:0; width:100vw; height:100vh; overflow:hidden; ba
 .hud-health{display:flex;align-items:center;gap:7px;white-space:nowrap}.hud-health small{font-weight:bold;min-width:34px;text-align:right}
 #hpb{background:linear-gradient(180deg,#7cec8f,#20a74c 65%,#17883a);box-shadow:inset 0 1px #f3fff588,0 0 8px #30c75677}
 #hpb.critical{background:linear-gradient(180deg,#ff8e81,#ed4242 60%,#b92031);box-shadow:inset 0 1px #fff7,0 0 8px #e54949aa}
-.hud-zeny{position:relative;color:#a27200;font-weight:bold;cursor:help;white-space:nowrap}.hud-zeny:focus-visible,.xp-row:focus-visible{outline:2px solid #2f6fd6;outline-offset:2px}
+.hud-zeny{position:relative;color:#a27200;font-weight:bold;cursor:help;white-space:nowrap}.hud-zeny:focus-visible,.xp-side:focus-visible{outline:2px solid #2f6fd6;outline-offset:-2px}
 .hud-flyout{position:absolute;bottom:calc(100% + 8px);left:0;z-index:90;background:#251f20;color:#fff;font-size:12px;font-weight:600;padding:7px 10px;border-radius:7px;white-space:nowrap;box-shadow:0 4px 14px #0008;opacity:0;visibility:hidden;pointer-events:none}
 .hud-zeny:hover .hud-flyout,.hud-zeny:focus .hud-flyout{opacity:1;visibility:visible}
-#xp-dock{flex:none;display:grid;gap:4px;width:100%;padding:6px 10px 8px;background:linear-gradient(180deg,#413743,#26242f);box-shadow:inset 0 2px 6px #140f1899;z-index:9}
-.xp-row{position:relative;height:20px;width:100%;border:1px solid #756c77;border-radius:4px;background:#161820;overflow:hidden;cursor:help;box-shadow:inset 0 1px 4px #000a;color:#fff;font:bold 11px/18px "Trebuchet MS",sans-serif;text-shadow:0 1px 2px #000,0 0 4px #000}
-.xp-row:hover{border-color:#e9d39a}.xp-fill{position:absolute;inset:0 auto 0 0;width:0;transition:width .3s ease}
-#jb{background:linear-gradient(180deg,#bca0ff,#7452cb 70%,#493692)}#xpb{background:linear-gradient(180deg,#9ce6ff,#348fcc 70%,#246398)}
-.xp-label,.xp-pct{position:absolute;top:0;z-index:1}.xp-label{left:10px}.xp-pct{right:10px}
-@media(max-width:560px){#hud{gap:6px 10px;padding:7px 10px;font-size:11px}.hud-health .bar{width:94px}.hud-health small{min-width:28px}}
+#xp-dock{flex:none;width:100%;padding:6px 10px 8px;background:linear-gradient(180deg,#413743,#26242f);box-shadow:inset 0 2px 6px #140f1899;z-index:9}
+/* One RO-style bar: Base fills toward the centre from the left, Job from the right. */
+#xp-track{display:flex;width:100%;height:24px;border:1px solid #756c77;border-radius:4px;background:#161820;overflow:hidden;box-shadow:inset 0 1px 4px #000a;color:#fff;font:bold 11px/22px "Trebuchet MS",sans-serif;text-shadow:0 1px 2px #000,0 0 4px #000}
+.xp-side{position:relative;flex:0 0 50%;min-width:0;cursor:help;overflow:hidden}.xp-side:first-child{border-right:2px solid #d6c2a6}.xp-side:hover{background:#ffffff12}
+.xp-fill{position:absolute;top:0;bottom:0;left:0;width:0;transition:width .3s ease}
+#jb{left:auto;right:0;background:linear-gradient(180deg,#bca0ff,#7452cb 70%,#493692)}#xpb{background:linear-gradient(180deg,#9ce6ff,#348fcc 70%,#246398)}
+.xp-label,.xp-pct{position:absolute;top:0;z-index:1;white-space:nowrap}.xp-label{left:8px}.xp-label.job{left:auto;right:8px}.xp-pct{left:50%;transform:translateX(-50%)}
+@media(max-width:560px){#hud{gap:6px 10px;padding:7px 10px;font-size:11px}.hud-health .bar{width:94px}.hud-health small{min-width:28px}#xp-track{height:32px}.xp-label,.xp-label.job{left:0;right:0;top:0;text-align:center;font-size:9px;line-height:12px}.xp-pct{top:12px;line-height:18px;font-size:10px}}
 .body{padding:8px;font-size:13px}
 .slot{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:5px 8px;border:1px solid var(--edge);background:#fffdf5;margin-bottom:4px;border-radius:4px;min-height:36px}
 .r0{color:#555}.r1{color:#2a9d3f}.r2{color:#2f6fd6}.r3{color:#a23fd6}.r4{color:#e07b00;font-weight:bold}
@@ -159,11 +161,11 @@ hr{border:0;border-top:1px dashed var(--edge);margin:6px 0}
 <div id="hud"><div><b id="cls2"></b> Base Lv <b id="lv">1</b> / Job Lv <b id="jl">1</b></div>
 <div class="hud-health">HP <div class="bar" role="meter" aria-label="HP" aria-valuemin="0" aria-valuemax="100" id="hpMeter"><i id="hpb"></i></div><small id="hpPct">100%</small></div>
 <div class="hud-zeny" id="zenyHover" tabindex="0" aria-describedby="zenyRate">&#9679; <b id="zeny">0</b> Zeny<span class="hud-flyout" id="zenyRate" role="tooltip">Zeny earned: 0/min</span></div>
-<div>Kills/min <b id="kills" title="Updated every 30 seconds (last 30s)">0.0</b></div><div style="margin-left:auto;display:flex;align-items:center;gap:8px"><span id="userBadge" style="font-weight:bold;font-size:12px;background:#e9d39a;padding:3px 8px;border-radius:4px;border:1px solid var(--edge2)"></span><button id="logoutBtn" onclick="logout()" style="display:none">Logout</button><button id="spd">Speed x1</button></div></div>
-<div id="xp-dock" aria-label="Level progress">
-  <div class="xp-row" id="jobTrack" tabindex="0" role="progressbar" aria-label="Job Level" aria-valuemin="0" aria-valuemax="100" title="Job Level: 0% to next level"><div class="xp-fill" id="jb"></div><span class="xp-label" id="jobLabel">Job Level 1</span><span class="xp-pct" id="jobPct">0%</span></div>
-  <div class="xp-row" id="baseTrack" tabindex="0" role="progressbar" aria-label="Base Level" aria-valuemin="0" aria-valuemax="100" title="Base Level: 0% to next level"><div class="xp-fill" id="xpb"></div><span class="xp-label" id="baseLabel">Base Level 1</span><span class="xp-pct" id="basePct">0%</span></div>
-</div>
+<div>Kills/min <b id="kills" title="Recent kills per minute (last 60 seconds, refreshed each second)">0.0</b></div><div style="margin-left:auto;display:flex;align-items:center;gap:8px"><span id="userBadge" style="font-weight:bold;font-size:12px;background:#e9d39a;padding:3px 8px;border-radius:4px;border:1px solid var(--edge2)"></span><button id="logoutBtn" onclick="logout()" style="display:none">Logout</button><button id="spd">Speed x1</button></div></div>
+<div id="xp-dock" aria-label="Level progress"><div id="xp-track">
+  <div class="xp-side" id="baseTrack" tabindex="0" role="progressbar" aria-label="Base Level" aria-valuemin="0" aria-valuemax="100" title="Base Level: 0% to next level"><div class="xp-fill" id="xpb"></div><span class="xp-label" id="baseLabel">Base Lv 1</span><span class="xp-pct" id="basePct">0%</span></div>
+  <div class="xp-side" id="jobTrack" tabindex="0" role="progressbar" aria-label="Job Level" aria-valuemin="0" aria-valuemax="100" title="Job Level: 0% to next level"><div class="xp-fill" id="jb"></div><span class="xp-pct" id="jobPct">0%</span><span class="xp-label job" id="jobLabel">Job Lv 1</span></div>
+</div></div>
 </div>
 <div id="modal"><div class="login-card"><p id="mt" style="font-size:14px;opacity:1;margin:0 0 12px"></p><div class="row" style="justify-content:center"><button id="my">Yes</button><button id="mn">Cancel</button></div></div></div><div id="tooltip"></div>
 <script src="assets/sprite_pack_data.js?v=1"></script>
@@ -207,7 +209,7 @@ const AL={str:'STR',agi:'AGI',dex:'DEX',luk:'LUK',int:'INT',hp:'Max HP',atk:'ATK
 // late maps in about five, with bosses still a ~12x fight. See tools/tests/economy_sim.js.
 const SU=k=>k.toUpperCase(),BX_=13,Z0=-28,Z1=12,MPS=15,AGGRO=6.5,HPK=42,HPE=1.3,K5=['str','agi','dex','luk','int'];
 const GM_USER='GM',GM_PASS='gm1234';   // CHANGE THE GM PASSWORD before you publish
-const BUILD='2026-10-04 ui-v31 levels rates boss-escorts';   // shown on the login card - confirms which file you loaded
+const BUILD='2026-10-04 ui-v32 split-exp live-rates';   // shown on the login card - confirms which file you loaded
 $('buildTag').textContent='build '+BUILD;
 
 // ---------- class tree: Novice -> 6 first jobs -> 6 second jobs -> 6 third jobs ----------
@@ -1262,27 +1264,29 @@ const tip=$('tooltip');
 document.addEventListener('mouseover',e=>{const c=S&&e.target.closest&&e.target.closest('[data-tip]');if(!c){tip.style.display='none';return}const it=find(c.dataset.tip);if(!it){tip.style.display='none';return}
   tip.innerHTML=itemDetail(it);tip.style.display='block'});
 document.addEventListener('mousemove',e=>{tip.style.left=Math.min(innerWidth-240,e.clientX+14)+'px';tip.style.top=Math.min(innerHeight-200,e.clientY+14)+'px'});
-// Kill rate is a completed 30-second sample (one display update each interval).
-// Zeny/min is a rolling 60-second *income* rate, counted when credited, not inferred
-// from balance changes: refining or pet rolls cannot hide Zeny earned in the same tick.
-const HUD_RATE_WINDOW=60000,HUD_KILL_REFRESH=30000;
+// Record positive kills and Zeny credits against real elapsed time. Display both rolling
+// 60-second rates once a second; on a long browser stall, discard stale history rather
+// than treating 10 minutes of paused frames as one second of furious combat.
+const HUD_RATE_WINDOW=60000,HUD_IDLE_RESET=30000,HUD_RATE_REFRESH=1000;
 function stepHudRate(rate,user,kills,earned,now){
   const k=Math.max(0,Math.floor(Number(kills)||0)),z=Math.max(0,Number(earned)||0);
-  if(!rate||rate.user!==user||now<rate.lastAt||now-rate.lastAt>HUD_RATE_WINDOW)
-    rate={user,lastAt:now,killAt:now,killStart:k,killsPerMin:0,lastEarned:z,started:now,events:[]};
+  if(!rate||rate.user!==user||now<rate.lastAt||now-rate.lastAt>HUD_IDLE_RESET||k<rate.lastKills||z<rate.lastEarned)
+    rate={user,lastAt:now,lastSampleAt:now,lastKills:k,lastEarned:z,started:now,killsPerMin:0,zenyPerMin:0,killsEvents:[],events:[]};
   else{
-    const delta=Math.max(0,z-rate.lastEarned);
-    if(delta)rate.events.push({at:now,amount:delta});
-    rate.lastEarned=z;rate.lastAt=now;
-    if(now-rate.killAt>=HUD_KILL_REFRESH){
-      rate.killsPerMin=Math.max(0,k-rate.killStart)*HUD_RATE_WINDOW/(now-rate.killAt);
-      rate.killAt=now;rate.killStart=k;
+    const dk=k-rate.lastKills,dz=z-rate.lastEarned;
+    if(dk)rate.killsEvents.push({at:now,amount:dk});
+    if(dz)rate.events.push({at:now,amount:dz});
+    rate.lastKills=k;rate.lastEarned=z;rate.lastAt=now;
+    if(now-rate.lastSampleAt>=HUD_RATE_REFRESH){
+      while(rate.killsEvents.length&&rate.killsEvents[0].at<=now-HUD_RATE_WINDOW)rate.killsEvents.shift();
+      while(rate.events.length&&rate.events[0].at<=now-HUD_RATE_WINDOW)rate.events.shift();
+      const elapsed=Math.max(HUD_RATE_REFRESH,Math.min(HUD_RATE_WINDOW,now-rate.started));
+      rate.killsPerMin=rate.killsEvents.reduce((sum,e)=>sum+e.amount,0)*HUD_RATE_WINDOW/elapsed;
+      rate.zenyPerMin=rate.events.reduce((sum,e)=>sum+e.amount,0)*HUD_RATE_WINDOW/elapsed;
+      rate.lastSampleAt+=HUD_RATE_REFRESH*Math.floor((now-rate.lastSampleAt)/HUD_RATE_REFRESH);
     }
   }
-  while(rate.events.length&&rate.events[0].at<=now-HUD_RATE_WINDOW)rate.events.shift();
-  const elapsed=Math.max(1000,Math.min(HUD_RATE_WINDOW,now-rate.started));
-  const zeny=rate.events.reduce((sum,e)=>sum+e.amount,0)*HUD_RATE_WINDOW/elapsed;
-  return{state:rate,kills:rate.killsPerMin,seconds:rate.killsPerMin/60,zeny};
+  return{state:rate,kills:rate.killsPerMin,seconds:rate.killsPerMin/60,zeny:rate.zenyPerMin};
 }
 const levelPct=(value,required,maxed=false)=>maxed?100:Math.min(100,Math.max(0,(+value||0)/Math.max(1,+required||1)*100));
 function bars(){if(!S)return;
@@ -1290,13 +1294,13 @@ function bars(){if(!S)return;
   const j=jobOf(),c=C(),hp=levelPct(S.hp,maxHp()),jp=levelPct(j.jx,jneed(j.jl),j.jl>=c.mj),bp=levelPct(S.exp,need(),S.lv>=150);
   $('lv').textContent=S.lv;$('cls2').textContent=S.cls;$('jl').textContent=j.jl;$('zeny').textContent=(+S.zeny||0).toLocaleString();
   $('kills').textContent=rates.kills.toFixed(1);
-  $('kills').title=`Kills/min (last 30s, refreshed every 30s): ${rates.kills.toFixed(1)} · ${rates.seconds.toFixed(2)} kills/sec`;
+  $('kills').title=`Kills/min (last 60s, refreshed every second): ${rates.kills.toFixed(1)} · ${rates.seconds.toFixed(2)} kills/sec`;
   $('zenyRate').textContent=`Zeny earned: ${Math.round(rates.zeny).toLocaleString()}/min (last 60s)`;
   $('hpb').style.width=hp+'%';$('hpb').classList.toggle('critical',hp<=30);
   $('hpPct').textContent=Math.round(hp)+'%';$('hpMeter').setAttribute('aria-valuenow',Math.round(hp));
   for(const[id,label,pct,lv]of[['job','Job Level',jp,j.jl],['base','Base Level',bp,S.lv]]){
     const text=pct.toFixed(1)+'%',track=$(id+'Track');
-    $(id==='job'?'jb':'xpb').style.width=pct+'%';$(id+'Pct').textContent=text;$(id+'Label').textContent=label+' '+lv;
+    $(id==='job'?'jb':'xpb').style.width=pct+'%';$(id+'Pct').textContent=text;$(id+'Label').textContent=(id==='job'?'Job':'Base')+' Lv '+lv;
     track.title=label+' '+lv+': '+text+(pct>=100?' (MAX)':' to next level');
     track.setAttribute('aria-valuenow',pct.toFixed(1));track.setAttribute('aria-valuetext',track.title);
   }
