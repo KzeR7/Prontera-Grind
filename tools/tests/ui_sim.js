@@ -218,9 +218,20 @@ t('the Mastery Index tracks monster titles and consumes loose cards for permanen
   assert.ok(h.includes('1/90 cards discovered')&&h.includes('<b>1/450</b> card mastery ranks'),'the album and five-rank-per-card progress are visible');
   assert.ok(h.includes('data-a="indexcard"')&&h.includes('Dedicate one'),'a loose card can advance an individual card');
   assert.ok(h.includes('data-a="cardroll"')&&h.includes('Token gacha'),'mastery ranks spend tokens on the gacha');
-  assert.ok(h.includes('data-a="cardreset"')&&h.includes('Reset · 1 Legendary card'),'a Legendary card resets the gacha and refunds tokens');
-  assert.ok(h.includes('Card Index available')&&!h.includes('(global max)'),'the loose-card list is renamed and the global-max wording is gone');
+  assert.ok(h.includes('data-a="cardreset"'),'the gacha reset is offered once a Legendary card is loose');
   assert.ok(h.includes('STR</b> 0/25')&&h.includes('HP Leech</b> 0/3')&&h.includes('ATK %</b> 0/5'),'current values and caps stay visible beside every reward');
+  // v57: the picker lists every loose Legendary so the player chooses what to sacrifice, the
+  // bag list gets rarity sub-tabs, and a stack can be dedicated in one tap.
+  U.S.cards=[{id:11,n:'Poring Card',g:3,stat:'str',v:4},{id:12,n:'Fabre Card',g:3,stat:'agi',v:3},{id:13,n:'Poring Card',g:0,stat:'dex',v:1}];
+  U.S.cardIndex.rolls=['str','agi','str'];
+  h=U.V.index();
+  assert.ok((h.match(/data-a="cardreset"/g)||[]).length>=3,'one reset button per loose Legendary card');
+  assert.ok(h.includes('data-v="11"')&&h.includes('data-v="12"'),'each sacrifice button carries its own card id');
+  assert.ok(!h.includes('data-v="13"')||!/cardreset" data-v="13"/.test(h),'a Common card is not offered as a sacrifice');
+  assert.ok(h.includes('data-a="cardtab"')&&h.includes('Legendary <small>2</small>'),'rarity sub-tabs count the loose cards');
+  assert.ok(h.includes('data-a="indexall"')&&h.includes('Insert all'),'a stack can be dedicated in one tap');
+  assert.ok(h.includes('Latest rolls'),'and the newest rolls are shown, not just the totals');
+  assert.ok(h.includes('Card Index available')&&!h.includes('(global max)'),'the loose-card list is renamed and the global-max wording is gone');
   for(const reward of ['hpPct','fleePct','leech','def','mdef','atkPct','matkPct','aspdPct','critPct'])assert.ok(src.includes("id:'"+reward+"'"),reward+' should be an available card mastery reward');
   assert.ok(h.includes('Poring Card')&&h.includes('Mastery 1/5'),'the card album keeps per-card mastery history');
   assert.ok(src.includes("if(v==='index'){openTab('index');return}"),'the Quest Board Index button opens the panel');
@@ -570,7 +581,7 @@ t('the Skills panel prints the whole tree against what a maxed line earns', () =
   assert.ok(src.includes('id="heroTitle"')&&src.includes('heroTitle.style.display'), 'equipped titles must follow the player above the head');
   assert.ok(src.includes('data-a="skalloc"')&&src.includes('Auto-allocate all skills')&&src.includes('autoAllocateSkills'), 'the Skills panel must expose one-click lower-class-first allocation');
   for(const [action,helper] of [['gmindex','gmIndexTest'],['gmcard','gmCardTest'],['gmskill','gmSkillTest'],['gmpet','gmPetTest']])assert.ok(src.includes('data-a="'+action+'"')&&src.includes(helper),action+' GM controls must be available for testing the new systems');
-  assert.ok(src.includes('data-v="all5000"')&&src.includes('data-v="xp4320000"'),'Index GM labels must expose the 5,000-rung and final-title scenarios');
+  assert.ok(src.includes('data-v="all5000"')&&src.includes('data-v="all50000"')&&src.includes('data-v="xp1000000"'),'Index GM labels must expose the 5,000-rung, 50,000-rung and final-title scenarios');
   assert.ok(src.includes('data-v="rollAll"')&&src.includes('data-v="g6dps"')&&src.includes('data-v="g6utility"'),'GM cap and complete pet-chain fixtures must be visible');
   assert.ok(src.includes('const skTree=()=>'), 'skTree() must exist - the panel needs the tree price');
   assert.ok(src.includes('const skEarnedMax=()=>'), 'skEarnedMax() must exist');

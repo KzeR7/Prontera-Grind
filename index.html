@@ -662,26 +662,32 @@ const MONSTER_INDEX=MAPS.flatMap((mp,map)=>[
 ]);
 const MONSTER_INDEX_KEYS=new Set(MONSTER_INDEX.map(m=>m.id));
 const CARD_NAMES=new Set(MONSTER_INDEX.map(m=>m.name+' Card'));
-const INDEX_MOB_MILESTONES=[100,1000,5000,25000,100000,500000,1000000,5000000];
+// v57: the ladder is a hunting plan, not a wall - a species is "finished" at 50,000 kills,
+// and the milestone XP is scaled to match (a fully hunted species is worth 50,279 Index XP).
+const INDEX_MOB_MILESTONES=[10,50,250,1000,5000,10000,25000,50000];
 const INDEX_MILESTONES=INDEX_MOB_MILESTONES;
-const INDEX_MILESTONE_XP=[5,10,20,35,60,90,125,200];
+const INDEX_MILESTONE_XP=[2,4,8,15,25,45,70,110];
 const INDEX_KILL_XP=1;
 const indexMilestoneBonus=(before,after)=>INDEX_MILESTONES.reduce((sum,at,i)=>sum+(before<at&&after>=at?INDEX_MILESTONE_XP[i]:0),0);
 const indexXpForCount=count=>{const n=safeCount(count);return n*INDEX_KILL_XP+INDEX_MILESTONES.reduce((sum,at,i)=>sum+(n>=at?INDEX_MILESTONE_XP[i]:0),0)};
 const indexMasteryLevel=count=>{const n=safeCount(count);let level=0;for(const at of INDEX_MOB_MILESTONES)if(n>=at)level++;return level};
 const indexNextMilestone=count=>INDEX_MOB_MILESTONES.find(at=>safeCount(count)<at)||null;
 const indexXpFromLedger=ledger=>Object.values(ledger||{}).reduce((sum,n)=>sum+indexXpForCount(n),0);
+// v57 title ladder: one fully hunted species is 50,279 Index XP, so the last title (1,000,000)
+// is about twenty maxed species - a real goal, not "one species and a few others". The whole
+// 90-species album (~4.53M XP) is deliberately NOT a title: it is tracked separately as its own
+// completion goal in the Index panel, so there is always something past the last rank.
 const INDEX_TITLES=[
-  {id:'field-initiate',name:'Field Initiate',xp:100,mark:'◉',tone:'bronze'},
+  {id:'field-initiate',name:'Field Initiate',xp:200,mark:'◉',tone:'bronze'},
   {id:'field-scout',name:'Field Scout',xp:1000,mark:'⌖',tone:'copper'},
-  {id:'midgard-vanguard',name:'Rune-Midgarts Vanguard',xp:10000,mark:'⚔',tone:'silver'},
-  {id:'midgard-tracker',name:'Midgard Tracker',xp:50000,mark:'✧',tone:'jade'},
-  {id:'dungeon-reaper',name:'Dungeon Reaper',xp:250000,mark:'☠',tone:'sapphire'},
-  {id:'rift-warden',name:'Rift Warden',xp:750000,mark:'✦',tone:'amethyst'},
-  {id:'abyss-stalker',name:'Abyss Stalker',xp:1500000,mark:'☾',tone:'obsidian'},
-  {id:'dark-lords-bane',name:"Dark Lord's Bane",xp:2500000,mark:'✹',tone:'crimson'},
-  {id:'midgard-champion',name:'Champion of Midgard',xp:3500000,mark:'♛',tone:'gold'},
-  {id:'valkyries-chosen',name:"Valkyrie's Chosen",xp:4320000,mark:'✶',tone:'valkyrie'}
+  {id:'midgard-vanguard',name:'Rune-Midgarts Vanguard',xp:3000,mark:'⚔',tone:'silver'},
+  {id:'midgard-tracker',name:'Midgard Tracker',xp:10000,mark:'✧',tone:'jade'},
+  {id:'dungeon-reaper',name:'Dungeon Reaper',xp:30000,mark:'☠',tone:'sapphire'},
+  {id:'rift-warden',name:'Rift Warden',xp:100000,mark:'✦',tone:'amethyst'},
+  {id:'abyss-stalker',name:'Abyss Stalker',xp:250000,mark:'☾',tone:'obsidian'},
+  {id:'dark-lords-bane',name:"Dark Lord's Bane",xp:500000,mark:'✹',tone:'crimson'},
+  {id:'midgard-champion',name:'Champion of Midgard',xp:750000,mark:'♛',tone:'gold'},
+  {id:'valkyries-chosen',name:"Valkyrie's Chosen",xp:1000000,mark:'✶',tone:'valkyrie'}
 ];
 // Keep the old constant name as an alias for tools and older integrations; titles now read Index XP.
 const HUNT_TITLES=INDEX_TITLES;
@@ -744,6 +750,23 @@ const cardMasteryStat=k=>{
 // only when the whole pool is full.
 const cardMasteryOpenOptions=()=>CARD_REWARD_OPTIONS.filter(o=>cardMasteryStat(o.id)<CARD_REWARD_CAPS[o.id]);
 const cardMasteryLegendaryCard=()=>Array.isArray(S&&S.cards)?S.cards.findIndex(c=>c&&+c.g===3):-1;
+// v57: the reset spends a Legendary card the player picks, so list every loose one.
+const cardMasteryLegendaryCards=()=>Array.isArray(S&&S.cards)?S.cards.map((c,i)=>c&&+c.g===3?{i,id:c.id,n:c.n,stat:c.stat,v:c.v}:null).filter(Boolean):[];
+let cardGrade=-1; // -1 = auto (rarest loose card), 0-3 = that rarity, 'all' = everything
+const cardMasteryCardByName=name=>Array.isArray(S&&S.cards)?S.cards.filter(c=>c&&c.n===name):[];
+// Dedicate as many copies of one card as its ranks still take (7 Poring cards fill 5/5 and leave 2
+// loose), so a stack never needs one confirmation per copy.
+function donateAllToMastery(name){
+  if(!S||!Array.isArray(S.cards))return {donated:0,left:0,level:0};
+  let donated=0;
+  while(cardMasteryLevel(name)<CARD_MASTERY_PER_CARD){
+    const next=cardMasteryCardByName(name)[0];
+    if(!next)break;
+    if(!donateCardToMastery(next.id))break;
+    donated++;
+  }
+  return {donated,left:cardMasteryCardByName(name).length,level:cardMasteryLevel(name)};
+}
 function cardMasteryGacha(){
   if(!S)return null;
   if(!S.cardIndex||typeof S.cardIndex!=='object'||Array.isArray(S.cardIndex))S.cardIndex=emptyCardIndex();
@@ -753,9 +776,12 @@ function cardMasteryGacha(){
   const id=open[Math.floor(Math.random()*open.length)].id;
   S.cardIndex.rolls.push(id);return id;
 }
-function cardMasteryReset(){
-  if(!S)return null;
-  const i=cardMasteryLegendaryCard();if(i<0)return null;
+function cardMasteryReset(cardId){
+  if(!S||!Array.isArray(S.cards))return null;
+  const chosen=cardId==null?cardMasteryLegendaryCards().at(0):cardMasteryLegendaryCards().find(c=>String(c.id)===String(cardId));
+  if(!chosen)return null;
+  const i=S.cards.findIndex(c=>c&&String(c.id)===String(chosen.id));
+  if(i<0||+S.cards[i].g!==3)return null;
   S.cards.splice(i,1);
   if(!S.cardIndex||typeof S.cardIndex!=='object'||Array.isArray(S.cardIndex))S.cardIndex=emptyCardIndex();
   const refunded=cardMasteryRolled();
@@ -1688,9 +1714,9 @@ function gmIndexTest(mode){
   else if(mode==='one'){
     const e=MONSTER_INDEX[0];recordMonsterKill({mapIndex:e.map,n:e.name});
   }else if(mode==='xp10000')S.indexXp=10000;
-  else if(mode==='xp4320000')S.indexXp=4320000;
+  else if(mode==='xp1000000')S.indexXp=1000000;
   else{
-    const target=mode==='all1'?1:mode==='all100'?100:mode==='all1000'?1000:5000;
+    const target=mode==='all1'?1:mode==='all100'?100:mode==='all1000'?1000:mode==='all50000'?50000:5000;
     S.mobKills={};for(const e of MONSTER_INDEX)S.mobKills[e.id]=target;S.indexXp=indexXpFromLedger(S.mobKills);
   }
   ui();save();
@@ -1863,7 +1889,7 @@ const V={
     <p><small>Drag to rotate, scroll to zoom. Hotkeys: M S J K B E C Q R L P I O, Esc to close.</small></p><button class="full" data-a="reset">Erase this account's save &amp; restart</button><button class="full" data-a="logout">Logout</button>`},
   gm(){return`<div class="hd">GM multiplier (EXP, Job EXP, Zeny, quests)</div><div class="row">${[1,10,100,1000].map(x=>`<button data-a="gmx" data-v="${x}" ${S.gmx===x?'style="background:#ffe08a"':''}>x${x}</button>`).join('')}</div>
     <div class="row" style="margin-top:8px"><button data-a="gmz">+1,000,000 Zeny</button><button data-a="gmo">+20 Oridecon &amp; Elunium</button><button data-a="gml">+10 Base Levels</button><button data-a="gmj">Max Job Lv (current class)</button><button data-a="gmu">Unlock all map levels</button></div>
-    <div class="hd" style="margin-top:10px">Index mastery test controls</div><small>These use the real per-species ledger and the slower 100 / 1,000 / 5,000+ kill ladder. Clear before trying another scenario.</small><div class="row"><button data-a="gmindex" data-v="one">+1 Poring kill</button><button data-a="gmindex" data-v="all1">1 kill every species</button><button data-a="gmindex" data-v="all100">100 kills every species</button><button data-a="gmindex" data-v="all1000">1,000 kills every species</button><button data-a="gmindex" data-v="all5000">5,000 kills every species</button><button data-a="gmindex" data-v="xp10000">Set 10,000 XP title test</button><button data-a="gmindex" data-v="xp4320000">Set 4,320,000 final title</button><button data-a="gmindex" data-v="clear">Clear Index</button></div>
+    <div class="hd" style="margin-top:10px">Index mastery test controls</div><small>These use the real per-species ledger and the 10 / 250 / 5,000 / 50,000 kill ladder. Clear before trying another scenario.</small><div class="row"><button data-a="gmindex" data-v="one">+1 Poring kill</button><button data-a="gmindex" data-v="all1">1 kill every species</button><button data-a="gmindex" data-v="all100">100 kills every species</button><button data-a="gmindex" data-v="all1000">1,000 kills every species</button><button data-a="gmindex" data-v="all5000">5,000 kills every species</button><button data-a="gmindex" data-v="all50000">50,000 kills every species</button><button data-a="gmindex" data-v="xp10000">Set 10,000 XP title test</button><button data-a="gmindex" data-v="xp1000000">Set the final title</button><button data-a="gmindex" data-v="clear">Clear Index</button></div>
     <div class="hd" style="margin-top:10px">Card mastery test controls</div><small>Loose cards can be dedicated through the Card Mastery tab; every mastery rank is one gacha token. Roll every token fills the stat caps the slow way (one random roll at a time). Socketed cards stay untouched.</small><div class="row"><button data-a="gmcard" data-v="poring1">+1 Poring Card</button><button data-a="gmcard" data-v="poring5">+5 Poring Cards</button><button data-a="gmcard" data-v="poringMax">Max Poring 5/5</button><button data-a="gmcard" data-v="allMax">Max all cards 5/5</button><button data-a="gmcard" data-v="rollAll">Roll every token</button><button data-a="gmcard" data-v="clear">Reset card mastery</button></div>
     <div class="hd" style="margin-top:10px">Skill accounting test controls</div><small>Max the current class line, then use the normal Auto-allocate all skills button or let GM do both steps.</small><div class="row"><button data-a="gmskill" data-v="maxjobs">Max current line jobs</button><button data-a="gmskill" data-v="maxallocate">Max jobs + auto allocate</button><button data-a="gmskill" data-v="reset">Reset current line skills</button></div>
     <div class="hd" style="margin-top:10px">Test pets</div><div class="row">${RN.map((n,i)=>`<button data-a="gmp" data-v="${i}">+ ${n} pet</button>`).join('')}</div><div class="row" style="margin-top:6px"><button data-a="gmm" data-v="4">All pets G4</button><button data-a="gmm" data-v="6">All pets G6</button><button data-a="gmpet" data-v="g6dps">Max G6 DPS pet</button><button data-a="gmpet" data-v="g6buff">Max G6 + buff slot</button><button data-a="gmpet" data-v="g6utility">Max G6 utility slots</button><button data-a="gmpet" data-v="clear">Clear pets</button></div>`}};
@@ -1923,8 +1949,10 @@ function renderTitleTrack(){
 function renderMobIndex(){
   const counts=S.mobKills||{},found=MONSTER_INDEX.filter(m=>safeCount(counts[m.id])>0).length,xp=indexExperience(),rank=indexRankForXp(xp),next=indexNextTitle(xp),prev=rank?INDEX_TITLES[rank-1].xp:0;
   const pct=next?Math.min(100,Math.max(0,(xp-prev)/(next.xp-prev)*100)):100;
+  const albumDone=MONSTER_INDEX.filter(m=>safeCount(counts[m.id])>=INDEX_MOB_MILESTONES[INDEX_MOB_MILESTONES.length-1]).length;
   return `<div class="mastery-summary"><b>⚔ Individual Monster Index · Monster Hunt Ledger</b><span>${found}/${MONSTER_INDEX.length} species recorded · ${xp.toLocaleString()} Index XP · Rank ${Math.max(1,rank)}</span>
-    <small>Every species has its own eight-rung kill ladder: 100, 1,000, 5,000, 25,000, 100,000, 500,000, 1,000,000 and 5,000,000 kills. First kills discover a monster, repeated kills raise that monster's mastery, and every rung adds Index XP. Variety and quantity both move the rank bar.</small></div>
+    <small>Every species has its own eight-rung kill ladder: 10, 50, 250, 1,000, 5,000, 10,000, 25,000 and 50,000 kills. First kills discover a monster, repeated kills raise that monster's mastery, and every rung adds Index XP. Variety and quantity both move the rank bar.</small>
+    <small><b>Album:</b> ${albumDone}/${MONSTER_INDEX.length} species hunted to their last rung (50,000 kills) - ${(MONSTER_INDEX.length*50279).toLocaleString()} Index XP in total, kept separate from the title ranks so there is always one more hunt.</small></div>
     <div class="mastery-progress-card index-xp-card"><div><b>Index Mastery Lv ${Math.max(1,rank)}</b> <small>· ${next?`${(next.xp-xp).toLocaleString()} XP to ${next.name}`:'all title ranks complete'}</small></div><div class="mastery-track"><i style="width:${pct.toFixed(1)}%"></i></div><small>${xp.toLocaleString()}${next?` / ${next.xp.toLocaleString()}`:''} Index XP${next?' · next title: '+next.name:''}</small></div>
     <div class="mastery-section-title">🏅 Index Title Ranks <small>Equip any rank you have earned</small></div><div class="mastery-title-list">${renderTitleTrack()}</div>
     <div class="mastery-section-title">📖 Monster Index <small>${MONSTER_INDEX.length} entries across ${MAPS.length} maps · 8 mastery rungs each</small></div>
@@ -1937,6 +1965,13 @@ function cardRollSummary(){
   const c={};for(const x of rolls)c[x]=(c[x]||0)+1;
   return CARD_REWARD_OPTIONS.filter(o=>c[o.id]).map(o=>`${o.name} ×${c[o.id]}`).join(' · ');
 }
+// The last few rolls, newest first - the totals above hide what a long session actually rolled.
+function cardRollRecent(){
+  const rolls=cardMasteryRolls();if(!rolls.length)return'';
+  const recent=rolls.slice(-8).reverse().map((id,i)=>{const o=CARD_REWARD_OPTIONS.find(x=>x.id===id);
+    return `<span class="roll-chip${i?'':''}">${o?o.name:id}<small>+1</small></span>`}).join('');
+  return `<div class="card-roll-recent"><small>Latest rolls (newest first):</small><div class="roll-chips">${recent}</div></div>`;
+}
 // The reward picker became a token gacha: one button spends a token on a random stat, one rolls
 // every token you hold, and one reset spends a loose Legendary card to clear the rolls and hand
 // the tokens back.
@@ -1944,20 +1979,26 @@ function cardGachaPanel(){
   const available=cardMasteryAvailable(),rolled=cardMasteryRolled(),open=cardMasteryOpenOptions(),legendary=cardMasteryLegendaryCard()>=0,summary=cardRollSummary();
   return `<div class="mastery-section-title">🎲 Token gacha <small>1 token = one random permanent stat</small></div>
     <div class="mastery-progress-card card-gacha"><div><b>${available} token${available===1?'':'s'} ready</b> <small>· ${cardMasteryEarned()} earned · ${rolled} rolled${legendary?' · 1 Legendary card in your bag':''}</small></div>
-    <div class="row"><button data-a="cardroll" ${available&&open.length?'':'disabled'}>🎲 Gacha · 1 token</button><button data-a="cardrollall" ${available&&open.length?'':'disabled'}>🎲 Roll all · ${available}</button><button data-a="cardreset" ${rolled&&legendary?'':'disabled'}>♻ Reset · 1 Legendary card</button></div>
+    <div class="row"><button data-a="cardroll" ${available&&open.length?'':'disabled'}>🎲 Gacha · 1 token</button><button data-a="cardrollall" ${available&&open.length?'':'disabled'}>🎲 Roll all · ${available}</button><button data-a="cardreset" ${rolled&&legendary?'':'disabled'}>♻ Reset · pick a card below</button></div>
     <small>${open.length?`Rolled so far: ${summary||'none yet'}.`:'Every stat is at its cap - no roll is possible. A reset refunds every spent token and lets you roll again.'}</small>
+    ${cardRollRecent()}
+    ${legendary?`<div class="card-sacrifice"><small>Reset spends one Legendary card - choose which:</small>${cardMasteryLegendaryCards().map(c=>`<button data-a="cardreset" data-v="${c.id}" aria-label="Reset the gacha and sacrifice ${c.n}">♻ Sacrifice ${c.n} <small>${SU(c.stat)} +${c.v}</small></button>`).join('')}</div>`:''}
     <div class="card-reward-legend">${CARD_REWARD_OPTIONS.map(o=>`<span><b>${o.name}</b> ${cardMasteryStat(o.id)}/${CARD_REWARD_CAPS[o.id]} · ${o.desc}${cardMasteryStat(o.id)>=CARD_REWARD_CAPS[o.id]?' · full':''}</span>`).join('')}</div></div>`;
 }
 function renderCardIndex(){
   const ci=S.cardIndex||emptyCardIndex(),byName=ci.byName||{},donated=safeCount(ci.donated),total=cardMasteryTotal(),available=cardMasteryAvailable(),rolled=cardMasteryRolled(),album=[...CARD_NAMES],max=album.length*CARD_MASTERY_PER_CARD,registered=album.filter(name=>cardMasteryLevel(name)>0).length,bar=max?Math.min(100,total/max*100):0;
   const groups=new Map();for(const c of S.cards||[]){const key=`${c.n}|${c.g}|${c.stat}`;if(!groups.has(key))groups.set(key,{card:c,cards:[]});groups.get(key).cards.push(c)}
   const inventory=[...groups.values()].sort((a,b)=>b.card.g-a.card.g||a.card.n.localeCompare(b.card.n));
+  // v57: the un-tabbed list was too long - default to the rarest loose rarity, keep All one tap away.
+  const rarest=inventory.length?Math.max(...inventory.map(x=>x.card.g)):-1;
+  const tab=cardGrade==='all'?'all':inventory.some(x=>x.card.g===cardGrade)?cardGrade:rarest;
   return `<div class="mastery-summary"><b>🃏 Per-Card Mastery</b><span>${registered}/${album.length} cards discovered · ${total}/${max} mastery ranks · ${donated.toLocaleString()} copies dedicated</span>
     <small>Each card has ${CARD_MASTERY_PER_CARD} ranks, and every rank you master gives <b>1 token</b>. Spend a token on the gacha for one random permanent stat. A reset costs 1 Legendary card, clears every rolled stat and refunds all spent tokens. Socketed cards stay in equipment and cannot be dedicated.</small></div>
     <div class="mastery-progress-card"><div><b>${total}/${max}</b> card mastery ranks <small>· ${available} token${available===1?'':'s'} ready · ${rolled} rolled</small></div><div class="mastery-track"><i style="width:${bar.toFixed(1)}%"></i></div></div>
     ${cardGachaPanel()}
     <div class="mastery-section-title">📥 Card Index available <small>${(S.cards||[]).length} in your card bag</small></div>
-    <div class="mastery-card-list">${inventory.map(({card:c,cards})=>{const level=cardMasteryLevel(c.n),full=level>=CARD_MASTERY_PER_CARD;return `<div class="mastery-card-row"><span class="r${GI[c.g]}">🃏 <b>${c.n}</b><small>${GRADE[c.g]} · ${SU(c.stat)} +${c.v} · x${cards.length} · Mastery ${level}/${CARD_MASTERY_PER_CARD}</small></span><button data-a="indexcard" data-v="${cards[0].id}" ${full?'disabled':''} aria-label="Dedicate one ${c.n} to card mastery">${full?'MAXED':'Dedicate one'}</button></div>`}).join('')||'<div class="mastery-empty">No loose cards yet. Card drops go here after pickup; socketed cards are not eligible.</div>'}</div>
+    <div class="row card-tabs">${[4,3,2,1,0].map(g=>`<button data-a="cardtab" data-v="${g}" class="${tab===g?'on':''}" ${inventory.some(x=>x.card.g===g)?'':'disabled'} aria-pressed="${tab===g}">${GRADE[g]} <small>${inventory.filter(x=>x.card.g===g).reduce((n,x)=>n+x.cards.length,0)}</small></button>`).join('')}<button data-a="cardtab" data-v="all" class="${tab==='all'?'on':''}" aria-pressed="${tab==='all'}">All <small>${(S.cards||[]).length}</small></button></div>
+    <div class="mastery-card-list">${inventory.filter(x=>tab==='all'||x.card.g===tab).map(({card:c,cards})=>{const level=cardMasteryLevel(c.n),full=level>=CARD_MASTERY_PER_CARD,room=CARD_MASTERY_PER_CARD-level,take=Math.min(cards.length,room);return `<div class="mastery-card-row"><span class="r${GI[c.g]}">🃏 <b>${c.n}</b><small>${GRADE[c.g]} · ${SU(c.stat)} +${c.v} · x${cards.length} · Mastery ${level}/${CARD_MASTERY_PER_CARD}</small></span><button data-a="indexcard" data-v="${cards[0].id}" ${full?'disabled':''} aria-label="Dedicate one ${c.n} to card mastery">${full?'MAXED':'Dedicate one'}</button>${full?'':`<button data-a="indexall" data-v="${c.n}" aria-label="Dedicate ${take} ${c.n} at once">Insert all · ${take}</button>`}</div>`}).join('')||`<div class="mastery-empty">${(S.cards||[]).length?'No loose cards in this rarity - pick another tab.':'No loose cards yet. Card drops go here after pickup; socketed cards are not eligible.'}</div>`}</div>
     <div class="mastery-section-title">🗂 Card Mastery Album <small>Every mastered rank stays recorded</small></div>
     ${MAPS.map((mp,map)=>{const entries=MONSTER_INDEX.filter(m=>m.map===map),seen=entries.filter(m=>cardMasteryLevel(m.name+' Card')>0).length;
       return `<details class="mastery-map" data-a="idxmap" data-v="cards:${map}" ${indexSectionOpen('cards',map)?'open':''}><summary><b>${mp.n}</b><small>${seen}/${entries.length} cards started</small></summary><div class="mastery-roster">${entries.map(m=>{const name=m.name+' Card',level=cardMasteryLevel(name),n=safeCount(byName[name]);return `<div class="mastery-mob${level?' found':''}"><span class="mastery-mob-icon">${m.boss?'👑':'🃏'}</span><span><b>${name}${m.boss?' · BOSS':''}</b><small>Mastery ${level}/${CARD_MASTERY_PER_CARD} · ${level} token${level===1?'':'s'} earned · ${n?n+' dedicated cop'+(n===1?'y':'ies'):'Not started'}</small></span><b class="mastery-count">${level}/${CARD_MASTERY_PER_CARD}</b></div>`}).join('')}</div></details>`;
@@ -2048,8 +2089,15 @@ const ACT={
       const used=donateCardToMastery(id);if(!used)return;log(`${used.n} reached Card Mastery ${cardMasteryLevel(used.n)}/${CARD_MASTERY_PER_CARD}. Choose its permanent reward in the Index.`,'r3','card');ui();save()})},
   cardroll:()=>{const r=cardMasteryGacha();if(!r)return;const opt=CARD_REWARD_OPTIONS.find(x=>x.id===r);S.hp=Math.min(S.hp,maxHp());log(`🎲 Card gacha: ${opt?opt.name:r} +1 (now ${cardMasteryStat(r)}).`,'r3','card');addFloat(pl.x,2.6,pl.z,'🎲 '+(opt?opt.name:r)+' +1','#ffd23f');ui();save()},
   cardrollall:()=>{let n=0,last=null;while((last=cardMasteryGacha()))n++;if(!n)return;S.hp=Math.min(S.hp,maxHp());log(`🎲 Card gacha: rolled ${n} token${n===1?'':'s'} - ${cardRollSummary()}.`,'r3','card');ui();save()},
-  cardreset:()=>{const rolled=cardMasteryRolled();if(!rolled)return log('Nothing has been rolled yet.','r0','card');if(cardMasteryLegendaryCard()<0)return log('A gacha reset needs 1 Legendary card in your card bag.','r0','card');
-    ask(`Reset the card gacha? It spends 1 Legendary card, clears ${rolled} rolled stat${rolled===1?'':'s'} and refunds all ${rolled} token${rolled===1?'':'s'}.`,()=>{const n=cardMasteryReset();if(n==null)return;S.hp=Math.min(S.hp,maxHp());log(`♻ Card gacha reset: ${n} stat${n===1?'':'s'} cleared, ${n} token${n===1?'':'s'} refunded.`,'r4','card');ui();save()})},
+  cardreset:v=>{const rolled=cardMasteryRolled();if(!rolled)return log('Nothing has been rolled yet.','r0','card');
+    const pool=cardMasteryLegendaryCards();if(!pool.length)return log('A gacha reset needs 1 Legendary card in your card bag.','r0','card');
+    const pick=v!=null?pool.find(c=>String(c.id)===String(v)):pool[0];if(!pick)return;
+    ask(`Reset the card gacha and sacrifice ${pick.n} (${SU(pick.stat)} +${pick.v})? It clears ${rolled} rolled stat${rolled===1?'':'s'} and refunds all ${rolled} token${rolled===1?'':'s'}.`,()=>{const n=cardMasteryReset(pick.id);if(n==null)return;S.hp=Math.min(S.hp,maxHp());log(`♻ Card gacha reset: sacrificed ${pick.n}, cleared ${n} stat${n===1?'':'s'}, ${n} token${n===1?'':'s'} refunded.`,'r4','card');ui();save()})},
+  cardtab:v=>{cardGrade=v==='all'?'all':+v;renderWin()},
+  indexall:name=>{const r=donateAllToMastery(String(name));if(!r.donated)return;S.hp=Math.min(S.hp,maxHp());
+    log(`🃏 ${name}: dedicated ${r.donated} cop${r.donated===1?'y':'ies'} - mastery ${r.level}/${CARD_MASTERY_PER_CARD}${r.left?`, ${r.left} left in the bag`:''}.`,'r3','card');
+    addFloat(pl.x,2.6,pl.z,`🃏 ${name} ${r.level}/${CARD_MASTERY_PER_CARD}`,'#ffd23f');ui();save()},
+  indexcard:all=>all,
   refine:k=>refine(k),sub:v=>{const[t,k]=v.split(':');sub[t]=k;renderWin()},selp:v=>{selP=+v;renderWin()},
   pon:id=>{const p=gp(id);if(!p)return;if(p.on)p.on=false;else if(S.pets.filter(x=>x.on).length<3)p.on=true;else log('Only 3 pets can fight at once. Remove one first.','','pet');ui();save()},
   pskill:id=>{const p=gp(id);if(!p)return;const c=petSkillCost(p);if(S.zeny<c){log('Not enough Zeny for a pet skill roll.');ui();return}S.zeny-=c;const[a,b]=rollPetSkills();p.skills=[a,b];

@@ -44,7 +44,7 @@ let RAW = ${JSON.stringify(JSON.stringify(save))};
 const lsGet = () => RAW;
 const saveKey = () => 'k';
 const newQuest = () => ({type:'kill', goal:1, prog:0, z:0, xp:0});
-this.__l = {loadRaw, setRaw: v => { RAW = JSON.stringify(v) }, setState:v=>{S=v}, getState:()=>S, emptyCardIndex, recordMonsterKill, donateCardToMastery, cardMasteryTotal, cardMasteryEarned, cardMasteryAvailable, cardMasteryRolled, cardMasteryStat, cardMasteryGacha, cardMasteryReset, cardMasteryLegendaryCard, CARD_REWARD_OPTIONS, indexXpForCount, INDEX_MOB_MILESTONES, INDEX_MILESTONE_XP, INDEX_TITLES, CARD_NAMES, CARD_REWARD_CAPS, CARD_REWARD_IDS};
+this.__l = {loadRaw, setRaw: v => { RAW = JSON.stringify(v) }, setState:v=>{S=v}, getState:()=>S, emptyCardIndex, recordMonsterKill, donateCardToMastery, cardMasteryTotal, cardMasteryEarned, cardMasteryAvailable, cardMasteryRolled, cardMasteryStat, cardMasteryGacha, cardMasteryReset, cardMasteryLegendaryCard, cardMasteryLegendaryCards, donateAllToMastery, cardMasteryLevel, CARD_REWARD_OPTIONS, indexXpForCount, INDEX_MOB_MILESTONES, INDEX_MILESTONE_XP, INDEX_TITLES, MONSTER_INDEX, CARD_NAMES, CARD_REWARD_CAPS, CARD_REWARD_IDS};
 `;
 const sb = { console };
 vm.createContext(sb); vm.runInContext(harness, sb);
@@ -162,14 +162,50 @@ t('mastery records, title unlocks, and bounded permanent stats survive load repa
   assert.strictEqual(Object.values(repaired.cardIndex.stats).reduce((a,n)=>a+n,0),0);assert.strictEqual(repaired.cardIndex.mastery['Poring Card'],3);
 });
 
-t('the slower individual-mob ladder and 20-day title endpoint are data-driven',()=>{
+t('v57 card mastery: insert-all fills a stack, and the reset sacrifices the card you pick',()=>{
   const U=sb.__l;
-  assert.strictEqual(JSON.stringify(Array.from(U.INDEX_MOB_MILESTONES)),JSON.stringify([100,1000,5000,25000,100000,500000,1000000,5000000]));
-  assert.strictEqual(U.indexXpForCount(99),99,'the first title rung stays accessible but does not arrive early');
-  assert.strictEqual(U.indexXpForCount(100),105,'the first 100-kill milestone adds only a modest bonus');
-  assert.strictEqual(U.indexXpForCount(1000),1015,'the second milestone is at 1,000, not 5');
-  assert.strictEqual(U.indexXpForCount(4320000)-4320000,345,'milestone bonuses do not materially move the modeled endpoint');
-  assert.strictEqual(U.INDEX_TITLES.at(-1).xp,4320000,'the final title is set to 4.32m Index XP');
+  const cards=[];
+  for(let i=0;i<7;i++)cards.push({id:100+i,n:'Poring Card',g:0,stat:'str',v:1});
+  cards.push({id:200,n:'Fabre Card',g:3,stat:'agi',v:9});
+  cards.push({id:201,n:'Drops Card',g:3,stat:'dex',v:9});
+  U.setState({lv:99,zeny:0,hp:100,cards,cardIndex:U.emptyCardIndex()});
+  // "insert all" on a stack of 7 dedicates 5 (the rank cap) and leaves 2 in the bag
+  const all=U.donateAllToMastery('Poring Card');
+  assert.strictEqual(all.donated,5,'seven Poring cards fill the five ranks');
+  assert.strictEqual(all.level,5,'and the entry is maxed');
+  assert.strictEqual(all.left,2,'the two spare copies stay loose');
+  assert.strictEqual(U.getState().cards.filter(c=>c.n==='Poring Card').length,2);
+  assert.strictEqual(U.cardMasteryLevel('Poring Card'),5);
+  assert.strictEqual(U.cardMasteryAvailable(),5,'each rank still pays one token');
+  // a second insert-all on a maxed entry does nothing
+  assert.strictEqual(U.donateAllToMastery('Poring Card').donated,0,'a maxed card refuses more copies');
+  // the reset spends the Legendary the player chose, not the first in the bag
+  U.cardMasteryGacha();U.cardMasteryGacha();
+  assert.strictEqual(U.cardMasteryRolled(),2);
+  assert.strictEqual(U.cardMasteryLegendaryCards().length,2,'both Legendaries are offered');
+  const refunded=U.cardMasteryReset(201);
+  assert.strictEqual(refunded,2,'the picked card pays for the reset');
+  const left=U.getState().cards.map(c=>c.id);
+  assert.ok(left.includes(200)&&!left.includes(201),'Drops Card was sacrificed, Fabre Card stayed');
+  assert.strictEqual(U.cardMasteryRolled(),0,'every rolled stat was cleared');
+  assert.strictEqual(U.cardMasteryAvailable(),5,'and every rolled token came back');
+});
+
+t('the 50,000-kill species ladder and album title endpoint are data-driven',()=>{
+  const U=sb.__l;
+  assert.strictEqual(JSON.stringify(Array.from(U.INDEX_MOB_MILESTONES)),JSON.stringify([10,50,250,1000,5000,10000,25000,50000]));
+  assert.strictEqual(U.indexXpForCount(9),9,'the first rung arrives with the first few kills');
+  assert.strictEqual(U.indexXpForCount(10),12,'the 10-kill milestone adds a small bonus');
+  assert.strictEqual(U.indexXpForCount(50),56,'the second rung is at 50 kills');
+  assert.strictEqual(U.indexXpForCount(1000),1029,'the 1,000-kill rung lands mid-ladder');
+  assert.strictEqual(U.indexXpForCount(50000),50279,'a fully hunted species is 50,000 kills plus 279 bonus XP');
+  // The last title is about twenty maxed species; the 90-species album is a separate goal.
+  assert.strictEqual(U.MONSTER_INDEX.length,90,'the album is 90 species');
+  assert.strictEqual(U.INDEX_TITLES.at(-1).xp,1000000,'the final title is 1m Index XP');
+  assert.ok(U.INDEX_TITLES.at(-1).xp<=20*50279+1000,'~twenty maxed species, not one');
+  const album=U.MONSTER_INDEX.length*50279;
+  assert.strictEqual(album,4525110,'a perfect album is 4,525,110 Index XP');
+  assert.ok(album>U.INDEX_TITLES.at(-1).xp*4,'so the album is a much longer, separate goal');
 });
 
 t('v51 migration: old per-rank rewards and the global track become capped gacha rolls',()=>{
