@@ -442,10 +442,11 @@ t('a maxed job level fits its data-derived tree without exposed overflow', () =>
   console.log('       ' + rows.map(r => r[0] + ' ' + r[3] + '/' + r[2]).join(' · '));
 });
 
-t('even the thinnest history in the game can finish its tree', () => {
-  // A future class must still fit at the minimum promotion history. Two things shrink a line's
-  // raw point supply: promoting at the minimum gate and restarting the Novice. The allocator
-  // caps the live purse to the derived tree, and this test keeps the tree itself data-driven.
+t('a rushed promotion is deliberately short of the full tree (v59 build choice)', () => {
+  // v59: skill caps went RO-style (mostly 10, one 5-level utility skill per class), so a full
+  // line tree costs 139 points against 156 earned at max job. Promoting at the minimum gate and
+  // restarting the Novice gives 127 - twelve short, which is the build choice, not a bug. What
+  // must still hold: a maxed line always finishes, and the early lines keep a real cushion.
   const lines = { Novice: ['Novice'], '1st job': ['Novice','Swordman'], '2nd job': ['Novice','Swordman','Knight'],
                   'Lord Knight': ['Novice','Swordman','Knight','Lord Knight'] };
   const floor = 0;                       // the Novice restarted: no Novice job levels at all
@@ -453,19 +454,24 @@ t('even the thinnest history in the game can finish its tree', () => {
   for (const [label, line] of Object.entries(lines)) {
     const reach = K.SKILLS.filter(s => line.includes(s.from));
     const tree = reach.reduce((a, s) => a + s.max, 0) - (reach.some(s => s.id === 'aid') ? 1 : 0);
-    // a Novice 10 for the first three (you cannot promote without it), then the minimum gates
     const earn = label === 'Novice' ? 9
       : label === '1st job' ? 9 + 49
       : label === '2nd job' ? 9 + 39 + 49
       : floor + 39 + 39 + 49;
     rows.push([label, tree, earn]);
-    assert.ok(tree <= earn, `${label}: tree ${tree} of ${earn} earned on the thinnest history`);
-    // The derived one-point tree must fit, with the existing history cushion where available.
-    assert.ok(label === 'Novice' ? earn - tree >= 1 : earn - tree >= 30,
-      `${label}: only ${earn - tree} points spare - too tight to trust`);
+    if (label === 'Lord Knight') {
+      assert.strictEqual(earn - tree, -12, 'the thinnest history is 12 points short by design');
+    } else {
+      assert.ok(tree <= earn, `${label}: tree ${tree} of ${earn} earned on the thinnest history`);
+      assert.ok(earn - tree >= 3, `${label}: only ${earn - tree} points spare - too tight to trust`);
+    }
   }
-  console.log('       thinnest history: ' + rows.map(r => r[0] + ' tree ' + r[1] + ' of ' + r[2] + ' (' + (r[2] - r[1]) + ' spare)').join(' · '));
+  // and the intended path - every job level taken to 50 - has room to finish the whole line
+  const maxed = 9 + 49 + 49 + 49, fullTree = rows.find(r => r[0] === 'Lord Knight')[1];
+  assert.ok(maxed - fullTree >= 10, 'a maxed line must finish its tree with a real cushion (' + (maxed - fullTree) + ')');
+  console.log('       thinnest history: ' + rows.map(r => r[0] + ' tree ' + r[1] + ' of ' + r[2] + ' (' + (r[2] - r[1]) + ')').join(' · '));
 });
+
 
 t('effects are actually attached to the new skills (tagging must run after the push)', () => {
   // Regression: the FX tagging loop used to sit ABOVE SKILLS.push(), so SKILLS.find() returned
@@ -803,7 +809,7 @@ function treeCost(cls) {
 t('points are earned from the current line only', () => {
   K.S = { cls: 'Swordman', jobs: { Novice: { jl: 10 }, Swordman: { jl: 50 }, Thief: { jl: 50 }, Mage: { jl: 40 } }, sk: {} };
   assert.strictEqual(K.skLine().join('>'), 'Novice>Swordman');
-  assert.strictEqual(K.skEarned(), 24, 'the current line earns only its capped Swordman tree budget');
+  assert.strictEqual(K.skEarned(), 49, 'the current line earns only its capped Swordman tree budget');
   // the old code would have returned 9+49+49+39 = 146 here, which is the overflow
   assert.ok(K.skEarned() < 146, 'other lines must not fund this one');
 });

@@ -96,14 +96,29 @@ the animation-frame loop drives it while the tab is on screen and a once-a-secon
 drives it while the tab is hidden, replaying real elapsed time in steps no bigger than
 0.1s, capped at 10 minutes per wake so a sleeping laptop cannot dump hours into one frame.
 Only the frame loop draws. Coming back logs one line - `Away 3m 12s · +42 kills · +6,120
-Zeny` - and the Settings checkbox "Keep grinding while this tab is in the background"
-(`S.bg`, default on) pauses it instead, in which case hidden time is dropped, not
-simulated. `tools/tests/background_sim.js` pins all of that without a browser. The shared Base/Job bar is now 14px high on desktop
+Zeny`. Since v58 there is no switch anywhere: background grinding is permanent (`bgOn()`
+is a constant, every load normalises `S.bg=true`), and no save or button can pause it.
+`tools/tests/background_sim.js` pins all of that without a browser. The shared Base/Job bar is now 14px high on desktop
 (22px on narrow screens). Skills display their names over the moving player; gold
 outgoing damage numbers and red spiked critical bubbles follow the supplied RO example.
 Active pets use their eight existing Divine Pride monster sprite IDs in the same
 WebGL/DOM renderer as mobs, all at one small scale (with a drawn fallback if an
 official remote PNG cannot load). Samples also reset at login or on a new adventure.
+
+**v59 deeper skill lines + a free pet skill.** Every job class now teaches **five** skills
+(the roster is 91, up from 73) and skill levels are per-skill RO-style: most stop at 10, a
+utility skill in each class stops at 5, so a full line tree costs **140 points (139 payable -
+First Aid's level is free)** against the **156 a maxed line earns**. Job levels therefore pay out
+all the way to 50, and the panel says plainly that a line promoted out of at the minimum gate may
+not finish its tree (a restart can be 12 points short; that is the build choice). Cooldowns went
+up (actives x1.5, trade-offs x1.2), damage slopes were halved so each skill at its new max still
+matches the old 5-level output, and a shared **0.5s global cooldown** (`SKGCD`) now spreads the
+casts of one swing: cast 0 lands instantly, casts 1-2 are queued and fire on their turn (and are
+dropped if the target dies). Pets: **every pet arrives from a drop with one random skill already
+slotted** (same weighted pool as the gacha, which then sells the second slot). Tuning numbers are
+a first pass the owner wants to sit with before they are final; pet identity (signature skill /
+stat leaning) stays parked at the owner's request. No save loses anything: caps that dropped
+leave over-spent levels in place and the repair loop only ever trims overspend.
 
 **v58 Abyss-only Legendary + card panel polish.** Grade caps were re-tiered to the owner's map
 tiers: early maps (Prontera, Izlude, Geffen, Morroc, Payon) top out at Fine/Rare/Epic, the four

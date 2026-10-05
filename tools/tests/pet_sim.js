@@ -131,6 +131,23 @@ t('one gacha fills BOTH slots and never repeats a skill', () => {
   assert.strictEqual(seen.size, 12, 'after 200 rolls every skill must have come up at least once');
 });
 
+t('a pet arrives from a drop with one random skill already slotted (v59)', () => {
+  // the drop site rolls the SAME weighted pool the gacha uses, and stores one skill
+  const drop = src.match(/const gifted=pickW\(PET_SKILL_WEIGHTS\);[\s\S]*?'pet'\);/);
+  assert.ok(drop, 'the pet drop must roll one skill (const gifted = pickW(PET_SKILL_WEIGHTS))');
+  assert.ok(drop[0].includes('skills:[PET_SKILLS[gifted].id]'), 'and the pet must arrive with it slotted');
+  assert.ok(drop[0].includes('${PET_SKILLS[gifted].n}'), 'the drop message must name the skill it brought');
+  // one filled slot, and the gacha is what completes the pair
+  const p1 = { skills: ['warcry'] };
+  assert.strictEqual(P.petSkills(p1).length, 1, 'a fresh pet holds exactly one skill');
+  const p2 = { skills: ['warcry', 'spiritbolt'] };
+  assert.strictEqual(P.petSkills(p2).length, 2, 'the gacha fills the second slot');
+  // and the panel says so, instead of promising an empty pet
+  assert.ok(src.includes('Every pet arrives from a drop with one random skill already slotted'),
+    'the pets panel must explain the free skill');
+  assert.ok(src.includes("SL.length===1?'Gacha the second skill'"), 'and the button must say what the paid roll will do');
+});
+
 t('the extra gacha skills are low-impact utility, not hidden DPS', () => {
   const utility=P.PET_SKILLS.filter(s=>s.kind==='utility');
   assert.strictEqual(JSON.stringify(utility.map(s=>s.effect)),JSON.stringify(['zeny','heal','def','comfort']));

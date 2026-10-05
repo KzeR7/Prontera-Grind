@@ -490,43 +490,35 @@ props, and `landmark()` places the large structures that frame the avenue.
 ## Verify before you push (expected output)
 
 ```sh
-python3 - <<'PY'
+python3 - <<'PYPACK'
 h=open('index.html').read()
 open('/tmp/pack_block.js','w').write(h[h.index('const PACK_BODY='):h.index('function ensureHero(')])
-PY
+PYPACK
 node tools/tests/pack_sim.js           # -> "bodies in pack (19): ..."
-node tools/tests/class_change_sim.js   # -> "22 passed, 0 failed"
-node tools/tests/save_load_sim.js      # -> "10 passed, 0 failed"
-node tools/tests/economy_sim.js        # -> "21 passed, 0 failed"
-node tools/tests/stat_sim.js           # -> "7 passed, 0 failed"
+node tools/tests/class_change_sim.js   # -> "25 passed, 0 failed"
+node tools/tests/class_skin_sim.js     # -> "39 passed, 0 failed" (live class skins, both genders, mirrors)
+node tools/tests/kit_sim.js            # -> "34 passed, 0 failed" (v2 atlas + KIT_PS, payon recipe, ten identities)
+node tools/tests/skill_sim.js          # -> "52 passed, 0 failed" (91-skill roster, caps, cooldowns, GCD queue)
+node tools/tests/save_load_sim.js      # -> "22 passed, 0 failed"
+node tools/tests/economy_sim.js        # -> "23 passed, 0 failed"
+node tools/tests/gear_sim.js           # -> "30 passed, 0 failed"
+node tools/tests/picker_sim.js         # -> "19 passed, 0 failed" (the picker, booted under a DOM stub)
 node tools/tests/card_sim.js           # -> "13 passed, 0 failed"
-node tools/tests/skill_sim.js          # -> "48 passed, 0 failed"
-node tools/tests/gear_sim.js           # -> "20 passed, 0 failed  (20 assertions groups)"
+node tools/tests/drop_card_sheet_sim.js # -> "12 passed, 0 failed"
+node tools/tests/weapon_review_sim.js  # -> "13 passed, 0 failed"
+node tools/tests/pet_sim.js            # -> "13 passed, 0 failed" (+ printed pet data and the maxed-pet balance measurement)
+node tools/tests/sprite_sim.js         # -> "12 passed, 0 failed"
+node tools/tests/background_sim.js     # -> "12 passed, 0 failed" (grinding is permanent)
 node tools/tests/scene_sim.js          # -> "8 passed, 0 failed" (per-map scenery, water, clear lane)
-node tools/tests/kit_sim.js            # -> "20 passed, 0 failed" (payon recipe + RO scale, morocc design, builders, loader)
-node tools/tests/ui_sim.js             # -> "13 passed, 0 failed"
-node tools/tests/sprite_sim.js         # -> "10 passed, 0 failed" (mob art, weapon icons, view names)
-node tools/tests/starter_sim.js        # -> "4 passed, 0 failed"
-node tools/tests/weapon_joint_sim.js   # -> "7 passed, 0 failed" (measured hand joints, parked weapon)
-node tools/tests/picker_sim.js         # -> "13 passed, 0 failed" (the picker the owner uses, booted under a DOM stub)
-node tools/tests/pack_sim.js          # -> "bodies in pack (19): ..."
-node tools/tests/class_change_sim.js  # -> "24 passed, 0 failed"
-node tools/tests/save_load_sim.js     # -> "12 passed, 0 failed"
-node tools/tests/economy_sim.js       # -> "21 passed, 0 failed"
-node tools/tests/stat_sim.js          # -> "7 passed, 0 failed"
-node tools/tests/card_sim.js          # -> "13 passed, 0 failed"
-node tools/tests/skill_sim.js         # -> "51 passed, 0 failed"
-node tools/tests/gear_sim.js          # -> "24 passed, 0 failed  (24 assertions groups)"
-node tools/tests/scene_sim.js         # -> "8 passed, 0 failed" (per-map scenery, water, clear lane)
-node tools/tests/kit_sim.js           # -> "34 passed, 0 failed" (v2 atlas + KIT_PS, payon recipe, morocc design, ten identities, builders, loader)
-node tools/tests/ui_sim.js            # -> "31 passed, 0 failed"
-node tools/tests/sprite_sim.js        # -> "12 passed, 0 failed" (mob/weapon Divine Pride mapping, fallbacks, the held-weapon switch)
-node tools/tests/class_skin_sim.js    # -> "21 passed, 0 failed" (live class skins: every class, both genders, mirrors, asset loading)
-node tools/tests/starter_sim.js       # -> "7 passed, 0 failed" (the gentle starter stages)
-node tools/tests/pet_sim.js           # -> "11 passed, 0 failed" (+ the printed pet data, buff rules and the maxed-pet balance measurement)
-python3 tools/make_class_skins.py --check   # -> "Class skins are current."
-python3 tools/make_sprite_viewer.py --check # -> "Sprite viewer is current."
+node tools/tests/starter_sim.js        # -> "8 passed, 0 failed" (the gentle starter stages)
+node tools/tests/stat_sim.js           # -> "7 passed, 0 failed"
+node tools/tests/weapon_joint_sim.js   # -> "7 passed, 0 failed"
+node tools/tests/ui_sim.js             # -> "37 passed, 0 failed"
+node tools/tests/sprite_viewer_sim.js  # -> "Sprite viewer: 154 PNGs, 7 trees, 19 class jobs; ..."
+python3 tools/make_class_skins.py --check    # -> "Class skins are current."
+python3 tools/make_sprite_viewer.py --check  # -> "Sprite viewer is current."
 ```
+
 
 Every suite pulls real code out of `index.html` by **string boundary**, so an edit that
 moves a declaration can break a test without breaking the game. Traps, all hit once already:
@@ -3279,3 +3271,58 @@ assigned for feel rather than fidelity. While reworking that, two shipped bugs s
   across both v57 and v58: gear values are stamped at drop time, so items already owned keep
   their rolls, and the only removal is the background checkbox (the field stays in saves,
   normalised to on).
+
+### 2026-10-06 — `grind-v59 deeper skill lines + a free pet skill` (owner items 1 and 4)
+
+* **The roster is 91 skills (was 73) - one more per class (owner item 1).** Novice keeps only First
+  Aid; each of the 18 job classes now carries **5** skills (4 existing + 1 new), so Swordman's line
+  teaches `provoke`, Knight's `spear`, Lord Knight's `jointbeat`, Mage's `fireball`, Wizard's
+  `tstorm`, High Wizard's `napalm`, Archer's `iconc`, Hunter's `falconry`, Sniper's `pharrow`,
+  Thief's `steal`, Assassin's `vdust`, Assassin Cross's `sdestroy`, Acolyte's `iagi`, Priest's
+  `kyrie`, High Priest's `meditatio`, Merchant's `discount`, Blacksmith's `wresearch` and
+  Whitesmith's `cboost`. Two of them are the answer to a combat question the owner had: `tstorm`
+  is the Wizard's first true AoE and `sdestroy` is the Cross's ranged execute (it carries `rng`).
+* **Per-skill caps are RO-style, not one number per tier (owner's correction).** `act`/`pas`/`tos`
+  now default to `mx=10`, and a utility/passive skill in each class stops at 5 (First Aid,
+  Endure, Energy Coat, Frenzy, Basilica, Deadly Poison, Over Thrust, Spear Boomerang, Frost Nova,
+  Land Mine, Grimtooth, Gravitation Field among the old ones; Provoke, Improve Concentration,
+  Steal, Increase AGI, Kyrie Eleison, Discount and Cart Boost among the new). A full line tree is
+  now **140 points (139 payable, First Aid's level is free)**.
+* **Cooldowns went up, damage came down, and one global cooldown ties it together.** Every active
+  cooldown is x1.5 (rounded to .5s) and every trade-off x1.2 (rounded to whole seconds), and the
+  per-level damage slopes were halved so a skill at its new max still does what the old 5-level max
+  did (verified numerically: every pre-existing skill within 0.05 of v58 at max level). `SKGCD=.5`
+  is a new shared global cooldown: cast 0 lands instantly and starts its own cooldown, casts 1-2 of
+  a swing are queued (`castQ`, `{t:SKGCD*(cast-1),sk,k}`), fire when their turn comes, and are
+  dropped if the target dies first - so a three-skill swing is pressure over the swing instead of
+  three hits on one frame. 1/2/3 cast slots per tier are unchanged. **The tuning numbers are not
+  final** - the owner asked for a dedicated discussion before they are locked.
+* **Job levels now pay out all the way (the complaint this round fixes).** At max job level a line
+  earns 156 points against a 139-point tree, so there is room to finish everything and 17 points to
+  steer with; a line promoted at the minimum gate and restarted can be 12 short, which is the build
+  choice the panel now states out loud. No point refund: a save that over-spent on a skill whose cap
+  dropped keeps its levels, `skpAvail()` clamps at 0 and the repair loop only ever trims overspend -
+  nothing a player already bought is taken away, and a skill reset clears any stuck state.
+* **Every pet now arrives from a drop with one random skill already slotted (owner item 4).** The
+  drop rolls the same weighted pool the gacha uses (`pickW(PET_SKILL_WEIGHTS)`) and stores one
+  skill, so a fresh pet is useful from the first minute and the collection has meaning before any
+  Zeny is spent; the paid gacha then fills the second slot ("Gacha the second skill") and still
+  never repeats a skill. Pet *identity* work (signature skill / stat leaning) stays deliberately
+  parked - the owner asked for more time to think about it.
+* **Files touched:** `index.html` (`act`/`pas`/`tos` caps, 18 new skill definitions + `FX` tags +
+  `SKILL_ICON` glyphs + `SKILL_VFX`, halved slopes, raised cooldowns, `SKGCD`/`castQ` + its four
+  clear sites + the `update()` drain, pet drop skill, pets panel copy, skills panel copy, `BUILD`),
+  `tools/tests/{skill_sim,ui_sim,pet_sim}.js`, `Updates/cards-gear-audit/*` (v59 label, v58 added
+  to `SAFE_PREVIOUS_BUILDS` = 17 unique entries), `READ-ME-FIRST.md`, this log (the
+  "Verify before you push" block had drifted since v37 - it is now the current 21-suite list).
+* **Tests:** all **21 suites** pass on the same tree (no suite reports a FAIL line): pack 19,
+  class_change 25, class_skin 39, save_load 22, economy 23, stat 7, card 13, skill 52, gear 30,
+  scene 8, kit 34, UI 37, sprite 12, starter 8, pet 13, picker 19, drop_card_sheet 12,
+  weapon_joint 7, weapon_review 13, sprite_viewer 154 PNGs/19 jobs, background 12.
+* **Branches / PR:** `arena/01a10c2f-prontera-grind` -> PR #22 against `main`, updated with this
+  commit.
+* **Known limits / follow-ups:** skill numbers are a first pass (cooldown x1.5/x1.2 and the halved
+  slopes are the owner-endorsed shape, not the final feel) and want the dedicated tuning session
+  the owner asked for; pet identity is still parked by the owner's own request. The 5-level utility
+  skills are the only place a "wasted" point can happen if a later patch changes a cap - the panel
+  warns and the repair loop trims, so no save loses anything.

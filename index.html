@@ -311,7 +311,7 @@ const heroWeaponType=(cls,allowed,equipped)=>{const choices=allowed||[],preferre
 const STATS=[['str','STR','ATK'],['agi','AGI','ASPD, Flee'],['int','INT','Skill dmg'],['dex','DEX','Hit, min dmg'],['vit','VIT','DEF, MDEF, HP'],['luk','LUK','Crit, drops']];
 // A unique, immediately scannable glyph for every skill. These are interface symbols, not
 // replacement or recoloured character-sprite art.
-const SKILL_ICON={aid:'💚',bash:'👊',endure:'🛡️',hprec:'❤️‍🩹',bowl:'🌀',pierce:'🪡',quick:'⚡',spiral:'🌪️',aura:'✨',
+const SKILL_ICON={aid:'💚',bash:'👊',provoke:'😡',fireball:'🎆',iconc:'🔭',steal:'🧤',iagi:'🐇',discount:'🏷️',spear:'⚜️',tstorm:'⛈️',falconry:'🪁',vdust:'⚗️',kyrie:'🙏',wresearch:'🔬',jointbeat:'🦴',napalm:'🔴',pharrow:'🪃',sdestroy:'🌫️',meditatio:'🧘',cboost:'🛞',endure:'🛡️',hprec:'❤️‍🩹',bowl:'🌀',pierce:'🪡',quick:'⚡',spiral:'🌪️',aura:'✨',
   fire:'🔥',nap:'💀',coat:'💫',storm:'❄️',jup:'🌩️',amp:'📘',meteor:'☄️',grav:'🌌',mystic:'🔮',
   dstr:'🏹',owl:'🦉',vult:'🦅',blitz:'🪶',sharp:'🎯',beast:'🐾',falcon:'🪽',focus:'🔍',sight:'👁️',
   dbl:'⚔️',env:'☠️',dodge:'💨',sonic:'💥',grim:'🌑',katm:'🗡️',mAss:'🌠',soulb:'👻',
@@ -342,7 +342,7 @@ const GM_USER='GM',GM_PASS='gm1234';   // CHANGE THE GM PASSWORD before you publ
 // script block, which is a SyntaxError - the game did not run on main at all. One line wins, and
 // it names both sides of this merge: the v38 balance patch (the weapon cut, the affix/card
 // give-back) and main's weapon-hold rendering work.
-const BUILD='2026-10-05 grind-v58 Abyss-only legendary + card panel polish';   // shown on the login card - confirms which file you loaded
+const BUILD='2026-10-06 grind-v59 deeper skill lines + a free pet skill';   // shown on the login card - confirms which file you loaded
 $('buildTag').textContent='build '+BUILD;
 
 // ---------- class tree: Novice -> 6 first jobs -> 6 second jobs -> 6 third jobs ----------
@@ -362,34 +362,34 @@ CD.forEach(([n,par,aspd,atk,hp,col,cape,wt,main,rng,hat])=>CLASSES[n]={n,par,asp
 for(const c of Object.values(CLASSES)){c.tier=0;for(let p=c.par;p;p=CLASSES[p].par)c.tier++;c.mj=c.tier?50:10;c.rj=[0,10,40,50][c.tier];if(c.par)CLASSES[c.par].kids.push(c.n)}
 const lineOf=n=>{const a=[];for(;n;n=CLASSES[n].par)a.unshift(n);return a},down=n=>[n].concat(...CLASSES[n].kids.map(down));
 // ---------- skills (no SP: cooldown only) ----------
-const act=(id,n,from,cd,mul,hits,col)=>({id,n,from,cls:down(from),max:5,type:'act',magic:['Mage','Wizard','High Wizard','Acolyte','Priest','High Priest'].includes(from),cd,mul,hits,col,d:L=>`Auto: ${hits>1?hits+' hits of ':''}${Math.round(mul(L)*100)}% dmg &middot; CD ${cd}s`});
-const pas=(id,n,from,key,f,txt)=>({id,n,from,cls:down(from),max:5,type:'pas',key,f,d:L=>txt.replace('#',f(L))});
+const act=(id,n,from,cd,mul,hits,col,mx=10)=>({id,n,from,cls:down(from),max:mx,type:'act',magic:['Mage','Wizard','High Wizard','Acolyte','Priest','High Priest'].includes(from),cd,mul,hits,col,d:L=>`Auto: ${hits>1?hits+' hits of ':''}${Math.round(mul(L)*100)}% dmg &middot; CD ${cd}s`});
+const pas=(id,n,from,key,f,txt,mx=10)=>({id,n,from,cls:down(from),max:mx,type:'pas',key,f,d:L=>txt.replace('#',f(L))});
 // Tradeoff: an auto-cast buff with a genuine cost. Declared up here next to act()/pas() so the
 // main SKILLS array can use it, not just the pushed additions.
-const Z=()=>0,tos=(id,n,from,cd,o,col)=>({id,n,from,cls:down(from),max:5,type:'to',cd,col,to:o,
+const Z=()=>0,tos=(id,n,from,cd,o,col,mx=10)=>({id,n,from,cls:down(from),max:mx,type:'to',cd,col,to:o,
   d:L=>`Auto when above ${Math.round((o.hp||.6)*100)}% HP: ${o.txt(L)} for ${Math.round((o.dur||Z)(L))}s &middot; CD ${cd}s`});
 const SKILLS=[
  {id:'aid',n:'First Aid',from:'Novice',cls:Object.keys(CLASSES),max:5,type:'heal',cd:6,d:L=>`Auto: heals ${10+5*L}% HP when below half.`},
- act('bash','Bash','Swordman',2,L=>1.4+.3*L,1,'#ffb347'),pas('endure','Endure','Swordman','def',L=>2*L,'DEF +#.'),pas('hprec','HP Recovery','Swordman','hpreg',L=>.3*L,'Regen +#% HP/s.'),
- act('bowl','Bowling Bash','Knight',4,L=>.9+.2*L,2,'#ffe14d'),act('pierce','Pierce','Knight',2.5,L=>.7+.12*L,3,'#ff9d5c'),tos('quick','Two-Hand Quicken','Knight',26,{hp:.5,dur:L=>8+2*L,aspd:L=>15+7*L,def:L=>-(4+2*L),atk:Z,drain:Z,
-   txt:L=>`ASPD +${15+7*L}%, DEF ${-(4+2*L)}`},'#ffe14d'),
- act('spiral','Spiral Pierce','Lord Knight',5,L=>.8+.15*L,6,'#ff7a5c'),pas('aura','Aura Blade','Lord Knight','atk',L=>5*L,'ATK +#%.'),
- act('fire','Fire Bolt','Mage',1.5,L=>.7+.15*L,3,'#ff8a3d'),act('nap','Napalm Beat','Mage',1.2,L=>.9+.2*L,1,'#c9a0ff'),tos('coat','Energy Coat','Mage',30,{hp:.4,dur:L=>8+2*L,def:L=>15+8*L,atk:L=>-(6+3*L),aspd:Z,drain:Z,
-   txt:L=>`DEF +${15+8*L}, ATK ${-(6+3*L)}%`},'#8fd0ff'),
- act('storm','Storm Gust','Wizard',5,L=>.4+.1*L,8,'#8fe9ff'),act('jup','Jupitel Thunder','Wizard',3,L=>.8+.15*L,4,'#ffee55'),pas('amp','Amplify Magic','Wizard','matk',L=>5*L,'MATK +#%.'),
- act('meteor','Meteor Storm','High Wizard',6,L=>.5+.1*L,10,'#ff5a2a'),act('grav','Gravitational Field','High Wizard',4,L=>.7+.12*L,5,'#b080ff'),pas('mystic','Mystical Amplification','High Wizard','matk',L=>6*L,'MATK +#%.'),
- act('dstr','Double Strafe','Archer',1.5,L=>.8+.15*L,2,'#ffd28a'),pas('owl',"Owl's Eye",'Archer','atk',L=>3*L,'ATK +#%.'),pas('vult',"Vulture's Eye",'Archer','crit',L=>2*L,'Crit +#%.'),
- act('blitz','Blitz Beat','Hunter',3,L=>.7+.12*L,3,'#ffd23f'),act('sharp','Sharp Shooting','Hunter',4,L=>2+.5*L,1,'#ff4d4d'),pas('beast','Beast Bane','Hunter','atk',L=>4*L,'ATK +#%.'),
- act('falcon','Falcon Assault','Sniper',5,L=>3+.7*L,1,'#ffffff'),act('focus','Focused Arrow','Sniper',3.5,L=>.9+.15*L,3,'#ff9d3d'),pas('sight','True Sight','Sniper','crit',L=>3*L,'Crit +#%.'),
- pas('dbl','Double Attack','Thief','dbl',L=>10+8*L,'#% chance to strike twice.'),act('env','Envenom','Thief',2.5,L=>1.2+.3*L,1,'#7dff7d'),pas('dodge','Improve Dodge','Thief','flee',L=>3*L,'Flee +#%.'),
- act('sonic','Sonic Blow','Assassin',4,L=>.5+.1*L,6,'#ff9dff'),act('grim','Grimtooth','Assassin',2.5,L=>1.1+.25*L,2,'#ff6b6b'),pas('katm','Katar Mastery','Assassin','atk',L=>4*L,'ATK +#%.'),
- act('mAss','Meteor Assault','Assassin Cross',5,L=>.7+.15*L,4,'#d08cff'),act('soulb','Soul Breaker','Assassin Cross',3,L=>1+.2*L,2,'#ff5a8a'),
- act('holy','Holy Light','Acolyte',2,L=>1.5+.3*L,1,'#fff3a0'),pas('heal','Heal','Acolyte','hpreg',L=>.3*L,'Regen +#% HP/s.'),pas('bless','Blessing','Acolyte','atk',L=>3*L,'ATK +#%.'),
- act('magnus','Magnus Exorcismus','Priest',5,L=>.55+.1*L,6,'#ffe0ff'),pas('sanct','Sanctuary','Priest','hpreg',L=>.4*L,'Regen +#% HP/s.'),pas('asp','Aspersio','Priest','atk',L=>4*L,'ATK +#%.'),
- act('judex','Judex','High Priest',3,L=>.8+.15*L,3,'#ffffff'),pas('assum','Assumptio','High Priest','def',L=>4*L,'DEF +#.'),pas('gloria','Gloria','High Priest','atk',L=>5*L,'ATK +#%.'),
- act('mammo','Mammonite','Merchant',2.5,L=>1.6+.35*L,1,'#ffd23f'),pas('greed','Overcharge','Merchant','zeny',L=>8*L,'Zeny gain +#%.'),pas('phys','Physical Training','Merchant','hpp',L=>4*L,'Max HP +#%.'),
- act('hammer','Hammer Fall','Blacksmith',4,L=>2.4+.5*L,1,'#ff7a1a'),pas('adren','Adrenaline Rush','Blacksmith','aspd',L=>5*L,'ASPD +#%.'),pas('wperf','Weapon Perfection','Blacksmith','atk',L=>4*L,'ATK +#%.'),
- act('cart','Cart Termination','Whitesmith',5,L=>3+.6*L,1,'#ffa040'),pas('thrust','Power-Thrust','Whitesmith','atk',L=>6*L,'ATK +#%.'),pas('skin','Skin Tempering','Whitesmith','hpp',L=>6*L,'Max HP +#%.')];
+ act('bash','Bash','Swordman',3,L=>1.4+.15*L,1,'#ffb347'),pas('endure','Endure','Swordman','def',L=>1*L,'DEF +#.'),pas('hprec','HP Recovery','Swordman','hpreg',L=>.15*L,'Regen +#% HP/s.'),
+  tos('provoke','Provoke','Swordman',30,{hp:.55,dur:L=>8+L,atk:L=>4+2*L,aspd:Z,def:L=>-(3+L),drain:Z,txt:L=>`ATK +${4+2*L}%, DEF ${-(3+L)}`},'#ff9d9d',5), act('bowl','Bowling Bash','Knight',6,L=>.9+.1*L,2,'#ffe14d'),act('pierce','Pierce','Knight',4,L=>.7+.06*L,3,'#ff9d5c'),tos('quick','Two-Hand Quicken','Knight',31,{hp:.5,dur:L=>8+1*L,aspd:L=>15+3.5*L,def:L=>-(4+1*L),atk:Z,drain:Z,
+   txt:L=>`ASPD +${15+3.5*L}%, DEF ${-(4+1*L)}`},'#ffe14d'),
+  pas('spear','Spear Mastery','Knight','atk',L=>2*L,'ATK +#%.'), act('spiral','Spiral Pierce','Lord Knight',7.5,L=>.8+.075*L,6,'#ff7a5c'),pas('aura','Aura Blade','Lord Knight','atk',L=>2.5*L,'ATK +#%.'),
+  act('jointbeat','Joint Beat','Lord Knight',7,L=>1+.2*L,1,'#ffb347'), act('fire','Fire Bolt','Mage',2,L=>.7+.075*L,3,'#ff8a3d'),act('nap','Napalm Beat','Mage',2,L=>.9+.1*L,1,'#c9a0ff'),tos('coat','Energy Coat','Mage',36,{hp:.4,dur:L=>8+2*L,def:L=>15+8*L,atk:L=>-(6+3*L),aspd:Z,drain:Z,
+   txt:L=>`DEF +${15+8*L}, ATK ${-(6+3*L)}%`},'#8fd0ff',5),
+  act('fireball','Fire Ball','Mage',3.5,L=>.5+.1*L,1,'#ff8a3d'), act('storm','Storm Gust','Wizard',7.5,L=>.4+.05*L,8,'#8fe9ff'),act('jup','Jupitel Thunder','Wizard',4.5,L=>.8+.075*L,4,'#ffee55'),pas('amp','Amplify Magic','Wizard','matk',L=>2.5*L,'MATK +#%.'),
+  act('tstorm','Thunder Storm','Wizard',7,L=>.45+.09*L,4,'#8fe9ff'), act('meteor','Meteor Storm','High Wizard',9,L=>.5+.05*L,10,'#ff5a2a'),act('grav','Gravitational Field','High Wizard',6,L=>.7+.12*L,5,'#b080ff',5),pas('mystic','Mystical Amplification','High Wizard','matk',L=>3*L,'MATK +#%.'),
+  act('napalm','Napalm Vulcan','High Wizard',8,L=>.35+.07*L,4,'#ff8a3d'), act('dstr','Double Strafe','Archer',2,L=>.8+.075*L,2,'#ffd28a'), tos('iconc','Improve Concentration','Archer',26,{hp:.5,dur:L=>8+L,aspd:L=>8+4*L,def:L=>-(3+L),atk:Z,drain:Z,txt:L=>`ASPD +${8+4*L}%, DEF ${-(3+L)}`},'#d8ffb0',5), pas('owl',"Owl's Eye",'Archer','atk',L=>1.5*L,'ATK +#%.'),pas('vult',"Vulture's Eye",'Archer','crit',L=>1*L,'Crit +#%.'),
+ act('blitz','Blitz Beat','Hunter',4.5,L=>.7+.06*L,3,'#ffd23f'),act('sharp','Sharp Shooting','Hunter',6,L=>2+.25*L,1,'#ff4d4d'),pas('beast','Beast Bane','Hunter','atk',L=>2*L,'ATK +#%.'),
+  pas('falconry','Falconry Mastery','Hunter','crit',L=>1.5*L,'Crit +#%.'), act('falcon','Falcon Assault','Sniper',7.5,L=>3+.35*L,1,'#ffffff'),act('focus','Focused Arrow','Sniper',5,L=>.9+.075*L,3,'#ff9d3d'),pas('sight','True Sight','Sniper','crit',L=>1.5*L,'Crit +#%.'),
+  act('pharrow','Phantasmic Arrow','Sniper',8,L=>.8+.16*L,3,'#ffd28a',5), pas('dbl','Double Attack','Thief','dbl',L=>10+4*L,'#% chance to strike twice.'),act('env','Envenom','Thief',4,L=>1.2+.15*L,1,'#7dff7d'),pas('dodge','Improve Dodge','Thief','flee',L=>1.5*L,'Flee +#%.'),
+  pas('steal','Steal','Thief','zeny',L=>4*L,'Zeny gain +#%.',5), act('sonic','Sonic Blow','Assassin',6,L=>.5+.05*L,6,'#ff9dff'),act('grim','Grimtooth','Assassin',4,L=>1.1+.25*L,2,'#ff6b6b',5),pas('katm','Katar Mastery','Assassin','atk',L=>2*L,'ATK +#%.'),
+  act('vdust','Venom Dust','Assassin',6,L=>.5+.1*L,1,'#7dff7d'), act('mAss','Meteor Assault','Assassin Cross',7.5,L=>.7+.075*L,4,'#d08cff'),act('soulb','Soul Breaker','Assassin Cross',4.5,L=>1+.1*L,2,'#ff5a8a'),
+  act('sdestroy','Soul Destroyer','Assassin Cross',7,L=>.7+.14*L,2,'#ff5a8a'), act('holy','Holy Light','Acolyte',3,L=>1.5+.15*L,1,'#fff3a0'),pas('heal','Heal','Acolyte','hpreg',L=>.15*L,'Regen +#% HP/s.'),pas('bless','Blessing','Acolyte','atk',L=>1.5*L,'ATK +#%.'),
+  tos('iagi','Increase AGI','Acolyte',26,{hp:.5,dur:L=>8+L,aspd:L=>6+3*L,atk:L=>-(3+2*L),def:Z,drain:Z,txt:L=>`ASPD +${6+3*L}%, ATK ${-(3+2*L)}%`},'#b8f3ff',5), act('magnus','Magnus Exorcismus','Priest',7.5,L=>.55+.05*L,6,'#ffe0ff'),pas('sanct','Sanctuary','Priest','hpreg',L=>.2*L,'Regen +#% HP/s.'),pas('asp','Aspersio','Priest','atk',L=>2*L,'ATK +#%.'),
+  tos('kyrie','Kyrie Eleison','Priest',30,{hp:.5,dur:L=>10+L,def:L=>10+4*L,atk:L=>-(4+2*L),aspd:Z,drain:Z,txt:L=>`DEF +${10+4*L}, ATK ${-(4+2*L)}%`},'#fff3a0',5), act('judex','Judex','High Priest',4.5,L=>.8+.075*L,3,'#ffffff'),pas('assum','Assumptio','High Priest','def',L=>2*L,'DEF +#.'),pas('gloria','Gloria','High Priest','atk',L=>2.5*L,'ATK +#%.'),
+  pas('meditatio','Meditatio','High Priest','matk',L=>3*L,'MATK +#%.'), act('mammo','Mammonite','Merchant',4,L=>1.6+.175*L,1,'#ffd23f'),pas('greed','Overcharge','Merchant','zeny',L=>4*L,'Zeny gain +#%.'),pas('phys','Physical Training','Merchant','hpp',L=>2*L,'Max HP +#%.'),
+  pas('discount','Discount','Merchant','zeny',L=>4*L,'Zeny gain +#%.',5), act('hammer','Hammer Fall','Blacksmith',6,L=>2.4+.25*L,1,'#ff7a1a'),pas('adren','Adrenaline Rush','Blacksmith','aspd',L=>2.5*L,'ASPD +#%.'),pas('wperf','Weapon Perfection','Blacksmith','atk',L=>2*L,'ATK +#%.'),
+  pas('wresearch','Weapon Research','Blacksmith','atk',L=>1.5*L,'ATK +#%.'), act('cart','Cart Termination','Whitesmith',7.5,L=>3+.3*L,1,'#ffa040'),pas('thrust','Power-Thrust','Whitesmith','atk',L=>3*L,'ATK +#%.'),pas('skin','Skin Tempering','Whitesmith','hpp',L=>3*L,'Max HP +#%.'), tos('cboost','Cart Boost','Whitesmith',26,{hp:.5,dur:L=>8+2*L,aspd:L=>10+5*L,def:L=>-(4+2*L),atk:Z,drain:Z,txt:L=>`ASPD +${10+5*L}%, DEF ${-(4+2*L)}`},'#ffa040',5), ];
 
 // ---------- skill effects (2026-10-03) ----------
 // Tagged after the fact, the same way rng/aoe already were. dot.pow is the share of the
@@ -436,6 +436,14 @@ const FX={
   vsplash:{dot:{pow:.08,dur:5,col:'#7dff7d'},chain:{n:2,pow:.4}},                    // Venom Splasher: single target, delayed bomb
   tundead:{aoe:1,stun:{dur:.8}},                                                // Turn Undead: area obliteration
   meltdown:{aoe:1,dot:{pow:.07,dur:5,col:'#ffa040'},stun:{dur:.8}},             // Meltdown: damages surrounding enemies
+  // v59 additions
+  fireball:{aoe:1},                                                                // Fire Ball: 3x3 fire
+  tstorm:{aoe:1,stun:{dur:.6}},                                                    // Thunder Storm: 5x5 lightning
+  vdust:{aoe:1,dot:{pow:.06,dur:5,col:'#7dff7d'}},                                 // Venom Dust: poison cloud
+  jointbeat:{stun:{dur:.9}},                                                       // Joint Beat: breaks the target's joints
+  napalm:{dot:{pow:.05,dur:4,col:'#ff8a3d'}},                                      // Napalm Vulcan: multi-hit fire
+  pharrow:{stun:{dur:.8}},                                                         // Phantasmic Arrow: pins the target
+  sdestroy:{chain:{n:2,pow:.4}},                                                   // Soul Destroyer: soul wave
 };
 
 // Tradeoff: an auto-cast buff with a genuine cost. It fires itself when off cooldown and your
@@ -455,38 +463,38 @@ const FX={
 // Fire Wall was sitting on Wizard; it is a Mage spell, so Wizard gets Frost Nova instead and
 // Mage keeps Fire Bolt / Napalm Beat / Frost Diver / Energy Coat.
 SKILLS.push(
- tos('frenzy','Frenzy','Lord Knight',22,{hp:.5,dur:L=>6+L,aspd:L=>20+8*L,def:L=>-(10+4*L),atk:Z,drain:Z,
-   txt:L=>`ASPD +${20+8*L}%, DEF ${-(10+4*L)}`},'#ff4d4d'),
- tos('dpois','Deadly Poison','Assassin Cross',26,{hp:.7,dur:L=>5+L,atk:L=>25+10*L,aspd:Z,def:Z,drain:L=>1+.4*L,
-   txt:L=>`ATK +${25+10*L}% but you lose ${(1+.4*L).toFixed(1)}% max HP per second`},'#b05cff'),
- tos('ovthrust','Overthrust','Blacksmith',24,{hp:.6,dur:L=>8+2*L,atk:L=>15+6*L,aspd:Z,def:L=>-(5+2*L),drain:Z,
-   txt:L=>`ATK +${15+6*L}%, DEF ${-(5+2*L)}`},'#ff9d3c'),
- act('mbrk','Magnum Break','Swordman',4.5,L=>1.1+.22*L,1,'#ff7a3d'),
- act('fdiver','Frost Diver','Mage',3.5,L=>1+.2*L,2,'#8fe9ff'),
- act('fnova','Frost Nova','Wizard',5,L=>.6+.12*L,4,'#8fe9ff'),
- act('ashower','Arrow Shower','Archer',4,L=>.7+.15*L,3,'#ffd28a'),
- act('sandat','Sand Attack','Thief',3,L=>.9+.18*L,1,'#e0c78a'),
- act('signum','Signum Crucis','Acolyte',5,L=>.8+.16*L,2,'#ffe0a0'),
- act('cartrev','Cart Revolution','Merchant',4.5,L=>1.2+.24*L,1,'#ffa040'),
- act('spearboom','Spear Boomerang','Knight',3.5,L=>1.3+.26*L,1,'#ffe14d'),
- act('tblow','Traumatic Blow','Lord Knight',4,L=>1+.2*L,1,'#ff5a5a'),
- act('vermilion','Lord of Vermilion','High Wizard',6.5,L=>.5+.1*L,8,'#ff6a8a'),
- act('landmine','Land Mine','Hunter',4,L=>1.5+.3*L,1,'#c8a060'),
- tos('wwalk','Wind Walk','Sniper',28,{hp:.5,dur:L=>8+2*L,aspd:L=>12+6*L,def:L=>-(5+3*L),atk:Z,drain:Z,
-   txt:L=>`ASPD +${12+6*L}%, DEF ${-(5+3*L)}`},'#d8ffb0'),
- act('vsplash','Venom Splasher','Assassin',4,L=>.9+.18*L,2,'#7dff7d'),
- pas('akatar','Advanced Katar Mastery','Assassin Cross','atk',L=>5*L,'ATK +#%.'),
- act('tundead','Turn Undead','Priest',5,L=>1.1+.22*L,2,'#fff3a0'),
- tos('basilica','Basilica','High Priest',30,{hp:.6,dur:L=>8+2*L,atk:L=>12+5*L,aspd:Z,def:L=>-(6+3*L),drain:Z,
-   txt:L=>`ATK +${12+5*L}%, DEF ${-(6+3*L)}`},'#fff3a0'),
- act('meltdown','Meltdown','Whitesmith',6,L=>1.4+.28*L,1,'#ffa040'));
+ tos('frenzy','Frenzy','Lord Knight',26,{hp:.5,dur:L=>6+L,aspd:L=>20+8*L,def:L=>-(10+4*L),atk:Z,drain:Z,
+   txt:L=>`ASPD +${20+8*L}%, DEF ${-(10+4*L)}`},'#ff4d4d',5),
+ tos('dpois','Deadly Poison','Assassin Cross',31,{hp:.7,dur:L=>5+L,atk:L=>25+10*L,aspd:Z,def:Z,drain:L=>1+.4*L,
+   txt:L=>`ATK +${25+10*L}% but you lose ${(1+.4*L).toFixed(1)}% max HP per second`},'#b05cff',5),
+ tos('ovthrust','Overthrust','Blacksmith',29,{hp:.6,dur:L=>8+2*L,atk:L=>15+6*L,aspd:Z,def:L=>-(5+2*L),drain:Z,
+   txt:L=>`ATK +${15+6*L}%, DEF ${-(5+2*L)}`},'#ff9d3c',5),
+ act('mbrk','Magnum Break','Swordman',7,L=>1.1+.11*L,1,'#ff7a3d'),
+ act('fdiver','Frost Diver','Mage',5,L=>1+.1*L,2,'#8fe9ff'),
+ act('fnova','Frost Nova','Wizard',7.5,L=>.6+.12*L,4,'#8fe9ff',5),
+ act('ashower','Arrow Shower','Archer',6,L=>.7+.075*L,3,'#ffd28a'),
+ act('sandat','Sand Attack','Thief',4.5,L=>.9+.09*L,1,'#e0c78a'),
+ act('signum','Signum Crucis','Acolyte',7.5,L=>.8+.08*L,2,'#ffe0a0'),
+ act('cartrev','Cart Revolution','Merchant',7,L=>1.2+.12*L,1,'#ffa040'),
+ act('spearboom','Spear Boomerang','Knight',5,L=>1.3+.26*L,1,'#ffe14d',5),
+ act('tblow','Traumatic Blow','Lord Knight',6,L=>1+.1*L,1,'#ff5a5a'),
+ act('vermilion','Lord of Vermilion','High Wizard',10,L=>.5+.05*L,8,'#ff6a8a'),
+ act('landmine','Land Mine','Hunter',6,L=>1.5+.3*L,1,'#c8a060',5),
+ tos('wwalk','Wind Walk','Sniper',34,{hp:.5,dur:L=>8+1*L,aspd:L=>12+3*L,def:L=>-(5+1.5*L),atk:Z,drain:Z,
+   txt:L=>`ASPD +${12+3*L}%, DEF ${-(5+1.5*L)}`},'#d8ffb0'),
+ act('vsplash','Venom Splasher','Assassin',6,L=>.9+.09*L,2,'#7dff7d'),
+ pas('akatar','Advanced Katar Mastery','Assassin Cross','atk',L=>2.5*L,'ATK +#%.'),
+ act('tundead','Turn Undead','Priest',7.5,L=>1.1+.11*L,2,'#fff3a0'),
+ tos('basilica','Basilica','High Priest',36,{hp:.6,dur:L=>8+2*L,atk:L=>12+5*L,aspd:Z,def:L=>-(6+3*L),drain:Z,
+   txt:L=>`ATK +${12+5*L}%, DEF ${-(6+3*L)}`},'#fff3a0',5),
+ act('meltdown','Meltdown','Whitesmith',9,L=>1.4+.14*L,1,'#ffa040'));
 
 // Applied AFTER the push above: tagging before it silently skipped every new skill, because
 // SKILLS.find() returned undefined and the guard swallowed it.
 for(const k in FX){const s=SKILLS.find(x=>x.id===k);if(s)Object.assign(s,FX[k])}
 for(const id of ['nap','env']){const s=SKILLS.find(x=>x.id===id),desc=s.d;s.d=L=>desc(L)+' &middot; AREA: splashes nearby enemies.'}
 
-SKILLS.find(s=>s.id==='soulb').rng=1;SKILLS.find(s=>s.id==='mAss').aoe=1;SKILLS.find(s=>s.id==='soulb').d=L=>`Auto RANGED (up to 5 tiles): 2 hits of ${Math.round((1+.2*L)*100)}% dmg &middot; CD 3s`;SKILLS.find(s=>s.id==='mAss').d=L=>`Auto AREA: 4 hits of ${Math.round((.7+.15*L)*100)}% dmg, hits all nearby &middot; CD 5s`;
+SKILLS.find(s=>s.id==='soulb').rng=1;SKILLS.find(s=>s.id==='mAss').aoe=1;SKILLS.find(s=>s.id==='sdestroy').rng=1;SKILLS.find(s=>s.id==='soulb').d=L=>`Auto RANGED (up to 5 tiles): 2 hits of ${Math.round((1+.2*L)*100)}% dmg &middot; CD 3s`;SKILLS.find(s=>s.id==='mAss').d=L=>`Auto AREA: 4 hits of ${Math.round((.7+.15*L)*100)}% dmg, hits all nearby &middot; CD 5s`;
 
 // One visible battlefield effect for every active skill and temporary buff. These are
 // lightweight Three.js geometry recipes (not replacement character art). Their silhouettes
@@ -511,7 +519,11 @@ const SKILL_VFX={
   sandat:{kind:'sand',life:.6},signum:{kind:'holyField',life:.78},cartrev:{kind:'cartCrash',life:.62},
   spearboom:{kind:'spearThrow',at:'path',life:.58},tblow:{kind:'bleed',life:.66},
   vermilion:{kind:'lightningStorm',life:.84},landmine:{kind:'earthTrap',life:.66},
-  vsplash:{kind:'poisonBomb',life:.76},tundead:{kind:'holyNova',life:.8},meltdown:{kind:'fireNova',life:.72}
+  vsplash:{kind:'poisonBomb',life:.76},tundead:{kind:'holyNova',life:.8},meltdown:{kind:'fireNova',life:.72},
+  provoke:{kind:'frenzyAura',at:'caster',life:.7},fireball:{kind:'fireNova',life:.7},iconc:{kind:'windAura',at:'caster',life:.7},
+  iagi:{kind:'windAura',at:'caster',life:.7},tstorm:{kind:'lightningStorm',life:.9},vdust:{kind:'poison',life:.8},
+  kyrie:{kind:'shieldAura',at:'caster',life:.7},napalm:{kind:'fireBolt',at:'path',life:.5},pharrow:{kind:'arrowBurst',life:.55},
+  sdestroy:{kind:'soulBolt',at:'path',life:.6},cboost:{kind:'windAura',at:'caster',life:.7}, jointbeat:{kind:'impact',life:.5},
 };
 function skillFxSpec(id,color){const v=SKILL_VFX[id];return v?{id,kind:v.kind,at:v.at||'target',life:v.life||.65,color:color||'#fff'}:null}
 // ---------- world: 5 maps x 10 levels. Lv1-3 novice gear, 4-7 1st job, 8-9 2nd job, 10 boss = high-tier ----------
@@ -1000,7 +1012,7 @@ const roundReq=n=>{const a=Math.abs(n),m=a<100?1:a<1e4?10:a<1e5?100:1e3;return M
 const JOFF=[0,9,49,98];
 
 // ---------- state ----------
-let currentUser=null,S=null,speed=1,zenyEarned=0,floats=[],drops=[],t=0,shake=0,atkAnim=0,hitAnim=0,pend=[],shots=[],skillFx=[],barT=0,hudRate=null,logs=[],tab=null,selB=null,selC=null,selK=null,mapM=0,mapL=1;
+let currentUser=null,S=null,speed=1,zenyEarned=0,floats=[],drops=[],t=0,shake=0,atkAnim=0,hitAnim=0,pend=[],castQ=[],shots=[],skillFx=[],barT=0,hudRate=null,logs=[],tab=null,selB=null,selC=null,selK=null,mapM=0,mapL=1;
 // wt/wx/wz are the roam target: with no mobs on the field the character wanders instead of
 // trudging back to the spawn point. Only a defeat sends you home (see the death handler).
 const pl={x:0,z:Z1-1.5,ry:0,orb:0,run:0,wt:0,wx:0,wz:Z1-1.5},skCd={},petR={};
@@ -1253,9 +1265,12 @@ const gx=()=>S.gm?(S.gmx||100):1;
 
 // ---------- derived stats ----------
 // Skill points: one per job level past the first (9 for a maxed Novice, 58 for a maxed 1st
-// job, 107 for a 2nd job, 156 for a transcendent), and ONE point per skill level - 5 to max a
-// skill. Every line's whole tree therefore costs 4 / 24 / 44 / 64 points against 9 / 58 / 107 /
-// 156 earned, so a maxed job level can always finish its own tree, in every possible history.
+// job, 107 for a 2nd job, 156 for a transcendent), and ONE point per skill level. Since v59 a
+// line's fifteen class skills cap at 10 (most) or 5 (one utility skill per class), so the whole
+// tree costs 4 / 49 / 94 / 139 points against 9 / 58 / 107 / 156 earned. A maxed line finishes
+// with 17 points to spare, and that is the design: job levels keep paying to the very end of the
+// third job. A player who promotes at the minimum gate and restarts the Novice has 127 points and
+// stays ~12 short of the full tree - that is the build choice, not a bug (the panel shows it).
 //
 // History, because this number has been wrong twice:
 //   v35 charged the escalating ladder (level L cost L, so 15 to max a skill). A maxed Lord
@@ -1523,6 +1538,10 @@ function strike(mult,col,magic=false){
 // first lands softer (SKFADE), so the extra spam reads as pressure rather than as a flat
 // doubling of single-target damage.
 const SKSLOTS=t=>1+(t||0),SKFADE=[1,.55,.3,.18];
+// v59: skills share one global cooldown. A swing's first skill lands instantly and the extra
+// casts (tier 2 and 3) land SKGCD later each, so a three-skill swing is pressure over the
+// swing instead of three hits on the same frame. Raise or lower SKGCD to move the whole feel.
+const SKGCD=.5;
 // dot.pow is the fraction of the triggering hit dealt PER SECOND, so a .05/4s dot adds 20% of
 // the hit spread over time. chain.pow is the fraction each bounce deals, once per target.
 function castSkill(sk,k){
@@ -1546,8 +1565,8 @@ function playerAttack(){
   for(const sk of ready){
     if(cast>=SKSLOTS(C().tier))break;
     const k=SKFADE[cast]||.3;cast++;
-    skCd[sk.id]=sk.cd;skillNameFloat(sk.n,cast-1);
-    castSkill(sk,k);
+    skillNameFloat(sk.n,cast-1);
+    if(cast===1){skCd[sk.id]=sk.cd;castSkill(sk,k)}else castQ.push({t:SKGCD*(cast-1),sk,k});
     if(!mob||mob.hp<=0||mob.pack!==pack)break;
   }
   if(cast||far)return;
@@ -1566,7 +1585,7 @@ const qProg=type=>S.q&&S.q.forEach(q=>{if(q.type===type)q.prog=Math.min(q.goal,q
 function earnZeny(amount){const n=Math.max(0,Number(amount)||0);S.zeny+=n;zenyEarned+=n}
 function kill(o){const keep=mob;if(o)mob=o;if(!mob||!mobs.includes(mob)){mob=keep;return}
   const g=gx();S.kills++;recordMonsterKill(mob);S.kl++;qProg('kill');if(mob.boss)qProg('boss');
-  const z=Math.round(mob.zeny*(1+pv('zeny')/100))*g,xp=Math.round(mob.exp*expRate());earnZeny(z);S.exp+=xp;addJob(Math.round(Math.round(mob.exp*.7)*expRate()));pend=[];
+  const z=Math.round(mob.zeny*(1+pv('zeny')/100))*g,xp=Math.round(mob.exp*expRate());earnZeny(z);S.exp+=xp;addJob(Math.round(Math.round(mob.exp*.7)*expRate()));pend=[];castQ=[];
   addFloat(mob.x,2.4,mob.z,'+'+numTxt(z)+'z','#ffd23f');log(`${mob.n} defeated! +${xp.toLocaleString()} EXP, +${z.toLocaleString()} Zeny`,'','kills,zeny');
   // Drop odds are the field's own numbers: nothing on the character scales them, so LUK cannot
   // bend the tables (it still raises ATK through the crit/DEX side of the stat sheet, which is
@@ -1575,7 +1594,7 @@ function kill(o){const keep=mob;if(o)mob=o;if(!mob||!mobs.includes(mob)){mob=kee
   if(Math.random()*100<mob.cardCh){const g2=mob.card.g;drops.push(mkDrop({card:1,id:uid(),n:mob.card.n,g:g2,stat:mob.card.stat,v:cardVal(g2,mob.card.stat)}))}
   if(mob.ore)for(const o of['ori','elu'])if(Math.random()<mob.oreCh)drops.push(mkDrop({ore:o,id:uid(),n:ORE[o]}));
   if(Math.random()*100<(mob.boss?.5:.03)){const r=pickW(PW[Math.min(S.mp,9)]),c=PETS.filter(x=>x.r===r),sp=PETS.indexOf(c[ri(0,c.length-1)]);
-    if(S.pets.length<40){S.pets.push({id:ri(1e6,9e6),sp,mut:0,eq:[0,0,0],skills:[],on:S.pets.filter(x=>x.on).length<3});log(`A ${RN[r]} pet followed you: ${PETS[sp].n}!`,'r'+RCL[r],'pet');addFloat(mob.x,3,mob.z,'PET!','#ff9dff',true)}
+    if(S.pets.length<40){const gifted=pickW(PET_SKILL_WEIGHTS);S.pets.push({id:ri(1e6,9e6),sp,mut:0,eq:[0,0,0],skills:[PET_SKILLS[gifted].id],on:S.pets.filter(x=>x.on).length<3});log(`A ${RN[r]} pet followed you: ${PETS[sp].n} with ${PET_SKILLS[gifted].n}!`,'r'+RCL[r],'pet');addFloat(mob.x,3,mob.z,'PET!','#ff9dff',true)}
     else{const z=Math.floor(EGG*(.3+r*.4));earnZeny(z);log(`A ${RN[r]} ${PETS[sp].n} appeared but your pet collection is full (+${z}z).`,'','pet,zeny')}}
   checkLevel();
   if(mob.boss||(S.lvl<10&&S.kl>=MPS)){mobs=[];S.kl=0;if(S.lvl<10&&S.lvl>=S.prog[S.mp]){S.prog[S.mp]=S.lvl+1;log(`${fieldName()} cleared! Stage ${S.lvl+1} unlocked.`,'r3');if(S.adv&&S.lvl<10){S.lvl++}}}
@@ -1830,7 +1849,7 @@ const V={
     <small><b>A class you have played before is one click away</b> - its Base Lv, job level, skills, stats and gear are still on it, so there is no Novice reset needed to go back to it. A class you have <i>never</i> played still has to be unlocked from its parent (or from the Novice).</small>
     <button class="full" data-a="job" data-v="Novice" ${S.cls==='Novice'?'disabled':''}>Restart as Novice (Base Lv 25, job levels cleared)</button>`},
   skills(){const line=lineOf(S.cls),av=skpAvail(),sel=SKILLS.find(s=>s.id===selS);
-    return`${S.skRepair?`<div class="row" style="margin-bottom:4px"><small class="r0"><b>Repaired an older save:</b> ${S.skRepair} skill point${S.skRepair>1?'s were':' was'} refunded - the old shop minted points, so this line was carrying levels it had never earned. Nothing else to do.</small></div>`:''}<div class="hd">Skill points: ${av} <small>(${skEarned()} earned on this line, ${Math.max(0,skSpent()-(S.sk.aid?1:0))} spent &middot; this line's tree costs ${skTree()}, a maxed line earns ${skEarnedMax()} - <b>${Math.max(0,skEarnedMax()-skTree())} to spare</b>)</small></div><small>Skill levels cost 1 point each (5 to max a skill), so a maxed job level can always finish this whole line &middot; ${SKSLOTS(C().tier)} skill${SKSLOTS(C().tier)>1?'s cast':''} per swing at this job tier &middot; later casts in the same swing land at ${SKFADE.slice(1).map(f=>Math.round(f*100)+'%').join(' / ')} &middot; active skills auto-cast when learned; use the Auto cast checkbox on a skill to pause it, or the ALL tile beside First Aid to pause or resume the whole line at once</small>`
+    return`${S.skRepair?`<div class="row" style="margin-bottom:4px"><small class="r0"><b>Repaired an older save:</b> ${S.skRepair} skill point${S.skRepair>1?'s were':' was'} refunded - the old shop minted points, so this line was carrying levels it had never earned. Nothing else to do.</small></div>`:''}<div class="hd">Skill points: ${av} <small>(${skEarned()} earned on this line, ${Math.max(0,skSpent()-(S.sk.aid?1:0))} spent &middot; this line's tree costs ${skTree()}, a maxed line earns ${skEarnedMax()} - <b>${Math.max(0,skEarnedMax()-skTree())} to spare</b>)</small></div><small>Skill levels cost 1 point each. Most skills cap at 10 and a few utility skills stop at 5 (RO-style), so a maxed line spends 139 of its 156 points - job levels pay out all the way to 50, and a line you promoted out of early may not finish &middot; ${SKSLOTS(C().tier)} skill${SKSLOTS(C().tier)>1?'s cast':''} per swing at this job tier &middot; later casts in the same swing land at ${SKFADE.slice(1).map(f=>Math.round(f*100)+'%').join(' / ')} on a ${SKGCD}s shared global cooldown &middot; active skills auto-cast when learned; use the Auto cast checkbox on a skill to pause it, or the ALL tile beside First Aid to pause or resume the whole line at once</small>`
     +line.map(from=>{const ss=SKILLS.filter(s=>s.from===from);return ss.length?`<div class="sec">${from}</div><div class="skg">${ss.map(s=>{const L=lv(s.id),off=!!(L&&s.type!=='pas'&&skOff(s.id)),kind=s.type==='pas'?'PASSIVE':s.type==='to'?'TRADEOFF':s.type==='heal'?'HEAL':'ACTIVE';
       return`<div class="sk${L?'':' off'}${off?' auto-off':''}${selS===s.id?' sel':''}" style="--sk-accent:${s.col||'#8a6a2c'}" data-a="ssel" data-v="${s.id}">
         <div class="sk-head"><span class="sk-kind">${kind}</span>${off?'<span class="sk-paused">OFF</span>':''}</div>
@@ -2026,9 +2045,9 @@ function petDetail(p){const sp=PETS[p.sp],g=p.mut,sk=p.sk||[1,2,3],SL=petSkills(
   return`<div class="mob-card" style="margin-top:8px"><div class="hd r${RCL[sp.r]}">${petIcon(sp,true)} ${sp.n} <small>${RN[sp.r]}</small></div><small>Mutation: <b>${g?'Grade '+g+' (x'+MUT[g]+' dmg)':'none (x1)'}</b> &middot; ${petDmg(p).toLocaleString()} dmg every ${petInt(p).toFixed(2)}s</small>`
   +p.eq.map((t,i)=>`<div class="slot"><span><b>${PEQ[i].n} &middot; Level ${t}/${PT.length}</b> <small>(${t?PT[t-1]:'Untrained'})</small><br><small>${PEQ[i].d(t)}</small>${t<PT.length?`<br><small class="r0">${Math.round(PTG[t]*100)}% upgrade success &middot; ${t+2<=PT.length?Math.round(GREAT*100)+'% double upgrade chance on success':'double upgrade unavailable at this level'}</small>`:''}</span><button data-a="peq" data-v="${p.id}:${i}" ${t>=PT.length||S.zeny<peqCost(t)?'disabled':''}>${t>=PT.length?'MAX':'🎲 '+peqCost(t).toLocaleString()+'z'}</button></div>`).join('')
   +`<div class="sec">Pet skills &middot; 2 slots</div>`
-  +[0,1].map(i=>{const q=SL[i];return q?`<small><b>${q.icon} ${q.n}</b> &middot; ${q.kind==='buff'?'Player buff':q.kind==='aoe'?'AoE attack':q.kind==='single'?'Single-target attack':'Low-impact utility'} &middot; ${q.desc}</small>`:`<small>Slot ${i+1}: <b class="r0">empty</b> - one gacha fills both slots.</small>`}).join('<br>')
-  +`<div class="row" style="margin-top:4px"><button data-a="pskill" data-v="${p.id}" ${S.zeny<petSkillCost(p)?'disabled':''}>🎲 ${SL.length?'Reroll both skills':'Gacha both skills'} (${petSkillCost(p).toLocaleString()}z)</button></div>`
-  +`<small>Twelve skills: 4 player buffs, 2 AoE attacks, 2 single-target attacks and 4 low-impact utility rolls. Gacha weights: War Cry and Arcane Blessing 0.35× each; every other skill 1×. One roll fills both slots and never repeats a skill; a pet uses one skill every ${PETGAP}s.</small>`
+  +[0,1].map(i=>{const q=SL[i];return q?`<small><b>${q.icon} ${q.n}</b> &middot; ${q.kind==='buff'?'Player buff':q.kind==='aoe'?'AoE attack':q.kind==='single'?'Single-target attack':'Low-impact utility'} &middot; ${q.desc}</small>`:`<small>Slot ${i+1}: <b class="r0">empty</b> - one gacha fills the remaining slot.</small>`}).join('<br>')
+  +`<div class="row" style="margin-top:4px"><button data-a="pskill" data-v="${p.id}" ${S.zeny<petSkillCost(p)?'disabled':''}>🎲 ${SL.length>=2?'Reroll both skills':SL.length===1?'Gacha the second skill':'Gacha both skills'} (${petSkillCost(p).toLocaleString()}z)</button></div>`
+  +`<small>Twelve skills: 4 player buffs, 2 AoE attacks, 2 single-target attacks and 4 low-impact utility rolls. Gacha weights: War Cry and Arcane Blessing 0.35× each; every other skill 1×. Every pet arrives from a drop with one random skill already slotted, so the collection means something from the first minute; one gacha fills the rest and never repeats a skill. A pet uses one skill every ${PETGAP}s.</small>`
   +`<small style="display:block;margin-top:4px">Player buffs last 30s on a 60s cooldown and <b>never stack</b> - while one is up another pet's copy is ignored, and the ATK and MATK buffs cannot run at the same time.</small>`
   +`<div class="row" style="margin-top:6px"><button data-a="pon" data-v="${p.id}">${p.on?'Remove from battle':'Send to battle'}</button><button data-a="prel" data-v="${p.id}">Release</button></div><div class="sec">Mutation</div>`
   +`<div class="row"><button data-a="proll" data-v="${p.id}" ${busy(p)?'disabled':''}>🎲 Roll (${rollCost(p).toLocaleString()}z)</button><button data-a="pauto" data-v="${p.id}" ${p.roll||(rollingSet.has(p.id)&&!autoSet.has(p.id))?'disabled':''}>${autoSet.has(p.id)?'⏹ Stop auto':'🔁 Auto roll'}</button></div>`
@@ -2062,7 +2081,7 @@ const MAX_TABS=3;const openTab=k=>{if(k==='gm'&&!S.gm)return;if(k!=='status')eqP
   // Reopening a window starts at its first sub-tab: Status shows Stats, Inventory shows Bag.
   if(k==='status')sub.status='stats';if(k==='bag')sub.bag='bag';
   if(k==='map'){mapM=S.mp;mapL=S.lvl}}renderWin()};
-const gotoField=(m,l)=>{S.mp=m;S.lvl=l;S.kl=0;mobs=[];mob=null;respawn=.3;pend=[];qRefresh();ui();save()};
+const gotoField=(m,l)=>{S.mp=m;S.lvl=l;S.kl=0;mobs=[];mob=null;respawn=.3;pend=[];castQ=[];qRefresh();ui();save()};
 const ACT={
   selm:v=>{mapM=+v;mapL=Math.min(mapL,Math.max(1,S.prog[mapM]));renderWin()},sell_:v=>{mapL=+v;renderWin()},go:()=>{if(mapL<=S.prog[mapM]){gotoField(mapM,mapL);log(`Traveled to ${fieldName()}.`)}},
   stat:k=>{if(S.pts>=cost(k)&&S.st[k]<statCap()){S.pts-=cost(k);S.st[k]++;S.hp=Math.min(S.hp,maxHp());ui();save()}},
@@ -2153,7 +2172,7 @@ const ACT={
   sex:v=>{S.sex=v==='f'?'f':v==='m'?'m':(S.sex==='f'?'m':'f');heroKey='';log(`Appearance: ${S.sex==='f'?'female':'male'}.`);ui();save()},
   costume:()=>{log('Costumes arrive in a future patch - they will restyle a class without changing its stats.','','misc');ui()},
   hair:v=>{S.hair=(((S.hair|0)+(+v||1))%19+19)%19;heroKey='';ui();save()},
-  reset:()=>{ask('Erase this account save and start over?',()=>{const gm=S.gm;hudRate=null;zenyEarned=0;S=fresh();S.gm=gm;S.q=['kill','loot','boss'].map(newQuest);floats.forEach(f=>f.el&&f.el.remove());floats=[];drops=[];pend=[];mobs=[];mob=null;respawn=.3;logs=[];log('New adventure started.');ui();save()})},
+  reset:()=>{ask('Erase this account save and start over?',()=>{const gm=S.gm;hudRate=null;zenyEarned=0;S=fresh();S.gm=gm;S.q=['kill','loot','boss'].map(newQuest);floats.forEach(f=>f.el&&f.el.remove());floats=[];drops=[];pend=[];castQ=[];mobs=[];mob=null;respawn=.3;logs=[];log('New adventure started.');ui();save()})},
   gmx:v=>{S.gmx=+v;ui();save()},gmz:()=>{S.zeny+=1e6;ui();save()},gmo:()=>{S.ore.ori+=20;S.ore.elu+=20;ui();save()},gml:()=>{S.lv=Math.min(150,S.lv+10);S.pts+=30;S.hp=maxHp();ui();save()},
   gmj:()=>{const j=jobOf();j.jl=C().mj;j.jx=0;ui();save()},gmu:()=>{S.prog=MAPS.map(()=>10);ui();save()},gmindex:v=>gmIndexTest(v),gmcard:v=>gmCardTest(v),gmskill:v=>gmSkillTest(v),gmpet:v=>gmPetTest(v),gmp:v=>{if(S.pets.length>=40)S.pets.shift();const c=PETS.filter(x=>x.r===+v);S.pets.push({id:ri(1e6,9e6),sp:PETS.indexOf(c[ri(0,c.length-1)]),mut:0,eq:[0,0,0],skills:[],on:S.pets.filter(x=>x.on).length<3});ui();save()},gmm:v=>{S.pets.forEach(p=>p.mut=+v);ui();save()},gmc:()=>{S.pets=[];ui();save()}};
 $('dock').onclick=e=>{const b=e.target.closest('[data-t]');if(b)openTab(b.dataset.t)};
@@ -2245,6 +2264,9 @@ function update(dt){
   tickSkillFx(dt);
   if(skillOn('aid')&&S.hp<maxHp()*.5&&(skCd.aid||0)<=0){skCd.aid=6;const h=Math.ceil(maxHp()*(.1+.05*lv('aid')));S.hp=Math.min(maxHp(),S.hp+h);playSkillFx('aid',null,'#7dff7d');skillNameFloat('First Aid');addFloat(pl.x,2.6,pl.z,'+'+h,'#7dff7d')}
   for(let i=pend.length-1;i>=0;i--){const p=pend[i];p.t-=dt;if(p.t<=0){pend.splice(i,1);strike(p.m,p.col,!!p.magic);shot(p.col);if(mob&&mob.hp<=0){kill();break}}}
+  // queued extra casts of a swing: they fire on their own delay and set their cooldown when they do
+  for(let i=castQ.length-1;i>=0;i--){const c=castQ[i];c.t-=dt;if(c.t<=0){castQ.splice(i,1);
+    if(!mob||mob.hp<=0)continue;skCd[c.sk.id]=c.sk.cd;skillNameFloat(c.sk.n);castSkill(c.sk,c.k);if(mob&&mob.hp<=0)break}}
   // a timed tradeoff buff ticks down, drains HP if it says so, and clears when it expires
   // tb.t is undefined until the first cast, so every read of it defaults to 0. Without that,
   // 'tb.t>0' is false and the buff never ticks, and 'tb.t<=0' is false and it never re-casts.
@@ -2301,7 +2323,7 @@ function update(dt){
         else{const md=m.mag?mdef():def(),cut=Math.min(.75,md/(md+4000));
           const d=Math.max(1,Math.round(m.atk*rnd(.8,1.2)*(1-cut)));S.hp-=d;hitAnim=1;m.atkAnim=1;damageFloat(pl.x,2.4,pl.z,d,false,true);
           // Defeat is the ONE thing that puts you back at the spawn point.
-if(S.hp<=0){log('You were defeated... knocked back to the entrance.','r0','kills');S.hp=maxHp();S.kl=0;mobs=[];mob=null;respawn=1.5;pend=[];tb={};
+if(S.hp<=0){log('You were defeated... knocked back to the entrance.','r0','kills');S.hp=maxHp();S.kl=0;mobs=[];mob=null;respawn=1.5;pend=[];castQ=[];tb={};
           pl.x=0;pl.z=Z1-1.5;pl.wt=0;ui();return}}}}
     }
     if(!mob||!mobs.includes(mob)||mob.pack!==activePack)mob=mobs.find(m=>m.boss)||packMob();

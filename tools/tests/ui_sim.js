@@ -59,6 +59,7 @@ const code = [
   pick(/const STATS=\[[\s\S]*?\];/, 'STATS'),
   pick(/const SKILL_ICON=\{[^}]*\};/, 'per-skill icon map'),
   pick(/const SKSLOTS=t=>[^;]+;/, 'SKSLOTS/SKFADE'),
+  pick(/const SKGCD=[\d.]+;/, 'SKGCD'),
   pick(/const tnode=n=>[^\n]*/, 'tnode'),
   pick(/const crit=\(\)=>[^\n]*/, 'crit/flee/missCh'),
   pick(/const def=\(\)=>[^\n]*/, 'def/mdef/critD/needAt/need/cost'),
@@ -593,8 +594,10 @@ t('the Skills panel prints the whole tree against what a maxed line earns', () =
   assert.ok(src.includes('const skCost=()=>1;'), 'a skill level costs one point (v37)');
   assert.ok(src.includes('this line\'s tree costs ${skTree()}, a maxed line earns ${skEarnedMax()}'),
     'the panel must show the tree price and the maxed-line income side by side');
-  assert.ok(src.includes('Skill levels cost 1 point each (5 to max a skill), so a maxed job level can always finish this whole line'),
-    'the panel blurb must state the guarantee');
+  assert.ok(src.includes('Most skills cap at 10 and a few utility skills stop at 5 (RO-style)'),
+    'the panel blurb must state the v59 cap rule');
+  assert.ok(src.includes('job levels pay out all the way to 50'),
+    'and that job levels keep paying out (the owner complaint this round fixes)');
   // and the arithmetic itself, on the real numbers
   const box = {};
   vm.createContext(box);
@@ -614,8 +617,8 @@ t('the Skills panel prints the whole tree against what a maxed line earns', () =
   const K = box.__s, line = K.lineOf('Lord Knight');
   const tree = K.skTree(), max = K.skEarnedMax();
   assert.strictEqual(max, tree, 'a maxed line must expose exactly the tree budget: ' + tree + ' of ' + max);
-  // this fixture has the Knight at Job 40, so it has earned 146 - still far above the 64-point tree
-  assert.strictEqual(K.skpAvail(), 64, 'a maxed Lord Knight has exactly its 64-point tree budget');
+  // this fixture has the Knight at Job 40, so it has earned 146 - still far above the v59 139-point tree
+  assert.strictEqual(K.skpAvail(), 139, 'a maxed Lord Knight has exactly its 139-point tree budget');
   assert.ok(tree <= 146, 'the tree must fit inside a mid-promotion job history');
   console.log('       Lord Knight: tree ' + tree + ' pts of ' + max + ' earned at max job level');
 });
