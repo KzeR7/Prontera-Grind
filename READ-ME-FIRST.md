@@ -8,11 +8,16 @@ the repo, so pushing to `main` is the deploy.
 * `assets/sprite_pack_data.js` — the built class pack: 19 class bodies + 2 heads, base64 atlases (~5.8 MB).
 * `assets/kit/` — **map kit v2**: `ro-spritesheet.png` + `.json` (25 terrain tiles, 34 billboards)
   and the two attached level designs (`ro-map-payon.json`, `ro-map-morocc.json`).
-* `Sprite/*.png` — the uploaded class sheets, the source art for the pack.
+* `Sprite/*.png` — the uploaded class sheets, the source art for the pack (the animated fallback).
 * `Updates/Sprite/index.html` — the **canonical class-sprite reference backup** for all seven uploaded trees;
   after changing its PNGs, refresh the manifest with `python3 tools/make_sprite_viewer.py`. See
-  `Updates/Sprite/README.md` for the future-update workflow and why these still poses stay separate
-  from the live animation pack.
+  `Updates/Sprite/README.md` for the future-update workflow.
+* `assets/class_skins_data.js` — the **live class skins**: for every class and gender, the crop box and
+  file of its four uploaded poses (S, SE, NE walk + SE attack). The game draws the hero from those PNGs
+  in `Updates/Sprite/` and mirrors them for SW / NW / attack SW; the animated pack
+  (`assets/sprite_pack_data.js`) is the fallback until they load. Rebuild after changing a PNG with
+  `python3 tools/make_class_skins.py` (`--check` fails when it is stale), and see the QC sheet tool
+  `python3 tools/preview_class_skins.py`.
 * `tools/` — the art pipelines (`make_sprite_pack.py`, `make_sprite_viewer.py`, `montage.py`), the test suites (`tools/tests/`)
   and a dev-only plan previewer (`tools/preview/`).
 * `AGENTS.md` — **the project's rules and its full update log**. Read it before changing anything:
@@ -36,6 +41,7 @@ h=open('index.html').read()
 open('/tmp/pack_block.js','w').write(h[h.index('const PACK_BODY='):h.index('function ensureHero(')])
 PY
 python3 tools/make_sprite_viewer.py --check
+python3 tools/make_class_skins.py --check
 for t in tools/tests/*_sim.js; do node "$t" || exit 1; done
 ```
 

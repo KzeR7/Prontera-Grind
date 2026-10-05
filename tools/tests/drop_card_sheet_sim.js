@@ -150,7 +150,8 @@ t('card effect matrix uses the game’s actual rounded values and roll pools',()
 });
 t('worksheet migrates v45 edits through the v47 UI-only build',()=>{
   const script=html.match(/<script>\s*([\s\S]*?)\s*<\/script>/)[1];
-  assert.ok(script.includes("'2026-10-05 balance-v46 cdm tune + mastery index'"),'v46 must be a safe previous build before the v47 UI-only snapshot');
+  assert.ok(script.includes("'2026-10-05 balance-v47 bag locks + gear level reference'"),'v47 must be a safe previous build before the v51 sprite-only snapshot');
+  assert.ok(script.includes("'2026-10-05 balance-v46 cdm tune + mastery index'"),'v46 must stay a safe previous build');
   assert.ok(script.includes("'2026-10-05 balance-v45 all-class late-map gear'"),'the older v45 worksheet migration must remain supported');
   class Element{constructor(){this.innerHTML='';this.textContent='';this.value='';this.hidden=false;this.dataset={};this.classList={toggle(){},remove(){},add(){}}}addEventListener(){}setAttribute(){}focus(){}select(){}}
   const els=new Map(),get=id=>{if(!els.has(id))els.set(id,new Element());return els.get(id)};get('baseline-data').textContent=dataMatch[1];

@@ -16,8 +16,10 @@ The generator rebuilds the embedded folder/class and image manifests in `index.h
 
 Open `Updates/Sprite/index.html` in a browser or serve the repository with the project's local HTTP server. The page uses only local relative PNG paths and has no external script dependency. Review notes stay in the browser unless copied or downloaded by the owner.
 
-## Keep reference art separate from the live game pack
+## This set is now what the live game wears
 
-These files are individual full-body 200×200 still poses. They are not the game's eight-direction, multi-frame body/head atlas and do not carry the game's selectable hair. Do not replace `assets/sprite_pack_data.js` or the root `Sprite/*.png` sheets with this reference set. The game already resolves each of its 19 classes to its matching animated body when that body exists; `node tools/tests/pack_sim.js` checks the live compositor and class-to-skin mapping.
+These files are individual full-body 200×200 still poses. They are not an eight-direction, multi-frame animation atlas and they do not carry the game's 19 selectable hair styles — that is why the live game draws them as **one still per view**: S, SE and NE walking plus the SE attack, mirrored for SW, NW and the SW attack, and it keeps the animated pack as the fallback until they load. `assets/class_skins_data.js` (built by `python3 tools/make_class_skins.py`, checked with `--check`) stores the crop box and file for every class and gender, and `node tools/tests/class_skin_sim.js` checks the mapping, both genders, the mirrors and the asset loading. `tools/preview_class_skins.py` paints the same picture offline for review.
+
+Do not replace `assets/sprite_pack_data.js` or the root `Sprite/*.png` sheets with this set: the animated pack is still the fallback art, and `node tools/tests/pack_sim.js` still checks that compositor and the class-to-skin mapping.
 
 `tools/sprite_picker_standalone.html` and `tools/attack_selection.json` are separate game attack-pose/head-seat tools and backups. They are intentionally not overwritten by this reference page.

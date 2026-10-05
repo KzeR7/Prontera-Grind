@@ -482,15 +482,32 @@ t('every skill has a distinct icon and upgraded card metadata', () => {
   assert.ok(/\.skg\{[^}]*repeat\(4,minmax\(0,1fr\)\)/.test(src) && src.includes('.sk .si{width:40px;height:40px'), 'the icon tiles use a polished responsive card style');
 });
 
-t('Settings shows a live class, gender and hairstyle preview', () => {
+t('Settings previews the class art the character actually wears', () => {
   U.S = mkS('Assassin Cross'); U.S.sex = 'f'; U.S.hair = 7;
   const h = U.V.set();
   assert.ok(h.includes('id="hairPreview"') && h.includes('id="hairPreviewLoading"'), 'a canvas preview has a loading fallback');
-  assert.ok(h.includes('Live female Assassin Cross hair preview'), 'the preview describes the current class and gender');
-  assert.ok(h.includes('Female &middot; front idle pose') && h.includes('Style 8 of 19'), 'gender and selected hair are reflected');
-  assert.ok(h.includes('aria-label="Previous hairstyle"') && h.includes('aria-label="Next hairstyle"'), 'hair controls have accessible names');
-  assert.ok(src.includes("if(tabs.includes('set'))drawHairPreview()"), 'opening or changing Settings redraws the canvas');
-  assert.ok(src.includes('function drawHairPreview()') && src.includes('ctx.drawImage(atlas,0,0,PK.cellW,PK.cellH,0,0,cv.width,cv.height)'), 'the preview crops the actual packed class-and-hair art');
+  assert.ok(h.includes('Live female Assassin Cross class skin preview'), 'the preview describes the current class and gender');
+  assert.ok(h.includes('Female &middot; S (front) view'), 'and the view it draws');
+  assert.ok(h.includes('Hair comes with the class art'), 'the hairstyle is honestly reported as part of the uploaded art');
+  assert.ok(h.includes('still saved with your account (style 8 of 19)'), 'the saved hairstyle is not lost');
+  assert.ok(h.includes('aria-label="Previous hairstyle"') && h.includes('aria-label="Next hairstyle"'), 'the hair controls keep their accessible names');
+  assert.ok(!h.includes('data-a="hair"'), 'but they are no longer live buttons while the art is fixed');
+  assert.ok(h.includes('The art has no N, E or W pose'), 'the panel says which facings use the nearest supplied view');
+  assert.ok(h.includes('the held-weapon art is switched off'), 'and that the held-weapon overlay is off for now');
+  assert.ok(src.includes("if(tabs.includes('set'))drawAppearancePreview();if(tabs.includes('job'))drawClassPreview()}"),
+    'opening or changing a panel redraws its preview');
+  assert.ok(src.includes("ctx.drawImage(im,f[0],f[1],f[2],f[3],"), 'the preview draws the real class art crop');
+});
+
+t('the class-change panel previews the class it is describing', () => {
+  U.S = mkS('Knight');
+  const h = U.V.job();
+  assert.ok(h.includes('id="classPreview"') && h.includes('id="classPreviewLoading"'), 'the class panel has its own canvas and loading note');
+  assert.ok(h.includes('male Knight class skin preview'), 'the preview describes the current class and gender');
+  assert.ok(h.includes('CLASS PREVIEW') && h.includes('You wear this now'), 'with a plain label for the class you already are');
+  assert.ok(h.includes('What this class looks like') || h.includes('You wear this now'), 'and a label for a class you are only looking at');
+  const g = h.match(/.{0,40}undefined.{0,40}/);
+  assert.ok(!g, 'the class panel renders without undefined values: ' + (g ? g[0] : ''));
 });
 
 t('the character + class panels show the class-collection bonus', () => {

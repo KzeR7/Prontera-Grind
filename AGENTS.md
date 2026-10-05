@@ -519,10 +519,13 @@ node tools/tests/skill_sim.js         # -> "51 passed, 0 failed"
 node tools/tests/gear_sim.js          # -> "24 passed, 0 failed  (24 assertions groups)"
 node tools/tests/scene_sim.js         # -> "8 passed, 0 failed" (per-map scenery, water, clear lane)
 node tools/tests/kit_sim.js           # -> "34 passed, 0 failed" (v2 atlas + KIT_PS, payon recipe, morocc design, ten identities, builders, loader)
-node tools/tests/ui_sim.js            # -> "20 passed, 0 failed"
-node tools/tests/sprite_sim.js        # -> "12 passed, 0 failed" (mob/weapon Divine Pride mapping, fallbacks)
+node tools/tests/ui_sim.js            # -> "31 passed, 0 failed"
+node tools/tests/sprite_sim.js        # -> "12 passed, 0 failed" (mob/weapon Divine Pride mapping, fallbacks, the held-weapon switch)
+node tools/tests/class_skin_sim.js    # -> "21 passed, 0 failed" (live class skins: every class, both genders, mirrors, asset loading)
 node tools/tests/starter_sim.js       # -> "7 passed, 0 failed" (the gentle starter stages)
 node tools/tests/pet_sim.js           # -> "11 passed, 0 failed" (+ the printed pet data, buff rules and the maxed-pet balance measurement)
+python3 tools/make_class_skins.py --check   # -> "Class skins are current."
+python3 tools/make_sprite_viewer.py --check # -> "Sprite viewer is current."
 ```
 
 Every suite pulls real code out of `index.html` by **string boundary**, so an edit that
@@ -3020,3 +3023,20 @@ assigned for feel rather than fidelity. While reworking that, two shipped bugs s
 
 * **PR:** pushed `arena/01a10af7-prontera-grind` and opened PR #18, “Add canonical class sprite reference backup,” against `main`. The prior v50 log line saying “not pushed yet” was accurate before publication; this entry records the completed push and PR.
 * **Checks:** all 19 local test suites passed before the push. GitHub's Cloudflare Workers Builds check then reported **failure**; its only diagnostic is a Cloudflare dashboard link that redirects to account sign-in, and the GitHub check contains no build log or annotations. The failure reason is therefore unverified; do not describe the deployment check as passing.
+
+### 2026-10-05 — `skin-v51 live class skins in the game`
+
+* **What changed for players:** your character is now drawn from the uploaded class art in `Updates/Sprite/`. Every one of the 19 classes uses its own files, in the gender you picked, for the four views that exist: **S** (straight down), **SE** and **NE** walking, and the **SE** attack. **SW**, **NW** and the **SW attack** are the same poses mirrored horizontally - in the game and in the reference viewer, from the same source file. The art has no N, E or W drawing, so walking straight up shows the NE view and walking straight left/right shows the SE / mirrored SE view; the Appearance panel says that in words, so no facing is silently wrong.
+* **Animation trade-off (chosen by the owner):** these are single finished drawings, not sheets, so there are no walk or attack frames to play. Walking slides the one pose the game already had - exactly what the reference viewer does - and an attack is its one drawn swing. One constant scale per class and gender keeps the character the same size it was next to the monsters.
+* **Hair:** the uploaded art has the hair drawn into it, so the 19 hairstyles can no longer be composed on top. The saved hairstyle is untouched in your account and still applies if the animated pack is ever shown again; the ◀/▶ buttons now explain this instead of pretending to work.
+* **Weapons:** the held-weapon item icon is switched off for now (the owner's call while the class art is finished). The icon was anchored to hand positions measured from the old animated atlas, so it could only float wrongly on the new art. Weapons still fight, keep their stats and show in Equipment and the Bag; the slash and arrow effects are unchanged.
+* **Previews:** Settings shows a **live preview of the class skin you are wearing** (class + gender, S view), and the class-change panel shows the class you are looking at, male or female, before you switch. The class you are already on says "You wear this now".
+* **Safety net:** the game waits until all four drawings of that class and gender have decoded before it wears them; until then (or if a file cannot load, which is logged in the game log) it keeps the animated sprite, so a half-loaded class can never show the wrong pose or another class's art.
+* **Art:** none drawn, recoloured or redrawn - the game crops the uploaded PNGs by their own measured opaque bounds and mirrors them horizontally. `tools/montage.py` was not used and `assets/sprite_pack_data.js` / `Sprite/*.png` are untouched.
+* **Files touched:** `index.html` (class-skin loader/compositor, hero selection, Settings + class-change previews, held-weapon switch, BUILD), new `assets/class_skins_data.js`, new `tools/make_class_skins.py`, new `tools/preview_class_skins.py`, new `tools/tests/class_skin_sim.js`, `tools/tests/pack_sim.js`, `tools/tests/sprite_sim.js`, `tools/tests/ui_sim.js`, `tools/tests/drop_card_sheet_sim.js`, `Updates/cards-gear-audit/equipment-cards-tuning.html` (v47 as a safe previous build, snapshot refreshed), `Updates/cards-gear-audit/affix-ranges.html` (build badge), `Updates/Sprite/README.md`, `READ-ME-FIRST.md`, and this log.
+* **Known limits / follow-ups (tell the owner):**
+  * Three uploaded files are byte-for-byte duplicates of another pose: `aco female walking S` = `aco male walking S` (her front walk is the male drawing), `aco female attack SE` = `aco female walking SE` (her attack is her own walk), and `blacksmith female walking NE` = `whitesmith female walking NE`. `class_skin_sim.js` pins this list so a re-upload is noticed; no new art was invented to fill the gaps.
+  * Only one walk pose per direction exists, so movement has no leg cycle; if the owner wants motion, the options are more supplied frames or a self-made bob (not done).
+  * The held-weapon placement pass (v29 parked weapon + `assets/weapon_joints_data.js`) is parked behind `HERO_HELD_WEAPON=false`, ready to be re-measured against the new attack art.
+* **Tests:** all **20 suites** pass - card 13, class_change 25, class_skin 23, drop_card_sheet 12, economy 22, gear 30, kit 34, pack 19 bodies, pet 11, picker 19, save_load 18, scene 8, skill 51, sprite 12, sprite_viewer 154 PNGs, starter 8, stat 7, ui 31, weapon_joint 7, weapon_review 13. `node --check` on the inline game script and `git diff --check` are clean; both manifest generators report current.
+* **Branches / PR:** `arena/01a10b27-prontera-grind`.
