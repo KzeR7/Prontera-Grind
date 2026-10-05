@@ -461,6 +461,17 @@ t('both previews play the real class animation, not a still', () => {
   assert.ok(src.includes('animating'), 'the panel says the preview is animating');
 });
 
+t('the old melee swing arc is off, so the uploaded attack is not doubled', () => {
+  assert.ok(src.includes('const HERO_SWING_ARC=false;'), 'the arc sits behind one named switch');
+  assert.ok(src.includes("slashM.visible=HERO_SWING_ARC&&atkAnim>.12&&wt!=='bow'&&wt!=='staff';"),
+    'and the swing cue is gated by it (bow and staff shots are untouched)');
+  const decl = src.indexOf('const HERO_SWING_ARC=false;'), use = src.indexOf('slashM.visible=HERO_SWING_ARC&&');
+  assert.ok(decl >= 0 && decl < use, 'the switch is declared before the function that reads it');
+  assert.ok(src.includes('The white melee swing arc is switched off too - the uploaded attack animation already is the swing.'),
+    'and the Appearance panel tells the player, instead of the cue just vanishing');
+  assert.ok(!src.includes('HERO_SWING_ARC=true'), 'nothing switches the duplicate arc back on by accident');
+});
+
 t('the hairstyle and the held weapon are honestly reported', () => {
   assert.ok(src.includes('Every uploaded file is a complete looping animation, hair included'), 'the hair is part of the art');
   assert.ok(src.includes('is still saved with your account'), 'and the saved choice is not lost');

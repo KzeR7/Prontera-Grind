@@ -1790,7 +1790,7 @@ const V={
   <small>Every uploaded file is a complete looping animation, hair included, so the old 19 hairstyles cannot be put on it. The style you picked is still saved with your account (style ${hair} of 19) and comes back if the animated pack is ever used again.</small>
   <small><b>Views:</b> S (straight down), SE and NE are the supplied animations; SW and NW are those mirrored, and the attack is the supplied SE swing, mirrored when you swing to the left. The art has no E or W animation, and only High Priest has its own straight-up N one, so walking straight up uses NE${S.cls==='High Priest'?' (High Priest uses its own N art)':''} and walking straight left or right uses the SE / mirrored SE view.</small>
   <small><b>Standing still:</b> the art has no idle animation, so at rest your character keeps playing its walk cycle - the same thing the reference viewer does. Send idle art and it will use it.</small>
-  <small><b>Weapons:</b> the held-weapon art is switched off while the class skins are finished, so your character is drawn from the class art alone. Your equipped weapon still gives its full stats and shows in Equipment and the Bag.</small>
+  <small><b>Weapons:</b> the held-weapon art is switched off while the class skins are finished, so your character is drawn from the class art alone. The white melee swing arc is switched off too - the uploaded attack animation already is the swing. Your equipped weapon still gives its full stats and shows in Equipment and the Bag.</small>
     <div class="hd" style="margin-top:10px">Damage numbers</div>
     <div class="row"><button data-a="dmgshow" data-v="on" class="${S.dmgShow!==false?'on':''}" aria-pressed="${S.dmgShow!==false}">Show: On</button><button data-a="dmgshow" data-v="off" class="${S.dmgShow===false?'on':''}" aria-pressed="${S.dmgShow===false}">Show: Off</button></div>
     <div class="row" style="margin-top:4px"><button data-a="dmgfmt" data-v="short" class="${S.dmgShort!==false?'on':''}" aria-pressed="${S.dmgShort!==false}">Short &middot; 100K / 1M</button><button data-a="dmgfmt" data-v="full" class="${S.dmgShort===false?'on':''}" aria-pressed="${S.dmgShort===false}">Full &middot; 100,000</button></div>
@@ -3378,11 +3378,15 @@ function buildMob(m){
     im.onerror=()=>{v.imageFailed=true;im.style.display='none'};im.src=url;mobSpriteLayer.appendChild(im);v.image=im;requestMobTexture(v.spriteId)}
   return v}
 let slashM=null;
+// The uploaded attack animation is the whole swing.  The old melee cue - a white arc stroked in
+// code over the hero - would read as a second, duplicate slash on top of it, so it waits with the
+// held weapon: one line to switch back on if the owner wants the hit cue more than the clean swing.
+const HERO_SWING_ARC=false;
 function drawSlashFX(x,z,wt){
   if(!slashM){const cv=document.createElement('canvas');cv.width=80;cv.height=80;const g=cv.getContext('2d');
     g.strokeStyle='#fff6c8';g.lineWidth=7;g.beginPath();g.arc(40,48,28,-1.4,.9);g.stroke();g.strokeStyle='#fff';g.lineWidth=3;g.beginPath();g.arc(40,48,24,-1.25,.7);g.stroke();
     slashM=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(cv),transparent:true,depthWrite:false}));slashM.center.set(.5,.25);scene.add(slashM)}
-  slashM.visible=atkAnim>.12&&wt!=='bow'&&wt!=='staff';if(!slashM.visible)return;
+  slashM.visible=HERO_SWING_ARC&&atkAnim>.12&&wt!=='bow'&&wt!=='staff';if(!slashM.visible)return;
   slashM.position.set(x,1.15,z);slashM.material.opacity=Math.min(1,atkAnim*1.6)*.9;slashM.scale.set(1.6+atkAnim*1.2,1.6+atkAnim*1.2,1)}
 // Pets use the same official Divine Pride renderer as field mobs, but every species
 // stays well below the hero regardless of the monster's size or mutation grade.

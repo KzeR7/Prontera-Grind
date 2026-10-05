@@ -502,6 +502,7 @@ t('Settings previews the class art the character actually wears', () => {
   assert.ok(h.includes('the art has no idle animation, so at rest your character keeps playing its walk cycle'),
     'the standing-still policy is stated plainly, not hidden');
   assert.ok(h.includes('the held-weapon art is switched off'), 'and that the held-weapon overlay is off for now');
+  assert.ok(h.includes('The white melee swing arc is switched off too'), 'and that the duplicate swing arc is off, with the reason');
   assert.ok(src.includes("if(tabs.includes('set'))drawAppearancePreview();") &&
             src.includes("if(tabs.includes('job'))drawClassPreview();"),
     'the game loop redraws whichever preview is open, so it animates');

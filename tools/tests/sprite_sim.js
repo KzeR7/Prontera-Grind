@@ -251,7 +251,9 @@ t('official sprites are loaded over the procedural art with safe fallbacks', () 
             'the away-view list is still remembered (a front-view item icon reads wrong there)');
   assert.ok(src.includes("n.el.style.display='grid'"), 'the weapon node code is still in place, just not reached');
   assert.ok(src.includes("if(!mob||heroWeaponType(C().n,C().wt,S.eq.weapon&&S.eq.weapon.wt)!=='bow')return"), 'only the Archer weapon family emits the basic arrow projectile');
-  assert.ok(src.includes("slashM.visible=atkAnim>.12&&wt!=='bow'&&wt!=='staff'"), 'bow and staff attacks do not show a generic melee slash');
+  assert.ok(src.includes("slashM.visible=HERO_SWING_ARC&&atkAnim>.12&&wt!=='bow'&&wt!=='staff'")
+            && src.includes('const HERO_SWING_ARC=false;'),
+            'bow and staff attacks never showed a generic melee slash, and since v52 the melee arc itself waits behind HERO_SWING_ARC so it cannot double the uploaded attack animation');
   assert.ok(src.includes('n.fallback.textContent=WICON[wt]'), 'the existing weapon glyph remains the icon fallback');
 });
 
