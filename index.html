@@ -328,7 +328,7 @@ const GM_USER='GM',GM_PASS='gm1234';   // CHANGE THE GM PASSWORD before you publ
 // script block, which is a SyntaxError - the game did not run on main at all. One line wins, and
 // it names both sides of this merge: the v38 balance patch (the weapon cut, the affix/card
 // give-back) and main's weapon-hold rendering work.
-const BUILD='2026-10-05 skin-v51 live class skins in the game';   // shown on the login card - confirms which file you loaded
+const BUILD='2026-10-05 skin-v52 animated class skins (APNG)';   // shown on the login card - confirms which file you loaded
 $('buildTag').textContent='build '+BUILD;
 
 // ---------- class tree: Novice -> 6 first jobs -> 6 second jobs -> 6 third jobs ----------
@@ -1785,10 +1785,11 @@ const V={
     <small>${shown.length} of ${logs.length} events shown &middot; tick what you want to read &middot; the on-screen log follows the same ticks</small>
     ${shown.map(l=>`<div class="${l.cls||''}">${l.m}</div>`).join('')||'<i>No events to show.</i>'}`},
   set(){const hair=((S.hair|0)%19+19)%19+1,sex=S.sex==='f'?'Female':'Male';return`<div class="hd">Appearance</div><div class="row"><button data-a="sex" data-v="m" aria-label="Choose male sprite" style="${S.sex==='f'?'':'background:#ffe08a'}">♂ Male</button><button data-a="sex" data-v="f" aria-label="Choose female sprite" style="${S.sex==='f'?'background:#ffe08a':''}">♀ Female</button></div>
-  <div class="hair-preview-card"><div class="hair-preview-stage"><canvas id="hairPreview" width="126" height="134" role="img" aria-label="Live ${sex.toLowerCase()} ${S.cls} class skin preview"></canvas><span class="hair-preview-loading" id="hairPreviewLoading">Loading sprite…</span></div><div class="hair-preview-info"><span class="eyebrow">LIVE PREVIEW</span><b>${S.cls}</b><span>${sex} &middot; S (front) view</span><span class="hair-style-label">Your class's own uploaded art</span></div></div>
+  <div class="hair-preview-card"><div class="hair-preview-stage"><canvas id="hairPreview" width="126" height="134" role="img" aria-label="Live ${sex.toLowerCase()} ${S.cls} class skin preview"></canvas><span class="hair-preview-loading" id="hairPreviewLoading">Loading sprite…</span></div><div class="hair-preview-info"><span class="eyebrow">LIVE PREVIEW</span><b>${S.cls}</b><span>${sex} &middot; S (front) view &middot; animating</span><span class="hair-style-label">Your class's own uploaded animation</span></div></div>
   <div class="row hair-controls" style="margin-top:4px;align-items:center;gap:8px"><button disabled aria-label="Previous hairstyle" title="The hairstyle is part of the uploaded class art">◀</button><span>Hair comes with the class art</span><button disabled aria-label="Next hairstyle" title="The hairstyle is part of the uploaded class art">▶</button></div>
-  <small>The uploaded class art is one finished drawing per view, hair included, so the old 19 hairstyles cannot be put on it. The style you picked is still saved with your account (style ${hair} of 19) and comes back if the animated pack is ever used again.</small>
-  <small><b>Views:</b> S (straight down), SE and NE are the uploaded poses; SW, NW and the SW attack are the same pose mirrored. The art has no N, E or W pose, so walking straight up uses the NE view and walking straight left or right uses the SE / mirrored SE view.</small>
+  <small>Every uploaded file is a complete looping animation, hair included, so the old 19 hairstyles cannot be put on it. The style you picked is still saved with your account (style ${hair} of 19) and comes back if the animated pack is ever used again.</small>
+  <small><b>Views:</b> S (straight down), SE and NE are the supplied animations; SW and NW are those mirrored, and the attack is the supplied SE swing, mirrored when you swing to the left. The art has no E or W animation, and only High Priest has its own straight-up N one, so walking straight up uses NE${S.cls==='High Priest'?' (High Priest uses its own N art)':''} and walking straight left or right uses the SE / mirrored SE view.</small>
+  <small><b>Standing still:</b> the art has no idle animation, so at rest your character keeps playing its walk cycle - the same thing the reference viewer does. Send idle art and it will use it.</small>
   <small><b>Weapons:</b> the held-weapon art is switched off while the class skins are finished, so your character is drawn from the class art alone. Your equipped weapon still gives its full stats and shows in Equipment and the Bag.</small>
     <div class="hd" style="margin-top:10px">Damage numbers</div>
     <div class="row"><button data-a="dmgshow" data-v="on" class="${S.dmgShow!==false?'on':''}" aria-pressed="${S.dmgShow!==false}">Show: On</button><button data-a="dmgshow" data-v="off" class="${S.dmgShow===false?'on':''}" aria-pressed="${S.dmgShow===false}">Show: Off</button></div>
@@ -3216,51 +3217,88 @@ const packImg={},packCache=new Map(),PACK_K=.03;let packReady=false;
   for(const c in PK.bodies)ld('b:'+c,PK.bodies[c].atlas);for(const h in PK.heads)ld('h:'+h,PK.heads[h])})();
 
 // ----- Class skins (assets/class_skins_data.js, built by tools/make_class_skins.py) -----
-// The owner's class art is one finished 200x200 drawing per supplied view: walking S, walking
-// SE, walking NE and attacking SE.  SW, NW and the SW attack are that same drawing mirrored
-// horizontally - byte for byte what the canonical reference viewer in Updates/Sprite/index.html
-// shows for the same route.  The art has no N, E or W drawing, so walking straight up uses the
-// NE view and walking straight left / right uses the SE / mirrored SE view; the Appearance panel
-// spells that out, so a facing is never quietly wrong.  There are no animation frames in this
-// art: walking slides the still, and an attack is its one drawn swing.
+// The owner's class art is one complete 200x200 ANIMATED PNG per supplied view: walking S,
+// walking SE, walking NE and attacking SE (High Priest also supplies its own walking N).
+// Every file loops forever - so the browser plays it and the game copies the frame the browser
+// is showing right now onto a 200x200 canvas, which is the texture on the hero billboard. That
+// bridge is the point: an APNG handed straight to THREE.TextureLoader would freeze on whatever
+// frame happened to be decoded at upload time. No animation clock, no frame counter, no
+// cropping: the file's own frame order, per-frame delays and endless loop are what the player
+// sees. SW, NW and the SW attack are that same file mirrored horizontally (drawn flipped on the
+// canvas, never re-encoded); the art has no W, E or (except High Priest) N drawing, so those
+// three facings show a named nearest view and the Appearance panel spells that out.
+const SKIN_SIZE=200;                       // every supplied canvas is 200x200
 const SKIN_VIEW={0:['S',0],1:['SE',1],2:['SE',1],3:['NE',1],4:['NE',0],5:['NE',0],6:['SE',0],7:['SE',0]};
+// Attacking is drawn by the single SE attack animation: the left-hand facings (SW, W, NW) get it
+// mirrored, everything else the drawn swing.  Both are named here, in one list, so it is testable.
 const SKIN_ATTACK_MIRROR=[0,1,1,1,0,0,0,0];
-// One constant scale per class and gender: the hero already stood 72px of the old pack cell
-// tall (PACK_K per pixel), so the drawn character keeps its size next to the monsters.
+// One constant scale per class and gender: the hero already stood 72px of the old pack cell tall.
 const SKIN_H=72*PACK_K;
-const skinPacks=new Map(),skinWarned={};
+const SKIN_CACHE_MAX=24;                   // the hidden <img> decoders kept alive at once
+const skinDocs={},skinDocOrder=[],skinPacks=new Map(),skinWarned={};
+// A hidden-but-painted <img> is what keeps a native APNG's timeline running; display:none is
+// exactly what browsers are allowed to skip, so the decoder lives in the corner instead.
+function skinLayer(){let el=$('skinDecoders');if(!el){el=document.createElement('div');el.id='skinDecoders';
+  el.setAttribute('aria-hidden','true');
+  el.style.cssText='position:fixed;left:0;top:0;width:1px;height:1px;overflow:hidden;opacity:0;pointer-events:none;z-index:-1';
+  document.body.appendChild(el)}return el}
+function skinDoc(url){
+  const cached=skinDocs[url];
+  if(cached)return cached;
+  const im=new Image();im.alt='';im.draggable=false;im.decoding='async';
+  im.style.cssText='width:'+SKIN_SIZE+'px;height:'+SKIN_SIZE+'px';
+  skinDocs[url]=im;skinDocOrder.push(url);
+  if(skinDocOrder.length>SKIN_CACHE_MAX){const old=skinDocOrder.shift();
+    if(old&&old!==url)delete skinDocs[old]}
+  im.onload=()=>{heroKey='';drawAppearancePreview();drawClassPreview()};
+  im.onerror=()=>{const key=im.dataset.warn||'';if(!skinWarned[key]){skinWarned[key]=1;
+    log('Class skin art could not load ('+decodeURI(url)+'). The animated fallback sprite is used instead.','r0')}};
+  im.src=encodeURI(url);
+  skinLayer().appendChild(im);
+  return im}
+// One pack per class and gender: the measured art data plus one decoder per supplied view.
 function skinPack(cls,sex){
   const key=String(cls)+'|'+(sex==='f'?'f':'m'),cached=skinPacks.get(key);
   if(cached!==undefined)return cached;
   const all=window.CLASS_SKINS,rec=all&&all.classes&&all.classes[cls]?all.classes[cls][sex==='f'?'f':'m']:null;
   let p=null;
-  if(rec){p={dir:all.dir,ref:rec.ref,poses:rec.poses,files:rec.files,imgs:{}};
-    for(const v in rec.files){const im=new Image();p.imgs[v]=im;
-      im.onload=()=>{heroKey='';drawAppearancePreview();drawClassPreview()};
-      im.onerror=()=>{if(!skinWarned[key]){skinWarned[key]=1;
-        log(`Class skin art could not load (${rec.files[v]}). ${cls} keeps the animated sprite instead.`,'r0')}};
-      im.src=encodeURI(p.dir+'/'+rec.files[v])}}
+  if(rec){p={dir:all.dir,files:rec.files,frames:rec.frames,poses:rec.poses,height:rec.height,anchor:rec.anchor,views:{}};
+    for(const v in rec.files){const url=p.dir+'/'+rec.files[v],im=skinDoc(url);im.dataset.warn=key+'|'+v;p.views[v]=im}}
   skinPacks.set(key,p);return p}
-function skinImage(p,view){const im=p&&p.imgs[view];return im&&im.complete&&im.naturalWidth>0?im:null}
-// Every view of the class has to decode before the skin is worn: a half-loaded class would show
-// the wrong pose for a moment, and this game never shows a facing it cannot back up.
+function skinImage(p,view){const im=p&&p.views[view];return im&&im.complete&&im.naturalWidth>0?im:null}
+// The whole class and gender waits for every supplied view to decode: a half-loaded class would
+// show the wrong view for a moment, and the animated fallback is always there to cover the wait.
 function skinLoaded(p){if(!p)return false;for(const v in p.files)if(!skinImage(p,v))return false;return true}
-function mkSkinHero(p,im){
-  const tex=new THREE.Texture(im);tex.magFilter=tex.minFilter=THREE.NearestFilter;tex.generateMipmaps=false;tex.needsUpdate=true;
+// Which supplied animation a facing and an action draw, and whether it is mirrored.  dir 4 (straight
+// up) uses High Priest's own N file when the class has one; otherwise the NE view stands in.
+function skinRoute(p,dir,atk){
+  if(atk>0)return{view:'attack',mirror:!!SKIN_ATTACK_MIRROR[dir]};
+  if(dir===4&&p&&p.files&&p.files.N)return{view:'N',mirror:false};
+  const v=SKIN_VIEW[dir];return{view:v[0],mirror:!!v[1]}}
+function mkSkinHero(p){
+  const cv=document.createElement('canvas');cv.width=SKIN_SIZE;cv.height=SKIN_SIZE;
+  const tex=new THREE.CanvasTexture(cv);tex.magFilter=tex.minFilter=THREE.NearestFilter;tex.generateMipmaps=false;
   const s=new THREE.Sprite(new THREE.SpriteMaterial({map:tex,transparent:true,alphaTest:.12}));
-  s.center.set(.5,0);                     // the drawn feet sit on the ground anchor
-  s.userData.skin=p;
+  const px=SKIN_H/(p.height||90);                      // world units per source pixel, one per class/gender
+  s.scale.set(SKIN_SIZE*px,SKIN_SIZE*px,1);
+  // anchor: the figure's own centre x and its ground line, so the feet stay put while frames advance
+  s.center.set((p.anchor[0]||SKIN_SIZE/2)/SKIN_SIZE,1-(p.anchor[1]||SKIN_SIZE)/SKIN_SIZE);
+  s.userData.skin={p,cv,tex,view:'',mirror:null};
   return s}
-function setSkinCell(spr,dir,atk){
-  const p=spr.userData.skin,view=atk>0?'attack':SKIN_VIEW[dir][0],mirror=atk>0?!!SKIN_ATTACK_MIRROR[dir]:!!SKIN_VIEW[dir][1],
-        f=p.poses[view],im=skinImage(p,view),t=spr.material.map;
-  if(!im){spr.visible=false;return false}
+// Copy the frame the browser is showing right now - the APNG keeps its own timing and loop.
+function captureSkinFrame(spr,route){
+  const sk=spr.userData.skin,p=sk.p,im=skinImage(p,route.view);
+  if(!im){spr.visible=false;return false}             // no source yet: hide rather than show a stale facing
   spr.visible=true;
-  if(t.image!==im){t.image=im;t.needsUpdate=true}
-  const w=im.naturalWidth,h=im.naturalHeight,u0=f[0]/w,u1=(f[0]+f[2])/w,v0=f[1]/h,v1=(f[1]+f[3])/h,px=SKIN_H/(p.ref||f[3]);
-  t.repeat.set(mirror?-(u1-u0):u1-u0,v1-v0);
-  t.offset.set(mirror?u1:u0,1-v1);
-  spr.scale.set(f[2]*px,f[3]*px,1);
+  const ctx=sk.cv.getContext('2d');
+  ctx.setTransform(1,0,0,1,0,0);
+  ctx.clearRect(0,0,SKIN_SIZE,SKIN_SIZE);             // transparency preserved - no background is painted
+  ctx.imageSmoothingEnabled=false;                    // pixel art stays pixel art
+  if(route.mirror){ctx.translate(SKIN_SIZE,0);ctx.scale(-1,1)}
+  ctx.drawImage(im,0,0,SKIN_SIZE,SKIN_SIZE);          // the complete square image, never a crop
+  ctx.setTransform(1,0,0,1,0,0);
+  sk.view=route.view;sk.mirror=route.mirror;
+  sk.tex.needsUpdate=true;                            // the GPU texture follows the canvas next render
   return true}
 function packTex(opt){
   const PK=window.SPRITE_PACK,body=packBodyFor(opt.cls,opt.tier)||'thief',sex=opt.sex==='f'?'female':'male',hs=(((opt.hair|0)%PK.hairStyles)+PK.hairStyles)%PK.hairStyles,key=body+'|'+sex+'|'+hs;
@@ -3273,16 +3311,15 @@ function packTex(opt){
     g.drawImage(bi,f*96,(a*8+d)*96,96,96,dx,dy,96,96);
     const an=anc[a][d][f];g.drawImage(hi,d*64,hs*64,64,64,dx+an[0]-32,dy+an[1]-48,64,64)}
   const t=new THREE.CanvasTexture(cv);t.magFilter=t.minFilter=THREE.NearestFilter;t.generateMipmaps=false;packCache.set(key,t);return t}
-// Both previews draw the real class skin - the same source PNG, crop and mirroring the 3D hero
-// uses - so a panel can never show something the game does not.  The front (S) view is drawn,
-// which is the pose you walk around in.
+// Both previews play the real class skin: the same APNG source the 3D hero wears, redrawn every
+// animation frame from the live decoder, so the panel shows the actual animation and not a still.
 function drawSkinPreview(id,labelId,cls,sex){
   const cv=$(id);if(!cv)return;const ctx=cv.getContext('2d'),label=labelId?$(labelId):null;
+  const p=skinPack(cls,sex),im=p?skinImage(p,'S'):null;
+  if(!im){if(label)label.style.display='block';ctx.clearRect(0,0,cv.width,cv.height);return}
+  const ax=p.anchor[0],ay=p.anchor[1],bw=126,bh=134;      // the old preview framing, so panels did not move
   ctx.clearRect(0,0,cv.width,cv.height);ctx.imageSmoothingEnabled=false;
-  const p=skinPack(cls,sex),im=p?skinImage(p,'S'):null,f=p?p.poses.S:null;
-  if(!im||!f){if(label)label.style.display='block';return}
-  const px=Math.max(1,(cv.height-8)/(p.ref||f[3])),w=Math.max(1,Math.round(f[2]*px)),h=Math.max(1,Math.round(f[3]*px));
-  ctx.drawImage(im,f[0],f[1],f[2],f[3],Math.round((cv.width-w)/2),cv.height-4-h,w,h);
+  ctx.drawImage(im,ax-bw/2,ay-bh+6,bw,bh,0,0,cv.width,cv.height);
   if(label)label.style.display='none'}
 function drawAppearancePreview(){if(S)drawSkinPreview('hairPreview','hairPreviewLoading',S.cls,S.sex)}
 function drawClassPreview(){if(S)drawSkinPreview('classPreview','classPreviewLoading',selK||S.cls,S.sex)}
@@ -3294,12 +3331,11 @@ function setPackCell(spr,dir,run,atk,clock){
   const p=heroPoseFrame(run,atk,clock,true),t=spr.material.map;t.repeat.set(1/8,1/24);t.offset.set(p.frame/8,1-(p.kind*8+dir+1)/24)}
 function ensureHero(opt){const k=JSON.stringify(opt);if(heroKey===k&&heroSpr)return;heroKey=k;heroDirty=false;
   if(heroSpr){P.remove(heroSpr);heroSpr=null}if(heroHeadSpr){P.remove(heroHeadSpr);heroHeadSpr=null}
-  // v51: the class's own uploaded art is what the hero wears now - one still per view, mirrored
-  // for the other side.  It waits until every view of that class and gender has decoded; until
-  // then (or if a file is missing) the animated pack body keeps the game playable, so the
-  // character is never shown in the wrong pose from the new set.
+  // v52: the class's own animated APNGs are what the hero wears now.  Every supplied view of that
+  // class and gender has to be decoded first; until then (or if a file is missing) the animated
+  // pack body keeps the game playable, so the character is never half-switched or left blank.
   const sp=skinPack(opt.cls,opt.sex);
-  if(skinLoaded(sp)){heroSpr=mkSkinHero(sp,skinImage(sp,SKIN_VIEW[0][0]));P.add(heroSpr);return}
+  if(skinLoaded(sp)){heroSpr=mkSkinHero(sp);P.add(heroSpr);return}
   const pb=packReady?packBodyFor(opt.cls,opt.tier):null;
   if(pb&&packImg['b:'+pb]){heroSpr=mkPackHero(opt);P.add(heroSpr);return}
   // last resort while both art sets are still loading: the drawn hero keeps the game playable
@@ -3559,8 +3595,12 @@ function draw(){
   const w=S.eq.weapon,wt=heroWeaponType(c.n,c.wt,w&&w.wt),clothN=S.eq.armor?TC[S.eq.armor.tier]:c.col,hairN=S.eq.head?TC[S.eq.head.tier]:0xd0492c,metalN=w?TC[w.tier]:0xc0c0c0;
   ensureHero({cls:c.n,cloth:hx(clothN),clothN,cape:c.cape?hx(c.cape):'',hair:hx(hairN),hairN,hat:c.hat?hx(c.hat):'',wt,metal:hx(metalN),skin:'#ffd2a8',look:lookOf(c.n),tier:c.tier||0,sex:S.sex||'m',hair:S.hair|0,shield:!!(S.eq.off&&S.eq.off.slot==='off')});
   const pFace=mob?Math.atan2(mob.z-pl.z,mob.x-pl.x):pl.run?-pl.ry: -az+Math.PI;
-  if(heroSpr){const hd=viewDir(pFace);
-    if(heroSpr.userData.skin)setSkinCell(heroSpr,hd,atkAnim);
+  if(heroSpr){const hd=viewDir(pFace),sk=heroSpr.userData.skin;
+    if(sk){const route=skinRoute(sk.p,hd,atkAnim);
+      // The browser is playing the APNG; this copies the frame it is showing right now onto the
+      // canvas the GPU texture reads.  Once per rendered frame, so no APNG frame can be skipped
+      // by a guessed counter - the file's own timing and endless loop decide what the player sees.
+      captureSkinFrame(heroSpr,route)}
     else if(heroSpr.userData.pack)setPackCell(heroSpr,hd,pl.run,atkAnim,t);
     else setCell(heroSpr,hd,animRow(pl.run,atkAnim,t,10));
   heroSpr.material.color.setRGB(1,1-hitAnim*.75,1-hitAnim*.75)}
@@ -3604,7 +3644,10 @@ function draw(){
   for(const m of mobs){const v=mobMesh.get(m);if(v)syncMobImage(v,m,mobVisualScale(m))}
   for(const p of S.pets.filter(p=>p.on)){const v=petMesh.get(p.id),r=petR[p.id],sp=PETS[p.sp];
     if(v&&r&&sp)syncMobImage(v,{x:r.x,z:r.z,run:r.run,a:p.id,shape:petFallbackShape(sp),flash:0},PET_VISUAL_SCALE)}
-  syncSkillFx();syncWeaponSprites(pFace,c);R.render(scene,cam);
+  syncSkillFx();syncWeaponSprites(pFace,c);
+  if(tabs.includes('set'))drawAppearancePreview();
+  if(tabs.includes('job'))drawClassPreview();
+  R.render(scene,cam);
   floats.forEach(f=>{if(!f.el){const e=document.createElement('div');e.className='fl'+(f.big?' big':'')+(f.kind&&f.kind!=='text'?' '+f.kind:'');e.textContent=f.txt;if(f.col)e.style.color=f.col;ov.appendChild(e);f.el=e}
     const[a,b]=scr(f.anchor==='hero'?pl.x:f.x,f.y,f.anchor==='hero'?pl.z:f.z);f.el.style.left=a+'px';f.el.style.top=b+'px';f.el.style.opacity=Math.max(0,f.life)});
   const pt=bn?`BOSS FIGHT · ${mobs.filter(m=>!m.boss).length} minions`:`Pack ${activePack+1}/3 · Monsters ${Math.min(S.kl,MPS)}/${MPS}`;if(pt!==lastProg){lastProg=pt;prog.textContent=pt}

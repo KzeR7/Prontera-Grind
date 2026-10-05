@@ -495,11 +495,19 @@ t('Settings previews the class art the character actually wears', () => {
   assert.ok(h.includes('still saved with your account (style 8 of 19)'), 'the saved hairstyle is not lost');
   assert.ok(h.includes('aria-label="Previous hairstyle"') && h.includes('aria-label="Next hairstyle"'), 'the hair controls keep their accessible names');
   assert.ok(!h.includes('data-a="hair"'), 'but they are no longer live buttons while the art is fixed');
-  assert.ok(h.includes('The art has no N, E or W pose'), 'the panel says which facings use the nearest supplied view');
+  assert.ok(h.includes('S (front) view &middot; animating'), 'and says the preview is the animation, not a still');
+  assert.ok(h.includes('the supplied SE swing, mirrored when you swing to the left'), 'the panel says which views are mirrored, and why');
+  assert.ok(h.includes('The art has no E or W animation, and only High Priest has its own straight-up N one'),
+    'the panel says which facings use the nearest supplied view');
+  assert.ok(h.includes('the art has no idle animation, so at rest your character keeps playing its walk cycle'),
+    'the standing-still policy is stated plainly, not hidden');
   assert.ok(h.includes('the held-weapon art is switched off'), 'and that the held-weapon overlay is off for now');
-  assert.ok(src.includes("if(tabs.includes('set'))drawAppearancePreview();if(tabs.includes('job'))drawClassPreview()}"),
-    'opening or changing a panel redraws its preview');
-  assert.ok(src.includes("ctx.drawImage(im,f[0],f[1],f[2],f[3],"), 'the preview draws the real class art crop');
+  assert.ok(src.includes("if(tabs.includes('set'))drawAppearancePreview();") &&
+            src.includes("if(tabs.includes('job'))drawClassPreview();"),
+    'the game loop redraws whichever preview is open, so it animates');
+  assert.ok(src.includes('ctx.drawImage(im,ax-bw/2,ay-bh+6,bw,bh,0,0,cv.width,cv.height);'),
+    'the preview draws the whole current animation frame around the art anchor');
+  assert.ok(src.includes('captureSkinFrame(heroSpr,route)'), 'and the in-game hero copies the browser\'s current frame each render');
 });
 
 t('the class-change panel previews the class it is describing', () => {

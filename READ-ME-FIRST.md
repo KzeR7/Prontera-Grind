@@ -12,12 +12,16 @@ the repo, so pushing to `main` is the deploy.
 * `Updates/Sprite/index.html` — the **canonical class-sprite reference backup** for all seven uploaded trees;
   after changing its PNGs, refresh the manifest with `python3 tools/make_sprite_viewer.py`. See
   `Updates/Sprite/README.md` for the future-update workflow.
-* `assets/class_skins_data.js` — the **live class skins**: for every class and gender, the crop box and
-  file of its four uploaded poses (S, SE, NE walk + SE attack). The game draws the hero from those PNGs
-  in `Updates/Sprite/` and mirrors them for SW / NW / attack SW; the animated pack
-  (`assets/sprite_pack_data.js`) is the fallback until they load. Rebuild after changing a PNG with
-  `python3 tools/make_class_skins.py` (`--check` fails when it is stale), and see the QC sheet tool
-  `python3 tools/preview_class_skins.py`.
+* `assets/class_skins_data.js` — the **live class skins**: for every class and gender, the file, frame
+  count, per-frame delays, opaque bounds, drawn height and ground line of its uploaded **animated**
+  PNGs (walking S / SE / NE, attack SE, plus High Priest's own walking N). Every one of those files is
+  a multi-frame looping APNG, so the game lets the browser play it and copies the frame being shown
+  onto the hero's texture each render; SW / NW / attack SW are the same file mirrored. The animated
+  pack (`assets/sprite_pack_data.js`) is the fallback until they load. Rebuild after changing a PNG
+  with `python3 tools/make_class_skins.py` (`--check` fails when it is stale, and also when a file
+  stops being a multi-frame endless loop), and see the QC sheet tool
+  `python3 tools/preview_class_skins.py` (one directions sheet plus one frame-by-frame walk-cycle
+  sheet per class).
 * `tools/` — the art pipelines (`make_sprite_pack.py`, `make_sprite_viewer.py`, `montage.py`), the test suites (`tools/tests/`)
   and a dev-only plan previewer (`tools/preview/`).
 * `AGENTS.md` — **the project's rules and its full update log**. Read it before changing anything:
