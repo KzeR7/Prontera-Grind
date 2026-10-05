@@ -3129,3 +3129,8 @@ assigned for feel rather than fidelity. While reworking that, two shipped bugs s
 * **Files touched by the merge:** `index.html` (BUILD line), `Updates/cards-gear-audit/{affix-ranges,equipment-cards-tuning}.html` (markers, safe-build list, refreshed baseline), `tools/tests/drop_card_sheet_sim.js` (one merged migration test) and this log.
 * **Tests:** all **20 suites** pass after the merge: pack 19 bodies, class_change 25, class_skin 39 checks, save_load 21, economy 22, stat 7, card 13, skill 52, gear 30, scene 8, kit 34, UI 36, sprite 12, starter 8, pet 12, picker 19, drop_card_sheet 12, weapon_joint 7, weapon_review 13 and sprite_viewer 154 PNGs / 19 jobs. The merged inline game script passes `node --check`; `tools/make_sprite_viewer.py --check` and `tools/backup_apng_code.py --check` both report current.
 * **Branches / PR:** `arena/01a10b6a-prontera-grind`; pushed and opened as a pull request against `main` (see the next entry for the number).
+
+### 2026-10-05 — `balance-v51 + skin-v53 PR #21 published`
+
+* **PR:** pushed `arena/01a10b6a-prontera-grind` and opened PR #21, “Balance v51: faster early game, card gacha, title seal, ore/refine nerf,” against `main`. The entry above promised the number; this is it.
+* **Before the push:** committed the six-item update, merged `origin/main` (PR #20) with all conflicts resolved, and re-ran everything on the merged tree — all 20 suites green, inline script `node --check` clean, sprite-viewer and APNG-backup checks current, `git diff --check` clean.
