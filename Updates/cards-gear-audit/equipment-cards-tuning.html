@@ -119,9 +119,10 @@ textarea{width:100%;min-height:82px;resize:vertical}.notes-grid{display:grid;gri
 const BASE = JSON.parse(document.getElementById('baseline-data').textContent);
 const STORE_KEY = 'prontera-grind-equipment-cards-tuning-v1';
 // v43 changed pacing; v44 changed Assassin weapon eligibility; v45 adds all class weapon families
-// to active late-map tiers; v46 changed only the final gear Crit DMG scale, and v47 adds UI-only bag locks / level labels. Carry edits
+// to active late-map tiers; v46 changed only the final gear Crit DMG scale, and v47 adds UI-only bag locks / level labels.
+// v48-v50 changed progression/mastery/pet balance without changing this gear-drop catalog. Carry edits
 // forward by item identity, rebase shifted catalog IDs, and discard overrides only for replaced gear.
-const SAFE_PREVIOUS_BUILDS = ['2026-10-05 balance-v47 bag locks + gear level reference','2026-10-05 balance-v46 cdm tune + mastery index','2026-10-05 balance-v45 all-class late-map gear','2026-10-05 balance-v44 two-handed katar','2026-10-05 balance-v43 progression pacing','2026-10-05 balance-v42 early-map class pathways'];
+const SAFE_PREVIOUS_BUILDS = ['2026-10-05 balance-v50 slower index capped cards safer pets','2026-10-05 balance-v49 mastery GM test controls','2026-10-05 balance-v48 individual mastery + skill allocator','2026-10-05 balance-v47 bag locks + gear level reference','2026-10-05 balance-v46 cdm tune + mastery index','2026-10-05 balance-v45 all-class late-map gear','2026-10-05 balance-v44 two-handed katar','2026-10-05 balance-v43 progression pacing','2026-10-05 balance-v42 early-map class pathways'];
 const STAT_META = [
   {key:'str',label:'STR',unit:'stat points',fit:'Weapons',effect:'Adds STR. For a STR-main class, each point adds 1.5 to base ATK; the stat also feeds any other STR-based formula.'},
   {key:'agi',label:'AGI',unit:'stat points',fit:'Armor / Shield / Legwear',effect:'Adds AGI: faster swings (up to the AGI speed cap) and more Flee.'},
