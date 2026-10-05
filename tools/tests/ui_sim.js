@@ -94,6 +94,7 @@ const RAR=[{n:'Common',m:1,w:60},{n:'Fine',m:1.35,w:25},{n:'Rare',m:1.9,w:10},{n
 const PW=[[90,9,1,0],[80,17,3,0],[70,24,5.5,.5],[60,30,9,1],[50,35,13,2],[40,38,18,4],[30,40,24,6],[22,40,30,8],[12,38,38,12],[5,30,45,20]];
 const MAXST=99,ELITELV=100,Z0=-14;
 const statCap=()=>99,selK=null,gp=id=>S&&S.pets.find(x=>String(x.id)===String(id)),classRec=()=>null,tb={};
+let skinBroken=false,skinNote='';   // the Appearance panel's class-skin state (loaded with the game in the real page)
 const skCost=x=>x,skOff=id=>!!(S&&S.skOff&&S.skOff[id]);
 let petBuff={atk:0,matk:0,hp:0,leech:0,atkT:0,matkT:0,hpT:0,leechT:0},petBuffSrc={},petSkillCd={},petNote={};
 const rollingSet=new Set(),autoSet=new Set(),busy=()=>false;
@@ -486,15 +487,46 @@ t('every skill has a distinct icon and upgraded card metadata', () => {
   assert.ok(/\.skg\{[^}]*repeat\(4,minmax\(0,1fr\)\)/.test(src) && src.includes('.sk .si{width:40px;height:40px'), 'the icon tiles use a polished responsive card style');
 });
 
-t('Settings shows a live class, gender and hairstyle preview', () => {
+t('Settings previews the class art the character actually wears', () => {
   U.S = mkS('Assassin Cross'); U.S.sex = 'f'; U.S.hair = 7;
   const h = U.V.set();
   assert.ok(h.includes('id="hairPreview"') && h.includes('id="hairPreviewLoading"'), 'a canvas preview has a loading fallback');
-  assert.ok(h.includes('Live female Assassin Cross hair preview'), 'the preview describes the current class and gender');
-  assert.ok(h.includes('Female &middot; front idle pose') && h.includes('Style 8 of 19'), 'gender and selected hair are reflected');
-  assert.ok(h.includes('aria-label="Previous hairstyle"') && h.includes('aria-label="Next hairstyle"'), 'hair controls have accessible names');
-  assert.ok(src.includes("if(tabs.includes('set'))drawHairPreview()"), 'opening or changing Settings redraws the canvas');
-  assert.ok(src.includes('function drawHairPreview()') && src.includes('ctx.drawImage(atlas,0,0,PK.cellW,PK.cellH,0,0,cv.width,cv.height)'), 'the preview crops the actual packed class-and-hair art');
+  assert.ok(h.includes('Live female Assassin Cross class skin preview'), 'the preview describes the current class and gender');
+  assert.ok(h.includes('Female &middot; S (front) view'), 'and the view it draws');
+  assert.ok(h.includes('Hair comes with the class art'), 'the hairstyle is honestly reported as part of the uploaded art');
+  assert.ok(h.includes('still saved with your account (style 8 of 19)'), 'the saved hairstyle is not lost');
+  assert.ok(h.includes('aria-label="Previous hairstyle"') && h.includes('aria-label="Next hairstyle"'), 'the hair controls keep their accessible names');
+  assert.ok(!h.includes('data-a="hair"'), 'but they are no longer live buttons while the art is fixed');
+  assert.ok(h.includes('S (front) view &middot; animating'), 'and says the preview is the animation, not a still');
+  assert.ok(h.includes('the supplied SE swing, mirrored when you swing to the left'), 'the panel says which views are mirrored, and why');
+  assert.ok(h.includes('The art has no E or W animation, and only High Priest has its own straight-up N one'),
+    'the panel says which facings use the nearest supplied view');
+  assert.ok(h.includes('the art has no idle animation, so at rest your character keeps playing its walk cycle'),
+    'the standing-still policy is stated plainly, not hidden');
+  assert.ok(h.includes('the held-weapon art is switched off'), 'and that the held-weapon overlay is off for now');
+  assert.ok(h.includes('The white melee swing arc is switched off too'), 'and that the duplicate swing arc is off, with the reason');
+  assert.ok(src.includes("if(tabs.includes('set'))drawAppearancePreview();") &&
+            src.includes("if(tabs.includes('job'))drawClassPreview();"),
+    'the game loop redraws whichever preview is open, so it animates');
+  assert.ok(src.includes('ctx.drawImage(f.img,f.sx+ax-bw/2,ay-bh+6,bw,bh,0,0,cv.width,cv.height);'),
+    'the preview draws the whole current animation frame around the art anchor');
+  assert.ok(src.includes('const p=skinPack(cls,sex),f=p?skinFrameOf(p,\'S\'):null;'),
+    'reading the frame the file\'s own delays say is due');
+  assert.ok(src.includes('captureSkinFrame(heroSpr,route)'), 'and the in-game hero paints the due frame each render');
+  assert.ok(src.includes('skinDecodePng') && src.includes("new DecompressionStream('deflate')"),
+    'because the game decodes the APNG frames itself rather than trusting a hidden <img> to advance');
+});
+
+t('the class-change panel previews the class it is describing', () => {
+  U.S = mkS('Knight');
+  const h = U.V.job();
+  assert.ok(h.includes('id="classPreview"') && h.includes('id="classPreviewLoading"'), 'the class panel has its own canvas and loading note');
+  assert.ok(h.includes('male Knight class skin preview'), 'the preview describes the current class and gender');
+  assert.ok(h.includes('CLASS PREVIEW') && h.includes('You wear this now'), 'with a plain label for the class you already are');
+  assert.ok(h.includes('S (front) view &middot; animating'), 'and the class preview is labelled as the animation too');
+  assert.ok(h.includes('What this class looks like') || h.includes('You wear this now'), 'and a label for a class you are only looking at');
+  const g = h.match(/.{0,40}undefined.{0,40}/);
+  assert.ok(!g, 'the class panel renders without undefined values: ' + (g ? g[0] : ''));
 });
 
 t('the character + class panels show the class-collection bonus', () => {
