@@ -1,7 +1,13 @@
 // Runs the game's real pack code against the real pack data, outside a browser.
-//   node tools/tests/pack_sim.js   (expects the inline JS + pack block extracted first)
-const fs=require('fs'),vm=require('vm'),assert=require('assert');
-const block=fs.readFileSync(process.env.PACK_BLOCK || '/tmp/pack_block.js','utf8');
+//   node tools/tests/pack_sim.js
+// The block is read straight out of index.html (the same region the browser runs); set PACK_BLOCK
+// to a file to test a different extraction.
+const fs=require('fs'),vm=require('vm'),assert=require('assert'),path=require('path');
+const block=process.env.PACK_BLOCK?fs.readFileSync(process.env.PACK_BLOCK,'utf8'):(()=>{
+  const page=fs.readFileSync(path.join(__dirname,'..','..','index.html'),'utf8');
+  const from=page.indexOf('const PACK_BODY='),to=page.indexOf('function ensureHero(',from);
+  assert.ok(from>0&&to>from,'index.html must still carry the pack block (const PACK_BODY= ... function ensureHero()');
+  return page.slice(from,to)})();
 const draws=[];
 class FakeImage{constructor(){this.width=0;this.height=0}set src(u){this._src=u;if(this.onload)this.onload()}}
 const ctx={imageSmoothingEnabled:true,drawImage(){draws.push(arguments)}};

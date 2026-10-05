@@ -15,11 +15,14 @@ the repo, so pushing to `main` is the deploy.
 * `assets/class_skins_data.js` — the **live class skins**: for every class and gender, the file, frame
   count, per-frame delays, opaque bounds, drawn height and ground line of its uploaded **animated**
   PNGs (walking S / SE / NE, attack SE, plus High Priest's own walking N). Every one of those files is
-  a multi-frame looping APNG, so the game lets the browser play it and copies the frame being shown
-  onto the hero's texture each render; SW / NW / attack SW are the same file mirrored. The animated
-  pack (`assets/sprite_pack_data.js`) is the fallback until they load. Rebuild after changing a PNG
-  with `python3 tools/make_class_skins.py` (`--check` fails when it is stale, and also when a file
-  stops being a multi-frame endless loop), and see the QC sheet tool
+  a multi-frame looping APNG, so the game **decodes those frames itself** (`skinDecodePng` in
+  `index.html`: PNG chunks, `DecompressionStream`, unfilter, APNG blend/dispose) and paints the
+  frame that is due at that moment onto the hero's texture - the clock is the file's own delay
+  table, looping forever, and SW / NW / attack SW are the same file mirrored. The animated pack
+  (`assets/sprite_pack_data.js`) is the fallback until they load. Rebuild after changing a PNG with
+  `python3 tools/make_class_skins.py` (`--check` fails when it is stale, and also when a file stops
+  being a multi-frame endless loop); re-make the frame fixture that proves the decoder with
+  `/tmp/venv/bin/python3 tools/make_apng_fixtures.py`; and see the QC sheet tool
   `python3 tools/preview_class_skins.py` (one directions sheet plus one frame-by-frame walk-cycle
   sheet per class).
 * `tools/` — the art pipelines (`make_sprite_pack.py`, `make_sprite_viewer.py`, `montage.py`), the test suites (`tools/tests/`)

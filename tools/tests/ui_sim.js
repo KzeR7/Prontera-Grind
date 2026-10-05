@@ -94,6 +94,7 @@ const RAR=[{n:'Common',m:1,w:60},{n:'Fine',m:1.35,w:25},{n:'Rare',m:1.9,w:10},{n
 const PW=[[90,9,1,0],[80,17,3,0],[70,24,5.5,.5],[60,30,9,1],[50,35,13,2],[40,38,18,4],[30,40,24,6],[22,40,30,8],[12,38,38,12],[5,30,45,20]];
 const MAXST=99,ELITELV=100,Z0=-14;
 const statCap=()=>99,selK=null,gp=id=>S&&S.pets.find(x=>String(x.id)===String(id)),classRec=()=>null,tb={};
+let skinBroken=false,skinNote='';   // the Appearance panel's class-skin state (loaded with the game in the real page)
 const skCost=x=>x,skOff=id=>!!(S&&S.skOff&&S.skOff[id]);
 let petBuff={atk:0,matk:0,hp:0,leech:0,atkT:0,matkT:0,hpT:0,leechT:0},petBuffSrc={},petSkillCd={},petNote={};
 const rollingSet=new Set(),autoSet=new Set(),busy=()=>false;
@@ -506,9 +507,13 @@ t('Settings previews the class art the character actually wears', () => {
   assert.ok(src.includes("if(tabs.includes('set'))drawAppearancePreview();") &&
             src.includes("if(tabs.includes('job'))drawClassPreview();"),
     'the game loop redraws whichever preview is open, so it animates');
-  assert.ok(src.includes('ctx.drawImage(im,ax-bw/2,ay-bh+6,bw,bh,0,0,cv.width,cv.height);'),
+  assert.ok(src.includes('ctx.drawImage(f.img,f.sx+ax-bw/2,ay-bh+6,bw,bh,0,0,cv.width,cv.height);'),
     'the preview draws the whole current animation frame around the art anchor');
-  assert.ok(src.includes('captureSkinFrame(heroSpr,route)'), 'and the in-game hero copies the browser\'s current frame each render');
+  assert.ok(src.includes('const p=skinPack(cls,sex),f=p?skinFrameOf(p,\'S\'):null;'),
+    'reading the frame the file\'s own delays say is due');
+  assert.ok(src.includes('captureSkinFrame(heroSpr,route)'), 'and the in-game hero paints the due frame each render');
+  assert.ok(src.includes('skinDecodePng') && src.includes("new DecompressionStream('deflate')"),
+    'because the game decodes the APNG frames itself rather than trusting a hidden <img> to advance');
 });
 
 t('the class-change panel previews the class it is describing', () => {

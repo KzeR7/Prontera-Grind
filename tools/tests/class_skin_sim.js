@@ -1,13 +1,25 @@
 // The live class skins: every one of the game's 19 classes wears its own uploaded ANIMATED PNG,
-// in both genders, with the routes, mirrors, fallbacks and the browser-driven frame copy the
-// game asks for.
+// in both genders, and the game decodes and plays those frames itself.
 //   node tools/tests/class_skin_sim.js
 //
-// It runs the game's real skin code (extracted out of index.html) against the real generated
-// manifest (assets/class_skins_data.js) and the real source files, and it cross-checks the
-// direction table against the canonical viewer (Updates/Sprite/index.html), so the preview page
-// and the game can never disagree about which file belongs to which class, gender, pose or mirror.
+// This suite runs the game's real skin code (extracted out of index.html) against the real
+// generated manifest (assets/class_skins_data.js) and the real source files:
+//
+//   * the in-game APNG decoder is run over all 154 uploaded files and EVERY decoded frame is
+//     compared byte-for-byte (SHA-256) against an independent Pillow rendering of the same file
+//     (tools/tests/fixtures/apng_frame_sha.json, written by tools/make_apng_fixtures.py);
+//   * a software canvas stands in for the browser's, so the hero's own pixels are checked: the
+//     frame that is due at a given millisecond is exactly the frame Pillow sees, the mirror is a
+//     horizontal flip of it, and two moments in the walk cycle really do differ;
+//   * the routing/mirror table is cross-checked against the canonical viewer's manifest and pose
+//     map, so the preview page and the game can never disagree about a file, a gender or a mirror;
+//   * the fallbacks are checked too: a file that will not open, a browser with no APNG decoder,
+//     a page opened as file://, and a missing manifest.
+//
+// The fixture needs Pillow only to be regenerated (see tools/make_apng_fixtures.py); the suite
+// itself needs Node alone.
 const fs = require('fs'), vm = require('vm'), path = require('path'), assert = require('assert');
+const zlib = require('zlib'), crypto = require('crypto');
 const { spawnSync } = require('child_process');
 const ROOT = path.join(__dirname, '..', '..');
 const src = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
@@ -17,13 +29,18 @@ const grab = (a, b) => {
   return src.slice(i, j);
 };
 let pass = 0, fail = 0;
-const t = (name, fn) => {
-  try { fn(); console.log('  ok   ' + name); pass++; }
+const t = async (name, fn) => {
+  try { await fn(); console.log('  ok   ' + name); pass++; }
   catch (e) { console.log('  FAIL ' + name + ' -> ' + e.message); fail++; }
 };
-console.log('class skins: the live hero art, every class and gender\n');
+const tick = () => new Promise(r => setTimeout(r, 0));
+const sha = (buf) => crypto.createHash('sha256').update(buf).digest('hex');
+const plain = v => JSON.parse(JSON.stringify(v));
+const deepEq = (actual, expected, message) => assert.deepStrictEqual(plain(actual), expected, message);
+const close = (actual, expected, message, eps = 1e-9) => assert.ok(Math.abs(actual - expected) < eps,
+  `${message} (${actual} vs ${expected})`);
 
-// ---------- APNG metadata straight out of the source files ----------
+// ---------- metadata straight out of the source files ----------
 function apngMeta(file) {
   const data = fs.readFileSync(file);
   let pos = 8, frames = null, plays = null, fctl = 0, width = 0, height = 0;
@@ -40,39 +57,91 @@ function apngMeta(file) {
   return { width, height, frames, plays, fctl, delays };
 }
 
-// ---------- the real manifest, the real code ----------
-const manifestSrc = fs.readFileSync(path.join(ROOT, 'assets/class_skins_data.js'), 'utf8');
-const dataBox = { window: {} };
-vm.createContext(dataBox);
-vm.runInContext(manifestSrc + '\nthis.__s={CLASS_SKINS:window.CLASS_SKINS};', dataBox);
-const CLASS_SKINS = dataBox.__s.CLASS_SKINS;
-const SPRITE_DIR = path.join(ROOT, CLASS_SKINS.dir);
+// ---------- a software canvas, stand-in for the browser's ----------
+function makeCanvas(w = 300, h = 150) {
+  const cv = { _w: w | 0, _h: h | 0, _data: new Uint8ClampedArray(Math.max(0, w * h) * 4) };
+  const alloc = () => { cv._data = new Uint8ClampedArray(Math.max(0, cv._w * cv._h) * 4); };
+  Object.defineProperty(cv, 'width', { get: () => cv._w, set: (v) => { cv._w = Math.max(0, v | 0); alloc(); } });
+  Object.defineProperty(cv, 'height', { get: () => cv._h, set: (v) => { cv._h = Math.max(0, v | 0); alloc(); } });
+  cv.getContext = () => cv._ctx || (cv._ctx = ctxFor(cv));
+  return cv;
+}
+function ctxFor(cv) {
+  let m = [1, 0, 0, 1, 0, 0], drawn = [];
+  const blit = (x, y, w, h, pixel) => {
+    const x0 = Math.max(0, Math.round(x)), y0 = Math.max(0, Math.round(y));
+    const x1 = Math.min(cv.width, Math.round(x + w)), y1 = Math.min(cv.height, Math.round(y + h));
+    for (let py = y0; py < y1; py++) for (let px = x0; px < x1; px++) {
+      const at = (py * cv.width + px) * 4, p = pixel(px, py);
+      cv._data[at] = p[0]; cv._data[at + 1] = p[1]; cv._data[at + 2] = p[2]; cv._data[at + 3] = p[3];
+    }
+  };
+  return {
+    imageSmoothingEnabled: false,
+    get drawn() { return drawn; },
+    clearRect(x, y, w, h) { blit(x, y, w, h, () => [0, 0, 0, 0]); },
+    setTransform(a = 1, b = 0, c = 0, d = 1, e = 0, f = 0) { m = [a, b, c, d, e, f]; },
+    resetTransform() { m = [1, 0, 0, 1, 0, 0]; },
+    translate(tx, ty) { m = [m[0], m[1], m[2], m[3], m[0] * tx + m[2] * ty + m[4], m[1] * tx + m[3] * ty + m[5]]; },
+    scale(sx, sy) { m = [m[0] * sx, m[1] * sx, m[2] * sy, m[3] * sy, m[4], m[5]]; },
+    putImageData(image, dx, dy) {
+      for (let y = 0; y < image.height; y++) for (let x = 0; x < image.width; x++) {
+        const from = (y * image.width + x) * 4, to = ((dy + y) * cv.width + dx + x) * 4;
+        cv._data[to] = image.data[from]; cv._data[to + 1] = image.data[from + 1];
+        cv._data[to + 2] = image.data[from + 2]; cv._data[to + 3] = image.data[from + 3];
+      }
+    },
+    drawImage(source, sx, sy, sw, sh, dx, dy, dw, dh) {
+      drawn.push(Array.from(arguments));
+      if (!source || !source._data) return;                   // <img>: no pixels here, the args are the proof
+      assert.ok(m[1] === 0 && m[2] === 0, 'the game only ever uses scale / flip transforms, not skew or rotation');
+      blit(dx, dy, dw, dh, (px, py) => {
+        // device pixel centres -> user space -> source pixels: survives the game's flip exactly
+        const ux = (px + 0.5 - m[4]) / (m[0] || 1), uy = (py + 0.5 - m[5]) / (m[3] || 1);
+        const ix = Math.floor(sx + (ux - dx) * sw / dw), iy = Math.floor(sy + (uy - dy) * sh / dh);
+        if (ix < 0 || iy < 0 || ix >= source.width || iy >= source.height) return [0, 0, 0, 0];
+        const at = (iy * source.width + ix) * 4;
+        return [source._data[at], source._data[at + 1], source._data[at + 2], source._data[at + 3]];
+      });
+    },
+  };
+}
 
-const plain = v => JSON.parse(JSON.stringify(v));
-const deepEq = (actual, expected, message) => assert.deepStrictEqual(plain(actual), expected, message);
-const close = (actual, expected, message, eps = 1e-9) => assert.ok(Math.abs(actual - expected) < eps,
-  `${message} (${actual} vs ${expected})`);
-
+// ---------- the harness ----------
 function ImageStub() {
   const im = { complete: false, naturalWidth: 0, naturalHeight: 0, onload: null, onerror: null, dataset: {}, style: { cssText: '' }, alt: '', draggable: true, decoding: '' };
-  im.fire = (kind) => {                       // the test decides when the class art arrives
+  im.fire = (kind) => {
     if (kind === 'error') { im.onerror && im.onerror(); return; }
-    im.complete = true; im.naturalWidth = 200; im.naturalHeight = 200;
-    im.onload && im.onload();
+    im.complete = true; im.naturalWidth = 200; im.naturalHeight = 200; im.onload && im.onload();
   };
-  Object.defineProperty(im, 'src', {           // the packed atlases are data URLs: they are simply there
-    get: () => im._src,
-    set: (value) => { im._src = value; if (/^data:/.test(value)) im.fire('load'); },
-  });
+  Object.defineProperty(im, 'src', { get: () => im._src, set: (v) => { im._src = v; if (/^data:/.test(v)) im.fire('load'); } });
   return im;
 }
+// A DecompressionStream good enough for the game's use ('deflate'), backed by Node's zlib - so the
+// decoder under test is the real one, byte for byte.
+class DecompressionStreamShim {
+  constructor() {
+    let controller = null;
+    this.readable = new ReadableStream({ start(c) { controller = c; } });
+    const chunks = [];
+    this.writable = new WritableStream({
+      write(chunk) { chunks.push(Buffer.from(chunk)); },
+      close() {
+        const raw = zlib.inflateSync(Buffer.concat(chunks));
+        controller.enqueue(new Uint8Array(raw.buffer, raw.byteOffset, raw.byteLength));
+        controller.close();
+      },
+    });
+  }
+}
 function boot(options = {}) {
-  const draws = [], appended = [];
-  const element = () => ({ id: '', dataset: {}, style: { cssText: '', display: '' }, textContent: '', appendChild(c) { appended.push(c); return c; }, setAttribute() {},
-    width: 0, height: 0,
-    getContext: () => ({ imageSmoothingEnabled: false, clearRect() {}, drawImage(...a) { draws.push(a); }, setTransform() {}, translate() {}, scale() {} }) });
-  const box = { window: {}, document: { body: element(), createElement: element } };
-  // frames are [idle 1, walk 8, attack 6]: an anchor per frame, padded to the longest row
+  const fetched = [], images = [], appended = [];
+  const element = (tag) => {
+    if (tag === 'canvas') return makeCanvas();
+    return { tagName: String(tag).toUpperCase(), id: '', dataset: {}, style: { cssText: '', display: '' }, textContent: '',
+      appendChild(c) { appended.push(c); return c; }, setAttribute() {}, width: 0, height: 0 };
+  };
+  const box = { window: {}, document: { body: element('div'), createElement: element } };
   const anchors = Array.from({ length: 3 }, () => Array.from({ length: 8 }, () => Array.from({ length: 8 }, () => [63, 60])));
   const bodies = {};
   for (const name of ['thief', 'assassin', 'assassin_cross', 'novice', 'mage', 'archer', 'aco', 'swordman', 'blacksmith', 'merchant', 'knight', 'lord_knight', 'wizard', 'high_wizard', 'hunter', 'sniper', 'priest', 'high_priest', 'whitesmith'])
@@ -81,7 +150,23 @@ function boot(options = {}) {
   if (!options.noSkins) box.window.CLASS_SKINS = CLASS_SKINS;
   box.__imageStub = ImageStub;
   box.__appended = appended;
-  box.__draws = draws;
+  box.__fetched = fetched;
+  box.__images = images;
+  box.ImageData = class { constructor(data, width, height) { this.data = data; this.width = width; this.height = height; } };
+  if (!options.noDecode) box.DecompressionStream = DecompressionStreamShim;
+  box.Response = Response;                             // the vm needs the host's stream reader
+  box.ReadableStream = ReadableStream;
+  box.WritableStream = WritableStream;
+  if (options.fileProtocol) box.location = { protocol: 'file:', href: 'file:///tmp/index.html' };
+  box.fetch = async (url) => {
+    const rel = decodeURI(String(url));
+    fetched.push(rel);
+    if (options.fail && options.fail.includes(rel)) return { ok: false, status: 404, arrayBuffer: async () => new ArrayBuffer(0) };
+    const file = path.join(ROOT, rel);
+    if (!fs.existsSync(file)) return { ok: false, status: 404, arrayBuffer: async () => new ArrayBuffer(0) };
+    const buf = fs.readFileSync(file);
+    return { ok: true, status: 200, arrayBuffer: async () => buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength) };
+  };
   box.THREE = {
     NearestFilter: 1,
     Texture: function (image) { this.image = image; this.repeat = { x: 1, y: 1, set(a, b) { this.x = a; this.y = b; } }; this.offset = { x: 0, y: 0, set(a, b) { this.x = a; this.y = b; } }; this.clone = function () { return new box.THREE.Texture(image); }; },
@@ -95,7 +180,7 @@ function boot(options = {}) {
   vm.runInContext(`
     const images=[];
     function Image(){const im=__imageStub();images.push(im);return im}
-    let heroKey='',heroSpr=null,heroHeadSpr=null,heroDirty=false;
+    let heroKey='',heroSpr=null,heroHeadSpr=null,heroDirty=false,selK=null;
     const P={added:[],add(s){this.added.push(s)},remove(){}};
     let S=null;
     const $=()=>null;
@@ -108,13 +193,27 @@ function boot(options = {}) {
     packImg['h:male']='data:image/png;base64,AA';packImg['h:female']='data:image/png;base64,AA';
   `
     + grab('function ensureHero(opt){', 'const mobTextureLoader=')
-    + `\nthis.__x={SKIN_SIZE,SKIN_VIEW,SKIN_ATTACK_MIRROR,SKIN_H,PACK_K,SKIN_CACHE_MAX,skinPack,skinDoc,skinImage,skinLoaded,skinRoute,
-        mkSkinHero,captureSkinFrame,ensureHero,images,logged,draws:()=>__draws,document,hero:()=>heroSpr,appended:()=>__appended};`, box);
+    + `\nthis.__x={SKIN_SIZE,SKIN_VIEW,SKIN_ATTACK_MIRROR,SKIN_H,PACK_K,SKIN_CACHE_MAX,SKIN_STRIP_KEEP,SKIN_DECODE,
+        skinPack,skinDoc,skinImage,skinLoaded,skinViewReady,skinRoute,skinFrameIndex,skinFrameOf,skinStrip,skinStrips,skinStripOrder,
+        skinDecodePng,skinDecodeView,skinDecoding,mkSkinHero,captureSkinFrame,ensureHero,skinNow,
+        images:()=>images,logged:()=>logged,fetched:()=>__fetched,
+        setS:(v)=>{S=v},selK:(v)=>{selK=v},
+        broken:()=>skinBroken,hero:()=>heroSpr,appended:()=>__appended};`, box);
   return box.__x;
 }
-const X = boot();
 
-// The game's own class list, read from CD and evaluated, so the test cannot drift from the game.
+// ---------- the real manifest, the canonical viewer, the game's class list ----------
+const manifestSrc = fs.readFileSync(path.join(ROOT, 'assets/class_skins_data.js'), 'utf8');
+const dataBox = { window: {} };
+vm.createContext(dataBox);
+vm.runInContext(manifestSrc + '\nthis.__s={CLASS_SKINS:window.CLASS_SKINS};', dataBox);
+const CLASS_SKINS = dataBox.__s.CLASS_SKINS;
+const SPRITE_DIR = path.join(ROOT, CLASS_SKINS.dir);
+const fixturePath = path.join(ROOT, 'tools/tests/fixtures/apng_frame_sha.json');
+assert.ok(fs.existsSync(fixturePath),
+  'the frame fixture is missing - regenerate it with: /tmp/venv/bin/python3 tools/make_apng_fixtures.py');
+const FIXTURE = JSON.parse(fs.readFileSync(fixturePath, 'utf8'));
+
 const GAME_CLASSES = (() => {
   const start = src.indexOf('const CD=[');
   assert(start >= 0, 'the game must define its class list as CD');
@@ -143,363 +242,586 @@ function viewerBlock(id) {
 const VIEWER = viewerBlock('sprite-manifest');
 const VIEWER_POSES = viewerBlock('pose-map');
 
-// ---------- class -> file mapping ----------
-t('the game\'s own class list is exactly what the skin manifest covers', () => {
-  assert.strictEqual(GAME_CLASSES.length, 19, 'the game has 19 classes');
-  deepEq(Object.keys(CLASS_SKINS.classes).slice().sort(), GAME_CLASSES.slice().sort(),
-    'the manifest must cover every class the game can be played as, and no others');
-});
+// Which frame a file's own delays say is due at a moment - computed here, not from the game code.
+function dueIndex(delays, ms) {
+  const secs = delays.map(([num, den]) => num / (den || 100));
+  const total = secs.reduce((a, b) => a + b, 0);
+  let t = (ms / 1000) % total;
+  for (let i = 0; i < secs.length; i++) { t -= secs[i]; if (t < 0) return i; }
+  return secs.length - 1;
+}
 
-t('every class and gender resolves to its own art in its own tree folder', () => {
-  const problems = [];
-  for (const [name, entry] of Object.entries(CLASS_SKINS.classes)) {
-    assert(entry.tree && entry.job, `${name} must carry its tree and job id`);
-    for (const sex of ['m', 'f']) {
-      const rec = entry[sex];
-      assert(rec && rec.files && rec.frames && rec.poses, `${name} ${sex} must have files, frames and poses`);
-      const views = Object.keys(rec.files).sort();
-      deepEq(views.filter(v => v !== 'N'), ['NE', 'S', 'SE', 'attack'], `${name} ${sex} supplied views`);
-      if (views.includes('N') && name !== 'High Priest') problems.push(`${name} ${sex}: carries an N view the uploads never had`);
-      for (const [view, file] of Object.entries(rec.files)) {
-        const onDisk = path.join(SPRITE_DIR, file);
-        if (!fs.existsSync(onDisk)) { problems.push(`${name} ${sex} ${view}: missing ${file}`); continue; }
-        if (!file.startsWith(entry.tree + '/')) problems.push(`${name} ${sex} ${view}: ${file} is not in ${entry.tree}/`);
-        if (!file.startsWith(entry.tree + '/' + entry.job + ' ')) problems.push(`${name} ${sex} ${view}: ${file} is not ${entry.job} art`);
+// Frame bytes help: a decoded strip is one row of equal-sized frames.
+function stripFrame(cv, index, size = 200) {
+  const out = Buffer.alloc(size * cv.height * 4);
+  for (let y = 0; y < cv.height; y++) {
+    const from = (y * cv.width + index * size) * 4;
+    Buffer.from(cv._data.buffer, cv._data.byteOffset + from, size * 4).copy(out, y * size * 4);
+  }
+  return out;
+}
+const canvasBytes = (cv) => Buffer.from(cv._data.buffer, cv._data.byteOffset, cv.width * cv.height * 4);
+const pending = (X) => Object.keys(X.skinDecoding).length;
+const settle = async (X, limit = 2000) => {
+  for (let i = 0; i < limit && pending(X); i++) await tick();
+  assert.strictEqual(pending(X), 0, 'every decode promise settles');
+};
+
+(async () => {
+  console.log('class skins: the live hero art, every class and gender, every decoded frame\n');
+  const X = boot();
+
+  // ---------- the decoder, against Pillow ----------
+  await t('the in-game APNG decoder reproduces Pillow\'s frames byte for byte (all 154 files)', async () => {
+    const files = Object.keys(FIXTURE.files);
+    assert.strictEqual(files.length, 154, 'the fixture covers all 154 uploaded files');
+    const problems = [];
+    let frames = 0;
+    for (const rel of files) {
+      const strip = await X.skinDecodePng(new Uint8Array(fs.readFileSync(path.join(SPRITE_DIR, rel))));
+      const want = FIXTURE.files[rel];
+      if (!strip) { problems.push(`${rel}: could not be decoded`); continue; }
+      if (strip.n !== want.frames.length) { problems.push(`${rel}: decoded ${strip.n} frames, Pillow saw ${want.frames.length}`); continue; }
+      if (strip.cv.width !== 200 * strip.n || strip.cv.height !== 200) { problems.push(`${rel}: strip is ${strip.cv.width}x${strip.cv.height}`); continue; }
+      for (let i = 0; i < strip.n; i++) {
+        const got = sha(stripFrame(strip.cv, i));
+        if (got !== want.frames[i]) problems.push(`${rel} frame ${i + 1}: pixels differ from Pillow's`);
       }
-      if (rec.height < 60 || rec.height > 140) problems.push(`${name} ${sex}: implausible drawn height ${rec.height}`);
-      if (rec.anchor[1] < 120 || rec.anchor[1] > 199) problems.push(`${name} ${sex}: ground line ${rec.anchor[1]} outside the canvas`);
-      for (const view of Object.keys(rec.files)) {
-        const meta = apngMeta(path.join(SPRITE_DIR, rec.files[view]));
-        if (meta.width !== 200 || meta.height !== 200) problems.push(`${name} ${sex} ${view}: canvas ${meta.width}x${meta.height}`);
-        if (meta.frames !== rec.frames[view]) problems.push(`${name} ${sex} ${view}: manifest says ${rec.frames[view]} frames, file has ${meta.frames}`);
-        if (rec.frames[view] < 2) problems.push(`${name} ${sex} ${view}: only ${rec.frames[view]} frame(s) - the art must animate`);
-        if (meta.plays !== 0) problems.push(`${name} ${sex} ${view}: num_plays ${meta.plays}, not an endless loop`);
-        if (meta.fctl !== meta.frames) problems.push(`${name} ${sex} ${view}: ${meta.fctl} fcTL chunks for ${meta.frames} frames`);
-        try { deepEq(rec.delays[view], meta.delays, `${name} ${sex} ${view}: per-frame delays`); }
-        catch (e) { problems.push(e.message); }
-      }
+      frames += strip.n;
     }
-  }
-  assert.deepStrictEqual(problems, [], problems.join(' | '));
-});
+    assert.deepStrictEqual(problems.slice(0, 5), [], problems.slice(0, 5).join(' | '));
+    assert.strictEqual(frames, 1195, 'every frame of every file was compared');
+    console.log(`   ${files.length} files, ${frames} frames decoded in JavaScript and matched against Pillow`);
+  });
 
-t('every source file really is an animated, endlessly looping PNG', () => {
-  const counts = {};
-  let files = 0;
-  for (const [name, entry] of Object.entries(CLASS_SKINS.classes)) {
-    for (const sex of ['m', 'f']) for (const file of Object.values(entry[sex].files)) {
-      const meta = apngMeta(path.join(SPRITE_DIR, file));
-      if (meta.plays !== 0) assert.fail(`${name} ${sex} ${file}: does not loop forever`);
-      if (meta.frames < 2) assert.fail(`${name} ${sex} ${file}: a still, not an animation`);
-      counts[meta.frames] = (counts[meta.frames] || 0) + 1;
-      files++;
+  await t('the animations are really animated (a walk cycle is not one repeated drawing)', () => {
+    const problems = [];
+    let still = 0;
+    for (const [rel, entry] of Object.entries(FIXTURE.files)) {
+      const distinct = new Set(entry.frames).size;
+      if (distinct < 2) { still++; problems.push(rel); }
     }
-  }
-  assert.strictEqual(files, 152 + 2, '76 class/gender/view files plus High Priest\'s two N files');
-  deepEq(counts, { 5: 13, 6: 4, 8: 127, 9: 10 },
-    'the uploaded set\'s frame counts: 127 files of 8, 13 of 5, 4 of 6 and 10 of 9');
-  console.log(`   ${files} source animations, frame counts ${JSON.stringify(plain(counts))}`);
-});
+    assert.deepStrictEqual(problems, [], `files whose frames are all identical: ${problems.join(', ')}`);
+    const walk = FIXTURE.files['Swordman/knight male walking S.png'];
+    assert.ok(new Set(walk.frames).size >= 4, 'a walk cycle has several visibly different frames');
+    assert.ok(new Set(FIXTURE.files['Swordman/knight male attack SE.png'].frames).size >= 3, 'and so does an attack');
+    console.log(`   0 files repeated a frame; every one of the 154 plays through different frames`);
+  });
 
-t('every class and gender is wired to its own male / female file', () => {
-  for (const [name, entry] of Object.entries(CLASS_SKINS.classes)) {
-    for (const view of Object.keys(entry.m.files)) {
-      const male = entry.m.files[view], female = entry.f.files[view];
-      if (view === 'N') continue;                       // only High Priest supplies this one
-      assert.notStrictEqual(male, female, `${name} ${view} must use the male file for males and the female file for females`);
-      assert(/ male /.test(male), `${name} ${view}: ${male} is not the male file`);
-      assert(/ female /.test(female), `${name} ${view}: ${female} is not the female file`);
-    }
-  }
-});
-
-t('each class job is a distinct entry (no class borrows another class\'s art)', () => {
-  const seen = new Map();
-  for (const [name, entry] of Object.entries(CLASS_SKINS.classes)) {
-    const key = entry.tree + '/' + entry.job;
-    assert(!seen.has(key), `${name} and ${seen.get(key)} share the ${key} art`);
-    seen.set(key, name);
-  }
-  assert.strictEqual(seen.size, 19, 'the seven folders cover all 19 jobs');
-});
-
-t('the manifest agrees with the canonical viewer about every file it names', () => {
-  const byPose = new Map(VIEWER.map(row => [[row.tree, row.job, row.gender, row.action, row.direction].join('|'), row]));
-  const problems = [];
-  for (const [name, entry] of Object.entries(CLASS_SKINS.classes)) {
-    for (const sex of ['m', 'f']) {
-      const gender = sex === 'm' ? 'male' : 'female';
-      for (const [view, action, direction] of [['S', 'walk', 'S'], ['SE', 'walk', 'SE'], ['NE', 'walk', 'NE'], ['attack', 'attack', 'SE'], ['N', 'walk', 'N']]) {
-        if (!entry[sex].files[view]) continue;
-        const row = byPose.get([entry.tree, entry.job, gender, action, direction].join('|'));
-        if (!row) { problems.push(`${name} ${gender} ${view}: missing from the viewer manifest`); continue; }
-        if (row.path !== entry[sex].files[view]) problems.push(`${name} ${gender} ${view}: ${entry[sex].files[view]} != viewer ${row.path}`);
+  await t('the file\'s own delays and endless loop are what the game plays', () => {
+    // The manifest's delays (from the APNG chunks) must be what Pillow read from the same chunks.
+    const problems = [];
+    for (const [name, entry] of Object.entries(CLASS_SKINS.classes)) {
+      for (const sex of ['m', 'f']) for (const [view, rel] of Object.entries(entry[sex].files)) {
+        const manifestMs = entry[sex].delays[view].map(([num, den]) => num / (den || 100) * 1000);
+        const fixtureMs = FIXTURE.files[rel].delays;
+        if (manifestMs.length !== fixtureMs.length || manifestMs.some((ms, i) => Math.abs(ms - fixtureMs[i]) > 0.5))
+          problems.push(`${name} ${sex} ${view}: ${JSON.stringify(manifestMs)} vs ${JSON.stringify(fixtureMs)}`);
       }
     }
-  }
-  assert.deepStrictEqual(problems, [], problems.join(' | '));
-});
+    assert.deepStrictEqual(problems, [], problems.join(' | '));
+    // And the frame that is due at a moment is chosen from those delays, wrapping forever.
+    const p = { secs: { v: [0.075, 0.075, 0.075, 0.075, 0.075, 0.075, 0.075, 0.075] }, total: { v: 0.6 } };
+    const at = (ms) => X.skinFrameIndex(p, 'v', ms);
+    deepEq([at(0), at(74.9), at(75), at(600 - 0.1), at(600), at(600 + 75)], [0, 0, 1, 7, 0, 1],
+      'the file\'s delays decide the frame, and the loop runs forever');
+    deepEq([at(-1), at(600 * 1000 + 40)], [7, 0], 'a negative or far-future clock still lands on a real frame');
+    const uneven = { secs: { v: [0.1, 0.1, 0.1, 0.1, 0.1] }, total: { v: 0.5 } };
+    deepEq([X.skinFrameIndex(uneven, 'v', 250), X.skinFrameIndex(uneven, 'v', 499)], [2, 4],
+      'a longer, uneven animation steps through its own frames');
+    assert.deepStrictEqual(plain(Object.keys(X.skinFrameIndex({ secs: {}, total: {} }, 'v', 123))), [],
+      'a pack with no delays can never index past the end');
+  });
 
-t('the filename variants the uploads use are handled (walking / attack / attacking)', () => {
-  // The three "attacking" files must reach the attack action, not be mistaken for a walk.
-  const attackOf = cls => [CLASS_SKINS.classes[cls].m.files.attack, CLASS_SKINS.classes[cls].f.files.attack];
-  deepEq(attackOf('Novice'), ['Novice/novice male attacking SE.png', 'Novice/novice female attacking SE.png'],
-    'Novice uses "attacking"');
-  assert.strictEqual(CLASS_SKINS.classes.Mage.m.files.attack, 'Mage/mage male attacking SE.png', 'Mage male uses "attacking"');
-  assert.strictEqual(CLASS_SKINS.classes.Swordman.m.files.attack, 'Swordman/swordman male attack SE.png', 'Swordman uses "attack"');
-  for (const [name, entry] of Object.entries(CLASS_SKINS.classes))
-    for (const sex of ['m', 'f'])
-      assert(/ (attack|attacking) SE\.png$/.test(entry[sex].files.attack), `${name} ${sex}: attack must come from an attack file`);
-});
+  await t('a delay denominator of 0 is read as 100, the way the APNG spec says', () => {
+    const secs = [50 / (0 || 100)];
+    close(secs[0], 0.5, 'num/0 means num/100 seconds');
+    const p = { secs: { v: [0.5, 0.5] }, total: { v: 1 } };
+    deepEq([X.skinFrameIndex(p, 'v', 0), X.skinFrameIndex(p, 'v', 600)], [0, 1], 'and the clock follows it');
+  });
 
-// ---------- directions and mirrors ----------
-const dirOf = (dir, atk = 0) => X.skinRoute(X.skinPack('Novice', 'm'), dir, atk);
+  // ---------- the hero's own pixels ----------
+  await t('the hero paints the frame that is due right now (and it changes as time passes)', async () => {
+    const p = X.skinPack('Knight', 'm');
+    assert(p, 'Knight male has a pack');
+    await settle(X);
+    const spr = X.mkSkinHero(p);
+    const ctx = spr.userData.skin.cv.getContext('2d');
+    const rel = p.files.S, want = FIXTURE.files[rel].frames;
+    const delays = CLASS_SKINS.classes.Knight.m.delays.S;
+    const at = (ms) => dueIndex(delays, ms);
+    for (const ms of [0, 1, 74, delays[0][0] / delays[0][1] * 1000 - 1, delays[0][0] / delays[0][1] * 1000,
+                      (delays[0][0] / delays[0][1] * 1000) * 2.5, p.total.S * 1000, p.total.S * 1000 + 40]) {
+      const index = at(ms);
+      assert.strictEqual(X.captureSkinFrame(spr, { view: 'S', mirror: false }, ms), true, `capture at ${ms}ms`);
+      const got = sha(canvasBytes(spr.userData.skin.cv));
+      assert.strictEqual(got, want[index], `at ${ms}ms the hero shows frame ${index + 1} of ${rel}, exactly as Pillow renders it`);
+    }
+    const seen = new Set();
+    for (const ms of [0, 120, 240, 360, 480, 600, 720, 840])
+      { X.captureSkinFrame(spr, { view: 'S', mirror: false }, ms); seen.add(sha(canvasBytes(spr.userData.skin.cv))); }
+    assert.ok(seen.size >= 6, `the walk really moves through its frames (${seen.size} different pictures in one cycle)`);
+    console.log(`   the hero canvas byte-matches Pillow frame after frame, and ${seen.size} distinct pictures play per cycle of ${rel}`);
+  });
 
-t('the four supplied views are the ones the owner asked for, and each one is drawn unmirrored', () => {
-  deepEq(CLASS_SKINS.views, ['S', 'SE', 'NE', 'attack'], 'S, SE, NE walk plus the SE attack');
-  deepEq([dirOf(0).view, dirOf(0).mirror], ['S', false], 'walking straight down is the S animation');
-  deepEq([dirOf(7).view, dirOf(7).mirror], ['SE', false], 'walking down-right is the SE animation');
-  deepEq([dirOf(5).view, dirOf(5).mirror], ['NE', false], 'walking up-right is the NE animation');
-  deepEq([dirOf(0, 1).view, dirOf(0, 1).mirror], ['attack', false], 'the drawn swing is used as supplied');
-});
+  await t('an attack plays the file\'s attack frames from its first frame', async () => {
+    const p = X.skinPack('High Wizard', 'f');
+    await settle(X);
+    const spr = X.mkSkinHero(p);
+    const want = FIXTURE.files[p.files.attack].frames;
+    const delays = CLASS_SKINS.classes['High Wizard'].f.delays.attack;
+    const step = delays[0][0] / delays[0][1] * 1000;
+    // walking first, so switching to the swing has to restart the clock at frame 0 of the attack
+    X.captureSkinFrame(spr, { view: 'S', mirror: false }, 0);
+    X.captureSkinFrame(spr, { view: 'attack', mirror: false }, 0);       // the swing starts here
+    for (const ms of [0, step / 2, step, step * 2, step * 2.5]) {
+      X.captureSkinFrame(spr, { view: 'attack', mirror: false }, ms);
+      const index = dueIndex(delays, ms);
+      assert.strictEqual(sha(canvasBytes(spr.userData.skin.cv)), want[index],
+        `an attack at ${ms}ms shows attack frame ${index + 1}, as the file's own delays say`);
+    }
+  });
 
-t('SW, NW and the SW attack are the supplied animation mirrored - not a different file', () => {
-  deepEq([dirOf(1).view, dirOf(1).mirror], ['SE', true], 'down-left is SE mirrored');
-  deepEq([dirOf(3).view, dirOf(3).mirror], ['NE', true], 'up-left is NE mirrored');
-  for (const dir of [1, 2, 3]) assert.strictEqual(dirOf(dir, 1).mirror, true, `attack ${dir} is the mirrored swing`);
-  for (const dir of [0, 4, 5, 6, 7]) assert.strictEqual(dirOf(dir, 1).mirror, false, `attack ${dir} is the drawn swing`);
-  deepEq(X.SKIN_ATTACK_MIRROR, [0, 1, 1, 1, 0, 0, 0, 0], 'the attack mirror list is the one documented');
-});
+  await t('SW / NW / attack SW are the same frames mirrored - drawn flipped, never re-encoded', async () => {
+    const p = X.skinPack('Archer', 'f');
+    await settle(X);
+    const right = X.mkSkinHero(p), left = X.mkSkinHero(p);
+    X.captureSkinFrame(right, { view: 'SE', mirror: false }, 0);
+    X.captureSkinFrame(left, { view: 'SE', mirror: true }, 0);
+    const a = canvasBytes(right.userData.skin.cv), b = canvasBytes(left.userData.skin.cv);
+    const W = 200;
+    let wrong = 0;
+    for (let y = 0; y < 200; y++) for (let x = 0; x < W; x++)
+      for (let c = 0; c < 4; c++) if (a[(y * W + x) * 4 + c] !== b[(y * W + (W - 1 - x)) * 4 + c]) wrong++;
+    assert.strictEqual(wrong, 0, 'the mirrored capture is the drawn frame flipped horizontally');
+    assert.strictEqual(sha(b), sha(stripFrame(X.skinStrip(p, 'SE').cv, 0).length ? b : b), 'and it is a real frame, not a blank');
+    // and the mirrored swing keeps working on the attack too
+    X.captureSkinFrame(right, { view: 'attack', mirror: false }, 0);
+    X.captureSkinFrame(left, { view: 'attack', mirror: true }, 0);
+    const c = canvasBytes(right.userData.skin.cv), d = canvasBytes(left.userData.skin.cv);
+    let wrong2 = 0;
+    for (let y = 0; y < 200; y++) for (let x = 0; x < W; x++)
+      for (let k = 0; k < 4; k++) if (c[(y * W + x) * 4 + k] !== d[(y * W + (W - 1 - x)) * 4 + k]) wrong2++;
+    assert.strictEqual(wrong2, 0, 'the mirrored attack is the drawn attack flipped horizontally');
+  });
 
-t('the game\'s route table is the canonical viewer\'s route table', () => {
-  const expected = { 0: ['S', 0], 1: ['SE', 1], 2: ['SE', 1], 3: ['NE', 1], 4: ['NE', 0], 5: ['NE', 0], 6: ['SE', 0], 7: ['SE', 0] };
-  deepEq(X.SKIN_VIEW, expected, 'the eight facings resolve to the four supplied views');
-  // Each route the viewer names is one facing of the compass; the game must draw the same file
-  // with the same mirror flag for that facing.
-  const routeFacing = { S: 0, SW: 1, W: 2, NW: 3, N: 4, NE: 5, E: 6, SE: 7 };
-  for (const [route, facing] of Object.entries(routeFacing)) {
-    const definition = VIEWER_POSES[route];
-    if (!definition) continue;                       // the viewer names no W, N or E view
-    deepEq([dirOf(facing).view, dirOf(facing).mirror ? 1 : 0],
-      [definition.sourceDirection, definition.mirror ? 1 : 0], `viewer route ${route} vs the game's facing ${facing}`);
-  }
-  assert.strictEqual(VIEWER_POSES.attackSW.sourceDirection, 'SE');
-  assert.strictEqual(VIEWER_POSES.attackSW.mirror, true, 'the viewer mirrors the SW attack from SE');
-  assert.strictEqual(dirOf(1, 1).mirror, true, 'and so does the game');
-  assert.strictEqual(dirOf(0, 1).view, 'attack', 'the viewer\'s attackSE route is the game\'s attack view');
-});
+  await t('the log says the frames arrived, so the player can see the animation is running', async () => {
+    const Y = boot();
+    const p = Y.skinPack('Rogue' in CLASS_SKINS.classes ? 'Rogue' : 'Hunter', 'f');
+    await settle(Y);
+    const line = Y.logged().find(m => /Class skin animation ready/.test(m));
+    assert.ok(line, 'a ready line is logged once the class\'s frames are decoded');
+    assert.ok(/female/.test(line), 'it names the class and gender: ' + line);
+    for (const view of Object.keys(p.files)) assert.ok(line.includes(`${p.frames[view]} ${view}`), `it names the ${view} frame count`);
+    assert.ok(/played with the file's own delays/.test(line), 'and says where the timing comes from');
+    assert.strictEqual(Y.logged().filter(m => /Class skin animation ready/.test(m)).length, 1, 'once per class and gender, not once per view');
+  });
 
-t('the views the art does not carry use a named nearest animation, and it is documented', () => {
-  const nov = X.skinPack('Novice', 'm'), hp = X.skinPack('High Priest', 'm');
-  deepEq([dirOf(4).view, dirOf(4).mirror], ['NE', false], 'straight up uses the NE animation');
-  deepEq([dirOf(6).view, dirOf(6).mirror], ['SE', false], 'straight right uses the SE animation');
-  deepEq([dirOf(2).view, dirOf(2).mirror], ['SE', true], 'straight left uses the SE animation mirrored');
-  deepEq([X.skinRoute(hp, 4, 0).view, X.skinRoute(hp, 4, 0).mirror], ['N', false],
-    'a class that supplies its own straight-up art uses it');
-  deepEq([X.skinRoute(nov, 4, 0).view], ['NE'], 'a class without one falls back to NE');
-  assert.ok(src.includes('The art has no E or W animation, and only High Priest has its own straight-up N one'),
-    'the panel tells the player in words');
-});
+  await t('a dropped decoded view never blanks the hero, and a new facing never shows the old one', async () => {
+    const Y = boot();
+    const p = Y.skinPack('Sniper', 'm');
+    await settle(Y);
+    const spr = Y.mkSkinHero(p);
+    assert.strictEqual(Y.captureSkinFrame(spr, { view: 'S', mirror: false }, 0), true, 'the S walk paints');
+    const before = sha(canvasBytes(spr.userData.skin.cv));
+    Y.skinStrips.delete(p.dir + '/' + p.files.S);                 // exactly what an eviction does
+    assert.strictEqual(Y.captureSkinFrame(spr, { view: 'S', mirror: false }, 100), false, 'there is nothing left to draw');
+    assert.strictEqual(sha(canvasBytes(spr.userData.skin.cv)), before, 'so the frame already on screen stays put');
+    assert.strictEqual(spr.visible, true, 'the hero is not blanked');
+    await settle(Y);
+    assert(Y.skinStrip(p, 'S'), 'and that view is decoded again in the background, on its own');
+    Y.skinStrips.delete(p.dir + '/' + p.files.NE);
+    assert.strictEqual(Y.captureSkinFrame(spr, { view: 'NE', mirror: false }, 0), false, 'a facing with no art cannot paint');
+    assert.strictEqual(spr.visible, false, 'so it hides rather than showing the straight-down pose while walking up-left');
+  });
 
-t('the art has no idle animation, and the standing-still policy says so out loud', () => {
-  assert(!Object.values(CLASS_SKINS.classes).some(e => Object.keys(e.m.files).includes('idle')),
-    'no idle animation is invented or claimed');
-  deepEq([X.skinRoute(X.skinPack('Knight', 'f'), 0, 0).view, X.skinRoute(X.skinPack('Knight', 'f'), 0, 0).mirror], ['S', false],
-    'at rest the S walk animation keeps playing (the viewer\'s behaviour)');
-  assert.ok(src.includes('the art has no idle animation, so at rest your character keeps playing its walk cycle'),
-    'and the panel states it plainly');
-});
+  await t('nothing stale is ever shown: no frames yet means the hero hides', () => {
+    const Y = boot();                                   // a decoder that never finishes
+    Y.fetch = () => new Promise(() => {});
+    const p = Y.skinPack('Sniper', 'f');
+    const spr = Y.mkSkinHero(p);
+    assert.strictEqual(Y.captureSkinFrame(spr, { view: 'SE', mirror: true }, 0), false, 'an undecoded view cannot be captured');
+    assert.strictEqual(spr.visible, false, 'so the sprite hides rather than showing the previous pose');
+  });
 
-// ---------- the drawn cell ----------
-const skinSprite = (cls = 'Knight', sex = 'm') => X.mkSkinHero(X.skinPack(cls, sex));
+  // ---------- class -> file mapping ----------
+  await t('the game\'s own class list is exactly what the skin manifest covers', () => {
+    assert.strictEqual(GAME_CLASSES.length, 19, 'the game has 19 classes');
+    deepEq(Object.keys(CLASS_SKINS.classes).slice().sort(), GAME_CLASSES.slice().sort(),
+      'the manifest must cover every class the game can be played as, and no others');
+  });
 
-t('the hero is one 200x200 canvas texture drawing the complete square image', () => {
-  const spr = skinSprite(), sk = spr.userData.skin;
-  assert.ok(sk.p.files.S.includes('knight male walking S.png'), 'the Knight wears its own art');
-  assert.strictEqual(X.SKIN_SIZE, 200, 'the source canvas is 200x200');
-  close(spr.center.x, sk.p.anchor[0] / 200, 'the anchor x is the figure centre');
-  close(spr.center.y, 1 - sk.p.anchor[1] / 200, 'the anchor y is the ground line, so the feet stay put');
-  close(spr.scale.x, spr.scale.y, 'the square image is never stretched');
-  close(spr.scale.y, X.SKIN_SIZE * (X.SKIN_H / sk.p.height), 'one constant scale per class and gender');
-  close(X.SKIN_H, 72 * X.PACK_K, 'the drawn character keeps the height the hero already had next to the mobs');
-});
+  await t('every class and gender resolves to its own art in its own tree folder', () => {
+    const problems = [];
+    for (const [name, entry] of Object.entries(CLASS_SKINS.classes)) {
+      assert(entry.tree && entry.job, `${name} must carry its tree and job id`);
+      for (const sex of ['m', 'f']) {
+        const rec = entry[sex];
+        assert(rec && rec.files && rec.frames && rec.poses, `${name} ${sex} must have files, frames and poses`);
+        const views = Object.keys(rec.files).sort();
+        deepEq(views.filter(v => v !== 'N'), ['NE', 'S', 'SE', 'attack'], `${name} ${sex} supplied views`);
+        if (views.includes('N') && name !== 'High Priest') problems.push(`${name} ${sex}: carries an N view the uploads never had`);
+        for (const [view, file] of Object.entries(rec.files)) {
+          const onDisk = path.join(SPRITE_DIR, file);
+          if (!fs.existsSync(onDisk)) { problems.push(`${name} ${sex} ${view}: missing ${file}`); continue; }
+          if (!file.startsWith(entry.tree + '/')) problems.push(`${name} ${sex} ${view}: ${file} is not in ${entry.tree}/`);
+          if (!file.startsWith(entry.tree + '/' + entry.job + ' ')) problems.push(`${name} ${sex} ${view}: ${file} is not ${entry.job} art`);
+        }
+        if (rec.height < 60 || rec.height > 140) problems.push(`${name} ${sex}: implausible drawn height ${rec.height}`);
+        if (rec.anchor[1] < 120 || rec.anchor[1] > 199) problems.push(`${name} ${sex}: ground line ${rec.anchor[1]} outside the canvas`);
+        for (const view of Object.keys(rec.files)) {
+          const meta = apngMeta(path.join(SPRITE_DIR, rec.files[view]));
+          if (meta.width !== 200 || meta.height !== 200) problems.push(`${name} ${sex} ${view}: canvas ${meta.width}x${meta.height}`);
+          if (meta.frames !== rec.frames[view]) problems.push(`${name} ${sex} ${view}: manifest says ${rec.frames[view]} frames, file has ${meta.frames}`);
+          if (meta.frames !== FIXTURE.files[rec.files[view]].frames.length) problems.push(`${name} ${sex} ${view}: the frame fixture is stale`);
+          if (rec.frames[view] < 2) problems.push(`${name} ${sex} ${view}: only ${rec.frames[view]} frame(s) - the art must animate`);
+          if (meta.plays !== 0) problems.push(`${name} ${sex} ${view}: num_plays ${meta.plays}, not an endless loop`);
+          if (meta.fctl !== meta.frames) problems.push(`${name} ${sex} ${view}: ${meta.fctl} fcTL chunks for ${meta.frames} frames`);
+          try { deepEq(rec.delays[view], meta.delays, `${name} ${sex} ${view}: per-frame delays`); }
+          catch (e) { problems.push(e.message); }
+        }
+      }
+    }
+    assert.deepStrictEqual(problems, [], problems.join(' | '));
+  });
 
-t('each rendered frame copies the browser\'s current animation frame onto the canvas', () => {
-  const spr = skinSprite(), sk = spr.userData.skin, p = sk.p;
-  for (const v of Object.keys(p.files)) p.views[v].fire('load');
-  X.draws().length = 0;
-  assert.strictEqual(X.captureSkinFrame(spr, { view: 'S', mirror: false }), true, 'the capture reports a frame was drawn');
-  deepEq(X.draws().map(a => a.length), [5], 'one whole-image drawImage per capture');
-  deepEq(X.draws().map(a => [a[1], a[2], a[3], a[4]]), [[0, 0, 200, 200]], 'the complete square image, never a crop');
-  assert.strictEqual(sk.tex.needsUpdate, true, 'the GPU texture is flagged so the frame reaches the screen');
-  X.draws().length = 0;
-  X.captureSkinFrame(spr, { view: 'S', mirror: false });
-  assert.strictEqual(X.draws().length, 1, 'and it copies again next render, following the browser\'s timeline');
-  assert.ok(src.includes('captureSkinFrame(heroSpr,route)'), 'the game calls it from the render loop');
-  const call = src.indexOf('captureSkinFrame(heroSpr,route)'), render = src.indexOf('R.render(scene,cam)', call);
-  assert.ok(render > call, 'before the frame is rendered');
-  assert.ok(!/setInterval|requestAnimationFrame/.test(grab('function captureSkinFrame(', 'function packTex(')),
-    'no second animation clock: the file\'s own timing drives it');
-});
+  await t('every source file really is an animated, endlessly looping PNG', () => {
+    const counts = {};
+    let files = 0;
+    for (const entry of Object.values(CLASS_SKINS.classes)) {
+      for (const sex of ['m', 'f']) for (const file of Object.values(entry[sex].files)) {
+        const meta = apngMeta(path.join(SPRITE_DIR, file));
+        if (meta.plays !== 0) assert.fail(`${file}: does not loop forever`);
+        if (meta.frames < 2) assert.fail(`${file}: a still, not an animation`);
+        counts[meta.frames] = (counts[meta.frames] || 0) + 1;
+        files++;
+      }
+    }
+    assert.strictEqual(files, 152 + 2, '76 class/gender/view files plus High Priest\'s two N files');
+    deepEq(counts, { 5: 13, 6: 4, 8: 127, 9: 10 },
+      'the uploaded set\'s frame counts: 127 files of 8, 13 of 5, 4 of 6 and 10 of 9');
+    console.log(`   ${files} source animations, frame counts ${JSON.stringify(plain(counts))}`);
+  });
 
-t('the mirror is drawn flipped on the canvas (no re-encoded file, no negative scale)', () => {
-  const calls = [];
-  const ctx = { imageSmoothingEnabled: false, clearRect() { calls.push('clear'); }, drawImage() { calls.push('draw'); },
-    setTransform(...a) { calls.push('transform ' + a.join(',')); }, translate(...a) { calls.push('translate ' + a.join(',')); }, scale(...a) { calls.push('scale ' + a.join(',')); } };
-  const saved = X.document.createElement;
-  X.document.createElement = (...args) => {
-    const el = saved(...args);
-    if (args[0] === 'canvas') { el.width = el.height = 200; el.getContext = () => ctx; }
-    return el;
-  };
-  const spr = skinSprite();
-  const p = spr.userData.skin.p;
-  for (const v of Object.keys(p.files)) p.views[v].fire('load');
-  calls.length = 0;
-  try { X.captureSkinFrame(spr, { view: 'SE', mirror: true }); }
-  finally { X.document.createElement = saved; }
-  assert.ok(calls.includes('translate 200,0') && calls.includes('scale -1,1'),
-    'a mirrored route flips horizontally: ' + calls.join(' | '));
-  assert.ok(!calls.some(c => /scale -?1,-/.test(c)), 'never vertically');
-  const iClear = calls.indexOf('clear'), iDraw = calls.indexOf('draw');
-  assert.ok(iClear >= 0 && iDraw > iClear, 'the canvas is cleared before it is repainted each frame (alpha preserved)');
-  assert.strictEqual(calls.filter(c => c === 'clear').length, 1, 'exactly one clear per frame');
-  assert.ok(calls.includes('transform 1,0,0,1,0,0'), "the transform is reset, so one frame's mirror cannot leak into the next");
-});
+  await t('every class and gender is wired to its own male / female file', () => {
+    for (const [name, entry] of Object.entries(CLASS_SKINS.classes)) {
+      for (const view of Object.keys(entry.m.files)) {
+        const male = entry.m.files[view], female = entry.f.files[view];
+        if (view === 'N') continue;                       // only High Priest supplies this one
+        assert.notStrictEqual(male, female, `${name} ${view} must use the male file for males and the female file for females`);
+        assert(/ male /.test(male), `${name} ${view}: ${male} is not the male file`);
+        assert(/ female /.test(female), `${name} ${view}: ${female} is not the female file`);
+      }
+    }
+  });
 
-t('an undecoded or missing animation hides the hero instead of showing a stale facing', () => {
-  const spr = skinSprite('Sniper', 'f');
-  const p = spr.userData.skin.p;
-  p.views.SE.complete = false; p.views.SE._src = '';
-  assert.strictEqual(X.captureSkinFrame(spr, { view: 'SE', mirror: true }), false, 'an undecoded view cannot be captured');
-  assert.strictEqual(spr.visible, false, 'so the sprite hides rather than showing the previous pose');
-});
+  await t('each class job is a distinct entry (no class borrows another class\'s art)', () => {
+    const seen = new Map();
+    for (const [name, entry] of Object.entries(CLASS_SKINS.classes)) {
+      const key = entry.tree + '/' + entry.job;
+      assert(!seen.has(key), `${name} and ${seen.get(key)} share the ${key} art`);
+      seen.set(key, name);
+    }
+    assert.strictEqual(seen.size, 19, 'the seven folders cover all 19 jobs');
+  });
 
-// ---------- asset loading and the hero ----------
-t('the page loads the manifest and asks for the class\'s own files, once each', () => {
-  assert.ok(src.includes('<script src="assets/class_skins_data.js?v=1"></script>'), 'the manifest is loaded by the page');
-  assert.ok(src.includes('im.src=encodeURI(url)'), 'the loader URL-encodes the source path (it contains spaces)');
-  const before = X.images.length;
-  const p = X.skinPack('Lord Knight', 'f');
-  const urls = X.images.slice(before).map(im => decodeURI(im._src));
-  deepEq(urls.slice().sort(), [
-    'Updates/Sprite/Swordman/lordknight female walking S.png',
-    'Updates/Sprite/Swordman/lordknight female walking SE.png',
-    'Updates/Sprite/Swordman/lordknight female walking NE.png',
-    'Updates/Sprite/Swordman/lordknight female attack SE.png',
-  ].sort(), 'exactly the files this class and gender really has are requested');
-  const again = X.images.length;
-  X.skinPack('Lord Knight', 'f');
-  assert.strictEqual(X.images.length, again, 'and a second look reuses the same decoders');
-});
+  await t('the manifest agrees with the canonical viewer about every file it names', () => {
+    const byPose = new Map(VIEWER.map(row => [[row.tree, row.job, row.gender, row.action, row.direction].join('|'), row]));
+    const problems = [];
+    for (const [name, entry] of Object.entries(CLASS_SKINS.classes)) {
+      for (const sex of ['m', 'f']) {
+        const gender = sex === 'm' ? 'male' : 'female';
+        for (const [view, action, direction] of [['S', 'walk', 'S'], ['SE', 'walk', 'SE'], ['NE', 'walk', 'NE'], ['attack', 'attack', 'SE'], ['N', 'walk', 'N']]) {
+          if (!entry[sex].files[view]) continue;
+          const row = byPose.get([entry.tree, entry.job, gender, action, direction].join('|'));
+          if (!row) { problems.push(`${name} ${gender} ${view}: missing from the viewer manifest`); continue; }
+          if (row.path !== entry[sex].files[view]) problems.push(`${name} ${gender} ${view}: ${entry[sex].files[view]} != viewer ${row.path}`);
+        }
+      }
+    }
+    assert.deepStrictEqual(problems, [], problems.join(' | '));
+  });
 
-t('all supplied views load before the skin is worn, and the animated fallback covers the wait', () => {
-  const p = X.skinPack('Assassin', 'm');
-  assert(p, 'Assassin male has a skin pack');
-  assert.strictEqual(X.skinLoaded(p), false, 'nothing is loaded yet');
-  const views = Object.keys(p.files);
-  p.views[views[0]].fire('load');
-  assert.strictEqual(X.skinLoaded(p), false, 'one view is not enough - a half-loaded class would show the wrong facing');
-  for (const v of views.slice(1)) p.views[v].fire('load');
-  assert.strictEqual(X.skinLoaded(p), true, 'the whole class is ready');
+  await t('the filename variants the uploads use are handled (walking / attack / attacking)', () => {
+    const attackOf = cls => [CLASS_SKINS.classes[cls].m.files.attack, CLASS_SKINS.classes[cls].f.files.attack];
+    deepEq(attackOf('Novice'), ['Novice/novice male attacking SE.png', 'Novice/novice female attacking SE.png'],
+      'Novice uses "attacking"');
+    assert.strictEqual(CLASS_SKINS.classes.Mage.m.files.attack, 'Mage/mage male attacking SE.png', 'Mage male uses "attacking"');
+    assert.strictEqual(CLASS_SKINS.classes.Swordman.m.files.attack, 'Swordman/swordman male attack SE.png', 'Swordman uses "attack"');
+    for (const [name, entry] of Object.entries(CLASS_SKINS.classes))
+      for (const sex of ['m', 'f'])
+        assert(/ (attack|attacking) SE\.png$/.test(entry[sex].files.attack), `${name} ${sex}: attack must come from an attack file`);
+  });
 
-  X.ensureHero({ cls: 'Assassin', sex: 'm', tier: 2 });
-  assert(X.hero().userData.skin, 'the loaded Assassin wears its own animation');
-  assert(!X.hero().userData.pack, 'and not the animated pack');
+  // ---------- directions and mirrors ----------
+  const dirOf = (dir, atk = 0) => X.skinRoute(X.skinPack('Novice', 'm'), dir, atk);
 
-  const boss = X.skinPack('High Wizard', 'm');
-  X.ensureHero({ cls: 'High Wizard', sex: 'm', tier: 2 });
-  assert(X.hero().userData.pack, 'a class whose art is still arriving keeps the animated fallback - never a wrong pose');
-  for (const v of Object.keys(boss.files)) boss.views[v].fire('load');
-  X.ensureHero({ cls: 'High Wizard', sex: 'm', tier: 2 });
-  assert(X.hero().userData.skin, 'and switches the moment every file is ready');
-});
+  await t('the four supplied views are the ones the owner asked for, and each one is drawn unmirrored', () => {
+    deepEq(CLASS_SKINS.views, ['S', 'SE', 'NE', 'attack'], 'S, SE, NE walk plus the SE attack');
+    deepEq([dirOf(0).view, dirOf(0).mirror], ['S', false], 'walking straight down is the S animation');
+    deepEq([dirOf(7).view, dirOf(7).mirror], ['SE', false], 'walking down-right is the SE animation');
+    deepEq([dirOf(5).view, dirOf(5).mirror], ['NE', false], 'walking up-right is the NE animation');
+    deepEq([dirOf(0, 1).view, dirOf(0, 1).mirror], ['attack', false], 'the drawn swing is used as supplied');
+  });
 
-t('a broken file is reported and falls back - the player is never left blank', () => {
-  const before = X.images.length;
-  const p = X.skinPack('Whitesmith', 'f');
-  assert.strictEqual(X.images.length - before, 4, 'the four Whitesmith files are requested');
-  p.views.attack.fire('error');
-  assert(X.logged.some(m => /Class skin art could not load/.test(m)), 'the player is told in the log');
-  assert.ok(X.logged.some(m => /animated fallback sprite is used instead/.test(m)), 'and what happens instead');
-  X.ensureHero({ cls: 'Whitesmith', sex: 'f', tier: 3 });
-  assert(!X.hero().userData.skin, 'no skin is worn for that class');
-  X.ensureHero({ cls: 'Whitesmith', sex: 'f', tier: 3 });
-  assert(X.hero().userData.pack, 'its animated Whitesmith body is worn instead - never another class');
-  assert.strictEqual(X.hero().userData.body, 'whitesmith', 'and it is that class\'s own body art');
-});
+  await t('SW, NW and the SW attack are the supplied animation mirrored - not a different file', () => {
+    deepEq([dirOf(1).view, dirOf(1).mirror], ['SE', true], 'down-left is SE mirrored');
+    deepEq([dirOf(3).view, dirOf(3).mirror], ['NE', true], 'up-left is NE mirrored');
+    for (const dir of [1, 2, 3]) assert.strictEqual(dirOf(dir, 1).mirror, true, `attack ${dir} is the mirrored swing`);
+    for (const dir of [0, 4, 5, 6, 7]) assert.strictEqual(dirOf(dir, 1).mirror, false, `attack ${dir} is the drawn swing`);
+    deepEq(X.SKIN_ATTACK_MIRROR, [0, 1, 1, 1, 0, 0, 0, 0], 'the attack mirror list is the one documented');
+  });
 
-t('a missing manifest leaves the game exactly as it was (the animated pack hero)', () => {
-  const Y = boot({ noSkins: true });
-  Y.ensureHero({ cls: 'Knight', sex: 'm', tier: 1 });
-  assert.strictEqual(Y.skinPack('Knight', 'm'), null, 'no skin pack is invented out of thin air');
-  assert(Y.hero().userData.pack, 'the animated Knight body is worn instead');
-});
+  await t('the game\'s route table is the canonical viewer\'s route table', () => {
+    const expected = { 0: ['S', 0], 1: ['SE', 1], 2: ['SE', 1], 3: ['NE', 1], 4: ['NE', 0], 5: ['NE', 0], 6: ['SE', 0], 7: ['SE', 0] };
+    deepEq(X.SKIN_VIEW, expected, 'the eight facings resolve to the four supplied views');
+    const routeFacing = { S: 0, SW: 1, W: 2, NW: 3, N: 4, NE: 5, E: 6, SE: 7 };
+    for (const [route, facing] of Object.entries(routeFacing)) {
+      const definition = VIEWER_POSES[route];
+      if (!definition) continue;                       // the viewer names no W, N or E view
+      deepEq([dirOf(facing).view, dirOf(facing).mirror ? 1 : 0],
+        [definition.sourceDirection, definition.mirror ? 1 : 0], `viewer route ${route} vs the game's facing ${facing}`);
+    }
+    assert.strictEqual(VIEWER_POSES.attackSW.sourceDirection, 'SE');
+    assert.strictEqual(VIEWER_POSES.attackSW.mirror, true, 'the viewer mirrors the SW attack from SE');
+    assert.strictEqual(dirOf(1, 1).mirror, true, 'and so does the game');
+  });
 
-t('the decoders stay in the page, painted but invisible, and the cache is bounded', () => {
-  assert.ok(src.includes("el.style.cssText='position:fixed;left:0;top:0;width:1px;height:1px;overflow:hidden;opacity:0;pointer-events:none;z-index:-1'"),
-    'the decoder layer is clipped and transparent - never display:none, which browsers may skip');
-  assert.ok(src.includes('const SKIN_CACHE_MAX=24;') && src.includes('skinDocOrder.length>SKIN_CACHE_MAX'),
-    'the decoder cache is bounded so a long class-change session cannot leak images');
-  assert.ok(X.appended().length > 0, 'the decoders are actually attached to the document');
-});
+  await t('the views the art does not carry use a named nearest animation, and it is documented', () => {
+    const nov = X.skinPack('Novice', 'm'), hp = X.skinPack('High Priest', 'm');
+    deepEq([dirOf(4).view, dirOf(4).mirror], ['NE', false], 'straight up uses the NE animation');
+    deepEq([dirOf(6).view, dirOf(6).mirror], ['SE', false], 'straight right uses the SE animation');
+    deepEq([dirOf(2).view, dirOf(2).mirror], ['SE', true], 'straight left uses the SE animation mirrored');
+    deepEq([X.skinRoute(hp, 4, 0).view, X.skinRoute(hp, 4, 0).mirror], ['N', false],
+      'a class that supplies its own straight-up art uses it');
+    deepEq([X.skinRoute(nov, 4, 0).view], ['NE'], 'a class without one falls back to NE');
+    assert.ok(src.includes('The art has no E or W animation, and only High Priest has its own straight-up N one'),
+      'the panel tells the player in words');
+  });
 
-// ---------- previews ----------
-t('both previews play the real class animation, not a still', () => {
-  assert.ok(src.includes('function drawSkinPreview(id,labelId,cls,sex){'), 'one preview renderer');
-  assert.ok(src.includes("const p=skinPack(cls,sex),im=p?skinImage(p,'S'):null;"),
-    'the preview reads the same pack and the same S animation the hero wears');
-  assert.ok(src.includes('ctx.drawImage(im,ax-bw/2,ay-bh+6,bw,bh,0,0,cv.width,cv.height);'), 'and frames it around the art\'s own anchor');
-  assert.ok(src.includes("if(tabs.includes('set'))drawAppearancePreview();") &&
-            src.includes("if(tabs.includes('job'))drawClassPreview();"),
-    'the game loop redraws whichever preview is open, so it animates');
-  assert.ok(src.includes("function drawAppearancePreview(){if(S)drawSkinPreview('hairPreview','hairPreviewLoading',S.cls,S.sex)}"),
-    'the Appearance panel preview follows the class and gender you wear');
-  assert.ok(src.includes("function drawClassPreview(){if(S)drawSkinPreview('classPreview','classPreviewLoading',selK||S.cls,S.sex)}"),
-    'the class-change panel preview follows the class you are looking at');
-  assert.ok(src.includes('id="classPreview"') && src.includes('id="classPreviewLoading"'), 'the class panel has its canvas and its loading note');
-  assert.ok(src.includes('animating'), 'the panel says the preview is animating');
-});
+  await t('the art has no idle animation, and the standing-still policy says so out loud', () => {
+    assert(!Object.values(CLASS_SKINS.classes).some(e => Object.keys(e.m.files).includes('idle')),
+      'no idle animation is invented or claimed');
+    deepEq([X.skinRoute(X.skinPack('Knight', 'f'), 0, 0).view, X.skinRoute(X.skinPack('Knight', 'f'), 0, 0).mirror], ['S', false],
+      'at rest the S walk animation keeps playing (the viewer\'s behaviour)');
+    assert.ok(src.includes('the art has no idle animation, so at rest your character keeps playing its walk cycle'),
+      'and the panel states it plainly');
+  });
 
-t('the old melee swing arc is off, so the uploaded attack is not doubled', () => {
-  assert.ok(src.includes('const HERO_SWING_ARC=false;'), 'the arc sits behind one named switch');
-  assert.ok(src.includes("slashM.visible=HERO_SWING_ARC&&atkAnim>.12&&wt!=='bow'&&wt!=='staff';"),
-    'and the swing cue is gated by it (bow and staff shots are untouched)');
-  const decl = src.indexOf('const HERO_SWING_ARC=false;'), use = src.indexOf('slashM.visible=HERO_SWING_ARC&&');
-  assert.ok(decl >= 0 && decl < use, 'the switch is declared before the function that reads it');
-  assert.ok(src.includes('The white melee swing arc is switched off too - the uploaded attack animation already is the swing.'),
-    'and the Appearance panel tells the player, instead of the cue just vanishing');
-  assert.ok(!src.includes('HERO_SWING_ARC=true'), 'nothing switches the duplicate arc back on by accident');
-});
+  // ---------- the drawn cell ----------
+  const skinSprite = (cls = 'Knight', sex = 'm') => X.mkSkinHero(X.skinPack(cls, sex));
 
-t('the hairstyle and the held weapon are honestly reported', () => {
-  assert.ok(src.includes('Every uploaded file is a complete looping animation, hair included'), 'the hair is part of the art');
-  assert.ok(src.includes('is still saved with your account'), 'and the saved choice is not lost');
-  assert.ok(!src.includes('data-a="hair"'), 'no live hair action is offered while the art is fixed');
-  assert.ok(src.includes("hair:v=>{S.hair=(((S.hair|0)+(+v||1))%19+19)%19;heroKey='';ui();save()}"),
-    'the save field and its handler stay for saves and for the pack fallback');
-  assert.ok(src.includes('const HERO_HELD_WEAPON=false;'), 'the held-weapon overlay is off behind one switch');
-  assert.ok(src.includes("if(!HERO_HELD_WEAPON){weaponNodes.forEach(n=>n.el.style.display='none');return}"),
-    'so no old weapon icon floats on the new art');
-});
+  await t('the hero is one 200x200 canvas texture drawing the complete square image', () => {
+    const spr = skinSprite(), sk = spr.userData.skin;
+    assert.ok(sk.p.files.S.includes('knight male walking S.png'), 'the Knight wears its own art');
+    assert.strictEqual(X.SKIN_SIZE, 200, 'the source canvas is 200x200');
+    close(spr.center.x, sk.p.anchor[0] / 200, 'the anchor x is the figure centre');
+    close(spr.center.y, 1 - sk.p.anchor[1] / 200, 'the anchor y is the ground line, so the feet stay put');
+    close(spr.scale.x, spr.scale.y, 'the square image is never stretched');
+    close(spr.scale.y, X.SKIN_SIZE * (X.SKIN_H / sk.p.height), 'one constant scale per class and gender');
+    close(X.SKIN_H, 72 * X.PACK_K, 'the drawn character keeps the height the hero already had next to the mobs');
+  });
 
-t('the new art is never pushed through the old atlas slicing', () => {
-  const skinBlock = grab('function skinLayer(){', 'function packTex(opt){');
-  assert.ok(!skinBlock.includes('repeat.set(1/8,1/24)'), 'the APNG path has no 8x24 atlas repeat');
-  assert.ok(!skinBlock.includes('setPackCell'), 'and never calls the atlas cell setter');
-  assert.ok(!skinBlock.includes('offset.set'), 'nor the atlas UV offsets');
-  assert.ok(skinBlock.includes('new THREE.CanvasTexture(cv)'), 'it is one canvas texture for the whole animation');
-  assert.ok(src.includes('const hd=viewDir(pFace),sk=heroSpr.userData.skin;'), 'the render loop branches on the skin sprite');
-});
+  await t('each rendered frame copies the due animation frame onto the canvas, nothing else', async () => {
+    const p = X.skinPack('Wizard', 'f');
+    await settle(X);
+    const spr = X.mkSkinHero(p);
+    const ctx = spr.userData.skin.cv.getContext('2d');
+    X.captureSkinFrame(spr, { view: 'S', mirror: false }, 0);
+    assert.strictEqual(ctx.drawn[0][0], X.skinStrip(p, 'S').cv, 'the source is the decoded strip');
+    deepEq(ctx.drawn[0].slice(1), [0, 0, 200, 200, 0, 0, 200, 200],
+      'one whole 200x200 frame from the decoded strip, never a crop of the source art');
+    assert.strictEqual(spr.userData.skin.tex.needsUpdate, true, 'the GPU texture is flagged so the frame reaches the screen');
+    ctx.drawn.length = 0;
+    const step = CLASS_SKINS.classes.Wizard.f.delays.S[0][0] / CLASS_SKINS.classes.Wizard.f.delays.S[0][1] * 1000;
+    X.captureSkinFrame(spr, { view: 'S', mirror: false }, step);
+    assert.strictEqual(ctx.drawn.length, 1, 'and it paints again next render');
+    assert.strictEqual(ctx.drawn[0][1], 200, 'with the next frame\'s row of the strip');
+    assert.ok(src.includes('captureSkinFrame(heroSpr,route)'), 'the game calls it from the render loop');
+    const call = src.indexOf('captureSkinFrame(heroSpr,route)'), render = src.indexOf('R.render(scene,cam)', call);
+    assert.ok(render > call, 'before the frame is rendered');
+    assert.ok(!/setInterval|requestAnimationFrame/.test(grab('function captureSkinFrame(', 'function packTex(')),
+      'no second animation clock: the file\'s own delays drive it through the one render loop');
+  });
 
-// ---------- the generated manifest ----------
-t('the committed manifest is the current build of the source art', () => {
-  const run = spawnSync('python3', [path.join(ROOT, 'tools/make_class_skins.py'), '--check'], { encoding: 'utf8' });
-  assert.strictEqual(run.status, 0, `manifest is stale: ${run.stderr || run.stdout}`);
-  const viewerRun = spawnSync('python3', [path.join(ROOT, 'tools/make_sprite_viewer.py'), '--check'], { encoding: 'utf8' });
-  assert.strictEqual(viewerRun.status, 0, `canonical viewer is stale: ${viewerRun.stderr || viewerRun.stdout}`);
-});
+  await t('the new art is never pushed through the old atlas slicing', () => {
+    const skinBlock = grab('function skinLayer(){', 'function packTex(opt){');
+    assert.ok(!skinBlock.includes('repeat.set(1/8,1/24)'), 'the APNG path has no 8x24 atlas repeat');
+    assert.ok(!skinBlock.includes('setPackCell'), 'and never calls the atlas cell setter');
+    assert.ok(!skinBlock.includes('offset.set'), 'nor the atlas UV offsets');
+    assert.ok(skinBlock.includes('putImageData') && skinBlock.includes('skinUnfilter'),
+      'it decodes the file\'s own frames instead');
+    assert.ok(src.includes('const hd=viewDir(pFace),sk=heroSpr.userData.skin;'), 'the render loop branches on the skin sprite');
+  });
 
-console.log(`\n${pass} passed, ${fail} failed`);
-console.log(`   ${Object.keys(CLASS_SKINS.classes).length} classes, ${Object.keys(CLASS_SKINS.classes).length * 2} class/gender sets, ${CLASS_SKINS.views.length} supplied views each`);
-process.exit(fail ? 1 : 0);
+  // ---------- asset loading and the hero ----------
+  await t('the page loads the manifest and asks for the class\'s own files, once each', async () => {
+    assert.ok(src.includes('<script src="assets/class_skins_data.js?v=1"></script>'), 'the manifest is loaded by the page');
+    assert.ok(src.includes('await fetch(encodeURI(url))'), 'the loader URL-encodes the source path (it contains spaces)');
+    const Y = boot();
+    const p = Y.skinPack('Lord Knight', 'f');
+    deepEq(Y.fetched().slice().sort(), [
+      'Updates/Sprite/Swordman/lordknight female walking S.png',
+      'Updates/Sprite/Swordman/lordknight female walking SE.png',
+      'Updates/Sprite/Swordman/lordknight female walking NE.png',
+      'Updates/Sprite/Swordman/lordknight female attack SE.png',
+    ].sort(), 'exactly the files this class and gender really has are requested');
+    await settle(Y);
+    deepEq(Y.fetched().sort(), p.files && Object.values(p.files).map(f => 'Updates/Sprite/' + f).sort(),
+      'once each, no repeats');
+    assert.strictEqual(Y.skinLoaded(p), true, 'and all four are decoded');
+  });
+
+  await t('all supplied views decode before the skin is worn, and the animated fallback covers the wait', async () => {
+    const Y = boot();
+    const p = Y.skinPack('Assassin', 'm');
+    assert.strictEqual(Y.skinLoaded(p), false, 'nothing is decoded yet');
+    Y.ensureHero({ cls: 'Assassin', sex: 'm', tier: 2 });
+    assert.strictEqual(Y.hero().userData.skin, undefined, 'so the hero is not wearing it yet');
+    assert(Y.hero().userData.pack, 'the animated pack keeps the game playable - never a half-loaded class');
+    await settle(Y);
+    assert.strictEqual(Y.skinLoaded(p), true, 'every view is decoded');
+    Y.ensureHero({ cls: 'Assassin', sex: 'm', tier: 2 });
+    assert(Y.hero().userData.skin, 'and now the Assassin\'s own animation is worn');
+    assert(!Y.hero().userData.pack, 'instead of the pack');
+  });
+
+  await t('a file that will not open is reported, and the class falls back - never a stale pose', async () => {
+    const Y = boot({ fail: ['Updates/Sprite/Merchant/whitesmith female attack SE.png'] });
+    const p = Y.skinPack('Whitesmith', 'f');
+    await settle(Y);
+    assert(Y.logged().some(m => /Class skin animation could not be read/.test(m)), 'the player is told in the log');
+    assert.ok(Y.logged().some(m => /HTTP 404/.test(m)), 'with the reason');
+    assert.strictEqual(Y.skinLoaded(p), false, 'that class is not worn');
+    Y.ensureHero({ cls: 'Whitesmith', sex: 'f', tier: 3 });
+    assert(!Y.hero().userData.skin, 'no skin is worn for that class');
+    Y.ensureHero({ cls: 'Whitesmith', sex: 'f', tier: 3 });
+    assert(Y.hero().userData.pack, 'its animated Whitesmith body is worn instead - never another class');
+    assert.strictEqual(Y.hero().userData.body, 'whitesmith', 'and it is that class\'s own body art');
+    assert.strictEqual(Y.broken(), true, 'and the Appearance panel will say the frames could not be read');
+  });
+
+  await t('a browser with no frame decoder keeps the art, and says the animation needs the served page', async () => {
+    const Y = boot({ noDecode: true });
+    const p = Y.skinPack('Priest', 'm');
+    assert.strictEqual(Y.SKIN_DECODE, false, 'the decoder is unavailable');
+    assert.ok(Y.logged().some(m => /this browser cannot decode the frames/.test(m)), 'it is reported, not hidden');
+    assert.ok(Y.logged().some(m => /serve the game over http/.test(m)), 'with what to do about it');
+    assert.strictEqual(Y.logged().some(m => /could not load/.test(m)), false, 'and no image error, because the art is still shown');
+    Y.ensureHero({ cls: 'Priest', sex: 'm', tier: 2 });
+    assert(Y.hero().userData.pack, 'the animated pack covers the wait, exactly as before');
+    Y.images().forEach(im => im.fire('load'));
+    assert.strictEqual(Y.skinLoaded(p), true, 'the art itself still arrives (drawn without its frames)');
+    Y.ensureHero({ cls: 'Priest', sex: 'm', tier: 2 });
+    assert(Y.hero().userData.skin, 'and is worn');
+    assert.strictEqual(Y.broken(), true, 'with the honest note on the panel');
+    assert.ok(src.includes('<b>Some animations could not be read as animations</b>'), 'which the panel really renders');
+  });
+
+  await t('a page opened as a file:// URL leans on the images instead of fetch', async () => {
+    const Y = boot({ fileProtocol: true });
+    Y.skinPack('Mage', 'm');
+    assert.strictEqual(Y.SKIN_DECODE, false, 'fetch + DecompressionStream are not assumed there');
+    assert.strictEqual(Y.fetched().length, 0, 'nothing is fetched');
+    assert.ok(Y.images().length >= 4, 'the <img> decoders are used instead');
+    assert.ok(Y.logged().some(m => /the page is not being served over http/.test(m)), 'and the log explains the missing frames');
+  });
+
+  await t('a missing manifest leaves the game exactly as it was (the animated pack hero)', () => {
+    const Y = boot({ noSkins: true });
+    Y.ensureHero({ cls: 'Knight', sex: 'm', tier: 1 });
+    assert.strictEqual(Y.skinPack('Knight', 'm'), null, 'no skin pack is invented out of thin air');
+    assert(Y.hero().userData.pack, 'the animated Knight body is worn instead');
+  });
+
+  await t('decoded animations are cached, bounded, and the worn class is never evicted', async () => {
+    const Y = boot();
+    Y.ensureHero({ cls: 'Knight', sex: 'm', tier: 2 });
+    const worn = Y.skinPack('Knight', 'm');
+    await settle(Y);
+    Y.ensureHero({ cls: 'Knight', sex: 'm', tier: 2 });
+    assert(Y.hero().userData.skin, 'the Knight is worn');
+    const names = Object.keys(CLASS_SKINS.classes);
+    for (const name of names) Y.skinPack(name, 'm');            // look at every class, as the panel can
+    await settle(Y);
+    assert.ok(Y.skinStrips.size <= Y.SKIN_STRIP_KEEP, `at most ${Y.SKIN_STRIP_KEEP} decoded views stay in memory (kept ${Y.skinStrips.size})`);
+    for (const view of Object.keys(worn.files))                    // the worn class must still be there
+      assert(Y.skinStrip(worn, view), `the worn class keeps its ${view} animation decoded`);
+    const again = Y.fetched().length;
+    Y.skinPack('Knight', 'm');
+    assert.strictEqual(Y.fetched().length, again, 'and no file is fetched twice while it is cached');
+    console.log(`   ${Y.skinStrips.size} of ${names.length * 4} decoded views were kept (cap ${Y.SKIN_STRIP_KEEP})`);
+  });
+
+  await t('the fallback <img> layer is still clipped, invisible and bounded', () => {
+    assert.ok(src.includes("el.style.cssText='position:fixed;left:0;top:0;width:1px;height:1px;overflow:hidden;opacity:0;pointer-events:none;z-index:-1'"),
+      'the fallback decoder layer is clipped and transparent, never display:none');
+    assert.ok(src.includes('const SKIN_CACHE_MAX=24;') && src.includes('skinDocOrder.length>SKIN_CACHE_MAX'),
+      'the fallback image cache is bounded');
+    assert.ok(src.includes('const SKIN_STRIP_KEEP=18;'), 'and the decoded animations have their own bound');
+  });
+
+  // ---------- previews ----------
+  await t('both previews play the real class animation, not a still', async () => {
+    assert.ok(src.includes('function drawSkinPreview(id,labelId,cls,sex){'), 'one preview renderer');
+    assert.ok(src.includes("const p=skinPack(cls,sex),f=p?skinFrameOf(p,'S'):null;"),
+      'the preview reads the same pack and the same S animation the hero wears');
+    assert.ok(src.includes('ctx.drawImage(f.img,f.sx+ax-bw/2,ay-bh+6,bw,bh,0,0,cv.width,cv.height);'),
+      'and draws the frame that is due, framed around the art\'s own anchor');
+    const Y = boot();
+    const p = Y.skinPack('Blacksmith', 'm');
+    await settle(Y);
+    const delays = CLASS_SKINS.classes.Blacksmith.m.delays.S;
+    for (const ms of [0, 137, 500, 900]) {
+      const index = dueIndex(delays, ms);
+      assert.strictEqual(Y.skinFrameOf(p, 'S', ms).sx, index * 200,
+        `at ${ms}ms the preview shows frame ${index + 1} (200px row ${index} of the strip)`);
+    }
+    assert.ok(new Set([0, 137, 500, 900].map(ms => Y.skinFrameOf(p, 'S', ms).sx)).size > 1,
+      'so the preview really animates rather than repeating one frame');
+    assert.ok(src.includes("if(tabs.includes('set'))drawAppearancePreview();") &&
+              src.includes("if(tabs.includes('job'))drawClassPreview();"),
+      'the game loop redraws whichever preview is open');
+    assert.ok(src.includes("function drawAppearancePreview(){if(S)drawSkinPreview('hairPreview','hairPreviewLoading',S.cls,S.sex)}"),
+      'the Appearance panel preview follows the class and gender you wear');
+    assert.ok(src.includes("function drawClassPreview(){if(S)drawSkinPreview('classPreview','classPreviewLoading',selK||S.cls,S.sex)}"),
+      'the class-change panel preview follows the class you are looking at');
+    assert.ok(src.includes('id="classPreview"') && src.includes('id="classPreviewLoading"'), 'the class panel has its canvas and its loading note');
+    assert.ok(src.includes('animating'), 'the panels say the preview is animating');
+  });
+
+  await t('the old melee swing arc is off, so the uploaded attack is not doubled', () => {
+    assert.ok(src.includes('const HERO_SWING_ARC=false;'), 'the arc sits behind one named switch');
+    assert.ok(src.includes("slashM.visible=HERO_SWING_ARC&&atkAnim>.12&&wt!=='bow'&&wt!=='staff';"),
+      'and the swing cue is gated by it (bow and staff shots are untouched)');
+    const decl = src.indexOf('const HERO_SWING_ARC=false;'), use = src.indexOf('slashM.visible=HERO_SWING_ARC&&');
+    assert.ok(decl >= 0 && decl < use, 'the switch is declared before the function that reads it');
+    assert.ok(src.includes('The white melee swing arc is switched off too - the uploaded attack animation already is the swing.'),
+      'and the Appearance panel tells the player, instead of the cue just vanishing');
+    assert.ok(!src.includes('HERO_SWING_ARC=true'), 'nothing switches the duplicate arc back on by accident');
+  });
+
+  await t('the hairstyle and the held weapon are honestly reported', () => {
+    assert.ok(src.includes('Every uploaded file is a complete looping animation, hair included'), 'the hair is part of the art');
+    assert.ok(src.includes('is still saved with your account'), 'and the saved choice is not lost');
+    assert.ok(!src.includes('data-a="hair"'), 'no live hair action is offered while the art is fixed');
+    assert.ok(src.includes("hair:v=>{S.hair=(((S.hair|0)+(+v||1))%19+19)%19;heroKey='';ui();save()}"),
+      'the save field and its handler stay for saves and for the pack fallback');
+    assert.ok(src.includes('const HERO_HELD_WEAPON=false;'), 'the held-weapon overlay is off behind one switch');
+    assert.ok(src.includes("if(!HERO_HELD_WEAPON){weaponNodes.forEach(n=>n.el.style.display='none');return}"),
+      'so no old weapon icon floats on the new art');
+  });
+
+  // ---------- the generated manifest ----------
+  await t('the committed manifest and the frame fixture are the current build of the source art', () => {
+    const run = spawnSync('python3', [path.join(ROOT, 'tools/make_class_skins.py'), '--check'], { encoding: 'utf8' });
+    assert.strictEqual(run.status, 0, `manifest is stale: ${run.stderr || run.stdout}`);
+    const viewerRun = spawnSync('python3', [path.join(ROOT, 'tools/make_sprite_viewer.py'), '--check'], { encoding: 'utf8' });
+    assert.strictEqual(viewerRun.status, 0, `canonical viewer is stale: ${viewerRun.stderr || viewerRun.stdout}`);
+    assert.strictEqual(FIXTURE.dir, CLASS_SKINS.dir, 'the fixture describes the same source folder');
+  });
+
+  console.log(`\n${pass} passed, ${fail} failed`);
+  console.log(`   ${Object.keys(CLASS_SKINS.classes).length} classes, ${Object.keys(CLASS_SKINS.classes).length * 2} class/gender sets, ${CLASS_SKINS.views.length} supplied views each`);
+  process.exit(fail ? 1 : 0);
+})().catch(err => { console.error('the suite itself broke:', err); process.exit(1); });
