@@ -103,7 +103,7 @@ const $=id=>({style:{},set innerHTML(v){globalThis['h_'+id]=v},get innerHTML(){r
 const dr=()=>1;
 ${code}
 const skpAvail=()=>5,skTree=()=>4,skEarnedMax=()=>9,skLine=()=>['Novice'],skEarned=()=>9,skSpent=()=>0,pv=()=>0,bon=()=>0,qTxt=q=>'quest';
-this.__u={ V, SKILLS, SKILL_ICON, logs, set S(v){S=v}, get S(){return S}, set eqPick(v){eqPick=v}, get eqPick(){return eqPick},
+this.__u={ V, SKILLS, SKILL_ICON, logs, indexSectionOpen, indexToggleSection, set S(v){S=v}, get S(){return S}, set eqPick(v){eqPick=v}, get eqPick(){return eqPick},
            set indexMode(v){indexMode=v}, get indexMode(){return indexMode}, set mapM(v){mapM=v}, set mapL(v){mapL=v}, set selE(v){selE=v}, get selE(){return selE}, set selB(v){selB=v}, get selB(){return selB}, set selS(v){selS=v}, set selP(v){selP=v} };
 `;
 const sb = { console };
@@ -154,7 +154,7 @@ t('the map panel renders every map and field', () => {
   const b = U.V.map();
   assert.ok(b.includes('<b>1%</b>') && b.includes('poolitem') && b.includes('Each item rolls independently'), 'the boss must list its whole pool at 1% each');
   assert.ok(b.includes('0.1%'), 'boss card odds must read 0.1% (v38)');
-  assert.ok(b.includes('2% each') && b.includes('5% each'), 'ore rates: 2% per monster, 5% per boss');
+  assert.ok(b.includes('1% each') && b.includes('2.5% each'), 'v51 ore rates: 1% per monster, 2.5% per boss');
 });
 
 t('the map tab is a compact two-band panel: maps on top, that map\'s fields under them', () => {
@@ -216,9 +216,10 @@ t('the Mastery Index tracks monster titles and consumes loose cards for permanen
   h=U.V.index();
   assert.ok(h.includes('1/90 cards discovered')&&h.includes('<b>1/450</b> card mastery ranks'),'the album and five-rank-per-card progress are visible');
   assert.ok(h.includes('data-a="indexcard"')&&h.includes('Dedicate one'),'a loose card can advance an individual card');
-  assert.ok(h.includes('data-a="cardreward"')&&h.includes('Choose reward for mastery'),'each card rank offers a permanent reward choice');
-  assert.ok(h.includes('STR</b> 0/25')&&h.includes('HP Leech</b> 0/3')&&h.includes('ATK %</b> 0/5'),'effective global caps must be visible beside every reward');
-  assert.ok(src.includes('CARD_REWARD_POINT_CAP')&&src.includes('active reward budget is exactly filled')&&src.includes('future reward caps can use the recorded ranks'),'the UI shows the exact current reward budget and future-reward behavior');
+  assert.ok(h.includes('data-a="cardroll"')&&h.includes('Token gacha'),'mastery ranks spend tokens on the gacha');
+  assert.ok(h.includes('data-a="cardreset"')&&h.includes('Reset · 1 Legendary card'),'a Legendary card resets the gacha and refunds tokens');
+  assert.ok(h.includes('Card Index available')&&!h.includes('(global max)'),'the loose-card list is renamed and the global-max wording is gone');
+  assert.ok(h.includes('STR</b> 0/25')&&h.includes('HP Leech</b> 0/3')&&h.includes('ATK %</b> 0/5'),'current values and caps stay visible beside every reward');
   for(const reward of ['hpPct','fleePct','leech','def','mdef','atkPct','matkPct','aspdPct','critPct'])assert.ok(src.includes("id:'"+reward+"'"),reward+' should be an available card mastery reward');
   assert.ok(h.includes('Poring Card')&&h.includes('Mastery 1/5'),'the card album keeps per-card mastery history');
   assert.ok(src.includes("if(v==='index'){openTab('index');return}"),'the Quest Board Index button opens the panel');
@@ -501,7 +502,7 @@ t('the character + class panels show the class-collection bonus', () => {
   let h = U.V.stats();
   assert.ok(h.includes('Class collection'), 'collection progress must be visible on the character panel');
   assert.ok(h.includes('Class collection: 0/6 transcendent'), 'only transcendent classes count, and the total is data-driven');
-  assert.ok(h.includes('activates at Base Lv 100'), 'the gate is spelled out before the rebirth levels');
+  assert.ok(h.includes('at Base Lv 100+')&&h.includes('permanent'), 'the v51 rule is spelled out: earned per transcendent class at 100+, kept account-wide');
   U.S.lv = 100; U.S.base['Lord Knight'] = {lv:110};
   h = U.V.stats();
   assert.ok(h.includes('Class collection: 1/6 transcendent'), 'a played transcendent class joins the count');
@@ -541,7 +542,7 @@ t('the Skills panel prints the whole tree against what a maxed line earns', () =
   assert.ok(src.includes('data-a="skalloc"')&&src.includes('Auto-allocate all skills')&&src.includes('autoAllocateSkills'), 'the Skills panel must expose one-click lower-class-first allocation');
   for(const [action,helper] of [['gmindex','gmIndexTest'],['gmcard','gmCardTest'],['gmskill','gmSkillTest'],['gmpet','gmPetTest']])assert.ok(src.includes('data-a="'+action+'"')&&src.includes(helper),action+' GM controls must be available for testing the new systems');
   assert.ok(src.includes('data-v="all5000"')&&src.includes('data-v="xp4320000"'),'Index GM labels must expose the 5,000-rung and final-title scenarios');
-  assert.ok(src.includes('data-v="capDemo"')&&src.includes('data-v="g6dps"')&&src.includes('data-v="g6utility"'),'GM cap and complete pet-chain fixtures must be visible');
+  assert.ok(src.includes('data-v="rollAll"')&&src.includes('data-v="g6dps"')&&src.includes('data-v="g6utility"'),'GM cap and complete pet-chain fixtures must be visible');
   assert.ok(src.includes('const skTree=()=>'), 'skTree() must exist - the panel needs the tree price');
   assert.ok(src.includes('const skEarnedMax=()=>'), 'skEarnedMax() must exist');
   assert.ok(src.includes('const skCost=()=>1;'), 'a skill level costs one point (v37)');
@@ -992,6 +993,84 @@ t('the funnel on the Logs tab opens the same tick row and folds itself away', ()
   assert.strictEqual(P.fil.attrs['aria-expanded'], 'false', 'the funnel goes quiet again');
   P.toggle(); P.hide();
   assert.strictEqual(P.panel.style.display, 'none', 'and the funnel itself closes it too');
+});
+
+t('the Index remembers every map ledger you opened, across re-renders', () => {
+  U.S = mkS('Novice'); U.indexMode = 'mobs';
+  let h = U.V.index();
+  assert.ok(h.includes('data-a="idxmap" data-v="mobs:0"'), 'every map ledger is a persistent section, not a native details');
+  assert.ok(/data-v="mobs:0"[^>]*open/.test(h), 'the map you are on starts open');
+  assert.ok(!/data-v="mobs:1"[^>]*open/.test(h), 'other maps start collapsed');
+  U.indexToggleSection('mobs', 1);
+  h = U.V.index();
+  assert.ok(/data-v="mobs:1"[^>]*open/.test(h), 'opening another map keeps it open');
+  U.S.mp = 1; h = U.V.index();                       // a kill/level-up re-render in the background
+  assert.ok(/data-v="mobs:1"[^>]*open/.test(h), 'the re-render no longer slams the map you are reading shut');
+  U.indexToggleSection('mobs', 1); h = U.V.index();  // click it shut on purpose
+  assert.ok(!/data-v="mobs:1"[^>]*open/.test(h), 'a section you closed stays closed, even when it is the current map');
+  U.indexMode = 'cards'; h = U.V.index();
+  assert.ok(h.includes('data-a="idxmap" data-v="cards:0"'), 'the card album gets the same memory');
+  assert.ok(!/data-v="cards:0"[^>]*open/.test(h), 'and keeps its own open/closed state per tab');
+  assert.ok(src.includes("if(b.dataset.a==='idxmap'&&e.target.closest('summary'))e.preventDefault();"), 'the native details toggle is suppressed so it cannot fight the re-render');
+});
+
+t('the equipped title is a small transparent gold seal under the feet, with its rank mark', () => {
+  assert.ok(/id="heroTitleMark"/.test(src) && /heroTitleMark\.textContent=equipped\.mark/.test(src), 'the title glyph rides on the left as the logo');
+  assert.ok(/scr\(pl\.x,0\.16,pl\.z\)/.test(src), 'the seal is projected at the feet, not above the head');
+  assert.ok(/\.hero-title\{[^}]*background:transparent/.test(src), 'no fill behind the name');
+  assert.ok(/\.hero-title\{[^}]*border:1px solid #e8c25a/.test(src), 'a thin gold frame instead');
+  assert.ok(/\.hero-title\{[^}]*transform:translate\(-50%,3px\)/.test(src), 'and it hangs below the anchor point');
+  assert.ok(!/\.hero-title\{[^}]*background:linear-gradient/.test(src), 'the old parchment fill is gone');
+});
+
+t('the detail card opens directly under the clicked slot or bag tile, not at the window bottom', () => {
+  U.S = mkS('Knight'); U.selB = null; U.eqPick = null;
+  U.selE = 'head'; let e = U.V.equip();
+  assert.ok(e.includes('doll-detail'), 'the equipment detail card rides inside the doll');
+  assert.ok(e.indexOf('doll-detail') < e.indexOf('data-v="weapon"'), 'a head click puts refine/cards under the head row, above the hands row');
+  U.selE = 'acc2'; e = U.V.equip();
+  assert.ok(e.indexOf('data-v="leg"') < e.indexOf('doll-detail'), 'a feet-row click puts the card after the legs row');
+  assert.ok(e.indexOf('refineUI') === -1, 'the card is real markup, not a raw call');
+  U.selB = 9; let b = U.V.bag0();
+  assert.ok(b.includes('mob-card grid-detail'), 'the bag detail card sits inside the grid');
+  assert.ok(b.indexOf('grid-detail') > b.indexOf('data-a="selb" data-v="9"'), 'right after the tile you clicked');
+  assert.ok(!b.includes('Click an item to see its stats'), 'the old bottom hint card is not repeated under the grid');
+  U.selB = null; b = U.V.bag0();
+  assert.ok(!b.includes('grid-detail') && b.includes('Click an item to see its stats'), 'with nothing selected the quiet hint is all that shows');
+});
+
+t('refine controls sit with the piece: the ladder is the v51 30%-nerfed one', () => {
+  U.S = mkS('Knight'); U.selE = 'weapon'; U.eqPick = null;
+  U.S.eq.weapon = { id: 1, name: 'Claymore', tier: 2, slot: 'weapon', wt: 'sword', val: 90, r: 3, sec: 1, slots: 1, cards: [] };
+  U.S.cards = [{ id: 4, n: 'Poring Card', stat: 'str', g: 1, v: 3, card: true }];
+  const e = U.V.equip();
+  assert.ok(e.indexOf('Refine') > -1 && e.indexOf('Insert card') > -1, 'the weapon shows both sections');
+  assert.ok(e.indexOf('Refine') < e.indexOf('Insert card'), 'Refine comes before the long card-insert list, not after it');
+  assert.ok(src.includes('refCh=it=>[70,70,70,70,49,42,35,28,21,14][it.r||0]'), 'the refine chance table is the nerfed one');
+  assert.ok(src.includes('ore:l===10,oreCh:l===10?.01:0') && src.includes('ore:true,oreCh:.025'), 'ore drops are halved to 1% / 2.5%');
+});
+
+t('worn equipment can never be auto-sold or bulk-sold', () => {
+  const sellValFn = pick(/const sellVal=it=>[^;]+;/, 'sellVal');
+  const sellnowFn = grab('sellnow:()=>{', 'clicksell:');
+  const box = {}; vm.createContext(box);
+  vm.runInContext(`let S=null,selB=null,z=0,sold=0;const earnZeny=v=>{z+=v},log=()=>{},ui=()=>{},save=()=>{sold++};
+    const autoSellOn=t=>!!(S.autoSell&&S.autoSell[t]);
+    ${sellValFn}
+    const ACT={${sellnowFn}};
+    this.__bulk={set S(v){S=v},get S(){return S},get z(){return z},get saved(){return sold},ACT};`, box);
+  const C = box.__bulk;
+  const worn = { id: 1, name: 'Worn Claymore', tier: 4, slot: 'weapon', val: 900, sec: 3, locked: false, cards: [] };
+  const bag = { id: 2, name: 'Spare Claymore', tier: 4, slot: 'weapon', val: 800, sec: 3, locked: false, cards: [] };
+  C.S = { inv: [bag], cards: [], eq: { weapon: worn, armor: null, head: null, off: null, acc1: null, acc2: null, leg: null },
+          autoSell: [false, false, false, false, true], zeny: 0 };
+  C.ACT.sellnow();
+  assert.strictEqual(C.S.inv.length, 0, 'the matching bag copy is the one that sells');
+  assert.strictEqual(C.S.eq.weapon, worn, 'the worn weapon is untouched: equipment is not in the bag list');
+  assert.ok(C.z > 0, 'the sale still paid out');
+  assert.ok(src.includes('S.inv.filter(i=>!i.locked&&autoSellOn(i.tier))'), 'bulk sell only ever reads S.inv');
+  assert.ok(src.includes('if(!it.locked&&autoSellOn(it.tier)){const v=sellVal(it)'), 'drop auto-sell only ever reads S.inv');
+  assert.ok(src.includes('const i=S.inv.findIndex(x=>String(x.id)===String(id))'), 'manual Sell searches the bag, never S.eq');
 });
 
 console.log(`\n${pass} passed, ${fail} failed`);

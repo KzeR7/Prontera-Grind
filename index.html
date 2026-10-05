@@ -164,7 +164,11 @@ hr{border:0;border-top:1px dashed var(--edge);margin:6px 0}
 #qp{position:absolute;right:12px;top:50%;transform:translateY(-50%);width:210px;background:rgba(30,20,10,.5);border:1px solid #ffffff44;border-radius:8px;padding:6px 8px;color:#fff;font:12px "Trebuchet MS",sans-serif;pointer-events:auto;z-index:5;line-height:1.3;display:none}#qp .pbar{margin:3px 0}
 .skg{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}.sk{position:relative;min-width:0;min-height:146px;border:1px solid var(--sk-accent,#8a6a2c);border-radius:10px;background:linear-gradient(160deg,#fffdf7,#f4e7c8);text-align:center;padding:7px 5px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:4px;line-height:1.1;box-shadow:0 2px 5px #4b35151a,inset 0 1px 0 #fff}.sk:hover{transform:translateY(-1px);box-shadow:0 4px 9px #4b35152b}.sk.off{filter:grayscale(.45);opacity:.68}.sk.sel{outline:3px solid #2f6fd6;outline-offset:1px}.sk-head{width:100%;display:flex;justify-content:space-between;align-items:center;gap:2px}.sk-kind{font:700 8px/1.2 "Trebuchet MS",sans-serif;letter-spacing:.35px;padding:2px 4px;border-radius:7px;background:#3b2a1a12;color:#604723;white-space:nowrap}.sk-paused{font:700 8px/1.2 "Trebuchet MS",sans-serif;padding:2px 4px;border-radius:7px;background:#e5484d;color:#fff}.sk .si{width:40px;height:40px;display:grid;place-items:center;border-radius:12px;border:1px solid #ffffffbb;background:radial-gradient(circle at 32% 25%,#fff 0,var(--sk-accent,#8a6a2c) 115%);font-size:24px;line-height:1;box-shadow:0 2px 5px #34200c33,inset 0 1px 0 #fff}.sk.auto-off .si{filter:grayscale(1);opacity:.55}.sk-name{width:100%;min-height:24px;font-size:10px;font-weight:700;line-height:1.15;overflow-wrap:anywhere}.sk-level{font-size:10px;color:#5c482c;white-space:nowrap}.sk button{margin-top:auto;padding:2px 9px;font-weight:bold}.sk button:disabled{opacity:.36}.sk-autocast{display:flex;align-items:center;justify-content:center;gap:4px;min-height:14px;font-size:9px;line-height:1;white-space:nowrap;cursor:pointer;color:#4b3c21}.sk-autocast input{width:12px;height:12px;margin:0;accent-color:#2f6fd6;cursor:pointer}.sk.auto-off .sk-autocast{color:#8d3939}
 .hair-preview-card{display:flex;align-items:center;gap:12px;margin:9px 0;padding:8px;border:1px solid var(--edge);border-radius:8px;background:linear-gradient(145deg,#fffdf6,#f0e2bd);box-shadow:inset 0 1px 0 #fff}.hair-preview-stage{position:relative;flex:0 0 150px;width:150px;height:160px;display:flex;align-items:center;justify-content:center;overflow:hidden;border:1px solid #c9a35b;border-radius:8px;background:radial-gradient(circle at 50% 37%,#fff9df,#d9c18b)}.hair-preview-stage canvas{display:block;width:150px;height:160px;image-rendering:pixelated}.hair-preview-loading{position:absolute;font-size:10px;color:#5d4929;text-align:center}.hair-preview-info{display:flex;flex-direction:column;gap:5px;min-width:0}.hair-preview-info .eyebrow{font-weight:bold;font-size:9px;letter-spacing:.7px;color:#89672e}.hair-preview-info b{font-size:14px;overflow-wrap:anywhere}.hair-preview-info .hair-style-label{font-weight:bold;color:#63491f;font-size:12px}.hair-controls button{min-width:40px;font-weight:bold}.hair-controls span{font-weight:bold;font-size:12px}
-.doll{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;max-width:300px;margin:8px auto;padding:10px;border-radius:10px;background:radial-gradient(#ffe9a8,#e9d39a)}
+.doll{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;max-width:340px;margin:8px auto;padding:10px;border-radius:10px;background:radial-gradient(#ffe9a8,#e9d39a)}
+/* v51: the selected piece's detail card (refine, cards, unequip) drops into the grid directly
+   below the row that holds the clicked slot, so nothing has to be hunted for at the bottom. */
+.doll-detail,.grid-detail{grid-column:1/-1;margin:2px 0 4px;padding-top:6px;border-top:1px dashed #b98b3f}
+.grid-detail{margin:2px 0}
 #modal{position:fixed;inset:0;background:#0009;z-index:900;display:none;align-items:center;justify-content:center}
 .bts{display:flex;align-items:center;gap:4px;flex:none}.bts small{width:34px;text-align:right}.bts button{width:42px;padding:3px 0;text-align:center}
 .chip{background:#fffdf5;border:2px solid var(--edge2);border-radius:14px;padding:2px 10px;font-size:12px}
@@ -220,11 +224,13 @@ button.tick.on{background:#ffe08a;border-color:var(--gold);font-weight:bold}
 #hud>div:last-child{min-width:max-content}
 /* v46: a quest-board-linked RO-flavoured mastery ledger, with beveled parchment, gold trim and foil-rank title seals. */
 .title-hud{margin:0 3px;padding:1px 6px;border:1px solid #8a6a2c;border-radius:10px;background:linear-gradient(#fff4c8,#d9b25c);color:#553719;font-size:10px;font-weight:800;white-space:nowrap;text-shadow:0 1px #fff9;box-shadow:inset 0 1px #fff9}
-/* Kept as an accessible compatibility mirror for old saves/tests; the equipped title is now
-   rendered at the hero's head, never as a crowded item in the bottom status bar. */
+/* Kept as an accessible compatibility mirror for old saves/tests; the equipped title is drawn
+   under the hero's feet in the world, never as a crowded item in the bottom status bar. */
 .hud-title-mirror{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;border:0!important;overflow:hidden!important;clip:rect(0 0 0 0)!important;clip-path:inset(50%)!important;white-space:nowrap!important}
-.hero-title{position:absolute;z-index:27;display:none;transform:translate(-50%,-100%);pointer-events:none;max-width:min(48vw,260px);padding:3px 9px 4px;border:1px solid #f1cf69;border-radius:10px;background:linear-gradient(180deg,rgba(62,35,17,.94),rgba(29,22,26,.9));color:#ffe9a8;font:800 11px/1.1 Georgia,serif;letter-spacing:.15px;text-align:center;text-shadow:0 1px 2px #000,0 0 5px #000;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;box-shadow:0 2px 8px #0008,0 0 0 1px #5b3d1c99}
-.hero-title::after{content:'';position:absolute;left:50%;bottom:-5px;width:8px;height:8px;background:#3d2618;border-right:1px solid #f1cf69;border-bottom:1px solid #f1cf69;transform:translateX(-50%) rotate(45deg)}
+/* v51: a small transparent seal under the legs - gold frame, no fill, the rank mark as its logo. */
+.hero-title{position:absolute;z-index:27;display:none;transform:translate(-50%,3px);pointer-events:none;max-width:min(52vw,240px);padding:1px 7px 2px 5px;border:1px solid #e8c25a;border-radius:8px;background:transparent;color:#ffe9a8;font:800 9.5px/1.15 Georgia,serif;letter-spacing:.2px;text-align:center;text-shadow:0 1px 2px #000,0 0 6px #000;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;box-shadow:0 0 0 1px #1c120955,0 0 6px #e8c25a55,inset 0 0 0 1px #e8c25a44}
+.hero-title .ht-mark{display:inline-grid;place-items:center;width:13px;height:13px;margin-right:4px;border:1px solid #e8c25a;border-radius:50%;background:transparent;color:#ffe9a8;font:800 8px/1 Georgia,serif;vertical-align:-2px;text-shadow:0 1px 2px #000}
+.hero-title::after{content:'';position:absolute;left:50%;top:-4px;width:6px;height:6px;background:transparent;border-left:1px solid #e8c25a;border-top:1px solid #e8c25a;transform:translateX(-50%) rotate(45deg)}
 #qp .qp-head{display:flex;align-items:center;justify-content:space-between;gap:5px;font-weight:bold}#qp .qp-actions{display:flex;align-items:center;gap:4px}#qp .qp-actions button{font-size:10px;padding:1px 5px;white-space:nowrap}
 .mastery-head{display:flex;align-items:center;gap:8px;margin-bottom:7px;padding:7px 8px;border:2px solid var(--edge2);border-radius:9px;background:linear-gradient(115deg,#fff7df,#e6cf95);box-shadow:inset 0 1px #fff;min-width:0}
 .mastery-emblem{flex:none;width:36px;height:36px;display:grid;place-items:center;border:2px ridge #b98327;border-radius:50%;background:radial-gradient(circle at 30% 25%,#fff8cb,#d09a3a 70%,#80602a);color:#633c0b;font-size:23px;text-shadow:0 1px #fff;box-shadow:0 2px 3px #3b2a1a55}
@@ -252,7 +258,7 @@ button.tick.on{background:#ffe08a;border-color:var(--gold);font-weight:bold}
 <small>You must log in every time you open the game.</small>
 <div id="buildTag" style="margin-top:6px;font-size:10px;opacity:.55;text-align:center"></div></div></div>
 <div id="wrap"><div class="title"><span id="stageTitle">Prontera Lv 1</span><span id="grindStatus" style="font-size:12px;opacity:.85"></span></div>
-<div id="view"><div id="ov"><div id="mobSpriteLayer" aria-hidden="true"></div><div id="weaponSpriteLayer" aria-hidden="true"></div><div id="prog"></div><div id="tag"><b id="tn"></b><div class="bar"><i id="th" style="background:var(--hp)"></i></div></div><div id="heroTitle" class="hero-title" aria-live="polite"><span id="heroTitleText"></span></div><div id="hint">Drag to rotate &middot; Scroll to zoom</div><div id="feedWrap"><div id="feedFilter" role="group" aria-label="Log filter"></div><div id="feedTabs"><button id="feedTab" type="button" aria-expanded="true" aria-controls="feed" title="Minimize or show the on-screen log">📃 Logs ▾</button><button id="feedFil" type="button" aria-expanded="false" aria-controls="feedFilter" aria-label="Filter the on-screen log" title="Filter the log - this row folds away by itself">▽</button></div><div id="feed"></div></div><div id="hudBuffs" role="status" aria-live="polite" aria-label="Active pet buffs - hover an icon for what it does"></div><div id="qp"></div><div id="dock"></div>
+<div id="view"><div id="ov"><div id="mobSpriteLayer" aria-hidden="true"></div><div id="weaponSpriteLayer" aria-hidden="true"></div><div id="prog"></div><div id="tag"><b id="tn"></b><div class="bar"><i id="th" style="background:var(--hp)"></i></div></div><div id="heroTitle" class="hero-title" aria-live="polite"><span id="heroTitleMark" class="ht-mark" aria-hidden="true"></span><span id="heroTitleText"></span></div><div id="hint">Drag to rotate &middot; Scroll to zoom</div><div id="feedWrap"><div id="feedFilter" role="group" aria-label="Log filter"></div><div id="feedTabs"><button id="feedTab" type="button" aria-expanded="true" aria-controls="feed" title="Minimize or show the on-screen log">📃 Logs ▾</button><button id="feedFil" type="button" aria-expanded="false" aria-controls="feedFilter" aria-label="Filter the on-screen log" title="Filter the log - this row folds away by itself">▽</button></div><div id="feed"></div></div><div id="hudBuffs" role="status" aria-live="polite" aria-label="Active pet buffs - hover an icon for what it does"></div><div id="qp"></div><div id="dock"></div>
 <div id="wins"></div></div></div>
 <div id="hud"><div><b id="cls2"></b> <span id="titleLabel" class="title-hud hud-title-mirror" aria-hidden="true" style="display:none"></span> Base Lv <b id="lv">1</b> / Job Lv <b id="jl">1</b></div>
 <div class="hud-health">HP <div class="bar" role="meter" aria-label="HP" aria-valuemin="0" aria-valuemax="100" id="hpMeter"><i id="hpb"></i></div><small id="hpPct">100%</small></div>
@@ -327,7 +333,7 @@ const GM_USER='GM',GM_PASS='gm1234';   // CHANGE THE GM PASSWORD before you publ
 // script block, which is a SyntaxError - the game did not run on main at all. One line wins, and
 // it names both sides of this merge: the v38 balance patch (the weapon cut, the affix/card
 // give-back) and main's weapon-hold rendering work.
-const BUILD='2026-10-05 balance-v50 slower index capped cards safer pets';   // shown on the login card - confirms which file you loaded
+const BUILD='2026-10-05 balance-v51 faster early game + card gacha + title seal';   // shown on the login card - confirms which file you loaded
 $('buildTag').textContent='build '+BUILD;
 
 // ---------- class tree: Novice -> 6 first jobs -> 6 second jobs -> 6 third jobs ----------
@@ -681,10 +687,10 @@ const HUNT_TITLES=INDEX_TITLES;
 const MASTER_STATS=['str','agi','dex','int','vit','luk'];
 const CARD_MASTERY_PER_CARD=5;
 const CARD_MASTERY_STAT_CAP=5; // only used to bound migration from the retired global stat track
-// Global caps define the active reward budget. The budget is the sum of the current reward caps,
-// so a full 450-rank album earns exactly enough assignable points to fill today's rewards and no
-// surplus. Later album ranks remain recorded as mastery; adding a future reward cap automatically
-// makes those already-earned ranks spendable without changing the existing stat caps.
+// v51: every mastery rank grants one TOKEN, and a token buys one gacha roll - a random permanent
+// stat from the pool below. Per-stat caps keep a full album from becoming an unbounded stat dump,
+// and a roll always lands on a stat that still has room, so no token is ever wasted. A reset
+// costs one loose Legendary card and refunds every spent token.
 const CARD_REWARD_CAPS={str:25,agi:25,dex:25,int:25,vit:25,luk:25,hpPct:10,fleePct:10,leech:3,def:25,mdef:25,atkPct:5,matkPct:5,aspdPct:5,critPct:5};
 const CARD_REWARD_OPTIONS=[
   {id:'str',name:'STR',desc:'+1 STR'}, {id:'agi',name:'AGI',desc:'+1 AGI'},
@@ -697,8 +703,7 @@ const CARD_REWARD_OPTIONS=[
   {id:'critPct',name:'Crit %',desc:'+1 Crit percentage point'}
 ];
 const CARD_REWARD_IDS=new Set(CARD_REWARD_OPTIONS.map(x=>x.id));
-const CARD_REWARD_POINT_CAP=CARD_REWARD_OPTIONS.reduce((sum,o)=>sum+CARD_REWARD_CAPS[o.id],0);
-const emptyCardIndex=()=>({donated:0,byName:{},mastery:{},rewards:{},stats:Object.fromEntries(MASTER_STATS.map(k=>[k,0]))});
+const emptyCardIndex=()=>({donated:0,byName:{},mastery:{},rewards:{},rolls:[],stats:Object.fromEntries(MASTER_STATS.map(k=>[k,0]))});
 const safeCount=v=>{const n=Number(v);return Number.isFinite(n)?Math.max(0,Math.min(Number.MAX_SAFE_INTEGER,Math.floor(n))):0};
 const indexExperience=()=>S&&Number.isFinite(Number(S.indexXp))?safeCount(S.indexXp):safeCount(S.kills);
 const indexRankForXp=xp=>{let rank=0;for(const t of INDEX_TITLES)if(xp>=t.xp)rank++;return rank};
@@ -716,23 +721,46 @@ function recordMonsterKill(mob){
   return {key,count:after,level:indexMasteryLevel(after),bonus:indexMilestoneBonus(before,after)};
 }
 // ---------- card mastery ----------
-// Each named card has five independent mastery ranks. One loose copy advances one rank; the
-// player then chooses one permanent reward for that rank. Socketed cards never reach this path.
+// Each named card has five independent mastery ranks. One loose copy advances one rank and grants
+// one token; tokens are spent on the gacha (one random permanent stat each). Socketed cards never
+// reach this path. Older saves keep every stat they had already earned: repairMastery() turns the
+// retired per-rank picks and the old global track into recorded gacha rolls.
 const cardMasteryLevel=(name,ci=S&&S.cardIndex)=>{if(!ci)return 0;const explicit=safeCount(ci.mastery&&ci.mastery[name]);if(explicit)return Math.min(CARD_MASTERY_PER_CARD,explicit);return Math.min(CARD_MASTERY_PER_CARD,safeCount(ci.byName&&ci.byName[name]))};
-const cardMasteryRewards=(name,ci=S&&S.cardIndex)=>{const a=ci&&ci.rewards&&ci.rewards[name];return Array.isArray(a)?a.filter(x=>CARD_REWARD_IDS.has(x)).slice(0,CARD_MASTERY_PER_CARD):[]};
 const cardMasteryKeys=()=>[...new Set([...Object.keys(S&&S.cardIndex&&S.cardIndex.mastery||{}),...Object.keys(S&&S.cardIndex&&S.cardIndex.byName||{})])];
 const cardMasteryTotal=()=>cardMasteryKeys().reduce((sum,n)=>sum+cardMasteryLevel(n),0);
-const cardMasteryAssigned=()=>MASTER_STATS.reduce((sum,k)=>sum+safeCount(S&&S.cardIndex&&S.cardIndex.stats&&S.cardIndex.stats[k]),0)+[...new Set([...Object.keys(S&&S.cardIndex&&S.cardIndex.rewards||{}),...cardMasteryKeys()])].reduce((sum,n)=>sum+cardMasteryRewards(n).length,0);
-const cardMasteryEarned=()=>Math.min(CARD_REWARD_POINT_CAP,cardMasteryTotal());
-const cardMasterySpent=()=>cardMasteryAssigned();
+const cardMasteryRolls=()=>Array.isArray(S&&S.cardIndex&&S.cardIndex.rolls)?S.cardIndex.rolls.filter(x=>CARD_REWARD_IDS.has(x)):[];
+const cardMasteryRolled=()=>cardMasteryRolls().length;
+const cardMasteryEarned=()=>cardMasteryTotal();               // one token per mastery rank
+const cardMasterySpent=()=>cardMasteryRolled();               // one token per gacha roll
 const cardMasteryAvailable=()=>Math.max(0,cardMasteryEarned()-cardMasterySpent());
-const cardMasteryCapRoom=()=>CARD_REWARD_OPTIONS.reduce((sum,o)=>sum+Math.max(0,CARD_REWARD_CAPS[o.id]-cardMasteryStat(o.id)),0);
 const cardMasteryStat=k=>{
   if(!CARD_REWARD_IDS.has(k))return 0;
   let n=MASTER_STATS.includes(k)?safeCount(S&&S.cardIndex&&S.cardIndex.stats&&S.cardIndex.stats[k]):0;
-  for(const name of Object.keys(S&&S.cardIndex&&S.cardIndex.rewards||{}))n+=cardMasteryRewards(name).filter(x=>x===k).length;
+  for(const x of cardMasteryRolls())if(x===k)n++;
   return Math.min(CARD_REWARD_CAPS[k]??Number.MAX_SAFE_INTEGER,n);
 };
+// A capped stat is skipped by the roll, so every token still finds a home; the button is disabled
+// only when the whole pool is full.
+const cardMasteryOpenOptions=()=>CARD_REWARD_OPTIONS.filter(o=>cardMasteryStat(o.id)<CARD_REWARD_CAPS[o.id]);
+const cardMasteryLegendaryCard=()=>Array.isArray(S&&S.cards)?S.cards.findIndex(c=>c&&+c.g===3):-1;
+function cardMasteryGacha(){
+  if(!S)return null;
+  if(!S.cardIndex||typeof S.cardIndex!=='object'||Array.isArray(S.cardIndex))S.cardIndex=emptyCardIndex();
+  if(!Array.isArray(S.cardIndex.rolls))S.cardIndex.rolls=[];
+  if(cardMasteryAvailable()<1)return null;
+  const open=cardMasteryOpenOptions();if(!open.length)return null;
+  const id=open[Math.floor(Math.random()*open.length)].id;
+  S.cardIndex.rolls.push(id);return id;
+}
+function cardMasteryReset(){
+  if(!S)return null;
+  const i=cardMasteryLegendaryCard();if(i<0)return null;
+  S.cards.splice(i,1);
+  if(!S.cardIndex||typeof S.cardIndex!=='object'||Array.isArray(S.cardIndex))S.cardIndex=emptyCardIndex();
+  const refunded=cardMasteryRolled();
+  S.cardIndex.rolls=[];
+  return refunded;
+}
 function donateCardToMastery(id){
   if(!S||!Array.isArray(S.cards))return null;
   const i=S.cards.findIndex(c=>c&&String(c.id)===String(id));if(i<0)return null;
@@ -749,19 +777,8 @@ function donateCardToMastery(id){
   ci.byName[name]=safeCount(ci.byName[name])+1;ci.mastery[name]=level+1;
   return c;
 }
-function assignCardMasteryReward(name,reward){
-  if(!S||!S.cardIndex||!CARD_REWARD_IDS.has(reward))return false;
-  const n=String(name||'');if(!n||!CARD_NAMES.has(n))return false;
-  const level=cardMasteryLevel(n),a=cardMasteryRewards(n);if(!level||cardMasteryAvailable()<1||a.length>=level||a.length>=CARD_MASTERY_PER_CARD||cardMasteryStat(reward)>=CARD_REWARD_CAPS[reward])return false;
-  if(!S.cardIndex.rewards||typeof S.cardIndex.rewards!=='object'||Array.isArray(S.cardIndex.rewards))S.cardIndex.rewards={};
-  S.cardIndex.rewards[n]=a.concat(reward);return true;
-}
-// Compatibility helper for old saves/tools: assign the next unclaimed rank on the first card.
-function allocateCardMastery(stat){
-  if(!CARD_REWARD_IDS.has(stat))return false;
-  for(const name of Object.keys(S&&S.cardIndex&&S.cardIndex.mastery||{}))if(assignCardMasteryReward(name,stat))return true;
-  return false;
-}
+// v51 retired the per-rank reward picker. The old helpers (assignCardMasteryReward /
+// allocateCardMastery) are gone: cardMasteryGacha() rolls a random stat for one token instead.
 function repairMastery(f){
   if(!f.mobKills||typeof f.mobKills!=='object'||Array.isArray(f.mobKills))f.mobKills={};
   for(const k of Object.keys(f.mobKills)){
@@ -781,26 +798,26 @@ function repairMastery(f){
   for(const k of Object.keys(ci.byName))ci.mastery[k]=Math.min(CARD_MASTERY_PER_CARD,Math.max(safeCount(ci.mastery[k]),Math.min(CARD_MASTERY_PER_CARD,ci.byName[k])));
   for(const k of Object.keys(ci.mastery))if(!CARD_NAMES.has(k)||!ci.byName[k])delete ci.mastery[k];
   if(!ci.rewards||typeof ci.rewards!=='object'||Array.isArray(ci.rewards))ci.rewards={};
-  for(const k of Object.keys(ci.rewards)){
-    if(!CARD_NAMES.has(k)||!ci.mastery[k]){delete ci.rewards[k];continue}
-    ci.rewards[k]=Array.isArray(ci.rewards[k])?ci.rewards[k].filter(x=>CARD_REWARD_IDS.has(x)).slice(0,ci.mastery[k]):[];
-  }
-  const rewardUsed=Object.fromEntries(CARD_REWARD_OPTIONS.map(o=>[o.id,0]));
-  for(const k of Object.keys(ci.rewards))ci.rewards[k]=ci.rewards[k].filter(x=>rewardUsed[x]++<CARD_REWARD_CAPS[x]);
   if(!ci.stats||typeof ci.stats!=='object'||Array.isArray(ci.stats))ci.stats={};
-  // Legacy v46/v47 saves had one global stat-points track without a card identity. Preserve
-  // those points by assigning them deterministically to the first available ranks in the
-  // migrated album; afterward every rank is represented by the same per-card reward ledger,
-  // so a picker cannot award a sixth point to a card whose old global point was already spent.
-  const legacyRewards=[];
-  for(const k of MASTER_STATS)for(let i=0;i<Math.min(CARD_MASTERY_STAT_CAP,safeCount(ci.stats[k]));i++)legacyRewards.push(k);
-  const migratedNames=Object.keys(ci.mastery);
-  for(const reward of legacyRewards){
-    if(rewardUsed[reward]>=CARD_REWARD_CAPS[reward])continue;
-    const target=migratedNames.find(n=>cardMasteryRewards(n,ci).length<Math.min(CARD_MASTERY_PER_CARD,safeCount(ci.mastery[n])));
-    if(!target)break;
-    ci.rewards[target]=(ci.rewards[target]||[]).concat(reward);rewardUsed[reward]++;
+  // v51 migration: the per-rank reward picker and the v46/v47 global stat track both become
+  // recorded gacha rolls, in the old order and under the same per-stat caps. An older save keeps
+  // exactly the bonuses it had earned; from then on the roll list is the only reward ledger.
+  if(!Array.isArray(ci.rolls))ci.rolls=[];
+  const rollUsed=Object.fromEntries(CARD_REWARD_OPTIONS.map(o=>[o.id,0]));
+  ci.rolls=ci.rolls.filter(x=>CARD_REWARD_IDS.has(x));
+  for(const x of ci.rolls)rollUsed[x]++;
+  const migratedRolls=[];
+  for(const k of MASTER_STATS)for(let i=0;i<Math.min(CARD_MASTERY_STAT_CAP,safeCount(ci.stats[k]));i++)migratedRolls.push(k);
+  for(const name of Object.keys(ci.rewards)){
+    if(!CARD_NAMES.has(name)||!ci.mastery[name])continue;
+    const a=Array.isArray(ci.rewards[name])?ci.rewards[name].filter(x=>CARD_REWARD_IDS.has(x)).slice(0,Math.min(CARD_MASTERY_PER_CARD,ci.mastery[name])):[];
+    migratedRolls.push(...a);
   }
+  for(const x of migratedRolls){
+    if(rollUsed[x]>=CARD_REWARD_CAPS[x])continue;      // keep the stat budget bounded on migration too
+    ci.rolls.push(x);rollUsed[x]++;
+  }
+  ci.rewards={};
   for(const k of MASTER_STATS)ci.stats[k]=0;
   for(const k of Object.keys(ci.stats))if(!MASTER_STATS.includes(k))delete ci.stats[k];
   // Legacy v46 records used one global donation track. Their byName counts become the first
@@ -860,8 +877,8 @@ function fieldOf(m,l){const mp=MAPS[m],sec=secField(m,l),T=gearPool(m,l),n=T.len
   // three gear rolls per mob, spread across the pool so two mobs on one field do not pay out
   // the same item; gear is the common drop and a card is the rare one.
   const mobs=[0,1].map(j=>{const mm=mp.mobs[(l-1+j)%mp.mobs.length],cg=l<=3?0:l<=7?1:2;
-    return{...mm,tier:ft,drops:[[T[(l*3+2*j)%n],4.8],[T[(l*3+2*j+1)%n],4.0],[T[(l*3+2*j+2)%n],3.2]],card:{n:mm.n+' Card',stat:cardStat(cg,(m*10+l+j)*3+1),g:cg},cardCh:.45,ore:l===10,oreCh:l===10?.02:0}});
-  return{m,l,sec,tier:ft,mobs,boss:l===10?{...mp.boss,tier:ft,drops:T.map(x=>[x,1]),card:{n:mp.boss.n+' Card',stat:cardStat(3,m),g:3},cardCh:.1,ore:true,oreCh:.05}:null}}
+    return{...mm,tier:ft,drops:[[T[(l*3+2*j)%n],4.8],[T[(l*3+2*j+1)%n],4.0],[T[(l*3+2*j+2)%n],3.2]],card:{n:mm.n+' Card',stat:cardStat(cg,(m*10+l+j)*3+1),g:cg},cardCh:.45,ore:l===10,oreCh:l===10?.01:0}});
+  return{m,l,sec,tier:ft,mobs,boss:l===10?{...mp.boss,tier:ft,drops:T.map(x=>[x,1]),card:{n:mp.boss.n+' Card',stat:cardStat(3,m),g:3},cardCh:.1,ore:true,oreCh:.025}:null}}
 // One drop line for the map panel: icon + name + the fixed rarity on the left, the % on the right.
 const poolIc=T=>gearSlot(T)==='weapon'?(WICON[T.k]||'⚔️'):{armor:'🥼',head:'🎩',off:'🛡️',leg:'👖',acc:'💍'}[T.k];
 const dropTxt=([T,ch],tier)=>`<div class="dropline"><span>${poolIc(T)} ${T.n} <small class="r${tier||0}">${RAR[tier||0].n}</small></span><b>${ch}%</b></div>`;
@@ -875,16 +892,17 @@ const dropTxt=([T,ch],tier)=>`<div class="dropline"><span>${poolIc(T)} ${T.n} <s
 const MAXST=120,BASECAP=99,ELITELV=100,statCap=()=>S.lv>=ELITELV?MAXST:BASECAP;
 
 // ---------- economy tuning ----------
-// Live pacing target: Base Lv 1-10 takes about 7 minutes; Base Lv 10-50 takes about
-// 30 more minutes (about 37 minutes total to Base 50). Keep the old ~5-hour Base 50-99
-// stretch and 48-hour post-reset 100-150 tail. The reset stays about 3.9x to preserve a
-// distinct endgame phase. Time estimates use 800 kills/hour and an average boss every 16
-// kills; the live Stage-10 boss-with-escorts fight is not a literal part of that model.
-// Mob EXP is EXPK*pw^1.5/50, boss EXP is BOSEK*pw^1.5/50, and Zeny is based on pw^2.
+// v51 live pacing: Base Lv 1-70 earns EXP_BOOST_X (3x) the normal amount, so the whole
+// early-to-mid route is fast in real play - about 2 minutes to Lv10 and about 12 minutes
+// to Lv70 in the model. The old ~5-hour Base 71-99 stretch, the reset and the 48-hour
+// post-reset 100-150 tail are unchanged. Time estimates use 800 kills/hour and an average
+// boss every 16 kills; the live Stage-10 boss-with-escorts fight is not a literal part of
+// that model. Mob EXP is EXPK*pw^1.5/50, boss EXP is BOSEK*pw^1.5/50, Zeny is based on pw^2.
 // The job bar uses the same level-appropriate path power as the early-map stages, then
-// power ~= Base Lv through 99. Normal Base/Job/quest EXP is 70x below Lv100 and 70/3x
-// at Lv100+; GM keeps its configured multiplier. tools/tune_pacing.js and economy_sim.js
-// pin the historical kill-rate model; actual elapsed time varies with class, gear and play.
+// power ~= Base Lv through 99. Normal Base/Job/quest EXP is 70x below Lv100 (3x that
+// through Lv70) and 70/3x at Lv100+; GM keeps its configured multiplier. Base, Job and
+// quest EXP all read expRate(), so the boost lifts every bar together. tools/tune_pacing.js
+// and economy_sim.js pin this model; actual elapsed time varies with class, gear and play.
 const EXPK=5.5,BOSEK=46,ZK=[8,14],BZK=[150,250];
 // Quest rewards scale with need(Lv); this curve models about 20% quest EXP overall, with
 // no single level funded by more than ~40%. Loot cadence uses .126 expected equipment
@@ -900,7 +918,10 @@ const pwOf=L=>{if(L<=10)return Math.max(1,L|0);for(const[c,p]of EARLY_PWR)if(L<=
 const epkOf=L=>{const p=pwOf(L),m=Math.max(1,Math.floor(EXPK*Math.pow(p,1.5)/50)),b=Math.max(1,Math.floor(BOSEK*Math.pow(p,1.5)/50));return(MPS*m+b)/(MPS+1)};
 const qrOf=L=>QXP.kill/(12+2*L)+.126*QXP.loot/(3+Math.floor(L/3))+(L>=12?QXP.boss/((MPS+1)*(1+Math.floor(L/10))):0);
 // Player EXP only: GM keeps its configured multiplier; Zeny and drop odds are unchanged.
-const expRate=()=>S.gm?gx():(S.lv<100?70:70/3);
+// v51: Base Lv 1-70 levels 3x faster. One multiplier feeds Base, Job and quest EXP, so the
+// boosted band speeds every bar together; Lv71+ keeps the historical curve.
+const EXP_BOOST_LV=70,EXP_BOOST_X=3;
+const expRate=()=>S.gm?gx():(S.lv<=EXP_BOOST_LV?70*EXP_BOOST_X:(S.lv<100?70:70/3));
 // Base-EXP requirements use continuous power segments through Lv99, then the intentional
 // reset at Lv100 and a separate post-99 ramp. Tuned to the level-appropriate map route,
 // normal EXP multipliers and shipped quest rewards in tools/tune_pacing.js.
@@ -1239,7 +1260,7 @@ const autoAllocateSkills=()=>{if(!S.sk||typeof S.sk!=='object')S.sk={};let bough
   }
   return bought;
 };
-const refCost=it=>Math.round(200*((it.r||0)+1)*(1+(it.sec||0)*.5)),refCh=it=>[100,100,100,100,70,60,50,40,30,20][it.r||0];
+const refCost=it=>Math.round(200*((it.r||0)+1)*(1+(it.sec||0)*.5)),refCh=it=>[70,70,70,70,49,42,35,28,21,14][it.r||0];
 const affTxt=a=>`${AL[a.k]} +${a.v}`,cardTxt=c=>`${c.n} (${SU(c.stat)} +${c.v})`,dtier=it=>it.card?GI[it.g]:it.ore?3:it.tier;
 const isBoss=()=>S.lvl===10,fieldName=()=>`${MAPS[S.mp].n} Stage ${S.lvl}`;
 const icon=it=>it.card?'🃏':it.ore?'💎':it.slot==='weapon'?(WICON[it.wt]||'⚔️'):SLOTS[it.slot].ic;
@@ -1535,7 +1556,7 @@ function newQuest(type){return qScale({type,goal:1,prog:0})}
 function qRefresh(){if(!S||!Array.isArray(S.q))return;(S.q||[]).forEach(q=>{if(q&&q.type)qScale(q)})}
 const qTxt=q=>q.type==='kill'?`Defeat ${q.goal} monsters`:q.type==='loot'?`Collect ${q.goal} equipment drops`:`Defeat ${q.goal} boss${q.goal>1?'es':''}`;
 function refine(sl){const it=S.eq[sl];if(!it||(it.r||0)>=10)return;const o=it.slot==='weapon'?'ori':'elu',c=refCost(it);
-  if(S.ore[o]<1){log(`You need 1 ${ORE[o]}. (2% drop from Stage 10 monsters, 5% from the boss)`);return}if(S.zeny<c){log('Not enough Zeny.');return}
+  if(S.ore[o]<1){log(`You need 1 ${ORE[o]}. (1% drop from Stage 10 monsters, 2.5% from the boss)`);return}if(S.zeny<c){log('Not enough Zeny.');return}
   S.ore[o]--;S.zeny-=c;if(Math.random()*100<refCh(it)){it.r=(it.r||0)+1;log(`Refine success! ${iname(it)}`,'r3','gear');addFloat(pl.x,3,pl.z,'Refine +'+it.r,'#ffd23f')}
   else{if(it.r>=5){it.r--;log(`Refine failed... dropped to +${it.r}.`,'r0','gear')}else log('Refine failed.','r0','gear');addFloat(pl.x,3,pl.z,'Failed','#ff6b6b')}ui();save()}
 
@@ -1576,13 +1597,16 @@ function noviceRun(){                         // a real restart: 25 Base Lv, Job
 // wiped Base Lv, stats and points when a player switched back to a class they had played.
 function playedClass(n){return !!((S.base&&S.base[n])||classCareer(n))}
 const classCareer=n=>{const j=S.jobs&&S.jobs[n];return !!(j&&((+j.jl||1)>1||(+j.jx||0)>0))};
-// Class collection (v17b nerf): +1% damage per TRANSCENDENT (tier-3) class played, and
-// only once the rebirth grind starts (Base Lv 100+). Derived at runtime, so old saves get
-// credit for free, and both counts are data-driven - classes added later join in
-// automatically. Played = a tier-3 record in S.base, or being on one right now.
-const playedClasses=()=>{const s=new Set();if(CLASSES[S.cls]&&CLASSES[S.cls].tier===3)s.add(S.cls);for(const k in CLASSES)if(CLASSES[k].tier===3&&playedClass(k))s.add(k);return s.size};
+// Class collection: +1% damage per TRANSCENDENT (tier-3) class that has reached Base Lv 100+.
+// v51 fix: the bonus is account-wide and permanent - it is earned by the class, not by whatever
+// character is currently active, so switching to a lower-level class no longer drops it to 0
+// (the old gate read the ACTIVE class's Base Lv, which disagreed with the visible count).
+// Derived at runtime, so old saves get credit for free; a class's own S.base record carries the
+// Base Lv it left at. Played = a tier-3 record, or being on one right now.
+const t3At100=n=>{const lv=n===S.cls?safeCount(S.lv):safeCount(S.base&&S.base[n]&&S.base[n].lv);return lv>=100};
+const playedClasses=()=>{const s=new Set();if(CLASSES[S.cls]&&CLASSES[S.cls].tier===3&&t3At100(S.cls))s.add(S.cls);for(const k in CLASSES)if(CLASSES[k].tier===3&&playedClass(k)&&t3At100(k))s.add(k);return s.size};
 const t3Total=()=>{let n=0;for(const k in CLASSES)if(CLASSES[k].tier===3)n++;return n};
-const collDmg=()=>S.lv>=100?playedClasses():0;
+const collDmg=()=>playedClasses();
 function classBlock(n){
   if(n===S.cls)return'Current class';if(n==='Novice')return'';
   if(playedClass(n))return'';
@@ -1651,17 +1675,14 @@ function gmCardTest(mode){
     const ci=S.cardIndex;
     if(!ci.byName||typeof ci.byName!=='object'||Array.isArray(ci.byName))ci.byName={};
     if(!ci.mastery||typeof ci.mastery!=='object'||Array.isArray(ci.mastery))ci.mastery={};
-    if(!ci.rewards||typeof ci.rewards!=='object'||Array.isArray(ci.rewards))ci.rewards={};
+    if(!Array.isArray(ci.rolls))ci.rolls=[];
+    ci.rewards={};
     ci.stats=Object.fromEntries(MASTER_STATS.map(k=>[k,0]));
     if(mode==='poringMax'){
-      ci.byName['Poring Card']=5;ci.mastery['Poring Card']=5;ci.rewards['Poring Card']=[];ci.donated=Math.max(safeCount(ci.donated),5);
-    }else if(mode==='allMax'||mode==='capDemo'){
-      ci.rewards={};for(const name of CARD_NAMES){ci.byName[name]=5;ci.mastery[name]=5}ci.donated=Math.max(safeCount(ci.donated),CARD_NAMES.size*CARD_MASTERY_PER_CARD);
-      if(mode==='capDemo'){
-        let slot=0;for(const opt of CARD_REWARD_OPTIONS)for(let i=0;i<CARD_REWARD_CAPS[opt.id];i++,slot++){
-          const name=[...CARD_NAMES][Math.floor(slot/CARD_MASTERY_PER_CARD)];(ci.rewards[name]||(ci.rewards[name]=[])).push(opt.id);
-        }
-      }
+      ci.byName['Poring Card']=5;ci.mastery['Poring Card']=5;ci.donated=Math.max(safeCount(ci.donated),5);
+    }else if(mode==='allMax'||mode==='rollAll'){
+      for(const name of CARD_NAMES){ci.byName[name]=5;ci.mastery[name]=5}ci.donated=Math.max(safeCount(ci.donated),CARD_NAMES.size*CARD_MASTERY_PER_CARD);
+      if(mode==='rollAll')while(cardMasteryGacha());
     }
   }
   ui();save();
@@ -1721,7 +1742,7 @@ const V={
         </div>`:`<small>Boss appears at Stage 10.</small>`}
         <div class="sec">🐾 Pet drops</div><small>0.3% per kill, 5% from bosses. Odds on ${mp.n}: ${PW[Math.min(mapM,9)].map((w,i)=>RN[i]+' '+w+'%').join(' &middot; ')}</small></div></div>`},
   stats(){const c=C(),b=k=>bon(k)?` <small class="r1">+${bon(k)}</small>`:'';
-    return`<div class="hd">${S.cls} &middot; Base Lv ${S.lv} &middot; Job Lv ${jobOf().jl}/${c.mj}</div><div class="hd">Stat points: ${S.pts} <small>(max ${statCap()} each${S.lv<ELITELV?' &middot; '+MAXST+' unlocks at Base Lv '+ELITELV:''} &middot; max Base Lv 150)</small></div><div class="hd">🏆 Class collection: ${playedClasses()}/${t3Total()} transcendent classes &middot; <b>+${collDmg()}% damage</b> <small>(+1% each${S.lv<100?' &middot; activates at Base Lv 100':''})</small></div>`
+    return`<div class="hd">${S.cls} &middot; Base Lv ${S.lv} &middot; Job Lv ${jobOf().jl}/${c.mj}</div><div class="hd">Stat points: ${S.pts} <small>(max ${statCap()} each${S.lv<ELITELV?' &middot; '+MAXST+' unlocks at Base Lv '+ELITELV:''} &middot; max Base Lv 150)</small></div><div class="hd">🏆 Class collection: ${playedClasses()}/${t3Total()} transcendent classes at Base Lv 100+ &middot; <b>+${collDmg()}% damage</b> <small>(+1% each, permanent${playedClasses()?'':' - take a transcendent class to Base Lv 100 to earn it'})</small></div>`
     +STATS.map(([k,l,d])=>`<div class="slot"><span><b>${l}</b> ${S.st[k]}${b(k)} <small>(${d})</small></span><span class="bts"><small>${cost(k)}pt</small><button data-a="stat" data-v="${k}" ${S.pts>=cost(k)&&S.st[k]<statCap()?'':'disabled'}>+1</button><button data-a="stat5" data-v="${k}" ${S.pts>=cost(k)&&S.st[k]<statCap()?'':'disabled'}>+5</button></span></div>`).join('')
     +`<div class="slot" style="flex-wrap:wrap"><span>ATK <b>${atk()}</b></span><span>MATK <b>${matk()}</b></span><span>DEF <b>${def()}</b></span><span>ASPD <b>${(1/aspd()).toFixed(2)}/s</b></span><span>Crit <b>${crit().toFixed(1)}%</b></span><span>Crit DMG <b>x${critD().toFixed(2)}</b></span><span>MDEF <b>${mdef()}</b></span><span>Flee <b>${flee().toFixed(0)}%</b></span><span>HP <b>${maxHp()}</b></span></div>
     <small>Weapons: ${c.wt.join(', ')}${katarOnly()?' (two-handed Katar; no off-hand)':''} &middot; Main stat: ${SU(c.main)}</small><button class="full" data-a="rstat">Reset stats (${rcost()}z)</button>`},
@@ -1730,7 +1751,7 @@ const V={
     return`<div class="tree"><div class="trow" style="justify-content:center">${tnode('Novice')}</div><div class="trunk"></div>
     ${[0,1,2].map(i=>`<div class="trow">${lines.map(l=>tnode(l[i])).join('')}</div>${i<2?'<div class="trunk"></div>':''}`).join('')}</div>
     <div class="legend"><span class="tn cur">Current</span><span class="tn ok">Available</span><span class="tn played">Played</span><span class="tn lock">Locked</span></div>
-    <div class="hd" style="margin-top:4px">🏆 Class collection: ${playedClasses()}/${t3Total()} transcendent &middot; <b>+${collDmg()}% damage</b> <small>(+1% each${S.lv<100?' &middot; activates at Base Lv 100':''} - play them all!)</small></div>
+    <div class="hd" style="margin-top:4px">🏆 Class collection: ${playedClasses()}/${t3Total()} transcendent at Base Lv 100+ &middot; <b>+${collDmg()}% damage</b> <small>(+1% each, permanent - play them all!)</small></div>
     <div class="mob-card"><div class="hd">${k}</div><small>${c.par?'Before: <b>'+c.par+'</b>':'Starting class'}${c.kids.length?' &middot; Next: <b>'+c.kids.join(', ')+'</b>':''}</small><br>
     <small>${pj?`Saved ${rec?`Base Lv ${rec.lv} &middot; `:''}Job Lv ${pj.jl}/${c.mj}`:'Not played yet'}${playedClass(k)&&k!==S.cls?' &middot; <b>waiting: your stats, skills and gear are still on it</b>':''} &middot; ATK x${c.atk} &middot; ASPD x${c.aspd} &middot; HP x${c.hp}<br>Weapons: ${c.wt.join(', ')}${katarOnly(k)?' (two-handed Katar; no off-hand)':''} &middot; Main stat ${SU(c.main)}</small>
     <div class="row" style="margin-top:6px"><button data-a="job" data-v="${k}" ${blk?'disabled':''}>${k===S.cls?'Current class':'Change to '+k}</button>${blk&&k!==S.cls?`<small class="r0">${blk}</small>`:''}</div></div>
@@ -1747,6 +1768,7 @@ const V={
     +(sel?(()=>{const SL=lv(sel.id),soff=!!(SL&&sel.type!=='pas'&&skOff(sel.id));return`<div class="mob-card" style="margin-top:8px"><div class="sk-detail-head"><b>${sel.n}</b> <small>${sel.type==='pas'?'Passive':sel.type==='heal'?'Auto-heal':sel.type==='to'?'Tradeoff (auto-cast)':'Active (auto-cast)'}${sel.rng?' &middot; RANGED':''}${sel.aoe?' &middot; AREA':''}${sel.dot?' &middot; DOT':''}${sel.stun?' &middot; STUN':''}${sel.chain?' &middot; CHAIN':''}</small></div><div class="sk-detail-autocast">${SL&&sel.type!=='pas'?`<label class="sk-autocast"><input type="checkbox" data-a="sktog" data-v="${sel.id}" ${soff?'':'checked'} aria-label="Auto cast ${sel.n}"> Auto cast this skill</label><small class="${soff?'r0':''}">${soff?'Paused - it will not be used until you check this again.':'Cast automatically every time you attack.'}</small>`:'<small>Passive or not learned yet - nothing to auto-cast.</small>'}</div><small>${sel.d(Math.max(1,SL))}</small>${SL&&SL<sel.max?`<br><small>Next: ${sel.d(SL+1)}</small>`:''}</div>`})():'')
     +`<button class="full" data-a="rskill">Reset skills (${rcost()}z)</button>`},
   bag0(){const sel=selB&&S.inv.find(x=>String(x.id)===String(selB));const n=Math.max(30,Math.ceil(S.inv.length/6)*6);const inv=S.inv.map((it,i)=>({it,i})).sort((a,b)=>Number(!!b.it.locked)-Number(!!a.it.locked)||a.i-b.i).map(x=>x.it);
+    const detail=sel?`<div class="mob-card grid-detail">${itemDetail(sel)}<div class="row" style="margin-top:6px"><button data-a="equip" data-v="${sel.id}" ${canUse(sel)?'':'disabled'}>Equip</button><button data-a="sell" data-v="${sel.id}">Sell ${sellVal(sel)}z</button><button class="tick${sel.locked?' on':''}" data-a="lockgear" data-v="${sel.id}" aria-pressed="${!!sel.locked}" title="Locked gear stays pinned and protected from auto-sell">${sel.locked?'&#9733; Unlock':'☆ Lock'}</button><button class="tick${autoSellOn(sel.tier||0)?' on':''}" data-a="autosell" data-v="${sel.tier||0}" title="Auto-sell every ${RAR[sel.tier||0].n} item on drop">Auto-sell ${RAR[sel.tier||0].n}</button></div></div>`:'';
     return (eqPick?equipChooser(eqPick):'')
     +`<div class="row"><span class="chip">🔶 Oridecon <b>${S.ore.ori}</b></span><span class="chip">🔷 Elunium <b>${S.ore.elu}</b></span></div>
     <div class="mob-card sellbox" style="margin-top:4px"><div class="hd">Selling tools</div>
@@ -1762,17 +1784,28 @@ const V={
       // detail card and the tooltips all keep working.
       // v39: with click-sell ON, a plain tile sells on the click instead of selecting the item;
       // the hover tooltip stays, so what you are about to sell is still readable first.
-      return fits?`<div class="cell b${dtier(it)}${on?' sel':''} fit" data-tip="${it.id}" aria-label="${iname(it)} - fits this slot, click to equip" data-a="eqpick" data-v="${it.id}:${eqPick}">${icon(it)}${it.locked?`<i class="lockstar" title="Locked gear" aria-label="Locked">&#9733;</i>`:''}${it.r?`<i class="rf">+${it.r}</i>`:''}</div>`
-        :cell(it,on,clickSellOn()?`data-a="quicksell" data-v="${it.id}" aria-label="${iname(it)} - click to sell it now"`:`data-a="selb" data-v="${it.id}"`)}).join('')}</div>
-    <div class="mob-card" style="margin-top:8px">${sel?itemDetail(sel)+`<div class="row" style="margin-top:6px"><button data-a="equip" data-v="${sel.id}" ${canUse(sel)?'':'disabled'}>Equip</button><button data-a="sell" data-v="${sel.id}">Sell ${sellVal(sel)}z</button><button class="tick${sel.locked?' on':''}" data-a="lockgear" data-v="${sel.id}" aria-pressed="${!!sel.locked}" title="Locked gear stays pinned and protected from auto-sell">${sel.locked?'&#9733; Unlock':'☆ Lock'}</button><button class="tick${autoSellOn(sel.tier||0)?' on':''}" data-a="autosell" data-v="${sel.tier||0}" title="Auto-sell every ${RAR[sel.tier||0].n} item on drop">Auto-sell ${RAR[sel.tier||0].n}</button></div>`:'<small>Click an item to see its stats. Hover for a quick tooltip.</small>'}</div>`},
-  equip(){const c=C(),sel=S.eq[selE],pos={head:'grid-column:2;grid-row:1',weapon:'grid-column:1;grid-row:2',armor:'grid-column:2;grid-row:2',off:'grid-column:3;grid-row:2',acc1:'grid-column:1;grid-row:3',leg:'grid-column:2;grid-row:3',acc2:'grid-column:3;grid-row:3'};
-    return`<div class="doll">${EQK.filter(([k])=>k!=='off'||!katarOnly()).map(([k,l,ic])=>{const e=S.eq[k];return`<div class="cell b${e?dtier(e):0}${selE===k?' sel':''}" style="${pos[k]}" data-a="seleq" data-v="${k}" ${e?`data-tip="${e.id}"`:''}>${e?icon(e)+(e.locked?'<i class="lockstar" title="Locked gear" aria-label="Locked">&#9733;</i>':'')+(e.r?`<i class="rf">+${e.r}</i>`:''):`<span style="opacity:.3">${ic}</span>`}<i class="rf" style="left:2px;right:auto;top:2px;bottom:auto;color:#fff;background:#3b2a1add;font-size:9px;font-style:normal">${k==='weapon'&&katarOnly()?'2H Katar':l}</i></div>`}).join('')}</div>`
-    +`<div class="mob-card">${sel?itemMain(sel)+cardSlots(sel,selE)+insertUI(sel)+refineUI(sel,selE)+`<div class="row" style="margin-top:6px"><button data-a="unequip" data-v="${selE}">Unequip</button><button class="tick${sel.locked?' on':''}" data-a="lockgear" data-v="${sel.id}" aria-pressed="${!!sel.locked}">${sel.locked?'&#9733; Unlock':'☆ Lock'}</button></div>`:'<small>Click any slot above to choose what to wear there (the Bag opens with the items that fit already highlighted). Select one to inspect it, remove cards or refine.</small>'}</div>`
+      const tile=fits?`<div class="cell b${dtier(it)}${on?' sel':''} fit" data-tip="${it.id}" aria-label="${iname(it)} - fits this slot, click to equip" data-a="eqpick" data-v="${it.id}:${eqPick}">${icon(it)}${it.locked?`<i class="lockstar" title="Locked gear" aria-label="Locked">&#9733;</i>`:''}${it.r?`<i class="rf">+${it.r}</i>`:''}</div>`
+        :cell(it,on,clickSellOn()?`data-a="quicksell" data-v="${it.id}" aria-label="${iname(it)} - click to sell it now"`:`data-a="selb" data-v="${it.id}"`);
+      // v51: the selected item's card drops into the grid directly under its own row, so the
+      // Equip / Sell / Lock buttons are always next to the item you clicked - no scrolling to
+      // the bottom of a full bag.
+      return tile+(on?detail:'')}).join('')}</div>
+    ${sel?'':'<div class="mob-card" style="margin-top:8px"><small>Click an item to see its stats. Hover for a quick tooltip.</small></div>'}`},
+  equip(){const c=C(),sel=S.eq[selE];
+    const slotCell=k=>{const code=EQK.find(x=>x[0]===k);if(!code||(k==='off'&&katarOnly()))return'<div class="cell empty"></div>';const[l,ic]=[code[1],code[2]],e=S.eq[k];
+      return `<div class="cell b${e?dtier(e):0}${selE===k?' sel':''}" data-a="seleq" data-v="${k}" ${e?`data-tip="${e.id}"`:''}>${e?icon(e)+(e.locked?'<i class="lockstar" title="Locked gear" aria-label="Locked">&#9733;</i>':'')+(e.r?`<i class="rf">+${e.r}</i>`:''):`<span style="opacity:.3">${ic}</span>`}<i class="rf" style="left:2px;right:auto;top:2px;bottom:auto;color:#fff;background:#3b2a1add;font-size:9px;font-style:normal">${k==='weapon'&&katarOnly()?'2H Katar':l}</i></div>`};
+    // v51: the detail card is inserted into the doll right below the row that owns the clicked
+    // slot (head / hands+body / legs+accessories), so Refine, card slots and Unequip sit beside
+    // the piece they act on instead of at the bottom of the window.
+    const detail=`<div class="doll-detail">${sel?itemMain(sel)+refineUI(sel,selE)+cardSlots(sel,selE)+insertUI(sel)+`<div class="row" style="margin-top:6px"><button data-a="unequip" data-v="${selE}">Unequip</button><button class="tick${sel.locked?' on':''}" data-a="lockgear" data-v="${sel.id}" aria-pressed="${!!sel.locked}">${sel.locked?'&#9733; Unlock':'☆ Lock'}</button></div>`:'<small>Click any slot above to choose what to wear there (the Bag opens with the items that fit already highlighted). Select one to inspect it, refine it or remove cards.</small>'}</div>`;
+    const rows=[['','head',''],['weapon','armor','off'],['acc1','leg','acc2']];
+    const rowAt=rows.findIndex(r=>r.includes(selE));
+    return`<div class="doll">${rows.map((r,i)=>r.map(slotCell).join('')+(i===rowAt?detail:'')).join('')}</div>`
     +`<small>Weapons: ${c.wt.join(', ')} &middot; ${canShield()?'Shield allowed':'No shield'}${katarOnly()?' &middot; <b>Two-handed Katar; no off-hand weapon</b>':''}</small>`},
   cards(){const g={};S.cards.forEach(c=>(g[c.n]=g[c.n]||[]).push(c));const ks=Object.keys(g),sel=g[selC]?g[selC][0]:null;
     return`<div class="grid">${ks.map(n=>`<div class="cell b${GI[g[n][0].g]}${n===selC?' sel':''}" data-a="selc" data-v="${n}" data-tip="${g[n][0].id}">🃏<i class="rf">x${g[n].length}</i></div>`).join('')||'<small>No cards yet. Every monster drops its own card at a low chance.</small>'}</div>
     ${sel?`<div class="mob-card" style="margin-top:8px">${itemDetail(sel)}<div class="row" style="margin-top:6px">${EQK.map(([k,l])=>{const e=S.eq[k];return e&&(e.cards||[]).length<(e.slots||0)&&CFIT[sel.stat]===grp(e)?`<button data-a="sock" data-v="${sel.id}:${k}">&rarr; ${l}</button>`:''}).join('')}<button data-a="sellcard" data-v="${sel.id}">Sell ${sel.v*150}z</button></div></div>`:''}`},
-  refine(){return`<div class="hd">Oridecon: ${S.ore.ori} &middot; Elunium: ${S.ore.elu}</div><small>Weapons use Oridecon; armor, shield, legs, headgear and accessories use Elunium (Stage 10: 2% per monster, 5% per boss).</small>`
+  refine(){return`<div class="hd">Oridecon: ${S.ore.ori} &middot; Elunium: ${S.ore.elu}</div><small>Weapons use Oridecon; armor, shield, legs, headgear and accessories use Elunium (Stage 10: 1% per monster, 2.5% per boss).</small>`
     +EQK.map(([k,l])=>{const it=S.eq[k];if(!it)return'';const r=it.r||0,o=it.slot==='weapon'?'ori':'elu',c=refCost(it);
       return`<div class="slot" style="align-items:flex-start;gap:10px;margin-top:6px">${cell(it,false)}<div style="flex:1"><b class="r${it.tier}">${iname(it)}</b> <small>${l}</small><br><small>${SLOTS[it.slot].stat} +${ev(it)} &rarr; +${Math.round(it.val*(1+(r+1)*.15))} &middot; ${r>=10?'MAX':'Success '+refCh(it)+'% &middot; '+c.toLocaleString()+'z + 1 '+ORE[o]}</small><br><button data-a="refine" data-v="${k}" ${r>=10||S.ore[o]<1||S.zeny<c?'disabled':''}>Refine</button></div></div>`}).join('')},
   pet(){const P=S.pets,A=P.filter(p=>p.on).length,p=gp(selP);
@@ -1794,7 +1827,7 @@ const V={
   gm(){return`<div class="hd">GM multiplier (EXP, Job EXP, Zeny, quests)</div><div class="row">${[1,10,100,1000].map(x=>`<button data-a="gmx" data-v="${x}" ${S.gmx===x?'style="background:#ffe08a"':''}>x${x}</button>`).join('')}</div>
     <div class="row" style="margin-top:8px"><button data-a="gmz">+1,000,000 Zeny</button><button data-a="gmo">+20 Oridecon &amp; Elunium</button><button data-a="gml">+10 Base Levels</button><button data-a="gmj">Max Job Lv (current class)</button><button data-a="gmu">Unlock all map levels</button></div>
     <div class="hd" style="margin-top:10px">Index mastery test controls</div><small>These use the real per-species ledger and the slower 100 / 1,000 / 5,000+ kill ladder. Clear before trying another scenario.</small><div class="row"><button data-a="gmindex" data-v="one">+1 Poring kill</button><button data-a="gmindex" data-v="all1">1 kill every species</button><button data-a="gmindex" data-v="all100">100 kills every species</button><button data-a="gmindex" data-v="all1000">1,000 kills every species</button><button data-a="gmindex" data-v="all5000">5,000 kills every species</button><button data-a="gmindex" data-v="xp10000">Set 10,000 XP title test</button><button data-a="gmindex" data-v="xp4320000">Set 4,320,000 final title</button><button data-a="gmindex" data-v="clear">Clear Index</button></div>
-    <div class="hd" style="margin-top:10px">Card mastery test controls</div><small>Loose cards can be dedicated through the Card Mastery tab; Max Poring exposes its five reward pickers. Cap demo fills the current reward budget; later mastered ranks remain recorded for future reward additions. Socketed cards stay untouched.</small><div class="row"><button data-a="gmcard" data-v="poring1">+1 Poring Card</button><button data-a="gmcard" data-v="poring5">+5 Poring Cards</button><button data-a="gmcard" data-v="poringMax">Max Poring 5/5</button><button data-a="gmcard" data-v="allMax">Max all cards 5/5</button><button data-a="gmcard" data-v="capDemo">Fill global caps</button><button data-a="gmcard" data-v="clear">Reset card mastery</button></div>
+    <div class="hd" style="margin-top:10px">Card mastery test controls</div><small>Loose cards can be dedicated through the Card Mastery tab; every mastery rank is one gacha token. Roll every token fills the stat caps the slow way (one random roll at a time). Socketed cards stay untouched.</small><div class="row"><button data-a="gmcard" data-v="poring1">+1 Poring Card</button><button data-a="gmcard" data-v="poring5">+5 Poring Cards</button><button data-a="gmcard" data-v="poringMax">Max Poring 5/5</button><button data-a="gmcard" data-v="allMax">Max all cards 5/5</button><button data-a="gmcard" data-v="rollAll">Roll every token</button><button data-a="gmcard" data-v="clear">Reset card mastery</button></div>
     <div class="hd" style="margin-top:10px">Skill accounting test controls</div><small>Max the current class line, then use the normal Auto-allocate all skills button or let GM do both steps.</small><div class="row"><button data-a="gmskill" data-v="maxjobs">Max current line jobs</button><button data-a="gmskill" data-v="maxallocate">Max jobs + auto allocate</button><button data-a="gmskill" data-v="reset">Reset current line skills</button></div>
     <div class="hd" style="margin-top:10px">Test pets</div><div class="row">${RN.map((n,i)=>`<button data-a="gmp" data-v="${i}">+ ${n} pet</button>`).join('')}</div><div class="row" style="margin-top:6px"><button data-a="gmm" data-v="4">All pets G4</button><button data-a="gmm" data-v="6">All pets G6</button><button data-a="gmpet" data-v="g6dps">Max G6 DPS pet</button><button data-a="gmpet" data-v="g6buff">Max G6 + buff slot</button><button data-a="gmpet" data-v="g6utility">Max G6 utility slots</button><button data-a="gmpet" data-v="clear">Clear pets</button></div>`}};
 V.index=()=>`<div class="mastery-head"><div class="mastery-emblem">✦</div><div><b>Midgard Mastery Index</b><small>Individual monsters, Index XP and per-card rewards</small></div><span class="mastery-counter">${indexExperience().toLocaleString()} Index XP</span></div><div class="mastery-tabs"><button data-a="indexview" data-v="mobs" class="${indexMode==='mobs'?'on':''}" aria-pressed="${indexMode==='mobs'}">⚔ Mob Index</button><button data-a="indexview" data-v="cards" class="${indexMode==='cards'?'on':''}" aria-pressed="${indexMode==='cards'}">🃏 Card Mastery</button></div>${indexMode==='mobs'?renderMobIndex():renderCardIndex()}`;
@@ -1805,6 +1838,12 @@ function canShield(){return /^(Novice|Swordman|Knight|Lord Knight|Acolyte|Priest
 function katarOnly(cls=S.cls){return cls==='Assassin'||cls==='Assassin Cross'}
 function ekey(it){if(it.slot==='acc')return S.eq.acc1&&!S.eq.acc2?'acc2':'acc1';return it.slot}
 const tabs=[];let selP=null,selS=null,selE='weapon',qOpen=true,eqPick=null,indexMode='mobs';const sub={status:'stats',bag:'bag'};
+// The Index window is rebuilt on every game update, so a native <details> would slam shut the
+// moment a kill or level-up re-renders it. Remember each map's open/closed choice per tab and
+// feed it back into the markup, so reading another map's ledger stays readable.
+const indexOpenSections={mobs:{},cards:{}};
+const indexSectionOpen=(tab,map)=>{const st=indexOpenSections[tab]||(indexOpenSections[tab]={});return Object.prototype.hasOwnProperty.call(st,map)?st[map]:map===S.mp};
+const indexToggleSection=(tab,map)=>{const st=indexOpenSections[tab]||(indexOpenSections[tab]={});st[map]=!indexSectionOpen(tab,map);return st[map]};
 // ---------- equipping from a slot ----------
 // Clicking a slot in the Equipment panel opens the bag right there, already filtered to what
 // that slot will take for THIS class: weapon type and class restrictions, shields only for the
@@ -1853,33 +1892,38 @@ function renderMobIndex(){
     <div class="mastery-section-title">🏅 Index Title Ranks <small>Equip any rank you have earned</small></div><div class="mastery-title-list">${renderTitleTrack()}</div>
     <div class="mastery-section-title">📖 Monster Index <small>${MONSTER_INDEX.length} entries across ${MAPS.length} maps · 8 mastery rungs each</small></div>
     ${MAPS.map((mp,map)=>{const rows=MONSTER_INDEX.filter(m=>m.map===map),mapFound=rows.filter(m=>safeCount(counts[m.id])>0).length,mapKills=rows.reduce((n,m)=>n+safeCount(counts[m.id]),0);
-      return `<details class="mastery-map" ${map===S.mp?'open':''}><summary><b>${mp.n}</b><small>${mapFound}/${rows.length} indexed · ${mapKills.toLocaleString()} species kills</small></summary><div class="mastery-roster">${rows.map(m=>{const n=safeCount(counts[m.id]),level=indexMasteryLevel(n),nextMob=indexNextMilestone(n),at=nextMob||INDEX_MOB_MILESTONES[INDEX_MOB_MILESTONES.length-1],before=level?INDEX_MOB_MILESTONES[level-1]:0,mpct=nextMob?Math.min(100,Math.max(0,(n-before)/(nextMob-before)*100)):100;return `<div class="mastery-mob${n?' found':''}"><span class="mastery-mob-icon">${m.boss?'👑':'✦'}</span><span><b>${m.name}${m.boss?' · BOSS':''}</b><small>Mastery Lv ${level}/${INDEX_MOB_MILESTONES.length} · ${n.toLocaleString()} kills recorded · individual species kills${nextMob?` · ${nextMob-n} to next rung`:' · fully indexed'}</small><span class="mastery-track mob-track"><i style="width:${mpct.toFixed(1)}%"></i></span></span><b class="mastery-count">${n.toLocaleString()}</b></div>`}).join('')}</div></details>`;
+      return `<details class="mastery-map" data-a="idxmap" data-v="mobs:${map}" ${indexSectionOpen('mobs',map)?'open':''}><summary><b>${mp.n}</b><small>${mapFound}/${rows.length} indexed · ${mapKills.toLocaleString()} species kills</small></summary><div class="mastery-roster">${rows.map(m=>{const n=safeCount(counts[m.id]),level=indexMasteryLevel(n),nextMob=indexNextMilestone(n),at=nextMob||INDEX_MOB_MILESTONES[INDEX_MOB_MILESTONES.length-1],before=level?INDEX_MOB_MILESTONES[level-1]:0,mpct=nextMob?Math.min(100,Math.max(0,(n-before)/(nextMob-before)*100)):100;return `<div class="mastery-mob${n?' found':''}"><span class="mastery-mob-icon">${m.boss?'👑':'✦'}</span><span><b>${m.name}${m.boss?' · BOSS':''}</b><small>Mastery Lv ${level}/${INDEX_MOB_MILESTONES.length} · ${n.toLocaleString()} kills recorded · individual species kills${nextMob?` · ${nextMob-n} to next rung`:' · fully indexed'}</small><span class="mastery-track mob-track"><i style="width:${mpct.toFixed(1)}%"></i></span></span><b class="mastery-count">${n.toLocaleString()}</b></div>`}).join('')}</div></details>`;
     }).join('')}`;
 }
-function cardRewardPicker(name){
-  const level=cardMasteryLevel(name),rewards=cardMasteryRewards(name);
-  if(!level||rewards.length>=level||cardMasteryAvailable()<1)return '';
-  const rank=rewards.length+1;
-  const options=CARD_REWARD_OPTIONS.map(o=>`<option value="${o.id}" ${cardMasteryStat(o.id)>=CARD_REWARD_CAPS[o.id]?'disabled':''}>${o.name} · ${o.desc} · max ${CARD_REWARD_CAPS[o.id]}</option>`).join('');
-  return `<label class="card-reward-pick"><small>Choose reward for mastery ${rank}/${CARD_MASTERY_PER_CARD} · global caps apply</small><select data-a="cardreward" data-v="${encodeURIComponent(name)}" aria-label="Choose reward for ${name} mastery ${rank}"><option value="">Select a permanent reward…</option>${options}</select></label>`;
+function cardRollSummary(){
+  const rolls=cardMasteryRolls();if(!rolls.length)return'';
+  const c={};for(const x of rolls)c[x]=(c[x]||0)+1;
+  return CARD_REWARD_OPTIONS.filter(o=>c[o.id]).map(o=>`${o.name} ×${c[o.id]}`).join(' · ');
 }
-function cardRewardSummary(name){
-  const rewards=cardMasteryRewards(name);return rewards.length?`<small class="card-reward-summary">Rewards: ${rewards.map((id,i)=>{const o=CARD_REWARD_OPTIONS.find(x=>x.id===id);return `M${i+1} ${o?o.name:id}`}).join(' · ')}</small>`:'';
+// The reward picker became a token gacha: one button spends a token on a random stat, one rolls
+// every token you hold, and one reset spends a loose Legendary card to clear the rolls and hand
+// the tokens back.
+function cardGachaPanel(){
+  const available=cardMasteryAvailable(),rolled=cardMasteryRolled(),open=cardMasteryOpenOptions(),legendary=cardMasteryLegendaryCard()>=0,summary=cardRollSummary();
+  return `<div class="mastery-section-title">🎲 Token gacha <small>1 token = one random permanent stat</small></div>
+    <div class="mastery-progress-card card-gacha"><div><b>${available} token${available===1?'':'s'} ready</b> <small>· ${cardMasteryEarned()} earned · ${rolled} rolled${legendary?' · 1 Legendary card in your bag':''}</small></div>
+    <div class="row"><button data-a="cardroll" ${available&&open.length?'':'disabled'}>🎲 Gacha · 1 token</button><button data-a="cardrollall" ${available&&open.length?'':'disabled'}>🎲 Roll all · ${available}</button><button data-a="cardreset" ${rolled&&legendary?'':'disabled'}>♻ Reset · 1 Legendary card</button></div>
+    <small>${open.length?`Rolled so far: ${summary||'none yet'}.`:'Every stat is at its cap - no roll is possible. A reset refunds every spent token and lets you roll again.'}</small>
+    <div class="card-reward-legend">${CARD_REWARD_OPTIONS.map(o=>`<span><b>${o.name}</b> ${cardMasteryStat(o.id)}/${CARD_REWARD_CAPS[o.id]} · ${o.desc}${cardMasteryStat(o.id)>=CARD_REWARD_CAPS[o.id]?' · full':''}</span>`).join('')}</div></div>`;
 }
 function renderCardIndex(){
-  const ci=S.cardIndex||emptyCardIndex(),byName=ci.byName||{},donated=safeCount(ci.donated),total=cardMasteryTotal(),assigned=cardMasteryAssigned(),available=cardMasteryAvailable(),album=[...CARD_NAMES],max=album.length*CARD_MASTERY_PER_CARD,registered=album.filter(name=>cardMasteryLevel(name)>0).length,bar=max?Math.min(100,total/max*100):0;
+  const ci=S.cardIndex||emptyCardIndex(),byName=ci.byName||{},donated=safeCount(ci.donated),total=cardMasteryTotal(),available=cardMasteryAvailable(),rolled=cardMasteryRolled(),album=[...CARD_NAMES],max=album.length*CARD_MASTERY_PER_CARD,registered=album.filter(name=>cardMasteryLevel(name)>0).length,bar=max?Math.min(100,total/max*100):0;
   const groups=new Map();for(const c of S.cards||[]){const key=`${c.n}|${c.g}|${c.stat}`;if(!groups.has(key))groups.set(key,{card:c,cards:[]});groups.get(key).cards.push(c)}
   const inventory=[...groups.values()].sort((a,b)=>b.card.g-a.card.g||a.card.n.localeCompare(b.card.n));
-  const earned=cardMasteryEarned(),capRoom=cardMasteryCapRoom();
   return `<div class="mastery-summary"><b>🃏 Per-Card Mastery</b><span>${registered}/${album.length} cards discovered · ${total}/${max} mastery ranks · ${donated.toLocaleString()} copies dedicated</span>
-    <small>Each card has ${CARD_MASTERY_PER_CARD} ranks. A rank contributes one point to the active reward budget until the current global caps are filled: +25 each core stat, +10% Max HP, +10 Flee points, +3% leech, +25 DEF/MDEF and +5% ATK/MATK/ASPD/Crit. Socketed cards stay in equipment and cannot be dedicated. Later ranks remain recorded for future reward categories.</small></div>
-    <div class="mastery-progress-card"><div><b>${total}/${max}</b> card mastery ranks <small>· ${earned}/${CARD_REWARD_POINT_CAP} reward points · ${available} waiting · ${assigned} assigned</small></div><div class="mastery-track"><i style="width:${bar.toFixed(1)}%"></i></div><small>${total>=max?`Every indexed card is fully mastered. The active reward budget is exactly filled; future reward caps can use the recorded ranks.`:`Collect duplicate copies of the same card to reach its 5/5 mastery. ${capRoom?`${capRoom} points of current reward capacity remain.`:'All current reward caps are filled; later mastery ranks stay recorded for future rewards.'}`}</small></div>
-    <div class="mastery-section-title">✨ Reward choices <small>Choose one for every card mastery rank</small></div><div class="card-reward-legend">${CARD_REWARD_OPTIONS.map(o=>`<span><b>${o.name}</b> ${cardMasteryStat(o.id)}/${CARD_REWARD_CAPS[o.id]} · ${o.desc} <small>(global max)</small></span>`).join('')}</div>
-    <div class="mastery-section-title">📥 Loose cards available <small>${(S.cards||[]).length} in your card bag</small></div>
+    <small>Each card has ${CARD_MASTERY_PER_CARD} ranks, and every rank you master gives <b>1 token</b>. Spend a token on the gacha for one random permanent stat. A reset costs 1 Legendary card, clears every rolled stat and refunds all spent tokens. Socketed cards stay in equipment and cannot be dedicated.</small></div>
+    <div class="mastery-progress-card"><div><b>${total}/${max}</b> card mastery ranks <small>· ${available} token${available===1?'':'s'} ready · ${rolled} rolled</small></div><div class="mastery-track"><i style="width:${bar.toFixed(1)}%"></i></div></div>
+    ${cardGachaPanel()}
+    <div class="mastery-section-title">📥 Card Index available <small>${(S.cards||[]).length} in your card bag</small></div>
     <div class="mastery-card-list">${inventory.map(({card:c,cards})=>{const level=cardMasteryLevel(c.n),full=level>=CARD_MASTERY_PER_CARD;return `<div class="mastery-card-row"><span class="r${GI[c.g]}">🃏 <b>${c.n}</b><small>${GRADE[c.g]} · ${SU(c.stat)} +${c.v} · x${cards.length} · Mastery ${level}/${CARD_MASTERY_PER_CARD}</small></span><button data-a="indexcard" data-v="${cards[0].id}" ${full?'disabled':''} aria-label="Dedicate one ${c.n} to card mastery">${full?'MAXED':'Dedicate one'}</button></div>`}).join('')||'<div class="mastery-empty">No loose cards yet. Card drops go here after pickup; socketed cards are not eligible.</div>'}</div>
-    <div class="mastery-section-title">🗂 Card Mastery Album <small>Every mastered rank and reward stays recorded</small></div>
+    <div class="mastery-section-title">🗂 Card Mastery Album <small>Every mastered rank stays recorded</small></div>
     ${MAPS.map((mp,map)=>{const entries=MONSTER_INDEX.filter(m=>m.map===map),seen=entries.filter(m=>cardMasteryLevel(m.name+' Card')>0).length;
-      return `<details class="mastery-map" ${map===S.mp?'open':''}><summary><b>${mp.n}</b><small>${seen}/${entries.length} cards started</small></summary><div class="mastery-roster">${entries.map(m=>{const name=m.name+' Card',level=cardMasteryLevel(name),n=safeCount(byName[name]),rewards=cardMasteryRewards(name);return `<div class="mastery-mob${level?' found':''}"><span class="mastery-mob-icon">${m.boss?'👑':'🃏'}</span><span><b>${name}${m.boss?' · BOSS':''}</b><small>Mastery ${level}/${CARD_MASTERY_PER_CARD} · ${n?n+' dedicated cop'+(n===1?'y':'ies'):'Not started'}</small>${cardRewardSummary(name)}${cardRewardPicker(name)}</span><b class="mastery-count">${level}/${CARD_MASTERY_PER_CARD}</b></div>`}).join('')}</div></details>`;
+      return `<details class="mastery-map" data-a="idxmap" data-v="cards:${map}" ${indexSectionOpen('cards',map)?'open':''}><summary><b>${mp.n}</b><small>${seen}/${entries.length} cards started</small></summary><div class="mastery-roster">${entries.map(m=>{const name=m.name+' Card',level=cardMasteryLevel(name),n=safeCount(byName[name]);return `<div class="mastery-mob${level?' found':''}"><span class="mastery-mob-icon">${m.boss?'👑':'🃏'}</span><span><b>${name}${m.boss?' · BOSS':''}</b><small>Mastery ${level}/${CARD_MASTERY_PER_CARD} · ${level} token${level===1?'':'s'} earned · ${n?n+' dedicated cop'+(n===1?'y':'ies'):'Not started'}</small></span><b class="mastery-count">${level}/${CARD_MASTERY_PER_CARD}</b></div>`}).join('')}</div></details>`;
     }).join('')}`;
 }
 
@@ -1948,13 +1992,16 @@ const ACT={
   unsock:v=>{const[k,i]=v.split(':'),e=S.eq[k];if(!e)return;const c=e.cards[+i],p=200*(c.g+1);if(S.zeny<p)return log('Not enough Zeny to remove the card.');S.zeny-=p;e.cards.splice(+i,1);S.cards.push(c);S.hp=Math.min(S.hp,maxHp());ui();save()},
   sellcard:id=>{const i=S.cards.findIndex(c=>String(c.id)===id);if(i<0)return;const c=S.cards.splice(i,1)[0];earnZeny(c.v*150);ui();save()},
   indexview:v=>{if(v==='mobs'||v==='cards'){indexMode=v;renderWin()}},
+  idxmap:v=>{const[tab,raw]=String(v).split(':'),map=+raw;if(tab==='mobs'||tab==='cards'){indexToggleSection(tab,map);renderWin()}},
   titleequip:id=>{if(id==='none'){if(!S.equippedTitle)return;S.equippedTitle=null;log('Hunt title unequipped.','','quest');ui();save();return}
     const title=HUNT_TITLES.find(t=>t.id===id&&titleUnlocked(t));if(!title)return;S.equippedTitle=title.id;log(`Title equipped: ${title.name}.`,'r4','quest');ui();save()},
   indexcard:id=>{const c=S.cards.find(x=>String(x.id)===String(id));if(!c)return;const before=cardMasteryLevel(c.n);
     ask(`Dedicate one ${GRADE[c.g]} ${c.n}? This consumes the loose card and advances this card from mastery ${before}/${CARD_MASTERY_PER_CARD} to ${before+1}/${CARD_MASTERY_PER_CARD}. Choose one permanent reward for the new rank afterward.`,()=>{
       const used=donateCardToMastery(id);if(!used)return;log(`${used.n} reached Card Mastery ${cardMasteryLevel(used.n)}/${CARD_MASTERY_PER_CARD}. Choose its permanent reward in the Index.`,'r3','card');ui();save()})},
-  cardreward:v=>{const cut=String(v).lastIndexOf('|');if(cut<1)return;const name=decodeURIComponent(String(v).slice(0,cut)),reward=String(v).slice(cut+1);if(!assignCardMasteryReward(name,reward))return;const opt=CARD_REWARD_OPTIONS.find(x=>x.id===reward);S.hp=Math.min(S.hp,maxHp());log(`${name} mastery reward: +${opt?opt.desc:reward}.`,'r4','card');ui();save()},
-  indexstat:stat=>{if(!allocateCardMastery(stat))return;S.hp=Math.min(S.hp,maxHp());log(`Card Mastery reward assigned: ${SU(stat)}.`,'r4','quest');ui();save()},
+  cardroll:()=>{const r=cardMasteryGacha();if(!r)return;const opt=CARD_REWARD_OPTIONS.find(x=>x.id===r);S.hp=Math.min(S.hp,maxHp());log(`🎲 Card gacha: ${opt?opt.name:r} +1 (now ${cardMasteryStat(r)}).`,'r3','card');addFloat(pl.x,2.6,pl.z,'🎲 '+(opt?opt.name:r)+' +1','#ffd23f');ui();save()},
+  cardrollall:()=>{let n=0,last=null;while((last=cardMasteryGacha()))n++;if(!n)return;S.hp=Math.min(S.hp,maxHp());log(`🎲 Card gacha: rolled ${n} token${n===1?'':'s'} - ${cardRollSummary()}.`,'r3','card');ui();save()},
+  cardreset:()=>{const rolled=cardMasteryRolled();if(!rolled)return log('Nothing has been rolled yet.','r0','card');if(cardMasteryLegendaryCard()<0)return log('A gacha reset needs 1 Legendary card in your card bag.','r0','card');
+    ask(`Reset the card gacha? It spends 1 Legendary card, clears ${rolled} rolled stat${rolled===1?'':'s'} and refunds all ${rolled} token${rolled===1?'':'s'}.`,()=>{const n=cardMasteryReset();if(n==null)return;S.hp=Math.min(S.hp,maxHp());log(`♻ Card gacha reset: ${n} stat${n===1?'':'s'} cleared, ${n} token${n===1?'':'s'} refunded.`,'r4','card');ui();save()})},
   refine:k=>refine(k),sub:v=>{const[t,k]=v.split(':');sub[t]=k;renderWin()},selp:v=>{selP=+v;renderWin()},
   pon:id=>{const p=gp(id);if(!p)return;if(p.on)p.on=false;else if(S.pets.filter(x=>x.on).length<3)p.on=true;else log('Only 3 pets can fight at once. Remove one first.','','pet');ui();save()},
   pskill:id=>{const p=gp(id);if(!p)return;const c=petSkillCost(p);if(S.zeny<c){log('Not enough Zeny for a pet skill roll.');ui();return}S.zeny-=c;const[a,b]=rollPetSkills();p.skills=[a,b];
@@ -2005,8 +2052,7 @@ $('feedFilter').addEventListener('mouseenter',()=>{if(feedFilTimer)clearTimeout(
 $('feedFilter').addEventListener('mouseleave',()=>{if(feedFilShown)feedFilArm()});
 $('feedFilter').addEventListener('focusin',()=>{if(feedFilTimer)clearTimeout(feedFilTimer)});
 $('feedFilter').addEventListener('focusout',()=>{if(feedFilShown)feedFilArm()});
-$('wins').onclick=e=>{const x=e.target.closest('[data-x]');if(x){openTab(x.dataset.x);return}const b=e.target.closest('[data-a]');if(b&&b.dataset.a==='ssel'&&e.target.closest('.sk-autocast'))return;if(b&&!b.disabled&&ACT[b.dataset.a])ACT[b.dataset.a](b.dataset.v)};
-$('wins').onchange=e=>{const b=e.target.closest('[data-a="cardreward"]');if(!b||!b.value)return;const v=b.dataset.v+'|'+b.value;if(ACT.cardreward)ACT.cardreward(v)};
+$('wins').onclick=e=>{const x=e.target.closest('[data-x]');if(x){openTab(x.dataset.x);return}const b=e.target.closest('[data-a]');if(b&&b.dataset.a==='ssel'&&e.target.closest('.sk-autocast'))return;if(b&&!b.disabled&&ACT[b.dataset.a]){if(b.dataset.a==='idxmap'&&e.target.closest('summary'))e.preventDefault();ACT[b.dataset.a](b.dataset.v)}};
 addEventListener('keydown',e=>{if(!S||e.ctrlKey||e.metaKey||e.altKey||/INPUT|TEXTAREA/.test(e.target.tagName))return;const k=e.key.toUpperCase();if(k==='ESCAPE'){if(feedFilShown){feedFilHide();return}tabs.pop();renderWin();return}if(k==='Q'){qOpen=!qOpen;renderQ();return}const X={E:['status','equip'],C:['bag','cards'],R:['status','equip']}[k];if(X){const same=tabs.includes(X[0])&&sub[X[0]]===X[1];sub[X[0]]=X[1];if(same)openTab(X[0]);else{if(!tabs.includes(X[0])){if(tabs.length>=MAX_TABS)tabs.shift();tabs.push(X[0])}renderWin()}return}const f=Object.entries(TABS).find(([,v])=>v[2]===k);if(f)openTab(f[0])});
 $('spd').onclick=()=>{speed=speed===1?2:speed===2?4:1;$('spd').textContent='Speed x'+speed};
 const tip=$('tooltip');
@@ -2166,7 +2212,7 @@ if(S.hp<=0){log('You were defeated... knocked back to the entrance.','r0','kills
 }
 
 // 3D Scene setup
-const view=$('view'),ov=$('ov'),tag=$('tag'),prog=$('prog'),heroTitle=$('heroTitle'),heroTitleText=$('heroTitleText');
+const view=$('view'),ov=$('ov'),tag=$('tag'),prog=$('prog'),heroTitle=$('heroTitle'),heroTitleMark=$('heroTitleMark'),heroTitleText=$('heroTitleText');
 const R=new THREE.WebGLRenderer({antialias:true});R.shadowMap.enabled=true;view.prepend(R.domElement);
 const scene=new THREE.Scene(),cam=new THREE.PerspectiveCamera(38,2,.1,200);
 let az=0,el=.95,zoom=1;
@@ -3500,10 +3546,10 @@ function draw(){
     const fl=m.flash||0;v.spr.material.color.setRGB(1,1-fl*.8,1-fl*.8)}
   if(mob){const s=mobVisualScale(mob),[qx,qy]=scr(mob.x,3.08*s+.15,mob.z);tag.style.display='block';tag.style.left=qx+'px';tag.style.top=qy+'px';$('tn').textContent=mob.n+(mob.boss?' (BOSS)':'');$('th').style.width=Math.max(0,mob.hp/mob.max*100)+'%'}else tag.style.display='none';
   // Equipped titles belong to the character in the world, not the crowded status bar. Project
-  // one small parchment seal from the hero's head every frame so it follows movement and camera
-  // rotation just like the skill names do.
+  // one small transparent gold seal from below the hero's feet every frame so it follows
+  // movement and camera rotation just like the skill names do. The rank mark rides on the left.
   const equipped=HUNT_TITLES.find(t=>t.id===S.equippedTitle&&titleUnlocked(t));
-  if(heroTitle&&heroTitleText){if(equipped){const [txh,tyh]=scr(pl.x,4.05,pl.z);heroTitle.style.display='block';heroTitle.style.left=txh+'px';heroTitle.style.top=tyh+'px';heroTitleText.textContent='✦ '+equipped.name;heroTitle.title='Index title · '+(equipped.xp??equipped.kills).toLocaleString()+' Index XP'}else heroTitle.style.display='none'}
+  if(heroTitle&&heroTitleText){if(equipped){const [txh,tyh]=scr(pl.x,0.16,pl.z);heroTitle.style.display='block';heroTitle.style.left=txh+'px';heroTitle.style.top=tyh+'px';if(heroTitleMark)heroTitleMark.textContent=equipped.mark||'✦';heroTitleText.textContent=equipped.name;heroTitle.title='Index title · '+(equipped.xp??equipped.kills).toLocaleString()+' Index XP'}else heroTitle.style.display='none'}
   const pids=new Set(S.pets.filter(p=>p.on).map(p=>p.id));petMesh.forEach((v,id)=>{if(!pids.has(id)){disposeCreatureVisual(v);petMesh.delete(id)}});
   S.pets.filter(p=>p.on).forEach(p=>{const sp=PETS[p.sp],r=petR[p.id];if(!sp||!r)return;let v=petMesh.get(p.id);
     const pet={x:r.x,z:r.z,run:r.run,a:p.id,shape:petFallbackShape(sp),c:sp.c,spriteId:sp.spriteId,flash:0};

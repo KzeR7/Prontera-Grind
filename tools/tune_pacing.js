@@ -4,19 +4,21 @@
 //
 // Canonical model: 800 kills/hour on the level-appropriate field power along the route
 // (Prontera p1-10; early class fields through p50; then power ~= Base Lv). Mob EXP, Job EXP,
-// quest fractions and the 70x / 70/3x normal EXP rates mirror index.html. A boss replaces
+// quest fractions and the 3x / 70x / 70÷3x normal EXP rates mirror index.html (v51 adds the
+// 3x band through Base Lv 70). A boss replaces
 // the pack every 16th kill; the actual Stage-10 boss-with-escorts fight is not simulated.
 //
-// Pacing targets: Base 1->10 in about 7 minutes, then Base 10->50 in about 30 minutes
-// (37 minutes total). Preserve Base 50->99 at about 5 more hours (5h37 total), and the
-// 48-hour Base 100->150 tail after the deliberate reset. Requirements rise within each
-// phase; only the rebirth transition drops the threshold.
+// v51 pacing targets: Base 1->10 in about 2.5 minutes, Base 10->50 in about 11 more, and
+// Base 50->99 in about 4.5 more hours (about 4h50m total). Preserve the 48-hour Base
+// 100->150 tail after the deliberate reset. Requirements rise within each phase; only the
+// rebirth transition drops the threshold. The 3x band through Lv70 is what moves the early
+// half; the requirement curve itself (needAt) is unchanged.
 //
 // The .126 loot-quest completion factor matches qrOf() in index.html after the 2x gear
 // drop changes. Card and ore pickups are not counted by the loot quest.
 
 const EXPK = 5.5, BOSEK = 46, MPS = 15, KPH = 800;
-const rateAt = L => L < 100 ? 70 : 70 / 3;
+const rateAt = L => L <= 70 ? 210 : L < 100 ? 70 : 70 / 3;   // v51: 3x through Lv70
 const QXP = { kill: 1 / 1400, loot: 1 / 1750, boss: 1 / 840 };
 const EARLY_PWR = [[11,10],[14,12],[16,15],[19,17],[27,20],[34,28],[42,35],[49,43],[59,50]];
 const pwFor = lv => { if (lv <= 10) return Math.max(1, lv | 0);
@@ -95,7 +97,7 @@ if (process.argv[2]) {
   process.exit(0);
 }
 
-const TGT = { T10: 7 / 60, T50: 37 / 60, T99: 337 / 60, TAIL: 48 };
+const TGT = { T10: 2.5 / 60, T50: 13.6 / 60, T99: 290 / 60, TAIL: 48 };   // v51 production targets
 function bisect(lo, hi, f) {
   let flo = f(lo), fhi = f(hi);
   if (flo > 0 || fhi < 0) throw new Error('no root in [' + lo + ',' + hi + ']: ' + flo.toFixed(3) + ' .. ' + fhi.toFixed(3));
@@ -142,14 +144,14 @@ const NE3 = bisect(3, 14, ne3 => {
 const n100 = Math.floor(n100At(NE3));
 const fin = simulate({ cA, aA, aB, n100, ne3: NE3 }, false);
 
-console.log('\n=== tuned production curve (70x / 70/3x rates; .126 loot cadence) ===');
+console.log('\n=== tuned production curve (3x / 70x / 70÷3x rates; .126 loot cadence) ===');
 console.log(`cA=${cA.toFixed(8)}  aA=${aA.toFixed(8)}  aB=${aB.toFixed(8)}  n100=${n100.toFixed(0)}  NE3=${NE3.toFixed(8)}`);
 console.log('shipping QXP', Object.entries(QXP).map(([k, v]) => `${k}=1/${(1/v).toFixed(0)}`).join(', '));
 console.log('quest share', (fin.SHARE * 100).toFixed(1) + '% global,', (fin.maxShare * 100).toFixed(1) + '% worst level');
 for (const L of [1, 2, 5, 9, 10, 20, 30, 40, 50, 60, 70, 80, 90, 99, 100, 110, 120, 130, 140, 149, 150])
   console.log(`needAt(${L}) = ${fin.needAt(L).toLocaleString()}`);
 console.log('\nbase milestones:');
-for (const [L, target] of [[10, '7 min'], [50, '37 min total (7 + 30 min)'], [99, '5 h 37 min (~5 h after Base 50)'], [150, 'model total']]) {
+for (const [L, target] of [[10, '2.5 min'], [50, '13.6 min total (2.5 + 11 min)'], [99, '4 h 50 min (~4.5 h after Base 50)'], [150, 'model total']]) {
   const h = L === 150 ? fin.T150 : fin.T[L];
   console.log(`Base ${L}: ${(h * 60).toFixed(1)} min / ${h.toFixed(3)} h (target ${target})`);
 }
