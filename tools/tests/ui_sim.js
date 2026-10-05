@@ -206,18 +206,21 @@ t('map and boss-field panels stay inside narrow viewports', () => {
 });
 
 t('the Mastery Index tracks monster titles and consumes loose cards for permanent stat points',()=>{
-  U.S=mkS('Novice');U.S.kills=500;U.S.mobKills={'0:Poring':12,'0:Mastering':1};U.S.equippedTitle=null;
+  U.S=mkS('Novice');U.S.indexXp=1000;U.S.kills=500;U.S.mobKills={'0:Poring':12,'0:Mastering':1};U.S.equippedTitle=null;
   U.indexMode='mobs';let h=U.V.index();
   assert.ok(h.includes('Midgard Mastery Index')&&h.includes('Monster Hunt Ledger'),'the new dock panel should render the index header and ledger');
   assert.ok(h.includes('12 kills recorded')&&h.includes('Mastering · BOSS'),'regular mobs and bosses both get species rows');
-  assert.ok(h.includes('Field Scout')&&h.includes('data-a="titleequip"'),'lifetime milestones unlock an equippable title');
+  assert.ok(h.includes('Field Scout')&&h.includes('data-a="titleequip"'),'Index XP ranks unlock an equippable title');
   assert.strictEqual((h.match(/class="mastery-title tone-/g)||[]).length,10,'the ladder has ten designed rank seals');
-  U.indexMode='cards';U.S.cardIndex={donated:5,byName:{'Poring Card':1},stats:{str:1,agi:0,dex:0,int:0,vit:0,luk:0}};
+  U.indexMode='cards';U.S.cardIndex={donated:1,byName:{'Poring Card':1},mastery:{'Poring Card':1},rewards:{},stats:{str:0,agi:0,dex:0,int:0,vit:0,luk:0}};
   h=U.V.index();
-  assert.ok(h.includes('1/90 unique cards archived')&&h.includes('<b>1/30</b> permanent points earned'),'album and stat mastery progress are visible');
-  assert.ok(h.includes('data-a="indexcard"')&&h.includes('Slot one'),'a loose card can be archived from this panel');
-  assert.ok(h.includes('data-a="indexstat"')&&h.includes('Permanent +1/5'),'permanent points are allocated to capped core stats');
-  assert.ok(h.includes('Poring Card')&&h.includes('Archived 1 time'),'the card album keeps a duplicate-aware history');
+  assert.ok(h.includes('1/90 cards discovered')&&h.includes('<b>1/450</b> card mastery ranks'),'the album and five-rank-per-card progress are visible');
+  assert.ok(h.includes('data-a="indexcard"')&&h.includes('Dedicate one'),'a loose card can advance an individual card');
+  assert.ok(h.includes('data-a="cardreward"')&&h.includes('Choose reward for mastery'),'each card rank offers a permanent reward choice');
+  assert.ok(h.includes('STR</b> 0/25')&&h.includes('HP Leech</b> 0/3')&&h.includes('ATK %</b> 0/5'),'effective global caps must be visible beside every reward');
+  assert.ok(src.includes('CARD_REWARD_POINT_CAP')&&src.includes('active reward budget is exactly filled')&&src.includes('future reward caps can use the recorded ranks'),'the UI shows the exact current reward budget and future-reward behavior');
+  for(const reward of ['hpPct','fleePct','leech','def','mdef','atkPct','matkPct','aspdPct','critPct'])assert.ok(src.includes("id:'"+reward+"'"),reward+' should be an available card mastery reward');
+  assert.ok(h.includes('Poring Card')&&h.includes('Mastery 1/5'),'the card album keeps per-card mastery history');
   assert.ok(src.includes("if(v==='index'){openTab('index');return}"),'the Quest Board Index button opens the panel');
   assert.ok(src.includes('data-q="index"')&&src.includes("index:['📚','Mastery Index','I']"),'both Quest Board and dock link to the index');
   assert.ok(src.includes('flex-wrap:wrap;justify-content:center')&&src.includes('max-width:calc(100vw - 12px)'),'the expanded dock wraps on narrow screens');
@@ -519,10 +522,10 @@ t('pet details show Ragnarok sprites, named upgrade levels, and gacha skill odds
   // v35: TWO skill slots, both filled by one gacha
   assert.ok(h.includes('Pet skills &middot; 2 slots'),'the panel must show two skill slots');
   assert.ok(h.includes('War Cry')&&h.includes('Spirit Bolt'),'both rolled skills must be listed');
-  assert.ok(h.includes('Player ATK +20% for 30s, 60s cooldown'),'a buff must state its 30s/60s timing');
-  assert.ok(h.includes('Single target: 2.5× pet damage'),'an attack skill must state its multiplier');
+  assert.ok(h.includes('Player ATK +15% for 30s, 60s cooldown'),'a buff must state its 30s/60s timing');
+  assert.ok(h.includes('Single target: 2.25× pet damage'),'an attack skill must state its multiplier');
   assert.ok(h.includes('Reroll both skills'),'the gacha rerolls the whole loadout');
-  assert.ok(h.includes('Eight equally weighted skills: 4 player buffs, 2 AoE attacks, 2 single-target attacks.'),'the gacha distribution must be clear');
+  assert.ok(h.includes('Twelve skills: 4 player buffs, 2 AoE attacks, 2 single-target attacks and 4 low-impact utility rolls.')&&h.includes('Gacha weights: War Cry and Arcane Blessing 0.35× each'),'the gacha distribution and reduced buff weights must be clear');
   assert.ok(h.includes('never stack')&&h.includes('ATK and MATK buffs cannot run at the same time'),'the no-stacking rules must be on the panel');
   assert.ok(h.includes('data-a="pskill"'),'the pet skill gacha button must be present');
   // and the empty-slot state on a pet that has not rolled yet
@@ -533,6 +536,12 @@ t('pet details show Ragnarok sprites, named upgrade levels, and gacha skill odds
 });
 
 t('the Skills panel prints the whole tree against what a maxed line earns', () => {
+  assert.ok(src.includes('<div id="hud">'), 'the on-screen status row must carry its flex-bar id');
+  assert.ok(src.includes('id="heroTitle"')&&src.includes('heroTitle.style.display'), 'equipped titles must follow the player above the head');
+  assert.ok(src.includes('data-a="skalloc"')&&src.includes('Auto-allocate all skills')&&src.includes('autoAllocateSkills'), 'the Skills panel must expose one-click lower-class-first allocation');
+  for(const [action,helper] of [['gmindex','gmIndexTest'],['gmcard','gmCardTest'],['gmskill','gmSkillTest'],['gmpet','gmPetTest']])assert.ok(src.includes('data-a="'+action+'"')&&src.includes(helper),action+' GM controls must be available for testing the new systems');
+  assert.ok(src.includes('data-v="all5000"')&&src.includes('data-v="xp4320000"'),'Index GM labels must expose the 5,000-rung and final-title scenarios');
+  assert.ok(src.includes('data-v="capDemo"')&&src.includes('data-v="g6dps"')&&src.includes('data-v="g6utility"'),'GM cap and complete pet-chain fixtures must be visible');
   assert.ok(src.includes('const skTree=()=>'), 'skTree() must exist - the panel needs the tree price');
   assert.ok(src.includes('const skEarnedMax=()=>'), 'skEarnedMax() must exist');
   assert.ok(src.includes('const skCost=()=>1;'), 'a skill level costs one point (v37)');
@@ -548,18 +557,19 @@ t('the Skills panel prints the whole tree against what a maxed line earns', () =
     ${grab('const CD=[', 'const pm=s=>')}
     const skLine=()=>lineOf(S.cls);
     const skCost=()=>1, skCostOf=L=>L;
-    const skEarned=()=>skLine().reduce((a,n)=>a+Math.max(0,(((S.jobs[n]||{}).jl)||1)-1),0);
+    const rawSkillEarned=(cls,jobs)=>skLine().reduce((a,n)=>a+Math.max(0,(((jobs[n]||{}).jl)||1)-1),0);
+    const skEarned=()=>Math.min(rawSkillEarned(S.cls,S.jobs),skTree());
     const skSpent=()=>SKILLS.reduce((a,s)=>a+(skLine().includes(s.from)?skCostOf(S.sk[s.id]||0):0),0);
     const skpAvail=()=>Math.max(0,skEarned()-Math.max(0,skSpent()-(S.sk.aid?1:0)));
     const skTree=()=>Math.max(0,SKILLS.filter(s=>skLine().includes(s.from)).reduce((a,s)=>a+skCostOf(s.max),0)-(S.sk.aid?1:0));
-    const skEarnedMax=()=>skLine().reduce((a,n)=>a+(CLASSES[n].mj-1),0);
+    const skEarnedMax=()=>skTree();
     this.__s={skTree,skEarnedMax,skpAvail,SKILLS,lineOf};
   `, box);
   const K = box.__s, line = K.lineOf('Lord Knight');
   const tree = K.skTree(), max = K.skEarnedMax();
-  assert.ok(max - tree >= 30, 'a maxed line must clear its tree by 30+ points: ' + tree + ' of ' + max);
+  assert.strictEqual(max, tree, 'a maxed line must expose exactly the tree budget: ' + tree + ' of ' + max);
   // this fixture has the Knight at Job 40, so it has earned 146 - still far above the 64-point tree
-  assert.strictEqual(K.skpAvail(), 146, 'a fresh Lord Knight has its full purse (9+49+39+49)');
+  assert.strictEqual(K.skpAvail(), 64, 'a maxed Lord Knight has exactly its 64-point tree budget');
   assert.ok(tree <= 146, 'the tree must fit inside a mid-promotion job history');
   console.log('       Lord Knight: tree ' + tree + ' pts of ' + max + ' earned at max job level');
 });
@@ -686,7 +696,7 @@ t('pet buffs are icon tiles above the status bar, and the description waits for 
   const html = box.__b.nodes.hudBuffs.innerHTML;
   assert.strictEqual((html.match(/class="pbx"/g) || []).length, 2, 'one tile per running buff, no text rows');
   assert.ok(html.includes('War Cry') && html.includes('Vital Aura'), 'the flyout names the skill: ' + html);
-  assert.ok(html.includes('Player ATK +20% for 30s, 60s cooldown') && html.includes('Max HP +20%'),
+  assert.ok(html.includes('Player ATK +15% for 30s, 60s cooldown') && html.includes('Max HP +15%'),
     'and carries the skill description');
   assert.ok(html.includes('Poring') && html.includes('Drops'), 'the flyout names the pet that cast it');
   assert.ok(html.includes('>13<') && html.includes('>4<'), 'the tile counts the seconds down (rounded up)');
