@@ -18,7 +18,7 @@ ${grab('let mobs=[],mob=null','function genGear(')}
 const gx=()=>1,addJob=()=>{},checkLevel=()=>{},qProg=()=>{},addFloat=()=>{},log=()=>{},save=()=>{},ui=()=>{},numTxt=n=>String(Math.round(n));
 const mkDrop=()=>null,genGear=()=>null;
 ${grab('function earnZeny(amount){','function collect(it){')}
-this.H={fresh,CLASSES,spawn,kill,atk,aspd,maxHp,def,mdef,starterStage,HPK,HPE,MAPS,AGGRO,PACK_GAP,PACK_MAX,PACK_JITTER,packSites,stageSpec,nearestPack,pl,
+this.H={fresh,CLASSES,spawn,kill,atk,aspd,maxHp,def,mdef,starterStage,fieldPower,HPK,HPE,MAPS,AGGRO,PACK_GAP,PACK_MAX,PACK_JITTER,packSites,stageSpec,nearestPack,pl,
 set S(v){S=v},get S(){return S},get mobs(){return mobs},get mob(){return mob},get activePack(){return activePack}};
 `,ctx);
 const H=ctx.H;
@@ -26,7 +26,7 @@ let pass=0,fail=0;const t=(n,f)=>{try{f();console.log('  ok   '+n);pass++}catch(
 const spawn=(m,l,cls='Mage',lv=10)=>{H.S=H.fresh();Object.assign(H.S,{mp:m,lvl:l,cls,lv});H.spawn();return H.mobs};
 t('all 25 starter stages have gentler HP/ATK and only one or two per encounter',()=>{
  for(let m=0;m<5;m++)for(let l=1;l<=5;l++)for(let trial=0;trial<12;trial++){
-  const pack=spawn(m,l),p=H.MAPS[m].b+l,mb=1+m*.15;
+  const pack=spawn(m,l),p=H.fieldPower(m,l),mb=1+m*.15;
   assert.strictEqual(new Set(pack.map(x=>x.pack)).size,3);
   assert.ok(pack.every(x=>pack.filter(y=>y.pack===x.pack).length<=2));for(const mob of pack){
    assert.ok(mob.hp<=Math.floor(H.HPK*mb*Math.pow(p,H.HPE)));
@@ -36,11 +36,27 @@ t('all 25 starter stages have gentler HP/ATK and only one or two per encounter',
   }
  }
 });
-t('each first job survives starter packs bare-handed at Base 10/20/30/40/50',()=>{
+t('Prontera and the four class maps follow the requested Base Lv stage bands',()=>{
+ assert.deepStrictEqual(Array.from({length:10},(_,i)=>H.fieldPower(0,i+1)),[1,2,3,4,5,6,7,8,9,10]);
+ const band=[10,12,15,17,20,20,28,35,43,50];
+ for(let m=1;m<=4;m++){
+  assert.deepStrictEqual(Array.from({length:10},(_,i)=>H.fieldPower(m,i+1)),band,H.MAPS[m].n+' stage power');
+  for(let l=1;l<=5;l++)assert.ok(H.fieldPower(m,l)>=10&&H.fieldPower(m,l)<=20);
+  for(let l=6;l<=10;l++)assert.ok(H.fieldPower(m,l)>=20&&H.fieldPower(m,l)<=50);
+  assert.strictEqual(H.MAPS[m].rec,'Lv 10-50');
+ }
+ assert.strictEqual(H.MAPS[0].rec,'Lv 1-10');
+ assert.ok(H.MAPS[0].t.includes('easy Lv 1-10'));
+ for(let m=1;m<=4;m++)assert.ok(H.MAPS[m].t.includes('stages 1-5 Lv 10-20; 6-10 Lv 20-50'));
+ for(let m=5;m<10;m++)for(let l=1;l<=10;l++)assert.strictEqual(H.fieldPower(m,l),H.MAPS[m].b+l,'later-map curve changed');
+});
+t('class-map starter packs are survivable at target level with focused stats and no gear',()=>{
  let worst=0;
  for(const [cls,c] of Object.entries(H.CLASSES).filter(([,c])=>c.tier===1)){
-  for(let m=0;m<5;m++)for(let stage=1;stage<=5;stage++)for(let trial=0;trial<12;trial++){
-   const pack=spawn(m,stage,cls,stage*10).filter(x=>x.pack===0),hp=H.maxHp();
+  for(let m=1;m<5;m++)for(let stage=1;stage<=5;stage++)for(let trial=0;trial<12;trial++){
+   const playerLv=H.fieldPower(m,stage),all=spawn(m,stage,cls,playerLv),main=H.CLASSES[cls].main,support=Math.max(1,Math.floor(playerLv/2));
+   for(const k of new Set([main,'vit','agi','dex']))H.S.st[k]=k===main?playerLv:support;
+   const pack=all.filter(x=>x.pack===0),hp=H.maxHp();
    // Worst incoming roll, no evasion; outgoing low roll with a 20% miss allowance.
    // Assume all enemies attack from the start, eliminating movement's respite.
    let incoming=0;
@@ -60,7 +76,7 @@ t('Novice encounters stay one low-HP monster at a time, in three separate packs'
 });
 t('non-boss stages retain their combat formulas and boss escorts use normal mob stats',()=>{
  for(let m=0;m<10;m++)for(let l=1;l<10;l++)if(!H.starterStage(m,l)){
-  const pack=spawn(m,l),p=H.MAPS[m].b+l,mb=1+m*.15+Math.max(0,m-4)*.2;
+  const pack=spawn(m,l),p=H.fieldPower(m,l),mb=1+m*.15+Math.max(0,m-4)*.2;
   for(const mob of pack){assert.strictEqual(mob.hp,Math.floor(H.HPK*mb*Math.pow(p,H.HPE)));assert.strictEqual(mob.atk,Math.floor((5+p*4.6)*mb))}
   assert.ok(pack.length>=3&&pack.length<=9);
  }
@@ -70,7 +86,7 @@ t('non-boss stages retain their combat formulas and boss escorts use normal mob 
   assert.ok(wave.every(x=>x.pack===0),'boss and escorts should fight together');
   assert.ok(wave.slice(1).every(x=>!x.boss),'escorts must have normal drops');
   H.S.kl=15;H.spawn();assert.strictEqual(H.mobs.length,wave.length,'no separate 15-kill boss gate');
-  const p=H.MAPS[m].b+10,mb=1+m*.15+Math.max(0,m-4)*.2;
+  const p=H.fieldPower(m,10),mb=1+m*.15+Math.max(0,m-4)*.2;
   assert.strictEqual(H.mobs[0].hp,Math.floor(500*mb*Math.pow(p,H.HPE)));
   for(const escort of wave.slice(1)){assert.strictEqual(escort.hp,Math.floor(H.HPK*mb*Math.pow(p,H.HPE)));
    assert.strictEqual(escort.atk,Math.floor((5+p*4.6)*mb))}

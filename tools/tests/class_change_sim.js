@@ -24,8 +24,6 @@ const jobOf = () => S.jobs[S.cls] || (S.jobs[S.cls] = {jl:1, jx:0});
 const totalPts = () => { let p = 10; for (let l = 2; l <= S.lv; l++) p += 4 + Math.floor(l/5); return p };
 const maxHp = () => Math.round((80 + S.lv*20 + S.st.vit*8) * CLASSES[S.cls].hp);
 const canShield = () => /^(Novice|Swordman|Knight|Lord Knight|Acolyte|Priest|High Priest|Merchant|Blacksmith|Whitesmith)$/.test(S.cls);
-const dualOn = () => S.cls === 'Assassin' || S.cls === 'Assassin Cross';
-const dualOk = it => dualOn() && (it.wt === 'dagger' || it.wt === 'katar');
 const C = () => CLASSES[S.cls] || CLASSES.Novice;
 const SKILLS = [{id:'aid',cls:['Novice']},{id:'hide',cls:['Thief','Assassin','Assassin Cross']},{id:'enb',cls:['Swordman','Knight','Lord Knight']}];
 const log = () => {}, ui = () => {}, save = () => {}, addFloat = () => {}, pl = {x:0, z:0};
@@ -44,6 +42,18 @@ const mk = (o = {}) => Object.assign({cls:'Novice', lv:1, exp:0, hp:100, pts:10,
 let pass = 0, fail = 0;
 const t = (n, f) => { try { f(); console.log('  ok   ' + n); pass++; } catch (e) { console.log('  FAIL ' + n + ' -> ' + e.message); fail++; } };
 console.log('class change: restart on load, keep what you stepped away from\n');
+
+t('Assassin jobs keep one Katar and stow a legacy off-hand weapon on promotion', () => {
+  assert.deepStrictEqual(Array.from(H.CLASSES.Assassin.wt), ['katar']);
+  assert.deepStrictEqual(Array.from(H.CLASSES['Assassin Cross'].wt), ['katar']);
+  const katar={id:701,slot:'weapon',wt:'katar',name:'Katar'},oldDagger={id:702,slot:'weapon',wt:'dagger',name:'Old off-hand Dagger'};
+  H.S=mk({cls:'Assassin',lv:100,jobs:{Novice:{jl:10,jx:0},Thief:{jl:40,jx:0},Assassin:{jl:50,jx:0}},
+    eq:{weapon:katar,armor:null,head:null,off:oldDagger,leg:null,acc1:null,acc2:null}});
+  H.changeClass('Assassin Cross');
+  assert.strictEqual(H.S.eq.weapon.id,katar.id,'the Katar should remain equipped');
+  assert.strictEqual(H.S.eq.off,null,'an off-hand weapon must be removed');
+  assert.ok(H.S.inv.some(i=>i.id===oldDagger.id),'the old off-hand must be preserved in the bag');
+});
 
 t('new second and transcendent jobs preserve every stat and unspent point', () => {
   for(const [name,c] of Object.entries(H.CLASSES).filter(([,c])=>c.tier>=2)){

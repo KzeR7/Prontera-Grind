@@ -35,6 +35,8 @@ const code = [
   pick(/const RAR=\[[^\]]*\];/, 'RAR'),
   pick(/const AM=\[[^\]]*\],GRADE=\[[^\]]*\],GI=\[[^\]]*\],CV=\[[^\]]*\];/, 'AM/GRADE/GI/CV'),
   pick(/const AFF=\[[^\]]*\],AB=\{[^}]*\};/, 'AFF/AB'),
+  pick(/const AFFIX_CDM_SCALE=[^\n]+;/, 'gear-only Crit DMG post-roll scale'),
+  pick(/const affixValue=\(k,section,tier,roll\)=>\{[^}]+\};/, 'affixValue'),
   pick(/const MAPTIER=\[[^\]]*\];/, 'MAPTIER'),
   pick(/const dropTier=\(m,l\)=>[^;]+;/, 'dropTier'),
   // the equipment catalogue + the map table + its level bands (a stub mob parser, since pet

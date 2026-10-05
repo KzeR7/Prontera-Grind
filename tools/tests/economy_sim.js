@@ -5,9 +5,9 @@
 //   node tools/tests/economy_sim.js
 //
 // The rules being tested:
-//   * live pacing anchors hold (owner): about 7 min to Base Lv10, 2 h to Lv50, about
-//     5 more hours from Lv50 to Lv99, then a much harder 48 h (2-day) Lv100-150 tail
-//     after the one-time reset; solved at ~800 kills/hour on the band map's boss field;
+//   * live pacing anchors hold (owner): about 7 min to Base Lv10, then about 30 min from
+//     Base 10 to 50; retain ~5 more hours from Base 50 to 99 and the 48 h post-reset tail,
+//     using the level-appropriate map-stage power path at ~800 kills/hour;
 //   * job bars mirror the base curve (JOFF lockstep), so the job gates land on those
 //     same anchors;
 //   * quests pay a fraction of need(Lv) and can never carry more than ~40% of a level
@@ -24,8 +24,8 @@ const nq = grab('function qScale(q){', '\nconst qTxt=');   // qScale + newQuest 
 const arena = grab('const SU=k=>', ',K5=[') + ';';
 
 // The curve the whole game levels by is pinned so a change is deliberate. It is two
-// continuous power segments up to 99, then the deliberate reset at 100 and steep 100-150 tail.
-if (!/const NA1=132\.99332769,NE1=1\.87201222,N50=Math\.floor\(NA1\*Math\.pow\(50,NE1\)\),NE2=3\.05002160,N100=419344,NE3=8\.40337760;/.test(src))
+// continuous power segments up to 99, then the deliberate reset at 100 and post-99 tail.
+if (!/const NA1=187\.05917193,NE1=1\.28123988,N50=Math\.floor\(NA1\*Math\.pow\(50,NE1\)\),NE2=7\.06296658,N100=906779,NE3=5\.57031747;/.test(src))
   throw new Error('needAt() curve constants changed - update this test deliberately');
 if (!/needAt=L=>L<=50\?Math\.floor\(NA1\*Math\.pow\(L,NE1\)\):L<=99\?Math\.floor\(N50\*Math\.pow\(L\/50,NE2\)\):Math\.floor\(N100\*Math\.pow\(L\/100,NE3\)\)/.test(src))
   throw new Error('needAt() formula changed - update this test deliberately');
@@ -62,14 +62,12 @@ const t = (n, f) => { try { f(); console.log('  ok   ' + n); pass++; } catch (e)
 console.log('economy: live 70x/70÷3x pacing, quest share, job gates and Zeny scale\n');
 
 // ---- the model the balance was solved with (same as tools/tune_pacing.js) ----------
-// The player camps the Stage-10 field of the map band. A boss replaces the pack every
-// MPS+1 kills; quest XP uses the current live multiplier and loot progress uses the
-// expected .126 equipment pickups per kill after the doubled drop rates. Each level is
-// self-consistent: kills = need / (epk*rate + need*qrate*rate).
-const MAP_B = [0, 9, 19, 31, 43, 59, 66, 73, 79, 89];
-const BAND = [[12,0],[24,1],[34,2],[46,3],[60,4],[67,5],[74,6],[80,7],[90,8],[99,9]];
+// Use the level-appropriate power route: early stage powers through p50, then p ~= Base Lv.
+// The model averages a boss every MPS+1 kills; quest XP uses the live multiplier and .126
+// expected equipment pickups per kill. Each level is self-consistent: kills = need /
+// (mob EXP per kill + expected quest XP per kill).
 const MPS = 15, KILLS_PER_HOUR = 800;
-const pwFor = lv => { for (const [cap, m] of BAND) if (lv <= cap) return MAP_B[m] + 10; return 99; };
+const pwFor = lv => E.pwOf(lv);
 const mobExp = p => Math.max(1, Math.floor(E.EXPK * Math.pow(p, 1.5) / 50));
 const bossExp = p => Math.max(1, Math.floor(E.BOSEK * Math.pow(p, 1.5) / 50));
 const expPerKill = p => (MPS * mobExp(p) + bossExp(p)) / (MPS + 1);
@@ -124,21 +122,27 @@ t('EXP grows with the field power level, never backwards', () => {
   for (const p of [1, 10, 29, 43, 59, 73, 89, 99]) { const e = mobExp(p); assert.ok(e >= prev, 'exp fell at pw' + p); prev = e; }
 });
 
+t('the pacing model follows the current level-appropriate field power path', () => {
+  for (const [lv, power] of [[1,1],[10,10],[11,10],[12,12],[15,15],[20,20],[21,20],
+    [28,28],[35,35],[43,43],[50,50],[59,50],[60,60],[99,99],[100,99]])
+    assert.strictEqual(E.pwOf(lv), power, 'pwOf(' + lv + ')');
+});
+
 t('the curve is strictly increasing within each phase, with the rebirth drop at 100', () => {
   let prev = 0;
   for (let L = 1; L < 150; L++) {
     if (L === 100) { prev = E.needAt(L); continue; }   // the one deliberate drop
     const n = E.needAt(L); assert.ok(n > prev, 'needAt(' + L + ') = ' + n + ' <= ' + prev); prev = n;
   }
-  assert.strictEqual(E.needAt(10), 9904, 'early requirement anchor');
-  assert.strictEqual(E.needAt(50), 201521, 'Base 50 anchor');
-  assert.strictEqual(E.needAt(99), 1618659, 'Base 99 anchor');
+  assert.strictEqual(E.needAt(10), 3574, 'early requirement anchor');
+  assert.strictEqual(E.needAt(50), 28103, 'Base 50 anchor');
+  assert.strictEqual(E.needAt(99), 3500168, 'Base 99 anchor');
   // The level-100 reset is deliberate; the much steeper endgame ramp climbs through 150.
   assert.ok(E.needAt(100) < E.needAt(99), 'level 100 must be cheaper than 99 at the reset');
   const drop = E.needAt(99) / E.needAt(100);
   assert.ok(drop > 3 && drop < 5, 'the reset should be about 3.9x, got x' + drop.toFixed(1));
-  assert.strictEqual(E.needAt(100), 419344, 'Base 100 reset floor');
-  assert.strictEqual(E.needAt(150), 12657029, 'level cap');
+  assert.strictEqual(E.needAt(100), 906779, 'Base 100 reset floor');
+  assert.strictEqual(E.needAt(150), 8677321, 'level cap');
 });
 
 t('normal EXP is 70x below 100 and one-third thereafter; GM is unchanged', () => {
@@ -159,16 +163,18 @@ t('the real kill reward block boosts Base/Job EXP but leaves player Zeny unchang
       const S={lv:${level},gm:${gm},gmx:100,kills:0,kl:0,zeny:0,exp:0};
       const gx=()=>S.gm?S.gmx:1;
       ${src.match(/const expRate=[^;]+;/)[0]}
-      const mob={exp:100,zeny:10,boss:false},pv=()=>0,qProg=()=>{};
-      let jobXP=0,pend=[],zenyEarned=0;const addJob=x=>jobXP+=x;
+      const mob={n:'Test Mob',mapIndex:0,exp:100,zeny:10,boss:false},pv=()=>0,qProg=()=>{};
+      let jobXP=0,pend=[],zenyEarned=0,recorded=0;const addJob=x=>jobXP+=x,recordMonsterKill=()=>recorded++;
       ${grab('function earnZeny(amount){','function kill(o){')}
       ${rewards}
-      this.result={xp:S.exp,z:S.zeny,jobXP};
+      this.result={xp:S.exp,z:S.zeny,jobXP,kills:S.kills,recorded};
     `,world);
     const rate=gm?100:level<100?70:70/3;
     assert.strictEqual(world.result.xp,Math.round(100*rate));
     assert.strictEqual(world.result.jobXP,Math.round(70*rate));
     assert.strictEqual(world.result.z,gm?1000:10);
+    assert.strictEqual(world.result.kills,1,'the reward block still increments the lifetime kill count');
+    assert.strictEqual(world.result.recorded,1,'the kill is forwarded once to the per-monster index');
   }
 });
 
@@ -186,7 +192,7 @@ t('quests pay a fraction of need(Lv), not a flat number', () => {
   assert.strictEqual(E.newQuest('kill').xp, Math.floor(n * E.QXP.kill * (70/3)));
   assert.strictEqual(E.newQuest('loot').xp, Math.floor(n * E.QXP.loot * (70/3)));
   assert.strictEqual(E.newQuest('boss').xp, Math.floor(n * E.QXP.boss * (70/3)));
-  assert.strictEqual(E.newQuest('boss').xp, 351584, 'boss quest xp at Lv150');
+  assert.strictEqual(E.newQuest('boss').xp, 241036, 'boss quest xp at Lv150');
 });
 
 t('quest EXP scales with need(Lv) instead of drifting', () => {
@@ -227,16 +233,17 @@ t('pacing anchor: Base Lv 10 (1st job change) in about 7 min (got ' + (TL.T[10] 
   assert.ok(TL.T[10] * 60 < 8.2, 'too slow: ' + (TL.T[10] * 60).toFixed(1) + ' min');
 });
 
-t('pacing anchor: Base Lv 50 in about 2 h (got ' + TL.T[50].toFixed(2) + ' h)', () => {
-  assert.ok(TL.T[50] > 1.5, 'too fast: ' + TL.T[50].toFixed(2) + ' h');
-  assert.ok(TL.T[50] < 2.6, 'too slow: ' + TL.T[50].toFixed(2) + ' h');
+t('pacing anchor: Base Lv 10->50 takes about 30 min (got ' + ((TL.T[50]-TL.T[10])*60).toFixed(1) + ' min)', () => {
+  const total = TL.T[50] * 60, interval = (TL.T[50] - TL.T[10]) * 60;
+  assert.ok(total > 35 && total < 40, 'Base 50 total should be about 37 min, got ' + total.toFixed(1));
+  assert.ok(interval > 27 && interval < 33, 'Base 10->50 should be about 30 min, got ' + interval.toFixed(1));
 });
 
 t('pacing anchor: Base Lv 50 to 99 takes about 5 h (got ' + (TL.T[99] - TL.T[50]).toFixed(2) + ' h)', () => {
   const midgame = TL.T[99] - TL.T[50];
   assert.ok(midgame > 4.3, 'too fast: ' + midgame.toFixed(2) + ' h');
   assert.ok(midgame < 5.7, 'too slow: ' + midgame.toFixed(2) + ' h');
-  assert.ok(TL.T[99] > 6.4 && TL.T[99] < 7.8, 'Base 99 total should be around 7 h: ' + TL.T[99].toFixed(2) + ' h');
+  assert.ok(TL.T[99] > 5.4 && TL.T[99] < 5.9, 'Base 99 total should be about 5 h 37 min: ' + TL.T[99].toFixed(2) + ' h');
 });
 
 t('pacing anchor: Base 100-150 is a hard ~2-day climb after the reset (got ' + (TL.hours - TL.T[100]).toFixed(1) + ' h)', () => {
@@ -250,11 +257,13 @@ t('pacing anchor: Base 100-150 is a hard ~2-day climb after the reset (got ' + (
 t('job gates land on the anchors: base ' + GATES.map(g => g && g.base).join('/') +
   ' at ' + GATES.map(g => g && g.hours.toFixed(1) + 'h').join('/'), () => {
   assert.ok(Math.abs(GATES[0].base - 10) <= 1, '1st job gate at base ' + GATES[0].base);
-  assert.ok(Math.abs(GATES[1].base - 49) <= 2, '2nd job gate at base ' + GATES[1].base);
+  assert.ok(Math.abs(GATES[1].base - 48) <= 2, '2nd job gate at base ' + GATES[1].base);
   assert.ok(Math.abs(GATES[2].base - 99) <= 2, 'transcendent gate at base ' + GATES[2].base);
-  assert.ok(GATES[0].hours < 0.4, '1st job after ' + GATES[0].hours.toFixed(2) + ' h');
-  assert.ok(GATES[1].hours > 1.2 && GATES[1].hours < 3, '2nd job after ' + GATES[1].hours.toFixed(2) + ' h');
-  assert.ok(GATES[2].hours > 6 && GATES[2].hours < 8.5, 'transcendent after ' + GATES[2].hours.toFixed(2) + ' h');
+  assert.ok(GATES[0].hours > 0.09 && GATES[0].hours < 0.14, '1st job after ' + GATES[0].hours.toFixed(2) + ' h');
+  const firstJobInterval = GATES[1].hours - GATES[0].hours;
+  assert.ok(firstJobInterval > 0.43 && firstJobInterval < 0.55, 'first-job levels should align to the 30-minute Base 10->50 interval; got ' + (firstJobInterval*60).toFixed(1) + ' min');
+  assert.ok(GATES[1].hours > 0.5 && GATES[1].hours < 0.7, '2nd job after ' + GATES[1].hours.toFixed(2) + ' h');
+  assert.ok(GATES[2].hours > 5.3 && GATES[2].hours < 5.9, 'transcendent after ' + GATES[2].hours.toFixed(2) + ' h');
 });
 
 t('a full run earns enough Zeny for the endgame sinks', () => {

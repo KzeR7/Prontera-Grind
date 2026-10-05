@@ -53,6 +53,8 @@ const code = [
   pick(/const SU=k=>[^,]+/, 'SU'),
   grab('const ARM=[', 'const dropTxt='),
   pick(/const WICON=\{[^}]*\},ORE=\{[^}]*\},SECN=\[[^\]]*\];/, 'WICON/ORE/SECN'),
+  pick(/const gearRefLevel=it=>[^;]+;/, 'gear reference level'),
+  pick(/const sellVal=it=>[^;]+;/, 'sell value'),
   pick(/const cell=\(it,sel,extra=''\)=>[^\n]*/, 'cell'),
   pick(/const STATS=\[[\s\S]*?\];/, 'STATS'),
   pick(/const SKILL_ICON=\{[^}]*\};/, 'per-skill icon map'),
@@ -102,7 +104,7 @@ const dr=()=>1;
 ${code}
 const skpAvail=()=>5,skTree=()=>4,skEarnedMax=()=>9,skLine=()=>['Novice'],skEarned=()=>9,skSpent=()=>0,pv=()=>0,bon=()=>0,qTxt=q=>'quest';
 this.__u={ V, SKILLS, SKILL_ICON, logs, set S(v){S=v}, get S(){return S}, set eqPick(v){eqPick=v}, get eqPick(){return eqPick},
-           set mapM(v){mapM=v}, set mapL(v){mapL=v}, set selE(v){selE=v}, set selS(v){selS=v}, set selP(v){selP=v} };
+           set indexMode(v){indexMode=v}, get indexMode(){return indexMode}, set mapM(v){mapM=v}, set mapL(v){mapL=v}, set selE(v){selE=v}, get selE(){return selE}, set selB(v){selB=v}, get selB(){return selB}, set selS(v){selS=v}, set selP(v){selP=v} };
 `;
 const sb = { console };
 vm.createContext(sb); vm.runInContext(harness, sb);
@@ -113,7 +115,8 @@ const armor = { id: 2, name: 'Chain Mail', tier: 2, slot: 'armor', val: 50, r: 0
 const ring = { id: 3, name: 'Silver Ring', tier: 2, slot: 'acc', val: 20, r: 0, sec: 1, cards: [] };
 const card = { id: 4, n: 'Poring Card', stat: 'str', g: 1, v: 3, card: true };
 const mkS = (cls) => ({
-  cls, sex: 'm', hair: 0, lv: 60, exp: 0, hp: 900, zeny: 5000, pts: 3, kills: 10, mp: 0, lvl: 5, kl: 3, gmx: 100, gm: false,
+  cls, sex: 'm', hair: 0, lv: 60, exp: 0, hp: 900, zeny: 5000, pts: 3, kills: 10, mobKills: {}, equippedTitle: null,
+  cardIndex: { donated: 0, byName: {}, stats: { str: 0, agi: 0, dex: 0, int: 0, vit: 0, luk: 0 } }, mp: 0, lvl: 5, kl: 3, gmx: 100, gm: false,
   st: { str: 30, agi: 20, dex: 20, luk: 5, int: 5, vit: 20 }, sk: { aid: 1 }, skOff: {}, jobs: { [cls]: { jl: 30, jx: 0 }, Novice: { jl: 10, jx: 0 } }, base: {},
   eq: { head: null, weapon: sword, armor, off: null, acc1: ring, leg: null, acc2: null },
   inv: [armor, ring, { id: 9, name: 'Broad Sword', tier: 2, slot: 'weapon', wt: 'sword', val: 70, r: 0, sec: 1, cards: [] }], cards: [card], pets: [], ore: { ori: 2, elu: 1 }, prog: [1, 1, 1, 10, 10, 5, 3, 1, 1, 1],
@@ -141,7 +144,9 @@ t('the map panel renders every map and field', () => {
   // word "farming" there instead). The current map keeps its dot marker.
   const cards = h.slice(h.indexOf('class="mapgrid'), h.indexOf('class="mapband fields'));
   assert.ok(!/>\s*farming\s*</.test(cards), 'no map card says "farming" any more');
-  assert.ok(cards.includes('● Lv 1-12') && cards.includes('Lv 10-24'), 'the level range is back under the name');
+  assert.ok(cards.includes('● Lv 1-10') && cards.includes('Lv 10-50'), 'the updated level range is back under the name');
+  for(const m of [1,2,3,4]){U.mapM=m;assert.ok(U.V.map().includes('stages 1-5 Lv 10-20; 6-10 Lv 20-50'),'class map '+m+' states both stage-level bands')}
+  U.mapM=0;
   assert.ok(cards.includes('Lv 90-99'), 'and every map carries one');
   assert.strictEqual((h.match(/class="map-node/g) || []).length, 10, 'one node per field');
   // the boss field lists the whole pool with odds, and the new ore rates
@@ -200,6 +205,25 @@ t('map and boss-field panels stay inside narrow viewports', () => {
   assert.ok(boss.includes('poolitem'), 'the selected boss field keeps its drop pool');
 });
 
+t('the Mastery Index tracks monster titles and consumes loose cards for permanent stat points',()=>{
+  U.S=mkS('Novice');U.S.kills=500;U.S.mobKills={'0:Poring':12,'0:Mastering':1};U.S.equippedTitle=null;
+  U.indexMode='mobs';let h=U.V.index();
+  assert.ok(h.includes('Midgard Mastery Index')&&h.includes('Monster Hunt Ledger'),'the new dock panel should render the index header and ledger');
+  assert.ok(h.includes('12 kills recorded')&&h.includes('Mastering · BOSS'),'regular mobs and bosses both get species rows');
+  assert.ok(h.includes('Field Scout')&&h.includes('data-a="titleequip"'),'lifetime milestones unlock an equippable title');
+  assert.strictEqual((h.match(/class="mastery-title tone-/g)||[]).length,10,'the ladder has ten designed rank seals');
+  U.indexMode='cards';U.S.cardIndex={donated:5,byName:{'Poring Card':1},stats:{str:1,agi:0,dex:0,int:0,vit:0,luk:0}};
+  h=U.V.index();
+  assert.ok(h.includes('1/90 unique cards archived')&&h.includes('<b>1/30</b> permanent points earned'),'album and stat mastery progress are visible');
+  assert.ok(h.includes('data-a="indexcard"')&&h.includes('Slot one'),'a loose card can be archived from this panel');
+  assert.ok(h.includes('data-a="indexstat"')&&h.includes('Permanent +1/5'),'permanent points are allocated to capped core stats');
+  assert.ok(h.includes('Poring Card')&&h.includes('Archived 1 time'),'the card album keeps a duplicate-aware history');
+  assert.ok(src.includes("if(v==='index'){openTab('index');return}"),'the Quest Board Index button opens the panel');
+  assert.ok(src.includes('data-q="index"')&&src.includes("index:['📚','Mastery Index','I']"),'both Quest Board and dock link to the index');
+  assert.ok(src.includes('flex-wrap:wrap;justify-content:center')&&src.includes('max-width:calc(100vw - 12px)'),'the expanded dock wraps on narrow screens');
+  assert.ok(src.includes('recordMonsterKill(mob)')&&src.includes('data-a="titleequip"'),'kills are recorded and titles can be equipped from the view');
+});
+
 t('clicking a slot highlights the fit in the REAL bag tab - no extra pop-out', () => {
   U.S = mkS('Swordman');
   U.selE = 'weapon'; U.eqPick = null; U.sub = 'bag';
@@ -222,6 +246,23 @@ t('clicking a slot highlights the fit in the REAL bag tab - no extra pop-out', (
   // and the actual slot click opens that window
   assert.ok(src.includes("seleq:v=>{selE=v;eqPick=v;sub.bag='bag';if(!tabs.includes('bag'))"), 'clicking a doll slot opens the Bag tab');
   assert.ok(src.includes("if(k==='status')sub.status='stats';if(k==='bag')sub.bag='bag';"), 'reopening a window resets its sub-tab');
+});
+
+t('Assassin equipment UI describes and renders one two-handed Katar only',()=>{
+  U.S=mkS('Assassin');U.selE='weapon';
+  U.S.eq.weapon={id:88,name:'Katar',tier:3,slot:'weapon',wt:'katar',val:80,slots:4,cards:[]};
+  const h=U.V.equip();
+  assert.ok(h.includes('Weapons: katar'), 'the allowed weapon list should only say katar');
+  assert.ok(h.includes('Two-handed Katar; no off-hand weapon'), 'the one-weapon rule should be explicit');
+  assert.ok(h.includes('2H Katar'), 'the main-hand slot should identify Katar as a two-handed weapon');
+  assert.ok(!h.includes('L.Hand'), 'Assassin should not get a second-hand equipment slot');
+  assert.strictEqual((h.match(/empty slot/g)||[]).length,4,'a Katar should expose four card sockets');
+  U.S=mkS('Archer');U.S.eq.weapon={id:89,name:'Four Slot Bow',tier:3,slot:'weapon',wt:'bow',val:80,slots:4,cards:[]};U.selE='weapon';
+  const bow=U.V.equip();assert.strictEqual((bow.match(/empty slot/g)||[]).length,4,'a bow should expose four card sockets');
+  U.S=mkS('Assassin');U.S.eq.weapon={id:88,name:'Katar',tier:3,slot:'weapon',wt:'katar',val:80,slots:4,cards:[]};U.selE='weapon';
+  U.eqPick='weapon';const bag=U.V.bag0();
+  assert.ok(bag.includes('Choosing a two-handed katar')&&bag.includes('occupies both hands'), 'the chooser should explain the two-handed restriction');
+  U.eqPick=null;
 });
 
 t('the skills panel renders for every class tier', () => {
@@ -270,6 +311,7 @@ t('HP flips at 30%; one split bar fills Base from left and Job from right with c
     const nodes={};const $=id=>nodes[id]||(nodes[id]={style:{},textContent:'',title:'',attrs:{},
       classList:{flags:{},toggle(k,v){this.flags[k]=v}},setAttribute(k,v){this.attrs[k]=v}});
     let S={lv:20,exp:90,hp:31,kills:0,zeny:0},hudRate=null,zenyEarned=0,currentUser='A';
+    const HUNT_TITLES=[{id:'field-scout',name:'Field Scout',kills:500}],titleUnlocked=t=>S.kills>=t.kills;
     // the pet buff chips bars() now draws: no pet buff is running in this fixture
     let petBuff={atk:0,matk:0,hp:0,leech:0,atkT:0,matkT:0,hpT:0,leechT:0},petBuffSrc={};
     ${grab('const PET_SKILLS=[', 'const petDmg=')}
@@ -291,6 +333,9 @@ t('HP flips at 30%; one split bar fills Base from left and Job from right with c
   h.job.jl=50;h.S.lv=150;h.bars();assert.strictEqual(d.jb.style.width,'100%');assert.strictEqual(d.xpb.style.width,'100%');
   assert.ok(d.dps&&d.dps.title.includes('Damage per second'),'bars() writes the DPS readout every second');
   assert.strictEqual(d.dps.textContent,'0','no damage banked means no DPS');
+  h.S.kills=500;h.S.equippedTitle='field-scout';h.bars();
+  assert.strictEqual(d.titleLabel.textContent,'✦ Field Scout','the chosen title appears beside the class in the HUD');
+  assert.strictEqual(d.titleLabel.style.display,'inline-block','an equipped title is visible');
 });
 
 t('damage digits, critical burst and skill names use separate anchored combat overlays', () => {
@@ -570,6 +615,11 @@ t('the bag shows its 1000-item limit and refuses loot once it is full', () => {
   C.collect({ id: 8, name: 'Abyss Blade', tier: 4, slot: 'weapon', val: 90, sec: 3, lvl: 99, cards: [] });
   assert.ok(C.S.inv.some(i => i && i.id === 8), 'an unticked rarity still lands in the bag');
   assert.ok(!C.msg.includes('Auto-sold'), 'and is not reported as sold');
+  C.S.inv.length=0;C.S.zeny=0;C.S.autoSell=[false,false,true,false,false];C.clear();
+  C.collect({id:9,name:'Pinned Blade',tier:2,slot:'weapon',wt:'sword',val:80,sec:1,lvl:40,locked:true,cards:[]});
+  assert.ok(C.S.inv.some(i=>i&&i.id===9&&i.locked),'a locked incoming item bypasses the auto-sell filter');
+  assert.strictEqual(C.S.zeny,0,'keeping a locked item pays no sale value');
+  assert.ok(!C.msg.includes('Auto-sold'),'the locked item is never reported as auto-sold');
 });
 
 t('Settings carries BOTH damage-number toggles (show/hide and short/full) and remembers them', () => {
@@ -625,6 +675,7 @@ t('pet buffs are icon tiles above the status bar, and the description waits for 
     const nodes={};const $=id=>nodes[id]||(nodes[id]={style:{},textContent:'',title:'',attrs:{},
       classList:{flags:{},toggle(k,v){this.flags[k]=v}},setAttribute(k,v){this.attrs[k]=v}});
     let S={lv:20,exp:90,hp:80,kills:0,zeny:0},hudRate=null,zenyEarned=0,currentUser='A';
+    const HUNT_TITLES=[{id:'field-scout',name:'Field Scout',kills:500}],titleUnlocked=t=>S.kills>=t.kills;
     let petBuff={atk:20,matk:0,hp:20,leech:0,atkT:12.4,matkT:0,hpT:3.2,leechT:0},petBuffSrc={atk:'Poring',hp:'Drops'};
     const performance={now:()=>1000},job={jl:10,jx:45},jobOf=()=>job,C=()=>({mj:50}),maxHp=()=>100,
       jneed=()=>100,need=()=>200;
@@ -701,12 +752,72 @@ t('the Bag sells by rarity, on the drop or on a click', () => {
   assert.ok(h.includes('data-a="quicksell" data-v="2"') && !h.includes('data-a="selb" data-v="2"'),
     'plain tiles sell instead of selecting');
   assert.ok(h.includes('data-tip="2"'), 'the hover tooltip still says what the item is');
-  assert.ok(src.includes('quicksell:id=>{const it=S.inv.find(x=>String(x.id)===String(id));if(!it)return;const v=sellVal(it);sell(id);'),
-    'and the action really sells, at the sale value');
+  assert.ok(src.includes('quicksell:id=>{const it=S.inv.find(x=>String(x.id)===String(id));if(!it)return;const v=sellVal(it);if(!sell(id))return;'),
+    'and the action only reports a sale when sell() actually completed');
   // an inspect click still works when the mode is off
   U.S.clickSell = false; h = U.V.bag0();
   assert.ok(h.includes('data-a="selb" data-v="2"') && !h.includes('data-a="quicksell"'), 'OFF restores inspecting');
   assert.ok(!src.includes('data-a="sellbelow"'), 'the old two purge buttons are gone');
+});
+
+t('the Bag keeps insertion order, pins locked gear, and labels rarity-based equipment levels',()=>{
+  U.S=mkS('Knight');U.selB=null;U.eqPick=null;U.S.clickSell=false;U.S.autoSell=[false,false,false,false,false];
+  const gear=(id,name,tier,lvl)=>({id,name,tier,slot:'weapon',wt:'sword',val:30,sec:1,lvl,cards:[],aff:[]});
+  const a=gear(41,'Common Blade',0,40),b=gear(42,'Legendary Blade',4,40),c=gear(43,'Rare Blade',2,40),d=gear(44,'Fine Blade',1,41);
+  U.S.inv=[a,b,c];
+  const order=html=>[...html.matchAll(/data-a="selb" data-v="([^"]+)"/g)].map(m=>m[1]);
+  let h=U.V.bag0();
+  assert.deepStrictEqual(order(h),['41','42','43'],'the current insertion order is not sorted by rarity/value');
+  U.S.inv.push(d);h=U.V.bag0();
+  assert.deepStrictEqual(order(h),['41','42','43','44'],'a new drop appends without moving existing items');
+  c.locked=true;h=U.V.bag0();
+  assert.deepStrictEqual(order(h),['43','41','42','44'],'locked gear is pinned first while unlocked gear keeps its order');
+  assert.ok(h.includes('class="lockstar"')&&h.includes('title="Locked gear"'),'a locked tile carries a visible star badge');
+  U.S.autoSell[2]=true;U.selB=43;U.S.lv=1;h=U.V.bag0();
+  const purge=h.slice(h.indexOf('data-a="sellnow"'),h.indexOf('data-a="sellnow"')+48);
+  assert.ok(purge.includes('disabled'),'a locked matching rarity cannot be bulk-sold');
+  assert.ok(h.includes('Gear Lv 60')&&h.includes('reference only (no Base Lv equip restriction)'),
+    'same field-level gear shows a higher Rare-grade reference level without an equip gate');
+  assert.ok(h.includes('data-a="lockgear" data-v="43"')&&h.includes('aria-pressed="true"'),
+    'the selected item exposes an explicit Unlock control');
+  const equipButton=h.match(/<button data-a="equip" data-v="43"([^>]*)>/);
+  assert.ok(equipButton&&!equipButton[1].includes('disabled'),'a reference Gear Lv 60 never blocks Base Lv 1 from equipping');
+  assert.ok(src.includes('lockgear:id=>toggleGearLock(id)'),'the lock button has a live action');
+});
+
+t('locked gear requires deliberate confirmation for manual sale and is skipped by automated sales',()=>{
+  const sellFn=grab('function sell(id){','// Quest goal AND reward');
+  const sellValFn=pick(/const sellVal=it=>[^;]+;/,'sellVal');
+  const box={};vm.createContext(box);
+  vm.runInContext(`let S={inv:[],cards:[]},selB=null,modal='',confirmSale=null,earned=0;
+    const iname=it=>it.name,earnZeny=v=>{earned+=v},log=()=>{},ui=()=>{},save=()=>{},ask=(m,y)=>{modal=m;confirmSale=y};
+    ${sellValFn}
+    ${sellFn}
+    this.__sale={S,get modal(){return modal},get confirmSale(){return confirmSale},get earned(){return earned},sell,sellVal};`,box);
+  const C=box.__sale,item={id:91,name:'Blue Blade',tier:2,sec:1,lvl:40,locked:true,cards:[]};C.S.inv.push(item);
+  assert.strictEqual(C.sell(91),false,'a locked manual sale waits for confirmation');
+  assert.ok(C.modal.includes('locked')&&C.modal.includes('Unlock it before selling'),'the confirmation warns that the gear is locked');
+  assert.strictEqual(C.S.inv.length,1,'Cancel leaves the item safely in the bag');
+  C.confirmSale();
+  assert.strictEqual(C.S.inv.length,1,'confirming only unlocks; it never silently sells the item');
+  assert.strictEqual(item.locked,false,'the confirmation unlocks the item first');
+  assert.strictEqual(C.earned,0,'unlock confirmation alone pays nothing');
+  assert.strictEqual(C.sell(91),true,'a second deliberate Sell action can now complete');
+  assert.strictEqual(C.S.inv.length,0,'the unlocked item is sold only after that second action');
+  assert.strictEqual(C.earned,C.sellVal(item),'the confirmed manual sale pays the ordinary sell value');
+  assert.ok(src.includes('S.inv.filter(i=>!i.locked&&autoSellOn(i.tier))'),'bulk sell omits locked gear');
+  assert.ok(src.includes('S.inv.some(i=>!i.locked&&autoSellOn(i.tier))'),'the bulk-sell button is disabled when only locked matches remain');
+  assert.ok(src.includes('if(!it.locked&&autoSellOn(it.tier))'),'drop auto-sell never consumes a locked item');
+});
+
+t('the lock toggle changes saved item state in either direction',()=>{
+  const lockFn=grab('function toggleGearLock(id){','const cell=');
+  const box={};vm.createContext(box);
+  vm.runInContext(`let target={id:7,name:'Test Blade',locked:false},calls=0;const find=id=>String(id)==='7'?target:null,iname=it=>it.name,log=()=>{},ui=()=>{},save=()=>{calls++};
+    ${lockFn}
+    this.__lock={target,get calls(){return calls},toggleGearLock};`,box);
+  const C=box.__lock;C.toggleGearLock(7);assert.strictEqual(C.target.locked,true);assert.strictEqual(C.calls,1);
+  C.toggleGearLock('7');assert.strictEqual(C.target.locked,false);assert.strictEqual(C.calls,2);
 });
 
 t('the Log window filters by category, and the on-screen feed folds away', () => {

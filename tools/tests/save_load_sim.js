@@ -44,7 +44,7 @@ let RAW = ${JSON.stringify(JSON.stringify(save))};
 const lsGet = () => RAW;
 const saveKey = () => 'k';
 const newQuest = () => ({type:'kill', goal:1, prog:0, z:0, xp:0});
-this.__l = {loadRaw, setRaw: v => { RAW = JSON.stringify(v) }};
+this.__l = {loadRaw, setRaw: v => { RAW = JSON.stringify(v) }, setState:v=>{S=v}, getState:()=>S, emptyCardIndex, recordMonsterKill, donateCardToMastery, allocateCardMastery, cardMasteryEarned, cardMasteryAvailable, cardMasteryStat};
 `;
 const sb = { console };
 vm.createContext(sb); vm.runInContext(harness, sb);
@@ -68,6 +68,25 @@ t('valid records survive a save/load', () => {
   assert.strictEqual(f.base.Swordman.eq.weapon, 77);
   assert.strictEqual(f.base.Novice.lv, 12);
 });
+t('legacy Assassin daggers and off-hand weapons are preserved in the bag, not worn',()=>{
+  for(const cls of ['Assassin','Assassin Cross']){
+    const old={...JSON.parse(JSON.stringify(save)),cls,
+      eq:{weapon:{id:901,slot:'weapon',wt:'dagger',name:'Old Dagger',val:20,aff:[],cards:[]},
+        armor:null,head:null,off:{id:902,slot:'weapon',wt:'katar',name:'Old off-hand Katar',val:25,aff:[],cards:[]},
+        leg:null,acc1:null,acc2:null},inv:[]};
+    const box={};vm.createContext(box);
+    const custom=harness.replace(/const lsGet = \(\) => .*?;/,'const lsGet = () => '+JSON.stringify(JSON.stringify(old))+';');
+    vm.runInContext(custom,box);const migrated=box.__l.loadRaw();
+    assert.strictEqual(migrated.eq.weapon,null,cls+' must not retain a main-hand dagger');
+    assert.strictEqual(migrated.eq.off,null,cls+' must not retain an off-hand weapon');
+    assert.deepStrictEqual(Array.from(migrated.inv,x=>x.id).sort(),[901,902],cls+' gear should be stowed without being lost');
+    const valid={...old,eq:{weapon:{id:903,slot:'weapon',wt:'katar',name:'Valid Katar',val:30,aff:[],cards:[]},armor:null,head:null,off:null,leg:null,acc1:null,acc2:null},inv:[]};
+    const validBox={};vm.createContext(validBox);
+    vm.runInContext(harness.replace(/const lsGet = \(\) => .*?;/,'const lsGet = () => '+JSON.stringify(JSON.stringify(valid))+';'),validBox);
+    assert.strictEqual(validBox.__l.loadRaw().eq.weapon.id,903,cls+' must keep a legal main-hand Katar on load');
+  }
+});
+
 t('pet upgrade levels and valid gacha skills survive load, while junk is normalized', () => {
   const p=id=>f.pets.find(x=>x.id===id);
   assert.deepStrictEqual(Array.from(p(1).eq),[1,2,3],'valid Claw/Collar/Charm upgrade levels must persist');
@@ -92,11 +111,68 @@ t('the live game state is untouched by the repair', () => {
   assert.strictEqual(f.eq.weapon.r, 1);
 });
 
+t('gear locks persist while missing or malformed lock flags repair to unlocked',()=>{
+  const raw=JSON.parse(JSON.stringify(save));
+  raw.inv=[
+    {id:301,name:'Locked Blade',slot:'weapon',wt:'sword',tier:2,val:40,locked:true,cards:[]},
+    {id:302,name:'Legacy Blade',slot:'weapon',wt:'sword',tier:1,val:20,cards:[]},
+    {id:303,name:'Malformed Lock',slot:'weapon',wt:'sword',tier:1,val:20,locked:'true',cards:[]}
+  ];
+  raw.eq.weapon.locked=true;
+  sb.__l.setRaw(raw);const repaired=load();
+  assert.strictEqual(repaired.inv[0].locked,true,'a deliberate bag lock survives');
+  assert.strictEqual(repaired.inv[1].locked,false,'legacy items default to unlocked');
+  assert.strictEqual(repaired.inv[2].locked,false,'malformed truthy data cannot accidentally lock or sell gear');
+  assert.strictEqual(repaired.eq.weapon.locked,true,'locks persist on equipped gear too');
+  sb.__l.setRaw(save);
+});
+
 t('card values are repaired per stat, not flattened to CV[grade]', () => {
   const byId = id => f.cards.find(c => c.id === id);
   assert.strictEqual(byId(1).v, 192, 'a Legendary HP card should repair to 16*12, not the stale 5');
   assert.strictEqual(byId(2).v, 10, 'a Rare STR card should repair to round(CV[2]) = 10');
   assert.strictEqual(byId(3).v, 6, 'an unknown stat should fall back to round(CV[grade 1]) = 6, not crash');
+});
+
+t('legacy saves default the monster ledger, card album, and equipped title safely',()=>{
+  assert.deepStrictEqual(Object.keys(f.mobKills),[]);
+  assert.strictEqual(f.equippedTitle,null);
+  assert.strictEqual(f.cardIndex.donated,0);
+  assert.deepStrictEqual(Object.keys(f.cardIndex.byName),[]);
+  assert.deepStrictEqual(Object.values(f.cardIndex.stats),[0,0,0,0,0,0]);
+});
+
+t('mastery records, title unlocks, and bounded permanent stats survive load repair',()=>{
+  const mastered={...save,kills:500,equippedTitle:'field-scout',mobKills:{'0:Poring':4.9,'0:Mastering':1,'999:Missing':77},
+    cardIndex:{donated:10,byName:{'Poring Card':3,'Unused Card':0},stats:{str:1,vit:3,luk:-4,other:9}}};
+  const box={};vm.createContext(box);
+  vm.runInContext(harness.replace(/const lsGet = \(\) => .*?;/,'const lsGet = () => '+JSON.stringify(JSON.stringify(mastered))+';'),box);
+  const repaired=box.__l.loadRaw();
+  assert.strictEqual(repaired.equippedTitle,'field-scout');
+  assert.deepStrictEqual(JSON.parse(JSON.stringify(repaired.mobKills)),{'0:Poring':4,'0:Mastering':1});
+  assert.strictEqual(repaired.cardIndex.donated,10);
+  assert.deepStrictEqual(JSON.parse(JSON.stringify(repaired.cardIndex.byName)),{'Poring Card':3});
+  assert.strictEqual(repaired.cardIndex.stats.str,1);
+  assert.strictEqual(repaired.cardIndex.stats.vit,1,'unearned excess permanent points must be trimmed to the 2 earned');
+  assert.strictEqual(repaired.cardIndex.stats.luk,0);
+  assert.strictEqual(repaired.cardIndex.stats.other,undefined);
+  assert.strictEqual(Object.values(repaired.cardIndex.stats).reduce((a,n)=>a+n,0),2);
+});
+
+t('kills and card dedication earn permanent mastery points and persist through reload',()=>{
+  const box={};vm.createContext(box);vm.runInContext(harness,box);
+  const U=box.__l,state={lv:1,cls:'Novice',jobs:{Novice:{jl:1,jx:0}},sk:{aid:1},kills:0,mp:0,mobKills:{},equippedTitle:null,cardIndex:U.emptyCardIndex(),
+    cards:Array.from({length:5},(_,i)=>({id:'card-'+i,n:i<2?'Poring Card':'Fabre Card',g:i%4,stat:'str',v:3}))};
+  U.setState(state);U.recordMonsterKill({mapIndex:0,n:'Poring'});U.recordMonsterKill({mapIndex:0,n:'Poring'});U.recordMonsterKill({mapIndex:0,n:'Mastering'});
+  for(let i=0;i<5;i++)assert.ok(U.donateCardToMastery('card-'+i),'the indexed loose card should be consumed');
+  assert.strictEqual(state.mobKills['0:Poring'],2);assert.strictEqual(state.mobKills['0:Mastering'],1);
+  assert.strictEqual(state.cards.length,0);assert.strictEqual(state.cardIndex.donated,5);
+  assert.strictEqual(state.cardIndex.byName['Poring Card'],2);assert.strictEqual(state.cardIndex.byName['Fabre Card'],3);
+  assert.strictEqual(U.cardMasteryEarned(),1);assert.strictEqual(U.cardMasteryAvailable(),1);
+  assert.strictEqual(U.allocateCardMastery('str'),true);assert.strictEqual(U.cardMasteryStat('str'),1);
+  U.setRaw(state);const round=U.loadRaw();
+  assert.strictEqual(round.cardIndex.donated,5);assert.strictEqual(round.cardIndex.stats.str,1);
+  assert.strictEqual(round.mobKills['0:Poring'],2);assert.strictEqual(round.mobKills['0:Mastering'],1);
 });
 
 t('skills that no longer exist are dropped, refunding their points', () => {
