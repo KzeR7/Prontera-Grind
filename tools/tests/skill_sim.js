@@ -25,8 +25,8 @@ ${ledger}
 // skOff and skillOn share one line in index.html, so the pick above already brought both in.
 let S = null, tb = {}, skCd = {}, dt = 0;
 const lv = id => (S.sk && S.sk[id]) || 0;
-const maxHp = () => 1000, log = () => {}, addFloat = () => {}, skillNameFloat = () => {}, playSkillFx = () => {}, pl = {x:0,z:0};
-this.__k = { SKILLS, CLASSES, SKSLOTS, SKFADE, SKILL_VFX, skillFxSpec, skCost, applyDot, applyStun, skillOn, skOff, down, skLine, skEarned, skSpent, skpAvail,
+const maxHp = () => 1000, earnZeny = () => {}, log = () => {}, addFloat = () => {}, skillNameFloat = () => {}, playSkillFx = () => {}, pl = {x:0,z:0};
+this.__k = { SKILLS, CLASSES, SKSLOTS, SKFADE, SKILL_VFX, skillFxSpec, skCost, applyDot, applyStun, skillOn, skOff, down, skLine, skEarned, skSpent, skpAvail, autoAllocateSkills, skTree, skEarnedMax,
              set S(v){S=v}, get S(){return S},
              get tb(){return tb}, set tb(v){tb=v},
              get skCd(){return skCd}, set skCd(v){skCd=v},
@@ -86,7 +86,7 @@ const PET_UPGRADE_COST_SRC = pick(/peqCost=t=>[^,;]+/, 'pet upgrade cost');
 const PET_UPGRADE_ACTION = block('peq:v=>');
 const PET_RELEASE_ACTION = block('prel:id=>');
 const PET_SKILL_GAP = pick(/const PETGAP=\d+/, 'the per-pet skill gap');
-const PET_SKILL_ROLL = pick(/const PET_SKILL_WEIGHTS=PET_SKILLS\.map\(\(\)=>1\),rollPetSkills=[^\n]*/, 'both-slot pet skill gacha');
+const PET_SKILL_ROLL = pick(/const PET_SKILL_WEIGHTS=\[[^\n]*/, 'both-slot pet skill gacha');
 const pickWMatch = src.match(/const pickW=w=>\{[\s\S]*?\},gp=/);
 if (!pickWMatch) throw new Error('cannot extract weighted gacha picker');
 const PICKW_CODE = pickWMatch[0].slice(0, -',gp='.length) + ';';
@@ -98,22 +98,22 @@ function makePetHarness(){
   vm.runInContext(`
     ${PET_DATA_SRC}
     ${PET_SKILL_SRC}
-    const MUT=[1,2,4,6,8,20,40],MC=[0];
-    let petBuff={atk:0,matk:0,hp:0,leech:0,atkT:0,matkT:0,hpT:0,leechT:0},petBuffSrc={},petSkillCd={},petNote={},mobs=[];
+    const MUT=[1,2,4,6,8,18,38],MC=[0];
+    let petBuff={atk:0,matk:0,hp:0,leech:0,def:0,atkT:0,matkT:0,hpT:0,leechT:0,defT:0},petBuffSrc={},petSkillCd={},petNote={},mobs=[];
     let S={hp:500};
     const petDmg=()=>100,pl={x:0,z:0},rnd=(a,b)=>(a+b)/2,numTxt=String,maxHp=()=>1000;
-    const logs=[],log=(...x)=>logs.push(x),addFloat=()=>{},playSkillFx=()=>{},hurt=(o,d)=>{o.hp-=d};
+    const logs=[],log=(...x)=>logs.push(x),earnZeny=()=>{},addFloat=()=>{},playSkillFx=()=>{},hurt=(o,d)=>{o.hp-=d};
     ${PICKW_CODE}
     ${PET_SKILL_GAP}
     ${PET_SKILL_ROLL}
     ${PET_HIT_SRC}
-    const zeroBuff=()=>({atk:0,matk:0,hp:0,leech:0,atkT:0,matkT:0,hpT:0,leechT:0});
+    const zeroBuff=()=>({atk:0,matk:0,hp:0,leech:0,def:0,atkT:0,matkT:0,hpT:0,leechT:0,defT:0});
     this.__pet={PET_SKILLS,PETGAP,petHit,logs,get buff(){return petBuff},set buff(v){petBuff=v},zeroBuff,
       get notes(){return petNote},set notes(v){petNote=v},
       get cooldowns(){return petSkillCd},set cooldowns(v){petSkillCd=v},get mobs(){return mobs},set mobs(v){mobs=v},
-      // eight rolls that walk slot A 0>7 and slot B 7>0, so every one of the eight skills must appear
-      rollAll(){const a=[.01,.98,.13,.86,.26,.74,.38,.61,.51,.49,.63,.36,.76,.24,.88,.11];let i=0;Math.random=()=>a[i++];
-        return Array.from({length:8},()=>Array.from(rollPetSkills()))}};
+      // A deterministic stream is enough to exercise weighted draws without assuming equal odds.
+      rollAll(){let seed=20261005;Math.random=()=>{seed=(seed*1664525+1013904223)>>>0;return seed/4294967296};
+        return Array.from({length:200},()=>Array.from(rollPetSkills()))}};
   `,box);
   return box.__pet;
 }
@@ -176,9 +176,9 @@ t('player ATK and MATK formulas consume only their matching pet buffs and passiv
   assert.strictEqual(strikeBox.damage.magical,strikeBox.damage.physical*2,'the real strike() ignored its magic flag');
 });
 
-t('the gacha contains four buffs, two AoE attacks and two single-target attacks, and rolls two at a time', () => {
+t('the gacha contains four buffs, two AoE attacks, two single-target attacks and four utility skills, and rolls two at a time', () => {
   const P=makePetHarness(),skills=Array.from(P.PET_SKILLS);
-  assert.strictEqual(skills.length,8,'the pet skill pool must contain exactly eight skills');
+  assert.strictEqual(skills.length,12,'the pet skill pool must contain exactly twelve skills');
   const buffs=skills.filter(s=>s.kind==='buff');
   assert.strictEqual(buffs.length,4,'need four player buffs');
   assert.deepStrictEqual(buffs.map(s=>s.stat).sort(),['atk','hp','leech','matk'],'ATK, MATK, life leech and max HP');
@@ -186,12 +186,14 @@ t('the gacha contains four buffs, two AoE attacks and two single-target attacks,
   assert.ok(buffs.every(s=>/never stacks/i.test(s.desc)),'and every one says it does not stack');
   assert.strictEqual(skills.filter(s=>s.kind==='aoe').length,2,'need two AoE attacks');
   assert.strictEqual(skills.filter(s=>s.kind==='single').length,2,'need two single-target attacks');
+  assert.strictEqual(skills.filter(s=>s.kind==='utility').length,4,'need four low-impact utility skills');
+  assert.ok(skills.filter(s=>s.kind==='utility').every(s=>/no combat damage/i.test(s.desc)),'utility skills must not be hidden DPS');
   assert.ok(skills.every(s=>s.cd>0&&s.desc&&K.SKILL_VFX[s.vfx]),'every gacha skill needs cooldown, description and visible effect');
   assert.strictEqual(P.PETGAP,7,'a pet may use one skill every seven seconds');
   const rolled=P.rollAll();
-  assert.strictEqual(rolled.length,8,'eight rolls');
+  assert.strictEqual(rolled.length,200,'deterministic weighted rolls');
   rolled.forEach(pair=>{assert.strictEqual(pair.length,2,'one roll fills BOTH slots');assert.notStrictEqual(pair[0],pair[1],'a pet can never hold the same skill twice');});
-  assert.strictEqual(new Set(rolled.flat()).size,8,'equal-weight rolls must reach every one of the eight skills');
+  assert.strictEqual(new Set(rolled.flat()).size,12,'weighted rolls must reach every one of the twelve skills');
 });
 
 t('the real pet skill gacha action charges Zeny, saves the roll and respects the balance', () => {
@@ -203,7 +205,7 @@ t('the real pet skill gacha action charges Zeny, saves the roll and respects the
     ${PET_SKILL_ROLL}
     // the real pet-combat helpers, so the action's clearPetCd() runs as shipped
     let petBuff={atk:0,matk:0,hp:0,leech:0,atkT:0,matkT:0,hpT:0,leechT:0},petBuffSrc={},petNote={},mobs=[],pl={x:0,z:0};
-    const numTxt=String,maxHp=()=>100,hurt=()=>{},addFloat=()=>{},playSkillFx=()=>{};
+    const numTxt=String,maxHp=()=>100,earnZeny=()=>{},hurt=()=>{},addFloat=()=>{},playSkillFx=()=>{};
     ${PET_HIT_SRC}
     const ${PET_SKILL_COST_SRC};
     let S={zeny:5000,pets:[{id:7,sp:0,skills:[]}]},petSkillCd={7:4,'7|warcry':9},logRows=[],uiCount=0,saveCount=0;
@@ -275,7 +277,7 @@ t('releasing a pet clears its auto-roll and skill-cooldown state', () => {
 t('pet skills execute their buff, AoE and single-target effects in combat', () => {
   const P=makePetHarness(),pet=id=>({id:1,sp:0,mut:0,eq:[0,0,0],skills:[id]}),target=()=>({x:0,z:0,hp:1000}),near=()=>({x:1,z:1,hp:1000}),far=()=>({x:9,z:9,hp:1000});
   let a=target();P.mobs=[a];P.cooldowns={};P.buff=P.zeroBuff();P.petHit(pet('warcry'),a);
-  assert.strictEqual(P.buff.atk,20,'War Cry must buff player ATK by 20%');
+  assert.strictEqual(P.buff.atk,15,'War Cry must buff player ATK by 15%');
   assert.strictEqual(P.buff.atkT,30,'War Cry lasts 30s now');
   assert.strictEqual(P.cooldowns['1|warcry'],60,'on a 60s cooldown');
   assert.strictEqual(P.cooldowns[1],7,'and the pet is held for the 7s skill gap');
@@ -291,22 +293,27 @@ t('pet skills execute their buff, AoE and single-target effects in combat', () =
   assert.ok(P.logs.some(r=>String(r[0]).includes('the ATK buff is already up')),'a second pet cannot stack a second ATK buff');
   P.buff=P.zeroBuff();
   P.cooldowns={};P.petHit(pet('arcane'),a);
-  assert.strictEqual(P.buff.matk,20,'with the ATK buff gone, MATK is free to run');
-  // the two new buffs: 5% of the pet's damage as healing, and +20% max HP for the player
+  assert.strictEqual(P.buff.matk,15,'with the ATK buff gone, MATK is free to run');
+  // the two other buffs: 3% of the pet's damage as healing, and +15% max HP for the player
   P.buff=P.zeroBuff();P.cooldowns={};P.petHit(pet('siphon'),a);
-  assert.strictEqual(P.buff.leech,5,'Blood Siphon leeches 5%');
+  assert.strictEqual(P.buff.leech,3,'Blood Siphon leeches 3%');
   assert.strictEqual(P.cooldowns['1|siphon'],60,'on a 60s cooldown');
   P.buff=P.zeroBuff();P.cooldowns={};P.petHit(pet('vital'),a);
-  assert.strictEqual(P.buff.hp,20,'Vital Aura adds 20% max HP');
+  assert.strictEqual(P.buff.hp,15,'Vital Aura adds 15% max HP');
   assert.strictEqual(P.buff.hpT,30,'for 30s');
   P.buff=P.zeroBuff();
-  for(const [id,power] of [['flameburst',1.6],['thunderclap',1.4]]){
+  for(const [id,power] of [['flameburst',1.45],['thunderclap',1.25]]){
     a=target();const b=near(),c=far();P.cooldowns={};P.mobs=[a,b,c];P.petHit(pet(id),a);
     assert.strictEqual(a.hp,1000-100*power,id+' missed its target');assert.strictEqual(b.hp,1000-100*power,id+' missed a nearby AoE target');assert.strictEqual(c.hp,1000,id+' hit outside the AoE radius');
   }
-  for(const [id,power] of [['piercingfang',2.2],['spiritbolt',2.5]]){
+  for(const [id,power] of [['piercingfang',2],['spiritbolt',2.25]]){
     a=target();const b=near(),c=far();P.cooldowns={};P.mobs=[a,b,c];P.petHit(pet(id),a);
     assert.strictEqual(a.hp,1000-100*power,id+' missed its single target');assert.strictEqual(b.hp,1000,id+' spilled onto a nearby mob');assert.strictEqual(c.hp,1000,id+' spilled onto a distant mob');
+  }
+  // Low-impact utility rolls never hit a mob; they only perform their described comfort action.
+  for(const id of ['treasuresniff','warmnuzzle','guardingchirp','tailwag']){
+    a=target();P.cooldowns={};P.buff=P.zeroBuff();P.mobs=[a];P.petHit(pet(id),a);
+    assert.strictEqual(a.hp,1000,id+' must not deal combat damage');
   }
 });
 
@@ -314,11 +321,11 @@ t('a two-slot pet alternates its skills, and a blocked buff falls back to a real
   const P=makePetHarness(),target=()=>({x:0,z:0,hp:1000});
   const two={id:1,sp:0,mut:0,eq:[0,0,0],skills:['piercingfang','spiritbolt']};
   let a=target();P.mobs=[a];P.cooldowns={};P.buff=P.zeroBuff();P.petHit(two,a);
-  assert.strictEqual(a.hp,750,'the stronger ready skill goes first (Spirit Bolt, 2.5x)');
+  assert.strictEqual(a.hp,775,'the stronger ready skill goes first (Spirit Bolt, 2.25x)');
   // clear only the gate: the other skill must be the one that fires next
   delete P.cooldowns[1];
   P.petHit(two,a);
-  assert.strictEqual(a.hp,750-220,'then Piercing Fang (2.2x), not Spirit Bolt again');
+  assert.strictEqual(a.hp,775-200,'then Piercing Fang (2.0x), not Spirit Bolt again');
   // with both on cooldown the pet swings normally instead of standing still
   delete P.cooldowns[1];
   const before=a.hp;P.petHit(two,a);
@@ -410,18 +417,16 @@ t('every job line has the same number of its own skills', () => {
   console.log('       ' + Object.entries(byTier).map(([t, s]) => 'tier ' + t + ': ' + [...s][0] + ' own skills').join(' | '));
 });
 
-t('a maxed job level can finish its whole tree, with plenty left over', () => {
-  // v37: a skill level costs ONE point, so maxing a 5-level skill costs 5. v36's flat 2 left
-  // only 1-28 points spare and the worst save in the game (a Lord Knight promoted at the
-  // minimum gate who also restarted the Novice) could not finish its tree at all - see the
-  // worst-case test below, which is the rule this price has to satisfy.
+t('a maxed job level fits its data-derived tree without exposed overflow', () => {
+  // Every level costs ONE point. The live purse is capped to the data-derived tree so a maxed
+  // job line can finish all reachable skills without showing a phantom remainder.
   assert.strictEqual([1,2,3,4,5].reduce((a, L) => a + K.skCost(L), 0), 5, 'maxing a skill should cost 5');
   assert.strictEqual(K.skCost(1), 1, 'every level costs the same single point');
   const rows = [];
   for (const [name, c] of Object.entries(K.CLASSES)) {
     const line = []; for (let x = name; x; x = K.CLASSES[x].par) line.unshift(x);
     const reach = K.SKILLS.filter(s => line.includes(s.from));
-    // the ladder's cost, less the one free level of aid every line inherits
+    // the flat per-level cost, less the one free level of First Aid every line inherits
     const need = reach.reduce((a, s) => a + 1 * s.max, 0) - 1;
     const earned = line.reduce((a, n) => a + (K.CLASSES[n].mj - 1), 0);
     rows.push([name, c.tier, need, earned]);
@@ -438,10 +443,9 @@ t('a maxed job level can finish its whole tree, with plenty left over', () => {
 });
 
 t('even the thinnest history in the game can finish its tree', () => {
-  // Every earlier price failed this. Two things shrink a line's point supply: promoting at the
-  // minimum gate (Swordman 40 -> Knight 40, never 50) and restarting the Novice, which clears
-  // the Novice's own job level while its skills stay bought. This is the floor the price has to
-  // clear, and it is computed from the real CLASSES/SKILLS rather than a hand-typed table.
+  // A future class must still fit at the minimum promotion history. Two things shrink a line's
+  // raw point supply: promoting at the minimum gate and restarting the Novice. The allocator
+  // caps the live purse to the derived tree, and this test keeps the tree itself data-driven.
   const lines = { Novice: ['Novice'], '1st job': ['Novice','Swordman'], '2nd job': ['Novice','Swordman','Knight'],
                   'Lord Knight': ['Novice','Swordman','Knight','Lord Knight'] };
   const floor = 0;                       // the Novice restarted: no Novice job levels at all
@@ -456,8 +460,7 @@ t('even the thinnest history in the game can finish its tree', () => {
       : floor + 39 + 39 + 49;
     rows.push([label, tree, earn]);
     assert.ok(tree <= earn, `${label}: tree ${tree} of ${earn} earned on the thinnest history`);
-    // the Novice owns exactly one skill, so its cushion is naturally small; every real job line
-    // has to keep a real margin (30+), which is what the 2-point price failed to do.
+    // The derived one-point tree must fit, with the existing history cushion where available.
     assert.ok(label === 'Novice' ? earn - tree >= 1 : earn - tree >= 30,
       `${label}: only ${earn - tree} points spare - too tight to trust`);
   }
@@ -787,11 +790,9 @@ t('when several tradeoffs are ready, the strongest one wins', () => {
 
 
 // ---- skill points are per class LINE, not one global pile (the overflow bug) -----
-// Point supply: Novice line 9 / tier-1 58 / tier-2 107 / tier-3 156 for a fully levelled line.
-// Tree cost to max everything a line can reach is 15 / 75 / 135 / 195, so no line can max its
-// own tree. The bug was never the supply: the old skpAvail() summed the job levels of EVERY
-// class in S.jobs against one global S.sk, so a second line's points funded the first and the
-// number kept climbing with nothing left to buy.
+// Raw point supply remains Novice 9 / tier-1 58 / tier-2 107 / tier-3 156 for a fully levelled
+// line. The live purse is capped to the reachable flat-cost tree (4 / 24 / 44 / 64), so the
+// old cross-line overflow cannot fund an unrelated branch or leave unusable points behind.
 const lineOf = cls => { const a = []; for (let n = cls; n; n = K.CLASSES[n].par) a.unshift(n); return a };
 const jobRec = (cls, jl) => ({ Novice: { jl: 10 }, [cls]: { jl } });
 function treeCost(cls) {
@@ -802,7 +803,7 @@ function treeCost(cls) {
 t('points are earned from the current line only', () => {
   K.S = { cls: 'Swordman', jobs: { Novice: { jl: 10 }, Swordman: { jl: 50 }, Thief: { jl: 50 }, Mage: { jl: 40 } }, sk: {} };
   assert.strictEqual(K.skLine().join('>'), 'Novice>Swordman');
-  assert.strictEqual(K.skEarned(), 9 + 49, 'only the Novice and Swordman job levels count');
+  assert.strictEqual(K.skEarned(), 24, 'the current line earns only its capped Swordman tree budget');
   // the old code would have returned 9+49+49+39 = 146 here, which is the overflow
   assert.ok(K.skEarned() < 146, 'other lines must not fund this one');
 });
@@ -817,15 +818,21 @@ t('spending on another line does not drain this one', () => {
   assert.strictEqual(K.skpAvail(), before, 'the Swordman pool is untouched');
 });
 
-t('a line can never buy its whole tree', () => {
-  const rows = [];
-  ['Novice', 'Swordman', 'Swordman>Knight'.split('>').pop(), 'Knight', 'Lord Knight', 'Mage', 'Wizard', 'High Wizard', 'Thief', 'Assassin', 'Assassin Cross', 'Archer', 'Hunter', 'Sniper', 'Merchant', 'Blacksmith', 'Whitesmith', 'Acolyte', 'Priest', 'High Priest'].forEach(cls => {
-    // every class in the line capped at Job Lv 50 (the Novice at 10) - the most a line can earn
-    const earn = lineOf(cls).reduce((a, n) => a + (n === 'Novice' ? 9 : 49), 0);
-    rows.push([cls, earn, treeCost(cls) - 1]);   // -1 for the free first point of aid
-  });
-  rows.forEach(([cls, earn, cost]) => assert.ok(cost > earn, cls + ' can max its tree: ' + earn + ' earned vs ' + cost + ' to buy'));
-  console.log('       ' + rows.map(r => r[0] + ' ' + r[1] + 'vs' + r[2]).join(' · '));
+t('a maxed job line reaches its tree and never leaves extra skill points', () => {
+  const classes = ['Novice','Swordman','Knight','Lord Knight','Mage','Wizard','High Wizard','Thief','Assassin','Assassin Cross','Archer','Hunter','Sniper','Merchant','Blacksmith','Whitesmith','Acolyte','Priest','High Priest'];
+  for (const cls of classes) {
+    const jobs={};for (let n=cls;n;n=K.CLASSES[n].par)jobs[n]={jl:n==='Novice'?10:50};
+    K.S={cls,jobs,sk:{aid:1}};
+    assert.strictEqual(K.skEarnedMax(),K.skTree(),cls+' must not mint spare points at max job level');
+    assert.strictEqual(K.skEarned(),K.skTree(),cls+' must expose exactly its payable tree budget');
+  }
+});
+
+t('auto allocation maxes lower class skills before moving up the line', () => {
+  const jobs={Novice:{jl:10},Swordman:{jl:50},Knight:{jl:50},'Lord Knight':{jl:50}};
+  K.S={cls:'Lord Knight',jobs,sk:{aid:1}};
+  const n=K.autoAllocateSkills();assert.ok(n>0,'the button must buy skill levels');assert.strictEqual(K.skpAvail(),0,'a maxed line has no unassigned overflow');
+  for(const from of ['Novice','Swordman','Knight','Lord Knight'])for(const sk of K.SKILLS.filter(x=>x.from===from))assert.strictEqual(K.S.sk[sk.id],sk.max,from+' skill '+sk.id+' was not maxed in order');
 });
 
 t('the ledger matches what the + button charges (no phantom points)', () => {

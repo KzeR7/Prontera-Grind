@@ -44,7 +44,7 @@ let RAW = ${JSON.stringify(JSON.stringify(save))};
 const lsGet = () => RAW;
 const saveKey = () => 'k';
 const newQuest = () => ({type:'kill', goal:1, prog:0, z:0, xp:0});
-this.__l = {loadRaw, setRaw: v => { RAW = JSON.stringify(v) }, setState:v=>{S=v}, getState:()=>S, emptyCardIndex, recordMonsterKill, donateCardToMastery, allocateCardMastery, cardMasteryEarned, cardMasteryAvailable, cardMasteryStat};
+this.__l = {loadRaw, setRaw: v => { RAW = JSON.stringify(v) }, setState:v=>{S=v}, getState:()=>S, emptyCardIndex, recordMonsterKill, donateCardToMastery, allocateCardMastery, assignCardMasteryReward, cardMasteryTotal, cardMasteryEarned, cardMasteryAvailable, cardMasteryStat, indexXpForCount, INDEX_MOB_MILESTONES, INDEX_MILESTONE_XP, INDEX_TITLES, CARD_NAMES, CARD_REWARD_CAPS, CARD_REWARD_POINT_CAP};
 `;
 const sb = { console };
 vm.createContext(sb); vm.runInContext(harness, sb);
@@ -143,7 +143,7 @@ t('legacy saves default the monster ledger, card album, and equipped title safel
 });
 
 t('mastery records, title unlocks, and bounded permanent stats survive load repair',()=>{
-  const mastered={...save,kills:500,equippedTitle:'field-scout',mobKills:{'0:Poring':4.9,'0:Mastering':1,'999:Missing':77},
+  const mastered={...save,kills:500,indexXp:1000,equippedTitle:'field-scout',mobKills:{'0:Poring':4.9,'0:Mastering':1,'999:Missing':77},
     cardIndex:{donated:10,byName:{'Poring Card':3,'Unused Card':0},stats:{str:1,vit:3,luk:-4,other:9}}};
   const box={};vm.createContext(box);
   vm.runInContext(harness.replace(/const lsGet = \(\) => .*?;/,'const lsGet = () => '+JSON.stringify(JSON.stringify(mastered))+';'),box);
@@ -152,11 +152,45 @@ t('mastery records, title unlocks, and bounded permanent stats survive load repa
   assert.deepStrictEqual(JSON.parse(JSON.stringify(repaired.mobKills)),{'0:Poring':4,'0:Mastering':1});
   assert.strictEqual(repaired.cardIndex.donated,10);
   assert.deepStrictEqual(JSON.parse(JSON.stringify(repaired.cardIndex.byName)),{'Poring Card':3});
-  assert.strictEqual(repaired.cardIndex.stats.str,1);
-  assert.strictEqual(repaired.cardIndex.stats.vit,1,'unearned excess permanent points must be trimmed to the 2 earned');
-  assert.strictEqual(repaired.cardIndex.stats.luk,0);
+  assert.strictEqual(repaired.cardIndex.stats.str,0);
+  assert.strictEqual(repaired.cardIndex.stats.vit,0,'legacy global stats are migrated into per-card rewards');
+  assert.strictEqual(repaired.cardIndex.stats.luk,0);assert.deepStrictEqual(JSON.parse(JSON.stringify(repaired.cardIndex.rewards['Poring Card'])),['str','vit','vit']);
   assert.strictEqual(repaired.cardIndex.stats.other,undefined);
-  assert.strictEqual(Object.values(repaired.cardIndex.stats).reduce((a,n)=>a+n,0),2);
+  assert.strictEqual(Object.values(repaired.cardIndex.stats).reduce((a,n)=>a+n,0),0);assert.strictEqual(repaired.cardIndex.mastery['Poring Card'],3);
+});
+
+t('the slower individual-mob ladder and 20-day title endpoint are data-driven',()=>{
+  const U=sb.__l;
+  assert.strictEqual(JSON.stringify(Array.from(U.INDEX_MOB_MILESTONES)),JSON.stringify([100,1000,5000,25000,100000,500000,1000000,5000000]));
+  assert.strictEqual(U.indexXpForCount(99),99,'the first title rung stays accessible but does not arrive early');
+  assert.strictEqual(U.indexXpForCount(100),105,'the first 100-kill milestone adds only a modest bonus');
+  assert.strictEqual(U.indexXpForCount(1000),1015,'the second milestone is at 1,000, not 5');
+  assert.strictEqual(U.indexXpForCount(4320000)-4320000,345,'milestone bonuses do not materially move the modeled endpoint');
+  assert.strictEqual(U.INDEX_TITLES.at(-1).xp,4320000,'the final title is set to 4.32m Index XP');
+});
+
+t('malformed card rewards are repaired to global caps, not only per-card limits',()=>{
+  const names=['Poring Card','Fabre Card','Lunatic Card','Drops Card','Chonchon Card','Willow Card'];
+  const cardIndex={donated:30,byName:Object.fromEntries(names.map(n=>[n,5])),mastery:Object.fromEntries(names.map(n=>[n,5])),
+    rewards:Object.fromEntries(names.map(n=>[n,Array(5).fill('str')])),stats:{str:5,agi:0,dex:0,int:0,vit:0,luk:0}};
+  const raw={...save,indexXp:1000,cardIndex};const box={};vm.createContext(box);
+  vm.runInContext(harness.replace(/const lsGet = \(\) => .*?;/,'const lsGet = () => '+JSON.stringify(JSON.stringify(raw))+';'),box);
+  const repaired=box.__l.loadRaw(),rewards=Object.values(repaired.cardIndex.rewards).flat();
+  assert.strictEqual(rewards.filter(x=>x==='str').length,25,'the +25 STR cap survives a six-card overflow');
+  assert.ok(Object.values(repaired.cardIndex.rewards).every(a=>a.length<=5),'each card still has at most five ranks');
+});
+
+t('a full card album has exactly the current reward budget, with no surplus points',()=>{
+  const U=sb.__l,names=Array.from(U.CARD_NAMES),state={cardIndex:U.emptyCardIndex(),cards:[]};
+  for(const name of names){state.cardIndex.byName[name]=5;state.cardIndex.mastery[name]=5}
+  let slot=0;for(const [id,cap] of Object.entries(U.CARD_REWARD_CAPS))for(let i=0;i<cap;i++,slot++){
+    const name=names[Math.floor(slot/5)];(state.cardIndex.rewards[name]||(state.cardIndex.rewards[name]=[])).push(id);
+  }
+  U.setState(state);
+  assert.strictEqual(U.cardMasteryTotal(),450,'five ranks across all 90 cards');
+  assert.strictEqual(U.cardMasteryEarned(),U.CARD_REWARD_POINT_CAP,'earned points stop at the sum of active reward caps');
+  assert.strictEqual(U.cardMasteryAvailable(),0,'maxing the current reward caps leaves no extra point');
+  assert.strictEqual(U.CARD_REWARD_POINT_CAP,243,'the requested current caps total 243 assignable points');
 });
 
 t('kills and card dedication earn permanent mastery points and persist through reload',()=>{
@@ -168,10 +202,10 @@ t('kills and card dedication earn permanent mastery points and persist through r
   assert.strictEqual(state.mobKills['0:Poring'],2);assert.strictEqual(state.mobKills['0:Mastering'],1);
   assert.strictEqual(state.cards.length,0);assert.strictEqual(state.cardIndex.donated,5);
   assert.strictEqual(state.cardIndex.byName['Poring Card'],2);assert.strictEqual(state.cardIndex.byName['Fabre Card'],3);
-  assert.strictEqual(U.cardMasteryEarned(),1);assert.strictEqual(U.cardMasteryAvailable(),1);
+  assert.strictEqual(U.cardMasteryEarned(),5);assert.strictEqual(U.cardMasteryAvailable(),5);assert.deepStrictEqual(JSON.parse(JSON.stringify(state.cardIndex.mastery)),{'Poring Card':2,'Fabre Card':3});
   assert.strictEqual(U.allocateCardMastery('str'),true);assert.strictEqual(U.cardMasteryStat('str'),1);
   U.setRaw(state);const round=U.loadRaw();
-  assert.strictEqual(round.cardIndex.donated,5);assert.strictEqual(round.cardIndex.stats.str,1);
+  assert.strictEqual(round.cardIndex.donated,5);assert.deepStrictEqual(JSON.parse(JSON.stringify(round.cardIndex.rewards)),{'Poring Card':['str']});
   assert.strictEqual(round.mobKills['0:Poring'],2);assert.strictEqual(round.mobKills['0:Mastering'],1);
 });
 
