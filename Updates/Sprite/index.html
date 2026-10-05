@@ -1,0 +1,2365 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark">
+<title>Sprite Movement Preview — Prontera Grind</title>
+<style>
+:root{
+  --bg:#10151b;--surface:#171f28;--surface-raised:#1d2832;--surface-soft:#222f3a;
+  --line:#334451;--ink:#eff4f6;--muted:#9aabb4;--gold:#f3c86b;--cyan:#79d6dc;
+  --green:#a7d69b;--red:#f39a8c;--shadow:0 16px 44px #0004;
+}
+*{box-sizing:border-box}
+html{min-width:320px;background:var(--bg)}
+body{margin:0;background:radial-gradient(ellipse at 70% -5%,#263b42 0,transparent 42%),var(--bg);
+  color:var(--ink);font:14px/1.48 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+button,select,textarea{font:inherit;color:inherit}
+button,select{border:1px solid var(--line);background:#202b35;border-radius:9px}
+button{cursor:pointer;transition:border-color .16s,background .16s,transform .16s}
+button:hover{border-color:var(--cyan);background:#293843}
+button:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+button:active{transform:translateY(1px)}
+code{font:11px/1.5 ui-monospace,SFMono-Regular,Consolas,monospace;color:#c3e4dc;overflow-wrap:anywhere}
+.shell{max-width:1440px;margin:0 auto;padding:24px clamp(14px,3vw,42px) 34px}
+.topbar{display:flex;align-items:flex-start;justify-content:space-between;gap:18px;margin-bottom:20px}
+.brand{display:flex;align-items:flex-start;gap:14px}
+.brand-mark{width:44px;height:44px;display:grid;place-items:center;flex:none;border-radius:13px;
+  border:1px solid #d8b45a66;background:linear-gradient(145deg,#5c4720,#27332e 75%);
+  color:var(--gold);font-size:13px;font-weight:850;letter-spacing:.09em;box-shadow:inset 0 1px #fff2}
+.eyebrow{text-transform:uppercase;letter-spacing:.16em;font-size:10px;font-weight:800;color:var(--cyan);margin:1px 0 3px}
+h1{font-size:clamp(23px,3vw,34px);letter-spacing:-.035em;line-height:1.15;margin:0}
+.lede{color:var(--muted);margin:7px 0 0;max-width:790px;font-size:13px}
+.summary-pills{display:flex;gap:7px;flex-wrap:wrap;justify-content:flex-end}
+.pill{border:1px solid var(--line);border-radius:999px;padding:5px 10px;color:var(--muted);background:#151e26;font-size:11px;white-space:nowrap}
+.pill strong{color:var(--ink);font-weight:700}
+.layout{display:grid;grid-template-columns:minmax(265px,335px) minmax(0,1fr);gap:16px;align-items:start}
+.rail,.maincol{display:grid;gap:14px;min-width:0}
+.panel{border:1px solid var(--line);border-radius:15px;background:linear-gradient(150deg,#1b252e,#151d25 70%);box-shadow:var(--shadow)}
+.panel-pad{padding:17px}
+.section-kicker{color:var(--cyan);font-size:10px;text-transform:uppercase;letter-spacing:.15em;font-weight:800;margin:0 0 5px}
+h2{font-size:17px;line-height:1.2;letter-spacing:-.015em;margin:0}
+h3{font-size:13px;line-height:1.25;margin:0}
+.helper{font-size:11px;color:var(--muted);margin:7px 0 0}
+.form-stack{display:grid;gap:13px;margin-top:15px}
+.field{display:grid;gap:6px}
+.field label,.field-label{font-size:11px;font-weight:700;color:#c6d2d8}
+select{width:100%;padding:10px 34px 10px 11px;min-height:40px;cursor:pointer}
+.gender-switch,.toggle-row{display:flex;gap:6px}
+.gender-switch button,.toggle-row button{flex:1;min-height:36px;padding:7px 10px;color:var(--muted);font-size:12px}
+.gender-switch button.selected,.toggle-row button.selected{color:#181d20;background:var(--gold);border-color:var(--gold);font-weight:800}
+.tree-caption{border-top:1px solid #ffffff12;padding-top:11px;margin-top:13px;color:var(--muted);font-size:11px}
+.tree-caption strong{color:var(--ink)}
+.coverage{padding:13px;border-radius:11px;background:#101820;border:1px solid #293943;margin-top:15px}
+.coverage-top{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.coverage-top strong{font-size:12px}
+.coverage-count{font:700 11px ui-monospace,SFMono-Regular,Consolas,monospace;color:var(--green)}
+.coverage ul{list-style:none;margin:8px 0 0;padding:0;display:grid;gap:5px}
+.coverage li{display:flex;align-items:flex-start;gap:7px;color:var(--muted);font-size:10px}
+.coverage li:before{content:'✓';color:var(--green);font-weight:900}
+.coverage li.missing:before{content:'!';color:var(--red)}
+.coverage li.fallback:before{content:'↳';color:var(--gold)}
+.coverage .muted{color:var(--muted)}
+.control-panel{padding:17px}
+.control-head{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:13px}
+.keyhint{font-size:10px;color:var(--muted);text-align:right;max-width:135px}
+.dpad{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;max-width:286px;margin:0 auto}
+.dpad-spacer{visibility:hidden}
+.dir-btn{min-height:69px;padding:7px 5px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;text-align:center}
+.dir-btn .arrow{font-size:19px;line-height:1.15;color:var(--gold)}
+.dir-btn b{font-size:10px;line-height:1.2}
+.dir-btn small{font-size:9px;color:var(--muted);line-height:1.15}
+.attack-block{border-top:1px solid #ffffff13;margin-top:15px;padding-top:13px}
+.attack-row{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;margin-top:8px}
+.attack-btn{min-height:40px;padding:7px 9px;font-size:11px;font-weight:750;color:#ffdb9c;border-color:#745e37;background:#30291e}
+.attack-btn:hover{border-color:var(--gold);background:#3c3220}
+.utility-row{display:flex;gap:7px;margin-top:12px}
+.utility-row button{flex:1;padding:8px 10px;font-size:11px;font-weight:700}
+.utility-row .demo-btn{color:#142024;background:var(--cyan);border-color:var(--cyan)}
+.utility-row .demo-btn:hover{background:#9aebed}
+.control-note{font-size:10px;color:var(--muted);margin:11px 1px 0}
+.control-note kbd{font:10px ui-monospace,monospace;color:#e2e9eb;border:1px solid #576771;border-bottom-width:2px;border-radius:4px;padding:1px 4px;background:#202b35}
+.stage-panel{overflow:hidden}
+.stage-top{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:15px 17px 12px}
+.stage-name{display:flex;align-items:center;gap:9px;min-width:0}
+.live-dot{width:9px;height:9px;border-radius:50%;background:var(--green);box-shadow:0 0 12px #a7d69b88;flex:none}
+.stage-name h2{font-size:15px}
+.stage-name p{margin:3px 0 0;color:var(--muted);font-size:10px}
+.stage-actions{display:flex;align-items:center;gap:7px;flex:none}
+.stage-actions select{width:auto;min-height:34px;padding:6px 25px 6px 9px;font-size:11px}
+.stage-actions button{padding:7px 9px;font-size:10px;color:var(--muted)}
+.world{height:clamp(340px,44vw,490px);position:relative;overflow:hidden;isolation:isolate;
+  border-top:1px solid #ffffff10;border-bottom:1px solid #ffffff10;
+  background-color:#25342e;
+  background-image:
+    radial-gradient(ellipse at 50% 76%,#75845722 0,transparent 55%),
+    linear-gradient(0deg,#111a1a22 0%,transparent 58%),
+    repeating-linear-gradient(135deg,transparent 0 47px,#d4e0c10c 48px 49px,transparent 50px 96px),
+    repeating-linear-gradient(45deg,transparent 0 47px,#0b15150d 48px 49px,transparent 50px 96px),
+    linear-gradient(180deg,#344642,#2b3a32 48%,#354233);
+}
+.world:before{content:'';position:absolute;inset:0;z-index:-1;background:radial-gradient(ellipse at 50% 48%,transparent 20%,#0a111188 100%)}
+.world-grid{position:absolute;inset:0;pointer-events:none;opacity:.62;background:
+  linear-gradient(90deg,transparent calc(50% - 1px),#c8d7bb2a 50%,transparent calc(50% + 1px)),
+  linear-gradient(0deg,transparent calc(50% - 1px),#c8d7bb1c 50%,transparent calc(50% + 1px))}
+.world-label{position:absolute;z-index:1;top:13px;left:15px;color:#eef5df99;font-size:9px;letter-spacing:.16em;text-transform:uppercase}
+.world-label.bottom{top:auto;bottom:12px;left:auto;right:14px;text-align:right}
+.ground-line{position:absolute;left:9%;right:9%;top:76%;height:1px;border-top:1px dashed #dce6c34f}
+.ground-marker{position:absolute;top:calc(76% - 4px);left:50%;width:8px;height:8px;border:1px solid #f3c86b99;border-radius:50%;transform:translateX(-50%);background:#f3c86b22}
+.hero-anchor{position:absolute;left:50%;top:52%;width:clamp(270px,33vw,380px);height:clamp(270px,33vw,380px);
+  transform:translate(-50%,-50%);display:grid;place-items:center;transition:left .32s ease,top .32s ease;z-index:2}
+.hero-img{width:100%;height:100%;display:block;object-fit:contain;image-rendering:pixelated;filter:drop-shadow(0 12px 8px #10120c66)}
+.hero-img.mirror{transform:scaleX(-1)}
+#heroImage[hidden],#emptyHero[hidden]{display:none}
+.empty-hero{width:228px;max-width:75%;padding:17px;border:1px dashed #f39a8c88;border-radius:12px;background:#111a1de8;text-align:center;color:#f4b2a8;font-size:12px;box-shadow:0 8px 24px #0004}
+.empty-hero strong{display:block;font-size:14px;margin-bottom:5px}
+.world-status{position:absolute;z-index:3;left:50%;bottom:13px;transform:translateX(-50%);max-width:calc(100% - 28px);padding:6px 10px;
+  border:1px solid #d2e1c533;border-radius:999px;background:#111b1bd9;color:#ebf3e5;font-size:10px;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.stage-footer{padding:11px 17px 14px;display:flex;justify-content:space-between;align-items:center;gap:12px}
+.source-line{color:var(--muted);font-size:10px;min-width:0}
+.source-line code{display:block;margin-top:3px}
+.source-badge{border:1px solid #53736b;border-radius:999px;padding:4px 8px;background:#19302e;color:#b6e6c8;font-size:9px;white-space:nowrap}
+.source-badge.mirrored{border-color:#78633b;background:#332c1e;color:#f5d89a}
+.pose-panel,.notes-panel{margin-top:16px;padding:17px}
+.panel-heading{display:flex;justify-content:space-between;align-items:flex-end;gap:14px;margin-bottom:12px}
+.panel-heading p{margin:4px 0 0;color:var(--muted);font-size:11px}
+.pose-grid{display:grid;grid-template-columns:repeat(7,minmax(116px,1fr));gap:9px}
+.pose-card{min-width:0;padding:8px;border:1px solid var(--line);border-radius:11px;background:#111a21;text-align:left;color:var(--ink)}
+.pose-card:hover{transform:translateY(-2px)}
+.pose-card.active{border-color:var(--gold);box-shadow:0 0 0 1px #f3c86b33}
+.pose-card.missing{border-style:dashed;opacity:.76}
+.pose-card-head{display:flex;justify-content:space-between;gap:5px;align-items:center}
+.pose-card-head b{font-size:10px}
+.pose-tag{font-size:8px;text-transform:uppercase;letter-spacing:.08em;color:var(--cyan)}
+.pose-tag.mirror{color:var(--gold)}
+.thumb{height:115px;margin:7px 0 5px;display:grid;place-items:center;overflow:hidden;border-radius:7px;
+  background-color:#28333b;background-image:linear-gradient(45deg,#34414a 25%,transparent 25%),linear-gradient(-45deg,#34414a 25%,transparent 25%),linear-gradient(45deg,transparent 75%,#34414a 75%),linear-gradient(-45deg,transparent 75%,#34414a 75%);background-size:16px 16px;background-position:0 0,0 8px,8px -8px,-8px 0}
+.thumb img{width:115px;height:115px;object-fit:contain;image-rendering:pixelated}
+.thumb img.mirror{transform:scaleX(-1)}
+.thumb .missing-text{padding:8px;color:#f2a79b;text-align:center;font-size:9px}
+.pose-file{display:block;min-height:30px;color:var(--muted);font:9px/1.35 ui-monospace,SFMono-Regular,Consolas,monospace;overflow-wrap:anywhere}
+.notes-layout{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:end}
+.notes-copy{min-width:0}
+.notes-copy label{display:block;margin-bottom:6px;font-size:11px;font-weight:750}
+textarea{width:100%;min-height:82px;resize:vertical;padding:10px 11px;border:1px solid var(--line);border-radius:9px;background:#101820;color:var(--ink);font-size:12px}
+textarea::placeholder{color:#71838e}
+.note-actions{display:flex;flex-direction:column;gap:7px}
+.note-actions button{padding:8px 10px;font-size:10px;font-weight:700;white-space:nowrap}
+.note-save{color:var(--muted);font-size:10px;margin-top:5px;min-height:14px}
+.footnote{border-top:1px solid #ffffff10;margin-top:17px;padding-top:13px;color:var(--muted);font-size:10px}
+.footnote strong{color:#d4e1dd}
+@media(max-width:1080px){.pose-grid{grid-template-columns:repeat(4,minmax(120px,1fr))}}
+@media(max-width:820px){.layout{grid-template-columns:1fr}.rail{grid-template-columns:repeat(2,minmax(0,1fr));align-items:start}.summary-pills{display:none}.world{height:390px}}
+@media(max-width:620px){.shell{padding:16px 12px 26px}.topbar{margin-bottom:14px}.brand-mark{width:38px;height:38px}.rail{grid-template-columns:1fr}.layout{gap:12px}.panel-pad,.control-panel,.pose-panel,.notes-panel{padding:13px}.pose-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.world{height:350px}.hero-anchor{width:280px;height:280px}.stage-top{padding:12px}.stage-footer{align-items:flex-start;padding:10px 12px}.world-status{font-size:9px}.notes-layout{grid-template-columns:1fr}.note-actions{flex-direction:row}.note-actions button{flex:1}.panel-heading{align-items:flex-start;flex-direction:column}.stage-actions{gap:4px}.stage-actions button{font-size:9px}}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div class="shell">
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-mark" aria-hidden="true">PG</div>
+      <div>
+        <p class="eyebrow">Prontera Grind · art review</p>
+        <h1>Sprite movement preview</h1>
+        <p class="lede">Try the seven class trees and both genders. The movement directions below use your requested S / SE / SW / NE / NW views; SW and NW are horizontal mirrors of the supplied SE and NE art.</p>
+      </div>
+    </div>
+    <div class="summary-pills" aria-label="Sprite collection summary">
+      <span class="pill" id="assetSummary">Loading sprite list…</span>
+      <span class="pill">Local preview <strong>· no game edits</strong></span>
+    </div>
+  </header>
+
+  <div class="layout">
+    <aside class="rail" aria-label="Sprite selection and controls">
+      <section class="panel panel-pad">
+        <p class="section-kicker">Character</p>
+        <h2>Choose a class</h2>
+        <div class="form-stack">
+          <div class="field">
+            <label for="treeSelect">Class tree / folder</label>
+            <select id="treeSelect"></select>
+          </div>
+          <div class="field">
+            <label for="jobSelect">Class / job</label>
+            <select id="jobSelect"></select>
+          </div>
+          <div class="field">
+            <span class="field-label">Gender</span>
+            <div class="gender-switch" role="group" aria-label="Choose sprite gender">
+              <button type="button" data-gender="male" class="selected" aria-pressed="true">Male</button>
+              <button type="button" data-gender="female" aria-pressed="false">Female</button>
+            </div>
+          </div>
+        </div>
+        <div class="tree-caption" id="treeCaption"></div>
+        <div class="coverage" aria-live="polite">
+          <div class="coverage-top"><strong>Source pose coverage</strong><span class="coverage-count" id="coverageCount"></span></div>
+          <ul id="coverageList"></ul>
+        </div>
+      </section>
+
+      <section class="panel control-panel">
+        <div class="control-head">
+          <div><p class="section-kicker">Test movement</p><h2>Direction pad</h2></div>
+          <div class="keyhint">Hold a direction<br>or use arrow keys</div>
+        </div>
+        <div class="dpad" role="group" aria-label="Walk in the selected direction">
+          <button class="dir-btn" type="button" data-move="NW" aria-label="Walk up-left, NW view"><span class="arrow">↖</span><b>Walk up-left</b><small>NW view · mirrored</small></button>
+          <span class="dpad-spacer" aria-hidden="true"></span>
+          <button class="dir-btn" type="button" data-move="NE" aria-label="Walk up-right, NE view"><span class="arrow">↗</span><b>Walk up-right</b><small>NE view</small></button>
+          <span class="dpad-spacer" aria-hidden="true"></span>
+          <span class="dpad-spacer" aria-hidden="true"></span>
+          <span class="dpad-spacer" aria-hidden="true"></span>
+          <button class="dir-btn" type="button" data-move="SW" aria-label="Walk down-left, SW view"><span class="arrow">↙</span><b>Walk down-left</b><small>SW view · mirrored</small></button>
+          <button class="dir-btn" type="button" data-move="S" aria-label="Walk straight down, S view"><span class="arrow">↓</span><b>Walk straight down</b><small>S view</small></button>
+          <button class="dir-btn" type="button" data-move="SE" aria-label="Walk down-right, SE view"><span class="arrow">↘</span><b>Walk down-right</b><small>SE view</small></button>
+        </div>
+        <p class="control-note"><kbd>↑</kbd> NE / <kbd>←</kbd> SW / <kbd>↓</kbd> S / <kbd>→</kbd> SE</p>
+        <div class="attack-block">
+          <div class="field-label">Attack facing</div>
+          <div class="attack-row">
+            <button class="attack-btn" type="button" data-pose="attackSE">⚔ Attack SE</button>
+            <button class="attack-btn" type="button" data-pose="attackSW">⚔ Attack SW · mirror</button>
+          </div>
+        </div>
+        <div class="utility-row">
+          <button type="button" id="demoButton" class="demo-btn">▶ Run direction check</button>
+          <button type="button" id="resetButton">Reset position</button>
+        </div>
+        <p class="control-note">Arrow keys move through the requested views. Press <kbd>Space</kbd> to show the SE attack pose; hold a direction button to keep stepping.</p>
+      </section>
+    </aside>
+
+    <main class="maincol">
+      <section class="panel stage-panel" aria-label="Live sprite preview">
+        <div class="stage-top">
+          <div class="stage-name">
+            <span class="live-dot" aria-hidden="true"></span>
+            <div><h2 id="currentCharacter">Novice · Male</h2><p id="currentPose">Walk straight down · S view</p></div>
+          </div>
+          <div class="stage-actions">
+            <button type="button" id="centerButton">Center sprite</button>
+          </div>
+        </div>
+        <div class="world" id="world" aria-label="Movement test field">
+          <div class="world-grid" aria-hidden="true"></div>
+          <span class="world-label">Movement field · transparent PNG preview</span>
+          <span class="world-label bottom">Down · S</span>
+          <div class="ground-line" aria-hidden="true"></div>
+          <div class="ground-marker" aria-hidden="true"></div>
+          <div class="hero-anchor" id="heroAnchor" style="left:50%;top:52%">
+            <img class="hero-img" id="heroImage" alt="" hidden>
+            <div class="empty-hero" id="emptyHero" hidden></div>
+          </div>
+          <div class="world-status" id="worldStatus" aria-live="polite"></div>
+        </div>
+        <div class="stage-footer">
+          <div class="source-line" id="sourceLine"></div>
+          <span class="source-badge" id="sourceBadge"></span>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <section class="panel pose-panel" aria-label="Available views and mirrored views">
+    <div class="panel-heading">
+      <div><p class="section-kicker">Pose gallery</p><h2>Walk and attack views</h2><p>Select any card to show it on the field. Mirrored views reuse the original PNG.</p></div>
+      <span class="pill">Requested views: NE / NW · S · SE / SW · attack SE / SW</span>
+    </div>
+    <div class="pose-grid" id="poseGrid"></div>
+  </section>
+
+  <section class="panel notes-panel" aria-label="Review notes">
+    <div class="panel-heading">
+      <div><p class="section-kicker">Owner feedback</p><h2>Review notes</h2><p>Notes stay in this browser only. Copy them to send feedback; nothing is uploaded.</p></div>
+    </div>
+    <div class="notes-layout">
+      <div class="notes-copy">
+        <label for="reviewNote" id="noteLabel">Notes for Novice · Male</label>
+        <textarea id="reviewNote" placeholder="Example: NE walking pose looks good; SW mirror needs checking…"></textarea>
+        <div class="note-save" id="noteSave" aria-live="polite">Saved locally in this browser.</div>
+      </div>
+      <div class="note-actions">
+        <button type="button" id="copyNoteButton">Copy review note</button>
+        <button type="button" id="downloadNotesButton">Download notes</button>
+        <button type="button" id="clearNoteButton">Clear this note</button>
+      </div>
+    </div>
+  </section>
+
+  <footer class="footnote"><strong>Important:</strong> each source PNG is a single 200×200 transparent pose, not a multi-frame animation sheet. This page moves the existing pose image around the field and changes poses for review; it does not create or alter sprite art. All seven folders and source PNGs remain untouched.</footer>
+</div>
+
+<script id="sprite-config" type="application/json">[
+  {
+    "name": "Novice",
+    "classes": [
+      {
+        "id": "novice",
+        "label": "Novice"
+      }
+    ]
+  },
+  {
+    "name": "Thief",
+    "classes": [
+      {
+        "id": "thief",
+        "label": "Thief"
+      },
+      {
+        "id": "assassin",
+        "label": "Assassin"
+      },
+      {
+        "id": "assassincross",
+        "label": "Assassin Cross"
+      }
+    ]
+  },
+  {
+    "name": "Merchant",
+    "classes": [
+      {
+        "id": "merchant",
+        "label": "Merchant"
+      },
+      {
+        "id": "blacksmith",
+        "label": "Blacksmith"
+      },
+      {
+        "id": "whitesmith",
+        "label": "Whitesmith"
+      }
+    ]
+  },
+  {
+    "name": "Mage",
+    "classes": [
+      {
+        "id": "mage",
+        "label": "Mage"
+      },
+      {
+        "id": "wizard",
+        "label": "Wizard"
+      },
+      {
+        "id": "highwizard",
+        "label": "High Wizard"
+      }
+    ]
+  },
+  {
+    "name": "Archer",
+    "classes": [
+      {
+        "id": "archer",
+        "label": "Archer"
+      },
+      {
+        "id": "hunter",
+        "label": "Hunter"
+      },
+      {
+        "id": "sniper",
+        "label": "Sniper"
+      }
+    ]
+  },
+  {
+    "name": "Acolyte",
+    "classes": [
+      {
+        "id": "aco",
+        "label": "Acolyte"
+      },
+      {
+        "id": "priest",
+        "label": "Priest"
+      },
+      {
+        "id": "highpriest",
+        "label": "High Priest"
+      }
+    ]
+  },
+  {
+    "name": "Swordman",
+    "classes": [
+      {
+        "id": "swordman",
+        "label": "Swordman"
+      },
+      {
+        "id": "knight",
+        "label": "Knight"
+      },
+      {
+        "id": "lordknight",
+        "label": "Lord Knight"
+      }
+    ]
+  }
+]</script>
+<script id="sprite-manifest" type="application/json">[
+  {
+    "tree": "Novice",
+    "job": "novice",
+    "gender": "male",
+    "action": "walk",
+    "direction": "NE",
+    "originalPose": "walking NE",
+    "fileName": "novice male walking NE.png",
+    "path": "Novice/novice male walking NE.png"
+  },
+  {
+    "tree": "Novice",
+    "job": "novice",
+    "gender": "male",
+    "action": "walk",
+    "direction": "S",
+    "originalPose": "walking S",
+    "fileName": "novice male walking S.png",
+    "path": "Novice/novice male walking S.png"
+  },
+  {
+    "tree": "Novice",
+    "job": "novice",
+    "gender": "male",
+    "action": "walk",
+    "direction": "SE",
+    "originalPose": "walking SE",
+    "fileName": "novice male walking SE.png",
+    "path": "Novice/novice male walking SE.png"
+  },
+  {
+    "tree": "Novice",
+    "job": "novice",
+    "gender": "male",
+    "action": "attack",
+    "direction": "SE",
+    "originalPose": "attacking SE",
+    "fileName": "novice male attacking SE.png",
+    "path": "Novice/novice male attacking SE.png"
+  },
+  {
+    "tree": "Novice",
+    "job": "novice",
+    "gender": "female",
+    "action": "walk",
+    "direction": "NE",
+    "originalPose": "walking NE",
+    "fileName": "novice female walking NE.png",
+    "path": "Novice/novice female walking NE.png"
+  },
+  {
+    "tree": "Novice",
+    "job": "novice",
+    "gender": "female",
+    "action": "walk",
+    "direction": "S",
+    "originalPose": "walking S",
+    "fileName": "novice female walking S.png",
+    "path": "Novice/novice female walking S.png"
+  },
+  {
+    "tree": "Novice",
+    "job": "novice",
+    "gender": "female",
+    "action": "walk",
+    "direction": "SE",
+    "originalPose": "walking SE",
+    "fileName": "novice female walking SE.png",
+    "path": "Novice/novice female walking SE.png"
+  },
+  {
+    "tree": "Novice",
+    "job": "novice",
+    "gender": "female",
+    "action": "attack",
+    "direction": "SE",
+    "originalPose": "attacking SE",
+    "fileName": "novice female attacking SE.png",
+    "path": "Novice/novice female attacking SE.png"
+  },
+  {
+    "tree": "Thief",
+    "job": "thief",
+    "gender": "male",
+    "action": "walk",
+    "direction": "NE",
+    "originalPose": "walking NE",
+    "fileName": "thief male walking NE.png",
+    "path": "Thief/thief male walking NE.png"
+  },
+  {
+    "tree": "Thief",
+    "job": "thief",
+    "gender": "male",
+    "action": "walk",
+    "direction": "S",
+    "originalPose": "walking S",
+    "fileName": "thief male walking S.png",
+    "path": "Thief/thief male walking S.png"
+  },
+  {
+    "tree": "Thief",
+    "job": "thief",
+    "gender": "male",
+    "action": "walk",
+    "direction": "SE",
+    "originalPose": "walking SE",
+    "fileName": "thief male walking SE.png",
+    "path": "Thief/thief male walking SE.png"
+  },
+  {
+    "tree": "Thief",
+    "job": "thief",
+    "gender": "male",
+    "action": "attack",
+    "direction": "SE",
+    "originalPose": "attack SE",
+    "fileName": "thief male attack SE.png",
+    "path": "Thief/thief male attack SE.png"
+  },
+  {
+    "tree": "Thief",
+    "job": "thief",
+    "gender": "female",
+    "action": "walk",
+    "direction": "NE",
+    "originalPose": "walking NE",
+    "fileName": "thief female walking NE.png",
+    "path": "Thief/thief female walking NE.png"
+  },
+  {
+    "tree": "Thief",
+    "job": "thief",
+    "gender": "female",
+    "action": "walk",
+    "direction": "S",
+    "originalPose": "walking S",
+    "fileName": "thief female walking S.png",
+    "path": "Thief/thief female walking S.png"
+  },
+  {
+    "tree": "Thief",
+    "job": "thief",
+    "gender": "female",
+    "action": "walk",
+    "direction": "SE",
+    "originalPose": "walking SE",
+    "fileName": "thief female walking SE.png",
+    "path": "Thief/thief female walking SE.png"
+  },
+  {
+    "tree": "Thief",
+    "job": "thief",
+    "gender": "female",
+    "action": "attack",
+    "direction": "SE",
+    "originalPose": "attack SE",
+    "fileName": "thief female attack SE.png",
+    "path": "Thief/thief female attack SE.png"
+  },
+  {
+    "tree": "Thief",
+    "job": "assassin",
+    "gender": "male",
+    "action": "walk",
+    "direction": "NE",
+    "originalPose": "walking NE",
+    "fileName": "assassin male walking NE.png",
+    "path": "Thief/assassin male walking NE.png"
+  },
+  {
+    "tree": "Thief",
+    "job": "assassin",
+    "gender": "male",
+    "action": "walk",
+    "direction": "S",
+    "originalPose": "walking S",
+    "fileName": "assassin male walking S.png",
+    "path": "Thief/assassin male walking S.png"
+  },
+  {
+    "tree": "Thief",
+    "job": "assassin",
+    "gender": "male",
+    "action": "walk",
+    "direction": "SE",
+    "originalPose": "walking SE",
+    "fileName": "assassin male walking SE.png",
+    "path": "Thief/assassin male walking SE.png"
+  },
+  {
+    "tree": "Thief",
+    "job": "assassin",
+    "gender": "male",
+    "action": "attack",
+    "direction": "SE",
+    "originalPose": "attack SE",
+    "fileName": "assassin male attack SE.png",
+    "path": "Thief/assassin male attack SE.png"
+  },
+  {
+    "tree": "Thief",
+    "job": "assassin",
+    "gender": "female",
+    "action": "walk",
+    "direction": "NE",
+    "originalPose": "walking NE",
+    "fileName": "assassin female walking NE.png",
+    "path": "Thief/assassin female walking NE.png"
+  },
+  {
+    "tree": "Thief",
+    "job": "assassin",
+    "gender": "female",
+    "action": "walk",
+    "direction": "S",
+    "originalPose": "walking S",
+    "fileName": "assassin female walking S.png",
+    "path": "Thief/assassin female walking S.png"
+  },
+  {
+    "tree": "Thief",
+    "job": "assassin",
+    "gender": "female",
+    "action": "walk",
+    "direction": "SE",
+    "originalPose": "walking SE",
+    "fileName": "assassin female walking SE.png",
+    "path": "Thief/assassin female walking SE.png"
+  },
+  {
+    "tree": "Thief",
+    "job": "assassin",
+    "gender": "female",
+    "action": "attack",
+    "direction": "SE",
+    "originalPose": "attack SE",
+    "fileName": "assassin female attack SE.png",
+    "path": "Thief/assassin female attack SE.png"
+  },
+  {
+    "tree": "Thief",
+    "job": "assassincross",
+    "gender": "male",
+    "action": "walk",
+    "direction": "NE",
+    "originalPose": "walking NE",
+    "fileName": "assassincross male walking NE.png",
+    "path": "Thief/assassincross male walking NE.png"
+  },
+  {
+    "tree": "Thief",
+    "job": "assassincross",
+    "gender": "male",
+    "action": "walk",
+    "direction": "S",
+    "originalPose": "walking S",
+    "fileName": "assassincross male walking S.png",
+    "path": "Thief/assassincross male walking S.png"
+  },
+  {
+    "tree": "Thief",
+    "job": "assassincross",
+    "gender": "male",
+    "action": "walk",
+    "direction": "SE",
+    "originalPose": "walking SE",
+    "fileName": "assassincross male walking SE.png",
+    "path": "Thief/assassincross male walking SE.png"
+  },
+  {
+    "tree": "Thief",
+    "job": "assassincross",
+    "gender": "male",
+    "action": "attack",
+    "direction": "SE",
+    "originalPose": "attack SE",
+    "fileName": "assassincross male attack SE.png",
+    "path": "Thief/assassincross male attack SE.png"
+  },
+  {
+    "tree": "Thief",
+    "job": "assassincross",
+    "gender": "female",
+    "action": "walk",
+    "direction": "NE",
+    "originalPose": "walking NE",
+    "fileName": "assassincross female walking NE.png",
+    "path": "Thief/assassincross female walking NE.png"
+  },
+  {
+    "tree": "Thief",
+    "job": "assassincross",
+    "gender": "female",
+    "action": "walk",
+    "direction": "S",
+    "originalPose": "walking S",
+    "fileName": "assassincross female walking S.png",
+    "path": "Thief/assassincross female walking S.png"
+  },
+  {
+    "tree": "Thief",
+    "job": "assassincross",
+    "gender": "female",
+    "action": "walk",
+    "direction": "SE",
+    "originalPose": "walking SE",
+    "fileName": "assassincross female walking SE.png",
+    "path": "Thief/assassincross female walking SE.png"
+  },
+  {
+    "tree": "Thief",
+    "job": "assassincross",
+    "gender": "female",
+    "action": "attack",
+    "direction": "SE",
+    "originalPose": "attack SE",
+    "fileName": "assassincross female attack SE.png",
+    "path": "Thief/assassincross female attack SE.png"
+  },
+  {
+    "tree": "Merchant",
+    "job": "merchant",
+    "gender": "male",
+    "action": "walk",
+    "direction": "NE",
+    "originalPose": "walking NE",
+    "fileName": "merchant male walking NE.png",
+    "path": "Merchant/merchant male walking NE.png"
+  },
+  {
+    "tree": "Merchant",
+    "job": "merchant",
+    "gender": "male",
+    "action": "walk",
+    "direction": "S",
+    "originalPose": "walking S",
+    "fileName": "merchant male walking S.png",
+    "path": "Merchant/merchant male walking S.png"
+  },
+  {
+    "tree": "Merchant",
+    "job": "merchant",
+    "gender": "male",
+    "action": "walk",
+    "direction": "SE",
+    "originalPose": "walking SE",
+    "fileName": "merchant male walking SE.png",
+    "path": "Merchant/merchant male walking SE.png"
+  },
+  {
+    "tree": "Merchant",
+    "job": "merchant",
+    "gender": "male",
+    "action": "attack",
+    "direction": "SE",
+    "originalPose": "attack SE",
+    "fileName": "merchant male attack SE.png",
+    "path": "Merchant/merchant male attack SE.png"
+  },
+  {
+    "tree": "Merchant",
+    "job": "merchant",
+    "gender": "female",
+    "action": "walk",
+    "direction": "NE",
+    "originalPose": "walking NE",
+    "fileName": "merchant female walking NE.png",
+    "path": "Merchant/merchant female walking NE.png"
+  },
+  {
+    "tree": "Merchant",
+    "job": "merchant",
+    "gender": "female",
+    "action": "walk",
+    "direction": "S",
+    "originalPose": "walking S",
+    "fileName": "merchant female walking S.png",
+    "path": "Merchant/merchant female walking S.png"
+  },
+  {
+    "tree": "Merchant",
+    "job": "merchant",
+    "gender": "female",
+    "action": "walk",
+    "direction": "SE",
+    "originalPose": "walking SE",
+    "fileName": "merchant female walking SE.png",
+    "path": "Merchant/merchant female walking SE.png"
+  },
+  {
+    "tree": "Merchant",
+    "job": "merchant",
+    "gender": "female",
+    "action": "attack",
+    "direction": "SE",
+    "originalPose": "attack SE",
+    "fileName": "merchant female attack SE.png",
+    "path": "Merchant/merchant female attack SE.png"
+  },
+  {
+    "tree": "Merchant",
+    "job": "blacksmith",
+    "gender": "male",
+    "action": "walk",
+    "direction": "NE",
+    "originalPose": "walking NE",
+    "fileName": "blacksmith male walking NE.png",
+    "path": "Merchant/blacksmith male walking NE.png"
+  },
+  {
+    "tree": "Merchant",
+    "job": "blacksmith",
+    "gender": "male",
+    "action": "walk",
+    "direction": "S",
+    "originalPose": "walking S",
+    "fileName": "blacksmith male walking S.png",
+    "path": "Merchant/blacksmith male walking S.png"
+  },
+  {
+    "tree": "Merchant",
+    "job": "blacksmith",
+    "gender": "male",
+    "action": "walk",
+    "direction": "SE",
+    "originalPose": "walking SE",
+    "fileName": "blacksmith male walking SE.png",
+    "path": "Merchant/blacksmith male walking SE.png"
+  },
+  {
+    "tree": "Merchant",
+    "job": "blacksmith",
+    "gender": "male",
+    "action": "attack",
+    "direction": "SE",
+    "originalPose": "attack SE",
+    "fileName": "blacksmith male attack SE.png",
+    "path": "Merchant/blacksmith male attack SE.png"
+  },
+  {
+    "tree": "Merchant",
+    "job": "blacksmith",
+    "gender": "female",
+    "action": "walk",
+    "direction": "NE",
+    "originalPose": "walking NE",
+    "fileName": "blacksmith female walking NE.png",
+    "path": "Merchant/blacksmith female walking NE.png"
+  },
+  {
+    "tree": "Merchant",
+    "job": "blacksmith",
+    "gender": "female",
+    "action": "walk",
+    "direction": "S",
+    "originalPose": "walking S",
+    "fileName": "blacksmith female walking S.png",
+    "path": "Merchant/blacksmith female walking S.png"
+  },
+  {
+    "tree": "Merchant",
+    "job": "blacksmith",
+    "gender": "female",
+    "action": "walk",
+    "direction": "SE",
+    "originalPose": "walking SE",
+    "fileName": "blacksmith female walking SE.png",
+    "path": "Merchant/blacksmith female walking SE.png"
+  },
+  {
+    "tree": "Merchant",
+    "job": "blacksmith",
+    "gender": "female",
+    "action": "attack",
+    "direction": "SE",
+    "originalPose": "attack SE",
+    "fileName": "blacksmith female attack SE.png",
+    "path": "Merchant/blacksmith female attack SE.png"
+  },
+  {
+    "tree": "Merchant",
+    "job": "whitesmith",
+    "gender": "male",
+    "action": "walk",
+    "direction": "NE",
+    "originalPose": "walking NE",
+    "fileName": "whitesmith male walking NE.png",
+    "path": "Merchant/whitesmith male walking NE.png"
+  },
+  {
+    "tree": "Merchant",
+    "job": "whitesmith",
+    "gender": "male",
+    "action": "walk",
+    "direction": "S",
+    "originalPose": "walking S",
+    "fileName": "whitesmith male walking S.png",
+    "path": "Merchant/whitesmith male walking S.png"
+  },
+  {
+    "tree": "Merchant",
+    "job": "whitesmith",
+    "gender": "male",
+    "action": "walk",
+    "direction": "SE",
+    "originalPose": "walking SE",
+    "fileName": "whitesmith male walking SE.png",
+    "path": "Merchant/whitesmith male walking SE.png"
+  },
+  {
+    "tree": "Merchant",
+    "job": "whitesmith",
+    "gender": "male",
+    "action": "attack",
+    "direction": "SE",
+    "originalPose": "attack SE",
+    "fileName": "whitesmith male attack SE.png",
+    "path": "Merchant/whitesmith male attack SE.png"
+  },
+  {
+    "tree": "Merchant",
+    "job": "whitesmith",
+    "gender": "female",
+    "action": "walk",
+    "direction": "NE",
+    "originalPose": "walking NE",
+    "fileName": "whitesmith female walking NE.png",
+    "path": "Merchant/whitesmith female walking NE.png"
+  },
+  {
+    "tree": "Merchant",
+    "job": "whitesmith",
+    "gender": "female",
+    "action": "walk",
+    "direction": "S",
+    "originalPose": "walking S",
+    "fileName": "whitesmith female walking S.png",
+    "path": "Merchant/whitesmith female walking S.png"
+  },
+  {
+    "tree": "Merchant",
+    "job": "whitesmith",
+    "gender": "female",
+    "action": "walk",
+    "direction": "SE",
+    "originalPose": "walking SE",
+    "fileName": "whitesmith female walking SE.png",
+    "path": "Merchant/whitesmith female walking SE.png"
+  },
+  {
+    "tree": "Merchant",
+    "job": "whitesmith",
+    "gender": "female",
+    "action": "attack",
+    "direction": "SE",
+    "originalPose": "attack SE",
+    "fileName": "whitesmith female attack SE.png",
+    "path": "Merchant/whitesmith female attack SE.png"
+  },
+  {
+    "tree": "Mage",
+    "job": "mage",
+    "gender": "male",
+    "action": "walk",
+    "direction": "NE",
+    "originalPose": "walking NE",
+    "fileName": "mage male walking NE.png",
+    "path": "Mage/mage male walking NE.png"
+  },
+  {
+    "tree": "Mage",
+    "job": "mage",
+    "gender": "male",
+    "action": "walk",
+    "direction": "S",
+    "originalPose": "walking S",
+    "fileName": "mage male walking S.png",
+    "path": "Mage/mage male walking S.png"
+  },
+  {
+    "tree": "Mage",
+    "job": "mage",
+    "gender": "male",
+    "action": "walk",
+    "direction": "SE",
+    "originalPose": "walking SE",
+    "fileName": "mage male walking SE.png",
+    "path": "Mage/mage male walking SE.png"
+  },
+  {
+    "tree": "Mage",
+    "job": "mage",
+    "gender": "male",
+    "action": "attack",
+    "direction": "SE",
+    "originalPose": "attacking SE",
+    "fileName": "mage male attacking SE.png",
+    "path": "Mage/mage male attacking SE.png"
+  },
+  {
+    "tree": "Mage",
+    "job": "mage",
+    "gender": "female",
+    "action": "walk",
+    "direction": "NE",
+    "originalPose": "walking NE",
+    "fileName": "mage female walking NE.png",
+    "path": "Mage/mage female walking NE.png"
+  },
+  {
+    "tree": "Mage",
+    "job": "mage",
+    "gender": "female",
+    "action": "walk",
+    "direction": "S",
+    "originalPose": "walking S",
+    "fileName": "mage female walking S.png",
+    "path": "Mage/mage female walking S.png"
+  },
+  {
+    "tree": "Mage",
+    "job": "mage",
+    "gender": "female",
+    "action": "walk",
+    "direction": "SE",
+    "originalPose": "walking SE",
+    "fileName": "mage female walking SE.png",
+    "path": "Mage/mage female walking SE.png"
+  },
+  {
+    "tree": "Mage",
+    "job": "mage",
+    "gender": "female",
+    "action": "attack",
+    "direction": "SE",
+    "originalPose": "attack SE",
+    "fileName": "mage female attack SE.png",
+    "path": "Mage/mage female attack SE.png"
+  },
+  {
+    "tree": "Mage",
+    "job": "wizard",
+    "gender": "male",
+    "action": "walk",
+    "direction": "NE",
+    "originalPose": "walking NE",
+    "fileName": "wizard male walking NE.png",
+    "path": "Mage/wizard male walking NE.png"
+  },
+  {
+    "tree": "Mage",
+    "job": "wizard",
+    "gender": "male",
+    "action": "walk",
+    "direction": "S",
+    "originalPose": "walking S",
+    "fileName": "wizard male walking S.png",
+    "path": "Mage/wizard male walking S.png"
+  },
+  {
+    "tree": "Mage",
+    "job": "wizard",
+    "gender": "male",
+    "action": "walk",
+    "direction": "SE",
+    "originalPose": "walking SE",
+    "fileName": "wizard male walking SE.png",
+    "path": "Mage/wizard male walking SE.png"
+  },
+  {
+    "tree": "Mage",
+    "job": "wizard",
+    "gender": "male",
+    "action": "attack",
+    "direction": "SE",
+    "originalPose": "attack SE",
+    "fileName": "wizard male attack SE.png",
+    "path": "Mage/wizard male attack SE.png"
+  },
+  {
+    "tree": "Mage",
+    "job": "wizard",
+    "gender": "female",
+    "action": "walk",
+    "direction": "NE",
+    "originalPose": "walking NE",
+    "fileName": "wizard female walking NE.png",
+    "path": "Mage/wizard female walking NE.png"
+  },
+  {
+    "tree": "Mage",
+    "job": "wizard",
+    "gender": "female",
+    "action": "walk",
+    "direction": "S",
+    "originalPose": "walking S",
+    "fileName": "wizard female walking S.png",
+    "path": "Mage/wizard female walking S.png"
+  },
+  {
+    "tree": "Mage",
+    "job": "wizard",
+    "gender": "female",
+    "action": "walk",
+    "direction": "SE",
+    "originalPose": "walking SE",
+    "fileName": "wizard female walking SE.png",
+    "path": "Mage/wizard female walking SE.png"
+  },
+  {
+    "tree": "Mage",
+    "job": "wizard",
+    "gender": "female",
+    "action": "attack",
+    "direction": "SE",
+    "originalPose": "attack SE",
+    "fileName": "wizard female attack SE.png",
+    "path": "Mage/wizard female attack SE.png"
+  },
+  {
+    "tree": "Mage",
+    "job": "highwizard",
+    "gender": "male",
+    "action": "walk",
+    "direction": "NE",
+    "originalPose": "walking NE",
+    "fileName": "highwizard male walking NE.png",
+    "path": "Mage/highwizard male walking NE.png"
+  },
+  {
+    "tree": "Mage",
+    "job": "highwizard",
+    "gender": "male",
+    "action": "walk",
+    "direction": "S",
+    "originalPose": "walking S",
+    "fileName": "highwizard male walking S.png",
+    "path": "Mage/highwizard male walking S.png"
+  },
+  {
+    "tree": "Mage",
+    "job": "highwizard",
+    "gender": "male",
+    "action": "walk",
+    "direction": "SE",
+    "originalPose": "walking SE",
+    "fileName": "highwizard male walking SE.png",
+    "path": "Mage/highwizard male walking SE.png"
+  },
+  {
+    "tree": "Mage",
+    "job": "highwizard",
+    "gender": "male",
+    "action": "attack",
+    "direction": "SE",
+    "originalPose": "attack SE",
+    "fileName": "highwizard male attack SE.png",
+    "path": "Mage/highwizard male attack SE.png"
+  },
+  {
+    "tree": "Mage",
+    "job": "highwizard",
+    "gender": "female",
+    "action": "walk",
+    "direction": "NE",
+    "originalPose": "walking NE",
+    "fileName": "highwizard female walking NE.png",
+    "path": "Mage/highwizard female walking NE.png"
+  },
+  {
+    "tree": "Mage",
+    "job": "highwizard",
+    "gender": "female",
+    "action": "walk",
+    "direction": "S",
+    "originalPose": "walking S",
+    "fileName": "highwizard female walking S.png",
+    "path": "Mage/highwizard female walking S.png"
+  },
+  {
+    "tree": "Mage",
+    "job": "highwizard",
+    "gender": "female",
+    "action": "walk",
+    "direction": "SE",
+    "originalPose": "walking SE",
+    "fileName": "highwizard female walking SE.png",
+    "path": "Mage/highwizard female walking SE.png"
+  },
+  {
+    "tree": "Mage",
+    "job": "highwizard",
+    "gender": "female",
+    "action": "attack",
+    "direction": "SE",
+    "originalPose": "attack SE",
+    "fileName": "highwizard female attack SE.png",
+    "path": "Mage/highwizard female attack SE.png"
+  },
+  {
+    "tree": "Archer",
+    "job": "archer",
+    "gender": "male",
+    "action": "walk",
+    "direction": "NE",
+    "originalPose": "walking NE",
+    "fileName": "archer male walking NE.png",
+    "path": "Archer/archer male walking NE.png"
+  },
+  {
+    "tree": "Archer",
+    "job": "archer",
+    "gender": "male",
+    "action": "walk",
+    "direction": "S",
+    "originalPose": "walking S",
+    "fileName": "archer male walking S.png",
+    "path": "Archer/archer male walking S.png"
+  },
+  {
+    "tree": "Archer",
+    "job": "archer",
+    "gender": "male",
+    "action": "walk",
+    "direction": "SE",
+    "originalPose": "walking SE",
+    "fileName": "archer male walking SE.png",
+    "path": "Archer/archer male walking SE.png"
+  },
+  {
+    "tree": "Archer",
+    "job": "archer",
+    "gender": "male",
+    "action": "attack",
+    "direction": "SE",
+    "originalPose": "attack SE",
+    "fileName": "archer male attack SE.png",
+    "path": "Archer/archer male attack SE.png"
+  },
+  {
+    "tree": "Archer",
+    "job": "archer",
+    "gender": "female",
+    "action": "walk",
+    "direction": "NE",
+    "originalPose": "walking NE",
+    "fileName": "archer female walking NE.png",
+    "path": "Archer/archer female walking NE.png"
+  },
+  {
+    "tree": "Archer",
+    "job": "archer",
+    "gender": "female",
+    "action": "walk",
+    "direction": "S",
+    "originalPose": "walking S",
+    "fileName": "archer female walking S.png",
+    "path": "Archer/archer female walking S.png"
+  },
+  {
+    "tree": "Archer",
+    "job": "archer",
+    "gender": "female",
+    "action": "walk",
+    "direction": "SE",
+    "originalPose": "walking SE",
+    "fileName": "archer female walking SE.png",
+    "path": "Archer/archer female walking SE.png"
+  },
+  {
+    "tree": "Archer",
+    "job": "archer",
+    "gender": "female",
+    "action": "attack",
+    "direction": "SE",
+    "originalPose": "attack SE",
+    "fileName": "archer female attack SE.png",
+    "path": "Archer/archer female attack SE.png"
+  },
+  {
+    "tree": "Archer",
+    "job": "hunter",
+    "gender": "male",
+    "action": "walk",
+    "direction": "NE",
+    "originalPose": "walking NE",
+    "fileName": "hunter male walking NE.png",
+    "path": "Archer/hunter male walking NE.png"
+  },
+  {
+    "tree": "Archer",
+    "job": "hunter",
+    "gender": "male",
+    "action": "walk",
+    "direction": "S",
+    "originalPose": "walking S",
+    "fileName": "hunter male walking S.png",
+    "path": "Archer/hunter male walking S.png"
+  },
+  {
+    "tree": "Archer",
+    "job": "hunter",
+    "gender": "male",
+    "action": "walk",
+    "direction": "SE",
+    "originalPose": "walking SE",
+    "fileName": "hunter male walking SE.png",
+    "path": "Archer/hunter male walking SE.png"
+  },
+  {
+    "tree": "Archer",
+    "job": "hunter",
+    "gender": "male",
+    "action": "attack",
+    "direction": "SE",
+    "originalPose": "attack SE",
+    "fileName": "hunter male attack SE.png",
+    "path": "Archer/hunter male attack SE.png"
+  },
+  {
+    "tree": "Archer",
+    "job": "hunter",
+    "gender": "female",
+    "action": "walk",
+    "direction": "NE",
+    "originalPose": "walking NE",
+    "fileName": "hunter female walking NE.png",
+    "path": "Archer/hunter female walking NE.png"
+  },
+  {
+    "tree": "Archer",
+    "job": "hunter",
+    "gender": "female",
+    "action": "walk",
+    "direction": "S",
+    "originalPose": "walking S",
+    "fileName": "hunter female walking S.png",
+    "path": "Archer/hunter female walking S.png"
+  },
+  {
+    "tree": "Archer",
+    "job": "hunter",
+    "gender": "female",
+    "action": "walk",
+    "direction": "SE",
+    "originalPose": "walking SE",
+    "fileName": "hunter female walking SE.png",
+    "path": "Archer/hunter female walking SE.png"
+  },
+  {
+    "tree": "Archer",
+    "job": "hunter",
+    "gender": "female",
+    "action": "attack",
+    "direction": "SE",
+    "originalPose": "attack SE",
+    "fileName": "hunter female attack SE.png",
+    "path": "Archer/hunter female attack SE.png"
+  },
+  {
+    "tree": "Archer",
+    "job": "sniper",
+    "gender": "male",
+    "action": "walk",
+    "direction": "NE",
+    "originalPose": "walking NE",
+    "fileName": "sniper male walking NE.png",
+    "path": "Archer/sniper male walking NE.png"
+  },
+  {
+    "tree": "Archer",
+    "job": "sniper",
+    "gender": "male",
+    "action": "walk",
+    "direction": "S",
+    "originalPose": "walking S",
+    "fileName": "sniper male walking S.png",
+    "path": "Archer/sniper male walking S.png"
+  },
+  {
+    "tree": "Archer",
+    "job": "sniper",
+    "gender": "male",
+    "action": "walk",
+    "direction": "SE",
+    "originalPose": "walking SE",
+    "fileName": "sniper male walking SE.png",
+    "path": "Archer/sniper male walking SE.png"
+  },
+  {
+    "tree": "Archer",
+    "job": "sniper",
+    "gender": "male",
+    "action": "attack",
+    "direction": "SE",
+    "originalPose": "attack SE",
+    "fileName": "sniper male attack SE.png",
+    "path": "Archer/sniper male attack SE.png"
+  },
+  {
+    "tree": "Archer",
+    "job": "sniper",
+    "gender": "female",
+    "action": "walk",
+    "direction": "NE",
+    "originalPose": "walking NE",
+    "fileName": "sniper female walking NE.png",
+    "path": "Archer/sniper female walking NE.png"
+  },
+  {
+    "tree": "Archer",
+    "job": "sniper",
+    "gender": "female",
+    "action": "walk",
+    "direction": "S",
+    "originalPose": "walking S",
+    "fileName": "sniper female walking S.png",
+    "path": "Archer/sniper female walking S.png"
+  },
+  {
+    "tree": "Archer",
+    "job": "sniper",
+    "gender": "female",
+    "action": "walk",
+    "direction": "SE",
+    "originalPose": "walking SE",
+    "fileName": "sniper female walking SE.png",
+    "path": "Archer/sniper female walking SE.png"
+  },
+  {
+    "tree": "Archer",
+    "job": "sniper",
+    "gender": "female",
+    "action": "attack",
+    "direction": "SE",
+    "originalPose": "attack SE",
+    "fileName": "sniper female attack SE.png",
+    "path": "Archer/sniper female attack SE.png"
+  },
+  {
+    "tree": "Acolyte",
+    "job": "aco",
+    "gender": "male",
+    "action": "walk",
+    "direction": "NE",
+    "originalPose": "walking NE",
+    "fileName": "aco male walking NE.png",
+    "path": "Acolyte/aco male walking NE.png"
+  },
+  {
+    "tree": "Acolyte",
+    "job": "aco",
+    "gender": "male",
+    "action": "walk",
+    "direction": "S",
+    "originalPose": "walking S",
+    "fileName": "aco male walking S.png",
+    "path": "Acolyte/aco male walking S.png"
+  },
+  {
+    "tree": "Acolyte",
+    "job": "aco",
+    "gender": "male",
+    "action": "walk",
+    "direction": "SE",
+    "originalPose": "walking SE",
+    "fileName": "aco male walking SE.png",
+    "path": "Acolyte/aco male walking SE.png"
+  },
+  {
+    "tree": "Acolyte",
+    "job": "aco",
+    "gender": "male",
+    "action": "attack",
+    "direction": "SE",
+    "originalPose": "attack SE",
+    "fileName": "aco male attack SE.png",
+    "path": "Acolyte/aco male attack SE.png"
+  },
+  {
+    "tree": "Acolyte",
+    "job": "aco",
+    "gender": "female",
+    "action": "walk",
+    "direction": "NE",
+    "originalPose": "walking NE",
+    "fileName": "aco female walking NE.png",
+    "path": "Acolyte/aco female walking NE.png"
+  },
+  {
+    "tree": "Acolyte",
+    "job": "aco",
+    "gender": "female",
+    "action": "walk",
+    "direction": "S",
+    "originalPose": "walking S",
+    "fileName": "aco female walking S.png",
+    "path": "Acolyte/aco female walking S.png"
+  },
+  {
+    "tree": "Acolyte",
+    "job": "aco",
+    "gender": "female",
+    "action": "walk",
+    "direction": "SE",
+    "originalPose": "walking SE",
+    "fileName": "aco female walking SE.png",
+    "path": "Acolyte/aco female walking SE.png"
+  },
+  {
+    "tree": "Acolyte",
+    "job": "aco",
+    "gender": "female",
+    "action": "attack",
+    "direction": "SE",
+    "originalPose": "attack SE",
+    "fileName": "aco female attack SE.png",
+    "path": "Acolyte/aco female attack SE.png"
+  },
+  {
+    "tree": "Acolyte",
+    "job": "priest",
+    "gender": "male",
+    "action": "walk",
+    "direction": "NE",
+    "originalPose": "walking NE",
+    "fileName": "priest male walking NE.png",
+    "path": "Acolyte/priest male walking NE.png"
+  },
+  {
+    "tree": "Acolyte",
+    "job": "priest",
+    "gender": "male",
+    "action": "walk",
+    "direction": "S",
+    "originalPose": "walking S",
+    "fileName": "priest male walking S.png",
+    "path": "Acolyte/priest male walking S.png"
+  },
+  {
+    "tree": "Acolyte",
+    "job": "priest",
+    "gender": "male",
+    "action": "walk",
+    "direction": "SE",
+    "originalPose": "walking SE",
+    "fileName": "priest male walking SE.png",
+    "path": "Acolyte/priest male walking SE.png"
+  },
+  {
+    "tree": "Acolyte",
+    "job": "priest",
+    "gender": "male",
+    "action": "attack",
+    "direction": "SE",
+    "originalPose": "attack SE",
+    "fileName": "priest male attack SE.png",
+    "path": "Acolyte/priest male attack SE.png"
+  },
+  {
+    "tree": "Acolyte",
+    "job": "priest",
+    "gender": "female",
+    "action": "walk",
+    "direction": "NE",
+    "originalPose": "walking NE",
+    "fileName": "priest female walking NE.png",
+    "path": "Acolyte/priest female walking NE.png"
+  },
+  {
+    "tree": "Acolyte",
+    "job": "priest",
+    "gender": "female",
+    "action": "walk",
+    "direction": "S",
+    "originalPose": "walking S",
+    "fileName": "priest female walking S.png",
+    "path": "Acolyte/priest female walking S.png"
+  },
+  {
+    "tree": "Acolyte",
+    "job": "priest",
+    "gender": "female",
+    "action": "walk",
+    "direction": "SE",
+    "originalPose": "walking SE",
+    "fileName": "priest female walking SE.png",
+    "path": "Acolyte/priest female walking SE.png"
+  },
+  {
+    "tree": "Acolyte",
+    "job": "priest",
+    "gender": "female",
+    "action": "attack",
+    "direction": "SE",
+    "originalPose": "attack SE",
+    "fileName": "priest female attack SE.png",
+    "path": "Acolyte/priest female attack SE.png"
+  },
+  {
+    "tree": "Acolyte",
+    "job": "highpriest",
+    "gender": "male",
+    "action": "walk",
+    "direction": "NE",
+    "originalPose": "walking NE",
+    "fileName": "highpriest male walking NE.png",
+    "path": "Acolyte/highpriest male walking NE.png"
+  },
+  {
+    "tree": "Acolyte",
+    "job": "highpriest",
+    "gender": "male",
+    "action": "walk",
+    "direction": "N",
+    "originalPose": "walking N",
+    "fileName": "highpriest male walking N.png",
+    "path": "Acolyte/highpriest male walking N.png"
+  },
+  {
+    "tree": "Acolyte",
+    "job": "highpriest",
+    "gender": "male",
+    "action": "walk",
+    "direction": "S",
+    "originalPose": "walking S",
+    "fileName": "highpriest male walking S.png",
+    "path": "Acolyte/highpriest male walking S.png"
+  },
+  {
+    "tree": "Acolyte",
+    "job": "highpriest",
+    "gender": "male",
+    "action": "walk",
+    "direction": "SE",
+    "originalPose": "walking SE",
+    "fileName": "highpriest male walking SE.png",
+    "path": "Acolyte/highpriest male walking SE.png"
+  },
+  {
+    "tree": "Acolyte",
+    "job": "highpriest",
+    "gender": "male",
+    "action": "attack",
+    "direction": "SE",
+    "originalPose": "attack SE",
+    "fileName": "highpriest male attack SE.png",
+    "path": "Acolyte/highpriest male attack SE.png"
+  },
+  {
+    "tree": "Acolyte",
+    "job": "highpriest",
+    "gender": "female",
+    "action": "walk",
+    "direction": "NE",
+    "originalPose": "walking NE",
+    "fileName": "highpriest female walking NE.png",
+    "path": "Acolyte/highpriest female walking NE.png"
+  },
+  {
+    "tree": "Acolyte",
+    "job": "highpriest",
+    "gender": "female",
+    "action": "walk",
+    "direction": "N",
+    "originalPose": "walking N",
+    "fileName": "highpriest female walking N.png",
+    "path": "Acolyte/highpriest female walking N.png"
+  },
+  {
+    "tree": "Acolyte",
+    "job": "highpriest",
+    "gender": "female",
+    "action": "walk",
+    "direction": "S",
+    "originalPose": "walking S",
+    "fileName": "highpriest female walking S.png",
+    "path": "Acolyte/highpriest female walking S.png"
+  },
+  {
+    "tree": "Acolyte",
+    "job": "highpriest",
+    "gender": "female",
+    "action": "walk",
+    "direction": "SE",
+    "originalPose": "walking SE",
+    "fileName": "highpriest female walking SE.png",
+    "path": "Acolyte/highpriest female walking SE.png"
+  },
+  {
+    "tree": "Acolyte",
+    "job": "highpriest",
+    "gender": "female",
+    "action": "attack",
+    "direction": "SE",
+    "originalPose": "attack SE",
+    "fileName": "highpriest female attack SE.png",
+    "path": "Acolyte/highpriest female attack SE.png"
+  },
+  {
+    "tree": "Swordman",
+    "job": "swordman",
+    "gender": "male",
+    "action": "walk",
+    "direction": "NE",
+    "originalPose": "walking NE",
+    "fileName": "swordman male walking NE.png",
+    "path": "Swordman/swordman male walking NE.png"
+  },
+  {
+    "tree": "Swordman",
+    "job": "swordman",
+    "gender": "male",
+    "action": "walk",
+    "direction": "S",
+    "originalPose": "walking S",
+    "fileName": "swordman male walking S.png",
+    "path": "Swordman/swordman male walking S.png"
+  },
+  {
+    "tree": "Swordman",
+    "job": "swordman",
+    "gender": "male",
+    "action": "walk",
+    "direction": "SE",
+    "originalPose": "walking SE",
+    "fileName": "swordman male walking SE.png",
+    "path": "Swordman/swordman male walking SE.png"
+  },
+  {
+    "tree": "Swordman",
+    "job": "swordman",
+    "gender": "male",
+    "action": "attack",
+    "direction": "SE",
+    "originalPose": "attack SE",
+    "fileName": "swordman male attack SE.png",
+    "path": "Swordman/swordman male attack SE.png"
+  },
+  {
+    "tree": "Swordman",
+    "job": "swordman",
+    "gender": "female",
+    "action": "walk",
+    "direction": "NE",
+    "originalPose": "walking NE",
+    "fileName": "swordman female walking NE.png",
+    "path": "Swordman/swordman female walking NE.png"
+  },
+  {
+    "tree": "Swordman",
+    "job": "swordman",
+    "gender": "female",
+    "action": "walk",
+    "direction": "S",
+    "originalPose": "walking S",
+    "fileName": "swordman female walking S.png",
+    "path": "Swordman/swordman female walking S.png"
+  },
+  {
+    "tree": "Swordman",
+    "job": "swordman",
+    "gender": "female",
+    "action": "walk",
+    "direction": "SE",
+    "originalPose": "walking SE",
+    "fileName": "swordman female walking SE.png",
+    "path": "Swordman/swordman female walking SE.png"
+  },
+  {
+    "tree": "Swordman",
+    "job": "swordman",
+    "gender": "female",
+    "action": "attack",
+    "direction": "SE",
+    "originalPose": "attack SE",
+    "fileName": "swordman female attack SE.png",
+    "path": "Swordman/swordman female attack SE.png"
+  },
+  {
+    "tree": "Swordman",
+    "job": "knight",
+    "gender": "male",
+    "action": "walk",
+    "direction": "NE",
+    "originalPose": "walking NE",
+    "fileName": "knight male walking NE.png",
+    "path": "Swordman/knight male walking NE.png"
+  },
+  {
+    "tree": "Swordman",
+    "job": "knight",
+    "gender": "male",
+    "action": "walk",
+    "direction": "S",
+    "originalPose": "walking S",
+    "fileName": "knight male walking S.png",
+    "path": "Swordman/knight male walking S.png"
+  },
+  {
+    "tree": "Swordman",
+    "job": "knight",
+    "gender": "male",
+    "action": "walk",
+    "direction": "SE",
+    "originalPose": "walking SE",
+    "fileName": "knight male walking SE.png",
+    "path": "Swordman/knight male walking SE.png"
+  },
+  {
+    "tree": "Swordman",
+    "job": "knight",
+    "gender": "male",
+    "action": "attack",
+    "direction": "SE",
+    "originalPose": "attack SE",
+    "fileName": "knight male attack SE.png",
+    "path": "Swordman/knight male attack SE.png"
+  },
+  {
+    "tree": "Swordman",
+    "job": "knight",
+    "gender": "female",
+    "action": "walk",
+    "direction": "NE",
+    "originalPose": "walking NE",
+    "fileName": "knight female walking NE.png",
+    "path": "Swordman/knight female walking NE.png"
+  },
+  {
+    "tree": "Swordman",
+    "job": "knight",
+    "gender": "female",
+    "action": "walk",
+    "direction": "S",
+    "originalPose": "walking S",
+    "fileName": "knight female walking S.png",
+    "path": "Swordman/knight female walking S.png"
+  },
+  {
+    "tree": "Swordman",
+    "job": "knight",
+    "gender": "female",
+    "action": "walk",
+    "direction": "SE",
+    "originalPose": "walking SE",
+    "fileName": "knight female walking SE.png",
+    "path": "Swordman/knight female walking SE.png"
+  },
+  {
+    "tree": "Swordman",
+    "job": "knight",
+    "gender": "female",
+    "action": "attack",
+    "direction": "SE",
+    "originalPose": "attack SE",
+    "fileName": "knight female attack SE.png",
+    "path": "Swordman/knight female attack SE.png"
+  },
+  {
+    "tree": "Swordman",
+    "job": "lordknight",
+    "gender": "male",
+    "action": "walk",
+    "direction": "NE",
+    "originalPose": "walking NE",
+    "fileName": "lordknight male walking NE.png",
+    "path": "Swordman/lordknight male walking NE.png"
+  },
+  {
+    "tree": "Swordman",
+    "job": "lordknight",
+    "gender": "male",
+    "action": "walk",
+    "direction": "S",
+    "originalPose": "walking S",
+    "fileName": "lordknight male walking S.png",
+    "path": "Swordman/lordknight male walking S.png"
+  },
+  {
+    "tree": "Swordman",
+    "job": "lordknight",
+    "gender": "male",
+    "action": "walk",
+    "direction": "SE",
+    "originalPose": "walking SE",
+    "fileName": "lordknight male walking SE.png",
+    "path": "Swordman/lordknight male walking SE.png"
+  },
+  {
+    "tree": "Swordman",
+    "job": "lordknight",
+    "gender": "male",
+    "action": "attack",
+    "direction": "SE",
+    "originalPose": "attack SE",
+    "fileName": "lordknight male attack SE.png",
+    "path": "Swordman/lordknight male attack SE.png"
+  },
+  {
+    "tree": "Swordman",
+    "job": "lordknight",
+    "gender": "female",
+    "action": "walk",
+    "direction": "NE",
+    "originalPose": "walking NE",
+    "fileName": "lordknight female walking NE.png",
+    "path": "Swordman/lordknight female walking NE.png"
+  },
+  {
+    "tree": "Swordman",
+    "job": "lordknight",
+    "gender": "female",
+    "action": "walk",
+    "direction": "S",
+    "originalPose": "walking S",
+    "fileName": "lordknight female walking S.png",
+    "path": "Swordman/lordknight female walking S.png"
+  },
+  {
+    "tree": "Swordman",
+    "job": "lordknight",
+    "gender": "female",
+    "action": "walk",
+    "direction": "SE",
+    "originalPose": "walking SE",
+    "fileName": "lordknight female walking SE.png",
+    "path": "Swordman/lordknight female walking SE.png"
+  },
+  {
+    "tree": "Swordman",
+    "job": "lordknight",
+    "gender": "female",
+    "action": "attack",
+    "direction": "SE",
+    "originalPose": "attack SE",
+    "fileName": "lordknight female attack SE.png",
+    "path": "Swordman/lordknight female attack SE.png"
+  }
+]</script>
+<script id="pose-map" type="application/json">{
+  "NW": {
+    "action": "walk",
+    "sourceDirection": "NE",
+    "mirror": true,
+    "label": "Walk up-left · NW view",
+    "shortLabel": "Walk NW"
+  },
+  "NE": {
+    "action": "walk",
+    "sourceDirection": "NE",
+    "mirror": false,
+    "label": "Walk up-right · NE view",
+    "shortLabel": "Walk NE"
+  },
+  "SW": {
+    "action": "walk",
+    "sourceDirection": "SE",
+    "mirror": true,
+    "label": "Walk down-left · SW view",
+    "shortLabel": "Walk SW"
+  },
+  "S": {
+    "action": "walk",
+    "sourceDirection": "S",
+    "mirror": false,
+    "label": "Walk straight down · S view",
+    "shortLabel": "Walk S"
+  },
+  "SE": {
+    "action": "walk",
+    "sourceDirection": "SE",
+    "mirror": false,
+    "label": "Walk down-right · SE view",
+    "shortLabel": "Walk SE"
+  },
+  "attackSE": {
+    "action": "attack",
+    "sourceDirection": "SE",
+    "mirror": false,
+    "label": "Attack · SE view",
+    "shortLabel": "Attack SE"
+  },
+  "attackSW": {
+    "action": "attack",
+    "sourceDirection": "SE",
+    "mirror": true,
+    "label": "Attack · SW view (mirrored)",
+    "shortLabel": "Attack SW"
+  }
+}</script>
+<script>
+(() => {
+  'use strict';
+
+  const trees = JSON.parse(document.getElementById('sprite-config').textContent);
+  const manifest = JSON.parse(document.getElementById('sprite-manifest').textContent);
+  const routeMap = JSON.parse(document.getElementById('pose-map').textContent);
+  const fileByPose = new Map();
+  manifest.forEach(file => fileByPose.set([file.tree, file.job, file.gender, file.action, file.direction].join('|'), file));
+  const routeIds = ['NW', 'NE', 'SW', 'S', 'SE', 'attackSE', 'attackSW'];
+  const positions = { NE: [0, -1], NW: [0, -1], S: [0, 1], SE: [1, 1], SW: [-1, 1] };
+  const NOTE_PREFIX = 'pg-sprite-review-v1:';
+  const state = { tree: 'Novice', job: 'novice', gender: 'male', pose: 'S', x: 50, y: 52, timer: null, demoTimer: null, demoIndex: 0 };
+  const el = Object.fromEntries([
+    'treeSelect','jobSelect','treeCaption','coverageCount','coverageList','assetSummary','currentCharacter','currentPose',
+    'heroAnchor','heroImage','emptyHero','worldStatus','sourceLine','sourceBadge','poseGrid','reviewNote','noteLabel','noteSave',
+    'demoButton','resetButton','centerButton','copyNoteButton','downloadNotesButton','clearNoteButton'
+  ].map(id => [id, document.getElementById(id)]));
+
+  const getTree = () => trees.find(tree => tree.name === state.tree);
+  const getClassLabel = () => getTree().classes.find(job => job.id === state.job).label;
+  const source = (action, direction) => fileByPose.get([state.tree, state.job, state.gender, action, direction].join('|')) || null;
+  const getNoteKey = () => `${NOTE_PREFIX}${state.tree}|${state.job}|${state.gender}`;
+
+  function buildSelects() {
+    trees.forEach(tree => el.treeSelect.add(new Option(tree.name, tree.name)));
+    el.treeSelect.value = state.tree;
+    fillJobs();
+    el.treeSelect.addEventListener('change', () => {
+      state.tree = el.treeSelect.value;
+      state.job = getTree().classes[0].id;
+      fillJobs();
+      refreshAll();
+    });
+    el.jobSelect.addEventListener('change', () => { state.job = el.jobSelect.value; refreshAll(); });
+    document.querySelectorAll('[data-gender]').forEach(button => button.addEventListener('click', () => {
+      state.gender = button.dataset.gender;
+      document.querySelectorAll('[data-gender]').forEach(other => {
+        const selected = other.dataset.gender === state.gender;
+        other.classList.toggle('selected', selected);
+        other.setAttribute('aria-pressed', String(selected));
+      });
+      refreshAll();
+    }));
+  }
+
+  function fillJobs() {
+    el.jobSelect.replaceChildren();
+    getTree().classes.forEach(job => el.jobSelect.add(new Option(job.label, job.id)));
+    el.jobSelect.value = state.job;
+  }
+
+  // NE/NW and SE/SW are intentional mirrored pairs. High Priest has N art rather than NE;
+  // show the supplied N pose as a clearly-labelled up-view fallback, never as fake NE art.
+  function resolveRoute(id) {
+    const route = routeMap[id];
+    if (!route) return { file: null, mirror: false, fallback: false };
+    let file = source(route.action, route.sourceDirection);
+    let fallback = false;
+    if (!file && route.action === 'walk' && route.sourceDirection === 'NE') {
+      file = source('walk', 'N');
+      fallback = Boolean(file);
+    }
+    return { file, mirror: Boolean(route.mirror && file && !fallback), fallback, route };
+  }
+
+  function noteStorageGet(key) {
+    try { return localStorage.getItem(key) || ''; } catch (_) { return ''; }
+  }
+  function noteStorageSet(key, value) {
+    try {
+      if (value) localStorage.setItem(key, value);
+      else localStorage.removeItem(key);
+      return true;
+    } catch (_) { return false; }
+  }
+
+  function renderCoverage() {
+    const expected = [
+      ['walk', 'NE', 'Walking NE (up-right)'],
+      ['walk', 'S', 'Walking S (straight down)'],
+      ['walk', 'SE', 'Walking SE (down-right)'],
+      ['attack', 'SE', 'Attack SE']
+    ];
+    let directCount = 0;
+    const rows = expected.map(([action, direction, label]) => {
+      const file = source(action, direction);
+      if (file) directCount++;
+      const fallbackNote = !file && action === 'walk' && direction === 'NE' && source('walk', 'N');
+      if (file) return `<li>${label}: <span class="muted">${escapeHtml(file.fileName)}</span></li>`;
+      if (fallbackNote) return `<li class="fallback">${label} art missing; N pose is used for the up-view preview.</li>`;
+      return `<li class="missing">${label} art missing in this class/gender.</li>`;
+    });
+    el.coverageCount.textContent = `${directCount} / 4 direct`;
+    el.coverageList.innerHTML = rows.join('');
+  }
+
+  function renderHeader() {
+    const tree = getTree();
+    el.treeCaption.innerHTML = `<strong>${escapeHtml(tree.name)} tree</strong> · ${tree.classes.map(job => escapeHtml(job.label)).join(' → ')}`;
+    el.currentCharacter.textContent = `${getClassLabel()} · ${capitalize(state.gender)}`;
+    const totalClasses = trees.reduce((sum, item) => sum + item.classes.length, 0);
+    el.assetSummary.innerHTML = `<strong>${trees.length}</strong> trees · <strong>${totalClasses}</strong> classes · <strong>${manifest.length}</strong> source PNGs`;
+    renderCoverage();
+    el.noteLabel.textContent = `Notes for ${getClassLabel()} · ${capitalize(state.gender)}`;
+    el.reviewNote.value = noteStorageGet(getNoteKey());
+    el.noteSave.textContent = 'Saved locally in this browser.';
+  }
+
+  function renderStage() {
+    const definition = routeMap[state.pose];
+    const resolved = resolveRoute(state.pose);
+    const label = definition ? definition.label : state.pose;
+    el.currentPose.textContent = label;
+    el.heroImage.hidden = true;
+    el.emptyHero.hidden = true;
+    el.heroImage.classList.remove('mirror');
+    el.sourceBadge.classList.remove('mirrored');
+
+    if (!resolved.file) {
+      const missingLabel = definition && definition.action === 'attack' ? 'Attack pose not supplied' : 'Walking pose not supplied';
+      el.emptyHero.innerHTML = `<strong>${missingLabel}</strong>No matching source PNG exists for ${escapeHtml(getClassLabel())} · ${capitalize(state.gender)}. See the gallery for available art.`;
+      el.emptyHero.hidden = false;
+      el.sourceLine.innerHTML = `<span>Requested view: ${escapeHtml(label)}</span><code>Missing source PNG for this direction</code>`;
+      el.sourceBadge.textContent = 'SOURCE MISSING';
+      el.sourceBadge.classList.add('mirrored');
+      el.worldStatus.textContent = `${getClassLabel()} · ${capitalize(state.gender)} · ${label} · source missing`;
+      return;
+    }
+
+    const file = resolved.file;
+    el.heroImage.src = encodeURI(`./${file.path}`);
+    el.heroImage.alt = `${getClassLabel()} ${state.gender} ${label}${resolved.mirror ? ', mirrored view' : ''}`;
+    el.heroImage.classList.toggle('mirror', resolved.mirror);
+    el.heroImage.hidden = false;
+    el.heroImage.onerror = () => {
+      el.heroImage.hidden = true;
+      el.emptyHero.innerHTML = `<strong>Could not load this PNG</strong><code>${escapeHtml(file.path)}</code>`;
+      el.emptyHero.hidden = false;
+    };
+    el.sourceLine.innerHTML = `<span>Source: ${resolved.fallback ? 'walking N fallback' : escapeHtml(file.originalPose)}</span><code>${escapeHtml(file.path)}</code>`;
+    if (resolved.fallback) {
+      el.sourceBadge.textContent = 'N FALLBACK';
+      el.sourceBadge.classList.add('mirrored');
+      el.worldStatus.textContent = `${getClassLabel()} · N fallback for up view · not a supplied NE pose`;
+    } else if (resolved.mirror) {
+      el.sourceBadge.textContent = `MIRRORED FROM ${file.direction}`;
+      el.sourceBadge.classList.add('mirrored');
+      el.worldStatus.textContent = `${getClassLabel()} · ${label} · mirrored horizontally from ${file.direction}`;
+    } else {
+      el.sourceBadge.textContent = 'SOURCE POSE';
+      el.worldStatus.textContent = `${getClassLabel()} · ${capitalize(state.gender)} · ${label}`;
+    }
+  }
+
+  function renderGallery() {
+    el.poseGrid.replaceChildren();
+    routeIds.forEach(id => {
+      const definition = routeMap[id];
+      const resolved = resolveRoute(id);
+      const card = document.createElement('button');
+      card.type = 'button';
+      card.className = `pose-card${id === state.pose ? ' active' : ''}${resolved.file ? '' : ' missing'}`;
+      card.setAttribute('aria-label', `Show ${definition.label}`);
+      const heading = document.createElement('span');
+      heading.className = 'pose-card-head';
+      const title = document.createElement('b');
+      title.textContent = definition.shortLabel;
+      const tag = document.createElement('span');
+      tag.className = `pose-tag${resolved.mirror ? ' mirror' : ''}`;
+      tag.textContent = resolved.mirror ? `Mirror ${resolved.file.direction}` : (resolved.fallback ? 'N fallback' : (resolved.file ? 'Source' : 'Missing'));
+      heading.append(title, tag);
+      const thumb = document.createElement('span');
+      thumb.className = 'thumb';
+      if (resolved.file) {
+        const image = document.createElement('img');
+        image.src = encodeURI(`./${resolved.file.path}`);
+        image.alt = '';
+        image.classList.toggle('mirror', resolved.mirror);
+        thumb.append(image);
+      } else {
+        const missing = document.createElement('span');
+        missing.className = 'missing-text';
+        missing.textContent = definition.action === 'attack' ? 'Attack PNG missing' : 'Walking PNG missing';
+        thumb.append(missing);
+      }
+      const path = document.createElement('code');
+      path.className = 'pose-file';
+      path.textContent = resolved.file ? resolved.file.path : 'No source file';
+      card.append(heading, thumb, path);
+      card.addEventListener('click', () => { stopMovement(); stopDemo(); state.pose = id; renderStage(); renderGallery(); });
+      el.poseGrid.append(card);
+    });
+  }
+
+  function renderPosition() {
+    el.heroAnchor.style.left = `${state.x}%`;
+    el.heroAnchor.style.top = `${state.y}%`;
+  }
+
+  function refreshAll() {
+    stopMovement();
+    stopDemo();
+    state.x = 50; state.y = 52;
+    renderHeader();
+    renderStage();
+    renderGallery();
+    renderPosition();
+  }
+
+  function showPose(id, fromDemo = false) {
+    if (!routeMap[id]) return;
+    stopMovement();
+    if (!fromDemo) stopDemo();
+    state.pose = id;
+    renderStage();
+    renderGallery();
+  }
+
+  function step(id) {
+    const vector = positions[id];
+    if (!vector) { showPose(id); return; }
+    state.pose = id;
+    state.x = clamp(state.x + vector[0] * 5.5, 13, 87);
+    state.y = clamp(state.y + vector[1] * 5.5, 18, 76);
+    renderStage();
+    renderGallery();
+    renderPosition();
+  }
+
+  function startMovement(id) {
+    if (!positions[id]) { showPose(id); return; }
+    stopDemo();
+    stopMovement();
+    step(id);
+    state.timer = window.setInterval(() => step(id), 250);
+  }
+
+  function stopMovement() {
+    if (state.timer !== null) window.clearInterval(state.timer);
+    state.timer = null;
+  }
+
+  function stopDemo() {
+    if (state.demoTimer !== null) window.clearTimeout(state.demoTimer);
+    state.demoTimer = null;
+    state.demoIndex = 0;
+    el.demoButton.textContent = '▶ Run direction check';
+  }
+
+  function runDemo() {
+    if (state.demoTimer !== null) { stopDemo(); return; }
+    stopMovement();
+    state.x = 50; state.y = 52;
+    renderPosition();
+    const route = ['NE', 'SE', 'S', 'SW', 'NW', 'attackSE', 'attackSW'];
+    el.demoButton.textContent = '■ Stop direction check';
+    const advance = () => {
+      const id = route[state.demoIndex];
+      if (positions[id]) step(id); else showPose(id, true);
+      state.demoIndex++;
+      if (state.demoIndex < route.length) state.demoTimer = window.setTimeout(advance, 850);
+      else { state.demoTimer = null; el.demoButton.textContent = '▶ Run direction check'; state.demoIndex = 0; }
+    };
+    advance();
+  }
+
+  function resetPosition() {
+    stopMovement();
+    stopDemo();
+    state.x = 50; state.y = 52;
+    renderPosition();
+  }
+
+  function noteChanged() {
+    const saved = noteStorageSet(getNoteKey(), el.reviewNote.value.trim());
+    el.noteSave.textContent = saved ? 'Saved locally in this browser.' : 'Local save unavailable here — use “Copy review note” before closing.';
+  }
+
+  async function copyText(text) {
+    try {
+      await navigator.clipboard.writeText(text);
+      return true;
+    } catch (_) {
+      const helper = document.createElement('textarea');
+      helper.value = text;
+      helper.style.position = 'fixed'; helper.style.opacity = '0';
+      document.body.append(helper); helper.select();
+      let copied = false;
+      try { copied = document.execCommand('copy'); } catch (_) {}
+      helper.remove();
+      return copied;
+    }
+  }
+
+  function reviewSummary() {
+    const pose = routeMap[state.pose].label;
+    const note = el.reviewNote.value.trim() || '(no note entered)';
+    return `Sprite review — ${state.tree} / ${getClassLabel()} (${capitalize(state.gender)})\nCurrent view: ${pose}\nSource: ${resolveRoute(state.pose).file?.path || 'missing'}\n\n${note}`;
+  }
+
+  function downloadNotes() {
+    const notes = {};
+    try {
+      for (let index = 0; index < localStorage.length; index++) {
+        const key = localStorage.key(index);
+        if (key && key.startsWith(NOTE_PREFIX)) notes[key.slice(NOTE_PREFIX.length)] = localStorage.getItem(key);
+      }
+    } catch (_) {}
+    if (el.reviewNote.value.trim()) notes[`${state.tree}|${state.job}|${state.gender}`] = el.reviewNote.value.trim();
+    const body = JSON.stringify({ format: 'prontera-grind-sprite-review-v1', notes }, null, 2);
+    const blob = new Blob([body], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url; link.download = 'sprite-review-notes.json';
+    document.body.append(link); link.click(); link.remove(); URL.revokeObjectURL(url);
+  }
+
+  function bindControls() {
+    document.querySelectorAll('[data-move]').forEach(button => {
+      const id = button.dataset.move;
+      button.addEventListener('pointerdown', event => {
+        if (event.button !== 0) return;
+        event.preventDefault();
+        startMovement(id);
+      });
+      button.addEventListener('click', event => { if (event.detail === 0) step(id); });
+    });
+    document.addEventListener('pointerup', stopMovement);
+    document.addEventListener('pointercancel', stopMovement);
+    window.addEventListener('blur', stopMovement);
+    document.querySelectorAll('[data-pose]').forEach(button => button.addEventListener('click', () => showPose(button.dataset.pose)));
+    el.demoButton.addEventListener('click', runDemo);
+    el.resetButton.addEventListener('click', resetPosition);
+    el.centerButton.addEventListener('click', resetPosition);
+    el.reviewNote.addEventListener('input', noteChanged);
+    el.copyNoteButton.addEventListener('click', async () => {
+      const ok = await copyText(reviewSummary());
+      el.noteSave.textContent = ok ? 'Review summary copied — paste it back when ready.' : 'Copy blocked by this browser. Select and copy the note manually.';
+    });
+    el.downloadNotesButton.addEventListener('click', downloadNotes);
+    el.clearNoteButton.addEventListener('click', () => { el.reviewNote.value = ''; noteChanged(); });
+
+    const keys = { ArrowUp: 'NE', ArrowLeft: 'SW', ArrowDown: 'S', ArrowRight: 'SE' };
+    document.addEventListener('keydown', event => {
+      const target = event.target;
+      if (target && /INPUT|TEXTAREA|SELECT|BUTTON/.test(target.tagName)) return;
+      if (keys[event.key]) { event.preventDefault(); if (!event.repeat) startMovement(keys[event.key]); }
+      else if (event.code === 'Space' && !event.repeat) { event.preventDefault(); showPose('attackSE'); }
+    });
+    document.addEventListener('keyup', event => { if (keys[event.key]) stopMovement(); });
+  }
+
+  function clamp(value, min, max) { return Math.max(min, Math.min(max, value)); }
+  function capitalize(word) { return word.charAt(0).toUpperCase() + word.slice(1); }
+  function escapeHtml(value) { return String(value).replace(/[&<>"']/g, char => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[char])); }
+
+  buildSelects();
+  bindControls();
+  refreshAll();
+})();
+</script>
+</body>
+</html>
