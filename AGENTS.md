@@ -31,7 +31,7 @@ fights an immediate boss plus escorts on each Stage 10 map.
 | `Sprite/*.png` | the uploaded RO-style sprite sheets (21 of them). The **source art**. |
 | `tools/make_sprite_pack.py` | crops `Sprite/` → `assets/sprite_pack_data.js`. |
 | `tools/montage.py` | rebuilds the four montage sheets (see below). |
-| `tools/tests/` | the thirteen test suites. Run them before every push. |
+| `tools/tests/` | the test suites. Run all of them before every push. |
 | `tools/preview/` | dev-only: dumps the ten plans out of the game and paints them top-down, so a layout can be judged without a browser (`node tools/preview/dump_plans.js` then `python3 tools/preview/render_plans.py`). Nothing here ships to the player. |
 | `READ-ME-FIRST.md` | handover note: what this repo is, how to run it and how to recover after a workspace reset. |
 
@@ -62,7 +62,7 @@ in-game and stored in `localStorage` under `pg_acc4`, saves under `pg_save3_<use
    the stub's own centre, never the silhouette centroid. Stub-less frames (the diving
    lunge) fall back to the torso with that direction's median `stub_top − hips_y`.
 5. **Montage sheets only through `tools/montage.py`.** Never hand-split a montage.
-6. **All thirteen test suites must be green before you push.** Add a test when you add
+6. **All test suites under `tools/tests/` must be green before you push.** Add a test when you add
    behaviour. A change with no test is not finished.
 7. **Bump the `BUILD` tag** (`const BUILD='…'` in `index.html`) for anything a player can
    see, and **append to the log below**.
@@ -2894,3 +2894,92 @@ assigned for feel rather than fidelity. While reworking that, two shipped bugs s
   from it is linked in the session reply. This entry covers everything since the v38 merge:
   pet-buff icon tiles, the master auto-cast switch, the bag selling tools, the log filter, the feed
   following the filter, the translucent tab, and this funnel.
+
+### 2026-10-05 — `tool-v42 equipment-card tuning sheet` (tool only; no game change, no BUILD bump)
+
+* **What changed for the owner:** added a self-contained, offline HTML worksheet at
+  `Updates/cards-gear-audit/equipment-cards-tuning.html`, based on the current `ui-v41` game data.
+  It lists all ten maps, their ten stages, all four equipment tiers and **336** catalog entries;
+  selecting a map and stage shows the exact field monsters, their three gear rolls and card effects,
+  plus the Stage-10 boss's full equipment pool. The map's stage-to-tier schedule, individual field
+  drop assignments, item names/pool membership, shared drop rates, card stat pools and effect
+  values can all be edited. It also lists all **200 field-card entries and 10 boss cards**, with an
+  optional one-card stat override. **Copy change spec** or **Download JSON** returns only the edits;
+  the page saves edits in that browser and does not change the game.
+* **Files touched:** `Updates/cards-gear-audit/equipment-cards-tuning.html` (new, with an embedded
+  snapshot of the current game tables), `tools/tests/drop_card_sheet_sim.js` (new: snapshot parity,
+  map/stage coverage, drop routing, card rules, offline rendering and export checks), `AGENTS.md`.
+  `index.html` is unchanged.
+* **Art:** none. `Sprite/`, the packed character art and `assets/kit/` are untouched; `tools/montage.py`
+  was not used.
+* **Tests:** all **eighteen** suites green - `card` 13, `class_change` 24, `drop_card_sheet` 8,
+  `economy` 21, `gear` 24, `kit` 34, `pack` 19 bodies, `pet` 11, `picker` 19, `save_load` 13,
+  `scene` 8, `skill` 51, `sprite` 12, `starter` 7, `stat` 7, `ui` 25, `weapon_joint` 7 and
+  `weapon_review` 13. The sheet test verifies its embedded data against the real `fieldOf()` and
+  card formulas, and checks the worksheet JavaScript and rendered HTML. The game inline script also
+  passes `node --check`.
+* **Branches / PR:** `arena/01a10974-prontera-grind`. No push or PR requested; not pushed.
+* **Known limits / follow-ups:** this is a baseline snapshot, not a game patch. The drop-rate inputs
+  are global because the current game shares those rates across maps; the sheet can change map/stage
+  pools and individual gear assignments, but does not yet offer separate per-map probability
+  sliders. Card-value edits are global per grade/stat; the optional one-card override targets one
+  monster on one map/stage. Paste the exported JSON back before any of these edits are applied to
+  `index.html`.
+
+### 2026-10-05 — `balance-v42 early-map class pathways`
+
+* **What changed for players:**
+  * **Prontera is now the easy Novice start for Base Lv 1-10.** All ten stages stay on the starter drop tier. The live pool contains Novice-usable swords, daggers, armor, headgear, legwear and accessories; it no longer drops a mace or shield, which a Novice cannot equip.
+  * **Izlude serves the Swordman and Merchant trees:** every tier now includes a Swordman sword alongside Merchant axes and maces. Stage 10's boss pool includes the high-tier Golden Axe and Loaded Mace. Geffen serves Mage staves, Morroc serves Thief daggers/katars, and Payon serves Archer bows; its Archer target follows the owner's correction.
+  * The four class maps now state their bands on the map: stages 1-5 target Base Lv 10-20, and stages 6-10 target Base Lv 20-50. Their drops progress from starter gear (stages 1-5), to 1st-job gear (6-7), 2nd-job gear (8-9), then high-tier gear at the Stage-10 boss. The late-map power and gear schedules are unchanged. No equipment Base Lv gates were added.
+  * The Build tag is `2026-10-05 balance-v42 early-map class pathways`. **Boss-card effects were not changed**; they remain pending the owner's review of the card-by-card proposal.
+* **Worksheet:** refreshed `Updates/cards-gear-audit/equipment-cards-tuning.html` for the new game baseline. It now shows each stage's target Base Lv and the current class-map gear tiers. This supersedes the preceding worksheet snapshot: the revised catalog has **338** entries. `node tools/tests/drop_card_sheet_sim.js --refresh-snapshot` rebuilds that embedded snapshot after an intentional game-data change.
+* **Files touched:** `index.html` (map identities/recommendations, early field-power schedule, stage-to-gear routing, optional off-hand drops for Novice, Build tag), `tools/tests/gear_sim.js`, `tools/tests/starter_sim.js`, `tools/tests/ui_sim.js`, `Updates/cards-gear-audit/equipment-cards-tuning.html`, `tools/tests/drop_card_sheet_sim.js`, and this log.
+* **Art:** none. No sprite or map art changed.
+* **Tests:** all **eighteen suites** green: card 13, class_change 24, drop_card_sheet 9, economy 21, gear 25, kit 34, pack 19 bodies, pet 11, picker 19, save_load 13, scene 8, skill 51, sprite 12, starter 8, stat 7, ui 25, weapon_joint 7, weapon_review 13. The inline game script also passes `node --check`; `git diff --check` is clean.
+* **Branches / PR:** `arena/01a10974-prontera-grind`. Not pushed; no PR opened.
+
+### 2026-10-05 — `balance-v43 progression pacing`
+
+* **What changed for players:** Base Lv 1-10 is tuned to about **7 minutes**, and Base Lv 10-50 to about **30 more minutes** (about 37 minutes total), using the level-appropriate early-map power route. Job bars keep the existing class resets and offsets: the first-job Job Lv 1-40 track now mirrors roughly that same 30-minute interval, with the next job gate around Base 48-49. The Base 50-99 stretch remains about five hours, and the post-reset Base 100-150 tail remains about 48 hours. Updated the early map detail hint so Prontera says Base Lv 1-10 and the class-map starters say Base Lv 10-20.
+* **Card tuning:** no boss-card values or socket rules were changed; the proposed 2x card-value change remains pending review/approval.
+* **Worksheet compatibility:** refreshed only the worksheet's source-build marker to v43. Since this build changes pacing, not card/gear data, the worksheet now migrates saved v42 edits in place instead of discarding them; a regression test covers that preservation.
+* **Files touched for this pacing pass:** `index.html` (EXP curve, level-power mapping for Job pacing, map hint, BUILD), `tools/tune_pacing.js`, `tools/tests/economy_sim.js`, `Updates/cards-gear-audit/equipment-cards-tuning.html` (build marker + v42 saved-state migration), `tools/tests/drop_card_sheet_sim.js`, and this log. Earlier v42 map-pathway and worksheet files remain part of the same uncommitted worktree.
+* **Model results:** Base 10 at 7.0 min, Base 50 at 37.1 min total (30.1 min from Base 10), Base 99 at 5.617 h total (about five hours after Base 50); job gates at Base 10 / 48 / 99. The model uses 800 kills/hour and an average boss every 16 kills; real time still depends on class, gear and combat speed.
+* **Tests:** all **18 suites** pass, including the updated economy pacing/job-gate model and worksheet migration; `node --check` on the inline game script and `git diff --check` are clean.
+* **Branches / PR:** `arena/01a10974-prontera-grind`. No commit, push, or PR.
+
+### 2026-10-05 — `balance-v44 two-handed Assassin Katar + affix range chart`
+
+* **What changed for players:** Assassin and Assassin Cross can equip only one Katar, and it occupies both hands. The equipment screen labels it `2H Katar`, hides the off-hand slot, and explains that no shield or second weapon can be worn. Daggers and off-hand gear from older Assassin saves are moved into the bag on load; gear that becomes invalid during a class change is stowed rather than lost. Mixed late-map weapon drops were adjusted where their old dagger entries would no longer be usable by any of the advanced class lines leveling there.
+* **Affix reference:** added the self-contained `Updates/cards-gear-audit/affix-ranges.html`. It charts all 11 affixes for five rarities and four gear sections, with exact rounded min/max values, live weights, units, the generator formula and affixes-per-item counts. `gear_sim.js` checks all 220 displayed range cells against the live source constants and formula.
+* **Cards and pacing:** card pools, values, effects and socket rules are unchanged. The v43 leveling pace is carried forward unchanged; this pass does not retune or revert it.
+* **Worksheet compatibility:** refreshed the baseline for the revised mixed-map catalog and v44 build. Older v42/v43 worksheet edits migrate forward; edits on unaffected gear and user-added items remain, while replaced weapon identities reset and drop overrides pointing at those old identities are discarded. Tests cover both migrations.
+* **Files touched:** `index.html` (Assassin weapon lists, two-handed equipment rules/UI, legacy-save and class-change repair, mixed-map weapon pools, BUILD), `tools/tests/gear_sim.js`, `tools/tests/class_change_sim.js`, `tools/tests/save_load_sim.js`, `tools/tests/sprite_sim.js`, `tools/tests/ui_sim.js`, `Updates/cards-gear-audit/affix-ranges.html` (new), `Updates/cards-gear-audit/equipment-cards-tuning.html`, `tools/tests/drop_card_sheet_sim.js`, and this log. The v43 pacing changes and their tests remain in the worktree.
+* **Art:** none. No sprite assets changed.
+* **Tests:** all **18 suites** pass, including the katar-only class/equipment/load cases, affix-chart parity and worksheet migration; the inline game script passes `node --check`, and `git diff --check` is clean.
+* **Branches / PR:** `arena/01a10974-prontera-grind`. No commit, push or PR.
+
+### 2026-10-05 — `balance-v45 all-class late-map gear + four-slot bows/Katars`
+
+* **What changed for players:** the active gear tiers on Comodo, Louyang, Amatsu, Niflheim and Abyss now each drop all seven weapon families, so every class can find a weapon it can equip on those late maps. Abyss keeps the Dark Lord high-tier armor set and now has a high-tier weapon for every family; its Stage-10 boss rolls that complete pool at the existing Legendary 1% per-item rate. Early-map class themes and pacing are unchanged.
+* **Card sockets:** generated bows and Katars now always have four card sockets; other weapon families keep the existing 1–3 socket roll. The card effects and values themselves are unchanged.
+* **Map revisit recommendation (not implemented):** next, add a Monster Index / map-mastery track that records first kills and card discoveries and awards regional tokens or cosmetic rewards. That makes earlier maps worth revisiting without letting their gear overtake Abyss. Any new or changed card effects should be proposed card-by-card first; none were changed here.
+* **Worksheet and chart:** refreshed the equipment worksheet snapshot to the 378-item catalog and v45 build. Its migration matches saved edits by item identity and rebases shifted catalog/drop IDs from v44; v42/v43 saved edits still migrate. The affix chart is also labeled for v45; its values/formula are unchanged.
+* **Files touched:** `index.html` (all-class late-map pools, Katar/Bow socket count, BUILD), `tools/tests/gear_sim.js`, `tools/tests/ui_sim.js`, `Updates/cards-gear-audit/equipment-cards-tuning.html`, `tools/tests/drop_card_sheet_sim.js`, `Updates/cards-gear-audit/affix-ranges.html`, and this log.
+* **Tests:** all **18 suites** pass, including late-map class coverage, Abyss boss-pool completeness, 4-socket generation/rendering, chart parity and worksheet migration; inline game JavaScript passes `node --check`, and `git diff --check` is clean.
+* **Branches / PR:** `arena/01a10974-prontera-grind`. No commit, push or PR.
+
+### 2026-10-05 — `balance-v46 Crit DMG output tune + Mastery Index`
+
+* **What changed for players:** the gear Crit DMG affix remains in the roll pool, but only its final gear value is multiplied by 70% after the existing rounded roll (`100 → 70`). Its `AB.cdm` and all other affix values are unchanged. Card Crit DMG and card valuation are unchanged. The standalone affix chart now explains and tests this gear-only final scale.
+* **Mastery Index:** added a dock tab and a 📚 Index button beside the on-screen Quest Board. The Mob Index records lifetime kills for each of the 90 regular/boss entries across all maps and shows the global title ladder. Ten cumulative lifetime-kill titles are progressively unlockable and equippable in the HUD:
+  * 100 — Field Initiate; 500 — Field Scout; 2,000 — Rune-Midgarts Vanguard; 7,500 — Midgard Tracker; 20,000 — Dungeon Reaper;
+  * 45,000 — Rift Warden; 90,000 — Abyss Stalker; 160,000 — Dark Lord's Bane; 275,000 — Champion of Midgard; 450,000 — Valkyrie's Chosen.
+* **Card Mastery recommendation implemented:** confirm before consuming one loose card into the permanent album; every 5 dedicated copies grant 1 permanent point in STR, AGI, DEX, INT, VIT or LUK. Each stat caps at +5, for +30 total points / 150 cards to complete the stat reward track. Card names and duplicate counts remain archived; socketed cards cannot be dedicated, and all current card effects stay intact.
+* **Save and worksheet compatibility:** old game saves receive empty mastery records; kill counts, the album, allocations and earned/equipped titles persist and are repaired against the unlock/cap rules. Added the v45 worksheet build to its safe migration list before refreshing the v46 snapshot; tests cover v45 edit preservation.
+* **Pacing / cards / equipment:** the v43 progression pace remains unchanged. No boss-card changes, card-value changes, socket-capacity changes or equipment Base Lv gates were added in this pass.
+* **Files touched for v46:** `index.html` (gear-only CDM output, persistent mastery model, kill/title/card UI and Quest Board link, BUILD), `tools/tests/gear_sim.js`, `tools/tests/pet_sim.js`, `tools/tests/economy_sim.js`, `tools/tests/save_load_sim.js`, `tools/tests/ui_sim.js`, `Updates/cards-gear-audit/affix-ranges.html`, `Updates/cards-gear-audit/equipment-cards-tuning.html`, `tools/tests/drop_card_sheet_sim.js`, and this log. The worksheet card-effect matrix remains unchanged.
+* **Art:** none. The title seals and parchment treatment are CSS/UI; no sprites or map art changed.
+* **Tests:** all **18 suites** pass (including live affix-chart parity, card preservation, the mastery save/UI flows, and v45 worksheet migration); the inline game script passes `node --check`, and `git diff --check` is clean.
+* **Branches / PR:** `arena/01a10974-prontera-grind`. No commit, push or PR.

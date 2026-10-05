@@ -2,9 +2,9 @@
 //   node tools/tests/gear_sim.js
 //
 // The rules being tested:
-//   * the catalogue is a real database: 10 maps x 4 sections (Novice / 1st job / 2nd job /
-//     high tier), and every section carries 2-3 weapon types plus body, headgear, shield,
-//     legwear and two accessories - weapons are what a player hunts for, so they come first;
+//   * the catalogue is a real database: 10 maps x 4 sections (starter / 1st job / 2nd job /
+//     high tier), each with weapons plus body, headgear, shield, legwear and accessories; the
+//     active late-map sections carry every weapon family so all classes can hunt their own;
 //   * a drop is RELEVANT: every weapon in a map's pool is one a class that actually levels
 //     there can use, and every class that levels there can use at least one weapon in each
 //     of that map's sections;
@@ -32,6 +32,7 @@ const code = [
   pick(/const RAR=\[[^\]]*\];/, 'RAR'),
   pick(/const AM=\[[^\]]*\],GRADE=\[[^\]]*\],GI=\[[^\]]*\],CV=\[[^\]]*\];/, 'rarity tables'),
   pick(/const AFF=\[[^\]]*\],AB=\{[^}]*\};/, 'AFF/AB'),
+  pick(/const AFFIX_CDM_SCALE=[^\n]+;/, 'gear-only Crit DMG post-roll scale'),
   pick(/K5=\[[^\]]*\];/, 'K5'),
   pick(/const cardVal=\(g,st\)=>[^;]+;/, 'cardVal'),
   pick(/const cardStat=\(g,seed\)=>\{[^}]*\};/, 'cardStat'),
@@ -42,18 +43,19 @@ const code = [
   pick(/const dropTier=\(m,l\)=>[^;]+;/, 'dropTier'),
   pick(/const sellVal=it=>[^;]+;/, 'sellVal'),
   grab('function genGear(T,l,sec,boss,tier){', '// ---------- skill effects'),
+  pick(/const affixValue=\(k,section,tier,roll\)=>\{[^}]+\};/, 'affixValue'),
   `function executeGearRoll(mob,roll){const old=Math.random;Math.random=()=>roll;const drops=[],mkDrop=it=>({it});try{${gearDropLoop}}finally{Math.random=old}return drops}`,
-  grab('function canShield(){', 'function ekey(it)'),        // canShield / dualOn / dualOk
+  grab('function canShield(){', 'function ekey(it)'),        // shield and single-katar class rules
   grab('function slotAccepts(k,it){', 'function equipChooser(k){'),
 ].join('\n');
 
 const harness = `
 ${code}
-const SECN=['Novice gear','1st-job gear','2nd-job gear','High-tier gear'];
+const SECN=['Starter gear','1st-job gear','2nd-job gear','High-tier gear'];
 const SLOTS={weapon:{label:'Weapon',stat:'ATK',ic:'A'},armor:{label:'Armor',stat:'DEF',ic:'B'},head:{label:'Headgear',stat:'HP',ic:'C'},off:{label:'Shield',stat:'DEF',ic:'D'},leg:{label:'Legwear',stat:'DEF',ic:'E'},acc:{label:'Accessory',stat:'HP',ic:'F'}};
 const rnd=(a,b)=>a+Math.random()*(b-a),ri=(a,b)=>Math.floor(rnd(a,b+1)),uid=()=>1;
 let S=null;
-this.__g={ MAPS, GEAR, gearPool, fieldOf, genGear, executeGearRoll, slotAccepts, canUse, canShield, dualOk, CLASSES, lineOf, secOf, secField, SLOTS, BAGMAX, MAPTIER, dropTier, sellVal,
+this.__g={ MAPS, GEAR, gearPool, fieldOf, genGear, executeGearRoll, slotAccepts, canUse, canShield, katarOnly, CLASSES, lineOf, secOf, secField, SLOTS, BAGMAX, MAPTIER, dropTier, sellVal, AM, AFF, AB, RAR, AFFIX_CDM_SCALE, scaleCritDamageAffix, affixValue,
            set S(v){S=v}, get S(){return S} };
 `;
 const sb = { console };
@@ -76,7 +78,7 @@ t('ten maps, four sections each, all of them populated', () => {
   });
 });
 
-t('every section carries weapons plus one of every armour slot', () => {
+t('every section has weapons and its available armour/accessory slots', () => {
   let weapons = 0;
   G.MAPS.forEach(mp => mp.gear.forEach((sg, sec) => {
     const where = mp.n + ' section ' + sec;
@@ -84,7 +86,9 @@ t('every section carries weapons plus one of every armour slot', () => {
     assert.ok(wt.length >= 1, where + ': no weapon at all');
     wt.forEach(k => assert.ok(WEP.includes(k), where + ': unknown weapon type ' + k));
     assert.ok(sg.w[wt[0]], where + ': empty weapon name');
-    ['a', 'h', 'o', 'l', 'ac', 'ac2'].forEach(k => assert.ok(sg[k] && sg[k].length > 2, where + ': missing ' + k));
+    ['a', 'h', 'l', 'ac', 'ac2'].forEach(k => assert.ok(sg[k] && sg[k].length > 2, where + ': missing ' + k));
+    if(mp.n==='Prontera'&&sec===0)assert.ok(!sg.o,'Novice cannot equip the shield slot');
+    else assert.ok(sg.o&&sg.o.length>2,where+': missing shield');
     weapons += wt.length;
   }));
   console.log('       ' + weapons + ' weapon entries across 40 sections');
@@ -92,35 +96,51 @@ t('every section carries weapons plus one of every armour slot', () => {
 
 t('names do not repeat inside a map (no two slots offer the same item)', () => {
   G.MAPS.forEach(mp => mp.gear.forEach((sg, sec) => {
-    const names = Object.keys(sg.w).map(k => sg.w[k]).concat([sg.a, sg.h, sg.o, sg.l, sg.ac, sg.ac2]);
+    const names = Object.keys(sg.w).map(k => sg.w[k]).concat([sg.a, sg.h, sg.o, sg.l, sg.ac, sg.ac2].filter(Boolean));
     assert.strictEqual(new Set(names).size, names.length, mp.n + ' section ' + sec + ' repeats a name');
   }));
 });
 
+t('early maps use novice equipment first, then class-tier gear through the Lv50 boss stage', () => {
+  for(let l=1;l<=10;l++)assert.strictEqual(G.secField(0,l),0,'Prontera must stay on Novice gear');
+  const novicePool=G.gearPool(0,10),noviceTypes=new Set(novicePool.filter(x=>!['armor','head','off','leg','acc'].includes(x.k)).map(x=>x.k));
+  assert.deepStrictEqual([...noviceTypes].sort(),['dagger','sword']);
+  assert.ok(!novicePool.some(x=>x.k==='off'),'Prontera cannot drop a shield that Novice cannot equip');
+  const weaponTypes=(m,sec)=>Object.keys(G.MAPS[m].gear[sec].w);
+  for(let m=1;m<=4;m++)for(let l=1;l<=10;l++)
+    assert.strictEqual(G.secField(m,l),l<=5?0:l<=7?1:l<=9?2:3,`${G.MAPS[m].n} stage ${l} tier`);
+  for(let sec=0;sec<4;sec++){
+    assert.ok(weaponTypes(1,sec).includes('sword'),'Izlude needs Swordman swords in every tier');
+    assert.ok(weaponTypes(1,sec).includes('axe')&&weaponTypes(1,sec).includes('mace'),'Izlude needs Merchant weapons in every tier');
+    assert.ok(weaponTypes(2,sec).includes('staff'),'Geffen needs Mage staves');
+    assert.ok(weaponTypes(3,sec).includes('dagger'),'Morroc needs Thief daggers');
+    assert.ok(weaponTypes(4,sec).includes('bow'),'Payon needs Archer bows');
+  }
+  assert.ok(G.gearPool(1,10).some(x=>x.n==='Golden Axe'||x.n==='Loaded Mace'),'Izlude boss tier must include a Merchant weapon');
+  assert.ok(G.gearPool(2,10).some(x=>x.n==='Wand of Hermes'),'Geffen boss tier must include its Mage weapon');
+  assert.ok(G.gearPool(3,10).some(x=>x.n==='Sandstorm Dagger'),'Morroc boss tier must include its Thief weapon');
+  assert.ok(G.gearPool(4,10).some(x=>x.n==='Gakkung Bow'),'Payon boss tier must include its Archer weapon');
+});
+
 t('armour and accessory names are unique across the whole game', () => {
   const seen = new Map();
-  G.MAPS.forEach(mp => mp.gear.forEach(sg => [sg.a, sg.h, sg.o, sg.l, sg.ac, sg.ac2].forEach(n => {
+  G.MAPS.forEach(mp => mp.gear.forEach(sg => [sg.a, sg.h, sg.o, sg.l, sg.ac, sg.ac2].filter(Boolean).forEach(n => {
     if (seen.has(n)) throw new Error(n + ' is both ' + seen.get(n) + ' and ' + mp.n);
     seen.set(n, mp.n);
   })));
 });
 
 // ---- 2. per-map relevance ----------------------------------------------------
-// Which class lines each map is built to serve. The five early maps are class-themed; the five
-// level 60+ maps are mixed, and by then every line is a 2nd/3rd job, so they are tested against
-// the advanced weapon lists (a Lord Knight, an Assassin Cross, a Sniper, a Whitesmith, a High
-// Priest and a High Wizard can all be standing on Comodo at Lv 60+).
+// The five early maps are class-themed. Every mixed late map now carries a weapon family
+// for every class, so all class lines can return there to hunt their own gear.
+const EVERY_CLASS=Object.keys(G.CLASSES);
 const MAP_LINES = [
-  ['Novice', 'Swordman', 'Acolyte'],
-  ['Merchant', 'Blacksmith', 'Whitesmith'],
+  ['Novice', 'Swordman'],
+  ['Swordman', 'Knight', 'Lord Knight', 'Merchant', 'Blacksmith', 'Whitesmith'],
   ['Mage', 'Wizard', 'High Wizard'],
   ['Thief', 'Assassin', 'Assassin Cross'],
   ['Archer', 'Hunter', 'Sniper'],
-  ['Lord Knight', 'Assassin Cross', 'Sniper', 'Whitesmith', 'High Priest', 'High Wizard'],
-  ['Lord Knight', 'Assassin Cross', 'Sniper', 'Whitesmith', 'High Priest', 'High Wizard'],
-  ['Lord Knight', 'Assassin Cross', 'Sniper', 'Whitesmith', 'High Priest', 'High Wizard'],
-  ['Lord Knight', 'Assassin Cross', 'Sniper', 'Whitesmith', 'High Priest', 'High Wizard'],
-  ['Lord Knight', 'Assassin Cross', 'Sniper', 'Whitesmith', 'High Priest', 'High Wizard'],
+  EVERY_CLASS, EVERY_CLASS, EVERY_CLASS, EVERY_CLASS, EVERY_CLASS,
 ];
 const wtsOf = cls => G.CLASSES[cls].wt || [];
 const typesIn = (mp, sec) => Object.keys(mp.gear[sec].w);
@@ -130,9 +150,8 @@ const isWep = x => !ARM.includes(x.k);
 t('every weapon in a map pool is usable by a line that levels there', () => {
   G.MAPS.forEach((mp, m) => {
     const allowed = new Set(MAP_LINES[m].flatMap(wtsOf));
-    mp.gear.forEach((sg, sec) => typesIn(mp, sec).forEach(k => {
-      assert.ok(allowed.has(k), mp.n + ' section ' + sec + ' drops a ' + k + ' but no line there can use it');
-    }));
+    for(let l=1;l<=10;l++)G.gearPool(m,l).filter(isWep).forEach(x=>
+      assert.ok(allowed.has(x.k),mp.n+' stage '+l+' drops a '+x.k+' but no line there can use it'));
   });
 });
 
@@ -159,6 +178,28 @@ t('each mixed map carries a real spread of weapon types', () => {
     G.MAPS[m].gear.forEach((sg, sec) => assert.ok(typesIn(G.MAPS[m], sec).length >= 3,
       G.MAPS[m].n + ' section ' + sec + ' needs at least 3 weapon types'));
   });
+});
+
+t('every active late-map gear tier offers a weapon for every class',()=>{
+  const types=[...WEP].sort();
+  for(let m=5;m<10;m++)for(const sec of [2,3]){
+    const have=typesIn(G.MAPS[m],sec).sort();
+    assert.deepStrictEqual(have,types,`${G.MAPS[m].n} section ${sec} must carry all seven weapon families`);
+    for(const [cls,c] of Object.entries(G.CLASSES))
+      assert.ok(c.wt.some(wt=>have.includes(wt)),`${G.MAPS[m].n} section ${sec} has no weapon for ${cls}`);
+  }
+});
+
+t('Abyss Stage 10 drops the complete top-tier weapon and armor pool',()=>{
+  assert.strictEqual(G.secField(9,9),3,'Abyss late fields must use high-tier gear');
+  assert.strictEqual(G.dropTier(9,9),3,'Abyss fields stay Epic');
+  assert.strictEqual(G.dropTier(9,10),4,'Abyss boss drops are Legendary');
+  const pool=G.gearPool(9,10),boss=G.fieldOf(9,10).boss;
+  assert.deepStrictEqual([...new Set(pool.filter(isWep).map(x=>x.k))].sort(),[...WEP].sort());
+  for(const slot of ARM)assert.ok(pool.some(x=>x.k===slot),'Abyss high-tier pool needs '+slot);
+  assert.strictEqual(boss.drops.length,pool.length,'the boss rolls its entire high-tier pool');
+  assert.ok(boss.drops.every(([,chance])=>chance===1),'each top-tier boss item keeps the 1% gate');
+  assert.strictEqual(G.MAPS[9].gear[3].a,'Dark Lord Mail','Abyss should retain its named best armor set');
 });
 
 t('a high-tier section never repeats a starter weapon name', () => {
@@ -203,7 +244,7 @@ t('the drop table: mobs roll three gear chances, the boss rolls its whole pool a
 t('the real equipment-drop loop creates boss gear when an independent roll succeeds', () => {
   G.S = {st:{luk:0},eq:{}};
   const F = G.fieldOf(0, 10), boss = {...F.boss,boss:true,lvl:10,sec:F.sec};
-  assert.strictEqual(boss.drops.length, 9, 'expected a roll for every boss-pool item');
+  assert.strictEqual(boss.drops.length, G.gearPool(0,10).length, 'expected a roll for every boss-pool item');
   // The gate is empirically 1%, not the old 2.4%: a 1.5% roll would have paid out the whole
   // pool before v38 and must pay out nothing now, while a 0.8% roll still clears every entry.
   assert.strictEqual(G.executeGearRoll(boss, .015).length, 0, 'the boss gate is no longer 1%');
@@ -252,18 +293,21 @@ t('the pool is exactly the section set and only grows as you climb', () => {
     let prev = 0;
     for (let l = 1; l <= 10; l++) {
       const pool = G.gearPool(m, l), sec = mp.gear[G.secField(m, l)];
-      const names = Object.keys(sec.w).map(k => sec.w[k]).concat([sec.a, sec.h, sec.o, sec.l, sec.ac, sec.ac2]);
+      const names = Object.keys(sec.w).map(k => sec.w[k]).concat([sec.a, sec.h, sec.o, sec.l, sec.ac, sec.ac2].filter(Boolean));
       assert.strictEqual(pool.map(x => x.n).join('|'), names.join('|'), mp.n + ' Lv' + l + ' pool must be the section set');
       assert.ok(pool.length >= prev, mp.n + ' Lv' + l + ' pool shrank');
       assert.ok(pool.length >= 7, mp.n + ' Lv' + l + ' pool is thin: ' + pool.length);
       prev = pool.length;
     }
-    // a themed map's later sections must be different gear, not renamed repeats. The level 60+
-    // maps are pinned to one high-tier set on purpose: they are all Lv 60-99, so their whole
-    // pool is the top section and the field never offers a starter item.
-    if (m < 5) {
+    // Prontera is locked to Novice gear on every stage. The four class maps hold their first
+    // tier through stage 5, then progress at stages 6, 8 and 10. The level 60+ maps stay pinned
+    // to one high-tier set on purpose, so their whole pool never offers a starter item.
+    if (m === 0) {
+      const novice = G.gearPool(m, 1).map(x => x.n).join('|');
+      for(let l=2;l<=10;l++)assert.strictEqual(G.gearPool(m,l).map(x=>x.n).join('|'),novice,'Prontera must stay on Novice gear');
+    } else if (m < 5) {
       const s0 = G.gearPool(m, 1).map(x => x.n);
-      [4, 8, 10].forEach(l => assert.ok(G.gearPool(m, l).some(n => !s0.includes(n.n)), mp.n + ' later sections add nothing'));
+      [6, 8, 10].forEach(l => assert.ok(G.gearPool(m, l).some(n => !s0.includes(n.n)), mp.n + ' later sections add nothing'));
     } else {
       // v38: the high tier starts at field level 3, and stages 1-2 hand out section 2 (the
       // Comodo cliff floor) instead of the old "high tier from level 1".
@@ -290,17 +334,23 @@ t('a weapon slot offers only weapons of a type the class may use', () => {
   assert.ok(G.slotAccepts('weapon', bow) && !G.slotAccepts('weapon', sword), 'Archer is bow-only');
 });
 
-t('the off hand offers shields only to shield classes, daggers only to dual-wielders', () => {
-  const shield = item({ id: 3, slot: 'off' }), dagger = item({ id: 4, slot: 'weapon', wt: 'dagger' }), sword = item({ id: 5, wt: 'sword' });
-  bag('Swordman', [shield, dagger, sword]);
+t('off-hand shields stay class-gated; Assassins use one Katar and cannot off-hand weapons', () => {
+  const shield = item({ id: 3, slot: 'off' }), dagger = item({ id: 4, slot: 'weapon', wt: 'dagger' }),
+    katar = item({ id: 5, slot: 'weapon', wt: 'katar' }), sword = item({ id: 6, wt: 'sword' });
+  bag('Swordman', [shield, dagger, katar, sword]);
   assert.ok(G.slotAccepts('off', shield), 'Swordman may hold a shield');
-  assert.ok(!G.slotAccepts('off', dagger), 'Swordman may not dual-wield');
+  assert.ok(!G.slotAccepts('off', dagger) && !G.slotAccepts('off', katar), 'Swordman may not use a weapon off-hand');
   assert.ok(!G.slotAccepts('off', sword), 'a one-handed sword is not an off-hand item for a Swordman');
-  bag('Assassin', [shield, dagger, sword]);
-  assert.ok(!G.slotAccepts('off', shield), 'Assassin cannot hold a shield');
-  assert.ok(G.slotAccepts('off', dagger), 'Assassin may dual-wield daggers');
   bag('Knight', [shield]);
   assert.ok(G.slotAccepts('off', shield), 'Knight keeps the shield');
+  for(const cls of ['Assassin','Assassin Cross']){
+    assert.deepStrictEqual(Array.from(G.CLASSES[cls].wt),['katar'],cls+' must be katar-only');
+    bag(cls,[shield,dagger,katar]);
+    assert.ok(G.katarOnly(),cls+' should be marked as a single-katar class');
+    assert.ok(G.slotAccepts('weapon',katar),cls+' may equip a katar in the main hand');
+    assert.ok(!G.slotAccepts('weapon',dagger),cls+' may not equip a dagger');
+    assert.ok(!G.slotAccepts('off',shield)&&!G.slotAccepts('off',dagger)&&!G.slotAccepts('off',katar),cls+' has no usable off-hand');
+  }
 });
 
 t('a slot only accepts its own slot, and never cards or ores', () => {
@@ -328,9 +378,10 @@ t('every slot is offered exactly what the class may wear, and nothing else', () 
     slot: ARM.includes(x.k) ? x.k : 'weapon', wt: ARM.includes(x.k) ? undefined : x.k });
   const inv = G.gearPool(0, 1).map(mk);
   bag('Novice', inv);
-  assert.strictEqual(inv.filter(it => G.slotAccepts('weapon', it)).length, G.gearPool(0, 1).filter(isWep).length - 1);  // sword+dagger for a Novice, not the mace
+  assert.strictEqual(inv.filter(it => G.slotAccepts('weapon', it)).length, 2, 'a Novice can use the Prontera sword and dagger');
   ['weapon', 'armor', 'head', 'off', 'leg', 'acc1', 'acc2'].forEach(k => {
     const list = inv.filter(it => G.slotAccepts(k, it));
+    if(k==='off'){assert.strictEqual(list.length,0,'Novice must not be offered a shield from Prontera');return}
     assert.ok(list.length >= 1, 'empty bag list for slot ' + k);
     list.forEach(it => assert.ok(G.canUse(it), it.name + ' offered for ' + k + ' but the class cannot use it'));
   });
@@ -381,6 +432,64 @@ t('the rarity band is fixed but the affixes are rolled every time', () => {
   assert.strictEqual(mid.tier, 1);
   assert.ok(mid.aff.length >= 1 && mid.aff.length <= 2, 'Fine gear rolls one or two affixes');
   assert.ok(mid.name.startsWith('Fine '), 'the item name states its fixed band: ' + mid.name);
+});
+
+t('gear Crit DMG alone is scaled to 70% after the existing rounded affix roll',()=>{
+  assert.strictEqual(G.AFFIX_CDM_SCALE,.7,'gear CDM output multiplier');
+  assert.strictEqual(G.scaleCritDamageAffix(100),70,'a prior rolled value of 100 becomes 70');
+  assert.strictEqual(G.scaleCritDamageAffix(40),28,'a prior rolled value of 40 becomes 28');
+  assert.strictEqual(G.scaleCritDamageAffix(1),1,'the existing minimum +1 is preserved');
+  for(let tier=0;tier<G.AM.length;tier++)for(let section=0;section<4;section++)for(const roll of [.8,.91,1,1.2,1.249]){
+    for(const key of G.AFF){
+      const raw=Math.max(1,Math.round((1+section)*G.AM[tier]*G.AB[key]*roll));
+      const expected=key==='cdm'?G.scaleCritDamageAffix(raw):raw;
+      assert.strictEqual(G.affixValue(key,section,tier,roll),expected,`${key} tier ${tier} section ${section} roll ${roll}`);
+    }
+  }
+  assert.ok(src.includes("k==='cdm'?scaleCritDamageAffix(raw):raw"),'the post-roll multiplier must apply only to gear Crit DMG');
+  assert.ok(src.includes('const n=[1,1+ri(0,1),2,2+ri(0,1),3][t]'),'live affix counts changed without updating the chart notes');
+});
+
+t('the affix range chart matches the live generator for every stat, rarity and gear section',()=>{
+  const chart=fs.readFileSync(__dirname+'/../../Updates/cards-gear-audit/affix-ranges.html','utf8');
+  assert.ok(chart.includes('Crit DMG only:')&&chart.includes('round(raw × 0.70)'),'chart must explain the separate gear CDM post-roll');
+  assert.ok(chart.includes('Card Crit DMG values are unchanged'),'chart must distinguish gear from cards');
+  assert.ok(chart.includes(src.match(/const BUILD='([^']+)'/)[1]),'chart build label must match the game');
+  const tables=[...chart.matchAll(/<table data-rarity="([^"]+)">([\s\S]*?)<\/table>/g)];
+  assert.strictEqual(tables.length,G.RAR.length,'one table per rarity');
+  for(const [tableIndex,table] of tables.entries()){
+    const [,rarity,body]=table;
+    assert.strictEqual(rarity,G.RAR[tableIndex].n,'rarity order');
+    const rows=[...body.matchAll(/<tr data-affix="([^"]+)" data-weight="([^"]+)">([\s\S]*?)<\/tr>/g)];
+    assert.strictEqual(rows.length,G.AFF.length,rarity+' affix count');
+    for(const [rowIndex,row] of rows.entries()){
+      const [,key,weight,cellsHtml]=row,affix=G.AFF[rowIndex];
+      assert.strictEqual(key,affix,rarity+' affix order');
+      assert.strictEqual(Number(weight),G.AB[affix],rarity+' '+affix+' weight');
+      const cells=[...cellsHtml.matchAll(/<td[^>]*>([\s\S]*?)<\/td>/g)].map(m=>m[1]);
+      assert.strictEqual(cells.length,5,rarity+' '+affix+' needs weight + four section ranges');
+      assert.strictEqual(cells[0].replace(/<[^>]*>/g,'').trim(),'×'+G.AB[affix].toFixed(2),rarity+' '+affix+' printed weight');
+      for(let section=0;section<4;section++){
+        const scale=(1+section)*G.AM[tableIndex]*G.AB[affix];
+        const rawMin=Math.max(1,Math.round(scale*.8)),rawMax=Math.max(1,Math.ceil(scale*1.25+.5)-1);
+        const expected=affix==='cdm'?[G.scaleCritDamageAffix(rawMin),G.scaleCritDamageAffix(rawMax)]:[rawMin,rawMax];
+        const actual=cells[section+1].replace(/<[^>]*>/g,'').trim().match(/^\+(\d+)–(\d+)$/);
+        assert.ok(actual,rarity+' '+affix+' S'+section+' range is malformed');
+        assert.deepStrictEqual([Number(actual[1]),Number(actual[2])],expected,rarity+' '+affix+' S'+section);
+      }
+    }
+  }
+});
+
+t('Katars and bows always roll four card sockets; other weapons stay at three or fewer',()=>{
+  for(const wt of ['katar','bow'])for(let tier=0;tier<5;tier++)for(let sec=0;sec<4;sec++){
+    const it=G.genGear({k:wt,n:'Test '+wt},99,sec,false,tier);
+    assert.strictEqual(it.slots,4,wt+' tier '+tier+' section '+sec);
+  }
+  for(const wt of ['dagger','staff','axe','sword','mace'])for(let tier=0;tier<5;tier++){
+    const it=G.genGear({k:wt,n:'Test '+wt},99,3,false,tier);
+    assert.ok(it.slots<=3,wt+' unexpectedly exceeded the old socket cap');
+  }
 });
 
 t('selling gear is pocket money and never funds an upgrade', () => {

@@ -175,15 +175,15 @@ t('Divine Pride item icons cover every weapon type used by all 19 classes', () =
     assert.strictEqual(weaponItemUrl(type), 'https://www.divine-pride.net/img/items/item/dpRO/' + id);
 });
 
-t('class weapon rules show bows, staves and a single katar for the requested jobs', () => {
+t('class weapon rules show bows, staves and one two-handed Katar for the Assassin jobs', () => {
   assert.strictEqual(heroWeaponType('Archer', ['bow'], 'dagger'), 'bow');
   assert.strictEqual(heroWeaponType('Hunter', ['bow'], null), 'bow');
   assert.strictEqual(heroWeaponType('Sniper', ['bow'], null), 'bow');
   assert.strictEqual(heroWeaponType('Mage', ['staff'], null), 'staff');
   assert.strictEqual(heroWeaponType('Wizard', ['staff'], null), 'staff');
   assert.strictEqual(heroWeaponType('High Wizard', ['staff'], null), 'staff');
-  assert.strictEqual(heroWeaponType('Assassin', ['dagger', 'katar'], 'dagger'), 'katar');
-  assert.strictEqual(heroWeaponType('Assassin Cross', ['dagger', 'katar'], 'dagger'), 'katar');
+  assert.strictEqual(heroWeaponType('Assassin', ['katar'], 'dagger'), 'katar');
+  assert.strictEqual(heroWeaponType('Assassin Cross', ['katar'], 'dagger'), 'katar');
   assert.strictEqual(heroWeaponType('Thief', ['dagger'], 'dagger'), 'dagger');
   assert.ok(Object.keys(CLASS_WEAPON).length >= 8, 'all requested class overrides are explicit');
 });
