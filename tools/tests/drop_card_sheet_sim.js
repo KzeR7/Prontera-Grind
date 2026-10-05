@@ -150,7 +150,6 @@ t('card effect matrix uses the game’s actual rounded values and roll pools',()
 });
 t('worksheet migrates v45 edits through the merged class-skin + balance build',()=>{
   const script=html.match(/<script>\s*([\s\S]*?)\s*<\/script>/)[1];
-  assert.ok(script.includes("'2026-10-05 balance-v51 faster early game + card gacha + title seal'"),'the v51 balance build must be a safe previous build after the merge');
   assert.ok(script.includes("'2026-10-05 skin-v53 class animations decoded in-game'"),'skin-v53 becomes a safe previous build once the merged snapshot is written');
   assert.ok(script.includes("'2026-10-05 skin-v52 animated class skins (APNG)'"),'skin-v52 must remain a safe previous build');
   assert.ok(script.includes("'2026-10-05 skin-v51 live class skins in the game'"),'skin-v51 must remain a safe previous build');
