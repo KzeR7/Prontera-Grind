@@ -44,7 +44,7 @@ let RAW = ${JSON.stringify(JSON.stringify(save))};
 const lsGet = () => RAW;
 const saveKey = () => 'k';
 const newQuest = () => ({type:'kill', goal:1, prog:0, z:0, xp:0});
-this.__l = {loadRaw, setRaw: v => { RAW = JSON.stringify(v) }, setState:v=>{S=v}, getState:()=>S, emptyCardIndex, recordMonsterKill, donateCardToMastery, allocateCardMastery, assignCardMasteryReward, cardMasteryTotal, cardMasteryEarned, cardMasteryAvailable, cardMasteryStat, indexXpForCount, INDEX_MOB_MILESTONES, INDEX_MILESTONE_XP, INDEX_TITLES, CARD_NAMES, CARD_REWARD_CAPS, CARD_REWARD_POINT_CAP};
+this.__l = {loadRaw, setRaw: v => { RAW = JSON.stringify(v) }, setState:v=>{S=v}, getState:()=>S, emptyCardIndex, recordMonsterKill, donateCardToMastery, cardMasteryTotal, cardMasteryEarned, cardMasteryAvailable, cardMasteryRolled, cardMasteryStat, cardMasteryGacha, cardMasteryReset, cardMasteryLegendaryCard, CARD_REWARD_OPTIONS, indexXpForCount, INDEX_MOB_MILESTONES, INDEX_MILESTONE_XP, INDEX_TITLES, CARD_NAMES, CARD_REWARD_CAPS, CARD_REWARD_IDS};
 `;
 const sb = { console };
 vm.createContext(sb); vm.runInContext(harness, sb);
@@ -153,8 +153,11 @@ t('mastery records, title unlocks, and bounded permanent stats survive load repa
   assert.strictEqual(repaired.cardIndex.donated,10);
   assert.deepStrictEqual(JSON.parse(JSON.stringify(repaired.cardIndex.byName)),{'Poring Card':3});
   assert.strictEqual(repaired.cardIndex.stats.str,0);
-  assert.strictEqual(repaired.cardIndex.stats.vit,0,'legacy global stats are migrated into per-card rewards');
-  assert.strictEqual(repaired.cardIndex.stats.luk,0);assert.deepStrictEqual(JSON.parse(JSON.stringify(repaired.cardIndex.rewards['Poring Card'])),['str','vit','vit']);
+  assert.strictEqual(repaired.cardIndex.stats.vit,0,'legacy global stats are migrated into gacha rolls');
+  assert.strictEqual(repaired.cardIndex.stats.luk,0);
+  // v51: every legacy global point that fits the caps becomes a roll (str + vit x3), even if the
+  // old per-card rank ledger happened to have no room for it at the time.
+  assert.deepStrictEqual(JSON.parse(JSON.stringify(repaired.cardIndex.rolls)),['str','vit','vit','vit']);
   assert.strictEqual(repaired.cardIndex.stats.other,undefined);
   assert.strictEqual(Object.values(repaired.cardIndex.stats).reduce((a,n)=>a+n,0),0);assert.strictEqual(repaired.cardIndex.mastery['Poring Card'],3);
 });
@@ -169,28 +172,41 @@ t('the slower individual-mob ladder and 20-day title endpoint are data-driven',(
   assert.strictEqual(U.INDEX_TITLES.at(-1).xp,4320000,'the final title is set to 4.32m Index XP');
 });
 
-t('malformed card rewards are repaired to global caps, not only per-card limits',()=>{
+t('v51 migration: old per-rank rewards and the global track become capped gacha rolls',()=>{
   const names=['Poring Card','Fabre Card','Lunatic Card','Drops Card','Chonchon Card','Willow Card'];
   const cardIndex={donated:30,byName:Object.fromEntries(names.map(n=>[n,5])),mastery:Object.fromEntries(names.map(n=>[n,5])),
     rewards:Object.fromEntries(names.map(n=>[n,Array(5).fill('str')])),stats:{str:5,agi:0,dex:0,int:0,vit:0,luk:0}};
   const raw={...save,indexXp:1000,cardIndex};const box={};vm.createContext(box);
   vm.runInContext(harness.replace(/const lsGet = \(\) => .*?;/,'const lsGet = () => '+JSON.stringify(JSON.stringify(raw))+';'),box);
-  const repaired=box.__l.loadRaw(),rewards=Object.values(repaired.cardIndex.rewards).flat();
-  assert.strictEqual(rewards.filter(x=>x==='str').length,25,'the +25 STR cap survives a six-card overflow');
-  assert.ok(Object.values(repaired.cardIndex.rewards).every(a=>a.length<=5),'each card still has at most five ranks');
+  const U=box.__l,repaired=U.loadRaw(),rolls=repaired.cardIndex.rolls;
+  assert.strictEqual(rolls.filter(x=>x==='str').length,25,'the +25 STR cap survives a six-card overflow');
+  assert.strictEqual(rolls.length,25,'25 of the 30 old picks survive; the five over-cap picks are the cap doing its job');
+  assert.deepStrictEqual(JSON.parse(JSON.stringify(repaired.cardIndex.rewards)),{},'the retired reward ledger is emptied after migration');
+  U.setState(repaired);
+  assert.strictEqual(U.cardMasteryEarned(),30,'six mastered cards are 30 tokens');
+  assert.strictEqual(U.cardMasteryAvailable(),5,'the migrated rolls count as spent tokens, so the over-cap five stay unspent');
+  assert.strictEqual(U.cardMasteryStat('str'),25,'the migrated bonus is live');
+  repaired.cards=[{id:'leg',n:'Poring Card',g:3,stat:'str',v:3}];
+  const refund=U.cardMasteryReset();
+  assert.strictEqual(refund,25,'the reset refunds every spent token');
+  assert.strictEqual(U.cardMasteryAvailable(),30,'and all 30 tokens are spendable again');
 });
 
-t('a full card album has exactly the current reward budget, with no surplus points',()=>{
+t('a full card album is 450 tokens; the caps fill first and the rest wait',()=>{
   const U=sb.__l,names=Array.from(U.CARD_NAMES),state={cardIndex:U.emptyCardIndex(),cards:[]};
   for(const name of names){state.cardIndex.byName[name]=5;state.cardIndex.mastery[name]=5}
-  let slot=0;for(const [id,cap] of Object.entries(U.CARD_REWARD_CAPS))for(let i=0;i<cap;i++,slot++){
-    const name=names[Math.floor(slot/5)];(state.cardIndex.rewards[name]||(state.cardIndex.rewards[name]=[])).push(id);
-  }
   U.setState(state);
   assert.strictEqual(U.cardMasteryTotal(),450,'five ranks across all 90 cards');
-  assert.strictEqual(U.cardMasteryEarned(),U.CARD_REWARD_POINT_CAP,'earned points stop at the sum of active reward caps');
-  assert.strictEqual(U.cardMasteryAvailable(),0,'maxing the current reward caps leaves no extra point');
-  assert.strictEqual(U.CARD_REWARD_POINT_CAP,243,'the requested current caps total 243 assignable points');
+  assert.strictEqual(U.cardMasteryEarned(),450,'every rank is one token');
+  assert.strictEqual(U.cardMasteryAvailable(),450,'nothing spent yet');
+  let n=0;while(U.cardMasteryGacha())n++;
+  const capTotal=Object.values(U.CARD_REWARD_CAPS).reduce((a,b)=>a+b,0);
+  assert.strictEqual(n,capTotal,'the gacha fills every cap and then stops handing out wasted rolls');
+  assert.strictEqual(U.cardMasteryAvailable(),450-capTotal,'the tokens that could not be spent stay in the bank');
+  assert.strictEqual(U.cardMasteryGacha(),null,'no roll is possible while every cap is full');
+  state.cards=[{id:'leg',n:'Poring Card',g:3,stat:'str',v:3}];
+  state.cardIndex.rolls=[];U.setState(state);
+  assert.strictEqual(capTotal,243,'the current caps total 243 rollable points');
 });
 
 t('kills and card dedication earn permanent mastery points and persist through reload',()=>{
@@ -203,9 +219,12 @@ t('kills and card dedication earn permanent mastery points and persist through r
   assert.strictEqual(state.cards.length,0);assert.strictEqual(state.cardIndex.donated,5);
   assert.strictEqual(state.cardIndex.byName['Poring Card'],2);assert.strictEqual(state.cardIndex.byName['Fabre Card'],3);
   assert.strictEqual(U.cardMasteryEarned(),5);assert.strictEqual(U.cardMasteryAvailable(),5);assert.deepStrictEqual(JSON.parse(JSON.stringify(state.cardIndex.mastery)),{'Poring Card':2,'Fabre Card':3});
-  assert.strictEqual(U.allocateCardMastery('str'),true);assert.strictEqual(U.cardMasteryStat('str'),1);
+  const rolled=U.cardMasteryGacha();assert.ok(rolled,'one token rolls one random stat');assert.strictEqual(U.cardMasteryStat(rolled),1);assert.strictEqual(U.cardMasteryAvailable(),4);
   U.setRaw(state);const round=U.loadRaw();
-  assert.strictEqual(round.cardIndex.donated,5);assert.deepStrictEqual(JSON.parse(JSON.stringify(round.cardIndex.rewards)),{'Poring Card':['str']});
+  assert.strictEqual(round.cardIndex.donated,5);assert.deepStrictEqual(JSON.parse(JSON.stringify(round.cardIndex.rolls)),[rolled]);
+  state.cards.push({id:'leg',n:'Poring Card',g:3,stat:'str',v:3});U.setRaw(state);U.loadRaw();
+  assert.strictEqual(U.cardMasteryReset(),1,'a loose Legendary card resets one roll and refunds its token');
+  assert.strictEqual(U.cardMasteryAvailable(),5,'the refunded token is ready again');
   assert.strictEqual(round.mobKills['0:Poring'],2);assert.strictEqual(round.mobKills['0:Mastering'],1);
 });
 
