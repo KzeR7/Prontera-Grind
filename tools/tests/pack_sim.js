@@ -16,9 +16,13 @@ vm.runInContext(block+'\nthis.__x={PACK_BODY,packTex,packCache,packBodyFor,drawH
 const {PACK_BODY,packTex,packCache,packBodyFor,drawHairPreview}=sandbox.__x;
 const PK=sandbox.window.SPRITE_PACK;
 const classes=['Novice','Swordman','Knight','Lord Knight','Mage','Wizard','High Wizard','Archer','Hunter','Sniper','Thief','Assassin','Assassin Cross','Acolyte','Priest','High Priest','Merchant','Blacksmith','Whitesmith'];
+const classSkins={Novice:'novice',Swordman:'swordman',Knight:'knight','Lord Knight':'lord_knight',Mage:'mage',Wizard:'wizard','High Wizard':'high_wizard',Archer:'archer',Hunter:'hunter',Sniper:'sniper',Thief:'thief',Assassin:'assassin','Assassin Cross':'assassin_cross',Acolyte:'aco',Priest:'priest','High Priest':'high_priest',Merchant:'merchant',Blacksmith:'blacksmith',Whitesmith:'whitesmith'};
 let bad=[],own=[];
 for(const c of classes){
   const b=packBodyFor(c,0);
+  const classSkin=classSkins[c];
+  assert.ok(PK.bodies[classSkin],`${c} must have its own uploaded animated class skin`);
+  assert.strictEqual(b,classSkin,`${c} must resolve to its own matching animated skin`);
   if(!b||!PK.bodies[b]){bad.push(c+': no body');continue}
   if(b!==PACK_BODY[c])own.push(c+'->'+b);
   packCache.clear();draws.length=0;packTex({cls:c,sex:'m',hair:0,tier:0});

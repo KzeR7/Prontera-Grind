@@ -9,7 +9,11 @@ the repo, so pushing to `main` is the deploy.
 * `assets/kit/` — **map kit v2**: `ro-spritesheet.png` + `.json` (25 terrain tiles, 34 billboards)
   and the two attached level designs (`ro-map-payon.json`, `ro-map-morocc.json`).
 * `Sprite/*.png` — the uploaded class sheets, the source art for the pack.
-* `tools/` — the art pipelines (`make_sprite_pack.py`, `montage.py`), the test suites (`tools/tests/`)
+* `Updates/Sprite/index.html` — the **canonical class-sprite reference backup** for all seven uploaded trees;
+  after changing its PNGs, refresh the manifest with `python3 tools/make_sprite_viewer.py`. See
+  `Updates/Sprite/README.md` for the future-update workflow and why these still poses stay separate
+  from the live animation pack.
+* `tools/` — the art pipelines (`make_sprite_pack.py`, `make_sprite_viewer.py`, `montage.py`), the test suites (`tools/tests/`)
   and a dev-only plan previewer (`tools/preview/`).
 * `AGENTS.md` — **the project's rules and its full update log**. Read it before changing anything:
   it carries the house rules (crop only, never draw art; all 8 directions and 3 animation rows
@@ -31,20 +35,17 @@ python3 - <<'PY'
 h=open('index.html').read()
 open('/tmp/pack_block.js','w').write(h[h.index('const PACK_BODY='):h.index('function ensureHero(')])
 PY
-for t in pack class_change save_load economy stat card skill gear scene kit ui sprite starter pet; do
-  node tools/tests/${t}_sim.js || echo "FAILED: $t"
-done
+python3 tools/make_sprite_viewer.py --check
+for t in tools/tests/*_sim.js; do node "$t" || exit 1; done
 ```
 
-Expected tails: pack prints the 19 bodies; every other suite prints `N passed, 0 failed`
-(class_change 22, save_load 10, economy 21, stat 7, card 13, skill 50, gear 24, scene 8,
-**kit 34**, ui 18, sprite 12, starter 7, **pet 11**). All suites pull the real code out of
-`index.html` by string boundary, so moving a declaration can break a test without breaking the
-game — if a suite throws, read the boundary it grabs before assuming the game is at fault.
-`pet_sim.js` also PRINTS the pet roster, the training ladder, the eight gacha skills, the buff
-rules and the maxed-pet balance measurement — run it on its own when pet numbers are being
-discussed. One of its assertions IS the balance target: one fully maxed pet must land within 12%
-of one fully maxed character's whole rotation, so a retune that drifts is a red suite.
+Run the suite before every push. `pack_sim.js` reads the extracted `/tmp/pack_block.js`; the
+sprite viewer test checks that its canonical HTML backup matches the PNG files. The tests pull
+live code out of `index.html` by string boundary, so moving a declaration can break a harness
+without breaking the game — if a suite throws, inspect the boundary it extracts before assuming
+the game is at fault. `pet_sim.js` also prints the roster, training ladder, eight gacha skills,
+buff rules and maxed-pet balance measurement; one assertion keeps a fully maxed pet within 12%
+of one fully maxed character's whole rotation.
 
 ## Change the map art
 

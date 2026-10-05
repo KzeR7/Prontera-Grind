@@ -2972,7 +2972,8 @@ const mobSpriteLayer=$('mobSpriteLayer'),weaponSpriteLayer=$('weaponSpriteLayer'
 let heroSpr=null,heroHeadSpr=null,heroKey='',heroDirty=false;
 // ----- Class sprite packs (assets/sprite_pack_data.js, built by tools/make_sprite_pack.py) -----
 // Body + head are composited once per (class, sex, hair) into a single atlas: 8 cols = frames, rows = anim*8+dir (idle,walk,attack x 8 dirs)
-// Every first job line ships its own body art; each line keeps one body through its whole tree.
+// All 19 current jobs have their own packed body, and packBodyFor prefers that exact class skin.
+// PACK_BODY is only a fallback for a future class whose own sheet is not in the pack yet.
 const PACK_BODY={Novice:'novice',
   Swordman:'swordman',Knight:'swordman','Lord Knight':'swordman',
   Mage:'mage',Wizard:'mage','High Wizard':'mage',
