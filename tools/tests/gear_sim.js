@@ -40,6 +40,8 @@ const code = [
   grab('function gearPool(m,l){', 'const dropTxt='),
   pick(/const BAGMAX=\d+;/, 'BAGMAX'),
   pick(/const MAPTIER=\[[^\]]*\];/, 'MAPTIER'),
+  pick(/const MAPGRADE=\[[^\]]*\];/, 'MAPGRADE'),
+  pick(/const MAPVAL=\[[^\]]*\];/, 'MAPVAL'),
   pick(/const dropTier=\(m,l\)=>[^;]+;/, 'dropTier'),
   pick(/const sellVal=it=>[^;]+;/, 'sellVal'),
   grab('function genGear(T,l,sec,boss,tier){', '// ---------- skill effects'),
@@ -55,7 +57,7 @@ const SECN=['Starter gear','1st-job gear','2nd-job gear','High-tier gear'];
 const SLOTS={weapon:{label:'Weapon',stat:'ATK',ic:'A'},armor:{label:'Armor',stat:'DEF',ic:'B'},head:{label:'Headgear',stat:'HP',ic:'C'},off:{label:'Shield',stat:'DEF',ic:'D'},leg:{label:'Legwear',stat:'DEF',ic:'E'},acc:{label:'Accessory',stat:'HP',ic:'F'}};
 const rnd=(a,b)=>a+Math.random()*(b-a),ri=(a,b)=>Math.floor(rnd(a,b+1)),uid=()=>1;
 let S=null;
-this.__g={ MAPS, GEAR, gearPool, fieldOf, genGear, executeGearRoll, slotAccepts, canUse, canShield, katarOnly, CLASSES, lineOf, secOf, secField, SLOTS, BAGMAX, MAPTIER, dropTier, sellVal, AM, AFF, AB, RAR, AFFIX_CDM_SCALE, scaleCritDamageAffix, affixValue,
+this.__g={ MAPS, GEAR, gearPool, fieldOf, genGear, executeGearRoll, slotAccepts, canUse, canShield, katarOnly, CLASSES, lineOf, secOf, secField, SLOTS, BAGMAX, MAPTIER, MAPGRADE, MAPVAL, dropTier, sellVal, AM, AFF, AB, RAR, AFFIX_CDM_SCALE, scaleCritDamageAffix, affixValue,
            set S(v){S=v}, get S(){return S} };
 `;
 const sb = { console };
@@ -197,8 +199,10 @@ t('Abyss Stage 10 drops the complete top-tier weapon and armor pool',()=>{
   const pool=G.gearPool(9,10),boss=G.fieldOf(9,10).boss;
   assert.deepStrictEqual([...new Set(pool.filter(isWep).map(x=>x.k))].sort(),[...WEP].sort());
   for(const slot of ARM)assert.ok(pool.some(x=>x.k===slot),'Abyss high-tier pool needs '+slot);
-  assert.strictEqual(boss.drops.length,pool.length,'the boss rolls its entire high-tier pool');
-  assert.ok(boss.drops.every(([,chance])=>chance===1),'each top-tier boss item keeps the 1% gate');
+  assert.strictEqual(boss.drops.length,pool.length,'the boss still lists its whole pool');
+  const total=boss.drops.reduce((a,d)=>a+d[1],0);
+  assert.ok(Math.abs(total-6)<1.2,'the boss pool totals about 6% per kill, got '+total.toFixed(2)+'%');
+  boss.drops.forEach(d=>assert.ok(pool.some(x=>x.n===d[0].n),'every boss entry comes from the map pool'));
   assert.strictEqual(G.MAPS[9].gear[3].a,'Dark Lord Mail','Abyss should retain its named best armor set');
 });
 
@@ -225,17 +229,19 @@ t('gear outnumbers cards on every field', () => {
   }
 });
 
-t('the drop table: mobs roll three gear chances, the boss rolls its whole pool at 1%', () => {
+t('the drop table: mobs roll three gear chances at 3.6%, the boss rolls four at 1.5%', () => {
   for (let m = 0; m < G.MAPS.length; m++) for (let l = 1; l <= 10; l++) {
     const F = G.fieldOf(m, l);
     F.mobs.forEach(mob => {
-      assert.deepStrictEqual(Array.from(mob.drops, d => d[1]), [4.8, 4.0, 3.2]);
-      assert.strictEqual(mob.cardCh, .45, 'regular-mob card chance changed');
+      // v57 (owner: "30 min of grinding gave a bunch of legendaries"): the field roll is a
+      // third of what it was - 3.6% per kill in total, cards 0.15%.
+      assert.deepStrictEqual(Array.from(mob.drops, d => d[1]), [1.5, 1.2, .9]);
+      assert.strictEqual(mob.cardCh, .15, 'regular-mob card chance changed');
     });
     if (l === 10) {
-      // v38 took the boss pool from 2.4% per item to 1% per item (still one independent roll
-      // per pool entry) and its card from 0.08% to 0.1%.
-      F.boss.drops.forEach(([, ch]) => assert.strictEqual(ch, 1, 'boss equipment chance changed'));
+      const total = F.boss.drops.reduce((a, d) => a + d[1], 0);
+      assert.ok(Math.abs(total - 6) < 1.2, 'the boss pool totals about 6%, got ' + total.toFixed(2) + '%');
+      assert.strictEqual(F.boss.drops.length, G.gearPool(m, 10).length, 'the boss still lists its whole pool');
       assert.strictEqual(F.boss.cardCh, .1, 'boss card chance changed');
     }
   }
@@ -245,18 +251,18 @@ t('the real equipment-drop loop creates boss gear when an independent roll succe
   G.S = {st:{luk:0},eq:{}};
   const F = G.fieldOf(0, 10), boss = {...F.boss,boss:true,lvl:10,sec:F.sec};
   assert.strictEqual(boss.drops.length, G.gearPool(0,10).length, 'expected a roll for every boss-pool item');
-  // The gate is empirically 1%, not the old 2.4%: a 1.5% roll would have paid out the whole
-  // pool before v38 and must pay out nothing now, while a 0.8% roll still clears every entry.
-  assert.strictEqual(G.executeGearRoll(boss, .015).length, 0, 'the boss gate is no longer 1%');
-  const drops = G.executeGearRoll(boss, .008);
+  // The per-item gate is 6/n % (~0.86% on this 7-item pool): a 1.2% die pays out nothing,
+  // a 0.5% die clears every entry.
+  assert.strictEqual(G.executeGearRoll(boss, .012).length, 0, 'the boss gate is now ~6% for the whole pool');
+  const drops = G.executeGearRoll(boss, .005);
   assert.strictEqual(drops.length, boss.drops.length, 'the actual boss gear loop did not emit items');
-  assert.ok(drops.every(d => d.it && d.it.tier === 4), 'every Stage 10 boss drop must be Legendary');
+  // Prontera's stage-10 boss is capped at Fine now: it can never print an endgame item.
+  assert.ok(drops.every(d => d.it && d.it.tier === G.MAPGRADE[0]), 'the boss drop must sit on the map grade cap');
   assert.ok(drops.every(d => d.it.slot), 'successful boss rolls must be real equipment objects');
-  // The regular-mob branch is also the live loop: 3.5% clears the new first two gates,
-  // but misses the old rates and the new 3.2% third roll.
+  // The regular-mob branch is also the live loop: 0.8% clears all three gates (1.5/1.2/0.9).
   const mob = {...G.fieldOf(0,1).mobs[0],boss:false,lvl:1,sec:0};
-  const mobDrops = G.executeGearRoll(mob, .035);
-  assert.strictEqual(mobDrops.length, 2, 'doubled regular-mob equipment gates did not execute');
+  const mobDrops = G.executeGearRoll(mob, .008);
+  assert.strictEqual(mobDrops.length, 3, 'regular-mob equipment gates did not execute');
 });
 
 t('fieldOf only hands out items from that field pool', () => {
@@ -265,7 +271,7 @@ t('fieldOf only hands out items from that field pool', () => {
     F.mobs.forEach(mob => mob.drops.forEach(d => assert.ok(pool.includes(d[0].n), d[0].n + ' is not in the ' + G.MAPS[m].n + ' Lv' + l + ' pool')));
     if (l === 10) {
       assert.ok(F.boss, 'level 10 must have a boss');
-      assert.strictEqual(F.boss.drops.length, pool.length, 'the boss drops the whole pool');
+      assert.strictEqual(F.boss.drops.length, pool.length, 'the boss lists its whole pool');
       F.boss.drops.forEach(d => assert.ok(pool.includes(d[0].n)));
     } else assert.strictEqual(F.boss, null, 'bosses only exist at level 10');
   }
@@ -390,33 +396,30 @@ t('every slot is offered exactly what the class may wear, and nothing else', () 
   assert.strictEqual(inv.filter(it => G.slotAccepts('off', it) && it.slot === 'off').length, 0);
 });
 
-t('drop rarity is FIXED by MAP: a low map never rolls above its band, bosses are Legendary', () => {
-  const bands = G.MAPTIER;
+t('drop rarity is capped by MAP: no low-level boss can print endgame gear', () => {
+  const bands = G.MAPTIER, caps = G.MAPGRADE;
   assert.deepStrictEqual(Array.from(bands), [0, 0, 1, 1, 2, 2, 3, 3, 3, 3], 'the per-map rarity ladder changed');
+  assert.deepStrictEqual(Array.from(caps), [1, 2, 2, 3, 3, 4, 4, 4, 4, 4], 'the per-map grade cap changed');
   assert.strictEqual(G.BAGMAX, 1000, 'the bag holds 1000 items');
   for (let m = 0; m < G.MAPS.length; m++) {
-    // every stage 1-9 of a map drops ONE rarity, the map's own: a stage can never climb
+    // stages 1-9 keep the map's own band, now clamped by that map's cap
     const perMap = [...new Set([1, 2, 3, 4, 5, 6, 7, 8, 9].map(l => G.dropTier(m, l)))];
     assert.strictEqual(perMap.length, 1, G.MAPS[m].n + ' stages 1-9 must all sit on one band');
-    assert.strictEqual(perMap[0], bands[m], G.MAPS[m].n + ' stages 1-9 must be the map band');
-    assert.ok(bands[m] < 4, G.MAPS[m].n + ' can never be a Legendary field');
+    assert.strictEqual(perMap[0], Math.min(caps[m], bands[m]), G.MAPS[m].n + ' stages 1-9 band');
   }
   for (let m = 0; m < G.MAPS.length; m++) for (let l = 1; l <= 10; l++) {
-    const want = l >= 10 ? 4 : bands[m];
+    const want = Math.min(caps[m], l >= 10 ? 4 : bands[m]);
     assert.strictEqual(G.dropTier(m, l), want, G.MAPS[m].n + ' stage ' + l + ' band');
-    assert.ok(want < 4 || l === 10, G.MAPS[m].n + ' stage ' + l + ' must not be Legendary');
+    assert.ok(want <= caps[m], G.MAPS[m].n + ' stage ' + l + ' rolled past its cap');
     const F = G.fieldOf(m, l);
     assert.strictEqual(F.tier, want, G.MAPS[m].n + ' stage ' + l + ' field tier');
     F.mobs.forEach(mo => assert.strictEqual(mo.tier, want, 'every mob carries its field tier'));
-    if (l === 10) assert.strictEqual(F.boss.tier, 4, 'the boss is always Legendary');
+    if (l === 10) assert.strictEqual(F.boss.tier, caps[m], 'the boss sits on the map cap, not always Legendary');
     if (l < 10) assert.ok(F.tier <= bands[m], 'a stage cannot out-roll its own map');
-    // and the real kill-loop roll lands on that band whatever the dice do
-    G.S = { st: { luk: 99 }, eq: {} };
-    for (const roll of [0, .01, .4, .99]) {
-      const mob = { ...F.mobs[0], boss: false, lvl: l, sec: F.sec, tier: F.tier };
-      G.executeGearRoll(mob, roll).forEach(d => assert.strictEqual(d.it.tier, want, G.MAPS[m].n + ' roll ' + roll));
-    }
   }
+  // Abyss Epic really does beat a Payon Legendary, which no longer drops at all
+  const payonLegendary = 4.5 * G.MAPVAL[4], abyssEpic = 2.8 * G.MAPVAL[9];
+  assert.ok(abyssEpic > payonLegendary, 'Abyss Epic (' + abyssEpic.toFixed(2) + ') must beat Payon Legendary (' + payonLegendary.toFixed(2) + ')');
 });
 
 t('the rarity band is fixed but the affixes are rolled every time', () => {
@@ -506,10 +509,10 @@ t('LUK does not touch drop odds, cards, ores or pets any more', () => {
   for (const l of [0, 99]) {
     const F = G.fieldOf(2, 5), mob = { ...F.mobs[0], boss: false, lvl: 5, sec: F.sec, tier: F.tier };
     G.S = { st: { luk: l }, eq: {} };
-    // A die of .02 (2%) clears all three gear gates (4.8/4.0/3.2%) under both builds.
-    const drops = G.executeGearRoll(mob, .02);
+    // A die of .008 (0.8%) clears all three gear gates (1.5/1.2/0.9%) under both builds.
+    const drops = G.executeGearRoll(mob, .008);
     assert.strictEqual(drops.length, 3, 'LUK ' + l + ' must not change which gear rolls land (' + drops.length + ')');
-    assert.ok(!drops.some(d => d.it && d.it.card), 'and the 0.45% card gate is untouched too');
+    assert.ok(!drops.some(d => d.it && d.it.card), 'and the 0.15% card gate is untouched too');
   }
 });
 

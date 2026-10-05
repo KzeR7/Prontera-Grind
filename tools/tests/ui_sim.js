@@ -137,8 +137,8 @@ t('the map panel renders every map and field', () => {
   assert.ok(h.includes('Prontera') && h.includes('Abyss'), 'every map must be listed');
   assert.ok(!h.includes('Gear that drops here'), 'the bulky gear-by-slot card was removed in v16');
   // every drop now sits on the monster that drops it, one % line each
-  assert.ok(h.includes('dropline') && h.includes('4.8%') && h.includes('4%') && h.includes('3.2%'), 'mob gear odds must each be doubled and visible');
-  assert.ok(h.includes('0.45%'), 'the card chance stays visible on the monster');
+  assert.ok(h.includes('dropline') && h.includes('1.5%') && h.includes('1.2%') && h.includes('0.9%'), 'mob gear odds (v57: 3.6% total) must each be visible');
+  assert.ok(h.includes('0.15%'), 'the card chance stays visible on the monster');
   assert.ok(h.includes('mapcard'), 'the map selector must be the scalable grid');
   assert.strictEqual((h.match(/class="mapcard/g) || []).length, 10, 'one card per map');
   // Every map card shows its recommended level range under the name (the old build printed the
@@ -153,7 +153,7 @@ t('the map panel renders every map and field', () => {
   // the boss field lists the whole pool with odds, and the new ore rates
   U.mapL = 10;
   const b = U.V.map();
-  assert.ok(b.includes('<b>1%</b>') && b.includes('poolitem') && b.includes('Each item rolls independently'), 'the boss must list its whole pool at 1% each');
+  assert.ok(b.includes('<b>0.9%</b>') && b.includes('poolitem') && b.includes('Each item rolls independently'), 'the boss must list its whole pool at its 6%-total rate');
   assert.ok(b.includes('0.1%'), 'boss card odds must read 0.1% (v38)');
   assert.ok(b.includes('1% each') && b.includes('2.5% each'), 'v51 ore rates: 1% per monster, 2.5% per boss');
 });
@@ -487,30 +487,26 @@ t('every skill has a distinct icon and upgraded card metadata', () => {
   assert.ok(/\.skg\{[^}]*repeat\(4,minmax\(0,1fr\)\)/.test(src) && src.includes('.sk .si{width:40px;height:40px'), 'the icon tiles use a polished responsive card style');
 });
 
-t('Settings previews the class art the character actually wears', () => {
+t('Settings shows a clean character card: preview, costume note, no wall of text', () => {
   U.S = mkS('Assassin Cross'); U.S.sex = 'f'; U.S.hair = 7;
   const h = U.V.set();
   assert.ok(h.includes('id="hairPreview"') && h.includes('id="hairPreviewLoading"'), 'a canvas preview has a loading fallback');
   assert.ok(h.includes('Live female Assassin Cross class skin preview'), 'the preview describes the current class and gender');
-  assert.ok(h.includes('Female &middot; S (front) view'), 'and the view it draws');
-  assert.ok(h.includes('Hair comes with the class art'), 'the hairstyle is honestly reported as part of the uploaded art');
-  assert.ok(h.includes('still saved with your account (style 8 of 19)'), 'the saved hairstyle is not lost');
-  assert.ok(h.includes('aria-label="Previous hairstyle"') && h.includes('aria-label="Next hairstyle"'), 'the hair controls keep their accessible names');
-  assert.ok(!h.includes('data-a="hair"'), 'but they are no longer live buttons while the art is fixed');
-  assert.ok(h.includes('S (front) view &middot; animating'), 'and says the preview is the animation, not a still');
-  assert.ok(h.includes('the supplied SE swing, mirrored when you swing to the left'), 'the panel says which views are mirrored, and why');
-  assert.ok(h.includes('The art has no E or W animation, and only High Priest has its own straight-up N one'),
-    'the panel says which facings use the nearest supplied view');
-  assert.ok(h.includes('the art has no idle animation, so at rest your character keeps playing its walk cycle'),
-    'the standing-still policy is stated plainly, not hidden');
-  assert.ok(h.includes('the held-weapon art is switched off'), 'and that the held-weapon overlay is off for now');
-  assert.ok(h.includes('The white melee swing arc is switched off too'), 'and that the duplicate swing arc is off, with the reason');
+  assert.ok(h.includes('LIVE PREVIEW') && h.includes('Female &middot; animating'), 'labelled plainly as the live animation');
+  assert.ok(h.includes('Costumes - outfits that restyle a class without touching its stats - are planned for a future patch.'),
+    'the hairstyle slot is honestly described as a future costume feature');
+  assert.ok(/data-a="costume" disabled/.test(h), 'and the costume button is visibly not live yet');
+  assert.ok(!h.includes('data-a="hair"'), 'the retired hairstyle arrows are gone');
+  for (const gone of ['no idle animation', 'only High Priest has its own straight-up N', 'the supplied SE swing, mirrored',
+                      'the held-weapon art is switched off', 'style 8 of 19'])
+    assert.ok(!h.includes(gone), 'the settings tab no longer explains engine internals: ' + gone);
+  assert.ok(!/aria-label="Previous hairstyle"/.test(h), 'no dead hair controls either');
   assert.ok(src.includes("if(tabs.includes('set'))drawAppearancePreview();") &&
             src.includes("if(tabs.includes('job'))drawClassPreview();"),
     'the game loop redraws whichever preview is open, so it animates');
   assert.ok(src.includes('ctx.drawImage(f.img,f.sx+ax-bw/2,ay-bh+6,bw,bh,0,0,cv.width,cv.height);'),
     'the preview draws the whole current animation frame around the art anchor');
-  assert.ok(src.includes('const p=skinPack(cls,sex),f=p?skinFrameOf(p,\'S\'):null;'),
+  assert.ok(src.includes("const p=skinPack(cls,sex),f=p?skinFrameOf(p,'S'):null;"),
     'reading the frame the file\'s own delays say is due');
   assert.ok(src.includes('captureSkinFrame(heroSpr,route)'), 'and the in-game hero paints the due frame each render');
   assert.ok(src.includes('skinDecodePng') && src.includes("new DecompressionStream('deflate')"),
@@ -523,7 +519,8 @@ t('the class-change panel previews the class it is describing', () => {
   assert.ok(h.includes('id="classPreview"') && h.includes('id="classPreviewLoading"'), 'the class panel has its own canvas and loading note');
   assert.ok(h.includes('male Knight class skin preview'), 'the preview describes the current class and gender');
   assert.ok(h.includes('CLASS PREVIEW') && h.includes('You wear this now'), 'with a plain label for the class you already are');
-  assert.ok(h.includes('S (front) view &middot; animating'), 'and the class preview is labelled as the animation too');
+  assert.ok(h.includes('&middot; animating'), 'and the class preview is labelled as the animation too');
+  assert.ok(!h.includes('S (front) view'), 'without the retired view essay');
   assert.ok(h.includes('What this class looks like') || h.includes('You wear this now'), 'and a label for a class you are only looking at');
   const g = h.match(/.{0,40}undefined.{0,40}/);
   assert.ok(!g, 'the class panel renders without undefined values: ' + (g ? g[0] : ''));
