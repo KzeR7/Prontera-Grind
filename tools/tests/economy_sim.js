@@ -59,7 +59,7 @@ const E = sb.__e;
 
 let pass = 0, fail = 0;
 const t = (n, f) => { try { f(); console.log('  ok   ' + n); pass++; } catch (e) { console.log('  FAIL ' + n + ' -> ' + e.message); fail++; } };
-console.log('economy: live 70x/70÷3x pacing, quest share, job gates and Zeny scale\n');
+console.log('economy: live 3x/70x/70÷3x pacing, quest share, job gates and Zeny scale\n');
 
 // ---- the model the balance was solved with (same as tools/tune_pacing.js) ----------
 // Use the level-appropriate power route: early stage powers through p50, then p ~= Base Lv.
@@ -74,7 +74,7 @@ const expPerKill = p => (MPS * mobExp(p) + bossExp(p)) / (MPS + 1);
 const mobZeny = p => ((E.ZK[0] + E.ZK[1]) / 2) * p * p / 1000;
 const bossZeny = p => ((E.BZK[0] + E.BZK[1]) / 2) * p * p / 1000;
 const zenyPerKill = p => (MPS * mobZeny(p) + bossZeny(p)) / (MPS + 1);
-const rateFor = L => L < 100 ? 70 : 70 / 3;
+const rateFor = L => L <= 70 ? 210 : L < 100 ? 70 : 70 / 3;   // mirrors expRate(): 3x band through Lv70
 const killsFor = L => { const p = pwFor(L), n = E.needAt(L), rate = rateFor(L);
   return Math.ceil(n / (expPerKill(p) * rate + n * E.qrOf(L) * rate)); };
 
@@ -145,9 +145,9 @@ t('the curve is strictly increasing within each phase, with the rebirth drop at 
   assert.strictEqual(E.needAt(150), 8677321, 'level cap');
 });
 
-t('normal EXP is 70x below 100 and one-third thereafter; GM is unchanged', () => {
+t('normal EXP is 3x through Lv70, then 70x and one-third; GM is unchanged', () => {
   for(const lv of [1,10,60,99,100,150]){
-    E.S={lv,gm:false}; assert.strictEqual(E.expRate(),lv<100?70:70/3);
+    E.S={lv,gm:false}; assert.strictEqual(E.expRate(),lv<=70?210:lv<100?70:70/3);
     E.S.gm=true; assert.strictEqual(E.expRate(),100);
     E.S.gmx=25; assert.strictEqual(E.expRate(),25);
   }
@@ -162,6 +162,7 @@ t('the real kill reward block boosts Base/Job EXP but leaves player Zeny unchang
     vm.runInContext(`
       const S={lv:${level},gm:${gm},gmx:100,kills:0,kl:0,zeny:0,exp:0};
       const gx=()=>S.gm?S.gmx:1;
+      ${src.match(/const EXP_BOOST_LV=\d+,EXP_BOOST_X=\d+;/)[0]}
       ${src.match(/const expRate=[^;]+;/)[0]}
       const mob={n:'Test Mob',mapIndex:0,exp:100,zeny:10,boss:false},pv=()=>0,qProg=()=>{};
       let jobXP=0,pend=[],zenyEarned=0,recorded=0;const addJob=x=>jobXP+=x,recordMonsterKill=()=>recorded++;
@@ -169,7 +170,7 @@ t('the real kill reward block boosts Base/Job EXP but leaves player Zeny unchang
       ${rewards}
       this.result={xp:S.exp,z:S.zeny,jobXP,kills:S.kills,recorded};
     `,world);
-    const rate=gm?100:level<100?70:70/3;
+    const rate=gm?100:level<=70?210:level<100?70:70/3;
     assert.strictEqual(world.result.xp,Math.round(100*rate));
     assert.strictEqual(world.result.jobXP,Math.round(70*rate));
     assert.strictEqual(world.result.z,gm?1000:10);
@@ -197,11 +198,12 @@ t('quests pay a fraction of need(Lv), not a flat number', () => {
 
 t('quest EXP scales with need(Lv) instead of drifting', () => {
   E.S = { gm: false };
-  E.S.lv = 50; E.PW = pwFor(50); const a = E.newQuest('kill').xp;
-  E.S.lv = 100; E.PW = pwFor(100); const b = E.newQuest('kill').xp;
+  E.S.lv = 50; E.PW = pwFor(50); const a = E.newQuest('kill').xp, ra = E.expRate();
+  E.S.lv = 100; E.PW = pwFor(100); const b = E.newQuest('kill').xp, rb = E.expRate();
   // At rebirth, both the requirement curve and the live EXP multiplier reset; the
-  // quest reward should follow need(Lv) and that one-third post-99 rate exactly.
-  const curve = E.needAt(100) / E.needAt(50) / 3;
+  // quest reward must follow need(Lv) times whatever expRate() currently returns
+  // (Lv50 sits inside the v51 3x band, Lv100 in the one-third band).
+  const curve = (E.needAt(100) * rb) / (E.needAt(50) * ra);
   assert.ok(b > 0 && a > 0, 'quest rewards must stay positive across the reset');
   assert.ok(Math.abs(b / a - curve) / curve < 0.05, 'quest exp grew off-curve: ' + (b / a).toFixed(2) + ' vs ' + curve.toFixed(2));
 });
@@ -228,22 +230,22 @@ t('no single level is carried by quests (worst ' + (TL.worst * 100).toFixed(1) +
   assert.ok(TL.worst <= 0.45, 'a level fed ' + (TL.worst * 100).toFixed(1) + '% by quests - the high end must stay a mob grind');
 });
 
-t('pacing anchor: Base Lv 10 (1st job change) in about 7 min (got ' + (TL.T[10] * 60).toFixed(1) + ' min)', () => {
-  assert.ok(TL.T[10] * 60 > 6, 'too fast: ' + (TL.T[10] * 60).toFixed(1) + ' min');
-  assert.ok(TL.T[10] * 60 < 8.2, 'too slow: ' + (TL.T[10] * 60).toFixed(1) + ' min');
+t('pacing anchor: Base Lv 10 (1st job change) in about 2.5 min with the v51 3x band (got ' + (TL.T[10] * 60).toFixed(1) + ' min)', () => {
+  assert.ok(TL.T[10] * 60 > 2.2, 'too fast: ' + (TL.T[10] * 60).toFixed(1) + ' min');
+  assert.ok(TL.T[10] * 60 < 2.8, 'too slow: ' + (TL.T[10] * 60).toFixed(1) + ' min');
 });
 
-t('pacing anchor: Base Lv 10->50 takes about 30 min (got ' + ((TL.T[50]-TL.T[10])*60).toFixed(1) + ' min)', () => {
+t('pacing anchor: Base Lv 10->50 takes about 11 min with the 3x band (got ' + ((TL.T[50]-TL.T[10])*60).toFixed(1) + ' min)', () => {
   const total = TL.T[50] * 60, interval = (TL.T[50] - TL.T[10]) * 60;
-  assert.ok(total > 35 && total < 40, 'Base 50 total should be about 37 min, got ' + total.toFixed(1));
-  assert.ok(interval > 27 && interval < 33, 'Base 10->50 should be about 30 min, got ' + interval.toFixed(1));
+  assert.ok(total > 12.5 && total < 15, 'Base 50 total should be about 13.6 min, got ' + total.toFixed(1));
+  assert.ok(interval > 10 && interval < 12.5, 'Base 10->50 should be about 11 min, got ' + interval.toFixed(1));
 });
 
 t('pacing anchor: Base Lv 50 to 99 takes about 5 h (got ' + (TL.T[99] - TL.T[50]).toFixed(2) + ' h)', () => {
   const midgame = TL.T[99] - TL.T[50];
   assert.ok(midgame > 4.3, 'too fast: ' + midgame.toFixed(2) + ' h');
   assert.ok(midgame < 5.7, 'too slow: ' + midgame.toFixed(2) + ' h');
-  assert.ok(TL.T[99] > 5.4 && TL.T[99] < 5.9, 'Base 99 total should be about 5 h 37 min: ' + TL.T[99].toFixed(2) + ' h');
+  assert.ok(TL.T[99] > 4.55 && TL.T[99] < 5.15, 'v51 Base 99 total should be about 4 h 50 min: ' + TL.T[99].toFixed(2) + ' h');
 });
 
 t('pacing anchor: Base 100-150 is a hard ~2-day climb after the reset (got ' + (TL.hours - TL.T[100]).toFixed(1) + ' h)', () => {
@@ -259,17 +261,17 @@ t('job gates land on the anchors: base ' + GATES.map(g => g && g.base).join('/')
   assert.ok(Math.abs(GATES[0].base - 10) <= 1, '1st job gate at base ' + GATES[0].base);
   assert.ok(Math.abs(GATES[1].base - 48) <= 2, '2nd job gate at base ' + GATES[1].base);
   assert.ok(Math.abs(GATES[2].base - 99) <= 2, 'transcendent gate at base ' + GATES[2].base);
-  assert.ok(GATES[0].hours > 0.09 && GATES[0].hours < 0.14, '1st job after ' + GATES[0].hours.toFixed(2) + ' h');
+  assert.ok(GATES[0].hours > 0.03 && GATES[0].hours < 0.06, '1st job after ' + GATES[0].hours.toFixed(2) + ' h');
   const firstJobInterval = GATES[1].hours - GATES[0].hours;
-  assert.ok(firstJobInterval > 0.43 && firstJobInterval < 0.55, 'first-job levels should align to the 30-minute Base 10->50 interval; got ' + (firstJobInterval*60).toFixed(1) + ' min');
-  assert.ok(GATES[1].hours > 0.5 && GATES[1].hours < 0.7, '2nd job after ' + GATES[1].hours.toFixed(2) + ' h');
-  assert.ok(GATES[2].hours > 5.3 && GATES[2].hours < 5.9, 'transcendent after ' + GATES[2].hours.toFixed(2) + ' h');
+  assert.ok(firstJobInterval > 0.14 && firstJobInterval < 0.20, 'first-job levels should align to the 11-minute Base 10->50 interval; got ' + (firstJobInterval*60).toFixed(1) + ' min');
+  assert.ok(GATES[1].hours > 0.17 && GATES[1].hours < 0.25, '2nd job after ' + GATES[1].hours.toFixed(2) + ' h');
+  assert.ok(GATES[2].hours > 4.55 && GATES[2].hours < 5.15, 'transcendent after ' + GATES[2].hours.toFixed(2) + ' h');
 });
 
 t('a full run earns enough Zeny for the endgame sinks', () => {
   const z = totalZeny();
   const refCost = (r, sec) => Math.round(200 * (r + 1) * (1 + sec * .5));
-  const refCh = [100,100,100,100,70,60,50,40,30,20];
+  const refCh = [70,70,70,70,49,42,35,28,21,14];   // v51: every step nerfed 30%
   let oneSlot = 0; for (let r = 0; r < 10; r++) oneSlot += refCost(r, 3) / (refCh[r] / 100);
   const fullSetup = oneSlot * 7;
   assert.ok(z > fullSetup * 5, 'only ' + Math.round(z / fullSetup) + 'x a full +10 setup - refining is unaffordable');
