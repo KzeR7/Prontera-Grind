@@ -1105,5 +1105,50 @@ t('worn equipment can never be auto-sold or bulk-sold', () => {
   assert.ok(src.includes('const i=S.inv.findIndex(x=>String(x.id)===String(id))'), 'manual Sell searches the bag, never S.eq');
 });
 
+t('the reset buttons explain themselves, refuse on screen, and survive a rebuild', () => {
+  const pts = pick(/const totalPts=\(\)=>[^\n]*/, 'totalPts/rcost');
+  const deniedFn = grab('function denied(cost,what){', 'function log(');
+  const rstat = src.match(/rstat:\(\)=>\{[\s\S]*?save\(\)\}/)[0];
+  const box = {}; vm.createContext(box);
+  vm.runInContext(`let S=null;const logs=[],floats=[];let saves=0,uis=0;
+    const log=m=>logs.push(m),addFloat=(x,y,z,t)=>floats.push(t),ui=()=>uis++,save=()=>saves++;
+    const maxHp=()=>900;const pl={x:0,z:0};
+    ${pts}
+    ${deniedFn}
+    const ACT={${rstat}};
+    this.__r={set S(v){S=v},get S(){return S},get logs(){return logs},get floats(){return floats},get saves(){return saves},ACT};`, box);
+  const R = box.__r;
+  // below Base 20 the reset is free: it must work with an empty wallet (v56)
+  R.S = { lv: 12, zeny: 0, st: { str: 30, agi: 20, dex: 20, int: 5, vit: 20, luk: 5 }, pts: 0, hp: 100 };
+  R.ACT.rstat();
+  assert.strictEqual(R.S.zeny, 0, 'a free reset must not charge anything');
+  assert.deepStrictEqual(R.S.st, { str: 1, agi: 1, dex: 1, int: 1, vit: 1, luk: 1 }, 'the free reset really resets');
+  assert.strictEqual(R.saves, 1, 'the free reset saves');
+  assert.ok(!/Not enough/.test(R.logs[0] || ''), 'the free reset is not refused');
+  // Lv30 with 500z cannot afford 1,500z: the refusal has to be visible, not just logged
+  R.S = { lv: 30, zeny: 500, st: { str: 30, agi: 20, dex: 20, int: 5, vit: 20, luk: 5 }, pts: 0, hp: 100 };
+  const savesBefore = R.saves;
+  R.ACT.rstat();
+  assert.strictEqual(R.S.zeny, 500, 'nothing is charged when the reset is refused');
+  assert.strictEqual(R.S.st.str, 30, 'a refused reset leaves the stats alone');
+  assert.ok(/Not enough Zeny/.test(R.logs[R.logs.length - 1]), 'the refusal is logged');
+  assert.strictEqual(R.floats.length, 1, 'the refusal also floats over the character');
+  assert.strictEqual(R.saves, savesBefore, 'a refused reset does not save');
+  // the button itself says why it is dead, and what a working reset costs
+  U.S = mkS('Novice'); U.S.lv = 30; U.S.zeny = 500;
+  const poor = U.V.stats();
+  assert.ok(/data-a="rstat"[^>]*disabled title="You need 1,500 Zeny to reset stats"/.test(poor),
+    'an unaffordable reset button is disabled and explains the price');
+  assert.ok(/Reset stats \(1[,.]?500z\)/.test(poor), 'the price is on the button (got ' + (poor.match(/Reset stats \([^)]*\)/) || ['none'])[0] + ')');
+  U.S.zeny = 5000;
+  assert.ok(!/data-a="rstat"[^>]*disabled/.test(U.V.stats()), 'affordable resets are clickable');
+  U.S.lv = 15;
+  assert.ok(U.V.stats().includes('Reset stats (free below Base 20)'), 'the free band is on the label');
+  // a click whose press and release span a kill's renderWin() must not be swallowed
+  assert.ok(/if\(winPress\)\{winDirty=true;return\}/.test(src), 'renderWin must defer while a pointer is down');
+  assert.ok(/addEventListener\('pointerup',winUp\)/.test(src), 'the deferred rebuild runs on pointerup');
+  assert.ok(/\$\('wins'\)\.addEventListener\('pointerdown'/.test(src), 'the guard arms on a window press');
+});
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

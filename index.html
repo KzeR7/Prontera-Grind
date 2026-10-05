@@ -334,7 +334,7 @@ const GM_USER='GM',GM_PASS='gm1234';   // CHANGE THE GM PASSWORD before you publ
 // script block, which is a SyntaxError - the game did not run on main at all. One line wins, and
 // it names both sides of this merge: the v38 balance patch (the weapon cut, the affix/card
 // give-back) and main's weapon-hold rendering work.
-const BUILD='2026-10-05 grind-v54 background grinding';   // shown on the login card - confirms which file you loaded
+const BUILD='2026-10-05 grind-v56 mid-game exp wall + reset fixes';   // shown on the login card - confirms which file you loaded
 $('buildTag').textContent='build '+BUILD;
 
 // ---------- class tree: Novice -> 6 first jobs -> 6 second jobs -> 6 third jobs ----------
@@ -893,23 +893,31 @@ const dropTxt=([T,ch],tier)=>`<div class="dropline"><span>${poolIc(T)} ${T.n} <s
 const MAXST=120,BASECAP=99,ELITELV=100,statCap=()=>S.lv>=ELITELV?MAXST:BASECAP;
 
 // ---------- economy tuning ----------
-// v51 live pacing: Base Lv 1-70 earns EXP_BOOST_X (3x) the normal amount, so the whole
-// early-to-mid route is fast in real play - about 2 minutes to Lv10 and about 12 minutes
-// to Lv70 in the model. The old ~5-hour Base 71-99 stretch, the reset and the 48-hour
-// post-reset 100-150 tail are unchanged. Time estimates use 800 kills/hour and an average
-// boss every 16 kills; the live Stage-10 boss-with-escorts fight is not a literal part of
-// that model. Mob EXP is EXPK*pw^1.5/50, boss EXP is BOSEK*pw^1.5/50, Zeny is based on pw^2.
+// v56 live pacing: the whole EXP economy reads at one tenth (EXP_RATE 7 is the old 70x),
+// and the 3x early boost now ends at Base 50 - so Base 51-70 is the mid-game wall instead of
+// a formality. Base 1-50 keeps its v51 speed (~2.5 min to Lv10, ~14 min to Lv50), Base 50-70
+// takes about 1 h 20 m (levels ramp from seconds to ~10 minutes each), Base 99 lands at about
+// 7 hours and the post-reset 100-150 tail is still the two-day climb. Base 70-99 requirements
+// barely climb (130k -> 167k), which is what pays for the wall; per level it plays as a steady
+// ~11 minute plateau. Time estimates use 800 kills/hour and an average boss every 16 kills;
+// the live Stage-10 boss-with-escorts fight is not a literal part of that model. Mob EXP is
+// EXPK*pw^1.5/50, boss EXP is BOSEK*pw^1.5/50, Zeny is based on pw^2.
 // The job bar uses the same level-appropriate path power as the early-map stages, then
-// power ~= Base Lv through 99. Normal Base/Job/quest EXP is 70x below Lv100 (3x that
-// through Lv70) and 70/3x at Lv100+; GM keeps its configured multiplier. Base, Job and
-// quest EXP all read expRate(), so the boost lifts every bar together. tools/tune_pacing.js
-// and economy_sim.js pin this model; actual elapsed time varies with class, gear and play.
+// power ~= Base Lv through 99. GM keeps its configured multiplier. Base, Job and quest EXP
+// all read expRate(), so the band lifts every bar together. tools/tune_pacing.js and
+// economy_sim.js pin this model; actual elapsed time varies with class, gear and play.
 const EXPK=5.5,BOSEK=46,ZK=[8,14],BZK=[150,250];
+// v56: no kill pays less than ZMIN, so the first levels are not a 1-Zeny trickle (the raw
+// formula only reaches 5z around power 21, and the curve takes over from there).
+const ZMIN=5;
 // Quest rewards scale with need(Lv); this curve models about 20% quest EXP overall, with
 // no single level funded by more than ~40%. Loot cadence uses .126 expected equipment
-// pickups per kill after the 2x equipment changes (cards do not count).
-const QXP={kill:1/1400,loot:1/1750,boss:1/840},QZ={kill:1.6,loot:9,boss:26};
-const zenAt=p=>Math.max(1,Math.round(.011*p*p));   // reference zeny per kill at power level p
+// pickups per kill after the 2x equipment changes (cards do not count). v56: quest EXP is
+// need(L)*QXP*expRate(), so the one-tenth EXP_RATE above had to be matched by ten times the
+// quest fraction - otherwise the smaller displayed numbers would have quietly cut every
+// quest reward to a tenth of its old share of a level. Quest Zeny is untouched.
+const QXP={kill:1/140,loot:1/175,boss:1/84},QZ={kill:1.6,loot:9,boss:26};
+const zenAt=p=>Math.max(ZMIN,Math.round(.011*p*p));   // reference zeny per kill at power level p (v56 floor)
 // Canonical power follows the level-appropriate route: Prontera p1-10; class-map stages
 // p10,12,15,17,20,20,28,35,43,50; stay at p50 until the next route opens at Base 60;
 // later maps have a field for every Base level. These steps keep Job bars aligned to the
@@ -919,14 +927,20 @@ const pwOf=L=>{if(L<=10)return Math.max(1,L|0);for(const[c,p]of EARLY_PWR)if(L<=
 const epkOf=L=>{const p=pwOf(L),m=Math.max(1,Math.floor(EXPK*Math.pow(p,1.5)/50)),b=Math.max(1,Math.floor(BOSEK*Math.pow(p,1.5)/50));return(MPS*m+b)/(MPS+1)};
 const qrOf=L=>QXP.kill/(12+2*L)+.126*QXP.loot/(3+Math.floor(L/3))+(L>=12?QXP.boss/((MPS+1)*(1+Math.floor(L/10))):0);
 // Player EXP only: GM keeps its configured multiplier; Zeny and drop odds are unchanged.
-// v51: Base Lv 1-70 levels 3x faster. One multiplier feeds Base, Job and quest EXP, so the
-// boosted band speeds every bar together; Lv71+ keeps the historical curve.
-const EXP_BOOST_LV=70,EXP_BOOST_X=3;
-const expRate=()=>S.gm?gx():(S.lv<=EXP_BOOST_LV?70*EXP_BOOST_X:(S.lv<100?70:70/3));
-// Base-EXP requirements use continuous power segments through Lv99, then the intentional
-// reset at Lv100 and a separate post-99 ramp. Tuned to the level-appropriate map route,
-// normal EXP multipliers and shipped quest rewards in tools/tune_pacing.js.
-const NA1=187.05917193,NE1=1.28123988,N50=Math.floor(NA1*Math.pow(50,NE1)),NE2=7.06296658,N100=906779,NE3=5.57031747;
+// v56: the 1/10 display scale lives in EXP_RATE (the old 70x becomes 7x) and the 3x band ends
+// at Base 50. One multiplier feeds Base, Job and quest EXP, so the band lifts every bar
+// together and dividing it shrinks every displayed number by ten without changing the pace.
+const EXP_BOOST_LV=50,EXP_BOOST_X=3,EXP_RATE=7;
+const expRate=()=>S.gm?gx():(S.lv<=EXP_BOOST_LV?EXP_RATE*EXP_BOOST_X:(S.lv<100?EXP_RATE:EXP_RATE/3));
+// Base-EXP requirements: three continuous power segments through Lv99 (1-50 keeps the v51
+// shape, 50-70 is the v56 stretch, 70-99 climbs gently), then the intentional reset at Lv100
+// and the separate post-99 ramp. Every value is shown at three significant figures, so the
+// bar reads 360 / 1,490 / 35,000 instead of 3,574 / 1,404,641. Tuned to the level-appropriate
+// map route, the live EXP multipliers and the shipped quest rewards in tools/tune_pacing.js.
+const NA1=18.705917193,NE1=1.28684215,N50=Math.floor(NA1*Math.pow(50,NE1)),NE2=11.33248639,N70=Math.floor(N50*Math.pow(1.4,NE2)),NE2B=0.72933977,N100=43260,NE3=8.2928141;
+// Round to three significant figures (a step of 1, 10, 100 or 1000 by magnitude) and keep the
+// value at least 1, so a requirement is always a readable number and never zero.
+const roundReq=n=>{const a=Math.abs(n),m=a<100?1:a<1e4?10:a<1e5?100:1e3;return Math.max(1,Math.round(n/m)*m)};
 // Job levels run alongside base levels. JOFF[t] is the base level a job level of tier t
 // keeps pace with: Novice job j ~ base j, 1st job j ~ base j+9, 2nd job j ~ base j+49,
 // transcendent j ~ base j+98. The first job change remains at Base 10 (~7 min); Job Lv 1-40
@@ -1228,8 +1242,8 @@ const atk=()=>Math.round((4+S.lv*2+eqv('weapon')+st(C().main)*1.5+(st('dex')+st(
 const matk=()=>Math.round((4+S.lv*2+eqv('weapon')*.8+st('int')*1.5+st('dex')*.25)*C().atk*(1+(pv('matk')+bon('matk')+(typeof cardMasteryStat==='function'?cardMasteryStat('matkPct'):0)+(tb.matk||0)+(petBuff.matk||0))/100)*(1+collDmg()/100));
 const aspd=()=>Math.max(.2,.85*C().aspd*(1-Math.min(.5,st('agi')*.006))/(1+(pv('aspd')+bon('aspd')+(typeof cardMasteryStat==='function'?cardMasteryStat('aspdPct'):0)+(tb.aspd||0))/100));
 const crit=()=>Math.min(60,3+st('luk')*.4+pv('crit')+bon('crit')+(typeof cardMasteryStat==='function'?cardMasteryStat('critPct'):0)),flee=()=>Math.min(60,st('agi')*.5+S.lv*.1+pv('flee')+bon('flee')+(typeof cardMasteryStat==='function'?cardMasteryStat('fleePct'):0)),missCh=()=>Math.max(0,15-st('dex')*.25);
-const def=()=>Math.floor(S.lv*.5+st('vit')*.5+eqv('armor')+eqv('leg')+(S.eq.off&&S.eq.off.slot==='off'?eqv('off'):0)+pv('def')+(typeof cardMasteryStat==='function'?cardMasteryStat('def'):0)+(tb.def||0)+(petBuff.def||0)),mdef=()=>Math.floor(S.lv*.3+st('int')*.5+st('vit')*.4+eqv('head')*.3+pv('def')*.5+(typeof cardMasteryStat==='function'?cardMasteryStat('mdef'):0)),critD=()=>2+st('luk')*.01+st('dex')*.005+bon('cdm')/100,needAt=L=>L<=50?Math.floor(NA1*Math.pow(L,NE1)):L<=99?Math.floor(N50*Math.pow(L/50,NE2)):Math.floor(N100*Math.pow(L/100,NE3)),need=()=>needAt(S.lv),cost=k=>{const v=S.st[k];return v<ELITELV?1+Math.floor((v-1)/10):10+(v-ELITELV)};
-const totalPts=()=>{let p=10;for(let l=2;l<=S.lv;l++)p+=4+Math.floor(l/5);return p},rcost=()=>S.lv*50;
+const def=()=>Math.floor(S.lv*.5+st('vit')*.5+eqv('armor')+eqv('leg')+(S.eq.off&&S.eq.off.slot==='off'?eqv('off'):0)+pv('def')+(typeof cardMasteryStat==='function'?cardMasteryStat('def'):0)+(tb.def||0)+(petBuff.def||0)),mdef=()=>Math.floor(S.lv*.3+st('int')*.5+st('vit')*.4+eqv('head')*.3+pv('def')*.5+(typeof cardMasteryStat==='function'?cardMasteryStat('mdef'):0)),critD=()=>2+st('luk')*.01+st('dex')*.005+bon('cdm')/100,needAt=L=>roundReq(L<=50?Math.floor(NA1*Math.pow(L,NE1)):L<=70?Math.floor(N50*Math.pow(L/50,NE2)):L<=99?Math.floor(N70*Math.pow(L/70,NE2B)):Math.floor(N100*Math.pow(L/100,NE3))),need=()=>needAt(S.lv),cost=k=>{const v=S.st[k];return v<ELITELV?1+Math.floor((v-1)/10):10+(v-ELITELV)};
+const totalPts=()=>{let p=10;for(let l=2;l<=S.lv;l++)p+=4+Math.floor(l/5);return p},rcost=()=>S.lv<20?0:S.lv*50;
 // Skill points belong to the class LINE you are standing in, exactly like RO: the Novice level
 // you grinded, your first job and your second job all pool together, and only the skills your
 // line can reach draw on that pool. The old code pooled the job levels of EVERY class you had
@@ -1322,13 +1336,13 @@ function spawn(){
     const early=starterStage(S.mp,S.lvl),m=F.mobs[ri(0,1)];
     const hp=early?Math.min(starterHp(S.lvl),Math.floor(HPK*mb*Math.pow(l,HPE))):Math.floor(HPK*mb*Math.pow(l,HPE));
     mobs.push({...m,mapIndex:S.mp,boss:false,pack,hp,max:hp,atk:early?starterAtk(S.lvl):Math.floor((5+l*4.6)*mb),
-      exp:Math.max(1,Math.floor(EXPK*Math.pow(l,1.5)/50)),zeny:Math.max(1,Math.floor(ri(ZK[0],ZK[1])*l*l/1000)),
+      exp:Math.max(1,Math.floor(EXPK*Math.pow(l,1.5)/50)),zeny:Math.max(ZMIN,Math.floor(ri(ZK[0],ZK[1])*l*l/1000)),
       size:.6,mag:['demon','tree','blob'].includes(m.shape),lvl:l,sec:F.sec});
   };
   if(bossWave){
     const hp=Math.floor(500*mb*Math.pow(l,HPE));
     mobs.push({...F.boss,mapIndex:S.mp,boss:true,pack:0,hp,max:hp,atk:Math.floor((8+l*6.5)*mb),
-      exp:Math.max(1,Math.floor(BOSEK*Math.pow(l,1.5)/50)),zeny:Math.max(1,Math.floor(ri(BZK[0],BZK[1])*l*l/1000)),
+      exp:Math.max(1,Math.floor(BOSEK*Math.pow(l,1.5)/50)),zeny:Math.max(ZMIN,Math.floor(ri(BZK[0],BZK[1])*l*l/1000)),
       size:1.3,mag:true,lvl:l,sec:F.sec});
     // The first five maps bring three escorts; the five later maps bring five.
     for(let i=0;i<(S.mp<5?3:5);i++)addMinion(0);
@@ -1435,6 +1449,10 @@ function renderFeedFilter(){const p=$('feedFilter');if(!p)return;
 const feedFilShow=()=>{const p=$('feedFilter'),b=$('feedFil');if(!p)return;feedFilShown=true;renderFeedFilter();p.style.display='flex';
   if(b){b.classList.add('on');b.setAttribute('aria-expanded','true')}feedFilArm()};
 const feedFilToggle=()=>{if(feedFilShown)feedFilHide();else feedFilShow()};
+// A refused purchase must never be invisible: the log line is easy to miss while the kill feed is
+// running, so the same message also floats over the character. Both reset buttons use it.
+function denied(cost,what){log(`Not enough Zeny: ${cost.toLocaleString()}z needed to reset ${what} (you have ${Math.floor(S.zeny).toLocaleString()}z).`,'r0','misc');
+  addFloat(pl.x,2.9,pl.z,'Need '+cost.toLocaleString()+'z','#ff6b6b',true);ui()}
 function log(m,cls,cat){const e={m,cls,cat};logs.push(e);if(logs.length>80)logs.shift();
   const d=document.createElement('div');d.textContent=m;e.d=d;feedLive.push(e);if(feedLive.length>8)feedLive.shift();
   feedDraw();setTimeout(()=>{d.remove();const i=feedLive.indexOf(e);if(i>=0)feedLive.splice(i,1)},7000);
@@ -1747,7 +1765,7 @@ const V={
     return`<div class="hd">${S.cls} &middot; Base Lv ${S.lv} &middot; Job Lv ${jobOf().jl}/${c.mj}</div><div class="hd">Stat points: ${S.pts} <small>(max ${statCap()} each${S.lv<ELITELV?' &middot; '+MAXST+' unlocks at Base Lv '+ELITELV:''} &middot; max Base Lv 150)</small></div><div class="hd">🏆 Class collection: ${playedClasses()}/${t3Total()} transcendent classes at Base Lv 100+ &middot; <b>+${collDmg()}% damage</b> <small>(+1% each, permanent${playedClasses()?'':' - take a transcendent class to Base Lv 100 to earn it'})</small></div>`
     +STATS.map(([k,l,d])=>`<div class="slot"><span><b>${l}</b> ${S.st[k]}${b(k)} <small>(${d})</small></span><span class="bts"><small>${cost(k)}pt</small><button data-a="stat" data-v="${k}" ${S.pts>=cost(k)&&S.st[k]<statCap()?'':'disabled'}>+1</button><button data-a="stat5" data-v="${k}" ${S.pts>=cost(k)&&S.st[k]<statCap()?'':'disabled'}>+5</button></span></div>`).join('')
     +`<div class="slot" style="flex-wrap:wrap"><span>ATK <b>${atk()}</b></span><span>MATK <b>${matk()}</b></span><span>DEF <b>${def()}</b></span><span>ASPD <b>${(1/aspd()).toFixed(2)}/s</b></span><span>Crit <b>${crit().toFixed(1)}%</b></span><span>Crit DMG <b>x${critD().toFixed(2)}</b></span><span>MDEF <b>${mdef()}</b></span><span>Flee <b>${flee().toFixed(0)}%</b></span><span>HP <b>${maxHp()}</b></span></div>
-    <small>Weapons: ${c.wt.join(', ')}${katarOnly()?' (two-handed Katar; no off-hand)':''} &middot; Main stat: ${SU(c.main)}</small><button class="full" data-a="rstat">Reset stats (${rcost()}z)</button>`},
+    <small>Weapons: ${c.wt.join(', ')}${katarOnly()?' (two-handed Katar; no off-hand)':''} &middot; Main stat: ${SU(c.main)}</small><button class="full" data-a="rstat" ${rcost()&&S.zeny<rcost()?'disabled title="You need '+rcost().toLocaleString()+' Zeny to reset stats"':''}>Reset stats (${rcost()?rcost()+'z':'free below Base 20'})</button>`},
   job(){const lines=[['Swordman','Knight','Lord Knight'],['Mage','Wizard','High Wizard'],['Archer','Hunter','Sniper'],['Thief','Assassin','Assassin Cross'],['Acolyte','Priest','High Priest'],['Merchant','Blacksmith','Whitesmith']];
     const k=selK||S.cls,c=CLASSES[k],blk=classBlock(k),pj=S.jobs[k],rec=classRec(k);
     return`<div class="tree"><div class="trow" style="justify-content:center">${tnode('Novice')}</div><div class="trunk"></div>
@@ -1769,7 +1787,7 @@ const V={
         <div class="sk-level"><b>Lv ${L}</b> / ${s.max}</div>
         <button data-a="skill" data-v="${s.id}" aria-label="Increase ${s.n}" title="${L<s.max?'level '+(L+1)+' costs '+skCost(L+1)+' points':'max level'}" ${av>=skCost(L+1)&&L<s.max?'':'disabled'}>${L<s.max?'+'+skCost(L+1):'MAX'}</button></div>`}).join('')}${from==='Novice'?skMasterTile():''}</div>`:''}).join('')
     +(sel?(()=>{const SL=lv(sel.id),soff=!!(SL&&sel.type!=='pas'&&skOff(sel.id));return`<div class="mob-card" style="margin-top:8px"><div class="sk-detail-head"><b>${sel.n}</b> <small>${sel.type==='pas'?'Passive':sel.type==='heal'?'Auto-heal':sel.type==='to'?'Tradeoff (auto-cast)':'Active (auto-cast)'}${sel.rng?' &middot; RANGED':''}${sel.aoe?' &middot; AREA':''}${sel.dot?' &middot; DOT':''}${sel.stun?' &middot; STUN':''}${sel.chain?' &middot; CHAIN':''}</small></div><div class="sk-detail-autocast">${SL&&sel.type!=='pas'?`<label class="sk-autocast"><input type="checkbox" data-a="sktog" data-v="${sel.id}" ${soff?'':'checked'} aria-label="Auto cast ${sel.n}"> Auto cast this skill</label><small class="${soff?'r0':''}">${soff?'Paused - it will not be used until you check this again.':'Cast automatically every time you attack.'}</small>`:'<small>Passive or not learned yet - nothing to auto-cast.</small>'}</div><small>${sel.d(Math.max(1,SL))}</small>${SL&&SL<sel.max?`<br><small>Next: ${sel.d(SL+1)}</small>`:''}</div>`})():'')
-    +`<button class="full" data-a="rskill">Reset skills (${rcost()}z)</button>`},
+    +`<button class="full" data-a="rskill" ${rcost()&&S.zeny<rcost()?'disabled title="You need '+rcost().toLocaleString()+' Zeny to reset skills"':''}>Reset skills (${rcost()?rcost()+'z':'free below Base 20'})</button>`},
   bag0(){const sel=selB&&S.inv.find(x=>String(x.id)===String(selB));const n=Math.max(30,Math.ceil(S.inv.length/6)*6);const inv=S.inv.map((it,i)=>({it,i})).sort((a,b)=>Number(!!b.it.locked)-Number(!!a.it.locked)||a.i-b.i).map(x=>x.it);
     const detail=sel?`<div class="mob-card grid-detail">${itemDetail(sel)}<div class="row" style="margin-top:6px"><button data-a="equip" data-v="${sel.id}" ${canUse(sel)?'':'disabled'}>Equip</button><button data-a="sell" data-v="${sel.id}">Sell ${sellVal(sel)}z</button><button class="tick${sel.locked?' on':''}" data-a="lockgear" data-v="${sel.id}" aria-pressed="${!!sel.locked}" title="Locked gear stays pinned and protected from auto-sell">${sel.locked?'&#9733; Unlock':'☆ Lock'}</button><button class="tick${autoSellOn(sel.tier||0)?' on':''}" data-a="autosell" data-v="${sel.tier||0}" title="Auto-sell every ${RAR[sel.tier||0].n} item on drop">Auto-sell ${RAR[sel.tier||0].n}</button></div></div>`:'';
     return (eqPick?equipChooser(eqPick):'')
@@ -1959,12 +1977,23 @@ function insertUI(sel){if(!(sel.slots>0))return'<small>No card slots on this ite
   return'<div class="sec">Insert card</div>'+([...new Map(fit.map(c=>[c.n,c])).values()].map(c=>`<div class="slot"><span class="r${GI[c.g]}">🃏 ${c.n} <small>${SU(c.stat)} +${c.v} &middot; x${fit.filter(x=>x.n===c.n).length}</small></span><button data-a="sock" data-v="${c.id}:${selE}">Insert</button></div>`).join('')||'<small>No compatible cards in your bag.</small>')}
 function renderWin(){
   if(!S)return;
+  // A kill, a level-up or any panel refresh rebuilds every open window from scratch. A click whose
+  // press and release span one of those rebuilds used to be swallowed - the button the pointer went
+  // down on was already gone when the release arrived, which is what made the reset buttons (and
+  // others) feel broken. While a pointer is held inside the windows the rebuild is held too, and
+  // the deferred one runs the moment the pointer comes up.
+  if(winPress){winDirty=true;return}
   $('dock').innerHTML=Object.entries(TABS).filter(([k])=>k!=='gm'||S.gm).map(([k,[ic,n,key]])=>`<button class="ib${tabs.includes(k)?' on':''}" data-t="${k}" title="${n} (${key})">${ic}<span class="k">${key}</span>${dot(k)?'<i class="dot"></i>':''}</button>`).join('');
   renderQ();const host=$('wins');host.style.display=tabs.length?'flex':'none';
   const old={};host.querySelectorAll('[data-win]').forEach(e=>old[e.dataset.win]=e.querySelector('.wbody').scrollTop);
   host.innerHTML=tabs.map(k=>`<div class="win wp${k==='map'?' wide':''}" data-win="${k}"><div class="title"><span>${TABS[k][1]}</span><button data-x="${k}">&#10005;</button></div><div class="body wbody">${V[k]()}</div></div>`).join('');
   host.querySelectorAll('[data-win]').forEach(e=>{e.querySelector('.wbody').scrollTop=e.dataset.win==='log'?1e6:(old[e.dataset.win]||0)});
   if(tabs.includes('set'))drawAppearancePreview();if(tabs.includes('job'))drawClassPreview()}
+let winPress=false,winDirty=false;
+const winUp=()=>{winPress=false;if(winDirty){winDirty=false;renderWin()}};
+// Guarded so the headless UI harness (which pulls this slice into a bare vm) still loads.
+if(typeof addEventListener==='function'){addEventListener('pointerup',winUp);addEventListener('pointercancel',winUp)}
+if($('wins')&&$('wins').addEventListener)$('wins').addEventListener('pointerdown',()=>{winPress=true});
 const MAX_TABS=3;const openTab=k=>{if(k==='gm'&&!S.gm)return;if(k!=='status')eqPick=null;const i=tabs.indexOf(k);if(i>=0)tabs.splice(i,1);else{if(tabs.length>=MAX_TABS)tabs.shift();tabs.push(k);
   // Reopening a window starts at its first sub-tab: Status shows Stats, Inventory shows Bag.
   if(k==='status')sub.status='stats';if(k==='bag')sub.bag='bag';
@@ -1975,12 +2004,12 @@ const ACT={
   stat:k=>{if(S.pts>=cost(k)&&S.st[k]<statCap()){S.pts-=cost(k);S.st[k]++;S.hp=Math.min(S.hp,maxHp());ui();save()}},
   stat5:k=>{for(let i=0;i<5;i++)if(S.pts>=cost(k)&&S.st[k]<statCap()){S.pts-=cost(k);S.st[k]++}S.hp=Math.min(S.hp,maxHp());ui();save()},
   selk:v=>{selK=v;renderWin()},job:n=>{if(n==='Novice'&&S.cls!=='Novice')ask('Restart as Novice? You go back to Base Lv 25, job levels cleared, and your stats are refunded. Classes you leave keep their own Base Lv, stats and gear, so you can switch back to them later.',()=>changeClass(n));else changeClass(n)},
-  rstat:()=>{if(S.zeny<rcost())return log('Not enough Zeny to reset stats.');S.zeny-=rcost();for(const k in S.st)S.st[k]=1;S.pts=totalPts();S.hp=Math.min(S.hp,maxHp());log('Stats reset.');ui();save()},
+  rstat:()=>{const c=rcost();if(S.zeny<c)return denied(c,'stats');S.zeny-=c;for(const k in S.st)S.st[k]=1;S.pts=totalPts();S.hp=Math.min(S.hp,maxHp());log('Stats reset.'+(c?' -'+c.toLocaleString()+'z':''));ui();save()},
   skill:id=>{const s=SKILLS.find(x=>x.id===id);if(!s)return;const nx=lv(id)+1,c=skCost(nx);
     if(nx>s.max||!lineOf(S.cls).includes(s.from))return;
     if(skpAvail()<c)return log('Needs '+c+' skill points (you have '+skpAvail()+').','r0','skill');
     S.sk[id]=nx;S.skRepair=0;ui();save()},
-  rskill:()=>{if(S.zeny<rcost())return log('Not enough Zeny to reset skills.');S.zeny-=rcost();S.sk={aid:1};S.skOff={};S.skRepair=0;log('Skills reset; every skill auto-casts again.','','skill');ui();save()},
+  rskill:()=>{const c=rcost();if(S.zeny<c)return denied(c,'skills');S.zeny-=c;S.sk={aid:1};S.skOff={};S.skRepair=0;log('Skills reset'+(c?' -'+c.toLocaleString()+'z':'')+'; every skill auto-casts again.','','skill');ui();save()},
   selb:v=>{selB=v;renderWin()},equip:id=>equip(+id),sell:id=>sell(id),
   autosell:v=>{const t=Math.max(0,Math.min(4,+v||0));if(!Array.isArray(S.autoSell))S.autoSell=[false,false,false,false,false];S.autoSell[t]=!S.autoSell[t];
     log(`${RAR[t].n} items will ${S.autoSell[t]?'be sold automatically the moment they drop':'stay in the bag'}.`,S.autoSell[t]?'r3':'','gear');ui();save()},

@@ -103,10 +103,24 @@ simulated. `tools/tests/background_sim.js` pins all of that without a browser. T
 outgoing damage numbers and red spiked critical bubbles follow the supplied RO example.
 Active pets use their eight existing Divine Pride monster sprite IDs in the same
 WebGL/DOM renderer as mobs, all at one small scale (with a drawn fallback if an
-official remote PNG cannot load). Samples also reset at login or on a new adventure. The economy pacing
-tests still model the former 15-kill boss cadence, so their time-to-level projections
-are historical until a real Stage-10 boss-wave playtest. To look at a layout without a
-browser:
+official remote PNG cannot load). Samples also reset at login or on a new adventure.
+
+**v56 EXP curve and early economy.** Every displayed EXP number is one tenth of the old one
+(`EXP_RATE 7` replaces the flat 70x, and all three rate tiers scale together, so the pace is
+unchanged), and every requirement is rounded to three significant figures - Base 10 needs 360,
+not 3,574. The 3x early boost now ends at Base 50, which turns Base 51-70 into the mid-game
+wall: 50->70 takes about 1 h 20 m (levels ramp from seconds to ~10 minutes each) instead of
+12 minutes, Base 70 lands at ~1 h 34 m and Base 99 at ~6 h 55 m. Base 1-50 keeps its old pace
+(~2.5 min to Lv10, ~14 min to Lv50) and the post-reset 100-150 tail stays a 48-hour climb.
+Quests pay the same share of a level as before (`QXP` was scaled x10 to cancel the display
+change). Kills now pay at least 5 Zeny (`ZMIN`), so the first levels are not a 1-Zeny trickle;
+the raw curve takes over around Base 22. `rcost()` is free below Base 20 and a refused reset
+now says so on screen instead of only in the log, and windows no longer rebuild while a
+pointer is held down - that was what made the reset buttons feel dead. Read the curve with
+`node tools/pacing_report.js` (level-by-level times) and re-solve or check it with
+`node tools/tune_pacing.js` / `node tools/tune_pacing.js --verify`. The pacing tests model the
+canonical 16-kill boss cadence, so absolute times vary with a real Stage-10 boss-wave playtest.
+To look at a layout without a browser:
 
 ```sh
 node tools/preview/dump_plans.js /tmp/plans.json 10    # third arg: stage, defaults to 1

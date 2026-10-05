@@ -19,34 +19,39 @@ const src = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
 const pick = (re, name) => { const m = src.match(re); if (!m) throw new Error('cannot read ' + name + ' from index.html'); return m; };
 
 // ---- constants, straight out of the game ------------------------------------------------
-const [, EXPK, BOSEK] = pick(/const EXPK=([\d.]+),BOSEK=([\d.]+),ZK=\[(\d+),(\d+)\],BZK=\[(\d+),(\d+)\];/, 'EXPK/BOSEK/ZK/BZK');
-const ZK = pick(/const EXPK=[\d.]+,BOSEK=[\d.]+,ZK=\[(\d+),(\d+)\],BZK=\[(\d+),(\d+)\];/, 'ZK/BZK').slice(1, 3).map(Number);
-const BZK = pick(/const EXPK=[\d.]+,BOSEK=[\d.]+,ZK=\[\d+,\d+\],BZK=\[(\d+),(\d+)\];/, 'BZK').slice(1, 3).map(Number);
-const QXP = (() => { const m = pick(/const QXP=\{kill:1\/(\d+),loot:1\/(\d+),boss:1\/(\d+)\}/, 'QXP'); return { kill: 1 / +m[1], loot: 1 / +m[2], boss: 1 / +m[3] }; })();
-const [, NA1, NE1, NE2] = pick(/const NA1=([\d.]+),NE1=([\d.]+),N50=Math\.floor\(NA1\*Math\.pow\(50,NE1\)\),NE2=([\d.]+),N100=(\d+),NE3=([\d.]+);/, 'needAt constants');
-const N100 = +pick(/N100=(\d+),NE3=/, 'N100')[1], NE3 = +pick(/N100=\d+,NE3=([\d.]+);/, 'NE3')[1];
-const [, BOOST_LV, BOOST_X] = pick(/const EXP_BOOST_LV=(\d+),EXP_BOOST_X=(\d+);/, 'EXP boost band');
-const EARLY_PWR = [...pick(/const EARLY_PWR=\[([\s\S]*?)\];/, 'EARLY_PWR')[1].matchAll(/\[(\d+),(\d+)\]/g)].map(m => [+m[1], +m[2]]);
-const JOFF = pick(/const JOFF=\[([^\]]+)\];/, 'JOFF')[1].split(',').map(Number);
+const grab = (re, name) => { const m = src.match(re); if (!m) throw new Error('cannot read ' + name + ' from index.html'); return m; };
+const EXPK = +grab(/const EXPK=([\d.]+),/, 'EXPK')[1];
+const BOSEK = +grab(/const EXPK=[\d.]+,BOSEK=([\d.]+),/, 'BOSEK')[1];
+const ZK = [+grab(/ZK=\[(\d+),(\d+)\],BZK/, 'ZK')[1], +grab(/ZK=\[\d+,(\d+)\],BZK/, 'ZK')[1]];
+const BZK = [+grab(/BZK=\[(\d+),(\d+)\];/, 'BZK')[1], +grab(/BZK=\[\d+,(\d+)\];/, 'BZK')[1]];
+const ZMIN = +grab(/const ZMIN=(\d+);/, 'ZMIN')[1];
+const QXP = (() => { const m = grab(/const QXP=\{kill:1\/(\d+),loot:1\/(\d+),boss:1\/(\d+)\}/, 'QXP'); return { kill: 1 / +m[1], loot: 1 / +m[2], boss: 1 / +m[3] }; })();
+const [, NA1, NE1, NE2, NE2B, N100, NE3] = grab(/const NA1=([\d.]+),NE1=([\d.]+),N50=Math\.floor\(NA1\*Math\.pow\(50,NE1\)\),NE2=([\d.]+),N70=Math\.floor\(N50\*Math\.pow\(1\.4,NE2\)\),NE2B=([\d.]+),N100=(\d+),NE3=([\d.]+);/, 'needAt constants');
+const N50 = Math.floor(+NA1 * Math.pow(50, +NE1)), N70 = Math.floor(N50 * Math.pow(1.4, +NE2));
+const [, BOOST_LV, BOOST_X, EXP_RATE] = grab(/const EXP_BOOST_LV=(\d+),EXP_BOOST_X=(\d+),EXP_RATE=(\d+);/, 'EXP boost band');
+const EARLY_PWR = [...grab(/const EARLY_PWR=\[([\s\S]*?)\];/, 'EARLY_PWR')[1].matchAll(/\[(\d+),(\d+)\]/g)].map(m => [+m[1], +m[2]]);
+const JOFF = grab(/const JOFF=\[([^\]]+)\];/, 'JOFF')[1].split(',').map(Number);
 const MPS = 15, KILLS_PER_HOUR = 800;   // the model's own numbers (pack size, cadence)
 
-const needAt = L => L <= 50 ? Math.floor(NA1 * Math.pow(L, NE1))
-  : L <= 99 ? Math.floor(Math.floor(NA1 * Math.pow(50, NE1)) * Math.pow(L / 50, NE2))
-    : Math.floor(N100 * Math.pow(L / 100, NE3));
+const roundReq = n => { const a = Math.abs(n), m = a < 100 ? 1 : a < 1e4 ? 10 : a < 1e5 ? 100 : 1e3; return Math.max(1, Math.round(n / m) * m) };
+const needAt = L => roundReq(L <= 50 ? Math.floor(NA1 * Math.pow(L, NE1))
+  : L <= 70 ? Math.floor(N50 * Math.pow(L / 50, NE2))
+    : L <= 99 ? Math.floor(N70 * Math.pow(L / 70, NE2B))
+      : Math.floor(N100 * Math.pow(L / 100, NE3)));
 const pwOf = L => { if (L <= 10) return Math.max(1, L | 0); for (const [cap, p] of EARLY_PWR) if (L <= cap) return p; return Math.min(99, L | 0); };
-const expRate = L => L <= +BOOST_LV ? 70 * +BOOST_X : L < 100 ? 70 : 70 / 3;
+const expRate = L => L <= +BOOST_LV ? +EXP_RATE * +BOOST_X : L < 100 ? +EXP_RATE : +EXP_RATE / 3;
 const mobExp = p => Math.max(1, Math.floor(+EXPK * Math.pow(p, 1.5) / 50));
 const bossExp = p => Math.max(1, Math.floor(+BOSEK * Math.pow(p, 1.5) / 50));
 const expPerKill = p => (MPS * mobExp(p) + bossExp(p)) / (MPS + 1);
 const avg = a => (a[0] + a[1]) / 2;
-const mobZeny = p => Math.max(1, Math.floor(avg(ZK) * p * p / 1000));
-const bossZeny = p => Math.max(1, Math.floor(avg(BZK) * p * p / 1000));
+const mobZeny = p => Math.max(+ZMIN, Math.floor(avg(ZK) * p * p / 1000));
+const bossZeny = p => Math.max(+ZMIN, Math.floor(avg(BZK) * p * p / 1000));
 const zenyPerKill = p => (MPS * mobZeny(p) + bossZeny(p)) / (MPS + 1);
 const qrOf = L => QXP.kill / (12 + 2 * L) + .126 * QXP.loot / (3 + Math.floor(L / 3)) + (L >= 12 ? QXP.boss / ((MPS + 1) * (1 + Math.floor(L / 10))) : 0);
 // Quest Zeny: a completed quest pays goal * QZ[type] * zenAt(power), and the goal is exactly the
 // work that completed it, so every goal cancels: income per kill is zenAt(power) * the QZ mix.
 const QZ = (() => { const m = pick(/const QXP=\{[^}]+\},QZ=\{kill:([\d.]+),loot:([\d.]+),boss:([\d.]+)\}/, 'QZ'); return { kill: +m[1], loot: +m[2], boss: +m[3] }; })();
-const zenAt = p => Math.max(1, Math.round(.011 * p * p));
+const zenAt = p => Math.max(+ZMIN, Math.round(.011 * p * p));
 const questZenyPerKill = (p, L) => zenAt(p) * (QZ.kill + .126 * QZ.loot + (L >= 12 ? QZ.boss / (MPS + 1) : 0));
 
 // ---- one pass over the whole climb --------------------------------------------------------
@@ -98,6 +103,6 @@ if (wantLevels) {
   for (const L of [10, 20, 30, 50]) console.log('by Base ' + String(L).padEnd(3) + ' ' + nz(at(L).cumZeny).padStart(9) + ' Zeny earned in total');
 }
 
-console.log('\n(read straight from index.html: EXPK=' + EXPK + ', BOSEK=' + BOSEK + ', ZK=[' + ZK + '], BZK=[' + BZK + '], ' +
-  'EX P band ' + BOOST_X + 'x through Lv' + BOOST_LV + ', needAt seeds ' + NA1 + '/' + NE1 + '/' + NE2 + '/' + N100 + '/' + NE3 + ')');
+console.log('\n(read straight from index.html: EXPK=' + EXPK + ', BOSEK=' + BOSEK + ', ZK=[' + ZK + '], BZK=[' + BZK + '], ZMIN=' + ZMIN + ', ' +
+  'rate ' + EXP_RATE + 'x, band ' + BOOST_X + 'x through Lv' + BOOST_LV + ', needAt seeds ' + NA1 + '/' + NE1 + '/' + NE2 + '/' + NE2B + '/' + N100 + '/' + NE3 + ')');
 console.log('Elapsed times are the model\'s, not a promise: class, gear, Speed x2/x4 and play style all move them.');
