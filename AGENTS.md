@@ -3230,3 +3230,52 @@ assigned for feel rather than fidelity. While reworking that, two shipped bugs s
   Amatsu are worth less than they used to be (owned items keep their rolls), which is the intended
   fix for "30 min of grinding gave a bunch of legendaries" and will want a balance read after the
   owner plays a while.
+
+### 2026-10-05 — `grind-v58 Abyss-only legendary + card panel polish` (owner follow-ups)
+
+* **Mid maps now top out at Epic, bosses included (owner item 1):** the owner's tier read was
+  explicit - Izlude/Geffen/Morroc/Payon are early, Comodo/Louyang/Amatsu/Niflheim are mid, and
+  Abyss is the *only* endgame map. `MAPGRADE` is now `[1,2,2,3,3,3,3,3,3,4]` (it was
+  `[1,2,2,3,3,4,4,4,4,4]`, which let every mid map print Legendary gear - that is the drop the
+  owner saw) and `MAPVAL` was respaced to `[0.34,0.40,0.47,0.56,0.66,0.72,0.78,0.84,0.92,1.15]`
+  so the Abyss band steps clear of the mid maps. `dropTier(m,l)` clamps both the field ladder and
+  the stage-10 boss to the map cap, so a Niflheim boss tops out at Epic and only Abyss can roll
+  Legendary. `gear_sim` now pins the cap array, the "only Abyss may reach Legendary" rule, the
+  two boundary stages and the Abyss band gap.
+* **Card mastery panel rebuilt (owner item 2):** the roll list is capped at the **last three**
+  rolls (newest first) and rendered as one **horizontal** chip strip with real styling
+  (`.card-roll-recent` / `.roll-chips` / `.roll-chip`, inherit font, gold ring on the newest) -
+  the previous bare vertical list pushed the whole tab down. The reset is now a **dropdown plus
+  one button** (`.card-pick` + `cardpick` action + `cardPick` state): pick the Legendary from the
+  list, press Reset to the right. A row of sacrifice buttons per card is gone, so a big
+  collection cannot wreck the layout.
+* **Background grinding is permanent (owner item 3):** the checkbox is removed from Settings, the
+  `bg` action is deleted, every load normalises `f.bg=true` and `bgOn()` is a constant `true`, so
+  hiding the tab always keeps the sim (and its save) running. The line stays as a statement of
+  fact. `background_sim` was rewritten around the new contract: even a legacy save that says
+  `bg:false` still grinds, and no UI/action can flip it.
+* **Test-pin repairs (the v57 regressions the owner's "don't break my game" note was about):**
+  `class_skin_sim` still asserted the settings copy that v57 deleted (the view/idle/swing-arc
+  paragraphs and "hair is part of the art") - those now assert the retired text is *gone* and the
+  Costume note is present; `starter_sim` pinned the old 0.45% card chance (now 0.15%);
+  `pet_sim` needed the new `MAPGRADE`/`MAPVAL` picks in its harness, and `genGear()` now reads the
+  map band through `(S&&S.mp|0)||0` so a harness with no live state cannot crash it;
+  `equipment-cards-tuning.html`'s `SAFE_PREVIOUS_BUILDS` had a missing opening quote from an
+  earlier hand bump, which is what made the worksheet fail `node --check` ("Octal literals are
+  not allowed in strict mode") - the list is repaired and de-duplicated.
+* **Files touched:** `index.html` (MAPGRADE/MAPVAL/genGear, card panel + CSS + `cardpick`/`cardPick`,
+  Settings Gameplay line, `bg` removal, `bgOn`, `f.bg`, `BUILD`), `tools/tests/{gear_sim,ui_sim,
+  background_sim,class_skin_sim,starter_sim,pet_sim}.js`, `Updates/cards-gear-audit/*` (v58 label,
+  repaired carry-forward list, refreshed worksheet baseline), `READ-ME-FIRST.md`, this log.
+* **Tests:** all **21 suites** pass on the same tree (no suite reports a FAIL line): pack 19,
+  class_change 25, class_skin 39, save_load 22, economy 23, stat 7, card 13, skill 52, gear 30,
+  scene 8, kit 34, UI 37, sprite 12, starter 8, pet 12, picker 19, drop_card_sheet 12,
+  weapon_joint 7, weapon_review 13, sprite_viewer 154 PNGs/19 jobs, background 12.
+* **Branches / PR:** `arena/01a10c2f-prontera-grind` -> PR #22 against `main`, updated with this
+  commit.
+* **Known limits / follow-ups:** items 1 (skills) and 4 (pets) from the owner's seven-item round
+  are still to come - both are design-heavy and the owner wants a dedicated tuning discussion
+  (skills especially: +1 skill per class, longer cooldowns, some build choice). Saves are safe
+  across both v57 and v58: gear values are stamped at drop time, so items already owned keep
+  their rolls, and the only removal is the background checkbox (the field stays in saves,
+  normalised to on).

@@ -399,7 +399,14 @@ t('every slot is offered exactly what the class may wear, and nothing else', () 
 t('drop rarity is capped by MAP: no low-level boss can print endgame gear', () => {
   const bands = G.MAPTIER, caps = G.MAPGRADE;
   assert.deepStrictEqual(Array.from(bands), [0, 0, 1, 1, 2, 2, 3, 3, 3, 3], 'the per-map rarity ladder changed');
-  assert.deepStrictEqual(Array.from(caps), [1, 2, 2, 3, 3, 4, 4, 4, 4, 4], 'the per-map grade cap changed');
+  assert.deepStrictEqual(Array.from(caps), [1, 2, 2, 3, 3, 3, 3, 3, 3, 4], 'the per-map grade cap changed');
+  // v57 owner tiers: Izlude/Geffen/Morroc/Payon are early, Comodo/Louyang/Amatsu/Niflheim mid,
+  // and Abyss is the only endgame map - so only Abyss may reach Legendary.
+  assert.deepStrictEqual(Array.from(caps).map(c => c >= 4), [false,false,false,false,false,false,false,false,false,true],
+    'Abyss must be the only map that can drop Legendary gear');
+  assert.strictEqual(G.dropTier(8, 10), 3, 'Niflheim stage 10 tops out below Abyss');
+  assert.strictEqual(G.dropTier(9, 10), 4, 'Abyss stage 10 is the Legendary source');
+  assert.ok(G.MAPVAL[9] > G.MAPVAL[8] * 1.2, 'and the Abyss value band is a clear step above the mid maps');
   assert.strictEqual(G.BAGMAX, 1000, 'the bag holds 1000 items');
   for (let m = 0; m < G.MAPS.length; m++) {
     // stages 1-9 keep the map's own band, now clamped by that map's cap

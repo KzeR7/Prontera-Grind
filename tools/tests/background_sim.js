@@ -169,18 +169,17 @@ t('the speed multiplier applies to background slices too', () => {
   bg.pass(1000); bg.show();
 });
 
-t('the setting off pauses instead of grinding', () => {
-  bg.S.bg = false;
+t('background grinding is permanent - no save field can pause a hidden tab', () => {
+  // v57: the owner retired the tick ("this should be a permanent feature, not selectable").
+  bg.S.bg = false;                             // even a legacy save that says "off" keeps grinding
   const before = bg.logs.length;
   bg.pass(1); bg.hide();
   const a = bg.stat();
   for (let s = 0; s < 120; s++) { bg.pass(1000); bg.wake(); }
-  assert.strictEqual(bg.stat().gameTime, a.gameTime, 'two hidden minutes simulated nothing');
+  assert.ok(bg.stat().gameTime - a.gameTime > 100, 'two hidden minutes still simulated');
   bg.pass(1000); bg.show();
-  assert.strictEqual(bg.stat().gameTime, a.gameTime, 'returning simulated nothing either');
-  assert.strictEqual(bg.logs.length, before, 'a paused tab does not print an away line');
+  assert.ok(bg.logs.length > before, 'and the away line is still printed even though the save said off');
   bg.pass(16); bg.frame();
-  assert.ok(bg.stat().gameTime > a.gameTime, 'frames drive the sim again the moment it is back');
   bg.S.bg = true;
 });
 
@@ -192,11 +191,14 @@ t('the ticker does not double-drive a healthy visible tab', () => {
   near(bg.stat().gameTime - a.gameTime, 3.016, 0.002, 'the frame picks the waiting time up, once');
 });
 
-t('a fresh save starts with background grinding on, and old saves keep it', () => {
-  assert.ok(src.includes('clickSell:false,bg:true,autoSell:'), 'a fresh save carries bg:true');
-  assert.ok(src.includes('if(f.bg!==true&&f.bg!==false)f.bg=true;'), 'an old save without the field migrates to on');
-  assert.ok(src.includes('data-a="bg"'), 'Settings renders the checkbox');
-  assert.ok(/bg:\(\)=>\{S\.bg=S\.bg===false;/.test(src), 'the checkbox is wired to an ACT action');
+t('background grinding has no switch left in the UI or in ACT', () => {
+  assert.ok(src.includes('clickSell:false,bg:true,autoSell:'), 'a fresh save still carries bg:true');
+  assert.ok(src.includes('f.bg=true;'), 'and every load normalises the field to on');
+  assert.ok(!src.includes('if(f.bg!==true&&f.bg!==false)f.bg=true;'), 'the old toggle migration is gone');
+  assert.ok(!src.includes('data-a="bg"'), 'Settings no longer renders a checkbox');
+  assert.ok(!/bg:\(\)=>\{S\.bg=/.test(src), 'and no ACT action can flip it');
+  assert.ok(src.includes('const bgOn=()=>true;'), 'bgOn() is permanently true');
+  assert.ok(src.includes('Keeps grinding while this tab is in the background'), 'the tidied line stays as a statement of fact');
 });
 
 console.log(`\n${pass} passed, ${fail} failed`);

@@ -223,14 +223,19 @@ t('the Mastery Index tracks monster titles and consumes loose cards for permanen
   // v57: the picker lists every loose Legendary so the player chooses what to sacrifice, the
   // bag list gets rarity sub-tabs, and a stack can be dedicated in one tap.
   U.S.cards=[{id:11,n:'Poring Card',g:3,stat:'str',v:4},{id:12,n:'Fabre Card',g:3,stat:'agi',v:3},{id:13,n:'Poring Card',g:0,stat:'dex',v:1}];
-  U.S.cardIndex.rolls=['str','agi','str'];
+  U.S.cardIndex.rolls=['str','str','agi'];
   h=U.V.index();
-  assert.ok((h.match(/data-a="cardreset"/g)||[]).length>=3,'one reset button per loose Legendary card');
-  assert.ok(h.includes('data-v="11"')&&h.includes('data-v="12"'),'each sacrifice button carries its own card id');
-  assert.ok(!h.includes('data-v="13"')||!/cardreset" data-v="13"/.test(h),'a Common card is not offered as a sacrifice');
+  assert.strictEqual((h.match(/data-a="cardreset"/g)||[]).length,1,'exactly one reset button now');
+  assert.ok(h.includes('class="card-pick" data-a="cardpick"'),'the sacrifice is a dropdown, not a button per card');
+  assert.ok(h.includes('<option value="11"')&&h.includes('<option value="12"'),'every loose Legendary is an option');
+  assert.ok(!h.includes('<option value="13"'),'a Common card is not offered as a sacrifice');
+  assert.ok((h.match(/<option /g)||[]).length===2,'one option per loose Legendary, no more');
   assert.ok(h.includes('data-a="cardtab"')&&h.includes('Legendary <small>2</small>'),'rarity sub-tabs count the loose cards');
   assert.ok(h.includes('data-a="indexall"')&&h.includes('Insert all'),'a stack can be dedicated in one tap');
   assert.ok(h.includes('Latest rolls'),'and the newest rolls are shown, not just the totals');
+  assert.ok((h.match(/class="roll-chip(?!s)/g)||[]).length===3,'at most three rolls are listed');
+  assert.ok(h.indexOf('AGI</b>')<h.indexOf('STR</b>'),'newest roll first');
+  assert.ok(src.includes('.roll-chips{display:flex;flex-direction:row'),'the chips are a horizontal strip, not a column');
   assert.ok(h.includes('Card Index available')&&!h.includes('(global max)'),'the loose-card list is renamed and the global-max wording is gone');
   for(const reward of ['hpPct','fleePct','leech','def','mdef','atkPct','matkPct','aspdPct','critPct'])assert.ok(src.includes("id:'"+reward+"'"),reward+' should be an available card mastery reward');
   assert.ok(h.includes('Poring Card')&&h.includes('Mastery 1/5'),'the card album keeps per-card mastery history');

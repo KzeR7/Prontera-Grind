@@ -242,6 +242,14 @@ button.tick.on{background:#ffe08a;border-color:var(--gold);font-weight:bold}
 .mastery-medal{position:relative;width:36px;height:36px;display:grid;place-items:center;border:2px ridge var(--foil);border-radius:50%;background:radial-gradient(circle at 30% 24%,var(--foil-hi,#fff),var(--foil) 70%,var(--foil-lo,#463b30));color:#332416;font:900 18px Georgia,serif;text-shadow:0 1px #fff9;box-shadow:inset 0 0 0 2px #fff8,0 1px 2px #251b1677}.mastery-medal small{position:absolute;right:-4px;bottom:-3px;padding:0 3px;border:1px solid var(--foil);border-radius:6px;background:#fff8e6;color:#3b2a1a;font:800 8px/1.2 sans-serif}
 .tone-bronze{--foil:#9e633e;--foil-hi:#f4d1a2;--foil-lo:#59351f}.tone-copper{--foil:#a76a45;--foil-hi:#ffdbb1;--foil-lo:#5a331c}.tone-silver{--foil:#9099a1;--foil-hi:#fff;--foil-lo:#4d5763}.tone-jade{--foil:#558b68;--foil-hi:#d8f5ca;--foil-lo:#244d35}.tone-sapphire{--foil:#4374a9;--foil-hi:#d2e8ff;--foil-lo:#243c70}.tone-amethyst{--foil:#8663aa;--foil-hi:#f0d8ff;--foil-lo:#482861}.tone-obsidian{--foil:#575074;--foil-hi:#d8d0ff;--foil-lo:#211f35}.tone-crimson{--foil:#b64745;--foil-hi:#ffd6b0;--foil-lo:#5b202b}.tone-gold{--foil:#bd8c22;--foil-hi:#fff1a8;--foil-lo:#684312}.tone-valkyrie{--foil:#d5a52f;--foil-hi:#fffde1;--foil-lo:#8a5e1b}.tone-valkyrie .mastery-medal{box-shadow:inset 0 0 0 2px #fff9,0 0 0 2px #edcb6a,0 0 10px #d4a82c88}
 .mastery-title-copy{display:flex;flex-direction:column;min-width:0}.mastery-title-copy>b{font-size:11px;line-height:1.2;color:#372719}.mastery-title-copy>small{font-size:9px;line-height:1.2;overflow-wrap:anywhere}.mastery-title>button{padding:3px 5px;font-size:9px;min-width:48px}.mastery-track{height:6px;margin:3px 0;border:1px solid #796c5533;border-radius:5px;overflow:hidden;background:#ddd4c1}.mastery-track i{display:block;height:100%;background:linear-gradient(90deg,var(--foil,#b98327),#ffe8a0);transition:width .2s}
+.card-roll-recent{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin:5px 0 2px;padding:5px 7px;border:1px solid var(--edge);border-radius:6px;background:#fffdf5}
+.card-roll-recent>span{font-size:10px;font-weight:700;color:#6b5a3c}
+.roll-chips{display:flex;flex-direction:row;align-items:center;gap:5px;flex-wrap:wrap}
+.roll-chip{display:inline-flex;align-items:baseline;gap:4px;padding:2px 8px;border:1px solid #c9a660;border-radius:999px;background:linear-gradient(#fff8dc,#f0dfae);font-family:inherit;font-size:11px;font-weight:800;color:#553719;white-space:nowrap}
+.roll-chip.new{border-color:var(--gold);box-shadow:0 0 5px #d4a82c88}
+.roll-chip small{font-size:9px;font-weight:700;color:#7a6236}
+.card-pick{max-width:190px;padding:3px 5px;border:1px solid var(--edge);border-radius:6px;background:#fffdf5;font-family:inherit;font-size:11px;font-weight:700;color:#553719}
+.card-pick.off{padding:3px 8px;border:1px dashed #cbbfa4;border-radius:6px;font-size:10px;color:#8a7a5c;background:#f6f1e4}
 .mastery-progress-card>div:first-child{font-size:11px}.mastery-map{margin:5px 0;border:1px solid var(--edge);border-radius:6px;background:#fffdf5;overflow:hidden}.mastery-map>summary{display:flex;align-items:baseline;gap:5px;padding:6px 7px;cursor:pointer;background:linear-gradient(90deg,#fff9e9,#f1e2bb);font-size:11px}.mastery-map>summary small{margin-left:auto;text-align:right;font-size:9px}.mastery-roster{padding:3px 6px}.mastery-mob{display:grid;grid-template-columns:19px minmax(0,1fr) auto;align-items:center;gap:5px;padding:4px 1px;border-bottom:1px dotted #d9cba9}.mastery-mob:last-child{border-bottom:0}.mastery-mob.found>span:nth-child(2)>b{color:#3d6e47}.mastery-mob-icon{font-size:14px;text-align:center}.mastery-mob>span:nth-child(2){min-width:0}.mastery-mob>span:nth-child(2)>b{display:block;font-size:10px;overflow-wrap:anywhere}.mastery-mob small{display:block;font-size:9px}.mastery-count{font-size:10px;font-variant-numeric:tabular-nums;color:#614a25}
 .mastery-stat-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:5px}.mastery-stat{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px;align-items:center;padding:6px;border:1px solid var(--edge);border-radius:6px;background:#fffdf5;min-width:0}.mastery-stat>span:first-child{display:flex;flex-direction:column}.mastery-stat>span:first-child b{font-size:12px}.mastery-stat>span:first-child small{font-size:9px}.mastery-pips{display:flex;gap:2px}.mastery-pips i{width:7px;height:7px;border:1px solid #8e7957;border-radius:50%;background:#e7dfce}.mastery-pips i.filled{background:radial-gradient(circle at 35% 25%,#fff3ac,#d29b35);border-color:#8c5e17;box-shadow:0 0 3px #b9832777}.mastery-stat button{grid-column:1/-1;width:100%;padding:2px 4px;font-size:9px}.mastery-card-list{display:grid;gap:4px}.mastery-card-row{display:flex;align-items:center;justify-content:space-between;gap:6px;padding:5px 6px;border:1px solid #d6c394;border-radius:6px;background:#fffdf5;min-width:0}.mastery-card-row>span{display:flex;flex-direction:column;min-width:0;font-size:10px;overflow-wrap:anywhere}.mastery-card-row>span small{font-size:9px}.mastery-card-row button{flex:none;padding:3px 6px;font-size:9px}.mastery-empty{padding:9px;border:1px dashed var(--edge);border-radius:6px;background:#fffdf5;font-size:10px;line-height:1.4}.index-xp-card{background:linear-gradient(100deg,#fffdf5,#fff0c2)}.mob-track{display:block;width:100%;height:4px;margin-top:3px}.card-reward-legend{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px;margin:5px 0 8px;padding:6px;border:1px solid var(--edge);border-radius:6px;background:#fffdf5}.card-reward-legend span{font-size:9px;line-height:1.25}.card-reward-legend b{color:#4b351d}.card-reward-pick{display:flex;flex-direction:column;gap:3px;margin-top:4px}.card-reward-pick small{font-size:9px;color:#8a5c18;font-weight:700}.card-reward-pick select{max-width:100%;font:10px "Trebuchet MS",sans-serif;padding:3px;border:1px solid var(--edge2);border-radius:4px;background:#fff8e6;color:var(--ink)}.card-reward-summary{color:#6b4d22!important;font-size:9px!important}
 @media(max-width:560px){#dock{max-width:calc(100vw - 12px);flex-wrap:wrap;justify-content:center}.title-hud{max-width:96px;overflow:hidden;text-overflow:ellipsis;vertical-align:middle}}
@@ -334,7 +342,7 @@ const GM_USER='GM',GM_PASS='gm1234';   // CHANGE THE GM PASSWORD before you publ
 // script block, which is a SyntaxError - the game did not run on main at all. One line wins, and
 // it names both sides of this merge: the v38 balance patch (the weapon cut, the affix/card
 // give-back) and main's weapon-hold rendering work.
-const BUILD='2026-10-05 grind-v57 map-capped gear + calmer drops';   // shown on the login card - confirms which file you loaded
+const BUILD='2026-10-05 grind-v58 Abyss-only legendary + card panel polish';   // shown on the login card - confirms which file you loaded
 $('buildTag').textContent='build '+BUILD;
 
 // ---------- class tree: Novice -> 6 first jobs -> 6 second jobs -> 6 third jobs ----------
@@ -753,6 +761,7 @@ const cardMasteryLegendaryCard=()=>Array.isArray(S&&S.cards)?S.cards.findIndex(c
 // v57: the reset spends a Legendary card the player picks, so list every loose one.
 const cardMasteryLegendaryCards=()=>Array.isArray(S&&S.cards)?S.cards.map((c,i)=>c&&+c.g===3?{i,id:c.id,n:c.n,stat:c.stat,v:c.v}:null).filter(Boolean):[];
 let cardGrade=-1; // -1 = auto (rarest loose card), 0-3 = that rarity, 'all' = everything
+let cardPick=null; // the Legendary card the reset dropdown has selected (falls back to the first)
 const cardMasteryCardByName=name=>Array.isArray(S&&S.cards)?S.cards.filter(c=>c&&c.n===name):[];
 // Dedicate as many copies of one card as its ranks still take (7 Poring cards fill 5/5 and leave 2
 // loose), so a stack never needs one confirmation per copy.
@@ -883,13 +892,16 @@ const BAGMAX=1000;
 // Pinned by gear_sim.js.
 const MAPTIER=[0,0,1,1,2,2,3,3,3,3];
 // v57: every map owns a value band and a grade cap, so a low-level boss can never hand out
-// endgame gear. MAPGRADE is the best rarity a map can roll - Prontera tops out at Fine, the
-// class maps at Rare/Epic, and only the Lv 60+ maps reach Legendary - so a Payon boss can no
-// longer print Legendary items. MAPVAL is the map's value band: a higher map's *lower* grade
-// still beats a lower map's best (Abyss Epic 2.8x1.18 beats Payon Legendary 4.5x0.66, which
-// can no longer drop there at all), while the endgame stays anchored where it was.
-const MAPGRADE=[1,2,2,3,3,4,4,4,4,4];
-const MAPVAL=[0.34,0.40,0.47,0.56,0.66,0.78,0.90,1.0,1.08,1.18];
+// endgame gear. The owner's tiers: Prontera (Lv1-10) and the four class maps (Izlude, Geffen,
+// Morroc, Payon - Lv10-50) are EARLY; Comodo, Louyang, Amatsu and Niflheim (Lv60-99) are MID;
+// and Abyss is the only ENDGAME map. MAPGRADE caps the best rarity each map can roll, so the
+// early maps top out at Fine/Rare/Epic and the four mid maps stop at Epic - only Abyss can
+// print Legendary gear. MAPVAL is the value band: each map's items are worth about 15% more
+// than the map below, so Abyss Epic (2.8x1.15=3.22) beats every mid-game Legendary-grade item
+// (4.5x0.92=4.14 for the strongest possible mid item, which can no longer drop anyway) and
+// beats the mid maps' best reachable grade by a wide margin.
+const MAPGRADE=[1,2,2,3,3,3,3,3,3,4];
+const MAPVAL=[0.34,0.40,0.47,0.56,0.66,0.72,0.78,0.84,0.92,1.15];
 const dropTier=(m,l)=>Math.min(MAPGRADE[Math.max(0,Math.min(MAPGRADE.length-1,m|0))],l>=10?4:MAPTIER[Math.max(0,Math.min(MAPTIER.length-1,m|0))]);
 // The field's gear pool: every item an equipment drop on this map+level can be. Weapons first
 // (they are the ones a player is hunting), then body, headgear, optional shield, legwear and accessories.
@@ -1115,7 +1127,7 @@ function load(){try{const s=JSON.parse(lsGet(saveKey()));if(s&&s.lv){const F=fre
   // a bag click inspects rather than sells, nothing is auto-sold and no log filter is hidden.
   if(f.feed!==true&&f.feed!==false)f.feed=true;
   if(f.clickSell!==true&&f.clickSell!==false)f.clickSell=false;
-  if(f.bg!==true&&f.bg!==false)f.bg=true;                    // background grinding: on unless turned off
+  f.bg=true;                                                 // v57: background grinding is permanent now
   // Auto-sell is repaired strictly (only a real true/1 arms a band): a corrupt entry must never
   // silently start selling a rarity the player never ticked.
   if(!Array.isArray(f.autoSell))f.autoSell=[false,false,false,false,false];else f.autoSell=[0,1,2,3,4].map(i=>f.autoSell[i]===true||f.autoSell[i]===1);
@@ -1407,7 +1419,7 @@ function genGear(T,l,sec,boss,tier){
   // biggest power source a character owns, and dividing the base divides it at every level.
   // Armor/head/shield/legwear/accessory keep their value: headgear (maxHp x4) and accessory
   // (maxHp x3) are the HP slots and armour/legs/shield carry DEF, which is the anti-death stat.
-  const val=Math.max(1,Math.round({weapon:2,armor:4,head:10,off:3,leg:3,acc:5}[slot]*[1,2.2,4,7][sec]*(1+l*.15)*RAR[t].m*(MAPVAL[Math.max(0,Math.min(MAPVAL.length-1,S.mp|0))])*rnd(.9,1.12)));
+  const val=Math.max(1,Math.round({weapon:2,armor:4,head:10,off:3,leg:3,acc:5}[slot]*[1,2.2,4,7][sec]*(1+l*.15)*RAR[t].m*(MAPVAL[Math.max(0,Math.min(MAPVAL.length-1,(S&&S.mp|0)||0))])*rnd(.9,1.12)));
   const n=[1,1+ri(0,1),2,2+ri(0,1),3][t],pool=AFF.slice(),aff=[];
   for(let i=0;i<n;i++){const k=pool.splice(ri(0,pool.length-1),1)[0];aff.push({k,v:affixValue(k,sec,t,rnd(.8,1.25))})}
   // Katars and bows always have four card sockets; every other weapon keeps the existing 1-3 roll.
@@ -1884,7 +1896,7 @@ const V={
     <div class="row"><button data-a="dmgshow" data-v="on" class="${S.dmgShow!==false?'on':''}" aria-pressed="${S.dmgShow!==false}">Show: On</button><button data-a="dmgshow" data-v="off" class="${S.dmgShow===false?'on':''}" aria-pressed="${S.dmgShow===false}">Show: Off</button></div>
     <div class="row" style="margin-top:4px"><button data-a="dmgfmt" data-v="short" class="${S.dmgShort!==false?'on':''}" aria-pressed="${S.dmgShort!==false}">Short &middot; 100K / 1M</button><button data-a="dmgfmt" data-v="full" class="${S.dmgShort===false?'on':''}" aria-pressed="${S.dmgShort===false}">Full &middot; 100,000</button></div>
     <small>On or off, and how the numbers read. Saved with your account.</small>
-    <div class="hd" style="margin-top:10px">Gameplay</div><label><input type="checkbox" data-a="auto" ${S.auto!==false?'checked':''}> Auto-equip better gear</label><br><label><input type="checkbox" data-a="adv" ${S.adv!==false?'checked':''}> Auto-advance to next level (turn off to farm)</label><br><label><input type="checkbox" data-a="bg" ${S.bg!==false?'checked':''}> Keep grinding while this tab is in the background</label>
+    <div class="hd" style="margin-top:10px">Gameplay</div><label><input type="checkbox" data-a="auto" ${S.auto!==false?'checked':''}> Auto-equip better gear</label><br><label><input type="checkbox" data-a="adv" ${S.adv!==false?'checked':''}> Auto-advance to next level (turn off to farm)</label><br><label title="Always on - the game cannot be paused by hiding the tab any more"><span class="lockmark">&#10003;</span> Keeps grinding while this tab is in the background</label>
     <small>Background grinding keeps playing while the tab is hidden; untick it to pause instead.</small>
     <p><small>Drag to rotate, scroll to zoom. Hotkeys: M S J K B E C Q R L P I O, Esc to close.</small></p><button class="full" data-a="reset">Erase this account's save &amp; restart</button><button class="full" data-a="logout">Logout</button>`},
   gm(){return`<div class="hd">GM multiplier (EXP, Job EXP, Zeny, quests)</div><div class="row">${[1,10,100,1000].map(x=>`<button data-a="gmx" data-v="${x}" ${S.gmx===x?'style="background:#ffe08a"':''}>x${x}</button>`).join('')}</div>
@@ -1965,12 +1977,13 @@ function cardRollSummary(){
   const c={};for(const x of rolls)c[x]=(c[x]||0)+1;
   return CARD_REWARD_OPTIONS.filter(o=>c[o.id]).map(o=>`${o.name} ×${c[o.id]}`).join(' · ');
 }
-// The last few rolls, newest first - the totals above hide what a long session actually rolled.
+// The last three rolls, newest first, as one horizontal strip - the totals above hide what a
+// long session actually rolled, and a vertical list pushed the rest of the tab down the page.
 function cardRollRecent(){
   const rolls=cardMasteryRolls();if(!rolls.length)return'';
-  const recent=rolls.slice(-8).reverse().map((id,i)=>{const o=CARD_REWARD_OPTIONS.find(x=>x.id===id);
-    return `<span class="roll-chip${i?'':''}">${o?o.name:id}<small>+1</small></span>`}).join('');
-  return `<div class="card-roll-recent"><small>Latest rolls (newest first):</small><div class="roll-chips">${recent}</div></div>`;
+  const recent=rolls.slice(-3).reverse().map((id,i)=>{const o=CARD_REWARD_OPTIONS.find(x=>x.id===id);
+    return `<span class="roll-chip${i?'':' new'}"><b>${o?o.name:id}</b><small>+1</small></span>`}).join('');
+  return `<div class="card-roll-recent"><span>Latest rolls</span><div class="roll-chips">${recent}</div></div>`;
 }
 // The reward picker became a token gacha: one button spends a token on a random stat, one rolls
 // every token you hold, and one reset spends a loose Legendary card to clear the rolls and hand
@@ -1979,10 +1992,10 @@ function cardGachaPanel(){
   const available=cardMasteryAvailable(),rolled=cardMasteryRolled(),open=cardMasteryOpenOptions(),legendary=cardMasteryLegendaryCard()>=0,summary=cardRollSummary();
   return `<div class="mastery-section-title">🎲 Token gacha <small>1 token = one random permanent stat</small></div>
     <div class="mastery-progress-card card-gacha"><div><b>${available} token${available===1?'':'s'} ready</b> <small>· ${cardMasteryEarned()} earned · ${rolled} rolled${legendary?' · 1 Legendary card in your bag':''}</small></div>
-    <div class="row"><button data-a="cardroll" ${available&&open.length?'':'disabled'}>🎲 Gacha · 1 token</button><button data-a="cardrollall" ${available&&open.length?'':'disabled'}>🎲 Roll all · ${available}</button><button data-a="cardreset" ${rolled&&legendary?'':'disabled'}>♻ Reset · pick a card below</button></div>
+    <div class="row"><button data-a="cardroll" ${available&&open.length?'':'disabled'}>🎲 Gacha · 1 token</button><button data-a="cardrollall" ${available&&open.length?'':'disabled'}>🎲 Roll all · ${available}</button><button data-a="cardreset" ${rolled&&legendary?'':'disabled'}>♻ Reset</button>
+    ${legendary?`<select class="card-pick" data-a="cardpick" aria-label="Legendary card the reset will sacrifice">${cardMasteryLegendaryCards().map(c=>`<option value="${c.id}" ${String(cardPick)===String(c.id)?'selected':''}>♻ ${c.n} · ${SU(c.stat)} +${c.v}</option>`).join('')}</select>`:`<span class="card-pick off">♻ needs a Legendary card</span>`}</div>
     <small>${open.length?`Rolled so far: ${summary||'none yet'}.`:'Every stat is at its cap - no roll is possible. A reset refunds every spent token and lets you roll again.'}</small>
     ${cardRollRecent()}
-    ${legendary?`<div class="card-sacrifice"><small>Reset spends one Legendary card - choose which:</small>${cardMasteryLegendaryCards().map(c=>`<button data-a="cardreset" data-v="${c.id}" aria-label="Reset the gacha and sacrifice ${c.n}">♻ Sacrifice ${c.n} <small>${SU(c.stat)} +${c.v}</small></button>`).join('')}</div>`:''}
     <div class="card-reward-legend">${CARD_REWARD_OPTIONS.map(o=>`<span><b>${o.name}</b> ${cardMasteryStat(o.id)}/${CARD_REWARD_CAPS[o.id]} · ${o.desc}${cardMasteryStat(o.id)>=CARD_REWARD_CAPS[o.id]?' · full':''}</span>`).join('')}</div></div>`;
 }
 function renderCardIndex(){
@@ -2091,9 +2104,11 @@ const ACT={
   cardrollall:()=>{let n=0,last=null;while((last=cardMasteryGacha()))n++;if(!n)return;S.hp=Math.min(S.hp,maxHp());log(`🎲 Card gacha: rolled ${n} token${n===1?'':'s'} - ${cardRollSummary()}.`,'r3','card');ui();save()},
   cardreset:v=>{const rolled=cardMasteryRolled();if(!rolled)return log('Nothing has been rolled yet.','r0','card');
     const pool=cardMasteryLegendaryCards();if(!pool.length)return log('A gacha reset needs 1 Legendary card in your card bag.','r0','card');
-    const pick=v!=null?pool.find(c=>String(c.id)===String(v)):pool[0];if(!pick)return;
+    const want=v!=null?v:cardPick;
+    const pick=want!=null?pool.find(c=>String(c.id)===String(want))||pool[0]:pool[0];if(!pick)return;
     ask(`Reset the card gacha and sacrifice ${pick.n} (${SU(pick.stat)} +${pick.v})? It clears ${rolled} rolled stat${rolled===1?'':'s'} and refunds all ${rolled} token${rolled===1?'':'s'}.`,()=>{const n=cardMasteryReset(pick.id);if(n==null)return;S.hp=Math.min(S.hp,maxHp());log(`♻ Card gacha reset: sacrificed ${pick.n}, cleared ${n} stat${n===1?'':'s'}, ${n} token${n===1?'':'s'} refunded.`,'r4','card');ui();save()})},
   cardtab:v=>{cardGrade=v==='all'?'all':+v;renderWin()},
+  cardpick:v=>{cardPick=v},
   indexall:name=>{const r=donateAllToMastery(String(name));if(!r.donated)return;S.hp=Math.min(S.hp,maxHp());
     log(`🃏 ${name}: dedicated ${r.donated} cop${r.donated===1?'y':'ies'} - mastery ${r.level}/${CARD_MASTERY_PER_CARD}${r.left?`, ${r.left} left in the bag`:''}.`,'r3','card');
     addFloat(pl.x,2.6,pl.z,`🃏 ${name} ${r.level}/${CARD_MASTERY_PER_CARD}`,'#ffd23f');ui();save()},
@@ -2128,7 +2143,7 @@ const ACT={
   prel:id=>{const p=gp(id);if(!p)return;const z=Math.floor(EGG*.3);ask(`Release ${PETS[p.sp].n}? You get ${z}z back.`,()=>{S.pets=S.pets.filter(x=>x!==p);autoSet.delete(p.id);clearPetCd(p.id);earnZeny(z);ui();save()})},
   claim:i=>{const q=S.q[+i];if(q&&q.prog>=q.goal){qScale(q);earnZeny(q.z||0);S.exp+=(q.xp||0);log(`Quest complete! +${(q.z||0).toLocaleString()}z, +${(q.xp||0).toLocaleString()} EXP`,'r3','quest');S.q[+i]=newQuest(q.type);checkLevel();ui();save()}},
   auto:()=>{S.auto=S.auto===false;ui()},adv:()=>{S.adv=S.adv===false;ui()},
-  bg:()=>{S.bg=S.bg===false;log(S.bg?'Background grinding ON: the game keeps playing (and saving) while this tab is behind another tab or window - the log tells you what the time away was worth.':'Background grinding OFF: the game pauses while this tab is in the background and picks up exactly where you left it.');ui();save()},
+
   feed:()=>{S.feed=!feedOn();feedTab();ui();save()},
   logf:v=>{if(!S.logOff||typeof S.logOff!=='object')S.logOff={};if(S.logOff[v])delete S.logOff[v];else S.logOff[v]=1;if(feedFilShown)renderFeedFilter();feedDraw();ui();save()},
   logfall:v=>{if(!S.logOff||typeof S.logOff!=='object')S.logOff={};LOGCATS.forEach(([k])=>{if(v==='off')S.logOff[k]=1;else delete S.logOff[k]});if(feedFilShown)renderFeedFilter();feedDraw();ui();save()},
@@ -3983,7 +3998,9 @@ function loop(now){try{simAdvance(now);draw()}catch(e){if(!loop.e){loop.e=1;cons
 // the sim actually earned, and a level-up if one landed. "Pause in the background" is the one
 // setting that turns this off - then hidden time is dropped instead of simulated, so the character
 // picks up exactly where they were left.
-const bgOn=()=>!(S&&S.bg===false);
+// v57: background grinding is permanent - the owner asked for the tick to go away. Hiding the
+// tab always keeps the sim running; no save field can pause it.
+const bgOn=()=>true;
 let awayAt=0,awayKills=0,awayZeny=0,awayLv=0;
 function awayTxt(sec){sec=Math.max(0,Math.round(sec));const h=Math.floor(sec/3600),m=Math.floor(sec%3600/60),s=sec%60;
   if(h)return h+'h'+(m?' '+m+'m':'');      // "3h", "1h 12m"

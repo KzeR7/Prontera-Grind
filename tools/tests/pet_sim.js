@@ -36,6 +36,8 @@ const code = [
   pick(/const AFFIX_CDM_SCALE=[^\n]+;/, 'gear-only Crit DMG post-roll scale'),
   pick(/const affixValue=\(k,section,tier,roll\)=>\{[^}]+\};/, 'affixValue'),
   pick(/const MAPTIER=\[[^\]]*\];/, 'MAPTIER'),
+  pick(/const MAPGRADE=\[[^\]]*\];/, 'MAPGRADE'),
+  pick(/const MAPVAL=\[[^\]]*\];/, 'MAPVAL'),
   pick(/const dropTier=\(m,l\)=>[^;]+;/, 'dropTier'),
   // the equipment catalogue + the map table + its level bands (a stub mob parser, since pet
   // power does not depend on monster sprites)

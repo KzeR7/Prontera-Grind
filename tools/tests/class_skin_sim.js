@@ -596,8 +596,7 @@ const settle = async (X, limit = 2000) => {
     deepEq([X.skinRoute(hp, 4, 0).view, X.skinRoute(hp, 4, 0).mirror], ['N', false],
       'a class that supplies its own straight-up art uses it');
     deepEq([X.skinRoute(nov, 4, 0).view], ['NE'], 'a class without one falls back to NE');
-    assert.ok(src.includes('The art has no E or W animation, and only High Priest has its own straight-up N one'),
-      'the panel tells the player in words');
+    assert.ok(!src.includes('The art has no E or W animation'), 'the retired view essay is gone (v57 cleaned the panel)');
   });
 
   await t('the art has no idle animation, and the standing-still policy says so out loud', () => {
@@ -605,8 +604,7 @@ const settle = async (X, limit = 2000) => {
       'no idle animation is invented or claimed');
     deepEq([X.skinRoute(X.skinPack('Knight', 'f'), 0, 0).view, X.skinRoute(X.skinPack('Knight', 'f'), 0, 0).mirror], ['S', false],
       'at rest the S walk animation keeps playing (the viewer\'s behaviour)');
-    assert.ok(src.includes('the art has no idle animation, so at rest your character keeps playing its walk cycle'),
-      'and the panel states it plainly');
+    assert.ok(!src.includes('the art has no idle animation'), 'the retired idle note is gone too');
   });
 
   // ---------- the drawn cell ----------
@@ -716,7 +714,7 @@ const settle = async (X, limit = 2000) => {
     Y.ensureHero({ cls: 'Priest', sex: 'm', tier: 2 });
     assert(Y.hero().userData.skin, 'and is worn');
     assert.strictEqual(Y.broken(), true, 'with the honest note on the panel');
-    assert.ok(src.includes('<b>Some animations could not be read as animations</b>'), 'which the panel really renders');
+    assert.ok(src.includes('<b>Some animations could not be read</b>'), 'which the panel really renders');
   });
 
   await t('a page opened as a file:// URL leans on the images instead of fetch', async () => {
@@ -797,14 +795,14 @@ const settle = async (X, limit = 2000) => {
       'and the swing cue is gated by it (bow and staff shots are untouched)');
     const decl = src.indexOf('const HERO_SWING_ARC=false;'), use = src.indexOf('slashM.visible=HERO_SWING_ARC&&');
     assert.ok(decl >= 0 && decl < use, 'the switch is declared before the function that reads it');
-    assert.ok(src.includes('The white melee swing arc is switched off too - the uploaded attack animation already is the swing.'),
-      'and the Appearance panel tells the player, instead of the cue just vanishing');
+    assert.ok(!src.includes('The white melee swing arc is switched off too'), 'the retired swing-arc note is gone');
     assert.ok(!src.includes('HERO_SWING_ARC=true'), 'nothing switches the duplicate arc back on by accident');
   });
 
   await t('the hairstyle and the held weapon are honestly reported', () => {
-    assert.ok(src.includes('Every uploaded file is a complete looping animation, hair included'), 'the hair is part of the art');
-    assert.ok(src.includes('is still saved with your account'), 'and the saved choice is not lost');
+    assert.ok(src.includes('hair included'), 'the hair is stated as part of the art');
+    assert.ok(src.includes('Costumes - outfits that restyle a class without touching its stats - are planned for a future patch.'),
+      'and the Costume slot is honestly promised for a future patch');
     assert.ok(!src.includes('data-a="hair"'), 'no live hair action is offered while the art is fixed');
     assert.ok(src.includes("hair:v=>{S.hair=(((S.hair|0)+(+v||1))%19+19)%19;heroKey='';ui();save()}"),
       'the save field and its handler stay for saves and for the pack fallback');

@@ -105,6 +105,16 @@ Active pets use their eight existing Divine Pride monster sprite IDs in the same
 WebGL/DOM renderer as mobs, all at one small scale (with a drawn fallback if an
 official remote PNG cannot load). Samples also reset at login or on a new adventure.
 
+**v58 Abyss-only Legendary + card panel polish.** Grade caps were re-tiered to the owner's map
+tiers: early maps (Prontera, Izlude, Geffen, Morroc, Payon) top out at Fine/Rare/Epic, the four
+mid maps (Comodo, Louyang, Amatsu, Niflheim) now stop at **Epic - bosses included** - and **Abyss
+is the only map that can drop Legendary gear**, with a value band that steps clear of the mid maps.
+The Card Mastery tab shows the **last three** rolls as one horizontal chip strip, and the gacha
+reset is a **dropdown of your loose Legendary cards plus a single Reset button**. Background
+grinding is now permanent: the Settings checkbox is gone, hiding the tab always keeps the game
+running, and no save or button can pause it. Owned gear is untouched by all of this - item values
+are stamped when they drop.
+
 **v57 map-capped gear and calmer drops.** Boss equipment is tiered by map now: `MAPGRADE` caps the
 best rarity each map can drop (a Payon stage-10 boss tops out at Epic) and `MAPVAL` gives every map a
 value band, so an Abyss Epic beats a Payon Legendary - which can no longer drop at all. Only items
