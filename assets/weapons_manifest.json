@@ -1,0 +1,266 @@
+{
+ "families": [
+  "sword",
+  "dagger",
+  "katar",
+  "bow",
+  "staff",
+  "mace",
+  "axe",
+  "spear"
+ ],
+ "designs": [
+  {
+   "id": "sword_knight",
+   "family": "sword",
+   "label": "Knight's Blade",
+   "w": 21,
+   "h": 21,
+   "source": "data/sprite/¾ÆÀÌÅÛ/ÇÁ¸®½ºÆ®ÀÇ°Ë.spr",
+   "held": [
+    "E",
+    "N",
+    "NE",
+    "NW",
+    "S",
+    "SE",
+    "SW",
+    "W"
+   ]
+  },
+  {
+   "id": "sword_chill",
+   "family": "sword",
+   "label": "Chilling Sword",
+   "w": 23,
+   "h": 23,
+   "source": "data/sprite/¾ÆÀÌÅÛ/¼­´ÃÇÑ°Ë.spr"
+  },
+  {
+   "id": "sword_elem",
+   "family": "sword",
+   "label": "Elemental Sword",
+   "w": 24,
+   "h": 24,
+   "source": "data/sprite/¾ÆÀÌÅÛ/¿¤·¹¸àÅ»¼Òµå.spr"
+  },
+  {
+   "id": "dagger_chill",
+   "family": "dagger",
+   "label": "Chilling Knife",
+   "w": 16,
+   "h": 24,
+   "source": "data/sprite/¾ÆÀÌÅÛ/¼­´ÃÇÑ³ªÀÌÇÁ.spr"
+  },
+  {
+   "id": "dagger_ice",
+   "family": "dagger",
+   "label": "Frost Dagger",
+   "w": 19,
+   "h": 24,
+   "source": "data/sprite/¾ÆÀÌÅÛ/¼­´ÃÇÑ´ë°Å.spr"
+  },
+  {
+   "id": "dagger_broken",
+   "family": "dagger",
+   "label": "Broken Blade",
+   "w": 22,
+   "h": 23,
+   "source": "data/sprite/¾ÆÀÌÅÛ/ºÎ·¯Áø°Ë.spr"
+  },
+  {
+   "id": "katar_plain",
+   "family": "katar",
+   "label": "Katar",
+   "w": 21,
+   "h": 21,
+   "source": "data/sprite/¾ÆÀÌÅÛ/Ä«Å¸¸£.spr"
+  },
+  {
+   "id": "katar_reinf",
+   "family": "katar",
+   "label": "Reinforced Katar",
+   "w": 20,
+   "h": 24,
+   "source": "data/sprite/¾ÆÀÌÅÛ/°­È­Ä«Å¸¸£.spr"
+  },
+  {
+   "id": "katar_guil",
+   "family": "katar",
+   "label": "Guillotine Katar",
+   "w": 15,
+   "h": 24,
+   "source": "data/sprite/¾ÆÀÌÅÛ/±æ·ÎÆ¾Ä«Å¸¸£.spr"
+  },
+  {
+   "id": "bow_chill",
+   "family": "bow",
+   "label": "Chilling Bow",
+   "w": 16,
+   "h": 24,
+   "source": "data/sprite/¾ÆÀÌÅÛ/¼­´ÃÇÑÈ°.spr"
+  },
+  {
+   "id": "bow_royal",
+   "family": "bow",
+   "label": "Royal Bow",
+   "w": 21,
+   "h": 24,
+   "source": "data/sprite/¾ÆÀÌÅÛ/¿Õ°¡ÀÇÈ°.spr"
+  },
+  {
+   "id": "bow_thorn",
+   "family": "bow",
+   "label": "Thorn Bow",
+   "w": 13,
+   "h": 24,
+   "source": "data/sprite/¾ÆÀÌÅÛ/¾î´À¸¶¹ý»çÀÇ¸¶µµ°Ë.spr"
+  },
+  {
+   "id": "staff_gold",
+   "family": "staff",
+   "label": "Golden Rod Staff",
+   "w": 24,
+   "h": 24,
+   "source": "data/sprite/¾ÆÀÌÅÛ/°ñµç·Îµå½ºÅÂÇÁ.spr"
+  },
+  {
+   "id": "staff_ion",
+   "family": "staff",
+   "label": "Aion Staff",
+   "w": 17,
+   "h": 24,
+   "source": "data/sprite/¾ÆÀÌÅÛ/¾ÆÀÌ¿Â½ºÅÂÇÁ.spr"
+  },
+  {
+   "id": "staff_shadow",
+   "family": "staff",
+   "label": "Shadow Staff",
+   "w": 20,
+   "h": 24,
+   "source": "data/sprite/¾ÆÀÌÅÛ/½¦µµ¿ì½ºÅÂÇÁ.spr"
+  },
+  {
+   "id": "mace_gold",
+   "family": "mace",
+   "label": "Golden Mace",
+   "w": 20,
+   "h": 20,
+   "source": "data/sprite/¾ÆÀÌÅÛ/°ñµç¸ÞÀÌ½º.spr"
+  },
+  {
+   "id": "mace_wand",
+   "family": "mace",
+   "label": "Arc Wand",
+   "w": 20,
+   "h": 20,
+   "source": "data/sprite/¾ÆÀÌÅÛ/¾ÆÅ©¿Ïµå.spr"
+  },
+  {
+   "id": "mace_forge",
+   "family": "mace",
+   "label": "Forge Hammer",
+   "w": 18,
+   "h": 24,
+   "source": "data/sprite/¾ÆÀÌÅÛ/È¦±×·£Á¦·Ã¸ÁÄ¡.spr"
+  },
+  {
+   "id": "axe_chill",
+   "family": "axe",
+   "label": "Chilling Battleaxe",
+   "w": 20,
+   "h": 24,
+   "source": "data/sprite/¾ÆÀÌÅÛ/¼­´ÃÇÑ¾ç³¯µµ³¢.spr"
+  },
+  {
+   "id": "axe_single",
+   "family": "axe",
+   "label": "Chilling Axe",
+   "w": 15,
+   "h": 24,
+   "source": "data/sprite/¾ÆÀÌÅÛ/¼­´ÃÇÑµµ³¢.spr"
+  },
+  {
+   "id": "axe_hammer",
+   "family": "axe",
+   "label": "Chilling Hammer",
+   "w": 23,
+   "h": 24,
+   "source": "data/sprite/¾ÆÀÌÅÛ/¼­´ÃÇÑÃ¶Åð.spr"
+  },
+  {
+   "id": "spear_chill",
+   "family": "spear",
+   "label": "Chilling Lance",
+   "w": 20,
+   "h": 24,
+   "source": "data/sprite/¾ÆÀÌÅÛ/¼­´ÃÇÑÃ¢.spr"
+  },
+  {
+   "id": "spear_undine",
+   "family": "spear",
+   "label": "Undine Spear",
+   "w": 24,
+   "h": 24,
+   "source": "data/sprite/¾ÆÀÌÅÛ/¿îµð³×ÀÇÃ¢.spr"
+  },
+  {
+   "id": "spear_plain",
+   "family": "spear",
+   "label": "Plain Spear",
+   "w": 23,
+   "h": 24,
+   "source": "data/sprite/¾ÆÀÌÅÛ/½ºÇÇ¾î.spr"
+  }
+ ],
+ "held": {
+  "sword_knight": {
+   "id": "sword_knight",
+   "label": "Knight's Blade",
+   "source": "data/sprite/ÀÎ°£Á·/±â»ç/±â»ç_³²_ÇÁ¸®½ºÆ®ÀÇ°Ë.spr",
+   "frames": 7,
+   "dirs": {
+    "S": {
+     "frame": 0,
+     "w": 39,
+     "h": 40
+    },
+    "SW": {
+     "frame": 0,
+     "w": 39,
+     "h": 40
+    },
+    "W": {
+     "frame": 1,
+     "w": 21,
+     "h": 32
+    },
+    "NW": {
+     "frame": 1,
+     "w": 21,
+     "h": 32
+    },
+    "N": {
+     "frame": 1,
+     "w": 21,
+     "h": 32
+    },
+    "NE": {
+     "frame": 1,
+     "w": 21,
+     "h": 32
+    },
+    "E": {
+     "frame": 0,
+     "w": 39,
+     "h": 40
+    },
+    "SE": {
+     "frame": 0,
+     "w": 39,
+     "h": 40
+    }
+   }
+  }
+ }
+}

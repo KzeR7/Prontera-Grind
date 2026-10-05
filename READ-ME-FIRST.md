@@ -31,7 +31,18 @@ the repo, so pushing to `main` is the deploy.
   current by `python3 tools/backup_apng_code.py --check`), and `simple_apng_demo.png` (a 6-frame
   example of the simplest APNG, written by `python3 tools/make_simple_apng.py`). **Read this before
   changing the class art or the hero.**
-* `tools/` — the art pipelines (`make_sprite_pack.py`, `make_sprite_viewer.py`, `make_simple_apng.py`, `montage.py`), the test suites (`tools/tests/`)
+* `TOOLS-START-HERE.md` — **the tool map**: every dev page, generator and picker in `tools/`, what it answers
+  and who owns it. Read that instead of guessing which of the two dozen pages is the live one.
+* `tools/weapon_proposal.html` — **the live weapon review page** (served at `/` by
+  `python3 tools/preview_server.py 8000`, or `/weapons`). Every one of the 19 classes on its own animated
+  sprite with a real Ragnarok Online weapon on it: drag to move, wheel/`[`/`]` to rotate, `-`/`+` to size,
+  `0` to reset, **✕ on any class = no weapon for that job**, three designs per weapon family, and
+  **Copy my proposal** returns one JSON block. The art is real RO client art, decoded and cropped by
+  `python3 tools/make_weapon_pack.py --source <extracted client>` (`--check` verifies `assets/`);
+  `tools/weapon-art-notes.md` documents the SPR/ACT formats, the two traps and the provenance.
+  **Nothing from this pass is in the game.**
+* `tools/` — the art pipelines (`make_sprite_pack.py`, `make_class_skins.py`, `make_weapon_pack.py`,
+  `make_sprite_viewer.py`, `make_simple_apng.py`, `montage.py`), the test suites (`tools/tests/`)
   and a dev-only plan previewer (`tools/preview/`).
 * `AGENTS.md` — **the project's rules and its full update log**. Read it before changing anything:
   it carries the house rules (crop only, never draw art; all 8 directions and 3 animation rows
@@ -55,6 +66,7 @@ open('/tmp/pack_block.js','w').write(h[h.index('const PACK_BODY='):h.index('func
 PY
 python3 tools/make_sprite_viewer.py --check
 python3 tools/make_class_skins.py --check
+python3 tools/make_weapon_pack.py --check      # the weapon art under assets/weapons/
 for t in tools/tests/*_sim.js; do node "$t" || exit 1; done
 ```
 

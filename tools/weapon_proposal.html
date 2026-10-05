@@ -1,0 +1,630 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Prontera Grind — weapon proposal</title>
+<style>
+  :root{
+    --bg:#0e1016; --panel:#171a23; --panel2:#1e222d; --line:#2c313f;
+    --ink:#e8ecf4; --dim:#98a2b8; --gold:#e9c46a; --gold2:#c9a227;
+    --ok:#6ddb8f; --warn:#ffb347; --bad:#ff6b6b;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--bg);color:var(--ink);
+    font:13px/1.5 ui-sans-serif,system-ui,"Segoe UI",Roboto,sans-serif}
+  a{color:var(--gold)}
+  header{padding:14px 18px 10px;border-bottom:1px solid var(--line);
+    background:linear-gradient(180deg,#1a1f2b,#12151d)}
+  h1{margin:0;font-size:17px;letter-spacing:.3px}
+  h1 span{color:var(--gold)}
+  .sub{color:var(--dim);margin-top:4px;max-width:1000px}
+  .sub b{color:var(--ink)}
+  .wrap{display:grid;grid-template-columns:266px minmax(430px,1fr) 300px;gap:12px;padding:12px}
+  @media (max-width:1180px){.wrap{grid-template-columns:1fr}}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:9px;padding:10px}
+  .card h2{margin:0 0 8px;font-size:12px;text-transform:uppercase;letter-spacing:.9px;color:var(--gold)}
+  .hint{color:var(--dim);font-size:11.5px}
+  button{font:inherit;color:var(--ink);background:var(--panel2);border:1px solid var(--line);
+    border-radius:6px;padding:5px 9px;cursor:pointer}
+  button:hover{border-color:var(--gold2)}
+  button.on{background:#3a3016;border-color:var(--gold);color:#ffe9a8}
+  button.wide{width:100%;text-align:left;margin-bottom:4px}
+  .row{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+  .clslist{max-height:430px;overflow:auto;margin:-2px -4px 0;padding:2px 4px}
+  .cls{display:flex;align-items:center;gap:7px;padding:4px 5px;border-radius:6px;cursor:pointer;
+    border:1px solid transparent}
+  .cls:hover{background:#1c212c}
+  .cls.sel{background:#241f10;border-color:var(--gold2)}
+  .cls.off .nm{color:#6b7488;text-decoration:line-through}
+  .cls .nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .cls .fam{color:var(--dim);font-size:10.5px;text-transform:uppercase;letter-spacing:.5px}
+  .cls .sw{width:26px;text-align:center;color:var(--bad);font-weight:700}
+  .stagebox{background:radial-gradient(120% 90% at 50% 0%,#232a38,#12151d 70%);
+    border:1px solid var(--line);border-radius:9px;padding:10px;text-align:center}
+  canvas#stage{image-rendering:pixelated;background:
+    linear-gradient(180deg,#2a3040,#1a1e28);border-radius:6px;cursor:grab;touch-action:none}
+  canvas#stage.drag{cursor:grabbing}
+  .stagebar{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin-top:8px}
+  .designs{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}
+  .des{width:88px;background:var(--panel2);border:1px solid var(--line);border-radius:8px;
+    padding:6px 4px;cursor:pointer;text-align:center}
+  .des.sel{border-color:var(--gold);background:#2b2513}
+  .des img{width:64px;height:56px;object-fit:contain;image-rendering:pixelated}
+  .des .lb{font-size:10.5px;color:var(--dim);margin-top:2px}
+  .des.sel .lb{color:#ffe9a8}
+  table.nums{width:100%;border-collapse:collapse;font-size:12px}
+  table.nums td{padding:2px 4px;border-bottom:1px solid #232833}
+  table.nums td:last-child{text-align:right;color:var(--gold)}
+  .off{color:var(--bad)}
+  .legend{display:flex;gap:10px;flex-wrap:wrap;color:var(--dim);font-size:11px}
+  .refstrip{display:flex;gap:3px;justify-content:center;flex-wrap:wrap;margin-top:6px}
+  .refstrip .cell{background:#1b202b;border:1px solid var(--line);border-radius:5px;padding:3px}
+  .refstrip img{width:44px;height:44px;object-fit:contain;image-rendering:pixelated;display:block}
+  .refstrip .cell small{display:block;text-align:center;color:var(--dim);font-size:9.5px}
+  textarea{width:100%;height:120px;background:#0d1016;color:#cfe3ff;border:1px solid var(--line);
+    border-radius:6px;font:11px/1.45 ui-monospace,Consolas,monospace;padding:6px}
+  .tag{display:inline-block;background:#232a38;border:1px solid var(--line);border-radius:99px;
+    padding:1px 7px;font-size:10.5px;color:var(--dim);margin-left:6px}
+  .note{background:#141821;border-left:3px solid var(--gold2);padding:7px 9px;border-radius:0 6px 6px 0;
+    color:var(--dim);font-size:11.5px;margin-top:8px}
+  .note b{color:var(--ink)}
+  .kbd{background:#232a38;border:1px solid var(--line);border-radius:4px;padding:0 4px;font-size:10.5px}
+</style>
+</head>
+<body>
+<header>
+  <h1>Prontera Grind — <span>weapon proposal</span></h1>
+  <div class="sub">
+    Real <b>Ragnarok Online</b> weapon art from the RO client, shown on your own class sprites.
+    Drag a weapon to move it, rotate it, and tick <b>no weapon</b> on the jobs that should stay bare-handed.
+    Nothing here is in the game yet — this page is the proposal you approve, and
+    <b>Copy my proposal</b> hands your choices back.
+  </div>
+</header>
+
+<div class="wrap">
+  <!-- ---------------- left: classes ---------------- -->
+  <div class="card">
+    <h2>Classes <span class="tag" id="clsCount"></span></h2>
+    <div class="hint">Click a class to work on it. The ✕ button toggles <b>no weapon</b> for that job.</div>
+    <div class="clslist" id="clsList"></div>
+    <div class="row" style="margin-top:8px">
+      <button id="allOn">Weapon on all</button>
+      <button id="allOff">No weapon on all</button>
+    </div>
+  </div>
+
+  <!-- ---------------- middle: stage ---------------- -->
+  <div>
+    <div class="stagebox">
+      <canvas id="stage" width="760" height="520"></canvas>
+      <div class="stagebar">
+        <button id="play">⏸ Pause</button>
+        <span class="hint">view:</span>
+        <span id="views"></span>
+        <button id="reset">↺ Reset this class</button>
+      </div>
+      <div class="stagebar legend">
+        <span>Drag the weapon to move it.</span>
+        <span>Wheel or <span class="kbd">[</span><span class="kbd">]</span> = rotate.</span>
+        <span><span class="kbd">−</span><span class="kbd">+</span> = size.</span>
+        <span><span class="kbd">0</span> = reset position.</span>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:12px">
+      <h2>Designs for <span id="famName">—</span> <span class="tag" id="className"></span></h2>
+      <div class="designs" id="designs"></div>
+      <div class="hint" style="margin-top:8px" id="designNote"></div>
+    </div>
+
+    <div class="card" style="margin-top:12px">
+      <h2>What the real client does</h2>
+      <div class="hint">The official RO held-weapon sprite for this family, drawn at the angles the client uses.
+        Your proposal above uses one angle you control; these are here so the angle can be judged against the original.</div>
+      <div class="refstrip" id="refStrip"></div>
+    </div>
+  </div>
+
+  <!-- ---------------- right: numbers + export ---------------- -->
+  <div>
+    <div class="card">
+      <h2>This class</h2>
+      <table class="nums">
+        <tr><td>Class</td><td id="nClass">—</td></tr>
+        <tr><td>Weapon family</td><td id="nFam">—</td></tr>
+        <tr><td>Design</td><td id="nDesign">—</td></tr>
+        <tr><td>Offset (x, y)</td><td id="nOff">—</td></tr>
+        <tr><td>Rotation</td><td id="nRot">—</td></tr>
+        <tr><td>Size</td><td id="nScale">—</td></tr>
+        <tr><td>Weapon</td><td id="nOn">—</td></tr>
+      </table>
+      <div class="row" style="margin-top:8px">
+        <button id="copy">📋 Copy my proposal</button>
+        <button id="clear">Clear saved</button>
+      </div>
+      <div class="hint" id="copyNote" style="margin-top:6px">Saved in this browser as you work.</div>
+      <textarea id="export" readonly spellcheck="false" style="margin-top:8px"></textarea>
+    </div>
+
+    <div class="card" style="margin-top:12px">
+      <h2>Every class at a glance</h2>
+      <div id="summary" class="hint"></div>
+    </div>
+
+    <div class="card" style="margin-top:12px">
+      <h2>Where this art comes from</h2>
+      <div class="note" id="prov"></div>
+      <div class="note">
+        <b>Provenance:</b> every weapon image is a real Ragnarok Online client sprite
+        (<code>data/sprite/아이템/*.spr</code> and the held-weapon sprites under
+        <code>data/sprite/인간족/</code>), decoded and <b>cropped only</b> — never redrawn,
+        recoloured or hand-scaled. House rule 1 forbids inventing sprite art, so nothing was drawn here.
+        <br><b>Not in the game:</b> this page only reads. Nothing is baked into the pack or the game until you say so.
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="../assets/class_skins_data.js"></script>
+<script src="../assets/weapons_data.js"></script>
+<script>
+/* =============================================================================
+   Weapon proposal — every class, real RO weapon art, draggable into place.
+   The art and the class frames are read from the repo (assets/), the choices
+   are kept in this browser, and "Copy my proposal" returns them as one JSON block.
+   ========================================================================== */
+const ART   = window.WEAPON_ART  || {};
+const SKINS = window.CLASS_SKINS || {classes:{}};
+
+/* ---- the game's own class table: name -> allowed weapon families ------------------ */
+const FAMILIES = {
+  sword:'Sword', dagger:'Dagger', katar:'Katar', bow:'Bow',
+  staff:'Staff', mace:'Mace', axe:'Axe', spear:'Spear'
+};
+// straight out of index.html's CD table (the `wt` column)
+const CLASS_FAMILIES = {
+  'Novice':['dagger','sword'], 'Swordman':['sword'], 'Mage':['staff'], 'Archer':['bow'],
+  'Thief':['dagger'], 'Acolyte':['mace'], 'Merchant':['axe','mace'],
+  'Knight':['sword'], 'Wizard':['staff'], 'Hunter':['bow'], 'Assassin':['katar'],
+  'Priest':['mace'], 'Blacksmith':['axe','mace'],
+  'Lord Knight':['sword'], 'High Wizard':['staff'], 'Sniper':['bow'], 'Assassin Cross':['katar'],
+  'High Priest':['mace'], 'Whitesmith':['axe','mace']
+};
+const CLASS_ORDER = ['Novice','Swordman','Mage','Archer','Thief','Acolyte','Merchant',
+  'Knight','Wizard','Hunter','Assassin','Priest','Blacksmith',
+  'Lord Knight','High Wizard','Sniper','Assassin Cross','High Priest','Whitesmith'];
+
+/* ---- the designs, in the order tools/make_weapon_pack.py wrote them --------------- */
+const DESIGNS = {
+  sword:['sword_knight','sword_chill','sword_elem'],
+  dagger:['dagger_chill','dagger_ice','dagger_broken'],
+  katar:['katar_plain','katar_reinf','katar_guil'],
+  bow:['bow_chill','bow_royal','bow_thorn'],
+  staff:['staff_gold','staff_ion','staff_shadow'],
+  mace:['mace_gold','mace_wand','mace_forge'],
+  axe:['axe_chill','axe_single','axe_hammer'],
+  spear:['spear_chill','spear_undine','spear_plain']
+};
+const DESIGN_LABEL = {
+  sword_knight:"Knight's Blade", sword_chill:'Chilling Sword', sword_elem:'Elemental Sword',
+  dagger_chill:'Chilling Knife', dagger_ice:'Frost Dagger', dagger_broken:'Broken Blade',
+  katar_plain:'Katar', katar_reinf:'Reinforced Katar', katar_guil:'Guillotine Katar',
+  bow_chill:'Chilling Bow', bow_royal:'Royal Bow', bow_thorn:'Thorn Bow',
+  staff_gold:'Golden Rod Staff', staff_ion:'Aion Staff', staff_shadow:'Shadow Staff',
+  mace_gold:'Golden Mace', mace_wand:'Arc Wand', mace_forge:'Forge Hammer',
+  axe_chill:'Chilling Battleaxe', axe_single:'Chilling Axe', axe_hammer:'Chilling Hammer',
+  spear_chill:'Chilling Lance', spear_undine:'Undine Spear', spear_plain:'Plain Spear'
+};
+const SOURCE_NOTE = {
+  sword_knight:'the only family with a full held-weapon sprite in the client dump (8 angles)',
+  bow_chill:'the only held-weapon bow in the client dump (back angles only)'
+};
+
+/* ---- where a weapon is held: grip = the point of the image that is the handle ---- */
+const GRIP = {
+  sword:[.50,.90], dagger:[.50,.86], katar:[.50,.55], bow:[.50,.50],
+  staff:[.50,.74], mace:[.50,.88], axe:[.50,.86], spear:[.50,.60]
+};
+/* where the hand is, as a fraction of the class sprite's own opaque box, per view.
+   Tuned so the weapon clears the silhouette (outside, slightly low) rather than
+   crossing the chest. A starting point only — drag it and your number is what counts. */
+const HAND = { S:[.02,.66], SE:[.99,.64], NE:[.04,.64], attack:[1.0,.56], N:[.06,.64] };
+/* the angle the weapon rests at, per family, per view (degrees) */
+const ANGLE = {
+  sword:{S:8,SE:14,NE:10,attack:-38,N:6},
+  dagger:{S:6,SE:10,NE:8,attack:-30,N:4},
+  katar:{S:0,SE:6,NE:4,attack:-20,N:0},
+  bow:{S:0,SE:0,NE:0,attack:-8,N:0},
+  staff:{S:6,SE:8,NE:6,attack:-26,N:4},
+  mace:{S:8,SE:12,NE:10,attack:-34,N:6},
+  axe:{S:10,SE:14,NE:12,attack:-40,N:8},
+  spear:{S:6,SE:8,NE:6,attack:-24,N:4}
+};
+const BASE_SCALE = 1.25;   // the HD class art is ~1.25x the classic body the weapons were drawn for
+
+/* ---- which sprite file backs a view (S/SE/NE/attack/N), mirrors included ---------- */
+const VIEWS = ['S','SE','NE','attack'];
+const VIEW_LABEL = {S:'South',SE:'South-East',NE:'North-East',attack:'Attack (SE)',N:'North'};
+
+/* =============================================================================
+   APNG decoder — the same walk index.html uses (PNG chunks, DecompressionStream,
+   unfilter, APNG blend/dispose) so the class art animates here exactly as in game.
+   ========================================================================== */
+function bytesOf(parts){let n=0;for(const p of parts)n+=p.length;const out=new Uint8Array(n);
+  let o=0;for(const p of parts){out.set(p,o);o+=p.length}return out}
+async function inflate(b){
+  const s=new DecompressionStream('deflate'),w=s.writable.getWriter();
+  w.write(b);w.close();return new Uint8Array(await new Response(s.readable).arrayBuffer())}
+function paeth(a,b,c){const p=a+b-c,pa=Math.abs(p-a),pb=Math.abs(p-b),pc=Math.abs(p-c);
+  return pa<=pb&&pa<=pc?a:pb<=pc?b:c}
+function unfilter(raw,w,h,bpp){
+  const stride=w*bpp,out=new Uint8Array(stride*h);
+  for(let y=0;y<h;y++){
+    const f=raw[y*(stride+1)],line=y*stride,prev=line-stride,src=y*(stride+1)+1;
+    for(let x=0;x<stride;x++){
+      const v=raw[src+x],a=x>=bpp?out[line+x-bpp]:0,b=y?out[prev+x]:0,c=(y&&x>=bpp)?out[prev+x-bpp]:0;
+      out[line+x]=(f===0?v:f===1?v+a:f===2?v+b:f===3?v+((a+b)>>1):f===4?v+paeth(a,b,c):v)&255}}
+  return out}
+async function decodeApng(bytes){
+  if(!bytes||bytes.length<8||bytes[0]!==137||bytes[1]!==80)return null;
+  const view=new DataView(bytes.buffer,bytes.byteOffset,bytes.byteLength);
+  let p=8,width=0,height=0,depth=0,type=0,interlace=0,frames=null;const parts=[];
+  while(p+8<=bytes.length){
+    const length=view.getUint32(p),kind=String.fromCharCode(bytes[p+4],bytes[p+5],bytes[p+6],bytes[p+7]);
+    if(kind==='IHDR'){width=view.getUint32(p+8);height=view.getUint32(p+12);depth=bytes[p+16];type=bytes[p+17];interlace=bytes[p+20]}
+    else if(kind==='acTL')frames=view.getUint32(p+8);
+    else if(kind==='fcTL')parts.push({rect:{x:view.getUint32(p+20),y:view.getUint32(p+24),w:view.getUint32(p+12),h:view.getUint32(p+16)},
+      dispose:bytes[p+32],blend:bytes[p+33],delay:[view.getUint16(p+28),view.getUint16(p+30)],chunks:[]});
+    else if(kind==='IDAT'){if(!parts.length)parts.push({rect:{x:0,y:0,w:width,h:height},dispose:0,blend:0,delay:[0,100],chunks:[]});
+      parts[0].chunks.push(bytes.subarray(p+8,p+8+length))}
+    else if(kind==='fdAT'&&parts.length)parts[parts.length-1].chunks.push(bytes.subarray(p+12,p+8+length));
+    p+=12+length;
+    if(kind==='IEND')break}
+  if(!frames||!parts.length||!width||!height||depth!==8||type!==6||interlace)return null;
+  if(parts.length!==frames)return null;
+  const shown=new Uint8ClampedArray(width*height*4);const out=[];
+  const delays=[];
+  for(const part of parts){
+    if(!part.chunks.length)return null;
+    const px=unfilter(await inflate(bytesOf(part.chunks)),part.rect.w,part.rect.h,4);
+    const saved=part.dispose===2?shown.slice():null;
+    for(let y=0;y<part.rect.h;y++)for(let x=0;x<part.rect.w;x++){
+      const from=(y*part.rect.w+x)*4,to=((part.rect.y+y)*width+part.rect.x+x)*4,a=px[from+3];
+      if(part.blend===1&&a<255){
+        const keep=shown[to+3]*(255-a)/255;
+        shown[to]=(px[from]*a+shown[to]*keep)/(a+keep||1);
+        shown[to+1]=(px[from+1]*a+shown[to+1]*keep)/(a+keep||1);
+        shown[to+2]=(px[from+2]*a+shown[to+2]*keep)/(a+keep||1);
+        shown[to+3]=a+keep}
+      else{shown[to]=px[from];shown[to+1]=px[from+1];shown[to+2]=px[from+2];shown[to+3]=a}}
+    out.push(shown.slice());
+    // APNG delay is delay_num/delay_den seconds; a denominator of 0 means 100 (per spec).
+    const d=part.delay, den=d[1]||100;
+    delays.push(Math.max(20, den? d[0]/den*1000 : d[0]));
+    if(part.dispose===1){for(let y=0;y<part.rect.h;y++)for(let x=0;x<part.rect.w;x++){
+      const to=((part.rect.y+y)*width+part.rect.x+x)*4;shown[to]=shown[to+1]=shown[to+2]=shown[to+3]=0}}
+    else if(part.dispose===2&&saved)shown.set(saved)}
+  const cv=document.createElement('canvas');cv.width=width*out.length;cv.height=height;
+  const ctx=cv.getContext('2d');ctx.imageSmoothingEnabled=false;
+  for(let i=0;i<out.length;i++)ctx.putImageData(new ImageData(out[i],width,height),i*width,0);
+  return {cv,n:out.length,w:width,h:height,delays};
+}
+
+/* =============================================================================
+   State
+   ========================================================================== */
+const KEY='pg_weapon_proposal_v1';
+const state={
+  sel:'Knight', view:'S', playing:true, zoom:3.4,
+  per:{},   // perClass: {off, design, fam, dx, dy, rot, scale}
+};
+function clsInfo(name){const c=SKINS.classes[name];return c||null}
+function famOf(name){
+  const p=state.per[name];if(p&&p.fam)return p.fam;
+  const f=CLASS_FAMILIES[name]||['sword'];return f[0];
+}
+function designOf(name){
+  const p=state.per[name];if(p&&p.design)return p.design;
+  const f=famOf(name);return (DESIGNS[f]||[])[0];
+}
+function offOf(name){return !!(state.per[name]&&state.per[name].off)}
+function entry(name){
+  if(!state.per[name])state.per[name]={};
+  return state.per[name];
+}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(state.per))}catch(e){}}
+function load(){
+  try{const raw=localStorage.getItem(KEY);if(raw)state.per=JSON.parse(raw)||{}}catch(e){state.per={}}
+}
+
+/* =============================================================================
+   Weapon art — the PNGs the packer wrote (also inlined in weapons_data.js, and
+   the images are the fallback if a file ever goes missing).
+   ========================================================================== */
+const MANIFEST_IMPLIED = {};   // id -> {w,h} is discovered from the image itself
+const weaponImg={};
+function weaponUrl(id){return '../assets/weapons/'+id+'.png'}
+function heldUrl(id,dir){return '../assets/weapons/held/'+id+'__'+dir+'.png'}
+function imgFor(id){
+  if(weaponImg[id])return weaponImg[id];
+  const im=new Image();
+  im.src = ART[id] ? 'data:image/png;base64,'+ART[id] : weaponUrl(id);
+  im.onerror=()=>{if(im.src.indexOf('data:')<0)im.src=weaponUrl(id)};
+  weaponImg[id]=im;return im;
+}
+
+/* =============================================================================
+   Frame cache: class + view -> decoded strip of frames
+   ========================================================================== */
+const stripCache={}, stripPending={};
+function viewFile(cls,sex,view){
+  const c=clsInfo(cls);if(!c)return null;
+  const g=c[sex];if(!g)return null;
+  return g.files[view]||null;
+}
+function viewPose(cls,sex,view){
+  const c=clsInfo(cls);const g=c&&c[sex];const p=g&&g.poses&&g.poses[view];
+  return p||[70,60,60,100];
+}
+function strip(cls,sex,view){
+  const key=cls+'|'+sex+'|'+view;
+  if(stripCache[key])return stripCache[key];
+  if(stripPending[key])return null;
+  const file=viewFile(cls,sex,view);
+  if(!file){stripCache[key]=null;return null}
+  stripPending[key]=true;
+  fetch(encodeURI('../'+SKINS.dir+'/'+file)).then(r=>r.arrayBuffer()).then(b=>decodeApng(new Uint8Array(b)))
+    .then(dec=>{stripCache[key]=dec;stripPending[key]=false;requestRender()})
+    .catch(()=>{stripCache[key]=null;stripPending[key]=false});
+  return null;
+}
+
+/* =============================================================================
+   Rendering
+   ========================================================================== */
+const stage=document.getElementById('stage'), sctx=stage.getContext('2d');
+let raf=null, needRender=false, clock=0;
+function requestRender(){if(!needRender){needRender=true;raf=requestAnimationFrame(draw)}}
+function playMs(cls,sex,view){
+  const g=clsInfo(cls)[sex];
+  const d=g.delays&&g.delays[view];
+  if(!d||!d.length)return 75;
+  return (d[0][1]?d[0][0]/d[0][1]*1000:d[0][0])||75;
+}
+let acc=0, last=0, frameIdx=0, lastKey='';
+function draw(){
+  needRender=false;
+  const cls=state.sel, sex='m';
+  const info=clsInfo(cls);
+  if(!info){sctx.clearRect(0,0,stage.width,stage.height);return}
+  const view=state.view;
+  const dec=strip(cls,sex,view);
+  const z=state.zoom;
+  const CW=200*z, CH=200*z;
+  const ox=(stage.width-CW)/2, oy=(stage.height-CH)/2;
+  sctx.clearRect(0,0,stage.width,stage.height);
+
+  // ground line + the class sprite
+  sctx.save();
+  if(dec){
+    const key=cls+sex+view;
+    if(key!==lastKey){lastKey=key;frameIdx=0;acc=0;last=performance.now()}
+    if(state.playing){
+      const now=performance.now();
+      acc+=now-last;last=now;
+      const step=dec.delays&&dec.delays.length?dec.delays[frameIdx%dec.delays.length]:playMs(cls,sex,view);
+      const span=Math.max(30,step);
+      while(acc>span){acc-=span;frameIdx=(frameIdx+1)%dec.n}
+    }
+    const f=frameIdx%dec.n;
+    sctx.imageSmoothingEnabled=false;
+    sctx.drawImage(dec.cv, f*dec.w,0,dec.w,dec.h, ox,oy, CW,CH);
+  }else{
+    // the file is still decoding (or unreadable): say so instead of showing nothing
+    sctx.fillStyle='#8b94a8';sctx.font='13px system-ui';sctx.textAlign='center';
+    sctx.fillText('decoding '+viewFile(cls,'m',view)+' …',stage.width/2,stage.height/2);
+    sctx.textAlign='left';
+  }
+  sctx.restore();
+
+  // the weapon
+  const fam=famOf(cls);
+  if(!offOf(cls)){
+    const did=designOf(cls);
+    const im=imgFor(did);
+    if(im.complete&&im.naturalWidth){
+      const e=entry(cls);
+      const pose=viewPose(cls,sex,view);
+      const [hx,hy]=HAND[view]||[.5,.6];
+      const ax=pose[0]+pose[2]*hx, ay=pose[1]+pose[3]*hy;      // the hand, in 200x200 space
+      const [gx,gy]=GRIP[fam]||[.5,.85];
+      const s=BASE_SCALE*(e.scale||1);
+      const rot=((ANGLE[fam]&&ANGLE[fam][view])||0)+(e.rot||0);
+      const px=ox+ax*z+(e.dx||0)*z, py=oy+ay*z+(e.dy||0)*z;
+      sctx.save();
+      sctx.imageSmoothingEnabled=false;
+      sctx.translate(px,py);
+      sctx.rotate(rot*Math.PI/180);
+      sctx.drawImage(im,-gx*im.naturalWidth*s*z,-gy*im.naturalHeight*s*z,
+                        im.naturalWidth*s*z,im.naturalHeight*s*z);
+      sctx.restore();
+      // the grip marker: what you are steering
+      sctx.fillStyle='rgba(233,196,106,.9)';
+      sctx.beginPath();sctx.arc(px,py,3,0,7);sctx.fill();
+    }
+  }
+  if(state.playing)requestRender();
+}
+
+/* =============================================================================
+   Dragging / rotating / sizing
+   ========================================================================== */
+let drag=null;
+stage.addEventListener('pointerdown',ev=>{
+  if(offOf(state.sel))return;
+  drag={x:ev.clientX,y:ev.clientY,dx:entry(state.sel).dx||0,dy:entry(state.sel).dy||0};
+  stage.setPointerCapture(ev.pointerId);stage.classList.add('drag');
+});
+stage.addEventListener('pointermove',ev=>{
+  if(!drag)return;
+  const e=entry(state.sel);
+  e.dx=Math.round(drag.dx+(ev.clientX-drag.x)/state.zoom);
+  e.dy=Math.round(drag.dy+(ev.clientY-drag.y)/state.zoom);
+  refreshNumbers();requestRender();
+});
+function endDrag(){if(!drag)return;drag=null;stage.classList.remove('drag');save();refreshSummary()}
+stage.addEventListener('pointerup',endDrag);
+stage.addEventListener('pointercancel',endDrag);
+stage.addEventListener('wheel',ev=>{
+  if(offOf(state.sel))return;
+  ev.preventDefault();const e=entry(state.sel);
+  e.rot=Math.round((e.rot||0)+(ev.deltaY>0?-2:2));refreshNumbers();requestRender();save();
+},{passive:false});
+window.addEventListener('keydown',ev=>{
+  const e=entry(state.sel);
+  if(ev.key==='['){e.rot=(e.rot||0)-2}
+  else if(ev.key===']'){e.rot=(e.rot||0)+2}
+  else if(ev.key==='-'||ev.key==='_'){e.scale=Math.max(.4,+( (e.scale||1)-.05).toFixed(2))}
+  else if(ev.key==='='||ev.key==='+'){e.scale=Math.min(3,+((e.scale||1)+.05).toFixed(2))}
+  else if(ev.key==='0'){e.dx=0;e.dy=0;e.rot=0;e.scale=1}
+  else return;
+  ev.preventDefault();refreshNumbers();refreshDesigns();requestRender();save();
+});
+
+/* =============================================================================
+   UI
+   ========================================================================== */
+const $=id=>document.getElementById(id);
+function refreshClassList(){
+  const box=$('clsList');box.innerHTML='';
+  for(const n of CLASS_ORDER){
+    const row=document.createElement('div');
+    row.className='cls'+(n===state.sel?' sel':'')+(offOf(n)?' off':'');
+    const nm=document.createElement('div');nm.className='nm';nm.textContent=n;
+    const fa=document.createElement('div');fa.className='fam';
+    fa.textContent=(CLASS_FAMILIES[n].length>1?'':'')+famOf(n);
+    const bt=document.createElement('button');
+    bt.textContent=offOf(n)?'—':'✕';bt.title=offOf(n)?'give this job a weapon':'no weapon for this job';
+    bt.style.padding='0 6px';bt.onclick=ev=>{ev.stopPropagation();entry(n).off=!offOf(n);save();refreshAll()};
+    row.append(nm,fa,bt);
+    row.onclick=()=>{state.sel=n;state.view='S';lastKey='';refreshAll()};
+    box.appendChild(row);
+  }
+  $('clsCount').textContent=CLASS_ORDER.length+' jobs · '+CLASS_ORDER.filter(n=>!offOf(n)).length+' armed';
+}
+function refreshDesigns(){
+  const cls=state.sel,fam=famOf(cls),did=designOf(cls);
+  $('famName').textContent=FAMILIES[fam]||fam;
+  $('className').textContent=cls;
+  const note=SOURCE_NOTE[did];
+  $('designNote').innerHTML=(offOf(cls)
+    ? '<b class="off">This job is set to carry no weapon.</b> Untick it in the class list to pick a design.'
+    : 'Three designs per family, all real RO item art. The chosen one is drawn on the class sprite above.'
+      + (note?' <b>('+note+')</b>':''));
+  const box=$('designs');box.innerHTML='';
+  for(const d of DESIGNS[fam]||[]){
+    const el=document.createElement('div');
+    el.className='des'+(d===did?' sel':'');
+    const im=document.createElement('img');im.src=weaponUrl(d);im.alt=d;
+    const lb=document.createElement('div');lb.className='lb';lb.textContent=DESIGN_LABEL[d]||d;
+    el.append(im,lb);
+    el.onclick=()=>{entry(cls).design=d;save();refreshAll()};
+    box.appendChild(el);
+  }
+}
+function refreshViews(){
+  const box=$('views');box.innerHTML='';
+  const c=clsInfo(state.sel);const g=c&&c.m;
+  const avail=VIEWS.filter(v=>g&&g.files&&g.files[v]);
+  for(const v of avail){
+    const b=document.createElement('button');
+    b.textContent=VIEW_LABEL[v]||v;b.className=state.view===v?'on':'';
+    b.onclick=()=>{state.view=v;lastKey='';refreshViews();requestRender()};
+    box.appendChild(b);
+  }
+}
+function refreshRefStrip(){
+  const box=$('refStrip');box.innerHTML='';
+  const fam=famOf(state.sel);
+  const did=designOf(state.sel);
+  // the held art exists for whichever design carries it; show the family's best
+  const with_ = Object.keys(ART).filter(k=>k.indexOf('held_'+did+'__')===0);
+  const dirs=['S','SW','W','NW','N','NE','E','SE'];
+  let any=false;
+  for(const d of dirs){
+    if(!with_.includes('held_'+did+'__'+d))continue;
+    any=true;
+    const cell=document.createElement('div');cell.className='cell';
+    const im=document.createElement('img');im.src=heldUrl(did,d);im.alt=d;
+    const lb=document.createElement('small');lb.textContent=d;
+    cell.append(im,lb);box.appendChild(cell);
+  }
+  if(!any){
+    box.innerHTML='<div class="hint">The client dump used here only carries full held-weapon sprites for one '
+      +'family (the Knight\'s sword) and one bow. Everything else is the item art, which is a single front '
+      +'view — that is exactly why the angle above is yours to set.</div>';
+  }
+}
+function refreshNumbers(){
+  const cls=state.sel,e=entry(cls);
+  $('nClass').textContent=cls;
+  $('nFam').textContent=FAMILIES[famOf(cls)]||famOf(cls);
+  $('nDesign').textContent=(DESIGN_LABEL[designOf(cls)]||designOf(cls))+(e.off?' (off)':'');
+  $('nOff').textContent=(e.dx||0)+', '+(e.dy||0);
+  $('nRot').textContent=((ANGLE[famOf(cls)]&&ANGLE[famOf(cls)][state.view])||0)+(e.rot||0)+'°';
+  $('nScale').textContent=(BASE_SCALE*(e.scale||1)).toFixed(2)+'×';
+  $('nOn').innerHTML=offOf(cls)?'<span class="off">none</span>':'carried';
+}
+function refreshSummary(){
+  const lines=[];
+  for(const n of CLASS_ORDER){
+    const e=state.per[n]||{};
+    if(e.off){lines.push('<div><b>'+n+'</b> — <span class="off">no weapon</span></div>');continue}
+    const tweak=(e.dx||e.dy||e.rot||(e.scale&&e.scale!==1))
+      ? ' <span class="hint">(moved '+(e.dx||0)+','+(e.dy||0)+' rot '+((ANGLE[famOf(n)]&&ANGLE[famOf(n)][state.view])||0)+(e.rot||0)+'°)</span>' : '';
+    lines.push('<div><b>'+n+'</b> — '+(DESIGN_LABEL[designOf(n)]||designOf(n))+tweak+'</div>');
+  }
+  $('summary').innerHTML=lines.join('');
+  $('export').value=proposalJSON();
+}
+function refreshAll(){refreshClassList();refreshDesigns();refreshViews();refreshRefStrip();refreshNumbers();refreshSummary();requestRender()}
+
+/* =============================================================================
+   Hand-back
+   ========================================================================== */
+function proposalJSON(){
+  const out={page:'weapon-proposal',version:1,classes:{}};
+  for(const n of CLASS_ORDER){
+    const e=state.per[n]||{};
+    out.classes[n]={weapon:!e.off,family:famOf(n),design:(e.off?null:designOf(n)),
+      dx:e.dx||0,dy:e.dy||0,rot:e.rot||0,scale:+(e.scale||1).toFixed(2)};
+  }
+  return JSON.stringify(out,null,1);
+}
+$('copy').onclick=async()=>{
+  const txt=proposalJSON();
+  $('export').value=txt;
+  try{await navigator.clipboard.writeText(txt);$('copyNote').innerHTML='<b style="color:var(--ok)">Copied.</b> Paste it back to the agent.'}
+  catch(e){$('export').select();$('copyNote').textContent='Press Ctrl/Cmd+C — the JSON is selected below.'}
+};
+$('clear').onclick=()=>{state.per={};save();refreshAll();$('copyNote').textContent='Cleared. Back to the automatic placement.'};
+$('reset').onclick=()=>{state.per[state.sel]={};save();refreshAll()};
+$('allOn').onclick=()=>{for(const n of CLASS_ORDER)entry(n).off=false;save();refreshAll()};
+$('allOff').onclick=()=>{for(const n of CLASS_ORDER)entry(n).off=true;save();refreshAll()};
+$('play').onclick=()=>{state.playing=!state.playing;$('play').textContent=state.playing?'⏸ Pause':'▶ Play';last=performance.now();requestRender()};
+
+/* ---- provenance box: say exactly where the pixels came from ---- */
+$('prov').innerHTML='Every image on this page is a real Ragnarok Online client sprite, decoded from the'
+  +' client\'s own <code>.spr</code> files and cropped to its own opaque bounds — nothing was drawn,'
+  +' traced or recoloured. <code>assets/weapons_manifest.json</code> records the exact source file behind'
+  +' each of the '+Object.keys(ART).filter(k=>k.indexOf('held_')!==0).length+' item images, and'
+  +' <code>tools/make_weapon_pack.py</code> is the tool that produced them (re-run it with a different'
+  +' extracted client to swap the set).';
+
+load();refreshAll();
+requestRender();
+</script>
+</body>
+</html>
