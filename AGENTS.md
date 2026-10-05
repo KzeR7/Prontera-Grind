@@ -3015,3 +3015,8 @@ assigned for feel rather than fidelity. While reworking that, two shipped bugs s
 * **Files touched:** `Updates/Sprite/index.html`, new `Updates/Sprite/README.md`, new `tools/make_sprite_viewer.py`, `tools/tests/sprite_viewer_sim.js`, `tools/tests/pack_sim.js`, `index.html` (clarifying class-skin fallback comments only), `READ-ME-FIRST.md`, and this log. No player-visible game behavior or `BUILD` change.
 * **Tests:** all **19 suites** pass. The viewer check verifies 154 PNGs, 200×200 dimensions, complete requested source poses and a current generated manifest; `pack_sim.js` verifies all 19 exact game skin mappings. Inline viewer JS passes `node --check`, and `git diff --check` is clean.
 * **Branches / PR:** `arena/01a10af7-prontera-grind`. Prepared for the requested PR; not pushed yet.
+
+### 2026-10-05 — `tool-v50 PR #18 published`
+
+* **PR:** pushed `arena/01a10af7-prontera-grind` and opened PR #18, “Add canonical class sprite reference backup,” against `main`. The prior v50 log line saying “not pushed yet” was accurate before publication; this entry records the completed push and PR.
+* **Checks:** all 19 local test suites passed before the push. GitHub's Cloudflare Workers Builds check then reported **failure**; its only diagnostic is a Cloudflare dashboard link that redirects to account sign-in, and the GitHub check contains no build log or annotations. The failure reason is therefore unverified; do not describe the deployment check as passing.
