@@ -8,12 +8,30 @@ the repo, so pushing to `main` is the deploy.
 * `assets/sprite_pack_data.js` — the built class pack: 19 class bodies + 2 heads, base64 atlases (~5.8 MB).
 * `assets/kit/` — **map kit v2**: `ro-spritesheet.png` + `.json` (25 terrain tiles, 34 billboards)
   and the two attached level designs (`ro-map-payon.json`, `ro-map-morocc.json`).
-* `Sprite/*.png` — the uploaded class sheets, the source art for the pack.
+* `Sprite/*.png` — the uploaded class sheets, the source art for the pack (the animated fallback).
 * `Updates/Sprite/index.html` — the **canonical class-sprite reference backup** for all seven uploaded trees;
   after changing its PNGs, refresh the manifest with `python3 tools/make_sprite_viewer.py`. See
-  `Updates/Sprite/README.md` for the future-update workflow and why these still poses stay separate
-  from the live animation pack.
-* `tools/` — the art pipelines (`make_sprite_pack.py`, `make_sprite_viewer.py`, `montage.py`), the test suites (`tools/tests/`)
+  `Updates/Sprite/README.md` for the future-update workflow.
+* `assets/class_skins_data.js` — the **live class skins**: for every class and gender, the file, frame
+  count, per-frame delays, opaque bounds, drawn height and ground line of its uploaded **animated**
+  PNGs (walking S / SE / NE, attack SE, plus High Priest's own walking N). Every one of those files is
+  a multi-frame looping APNG, so the game **decodes those frames itself** (`skinDecodePng` in
+  `index.html`: PNG chunks, `DecompressionStream`, unfilter, APNG blend/dispose) and paints the
+  frame that is due at that moment onto the hero's texture - the clock is the file's own delay
+  table, looping forever, and SW / NW / attack SW are the same file mirrored. The animated pack
+  (`assets/sprite_pack_data.js`) is the fallback until they load. Rebuild after changing a PNG with
+  `python3 tools/make_class_skins.py` (`--check` fails when it is stale, and also when a file stops
+  being a multi-frame endless loop); re-make the frame fixture that proves the decoder with
+  `/tmp/venv/bin/python3 tools/make_apng_fixtures.py`; and see the QC sheet tool
+  `python3 tools/preview_class_skins.py` (one directions sheet plus one frame-by-frame walk-cycle
+  sheet per class).
+* `Updates/ApngAnimation/` — **how the class skins animate, and the working method to follow**:
+  `README.md` (the APNG format as the art uses it, the game's decoder/player, every trap, and the
+  full update procedure), `class_skin_animation.js` (verbatim backup of that code block, kept
+  current by `python3 tools/backup_apng_code.py --check`), and `simple_apng_demo.png` (a 6-frame
+  example of the simplest APNG, written by `python3 tools/make_simple_apng.py`). **Read this before
+  changing the class art or the hero.**
+* `tools/` — the art pipelines (`make_sprite_pack.py`, `make_sprite_viewer.py`, `make_simple_apng.py`, `montage.py`), the test suites (`tools/tests/`)
   and a dev-only plan previewer (`tools/preview/`).
 * `AGENTS.md` — **the project's rules and its full update log**. Read it before changing anything:
   it carries the house rules (crop only, never draw art; all 8 directions and 3 animation rows
@@ -36,6 +54,7 @@ h=open('index.html').read()
 open('/tmp/pack_block.js','w').write(h[h.index('const PACK_BODY='):h.index('function ensureHero(')])
 PY
 python3 tools/make_sprite_viewer.py --check
+python3 tools/make_class_skins.py --check
 for t in tools/tests/*_sim.js; do node "$t" || exit 1; done
 ```
 

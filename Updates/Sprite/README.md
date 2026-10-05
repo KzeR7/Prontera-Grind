@@ -16,8 +16,18 @@ The generator rebuilds the embedded folder/class and image manifests in `index.h
 
 Open `Updates/Sprite/index.html` in a browser or serve the repository with the project's local HTTP server. The page uses only local relative PNG paths and has no external script dependency. Review notes stay in the browser unless copied or downloaded by the owner.
 
-## Keep reference art separate from the live game pack
+## This set is now what the live game wears
 
-These files are individual full-body 200×200 still poses. They are not the game's eight-direction, multi-frame body/head atlas and do not carry the game's selectable hair. Do not replace `assets/sprite_pack_data.js` or the root `Sprite/*.png` sheets with this reference set. The game already resolves each of its 19 classes to its matching animated body when that body exists; `node tools/tests/pack_sim.js` checks the live compositor and class-to-skin mapping.
+Every file here is a full-body 200×200 **animated PNG**: it carries several frames, its own per-frame delays and `num_plays = 0` (loop forever). A still reader only ever sees frame 0, which is how an earlier version of this note wrongly described the set as "still poses" — parse `acTL`/`fcTL` or step `ImageSequence` before judging a file. Frame counts in the uploaded set: 8 frames (127 files), 5 (13), 6 (4), 9 (10). What the set does **not** carry is an idle animation, an E or W drawing, a straight-up N drawing (High Priest is the only exception), or the game's 19 selectable hair styles — so the live game walks in place while you stand still, uses SE for straight left/right, uses NE for straight up unless the class supplies its own N, and cannot put the old hairstyles on top of the art.
+
+`assets/class_skins_data.js` (built by `python3 tools/make_class_skins.py`, checked with `--check`) stores, for every class and gender: the source file per view, its frame count, its per-frame delays, the union of its frames' opaque bounds, its drawn height and its ground line. `node tools/tests/class_skin_sim.js` checks all of that against the real files (APNG chunk by chunk), plus the mapping, both genders, the routes and mirrors, the previews and the asset loading. `tools/preview_class_skins.py` paints one directions sheet and one frame-by-frame walk-cycle sheet per class offline for review.
+
+The game never runs these files through the 8×24 atlas slicing, and it does not lean on the browser to animate a hidden `<img>` either — browsers pause an APNG that is not painted on screen, which is what left one earlier build frozen on frame 0. Instead `index.html` decodes the frames itself (`skinDecodePng`: chunk walk, `DecompressionStream('deflate')`, PNG unfilter, APNG blend/dispose) into one horizontal strip of frames per view, and each rendered frame paints the frame that is due right now onto the 200×200 canvas used as the hero's `CanvasTexture`. The clock is the file's own delay table (and its endless loop), so nothing is sped up, slowed down, invented or counted by hand.
+
+**The full method - the APNG format as these files use it, how the game decodes and plays the frames, every trap and the step-by-step for updating the art - lives in `Updates/ApngAnimation/README.md`, with a verbatim backup of the animation code beside it. Read that first.**
+
+`node tools/tests/class_skin_sim.js` proves it: it runs that decoder over all 154 files and compares every decoded frame byte-for-byte (SHA-256) with an independent Pillow rendering (`tools/tests/fixtures/apng_frame_sha.json`, written by `/tmp/venv/bin/python3 tools/make_apng_fixtures.py`), then checks the hero's own pixels show the due frame, that the mirror is a horizontal flip, and the fallbacks. Regenerate the fixture after replacing a PNG.
+
+Do not replace `assets/sprite_pack_data.js` or the root `Sprite/*.png` sheets with this set: the animated pack is still the fallback art, and `node tools/tests/pack_sim.js` still checks that compositor and the class-to-skin mapping.
 
 `tools/sprite_picker_standalone.html` and `tools/attack_selection.json` are separate game attack-pose/head-seat tools and backups. They are intentionally not overwritten by this reference page.

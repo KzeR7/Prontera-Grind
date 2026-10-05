@@ -265,6 +265,7 @@ button.tick.on{background:#ffe08a;border-color:var(--gold);font-weight:bold}
 </div>
 <div id="modal"><div class="login-card"><p id="mt" style="font-size:14px;opacity:1;margin:0 0 12px"></p><div class="row" style="justify-content:center"><button id="my">Yes</button><button id="mn">Cancel</button></div></div></div><div id="tooltip"></div>
 <script src="assets/sprite_pack_data.js?v=1"></script>
+<script src="assets/class_skins_data.js?v=1"></script>
 <script src="assets/weapon_joints_data.js?v=1"></script>
 <!-- v1 Morocc atlas generator deleted (2026-10-04): retired to Updates/retired-v1-kit/ when map
      kit v2 shipped, and this tag pointed at a file that no longer exists in the tree. kit_sim
@@ -327,7 +328,7 @@ const GM_USER='GM',GM_PASS='gm1234';   // CHANGE THE GM PASSWORD before you publ
 // script block, which is a SyntaxError - the game did not run on main at all. One line wins, and
 // it names both sides of this merge: the v38 balance patch (the weapon cut, the affix/card
 // give-back) and main's weapon-hold rendering work.
-const BUILD='2026-10-05 balance-v50 slower index capped cards safer pets';   // shown on the login card - confirms which file you loaded
+const BUILD='2026-10-05 skin-v53 class animations decoded in-game';   // shown on the login card - confirms which file you loaded
 $('buildTag').textContent='build '+BUILD;
 
 // ---------- class tree: Novice -> 6 first jobs -> 6 second jobs -> 6 third jobs ----------
@@ -1734,6 +1735,7 @@ const V={
     <div class="mob-card"><div class="hd">${k}</div><small>${c.par?'Before: <b>'+c.par+'</b>':'Starting class'}${c.kids.length?' &middot; Next: <b>'+c.kids.join(', ')+'</b>':''}</small><br>
     <small>${pj?`Saved ${rec?`Base Lv ${rec.lv} &middot; `:''}Job Lv ${pj.jl}/${c.mj}`:'Not played yet'}${playedClass(k)&&k!==S.cls?' &middot; <b>waiting: your stats, skills and gear are still on it</b>':''} &middot; ATK x${c.atk} &middot; ASPD x${c.aspd} &middot; HP x${c.hp}<br>Weapons: ${c.wt.join(', ')}${katarOnly(k)?' (two-handed Katar; no off-hand)':''} &middot; Main stat ${SU(c.main)}</small>
     <div class="row" style="margin-top:6px"><button data-a="job" data-v="${k}" ${blk?'disabled':''}>${k===S.cls?'Current class':'Change to '+k}</button>${blk&&k!==S.cls?`<small class="r0">${blk}</small>`:''}</div></div>
+    <div class="hair-preview-card"><div class="hair-preview-stage"><canvas id="classPreview" width="126" height="134" role="img" aria-label="${S.sex==='f'?'female':'male'} ${k} class skin preview"></canvas><span class="hair-preview-loading" id="classPreviewLoading">Loading sprite…</span></div><div class="hair-preview-info"><span class="eyebrow">CLASS PREVIEW</span><b>${k}</b><span>${S.sex==='f'?'Female':'Male'} &middot; S (front) view &middot; animating</span><span class="hair-style-label">${k===S.cls?'You wear this now':'What this class looks like'}</span></div></div>
     <small><b>A class you have played before is one click away</b> - its Base Lv, job level, skills, stats and gear are still on it, so there is no Novice reset needed to go back to it. A class you have <i>never</i> played still has to be unlocked from its parent (or from the Novice).</small>
     <button class="full" data-a="job" data-v="Novice" ${S.cls==='Novice'?'disabled':''}>Restart as Novice (Base Lv 25, job levels cleared)</button>`},
   skills(){const line=lineOf(S.cls),av=skpAvail(),sel=SKILLS.find(s=>s.id===selS);
@@ -1783,8 +1785,13 @@ const V={
     <small>${shown.length} of ${logs.length} events shown &middot; tick what you want to read &middot; the on-screen log follows the same ticks</small>
     ${shown.map(l=>`<div class="${l.cls||''}">${l.m}</div>`).join('')||'<i>No events to show.</i>'}`},
   set(){const hair=((S.hair|0)%19+19)%19+1,sex=S.sex==='f'?'Female':'Male';return`<div class="hd">Appearance</div><div class="row"><button data-a="sex" data-v="m" aria-label="Choose male sprite" style="${S.sex==='f'?'':'background:#ffe08a'}">♂ Male</button><button data-a="sex" data-v="f" aria-label="Choose female sprite" style="${S.sex==='f'?'background:#ffe08a':''}">♀ Female</button></div>
-  <div class="hair-preview-card"><div class="hair-preview-stage"><canvas id="hairPreview" width="126" height="134" role="img" aria-label="Live ${sex.toLowerCase()} ${S.cls} hair preview"></canvas><span class="hair-preview-loading" id="hairPreviewLoading">Loading sprite…</span></div><div class="hair-preview-info"><span class="eyebrow">LIVE PREVIEW</span><b>${S.cls}</b><span>${sex} &middot; front idle pose</span><span class="hair-style-label">Style ${hair} of 19</span></div></div>
-  <div class="row hair-controls" style="margin-top:4px;align-items:center;gap:8px"><button data-a="hair" data-v="-1" aria-label="Previous hairstyle" title="Previous hairstyle">◀</button><span>Hair style ${hair} / 19</span><button data-a="hair" data-v="1" aria-label="Next hairstyle" title="Next hairstyle">▶</button></div><small>Preview updates here and on your character as you change hair or gender.</small>
+  <div class="hair-preview-card"><div class="hair-preview-stage"><canvas id="hairPreview" width="126" height="134" role="img" aria-label="Live ${sex.toLowerCase()} ${S.cls} class skin preview"></canvas><span class="hair-preview-loading" id="hairPreviewLoading">Loading sprite…</span></div><div class="hair-preview-info"><span class="eyebrow">LIVE PREVIEW</span><b>${S.cls}</b><span>${sex} &middot; S (front) view &middot; animating</span><span class="hair-style-label">Your class's own uploaded animation</span></div></div>
+  <div class="row hair-controls" style="margin-top:4px;align-items:center;gap:8px"><button disabled aria-label="Previous hairstyle" title="The hairstyle is part of the uploaded class art">◀</button><span>Hair comes with the class art</span><button disabled aria-label="Next hairstyle" title="The hairstyle is part of the uploaded class art">▶</button></div>
+  <small>Every uploaded file is a complete looping animation, hair included, so the old 19 hairstyles cannot be put on it. The style you picked is still saved with your account (style ${hair} of 19) and comes back if the animated pack is ever used again.</small>
+  <small><b>Views:</b> S (straight down), SE and NE are the supplied animations; SW and NW are those mirrored, and the attack is the supplied SE swing, mirrored when you swing to the left. The art has no E or W animation, and only High Priest has its own straight-up N one, so walking straight up uses NE${S.cls==='High Priest'?' (High Priest uses its own N art)':''} and walking straight left or right uses the SE / mirrored SE view.</small>
+  <small><b>Standing still:</b> the art has no idle animation, so at rest your character keeps playing its walk cycle - the same thing the reference viewer does. Send idle art and it will use it.</small>
+  ${skinBroken?`<small class="r0"><b>Some animations could not be read as animations</b> - the game decodes each file's frames itself and one or more would not open (the log says which). The art still shows, just without its frames; opening the game through the local server (python3 -m http.server) rather than as a file:// page is what the decoder needs.</small>`:''}
+  <small><b>Weapons:</b> the held-weapon art is switched off while the class skins are finished, so your character is drawn from the class art alone. The white melee swing arc is switched off too - the uploaded attack animation already is the swing. Your equipped weapon still gives its full stats and shows in Equipment and the Bag.</small>
     <div class="hd" style="margin-top:10px">Damage numbers</div>
     <div class="row"><button data-a="dmgshow" data-v="on" class="${S.dmgShow!==false?'on':''}" aria-pressed="${S.dmgShow!==false}">Show: On</button><button data-a="dmgshow" data-v="off" class="${S.dmgShow===false?'on':''}" aria-pressed="${S.dmgShow===false}">Show: Off</button></div>
     <div class="row" style="margin-top:4px"><button data-a="dmgfmt" data-v="short" class="${S.dmgShort!==false?'on':''}" aria-pressed="${S.dmgShort!==false}">Short &middot; 100K / 1M</button><button data-a="dmgfmt" data-v="full" class="${S.dmgShort===false?'on':''}" aria-pressed="${S.dmgShort===false}">Full &middot; 100,000</button></div>
@@ -1911,7 +1918,7 @@ function renderWin(){
   const old={};host.querySelectorAll('[data-win]').forEach(e=>old[e.dataset.win]=e.querySelector('.wbody').scrollTop);
   host.innerHTML=tabs.map(k=>`<div class="win wp${k==='map'?' wide':''}" data-win="${k}"><div class="title"><span>${TABS[k][1]}</span><button data-x="${k}">&#10005;</button></div><div class="body wbody">${V[k]()}</div></div>`).join('');
   host.querySelectorAll('[data-win]').forEach(e=>{e.querySelector('.wbody').scrollTop=e.dataset.win==='log'?1e6:(old[e.dataset.win]||0)});
-  if(tabs.includes('set'))drawHairPreview()}
+  if(tabs.includes('set'))drawAppearancePreview();if(tabs.includes('job'))drawClassPreview()}
 const MAX_TABS=3;const openTab=k=>{if(k==='gm'&&!S.gm)return;if(k!=='status')eqPick=null;const i=tabs.indexOf(k);if(i>=0)tabs.splice(i,1);else{if(tabs.length>=MAX_TABS)tabs.shift();tabs.push(k);
   // Reopening a window starts at its first sub-tab: Status shows Stats, Inventory shows Bag.
   if(k==='status')sub.status='stats';if(k==='bag')sub.bag='bag';
@@ -3207,8 +3214,247 @@ function packBodyFor(cls,tier){const PK=window.SPRITE_PACK;if(!PK)return null;
   const f=tier>=3?'assassin_cross':tier>=2?'assassin':'thief';return PK.bodies[f]?f:null}
 const packImg={},packCache=new Map(),PACK_K=.03;let packReady=false;
 (function(){const PK=window.SPRITE_PACK;if(!PK)return;let n=0,tot=0;
-  const ld=(k,u)=>{tot++;const i=new Image();i.onload=()=>{if(++n===tot){packReady=true;heroKey='';drawHairPreview()}};i.src=u;packImg[k]=i};
+  const ld=(k,u)=>{tot++;const i=new Image();i.onload=()=>{if(++n===tot){packReady=true;heroKey='';drawAppearancePreview();drawClassPreview()}};i.src=u;packImg[k]=i};
   for(const c in PK.bodies)ld('b:'+c,PK.bodies[c].atlas);for(const h in PK.heads)ld('h:'+h,PK.heads[h])})();
+
+// ----- Class skins (assets/class_skins_data.js, built by tools/make_class_skins.py) -----
+// The owner's class art is one complete 200x200 ANIMATED PNG per supplied view: walking S,
+// walking SE, walking NE and attacking SE (High Priest also supplies its own walking N).
+// Every one of those files is several full-frame RGBA images in a row, each with its own delay,
+// looping forever (num_plays = 0) - so the game DECODES those frames itself and plays them on the
+// file's own clock, painting the frame that is due right now onto the 200x200 canvas that is the
+// hero's texture.  v52 tried to lean on the browser instead ("copy whatever frame the decoded
+// <img> is showing"); browsers pause an APNG that is not painted on screen, so the hero sat on
+// frame 0.  Nothing here is invented, re-timed or re-encoded: frame order, per-frame delays and
+// the endless loop come from the file, and the test suite decodes every file and compares every
+// frame against Pillow's own rendering of it.
+const SKIN_SIZE=200;                       // every supplied canvas is 200x200
+const SKIN_VIEW={0:['S',0],1:['SE',1],2:['SE',1],3:['NE',1],4:['NE',0],5:['NE',0],6:['SE',0],7:['SE',0]};
+// Attacking is drawn by the single SE attack animation: the left-hand facings (SW, W, NW) get it
+// mirrored, everything else the drawn swing.  Both are named here, in one list, so it is testable.
+const SKIN_ATTACK_MIRROR=[0,1,1,1,0,0,0,0];
+// One constant scale per class and gender: the hero already stood 72px of the old pack cell tall.
+const SKIN_H=72*PACK_K;
+const SKIN_STRIP_KEEP=18;                  // decoded view strips kept alive at once (~23 MB of canvas)
+const SKIN_CACHE_MAX=24;                   // hidden <img> decoders kept alive when frames cannot be read
+const skinStrips=new Map(),skinStripOrder=[],skinDocs={},skinDocOrder=[],skinPacks=new Map(),skinWarned={},skinDecoding={};
+// Reading the frames needs fetch + DecompressionStream; a page opened straight off the disk
+// (file://) has neither, so there the game shows the art without its frames and says so.
+const SKIN_FILE_PROTOCOL=(typeof location!=='undefined'&&location.protocol==='file:');
+const SKIN_DECODE=!SKIN_FILE_PROTOCOL&&typeof DecompressionStream==='function'&&typeof fetch==='function'&&typeof Response==='function';
+let skinBroken=SKIN_FILE_PROTOCOL;
+function skinNow(){return (typeof performance!=='undefined'&&performance.now)?performance.now():Date.now()}
+// A hidden-but-painted <img> is the last-resort path when the frames cannot be read (and it is
+// what keeps the art visible at all on an old browser): display:none is exactly what browsers
+// are allowed to skip, so the decoder lives in the corner instead.
+function skinLayer(){let el=$('skinDecoders');if(!el){el=document.createElement('div');el.id='skinDecoders';
+  el.setAttribute('aria-hidden','true');
+  el.style.cssText='position:fixed;left:0;top:0;width:1px;height:1px;overflow:hidden;opacity:0;pointer-events:none;z-index:-1';
+  document.body.appendChild(el)}return el}
+function skinDoc(url){
+  const cached=skinDocs[url];
+  if(cached)return cached;
+  const im=new Image();im.alt='';im.draggable=false;im.decoding='async';
+  im.style.cssText='width:'+SKIN_SIZE+'px;height:'+SKIN_SIZE+'px';
+  skinDocs[url]=im;skinDocOrder.push(url);
+  if(skinDocOrder.length>SKIN_CACHE_MAX){const old=skinDocOrder.shift();
+    if(old&&old!==url)delete skinDocs[old]}
+  im.onload=()=>{heroKey='';drawAppearancePreview();drawClassPreview()};
+  im.src=encodeURI(url);
+  skinLayer().appendChild(im);
+  return im}
+function skinMakeImg(p,view,url,why){
+  let im=skinDocs[url];
+  if(!im){
+    skinBroken=true;
+    im=skinDoc(url);
+    im.onerror=()=>{const key=im.dataset.warn||'';if(!skinWarned[key]){skinWarned[key]=1;
+      log('Class skin art could not load ('+decodeURI(url)+'). The animated fallback sprite is used instead.','r0')}}
+    if(why&&!skinWarned[url]){skinWarned[url]=1;
+      log('Class skin animation could not be read ('+decodeURI(url)+'): '+why+'. The art is drawn without its frames - serve the game over http (python3 -m http.server) to see it animate.','r0')}}
+  im.dataset.warn=String(p&&p.files?p.files[view]:'')+'|'+view}
+// ---- APNG frames, decoded here ------------------------------------------------------------
+function skinBytes(parts){let n=0;for(const p of parts)n+=p.length;const out=new Uint8Array(n);
+  let o=0;for(const p of parts){out.set(p,o);o+=p.length}return out}
+async function skinInflate(bytes){
+  const stream=new DecompressionStream('deflate'),writer=stream.writable.getWriter();
+  writer.write(bytes);writer.close();
+  return new Uint8Array(await new Response(stream.readable).arrayBuffer())}
+function skinPaeth(a,b,c){const p=a+b-c,pa=Math.abs(p-a),pb=Math.abs(p-b),pc=Math.abs(p-c);
+  return pa<=pb&&pa<=pc?a:pb<=pc?b:c}
+// PNG filter reconstruction (RFC 2083 section 6), 8-bit RGBA rows only - which is what the art is.
+function skinUnfilter(raw,w,h,bpp){
+  const stride=w*bpp,out=new Uint8Array(stride*h);
+  for(let y=0;y<h;y++){
+    const filter=raw[y*(stride+1)],line=y*stride,prev=line-stride,src=y*(stride+1)+1;
+    for(let x=0;x<stride;x++){
+      const value=raw[src+x],a=x>=bpp?out[line+x-bpp]:0,b=y?out[prev+x]:0,c=(y&&x>=bpp)?out[prev+x-bpp]:0;
+      out[line+x]=(filter===0?value
+        :filter===1?value+a
+        :filter===2?value+b
+        :filter===3?value+((a+b)>>1)
+        :filter===4?value+skinPaeth(a,b,c)
+        :value)&255}}
+  return out}
+// One APNG -> one horizontal strip of its decoded frames, in file order.
+async function skinDecodePng(bytes){
+  if(!bytes||bytes.length<8||bytes[0]!==137||bytes[1]!==80||bytes[2]!==78||bytes[3]!==71)return null;
+  const view=new DataView(bytes.buffer,bytes.byteOffset,bytes.byteLength);
+  let p=8,width=0,height=0,depth=0,type=0,interlace=0,frames=null;
+  const parts=[];
+  while(p+8<=bytes.length){
+    const length=view.getUint32(p),kind=String.fromCharCode(bytes[p+4],bytes[p+5],bytes[p+6],bytes[p+7]);
+    if(kind==='IHDR'){width=view.getUint32(p+8);height=view.getUint32(p+12);depth=bytes[p+16];type=bytes[p+17];interlace=bytes[p+20]}
+    else if(kind==='acTL')frames=view.getUint32(p+8);
+    else if(kind==='fcTL')parts.push({rect:{x:view.getUint32(p+20),y:view.getUint32(p+24),w:view.getUint32(p+12),h:view.getUint32(p+16)},
+      dispose:bytes[p+32],blend:bytes[p+33],delay:[view.getUint16(p+28),view.getUint16(p+30)],chunks:[]});
+    else if(kind==='IDAT'){if(!parts.length)parts.push({rect:{x:0,y:0,w:width,h:height},dispose:0,blend:0,delay:[0,100],chunks:[]});
+      parts[0].chunks.push(bytes.subarray(p+8,p+8+length))}
+    else if(kind==='fdAT'&&parts.length)parts[parts.length-1].chunks.push(bytes.subarray(p+12,p+8+length));
+    p+=12+length;
+    if(kind==='IEND')break}
+  if(!frames||!parts.length||!width||!height||depth!==8||type!==6||interlace)return null;
+  if(parts.length!==frames)return null;
+  const shown=new Uint8ClampedArray(width*height*4);       // the picture as displayed, starts transparent
+  const out=[];
+  for(const part of parts){
+    if(!part.chunks.length)return null;
+    const pixels=skinUnfilter(await skinInflate(skinBytes(part.chunks)),part.rect.w,part.rect.h,4);
+    const saved=part.dispose===2?shown.slice():null;       // APNG_DISPOSE_OP_PREVIOUS
+    for(let y=0;y<part.rect.h;y++)for(let x=0;x<part.rect.w;x++){
+      const from=(y*part.rect.w+x)*4,to=((part.rect.y+y)*width+part.rect.x+x)*4,alpha=pixels[from+3];
+      if(part.blend===1&&alpha<255){                        // APNG_BLEND_OP_OVER
+        const keep=shown[to+3]*(255-alpha)/255;
+        shown[to]=(pixels[from]*alpha+shown[to]*keep)/(alpha+keep||1);
+        shown[to+1]=(pixels[from+1]*alpha+shown[to+1]*keep)/(alpha+keep||1);
+        shown[to+2]=(pixels[from+2]*alpha+shown[to+2]*keep)/(alpha+keep||1);
+        shown[to+3]=alpha+keep}
+      else{shown[to]=pixels[from];shown[to+1]=pixels[from+1];shown[to+2]=pixels[from+2];shown[to+3]=alpha}}
+    out.push(shown.slice());
+    if(part.dispose===1){                                   // APNG_DISPOSE_OP_BACKGROUND
+      for(let y=0;y<part.rect.h;y++)for(let x=0;x<part.rect.w;x++){const to=((part.rect.y+y)*width+part.rect.x+x)*4;
+        shown[to]=shown[to+1]=shown[to+2]=shown[to+3]=0}}
+    else if(part.dispose===2&&saved)shown.set(saved)}
+  const cv=document.createElement('canvas');cv.width=width*out.length;cv.height=height;
+  const ctx=cv.getContext('2d');ctx.imageSmoothingEnabled=false;
+  for(let i=0;i<out.length;i++)ctx.putImageData(new ImageData(out[i],width,height),i*width,0);
+  return {cv,n:out.length,w:width,h:height}}
+async function skinDecodeView(url){
+  const response=await fetch(encodeURI(url));
+  if(!response.ok)throw Error('HTTP '+response.status);
+  return skinDecodePng(new Uint8Array(await response.arrayBuffer()))}
+// ---- which decoded strips stay in memory ------------------------------------------------
+function skinPinnedUrls(){
+  const pin=new Set();
+  const add=p=>{if(p&&p.files)for(const v in p.files)pin.add(p.dir+'/'+p.files[v])};
+  add(heroSpr&&heroSpr.userData.skin?heroSpr.userData.skin.p:null);
+  if(S){add(skinPack(S.cls,S.sex));if(selK)add(skinPack(selK,S.sex))}
+  return pin}
+function skinEvict(){
+  const pin=skinPinnedUrls();
+  while(skinStripOrder.length>SKIN_STRIP_KEEP){
+    let i=0;while(i<skinStripOrder.length&&pin.has(skinStripOrder[i]))i++;
+    if(i>=skinStripOrder.length)break;                     // everything left is in use
+    const url=skinStripOrder.splice(i,1)[0],gone=skinStrips.get(url);
+    skinStrips.delete(url);
+    if(gone&&gone.cv){gone.cv.width=1;gone.cv.height=1}}}
+function skinStrip(p,view){
+  const url=p.dir+'/'+p.files[view],strip=skinStrips.get(url);
+  if(strip){const i=skinStripOrder.indexOf(url);if(i>=0)skinStripOrder.splice(i,1);skinStripOrder.push(url)}
+  return strip||null}
+function skinViewEnsure(p,view){
+  const url=p.dir+'/'+p.files[view];
+  if(skinStrips.has(url)||skinDocs[url]||skinDecoding[url])return;
+  if(!SKIN_DECODE){skinMakeImg(p,view,url,SKIN_FILE_PROTOCOL?'the page is not being served over http':'this browser cannot decode the frames');return}
+  skinDecoding[url]=1;
+  skinDecodeView(url).then(strip=>{
+    delete skinDecoding[url];
+    if(strip&&strip.n===p.frames[view]){
+      skinStrips.set(url,strip);skinStripOrder.push(url);skinEvict();
+      heroKey='';drawAppearancePreview();drawClassPreview();
+      if(p.name&&skinLoaded(p)&&!skinWarned['ready:'+p.name]){skinWarned['ready:'+p.name]=1;
+        // one plain line in the log so the player can see the frames arrived and are playing
+        const bits=Object.keys(p.files).map(v=>p.frames[v]+' '+v).join(', ');
+        log('Class skin animation ready: '+p.name+' - '+bits+' frames, played with the file\'s own delays.')}}
+    else skinMakeImg(p,view,url,strip&&strip.n!==p.frames[view]?'the file has '+strip.n+' frames, the manifest says '+p.frames[view]:'the file could not be read as an animation');
+  }).catch(err=>{delete skinDecoding[url];skinMakeImg(p,view,url,err&&err.message)})}
+// One pack per class and gender: the measured art data, the file's own delays in seconds, and the
+// promise to decode every supplied view.
+function skinPack(cls,sex){
+  const key=String(cls)+'|'+(sex==='f'?'f':'m'),cached=skinPacks.get(key);
+  if(cached!==undefined)return cached;
+  const all=window.CLASS_SKINS,rec=all&&all.classes&&all.classes[cls]?all.classes[cls][sex==='f'?'f':'m']:null;
+  let p=null;
+  if(rec){p={dir:all.dir,name:String(cls)+' '+(sex==='f'?'female':'male'),files:rec.files,frames:rec.frames,delays:rec.delays,secs:{},total:{},height:rec.height,anchor:rec.anchor};
+    for(const v in rec.files){
+      const d=rec.delays[v]||[];
+      // an APNG delay denominator of 0 means 100 (spec); seconds here, the unit the clock is in
+      const secs=d.map(e=>e[0]/(e[1]||100));
+      p.secs[v]=secs;p.total[v]=secs.reduce((a,b)=>a+b,0)}
+    for(const v in rec.files)skinViewEnsure(p,v)}
+  skinPacks.set(key,p);return p}
+function skinImage(p,view){const im=p&&skinDocs[p.dir+'/'+p.files[view]];return im&&im.complete&&im.naturalWidth>0?im:null}
+function skinStripOf(p,view){return p?skinStrips.get(p.dir+'/'+p.files[view])||null:null}
+function skinViewReady(p,view){return !!(skinStripOf(p,view)||skinImage(p,view))}
+// The whole class and gender waits for every supplied view: a half-loaded class would show the
+// wrong view for a moment, and the animated pack is always there to cover the wait.
+function skinLoaded(p){if(!p)return false;for(const v in p.files)if(!skinViewReady(p,v))return false;return true}
+// Which supplied animation a facing and an action draw, and whether it is mirrored.  dir 4 (straight
+// up) uses High Priest's own N file when the class has one; otherwise the NE view stands in.
+function skinRoute(p,dir,atk){
+  if(atk>0)return{view:'attack',mirror:!!SKIN_ATTACK_MIRROR[dir]};
+  if(dir===4&&p&&p.files&&p.files.N)return{view:'N',mirror:false};
+  const v=SKIN_VIEW[dir];return{view:v[0],mirror:!!v[1]}}
+function mkSkinHero(p){
+  const cv=document.createElement('canvas');cv.width=SKIN_SIZE;cv.height=SKIN_SIZE;
+  const tex=new THREE.CanvasTexture(cv);tex.magFilter=tex.minFilter=THREE.NearestFilter;tex.generateMipmaps=false;
+  const s=new THREE.Sprite(new THREE.SpriteMaterial({map:tex,transparent:true,alphaTest:.12}));
+  const px=SKIN_H/(p.height||90);                      // world units per source pixel, one per class/gender
+  s.scale.set(SKIN_SIZE*px,SKIN_SIZE*px,1);
+  // anchor: the figure's own centre x and its ground line, so the feet stay put while frames advance
+  s.center.set((p.anchor[0]||SKIN_SIZE/2)/SKIN_SIZE,1-(p.anchor[1]||SKIN_SIZE)/SKIN_SIZE);
+  s.userData.skin={p,cv,tex,view:'',mirror:null,route:'',t0:0};
+  return s}
+// Which frame is due right now: walk the file's own delays, wrap at their total, forever.
+function skinFrameIndex(p,view,ms){
+  const secs=p.secs[view],total=p.total[view]||0;
+  if(!secs||!secs.length||!(total>0))return 0;
+  let t=(ms/1000)%total;if(t<0)t+=total;
+  for(let i=0;i<secs.length;i++){t-=secs[i];if(t<0)return i}
+  return secs.length-1}
+// The source to copy from for a view, and where its due frame starts in that source.
+function skinFrameOf(p,view,now){
+  const strip=skinStrip(p,view);
+  if(strip)return{img:strip.cv,sx:skinFrameIndex(p,view,now===undefined?skinNow():now)*strip.w,sw:strip.w,sh:strip.h};
+  const im=skinImage(p,view);
+  return im?{img:im,sx:0,sw:SKIN_SIZE,sh:SKIN_SIZE}:null}
+// Paint the frame that is due for this facing onto the hero's canvas; the browser-playing-the-file
+// version of this could not be trusted to advance, so the clock and the frames are both ours now.
+function captureSkinFrame(spr,route,now){
+  const sk=spr.userData.skin,p=sk.p,nowMs=now===undefined?skinNow():now;
+  const key=route.view+(route.mirror?'|m':'');
+  const changed=sk.route!==key;
+  if(changed){sk.route=key;sk.t0=nowMs}               // a new view or a new swing starts at its frame 0
+  const frame=skinFrameOf(p,route.view,nowMs-sk.t0);
+  if(!frame){
+    // nothing to draw: for the facing already on screen keep the frame it is showing (a decoded
+    // view that was dropped from the cache reloads in the background), but never show one facing's
+    // art while the player is facing another - there the sprite hides until its frames arrive.
+    skinViewEnsure(p,route.view);                     // the cache may have dropped it - ask again (idempotent)
+    if(!changed&&sk.painted)return false;
+    spr.visible=false;return false}
+  spr.visible=true;sk.painted=true;
+  const ctx=sk.cv.getContext('2d');
+  ctx.setTransform(1,0,0,1,0,0);
+  ctx.clearRect(0,0,SKIN_SIZE,SKIN_SIZE);             // transparency preserved - no background is painted
+  ctx.imageSmoothingEnabled=false;                    // pixel art stays pixel art
+  if(route.mirror){ctx.translate(SKIN_SIZE,0);ctx.scale(-1,1)}
+  ctx.drawImage(frame.img,frame.sx,0,frame.sw,frame.sh,0,0,SKIN_SIZE,SKIN_SIZE);
+  ctx.setTransform(1,0,0,1,0,0);
+  sk.view=route.view;sk.mirror=route.mirror;
+  sk.tex.needsUpdate=true;                            // the GPU texture follows the canvas next render
+  return true}
+
 function packTex(opt){
   const PK=window.SPRITE_PACK,body=packBodyFor(opt.cls,opt.tier)||'thief',sex=opt.sex==='f'?'female':'male',hs=(((opt.hair|0)%PK.hairStyles)+PK.hairStyles)%PK.hairStyles,key=body+'|'+sex+'|'+hs;
   if(packCache.has(key))return packCache.get(key);
@@ -3220,13 +3466,18 @@ function packTex(opt){
     g.drawImage(bi,f*96,(a*8+d)*96,96,96,dx,dy,96,96);
     const an=anc[a][d][f];g.drawImage(hi,d*64,hs*64,64,64,dx+an[0]-32,dy+an[1]-48,64,64)}
   const t=new THREE.CanvasTexture(cv);t.magFilter=t.minFilter=THREE.NearestFilter;t.generateMipmaps=false;packCache.set(key,t);return t}
-function drawHairPreview(){
-  const cv=$('hairPreview');if(!cv||!S)return;const ctx=cv.getContext('2d'),label=$('hairPreviewLoading'),PK=window.SPRITE_PACK;
+// Both previews play the real class skin: the same APNG source the 3D hero wears, redrawn every
+// animation frame from the live decoder, so the panel shows the actual animation and not a still.
+function drawSkinPreview(id,labelId,cls,sex){
+  const cv=$(id);if(!cv)return;const ctx=cv.getContext('2d'),label=labelId?$(labelId):null;
+  const p=skinPack(cls,sex),f=p?skinFrameOf(p,'S'):null;
+  if(!f){if(label)label.style.display='block';ctx.clearRect(0,0,cv.width,cv.height);return}
+  const ax=p.anchor[0],ay=p.anchor[1],bw=126,bh=134;      // the old preview framing, so panels did not move
   ctx.clearRect(0,0,cv.width,cv.height);ctx.imageSmoothingEnabled=false;
-  if(!PK||!packReady){if(label)label.style.display='block';return}
-  const c=C(),tex=packTex({cls:c.n,tier:c.tier,sex:S.sex||'m',hair:S.hair|0}),atlas=tex.image;
-  if(!atlas){if(label)label.style.display='block';return}
-  ctx.drawImage(atlas,0,0,PK.cellW,PK.cellH,0,0,cv.width,cv.height);if(label)label.style.display='none'}
+  ctx.drawImage(f.img,f.sx+ax-bw/2,ay-bh+6,bw,bh,0,0,cv.width,cv.height);
+  if(label)label.style.display='none'}
+function drawAppearancePreview(){if(S)drawSkinPreview('hairPreview','hairPreviewLoading',S.cls,S.sex)}
+function drawClassPreview(){if(S)drawSkinPreview('classPreview','classPreviewLoading',selK||S.cls,S.sex)}
 function mkPackHero(opt){
   const PK=window.SPRITE_PACK,t=packTex(opt).clone();t.needsUpdate=true;t.repeat.set(1/8,1/24);
   const s=new THREE.Sprite(new THREE.SpriteMaterial({map:t,transparent:true,alphaTest:.12}));
@@ -3235,10 +3486,14 @@ function setPackCell(spr,dir,run,atk,clock){
   const p=heroPoseFrame(run,atk,clock,true),t=spr.material.map;t.repeat.set(1/8,1/24);t.offset.set(p.frame/8,1-(p.kind*8+dir+1)/24)}
 function ensureHero(opt){const k=JSON.stringify(opt);if(heroKey===k&&heroSpr)return;heroKey=k;heroDirty=false;
   if(heroSpr){P.remove(heroSpr);heroSpr=null}if(heroHeadSpr){P.remove(heroHeadSpr);heroHeadSpr=null}
+  // v52: the class's own animated APNGs are what the hero wears now.  Every supplied view of that
+  // class and gender has to be decoded first; until then (or if a file is missing) the animated
+  // pack body keeps the game playable, so the character is never half-switched or left blank.
+  const sp=skinPack(opt.cls,opt.sex);
+  if(skinLoaded(sp)){heroSpr=mkSkinHero(sp);P.add(heroSpr);return}
   const pb=packReady?packBodyFor(opt.cls,opt.tier):null;
   if(pb&&packImg['b:'+pb]){heroSpr=mkPackHero(opt);P.add(heroSpr);return}
-  // the class pack is the only hero art; until it loads (or if a body is missing) the
-  // drawn hero keeps the game playable
+  // last resort while both art sets are still loading: the drawn hero keeps the game playable
   const tex=getSheet('h:'+k,(ctx,x,y,d,kind,fr)=>drawHero(ctx,x,y,d,kind,fr,opt));
   heroSpr=mkBillboard(tex,1.95,2.92);P.add(heroSpr)}
 const mobTextureLoader=new THREE.TextureLoader(),mobTextureCache=new Map();
@@ -3278,11 +3533,15 @@ function buildMob(m){
     im.onerror=()=>{v.imageFailed=true;im.style.display='none'};im.src=url;mobSpriteLayer.appendChild(im);v.image=im;requestMobTexture(v.spriteId)}
   return v}
 let slashM=null;
+// The uploaded attack animation is the whole swing.  The old melee cue - a white arc stroked in
+// code over the hero - would read as a second, duplicate slash on top of it, so it waits with the
+// held weapon: one line to switch back on if the owner wants the hit cue more than the clean swing.
+const HERO_SWING_ARC=false;
 function drawSlashFX(x,z,wt){
   if(!slashM){const cv=document.createElement('canvas');cv.width=80;cv.height=80;const g=cv.getContext('2d');
     g.strokeStyle='#fff6c8';g.lineWidth=7;g.beginPath();g.arc(40,48,28,-1.4,.9);g.stroke();g.strokeStyle='#fff';g.lineWidth=3;g.beginPath();g.arc(40,48,24,-1.25,.7);g.stroke();
     slashM=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(cv),transparent:true,depthWrite:false}));slashM.center.set(.5,.25);scene.add(slashM)}
-  slashM.visible=atkAnim>.12&&wt!=='bow'&&wt!=='staff';if(!slashM.visible)return;
+  slashM.visible=HERO_SWING_ARC&&atkAnim>.12&&wt!=='bow'&&wt!=='staff';if(!slashM.visible)return;
   slashM.position.set(x,1.15,z);slashM.material.opacity=Math.min(1,atkAnim*1.6)*.9;slashM.scale.set(1.6+atkAnim*1.2,1.6+atkAnim*1.2,1)}
 // Pets use the same official Divine Pride renderer as field mobs, but every species
 // stays well below the hero regardless of the monster's size or mutation grade.
@@ -3308,7 +3567,14 @@ function weaponNode(slot,wt){let n=weaponNodes.get(slot);if(n&&n.type===wt)retur
   const url=weaponItemUrl(wt);n.img.onload=()=>{if(n.type===wt)n.fallback.style.display='none'};n.img.onerror=()=>{if(n.type===wt){n.img.style.display='none';n.fallback.style.display='grid'}};
   if(url)n.img.src=url;else{n.img.removeAttribute('src');n.img.style.display='none'}
   return n}
+// v51: the held-weapon art is switched off.  The owner asked for it while the class skins are
+// finished: the item icon is anchored to hand joints measured from the OLD animated atlas, and
+// the new still art is mostly bare-handed, so a floating icon could only misplace the weapon.
+// Everything below the flag is the untouched v29 parked-weapon code, kept for the next pass;
+// weapons still work in combat, in the Equipment panel and in the Bag.
+const HERO_HELD_WEAPON=false;
 function syncWeaponSprites(pFace,c){
+  if(!HERO_HELD_WEAPON){weaponNodes.forEach(n=>n.el.style.display='none');return}
   const packed=!!(heroSpr&&heroSpr.userData.pack);if(!packed){weaponNodes.forEach(n=>n.el.style.display='none');return}
   const w=S.eq.weapon,wt=heroWeaponType(c.n,c.wt,w&&w.wt),pose=heroPoseFrame(pl.run,atkAnim,t,packed),dir=viewDir(pFace);
   // v26: the weapon shows only during an attack.  Idle and walking are bare-handed - the
@@ -3488,7 +3754,14 @@ function draw(){
   const w=S.eq.weapon,wt=heroWeaponType(c.n,c.wt,w&&w.wt),clothN=S.eq.armor?TC[S.eq.armor.tier]:c.col,hairN=S.eq.head?TC[S.eq.head.tier]:0xd0492c,metalN=w?TC[w.tier]:0xc0c0c0;
   ensureHero({cls:c.n,cloth:hx(clothN),clothN,cape:c.cape?hx(c.cape):'',hair:hx(hairN),hairN,hat:c.hat?hx(c.hat):'',wt,metal:hx(metalN),skin:'#ffd2a8',look:lookOf(c.n),tier:c.tier||0,sex:S.sex||'m',hair:S.hair|0,shield:!!(S.eq.off&&S.eq.off.slot==='off')});
   const pFace=mob?Math.atan2(mob.z-pl.z,mob.x-pl.x):pl.run?-pl.ry: -az+Math.PI;
-  if(heroSpr){if(heroSpr.userData.pack)setPackCell(heroSpr,viewDir(pFace),pl.run,atkAnim,t);else setCell(heroSpr,viewDir(pFace),animRow(pl.run,atkAnim,t,10));
+  if(heroSpr){const hd=viewDir(pFace),sk=heroSpr.userData.skin;
+    if(sk){const route=skinRoute(sk.p,hd,atkAnim);
+      // The browser is playing the APNG; this copies the frame it is showing right now onto the
+      // canvas the GPU texture reads.  Once per rendered frame, so no APNG frame can be skipped
+      // by a guessed counter - the file's own timing and endless loop decide what the player sees.
+      captureSkinFrame(heroSpr,route)}
+    else if(heroSpr.userData.pack)setPackCell(heroSpr,hd,pl.run,atkAnim,t);
+    else setCell(heroSpr,hd,animRow(pl.run,atkAnim,t,10));
   heroSpr.material.color.setRGB(1,1-hitAnim*.75,1-hitAnim*.75)}
   drawSlashFX(pl.x+Math.cos(pFace)*0.7,pl.z+Math.sin(pFace)*0.7,wt);
   const alive=new Set(mobs);mobMesh.forEach((v,m)=>{if(!alive.has(m)){disposeCreatureVisual(v);mobMesh.delete(m)}});
@@ -3530,7 +3803,10 @@ function draw(){
   for(const m of mobs){const v=mobMesh.get(m);if(v)syncMobImage(v,m,mobVisualScale(m))}
   for(const p of S.pets.filter(p=>p.on)){const v=petMesh.get(p.id),r=petR[p.id],sp=PETS[p.sp];
     if(v&&r&&sp)syncMobImage(v,{x:r.x,z:r.z,run:r.run,a:p.id,shape:petFallbackShape(sp),flash:0},PET_VISUAL_SCALE)}
-  syncSkillFx();syncWeaponSprites(pFace,c);R.render(scene,cam);
+  syncSkillFx();syncWeaponSprites(pFace,c);
+  if(tabs.includes('set'))drawAppearancePreview();
+  if(tabs.includes('job'))drawClassPreview();
+  R.render(scene,cam);
   floats.forEach(f=>{if(!f.el){const e=document.createElement('div');e.className='fl'+(f.big?' big':'')+(f.kind&&f.kind!=='text'?' '+f.kind:'');e.textContent=f.txt;if(f.col)e.style.color=f.col;ov.appendChild(e);f.el=e}
     const[a,b]=scr(f.anchor==='hero'?pl.x:f.x,f.y,f.anchor==='hero'?pl.z:f.z);f.el.style.left=a+'px';f.el.style.top=b+'px';f.el.style.opacity=Math.max(0,f.life)});
   const pt=bn?`BOSS FIGHT · ${mobs.filter(m=>!m.boss).length} minions`:`Pack ${activePack+1}/3 · Monsters ${Math.min(S.kl,MPS)}/${MPS}`;if(pt!==lastProg){lastProg=pt;prog.textContent=pt}

@@ -238,16 +238,22 @@ t('official sprites are loaded over the procedural art with safe fallbacks', () 
   assert.ok(src.includes('im.onerror=()=>{v.imageFailed=true'), 'a failed browser image marks the official art unavailable');
   assert.ok(src.includes('const ready=!v.imageFailed&&im.complete&&im.naturalWidth>0'), 'the DOM sprite is used when the GPU image cannot load');
   assert.ok(src.includes("if(!v.official)setCell(v.spr"), 'the original animated procedural mob art remains the final fallback');
-  assert.ok(src.includes('function syncWeaponSprites(pFace,c){\n  const packed=!!(heroSpr&&heroSpr.userData.pack)'), 'weapon art is mounted to the current packed hero pose');
-  assert.ok(src.includes("if(pose.kind!==2){weaponNodes.forEach(n=>n.el.style.display='none');return}"),
-            'v26: the held weapon is drawn only on attack frames - idle and walking are bare-handed');
+  // v51: the owner removed the held-weapon art while the class skins are finished, so the overlay
+  // is off - the parked v29 placement code stays below the flag for the next pass.
+  assert.ok(src.includes('const HERO_HELD_WEAPON=false;'), 'one flag switches the held-weapon art off');
+  assert.ok(src.includes("if(!HERO_HELD_WEAPON){weaponNodes.forEach(n=>n.el.style.display='none');return}"),
+            'and the overlay hides instead of floating an icon on the new art');
+  assert.ok(src.includes('function syncWeaponSprites(pFace,c){\n  if(!HERO_HELD_WEAPON)'),
+            'the flag is the first thing the weapon placement consults');
+  assert.ok(src.includes("const packed=!!(heroSpr&&heroSpr.userData.pack);if(!packed){weaponNodes.forEach(n=>n.el.style.display='none');return}"),
+            'the parked path it would fall back to is untouched for the next pass');
   assert.ok(src.includes('const WEAPON_HIDDEN_DIRS=[3,4,5];'),
-            'v27: the away-facing views (NW, N, NE) hide the weapon - a front-view item icon reads wrong there');
-  assert.ok(src.includes("if(WEAPON_HIDDEN_DIRS.indexOf(dir)>=0){weaponNodes.forEach(n=>n.el.style.display='none');return}"),
-            'v27: the hidden-view list is what the weapon code consults');
-  assert.ok(src.includes("n.el.style.display='grid'"), 'the weapon node is still shown while the attack animation plays');
+            'the away-view list is still remembered (a front-view item icon reads wrong there)');
+  assert.ok(src.includes("n.el.style.display='grid'"), 'the weapon node code is still in place, just not reached');
   assert.ok(src.includes("if(!mob||heroWeaponType(C().n,C().wt,S.eq.weapon&&S.eq.weapon.wt)!=='bow')return"), 'only the Archer weapon family emits the basic arrow projectile');
-  assert.ok(src.includes("slashM.visible=atkAnim>.12&&wt!=='bow'&&wt!=='staff'"), 'bow and staff attacks do not show a generic melee slash');
+  assert.ok(src.includes("slashM.visible=HERO_SWING_ARC&&atkAnim>.12&&wt!=='bow'&&wt!=='staff'")
+            && src.includes('const HERO_SWING_ARC=false;'),
+            'bow and staff attacks never showed a generic melee slash, and since v52 the melee arc itself waits behind HERO_SWING_ARC so it cannot double the uploaded attack animation');
   assert.ok(src.includes('n.fallback.textContent=WICON[wt]'), 'the existing weapon glyph remains the icon fallback');
 });
 
