@@ -90,7 +90,15 @@ right Job half (filling leftward), with percentages centered in their own halves
 detailed hover percentages. Earned Zeny/min is shown on hover; Kills/min and Zeny/min
 use rolling 60-second activity, refreshed every second (kills/sec on hover). After a
 browser stall longer than 30 seconds, the rates reset instead of compressing the
-paused time into a false burst. The shared Base/Job bar is now 14px high on desktop
+paused time into a false burst. **The game also keeps grinding while the tab is in the
+background.** One clock owns the sim's time (`simAdvance` at the bottom of `index.html`):
+the animation-frame loop drives it while the tab is on screen and a once-a-second timer
+drives it while the tab is hidden, replaying real elapsed time in steps no bigger than
+0.1s, capped at 10 minutes per wake so a sleeping laptop cannot dump hours into one frame.
+Only the frame loop draws. Coming back logs one line - `Away 3m 12s · +42 kills · +6,120
+Zeny` - and the Settings checkbox "Keep grinding while this tab is in the background"
+(`S.bg`, default on) pauses it instead, in which case hidden time is dropped, not
+simulated. `tools/tests/background_sim.js` pins all of that without a browser. The shared Base/Job bar is now 14px high on desktop
 (22px on narrow screens). Skills display their names over the moving player; gold
 outgoing damage numbers and red spiked critical bubbles follow the supplied RO example.
 Active pets use their eight existing Divine Pride monster sprite IDs in the same

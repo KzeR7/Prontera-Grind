@@ -334,7 +334,7 @@ const GM_USER='GM',GM_PASS='gm1234';   // CHANGE THE GM PASSWORD before you publ
 // script block, which is a SyntaxError - the game did not run on main at all. One line wins, and
 // it names both sides of this merge: the v38 balance patch (the weapon cut, the affix/card
 // give-back) and main's weapon-hold rendering work.
-const BUILD='2026-10-05 skin-v53 class animations + balance-v51 faster early game';   // shown on the login card - confirms which file you loaded
+const BUILD='2026-10-05 grind-v54 background grinding';   // shown on the login card - confirms which file you loaded
 $('buildTag').textContent='build '+BUILD;
 
 // ---------- class tree: Novice -> 6 first jobs -> 6 second jobs -> 6 third jobs ----------
@@ -1049,7 +1049,7 @@ const uid=()=>Date.now()+Math.random(),rnd=(a,b)=>a+Math.random()*(b-a),ri=(a,b)
 // One roll fills both slots. The second pick is made from the skills the first did not take, so
 // the two can never match and there is no retry loop to spin if the dice are pinned.
 const PET_SKILL_WEIGHTS=[.35,.35,1,1,1,1,1,1,1,1,1,1],rollPetSkills=()=>{const a=pickW(PET_SKILL_WEIGHTS),rest=PET_SKILL_WEIGHTS.map((w,i)=>i).filter(i=>i!==a),b=rest[pickW(rest.map(i=>PET_SKILL_WEIGHTS[i]))];return[PET_SKILLS[a].id,PET_SKILLS[b].id]};
-const fresh=()=>({pets:[],cls:'Novice',sex:'m',hair:0,lv:1,exp:0,hp:100,zeny:0,kills:0,indexXp:0,mobKills:{},equippedTitle:null,cardIndex:emptyCardIndex(),dmg:0,pts:10,jobs:{Novice:{jl:1,jx:0}},sk:{aid:1},skOff:{},dmgShort:true,dmgShow:true,base:{},mp:0,lvl:1,prog:[1,1,1,1,1],kl:0,auto:true,adv:true,feed:true,clickSell:false,autoSell:[false,false,false,false,false],logOff:{},q:null,cards:[],ore:{ori:0,elu:0},gm:false,gmx:100,
+const fresh=()=>({pets:[],cls:'Novice',sex:'m',hair:0,lv:1,exp:0,hp:100,zeny:0,kills:0,indexXp:0,mobKills:{},equippedTitle:null,cardIndex:emptyCardIndex(),dmg:0,pts:10,jobs:{Novice:{jl:1,jx:0}},sk:{aid:1},skOff:{},dmgShort:true,dmgShow:true,base:{},mp:0,lvl:1,prog:[1,1,1,1,1],kl:0,auto:true,adv:true,feed:true,clickSell:false,bg:true,autoSell:[false,false,false,false,false],logOff:{},q:null,cards:[],ore:{ori:0,elu:0},gm:false,gmx:100,
   st:{str:1,agi:1,dex:1,luk:1,int:1,vit:1},eq:{weapon:{id:1,slot:'weapon',wt:'dagger',tier:0,val:5,name:'Novice Knife',aff:[],slots:1,cards:[],sec:0},armor:null,head:null,off:null,leg:null,acc1:null,acc2:null},inv:[]});
 const saveKey=()=>'pg_save3_'+currentUser;
 const num_= (v,d)=>{v=+v;return Number.isFinite(v)?v:d};
@@ -1062,6 +1062,7 @@ function load(){try{const s=JSON.parse(lsGet(saveKey()));if(s&&s.lv){const F=fre
   // a bag click inspects rather than sells, nothing is auto-sold and no log filter is hidden.
   if(f.feed!==true&&f.feed!==false)f.feed=true;
   if(f.clickSell!==true&&f.clickSell!==false)f.clickSell=false;
+  if(f.bg!==true&&f.bg!==false)f.bg=true;                    // background grinding: on unless turned off
   // Auto-sell is repaired strictly (only a real true/1 arms a band): a corrupt entry must never
   // silently start selling a rarity the player never ticked.
   if(!Array.isArray(f.autoSell))f.autoSell=[false,false,false,false,false];else f.autoSell=[0,1,2,3,4].map(i=>f.autoSell[i]===true||f.autoSell[i]===1);
@@ -1829,7 +1830,8 @@ const V={
     <div class="row"><button data-a="dmgshow" data-v="on" class="${S.dmgShow!==false?'on':''}" aria-pressed="${S.dmgShow!==false}">Show: On</button><button data-a="dmgshow" data-v="off" class="${S.dmgShow===false?'on':''}" aria-pressed="${S.dmgShow===false}">Show: Off</button></div>
     <div class="row" style="margin-top:4px"><button data-a="dmgfmt" data-v="short" class="${S.dmgShort!==false?'on':''}" aria-pressed="${S.dmgShort!==false}">Short &middot; 100K / 1M</button><button data-a="dmgfmt" data-v="full" class="${S.dmgShort===false?'on':''}" aria-pressed="${S.dmgShort===false}">Full &middot; 100,000</button></div>
     <small>The first switch shows or hides the floating combat numbers; the second picks how they read (100K / 1M, or every digit). Normal, critical and incoming damage all follow both, and both are saved with your account.</small>
-    <div class="hd" style="margin-top:10px">Gameplay</div><label><input type="checkbox" data-a="auto" ${S.auto!==false?'checked':''}> Auto-equip better gear</label><br><label><input type="checkbox" data-a="adv" ${S.adv!==false?'checked':''}> Auto-advance to next level (turn off to farm)</label>
+    <div class="hd" style="margin-top:10px">Gameplay</div><label><input type="checkbox" data-a="auto" ${S.auto!==false?'checked':''}> Auto-equip better gear</label><br><label><input type="checkbox" data-a="adv" ${S.adv!==false?'checked':''}> Auto-advance to next level (turn off to farm)</label><br><label><input type="checkbox" data-a="bg" ${S.bg!==false?'checked':''}> Keep grinding while this tab is in the background</label>
+    <small>Background grinding keeps the character fighting while this tab is behind another tab or window, and the log tells you what the time away was worth (kills, Zeny, level-ups). Untick it and the game pauses the moment the tab is hidden, picking up exactly where it left off.</small>
     <p><small>Drag the view to rotate, scroll to zoom. Hotkeys: M S J K B E C Q R L P I O, Esc to close.</small></p><button class="full" data-a="reset">Erase this account's save &amp; restart</button><button class="full" data-a="logout">Logout</button>`},
   gm(){return`<div class="hd">GM multiplier (EXP, Job EXP, Zeny, quests)</div><div class="row">${[1,10,100,1000].map(x=>`<button data-a="gmx" data-v="${x}" ${S.gmx===x?'style="background:#ffe08a"':''}>x${x}</button>`).join('')}</div>
     <div class="row" style="margin-top:8px"><button data-a="gmz">+1,000,000 Zeny</button><button data-a="gmo">+20 Oridecon &amp; Elunium</button><button data-a="gml">+10 Base Levels</button><button data-a="gmj">Max Job Lv (current class)</button><button data-a="gmu">Unlock all map levels</button></div>
@@ -2039,6 +2041,7 @@ const ACT={
   prel:id=>{const p=gp(id);if(!p)return;const z=Math.floor(EGG*.3);ask(`Release ${PETS[p.sp].n}? You get ${z}z back.`,()=>{S.pets=S.pets.filter(x=>x!==p);autoSet.delete(p.id);clearPetCd(p.id);earnZeny(z);ui();save()})},
   claim:i=>{const q=S.q[+i];if(q&&q.prog>=q.goal){qScale(q);earnZeny(q.z||0);S.exp+=(q.xp||0);log(`Quest complete! +${(q.z||0).toLocaleString()}z, +${(q.xp||0).toLocaleString()} EXP`,'r3','quest');S.q[+i]=newQuest(q.type);checkLevel();ui();save()}},
   auto:()=>{S.auto=S.auto===false;ui()},adv:()=>{S.adv=S.adv===false;ui()},
+  bg:()=>{S.bg=S.bg===false;log(S.bg?'Background grinding ON: the game keeps playing (and saving) while this tab is behind another tab or window - the log tells you what the time away was worth.':'Background grinding OFF: the game pauses while this tab is in the background and picks up exactly where you left it.');ui();save()},
   feed:()=>{S.feed=!feedOn();feedTab();ui();save()},
   logf:v=>{if(!S.logOff||typeof S.logOff!=='object')S.logOff={};if(S.logOff[v])delete S.logOff[v];else S.logOff[v]=1;if(feedFilShown)renderFeedFilter();feedDraw();ui();save()},
   logfall:v=>{if(!S.logOff||typeof S.logOff!=='object')S.logOff={};LOGCATS.forEach(([k])=>{if(v==='off')S.logOff[k]=1;else delete S.logOff[k]});if(feedFilShown)renderFeedFilter();feedDraw();ui();save()},
@@ -3857,8 +3860,65 @@ function draw(){
     const[a,b]=scr(f.anchor==='hero'?pl.x:f.x,f.y,f.anchor==='hero'?pl.z:f.z);f.el.style.left=a+'px';f.el.style.top=b+'px';f.el.style.opacity=Math.max(0,f.life)});
   const pt=bn?`BOSS FIGHT · ${mobs.filter(m=>!m.boss).length} minions`:`Pack ${activePack+1}/3 · Monsters ${Math.min(S.kl,MPS)}/${MPS}`;if(pt!==lastProg){lastProg=pt;prog.textContent=pt}
 }
-let last=performance.now();
-function loop(now){const dt=Math.min(.1,(now-last)/1000);last=now;try{for(let i=0;i<speed;i++){update(dt);kitTick(dt)}draw()}catch(e){if(!loop.e){loop.e=1;console.error(e);log('Error: '+e.message,'r0')}}requestAnimationFrame(loop)}
+// ---------- the clock: one simulation, driven by frames or by timers ----------
+// A browser stops calling requestAnimationFrame the moment its tab is not the one on screen, which
+// is why the grind used to freeze the second the player looked at another tab. Timers do keep
+// running in a hidden tab, but they are throttled (about once a second, and about once a minute
+// after five minutes hidden), so they cannot tick the game at frame rate. There is no second game
+// loop here: there is ONE clock that owns the sim's time. simAdvance() hands out the real time that
+// has passed, in slices no bigger than SIM_STEP - the same 0.1s ceiling the old loop put on dt - so
+// a background wake that slept over 60 seconds simulates them in small steps instead of one giant
+// jump. Whichever driver calls it (an animation frame while the tab is on screen, the hidden-tab
+// timer while it is not), the sim can never be fed the same second twice, because the clock moves
+// forward the moment the time is handed out. Only the frame driver draws: nothing hidden can be
+// seen, and skipping draw() is what keeps a background tab cheap.
+const SIM_STEP=.1;    // seconds: most sim time one step may carry (the old dt cap)
+const SIM_CATCHUP=600;// seconds: most time one wake may replay. A throttled timer is replayed in
+                      // full; a laptop that slept for hours replays ten minutes and drops the rest,
+                      // so one frame can never chew through an afternoon of grinding (or freeze
+                      // the tab doing it). The welcome-back line says when this cap was hit.
+const SIM_BG_MS=1000; // ms between hidden-tab wake-ups (a hidden tab clamps timers to ~1s, so
+                      // this is the cadence the browser actually gives a background page)
+let simAt=performance.now();
+function simSteps(dt){for(let i=0;i<speed;i++){update(dt);kitTick(dt)}}
+function simAdvance(now=performance.now()){
+  const elapsed=Math.min(SIM_CATCHUP,Math.max(0,(now-simAt)/1000));simAt=now;
+  let left=elapsed;
+  while(left>SIM_STEP){simSteps(SIM_STEP);left-=SIM_STEP}
+  if(left>1e-6)simSteps(left)}   // the remainder is its own step, so a 16ms frame stays ONE step
+function loop(now){try{simAdvance(now);draw()}catch(e){if(!loop.e){loop.e=1;console.error(e);log('Error: '+e.message,'r0')}}requestAnimationFrame(loop)}
+
+// ---------- grinding while the tab is hidden ----------
+// The ticker is what keeps that clock moving while the tab is in the background. When the player
+// comes back the log says what the time away was worth: the wall-clock time, the kills and Zeny
+// the sim actually earned, and a level-up if one landed. "Pause in the background" is the one
+// setting that turns this off - then hidden time is dropped instead of simulated, so the character
+// picks up exactly where they were left.
+const bgOn=()=>!(S&&S.bg===false);
+let awayAt=0,awayKills=0,awayZeny=0,awayLv=0;
+function awayTxt(sec){sec=Math.max(0,Math.round(sec));const h=Math.floor(sec/3600),m=Math.floor(sec%3600/60),s=sec%60;
+  if(h)return h+'h'+(m?' '+m+'m':'');      // "3h", "1h 12m"
+  if(m)return m+'m'+(s?' '+s+'s':'');      // "10m", "3m 12s"
+  return s+'s'}
+function bgTick(){
+  if(!document.hidden)return;           // a visible tab is driven by its frames, not by this
+  if(!bgOn()){simAt=performance.now();return}
+  try{simAdvance()}catch(e){if(!bgTick.e){bgTick.e=1;console.error(e);log('Error: '+e.message,'r0')}}}
+function bgHide(){                      // the tab went to the background: note the moment, then save
+  awayAt=performance.now();awayKills=S?S.kills:0;awayZeny=zenyEarned;awayLv=S?S.lv:0;
+  simAdvance(awayAt);save()}
+function bgShow(){                      // and it is back: replay what the timer missed, and report
+  if(!awayAt)return;
+  const now=performance.now(),away=(now-awayAt)/1000;awayAt=0;
+  if(bgOn())simAdvance(now);else simAt=now;
+  if(S&&bgOn()&&away>=2){
+    const counted=Math.min(away,SIM_CATCHUP),kills=S.kills-awayKills,zeny=Math.round(zenyEarned-awayZeny);
+    log('Away '+awayTxt(away)+(counted<away-1?' ('+awayTxt(counted)+' of grinding)':'')
+      +(kills>0?' · +'+kills.toLocaleString()+' kills':'')+(zeny>0?' · +'+zeny.toLocaleString()+' Zeny':'')
+      +(S.lv>awayLv?' · Base Lv '+awayLv+' → '+S.lv:''),'r3','misc,zeny')}
+  save()}
+document.addEventListener('visibilitychange',()=>{if(document.hidden)bgHide();else bgShow()});
+setInterval(bgTick,SIM_BG_MS);
 resize();respawn=.3;requestAnimationFrame(loop);setInterval(save,5000);kitFetch();
 </script>
 </body>
