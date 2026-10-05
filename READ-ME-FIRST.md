@@ -105,6 +105,20 @@ Active pets use their eight existing Divine Pride monster sprite IDs in the same
 WebGL/DOM renderer as mobs, all at one small scale (with a drawn fallback if an
 official remote PNG cannot load). Samples also reset at login or on a new adventure.
 
+**v57 map-capped gear and calmer drops.** Boss equipment is tiered by map now: `MAPGRADE` caps the
+best rarity each map can drop (a Payon stage-10 boss tops out at Epic) and `MAPVAL` gives every map a
+value band, so an Abyss Epic beats a Payon Legendary - which can no longer drop at all. Only items
+dropped after this build use the bands; everything already in a save keeps its rolls. Drop rates came
+down to the owner's gentle preset: field gear 3.6% per kill, cards 0.15%, a boss ~6% across its whole
+pool (no more one 1% roll per pool entry), pets about one per two hours. The Mob Index was rescaled to
+a 50,000-kill species ladder (10/50/250/1,000/5,000/10,000/25,000/50,000) with a 200 -> 1,000,000
+title ladder and the 90-species album tracked separately. The Card Mastery tab shows the newest rolls,
+lets you pick which Legendary the reset sacrifices, offers **Insert all** per stack and splits the
+loose-card list into rarity tabs. The Settings tab lost its paragraphs: hair controls are gone, and a
+disabled **Costume (soon)** button says costumes arrive in a future patch. Skills and pets from the
+same owner message are the next round - skill cooldowns are explicitly parked for a dedicated tuning
+discussion.
+
 **v56 EXP curve and early economy.** Every displayed EXP number is one tenth of the old one
 (`EXP_RATE 7` replaces the flat 70x, and all three rate tiers scale together, so the pace is
 unchanged), and every requirement is rounded to three significant figures - Base 10 needs 360,

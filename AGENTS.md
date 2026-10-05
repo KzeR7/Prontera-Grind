@@ -3164,3 +3164,69 @@ assigned for feel rather than fidelity. While reworking that, two shipped bugs s
 * **Tests:** all **21 suites** pass: pack 19 bodies, class_change 25, class_skin 39, save_load 21, economy 23, stat 7, card 13, skill 52, gear 30, scene 8, kit 34, UI 37, sprite 12, starter 8, pet 12, picker 19, drop_card_sheet 12, weapon_joint 7, weapon_review 13, sprite_viewer 154 PNGs / 19 jobs, background 12. `economy_sim` now pins the new anchors (360 / 2,870 / 130,000 / 167,000 / 43,300 / 1,248,000, every one a three-sig-fig value, strictly increasing with the single drop at Base 100 at 3.86x), the 21/7/7÷3 rate tiers, the 80-minute wall, the 6.9 h Base 99, the 48 h tail and the 5z floor; `ui_sim` proves a free reset below Base 20 works with an empty wallet, a refused reset costs nothing and is visible on screen, an unaffordable button is disabled and priced, and the deferred-rebuild guard is in place. The inline game script passes `node --check`.
 * **Branches / PR:** `arena/01a10c2f-prontera-grind` -> PR #22 against `main` (this round lands on the same open PR).
 * **Known limits / follow-ups:** the owner chose the 80-minute wall knowing the cost stated up front - Base 70-99 requirements barely climb and the road to Base 99 is about two hours longer than before. Every anchor lives in `TGT` at the top of `tools/tune_pacing.js`, and that tool now both solves and verifies this design, so the next retune is a deliberate edit there. Not verified in a real browser here (no browser in the sandbox): the reset-button fix and the new labels should be clicked once on the live preview.
+
+### 2026-10-05 — `grind-v57 map-capped gear + calmer drops` (owner round 7, items 2/3/5/6/7)
+
+* **Boss equipment is tiered by map (owner item 2, option a):** two new per-map tables sit beside
+  `MAPTIER`. `MAPGRADE=[1,2,2,3,3,4,4,4,4,4]` is the *cap* - Prontera tops out at Fine, Izlude/Geffen
+  at Rare, Morroc/Payon at Epic, and only the Lv60+ maps (Comodo onward) can reach Legendary - and
+  `dropTier(m,l)` now returns `min(cap, ladder)`, so a stage-10 Payon boss can no longer print a
+  Legendary item. `MAPVAL=[0.34,0.40,0.47,0.56,0.66,0.78,0.90,1.0,1.08,1.18]` gives every map a value
+  band that `genGear()` multiplies in, so the map's *tier* now dominates the grade: an Abyss Epic
+  (2.8x1.18=3.30) beats a Payon Legendary (4.5x0.66=2.97 - which can no longer drop at all). Items
+  already in a save keep the numbers they rolled; only new drops use the bands.
+* **Gentle drop rates (owner item 3, option a):** field gear 12%/kill -> **3.6%** (three rolls at
+  1.5/1.2/0.9 instead of 4.8/4.0/3.2, so ~29 items/h instead of ~96), card 0.45% -> **0.15%**
+  (~1.2/h), boss equipment 13%/kill (one 1% roll *per pool entry*) -> **~6% total** with the whole
+  pool still listed (`Math.round(600/n)/100` per entry, so every item stays obtainable and the
+  displayed per-item rate matches the roll), and pet drops 0.3%/kill + 5%/boss -> **0.03% + 0.5%**
+  (~1 pet per two hours instead of ~2.4/h). `gearPool()` and the boss pool are unchanged, so no item
+  became unobtainable; only the odds moved. The map panel's drop lines and the card odds follow
+  automatically because they read the same tables.
+* **Mob index readjusted (owner item 5):** the species ladder is now
+  `[10,50,250,1000,5000,10000,25000,50000]` (was `[100,1000,5000,25000,100000,500000,1000000,5000000]`,
+  i.e. over 100x too long) with milestone XP `[2,4,8,15,25,45,70,110]` (279 per fully hunted
+  species, 50,279 Index XP total). The title ladder is a smooth ~3x geometric run:
+  200 / 1,000 / 3,000 / 10,000 / 30,000 / 100,000 / 250,000 / 500,000 / 750,000 / 1,000,000 - the
+  last rank is about twenty maxed species, satisfying "the top title must be a bigger goal than one
+  species maxed and a few others", while the 90-species album (4,525,110 Index XP) is tracked
+  separately in the panel as its own completion goal. GM controls updated (`all50000`, `xp1000000`).
+* **Card mastery UI (owner item 6):** the token gacha now lists the last eight rolls newest-first
+  (`cardRollRecent()`), so what a long session actually rolled is visible instead of only the totals.
+  The reset lists every loose Legendary card with its own sacrifice button and
+  `cardMasteryReset(cardId)` spends the one you picked (defaulting to the first only when called
+  without an id). The loose-card list gained Common/Fine/Rare/Epic/Legendary sub-tabs with counts
+  (defaulting to the rarest loose rarity, All one tap away), and every stack has an **Insert all**
+  button that dedicates as many copies as its remaining ranks allow in one tap through the real
+  `donateCardToMastery()` path - 7 Poring cards fill 5/5 and leave 2 loose.
+* **Settings tab cleaned up (owner item 7):** the appearance block is now a small character card -
+  Male/Female buttons, the live class preview, one line of text - and the hair controls/paragraphs
+  ("Hair comes with the class art", the view/standing-still/weapon essays, the "style 8 of 19"
+  line) are gone. A disabled **Costume (soon)** button states the plan: "Costumes - outfits that
+  restyle a class without changing its stats - are planned for a future patch", with a
+  `costume` action that logs it if it is ever enabled. The long damage-number and background-grinding
+  paragraphs were each cut to one line; the class-change card dropped its "S (front) view" detail.
+* **Files touched:** `index.html` (MAPGRADE/MAPVAL/dropTier, field + boss + pet drop lines, the map
+  panel's pet odds line, `genGear()` value band, index ladder/titles/album line + GM controls,
+  `cardRollRecent`, `cardMasteryLegendaryCards`/`donateAllToMastery`/`cardMasteryReset(id)`,
+  `cardGrade` state + tabs + insert-all, the Settings panel, `BUILD`), `tools/tests/{gear_sim,
+  drop_card_sheet_sim, ui_sim, save_load_sim}.js`, `Updates/cards-gear-audit/*` (build label,
+  carry-forward list, refreshed worksheet baseline), `READ-ME-FIRST.md`, this log.
+* **Tests:** all **21 suites** pass: pack 19 bodies, class_change 25, class_skin 39, save_load 22,
+  economy 23, stat 7, card 13, skill 52, gear 30, scene 8, kit 34, UI 37, sprite 12, starter 8,
+  pet 12, picker 19, drop_card_sheet 12, weapon_joint 7, weapon_review 13, sprite_viewer 154
+  PNGs/19 jobs, background 12. `gear_sim` pins the new caps, bands, rates and the Abyss-Epic-beats-
+  Payon-Legendary arithmetic; `drop_card_sheet_sim` pins the worksheet totals; `ui_sim` pins the
+  settings copy, the rarity tabs / picker buttons and the drop lines; `save_load_sim` proves the
+  insert-all and pick-a-sacrifice behaviour on a real state.
+* **Branches / PR:** `arena/01a10c2f-prontera-grind` -> PR #22 against `main` (the same PR as the
+  v56 round).
+* **Known limits / follow-ups:** the two biggest owner items from the same message are **not in this
+  round** and are next: **skills** (+1 skill per class, longer cooldowns so skills stay individually
+  spammable but do not all fire together, some build choice - the owner explicitly wants a dedicated
+  tuning discussion before the numbers are final) and **pets** (per-pet identity instead of rarity
+  reskins: a signature skill + stat leaning per pet, rarity setting the slot count and leaning
+  strength, plus one free random skill granted at drop). The map value band means new drops below
+  Amatsu are worth less than they used to be (owned items keep their rolls), which is the intended
+  fix for "30 min of grinding gave a bunch of legendaries" and will want a balance read after the
+  owner plays a while.
