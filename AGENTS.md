@@ -2994,3 +2994,24 @@ assigned for feel rather than fidelity. While reworking that, two shipped bugs s
 * **Art:** none. No sprites or map art changed.
 * **Tests:** all **18 suites** pass: card 13, class_change 25, drop_card_sheet 12, economy 22, gear 30, kit 34, pack (19 class bodies), pet 11, picker 19, save_load 18, scene 8, skill 51, sprite 12, starter 8, stat 7, UI 30, weapon_joint 7, weapon_review 13. Inline game JavaScript passes `node --check`; `git diff --check` is clean.
 * **Branches / PR:** `arena/01a10974-prontera-grind`. No commit, push, or PR.
+
+### 2026-10-05 — `tool-v48 sprite movement preview`
+
+* **What changed for the owner:** added a standalone sprite review page at `Updates/Sprite/index.html`. It covers all seven class-tree folders, all 19 jobs and both genders; the direction pad and short route demo show S, NE/NW, SE/SW and SE/SW attacks. NW/SW are visibly labelled horizontal mirrors of the supplied NE/SE art. Missing angles are called out instead of silently replaced, with the High Priest N pose identified as an up-view fallback. The page also has local-only review notes with copy/download actions. The source PNGs are single 200×200 poses, not animation sheets, so the preview moves the existing image but does not invent animation frames.
+* **Files touched:** `Updates/Sprite/index.html` (new standalone viewer), `tools/tests/sprite_viewer_sim.js` (asset manifest, directions, missing-source cases and inline-script checks), and this log. The game and `BUILD` tag are unchanged.
+* **Tests:** all **19 suites** pass, including the new sprite viewer check; inline viewer JavaScript passes `node --check`, every listed image responds from the preview server, and `git diff --check` is clean.
+* **Branches / PR:** `arena/01a10af7-prontera-grind`. No commit, push or PR.
+
+### 2026-10-05 — `tool-v49 refreshed viewer for the new directional sprites`
+
+* **What changed for the owner:** refreshed the preview with the six newly added PNGs: Archer female NE and S walks, Archer male SE walk, Sniper male SE attack, and High Priest male/female NE walks. The viewer now lists **154** source poses, and all 19 jobs in both genders have direct NE, S and SE walking plus SE attack art. High Priest now uses its new NE files; its older N files remain available in the source gallery but are no longer an up-view fallback.
+* **Files touched:** the six new PNGs in `Updates/Sprite/{Archer,Acolyte}/`, `Updates/Sprite/index.html` (refreshed manifest), `tools/tests/sprite_viewer_sim.js` (now asserts complete requested pose coverage), and this log. No game code or `BUILD` change.
+* **Tests:** all **19 suites** pass; the viewer test checks all 154 local PNGs, their 200×200 dimensions, full requested pose coverage, mirrors and inline JavaScript. The viewer script passes `node --check`; `git diff --check` is clean.
+* **Branches / PR:** `arena/01a10af7-prontera-grind`. No commit, push or PR.
+
+### 2026-10-05 — `tool-v50 canonical sprite reference backup + class-skin alignment check`
+
+* **What changed for the owner:** declared `Updates/Sprite/index.html` the one canonical review/backup page, documented it in `Updates/Sprite/README.md` and `READ-ME-FIRST.md`, and added `python3 tools/make_sprite_viewer.py` so future PNG updates refresh that same HTML in place (`--check` verifies it is current). The live game already prefers the exact named animated skin for each of its 19 class jobs; tightened `pack_sim.js` to assert every class resolves to its own packed body. The reference PNGs remain separate: they are still poses, not the game's eight-direction body/head animation atlas, so replacing the live pack with them would remove existing animation and hair composition.
+* **Files touched:** `Updates/Sprite/index.html`, new `Updates/Sprite/README.md`, new `tools/make_sprite_viewer.py`, `tools/tests/sprite_viewer_sim.js`, `tools/tests/pack_sim.js`, `index.html` (clarifying class-skin fallback comments only), `READ-ME-FIRST.md`, and this log. No player-visible game behavior or `BUILD` change.
+* **Tests:** all **19 suites** pass. The viewer check verifies 154 PNGs, 200×200 dimensions, complete requested source poses and a current generated manifest; `pack_sim.js` verifies all 19 exact game skin mappings. Inline viewer JS passes `node --check`, and `git diff --check` is clean.
+* **Branches / PR:** `arena/01a10af7-prontera-grind`. Prepared for the requested PR; not pushed yet.
