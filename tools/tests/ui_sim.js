@@ -517,6 +517,7 @@ t('the class-change panel previews the class it is describing', () => {
   assert.ok(h.includes('id="classPreview"') && h.includes('id="classPreviewLoading"'), 'the class panel has its own canvas and loading note');
   assert.ok(h.includes('male Knight class skin preview'), 'the preview describes the current class and gender');
   assert.ok(h.includes('CLASS PREVIEW') && h.includes('You wear this now'), 'with a plain label for the class you already are');
+  assert.ok(h.includes('S (front) view &middot; animating'), 'and the class preview is labelled as the animation too');
   assert.ok(h.includes('What this class looks like') || h.includes('You wear this now'), 'and a label for a class you are only looking at');
   const g = h.match(/.{0,40}undefined.{0,40}/);
   assert.ok(!g, 'the class panel renders without undefined values: ' + (g ? g[0] : ''));
