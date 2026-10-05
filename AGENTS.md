@@ -2983,3 +2983,14 @@ assigned for feel rather than fidelity. While reworking that, two shipped bugs s
 * **Art:** none. The title seals and parchment treatment are CSS/UI; no sprites or map art changed.
 * **Tests:** all **18 suites** pass (including live affix-chart parity, card preservation, the mastery save/UI flows, and v45 worksheet migration); the inline game script passes `node --check`, and `git diff --check` is clean.
 * **Branches / PR:** `arena/01a10974-prontera-grind`. No commit, push or PR.
+
+### 2026-10-05 — `balance-v47 bag locks + gear level reference`
+
+* **What changed for players:** the Bag now keeps equipment in pickup/inventory order instead of reshuffling by rarity and value whenever loot arrives. Locked gear is pinned above unlocked gear, marked with a gold star, and can be locked/unlocked from the Bag or equipment detail panel. Lock state saves across reloads; auto-sell and bulk-sell skip locked items. Click-sell or manual Sell on locked gear opens an unlock warning; confirming only unlocks it, and a second click/Sell action is required to sell it.
+* **Equipment level:** gear details/tooltips now show a reference Gear Lv equal to the dropped monster level plus 10 per rarity step (Common +0, Fine +10, Rare +20, Epic +30, Legendary +40), clamped to 1-150. This is informational only; it does not gate equipment by player Base Lv. No gear stats or class-use rules changed.
+* **Pacing / cards:** the EXP curve was not changed. `node tools/tune_pacing.js` confirms the Base Lv 100-150 tail remains about **48.0 modeled hours** at 800 kills/hour; the requested new target duration is still pending. Card effects and values, sockets, and the v46 gear-only Crit DMG scale remain unchanged.
+* **Worksheet compatibility:** updated the visible build markers to v47 and added v46 to the worksheet's safe prior-build list. The catalog/card snapshot itself is unchanged because this pass only adds UI and save-state behavior; v45 and earlier safe migrations remain supported.
+* **Files touched:** `index.html` (bag ordering, reference Gear Lv display, lock state and protected selling, BUILD), `tools/tests/ui_sim.js`, `tools/tests/save_load_sim.js`, `Updates/cards-gear-audit/affix-ranges.html` (build badge/footer), `Updates/cards-gear-audit/equipment-cards-tuning.html` (build marker and v46 migration compatibility), `tools/tests/drop_card_sheet_sim.js`, and this log.
+* **Art:** none. No sprites or map art changed.
+* **Tests:** all **18 suites** pass: card 13, class_change 25, drop_card_sheet 12, economy 22, gear 30, kit 34, pack (19 class bodies), pet 11, picker 19, save_load 18, scene 8, skill 51, sprite 12, starter 8, stat 7, UI 30, weapon_joint 7, weapon_review 13. Inline game JavaScript passes `node --check`; `git diff --check` is clean.
+* **Branches / PR:** `arena/01a10974-prontera-grind`. No commit, push, or PR.

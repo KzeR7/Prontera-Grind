@@ -126,6 +126,7 @@ hr{border:0;border-top:1px dashed var(--edge);margin:6px 0}
 .cell.empty{opacity:.35;cursor:default}.cell.sel{outline:3px solid #ffe08a}
 .cell.b1{border-color:#5cb85c}.cell.b2{border-color:#4a86e8}.cell.b3{border-color:#b05ce0}.cell.b4{border-color:#ffb020;box-shadow:0 0 7px #ffb020}
 .cell .rf{position:absolute;right:2px;bottom:0;font:bold 10px sans-serif;color:#ffe08a;font-style:normal;text-shadow:0 0 2px #000}
+.cell .lockstar{position:absolute;right:2px;top:1px;font:bold 14px/1 sans-serif;color:#9a6500;text-shadow:0 1px 2px #fff,0 0 3px #fff;pointer-events:none;z-index:1}
 .lvgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,72px),1fr));gap:5px;margin:4px 0;min-width:0}
 .mapgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,76px),1fr));gap:5px;margin:4px 0;min-width:0}
 .mapcard{display:flex;flex-direction:column;align-items:flex-start;gap:0;padding:4px 6px;text-align:left;line-height:1.2;border:2px solid var(--edge);background:#fffdf5;border-radius:6px;cursor:pointer;overflow:hidden}
@@ -206,6 +207,7 @@ hr{border:0;border-top:1px dashed var(--edge);margin:6px 0}
 button.tick{padding:2px 7px;font-size:11px}
 button.tick.on{background:#ffe08a;border-color:var(--gold);font-weight:bold}
 .grid.sellmode .cell{cursor:crosshair}
+/* Locked equipment stays visible at the head of the bag and is protected from automatic sales. */
 .grid.sellmode .cell::before{content:'$';position:absolute;top:-6px;left:-6px;background:#c22a2a;color:#fff;font:700 9px/1.3 sans-serif;padding:0 3px;border-radius:6px}
 .logfbar{display:flex;flex-wrap:wrap;gap:4px 8px;align-items:center;margin-bottom:6px;padding:6px 8px;border:1px solid var(--edge);border-radius:6px;background:#fffdf5;position:sticky;top:-1px;z-index:3}
 .logf{display:flex;align-items:center;gap:3px;font-size:12px;white-space:nowrap}
@@ -316,7 +318,7 @@ const GM_USER='GM',GM_PASS='gm1234';   // CHANGE THE GM PASSWORD before you publ
 // script block, which is a SyntaxError - the game did not run on main at all. One line wins, and
 // it names both sides of this merge: the v38 balance patch (the weapon cut, the affix/card
 // give-back) and main's weapon-hold rendering work.
-const BUILD='2026-10-05 balance-v46 cdm tune + mastery index';   // shown on the login card - confirms which file you loaded
+const BUILD='2026-10-05 balance-v47 bag locks + gear level reference';   // shown on the login card - confirms which file you loaded
 $('buildTag').textContent='build '+BUILD;
 
 // ---------- class tree: Novice -> 6 first jobs -> 6 second jobs -> 6 third jobs ----------
@@ -968,7 +970,10 @@ function load(){try{const s=JSON.parse(lsGet(saveKey()));if(s&&s.lv){const F=fre
     for(const s of['str','agi','dex','luk','int','vit'])r.st[s]=Math.max(1,Math.min(MAXST,num_(r.st[s],1)));
     if(!r.eq||typeof r.eq!=='object')r.eq=null}   // null = loadout unknown: keep what is worn
   if(!Array.isArray(f.pets))f.pets=[];f.pets=f.pets.filter(p=>p&&typeof p==='object');if(!Array.isArray(f.inv))f.inv=[];if(!Array.isArray(f.cards))f.cards=[];
-  if(!f.eq||typeof f.eq!=='object')f.eq=F.eq;if(f.hp<=0)f.hp=F.hp;
+  if(!f.eq||typeof f.eq!=='object')f.eq=F.eq;
+  // v47 equipment locks are per-item data: legacy gear defaults unlocked, while deliberate locks persist.
+  {const fixLock=it=>{if(it&&typeof it==='object')it.locked=it.locked===true};f.inv.forEach(fixLock);Object.values(f.eq).forEach(fixLock)}
+  if(f.hp<=0)f.hp=F.hp;
   // Assassin jobs use one two-handed Katar; repair class-incompatible legacy gear without losing items.
   {const c=CLASSES[f.cls],shield=/^(Novice|Swordman|Knight|Lord Knight|Acolyte|Priest|High Priest|Merchant|Blacksmith|Whitesmith)$/.test(f.cls),
     stow=it=>{if(it&&!f.inv.some(x=>x&&x.id!=null&&it.id!=null&&String(x.id)===String(it.id)))f.inv.push(it)};
@@ -1359,10 +1364,10 @@ function collect(it){
   if(it.ore){S.ore[it.ore]++;log(`Got ${it.n}!`,'r4','gear');addFloat(pl.x,2.8,pl.z,it.n+'!','#6cd3ff',true);ui();return}
   // The bag holds BAGMAX items. At capacity the loot is refused and stays where it fell, so a
   // long farm can never grow the save past the cap.
-  // v39: auto-sell runs BEFORE the bag cap and before auto-equip, so a ticked band can never be
-  // swallowed by a full bag and can never be worn by accident. It pays exactly sellVal(), the
-  // same money a manual sale pays, and it still counts for loot quests - the item was looted.
-  if(autoSellOn(it.tier)){const v=sellVal(it);earnZeny(v);qProg('loot');(it.cards||[]).forEach(c=>S.cards.push(c));
+  // v39: auto-sell runs BEFORE the bag cap and before auto-equip for unlocked drops, so a ticked
+  // band can never be swallowed by a full bag or worn by accident. Locked gear bypasses the
+  // filter, stays protected, and still counts for loot quests - the item was looted.
+  if(!it.locked&&autoSellOn(it.tier)){const v=sellVal(it);earnZeny(v);qProg('loot');(it.cards||[]).forEach(c=>S.cards.push(c));
     log(`Auto-sold [${RAR[it.tier].n}] ${it.name} (+${v.toLocaleString()}z)`,'r'+it.tier,'gear,zeny');ui();save();return}
   if(S.inv.length>=BAGMAX){log(`Bag full (${BAGMAX} items): sold nothing, left ${it.name} on the ground.`,'r0','gear');addFloat(pl.x,3,pl.z,'BAG FULL','#ff6b6b',true);ui();return}
   S.inv.push(it);qProg('loot');log(`Picked up [${RAR[it.tier].n}] ${it.name}`,'r'+it.tier,'gear');
@@ -1378,7 +1383,9 @@ const sellVal=it=>Math.max(1,Math.round(50*(1+.9*(it.sec||0))*(1+1.4*(it.tier||0
 // v39 bag sell tools. autoSellOn(tier) is true when that rarity band is ticked in the Bag, and
 // clickSellOn() is the tap-to-sell mode; both read the save, so both survive a reload.
 const autoSellOn=t=>!!(S&&S.autoSell&&S.autoSell[Math.max(0,Math.min(4,Math.floor(+t||0)))]),clickSellOn=()=>!!(S&&S.clickSell);
-function sell(id){const i=S.inv.findIndex(x=>String(x.id)===String(id));if(i<0)return;const it=S.inv.splice(i,1)[0];earnZeny(sellVal(it));(it.cards||[]).forEach(c=>S.cards.push(c));if(selB==it.id)selB=null;ui();save()}
+function sell(id){const i=S.inv.findIndex(x=>String(x.id)===String(id));if(i<0)return false;const it=S.inv[i];
+  if(it.locked){ask(`${iname(it)} is locked. Unlock it before selling? It will stay in your bag until you sell again.`,()=>{it.locked=false;log(`${iname(it)} unlocked. Click Sell again to continue.`,'r3','gear');ui();save()});return false}
+  S.inv.splice(i,1);earnZeny(sellVal(it));(it.cards||[]).forEach(c=>S.cards.push(c));if(selB==it.id)selB=null;ui();save();return true}
 // Quest goal AND reward are solved from the level you are standing at, by the one function the
 // panel and the Claim button both read - so what the quest panel states is exactly what you are
 // paid. The old code froze both at the level the quest was created, so a quest picked up at Lv 1
@@ -1470,10 +1477,15 @@ function changeClass(n){if(classBlock(n))return;
 const TABS={map:['🗺️','World Map','M'],status:['📊','Character','S'],job:['🌳','Class Tree','J'],skills:['✨','Skills','K'],bag:['🎒','Inventory','B'],log:['📃','Log','L'],pet:['🐾','Pets','P'],index:['📚','Mastery Index','I'],set:['⚙️','Settings','O'],gm:['🛠️','GM Tools','G']};
 const dot=k=>{if(!S)return false;if(k==='status')return S.pts>0;if(k==='skills')return skpAvail()>0;if(k==='quest')return!!(S.q&&S.q.some(q=>q.prog>=q.goal));if(k==='cards')return S.cards.length>0;if(k==='index'){const rank=HUNT_TITLES.findIndex(t=>t.id===S.equippedTitle);return cardMasteryAvailable()>0||HUNT_TITLES.some((t,i)=>i>rank&&titleUnlocked(t))}return false};
 const find=id=>[...S.inv,...items(),...S.cards].find(x=>String(x.id)===String(id));
-const cell=(it,sel,extra='')=>`<div class="cell b${dtier(it)}${sel?' sel':''}" data-tip="${it.id}" ${extra}>${icon(it)}${it.r?`<i class="rf">+${it.r}</i>`:''}</div>`;
+// Gear level is a display-only grade: field level +10 per rarity step (Common +0 through Legendary +40).
+// It is never consulted by canUse() and cannot restrict equipping by Base Lv.
+const gearRefLevel=it=>Math.max(1,Math.min(150,Math.floor(+it.lvl||1)+10*Math.max(0,Math.min(4,Math.floor(+it.tier||0)))));
+function toggleGearLock(id){const it=find(id);if(!it||it.card||it.ore)return;it.locked=!it.locked;log(`${iname(it)} ${it.locked?'locked':'unlocked'}.`,it.locked?'r3':'','gear');ui();save()}
+const cell=(it,sel,extra='')=>`<div class="cell b${dtier(it)}${sel?' sel':''}" data-tip="${it.id}" ${extra}>${icon(it)}${it.locked?`<i class="lockstar" title="Locked gear" aria-label="Locked">&#9733;</i>`:''}${it.r?`<i class="rf">+${it.r}</i>`:''}</div>`;
 function itemMain(it){
   if(it.card)return`<b class="r${GI[it.g]}">${it.n}</b><div>${GRADE[it.g]} card &middot; <b>${SU(it.stat)} +${it.v}</b></div><div><small>Fits: ${CFL[CFIT[it.stat]]} only</small></div>`;
   return`<b class="r${it.tier}">${iname(it)}</b><div><small>${RAR[it.tier].n} ${SLOTS[it.slot].label}${it.wt?' ('+it.wt+')':''} &middot; ${SECN[it.sec||0]}</small></div>
+  <div><small>Gear Lv ${gearRefLevel(it)} &middot; reference only (no Base Lv equip restriction)</small></div>${it.locked?'<div><small class="r3">&#9733; Locked &middot; protected from auto-sell</small></div>':''}
   <div><b>${SLOTS[it.slot].stat} +${ev(it)}</b>${it.r?` <small>(base ${it.val})</small>`:''}</div>${(it.aff||[]).length?`<div class="sec">Affixes <small>(${it.aff.length} random)</small></div>`:''}${(it.aff||[]).map(a=>`<div class="r1">&#9670; ${affTxt(a)}</div>`).join('')}`}
 function itemDetail(it){if(it.card)return itemMain(it);const cs=it.cards||[];return itemMain(it)+Array.from({length:it.slots||0},(_,i)=>`<div><small>${cs[i]?'&#9670; '+cardTxt(cs[i]):'&#9671; empty card slot'}</small></div>`).join('')+(canUse(it)?'':'<div class="r0"><small>Your class cannot use this.</small></div>')}
 const cardSlots=(it,k)=>Array.from({length:it.slots||0},(_,i)=>{const c=(it.cards||[])[i];return c?`<div><small class="r${GI[c.g]}">&#9670; ${cardTxt(c)}</small> <button data-a="unsock" data-v="${k}:${i}">Remove ${200*(c.g+1)}z</button></div>`:'<div><small>&#9671; empty slot</small></div>'}).join('');
@@ -1537,13 +1549,13 @@ const V={
         <button data-a="skill" data-v="${s.id}" aria-label="Increase ${s.n}" title="${L<s.max?'level '+(L+1)+' costs '+skCost(L+1)+' points':'max level'}" ${av>=skCost(L+1)&&L<s.max?'':'disabled'}>${L<s.max?'+'+skCost(L+1):'MAX'}</button></div>`}).join('')}${from==='Novice'?skMasterTile():''}</div>`:''}).join('')
     +(sel?(()=>{const SL=lv(sel.id),soff=!!(SL&&sel.type!=='pas'&&skOff(sel.id));return`<div class="mob-card" style="margin-top:8px"><div class="sk-detail-head"><b>${sel.n}</b> <small>${sel.type==='pas'?'Passive':sel.type==='heal'?'Auto-heal':sel.type==='to'?'Tradeoff (auto-cast)':'Active (auto-cast)'}${sel.rng?' &middot; RANGED':''}${sel.aoe?' &middot; AREA':''}${sel.dot?' &middot; DOT':''}${sel.stun?' &middot; STUN':''}${sel.chain?' &middot; CHAIN':''}</small></div><div class="sk-detail-autocast">${SL&&sel.type!=='pas'?`<label class="sk-autocast"><input type="checkbox" data-a="sktog" data-v="${sel.id}" ${soff?'':'checked'} aria-label="Auto cast ${sel.n}"> Auto cast this skill</label><small class="${soff?'r0':''}">${soff?'Paused - it will not be used until you check this again.':'Cast automatically every time you attack.'}</small>`:'<small>Passive or not learned yet - nothing to auto-cast.</small>'}</div><small>${sel.d(Math.max(1,SL))}</small>${SL&&SL<sel.max?`<br><small>Next: ${sel.d(SL+1)}</small>`:''}</div>`})():'')
     +`<button class="full" data-a="rskill">Reset skills (${rcost()}z)</button>`},
-  bag0(){const sel=selB&&S.inv.find(x=>String(x.id)===String(selB));const n=Math.max(30,Math.ceil(S.inv.length/6)*6);const inv=[...S.inv].sort((a,b)=>b.tier-a.tier||ev(b)-ev(a));
+  bag0(){const sel=selB&&S.inv.find(x=>String(x.id)===String(selB));const n=Math.max(30,Math.ceil(S.inv.length/6)*6);const inv=S.inv.map((it,i)=>({it,i})).sort((a,b)=>Number(!!b.it.locked)-Number(!!a.it.locked)||a.i-b.i).map(x=>x.it);
     return (eqPick?equipChooser(eqPick):'')
     +`<div class="row"><span class="chip">🔶 Oridecon <b>${S.ore.ori}</b></span><span class="chip">🔷 Elunium <b>${S.ore.elu}</b></span></div>
     <div class="mob-card sellbox" style="margin-top:4px"><div class="hd">Selling tools</div>
       <div class="row"><small>Auto-sell on drop:</small>${RAR.map((r,i)=>`<button class="tick${autoSellOn(i)?' on':''}" data-a="autosell" data-v="${i}" aria-pressed="${autoSellOn(i)}" title="Sell every ${r.n} item the moment it drops">${r.n}</button>`).join('')}</div>
-      <div class="row" style="margin-top:4px"><button data-a="sellnow" ${S.inv.some(i=>autoSellOn(i.tier))?'':'disabled'}>Sell matching now</button><button class="tick${clickSellOn()?' on':''}" data-a="clicksell" aria-pressed="${clickSellOn()}">Click-sell: ${clickSellOn()?'ON':'OFF'}</button></div>
-      <small>${clickSellOn()?'<b class="r0">Click-sell is ON</b> - the next bag item you click is sold instantly.':'Ticked rarities are sold the moment they drop, so they never enter the bag. Click-sell turns a single click in the grid into an instant sale.'}</small></div>
+      <div class="row" style="margin-top:4px"><button data-a="sellnow" ${S.inv.some(i=>!i.locked&&autoSellOn(i.tier))?'':'disabled'}>Sell matching now</button><button class="tick${clickSellOn()?' on':''}" data-a="clicksell" aria-pressed="${clickSellOn()}">Click-sell: ${clickSellOn()?'ON':'OFF'}</button></div>
+      <small>${clickSellOn()?'<b class="r0">Click-sell is ON</b> - the next unlocked bag item you click is sold instantly.':'Ticked rarities are sold the moment they drop, so they never enter the bag. Click-sell turns a single click in the grid into an instant sale.'}</small><small>&#9733; Locked gear stays at the top and is skipped by auto/bulk sell. Manual Sell asks you to confirm unlocking it.</small></div>
     <div class="row" style="margin-top:4px"><small class="${S.inv.length>=BAGMAX?'r0':''}">${S.inv.length}/${BAGMAX} items${S.inv.length>=BAGMAX?' &middot; BAG FULL':''}</small></div>
     <small>Selling pays a small flat amount - a bag dump never funds an upgrade.</small>
     <div class="grid${clickSellOn()?' sellmode':''}">${Array.from({length:n},(_,i)=>{const it=inv[i];if(!it)return'<div class="cell empty"></div>';
@@ -1553,12 +1565,12 @@ const V={
       // detail card and the tooltips all keep working.
       // v39: with click-sell ON, a plain tile sells on the click instead of selecting the item;
       // the hover tooltip stays, so what you are about to sell is still readable first.
-      return fits?`<div class="cell b${dtier(it)}${on?' sel':''} fit" data-tip="${it.id}" aria-label="${iname(it)} - fits this slot, click to equip" data-a="eqpick" data-v="${it.id}:${eqPick}">${icon(it)}${it.r?`<i class="rf">+${it.r}</i>`:''}</div>`
+      return fits?`<div class="cell b${dtier(it)}${on?' sel':''} fit" data-tip="${it.id}" aria-label="${iname(it)} - fits this slot, click to equip" data-a="eqpick" data-v="${it.id}:${eqPick}">${icon(it)}${it.locked?`<i class="lockstar" title="Locked gear" aria-label="Locked">&#9733;</i>`:''}${it.r?`<i class="rf">+${it.r}</i>`:''}</div>`
         :cell(it,on,clickSellOn()?`data-a="quicksell" data-v="${it.id}" aria-label="${iname(it)} - click to sell it now"`:`data-a="selb" data-v="${it.id}"`)}).join('')}</div>
-    <div class="mob-card" style="margin-top:8px">${sel?itemDetail(sel)+`<div class="row" style="margin-top:6px"><button data-a="equip" data-v="${sel.id}" ${canUse(sel)?'':'disabled'}>Equip</button><button data-a="sell" data-v="${sel.id}">Sell ${sellVal(sel)}z</button><button class="tick${autoSellOn(sel.tier||0)?' on':''}" data-a="autosell" data-v="${sel.tier||0}" title="Auto-sell every ${RAR[sel.tier||0].n} item on drop">Auto-sell ${RAR[sel.tier||0].n}</button></div>`:'<small>Click an item to see its stats. Hover for a quick tooltip.</small>'}</div>`},
+    <div class="mob-card" style="margin-top:8px">${sel?itemDetail(sel)+`<div class="row" style="margin-top:6px"><button data-a="equip" data-v="${sel.id}" ${canUse(sel)?'':'disabled'}>Equip</button><button data-a="sell" data-v="${sel.id}">Sell ${sellVal(sel)}z</button><button class="tick${sel.locked?' on':''}" data-a="lockgear" data-v="${sel.id}" aria-pressed="${!!sel.locked}" title="Locked gear stays pinned and protected from auto-sell">${sel.locked?'&#9733; Unlock':'☆ Lock'}</button><button class="tick${autoSellOn(sel.tier||0)?' on':''}" data-a="autosell" data-v="${sel.tier||0}" title="Auto-sell every ${RAR[sel.tier||0].n} item on drop">Auto-sell ${RAR[sel.tier||0].n}</button></div>`:'<small>Click an item to see its stats. Hover for a quick tooltip.</small>'}</div>`},
   equip(){const c=C(),sel=S.eq[selE],pos={head:'grid-column:2;grid-row:1',weapon:'grid-column:1;grid-row:2',armor:'grid-column:2;grid-row:2',off:'grid-column:3;grid-row:2',acc1:'grid-column:1;grid-row:3',leg:'grid-column:2;grid-row:3',acc2:'grid-column:3;grid-row:3'};
-    return`<div class="doll">${EQK.filter(([k])=>k!=='off'||!katarOnly()).map(([k,l,ic])=>{const e=S.eq[k];return`<div class="cell b${e?dtier(e):0}${selE===k?' sel':''}" style="${pos[k]}" data-a="seleq" data-v="${k}" ${e?`data-tip="${e.id}"`:''}>${e?icon(e)+(e.r?`<i class="rf">+${e.r}</i>`:''):`<span style="opacity:.3">${ic}</span>`}<i class="rf" style="left:2px;right:auto;top:2px;bottom:auto;color:#fff;background:#3b2a1add;font-size:9px;font-style:normal">${k==='weapon'&&katarOnly()?'2H Katar':l}</i></div>`}).join('')}</div>`
-    +`<div class="mob-card">${sel?itemMain(sel)+cardSlots(sel,selE)+insertUI(sel)+refineUI(sel,selE)+`<div class="row" style="margin-top:6px"><button data-a="unequip" data-v="${selE}">Unequip</button></div>`:'<small>Click any slot above to choose what to wear there (the Bag opens with the items that fit already highlighted). Select one to inspect it, remove cards or refine.</small>'}</div>`
+    return`<div class="doll">${EQK.filter(([k])=>k!=='off'||!katarOnly()).map(([k,l,ic])=>{const e=S.eq[k];return`<div class="cell b${e?dtier(e):0}${selE===k?' sel':''}" style="${pos[k]}" data-a="seleq" data-v="${k}" ${e?`data-tip="${e.id}"`:''}>${e?icon(e)+(e.locked?'<i class="lockstar" title="Locked gear" aria-label="Locked">&#9733;</i>':'')+(e.r?`<i class="rf">+${e.r}</i>`:''):`<span style="opacity:.3">${ic}</span>`}<i class="rf" style="left:2px;right:auto;top:2px;bottom:auto;color:#fff;background:#3b2a1add;font-size:9px;font-style:normal">${k==='weapon'&&katarOnly()?'2H Katar':l}</i></div>`}).join('')}</div>`
+    +`<div class="mob-card">${sel?itemMain(sel)+cardSlots(sel,selE)+insertUI(sel)+refineUI(sel,selE)+`<div class="row" style="margin-top:6px"><button data-a="unequip" data-v="${selE}">Unequip</button><button class="tick${sel.locked?' on':''}" data-a="lockgear" data-v="${sel.id}" aria-pressed="${!!sel.locked}">${sel.locked?'&#9733; Unlock':'☆ Lock'}</button></div>`:'<small>Click any slot above to choose what to wear there (the Bag opens with the items that fit already highlighted). Select one to inspect it, remove cards or refine.</small>'}</div>`
     +`<small>Weapons: ${c.wt.join(', ')} &middot; ${canShield()?'Shield allowed':'No shield'}${katarOnly()?' &middot; <b>Two-handed Katar; no off-hand weapon</b>':''}</small>`},
   cards(){const g={};S.cards.forEach(c=>(g[c.n]=g[c.n]||[]).push(c));const ks=Object.keys(g),sel=g[selC]?g[selC][0]:null;
     return`<div class="grid">${ks.map(n=>`<div class="cell b${GI[g[n][0].g]}${n===selC?' sel':''}" data-a="selc" data-v="${n}" data-tip="${g[n][0].id}">🃏<i class="rf">x${g[n].length}</i></div>`).join('')||'<small>No cards yet. Every monster drops its own card at a low chance.</small>'}</div>
@@ -1706,12 +1718,13 @@ const ACT={
   selb:v=>{selB=v;renderWin()},equip:id=>equip(+id),sell:id=>sell(id),
   autosell:v=>{const t=Math.max(0,Math.min(4,+v||0));if(!Array.isArray(S.autoSell))S.autoSell=[false,false,false,false,false];S.autoSell[t]=!S.autoSell[t];
     log(`${RAR[t].n} items will ${S.autoSell[t]?'be sold automatically the moment they drop':'stay in the bag'}.`,S.autoSell[t]?'r3':'','gear');ui();save()},
-  sellnow:()=>{const list=S.inv.filter(i=>autoSellOn(i.tier)).slice();if(!list.length)return log('No bagged item matches the rarities you ticked.','r0','gear');
+  lockgear:id=>toggleGearLock(id),
+  sellnow:()=>{const list=S.inv.filter(i=>!i.locked&&autoSellOn(i.tier)).slice();if(!list.length)return log('No unlocked bag item matches the rarities you ticked. Locked gear stays safe.','r0','gear');
     let z=0;for(const i of list){z+=sellVal(i);(i.cards||[]).forEach(c=>S.cards.push(c));const k=S.inv.indexOf(i);if(k>=0)S.inv.splice(k,1)}
     earnZeny(z);if(selB&&!S.inv.some(x=>String(x.id)===String(selB)))selB=null;
     log(`Sold ${list.length} matching item${list.length>1?'s':''} (+${z.toLocaleString()}z).`,'r3','gear,zeny');ui();save()},
-  clicksell:()=>{S.clickSell=!clickSellOn();log(S.clickSell?'Click-sell ON: a click in the bag sells that item immediately.':'Click-sell OFF: a click in the bag inspects the item again.',S.clickSell?'r0':'r3','gear');ui();save()},
-  quicksell:id=>{const it=S.inv.find(x=>String(x.id)===String(id));if(!it)return;const v=sellVal(it);sell(id);log(`Sold ${iname(it)} for ${v.toLocaleString()}z.`,'r3','gear,zeny')},
+  clicksell:()=>{S.clickSell=!clickSellOn();log(S.clickSell?'Click-sell ON: an unlocked bag item sells on click; locked gear asks to unlock first.':'Click-sell OFF: a click in the bag inspects the item again.',S.clickSell?'r0':'r3','gear');ui();save()},
+  quicksell:id=>{const it=S.inv.find(x=>String(x.id)===String(id));if(!it)return;const v=sellVal(it);if(!sell(id))return;log(`Sold ${iname(it)} for ${v.toLocaleString()}z.`,'r3','gear,zeny')},
   // Clicking a green bag tile wears it; the highlight mode stays on so several pieces can be
   // compared, and closing it is the ✕ on the banner (eqclose).
   eqpick:v=>{const[id,k]=v.split(':');equipIn(k,id)},

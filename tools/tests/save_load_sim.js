@@ -111,6 +111,22 @@ t('the live game state is untouched by the repair', () => {
   assert.strictEqual(f.eq.weapon.r, 1);
 });
 
+t('gear locks persist while missing or malformed lock flags repair to unlocked',()=>{
+  const raw=JSON.parse(JSON.stringify(save));
+  raw.inv=[
+    {id:301,name:'Locked Blade',slot:'weapon',wt:'sword',tier:2,val:40,locked:true,cards:[]},
+    {id:302,name:'Legacy Blade',slot:'weapon',wt:'sword',tier:1,val:20,cards:[]},
+    {id:303,name:'Malformed Lock',slot:'weapon',wt:'sword',tier:1,val:20,locked:'true',cards:[]}
+  ];
+  raw.eq.weapon.locked=true;
+  sb.__l.setRaw(raw);const repaired=load();
+  assert.strictEqual(repaired.inv[0].locked,true,'a deliberate bag lock survives');
+  assert.strictEqual(repaired.inv[1].locked,false,'legacy items default to unlocked');
+  assert.strictEqual(repaired.inv[2].locked,false,'malformed truthy data cannot accidentally lock or sell gear');
+  assert.strictEqual(repaired.eq.weapon.locked,true,'locks persist on equipped gear too');
+  sb.__l.setRaw(save);
+});
+
 t('card values are repaired per stat, not flattened to CV[grade]', () => {
   const byId = id => f.cards.find(c => c.id === id);
   assert.strictEqual(byId(1).v, 192, 'a Legendary HP card should repair to 16*12, not the stale 5');

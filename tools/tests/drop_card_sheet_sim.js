@@ -148,9 +148,10 @@ t('card effect matrix uses the game’s actual rounded values and roll pools',()
   assert.deepStrictEqual(sheet.cardValues.map(g=>g.atk),[3,5,8,13]);
   assert.deepStrictEqual(sheet.cardValues.map(g=>g.cdm),[2,4,7,11]);
 });
-t('worksheet accepts and preserves v45 saved edits in the v46 gear-only tune',()=>{
+t('worksheet migrates v45 edits through the v47 UI-only build',()=>{
   const script=html.match(/<script>\s*([\s\S]*?)\s*<\/script>/)[1];
-  assert.ok(script.includes("'2026-10-05 balance-v45 all-class late-map gear'"),'v45 must be a safe previous worksheet build before the v46 snapshot');
+  assert.ok(script.includes("'2026-10-05 balance-v46 cdm tune + mastery index'"),'v46 must be a safe previous build before the v47 UI-only snapshot');
+  assert.ok(script.includes("'2026-10-05 balance-v45 all-class late-map gear'"),'the older v45 worksheet migration must remain supported');
   class Element{constructor(){this.innerHTML='';this.textContent='';this.value='';this.hidden=false;this.dataset={};this.classList={toggle(){},remove(){},add(){}}}addEventListener(){}setAttribute(){}focus(){}select(){}}
   const els=new Map(),get=id=>{if(!els.has(id))els.set(id,new Element());return els.get(id)};get('baseline-data').textContent=dataMatch[1];
   const catalog=sheet.maps.map(m=>m.sections.map(s=>s.items.map(i=>({...i,field:true,boss:true}))));
@@ -160,7 +161,7 @@ t('worksheet accepts and preserves v45 saved edits in the v46 gear-only tune',()
   const context={document,localStorage:{getItem:()=>JSON.stringify(saved),setItem(){},removeItem(){}},navigator:{},console,Blob:function(){},URL:{},confirm:()=>true};
   vm.createContext(context);vm.runInContext(script,context);
   const migrated=vm.runInContext('state',context),newArmor=migrated.catalog[9][3].find(i=>i.slot==='armor');
-  assert.strictEqual(migrated.sourceBuild,sheet.build,'v45 should migrate to the current v46 baseline');
+  assert.strictEqual(migrated.sourceBuild,sheet.build,'v45 should migrate to the current v47 baseline');
   assert.strictEqual(newArmor.name,'My v45 Dark Lord Mail','the v45 item rename should survive');
   assert.strictEqual(newArmor.boss,false,'the v45 drop toggle should survive');
   assert.strictEqual(migrated.globalNotes,saved.globalNotes,'v45 notes should survive');

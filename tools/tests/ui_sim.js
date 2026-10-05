@@ -53,6 +53,8 @@ const code = [
   pick(/const SU=k=>[^,]+/, 'SU'),
   grab('const ARM=[', 'const dropTxt='),
   pick(/const WICON=\{[^}]*\},ORE=\{[^}]*\},SECN=\[[^\]]*\];/, 'WICON/ORE/SECN'),
+  pick(/const gearRefLevel=it=>[^;]+;/, 'gear reference level'),
+  pick(/const sellVal=it=>[^;]+;/, 'sell value'),
   pick(/const cell=\(it,sel,extra=''\)=>[^\n]*/, 'cell'),
   pick(/const STATS=\[[\s\S]*?\];/, 'STATS'),
   pick(/const SKILL_ICON=\{[^}]*\};/, 'per-skill icon map'),
@@ -102,7 +104,7 @@ const dr=()=>1;
 ${code}
 const skpAvail=()=>5,skTree=()=>4,skEarnedMax=()=>9,skLine=()=>['Novice'],skEarned=()=>9,skSpent=()=>0,pv=()=>0,bon=()=>0,qTxt=q=>'quest';
 this.__u={ V, SKILLS, SKILL_ICON, logs, set S(v){S=v}, get S(){return S}, set eqPick(v){eqPick=v}, get eqPick(){return eqPick},
-           set indexMode(v){indexMode=v}, get indexMode(){return indexMode}, set mapM(v){mapM=v}, set mapL(v){mapL=v}, set selE(v){selE=v}, get selE(){return selE}, set selS(v){selS=v}, set selP(v){selP=v} };
+           set indexMode(v){indexMode=v}, get indexMode(){return indexMode}, set mapM(v){mapM=v}, set mapL(v){mapL=v}, set selE(v){selE=v}, get selE(){return selE}, set selB(v){selB=v}, get selB(){return selB}, set selS(v){selS=v}, set selP(v){selP=v} };
 `;
 const sb = { console };
 vm.createContext(sb); vm.runInContext(harness, sb);
@@ -613,6 +615,11 @@ t('the bag shows its 1000-item limit and refuses loot once it is full', () => {
   C.collect({ id: 8, name: 'Abyss Blade', tier: 4, slot: 'weapon', val: 90, sec: 3, lvl: 99, cards: [] });
   assert.ok(C.S.inv.some(i => i && i.id === 8), 'an unticked rarity still lands in the bag');
   assert.ok(!C.msg.includes('Auto-sold'), 'and is not reported as sold');
+  C.S.inv.length=0;C.S.zeny=0;C.S.autoSell=[false,false,true,false,false];C.clear();
+  C.collect({id:9,name:'Pinned Blade',tier:2,slot:'weapon',wt:'sword',val:80,sec:1,lvl:40,locked:true,cards:[]});
+  assert.ok(C.S.inv.some(i=>i&&i.id===9&&i.locked),'a locked incoming item bypasses the auto-sell filter');
+  assert.strictEqual(C.S.zeny,0,'keeping a locked item pays no sale value');
+  assert.ok(!C.msg.includes('Auto-sold'),'the locked item is never reported as auto-sold');
 });
 
 t('Settings carries BOTH damage-number toggles (show/hide and short/full) and remembers them', () => {
@@ -745,12 +752,72 @@ t('the Bag sells by rarity, on the drop or on a click', () => {
   assert.ok(h.includes('data-a="quicksell" data-v="2"') && !h.includes('data-a="selb" data-v="2"'),
     'plain tiles sell instead of selecting');
   assert.ok(h.includes('data-tip="2"'), 'the hover tooltip still says what the item is');
-  assert.ok(src.includes('quicksell:id=>{const it=S.inv.find(x=>String(x.id)===String(id));if(!it)return;const v=sellVal(it);sell(id);'),
-    'and the action really sells, at the sale value');
+  assert.ok(src.includes('quicksell:id=>{const it=S.inv.find(x=>String(x.id)===String(id));if(!it)return;const v=sellVal(it);if(!sell(id))return;'),
+    'and the action only reports a sale when sell() actually completed');
   // an inspect click still works when the mode is off
   U.S.clickSell = false; h = U.V.bag0();
   assert.ok(h.includes('data-a="selb" data-v="2"') && !h.includes('data-a="quicksell"'), 'OFF restores inspecting');
   assert.ok(!src.includes('data-a="sellbelow"'), 'the old two purge buttons are gone');
+});
+
+t('the Bag keeps insertion order, pins locked gear, and labels rarity-based equipment levels',()=>{
+  U.S=mkS('Knight');U.selB=null;U.eqPick=null;U.S.clickSell=false;U.S.autoSell=[false,false,false,false,false];
+  const gear=(id,name,tier,lvl)=>({id,name,tier,slot:'weapon',wt:'sword',val:30,sec:1,lvl,cards:[],aff:[]});
+  const a=gear(41,'Common Blade',0,40),b=gear(42,'Legendary Blade',4,40),c=gear(43,'Rare Blade',2,40),d=gear(44,'Fine Blade',1,41);
+  U.S.inv=[a,b,c];
+  const order=html=>[...html.matchAll(/data-a="selb" data-v="([^"]+)"/g)].map(m=>m[1]);
+  let h=U.V.bag0();
+  assert.deepStrictEqual(order(h),['41','42','43'],'the current insertion order is not sorted by rarity/value');
+  U.S.inv.push(d);h=U.V.bag0();
+  assert.deepStrictEqual(order(h),['41','42','43','44'],'a new drop appends without moving existing items');
+  c.locked=true;h=U.V.bag0();
+  assert.deepStrictEqual(order(h),['43','41','42','44'],'locked gear is pinned first while unlocked gear keeps its order');
+  assert.ok(h.includes('class="lockstar"')&&h.includes('title="Locked gear"'),'a locked tile carries a visible star badge');
+  U.S.autoSell[2]=true;U.selB=43;U.S.lv=1;h=U.V.bag0();
+  const purge=h.slice(h.indexOf('data-a="sellnow"'),h.indexOf('data-a="sellnow"')+48);
+  assert.ok(purge.includes('disabled'),'a locked matching rarity cannot be bulk-sold');
+  assert.ok(h.includes('Gear Lv 60')&&h.includes('reference only (no Base Lv equip restriction)'),
+    'same field-level gear shows a higher Rare-grade reference level without an equip gate');
+  assert.ok(h.includes('data-a="lockgear" data-v="43"')&&h.includes('aria-pressed="true"'),
+    'the selected item exposes an explicit Unlock control');
+  const equipButton=h.match(/<button data-a="equip" data-v="43"([^>]*)>/);
+  assert.ok(equipButton&&!equipButton[1].includes('disabled'),'a reference Gear Lv 60 never blocks Base Lv 1 from equipping');
+  assert.ok(src.includes('lockgear:id=>toggleGearLock(id)'),'the lock button has a live action');
+});
+
+t('locked gear requires deliberate confirmation for manual sale and is skipped by automated sales',()=>{
+  const sellFn=grab('function sell(id){','// Quest goal AND reward');
+  const sellValFn=pick(/const sellVal=it=>[^;]+;/,'sellVal');
+  const box={};vm.createContext(box);
+  vm.runInContext(`let S={inv:[],cards:[]},selB=null,modal='',confirmSale=null,earned=0;
+    const iname=it=>it.name,earnZeny=v=>{earned+=v},log=()=>{},ui=()=>{},save=()=>{},ask=(m,y)=>{modal=m;confirmSale=y};
+    ${sellValFn}
+    ${sellFn}
+    this.__sale={S,get modal(){return modal},get confirmSale(){return confirmSale},get earned(){return earned},sell,sellVal};`,box);
+  const C=box.__sale,item={id:91,name:'Blue Blade',tier:2,sec:1,lvl:40,locked:true,cards:[]};C.S.inv.push(item);
+  assert.strictEqual(C.sell(91),false,'a locked manual sale waits for confirmation');
+  assert.ok(C.modal.includes('locked')&&C.modal.includes('Unlock it before selling'),'the confirmation warns that the gear is locked');
+  assert.strictEqual(C.S.inv.length,1,'Cancel leaves the item safely in the bag');
+  C.confirmSale();
+  assert.strictEqual(C.S.inv.length,1,'confirming only unlocks; it never silently sells the item');
+  assert.strictEqual(item.locked,false,'the confirmation unlocks the item first');
+  assert.strictEqual(C.earned,0,'unlock confirmation alone pays nothing');
+  assert.strictEqual(C.sell(91),true,'a second deliberate Sell action can now complete');
+  assert.strictEqual(C.S.inv.length,0,'the unlocked item is sold only after that second action');
+  assert.strictEqual(C.earned,C.sellVal(item),'the confirmed manual sale pays the ordinary sell value');
+  assert.ok(src.includes('S.inv.filter(i=>!i.locked&&autoSellOn(i.tier))'),'bulk sell omits locked gear');
+  assert.ok(src.includes('S.inv.some(i=>!i.locked&&autoSellOn(i.tier))'),'the bulk-sell button is disabled when only locked matches remain');
+  assert.ok(src.includes('if(!it.locked&&autoSellOn(it.tier))'),'drop auto-sell never consumes a locked item');
+});
+
+t('the lock toggle changes saved item state in either direction',()=>{
+  const lockFn=grab('function toggleGearLock(id){','const cell=');
+  const box={};vm.createContext(box);
+  vm.runInContext(`let target={id:7,name:'Test Blade',locked:false},calls=0;const find=id=>String(id)==='7'?target:null,iname=it=>it.name,log=()=>{},ui=()=>{},save=()=>{calls++};
+    ${lockFn}
+    this.__lock={target,get calls(){return calls},toggleGearLock};`,box);
+  const C=box.__lock;C.toggleGearLock(7);assert.strictEqual(C.target.locked,true);assert.strictEqual(C.calls,1);
+  C.toggleGearLock('7');assert.strictEqual(C.target.locked,false);assert.strictEqual(C.calls,2);
 });
 
 t('the Log window filters by category, and the on-screen feed folds away', () => {
