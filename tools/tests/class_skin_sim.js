@@ -252,7 +252,8 @@ function dueIndex(delays, ms) {
 }
 
 // Frame bytes help: a decoded strip is one row of equal-sized frames.
-function stripFrame(cv, index, size = 200) {
+function stripFrame(cv, index, size) {
+  size = size || cv.height;
   const out = Buffer.alloc(size * cv.height * 4);
   for (let y = 0; y < cv.height; y++) {
     const from = (y * cv.width + index * size) * 4;
@@ -813,6 +814,53 @@ const settle = async (X, limit = 2000) => {
   });
 
   // ---------- the generated manifest ----------
+  await t('the simplest APNG the repo ships round-trips through the game\'s decoder', async () => {
+    // tools/make_simple_apng.py writes the simplest form and reports the SHA-256 of every frame's
+    // raw RGBA; the game's own decoder must read that file back and produce exactly those frames.
+    const demo = path.join(ROOT, 'Updates/ApngAnimation/simple_apng_demo.png');
+    assert.ok(fs.existsSync(demo), 'the note\'s demo APNG must be committed with it');
+    for (const file of [demo]) {
+      const run = spawnSync('python3', [path.join(ROOT, 'tools/make_simple_apng.py'), '--verify', file, '--json'], { encoding: 'utf8' });
+      assert.strictEqual(run.status, 0, `the writer could not read its own file: ${run.stderr}`);
+      const report = JSON.parse(run.stdout.trim().split('\n').pop());
+      const strip = await X.skinDecodePng(new Uint8Array(fs.readFileSync(file)));
+      assert(strip, 'the game\'s decoder reads the simplest-form APNG');
+      assert.strictEqual(strip.n, report.frames, 'frame count agrees with the writer');
+      assert.strictEqual(strip.cv.height, report.height, 'frame size agrees with the writer');
+      for (let i = 0; i < strip.n; i++)
+        assert.strictEqual(sha(stripFrame(strip.cv, i)), report.frames_sha[i],
+          `frame ${i + 1} of ${path.basename(file)} decodes identically in Python and in the game`);
+      assert.ok(strip.n >= 2, 'and the demo really carries several frames');
+      console.log(`   ${path.basename(file)}: ${strip.n} frames, ${report.width}x${report.height}, decoded identically by the writer and the game`);
+    }
+    // a fresh file written by the same tool must also round-trip (not just the committed one)
+    const tmp = path.join(require('os').tmpdir(), 'class_skin_simple_apng_check.png');
+    const built = spawnSync('python3', [path.join(ROOT, 'tools/make_simple_apng.py'), '--demo', tmp, '--json'], { encoding: 'utf8' });
+    assert.strictEqual(built.status, 0, `the demo writer failed: ${built.stderr}`);
+    const builtReport = JSON.parse(built.stdout.trim().split('\n').pop());
+    const builtStrip = await X.skinDecodePng(new Uint8Array(fs.readFileSync(tmp)));
+    assert(builtStrip && builtStrip.n === builtReport.frames, 'a freshly written APNG decodes too');
+    for (let i = 0; i < builtStrip.n; i++)
+      assert.strictEqual(sha(stripFrame(builtStrip.cv, i)), builtReport.frames_sha[i],
+        `freshly written frame ${i + 1} matches the game's decoder`);
+  });
+
+  await t('the animation code backup next to the notes matches the live game', () => {
+    const run = spawnSync('python3', [path.join(ROOT, 'tools/backup_apng_code.py'), '--check'], { encoding: 'utf8' });
+    assert.strictEqual(run.status, 0, `Updates/ApngAnimation/class_skin_animation.js is stale: ${run.stderr || run.stdout}`);
+    const backup = fs.readFileSync(path.join(ROOT, 'Updates/ApngAnimation/class_skin_animation.js'), 'utf8');
+    assert.ok(backup.includes('function skinDecodePng(') && backup.includes('function captureSkinFrame('),
+      'the backup really carries the animation, not just a comment');
+    assert.ok(fs.existsSync(path.join(ROOT, 'Updates/ApngAnimation/README.md')),
+      'and the note that explains the method sits beside it');
+    const note = fs.readFileSync(path.join(ROOT, 'Updates/ApngAnimation/README.md'), 'utf8')
+      .replace(/\s+/g, ' ');                       // the note is wrapped prose: compare it unwrapped
+    for (const must of ['acTL', 'fcTL', 'fdAT', 'DecompressionStream', 'skinFrameIndex', 'num_plays',
+      'browsers pause an APNG that is not painted on screen', 'make_simple_apng.py',
+      'python3 tools/make_class_skins.py', 'tools/tests/fixtures/apng_frame_sha.json'])
+      assert.ok(note.includes(must), `the note must still cover ${must}`);
+  });
+
   await t('the committed manifest and the frame fixture are the current build of the source art', () => {
     const run = spawnSync('python3', [path.join(ROOT, 'tools/make_class_skins.py'), '--check'], { encoding: 'utf8' });
     assert.strictEqual(run.status, 0, `manifest is stale: ${run.stderr || run.stdout}`);

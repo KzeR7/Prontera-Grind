@@ -25,7 +25,13 @@ the repo, so pushing to `main` is the deploy.
   `/tmp/venv/bin/python3 tools/make_apng_fixtures.py`; and see the QC sheet tool
   `python3 tools/preview_class_skins.py` (one directions sheet plus one frame-by-frame walk-cycle
   sheet per class).
-* `tools/` — the art pipelines (`make_sprite_pack.py`, `make_sprite_viewer.py`, `montage.py`), the test suites (`tools/tests/`)
+* `Updates/ApngAnimation/` — **how the class skins animate, and the working method to follow**:
+  `README.md` (the APNG format as the art uses it, the game's decoder/player, every trap, and the
+  full update procedure), `class_skin_animation.js` (verbatim backup of that code block, kept
+  current by `python3 tools/backup_apng_code.py --check`), and `simple_apng_demo.png` (a 6-frame
+  example of the simplest APNG, written by `python3 tools/make_simple_apng.py`). **Read this before
+  changing the class art or the hero.**
+* `tools/` — the art pipelines (`make_sprite_pack.py`, `make_sprite_viewer.py`, `make_simple_apng.py`, `montage.py`), the test suites (`tools/tests/`)
   and a dev-only plan previewer (`tools/preview/`).
 * `AGENTS.md` — **the project's rules and its full update log**. Read it before changing anything:
   it carries the house rules (crop only, never draw art; all 8 directions and 3 animation rows

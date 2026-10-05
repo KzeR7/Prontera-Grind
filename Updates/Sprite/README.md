@@ -24,6 +24,8 @@ Every file here is a full-body 200×200 **animated PNG**: it carries several fra
 
 The game never runs these files through the 8×24 atlas slicing, and it does not lean on the browser to animate a hidden `<img>` either — browsers pause an APNG that is not painted on screen, which is what left one earlier build frozen on frame 0. Instead `index.html` decodes the frames itself (`skinDecodePng`: chunk walk, `DecompressionStream('deflate')`, PNG unfilter, APNG blend/dispose) into one horizontal strip of frames per view, and each rendered frame paints the frame that is due right now onto the 200×200 canvas used as the hero's `CanvasTexture`. The clock is the file's own delay table (and its endless loop), so nothing is sped up, slowed down, invented or counted by hand.
 
+**The full method - the APNG format as these files use it, how the game decodes and plays the frames, every trap and the step-by-step for updating the art - lives in `Updates/ApngAnimation/README.md`, with a verbatim backup of the animation code beside it. Read that first.**
+
 `node tools/tests/class_skin_sim.js` proves it: it runs that decoder over all 154 files and compares every decoded frame byte-for-byte (SHA-256) with an independent Pillow rendering (`tools/tests/fixtures/apng_frame_sha.json`, written by `/tmp/venv/bin/python3 tools/make_apng_fixtures.py`), then checks the hero's own pixels show the due frame, that the mirror is a horizontal flip, and the fallbacks. Regenerate the fixture after replacing a PNG.
 
 Do not replace `assets/sprite_pack_data.js` or the root `Sprite/*.png` sheets with this set: the animated pack is still the fallback art, and `node tools/tests/pack_sim.js` still checks that compositor and the class-to-skin mapping.
