@@ -90,15 +90,76 @@ right Job half (filling leftward), with percentages centered in their own halves
 detailed hover percentages. Earned Zeny/min is shown on hover; Kills/min and Zeny/min
 use rolling 60-second activity, refreshed every second (kills/sec on hover). After a
 browser stall longer than 30 seconds, the rates reset instead of compressing the
-paused time into a false burst. The shared Base/Job bar is now 14px high on desktop
+paused time into a false burst. **The game also keeps grinding while the tab is in the
+background.** One clock owns the sim's time (`simAdvance` at the bottom of `index.html`):
+the animation-frame loop drives it while the tab is on screen and a once-a-second timer
+drives it while the tab is hidden, replaying real elapsed time in steps no bigger than
+0.1s, capped at 10 minutes per wake so a sleeping laptop cannot dump hours into one frame.
+Only the frame loop draws. Coming back logs one line - `Away 3m 12s · +42 kills · +6,120
+Zeny`. Since v58 there is no switch anywhere: background grinding is permanent (`bgOn()`
+is a constant, every load normalises `S.bg=true`), and no save or button can pause it.
+`tools/tests/background_sim.js` pins all of that without a browser. The shared Base/Job bar is now 14px high on desktop
 (22px on narrow screens). Skills display their names over the moving player; gold
 outgoing damage numbers and red spiked critical bubbles follow the supplied RO example.
 Active pets use their eight existing Divine Pride monster sprite IDs in the same
 WebGL/DOM renderer as mobs, all at one small scale (with a drawn fallback if an
-official remote PNG cannot load). Samples also reset at login or on a new adventure. The economy pacing
-tests still model the former 15-kill boss cadence, so their time-to-level projections
-are historical until a real Stage-10 boss-wave playtest. To look at a layout without a
-browser:
+official remote PNG cannot load). Samples also reset at login or on a new adventure.
+
+**v59 deeper skill lines + a free pet skill.** Every job class now teaches **five** skills
+(the roster is 91, up from 73) and skill levels are per-skill RO-style: most stop at 10, a
+utility skill in each class stops at 5, so a full line tree costs **140 points (139 payable -
+First Aid's level is free)** against the **156 a maxed line earns**. Job levels therefore pay out
+all the way to 50, and the panel says plainly that a line promoted out of at the minimum gate may
+not finish its tree (a restart can be 12 points short; that is the build choice). Cooldowns went
+up (actives x1.5, trade-offs x1.2), damage slopes were halved so each skill at its new max still
+matches the old 5-level output, and a shared **0.5s global cooldown** (`SKGCD`) now spreads the
+casts of one swing: cast 0 lands instantly, casts 1-2 are queued and fire on their turn (and are
+dropped if the target dies). Pets: **every pet arrives from a drop with one random skill already
+slotted** (same weighted pool as the gacha, which then sells the second slot). Tuning numbers are
+a first pass the owner wants to sit with before they are final; pet identity (signature skill /
+stat leaning) stays parked at the owner's request. No save loses anything: caps that dropped
+leave over-spent levels in place and the repair loop only ever trims overspend.
+
+**v58 Abyss-only Legendary + card panel polish.** Grade caps were re-tiered to the owner's map
+tiers: early maps (Prontera, Izlude, Geffen, Morroc, Payon) top out at Fine/Rare/Epic, the four
+mid maps (Comodo, Louyang, Amatsu, Niflheim) now stop at **Epic - bosses included** - and **Abyss
+is the only map that can drop Legendary gear**, with a value band that steps clear of the mid maps.
+The Card Mastery tab shows the **last three** rolls as one horizontal chip strip, and the gacha
+reset is a **dropdown of your loose Legendary cards plus a single Reset button**. Background
+grinding is now permanent: the Settings checkbox is gone, hiding the tab always keeps the game
+running, and no save or button can pause it. Owned gear is untouched by all of this - item values
+are stamped when they drop.
+
+**v57 map-capped gear and calmer drops.** Boss equipment is tiered by map now: `MAPGRADE` caps the
+best rarity each map can drop (a Payon stage-10 boss tops out at Epic) and `MAPVAL` gives every map a
+value band, so an Abyss Epic beats a Payon Legendary - which can no longer drop at all. Only items
+dropped after this build use the bands; everything already in a save keeps its rolls. Drop rates came
+down to the owner's gentle preset: field gear 3.6% per kill, cards 0.15%, a boss ~6% across its whole
+pool (no more one 1% roll per pool entry), pets about one per two hours. The Mob Index was rescaled to
+a 50,000-kill species ladder (10/50/250/1,000/5,000/10,000/25,000/50,000) with a 200 -> 1,000,000
+title ladder and the 90-species album tracked separately. The Card Mastery tab shows the newest rolls,
+lets you pick which Legendary the reset sacrifices, offers **Insert all** per stack and splits the
+loose-card list into rarity tabs. The Settings tab lost its paragraphs: hair controls are gone, and a
+disabled **Costume (soon)** button says costumes arrive in a future patch. Skills and pets from the
+same owner message are the next round - skill cooldowns are explicitly parked for a dedicated tuning
+discussion.
+
+**v56 EXP curve and early economy.** Every displayed EXP number is one tenth of the old one
+(`EXP_RATE 7` replaces the flat 70x, and all three rate tiers scale together, so the pace is
+unchanged), and every requirement is rounded to three significant figures - Base 10 needs 360,
+not 3,574. The 3x early boost now ends at Base 50, which turns Base 51-70 into the mid-game
+wall: 50->70 takes about 1 h 20 m (levels ramp from seconds to ~10 minutes each) instead of
+12 minutes, Base 70 lands at ~1 h 34 m and Base 99 at ~6 h 55 m. Base 1-50 keeps its old pace
+(~2.5 min to Lv10, ~14 min to Lv50) and the post-reset 100-150 tail stays a 48-hour climb.
+Quests pay the same share of a level as before (`QXP` was scaled x10 to cancel the display
+change). Kills now pay at least 5 Zeny (`ZMIN`), so the first levels are not a 1-Zeny trickle;
+the raw curve takes over around Base 22. `rcost()` is free below Base 20 and a refused reset
+now says so on screen instead of only in the log, and windows no longer rebuild while a
+pointer is held down - that was what made the reset buttons feel dead. Read the curve with
+`node tools/pacing_report.js` (level-by-level times) and re-solve or check it with
+`node tools/tune_pacing.js` / `node tools/tune_pacing.js --verify`. The pacing tests model the
+canonical 16-kill boss cadence, so absolute times vary with a real Stage-10 boss-wave playtest.
+To look at a layout without a browser:
 
 ```sh
 node tools/preview/dump_plans.js /tmp/plans.json 10    # third arg: stage, defaults to 1

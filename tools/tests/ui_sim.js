@@ -59,6 +59,7 @@ const code = [
   pick(/const STATS=\[[\s\S]*?\];/, 'STATS'),
   pick(/const SKILL_ICON=\{[^}]*\};/, 'per-skill icon map'),
   pick(/const SKSLOTS=t=>[^;]+;/, 'SKSLOTS/SKFADE'),
+  pick(/const SKGCD=[\d.]+;/, 'SKGCD'),
   pick(/const tnode=n=>[^\n]*/, 'tnode'),
   pick(/const crit=\(\)=>[^\n]*/, 'crit/flee/missCh'),
   pick(/const def=\(\)=>[^\n]*/, 'def/mdef/critD/needAt/need/cost'),
@@ -137,8 +138,8 @@ t('the map panel renders every map and field', () => {
   assert.ok(h.includes('Prontera') && h.includes('Abyss'), 'every map must be listed');
   assert.ok(!h.includes('Gear that drops here'), 'the bulky gear-by-slot card was removed in v16');
   // every drop now sits on the monster that drops it, one % line each
-  assert.ok(h.includes('dropline') && h.includes('4.8%') && h.includes('4%') && h.includes('3.2%'), 'mob gear odds must each be doubled and visible');
-  assert.ok(h.includes('0.45%'), 'the card chance stays visible on the monster');
+  assert.ok(h.includes('dropline') && h.includes('1.5%') && h.includes('1.2%') && h.includes('0.9%'), 'mob gear odds (v57: 3.6% total) must each be visible');
+  assert.ok(h.includes('0.15%'), 'the card chance stays visible on the monster');
   assert.ok(h.includes('mapcard'), 'the map selector must be the scalable grid');
   assert.strictEqual((h.match(/class="mapcard/g) || []).length, 10, 'one card per map');
   // Every map card shows its recommended level range under the name (the old build printed the
@@ -153,7 +154,7 @@ t('the map panel renders every map and field', () => {
   // the boss field lists the whole pool with odds, and the new ore rates
   U.mapL = 10;
   const b = U.V.map();
-  assert.ok(b.includes('<b>1%</b>') && b.includes('poolitem') && b.includes('Each item rolls independently'), 'the boss must list its whole pool at 1% each');
+  assert.ok(b.includes('<b>0.9%</b>') && b.includes('poolitem') && b.includes('Each item rolls independently'), 'the boss must list its whole pool at its 6%-total rate');
   assert.ok(b.includes('0.1%'), 'boss card odds must read 0.1% (v38)');
   assert.ok(b.includes('1% each') && b.includes('2.5% each'), 'v51 ore rates: 1% per monster, 2.5% per boss');
 });
@@ -218,9 +219,25 @@ t('the Mastery Index tracks monster titles and consumes loose cards for permanen
   assert.ok(h.includes('1/90 cards discovered')&&h.includes('<b>1/450</b> card mastery ranks'),'the album and five-rank-per-card progress are visible');
   assert.ok(h.includes('data-a="indexcard"')&&h.includes('Dedicate one'),'a loose card can advance an individual card');
   assert.ok(h.includes('data-a="cardroll"')&&h.includes('Token gacha'),'mastery ranks spend tokens on the gacha');
-  assert.ok(h.includes('data-a="cardreset"')&&h.includes('Reset · 1 Legendary card'),'a Legendary card resets the gacha and refunds tokens');
-  assert.ok(h.includes('Card Index available')&&!h.includes('(global max)'),'the loose-card list is renamed and the global-max wording is gone');
+  assert.ok(h.includes('data-a="cardreset"'),'the gacha reset is offered once a Legendary card is loose');
   assert.ok(h.includes('STR</b> 0/25')&&h.includes('HP Leech</b> 0/3')&&h.includes('ATK %</b> 0/5'),'current values and caps stay visible beside every reward');
+  // v57: the picker lists every loose Legendary so the player chooses what to sacrifice, the
+  // bag list gets rarity sub-tabs, and a stack can be dedicated in one tap.
+  U.S.cards=[{id:11,n:'Poring Card',g:3,stat:'str',v:4},{id:12,n:'Fabre Card',g:3,stat:'agi',v:3},{id:13,n:'Poring Card',g:0,stat:'dex',v:1}];
+  U.S.cardIndex.rolls=['str','str','agi'];
+  h=U.V.index();
+  assert.strictEqual((h.match(/data-a="cardreset"/g)||[]).length,1,'exactly one reset button now');
+  assert.ok(h.includes('class="card-pick" data-a="cardpick"'),'the sacrifice is a dropdown, not a button per card');
+  assert.ok(h.includes('<option value="11"')&&h.includes('<option value="12"'),'every loose Legendary is an option');
+  assert.ok(!h.includes('<option value="13"'),'a Common card is not offered as a sacrifice');
+  assert.ok((h.match(/<option /g)||[]).length===2,'one option per loose Legendary, no more');
+  assert.ok(h.includes('data-a="cardtab"')&&h.includes('Legendary <small>2</small>'),'rarity sub-tabs count the loose cards');
+  assert.ok(h.includes('data-a="indexall"')&&h.includes('Insert all'),'a stack can be dedicated in one tap');
+  assert.ok(h.includes('Latest rolls'),'and the newest rolls are shown, not just the totals');
+  assert.ok((h.match(/class="roll-chip(?!s)/g)||[]).length===3,'at most three rolls are listed');
+  assert.ok(h.indexOf('AGI</b>')<h.indexOf('STR</b>'),'newest roll first');
+  assert.ok(src.includes('.roll-chips{display:flex;flex-direction:row'),'the chips are a horizontal strip, not a column');
+  assert.ok(h.includes('Card Index available')&&!h.includes('(global max)'),'the loose-card list is renamed and the global-max wording is gone');
   for(const reward of ['hpPct','fleePct','leech','def','mdef','atkPct','matkPct','aspdPct','critPct'])assert.ok(src.includes("id:'"+reward+"'"),reward+' should be an available card mastery reward');
   assert.ok(h.includes('Poring Card')&&h.includes('Mastery 1/5'),'the card album keeps per-card mastery history');
   assert.ok(src.includes("if(v==='index'){openTab('index');return}"),'the Quest Board Index button opens the panel');
@@ -487,30 +504,26 @@ t('every skill has a distinct icon and upgraded card metadata', () => {
   assert.ok(/\.skg\{[^}]*repeat\(4,minmax\(0,1fr\)\)/.test(src) && src.includes('.sk .si{width:40px;height:40px'), 'the icon tiles use a polished responsive card style');
 });
 
-t('Settings previews the class art the character actually wears', () => {
+t('Settings shows a clean character card: preview, costume note, no wall of text', () => {
   U.S = mkS('Assassin Cross'); U.S.sex = 'f'; U.S.hair = 7;
   const h = U.V.set();
   assert.ok(h.includes('id="hairPreview"') && h.includes('id="hairPreviewLoading"'), 'a canvas preview has a loading fallback');
   assert.ok(h.includes('Live female Assassin Cross class skin preview'), 'the preview describes the current class and gender');
-  assert.ok(h.includes('Female &middot; S (front) view'), 'and the view it draws');
-  assert.ok(h.includes('Hair comes with the class art'), 'the hairstyle is honestly reported as part of the uploaded art');
-  assert.ok(h.includes('still saved with your account (style 8 of 19)'), 'the saved hairstyle is not lost');
-  assert.ok(h.includes('aria-label="Previous hairstyle"') && h.includes('aria-label="Next hairstyle"'), 'the hair controls keep their accessible names');
-  assert.ok(!h.includes('data-a="hair"'), 'but they are no longer live buttons while the art is fixed');
-  assert.ok(h.includes('S (front) view &middot; animating'), 'and says the preview is the animation, not a still');
-  assert.ok(h.includes('the supplied SE swing, mirrored when you swing to the left'), 'the panel says which views are mirrored, and why');
-  assert.ok(h.includes('The art has no E or W animation, and only High Priest has its own straight-up N one'),
-    'the panel says which facings use the nearest supplied view');
-  assert.ok(h.includes('the art has no idle animation, so at rest your character keeps playing its walk cycle'),
-    'the standing-still policy is stated plainly, not hidden');
-  assert.ok(h.includes('the held-weapon art is switched off'), 'and that the held-weapon overlay is off for now');
-  assert.ok(h.includes('The white melee swing arc is switched off too'), 'and that the duplicate swing arc is off, with the reason');
+  assert.ok(h.includes('LIVE PREVIEW') && h.includes('Female &middot; animating'), 'labelled plainly as the live animation');
+  assert.ok(h.includes('Costumes - outfits that restyle a class without touching its stats - are planned for a future patch.'),
+    'the hairstyle slot is honestly described as a future costume feature');
+  assert.ok(/data-a="costume" disabled/.test(h), 'and the costume button is visibly not live yet');
+  assert.ok(!h.includes('data-a="hair"'), 'the retired hairstyle arrows are gone');
+  for (const gone of ['no idle animation', 'only High Priest has its own straight-up N', 'the supplied SE swing, mirrored',
+                      'the held-weapon art is switched off', 'style 8 of 19'])
+    assert.ok(!h.includes(gone), 'the settings tab no longer explains engine internals: ' + gone);
+  assert.ok(!/aria-label="Previous hairstyle"/.test(h), 'no dead hair controls either');
   assert.ok(src.includes("if(tabs.includes('set'))drawAppearancePreview();") &&
             src.includes("if(tabs.includes('job'))drawClassPreview();"),
     'the game loop redraws whichever preview is open, so it animates');
   assert.ok(src.includes('ctx.drawImage(f.img,f.sx+ax-bw/2,ay-bh+6,bw,bh,0,0,cv.width,cv.height);'),
     'the preview draws the whole current animation frame around the art anchor');
-  assert.ok(src.includes('const p=skinPack(cls,sex),f=p?skinFrameOf(p,\'S\'):null;'),
+  assert.ok(src.includes("const p=skinPack(cls,sex),f=p?skinFrameOf(p,'S'):null;"),
     'reading the frame the file\'s own delays say is due');
   assert.ok(src.includes('captureSkinFrame(heroSpr,route)'), 'and the in-game hero paints the due frame each render');
   assert.ok(src.includes('skinDecodePng') && src.includes("new DecompressionStream('deflate')"),
@@ -523,7 +536,8 @@ t('the class-change panel previews the class it is describing', () => {
   assert.ok(h.includes('id="classPreview"') && h.includes('id="classPreviewLoading"'), 'the class panel has its own canvas and loading note');
   assert.ok(h.includes('male Knight class skin preview'), 'the preview describes the current class and gender');
   assert.ok(h.includes('CLASS PREVIEW') && h.includes('You wear this now'), 'with a plain label for the class you already are');
-  assert.ok(h.includes('S (front) view &middot; animating'), 'and the class preview is labelled as the animation too');
+  assert.ok(h.includes('&middot; animating'), 'and the class preview is labelled as the animation too');
+  assert.ok(!h.includes('S (front) view'), 'without the retired view essay');
   assert.ok(h.includes('What this class looks like') || h.includes('You wear this now'), 'and a label for a class you are only looking at');
   const g = h.match(/.{0,40}undefined.{0,40}/);
   assert.ok(!g, 'the class panel renders without undefined values: ' + (g ? g[0] : ''));
@@ -573,15 +587,17 @@ t('the Skills panel prints the whole tree against what a maxed line earns', () =
   assert.ok(src.includes('id="heroTitle"')&&src.includes('heroTitle.style.display'), 'equipped titles must follow the player above the head');
   assert.ok(src.includes('data-a="skalloc"')&&src.includes('Auto-allocate all skills')&&src.includes('autoAllocateSkills'), 'the Skills panel must expose one-click lower-class-first allocation');
   for(const [action,helper] of [['gmindex','gmIndexTest'],['gmcard','gmCardTest'],['gmskill','gmSkillTest'],['gmpet','gmPetTest']])assert.ok(src.includes('data-a="'+action+'"')&&src.includes(helper),action+' GM controls must be available for testing the new systems');
-  assert.ok(src.includes('data-v="all5000"')&&src.includes('data-v="xp4320000"'),'Index GM labels must expose the 5,000-rung and final-title scenarios');
+  assert.ok(src.includes('data-v="all5000"')&&src.includes('data-v="all50000"')&&src.includes('data-v="xp1000000"'),'Index GM labels must expose the 5,000-rung, 50,000-rung and final-title scenarios');
   assert.ok(src.includes('data-v="rollAll"')&&src.includes('data-v="g6dps"')&&src.includes('data-v="g6utility"'),'GM cap and complete pet-chain fixtures must be visible');
   assert.ok(src.includes('const skTree=()=>'), 'skTree() must exist - the panel needs the tree price');
   assert.ok(src.includes('const skEarnedMax=()=>'), 'skEarnedMax() must exist');
   assert.ok(src.includes('const skCost=()=>1;'), 'a skill level costs one point (v37)');
   assert.ok(src.includes('this line\'s tree costs ${skTree()}, a maxed line earns ${skEarnedMax()}'),
     'the panel must show the tree price and the maxed-line income side by side');
-  assert.ok(src.includes('Skill levels cost 1 point each (5 to max a skill), so a maxed job level can always finish this whole line'),
-    'the panel blurb must state the guarantee');
+  assert.ok(src.includes('Most skills cap at 10 and a few utility skills stop at 5 (RO-style)'),
+    'the panel blurb must state the v59 cap rule');
+  assert.ok(src.includes('job levels pay out all the way to 50'),
+    'and that job levels keep paying out (the owner complaint this round fixes)');
   // and the arithmetic itself, on the real numbers
   const box = {};
   vm.createContext(box);
@@ -601,8 +617,8 @@ t('the Skills panel prints the whole tree against what a maxed line earns', () =
   const K = box.__s, line = K.lineOf('Lord Knight');
   const tree = K.skTree(), max = K.skEarnedMax();
   assert.strictEqual(max, tree, 'a maxed line must expose exactly the tree budget: ' + tree + ' of ' + max);
-  // this fixture has the Knight at Job 40, so it has earned 146 - still far above the 64-point tree
-  assert.strictEqual(K.skpAvail(), 64, 'a maxed Lord Knight has exactly its 64-point tree budget');
+  // this fixture has the Knight at Job 40, so it has earned 146 - still far above the v59 139-point tree
+  assert.strictEqual(K.skpAvail(), 139, 'a maxed Lord Knight has exactly its 139-point tree budget');
   assert.ok(tree <= 146, 'the tree must fit inside a mid-promotion job history');
   console.log('       Lord Knight: tree ' + tree + ' pts of ' + max + ' earned at max job level');
 });
@@ -1103,6 +1119,51 @@ t('worn equipment can never be auto-sold or bulk-sold', () => {
   assert.ok(src.includes('S.inv.filter(i=>!i.locked&&autoSellOn(i.tier))'), 'bulk sell only ever reads S.inv');
   assert.ok(src.includes('if(!it.locked&&autoSellOn(it.tier)){const v=sellVal(it)'), 'drop auto-sell only ever reads S.inv');
   assert.ok(src.includes('const i=S.inv.findIndex(x=>String(x.id)===String(id))'), 'manual Sell searches the bag, never S.eq');
+});
+
+t('the reset buttons explain themselves, refuse on screen, and survive a rebuild', () => {
+  const pts = pick(/const totalPts=\(\)=>[^\n]*/, 'totalPts/rcost');
+  const deniedFn = grab('function denied(cost,what){', 'function log(');
+  const rstat = src.match(/rstat:\(\)=>\{[\s\S]*?save\(\)\}/)[0];
+  const box = {}; vm.createContext(box);
+  vm.runInContext(`let S=null;const logs=[],floats=[];let saves=0,uis=0;
+    const log=m=>logs.push(m),addFloat=(x,y,z,t)=>floats.push(t),ui=()=>uis++,save=()=>saves++;
+    const maxHp=()=>900;const pl={x:0,z:0};
+    ${pts}
+    ${deniedFn}
+    const ACT={${rstat}};
+    this.__r={set S(v){S=v},get S(){return S},get logs(){return logs},get floats(){return floats},get saves(){return saves},ACT};`, box);
+  const R = box.__r;
+  // below Base 20 the reset is free: it must work with an empty wallet (v56)
+  R.S = { lv: 12, zeny: 0, st: { str: 30, agi: 20, dex: 20, int: 5, vit: 20, luk: 5 }, pts: 0, hp: 100 };
+  R.ACT.rstat();
+  assert.strictEqual(R.S.zeny, 0, 'a free reset must not charge anything');
+  assert.deepStrictEqual(R.S.st, { str: 1, agi: 1, dex: 1, int: 1, vit: 1, luk: 1 }, 'the free reset really resets');
+  assert.strictEqual(R.saves, 1, 'the free reset saves');
+  assert.ok(!/Not enough/.test(R.logs[0] || ''), 'the free reset is not refused');
+  // Lv30 with 500z cannot afford 1,500z: the refusal has to be visible, not just logged
+  R.S = { lv: 30, zeny: 500, st: { str: 30, agi: 20, dex: 20, int: 5, vit: 20, luk: 5 }, pts: 0, hp: 100 };
+  const savesBefore = R.saves;
+  R.ACT.rstat();
+  assert.strictEqual(R.S.zeny, 500, 'nothing is charged when the reset is refused');
+  assert.strictEqual(R.S.st.str, 30, 'a refused reset leaves the stats alone');
+  assert.ok(/Not enough Zeny/.test(R.logs[R.logs.length - 1]), 'the refusal is logged');
+  assert.strictEqual(R.floats.length, 1, 'the refusal also floats over the character');
+  assert.strictEqual(R.saves, savesBefore, 'a refused reset does not save');
+  // the button itself says why it is dead, and what a working reset costs
+  U.S = mkS('Novice'); U.S.lv = 30; U.S.zeny = 500;
+  const poor = U.V.stats();
+  assert.ok(/data-a="rstat"[^>]*disabled title="You need 1,500 Zeny to reset stats"/.test(poor),
+    'an unaffordable reset button is disabled and explains the price');
+  assert.ok(/Reset stats \(1[,.]?500z\)/.test(poor), 'the price is on the button (got ' + (poor.match(/Reset stats \([^)]*\)/) || ['none'])[0] + ')');
+  U.S.zeny = 5000;
+  assert.ok(!/data-a="rstat"[^>]*disabled/.test(U.V.stats()), 'affordable resets are clickable');
+  U.S.lv = 15;
+  assert.ok(U.V.stats().includes('Reset stats (free below Base 20)'), 'the free band is on the label');
+  // a click whose press and release span a kill's renderWin() must not be swallowed
+  assert.ok(/if\(winPress\)\{winDirty=true;return\}/.test(src), 'renderWin must defer while a pointer is down');
+  assert.ok(/addEventListener\('pointerup',winUp\)/.test(src), 'the deferred rebuild runs on pointerup');
+  assert.ok(/\$\('wins'\)\.addEventListener\('pointerdown'/.test(src), 'the guard arms on a window press');
 });
 
 console.log(`\n${pass} passed, ${fail} failed`);

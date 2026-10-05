@@ -32,6 +32,8 @@ function liveData(){
     `const SECN=${pickValue(/SECN=(\[[^\]]*\])/,'equipment section names')};`,
     pick(/const CFIT=\{[^}]*\},CFL=\{[^}]*\};/,'card slot fit table'),
     pick(/const MAPTIER=\[[^\]]*\];/,'map rarity bands'),
+    pick(/const MAPGRADE=\[[^\]]*\];/,'map grade caps'),
+    pick(/const MAPVAL=\[[^\]]*\];/,'map value bands'),
     pick(/const dropTier=\(m,l\)=>[^;]+;/,'dropTier'),
     grab('function gearPool(m,l){','// ---------- stat progression'),
     `const WICON=${pickValue(/const WICON=(\{[^}]*\})/,'weapon type table')};`,
@@ -135,7 +137,11 @@ t('rarity, card grades, and Stage-10 boss pools are complete',()=>{
     for(const s of m.stages){
       const cardGrade=s.stage<=3?0:s.stage<=7?1:2;
       for(const mob of s.mobs){assert.strictEqual(mob.drops.length,3);assert.strictEqual(mob.card.grade,cardGrade);assert.strictEqual(mob.card.name,mob.name+' Card')}
-      if(s.stage===10){assert.ok(s.boss);assert.strictEqual(s.boss.drops.length,m.sections[s.section].items.length);assert.ok(s.boss.drops.every(d=>d.rate===1));assert.strictEqual(s.boss.card.grade,3);assert.strictEqual(s.boss.card.name,m.boss+' Card')}
+      if(s.stage===10){assert.ok(s.boss);assert.strictEqual(s.boss.drops.length,m.sections[s.section].items.length);
+        // v57: the pool still lists every item, but the whole pool now totals ~6% per boss kill
+        const total=s.boss.drops.reduce((a,d)=>a+d.rate,0);
+        assert.ok(Math.abs(total-6)<1.2,'boss pool totals about 6%, got '+total.toFixed(2)+'%');
+        assert.strictEqual(s.boss.card.grade,3);assert.strictEqual(s.boss.card.name,m.boss+' Card')}
       else assert.strictEqual(s.boss,null);
     }
   }

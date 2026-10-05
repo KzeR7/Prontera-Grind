@@ -490,43 +490,35 @@ props, and `landmark()` places the large structures that frame the avenue.
 ## Verify before you push (expected output)
 
 ```sh
-python3 - <<'PY'
+python3 - <<'PYPACK'
 h=open('index.html').read()
 open('/tmp/pack_block.js','w').write(h[h.index('const PACK_BODY='):h.index('function ensureHero(')])
-PY
+PYPACK
 node tools/tests/pack_sim.js           # -> "bodies in pack (19): ..."
-node tools/tests/class_change_sim.js   # -> "22 passed, 0 failed"
-node tools/tests/save_load_sim.js      # -> "10 passed, 0 failed"
-node tools/tests/economy_sim.js        # -> "21 passed, 0 failed"
-node tools/tests/stat_sim.js           # -> "7 passed, 0 failed"
+node tools/tests/class_change_sim.js   # -> "25 passed, 0 failed"
+node tools/tests/class_skin_sim.js     # -> "39 passed, 0 failed" (live class skins, both genders, mirrors)
+node tools/tests/kit_sim.js            # -> "34 passed, 0 failed" (v2 atlas + KIT_PS, payon recipe, ten identities)
+node tools/tests/skill_sim.js          # -> "52 passed, 0 failed" (91-skill roster, caps, cooldowns, GCD queue)
+node tools/tests/save_load_sim.js      # -> "22 passed, 0 failed"
+node tools/tests/economy_sim.js        # -> "23 passed, 0 failed"
+node tools/tests/gear_sim.js           # -> "30 passed, 0 failed"
+node tools/tests/picker_sim.js         # -> "19 passed, 0 failed" (the picker, booted under a DOM stub)
 node tools/tests/card_sim.js           # -> "13 passed, 0 failed"
-node tools/tests/skill_sim.js          # -> "48 passed, 0 failed"
-node tools/tests/gear_sim.js           # -> "20 passed, 0 failed  (20 assertions groups)"
+node tools/tests/drop_card_sheet_sim.js # -> "12 passed, 0 failed"
+node tools/tests/weapon_review_sim.js  # -> "13 passed, 0 failed"
+node tools/tests/pet_sim.js            # -> "13 passed, 0 failed" (+ printed pet data and the maxed-pet balance measurement)
+node tools/tests/sprite_sim.js         # -> "12 passed, 0 failed"
+node tools/tests/background_sim.js     # -> "12 passed, 0 failed" (grinding is permanent)
 node tools/tests/scene_sim.js          # -> "8 passed, 0 failed" (per-map scenery, water, clear lane)
-node tools/tests/kit_sim.js            # -> "20 passed, 0 failed" (payon recipe + RO scale, morocc design, builders, loader)
-node tools/tests/ui_sim.js             # -> "13 passed, 0 failed"
-node tools/tests/sprite_sim.js         # -> "10 passed, 0 failed" (mob art, weapon icons, view names)
-node tools/tests/starter_sim.js        # -> "4 passed, 0 failed"
-node tools/tests/weapon_joint_sim.js   # -> "7 passed, 0 failed" (measured hand joints, parked weapon)
-node tools/tests/picker_sim.js         # -> "13 passed, 0 failed" (the picker the owner uses, booted under a DOM stub)
-node tools/tests/pack_sim.js          # -> "bodies in pack (19): ..."
-node tools/tests/class_change_sim.js  # -> "24 passed, 0 failed"
-node tools/tests/save_load_sim.js     # -> "12 passed, 0 failed"
-node tools/tests/economy_sim.js       # -> "21 passed, 0 failed"
-node tools/tests/stat_sim.js          # -> "7 passed, 0 failed"
-node tools/tests/card_sim.js          # -> "13 passed, 0 failed"
-node tools/tests/skill_sim.js         # -> "51 passed, 0 failed"
-node tools/tests/gear_sim.js          # -> "24 passed, 0 failed  (24 assertions groups)"
-node tools/tests/scene_sim.js         # -> "8 passed, 0 failed" (per-map scenery, water, clear lane)
-node tools/tests/kit_sim.js           # -> "34 passed, 0 failed" (v2 atlas + KIT_PS, payon recipe, morocc design, ten identities, builders, loader)
-node tools/tests/ui_sim.js            # -> "31 passed, 0 failed"
-node tools/tests/sprite_sim.js        # -> "12 passed, 0 failed" (mob/weapon Divine Pride mapping, fallbacks, the held-weapon switch)
-node tools/tests/class_skin_sim.js    # -> "21 passed, 0 failed" (live class skins: every class, both genders, mirrors, asset loading)
-node tools/tests/starter_sim.js       # -> "7 passed, 0 failed" (the gentle starter stages)
-node tools/tests/pet_sim.js           # -> "11 passed, 0 failed" (+ the printed pet data, buff rules and the maxed-pet balance measurement)
-python3 tools/make_class_skins.py --check   # -> "Class skins are current."
-python3 tools/make_sprite_viewer.py --check # -> "Sprite viewer is current."
+node tools/tests/starter_sim.js        # -> "8 passed, 0 failed" (the gentle starter stages)
+node tools/tests/stat_sim.js           # -> "7 passed, 0 failed"
+node tools/tests/weapon_joint_sim.js   # -> "7 passed, 0 failed"
+node tools/tests/ui_sim.js             # -> "37 passed, 0 failed"
+node tools/tests/sprite_viewer_sim.js  # -> "Sprite viewer: 154 PNGs, 7 trees, 19 class jobs; ..."
+python3 tools/make_class_skins.py --check    # -> "Class skins are current."
+python3 tools/make_sprite_viewer.py --check  # -> "Sprite viewer is current."
 ```
+
 
 Every suite pulls real code out of `index.html` by **string boundary**, so an edit that
 moves a declaration can break a test without breaking the game. Traps, all hit once already:
@@ -3134,3 +3126,203 @@ assigned for feel rather than fidelity. While reworking that, two shipped bugs s
 
 * **PR:** pushed `arena/01a10b6a-prontera-grind` and opened PR #21, “Balance v51: faster early game, card gacha, title seal, ore/refine nerf,” against `main`. The entry above promised the number; this is it.
 * **Before the push:** committed the six-item update, merged `origin/main` (PR #20) with all conflicts resolved, and re-ran everything on the merged tree — all 20 suites green, inline script `node --check` clean, sprite-viewer and APNG-backup checks current, `git diff --check` clean.
+
+### 2026-10-05 — `grind-v54 background grinding`
+
+* **What changed for the player:** the game no longer freezes when you look at another tab. A browser stops sending animation frames to a tab that is not on screen, which is exactly what used to stop the fight; now the sim's time is owned by one clock (`simAdvance` at the bottom of `index.html`). The frame loop drives it while the tab is on screen, a once-a-second timer drives it while the tab is hidden, and the real time that passed is replayed in steps no bigger than the 0.1s the old loop already allowed. Combat, EXP, Zeny, drops, pets, quests, level-ups and the five-second autosave all carry on at the normal rate (plus one save at the moment the tab goes to the background). Nothing is drawn while hidden - that is what keeps a background tab cheap, and the ticker only ever runs while `document.hidden` is true.
+* **What you will see:** switch to another tab for a few minutes and come back, and the log has one new line, e.g. `Away 3m 12s · +42 kills · +6,120 Zeny` - with a `· Base Lv 60 → 61` when a level-up landed in there. The clock also gives the right time to a tab that stalled while visible: the next frame replays the missing seconds in capped steps instead of throwing them away.
+* **The one cap:** a single wake replays at most 10 minutes (`SIM_CATCHUP`). An ordinary hidden tab loses nothing - the browser wakes the timer about once a second, and about once a minute after five minutes hidden, and each wake is replayed in full. A laptop that slept for hours replays the last ten minutes and drops the rest, and the line says so: `Away 3h (10m of grinding) · +601 kills · +6,010 Zeny`. `SIM_CATCHUP` is the single number to tune if the owner ever wants a sleep to count for more or less.
+* **New setting:** Settings → Gameplay → "Keep grinding while this tab is in the background" (`S.bg`, on for new saves and migrated to on for old ones). Untick it and a hidden tab is paused instead: its time is dropped rather than simulated, the character picks up exactly where it was left, and no away line is printed. It is on by default because that is what the owner asked for.
+* **Files touched:** `index.html` (the clock, the hidden-tab ticker, the away summary, the `S.bg` save field + migration + Settings checkbox + `ACT.bg`, `BUILD`), new `tools/tests/background_sim.js`, `READ-ME-FIRST.md`, `Updates/cards-gear-audit/{affix-ranges,equipment-cards-tuning}.html` (build label; the worksheet snapshot was refreshed and the old build added to its carry-forward list), and this log.
+* **Art:** none. No sprite sheet, atlas, class skin or code block under `Updates/` was touched; `tools/montage.py` was not used and `assets/sprite_pack_data.js` is untouched.
+* **Tests:** all **21 suites** pass: pack 19 bodies, class_change 25, class_skin 39, save_load 21, economy 22, stat 7, card 13, skill 52, gear 30, scene 8, kit 34, UI 36, sprite 12, starter 8, pet 12, picker 19, drop_card_sheet 12, weapon_joint 7, weapon_review 13, sprite_viewer 154 PNGs / 19 jobs, and the new `background_sim` 12 checks (one 16ms frame = one small step; 30 hidden seconds with no frames at all; a 10s-throttled tab still gets its whole minute; the away line's real kills/Zeny; no double replay on return; the 10-minute cap and its wording; `maxDt <= SIM_STEP` on every slice; x4 speed in the background; the pause setting; the ticker not double-driving a visible tab; the save field and its migration). The inline game script passes `node --check`.
+* **Branches / PR:** `arena/01a10c2f-prontera-grind` → PR #22 against `main`.
+* **Known limits / follow-ups:** **not verified in a real browser here** - this sandbox has no browser, so the tab-switch itself must be confirmed by the owner on the live preview; the test proves the game catches up whatever the browser's timer throttling hands it, which is the half the game controls. Background grinding is real progress at the normal playing rate, so a tab left hidden overnight now grinds overnight - that is the requested behaviour, and the Settings checkbox (or `SIM_CATCHUP`) is where to change it if the owner ever wants the background to be slower or shorter.
+
+### 2026-10-05 — `tool-v55 pacing report`
+
+* **What changed for the owner:** a new read-only dev tool, `node tools/pacing_report.js`, answers "what is the level curve in gameplay time right now". It reads every constant out of `index.html` (requirement seeds, EXPK/BOSEK, ZK/BZK, the 3x/70x/70÷3x bands, the quest fractions and QZ) and prints the same canonical model `tune_pacing.js` and `economy_sim.js` balance against: 800 kills/hour, a boss every 16th kill, and the level-appropriate field power path. It shows EXP per kill (what the kill log actually prints), EXP to next level, kills and time per level, cumulative time, and Zeny earned (mob Zeny plus the quest Zeny that quest goals cancel out to per kill). `--levels 1-30` prints any range level by level. Nothing in the game changes, and nothing is written anywhere.
+* **Files touched:** new `tools/pacing_report.js`, and this log. No game code, no art, no `BUILD` change (the player sees nothing new).
+* **Tests:** no suite touches the tool, and it does not run inside one; all 21 suites still pass on the same tree (`background_sim` 12 included). The tool throws rather than printing a stale number if a constant it reads is renamed.
+* **Branches / PR:** `arena/01a10c2f-prontera-grind` (PR #22 is open against `main` for the background-grinding build on the same branch).
+
+### 2026-10-05 — `grind-v56 mid-game exp wall + reset fixes`
+
+* **Smaller, rounded numbers (owner item 1):** every displayed EXP number is now one tenth of what it was. `EXP_RATE=7` replaces the flat 70x inside `expRate()` (the 3x band and the 100+ one-third band scale with it), and `needAt()` pipes every requirement through `roundReq`, which rounds to three significant figures. A Poring pays 21 EXP (was 210), Base 10 needs 360 (was 3,574) and Base 99 reads 167,000 (was 3,474,784) - no more ragged 187 / 3,574 style figures. Because the requirement curve and the multiplier scale together this is display-only; the one thing it was not neutral for is quests, whose reward is `need(L)*QXP*expRate()`, so `QXP` was multiplied by ten (1/140, 1/175, 1/84) to keep quests paying exactly the same share of a level as before (23.5% overall, 39.3% worst).
+* **The Base 50-70 wall (owner item 2):** `EXP_BOOST_LV` moved 70 -> 50, so Base 51-70 no longer earns the 3x band. Backed by the live chart, the owner asked for "less than 2 hours" and picked the middle option: Base 50->70 now takes **1 h 20 m** (was 12 min), ramping smoothly from seconds per level at 51 to ~10 minutes at 70, with Base 70 at 1 h 34 m. The curve is continuous, so a longer wall lifts everything above it - Base 70-99 requirements are nearly flat (130,000 -> 167,000) and Base 99 lands at **6 h 55 m** (was 4 h 50 m). Base 1-50 keeps its exact v51 pace (Lv10 2.5 min, Lv50 13.7 min) and the post-reset 100-150 tail stays 48 h (Lv150 at 55 h).
+* **Low-level Zeny floor (owner item 3, gentle option):** `ZMIN=5` floors both the mob and the boss Zeny lines in `spawn()` and the reference `zenAt()`, so a Lv1 kill pays 5z instead of 1z; the raw curve takes over around Base 22 and the mid/late curve is untouched. Roughly 5x the early wallet, fading into today's numbers by Base 25.
+* **Stat reset (owner item 4):** `rcost()` is free below Base 20 and stays 50z x Lv above it, and the buttons now read "free below Base 20". Two real bugs sat behind "reset button sometimes doesnt work": (a) an unaffordable reset was refused with a log line only - it now floats `Need 1,500z` over the character and logs it, and an unaffordable button is `disabled` with a title saying what it costs, so the refusal is never silent; (b) `ui()` -> `renderWin()` rebuilt every open window's `innerHTML` on every kill, so a click whose press and release spanned a rebuild landed on a fresh node and did nothing - `renderWin()` now defers while a pointer is held inside the windows and re-runs on pointerup. (A label bug caught in review: the price was first written as a non-interpolating `'${rcost()}z'` string.)
+* **Files touched:** `index.html` (economy block + `ZMIN`, `needAt`/`roundReq`, `rcost`, `spawn()` Zeny floors, both reset actions + button labels + `denied()`, the `renderWin` pointer guard, `BUILD`), `tools/tune_pacing.js` (rewritten as the v56 solver/verifier: `node tools/tune_pacing.js` solves the design, `--verify` checks index.html against it), `tools/pacing_report.js` (reads the new constants shape), `tools/tests/{economy_sim,ui_sim}.js`, `READ-ME-FIRST.md`, `Updates/cards-gear-audit/{affix-ranges,equipment-cards-tuning}.html` (build label x3, carry-forward list, refreshed worksheet baseline), this log.
+* **Tests:** all **21 suites** pass: pack 19 bodies, class_change 25, class_skin 39, save_load 21, economy 23, stat 7, card 13, skill 52, gear 30, scene 8, kit 34, UI 37, sprite 12, starter 8, pet 12, picker 19, drop_card_sheet 12, weapon_joint 7, weapon_review 13, sprite_viewer 154 PNGs / 19 jobs, background 12. `economy_sim` now pins the new anchors (360 / 2,870 / 130,000 / 167,000 / 43,300 / 1,248,000, every one a three-sig-fig value, strictly increasing with the single drop at Base 100 at 3.86x), the 21/7/7÷3 rate tiers, the 80-minute wall, the 6.9 h Base 99, the 48 h tail and the 5z floor; `ui_sim` proves a free reset below Base 20 works with an empty wallet, a refused reset costs nothing and is visible on screen, an unaffordable button is disabled and priced, and the deferred-rebuild guard is in place. The inline game script passes `node --check`.
+* **Branches / PR:** `arena/01a10c2f-prontera-grind` -> PR #22 against `main` (this round lands on the same open PR).
+* **Known limits / follow-ups:** the owner chose the 80-minute wall knowing the cost stated up front - Base 70-99 requirements barely climb and the road to Base 99 is about two hours longer than before. Every anchor lives in `TGT` at the top of `tools/tune_pacing.js`, and that tool now both solves and verifies this design, so the next retune is a deliberate edit there. Not verified in a real browser here (no browser in the sandbox): the reset-button fix and the new labels should be clicked once on the live preview.
+
+### 2026-10-05 — `grind-v57 map-capped gear + calmer drops` (owner round 7, items 2/3/5/6/7)
+
+* **Boss equipment is tiered by map (owner item 2, option a):** two new per-map tables sit beside
+  `MAPTIER`. `MAPGRADE=[1,2,2,3,3,4,4,4,4,4]` is the *cap* - Prontera tops out at Fine, Izlude/Geffen
+  at Rare, Morroc/Payon at Epic, and only the Lv60+ maps (Comodo onward) can reach Legendary - and
+  `dropTier(m,l)` now returns `min(cap, ladder)`, so a stage-10 Payon boss can no longer print a
+  Legendary item. `MAPVAL=[0.34,0.40,0.47,0.56,0.66,0.78,0.90,1.0,1.08,1.18]` gives every map a value
+  band that `genGear()` multiplies in, so the map's *tier* now dominates the grade: an Abyss Epic
+  (2.8x1.18=3.30) beats a Payon Legendary (4.5x0.66=2.97 - which can no longer drop at all). Items
+  already in a save keep the numbers they rolled; only new drops use the bands.
+* **Gentle drop rates (owner item 3, option a):** field gear 12%/kill -> **3.6%** (three rolls at
+  1.5/1.2/0.9 instead of 4.8/4.0/3.2, so ~29 items/h instead of ~96), card 0.45% -> **0.15%**
+  (~1.2/h), boss equipment 13%/kill (one 1% roll *per pool entry*) -> **~6% total** with the whole
+  pool still listed (`Math.round(600/n)/100` per entry, so every item stays obtainable and the
+  displayed per-item rate matches the roll), and pet drops 0.3%/kill + 5%/boss -> **0.03% + 0.5%**
+  (~1 pet per two hours instead of ~2.4/h). `gearPool()` and the boss pool are unchanged, so no item
+  became unobtainable; only the odds moved. The map panel's drop lines and the card odds follow
+  automatically because they read the same tables.
+* **Mob index readjusted (owner item 5):** the species ladder is now
+  `[10,50,250,1000,5000,10000,25000,50000]` (was `[100,1000,5000,25000,100000,500000,1000000,5000000]`,
+  i.e. over 100x too long) with milestone XP `[2,4,8,15,25,45,70,110]` (279 per fully hunted
+  species, 50,279 Index XP total). The title ladder is a smooth ~3x geometric run:
+  200 / 1,000 / 3,000 / 10,000 / 30,000 / 100,000 / 250,000 / 500,000 / 750,000 / 1,000,000 - the
+  last rank is about twenty maxed species, satisfying "the top title must be a bigger goal than one
+  species maxed and a few others", while the 90-species album (4,525,110 Index XP) is tracked
+  separately in the panel as its own completion goal. GM controls updated (`all50000`, `xp1000000`).
+* **Card mastery UI (owner item 6):** the token gacha now lists the last eight rolls newest-first
+  (`cardRollRecent()`), so what a long session actually rolled is visible instead of only the totals.
+  The reset lists every loose Legendary card with its own sacrifice button and
+  `cardMasteryReset(cardId)` spends the one you picked (defaulting to the first only when called
+  without an id). The loose-card list gained Common/Fine/Rare/Epic/Legendary sub-tabs with counts
+  (defaulting to the rarest loose rarity, All one tap away), and every stack has an **Insert all**
+  button that dedicates as many copies as its remaining ranks allow in one tap through the real
+  `donateCardToMastery()` path - 7 Poring cards fill 5/5 and leave 2 loose.
+* **Settings tab cleaned up (owner item 7):** the appearance block is now a small character card -
+  Male/Female buttons, the live class preview, one line of text - and the hair controls/paragraphs
+  ("Hair comes with the class art", the view/standing-still/weapon essays, the "style 8 of 19"
+  line) are gone. A disabled **Costume (soon)** button states the plan: "Costumes - outfits that
+  restyle a class without changing its stats - are planned for a future patch", with a
+  `costume` action that logs it if it is ever enabled. The long damage-number and background-grinding
+  paragraphs were each cut to one line; the class-change card dropped its "S (front) view" detail.
+* **Files touched:** `index.html` (MAPGRADE/MAPVAL/dropTier, field + boss + pet drop lines, the map
+  panel's pet odds line, `genGear()` value band, index ladder/titles/album line + GM controls,
+  `cardRollRecent`, `cardMasteryLegendaryCards`/`donateAllToMastery`/`cardMasteryReset(id)`,
+  `cardGrade` state + tabs + insert-all, the Settings panel, `BUILD`), `tools/tests/{gear_sim,
+  drop_card_sheet_sim, ui_sim, save_load_sim}.js`, `Updates/cards-gear-audit/*` (build label,
+  carry-forward list, refreshed worksheet baseline), `READ-ME-FIRST.md`, this log.
+* **Tests:** all **21 suites** pass: pack 19 bodies, class_change 25, class_skin 39, save_load 22,
+  economy 23, stat 7, card 13, skill 52, gear 30, scene 8, kit 34, UI 37, sprite 12, starter 8,
+  pet 12, picker 19, drop_card_sheet 12, weapon_joint 7, weapon_review 13, sprite_viewer 154
+  PNGs/19 jobs, background 12. `gear_sim` pins the new caps, bands, rates and the Abyss-Epic-beats-
+  Payon-Legendary arithmetic; `drop_card_sheet_sim` pins the worksheet totals; `ui_sim` pins the
+  settings copy, the rarity tabs / picker buttons and the drop lines; `save_load_sim` proves the
+  insert-all and pick-a-sacrifice behaviour on a real state.
+* **Branches / PR:** `arena/01a10c2f-prontera-grind` -> PR #22 against `main` (the same PR as the
+  v56 round).
+* **Known limits / follow-ups:** the two biggest owner items from the same message are **not in this
+  round** and are next: **skills** (+1 skill per class, longer cooldowns so skills stay individually
+  spammable but do not all fire together, some build choice - the owner explicitly wants a dedicated
+  tuning discussion before the numbers are final) and **pets** (per-pet identity instead of rarity
+  reskins: a signature skill + stat leaning per pet, rarity setting the slot count and leaning
+  strength, plus one free random skill granted at drop). The map value band means new drops below
+  Amatsu are worth less than they used to be (owned items keep their rolls), which is the intended
+  fix for "30 min of grinding gave a bunch of legendaries" and will want a balance read after the
+  owner plays a while.
+
+### 2026-10-05 — `grind-v58 Abyss-only legendary + card panel polish` (owner follow-ups)
+
+* **Mid maps now top out at Epic, bosses included (owner item 1):** the owner's tier read was
+  explicit - Izlude/Geffen/Morroc/Payon are early, Comodo/Louyang/Amatsu/Niflheim are mid, and
+  Abyss is the *only* endgame map. `MAPGRADE` is now `[1,2,2,3,3,3,3,3,3,4]` (it was
+  `[1,2,2,3,3,4,4,4,4,4]`, which let every mid map print Legendary gear - that is the drop the
+  owner saw) and `MAPVAL` was respaced to `[0.34,0.40,0.47,0.56,0.66,0.72,0.78,0.84,0.92,1.15]`
+  so the Abyss band steps clear of the mid maps. `dropTier(m,l)` clamps both the field ladder and
+  the stage-10 boss to the map cap, so a Niflheim boss tops out at Epic and only Abyss can roll
+  Legendary. `gear_sim` now pins the cap array, the "only Abyss may reach Legendary" rule, the
+  two boundary stages and the Abyss band gap.
+* **Card mastery panel rebuilt (owner item 2):** the roll list is capped at the **last three**
+  rolls (newest first) and rendered as one **horizontal** chip strip with real styling
+  (`.card-roll-recent` / `.roll-chips` / `.roll-chip`, inherit font, gold ring on the newest) -
+  the previous bare vertical list pushed the whole tab down. The reset is now a **dropdown plus
+  one button** (`.card-pick` + `cardpick` action + `cardPick` state): pick the Legendary from the
+  list, press Reset to the right. A row of sacrifice buttons per card is gone, so a big
+  collection cannot wreck the layout.
+* **Background grinding is permanent (owner item 3):** the checkbox is removed from Settings, the
+  `bg` action is deleted, every load normalises `f.bg=true` and `bgOn()` is a constant `true`, so
+  hiding the tab always keeps the sim (and its save) running. The line stays as a statement of
+  fact. `background_sim` was rewritten around the new contract: even a legacy save that says
+  `bg:false` still grinds, and no UI/action can flip it.
+* **Test-pin repairs (the v57 regressions the owner's "don't break my game" note was about):**
+  `class_skin_sim` still asserted the settings copy that v57 deleted (the view/idle/swing-arc
+  paragraphs and "hair is part of the art") - those now assert the retired text is *gone* and the
+  Costume note is present; `starter_sim` pinned the old 0.45% card chance (now 0.15%);
+  `pet_sim` needed the new `MAPGRADE`/`MAPVAL` picks in its harness, and `genGear()` now reads the
+  map band through `(S&&S.mp|0)||0` so a harness with no live state cannot crash it;
+  `equipment-cards-tuning.html`'s `SAFE_PREVIOUS_BUILDS` had a missing opening quote from an
+  earlier hand bump, which is what made the worksheet fail `node --check` ("Octal literals are
+  not allowed in strict mode") - the list is repaired and de-duplicated.
+* **Files touched:** `index.html` (MAPGRADE/MAPVAL/genGear, card panel + CSS + `cardpick`/`cardPick`,
+  Settings Gameplay line, `bg` removal, `bgOn`, `f.bg`, `BUILD`), `tools/tests/{gear_sim,ui_sim,
+  background_sim,class_skin_sim,starter_sim,pet_sim}.js`, `Updates/cards-gear-audit/*` (v58 label,
+  repaired carry-forward list, refreshed worksheet baseline), `READ-ME-FIRST.md`, this log.
+* **Tests:** all **21 suites** pass on the same tree (no suite reports a FAIL line): pack 19,
+  class_change 25, class_skin 39, save_load 22, economy 23, stat 7, card 13, skill 52, gear 30,
+  scene 8, kit 34, UI 37, sprite 12, starter 8, pet 12, picker 19, drop_card_sheet 12,
+  weapon_joint 7, weapon_review 13, sprite_viewer 154 PNGs/19 jobs, background 12.
+* **Branches / PR:** `arena/01a10c2f-prontera-grind` -> PR #22 against `main`, updated with this
+  commit.
+* **Known limits / follow-ups:** items 1 (skills) and 4 (pets) from the owner's seven-item round
+  are still to come - both are design-heavy and the owner wants a dedicated tuning discussion
+  (skills especially: +1 skill per class, longer cooldowns, some build choice). Saves are safe
+  across both v57 and v58: gear values are stamped at drop time, so items already owned keep
+  their rolls, and the only removal is the background checkbox (the field stays in saves,
+  normalised to on).
+
+### 2026-10-06 — `grind-v59 deeper skill lines + a free pet skill` (owner items 1 and 4)
+
+* **The roster is 91 skills (was 73) - one more per class (owner item 1).** Novice keeps only First
+  Aid; each of the 18 job classes now carries **5** skills (4 existing + 1 new), so Swordman's line
+  teaches `provoke`, Knight's `spear`, Lord Knight's `jointbeat`, Mage's `fireball`, Wizard's
+  `tstorm`, High Wizard's `napalm`, Archer's `iconc`, Hunter's `falconry`, Sniper's `pharrow`,
+  Thief's `steal`, Assassin's `vdust`, Assassin Cross's `sdestroy`, Acolyte's `iagi`, Priest's
+  `kyrie`, High Priest's `meditatio`, Merchant's `discount`, Blacksmith's `wresearch` and
+  Whitesmith's `cboost`. Two of them are the answer to a combat question the owner had: `tstorm`
+  is the Wizard's first true AoE and `sdestroy` is the Cross's ranged execute (it carries `rng`).
+* **Per-skill caps are RO-style, not one number per tier (owner's correction).** `act`/`pas`/`tos`
+  now default to `mx=10`, and a utility/passive skill in each class stops at 5 (First Aid,
+  Endure, Energy Coat, Frenzy, Basilica, Deadly Poison, Over Thrust, Spear Boomerang, Frost Nova,
+  Land Mine, Grimtooth, Gravitation Field among the old ones; Provoke, Improve Concentration,
+  Steal, Increase AGI, Kyrie Eleison, Discount and Cart Boost among the new). A full line tree is
+  now **140 points (139 payable, First Aid's level is free)**.
+* **Cooldowns went up, damage came down, and one global cooldown ties it together.** Every active
+  cooldown is x1.5 (rounded to .5s) and every trade-off x1.2 (rounded to whole seconds), and the
+  per-level damage slopes were halved so a skill at its new max still does what the old 5-level max
+  did (verified numerically: every pre-existing skill within 0.05 of v58 at max level). `SKGCD=.5`
+  is a new shared global cooldown: cast 0 lands instantly and starts its own cooldown, casts 1-2 of
+  a swing are queued (`castQ`, `{t:SKGCD*(cast-1),sk,k}`), fire when their turn comes, and are
+  dropped if the target dies first - so a three-skill swing is pressure over the swing instead of
+  three hits on one frame. 1/2/3 cast slots per tier are unchanged. **The tuning numbers are not
+  final** - the owner asked for a dedicated discussion before they are locked.
+* **Job levels now pay out all the way (the complaint this round fixes).** At max job level a line
+  earns 156 points against a 139-point tree, so there is room to finish everything and 17 points to
+  steer with; a line promoted at the minimum gate and restarted can be 12 short, which is the build
+  choice the panel now states out loud. No point refund: a save that over-spent on a skill whose cap
+  dropped keeps its levels, `skpAvail()` clamps at 0 and the repair loop only ever trims overspend -
+  nothing a player already bought is taken away, and a skill reset clears any stuck state.
+* **Every pet now arrives from a drop with one random skill already slotted (owner item 4).** The
+  drop rolls the same weighted pool the gacha uses (`pickW(PET_SKILL_WEIGHTS)`) and stores one
+  skill, so a fresh pet is useful from the first minute and the collection has meaning before any
+  Zeny is spent; the paid gacha then fills the second slot ("Gacha the second skill") and still
+  never repeats a skill. Pet *identity* work (signature skill / stat leaning) stays deliberately
+  parked - the owner asked for more time to think about it.
+* **Files touched:** `index.html` (`act`/`pas`/`tos` caps, 18 new skill definitions + `FX` tags +
+  `SKILL_ICON` glyphs + `SKILL_VFX`, halved slopes, raised cooldowns, `SKGCD`/`castQ` + its four
+  clear sites + the `update()` drain, pet drop skill, pets panel copy, skills panel copy, `BUILD`),
+  `tools/tests/{skill_sim,ui_sim,pet_sim}.js`, `Updates/cards-gear-audit/*` (v59 label, v58 added
+  to `SAFE_PREVIOUS_BUILDS` = 17 unique entries), `READ-ME-FIRST.md`, this log (the
+  "Verify before you push" block had drifted since v37 - it is now the current 21-suite list).
+* **Tests:** all **21 suites** pass on the same tree (no suite reports a FAIL line): pack 19,
+  class_change 25, class_skin 39, save_load 22, economy 23, stat 7, card 13, skill 52, gear 30,
+  scene 8, kit 34, UI 37, sprite 12, starter 8, pet 13, picker 19, drop_card_sheet 12,
+  weapon_joint 7, weapon_review 13, sprite_viewer 154 PNGs/19 jobs, background 12.
+* **Branches / PR:** `arena/01a10c2f-prontera-grind` -> PR #22 against `main`, updated with this
+  commit.
+* **Known limits / follow-ups:** skill numbers are a first pass (cooldown x1.5/x1.2 and the halved
+  slopes are the owner-endorsed shape, not the final feel) and want the dedicated tuning session
+  the owner asked for; pet identity is still parked by the owner's own request. The 5-level utility
+  skills are the only place a "wasted" point can happen if a later patch changes a cap - the panel
+  warns and the repair loop trims, so no save loses anything.
