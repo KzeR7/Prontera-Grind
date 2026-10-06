@@ -88,6 +88,19 @@ as it always has, with accounts and saves in `localStorage`. Both paths are cove
 5. Sign in, play, then check it really followed you: open the game in another browser (or on a phone),
    sign in with the same username and password, and the same character should load.
 
+### See it working before deploying (no Cloudflare account needed)
+
+```sh
+bash tools/build_site.sh && node tools/dev_server.js      # -> http://localhost:8788
+```
+
+That serves `dist/` and routes `/api/*` to the very same handler files Cloudflare will run, with the
+same D1-shaped shim the tests use, over real HTTP with real cookies — in-memory database, so stopping
+the process wipes it. Register, play, then open the address in another browser and sign in with the
+same username and password: the character should be there. `tools/tests/dev_server_sim.js` is that
+whole trip, automated (13 checks). `npx wrangler pages dev dist` remains the official check, and is
+the only way to test Cloudflare's own runtime (CPU limits, the real D1 binding).
+
 Day-to-day: **`/gm.html`** is the GM console (players, gifts, passwords, announcements, save
 backups). It is a client of `/api/gm/*` and holds no authority itself; the server checks the session
 cookie on every call. Local testing without a server is unchanged:

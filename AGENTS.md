@@ -3591,11 +3591,11 @@ assigned for feel rather than fidelity. While reworking that, two shipped bugs s
   `cloudTouch()`, `logout()`, a Cloud log filter, the GM-console button, `BUILD`), `gm.html` (new),
   `migrations/0001_init.sql` (new), `wrangler.toml` (new), `_routes.json` (new),
   `functions/_lib/{auth,db,http,validate}.js` (new), `functions/api/{register,sessions,me,save,messages,grants}.js`
-  (new), `functions/api/gm/{players,player,log}.js` (new), `tools/tests/{api_sim,cloud_sim,gm_console_sim}.js`
-  (new), `tools/tests/publish_sim.js` (three new checks), `tools/build_site.sh` (`gm.html` and
+  (new), `functions/api/gm/{players,player,log}.js` (new), `tools/dev_server.js` (new),
+  `tools/tests/{api_sim,cloud_sim,gm_console_sim,dev_server_sim}.js` (new), `tools/tests/publish_sim.js` (three new checks), `tools/build_site.sh` (`gm.html` and
   `_routes.json` now ship), `Updates/cards-gear-audit/*.html` (v62 label; v61 appended to
   `SAFE_PREVIOUS_BUILDS`), `AGENTS.md`, `READ-ME-FIRST.md`, `tools/server-shift-plan.md`.
-* **Tests:** all **26 suites** pass (23 + `api_sim` + `cloud_sim` + `gm_console_sim`), both `--check`
+* **Tests:** all **27 suites** pass (23 + `api_sim` + `cloud_sim` + `gm_console_sim` + `dev_server_sim`), both `--check`
   tools current, `bash tools/build_site.sh` clean, inline game script passes `node --check`.
   `api_sim.js` runs the real handlers against a real SQLite (`node:sqlite`, D1-shaped shim) and found
   three real bugs while it was written: `currentUser` called `db.sessionByToken` on the D1 handle
@@ -3603,6 +3603,11 @@ assigned for feel rather than fidelity. While reworking that, two shipped bugs s
   and `new URL(request.url)` threw on a bare path.
 * **Art:** no sheets added, removed or rebuilt; `tools/montage.py` was not used.
 * **Branches / PR:** `arena/50beb968-prontera-grind`, same PR updated.
+* **`tools/dev_server.js`** runs the whole server locally with no Cloudflare account: it serves
+  `dist/` and routes `/api/*` to the same handler files, over real HTTP with real cookies and an
+  in-memory database, so the cross-device login can be shown working today. `tools/tests/dev_server_sim.js`
+  automates that trip (13 checks) — the layer a direct handler call cannot cover, because the client's
+  *is there an API here?* test depends on the wire Content-Type.
 * **Known limits / follow-ups:** the **Cloudflare project does not exist yet** and `wrangler.toml`
   still holds `REPLACE_WITH_YOUR_D1_ID`, so no player is on the server path — the deploy steps are
   `READ-ME-FIRST.md` § *Put the saves on the server*. `/api/board` (leaderboard), presence, world chat

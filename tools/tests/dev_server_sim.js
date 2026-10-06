@@ -1,0 +1,151 @@
+// End to end, over real HTTP: the whole server path the player's browser will take.
+//   node tools/tests/dev_server_sim.js
+//
+// api_sim.js calls the handlers directly; THIS suite boots the local dev server (tools/dev_server.js)
+// and talks to it with fetch(), cookies and all. That is the layer where the things a direct call
+// cannot catch live: cookie round-trips, status codes on the wire, JSON content types (the client's
+// "is there an API here?" test depends on exactly that), and the static/API split.
+import assert from 'node:assert';
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { start } from '../dev_server.js';
+
+const root = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
+let pass = 0, fail = 0;
+const t = async (n, fn) => { try { await fn(); console.log('  ok   ' + n); pass++; } catch (e) { console.log('  FAIL ' + n + ' -> ' + (e && e.message)); fail++; } };
+console.log('dev server: the real handlers over real HTTP, with cookies\n');
+
+const { server, port, close } = await start({ port: 0, host: '127.0.0.1' });
+const base = 'http://127.0.0.1:' + port;
+const jar = {};                                   // one cookie jar per named player
+const call = async (who, method, url, body) => {
+  const r = await fetch(base + url, {
+    method,
+    headers: Object.assign({ 'Content-Type': 'application/json' },
+      jar[who] ? { cookie: jar[who] } : {}),
+    body: body === undefined ? undefined : JSON.stringify(body),
+  });
+  const raw = r.headers.getSetCookie ? r.headers.getSetCookie() : [];
+  if (raw.length) jar[who] = raw.map(c => c.split(';')[0]).join('; ');
+  const type = r.headers.get('content-type') || '';
+  return { status: r.status, type, data: type.includes('json') ? await r.json() : await r.text() };
+};
+const save = lv => JSON.stringify({ lv, cls: 'Novice', zeny: lv * 100, kills: lv, st: { str: 1 }, q: [], inv: [], v: 20 });
+
+try {
+  await t('the API answers as JSON, which is what makes the client turn the cloud on', async () => {
+    const me = await call('anon', 'GET', '/api/me');
+    assert.strictEqual(me.status, 401);
+    assert.ok(me.type.includes('json'), 'a JSON content type on /api/me is the client\'s whole probe, got ' + me.type);
+  });
+
+  await t('the first account registered becomes the owner, and gets a recovery code', async () => {
+    const r = await call('owner', 'POST', '/api/register', { u: 'KzeR', p: 'a-long-owner-password' });
+    assert.strictEqual(r.status, 201);
+    assert.strictEqual(r.data.gm, 2, 'the first account must be the owner - no bootstrap secret in the repo');
+    assert.match(r.data.recovery, /^[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}$/);
+    assert.ok(jar.owner.includes('pg_session='), 'a session cookie must come back over the wire');
+  });
+
+  await t('the cookie alone signs you in on the next request', async () => {
+    const me = await call('owner', 'GET', '/api/me');
+    assert.strictEqual(me.status, 200);
+    assert.strictEqual(me.data.u, 'KzeR');
+  });
+
+  await t('a second player registers, is not a GM, and has their own empty save', async () => {
+    const r = await call('friend', 'POST', '/api/register', { u: 'Friend', p: 'a-long-friend-password' });
+    assert.strictEqual(r.status, 201);
+    assert.strictEqual(r.data.gm, 0, 'only the first account is the owner');
+    const s = await call('friend', 'GET', '/api/save');
+    assert.strictEqual(s.status, 200);
+    assert.strictEqual(s.data.blob, null);
+  });
+
+  await t('a save round-trips through the server, and the leaderboard columns come back derived', async () => {
+    const put = await call('friend', 'PUT', '/api/save', { version: 0, blob: save(17), savedAt: Date.now() });
+    assert.strictEqual(put.status, 200);
+    assert.strictEqual(put.data.version, 1);
+    const get = await call('friend', 'GET', '/api/save');
+    assert.strictEqual(get.data.version, 1);
+    assert.strictEqual(JSON.parse(get.data.blob).lv, 17);
+  });
+
+  await t('the second browser sees the same character (this is the whole point)', async () => {
+    const out = await fetch(base + '/api/sessions', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ u: 'Friend', p: 'a-long-friend-password' }),
+    });
+    const cookie = out.headers.getSetCookie().map(c => c.split(';')[0]).join('; ');
+    const got = await fetch(base + '/api/save', { headers: { cookie } }).then(r => r.json());
+    assert.strictEqual(JSON.parse(got.blob).lv, 17, 'the same save must load on another device');
+  });
+
+  await t('a stale version is refused with 409 and the server copy, never a silent loss', async () => {
+    const r = await call('friend', 'PUT', '/api/save', { version: 0, blob: save(99), savedAt: Date.now() });
+    assert.strictEqual(r.status, 409);
+    assert.strictEqual(JSON.parse(r.data.blob).lv, 17, 'the client needs the server copy to offer a choice');
+  });
+
+  await t('the owner can reach the GM API; a player cannot', async () => {
+    const asOwner = await call('owner', 'GET', '/api/gm/players');
+    assert.strictEqual(asOwner.status, 200);
+    assert.ok(asOwner.data.players.some(p => p.u === 'Friend'), 'the owner sees the player list');
+    const asPlayer = await call('friend', 'GET', '/api/gm/players');
+    assert.strictEqual(asPlayer.status, 403, 'a normal account must be refused');
+  });
+
+  await t('a GM gift sent over HTTP is waiting for the player on their next login', async () => {
+    const players = await call('owner', 'GET', '/api/gm/players');
+    const friend = players.data.players.find(p => p.u === 'Friend');
+    const sent = await call('owner', 'POST', '/api/gm/player', {
+      id: friend.id, action: 'grant', kind: 'zeny', payload: { amount: 250000 }, note: 'welcome',
+    });
+    assert.strictEqual(sent.status, 200);
+    const pending = await call('friend', 'GET', '/api/grants');
+    assert.strictEqual(pending.data.grants.length, 1);
+    assert.strictEqual(pending.data.grants[0].payload.amount, 250000);
+  });
+
+  await t('an announcement is queued for everyone', async () => {
+    const players = await call('owner', 'GET', '/api/gm/players');
+    const friend = players.data.players.find(p => p.u === 'Friend');
+    const sent = await call('owner', 'POST', '/api/gm/player', { id: friend.id, action: 'announce', body: 'Servers up!', kind: 'notice', toAll: true });
+    assert.strictEqual(sent.status, 200);
+    const msgs = await call('friend', 'GET', '/api/messages');
+    assert.ok(msgs.data.messages.length >= 1);
+    assert.strictEqual(msgs.data.messages[0].body, 'Servers up!');
+  });
+
+  await t('every GM action wrote an audit row', async () => {
+    const log = await call('owner', 'GET', '/api/gm/log');
+    assert.strictEqual(log.status, 200);
+    const kinds = log.data.events.map(e => e.kind);
+    for (const k of ['gm-grant', 'gm-announce']) assert.ok(kinds.includes(k), 'no audit row for ' + k + ' (saw: ' + kinds.join(',') + ')');
+    // The feed also carries a human label, which is what the console shows; assert it is not the raw kind.
+    const row = log.data.events.find(e => e.kind === 'gm-grant');
+    assert.ok(row.label && row.label !== 'gm-grant', 'the audit feed should label actions in words, got ' + row.label);
+  });
+
+  await t('the static site is served alongside the API, and dev material is not', async () => {
+    const page = await fetch(base + '/');
+    assert.strictEqual(page.status, 200);
+    assert.ok((await page.text()).includes('Prontera Grind'), 'the game itself must be served at /');
+    assert.ok((await fetch(base + '/gm.html')).status === 200, 'the GM console must be served');
+    assert.strictEqual((await fetch(base + '/tools/dev_server.js')).status, 404, 'dev files must not be reachable');
+    const { built } = { built: fs.existsSync(path.join(root, 'dist')) };
+    if (built) assert.ok(!fs.existsSync(path.join(root, 'dist', 'tools')), 'the published tree must not contain tools/');
+  });
+
+  await t('an unknown API path answers JSON 404, never the index page', async () => {
+    const r = await call('anon', 'GET', '/api/nope');
+    assert.strictEqual(r.status, 404);
+    assert.ok(r.type.includes('json'), 'a JSON 404 keeps the client from misreading an error as a static host');
+  });
+} finally {
+  await close();
+}
+
+console.log('\n' + pass + ' passed, ' + fail + ' failed');
+process.exit(fail ? 1 : 0);

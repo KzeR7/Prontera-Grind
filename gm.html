@@ -212,7 +212,7 @@ function renderTab() {
   } else {
     body.innerHTML = d.events.length
       ? `<table><thead><tr><th>When</th><th>Action</th><th>Detail</th><th>By</th></tr></thead><tbody>
-         ${d.events.map(e => `<tr><td>${when(e.at)}</td><td>${esc(e.kind)}</td><td class="small">${esc(e.detail || '')}</td><td>${esc(e.actor || '')}</td></tr>`).join('')}
+         ${d.events.map(e => `<tr><td>${when(e.at)}</td><td>${esc(e.label || e.kind)}</td><td class="small">${esc(e.detail || '')}</td><td>${esc(e.actor || '')}</td></tr>`).join('')}
          </tbody></table>`
       : `<p class="small">Nothing logged for this player yet.</p>`;
   }
