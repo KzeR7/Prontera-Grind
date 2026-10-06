@@ -349,7 +349,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // script block, which is a SyntaxError - the game did not run on main at all. One line wins, and
 // it names both sides of this merge: the v38 balance patch (the weapon cut, the affix/card
 // give-back) and main's weapon-hold rendering work.
-const BUILD='2026-10-06 grind-v60 GM password rotated out of the client';   // shown on the login card - confirms which file you loaded
+const BUILD='2026-10-06 grind-v61 local GM password + publish-only build';   // shown on the login card - confirms which file you loaded
 $('buildTag').textContent='build '+BUILD;
 
 // ---------- class tree: Novice -> 6 first jobs -> 6 second jobs -> 6 third jobs ----------
@@ -1237,6 +1237,16 @@ function hashPw(p){let h1=0xdeadbeef,h2=0x41c6ce57;const s='pg4:'+p;for(let i=0;
 // GM_ROUNDS+1 times over a salted starting point: guessing a password costs ~20,000x more than the
 // plain 64-bit mix would, which is what makes a long random phrase safe to store in a public file.
 const gmHash=p=>{let h=hashPw('pg-gm:'+p);for(let i=0;i<GM_ROUNDS;i++)h=hashPw(h);return h};
+// A SECOND, local GM password: short and simple if you want it, kept in THIS browser only, so it
+// never appears in this public file. Set it once from the browser console on your own machine:
+//     localStorage.setItem('pg_gm_local', gmHash('test1234'))
+// and log in as GM with `test1234` from then on. Remove it with
+//     localStorage.removeItem('pg_gm_local')
+// It cannot leak to other players (they cannot read your browser storage) and it cannot weaken the
+// file's own password (that one is still required if the local value is missing). It IS still a
+// client-side door - anyone with devtools can set S.gm on their own copy - so the real GM account
+// arrives with the server: tools/gm-panel-plan.md.
+const gmOk=p=>{const h=gmHash(p);if(h===String(GM_PASS_HASH))return true;const local=lsGet('pg_gm_local');return !!(local&&h===local)};
 let authMode='login';
 function showErr(m,ok){const e=$('loginErr');e.textContent=m;e.style.color=ok?'#2a9d3f':'#e5484d'}
 function setMode(m){authMode=m;$('tabLogin').classList.toggle('on',m==='login');$('tabReg').classList.toggle('on',m==='reg');$('regRow').style.display=m==='reg'?'block':'none';
@@ -1254,7 +1264,7 @@ function submitAuth(e){
       const acc=getAcc();if(Object.keys(acc).some(k=>k.toLowerCase()===u.toLowerCase()))return showErr('That username is already taken.');
       acc[u]=hashPw(p);setAcc(acc);if(!getAcc()[u])return showErr('Could not save the account (browser storage blocked).');
       setMode('login');$('password').value='';$('password2').value='';showErr('Account created! Now log in.',true);return}
-    if(isGM){if(gmHash(p)!==String(GM_PASS_HASH))return showErr('Incorrect GM password.');currentUser=GM_USER;initSession(true);return}
+    if(isGM){if(!gmOk(p))return showErr('Incorrect GM password.');currentUser=GM_USER;initSession(true);return}
     const acc=getAcc(),key=Object.keys(acc).find(k=>k.toLowerCase()===u.toLowerCase());
     if(!key)return showErr('Account not found. Use the Register tab first.');
     if(acc[key]!==hashPw(p))return showErr('Incorrect password.');

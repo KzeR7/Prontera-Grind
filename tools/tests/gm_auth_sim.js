@@ -34,8 +34,12 @@ t('index.html has no plaintext GM_PASS constant at all', () => {
 });
 
 t('the login path compares the salted hash, not the password', () => {
-  assert.ok(src.includes("if(gmHash(p)!==String(GM_PASS_HASH))return showErr('Incorrect GM password.')"),
-    'the GM branch of submitAuth must check gmHash(p) against GM_PASS_HASH');
+  // v61 moved the compare inside gmOk() so a locally stored password can also be accepted; the
+  // contract is unchanged: the plaintext is never compared, and GM_PASS_HASH is always checked.
+  assert.ok(src.includes("const gmOk=p=>{const h=gmHash(p);if(h===String(GM_PASS_HASH))return true;"),
+    'gmOk must compare gmHash(p) against GM_PASS_HASH');
+  assert.ok(!/gmHash\(p\)\s*!==\s*p|p\s*===\s*String\(GM_PASS_HASH\)/.test(src),
+    'nothing may compare the plaintext password to the stored hash directly');
 });
 
 t('the round count is high enough to make guessing expensive', () => {
@@ -100,6 +104,37 @@ t('the whole generate-then-log-in workflow works (rehearsed on a scratch copy)',
   catch (e) { wrongRejected = e.status === 1; }
   assert.ok(wrongRejected, 'a wrong password must make --check exit 1');
   fs.unlinkSync(scratch);
+});
+
+t('a locally stored GM password works, and only when it is actually set', () => {
+  // gmOk(p) accepts the file's password OR the one stored in this browser under pg_gm_local. The
+  // owner wanted a short, simple password for testing; keeping it in localStorage instead of the
+  // file means the repo holds no usable secret, and another player cannot read it.
+  const { loadGame } = require('../make_gm_hash.js');
+  const game = gameHash(), tool = loadGame();
+  const gmStart = src.indexOf('const gmOk=p=>{');
+  const gmEnd = src.indexOf('\n', gmStart);
+  const make = store => new Function('gmHash', 'GM_PASS_HASH', 'lsGet',
+    'return ' + src.slice(gmStart + 'const '.length, gmEnd).replace(/;$/, ''))(game, src.match(/GM_PASS_HASH='([0-9a-f]{16})'/)[1], k => (k in store ? store[k] : null));
+
+  const simple = 'test1234';
+  const localHash = tool.gmHash(simple);
+  const withLocal = make({ pg_gm_local: localHash });
+  assert.strictEqual(withLocal(simple), true, 'the locally stored password must log in');
+  assert.strictEqual(withLocal('test12345'), false, 'a near miss must not log in');
+  assert.strictEqual(withLocal('gm1234'), false, 'the retired password must still not work');
+
+  const withNone = make({});
+  assert.strictEqual(withNone(simple), false, 'no local password means the file password is still required');
+  assert.strictEqual(withNone('anything-else'), false);
+
+  const withGarbage = make({ pg_gm_local: 'not-a-hash' });
+  assert.strictEqual(withGarbage(simple), false, 'a corrupt local value must fail closed, not open');
+});
+
+t('the login handler uses gmOk, not a bare hash compare', () => {
+  assert.ok(src.includes('if(isGM){if(!gmOk(p))'), 'submitAuth must go through gmOk() so the local password is honoured');
+  assert.ok(src.includes("localStorage.setItem('pg_gm_local'"), 'the how-to comment for setting the local GM password is gone');
 });
 
 t('hashing stays fast enough for a login click', () => {
