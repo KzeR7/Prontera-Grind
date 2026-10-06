@@ -48,7 +48,7 @@ export function publicFields(save) {
     lv: Math.min(CAPS.level, num(save.lv)),
     cls: typeof save.cls === 'string' ? save.cls.slice(0, 32) : null,
     zeny: Math.min(CAPS.maxZeny, num(save.zeny)),
-    kills: num(save.kills),
+    kills: Math.min(Number.MAX_SAFE_INTEGER, num(save.kills)),
     playtime: num(save.playtime ?? save.play),   // optional field; harmless if absent
   };
 }

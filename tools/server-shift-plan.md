@@ -57,20 +57,24 @@ So the verdict is unchanged, for a better reason than the one this plan original
 
 | Question | Answer |
 |---|---|
-| Scope of the first build | **Phases 1 + 2 together** (§9): login + cloud saves, server-measured away progress, and the social layer (online list, world chat, leaderboard). Real-time co-op is wanted **later**, not now. |
-| Does 1 + 2 still fit the free tier? | **Yes, with about 3x headroom** — the budget is worked out in §3d. The largest single line item is the social poll, so its interval is a design knob, not a cost. |
+| Scope of the first build | Phase 1 (accounts/cloud saves) is already live. The current explicit change is **the leaderboard only**: Daily, Weekly and All-time by kills, with Base Lv as the tie-breaker. Do not bundle the other Phase 2 features into this change. |
+| Later Phase 2 preferences | If separately requested: away progress capped at **4 hours** and rewarded at **half rate**; show an **online count only** (no player list); put world chat in the existing Logs UI. A 15-second poll is near-live, not instant: messages may take up to about 15 seconds to appear. |
+| Does the earlier 1 + 2 workload estimate fit the free tier? | §3d is an illustrative capacity estimate, not authorization to build that full scope. Real-time co-op is still **later**, not now. |
 | Login style | **Username + password (server-hashed) with a one-time recovery code** shown at registration (§6.4). No email service needed. |
 | Host | **Read from the dashboard (2026-10-06): 52 MB of 5 GB, 0 of 750 instance hours, 1 service.** Bandwidth is a cents risk, not the reason to move; the reason to move the server is that Render free has no durable database (§1a). The service *type* (static site vs web service) is still worth confirming (§3a) — it decides whether the client also moves in phase 1. |
-| What to build now | **~~Nothing yet.~~ LIFTED 2026-10-06: the owner said "yes go".** Phase 1 is built — see the status block below. This document is still the design of record; §9 tracks what is done. |
+| What to build now | The leaderboard is the only Phase 2 feature authorized in this change. Away progress, presence and world chat remain future work; their preferences are recorded above. |
 
 ---
 
-### Phase 1 status — BUILT (2026-10-06, `grind-v62`)
+### Existing cloud deployment and leaderboard status (checked 2026-10-06)
 
-Everything below is in the repo and covered by tests. **Nothing is deployed yet**: the Cloudflare
-Pages project does not exist, and `wrangler.toml` still carries `REPLACE_WITH_YOUR_D1_ID`, so the
-hero's old static host keeps serving exactly what it served before (the client detects the missing
-API and stays in local mode). The deploy checklist is `READ-ME-FIRST.md` § *Put the saves on the server*.
+The production Pages site was serving build v63 with cloud accounts enabled; signed-out
+`/api/me` returned the expected 401 JSON, and `/gm.html` loaded. The Render site was still serving
+an older v59 build when checked; it is deliberately retained as the owner's backup and is not a
+problem to fix. Phase 1 (accounts and cloud saves) is already in place. This branch adds the v64
+leaderboard. **It is not deployed yet**: apply `migrations/0002_leaderboard.sql` to D1 database `pg`
+separately, then merge to `main` for the Pages production deploy. Pages does not run migrations.
+See `tools/cloudflare-deploy-steps.md` for the precise steps.
 
 | Planned in §5a | Actually shipped | Note |
 |---|---|---|
@@ -80,7 +84,7 @@ API and stays in local mode). The deploy checklist is `READ-ME-FIRST.md` § *Put
 | `GET/PUT /api/save` | ✅ `functions/api/save.js` | 512 KB cap, `409` echoes the server copy, `save_history` every 10th version (newest 5) |
 | `GET /api/messages` + `POST` | ✅ `functions/api/messages.js` | announcements to all or one player, read state per recipient |
 | (not planned) | ✅ `functions/api/grants.js` | GM gifts: queued server-side, applied by the player's own client (offline players are the normal case), claimed exactly once |
-| `GET /api/board` (phase 2) | ⏳ | the denormalised columns are already written on every save; only the read endpoint and the UI remain |
+| `GET /api/board` (`daily`, `weekly` or `all`) | ✅ `functions/api/board.js` + the v64 UI | D1 counters/migration 0002, authenticated top 50; daily/weekly count only newly synced kills, and Base Lv breaks ties. Deploy only after applying the migration. |
 | Turnstile on register | ❌ deliberately not | a CAPTCHA in front of a 20-player game the owner is testing would cost more than it saves; rate limits cover the bot case |
 
 Also shipped, beyond §5a/§5b: the **GM console** (`gm.html` + `functions/api/gm/{players,player,log}.js`,
@@ -223,18 +227,21 @@ Three honest ways out, all free:
 Everything else the API does — parse a ~100 KB JSON blob, one D1 upsert — is 1-3 ms, comfortably
 inside 10 ms.
 
-### 3d. Phases 1 + 2 at 20 players — the budget the owner asked about
+### 3d. Illustrative Phase 1 + 2 capacity estimate at 20 players
 
-The owner's chosen scope is login + cloud saves + away progress + social (online list, chat,
-leaderboard), with real-time co-op later. Here is that exact workload against the free allowances,
-assuming each player is **online 4 hours a day** (the generous case for a browser idle game):
+This is an earlier capacity estimate for a combined Phase 1 + 2 workload, not the current scope or
+authorization to implement everything in the table. The explicitly authorized addition now is the
+leaderboard. If later requested, Phase 2 preferences are: away progress capped at 4 hours and paid at
+half rate, online count only (no player list), and world chat inside the existing Logs UI. A 15-second
+poll is near-live, not instant; a message may take up to 15 seconds to appear. The estimate below
+assumes each player is **online 4 hours a day** (the generous case for a browser idle game):
 
 | Line item | Requests/day | D1 row writes/day |
 |---|---|---|
 | Save uploads (dirty flag, 60 s debounce) | 4,800 | 4,800 |
 | Save-history snapshots (1 in 10 syncs) | — | 480 |
 | Logins, session resume, save downloads, away-progress claim | ~300 | ~300 |
-| Presence + chat + leaderboard **(one combined `/api/live` poll every 15 s)** | 19,200 | 0 (chat ring buffer + presence live in the DO) |
+| Future online-count/chat/leaderboard poll (illustrative **one `/api/live` poll every 15 s**) | 19,200 | 0 (design estimate only; not implemented) |
 | Chat messages kept in D1 history | — | ~500 |
 | **Total** | **~24,300 = 24% of the 100,000/day allowance** | **~6,100 = 6% of the 100,000/day allowance** |
 
@@ -305,22 +312,21 @@ Verdict: strictly more moving parts, worse reliability, same $0 — until it isn
 **Phase 1 needs D1 only** (plus one small DO for hashing if you want strong password hashes on the
 free plan). Durable Objects, chat and presence are Phase 2.
 
-### 5a. The API surface (7 endpoints, all you need for phase 1)
+### 5a. Core API surface (phase 1 + v64 leaderboard)
 
 | Method + path | Body | Answer |
 |---|---|---|
-| `POST /api/register` | `{u, p, recovery?}` | `201 {u, gm:false}` + session cookie |
+| `POST /api/register` | `{u, p}` | `201` + session cookie and a one-time recovery code |
 | `POST /api/sessions` (login) | `{u, p}` | `200 {u, gm}` + session cookie, or `401 {err}` |
 | `DELETE /api/sessions` (logout) | — | `204`, session row deleted |
 | `GET /api/me` | — | `{u, gm}` (used to resume a session on reload) |
-| `GET /api/save` | — | `200 {v, blob, savedAt}` or `204` if none |
-| `PUT /api/save` | `{v, blob, savedAt, pub}` | `200 {v}` / `409 {v, blob, savedAt}` = server copy is newer |
-| `GET /api/board` (phase 2) | — | top 50 by level/kills from the denormalised columns |
+| `GET /api/save` | — | `200 {version, blob, savedAt, pending}`; `blob` is `null` if none |
+| `PUT /api/save` | `{version, blob, savedAt}` | `200 {version}` / `409 {version, blob, savedAt}` = server copy is newer |
+| `GET /api/board` (period: daily, weekly or all) | — | Authenticated top 50 by period kills, then current Base Lv; daily/weekly use newly synced kill gains |
 
-* **Session** = 32 random bytes, sent as a cookie (`pg_session`, httpOnly, Secure, SameSite=Lax,
-  30-day rolling). Only its SHA-256 sits in D1, so a database leak is not a login leak.
-* **`pub`** is a small whitelist the *server* stores for the leaderboard
-  (`{lv, cls, kills, zeny, playtime}`) — never a free-form client object.
+Messages, grants and owner-only GM routes are listed in the status table above. **Leaderboard fields
+are derived from the validated save on the server** (`level`, `cls`, `kills`, `zeny`, `playtime`); the
+client cannot submit a separate `pub` object.
 * **Rate limiting**: 5 failed logins per username and 20 per IP per 15 minutes (a counter row in
   D1 or the DO). Free Cloudflare DDoS protection sits in front of it, and **Turnstile** (free) on
   register stops bot signups.
@@ -434,11 +440,11 @@ Rules that keep players' progress safe:
 |---|---|---|
 | 1 | Client-authoritative (the browser simulates, the server stores) or server-authoritative (the server simulates)? | **Client-authoritative for now** — porting the 3,958-line sim to the Worker is a rewrite, not a shift. Revisit only if trading or PvP is ever added. |
 | 2 | Can players keep playing with no internet / no account? | **Yes.** Local save + offline play stays as the fallback; the cloud is the vault. |
-| 3 | What happens to progress when the tab is closed? | **Add server-measured away progress** (§8) — phase 2, and the server bounds it with its own clock. |
+| 3 | What happens to progress when the tab is closed? | If separately requested later: server-measured away progress, capped at **4 hours** and rewarded at **half rate** (§8). It is not part of the current leaderboard change. |
 | 4 | Should the game split into `client/` and `server/` folders? | **Not yet.** Keep `index.html` where every test suite expects it and add `functions/api/*` beside it. A file-layout refactor is a separate, riskier job. |
-| 5 | Scope of the first build | **Phases 1 + 2** (§9): accounts + cloud saves, away progress, and social. Real-time co-op is a wanted **later** phase, deliberately not in this build. |
+| 5 | Scope of the first build | Phase 1 (accounts + cloud saves) is live; the current explicit addition is only the leaderboard. Away progress, presence and world chat remain later work; real-time co-op remains later still. |
 | 6 | Login style | **Username + password, server-hashed, plus a one-time recovery code** shown at registration (§6.4) — no email service needed, and a forgotten password is not a dead account. |
-| 7 | What is built right now | **Nothing yet.** The owner reads this document and chooses when to start. |
+| 7 | What is built right now | Phase 1 is live on Pages; the v64 leaderboard code is built and tested on this branch, pending D1 migration 0002 and production deploy. |
 
 ### 7b. Repo prep (all small, none of it touches the game)
 
@@ -569,14 +575,14 @@ What the server *can* do cheaply and should:
   client cannot inflate it without actually playing. Use exactly that number for away progress:
 
 ```
-awaySeconds = clamp(now - last_seen, 0, CAP)            // CAP: 4-8 h, your call
-awayKills   = rate_kph / 3600 * awaySeconds * EFF       // EFF: 0.5-0.7 is a common idle-game feel
-award       = exp and Zeny for awayKills kills, no gear  // decide the drop policy deliberately
+awaySeconds = clamp(now - last_seen, 0, 4 hours)       // owner's chosen hard cap
+awayKills   = rate_kph / 3600 * awaySeconds * 0.5       // owner's chosen half-rate reward
+award       = exp and Zeny for awayKills kills, no gear  // do not award random drops offline
 ```
 
-The current client already caps one wake at 10 minutes of catch-up (`simAdvance`), so raise that
-deliberately rather than by accident — the server's award and the client's cap should tell the same
-story.
+These are the recorded design choices, **not work included in the leaderboard change**. If away
+progress is separately authorized, raise the current 10-minute client wake cap deliberately so the
+server award and client catch-up tell the same story.
 
 * **Do not build trading or PvP on top of a client-authoritative save.** That is the point where
   cheating stops being a leaderboard cosmetic and starts hurting other players. Those features
@@ -592,7 +598,7 @@ story.
 |---|---|---|---|
 | **0 — hygiene** | Rotate/remove the GM password from `index.html`; add `.assetsignore`; confirm the current Render bandwidth number | ~30 min | **Do this first, before anything else** |
 | **1 — accounts + cloud saves** | `functions/api/*`, D1 schema, session cookies, auth in a DO, debounced sync + 409 dialog, upload-this-device migration, export/import codes, recovery code, `api_sim.js`, GM role server-side | 1-2 focused days | **Chosen — first build** |
-| **2 — social + idle progress** | Presence (online list), world chat, leaderboard from the denormalised columns, server-measured away progress (§8), all behind one `/api/live` endpoint and polled every 15 s | ~1 day | **Chosen — same build as phase 1** (§3d shows it fits the free tier) |
+| **2 — social + idle progress** | Leaderboard (Daily/Weekly/All-time) from newly synced kills with Base Lv tie-break. Later, only if separately requested: away progress (4 h cap, half rate), online count only (no list), and world chat in the existing Logs UI (15 s polling; up to 15 s delay). | ~1 day | **Partial: leaderboard built for v64; remaining Phase 2 work is deferred and not included in this change.** |
 | **3 — real-time (wanted, later)** | Shared field: 1 Hz tick broadcast via one Durable Object, authoritative or semi-authoritative; `/api/live` swaps from polling to a hibernating WebSocket without the client's UI code changing | Weeks, plus a client render/net rewrite | **Later, on purpose.** The endpoint shape in phase 2 exists so this does not mean a rewrite. |
 
 **What phase 3 really costs** (so nobody is surprised): free-tier WebSocket/DO messages are counted
@@ -604,18 +610,14 @@ floor. Everything else in this plan stays free at this scale.
 
 ---
 
-## 10. What I would do, in order
+## 10. Current next steps
 
-1. **✅ Done in v60**: the GM password is rotated out of the client and out of the legacy pages. Left
-   to do on the Render side: stop publishing `_login.html`, `_shot.html`, `logic2.js`, `tools/`,
-   `Updates/`, `Sprite/` and the four `_recon_*.png` (§7b — the 30-second version is to set the
-   Publish Directory to a folder holding only the game files).
-2. **Then**: stand up the Cloudflare side (Pages connected to the repo, D1 created in the region
-   nearest your players) and build **phases 1 + 2** behind a flag, so the game keeps working from
-   localStorage until the API is proven by `api_sim.js`.
-3. **Ship it as v60** with the login card showing a sync state (`Saved 2 m ago · Cloud` /
-   `Offline`), the upload-this-device migration, the two-saves dialog, and the recovery code shown
-   once at registration. Bump `BUILD`, append to `AGENTS.md`, run all 21 suites plus the new one.
-4. **Watch the dashboards for two weeks** before considering phase 3. The daily numbers you see are
-   the ones that decide whether the free tier holds at 20 players — and §3d says they will, with
-   the social poll interval as the knob if they do not.
+1. **The Cloudflare deployment is already active** (checked 2026-10-06); Render remains deliberately
+   available as a backup. Do not remove it or treat its older build as an incident.
+2. For the v64 leaderboard, apply `migrations/0002_leaderboard.sql` to the existing D1 `pg` database,
+   then merge the PR to `main`. The Git-connected Pages project deploys automatically; see
+   `tools/cloudflare-deploy-steps.md` for the manual alternative and verification steps.
+3. The only feature in this change is the leaderboard. Away progress, online count and world chat
+   remain future work unless the owner asks to proceed; their selected rules are recorded above.
+4. Real-time co-op/WebSockets remain a later, separate phase. A 15-second chat poll is near-live and
+   may delay a new message by up to 15 seconds; do not describe it as instant chat.

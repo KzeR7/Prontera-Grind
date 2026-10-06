@@ -7,11 +7,13 @@
 #   Build command          bash tools/build_site.sh
 #   Build output directory dist
 #   Then: wrangler d1 create pg        (once; pick the region nearest the players)
-#         wrangler d1 execute pg --remote --file=migrations/0001_init.sql
+#         wrangler d1 execute pg --remote --file=migrations/0001_init.sql   (new DB only)
+#         wrangler d1 execute pg --remote --file=migrations/0002_leaderboard.sql   (once per DB)
 #
 # Local development (the official Functions runtime; tools/dev_server.js is the offline one):
 #   npx wrangler pages dev dist --d1 DB=<database_id>   # binds THIS id to DB, on 127.0.0.1:8787
 #   npx wrangler d1 execute pg --local --file=migrations/0001_init.sql
+#   npx wrangler d1 execute pg --local --file=migrations/0002_leaderboard.sql
 #
 # Step-by-step deploy, including where the database id goes: tools/cloudflare-deploy-steps.md
 #

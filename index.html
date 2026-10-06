@@ -253,6 +253,7 @@ button.tick.on{background:#ffe08a;border-color:var(--gold);font-weight:bold}
 .mastery-progress-card>div:first-child{font-size:11px}.mastery-map{margin:5px 0;border:1px solid var(--edge);border-radius:6px;background:#fffdf5;overflow:hidden}.mastery-map>summary{display:flex;align-items:baseline;gap:5px;padding:6px 7px;cursor:pointer;background:linear-gradient(90deg,#fff9e9,#f1e2bb);font-size:11px}.mastery-map>summary small{margin-left:auto;text-align:right;font-size:9px}.mastery-roster{padding:3px 6px}.mastery-mob{display:grid;grid-template-columns:19px minmax(0,1fr) auto;align-items:center;gap:5px;padding:4px 1px;border-bottom:1px dotted #d9cba9}.mastery-mob:last-child{border-bottom:0}.mastery-mob.found>span:nth-child(2)>b{color:#3d6e47}.mastery-mob-icon{font-size:14px;text-align:center}.mastery-mob>span:nth-child(2){min-width:0}.mastery-mob>span:nth-child(2)>b{display:block;font-size:10px;overflow-wrap:anywhere}.mastery-mob small{display:block;font-size:9px}.mastery-count{font-size:10px;font-variant-numeric:tabular-nums;color:#614a25}
 .mastery-stat-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:5px}.mastery-stat{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px;align-items:center;padding:6px;border:1px solid var(--edge);border-radius:6px;background:#fffdf5;min-width:0}.mastery-stat>span:first-child{display:flex;flex-direction:column}.mastery-stat>span:first-child b{font-size:12px}.mastery-stat>span:first-child small{font-size:9px}.mastery-pips{display:flex;gap:2px}.mastery-pips i{width:7px;height:7px;border:1px solid #8e7957;border-radius:50%;background:#e7dfce}.mastery-pips i.filled{background:radial-gradient(circle at 35% 25%,#fff3ac,#d29b35);border-color:#8c5e17;box-shadow:0 0 3px #b9832777}.mastery-stat button{grid-column:1/-1;width:100%;padding:2px 4px;font-size:9px}.mastery-card-list{display:grid;gap:4px}.mastery-card-row{display:flex;align-items:center;justify-content:space-between;gap:6px;padding:5px 6px;border:1px solid #d6c394;border-radius:6px;background:#fffdf5;min-width:0}.mastery-card-row>span{display:flex;flex-direction:column;min-width:0;font-size:10px;overflow-wrap:anywhere}.mastery-card-row>span small{font-size:9px}.mastery-card-row button{flex:none;padding:3px 6px;font-size:9px}.mastery-empty{padding:9px;border:1px dashed var(--edge);border-radius:6px;background:#fffdf5;font-size:10px;line-height:1.4}.index-xp-card{background:linear-gradient(100deg,#fffdf5,#fff0c2)}.mob-track{display:block;width:100%;height:4px;margin-top:3px}.card-reward-legend{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px;margin:5px 0 8px;padding:6px;border:1px solid var(--edge);border-radius:6px;background:#fffdf5}.card-reward-legend span{font-size:9px;line-height:1.25}.card-reward-legend b{color:#4b351d}.card-reward-pick{display:flex;flex-direction:column;gap:3px;margin-top:4px}.card-reward-pick small{font-size:9px;color:#8a5c18;font-weight:700}.card-reward-pick select{max-width:100%;font:10px "Trebuchet MS",sans-serif;padding:3px;border:1px solid var(--edge2);border-radius:4px;background:#fff8e6;color:var(--ink)}.card-reward-summary{color:#6b4d22!important;font-size:9px!important}
 @media(max-width:560px){#dock{max-width:calc(100vw - 12px);flex-wrap:wrap;justify-content:center}.title-hud{max-width:96px;overflow:hidden;text-overflow:ellipsis;vertical-align:middle}}
+.board-panel{display:flex;flex-direction:column;gap:6px;min-width:0}.board-periods{display:flex;gap:4px}.board-periods button{flex:1;min-width:0;padding:5px 3px;font-size:11px}.board-periods button.on{background:#ffe08a;border-color:var(--gold)}.board-head{display:flex;align-items:center;justify-content:space-between;gap:6px}.board-head small,.board-note{font-size:10px;line-height:1.35;opacity:.78}.board-row{display:grid;grid-template-columns:23px minmax(0,1fr) auto auto;gap:5px;align-items:center;padding:5px 4px;border-bottom:1px dotted #cbb98a;font-size:11px}.board-row b{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.board-rank{font-weight:700;color:#805b1b}.board-level,.board-kills{white-space:nowrap;font-variant-numeric:tabular-nums}.board-kills{font-weight:bold}.board-state{padding:8px;border:1px dashed var(--edge);border-radius:6px;background:#fffdf5;font-size:11px;line-height:1.4}
 </style>
 </head>
 <body>
@@ -361,7 +362,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // script block, which is a SyntaxError - the game did not run on main at all. One line wins, and
 // it names both sides of this merge: the v38 balance patch (the weapon cut, the affix/card
 // give-back) and main's weapon-hold rendering work.
-const BUILD='2026-10-06 grind-v63 save backups + a login that keeps your progress';   // shown on the login card - confirms which file you loaded
+const BUILD='2026-10-06 grind-v64 daily, weekly and all-time leaderboard';   // shown on the login card - confirms which file you loaded
 $('buildTag').textContent='build '+BUILD;
 
 // ---------- class tree: Novice -> 6 first jobs -> 6 second jobs -> 6 third jobs ----------
@@ -1312,6 +1313,7 @@ $('loginForm').addEventListener('submit',submitAuth);$('tabLogin').onclick=()=>s
 // stays in the account's save history where the GM console can restore it.
 const CLOUD={api:false,on:false,user:null,gm:false,ver:0,dirty:false,lastPush:0,pushing:false,
   offline:false,paused:false};
+let boardPeriod='daily',boardCache=Object.create(null),boardLoading=false,boardError='',boardRequest=0;
 const CLOUD_DEBOUNCE=30000;      // push at most this often while playing
 const CLOUD_MAX_AGE=900000;      // a tab hidden longer than this re-pulls before pushing again
 const saveKeyFor=u=>'pg_save3_'+u;
@@ -1320,6 +1322,19 @@ const cloudSay=(m,cls)=>log(m,cls||'r3','cloud');
 function cloudBadge(txt,tip){const e=$('cloudBadge');if(e){e.textContent=txt||'';e.title=tip||''}}
 function cloudLoginLine(txt){const e=$('loginCloud');if(e)e.textContent=txt||''}
 async function cloudFetch(path,opt){return fetch(cloudUrl(path),Object.assign({credentials:'same-origin',headers:{'Content-Type':'application/json'}},opt||{}))}
+async function boardRefresh(period=boardPeriod){
+  if(!['daily','weekly','all'].includes(period))return;
+  const seq=++boardRequest;
+  if(!CLOUD.api||!CLOUD.on){boardError='Sign in to a cloud account to view the leaderboard.';boardLoading=false;if(tabs.includes('board'))renderWin();return}
+  boardLoading=true;boardError='';if(tabs.includes('board'))renderWin();
+  try{
+    const r=await cloudFetch('/board?period='+encodeURIComponent(period),{cache:'no-store'});
+    const d=await r.json().catch(()=>({}));
+    if(!r.ok)throw new Error(d.err||('HTTP '+r.status));
+    boardCache[period]=d;
+  }catch(e){if(seq===boardRequest)boardError=e&&e.message||'Could not load the leaderboard.'}
+  if(seq===boardRequest){boardLoading=false;if(tabs.includes('board'))renderWin()}
+}
 function cloudTouch(){if(!CLOUD.on||CLOUD.paused)return;CLOUD.dirty=true;cloudBadge('☁ …','Waiting to sync')}
 
 // Push the current save. Returns 'ok' | 'conflict' | 'offline' | 'idle'; never throws, because a dead
@@ -2051,7 +2066,7 @@ function changeClass(n){if(classBlock(n))return;
   addFloat(pl.x,3.6,pl.z,n+'!','#fff',true);ui();save()}
 
 // ---------- UI ----------
-const TABS={map:['🗺️','World Map','M'],status:['📊','Character','S'],job:['🌳','Class Tree','J'],skills:['✨','Skills','K'],bag:['🎒','Inventory','B'],log:['📃','Log','L'],pet:['🐾','Pets','P'],index:['📚','Mastery Index','I'],set:['⚙️','Settings','O'],gm:['🛠️','GM Tools','G']};
+const TABS={map:['🗺️','World Map','M'],status:['📊','Character','S'],job:['🌳','Class Tree','J'],skills:['✨','Skills','K'],bag:['🎒','Inventory','B'],log:['📃','Log','L'],pet:['🐾','Pets','P'],index:['📚','Mastery Index','I'],board:['🏆','Leaderboard','V'],set:['⚙️','Settings','O'],gm:['🛠️','GM Tools','G']};
 const dot=k=>{if(!S)return false;if(k==='status')return S.pts>0;if(k==='skills')return skpAvail()>0;if(k==='quest')return!!(S.q&&S.q.some(q=>q.prog>=q.goal));if(k==='cards')return S.cards.length>0;if(k==='index'){const rank=HUNT_TITLES.findIndex(t=>t.id===S.equippedTitle);return cardMasteryAvailable()>0||HUNT_TITLES.some((t,i)=>i>rank&&titleUnlocked(t))}return false};
 const find=id=>[...S.inv,...items(),...S.cards].find(x=>String(x.id)===String(id));
 // Gear level is a display-only grade: field level +10 per rarity step (Common +0 through Legendary +40).
@@ -2232,6 +2247,14 @@ const V={
       return`<div class="slot" style="align-items:flex-start;gap:10px;margin-top:6px">${cell(it,false)}<div style="flex:1"><b class="r${it.tier}">${iname(it)}</b> <small>${l}</small><br><small>${SLOTS[it.slot].stat} +${ev(it)} &rarr; +${Math.round(it.val*(1+(r+1)*.15))} &middot; ${r>=10?'MAX':'Success '+refCh(it)+'% &middot; '+c.toLocaleString()+'z + 1 '+ORE[o]}</small><br><button data-a="refine" data-v="${k}" ${r>=10||S.ore[o]<1||S.zeny<c?'disabled':''}>Refine</button></div></div>`}).join('')},
   pet(){const P=S.pets,A=P.filter(p=>p.on).length,p=gp(selP);
     return`<div class="hd">Pets <small>Fighting ${A}/3 &middot; Collection ${P.length}</small></div><small>Pets drop from monsters. Drop odds per map are on the World Map.</small><div class="grid" style="margin-top:6px">${P.map(q=>{const sp=PETS[q.sp];return`<div class="cell b${RCL[sp.r]}${selP===q.id?' sel':''}" style="font-size:30px" data-a="selp" data-v="${q.id}">${petIcon(sp)}${q.on?'<i class="rf" style="left:2px;right:auto;top:2px;bottom:auto;font-style:normal">ON</i>':''}${q.mut?`<i class="rf">G${q.mut}</i>`:''}</div>`}).join('')||'<small>No pets yet.</small>'}</div>`+(p?petDetail(p):'<small>Select a pet to manage it.</small>')},
+  board(){const labels={daily:'Daily',weekly:'Weekly',all:'All-time'},data=boardCache[boardPeriod],esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    const periods=['daily','weekly','all'],entries=data&&Array.isArray(data.entries)?data.entries:[];
+    const rows=entries.map((r,i)=>`<div class="board-row"><span class="board-rank">${i+1}</span><b title="${esc(r.name)}">${esc(r.name)}</b><span class="board-level">Lv ${Math.max(1,Number(r.level)||1)}</span><strong class="board-kills">${Math.max(0,Number(r.kills)||0).toLocaleString()} kills</strong></div>`).join('');
+    const state=!CLOUD.api||!CLOUD.on?'<div class="board-state">Sign in to a cloud account to view the leaderboard.</div>':boardError?`<div class="board-state">${esc(boardError)}</div>`:boardLoading&&!data?'<div class="board-state">Loading scores…</div>':!data?'<div class="board-state">Choose a period or refresh to load scores.</div>':entries.length?rows:'<div class="board-state">No kills have synced for this period yet.</div>';
+    return`<div class="board-panel"><div class="board-periods">${periods.map(p=>`<button data-a="boardperiod" data-v="${p}" class="${boardPeriod===p?'on':''}" aria-pressed="${boardPeriod===p}">${labels[p]}</button>`).join('')}</div>
+      <div class="board-head"><small>${data?esc(data.label):'Periods use Singapore time'}${boardLoading&&data?' · refreshing…':''}</small><button data-a="boardrefresh" title="Refresh the scores" aria-label="Refresh leaderboard">↻</button></div>
+      <div class="board-row" style="font-weight:bold;border-bottom:1px solid var(--edge)"><span>#</span><span>Player</span><span>Base</span><span>Kills</span></div>${state}
+      <small class="board-note">Ranked by kills, then current Base Lv. Daily and weekly scores count kills synced since the leaderboard launched; all-time starts from existing cloud saves. Scores are self-reported.</small></div>`},
   log(){const cats=LOGCATS.map(([k,n])=>`<label class="logf"><input type="checkbox" data-a="logf" data-v="${k}" ${logOn(k)?'checked':''} aria-label="Show ${n} lines"> ${n}</label>`).join('');
     const shown=logShown();
     return`<div class="logfbar">${cats}<span class="sp"><button data-a="logfall" data-v="on">All</button><button data-a="logfall" data-v="off">None</button></span></div>
@@ -2248,7 +2271,7 @@ const V={
     <small>On or off, and how the numbers read. Saved with your account.</small>
     <div class="hd" style="margin-top:10px">Gameplay</div><label><input type="checkbox" data-a="auto" ${S.auto!==false?'checked':''}> Auto-equip better gear</label><br><label><input type="checkbox" data-a="adv" ${S.adv!==false?'checked':''}> Auto-advance to next level (turn off to farm)</label><br><label title="Always on - the game cannot be paused by hiding the tab any more"><span class="lockmark">&#10003;</span> Keeps grinding while this tab is in the background</label>
     <small>Background grinding keeps playing while the tab is hidden; untick it to pause instead.</small>
-    <p><small>Drag to rotate, scroll to zoom. Hotkeys: M S J K B E C Q R L P I O, Esc to close.</small></p><button class="full" data-a="reset">Erase this account's save &amp; restart</button><button class="full" data-a="logout">Logout</button>`},
+    <p><small>Drag to rotate, scroll to zoom. Hotkeys: M S J K B E C Q R L P I V O, Esc to close.</small></p><button class="full" data-a="reset">Erase this account's save &amp; restart</button><button class="full" data-a="logout">Logout</button>`},
   gm(){return`<div class="hd">GM multiplier (EXP, Job EXP, Zeny, quests)</div><div class="row">${[1,10,100,1000].map(x=>`<button data-a="gmx" data-v="${x}" ${S.gmx===x?'style="background:#ffe08a"':''}>x${x}</button>`).join('')}</div>
     <div class="row" style="margin-top:8px"><button data-a="gmz">+1,000,000 Zeny</button><button data-a="gmo">+20 Oridecon &amp; Elunium</button><button data-a="gml">+10 Base Levels</button><button data-a="gmj">Max Job Lv (current class)</button><button data-a="gmu">Unlock all map levels</button></div>
     <div class="hd" style="margin-top:10px">Index mastery test controls</div><small>These use the real per-species ledger and the 10 / 250 / 5,000 / 50,000 kill ladder. Clear before trying another scenario.</small><div class="row"><button data-a="gmindex" data-v="one">+1 Poring kill</button><button data-a="gmindex" data-v="all1">1 kill every species</button><button data-a="gmindex" data-v="all100">100 kills every species</button><button data-a="gmindex" data-v="all1000">1,000 kills every species</button><button data-a="gmindex" data-v="all5000">5,000 kills every species</button><button data-a="gmindex" data-v="all50000">50,000 kills every species</button><button data-a="gmindex" data-v="xp10000">Set 10,000 XP title test</button><button data-a="gmindex" data-v="xp1000000">Set the final title</button><button data-a="gmindex" data-v="clear">Clear Index</button></div>
@@ -2411,10 +2434,12 @@ if($('wins')&&$('wins').addEventListener)$('wins').addEventListener('pointerdown
 const MAX_TABS=3;const openTab=k=>{if(k==='gm'&&!S.gm)return;if(k!=='status')eqPick=null;const i=tabs.indexOf(k);if(i>=0)tabs.splice(i,1);else{if(tabs.length>=MAX_TABS)tabs.shift();tabs.push(k);
   // Reopening a window starts at its first sub-tab: Status shows Stats, Inventory shows Bag.
   if(k==='status')sub.status='stats';if(k==='bag')sub.bag='bag';
-  if(k==='map'){mapM=S.mp;mapL=S.lvl}}renderWin()};
+  if(k==='map'){mapM=S.mp;mapL=S.lvl}}renderWin();if(k==='board'&&tabs.includes('board'))boardRefresh(boardPeriod)};
 const gotoField=(m,l)=>{S.mp=m;S.lvl=l;S.kl=0;mobs=[];mob=null;respawn=.3;pend=[];castQ=[];qRefresh();ui();save()};
 const ACT={
-  selm:v=>{mapM=+v;mapL=Math.min(mapL,Math.max(1,S.prog[mapM]));renderWin()},sell_:v=>{mapL=+v;renderWin()},go:()=>{if(mapL<=S.prog[mapM]){gotoField(mapM,mapL);log(`Traveled to ${fieldName()}.`)}},
+  boardperiod:v=>{if(!['daily','weekly','all'].includes(v))return;boardPeriod=v;boardError='';renderWin();boardRefresh(v)},
+  boardrefresh:()=>boardRefresh(boardPeriod),
+  selm:v=>{mapM=+v;mapL=Math.min(mapL,Math.max(1,S.prog[mapM]));renderWin()}, sell_:v=>{mapL=+v;renderWin()},go:()=>{if(mapL<=S.prog[mapM]){gotoField(mapM,mapL);log(`Traveled to ${fieldName()}.`)}},
   stat:k=>{if(S.pts>=cost(k)&&S.st[k]<statCap()){S.pts-=cost(k);S.st[k]++;S.hp=Math.min(S.hp,maxHp());ui();save()}},
   stat5:k=>{for(let i=0;i<5;i++)if(S.pts>=cost(k)&&S.st[k]<statCap()){S.pts-=cost(k);S.st[k]++}S.hp=Math.min(S.hp,maxHp());ui();save()},
   selk:v=>{selK=v;renderWin()},job:n=>{if(n==='Novice'&&S.cls!=='Novice')ask('Restart as Novice? You go back to Base Lv 25, job levels cleared, and your stats are refunded. Classes you leave keep their own Base Lv, stats and gear, so you can switch back to them later.',()=>changeClass(n));else changeClass(n)},

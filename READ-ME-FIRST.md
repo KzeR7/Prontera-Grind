@@ -34,10 +34,9 @@ deploy — but the host's build output directory must be `dist/`, never the repo
   changing the class art or the hero.**
 * `tools/` — the art pipelines (`make_sprite_pack.py`, `make_sprite_viewer.py`, `make_simple_apng.py`, `montage.py`), the test suites (`tools/tests/`)
   and a dev-only plan previewer (`tools/preview/`).
-* `tools/server-shift-plan.md` — the plan for moving accounts and saves server-side (Render vs
-  Cloudflare with the free-tier maths, the API/D1 sketch, save sync + conflict rules, the migration
-  for existing players, and the staged roadmap). Nothing in it is built yet; it is what the owner
-  asked for and it records the two decisions that are still open.
+* `tools/server-shift-plan.md` — the design record for accounts, cloud saves, leaderboard, and later
+  social/away-progress work (Render vs Cloudflare, free-tier maths, API/D1 sketch, save sync + conflict
+  rules, and the staged roadmap). It tracks what is already built and the owner's current scope choices.
 * `AGENTS.md` — **the project's rules and its full update log**. Read it before changing anything:
   it carries the house rules (crop only, never draw art; all 8 directions and 3 animation rows
   survive; append to the log; bump `BUILD` for anything a player can see) and the history.
@@ -68,7 +67,24 @@ Directory `dist`; Cloudflare Pages: same command, "Build output directory" `dist
 serves the root publishes all of them. `tools/tests/publish_sim.js` runs this build in CI and fails if
 anything dev-side reaches `dist/`.
 
-## Put the saves on the server (v63, optional but this is the point of the shift)
+With Cloudflare Pages connected to this GitHub repo and `main` set as the production branch, merging
+a PR to `main` automatically starts the production build/deploy; use the Pages check/deployment
+status to confirm it finished. A manual production deploy is also possible:
+
+```sh
+bash tools/build_site.sh
+npx wrangler pages deploy dist --project-name prontera-grind --branch main
+```
+
+The Render site is deliberately retained as your backup; these steps do not change it. **Pages does
+not run D1 migrations as part of a build.** Apply a database migration separately, once, before
+shipping code that depends on it (see the v64 leaderboard note below).
+
+The small cloud badge in the game header is a **save-sync status**, not a player-presence indicator:
+`☁ …` means changes are waiting to sync, `☁ ⇅` means an upload is in progress, `☁ ✓` means the
+save was accepted by the cloud, and `☁ ✕` means the game is offline (your local progress remains safe).
+
+## Put the saves on the server (v64 leaderboard update, optional but this is the point of the shift)
 
 **The click-by-click walkthrough is `tools/cloudflare-deploy-steps.md`** — creating the database,
 loading the schema, connecting the Pages project, binding it, and the checks to run before telling
@@ -79,25 +95,35 @@ players the new address. What follows is the short version.
 Accounts and saves can live in Cloudflare D1, so a character follows the player to any device. The
 whole feature is **optional by construction**: with no API behind the address, the game runs exactly
 as it always has, with accounts and saves in `localStorage`. Both paths are covered by
-`tools/tests/cloud_sim.js` (19 checks) and `tools/tests/api_sim.js` (27 checks).
+`tools/tests/cloud_sim.js` (30 checks) and `tools/tests/api_sim.js` (27 checks).
 
-1. `npx wrangler d1 create prontera-grind` — copy the `database_id` it prints into `wrangler.toml`
-   (the placeholder is `REPLACE_WITH_YOUR_D1_ID`).
-2. `npx wrangler d1 execute prontera-grind --remote --file migrations/0001_init.sql` — creates
-   `users`, `sessions`, `saves`, `save_history`, `messages`, `message_reads`, `grants`, `events`.
-3. Create the Pages project with **Build command** `bash tools/build_site.sh` and **Build output
-   directory** `dist`, then bind the D1 database to it as **`DB`** (Pages → Settings → Functions →
-   D1 database bindings). `_routes.json` in `dist/` sends only `/api/*` through Functions, so the
-   static site stays on the free unlimited path.
+For a **new** installation, create a D1 database named `pg`, put its ID in `wrangler.toml`, and
+apply `0001_init.sql` first. The existing Cloudflare setup already has this database/schema, so do
+not create a second database or rerun the initial setup just to ship this leaderboard.
+
+1. On the existing database, apply the leaderboard migration once:
+   `npx wrangler d1 execute pg --remote --file=migrations/0002_leaderboard.sql`
+   (or paste that SQL into the `pg` D1 console). It safely seeds all-time totals from existing cloud
+   saves; daily/weekly scores start with newly synced kills and do not backfill history. The board
+   uses Asia/Singapore calendar days and Monday-start weeks; Base Lv breaks kill-count ties. This is
+   separate from a Pages deploy and must be applied before the new API is used.
+2. For a brand-new database only, create `pg`, update `database_id` in `wrangler.toml`, then run
+   `npx wrangler d1 execute pg --remote --file=migrations/0001_init.sql` followed by the `0002`
+   command above.
+3. Create/connect the Pages project with **Build command** `bash tools/build_site.sh` and **Build
+   output directory** `dist`, then bind the D1 database to it as **`DB`** (Pages → Settings →
+   Functions → D1 database bindings). `_routes.json` in `dist/` sends only `/api/*` through Functions,
+   so the static site stays on the free unlimited path.
 4. Deploy and open the game. The login card gains "☁ Cloud accounts are on"; the first account you
    register becomes the **owner** (`gm=2`) and is shown a one-time recovery code — write it down.
 5. Sign in, play, then check it really followed you: open the game in another browser (or on a phone),
    sign in with the same username and password, and the same character should load.
 
-**Players already on the old address need one extra thing**, because a browser's saved games belong to
-the address, not to the game: on the old site use **⬇ Back up saves** on the login card, then on the
-new site **⬆ Restore a backup**, then register with the same account name — the game offers to adopt
-the progress that is already on that device. `tools/cloudflare-deploy-steps.md` §6 walks it through.
+**Players who choose to migrate a local browser save need one extra step**, because browser storage
+belongs to the address, not the game: if the old client shows **⬇ Back up saves**, export there, then
+use **⬆ Restore a backup** on the new site and register with the same account name. The game offers
+to adopt that device's progress. Older backup builds may not have those controls; retaining Render
+as a backup does not require changing it. `tools/cloudflare-deploy-steps.md` §6 has the details.
 
 ### See it working before deploying (no Cloudflare account needed)
 
@@ -109,7 +135,7 @@ That serves `dist/` and routes `/api/*` to the very same handler files Cloudflar
 same D1-shaped shim the tests use, over real HTTP with real cookies — in-memory database, so stopping
 the process wipes it. Register, play, then open the address in another browser and sign in with the
 same username and password: the character should be there. `tools/tests/dev_server_sim.js` is that
-whole trip, automated (13 checks). `npx wrangler pages dev dist` remains the official check, and is
+whole trip, automated (14 checks, including the leaderboard endpoint). `npx wrangler pages dev dist` remains the official check, and is
 the only way to test Cloudflare's own runtime (CPU limits, the real D1 binding).
 
 Day-to-day: **`/gm.html`** is the GM console (players, gifts, passwords, announcements, save

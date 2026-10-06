@@ -38,7 +38,10 @@ function makeD1(sqlite) {
 
 function freshEnv() {
   const sqlite = new DatabaseSync(':memory:');
-  sqlite.exec(fs.readFileSync(path.join(root, 'migrations', '0001_init.sql'), 'utf8'));
+  const dir = path.join(root, 'migrations');
+  for (const name of fs.readdirSync(dir).filter(n => /^\d+_.*\.sql$/.test(n)).sort()) {
+    sqlite.exec(fs.readFileSync(path.join(dir, name), 'utf8'));
+  }
   return { env: { DB: makeD1(sqlite) }, sqlite };
 }
 

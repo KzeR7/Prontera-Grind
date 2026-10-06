@@ -3657,3 +3657,15 @@ assigned for feel rather than fidelity. While reworking that, two shipped bugs s
 * **Known limits / follow-ups:** still nothing deployed — `wrangler.toml` holds the placeholder until
   the owner creates the database. `save_history` and the GM restore path are unchanged. The backup
   file is not encrypted: it is the player's own data and they are told what is in it.
+
+### 2026-10-06 — `2026-10-06 grind-v64 daily, weekly and all-time leaderboard`
+* **What changed for the player:**
+  * The dock now has a **Leaderboard** tab (shortcut **V**) with Daily, Weekly and All-time views, a refresh button, and a refresh when the tab opens. Rows show kills and current Base Lv; Base Lv breaks kill-count ties.
+  * Daily and weekly scores count positive kill gains accepted in cloud saves during the period, not lifetime kills relabelled as today's. Existing saves seed All-time only. Calendar windows use Asia/Singapore dates and Monday-start weeks.
+* **Files touched:** `index.html` (board UI, API refresh, `BUILD`), `migrations/0002_leaderboard.sql`, `functions/_lib/board.js`, `functions/api/board.js`, `functions/_lib/validate.js`, `tools/dev_server.js`, leaderboard/migration/API/UI/dev-server/publish tests, deployment notes, `wrangler.toml`, equipment-sheet build snapshot, `AGENTS.md`.
+* **Art:** no sheets were added, removed or rebuilt; `tools/montage.py` was not used.
+* **Tests:** `bash tools/build_site.sh` completed (177 files); sprite-viewer and class-skin checks current; all 29 `tools/tests/*_sim.js` suites passed, including leaderboard 6/6, migration 5/5, UI 39/39 and dev-server 14/14. Inline game JavaScript and changed JavaScript pass `node --check`; `git diff --check` is clean.
+* **Branches / PR:** `arena/1896fc9a-prontera-grind`; no PR opened and nothing pushed.
+* **Known limits / follow-ups:**
+  * The v64 code is not deployed. Apply `migrations/0002_leaderboard.sql` to the existing D1 database `pg` before Pages serves the new `/api/board`; a merge to the connected production branch `main` triggers Pages automatically. The manual steps are in `tools/cloudflare-deploy-steps.md`.
+  * Render is deliberately retained as a backup and was not changed. Away progress (4-hour cap, half-rate reward), online count (no list), and world chat in Logs remain future work, not part of this change. A future 15-second chat poll would allow up to about 15 seconds of delivery delay.
