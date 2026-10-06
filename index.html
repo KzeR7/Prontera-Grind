@@ -24,12 +24,15 @@ html, body { margin:0; padding:0; width:100vw; height:100vh; overflow:hidden; ba
 .fl{position:absolute;transform:translate(-50%,-50%);font-weight:bold;font-size:16px;white-space:nowrap;text-shadow:-1px -1px 0 #000,1px -1px 0 #000,-1px 1px 0 #000,1px 1px 0 #000}
 .fl.big{font-size:24px}
 .fl{pointer-events:none}
-/* RO-style damage: outlined golden digits; crits sit on a red spiked bubble. */
-.fl.damage,.fl.critical,.fl.incoming{font-family:Verdana,"Trebuchet MS",sans-serif;font-size:22px;font-weight:900;font-variant-numeric:tabular-nums;letter-spacing:1px;color:#ffe643!important;-webkit-text-stroke:1.5px #30221e;paint-order:stroke fill;text-shadow:1px 2px 0 #120e0b,0 0 3px #140d08;z-index:24;animation:hit-pop .24s ease-out both}
-.fl.critical{font-size:26px;color:#fff264!important;isolation:isolate}
-.fl.critical::before{content:"";position:absolute;z-index:-1;inset:-13px -19px;background:radial-gradient(ellipse,#f79b50 5%,#d83e32 43%,#a6232f 66%,#711626 100%);clip-path:polygon(50% 0%,57% 18%,70% 5%,72% 24%,88% 12%,85% 32%,100% 29%,89% 46%,100% 55%,83% 62%,91% 81%,72% 74%,65% 100%,53% 79%,39% 97%,35% 77%,16% 88%,20% 66%,0% 64%,14% 48%,1% 36%,20% 33%,12% 13%,32% 24%,40% 4%)}
-.fl.incoming{color:#ff7772!important;font-size:18px}
-.fl.skill{font:bold 14px "Trebuchet MS",sans-serif;color:#fff!important;background:#262233d9;border:1px solid #ffda7a;border-radius:4px;padding:3px 9px;letter-spacing:.2px;text-shadow:0 1px 2px #000,0 0 5px #000;box-shadow:0 2px 8px #0008;z-index:25}
+/* Keep floats pinned to the projected hit point and use readable, restrained type by damage kind. */
+.fl.damage,.fl.skill-damage,.fl.critical,.fl.incoming{position:absolute;font-family:"Trebuchet MS",Verdana,sans-serif;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:0;z-index:24;animation:hit-pop .18s ease-out both}
+.fl.damage{font-size:17px;color:#fff0a6!important;-webkit-text-stroke:.5px #4b3514;text-shadow:0 1px 2px #000,0 0 3px #000}
+.fl.skill-damage{font-size:17px;color:#c9f1ff!important;-webkit-text-stroke:.5px #123a57;text-shadow:0 1px 2px #000,0 0 4px #279cd1}
+.fl.critical{font-size:21px;color:#ffe08a!important;-webkit-text-stroke:.6px #57330a;text-shadow:0 1px 2px #000,0 0 4px #ffb52e}
+.fl.incoming{font-size:16px;color:#ff9b94!important;-webkit-text-stroke:.4px #4b1018;text-shadow:0 1px 2px #000,0 0 3px #f33}
+.fl.miss,.fl.evade{position:absolute;font:700 13px/1 "Trebuchet MS",Verdana,sans-serif;letter-spacing:.3px;padding:0;border:0;border-radius:0;background:transparent;color:#f1f3f6!important;-webkit-text-stroke:0;text-shadow:0 1px 2px #000,0 0 3px #000;box-shadow:none;z-index:25;animation:hit-pop .18s ease-out both}
+.fl.evade{color:#9eeaff!important;text-shadow:0 1px 2px #000,0 0 3px #14738a}
+.fl.skill{font:bold 14px "Trebuchet MS",sans-serif;color:#fff!important;background:linear-gradient(135deg,#30233fe8,#182b44e8);border:1px solid #b6eaff;border-radius:5px;padding:3px 9px;letter-spacing:.2px;text-shadow:0 1px 2px #000,0 0 5px #000;box-shadow:0 2px 8px #0008,0 0 8px #55dfff44;z-index:25}
 @keyframes hit-pop{0%{transform:translate(-50%,-35%) scale(.65)}65%{transform:translate(-50%,-55%) scale(1.1)}100%{transform:translate(-50%,-50%) scale(1)}}
 #tag{position:absolute;transform:translate(-50%,-100%);text-align:center;color:#fff;font:bold 12px "Trebuchet MS",sans-serif;text-shadow:-1px -1px 0 #000,1px -1px 0 #000,-1px 1px 0 #000,1px 1px 0 #000;display:none}
 #tag .bar{width:90px;height:8px;margin:2px auto 0}
@@ -110,6 +113,7 @@ button:hover{background:#ffe9a8}button:focus-visible{outline:2px solid #2f6fd6}
 .form-group { margin-bottom: 12px; text-align: left; }
 .form-group label { display: block; font-size: 11px; font-weight: bold; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.5px; }
 .form-group input { width: 100%; padding: 8px 10px; border: 1px solid var(--edge2); border-radius: 4px; background: #fffdf5; font: inherit; font-size: 13px; }
+.remember-user{display:flex;align-items:center;gap:6px;margin:-5px 0 10px;text-align:left;font-size:11px;color:#604723;cursor:pointer}.remember-user input{width:14px;height:14px;margin:0;accent-color:#7a5520;cursor:pointer}
 .login-btn { width: 100%; padding: 8px; font-weight: bold; font-size: 14px; margin-top: 6px; }
 .login-err { color: #e5484d; font-size: 12px; margin-top: 8px; min-height: 16px; font-weight: bold; }
 .login-footer { margin-top: 14px; font-size: 12px; display: flex; justify-content: space-between; gap: 8px; }
@@ -162,14 +166,22 @@ hr{border:0;border-top:1px dashed var(--edge);margin:6px 0}
 @media(max-width:560px){.ib{width:32px;height:32px;font-size:16px}#dock{gap:3px;padding:4px 6px;max-width:calc(100vw - 12px);flex-wrap:wrap;justify-content:center}.grid{grid-template-columns:repeat(5,1fr)}.skg{grid-template-columns:repeat(3,minmax(0,1fr))}.sk-master{grid-column:3}.hair-preview-card{gap:8px;padding:6px}.hair-preview-stage{flex-basis:128px;width:128px;height:138px}.hair-preview-stage canvas{width:128px;height:138px}}
 .atabs{display:flex;gap:4px;margin-bottom:14px;align-items:stretch}.atabs button{flex:1 1 0;min-width:0;height:34px;min-height:34px;padding:6px 8px;font-weight:bold;font-size:13px;line-height:20px;box-sizing:border-box}.atabs button.on{background:#ffe08a;border-color:var(--gold);height:34px;min-height:34px}
 #qp{position:absolute;right:12px;top:50%;transform:translateY(-50%);width:210px;background:rgba(30,20,10,.5);border:1px solid #ffffff44;border-radius:8px;padding:6px 8px;color:#fff;font:12px "Trebuchet MS",sans-serif;pointer-events:auto;z-index:5;line-height:1.3;display:none}#qp .pbar{margin:3px 0}
-.skg{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}.sk{position:relative;min-width:0;min-height:146px;border:1px solid var(--sk-accent,#8a6a2c);border-radius:10px;background:linear-gradient(160deg,#fffdf7,#f4e7c8);text-align:center;padding:7px 5px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:4px;line-height:1.1;box-shadow:0 2px 5px #4b35151a,inset 0 1px 0 #fff}.sk:hover{transform:translateY(-1px);box-shadow:0 4px 9px #4b35152b}.sk.off{filter:grayscale(.45);opacity:.68}.sk.sel{outline:3px solid #2f6fd6;outline-offset:1px}.sk-head{width:100%;display:flex;justify-content:space-between;align-items:center;gap:2px}.sk-kind{font:700 8px/1.2 "Trebuchet MS",sans-serif;letter-spacing:.35px;padding:2px 4px;border-radius:7px;background:#3b2a1a12;color:#604723;white-space:nowrap}.sk-paused{font:700 8px/1.2 "Trebuchet MS",sans-serif;padding:2px 4px;border-radius:7px;background:#e5484d;color:#fff}.sk .si{width:40px;height:40px;display:grid;place-items:center;border-radius:12px;border:1px solid #ffffffbb;background:radial-gradient(circle at 32% 25%,#fff 0,var(--sk-accent,#8a6a2c) 115%);font-size:24px;line-height:1;box-shadow:0 2px 5px #34200c33,inset 0 1px 0 #fff}.sk.auto-off .si{filter:grayscale(1);opacity:.55}.sk-name{width:100%;min-height:24px;font-size:10px;font-weight:700;line-height:1.15;overflow-wrap:anywhere}.sk-level{font-size:10px;color:#5c482c;white-space:nowrap}.sk button{margin-top:auto;padding:2px 9px;font-weight:bold}.sk button:disabled{opacity:.36}.sk-autocast{display:flex;align-items:center;justify-content:center;gap:4px;min-height:14px;font-size:9px;line-height:1;white-space:nowrap;cursor:pointer;color:#4b3c21}.sk-autocast input{width:12px;height:12px;margin:0;accent-color:#2f6fd6;cursor:pointer}.sk.auto-off .sk-autocast{color:#8d3939}
+.skg{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px}.sk{position:relative;min-width:0;min-height:146px;border:1px solid var(--sk-accent,#8a6a2c);border-radius:10px;background:linear-gradient(160deg,#fffdf7,#f4e7c8);text-align:center;padding:7px 5px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:4px;line-height:1.1;box-shadow:0 2px 5px #4b35151a,inset 0 1px 0 #fff}.sk:hover{transform:translateY(-1px);box-shadow:0 4px 9px #4b35152b}.sk.off{filter:grayscale(.45);opacity:.68}.sk.sel{outline:3px solid #2f6fd6;outline-offset:1px}.sk-head{width:100%;display:flex;justify-content:space-between;align-items:center;gap:2px}.sk-kind{font:700 8px/1.2 "Trebuchet MS",sans-serif;letter-spacing:.35px;padding:2px 4px;border-radius:7px;background:#3b2a1a12;color:#604723;white-space:nowrap}.sk-paused{font:700 8px/1.2 "Trebuchet MS",sans-serif;padding:2px 4px;border-radius:7px;background:#e5484d;color:#fff}.sk .si{width:48px;height:48px;display:grid;place-items:center;border:0;border-radius:13px;background:transparent;line-height:1;box-shadow:none;overflow:visible}.skill-art{display:block;width:46px;height:46px;overflow:visible;filter:drop-shadow(0 2px 2px #17101c99)}.ro-item-icon{display:block;width:30px;height:30px;object-fit:contain;image-rendering:pixelated;pointer-events:none;filter:drop-shadow(0 1px 1px #1b100c55)}.ro-icon-fallback{display:inline-block;line-height:1}.sk-detail-card{grid-column:1/-1;width:100%;cursor:default}.sk.auto-off .si{filter:grayscale(1);opacity:.55}.sk-name{width:100%;min-height:24px;font-size:10px;font-weight:700;line-height:1.15;overflow-wrap:anywhere}.sk-level{font-size:10px;color:#5c482c;white-space:nowrap}.sk button{margin-top:auto;padding:2px 9px;font-weight:bold}.sk button:disabled{opacity:.36}.sk-autocast{display:flex;align-items:center;justify-content:center;gap:4px;min-height:14px;font-size:9px;line-height:1;white-space:nowrap;cursor:pointer;color:#4b3c21}.sk-autocast input{width:12px;height:12px;margin:0;accent-color:#2f6fd6;cursor:pointer}.sk.auto-off .sk-autocast{color:#8d3939}
 .hair-preview-card{display:flex;align-items:center;gap:12px;margin:9px 0;padding:8px;border:1px solid var(--edge);border-radius:8px;background:linear-gradient(145deg,#fffdf6,#f0e2bd);box-shadow:inset 0 1px 0 #fff}.hair-preview-stage{position:relative;flex:0 0 150px;width:150px;height:160px;display:flex;align-items:center;justify-content:center;overflow:hidden;border:1px solid #c9a35b;border-radius:8px;background:radial-gradient(circle at 50% 37%,#fff9df,#d9c18b)}.hair-preview-stage canvas{display:block;width:150px;height:160px;image-rendering:pixelated}.hair-preview-loading{position:absolute;font-size:10px;color:#5d4929;text-align:center}.hair-preview-info{display:flex;flex-direction:column;gap:5px;min-width:0}.hair-preview-info .eyebrow{font-weight:bold;font-size:9px;letter-spacing:.7px;color:#89672e}.hair-preview-info b{font-size:14px;overflow-wrap:anywhere}.hair-preview-info .hair-style-label{font-weight:bold;color:#63491f;font-size:12px}.hair-controls button{min-width:40px;font-weight:bold}.hair-controls span{font-weight:bold;font-size:12px}
 .doll{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;max-width:340px;margin:8px auto;padding:10px;border-radius:10px;background:radial-gradient(#ffe9a8,#e9d39a)}
 /* v51: the selected piece's detail card (refine, cards, unequip) drops into the grid directly
    below the row that holds the clicked slot, so nothing has to be hunted for at the bottom. */
 .doll-detail,.grid-detail{grid-column:1/-1;margin:2px 0 4px;padding-top:6px;border-top:1px dashed #b98b3f}
 .grid-detail{margin:2px 0}
-#modal{position:fixed;inset:0;background:#0009;z-index:900;display:none;align-items:center;justify-content:center}
+#modal{position:fixed;inset:0;background:#0009;z-index:1200;display:none;align-items:center;justify-content:center}
+#offlineModal{position:fixed;inset:0;z-index:910;display:none;align-items:center;justify-content:center;padding:14px;background:#120e0bbd;backdrop-filter:blur(3px)}
+.offline-card{width:min(500px,94vw);max-height:calc(100vh - 28px);overflow:auto;padding:18px;background:linear-gradient(145deg,#fff9e7,#f0dfb3);border:3px solid var(--edge);border-radius:12px;box-shadow:0 0 0 3px var(--edge2),0 18px 45px #0009}
+.offline-card .eyebrow{font-size:9px;font-weight:bold;letter-spacing:1px;color:#8a672c}.offline-card h2{margin:0 0 5px;font-size:21px}.offline-card>p{margin:0 0 12px;font-size:12px;line-height:1.45;opacity:.82}
+.offline-stats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;margin:10px 0}
+.offline-stat{display:flex;flex-direction:column;gap:3px;padding:8px 10px;border:1px solid #c9a35b;border-radius:8px;background:#fffdf6;min-width:0}
+.offline-stat small{font-size:10px;color:#735a30}.offline-stat b{font-size:15px;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+#offlineDetails{padding:8px;border:1px dashed #b98b3f;border-radius:7px;background:#fff8e8;font-size:11px;line-height:1.45}
+#offlineExplanation{margin:8px 0 12px;font-size:10px;line-height:1.4;color:#66532f}
 .bts{display:flex;align-items:center;gap:4px;flex:none}.bts small{width:34px;text-align:right}.bts button{width:42px;padding:3px 0;text-align:center}
 .chip{background:#fffdf5;border:2px solid var(--edge2);border-radius:14px;padding:2px 10px;font-size:12px}
 .trow .tn{font-size:10px;padding:3px 1px;word-break:break-word}.trow{gap:3px}.trunk{height:12px}
@@ -178,7 +190,7 @@ hr{border:0;border-top:1px dashed var(--edge);margin:6px 0}
 .cell .rf{color:#fff;background:#000b;padding:0 3px;border-radius:3px;text-shadow:none}
 #qp{top:12px;transform:none}
 #wins{position:absolute;left:12px;right:12px;top:12px;bottom:76px;display:none;flex-direction:row-reverse;gap:8px;width:auto;max-width:none;min-width:0;pointer-events:none;z-index:20}
-.wp{pointer-events:auto;flex:0 1 380px;min-width:0;min-height:0;max-width:100%;display:flex;flex-direction:column;overflow:hidden}.wbody{overflow:auto;overflow-x:hidden;flex:1;min-width:0;min-height:0;scrollbar-gutter:stable;overscroll-behavior:contain}
+.wp{pointer-events:auto;flex:0 1 380px;min-width:0;min-height:0;max-width:100%;display:flex;flex-direction:column;overflow:hidden}.wp[data-win="skills"]{flex-basis:500px}.wbody{overflow:auto;overflow-x:hidden;flex:1;min-width:0;min-height:0;scrollbar-gutter:stable;overscroll-behavior:contain}
 @media(max-width:900px){#wins{flex-direction:column;align-items:stretch}.wp,.wp.wide{width:100%;min-width:0;min-height:0;flex:1 1 0}.mapband,.mapband.fields{position:static}.mapcols{grid-template-columns:1fr}}
 .gt button{padding:2px 6px}.gt button.on{background:#ffe08a;border-color:var(--gold)}
 .chooser{border:2px solid #2f6fd6;box-shadow:0 0 0 2px #2f6fd655}
@@ -261,10 +273,11 @@ button.tick.on{background:#ffe08a;border-color:var(--gold);font-weight:bold}
 <div class="atabs"><button type="button" id="tabLogin" class="on">Login</button><button type="button" id="tabReg">Register</button></div>
 <form id="loginForm" autocomplete="on">
 <div class="form-group"><label for="username">Account Name</label><input type="text" id="username" required autocomplete="username"></div>
+<label class="remember-user" for="rememberUser"><input type="checkbox" id="rememberUser"> Remember user ID on this device</label>
 <div class="form-group"><label for="password">Password</label><input type="password" id="password" required autocomplete="current-password"></div>
 <div class="form-group" id="regRow" style="display:none"><label for="password2">Confirm Password</label><input type="password" id="password2" autocomplete="new-password"></div>
 <button type="submit" id="authBtn" class="login-btn">Login</button><div id="loginErr" class="login-err"></div></form>
-<small id="loginHint">You must log in every time you open the game.</small>
+<small id="loginHint">Local accounts log in each time; an active cloud session may resume automatically.</small>
 <div id="loginCloud" style="margin-top:8px;font-size:11px;opacity:.75;text-align:center"></div>
 <div id="saveTools" style="margin-top:6px;font-size:11px;text-align:center;opacity:.9"><a href="#" id="saveDl" title="Download every character saved in this browser as one file">⬇ Back up saves</a><span style="opacity:.5"> · </span><a href="#" id="saveUp" title="Load a backup file made by this button, on any address">⬆ Restore a backup</a><input type="file" id="saveFile" accept=".json,application/json" style="display:none"></div>
 <div id="buildTag" style="margin-top:6px;font-size:10px;opacity:.55;text-align:center"></div></div></div>
@@ -290,6 +303,22 @@ button.tick.on{background:#ffe08a;border-color:var(--gold);font-weight:bold}
 <p style="font-size:11px;opacity:.8;margin:0">Nothing is deleted: the copy you do not pick stays in the account's save history and the GM console can restore it.</p>
 <div class="row" style="justify-content:center;margin-top:10px"><button id="cfThis">Keep this device</button><button id="cfCloud">Keep the cloud save</button><button id="cfLater" style="opacity:.8">Decide later</button></div>
 </div></div>
+<div id="offlineModal" role="dialog" aria-modal="true" aria-labelledby="offlineTitle" aria-describedby="offlineExplanation">
+  <div class="offline-card"><div class="eyebrow">WELCOME BACK</div><h2 id="offlineTitle">Your offline grind is ready</h2><p>Your character kept earning while you were away. These rewards have already been added to your save.</p>
+    <div class="offline-stats">
+      <div class="offline-stat"><small>Time away</small><b id="offlineAway">0m</b></div>
+      <div class="offline-stat"><small>Credited time</small><b id="offlineCredited">0m</b></div>
+      <div class="offline-stat"><small>Monsters defeated</small><b id="offlineKills">+0</b></div>
+      <div class="offline-stat"><small>Total drops</small><b id="offlineDrops">+0</b></div>
+      <div class="offline-stat"><small>EXP</small><b id="offlineExp">+0</b></div>
+      <div class="offline-stat"><small>Equipment items</small><b id="offlineItems">+0</b></div>
+      <div class="offline-stat"><small>Cards</small><b id="offlineCards">+0</b></div>
+      <div class="offline-stat"><small>Zeny</small><b id="offlineZeny">+0</b></div>
+    </div>
+    <div id="offlineDetails">No items, cards, ores or pets dropped this time.</div><p id="offlineExplanation"></p>
+    <div class="row" style="justify-content:center;margin-top:10px"><button id="offlineContinue" class="login-btn">Continue grinding</button></div>
+  </div>
+</div>
 <div id="tooltip"></div>
 <script src="assets/sprite_pack_data.js?v=1"></script>
 <script src="assets/class_skins_data.js?v=1"></script>
@@ -324,15 +353,66 @@ const heroWeaponType=(cls,allowed,equipped)=>{const choices=allowed||[],preferre
 const STATS=[['str','STR','ATK'],['agi','AGI','ASPD, Flee'],['int','INT','Skill dmg'],['dex','DEX','Hit, min dmg'],['vit','VIT','DEF, MDEF, HP'],['luk','LUK','Crit, drops']];
 // A unique, immediately scannable glyph for every skill. These are interface symbols, not
 // replacement or recoloured character-sprite art.
-const SKILL_ICON={aid:'💚',bash:'👊',provoke:'😡',fireball:'🎆',iconc:'🔭',steal:'🧤',iagi:'🐇',discount:'🏷️',spear:'⚜️',tstorm:'⛈️',falconry:'🪁',vdust:'⚗️',kyrie:'🙏',wresearch:'🔬',jointbeat:'🦴',napalm:'🔴',pharrow:'🪃',sdestroy:'🌫️',meditatio:'🧘',cboost:'🛞',endure:'🛡️',hprec:'❤️‍🩹',bowl:'🌀',pierce:'🪡',quick:'⚡',spiral:'🌪️',aura:'✨',
-  fire:'🔥',nap:'💀',coat:'💫',storm:'❄️',jup:'🌩️',amp:'📘',meteor:'☄️',grav:'🌌',mystic:'🔮',
-  dstr:'🏹',owl:'🦉',vult:'🦅',blitz:'🪶',sharp:'🎯',beast:'🐾',falcon:'🪽',focus:'🔍',sight:'👁️',
-  dbl:'⚔️',env:'☠️',dodge:'💨',sonic:'💥',grim:'🌑',katm:'🗡️',mAss:'🌠',soulb:'👻',
-  holy:'🕊️',heal:'🩺',bless:'🙌',magnus:'✝️',sanct:'💧',asp:'🕯️',judex:'⚖️',assum:'💠',gloria:'⭐',
-  mammo:'🪙',greed:'💰',phys:'💪',hammer:'🔨',adren:'🏃',wperf:'⚙️',cart:'🛒',thrust:'🔩',skin:'🪨',
-  frenzy:'🦾',dpois:'🧪',ovthrust:'📈',mbrk:'🧱',fdiver:'🧊',fnova:'🌨️',ashower:'🌧️',sandat:'🏜️',
-  signum:'☦️',cartrev:'🚚',spearboom:'🔱',tblow:'💢',vermilion:'🌋',landmine:'💣',wwalk:'🌬️',
-  vsplash:'🧨',akatar:'🔪',tundead:'⚰️',basilica:'🏛️',meltdown:'⚒️'};
+// Locally drawn fantasy ability art: no hotlinked image can collapse to the same red placeholder.
+// Each skill has its own themed pictogram; the rim, glass, glow and tiny rune studs are crisp SVG.
+const SKILL_ICON={aid:'heart',bash:'fist',endure:'shield',hprec:'heart',provoke:'roar',bowl:'spiral',pierce:'spear',quick:'bolt',spear:'spear',spiral:'spiral',aura:'halo',jointbeat:'bone',fire:'flame',nap:'shadow',coat:'ward',fireball:'fireball',storm:'snow',jup:'bolt',amp:'book',tstorm:'storm',meteor:'meteor',grav:'gravity',mystic:'orb',napalm:'flame',dstr:'arrow',iconc:'eye',owl:'eye',vult:'feather',blitz:'feather',sharp:'target',beast:'paw',falconry:'feather',falcon:'wing',focus:'target',sight:'eye',pharrow:'arrow',dbl:'blades',env:'vial',dodge:'wind',steal:'hand',sonic:'blades',grim:'shadow',katm:'blades',vdust:'poison',mAss:'meteor',soulb:'ghost',sdestroy:'ghost',holy:'cross',heal:'heart',bless:'halo',iagi:'wing',magnus:'cross',sanct:'water',asp:'flame',kyrie:'shield',judex:'bolt',assum:'ward',gloria:'sun',meditatio:'lotus',mammo:'coin',greed:'coin',phys:'muscle',discount:'tag',hammer:'hammer',adren:'bolt',wperf:'gear',wresearch:'gear',cart:'cart',thrust:'spear',skin:'rock',cboost:'wheel',frenzy:'fist',dpois:'vial',ovthrust:'shock',mbrk:'shock',fdiver:'ice',fnova:'snow',ashower:'rain',sandat:'sand',signum:'cross',cartrev:'cart',spearboom:'spear',tblow:'fist',vermilion:'flame',landmine:'mine',wwalk:'wind',vsplash:'poison',akatar:'blades',tundead:'skull',basilica:'temple',meltdown:'anvil'};
+const SKILL_TONE={heart:['#17444c','#2bb9a9','#ecfff1'],fist:['#582b32','#f06d4c','#ffe0a0'],shield:['#294e70','#4eb1e8','#e4f8ff'],roar:['#633229','#ff9651','#fff0b4'],spiral:['#364278','#9385ff','#f1ebff'],spear:['#4c3941','#e1c276','#fff3c7'],bolt:['#3e3865','#b29bff','#f8efff'],halo:['#63501e','#e8bd4d','#fff5c4'],bone:['#52403a','#d9bc8b','#fff3da'],flame:['#71331f','#ff6a2e','#ffe987'],shadow:['#33254f','#9564d8','#f1dfff'],ward:['#1d5560','#42c7c0','#e5ffff'],fireball:['#642f27','#fa7c35','#fff2a5'],snow:['#1d4d72','#59c5ff','#effcff'],book:['#49345f','#bd91ff','#fff0ff'],storm:['#174f70','#52d6ed','#ecffff'],meteor:['#5d2e51','#fa70aa','#fff0df'],gravity:['#302354','#a76dff','#f1dfff'],orb:['#343b72','#8c9cff','#f2f3ff'],arrow:['#4c3d2b','#d6b56d','#fff1c0'],eye:['#244d67','#56d6d1','#edffff'],feather:['#285644','#56c78d','#edffdf'],target:['#64432d','#f2a356','#fff2c6'],paw:['#4a5d2a','#9bca50','#f5ffd9'],wing:['#30506f','#8dd7ff','#f5ffff'],blades:['#5a3045','#f2798c','#fff0d8'],vial:['#2b5947','#7bda7c','#f2ffdc'],ghost:['#49355d','#b38bf3','#fff0ff'],cross:['#67501f','#f2cf68','#fff8d6'],water:['#184f70','#50c8f4','#e9fbff'],sun:['#72501d','#ffc643','#fff8bd'],lotus:['#5a3b73','#d38cda','#fff0ff'],coin:['#684616','#f2b62f','#fff4ad'],muscle:['#633532','#ee8667','#ffe5c3'],tag:['#63502b','#d8af57','#fff2c2'],hammer:['#493b38','#c89e76','#fff0dc'],gear:['#3d5152','#7cc3ba','#effffc'],cart:['#525032','#c3ba54','#fbffbf'],rock:['#454654','#a4a6b4','#f5f5ff'],wheel:['#3c4c60','#65a9dc','#eff9ff'],shock:['#623151','#f36199','#ffedf7'],ice:['#20527d','#74d9ff','#f0fdff'],rain:['#294b75','#76aef4','#f5fbff'],sand:['#654b29','#d5a450','#fff2c6'],mine:['#4f3646','#d07083','#ffe7dc'],temple:['#66502d','#d3b468','#fff3c9'],anvil:['#41454f','#99a4b4','#f4f6ff'],wind:['#244d5c','#55c7b9','#eaffff'],poison:['#3d5128','#a9d946','#f6ffce'],hand:['#584052','#d595bb','#fff0fb'],skull:['#4d444c','#c2b8cb','#fffaff'],rune:['#383264','#8977e7','#f5f1ff']};
+const SKILL_PICTO={
+  heart:`<path d="M24 36S10.5 27.7 10.5 19.5a6.4 6.4 0 0 1 11.4-4L24 18l2.1-2.5a6.4 6.4 0 0 1 11.4 4C37.5 27.7 24 36 24 36Z"/><path d="M15 23h5l2.2-4.2 3.6 8 2.2-4H33" fill="none" stroke="#fff" stroke-width="1.4"/>`,
+  fist:`<path d="M12 25v-6a3 3 0 0 1 5.5-1.6 3.1 3.1 0 0 1 5.3-1.6 3.1 3.1 0 0 1 5.4.1 3.1 3.1 0 0 1 5.8 1.5v8.2c0 5.1-3.9 8.4-9 8.4h-2.8c-3.8 0-5.4-2-7.1-4.6L12 25Z"/><path d="M17.5 17v7m5.3-8v8m5.4-7v7" fill="none" stroke="#fff" stroke-width="1.3"/>`,
+  shield:`<path d="M24 8 36 12v9.4c0 7-4.6 12.2-12 17-7.4-4.8-12-10-12-17V12l12-4Z"/><path d="m17 24 4.4 4.4L31.5 18" fill="none" stroke="#fff" stroke-width="2.2"/>`,
+  roar:`<path d="M13 28c4-1 5-3.8 5-7.8 0-5.2 5.2-8.2 10.2-5.1l7.3 4.4-6.2 2.1 4.4 3.7-7.1 1.1c-3 5.2-8.3 7.6-13.6 6.1l3-3.1-3-1.4Z"/><path d="M10 17h3m-5 5h4m-3 5h4" fill="none" stroke="#fff" stroke-width="1.5"/>`,
+  spiral:`<path d="M24 10c-9 0-14 6.2-14 13.3 0 6.3 4.5 11.1 10.6 11.1 5.2 0 8.2-3.5 8.2-7.2 0-3.1-2-5.4-4.9-5.4-2.2 0-3.7 1.4-3.7 3.4" fill="none" stroke="currentColor" stroke-width="3"/><path d="M24 10c5.7 0 10 2.9 12.6 7.3M31 11l5.7 6.3-8.1.4" fill="none" stroke="#fff" stroke-width="1.3"/>`,
+  spear:`<path d="m24 7 7.2 10-5.1 1.1v16.5h-4.2V18.1L16.8 17 24 7Z"/><path d="m17 32-3 5m17-5 3 5M19 23h10" fill="none" stroke="#fff" stroke-width="1.5"/>`,
+  bolt:`<path d="M27 7 13 25h9l-2 16 15-21h-9l1-13Z"/><path d="m26 12-7 10h8l-4 11" fill="none" stroke="#fff" stroke-width="1.1"/>`,
+  halo:`<ellipse cx="24" cy="14" rx="11" ry="4.2" fill="none" stroke="currentColor" stroke-width="2.2"/><path d="M24 19v15m-7-5 7 5 7-5" fill="none" stroke="#fff" stroke-width="2"/><path d="M24 8V5m-14 9-3-1m31 1 3-1" fill="none" stroke="#fff" stroke-width="1.4"/>`,
+  bone:`<path d="M16 16a4 4 0 1 0-5.6 5.6 4 4 0 0 0 5.6 5.6l11-11a4 4 0 0 0 5.6-5.6 4 4 0 0 0-5.6-5.6L16 16Z" transform="translate(0 4)"/><path d="m18 22 4 4m3-9 4 4" fill="none" stroke="#fff" stroke-width="1.4"/>`,
+  flame:`<path d="M25 7c2.1 7-2.1 8.8-1.2 12 1.2-2.4 4.1-3.3 5.3-7.1C35 17 37 22 35 28.3c-1.6 5.1-6 8.2-11 8.2-6.6 0-11-4.7-11-10.7 0-5 3-9 7.2-12.2-.2 4.1 1.2 5.7 2.2 6.2C24 16.7 21.8 12.7 25 7Z"/><path d="M24 32c-3.7-2.7-2-6.2.3-8.6 0 2.5 3.9 3.6 3.9 6.2 0 2-1.7 3.4-4.2 2.4Z" fill="#fff2b0" stroke="none"/>`,
+  shadow:`<path d="M30.4 9.4a15.6 15.6 0 1 0 8.1 20.4A13 13 0 0 1 30.4 9.4Z"/><path d="m19 17 2 2m-7 7 2 1m14-11 1.5 2" stroke="#fff" stroke-width="1.6"/>`,
+  ward:`<circle cx="24" cy="24" r="13" fill="none" stroke="currentColor" stroke-width="3"/><path d="m24 13 8 4v6.5c0 4.6-3.1 7.7-8 11-4.9-3.3-8-6.4-8-11V17l8-4Z"/><path d="m20 24 3 3 6-7" fill="none" stroke="#fff" stroke-width="1.7"/>`,
+  fireball:`<circle cx="24" cy="25" r="10"/><path d="M22 29c-5-5 1-8 1-14 5 4 4 6 4 8 3-3 3-5 3-7 5 5 6 10 2 15-3 4-8 4-11-2Z" fill="#fff0a5" stroke="none"/><path d="m13 34-4 3m24-24 4-4m-24 8-4-2" stroke="#fff" stroke-width="1.4"/>`,
+  snow:`<path d="M24 9v30M11 16l26 16M11 32l26-16M20 11l4 4 4-4m-8 26 4-4 4 4M11 21l6-1-1-6m21 19-6 1 1 6M11 27l6 1-1 6m21-18-6-1 1-6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>`,
+  book:`<path d="M11 13c5-2 9-1 13 2 4-3 8-4 13-2v22c-5-2-9-1-13 2-4-3-8-4-13-2V13Z"/><path d="M24 15v20m-9-15 5 1m-5 5 5 1m8-7 5-1m-5 6 5-1" fill="none" stroke="#fff" stroke-width="1.4"/>`,
+  storm:`<path d="M13 27h21a6 6 0 0 0 .2-12 10.5 10.5 0 0 0-19-1.4A7 7 0 0 0 13 27Z"/><path d="m25 23-5 8h5l-2 8 8-12h-5l2-4Z" fill="#fff6bd" stroke="none"/>`,
+  meteor:`<path d="m28 11 8 8-11 11-8-8 11-11Z"/><path d="m17 26-6 7m12-4-3 6m-9-13-4 4m18-17 1-5m8 16 5 1" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"/>`,
+  gravity:`<circle cx="24" cy="24" r="7" fill="#171324" stroke="#fff" stroke-width="1.5"/><ellipse cx="24" cy="24" rx="16" ry="7" fill="none" stroke="currentColor" stroke-width="2.4" transform="rotate(-28 24 24)"/><ellipse cx="24" cy="24" rx="16" ry="7" fill="none" stroke="#fff" stroke-opacity=".7" stroke-width="1.1" transform="rotate(42 24 24)"/>`,
+  orb:`<circle cx="24" cy="24" r="10"/><circle cx="24" cy="24" r="15" fill="none" stroke="#fff" stroke-width="1.5" stroke-dasharray="2 3"/><path d="m24 15 2.6 6.4L33 24l-6.4 2.6L24 33l-2.6-6.4L15 24l6.4-2.6L24 15Z" fill="#fff4bc" stroke="none"/>`,
+  arrow:`<path d="M11 31 32 10l3 3-21 21-3-3Z"/><path d="m26 10 12-2-2 12-4-4-5 5-4-4 5-5-2-2Zm-6 14 4 4-8 8-4-4 8-8Z"/><path d="m11 31-2 8 8-2" fill="none" stroke="#fff" stroke-width="1.5"/>`,
+  eye:`<path d="M7 24s6.2-10 17-10 17 10 17 10-6.2 10-17 10S7 24 7 24Z"/><circle cx="24" cy="24" r="6" fill="#fff"/><circle cx="24" cy="24" r="2.5" fill="#28303d" stroke="none"/>`,
+  feather:`<path d="M35 10c-13 0-22 7-22 17 0 5 3 8 7 8 10 0 17-13 15-25Z"/><path d="m13 37 14-16m-8 9-1-7m7 1 6-1m-9 9 1-6" fill="none" stroke="#fff" stroke-width="1.5"/>`,
+  target:`<circle cx="24" cy="24" r="14" fill="none" stroke="currentColor" stroke-width="2.4"/><circle cx="24" cy="24" r="7" fill="none" stroke="#fff" stroke-width="1.7"/><path d="M24 7v8m0 18v8M7 24h8m18 0h8m-17-6 3 6-3 6 6-3 6 3-3-6 3-6-6 3-6-3Z" fill="none" stroke="#fff" stroke-width="1.4"/>`,
+  paw:`<ellipse cx="24" cy="29" rx="9" ry="7"/><ellipse cx="13" cy="18" rx="3.8" ry="5"/><ellipse cx="21" cy="14" rx="3.8" ry="5"/><ellipse cx="29" cy="14" rx="3.8" ry="5"/><ellipse cx="36" cy="19" rx="3.4" ry="4.5"/>`,
+  wing:`<path d="M8 30c6-1 9-9 11-17 4 5 5 9 5 13 4-4 8-7 14-8-2 8-8 15-17 18l-2-6-7 4-4-4Z"/><path d="m13 30 7 0m-2-6 8 4m1-8 5 3" fill="none" stroke="#fff" stroke-width="1.3"/>`,
+  blades:`<path d="m14 10 8 8-8 17-4-4 6-13-5-5 3-3Zm20 0-8 8 8 17 4-4-6-13 5-5-3-3Z"/><path d="m18 18 12 12m0-12L18 30" fill="none" stroke="#fff" stroke-width="1.2"/>`,
+  vial:`<path d="M19 9h10v5l-2 3v3l7 11a4 4 0 0 1-3.4 6H17.4a4 4 0 0 1-3.4-6l7-11v-3l-2-3V9Z"/><path d="M18 28h12l3 5H15l3-5Zm2-15h8" fill="none" stroke="#fff" stroke-width="1.5"/>`,
+  ghost:`<path d="M12 35V21a12 12 0 0 1 24 0v14l-5-3-4 4-4-4-5 4-3-4-3 3Z"/><circle cx="20" cy="22" r="2" fill="#fff" stroke="none"/><circle cx="29" cy="22" r="2" fill="#fff" stroke="none"/><path d="M21 29q3 3 6 0" fill="none" stroke="#fff" stroke-width="1.5"/>`,
+  cross:`<path d="M20 9h8v11h11v8H28v11h-8V28H9v-8h11V9Z"/><path d="M24 12v8m-11 4h7m8 0h7m-11 8v7" fill="none" stroke="#fff" stroke-width="1.4"/>`,
+  water:`<path d="M24 7c-3 7-12 15-12 22a12 12 0 0 0 24 0c0-7-9-15-12-22Z"/><path d="M18 29c1 4 3 5 6 6m5-17 3 5" fill="none" stroke="#fff" stroke-width="1.6"/>`,
+  sun:`<circle cx="24" cy="24" r="8"/><path d="M24 7v5m0 24v5M7 24h5m24 0h5M12 12l4 4m16 16 4 4m0-24-4 4m-16 16-4 4" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/>`,
+  lotus:`<path d="M24 34c-8-4-13-11-12-18 6 1 10 5 12 11 2-6 6-10 12-11 1 7-4 14-12 18Zm-2-6c-6-8-6-14-3-20 4 3 6 8 5 14 1-6 4-11 8-14 3 6 3 12-3 20"/><path d="M10 35q14 7 28 0" fill="none" stroke="#fff" stroke-width="1.5"/>`,
+  coin:`<circle cx="24" cy="24" r="14"/><circle cx="24" cy="24" r="10" fill="none" stroke="#fff" stroke-width="1.3"/><path d="M28 17c-1-2-8-2-8 2 0 5 9 2 9 7 0 4-7 6-11 2m6-14v20" fill="none" stroke="#fff7ca" stroke-width="2"/>`,
+  muscle:`<path d="M12 29c4-1 5-5 6-9l5-4 3 3 5-1 5 5-2 5 3 4-5 4H19l-7-3v-4Z"/><path d="m19 19 3 5m8-3-3 4m-9 7h12" fill="none" stroke="#fff" stroke-width="1.5"/>`,
+  tag:`<path d="M10 13V9h15l14 14-14 14L10 22v-9Z"/><circle cx="19" cy="16" r="2.3" fill="#fff" stroke="none"/><path d="m22 28 5-9m-7 3 3 2m5 3 3 2" fill="none" stroke="#fff" stroke-width="1.4"/>`,
+  hammer:`<path d="m13 11 7-4 10 8-4 6-4-3-9 16-5-3 10-16-5-4Zm16 13 5 3-4 8-5-3 4-8Z"/><path d="m13 11 5 4m9 6 4 2" fill="none" stroke="#fff" stroke-width="1.5"/>`,
+  gear:`<path d="m21 7 6 0 1.5 4.3 3.2 1.8 4.4-1.1 3 5.2-3 3.4v3.8l3 3.4-3 5.2-4.4-1.1-3.2 1.8L27 38h-6l-1.5-4.3-3.2-1.8-4.4 1.1-3-5.2 3-3.4v-3.8l-3-3.4 3-5.2 4.4 1.1 3.2-1.8L21 7Z"/><circle cx="24" cy="24" r="6" fill="none" stroke="#fff" stroke-width="2"/>`,
+  cart:`<path d="M9 11h4l4 18h17l4-13H16" fill="none" stroke="currentColor" stroke-width="2.6"/><circle cx="20" cy="35" r="2.5"/><circle cx="32" cy="35" r="2.5"/><path d="M20 20h12m-10 5h9" stroke="#fff" stroke-width="1.3"/>`,
+  rock:`<path d="m8 33 7-15 7 4 6-11 12 22H8Z"/><path d="m17 22 5 4 6-11m1 9 5 7" fill="none" stroke="#fff" stroke-width="1.5"/>`,
+  wheel:`<circle cx="24" cy="24" r="14" fill="none" stroke="currentColor" stroke-width="3"/><circle cx="24" cy="24" r="4"/><path d="M24 10v10m0 8v10M10 24h10m8 0h10M14 14l7 7m6 6 7 7m0-20-7 7m-6 6-7 7" fill="none" stroke="#fff" stroke-width="1.4"/>`,
+  shock:`<path d="m24 6 4.5 10 10.5-3-5 10 8 6-11 1-2 12-7-9-10 5 4-11-9-6 11-1 2-12 7 8 7-10Z"/><circle cx="24" cy="24" r="5" fill="#fff1ae" stroke="none"/>`,
+  ice:`<path d="M14 13 24 7l10 6-3 22-7 5-7-5-3-22Z"/><path d="m17 16 7 5 7-5m-7 5v16m-7-10 7-6 7 6" fill="none" stroke="#fff" stroke-width="1.5"/>`,
+  rain:`<path d="M12 25h23a6 6 0 0 0 0-12 10 10 0 0 0-18-1 7 7 0 0 0-5 13Z"/><path d="m17 29-2 5m10-5-2 5m10-5-2 5" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/>`,
+  sand:`<path d="M8 33q8-8 16 0 8-8 16 0M10 26q7-6 14 0 7-6 14 0" fill="none" stroke="currentColor" stroke-width="2.6"/><circle cx="15" cy="17" r="2"/><circle cx="31" cy="14" r="1.7"/><path d="m24 8 2 4h-4l2-4Z"/>`,
+  mine:`<path d="m24 8 13 8v14l-13 8-13-8V16l13-8Z"/><path d="m24 15 2.4 6.2L33 24l-6.6 2.4L24 33l-2.4-6.6L15 24l6.6-2.8L24 15Z" fill="#fff0a5"/><path d="m11 11-4-4m30 2 4-4m-3 32 4 3" fill="none" stroke="#fff" stroke-width="1.5"/>`,
+  temple:`<path d="m8 18 16-9 16 9H8Zm4 3h4v13h-4V21Zm10 0h4v13h-4V21Zm10 0h4v13h-4V21ZM9 37h30"/><path d="M15 16h18" fill="none" stroke="#fff" stroke-width="1.4"/>`,
+  anvil:`<path d="M12 15h12l3 5 11 2-5 6H21l-3 5h-5l4-9-5-5v-4Zm5 18h17l3 4H14l3-4Z"/><path d="M12 15h12m-5 12h13" fill="none" stroke="#fff" stroke-width="1.3"/>`,
+  wind:`<path d="M9 17h21c5 0 5-7 0-7-2 0-3 1-3 3M7 24h29c5 0 5 7 0 7-2 0-3-1-3-3M11 31h11" fill="none" stroke="currentColor" stroke-width="2.7" stroke-linecap="round"/><path d="M27 10c2-2 6-1 7 2m0 18c-1 3-4 4-7 2" fill="none" stroke="#fff" stroke-width="1.2"/>`,
+  poison:`<path d="M14 34 34 14M14 14l20 20" stroke="#fff" stroke-width="2"/><path d="M17 15a4 4 0 1 1 8 0v4l8 12a4 4 0 0 1-3 6H18a4 4 0 0 1-3-6l8-12v-4"/><path d="M19 29h10" fill="none" stroke="#fff" stroke-width="1.5"/>`,
+  hand:`<path d="M13 23v-6a2.6 2.6 0 0 1 5.2 0v5-9a2.6 2.6 0 0 1 5.2 0v9-7a2.6 2.6 0 0 1 5.2 0v8-5a2.5 2.5 0 0 1 5 0v9c0 6-4.2 10-10 10h-2c-3.5 0-5-2-7.5-5L10 27a2.3 2.3 0 0 1 3-3Z"/><path d="M18 22h15" fill="none" stroke="#fff" stroke-width="1.2"/>`,
+  skull:`<path d="M24 8a14 14 0 0 0-9 24v5h18v-5a14 14 0 0 0-9-24Z"/><circle cx="19" cy="23" r="3" fill="#fff"/><circle cx="29" cy="23" r="3" fill="#fff"/><path d="M22 31h4m-5-4 3 3 3-3" fill="none" stroke="#fff" stroke-width="1.5"/>`,
+  rune:`<path d="m24 8 14 8v16l-14 8-14-8V16l14-8Z"/><path d="M17 30V18l7 8 7-8v12M17 18h14" fill="none" stroke="#fff" stroke-width="2"/>`
+};
+const skillIcon=id=>{const motif=SKILL_ICON[id]||'rune',tone=SKILL_TONE[motif]||SKILL_TONE.rune,key='skgem-'+String(id).replace(/[^a-z0-9_-]/gi,''),art=SKILL_PICTO[motif]||SKILL_PICTO.rune;
+  return`<svg class="skill-art motif-${motif}" data-motif="${motif}" viewBox="0 0 48 48" aria-hidden="true" focusable="false"><defs><radialGradient id="${key}-core" cx="32%" cy="20%" r="88%"><stop stop-color="${tone[2]}"/><stop offset=".28" stop-color="${tone[1]}"/><stop offset="1" stop-color="${tone[0]}"/></radialGradient><linearGradient id="${key}-rim" x1="0" y1="0" x2=".85" y2="1"><stop stop-color="#fff3c9"/><stop offset=".2" stop-color="#c29b5c"/><stop offset=".55" stop-color="#59412d"/><stop offset=".82" stop-color="#e3c27d"/><stop offset="1" stop-color="#634424"/></linearGradient></defs><circle cx="24" cy="24" r="22.4" fill="#100c15" stroke="#07060b" stroke-width="1.2"/><circle cx="24" cy="24" r="20.9" fill="url(#${key}-rim)"/><circle cx="24" cy="24" r="18.5" fill="#251d2c" stroke="#fff0bd" stroke-opacity=".6" stroke-width=".55"/><circle cx="24" cy="24" r="16.8" fill="url(#${key}-core)" stroke="#fff" stroke-opacity=".35" stroke-width=".65"/><path d="M12 18c2-6 7-10 12-10-5 2-8 5-10 11Z" fill="#fff" opacity=".28"/><circle cx="8.1" cy="24" r="1" fill="#fff0bc"/><circle cx="39.9" cy="24" r="1" fill="#fff0bc"/><g color="${tone[2]}" fill="currentColor" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${art}</g><path d="m24 5 1 2-1 2-1-2 1-2Zm0 34 1 2-1 2-1-2 1-2Z" fill="#fff3c6"/></svg>`};
 // The CDM affix stays in the roll pool. Only its final GEAR-AFFIX output is scaled to 70%
 // after the original rounded roll (100 -> 70); AB.cdm remains .7 so existing card values/effects
 // are untouched. The range chart mirrors this last-step scale exactly.
@@ -362,7 +442,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // script block, which is a SyntaxError - the game did not run on main at all. One line wins, and
 // it names both sides of this merge: the v38 balance patch (the weapon cut, the affix/card
 // give-back) and main's weapon-hold rendering work.
-const BUILD='2026-10-06 grind-v64 daily, weekly and all-time leaderboard';   // shown on the login card - confirms which file you loaded
+const BUILD='2026-10-07 grind-v67 measured movement, combat floats and server-timed offline rewards';   // shown on the login card - confirms which file you loaded
 $('buildTag').textContent='build '+BUILD;
 
 // ---------- class tree: Novice -> 6 first jobs -> 6 second jobs -> 6 third jobs ----------
@@ -916,6 +996,7 @@ const ARM=['armor','head','off','leg','acc'],gearSlot=x=>ARM.includes(x.k)?x.k:'
 // The bag holds 1000 items. Loot is refused once it is full (the drop stays on the ground and
 // is reported) so a long farm cannot silently grow an unbounded save.
 const BAGMAX=1000;
+const OFFLINE_CAP_MS=4*60*60*1000,OFFLINE_REWARD_MULT=.5,OFFLINE_POPUP_MIN_MS=60000,OFFLINE_RATE_SAMPLE_MS=60000,OFFLINE_RATE_CAP=30000;
 // Rarity is a property of WHERE an item drops, not of the roll - and the MAP decides it, at every
 // stage it has. A low map never rolls above its own band, so a Prontera field can never hand out
 // Rare or Epic gear; the only route to Legendary is a Stage 10 boss, on any map. Only the
@@ -956,7 +1037,7 @@ function fieldOf(m,l){const mp=MAPS[m],sec=secField(m,l),T=gearPool(m,l),n=T.len
   // three gear rolls per mob, spread across the pool so two mobs on one field do not pay out
   // the same item; gear is the common drop and a card is the rare one.
   const mobs=[0,1].map(j=>{const mm=mp.mobs[(l-1+j)%mp.mobs.length],cg=l<=3?0:l<=7?1:2;
-    return{...mm,tier:ft,drops:[[T[(l*3+2*j)%n],1.5],[T[(l*3+2*j+1)%n],1.2],[T[(l*3+2*j+2)%n],.9]],card:{n:mm.n+' Card',stat:cardStat(cg,(m*10+l+j)*3+1),g:cg},cardCh:.15,ore:l===10,oreCh:l===10?.01:0}});
+    return{...mm,tier:ft,drops:[[T[(l*3+2*j)%n],1.5],[T[(l*3+2*j+1)%n],1.2],[T[(l*3+2*j+2)%n],.9]],card:{n:mm.n+' Card',stat:cardStat(cg,(m*10+l+j)*3+1),g:cg},cardCh:.15,ore:true,oreCh:l===10?.01:.005}});
   return{m,l,sec,tier:ft,mobs,boss:l===10?{...mp.boss,tier:ft,
     // v57: the boss still lists its whole pool - every item stays obtainable - but the pool now
     // totals ~6% per boss instead of one 1% roll per entry (13 entries used to mean 13%). The
@@ -1146,7 +1227,7 @@ const uid=()=>Date.now()+Math.random(),rnd=(a,b)=>a+Math.random()*(b-a),ri=(a,b)
 // One roll fills both slots. The second pick is made from the skills the first did not take, so
 // the two can never match and there is no retry loop to spin if the dice are pinned.
 const PET_SKILL_WEIGHTS=[.35,.35,1,1,1,1,1,1,1,1,1,1],rollPetSkills=()=>{const a=pickW(PET_SKILL_WEIGHTS),rest=PET_SKILL_WEIGHTS.map((w,i)=>i).filter(i=>i!==a),b=rest[pickW(rest.map(i=>PET_SKILL_WEIGHTS[i]))];return[PET_SKILLS[a].id,PET_SKILLS[b].id]};
-const fresh=()=>({pets:[],cls:'Novice',sex:'m',hair:0,lv:1,exp:0,hp:100,zeny:0,kills:0,indexXp:0,mobKills:{},equippedTitle:null,cardIndex:emptyCardIndex(),dmg:0,pts:10,jobs:{Novice:{jl:1,jx:0}},sk:{aid:1},skOff:{},dmgShort:true,dmgShow:true,base:{},mp:0,lvl:1,prog:[1,1,1,1,1],kl:0,auto:true,adv:true,feed:true,clickSell:false,bg:true,autoSell:[false,false,false,false,false],logOff:{},q:null,cards:[],ore:{ori:0,elu:0},gm:false,gmx:100,
+const fresh=()=>({pets:[],cls:'Novice',sex:'m',hair:0,lv:1,exp:0,hp:100,zeny:0,kills:0,indexXp:0,mobKills:{},equippedTitle:null,cardIndex:emptyCardIndex(),dmg:0,pts:10,jobs:{Novice:{jl:1,jx:0}},sk:{aid:1},skOff:{},dmgShort:true,dmgShow:true,base:{},mp:0,lvl:1,prog:[1,1,1,1,1],kl:0,auto:true,adv:true,feed:true,clickSell:false,bg:true,autoSell:[false,false,false,false,false],logOff:{},q:null,cards:[],ore:{ori:0,elu:0},offlineAt:0,offlineKph:0,offlineRateAt:0,offlineRateKills:0,offlineKillRemainder:0,gm:false,gmx:100,
   st:{str:1,agi:1,dex:1,luk:1,int:1,vit:1},eq:{weapon:{id:1,slot:'weapon',wt:'dagger',tier:0,val:5,name:'Novice Knife',aff:[],slots:1,cards:[],sec:0},armor:null,head:null,off:null,leg:null,acc1:null,acc2:null},inv:[]});
 const saveKey=()=>'pg_save3_'+currentUser;
 const num_= (v,d)=>{v=+v;return Number.isFinite(v)?v:d};
@@ -1166,6 +1247,7 @@ function load(){try{const s=JSON.parse(lsGet(saveKey()));if(s&&s.lv){const F=fre
   if(!f.logOff||typeof f.logOff!=='object'||Array.isArray(f.logOff))f.logOff={};
   for(const k of['str','agi','dex','luk','int','vit'])f.st[k]=Math.max(1,Math.min(MAXST,num_(f.st[k],1)));
   f.ore={ori:num_(f.ore&&f.ore.ori,0),elu:num_(f.ore&&f.ore.elu,0)};
+  f.offlineAt=Math.max(0,Math.floor(num_(f.offlineAt,0)));f.offlineKph=cl(num_(f.offlineKph,0),0,OFFLINE_RATE_CAP);f.offlineRateAt=Math.max(0,Math.floor(num_(f.offlineRateAt,0)));f.offlineRateKills=safeCount(f.offlineRateKills);f.offlineKillRemainder=cl(num_(f.offlineKillRemainder,0),0,.999999);
   if(!Array.isArray(f.prog)||!f.prog.length)f.prog=F.prog.slice();else f.prog=f.prog.map(v=>num_(v,1));
   while(f.prog.length<MAPS.length)f.prog.push(1);
   f.mp=Math.max(0,Math.min(MAPS.length-1,Math.floor(f.mp||0)));f.lvl=Math.max(1,Math.min(10,Math.floor(f.lvl||1)));
@@ -1236,12 +1318,26 @@ function load(){try{const s=JSON.parse(lsGet(saveKey()));if(s&&s.lv){const F=fre
     n.type=type;n.goal=Math.max(1,Math.floor(+n.goal||1));n.prog=Math.max(0,Math.floor(+n.prog||0));
     n.z=Math.max(0,Math.floor(+n.z||0));n.xp=Math.max(0,Math.floor(+n.xp||0));return n});
   repairMastery(f);return f}}catch(e){}return fresh()}
-function save(){if(!currentUser||!S)return;lsPut(saveKey(),JSON.stringify(S));cloudTouch()}
+function offlineRateSample(now=Date.now()){
+  if(!S)return;const kills=safeCount(S.kills),at=Number(S.offlineRateAt)||0,base=safeCount(S.offlineRateKills);
+  if(!at||now<at||kills<base){S.offlineRateAt=now;S.offlineRateKills=kills;return}
+  const elapsed=now-at;if(elapsed<OFFLINE_RATE_SAMPLE_MS)return;
+  S.offlineKph=cl((kills-base)*3600000/elapsed,0,OFFLINE_RATE_CAP);S.offlineRateAt=now;S.offlineRateKills=kills;
+}
+function save(){if(!currentUser||!S)return;const now=Date.now();offlineRateSample(now);S.offlineAt=now;lsPut(saveKey(),JSON.stringify(S));cloudTouch()}
+function offlinePlan(lastAt,now,rateKph,remainder=0){
+  const start=Number(lastAt),current=Number(now),awayMs=Number.isFinite(start)&&Number.isFinite(current)?Math.max(0,current-start):0,carry=cl(Number(remainder)||0,0,.999999);
+  if(!start||awayMs<OFFLINE_POPUP_MIN_MS)return{show:false,awayMs,creditedMs:0,kills:0,remainder:carry,rateKph:0};
+  const creditedMs=Math.min(awayMs,OFFLINE_CAP_MS),rateKphSafe=cl(Number(rateKph)||0,0,OFFLINE_RATE_CAP);
+  const budget=rateKphSafe*creditedMs/3600000*OFFLINE_REWARD_MULT+carry,kills=Math.max(0,Math.floor(budget));
+  return{show:true,awayMs,creditedMs,kills,remainder:budget-kills,rateKph:rateKphSafe};
+}
 
 // ---------- accounts (stored in this browser; real cross-device accounts need a server) ----------
 const mem={};
 const lsGet=k=>{try{return localStorage.getItem(k)}catch(e){return mem[k]||null}};
 function lsPut(k,v){try{localStorage.setItem(k,v)}catch(e){mem[k]=v}}
+function lsDel(k){try{localStorage.removeItem(k)}catch(e){delete mem[k]}}
 const getAcc=()=>{try{return JSON.parse(lsGet('pg_acc4')||'{}')}catch(e){return{}}};
 const setAcc=a=>lsPut('pg_acc4',JSON.stringify(a));
 function hashPw(p){let h1=0xdeadbeef,h2=0x41c6ce57;const s='pg4:'+p;for(let i=0;i<s.length;i++){const c=s.charCodeAt(i);h1=Math.imul(h1^c,2654435761);h2=Math.imul(h2^c,1597334677)}
@@ -1260,42 +1356,57 @@ const gmHash=p=>{let h=hashPw('pg-gm:'+p);for(let i=0;i<GM_ROUNDS;i++)h=hashPw(h
 // client-side door - anyone with devtools can set S.gm on their own copy - so the real GM account
 // arrives with the server: tools/gm-panel-plan.md.
 const gmOk=p=>{const h=gmHash(p);if(h===String(GM_PASS_HASH))return true;const local=lsGet('pg_gm_local');return !!(local&&h===local)};
+const REMEMBER_USER_KEY='pg_remember_user';
+function rememberUserId(id,force=false){
+  const field=$('username'),check=$('rememberUser'),name=String(id==null&&field?field.value:id||'').trim();
+  if(force&&check)check.checked=true;
+  if(check&&check.checked){if(name)lsPut(REMEMBER_USER_KEY,name)}else lsDel(REMEMBER_USER_KEY);
+}
+function restoreRememberedUser(){
+  const field=$('username'),check=$('rememberUser'),name=lsGet(REMEMBER_USER_KEY);
+  if(name&&field&&check){field.value=name;check.checked=true}
+  if(field)field.addEventListener('input',()=>{if(check&&check.checked)rememberUserId(field.value)});
+  if(check)check.addEventListener('change',()=>rememberUserId(field.value));
+}
+restoreRememberedUser();
 let authMode='login';
 function showErr(m,ok){const e=$('loginErr');e.textContent=m;e.style.color=ok?'#2a9d3f':'#e5484d'}
 function setMode(m){authMode=m;$('tabLogin').classList.toggle('on',m==='login');$('tabReg').classList.toggle('on',m==='reg');$('regRow').style.display=m==='reg'?'block':'none';
   $('authBtn').textContent=m==='reg'?'Create Account':'Login';$('password').autocomplete=m==='reg'?'new-password':'current-password';$('password2').required=m==='reg';showErr('')}
-function submitAuth(e){
+function submitAuth(e,confirmed=false){
   if(e)e.preventDefault();
   try{
     const u=$('username').value.trim(),p=$('password').value.trim();if(!u||!p)return showErr('Enter a username and password.');
     const isGM=u.toLowerCase()===String(GM_USER).toLowerCase();
     if(authMode==='reg'){
       if(isGM){setMode('login');return showErr('That name is reserved. Switched to Login — use the GM password.')}
-      if(CLOUD.api){                       // v62: real server accounts when the API is present
-        if(!/^[A-Za-z0-9_.-]{2,16}$/.test(u))return showErr('Username: 2-16 letters, numbers, _ . -');
-        if($('password2').value.trim()!==p)return showErr('Passwords do not match.');
-        return cloudAuth(u,p,true);
-      }
       if(!/^[A-Za-z0-9_.-]{2,16}$/.test(u))return showErr('Username: 2-16 letters, numbers, _ . -');
-      if(p.length<4)return showErr('Password must be at least 4 characters.');
+      if(p.length<(CLOUD.api?10:4))return showErr(CLOUD.api?'Cloud passwords must be at least 10 characters.':'Password must be at least 4 characters.');
+      if(p.length>200)return showErr('Password is too long.');
       if($('password2').value.trim()!==p)return showErr('Passwords do not match.');
+      if(!confirmed){
+        const where=CLOUD.api?'This cloud account can be used on other devices.':'This local account is stored in this browser only.';
+        return ask(`Create the account “${u}”?\n\n${where}`,()=>submitAuth(null,true),{yes:'Create account',no:'Cancel'});
+      }
+      if(CLOUD.api)return cloudAuth(u,p,true);
       const acc=getAcc();if(Object.keys(acc).some(k=>k.toLowerCase()===u.toLowerCase()))return showErr('That username is already taken.');
       acc[u]=hashPw(p);setAcc(acc);if(!getAcc()[u])return showErr('Could not save the account (browser storage blocked).');
-      setMode('login');$('password').value='';$('password2').value='';showErr('Account created! Now log in.',true);return}
-    if(isGM){if(!gmOk(p))return showErr('Incorrect GM password.');currentUser=GM_USER;initSession(true);return}
+      rememberUserId(u,true);setMode('login');$('password').value='';$('password2').value='';currentUser=u;return initSession(false,true)}
+    if(isGM){if(!gmOk(p))return showErr('Incorrect GM password.');rememberUserId(u);currentUser=GM_USER;initSession(true);return}
     if(CLOUD.api)return cloudAuth(u,p,false);
     const acc=getAcc(),key=Object.keys(acc).find(k=>k.toLowerCase()===u.toLowerCase());
     if(!key)return showErr('Account not found. Use the Register tab first.');
     if(acc[key]!==hashPw(p))return showErr('Incorrect password.');
-    currentUser=key;initSession(false);
+    rememberUserId(key);currentUser=key;initSession(false);
   }catch(err){showErr('Error: '+err.message)}
 }
+$('loginForm').addEventListener('submit',submitAuth);$('tabLogin').onclick=()=>setMode('login');$('tabReg').onclick=()=>setMode('reg');
 function logout(){save();cloudLogout();location.reload()}
-function initSession(gm){
+function initSession(gm,newAccount=false){
   try{
-    hudRate=null;zenyEarned=0;S=load();S.gm=gm;if(S.q)qRefresh();if(!S.q)S.q=['kill','loot','boss'].map(newQuest);if(S.mp>=MAPS.length||S.lvl>10){S.mp=0;S.lvl=1}
+    hudRate=null;zenyEarned=0;S=load();S.gm=gm;if(S.q)qRefresh();if(!S.q)S.q=['kill','loot','boss'].map(newQuest);if(S.mp>=MAPS.length||S.lvl>10){S.mp=0;S.lvl=1}applyOfflineProgress();
     $('userBadge').textContent=(gm?'🛠 ':'👤 ')+currentUser;$('logoutBtn').style.display='inline-block';ui();
-    $('loginOverlay').style.display='none';log(`Welcome${gm?', Game Master':' back'}, ${currentUser}!`);
+    $('loginOverlay').style.display='none';log(newAccount?`Account ready — welcome, ${currentUser}!`:`Welcome${gm?', Game Master':' back'}, ${currentUser}!`);
     try{localStorage.setItem('pg_probe','1')}catch(e){log('Browser storage is blocked: progress will NOT be saved.','r0')}
   }catch(err){S=null;showErr('Could not start: '+err.message)}
 }
@@ -1345,8 +1456,9 @@ async function cloudPush(push){
   if(CLOUD.pushing)return 'idle';
   CLOUD.pushing=true;cloudBadge('☁ ⇅','Syncing…');
   try{
-    const r=await cloudFetch('/save',{method:'PUT',body:JSON.stringify({version:CLOUD.ver,blob:JSON.stringify(S),savedAt:Date.now()})});
+    const r=await cloudFetch('/save',{method:'PUT',body:JSON.stringify({version:CLOUD.ver,blob:JSON.stringify(S),savedAt:Date.now(),offlineClaimId:S.offlineClaimId||null})});
     if(r.status===409){const c=await r.json();cloudBadge('☁ ⚠','Two saves - choose which to keep');cloudConflict(c);return 'conflict'}
+    if(r.status===428){const d=await r.json().catch(()=>({}));if(d.offlineClaim){applyOfflineProgress(Date.now(),d.offlineClaim);CLOUD.dirty=true;setTimeout(()=>cloudPush(true),0);return 'offline-claim'}throw new Error(d.err||'A server-timed offline claim is required.')}
     if(!r.ok)throw new Error('HTTP '+r.status);
     const d=await r.json();CLOUD.ver=d.version;CLOUD.dirty=false;CLOUD.lastPush=Date.now();CLOUD.offline=false;
     cloudBadge('☁ ✓','Saved to your account · v'+CLOUD.ver+' · '+new Date().toLocaleTimeString());
@@ -1363,8 +1475,9 @@ function cloudFlush(){return cloudPush(false)}
 function cloudFlushNow(){return cloudPush(true)}
 
 // The two-saves screen: the player decides, and both copies survive whatever they choose.
-function cloudConflict(server){
+function cloudConflict(server,initial=false){
   const box=$('conflict');if(!box)return;
+  CLOUD.paused=true;
   const read=b=>{try{if(!b)return null;const s=JSON.parse(b);return s&&s.lv?s:null}catch(e){return null}};
   const sSrv=read(server.blob)||{lv:'?',cls:'?',zeny:0,kills:0};
   const when=t=>t?new Date(t).toLocaleString():'unknown time';
@@ -1373,19 +1486,20 @@ function cloudConflict(server){
   $('conflictCards').innerHTML=card('📱 This device',S,'local copy')+card('☁ Cloud save',sSrv,when(server.savedAt));
   box.style.display='flex';
   const done=()=>{box.style.display='none'};
-  $('cfThis').onclick=async()=>{done();CLOUD.ver=server.version;CLOUD.dirty=true;await cloudPush(true);cloudSay('Kept this device\'s progress and uploaded it as version '+CLOUD.ver+'.','r1')};
-  $('cfCloud').onclick=()=>{done();cloudAdopt(server)};
-  $('cfLater').onclick=()=>{done();CLOUD.paused=true;cloudBadge('☁ ⏸','Sync paused for this session');cloudSay('Sync is paused for this session so neither copy is touched. Reload when you want to choose.','r0')};
+  $('cfThis').onclick=async()=>{done();CLOUD.paused=false;CLOUD.ver=server.version;CLOUD.dirty=true;if(server.offlineClaim)applyOfflineProgress(Date.now(),server.offlineClaim);await cloudPush(true);cloudSay('Kept this device\'s progress and uploaded it as version '+CLOUD.ver+'.','r1')};
+  $('cfCloud').onclick=async()=>{done();CLOUD.paused=false;await cloudAdopt(server,initial)};
+  $('cfLater').onclick=()=>{done();CLOUD.paused=true;cloudBadge('☁ ⏸','Sync paused for this session');cloudSay('Sync is paused for this session so neither copy is touched. Any server-timed offline claim is waiting until you choose a save.','r0')};
 }
 
 // Take the server's copy as the live save. This device's copy is stashed under its own backup key
 // first, so "keep cloud" is never a deletion either.
-function cloudAdopt(server){
+async function cloudAdopt(server,resumeOffline=false){
   try{const old=localStorage.getItem(saveKeyFor(currentUser));if(old)localStorage.setItem(saveKeyFor(currentUser)+'_local_'+Date.now(),old)}catch(e){}
   lsPut(saveKeyFor(currentUser),server.blob);
   const wasGm=S&&S.gm;S=load();S.gm=!!wasGm;
   if(S.q)qRefresh();if(!S.q)S.q=['kill','loot','boss'].map(newQuest);
-  CLOUD.ver=server.version;CLOUD.dirty=false;
+  CLOUD.ver=server.version;CLOUD.dirty=false;CLOUD.paused=false;
+  if(server.offlineClaim){applyOfflineProgress(Date.now(),server.offlineClaim);await cloudPush(true)}
   ui();cloudBadge('☁ ✓','Cloud save loaded · v'+CLOUD.ver);
   log('Loaded your cloud save (Lv '+S.lv+'). The copy this device had was kept as a local backup.','r1','cloud');
 }
@@ -1399,9 +1513,10 @@ async function cloudJoin(u,localBlob){
   let data=null;
   try{const r=await cloudFetch('/save');if(r.ok)data=await r.json()}
   catch(e){cloudBadge('☁ ✕','Offline - playing from this device');return}
-  if(!data||!data.blob){CLOUD.ver=0;CLOUD.dirty=true;await cloudPush(true);return}
-  if(data.blob===localBlob){CLOUD.ver=data.version;CLOUD.dirty=false;cloudBadge('☁ ✓','In sync · v'+data.version);return}
-  cloudConflict(data);
+  if(!data||!data.blob){CLOUD.ver=0;CLOUD.dirty=true;if(data&&data.offlineClaim)applyOfflineProgress(Date.now(),data.offlineClaim);await cloudPush(true);return}
+  if(data.blob===localBlob){CLOUD.ver=data.version;CLOUD.dirty=false;cloudBadge('☁ ✓','In sync · v'+data.version);
+    if(data.offlineClaim){applyOfflineProgress(Date.now(),data.offlineClaim);await cloudPush(true)}return}
+  cloudConflict(data,true);
 }
 
 // A tab that was away for a while asks what changed. Another device's save is adopted silently when
@@ -1413,8 +1528,9 @@ async function cloudRefresh(){
   catch(e){cloudBadge('☁ ✕','Offline - progress is safe on this device');return}
   if(!data||!data.blob)return;
   const local=localStorage.getItem(saveKeyFor(currentUser));
-  if(data.blob===local){CLOUD.ver=data.version;CLOUD.dirty=false;return}
-  if(CLOUD.dirty)cloudConflict(data);else cloudAdopt(data);
+  if(data.blob===local){CLOUD.ver=data.version;CLOUD.dirty=false;
+    if(data.offlineClaim){applyOfflineProgress(Date.now(),data.offlineClaim);await cloudPush(true)}return}
+  if(CLOUD.dirty)cloudConflict(data);else await cloudAdopt(data);
 }
 
 // Announcements and gifts, on their own cadence - deliberately NOT the save, so that a poll can never
@@ -1501,6 +1617,7 @@ async function initSessionFromCloud(u,gm,isNew){
       cloudStart(u,gm);CLOUD.ver=data.version;CLOUD.dirty=false;
       cloudBadge('☁ ✓','Cloud save loaded · v'+CLOUD.ver);
       log('Loaded your cloud save (Lv '+S.lv+').','r1','cloud');
+      if(data.offlineClaim){applyOfflineProgress(Date.now(),data.offlineClaim);await cloudPush(true)}
     }else{
       S=fresh();S.gm=!!gm;S.q=['kill','loot','boss'].map(newQuest);CLOUD.ver=0;CLOUD.dirty=true;
       cloudSession(u,gm);ui();$('loginOverlay').style.display='none';$('logoutBtn').style.display='inline-block';
@@ -1516,15 +1633,17 @@ async function cloudAuth(u,p,isReg){
     const r=await cloudFetch(isReg?'/register':'/sessions',{method:'POST',body:JSON.stringify({u,p})});
     const d=await r.json().catch(()=>({}));
     if(!r.ok)return showErr(d.err||('Error '+r.status));
+    rememberUserId(d.u||u,!!isReg);
     CLOUD.ver=0;CLOUD.dirty=false;
     if(isReg&&d.recovery){
       // Shown exactly once ever: the server keeps only its hash. It is the only way back in without
       // the GM, so it is treated as seriously as the password itself.
-      ask('Account created. WRITE THIS DOWN - it is the only way to reset your password without the GM:\n\n📋  '+d.recovery,
-        ()=>initSessionFromCloud(d.u,d.gm,true).catch(e=>showErr('Account created, but the game could not start: '+e.message)));
+      ask('Account created. Save this recovery code somewhere safe - it is the only way to reset your password without the GM:\n\n📋  '+d.recovery,
+        ()=>initSessionFromCloud(d.u,d.gm,true).catch(e=>showErr('Account created, but the game could not start: '+e.message)),
+        {yes:'I saved it — enter the game',no:'Not now'});
       return;
     }
-    return initSessionFromCloud(d.u,d.gm,isNew=isReg);
+    return initSessionFromCloud(d.u,d.gm,isReg);
   }catch(e){showErr('Could not reach the server: '+e.message+'. You can still play offline.')}
 }
 function cloudLogout(){
@@ -1645,6 +1764,8 @@ const skSetAll=on=>{if(!S.skOff||typeof S.skOff!=='object')S.skOff={};for(const 
 const skillsFullyAllocated=()=>SKILLS.filter(s=>lineOf(S.cls).includes(s.from)).every(s=>lv(s.id)>=s.max);
 const skMasterTile=()=>{const on=skAllOn(),n=skTog().length,done=skillsFullyAllocated();
   return`<div class="sk-tools"><label class="sk-master${on?'':' off'}" title="Switch the auto-cast of every learned skill on or off"><span class="sk-kind">ALL</span><div class="si" aria-hidden="true">&#9199;&#65039;</div><div class="sk-name">Auto-cast all</div><div class="sk-autocast"><input type="checkbox" data-a="skall" ${on?'checked':''} aria-label="Auto-cast every learned skill"> ${on?'ALL ON':'SOMETHING OFF'}</div><small>${n} skill${n===1?'':'s'} on this line</small></label><button class="sk-alloc" data-a="skalloc" ${done||skpAvail()<1?'disabled':''} title="Auto-allocate all available points: max lower-class skills first, then work up the tree">⚡ Auto-allocate all skills<small>${done?'All skills maxed':'Lower classes first'}</small></button></div>`};
+const skillDetailCard=sel=>{const SL=lv(sel.id),soff=!!(SL&&sel.type!=='pas'&&skOff(sel.id));
+  return`<div class="mob-card sk-detail-card" data-skill-detail="${sel.id}"><div class="sk-detail-head"><b>${sel.n}</b> <small>${sel.type==='pas'?'Passive':sel.type==='heal'?'Auto-heal':sel.type==='to'?'Tradeoff (auto-cast)':'Active (auto-cast)'}${sel.rng?' &middot; RANGED':''}${sel.aoe?' &middot; AREA':''}${sel.dot?' &middot; DOT':''}${sel.stun?' &middot; STUN':''}${sel.chain?' &middot; CHAIN':''}</small></div><div class="sk-detail-autocast">${SL&&sel.type!=='pas'?`<label class="sk-autocast"><input type="checkbox" data-a="sktog" data-v="${sel.id}" ${soff?'':'checked'} aria-label="Auto cast ${sel.n}"> Auto cast this skill</label><small class="${soff?'r0':''}">${soff?'Paused - it will not be used until you check this again.':'Cast automatically every time you attack.'}</small>`:'<small>Passive or not learned yet - nothing to auto-cast.</small>'}</div><small>${sel.d(Math.max(1,SL))}</small>${SL&&SL<sel.max?`<br><small>Next: ${sel.d(SL+1)}</small>`:''}</div>`};
 const pv=k=>SKILLS.reduce((a,s)=>a+(s.type==='pas'&&s.key===k&&skillOn(s.id)?s.f(lv(s.id)):0),0);
 const items=()=>Object.values(S.eq).filter(Boolean),ev=it=>Math.round(it.val*(1+(it.r||0)*.15)),iname=it=>(it.r?'+'+it.r+' ':'')+it.name,eqv=k=>S.eq[k]?ev(S.eq[k]):0;
 const bon=k=>{let v=MASTER_STATS.includes(k)?cardMasteryStat(k):0;for(const it of items()){for(const a of it.aff||[])if(a.k===k)v+=a.v;for(const c of it.cards||[])if(c.stat===k)v+=c.v}return v};
@@ -1691,7 +1812,14 @@ const autoAllocateSkills=()=>{if(!S.sk||typeof S.sk!=='object')S.sk={};let bough
 const refCost=it=>Math.round(200*((it.r||0)+1)*(1+(it.sec||0)*.5)),refCh=it=>[70,70,70,70,49,42,35,28,21,14][it.r||0];
 const affTxt=a=>`${AL[a.k]} +${a.v}`,cardTxt=c=>`${c.n} (${SU(c.stat)} +${c.v})`,dtier=it=>it.card?GI[it.g]:it.ore?3:it.tier;
 const isBoss=()=>S.lvl===10,fieldName=()=>`${MAPS[S.mp].n} Stage ${S.lvl}`;
-const icon=it=>it.card?'🃏':it.ore?'💎':it.slot==='weapon'?(WICON[it.wt]||'⚔️'):SLOTS[it.slot].ic;
+// Real RO item icons give each equipment family a recognizable shape and several name-based
+// variants. The existing held-weapon URL helper above remains unchanged for the 3D sprite layer.
+const RO_ITEM_ICON_CANDIDATES={weapon:{dagger:[1201,1202,1204,1205,1210,1212],katar:[1250,1251,1252,1253,1254,1255],staff:[1601,1602,1603,1604,1605,1606],bow:[1701,1702,1703,1704,1705,1706],axe:[1301,1302,1303,1304,1305,1306],sword:[1101,1104,1105,1106,1108,1110,1114],mace:[1501,1502,1503,1504,1505,1510]},armor:[2301,2302,2303,2304,2305,2306,2307,2308,2309,2310,2311,2312,2313],head:[2201,2202,2203,2204,2205,2206,2207,2208,2209,2210,2211,2212,2213,2214,2215,2216],off:[2101,2102,2103,2104,2105,2106,2107,2108],leg:[2401,2402,2403,2404,2405,2406,2407,2408],acc:[2601,2602,2603,2604,2605,2606,2607,2608,2609,2610]};
+const gearIconHash=text=>{let h=2166136261;for(let i=0;i<String(text).length;i++){h^=String(text).charCodeAt(i);h=Math.imul(h,16777619)}return h>>>0};
+const gearItemIconId=it=>{const list=it.slot==='weapon'?RO_ITEM_ICON_CANDIDATES.weapon[it.wt]:RO_ITEM_ICON_CANDIDATES[it.slot];if(!list||!list.length)return 0;const name=String(it.name||'').replace(/^(Common|Fine|Rare|Epic|Legendary)\s+/,'');return list[gearIconHash(it.slot+':'+name)%list.length]};
+const itemIconUrl=id=>id?`https://static.divine-pride.net/images/items/item/${id}.png`:'';
+const itemIconMarkup=it=>{if(it.card)return'🃏';if(it.ore)return'💎';const glyph=it.slot==='weapon'?(WICON[it.wt]||'⚔️'):SLOTS[it.slot].ic,id=gearItemIconId(it);return id?`<img class="ro-item-icon" src="${itemIconUrl(id)}" data-fallback="${glyph}" alt="" loading="lazy" decoding="async">`:`<span class="ro-icon-fallback">${glyph}</span>`};
+const icon=it=>itemIconMarkup(it);
 
 // ---------- mobs & loot ----------
 let mobs=[],mob=null,pAtkT=0,mAtkT=0,respawn=0,activePack=0;
@@ -1787,16 +1915,87 @@ function genGear(T,l,sec,boss,tier){
   const slots=slot==='weapon'&&(T.k==='katar'||T.k==='bow')?4:slot==='weapon'?Math.min(3,1+ri(0,1)+(t>=3?1:0)):Math.min(1,ri(0,1)+(t>=3?1:0));
   return{id:uid(),slot,wt:slot==='weapon'?T.k:undefined,tier:t,val,name:(t?RAR[t].n+' ':'')+T.n,aff,slots,cards:[],sec,lvl:l};
 }
+// Away time is earned from the same map/stage and drop tables as online play. The browser records
+// a rolling real-time kill rate, credits at most four hours, and simulates half that many kills.
+function offlineMobForCurrentField(){
+  const m=S.mp,stage=S.lvl,F=fieldOf(m,stage),l=fieldPower(m,stage),mb=1+m*.15+Math.max(0,m-4)*.2;
+  const regular=entry=>({...entry,mapIndex:m,boss:false,lvl:l,sec:F.sec,
+    exp:Math.max(1,Math.floor(EXPK*Math.pow(l,1.5)/50)),
+    zeny:Math.max(ZMIN,Math.floor(ri(ZK[0],ZK[1])*l*l/1000))});
+  if(F.boss&&Math.random()<1/(1+(m<5?3:5)))return{...F.boss,mapIndex:m,boss:true,lvl:l,sec:F.sec,
+    exp:Math.max(1,Math.floor(BOSEK*Math.pow(l,1.5)/50)),
+    zeny:Math.max(ZMIN,Math.floor(ri(BZK[0],BZK[1])*l*l/1000))};
+  return regular(F.mobs[ri(0,F.mobs.length-1)]);
+}
+function offlineStoreGear(it,r){
+  r.items++;r.drops++;
+  if(!it.locked&&autoSellOn(it.tier)){const value=sellVal(it);earnZeny(value);r.zeny+=value;r.autoSold++;qProg('loot');(it.cards||[]).forEach(c=>S.cards.push(c));return}
+  if(S.inv.length>=BAGMAX){r.overflow++;return}
+  S.inv.push(it);r.storedItems++;qProg('loot');
+  if(S.auto!==false&&canUse(it)){const k=ekey(it),cur=S.eq[k];if(!cur||ev(it)>ev(cur)){S.inv.splice(S.inv.indexOf(it),1);if(cur)S.inv.push(cur);S.eq[k]=it;S.hp=Math.min(S.hp,maxHp())}}
+}
+function offlineAwardKill(mob,r){
+  if(!mob)return;r.kills++;S.kills=safeCount(S.kills)+1;recordMonsterKill(mob);S.kl=safeCount(S.kl)+1;qProg('kill');if(mob.boss)qProg('boss');
+  const z=Math.round(mob.zeny*(1+pv('zeny')/100))*gx(),xp=Math.round(mob.exp*expRate());earnZeny(z);r.zeny+=z;S.exp+=xp;r.exp+=xp;
+  addJob(Math.round(Math.round(mob.exp*.7)*expRate()));checkLevel();
+  for(const[T,ch]of mob.drops)if(Math.random()*100<ch)offlineStoreGear(genGear(T,mob.lvl,mob.sec,mob.boss,mob.tier),r);
+  if(Math.random()*100<mob.cardCh){const g=mob.card.g;S.cards.push({card:1,id:uid(),n:mob.card.n,g,stat:mob.card.stat,v:cardVal(g,mob.card.stat)});r.cards++;r.drops++}
+  if(mob.ore)for(const ore of['ori','elu'])if(Math.random()<mob.oreCh){S.ore[ore]=safeCount(S.ore[ore])+1;r[ore]++;r.drops++}
+  if(Math.random()*100<(mob.boss?.5:.03)){
+    const rarity=pickW(PW[Math.min(S.mp,9)]),choices=PETS.filter(x=>x.r===rarity);
+    if(choices.length){const sp=PETS.indexOf(choices[ri(0,choices.length-1)]);r.drops++;
+      if(S.pets.length<40){const gifted=pickW(PET_SKILL_WEIGHTS);S.pets.push({id:ri(1e6,9e6),sp,mut:0,eq:[0,0,0],skills:[PET_SKILLS[gifted].id],on:S.pets.filter(x=>x.on).length<3});r.pets++}
+      else{const refund=Math.floor(EGG*(.3+rarity*.4));earnZeny(refund);r.zeny+=refund;r.petRefunds++}}
+  }
+  if(mob.boss||(S.lvl<10&&S.kl>=MPS)){
+    S.kl=0;
+    if(S.lvl<10&&S.lvl>=S.prog[S.mp]){S.prog[S.mp]=S.lvl+1;if(S.adv&&S.lvl<10){S.lvl++;r.stages++}}
+  }
+}
+function offlineDuration(ms){const sec=Math.floor(Math.max(0,ms)/1000),days=Math.floor(sec/86400),hours=Math.floor(sec%86400/3600),mins=Math.floor(sec%3600/60),seconds=sec%60;
+  return[days?days+'d':'',hours?hours+'h':'',mins?mins+'m':'',seconds&&!hours&&!days?seconds+'s':''].filter(Boolean).join(' ')||'0m'}
+function showOfflineReward(r){
+  const set=(id,value)=>{const e=$(id);if(e)e.textContent=value};
+  set('offlineAway',offlineDuration(r.awayMs));set('offlineCredited',offlineDuration(r.creditedMs));
+  set('offlineKills','+'+r.kills.toLocaleString());set('offlineDrops','+'+r.drops.toLocaleString());set('offlineExp','+'+r.exp.toLocaleString());
+  set('offlineItems','+'+r.items.toLocaleString());set('offlineCards','+'+r.cards.toLocaleString());set('offlineZeny','+'+r.zeny.toLocaleString());
+  const detail=[];if(r.storedItems)detail.push(`${r.storedItems} stored`);if(r.autoSold)detail.push(`${r.autoSold} auto-sold`);if(r.overflow)detail.push(`${r.overflow} not stored (bag full)`);
+  if(r.ori||r.elu)detail.push(`Oridecon +${r.ori} · Elunium +${r.elu}`);if(r.pets)detail.push(`Pets +${r.pets}`);if(r.petRefunds)detail.push(`${r.petRefunds} full-collection pet refund${r.petRefunds===1?'':'s'}`);if(r.stages)detail.push(`${r.stages} stage${r.stages===1?'':'s'} advanced`);
+  const note=[];note.push(r.awayMs>OFFLINE_CAP_MS?'Away rewards are capped at four hours.':'Rewards use the time credited above.');
+  note.push(r.rateKph>0?`Estimated at 50% of your recent online pace (${Math.round(r.rateKph).toLocaleString()} kills/hour).`:'No recent kill-rate sample was available, so no simulated kills were credited.');
+  const details=$('offlineDetails');if(details)details.textContent=detail.length?detail.join(' · '):'No items, cards, ores or pets dropped this time.';
+  const explanation=$('offlineExplanation');if(explanation)explanation.textContent=note.join(' ');
+  const modal=$('offlineModal');if(modal)modal.style.display='flex';const button=$('offlineContinue');if(button){button.onclick=()=>{modal.style.display='none'};button.focus()}
+}
+function applyOfflineProgress(now=Date.now(),serverClaim=null){
+  if(!S)return null;
+  let plan;
+  if(CLOUD.on){
+    // Cloud accounts may only simulate the kill budget issued by /api/save. The device clock and
+    // the save's offlineKph are deliberately ignored; both the elapsed window and rate came from D1.
+    const id=Number(serverClaim&&serverClaim.id);
+    if(!Number.isSafeInteger(id)||id<=0)return null;
+    if(Number(S.offlineClaimId)===id)return{alreadyApplied:true,show:false,kills:0};
+    plan={show:Number(serverClaim.awayMs)>=OFFLINE_POPUP_MIN_MS,awayMs:Math.max(0,Number(serverClaim.awayMs)||0),
+      creditedMs:cl(Number(serverClaim.creditedMs)||0,0,OFFLINE_CAP_MS),kills:safeCount(serverClaim.kills),
+      remainder:cl(Number(serverClaim.remainder)||0,0,.999999),rateKph:cl(Number(serverClaim.rateKph)||0,0,OFFLINE_RATE_CAP)};
+    S.offlineClaimId=id;
+  }else plan=offlinePlan(S.offlineAt,now,S.offlineKph,S.offlineKillRemainder);
+  const r={...plan,kills:0,drops:0,exp:0,zeny:0,items:0,storedItems:0,autoSold:0,overflow:0,cards:0,ori:0,elu:0,pets:0,petRefunds:0,stages:0};
+  if(plan.show){for(let i=0;i<plan.kills;i++)offlineAwardKill(offlineMobForCurrentField(),r);S.offlineKillRemainder=plan.remainder}
+  S.offlineAt=now;S.offlineRateAt=now;S.offlineRateKills=safeCount(S.kills);save();zenyEarned=0;
+  if(plan.show)showOfflineReward(r);return r;
+}
 // ---------- skill effects: damage over time, stun, chain ----------
 // DoT ticks twice a second for its duration; the number stored is damage PER SECOND.
-function applyDot(o,dps,dur,col){if(!o||!(dur>0))return;(o.dots=o.dots||[]).push({dps,t:0,dur,col:col||'#7dff7d'})}
+function applyDot(o,dps,dur,col,skill=false){if(!o||!(dur>0))return;const dot={dps,t:0,dur,col:col||'#7dff7d'};if(skill)dot.skill=true;(o.dots=o.dots||[]).push(dot)}
 // A stunned mob neither advances nor swings: its attack timer simply stops counting down.
 function applyStun(o,dur){if(!o||!(dur>0))return;
   const d=dur*(o.boss?.5:1);o.stun=Math.min(o.boss?1:2,Math.max(o.stun||0,d))}
 // Chain bounces a share of the hit onto the nearest other mobs - the pack-clearing tool.
-function chainHit(src,dmg,col,n){if(!src||!(dmg>0)||mobs.length<2)return;
+function chainHit(src,dmg,col,n,skill=false){if(!src||!(dmg>0)||mobs.length<2)return;
   const near=mobs.filter(o=>o!==src&&o.hp>0&&o.pack===src.pack).sort((a,b)=>Math.hypot(a.x-src.x,a.z-src.z)-Math.hypot(b.x-src.x,b.z-src.z)).slice(0,n||2);
-  for(const o of near){shots.push({x0:src.x,z0:src.z,x1:o.x,z1:o.z,t:0,col:col||'#fff'});hurt(o,Math.max(1,Math.round(dmg)),col)}}
+  for(const o of near){shots.push({x0:src.x,z0:src.z,x1:o.x,z1:o.z,t:0,col:col||'#fff'});hurt(o,Math.max(1,Math.round(dmg)),col,false,skill)}}
 const mkDrop=it=>({it,wx:mob.x+rnd(-.7,.7),wz:mob.z+rnd(-.7,.7),y:0,vy:-220,t:0});
 const addFloat=(x,y,z,txt,col,big,kind='text')=>floats.push({x,y,z,txt,col,life:1,big,kind});
 // Floating combat numbers are shortened by default: 100,000 reads "100K", 1,000,000 reads "1M".
@@ -1813,7 +2012,7 @@ const fullNum=()=>typeof S!=='undefined'&&S&&S.dmgShort===false;
 // combat float when it is off, and 'Short form' (S.dmgShort) switches between 100K/1M and the
 // full digits. Reward floats (Zeny, EXP) follow the short/full style but are never hidden.
 const numTxt=n=>fullNum()?String(Math.round(n)):shortNum(n);
-const damageFloat=(x,y,z,amount,critical=false,incoming=false)=>{if(S&&S.dmgShow===false)return;addFloat(x,y,z,numTxt(amount),null,false,incoming?'incoming':critical?'critical':'damage')};
+const damageFloat=(x,y,z,amount,critical=false,incoming=false,skill=false)=>{if(S&&S.dmgShow===false)return;addFloat(x,y,z,numTxt(amount),null,false,incoming?'incoming':critical?'critical':skill?'skill-damage':'damage')};
 // Skill labels track the moving player, rather than floating away from the cast location.
 const skillNameFloat=(name,slot=0)=>floats.push({x:pl.x,y:3.15+slot*.38,z:pl.z,txt:name,life:1.15,kind:'skill',anchor:'hero'});
 // ---------- the log ----------
@@ -1873,11 +2072,11 @@ function log(m,cls,cat){const e={m,cls,cat};logs.push(e);if(logs.length>80)logs.
 // ---------- combat ----------
 function shot(col){if(!mob||heroWeaponType(C().n,C().wt,S.eq.weapon&&S.eq.weapon.wt)!=='bow')return;
   shots.push({x0:pl.x,z0:pl.z,x1:mob.x,z1:mob.z,t:0,col:col||'#fff',arrow:true})}
-function hurt(o,d,col,c){S.dmg=(S.dmg||0)+d;o.hp-=d;o.flash=1;damageFloat(o.x+rnd(-.4,.4),1.2+.8*(o.spriteScale||o.size),o.z,d,c);if(o.hp<=0)kill(o)}
-function strike(mult,col,magic=false){
-  if(!mob)return;if(Math.random()*100<missCh()){addFloat(mob.x,1.8,mob.z,'Miss','#ccc');return}
+function hurt(o,d,col,c,skill=false){S.dmg=(S.dmg||0)+d;o.hp-=d;o.flash=1;damageFloat(o.x+rnd(-.4,.4),1.2+.8*(o.spriteScale||o.size),o.z,d,c,false,skill);if(o.hp<=0)kill(o)}
+function strike(mult,col,magic=false,skill=false){
+  if(!mob)return;if(Math.random()*100<missCh()){addFloat(mob.x,1.8,mob.z,'MISS','#dfe5ed',false,'miss');return}
   const c=Math.random()*100<crit(),base=magic?matk():atk(),d=Math.max(1,Math.round(base*mult*rnd(Math.min(.95,.7+st('dex')*.004),1.15)*(c?critD():1)));
-  S.dmg=(S.dmg||0)+d;mob.hp-=d;mob.flash=1;shake=c?6:2;const leech=typeof cardMasteryStat==='function'?cardMasteryStat('leech'):0;if(leech>0&&typeof maxHp==='function'){const h=Math.max(1,Math.round(d*leech/100));S.hp=Math.min(maxHp(),S.hp+h);addFloat(pl.x,2.7,pl.z,'+'+h,'#ff6b8a')}damageFloat(mob.x+rnd(-.4,.4),1.5*Math.max(1,(mob.spriteScale||mob.size)*.8)+.6,mob.z,d,c);
+  S.dmg=(S.dmg||0)+d;mob.hp-=d;mob.flash=1;shake=c?6:2;const leech=typeof cardMasteryStat==='function'?cardMasteryStat('leech'):0;if(leech>0&&typeof maxHp==='function'){const h=Math.max(1,Math.round(d*leech/100));S.hp=Math.min(maxHp(),S.hp+h);addFloat(pl.x,2.7,pl.z,'+'+h,'#ff6b8a')}damageFloat(mob.x+rnd(-.4,.4),1.5*Math.max(1,(mob.spriteScale||mob.size)*.8)+.6,mob.z,d,c,false,skill);
 }
 // Higher job tiers get more casts per swing: Novice 1, first job 2, second job 3, transcendent
 // 4 (tier is 0/1/2/3 - Assassin Cross and Lord Knight are tier 3, not 2). Every cast after the
@@ -1895,12 +2094,12 @@ function castSkill(sk,k){
   // still iterating. The remaining effects must never spill into the next sleeping pack.
   const target=mob,base=sk.magic?matk():atk(),m=sk.mul(lv(sk.id))*(1+st('int')*.01)*k;
   playSkillFx(sk.id,target,sk.col);
-  strike(m,sk.col,!!sk.magic);shot(sk.col,sk.rng);
-  if(sk.aoe&&target)for(const o of mobs.slice())if(o!==target&&o.pack===target.pack&&Math.hypot(o.x-target.x,o.z-target.z)<4)hurt(o,Math.max(1,Math.round(base*m*.8)),sk.col);
-  if(sk.chain&&target&&mobs.includes(target))chainHit(target,base*m*(sk.chain.pow||.5),sk.col,Math.min(4,(sk.chain.n||2)+Math.floor(lv(sk.id)/2)));
-  if(sk.dot&&target&&target.hp>0)applyDot(target,base*m*(sk.dot.pow||.05),sk.dot.dur||4,sk.dot.col||sk.col);
+  strike(m,sk.col,!!sk.magic,true);shot(sk.col,sk.rng);
+  if(sk.aoe&&target)for(const o of mobs.slice())if(o!==target&&o.pack===target.pack&&Math.hypot(o.x-target.x,o.z-target.z)<4)hurt(o,Math.max(1,Math.round(base*m*.8)),sk.col,false,true);
+  if(sk.chain&&target&&mobs.includes(target))chainHit(target,base*m*(sk.chain.pow||.5),sk.col,Math.min(4,(sk.chain.n||2)+Math.floor(lv(sk.id)/2)),true);
+  if(sk.dot&&target&&target.hp>0)applyDot(target,base*m*(sk.dot.pow||.05),sk.dot.dur||4,sk.dot.col||sk.col,true);
   if(sk.stun&&target&&target.hp>0)applyStun(target,(sk.stun.dur||.8)*(1+lv(sk.id)*.08));
-  if(target&&mobs.includes(target))for(let i=1;i<sk.hits;i++)pend.push({t:i*.09,m,col:sk.col,magic:!!sk.magic});
+  if(target&&mobs.includes(target))for(let i=1;i<sk.hits;i++)pend.push({t:i*.09,m,col:sk.col,magic:!!sk.magic,skill:true});
 }
 function playerAttack(){
   pAtkT=aspd();atkAnim=1;
@@ -1992,7 +2191,7 @@ function newQuest(type){return qScale({type,goal:1,prog:0})}
 function qRefresh(){if(!S||!Array.isArray(S.q))return;(S.q||[]).forEach(q=>{if(q&&q.type)qScale(q)})}
 const qTxt=q=>q.type==='kill'?`Defeat ${q.goal} monsters`:q.type==='loot'?`Collect ${q.goal} equipment drops`:`Defeat ${q.goal} boss${q.goal>1?'es':''}`;
 function refine(sl){const it=S.eq[sl];if(!it||(it.r||0)>=10)return;const o=it.slot==='weapon'?'ori':'elu',c=refCost(it);
-  if(S.ore[o]<1){log(`You need 1 ${ORE[o]}. (1% drop from Stage 10 monsters, 2.5% from the boss)`);return}if(S.zeny<c){log('Not enough Zeny.');return}
+  if(S.ore[o]<1){log(`You need 1 ${ORE[o]}. Regular mobs drop both ores at 0.5% on Stages 1-9 and 1% on Stage 10; the Stage 10 boss drops them at 2.5%.`);return}if(S.zeny<c){log('Not enough Zeny.');return}
   S.ore[o]--;S.zeny-=c;if(Math.random()*100<refCh(it)){it.r=(it.r||0)+1;log(`Refine success! ${iname(it)}`,'r3','gear');addFloat(pl.x,3,pl.z,'Refine +'+it.r,'#ffd23f')}
   else{if(it.r>=5){it.r--;log(`Refine failed... dropped to +${it.r}.`,'r0','gear')}else log('Refine failed.','r0','gear');addFloat(pl.x,3,pl.z,'Failed','#ff6b6b')}ui();save()}
 
@@ -2199,12 +2398,11 @@ const V={
     +line.map(from=>{const ss=SKILLS.filter(s=>s.from===from);return ss.length?`<div class="sec">${from}</div><div class="skg">${ss.map(s=>{const L=lv(s.id),off=!!(L&&s.type!=='pas'&&skOff(s.id)),kind=s.type==='pas'?'PASSIVE':s.type==='to'?'TRADEOFF':s.type==='heal'?'HEAL':'ACTIVE';
       return`<div class="sk${L?'':' off'}${off?' auto-off':''}${selS===s.id?' sel':''}" style="--sk-accent:${s.col||'#8a6a2c'}" data-a="ssel" data-v="${s.id}">
         <div class="sk-head"><span class="sk-kind">${kind}</span>${off?'<span class="sk-paused">OFF</span>':''}</div>
-        <div class="si" aria-hidden="true">${SKILL_ICON[s.id]||'✦'}</div><div class="sk-name">${s.n}</div>
+        <div class="si" aria-hidden="true">${skillIcon(s.id)}</div><div class="sk-name">${s.n}</div>
         <div class="sk-level"><b>Lv ${L}</b> / ${s.max}</div>
-        <button data-a="skill" data-v="${s.id}" aria-label="Increase ${s.n}" title="${L<s.max?'level '+(L+1)+' costs '+skCost(L+1)+' points':'max level'}" ${av>=skCost(L+1)&&L<s.max?'':'disabled'}>${L<s.max?'+'+skCost(L+1):'MAX'}</button></div>`}).join('')}${from==='Novice'?skMasterTile():''}</div>`:''}).join('')
-    +(sel?(()=>{const SL=lv(sel.id),soff=!!(SL&&sel.type!=='pas'&&skOff(sel.id));return`<div class="mob-card" style="margin-top:8px"><div class="sk-detail-head"><b>${sel.n}</b> <small>${sel.type==='pas'?'Passive':sel.type==='heal'?'Auto-heal':sel.type==='to'?'Tradeoff (auto-cast)':'Active (auto-cast)'}${sel.rng?' &middot; RANGED':''}${sel.aoe?' &middot; AREA':''}${sel.dot?' &middot; DOT':''}${sel.stun?' &middot; STUN':''}${sel.chain?' &middot; CHAIN':''}</small></div><div class="sk-detail-autocast">${SL&&sel.type!=='pas'?`<label class="sk-autocast"><input type="checkbox" data-a="sktog" data-v="${sel.id}" ${soff?'':'checked'} aria-label="Auto cast ${sel.n}"> Auto cast this skill</label><small class="${soff?'r0':''}">${soff?'Paused - it will not be used until you check this again.':'Cast automatically every time you attack.'}</small>`:'<small>Passive or not learned yet - nothing to auto-cast.</small>'}</div><small>${sel.d(Math.max(1,SL))}</small>${SL&&SL<sel.max?`<br><small>Next: ${sel.d(SL+1)}</small>`:''}</div>`})():'')
+        <button data-a="skill" data-v="${s.id}" aria-label="Increase ${s.n}" title="${L<s.max?'level '+(L+1)+' costs '+skCost(L+1)+' points':'max level'}" ${av>=skCost(L+1)&&L<s.max?'':'disabled'}>${L<s.max?'+'+skCost(L+1):'MAX'}</button></div>${selS===s.id?skillDetailCard(s):''}`}).join('')}${from==='Novice'?skMasterTile():''}</div>`:''}).join('')
     +`<button class="full" data-a="rskill" ${rcost()&&S.zeny<rcost()?'disabled title="You need '+rcost().toLocaleString()+' Zeny to reset skills"':''}>Reset skills (${rcost()?rcost()+'z':'free below Base 20'})</button>`},
-  bag0(){const sel=selB&&S.inv.find(x=>String(x.id)===String(selB));const n=Math.max(30,Math.ceil(S.inv.length/6)*6);const inv=S.inv.map((it,i)=>({it,i})).sort((a,b)=>Number(!!b.it.locked)-Number(!!a.it.locked)||a.i-b.i).map(x=>x.it);
+  bag0(){const sel=selB&&S.inv.find(x=>String(x.id)===String(selB));const n=Math.max(30,Math.ceil(S.inv.length/6)*6);const inv=S.inv.map((it,i)=>({it,i})).sort((a,b)=>{const af=!!eqPick&&slotAccepts(eqPick,a.it),bf=!!eqPick&&slotAccepts(eqPick,b.it);return Number(bf)-Number(af)||Number(!!b.it.locked)-Number(!!a.it.locked)||a.i-b.i}).map(x=>x.it);
     const detail=sel?`<div class="mob-card grid-detail">${itemDetail(sel)}<div class="row" style="margin-top:6px"><button data-a="equip" data-v="${sel.id}" ${canUse(sel)?'':'disabled'}>Equip</button><button data-a="sell" data-v="${sel.id}">Sell ${sellVal(sel)}z</button><button class="tick${sel.locked?' on':''}" data-a="lockgear" data-v="${sel.id}" aria-pressed="${!!sel.locked}" title="Locked gear stays pinned and protected from auto-sell">${sel.locked?'&#9733; Unlock':'☆ Lock'}</button><button class="tick${autoSellOn(sel.tier||0)?' on':''}" data-a="autosell" data-v="${sel.tier||0}" title="Auto-sell every ${RAR[sel.tier||0].n} item on drop">Auto-sell ${RAR[sel.tier||0].n}</button></div></div>`:'';
     return (eqPick?equipChooser(eqPick):'')
     +`<div class="row"><span class="chip">🔶 Oridecon <b>${S.ore.ori}</b></span><span class="chip">🔷 Elunium <b>${S.ore.elu}</b></span></div>
@@ -2242,7 +2440,7 @@ const V={
   cards(){const g={};S.cards.forEach(c=>(g[c.n]=g[c.n]||[]).push(c));const ks=Object.keys(g),sel=g[selC]?g[selC][0]:null;
     return`<div class="grid">${ks.map(n=>`<div class="cell b${GI[g[n][0].g]}${n===selC?' sel':''}" data-a="selc" data-v="${n}" data-tip="${g[n][0].id}">🃏<i class="rf">x${g[n].length}</i></div>`).join('')||'<small>No cards yet. Every monster drops its own card at a low chance.</small>'}</div>
     ${sel?`<div class="mob-card" style="margin-top:8px">${itemDetail(sel)}<div class="row" style="margin-top:6px">${EQK.map(([k,l])=>{const e=S.eq[k];return e&&(e.cards||[]).length<(e.slots||0)&&CFIT[sel.stat]===grp(e)?`<button data-a="sock" data-v="${sel.id}:${k}">&rarr; ${l}</button>`:''}).join('')}<button data-a="sellcard" data-v="${sel.id}">Sell ${sel.v*150}z</button></div></div>`:''}`},
-  refine(){return`<div class="hd">Oridecon: ${S.ore.ori} &middot; Elunium: ${S.ore.elu}</div><small>Weapons use Oridecon; armor, shield, legs, headgear and accessories use Elunium (Stage 10: 1% per monster, 2.5% per boss).</small>`
+  refine(){return`<div class="hd">Oridecon: ${S.ore.ori} &middot; Elunium: ${S.ore.elu}</div><small>Weapons use Oridecon; armor, shield, legs, headgear and accessories use Elunium. Regular mobs drop both at 0.5% on Stages 1-9 and 1% on Stage 10; Stage 10 bosses drop both at 2.5%.</small>`
     +EQK.map(([k,l])=>{const it=S.eq[k];if(!it)return'';const r=it.r||0,o=it.slot==='weapon'?'ori':'elu',c=refCost(it);
       return`<div class="slot" style="align-items:flex-start;gap:10px;margin-top:6px">${cell(it,false)}<div style="flex:1"><b class="r${it.tier}">${iname(it)}</b> <small>${l}</small><br><small>${SLOTS[it.slot].stat} +${ev(it)} &rarr; +${Math.round(it.val*(1+(r+1)*.15))} &middot; ${r>=10?'MAX':'Success '+refCh(it)+'% &middot; '+c.toLocaleString()+'z + 1 '+ORE[o]}</small><br><button data-a="refine" data-v="${k}" ${r>=10||S.ore[o]<1||S.zeny<c?'disabled':''}>Refine</button></div></div>`}).join('')},
   pet(){const P=S.pets,A=P.filter(p=>p.on).length,p=gp(selP);
@@ -2409,7 +2607,7 @@ function petDetail(p){const sp=PETS[p.sp],g=p.mut,sk=p.sk||[1,2,3],SL=petSkills(
   +(rollingSet.has(p.id)?`<div class="slot roll-status" id="rf${p.id}"><span>🎲 Rolling...</span></div>`:p.last?`<div class="roll-status"><span>Last roll: Grade ${p.last}</span></div>`:`<div class="roll-status"><span>&nbsp;</span></div>`)
   +(p.roll?`<div class="slot"><span>Rolled <b>Grade ${p.roll}</b> (x${MUT[p.roll]})</span><span><button data-a="pkeep" data-v="${p.id}">Keep new</button> <button data-a="pdisc" data-v="${p.id}">Keep old</button></span></div>`:'')
   +`<small>Odds: G1 50% &middot; G2 30% &middot; G3 16.5% &middot; G4 2.5% &middot; G5 0.8% &middot; G6 0.2%</small></div>`}
-function ask(msg,yes){$('mt').textContent=msg;$('modal').style.display='flex';$('my').onclick=()=>{$('modal').style.display='none';yes()};$('mn').onclick=()=>{$('modal').style.display='none'}}
+function ask(msg,yes,labels={}){$('mt').textContent=msg;$('my').textContent=labels.yes||'Yes';$('mn').textContent=labels.no||'Cancel';$('modal').style.display='flex';$('my').onclick=()=>{$('modal').style.display='none';yes()};$('mn').onclick=()=>{$('modal').style.display='none'}}
 function insertUI(sel){if(!(sel.slots>0))return'<small>No card slots on this item.</small>';if((sel.cards||[]).length>=sel.slots)return'';const fit=S.cards.filter(c=>CFIT[c.stat]===grp(sel));
   return'<div class="sec">Insert card</div>'+([...new Map(fit.map(c=>[c.n,c])).values()].map(c=>`<div class="slot"><span class="r${GI[c.g]}">🃏 ${c.n} <small>${SU(c.stat)} +${c.v} &middot; x${fit.filter(x=>x.n===c.n).length}</small></span><button data-a="sock" data-v="${c.id}:${selE}">Insert</button></div>`).join('')||'<small>No compatible cards in your bag.</small>')}
 function renderWin(){
@@ -2431,7 +2629,7 @@ const winUp=()=>{winPress=false;if(winDirty){winDirty=false;renderWin()}};
 // Guarded so the headless UI harness (which pulls this slice into a bare vm) still loads.
 if(typeof addEventListener==='function'){addEventListener('pointerup',winUp);addEventListener('pointercancel',winUp)}
 if($('wins')&&$('wins').addEventListener)$('wins').addEventListener('pointerdown',()=>{winPress=true});
-const MAX_TABS=3;const openTab=k=>{if(k==='gm'&&!S.gm)return;if(k!=='status')eqPick=null;const i=tabs.indexOf(k);if(i>=0)tabs.splice(i,1);else{if(tabs.length>=MAX_TABS)tabs.shift();tabs.push(k);
+const MAX_TABS=3;const openTab=k=>{if(k==='gm'&&!S.gm)return;const i=tabs.indexOf(k);if(k==='skills'&&i>=0)selS=null;if(k!=='status')eqPick=null;if(i>=0)tabs.splice(i,1);else{if(tabs.length>=MAX_TABS)tabs.shift();tabs.push(k);
   // Reopening a window starts at its first sub-tab: Status shows Stats, Inventory shows Bag.
   if(k==='status')sub.status='stats';if(k==='bag')sub.bag='bag';
   if(k==='map'){mapM=S.mp;mapL=S.lvl}}renderWin();if(k==='board'&&tabs.includes('board'))boardRefresh(boardPeriod)};
@@ -2488,7 +2686,7 @@ const ACT={
     log(`🃏 ${name}: dedicated ${r.donated} cop${r.donated===1?'y':'ies'} - mastery ${r.level}/${CARD_MASTERY_PER_CARD}${r.left?`, ${r.left} left in the bag`:''}.`,'r3','card');
     addFloat(pl.x,2.6,pl.z,`🃏 ${name} ${r.level}/${CARD_MASTERY_PER_CARD}`,'#ffd23f');ui();save()},
   indexcard:all=>all,
-  refine:k=>refine(k),sub:v=>{const[t,k]=v.split(':');sub[t]=k;renderWin()},selp:v=>{selP=+v;renderWin()},
+  refine:k=>refine(k),sub:v=>{const[t,k]=v.split(':');sub[t]=k;if(t==='bag'&&k!=='bag')eqPick=null;renderWin()},selp:v=>{selP=+v;renderWin()},
   pon:id=>{const p=gp(id);if(!p)return;if(p.on)p.on=false;else if(S.pets.filter(x=>x.on).length<3)p.on=true;else log('Only 3 pets can fight at once. Remove one first.','','pet');ui();save()},
   pskill:id=>{const p=gp(id);if(!p)return;const c=petSkillCost(p);if(S.zeny<c){log('Not enough Zeny for a pet skill roll.');ui();return}S.zeny-=c;const[a,b]=rollPetSkills();p.skills=[a,b];
     clearPetCd(p.id);
@@ -2542,9 +2740,23 @@ $('feedFilter').addEventListener('mouseleave',()=>{if(feedFilShown)feedFilArm()}
 $('feedFilter').addEventListener('focusin',()=>{if(feedFilTimer)clearTimeout(feedFilTimer)});
 $('feedFilter').addEventListener('focusout',()=>{if(feedFilShown)feedFilArm()});
 $('wins').onclick=e=>{const x=e.target.closest('[data-x]');if(x){openTab(x.dataset.x);return}const b=e.target.closest('[data-a]');if(b&&b.dataset.a==='ssel'&&e.target.closest('.sk-autocast'))return;if(b&&!b.disabled&&ACT[b.dataset.a]){if(b.dataset.a==='idxmap'&&e.target.closest('summary'))e.preventDefault();ACT[b.dataset.a](b.dataset.v)}};
+let chooserAtPointerDown=null,bagPointerInside=false,skillPointerInside=false,skillCardPointerInside=false;
+document.addEventListener('pointerdown',e=>{const target=e.target&&e.target.closest?e.target:null;chooserAtPointerDown=eqPick;bagPointerInside=!!(target&&target.closest('[data-win="bag"]'));skillPointerInside=!!(target&&target.closest('.sk[data-v]'));skillCardPointerInside=!!(target&&target.closest('.sk-detail-card'));},true);
+function closeEquipmentChooser(force=false){if(!eqPick&&!force)return;eqPick=null;selE=null;selB=null;const i=tabs.indexOf('bag');if(i>=0)tabs.splice(i,1);const tipEl=$('tooltip');if(tipEl)tipEl.style.display='none';renderWin()}
+document.addEventListener('click',e=>{
+  const target=e.target&&e.target.closest?e.target:null;
+  // Another tab's click handler may already clear eqPick before this document listener runs.
+  // The pointer-down snapshot still tells us a chooser was open, so close its Bag as well.
+  if(chooserAtPointerDown&&!bagPointerInside)closeEquipmentChooser(true);
+  chooserAtPointerDown=null;bagPointerInside=false;
+  const skillInside=skillPointerInside||skillCardPointerInside||(target&&(target.closest('.sk[data-v]')||target.closest('.sk-detail-card')));
+  skillPointerInside=false;skillCardPointerInside=false;
+  if(selS&&!skillInside){selS=null;if(tabs.includes('skills'))renderWin()}
+});
 addEventListener('keydown',e=>{if(!S||e.ctrlKey||e.metaKey||e.altKey||/INPUT|TEXTAREA/.test(e.target.tagName))return;const k=e.key.toUpperCase();if(k==='ESCAPE'){if(feedFilShown){feedFilHide();return}tabs.pop();renderWin();return}if(k==='Q'){qOpen=!qOpen;renderQ();return}const X={E:['status','equip'],C:['bag','cards'],R:['status','equip']}[k];if(X){const same=tabs.includes(X[0])&&sub[X[0]]===X[1];sub[X[0]]=X[1];if(same)openTab(X[0]);else{if(!tabs.includes(X[0])){if(tabs.length>=MAX_TABS)tabs.shift();tabs.push(X[0])}renderWin()}return}const f=Object.entries(TABS).find(([,v])=>v[2]===k);if(f)openTab(f[0])});
 $('spd').onclick=()=>{speed=speed===1?2:speed===2?4:1;$('spd').textContent='Speed x'+speed};
 const tip=$('tooltip');
+document.addEventListener('error',e=>{const img=e.target;if(!img||img.tagName!=='IMG'||!img.classList||!img.classList.contains('ro-item-icon'))return;const fallback=document.createElement('span');fallback.className='ro-icon-fallback';fallback.textContent=img.dataset.fallback||'✦';if(img.parentNode)img.parentNode.replaceChild(fallback,img)},true);
 document.addEventListener('mouseover',e=>{const c=S&&e.target.closest&&e.target.closest('[data-tip]');if(!c){tip.style.display='none';return}const it=find(c.dataset.tip);if(!it){tip.style.display='none';return}
   tip.innerHTML=itemDetail(it);tip.style.display='block'});
 document.addEventListener('mousemove',e=>{tip.style.left=Math.min(innerWidth-240,e.clientX+14)+'px';tip.style.top=Math.min(innerHeight-200,e.clientY+14)+'px'});
@@ -2608,6 +2820,10 @@ function bars(){if(!S)return;
 }
 function ui(){if(!S)return;bars();feedTab();$('stageTitle').textContent=fieldName()+(isBoss()?' (Boss map)':'');$('grindStatus').textContent=S.lvl<S.prog[S.mp]?'🔄 Farming':'✨ Frontier';renderWin()}
 
+// The owner felt the prior slowdown was too aggressive, so this is exactly halfway between
+// the original `6.5 + 0.05*AGI` pace and v66's proposed curve. It is 8.12 at AGI 99
+// (29.1% slower than 11.45) and 8.68 at AGI 120 (30.5% slower than 12.5).
+const heroMoveSpeedForAgi=agi=>5.3+Math.max(1,Number(agi)||1)*.025+Math.sqrt(Math.max(1,Number(agi)||1))*.035;
 function update(dt){
   if(!S)return;t+=dt;atkAnim=Math.max(0,atkAnim-dt*2.35);hitAnim=Math.max(0,hitAnim-dt*4);shake=Math.max(0,shake-dt*20);
   for(const k in skCd)skCd[k]=Math.max(0,skCd[k]-dt);
@@ -2619,7 +2835,7 @@ function update(dt){
   shots.forEach(s=>s.t+=dt*7);shots=shots.filter(s=>{if(s.t<1)return true;if(s.m)scene.remove(s.m);return false});
   tickSkillFx(dt);
   if(skillOn('aid')&&S.hp<maxHp()*.5&&(skCd.aid||0)<=0){skCd.aid=6;const h=Math.ceil(maxHp()*(.1+.05*lv('aid')));S.hp=Math.min(maxHp(),S.hp+h);playSkillFx('aid',null,'#7dff7d');skillNameFloat('First Aid');addFloat(pl.x,2.6,pl.z,'+'+h,'#7dff7d')}
-  for(let i=pend.length-1;i>=0;i--){const p=pend[i];p.t-=dt;if(p.t<=0){pend.splice(i,1);strike(p.m,p.col,!!p.magic);shot(p.col);if(mob&&mob.hp<=0){kill();break}}}
+  for(let i=pend.length-1;i>=0;i--){const p=pend[i];p.t-=dt;if(p.t<=0){pend.splice(i,1);strike(p.m,p.col,!!p.magic,!!p.skill);shot(p.col);if(mob&&mob.hp<=0){kill();break}}}
   // queued extra casts of a swing: they fire on their own delay and set their cooldown when they do
   for(let i=castQ.length-1;i>=0;i--){const c=castQ[i];c.t-=dt;if(c.t<=0){castQ.splice(i,1);
     if(!mob||mob.hp<=0)continue;skCd[c.sk.id]=c.sk.cd;skillNameFloat(c.sk.n);castSkill(c.sk,c.k);if(mob&&mob.hp<=0)break}}
@@ -2632,7 +2848,7 @@ function update(dt){
   if(mobs.length)for(const m of mobs.slice()){
     m.stun=Math.max(0,(m.stun||0)-dt);
     const ds=m.dots;if(ds&&ds.length)for(let i=ds.length-1;i>=0;i--){const d=ds[i];d.dur-=dt;d.t+=dt;
-      if(d.t>=.5){d.t-=.5;if(m.hp>0)hurt(m,Math.max(1,Math.round(d.dps*.5)),d.col)}
+      if(d.t>=.5){d.t-=.5;if(m.hp>0)hurt(m,Math.max(1,Math.round(d.dps*.5)),d.col,false,!!d.skill)}
       if(d.dur<=0)ds.splice(i,1)}}
   // tradeoff skills cast themselves the moment they are ready and you are healthy enough
   // The to.* fields are functions of skill level, so they must be CALLED here: storing them
@@ -2670,7 +2886,7 @@ function update(dt){
       if(ed>.1&&!stn){const v=Math.min(ed,dt*(m.boss?1.2:1.6)*(wake?1:.55));m.x+=ex/ed*v;m.z+=ez/ed*v}
       m.x=cl(m.x,-BX_,BX_);m.z=cl(m.z,Z0,Z1);m.ry=Math.atan2(pl.z-m.z,m.x-pl.x);
       if(wake&&Math.hypot(pl.x-m.x,pl.z-m.z)<=ms+.4&&!stn){m.at-=dt;if(m.at<=0){m.at=m.boss?1.2:1.5;
-        if(Math.random()*100<flee())addFloat(pl.x,2.4,pl.z,'Miss','#8cf');
+        if(Math.random()*100<flee())addFloat(pl.x,2.4,pl.z,'DODGE','#76eaff',false,'evade');
         // Incoming damage: a capped percentage cut, not a flat subtraction. The old line took
         // def*0.6 off every hit with a floor of 1, so a geared character took exactly 1 damage
         // from every monster and every boss in the game. def/(def+4000) caps at 75%: the naked
@@ -2692,13 +2908,13 @@ if(S.hp<=0){log('You were defeated... knocked back to the entrance.','r0','kills
     const ex=(o?o.x+(i-1)*.8:pl.x-1.2)-r.x,ez=(o?o.z+1.2:pl.z+(i-1)*1.1)-r.z,ed=Math.hypot(ex,ez);r.run=ed>.2;
     if(ed>.05){const v=Math.min(ed,6*dt);r.x+=ex/ed*v;r.z+=ez/ed*v}r.x=cl(r.x,-BX_,BX_);r.z=cl(r.z,Z0-1,Z1+1);r.lunge=Math.max(0,(r.lunge||0)-dt*4);
     if(o&&bd<2.4){r.at-=dt;if(r.at<=0){r.at=petInt(p);r.lunge=1;petHit(p,o)}}}
-  const px=tx-pl.x,pz=tz-pl.z,pd=Math.hypot(px,pz),spd=6.5+st('agi')*.05;pl.run=pd>.15;
+  const px=tx-pl.x,pz=tz-pl.z,pd=Math.hypot(px,pz),spd=heroMoveSpeedForAgi(st('agi'));pl.run=pd>.15;
   if(pd>.05){const s=Math.min(pd,spd*dt*(pd>3?1.4:1));pl.x+=px/pd*s;pl.z+=pz/pd*s}
   pl.x=cl(pl.x,-BX_,BX_);pl.z=cl(pl.z,Z0,Z1);
   if(mob)pl.ry=-Math.atan2(mob.z-pl.z,mob.x-pl.x);else if(pl.run)pl.ry=-Math.atan2(pz,px);
   if(S.hp<maxHp()&&Math.floor(t*2)!==Math.floor((t-dt)*2))S.hp=Math.min(maxHp(),S.hp+Math.ceil(maxHp()*.008));
   barT-=dt;if(barT<=0){barT=.15;bars()}
-  floats.forEach(f=>{f.life-=dt*1.1;if(f.kind!=='skill')f.y+=dt*(f.kind==='damage'||f.kind==='critical'||f.kind==='incoming' ? .3 : .8)});floats=floats.filter(f=>{if(f.life>0)return true;if(f.el)f.el.remove();return false});
+  floats.forEach(f=>{f.life-=dt*1.1;if(f.kind!=='skill')f.y+=dt*(['damage','skill-damage','critical','incoming','miss','evade'].includes(f.kind) ? .3 : .8)});floats=floats.filter(f=>{if(f.life>0)return true;if(f.el)f.el.remove();return false});
   drops.forEach(d=>{d.t+=dt;d.vy+=700*dt;d.y+=d.vy*dt;if(d.y>0){d.y=0;d.vy=-d.vy*.4;if(Math.abs(d.vy)<40)d.vy=0}});
   for(let i=drops.length-1;i>=0;i--)if(drops[i].t>.9){collect(drops[i].it);drops.splice(i,1)}
 }
@@ -4277,7 +4493,10 @@ dom.addEventListener('pointermove',e=>{if(!drag)return;az-=(e.clientX-drag[0])*.
 dom.addEventListener('pointerup',()=>drag=null);dom.addEventListener('pointercancel',()=>drag=null);
 dom.addEventListener('wheel',e=>{e.preventDefault();zoom=Math.min(2,Math.max(.6,zoom*(e.deltaY<0?1.1:.9)))},{passive:false});
 
-const ct=new THREE.Vector3(0,.8,0);let lastKey='';
+// Keep the character near the visual centre: a very small forward lead (0.25 world units)
+// leaves the body centre about 2% above screen centre, instead of the old 5-unit lead that
+// pushed the avatar down into the lower third of the view.
+const CAMERA_FOCUS_Y=.28,CAMERA_LEAD_Z=.25,ct=new THREE.Vector3(0,CAMERA_FOCUS_Y,0);let lastKey='';
 function draw(){
   if(!S)return;const bn=isBoss(),key=S.mp+':'+S.lvl+':'+bn,c=C(),mp=MAPS[S.mp];
   if(key!==lastKey){lastKey=key;const col=new THREE.Color(bn?0x8a6bb0:mp.sky);scene.background=col;scene.fog=new THREE.Fog(col,35,80);ground.material.color.setHex(mp.ground);buildDeco(S.mp);road.material.color.setHex(S.mp===3?0xe9d9a8:0xd8cdb4)}
@@ -4327,7 +4546,7 @@ function draw(){
   dmesh.forEach((m,d)=>{if(!live.has(d)){scene.remove(m);dmesh.delete(d)}});
   shots.forEach(s=>{if(!s.m){s.m=mk(scene,s.arrow?BX(.5,.04,.04):SP(.14),s.col);s.m.material.emissive.set(s.col);s.m.castShadow=false;s.m.rotation.y=-Math.atan2(s.z1-s.z0,s.x1-s.x0)}
     const k=Math.min(1,s.t);s.m.position.set(s.x0+(s.x1-s.x0)*k,1.4,s.z0+(s.z1-s.z0)*k)});
-  ct.x+=(pl.x*.6-ct.x)*.05;ct.z+=(pl.z-5-ct.z)*.05;
+  ct.x+=(pl.x*.6-ct.x)*.05;ct.z+=(pl.z-CAMERA_LEAD_Z-ct.z)*.05;
   const dd=(cam.aspect<1.5?26:18)/zoom,sk=shake*.03;
   cam.position.set(ct.x+Math.sin(az)*Math.cos(el)*dd+rnd(-sk,sk),Math.sin(el)*dd+.5,ct.z+Math.cos(az)*Math.cos(el)*dd+rnd(-sk,sk));
   cam.lookAt(ct);cam.updateMatrixWorld(true);

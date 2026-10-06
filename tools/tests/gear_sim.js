@@ -20,7 +20,11 @@ const src = fs.readFileSync(__dirname + '/../../index.html', 'utf8');
 const grab = (a, b) => { const i = src.indexOf(a), j = src.indexOf(b, i); if (i < 0 || j < 0) throw new Error('missing ' + a); return src.slice(i, j); };
 const pick = (re, name) => { const m = src.match(re); if (!m) throw new Error('cannot find ' + name); return m[0]; };
 
-const gearDropLoop = grab('  for(const[T,ch]of mob.drops)', '  if(Math.random()*100<mob.cardCh)');
+const killStart = src.indexOf('function kill(o){');
+const gearDropStart = src.indexOf('  for(const[T,ch]of mob.drops)', killStart);
+const gearDropEnd = src.indexOf('  if(Math.random()*100<mob.cardCh)', gearDropStart);
+if (killStart < 0 || gearDropStart < 0 || gearDropEnd < gearDropStart) throw new Error('cannot find the live kill() gear-drop loop');
+const gearDropLoop = src.slice(gearDropStart, gearDropEnd);
 const code = [
   'const bon=()=>0;',
   grab('const CD=[', 'const pm=s=>'),                       // class roster: CLASSES, lineOf
@@ -277,21 +281,21 @@ t('fieldOf only hands out items from that field pool', () => {
   }
 });
 
-t('the level 10 boss and its card are the field ceiling', () => {
+t('regular mobs drop both ores on every stage and Stage 10 keeps its stronger boss rate', () => {
   for (let m = 0; m < G.MAPS.length; m++) {
+    for (let l = 1; l < 10; l++) {
+      const field = G.fieldOf(m, l);
+      assert.ok(field.mobs.every(x => x.ore), G.MAPS[m].n + ' Stage ' + l + ' regular mobs must drop both ores');
+      assert.ok(field.mobs.every(x => x.oreCh === 0.005), G.MAPS[m].n + ' Stage ' + l + ' ore rate must be 0.5% each');
+    }
     const F = G.fieldOf(m, 10);
     assert.strictEqual(F.boss.card.g, 3, 'boss card must be Legendary');
     assert.ok(F.boss.cardCh < F.mobs[0].cardCh, 'boss card rarer than a mob card');
-    assert.ok(F.boss.ore && F.mobs[0].ore, 'level 10 fields drop oridecon/elunium');
-    // v16 ore buff: 2% per monster, 5% per boss (was 0.4% flat)
-    assert.strictEqual(F.mobs[0].oreCh, 0.01, 'level 10 mobs drop ore at 1% (v51 halved)');
-    assert.strictEqual(F.mobs[1].oreCh, 0.01, 'both mobs drop ore at 1% (v51 halved)');
-    assert.strictEqual(F.boss.oreCh, 0.025, 'the boss drops ore at 2.5% (v51 halved)');
+    assert.ok(F.boss.ore && F.mobs.every(x => x.ore), 'Stage 10 regular mobs and boss drop oridecon/elunium');
+    assert.ok(F.mobs.every(x => x.oreCh === 0.01), 'Stage 10 regular mobs drop ore at 1% each');
+    assert.strictEqual(F.boss.oreCh, 0.025, 'the boss drops ore at 2.5% each');
   }
-  const low = G.fieldOf(0, 1);
-  assert.strictEqual(low.mobs[0].ore, false, 'low fields must not drop refine ores');
-  assert.ok(!low.mobs[0].oreCh, 'low fields roll no ore chance');
-  assert.strictEqual(low.mobs[0].card.g, 0, 'low fields roll common cards');
+  assert.strictEqual(G.fieldOf(0, 1).mobs[0].card.g, 0, 'low fields keep common cards');
 });
 
 t('the pool is exactly the section set and only grows as you climb', () => {

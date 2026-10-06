@@ -1,8 +1,7 @@
 # Prontera Grind — the client/server shift plan
 
-*Written 2026-10-06 for BUILD `2026-10-06 grind-v59 deeper skill lines + a free pet skill`.*
-*Nothing in this file changes the game — it is the plan the owner asked for: Render or
-Cloudflare, how accounts and saves move to a server, and what to prepare.*
+*Originally written 2026-10-06 for BUILD `2026-10-06 grind-v59 deeper skill lines + a free pet skill`.*
+*This plan has been kept current as the cloud-save work shipped. BUILD v65 added client-side away rewards; v66 polished presentation/login. BUILD v67 moves **cloud offline time and kill-budget authorization** to D1 server time, with a persistent one-use claim (4-hour cap, 50% rate). The browser still performs the drop/EXP/item simulation and the overall game save remains client-authoritative.*
 
 ---
 
@@ -57,12 +56,12 @@ So the verdict is unchanged, for a better reason than the one this plan original
 
 | Question | Answer |
 |---|---|
-| Scope of the first build | Phase 1 (accounts/cloud saves) is already live. The current explicit change is **the leaderboard only**: Daily, Weekly and All-time by kills, with Base Lv as the tie-breaker. Do not bundle the other Phase 2 features into this change. |
-| Later Phase 2 preferences | If separately requested: away progress capped at **4 hours** and rewarded at **half rate**; show an **online count only** (no player list); put world chat in the existing Logs UI. A 15-second poll is near-live, not instant: messages may take up to about 15 seconds to appear. |
-| Does the earlier 1 + 2 workload estimate fit the free tier? | §3d is an illustrative capacity estimate, not authorization to build that full scope. Real-time co-op is still **later**, not now. |
+| Current scope | Phase 1 and the v64 leaderboard are live; v67 server-timed cloud offline claims use the existing save exchange, with no new poll or endpoint. v65 local-only reward timing and the v67 reward rolls remain client-side. |
+| Remaining social preferences | Online count only (no player list) and world chat in the existing Logs UI. A 15-second poll is near-live, not instant: messages may take up to about 15 seconds to appear. |
+| Does the earlier 1 + 2 workload estimate fit the free tier? | §3d remains an illustrative capacity estimate, not authorization to build every social feature. Real-time co-op is still **later**, not now. |
 | Login style | **Username + password (server-hashed) with a one-time recovery code** shown at registration (§6.4). No email service needed. |
 | Host | **Read from the dashboard (2026-10-06): 52 MB of 5 GB, 0 of 750 instance hours, 1 service.** Bandwidth is a cents risk, not the reason to move; the reason to move the server is that Render free has no durable database (§1a). The service *type* (static site vs web service) is still worth confirming (§3a) — it decides whether the client also moves in phase 1. |
-| What to build now | The leaderboard is the only Phase 2 feature authorized in this change. Away progress, presence and world chat remain future work; their preferences are recorded above. |
+| What remains | Cloud offline time and kill-budget claims are server-timed in v67; browser-only local mode still uses its clock. Moving loot generation and broader save validation to the server remains separate work. Online count and world chat remain future work. |
 
 ---
 
@@ -229,12 +228,12 @@ inside 10 ms.
 
 ### 3d. Illustrative Phase 1 + 2 capacity estimate at 20 players
 
-This is an earlier capacity estimate for a combined Phase 1 + 2 workload, not the current scope or
-authorization to implement everything in the table. The explicitly authorized addition now is the
-leaderboard. If later requested, Phase 2 preferences are: away progress capped at 4 hours and paid at
-half rate, online count only (no player list), and world chat inside the existing Logs UI. A 15-second
-poll is near-live, not instant; a message may take up to 15 seconds to appear. The estimate below
-assumes each player is **online 4 hours a day** (the generous case for a browser idle game):
+This remains an illustrative capacity estimate for a combined Phase 1 + 2 workload. The leaderboard
+is live, and BUILD v65 adds away rewards **inside the client save** (four-hour cap, half-rate drops
+and progression); that simulation adds no new API polling or separate server work. The remaining
+social preferences are online count only (no player list) and world chat inside the existing Logs UI.
+A 15-second poll is near-live, not instant; a message may take up to 15 seconds to appear. The estimate
+below assumes each player is **online 4 hours a day** (the generous case for a browser idle game):
 
 | Line item | Requests/day | D1 row writes/day |
 |---|---|---|
@@ -440,11 +439,11 @@ Rules that keep players' progress safe:
 |---|---|---|
 | 1 | Client-authoritative (the browser simulates, the server stores) or server-authoritative (the server simulates)? | **Client-authoritative for now** — porting the 3,958-line sim to the Worker is a rewrite, not a shift. Revisit only if trading or PvP is ever added. |
 | 2 | Can players keep playing with no internet / no account? | **Yes.** Local save + offline play stays as the fallback; the cloud is the vault. |
-| 3 | What happens to progress when the tab is closed? | If separately requested later: server-measured away progress, capped at **4 hours** and rewarded at **half rate** (§8). It is not part of the current leaderboard change. |
+| 3 | What happens to progress when the tab is closed? | **Built client-side in v65:** use the saved recent kill rate, cap credited absence at **4 hours**, and simulate rewards at **50%**. The returning-player summary reports time, kills/drops, EXP, equipment items and cards. Gear, cards, ores and pets can drop; auto-sell/equip and bag limits still apply. Client authority means this is not cheat-proof (§8). |
 | 4 | Should the game split into `client/` and `server/` folders? | **Not yet.** Keep `index.html` where every test suite expects it and add `functions/api/*` beside it. A file-layout refactor is a separate, riskier job. |
-| 5 | Scope of the first build | Phase 1 (accounts + cloud saves) is live; the current explicit addition is only the leaderboard. Away progress, presence and world chat remain later work; real-time co-op remains later still. |
+| 5 | Scope of the first build | Phase 1 (accounts + cloud saves), the leaderboard, v65 client-side offline rewards, and v66 presentation/login polish are built. Presence and world chat remain later work; real-time co-op remains later still. |
 | 6 | Login style | **Username + password, server-hashed, plus a one-time recovery code** shown at registration (§6.4) — no email service needed, and a forgotten password is not a dead account. |
-| 7 | What is built right now | Phase 1 is live on Pages; the v64 leaderboard code is built and tested on this branch, pending D1 migration 0002 and production deploy. |
+| 7 | What is built right now | Phase 1 is live on Pages; v64 leaderboard, v65 offline simulation, v66 UI/login polish and v67 server-timed cloud claims are built on this branch. The v64 note about migration 0002 and production deploy remains relevant to the leaderboard release. |
 
 ### 7b. Repo prep (all small, none of it touches the game)
 
@@ -559,36 +558,47 @@ politely.
 
 ## 8. The honest anti-cheat chapter
 
-With the simulation in the browser, **any player can open devtools and set `S.zeny = 1e9`.** This
-was already true locally; the difference is that now it happens next to other people's names on a
-leaderboard.
+With the simulation in the browser, **any player can still open devtools and edit their save.** That already applies to Zeny, levels and loot outcomes. v67 specifically closes the device-clock exploit for cloud offline timing: the Worker/D1 uses server `last_seen`, a server-observed kill rate and a one-use claim. A forward/backward client clock cannot change that cloud claim. Browser-only local accounts still use client time and do not sync across devices. This is not full anti-cheat for the game economy.
 
-What the server *can* do cheaply and should:
+### Offline reward behavior, client-built in v65; cloud timing moved server-side in v67
 
-* **Validate the shape** (reuse the client's repair rules) and reject impossible values
-  (`lv > 150`, `zeny < 0`, non-finite numbers).
-* **Rate-of-change checks** against the *server's* clock: a save that gained 40 base levels or
-  3 million Zeny in the 4 minutes since the last sync is not real → store it, flag the account,
-  hide it from the board, tell the GM. Never delete a player's save on suspicion.
-* **Measure the rate, do not ask for it.** The server already knows `kills_total` and `last_seen`.
-  The earned-kills-per-hour it computes from *its own* two timestamps is the honest number, and the
-  client cannot inflate it without actually playing. Use exactly that number for away progress:
+* For **cloud accounts**, `/api/save` reads D1 `last_seen` and server-measured `rate_kph`; it ignores
+  the device timestamp and client-supplied rate. Once away for at least a minute it snapshots
+  `min(server time away, 4 hours)` and the kill budget `floor(rate × credited hours × 0.5 +
+  server remainder)`. A persistent pending claim is returned unchanged on retry and is acknowledged
+  atomically with the versioned save that carries its claim ID. The same away interval cannot pay twice.
+* The server learns the recent rate from accepted kill-count deltas over server elapsed time (cap
+  30,000/hour); client-reported offline samples do not set it. Claims use the established **4-hour
+  cap, 50% rate and fractional carry**.
+* The simulation uses the current map/stage reward data. It can grant Zeny, EXP, equipment, cards,
+  Oridecon, Elunium and pets; existing auto-sell, auto-equip, quest, level and bag-cap rules apply.
+  The return dialog reports away/credited time, monsters, total drops, EXP, gear-item count, card
+  count and Zeny. The browser uses the server-approved kill count to run the existing map/stage
+  loot simulation; the `/api/save` exchange uses no heartbeat or new endpoint.
+* The existing save blob still carries the legacy local `offlineAt`/`offlineKph` fields, but cloud
+  claims ignore them; the server claim ID is the cloud acknowledgement. Offline accrual is applied
+  only after the player has adopted the chosen save at login; if two copies conflict, the choice is
+  made first, so neither save is silently thrown away.
 
-```
-awaySeconds = clamp(now - last_seen, 0, 4 hours)       // owner's chosen hard cap
-awayKills   = rate_kph / 3600 * awaySeconds * 0.5       // owner's chosen half-rate reward
-award       = exp and Zeny for awayKills kills, no gear  // do not award random drops offline
-```
+**Cloud offline timing is now server-authorized, but reward results are not fully authoritative.** A modified
+client can still edit the save blob or lie about reward contents because the whole combat/economy sim
+runs in the browser. Full protection requires moving drop/EXP/item generation and validating the relevant
+save deltas on the server. v67 adds one D1 claim row on a return and reuses the normal save upload; it
+does not add heartbeat traffic. Payload growth is tiny compared with the full save blob; the meaningful
+work is the idempotent claim transaction, conflict handling and (for full authority) porting reward logic.
 
-These are the recorded design choices, **not work included in the leaderboard change**. If away
-progress is separately authorized, raise the current 10-minute client wake cap deliberately so the
-server award and client catch-up tell the same story.
+### Server-side checks still worth doing for competitive features
 
-* **Do not build trading or PvP on top of a client-authoritative save.** That is the point where
-  cheating stops being a leaderboard cosmetic and starts hurting other players. Those features
-  require the sim to move server-side — a rewrite of the game, not a shift.
-* **Keep the leaderboard labelled**: "self-reported" until the day the sim is authoritative. Your
-  players will understand, and it keeps you honest.
+* **Validate save shape** and reject impossible values (`lv > 150`, `zeny < 0`, non-finite numbers).
+* **Rate-of-change checks** against the server clock can flag unusual jumps, but must preserve the
+  save and let a GM review it. They are detection, not proof.
+* Full reward authority is still future work: port the map/stage reward tables and RNG, apply reward
+  deltas against the server save, and ensure client conflict/restore paths cannot replay them. Keep the
+  current policy when doing so: four hours, half online pace, and the existing gear/cards/ores/pets.
+
+* **Do not build trading or PvP on top of a client-authoritative save.** Those features require the
+  simulation to move server-side — a rewrite of the game, not a shift.
+* **Keep the leaderboard labelled**: "self-reported" until the day the sim is authoritative.
 
 ---
 
@@ -598,7 +608,7 @@ server award and client catch-up tell the same story.
 |---|---|---|---|
 | **0 — hygiene** | Rotate/remove the GM password from `index.html`; add `.assetsignore`; confirm the current Render bandwidth number | ~30 min | **Do this first, before anything else** |
 | **1 — accounts + cloud saves** | `functions/api/*`, D1 schema, session cookies, auth in a DO, debounced sync + 409 dialog, upload-this-device migration, export/import codes, recovery code, `api_sim.js`, GM role server-side | 1-2 focused days | **Chosen — first build** |
-| **2 — social + idle progress** | Leaderboard (Daily/Weekly/All-time) from newly synced kills with Base Lv tie-break. Later, only if separately requested: away progress (4 h cap, half rate), online count only (no list), and world chat in the existing Logs UI (15 s polling; up to 15 s delay). | ~1 day | **Partial: leaderboard built for v64; remaining Phase 2 work is deferred and not included in this change.** |
+| **2 — social + idle progress** | Leaderboard (Daily/Weekly/All-time) from newly synced kills with Base Lv tie-break; v67 server-timed cloud claims (4 h cap, 50% kill budget) use the save exchange; v65 browser-only local rewards still use device time, and reward drops are still generated by the client. Remaining: online count only (no list), and world chat in the existing Logs UI (15 s polling; up to 15 s delay). | ~1 day | **Partial: leaderboard and server-timed cloud claims are built; client-side reward rolls remain; presence/chat are deferred.** |
 | **3 — real-time (wanted, later)** | Shared field: 1 Hz tick broadcast via one Durable Object, authoritative or semi-authoritative; `/api/live` swaps from polling to a hibernating WebSocket without the client's UI code changing | Weeks, plus a client render/net rewrite | **Later, on purpose.** The endpoint shape in phase 2 exists so this does not mean a rewrite. |
 
 **What phase 3 really costs** (so nobody is surprised): free-tier WebSocket/DO messages are counted
@@ -614,10 +624,11 @@ floor. Everything else in this plan stays free at this scale.
 
 1. **The Cloudflare deployment is already active** (checked 2026-10-06); Render remains deliberately
    available as a backup. Do not remove it or treat its older build as an incident.
-2. For the v64 leaderboard, apply `migrations/0002_leaderboard.sql` to the existing D1 `pg` database,
-   then merge the PR to `main`. The Git-connected Pages project deploys automatically; see
-   `tools/cloudflare-deploy-steps.md` for the manual alternative and verification steps.
-3. The only feature in this change is the leaderboard. Away progress, online count and world chat
-   remain future work unless the owner asks to proceed; their selected rules are recorded above.
+2. For v67, apply `migrations/0003_server_timed_offline_claims.sql` to D1 `pg` after migration 0002
+   and before deploying. The Git-connected Pages project then deploys automatically; see
+   `tools/cloudflare-deploy-steps.md` for the exact order and verification.
+3. Cloud away duration/kill budgets are now server-timed, but the client still rolls the resulting items
+   and EXP. Local-only fallback remains device-timed. Full economy authority is a separate server-sim
+   project; presence and world chat remain future work unless the owner asks to proceed.
 4. Real-time co-op/WebSockets remain a later, separate phase. A 15-second chat poll is near-live and
    may delay a new message by up to 15 seconds; do not describe it as instant chat.
