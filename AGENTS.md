@@ -3326,3 +3326,28 @@ assigned for feel rather than fidelity. While reworking that, two shipped bugs s
   the owner asked for; pet identity is still parked by the owner's own request. The 5-level utility
   skills are the only place a "wasted" point can happen if a later patch changes a cap - the panel
   warns and the repair loop trims, so no save loses anything.
+
+### 2026-10-06 — `docs only: the server shift plan (no game change, BUILD not bumped)`
+
+* **What changed for the player:** Nothing. No file the browser loads was touched, so `BUILD` stays
+  at `2026-10-06 grind-v59 deeper skill lines + a free pet skill`. The owner asked three questions -
+  should the game stay on Render or move to Cloudflare, how do accounts and saves become
+  server-side so a player can log in on any device, and what has to be prepared for that - and the
+  answers are not a code change, so they are written down instead of shipped.
+* **Files touched:** `tools/server-shift-plan.md` (new: the whole plan, ~330 lines), `READ-ME-FIRST.md`
+  (one pointer line so the next agent finds it), this log. Nothing else.
+* **Art:** no sheets added, removed or rebuilt; `tools/montage.py` was not used.
+* **Tests:** all **21 suites** pass on this tree (no FAIL line): pack 19, class_change 25,
+  class_skin 39, save_load 22, economy 23, stat 7, card 13, skill 52, gear 30, scene 8, kit 34,
+  UI 37, sprite 12, starter 8, pet 13, picker 19, drop_card_sheet 12, weapon_joint 7,
+  weapon_review 13, sprite_viewer 154 PNGs/19 jobs, background 12, plus both `--check` tools
+  ("Sprite viewer is current.", "Class skins are current."). `index.html` is untouched, so this run
+  only proves the docs change broke nothing - which is exactly what it should prove.
+* **Branches / PR:** `arena/50beb968-prontera-grind`, PR opened against `main` for the owner to read.
+* **Known limits / follow-ups:** the plan makes no decisions on the owner's behalf - the sync
+  cadence, whether away-progress exists, whether the client stays client-authoritative and whether
+  real-time co-op is ever wanted are all flagged as owner decisions in §7a. The two facts it leans on
+  hardest are worth re-checking before acting: Render's Hobby bandwidth for the last 30 days, and the
+  real size of a late-game save (`JSON.stringify(S).length` in the console). The GM password in
+  `index.html` is called out as the one thing worth fixing before any server work starts, because
+  the repo is public.

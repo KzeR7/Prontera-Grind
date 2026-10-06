@@ -33,6 +33,10 @@ the repo, so pushing to `main` is the deploy.
   changing the class art or the hero.**
 * `tools/` — the art pipelines (`make_sprite_pack.py`, `make_sprite_viewer.py`, `make_simple_apng.py`, `montage.py`), the test suites (`tools/tests/`)
   and a dev-only plan previewer (`tools/preview/`).
+* `tools/server-shift-plan.md` — the plan for moving accounts and saves server-side (Render vs
+  Cloudflare with the free-tier maths, the API/D1 sketch, save sync + conflict rules, the migration
+  for existing players, and the staged roadmap). Nothing in it is built yet; it is what the owner
+  asked for and it records the two decisions that are still open.
 * `AGENTS.md` — **the project's rules and its full update log**. Read it before changing anything:
   it carries the house rules (crop only, never draw art; all 8 directions and 3 animation rows
   survive; append to the log; bump `BUILD` for anything a player can see) and the history.
