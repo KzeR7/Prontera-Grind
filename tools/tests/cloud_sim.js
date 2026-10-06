@@ -35,7 +35,7 @@ function harness(opts = {}) {
   const store = new Map(Object.entries(opts.storage || {}));
   const state = {
     S: opts.S || { lv: 12, cls: 'Novice', zeny: 100, kills: 5, st: { str: 9, agi: 1, dex: 1, luk: 1, int: 1, vit: 1 } },
-    currentUser: null, logs: [], asks: [], saves: 0,
+    currentUser: null, logs: [], asks: [], saves: 0, downloads: [], lastBlob: null,
   };
   const fetchStub = async (url, init) => {
     calls.push({ url, init: init || {} });
@@ -55,11 +55,22 @@ function harness(opts = {}) {
     console, JSON, Math, Date, Number, String, Array, Object, Promise, Blob,
     fetch: fetchStub,
     localStorage: {
+      get length() { return store.size; },
+      key: i => [...store.keys()][i] ?? null,
       getItem: k => (store.has(k) ? store.get(k) : null),
       setItem: (k, v) => store.set(k, String(v)),
       removeItem: k => store.delete(k),
     },
-    document: { visibilityState: 'visible', getElementById: id => els.get(id) || null },
+    document: {
+      visibilityState: 'visible', getElementById: id => els.get(id) || null,
+      body: { appendChild() {} },
+      createElement: () => ({
+        click() { this._clicked = true; state.downloads.push({ name: this.download, blob: state.lastBlob }); },
+        remove() {},
+      }),
+    },
+    URL: { createObjectURL(b) { state.lastBlob = b; return 'blob:test'; }, revokeObjectURL() {} },
+    FileReader: class { readAsText(f) { this.result = f.text; this.onload && this.onload(); } },
     navigator: {},
     addEventListener: () => {},
     setInterval: () => 0,
@@ -69,7 +80,14 @@ function harness(opts = {}) {
     $: id => els.get(id) || null,
     ui: () => { state.uiCalls = (state.uiCalls || 0) + 1; },
     qRefresh: () => {}, newQuest: q => ({ type: q }), fresh: () => ({ lv: 1, cls: 'Novice', zeny: 0, kills: 0, st: { str: 1 }, q: [] }),
-    load: () => Object.assign({ lv: 9, cls: 'Novice', zeny: 5, kills: 0, st: { str: 1 }, q: [] }, opts.loadReturn || {}),
+    // The game's load() parses the saved blob for the logged-in name; mirror that here so a test
+    // that restores or adopts a save is checked against what would really be played.
+    load: () => {
+      const base = { lv: 9, cls: 'Novice', zeny: 5, kills: 0, st: { str: 1 }, q: [] };
+      let saved = null;
+      try { saved = JSON.parse(store.get('pg_save3_' + (sandbox.currentUser || '')) || 'null'); } catch (e) { saved = null; }
+      return Object.assign(base, saved || {}, opts.loadReturn || {});
+    },
     lsPut: (k, v) => { store.set(k, String(v)); },
     lsGet: k => (store.has(k) ? store.get(k) : null),
     iname: it => it.name,
@@ -79,22 +97,25 @@ function harness(opts = {}) {
     initSession: () => { state.localSession = true; },
     showErr: m => state.err = m,
     getAcc: () => ({}), setAcc: () => {}, hashPw: () => 'h', gmOk: () => false, GM_USER: 'GM',
-    ask: (msg, yes) => { state.asks.push(msg); state.askPromise = yes(); },
+    ask: (msg, yes) => { state.asks.push(msg); if (opts.answerAsk !== false) state.askPromise = yes(); },
     authMode: 'login', hudRate: null, zenyEarned: 0,
   };
   sandbox.$ = sandbox.$;
   sandbox.globalThis = sandbox;
   sandbox.S = state.S;                 // the game state the block mutates
   sandbox.currentUser = null;          // and the account name it works against
+  sandbox.BUILD = '2026-10-06 grind-test';
   // A couple of the game's own element hooks the block writes to.
-  for (const id of ['cloudBadge', 'loginCloud', 'userBadge', 'conflict', 'conflictWhy', 'conflictCards', 'cfThis', 'cfCloud', 'cfLater'])
+  for (const id of ['cloudBadge', 'loginCloud', 'userBadge', 'conflict', 'conflictWhy', 'conflictCards', 'cfThis', 'cfCloud', 'cfLater',
+    'loginOverlay', 'logoutBtn', 'saveDl', 'saveUp', 'saveFile'])
     els.set(id, { id, textContent: '', title: '', style: {}, set onclick(fn) { this._onclick = fn; }, get onclick() { return this._onclick; }, innerHTML: '' });
   els.get('cfLater').onclick = null;
   // A top-level `const` inside vm.runInContext does NOT become a property of the sandbox, so the
   // block's bindings are copied onto globalThis explicitly: that is how a suite drives them.
   const EXPORTS = ['CLOUD','cloudProbe','cloudPush','cloudFlush','cloudFlushNow','cloudConflict',
     'cloudAdopt','cloudPull','cloudApplyGrants','ptsSpent','cloudAuth','cloudLogout','cloudTouch',
-    'cloudSession','initSessionFromCloud','saveKeyFor','cloudBadge','cloudSay','cloudFetch'];
+    'cloudSession','initSessionFromCloud','saveKeyFor','cloudBadge','cloudSay','cloudFetch',
+    'cloudJoin','cloudRefresh','cloudStart','saveBackup','restoreBackup'];
   vm.createContext(sandbox);
   vm.runInContext(cloudCode + '\n;' + EXPORTS.map(n => `globalThis.${n}=${n};`).join(''), sandbox);
   return { sandbox, state, calls, els, store };
@@ -294,6 +315,170 @@ await T('the local GM password feature and the cloud layer coexist', async () =>
   assert.ok(src.includes("const gmOk=p=>{const h=gmHash(p);if(h===String(GM_PASS_HASH))return true;"),
     'gmOk must survive the cloud changes');
   assert.ok(src.includes("if(CLOUD.api)return cloudAuth(u,p,false);"), 'the cloud login branch must exist');
+});
+
+// -------------------------------------------- login: which copy wins, and how ----
+const loginHarness = (opts = {}) => harness(Object.assign({
+  routes: {
+    '/save': { status: 200, body: { version: 3, blob: null, savedAt: 1 } },
+    '/grants': { status: 200, body: { grants: [] } },
+    '/messages': { status: 200, body: { messages: [] } },
+  },
+}, opts));
+
+await T('registering with progress already in this browser: it is uploaded, never discarded', async () => {
+  const local = JSON.stringify({ lv: 33, cls: 'Knight', zeny: 500, kills: 7, st: { str: 1 }, q: [] });
+  const h = loginHarness({
+    storage: { 'pg_save3_KzeR': local },
+    routes: {
+      '/save': (n, init) => (init.method === 'PUT'
+        ? { status: 200, body: { version: 1 } }
+        : { status: 200, body: { version: 0, blob: null } }),
+      '/grants': { status: 200, body: { grants: [] } },
+      '/messages': { status: 200, body: { messages: [] } },
+    },
+    loadReturn: { lv: 33, cls: 'Knight', q: [] },
+  });
+  h.sandbox.CLOUD.api = true;
+  await h.sandbox.initSessionFromCloud('KzeR', 2, true);
+  const put = h.calls.find(c => c.url === '/api/save' && c.init.method === 'PUT');
+  assert.ok(put, 'the device\'s progress must be uploaded to the brand-new account');
+  // Pushed as the LIVE save, so it is re-serialised rather than byte-identical - what must survive is
+  // the progress itself (level, class, Zeny, kills), not the exact text of the old blob.
+  const pushed = JSON.parse(JSON.parse(put.init.body).blob);
+  assert.strictEqual(pushed.lv, 33);
+  assert.strictEqual(pushed.cls, 'Knight');
+  assert.strictEqual(pushed.zeny, 500);
+  assert.strictEqual(pushed.kills, 7);
+  assert.strictEqual(h.store.get('pg_save3_KzeR'), local, 'and the device keeps its own copy');
+  assert.strictEqual(h.els.get('conflict').style.display || 'none', 'none', 'nothing to choose between here');
+});
+
+await T('logging in where the cloud already has the same save: silent, just a version agreed', async () => {
+  const local = JSON.stringify({ lv: 20, cls: 'Mage', zeny: 10, kills: 1, st: { str: 1 }, q: [] });
+  const h = loginHarness({ storage: { 'pg_save3_X': local }, routes: {
+    '/save': { status: 200, body: { version: 9, blob: local } },
+    '/grants': { status: 200, body: { grants: [] } }, '/messages': { status: 200, body: { messages: [] } },
+  } });
+  h.sandbox.CLOUD.api = true;
+  await h.sandbox.initSessionFromCloud('X', 0, false);
+  assert.strictEqual(h.els.get('conflict').style.display || 'none', 'none', 'identical copies need no question');
+  assert.strictEqual(h.sandbox.CLOUD.ver, 9, 'the client must adopt the server\'s version');
+  assert.strictEqual(h.sandbox.CLOUD.dirty, false);
+});
+
+await T('logging in where the cloud has a DIFFERENT save: the player is asked', async () => {
+  const local = JSON.stringify({ lv: 20, cls: 'Mage', zeny: 10, kills: 1, st: { str: 1 }, q: [] });
+  const cloud = JSON.stringify({ lv: 51, cls: 'Sniper', zeny: 90000, kills: 400, st: { str: 1 }, q: [] });
+  const h = loginHarness({ storage: { 'pg_save3_X': local }, routes: {
+    '/save': { status: 200, body: { version: 12, blob: cloud, savedAt: 7 } },
+    '/grants': { status: 200, body: { grants: [] } }, '/messages': { status: 200, body: { messages: [] } },
+  } });
+  h.sandbox.CLOUD.api = true;
+  await h.sandbox.initSessionFromCloud('X', 0, false);
+  assert.strictEqual(h.els.get('conflict').style.display, 'flex', 'two different saves must be the player\'s call');
+  assert.strictEqual(h.store.get('pg_save3_X'), local, 'and nothing is written while they decide');
+});
+
+await T('a new device with no local save simply loads the cloud character', async () => {
+  const cloud = JSON.stringify({ lv: 44, cls: 'Priest', zeny: 1, kills: 2, st: { str: 1 }, q: [] });
+  const h = loginHarness({
+    routes: { '/save': { status: 200, body: { version: 5, blob: cloud } },
+      '/grants': { status: 200, body: { grants: [] } }, '/messages': { status: 200, body: { messages: [] } } },
+    loadReturn: { lv: 44, cls: 'Priest', q: [] },
+  });
+  h.sandbox.CLOUD.api = true;
+  await h.sandbox.initSessionFromCloud('X', 0, false);
+  assert.strictEqual(h.store.get('pg_save3_X'), cloud, 'the cloud save becomes this device\'s save');
+  assert.strictEqual(h.els.get('conflict').style.display || 'none', 'none');
+});
+
+await T('a long-hidden tab adopts another device\'s save when it has nothing of its own to lose', async () => {
+  const cloud = JSON.stringify({ lv: 60, zeny: 5, kills: 1, st: { str: 1 }, q: [] });
+  const h = loginHarness({ storage: { 'pg_save3_X': JSON.stringify({ lv: 40 }) },
+    routes: { '/save': { status: 200, body: { version: 8, blob: cloud } }, '/grants': { status: 200, body: {} }, '/messages': { status: 200, body: {} } } });
+  h.sandbox.CLOUD.api = true; h.sandbox.CLOUD.on = true; h.sandbox.CLOUD.dirty = false; h.sandbox.currentUser = 'X';
+  await h.sandbox.cloudRefresh();
+  assert.strictEqual(h.store.get('pg_save3_X'), cloud, 'a clean tab can follow the account');
+  assert.strictEqual(h.sandbox.CLOUD.ver, 8);
+});
+
+await T('but a tab with unsynced progress is asked instead of being overwritten', async () => {
+  const cloud = JSON.stringify({ lv: 60, zeny: 5, kills: 1, st: { str: 1 }, q: [] });
+  const h = loginHarness({ storage: { 'pg_save3_X': JSON.stringify({ lv: 41 }) },
+    routes: { '/save': { status: 200, body: { version: 8, blob: cloud } }, '/grants': { status: 200, body: {} }, '/messages': { status: 200, body: {} } } });
+  h.sandbox.CLOUD.api = true; h.sandbox.CLOUD.on = true; h.sandbox.CLOUD.dirty = true; h.sandbox.currentUser = 'X';
+  await h.sandbox.cloudRefresh();
+  assert.strictEqual(h.els.get('conflict').style.display, 'flex');
+  assert.strictEqual(h.store.get('pg_save3_X'), JSON.stringify({ lv: 41 }), 'the unsynced copy is left alone');
+});
+
+// --------------------------------------------------- carrying saves to a new address ----
+await T('the backup file holds this device\'s characters and NOTHING else', async () => {
+  const h = loginHarness({ storage: {
+    'pg_save3_KzeR': '{"lv":70}', 'pg_save3_Friend': '{"lv":12}', 'pg_acc4': '{"KzeR":"hash"}',
+    'pg_gm_local': 'deadbeef',                        // the browser-local GM marker
+    'unrelated_key': 'x',
+  } });
+  h.sandbox.BUILD = 'test';
+  h.sandbox.saveBackup();
+  assert.strictEqual(h.state.downloads.length, 1);
+  const dump = JSON.parse(await h.state.downloads[0].blob.text());
+  assert.deepStrictEqual(Object.keys(dump.keys).sort(), ['pg_acc4', 'pg_save3_Friend', 'pg_save3_KzeR'],
+    'exactly the saves and the browser account list');
+  assert.ok(!('pg_gm_local' in dump.keys), 'the GM marker must never leave the browser in a backup file');
+  assert.ok(!('unrelated_key' in dump.keys));
+  assert.match(dump.download || h.state.downloads[0].name, /prontera-grind-saves-\d{4}-\d{2}-\d{2}\.json/);
+  assert.ok(dump.at > 0 && dump.kind === 'save-backup');
+});
+
+await T('restoring writes the saves - and cannot write anything else, however the file is built', async () => {
+  const h = loginHarness({ storage: {}, answerAsk: true });
+  const file = { text: JSON.stringify({
+    kind: 'save-backup', v: 1, keys: {
+      'pg_save3_KzeR': '{"lv":70}', 'pg_acc4': '{}',
+      'pg_gm_local': 'deadbeef',                      // a hostile "backup" trying to grant itself GM
+      'pg_something_else': 'x',
+    } }) };
+  h.sandbox.restoreBackup(file);
+  assert.strictEqual(h.store.get('pg_save3_KzeR'), '{"lv":70}', 'the character is restored');
+  assert.strictEqual(h.store.get('pg_acc4'), '{}');
+  assert.strictEqual(h.store.get('pg_gm_local'), undefined, 'a backup file must never be able to set the GM marker');
+  assert.strictEqual(h.store.get('pg_something_else'), undefined, 'nor any other key');
+  assert.strictEqual(h.state.asks.length, 1, 'and it asks before overwriting anything');
+});
+
+await T('restoring asks before it replaces a character already on this device', async () => {
+  const h = loginHarness({ storage: { 'pg_save3_KzeR': '{"lv":70}' }, answerAsk: false });  // player says no
+  h.sandbox.restoreBackup({ text: JSON.stringify({ kind: 'save-backup', keys: { 'pg_save3_KzeR': '{"lv":1}' } }) });
+  assert.match(h.state.asks[0], /replaces the copy already on this device/i);
+  assert.strictEqual(h.store.get('pg_save3_KzeR'), '{"lv":70}', 'declining leaves the device untouched');
+});
+
+await T('a file that is not a backup is refused, and nothing is written', async () => {
+  const h = loginHarness({ storage: { 'pg_save3_X': '{"lv":70}' }, answerAsk: true });
+  for (const bad of ['not json at all', JSON.stringify({ hello: 'world' }), JSON.stringify({ kind: 'save-backup' })]) {
+    h.sandbox.restoreBackup({ text: bad });
+    assert.strictEqual(h.store.get('pg_save3_X'), '{"lv":70}');
+    assert.match(h.state.err, /not a Prontera Grind save backup/i, 'a file that is not a backup: ' + bad.slice(0, 20));
+  }
+  // A well-formed backup with no game keys in it is its own answer, not a crash.
+  h.sandbox.restoreBackup({ text: JSON.stringify({ kind: 'save-backup', keys: { 'pg_gm_local': 'x' } }) });
+  assert.match(h.state.err, /holds no characters/i);
+  assert.strictEqual(h.state.asks.length, 0, 'a file that is not a backup never gets as far as a question');
+});
+
+await T('the poll fetches announcements and gifts, and never the save itself', async () => {
+  const h = loginHarness({ routes: {
+    '/grants': { status: 200, body: { grants: [{ id: 5, kind: 'zeny', payload: { amount: 1000 } }] } },
+    '/messages': { status: 200, body: { messages: [{ id: 1, body: 'Server restart at 22:00', kind: 'notice' }] } },
+    '/save': { status: 200, body: { version: 2, blob: '{"lv":1}' } },
+  } });
+  h.sandbox.CLOUD.on = true; h.sandbox.CLOUD.api = true; h.sandbox.currentUser = 'X';
+  await h.sandbox.cloudPull();
+  assert.ok(h.state.logs.some(l => /Server restart/.test(l.m)), 'the announcement reaches the log');
+  assert.strictEqual(h.calls.filter(c => c.url === '/api/save').length, 0,
+    'a poll must not touch the save: that is what keeps it from ever overwriting play');
 });
 
 console.log('\n' + pass + ' passed, ' + fail + ' failed');

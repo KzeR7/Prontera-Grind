@@ -3616,3 +3616,44 @@ assigned for feel rather than fidelity. While reworking that, two shipped bugs s
   `index.html` mid-edit **twice** during this work; both times it was restored from the last commit and
   the edits re-applied by guarded script — the habit that saved it is committing after each verified
   step.
+
+### 2026-10-06 — `grind-v63 save backups + a login that keeps your progress`
+
+* **The deploy found a real bug before it happened.** Moving to a new address means a new
+  `localStorage`, so the characters living in a player's browser cannot follow them — and a second bug
+  sat right next to it: `initSessionFromCloud` only honoured the device's own copy for a *returning*
+  login, so a player registering a fresh account on the device they had been playing on would have had
+  their work ignored and replaced by the account's empty save. Both are fixed by putting the whole
+  reconciliation in one place, `cloudJoin`, which never guesses: identical copies agree on a version,
+  an empty cloud adopts this device's progress, and two different copies open the existing three-way
+  chooser (which keeps both, whichever way the player answers).
+* **The crossing bridge is a file**: **⬇ Back up saves** / **⬆ Restore a backup** on the login card.
+  It exports every `pg_save3_*` blob (plus the browser's own account list) as JSON and can put it back
+  on any address. A backup file may only ever write those keys — a test feeds it a file containing
+  `pg_gm_local` and asserts the GM marker is *not* written, because "restore this file someone sent
+  you" would otherwise be a way to hand yourself the GM tools.
+* **Announcements and gifts now arrive while playing**: a five-minute poll of `/api/grants` and
+  `/api/messages`. It deliberately does **not** fetch the save, so no background request can ever
+  overwrite what is being played; a long-hidden tab refreshes the save separately (`cloudRefresh`),
+  adopting silently only when it has nothing unsynced of its own.
+* **`tools/cloudflare-deploy-steps.md`** is the new walkthrough: create D1 (`pg`, APAC), run
+  `migrations/0001_init.sql` in the console, connect Pages to the repo with build
+  `bash tools/build_site.sh` and output `dist`, put the database id in `wrangler.toml` (the file is
+  the source of truth once committed — the dashboard's matching fields become read-only), then a
+  seven-line checklist before players are told. It also records that the first account registered is
+  the owner, so the owner must register before the address is shared.
+* **Corrected from the docs while writing it**: `wrangler pages dev` takes `--d1 NAME=<database_id>`
+  (the old `--d1=DB --local` in `wrangler.toml`'s comment was wrong), and a Wrangler file makes its
+  fields read-only in the dashboard — deleting the file is the documented way to hand configuration
+  back to the dashboard.
+* **Files touched:** `index.html` (`cloudJoin`/`cloudRefresh`/`cloudStart`, the rewritten
+  `initSessionFromCloud`, the five-minute poll, the save-file module + login-card buttons,
+  `BUILD`), `tools/tests/cloud_sim.js` (+11 checks, 30 total), `tools/cloudflare-deploy-steps.md`
+  (new), `wrangler.toml` (corrected local-dev command + source-of-truth note), `READ-ME-FIRST.md`,
+  `Updates/cards-gear-audit/*.html` (v63 label; v62 appended to `SAFE_PREVIOUS_BUILDS`), `AGENTS.md`.
+* **Tests:** all **27 suites** pass; `cloud_sim.js` covers the four login outcomes (identical, empty
+  cloud, different, new device), the hidden-tab refresh, the backup's key whitelist, and that the poll
+  never touches the save. Both `--check` tools current, `bash tools/build_site.sh` clean.
+* **Known limits / follow-ups:** still nothing deployed — `wrangler.toml` holds the placeholder until
+  the owner creates the database. `save_history` and the GM restore path are unchanged. The backup
+  file is not encrypted: it is the player's own data and they are told what is in it.

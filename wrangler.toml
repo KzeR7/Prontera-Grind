@@ -9,9 +9,16 @@
 #   Then: wrangler d1 create pg        (once; pick the region nearest the players)
 #         wrangler d1 execute pg --remote --file=migrations/0001_init.sql
 #
-# Local development:
-#   npx wrangler pages dev dist --d1=DB --local      # Functions + a local D1 on 127.0.0.1:8787
-#   wrangler d1 execute DB --local --file=migrations/0001_init.sql
+# Local development (the official Functions runtime; tools/dev_server.js is the offline one):
+#   npx wrangler pages dev dist --d1 DB=<database_id>   # binds THIS id to DB, on 127.0.0.1:8787
+#   npx wrangler d1 execute pg --local --file=migrations/0001_init.sql
+#
+# Step-by-step deploy, including where the database id goes: tools/cloudflare-deploy-steps.md
+#
+# NOTE: when this file is committed, Cloudflare treats it as the source of truth for a Pages
+# project - the fields it sets (the output directory, the D1 binding, the compatibility date) become
+# read-only in the dashboard. That is deliberate: the binding then lives in the repo, and a rebuild
+# from any branch gets the same wiring.
 #
 # Nothing in functions/ is a secret: the D1 binding is injected by Cloudflare, and there is no API
 # key anywhere in this repo.

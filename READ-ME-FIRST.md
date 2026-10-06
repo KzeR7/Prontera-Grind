@@ -68,7 +68,13 @@ Directory `dist`; Cloudflare Pages: same command, "Build output directory" `dist
 serves the root publishes all of them. `tools/tests/publish_sim.js` runs this build in CI and fails if
 anything dev-side reaches `dist/`.
 
-## Put the saves on the server (v62, optional but this is the point of the shift)
+## Put the saves on the server (v63, optional but this is the point of the shift)
+
+**The click-by-click walkthrough is `tools/cloudflare-deploy-steps.md`** — creating the database,
+loading the schema, connecting the Pages project, binding it, and the checks to run before telling
+players the new address. What follows is the short version.
+
+
 
 Accounts and saves can live in Cloudflare D1, so a character follows the player to any device. The
 whole feature is **optional by construction**: with no API behind the address, the game runs exactly
@@ -87,6 +93,11 @@ as it always has, with accounts and saves in `localStorage`. Both paths are cove
    register becomes the **owner** (`gm=2`) and is shown a one-time recovery code — write it down.
 5. Sign in, play, then check it really followed you: open the game in another browser (or on a phone),
    sign in with the same username and password, and the same character should load.
+
+**Players already on the old address need one extra thing**, because a browser's saved games belong to
+the address, not to the game: on the old site use **⬇ Back up saves** on the login card, then on the
+new site **⬆ Restore a backup**, then register with the same account name — the game offers to adopt
+the progress that is already on that device. `tools/cloudflare-deploy-steps.md` §6 walks it through.
 
 ### See it working before deploying (no Cloudflare account needed)
 
