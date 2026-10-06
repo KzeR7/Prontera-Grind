@@ -1,0 +1,36 @@
+# Prontera Grind — Cloudflare configuration
+#
+# Static client: `bash tools/build_site.sh` -> dist/  (see tools/server-shift-plan.md §7b)
+# Server:        functions/  (Pages Functions: /api/* only — see _routes.json in the build)
+#
+# Deploy (Pages, connected to this GitHub repo):
+#   Build command          bash tools/build_site.sh
+#   Build output directory dist
+#   Then: wrangler d1 create pg        (once; pick the region nearest the players)
+#         wrangler d1 execute pg --remote --file=migrations/0001_init.sql
+#
+# Local development (the official Functions runtime; tools/dev_server.js is the offline one):
+#   npx wrangler pages dev dist --d1 DB=<database_id>   # binds THIS id to DB, on 127.0.0.1:8787
+#   npx wrangler d1 execute pg --local --file=migrations/0001_init.sql
+#
+# Step-by-step deploy, including where the database id goes: tools/cloudflare-deploy-steps.md
+#
+# NOTE: when this file is committed, Cloudflare treats it as the source of truth for a Pages
+# project - the fields it sets (the output directory, the D1 binding, the compatibility date) become
+# read-only in the dashboard. That is deliberate: the binding then lives in the repo, and a rebuild
+# from any branch gets the same wiring.
+#
+# Nothing in functions/ is a secret: the D1 binding is injected by Cloudflare, and there is no API
+# key anywhere in this repo.
+
+name = "prontera-grind"
+compatibility_date = "2026-10-01"
+pages_build_output_dir = "dist"
+
+[[d1_databases]]
+binding = "DB"              # available to every function as env.DB
+database_name = "pg"
+database_id = "REPLACE_WITH_YOUR_D1_ID"   # printed by `wrangler d1 create pg`
+
+# Optional: a second GM-only path could be bound here later (Variables/secrets go in the dashboard,
+# never in this file).

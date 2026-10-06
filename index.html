@@ -263,7 +263,9 @@ button.tick.on{background:#ffe08a;border-color:var(--gold);font-weight:bold}
 <div class="form-group"><label for="password">Password</label><input type="password" id="password" required autocomplete="current-password"></div>
 <div class="form-group" id="regRow" style="display:none"><label for="password2">Confirm Password</label><input type="password" id="password2" autocomplete="new-password"></div>
 <button type="submit" id="authBtn" class="login-btn">Login</button><div id="loginErr" class="login-err"></div></form>
-<small>You must log in every time you open the game.</small>
+<small id="loginHint">You must log in every time you open the game.</small>
+<div id="loginCloud" style="margin-top:8px;font-size:11px;opacity:.75;text-align:center"></div>
+<div id="saveTools" style="margin-top:6px;font-size:11px;text-align:center;opacity:.9"><a href="#" id="saveDl" title="Download every character saved in this browser as one file">⬇ Back up saves</a><span style="opacity:.5"> · </span><a href="#" id="saveUp" title="Load a backup file made by this button, on any address">⬆ Restore a backup</a><input type="file" id="saveFile" accept=".json,application/json" style="display:none"></div>
 <div id="buildTag" style="margin-top:6px;font-size:10px;opacity:.55;text-align:center"></div></div></div>
 <div id="wrap"><div class="title"><span id="stageTitle">Prontera Lv 1</span><span id="grindStatus" style="font-size:12px;opacity:.85"></span></div>
 <div id="view"><div id="ov"><div id="mobSpriteLayer" aria-hidden="true"></div><div id="weaponSpriteLayer" aria-hidden="true"></div><div id="prog"></div><div id="tag"><b id="tn"></b><div class="bar"><i id="th" style="background:var(--hp)"></i></div></div><div id="heroTitle" class="hero-title" aria-live="polite"><span id="heroTitleMark" class="ht-mark" aria-hidden="true"></span><span id="heroTitleText"></span></div><div id="hint">Drag to rotate &middot; Scroll to zoom</div><div id="feedWrap"><div id="feedFilter" role="group" aria-label="Log filter"></div><div id="feedTabs"><button id="feedTab" type="button" aria-expanded="true" aria-controls="feed" title="Minimize or show the on-screen log">📃 Logs ▾</button><button id="feedFil" type="button" aria-expanded="false" aria-controls="feedFilter" aria-label="Filter the on-screen log" title="Filter the log - this row folds away by itself">▽</button></div><div id="feed"></div></div><div id="hudBuffs" role="status" aria-live="polite" aria-label="Active pet buffs - hover an icon for what it does"></div><div id="qp"></div><div id="dock"></div>
@@ -271,13 +273,23 @@ button.tick.on{background:#ffe08a;border-color:var(--gold);font-weight:bold}
 <div id="hud"><div><b id="cls2"></b> <span id="titleLabel" class="title-hud hud-title-mirror" aria-hidden="true" style="display:none"></span> Base Lv <b id="lv">1</b> / Job Lv <b id="jl">1</b></div>
 <div class="hud-health">HP <div class="bar" role="meter" aria-label="HP" aria-valuemin="0" aria-valuemax="100" id="hpMeter"><i id="hpb"></i></div><small id="hpPct">100%</small></div>
 <div class="hud-zeny" id="zenyHover" tabindex="0" aria-describedby="zenyRate">&#9679; <b id="zeny">0</b> Zeny<span class="hud-flyout" id="zenyRate" role="tooltip">Zeny earned: 0/min</span></div>
-<div>Kills/min <b id="kills" title="Recent kills per minute (last 60 seconds, refreshed each second)">0.0</b></div><div>DPS <b id="dps" title="Damage per second you dealt (last 60 seconds, refreshed each second)">0</b></div><div style="margin-left:auto;display:flex;align-items:center;gap:8px"><span id="userBadge" style="font-weight:bold;font-size:12px;background:#e9d39a;padding:3px 8px;border-radius:4px;border:1px solid var(--edge2)"></span><button id="logoutBtn" onclick="logout()" style="display:none">Logout</button><button id="spd">Speed x1</button></div></div>
+<div>Kills/min <b id="kills" title="Recent kills per minute (last 60 seconds, refreshed each second)">0.0</b></div><div>DPS <b id="dps" title="Damage per second you dealt (last 60 seconds, refreshed each second)">0</b></div><div style="margin-left:auto;display:flex;align-items:center;gap:8px"><span id="cloudBadge" title="Cloud save status" style="font-size:11px;opacity:.9"></span><span id="userBadge" style="font-weight:bold;font-size:12px;background:#e9d39a;padding:3px 8px;border-radius:4px;border:1px solid var(--edge2)"></span><button id="gmBtn" onclick="location.href='gm.html'" style="display:none" title="Server-side tooling for looking after players">🛠 GM console</button><button id="logoutBtn" onclick="logout()" style="display:none">Logout</button><button id="spd">Speed x1</button></div></div>
 <div id="xp-dock" aria-label="Level progress"><div id="xp-track">
   <div class="xp-side" id="baseTrack" tabindex="0" role="progressbar" aria-label="Base Level" aria-valuemin="0" aria-valuemax="100"><div class="xp-fill" id="xpb"></div><span class="xp-label" id="baseLabel">Base Lv 1</span><span class="xp-pct" id="basePct">0%</span></div>
   <div class="xp-side" id="jobTrack" tabindex="0" role="progressbar" aria-label="Job Level" aria-valuemin="0" aria-valuemax="100"><div class="xp-fill" id="jb"></div><span class="xp-pct" id="jobPct">0%</span><span class="xp-label job" id="jobLabel">Job Lv 1</span></div>
 </div></div>
 </div>
-<div id="modal"><div class="login-card"><p id="mt" style="font-size:14px;opacity:1;margin:0 0 12px"></p><div class="row" style="justify-content:center"><button id="my">Yes</button><button id="mn">Cancel</button></div></div></div><div id="tooltip"></div>
+<div id="modal"><div class="login-card"><p id="mt" style="font-size:14px;opacity:1;margin:0 0 12px"></p><div class="row" style="justify-content:center"><button id="my">Yes</button><button id="mn">Cancel</button></div></div></div><!-- The cloud conflict chooser. Two saves exist (this device and the account) and only the player can
+     say which one is real, so it is a three-way question, not a yes/no: keep this device, keep the
+     cloud, or decide later. Every path keeps both copies, so no answer can lose progress. -->
+<div id="conflict" style="display:none;position:fixed;inset:0;background:rgba(20,14,8,.72);z-index:60;align-items:center;justify-content:center"><div class="login-card" style="max-width:560px">
+<h2 style="font-size:16px">☁ Two different saves</h2>
+<p id="conflictWhy" style="font-size:13px;opacity:1;margin:0 0 10px"></p>
+<div id="conflictCards" style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px"></div>
+<p style="font-size:11px;opacity:.8;margin:0">Nothing is deleted: the copy you do not pick stays in the account's save history and the GM console can restore it.</p>
+<div class="row" style="justify-content:center;margin-top:10px"><button id="cfThis">Keep this device</button><button id="cfCloud">Keep the cloud save</button><button id="cfLater" style="opacity:.8">Decide later</button></div>
+</div></div>
+<div id="tooltip"></div>
 <script src="assets/sprite_pack_data.js?v=1"></script>
 <script src="assets/class_skins_data.js?v=1"></script>
 <script src="assets/weapon_joints_data.js?v=1"></script>
@@ -337,12 +349,19 @@ const AL={str:'STR',agi:'AGI',dex:'DEX',luk:'LUK',int:'INT',hp:'Max HP',atk:'ATK
 // onward. 1.3 keeps HP just ahead of ATK: early maps fall in a couple of swings and the
 // late maps in about five, with bosses still a ~12x fight. See tools/tests/economy_sim.js.
 const SU=k=>k.toUpperCase(),BX_=13,Z0=-28,Z1=12,MPS=15,AGGRO=6.5,BOSSZ=-4,BOSS_NEAR=2.2,BOSS_FAR=6,HPK=42,HPE=1.3,K5=['str','agi','dex','luk','int'];
-const GM_USER='GM',GM_PASS='gm1234';   // CHANGE THE GM PASSWORD before you publish
+const GM_USER='GM';
+// v60: the GM password is NOT in this file any more - only this hash of it. The old plaintext sat
+// in a public repo (and was served at /_login.html on the live site), so it was retired 2026-10-06.
+// To change the password:  node tools/make_gm_hash.js "your new password"  and paste the constants
+// it prints below. GM_ROUNDS is the number of extra hashPw passes, so a weak password is still
+// expensive to guess offline. This remains a client-side door, not a lock: anyone with devtools can
+// set S.gm by hand. Real GM security arrives with server accounts - tools/server-shift-plan.md §6.
+const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // Merge resolution (2026-10-04): main carried two BUILD lines (ui-v29 + ui-v35) in this one
 // script block, which is a SyntaxError - the game did not run on main at all. One line wins, and
 // it names both sides of this merge: the v38 balance patch (the weapon cut, the affix/card
 // give-back) and main's weapon-hold rendering work.
-const BUILD='2026-10-06 grind-v59 deeper skill lines + a free pet skill';   // shown on the login card - confirms which file you loaded
+const BUILD='2026-10-06 grind-v63 save backups + a login that keeps your progress';   // shown on the login card - confirms which file you loaded
 $('buildTag').textContent='build '+BUILD;
 
 // ---------- class tree: Novice -> 6 first jobs -> 6 second jobs -> 6 third jobs ----------
@@ -1216,7 +1235,7 @@ function load(){try{const s=JSON.parse(lsGet(saveKey()));if(s&&s.lv){const F=fre
     n.type=type;n.goal=Math.max(1,Math.floor(+n.goal||1));n.prog=Math.max(0,Math.floor(+n.prog||0));
     n.z=Math.max(0,Math.floor(+n.z||0));n.xp=Math.max(0,Math.floor(+n.xp||0));return n});
   repairMastery(f);return f}}catch(e){}return fresh()}
-function save(){if(!currentUser||!S)return;lsPut(saveKey(),JSON.stringify(S))}
+function save(){if(!currentUser||!S)return;lsPut(saveKey(),JSON.stringify(S));cloudTouch()}
 
 // ---------- accounts (stored in this browser; real cross-device accounts need a server) ----------
 const mem={};
@@ -1226,6 +1245,20 @@ const getAcc=()=>{try{return JSON.parse(lsGet('pg_acc4')||'{}')}catch(e){return{
 const setAcc=a=>lsPut('pg_acc4',JSON.stringify(a));
 function hashPw(p){let h1=0xdeadbeef,h2=0x41c6ce57;const s='pg4:'+p;for(let i=0;i<s.length;i++){const c=s.charCodeAt(i);h1=Math.imul(h1^c,2654435761);h2=Math.imul(h2^c,1597334677)}
   h1=Math.imul(h1^(h1>>>16),2246822507)^Math.imul(h2^(h2>>>13),3266489909);h2=Math.imul(h2^(h2>>>16),2246822507)^Math.imul(h1^(h1>>>13),3266489909);return(h2>>>0).toString(16).padStart(8,'0')+(h1>>>0).toString(16).padStart(8,'0')}
+// The GM password check. hashPw is one cheap pass with a 64-bit result, so gmHash runs it
+// GM_ROUNDS+1 times over a salted starting point: guessing a password costs ~20,000x more than the
+// plain 64-bit mix would, which is what makes a long random phrase safe to store in a public file.
+const gmHash=p=>{let h=hashPw('pg-gm:'+p);for(let i=0;i<GM_ROUNDS;i++)h=hashPw(h);return h};
+// A SECOND, local GM password: short and simple if you want it, kept in THIS browser only, so it
+// never appears in this public file. Set it once from the browser console on your own machine:
+//     localStorage.setItem('pg_gm_local', gmHash('test1234'))
+// and log in as GM with `test1234` from then on. Remove it with
+//     localStorage.removeItem('pg_gm_local')
+// It cannot leak to other players (they cannot read your browser storage) and it cannot weaken the
+// file's own password (that one is still required if the local value is missing). It IS still a
+// client-side door - anyone with devtools can set S.gm on their own copy - so the real GM account
+// arrives with the server: tools/gm-panel-plan.md.
+const gmOk=p=>{const h=gmHash(p);if(h===String(GM_PASS_HASH))return true;const local=lsGet('pg_gm_local');return !!(local&&h===local)};
 let authMode='login';
 function showErr(m,ok){const e=$('loginErr');e.textContent=m;e.style.color=ok?'#2a9d3f':'#e5484d'}
 function setMode(m){authMode=m;$('tabLogin').classList.toggle('on',m==='login');$('tabReg').classList.toggle('on',m==='reg');$('regRow').style.display=m==='reg'?'block':'none';
@@ -1237,20 +1270,26 @@ function submitAuth(e){
     const isGM=u.toLowerCase()===String(GM_USER).toLowerCase();
     if(authMode==='reg'){
       if(isGM){setMode('login');return showErr('That name is reserved. Switched to Login — use the GM password.')}
+      if(CLOUD.api){                       // v62: real server accounts when the API is present
+        if(!/^[A-Za-z0-9_.-]{2,16}$/.test(u))return showErr('Username: 2-16 letters, numbers, _ . -');
+        if($('password2').value.trim()!==p)return showErr('Passwords do not match.');
+        return cloudAuth(u,p,true);
+      }
       if(!/^[A-Za-z0-9_.-]{2,16}$/.test(u))return showErr('Username: 2-16 letters, numbers, _ . -');
       if(p.length<4)return showErr('Password must be at least 4 characters.');
       if($('password2').value.trim()!==p)return showErr('Passwords do not match.');
       const acc=getAcc();if(Object.keys(acc).some(k=>k.toLowerCase()===u.toLowerCase()))return showErr('That username is already taken.');
       acc[u]=hashPw(p);setAcc(acc);if(!getAcc()[u])return showErr('Could not save the account (browser storage blocked).');
       setMode('login');$('password').value='';$('password2').value='';showErr('Account created! Now log in.',true);return}
-    if(isGM){if(p!==String(GM_PASS))return showErr('Incorrect GM password.');currentUser=GM_USER;initSession(true);return}
+    if(isGM){if(!gmOk(p))return showErr('Incorrect GM password.');currentUser=GM_USER;initSession(true);return}
+    if(CLOUD.api)return cloudAuth(u,p,false);
     const acc=getAcc(),key=Object.keys(acc).find(k=>k.toLowerCase()===u.toLowerCase());
     if(!key)return showErr('Account not found. Use the Register tab first.');
     if(acc[key]!==hashPw(p))return showErr('Incorrect password.');
     currentUser=key;initSession(false);
   }catch(err){showErr('Error: '+err.message)}
 }
-function logout(){save();location.reload()}
+function logout(){save();cloudLogout();location.reload()}
 function initSession(gm){
   try{
     hudRate=null;zenyEarned=0;S=load();S.gm=gm;if(S.q)qRefresh();if(!S.q)S.q=['kill','loot','boss'].map(newQuest);if(S.mp>=MAPS.length||S.lvl>10){S.mp=0;S.lvl=1}
@@ -1260,6 +1299,298 @@ function initSession(gm){
   }catch(err){S=null;showErr('Could not start: '+err.message)}
 }
 $('loginForm').addEventListener('submit',submitAuth);$('tabLogin').onclick=()=>setMode('login');$('tabReg').onclick=()=>setMode('reg');
+
+// ---------- cloud accounts and saves (optional) ----------
+// When the site is served with the API (functions/api/*), a login is a real server account and the
+// save lives in D1, so the same character follows the player to any device. When the API is not
+// there - a plain static host, or the game opened from a file - everything below quietly switches
+// off and the game behaves exactly as it always has, with accounts and saves in localStorage.
+//
+// The browser still runs the simulation (tools/server-shift-plan.md §7a decision 1), so the cloud is
+// a VAULT, not the running state: localStorage leads during play and the server is kept in step by a
+// debounced push. Nothing here can lose progress - every conflict keeps both copies, and the loser
+// stays in the account's save history where the GM console can restore it.
+const CLOUD={api:false,on:false,user:null,gm:false,ver:0,dirty:false,lastPush:0,pushing:false,
+  offline:false,paused:false};
+const CLOUD_DEBOUNCE=30000;      // push at most this often while playing
+const CLOUD_MAX_AGE=900000;      // a tab hidden longer than this re-pulls before pushing again
+const saveKeyFor=u=>'pg_save3_'+u;
+const cloudUrl=p=>'/api'+p;
+const cloudSay=(m,cls)=>log(m,cls||'r3','cloud');
+function cloudBadge(txt,tip){const e=$('cloudBadge');if(e){e.textContent=txt||'';e.title=tip||''}}
+function cloudLoginLine(txt){const e=$('loginCloud');if(e)e.textContent=txt||''}
+async function cloudFetch(path,opt){return fetch(cloudUrl(path),Object.assign({credentials:'same-origin',headers:{'Content-Type':'application/json'}},opt||{}))}
+function cloudTouch(){if(!CLOUD.on||CLOUD.paused)return;CLOUD.dirty=true;cloudBadge('☁ …','Waiting to sync')}
+
+// Push the current save. Returns 'ok' | 'conflict' | 'offline' | 'idle'; never throws, because a dead
+// network must not interrupt play - it only leaves the local copy leading, and the badge says so.
+async function cloudPush(push){
+  if(!CLOUD.on||!S||!currentUser||CLOUD.paused)return 'idle';
+  if(!push&&(!CLOUD.dirty||Date.now()-CLOUD.lastPush<CLOUD_DEBOUNCE))return 'idle';
+  if(CLOUD.pushing)return 'idle';
+  CLOUD.pushing=true;cloudBadge('☁ ⇅','Syncing…');
+  try{
+    const r=await cloudFetch('/save',{method:'PUT',body:JSON.stringify({version:CLOUD.ver,blob:JSON.stringify(S),savedAt:Date.now()})});
+    if(r.status===409){const c=await r.json();cloudBadge('☁ ⚠','Two saves - choose which to keep');cloudConflict(c);return 'conflict'}
+    if(!r.ok)throw new Error('HTTP '+r.status);
+    const d=await r.json();CLOUD.ver=d.version;CLOUD.dirty=false;CLOUD.lastPush=Date.now();CLOUD.offline=false;
+    cloudBadge('☁ ✓','Saved to your account · v'+CLOUD.ver+' · '+new Date().toLocaleTimeString());
+    return 'ok';
+  }catch(e){
+    // The save is NOT on the server, so it stays dirty: the next flush (or the next tab-hide) retries
+    // it. Clearing the flag here would silently drop the sync until the player changed something.
+    CLOUD.dirty=true;CLOUD.offline=true;cloudBadge('☁ ✕','Offline - progress is safe on this device');
+    cloudSay('Cloud sync failed ('+e.message+'). Your progress is safe on this device and will sync when the connection returns.','r0');
+    return 'offline';
+  }finally{CLOUD.pushing=false}
+}
+function cloudFlush(){return cloudPush(false)}
+function cloudFlushNow(){return cloudPush(true)}
+
+// The two-saves screen: the player decides, and both copies survive whatever they choose.
+function cloudConflict(server){
+  const box=$('conflict');if(!box)return;
+  const read=b=>{try{if(!b)return null;const s=JSON.parse(b);return s&&s.lv?s:null}catch(e){return null}};
+  const sSrv=read(server.blob)||{lv:'?',cls:'?',zeny:0,kills:0};
+  const when=t=>t?new Date(t).toLocaleString():'unknown time';
+  const card=(title,s,sub)=>'<div class="mob-card" style="flex:1 1 220px"><div class="hd">'+title+'</div><small>Level <b>'+s.lv+'</b> · '+(s.cls||'?')+' · '+(s.zeny||0).toLocaleString()+' Zeny · '+(s.kills||0).toLocaleString()+' kills<br>'+sub+'</small></div>';
+  $('conflictWhy').textContent='This device and your account both have progress, and they are different - so I will not guess which one is real.';
+  $('conflictCards').innerHTML=card('📱 This device',S,'local copy')+card('☁ Cloud save',sSrv,when(server.savedAt));
+  box.style.display='flex';
+  const done=()=>{box.style.display='none'};
+  $('cfThis').onclick=async()=>{done();CLOUD.ver=server.version;CLOUD.dirty=true;await cloudPush(true);cloudSay('Kept this device\'s progress and uploaded it as version '+CLOUD.ver+'.','r1')};
+  $('cfCloud').onclick=()=>{done();cloudAdopt(server)};
+  $('cfLater').onclick=()=>{done();CLOUD.paused=true;cloudBadge('☁ ⏸','Sync paused for this session');cloudSay('Sync is paused for this session so neither copy is touched. Reload when you want to choose.','r0')};
+}
+
+// Take the server's copy as the live save. This device's copy is stashed under its own backup key
+// first, so "keep cloud" is never a deletion either.
+function cloudAdopt(server){
+  try{const old=localStorage.getItem(saveKeyFor(currentUser));if(old)localStorage.setItem(saveKeyFor(currentUser)+'_local_'+Date.now(),old)}catch(e){}
+  lsPut(saveKeyFor(currentUser),server.blob);
+  const wasGm=S&&S.gm;S=load();S.gm=!!wasGm;
+  if(S.q)qRefresh();if(!S.q)S.q=['kill','loot','boss'].map(newQuest);
+  CLOUD.ver=server.version;CLOUD.dirty=false;
+  ui();cloudBadge('☁ ✓','Cloud save loaded · v'+CLOUD.ver);
+  log('Loaded your cloud save (Lv '+S.lv+'). The copy this device had was kept as a local backup.','r1','cloud');
+}
+
+// Announcements, GM gifts, and the save itself. Called after every login and when a long-hidden tab
+// comes back.
+// The one place the device's copy and the cloud copy are reconciled, used at every login. It never
+// guesses: identical copies just agree on the version, an empty cloud adopts this device's progress,
+// and two different copies open the chooser (which keeps BOTH of them whatever the player decides).
+async function cloudJoin(u,localBlob){
+  let data=null;
+  try{const r=await cloudFetch('/save');if(r.ok)data=await r.json()}
+  catch(e){cloudBadge('☁ ✕','Offline - playing from this device');return}
+  if(!data||!data.blob){CLOUD.ver=0;CLOUD.dirty=true;await cloudPush(true);return}
+  if(data.blob===localBlob){CLOUD.ver=data.version;CLOUD.dirty=false;cloudBadge('☁ ✓','In sync · v'+data.version);return}
+  cloudConflict(data);
+}
+
+// A tab that was away for a while asks what changed. Another device's save is adopted silently when
+// this tab has nothing unsynced of its own to lose; anything else is the player's call.
+async function cloudRefresh(){
+  if(!CLOUD.on||CLOUD.paused)return;
+  let data=null;
+  try{const r=await cloudFetch('/save');if(r.ok)data=await r.json()}
+  catch(e){cloudBadge('☁ ✕','Offline - progress is safe on this device');return}
+  if(!data||!data.blob)return;
+  const local=localStorage.getItem(saveKeyFor(currentUser));
+  if(data.blob===local){CLOUD.ver=data.version;CLOUD.dirty=false;return}
+  if(CLOUD.dirty)cloudConflict(data);else cloudAdopt(data);
+}
+
+// Announcements and gifts, on their own cadence - deliberately NOT the save, so that a poll can never
+// overwrite what is being played. Called at login and every few minutes after it.
+async function cloudPull(){
+  if(!CLOUD.on||CLOUD.paused)return;
+  try{const g=await (await cloudFetch('/grants')).json();if(g.grants&&g.grants.length)cloudApplyGrants(g.grants)}catch(e){}
+  try{
+    const m=await (await cloudFetch('/messages')).json();
+    if(m.messages&&m.messages.length){
+      for(const x of m.messages)log('📣 '+(x.from?'GM '+x.from+': ':'')+x.body,x.kind==='event'?'r4':'r1','cloud');
+      cloudFetch('/messages',{method:'POST',body:JSON.stringify({ids:m.messages.map(x=>x.id)})}).catch(()=>{});
+    }
+  }catch(e){}
+}
+
+// GM gifts: the client owns the save format and its repair rules, so it applies them here and then
+// claims them on the server - so they land exactly once, even across devices.
+function cloudApplyGrants(list){
+  const ids=[];
+  for(const g of list){
+    try{
+      const p=g.payload||{};
+      if(g.kind==='zeny'&&Number.isFinite(p.amount)){S.zeny=Math.max(0,S.zeny+Math.floor(p.amount));log('🎁 GM'+(g.from?' '+g.from:'')+' sent you '+Math.abs(Math.floor(p.amount)).toLocaleString()+' Zeny.','r1','cloud')}
+      else if(g.kind==='level'&&Number.isFinite(p.amount)){const n=Math.floor(p.amount);S.lv=Math.max(1,Math.min(150,S.lv+n));S.pts=Math.max(0,totalPts()-ptsSpent());log('🎁 GM sent you '+Math.abs(n)+' base level'+(Math.abs(n)===1?'':'s')+'.','r1','cloud')}
+      else if(g.kind==='item'&&p.item){const it=Object.assign({},p.item);if(it.id==null)it.id=Date.now()+Math.random();S.inv.push(it);log('🎁 GM sent you '+iname(it)+'. Check your bag.','r1','cloud')}
+      else if(g.kind==='message'&&p.text)log('📣 GM: '+p.text,'r1','cloud');
+      else {log('A GM gift arrived that this build does not understand ('+g.kind+'). It is left unclaimed so the GM can resend it.','r0','cloud');continue}
+      if(g.id!=null)ids.push(g.id);
+    }catch(e){log('A GM gift could not be applied: '+e.message,'r0','cloud')}
+  }
+  if(ids.length){try{save()}catch(e){}
+    cloudFetch('/grants',{method:'POST',body:JSON.stringify({ids})}).catch(()=>{});}
+}
+// Points already spent on stats, using the game's own cost ladder, so a GM level grant leaves the
+// player with exactly the points that level is worth.
+function ptsSpent(){let c=0;for(const k of['str','agi','dex','luk','int','vit']){const v=S.st[k]||1;for(let i=1;i<v;i++)c+=(i<ELITELV?1+Math.floor((i-1)/10):10+(i-ELITELV))}return c}
+
+function cloudSession(u,gm){
+  CLOUD.on=true;CLOUD.user=u;CLOUD.gm=!!gm;
+  cloudBadge('☁ ✓','Signed in as '+u);
+  const badge=$('userBadge');if(badge)badge.textContent=(gm?'🛠 ':'👤 ')+u;
+  const gbtn=$('gmBtn');if(gbtn)gbtn.style.display=gm?'inline-block':'none';
+}
+
+// The caller's first look at the server: is there an API, and is this browser already signed in?
+async function cloudProbe(){
+  let r;
+  try{r=await cloudFetch('/me',{cache:'no-store'})}catch(e){cloudLoginLine('');return false}
+  // A static host answers /api/me with its 404 page (or hands back the game itself), so the content
+  // type is what tells us whether a real API is behind this address. Never treat HTML as a server.
+  const ct=(r.headers.get('Content-Type')||'');
+  if(!ct.includes('json')){CLOUD.api=false;cloudLoginLine('');return false}
+  CLOUD.api=(r.status===200||r.status===401);
+  if(r.status===401){cloudLoginLine('☁ Cloud accounts are on - register or sign in to play on any device.');return false}
+  if(!r.ok)return false;
+  const d=await r.json();
+  try{await initSessionFromCloud(d.u,d.gm,false);return true}
+  catch(e){cloudLoginLine('A cloud session existed but the game could not start: '+e.message);return false}
+}
+
+// The session itself. WHICH copy is live is decided by cloudJoin, never here.
+function cloudStart(u,gm){
+  S=load();S.gm=!!gm;
+  if(S.q)qRefresh();if(!S.q)S.q=['kill','loot','boss'].map(newQuest);
+  if(S.mp>=MAPS.length||S.lvl>10){S.mp=0;S.lvl=1}
+  cloudSession(u,gm);ui();$('loginOverlay').style.display='none';$('logoutBtn').style.display='inline-block';
+}
+async function initSessionFromCloud(u,gm,isNew){
+  currentUser=u;hudRate=null;zenyEarned=0;
+  const local=localStorage.getItem(saveKeyFor(u));
+  if(local){
+    // Progress for this name already exists in THIS browser - which is exactly the situation of a
+    // player who grinded before the server existed and is now registering. That save is real work, so
+    // it is never silently replaced and never ignored: cloudJoin reconciles it with the account.
+    cloudStart(u,gm);
+    log(isNew?'Account created. This device\'s progress is now your cloud save.':'Welcome back, '+u+'!','r1','cloud');
+    await cloudJoin(u,local);
+  }else{
+    let data=null;
+    try{const r=await cloudFetch('/save');if(r.ok)data=await r.json()}catch(e){}
+    if(data&&data.blob){                       // a new device: the cloud has the character
+      lsPut(saveKeyFor(u),data.blob);
+      cloudStart(u,gm);CLOUD.ver=data.version;CLOUD.dirty=false;
+      cloudBadge('☁ ✓','Cloud save loaded · v'+CLOUD.ver);
+      log('Loaded your cloud save (Lv '+S.lv+').','r1','cloud');
+    }else{
+      S=fresh();S.gm=!!gm;S.q=['kill','loot','boss'].map(newQuest);CLOUD.ver=0;CLOUD.dirty=true;
+      cloudSession(u,gm);ui();$('loginOverlay').style.display='none';$('logoutBtn').style.display='inline-block';
+      log('Welcome, '+u+'! Your progress will follow you to any device.','r1','cloud');
+    }
+  }
+  await cloudPull();
+}
+
+// Cloud register/login, used by submitAuth whenever the API is present.
+async function cloudAuth(u,p,isReg){
+  try{
+    const r=await cloudFetch(isReg?'/register':'/sessions',{method:'POST',body:JSON.stringify({u,p})});
+    const d=await r.json().catch(()=>({}));
+    if(!r.ok)return showErr(d.err||('Error '+r.status));
+    CLOUD.ver=0;CLOUD.dirty=false;
+    if(isReg&&d.recovery){
+      // Shown exactly once ever: the server keeps only its hash. It is the only way back in without
+      // the GM, so it is treated as seriously as the password itself.
+      ask('Account created. WRITE THIS DOWN - it is the only way to reset your password without the GM:\n\n📋  '+d.recovery,
+        ()=>initSessionFromCloud(d.u,d.gm,true).catch(e=>showErr('Account created, but the game could not start: '+e.message)));
+      return;
+    }
+    return initSessionFromCloud(d.u,d.gm,isNew=isReg);
+  }catch(e){showErr('Could not reach the server: '+e.message+'. You can still play offline.')}
+}
+function cloudLogout(){
+  if(!CLOUD.on)return;
+  cloudFlushNow();
+  cloudFetch('/sessions',{method:'DELETE',body:JSON.stringify({})}).catch(()=>{});
+  CLOUD.on=false;CLOUD.user=null;
+}
+
+// Sync on the way out (hidden tab, closing page) and pull again if a tab was away for a while.
+addEventListener('visibilitychange',()=>{
+  if(!CLOUD.on)return;
+  if(document.visibilityState==='hidden')cloudFlushNow();
+  else if(Date.now()-CLOUD.lastPush>CLOUD_MAX_AGE)cloudRefresh();
+});
+addEventListener('pagehide',()=>{if(CLOUD.on&&CLOUD.dirty)cloudFlushNow()});
+setInterval(cloudFlush,CLOUD_DEBOUNCE/2);
+// ---------- carrying saves between addresses ----------
+// The old home (a static host on its own domain) and the new one are different addresses, and a
+// different address means a different localStorage: a character living in this browser cannot follow
+// the player on its own. These two buttons are the bridge - a file holding every save on this device,
+// and a way to put it back on the other side. They work with or without a server, which also makes
+// them the plain "keep my game in a text file" feature players expect.
+const BACKUP_SAVES='pg_save3_';              // only these prefixes are ever exported or imported
+const BACKUP_LOCAL='pg_acc4';                // the browser account list, so a no-server browser moves too
+const backupMovable=k=>k.startsWith(BACKUP_SAVES)||k===BACKUP_LOCAL;
+const backupNames=keys=>keys.filter(k=>k.startsWith(BACKUP_SAVES)).map(k=>k.slice(BACKUP_SAVES.length));
+
+function saveBackup(){
+  const keys=[];
+  try{for(let i=0;i<localStorage.length;i++)keys.push(localStorage.key(i))}catch(e){}
+  const out={};
+  for(const k of keys)if(k&&backupMovable(k))out[k]=localStorage.getItem(k);
+  const names=backupNames(Object.keys(out));
+  if(!names.length)return showErr('This browser has no saved characters to back up.');
+  const text=JSON.stringify({app:'prontera-grind',kind:'save-backup',v:1,at:Date.now(),build:BUILD,keys:out});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([text],{type:'application/json'}));
+  a.download='prontera-grind-saves-'+new Date().toISOString().slice(0,10)+'.json';
+  document.body.appendChild(a);a.click();a.remove();
+  setTimeout(()=>URL.revokeObjectURL(a.href),4000);
+  showErr('Backed up '+names.length+' character'+(names.length===1?'':'s')+': '+names.join(', '));
+}
+
+function restoreBackup(file){
+  const r=new FileReader();
+  r.onload=()=>{
+    let d=null;
+    try{d=JSON.parse(r.result)}catch(e){}
+    if(!d||d.kind!=='save-backup'||!d.keys||typeof d.keys!=='object')
+      return showErr('That is not a Prontera Grind save backup.');
+    // A backup file can come from anyone, so it may only ever write game saves - never any other key
+    // in localStorage. (The browser-local GM marker lives in localStorage too: a file that could
+    // write arbitrary keys would be a way to grant yourself the GM tools.)
+    const keys=Object.keys(d.keys).filter(backupMovable);
+    const names=backupNames(keys);
+    if(!keys.length)return showErr('That backup holds no characters.');
+    const overwrite=names.filter(n=>localStorage.getItem(BACKUP_SAVES+n)!=null);
+    ask('Restore '+names.length+' character'+(names.length===1?'':'s')+' from this file?\n\n'+names.join(', ')+
+        (overwrite.length?'\n\nThis replaces the copy already on this device for: '+overwrite.join(', '):''),
+      ()=>{
+        for(const k of keys)lsPut(k,d.keys[k]);
+        showErr('Restored '+names.length+' character'+(names.length===1?'':'s')+'. Log in with the account name.');
+        log('Restored '+names.length+' character'+(names.length===1?'':'s')+' from a backup file.','r1','cloud');
+        setTimeout(()=>location.reload(),500);
+      });
+  };
+  r.onerror=()=>showErr('That file could not be read.');
+  r.readAsText(file);
+}
+
+// Bound once, and only if the card is on the page (the GM console and the test harness have no card).
+{const dl=$('saveDl'),up=$('saveUp'),fi=$('saveFile');
+ if(dl)dl.onclick=e=>{e.preventDefault();saveBackup()};
+ if(up)up.onclick=e=>{e.preventDefault();if(fi)fi.click()};
+ if(fi)fi.onchange=()=>{const f=fi.files&&fi.files[0];fi.value='';if(f)restoreBackup(f)};
+}
+addEventListener('load',()=>{setTimeout(cloudProbe,80)});
+setInterval(cloudPull,300000);   // announcements and gifts every 5 min; never the save itself
+
+
 addEventListener('load',()=>{if(typeof THREE==='undefined')showErr('3D engine failed to load. Check your internet connection and reload.')});
 const gx=()=>S.gm?(S.gmx||100):1;
 
@@ -1477,7 +1808,7 @@ const skillNameFloat=(name,slot=0)=>floats.push({x:pl.x,y:3.15+slot*.38,z:pl.z,t
 // is a view, not a delete - the newest 80 lines are always kept, so unticking a box and ticking
 // it back restores the history. The filter narrows the Log WINDOW; the on-screen feed stays a
 // live feed of everything.
-const LOGCATS=[['zeny','Zeny'],['gear','Equipment'],['kills','Kills'],['card','Cards'],['pet','Pets'],['lvl','Levels'],['skill','Skills'],['quest','Quests'],['misc','Other']];
+const LOGCATS=[['zeny','Zeny'],['gear','Equipment'],['kills','Kills'],['card','Cards'],['pet','Pets'],['lvl','Levels'],['skill','Skills'],['quest','Quests'],['cloud','Cloud'],['misc','Other']];
 const logCats=l=>String((l&&l.cat)||'misc').split(',');
 const logOn=c=>!(S&&S.logOff&&S.logOff[c]);
 const logShown=()=>logs.filter(l=>logCats(l).some(logOn));

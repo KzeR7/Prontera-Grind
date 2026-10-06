@@ -39,8 +39,11 @@ Ships by committing to `main` on GitHub (`KzeR7/Prontera-Grind`); Cloudflare Pag
 rebuilds from the repo. **The two files the game actually needs are `index.html` and
 `assets/sprite_pack_data.js`.** Everything else is tools, tests and docs.
 
-Login for testing: user `GM`, password `gm1234` (GM account; normal accounts are created
-in-game and stored in `localStorage` under `pg_acc4`, saves under `pg_save3_<user>`).
+Login for testing: user `GM`; **the GM password is not in this repo** (since v60 the client stores only
+a 20,001-pass hash of it). The owner holds it — ask them, or set a new one with
+`node tools/make_gm_hash.js "new password"` and paste the printed line into `index.html`. Normal
+accounts are created in-game and stored in `localStorage` under `pg_acc4`, saves under
+`pg_save3_<user>`.
 
 ## House rules — non-negotiable
 
@@ -509,6 +512,8 @@ node tools/tests/weapon_review_sim.js  # -> "13 passed, 0 failed"
 node tools/tests/pet_sim.js            # -> "13 passed, 0 failed" (+ printed pet data and the maxed-pet balance measurement)
 node tools/tests/sprite_sim.js         # -> "12 passed, 0 failed"
 node tools/tests/background_sim.js     # -> "12 passed, 0 failed" (grinding is permanent)
+node tools/tests/gm_auth_sim.js        # -> "12 passed, 0 failed" (GM password hashed; local GM password; tool/game agree)
+node tools/tests/publish_sim.js        # -> "7 passed, 0 failed" (runs the real build; only game files ship)
 node tools/tests/scene_sim.js          # -> "8 passed, 0 failed" (per-map scenery, water, clear lane)
 node tools/tests/starter_sim.js        # -> "8 passed, 0 failed" (the gentle starter stages)
 node tools/tests/stat_sim.js           # -> "7 passed, 0 failed"
@@ -3326,3 +3331,329 @@ assigned for feel rather than fidelity. While reworking that, two shipped bugs s
   the owner asked for; pet identity is still parked by the owner's own request. The 5-level utility
   skills are the only place a "wasted" point can happen if a later patch changes a cap - the panel
   warns and the repair loop trims, so no save loses anything.
+
+### 2026-10-06 — `docs only: the server shift plan (no game change, BUILD not bumped)`
+
+* **What changed for the player:** Nothing. No file the browser loads was touched, so `BUILD` stays
+  at `2026-10-06 grind-v59 deeper skill lines + a free pet skill`. The owner asked three questions -
+  should the game stay on Render or move to Cloudflare, how do accounts and saves become
+  server-side so a player can log in on any device, and what has to be prepared for that - and the
+  answers are not a code change, so they are written down instead of shipped.
+* **Files touched:** `tools/server-shift-plan.md` (new: the whole plan, ~330 lines), `READ-ME-FIRST.md`
+  (one pointer line so the next agent finds it), this log. Nothing else.
+* **Art:** no sheets added, removed or rebuilt; `tools/montage.py` was not used.
+* **Tests:** all **21 suites** pass on this tree (no FAIL line): pack 19, class_change 25,
+  class_skin 39, save_load 22, economy 23, stat 7, card 13, skill 52, gear 30, scene 8, kit 34,
+  UI 37, sprite 12, starter 8, pet 13, picker 19, drop_card_sheet 12, weapon_joint 7,
+  weapon_review 13, sprite_viewer 154 PNGs/19 jobs, background 12, plus both `--check` tools
+  ("Sprite viewer is current.", "Class skins are current."). `index.html` is untouched, so this run
+  only proves the docs change broke nothing - which is exactly what it should prove.
+* **Branches / PR:** `arena/50beb968-prontera-grind`, PR opened against `main` for the owner to read.
+* **Known limits / follow-ups:** the plan makes no decisions on the owner's behalf - the sync
+  cadence, whether away-progress exists, whether the client stays client-authoritative and whether
+  real-time co-op is ever wanted are all flagged as owner decisions in §7a. The two facts it leans on
+  hardest are worth re-checking before acting: Render's Hobby bandwidth for the last 30 days, and the
+  real size of a late-game save (`JSON.stringify(S).length` in the console). The GM password in
+  `index.html` is called out as the one thing worth fixing before any server work starts, because
+  the repo is public.
+
+### 2026-10-06 — `docs only: the owner's answers folded into the server shift plan`
+
+* **What changed for the player:** Nothing; `index.html` is untouched and `BUILD` is unchanged.
+  The owner read the plan from the entry above and answered its open questions, so those answers
+  are now part of `tools/server-shift-plan.md` instead of living in a chat log.
+* **The answers:** the first build is **phases 1 + 2** (accounts + cloud saves, server-measured away
+  progress, and the social layer - online list, world chat, leaderboard all polled through one
+  `/api/live` endpoint); **real-time co-op is wanted later**, not in this build; login is
+  **username + password with a one-time recovery code** at registration (no email service); and the
+  host decision waits on the owner reading Render's monthly bandwidth figure from the dashboard.
+  The owner also asked whether 1 + 2 is still free-tier-safe, so the plan now works the arithmetic
+  out loud (new §3d): about **24,300 requests/day and 6,100 D1 row writes/day** at 20 players
+  playing 4 h a day, against allowances of 100,000 for each - roughly 4x headroom, with the social
+  poll interval (15 s) and the save debounce (60 s) as the two knobs that move it.
+* **Files touched:** `tools/server-shift-plan.md` (decisions block under §1, new §3d budget table,
+  §7a turned from questions into answers, §9 roadmap statuses, §3a told where the Render bandwidth
+  number lives, §10 step 2 now says phases 1 + 2), this log. `index.html` and every test file are
+  untouched.
+* **Art:** no sheets added, removed or rebuilt; `tools/montage.py` was not used.
+* **Tests:** all **21 suites** green on this tree at the previous commit (the earlier entry has the
+  counts); nothing executable changed since, so this entry does not re-run them.
+* **Branches / PR:** `arena/50beb968-prontera-grind`, the same PR updated with this commit.
+* **Known limits / follow-ups:** the plan is still a plan - no server code exists. The owner chose
+  "plan only" for this session, so phase 0 (rotate the public GM password, hide the dev files from
+  the deploy) and phase 1 have not been started. The two facts the plan still wants before it is
+  acted on are Render's bandwidth figure and a real `JSON.stringify(S).length`.
+
+### 2026-10-06 — `docs only: the Render dashboard reading, and a corrected reason for the verdict`
+
+* **What changed for the player:** Nothing; `index.html` is untouched and `BUILD` is unchanged.
+  The owner sent a screenshot of Render's monthly usage page, so the plan now carries real numbers
+  instead of an estimate.
+* **The reading:** 52 MB of the 5 GB bandwidth (HTTP responses; WebSocket 0), **0 of 750 free
+  instance hours**, 1 service, 6 of 500 pipeline minutes. Interpretation, now written into §1a and
+  §3a: the client is about five cold loads into its month, so **Render's bandwidth cap is a
+  cents-scale risk even at 20 players** (one hard reload a day each ≈ 5.8 GB ≈ $0.13 of overage) -
+  the earlier framing of bandwidth as the headline reason to move was wrong and is corrected.
+  0 instance hours with 1 service also strongly suggests the service is a **Static Site** (static
+  sites never consume instance hours and never sleep); the type still needs confirming on the
+  service page, because it decides whether the client also moves in phase 1.
+* **The corrected verdict:** the reason to put the server on Cloudflare is **that Render free has
+  nowhere durable to put accounts** - the free Postgres expires 30 days after creation and the free
+  Key Value is in-memory - plus the 15-minute spin-down and the 750-hour pool being exactly one
+  24/7 service. Cloudflare D1 does not expire and Pages has no bandwidth cap. The recommendation
+  itself is unchanged; only its justification got honest.
+* **Files touched:** `tools/server-shift-plan.md` (new §1a, §3a now records the dashboard reading
+  and how to settle static-vs-web-service, §1 host decision row, §7d and §10 checklists updated),
+  this log. No code, no tests, no art.
+* **Tests:** all 21 suites were green at the previous commit and nothing executable has changed
+  since; not re-run.
+* **Branches / PR:** `arena/50beb968-prontera-grind`, same PR updated.
+* **Known limits / follow-ups:** the plan is still unbuilt (the owner chose plan-only). Open items:
+  confirm the Render service type, rotate the GM password out of the public client, and measure a
+  real `JSON.stringify(S).length` when phase 1 starts.
+
+### 2026-10-06 — `grind-v60 GM password rotated out of the client`
+
+* **What changed for the player:** the GM login still works exactly as before, but the password is
+  different **and the old one (`gm1234`) no longer works anywhere**. The game file does not contain
+  the password any more - only a stretched hash of it - so a public repo (and the copy that was being
+  served at `/_login.html` on the live site) no longer hands the GM account to anyone who reads it.
+  Normal accounts, saves and everything else are untouched. `BUILD` is now
+  `2026-10-06 grind-v60 GM password rotated out of the client`, so the login card confirms the new
+  file is loaded. **The new GM password is not in the repo or in this log** - the owner has it.
+* **Why now:** the owner asked for the rotation after the server-shift plan flagged it. The specific
+  discovery that made it urgent: `_login.html` (a pre-pack legacy page that the repo still deploys)
+  contained `GM_PASS='gm1234'` *and* auto-filled the password field, so the live Render site was
+  serving the GM password to anyone who guessed the file name. That copy is now empty of credentials.
+* **How it works now:** `hashPw` is one cheap 64-bit pass, far too weak to store a password behind, so
+  `gmHash(p)` runs it `GM_ROUNDS+1` paves over a salted start (`pg-gm:` prefix). `GM_ROUNDS=20000`,
+  measured at ~25 ms in node - invisible on a login click, and ~20,000x the work for anyone guessing
+  offline. Only `GM_PASS_HASH` (16 hex chars) is in the file. `node tools/make_gm_hash.js "new
+  password"` prints the line to paste in; `--check "password"` says whether a password is the live one;
+  `--show` prints the stored hash and round count; it refuses anything under 12 characters and reads
+  the game's own `hashPw`/`GM_ROUNDS` so the tool and the game cannot drift apart. Honest limit, said
+  in the source: this is still a client-side door - a player with devtools can set `S.gm` by hand.
+  Real GM security is the server work in `tools/server-shift-plan.md` §6.
+* **The first version of the change was wrong, and the new test caught it:** I generated the hash with
+  `GM_ROUNDS=20001` and the game's loop (`for i<GM_ROUNDS`) then hashed 20,002 times, so the password
+  did not work. `gm_auth_sim` was too weak to notice (it only compared tool-vs-game functions, which
+  agree by construction); it now **rehearses the owner's real workflow on a scratch copy of the game**
+  in `/tmp` - run the tool, paste the printed line, `--check` the password, `--check` a wrong one - so
+  an off-by-one or a stale paste can never lock the owner out. `GM_ROUNDS` is 20000 and the rehearsal
+  passes.
+* **Files touched:** `index.html` (`GM_USER`/`GM_ROUNDS`/`GM_PASS_HASH`, new `gmHash()` beside
+  `hashPw()`, the login branch, `BUILD`), `tools/make_gm_hash.js` (new tool), `tools/tests/gm_auth_sim.js`
+  (new suite, 10 checks), `_login.html` + `_shot.html` (credentials emptied; the legacy GM branch can
+  no longer log in), `tools/shot_harness.js` (password comes from `window.PG_GM_PASS`), the two
+  `Updates/cards-gear-audit/` files (build label refreshed; v59 appended to `SAFE_PREVIOUS_BUILDS`,
+  now 18 entries), `AGENTS.md` (login line + suite list), `READ-ME-FIRST.md`, this log.
+* **Art:** no sheets added, removed or rebuilt; `tools/montage.py` was not used.
+* **Tests:** all **22 suites** pass (21 + the new `gm_auth_sim`, 10 passed / 0 failed), plus both
+  `--check` tools. The two suites that pin build labels (`drop_card_sheet_sim`, `gear_sim`) failed
+  until their audit files were refreshed - that is the intended behaviour, not a workaround.
+* **Branches / PR:** `arena/50beb968-prontera-grind`, same PR updated.
+* **Known limits / follow-ups:** the old password is still readable in git history and in old log
+  entries - that cannot be undone, which is why the password was **rotated** rather than hidden. A
+  player could still hand-edit `S.gm`; that is a client-side-door limitation and it goes away with
+  server accounts. **The deploy must be checked**: if the Render static site publishes the whole repo,
+  `_login.html`, `_shot.html`, `logic2.js` and the four 2 MB `_recon_v27*.png` are all public - use
+  Render's Build Filters (Settings → Build & Deploy → Ignored Paths) - and the `*.recon.png` files
+  should be moved to `Sprite/recon/` so the refresh leaves them out of the published tree too.
+
+### 2026-10-06 — `docs only: the Render service type answered, and the expiry question`
+
+* **What changed for the player:** Nothing; no code changed in this entry.
+* **What was settled:** the game's live URL is `https://prontera-grind.onrender.com/`, and with
+  0 instance hours on one service that is a **Render Static Site** - so the client can stay on Render
+  indefinitely at $0, and nothing about the current game is at risk there. The 30-day expiry the owner
+  asked about applies **only to Render's free Postgres** (deleted 14 days after expiry) and the free
+  Key Value (in-memory), i.e. exactly the pieces a backend would need - which is why the migration
+  only matters when phase 1 starts, and why it is not urgent today.
+* **Also written down:** the live site currently publishes the whole repo, including
+  `_login.html` (which is how the retired GM password was downloadable), the two legacy pages,
+  `logic2.js`, `tools/`, `Updates/`, `Sprite/` and the four 2 MB `_recon_v27*.png` - so the plan now
+  lists the fix (Render **Publish Directory** pointing at a folder holding only the game files, or
+  moving the dev files under `Sprite/recon/` and `tools/legacy/`) and warns that Render's Build
+  Filters control *whether a deploy runs*, not what gets published.
+* **Files touched:** `tools/server-shift-plan.md` only (new §1a wording, the answered §3a box, the
+  "what the 30-day expiry applies to" note, §6.1 marked done, §7b publish-hygiene section, §10 step 1),
+  this log. No game code, no tests, no art.
+* **Tests:** all 22 suites were green at the previous commit (the v60 entry has the counts) and
+  nothing executable changed since; not re-run.
+* **Branches / PR:** `arena/50beb968-prontera-grind`, same PR updated.
+* **Known limits / follow-ups:** the publish-directory change is a Render dashboard action only the
+  owner can take; the plan names the two ways to do it but neither is done.
+
+### 2026-10-06 — `tools/build_site.sh: publish the game, not the repo`
+
+* **What changed for the player:** nothing they see in the game — `index.html` is untouched by this
+  entry. What changes is **what the website serves**: a new build script assembles only the files the
+  game actually fetches into `dist/`, so the live site can stop publishing `tools/`, `Sprite/`,
+  `image-search/`, `Updates/` (except the class sprites), the audit pages, the legacy `_login.html`
+  and `_shot.html`, and the four 2 MB `_recon_v27*.png`.
+* **Why:** a static host publishes the whole publish directory. That is how the retired GM password
+  was downloadable from the live site at `/_login.html`, and it is why a full load of the site was
+  ~37 MB rather than the ~16 MB the game needs.
+* **What it does:** `bash tools/build_site.sh [outdir]` copies `index.html`, `assets/` and
+  `Updates/Sprite/` into `dist/` (default), then *fails* if a required file is missing/empty or if
+  `_login.html`, `_shot.html`, `logic2.js` or `tools/` ended up in the output. Verified by hand:
+  `dist/` is 16 MB / 175 files (html 388 KB, assets 9.0 MB, class sprites 5.7 MB), every runtime URL
+  the game requests returns 200 with the right byte count when served from `dist/`, and
+  `/_login.html` returns 404.
+* **What the owner must do (dashboard only):** on Render → Settings → Build & Deploy →
+  **Build Command** = `bash tools/build_site.sh`, **Publish Directory** = `dist`. (Cloudflare Pages:
+  same command, "Build output directory" = `dist`.) Build Filters are *not* the fix — they control
+  whether a deploy runs, not what is published.
+* **Files touched:** `tools/build_site.sh` (new), `.gitignore` (`dist/`), `tools/server-shift-plan.md`
+  (§7b now documents the script and the two dashboard fields), this log. No game code, no tests, no art.
+* **Tests:** the script is not exercised by any suite (nothing under `tools/tests/` reads it) and it
+  writes only to `dist/`, which is gitignored. All 22 suites were green on the v60 commit; the only
+  changes since are this script and markdown, so the tree is unchanged for every harness.
+* **Branches / PR:** `arena/50beb968-prontera-grind`, same PR updated.
+* **Known limits / follow-ups:** the Render/Cloudflare settings are owner actions in a dashboard, not
+  something a push can do for them; until they are set, the live site still publishes the whole repo.
+
+### 2026-10-06 — `grind-v61 a local GM password, publish hygiene enforced by a test, and the GM panel plan`
+
+* **What changed for the player:** nothing in normal play. The GM login gains a second, deliberate
+  door: a **local GM password** kept in the GM's own browser, so a short simple password can be used
+  for testing without ever appearing in this public file. Set it once from the console with
+  `localStorage.setItem('pg_gm_local', gmHash('test1234'))`, then log in as `GM` / `test1234`;
+  `localStorage.removeItem('pg_gm_local')` removes it. The file's own long password still works, and
+  is still required when no local value is set. `BUILD` is now
+  `2026-10-06 grind-v61 local GM password + publish-only build`.
+* **Why it is safe enough:** the local hash never leaves the GM's browser, so no other player can read
+  it and the repo carries no usable secret. It is still a client-side door - devtools can set `S.gm`
+  on anyone's own copy - which is why the real GM account is server-side work
+  (`tools/gm-panel-plan.md`, §6).
+* **Publish hygiene, now enforced rather than remembered:** `.assetsignore` (Cloudflare's convention)
+  plus `tools/tests/publish_sim.js`, which **runs the real `tools/build_site.sh`** and fails if a
+  runtime file is missing, if any `assets/` path named in `index.html` is absent from the output, if
+  the class skins (`Updates/Sprite/`) stopped shipping, if a dev file (`_login.html`, `_shot.html`,
+  `logic2.js`, `tools/`, `Sprite/`, `image-search/`, the `_recon_*.png`, the repo docs) appears in it,
+  or if the tree grows past 30 MB. It also asserts `.assetsignore` uses no `!` re-includes, so it can
+  never be the reason a real game file disappears. Both are in the pre-push list now.
+* **New plan document:** `tools/gm-panel-plan.md` - the researched answer to the owner's "GM settings
+  generator". It maps Ragnarok's atcommands (`@item`, `@zeny`, `@baselevel`, `@who`, `@kick`, `@ban`,
+  `@broadcast`, charcommands `#item <name>`) onto this game's real save fields, records what the
+  existing in-game GM tab already does, explains why **editing another player's account is impossible
+  until saves live on the server** (phase 1), picks the delivery mechanism (a `grants` table applied at
+  next login, mailbox later on the same table), and lays out the security model (GM flag in D1 only,
+  `/gm` behind the session, two roles, an audit row for every action, no password ever visible).
+* **Files touched:** `index.html` (`gmOk` + the login branch + `BUILD`), `tools/tests/gm_auth_sim.js`
+  (12 checks now, covering the local password and that it fails closed), `tools/tests/publish_sim.js`
+  (new, 7 checks), `.assetsignore` (new), `tools/gm-panel-plan.md` (new),
+  `Updates/cards-gear-audit/{affix-ranges,equipment-cards-tuning}.html` (v61 label; v60 appended to
+  `SAFE_PREVIOUS_BUILDS`), `AGENTS.md`, `READ-ME-FIRST.md`, `tools/server-shift-plan.md` (new §7b.1 on
+  why the rule is enforced by a test).
+* **Art:** no sheets added, removed or rebuilt; `tools/montage.py` was not used.
+* **Tests:** all **23 suites** pass (21 + `gm_auth_sim` + `publish_sim`), both `--check` tools current,
+  and the inline game script passes `node --check`.
+* **Branches / PR:** `arena/50beb968-prontera-grind`, same PR updated.
+* **Known limits / follow-ups:** **the workspace reset mid-edit during this work and truncated
+  `index.html` to 456 lines** - it was restored from the v60 commit and the three intended edits were
+  re-applied by script with assertions, then every suite re-run (`wc -l` 4080, 397 KB). Anyone reading
+  this later: if a file looks impossibly short, `git checkout HEAD -- <file>` is the recovery, and the
+  suites are what prove the tree is sane. The GM panel itself is **not built** - it needs phase 1 of
+  the server shift first.
+
+### 2026-10-06 — `grind-v62 cloud accounts, saves and GM tools`
+
+* **The server shift's phase 1 is built** (`tools/server-shift-plan.md` § *Phase 1 status*, and the
+  design of record is `tools/gm-panel-plan.md`). Cloudflare Pages Functions + D1: username/password
+  accounts (PBKDF2-SHA256, 20 000 iterations, hash format `pbkdf2$<iters>$<salt>$<hash>` so the cost
+  can be raised later without breaking anyone), one-time recovery codes, session cookies, cloud saves
+  with conflict detection and history, announcements, GM gifts, and the GM console.
+* **The game still works with no server at all.** That is the load-bearing decision: `CLOUD.api` is set
+  only when `/api/me` answers *JSON* — a static host answers HTML, which the client refuses to treat as
+  a server — and everything cloud-related is skipped, leaving v61 behaviour (accounts and saves in
+  `localStorage`) byte for byte. The same file therefore ships to the old static host unchanged.
+* **Nothing can lose a save.** The browser keeps simulating and `localStorage` stays the running state;
+  the server is a vault. A `409` opens a three-way chooser (keep this device / keep the cloud / decide
+  later), and every branch keeps both copies: the loser of "keep the cloud" is stashed under
+  `pg_save3_<user>_local_<timestamp>`, and the server keeps a save-history copy a GM can restore.
+* **A failed push stays dirty**, so the next flush retries it — worth stating because the obvious
+  implementation (`dirty=false` in a `finally`) silently drops the sync until the player does
+  something new. Found by `cloud_sim.js`, not by playing.
+* **Gifts are applied by the player's own client**, then claimed (`POST /api/grants`). Offline players
+  are the normal case, so the server queues and the client — which owns the save format and its repair
+  rules — applies. A gift the client does not understand is **left unclaimed**, so the GM sees it still
+  pending and can resend, instead of it disappearing.
+* **The GM console is `gm.html`** (`@item`/`@zeny`/`@baselevel`/`@broadcast`/`@ban` vocabulary, an audit
+  row for every action, passwords replaceable but never readable). It is served publicly and that is
+  fine: it is a client of `/api/gm/*` and every call is authorised from the session cookie. The **first
+  account registered becomes the owner** (`gm=2`), so no bootstrap password lives in the repo.
+* **`_routes.json`** ships in `dist/`: only `/api/*` goes through Functions, so page views stay on the
+  free static path. Two other deliberate cost decisions: PBKDF2 at 20 000 rounds (~7 ms) fits the free
+  plan's 10 ms CPU ceiling that rules out scrypt/argon2; and `pub` (leaderboard columns) is re-derived
+  from the save blob on the server, never trusted from the client.
+* **Files touched:** `index.html` (the cloud module, `CLOUD.api` branch in `submitAuth`, `save()` →
+  `cloudTouch()`, `logout()`, a Cloud log filter, the GM-console button, `BUILD`), `gm.html` (new),
+  `migrations/0001_init.sql` (new), `wrangler.toml` (new), `_routes.json` (new),
+  `functions/_lib/{auth,db,http,validate}.js` (new), `functions/api/{register,sessions,me,save,messages,grants}.js`
+  (new), `functions/api/gm/{players,player,log}.js` (new), `tools/dev_server.js` (new),
+  `tools/tests/{api_sim,cloud_sim,gm_console_sim,dev_server_sim}.js` (new), `tools/tests/publish_sim.js` (three new checks), `tools/build_site.sh` (`gm.html` and
+  `_routes.json` now ship), `Updates/cards-gear-audit/*.html` (v62 label; v61 appended to
+  `SAFE_PREVIOUS_BUILDS`), `AGENTS.md`, `READ-ME-FIRST.md`, `tools/server-shift-plan.md`.
+* **Tests:** all **27 suites** pass (23 + `api_sim` + `cloud_sim` + `gm_console_sim` + `dev_server_sim`), both `--check`
+  tools current, `bash tools/build_site.sh` clean, inline game script passes `node --check`.
+  `api_sim.js` runs the real handlers against a real SQLite (`node:sqlite`, D1-shaped shim) and found
+  three real bugs while it was written: `currentUser` called `db.sessionByToken` on the D1 handle
+  itself, `noteFailure` read `.first()` without `await` (which disabled the whole per-account lockout),
+  and `new URL(request.url)` threw on a bare path.
+* **Art:** no sheets added, removed or rebuilt; `tools/montage.py` was not used.
+* **Branches / PR:** `arena/50beb968-prontera-grind`, same PR updated.
+* **`tools/dev_server.js`** runs the whole server locally with no Cloudflare account: it serves
+  `dist/` and routes `/api/*` to the same handler files, over real HTTP with real cookies and an
+  in-memory database, so the cross-device login can be shown working today. `tools/tests/dev_server_sim.js`
+  automates that trip (13 checks) — the layer a direct handler call cannot cover, because the client's
+  *is there an API here?* test depends on the wire Content-Type.
+* **Known limits / follow-ups:** the **Cloudflare project does not exist yet** and `wrangler.toml`
+  still holds `REPLACE_WITH_YOUR_D1_ID`, so no player is on the server path — the deploy steps are
+  `READ-ME-FIRST.md` § *Put the saves on the server*. `/api/board` (leaderboard), presence, world chat
+  and away-progress accrual are phase 2. There is no password *reset* for a player who loses both
+  password and recovery code except through a GM (by design, and owner-only). The workspace truncated
+  `index.html` mid-edit **twice** during this work; both times it was restored from the last commit and
+  the edits re-applied by guarded script — the habit that saved it is committing after each verified
+  step.
+
+### 2026-10-06 — `grind-v63 save backups + a login that keeps your progress`
+
+* **The deploy found a real bug before it happened.** Moving to a new address means a new
+  `localStorage`, so the characters living in a player's browser cannot follow them — and a second bug
+  sat right next to it: `initSessionFromCloud` only honoured the device's own copy for a *returning*
+  login, so a player registering a fresh account on the device they had been playing on would have had
+  their work ignored and replaced by the account's empty save. Both are fixed by putting the whole
+  reconciliation in one place, `cloudJoin`, which never guesses: identical copies agree on a version,
+  an empty cloud adopts this device's progress, and two different copies open the existing three-way
+  chooser (which keeps both, whichever way the player answers).
+* **The crossing bridge is a file**: **⬇ Back up saves** / **⬆ Restore a backup** on the login card.
+  It exports every `pg_save3_*` blob (plus the browser's own account list) as JSON and can put it back
+  on any address. A backup file may only ever write those keys — a test feeds it a file containing
+  `pg_gm_local` and asserts the GM marker is *not* written, because "restore this file someone sent
+  you" would otherwise be a way to hand yourself the GM tools.
+* **Announcements and gifts now arrive while playing**: a five-minute poll of `/api/grants` and
+  `/api/messages`. It deliberately does **not** fetch the save, so no background request can ever
+  overwrite what is being played; a long-hidden tab refreshes the save separately (`cloudRefresh`),
+  adopting silently only when it has nothing unsynced of its own.
+* **`tools/cloudflare-deploy-steps.md`** is the new walkthrough: create D1 (`pg`, APAC), run
+  `migrations/0001_init.sql` in the console, connect Pages to the repo with build
+  `bash tools/build_site.sh` and output `dist`, put the database id in `wrangler.toml` (the file is
+  the source of truth once committed — the dashboard's matching fields become read-only), then a
+  seven-line checklist before players are told. It also records that the first account registered is
+  the owner, so the owner must register before the address is shared.
+* **Corrected from the docs while writing it**: `wrangler pages dev` takes `--d1 NAME=<database_id>`
+  (the old `--d1=DB --local` in `wrangler.toml`'s comment was wrong), and a Wrangler file makes its
+  fields read-only in the dashboard — deleting the file is the documented way to hand configuration
+  back to the dashboard.
+* **Files touched:** `index.html` (`cloudJoin`/`cloudRefresh`/`cloudStart`, the rewritten
+  `initSessionFromCloud`, the five-minute poll, the save-file module + login-card buttons,
+  `BUILD`), `tools/tests/cloud_sim.js` (+11 checks, 30 total), `tools/cloudflare-deploy-steps.md`
+  (new), `wrangler.toml` (corrected local-dev command + source-of-truth note), `READ-ME-FIRST.md`,
+  `Updates/cards-gear-audit/*.html` (v63 label; v62 appended to `SAFE_PREVIOUS_BUILDS`), `AGENTS.md`.
+* **Tests:** all **27 suites** pass; `cloud_sim.js` covers the four login outcomes (identical, empty
+  cloud, different, new device), the hidden-tab refresh, the backup's key whitelist, and that the poll
+  never touches the save. Both `--check` tools current, `bash tools/build_site.sh` clean.
+* **Known limits / follow-ups:** still nothing deployed — `wrangler.toml` holds the placeholder until
+  the owner creates the database. `save_history` and the GM restore path are unchanged. The backup
+  file is not encrypted: it is the player's own data and they are told what is in it.

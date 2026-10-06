@@ -2,7 +2,8 @@
 
 A browser Ragnarok-Online-flavoured idle/grind game. **One file is the game**: `index.html`
 (HTML, CSS and JavaScript inline, Three.js from a CDN, no build step). Cloudflare Pages serves
-the repo, so pushing to `main` is the deploy.
+`dist/` (see *Put the saves on the server* below for the API half), so a push to `main` is the
+deploy — but the host's build output directory must be `dist/`, never the repo root.
 
 * `index.html` — the whole game. `const BUILD='…'` near the top is the tag shown on the login card.
 * `assets/sprite_pack_data.js` — the built class pack: 19 class bodies + 2 heads, base64 atlases (~5.8 MB).
@@ -33,18 +34,94 @@ the repo, so pushing to `main` is the deploy.
   changing the class art or the hero.**
 * `tools/` — the art pipelines (`make_sprite_pack.py`, `make_sprite_viewer.py`, `make_simple_apng.py`, `montage.py`), the test suites (`tools/tests/`)
   and a dev-only plan previewer (`tools/preview/`).
+* `tools/server-shift-plan.md` — the plan for moving accounts and saves server-side (Render vs
+  Cloudflare with the free-tier maths, the API/D1 sketch, save sync + conflict rules, the migration
+  for existing players, and the staged roadmap). Nothing in it is built yet; it is what the owner
+  asked for and it records the two decisions that are still open.
 * `AGENTS.md` — **the project's rules and its full update log**. Read it before changing anything:
   it carries the house rules (crop only, never draw art; all 8 directions and 3 animation rows
   survive; append to the log; bump `BUILD` for anything a player can see) and the history.
 
-Login for testing: **`GM` / `gm1234`**. Normal accounts are made in-game and stored in the
-browser (`pg_acc4`; saves under `pg_save3_<user>`).
+Login for testing: **`GM`** — the password is deliberately not written down here. Since v60 the game
+stores only a stretched hash of it (`node tools/make_gm_hash.js --check "…"` says whether a password
+is the live one; with no argument the tool prints how to set a new one). Since v61 you can also set a
+**local, simple** GM password that lives only in your own browser and never in this repo: run
+`localStorage.setItem('pg_gm_local', gmHash('test1234'))` in the game's console once, then log in as
+`GM` / `test1234`; `localStorage.removeItem('pg_gm_local')` removes it. Normal accounts are made
+in-game and stored in the browser (`pg_acc4`; saves under `pg_save3_<user>`).
 
 ## Run it
 
 ```sh
 python3 -m http.server 8000 --bind 0.0.0.0     # then open the preview on port 8000
 ```
+
+## Publish it
+
+```sh
+bash tools/build_site.sh                        # -> dist/ : index.html + assets/ + Updates/Sprite/
+```
+
+Point the host at **dist/** (Render static site: Build Command `bash tools/build_site.sh`, Publish
+Directory `dist`; Cloudflare Pages: same command, "Build output directory" `dist`). The repo root is
+*not* a publish directory: it holds the tools, the art sources and the screenshots, and a host that
+serves the root publishes all of them. `tools/tests/publish_sim.js` runs this build in CI and fails if
+anything dev-side reaches `dist/`.
+
+## Put the saves on the server (v63, optional but this is the point of the shift)
+
+**The click-by-click walkthrough is `tools/cloudflare-deploy-steps.md`** — creating the database,
+loading the schema, connecting the Pages project, binding it, and the checks to run before telling
+players the new address. What follows is the short version.
+
+
+
+Accounts and saves can live in Cloudflare D1, so a character follows the player to any device. The
+whole feature is **optional by construction**: with no API behind the address, the game runs exactly
+as it always has, with accounts and saves in `localStorage`. Both paths are covered by
+`tools/tests/cloud_sim.js` (19 checks) and `tools/tests/api_sim.js` (27 checks).
+
+1. `npx wrangler d1 create prontera-grind` — copy the `database_id` it prints into `wrangler.toml`
+   (the placeholder is `REPLACE_WITH_YOUR_D1_ID`).
+2. `npx wrangler d1 execute prontera-grind --remote --file migrations/0001_init.sql` — creates
+   `users`, `sessions`, `saves`, `save_history`, `messages`, `message_reads`, `grants`, `events`.
+3. Create the Pages project with **Build command** `bash tools/build_site.sh` and **Build output
+   directory** `dist`, then bind the D1 database to it as **`DB`** (Pages → Settings → Functions →
+   D1 database bindings). `_routes.json` in `dist/` sends only `/api/*` through Functions, so the
+   static site stays on the free unlimited path.
+4. Deploy and open the game. The login card gains "☁ Cloud accounts are on"; the first account you
+   register becomes the **owner** (`gm=2`) and is shown a one-time recovery code — write it down.
+5. Sign in, play, then check it really followed you: open the game in another browser (or on a phone),
+   sign in with the same username and password, and the same character should load.
+
+**Players already on the old address need one extra thing**, because a browser's saved games belong to
+the address, not to the game: on the old site use **⬇ Back up saves** on the login card, then on the
+new site **⬆ Restore a backup**, then register with the same account name — the game offers to adopt
+the progress that is already on that device. `tools/cloudflare-deploy-steps.md` §6 walks it through.
+
+### See it working before deploying (no Cloudflare account needed)
+
+```sh
+bash tools/build_site.sh && node tools/dev_server.js      # -> http://localhost:8788
+```
+
+That serves `dist/` and routes `/api/*` to the very same handler files Cloudflare will run, with the
+same D1-shaped shim the tests use, over real HTTP with real cookies — in-memory database, so stopping
+the process wipes it. Register, play, then open the address in another browser and sign in with the
+same username and password: the character should be there. `tools/tests/dev_server_sim.js` is that
+whole trip, automated (13 checks). `npx wrangler pages dev dist` remains the official check, and is
+the only way to test Cloudflare's own runtime (CPU limits, the real D1 binding).
+
+Day-to-day: **`/gm.html`** is the GM console (players, gifts, passwords, announcements, save
+backups). It is a client of `/api/gm/*` and holds no authority itself; the server checks the session
+cookie on every call. Local testing without a server is unchanged:
+
+```js
+// console on the game page, then log in as GM with that password (this browser only)
+localStorage.setItem('pg_gm_local', gmHash('test1234'))
+```
+
+Verify the production GM hash after rotating it: `node tools/make_gm_hash.js --check "$PW"`.
 
 ## Test it — before every push
 

@@ -13,7 +13,7 @@ function __dump(tag){
 window.addEventListener('load',function(){
  setTimeout(function(){
    try{document.getElementById('username').value='GM';
-        document.getElementById('password').value='gm1234';submitAuth();__vlog('login ok S='+(S?'yes':'NO'));}
+        document.getElementById('password').value=window.PG_GM_PASS||'';   // set by the runner; never stored heresubmitAuth();__vlog('login ok S='+(S?'yes':'NO'));}
    catch(e){__vlog('ERR '+e.message)}
  },40);
  setTimeout(function(){

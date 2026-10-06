@@ -1,0 +1,39 @@
+# .assetsignore — Cloudflare Pages never serves these, even if the project's output directory is
+# the repo root. This is the SECOND line of defence: the first is that the host publishes dist/
+# (see tools/build_site.sh and tools/server-shift-plan.md §7b), which simply does not contain them.
+#
+# Keep this list in sync with the "forbidden" list in tools/tests/publish_sim.js — that test fails
+# if a dev file ever reaches the publish directory on either path.
+#
+# The game fetches exactly three things at runtime: /index.html, /assets/**, /Updates/Sprite/**,
+# so everything else in this repo is safe to exclude. Note the entries are explicit and contain no
+# `!` re-includes: if this file were ever the only protection, nothing the game needs disappears.
+
+# --- dev material -------------------------------------------------------------
+tools/
+Sprite/
+image-search/
+
+# --- Updates/ : only Sprite/ ships (the animated class PNGs) -------------------
+Updates/ApngAnimation/
+Updates/cards-gear-audit/
+Updates/map-sprites-v2/
+Updates/retired-v1-kit/
+Updates/v27-organic-field/
+Updates/Sprite/index.html
+Updates/maps sprite.html
+Updates/ro_atlas.js
+
+# --- legacy pages, harnesses and screenshots ----------------------------------
+_login.html
+_shot.html
+logic2.js
+_recon_v27b.png
+_recon_v27c.png
+_recon_v27d.png
+_recon_v27e.png
+
+# --- repo documents (nothing here is read by the browser) ---------------------
+AGENTS.md
+READ-ME-FIRST.md
+.gitignore
