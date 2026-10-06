@@ -15,6 +15,7 @@
 // `wrangler pages dev` remains the check for those.
 import { DatabaseSync } from 'node:sqlite';
 import { createServer } from 'node:http';
+import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
@@ -161,6 +162,13 @@ export function start({ port = 8788, host = '127.0.0.1', site, dbFile } = {}) {
 
 // Only boot when run directly; a test or another tool can import the pieces above.
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+  // dist/ is build output and is not kept in the repo, so a fresh checkout - or a workspace that was
+  // snapshotted - will not have it. Build it rather than serving a blank page.
+  if (!fs.existsSync(path.join(root, 'dist', 'index.html'))) {
+    console.log('dist/ is missing - running tools/build_site.sh first');
+    const b = spawnSync('bash', [path.join(root, 'tools', 'build_site.sh')], { stdio: 'inherit' });
+    if (b.status !== 0) { console.error('build failed; nothing to serve'); process.exit(1); }
+  }
   const argPort = (process.argv.includes('--port') ? process.argv[process.argv.indexOf('--port') + 1] : null);
   const port = Number(argPort ?? process.env.PORT ?? 8788);
   const host = process.env.HOST || '0.0.0.0';       // reachable from the preview/proxy, not just localhost
