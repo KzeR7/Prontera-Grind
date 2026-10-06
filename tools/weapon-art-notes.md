@@ -199,7 +199,16 @@ raw `file://` file if the class art is to animate:
 * choices persist in `localStorage` under `pg_weapon_proposal_v3` (older `_v2`/`_v1` entries
   are migrated; `_v2`'s single placement is copied to both sprites, which is accurate for
   every view where the two sprites agree and a starting point elsewhere);
-* **Copy my proposal** exports one JSON block (v4): per class
+* **two buttons, two jobs.** `📋 Copy only what I changed` is the everyday one: it writes a
+  v5 block (`kind:'changes'`) that names **only the classes and views that differ from the
+  saved default**, on **one compact line** (a two-frame edit is ~0.9 KB against ~309 KB for
+  the full export, and the size sits on the button). Loading it back reproduces the edited
+  state exactly. A view it names carries **all** of that view's stored rows, because loading
+  replaces the view it is given — a partial one would silently drop rows, and a frame the
+  owner cleared has to come back cleared instead of as the old numbers. With nothing moved
+  it is empty, which is the honest answer. The other button, `📋 Copy everything`, is the
+  long v4 block below — that one is for backups and for folding into the game;
+* **Copy everything** exports one JSON block (v4): per class
   `{family, design, views: {m: {<view>: …}, f: {<view>: …}}}` — that block is the whole
   hand-back, one block per sprite. `base` is the shared placement an untouched frame falls back to
   (`handAuto: true` means that hand is still the built-in guess), and `frames` is **one

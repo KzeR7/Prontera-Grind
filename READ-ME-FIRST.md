@@ -51,7 +51,10 @@ deploy — but the host's build output directory must be `dist/`, never the repo
   grip, so a flipped weapon stays in the hand. A **"Weapon per view"** table ticks or
   unticks the weapon per drawing — so a job can be bare-handed on South and South-East but armed while
   attacking — and the class list's **✕** is still "no weapon for this job" everywhere. Three designs per
-  weapon family, and **Copy my proposal** returns one JSON block. **Every class at a glance** has a
+  weapon family, and **📋 Copy only what I changed** hands back just the classes and views that
+  differ from the saved default — one short line (a two-frame edit is under a kilobyte against the
+  full export's ~300 KB), which loads back into the identical state; **📋 Copy everything** is still
+  there for backups. **Every class at a glance** has a
   `▤ show the pictures` button: nineteen small live pictures, one per class, of whatever the page is
   holding right now, each labelled with whose numbers that sprite is using (her own, still his, or not
   tuned yet) — the worklist for the female pass. Click a picture to work on that class. The art is real RO client art, decoded and cropped by

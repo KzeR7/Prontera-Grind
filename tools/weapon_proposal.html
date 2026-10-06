@@ -220,7 +220,15 @@
         <button id="flipClear">↺ normal</button>
       </div>
       <div class="row" style="margin-top:8px">
-        <button id="copy">📋 Copy my proposal</button>
+        <button id="copyChanges" class="on">📋 Copy only what I changed <span id="chgSize" class="tag"></span></button>
+        <button id="copy">📋 Copy everything <span id="fullSize" class="tag"></span></button>
+      </div>
+      <div class="hint" style="margin-top:4px">
+        <b>Changed only</b> is what to paste back — it carries just the classes and views you moved,
+        so it stays short no matter how big the proposal gets. <b>Everything</b> is the whole proposal,
+        every frame of every view, for a complete backup.
+      </div>
+      <div class="row" style="margin-top:8px">
         <button id="default">↺ back to the saved default</button>
       </div>
       <div class="hint" id="copyNote" style="margin-top:6px">Saved in this browser as you work.</div>
@@ -559,8 +567,9 @@ function copyClassToOtherSex(){
 }
 function load(){
   state.per={};
-  // the shipped default first: the owner's progress, so the page opens on their work
-  try{ if(typeof WEAPON_PROPOSAL_DEFAULT!=='undefined') importProgress(WEAPON_PROPOSAL_DEFAULT); }catch(e){}
+  // the shipped default first: the owner's progress, so the page opens on their work.
+  // A copy of it is kept, so "copy only what I changed" has something to compare against.
+  try{ if(typeof WEAPON_PROPOSAL_DEFAULT!=='undefined'){ importProgress(WEAPON_PROPOSAL_DEFAULT); DEFAULT_SNAP=snapshot(); } }catch(e){}
   try{
     const raw=localStorage.getItem(KEY);
     if(raw){                       // what this browser has been working on wins
@@ -1240,6 +1249,15 @@ function refreshSummary(){  const lines=[];
   }
   $('summary').innerHTML=lines.join('');
   $('export').value=proposalJSON();
+  // how big each hand-back is, so it is obvious which one to paste back
+  try{
+    const chg=changedJSON();
+    $('chgSize').textContent=kb(chg);
+    $('fullSize').textContent=kb($('export').value);
+    const c=Object.keys(JSON.parse(chg).classes).length;
+    $('copyChanges').title=c?('short hand-back: '+c+' class'+(c===1?'':'es')+' you have changed, '
+      +'loads onto the saved default'):'nothing changed yet';
+  }catch(e){}
 }
 function refreshPlayButton(){
   $('play').textContent=state.playing?'❄ Freeze':'▶ Play animation';
@@ -1300,11 +1318,92 @@ function refreshAll(){
 /* =============================================================================
    Hand-back
    ========================================================================== */
+/* =============================================================================
+   The two hand-backs.
+   `proposalJSON` is everything: every frame of every view of both sprites, which is
+   what a full backup needs and is also long enough that pasting it back is painful.
+   `changedJSON` carries only the classes and views that differ from the saved default,
+   which is what the owner actually means when they say "here are my new placements".
+   A view it does mention carries ALL of that view's stored rows, because loading a
+   hand-back replaces a view it is given - a partial view would silently drop rows.
+   ========================================================================== */
+let DEFAULT_SNAP=null;
+function snapView(cls,view,sex){
+  const V=vw(cls,view,sex), st=storedVals(V), frames={};
+  for(const k of frameKeys(V)){
+    const f=V.frames[String(k)], o={};
+    for(const fld of PLACE_KEYS) if(f[fld]!=null) o[fld]=f[fld];
+    frames[k]=o;
+  }
+  return {on:V.on!==false, blend:V.blend!==false, st, frames};
+}
+function snapshot(){
+  const out={};
+  for(const n of CLASS_ORDER){
+    const views={m:{},f:{}};
+    for(const sex of ['m','f']) for(const v of viewsOf(n,sex)) views[sex][v]=snapView(n,v,sex);
+    out[n]={fam:famOf(n), design:designOf(n), off:classOff(n), views};
+  }
+  return out;
+}
+const sameSnap=(a,b)=>JSON.stringify(a)===JSON.stringify(b);
+function changedClasses(){
+  const now=snapshot(), names=[];
+  for(const n of CLASS_ORDER){
+    const A=DEFAULT_SNAP&&DEFAULT_SNAP[n], B=now[n];
+    if(!A){ names.push(n); continue }
+    let diff = A.fam!==B.fam || A.design!==B.design || A.off!==B.off;
+    for(const sex of ['m','f']) for(const v of viewsOf(n,sex))
+      if(!sameSnap(A.views[sex][v],B.views[sex][v])) diff=true;
+    if(diff) names.push(n);
+  }
+  return {names, now};
+}
+const pack=P=>({hand:[Math.round(P.hx),Math.round(P.hy)],
+  dx:+(P.dx||0).toFixed(2),dy:+(P.dy||0).toFixed(2),rot:+(P.rot||0).toFixed(2),
+  scale:+(P.scale||1).toFixed(2),flip:[(P.fx===-1?-1:1),(P.fy===-1?-1:1)]});
+/* One view in the same shape the full export uses, but only its hand-set rows and
+   without the `src` tag (in this file every row listed IS a hand-set row). */
+function viewOut(cls,view,sex){
+  const V=vw(cls,view,sex), auto=autoHand(cls,sex,view);
+  const hand=[Math.round(V.hx!=null?V.hx:auto[0]),Math.round(V.hy!=null?V.hy:auto[1])];
+  const frames={};
+  for(const k of frameKeys(V)){
+    const P=placed(cls,view,k,sex);
+    frames[k]=pack(P);
+  }
+  return {weapon:viewOn(cls,view,sex), blend:!!V.blend,
+    base:{hand, handAuto:V.hx==null, dx:+(V.dx||0).toFixed(2), dy:+(V.dy||0).toFixed(2),
+          rot:+(V.rot||0).toFixed(2), scale:+(V.scale||1).toFixed(2),
+          flip:[(V.fx===-1?-1:1),(V.fy===-1?-1:1)]},
+    frames};
+}
+function changedJSON(){
+  const {names, now}=changedClasses();
+  const out={page:'weapon-proposal',version:5,kind:'changes',classes:{}};
+  for(const n of names){
+    const A=DEFAULT_SNAP&&DEFAULT_SNAP[n], B=now[n], rec={};
+    if(!A||A.fam!==B.fam) rec.family=B.fam;
+    if(!A||A.design!==B.design) rec.design=B.design;
+    if(A&&A.off!==B.off) rec.off=B.off;
+    // only the sprites and views that really changed - an empty "f":{} block would be
+    // noise in every hand-back and reads like something was set on her sprite
+    const views={}; let any=false;
+    for(const sex of ['m','f']) for(const v of viewsOf(n,sex)){
+      if(A&&sameSnap(A.views[sex][v],B.views[sex][v])) continue;
+      (views[sex]=views[sex]||{})[v]=viewOut(n,v,sex); any=true;
+    }
+    if(any) rec.views=views;
+    out.classes[n]=rec;
+  }
+  // no indentation on purpose: this is the one the owner pastes back, and a compact
+  // line is several times smaller than the same object pretty-printed. The full export
+  // stays indented - that one is for reading and for backups.
+  return JSON.stringify(out);
+}
+const kb=s=>s.length<1024?(s.length+' B'):((s.length/1024).toFixed(1)+' KB');
 function proposalJSON(){
   const out={page:'weapon-proposal',version:4,classes:{}};
-  const pack=P=>({hand:[Math.round(P.hx),Math.round(P.hy)],
-    dx:+(P.dx||0).toFixed(2),dy:+(P.dy||0).toFixed(2),rot:+(P.rot||0).toFixed(2),
-    scale:+(P.scale||1).toFixed(2),flip:[(P.fx===-1?-1:1),(P.fy===-1?-1:1)]});
   for(const n of CLASS_ORDER){
     const views={m:{},f:{}};
     for(const sex of ['m','f']){
@@ -1332,12 +1431,21 @@ function proposalJSON(){
   }
   return JSON.stringify(out,null,1);
 }
-$('copy').onclick=async()=>{
-  const txt=proposalJSON();
+async function copyOut(txt,what){
   $('export').value=txt;
-  try{await navigator.clipboard.writeText(txt);$('copyNote').innerHTML='<b style="color:var(--ok)">Copied.</b> Paste it back to the agent.'}
-  catch(e){$('export').select();$('copyNote').textContent='Press Ctrl/Cmd+C — the JSON is selected below.'}
+  try{await navigator.clipboard.writeText(txt);
+    $('copyNote').innerHTML='<b style="color:var(--ok)">Copied '+kb(txt)+'.</b> Paste it back to the agent.'}
+  catch(e){$('export').select();
+    $('copyNote').textContent='Press Ctrl/Cmd+C — the JSON ('+kb(txt)+') is selected below.'}
+}
+$('copyChanges').onclick=async()=>{
+  const txt=changedJSON();
+  const names=Object.keys(JSON.parse(txt).classes);
+  await copyOut(txt,'changes');
+  if(!names.length) $('copyNote').innerHTML='<b>Nothing changed yet</b> — move something first, '
+    +'or use <b>Copy everything</b> for a full backup.';
 };
+$('copy').onclick=()=>copyOut(proposalJSON(),'everything');
 $('default').onclick=()=>{
   try{localStorage.removeItem(KEY);localStorage.removeItem(OLDKEY);localStorage.removeItem(OLDKEY1)}catch(e){}
   load();refreshAll();

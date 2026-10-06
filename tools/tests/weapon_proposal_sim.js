@@ -440,7 +440,7 @@ import vm from 'vm';
   };
   let probe = null;
   try {
-    vm.runInContext('globalThis.__probe={state,viewsOf,viewsAny,viewOn,vw,entry,classOff,anyOn,handBox,proposalJSON,blankView,refreshAll,refreshViewTable,views:VIEWS,el:id=>document.getElementById(id),geom:()=>({...geom}),viewFrames,placed,setFrame,clearFrame,importProgress,copyClassToOtherSex,autoHand,paintCell,sheetViewOf,tunedState,tuneCounts,sheetTiles:()=>sheetTiles,order:CLASS_ORDER,ang:f=>ANGLE[FAMILIES[f]]};', v);
+    vm.runInContext('globalThis.__probe={state,viewsOf,viewsAny,viewOn,vw,entry,classOff,anyOn,handBox,proposalJSON,blankView,refreshAll,refreshViewTable,views:VIEWS,el:id=>document.getElementById(id),geom:()=>({...geom}),viewFrames,placed,setFrame,clearFrame,importProgress,copyClassToOtherSex,autoHand,paintCell,sheetViewOf,tunedState,tuneCounts,sheetTiles:()=>sheetTiles,changedJSON,snapshot,viewOut,kb,order:CLASS_ORDER,ang:f=>ANGLE[FAMILIES[f]]};', v);
     probe = ctx.__probe;
   } catch (e) {
     fail++; console.log('  FAIL: could not reach the page internals: ' + e.message);
@@ -537,6 +537,84 @@ import vm from 'vm';
       ok(probe.state.importNote && /female sprite/.test(probe.state.importNote),
         'and the page says why');
       probe.el('default').onclick();     // back to the shipped default for the rest of the checks
+
+      // --- the short hand-back -------------------------------------------------------
+      // The owner's complaint: the export is "very very very long" because it resolves
+      // every frame of every view of both sprites, so pasting it back is painful.  The
+      // short one carries only what has changed, and has to rebuild the same state.
+      const emptyChg = JSON.parse(probe.changedJSON());
+      ok(emptyChg.version === 5 && emptyChg.kind === 'changes',
+        'the short hand-back says what it is (v5, changes against the saved default)');
+      ok(Object.keys(emptyChg.classes).length === 0,
+        'with nothing touched it is empty — no class, no frames, nothing to read');
+      const fullTxt = probe.proposalJSON(), emptyTxt = probe.changedJSON();
+      ok(emptyTxt.length * 20 < fullTxt.length,
+        `the empty one is far smaller than the full export (${emptyTxt.length} vs ${fullTxt.length} chars)`);
+
+      // one frame of one class: exactly what the owner does, dozens of times a session
+      const snapBefore = probe.snapshot();
+      const knightFrame = probe.placed('Knight', 'attack', 4, 'm');
+      probe.setFrame('Knight', 'attack', 4, { hx: 91, hy: 88, dx: 7, dy: -3, rot: -66, scale: 1.15, fx: -1 }, 'm');
+      const editedSnap = probe.snapshot();
+      const oneChg = probe.changedJSON(), oneObj = JSON.parse(oneChg);
+      ok(JSON.stringify(Object.keys(oneObj.classes)) === '["Knight"]',
+        'after moving one frame of one class, the short hand-back carries only that class');
+      ok(Object.keys(oneObj.classes.Knight.views).join(',') === 'm',
+        'only the sprite that was touched');
+      ok(Object.keys(oneObj.classes.Knight.views.m).join(',') === 'attack',
+        'only the view that was touched');
+      ok(oneObj.classes.Knight.views.m.attack.frames['4'].hand[0] === 91 &&
+         oneObj.classes.Knight.views.m.attack.frames['4'].flip[0] === -1,
+        'and it carries the new numbers for that frame');
+      ok(oneChg.length * 100 < fullTxt.length,
+        `that hand-back is under a hundredth of the full export (${oneChg.length} vs ${fullTxt.length} chars, `
+        + `${probe.kb(oneChg)} vs ${probe.kb(fullTxt)})`);
+      ok(oneChg.indexOf('\n') === -1 && fullTxt.indexOf('\n') > 0,
+        'the hand-back the owner pastes is one compact line; the full backup stays readable');
+      ok(oneObj.classes.Knight.views.m.attack.frames['0'] !== undefined &&
+         Object.keys(oneObj.classes.Knight.views.m.attack.frames).length === 9,
+        'the whole view comes with it (9 rows) — a hand-back replaces the view it names, so a partial one would drop rows');
+
+      // the property that matters: loading the short hand-back rebuilds the same state
+      probe.el('default').onclick();
+      ok(JSON.stringify(probe.snapshot()) === JSON.stringify(snapBefore),
+        'the reset really is the shipped default');
+      probe.importProgress(oneObj);
+      ok(JSON.stringify(probe.snapshot()) === JSON.stringify(editedSnap),
+        'loading the short hand-back rebuilds the edited state exactly — every class, view and frame');
+
+      // and if a frame is cleared, the short hand-back says so by leaving its row out
+      // (copy it while the edit is on screen - after "back to the saved default" there is
+      //  nothing to send, which is right: the state IS the default again)
+      probe.clearFrame('Knight', 'attack', 4, 'm');
+      const clearedSnap = probe.snapshot();
+      const clearedDelta = JSON.parse(probe.changedJSON());
+      const clearedRows = clearedDelta.classes.Knight.views.m.attack.frames;
+      ok(clearedRows['4'] === undefined && Object.keys(clearedRows).length === 8,
+        'the cleared frame has no row in the hand-back (8 rows, not 9)');
+      probe.el('default').onclick(); probe.importProgress(clearedDelta);
+      ok(JSON.stringify(probe.snapshot()) === JSON.stringify(clearedSnap),
+        'a frame the owner cleared comes back cleared, not as the old numbers');
+      probe.el('default').onclick();
+      ok(JSON.parse(probe.changedJSON()).classes.Knight === undefined,
+        'and once the page is back on the saved default there is nothing to send at all');
+
+      // a design swap and a per-view off switch travel too, and only what changed
+      probe.el('default').onclick();
+      probe.entry('Knight').design = 'sword_elem';
+      probe.vw('Knight', 'SE', 'f').on = false;
+      const twoObj = JSON.parse(probe.changedJSON());
+      ok(twoObj.classes.Knight.design === 'sword_elem',
+        'a design swap is in the short hand-back');
+      ok(twoObj.classes.Knight.views.f.SE.weapon === false,
+        'so is switching the weapon off on one view');
+      ok(twoObj.classes.Knight.views.m === undefined,
+        'and nothing else rides along');
+      const beforeTwo = probe.snapshot();
+      probe.el('default').onclick(); probe.importProgress(twoObj);
+      ok(JSON.stringify(probe.snapshot()) === JSON.stringify(beforeTwo),
+        'loading it rebuilds both changes together');
+      probe.el('default').onclick();
 
       // Round-trip: re-exporting the shipped default must reproduce the file, number for
       // number, apart from the in-between rows the file is deliberately not supposed to
