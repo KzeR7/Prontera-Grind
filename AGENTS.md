@@ -3482,3 +3482,32 @@ assigned for feel rather than fidelity. While reworking that, two shipped bugs s
 * **Branches / PR:** `arena/50beb968-prontera-grind`, same PR updated.
 * **Known limits / follow-ups:** the publish-directory change is a Render dashboard action only the
   owner can take; the plan names the two ways to do it but neither is done.
+
+### 2026-10-06 — `tools/build_site.sh: publish the game, not the repo`
+
+* **What changed for the player:** nothing they see in the game — `index.html` is untouched by this
+  entry. What changes is **what the website serves**: a new build script assembles only the files the
+  game actually fetches into `dist/`, so the live site can stop publishing `tools/`, `Sprite/`,
+  `image-search/`, `Updates/` (except the class sprites), the audit pages, the legacy `_login.html`
+  and `_shot.html`, and the four 2 MB `_recon_v27*.png`.
+* **Why:** a static host publishes the whole publish directory. That is how the retired GM password
+  was downloadable from the live site at `/_login.html`, and it is why a full load of the site was
+  ~37 MB rather than the ~16 MB the game needs.
+* **What it does:** `bash tools/build_site.sh [outdir]` copies `index.html`, `assets/` and
+  `Updates/Sprite/` into `dist/` (default), then *fails* if a required file is missing/empty or if
+  `_login.html`, `_shot.html`, `logic2.js` or `tools/` ended up in the output. Verified by hand:
+  `dist/` is 16 MB / 175 files (html 388 KB, assets 9.0 MB, class sprites 5.7 MB), every runtime URL
+  the game requests returns 200 with the right byte count when served from `dist/`, and
+  `/_login.html` returns 404.
+* **What the owner must do (dashboard only):** on Render → Settings → Build & Deploy →
+  **Build Command** = `bash tools/build_site.sh`, **Publish Directory** = `dist`. (Cloudflare Pages:
+  same command, "Build output directory" = `dist`.) Build Filters are *not* the fix — they control
+  whether a deploy runs, not what is published.
+* **Files touched:** `tools/build_site.sh` (new), `.gitignore` (`dist/`), `tools/server-shift-plan.md`
+  (§7b now documents the script and the two dashboard fields), this log. No game code, no tests, no art.
+* **Tests:** the script is not exercised by any suite (nothing under `tools/tests/` reads it) and it
+  writes only to `dist/`, which is gitignored. All 22 suites were green on the v60 commit; the only
+  changes since are this script and markdown, so the tree is unchanged for every harness.
+* **Branches / PR:** `arena/50beb968-prontera-grind`, same PR updated.
+* **Known limits / follow-ups:** the Render/Cloudflare settings are owner actions in a dashboard, not
+  something a push can do for them; until they are set, the live site still publishes the whole repo.

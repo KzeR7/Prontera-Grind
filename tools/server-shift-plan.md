@@ -414,21 +414,28 @@ wrangler.toml         # D1 binding, DO binding, routes
 tools/tests/api_sim.js  # house rule 6: a Worker handler with no test is not finished
 ```
 
-* **Publish hygiene (do this on Render too, today).** A Render Static Site serves the **whole
-  publish directory**, so right now the live site also publishes `_login.html`, `_shot.html`,
-  `logic2.js`, `tools/`, `Updates/`, `Sprite/` (1.8 MB) and the four 2 MB `_recon_v27*.png`. That is
-  how the old GM password ended up being downloadable (`/_login.html`), and it also means the live
-  site serves several megabytes nobody asked for — the four recon PNGs alone double the size of a
-  full cold load. Two ways to fix it, both cheap:
-  * **Render:** Settings → **Build & Deploy → Build Filters → Ignored Paths** — *build* filters decide
-    whether a deploy happens at all, so they are **not** a publish filter; the reliable fix on a static
-    site is to publish from a subdirectory instead (set **Publish Directory** to a folder that holds
-    only the game files).
-  * **Any host:** move the dev-only files under a directory that is not published, e.g.
-    `Sprite/recon/_recon_v27*.png` (the sprite pipeline only globs `Sprite/*.png`) and the legacy pages
-    into `tools/legacy/`. Nothing in the repo references them, so this is a pure move.
-  * On Cloudflare Pages the same job is `.assetsignore` (Cloudflare's own convention), plus a 25 MB
-    per-file limit to respect.
+* **Publish hygiene — solved by `tools/build_site.sh` (added 2026-10-06).** A static host publishes
+  the **whole publish directory**, so pointing one at the repo root also publishes `_login.html`
+  (which is exactly how the retired GM password was downloadable), `_shot.html`, `logic2.js`,
+  `tools/` (11 MB), `Updates/`, `Sprite/` (1.9 MB) and the four 2 MB `_recon_v27*.png`. The script
+  assembles **only what the game fetches at runtime** into `dist/`, and refuses to finish if a
+  required file is missing or a dev file is present:
+
+  ```sh
+  bash tools/build_site.sh          # -> dist/ : index.html + assets/ + Updates/Sprite/ only
+  ```
+
+  Measured result: **16 MB, 175 files** (html 388 KB, assets 9.0 MB, class sprites 5.7 MB) versus
+  ~37 MB for the whole repo, and every runtime URL verified served from `dist` while
+  `/_login.html` returns 404. The three files the game reads at runtime are `index.html`, `assets/`
+  and `Updates/Sprite/` (`assets/class_skins_data.js` points straight at the sprite PNGs) — nothing
+  else on the site is fetched by a player.
+
+  * **On Render (static site):** Settings → Build & Deploy → **Build Command** `bash tools/build_site.sh`,
+    **Publish Directory** `dist`. Build Filters are *not* the answer — they decide whether a deploy
+    runs at all, not what gets published.
+  * **On Cloudflare Pages:** Build command `bash tools/build_site.sh`, Build output directory `dist`.
+  * `dist/` is in `.gitignore` and is rebuilt by the host, so it is never committed.
 * Add `tools/tests/api_sim.js` to the "Verify before you push" block in `AGENTS.md`. It can drive the
   handlers against a fake D1 binding, the same way the existing suites drive real game functions.
 * **Local development**: `npx wrangler dev` gives you Pages Functions + a local D1
