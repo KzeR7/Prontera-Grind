@@ -30,7 +30,7 @@ pages_build_output_dir = "dist"
 [[d1_databases]]
 binding = "DB"              # available to every function as env.DB
 database_name = "pg"
-database_id = "REPLACE_WITH_YOUR_D1_ID"   # printed by `wrangler d1 create pg`
+database_id = "50a6448b-1f12-466c-a28a-10544bedf750"   # printed by `wrangler d1 create pg`
 
 # Optional: a second GM-only path could be bound here later (Variables/secrets go in the dashboard,
 # never in this file).
