@@ -3378,3 +3378,31 @@ assigned for feel rather than fidelity. While reworking that, two shipped bugs s
   "plan only" for this session, so phase 0 (rotate the public GM password, hide the dev files from
   the deploy) and phase 1 have not been started. The two facts the plan still wants before it is
   acted on are Render's bandwidth figure and a real `JSON.stringify(S).length`.
+
+### 2026-10-06 — `docs only: the Render dashboard reading, and a corrected reason for the verdict`
+
+* **What changed for the player:** Nothing; `index.html` is untouched and `BUILD` is unchanged.
+  The owner sent a screenshot of Render's monthly usage page, so the plan now carries real numbers
+  instead of an estimate.
+* **The reading:** 52 MB of the 5 GB bandwidth (HTTP responses; WebSocket 0), **0 of 750 free
+  instance hours**, 1 service, 6 of 500 pipeline minutes. Interpretation, now written into §1a and
+  §3a: the client is about five cold loads into its month, so **Render's bandwidth cap is a
+  cents-scale risk even at 20 players** (one hard reload a day each ≈ 5.8 GB ≈ $0.13 of overage) -
+  the earlier framing of bandwidth as the headline reason to move was wrong and is corrected.
+  0 instance hours with 1 service also strongly suggests the service is a **Static Site** (static
+  sites never consume instance hours and never sleep); the type still needs confirming on the
+  service page, because it decides whether the client also moves in phase 1.
+* **The corrected verdict:** the reason to put the server on Cloudflare is **that Render free has
+  nowhere durable to put accounts** - the free Postgres expires 30 days after creation and the free
+  Key Value is in-memory - plus the 15-minute spin-down and the 750-hour pool being exactly one
+  24/7 service. Cloudflare D1 does not expire and Pages has no bandwidth cap. The recommendation
+  itself is unchanged; only its justification got honest.
+* **Files touched:** `tools/server-shift-plan.md` (new §1a, §3a now records the dashboard reading
+  and how to settle static-vs-web-service, §1 host decision row, §7d and §10 checklists updated),
+  this log. No code, no tests, no art.
+* **Tests:** all 21 suites were green at the previous commit and nothing executable has changed
+  since; not re-run.
+* **Branches / PR:** `arena/50beb968-prontera-grind`, same PR updated.
+* **Known limits / follow-ups:** the plan is still unbuilt (the owner chose plan-only). Open items:
+  confirm the Render service type, rotate the GM password out of the public client, and measure a
+  real `JSON.stringify(S).length` when phase 1 starts.

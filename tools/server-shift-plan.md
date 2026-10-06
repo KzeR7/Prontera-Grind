@@ -25,6 +25,29 @@ WebSocket tick loop and in-memory world state**. Cloudflare makes you build that
 Durable Objects and counts every message against the free request budget. If the game ever
 becomes true real-time co-op, that is the trade; see §9 for what it actually costs.
 
+### 1a. The dashboard reading, and why the verdict does not change
+
+The owner's own Render usage page (2026-10-06) shows **52 MB of the 5 GB bandwidth** and
+**0 of 750 instance hours** on one service. That removes bandwidth from the argument — at these
+volumes Render's static hosting is fine, and even at 20 players the overage is cents (§3a). What is
+left is simpler and stronger:
+
+1. **Render has nowhere free to put the accounts.** The free Postgres **expires 30 days after
+   creation** and is deleted 14 days later; the free Key Value is in-memory and loses everything on
+   a restart. A server that forgets your progress every 30 days is worse than one that never had it.
+   Cloudflare D1 does not expire.
+2. **The free web service sleeps after 15 minutes and the 750-hour pool is exactly one 24/7
+   service.** An idle game whose players leave tabs open and sync every minute is the workload that
+   keeps a free service permanently awake — or wakes it, cold, for a minute at a time.
+3. **Doing it in one step avoids a self-inflicted complication.** The game can legitimately stay on
+   Render as a static site for now — but the accounts/saves still need a durable free database
+   (Cloudflare D1, or Neon/Supabase with a Render web service). If the client and the API end up on
+   different domains, that means CORS and `SameSite=None` cookie rules you would not otherwise have
+   to think about. Moving both to Cloudflare together avoids that for free.
+
+So the verdict is unchanged, for a better reason than the one this plan originally led with:
+**bandwidth is a cents problem; the missing free database is the real one.**
+
 ### Owner's decisions (locked 2026-10-06)
 
 | Question | Answer |
@@ -32,7 +55,7 @@ becomes true real-time co-op, that is the trade; see §9 for what it actually co
 | Scope of the first build | **Phases 1 + 2 together** (§9): login + cloud saves, server-measured away progress, and the social layer (online list, world chat, leaderboard). Real-time co-op is wanted **later**, not now. |
 | Does 1 + 2 still fit the free tier? | **Yes, with about 3x headroom** — the budget is worked out in §3d. The largest single line item is the social poll, so its interval is a design knob, not a cost. |
 | Login style | **Username + password (server-hashed) with a one-time recovery code** shown at registration (§6.4). No email service needed. |
-| Host | Leaning Cloudflare; **the Render bandwidth number is still to be read from the dashboard** (§3a) — it is the only fact that could change the verdict, and it cannot change it in Render's favour. |
+| Host | **Read from the dashboard (2026-10-06): 52 MB of 5 GB, 0 of 750 instance hours, 1 service.** Bandwidth is a cents risk, not the reason to move; the reason to move the server is that Render free has no durable database (§1a). The service *type* (static site vs web service) is still worth confirming (§3a) — it decides whether the client also moves in phase 1. |
 | What to build now | **Nothing yet.** This document is the deliverable; the owner reads it and decides when to start. |
 
 ---
@@ -83,13 +106,23 @@ bump (which the repo uses: `assets/sprite_pack_data.js?v=1`) forces a fresh copy
 means overage billing at ~$0.15/GB ($15 per 100 GB) or a suspended service. Cloudflare Pages
 serves static files with **no bandwidth or request cap**, and its CDN caches them at the edge.
 
-> **Check this before you decide anything else.** In the Render Dashboard: pick the **workspace**
-> (top-left workspace switcher) → **Billing** → the usage/bandwidth section for the current month.
-> The service's own page → **Metrics** shows traffic for that one service, but the 5 GB is spent by
-> the **whole workspace**, so the billing page is the number that matters. Two things to tell me
-> when you have it: the **GB used this month**, and whether the game is a *static site* or a *web
-> service* on Render. If it is anywhere near 5 GB, the decision is already made — and note that the
-> number resets monthly, so what you see mid-month has to be projected to the whole month.
+> **Answered 2026-10-06 — the owner's dashboard:** 52 MB of the 5 GB used this month
+> (HTTP responses 52 MB, WebSocket 0 MB), **0 of 750 free instance hours**, **1 service**, 6 of 500
+> pipeline minutes. Two things this tells us and one it does not:
+>
+> * **The bandwidth cap is not a today problem.** 52 MB is about five cold loads. Even at
+>   20 players each doing one hard reload a day, the arithmetic above lands at ~5.8 GB/month, and
+>   the overage is ~0.8 GB × $0.15 ≈ **13 cents a month**. Even at two cold loads a day it is about
+>   a dollar. Render's bandwidth is therefore a *cents* risk, not the reason to move — see §1a.
+> * **0 instance hours with 1 service is strong evidence the service is a Static Site.** Static
+>   sites never consume instance hours; they also never sleep. If it were a *web service* that had
+>   served 52 MB, it would have had to wake up to do it, and that time would show in this counter.
+> * **What it does not tell us:** whether that one service is a static site or a web service
+>   (0 hours could also mean a web service nobody has visited this month). To settle it: open the
+>   service in the dashboard — the page header/badge says **Static Site** or **Web Service** — or
+>   simply look at the URL you give players: `*.onrender.com` is Render, `*.pages.dev` is Cloudflare
+>   Pages. Either answer keeps the plan below unchanged; it only decides whether the *client* also
+>   moves when phase 1 starts.
 
 ### 3b. Requests and writes — what a 20-player server actually spends
 
@@ -463,7 +496,8 @@ floor. Everything else in this plan stays free at this scale.
 
 ## 10. What I would do, in order
 
-1. **This week**: read your Render bandwidth number (§3a); rotate the GM password out of the client;
+1. **This week**: rotate the GM password out of the client (the Render bandwidth question is already
+   answered — 52 MB of 5 GB, no urgency there, §1a);
    make sure `_login.html`, `_shot.html`, `logic2.js` and the `_recon_*.png` files are not deployed.
 2. **Then**: stand up the Cloudflare side (Pages connected to the repo, D1 created in the region
    nearest your players) and build **phases 1 + 2** behind a flag, so the game keeps working from
