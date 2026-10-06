@@ -5,8 +5,9 @@
 
 Routes:
 
-    /            the weapon review page   (drag a weapon where it looks wrong)
-    /review      the same page
+    /            the weapon proposal page  (weapons on the class sprites - the current one)
+    /weapons     the same page
+    /review      the older weapon review page (drag a weapon where it looks wrong)
     /standalone  the weapon review page with its data inlined (one file, no side requests)
     /picker      the attack pose + head picker (the owner's usual page)
     /<path>      anything else, served from the repo, so /tools/... and /assets/... work
@@ -22,7 +23,8 @@ import os
 import sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-PAGES = {'/': 'tools/weapon_review.html',
+PAGES = {'/': 'tools/weapon_proposal.html',
+         '/weapons': 'tools/weapon_proposal.html',
          '/review': 'tools/weapon_review.html',
          '/standalone': 'tools/weapon_review_standalone.html',
          '/picker': 'tools/sprite_picker.html'}
