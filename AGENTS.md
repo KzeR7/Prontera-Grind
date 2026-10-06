@@ -39,8 +39,11 @@ Ships by committing to `main` on GitHub (`KzeR7/Prontera-Grind`); Cloudflare Pag
 rebuilds from the repo. **The two files the game actually needs are `index.html` and
 `assets/sprite_pack_data.js`.** Everything else is tools, tests and docs.
 
-Login for testing: user `GM`, password `gm1234` (GM account; normal accounts are created
-in-game and stored in `localStorage` under `pg_acc4`, saves under `pg_save3_<user>`).
+Login for testing: user `GM`; **the GM password is not in this repo** (since v60 the client stores only
+a 20,001-pass hash of it). The owner holds it — ask them, or set a new one with
+`node tools/make_gm_hash.js "new password"` and paste the printed line into `index.html`. Normal
+accounts are created in-game and stored in `localStorage` under `pg_acc4`, saves under
+`pg_save3_<user>`.
 
 ## House rules — non-negotiable
 
@@ -509,6 +512,7 @@ node tools/tests/weapon_review_sim.js  # -> "13 passed, 0 failed"
 node tools/tests/pet_sim.js            # -> "13 passed, 0 failed" (+ printed pet data and the maxed-pet balance measurement)
 node tools/tests/sprite_sim.js         # -> "12 passed, 0 failed"
 node tools/tests/background_sim.js     # -> "12 passed, 0 failed" (grinding is permanent)
+node tools/tests/gm_auth_sim.js        # -> "10 passed, 0 failed" (GM password hashed, not stored; tool/game agree)
 node tools/tests/scene_sim.js          # -> "8 passed, 0 failed" (per-map scenery, water, clear lane)
 node tools/tests/starter_sim.js        # -> "8 passed, 0 failed" (the gentle starter stages)
 node tools/tests/stat_sim.js           # -> "7 passed, 0 failed"
@@ -3406,3 +3410,75 @@ assigned for feel rather than fidelity. While reworking that, two shipped bugs s
 * **Known limits / follow-ups:** the plan is still unbuilt (the owner chose plan-only). Open items:
   confirm the Render service type, rotate the GM password out of the public client, and measure a
   real `JSON.stringify(S).length` when phase 1 starts.
+
+### 2026-10-06 — `grind-v60 GM password rotated out of the client`
+
+* **What changed for the player:** the GM login still works exactly as before, but the password is
+  different **and the old one (`gm1234`) no longer works anywhere**. The game file does not contain
+  the password any more - only a stretched hash of it - so a public repo (and the copy that was being
+  served at `/_login.html` on the live site) no longer hands the GM account to anyone who reads it.
+  Normal accounts, saves and everything else are untouched. `BUILD` is now
+  `2026-10-06 grind-v60 GM password rotated out of the client`, so the login card confirms the new
+  file is loaded. **The new GM password is not in the repo or in this log** - the owner has it.
+* **Why now:** the owner asked for the rotation after the server-shift plan flagged it. The specific
+  discovery that made it urgent: `_login.html` (a pre-pack legacy page that the repo still deploys)
+  contained `GM_PASS='gm1234'` *and* auto-filled the password field, so the live Render site was
+  serving the GM password to anyone who guessed the file name. That copy is now empty of credentials.
+* **How it works now:** `hashPw` is one cheap 64-bit pass, far too weak to store a password behind, so
+  `gmHash(p)` runs it `GM_ROUNDS+1` paves over a salted start (`pg-gm:` prefix). `GM_ROUNDS=20000`,
+  measured at ~25 ms in node - invisible on a login click, and ~20,000x the work for anyone guessing
+  offline. Only `GM_PASS_HASH` (16 hex chars) is in the file. `node tools/make_gm_hash.js "new
+  password"` prints the line to paste in; `--check "password"` says whether a password is the live one;
+  `--show` prints the stored hash and round count; it refuses anything under 12 characters and reads
+  the game's own `hashPw`/`GM_ROUNDS` so the tool and the game cannot drift apart. Honest limit, said
+  in the source: this is still a client-side door - a player with devtools can set `S.gm` by hand.
+  Real GM security is the server work in `tools/server-shift-plan.md` §6.
+* **The first version of the change was wrong, and the new test caught it:** I generated the hash with
+  `GM_ROUNDS=20001` and the game's loop (`for i<GM_ROUNDS`) then hashed 20,002 times, so the password
+  did not work. `gm_auth_sim` was too weak to notice (it only compared tool-vs-game functions, which
+  agree by construction); it now **rehearses the owner's real workflow on a scratch copy of the game**
+  in `/tmp` - run the tool, paste the printed line, `--check` the password, `--check` a wrong one - so
+  an off-by-one or a stale paste can never lock the owner out. `GM_ROUNDS` is 20000 and the rehearsal
+  passes.
+* **Files touched:** `index.html` (`GM_USER`/`GM_ROUNDS`/`GM_PASS_HASH`, new `gmHash()` beside
+  `hashPw()`, the login branch, `BUILD`), `tools/make_gm_hash.js` (new tool), `tools/tests/gm_auth_sim.js`
+  (new suite, 10 checks), `_login.html` + `_shot.html` (credentials emptied; the legacy GM branch can
+  no longer log in), `tools/shot_harness.js` (password comes from `window.PG_GM_PASS`), the two
+  `Updates/cards-gear-audit/` files (build label refreshed; v59 appended to `SAFE_PREVIOUS_BUILDS`,
+  now 18 entries), `AGENTS.md` (login line + suite list), `READ-ME-FIRST.md`, this log.
+* **Art:** no sheets added, removed or rebuilt; `tools/montage.py` was not used.
+* **Tests:** all **22 suites** pass (21 + the new `gm_auth_sim`, 10 passed / 0 failed), plus both
+  `--check` tools. The two suites that pin build labels (`drop_card_sheet_sim`, `gear_sim`) failed
+  until their audit files were refreshed - that is the intended behaviour, not a workaround.
+* **Branches / PR:** `arena/50beb968-prontera-grind`, same PR updated.
+* **Known limits / follow-ups:** the old password is still readable in git history and in old log
+  entries - that cannot be undone, which is why the password was **rotated** rather than hidden. A
+  player could still hand-edit `S.gm`; that is a client-side-door limitation and it goes away with
+  server accounts. **The deploy must be checked**: if the Render static site publishes the whole repo,
+  `_login.html`, `_shot.html`, `logic2.js` and the four 2 MB `_recon_v27*.png` are all public - use
+  Render's Build Filters (Settings → Build & Deploy → Ignored Paths) - and the `*.recon.png` files
+  should be moved to `Sprite/recon/` so the refresh leaves them out of the published tree too.
+
+### 2026-10-06 — `docs only: the Render service type answered, and the expiry question`
+
+* **What changed for the player:** Nothing; no code changed in this entry.
+* **What was settled:** the game's live URL is `https://prontera-grind.onrender.com/`, and with
+  0 instance hours on one service that is a **Render Static Site** - so the client can stay on Render
+  indefinitely at $0, and nothing about the current game is at risk there. The 30-day expiry the owner
+  asked about applies **only to Render's free Postgres** (deleted 14 days after expiry) and the free
+  Key Value (in-memory), i.e. exactly the pieces a backend would need - which is why the migration
+  only matters when phase 1 starts, and why it is not urgent today.
+* **Also written down:** the live site currently publishes the whole repo, including
+  `_login.html` (which is how the retired GM password was downloadable), the two legacy pages,
+  `logic2.js`, `tools/`, `Updates/`, `Sprite/` and the four 2 MB `_recon_v27*.png` - so the plan now
+  lists the fix (Render **Publish Directory** pointing at a folder holding only the game files, or
+  moving the dev files under `Sprite/recon/` and `tools/legacy/`) and warns that Render's Build
+  Filters control *whether a deploy runs*, not what gets published.
+* **Files touched:** `tools/server-shift-plan.md` only (new §1a wording, the answered §3a box, the
+  "what the 30-day expiry applies to" note, §6.1 marked done, §7b publish-hygiene section, §10 step 1),
+  this log. No game code, no tests, no art.
+* **Tests:** all 22 suites were green at the previous commit (the v60 entry has the counts) and
+  nothing executable changed since; not re-run.
+* **Branches / PR:** `arena/50beb968-prontera-grind`, same PR updated.
+* **Known limits / follow-ups:** the publish-directory change is a Render dashboard action only the
+  owner can take; the plan names the two ways to do it but neither is done.

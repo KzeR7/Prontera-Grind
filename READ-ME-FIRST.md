@@ -41,8 +41,10 @@ the repo, so pushing to `main` is the deploy.
   it carries the house rules (crop only, never draw art; all 8 directions and 3 animation rows
   survive; append to the log; bump `BUILD` for anything a player can see) and the history.
 
-Login for testing: **`GM` / `gm1234`**. Normal accounts are made in-game and stored in the
-browser (`pg_acc4`; saves under `pg_save3_<user>`).
+Login for testing: **`GM`** — and the password is deliberately not written down here any more. Since
+v60 the game stores only a stretched hash of it (`node tools/make_gm_hash.js --check "…"` tells you
+whether a password is the live one; without an argument the tool prints how to set a new one). Normal
+accounts are made in-game and stored in the browser (`pg_acc4`; saves under `pg_save3_<user>`).
 
 ## Run it
 

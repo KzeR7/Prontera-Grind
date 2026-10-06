@@ -40,10 +40,15 @@ left is simpler and stronger:
    service.** An idle game whose players leave tabs open and sync every minute is the workload that
    keeps a free service permanently awake — or wakes it, cold, for a minute at a time.
 3. **Doing it in one step avoids a self-inflicted complication.** The game can legitimately stay on
-   Render as a static site for now — but the accounts/saves still need a durable free database
-   (Cloudflare D1, or Neon/Supabase with a Render web service). If the client and the API end up on
-   different domains, that means CORS and `SameSite=None` cookie rules you would not otherwise have
-   to think about. Moving both to Cloudflare together avoids that for free.
+   Render as a static site for now — and, as of the dashboard reading below, that is exactly what it
+   is, so nothing is broken or at risk today. But the accounts/saves still need a durable free
+   database, and if the client and the API end up on different domains you inherit CORS plus
+   `SameSite=None` cookie rules that a same-origin setup never has to think about. Moving both to
+   Cloudflare together avoids that for free.
+
+**So the decision is not urgent, and it is not "Render is bad".** Stay on Render for the client as
+long as you like. The migration only needs to happen when phase 1 starts, and it is a one-afternoon
+job at that point (connect the repo to Cloudflare Pages, add `functions/api/*`, create D1).
 
 So the verdict is unchanged, for a better reason than the one this plan originally led with:
 **bandwidth is a cents problem; the missing free database is the real one.**
@@ -91,7 +96,7 @@ From `index.html` and the docs, as of v59:
 
 ## 3. The free-tier maths, with your own numbers
 
-### 3a. Bandwidth — the reason the client cannot stay on Render
+### 3a. Bandwidth — measured, and *not* the reason to move
 
 Render's Hobby workspace includes **5 GB/month** of bandwidth for *all* services (static sites
 included). Your cold load is ~9.6 MB:
@@ -121,8 +126,19 @@ serves static files with **no bandwidth or request cap**, and its CDN caches the
 >   (0 hours could also mean a web service nobody has visited this month). To settle it: open the
 >   service in the dashboard — the page header/badge says **Static Site** or **Web Service** — or
 >   simply look at the URL you give players: `*.onrender.com` is Render, `*.pages.dev` is Cloudflare
->   Pages. Either answer keeps the plan below unchanged; it only decides whether the *client* also
->   moves when phase 1 starts.
+>   Pages. **Answered by the URL (2026-10-06):** the game is at
+>   `https://prontera-grind.onrender.com/`. With 0 instance hours and one service, that is a
+>   **Render Static Site** — static sites never consume instance hours and never sleep, and Render's
+>   static hosting is free and needs no card. **So the client can stay on Render indefinitely.** It is
+>   only the *server* (accounts, saves) that Render cannot host for free (§1a).
+
+> **What the 30-day expiry actually applies to.** The owner asked, reasonably, whether "Render is
+> only free for a month" — the answer is **no for the site, yes for the database**. The game's static
+> site does not expire, ever, at $0. The free **Postgres** expires 30 days after creation and is then
+> deleted after a 14-day grace period, and the free Key Value store is in-memory (wiped on restart).
+> Those two are the only pieces on a clock — and they are exactly the pieces accounts and saves need.
+> Nothing about the current game is at risk on Render; the risk would start the day you build the
+> backend there.
 
 ### 3b. Requests and writes — what a 20-player server actually spends
 
@@ -342,10 +358,18 @@ Rules that keep players' progress safe:
 
 ## 6. Accounts, login and the GM hole
 
-1. **Delete `GM_PASS` from `index.html` today.** It is in a public repo; rotate the password in the
-   same commit. With server accounts, GM is `users.gm = 1` and the login response says `gm:true`.
-   The client must never be the one deciding whether someone is a GM, and `S.gm` must not be a
-   field a save can carry — a save can be edited, a session cannot.
+1. **✅ Done in v60 (2026-10-06).** The plaintext `GM_PASS` is gone from `index.html`: the file now
+   carries only `GM_PASS_HASH`, a 20,001-pass salted hash, and the password itself was rotated (the
+   old `gm1234` no longer works anywhere). `node tools/make_gm_hash.js` sets a new one and
+   `tools/tests/gm_auth_sim.js` proves the tool and the game agree.
+   This was worth doing immediately because the legacy page `_login.html` — which the Render site was
+   still serving — contained the password **and auto-filled the login field**, i.e. the GM account was
+   one guessed URL away. That page now carries no credentials, and the screenshot harness takes the
+   password from the environment instead of the file.
+   Still a client-side door: anyone with devtools can set `S.gm` by hand. **That limitation is exactly
+   what server accounts fix** — with them, GM is `users.gm = 1` and the login response says `gm:true`.
+   The client must never be the one deciding whether someone is a GM, and `S.gm` must not be a field a
+   save can carry — a save can be edited, a session cannot.
 2. **Server-side hashing**: PBKDF2-SHA256, 210,000 iterations, 16-byte random salt, constant-time
    compare (`crypto.subtle.timingSafeEqual`). Do it inside the auth Durable Object (§3c).
 3. **Usernames become global and public** (leaderboard, chat). Keep the current rule
@@ -390,9 +414,21 @@ wrangler.toml         # D1 binding, DO binding, routes
 tools/tests/api_sim.js  # house rule 6: a Worker handler with no test is not finished
 ```
 
-* `.assetsignore` (or moving them) should keep `_login.html`, `_shot.html`, `logic2.js` and the four
-  `_recon_v27*.png` (2 MB each) out of the deployed site — they are old snapshots and screenshots,
-  not game files, and Pages has a 25 MB per-save limit to respect.
+* **Publish hygiene (do this on Render too, today).** A Render Static Site serves the **whole
+  publish directory**, so right now the live site also publishes `_login.html`, `_shot.html`,
+  `logic2.js`, `tools/`, `Updates/`, `Sprite/` (1.8 MB) and the four 2 MB `_recon_v27*.png`. That is
+  how the old GM password ended up being downloadable (`/_login.html`), and it also means the live
+  site serves several megabytes nobody asked for — the four recon PNGs alone double the size of a
+  full cold load. Two ways to fix it, both cheap:
+  * **Render:** Settings → **Build & Deploy → Build Filters → Ignored Paths** — *build* filters decide
+    whether a deploy happens at all, so they are **not** a publish filter; the reliable fix on a static
+    site is to publish from a subdirectory instead (set **Publish Directory** to a folder that holds
+    only the game files).
+  * **Any host:** move the dev-only files under a directory that is not published, e.g.
+    `Sprite/recon/_recon_v27*.png` (the sprite pipeline only globs `Sprite/*.png`) and the legacy pages
+    into `tools/legacy/`. Nothing in the repo references them, so this is a pure move.
+  * On Cloudflare Pages the same job is `.assetsignore` (Cloudflare's own convention), plus a 25 MB
+    per-file limit to respect.
 * Add `tools/tests/api_sim.js` to the "Verify before you push" block in `AGENTS.md`. It can drive the
   handlers against a fake D1 binding, the same way the existing suites drive real game functions.
 * **Local development**: `npx wrangler dev` gives you Pages Functions + a local D1
@@ -496,9 +532,10 @@ floor. Everything else in this plan stays free at this scale.
 
 ## 10. What I would do, in order
 
-1. **This week**: rotate the GM password out of the client (the Render bandwidth question is already
-   answered — 52 MB of 5 GB, no urgency there, §1a);
-   make sure `_login.html`, `_shot.html`, `logic2.js` and the `_recon_*.png` files are not deployed.
+1. **✅ Done in v60**: the GM password is rotated out of the client and out of the legacy pages. Left
+   to do on the Render side: stop publishing `_login.html`, `_shot.html`, `logic2.js`, `tools/`,
+   `Updates/`, `Sprite/` and the four `_recon_*.png` (§7b — the 30-second version is to set the
+   Publish Directory to a folder holding only the game files).
 2. **Then**: stand up the Cloudflare side (Pages connected to the repo, D1 created in the region
    nearest your players) and build **phases 1 + 2** behind a flag, so the game keeps working from
    localStorage until the API is proven by `api_sim.js`.

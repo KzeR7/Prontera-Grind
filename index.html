@@ -337,12 +337,19 @@ const AL={str:'STR',agi:'AGI',dex:'DEX',luk:'LUK',int:'INT',hp:'Max HP',atk:'ATK
 // onward. 1.3 keeps HP just ahead of ATK: early maps fall in a couple of swings and the
 // late maps in about five, with bosses still a ~12x fight. See tools/tests/economy_sim.js.
 const SU=k=>k.toUpperCase(),BX_=13,Z0=-28,Z1=12,MPS=15,AGGRO=6.5,BOSSZ=-4,BOSS_NEAR=2.2,BOSS_FAR=6,HPK=42,HPE=1.3,K5=['str','agi','dex','luk','int'];
-const GM_USER='GM',GM_PASS='gm1234';   // CHANGE THE GM PASSWORD before you publish
+const GM_USER='GM';
+// v60: the GM password is NOT in this file any more - only this hash of it. The old plaintext sat
+// in a public repo (and was served at /_login.html on the live site), so it was retired 2026-10-06.
+// To change the password:  node tools/make_gm_hash.js "your new password"  and paste the constants
+// it prints below. GM_ROUNDS is the number of extra hashPw passes, so a weak password is still
+// expensive to guess offline. This remains a client-side door, not a lock: anyone with devtools can
+// set S.gm by hand. Real GM security arrives with server accounts - tools/server-shift-plan.md §6.
+const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // Merge resolution (2026-10-04): main carried two BUILD lines (ui-v29 + ui-v35) in this one
 // script block, which is a SyntaxError - the game did not run on main at all. One line wins, and
 // it names both sides of this merge: the v38 balance patch (the weapon cut, the affix/card
 // give-back) and main's weapon-hold rendering work.
-const BUILD='2026-10-06 grind-v59 deeper skill lines + a free pet skill';   // shown on the login card - confirms which file you loaded
+const BUILD='2026-10-06 grind-v60 GM password rotated out of the client';   // shown on the login card - confirms which file you loaded
 $('buildTag').textContent='build '+BUILD;
 
 // ---------- class tree: Novice -> 6 first jobs -> 6 second jobs -> 6 third jobs ----------
@@ -1226,6 +1233,10 @@ const getAcc=()=>{try{return JSON.parse(lsGet('pg_acc4')||'{}')}catch(e){return{
 const setAcc=a=>lsPut('pg_acc4',JSON.stringify(a));
 function hashPw(p){let h1=0xdeadbeef,h2=0x41c6ce57;const s='pg4:'+p;for(let i=0;i<s.length;i++){const c=s.charCodeAt(i);h1=Math.imul(h1^c,2654435761);h2=Math.imul(h2^c,1597334677)}
   h1=Math.imul(h1^(h1>>>16),2246822507)^Math.imul(h2^(h2>>>13),3266489909);h2=Math.imul(h2^(h2>>>16),2246822507)^Math.imul(h1^(h1>>>13),3266489909);return(h2>>>0).toString(16).padStart(8,'0')+(h1>>>0).toString(16).padStart(8,'0')}
+// The GM password check. hashPw is one cheap pass with a 64-bit result, so gmHash runs it
+// GM_ROUNDS+1 times over a salted starting point: guessing a password costs ~20,000x more than the
+// plain 64-bit mix would, which is what makes a long random phrase safe to store in a public file.
+const gmHash=p=>{let h=hashPw('pg-gm:'+p);for(let i=0;i<GM_ROUNDS;i++)h=hashPw(h);return h};
 let authMode='login';
 function showErr(m,ok){const e=$('loginErr');e.textContent=m;e.style.color=ok?'#2a9d3f':'#e5484d'}
 function setMode(m){authMode=m;$('tabLogin').classList.toggle('on',m==='login');$('tabReg').classList.toggle('on',m==='reg');$('regRow').style.display=m==='reg'?'block':'none';
@@ -1243,7 +1254,7 @@ function submitAuth(e){
       const acc=getAcc();if(Object.keys(acc).some(k=>k.toLowerCase()===u.toLowerCase()))return showErr('That username is already taken.');
       acc[u]=hashPw(p);setAcc(acc);if(!getAcc()[u])return showErr('Could not save the account (browser storage blocked).');
       setMode('login');$('password').value='';$('password2').value='';showErr('Account created! Now log in.',true);return}
-    if(isGM){if(p!==String(GM_PASS))return showErr('Incorrect GM password.');currentUser=GM_USER;initSession(true);return}
+    if(isGM){if(gmHash(p)!==String(GM_PASS_HASH))return showErr('Incorrect GM password.');currentUser=GM_USER;initSession(true);return}
     const acc=getAcc(),key=Object.keys(acc).find(k=>k.toLowerCase()===u.toLowerCase());
     if(!key)return showErr('Account not found. Use the Register tab first.');
     if(acc[key]!==hashPw(p))return showErr('Incorrect password.');
