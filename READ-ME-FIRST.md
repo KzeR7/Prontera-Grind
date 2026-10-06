@@ -34,10 +34,26 @@ the repo, so pushing to `main` is the deploy.
 * `TOOLS-START-HERE.md` — **the tool map**: every dev page, generator and picker in `tools/`, what it answers
   and who owns it. Read that instead of guessing which of the two dozen pages is the live one.
 * `tools/weapon_proposal.html` — **the live weapon review page** (served at `/` by
-  `python3 tools/preview_server.py 8000`, or `/weapons`). Every one of the 19 classes on its own animated
-  sprite with a real Ragnarok Online weapon on it: drag to move, wheel/`[`/`]` to rotate, `-`/`+` to size,
-  `0` to reset, **✕ on any class = no weapon for that job**, three designs per weapon family, and
-  **Copy my proposal** returns one JSON block. The art is real RO client art, decoded and cropped by
+  `python3 tools/preview_server.py 8000`, or `/weapons`). Every one of the 19 classes on its own sprite
+  with a real Ragnarok Online weapon on it. It opens **frozen** so the weapon can be placed against a
+  still frame (`▶ Play animation` to animate, `,`/`.` to step a frame). Drag to move, wheel/`[`/`]` to
+  rotate, `-`/`+` to size, `0` to reset. **🎯 Set hand** then a click on the sprite locks the weapon onto
+  a hand you pick (arrows nudge; `↺ automatic hand` undoes it). **♂ Male / ♀ Female** switches between the two
+  sprite sets — each has its own hands, angles and frames (the two are different drawings, and four views
+  even have different frame counts), and `⧉ copy this class to the other gender` seeds one from the other.
+  It **opens on your saved progress** (`assets/weapon_proposal_data.js`, refreshed with the choices
+  you last pasted back), which `↺ back to the saved
+  default` restores. **Every placement belongs to the frame you are on** — set a hand on frame 3 and frame 5 and the
+  weapon moves with the body when you press play (`📌 copy to every frame` when you want one placement
+  everywhere, `blend the frames in between` to let two or three keys animate smoothly). Clicking the
+  sprite **snaps the weapon's grip onto that exact pixel**. `⇄` / `⇅` (or `F` / `V`) mirror the weapon image about its own
+  grip, so a flipped weapon stays in the hand. A **"Weapon per view"** table ticks or
+  unticks the weapon per drawing — so a job can be bare-handed on South and South-East but armed while
+  attacking — and the class list's **✕** is still "no weapon for this job" everywhere. Three designs per
+  weapon family, and **Copy my proposal** returns one JSON block. **Every class at a glance** has a
+  `▤ show the pictures` button: nineteen small live pictures, one per class, of whatever the page is
+  holding right now, each labelled with whose numbers that sprite is using (her own, still his, or not
+  tuned yet) — the worklist for the female pass. Click a picture to work on that class. The art is real RO client art, decoded and cropped by
   `python3 tools/make_weapon_pack.py --source <extracted client>` (`--check` verifies `assets/`);
   `tools/weapon-art-notes.md` documents the SPR/ACT formats, the two traps and the provenance.
   **Nothing from this pass is in the game.**

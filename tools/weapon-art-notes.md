@@ -118,21 +118,103 @@ raw `file://` file if the class art is to animate:
 
 * it decodes the class APNGs with the same walk `index.html` uses (`skinDecodePng` → chunk
   walk, `DecompressionStream('deflate')`, `unfilter`, APNG blend/dispose), so what the owner
-  sees is the real animation, not frame 0;
+  sees is the real animation, not a wrong-colour sprite;
+* **it opens frozen on frame 0.** Placement against a moving sprite was the owner's first
+  complaint. `▶ Play animation` / `❄ Freeze` (or the `,` / `.` keys) step frames with
+  `◀ frame` / `frame ▶`; the pause bar always names the frame it is showing;
+* **each gender has its own sprites and its own numbers.** `♂ Male` / `♀ Female` in the stage
+  bar switches the art; the hand, offset, angle, size and flip are stored **per sprite per
+  view**, because the two sheets are different drawings with different pose boxes (and four
+  views have a different number of frames: Knight attack 9 vs 5, Acolyte South-East 8 vs 5,
+  Wizard attack 8 vs 9, High Wizard attack 5 vs 8). `⧉ copy this class to the other gender`
+  drops everything about the class onto the other sprite — deliberately, as a **starting
+  point**, not as truth: her hands still want their own pass. When a proposal written for one
+  sprite (a hand-back, or the shipped default) names a view where the other sprite has a
+  different drawing count, that sprite keeps the shared numbers instead of a frame index that
+  means nothing, and the page says so under **Sprite**;
+* **every placement belongs to the frame you are on.** A hand moves during a walk cycle, so
+  one fixed spot cannot follow it: the hand, offset, rotation, size and flip you set are
+  stored against that frame index, and playing the animation draws each drawing with its own
+  numbers — the weapon moves with the body. A frame you have not touched uses the view's
+  **shared** numbers (the automatic hand until you choose one), unless **blend the frames in
+  between** is ticked and two or more frames have their own numbers, in which case the frames
+  between them are a straight line (before the first key and after the last one the weapon
+  holds that key's place). One lone key changes only its own frame — it cannot freeze the
+  whole walk on itself. `📌 copy to every frame` gives every drawing of the view the
+  placement you are looking at; `clear this frame` hands that frame back to the shared
+  numbers. The line under the frame stepper always says which of the three you are looking at
+  and how many frames of the view are tuned;
 * one weapon is drawn at the hand at the view's angle, **draggable**, rotatable (wheel,
   `[`/`]`), sizable (`-`/`+`) and resettable (`0`);
-* every class has a **✕ toggle** for "this job carries no weapon";
+* **🎯 Set hand** locks the weapon onto a hand the owner picks: click the sprite and that
+  view's grip is set, in 200×200 class-sprite pixels, **and the weapon snaps its grip onto
+  that exact point** (the click clears `dx`/`dy`, which is what makes the snap visible — with
+  an old nudge left in place the weapon lands beside the crosshair and the click looks like it
+  did nothing). A dashed crosshair follows the pointer while the mode is on, a badge beside
+  the button shows the hand (`automatic (x, y)` or `x, y (set)`), and a view with no weapon
+  says so on the canvas instead of looking broken. Arrow keys nudge by 1 px (Shift = 5),
+  `use this hand on every view` copies it, `↺ automatic hand` goes back to the guess. Every
+  view follows its own automatic guess until it is clicked — the hand is per class *and*
+  per view. The listener sits on the **document in the capture phase** and refuses clicks that
+  land on a control, so nothing on the page can swallow the click;
+* a **"Weapon per view" table** decides which drawings carry a weapon: one checkbox per view
+  (South, South-East, North-East, Attack (SE), North when the class has that drawing), with
+  that view's hand, offset and angle beside it, plus `weapon on every view` and
+  `bare-handed everywhere`. So "bare on South and South-East, armed only while attacking" is
+  expressible per class;
+* **flip**: `⇄ Flip left/right`, `⇅ Flip up/down` and `↺ normal` (or the `F` / `V` keys, or
+  the ⇄ ⇅ buttons on each row of the view table) mirror the weapon image **about its own grip
+  point**, so a flipped weapon stays in the hand instead of jumping sideways. The flip is per
+  class *and* per view;
+* the class list's **✕** is still the whole-job switch: no weapon on any view;
 * three designs per family, click to swap;
-* choices persist in `localStorage` under `pg_weapon_proposal_v1`;
-* **Copy my proposal** exports one JSON block: per class `{weapon, family, design, dx, dy,
-  rot, scale}` — that block is the whole hand-back.
+* **Every class at a glance** — `▤ show the pictures` opens 19 small live pictures, one per class,
+  each showing that class's weapon row as the page is currently holding it (saved default or unsaved
+  edits), animated, with one word under it: **her own numbers** / **same as his** / **his on some
+  views** / **not tuned yet**, plus a count line above the grid. Clicking a picture selects that
+  class. It opens hidden so the page still lands on the picker;
+* **one composite rule, one function.** The stage and those pictures both go through `paintCell`
+  (body frame, hand marker, weapon at the grip + the frame's own numbers, mirror about the grip),
+  so a picture can never show something the picker would not. `tools/tests/weapon_proposal_sim.js`
+  asserts both call it, and unit-tests the rule on a recording canvas: bare view = body and no
+  weapon, armed view = weapon exactly at `hand + dx/dy`, rotated by the family angle plus the
+  frame's own `rot`. The same suite also checks every element id the script reaches for exists in
+  the markup (a typo there would boot a null and kill the page, and the DOM stub would hide it);
+* **the page opens on the owner's progress.** `assets/weapon_proposal_data.js`
+  (`window.WEAPON_PROPOSAL_DEFAULT`, generated from the owner's own `Copy my proposal`
+  hand-back) is loaded by a `<script src>` before the page script, so a fresh browser, an
+  empty `localStorage` or a different machine all start from the same tuned numbers. Edits
+  still win over it; `↺ back to the saved default` clears this browser and returns to it, and
+  `📥 Load a saved proposal JSON` pastes a hand-back back in (a v3 file — one sprite — is
+  accepted and copied to both, with the frame-count caveat above);
+  * only the drawings the owner really placed are stored, each marked `"src": "frame"`; the
+  entries their own export had **blended** between two keys are deliberately left out, so the
+  page re-derives those lines from the same keys (the numbers come out the same, and a view
+  whose frames were all inherited stays empty and follows the sprite's own guess);
+  * the shipped numbers are the owner's, so a view that looks off on the female sprite is
+  usually a class they copied across with **`⧉ copy this class to the other gender`** — her
+  four basic classes (Novice, Swordman, Mage, Archer) currently carry his attack numbers on
+  her, whose pose boxes sit elsewhere in the 200×200 box; that is her tuning still to do, not
+  a page fault;
+* choices persist in `localStorage` under `pg_weapon_proposal_v3` (older `_v2`/`_v1` entries
+  are migrated; `_v2`'s single placement is copied to both sprites, which is accurate for
+  every view where the two sprites agree and a starting point elsewhere);
+* **Copy my proposal** exports one JSON block (v4): per class
+  `{family, design, views: {m: {<view>: …}, f: {<view>: …}}}` — that block is the whole
+  hand-back, one block per sprite. `base` is the shared placement an untouched frame falls back to
+  (`handAuto: true` means that hand is still the built-in guess), and `frames` is **one
+  already-resolved entry per drawing** — `{hand, dx, dy, rot, scale, flip, src}` — so the game
+  never has to blend anything itself. `src` is `frame`, `blend` or `shared`. `flip` is
+  `[1|-1, 1|-1]` (left/right, up/down).
 
 Two frames of truth to keep in mind when reading a proposal back:
 
 * `dx`/`dy` are in **200×200 class-sprite pixels**, the same space `poses` in
-  `assets/class_skins_data.js` uses;
+  `assets/class_skins_data.js` uses, and the same space `hand` is measured in;
 * `rot` is **added to** the family's default angle for that view, which lives in `ANGLE` in
-  the page.
+  the page;
+* `hand` is `[x, y]` or `null` — **`null` means "keep guessing"**, not "0,0". Leave it null
+  unless the sprite drawing really does sit somewhere the guess cannot reach.
 
 ## The step after approval
 
