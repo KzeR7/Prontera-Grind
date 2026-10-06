@@ -1,0 +1,1536 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Prontera Grind — weapon proposal</title>
+<style>
+  :root{
+    --bg:#0e1016; --panel:#171a23; --panel2:#1e222d; --line:#2c313f;
+    --ink:#e8ecf4; --dim:#98a2b8; --gold:#e9c46a; --gold2:#c9a227;
+    --ok:#6ddb8f; --warn:#ffb347; --bad:#ff6b6b; --hand:#6ddb8f;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--bg);color:var(--ink);
+    font:13px/1.5 ui-sans-serif,system-ui,"Segoe UI",Roboto,sans-serif}
+  header{padding:14px 18px 10px;border-bottom:1px solid var(--line);
+    background:linear-gradient(180deg,#1a1f2b,#12151d)}
+  h1{margin:0;font-size:17px;letter-spacing:.3px}
+  h1 span{color:var(--gold)}
+  .sub{color:var(--dim);margin-top:4px;max-width:1040px}
+  .sub b{color:var(--ink)}
+  .wrap{display:grid;grid-template-columns:266px minmax(430px,1fr) 306px;gap:12px;padding:12px}
+  @media (max-width:1180px){.wrap{grid-template-columns:1fr}}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:9px;padding:10px}
+  .card h2{margin:0 0 8px;font-size:12px;text-transform:uppercase;letter-spacing:.9px;color:var(--gold)}
+  .hint{color:var(--dim);font-size:11.5px}
+  button{font:inherit;color:var(--ink);background:var(--panel2);border:1px solid var(--line);
+    border-radius:6px;padding:5px 9px;cursor:pointer}
+  button:hover{border-color:var(--gold2)}
+  button.on{background:#3a3016;border-color:var(--gold);color:#ffe9a8}
+  button.handon{background:#12351f;border-color:var(--ok);color:#c9ffd9}
+  button.wide{width:100%;text-align:left;margin-bottom:4px}
+  .row{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+  .clslist{max-height:400px;overflow:auto;margin:-2px -4px 0;padding:2px 4px}
+  .cls{display:flex;align-items:center;gap:7px;padding:4px 5px;border-radius:6px;cursor:pointer;
+    border:1px solid transparent}
+  .cls:hover{background:#1c212c}
+  .cls.sel{background:#241f10;border-color:var(--gold2)}
+  .cls.off .nm{color:#6b7488;text-decoration:line-through}
+  .cls .nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .cls .fam{color:var(--dim);font-size:10.5px;text-transform:uppercase;letter-spacing:.5px}
+  .cls .sw{width:26px;text-align:center;color:var(--bad);font-weight:700}
+  /* the whole proposal at a glance: one small live cell per class, drawn by paintCell,
+     the same function the big stage uses, so a tile can never disagree with the picker */
+  .sheet{display:grid;grid-template-columns:repeat(auto-fill,minmax(88px,1fr));gap:8px;padding:4px 12px 10px}
+  .sheet[hidden]{display:none}
+  .sheet .t{position:relative;background:#0f1116;border:1px solid #232838;border-radius:8px;
+    padding:4px 4px 3px;text-align:center;cursor:pointer}
+  .sheet .t:hover{border-color:#3d465e}
+  .sheet .t.sel{border-color:var(--gold);box-shadow:0 0 0 1px var(--gold) inset}
+  .sheet .t.off{opacity:.45}
+  .sheet .t canvas{display:block;width:100%;height:auto;image-rendering:pixelated}
+  .sheet .t .nm{font-size:10.5px;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .sheet .t .st{font-size:9.5px;color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .sheet .t .st.his{color:var(--gold)}
+  .sheet .t .st.hers{color:var(--good)}
+  .sheet .t .bd{position:absolute;top:3px;right:4px;font-size:9px;color:var(--dim);
+    background:#0f1116cc;border-radius:4px;padding:0 3px}
+  .stagebox{background:radial-gradient(120% 90% at 50% 0%,#232a38,#12151d 70%);
+    border:1px solid var(--line);border-radius:9px;padding:10px;text-align:center}
+  canvas#stage{image-rendering:pixelated;background:
+    linear-gradient(180deg,#2a3040,#1a1e28);border-radius:6px;cursor:grab;touch-action:none;display:block;margin:0 auto}
+  canvas#stage.drag{cursor:grabbing}
+  canvas#stage.pick{cursor:crosshair}
+  .stagebar{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin-top:8px}
+  .legend{display:flex;gap:10px;flex-wrap:wrap;color:var(--dim);font-size:11px;justify-content:center}
+  .designs{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}
+  .des{width:88px;background:var(--panel2);border:1px solid var(--line);border-radius:8px;
+    padding:6px 4px;cursor:pointer;text-align:center}
+  .des.sel{border-color:var(--gold);background:#2b2513}
+  .des img{width:64px;height:56px;object-fit:contain;image-rendering:pixelated}
+  .des .lb{font-size:10.5px;color:var(--dim);margin-top:2px}
+  .des.sel .lb{color:#ffe9a8}
+  table.nums{width:100%;border-collapse:collapse;font-size:12px}
+  table.nums td{padding:2px 4px;border-bottom:1px solid #232833}
+  table.nums td:last-child{text-align:right;color:var(--gold)}
+  table.nums td.vh{text-align:right;color:var(--hand)}
+  .off{color:var(--bad)}
+  .refstrip{display:flex;gap:3px;justify-content:center;flex-wrap:wrap;margin-top:6px}
+  .refstrip .cell{background:#1b202b;border:1px solid var(--line);border-radius:5px;padding:3px}
+  .refstrip img{width:44px;height:44px;object-fit:contain;image-rendering:pixelated;display:block}
+  .refstrip .cell small{display:block;text-align:center;color:var(--dim);font-size:9.5px}
+  textarea{width:100%;height:130px;background:#0d1016;color:#cfe3ff;border:1px solid var(--line);
+    border-radius:6px;font:11px/1.45 ui-monospace,Consolas,monospace;padding:6px}
+  .tag{display:inline-block;background:#232a38;border:1px solid var(--line);border-radius:99px;
+    padding:1px 7px;font-size:10.5px;color:var(--dim);margin-left:6px}
+  .note{background:#141821;border-left:3px solid var(--gold2);padding:7px 9px;border-radius:0 6px 6px 0;
+    color:var(--dim);font-size:11.5px;margin-top:8px}
+  .note b{color:var(--ink)}
+  .kbd{background:#232a38;border:1px solid var(--line);border-radius:4px;padding:0 4px;font-size:10.5px}
+  /* per-view visibility table */
+  table.views{width:100%;border-collapse:collapse;font-size:12px;margin-top:4px}
+  table.views th{text-align:left;font-weight:600;color:var(--dim);font-size:10.5px;
+    text-transform:uppercase;letter-spacing:.6px;padding:2px 4px;border-bottom:1px solid var(--line)}
+  table.views td{padding:3px 4px;border-bottom:1px solid #232833}
+  table.views tr.cur{background:#1d2330}
+  table.views td.c{text-align:center}
+  table.views button.mini{padding:0 5px;font-size:11px;line-height:16px;opacity:.55}
+  table.views button.mini.on{opacity:1;background:#2b2513;border-color:var(--gold);color:#ffe9a8}
+  .swatch{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:5px;
+    border:1px solid #0006;vertical-align:middle}
+  .on{color:var(--ok)}
+  .pausebar{background:#1d2330;border:1px solid var(--line);border-radius:7px;padding:6px 8px;
+    margin-top:8px;font-size:11.5px;color:var(--dim);text-align:center}
+  .pausebar b{color:var(--gold)}
+</style>
+</head>
+<body>
+<header>
+  <h1>Prontera Grind — <span>weapon proposal</span></h1>
+  <div class="sub">
+    Real <b>Ragnarok Online</b> weapon art on your own class sprites. The sprite starts
+    <b>frozen</b> so it is easy to place: drag the weapon, or press <b>🎯 Set hand</b> and click
+    the actual hand. Tick <b>weapon</b> per view, and untick a whole job with <b>✕</b>.
+    Nothing here is in the game yet — <b>Copy my proposal</b> hands your choices back.
+  </div>
+</header>
+
+<div class="wrap">
+  <!-- ---------------- left: classes ---------------- -->
+  <div class="card">
+    <h2>Classes <span class="tag" id="clsCount"></span></h2>
+    <div class="hint">Click a class to work on it. The ✕ toggles <b>no weapon at all</b> for that job.</div>
+    <div class="clslist" id="clsList"></div>
+    <div class="row" style="margin-top:8px">
+      <button id="allOn">Weapon on all</button>
+      <button id="allOff">No weapon on all</button>
+    </div>
+  </div>
+
+  <!-- ---------------- middle: stage ---------------- -->
+  <div>
+    <div class="stagebox">
+      <canvas id="stage" width="760" height="520"></canvas>
+      <div class="stagebar">
+        <button id="play">▶ Play animation</button>
+        <button id="pick">🎯 Set hand</button>
+        <span class="hint" id="handLbl"></span>
+        <span class="hint">gender:</span>
+        <span id="sexes"></span>
+        <span class="hint">view:</span>
+        <span id="views"></span>
+      </div>
+      <div class="stagebar">
+        <button id="prevFrame" title="previous frame ( , )">◀ frame</button>
+        <span class="hint" id="frameLbl">frame 1/8</span>
+        <button id="nextFrame" title="next frame ( . )">frame ▶</button>
+        <button id="frameCopy" title="use this frame's placement on every frame of this view">📌 copy to every frame</button>
+        <button id="frameClear" title="forget this frame's own placement">clear this frame</button>
+        <label class="hint" style="display:inline-flex;align-items:center;gap:4px;cursor:pointer">
+          <input type="checkbox" id="blend"> blend the frames in between</label>
+        <button id="reset">↺ Reset this class</button>
+      </div>
+      <div class="hint" id="frameSrc" style="margin-top:6px"></div>
+      <div class="pausebar" id="pausebar"></div>
+      <div class="stagebar legend">
+        <span><b>Drag</b> the weapon to move it.</span>
+        <span>Wheel or <span class="kbd">[</span><span class="kbd">]</span> = rotate.</span>
+        <span><span class="kbd">−</span><span class="kbd">+</span> = size.</span>
+        <span><span class="kbd">0</span> = reset this frame.</span>
+        <span>Arrows = nudge 1px.</span>
+        <span><b>Everything you set belongs to the frame you are on.</b></span>
+        <span><span class="kbd">F</span>/<span class="kbd">V</span> = flip the weapon.</span>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:12px">
+      <h2>Weapon per view <span class="tag" id="famTag"></span></h2>
+      <div class="hint">
+        Some views should stay bare — untick them. Example: untick <b>South</b> and <b>South-East</b>,
+        keep <b>Attack (SE)</b> ticked, and this class only shows a weapon while it swings.
+      </div>
+      <table class="views"><tbody id="viewTable"></tbody></table>
+      <div class="row" style="margin-top:6px">
+        <button id="viewAll">weapon on every view</button>
+        <button id="viewNone">bare-handed everywhere</button>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:12px">
+      <h2>Designs for <span id="famName">—</span></h2>
+      <div class="designs" id="designs"></div>
+      <div class="hint" style="margin-top:8px" id="designNote"></div>
+    </div>
+
+    <div class="card" style="margin-top:12px">
+      <h2>What the real client does</h2>
+      <div class="hint">The official RO held-weapon sprite for this family, drawn at the angles the client uses.
+        Your proposal above uses one angle you control; these are here so the angle can be judged against the original.</div>
+      <div class="refstrip" id="refStrip"></div>
+    </div>
+  </div>
+
+  <!-- ---------------- right: numbers + export ---------------- -->
+  <div>
+    <div class="card">
+      <h2>This class, this view</h2>
+      <table class="nums">
+        <tr><td>Class</td><td id="nClass">—</td></tr>
+        <tr><td>Sprite</td><td id="nSex">—</td></tr>
+        <tr><td>View</td><td id="nView">—</td></tr>
+        <tr><td>Weapon here</td><td id="nOn">—</td></tr>
+        <tr><td>Family / design</td><td id="nDesign">—</td></tr>
+        <tr><td>Hand (x, y)</td><td id="nHand" class="vh">—</td></tr>
+        <tr><td>Offset (x, y)</td><td id="nOff">—</td></tr>
+        <tr><td>Rotation</td><td id="nRot">—</td></tr>
+        <tr><td>Size</td><td id="nScale">—</td></tr>
+        <tr><td>Flip</td><td id="nFlip">—</td></tr>
+      </table>
+      <div class="row" style="margin-top:8px">
+        <button id="handAll">use this hand on every view</button>
+        <button id="handClear">↺ automatic hand</button>
+      </div>
+      <div class="row" style="margin-top:8px">
+        <button id="sexCopy" title="drop everything about this class onto the other sprite">⧉ copy this class to the other gender</button>
+      </div>
+      <div class="row" style="margin-top:8px">
+        <button id="flipX">⇄ Flip left/right</button>
+        <button id="flipY">⇅ Flip up/down</button>
+        <button id="flipClear">↺ normal</button>
+      </div>
+      <div class="row" style="margin-top:8px">
+        <button id="copyChanges" class="on">📋 Copy only what I changed <span id="chgSize" class="tag"></span></button>
+        <button id="copy">📋 Copy everything <span id="fullSize" class="tag"></span></button>
+      </div>
+      <div class="hint" style="margin-top:4px">
+        <b>Changed only</b> is what to paste back — it carries just the classes and views you moved,
+        so it stays short no matter how big the proposal gets. <b>Everything</b> is the whole proposal,
+        every frame of every view, for a complete backup.
+      </div>
+      <div class="row" style="margin-top:8px">
+        <button id="default">↺ back to the saved default</button>
+      </div>
+      <div class="hint" id="copyNote" style="margin-top:6px">Saved in this browser as you work.</div>
+      <textarea id="export" readonly spellcheck="false" style="margin-top:8px"></textarea>
+      <details style="margin-top:8px">
+        <summary class="hint" style="cursor:pointer">📥 Load a saved proposal JSON</summary>
+        <textarea id="importBox" spellcheck="false" placeholder="paste a proposal JSON here"
+          style="margin-top:6px;height:90px"></textarea>
+        <div class="row" style="margin-top:6px">
+          <button id="importGo">load this JSON</button>
+          <span class="hint" id="importNote"></span>
+        </div>
+      </details>
+    </div>
+
+    <div class="card" style="margin-top:12px">
+      <h2>Every class at a glance <span class="tag" id="sheetTag"></span>
+        <button id="sheetBtn" style="margin-left:auto">▤ show the pictures</button></h2>
+      <div class="hint" id="sheetNote" style="padding:8px 12px 0"></div>
+      <div class="sheet" id="sheet" hidden></div>
+      <div id="summary" class="hint" style="padding:0 12px 10px"></div>
+    </div>
+
+    <div class="card" style="margin-top:12px">
+      <h2>Where this art comes from</h2>
+      <div class="note" id="prov"></div>
+      <div class="note">
+        <b>Provenance:</b> every weapon image is a real Ragnarok Online client sprite
+        (<code>data/sprite/아이템/*.spr</code> and the held-weapon sprites under
+        <code>data/sprite/인간족/</code>), decoded and <b>cropped only</b> — never redrawn,
+        recoloured or hand-scaled. House rule 1 forbids inventing sprite art, so nothing was drawn here.
+        <br><b>Not in the game:</b> this page only reads. Nothing is baked into the pack or the game until you say so.
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="../assets/class_skins_data.js"></script>
+<script src="../assets/weapons_data.js"></script>
+<script src="../assets/weapon_proposal_data.js"></script>
+<script>
+/* =============================================================================
+   Weapon proposal — every class, real RO weapon art, one placement per view.
+
+   The sprite is FROZEN by default and can be stepped frame by frame, because
+   placing a weapon against a moving sprite is guesswork. Two ways to place it:
+     • drag the weapon (offset per class + view), or
+     • "Set hand" and click the sprite where the hand actually is.
+   Each view also carries its own weapon on/off, so a class can be bare on
+   South and South-East and armed only while attacking.
+   ========================================================================== */
+const ART   = window.WEAPON_ART  || {};
+const SKINS = window.CLASS_SKINS || {classes:{}};
+
+/* ---- the game's own class table: name -> allowed weapon families ------------------ */
+const FAMILIES = {
+  sword:'Sword', dagger:'Dagger', katar:'Katar', bow:'Bow',
+  staff:'Staff', mace:'Mace', axe:'Axe', spear:'Spear'
+};
+// straight out of index.html's CD table (the `wt` column)
+const CLASS_FAMILIES = {
+  'Novice':['dagger','sword'], 'Swordman':['sword'], 'Mage':['staff'], 'Archer':['bow'],
+  'Thief':['dagger'], 'Acolyte':['mace'], 'Merchant':['axe','mace'],
+  'Knight':['sword'], 'Wizard':['staff'], 'Hunter':['bow'], 'Assassin':['katar'],
+  'Priest':['mace'], 'Blacksmith':['axe','mace'],
+  'Lord Knight':['sword'], 'High Wizard':['staff'], 'Sniper':['bow'], 'Assassin Cross':['katar'],
+  'High Priest':['mace'], 'Whitesmith':['axe','mace']
+};
+const CLASS_ORDER = ['Novice','Swordman','Mage','Archer','Thief','Acolyte','Merchant',
+  'Knight','Wizard','Hunter','Assassin','Priest','Blacksmith',
+  'Lord Knight','High Wizard','Sniper','Assassin Cross','High Priest','Whitesmith'];
+
+/* ---- the designs, in the order tools/make_weapon_pack.py wrote them --------------- */
+const DESIGNS = {
+  sword:['sword_knight','sword_chill','sword_elem'],
+  dagger:['dagger_chill','dagger_ice','dagger_broken'],
+  katar:['katar_plain','katar_reinf','katar_guil'],
+  bow:['bow_chill','bow_royal','bow_thorn'],
+  staff:['staff_gold','staff_ion','staff_shadow'],
+  mace:['mace_gold','mace_wand','mace_forge'],
+  axe:['axe_chill','axe_single','axe_hammer'],
+  spear:['spear_chill','spear_undine','spear_plain']
+};
+const DESIGN_LABEL = {
+  sword_knight:"Knight's Blade", sword_chill:'Chilling Sword', sword_elem:'Elemental Sword',
+  dagger_chill:'Chilling Knife', dagger_ice:'Frost Dagger', dagger_broken:'Broken Blade',
+  katar_plain:'Katar', katar_reinf:'Reinforced Katar', katar_guil:'Guillotine Katar',
+  bow_chill:'Chilling Bow', bow_royal:'Royal Bow', bow_thorn:'Thorn Bow',
+  staff_gold:'Golden Rod Staff', staff_ion:'Aion Staff', staff_shadow:'Shadow Staff',
+  mace_gold:'Golden Mace', mace_wand:'Arc Wand', mace_forge:'Forge Hammer',
+  axe_chill:'Chilling Battleaxe', axe_single:'Chilling Axe', axe_hammer:'Chilling Hammer',
+  spear_chill:'Chilling Lance', spear_undine:'Undine Spear', spear_plain:'Plain Spear'
+};
+
+/* ---- where a weapon is held: grip = the point of the image that is the handle ---- */
+const GRIP = {
+  sword:[.50,.90], dagger:[.50,.86], katar:[.50,.55], bow:[.50,.50],
+  staff:[.50,.74], mace:[.50,.88], axe:[.50,.86], spear:[.50,.60]
+};
+/* Where the hand is when the owner has not chosen one: a fraction of the class
+   sprite's own opaque box, per view. These are only the starting guess. */
+const HAND = { S:[.02,.66], SE:[.99,.64], NE:[.04,.64], attack:[1.0,.56], N:[.06,.64] };
+/* the angle the weapon rests at, per family, per view (degrees) */
+const ANGLE = {
+  sword:{S:8,SE:14,NE:10,attack:-38,N:6},
+  dagger:{S:6,SE:10,NE:8,attack:-30,N:4},
+  katar:{S:0,SE:6,NE:4,attack:-20,N:0},
+  bow:{S:0,SE:0,NE:0,attack:-8,N:0},
+  staff:{S:6,SE:8,NE:6,attack:-26,N:4},
+  mace:{S:8,SE:12,NE:10,attack:-34,N:6},
+  axe:{S:10,SE:14,NE:12,attack:-40,N:8},
+  spear:{S:6,SE:8,NE:6,attack:-24,N:4}
+};
+const BASE_SCALE = 1.25;   // the HD class art is ~1.25x the classic body the weapons were drawn for
+
+/* ---- which sprite file backs a view (S/SE/NE/attack/N), mirrors included ---------- */
+const VIEWS = ['S','SE','NE','attack'];
+const VIEW_LABEL = {S:'South',SE:'South-East',NE:'North-East',attack:'Attack (SE)',N:'North'};
+
+/* =============================================================================
+   APNG decoder — the same walk index.html uses (PNG chunks, DecompressionStream,
+   unfilter, APNG blend/dispose) so the class art here is the real animation.
+   ========================================================================== */
+function bytesOf(parts){let n=0;for(const p of parts)n+=p.length;const out=new Uint8Array(n);
+  let o=0;for(const p of parts){out.set(p,o);o+=p.length}return out}
+async function inflate(b){
+  const s=new DecompressionStream('deflate'),w=s.writable.getWriter();
+  w.write(b);w.close();return new Uint8Array(await new Response(s.readable).arrayBuffer())}
+function paeth(a,b,c){const p=a+b-c,pa=Math.abs(p-a),pb=Math.abs(p-b),pc=Math.abs(p-c);
+  return pa<=pb&&pa<=pc?a:pb<=pc?b:c}
+function unfilter(raw,w,h,bpp){
+  const stride=w*bpp,out=new Uint8Array(stride*h);
+  for(let y=0;y<h;y++){
+    const f=raw[y*(stride+1)],line=y*stride,prev=line-stride,src=y*(stride+1)+1;
+    for(let x=0;x<stride;x++){
+      const v=raw[src+x],a=x>=bpp?out[line+x-bpp]:0,b=y?out[prev+x]:0,c=(y&&x>=bpp)?out[prev+x-bpp]:0;
+      out[line+x]=(f===0?v:f===1?v+a:f===2?v+b:f===3?v+((a+b)>>1):f===4?v+paeth(a,b,c):v)&255}}
+  return out}
+async function decodeApng(bytes){
+  if(!bytes||bytes.length<8||bytes[0]!==137||bytes[1]!==80)return null;
+  const view=new DataView(bytes.buffer,bytes.byteOffset,bytes.byteLength);
+  let p=8,width=0,height=0,depth=0,type=0,interlace=0,frames=null;const parts=[];
+  while(p+8<=bytes.length){
+    const length=view.getUint32(p),kind=String.fromCharCode(bytes[p+4],bytes[p+5],bytes[p+6],bytes[p+7]);
+    if(kind==='IHDR'){width=view.getUint32(p+8);height=view.getUint32(p+12);depth=bytes[p+16];type=bytes[p+17];interlace=bytes[p+20]}
+    else if(kind==='acTL')frames=view.getUint32(p+8);
+    else if(kind==='fcTL')parts.push({rect:{x:view.getUint32(p+20),y:view.getUint32(p+24),w:view.getUint32(p+12),h:view.getUint32(p+16)},
+      dispose:bytes[p+32],blend:bytes[p+33],delay:[view.getUint16(p+28),view.getUint16(p+30)],chunks:[]});
+    else if(kind==='IDAT'){if(!parts.length)parts.push({rect:{x:0,y:0,w:width,h:height},dispose:0,blend:0,delay:[0,100],chunks:[]});
+      parts[0].chunks.push(bytes.subarray(p+8,p+8+length))}
+    else if(kind==='fdAT'&&parts.length)parts[parts.length-1].chunks.push(bytes.subarray(p+12,p+8+length));
+    p+=12+length;
+    if(kind==='IEND')break}
+  if(!frames||!parts.length||!width||!height||depth!==8||type!==6||interlace)return null;
+  if(parts.length!==frames)return null;
+  const shown=new Uint8ClampedArray(width*height*4);const out=[];const delays=[];
+  for(const part of parts){
+    if(!part.chunks.length)return null;
+    const px=unfilter(await inflate(bytesOf(part.chunks)),part.rect.w,part.rect.h,4);
+    const saved=part.dispose===2?shown.slice():null;
+    for(let y=0;y<part.rect.h;y++)for(let x=0;x<part.rect.w;x++){
+      const from=(y*part.rect.w+x)*4,to=((part.rect.y+y)*width+part.rect.x+x)*4,a=px[from+3];
+      if(part.blend===1&&a<255){
+        const keep=shown[to+3]*(255-a)/255;
+        shown[to]=(px[from]*a+shown[to]*keep)/(a+keep||1);
+        shown[to+1]=(px[from+1]*a+shown[to+1]*keep)/(a+keep||1);
+        shown[to+2]=(px[from+2]*a+shown[to+2]*keep)/(a+keep||1);
+        shown[to+3]=a+keep}
+      else{shown[to]=px[from];shown[to+1]=px[from+1];shown[to+2]=px[from+2];shown[to+3]=a}}
+    out.push(shown.slice());
+    const d=part.delay, den=d[1]||100;
+    delays.push(Math.max(20, den? d[0]/den*1000 : d[0]));
+    if(part.dispose===1){for(let y=0;y<part.rect.h;y++)for(let x=0;x<part.rect.w;x++){
+      const to=((part.rect.y+y)*width+part.rect.x+x)*4;shown[to]=shown[to+1]=shown[to+2]=shown[to+3]=0}}
+    else if(part.dispose===2&&saved)shown.set(saved)}
+  const cv=document.createElement('canvas');cv.width=width*out.length;cv.height=height;
+  const ctx=cv.getContext('2d');ctx.imageSmoothingEnabled=false;
+  for(let i=0;i<out.length;i++)ctx.putImageData(new ImageData(out[i],width,height),i*width,0);
+  return {cv,n:out.length,w:width,h:height,delays};
+}
+
+/* =============================================================================
+   State.  Everything is per class AND per view, because each view is its own
+   drawing with its own hand.
+   ========================================================================== */
+const KEY='pg_weapon_proposal_v3', OLDKEY='pg_weapon_proposal_v2', OLDKEY1='pg_weapon_proposal_v1';
+function blankView(){
+  return {on:true,dx:0,dy:0,rot:0,scale:1,hx:null,hy:null,fx:1,fy:1,
+          frames:{},blend:true};
+}
+const state={
+  sel:'Knight', view:'S', sex:'m', playing:false, zoom:3.2, pick:false, frame:0, ptr:null,
+  per:{}
+};
+function clsInfo(name){return SKINS.classes[name]||null}
+function clsSex(name,sex){const c=clsInfo(name);return (c&&(c[sex]||c.m))||null}
+/* Which drawings this gender actually has. The male and female sheets are different
+   art with their own pose boxes, so a view list is per gender. */
+function viewsOf(name,sex){
+  sex=sex||state.sex;
+  const g=clsSex(name,sex);const out=[];
+  for(const v of VIEWS.concat(['N'])) if(g&&g.files&&g.files[v]) out.push(v);
+  return out;
+}
+/* Every drawing either gender has, for the class list and the bulk switches. */
+function viewsAny(name){
+  const out=[];
+  for(const v of VIEWS.concat(['N']))
+    if(viewsOf(name,'m').indexOf(v)>=0||viewsOf(name,'f').indexOf(v)>=0) out.push(v);
+  return out;
+}
+function entry(name){
+  if(!state.per[name]) state.per[name]={off:false,fam:null,design:null,views:{}};
+  const e=state.per[name];
+  if(!e.views) e.views={};
+  // A save from v3 held one placement per view (there was one sprite). Give it to both
+  // genders as a starting point - the female numbers will be a little off, and the page
+  // says so - rather than throwing the tuning away.
+  if(!e.views.m&&!e.views.f){
+    const flat=e.views;e.views={m:{},f:{}};
+    for(const [v,rec] of Object.entries(flat))
+      if(VIEWS.concat(['N']).indexOf(v)>=0){
+        e.views.m[v]=JSON.parse(JSON.stringify(rec));
+        e.views.f[v]=JSON.parse(JSON.stringify(rec));
+      }
+  }
+  if(!e.views.m)e.views.m={};
+  if(!e.views.f)e.views.f={};
+  for(const sex of ['m','f']) for(const v of viewsOf(name,sex)){
+    if(!e.views[sex][v]) e.views[sex][v]=blankView();
+    const X=e.views[sex][v];
+    if(!X.frames)X.frames={};            // a save from before per-frame placement
+    if(X.blend===undefined)X.blend=true; // ...and one from before the blend switch
+  }
+  return e;
+}
+/* the row a control sits in says which view it belongs to */
+function vwViewOf(el){
+  let n=el;
+  while(n&&!(n.dataset&&n.dataset.view!=null)) n=n.parentNode;
+  return (n&&n.dataset&&n.dataset.view)||state.view;
+}
+function vw(name,view,sex){
+  sex=sex||state.sex;
+  const e=entry(name);
+  if(!e.views[sex])e.views[sex]={};
+  if(!e.views[sex][view]) e.views[sex][view]=blankView();
+  return e.views[sex][view];
+}
+function famOf(name){const e=state.per[name];return (e&&e.fam)||(CLASS_FAMILIES[name]||['sword'])[0]}
+function designOf(name){const e=state.per[name];return (e&&e.design)||(DESIGNS[famOf(name)]||[])[0]}
+function classOff(name){return !!(state.per[name]&&state.per[name].off)}
+function viewOn(name,view,sex){return classOff(name)?false:vw(name,view,sex).on!==false}
+function anyOn(name){return viewsAny(name).some(v=>viewOn(name,v,'m')||viewOn(name,v,'f'))}
+
+function save(){try{localStorage.setItem(KEY,JSON.stringify(state.per))}catch(e){}}
+/* ---------------------------------------------------------------------------
+   Reading a proposal back in. Accepts both the shipped default file and a
+   "Copy my proposal" hand-back, in either the v3 shape (one placement per view,
+   from before the female sprites were in the page - it is copied to both) or the
+   v4 shape (views[m] / views[f]). Only the drawings really set by hand are kept:
+   `src` other than 'frame' means the page worked that one out by blending, and
+   freezing it would stop each gender from following its own hand.
+   --------------------------------------------------------------------------- */
+function importProgress(obj){
+  if(!obj||!obj.classes)return 0;
+  let n=0, skippedForHer=0;
+  state.importNote='';
+  for(const [name,rec] of Object.entries(obj.classes)){
+    if(!clsInfo(name))continue;
+    const e=entry(name);
+    if(rec.family)e.fam=rec.family;
+    if(rec.design!==undefined)e.design=rec.design;
+    if(rec.off!==undefined)e.off=!!rec.off;
+    const bySex=(rec.views&&(rec.views.m||rec.views.f))?rec.views:null;
+    for(const sex of ['m','f']){
+      const src=(bySex?bySex[sex]:rec.views)||{};
+      for(const [view,V] of Object.entries(src)){
+        if(VIEWS.concat(['N']).indexOf(view)<0)continue;
+        const X=vw(name,view,sex), base=V.base||{};
+        const hand=(base.handAuto||!base.hand)?null:base.hand;
+        X.on=V.weapon!==false;
+        if(V.blend!==undefined)X.blend=!!V.blend;
+        X.hx=hand?Math.round(+hand[0]):null;
+        X.hy=hand?Math.round(+hand[1]):null;
+        X.dx=+base.dx||0;X.dy=+base.dy||0;X.rot=+base.rot||0;
+        X.scale=(base.scale==null)?1:+base.scale;
+        X.fx=(base.flip&&base.flip[0]===-1)?-1:1;
+        X.fy=(base.flip&&base.flip[1]===-1)?-1:1;
+        X.frames={};
+        const nf=viewFrames(name,view,sex);
+        // One-sprite numbers (a hand-back, or the shipped default) were laid out on the
+        // male sprite. If her drawing count differs, his frame-by-frame work cannot mean
+        // anything on her - she keeps the shared numbers instead of a wrong guess.
+        const fr=((!bySex)&&sex==='f'&&viewFrames(name,view,'f')!==viewFrames(name,view,'m'))
+          ? null : V.frames;
+        if(!fr&&!bySex&&sex==='f'&&V.frames) skippedForHer++;
+        const put=(i,f)=>{
+          if(!f)return;
+          if(f.src&&f.src!=='frame')return;          // blended/shared: leave it to the page
+          const i2=+i;
+          if(!(i2>=0&&i2<nf))return;                 // the two genders have different counts
+          const h=f.hand;
+          X.frames[String(i2)]={hx:(h&&h[0]!=null)?Math.round(+h[0]):undefined,
+                                hy:(h&&h[1]!=null)?Math.round(+h[1]):undefined,
+                                dx:+f.dx||0,dy:+f.dy||0,rot:+f.rot||0,
+                                scale:(f.scale==null)?1:+f.scale,
+                                fx:(f.flip&&f.flip[0]===-1)?-1:1,
+                                fy:(f.flip&&f.flip[1]===-1)?-1:1};
+          Object.keys(X.frames[String(i2)]).forEach(k=>{if(X.frames[String(i2)][k]===undefined)delete X.frames[String(i2)][k]});
+          n++;
+        };
+        if(Array.isArray(fr)) fr.forEach((f,i)=>put(i,f));
+        else if(fr) for(const [i,f] of Object.entries(fr)) put(i,f);
+      }
+    }
+  }
+  state.importNote=skippedForHer
+    ? skippedForHer+' view(s) where the female sprite has its own number of drawings: she keeps the shared numbers'
+    : '';
+  return n;
+}
+/* the tuning one gender has, dropped onto the other, so the second pass is quick */
+function copyClassToOtherSex(){
+  const from=state.sex, to=(from==='m')?'f':'m', e=entry(state.sel);
+  for(const v of viewsAny(state.sel)){
+    const A=e.views[from]&&e.views[from][v];
+    if(!A)continue;
+    if(!e.views[to][v])e.views[to][v]=blankView();
+    const B=e.views[to][v];
+    B.on=A.on;B.blend=A.blend;B.hx=A.hx;B.hy=A.hy;B.dx=A.dx;B.dy=A.dy;B.rot=A.rot;
+    B.scale=A.scale;B.fx=A.fx;B.fy=A.fy;
+    B.frames=JSON.parse(JSON.stringify(A.frames||{}));
+  }
+  save();
+}
+function load(){
+  state.per={};
+  // the shipped default first: the owner's progress, so the page opens on their work.
+  // A copy of it is kept, so "copy only what I changed" has something to compare against.
+  try{ if(typeof WEAPON_PROPOSAL_DEFAULT!=='undefined'){ importProgress(WEAPON_PROPOSAL_DEFAULT); DEFAULT_SNAP=snapshot(); } }catch(e){}
+  try{
+    const raw=localStorage.getItem(KEY);
+    if(raw){                       // what this browser has been working on wins
+      const saved=JSON.parse(raw)||{};
+      for(const [cls,rec] of Object.entries(saved)) if(clsInfo(cls)) state.per[cls]=rec;
+      return;
+    }
+    // v2 had one placement per view and no frames; v1 had no views at all
+    const old=localStorage.getItem(OLDKEY);
+    if(old){
+      const flat=JSON.parse(old)||{};
+      for(const [cls,v] of Object.entries(flat)) if(clsInfo(cls)){
+        if(v&&v.views){state.per[cls]=v;continue}
+        const views={};
+        for(const view of VIEWS.concat(['N'])) views[view]=
+          {on:!v.off,dx:v.dx||0,dy:v.dy||0,rot:v.rot||0,scale:v.scale||1,hx:null,hy:null};
+        state.per[cls]={off:!!v.off,fam:v.fam||null,design:v.design||null,views};
+      }
+      return;
+    }
+    const old1=localStorage.getItem(OLDKEY1);
+    if(old1){
+      const flat=JSON.parse(old1)||{};
+      for(const [cls,v] of Object.entries(flat)) if(clsInfo(cls)){
+        const views={};
+        for(const view of VIEWS.concat(['N'])) views[view]=
+          {on:!v.off,dx:v.dx||0,dy:v.dy||0,rot:v.rot||0,scale:v.scale||1,hx:null,hy:null};
+        state.per[cls]={off:!!v.off,fam:v.fam||null,design:v.design||null,views};
+      }
+    }
+  }catch(e){state.per={}}
+}
+
+/* =============================================================================
+   Weapon art
+   ========================================================================== */
+const weaponImg={};
+function weaponUrl(id){return '../assets/weapons/'+id+'.png'}
+function heldUrl(id,dir){return '../assets/weapons/held/'+id+'__'+dir+'.png'}
+function imgFor(id){
+  if(weaponImg[id])return weaponImg[id];
+  const im=new Image();
+  im.src = ART[id] ? 'data:image/png;base64,'+ART[id] : weaponUrl(id);
+  im.onerror=()=>{if(im.src.indexOf('data:')<0)im.src=weaponUrl(id)};
+  weaponImg[id]=im;return im;
+}
+
+/* =============================================================================
+   Frame cache: class + view -> decoded strip of frames
+   ========================================================================== */
+const stripCache={}, stripPending={};
+let sheetOn=false, sheetBuilt=false, sheetDirty=true, sheetFrame=0, sheetRaf=null, sheetTiles=[], sheetLast=0;
+function viewFile(cls,sex,view){
+  const c=clsInfo(cls);if(!c)return null;
+  const g=c[sex];if(!g)return null;
+  return g.files[view]||null;
+}
+function viewPose(cls,sex,view){
+  const c=clsInfo(cls);const g=c&&c[sex];const p=g&&g.poses&&g.poses[view];
+  return p||[70,60,60,100];
+}
+/* The starting guess for a hand: a fraction of the class sprite's own opaque box. */
+function autoHand(cls,sex,view){
+  const p=viewPose(cls,sex,view),h=HAND[view]||[.5,.6];
+  return [p[0]+p[2]*h[0], p[1]+p[3]*h[1]];
+}
+/* How many drawings a view has - from the skin manifest, so the frame count is known
+   before the animation has finished decoding. */
+function viewFrames(cls,view,sex){
+  const g=clsSex(cls,sex||state.sex),f=g&&g.frames&&g.frames[view];
+  return (typeof f==='number'&&f>0)?f:1;
+}
+
+/* ---------------------------------------------------------------------------
+   Per-frame placement.  Everything the owner sets belongs to the frame they are
+   looking at, because a hand moves during a walk cycle and one fixed spot cannot
+   follow it.  A frame with nothing stored of its own falls back to the view's
+   shared numbers - or, when "blend the frames in between" is ticked, to a straight
+   line between the nearest frames that do have their own numbers, which is what
+   lets two or three keys animate smoothly.
+   --------------------------------------------------------------------------- */
+const PLACE_FIELDS=['hx','hy','dx','dy','rot','scale'];
+function frameKeys(V){
+  return (V&&V.frames?Object.keys(V.frames):[]).map(Number)
+    .filter(k=>V.frames[k]&&Object.keys(V.frames[k]).length).sort((a,b)=>a-b);
+}
+function frameRec(cls,view,fi,sex){
+  const V=vw(cls,view,sex);
+  return (V.frames&&V.frames[String(fi)])||null;
+}
+function setFrame(cls,view,fi,patch,sex){
+  const V=vw(cls,view,sex);
+  if(!V.frames)V.frames={};
+  V.frames[String(fi)]=Object.assign({},V.frames[String(fi)]||{},patch);
+  save();
+}
+function clearFrame(cls,view,fi,sex){
+  const V=vw(cls,view,sex);
+  if(V.frames)delete V.frames[String(fi)];
+  save();
+}
+/* The numbers that actually draw one frame. `src` says where they came from. */
+function placed(cls,view,fi,sex){
+  sex=sex||state.sex;
+  fi=Math.max(0,Math.min(fi|0,viewFrames(cls,view,sex)-1));
+  const V=vw(cls,view,sex), auto=autoHand(cls,sex,view);
+  const base={hx:(V.hx!=null?V.hx:auto[0]), hy:(V.hy!=null?V.hy:auto[1]),
+              dx:V.dx||0, dy:V.dy||0, rot:V.rot||0, scale:+(V.scale||1),
+              fx:V.fx||1, fy:V.fy||1};
+  const own=frameRec(cls,view,fi,sex);
+  if(own&&Object.keys(own).length) return Object.assign({},base,own,{src:'frame'});
+  const keys=frameKeys(V);
+  if(V.blend&&keys.length>=2){
+    let a=keys[0], b=keys[keys.length-1];
+    for(const k of keys){ if(k<=fi)a=k; if(k>=fi)b=k; }
+    // before the first key or after the last one the weapon holds that key's place
+    if(a===b) return Object.assign({},base,V.frames[String(a)],{src:'blend'});
+    const ra=Object.assign({},base,V.frames[String(a)]),
+          rb=Object.assign({},base,V.frames[String(b)]),
+          t=(fi-a)/(b-a), out={src:'blend'};
+    for(const f of PLACE_FIELDS) out[f]=+(ra[f]+(rb[f]-ra[f])*t).toFixed(2);
+    // the mirror is a switch, not a number: take it from the nearer frame
+    out.fx=(t<.5?ra:rb).fx; out.fy=(t<.5?ra:rb).fy;
+    return out;
+  }
+  return Object.assign({},base,{src:'shared'});
+}
+/* The hand in 200x200 class-sprite space for one frame, plus whether it is still
+   the automatic guess (so the marker can be drawn faint when it is). */
+function handBox(cls,sex,view,fi){
+  if(fi==null)fi=state.frame;
+  const V=vw(cls,view,sex), own=frameRec(cls,view,fi,sex), P=placed(cls,view,fi,sex);
+  const guess=(!own||own.hx==null)&&V.hx==null;
+  return [P.hx,P.hy,guess];
+}
+function strip(cls,sex,view){
+  const key=cls+'|'+sex+'|'+view;
+  if(stripCache[key])return stripCache[key];
+  if(stripPending[key])return null;
+  const file=viewFile(cls,sex,view);
+  if(!file){stripCache[key]=null;return null}
+  stripPending[key]=true;
+  fetch(encodeURI('../'+SKINS.dir+'/'+file)).then(r=>r.arrayBuffer()).then(b=>decodeApng(new Uint8Array(b)))
+    .then(dec=>{stripCache[key]=dec;stripPending[key]=false;sheetDirty=true;requestRender()})
+    .catch(()=>{stripCache[key]=null;stripPending[key]=false});
+  return null;
+}
+
+/* =============================================================================
+   Rendering
+   ========================================================================== */
+/* One cell of the composite: the body frame, the hand marker, and the weapon at the
+   numbers that draw this very frame.  The big stage and the "every class at a glance"
+   tiles BOTH call this, so a tile can never show something the picker would not. */
+function paintCell(c,W,H,o){
+  const z=o.z, ox=o.ox, oy=o.oy, cls=o.cls, sex=o.sex, view=o.view, fi=o.fi|0;
+  const mk=(o.mk==null?9:o.mk);
+  c.clearRect(0,0,W,H);
+  const dec=strip(cls,sex,view);
+  if(dec){
+    c.imageSmoothingEnabled=false;
+    const f=((fi%dec.n)+dec.n)%dec.n;
+    c.drawImage(dec.cv,f*dec.w,0,dec.w,dec.h,ox,oy,200*z,200*z);
+  }
+  const P=placed(cls,view,fi,sex);
+  const [hx,hy,guess]=handBox(cls,sex,view,fi);
+  const sx=ox+hx*z, sy=oy+hy*z;
+  c.save();
+  c.strokeStyle= guess? 'rgba(109,219,143,.45)' : 'rgba(109,219,143,.95)';
+  c.lineWidth=1;
+  c.beginPath();
+  c.moveTo(sx-mk,sy);c.lineTo(sx+mk,sy);c.moveTo(sx,sy-mk);c.lineTo(sx,sy+mk);
+  c.stroke();
+  if(!guess){c.beginPath();c.arc(sx,sy,mk*0.55,0,7);c.stroke()}
+  c.restore();
+
+  if(viewOn(cls,view,sex)){
+    const fam=famOf(cls), did=designOf(cls), im=imgFor(did);
+    if(im.complete&&im.naturalWidth){
+      const [gx,gy]=GRIP[fam]||[.5,.85];
+      const s=BASE_SCALE*(P.scale||1);
+      const rot=((ANGLE[fam]&&ANGLE[fam][view])||0)+(P.rot||0);
+      const px=ox+(hx+(P.dx||0))*z, py=oy+(hy+(P.dy||0))*z;
+      c.save();
+      c.imageSmoothingEnabled=false;
+      c.translate(px,py);
+      c.rotate(rot*Math.PI/180);
+      // the flip mirrors the image about its own grip, so a flipped weapon stays in the hand
+      c.scale(P.fx===-1?-1:1, P.fy===-1?-1:1);
+      c.drawImage(im,-gx*im.naturalWidth*s*z,-gy*im.naturalHeight*s*z,
+                      im.naturalWidth*s*z,im.naturalHeight*s*z);
+      c.restore();
+      if(P.dx||P.dy){
+        // the weapon has been pushed off the hand on purpose: show the link
+        c.save();
+        c.strokeStyle='rgba(255,233,168,.45)';c.setLineDash([3,3]);
+        c.beginPath();c.moveTo(sx,sy);c.lineTo(px,py);c.stroke();
+        c.setLineDash([]);
+        c.strokeStyle='#ffe9a8';c.beginPath();c.arc(px,py,3.5,0,7);c.stroke();
+        c.restore();
+      }
+    }
+  }
+  return !!dec;
+}
+const stage=document.getElementById('stage'), sctx=stage.getContext('2d');
+let needRender=false, raf=null, acc=0, last=0;
+function requestRender(){if(!needRender){needRender=true;raf=requestAnimationFrame(draw)}}
+let geom={ox:0,oy:0,z:1};
+function draw(){
+  needRender=false;
+  const cls=state.sel, sex=state.sex, view=state.view;
+  if(!clsInfo(cls)){sctx.clearRect(0,0,stage.width,stage.height);return}
+  const z=state.zoom, CW=200*z, CH=200*z;
+  const ox=(stage.width-CW)/2, oy=(stage.height-CH)/2;
+  geom={ox,oy,z};
+
+  if(state.playing){
+    const dec=strip(cls,sex,view);
+    const now=performance.now();
+    acc+=now-last;last=now;
+    const step=(dec&&dec.delays&&dec.delays.length)?dec.delays[state.frame%dec.delays.length]:75;
+    while(acc>Math.max(30,step)){acc-=Math.max(30,step);
+      state.frame=(state.frame+1>=viewFrames(cls,view,sex))?0:state.frame+1}
+  }else acc=0;
+
+  const painted=paintCell(sctx,stage.width,stage.height,{cls,sex,view,fi:state.frame,z,ox,oy});
+  if(!painted){
+    sctx.fillStyle='#8b94a8';sctx.font='13px system-ui';sctx.textAlign='center';
+    sctx.fillText('decoding '+viewFile(cls,sex,view)+' …',stage.width/2,stage.height/2);
+    sctx.textAlign='left';
+  }
+
+  // a bare-handed view has nothing to lock onto: say so instead of looking broken
+  if(!viewOn(cls,view,sex)){
+    sctx.save();sctx.fillStyle='rgba(255,107,107,.95)';sctx.font='13px system-ui';sctx.textAlign='center';
+    sctx.fillText('No weapon on this view — tick it in "Weapon per view" (right) to place one here.',
+      stage.width/2,stage.height-14);
+    sctx.restore();
+  }
+
+  // in "Set hand" mode, a live crosshair so it is obvious where the click will land
+  if(state.pick){
+    const pt=state.ptr;
+    sctx.save();
+    if(pt){
+      const tx=ox+pt[0]*z, ty=oy+pt[1]*z;
+      sctx.strokeStyle='rgba(255,255,255,.35)';sctx.setLineDash([4,4]);
+      sctx.beginPath();sctx.moveTo(0,ty);sctx.lineTo(stage.width,ty);
+      sctx.moveTo(tx,0);sctx.lineTo(tx,stage.height);sctx.stroke();
+      sctx.setLineDash([]);
+      sctx.strokeStyle='#fff';sctx.beginPath();sctx.arc(tx,ty,7,0,7);sctx.stroke();
+    }
+    sctx.fillStyle='rgba(255,255,255,.9)';sctx.font='12px system-ui';sctx.textAlign='center';
+    sctx.fillText('Click where the hand is on THIS frame — the weapon then grips that exact point.',
+      stage.width/2,18);
+    sctx.restore();
+  }
+  if(state.playing)requestRender();
+}
+
+/* =============================================================================
+   Placing: drag the weapon, or click the hand
+   ========================================================================== */
+function canvasPoint(ev){
+  const r=stage.getBoundingClientRect();
+  const kx=stage.width/r.width, ky=stage.height/r.height;
+  return [(ev.clientX-r.left)*kx,(ev.clientY-r.top)*ky];
+}
+function toSprite(px,py){return [(px-geom.ox)/geom.z,(py-geom.oy)/geom.z]}
+
+let drag=null;
+/* The hand pick runs on the document in the capture phase: it still lands if anything
+   is sitting on top of the canvas, and it cannot be swallowed by the drag handler. */
+function insideStage(ev){
+  const r=stage.getBoundingClientRect();
+  return ev.clientX>=r.left&&ev.clientX<=r.right&&ev.clientY>=r.top&&ev.clientY<=r.bottom;
+}
+function setHandAt(clientX,clientY){
+  const [px,py]=canvasPoint({clientX,clientY});
+  const [x,y]=toSprite(px,py);
+  // the point the owner clicked IS the grip, and it belongs to the frame on screen:
+  // drop the old nudge, or the weapon would land beside the crosshair
+  setFrame(state.sel,state.view,state.frame,{
+    hx:Math.round(Math.max(0,Math.min(200,x))),
+    hy:Math.round(Math.max(0,Math.min(200,y))),
+    dx:0,dy:0});
+  refreshAll();
+}
+document.addEventListener('pointerdown',ev=>{
+  if(!state.pick)return;
+  const t=ev.target;
+  if(t&&t.closest&&t.closest('button,input,select,textarea,label,a'))return;   // the UI keeps working
+  if(!insideStage(ev))return;
+  setHandAt(ev.clientX,ev.clientY);
+  if(ev.preventDefault)ev.preventDefault();
+  if(ev.stopPropagation)ev.stopPropagation();
+},true);
+document.addEventListener('pointermove',ev=>{
+  if(!state.pick)return;
+  if(!insideStage(ev)){ if(state.ptr){state.ptr=null;requestRender()} return }
+  const [px,py]=canvasPoint(ev);
+  const [x,y]=toSprite(px,py);
+  state.ptr=[Math.round(x),Math.round(y)];
+  requestRender();
+},true);
+
+stage.addEventListener('pointerdown',ev=>{
+  if(state.pick)return;                       // handled on the document, above
+  if(!viewOn(state.sel,state.view))return;
+  const [px,py]=canvasPoint(ev);
+  const P=placed(state.sel,state.view,state.frame,state.sex);
+  drag={px,py,dx:P.dx||0,dy:P.dy||0};
+  stage.setPointerCapture(ev.pointerId);stage.classList.add('drag');
+});
+stage.addEventListener('pointermove',ev=>{
+  if(!drag)return;
+  const [px,py]=canvasPoint(ev);
+  setFrame(state.sel,state.view,state.frame,{
+    dx:Math.round(drag.dx+(px-drag.px)/geom.z),
+    dy:Math.round(drag.dy+(py-drag.py)/geom.z)});
+  refreshNumbers();refreshViewTable();refreshFrameSrc();requestRender();
+});
+function endDrag(){if(!drag)return;drag=null;stage.classList.remove('drag');refreshSummary();refreshFrameSrc()}
+stage.addEventListener('pointerup',endDrag);
+stage.addEventListener('pointercancel',endDrag);
+stage.addEventListener('wheel',ev=>{
+  if(!viewOn(state.sel,state.view))return;
+  ev.preventDefault();
+  const P=placed(state.sel,state.view,state.frame,state.sex);
+  setFrame(state.sel,state.view,state.frame,{rot:Math.round((P.rot||0)+(ev.deltaY>0?-2:2))},state.sex);
+  refreshNumbers();refreshViewTable();refreshFrameSrc();requestRender();
+},{passive:false});
+
+window.addEventListener('keydown',ev=>{
+  if(ev.target&&/INPUT|TEXTAREA/.test(ev.target.tagName))return;
+  const P=placed(state.sel,state.view,state.frame,state.sex);
+  const put=patch=>setFrame(state.sel,state.view,state.frame,patch,state.sex);
+  const nudge=ev.shiftKey?5:1;
+  let used=true;
+  if(state.pick&&ev.key.startsWith('Arrow')){
+    if(ev.key==='ArrowLeft')  put({hx:Math.round(P.hx)-nudge});
+    else if(ev.key==='ArrowRight') put({hx:Math.round(P.hx)+nudge});
+    else if(ev.key==='ArrowUp')    put({hy:Math.round(P.hy)-nudge});
+    else if(ev.key==='ArrowDown')  put({hy:Math.round(P.hy)+nudge});
+    else used=false;
+  }
+  else if(ev.key==='ArrowLeft')  put({dx:(P.dx||0)-nudge});
+  else if(ev.key==='ArrowRight') put({dx:(P.dx||0)+nudge});
+  else if(ev.key==='ArrowUp')    put({dy:(P.dy||0)-nudge});
+  else if(ev.key==='ArrowDown')  put({dy:(P.dy||0)+nudge});
+  else if(ev.key==='[') put({rot:(P.rot||0)-2});
+  else if(ev.key===']') put({rot:(P.rot||0)+2});
+  else if(ev.key==='-'||ev.key==='_') put({scale:Math.max(.4,+((P.scale||1)-.05).toFixed(2))});
+  else if(ev.key==='='||ev.key==='+') put({scale:Math.min(3,+((P.scale||1)+.05).toFixed(2))});
+  else if(ev.key==='0') put({dx:0,dy:0,rot:0,scale:1});
+  else if(ev.key===','){stepFrame(-1)}
+  else if(ev.key==='.'){stepFrame(1)}
+  else if(ev.key==='f'||ev.key==='F') put({fx:(P.fx===-1)?1:-1});
+  else if(ev.key==='v'||ev.key==='V') put({fy:(P.fy===-1)?1:-1});
+  else used=false;
+  if(!used)return;
+  ev.preventDefault();refreshNumbers();refreshViewTable();refreshFrameSrc();refreshSummary();requestRender();
+});
+
+function stepFrame(d){
+  const n=viewFrames(state.sel,state.view,state.sex);
+  state.playing=false;acc=0;
+  state.frame=((state.frame+d)%n+n)%n;
+  refreshPlayButton();refreshFrameLabel();refreshFrameSrc();requestRender();
+}
+
+/* =============================================================================
+   UI
+   ========================================================================== */
+const $=id=>document.getElementById(id);
+function refreshClassList(){
+  const box=$('clsList');box.innerHTML='';
+  for(const n of CLASS_ORDER){
+    const row=document.createElement('div');
+    row.className='cls'+(n===state.sel?' sel':'')+(classOff(n)?' off':'');
+    const nm=document.createElement('div');nm.className='nm';nm.textContent=n;
+    const fa=document.createElement('div');fa.className='fam';fa.textContent=famOf(n);
+    // a dot per view so it is obvious which views still carry a weapon
+    const dot=document.createElement('div');dot.style.cssText='font-size:10px;letter-spacing:1px';
+    dot.innerHTML=viewsAny(n).map(v=>'<span style="color:'
+      +((viewOn(n,v,'m')||viewOn(n,v,'f'))?'#6ddb8f':'#3a4152')+'">●</span>').join('');
+    const bt=document.createElement('button');
+    bt.textContent=classOff(n)?'—':'✕';bt.title=classOff(n)?'give this job a weapon again':'no weapon for this job';
+    bt.style.padding='0 6px';
+    bt.onclick=ev=>{ev.stopPropagation();const e=entry(n);e.off=!e.off;
+      if(!e.off)for(const sex of ['m','f'])for(const v of viewsOf(n,sex))vw(n,v,sex).on=true;
+      save();refreshAll()};
+    row.append(nm,fa,dot,bt);
+    row.onclick=()=>{state.sel=n;state.view=viewsOf(n,state.sex)[0]||viewsAny(n)[0]||'S';
+      state.frame=0;state.pick=false;refreshAll()};
+    box.appendChild(row);
+  }
+  const armed=CLASS_ORDER.filter(n=>anyOn(n)).length;
+  $('clsCount').textContent=armed+' of '+CLASS_ORDER.length+' jobs armed';
+}
+function refreshViewTable(){
+  const t=$('viewTable');t.innerHTML='';
+  const sex=state.sex;
+  const head=document.createElement('tr');
+  head.innerHTML='<th>View</th><th class="c">weapon</th><th class="c">hand</th><th class="c">offset</th>'
+    +'<th class="c">rot</th><th class="c">flip</th><th class="c" title="frames of this view that have their own placement">frames</th>';
+  t.appendChild(head);
+  const fi=state.frame;
+  for(const v of viewsOf(state.sel,sex)){
+    const V=vw(state.sel,v), P=placed(state.sel,v,fi,sex), n=viewFrames(state.sel,v,sex);
+    const tuned=frameKeys(V).length;
+    const gold=P.src==='frame'?'color:var(--gold)':'';
+    const tr=document.createElement('tr');
+    tr.dataset.view=v;
+    if(v===state.view)tr.className='cur';
+    tr.innerHTML='<td>'+VIEW_LABEL[v]+'</td>'
+      +'<td class="c"><input type="checkbox" data-view="'+v+'" '+(viewOn(state.sel,v,sex)?'checked':'')+'>'
+      +'</td>'
+      +'<td class="c" style="color:var(--hand);'+gold+'">'+Math.round(P.hx)+','+Math.round(P.hy)+'</td>'
+      +'<td class="c" style="'+gold+'">'+((P.dx||0)+','+(P.dy||0))+'</td>'
+      +'<td class="c" style="'+gold+'">'+((ANGLE[famOf(state.sel)]&&ANGLE[famOf(state.sel)][v]||0)+(P.rot||0))+'°</td>'
+      +'<td class="c" style="white-space:nowrap">'
+        +'<button class="mini'+((P.fx===-1)?' on':'')+'" data-flip="x" title="mirror left/right">⇄</button> '
+        +'<button class="mini'+((P.fy===-1)?' on':'')+'" data-flip="y" title="flip up/down">⇅</button>'
+      +'</td>'
+      +'<td class="c" style="'+(tuned?'color:var(--gold)':'')+'">'+(tuned?tuned+'/'+n:'—')+'</td>';
+    tr.onclick=ev=>{
+      if(ev.target.dataset&&ev.target.dataset.view!=null)return;   // the checkbox owns itself
+      state.view=v;state.frame=0;refreshAll();requestRender();
+    };
+    t.appendChild(tr);
+  }
+  // the little flip buttons flip that view's weapon image about its own grip
+  for(const fb of t.querySelectorAll('button[data-flip]')){
+    fb.onclick=ev=>{
+      ev.stopPropagation();
+      const view=vwViewOf(fb), P=placed(state.sel,view,state.frame,sex);
+      if(fb.dataset.flip==='x')setFrame(state.sel,view,state.frame,{fx:(P.fx===-1)?1:-1},sex);
+      else setFrame(state.sel,view,state.frame,{fy:(P.fy===-1)?1:-1},sex);
+      refreshAll();
+    };
+  }
+  // the box means "weapon on this view", so an unticked box leaves that view bare-handed
+  for(const cb of t.querySelectorAll('input[type=checkbox]')){
+    cb.onchange=ev=>{
+      ev.stopPropagation();
+      const v=cb.dataset.view;
+      vw(state.sel,v,sex).on=cb.checked;
+      if(cb.checked)state.per[state.sel].off=false;   // arming a view re-arms the job
+      save();refreshAll();
+    };
+    cb.onclick=ev=>ev.stopPropagation();
+  }
+}
+function refreshViews(){
+  const box=$('views');box.innerHTML='';
+  for(const v of viewsOf(state.sel,state.sex)){
+    const b=document.createElement('button');
+    const on=viewOn(state.sel,v);
+    b.innerHTML=(on?'<span class="swatch" style="background:#6ddb8f"></span>'
+                   :'<span class="swatch" style="background:#4a5163"></span>')+(VIEW_LABEL[v]||v);
+    b.className=state.view===v?'on':'';
+    b.onclick=()=>{state.view=v;state.frame=0;refreshAll();requestRender()};
+    box.appendChild(b);
+  }
+}
+function refreshDesigns(){
+  const cls=state.sel,fam=famOf(cls),did=designOf(cls);
+  $('famName').textContent=FAMILIES[fam]||fam;
+  $('famTag').textContent=cls+' · '+(FAMILIES[fam]||fam);
+  const armedViews=viewsOf(cls).filter(v=>viewOn(cls,v)).map(v=>VIEW_LABEL[v]);
+  $('designNote').innerHTML=(armedViews.length===0
+    ? '<b class="off">This job carries no weapon on any view.</b> Tick a view above, or the ✕ in the class list.'
+    : 'Carried on: <b>'+armedViews.join(', ')+'</b>. The other views stay bare-handed.')
+    +' Three designs per family, all real RO item art — the chosen one is drawn above.';
+  const box=$('designs');box.innerHTML='';
+  for(const d of DESIGNS[fam]||[]){
+    const el=document.createElement('div');
+    el.className='des'+(d===did?' sel':'');
+    const im=document.createElement('img');im.src=weaponUrl(d);im.alt=d;
+    const lb=document.createElement('div');lb.className='lb';lb.textContent=DESIGN_LABEL[d]||d;
+    el.append(im,lb);
+    el.onclick=()=>{const e=entry(state.sel);e.design=d;save();refreshAll()};
+    box.appendChild(el);
+  }
+}
+function refreshRefStrip(){
+  const box=$('refStrip');box.innerHTML='';
+  const did=designOf(state.sel);
+  const have=Object.keys(ART).filter(k=>k.indexOf('held_'+did+'__')===0);
+  const dirs=['S','SW','W','NW','N','NE','E','SE'];
+  let any=false;
+  for(const d of dirs){
+    if(!have.includes('held_'+did+'__'+d))continue;
+    any=true;
+    const cell=document.createElement('div');cell.className='cell';
+    const im=document.createElement('img');im.src=heldUrl(did,d);im.alt=d;
+    const lb=document.createElement('small');lb.textContent=d;
+    cell.append(im,lb);box.appendChild(cell);
+  }
+  if(!any){
+    box.innerHTML='<div class="hint">The client dump used here only carries full held-weapon sprites for one '
+      +'family (the Knight\'s sword) and one bow. Everything else is the item art, which is a single front '
+      +'view — that is exactly why the angle above is yours to set.</div>';
+  }
+}
+function refreshNumbers(){
+  const cls=state.sel,v=state.view,fi=state.frame,V=vw(cls,v),P=placed(cls,v,fi,state.sex);
+  const own=frameRec(cls,v,fi,state.sex);
+  const where=(own&&Object.keys(own).length)?'this frame'
+    :(P.src==='blend'?'blended':'shared view');
+  $('nClass').textContent=cls;
+  $('nSex').innerHTML=(state.sex==='m')?'♂ male sprite':'♀ female sprite';
+  if(state.sex==='f'&&viewFrames(cls,v,'f')!==viewFrames(cls,v,'m'))
+    $('nSex').innerHTML+=' <span class="hint">· her '+VIEW_LABEL[v].toLowerCase()+' has '
+      +viewFrames(cls,v,'f')+' drawings against his '+viewFrames(cls,v,'m')
+      +', so she started from the shared numbers</span>';
+  $('nView').textContent=(VIEW_LABEL[v]||v)+' · frame '+(fi+1);
+  $('nOn').innerHTML=viewOn(cls,v)?'<span class="on">carried</span>':'<span class="off">none</span>';
+  $('nDesign').textContent=(DESIGN_LABEL[designOf(cls)]||designOf(cls))+' ('+famOf(cls)+')';
+  const handSet=(own&&own.hx!=null)||V.hx!=null;
+  $('nHand').innerHTML=Math.round(P.hx)+', '+Math.round(P.hy)
+    +(handSet?' <span class="hint">· '+where+'</span>':' <span class="hint">· automatic</span>');
+  $('nOff').textContent=(P.dx||0)+', '+(P.dy||0);
+  $('nRot').textContent=(((ANGLE[famOf(cls)]&&ANGLE[famOf(cls)][v])||0)+(P.rot||0))+'°';
+  $('nScale').textContent=(BASE_SCALE*(P.scale||1)).toFixed(2)+'×';
+  $('nFlip').textContent=(P.fx===-1&&P.fy===-1)?'mirrored + upside-down'
+    :(P.fx===-1)?'mirrored ⇄':(P.fy===-1)?'upside-down ⇅':'normal';
+}
+/* =============================================================================
+   Every class at a glance: the whole proposal on one screen.
+   One small live cell per class, drawn by paintCell - the same composite the big
+   stage uses - so what the owner reviews here is what the picker would show.
+   ========================================================================== */
+const SHEET_VIEW='attack';
+const SHEET_PX=96;
+function sheetViewOf(cls,sex){
+  const vs=viewsOf(cls,sex);
+  return vs.indexOf(SHEET_VIEW)>=0 ? SHEET_VIEW : (vs[vs.length-1]||'S');
+}
+function hasStored(cls,view,sex){
+  const V=vw(cls,view,sex);
+  return V.hx!=null || V.hy!=null || !!V.dx || !!V.dy || !!V.rot
+    || (V.scale&&V.scale!==1) || V.fx===-1 || V.fy===-1 || frameKeys(V).length>0;
+}
+/* The numbers this sprite actually stores for a view, so "is hers still his?" can be asked
+   about what she has and not about the work he has that she has not done yet. */
+const PLACE_KEYS=['hx','hy','dx','dy','rot','scale','fx','fy'];
+function storedVals(V){
+  const out={};
+  for(const k of PLACE_KEYS){
+    const v=V[k];
+    const on = (k==='hx'||k==='hy') ? v!=null
+             : (k==='scale') ? (v!=null&&v!==1)
+             : (k==='fx'||k==='fy') ? v===-1 : !!v;
+    if(on) out[k]=v;
+  }
+  return out;
+}
+/* True when everything this sprite stores for the view is exactly what the other sprite
+   stores there - i.e. nothing has been placed on this sprite`s own account yet. */
+function sameAsOther(cls,view,sex){
+  const other=(sex==='m')?'f':'m';
+  const A=vw(cls,view,sex), B=vw(cls,view,other);
+  const a=storedVals(A), b=storedVals(B);
+  const n=Object.keys(a).length, nf=frameKeys(A).length;
+  if(!n&&!nf) return false;                            // nothing stored: nothing to compare
+  for(const [k,v] of Object.entries(a)) if(b[k]!==v) return false;
+  for(const k of frameKeys(A)){
+    const f=A.frames[String(k)], g=(B.frames||{})[String(k)];
+    if(!g) return false;
+    for(const fld of PLACE_KEYS) if(f[fld]!=null && f[fld]!==g[fld]) return false;
+  }
+  return true;
+}
+/* Which sprite's numbers this class is really using on the gender being shown, view by
+   view: 'own' = numbers stored here that differ from the other sprite, 'other' = numbers
+   stored here that are the other sprite's to the digit, 'blank' = nothing stored at all
+   so the page's own automatic hand is what draws. */
+function tuneCounts(cls,sex){
+  const other=(sex==='m')?'f':'m';
+  const mine=viewsOf(cls,sex), theirs=viewsOf(cls,other);
+  const c={own:0,same:0,blank:0,total:mine.length};
+  for(const v of mine){
+    if(!hasStored(cls,v,sex)){c.blank++;continue}
+    if(theirs.indexOf(v)>=0 && hasStored(cls,v,other) && sameAsOther(cls,v,sex)) c.same++;
+    else c.own++;
+  }
+  return c;
+}
+/* The one-word state of a class on the gender being shown.  A class can be part his and
+   part untouched (her four basics: his numbers on the attack, nothing on the walks), so
+   that mixture gets its own word instead of pretending to be one of them. */
+function tunedState(cls,sex){
+  const c=tuneCounts(cls,sex);
+  if(c.own&&c.same) return 'mixed';
+  if(c.own) return 'own';
+  if(c.same) return 'other';
+  return 'none';
+}
+function buildSheet(){
+  const box=$('sheet'); if(!box) return;
+  box.innerHTML=''; sheetTiles=[];
+  for(const n of CLASS_ORDER){
+    const t=document.createElement('div'); t.className='t';
+    const cv=document.createElement('canvas'); cv.width=SHEET_PX; cv.height=SHEET_PX;
+    const nm=document.createElement('div'); nm.className='nm'; nm.textContent=n;
+    const st=document.createElement('div'); st.className='st';
+    const bd=document.createElement('div'); bd.className='bd';
+    t.append(cv,nm,st,bd);
+    t.onclick=()=>{state.sel=n;state.view=sheetViewOf(n,state.sex);state.frame=0;state.pick=false;refreshAll()};
+    box.appendChild(t);
+    sheetTiles.push({cls:n,cv,t,st,bd});
+  }
+  sheetBuilt=true;
+}
+function paintSheetTile(T,sex,view){
+  const n=viewFrames(T.cls,view,sex);
+  const fi=n>1 ? (sheetFrame%n) : 0;
+  const z=SHEET_PX/200;
+  paintCell(T.cv.getContext('2d'),SHEET_PX,SHEET_PX,{cls:T.cls,sex,view,fi,z,ox:0,oy:0,mk:4});
+}
+function refreshSheet(){
+  if(!sheetOn) return;
+  if(!sheetBuilt) buildSheet();
+  const sex=state.sex, counts={own:0,other:0,mixed:0,none:0};
+  for(const T of sheetTiles){
+    const view=sheetViewOf(T.cls,sex), how=tunedState(T.cls,sex);
+    counts[how]++;
+    T.st.className='st'+(how==='other'||how==='mixed'?' his':(how==='own'?' hers':''));
+    T.st.textContent = how==='own' ? (sex==='m'?'his own numbers':'her own numbers')
+                     : how==='other' ? (sex==='m'?'same as hers':'same as his')
+                     : how==='mixed' ? (sex==='m'?'his, but split':'his on some views')
+                     : 'not tuned yet';
+    T.t.className='t'+(T.cls===state.sel?' sel':'')+(anyOn(T.cls)?'':' off');
+    const armed=anyOn(T.cls) && viewOn(T.cls,view,sex);
+    T.bd.textContent=anyOn(T.cls)?'':'no weapon';
+    T.bd.style.display=armed?'none':'';
+    paintSheetTile(T,sex,view);
+  }
+  const bits=[];
+  bits.push('on '+(sex==='m'?'his':'her')+' own numbers: <b>'+counts.own+'</b>');
+  if(counts.other) bits.push((sex==='m'?'still identical on both sprites':'still his numbers')+': <b>'+counts.other+'</b>');
+  if(counts.mixed) bits.push('partly his, part untouched: <b>'+counts.mixed+'</b>');
+  if(counts.none) bits.push('not tuned yet: <b>'+counts.none+'</b>');
+  $('sheetTag').textContent=SEX_WORD(sex)+' sprite';
+  $('sheetNote').innerHTML='Each class as it stands — '+bits.join(' · ')
+    +'. Click a tile to work on that class.';
+}
+function SEX_WORD(sex){return sex==='m'?'male':'female'}
+function sheetTick(ts){
+  if(!sheetOn){sheetRaf=null;return}
+  if(!sheetLast)sheetLast=ts;
+  if(ts-sheetLast>=110){sheetLast=ts;sheetFrame++;
+    for(const T of sheetTiles) paintSheetTile(T,state.sex,sheetViewOf(T.cls,state.sex));}
+  if(sheetDirty){sheetDirty=false;refreshSheet()}
+  sheetRaf=requestAnimationFrame(sheetTick);
+}
+function refreshSummary(){  const lines=[];
+  lines.push('<div class="hint">Tuning the <b>'+(state.sex==='m'?'male':'female')+'</b> sprite. '
+    +'Each sprite keeps its own numbers — flip gender with the ♂/♀ buttons.</div>');
+  const sex=state.sex;
+  for(const n of CLASS_ORDER){
+    if(!anyOn(n)){lines.push('<div><b>'+n+'</b> — <span class="off">no weapon</span></div>');continue}
+    const bare=viewsOf(n,sex).filter(v=>!viewOn(n,v,sex)).map(v=>VIEW_LABEL[v]);
+    const perFrame=viewsOf(n,sex).map(v=>[v,frameKeys(vw(n,v,sex)).length]).filter(x=>x[1])
+      .map(x=>VIEW_LABEL[x[0]]+' '+x[1]).join(', ');
+    const moved=viewsOf(n,sex).filter(v=>{const V=vw(n,v,sex);
+      return V.hx!=null||V.dx||V.dy||V.rot||(V.scale&&V.scale!==1)||V.fx===-1||V.fy===-1}).map(v=>VIEW_LABEL[v]);
+    let s='<div><b>'+n+'</b> — '+(DESIGN_LABEL[designOf(n)]||designOf(n));
+    if(bare.length)s+=' <span class="hint">· bare on '+bare.join(', ')+'</span>';
+    if(perFrame)s+=' <span class="hint">· per-frame on '+perFrame+'</span>';
+    if(moved.length)s+=' <span class="hint">· adjusted on '+moved.join(', ')+'</span>';
+    s+='</div>';
+    lines.push(s);
+  }
+  $('summary').innerHTML=lines.join('');
+  $('export').value=proposalJSON();
+  // how big each hand-back is, so it is obvious which one to paste back
+  try{
+    const chg=changedJSON();
+    $('chgSize').textContent=kb(chg);
+    $('fullSize').textContent=kb($('export').value);
+    const c=Object.keys(JSON.parse(chg).classes).length;
+    $('copyChanges').title=c?('short hand-back: '+c+' class'+(c===1?'':'es')+' you have changed, '
+      +'loads onto the saved default'):'nothing changed yet';
+  }catch(e){}
+}
+function refreshPlayButton(){
+  $('play').textContent=state.playing?'❄ Freeze':'▶ Play animation';
+  $('play').className=state.playing?'':'on';
+  $('pausebar').innerHTML=state.playing
+    ? 'Animating. <b>Freeze</b> it again to place the weapon — placement is against a still frame.'
+    : 'Frozen on <b>frame '+(state.frame+1)+'</b>. Step with <b>◀ frame</b> / <b>frame ▶</b> (or <span class="kbd">,</span> <span class="kbd">.</span>) and place the weapon on the frame you care about.';
+}
+function refreshFrameLabel(){
+  $('frameLbl').textContent='frame '+(state.frame+1)+'/'+viewFrames(state.sel,state.view,state.sex);
+}
+/* Says whether this frame has its own numbers, is blended, or shares the view's. */
+function refreshFrameSrc(){
+  const cls=state.sel,view=state.view,fi=state.frame;
+  const P=placed(cls,view,fi,state.sex), V=vw(cls,view), keys=frameKeys(V);
+  const tuned=keys.length, n=viewFrames(cls,view,state.sex);
+  const tail=tuned?(' · '+tuned+'/'+n+' frames of this view tuned'):'';
+  $('frameSrc').innerHTML=(P.src==='frame'? '<b style="color:var(--gold)">this frame has its own placement</b>'
+    :(P.src==='blend'? '<b style="color:var(--gold)">blended between the frames you set</b>'
+    : 'using the shared placement for this view'))+tail;
+  $('blend').checked=!!V.blend;
+}
+function refreshSexes(){
+  const box=$('sexes');box.innerHTML='';
+  for(const [sex,label] of [['m','♂ Male'],['f','♀ Female']]){
+    const b=document.createElement('button');
+    b.textContent=label;
+    b.className=(state.sex===sex)?'on':'';
+    b.title=(sex==='m')?'the male sprite':'the female sprite — its own hands and frames';
+    b.onclick=()=>{if(state.sex===sex)return;state.sex=sex;state.frame=0;state.pick=false;refreshAll()};
+    box.appendChild(b);
+  }
+}
+function refreshPickButton(){
+  $('pick').className=state.pick?'handon':'';
+  $('pick').textContent=state.pick?'🎯 Click the hand…':'🎯 Set hand';
+  stage.classList.toggle('pick',!!state.pick);
+  const [hx,hy,guess]=handBox(state.sel,state.sex,state.view,state.frame);
+  $('handLbl').innerHTML=state.pick
+    ? 'click the sprite: the hand for <b>'+(VIEW_LABEL[state.view]||state.view)
+      +'</b> on frame '+(state.frame+1)+' is set where you click'
+    : (guess? 'hand '+Math.round(hx)+', '+Math.round(hy)+' (automatic)'
+            : '<b style="color:var(--hand)">hand '+Math.round(hx)+', '+Math.round(hy)+'</b>');
+  const PP=placed(state.sel,state.view,state.frame,state.sex);
+  $('flipX').className=(PP.fx===-1)?'on':'';
+  $('flipY').className=(PP.fy===-1)?'on':'';
+}
+function refreshAll(){
+  if(viewsOf(state.sel,state.sex).indexOf(state.view)<0)
+    state.view=viewsOf(state.sel,state.sex)[0]||state.view;      // that gender may not have it
+  state.frame=Math.max(0,Math.min(state.frame,viewFrames(state.sel,state.view,state.sex)-1));
+  refreshSexes();
+  refreshClassList();refreshViews();refreshViewTable();refreshDesigns();refreshRefStrip();
+  refreshNumbers();refreshSummary();refreshPlayButton();refreshFrameLabel();refreshFrameSrc();
+  refreshPickButton();sheetDirty=true;if(sheetOn)refreshSheet();requestRender();
+}
+
+/* =============================================================================
+   Hand-back
+   ========================================================================== */
+/* =============================================================================
+   The two hand-backs.
+   `proposalJSON` is everything: every frame of every view of both sprites, which is
+   what a full backup needs and is also long enough that pasting it back is painful.
+   `changedJSON` carries only the classes and views that differ from the saved default,
+   which is what the owner actually means when they say "here are my new placements".
+   A view it does mention carries ALL of that view's stored rows, because loading a
+   hand-back replaces a view it is given - a partial view would silently drop rows.
+   ========================================================================== */
+let DEFAULT_SNAP=null;
+function snapView(cls,view,sex){
+  const V=vw(cls,view,sex), st=storedVals(V), frames={};
+  for(const k of frameKeys(V)){
+    const f=V.frames[String(k)], o={};
+    for(const fld of PLACE_KEYS) if(f[fld]!=null) o[fld]=f[fld];
+    frames[k]=o;
+  }
+  return {on:V.on!==false, blend:V.blend!==false, st, frames};
+}
+function snapshot(){
+  const out={};
+  for(const n of CLASS_ORDER){
+    const views={m:{},f:{}};
+    for(const sex of ['m','f']) for(const v of viewsOf(n,sex)) views[sex][v]=snapView(n,v,sex);
+    out[n]={fam:famOf(n), design:designOf(n), off:classOff(n), views};
+  }
+  return out;
+}
+const sameSnap=(a,b)=>JSON.stringify(a)===JSON.stringify(b);
+function changedClasses(){
+  const now=snapshot(), names=[];
+  for(const n of CLASS_ORDER){
+    const A=DEFAULT_SNAP&&DEFAULT_SNAP[n], B=now[n];
+    if(!A){ names.push(n); continue }
+    let diff = A.fam!==B.fam || A.design!==B.design || A.off!==B.off;
+    for(const sex of ['m','f']) for(const v of viewsOf(n,sex))
+      if(!sameSnap(A.views[sex][v],B.views[sex][v])) diff=true;
+    if(diff) names.push(n);
+  }
+  return {names, now};
+}
+const pack=P=>({hand:[Math.round(P.hx),Math.round(P.hy)],
+  dx:+(P.dx||0).toFixed(2),dy:+(P.dy||0).toFixed(2),rot:+(P.rot||0).toFixed(2),
+  scale:+(P.scale||1).toFixed(2),flip:[(P.fx===-1?-1:1),(P.fy===-1?-1:1)]});
+/* One view in the same shape the full export uses, but only its hand-set rows and
+   without the `src` tag (in this file every row listed IS a hand-set row). */
+function viewOut(cls,view,sex){
+  const V=vw(cls,view,sex), auto=autoHand(cls,sex,view);
+  const hand=[Math.round(V.hx!=null?V.hx:auto[0]),Math.round(V.hy!=null?V.hy:auto[1])];
+  const frames={};
+  for(const k of frameKeys(V)){
+    const P=placed(cls,view,k,sex);
+    frames[k]=pack(P);
+  }
+  return {weapon:viewOn(cls,view,sex), blend:!!V.blend,
+    base:{hand, handAuto:V.hx==null, dx:+(V.dx||0).toFixed(2), dy:+(V.dy||0).toFixed(2),
+          rot:+(V.rot||0).toFixed(2), scale:+(V.scale||1).toFixed(2),
+          flip:[(V.fx===-1?-1:1),(V.fy===-1?-1:1)]},
+    frames};
+}
+function changedJSON(){
+  const {names, now}=changedClasses();
+  const out={page:'weapon-proposal',version:5,kind:'changes',classes:{}};
+  for(const n of names){
+    const A=DEFAULT_SNAP&&DEFAULT_SNAP[n], B=now[n], rec={};
+    if(!A||A.fam!==B.fam) rec.family=B.fam;
+    if(!A||A.design!==B.design) rec.design=B.design;
+    if(A&&A.off!==B.off) rec.off=B.off;
+    // only the sprites and views that really changed - an empty "f":{} block would be
+    // noise in every hand-back and reads like something was set on her sprite
+    const views={}; let any=false;
+    for(const sex of ['m','f']) for(const v of viewsOf(n,sex)){
+      if(A&&sameSnap(A.views[sex][v],B.views[sex][v])) continue;
+      (views[sex]=views[sex]||{})[v]=viewOut(n,v,sex); any=true;
+    }
+    if(any) rec.views=views;
+    out.classes[n]=rec;
+  }
+  // no indentation on purpose: this is the one the owner pastes back, and a compact
+  // line is several times smaller than the same object pretty-printed. The full export
+  // stays indented - that one is for reading and for backups.
+  return JSON.stringify(out);
+}
+const kb=s=>s.length<1024?(s.length+' B'):((s.length/1024).toFixed(1)+' KB');
+function proposalJSON(){
+  const out={page:'weapon-proposal',version:4,classes:{}};
+  for(const n of CLASS_ORDER){
+    const views={m:{},f:{}};
+    for(const sex of ['m','f']){
+      for(const v of viewsOf(n,sex)){
+        const V=vw(n,v,sex), nf=viewFrames(n,v,sex);
+        // `frames` is what to draw: one resolved placement per drawing, already blended,
+        // with `src` saying whether it was set on that frame, blended, or the view default
+        const frames=[];
+        for(let i=0;i<nf;i++){
+          const P=placed(n,v,i,sex);
+          frames.push(Object.assign(pack(P),{src:V.frames&&V.frames[String(i)]&&Object.keys(V.frames[String(i)]).length
+            ?'frame':P.src}));
+        }
+        // the shared numbers an untouched frame falls back to (handAuto says the hand is
+        // still that sprite's own guess rather than something the owner chose)
+        const auto=autoHand(n,sex,v);
+        const shared={hand:[Math.round(V.hx!=null?V.hx:auto[0]),Math.round(V.hy!=null?V.hy:auto[1])],
+          handAuto:V.hx==null,
+          dx:+(V.dx||0).toFixed(2),dy:+(V.dy||0).toFixed(2),rot:+(V.rot||0).toFixed(2),
+          scale:+(V.scale||1).toFixed(2),flip:[(V.fx===-1?-1:1),(V.fy===-1?-1:1)]};
+        views[sex][v]={weapon:viewOn(n,v,sex),blend:!!V.blend,base:shared,frames};
+      }
+    }
+    out.classes[n]={family:famOf(n),design:classOff(n)?null:designOf(n),views};
+  }
+  return JSON.stringify(out,null,1);
+}
+async function copyOut(txt,what){
+  $('export').value=txt;
+  try{await navigator.clipboard.writeText(txt);
+    $('copyNote').innerHTML='<b style="color:var(--ok)">Copied '+kb(txt)+'.</b> Paste it back to the agent.'}
+  catch(e){$('export').select();
+    $('copyNote').textContent='Press Ctrl/Cmd+C — the JSON ('+kb(txt)+') is selected below.'}
+}
+$('copyChanges').onclick=async()=>{
+  const txt=changedJSON();
+  const names=Object.keys(JSON.parse(txt).classes);
+  await copyOut(txt,'changes');
+  if(!names.length) $('copyNote').innerHTML='<b>Nothing changed yet</b> — move something first, '
+    +'or use <b>Copy everything</b> for a full backup.';
+};
+$('copy').onclick=()=>copyOut(proposalJSON(),'everything');
+$('default').onclick=()=>{
+  try{localStorage.removeItem(KEY);localStorage.removeItem(OLDKEY);localStorage.removeItem(OLDKEY1)}catch(e){}
+  load();refreshAll();
+  $('copyNote').textContent='Back to the saved default (the owner\'s progress).';
+};
+$('importGo').onclick=()=>{
+  const txt=$('importBox').value||'';
+  let obj=null;
+  try{obj=JSON.parse(txt)}catch(e){$('importNote').innerHTML='<b style="color:var(--bad)">that is not JSON</b>';return}
+  const n=importProgress(obj);
+  save();refreshAll();
+  $('importNote').innerHTML=n?('<b style="color:var(--ok)">loaded '+n+' frame placements</b>')
+    :'<b style="color:var(--bad)">nothing I recognised in there</b>';
+};
+$('sheetBtn').onclick=()=>{
+  sheetOn=!sheetOn;
+  $('sheet').hidden=!sheetOn;
+  $('sheetBtn').textContent=sheetOn?'▤ hide the pictures':'▤ show the pictures';
+  if(sheetOn){
+    if(!sheetBuilt) buildSheet();
+    refreshSheet();
+    if(!sheetRaf){sheetLast=0;sheetRaf=requestAnimationFrame(sheetTick)}
+  }else if(sheetRaf){cancelAnimationFrame(sheetRaf);sheetRaf=null}
+};
+$('sexCopy').onclick=()=>{copyClassToOtherSex();refreshAll();
+  $('copyNote').innerHTML='Copied <b>'+state.sel+'</b> to the '+(state.sex==='m'?'female':'male')+' sprite.'};
+$('reset').onclick=()=>{
+  const e=entry(state.sel);
+  for(const v of viewsOf(state.sel))e.views[v]=blankView();
+  save();refreshAll();
+};
+$('allOn').onclick=()=>{for(const n of CLASS_ORDER){const e=entry(n);e.off=false;
+  for(const sex of ['m','f'])for(const v of viewsOf(n,sex))vw(n,v,sex).on=true}save();refreshAll()};
+$('allOff').onclick=()=>{for(const n of CLASS_ORDER)entry(n).off=true;save();refreshAll()};
+$('viewAll').onclick=()=>{const e=entry(state.sel);e.off=false;
+  for(const v of viewsAny(state.sel))vw(state.sel,v,state.sex).on=true;save();refreshAll()};
+$('viewNone').onclick=()=>{for(const v of viewsAny(state.sel))vw(state.sel,v).on=false;save();refreshAll()};
+$('handAll').onclick=()=>{
+  const P=placed(state.sel,state.view,state.frame,state.sex);
+  const pt=[Math.round(P.hx),Math.round(P.hy)];
+  for(const v of viewsOf(state.sel,state.sex)){const X=vw(state.sel,v,state.sex);X.hx=pt[0];X.hy=pt[1]}
+  save();refreshAll();
+};
+$('handClear').onclick=()=>{
+  for(const v of viewsOf(state.sel,state.sex)){
+    const X=vw(state.sel,v,state.sex);X.hx=null;X.hy=null;
+    if(X.frames)for(const k of Object.keys(X.frames)){
+      delete X.frames[k].hx;delete X.frames[k].hy;
+      if(!Object.keys(X.frames[k]).length)delete X.frames[k];
+    }
+  }
+  save();refreshAll();
+};
+$('frameCopy').onclick=()=>{
+  const cls=state.sel,view=state.view,fi=state.frame,sex=state.sex;
+  const n=viewFrames(cls,view,sex),P=placed(cls,view,fi,sex);
+  const keep={hx:Math.round(P.hx),hy:Math.round(P.hy),dx:+(P.dx||0),dy:+(P.dy||0),
+              rot:+(P.rot||0),scale:+(P.scale||1),fx:P.fx||1,fy:P.fy||1};
+  for(let i=0;i<n;i++)setFrame(cls,view,i,keep,sex);
+  refreshAll();
+};
+$('frameClear').onclick=()=>{clearFrame(state.sel,state.view,state.frame,state.sex);refreshAll()};
+$('blend').onchange=()=>{vw(state.sel,state.view,state.sex).blend=!!$('blend').checked;save();refreshAll()};
+$('flipX').onclick=()=>{const P=placed(state.sel,state.view,state.frame,state.sex);
+  setFrame(state.sel,state.view,state.frame,{fx:(P.fx===-1)?1:-1},state.sex);refreshAll()};
+$('flipY').onclick=()=>{const P=placed(state.sel,state.view,state.frame,state.sex);
+  setFrame(state.sel,state.view,state.frame,{fy:(P.fy===-1)?1:-1},state.sex);refreshAll()};
+$('flipClear').onclick=()=>{setFrame(state.sel,state.view,state.frame,{fx:1,fy:1},state.sex);refreshAll()};
+$('play').onclick=()=>{state.playing=!state.playing;last=performance.now();acc=0;refreshPlayButton();refreshFrameLabel();requestRender()};
+$('prevFrame').onclick=()=>stepFrame(-1);
+$('nextFrame').onclick=()=>stepFrame(1);
+$('pick').onclick=()=>{state.pick=!state.pick;refreshPickButton()};
+
+/* ---- provenance box ---- */
+$('prov').innerHTML='Every image on this page is a real Ragnarok Online client sprite, decoded from the'
+  +' client\'s own <code>.spr</code> files and cropped to its own opaque bounds — nothing was drawn,'
+  +' traced or recoloured. <code>assets/weapons_manifest.json</code> records the exact source file behind'
+  +' each of the '+Object.keys(ART).filter(k=>k.indexOf('held_')!==0).length+' item images, and'
+  +' <code>tools/make_weapon_pack.py</code> is the tool that produced them.';
+
+load();
+// every class gets a view entry for every view it has, so the tables are never empty
+for(const n of CLASS_ORDER) entry(n);
+refreshAll();
+requestRender();
+</script>
+</body>
+</html>
