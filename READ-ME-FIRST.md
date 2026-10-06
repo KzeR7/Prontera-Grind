@@ -41,16 +41,31 @@ the repo, so pushing to `main` is the deploy.
   it carries the house rules (crop only, never draw art; all 8 directions and 3 animation rows
   survive; append to the log; bump `BUILD` for anything a player can see) and the history.
 
-Login for testing: **`GM`** — and the password is deliberately not written down here any more. Since
-v60 the game stores only a stretched hash of it (`node tools/make_gm_hash.js --check "…"` tells you
-whether a password is the live one; without an argument the tool prints how to set a new one). Normal
-accounts are made in-game and stored in the browser (`pg_acc4`; saves under `pg_save3_<user>`).
+Login for testing: **`GM`** — the password is deliberately not written down here. Since v60 the game
+stores only a stretched hash of it (`node tools/make_gm_hash.js --check "…"` says whether a password
+is the live one; with no argument the tool prints how to set a new one). Since v61 you can also set a
+**local, simple** GM password that lives only in your own browser and never in this repo: run
+`localStorage.setItem('pg_gm_local', gmHash('test1234'))` in the game's console once, then log in as
+`GM` / `test1234`; `localStorage.removeItem('pg_gm_local')` removes it. Normal accounts are made
+in-game and stored in the browser (`pg_acc4`; saves under `pg_save3_<user>`).
 
 ## Run it
 
 ```sh
 python3 -m http.server 8000 --bind 0.0.0.0     # then open the preview on port 8000
 ```
+
+## Publish it
+
+```sh
+bash tools/build_site.sh                        # -> dist/ : index.html + assets/ + Updates/Sprite/
+```
+
+Point the host at **dist/** (Render static site: Build Command `bash tools/build_site.sh`, Publish
+Directory `dist`; Cloudflare Pages: same command, "Build output directory" `dist`). The repo root is
+*not* a publish directory: it holds the tools, the art sources and the screenshots, and a host that
+serves the root publishes all of them. `tools/tests/publish_sim.js` runs this build in CI and fails if
+anything dev-side reaches `dist/`.
 
 ## Test it — before every push
 

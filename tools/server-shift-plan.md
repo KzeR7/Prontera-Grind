@@ -435,7 +435,35 @@ tools/tests/api_sim.js  # house rule 6: a Worker handler with no test is not fin
     **Publish Directory** `dist`. Build Filters are *not* the answer — they decide whether a deploy
     runs at all, not what gets published.
   * **On Cloudflare Pages:** Build command `bash tools/build_site.sh`, Build output directory `dist`.
+    Cloudflare applies an own convention too: a **`.assetsignore`** in the root of the output
+    directory excludes files from being served. This repo carries one at its root (§7b.1) as a
+    second line of defence, so even a project mis-pointed at the repo root cannot serve `tools/`,
+    `Sprite/`, the legacy pages or the screenshots.
   * `dist/` is in `.gitignore` and is rebuilt by the host, so it is never committed.
+  * **Enforced by a test:** `node tools/tests/publish_sim.js` runs the real build and fails if a
+    required file is missing, if any `assets/` path `index.html` names is absent, if the class skins
+    stopped shipping, if a dev file appears in the output, or if the tree grows past 30 MB. That is
+    the answer to "how do I stop this happening again": the rule lives in a suite, not in a habit.
+
+### 7b.1 Why the publish rules must be enforced by a test, not by memory
+
+The failure this fixes was not a bug in the game — it was a *deployment* assumption nobody had
+written down: "a static host publishes the whole publish directory". Three things now make it
+impossible to forget, in increasing order of strength:
+
+1. **One publish path.** `tools/build_site.sh` is the only thing that produces a site; the host's
+   build command is that script, and the host's output directory is `dist/`. Publishing the repo root
+   is no longer a configuration anyone can drift into by accident.
+2. **A deny list in two places.** `.assetsignore` (Cloudflare's own convention) covers the case where
+   the output directory *is* the repo root; `build_site.sh` refuses to finish if a dev file is in
+   `dist/`. Neither path can serve `_login.html` any more.
+3. **A test that runs the real build.** `tools/tests/publish_sim.js` (in the pre-push list, AGENTS.md)
+   re-derives what the game needs *from the game itself* — the static `assets/` references in
+   `index.html` and the `Updates/Sprite` path inside `assets/class_skins_data.js` — so a future change
+   that adds a new asset directory fails a suite instead of 404-ing in a player's browser.
+
+The general rule worth keeping: **anything that must be true about a deploy belongs in a test that
+runs the deploy.** Documentation explains; a suite enforces.
 * Add `tools/tests/api_sim.js` to the "Verify before you push" block in `AGENTS.md`. It can drive the
   handlers against a fake D1 binding, the same way the existing suites drive real game functions.
 * **Local development**: `npx wrangler dev` gives you Pages Functions + a local D1

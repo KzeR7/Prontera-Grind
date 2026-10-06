@@ -512,7 +512,8 @@ node tools/tests/weapon_review_sim.js  # -> "13 passed, 0 failed"
 node tools/tests/pet_sim.js            # -> "13 passed, 0 failed" (+ printed pet data and the maxed-pet balance measurement)
 node tools/tests/sprite_sim.js         # -> "12 passed, 0 failed"
 node tools/tests/background_sim.js     # -> "12 passed, 0 failed" (grinding is permanent)
-node tools/tests/gm_auth_sim.js        # -> "10 passed, 0 failed" (GM password hashed, not stored; tool/game agree)
+node tools/tests/gm_auth_sim.js        # -> "12 passed, 0 failed" (GM password hashed; local GM password; tool/game agree)
+node tools/tests/publish_sim.js        # -> "7 passed, 0 failed" (runs the real build; only game files ship)
 node tools/tests/scene_sim.js          # -> "8 passed, 0 failed" (per-map scenery, water, clear lane)
 node tools/tests/starter_sim.js        # -> "8 passed, 0 failed" (the gentle starter stages)
 node tools/tests/stat_sim.js           # -> "7 passed, 0 failed"
@@ -3511,3 +3512,47 @@ assigned for feel rather than fidelity. While reworking that, two shipped bugs s
 * **Branches / PR:** `arena/50beb968-prontera-grind`, same PR updated.
 * **Known limits / follow-ups:** the Render/Cloudflare settings are owner actions in a dashboard, not
   something a push can do for them; until they are set, the live site still publishes the whole repo.
+
+### 2026-10-06 — `grind-v61 a local GM password, publish hygiene enforced by a test, and the GM panel plan`
+
+* **What changed for the player:** nothing in normal play. The GM login gains a second, deliberate
+  door: a **local GM password** kept in the GM's own browser, so a short simple password can be used
+  for testing without ever appearing in this public file. Set it once from the console with
+  `localStorage.setItem('pg_gm_local', gmHash('test1234'))`, then log in as `GM` / `test1234`;
+  `localStorage.removeItem('pg_gm_local')` removes it. The file's own long password still works, and
+  is still required when no local value is set. `BUILD` is now
+  `2026-10-06 grind-v61 local GM password + publish-only build`.
+* **Why it is safe enough:** the local hash never leaves the GM's browser, so no other player can read
+  it and the repo carries no usable secret. It is still a client-side door - devtools can set `S.gm`
+  on anyone's own copy - which is why the real GM account is server-side work
+  (`tools/gm-panel-plan.md`, §6).
+* **Publish hygiene, now enforced rather than remembered:** `.assetsignore` (Cloudflare's convention)
+  plus `tools/tests/publish_sim.js`, which **runs the real `tools/build_site.sh`** and fails if a
+  runtime file is missing, if any `assets/` path named in `index.html` is absent from the output, if
+  the class skins (`Updates/Sprite/`) stopped shipping, if a dev file (`_login.html`, `_shot.html`,
+  `logic2.js`, `tools/`, `Sprite/`, `image-search/`, the `_recon_*.png`, the repo docs) appears in it,
+  or if the tree grows past 30 MB. It also asserts `.assetsignore` uses no `!` re-includes, so it can
+  never be the reason a real game file disappears. Both are in the pre-push list now.
+* **New plan document:** `tools/gm-panel-plan.md` - the researched answer to the owner's "GM settings
+  generator". It maps Ragnarok's atcommands (`@item`, `@zeny`, `@baselevel`, `@who`, `@kick`, `@ban`,
+  `@broadcast`, charcommands `#item <name>`) onto this game's real save fields, records what the
+  existing in-game GM tab already does, explains why **editing another player's account is impossible
+  until saves live on the server** (phase 1), picks the delivery mechanism (a `grants` table applied at
+  next login, mailbox later on the same table), and lays out the security model (GM flag in D1 only,
+  `/gm` behind the session, two roles, an audit row for every action, no password ever visible).
+* **Files touched:** `index.html` (`gmOk` + the login branch + `BUILD`), `tools/tests/gm_auth_sim.js`
+  (12 checks now, covering the local password and that it fails closed), `tools/tests/publish_sim.js`
+  (new, 7 checks), `.assetsignore` (new), `tools/gm-panel-plan.md` (new),
+  `Updates/cards-gear-audit/{affix-ranges,equipment-cards-tuning}.html` (v61 label; v60 appended to
+  `SAFE_PREVIOUS_BUILDS`), `AGENTS.md`, `READ-ME-FIRST.md`, `tools/server-shift-plan.md` (new §7b.1 on
+  why the rule is enforced by a test).
+* **Art:** no sheets added, removed or rebuilt; `tools/montage.py` was not used.
+* **Tests:** all **23 suites** pass (21 + `gm_auth_sim` + `publish_sim`), both `--check` tools current,
+  and the inline game script passes `node --check`.
+* **Branches / PR:** `arena/50beb968-prontera-grind`, same PR updated.
+* **Known limits / follow-ups:** **the workspace reset mid-edit during this work and truncated
+  `index.html` to 456 lines** - it was restored from the v60 commit and the three intended edits were
+  re-applied by script with assertions, then every suite re-run (`wc -l` 4080, 397 KB). Anyone reading
+  this later: if a file looks impossibly short, `git checkout HEAD -- <file>` is the recovery, and the
+  suites are what prove the tree is sane. The GM panel itself is **not built** - it needs phase 1 of
+  the server shift first.
