@@ -61,7 +61,46 @@ So the verdict is unchanged, for a better reason than the one this plan original
 | Does 1 + 2 still fit the free tier? | **Yes, with about 3x headroom** — the budget is worked out in §3d. The largest single line item is the social poll, so its interval is a design knob, not a cost. |
 | Login style | **Username + password (server-hashed) with a one-time recovery code** shown at registration (§6.4). No email service needed. |
 | Host | **Read from the dashboard (2026-10-06): 52 MB of 5 GB, 0 of 750 instance hours, 1 service.** Bandwidth is a cents risk, not the reason to move; the reason to move the server is that Render free has no durable database (§1a). The service *type* (static site vs web service) is still worth confirming (§3a) — it decides whether the client also moves in phase 1. |
-| What to build now | **Nothing yet.** This document is the deliverable; the owner reads it and decides when to start. |
+| What to build now | **~~Nothing yet.~~ LIFTED 2026-10-06: the owner said "yes go".** Phase 1 is built — see the status block below. This document is still the design of record; §9 tracks what is done. |
+
+---
+
+### Phase 1 status — BUILT (2026-10-06, `grind-v62`)
+
+Everything below is in the repo and covered by tests. **Nothing is deployed yet**: the Cloudflare
+Pages project does not exist, and `wrangler.toml` still carries `REPLACE_WITH_YOUR_D1_ID`, so the
+hero's old static host keeps serving exactly what it served before (the client detects the missing
+API and stays in local mode). The deploy checklist is `READ-ME-FIRST.md` § *Put the saves on the server*.
+
+| Planned in §5a | Actually shipped | Note |
+|---|---|---|
+| `POST /api/register` | ✅ `functions/api/register.js` | first account registered becomes `gm=2` (owner), so no bootstrap secret lives in the repo |
+| `POST/DELETE /api/sessions` | ✅ `functions/api/sessions.js` | 32-byte token, SHA-256 at rest, `HttpOnly; Secure; SameSite=Lax`, 30-day rolling; only an explicit logout revokes it early |
+| `GET /api/me` | ✅ `functions/api/me.js` | also the client's *is there an API here?* probe (a static host answers HTML, which the client refuses to trust) |
+| `GET/PUT /api/save` | ✅ `functions/api/save.js` | 512 KB cap, `409` echoes the server copy, `save_history` every 10th version (newest 5) |
+| `GET /api/messages` + `POST` | ✅ `functions/api/messages.js` | announcements to all or one player, read state per recipient |
+| (not planned) | ✅ `functions/api/grants.js` | GM gifts: queued server-side, applied by the player's own client (offline players are the normal case), claimed exactly once |
+| `GET /api/board` (phase 2) | ⏳ | the denormalised columns are already written on every save; only the read endpoint and the UI remain |
+| Turnstile on register | ❌ deliberately not | a CAPTCHA in front of a 20-player game the owner is testing would cost more than it saves; rate limits cover the bot case |
+
+Also shipped, beyond §5a/§5b: the **GM console** (`gm.html` + `functions/api/gm/{players,player,log}.js`,
+design in `tools/gm-panel-plan.md` §2–3: `@who`, `@accinfo`, `@item`, `@zeny`, `@baselevel`,
+`@broadcast`, `@ban`, `@kick`, `@hide` vocabulary, audit row for every action) and `_routes.json`,
+which keeps every non-`/api` request off the Functions invocation allowance.
+
+Deliberate deviations from the draft, and why:
+
+* **PBKDF2 at **20 000** iterations, not 210 000.** §3c's 10 ms CPU ceiling is the binding constraint,
+  and 210 000 passes does not fit it by a factor of ten. The iteration count is stored *inside* the
+  hash string (`pbkdf2$<iters>$<salt>$<hash>`), so raising it later upgrades accounts transparently on
+  their next login.
+* **`pub` is derived, not trusted.** The draft had the client sending a leaderboard whitelist; the
+  server now re-derives `level/cls/kills/zeny/playtime` from the save blob on every write, so a
+  tampered client cannot fake a ranking.
+* **No Durable Object for hashing.** Measured at 20 000 iterations, PBKDF2-SHA256 costs ~7 ms, which
+  fits the free plan's 10 ms, so phase 1 is D1 only and stays $0.
+* **Heavy validation on the blob.** `checkSaveBlob`/`publicFields` clamp level ≤ 150, floor Zeny at 0,
+  and reject non-objects: a hostile blob is stored, but it cannot poison the leaderboard.
 
 ---
 

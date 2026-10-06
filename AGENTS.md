@@ -3556,3 +3556,58 @@ assigned for feel rather than fidelity. While reworking that, two shipped bugs s
   this later: if a file looks impossibly short, `git checkout HEAD -- <file>` is the recovery, and the
   suites are what prove the tree is sane. The GM panel itself is **not built** - it needs phase 1 of
   the server shift first.
+
+### 2026-10-06 — `grind-v62 cloud accounts, saves and GM tools`
+
+* **The server shift's phase 1 is built** (`tools/server-shift-plan.md` § *Phase 1 status*, and the
+  design of record is `tools/gm-panel-plan.md`). Cloudflare Pages Functions + D1: username/password
+  accounts (PBKDF2-SHA256, 20 000 iterations, hash format `pbkdf2$<iters>$<salt>$<hash>` so the cost
+  can be raised later without breaking anyone), one-time recovery codes, session cookies, cloud saves
+  with conflict detection and history, announcements, GM gifts, and the GM console.
+* **The game still works with no server at all.** That is the load-bearing decision: `CLOUD.api` is set
+  only when `/api/me` answers *JSON* — a static host answers HTML, which the client refuses to treat as
+  a server — and everything cloud-related is skipped, leaving v61 behaviour (accounts and saves in
+  `localStorage`) byte for byte. The same file therefore ships to the old static host unchanged.
+* **Nothing can lose a save.** The browser keeps simulating and `localStorage` stays the running state;
+  the server is a vault. A `409` opens a three-way chooser (keep this device / keep the cloud / decide
+  later), and every branch keeps both copies: the loser of "keep the cloud" is stashed under
+  `pg_save3_<user>_local_<timestamp>`, and the server keeps a save-history copy a GM can restore.
+* **A failed push stays dirty**, so the next flush retries it — worth stating because the obvious
+  implementation (`dirty=false` in a `finally`) silently drops the sync until the player does
+  something new. Found by `cloud_sim.js`, not by playing.
+* **Gifts are applied by the player's own client**, then claimed (`POST /api/grants`). Offline players
+  are the normal case, so the server queues and the client — which owns the save format and its repair
+  rules — applies. A gift the client does not understand is **left unclaimed**, so the GM sees it still
+  pending and can resend, instead of it disappearing.
+* **The GM console is `gm.html`** (`@item`/`@zeny`/`@baselevel`/`@broadcast`/`@ban` vocabulary, an audit
+  row for every action, passwords replaceable but never readable). It is served publicly and that is
+  fine: it is a client of `/api/gm/*` and every call is authorised from the session cookie. The **first
+  account registered becomes the owner** (`gm=2`), so no bootstrap password lives in the repo.
+* **`_routes.json`** ships in `dist/`: only `/api/*` goes through Functions, so page views stay on the
+  free static path. Two other deliberate cost decisions: PBKDF2 at 20 000 rounds (~7 ms) fits the free
+  plan's 10 ms CPU ceiling that rules out scrypt/argon2; and `pub` (leaderboard columns) is re-derived
+  from the save blob on the server, never trusted from the client.
+* **Files touched:** `index.html` (the cloud module, `CLOUD.api` branch in `submitAuth`, `save()` →
+  `cloudTouch()`, `logout()`, a Cloud log filter, the GM-console button, `BUILD`), `gm.html` (new),
+  `migrations/0001_init.sql` (new), `wrangler.toml` (new), `_routes.json` (new),
+  `functions/_lib/{auth,db,http,validate}.js` (new), `functions/api/{register,sessions,me,save,messages,grants}.js`
+  (new), `functions/api/gm/{players,player,log}.js` (new), `tools/tests/{api_sim,cloud_sim,gm_console_sim}.js`
+  (new), `tools/tests/publish_sim.js` (three new checks), `tools/build_site.sh` (`gm.html` and
+  `_routes.json` now ship), `Updates/cards-gear-audit/*.html` (v62 label; v61 appended to
+  `SAFE_PREVIOUS_BUILDS`), `AGENTS.md`, `READ-ME-FIRST.md`, `tools/server-shift-plan.md`.
+* **Tests:** all **26 suites** pass (23 + `api_sim` + `cloud_sim` + `gm_console_sim`), both `--check`
+  tools current, `bash tools/build_site.sh` clean, inline game script passes `node --check`.
+  `api_sim.js` runs the real handlers against a real SQLite (`node:sqlite`, D1-shaped shim) and found
+  three real bugs while it was written: `currentUser` called `db.sessionByToken` on the D1 handle
+  itself, `noteFailure` read `.first()` without `await` (which disabled the whole per-account lockout),
+  and `new URL(request.url)` threw on a bare path.
+* **Art:** no sheets added, removed or rebuilt; `tools/montage.py` was not used.
+* **Branches / PR:** `arena/50beb968-prontera-grind`, same PR updated.
+* **Known limits / follow-ups:** the **Cloudflare project does not exist yet** and `wrangler.toml`
+  still holds `REPLACE_WITH_YOUR_D1_ID`, so no player is on the server path — the deploy steps are
+  `READ-ME-FIRST.md` § *Put the saves on the server*. `/api/board` (leaderboard), presence, world chat
+  and away-progress accrual are phase 2. There is no password *reset* for a player who loses both
+  password and recovery code except through a GM (by design, and owner-only). The workspace truncated
+  `index.html` mid-edit **twice** during this work; both times it was restored from the last commit and
+  the edits re-applied by guarded script — the habit that saved it is committing after each verified
+  step.

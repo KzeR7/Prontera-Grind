@@ -64,6 +64,32 @@ t('no dev file, tool, art source or repo document is published', () => {
   assert.deepStrictEqual(found, [], 'must never be published: ' + found.join(', '));
 });
 
+t('the GM console ships, because it is only a client of the API', () => {
+  const f = path.join(out, 'gm.html');
+  assert.ok(fs.existsSync(f), 'gm.html must be published - the GM console is how the owner runs the game');
+  const gm = fs.readFileSync(f, 'utf8');
+  assert.ok(gm.length > 4000, 'gm.html looks like a stub');
+  assert.ok(!/GM_PASS|gmHash|passwordHash/.test(gm), 'the console must hold no credentials of its own');
+});
+
+t('Pages sends only /api/* through Functions (the free allowance depends on it)', () => {
+  const f = path.join(out, '_routes.json');
+  assert.ok(fs.existsSync(f), '_routes.json must be in the publish directory (Pages reads it from there)');
+  const r = JSON.parse(fs.readFileSync(f, 'utf8'));
+  assert.strictEqual(r.version, 1);
+  assert.deepStrictEqual(r.include, ['/api/*'], 'only the API should invoke Functions; static files are free and unlimited');
+  assert.ok(!/index\.html|\/\*\*/.test(r.include.join(',')), 'a broad include would bill every page view to the Functions allowance');
+});
+
+t('every API path the client calls exists as a Function file', () => {
+  const calls = [...src.matchAll(/cloudFetch\('([^']+)'/g)].map(m => m[1]);
+  for (const p of ['/register', '/sessions', '/me', '/save', '/messages', '/grants'])
+    assert.ok(fs.existsSync(path.join(root, 'functions', 'api', p.slice(1) + '.js')), 'missing handler: functions/api' + p + '.js');
+  assert.ok(calls.length >= 4, 'the client should be naming API paths');
+  for (const p of ['/gm/players', '/gm/player', '/gm/log'])
+    assert.ok(fs.existsSync(path.join(root, 'functions', 'api', p.slice(1) + '.js')), 'missing handler: ' + p);
+});
+
 t('the published tree is small enough to stay honest', () => {
   const walk = d => fs.readdirSync(d, { withFileTypes: true }).reduce((a, e) =>
     a + (e.isDirectory() ? walk(path.join(d, e.name)) : fs.statSync(path.join(d, e.name)).size), 0);

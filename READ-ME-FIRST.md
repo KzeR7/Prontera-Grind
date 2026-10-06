@@ -2,7 +2,8 @@
 
 A browser Ragnarok-Online-flavoured idle/grind game. **One file is the game**: `index.html`
 (HTML, CSS and JavaScript inline, Three.js from a CDN, no build step). Cloudflare Pages serves
-the repo, so pushing to `main` is the deploy.
+`dist/` (see *Put the saves on the server* below for the API half), so a push to `main` is the
+deploy — but the host's build output directory must be `dist/`, never the repo root.
 
 * `index.html` — the whole game. `const BUILD='…'` near the top is the tag shown on the login card.
 * `assets/sprite_pack_data.js` — the built class pack: 19 class bodies + 2 heads, base64 atlases (~5.8 MB).
@@ -66,6 +67,37 @@ Directory `dist`; Cloudflare Pages: same command, "Build output directory" `dist
 *not* a publish directory: it holds the tools, the art sources and the screenshots, and a host that
 serves the root publishes all of them. `tools/tests/publish_sim.js` runs this build in CI and fails if
 anything dev-side reaches `dist/`.
+
+## Put the saves on the server (v62, optional but this is the point of the shift)
+
+Accounts and saves can live in Cloudflare D1, so a character follows the player to any device. The
+whole feature is **optional by construction**: with no API behind the address, the game runs exactly
+as it always has, with accounts and saves in `localStorage`. Both paths are covered by
+`tools/tests/cloud_sim.js` (19 checks) and `tools/tests/api_sim.js` (27 checks).
+
+1. `npx wrangler d1 create prontera-grind` — copy the `database_id` it prints into `wrangler.toml`
+   (the placeholder is `REPLACE_WITH_YOUR_D1_ID`).
+2. `npx wrangler d1 execute prontera-grind --remote --file migrations/0001_init.sql` — creates
+   `users`, `sessions`, `saves`, `save_history`, `messages`, `message_reads`, `grants`, `events`.
+3. Create the Pages project with **Build command** `bash tools/build_site.sh` and **Build output
+   directory** `dist`, then bind the D1 database to it as **`DB`** (Pages → Settings → Functions →
+   D1 database bindings). `_routes.json` in `dist/` sends only `/api/*` through Functions, so the
+   static site stays on the free unlimited path.
+4. Deploy and open the game. The login card gains "☁ Cloud accounts are on"; the first account you
+   register becomes the **owner** (`gm=2`) and is shown a one-time recovery code — write it down.
+5. Sign in, play, then check it really followed you: open the game in another browser (or on a phone),
+   sign in with the same username and password, and the same character should load.
+
+Day-to-day: **`/gm.html`** is the GM console (players, gifts, passwords, announcements, save
+backups). It is a client of `/api/gm/*` and holds no authority itself; the server checks the session
+cookie on every call. Local testing without a server is unchanged:
+
+```js
+// console on the game page, then log in as GM with that password (this browser only)
+localStorage.setItem('pg_gm_local', gmHash('test1234'))
+```
+
+Verify the production GM hash after rotating it: `node tools/make_gm_hash.js --check "$PW"`.
 
 ## Test it — before every push
 
