@@ -37,7 +37,10 @@ export function makeD1(sqlite) {
 
 export function freshDb(file) {
   const sqlite = new DatabaseSync(file || ':memory:');
-  sqlite.exec(fs.readFileSync(path.join(root, 'migrations', '0001_init.sql'), 'utf8'));
+  const migrations = path.join(root, 'migrations');
+  for (const name of fs.readdirSync(migrations).filter(n => /^\d+_.*\.sql$/.test(n)).sort()) {
+    sqlite.exec(fs.readFileSync(path.join(migrations, name), 'utf8'));
+  }
   return sqlite;
 }
 
@@ -50,6 +53,7 @@ export const ROUTES = {
   'POST /api/sessions': ['onRequestPost', 'api/sessions.js'],
   'DELETE /api/sessions': ['onRequestDelete', 'api/sessions.js'],
   'GET /api/me': ['onRequestGet', 'api/me.js'],
+  'GET /api/board': ['onRequestGet', 'api/board.js'],
   'GET /api/save': ['onRequestGet', 'api/save.js'],
   'PUT /api/save': ['onRequestPut', 'api/save.js'],
   'GET /api/messages': ['onRequestGet', 'api/messages.js'],

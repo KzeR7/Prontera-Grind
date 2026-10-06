@@ -83,7 +83,7 @@ t('Pages sends only /api/* through Functions (the free allowance depends on it)'
 
 t('every API path the client calls exists as a Function file', () => {
   const calls = [...src.matchAll(/cloudFetch\('([^']+)'/g)].map(m => m[1]);
-  for (const p of ['/register', '/sessions', '/me', '/save', '/messages', '/grants'])
+  for (const p of ['/register', '/sessions', '/me', '/save', '/messages', '/grants', '/board'])
     assert.ok(fs.existsSync(path.join(root, 'functions', 'api', p.slice(1) + '.js')), 'missing handler: functions/api' + p + '.js');
   assert.ok(calls.length >= 4, 'the client should be naming API paths');
   for (const p of ['/gm/players', '/gm/player', '/gm/log'])

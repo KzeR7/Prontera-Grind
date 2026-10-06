@@ -101,11 +101,13 @@ let petBuff={atk:0,matk:0,hp:0,leech:0,atkT:0,matkT:0,hpT:0,leechT:0},petBuffSrc
 const rollingSet=new Set(),autoSet=new Set(),busy=()=>false;
 let S=null,mapM=0,mapL=1,selB=null,selC=null;   // remaining panel state comes in with the V grab
 const mobs=[],drops=[],logs=[];
+let boardPeriod='daily',boardCache={},boardLoading=false,boardError='';
+const CLOUD={api:false,on:false};
 const $=id=>({style:{},set innerHTML(v){globalThis['h_'+id]=v},get innerHTML(){return globalThis['h_'+id]||''},textContent:'',onclick:null});
 const dr=()=>1;
 ${code}
 const skpAvail=()=>5,skTree=()=>4,skEarnedMax=()=>9,skLine=()=>['Novice'],skEarned=()=>9,skSpent=()=>0,pv=()=>0,bon=()=>0,qTxt=q=>'quest';
-this.__u={ V, SKILLS, SKILL_ICON, logs, indexSectionOpen, indexToggleSection, set S(v){S=v}, get S(){return S}, set eqPick(v){eqPick=v}, get eqPick(){return eqPick},
+this.__u={ V, SKILLS, SKILL_ICON, logs, indexSectionOpen, indexToggleSection, set S(v){S=v}, get S(){return S}, set boardPeriod(v){boardPeriod=v}, set boardCache(v){boardCache=v}, set boardStatus(v){CLOUD.api=!!v.api;CLOUD.on=!!v.on}, set eqPick(v){eqPick=v}, get eqPick(){return eqPick},
            set indexMode(v){indexMode=v}, get indexMode(){return indexMode}, set mapM(v){mapM=v}, set mapL(v){mapL=v}, set selE(v){selE=v}, get selE(){return selE}, set selB(v){selB=v}, get selB(){return selB}, set selS(v){selS=v}, set selP(v){selP=v} };
 `;
 const sb = { console };
@@ -205,6 +207,24 @@ t('map and boss-field panels stay inside narrow viewports', () => {
   const boss = U.V.map();
   assert.ok(boss.includes('Dark Lord') && boss.includes('BOSS'), 'the last map and boss field still render after selection');
   assert.ok(boss.includes('poolitem'), 'the selected boss field keeps its drop pool');
+});
+
+t('the leaderboard renders daily, weekly and all-time stamps with kills and Base Lv',()=>{
+  U.boardPeriod='weekly';U.boardStatus={api:true,on:true};U.boardCache={weekly:{label:'This week · 2026-10-05 to 2026-10-06 SGT',entries:[{rank:1,name:'Knight_One',level:42,kills:12345}]}};
+  const h=U.V.board();
+  for(const p of ['Daily','Weekly','All-time'])assert.ok(h.includes(p),p+' leaderboard stamp is missing');
+  assert.ok(h.includes('Knight_One')&&h.includes('Lv 42')&&h.includes('12,345 kills'),'the player row shows name, current level and period kills');
+  assert.ok(h.includes('data-a="boardperiod"')&&h.includes('data-a="boardrefresh"'),'the period and refresh buttons are wired');
+  assert.ok(h.includes('self-reported')&&!h.includes('undefined'),'the leaderboard is honest about browser-simulated scores');
+  U.boardStatus={api:false,on:false};U.boardCache={};U.boardPeriod='daily';
+  assert.ok(U.V.board().includes('Sign in to a cloud account'),'the offline static game explains why no board is available');
+});
+
+t('Leaderboard is on the dock, opens from V, and refreshes on open',()=>{
+  assert.ok(src.includes("board:['🏆','Leaderboard','V']"),'the dock entry must advertise the V shortcut');
+  assert.ok(src.includes("const f=Object.entries(TABS).find(([,v])=>v[2]===k);if(f)openTab(f[0])"),'the shared hotkey router must use the dock entry');
+  assert.ok(src.includes("if(k==='board'&&tabs.includes('board'))boardRefresh(boardPeriod)"),'opening/reopening the board must refresh its active period');
+  assert.ok(src.includes("boardperiod:v=>{if(!['daily','weekly','all'].includes(v))return;boardPeriod=v;boardError='';renderWin();boardRefresh(v)"),'changing periods must request that period');
 });
 
 t('the Mastery Index tracks monster titles and consumes loose cards for permanent stat points',()=>{

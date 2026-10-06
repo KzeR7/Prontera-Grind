@@ -7,16 +7,24 @@
 // "is there an API here?" test depends on exactly that), and the static/API split.
 import assert from 'node:assert';
 import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
+import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { start } from '../dev_server.js';
 
 const root = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
+const site = fs.mkdtempSync(path.join(os.tmpdir(), 'pg-dev-server-site-'));
+const build = spawnSync('bash', [path.join(root, 'tools', 'build_site.sh'), site], { encoding: 'utf8' });
+if (build.status !== 0) {
+  fs.rmSync(site, { recursive: true, force: true });
+  throw new Error('could not build the dev-server fixture: ' + (build.stderr || build.stdout));
+}
 let pass = 0, fail = 0;
 const t = async (n, fn) => { try { await fn(); console.log('  ok   ' + n); pass++; } catch (e) { console.log('  FAIL ' + n + ' -> ' + (e && e.message)); fail++; } };
 console.log('dev server: the real handlers over real HTTP, with cookies\n');
 
-const { server, port, close } = await start({ port: 0, host: '127.0.0.1' });
+const { port, close } = await start({ port: 0, host: '127.0.0.1', site });
 const base = 'http://127.0.0.1:' + port;
 const jar = {};                                   // one cookie jar per named player
 const call = async (who, method, url, body) => {
@@ -88,6 +96,17 @@ try {
     assert.strictEqual(JSON.parse(r.data.blob).lv, 17, 'the client needs the server copy to offer a choice');
   });
 
+  await t('the leaderboard route returns the player\'s all-time score and records new synced kills', async () => {
+    const all = await call('friend', 'GET', '/api/board?period=all');
+    assert.strictEqual(all.status, 200);
+    assert.deepStrictEqual([all.data.entries[0].name, all.data.entries[0].level, all.data.entries[0].kills], ['Friend', 17, 17]);
+    assert.strictEqual((await call('anon', 'GET', '/api/board?period=daily')).status, 401);
+    const put = await call('friend', 'PUT', '/api/save', { version: 1, blob: save(22), savedAt: Date.now() });
+    assert.strictEqual(put.status, 200);
+    const day = await call('friend', 'GET', '/api/board?period=daily');
+    assert.deepStrictEqual([day.data.entries[0].name, day.data.entries[0].kills], ['Friend', 5]);
+  });
+
   await t('the owner can reach the GM API; a player cannot', async () => {
     const asOwner = await call('owner', 'GET', '/api/gm/players');
     assert.strictEqual(asOwner.status, 200);
@@ -134,8 +153,8 @@ try {
     assert.ok((await page.text()).includes('Prontera Grind'), 'the game itself must be served at /');
     assert.ok((await fetch(base + '/gm.html')).status === 200, 'the GM console must be served');
     assert.strictEqual((await fetch(base + '/tools/dev_server.js')).status, 404, 'dev files must not be reachable');
-    const { built } = { built: fs.existsSync(path.join(root, 'dist')) };
-    if (built) assert.ok(!fs.existsSync(path.join(root, 'dist', 'tools')), 'the published tree must not contain tools/');
+    assert.ok(fs.existsSync(path.join(site, 'index.html')), 'the fixture must be built before the server starts');
+    assert.ok(!fs.existsSync(path.join(site, 'tools')), 'the published tree must not contain tools/');
   });
 
   await t('an unknown API path answers JSON 404, never the index page', async () => {
@@ -145,6 +164,7 @@ try {
   });
 } finally {
   await close();
+  fs.rmSync(site, { recursive: true, force: true });
 }
 
 console.log('\n' + pass + ' passed, ' + fail + ' failed');

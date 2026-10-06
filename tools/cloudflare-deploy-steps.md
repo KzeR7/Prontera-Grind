@@ -1,4 +1,4 @@
-# Putting Prontera Grind on Cloudflare (phase 1: accounts + cloud saves)
+# Putting Prontera Grind on Cloudflare (initial setup + v64 leaderboard update)
 
 The click-by-click. **Nothing here costs money** and none of it needs a credit card: the whole point
 of choosing Cloudflare was that the free plan never expires, unlike the Render free database.
@@ -6,11 +6,37 @@ of choosing Cloudflare was that the free plan never expires, unlike the Render f
 Time: about 10 minutes, most of it waiting for the first build. You do **not** need to install
 anything — everything below can be done in the browser, with a command-line alternative at the end.
 
+## Updating the existing Pages installation (v64 leaderboard)
+
+The repo already has a Pages/D1 setup (`wrangler.toml`, database binding `DB`, database name `pg`).
+For this update, **do not create a second database or change its ID**. Pages does not apply SQL
+migrations automatically, so apply this additive migration to the bound remote database first:
+
+```sh
+npx wrangler d1 execute pg --remote --file=migrations/0002_leaderboard.sql
+```
+
+You can instead paste `migrations/0002_leaderboard.sql` into the `pg` database's Cloudflare D1
+Console. It backfills all-time totals from existing saves; it intentionally does not pretend old
+kills happened today or this week. The migration is safe to rerun. Keep the weekly calendar starting
+on Monday and dates in Asia/Singapore in mind when checking the boards.
+
+After the SQL succeeds, merging the PR to the connected production branch, `main`, automatically
+starts the Pages production build/deploy. Wait for the Cloudflare Pages check/deployment to finish.
+If you need to deploy manually instead, build and upload the production branch explicitly:
+
+```sh
+bash tools/build_site.sh
+npx wrangler pages deploy dist --project-name prontera-grind --branch main
+```
+
+The Render site is deliberately kept as your backup; this update does not change or remove it.
+
 Two facts to hold on to while you do this:
 
-* **The old site keeps working.** Nothing here touches `prontera-grind.onrender.com`; it keeps serving
-  the v63 file from `dist/` exactly as it does now. Until you switch your players over, the new
-  address is a private test.
+* **Render remains a deliberate backup.** Nothing here touches `prontera-grind.onrender.com` or
+  changes its deployment. Keep it available as your fallback; it is not a problem that it may serve
+  an older build.
 * **You register the first account.** The first account created on the new site becomes the **owner**
   (GM level 2, the one who can reset passwords and hand out GM rights). Do that before you tell
   anyone the address, or one of your friends will become the owner.
@@ -28,12 +54,11 @@ Two facts to hold on to while you do this:
 
 ## 2. Load the schema into it
 
-In the D1 database page, open the **Console** tab, paste the contents of
-`migrations/0001_init.sql`, and run it. It creates the eight tables the server uses (`users`,
-`sessions`, `saves`, `save_history`, `messages`, `message_reads`, `grants`, `events`).
-
-It is written with `CREATE TABLE IF NOT EXISTS` throughout, so running it twice is harmless — if you
-are unsure whether it worked, run it again.
+For a **new database only**, open the D1 database's **Console** tab and run `migrations/0001_init.sql`
+first. It creates the eight core tables (`users`, `sessions`, `saves`, `save_history`, `messages`,
+`message_reads`, `grants`, `events`). Then run `migrations/0002_leaderboard.sql` to add the board's
+lifetime/daily kill counters. Both migrations are additive and safe to rerun. For the existing live
+installation, use only `0002_leaderboard.sql` as described above; do not reinitialize the database.
 
 ## 3. Create the Pages project, connected to the repo
 
@@ -55,10 +80,12 @@ The repo ships a `wrangler.toml`, and Cloudflare treats that file as the **sourc
 what tells the deployment which D1 database to use, and the matching dashboard fields become
 read-only. So the database id belongs in the file, not in the dashboard:
 
-1. In `wrangler.toml`, replace `REPLACE_WITH_YOUR_D1_ID` with the UUID from step 1 and commit/push.
-   (The name stays `pg`; the binding name stays `DB` — that one is load-bearing, every function asks
-   for `env.DB`.)
-2. Cloudflare rebuilds on the push. When it finishes, the deployment has the database.
+1. For a **new D1 database**, replace `database_id` in `wrangler.toml` with its UUID and commit/push.
+   For the existing `pg` deployment, the file is already wired to the right database: leave the ID
+   unchanged. (The name stays `pg`; the binding name stays `DB` — every function asks for `env.DB`.)
+2. With Pages connected to GitHub, a push/merge to its production branch automatically rebuilds. The
+   D1 binding is available to Functions when the build finishes; SQL migrations remain a separate,
+   manual step.
 
 Dashboard alternative, if you would rather not commit the id: **the same table can be added in the
 project's Settings → Bindings → D1 database bindings** — but because the file exists, the dashboard
@@ -72,7 +99,7 @@ Open the `*.pages.dev` address Cloudflare gives the project, and walk this list:
 | Check | Expected |
 |---|---|
 | The login card | says **“☁ Cloud accounts are on — register or sign in…”** |
-| Build tag at the bottom of the card | `2026-10-06 grind-v63 …` (if it says v61, you are looking at the old site) |
+| Build tag at the bottom of the card | `2026-10-06 grind-v64 daily, weekly and all-time leaderboard` |
 | Register your own name | a dialog with a **recovery code** — copy it somewhere safe, it is shown once |
 | Play for a minute | the header badge goes `☁ …` → `☁ ✓` |
 | The same address in a second browser | sign in with the same name and password → **the same character loads** |
@@ -88,11 +115,13 @@ This is the part that is easy to get wrong, so it is worth reading even if it so
 new address is a different website as far as the browser is concerned**, and a browser's saved games
 belong to the address, not to the game. Nothing can migrate them automatically.
 
-So the game now carries a save file instead (v63, on the login card):
+The optional save-file bridge was added in v63. Use it only if the old client actually shows the
+backup control; older builds may not. The Render site is deliberately retained as an older backup,
+and this leaderboard update does not change it.
 
-1. On the **old** site (`prontera-grind.onrender.com`), click **⬇ Back up saves** and keep the
-   `.json` file. It holds every character saved in that browser.
-2. On the **new** site, click **⬆ Restore a backup**, pick the file, and confirm. The characters come
+1. On a source address that shows **⬇ Back up saves**, export the `.json` file. It holds every
+   character saved in that browser.
+2. On the new site, click **⬆ Restore a backup**, pick the file, and confirm. The characters come
    back — same level, same gear, same Zeny.
 3. Register with the **same account name** you used before. The game notices this device already has
    progress under that name and asks the account to adopt it, so the character becomes the cloud save
@@ -119,24 +148,29 @@ that, because "load this file a stranger sent you" is otherwise a way to hand ou
 | Symptom | Cause and fix |
 |---|---|
 | Login card does **not** show the cloud line, and `/api/me` returns an HTML 404 page | The functions did not deploy. Check that `functions/` is in the repo branch you connected, and that `dist/_routes.json` shipped (the build script fails loudly if it is missing). |
-| `/api/*` returns 500 | Usually the database binding: the id in `wrangler.toml` is still the placeholder, or the binding name is not exactly `DB`. |
-| A 500 mentioning `no such table` | The schema was not loaded into **this** database — redo step 2, and check you pasted into the right one. |
+| `/api/*` returns 500 | Check the D1 binding in `wrangler.toml` (`DB` must point at the intended `pg` database). |
+| `/api/board` says `no such table: leaderboard_kills` | Apply `migrations/0002_leaderboard.sql` to that same database. Pages builds do not run D1 migrations. |
+| Another 500 mentioning `no such table` | The initial schema was not loaded into this database — for a new installation, apply `0001_init.sql` first. |
 | Build fails with `MISSING: gm.html` | The build ran from the wrong directory. The project's root directory should be the repository root. |
 | The dashboard will not let you edit the D1 binding | Expected: `wrangler.toml` is the source of truth. Edit the file (step 4). |
 | A player's first login on the new site shows the two-saves chooser | They have progress on that device **and** a save in the account. That is the chooser working: **Keep this device** uploads what they were just playing, **Keep the cloud save** takes the account's copy, and either way the other copy is kept. |
-| You want the old behaviour back | Delete `functions/` and `_routes.json` from the deploy, or just keep using the old address: the client detects the missing API and plays exactly as it did before. |
+| Cloud sign-in is unavailable | The game keeps progress in this browser while offline; use the deliberately retained Render backup if you need to switch hosts. Do not delete the Pages Functions or D1 binding just to recover locally. |
 
 ## Command-line alternative
 
-If you prefer a terminal to the dashboard, the same five steps are:
+For the **existing** installation, the manual v64 update is:
 
 ```sh
 npx wrangler login
-npx wrangler d1 create pg                        # prints the database_id for wrangler.toml
-npx wrangler d1 execute pg --remote --file=migrations/0001_init.sql
-npx wrangler pages project create prontera-grind --production-branch main
-npx wrangler pages deploy dist                   # a manual deploy; the Git connection is still better
+npx wrangler d1 execute pg --remote --file=migrations/0002_leaderboard.sql
+bash tools/build_site.sh
+npx wrangler pages deploy dist --project-name prontera-grind --branch main
 ```
+
+For a **brand-new** Pages project, first create `pg`, apply `0001_init.sql`, configure its database ID
+in `wrangler.toml`, and create the Pages project with production branch `main`; then apply `0002` and
+build/deploy as above. A Git-connected project will deploy automatically after merges to `main`, so
+the manual Pages command is only a fallback.
 
 Local development against a real Functions runtime (this is the official way; `tools/dev_server.js`
 is the offline one that needs no account):
