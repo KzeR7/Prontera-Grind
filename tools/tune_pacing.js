@@ -1,169 +1,135 @@
-// tools/tune_pacing.js — solve the EXP/job curves against the requested live pacing.
-//   node tools/tune_pacing.js
-//   node tools/tune_pacing.js cA,aA,aB,n100   # verify a candidate
+// tools/tune_pacing.js — solve and verify the live Base-EXP curve.
+//   node tools/tune_pacing.js            # solve design B from its targets, print the constants
+//   node tools/tune_pacing.js --verify   # check index.html's shipped constants + timings
+//   node tools/tune_pacing.js a,b,c,d,e[,f]
+//        # check a candidate: a=NA1, b=NE1, c=NE2, d=NE2B, e=N100[, f=NE3]
 //
-// Canonical model: 800 kills/hour on the level-appropriate field power along the route
-// (Prontera p1-10; early class fields through p50; then power ~= Base Lv). Mob EXP, Job EXP,
-// quest fractions and the 3x / 70x / 70÷3x normal EXP rates mirror index.html (v51 adds the
-// 3x band through Base Lv 70). A boss replaces
-// the pack every 16th kill; the actual Stage-10 boss-with-escorts fight is not simulated.
+// Everything here is in the units index.html ships (the v56 display scale: EXP_RATE 7, so a
+// Lv1 kill pays 21 EXP and Base 10 needs 360). tools/pacing_report.js prints the same model
+// as a level-by-level table.
 //
-// v51 pacing targets: Base 1->10 in about 2.5 minutes, Base 10->50 in about 11 more, and
-// Base 50->99 in about 4.5 more hours (about 4h50m total). Preserve the 48-hour Base
-// 100->150 tail after the deliberate reset. Requirements rise within each phase; only the
-// rebirth transition drops the threshold. The 3x band through Lv70 is what moves the early
-// half; the requirement curve itself (needAt) is unchanged.
+// Canonical model: 800 kills/hour along the level-appropriate field route (Prontera p1-10;
+// early class fields through p50; then power ~= Base Lv), a boss replacing the pack every
+// 16th kill, and the shipped quest fractions. The Stage-10 boss-with-escorts fight is not
+// simulated.
 //
-// The .126 loot-quest completion factor matches qrOf() in index.html after the 2x gear
-// drop changes. Card and ore pickups are not counted by the loot quest.
+// v56 design (owner request): Base 1-50 keeps the v51 pace (~2.5 min to Lv10, ~14 min to
+// Lv50) while Base 50->70 becomes the mid-game wall - about 80 minutes, "less than 2 hours"
+// on the live chart, ramping from seconds per level at 51 to ~10 minutes at 70. The curve is
+// continuous, so the wall lifts the requirements above it; the 70-99 segment is therefore
+// nearly flat (130k -> 167k) and Base 99 lands at about 6 h 55 m. The 100-150 tail stays 48 h.
+const fs = require('fs');
+const src = fs.readFileSync(__dirname + '/../index.html', 'utf8');
+const grab = (re, name) => { const m = src.match(re); if (!m) throw new Error('cannot read ' + name + ' from index.html'); return m; };
 
-const EXPK = 5.5, BOSEK = 46, MPS = 15, KPH = 800;
-const rateAt = L => L <= 70 ? 210 : L < 100 ? 70 : 70 / 3;   // v51: 3x through Lv70
-const QXP = { kill: 1 / 1400, loot: 1 / 1750, boss: 1 / 840 };
+const EXPK = +grab(/const EXPK=([\d.]+),/, 'EXPK')[1];
+const BOSEK = +grab(/EXPK=[\d.]+,BOSEK=([\d.]+),/, 'BOSEK')[1];
+const NA1 = +grab(/const NA1=([\d.]+),/, 'NA1')[1];
+const NE1 = +grab(/NE1=([\d.]+),N50/, 'NE1')[1];
+const RATE = +grab(/EXP_RATE=(\d+);/, 'EXP_RATE')[1];
+const BOOST_LV = +grab(/const EXP_BOOST_LV=(\d+),/, 'EXP_BOOST_LV')[1];
+const BOOST_X = +grab(/EXP_BOOST_X=(\d+),/, 'EXP_BOOST_X')[1];
+const MPS = 15, KPH = 800;
+const QXP = { kill: 1 / 140, loot: 1 / 175, boss: 1 / 84 };    // v56: x10 to match EXP_RATE/10
+const RESET_RATIO = 3.86;                                      // deliberate Base-100 rebirth drop
+const DEFAULT_NE3 = 8.2928141;
+
+// Targets, in the units the report prints.
+const TGT = { T10: 2.5 / 60, T50: 13.9 / 60, WALL: 80 / 60, T99: 6.9, TAIL: 48 };
+
 const EARLY_PWR = [[11,10],[14,12],[16,15],[19,17],[27,20],[34,28],[42,35],[49,43],[59,50]];
 const pwFor = lv => { if (lv <= 10) return Math.max(1, lv | 0);
   for (const [cap, p] of EARLY_PWR) if (lv <= cap) return p; return Math.min(99, lv | 0); };
+const rateAt = L => L <= BOOST_LV ? RATE * BOOST_X : L < 100 ? RATE : RATE / 3;
 const mobExp = p => Math.max(1, Math.floor(EXPK * Math.pow(p, 1.5) / 50));
 const bossExp = p => Math.max(1, Math.floor(BOSEK * Math.pow(p, 1.5) / 50));
 const expPerKill = p => (MPS * mobExp(p) + bossExp(p)) / (MPS + 1);
-// Per-kill quest XP, matching qrOf() in index.html, including the live .126 loot factor.
-const qrateRaw = L => (QXP.kill / (12 + 2 * L) + .126 * QXP.loot / (3 + Math.floor(L / 3))
-  + (L >= 12 ? QXP.boss / ((MPS + 1) * (1 + Math.floor(L / 10))) : 0));
-let QSCALE = 1;
-const qrateAt = L => QSCALE * qrateRaw(L) * rateAt(L);
+const qrate = L => QXP.kill / (12 + 2 * L) + .126 * QXP.loot / (3 + Math.floor(L / 3))
+  + (L >= 12 ? QXP.boss / ((MPS + 1) * (1 + Math.floor(L / 10))) : 0);
+// index.html rounds every requirement to three significant figures (roundReq).
+const roundReq = n => { const a = Math.abs(n), m = a < 100 ? 1 : a < 1e4 ? 10 : a < 1e5 ? 100 : 1e3;
+  return Math.max(1, Math.round(n / m) * m); };
 
-const DEFAULT_NE3 = 5.57031747;   // current seed for verify mode; final tune solves the post-99 ramp
-const RESET_RATIO = 3.86;   // preserve the existing ~3.9x requirement drop at the Base-100 rebirth
+// Four segments, exactly as index.html evaluates them: 1-50 (cA,aA / NA1,NE1), 50-70 (aB),
+// 70-99 (aC / NE2B), then the Base-100 reset and the post-99 ramp (n100, ne3 / N100, NE3).
 function build(p) {
-  const n50 = Math.floor(p.cA * Math.pow(50, p.aA)), ne3 = p.ne3 ?? DEFAULT_NE3;
-  return L => L <= 50 ? Math.floor(p.cA * Math.pow(L, p.aA))
-    : L <= 99 ? Math.floor(n50 * Math.pow(L / 50, p.aB))
-      : Math.floor(p.n100 * Math.pow(L / 100, ne3));
+  const n50 = Math.floor(p.cA * Math.pow(50, p.aA));
+  const n70 = Math.floor(n50 * Math.pow(1.4, p.aB));
+  return L => roundReq(L <= 50 ? Math.floor(p.cA * Math.pow(L, p.aA))
+    : L <= 70 ? Math.floor(n50 * Math.pow(L / 50, p.aB))
+      : L <= 99 ? Math.floor(n70 * Math.pow(L / 70, p.aC))
+        : Math.floor(p.n100 * Math.pow(L / 100, p.ne3)));
 }
 
-const JOFF = [0, 9, 49, 98], GATE = [10, 40, 50];
-function simulate(p, clamp = true) {
-  const needAt = build(p);
-  // The clamp target is a 40% maximum single-level quest share. Multiplying both mob and
-  // quest XP by the same live EXP rate does not change that share.
-  if (clamp) {
-    let worstMobRatio = 0;
-    for (let L = 1; L < 150; L++) worstMobRatio = Math.max(worstMobRatio,
-      needAt(L) * qrateRaw(L) / expPerKill(pwFor(L)));
-    QSCALE = Math.min(1, .667 / worstMobRatio);
-  } else QSCALE = 1;
-
-  let hours = 0, questXp = 0, totalNeed = 0, maxShare = 0;
-  const T = { 1: 0 }, jl = [1, 1, 1, 1], jx = [0, 0, 0, 0], gate = [null, null, null];
-  let tier = 0;
+function simulate(p) {
+  const needAt = build(p), T = { 1: 0 }; let hours = 0, qx = 0, tot = 0, worst = 0;
   for (let L = 1; L < 150; L++) {
-    const rate = rateAt(L), pk = expPerKill(pwFor(L)) * rate, n = needAt(L), qr = qrateAt(L);
-    const kills = Math.ceil(n / (pk + n * qr));
-    const gained = kills * pk, qxp = kills * n * qr;
-    maxShare = Math.max(maxShare, qxp / (gained + qxp));
-    questXp += qxp; totalNeed += n;
-    hours += kills / KPH;
-    T[L + 1] = hours;
-
-    let je = .7 * gained;   // Job EXP is 70% of mob EXP; quests pay Base EXP only
-    while (je > 0 && tier < 3) {
-      if (jl[tier] >= GATE[tier]) { tier++; continue; }
-      const Lj = jl[tier] + JOFF[tier], nj = needAt(Lj);
-      const pkj = expPerKill(pwFor(Lj)) * rateAt(Lj), qrj = qrateAt(Lj);
-      const mobPart = Math.max(1, Math.floor(.7 * nj * pkj / (pkj + nj * qrj)));
-      const take = Math.min(je, mobPart - jx[tier]);
-      jx[tier] += take; je -= take;
-      if (jx[tier] >= mobPart) {
-        jl[tier]++; jx[tier] = 0;
-        if (jl[tier] >= GATE[tier] && !gate[tier]) gate[tier] = { hours, base: L + 1 };
-      }
-    }
+    const n = needAt(L), r = rateAt(L), epk = expPerKill(pwFor(L));
+    const kills = Math.ceil(n / (epk * r + n * qrate(L) * r));
+    const q = kills * n * qrate(L) * r, mob = kills * epk * r;
+    worst = Math.max(worst, q / (mob + q)); qx += q; tot += n; hours += kills / KPH; T[L + 1] = hours;
   }
-  return { needAt, SHARE: questXp / totalNeed, maxShare, T, gate,
-    T10: T[10], T50: T[50], T99: T[99], T150: hours };
+  return { T, hours, share: qx / tot, worst };
+}
+const bisect = (lo, hi, f) => { const flo = f(lo), fhi = f(hi);
+  if (flo > 0 || fhi < 0) throw new Error(`target out of reach in [${lo}, ${hi}] (${flo.toFixed(3)} .. ${fhi.toFixed(3)})`);
+  for (let i = 0; i < 90; i++) { const m = (lo + hi) / 2; if (f(m) > 0) hi = m; else lo = m; } return (lo + hi) / 2; };
+
+function solve() {
+  const p = { cA: NA1, aA: NE1 };
+  const wall = (aB, aC) => { const s = simulate({ ...p, aB, aC, n100: 30000, ne3: DEFAULT_NE3 }); return s.T; };
+  p.aB = bisect(2, 25, aB => (wall(aB, 1)[70] - wall(aB, 1)[50]) * 3600 - TGT.WALL * 3600);
+  p.aC = bisect(0.2, 3, aC => wall(p.aB, aC)[99] - TGT.T99);
+  p.n100 = Math.round(build({ ...p, n100: 30000, ne3: DEFAULT_NE3 })(99) / RESET_RATIO / 10) * 10;
+  p.ne3 = bisect(3, 30, ne3 => { const s = simulate({ ...p, ne3 }); return (s.hours - s.T[100]) - TGT.TAIL; });
+  return p;
 }
 
-// ---- verify mode: node tune_pacing.js cA,aA,aB,n100 ----------------------------
-if (process.argv[2]) {
-  const [cA, aA, aB, n100, ne3] = process.argv[2].split(',').map(Number);
-  if ([cA, aA, aB, n100].some(x => !Number.isFinite(x))) throw new Error('expected cA,aA,aB,n100 and optional ne3');
-  const v = simulate({ cA, aA, aB, n100, ...(Number.isFinite(ne3) ? { ne3 } : {}) }, false);
-  console.log(`verify cA=${cA} aA=${aA} aB=${aB} n100=${n100} NE3=${Number.isFinite(ne3) ? ne3 : DEFAULT_NE3}`);
-  console.log('Base 10', (v.T10 * 60).toFixed(2) + ' min', '| Base 50', v.T50.toFixed(3) + ' h',
-    '| Base 99', v.T99.toFixed(3) + ' h', '| tail 100-150', (v.T150 - v.T[100]).toFixed(3) + ' h',
-    '| total', v.T150.toFixed(3) + ' h');
-  console.log('quest share', (v.SHARE * 100).toFixed(2) + '% global,', (v.maxShare * 100).toFixed(2) + '% max per level');
-  v.gate.forEach((g, i) => console.log('job gate ' + i + ':', g ? `Base ${g.base} @ ${g.hours.toFixed(3)}h` : 'not reached'));
-  process.exit(0);
+function report(p, tag) {
+  const s = simulate(p), T = s.T, needAt = build(p);
+  const mm = h => h < 1 ? (h * 60).toFixed(1) + ' min' : h.toFixed(2) + ' h';
+  console.log(`\n${tag}`);
+  console.log(`  constants  NA1=${p.cA}  NE1=${p.aA}  N50=${Math.floor(p.cA * Math.pow(50, p.aA))}  NE2=${p.aB.toFixed(8)}`);
+  console.log(`             N70=${Math.floor(Math.floor(p.cA * Math.pow(50, p.aA)) * Math.pow(1.4, p.aB))}  NE2B=${p.aC.toFixed(8)}  N100=${p.n100}  NE3=${p.ne3.toFixed(7)}`);
+  console.log(`  milestones Lv10 ${mm(T[10])} | Lv50 ${mm(T[50])} | Lv70 ${mm(T[70])} | Lv99 ${mm(T[99])} | Lv150 ${mm(s.hours)}`);
+  console.log(`  segments   1-50 ${mm(T[50])} | 50-70 ${mm(T[70] - T[50])} | 70-99 ${mm(T[99] - T[70])} | tail ${mm(s.hours - T[100])}`);
+  console.log(`  shares     quest EXP ${(s.share * 100).toFixed(1)}% overall, worst level ${(s.worst * 100).toFixed(1)}%`);
+  console.log('  needs      ' + [1, 10, 20, 30, 40, 50, 60, 70, 80, 90, 99, 100, 110, 120, 130, 140, 150]
+    .map(L => L + ':' + needAt(L).toLocaleString()).join('  '));
+  return { s, T, needAt };
 }
 
-const TGT = { T10: 2.5 / 60, T50: 13.6 / 60, T99: 290 / 60, TAIL: 48 };   // v51 production targets
-function bisect(lo, hi, f) {
-  let flo = f(lo), fhi = f(hi);
-  if (flo > 0 || fhi < 0) throw new Error('no root in [' + lo + ',' + hi + ']: ' + flo.toFixed(3) + ' .. ' + fhi.toFixed(3));
-  for (let i = 0; i < 70; i++) {
-    const mid = (lo + hi) / 2;
-    if (f(mid) > 0) hi = mid; else lo = mid;
+const arg = process.argv[2];
+if (arg === '--verify' || arg === undefined || /^[\d.]/.test(arg)) {
+  let p;
+  if (/^[\d.]/.test(arg || '')) {
+    const [cA, aA, aB, aC, n100, ne3] = arg.split(',').map(Number);
+    report({ cA, aA, aB, aC, n100, ne3: ne3 || DEFAULT_NE3 }, 'candidate');
+  } else if (arg === '--verify') {
+    const [, cA, aA, aB, aC, n100, ne3] = grab(/const NA1=([\d.]+),NE1=([\d.]+),N50=Math\.floor\(NA1\*Math\.pow\(50,NE1\)\),NE2=([\d.]+),N70=Math\.floor\(N50\*Math\.pow\(1\.4,NE2\)\),NE2B=([\d.]+),N100=(\d+),NE3=([\d.]+);/, 'curve').map(Number);
+    p = { cA, aA, aB, aC, n100, ne3 };
+    const { s, T, needAt } = report(p, 'index.html (shipped)');
+    const checks = [
+      ['Base 10 lands at ~2.5 min', Math.abs(T[10] * 60 - 2.5) < 0.4, (T[10] * 60).toFixed(2) + ' min'],
+      ['Base 50 lands at ~13.9 min', Math.abs(T[50] * 60 - 13.9) < 0.6, (T[50] * 60).toFixed(2) + ' min'],
+      ['Base 50->70 is the ~80 minute wall', Math.abs((T[70] - T[50]) * 60 - 80) < 5, ((T[70] - T[50]) * 60).toFixed(0) + ' min'],
+      ['Base 99 lands at ~6.9 h', Math.abs(T[99] - 6.9) < 0.3, T[99].toFixed(2) + ' h'],
+      ['Base 100-150 tail is 48 h', Math.abs((s.hours - T[100]) - 48) < 1, (s.hours - T[100]).toFixed(1) + ' h'],
+      ['the Base-100 reset drops ~3.9x', needAt(99) / needAt(100) > 3 && needAt(99) / needAt(100) < 5, (needAt(99) / needAt(100)).toFixed(2) + 'x'],
+      ['requirements only drop at Base 100', (() => { let prev = 0; for (let L = 1; L < 150; L++) { if (L === 100) { prev = needAt(L); continue } const n = needAt(L); if (n <= prev) return false; prev = n } return true })(), 'strict inside each phase'],
+      ['quests stay a side dish', s.share > 0.12 && s.share < 0.42, (s.share * 100).toFixed(1) + '%'],
+      ['no level is carried by quests', s.worst <= 0.45, (s.worst * 100).toFixed(1) + '%'],
+    ];
+    console.log(''); let bad = 0;
+    for (const [name, ok, got] of checks) { console.log(`  ${ok ? 'ok  ' : 'FAIL'}  ${name} (got ${got})`); if (!ok) bad++; }
+    if (bad) { console.log(`\n${bad} check(s) failed - index.html no longer matches this model.`); process.exit(1); }
+    console.log('\nall checks pass: index.html matches the v56 model.');
+  } else {
+    p = solve();
+    const { s, T } = report(p, 'solved from the v56 targets (Base 50 wall 80 min, Base 99 6.9 h, tail 48 h)');
+    console.log(`\n  index.html should carry:  NE2=${p.aB.toFixed(8)},NE2B=${p.aC.toFixed(8)},N100=${p.n100},NE3=${p.ne3.toFixed(7)}`);
+    console.log(`  (1-50 ${(T[50] * 60).toFixed(1)} min, wall ${((T[70] - T[50]) * 60).toFixed(0)} min, Base 99 ${T[99].toFixed(2)} h, tail ${(s.hours - T[100]).toFixed(1)} h)`);
   }
-  return (lo + hi) / 2;
+} else {
+  console.log('usage: node tools/tune_pacing.js [--verify | a,b,c,d,e[,f]]');
 }
-function fit(aA, aB) {
-  const cA = bisect(.5, 1e5, x => simulate({ cA: x, aA, aB, n100: 15e4 }).T10 - TGT.T10);
-  return { cA, s: simulate({ cA, aA, aB, n100: 15e4 }) };
-}
-
-let best = null;
-for (let aA = 0.1; aA <= 4.0; aA += .1) {
-  for (let aB = 1.4; aB <= 12.0; aB += .2) {
-    try {
-      const { cA, s } = fit(aA, aB), err = Math.abs(s.T50 - TGT.T50) + Math.abs(s.T99 - TGT.T99);
-      if (!best || err < best.err) best = { err, cA, aA, aB, s };
-    } catch (e) { }
-  }
-}
-if (!best) { console.error('no fit found'); process.exit(1); }
-console.log('coarse best', { cA: best.cA.toFixed(3), aA: best.aA.toFixed(2), aB: best.aB.toFixed(2),
-  T50: best.s.T50.toFixed(2), T99: best.s.T99.toFixed(1) });
-
-let { cA, aA, aB } = best;
-for (let it = 0; it < 4; it++) {
-  cA = bisect(.5, 1e5, x => simulate({ cA: x, aA, aB, n100: 15e4 }).T10 - TGT.T10);
-  aA = bisect(0.01, 5.0, x => simulate({ cA, aA: x, aB, n100: 15e4 }).T50 - TGT.T50);
-  cA = bisect(.5, 1e5, x => simulate({ cA: x, aA, aB, n100: 15e4 }).T10 - TGT.T10);
-  aB = bisect(1.0, 14.0, x => simulate({ cA, aA, aB: x, n100: 15e4 }).T99 - TGT.T99);
-}
-cA = bisect(.5, 1e5, x => simulate({ cA: x, aA, aB, n100: 15e4 }).T10 - TGT.T10);
-const n100At = ne3 => bisect(1e3, 1e8, x => {
-  const s = simulate({ cA, aA, aB, n100: x, ne3 }, false);
-  return (s.T150 - s.T[100]) - TGT.TAIL;
-});
-const NE3 = bisect(3, 14, ne3 => {
-  const n = n100At(ne3), s = simulate({ cA, aA, aB, n100: n, ne3 }, false);
-  return s.needAt(99) / n - RESET_RATIO;
-});
-const n100 = Math.floor(n100At(NE3));
-const fin = simulate({ cA, aA, aB, n100, ne3: NE3 }, false);
-
-console.log('\n=== tuned production curve (3x / 70x / 70÷3x rates; .126 loot cadence) ===');
-console.log(`cA=${cA.toFixed(8)}  aA=${aA.toFixed(8)}  aB=${aB.toFixed(8)}  n100=${n100.toFixed(0)}  NE3=${NE3.toFixed(8)}`);
-console.log('shipping QXP', Object.entries(QXP).map(([k, v]) => `${k}=1/${(1/v).toFixed(0)}`).join(', '));
-console.log('quest share', (fin.SHARE * 100).toFixed(1) + '% global,', (fin.maxShare * 100).toFixed(1) + '% worst level');
-for (const L of [1, 2, 5, 9, 10, 20, 30, 40, 50, 60, 70, 80, 90, 99, 100, 110, 120, 130, 140, 149, 150])
-  console.log(`needAt(${L}) = ${fin.needAt(L).toLocaleString()}`);
-console.log('\nbase milestones:');
-for (const [L, target] of [[10, '2.5 min'], [50, '13.6 min total (2.5 + 11 min)'], [99, '4 h 50 min (~4.5 h after Base 50)'], [150, 'model total']]) {
-  const h = L === 150 ? fin.T150 : fin.T[L];
-  console.log(`Base ${L}: ${(h * 60).toFixed(1)} min / ${h.toFixed(3)} h (target ${target})`);
-}
-console.log('tail 100-150:', (fin.T150 - fin.T[100]).toFixed(1) + ' h (target 48 h); rebirth drop x' +
-  (fin.needAt(99) / fin.needAt(100)).toFixed(2));
-console.log('\njob gates:');
-['Novice -> 1st job', '1st -> 2nd job', '2nd -> transcendent'].forEach((n, i) => {
-  const g = fin.gate[i]; console.log(n + ':', g ? `Base ${g.base} @ ${g.hours.toFixed(3)} h` : 'not reached');
-});
-let prev = 0, bad = [];
-for (let L = 1; L < 150; L++) {
-  if (L === 100) { prev = fin.needAt(L); continue; }
-  const n = fin.needAt(L); if (n <= prev) bad.push(L); prev = n;
-}
-console.log(bad.length ? 'NOT monotone within phase at ' + bad.join(', ') : 'strictly increasing within both phases; reset only at 100');

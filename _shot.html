@@ -126,7 +126,7 @@ const STATS=[['str','STR','ATK'],['agi','AGI','ASPD, Flee'],['int','INT','Skill 
 const AFF=['str','agi','dex','luk','int','hp','atk','crit','aspd','flee','cdm'],AB={str:1,agi:1,dex:1,luk:1,int:1,hp:12,atk:.8,crit:.45,aspd:.6,flee:.8,cdm:1.5};
 const AL={str:'STR',agi:'AGI',dex:'DEX',luk:'LUK',int:'INT',hp:'Max HP',atk:'ATK %',crit:'Crit %',aspd:'ASPD %',flee:'Flee %',cdm:'Crit DMG %',vit:'VIT'};
 const SU=k=>k.toUpperCase(),BX_=7.5,Z0=-3,Z1=4,MPS=15,K5=['str','agi','dex','luk','int'];
-const GM_USER='GM',GM_PASS='gm1234';   // CHANGE THE GM PASSWORD before you publish
+const GM_USER='GM',GM_PASS='';   // retired 2026-10-06: the GM password lives (hashed) in index.html. This legacy page can no longer log in as GM.
 const BUILD='2026-10-02 sprites-v2';   // shown on the login card - confirms which file you loaded
 $('buildTag').textContent='build '+BUILD+' · atlases:'+Object.keys(window.SPRITE_ATLASES||{}).length;
 
@@ -894,7 +894,7 @@ function __dump(tag){
 window.addEventListener('load',function(){
  setTimeout(function(){
    try{document.getElementById('username').value='GM';
-        document.getElementById('password').value='gm1234';submitAuth();__vlog('login ok S='+(S?'yes':'NO'));}
+        document.getElementById('password').value='';submitAuth();__vlog('login ok S='+(S?'yes':'NO'));}
    catch(e){__vlog('ERR '+e.message)}
  },40);
  setTimeout(function(){

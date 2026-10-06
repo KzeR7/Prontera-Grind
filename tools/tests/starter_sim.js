@@ -32,7 +32,7 @@ t('all 25 starter stages have gentler HP/ATK and only one or two per encounter',
    assert.ok(mob.hp<=Math.floor(H.HPK*mb*Math.pow(p,H.HPE)));
    assert.ok(mob.atk<Math.floor((5+p*4.6)*mb));
    assert.strictEqual(mob.lvl,p,'gear power must remain map-specific');
-   assert.strictEqual(mob.drops.length,3);assert.strictEqual(mob.cardCh,.45);
+   assert.strictEqual(mob.drops.length,3);assert.strictEqual(mob.cardCh,.15);
   }
  }
 });

@@ -1,13 +1,16 @@
-// Live pacing regression: the model includes 70x normal EXP below Base 100, 70/3x at 100+,
-// the quest formulas, the doubled-gear loot cadence, and the Lv100 reset.
+// Live pacing regression: v56 puts the whole live EXP economy at one tenth of the old scale
+// (7x normal EXP below Base 100, 7/3x at 100+), ends the 3x early band at Base 50, and makes
+// 50-70 the deliberate mid-game wall (~80 min) - which lands Base 10 at ~2.5 min, Base 50 at
+// ~14 min, Base 99 at ~6 h 55 m and the post-reset 100-150 tail at 48 h. Covers the quest
+// formulas, the doubled-gear loot cadence, the Lv100 reset and the low-level Zeny floor.
 // Economy: EXP / Zeny / quest rewards, against the real constants and formulas
 // pulled out of index.html.
 //   node tools/tests/economy_sim.js
 //
 // The rules being tested:
-//   * live pacing anchors hold (owner): about 7 min to Base Lv10, then about 30 min from
-//     Base 10 to 50; retain ~5 more hours from Base 50 to 99 and the 48 h post-reset tail,
-//     using the level-appropriate map-stage power path at ~800 kills/hour;
+//   * live pacing anchors hold (owner): about 2.5 min to Base Lv10, Base 50 at ~14 min, the
+//     deliberate ~80-minute Base 50-70 wall, ~7 hours to Base 99 and the 48 h post-reset
+//     tail, using the level-appropriate map-stage power path at ~800 kills/hour;
 //   * job bars mirror the base curve (JOFF lockstep), so the job gates land on those
 //     same anchors;
 //   * quests pay a fraction of need(Lv) and can never carry more than ~40% of a level
@@ -25,13 +28,19 @@ const arena = grab('const SU=k=>', ',K5=[') + ';';
 
 // The curve the whole game levels by is pinned so a change is deliberate. It is two
 // continuous power segments up to 99, then the deliberate reset at 100 and post-99 tail.
-if (!/const NA1=187\.05917193,NE1=1\.28123988,N50=Math\.floor\(NA1\*Math\.pow\(50,NE1\)\),NE2=7\.06296658,N100=906779,NE3=5\.57031747;/.test(src))
+if (!/const NA1=18\.705917193,NE1=1\.28684215,N50=Math\.floor\(NA1\*Math\.pow\(50,NE1\)\),NE2=11\.33248639,N70=Math\.floor\(N50\*Math\.pow\(1\.4,NE2\)\),NE2B=0\.72933977,N100=43260,NE3=8\.2928141;/.test(src))
   throw new Error('needAt() curve constants changed - update this test deliberately');
-if (!/needAt=L=>L<=50\?Math\.floor\(NA1\*Math\.pow\(L,NE1\)\):L<=99\?Math\.floor\(N50\*Math\.pow\(L\/50,NE2\)\):Math\.floor\(N100\*Math\.pow\(L\/100,NE3\)\)/.test(src))
+if (!/const roundReq=n=>\{const a=Math\.abs\(n\),m=a<100\?1:a<1e4\?10:a<1e5\?100:1e3;return Math\.max\(1,Math\.round\(n\/m\)\*m\)\};/.test(src))
+  throw new Error('roundReq() three-significant-figure rounding changed - update this test deliberately');
+if (!/needAt=L=>roundReq\(L<=50\?Math\.floor\(NA1\*Math\.pow\(L,NE1\)\):L<=70\?Math\.floor\(N50\*Math\.pow\(L\/50,NE2\)\):L<=99\?Math\.floor\(N70\*Math\.pow\(L\/70,NE2B\)\):Math\.floor\(N100\*Math\.pow\(L\/100,NE3\)\)\)/.test(src))
   throw new Error('needAt() formula changed - update this test deliberately');
+if (!/const EXP_BOOST_LV=50,EXP_BOOST_X=3,EXP_RATE=7;/.test(src))
+  throw new Error('the v56 EXP band/rate changed - update this test deliberately');
+if (!/const ZMIN=5;/.test(src))
+  throw new Error('the low-level Zeny floor changed - update this test deliberately');
 if (!/const JOFF=\[0,9,49,98\];/.test(src))
   throw new Error('JOFF job/base lockstep offsets changed - update this test deliberately');
-if (!/const QXP=\{kill:1\/1400,loot:1\/1750,boss:1\/840\}/.test(src))
+if (!/const QXP=\{kill:1\/140,loot:1\/175,boss:1\/84\}/.test(src))
   throw new Error('QXP quest fractions changed - update this test deliberately');
 if (!/Math\.random\(\)<mob\.oreCh\)/.test(src))
   throw new Error('ore drop gate changed - update gear_sim deliberately');
@@ -46,11 +55,11 @@ ${econ}
 ${nq}
 ${petc}
 this.__pet = { PTG, GREAT, PT, peqCost: eval('(' + ${JSON.stringify('t=>' + peq.split('=>')[1])} + ')') };
-const needAt=L=>L<=50?Math.floor(NA1*Math.pow(L,NE1)):L<=99?Math.floor(N50*Math.pow(L/50,NE2)):Math.floor(N100*Math.pow(L/100,NE3));
+const needAt=L=>roundReq(L<=50?Math.floor(NA1*Math.pow(L,NE1)):L<=70?Math.floor(N50*Math.pow(L/50,NE2)):L<=99?Math.floor(N70*Math.pow(L/70,NE2B)):Math.floor(N100*Math.pow(L/100,NE3)));
 let S = null, PW = 1;
 const gx = () => S.gm ? (S.gmx || 100) : 1;
 const pw = () => PW;
-this.__e = { expRate, qRefresh, newQuest, needAt, EXPK, BOSEK, ZK, BZK, QXP, QZ, zenAt, pwOf, epkOf, qrOf, JOFF,
+this.__e = { expRate, qRefresh, newQuest, needAt, EXPK, BOSEK, ZK, BZK, QXP, QZ, zenAt, ZMIN, pwOf, epkOf, qrOf, JOFF,
              set S(v){S=v}, get S(){return S}, set PW(v){PW=v}, get PW(){return PW} };
 `;
 const sb = { console };
@@ -59,7 +68,7 @@ const E = sb.__e;
 
 let pass = 0, fail = 0;
 const t = (n, f) => { try { f(); console.log('  ok   ' + n); pass++; } catch (e) { console.log('  FAIL ' + n + ' -> ' + e.message); fail++; } };
-console.log('economy: live 3x/70x/70÷3x pacing, quest share, job gates and Zeny scale\n');
+console.log('economy: v56 21x/7x/7÷3x pacing, quest share, job gates and Zeny scale\n');
 
 // ---- the model the balance was solved with (same as tools/tune_pacing.js) ----------
 // Use the level-appropriate power route: early stage powers through p50, then p ~= Base Lv.
@@ -71,10 +80,11 @@ const pwFor = lv => E.pwOf(lv);
 const mobExp = p => Math.max(1, Math.floor(E.EXPK * Math.pow(p, 1.5) / 50));
 const bossExp = p => Math.max(1, Math.floor(E.BOSEK * Math.pow(p, 1.5) / 50));
 const expPerKill = p => (MPS * mobExp(p) + bossExp(p)) / (MPS + 1);
-const mobZeny = p => ((E.ZK[0] + E.ZK[1]) / 2) * p * p / 1000;
+const mobZeny = p => ((E.ZK[0] + E.ZK[1]) / 2) * p * p / 1000;      // raw formula, no floor
 const bossZeny = p => ((E.BZK[0] + E.BZK[1]) / 2) * p * p / 1000;
-const zenyPerKill = p => (MPS * mobZeny(p) + bossZeny(p)) / (MPS + 1);
-const rateFor = L => L <= 70 ? 210 : L < 100 ? 70 : 70 / 3;   // mirrors expRate(): 3x band through Lv70
+const killZeny = p => Math.max(E.ZMIN, Math.floor(mobZeny(p)));   // what spawn() actually pays
+const zenyPerKill = p => (MPS * killZeny(p) + Math.max(E.ZMIN, Math.floor(bossZeny(p)))) / (MPS + 1);
+const rateFor = L => L <= 50 ? 21 : L < 100 ? 7 : 7 / 3;   // mirrors expRate(): 3x band through Lv50
 const killsFor = L => { const p = pwFor(L), n = E.needAt(L), rate = rateFor(L);
   return Math.ceil(n / (expPerKill(p) * rate + n * E.qrOf(L) * rate)); };
 
@@ -134,20 +144,25 @@ t('the curve is strictly increasing within each phase, with the rebirth drop at 
     if (L === 100) { prev = E.needAt(L); continue; }   // the one deliberate drop
     const n = E.needAt(L); assert.ok(n > prev, 'needAt(' + L + ') = ' + n + ' <= ' + prev); prev = n;
   }
-  assert.strictEqual(E.needAt(10), 3574, 'early requirement anchor');
-  assert.strictEqual(E.needAt(50), 28103, 'Base 50 anchor');
-  assert.strictEqual(E.needAt(99), 3500168, 'Base 99 anchor');
+  assert.strictEqual(E.needAt(10), 360, 'early requirement anchor');
+  assert.strictEqual(E.needAt(50), 2870, 'Base 50 anchor');
+  assert.strictEqual(E.needAt(70), 130000, 'the v56 Base 70 wall top');
+  assert.strictEqual(E.needAt(99), 167000, 'Base 99 anchor');
   // The level-100 reset is deliberate; the much steeper endgame ramp climbs through 150.
   assert.ok(E.needAt(100) < E.needAt(99), 'level 100 must be cheaper than 99 at the reset');
   const drop = E.needAt(99) / E.needAt(100);
   assert.ok(drop > 3 && drop < 5, 'the reset should be about 3.9x, got x' + drop.toFixed(1));
-  assert.strictEqual(E.needAt(100), 906779, 'Base 100 reset floor');
-  assert.strictEqual(E.needAt(150), 8677321, 'level cap');
+  assert.strictEqual(E.needAt(100), 43300, 'Base 100 reset floor');
+  assert.strictEqual(E.needAt(150), 1248000, 'level cap');
+  for (const L of [10, 50, 70, 99, 100, 150]) {
+    const n = E.needAt(L), step = n < 100 ? 1 : n < 1e4 ? 10 : n < 1e5 ? 100 : 1e3;
+    assert.strictEqual(n % step, 0, 'needAt(' + L + ') = ' + n + ' is not a round ' + step + '-step number');
+  }
 });
 
-t('normal EXP is 3x through Lv70, then 70x and one-third; GM is unchanged', () => {
-  for(const lv of [1,10,60,99,100,150]){
-    E.S={lv,gm:false}; assert.strictEqual(E.expRate(),lv<=70?210:lv<100?70:70/3);
+t('normal EXP is 21x through Lv50, then 7x and one-third (the v56 one-tenth scale); GM is unchanged', () => {
+  for(const lv of [1,10,50,51,60,99,100,150]){
+    E.S={lv,gm:false}; assert.strictEqual(E.expRate(),lv<=50?21:lv<100?7:7/3);
     E.S.gm=true; assert.strictEqual(E.expRate(),100);
     E.S.gmx=25; assert.strictEqual(E.expRate(),25);
   }
@@ -162,7 +177,7 @@ t('the real kill reward block boosts Base/Job EXP but leaves player Zeny unchang
     vm.runInContext(`
       const S={lv:${level},gm:${gm},gmx:100,kills:0,kl:0,zeny:0,exp:0};
       const gx=()=>S.gm?S.gmx:1;
-      ${src.match(/const EXP_BOOST_LV=\d+,EXP_BOOST_X=\d+;/)[0]}
+      ${src.match(/const EXP_BOOST_LV=\d+,EXP_BOOST_X=\d+,EXP_RATE=\d+;/)[0]}
       ${src.match(/const expRate=[^;]+;/)[0]}
       const mob={n:'Test Mob',mapIndex:0,exp:100,zeny:10,boss:false},pv=()=>0,qProg=()=>{};
       let jobXP=0,pend=[],zenyEarned=0,recorded=0;const addJob=x=>jobXP+=x,recordMonsterKill=()=>recorded++;
@@ -170,7 +185,7 @@ t('the real kill reward block boosts Base/Job EXP but leaves player Zeny unchang
       ${rewards}
       this.result={xp:S.exp,z:S.zeny,jobXP,kills:S.kills,recorded};
     `,world);
-    const rate=gm?100:level<=70?210:level<100?70:70/3;
+    const rate=gm?100:level<=50?21:level<100?7:7/3;
     assert.strictEqual(world.result.xp,Math.round(100*rate));
     assert.strictEqual(world.result.jobXP,Math.round(70*rate));
     assert.strictEqual(world.result.z,gm?1000:10);
@@ -182,18 +197,18 @@ t('the real kill reward block boosts Base/Job EXP but leaves player Zeny unchang
 t('saved quests refresh to the new EXP rate without losing progress', () => {
   E.S={lv:99,gm:false,q:[{type:'kill',goal:210,prog:12,xp:1,at:99}]};
   E.qRefresh(); assert.strictEqual(E.S.q[0].prog,12);
-  assert.strictEqual(E.S.q[0].xp,Math.floor(E.needAt(99)*E.QXP.kill*70));
+  assert.strictEqual(E.S.q[0].xp,Math.floor(E.needAt(99)*E.QXP.kill*7));
   E.S.lv=100; E.qRefresh();
-  assert.strictEqual(E.S.q[0].xp,Math.floor(E.needAt(100)*E.QXP.kill*(70/3)));
+  assert.strictEqual(E.S.q[0].xp,Math.floor(E.needAt(100)*E.QXP.kill*(7/3)));
 });
 
 t('quests pay a fraction of need(Lv), not a flat number', () => {
   E.S = { lv: 150, gm: false }; E.PW = 99;
   const n = E.needAt(150);
-  assert.strictEqual(E.newQuest('kill').xp, Math.floor(n * E.QXP.kill * (70/3)));
-  assert.strictEqual(E.newQuest('loot').xp, Math.floor(n * E.QXP.loot * (70/3)));
-  assert.strictEqual(E.newQuest('boss').xp, Math.floor(n * E.QXP.boss * (70/3)));
-  assert.strictEqual(E.newQuest('boss').xp, 241036, 'boss quest xp at Lv150');
+  assert.strictEqual(E.newQuest('kill').xp, Math.floor(n * E.QXP.kill * (7/3)));
+  assert.strictEqual(E.newQuest('loot').xp, Math.floor(n * E.QXP.loot * (7/3)));
+  assert.strictEqual(E.newQuest('boss').xp, Math.floor(n * E.QXP.boss * (7/3)));
+  assert.strictEqual(E.newQuest('boss').xp, 34666, 'boss quest xp at Lv150');
 });
 
 t('quest EXP scales with need(Lv) instead of drifting', () => {
@@ -202,7 +217,7 @@ t('quest EXP scales with need(Lv) instead of drifting', () => {
   E.S.lv = 100; E.PW = pwFor(100); const b = E.newQuest('kill').xp, rb = E.expRate();
   // At rebirth, both the requirement curve and the live EXP multiplier reset; the
   // quest reward must follow need(Lv) times whatever expRate() currently returns
-  // (Lv50 sits inside the v51 3x band, Lv100 in the one-third band).
+  // (Lv50 sits inside the v56 3x band, Lv100 in the one-third band).
   const curve = (E.needAt(100) * rb) / (E.needAt(50) * ra);
   assert.ok(b > 0 && a > 0, 'quest rewards must stay positive across the reset');
   assert.ok(Math.abs(b / a - curve) / curve < 0.05, 'quest exp grew off-curve: ' + (b / a).toFixed(2) + ' vs ' + curve.toFixed(2));
@@ -214,7 +229,7 @@ t('the old /100 bug is gone: a normal player is not paid 1% of the GM', () => {
   E.S = { lv: 150, gm: true, gmx: 100 }; const gm = E.newQuest('kill');
   // both are floored independently, so compare the ratio, not exact multiples
   const ratioXp = gm.xp / normal.xp, ratioZ = gm.z / normal.z;
-  assert.ok(Math.abs(ratioXp - 100/(70/3)) < .01, 'GM should retain its own EXP multiplier, got ' + ratioXp.toFixed(2));
+  assert.ok(Math.abs(ratioXp - 100/(7/3)) < .01, 'GM should retain its own EXP multiplier, got ' + ratioXp.toFixed(2));
   assert.ok(ratioZ > 99 && ratioZ < 101, 'GM x100 should be ~100x zeny, got ' + ratioZ.toFixed(2));
   assert.ok(normal.xp > 1000, 'a Lv150 kill quest paying ' + normal.xp + 'xp is the old bug');
 });
@@ -230,22 +245,27 @@ t('no single level is carried by quests (worst ' + (TL.worst * 100).toFixed(1) +
   assert.ok(TL.worst <= 0.45, 'a level fed ' + (TL.worst * 100).toFixed(1) + '% by quests - the high end must stay a mob grind');
 });
 
-t('pacing anchor: Base Lv 10 (1st job change) in about 2.5 min with the v51 3x band (got ' + (TL.T[10] * 60).toFixed(1) + ' min)', () => {
-  assert.ok(TL.T[10] * 60 > 2.2, 'too fast: ' + (TL.T[10] * 60).toFixed(1) + ' min');
-  assert.ok(TL.T[10] * 60 < 2.8, 'too slow: ' + (TL.T[10] * 60).toFixed(1) + ' min');
+t('pacing anchor: Base Lv 10 (1st job change) in about 3 min (got ' + (TL.T[10] * 60).toFixed(1) + ' min)', () => {
+  assert.ok(TL.T[10] * 60 > 2.4, 'too fast: ' + (TL.T[10] * 60).toFixed(1) + ' min');
+  assert.ok(TL.T[10] * 60 < 3.6, 'too slow: ' + (TL.T[10] * 60).toFixed(1) + ' min');
 });
 
 t('pacing anchor: Base Lv 10->50 takes about 11 min with the 3x band (got ' + ((TL.T[50]-TL.T[10])*60).toFixed(1) + ' min)', () => {
   const total = TL.T[50] * 60, interval = (TL.T[50] - TL.T[10]) * 60;
-  assert.ok(total > 12.5 && total < 15, 'Base 50 total should be about 13.6 min, got ' + total.toFixed(1));
+  assert.ok(total > 12.5 && total < 16, 'Base 50 total should be about 14.4 min, got ' + total.toFixed(1));
   assert.ok(interval > 10 && interval < 12.5, 'Base 10->50 should be about 11 min, got ' + interval.toFixed(1));
 });
 
-t('pacing anchor: Base Lv 50 to 99 takes about 5 h (got ' + (TL.T[99] - TL.T[50]).toFixed(2) + ' h)', () => {
+t('pacing anchor: the v56 Base 50->70 wall is ~80 min, not minutes (got ' + ((TL.T[70] - TL.T[50]) * 60).toFixed(0) + ' min)', () => {
+  const wall = (TL.T[70] - TL.T[50]) * 60;
+  assert.ok(wall > 70, 'the 50-70 wall collapsed back to ' + wall.toFixed(0) + ' min');
+  assert.ok(wall < 92, 'the 50-70 wall ran long: ' + wall.toFixed(0) + ' min');
+});
+t('pacing anchor: Base Lv 50 to 99 takes about 6 h 40 m (got ' + (TL.T[99] - TL.T[50]).toFixed(2) + ' h)', () => {
   const midgame = TL.T[99] - TL.T[50];
-  assert.ok(midgame > 4.3, 'too fast: ' + midgame.toFixed(2) + ' h');
-  assert.ok(midgame < 5.7, 'too slow: ' + midgame.toFixed(2) + ' h');
-  assert.ok(TL.T[99] > 4.55 && TL.T[99] < 5.15, 'v51 Base 99 total should be about 4 h 50 min: ' + TL.T[99].toFixed(2) + ' h');
+  assert.ok(midgame > 6.2, 'too fast: ' + midgame.toFixed(2) + ' h');
+  assert.ok(midgame < 7.2, 'too slow: ' + midgame.toFixed(2) + ' h');
+  assert.ok(TL.T[99] > 6.5 && TL.T[99] < 7.3, 'Base 99 total should be about 6 h 55 min: ' + TL.T[99].toFixed(2) + ' h');
 });
 
 t('pacing anchor: Base 100-150 is a hard ~2-day climb after the reset (got ' + (TL.hours - TL.T[100]).toFixed(1) + ' h)', () => {
@@ -265,7 +285,7 @@ t('job gates land on the anchors: base ' + GATES.map(g => g && g.base).join('/')
   const firstJobInterval = GATES[1].hours - GATES[0].hours;
   assert.ok(firstJobInterval > 0.14 && firstJobInterval < 0.20, 'first-job levels should align to the 11-minute Base 10->50 interval; got ' + (firstJobInterval*60).toFixed(1) + ' min');
   assert.ok(GATES[1].hours > 0.17 && GATES[1].hours < 0.25, '2nd job after ' + GATES[1].hours.toFixed(2) + ' h');
-  assert.ok(GATES[2].hours > 4.55 && GATES[2].hours < 5.15, 'transcendent after ' + GATES[2].hours.toFixed(2) + ' h');
+  assert.ok(GATES[2].hours > 6.5 && GATES[2].hours < 7.3, 'transcendent after ' + GATES[2].hours.toFixed(2) + ' h');
 });
 
 t('a full run earns enough Zeny for the endgame sinks', () => {
@@ -285,8 +305,16 @@ t('endgame Zeny per kill is on the same scale as a refine attempt', () => {
   assert.ok(perKill < 2000, 'pw99 pays ' + perKill.toFixed(0) + 'z/kill - inflated');
 });
 
-t('low-level Zeny is not inflated (a Lv1 kill is still pocket change)', () => {
-  assert.ok(mobZeny(1) < 1, 'pw1 should pay ~0 before the max(1,...) floor');
+t('low-level Zeny is still pocket change but no longer zero (v56 floor)', () => {
+  assert.ok(mobZeny(1) < 1, 'the raw pw1 formula should stay under 1z');
+  assert.strictEqual(E.zenAt(1), 5, 'zeny per kill at power 1 is the 5z floor');
+  assert.strictEqual(killZeny(1), 5, 'a Lv1 kill pays the 5z floor');
+  assert.strictEqual(killZeny(10), 5, 'Lv10 kills are still the 5z floor');
+  assert.strictEqual(killZeny(20), 5, 'the floor still applies at Lv20');
+  assert.ok(killZeny(25) >= 6 && killZeny(25) <= 8, 'the curve takes over around Lv25 (got ' + killZeny(25).toFixed(1) + ')');
+  assert.ok(killZeny(50) > 25, 'the mid-game curve is untouched (got ' + killZeny(50).toFixed(1) + ')');
+  assert.strictEqual(E.ZMIN, 5, 'the shipped floor');
+  assert.strictEqual(src.match(/zeny:Math\.max\(ZMIN,/g).length, 2, 'both mob and boss Zeny use the floor');
   E.S = { lv: 1, gm: false }; E.PW = 1;
   assert.ok(E.newQuest('kill').z < 200, 'a Lv1 quest should not pay endgame money');
 });
