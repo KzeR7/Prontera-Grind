@@ -3351,3 +3351,30 @@ assigned for feel rather than fidelity. While reworking that, two shipped bugs s
   real size of a late-game save (`JSON.stringify(S).length` in the console). The GM password in
   `index.html` is called out as the one thing worth fixing before any server work starts, because
   the repo is public.
+
+### 2026-10-06 — `docs only: the owner's answers folded into the server shift plan`
+
+* **What changed for the player:** Nothing; `index.html` is untouched and `BUILD` is unchanged.
+  The owner read the plan from the entry above and answered its open questions, so those answers
+  are now part of `tools/server-shift-plan.md` instead of living in a chat log.
+* **The answers:** the first build is **phases 1 + 2** (accounts + cloud saves, server-measured away
+  progress, and the social layer - online list, world chat, leaderboard all polled through one
+  `/api/live` endpoint); **real-time co-op is wanted later**, not in this build; login is
+  **username + password with a one-time recovery code** at registration (no email service); and the
+  host decision waits on the owner reading Render's monthly bandwidth figure from the dashboard.
+  The owner also asked whether 1 + 2 is still free-tier-safe, so the plan now works the arithmetic
+  out loud (new §3d): about **24,300 requests/day and 6,100 D1 row writes/day** at 20 players
+  playing 4 h a day, against allowances of 100,000 for each - roughly 4x headroom, with the social
+  poll interval (15 s) and the save debounce (60 s) as the two knobs that move it.
+* **Files touched:** `tools/server-shift-plan.md` (decisions block under §1, new §3d budget table,
+  §7a turned from questions into answers, §9 roadmap statuses, §3a told where the Render bandwidth
+  number lives, §10 step 2 now says phases 1 + 2), this log. `index.html` and every test file are
+  untouched.
+* **Art:** no sheets added, removed or rebuilt; `tools/montage.py` was not used.
+* **Tests:** all **21 suites** green on this tree at the previous commit (the earlier entry has the
+  counts); nothing executable changed since, so this entry does not re-run them.
+* **Branches / PR:** `arena/50beb968-prontera-grind`, the same PR updated with this commit.
+* **Known limits / follow-ups:** the plan is still a plan - no server code exists. The owner chose
+  "plan only" for this session, so phase 0 (rotate the public GM password, hide the dev files from
+  the deploy) and phase 1 have not been started. The two facts the plan still wants before it is
+  acted on are Render's bandwidth figure and a real `JSON.stringify(S).length`.
