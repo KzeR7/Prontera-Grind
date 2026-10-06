@@ -314,7 +314,7 @@ t('low-level Zeny is still pocket change but no longer zero (v56 floor)', () => 
   assert.ok(killZeny(25) >= 6 && killZeny(25) <= 8, 'the curve takes over around Lv25 (got ' + killZeny(25).toFixed(1) + ')');
   assert.ok(killZeny(50) > 25, 'the mid-game curve is untouched (got ' + killZeny(50).toFixed(1) + ')');
   assert.strictEqual(E.ZMIN, 5, 'the shipped floor');
-  assert.strictEqual(src.match(/zeny:Math\.max\(ZMIN,/g).length, 2, 'both mob and boss Zeny use the floor');
+  assert.strictEqual(src.match(/zeny:Math\.max\(ZMIN,/g).length, 4, 'online and offline mob/boss Zeny all use the floor');
   E.S = { lv: 1, gm: false }; E.PW = 1;
   assert.ok(E.newQuest('kill').z < 200, 'a Lv1 quest should not pay endgame money');
 });

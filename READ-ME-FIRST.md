@@ -64,9 +64,10 @@ deploy — but the host's build output directory must be `dist/`, never the repo
 * `tools/` — the art pipelines (`make_sprite_pack.py`, `make_class_skins.py`, `make_weapon_pack.py`,
   `make_sprite_viewer.py`, `make_simple_apng.py`, `montage.py`), the test suites (`tools/tests/`)
   and a dev-only plan previewer (`tools/preview/`).
-* `tools/server-shift-plan.md` — the design record for accounts, cloud saves, leaderboard, and later
-  social/away-progress work (Render vs Cloudflare, free-tier maths, API/D1 sketch, save sync + conflict
-  rules, and the staged roadmap). It tracks what is already built and the owner's current scope choices.
+* `tools/server-shift-plan.md` — the design record for accounts, cloud saves, leaderboard, the v65
+  client-side offline-reward rules, and remaining social work (Render vs Cloudflare, free-tier maths,
+  API/D1 sketch, save sync + conflict rules, and the staged roadmap). It tracks what is built and the
+  owner's current scope choices.
 * `AGENTS.md` — **the project's rules and its full update log**. Read it before changing anything:
   it carries the house rules (crop only, never draw art; all 8 directions and 3 animation rows
   survive; append to the log; bump `BUILD` for anything a player can see) and the history.
@@ -78,6 +79,70 @@ is the live one; with no argument the tool prints how to set a new one). Since v
 `localStorage.setItem('pg_gm_local', gmHash('test1234'))` in the game's console once, then log in as
 `GM` / `test1234`; `localStorage.removeItem('pg_gm_local')` removes it. Normal accounts are made
 in-game and stored in the browser (`pg_acc4`; saves under `pg_save3_<user>`).
+
+## BUILD v67 — moderated movement, fixed combat floats, server-timed cloud idle claims
+
+* **Movement dialed back:** the speed is now exactly halfway between the old formula and v66's proposed slowdown. AGI 99 is **8.12** instead of 11.45 units/s (about **29.1% slower**, not 58%); AGI 120 is **8.68** instead of 12.5 (about **30.5% slower**, not 61%). The Speed x2/x4 button is unchanged.
+* **Camera:** unchanged from v66, per request.
+* **Combat floats:** fixed the projection bug: damage nodes were `position:relative`, so CSS added the projected screen coordinates to normal document flow. They are now absolute at the projected hit location. Attack numbers use a simpler, smaller typeface; crits are only modestly larger (21px vs 17px) without the oversized burst/tag; MISS/DODGE are plain labels with no badge frame.
+* **Cloud offline timing:** the client no longer decides the away duration or kill budget for cloud accounts. Existing `/api/save` GET/PUT uses D1 server time and a server-observed kill rate; it issues a persistent one-use claim, capped at **4 hours** and **50% rate**, and carries fractional kills forward. The client clock and its `offlineKph` field are ignored. The claim is not lost if the response/tab is interrupted, and retrying cannot issue it twice. Apply `migrations/0003_server_timed_offline_claims.sql` to the live D1 database before deploying this build; instructions are in `tools/cloudflare-deploy-steps.md`.
+* **Important trust boundary:** this closes the device-clock exploit for cloud offline timing/kill count without polling. The browser still rolls the actual EXP/items/cards/ores from the approved kill count, because combat, drops and the full save are still simulated client-side. A player who directly edits their save can still cheat other progression; complete reward authority requires moving the reward simulator and validating more of the save on the server. Browser-only local accounts still use local time and are not cross-device.
+
+## BUILD v66 — camera, skill art, login and combat polish
+
+* **Camera correction:** the previous 5-world-unit forward look-ahead left the hero visibly low. It is
+  now only 0.25 units; with the current camera angle the hero's body centre projects to about 48% of
+  the desktop play area (slightly above centre). This is an actual target change, not just a vertical
+  focus tweak.
+* **Movement amount:** the old pace was `6.5 + 0.05 × AGI`; it is now `4.1 + 0.07 × sqrt(AGI)`. At
+  AGI 99 that is 4.80 instead of 11.45 units/second (**58% slower**); at AGI 120 it is 4.87 instead
+  of 12.5 (**61% slower**). The speed button still deliberately multiplies movement.
+* **Skill artwork:** replaced failed/hotlinked tiny icons with self-contained 46px fantasy SVG ability
+  gems: metal rim, glass colour, glow and many distinct motifs for magic, weapons, healing, defence,
+  archery, poison and utility. They load locally, are crisp on high-DPI screens, and do not need an
+  image server.
+* **Combat floats:** ordinary hits are outlined gold/ivory, skill hits have a separate cool-blue glow,
+  misses/dodges use compact readable badges, incoming damage stays red, and criticals are 32px with a
+  larger red-gold burst frame and a small CRIT tag. The numeric damage remains visible.
+* **Registration/login:** clicking Create Account now asks for confirmation before sending/creating
+  anything. Login has a Remember user ID on this device checkbox; a successful registration turns it
+  on and stores only the username, never the password. The option can be unchecked to erase the saved
+  username.
+* **Offline-save caveat at v66 (superseded by v67):** cloud saves then carried the offline timestamp
+  and rate sample between devices, but the client clock still controlled the award; a forward jump
+  could claim the cap again. v67 now uses server-timed cloud claims for the away window and kill budget.
+  Browser-only local accounts still use device time. Neither version makes the overall client-generated
+  save or reward rolls cheat-proof.
+* **Bandwidth:** v67 fits cloud claim issuance/acknowledgement into the existing login/save exchange;
+  there is no heartbeat and almost no extra payload. The remaining larger security task is moving loot
+  generation and validating save deltas server-side, not server timing.
+
+## BUILD v65 — offline rewards and gameplay/UI fixes
+
+* **Ordinary mobs now drop Oridecon and Elunium** on every map: 0.5% each on Stages 1–9 and 1% each
+  on Stage 10; the Stage 10 boss remains 2.5% each.
+* **Movement and camera:** v65 introduced the gentler AGI curve. The preview still showed the hero low
+  because its 5-unit forward camera lead remained; v66 corrected that lead to 0.25 units.
+* **Equipment/Skills panels:** equipment-compatible gear temporarily sorts to the top of the bag while
+  choosing a slot, then normal ordering returns when it closes. Clicking elsewhere closes the chooser
+  and its description. Skills use a five-column desktop grid, show the selected skill's details below
+  the grid, and dismiss those details on an outside click.
+* **Ragnarok equipment icons:** gear still uses recognizable item art where available (including
+  Katar weapon art) and a safe fallback on a failed image load. The preview exposed unreliable remote
+  skill thumbnails; v66 replaced skill thumbnails with local, high-resolution fantasy vector gems.
+* **Offline rewards:** saves record a recent kill-rate estimate. On return after at least one minute,
+  the game credits no more than four hours and simulates kills at **50% of that recent online rate**.
+  The usual field reward rules still apply: EXP, Zeny, equipment, cards, both ores and pets can drop;
+  auto-sell/equip, quest and bag rules still apply. The welcome-back dialog summarizes actual away
+  time, credited time, kills, total drops, EXP, equipment items, cards and Zeny. A copy is reconciled
+  first when cloud saves conflict; offline rewards are applied only to the save the player chooses.
+* **Registration (refined in v66):** local registration enters the new character after the new
+  confirmation popup is accepted. Cloud registration asks before account creation, then still requires
+  the player to save the one-time recovery code before entering the game. Successful registration
+  remembers the user ID (never the password); the login checkbox can disable and clear it. Cloud
+  passwords require 10 characters; browser-only fallback accounts require 4. The browser-only mode is
+  device-local and its client-side hash is not suitable for protecting an account with valuable
+  cross-device progress; use the cloud account path for that.
 
 ## Run it
 

@@ -1,5 +1,5 @@
-// D1 migration safety: the leaderboard schema is additive, repeatable, and tracks only new kills
-// in daily/weekly buckets while preserving an account-lifetime total.
+// D1 migration safety: leaderboard counters remain additive, and the offline-claim migration adds
+// server-owned remainder/claim storage without changing existing saves.
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -14,7 +14,7 @@ const t = (name, fn) => {
   try { fn(); console.log('  ok   ' + name); pass++; }
   catch (e) { console.log('  FAIL ' + name + ' -> ' + e.message); fail++; }
 };
-console.log('migration: additive, repeatable leaderboard counters\n');
+console.log('migration: leaderboard counters and server-timed offline claims\n');
 
 db.exec(migration('0001_init.sql'));
 const user = db.prepare(`INSERT INTO users(username, pass_hash, created_at) VALUES('OldSave', 'test', 1)`).run().lastInsertRowid;
@@ -22,7 +22,20 @@ db.prepare(`INSERT INTO saves(user_id, version, blob, saved_at, updated_at, last
   kills_total, level, cls, zeny, playtime) VALUES(?,1,'{}',1,1,1,0,1200,35,'Novice',0,0)`).run(user);
 
 const apply = () => db.exec(migration('0002_leaderboard.sql'));
+const applyOffline = () => db.exec(migration('0003_server_timed_offline_claims.sql'));
 apply();
+applyOffline();
+
+t('offline-claim migration preserves old saves and creates one-pending-claim storage', () => {
+  assert.equal(db.prepare('SELECT version FROM saves WHERE user_id=?').get(user).version, 1, 'existing save row is untouched');
+  assert.equal(db.prepare("SELECT COUNT(*) AS n FROM sqlite_master WHERE type='table' AND name='offline_reward_claims'").get().n, 1);
+  assert.equal(db.prepare("SELECT COUNT(*) AS n FROM sqlite_master WHERE type='index' AND name='idx_offline_claim_one_pending'").get().n, 1);
+});
+
+t('offline-claim migration is safe to reapply', () => {
+  applyOffline();
+  assert.equal(db.prepare("SELECT COUNT(*) AS n FROM sqlite_master WHERE type='table' AND name='offline_reward_claims'").get().n, 1);
+});
 
 t('existing cloud saves backfill all-time kills, not old daily/weekly kills', () => {
   assert.equal(db.prepare("SELECT kills FROM leaderboard_kills WHERE user_id=? AND period_key='all'").get(user).kills, 1200);

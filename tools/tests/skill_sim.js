@@ -92,7 +92,7 @@ if (!pickWMatch) throw new Error('cannot extract weighted gacha picker');
 const PICKW_CODE = pickWMatch[0].slice(0, -',gp='.length) + ';';
 const PET_HIT_SRC = grab('const petSkills=p=>', 'const rollingSet=new Set');
 const PET_GACHA_ACTION = block('pskill:id=>');
-const STRIKE_SRC = grab('function strike(mult,col,magic=false){', '// Higher job tiers');
+const STRIKE_SRC = grab('function strike(mult,col,magic=false,skill=false){', '// Higher job tiers');
 function makePetHarness(){
   const box={};vm.createContext(box);
   vm.runInContext(`
@@ -140,8 +140,8 @@ t('magical class skills route through MATK, while physical classes remain ATK-ba
   for (const id of ['bash','dstr','mammo','env']) assert.ok(!byId(id).magic,id+' should deal physical ATK damage');
   assert.strictEqual(byId('amp').key,'matk','Amplify Magic must raise MATK, not physical ATK');
   assert.strictEqual(byId('mystic').key,'matk','Mystical Amplification must raise MATK, not physical ATK');
-  assert.ok(src.includes('strike(m,sk.col,!!sk.magic)')&&src.includes('magic:!!sk.magic')&&src.includes('strike(p.m,p.col,!!p.magic)'),
-    'multi-hit spells must preserve the MATK path through their delayed strikes');
+  assert.ok(src.includes('strike(m,sk.col,!!sk.magic,true)')&&src.includes('magic:!!sk.magic,skill:true')&&src.includes('strike(p.m,p.col,!!p.magic,!!p.skill)'),
+    'skill hits must keep their blue skill-damage style while multi-hit spells preserve the MATK path');
 });
 
 t('player ATK and MATK formulas consume only their matching pet buffs and passives', () => {

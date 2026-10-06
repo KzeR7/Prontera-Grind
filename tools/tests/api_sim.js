@@ -28,12 +28,22 @@ assert.ok(typeof globalThis.btoa === 'function', 'this suite needs global btoa (
 
 function makeD1(sqlite) {
   const wrap = (stmt, args = []) => ({
+    _stmt: stmt, _args: args,
     bind: (...more) => wrap(stmt, args.concat(more)),
     first: async () => stmt.get(...args) ?? null,
     all: async () => ({ results: stmt.all(...args) }),
     run: async () => ({ success: true, meta: stmt.run(...args) }),
   });
-  return { prepare: sql => wrap(sqlite.prepare(sql)) };
+  return {
+    prepare: sql => wrap(sqlite.prepare(sql)),
+    batch: async statements => {
+      sqlite.exec('BEGIN IMMEDIATE');
+      try {
+        const results = statements.map(q => ({ success: true, meta: q._stmt.run(...q._args) }));
+        sqlite.exec('COMMIT'); return results;
+      } catch (e) { sqlite.exec('ROLLBACK'); throw e; }
+    },
+  };
 }
 
 function freshEnv() {
@@ -177,12 +187,62 @@ await T('saves: first upload, then versions bump, and the blob is stored verbati
   assert.strictEqual(got.data.version, 2);
 });
 
-await T('a stale write is refused with the server copy, never silently applied', async () => {
+await T('offline time is server-timed, capped, half-rate, persistent until claimed, and one-use', async () => {
   const c = globalThis.__friend;
-  const stale = await api.putSave(env, c, { version: 1, blob: saveBlob(99, 1), savedAt: 3 });
+  const friendId = sqlite.prepare('SELECT id FROM users WHERE username = ?').get('FRIEND').id;
+  const awayMs = 24 * 60 * 60 * 1000;
+  const priorAt=Date.now()-awayMs;
+  sqlite.prepare('UPDATE saves SET last_seen=?, rate_kph=? WHERE user_id=?').run(priorAt,100,friendId);
+  sqlite.prepare(`INSERT INTO offline_reward_claims(user_id,away_ms,credited_ms,rate_kph,kills,remainder,issued_at,claimed_at)
+    VALUES(?,?,?,?,?,?,?,?)`).run(friendId,0,0,100,0,.25,priorAt,priorAt);
+  const first = await api.getSave(env, c);
+  const claim = first.data.offlineClaim;
+  assert.ok(claim && claim.id > 0, 'the server issues a persisted claim');
+  assert.ok(claim.awayMs >= awayMs, 'elapsed time comes from D1 server last_seen');
+  assert.strictEqual(claim.creditedMs, 4 * 60 * 60 * 1000, 'server caps at four hours');
+  assert.strictEqual(claim.kills, 200, '100 kills/hour × 4 hours × 50%');
+  const retry = await api.getSave(env, c);
+  assert.strictEqual(retry.data.offlineClaim.id, claim.id, 'retry returns the same claim instead of minting another');
+  assert.strictEqual(retry.data.offlineClaim.kills, claim.kills);
+  const version = retry.data.version;
+  const base = JSON.parse(retry.data.blob); base.kills += claim.kills;
+  base.offlineClaimId = claim.id;
+  base.offlineAt = 9999999999999; base.offlineKph = 30000; base.offlineKillRemainder = 0.99;
+  const missing = await api.putSave(env, c, { version, blob: JSON.stringify(Object.assign({}, base, { offlineClaimId: undefined })), savedAt: 9999999999999 });
+  assert.strictEqual(missing.status, 428, 'a pending server claim is required before this save can sync');
+  const accepted = await api.putSave(env, c, { version, blob: JSON.stringify(base), offlineClaimId: claim.id, savedAt: 9999999999999 });
+  assert.strictEqual(accepted.status, 200);
+  assert.strictEqual(accepted.data.offlineClaimId, claim.id);
+  const row = sqlite.prepare('SELECT version, saved_at, rate_kph, kills_total FROM saves WHERE user_id=?').get(friendId);
+  assert.strictEqual(row.kills_total, 207);
+  assert.ok(row.saved_at < 9999999999999, 'client-supplied clock is ignored');
+  const storedClaim = sqlite.prepare('SELECT claimed_at, remainder FROM offline_reward_claims WHERE id=?').get(claim.id);
+  assert.strictEqual(storedClaim.claimed_at > 0, true);
+  assert.strictEqual(storedClaim.remainder, 0.25, 'the server keeps its own fractional remainder with the claim');
+  const after = await api.getSave(env, c);
+  assert.strictEqual(after.data.offlineClaim, null, 'the same period cannot be claimed a second time');
+
+  // A save request can be the first request after a long absence (for example, a tab that came
+  // back online without running the visibility refresh). PUT must return a server claim rather than
+  // silently accepting the save as online progress.
+  const directAway=Date.now()-2*60*60*1000;
+  sqlite.prepare('UPDATE saves SET last_seen=?, rate_kph=? WHERE user_id=?').run(directAway,100,friendId);
+  const directSave=JSON.parse(after.data.blob);directSave.kills+=100;
+  const direct=await api.putSave(env,c,{version:after.data.version,blob:JSON.stringify(directSave),offlineClaimId:directSave.offlineClaimId});
+  assert.strictEqual(direct.status,428,'a first-return PUT also requires the pending claim');
+  assert.strictEqual(direct.data.offlineClaim.creditedMs,2*60*60*1000);
+  assert.strictEqual(direct.data.offlineClaim.kills,100);
+  directSave.offlineClaimId=direct.data.offlineClaim.id;
+  const directAccepted=await api.putSave(env,c,{version:after.data.version,blob:JSON.stringify(directSave),offlineClaimId:directSave.offlineClaimId});
+  assert.strictEqual(directAccepted.status,200,'the corrected retry acknowledges the issued claim');
+});
+
+await T('a stale write is refused with the server copy, never silently applied', async () => {
+  const c = globalThis.__friend, current = (await api.getSave(env, c)).data.version;
+  const stale = await api.putSave(env, c, { version: current - 1, blob: saveBlob(99, 1), savedAt: 3 });
   assert.strictEqual(stale.status, 409, 'a version mismatch must be a conflict');
   assert.strictEqual(stale.data.conflict, true);
-  assert.strictEqual(stale.data.version, 2, 'the server hands back its own version');
+  assert.strictEqual(stale.data.version, current, 'the server hands back its own version');
   const still = await api.getSave(env, c);
   assert.strictEqual(JSON.parse(still.data.blob).lv, 21, 'the stale write must not have landed');
 });

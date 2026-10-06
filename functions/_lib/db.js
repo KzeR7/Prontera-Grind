@@ -56,16 +56,53 @@ export const insertSave = (db, userId, blob, savedAt, pub, rateKph = 0) =>
     .bind(userId, blob, savedAt, now(), now(), rateKph, pub.kills ?? 0, pub.lv ?? null, pub.cls ?? null,
       pub.zeny ?? null, pub.playtime ?? null).run();
 
-export const updateSave = (db, userId, version, blob, savedAt, pub, rateKph) =>
-  db.prepare(`UPDATE saves SET version = ?, blob = ?, saved_at = ?, updated_at = ?, last_seen = ?,
+export const updateSaveStatement = (db, userId, version, blob, savedAt, pub, rateKph, expectedVersion = null) => {
+  const versionGuard = expectedVersion == null ? '' : ' AND version = ?';
+  const args = [version, blob, savedAt, now(), now(), rateKph, pub.kills ?? 0, pub.lv ?? null,
+    pub.cls ?? null, pub.zeny ?? null, pub.playtime ?? null, userId];
+  if (expectedVersion != null) args.push(expectedVersion);
+  return db.prepare(`UPDATE saves SET version = ?, blob = ?, saved_at = ?, updated_at = ?, last_seen = ?,
                                 rate_kph = ?, kills_total = ?, level = ?, cls = ?, zeny = ?, playtime = ?
-              WHERE user_id = ?`)
-    .bind(version, blob, savedAt, now(), now(), rateKph, pub.kills ?? 0, pub.lv ?? null, pub.cls ?? null,
-      pub.zeny ?? null, pub.playtime ?? null, userId).run();
+              WHERE user_id = ?${versionGuard}`).bind(...args);
+};
 
-export const touchSeen = (db, userId) =>
+export const updateSave = (db, userId, version, blob, savedAt, pub, rateKph, expectedVersion = null) =>
+  updateSaveStatement(db, userId, version, blob, savedAt, pub, rateKph, expectedVersion).run();
+
+export const touchSeen = (db, userId, at = now()) =>
   db.prepare('UPDATE saves SET last_seen = ?, updated_at = updated_at WHERE user_id = ?')
-    .bind(now(), userId).run();
+    .bind(at, userId).run();
+
+// An offline claim is a server-timed, persistent entitlement. It remains pending until a versioned
+// save containing its ID is accepted, so retrying login or losing a response can neither reroll nor
+// duplicate the same away period.
+export const pendingOfflineClaim = (db, userId) =>
+  db.prepare(`SELECT id, away_ms, credited_ms, rate_kph, kills, remainder, issued_at, claimed_at
+              FROM offline_reward_claims WHERE user_id = ? AND claimed_at IS NULL ORDER BY id DESC LIMIT 1`)
+    .bind(userId).first();
+
+export const offlineClaimById = (db, userId, id) =>
+  db.prepare(`SELECT id, away_ms, credited_ms, rate_kph, kills, remainder, issued_at, claimed_at
+              FROM offline_reward_claims WHERE user_id = ? AND id = ?`).bind(userId, id).first();
+
+export const lastOfflineRemainder = async (db, userId) => {
+  const row = await db.prepare(`SELECT remainder FROM offline_reward_claims
+                                WHERE user_id = ? AND claimed_at IS NOT NULL ORDER BY id DESC LIMIT 1`)
+    .bind(userId).first();
+  return Number(row?.remainder) || 0;
+};
+
+export const insertOfflineClaim = (db, userId, claim, issuedAt) =>
+  db.prepare(`INSERT OR IGNORE INTO offline_reward_claims
+              (user_id, away_ms, credited_ms, rate_kph, kills, remainder, issued_at)
+              VALUES(?, ?, ?, ?, ?, ?, ?)`)
+    .bind(userId, claim.awayMs, claim.creditedMs, claim.rateKph, claim.kills, claim.remainder, issuedAt).run();
+
+export const markOfflineClaimStatement = (db, userId, id, claimedAt, version, blob) =>
+  db.prepare(`UPDATE offline_reward_claims SET claimed_at = ?
+              WHERE user_id = ? AND id = ? AND claimed_at IS NULL
+                AND EXISTS (SELECT 1 FROM saves WHERE user_id = ? AND version = ? AND blob = ?)`)
+    .bind(claimedAt, userId, id, userId, version, blob);
 
 export const pushHistory = (db, userId, version, blob, savedAt) =>
   db.prepare('INSERT OR REPLACE INTO save_history(user_id, version, blob, saved_at) VALUES(?, ?, ?, ?)')

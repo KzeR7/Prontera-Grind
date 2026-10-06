@@ -57,7 +57,10 @@ const code = [
   pick(/const sellVal=it=>[^;]+;/, 'sell value'),
   pick(/const cell=\(it,sel,extra=''\)=>[^\n]*/, 'cell'),
   pick(/const STATS=\[[\s\S]*?\];/, 'STATS'),
-  pick(/const SKILL_ICON=\{[^}]*\};/, 'per-skill icon map'),
+  pick(/const SKILL_ICON=\{[^}]*\};/, 'per-skill pictogram map'),
+  pick(/const SKILL_TONE=\{[^;]+;/, 'skill icon color themes'),
+  pick(/const SKILL_PICTO=\{[\s\S]*?\n\};/, 'local vector skill art'),
+  grab('const skillIcon=id=>', '// The CDM affix stays'),
   pick(/const SKSLOTS=t=>[^;]+;/, 'SKSLOTS/SKFADE'),
   pick(/const SKGCD=[\d.]+;/, 'SKGCD'),
   pick(/const tnode=n=>[^\n]*/, 'tnode'),
@@ -74,6 +77,11 @@ const code = [
   pick(/const cardSlots=[^\n]*/, 'cardSlots'),
   grab('function insertUI(sel){', 'function renderWin(){'),
   pick(/function refineUI\(it,k\)\{const[^\n]*/, 'refineUI'),
+  pick(/const RO_ITEM_ICON_CANDIDATES=\{[^;]+;/, 'RO equipment image candidates'),
+  grab('const gearIconHash=text=>', 'const gearItemIconId='),
+  grab('const gearItemIconId=it=>', 'const itemIconUrl='),
+  pick(/const itemIconUrl=id=>[^;]+;/, 'gear image URL'),
+  grab('const itemIconMarkup=it=>', 'const icon=it=>'),
   pick(/const icon=it=>[^;]+;/, 'icon'),
   pick(/const items=\(\)=>[^\n]*/, 'items/ev/iname/eqv'),
   pick(/const refCost=it=>[^;]+;/, 'refCost/refCh'),
@@ -107,7 +115,7 @@ const $=id=>({style:{},set innerHTML(v){globalThis['h_'+id]=v},get innerHTML(){r
 const dr=()=>1;
 ${code}
 const skpAvail=()=>5,skTree=()=>4,skEarnedMax=()=>9,skLine=()=>['Novice'],skEarned=()=>9,skSpent=()=>0,pv=()=>0,bon=()=>0,qTxt=q=>'quest';
-this.__u={ V, SKILLS, SKILL_ICON, logs, indexSectionOpen, indexToggleSection, set S(v){S=v}, get S(){return S}, set boardPeriod(v){boardPeriod=v}, set boardCache(v){boardCache=v}, set boardStatus(v){CLOUD.api=!!v.api;CLOUD.on=!!v.on}, set eqPick(v){eqPick=v}, get eqPick(){return eqPick},
+this.__u={ V, SKILLS, SKILL_ICON, SKILL_TONE, SKILL_PICTO, skillIcon, logs, indexSectionOpen, indexToggleSection, set S(v){S=v}, get S(){return S}, set boardPeriod(v){boardPeriod=v}, set boardCache(v){boardCache=v}, set boardStatus(v){CLOUD.api=!!v.api;CLOUD.on=!!v.on}, set eqPick(v){eqPick=v}, get eqPick(){return eqPick},
            set indexMode(v){indexMode=v}, get indexMode(){return indexMode}, set mapM(v){mapM=v}, set mapL(v){mapL=v}, set selE(v){selE=v}, get selE(){return selE}, set selB(v){selB=v}, get selB(){return selB}, set selS(v){selS=v}, set selP(v){selP=v} };
 `;
 const sb = { console };
@@ -307,6 +315,48 @@ t('Assassin equipment UI describes and renders one two-handed Katar only',()=>{
   U.eqPick=null;
 });
 
+t('the equipment chooser temporarily promotes fitting gear and restores normal bag order when closed', () => {
+  U.S=mkS('Swordman');U.selB=null;U.eqPick='weapon';
+  const sorted=U.V.bag0();
+  assert.ok(sorted.indexOf('data-a="eqpick" data-v="9:weapon"')<sorted.indexOf('data-a="selb" data-v="2"'),
+    'the compatible weapon should lead the bag while the weapon slot is being filled');
+  U.eqPick=null;
+  const restored=U.V.bag0();
+  assert.ok(restored.indexOf('data-a="selb" data-v="2"')<restored.indexOf('data-a="selb" data-v="9"'),
+    'normal inventory order returns when the chooser closes');
+  assert.ok(src.includes("document.addEventListener('pointerdown'")&&src.includes('if(chooserAtPointerDown&&!bagPointerInside)closeEquipmentChooser(true)'),
+    'outside clicks use the chooser state captured at pointer-down even if another handler cleared it');
+  assert.ok(src.includes('function closeEquipmentChooser(force=false){if(!eqPick&&!force)return;eqPick=null;selE=null;selB=null;'),
+    'closing also clears the equipment selection and its detail card');
+  assert.ok(src.includes("tabs.splice(i,1);const tipEl=$('tooltip')"), 'closing removes the Bag and hides its tooltip');
+});
+
+t('the Skills grid fits all five class skills and selected descriptions dismiss outside', () => {
+  assert.ok(src.includes('.skg{display:grid;grid-template-columns:repeat(5,minmax(0,1fr))'), 'desktop uses five columns');
+  assert.ok(src.includes('.sk-detail-card{grid-column:1/-1'), 'the description takes a full row below the skill tiles');
+  assert.ok(src.includes("if(selS&&!skillInside){selS=null;if(tabs.includes('skills'))renderWin()}"), 'an outside click clears the selected detail');
+  assert.ok(src.includes("skillCardPointerInside=!!(target&&target.closest('.sk-detail-card'))"), 'clicking inside the detail does not dismiss it');
+});
+
+t('skill art is local, movement slowdown is moderated, and the unchanged camera centres the hero', () => {
+  assert.ok(src.includes("katar:[1250,1251,1252,1253,1254,1255]"), 'Katar gear has its own recognizable item sprites');
+  assert.ok(!src.includes('https://static.divine-pride.net/images/skills/'), 'skill artwork no longer depends on hotlinked images');
+  assert.ok(src.includes('class="skill-art motif-${motif}"')&&src.includes('data-motif="${motif}"'), 'each skill uses a locally drawn, themed vector gem');
+  assert.ok(src.includes('.skill-art{display:block;width:46px;height:46px'), 'the vector artwork is high-resolution and not a tiny red sprite');
+  const moveMatch=src.match(/const heroMoveSpeedForAgi=agi=>[^;]+;/);assert.ok(moveMatch,'AGI movement curve is missing');
+  const move=new Function(moveMatch[0]+';return heroMoveSpeedForAgi')();
+  const old99=6.5+99*.05,old120=6.5+120*.05;
+  assert.ok(Math.abs((1-move(99)/old99)*100-29.1)<.2, 'AGI 99 keeps about half the previous slowdown: 8.12 vs 11.45');
+  assert.ok(Math.abs((1-move(120)/old120)*100-30.5)<.2, 'AGI 120 keeps about half the previous slowdown: 8.68 vs 12.5');
+  const focus=Number((src.match(/const CAMERA_FOCUS_Y=([\d.]+)/)||[])[1]);
+  const lead=Number((src.match(/CAMERA_LEAD_Z=([\d.]+)/)||[])[1]);
+  assert.strictEqual(focus,.28, 'vertical focus remains close to the hero ground line');
+  assert.strictEqual(lead,.25, 'the old five-unit camera lead is reduced to a quarter unit');
+  assert.ok(src.includes('ct.z+=(pl.z-CAMERA_LEAD_Z-ct.z)*.05'), 'the render loop actually follows the near-centred camera target');
+  const bodyUp=(1.08-focus)*Math.cos(.95)-lead*Math.sin(.95),screenY=.5-bodyUp/(2*18*Math.tan(38*Math.PI/360));
+  assert.ok(screenY>.45&&screenY<.50, 'a normal desktop view projects the avatar centre just above screen centre (at '+(screenY*100).toFixed(1)+'%)');
+});
+
 t('the skills panel renders for every class tier', () => {
   ['Novice', 'Swordman', 'Knight', 'Lord Knight', 'Assassin Cross', 'High Wizard'].forEach(cls => {
     U.S = mkS(cls); U.selS = null;
@@ -380,11 +430,15 @@ t('HP flips at 30%; one split bar fills Base from left and Job from right with c
   assert.strictEqual(d.titleLabel.style.display,'inline-block','an equipped title is visible');
 });
 
-t('damage digits, critical burst and skill names use separate anchored combat overlays', () => {
-  assert.ok(src.includes('.fl.critical::before{')&&src.includes('clip-path:polygon('),
-    'critical damage needs a spiked red burst behind its number');
-  assert.ok(src.includes('color:#ffe643!important')&&src.includes('-webkit-text-stroke:'),
-    'ordinary damage needs RO-like gold outlined digits');
+t('damage floats stay screen-projected, restrained, and distinct by type', () => {
+  assert.ok(src.includes('.fl.damage,.fl.skill-damage,.fl.critical,.fl.incoming{position:absolute'),
+    'combat nodes must remain absolutely anchored to projected screen coordinates');
+  assert.ok(src.includes('.fl.damage{font-size:17px;color:#fff0a6!important;-webkit-text-stroke:'),
+    'ordinary damage uses a smaller, simpler gold Trebuchet treatment');
+  assert.ok(src.includes('.fl.critical{font-size:21px;')&&!src.includes('.fl.critical::before{'),
+    'critical damage is only modestly larger and has no oversized frame');
+  assert.ok(src.includes('.fl.miss,.fl.evade{position:absolute;')&&!src.includes('border:1px solid #d9e1ec'),
+    'MISS and DODGE are plain text labels with no badge frame');
   assert.ok(src.includes('#xp-track{display:flex;width:100%;height:14px')&&src.includes('#xp-dock{flex:none;width:100%;padding:3px 10px 4px'),
     'the shared Base/Job bar must be slimmer than before');
   assert.ok(src.includes('skillNameFloat(sk.n,cast-1)')&&src.includes("skillNameFloat('First Aid')")&&src.includes('skillNameFloat(s.n)'),
@@ -423,7 +477,7 @@ t('damage digits, critical burst and skill names use separate anchored combat ov
     let mob={x:1,z:3,hp:10000,size:1},shake=0,hit=null,S={dmg:0};
     const missCh=()=>0,crit=()=>100,atk=()=>100,matk=()=>200,st=()=>0,critD=()=>2,
       rnd=(a,b)=>a,addFloat=()=>{},damageFloat=(...args)=>{hit=args};
-    ${grab('function strike(mult,col,magic=false){','// Higher job tiers get more casts per swing:')}
+    ${grab('function strike(mult,col,magic=false,skill=false){','// Higher job tiers get more casts per swing:')}
     strike(1,'#fff');this.__hit={mob,hit,shake};
   `,strikeBox);
   assert.ok(strikeBox.__hit.hit[4]&&strikeBox.__hit.hit[3]>100&&strikeBox.__hit.shake===6,
@@ -511,17 +565,21 @@ t('the DPS meter shares the rolling minute and resets with the save', () => {
   m=s('p',0,0,0,80000);assert.strictEqual(m.dps,0,'a fresh save (damage counter reset) starts at zero');
 });
 
-t('every skill has a distinct icon and upgraded card metadata', () => {
-  const missing = [...U.SKILLS].filter(s => !U.SKILL_ICON[s.id]).map(s => s.id);
-  assert.deepStrictEqual(missing, [], 'skills without a mapped glyph: ' + missing.join(', '));
+t('every skill has distinct local vector art and upgraded card metadata', () => {
+  const missing = [...U.SKILLS].filter(s => !U.SKILL_ICON[s.id] || !U.SKILL_TONE[U.SKILL_ICON[s.id]] || !U.SKILL_PICTO[U.SKILL_ICON[s.id]]).map(s => s.id);
+  assert.deepStrictEqual(missing, [], 'skills without a complete local art mapping: ' + missing.join(', '));
   assert.strictEqual(Object.keys(U.SKILL_ICON).length, U.SKILLS.length, 'the icon map must cover the whole roster without unused entries');
-  assert.strictEqual(new Set(U.SKILLS.map(s => U.SKILL_ICON[s.id])).size, U.SKILLS.length, 'each skill must have a visually distinct glyph');
+  assert.ok(new Set(Object.values(U.SKILL_ICON)).size >= 40, 'skill art should use many clearly different pictograms, not one placeholder');
+  const art=U.SKILLS.map(s=>U.skillIcon(s.id));
+  assert.ok(art.every(svg=>svg.startsWith('<svg class="skill-art motif-')&&svg.includes('<defs>')&&svg.includes('linearGradient')), 'each skill renders self-contained, shaded vector art');
+  assert.strictEqual(new Set(art.map(svg=>svg.match(/id="(skgem-[^"]+)/)?.[1])).size, U.SKILLS.length, 'SVG definition IDs cannot collide between skills');
+  assert.ok(!src.includes('class="ro-skill-icon"'), 'there are no externally loaded red skill placeholders');
   U.S = mkS('Mage'); U.selS = null;
   const h = U.V.skills();
   assert.ok(h.includes('class="sk-head"') && h.includes('class="sk-kind"'), 'cards show the skill category');
-  assert.ok(h.includes('class="si" aria-hidden="true"') && h.includes('class="sk-level"'), 'cards show a pictogram and clear level');
+  assert.ok(h.includes('class="si" aria-hidden="true"') && h.includes('class="skill-art motif-flame"'), 'cards show a colored fantasy icon and clear level');
   assert.ok(h.includes('class="sk-name"') && h.includes('aria-label="Increase Fire Bolt"'), 'skill labels and upgrade buttons are accessible');
-  assert.ok(/\.skg\{[^}]*repeat\(4,minmax\(0,1fr\)\)/.test(src) && src.includes('.sk .si{width:40px;height:40px'), 'the icon tiles use a polished responsive card style');
+  assert.ok(/\.skg\{[^}]*repeat\(5,minmax\(0,1fr\)\)/.test(src) && src.includes('.sk .si{width:48px;height:48px'), 'the five-skill grid uses large, polished vector tiles');
 });
 
 t('Settings shows a clean character card: preview, costume note, no wall of text', () => {
@@ -719,7 +777,7 @@ t('Settings carries BOTH damage-number toggles (show/hide and short/full) and re
   assert.ok(src.includes('dmgShort:true,dmgShow:true,base:{}'), 'a fresh save starts short and visible');
   // the two switches really do reach the float code
   assert.ok(src.includes("const numTxt=n=>fullNum()?String(Math.round(n)):shortNum(n);"), 'one formatter serves every number');
-  assert.ok(src.includes("damageFloat=(x,y,z,amount,critical=false,incoming=false)=>{if(S&&S.dmgShow===false)return;"), 'hiding skips the float entirely');
+  assert.ok(src.includes("damageFloat=(x,y,z,amount,critical=false,incoming=false,skill=false)=>{if(S&&S.dmgShow===false)return;"), 'hiding skips the float entirely');
 });
 
 t('the map panel states the fixed rarity of the field it is showing', () => {
@@ -1115,7 +1173,7 @@ t('refine controls sit with the piece: the ladder is the v51 30%-nerfed one', ()
   assert.ok(e.indexOf('Refine') > -1 && e.indexOf('Insert card') > -1, 'the weapon shows both sections');
   assert.ok(e.indexOf('Refine') < e.indexOf('Insert card'), 'Refine comes before the long card-insert list, not after it');
   assert.ok(src.includes('refCh=it=>[70,70,70,70,49,42,35,28,21,14][it.r||0]'), 'the refine chance table is the nerfed one');
-  assert.ok(src.includes('ore:l===10,oreCh:l===10?.01:0') && src.includes('ore:true,oreCh:.025'), 'ore drops are halved to 1% / 2.5%');
+  assert.ok(src.includes('ore:true,oreCh:l===10?.01:.005') && src.includes('ore:true,oreCh:.025'), 'regular mobs drop both ores at 0.5% / 1%, Stage 10 boss at 2.5%');
 });
 
 t('worn equipment can never be auto-sold or bulk-sold', () => {

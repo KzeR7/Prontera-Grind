@@ -1,4 +1,4 @@
-# Putting Prontera Grind on Cloudflare (initial setup + v64 leaderboard update)
+# Putting Prontera Grind on Cloudflare (initial setup + v67 server-timed offline claims)
 
 The click-by-click. **Nothing here costs money** and none of it needs a credit card: the whole point
 of choosing Cloudflare was that the free plan never expires, unlike the Render free database.
@@ -6,20 +6,23 @@ of choosing Cloudflare was that the free plan never expires, unlike the Render f
 Time: about 10 minutes, most of it waiting for the first build. You do **not** need to install
 anything — everything below can be done in the browser, with a command-line alternative at the end.
 
-## Updating the existing Pages installation (v64 leaderboard)
+## Updating the existing Pages installation (v67 server-timed offline claims)
 
 The repo already has a Pages/D1 setup (`wrangler.toml`, database binding `DB`, database name `pg`).
 For this update, **do not create a second database or change its ID**. Pages does not apply SQL
-migrations automatically, so apply this additive migration to the bound remote database first:
+migrations automatically. On the existing database, make sure v64's leaderboard schema is present,
+then apply v67's server-offline claim schema before deploying the new Functions code:
 
 ```sh
 npx wrangler d1 execute pg --remote --file=migrations/0002_leaderboard.sql
+npx wrangler d1 execute pg --remote --file=migrations/0003_server_timed_offline_claims.sql
 ```
 
-You can instead paste `migrations/0002_leaderboard.sql` into the `pg` database's Cloudflare D1
-Console. It backfills all-time totals from existing saves; it intentionally does not pretend old
-kills happened today or this week. The migration is safe to rerun. Keep the weekly calendar starting
-on Monday and dates in Asia/Singapore in mind when checking the boards.
+Both migrations are additive and safe to rerun. Migration 0002 backfills all-time totals without
+pretending old kills happened today or this week; 0003 adds only the persistent, one-pending-claim
+ledger used by server timing. It does not rewrite player saves. In the dashboard, paste both files
+into the existing `pg` database's Console in that order. Keep the weekly calendar starting Monday
+and dates in Asia/Singapore in mind when checking the boards.
 
 After the SQL succeeds, merging the PR to the connected production branch, `main`, automatically
 starts the Pages production build/deploy. Wait for the Cloudflare Pages check/deployment to finish.
@@ -54,11 +57,11 @@ Two facts to hold on to while you do this:
 
 ## 2. Load the schema into it
 
-For a **new database only**, open the D1 database's **Console** tab and run `migrations/0001_init.sql`
-first. It creates the eight core tables (`users`, `sessions`, `saves`, `save_history`, `messages`,
-`message_reads`, `grants`, `events`). Then run `migrations/0002_leaderboard.sql` to add the board's
-lifetime/daily kill counters. Both migrations are additive and safe to rerun. For the existing live
-installation, use only `0002_leaderboard.sql` as described above; do not reinitialize the database.
+For a **new database only**, run `migrations/0001_init.sql` first. It creates the eight core tables
+(`users`, `sessions`, `saves`, `save_history`, `messages`, `message_reads`, `grants`, `events`). Then
+run `migrations/0002_leaderboard.sql` and `migrations/0003_server_timed_offline_claims.sql` in order.
+The latter two are additive and safe to rerun. For the existing live installation, do not reinitialize
+with 0001; apply 0002 and 0003 as described above.
 
 ## 3. Create the Pages project, connected to the repo
 
@@ -99,7 +102,7 @@ Open the `*.pages.dev` address Cloudflare gives the project, and walk this list:
 | Check | Expected |
 |---|---|
 | The login card | says **“☁ Cloud accounts are on — register or sign in…”** |
-| Build tag at the bottom of the card | `2026-10-06 grind-v64 daily, weekly and all-time leaderboard` |
+| Build tag at the bottom of the card | `2026-10-07 grind-v67 measured movement, combat floats and server-timed offline rewards` |
 | Register your own name | a dialog with a **recovery code** — copy it somewhere safe, it is shown once |
 | Play for a minute | the header badge goes `☁ …` → `☁ ✓` |
 | The same address in a second browser | sign in with the same name and password → **the same character loads** |
@@ -150,6 +153,7 @@ that, because "load this file a stranger sent you" is otherwise a way to hand ou
 | Login card does **not** show the cloud line, and `/api/me` returns an HTML 404 page | The functions did not deploy. Check that `functions/` is in the repo branch you connected, and that `dist/_routes.json` shipped (the build script fails loudly if it is missing). |
 | `/api/*` returns 500 | Check the D1 binding in `wrangler.toml` (`DB` must point at the intended `pg` database). |
 | `/api/board` says `no such table: leaderboard_kills` | Apply `migrations/0002_leaderboard.sql` to that same database. Pages builds do not run D1 migrations. |
+| `/api/save` says `no such table: offline_reward_claims` | Apply `migrations/0003_server_timed_offline_claims.sql` to that same database, then reload the game. |
 | Another 500 mentioning `no such table` | The initial schema was not loaded into this database — for a new installation, apply `0001_init.sql` first. |
 | Build fails with `MISSING: gm.html` | The build ran from the wrong directory. The project's root directory should be the repository root. |
 | The dashboard will not let you edit the D1 binding | Expected: `wrangler.toml` is the source of truth. Edit the file (step 4). |
@@ -158,18 +162,19 @@ that, because "load this file a stranger sent you" is otherwise a way to hand ou
 
 ## Command-line alternative
 
-For the **existing** installation, the manual v64 update is:
+For the **existing** installation, the manual v67 update is:
 
 ```sh
 npx wrangler login
 npx wrangler d1 execute pg --remote --file=migrations/0002_leaderboard.sql
+npx wrangler d1 execute pg --remote --file=migrations/0003_server_timed_offline_claims.sql
 bash tools/build_site.sh
 npx wrangler pages deploy dist --project-name prontera-grind --branch main
 ```
 
 For a **brand-new** Pages project, first create `pg`, apply `0001_init.sql`, configure its database ID
 in `wrangler.toml`, and create the Pages project with production branch `main`; then apply `0002` and
-build/deploy as above. A Git-connected project will deploy automatically after merges to `main`, so
+`0003` and build/deploy as above. A Git-connected project will deploy automatically after merges to `main`, so
 the manual Pages command is only a fallback.
 
 Local development against a real Functions runtime (this is the official way; `tools/dev_server.js`

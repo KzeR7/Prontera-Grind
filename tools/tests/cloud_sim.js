@@ -35,7 +35,7 @@ function harness(opts = {}) {
   const store = new Map(Object.entries(opts.storage || {}));
   const state = {
     S: opts.S || { lv: 12, cls: 'Novice', zeny: 100, kills: 5, st: { str: 9, agi: 1, dex: 1, luk: 1, int: 1, vit: 1 } },
-    currentUser: null, logs: [], asks: [], saves: 0, downloads: [], lastBlob: null,
+    currentUser: null, logs: [], asks: [], askLabels: [], saves: 0, offlineCalls: 0, offlineClaims: [], downloads: [], lastBlob: null,
   };
   const fetchStub = async (url, init) => {
     calls.push({ url, init: init || {} });
@@ -93,11 +93,13 @@ function harness(opts = {}) {
     iname: it => it.name,
     totalPts: () => 100,
     ELITELV: 100,
-    MAPS: [1, 2, 3], save: () => { state.saves++; },
+    MAPS: [1, 2, 3], save: () => { state.saves++; }, safeCount: v => Math.max(0, Math.floor(Number(v) || 0)),
+    applyOfflineProgress: (now, claim) => { state.offlineCalls++;state.offlineClaims.push(claim||null);if(claim&&sandbox.S)sandbox.S.offlineClaimId=claim.id; },
     initSession: () => { state.localSession = true; },
     showErr: m => state.err = m,
+    rememberUserId: (u, force) => { state.remembered = u; state.rememberForced = !!force; },
     getAcc: () => ({}), setAcc: () => {}, hashPw: () => 'h', gmOk: () => false, GM_USER: 'GM',
-    ask: (msg, yes) => { state.asks.push(msg); if (opts.answerAsk !== false) state.askPromise = yes(); },
+    ask: (msg, yes, labels) => { state.asks.push(msg); state.askLabels.push(labels || {}); if (opts.answerAsk !== false) state.askPromise = yes(); },
     authMode: 'login', hudRate: null, zenyEarned: 0,
   };
   sandbox.$ = sandbox.$;
@@ -143,6 +145,21 @@ await T('an API that answers 401 turns the cloud on and invites the player to si
   assert.strictEqual(await h.sandbox.cloudProbe(), false, 'not signed in yet');
   assert.strictEqual(h.sandbox.CLOUD.api, true);
   assert.match(h.els.get('loginCloud').textContent, /register or sign in/i);
+});
+
+await T('cloud login hands the server claim to the reward applier and syncs its claim ID', async () => {
+  const blob=JSON.stringify({lv:12,cls:'Novice',zeny:100,kills:5,st:{str:1}});
+  const offlineClaim={id:41,awayMs:8*3600000,creditedMs:4*3600000,rateKph:100,kills:200,remainder:0};
+  const h=harness({storage:{'pg_save3_FRIEND':blob},routes:{'/save':(n,init)=>init&&init.method==='PUT'
+    ?{status:200,body:{version:5,offlineClaimId:41}}
+    :{status:200,body:{version:4,blob,offlineClaim}}}});
+  h.sandbox.CLOUD.api=true;h.sandbox.CLOUD.on=true;h.sandbox.CLOUD.ver=4;h.sandbox.currentUser='FRIEND';
+  h.sandbox.S={lv:12,cls:'Novice',zeny:100,kills:5,st:{str:1}};
+  await h.sandbox.cloudJoin('FRIEND',blob);
+  assert.strictEqual(h.state.offlineCalls,1);
+  assert.strictEqual(h.state.offlineClaims[0].id,41);
+  const body=JSON.parse(h.calls.find(c=>c.url==='/api/save'&&c.init.method==='PUT').init.body);
+  assert.strictEqual(body.offlineClaimId,41,'the acknowledged save carries the server claim ID');
 });
 
 await T('playing offline: a failing push keeps the save and says so, and never throws', async () => {
@@ -276,10 +293,14 @@ await T('registration shows the recovery code once, and only through the real as
   h.sandbox.CLOUD.api = true;
   await h.sandbox.cloudAuth('NEW', 'a-good-password', true);
   assert.strictEqual(h.state.asks.length, 1, 'exactly one dialog');
+  assert.strictEqual(h.state.remembered, 'NEW', 'a successful cloud registration remembers its username');
+  assert.strictEqual(h.state.rememberForced, true, 'cloud registration turns remember-user on automatically');
   assert.match(h.state.asks[0], /ABCD-EFGH-JKLM-NPQR/, 'the code is in it');
-  assert.match(h.state.asks[0], /WRITE THIS DOWN/);
-  await h.state.askPromise;                       // the player taps OK, then the session starts
+  assert.match(h.state.asks[0], /Save this recovery code somewhere safe/);
+  assert.strictEqual(h.state.askLabels[0].yes, 'I saved it — enter the game', 'confirmation clearly leads into play');
+  await h.state.askPromise;                       // the player saves the code and enters the game
   assert.strictEqual(h.sandbox.CLOUD.on, true, 'and accepting it starts the session');
+  assert.strictEqual(h.state.offlineCalls, 0, 'cloud sessions do not trust local timestamps when the server issued no claim');
 });
 
 await T('a rejected login shows the server\'s own message and starts nothing', async () => {
