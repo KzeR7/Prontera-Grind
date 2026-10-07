@@ -266,6 +266,34 @@ button.tick.on{background:#ffe08a;border-color:var(--gold);font-weight:bold}
 .mastery-stat-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:5px}.mastery-stat{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px;align-items:center;padding:6px;border:1px solid var(--edge);border-radius:6px;background:#fffdf5;min-width:0}.mastery-stat>span:first-child{display:flex;flex-direction:column}.mastery-stat>span:first-child b{font-size:12px}.mastery-stat>span:first-child small{font-size:9px}.mastery-pips{display:flex;gap:2px}.mastery-pips i{width:7px;height:7px;border:1px solid #8e7957;border-radius:50%;background:#e7dfce}.mastery-pips i.filled{background:radial-gradient(circle at 35% 25%,#fff3ac,#d29b35);border-color:#8c5e17;box-shadow:0 0 3px #b9832777}.mastery-stat button{grid-column:1/-1;width:100%;padding:2px 4px;font-size:9px}.mastery-card-list{display:grid;gap:4px}.mastery-card-row{display:flex;align-items:center;justify-content:space-between;gap:6px;padding:5px 6px;border:1px solid #d6c394;border-radius:6px;background:#fffdf5;min-width:0}.mastery-card-row>span{display:flex;flex-direction:column;min-width:0;font-size:10px;overflow-wrap:anywhere}.mastery-card-row>span small{font-size:9px}.mastery-card-row button{flex:none;padding:3px 6px;font-size:9px}.mastery-empty{padding:9px;border:1px dashed var(--edge);border-radius:6px;background:#fffdf5;font-size:10px;line-height:1.4}.index-xp-card{background:linear-gradient(100deg,#fffdf5,#fff0c2)}.mob-track{display:block;width:100%;height:4px;margin-top:3px}.card-reward-legend{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px;margin:5px 0 8px;padding:6px;border:1px solid var(--edge);border-radius:6px;background:#fffdf5}.card-reward-legend span{font-size:9px;line-height:1.25}.card-reward-legend b{color:#4b351d}.card-reward-pick{display:flex;flex-direction:column;gap:3px;margin-top:4px}.card-reward-pick small{font-size:9px;color:#8a5c18;font-weight:700}.card-reward-pick select{max-width:100%;font:10px "Trebuchet MS",sans-serif;padding:3px;border:1px solid var(--edge2);border-radius:4px;background:#fff8e6;color:var(--ink)}.card-reward-summary{color:#6b4d22!important;font-size:9px!important}
 @media(max-width:560px){#dock{max-width:calc(100vw - 12px);flex-wrap:wrap;justify-content:center}.title-hud{max-width:96px;overflow:hidden;text-overflow:ellipsis;vertical-align:middle}}
 .board-panel{display:flex;flex-direction:column;gap:6px;min-width:0}.board-periods{display:flex;gap:4px}.board-periods button{flex:1;min-width:0;padding:5px 3px;font-size:11px}.board-periods button.on{background:#ffe08a;border-color:var(--gold)}.board-head{display:flex;align-items:center;justify-content:space-between;gap:6px}.board-head small,.board-note{font-size:10px;line-height:1.35;opacity:.78}.board-row{display:grid;grid-template-columns:23px minmax(0,1fr) auto auto;gap:5px;align-items:center;padding:5px 4px;border-bottom:1px dotted #cbb98a;font-size:11px}.board-row b{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.board-rank{font-weight:700;color:#805b1b}.board-level,.board-kills{white-space:nowrap;font-variant-numeric:tabular-nums}.board-kills{font-weight:bold}.board-state{padding:8px;border:1px dashed var(--edge);border-radius:6px;background:#fffdf5;font-size:11px;line-height:1.4}
+/* Prontera Town (v68): the safe town map, its name plates and the NPC talk box */
+#npcLayer{z-index:2;position:absolute;inset:0;pointer-events:none;overflow:hidden}
+.npc-tag{position:absolute;translate:-50% -100%;text-align:center;white-space:nowrap;pointer-events:none;line-height:1.25;
+  padding:2px 7px 3px;border:1px solid rgba(64,44,20,.35);border-radius:8px;background:rgba(255,250,236,.9);
+  box-shadow:0 2px 6px rgba(0,0,0,.22);font-size:11px;color:#402c14}
+.npc-tag b{display:block;font-size:12px;color:#5c3311}
+.npc-tag i{display:block;font-style:normal;font-size:9px;font-weight:700;color:#8a7a5c}
+.npc-tag .talk{display:none;font-size:10px;font-weight:700;color:#1d7a35}
+.npc-tag.near{border-color:var(--gold,#d8a13a);background:rgba(255,246,215,.97)}
+.npc-tag.near .talk{display:block}
+#npcBox{position:absolute;left:50%;bottom:14px;translate:-50% 0;width:min(660px,calc(100vw - 20px));display:none;z-index:30;cursor:default;
+  padding:10px 12px;border:2px solid #8a6a2a;border-radius:10px;background:linear-gradient(180deg,#fffaf0,#f6ecd6);
+  box-shadow:0 10px 26px rgba(0,0,0,.35);line-height:1.45;font-size:13px;color:#3d2b12;pointer-events:auto}
+#nbTop{display:flex;align-items:center;gap:9px}
+#nbFace{flex:none;width:74px;height:78px;image-rendering:pixelated;background:rgba(80,60,30,.08);border:1px solid #cbbfa4;border-radius:6px}
+#nbName{display:block;font-size:15px;color:#6b3a0f}#nbTitle{font-size:11px;font-weight:700;color:#8a7a5c}
+#nbBody{margin:7px 0 8px}#nbBody b{color:#6b3a0f}#nbBody small{display:block;margin-top:5px;color:#7a6a4c;font-size:11px}
+#nbActs{display:flex;flex-wrap:wrap;gap:5px}
+#nbActs button{padding:5px 9px;border:1px solid var(--edge,#cbbfa4);border-radius:6px;background:#fffdf5;font-family:inherit;
+  font-size:11px;font-weight:700;color:#553719;cursor:pointer}
+#nbActs button:hover{background:#ffe9b0}
+@media(max-width:560px){#nbFace{width:54px;height:58px}}
+.tquest{margin:5px 0;padding:5px 7px;border:1px dashed #cbbfa4;border-radius:6px;background:#fffdf5;font-size:12px}
+.tquest .tq{margin:2px 0}.tquest .tq b{color:#6b3a0f}.tquest .tq span{color:#8a7a5c}
+.tquest .tq.done{color:#1d7a35}.tquest .tq i{margin-left:5px;font-style:normal;font-weight:700;font-size:10px;color:#1d7a35}
+.tbands{margin-top:4px;font-size:11px;line-height:1.7}
+.tbands b.tier0{color:#6b6b6b}.tbands b.tier1{color:#2f6f2f}.tbands b.tier2{color:#2f5b9e}
+.tbands b.tier3{color:#7a3fa8}.tbands b.tier4{color:#c08a12}
 </style>
 </head>
 <body>
@@ -282,8 +310,8 @@ button.tick.on{background:#ffe08a;border-color:var(--gold);font-weight:bold}
 <div id="saveTools" style="margin-top:6px;font-size:11px;text-align:center;opacity:.9"><a href="#" id="saveDl" title="Download every character saved in this browser as one file">⬇ Back up saves</a><span style="opacity:.5"> · </span><a href="#" id="saveUp" title="Load a backup file made by this button, on any address">⬆ Restore a backup</a><input type="file" id="saveFile" accept=".json,application/json" style="display:none"></div>
 <div id="buildTag" style="margin-top:6px;font-size:10px;opacity:.55;text-align:center"></div></div></div>
 <div id="wrap"><div class="title"><span id="stageTitle">Prontera Lv 1</span><span id="grindStatus" style="font-size:12px;opacity:.85"></span></div>
-<div id="view"><div id="ov"><div id="mobSpriteLayer" aria-hidden="true"></div><div id="weaponSpriteLayer" aria-hidden="true"></div><div id="prog"></div><div id="tag"><b id="tn"></b><div class="bar"><i id="th" style="background:var(--hp)"></i></div></div><div id="heroTitle" class="hero-title" aria-live="polite"><span id="heroTitleMark" class="ht-mark" aria-hidden="true"></span><span id="heroTitleText"></span></div><div id="hint">Drag to rotate &middot; Scroll to zoom</div><div id="feedWrap"><div id="feedFilter" role="group" aria-label="Log filter"></div><div id="feedTabs"><button id="feedTab" type="button" aria-expanded="true" aria-controls="feed" title="Minimize or show the on-screen log">📃 Logs ▾</button><button id="feedFil" type="button" aria-expanded="false" aria-controls="feedFilter" aria-label="Filter the on-screen log" title="Filter the log - this row folds away by itself">▽</button></div><div id="feed"></div></div><div id="hudBuffs" role="status" aria-live="polite" aria-label="Active pet buffs - hover an icon for what it does"></div><div id="qp"></div><div id="dock"></div>
-<div id="wins"></div></div></div>
+<div id="view"><div id="ov"><div id="mobSpriteLayer" aria-hidden="true"></div><div id="weaponSpriteLayer" aria-hidden="true"></div><div id="npcLayer" aria-hidden="true"></div><div id="prog"></div><div id="tag"><b id="tn"></b><div class="bar"><i id="th" style="background:var(--hp)"></i></div></div><div id="heroTitle" class="hero-title" aria-live="polite"><span id="heroTitleMark" class="ht-mark" aria-hidden="true"></span><span id="heroTitleText"></span></div><div id="hint">Drag to rotate &middot; Scroll to zoom</div><div id="feedWrap"><div id="feedFilter" role="group" aria-label="Log filter"></div><div id="feedTabs"><button id="feedTab" type="button" aria-expanded="true" aria-controls="feed" title="Minimize or show the on-screen log">📃 Logs ▾</button><button id="feedFil" type="button" aria-expanded="false" aria-controls="feedFilter" aria-label="Filter the on-screen log" title="Filter the log - this row folds away by itself">▽</button></div><div id="feed"></div></div><div id="hudBuffs" role="status" aria-live="polite" aria-label="Active pet buffs - hover an icon for what it does"></div><div id="qp"></div><div id="dock"></div>
+<div id="wins"></div><div id="npcBox" role="dialog" aria-modal="false" aria-labelledby="nbName"><div id="nbTop"><canvas id="nbFace" width="74" height="78" aria-hidden="true"></canvas><span><b id="nbName"></b><span id="nbTitle"></span></span></div><div id="nbBody"></div><div id="nbActs"></div></div></div></div>
 <div id="hud"><div><b id="cls2"></b> <span id="titleLabel" class="title-hud hud-title-mirror" aria-hidden="true" style="display:none"></span> Base Lv <b id="lv">1</b> / Job Lv <b id="jl">1</b></div>
 <div class="hud-health">HP <div class="bar" role="meter" aria-label="HP" aria-valuemin="0" aria-valuemax="100" id="hpMeter"><i id="hpb"></i></div><small id="hpPct">100%</small></div>
 <div class="hud-zeny" id="zenyHover" tabindex="0" aria-describedby="zenyRate">&#9679; <b id="zeny">0</b> Zeny<span class="hud-flyout" id="zenyRate" role="tooltip">Zeny earned: 0/min</span></div>
@@ -442,7 +470,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // script block, which is a SyntaxError - the game did not run on main at all. One line wins, and
 // it names both sides of this merge: the v38 balance patch (the weapon cut, the affix/card
 // give-back) and main's weapon-hold rendering work.
-const BUILD='2026-10-07 grind-v67 measured movement, combat floats and server-timed offline rewards';   // shown on the login card - confirms which file you loaded
+const BUILD='2026-10-07 grind-v68 prontera town: buildings, a fountain, five NPCs and click-to-walk';   // shown on the login card - confirms which file you loaded
 $('buildTag').textContent='build '+BUILD;
 
 // ---------- class tree: Novice -> 6 first jobs -> 6 second jobs -> 6 third jobs ----------
@@ -1236,6 +1264,7 @@ function load(){try{const s=JSON.parse(lsGet(saveKey()));if(s&&s.lv){const F=fre
   for(const k of['lv','exp','hp','zeny','kills','indexXp','dmg','pts','mp','lvl','kl','gmx'])f[k]=num_(f[k],F[k]);if(!hadIndexXp)delete f.indexXp;
   if(f.dmgShort!==true&&f.dmgShort!==false)f.dmgShort=true;   // damage digits: short unless deliberately switched
   if(f.dmgShow!==true&&f.dmgShow!==false)f.dmgShow=true;      // and the floats are shown unless switched off
+  f.town=0;                                                   // v68: the town is a place, not a save state
   // v39 tools, all four defaulting to the quiet behaviour: the on-screen log starts unfolded,
   // a bag click inspects rather than sells, nothing is auto-sold and no log filter is hidden.
   if(f.feed!==true&&f.feed!==false)f.feed=true;
@@ -2353,6 +2382,7 @@ const V={
     // same size whichever map or field is picked.
     return`<div class="mapband">
       <div class="mapband-t">Maps <small>&middot; click one to see its stages below</small></div>
+      <div class="mapband-t">🏘 Prontera Town <small>&middot; the safe town: no monsters, no drops - five NPCs to talk to, a fountain plaza to walk</small><button class="go" data-a="town">${S.town?'Leave town':'Walk into town'}</button></div>
       <div class="mapgrid">${MAPS.map((m,i)=>{const cur=i===mapM,here=i===S.mp;
         return`<button class="mapcard${cur?' on':''}${here?' here':''}" data-a="selm" data-v="${i}" title="${m.n} - ${m.t}">
           <b>${m.n}</b><small>${here?'● ':''}${m.rec}</small></button>`}).join('')}</div></div>
@@ -2633,8 +2663,9 @@ const MAX_TABS=3;const openTab=k=>{if(k==='gm'&&!S.gm)return;const i=tabs.indexO
   // Reopening a window starts at its first sub-tab: Status shows Stats, Inventory shows Bag.
   if(k==='status')sub.status='stats';if(k==='bag')sub.bag='bag';
   if(k==='map'){mapM=S.mp;mapL=S.lvl}}renderWin();if(k==='board'&&tabs.includes('board'))boardRefresh(boardPeriod)};
-const gotoField=(m,l)=>{S.mp=m;S.lvl=l;S.kl=0;mobs=[];mob=null;respawn=.3;pend=[];castQ=[];qRefresh();ui();save()};
+const gotoField=(m,l)=>{if(townOn())townLeave(1);S.mp=m;S.lvl=l;S.kl=0;mobs=[];mob=null;respawn=.3;pend=[];castQ=[];qRefresh();ui();save()};
 const ACT={
+  town:()=>townToggle(),
   boardperiod:v=>{if(!['daily','weekly','all'].includes(v))return;boardPeriod=v;boardError='';renderWin();boardRefresh(v)},
   boardrefresh:()=>boardRefresh(boardPeriod),
   selm:v=>{mapM=+v;mapL=Math.min(mapL,Math.max(1,S.prog[mapM]));renderWin()}, sell_:v=>{mapL=+v;renderWin()},go:()=>{if(mapL<=S.prog[mapM]){gotoField(mapM,mapL);log(`Traveled to ${fieldName()}.`)}},
@@ -2753,7 +2784,12 @@ document.addEventListener('click',e=>{
   skillPointerInside=false;skillCardPointerInside=false;
   if(selS&&!skillInside){selS=null;if(tabs.includes('skills'))renderWin()}
 });
-addEventListener('keydown',e=>{if(!S||e.ctrlKey||e.metaKey||e.altKey||/INPUT|TEXTAREA/.test(e.target.tagName))return;const k=e.key.toUpperCase();if(k==='ESCAPE'){if(feedFilShown){feedFilHide();return}tabs.pop();renderWin();return}if(k==='Q'){qOpen=!qOpen;renderQ();return}const X={E:['status','equip'],C:['bag','cards'],R:['status','equip']}[k];if(X){const same=tabs.includes(X[0])&&sub[X[0]]===X[1];sub[X[0]]=X[1];if(same)openTab(X[0]);else{if(!tabs.includes(X[0])){if(tabs.length>=MAX_TABS)tabs.shift();tabs.push(X[0])}renderWin()}return}const f=Object.entries(TABS).find(([,v])=>v[2]===k);if(f)openTab(f[0])});
+addEventListener('keydown',e=>{if(!S||e.ctrlKey||e.metaKey||e.altKey||/INPUT|TEXTAREA/.test(e.target.tagName))return;const k=e.key.toUpperCase();
+  // In town WASD and the arrow keys walk the character (clicking the ground does the same);
+  // F opens the NPC standing next to you. Both are routed before the dock hotkeys so A and S
+  // move the hero instead of opening panels.
+  if(townOn()){if(townKey(k,1)){e.preventDefault();return}if(k==='F'&&TOWN.near){townTalk(TOWN.near);return}}if(k==='ESCAPE'){if(feedFilShown){feedFilHide();return}tabs.pop();renderWin();return}if(k==='Q'){qOpen=!qOpen;renderQ();return}const X={E:['status','equip'],C:['bag','cards'],R:['status','equip']}[k];if(X){const same=tabs.includes(X[0])&&sub[X[0]]===X[1];sub[X[0]]=X[1];if(same)openTab(X[0]);else{if(!tabs.includes(X[0])){if(tabs.length>=MAX_TABS)tabs.shift();tabs.push(X[0])}renderWin()}return}const f=Object.entries(TABS).find(([,v])=>v[2]===k);if(f)openTab(f[0])});
+addEventListener('keyup',e=>{const k=e.key.toUpperCase();if(townOn()&&townKey(k,0))e.preventDefault()});
 $('spd').onclick=()=>{speed=speed===1?2:speed===2?4:1;$('spd').textContent='Speed x'+speed};
 const tip=$('tooltip');
 document.addEventListener('error',e=>{const img=e.target;if(!img||img.tagName!=='IMG'||!img.classList||!img.classList.contains('ro-item-icon'))return;const fallback=document.createElement('span');fallback.className='ro-icon-fallback';fallback.textContent=img.dataset.fallback||'✦';if(img.parentNode)img.parentNode.replaceChild(fallback,img)},true);
@@ -2863,6 +2899,30 @@ function update(dt){
       tb={atk:(s.to.atk||Z)(L),aspd:(s.to.aspd||Z)(L),def:(s.to.def||Z)(L),drain:(s.to.drain||Z)(L),
           t:(s.to.dur||Z)(L),n:s.n};
       log(s.n+'! '+s.d(L),'r4','skill');playSkillFx(s.id,null,s.col);skillNameFloat(s.n)}}
+  // ---------- Prontera Town: the safe map. No spawner, no mobs, no drops, no combat ----------
+  // Nothing in the town branch can kill, drop, unlock a stage or feed the offline sample: the
+  // only things that move are the hero, the pets trotting round them and the fountain's water.
+  if(townOn()){
+    // townWalk owns the walk: it clamps the stored target into the town and, when the fountain is
+    // between the hero and that target, hands back a tangent point to walk at this frame. The
+    // stored target stays the real destination - the steer point is never written back into it.
+    const[twx,twz]=townWalk(dt);
+    const tpx=twx-pl.x,tpz=twz-pl.z,tpd=Math.hypot(tpx,tpz),tspd=heroMoveSpeedForAgi(st('agi'));
+    pl.run=tpd>.15;
+    if(tpd>.05){const s2=Math.min(tpd,tspd*dt*(tpd>3?1.4:1));pl.x+=tpx/tpd*s2;pl.z+=tpz/tpd*s2}
+    const g2=townAvoid(pl.x,pl.z);pl.x=g2[0];pl.z=g2[1];      // the plaza walls hold in the simulation
+    if(pl.run)pl.ry=-Math.atan2(tpz,tpx);
+    S.pets.filter(p=>p.on).forEach((p,i)=>{      // pets come along, and do not hunt in town
+      const r2=petR[p.id]||(petR[p.id]={x:pl.x-1,z:pl.z+1,at:rnd(0,1)}),a3=t*.5+i*1.26;
+      const ex2=pl.x+Math.cos(a3)*1.5-r2.x,ez2=pl.z+Math.sin(a3)*1.5-r2.z,ed2=Math.hypot(ex2,ez2);
+      r2.run=ed2>.2;r2.lunge=0;
+      if(ed2>.05){const v2=Math.min(ed2,5*dt);r2.x+=ex2/ed2*v2;r2.z+=ez2/ed2*v2}});
+    if(S.hp<maxHp()&&Math.floor(t*2)!==Math.floor((t-dt)*2))S.hp=Math.min(maxHp(),S.hp+Math.ceil(maxHp()*.008));
+    barT-=dt;if(barT<=0){barT=.15;bars()}
+    floats.forEach(f=>{f.life-=dt*1.1;if(f.kind!=='skill')f.y+=dt*(['damage','skill-damage','critical','incoming','miss','evade'].includes(f.kind) ? .3 : .8)});
+    floats=floats.filter(f=>{if(f.life>0)return true;if(f.el)f.el.remove();return false});
+    return;
+  }
   let tx=0,tz=Z1-1.5,reach=1.4;
   if(!mobs.length){respawn-=dt;if(respawn<=0)spawn();
     // Roam: pick a fresh spot when the timer runs out or the current one is reached.
@@ -4487,10 +4547,561 @@ function syncSkillFx(){
   }
 }
 
+// ---------- Prontera Town (v68): the safe town map --------------------------------------------
+// THE PLACE. The owner asked for a town-shaped map: RO-flavoured, buildings all around it, one
+// big fountain in the middle and a terrace where the NPCs stand. Nothing on it fights - the town
+// has **no spawner at all** - and the hero stops auto-grinding there. The player walks it with
+// the mouse: click the ground and the character walks to that spot (WASD and the arrow keys work
+// too), click an NPC and the character walks up to them and their talk box opens.
+//
+// THE FIVE NPCs (data below, in TOWN_NPC - one more entry puts a sixth on the plaza):
+//   Kafra Elise    warp + save point (every unlocked stage, the same rule the World Map uses)
+//   Captain Rondel the guard's contract board - take a quest, claim a finished one
+//   Sister Marina  the temple healer - restores HP, explains HP, defeat and First Aid
+//   Scholar Wren   the Royal Library - Monster Index, rare cards, Index titles
+//   Smith Gordon   forge and market - which map drops which rarity, ore and refine
+//
+// EVERY PIXEL IS THE GAME'S OWN ART (house rule 1, crop only - nothing here is drawn):
+//   * an NPC wears the class sprite pack (assets/sprite_pack_data.js), composited body + head
+//     with the pack's own measured rules (padL 15 / padT 38, head at anchor - (32, 48), 96x96
+//     body cells). A full pack atlas is 1008x3216 - about 13 MB of canvas - and the hero already
+//     holds one; five more, for art that never animates, would cost 65 MB for nothing. So each
+//     NPC gets ONE row of its eight idle facings, 1008x134 (half a megabyte), cut from the pack's
+//     own cells. When the pack has not finished loading, the game's own drawn hero stands in.
+//   * the ring of buildings are the map kit's own crops (house_prontera, cut from
+//     assets/kit/ro-spritesheet.png exactly like the field props), and the block-built RO houses
+//     stand in until the atlas arrives - the same fallback the field's own town uses.
+//   * the fountain, the gate, the terrace, the stalls, the banners and the lamps are block-built
+//     out of the same primitives and palette the field's town already uses (cream walls, red tile
+//     roofs, stone, blue water). Geometry, not sprite art.
+//
+// THE BALANCE IS UNTOUCHED. The town is not an entry in MAPS: no monsters, no cards, no drops, no
+// stage, so the Monster Index, the drop tables, the leaderboard and the offline claim never have
+// to know it exists. Warping from Kafra is gated by the same `S.prog` rule the World Map tab
+// already enforces, so it cannot skip a stage. Time in town is time not grinding; the kill-rate
+// sample that offline rewards are built from is left alone while the hero is here, so parking in
+// town does not throw away the credit for the time you were away.
+let town=0;                             // 1 = the player is standing in the town (the field world is hidden)
+const TOWN_Z=-6;                        // the plaza's centre - the fountain stands here
+const TOWN_R=13.5;                      // the cobbled plaza's radius
+const TOWN_TALK=3;                      // how close you must stand to an NPC to talk
+const TOWN_BOUND={x0:-17.5,x1:17.5,z0:-16.6,z1:19};   // where the hero may walk
+const TOWN_NPC=[
+  {id:'kafra',name:'Kafra Elise',job:'Warp & Save · Kafra Corporation',
+   cls:'Acolyte',sex:'f',hair:3,x:-7.3,z:-11.3},
+  {id:'captain',name:'Captain Rondel',job:'Prontera Guard · contract board',
+   cls:'Knight',sex:'m',hair:5,x:-3.8,z:-14.2},
+  {id:'sister',name:'Sister Marina',job:'Temple of Odin · healer',
+   cls:'High Priest',sex:'f',hair:1,x:0,z:-15.2},
+  {id:'wren',name:'Scholar Wren',job:'Royal Library · Mastery Index',
+   cls:'High Wizard',sex:'m',hair:7,x:3.8,z:-14.2},
+  {id:'smith',name:'Smith Gordon',job:'Forge & market · gear and drops',
+   cls:'Whitesmith',sex:'m',hair:2,x:7.3,z:-11.3}];
+const TOWN={on:0,scene:0,g:null,zoom:1,list:[],keys:{},near:null,talk:null,pending:null,marker:null,markerT:0,
+  spray:[],hint:'',at:0,plaza:null,kerb:null,kerbBlk:null,houseBlk:null,houseKit:null,kitArt:0};
+let TOWN_TAP=null;                      // the last canvas press, so a click can be told from a drag
+let townRay=null,townNdc=null,townPlane=null;   // built on the first ground click (a sliced-in sim carries no Raycaster)
+const townOn=()=>!!TOWN.on;
+const townCanvasXY=(cx,cy)=>{const r=R.domElement.getBoundingClientRect();return[cx-r.left,cy-r.top]};
+function townAvoid(x,z){
+  x=cl(x,TOWN_BOUND.x0,TOWN_BOUND.x1);z=cl(z,TOWN_BOUND.z0,TOWN_BOUND.z1);
+  const fr=4.7;                         // the fountain's basin: walk round it, never through it
+  let ex=x,ez=z-TOWN_Z,ed=Math.hypot(ex,ez);
+  if(ed<fr){if(ed<.001){ex=1;ez=0;ed=1}x=ex/ed*fr;z=TOWN_Z+ez/ed*fr}
+  for(const n of TOWN.list){            // and never stand inside somebody
+    const ox=x-n.def.x,oz=z-n.def.z,od=Math.hypot(ox,oz);
+    if(od<1.15){if(od<.001)continue;x=n.def.x+ox/od*1.15;z=n.def.z+oz/od*1.15}
+  }
+  return[cl(x,TOWN_BOUND.x0,TOWN_BOUND.x1),cl(z,TOWN_BOUND.z0,TOWN_BOUND.z1)];
+}
+
+// ----- the town scene: built once, kept hidden until the player walks in ----------------------
+function townBuild(){
+  if(TOWN.g)return;
+  const G=new THREE.Group();G.visible=false;scene.add(G);TOWN.g=G;
+  const C={grass:0x7cc46a,grass2:0x6cb954,cob:0xcfc6b0,path:0xd9cfb6,stone:0xd8d4c8,stone2:0xbdb7a8,
+    wall:0xf6ead0,wall2:0xf2e2c0,roof:0xc03a2e,roof2:0xa82e26,roofBlue:0x3f6fb5,wood:0x6b4a2a,
+    trim:0xf8f0dc,water:0x5ab8f0,water2:0x9fe0ff,banner:0x3f6fb5,banner2:0xd04a3e,gold:0xd8b83a};
+  const bx=(x,y,z,w,h,d,c,ry)=>{const m=mk(G,BX(w,h,d),c,x,y+h/2,z);if(ry)m.rotation.y=ry;return m};
+  const cy=(x,y,z,r1,r2,h,c,seg)=>{const g=new THREE.CylinderGeometry(r1,r2,h,seg||10);return mk(G,g,c,x,y+h/2,z)};
+  const sp=(x,y,z,r,c)=>{const m=mk(G,SP(r),c,x,y,z);return m};
+  // ground, plaza and the avenue in from the south gate
+  const grass=new THREE.Mesh(new THREE.PlaneGeometry(150,150),M(C.grass));
+  grass.rotation.x=-Math.PI/2;grass.receiveShadow=true;G.add(grass);
+  const plaza=new THREE.Mesh(new THREE.CircleGeometry(TOWN_R,56),M(C.cob));
+  plaza.rotation.x=-Math.PI/2;plaza.position.set(0,.02,TOWN_Z);plaza.receiveShadow=true;G.add(plaza);
+  TOWN.plaza=plaza;
+  const av=new THREE.Mesh(new THREE.PlaneGeometry(9.5,18),M(C.path));
+  av.rotation.x=-Math.PI/2;av.position.set(0,.021,15);av.receiveShadow=true;G.add(av);
+
+  // the BIG fountain: three stone tiers, blue water, eight jets
+  const f=new THREE.Group();f.position.set(0,0,TOWN_Z);G.add(f);
+  const fk=(g,c,y,seg)=>mk(f,g,c,0,y,0);
+  fk(CY(4.3,4.7,.85,28),C.stone,.42);fk(CY(4.5,4.5,.14,28),C.stone2,.85);      // basin + rim
+  fk(CY(3.95,3.95,.16,28),C.water,.8);
+  fk(CY(.5,.62,1.7,12),C.stone2,1.55);                                        // pedestal
+  fk(CY(2.45,1.75,.42,24),C.stone,2.7);fk(CY(2.15,2.15,.12,24),C.water,2.95); // mid bowl
+  fk(CY(.34,.4,1.25,10),C.stone2,3.5);
+  fk(CY(1.65,1.25,.36,20),C.stone,4.28);fk(CY(1.45,1.45,.1,20),C.water,4.5);  // top bowl
+  fk(CY(.2,.26,1.1,8),C.stone2,5.05);sp(0,5.75,0,.34,C.stone2);               // finial
+  const jetMat=()=>new THREE.MeshLambertMaterial({color:C.water2,transparent:true,opacity:.85});
+  for(let i=0;i<8;i++){
+    const a=i*Math.PI/4,m=new THREE.Mesh(CY(.07,.1,1.5,6),jetMat());
+    m.position.set(Math.cos(a)*2.1,3.6,Math.sin(a)*2.1);m.rotation.z=Math.cos(a)*.34;m.rotation.x=-Math.sin(a)*.34;
+    f.add(m);TOWN.spray.push({m,y:3.6,sp:2.2,ph:i*.8,amp:.12});
+  }
+  for(let i=0;i<12;i++){                        // the drops over the top bowl
+    const a=i*Math.PI/6,m=new THREE.Mesh(SP(.09),jetMat());
+    m.position.set(Math.cos(a)*1.5,4.85,Math.sin(a)*1.5);f.add(m);
+    TOWN.spray.push({m,y:4.85,sp:2.6+.4*(i%3),ph:i*.5,amp:.34,drop:1,o:.85});
+  }
+  // plaza rim: a low stone kerb, cut from the kit when the atlas is there
+  const kerb=new THREE.Group();G.add(kerb);TOWN.kerb=kerb;
+  TOWN.kerbBlk=new THREE.Group();G.add(TOWN.kerbBlk);
+  for(let i=0;i<36;i++){const a=i*Math.PI/18;bx(Math.cos(a)*TOWN_R,.0,TOWN_Z+Math.sin(a)*TOWN_R,.9,.22,.5,C.stone2,a+Math.PI/2)}
+
+  // the NPC terrace behind the fountain: a low stone platform with pillars and banners
+  const tx0=-14,tx1=14,tz=-20.6,td=6.6;
+  bx((tx0+tx1)/2,0,tz,tx1-tx0,.42,td,C.stone2);
+  bx((tx0+tx1)/2,.42,tz,(tx1-tx0)-.8,.1,td-.8,C.stone);
+  for(const x of[-13.2,-6.6,0,6.6,13.2]){
+    cy(x,.5,tz+td/2-.6,.42,.5,3.6,C.stone2,12);
+    sp(x,4.2,tz+td/2-.6,.3,C.gold);
+  }
+  for(let i=0;i<3;i++){const x=(i-1)*8.4;          // banners on the back wall
+    bx(x,4.4,tz-td/2+.12,.14,1.6,.14,C.wood);
+    bx(x,4.9,tz-td/2+.3,1.5,2.3,.08,i%2?C.banner:C.banner2);
+  }
+  for(let i=0;i<3;i++)bx(0,.42+i*.14,tz+td/2+.4+i*.5,tx1-tx0-i*2,.14,.5,C.stone2);   // steps down
+
+  // the ring of buildings: kit billboards once the atlas is loaded, block RO houses until then
+  TOWN.houseBlk=new THREE.Group();G.add(TOWN.houseBlk);TOWN.houseKit=new THREE.Group();TOWN.houseKit.visible=false;G.add(TOWN.houseKit);
+  const ring=[];
+  for(let i=0;i<16;i++){
+    const a=i*Math.PI/8;                       // skip the southern gate sector
+    if(Math.sin(a)>.62&&Math.abs(Math.cos(a))<.8)continue;
+    const r=21.5+((i*7)%3)*1.7;ring.push({a,r,s:.9+((i*5)%4)*.08,flip:i%2===1,
+      x:0+Math.cos(a)*r,z:TOWN_Z+Math.sin(a)*r});
+  }
+  for(const h of ring){                        // the block fallback, always built
+    const w=4.6+.6*(h.s-0.9)*10,d=4.2+.5*(h.s-0.9)*10,ht=2.6+h.s*.9;
+    const g2=new THREE.Group();g2.position.set(h.x,0,h.z);g2.rotation.y=-h.a+Math.PI/2;TOWN.houseBlk.add(g2);
+    mk(g2,BX(w,ht,d),C.wall,0,ht/2,0);
+    const r2=mk(g2,new THREE.ConeGeometry(Math.max(w,d)*.78,ht*.62,4),h.flip?C.roof:C.roof2,0,ht+ht*.31,0);r2.rotation.y=Math.PI/4;
+    mk(g2,BX(Math.max(w,d)*1.06,.16,.16),0x8a4a2a,0,ht+ht*.62,0);
+    mk(g2,BX(w+.5,.14,d+.5),C.trim,0,ht+.02,0);
+    mk(g2,BX(.9,1.4,.1),C.wood,0,.7,d/2+.02);
+    for(const wx of[-w*.28,w*.28])mk(g2,BX(.55,.55,.1),0x9ad7f5,wx,ht*.62,d/2+.02);
+  }
+  // market stalls on the plaza's rim, benches round the fountain, lamps and banners
+  const stall=(x,z,ry,c1,c2)=>{
+    const g2=new THREE.Group();g2.position.set(x,0,z);g2.rotation.y=ry;G.add(g2);
+    mk(g2,BX(3.2,.9,1.3),C.wood,0,.45,0);mk(g2,BX(3.4,.12,1.5),C.trim,0,.92,0);
+    mk(g2,BX(3.6,.16,2.5),c1,0,2.2,0);mk(g2,BX(3.6,.12,2.5),c2,0,2.36,0);
+    for(const sx of[-1.6,1.6])mk(g2,BX(.12,2.3,.12),C.wood,sx,1.15,-1);
+    mk(g2,BX(.5,.5,.5),C.wall2,-1.1,1.2,0);mk(g2,BX(.4,.4,.4),C.roof,.9,1.15,.1);
+  };
+  stall(-11.6,3.2,.5,C.banner,C.trim);stall(11.6,3.2,-.5,C.banner2,C.trim);
+  stall(-11.4,-13.6,.9,C.banner2,C.trim);stall(11.4,-13.6,-.9,C.banner,C.trim);
+  for(const a of[Math.PI*.25,Math.PI*.75,Math.PI*1.25,Math.PI*1.75]){
+    const x=Math.cos(a)*7.6,z=TOWN_Z+Math.sin(a)*7.6;
+    const g2=new THREE.Group();g2.position.set(x,0,z);g2.rotation.y=-a;G.add(g2);
+    mk(g2,BX(2.2,.14,.6),C.wood,0,.6,0);for(const sx of[-.9,.9])mk(g2,BX(.14,.6,.5),C.stone2,sx,.3,0);
+  }
+  for(let i=0;i<8;i++){                        // lamp posts round the plaza
+    const a=i*Math.PI/4+Math.PI/8,x=Math.cos(a)*11.6,z=TOWN_Z+Math.sin(a)*11.6;
+    cy(x,0,z,.09,.12,2.7,C.wood,8);sp(x,2.95,z,.22,0xffe08a).castShadow=false;
+  }
+  for(let i=0;i<6;i++){                        // banner poles on the plaza's rim
+    const a=i*Math.PI/3+.4,x=Math.cos(a)*12.6,z=TOWN_Z+Math.sin(a)*12.6;
+    cy(x,0,z,.09,.11,3.4,C.wood,8);
+    const fl=mk(G,BX(1.1,1.5,.07),i%2?C.banner:C.banner2,x+Math.cos(a)*.6,3.6,z+Math.sin(a)*.6);
+    fl.rotation.y=-a;
+  }
+  // the south gate: two towers and a banner arch, with the road running through it
+  for(const sx of[-5.4,5.4]){
+    bx(sx,0,21,2.1,5.4,2.1,C.stone2);bx(sx,5.4,21,2.5,.4,2.5,C.stone);
+    mk(G,new THREE.ConeGeometry(1.7,1.5,4),C.roofBlue,sx,6.35,21).rotation.y=Math.PI/4;
+    sp(sx,7.2,21,.26,C.gold);
+  }
+  bx(0,5.7,21,13,.5,1.1,C.stone);bx(0,6.25,21,1.2,1,.8,C.wood);
+  bx(0,6.6,21.55,4.6,1.1,.08,C.banner);
+  // the cathedral on the skyline behind the terrace (the RO Prontera silhouette)
+  const cath=new THREE.Group();cath.position.set(0,0,-31);G.add(cath);
+  mk(cath,BX(9,7.5,7),C.wall,0,3.75,0);
+  const cr=mk(cath,new THREE.ConeGeometry(7.4,4.6,4),C.roofBlue,0,9.8,0);cr.rotation.y=Math.PI/4;
+  mk(cath,BX(1.1,3.4,1.1),C.trim,0,7,3.7);
+  for(const sx of[-4.1,4.1]){
+    mk(cath,BX(2.2,10,2.2),C.wall2,sx,5,3.1);
+    const t=mk(cath,new THREE.ConeGeometry(1.7,3.4,4),C.roofBlue,sx,11.7,3.1);t.rotation.y=Math.PI/4;
+    mk(cath,SP(.42),C.gold,sx,13.6,3.1).castShadow=false;
+  }
+  mk(cath,BX(.2,1.5,.2),C.gold,0,13.2,0);mk(cath,BX(1.1,.2,.2),C.gold,0,13.7,0);
+  // trees and flowers on the grass between the buildings
+  for(let i=0;i<22;i++){
+    const a=i*Math.PI/11+.22,r=16.4+((i*13)%5)*1.1,x=Math.cos(a)*r,z=TOWN_Z+Math.sin(a)*r;
+    if(x>TOWN_BOUND.x0-1.4&&x<TOWN_BOUND.x1+1.4&&z>TOWN_BOUND.z0-1.4&&z<TOWN_BOUND.z1+1.4)continue;
+    const g2=new THREE.Group();g2.position.set(x,0,z);G.add(g2);
+    mk(g2,CY(.16,.24,1.5),C.wood,0,.75,0);mk(g2,SP(1.05),i%2?0x3f9b4a:0x4fae4f,0,2.35,0);
+  }
+  for(let i=0;i<26;i++){
+    const a=i*Math.PI/13,r=15.4+((i*11)%4)*.9,x=Math.cos(a)*r,z=TOWN_Z+Math.sin(a)*r;
+    sp(x,.1,z,.09,[0xff9db8,0xffe066,0xffffff][i%3]).castShadow=false;
+  }
+  // the walk marker: a gold ring the click target drops on the ground
+  const rg=new THREE.Mesh(new THREE.RingGeometry(.42,.62,26),new THREE.MeshBasicMaterial({color:0xffd23f,transparent:true,opacity:.9,depthWrite:false}));
+  rg.rotation.x=-Math.PI/2;rg.visible=false;G.add(rg);TOWN.marker=rg;
+
+  // the five NPCs: sprite, shadow, rug, and their HTML name plate
+  const layer=$('npcLayer');
+  for(const def of TOWN_NPC){
+    const npc={def,spr:null,tag:null,face:-1,art:''};
+    const g2=new THREE.Group();g2.position.set(def.x,0,def.z);G.add(g2);npc.g=g2;
+    mkShadow(g2,.44);
+    const rug=new THREE.Mesh(new THREE.CircleGeometry(.95,20),M(def.id==='sister'?0xf2d0dc:0xe4dcc4));
+    rug.rotation.x=-Math.PI/2;rug.position.y=.03;g2.add(rug);
+    if(layer){const el=document.createElement('div');el.className='npc-tag';
+      el.innerHTML=`<b>${def.name}</b><i>${def.job.split('·')[0].trim()}</i><span class="talk">💬 Click to talk</span>`;
+      layer.appendChild(el);npc.tag=el}
+    TOWN.list.push(npc);
+  }
+}
+// The pack is 5.8 MB, so it may still be loading when the player first walks in: build what we
+// have, and swap in the real art the moment it arrives. Same for the kit's house crops.
+function townNpcStrip(npc){
+  const PK=window.SPRITE_PACK;if(!PK)return null;
+  const n=npc.def,body=packBodyFor(n.cls,0)||'thief',sex=n.sex==='f'?'female':'male';
+  const hs=(((n.hair|0)%PK.hairStyles)+PK.hairStyles)%PK.hairStyles;
+  const bi=packImg['b:'+body],hi=packImg['h:'+sex],b=PK.bodies[body];
+  if(!bi||!hi||!b||!b.anchors)return null;
+  if(!bi.complete||!hi.complete||!bi.naturalWidth||!hi.naturalWidth)return null;
+  const cv=document.createElement('canvas');cv.width=PK.cellW*8;cv.height=PK.cellH;
+  const g=cv.getContext('2d');g.imageSmoothingEnabled=false;
+  for(let d=0;d<8;d++){
+    const an=b.anchors[0][d][0],dx=PK.padL+d*PK.cellW;
+    g.drawImage(bi,0,d*96,96,96,dx,PK.padT,96,96);                    // idle cell, direction d
+    g.drawImage(hi,d*64,hs*64,64,64,dx+an[0]-32,PK.padT+an[1]-48,64,64);
+  }
+  return cv;
+}
+function townNpcSprite(npc){
+  const cv=townNpcStrip(npc);
+  if(cv){
+    const PK=window.SPRITE_PACK,t=new THREE.CanvasTexture(cv);
+    t.magFilter=t.minFilter=THREE.NearestFilter;t.generateMipmaps=false;t.repeat.set(1/8,1);t.offset.set(0,0);
+    const s=new THREE.Sprite(new THREE.SpriteMaterial({map:t,transparent:true,alphaTest:.12}));
+    s.center.set(PK.pivotX/PK.cellW,(PK.cellH-PK.pivotY)/PK.cellH);
+    s.scale.set(PK.cellW*PACK_K,PK.cellH*PACK_K,1);
+    npc.art='pack';npc.cv=cv;return s;
+  }
+  const o={cls:npc.def.cls,cloth:'#f0e6d0',clothN:0xf0e6d0,cape:'',hair:npc.def.hair|0,hairN:0x5a3a20,
+    hat:'',wt:'sword',metal:'#c0c0c0',skin:'#ffd2a8',look:lookOf(npc.def.cls),tier:0,sex:npc.def.sex,shield:false};
+  npc.art='sheet';npc.cv=null;
+  return mkBillboard(getSheet('town:'+npc.def.id,(ctx,x,y,d,kind,fr)=>drawHero(ctx,x,y,d,kind,fr,o)),1.95,2.92);
+}
+function townNpcFace(npc,dir){
+  if(npc.face===dir)return;npc.face=dir;
+  if(!npc.spr)return;
+  if(npc.art==='pack'&&npc.spr.material.map)npc.spr.material.map.offset.set(dir/8,0);
+  else setCell(npc.spr,dir,0);
+}
+function townArt(){
+  for(const npc of TOWN.list){
+    if(npc.art!=='pack'&&packReady){
+      const old=npc.spr,s=townNpcSprite(npc);
+      if(s){if(old)npc.g.remove(old);npc.spr=s;npc.g.add(s);npc.face=-1;townNpcFace(npc,0)}
+    }else if(!npc.spr){npc.spr=townNpcSprite(npc);npc.g.add(npc.spr);townNpcFace(npc,0)}
+  }
+  if(!TOWN.kitArt&&kitAtlas('kit')){
+    const A=kitAtlas('kit'),e=A&&A.sprites&&A.sprites.house_prontera;
+    if(e){
+      let n=0;
+      for(let i=0;i<16;i++){
+        const a=i*Math.PI/8;if(Math.sin(a)>.62&&Math.abs(Math.cos(a))<.8)continue;
+        const r=21.5+((i*7)%3)*1.7,s=.9+((i*5)%4)*.08;
+        const t=kitCrop('kit','sprite','house_prontera',i%2===1);if(!t)continue;
+        const k=kitPropScale('house_prontera',s),sp2=new THREE.Sprite(new THREE.SpriteMaterial({map:t,transparent:true,alphaTest:.18}));
+        sp2.center.set(.5,1);sp2.scale.set(e.w*k,e.h*k,1);
+        sp2.position.set(Math.cos(a)*r,0,TOWN_Z+Math.sin(a)*r);TOWN.houseKit.add(sp2);n++;
+      }
+      if(n){TOWN.houseBlk.visible=false;TOWN.houseKit.visible=true;TOWN.kitArt=1}
+    }
+    const cob=kitCrop('kit','tile','ruin_cobble');
+    if(cob&&TOWN.plaza){
+      const m=cob.clone();m.needsUpdate=true;
+      const n=Math.max(1,Math.round(TOWN_R/1.4));m.repeat.set(n,n);
+      TOWN.plaza.material.map=m;TOWN.plaza.material.color.setHex(0xffffff);TOWN.plaza.material.needsUpdate=true;
+    }
+    for(let i=0;i<24;i++){                     // stone kerb and lantern plants, cut from the kit
+      const a2=i*Math.PI/12+.13,x=Math.cos(a2)*(TOWN_R+.7),z=TOWN_Z+Math.sin(a2)*(TOWN_R+.7);
+      const t=kitCrop('kit','sprite',i%3===0?'lantern_stone':'ruin_curb',i%2===1);if(!t)continue;
+      const type=i%3===0?'lantern_stone':'ruin_curb',ee=A.sprites[type];if(!ee)continue;
+      const k=kitPropScale(type,1),s2=new THREE.Sprite(new THREE.SpriteMaterial({map:t,transparent:true,alphaTest:.18}));
+      s2.center.set(.5,1);s2.scale.set(ee.w*k,ee.h*k,1);s2.position.set(x,0,z);TOWN.kerb.add(s2);
+    }
+    TOWN.kerbBlk.visible=false;
+  }
+}
+// ----- scene visibility: the field and the town never share the screen ------------------------
+function townScene(on){
+  if(TOWN.g)TOWN.g.visible=!!on;
+  TOWN.scene=!!on?1:0;
+  ground.visible=!on;deco.visible=!on;
+  if(KIT.ground)KIT.ground.visible=!on&&!!KIT.built;
+  if(on){road.visible=false;townObjs.forEach(o=>o.visible=false);lastKey='town'}
+}
+function townEnterScene(){
+  townScene(1);
+  scene.background=new THREE.Color(0x9fd6f2);scene.fog=new THREE.Fog(0x9fd6f2,46,120);
+  ground.material.color.setHex(0x7cc46a);
+  $('hint').textContent='Click the ground to walk · click an NPC to talk · drag to rotate';
+  TOWN.hint='🏘 Prontera Town · safe map';
+  lastProg='';prog.textContent=TOWN.hint;
+}
+function townLeaveScene(){
+  townScene(0);lastKey='';                     // the field's own branch rebuilds it on the next frame
+  $('hint').textContent='Drag to rotate · Scroll to zoom';
+  R.domElement.style.cursor='';
+  TOWN.marker.visible=false;TOWN.markerT=0;
+  for(const n of TOWN.list)if(n.tag)n.tag.style.display='none';
+}
+// ----- walking: click the ground, or hold WASD / the arrow keys --------------------------------
+function townWalk(dt){
+  if(mobs.length){mobs.length=0;mob=null}
+  const K=TOWN.keys;let dx=0,dz=0;
+  if(K.a||K.left)dx-=1;if(K.d||K.right)dx+=1;if(K.w||K.up)dz-=1;if(K.s||K.down)dz+=1;
+  if(dx||dz){const l=Math.hypot(dx,dz);pl.wx=pl.x+dx/l*3.2;pl.wz=pl.z+dz/l*3.2;TOWN.pending=null}
+  const keep=townAvoid(pl.wx,pl.wz);pl.wx=keep[0];pl.wz=keep[1];
+  if(TOWN.pending){
+    const n=TOWN.pending;
+    if(Math.hypot(n.def.x-pl.x,n.def.z-pl.z)<TOWN_TALK){townTalk(n);TOWN.pending=null}
+  }
+  // The fountain basin is a wall, not a magnet. If the straight line to the target runs through
+  // it, hand the walk a tangent point on the rim instead, so the hero rounds the fountain the way
+  // a player would - walk into the rim and the character would otherwise grind against it forever.
+  const bx=pl.wx-pl.x,bz=pl.wz-pl.z,bl=Math.hypot(bx,bz),fr=4.7,T2=Math.PI*2;
+  const tR=Math.hypot(pl.wx,pl.wz-TOWN_Z);
+  if(bl>1.2&&tR>fr+.5){          // a target on the far side, not one on the rim we are walking to
+    const u=((0-pl.x)*bx+(TOWN_Z-pl.z)*bz)/(bl*bl),tt=cl(u,0,1);
+    const nx=pl.x+bx*tt,nz=pl.z+bz*tt;
+    if(tt*bl>1.2&&Math.hypot(nx,nz-TOWN_Z)<fr-.25&&tt<.97){
+      const aH=Math.atan2(pl.z-TOWN_Z,pl.x),aT=Math.atan2(pl.wz-TOWN_Z,pl.wx);
+      let d=aT-aH;d=((d+T2)%T2)%T2;if(d>Math.PI)d-=T2;
+      const a2=aH+Math.sign(d||1)*Math.min(Math.abs(d),.62);
+      return[cl(Math.cos(a2)*(fr+.45),TOWN_BOUND.x0,TOWN_BOUND.x1),cl(TOWN_Z+Math.sin(a2)*(fr+.45),TOWN_BOUND.z0,TOWN_BOUND.z1)];
+    }
+  }
+  return[pl.wx,pl.wz];
+}
+function townKey(k,down){
+  const map={W:'w',A:'a',S:'s',D:'d',ARROWUP:'up',ARROWDOWN:'down',ARROWLEFT:'left',ARROWRIGHT:'right'};
+  const key=map[k];if(!key)return 0;
+  TOWN.keys[key]=down?1:0;return 1;
+}
+function townHover(cx,cy){
+  const[px,py]=townCanvasXY(cx,cy);
+  let over=0;
+  for(const n of TOWN.list){
+    const[bx,by]=scr(n.def.x,.05,n.def.z),[hx,hy]=scr(n.def.x,2.95,n.def.z);
+    const hh=Math.max(26,by-hy),w=hh*.36;
+    if(px>bx-w&&px<bx+w&&py>hy-12&&py<by+14){over=1;break}
+  }
+  R.domElement.style.cursor=over?'pointer':'';
+}
+function townClick(cx,cy){
+  if(!TOWN.on)return;
+  const[px,py]=townCanvasXY(cx,cy);
+  let best=null,bd=1e9;
+  for(const n of TOWN.list){
+    const[bx,by]=scr(n.def.x,.05,n.def.z),[hx,hy]=scr(n.def.x,2.95,n.def.z);
+    const hh=Math.max(26,by-hy),w=hh*.36;
+    if(px>bx-w&&px<bx+w&&py>hy-12&&py<by+14){
+      const d=Math.abs(px-bx)+Math.abs(py-(hy+by)/2);if(d<bd){bd=d;best=n}
+    }
+  }
+  if(best){
+    const dx=pl.x-best.def.x,dz=pl.z-best.def.z,d=Math.hypot(dx,dz)||1;
+    pl.wx=best.def.x+dx/d*1.7;pl.wz=best.def.z+dz/d*1.7;
+    if(Math.hypot(pl.x-best.def.x,pl.z-best.def.z)<TOWN_TALK)townTalk(best);
+    else TOWN.pending=best;
+    return;
+  }
+  const w=R.domElement.clientWidth,h=R.domElement.clientHeight;
+  if(!townRay){townRay=new THREE.Raycaster();townNdc=new THREE.Vector2();townPlane=new THREE.Plane(new THREE.Vector3(0,1,0),0)}
+  townNdc.set(px/w*2-1,-(py/h)*2+1);townRay.setFromCamera(townNdc,cam);
+  const hit=new THREE.Vector3();
+  if(!townRay.ray.intersectPlane(townPlane,hit))return;
+  const[ax,az]=townAvoid(hit.x,hit.z);
+  pl.wx=ax;pl.wz=az;TOWN.pending=null;
+  if(TOWN.marker){TOWN.marker.position.set(ax,.05,az);TOWN.marker.visible=true;TOWN.markerT=1}
+  if(TOWN.talk)townClose();
+}
+// ----- entering and leaving -------------------------------------------------------------------
+function townEnter(quiet){
+  if(!S)return;
+  townBuild();
+  TOWN.on=1;town=1;S.town=1;
+  TOWN.zoom=zoom;zoom=Math.min(zoom,.62);       // a town is wide: show the plaza, its NPCs and the roofs
+  mobs.length=0;mob=null;pend=[];castQ=[];tb={};
+  pl.wx=pl.x=0;pl.wz=pl.z=6.5;pl.wt=0;pl.run=0;
+  townArt();
+  for(const n of TOWN.list){if(!n.spr){n.spr=townNpcSprite(n);n.g.add(n.spr);townNpcFace(n,0)}}
+  townEnterScene();
+  if(!quiet){log('Entered Prontera Town - a safe map with no monsters. Click the ground to walk, click an NPC to talk (or press F next to one).','r2','misc')}
+  ui();save();
+}
+function townLeave(quiet){
+  if(!TOWN.on)return;
+  TOWN.on=0;town=0;S.town=0;townClose();TOWN.pending=null;
+  TOWN.keys={};zoom=TOWN.zoom||1;
+  pl.x=0;pl.z=Z1-1.5;pl.wx=0;pl.wz=Z1-1.5;pl.wt=0;
+  respawn=.3;
+  townLeaveScene();
+  if(!quiet){log('Back in the field - the grind resumes.','','misc')}
+  ui();save();
+}
+function townToggle(){if(TOWN.on)townLeave();else townEnter()}
+// ----- the talk box ---------------------------------------------------------------------------
+function townPortrait(npc){
+  const cv=$('nbFace');if(!cv)return;const g=cv.getContext('2d');
+  g.clearRect(0,0,cv.width,cv.height);
+  if(!npc||!npc.cv)return;                       // the drawn fallback has no atlas to crop
+  const PK=window.SPRITE_PACK,d=npc.face<0?0:npc.face;
+  g.imageSmoothingEnabled=false;
+  g.drawImage(npc.cv,d*PK.cellW,0,PK.cellW,PK.cellH,0,0,cv.width,cv.height);
+}
+function townQuestLines(){
+  return(S.q||[]).map((q,i)=>`<div class="tq${q.prog>=q.goal?' done':''}">
+    <b>${i+1}.</b> ${qTxt(q)} <span>${Math.min(q.prog,q.goal)}/${q.goal}</span>
+    ${q.prog>=q.goal?'<i>✓ reward ready</i>':''}</div>`).join('')||'<div class="tq">The board is empty.</div>';
+}
+function townPage(npc){
+  const n=npc.def,played=S.base&&S.base[S.cls];
+  if(n.id==='kafra'){
+    const acts=[];
+    for(let i=0;i<MAPS.length;i++){
+      const lv=Math.min(10,Math.max(1,S.prog[i]|0));
+      if(S.prog[i]>=1)acts.push([`${S.mp===i?'● ':''}${MAPS[i].n} · Stage ${lv}`,'warp:'+i]);
+    }
+    acts.push(['💾 Save now','save']);
+    acts.push(['✕ Never mind','close']);
+    return{acts,text:`Welcome to the Prontera plaza, <b>${S.cls}</b>! Kafra Corporation keeps a save point in every city.<br>
+      Pick a destination and I will send you straight there - every stage you have unlocked is listed
+      (the same rule the World Map uses, so a warp can never skip a stage). Your bag, gear, pets and titles travel with you.
+      <small>You are standing on <b>Prontera Town</b>: a safe map, no monsters and no drops. Field rewards resume the moment you step back out, and the time you are away is still credited when you return.</small>`};
+  }
+  if(n.id==='captain'){
+    const acts=[];
+    (S.q||[]).forEach((q,i)=>{if(q.prog>=q.goal)acts.push([`🏅 Claim ${i+1}: +${(q.z||0).toLocaleString()}z`,'claim:'+i])});
+    acts.push(['📜 Take a new contract','contract']);
+    acts.push(['📊 Character sheet','tab:status']);
+    acts.push(['✕ Close','close']);
+    return{acts,text:`The plaza is quiet, but the fields are not. Three contracts are on my board:<br>
+      <div class="tquest">${townQuestLines()}</div>
+      <small>A contract pays in Zeny and EXP the moment it is done; claiming one drafts a fresh contract of the same kind. Killing, looting and the Stage 10 bosses all count wherever you are grinding.</small>`};
+  }
+  if(n.id==='sister'){
+    const full=S.hp>=maxHp();
+    return{acts:[['✨ Restore my HP','heal'],['📚 Open the Mastery Index','tab:index'],['✕ Close','close']],
+      text:`The temple keeps a candle lit for every hunter in the fields. Your HP is <b>${Math.round(S.hp).toLocaleString()}</b> of <b>${maxHp().toLocaleString()}</b>${full?' - you are unhurt, but the blessing is yours anyway':''}.<br>
+      <small>HP comes back on its own: about 0.8% of your maximum every half second, and the <b>First Aid</b> skill heals you the moment you drop below half. If you fall in the field you wake at that field's entrance with your HP restored - and you lose the progress toward that stage's boss wave, so fight only what you can hold.</small>`};
+  }
+  if(n.id==='wren'){
+    const seen=Object.keys(S.mobKills||{}).length,total=MONSTER_INDEX.length;
+    const title=HUNT_TITLES.find(t=>t.id===S.equippedTitle&&titleUnlocked(t));
+    return{acts:[['📚 Mastery Index','tab:index'],['🃏 Card album','tab:bag:cards'],['🏆 Leaderboard','tab:board'],['✕ Close','close']],
+      text:`The Royal Library keeps the ledger of what Midgard has to offer. You have hunted
+      <b>${seen}</b> of <b>${total}</b> species and earned <b>${safeCount(S.indexXp).toLocaleString()}</b> Index XP${title?`, wearing the title <b>${title.name}</b>`:''}.<br>
+      <small>Every species has its own ladder - 10, 50, 250, 1,000, 5,000, 10,000, 25,000 and 50,000 kills - and each rung pays Index XP once. Donating five copies of a card to the album earns a mastery token; a token rolls one permanent stat from the gacha. ${cardMasteryAvailable()} token${cardMasteryAvailable()===1?'':'s'} ready now.</small>`};
+  }
+  const bands=MAPS.map((m,i)=>`${m.n}${S.prog[i]>=1?'':' (locked)'} <b class="tier${MAPGRADE[i]}">${RAR[MAPGRADE[i]].n}</b>`).join(' · ');
+  return{acts:[['🗺️ World Map','tab:map'],['🎒 Inventory','tab:bag'],['⚙️ Auto-sell rules','tab:set'],['✕ Close','close']],
+    text:`Every field has its own shelf, and a low field never sells endgame gear. The bands today:<br>
+      <div class="tbands">${bands}</div>
+      <small>Only a <b>Stage 10 boss</b> rolls Legendary, on any map, so boss runs are where the good pieces come from. Ore (Oridecon, Elunium) drops from ordinary monsters on every stage and refines a weapon or armour +1 per success; auto-sell rules in Settings keep the bag clear of what you have outgrown.
+      You are Base Lv <b>${S.lv}</b>${played?` (${S.cls} has been played to Base Lv ${played} before)`:''} - the recommended fields are on the World Map's own labels.</small>`};
+}
+function townSay(){
+  const npc=TOWN.talk;if(!npc)return;
+  const page=townPage(npc);
+  $('nbBody').innerHTML=page.text;
+  $('nbActs').innerHTML=page.acts.map(([label,act])=>`<button data-npc="${act}">${label}</button>`).join('');
+}
+function townTalk(npc){
+  if(!npc)return;
+  TOWN.talk=npc;$('npcBox').style.display='block';
+  $('nbName').textContent=npc.def.name;$('nbTitle').textContent=npc.def.job;
+  townPortrait(npc);townSay();
+}
+function townClose(){const b=$('npcBox');if(b)b.style.display='none';TOWN.talk=null;if(TOWN.pending)TOWN.pending=null}
+function townAct(act){
+  const npc=TOWN.talk;
+  if(act==='close'){townClose();return}
+  if(act==='save'){save();log('Kafra: your progress is saved.','r2','cloud');townSay();return}
+  if(act==='heal'){
+    S.hp=maxHp();playSkillFx('holyAura',null,'#ffe9a8');addFloat(pl.x,2.7,pl.z,'BLESSING','#ffe9a8',true);
+    log('Sister Marina restores your HP.','r1','misc');ui();save();townSay();return;
+  }
+  if(act==='contract'){
+    const q=S.q||[],i=q.findIndex(x=>x.prog<x.goal);
+    if(i<0){log('The captain: claim your finished contracts first - the board is full.','','quest');townSay();return}
+    const types=['kill','loot','boss'],t=types[ri(0,types.length-1)];
+    q[i]=newQuest(t);log(`Accepted a new ${t} contract.`,'r2','quest');ui();save();townSay();return;
+  }
+  if(act.startsWith('claim:')){ACT.claim(+act.slice(6));townSay();return}
+  if(act.startsWith('warp:')){
+    const i=+act.slice(5);if(!(i>=0&&i<MAPS.length))return;
+    const unlocked=S.prog[i]|0;if(unlocked<1)return;      // a locked stage is never a warp target
+    const lv=Math.min(10,Math.max(1,unlocked));
+    townClose();townLeave(1);gotoField(i,lv);
+    pl.x=0;pl.z=Z1-1.5;pl.wx=0;pl.wz=Z1-1.5;pl.wt=0;
+    log(`Kafra warp: ${MAPS[i].n} Stage ${lv}.`,'r2','misc');ui();save();return;
+  }
+  if(act.startsWith('tab:')){
+    const[,key,subKey]=act.split(':');
+    townClose();openTab(key);
+    if(subKey&&sub[key]!==undefined){sub[key]=subKey;renderWin()}
+    return;
+  }
+}
+// ----- the town's own frame: faces, name plates, water, marker ---------------------------------
+function townTick(){
+  const now=performance.now(),dt=TOWN.at?Math.min(.1,(now-TOWN.at)/1000):0;TOWN.at=now;
+  if(!TOWN.on)return;
+  townArt();
+  let near=null,nd=TOWN_TALK;
+  for(const n of TOWN.list){
+    const ang=Math.atan2(pl.z-n.def.z,pl.x-n.def.x);
+    if(n.spr)townNpcFace(n,viewDir(ang));
+    const d=Math.hypot(pl.x-n.def.x,pl.z-n.def.z);if(d<nd){nd=d;near=n}
+    if(n.tag){const[p,q2]=scr(n.def.x,2.95,n.def.z);
+      n.tag.style.display='block';n.tag.style.left=p.toFixed(1)+'px';n.tag.style.top=q2.toFixed(1)+'px'}
+  }
+  if(near!==TOWN.near){
+    TOWN.near=near;
+    for(const n of TOWN.list)if(n.tag)n.tag.classList.toggle('near',n===near);
+  }
+  for(const s of TOWN.spray){
+    s.m.position.y=s.y+Math.sin(now*.001*s.sp+s.ph)*s.amp;
+    if(s.drop)s.m.material.opacity=s.o*(.55+.45*Math.sin(now*.0013*s.sp+s.ph));
+  }
+  if(TOWN.marker&&TOWN.markerT>0){
+    TOWN.markerT=Math.max(0,TOWN.markerT-dt*1.7);const k=TOWN.markerT;
+    TOWN.marker.visible=k>.02;TOWN.marker.scale.setScalar(1+(1-k)*1.7);TOWN.marker.material.opacity=k*.9;
+  }
+  if(mobs.length){mobs.length=0;mob=null}
+  if(TOWN.talk&&TOWN.talk.cv!==null)townPortrait(TOWN.talk);
+}
+
 let drag=null;const dom=R.domElement;
-dom.addEventListener('pointerdown',e=>{drag=[e.clientX,e.clientY];dom.setPointerCapture(e.pointerId)});
-dom.addEventListener('pointermove',e=>{if(!drag)return;az-=(e.clientX-drag[0])*.006;el=Math.min(1.35,Math.max(.45,el+(e.clientY-drag[1])*.005));drag=[e.clientX,e.clientY]});
-dom.addEventListener('pointerup',()=>drag=null);dom.addEventListener('pointercancel',()=>drag=null);
+dom.addEventListener('pointerdown',e=>{drag=[e.clientX,e.clientY];TOWN_TAP=e;dom.setPointerCapture(e.pointerId)});
+dom.addEventListener('pointermove',e=>{
+  if(drag&&Math.abs(e.clientX-drag[0])+Math.abs(e.clientY-drag[1])>6)TOWN_TAP=null;   // a drag is a camera move, not a click
+  if(!drag)return;az-=(e.clientX-drag[0])*.006;el=Math.min(1.35,Math.max(.45,el+(e.clientY-drag[1])*.005));drag=[e.clientX,e.clientY];
+  if(townOn())townHover(e.clientX,e.clientY)});
+dom.addEventListener('pointerup',e=>{const t2=TOWN_TAP;drag=null;TOWN_TAP=null;
+  if(t2&&townOn()&&Math.abs(e.clientX-t2.clientX)+Math.abs(e.clientY-t2.clientY)<=6)townClick(e.clientX,e.clientY)});
+dom.addEventListener('pointercancel',()=>{drag=null;TOWN_TAP=null});
 dom.addEventListener('wheel',e=>{e.preventDefault();zoom=Math.min(2,Math.max(.6,zoom*(e.deltaY<0?1.1:.9)))},{passive:false});
 
 // Keep the character near the visual centre: a very small forward lead (0.25 world units)
@@ -4499,7 +5110,11 @@ dom.addEventListener('wheel',e=>{e.preventDefault();zoom=Math.min(2,Math.max(.6,
 const CAMERA_FOCUS_Y=.28,CAMERA_LEAD_Z=.25,ct=new THREE.Vector3(0,CAMERA_FOCUS_Y,0);let lastKey='';
 function draw(){
   if(!S)return;const bn=isBoss(),key=S.mp+':'+S.lvl+':'+bn,c=C(),mp=MAPS[S.mp];
-  if(key!==lastKey){lastKey=key;const col=new THREE.Color(bn?0x8a6bb0:mp.sky);scene.background=col;scene.fog=new THREE.Fog(col,35,80);ground.material.color.setHex(mp.ground);buildDeco(S.mp);road.material.color.setHex(S.mp===3?0xe9d9a8:0xd8cdb4)}
+  // In town the field's sky, deco and road are not rebuilt: the town scene owns the frame and
+  // keeps its own look (see townEnterScene). The talk boxes and the water are ticked here, once
+  // per frame, because the sim clock may run several sub-steps per frame.
+  if(townOn()){lastKey='town';townTick()}
+  else if(key!==lastKey){lastKey=key;const col=new THREE.Color(bn?0x8a6bb0:mp.sky);scene.background=col;scene.fog=new THREE.Fog(col,35,80);ground.material.color.setHex(mp.ground);buildDeco(S.mp);road.material.color.setHex(S.mp===3?0xe9d9a8:0xd8cdb4)}
   P.position.set(pl.x,0,pl.z);
   const w=S.eq.weapon,wt=heroWeaponType(c.n,c.wt,w&&w.wt),clothN=S.eq.armor?TC[S.eq.armor.tier]:c.col,hairN=S.eq.head?TC[S.eq.head.tier]:0xd0492c,metalN=w?TC[w.tier]:0xc0c0c0;
   ensureHero({cls:c.n,cloth:hx(clothN),clothN,cape:c.cape?hx(c.cape):'',hair:hx(hairN),hairN,hat:c.hat?hx(c.hat):'',wt,metal:hx(metalN),skin:'#ffd2a8',look:lookOf(c.n),tier:c.tier||0,sex:S.sex||'m',hair:S.hair|0,shield:!!(S.eq.off&&S.eq.off.slot==='off')});
@@ -4622,7 +5237,7 @@ function bgShow(){                      // and it is back: replay what the timer
   save()}
 document.addEventListener('visibilitychange',()=>{if(document.hidden)bgHide();else bgShow()});
 setInterval(bgTick,SIM_BG_MS);
-resize();respawn=.3;requestAnimationFrame(loop);setInterval(save,5000);kitFetch();
+resize();respawn=.3;requestAnimationFrame(loop);setInterval(save,5000);kitFetch();window.town=townToggle;
 </script>
 </body>
 </html>

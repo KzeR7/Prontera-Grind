@@ -3848,3 +3848,45 @@ assigned for feel rather than fidelity. While reworking that, two shipped bugs s
 * **It is not a summary.** Loading a short hand-back back into the page rebuilds the edited state **exactly** — same class, same sprite, same view, same every frame — which is checked in the tests by comparing the whole state before and after. A view that gets mentioned comes with all of its stored rows, because loading replaces a view rather than patching it: a partial one would quietly drop rows, and a frame the owner *cleared* has to come back cleared instead of reappearing with its old numbers. When nothing has been moved, the short hand-back is empty and says so — the state *is* the default, so there is nothing to send.
 * **`📋 Copy everything` is unchanged** and still there for backups; it stays indented so it can be read. Nothing the owner can see in the game changed: `index.html` is untouched, `BUILD` is unchanged.
 * **Tests:** `tools/tests/weapon_proposal_sim.js` **567 checks, 0 failed** (was 565), the page script passes `node --check`, and all **30** suites are green. Pushed to PR #23 for eyeballing; do not merge it — that is the owner's call.
+
+### 2026-10-07 — `2026-10-07 grind-v68 prontera town: buildings, a fountain, five NPCs and click-to-walk`
+
+* **What the owner asked for:** a *new map* — Prontera-like, buildings all around, a big fountain in
+  the middle with an area for NPCs, **five NPCs with names and sprites**, **no mobs**, and
+  **mouse-click movement**, for players to walk around, take quests and read information. All six
+  points are in: the town is entered with **T** (or the World Map tab's town row), the plaza is
+  ringed by sixteen buildings, the fountain is three stone tiers with eight jets, and the terrace
+  holds Kafra Elise, Captain Rondel, Sister Marina, Scholar Wren and Smith Gordon — each of whom
+  has a working page (warp/save, contracts, healing, the Mastery Index, drops and refine).
+* **The town is a place, not a stage.** It is deliberately **not** a `MAPS` entry, so the Monster
+  Index, the drop tables, the leaderboard and the offline claim are untouched by its existence. It
+  has no spawner: the town branch in `update(dt)` returns before the respawn/roam block, so nothing
+  can spawn, attack, drop or unlock while the player is in it. `collect`/`kill` are unreachable
+  there, and the kill-rate sample that offline rewards are built from is not fed by town time.
+* **Every pixel is the game's own art** (house rule 1, crop only). The building ring uses the kit's
+  own `house_prontera` crops and `ruin_cobble` paving; the block-built RO houses stand in until the
+  atlas loads, exactly as the field's own fallback town does. The NPC sprites composite the class
+  sprite pack with the pack's own measured rules — **one idle row per NPC** (~0.5 MB) instead of a
+  full 24-row atlas (~13 MB) each, because five extra full atlases would have cost ~65 MB of canvas
+  for art that never animates; the drawn hero stands in until the pack loads. The fountain, gate,
+  terrace, stalls, lamps and banners are the same primitives and palette the fallback town uses.
+* **Click-to-move, and it goes round things.** A tap (not a drag — the camera keeps its
+  orbit/zoom) raycasts the ground, drops a gold ring and walks the hero there; a tap on an NPC walks
+  the hero over and opens their box. WASD/arrows walk as well and are routed ahead of the dock
+  hotkeys while in town, and **F** talks to the NPC beside you. The basin is a wall: if the straight
+  line to the target crosses it, `townWalk` hands the walk a tangent point so the hero rounds the
+  fountain; the hero and the stored target are clamped by the simulation, not by `draw()`.
+* **Five real bugs the new smoke test caught before this shipped** (all fixed): the field's roam
+  block still ran in town and re-targeted the hero at random field spots; the hero's clamp lived only
+  in `townTick` (called from `draw`), so a headless/simulation path let the hero walk into the
+  fountain; the tangent steer point was written back into `pl.wx/wz`, so the hero stopped at the rim
+  instead of going round; Kafra's warp accepted a **locked** stage (`S.prog[i]|0` of `undefined` read
+  as 1); and the kit house group reported itself visible while empty.
+* **The harness is in the repo:** `tools/tests/town_smoke.js` boots the real `index.html` in jsdom
+  with the real Three.js r128 and walks 23 town scenarios. It is deliberately **not** named
+  `*_sim.js` (it needs `npm i --no-save jsdom three@0.128.0`; it skips with exit 0 otherwise), so the
+  plain-node gate is unchanged. `node_modules/` is now ignored.
+* **Build and references:** `BUILD` is `2026-10-07 grind-v68 prontera town: buildings, a fountain,
+  five NPCs and click-to-walk`. The two build-labelled reference pages
+  (`Updates/cards-gear-audit/affix-ranges.html`, `equipment-cards-tuning.html`) and the deploy
+  checklist carry the new tag, and v67 was prepended to the worksheet's `SAFE_PREVIOUS_BUILDS`.

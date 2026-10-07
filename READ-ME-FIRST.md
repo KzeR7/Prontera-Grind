@@ -80,6 +80,59 @@ is the live one; with no argument the tool prints how to set a new one). Since v
 `GM` / `test1234`; `localStorage.removeItem('pg_gm_local')` removes it. Normal accounts are made
 in-game and stored in the browser (`pg_acc4`; saves under `pg_save3_<user>`).
 
+## BUILD v68 — Prontera Town: a safe map, five NPCs and click-to-walk
+
+* **A new map, and it is a place, not a stage: Prontera Town.** Press **T** (or use **🏘 Walk into
+  town** on the World Map tab, or `window.town()` in the console). The field's monsters, kit deco,
+  road and sky are hidden while you are there, and the town has **no spawner at all** — nothing
+  spawns, nothing attacks, nothing drops. It is the one map where the hero stops grinding.
+* **The layout the owner asked for:** a cobbled plaza (radius 13.5) around a **three-tier stone
+  fountain** (eight side jets plus a ring of droplets, all animated), an **NPC terrace** behind it
+  with stone pillars and banners, a south gate with two towers, **sixteen buildings in a ring**
+  around the plaza, market stalls, benches, lamps, trees, flowers and a cathedral on the skyline.
+  Every pixel is the game's own art: the ring uses the kit's own `house_prontera` crops and the kit's
+  `ruin_cobble` paving once the atlas has loaded; until then the block-built RO houses stand in —
+  the same fallback the field's own town has always used. The fountain, gate, terrace and lamps are
+  the same primitives and palette (`bld`, `SP`, `BX`, the kit's stone/roof colours) the fallback town
+  already used. Nothing new was drawn.
+* **Five NPCs with names and sprites, standing on the terrace:** **Kafra Elise** (warp & save),
+  **Captain Rondel** (the guard's contract board), **Sister Marina** (temple healer), **Scholar
+  Wren** (Royal Library / Mastery Index) and **Smith Gordon** (forge & market). Each has a name
+  plate over their head that lights up when you are close enough to talk. Click one and the hero
+  walks over and their box opens; **F** talks to whoever is beside you.
+  Their sprites are the class sprite pack composited with the game's own measured rules (body cell
+  + head at the pack's anchor), **one idle row per NPC** (~0.5 MB) rather than a full 24-row atlas
+  (~13 MB) each — five extra full atlases would have cost ~65 MB of canvas for art that never
+  animates. Until the pack has loaded each NPC wears the game's drawn hero, and the pack art
+  replaces it the moment it arrives.
+* **What talking gets you:** Kafra warps to any stage you have already unlocked — the same `S.prog`
+  rule the World Map enforces, checked in code so a locked stage is refused, not merely greyed — and
+  saves; the captain lists your contracts, pays out a finished one and drafts a fresh contract of
+  the same kind scaled to your level; the sister restores HP and explains HP, defeat and First Aid;
+  the scholar opens the Mastery Index and the card album and explains the ladder and tokens; the
+  smith explains which field drops which rarity, ore, refine and the boss-only Legendary rule.
+* **Mouse-click movement.** Click the ground and the hero walks there (a gold ring marks the spot);
+  click an NPC and the hero walks over and talks. **WASD and the arrow keys** walk too, and while in
+  town they take priority over the dock hotkeys. The basin is a wall, not a magnet: a target on the
+  far side of the fountain is **walked around**, and the hero is clamped out of the fountain and out
+  of the NPCs by the simulation itself (not by the frame that happens to draw it).
+* **Nothing about the balance moved.** The town is not an entry in `MAPS`: no monsters, no cards, no
+  drops, no stage, so the Monster Index, the drop tables, the leaderboard and the cloud offline claim
+  never have to know it exists. Time in town does not feed the kill-rate sample that offline rewards
+  are built from — parking in town does not throw away the credit for the time you were away. `S.town`
+  is a display-only flag (the World Map button reads it) and `load()` clears it.
+* **Testing:** all suites green plus the four `--check` tools. The town itself is driven end to end by
+  `node tools/tests/town_smoke.js` — a jsdom harness that boots the real `index.html` with the real
+  Three.js r128 (`npm i --no-save jsdom three@0.128.0`; it prints a skip line and exits 0 without
+  them, so a clean checkout is never blocked). It walks **23 town scenarios**: entry and scene
+  swap, the plaza/fountain/building ring, the five NPCs and every page they render, click-to-walk
+  both across the plaza and around the fountain, WASD, ten minutes of standing still with zero
+  spawns, healing, taking and claiming a contract, locked-stage warp refusal, warping out, the field
+  spawning again afterwards, the offline rate untouched, the pack art replacing the stand-ins, and a
+  save/load round trip. It found and fixed five real bugs before this build shipped (the field's roam
+  running in town, the hero not being clamped by the simulation, the steer point overwriting the
+  walk target, Kafra warping into a locked stage, and an empty kit group reporting itself visible).
+
 ## BUILD v67 — moderated movement, fixed combat floats, server-timed cloud idle claims
 
 * **Movement dialed back:** the speed is now exactly halfway between the old formula and v66's proposed slowdown. AGI 99 is **8.12** instead of 11.45 units/s (about **29.1% slower**, not 58%); AGI 120 is **8.68** instead of 12.5 (about **30.5% slower**, not 61%). The Speed x2/x4 button is unchanged.
