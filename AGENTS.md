@@ -4082,3 +4082,38 @@ assigned for feel rather than fidelity. While reworking that, two shipped bugs s
   (`Updates/town-hd/board-1-town-layout.png`, from `tools/_town_dump.js` +
   `tools/preview_town_board.py`) is what the new proportions were judged on — the sprite-size table in
   this entry is the same numbers the board draws with.
+
+### 2026-10-07 — `grind-v69` camera pass: the town seen through the game's own camera (and the bug that caught), plus the flaky `api_sim`
+
+* **Why:** scale and layout were being judged on a plan board, and a plan is not what the player sees.
+  `tools/preview_town_board.py` now renders a **second** board — `Updates/town-hd/board-2-town-camera-view.png`
+  — by taking the camera the game itself would have and projecting every sprite through its real
+  view-projection matrix (`cam.matrixWorldInverse` x `cam.projectionMatrix`, both dumped by
+  `tools/_town_dump.js`). The dump now also enters the town the way the game does, applies the town's
+  own zoom clamp, pins the window to 16:9 and settles the camera on the spot the hero lands on
+  (`ct = pl*.6 / pl.z - CAMERA_LEAD_Z`), so the board is the honest "you just walked in" frame.
+* **The bug the camera board caught: the ring only ever walled the east side.** The two arcs were
+  generated as `side * (-66 + k*22)` degrees, and a mirrored angle list is the same list — fourteen
+  houses, seven pairs stacked on top of each other, all of them east of the fountain. The plan board
+  had hidden it because the pairs overlap exactly. The west arc is now `114 + k*22` degrees (a real
+  mirror), so the ring is seven houses east and seven west, x from -17.4 to 16.9. A regression guard
+  was added to `town_smoke.js` (houses on **both** sides, the avenue to the gate clear, the cathedral's
+  north end clear, fourteen houses) — the plan board could not have caught it, the camera board did.
+* **The town is framed for its own size.** The field's default pull-back (`18` units of view at zoom
+  `1`, the same for every map) shows about a third of a 44-unit town, so entering the town now clamps
+  the zoom to **<= .46** (was .62) and the wheel may go out to **.40** in town (the fields keep their
+  own `.6..2` exactly as before — `TOWN.scene` picks the floor). At .46 the square, the houses and
+  the gate are in frame together.
+* **Flower beds no longer grow through the roads.** The beds on the plaza's rim were placed at
+  r 15.4, which put them on the two `limestone_pale` side paths; they now sit at r 12.8-14.9 and skip
+  the strips (`|x| 12.4..17.4`, `|z-TZ| < 12.2`), so they dress the cobbles and the grass and never
+  the paving.
+* **`api_sim`'s flake, found and fixed at the root.** The suite had been failing intermittently (and
+  only in a back-to-back run) on "offline time is server-timed…": it computes `Date.now()-2h` for
+  `last_seen` and the handler credits the elapsed time **exactly**, so whenever a millisecond ticked
+  between the two calls the assertion saw `7200001 !== 7200000` and three later assertions (200 vs
+  428, kills 207 vs 7) cascaded off it. The test now freezes `Date.now` for that one call and restores
+  it in a `finally`. Four consecutive standalone runs and **two full `*_sim.js` loops: green**.
+* **Tests:** `town_smoke.js` **30/30** (the new ring guard); all `*_sim.js` green twice over; all five
+  `--check` tools current. `dist/` rebuilt. Build tag unchanged (`grind-v69`) — nothing in this pass
+  changes what a player sees in the fields.

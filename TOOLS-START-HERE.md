@@ -83,12 +83,22 @@ is not named `*_sim.js`. Run it after **any** change to the town, the pointer ha
 
 ```sh
 node tools/_town_dump.js            # needs jsdom + three: writes /tmp/town_placements.json
-python3 tools/preview_town_board.py # writes Updates/town-hd/board-1-town-layout.png
+python3 tools/preview_town_board.py # writes both boards below
 ```
 
-The dump enters the real town with the real `assets/town/town-atlas.json`, and the board composes
-those placements at 2:1 — real crops, real world sizes, back to front. Layout questions ("does the
-ring overlap", "is the fountain too big") get answered there; lighting and colour still need the game.
+The dump enters the real town with the real `assets/town/town-atlas.json` and takes the camera the
+game itself would have at the hero's landing spot; the tool writes two boards from that one dump:
+
+* `board-1-town-layout.png` — the plan, 2:1, real crops at real world sizes, back to front. Use it for
+  "does the ring overlap", "is the fountain too big".
+* `board-2-town-camera-view.png` — the same sprites projected through the game's own view-projection
+  matrix from its own camera, which is the closest thing to a screenshot available here. Use it for
+  framing: what is in shot when you walk in, whether the ring walls both sides, what a player sees
+  first. **A bug that both boards together caught:** the ring's west arc was a mirrored angle list,
+  which is the same list — all fourteen houses stood on the east side, exactly overlapping, invisible
+  on the plan and obvious on the camera view.
+
+Lighting, colour and the real floor textures still need the game itself.
 
 `pack_sim.js` reads that slice; `sprite_viewer_sim.js` checks the canonical viewer against the
 PNG files. The rest pull live code out of `index.html` by string boundary, so moving a

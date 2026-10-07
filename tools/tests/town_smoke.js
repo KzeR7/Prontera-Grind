@@ -316,6 +316,19 @@ t('the painted HD pack dresses the town, and dressings are protected from a late
   leave();
 });
 
+t('the ring walls both sides of the square, not one', () => {
+  // The arc is generated per side; a mirrored angle list once walked the east arc twice and put all
+  // fourteen houses on the east side, which the camera board caught. One house per side per step.
+  const xs = ev('TOWN.ring.map(h=>h.x)');
+  const west = xs.filter(x => x < -6).length, east = xs.filter(x => x > 6).length;
+  assert.ok(west >= 5 && east >= 5, 'houses on both sides of the square (west ' + west + ', east ' + east + ')');
+  // the avenue to the gate runs south (+z) down the middle: no house may stand on it, and the
+  // cathedral's plot at the north end stays clear
+  assert.ok(ev('TOWN.ring.every(h=>!(Math.abs(h.x)<6&&h.z-TOWN_Z>6))'), 'and the avenue to the gate stays open');
+  assert.ok(ev('TOWN.ring.every(h=>h.z-TOWN_Z>-20)'), 'and the cathedral keeps its north end');
+  assert.strictEqual(ev('TOWN.ring.length'), 14, 'fourteen houses wall the square');
+});
+
 t('the ring of buildings is either the kit crops or the block houses, never nothing', () => {
   const kit = ev('TOWN.kitArt'), n = ev('TOWN.houseBlk.children.length');
   assert.ok(n >= 10, 'there are a lot of buildings round the plaza: ' + n);

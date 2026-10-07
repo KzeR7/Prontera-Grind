@@ -24,6 +24,18 @@ const man=fs.readFileSync(path.join(ROOT,'assets/town/town-atlas.json'),'utf8');
 ev(`TOWNP.man=JSON.parse(${JSON.stringify(man)});TOWNP.png=document.createElement('canvas');TOWNP.ok=1;TOWNP.tex.clear();TOWN.paint=0;`);
 ev('window.town()');
 const out=JSON.parse(ev(`(()=>{
+  // The camera the player actually gets: entered town, after the zoom clamp, positioned by the same
+  // code the frame loop uses. Written out so the board can draw the town through it.
+  TOWN.zoom=1;zoom=1;window.town();if(!townOn())window.town();
+  TOWN.zoom=1;   // enter at the wallet's default view, then apply the town's own clamp
+  cam.aspect=16/9;                       // a normal desktop window, not the stub's 3:2
+  const dd=(cam.aspect<1.5?26:18)/zoom;
+  az=0;el=.95;
+  // The camera follows the hero (ct lerps towards pl each frame), so the honest "just walked in"
+  // view is the one from where the hero lands, with ct settled on them - gate and avenue in shot.
+  const ct={x:pl.x*.6,z:pl.z-CAMERA_LEAD_Z,y:CAMERA_FOCUS_Y};
+  cam.position.set(ct.x+Math.sin(az)*Math.cos(el)*dd,Math.sin(el)*dd+.5,ct.z+Math.cos(az)*Math.cos(el)*dd);
+  cam.lookAt(new THREE.Vector3(ct.x,ct.y,ct.z));cam.updateMatrixWorld(true);cam.updateProjectionMatrix();
   const seen=new Set(),list=[];
   const walk=(root)=>{
     root.traverse(o=>{
@@ -48,7 +60,14 @@ const out=JSON.parse(ev(`(()=>{
   };
   [TOWN.houseKit,TOWN.propBlk,TOWN.g].forEach(walk);
   return JSON.stringify({sprites:list,npc:TOWN.list.map(n=>({id:n.def.id,x:n.def.x,z:n.def.z})),
-    plaza:{r:TOWN_R,z:TOWN_Z},flip:!!TOWN.houseBlk.visible===false});
+    plaza:{r:TOWN_R,z:TOWN_Z},
+    bound:TOWN_BOUND,
+    cam:{pos:cam.position.toArray(),target:[ct.x,0,ct.z],
+         proj:Array.from(cam.projectionMatrix.elements),
+         view:Array.from(cam.matrixWorldInverse.elements),
+         world:Array.from(cam.matrixWorld.elements),
+         fov:cam.fov,near:cam.near,far:cam.far,aspect:cam.aspect,zoom:zoom,
+         viewW:1600,viewH:900}});
 })()`));
 fs.writeFileSync('/tmp/town_placements.json',JSON.stringify(out,null,1));
 console.log('sprites:',out.sprites.length,'groups:',JSON.stringify(out.sprites.reduce((a,s)=>(a[s.grp]=(a[s.grp]||0)+1,a),{})));

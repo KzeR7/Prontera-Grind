@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
 """
-Town layout board — what the player's town is made of, drawn from the shipping art.
+Town layout boards — what the player's town is made of, drawn from the shipping art.
 
-  python3 tools/preview_town_board.py            # writes Updates/town-hd/board-1-town-layout.png
+  python3 tools/preview_town_board.py
+    -> Updates/town-hd/board-1-town-layout.png        (plan, 2:1 orthographic)
+    -> Updates/town-hd/board-2-town-camera-view.png   (through the game's own camera)
 
 This is NOT a screenshot: there is no browser in this workspace. It is an offline composition of
 the REAL atlas (assets/town/town-atlas.json + .png) at the REAL placements (tools/_town_dump.js
@@ -61,6 +63,96 @@ def proj(x, z, y=0.0):
 
 def ground_poly(pts, color, draw):
     draw.polygon([proj(x, z) for x, z in pts], fill=color)
+
+
+def mat4(m):
+    """three.js stores matrices column-major as a flat 16 list; return rows for multiplying."""
+    return [[m[c * 4 + r] for c in range(4)] for r in range(4)]
+
+
+def matmul(a, b):
+    return [[sum(a[r][k] * b[k][c] for k in range(4)) for c in range(4)] for r in range(4)]
+
+
+def project(vp, x, y, z, w, h):
+    """world -> pixels through the game's own view-projection matrix, or None behind the camera."""
+    v = [x, y, z, 1.0]
+    clip = [sum(vp[r][k] * v[k] for k in range(4)) for r in range(4)]
+    if clip[3] <= 0.001:
+        return None
+    return ((clip[0] / clip[3] * .5 + .5) * w, (.5 - clip[1] / clip[3] * .5) * h)
+
+
+def camera_board(man, dump, atlas):
+    c = dump['cam']
+    W, H = c['viewW'], c['viewH']
+    vp = matmul(mat4(c['proj']), mat4(c['view']))
+    board = Image.new('RGBA', (W, H), (26, 30, 38, 255))
+    d = ImageDraw.Draw(board)
+    R, TZ = dump['plaza']['r'], dump['plaza']['z']
+
+    def poly(pts, color):
+        px = [project(vp, x, .01, z, W, H) for x, z in pts]
+        if any(p is None for p in px):
+            return
+        d.polygon(px, fill=color)
+
+    # --- ground (schematic, projected) ---
+    poly([(-46, -46), (46, -46), (46, 46), (-46, 46)], (108, 156, 88))
+    poly([(cx, cz + TZ) for cx, cz in _circle(R + .45, 64)], KERB)
+    poly([(cx, cz + TZ) for cx, cz in _circle(R, 64)], COBBLE)
+    poly([(-4.5, 22.5), (4.5, 22.5), (4.5, 7.0), (-4.5, 7.0)], DIRT)
+    for cx in (-14.9, 14.9):
+        poly([(cx - 1.6, TZ - 10.8), (cx + 1.6, TZ - 10.8), (cx + 1.6, TZ + 10.8), (cx - 1.6, TZ + 10.8)], DIRT)
+    poly([(-9.6, -19.4), (9.6, -19.4), (9.6, -13.0), (-9.6, -13.0)], (196, 189, 172))
+    # the walkable bound, so it is visible whether anything grows inside it
+    b = dump['bound']
+    for edge in ([(-b['x0'], b['z0']), (-b['x1'], b['z0'])], [(-b['x1'], b['z0']), (-b['x1'], b['z1'])],
+                 [(-b['x1'], b['z1']), (-b['x0'], b['z1'])], [(-b['x0'], b['z1']), (-b['x0'], b['z0'])]):
+        px = [project(vp, x, .05, z, W, H) for x, z in edge]
+        if all(p is not None for p in px):
+            d.line(px, fill=(120, 200, 130, 200), width=2)
+
+    # --- the sprites, far to near (billboards always face the camera) ---
+    rows = []
+    for sp in dump['sprites']:
+        e = man['sprites'].get(sp['art'])
+        if not e:
+            continue
+        anchor = project(vp, sp['x'], sp.get('y', 0), sp['z'], W, H)
+        top = project(vp, sp['x'], sp.get('y', 0) + sp['h'], sp['z'], W, H)
+        if not anchor or not top:
+            continue
+        dist = ((sp['x'] - c['pos'][0]) ** 2 + (sp['z'] - c['pos'][2]) ** 2) ** .5
+        rows.append((dist, sp, e, anchor, top))
+    rows.sort(key=lambda r: -r[0])
+    for dist, sp, e, anchor, top in rows:
+        ph = max(2, int(round(abs(top[1] - anchor[1]))))
+        pw = max(2, int(round(ph * e['w'] / e['h'])))
+        crop = atlas.crop((e['x'], e['y'], e['x'] + e['w'], e['y'] + e['h']))
+        if sp['flip']:
+            crop = crop.transpose(Image.FLIP_LEFT_RIGHT)
+        crop = crop.resize((pw, ph), Image.LANCZOS)
+        box = (int(round(anchor[0] - pw / 2)), int(round(anchor[1] - ph)))
+        if box[0] > W or box[0] + pw < 0 or box[1] > H:
+            continue
+        board.alpha_composite(crop, box)
+
+    # --- NPC markers + the frame's own caption ---
+    f = load_font(17)
+    for n in dump['npc']:
+        p = project(vp, n['x'], 1.4, n['z'], W, H)
+        if not p:
+            continue
+        d.ellipse((p[0] - 8, p[1] - 8, p[0] + 8, p[1] + 8), fill=(214, 60, 60), outline=(255, 245, 225), width=2)
+    title = load_font(26)
+    small = load_font(16)
+    d.text((24, 20), 'Prontera Town — through the game\u2019s own camera', font=title, fill=(255, 244, 214))
+    d.text((24, 54), 'camera (%.0f, %.0f, %.0f) looking at the plaza centre · fov %d · zoom %.2f · %dx%d'
+           % (c['pos'][0], c['pos'][1], c['pos'][2], c['fov'], c['zoom'], W, H), font=small, fill=(196, 206, 220))
+    d.text((24, 74), 'ground is schematic (the real floors are the kit HD tiles) · green box = where the hero may walk',
+           font=small, fill=(168, 180, 196))
+    return board
 
 
 def main():
@@ -147,6 +239,12 @@ def main():
 
     board.convert('RGB').save(OUT, 'PNG', optimize=True)
     print('wrote %s (%s · %d sprites placed)' % (os.path.relpath(OUT, ROOT), '%dx%d' % board.size, len(dump['sprites'])))
+
+    if 'cam' in dump:
+        cam_board = camera_board(man, dump, atlas)
+        OUT2 = os.path.join(ROOT, 'Updates', 'town-hd', 'board-2-town-camera-view.png')
+        cam_board.convert('RGB').save(OUT2, 'PNG', optimize=True)
+        print('wrote %s (%s)' % (os.path.relpath(OUT2, ROOT), '%dx%d' % cam_board.size))
 
 
 def _circle(r, n):

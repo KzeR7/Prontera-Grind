@@ -171,12 +171,16 @@ in-game and stored in the browser (`pg_acc4`; saves under `pg_save3_<user>`).
   pack finishing its download *before* the town was ever built, which dereferenced a town that did not
   exist yet and would have thrown on boot.
 * **How this pass was looked at without a browser:** this workspace cannot download Chrome, so the
-  town's layout is checked by `node tools/_town_dump.js` (jsdom walks into the real town with the real
-  atlas manifest and writes every sprite's placement) and `python3 tools/preview_town_board.py`, which
-  composes those onto one image at 2:1 — the buildings, fountain, gate, statue, stalls and props are
-  the real crops at their real world sizes, back to front, shadows and all. It is how the ring was
-  caught overlapping itself and the cathedral, and how the street line was tuned. The board is at
-  `Updates/town-hd/board-1-town-layout.png`.
+  town is checked by `node tools/_town_dump.js` (jsdom walks into the real town with the real atlas
+  manifest, takes the camera the game would have at the hero's landing spot, and writes every sprite's
+  placement) and `python3 tools/preview_town_board.py`, which draws **two** boards: the plan at 2:1
+  (`Updates/town-hd/board-1-town-layout.png`, real crops at real world sizes, back to front) and the
+  **view through the game's own camera** (`board-2-town-camera-view.png`, every sprite projected
+  through the real view-projection matrix). The camera board is what caught the last real bug - the
+  ring's west arc was a mirrored angle list, which is the *same* list, so all fourteen houses stood on
+  the east side exactly on top of each other, invisible on the plan and obvious from the camera.
+  Entering the town also pulls the camera back further than a field does (zoom .46, wheel to .40),
+  because the square does not fit in a field's frame.
 
 ## BUILD v67 — moderated movement, fixed combat floats, server-timed cloud idle claims
 
