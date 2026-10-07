@@ -520,7 +520,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // script block, which is a SyntaxError - the game did not run on main at all. One line wins, and
 // it names both sides of this merge: the v38 balance patch (the weapon cut, the affix/card
 // give-back) and main's weapon-hold rendering work.
-const BUILD='2026-10-07 grind-v75 crit frames + HD Prontera Town: a sunken river under the gate bridge, stone quays and a tiled wall';   // shown on the login card - confirms which file you loaded
+const BUILD='2026-10-07 grind-v76 crit frames + HD Prontera Town: a paved market square, a buttressed city wall and the sunken river';   // shown on the login card - confirms which file you loaded
 $('buildTag').textContent='build '+BUILD;
 
 // ---------- class tree: Novice -> 6 first jobs -> 6 second jobs -> 6 third jobs ----------
@@ -5143,6 +5143,19 @@ function townBuild(){
     {m:av,tile:'dirt_path',rep:[7,9.2]},{m:avS,tile:'dirt_path',rep:[7,5]},{m:avO,tile:'dirt_path',rep:[7,6]},
     {m:grassN,tile:'grass_jade',rep:[62,37]},{m:grassS,tile:'grass_jade',rep:[62,23]},
     {m:ringPath,tile:'limestone_pale',rep:[3,20]},{m:ringPath2,tile:'limestone_pale',rep:[3,20]}];
+  // The square's own paving: the two crossing streets that meet at the fountain and the apron round
+  // its basin, laid .005 above the cobble so they read as paving on paving rather than z-fighting.
+  const pave=(w,d,x,z,y,tile,rep2)=>{const m2=new THREE.Mesh(new THREE.PlaneGeometry(w,d),M(C.stone));
+    m2.rotation.x=-Math.PI/2;m2.position.set(x,y,z);m2.receiveShadow=true;G.add(m2);
+    TOWN.tiles.push({m:m2,tile,rep:rep2});return m2};
+  pave(2.6,22.8,0,TOWN_Z,.025,'limestone_pale',[2.4,21]);
+  pave(22.8,2.6,0,TOWN_Z,.025,'limestone_pale',[21,2.4]);
+  const apron2=new THREE.Mesh(new THREE.RingGeometry(5.0,7.2,48),M(C.stone));
+  apron2.rotation.x=-Math.PI/2;apron2.position.set(0,.029,TOWN_Z);apron2.receiveShadow=true;G.add(apron2);
+  TOWN.tiles.push({m:apron2,tile:'limestone_pale',rep:[14.4,14.4]});
+  const statBase=new THREE.Mesh(new THREE.CircleGeometry(3.1,32),M(C.stone));
+  statBase.rotation.x=-Math.PI/2;statBase.position.set(-7.8,.022,9.0);statBase.receiveShadow=true;G.add(statBase);
+  TOWN.tiles.push({m:statBase,tile:'limestone_pale',rep:[6.2,6.2]});
 
   // ---- the river, its banks and the bridge that crosses it ------------------------------------
   // Water is the kit's own animated HD pair (`water_frame_0/1`, the same tiles the fields' lakes
@@ -5350,7 +5363,7 @@ function townBuild(){
     const p2=mk(TOWN.propBlk,SP(.34),0xffe08a,x,4.7,z);p2.castShadow=false;
     prop('lamp_post',x,z,TOWN_WH.lamp_post,false,[p1,p2]);
   }
-  for(const a of[0,Math.PI*.5,Math.PI,Math.PI*1.5]){   // flower beds on the plaza's axes
+  for(const a of[Math.PI*.25,Math.PI*.75,Math.PI*1.25,Math.PI*1.75]){  // beds on the diagonals, off the streets
     const x=Math.cos(a)*8.9,z=TOWN_Z+Math.sin(a)*8.9;
     prop(a<1||a>5?'flower_bed':'flower_bed2',x,z,TOWN_WH.flower_bed,false,[]);
   }
@@ -5392,7 +5405,7 @@ function townBuild(){
   // the gate reads as the one opening in a walled city. It is never hidden: only the *block* gate
   // steps aside when the painted arch lands.
   for(const side of[-1,1]){
-    const x0=side*6.45,x1=side*30,cx=(x0+x1)/2,long=Math.abs(x1-x0);
+    const x0=side*6.45,x1=side*29.4,cx=(x0+x1)/2,long=Math.abs(x1-x0);
     const cur=bx(cx,0,23,long,3.9,1.7,C.stone2);             // the curtain
     bx(cx,0,23,long,.6,2.1,C.stone2);                        // a plinth course at the foot
     bx(cx,2.7,23,long,.18,1.85,C.stone);                     // a string course to break the face up
@@ -5401,7 +5414,21 @@ function townBuild(){
                     {m:cope,tile:'limestone_pale',rep:[long/1.5,.6]});
     for(let i=0;i<Math.floor(long/3.2);i++)                  // crenellations along the top
       bx(x0+side*(1.6+i*3.2),4.24,23,1.5,.7,1.7,C.stone2);
-    for(const tx of[10.5,20.5,29.5]){                        // watch towers break the run up
+    // Masonry, not a slab: the face the camera sees gets buttresses, arrow slits between them and a
+    // corbel table under the walkway - the three lines that make a wall read as a wall at distance.
+    const slit=new THREE.MeshBasicMaterial({color:0x241f1a});
+    for(let i=0;i<6;i++){
+      const bxx=x0+side*(1.9+i*3.9);
+      bx(bxx,0,23.95,1.0,4.05,.5,C.stone2);
+      bx(bxx,4.05,23.95,1.2,.22,.6,C.stone);
+    }
+    for(let i=0;i<5;i++){
+      const sx=x0+side*(3.85+i*3.9);
+      const sl=bx(sx,1.7,23.9,.18,1.15,.14,C.stone);sl.material=slit;sl.castShadow=false;
+    }
+    for(let i=0;i<9;i++)
+      bx(x0+side*(1.4+i*2.35),3.52,23.95,.62,.26,.4,C.stone2);
+    for(const tx of[10.5,19.5]){                             // watch towers break the run up
       const wt=bx(side*tx,0,23,3.0,6.6,3.0,C.stone2);
       TOWN.tiles.push({m:wt,tile:'limestone_pale',rep:[2.0,4.4]});
       bx(side*tx,4.7,23,3.1,.24,3.1,C.stone);
@@ -5409,6 +5436,14 @@ function townBuild(){
       const tp=mk(G,new THREE.ConeGeometry(2.3,1.8,4),C.roofBlue,side*tx,8.05,23);tp.rotation.y=Math.PI/4;
       sp(side*tx,9.05,23,.3,C.gold);
     }
+    // and the wall does not just stop at the edge of the field: a corner bastion caps each end
+    const kx=side*31.3,kt=bx(kx,0,23,4.4,7.2,4.4,C.stone2);
+    TOWN.tiles.push({m:kt,tile:'limestone_pale',rep:[2.9,4.8]});
+    bx(kx,7.2,23,4.8,.5,4.8,C.stone);bx(kx,5.1,23,4.5,.24,4.5,C.stone);
+    const kt2=mk(G,new THREE.ConeGeometry(3.2,2.6,4),C.roofBlue,kx,9.0,23);kt2.rotation.y=Math.PI/4;
+    sp(kx,10.4,23,.36,C.gold);
+    for(let i=0;i<4;i++)                                     // its own merlons
+      bx(kx-1.65+i*1.1,7.7,23,0.8,.55,2.6,C.stone2);
   }
   // the approach outside the wall: two trees either side of the road out, so the gate is framed
   for(const tx of[-10.6,10.6]){

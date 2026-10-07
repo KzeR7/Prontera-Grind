@@ -4222,3 +4222,11 @@ assigned for feel rather than fidelity. While reworking that, two shipped bugs s
 * **Walk line:** `townGroundY`'s ramps take `B.base`; `TOWN_BOUND.z1` 21.8 → **22.3** (21.75 left the walk-out target standing on the ramp). Board tool: `river_and_bridge` draws the quay runs cut at the deck, so the board cannot show a wall across the avenue.
 * **Files touched:** `index.html` (BUILD, `TOWN_RIVER`, `townAvoid`, the lawn split, the river/quay/bridge/shade build, `TOWN_BOUND`), `tools/tests/town_smoke.js`, `tools/preview_town_board.py`, the label files, `READ-ME-FIRST.md`, `TOOLS-START-HERE.md`.
 * **Tests:** `town_smoke` **35/35** (bridge pins, ramp and walk-out assertions rebuilt, the painted shadow pair's off-by-one fixed, `sand_gold`/`bridge_planks` in the tile allowlist, masonry names checked against the kit manifest), all **33** `*_sim.js` suites green.
+
+### 2026-10-07 — `2026-10-07 grind-v76 crit frames + HD Prontera Town: a paved market square, a buttressed city wall and the sunken river`
+
+* **What this pass is:** a second realism pass over what the town camera shows, grounded in the Prontera references the owner asked for (the central fountain square is the market, and the city is a walled rectangle).
+* **The square is paved:** two 2.6-wide `limestone_pale` streets cross the plaza through the fountain and a paved apron (RingGeometry 5.0..7.2) rings its basin, so the square reads as the crossroads the market sits on; the flower beds moved from the axes to the diagonals, off the roads.
+* **The wall is masonry:** six buttresses a side on the face the camera sees, arrow slits between them, a corbel table under the walkway, and a corner bastion (with merlons and a blue roof) capping each end of the curtain.
+* **Files touched:** `index.html` (BUILD, plaza paving meshes, bed angles, the curtain-wall loop), `tools/tests/town_smoke.js` (the new scenario), the label files, `READ-ME-FIRST.md`.
+* **Tests:** `town_smoke` **36/36** (paving, beds off the streets, buttresses and slits, kit tile names); all 33 `*_sim.js` suites and the six `--check` tools green.

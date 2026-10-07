@@ -253,6 +253,25 @@ this pass went back over the channel itself. Every problem was geometry, not art
   `TOWN.kitArt` and its tile names verified against `assets/kit/ro-tiles-hd.json`), and all **34**
   suites plus the five `--check` tools are green.
 
+## BUILD v76 — the square is paved, and the wall is masonry
+
+A second realism pass over what the town camera actually shows, grounded in the Prontera references
+the owner asked for: the city is a **walled rectangle**, and the **streets around the central
+fountain are the market**.
+
+* **The plaza is a market square, not a grey disc.** Two paved streets (2.6 wide, `limestone_pale`)
+  cross the square through the fountain, and a paved apron (r 5.0..7.2) rings its basin, so the
+  square reads as the crossroads the market sits on. The **flower beds moved off the crossing
+  streets** onto the diagonals, behind the benches, so no bed stands in a road.
+* **The wall reads as a wall.** The face the camera sees now carries **six buttresses a side**,
+  **arrow slits** between them and a **corbel table** under the walkway, and each end of the curtain
+  is capped by a **corner bastion** with merlons and a blue roof — the wall stops at a tower instead
+  of stopping in the middle of a field.
+* **Tests:** `town_smoke` is **36 scenarios** now (the new one walks the plaza's paving, checks that
+  no bed stands in the crossing streets, counts the buttresses and slits, and re-checks that every
+  course still names a tile the kit ships), and all **34** suites plus the five `--check` tools are
+  green.
+
 ## BUILD v72 — crit frame aligned, and the digits are the selection's own font and fill
 
 * **The font was the "design looks off" report.** The copy button prints its raw slider keys, and the

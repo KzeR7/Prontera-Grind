@@ -481,6 +481,40 @@ t('every building is grounded: the art and the stand-ins both carry a contact sh
   }
 });
 
+t('the square is a paved market square, and the wall reads as masonry', () => {
+  enter();
+  // the paving: the two crossing streets meet at the fountain and the apron rings its basin, so the
+  // plaza is not one flat grey disc (canon: the streets round the fountain are the market)
+  const strips = JSON.parse(ev(`JSON.stringify((TOWN.tiles||[]).filter(t=>t.tile==='limestone_pale'
+    &&t.m.geometry&&t.m.geometry.type==='PlaneGeometry'&&Math.abs(t.m.position.y-.025)<.002)
+    .map(t=>[t.m.geometry.parameters.width,t.m.geometry.parameters.height]))`));
+  assert.ok(strips.length >= 2, 'two paved streets cross the square: ' + JSON.stringify(strips));
+  assert.ok(strips.some(w => w[0] > 20) && strips.some(w => w[1] > 20),
+    'one running north-south and one east-west through the fountain: ' + JSON.stringify(strips));
+  assert.strictEqual(ev("(TOWN.tiles.find(t=>t.tile==='limestone_pale'&&t.m.geometry&&t.m.geometry.type==='RingGeometry')||{}).m?.geometry.parameters.outerRadius"), 7.2,
+    'and a paved apron rings the fountain basin, outside its keep-out');
+  // the beds moved off those streets onto the diagonals, or the paving would run through them
+  const beds = JSON.parse(ev("JSON.stringify((TOWN.propSpots||[]).filter(p=>p.n.indexOf('flower_bed')===0).map(p=>[p.x,p.z]))"));
+  assert.ok(beds.length >= 4, 'the flower beds are still there: ' + beds.length);
+  for (const b of beds)
+    assert.ok(Math.abs(b[0]) > 1.2 && Math.abs(b[1] - ev('TOWN_Z')) > 1.2,
+      'but none of them stands in the crossing streets: ' + JSON.stringify(b));
+  // the wall the gate stands in is masonry, not a slab: buttresses on its face and slits between them
+  const wall = JSON.parse(ev(`(()=>{let but=0,slit=0;TOWN.g.traverse(o=>{const g=o.geometry;
+    if(!o.isMesh||!g||!g.parameters||g.parameters.depth===undefined)return;
+    const p=new THREE.Vector3();o.getWorldPosition(p);
+    if(Math.abs(p.z-23.95)>.6)return;
+    if(g.parameters.width>=.9&&g.parameters.height>3.5)but++;                       // buttress shafts
+    if(o.material&&o.material.color&&o.material.color.getHex()===0x241f1a)slit++;   // arrow slits
+    });return JSON.stringify([but,slit])})()`));
+  assert.ok(wall[0] >= 10, 'the wall carries buttresses: ' + wall[0]);
+  assert.ok(wall[1] >= 8, 'and arrow slits between them: ' + wall[1]);
+  // every course still wears a tile the kit really ships (the flat-pastel check, kept honest)
+  const names = JSON.parse(ev("JSON.stringify([...new Set((TOWN.tiles||[]).map(t=>t.tile))])"));
+  assert.ok(names.indexOf('limestone_pale') >= 0 && names.indexOf('bridge_planks') >= 0,
+    'the masonry and the deck are still kit tiles: ' + names.join(','));
+});
+
 t('the river animates on the town clock, not the field one', () => {
   enter();
   const frames = ev('TOWN.river.maps?TOWN.river.maps.length:0');
