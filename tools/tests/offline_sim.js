@@ -22,7 +22,7 @@ function harness() {
   const $ = id => elements[id] || (elements[id] = { textContent: '', style: {}, onclick: null, focused: false, focus() { this.focused = true; } });
   const stableMath = Object.create(Math); stableMath.random = () => .5;
   const setup = `
-    let S = null, currentUser = 'Test', zenyEarned = 0;
+    let S = null, currentUser = 'Test', zenyEarned = 0, expEarned = 0;
     const CLOUD = { on: false };
     const cl = (v,a,b) => Math.max(a,Math.min(b,v));
     const safeCount = v => {const n=Number(v);return Number.isFinite(n)?Math.max(0,Math.min(Number.MAX_SAFE_INTEGER,Math.floor(n))):0};
@@ -34,6 +34,7 @@ function harness() {
     const ri = (a,b) => Math.floor(a + Math.random()*(b-a+1));
     const pv = () => 0, gx = () => 1, expRate = () => 1;
     const earnZeny = n => {S.zeny += n;zenyEarned += n};
+    const earnExp = n => {S.exp += n;expEarned += n};
     const recordMonsterKill = () => {}, qProg = () => {}, addJob = () => {}, checkLevel = () => {};
     const genGear = (T,l,sec,boss,tier) => ({id:++state.nextId,slot:'weapon',wt:'sword',tier:0,val:1,name:T.n,aff:[],cards:[],sec,lvl:l});
     const autoSellOn = () => false, sellVal = () => 5;
@@ -44,7 +45,9 @@ function harness() {
   const code = config + '\n' + helpers + '\n' + simulation + `
     globalThis.api = {
       offlinePlan, offlineRateSample, applyOfflineProgress,
-      setState(v){S=v}, getState(){return S}, setNow(v){clock.now=v}, setCloud(v){CLOUD.on=!!v}, elements, $, state
+      OFFLINE_POPUP_MIN_MS, OFFLINE_SIM_COVER_MS, OFFLINE_CAP_MS,
+      setState(v){S=v}, getState(){return S}, setNow(v){clock.now=v}, setCloud(v){CLOUD.on=!!v},
+      setPageBoot(v){PAGE_BOOT_AT=v}, getPageBoot(){return PAGE_BOOT_AT}, elements, $, state
     };
   `;
   const box = { console, Math: stableMath, Date: FakeDate, JSON, Number, String, Object, Array, state, clock, elements, $ };
@@ -149,6 +152,69 @@ t('offline simulation grants EXP, Zeny, gear, cards, both ores, and shows its fu
   assert.match(h.$('offlineExplanation').textContent, /50%/);
   h.$('offlineContinue').onclick();
   assert.strictEqual(h.$('offlineModal').style.display, 'none');
+});
+
+t('a claim this page has been alive for is acknowledged, never paid again (v73)', () => {
+  const S = { offlineAt:1,offlineKph:30000,offlineRateAt:0,offlineRateKills:0,offlineKillRemainder:0,
+    kills:0,kl:0,mp:0,lvl:1,prog:[1],exp:0,zeny:0,ore:{ori:0,elu:0},cards:[],inv:[],eq:{},
+    pets:[],auto:false,autoSell:[false,false,false,false,false],jobs:{},q:[],st:{str:1,agi:1,dex:1,luk:1,int:1,vit:1},
+    sk:{},skOff:{},cls:'Novice',base:{},hp:100 };
+  const now = 9 * 3600000;
+  h.setState(S); h.setCloud(true); h.setNow(now);
+  h.setPageBoot(1);                                  // the page has been open since the beginning
+  h.$('offlineModal').style.display = 'none';
+  const writes = h.state.saves;
+  // a five-minute window inside this page's lifetime: the sim replayed it (or ground it while
+  // hidden) at full rate, so paying the server budget too would double those minutes
+  const r = h.applyOfflineProgress(now, { id:44, awayMs:5 * 60000, creditedMs:5 * 60000, rateKph:100, kills:5, remainder:0 });
+  assert.strictEqual(r.covered, true, 'the window lies inside this page lifetime');
+  assert.strictEqual(r.show, false, 'a covered claim must not open the popup');
+  assert.strictEqual(r.kills, 0, 'and must not simulate the same minutes twice');
+  assert.strictEqual(S.kills, 0);
+  assert.strictEqual(S.offlineClaimId, 44, 'the claim is still acknowledged so the server clears it');
+  assert.strictEqual(S.offlineAt, now, 'the timestamp advances so the window can never pay later');
+  assert.strictEqual(h.state.saves, writes + 1, 'the acknowledgement is saved');
+  assert.strictEqual(h.$('offlineModal').style.display, 'none', 'no welcome-back card');
+  // the old one-minute throttled-tab gap no longer even reaches the popup floor
+  const tiny = h.applyOfflineProgress(now, { id:43, awayMs:60000, creditedMs:60000, rateKph:100, kills:1, remainder:0 });
+  assert.strictEqual(tiny.show, false, 'a one-minute gap is below the three-minute away window');
+  assert.strictEqual(tiny.kills, 0);
+  h.setCloud(false);
+});
+
+t('a real absence is still paid in full (page born after the window)', () => {
+  const S = { offlineAt:1,offlineKph:30000,offlineRateAt:0,offlineRateKills:0,offlineKillRemainder:0,
+    kills:0,kl:0,mp:0,lvl:1,prog:[1],exp:0,zeny:0,ore:{ori:0,elu:0},cards:[],inv:[],eq:{},
+    pets:[],auto:false,autoSell:[false,false,false,false,false],jobs:{},q:[],st:{str:1,agi:1,dex:1,luk:1,int:1,vit:1},
+    sk:{},skOff:{},cls:'Novice',base:{},hp:100 };
+  const now = 9 * 3600000, claim = { id:45, awayMs:3 * 3600000, creditedMs:3 * 3600000, rateKph:100, kills:150, remainder:0 };
+  h.setState(S); h.setCloud(true); h.setNow(now);
+  h.setPageBoot(now - 60000);                        // this page just booted; the 3h window predates it
+  h.$('offlineModal').style.display = 'none';
+  const r = h.applyOfflineProgress(now, claim);
+  assert.strictEqual(r.covered, false);
+  assert.strictEqual(r.kills, 150, 'a tab that was closed pays the whole server budget');
+  assert.strictEqual(S.kills, 150);
+  assert.strictEqual(h.$('offlineModal').style.display, 'flex');
+  // a long frozen gap is paid too: the sim can only replay its 10-minute catch-up budget
+  const long = { id:46, awayMs:h.OFFLINE_SIM_COVER_MS + 1, creditedMs:h.OFFLINE_SIM_COVER_MS + 1, rateKph:100, kills:20, remainder:0 };
+  h.setPageBoot(1);
+  const r2 = h.applyOfflineProgress(now, long);
+  assert.strictEqual(r2.covered, false, 'a window longer than the sim catch-up budget is a real absence');
+  assert.strictEqual(r2.kills, 20);
+  h.setCloud(false);
+});
+
+t('the client and the server share the three-minute away window, not the old one minute', () => {
+  assert.strictEqual(h.OFFLINE_POPUP_MIN_MS, 3 * 60 * 1000, 'client popup floor');
+  assert.strictEqual(h.OFFLINE_SIM_COVER_MS, 10 * 60 * 1000, 'the cover window mirrors SIM_CATCHUP');
+  assert.ok(src.includes('const SIM_CATCHUP=600;'), 'SIM_CATCHUP stays the catch-up budget the cover window mirrors');
+  assert.ok(!src.includes('OFFLINE_POPUP_MIN_MS=60000'), 'the one-minute floor that produced the 1m popup must be gone');
+  const server = fs.readFileSync(__dirname + '/../../functions/api/save.js', 'utf8');
+  assert.match(server, /const OFFLINE_MIN_MS = 3 \* 60 \* 1000;/,
+    'the server must mint no claim for a background tab\'s ~1-minute sync gap');
+  assert.match(server, /OFFLINE_REWARD_MULT = \.5;/, 'the half-rate factor is unchanged');
+  assert.match(server, /OFFLINE_CAP_MS = 4 \* 60 \* 60 \* 1000;/, 'the four-hour cap is unchanged');
 });
 
 t('initial local and cloud session paths are wired to apply offline progress and the popup fields exist', () => {

@@ -330,6 +330,21 @@ longer nudges the rarity roll (there is no roll to nudge); it still lifts the dr
 never funds an upgrade. The bag itself holds `BAGMAX = 1000` items; at capacity loot is refused
 and stays on the ground (cards live in their own, uncapped bag).
 
+**Class-tier gear gate (v74, widened in v74.1).** A piece belongs to a class TIER, not just a
+slot: `gearTierOf` is the item's `sec` (0 starter / 1 first job / 2 second job / 3 high tier) and
+`gearTierOK=(it,cls=S.cls)=>gearTierOf(it)<=Math.max(1,classTierOf(cls))` compares it with the
+class tree's own `CLASSES[cls].tier` - **the `max(1,...)` is the owner's v74.1 instruction** that
+the lowest band is starter + 1st-job gear, so a Novice and a first job both wear sections 0 and 1,
+a second job reaches section 2 and only a transcendent class section 3. (v74 originally read
+`gearTierOf(it)<=classTierOf(cls)`, which made the Novice starter-only; that was too strict.) It is
+folded into `canUse()`, which every equip path already goes through (bag highlight, chooser,
+auto-equip on drop, offline auto-equip, tooltip), so there is one rule and one place to change
+it. On a class change `stowUnfit()` takes every worn piece the new class cannot use off the body
+into the Bag, sets `locked=true` (auto-sell can never eat it) and stamps `wearer` with the class
+that was wearing it - and because `snapClass()` already stored those ids on the departing class,
+`equipRec()` wears them again on the way back. `initSession`/`cloudStart` run the same sweep, so
+a pre-v74 save loads legal.
+
 **Equipment database and drops.** `GEAR[map][section]` is the catalogue - 10 maps × 4 sections
 (Novice / 1st job / 2nd job / high tier), each section carrying 2-3 weapon types plus body,
 headgear, shield, legwear and two accessories (**96 weapon entries** in total; armour and
@@ -3948,3 +3963,83 @@ assigned for feel rather than fidelity. While reworking that, two shipped bugs s
 * **Files touched:** `index.html` (BUILD, float CSS block, `--brot` in the crit markup builder); `tools/tests/combat_float_sim.js` (new suite *"the digits use the selected font, and crits use the proposal's gradient fill and soft shadow"* — 8 assertions including the font family, gradient clip, thin stroke, `text-shadow:none`, soft shadow pair, rim, and the new curve + wobble; two old Verdana assertions flipped); `tools/tests/ui_sim.js` (font assertion flipped); build-tag snapshots (`affix-ranges.html` ×2, `equipment-cards-tuning.html`, `cloudflare-deploy-steps.md`); `READ-ME-FIRST.md` (v72 section); `Updates/crit-frame-compare/index.html` rewritten to show **both** fixes side by side (old misaligned frame + sticker digits vs v72).
 * **Tests:** all **33** suites pass (combat floats 11); the new suite is negative-controlled. Both pages' inline JS pass `node --check`; `git diff --check` clean.
 * **Dev-page note for the owner:** the copy button's keys are worth remembering when reporting a pick — `game` = Trebuchet (what they wanted), `classic` = Verdana 900, `heavy` = Arial Black. The v69/v70 hand-back said "Chunky (Verdana 900)", which is why the game shipped it; the fix is not that v69 was wrong to apply it, it is that the selection's key and the re-applied pick disagreed.
+
+### 2026-10-07 — `2026-10-07 grind-v73 crit retune, index crit, mid-map drop cut, boss crit resist`
+
+* **Four owner reports, one build.** (1) clicking **Refine** while the bag's "choose a slot" picker was open closed the picker; (2) a few hours of farming still fills the 1000-slot bag, and crit rate caps "too easily"; (3) crit damage is overpowered because every slot rolls cdm; (4) a **1-minute "offline reward"** modal keeps appearing during AFK play.
+* **The picker fix.** The document-level outside-click listener only treated `[data-win="bag"]` as inside, so any click in the **Equipment window** - where Refine, the card sockets, Unequip and Lock live - read as "clicked elsewhere" and ran `closeEquipmentChooser(true)`. The pointer-down snapshot now covers `[data-win="bag"]` **and** `[data-win="equip"]` (`chooserPointerInside`, was `bagPointerInside`), so only a click outside both windows (or the banner's ✕) dismisses the picker. Refine and friends now stay open for comparing several pieces, which is what the highlight mode was for.
+* **Drops -30% on maps 6-10 only.** New `FIELD_GEAR=[1.5,1.2,.9]` / `FIELD_GEAR_MID=[1.05,.84,.63]` (`fieldOf` picks by `m>=5`) and `BOSS_POOL_TOTAL=[600,420]`. A mid/endgame mob pays **2.52%** a kill (was 3.6%) and a map 6-10 Stage-10 boss pool totals **~4.2%** (was ~6%); Prontera + the four class maps (index 0-4) keep every original number for field and boss, `cardCh` (.15/.1) and ore chances untouched, and each boss still lists its whole pool so nothing became unobtainable. Loot-quest goals were left alone (a mid-map loot quest is ~40% slower - the goal can move off `3+L/3` if that drags).
+* **Crit rate: the "Retune + soft cap" package.** Base 3 → **2**, LUK **0.4 → 0.25** a point, `AB.crit` **0.45 → 0.32** (affix and crit cards: a Legendary crit card is +5, was +7), and above **45%** every further point from stats, skills, gear and card mastery counts **half**; the core still stops at **60%**. A Lv70 LUK-99 dump (24.75) plus both Hunter/Sniper crit passives (+30) lands ~50.9%, so the cap is a build again, not a stat dump.
+* **Index Crit - the 100% path that is not equipment and not stats.** Every Hunt Title adds a slice of **Index Crit** outside the 60% cap: `INDEX_CRIT=[1,1,2,2,3,4,5,6,7,9]` (Σ **+40**) via `indexCritBonus()`/`indexCrit()`. A complete Index (all ten titles, 1,000,000 Index XP, about twenty species hunted to their last rung) puts a fully capped build on exactly **100%** and the total stops there. Shown on the stats sheet (`+x% Index Crit`), the Index panel (`Index Crit +x% / +40%`) and each title row (`+n% Crit`); the GM panel's "Set the final title" (`gmindex xp1000000`) tests it in one click.
+* **Crit damage: cdm is a weapon/accessory affix now.** `genGear` filters `cdm` out of the roll pool for armor/head/shield/legwear, so at most three worn pieces can carry it (was seven); legacy gear keeps what it rolled. `AB.cdm` **0.7 → 0.45** and the 70% post-roll scale is unchanged, so a top-tier Legendary cdm affix is **+11-18** (was +18-27). The **cdm CARD** stopped following `AB.cdm` and pays its own **3/7/10/13** ladder (was 2/4/7/11). `critD()` base **2.0 → 1.9**.
+* **Boss crit defence.** `BOSS_CRIT_RES=[0,0,0,0,0,.2,.2,.25,.3,.4]` + `bossCritRes(m)`; the strike roll is `crit()*(1-(mob.critRes||0))`, so a capped 60% build crits **48 / 48 / 45 / 42 / 36%** on Comodo → Abyss bosses while maps 1-5 resist nothing. Shown on the map panel's boss card and on the boss nameplate (`· Crit Res 20%`); Stage-10 bosses inherit it offline through `fieldOf`. Escorts, regular mobs and pets are untouched.
+* **Pet companion band re-pinned.** The crit retune lowered the maxed-character ceiling and `pet_sim` caught pets at **0.900x** a maxed rotation (band 0.60-0.70). PETBAL **2.65 → 1.91** restores **0.649x**; no other pet rule moved.
+* **The 1-minute offline popup - root cause and fix.** Client and server both called any **60 s** gap "away", but a hidden tab is timer-throttled to about **once a minute** and grinds at 100% while hidden, so an ordinary background session minted a claim for time the page had already earned - that is the "1m offline reward" the owner saw. Both floors moved to **three minutes** (`OFFLINE_POPUP_MIN_MS`, `functions/api/save.js OFFLINE_MIN_MS`) and `applyOfflineProgress` now **acknowledges but does not pay** a claim whose window lies inside this page's lifetime and fits the sim's own `SIM_CATCHUP` replay budget (`OFFLINE_SIM_COVER_MS=10*60*1000`, `PAGE_BOOT_AT`): the claim id is recorded so the server clears it, the timestamps advance, nothing is simulated and no modal opens. A real absence - page closed, device asleep, or a window longer than the replay budget - still pays in full with its popup. The settings text now says a hidden tab is never "away".
+* **Files touched:** `index.html` (BUILD v73, crit/critD, Index Crit, `FIELD_GEAR*`/`BOSS_POOL_TOTAL`/`BOSS_CRIT_RES`/`bossCritRes`, `fieldOf`, `genGear`, `cardVal`, `applyOfflineProgress`, picker listeners, stats/Index/map/nameplate/settings text, PETBAL); `functions/api/save.js` (`OFFLINE_MIN_MS` 3 min); `tools/tests/crit_sim.js` (**new**, 5 tests); `tools/tests/ui_sim.js` (+1 picker test, chooser strings); `tools/tests/gear_sim.js` (drop-table/cdm/chart tests); `tools/tests/offline_sim.js` (+3 v73 tests); `tools/tests/card_sim.js`; `tools/tests/drop_card_sheet_sim.js`; `tools/tests/pet_sim.js`; `Updates/cards-gear-audit/affix-ranges.html` (regenerated crit/cdm rows, v73 tag, slot-limit note); `Updates/cards-gear-audit/equipment-cards-tuning.html` (snapshot refreshed); `tools/cloudflare-deploy-steps.md`; `READ-ME-FIRST.md`.
+* **Tests:** all **34** suites pass; `crit_sim` 5/5 covers the soft cap, the Index ladder/ceiling and the boss resistance; ui_sim 43, gear 31 groups, offline 11, drop sheet 12, card 13, pet 13. `node --check` clean on the page script and the function, `git diff --check` clean.
+* **Not pushed** and no PR - the owner plays the build first.
+
+### 2026-10-07 — `2026-10-07 grind-v74 class gear tiers, move speed, exp per min, softer boss crit resist`
+
+* **Four owner reports again.** (1) the boss crit defence from v73 was too harsh; (2) a high-level character who changes class keeps wearing gear that class should not be able to wear; (3) the Character sheet never explains movement speed; (4) the HUD should show EXP/min beside kills.
+* **Boss crit defence softened.** `BOSS_CRIT_RES` is now `[0,0,0,0,0,.15,.15,.15,.2,.3]` (was `-20/-20/-25/-30/-40`): Comodo, Louyang and Amatsu **-15%**, Niflheim **-20%**, Abyss **-30%**, maps 1-5 still zero. A capped 60% build therefore crits those bosses **51/51/51/48/42%**. Nothing else about the feature moved (strike roll, map panel line, nameplate, offline bosses).
+* **Class tier now gates equipment.** New `gearTierOf`/`classTierOf`/`gearTierOK`/`gearUserOf` on the shared stat line, folded into `canUse()`: an item's `sec` (0 starter / 1 first job / 2 second job / 3 high tier) may not exceed the wearer's class tier (Novice 0, first jobs 1, second jobs 2, transcendent 3). So 2nd/3rd-class gear is refused to a 1st class, exactly as the owner asked, and the refusal shows up everywhere the item does (bag highlight, chooser, auto-equip, offline auto-equip, tooltip) because every path already asks `canUse`.
+* **The change-class sweep.** `stowUnfit(from)` runs from `changeClass()`: every worn piece the new class cannot use goes into the Bag, is set `locked=true` (so auto-sell can never eat a stored loadout) and gets `wearer` stamped with the class that was legally wearing it. The item card reads `Locked to transcendent classes only: your Novice cannot wear it. This was Lord Knight's gear - it goes straight back on when you switch to Lord Knight again.` `snapClass()` already stored those ids on the departing class, so `equipRec()` wears them again on the way back - verified end-to-end (2 pieces off, locked, labelled; back on with an empty bag, no duplication). A piece the departing class could never legally wear (a legacy save) gets **no** `wearer` label, so the tooltip never lies. `initSession` and `cloudStart` run the same sweep, so a pre-v74 save is legal from its first frame.
+* **Movement speed on the Character sheet.** The AGI curve moved out of `update()` into one named `heroMoveSpeedForAgi` (unchanged maths: 8.12 u/s at AGI 99) beside `moveSpd()`/`MOVE_RUN`; the sheet prints `Move 7.35 u/s · 10.29 sprinting` and a sentence naming AGI as the only source and the sprint multiplier past 3 units.
+* **EXP/min in the HUD.** `stepHudRate` gained a sixth channel, fed by a new `earnExp()` session counter (the same idea as `earnZeny`: gross income, never confused by the level-up subtraction), and the header now reads `Kills/min · EXP/min · DPS`. The kill reward, offline kills and quest EXP all pay through `earnExp`.
+* **Files touched:** `index.html` (BUILD v74, the tier gate + sweep, session sweep, item card, movement line, `expEarned`/`earnExp`, `stepHudRate` + HUD chip, softer `BOSS_CRIT_RES`); `tools/tests/class_change_sim.js` (+2 tests, harness mirrors `canUse`/`stowUnfit`); `tools/tests/gear_sim.js` (+1 tier test); `tools/tests/ui_sim.js` (+3 tests: EXP/min, movement line, item card); `tools/tests/crit_sim.js` (new ladder); `tools/tests/economy_sim.js`, `tools/tests/offline_sim.js` (harness stubs for the two new helpers); build-tag snapshots (`affix-ranges.html` ×2, `equipment-cards-tuning.html` refreshed, `cloudflare-deploy-steps.md`); `AGENTS.md` balance map (+ class-tier paragraph); `READ-ME-FIRST.md` (v74).
+* **Tests:** all **34** suites pass; `ui_sim` 46, `class_change_sim` 27, `gear_sim` 32 groups, `crit_sim` 5. `node --check` clean, `git diff --check` clean.
+* **Not pushed** and no PR - the owner plays the build first.
+
+### 2026-10-07 — `2026-10-07 grind-v74.1 novices keep 1st-job gear, phone layout pass`
+
+* **Two owner follow-ups on v74, shipped as one build.** (1) *"make novices left alone, means
+  lowest gear is novice + 1st class"* - the v74 gate had put a Novice below the 1st-job band and
+  it locked a fresh character out of gear a first job can wear a minute later; (2) *"i tested in my
+  mobile the ui is abit messy and not in place"* - the deployed page had never been laid out for a
+  phone.
+* **Novice band.** `gearTierOK` is `gearTierOf(it)<=Math.max(1,classTierOf(cls))` and
+  `gearUserOf` label 1 is `Novice and 1st-job classes`, so sections 0 and 1 of the gear list are one
+  band. 2nd-job and high-tier gear are gated exactly as in v74; the `stowUnfit` sweep, the
+  auto-lock and the auto re-wear are untouched - they simply have less to do on a Novice now.
+  `gear_sim` (Novice `[0,1]`, the new label), `class_change_sim` (the harness guard regex for the
+  new line shape, plus a Novice wearing a section-1 sword and still refusing section 2) and
+  `ui_sim` (a new `secondJobSword` fixture for the refused card) were updated in the same edit -
+  all three hold literal copies of that line.
+* **Phone layout.** Cause was one shape in five places: the layout assumed a desktop window.
+  `100vh` on a phone is the height with the URL bar *retracted*, so the page was taller than the
+  screen and the bottom HUD sat below the fold - `html,body`/`#wrap` now use `100dvh` (with `100vh`
+  first as the fallback), `visualViewport` is watched alongside `resize` (iOS does not always fire
+  one when the URL bar moves), `overscroll-behavior:none` stops pull-to-refresh reloading a farming
+  session, and the tap highlight is gone since every button here is a control. `resize()` now
+  publishes the measured dock height as `--docktop` (`offsetHeight` + the dock's computed `bottom`
+  + 6) and `#feedWrap`/`#hudBuffs`/`#wins`/`#wnd` all read it on a phone instead of overlapping the
+  dock. A `max-width:700px` block (plus `430px` and `pointer:coarse` steps) at the END of the
+  stylesheet - last so it wins on source order - turns the HUD into a fixed three-column grid (two
+  rows of numbers, account cluster on its own right-aligned row) so a kill counter going 9 → 10 →
+  100 cannot re-flow the bar, grows the dock icons to 34px (32px small) from 28px, makes the tab
+  dock one sideways-scrolling row instead of a second row, lets the map/boss/tab windows fill the
+  play area, and pads the dock and `#xp-dock` with `env(safe-area-inset-bottom)`. Desk layout is
+  untouched: the wide-screen `#wins`/`#wnd` geometry is byte-identical and asserted in `ui_sim`.
+* **Pinch-to-zoom.** A phone has no wheel, so before this build the 3D camera could not zoom on one
+  at all. The pointer block now tracks touch pointers by `pointerId`: one finger rotates exactly as
+  before, two fingers pinch (`zoom*d/pinch0`, same 0.6x-2x clamp the wheel uses) and a pinching
+  finger never swings the camera, and lifting one finger re-seeds `drag` from the finger still down
+  so rotation resumes without a jump. New `ui_sim` test drives the sliced-out block with fake
+  pointer events - rotate, pinch out to the ceiling, pinch in to the floor, resume after a lift,
+  cancel, and the wheel still zooming.
+* **APK asked about, PWA recommended.** Tuning the web build is the light path: `manifest.json` +
+  service worker + icons makes it installable from the browser ("Add to Home Screen" = full-screen
+  icon, no store, no signing). An APK is the same files in a wrapper (Capacitor / TWA) needing a
+  signing keystore and a release per build, with no performance gain. Not built - awaiting the
+  owner's call.
+* **Files touched:** `index.html` (BUILD v74.1, the `max(1,...)` gate + label, viewport meta,
+  `100dvh`/overscroll, `--docktop` in `resize()` + `#feedWrap`/`#hudBuffs`, the phone media blocks,
+  `visualViewport` hook, the pinch pointer block, the rotate hint); `tools/tests/ui_sim.js` (2 new
+  tests, 48 groups, the buff-strip pin updated to the dock-aware form); `tools/tests/gear_sim.js`,
+  `tools/tests/class_change_sim.js`; `READ-ME-FIRST.md` (v74.1 section, v74 gear bullet amended
+  inline); the two `Updates/cards-gear-audit/*.html` tag mirrors and `tools/cloudflare-deploy-steps.md`
+  build tag.
+* **Tests:** all **34** suites pass (`ui_sim` 48, `gear_sim` 32, `class_change_sim` 27,
+  `weapon_proposal_sim` 567). `node --check` on the sliced page JS clean, `git diff --check` clean.
+* **Not pushed** and no PR - the owner plays the build first.

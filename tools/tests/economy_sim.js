@@ -180,7 +180,8 @@ t('the real kill reward block boosts Base/Job EXP but leaves player Zeny unchang
       ${src.match(/const EXP_BOOST_LV=\d+,EXP_BOOST_X=\d+,EXP_RATE=\d+;/)[0]}
       ${src.match(/const expRate=[^;]+;/)[0]}
       const mob={n:'Test Mob',mapIndex:0,exp:100,zeny:10,boss:false},pv=()=>0,qProg=()=>{};
-      let jobXP=0,pend=[],zenyEarned=0,recorded=0;const addJob=x=>jobXP+=x,recordMonsterKill=()=>recorded++;
+      let jobXP=0,pend=[],zenyEarned=0,expEarned=0,recorded=0;
+      const addJob=x=>jobXP+=x,recordMonsterKill=()=>recorded++;
       ${grab('function earnZeny(amount){','function kill(o){')}
       ${rewards}
       this.result={xp:S.exp,z:S.zeny,jobXP,kills:S.kills,recorded};

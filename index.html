@@ -2,16 +2,21 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <title>Prontera Grind</title>
 <style>
 :root{--ink:#3b2a1a;--panel:#fff8e6;--edge:#c9a35b;--edge2:#8a6a2c;--hp:#e5484d;--exp:#4aa3df;--gold:#e8a800}
 *{box-sizing:border-box}
-html, body { margin:0; padding:0; width:100vw; height:100vh; overflow:hidden; background:#2b3a55; font-family:"Trebuchet MS",Verdana,sans-serif; color:var(--ink); }
+/* v74.1 mobile: 100dvh (with 100vh as the fallback) is the height the browser actually shows -
+   100vh is the *largest* viewport on a phone, so the fixed-height game was taller than the
+   screen whenever the URL bar was out and the bottom of the HUD sat below the fold.
+   overscroll-behavior:none stops the pull-to-refresh gesture from reloading a farming session,
+   and the tap highlight is removed because every button in here is a game control. */
+html, body { margin:0; padding:0; width:100vw; height:100vh; height:100dvh; overflow:hidden; overscroll-behavior:none; -webkit-tap-highlight-color:transparent; background:#2b3a55; font-family:"Trebuchet MS",Verdana,sans-serif; color:var(--ink); }
 
 .win{background:var(--panel);border:3px solid var(--edge);border-radius:6px;box-shadow:0 0 0 2px var(--edge2),0 4px 0 2px var(--edge2)}
 .title{font-weight:bold;background:linear-gradient(#f3d98b,#d9b25c);border-bottom:2px solid var(--edge2);padding:4px 10px;font-size:14px;display:flex;justify-content:space-between;align-items:center}
-#wrap{width:100vw;height:100vh;display:flex;flex-direction:column;border:none;border-radius:0;box-shadow:none}
+#wrap{width:100vw;height:100vh;height:100dvh;display:flex;flex-direction:column;border:none;border-radius:0;box-shadow:none}
 #view{position:relative;flex:1;width:100%;line-height:0;touch-action:none;cursor:grab;overflow:hidden}
 #view canvas{width:100% !important;height:100% !important;display:block}
 #ov{position:absolute;inset:0;pointer-events:none;overflow:hidden;line-height:1.2}
@@ -88,7 +93,7 @@ html, body { margin:0; padding:0; width:100vw; height:100vh; overflow:hidden; ba
 /* v39: pet buffs are icon tiles parked above the status bar, far right. The tile carries the
    skill's own icon and a countdown; the description only appears when it is hovered or focused,
    so the bar stays quiet. (It used to be a row of text chips inside the status bar itself.) */
-#hudBuffs{position:absolute;right:12px;bottom:12px;display:none;gap:6px;pointer-events:auto;z-index:24}
+#hudBuffs{position:absolute;right:12px;bottom:var(--docktop,76px);display:none;gap:6px;pointer-events:auto;z-index:24}
 .pbx{position:relative;width:38px;height:38px;display:grid;place-items:center;font-size:20px;line-height:1;border:2px solid var(--edge2);border-radius:10px;background:radial-gradient(circle at 32% 25%,#fff,#ffd968 115%);box-shadow:0 2px 6px #0006;transition:transform .12s}
 .pbx:hover,.pbx:focus{transform:translateY(-2px)}
 .pbx:focus-visible{outline:2px solid #2f6fd6}
@@ -120,7 +125,7 @@ button:hover{background:#ffe9a8}button:focus-visible{outline:2px solid #2f6fd6}
 .wide{grid-column:1/-1}small{opacity:.7}button:disabled{opacity:.4;cursor:default}
 /* v39: the on-screen log has its own tab, so it can be folded away without closing anything.
    The tab stays put (and keeps counting) while the lines under it hide. */
-#feedWrap{position:absolute;left:12px;bottom:76px;display:flex;flex-direction:column;gap:4px;max-width:50%;pointer-events:none}
+#feedWrap{position:absolute;left:12px;bottom:var(--docktop,76px);display:flex;flex-direction:column;gap:4px;max-width:50%;pointer-events:none}
 #feedTab{position:relative;pointer-events:auto;align-self:flex-start;font:700 11px/1.3 "Trebuchet MS",sans-serif;background:rgba(59,42,26,.42);color:rgba(255,233,168,.78);border:1px solid rgba(255,255,255,.15);border-radius:8px;padding:2px 9px;cursor:pointer;letter-spacing:.2px;transition:background .15s,color .15s,border-color .15s}
 #feedTab:hover,#feedTab:focus-visible{background:rgba(59,42,26,.9);color:#ffe9a8;border-color:var(--edge)}
 /* A single quiet mark while a log filter is hiding lines from the feed: no controls on the
@@ -312,6 +317,59 @@ button.tick.on{background:#ffe08a;border-color:var(--gold);font-weight:bold}
 .mastery-stat-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:5px}.mastery-stat{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px;align-items:center;padding:6px;border:1px solid var(--edge);border-radius:6px;background:#fffdf5;min-width:0}.mastery-stat>span:first-child{display:flex;flex-direction:column}.mastery-stat>span:first-child b{font-size:12px}.mastery-stat>span:first-child small{font-size:9px}.mastery-pips{display:flex;gap:2px}.mastery-pips i{width:7px;height:7px;border:1px solid #8e7957;border-radius:50%;background:#e7dfce}.mastery-pips i.filled{background:radial-gradient(circle at 35% 25%,#fff3ac,#d29b35);border-color:#8c5e17;box-shadow:0 0 3px #b9832777}.mastery-stat button{grid-column:1/-1;width:100%;padding:2px 4px;font-size:9px}.mastery-card-list{display:grid;gap:4px}.mastery-card-row{display:flex;align-items:center;justify-content:space-between;gap:6px;padding:5px 6px;border:1px solid #d6c394;border-radius:6px;background:#fffdf5;min-width:0}.mastery-card-row>span{display:flex;flex-direction:column;min-width:0;font-size:10px;overflow-wrap:anywhere}.mastery-card-row>span small{font-size:9px}.mastery-card-row button{flex:none;padding:3px 6px;font-size:9px}.mastery-empty{padding:9px;border:1px dashed var(--edge);border-radius:6px;background:#fffdf5;font-size:10px;line-height:1.4}.index-xp-card{background:linear-gradient(100deg,#fffdf5,#fff0c2)}.mob-track{display:block;width:100%;height:4px;margin-top:3px}.card-reward-legend{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px;margin:5px 0 8px;padding:6px;border:1px solid var(--edge);border-radius:6px;background:#fffdf5}.card-reward-legend span{font-size:9px;line-height:1.25}.card-reward-legend b{color:#4b351d}.card-reward-pick{display:flex;flex-direction:column;gap:3px;margin-top:4px}.card-reward-pick small{font-size:9px;color:#8a5c18;font-weight:700}.card-reward-pick select{max-width:100%;font:10px "Trebuchet MS",sans-serif;padding:3px;border:1px solid var(--edge2);border-radius:4px;background:#fff8e6;color:var(--ink)}.card-reward-summary{color:#6b4d22!important;font-size:9px!important}
 @media(max-width:560px){#dock{max-width:calc(100vw - 12px);flex-wrap:wrap;justify-content:center}.title-hud{max-width:96px;overflow:hidden;text-overflow:ellipsis;vertical-align:middle}}
 .board-panel{display:flex;flex-direction:column;gap:6px;min-width:0}.board-periods{display:flex;gap:4px}.board-periods button{flex:1;min-width:0;padding:5px 3px;font-size:11px}.board-periods button.on{background:#ffe08a;border-color:var(--gold)}.board-head{display:flex;align-items:center;justify-content:space-between;gap:6px}.board-head small,.board-note{font-size:10px;line-height:1.35;opacity:.78}.board-row{display:grid;grid-template-columns:23px minmax(0,1fr) auto auto;gap:5px;align-items:center;padding:5px 4px;border-bottom:1px dotted #cbb98a;font-size:11px}.board-row b{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.board-rank{font-weight:700;color:#805b1b}.board-level,.board-kills{white-space:nowrap;font-variant-numeric:tabular-nums}.board-kills{font-weight:bold}.board-state{padding:8px;border:1px dashed var(--edge);border-radius:6px;background:#fffdf5;font-size:11px;line-height:1.4}
+/* v74.1 phone layout. The desktop rules above are fine at a desk; on a phone they produced a
+   HUD that re-flowed every time a number grew, a tab dock that overlapped the log feed and the
+   pet-buff bar, and windows that were squeezed into slivers. This block is the phone shape, and
+   it is last so it wins. Two breakpoints: 700px (every phone in portrait, most in landscape) and
+   430px (small phones). --docktop is the one number the feed, the buff bar and the windows agree
+   on: the distance from the bottom of the play area to just above the dock. */
+@media(max-width:700px){
+  :root{--docktop:66px}
+  /* A fixed three-column grid: identity / HP / Zeny on the first row, the three live rates on the
+     second, and the account cluster (badge / Speed / Logout) on a row of its own, right-aligned.
+     Nothing re-flows when a kill counter goes from 9 to 10 to 100. */
+  #hud{display:grid;grid-template-columns:minmax(0,auto) minmax(0,1fr) minmax(0,auto);gap:4px 9px;
+    padding:5px 8px;font-size:11px;line-height:1.3;align-items:center}
+  #hud>div:last-child{grid-column:1/-1;min-width:0;flex-wrap:wrap;gap:6px;justify-content:flex-end}
+  .hud-health{display:flex;align-items:center;gap:5px;min-width:0}
+  .hud-health .bar{width:auto;flex:1 1 auto;min-width:52px}
+  .hud-zeny{white-space:nowrap}
+  #xp-track{height:18px}
+  #xp-dock{padding-bottom:env(safe-area-inset-bottom,0px)}
+  .title{font-size:12px;padding:3px 8px}
+  .title #grindStatus{font-size:11px}
+  /* One scrolling row of tabs, all of them reachable, none of them orphaned onto a second row. */
+  #dock{bottom:calc(12px + env(safe-area-inset-bottom,0px));gap:3px;padding:4px 8px;max-width:calc(100vw - 8px);flex-wrap:nowrap;justify-content:flex-start;
+    overflow-x:auto;overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch;scrollbar-width:none;border-radius:12px}
+  #dock::-webkit-scrollbar{display:none}
+  .ib{width:34px;height:34px;font-size:16px;flex:0 0 auto}
+  .ib .k{font-size:7px}
+  #feedWrap{max-width:62%;bottom:var(--docktop)}
+  #feed{font-size:11px;line-height:1.32}
+  #hudBuffs{right:8px;bottom:var(--docktop)}
+  #hint{font-size:10px}
+  /* Windows fill the play area instead of being stacked into slivers, and the stack scrolls. */
+  #wins{left:6px;right:6px;top:6px;bottom:var(--docktop);overflow-y:auto;overscroll-behavior:contain}
+  .wp,.wp.wide{flex:1 1 auto;min-height:240px;width:100%}
+  #wnd{left:6px;right:6px;top:6px;bottom:var(--docktop);width:auto}
+  .offline-card{max-height:calc(100vh - 24px);max-height:calc(100dvh - 24px)}
+  .atabs button{padding:5px 9px}
+  .row button,.pbar+.row button{min-height:30px}
+}
+@media(max-width:430px){
+  #hud{font-size:10px;gap:3px 7px}
+  #hud>div:first-child{font-size:10px}
+  .hud-health .bar{min-width:40px}
+  .ib{width:32px;height:32px;font-size:15px}
+  #feedWrap{max-width:70%}
+  .wp,.wp.wide{min-height:200px}
+}
+@media(pointer:coarse){
+  /* A touch screen fires a synthetic hover on tap; the sticky highlight and the "?" cursor are
+     desktop affordances, so the controls are told to treat a tap as a tap. */
+  button,[data-a],.mapcard,.cell{touch-action:manipulation}
+  button{cursor:pointer}
+}
 </style>
 </head>
 <body>
@@ -328,12 +386,12 @@ button.tick.on{background:#ffe08a;border-color:var(--gold);font-weight:bold}
 <div id="saveTools" style="margin-top:6px;font-size:11px;text-align:center;opacity:.9"><a href="#" id="saveDl" title="Download every character saved in this browser as one file">⬇ Back up saves</a><span style="opacity:.5"> · </span><a href="#" id="saveUp" title="Load a backup file made by this button, on any address">⬆ Restore a backup</a><input type="file" id="saveFile" accept=".json,application/json" style="display:none"></div>
 <div id="buildTag" style="margin-top:6px;font-size:10px;opacity:.55;text-align:center"></div></div></div>
 <div id="wrap"><div class="title"><span id="stageTitle">Prontera Lv 1</span><span id="grindStatus" style="font-size:12px;opacity:.85"></span></div>
-<div id="view"><div id="ov"><div id="mobSpriteLayer" aria-hidden="true"></div><div id="weaponSpriteLayer" aria-hidden="true"></div><div id="prog"></div><div id="tag"><b id="tn"></b><div class="bar"><i id="th" style="background:var(--hp)"></i></div></div><div id="heroTitle" class="hero-title" aria-live="polite"><span id="heroTitleMark" class="ht-mark" aria-hidden="true"></span><span id="heroTitleText"></span></div><div id="hint">Drag to rotate &middot; Scroll to zoom</div><div id="feedWrap"><div id="feedFilter" role="group" aria-label="Log filter"></div><div id="feedTabs"><button id="feedTab" type="button" aria-expanded="true" aria-controls="feed" title="Minimize or show the on-screen log">📃 Logs ▾</button><button id="feedFil" type="button" aria-expanded="false" aria-controls="feedFilter" aria-label="Filter the on-screen log" title="Filter the log - this row folds away by itself">▽</button></div><div id="feed"></div></div><div id="hudBuffs" role="status" aria-live="polite" aria-label="Active pet buffs - hover an icon for what it does"></div><div id="qp"></div><div id="dock"></div>
+<div id="view"><div id="ov"><div id="mobSpriteLayer" aria-hidden="true"></div><div id="weaponSpriteLayer" aria-hidden="true"></div><div id="prog"></div><div id="tag"><b id="tn"></b><div class="bar"><i id="th" style="background:var(--hp)"></i></div></div><div id="heroTitle" class="hero-title" aria-live="polite"><span id="heroTitleMark" class="ht-mark" aria-hidden="true"></span><span id="heroTitleText"></span></div><div id="hint">Drag to rotate &middot; Scroll or pinch to zoom</div><div id="feedWrap"><div id="feedFilter" role="group" aria-label="Log filter"></div><div id="feedTabs"><button id="feedTab" type="button" aria-expanded="true" aria-controls="feed" title="Minimize or show the on-screen log">📃 Logs ▾</button><button id="feedFil" type="button" aria-expanded="false" aria-controls="feedFilter" aria-label="Filter the on-screen log" title="Filter the log - this row folds away by itself">▽</button></div><div id="feed"></div></div><div id="hudBuffs" role="status" aria-live="polite" aria-label="Active pet buffs - hover an icon for what it does"></div><div id="qp"></div><div id="dock"></div>
 <div id="wins"></div></div></div>
 <div id="hud"><div><b id="cls2"></b> <span id="titleLabel" class="title-hud hud-title-mirror" aria-hidden="true" style="display:none"></span> Base Lv <b id="lv">1</b> / Job Lv <b id="jl">1</b></div>
 <div class="hud-health">HP <div class="bar" role="meter" aria-label="HP" aria-valuemin="0" aria-valuemax="100" id="hpMeter"><i id="hpb"></i></div><small id="hpPct">100%</small></div>
 <div class="hud-zeny" id="zenyHover" tabindex="0" aria-describedby="zenyRate">&#9679; <b id="zeny">0</b> Zeny<span class="hud-flyout" id="zenyRate" role="tooltip">Zeny earned: 0/min</span></div>
-<div>Kills/min <b id="kills" title="Recent kills per minute (last 60 seconds, refreshed each second)">0.0</b></div><div>DPS <b id="dps" title="Damage per second you dealt (last 60 seconds, refreshed each second)">0</b></div><div style="margin-left:auto;display:flex;align-items:center;gap:8px"><span id="cloudBadge" title="Cloud save status" style="font-size:11px;opacity:.9"></span><span id="userBadge" style="font-weight:bold;font-size:12px;background:#e9d39a;padding:3px 8px;border-radius:4px;border:1px solid var(--edge2)"></span><button id="gmBtn" onclick="location.href='gm.html'" style="display:none" title="Server-side tooling for looking after players">🛠 GM console</button><button id="logoutBtn" onclick="logout()" style="display:none">Logout</button><button id="spd">Speed x1</button></div></div>
+<div>Kills/min <b id="kills" title="Recent kills per minute (last 60 seconds, refreshed each second)">0.0</b></div><div>EXP/min <b id="expmin" title="EXP earned per minute (last 60 seconds, refreshed each second)">0</b></div><div>DPS <b id="dps" title="Damage per second you dealt (last 60 seconds, refreshed each second)">0</b></div><div style="margin-left:auto;display:flex;align-items:center;gap:8px"><span id="cloudBadge" title="Cloud save status" style="font-size:11px;opacity:.9"></span><span id="userBadge" style="font-weight:bold;font-size:12px;background:#e9d39a;padding:3px 8px;border-radius:4px;border:1px solid var(--edge2)"></span><button id="gmBtn" onclick="location.href='gm.html'" style="display:none" title="Server-side tooling for looking after players">🛠 GM console</button><button id="logoutBtn" onclick="logout()" style="display:none">Logout</button><button id="spd">Speed x1</button></div></div>
 <div id="xp-dock" aria-label="Level progress"><div id="xp-track">
   <div class="xp-side" id="baseTrack" tabindex="0" role="progressbar" aria-label="Base Level" aria-valuemin="0" aria-valuemax="100"><div class="xp-fill" id="xpb"></div><span class="xp-label" id="baseLabel">Base Lv 1</span><span class="xp-pct" id="basePct">0%</span></div>
   <div class="xp-side" id="jobTrack" tabindex="0" role="progressbar" aria-label="Job Level" aria-valuemin="0" aria-valuemax="100"><div class="xp-fill" id="jb"></div><span class="xp-pct" id="jobPct">0%</span><span class="xp-label job" id="jobLabel">Job Lv 1</span></div>
@@ -459,10 +517,15 @@ const SKILL_PICTO={
 };
 const skillIcon=id=>{const motif=SKILL_ICON[id]||'rune',tone=SKILL_TONE[motif]||SKILL_TONE.rune,key='skgem-'+String(id).replace(/[^a-z0-9_-]/gi,''),art=SKILL_PICTO[motif]||SKILL_PICTO.rune;
   return`<svg class="skill-art motif-${motif}" data-motif="${motif}" viewBox="0 0 48 48" aria-hidden="true" focusable="false"><defs><radialGradient id="${key}-core" cx="32%" cy="20%" r="88%"><stop stop-color="${tone[2]}"/><stop offset=".28" stop-color="${tone[1]}"/><stop offset="1" stop-color="${tone[0]}"/></radialGradient><linearGradient id="${key}-rim" x1="0" y1="0" x2=".85" y2="1"><stop stop-color="#fff3c9"/><stop offset=".2" stop-color="#c29b5c"/><stop offset=".55" stop-color="#59412d"/><stop offset=".82" stop-color="#e3c27d"/><stop offset="1" stop-color="#634424"/></linearGradient></defs><circle cx="24" cy="24" r="22.4" fill="#100c15" stroke="#07060b" stroke-width="1.2"/><circle cx="24" cy="24" r="20.9" fill="url(#${key}-rim)"/><circle cx="24" cy="24" r="18.5" fill="#251d2c" stroke="#fff0bd" stroke-opacity=".6" stroke-width=".55"/><circle cx="24" cy="24" r="16.8" fill="url(#${key}-core)" stroke="#fff" stroke-opacity=".35" stroke-width=".65"/><path d="M12 18c2-6 7-10 12-10-5 2-8 5-10 11Z" fill="#fff" opacity=".28"/><circle cx="8.1" cy="24" r="1" fill="#fff0bc"/><circle cx="39.9" cy="24" r="1" fill="#fff0bc"/><g color="${tone[2]}" fill="currentColor" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${art}</g><path d="m24 5 1 2-1 2-1-2 1-2Zm0 34 1 2-1 2-1-2 1-2Z" fill="#fff3c6"/></svg>`};
-// The CDM affix stays in the roll pool. Only its final GEAR-AFFIX output is scaled to 70%
-// after the original rounded roll (100 -> 70); AB.cdm remains .7 so existing card values/effects
-// are untouched. The range chart mirrors this last-step scale exactly.
-const AFF=['str','agi','dex','luk','int','hp','atk','crit','aspd','flee','cdm'],AB={str:1,agi:1,dex:1,luk:1,int:1,hp:12,atk:.8,crit:.45,aspd:.6,flee:.8,cdm:.7};
+// The CDM affix stays in the roll pool, but v73 (owner: "players only target cri damage on all
+// equipments") changed who can roll it and what it pays: the affix is now a weapon/accessory roll
+// like the cdm CARD, and its gear weight is AB.cdm .7 -> .45. The final GEAR-AFFIX output is still
+// scaled to 70% after the original rounded roll (100 -> 70), so a top Legendary gear roll went
+// from +13% to +9% and only three slots can carry it at once instead of all seven. CDM CARDS keep
+// their own ladder (3/7/10/13) rather than the AB weight, so the socketed card path is untouched.
+// AB.crit is part of the v73 crit-rate retune (.45 -> .32, see crit()): the crit affix and crit
+// cards pay less per point. The range chart mirrors both. Pinned by gear_sim/card_sim/crit_sim.
+const AFF=['str','agi','dex','luk','int','hp','atk','crit','aspd','flee','cdm'],AB={str:1,agi:1,dex:1,luk:1,int:1,hp:12,atk:.8,crit:.32,aspd:.6,flee:.8,cdm:.45};
 const AFFIX_CDM_SCALE=.7,scaleCritDamageAffix=v=>Math.max(1,Math.round(v*AFFIX_CDM_SCALE));
 const affixValue=(k,section,tier,roll)=>{const raw=Math.max(1,Math.round((1+section)*AM[tier]*AB[k]*roll));return k==='cdm'?scaleCritDamageAffix(raw):raw};
 const AL={str:'STR',agi:'AGI',dex:'DEX',luk:'LUK',int:'INT',hp:'Max HP',atk:'ATK %',crit:'Crit %',aspd:'ASPD %',flee:'Flee %',cdm:'Crit DMG %',vit:'VIT'};
@@ -488,7 +551,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // script block, which is a SyntaxError - the game did not run on main at all. One line wins, and
 // it names both sides of this merge: the v38 balance patch (the weapon cut, the affix/card
 // give-back) and main's weapon-hold rendering work.
-const BUILD='2026-10-07 grind-v72 crit frame aligned, page font+gradient look';   // shown on the login card - confirms which file you loaded
+const BUILD='2026-10-07 grind-v74.1 novices keep 1st-job gear, phone layout pass';   // shown on the login card - confirms which file you loaded
 $('buildTag').textContent='build '+BUILD;
 
 // ---------- class tree: Novice -> 6 first jobs -> 6 second jobs -> 6 third jobs ----------
@@ -882,6 +945,14 @@ const indexExperience=()=>S&&Number.isFinite(Number(S.indexXp))?safeCount(S.inde
 const indexRankForXp=xp=>{let rank=0;for(const t of INDEX_TITLES)if(xp>=t.xp)rank++;return rank};
 const indexNextTitle=xp=>INDEX_TITLES.find(t=>xp<t.xp)||null;
 const titleUnlocked=t=>!!(S&&t&&indexExperience()>=t.xp);
+// v73: Index Crit - the only crit source that lives OUTSIDE the 60% cap, and the owner's answer
+// to "a way to max crit rate to 100% that is not equipment and not stats". Every Hunt Title you
+// unlock adds its slice; the ladder is +1/+1/+2/+2/+3/+4/+5/+6/+7/+9 = +40, so a complete Index
+// (all ten titles: 1,000,000 Index XP, about twenty species hunted to their last rung) puts a
+// fully capped 60% build exactly on the 100% ceiling. It cannot be bought, rolled or worn.
+const INDEX_CRIT=[1,1,2,2,3,4,5,6,7,9];
+const indexCritBonus=ranks=>INDEX_CRIT.slice(0,Math.max(0,Math.min(INDEX_CRIT.length,Math.floor(Number(ranks)||0)))).reduce((a,b)=>a+b,0);
+const indexCrit=()=>(typeof indexRankForXp==='function'&&typeof indexExperience==='function'?indexCritBonus(indexRankForXp(indexExperience())):0);
 function recordMonsterKill(mob){
   if(!S||!mob)return null;
   const map=Number.isInteger(mob.mapIndex)?mob.mapIndex:S.mp,key=monsterKey(map,mob.n);
@@ -1033,7 +1104,10 @@ const secOf=l=>l<=3?0:l<=7?1:l<=9?2:3,secOf0=l=>l<=3?0:l<=7?1:l<=9?2:3;
 // unlock the wider affix pool - hp, atk, crit, aspd, flee, cdm - so the good grades are the
 // exciting ones. A card's value scales by its stat's own weight AB, so an HP card is worth
 // ~12x a STR card at the same grade; the five base stats keep exactly their old values.
-const cardVal=(g,st)=>Math.max(1,Math.round((CV[g]||1)*(AB[st]||1)));
+// v73: the cdm card is the one exception - it pays a fixed 3/7/10/13 by grade instead of
+// following AB.cdm, because that weight now describes the (weaker, weapon/accessory-only) GEAR
+// affix. Cards already in a save are revalued by this table in load()'s repair, like every card.
+const cardVal=(g,st)=>st==='cdm'?([3,7,10,13][g]||1):Math.max(1,Math.round((CV[g]||1)*(AB[st]||1)));
 const cardStat=(g,seed)=>{const p=g>=2?AFF:K5;return p[((seed%p.length)+p.length)%p.length]};
 // A pool entry's k is its weapon type for weapons ('sword', 'bow', ...) and its slot for
 // everything else, so the UI asks gearSlot() which panel group an entry belongs to.
@@ -1042,7 +1116,29 @@ const ARM=['armor','head','off','leg','acc'],gearSlot=x=>ARM.includes(x.k)?x.k:'
 // The bag holds 1000 items. Loot is refused once it is full (the drop stays on the ground and
 // is reported) so a long farm cannot silently grow an unbounded save.
 const BAGMAX=1000;
-const OFFLINE_CAP_MS=4*60*60*1000,OFFLINE_REWARD_MULT=.5,OFFLINE_POPUP_MIN_MS=60000,OFFLINE_RATE_SAMPLE_MS=60000,OFFLINE_RATE_CAP=30000;
+// v73 (owner): the field tables are 30% lighter from Comodo on - map index 5 and up, whose
+// Stage-10 boss pools drop with them. Prontera and the four class maps (index 0-4) keep their
+// original numbers for field and boss alike, so the early game is untouched: a starter field
+// still pays 3.6% a kill, the mid/endgame fields pay 2.52%. Pinned by gear_sim.js.
+const FIELD_GEAR=[1.5,1.2,.9],FIELD_GEAR_MID=[1.05,.84,.63],BOSS_POOL_TOTAL=[600,420];
+// v73 (owner): high-level bosses resist crits. The number is the share of the crit chance that
+// is removed when you swing at that boss: a capped 60% build crits Comodo, Louyang and Amatsu's
+// bosses 51% of the time, Niflheim's Lord of Death 48% and the Abyss Dark Lord 42%. Maps 1-5
+// resist nothing - their bosses are a first wall, not a crit check - and escorts, regular mobs
+// and pets are untouched. v74 (owner): the first pass was too steep (-20/-25/-30/-40), so the
+// ladder is -15/-15/-15/-20/-30 instead.
+const BOSS_CRIT_RES=[0,0,0,0,0,.15,.15,.15,.2,.3],bossCritRes=m=>BOSS_CRIT_RES[Math.max(0,Math.min(BOSS_CRIT_RES.length-1,m|0))]||0;
+// v73 (owner: "afk, it suddenly pops the offline reward of 1min"): the away window is now three
+// minutes, not one. A hidden tab only clamped to ~1s timers used to sync about once a minute, so
+// a perfectly ordinary background minute read as "away" and paid for time the tab had already
+// ground itself. The server uses the same three minutes (functions/api/save.js OFFLINE_MIN_MS).
+const OFFLINE_CAP_MS=4*60*60*1000,OFFLINE_REWARD_MULT=.5,OFFLINE_POPUP_MIN_MS=3*60*1000,OFFLINE_RATE_SAMPLE_MS=60000,OFFLINE_RATE_CAP=30000;
+// The sim catches up at most SIM_CATCHUP (600s) of a frozen gap when the page comes back, so a
+// claim no longer than that, covering a window this page itself has been alive for, is time the
+// game already paid out - see applyOfflineProgress. Keep the two numbers in step.
+const OFFLINE_SIM_COVER_MS=10*60*1000;
+// set once when the script parses; `let` only so a test harness can move this page's birth time
+let PAGE_BOOT_AT=Date.now();   // a claim that starts before this moment covers time this page did not run
 // Rarity is a property of WHERE an item drops, not of the roll - and the MAP decides it, at every
 // stage it has. A low map never rolls above its own band, so a Prontera field can never hand out
 // Rare or Epic gear; the only route to Legendary is a Stage 10 boss, on any map. Only the
@@ -1081,14 +1177,18 @@ function gearPool(m,l){const sg=MAPS[m].gear[secField(m,l)],T=[];
   return T}
 function fieldOf(m,l){const mp=MAPS[m],sec=secField(m,l),T=gearPool(m,l),n=T.length,ft=dropTier(m,l);
   // three gear rolls per mob, spread across the pool so two mobs on one field do not pay out
-  // the same item; gear is the common drop and a card is the rare one.
+  // the same item; gear is the common drop and a card is the rare one. From Comodo on the
+  // table is the 30% lighter v73 one (FIELD_GEAR_MID); maps 1-5 use the original.
+  const gch=m>=5?FIELD_GEAR_MID:FIELD_GEAR;
   const mobs=[0,1].map(j=>{const mm=mp.mobs[(l-1+j)%mp.mobs.length],cg=l<=3?0:l<=7?1:2;
-    return{...mm,tier:ft,drops:[[T[(l*3+2*j)%n],1.5],[T[(l*3+2*j+1)%n],1.2],[T[(l*3+2*j+2)%n],.9]],card:{n:mm.n+' Card',stat:cardStat(cg,(m*10+l+j)*3+1),g:cg},cardCh:.15,ore:true,oreCh:l===10?.01:.005}});
+    return{...mm,tier:ft,drops:[[T[(l*3+2*j)%n],gch[0]],[T[(l*3+2*j+1)%n],gch[1]],[T[(l*3+2*j+2)%n],gch[2]]],card:{n:mm.n+' Card',stat:cardStat(cg,(m*10+l+j)*3+1),g:cg},cardCh:.15,ore:true,oreCh:l===10?.01:.005}});
   return{m,l,sec,tier:ft,mobs,boss:l===10?{...mp.boss,tier:ft,
     // v57: the boss still lists its whole pool - every item stays obtainable - but the pool now
     // totals ~6% per boss instead of one 1% roll per entry (13 entries used to mean 13%). The
     // pool is a chase again: about three boss pieces an hour at the tuned kill rate.
-    drops:T.map(x=>[x,Math.round(600/n)/100]),
+    // v73: mid/endgame bosses (map index 5+) pay 30% less, so their pool totals ~4.2%; the
+    // first five maps keep the original ~6%. A boss also carries its map's crit resistance.
+    drops:T.map(x=>[x,Math.round(BOSS_POOL_TOTAL[m>=5?1:0]/n)/100]),critRes:bossCritRes(m),
     card:{n:mp.boss.n+' Card',stat:cardStat(3,m),g:3},cardCh:.1,ore:true,oreCh:.025}:null}}
 // One drop line for the map panel: icon + name + the fixed rarity on the left, the % on the right.
 const poolIc=T=>gearSlot(T)==='weapon'?(WICON[T.k]||'⚔️'):{armor:'🥼',head:'🎩',off:'🛡️',leg:'👖',acc:'💍'}[T.k];
@@ -1159,7 +1259,9 @@ const roundReq=n=>{const a=Math.abs(n),m=a<100?1:a<1e4?10:a<1e5?100:1e3;return M
 const JOFF=[0,9,49,98];
 
 // ---------- state ----------
-let currentUser=null,S=null,speed=1,zenyEarned=0,floats=[],drops=[],t=0,shake=0,atkAnim=0,hitAnim=0,pend=[],castQ=[],shots=[],skillFx=[],barT=0,hudRate=null,logs=[],tab=null,selB=null,selC=null,selK=null,mapM=0,mapL=1;
+// expEarned (v74) is a session counter like zenyEarned: it counts what this login actually
+// earned, so the HUD's EXP/min readout is income, never a level-up's subtraction of it.
+let currentUser=null,S=null,speed=1,zenyEarned=0,expEarned=0,floats=[],drops=[],t=0,shake=0,atkAnim=0,hitAnim=0,pend=[],castQ=[],shots=[],skillFx=[],barT=0,hudRate=null,logs=[],tab=null,selB=null,selC=null,selK=null,mapM=0,mapL=1;
 // wt/wx/wz are the roam target: with no mobs on the field the character wanders instead of
 // trudging back to the spawn point. Only a defeat sends you home (see the death handler).
 const pl={x:0,z:Z1-1.5,ry:0,orb:0,run:0,wt:0,wx:0,wz:Z1-1.5},skCd={},petR={};
@@ -1187,7 +1289,11 @@ const PEQ=[{n:'Claw',d:t=>`+${t*10}% pet damage`},{n:'Collar',d:t=>`+${t*7}% pet
 // mutation, Claw, Collar, Charm, the skill multipliers, and both gacha slots all participate.
 // A fully maxed Angeling should land around 0.6-0.7x one maxed character, leaving a full
 // three-pet field useful without letting pets replace the character's own rotation.
-const PETGAP=7,PETBAL=2.65;
+// v73: the crit retune lowered that character ceiling - the slot-limited cdm affix removed most
+// of the crit-damage stacking a maxed build used to wear - so the knob is scaled down with it
+// (2.65 -> 1.91, exactly the ratio the companion band moved) rather than letting pets creep
+// towards parity. Pets are otherwise untouched. Pinned by pet_sim.js.
+const PETGAP=7,PETBAL=1.91;
 const PET_SKILLS=[
   {id:'warcry',n:'War Cry',kind:'buff',stat:'atk',power:15,duration:30,cd:60,desc:'Player ATK +15% for 30s, 60s cooldown. Never stacks with another pet, and cannot run next to MATK',vfx:'frenzy',color:'#ffd050',icon:'⚔️'},
   {id:'arcane',n:'Arcane Blessing',kind:'buff',stat:'matk',power:15,duration:30,cd:60,desc:'Player MATK +15% for 30s, 60s cooldown. Never stacks with another pet, and cannot run next to ATK',vfx:'magnus',color:'#a58bff',icon:'✦'},
@@ -1450,7 +1556,13 @@ $('loginForm').addEventListener('submit',submitAuth);$('tabLogin').onclick=()=>s
 function logout(){save();cloudLogout();location.reload()}
 function initSession(gm,newAccount=false){
   try{
-    hudRate=null;zenyEarned=0;S=load();S.gm=gm;if(S.q)qRefresh();if(!S.q)S.q=['kill','loot','boss'].map(newQuest);if(S.mp>=MAPS.length||S.lvl>10){S.mp=0;S.lvl=1}applyOfflineProgress();
+    hudRate=null;zenyEarned=0;expEarned=0;S=load();S.gm=gm;if(S.q)qRefresh();if(!S.q)S.q=['kill','loot','boss'].map(newQuest);if(S.mp>=MAPS.length||S.lvl>10){S.mp=0;S.lvl=1}
+    // v74: a save made before the class-tier gate can be wearing gear its class may not use (a
+    // Novice in High-tier armour). The sweep runs here too, so the rule holds from the first
+    // frame of a session, not only from the next class change. `from=null` means no wearer label:
+    // the class it is being taken off was never legally wearing it.
+    if(typeof canUse==='function'&&typeof stowUnfit==='function')stowUnfit(null);
+    applyOfflineProgress();
     $('userBadge').textContent=(gm?'🛠 ':'👤 ')+currentUser;$('logoutBtn').style.display='inline-block';ui();
     $('loginOverlay').style.display='none';log(newAccount?`Account ready — welcome, ${currentUser}!`:`Welcome${gm?', Game Master':' back'}, ${currentUser}!`);
     try{localStorage.setItem('pg_probe','1')}catch(e){log('Browser storage is blocked: progress will NOT be saved.','r0')}
@@ -1643,10 +1755,11 @@ function cloudStart(u,gm){
   S=load();S.gm=!!gm;
   if(S.q)qRefresh();if(!S.q)S.q=['kill','loot','boss'].map(newQuest);
   if(S.mp>=MAPS.length||S.lvl>10){S.mp=0;S.lvl=1}
+  if(typeof canUse==='function'&&typeof stowUnfit==='function')stowUnfit(null);   // v74: same repair on a cloud login
   cloudSession(u,gm);ui();$('loginOverlay').style.display='none';$('logoutBtn').style.display='inline-block';
 }
 async function initSessionFromCloud(u,gm,isNew){
-  currentUser=u;hudRate=null;zenyEarned=0;
+  currentUser=u;hudRate=null;zenyEarned=0;expEarned=0;
   const local=localStorage.getItem(saveKeyFor(u));
   if(local){
     // Progress for this name already exists in THIS browser - which is exactly the situation of a
@@ -1815,13 +1928,35 @@ const skillDetailCard=sel=>{const SL=lv(sel.id),soff=!!(SL&&sel.type!=='pas'&&sk
 const pv=k=>SKILLS.reduce((a,s)=>a+(s.type==='pas'&&s.key===k&&skillOn(s.id)?s.f(lv(s.id)):0),0);
 const items=()=>Object.values(S.eq).filter(Boolean),ev=it=>Math.round(it.val*(1+(it.r||0)*.15)),iname=it=>(it.r?'+'+it.r+' ':'')+it.name,eqv=k=>S.eq[k]?ev(S.eq[k]):0;
 const bon=k=>{let v=MASTER_STATS.includes(k)?cardMasteryStat(k):0;for(const it of items()){for(const a of it.aff||[])if(a.k===k)v+=a.v;for(const c of it.cards||[])if(c.stat===k)v+=c.v}return v};
-const st=k=>S.st[k]+bon(k),canUse=it=>it.slot==='off'?canShield():(it.slot!=='weapon'||!it.wt||C().wt.includes(it.wt));
+// v74 (owner: "second class or 3rd class equipment cannot be worn by 1st class"): a piece belongs
+// to a class TIER, not just a slot. The tier ladder is the class tree's own (`c.tier`: Novice 0,
+// first jobs 1, second 2, third 3) and the gate is `gearTierOf(it) <= max(1, classTierOf(cls))`.
+// v74.1 (owner: "make novices left alone, means lowest gear is novice + 1st class"): the `max(1)`
+// is that instruction - the LOWEST band of gear is starter + 1st-job gear, and both a Novice and a
+// first job wear it. From there a second job reaches section 2 and only a transcendent class
+// section 3. This lives on the same line as st()/canUse() so the tests that slice it keep working;
+// canUse is the single gate every equip path already goes through (bag highlight, chooser,
+// auto-equip, item tooltip).
+const st=k=>S.st[k]+bon(k),gearTierOf=it=>Math.max(0,Math.min(3,((it&&it.sec)|0)||0)),classTierOf=(cls=S.cls)=>Math.max(0,Math.min(3,(CLASSES[cls]&&CLASSES[cls].tier)||0)),gearTierOK=(it,cls=S.cls)=>gearTierOf(it)<=Math.max(1,classTierOf(cls)),gearUserOf=it=>['any class','Novice and 1st-job classes','2nd-job classes and up','transcendent classes only'][gearTierOf(it)],canUse=it=>gearTierOK(it)&&(it.slot==='off'?canShield():(it.slot!=='weapon'||!it.wt||C().wt.includes(it.wt)));
 const maxHp=()=>Math.round((80+S.lv*20+eqv('head')*4+(eqv('acc1')+eqv('acc2'))*3+st('vit')*8+bon('hp'))*C().hp*(1+(pv('hpp')+(typeof cardMasteryStat==='function'?cardMasteryStat('hpPct'):0))/100)*(1+(petBuff.hp||0)/100));
 const atk=()=>Math.round((4+S.lv*2+eqv('weapon')+st(C().main)*1.5+(st('dex')+st('luk'))*.25)*C().atk*(1+(pv('atk')+bon('atk')+(typeof cardMasteryStat==='function'?cardMasteryStat('atkPct'):0)+(tb.atk||0)+(petBuff.atk||0))/100)*(1+collDmg()/100));
 const matk=()=>Math.round((4+S.lv*2+eqv('weapon')*.8+st('int')*1.5+st('dex')*.25)*C().atk*(1+(pv('matk')+bon('matk')+(typeof cardMasteryStat==='function'?cardMasteryStat('matkPct'):0)+(tb.matk||0)+(petBuff.matk||0))/100)*(1+collDmg()/100));
 const aspd=()=>Math.max(.2,.85*C().aspd*(1-Math.min(.5,st('agi')*.006))/(1+(pv('aspd')+bon('aspd')+(typeof cardMasteryStat==='function'?cardMasteryStat('aspdPct'):0)+(tb.aspd||0))/100));
-const crit=()=>Math.min(60,3+st('luk')*.4+pv('crit')+bon('crit')+(typeof cardMasteryStat==='function'?cardMasteryStat('critPct'):0)),flee=()=>Math.min(60,st('agi')*.5+S.lv*.1+pv('flee')+bon('flee')+(typeof cardMasteryStat==='function'?cardMasteryStat('fleePct'):0)),missCh=()=>Math.max(0,15-st('dex')*.25);
-const def=()=>Math.floor(S.lv*.5+st('vit')*.5+eqv('armor')+eqv('leg')+(S.eq.off&&S.eq.off.slot==='off'?eqv('off'):0)+pv('def')+(typeof cardMasteryStat==='function'?cardMasteryStat('def'):0)+(tb.def||0)+(petBuff.def||0)),mdef=()=>Math.floor(S.lv*.3+st('int')*.5+st('vit')*.4+eqv('head')*.3+pv('def')*.5+(typeof cardMasteryStat==='function'?cardMasteryStat('mdef'):0)),critD=()=>2+st('luk')*.01+st('dex')*.005+bon('cdm')/100,needAt=L=>roundReq(L<=50?Math.floor(NA1*Math.pow(L,NE1)):L<=70?Math.floor(N50*Math.pow(L/50,NE2)):L<=99?Math.floor(N70*Math.pow(L/70,NE2B)):Math.floor(N100*Math.pow(L/100,NE3))),need=()=>needAt(S.lv),cost=k=>{const v=S.st[k];return v<ELITELV?1+Math.floor((v-1)/10):10+(v-ELITELV)};
+// v73 crit retune (owner): reaching the 60% cap used to be a LUK dump - LUK 99 alone paid
+// 39.6%. LUK now pays 0.25 a point, the flat base is 2, and above 45% every further point from
+// stats, skills, gear and card mastery counts half. A Lv70 LUK dump with both Hunter/Sniper crit
+// passives lands ~51%, so the last stretch to 60 is a real build. Index Crit (above) is the only
+// source that passes the 60 cap, and the total stops at 100.
+const crit=()=>{const v=2+st('luk')*.25+pv('crit')+bon('crit')+(typeof cardMasteryStat==='function'?cardMasteryStat('critPct'):0),core=Math.min(60,v<=45?v:45+(v-45)*.5);return Math.min(100,core+(typeof indexCrit==='function'?indexCrit():0))},flee=()=>Math.min(60,st('agi')*.5+S.lv*.1+pv('flee')+bon('flee')+(typeof cardMasteryStat==='function'?cardMasteryStat('fleePct'):0)),missCh=()=>Math.max(0,15-st('dex')*.25);
+// v74 (owner: "add a movement speed description"): AGI is the only stat that moves the hero, and
+// the curve used to be a private constant inside update(). It is one named function now, shown on
+// the stat sheet as the world units per second the hero actually travels (the run multiplier
+// applies past 3 units, which is why the sheet also prints the sprint figure). Pinned by ui_sim.
+const heroMoveSpeedForAgi=agi=>5.3+Math.max(1,Number(agi)||1)*.025+Math.sqrt(Math.max(1,Number(agi)||1))*.035,moveSpd=()=>heroMoveSpeedForAgi(st('agi')),MOVE_RUN=1.4;
+// v73 crit damage (owner: "cri damage is too overpowered"): the base multiplier drops 2.0 -> 1.9,
+// and the cdm route that fed it is slot-limited and lighter (see AB/genGear). LUK and DEX still
+// add a little on top, so a crit build stays the burst build - it just cannot stack seven slots.
+const def=()=>Math.floor(S.lv*.5+st('vit')*.5+eqv('armor')+eqv('leg')+(S.eq.off&&S.eq.off.slot==='off'?eqv('off'):0)+pv('def')+(typeof cardMasteryStat==='function'?cardMasteryStat('def'):0)+(tb.def||0)+(petBuff.def||0)),mdef=()=>Math.floor(S.lv*.3+st('int')*.5+st('vit')*.4+eqv('head')*.3+pv('def')*.5+(typeof cardMasteryStat==='function'?cardMasteryStat('mdef'):0)),critD=()=>1.9+st('luk')*.01+st('dex')*.005+bon('cdm')/100,needAt=L=>roundReq(L<=50?Math.floor(NA1*Math.pow(L,NE1)):L<=70?Math.floor(N50*Math.pow(L/50,NE2)):L<=99?Math.floor(N70*Math.pow(L/70,NE2B)):Math.floor(N100*Math.pow(L/100,NE3))),need=()=>needAt(S.lv),cost=k=>{const v=S.st[k];return v<ELITELV?1+Math.floor((v-1)/10):10+(v-ELITELV)};
 const totalPts=()=>{let p=10;for(let l=2;l<=S.lv;l++)p+=4+Math.floor(l/5);return p},rcost=()=>S.lv<20?0:S.lv*50;
 // Skill points belong to the class LINE you are standing in, exactly like RO: the Novice level
 // you grinded, your first job and your second job all pool together, and only the skills your
@@ -1955,7 +2090,11 @@ function genGear(T,l,sec,boss,tier){
   // Armor/head/shield/legwear/accessory keep their value: headgear (maxHp x4) and accessory
   // (maxHp x3) are the HP slots and armour/legs/shield carry DEF, which is the anti-death stat.
   const val=Math.max(1,Math.round({weapon:2,armor:4,head:10,off:3,leg:3,acc:5}[slot]*[1,2.2,4,7][sec]*(1+l*.15)*RAR[t].m*(MAPVAL[Math.max(0,Math.min(MAPVAL.length-1,(S&&S.mp|0)||0))])*rnd(.9,1.12)));
-  const n=[1,1+ri(0,1),2,2+ri(0,1),3][t],pool=AFF.slice(),aff=[];
+  // v73 (owner): the cdm affix is a weapon/accessory roll, so "crit damage on all seven slots"
+  // cannot exist any more. This follows the spirit of the cdm CARD's fit rule (CFIT['cdm'] puts
+  // those cards on weapons), widened to accessories because both are the offensive slots. Every
+  // other affix still rolls anywhere; gear that already carries a legacy cdm roll keeps it.
+  const n=[1,1+ri(0,1),2,2+ri(0,1),3][t],pool=(slot==='weapon'||slot==='acc'?AFF:AFF.filter(k=>k!=='cdm')).slice(),aff=[];
   for(let i=0;i<n;i++){const k=pool.splice(ri(0,pool.length-1),1)[0];aff.push({k,v:affixValue(k,sec,t,rnd(.8,1.25))})}
   // Katars and bows always have four card sockets; every other weapon keeps the existing 1-3 roll.
   const slots=slot==='weapon'&&(T.k==='katar'||T.k==='bow')?4:slot==='weapon'?Math.min(3,1+ri(0,1)+(t>=3?1:0)):Math.min(1,ri(0,1)+(t>=3?1:0));
@@ -1982,7 +2121,7 @@ function offlineStoreGear(it,r){
 }
 function offlineAwardKill(mob,r){
   if(!mob)return;r.kills++;S.kills=safeCount(S.kills)+1;recordMonsterKill(mob);S.kl=safeCount(S.kl)+1;qProg('kill');if(mob.boss)qProg('boss');
-  const z=Math.round(mob.zeny*(1+pv('zeny')/100))*gx(),xp=Math.round(mob.exp*expRate());earnZeny(z);r.zeny+=z;S.exp+=xp;r.exp+=xp;
+  const z=Math.round(mob.zeny*(1+pv('zeny')/100))*gx(),xp=Math.round(mob.exp*expRate());earnZeny(z);r.zeny+=z;earnExp(xp);r.exp+=xp;
   addJob(Math.round(Math.round(mob.exp*.7)*expRate()));checkLevel();
   for(const[T,ch]of mob.drops)if(Math.random()*100<ch)offlineStoreGear(genGear(T,mob.lvl,mob.sec,mob.boss,mob.tier),r);
   if(Math.random()*100<mob.cardCh){const g=mob.card.g;S.cards.push({card:1,id:uid(),n:mob.card.n,g,stat:mob.card.stat,v:cardVal(g,mob.card.stat)});r.cards++;r.drops++}
@@ -2027,10 +2166,17 @@ function applyOfflineProgress(now=Date.now(),serverClaim=null){
       remainder:cl(Number(serverClaim.remainder)||0,0,.999999),rateKph:cl(Number(serverClaim.rateKph)||0,0,OFFLINE_RATE_CAP)};
     S.offlineClaimId=id;
   }else plan=offlinePlan(S.offlineAt,now,S.offlineKph,S.offlineKillRemainder);
-  const r={...plan,kills:0,drops:0,exp:0,zeny:0,items:0,storedItems:0,autoSold:0,overflow:0,cards:0,ori:0,elu:0,pets:0,petRefunds:0,stages:0};
-  if(plan.show){for(let i=0;i<plan.kills;i++)offlineAwardKill(offlineMobForCurrentField(),r);S.offlineKillRemainder=plan.remainder}
-  S.offlineAt=now;S.offlineRateAt=now;S.offlineRateKills=safeCount(S.kills);save();zenyEarned=0;
-  if(plan.show)showOfflineReward(r);return r;
+  // v73: a claim that this page has been alive for, and that fits inside the sim's own catch-up
+  // budget, is time the running game already ground (the hidden-tab ticker never pauses) or
+  // replayed on the way back from a freeze. Paying it would double those minutes and pop a
+  // "welcome back" for ordinary background farming. Acknowledge the claim, pay nothing, stay
+  // quiet - but still advance the timestamps so the same window can never be paid later.
+  const awayStart=now-Math.max(0,Number(plan.awayMs)||0);
+  const covered=!!plan.show&&Number.isFinite(awayStart)&&awayStart>=PAGE_BOOT_AT&&plan.awayMs<=OFFLINE_SIM_COVER_MS;
+  const r={...plan,show:!!plan.show&&!covered,covered,kills:0,drops:0,exp:0,zeny:0,items:0,storedItems:0,autoSold:0,overflow:0,cards:0,ori:0,elu:0,pets:0,petRefunds:0,stages:0};
+  if(plan.show&&!covered){for(let i=0;i<plan.kills;i++)offlineAwardKill(offlineMobForCurrentField(),r);S.offlineKillRemainder=plan.remainder}
+  S.offlineAt=now;S.offlineRateAt=now;S.offlineRateKills=safeCount(S.kills);save();zenyEarned=0;expEarned=0;
+  if(plan.show&&!covered)showOfflineReward(r);return r;
 }
 // ---------- skill effects: damage over time, stun, chain ----------
 // DoT ticks twice a second for its duration; the number stored is damage PER SECOND.
@@ -2125,7 +2271,9 @@ function shot(col){if(!mob||heroWeaponType(C().n,C().wt,S.eq.weapon&&S.eq.weapon
 function hurt(o,d,col,c,skill=false){S.dmg=(S.dmg||0)+d;o.hp-=d;o.flash=1;damageFloat(o.x,1.2+.8*(o.spriteScale||o.size),o.z,d,c,false,skill);if(o.hp<=0)kill(o)}
 function strike(mult,col,magic=false,skill=false){
   if(!mob)return;if(Math.random()*100<missCh()){addFloat(mob.x,1.8,mob.z,'MISS','#dfe5ed',false,'miss');return}
-  const c=Math.random()*100<crit(),base=magic?matk():atk(),d=Math.max(1,Math.round(base*mult*rnd(Math.min(.95,.7+st('dex')*.004),1.15)*(c?critD():1)));
+  // v73: the crit roll answers to the target - a boss carries its map's crit resistance
+  // (BOSS_CRIT_RES) and every other monster resists nothing.
+  const c=Math.random()*100<Math.max(0,crit()*(1-(mob.critRes||0))),base=magic?matk():atk(),d=Math.max(1,Math.round(base*mult*rnd(Math.min(.95,.7+st('dex')*.004),1.15)*(c?critD():1)));
   S.dmg=(S.dmg||0)+d;mob.hp-=d;mob.flash=1;shake=c?6:2;const leech=typeof cardMasteryStat==='function'?cardMasteryStat('leech'):0;if(leech>0&&typeof maxHp==='function'){const h=Math.max(1,Math.round(d*leech/100));S.hp=Math.min(maxHp(),S.hp+h);addFloat(pl.x,2.7,pl.z,'+'+h,'#ff6b8a')}damageFloat(mob.x,1.5*Math.max(1,(mob.spriteScale||mob.size)*.8)+.6,mob.z,d,c,false,skill);
 }
 // Higher job tiers get more casts per swing: Novice 1, first job 2, second job 3, transcendent
@@ -2178,9 +2326,12 @@ const qProg=type=>S.q&&S.q.forEach(q=>{if(q.type===type)q.prog=Math.min(q.goal,q
 // A balance difference is not income: a purchase in the same frame can hide earned Zeny.
 // Count each credit directly for the live hover rate, without persisting session history.
 function earnZeny(amount){const n=Math.max(0,Number(amount)||0);S.zeny+=n;zenyEarned+=n}
+// v74: same idea for EXP, so the HUD's EXP/min is gross income (a level-up subtracts from S.exp,
+// a quest reward adds to it - both would confuse a reader of the save field itself).
+function earnExp(amount){const n=Math.max(0,Number(amount)||0);S.exp+=n;expEarned+=n}
 function kill(o){const keep=mob;if(o)mob=o;if(!mob||!mobs.includes(mob)){mob=keep;return}
   const g=gx();S.kills++;recordMonsterKill(mob);S.kl++;qProg('kill');if(mob.boss)qProg('boss');
-  const z=Math.round(mob.zeny*(1+pv('zeny')/100))*g,xp=Math.round(mob.exp*expRate());earnZeny(z);S.exp+=xp;addJob(Math.round(Math.round(mob.exp*.7)*expRate()));pend=[];castQ=[];
+  const z=Math.round(mob.zeny*(1+pv('zeny')/100))*g,xp=Math.round(mob.exp*expRate());earnZeny(z);earnExp(xp);addJob(Math.round(Math.round(mob.exp*.7)*expRate()));pend=[];castQ=[];
   addFloat(mob.x,2.4,mob.z,'+'+numTxt(z)+'z','#ffd23f');log(`${mob.n} defeated! +${xp.toLocaleString()} EXP, +${z.toLocaleString()} Zeny`,'','kills,zeny');
   // Drop odds are the field's own numbers: nothing on the character scales them, so LUK cannot
   // bend the tables (it still raises ATK through the crit/DEX side of the stat sheet, which is
@@ -2297,6 +2448,20 @@ function classBlock(n){
   if(playedClass(n))return'';
   for(let x=n;CLASSES[x].par;x=CLASSES[x].par){const p=CLASSES[x].par,pj=S.jobs[p];if(!pj||pj.jl<CLASSES[x].rj)return`Needs ${p} Job Lv ${CLASSES[x].rj}`}
   if(S.cls!=='Novice'&&S.cls!==CLASSES[n].par)return'Reset to Novice first';return''}
+// v74: a loadout can be illegal the moment the class changes, so every worn piece the new class
+// cannot use comes OFF - into the Bag, LOCKED (auto-sell can never eat it) and labelled with the
+// class that was wearing it. Nothing is lost: snapClass() already wrote those item ids into the
+// class we are leaving (S.base[from].eq), so equipRec() wears them again the moment the player
+// switches back. `from` decides whether the wearer label is honest: a piece the departing class
+// could not legally wear (a legacy save) gets no name and just states its requirement.
+function stowUnfit(from){
+  let n=0;const names=[];
+  for(const k in S.eq){const it=S.eq[k];if(!it||canUse(it))continue;
+    if(!S.inv.some(x=>x&&String(x.id)===String(it.id)))S.inv.push(it);
+    if(!it.wearer&&CLASSES[from]&&gearTierOK(it,from))it.wearer=from;
+    it.locked=true;names.push(iname(it));S.eq[k]=null;n++}
+  if(n)log(`${n} piece${n===1?'':'s'} came off (${names.join(', ')}): your ${S.cls} cannot wear ${n===1?'it':'them'}. Locked in the Bag - it goes straight back on when you switch back.`,'r3','gear');
+  return n}
 function changeClass(n){if(classBlock(n))return;
   snapClass();                                 // remember the class we are stepping away from
   const from=S.cls;S.cls=n;jobOf();
@@ -2304,9 +2469,7 @@ function changeClass(n){if(classBlock(n))return;
   if(rec){S.lv=rec.lv;S.exp=rec.exp;S.pts=rec.pts;S.st=Object.assign({},rec.st);if(rec.eq)equipRec(rec.eq)}
   else if(n==='Novice')noviceRun();
   else if(from==='Novice')freshBuild();       // promotions preserve allocated stats and unspent points
-  {const stow=it=>{if(it&&!S.inv.some(x=>x&&x.id!=null&&it.id!=null&&String(x.id)===String(it.id)))S.inv.push(it)},o=S.eq.off;
-   if(o&&!(o.slot==='off'&&canShield())){stow(o);S.eq.off=null}
-   const w=S.eq.weapon;if(w&&w.wt&&!C().wt.includes(w.wt)){stow(w);S.eq.weapon=null;log('Your weapon cannot be used by this class. Moved to Bag.','','gear')}}
+  stowUnfit(from);                            // shields, unusable weapon types and too-high class tiers
   S.hp=Math.max(1,Math.min(rec&&rec.hp||maxHp(),maxHp()));
   snapClass();                                 // so you can step away again right away
   log(rec?`Class: ${n} · back to Base Lv ${S.lv} · Job Lv ${S.jobs[n].jl} · stats, skills and gear restored.`
@@ -2325,10 +2488,15 @@ function toggleGearLock(id){const it=find(id);if(!it||it.card||it.ore)return;it.
 const cell=(it,sel,extra='')=>`<div class="cell b${dtier(it)}${sel?' sel':''}" data-tip="${it.id}" ${extra}>${icon(it)}${it.locked?`<i class="lockstar" title="Locked gear" aria-label="Locked">&#9733;</i>`:''}${it.r?`<i class="rf">+${it.r}</i>`:''}</div>`;
 function itemMain(it){
   if(it.card)return`<b class="r${GI[it.g]}">${it.n}</b><div>${GRADE[it.g]} card &middot; <b>${SU(it.stat)} +${it.v}</b></div><div><small>Fits: ${CFL[CFIT[it.stat]]} only</small></div>`;
+  // v74: the class tier of a piece is part of its description, and a piece that came off a class
+  // remembers who was wearing it so the lock is never a mystery: "it is locked BECAUSE Knight had
+  // it on, and it goes back on the moment you switch to Knight again".
   return`<b class="r${it.tier}">${iname(it)}</b><div><small>${RAR[it.tier].n} ${SLOTS[it.slot].label}${it.wt?' ('+it.wt+')':''} &middot; ${SECN[it.sec||0]}</small></div>
-  <div><small>Gear Lv ${gearRefLevel(it)} &middot; reference only (no Base Lv equip restriction)</small></div>${it.locked?'<div><small class="r3">&#9733; Locked &middot; protected from auto-sell</small></div>':''}
+  <div><small>Worn by: <b>${gearUserOf(it)}</b></small></div>
+  <div><small>Gear Lv ${gearRefLevel(it)} &middot; reference only: gear is gated by class tier, never by Base Lv</small></div>${it.locked?`<div><small class="r3">&#9733; Locked &middot; protected from auto-sell</small></div>`:''}
+  ${gearTierOK(it)?'':`<div><small class="r0">Locked to ${gearUserOf(it)}: your ${S.cls} cannot wear it.${it.wearer?` This was ${it.wearer}'s gear - it goes straight back on when you switch to ${it.wearer} again.`:''}</small></div>`}
   <div><b>${SLOTS[it.slot].stat} +${ev(it)}</b>${it.r?` <small>(base ${it.val})</small>`:''}</div>${(it.aff||[]).length?`<div class="sec">Affixes <small>(${it.aff.length} random)</small></div>`:''}${(it.aff||[]).map(a=>`<div class="r1">&#9670; ${affTxt(a)}</div>`).join('')}`}
-function itemDetail(it){if(it.card)return itemMain(it);const cs=it.cards||[];return itemMain(it)+Array.from({length:it.slots||0},(_,i)=>`<div><small>${cs[i]?'&#9670; '+cardTxt(cs[i]):'&#9671; empty card slot'}</small></div>`).join('')+(canUse(it)?'':'<div class="r0"><small>Your class cannot use this.</small></div>')}
+function itemDetail(it){if(it.card)return itemMain(it);const cs=it.cards||[];return itemMain(it)+Array.from({length:it.slots||0},(_,i)=>`<div><small>${cs[i]?'&#9670; '+cardTxt(cs[i]):'&#9671; empty card slot'}</small></div>`).join('')+(gearTierOK(it)&&!canUse(it)?'<div class="r0"><small>Your class cannot use this.</small></div>':'')}
 const cardSlots=(it,k)=>Array.from({length:it.slots||0},(_,i)=>{const c=(it.cards||[])[i];return c?`<div><small class="r${GI[c.g]}">&#9670; ${cardTxt(c)}</small> <button data-a="unsock" data-v="${k}:${i}">Remove ${200*(c.g+1)}z</button></div>`:'<div><small>&#9671; empty slot</small></div>'}).join('');
 const tnode=n=>{const c=CLASSES[n],pj=S.jobs[n],cur=n===S.cls,blk=classBlock(n);return`<div class="tn ${cur?'cur':blk?(pj?'played':'lock'):'ok'}${selK===n?' pick':''}" data-a="selk" data-v="${n}"><b>${n}</b><small>${pj?`Job ${pj.jl}/${c.mj}`:'Lv '+c.rj+' req'}</small></div>`};
 // ---------- GM test controls for the v48 mastery and skill systems ----------
@@ -2421,15 +2589,18 @@ const V={
       <div class="mob-card"><div class="hd">Boss &amp; pets</div>${mapL===10?`<small>Boss fights immediately with ${mapM<5?3:5} monsters. Defeat the boss to reset the fight.</small>`:''}
         ${F.boss?`<div class="mobentry"><b class="r4">${F.boss.n} (BOSS)</b>
           <div class="poollist">${F.boss.drops.map(([T,ch])=>`<span class="poolitem">${poolIc(T)} ${T.n}<b>${ch}%</b></span>`).join('')}</div>
+          ${bossCritRes(mapM)?`<div class="dropline"><span>🛡 Crit resistance <small>your Crit % is cut by this much against this boss</small></span><b>${Math.round(bossCritRes(mapM)*100)}%</b></div>`:''}
           <small>Every boss drop is <b class="r4">Legendary</b> with random affixes. Each item rolls independently; a boss can drop zero or several pieces.</small>
           <div class="dropline"><span>🃏 ${F.boss.card.n} <small>(${SU(F.boss.card.stat)} +${cardVal(3,F.boss.card.stat)}, Legendary)</small></span><b>${F.boss.cardCh}%</b></div>
           <div class="dropline ore"><span>🔶 Oridecon &middot; 🔷 Elunium</span><b>${F.boss.oreCh*100}% each</b></div>
         </div>`:`<small>Boss appears at Stage 10.</small>`}
         <div class="sec">🐾 Pet drops</div><small>0.03% per kill, 0.5% from bosses. Odds on ${mp.n}: ${PW[Math.min(mapM,9)].map((w,i)=>RN[i]+' '+w+'%').join(' &middot; ')}</small></div></div>`},
-  stats(){const c=C(),b=k=>bon(k)?` <small class="r1">+${bon(k)}</small>`:'';
+  stats(){const c=C(),b=k=>bon(k)?` <small class="r1">+${bon(k)}</small>`:'',idxC=typeof indexCrit==='function'?indexCrit():0;
     return`<div class="hd">${S.cls} &middot; Base Lv ${S.lv} &middot; Job Lv ${jobOf().jl}/${c.mj}</div><div class="hd">Stat points: ${S.pts} <small>(max ${statCap()} each${S.lv<ELITELV?' &middot; '+MAXST+' unlocks at Base Lv '+ELITELV:''} &middot; max Base Lv 150)</small></div><div class="hd">🏆 Class collection: ${playedClasses()}/${t3Total()} transcendent classes at Base Lv 100+ &middot; <b>+${collDmg()}% damage</b> <small>(+1% each, permanent${playedClasses()?'':' - take a transcendent class to Base Lv 100 to earn it'})</small></div>`
     +STATS.map(([k,l,d])=>`<div class="slot"><span><b>${l}</b> ${S.st[k]}${b(k)} <small>(${d})</small></span><span class="bts"><small>${cost(k)}pt</small><button data-a="stat" data-v="${k}" ${S.pts>=cost(k)&&S.st[k]<statCap()?'':'disabled'}>+1</button><button data-a="stat5" data-v="${k}" ${S.pts>=cost(k)&&S.st[k]<statCap()?'':'disabled'}>+5</button></span></div>`).join('')
-    +`<div class="slot" style="flex-wrap:wrap"><span>ATK <b>${atk()}</b></span><span>MATK <b>${matk()}</b></span><span>DEF <b>${def()}</b></span><span>ASPD <b>${(1/aspd()).toFixed(2)}/s</b></span><span>Crit <b>${crit().toFixed(1)}%</b></span><span>Crit DMG <b>x${critD().toFixed(2)}</b></span><span>MDEF <b>${mdef()}</b></span><span>Flee <b>${flee().toFixed(0)}%</b></span><span>HP <b>${maxHp()}</b></span></div>
+    +`<div class="slot" style="flex-wrap:wrap"><span>ATK <b>${atk()}</b></span><span>MATK <b>${matk()}</b></span><span>DEF <b>${def()}</b></span><span>ASPD <b>${(1/aspd()).toFixed(2)}/s</b></span><span>Crit <b>${crit().toFixed(1)}%</b>${idxC?` <small>(+${idxC}% Index Crit)</small>`:''}</span><span>Crit DMG <b>x${critD().toFixed(2)}</b></span><span>MDEF <b>${mdef()}</b></span><span>Flee <b>${flee().toFixed(0)}%</b></span><span>HP <b>${maxHp()}</b></span><span>Move <b>${moveSpd().toFixed(2)}</b> <small>u/s · ${(moveSpd()*MOVE_RUN).toFixed(2)} sprinting</small></span></div>
+    <small><b>Movement speed</b> comes from AGI alone: ${moveSpd().toFixed(2)} units a second at AGI ${st('agi')} (${(moveSpd()*MOVE_RUN).toFixed(2)} when running, which is any trip longer than 3 units). Every point of AGI adds about 0.03 - it never touches damage, so it is a comfort stat.</small>
+    <small>Crit is capped at 60% from stats, skills, gear and card mastery; above 45% each further point counts half. <b>Index Crit</b> (+${idxC}% of +40 max, from Hunt Titles) is the only source that passes the cap, and the total stops at 100%.</small>
     <small>Weapons: ${c.wt.join(', ')}${katarOnly()?' (two-handed Katar; no off-hand)':''} &middot; Main stat: ${SU(c.main)}</small><button class="full" data-a="rstat" ${rcost()&&S.zeny<rcost()?'disabled title="You need '+rcost().toLocaleString()+' Zeny to reset stats"':''}>Reset stats (${rcost()?rcost()+'z':'free below Base 20'})</button>`},
   job(){const lines=[['Swordman','Knight','Lord Knight'],['Mage','Wizard','High Wizard'],['Archer','Hunter','Sniper'],['Thief','Assassin','Assassin Cross'],['Acolyte','Priest','High Priest'],['Merchant','Blacksmith','Whitesmith']];
     const k=selK||S.cls,c=CLASSES[k],blk=classBlock(k),pj=S.jobs[k],rec=classRec(k);
@@ -2518,8 +2689,8 @@ const V={
     <div class="row" style="margin-top:4px"><button data-a="dmgfmt" data-v="short" class="${S.dmgShort!==false?'on':''}" aria-pressed="${S.dmgShort!==false}">Short &middot; 100K / 1M</button><button data-a="dmgfmt" data-v="full" class="${S.dmgShort===false?'on':''}" aria-pressed="${S.dmgShort===false}">Full &middot; 100,000</button></div>
     <small>On or off, and how the numbers read. Saved with your account.</small>
     <div class="hd" style="margin-top:10px">Gameplay</div><label><input type="checkbox" data-a="auto" ${S.auto!==false?'checked':''}> Auto-equip better gear</label><br><label><input type="checkbox" data-a="adv" ${S.adv!==false?'checked':''}> Auto-advance to next level (turn off to farm)</label><br><label title="Always on - the game cannot be paused by hiding the tab any more"><span class="lockmark">&#10003;</span> Keeps grinding while this tab is in the background</label>
-    <small>Background grinding keeps playing while the tab is hidden; untick it to pause instead.</small>
-    <p><small>Drag to rotate, scroll to zoom. Hotkeys: M S J K B E C Q R L P I V O, Esc to close.</small></p><button class="full" data-a="reset">Erase this account's save &amp; restart</button><button class="full" data-a="logout">Logout</button>`},
+    <small>Background grinding keeps playing while the tab is hidden - a hidden tab is never "away". The welcome-back reward only starts after <b>three minutes</b> without a save, so an ordinary background session never opens it.</small>
+    <p><small>Drag to rotate, scroll or pinch to zoom. Hotkeys: M S J K B E C Q R L P I V O, Esc to close.</small></p><button class="full" data-a="reset">Erase this account's save &amp; restart</button><button class="full" data-a="logout">Logout</button>`},
   gm(){return`<div class="hd">GM multiplier (EXP, Job EXP, Zeny, quests)</div><div class="row">${[1,10,100,1000].map(x=>`<button data-a="gmx" data-v="${x}" ${S.gmx===x?'style="background:#ffe08a"':''}>x${x}</button>`).join('')}</div>
     <div class="row" style="margin-top:8px"><button data-a="gmz">+1,000,000 Zeny</button><button data-a="gmo">+20 Oridecon &amp; Elunium</button><button data-a="gml">+10 Base Levels</button><button data-a="gmj">Max Job Lv (current class)</button><button data-a="gmu">Unlock all map levels</button></div>
     <div class="hd" style="margin-top:10px">Index mastery test controls</div><small>These use the real per-species ledger and the 10 / 250 / 5,000 / 50,000 kill ladder. Clear before trying another scenario.</small><div class="row"><button data-a="gmindex" data-v="one">+1 Poring kill</button><button data-a="gmindex" data-v="all1">1 kill every species</button><button data-a="gmindex" data-v="all100">100 kills every species</button><button data-a="gmindex" data-v="all1000">1,000 kills every species</button><button data-a="gmindex" data-v="all5000">5,000 kills every species</button><button data-a="gmindex" data-v="all50000">50,000 kills every species</button><button data-a="gmindex" data-v="xp10000">Set 10,000 XP title test</button><button data-a="gmindex" data-v="xp1000000">Set the final title</button><button data-a="gmindex" data-v="clear">Clear Index</button></div>
@@ -2571,7 +2742,7 @@ function renderTitleTrack(){
   return INDEX_TITLES.map((t,i)=>{
     const done=titleUnlocked(t),equipped=S.equippedTitle===t.id;
     const pct=done?100:Math.min(100,Math.max(0,xp/t.xp*100));
-    const progress=done?`${t.xp.toLocaleString()} Index XP · earned`: `${xp.toLocaleString()} / ${t.xp.toLocaleString()} Index XP`;
+    const progress=(done?`${t.xp.toLocaleString()} Index XP · earned`: `${xp.toLocaleString()} / ${t.xp.toLocaleString()} Index XP`)+` · +${INDEX_CRIT[i]}% Crit`;
     return `<article class="mastery-title tone-${t.tone}${done?' earned':' locked'}">
       <div class="mastery-medal" aria-hidden="true"><span>${t.mark}</span><small>${String(i+1).padStart(2,'0')}</small></div>
       <div class="mastery-title-copy"><b>${t.name}</b><small>Rank ${i+1} · ${progress}</small><div class="mastery-track"><i style="width:${pct.toFixed(1)}%"></i></div></div>
@@ -2586,7 +2757,8 @@ function renderMobIndex(){
   return `<div class="mastery-summary"><b>⚔ Individual Monster Index · Monster Hunt Ledger</b><span>${found}/${MONSTER_INDEX.length} species recorded · ${xp.toLocaleString()} Index XP · Rank ${Math.max(1,rank)}</span>
     <small>Every species has its own eight-rung kill ladder: 10, 50, 250, 1,000, 5,000, 10,000, 25,000 and 50,000 kills. First kills discover a monster, repeated kills raise that monster's mastery, and every rung adds Index XP. Variety and quantity both move the rank bar.</small>
     <small><b>Album:</b> ${albumDone}/${MONSTER_INDEX.length} species hunted to their last rung (50,000 kills) - ${(MONSTER_INDEX.length*50279).toLocaleString()} Index XP in total, kept separate from the title ranks so there is always one more hunt.</small></div>
-    <div class="mastery-progress-card index-xp-card"><div><b>Index Mastery Lv ${Math.max(1,rank)}</b> <small>· ${next?`${(next.xp-xp).toLocaleString()} XP to ${next.name}`:'all title ranks complete'}</small></div><div class="mastery-track"><i style="width:${pct.toFixed(1)}%"></i></div><small>${xp.toLocaleString()}${next?` / ${next.xp.toLocaleString()}`:''} Index XP${next?' · next title: '+next.name:''}</small></div>
+    <div class="mastery-progress-card index-xp-card"><div><b>Index Mastery Lv ${Math.max(1,rank)}</b> <small>· ${next?`${(next.xp-xp).toLocaleString()} XP to ${next.name}`:'all title ranks complete'}</small></div><div class="mastery-track"><i style="width:${pct.toFixed(1)}%"></i></div><small>${xp.toLocaleString()}${next?` / ${next.xp.toLocaleString()}`:''} Index XP${next?' · next title: '+next.name:''} · <b>Index Crit +${indexCrit()}% / +40%</b></small>
+    <small>Index Crit is the only crit source that sits outside the 60% cap: every Hunt Title you unlock adds its slice (+1/+1/+2/+2/+3/+4/+5/+6/+7/+9), and all ten put a fully capped build on exactly 100% crit. It cannot come from equipment or stats.</small></div>
     <div class="mastery-section-title">🏅 Index Title Ranks <small>Equip any rank you have earned</small></div><div class="mastery-title-list">${renderTitleTrack()}</div>
     <div class="mastery-section-title">📖 Monster Index <small>${MONSTER_INDEX.length} entries across ${MAPS.length} maps · 8 mastery rungs each</small></div>
     ${MAPS.map((mp,map)=>{const rows=MONSTER_INDEX.filter(m=>m.map===map),mapFound=rows.filter(m=>safeCount(counts[m.id])>0).length,mapKills=rows.reduce((n,m)=>n+safeCount(counts[m.id]),0);
@@ -2764,7 +2936,7 @@ const ACT={
   proll:id=>{const p=gp(id);if(!p||p.roll||rollingSet.has(p.id))return;rollOnce(p,false,g=>{p.roll=g;log(`Mutation roll: Grade ${g} (x${MUT[g]})`,g>=4?'r4':'r0','pet');ui();save()})},pauto:id=>{const p=gp(id);if(!p)return;if(autoSet.has(p.id)){autoSet.delete(p.id);ui();return}if(p.roll||rollingSet.has(p.id))return;if((p.sk||[1,2,3]).length>=6){log('Un-skip at least one grade to auto-roll.');return}autoSet.add(p.id);autoRoll(p)},
   pkeep:id=>{const p=gp(id);if(p){p.mut=p.roll;p.roll=0;ui();save()}},pdisc:id=>{const p=gp(id);if(p){p.roll=0;ui();save()}},
   prel:id=>{const p=gp(id);if(!p)return;const z=Math.floor(EGG*.3);ask(`Release ${PETS[p.sp].n}? You get ${z}z back.`,()=>{S.pets=S.pets.filter(x=>x!==p);autoSet.delete(p.id);clearPetCd(p.id);earnZeny(z);ui();save()})},
-  claim:i=>{const q=S.q[+i];if(q&&q.prog>=q.goal){qScale(q);earnZeny(q.z||0);S.exp+=(q.xp||0);log(`Quest complete! +${(q.z||0).toLocaleString()}z, +${(q.xp||0).toLocaleString()} EXP`,'r3','quest');S.q[+i]=newQuest(q.type);checkLevel();ui();save()}},
+  claim:i=>{const q=S.q[+i];if(q&&q.prog>=q.goal){qScale(q);earnZeny(q.z||0);earnExp(q.xp||0);log(`Quest complete! +${(q.z||0).toLocaleString()}z, +${(q.xp||0).toLocaleString()} EXP`,'r3','quest');S.q[+i]=newQuest(q.type);checkLevel();ui();save()}},
   auto:()=>{S.auto=S.auto===false;ui()},adv:()=>{S.adv=S.adv===false;ui()},
 
   feed:()=>{S.feed=!feedOn();feedTab();ui();save()},
@@ -2776,7 +2948,7 @@ const ACT={
   sex:v=>{S.sex=v==='f'?'f':v==='m'?'m':(S.sex==='f'?'m':'f');heroKey='';log(`Appearance: ${S.sex==='f'?'female':'male'}.`);ui();save()},
   costume:()=>{log('Costumes arrive in a future patch - they will restyle a class without changing its stats.','','misc');ui()},
   hair:v=>{S.hair=(((S.hair|0)+(+v||1))%19+19)%19;heroKey='';ui();save()},
-  reset:()=>{ask('Erase this account save and start over?',()=>{const gm=S.gm;hudRate=null;zenyEarned=0;S=fresh();S.gm=gm;S.q=['kill','loot','boss'].map(newQuest);floats.forEach(f=>f.el&&f.el.remove());floats=[];drops=[];pend=[];castQ=[];mobs=[];mob=null;respawn=.3;logs=[];log('New adventure started.');ui();save()})},
+  reset:()=>{ask('Erase this account save and start over?',()=>{const gm=S.gm;hudRate=null;zenyEarned=0;expEarned=0;S=fresh();S.gm=gm;S.q=['kill','loot','boss'].map(newQuest);floats.forEach(f=>f.el&&f.el.remove());floats=[];drops=[];pend=[];castQ=[];mobs=[];mob=null;respawn=.3;logs=[];log('New adventure started.');ui();save()})},
   gmx:v=>{S.gmx=+v;ui();save()},gmz:()=>{S.zeny+=1e6;ui();save()},gmo:()=>{S.ore.ori+=20;S.ore.elu+=20;ui();save()},gml:()=>{S.lv=Math.min(150,S.lv+10);S.pts+=30;S.hp=maxHp();ui();save()},
   gmj:()=>{const j=jobOf();j.jl=C().mj;j.jx=0;ui();save()},gmu:()=>{S.prog=MAPS.map(()=>10);ui();save()},gmindex:v=>gmIndexTest(v),gmcard:v=>gmCardTest(v),gmskill:v=>gmSkillTest(v),gmpet:v=>gmPetTest(v),gmp:v=>{if(S.pets.length>=40)S.pets.shift();const c=PETS.filter(x=>x.r===+v);S.pets.push({id:ri(1e6,9e6),sp:PETS.indexOf(c[ri(0,c.length-1)]),mut:0,eq:[0,0,0],skills:[],on:S.pets.filter(x=>x.on).length<3});ui();save()},gmm:v=>{S.pets.forEach(p=>p.mut=+v);ui();save()},gmc:()=>{S.pets=[];ui();save()}};
 $('dock').onclick=e=>{const b=e.target.closest('[data-t]');if(b)openTab(b.dataset.t)};
@@ -2790,15 +2962,19 @@ $('feedFilter').addEventListener('mouseleave',()=>{if(feedFilShown)feedFilArm()}
 $('feedFilter').addEventListener('focusin',()=>{if(feedFilTimer)clearTimeout(feedFilTimer)});
 $('feedFilter').addEventListener('focusout',()=>{if(feedFilShown)feedFilArm()});
 $('wins').onclick=e=>{const x=e.target.closest('[data-x]');if(x){openTab(x.dataset.x);return}const b=e.target.closest('[data-a]');if(b&&b.dataset.a==='ssel'&&e.target.closest('.sk-autocast'))return;if(b&&!b.disabled&&ACT[b.dataset.a]){if(b.dataset.a==='idxmap'&&e.target.closest('summary'))e.preventDefault();ACT[b.dataset.a](b.dataset.v)}};
-let chooserAtPointerDown=null,bagPointerInside=false,skillPointerInside=false,skillCardPointerInside=false;
-document.addEventListener('pointerdown',e=>{const target=e.target&&e.target.closest?e.target:null;chooserAtPointerDown=eqPick;bagPointerInside=!!(target&&target.closest('[data-win="bag"]'));skillPointerInside=!!(target&&target.closest('.sk[data-v]'));skillCardPointerInside=!!(target&&target.closest('.sk-detail-card'));},true);
+// v73: the picker's "inside" is the Bag window AND the Equipment window that opened it. The
+// Refine button, the card sockets, Unequip and Lock all live in the Equipment window's detail
+// card, so a click on any of them used to count as "clicked elsewhere" and shut the picker the
+// instant after the refine landed (owner report). Only a click outside BOTH windows dismisses it.
+let chooserAtPointerDown=null,chooserPointerInside=false,skillPointerInside=false,skillCardPointerInside=false;
+document.addEventListener('pointerdown',e=>{const target=e.target&&e.target.closest?e.target:null;chooserAtPointerDown=eqPick;chooserPointerInside=!!(target&&(target.closest('[data-win="bag"]')||target.closest('[data-win="equip"]')));skillPointerInside=!!(target&&target.closest('.sk[data-v]'));skillCardPointerInside=!!(target&&target.closest('.sk-detail-card'));},true);
 function closeEquipmentChooser(force=false){if(!eqPick&&!force)return;eqPick=null;selE=null;selB=null;const i=tabs.indexOf('bag');if(i>=0)tabs.splice(i,1);const tipEl=$('tooltip');if(tipEl)tipEl.style.display='none';renderWin()}
 document.addEventListener('click',e=>{
   const target=e.target&&e.target.closest?e.target:null;
   // Another tab's click handler may already clear eqPick before this document listener runs.
   // The pointer-down snapshot still tells us a chooser was open, so close its Bag as well.
-  if(chooserAtPointerDown&&!bagPointerInside)closeEquipmentChooser(true);
-  chooserAtPointerDown=null;bagPointerInside=false;
+  if(chooserAtPointerDown&&!chooserPointerInside)closeEquipmentChooser(true);
+  chooserAtPointerDown=null;chooserPointerInside=false;
   const skillInside=skillPointerInside||skillCardPointerInside||(target&&(target.closest('.sk[data-v]')||target.closest('.sk-detail-card')));
   skillPointerInside=false;skillCardPointerInside=false;
   if(selS&&!skillInside){selS=null;if(tabs.includes('skills'))renderWin()}
@@ -2814,37 +2990,44 @@ document.addEventListener('mousemove',e=>{tip.style.left=Math.min(innerWidth-240
 // 60-second rates once a second; on a long browser stall, discard stale history rather
 // than treating 10 minutes of paused frames as one second of furious combat.
 const HUD_RATE_WINDOW=60000,HUD_IDLE_RESET=30000,HUD_RATE_REFRESH=1000;
-function stepHudRate(rate,user,kills,earned,now,damage){
-  const k=Math.max(0,Math.floor(Number(kills)||0)),z=Math.max(0,Number(earned)||0),d=Math.max(0,Number(damage)||0);
-  if(!rate||rate.user!==user||now<rate.lastAt||now-rate.lastAt>HUD_IDLE_RESET||k<rate.lastKills||z<rate.lastEarned||d<rate.lastDmg)
-    rate={user,lastAt:now,lastSampleAt:now,lastKills:k,lastEarned:z,lastDmg:d,started:now,killsPerMin:0,zenyPerMin:0,dps:0,killsEvents:[],events:[],dmgEvents:[]};
+// v74: EXP rides the same rolling minute as kills and Zeny, so the HUD can show EXP/min beside
+// the kill rate. expGained is the session's gross EXP (earnExp), not S.exp, which level-ups lower.
+function stepHudRate(rate,user,kills,earned,now,damage,exp){
+  const k=Math.max(0,Math.floor(Number(kills)||0)),z=Math.max(0,Number(earned)||0),d=Math.max(0,Number(damage)||0),x=Math.max(0,Number(exp)||0);
+  if(!rate||rate.user!==user||now<rate.lastAt||now-rate.lastAt>HUD_IDLE_RESET||k<rate.lastKills||z<rate.lastEarned||d<rate.lastDmg||x<rate.lastExp)
+    rate={user,lastAt:now,lastSampleAt:now,lastKills:k,lastEarned:z,lastDmg:d,lastExp:x,started:now,killsPerMin:0,zenyPerMin:0,dps:0,expPerMin:0,killsEvents:[],events:[],dmgEvents:[],expEvents:[]};
   else{
-    const dk=k-rate.lastKills,dz=z-rate.lastEarned,dd=d-rate.lastDmg;
+    const dk=k-rate.lastKills,dz=z-rate.lastEarned,dd=d-rate.lastDmg,dx=x-rate.lastExp;
     if(dk)rate.killsEvents.push({at:now,amount:dk});
     if(dz)rate.events.push({at:now,amount:dz});
     if(dd)rate.dmgEvents.push({at:now,amount:dd});
-    rate.lastKills=k;rate.lastEarned=z;rate.lastDmg=d;rate.lastAt=now;
+    if(dx)(rate.expEvents=rate.expEvents||[]).push({at:now,amount:dx});
+    rate.lastKills=k;rate.lastEarned=z;rate.lastDmg=d;rate.lastExp=x;rate.lastAt=now;
     if(now-rate.lastSampleAt>=HUD_RATE_REFRESH){
       while(rate.killsEvents.length&&rate.killsEvents[0].at<=now-HUD_RATE_WINDOW)rate.killsEvents.shift();
       while(rate.events.length&&rate.events[0].at<=now-HUD_RATE_WINDOW)rate.events.shift();
       while(rate.dmgEvents.length&&rate.dmgEvents[0].at<=now-HUD_RATE_WINDOW)rate.dmgEvents.shift();
+      while(rate.expEvents&&rate.expEvents.length&&rate.expEvents[0].at<=now-HUD_RATE_WINDOW)rate.expEvents.shift();
       const elapsed=Math.max(HUD_RATE_REFRESH,Math.min(HUD_RATE_WINDOW,now-rate.started));
       rate.killsPerMin=rate.killsEvents.reduce((sum,e)=>sum+e.amount,0)*HUD_RATE_WINDOW/elapsed;
       rate.zenyPerMin=rate.events.reduce((sum,e)=>sum+e.amount,0)*HUD_RATE_WINDOW/elapsed;
       rate.dps=rate.dmgEvents.reduce((sum,e)=>sum+e.amount,0)*1000/elapsed;
+      rate.expPerMin=(rate.expEvents||[]).reduce((sum,e)=>sum+e.amount,0)*HUD_RATE_WINDOW/elapsed;
       rate.lastSampleAt+=HUD_RATE_REFRESH*Math.floor((now-rate.lastSampleAt)/HUD_RATE_REFRESH);
     }
   }
-  return{state:rate,kills:rate.killsPerMin,seconds:rate.killsPerMin/60,zeny:rate.zenyPerMin,dps:rate.dps};
+  return{state:rate,kills:rate.killsPerMin,seconds:rate.killsPerMin/60,zeny:rate.zenyPerMin,dps:rate.dps,exp:rate.expPerMin};
 }
 const levelPct=(value,required,maxed=false)=>maxed?100:Math.min(100,Math.max(0,(+value||0)/Math.max(1,+required||1)*100));
 function bars(){if(!S)return;
-  const rates=stepHudRate(hudRate,currentUser,S.kills,zenyEarned,performance.now(),S.dmg);hudRate=rates.state;
+  const rates=stepHudRate(hudRate,currentUser,S.kills,zenyEarned,performance.now(),S.dmg,expEarned);hudRate=rates.state;
   const j=jobOf(),c=C(),hp=levelPct(S.hp,maxHp()),jp=levelPct(j.jx,jneed(j.jl),j.jl>=c.mj),bp=levelPct(S.exp,need(),S.lv>=150);
   $('lv').textContent=S.lv;$('cls2').textContent=S.cls;$('jl').textContent=j.jl;$('zeny').textContent=(+S.zeny||0).toLocaleString();
   const title=HUNT_TITLES.find(t=>t.id===S.equippedTitle&&titleUnlocked(t)),titleLabel=$('titleLabel');if(titleLabel){titleLabel.textContent=title?'✦ '+title.name:'';titleLabel.style.display=title?'inline-block':'none';titleLabel.title=title?'Index title · '+(title.xp??title.kills).toLocaleString()+' Index XP':''}
   $('kills').textContent=rates.kills.toFixed(1);
   $('kills').title=`Kills/min (last 60s, refreshed every second): ${rates.kills.toFixed(1)} · ${rates.seconds.toFixed(2)} kills/sec`;
+  const expEl=$('expmin');if(expEl){expEl.textContent=Math.round(rates.exp).toLocaleString();
+    expEl.title=`EXP per minute (last 60s, refreshed every second): ${Math.round(rates.exp).toLocaleString()} EXP/min`}
   const dpsEl=$('dps');if(dpsEl){dpsEl.textContent=Math.round(rates.dps).toLocaleString();
     dpsEl.title=`Damage per second (last 60s, refreshed every second): ${Math.round(rates.dps).toLocaleString()} damage/sec`}
   $('zenyRate').textContent=`Zeny earned: ${Math.round(rates.zeny).toLocaleString()}/min (last 60s)`;
@@ -2872,8 +3055,8 @@ function ui(){if(!S)return;bars();feedTab();$('stageTitle').textContent=fieldNam
 
 // The owner felt the prior slowdown was too aggressive, so this is exactly halfway between
 // the original `6.5 + 0.05*AGI` pace and v66's proposed curve. It is 8.12 at AGI 99
-// (29.1% slower than 11.45) and 8.68 at AGI 120 (30.5% slower than 12.5).
-const heroMoveSpeedForAgi=agi=>5.3+Math.max(1,Number(agi)||1)*.025+Math.sqrt(Math.max(1,Number(agi)||1))*.035;
+// (29.1% slower than 11.45) and 8.68 at AGI 120 (30.5% slower than 12.5). The curve itself now
+// lives up with the other derived stats (see moveSpd), because the Character sheet prints it.
 function update(dt){
   if(!S)return;t+=dt;atkAnim=Math.max(0,atkAnim-dt*2.35);hitAnim=Math.max(0,hitAnim-dt*4);shake=Math.max(0,shake-dt*20);
   for(const k in skCd)skCd[k]=Math.max(0,skCd[k]-dt);
@@ -2981,8 +3164,20 @@ function resize(){
   R.setSize(w,h);
   cam.aspect=w/h;
   cam.updateProjectionMatrix();
+  // v74.1: publish the real dock height so the feed, the buff bar and the windows can sit just
+  // above it instead of overlapping it on a narrow screen. Falls back to the CSS default.
+  const dk=$('dock');
+  if(dk){
+    const dh=dk.offsetHeight||0;
+    let gap=12;                                  // #dock{bottom:12px}, plus the safe-area inset on a phone
+    try{const b=parseFloat(getComputedStyle(dk).bottom);if(isFinite(b))gap=b}catch(_){}
+    document.documentElement.style.setProperty('--docktop',Math.round(dh?dh+gap+6:76)+'px');
+  }
 }
 addEventListener('resize',resize);
+// v74.1: on a phone the visual viewport changes when the URL bar slides away or the device is
+// turned, and iOS does not always follow that with a window resize event. Re-measure both.
+if(window.visualViewport)visualViewport.addEventListener('resize',resize);
 
 const TC=[0xbbbbbb,0x5cb85c,0x4a86e8,0xb05ce0,0xffb020];
 const M=c=>new THREE.MeshLambertMaterial({color:c});
@@ -4852,9 +5047,25 @@ function syncSkillFx(){
 }
 
 let drag=null;const dom=R.domElement;
-dom.addEventListener('pointerdown',e=>{drag=[e.clientX,e.clientY];dom.setPointerCapture(e.pointerId)});
-dom.addEventListener('pointermove',e=>{if(!drag)return;az-=(e.clientX-drag[0])*.006;el=Math.min(1.35,Math.max(.45,el+(e.clientY-drag[1])*.005));drag=[e.clientX,e.clientY]});
-dom.addEventListener('pointerup',()=>drag=null);dom.addEventListener('pointercancel',()=>drag=null);
+// v74.1: a phone has no wheel, so "scroll to zoom" meant the camera could not zoom at all there.
+// One finger rotates exactly as before; two fingers pinch to zoom, the same clamp the wheel uses.
+// Pointers are tracked by id so the second finger never yanks the rotation, and when one of the
+// two lifts, the rotation resumes from the finger still down instead of jumping.
+const touchPts=new Map();let pinch0=0;
+const pinchNow=()=>{const p=[...touchPts.values()];return p.length>=2?Math.hypot(p[0][0]-p[1][0],p[0][1]-p[1][1]):0};
+dom.addEventListener('pointerdown',e=>{
+  if(e.pointerType==='touch')touchPts.set(e.pointerId,[e.clientX,e.clientY]);
+  if(touchPts.size>=2){pinch0=pinchNow();drag=null}else drag=[e.clientX,e.clientY];
+  dom.setPointerCapture(e.pointerId)});
+dom.addEventListener('pointermove',e=>{
+  if(e.pointerType==='touch'&&touchPts.has(e.pointerId))touchPts.set(e.pointerId,[e.clientX,e.clientY]);
+  if(touchPts.size>=2){const d=pinchNow();if(pinch0>0&&d>0){zoom=Math.min(2,Math.max(.6,zoom*d/pinch0));pinch0=d}return}
+  if(!drag)return;az-=(e.clientX-drag[0])*.006;el=Math.min(1.35,Math.max(.45,el+(e.clientY-drag[1])*.005));drag=[e.clientX,e.clientY]});
+const endPointer=e=>{
+  if(e.pointerType==='touch')touchPts.delete(e.pointerId);
+  if(touchPts.size<2)pinch0=0;
+  const p=[...touchPts.values()];drag=touchPts.size===1?[p[0][0],p[0][1]]:null};
+dom.addEventListener('pointerup',endPointer);dom.addEventListener('pointercancel',endPointer);
 dom.addEventListener('wheel',e=>{e.preventDefault();zoom=Math.min(2,Math.max(.6,zoom*(e.deltaY<0?1.1:.9)))},{passive:false});
 
 // Keep the character near the visual centre: a very small forward lead (0.25 world units)
@@ -4885,7 +5096,7 @@ function draw(){
     const mFace=Math.atan2(pl.z-m.z,pl.x-m.x);
     if(!v.official)setCell(v.spr,viewDir(mFace),animRow(m.run,m.atkAnim||0,t+m.a,8));
     const fl=m.flash||0;v.spr.material.color.setRGB(1,1-fl*.8,1-fl*.8)}
-  if(mob){const s=mobVisualScale(mob),[qx,qy]=scr(mob.x,3.08*s+.15,mob.z);tag.style.display='block';tag.style.left=qx+'px';tag.style.top=qy+'px';$('tn').textContent=mob.n+(mob.boss?' (BOSS)':'');$('th').style.width=Math.max(0,mob.hp/mob.max*100)+'%'}else tag.style.display='none';
+  if(mob){const s=mobVisualScale(mob),[qx,qy]=scr(mob.x,3.08*s+.15,mob.z);tag.style.display='block';tag.style.left=qx+'px';tag.style.top=qy+'px';$('tn').textContent=mob.n+(mob.boss?' (BOSS)':'')+(mob.boss&&mob.critRes?' · Crit Res '+Math.round(mob.critRes*100)+'%':'');$('th').style.width=Math.max(0,mob.hp/mob.max*100)+'%'}else tag.style.display='none';
   // Equipped titles belong to the character in the world, not the crowded status bar. Project
   // one small transparent gold seal from below the hero's feet every frame so it follows
   // movement and camera rotation just like the skill names do. The rank mark rides on the left.

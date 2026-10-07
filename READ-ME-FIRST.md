@@ -80,6 +80,106 @@ is the live one; with no argument the tool prints how to set a new one). Since v
 `GM` / `test1234`; `localStorage.removeItem('pg_gm_local')` removes it. Normal accounts are made
 in-game and stored in the browser (`pg_acc4`; saves under `pg_save3_<user>`).
 
+## BUILD v74.1 — novices keep 1st-job gear, and the phone layout pass
+
+* **The lowest gear band is Novice + 1st-job.** v74 made a Novice starter-gear-only, which locked
+  a fresh character out of the very pieces a first job can wear a minute later. The gate is now
+  `gearTierOf(item) <= max(1, classTierOf(you))`, so **sections 0 and 1 of the gear list are one
+  band** (`Worn by: Novice and 1st-job classes`) and everyone from Novice to a 1st job wears both.
+  2nd-job gear still needs a 2nd job; transcendent gear still needs a transcendent class. Nothing
+  else about the tier system changed - the auto-stow-on-class-change, the auto-lock and the
+  auto re-wear all still work, they just have less to do on a Novice.
+* **The phone layout was rebuilt.** The owner played the deployed build on his phone and the UI
+  was "abit messy and not in place". The causes were all the same shape - the layout assumed a
+  desktop window:
+  * **Viewport height.** `100vh` on a phone is the height with the URL bar *retracted*, so the
+    game was taller than the screen and the bottom of the HUD sat below the fold. Everything that
+    measures the screen now uses `100dvh` (with `100vh` kept first as the fallback), the visual
+    viewport is watched as well as `resize` (iOS does not always fire one when the URL bar
+    moves), and pull-to-refresh can no longer reload a farming session (`overscroll-behavior:none`).
+  * **The dock is measured, not guessed.** `resize()` publishes the real dock height as
+    `--docktop`, and the log feed, the pet-buff strip and the map/tab windows all sit just above
+    it instead of being covered by it.
+  * **The HUD is a fixed grid on a phone.** Two rows - identity / HP / Zeny, then `Kills/min ·
+    EXP/min · DPS` - plus the account cluster on its own row. Numbers going from 9 to 10 to 100
+    used to re-flow the whole bar.
+  * **Tappable controls and reachable tabs.** Dock icons grow to 34px (32px on a small phone) from
+    the 28px desktop size, the tab row scrolls sideways instead of wrapping into a second row, the
+    panels fill the play area instead of being stacked into slivers, and the dock and the bottom
+    bar clear a gesture bar via `env(safe-area-inset-bottom)`.
+  * **Pinch to zoom.** A phone has no scroll wheel, so before this build the 3D camera could not be
+    zoomed at all on one. One finger still rotates; two fingers pinch to zoom between the same
+    0.6x and 2x limits the wheel uses; the finger that is not pinching never swings the camera, and
+    lifting one finger resumes rotation from where the other one is instead of jumping.
+  * Desktop is untouched - every one of those rules lives in `@media(max-width:700px)`,
+    `max-width:430px` or `pointer:coarse` at the end of the stylesheet.
+* **The APK question.** Tuning the web build (this section) is the right first move: the page is
+  already installable from the browser once a `manifest.json` + service worker + icons are added
+  ("Add to Home Screen" then gives a full-screen icon, no store, no signing), and an APK would be
+  the *same files* inside a wrapper (Capacitor / Trusted Web Activity) needing a signing key and an
+  account for every release, with no performance gain. Ask for the PWA files if the home-screen
+  icon is wanted; ask for an APK only if a store listing is the goal.
+
+## BUILD v74 — class gear tiers, movement speed on the sheet, EXP/min, softer boss crit resist
+
+* **Equipment is gated by class tier now.** A piece belongs to a class tier (Starter / 1st-job /
+  2nd-job / High-tier), and you must *be* that tier to wear it: a first job reaches 1st-job gear, a
+  second job 2nd-job gear, and **High-tier gear is transcendent classes only**. So 2nd/3rd-class
+  equipment can no longer be worn by a 1st class, and the item card says which tier a piece is for
+  (`Worn by: 2nd-job classes and up`). **(v74.1: a Novice shares the first band with the 1st-job
+  classes — see the v74.1 section below. The original v74 rule "a Novice wears starter gear only"
+  was too strict and is rescinded.)**
+* **Changing class takes the wrong gear off — safely.** Every worn piece your new class cannot use
+  is moved to the Bag and **auto-locked**, so auto-sell can never eat it, and it remembers its
+  wearer: *"This was Lord Knight's gear — it goes straight back on when you switch to Lord Knight
+  again."* Switch back and it is worn again automatically, nothing duplicated. Saves made before
+  this build are swept on login, so the rule applies from the first frame.
+* **Movement speed is on the Character sheet.** `Move 7.35 u/s · 10.29 sprinting` beside ATK/ASPD,
+  with a line explaining that AGI is the only stat that moves it (about +0.03 a point) and that
+  the sprint multiplier applies on trips longer than 3 units. Nothing about the curve changed.
+* **The HUD shows EXP/min.** The header row is now `Kills/min · EXP/min · DPS`, all on the same
+  rolling 60-second window with the same stall reset; EXP counts gross income (a level-up no
+  longer makes the meter dip).
+* **Boss crit defence softened** (v73's ladder was too steep): Comodo/Louyang/Amatsu **-15%**,
+  Niflheim **-20%**, Abyss **-30%**; maps 1-5 still resist nothing. A capped 60% build crits them
+  **51/51/51/48/42%** of the time.
+
+## BUILD v73 — crit retune, Index Crit to 100%, lighter mid-map drops, boss crit resist
+
+* **Refine no longer closes the slot picker.** While you are choosing a weapon/armour for a slot,
+  clicking **Refine** (or a card socket, Unequip or Lock) used to shut the picker — those controls
+  live in the **Equipment window**, and only the Bag counted as "inside". Both windows count now, so
+  the picker survives a refine and you can compare the next piece. A click outside both windows (or
+  the banner's ✕) still closes it.
+* **Crit rate is a build again.** Base **2** (was 3), LUK pays **0.25** a point (was 0.4), the crit
+  affix/card weight is **0.32** (was 0.45), and above **45%** every further point counts **half**.
+  The core still caps at **60%**. A Lv70 LUK-99 dump plus both Hunter/Sniper crit passives lands
+  ~51%, so you need gear to finish the cap.
+* **Index Crit — the way to 100% without equipment or stats.** Every **Hunt Title** adds Index Crit
+  that sits **outside** the 60% cap: +1/+1/+2/+2/+3/+4/+5/+6/+7/+9 → **+40** at a complete Index
+  (all ten titles, 1,000,000 Index XP). A fully capped build plus a full Index is exactly **100%**.
+  It is on the stats sheet, the Index panel and every title row; the GM panel's "Set the final title"
+  tries it instantly.
+* **Crit damage (cdm) can no longer be worn on every slot.** The **cdm affix now rolls on weapons
+  and accessories only** (legacy gear keeps its rolls), its weight dropped **0.7 → 0.45** and the
+  70% post-roll scale is unchanged: a top Legendary affix is +11-18 instead of +18-27, on at most
+  three worn pieces. The **cdm card** keeps its own **3/7/10/13** ladder. The crit multiplier base
+  moved **2.0 → 1.9**.
+* **High-level bosses resist crits.** Comodo/Louyang/Amatsu **-20/-25%**, Niflheim **-30%**,
+  Abyss **-40%** of your Crit %; maps 1-5 bosses resist nothing. Shown on the map panel and on the
+  boss nameplate (`· Crit Res 20%`). **(v74 softened this to -15/-15/-15/-20/-30 — it was too
+  steep.)**
+* **Drops are 30% lighter from Comodo on.** Maps 6-10 pay **2.52%** gear a kill (was 3.6%) and their
+  Stage-10 boss pools total **~4.2%** (was ~6%); Prontera and the four class maps keep every original
+  number, and every boss still lists all of its items.
+* **The 1-minute "offline reward" popup is gone.** A hidden tab is timer-throttled to about once a
+  minute and grinds at full speed, so the old **60 s** "away" floor was paying twice for ordinary
+  background play. The floor is now **three minutes** on both the client and the server, and a claim
+  that lands inside the time this page has been open (and fits the sim's own 10-minute replay
+  budget) is acknowledged without rewards or popup. A real absence still pays in full.
+* **Pets:** PETBAL 2.65 → 1.91 so a maxed pet stays in the 0.6-0.7x companion band next to the
+  re-tuned character ceiling.
+
 ## BUILD v72 — crit frame aligned, and the digits are the selection's own font and fill
 
 * **The font was the "design looks off" report.** The copy button prints its raw slider keys, and the

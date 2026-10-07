@@ -18,6 +18,14 @@ const code = [grab('const CD=[', 'const lineOf='), grab('function classRec(', '/
 if (!/const totalPts=\(\)=>\{let p=10;for\(let l=2;l<=S\.lv;l\+\+\)p\+=4\+Math\.floor\(l\/5\);return p\}/.test(src))
   throw new Error('totalPts() grant curve changed in index.html - update the harness copy below it');
 
+// v74: the live canUse() carries the class-tier gate (index.html, the st()/canUse() line). The
+// harness copy below mirrors it, so pin the real shape here: if the gate moves or is reworded,
+// this fails instead of letting the sweep tests below pass against a stale rule.
+if (!/gearTierOK=\(it,cls=S\.cls\)=>gearTierOf\(it\)<=Math\.max\(1,classTierOf\(cls\)\)/.test(src) ||
+    !/canUse=it=>gearTierOK\(it\)&&\(it\.slot==='off'\?canShield\(\)/.test(src))
+  throw new Error('canUse()/gearTierOK() changed shape in index.html - update this harness copy');
+if (!/function stowUnfit\(from\)\{/.test(src)) throw new Error('stowUnfit() disappeared from index.html');
+
 const harness = `
 ${code}
 const jobOf = () => S.jobs[S.cls] || (S.jobs[S.cls] = {jl:1, jx:0});
@@ -29,7 +37,16 @@ const canShield = () => /^(Novice|Swordman|Knight|Lord Knight|Acolyte|Priest|Hig
 const C = () => CLASSES[S.cls] || CLASSES.Novice;
 const SKILLS = [{id:'aid',cls:['Novice']},{id:'hide',cls:['Thief','Assassin','Assassin Cross']},{id:'enb',cls:['Swordman','Knight','Lord Knight']}];
 const log = () => {}, ui = () => {}, save = () => {}, addFloat = () => {}, pl = {x:0, z:0};
-this.__h = {changeClass, classBlock, playedClass, playedClasses, t3Total, collDmg, classRec, snapClass, equipRec, noviceRun, clearClassSkills, CLASSES,
+// v74: the live canUse() carries the class-tier gate (index.html, the st()/canUse() line). The
+// harness must mirror it exactly or the sweep tests below would pass against a weaker rule, so
+// the harness copy is only a copy: the real line is pinned by the check above the harness.
+const gearTierOf = it => Math.max(0, Math.min(3, ((it && it.sec) | 0) || 0));
+const classTierOf = (cls = S.cls) => Math.max(0, Math.min(3, (CLASSES[cls] && CLASSES[cls].tier) || 0));
+// v74.1: the lowest band (sections 0 and 1) is shared by Novice and first jobs, hence max(1, ...)
+const gearTierOK = (it, cls = S.cls) => gearTierOf(it) <= Math.max(1, classTierOf(cls));
+const iname = it => (it.r ? '+' + it.r + ' ' : '') + it.name;
+const canUse = it => gearTierOK(it) && (it.slot === 'off' ? canShield() : (it.slot !== 'weapon' || !it.wt || C().wt.includes(it.wt)));
+this.__h = {changeClass, classBlock, playedClass, playedClasses, t3Total, collDmg, classRec, snapClass, equipRec, noviceRun, clearClassSkills, stowUnfit, canUse, gearTierOK, CLASSES,
             set S(v){S=v}, get S(){return S}};
 `;
 const sb = { console };
@@ -330,6 +347,64 @@ t('records made while playing grow the transcendent collection', () => {
   assert.ok(H.S.base['Lord Knight'], 'the Lord Knight run was recorded on the way out');
   assert.strictEqual(H.playedClasses(), 1, 'the recorded Lord Knight counts; the Swordman back does not');
   assert.strictEqual(H.collDmg(), 1, 'the record carries lv 101, so the point is permanent');
+});
+
+t('v74: too-high class gear comes off on a class change, is locked, and is labelled with its wearer', () => {
+  // The owner's report: "when you reach lv 100 players change classes, they still wear high level
+  // equipment". A Lord Knight at Base Lv 120 stepping into a Novice must not keep wearing them.
+  const sword = t => ({ id: 10 + t, slot: 'weapon', wt: 'sword', name: 'Tier ' + t, val: 10, sec: t });
+  const armor = t => ({ id: 20 + t, slot: 'armor', name: 'Armor ' + t, val: 10, sec: t });
+  const leg = t => ({ id: 30 + t, slot: 'leg', name: 'Leg ' + t, val: 10, sec: t });
+  const eq = { weapon: sword(3), armor: armor(3), head: null, off: null, leg: leg(2), acc1: null, acc2: null };
+  H.S = mk({ cls: 'Lord Knight', lv: 120, jobs: { 'Novice': { jl: 10, jx: 0 }, 'Lord Knight': { jl: 50, jx: 0 } },
+    eq: Object.assign({}, eq), base: {} });
+  const ids = { weapon: eq.weapon.id, armor: eq.armor.id, leg: eq.leg.id };
+  H.changeClass('Novice');
+  assert.strictEqual(H.S.eq.weapon, null, 'the tier-3 weapon comes off for a Novice');
+  assert.strictEqual(H.S.eq.armor, null, 'and the tier-3 armor');
+  assert.strictEqual(H.S.eq.leg, null, 'and the tier-2 legwear');
+  for (const it of [eq.weapon, eq.armor, eq.leg]) {
+    assert.ok(H.S.inv.some(x => x.id === it.id), it.name + ' must be in the Bag');
+    assert.strictEqual(it.locked, true, it.name + ' must be auto-locked');
+    assert.strictEqual(it.wearer, 'Lord Knight', it.name + ' must remember who was wearing it');
+  }
+  // no item is duplicated, and the departing class record still points at the same ids
+  assert.deepStrictEqual(H.S.inv.map(x => x.id), Object.values(ids), 'each piece appears once');
+  const left = H.S.base['Lord Knight'].eq;
+  assert.deepStrictEqual({ weapon: left.weapon, armor: left.armor, leg: left.leg }, ids,
+    'the loadout is stored on the class it left');
+  assert.deepStrictEqual([left.head, left.off, left.acc1, left.acc2], [null, null, null, null], 'and the empty slots stay empty');
+  // the tier ladder itself
+  assert.ok(H.gearTierOK(sword(0), 'Novice'), 'starter gear fits anyone');
+  assert.ok(H.gearTierOK(sword(1), 'Novice') && H.gearTierOK(sword(1), 'Swordman'), 'v74.1: Novice and 1st jobs share the low band');
+  assert.ok(!H.gearTierOK(sword(2), 'Novice') && !H.gearTierOK(sword(2), 'Swordman'), '2nd-job gear needs a promotion');
+  assert.ok(!H.gearTierOK(armor(2), 'Swordman') && H.gearTierOK(armor(2), 'Knight'), '2nd-job gear needs a promotion');
+  assert.ok(!H.gearTierOK(armor(3), 'Knight') && H.gearTierOK(armor(3), 'Lord Knight'), 'high-tier gear needs a transcendent class');
+  assert.strictEqual(H.gearTierOK(armor(3), 'Novice'), false);
+  // switching back wears it all again - still locked, so auto-sell can never eat a stored loadout
+  H.changeClass('Swordman');                       // a first job: sec 0 and 1 fit, sec 2/3 do not
+  assert.strictEqual(H.S.eq.weapon, null, 'the Swordman still cannot wear tier-3 gear');
+  assert.strictEqual(H.S.eq.leg, null, 'nor the tier-2 legwear');
+  H.changeClass('Lord Knight');
+  assert.strictEqual(H.S.eq.weapon.id, ids.weapon, 'the weapon is worn again on the way back');
+  assert.strictEqual(H.S.eq.armor.id, ids.armor);
+  assert.strictEqual(H.S.eq.leg.id, ids.leg);
+  assert.strictEqual(H.S.inv.length, 0, 'the Bag is empty again: they were re-worn, not copied');
+  assert.strictEqual(eq.weapon.locked, true, 'the lock stays, which is what keeps them safe');
+  assert.strictEqual(eq.weapon.wearer, 'Lord Knight', 'the wearer label stays too');
+});
+
+t('v74: a piece the departing class could not legally wear gets no wearer label', () => {
+  // Legacy saves can hold gear that was never legal (for example a Grand Cross-wearing Novice
+  // from before the tier gate). The sweep still takes it off and locks it, but it must NOT
+  // claim the Novice was its wearer, or the tooltip would lie.
+  const high = { id: 41, slot: 'weapon', wt: 'sword', name: 'Unlawful Sword', val: 10, sec: 3 };
+  H.S = mk({ cls: 'Novice', lv: 100, jobs: { Novice: { jl: 10, jx: 0 } },
+    eq: { weapon: high, armor: null, head: null, off: null, leg: null, acc1: null, acc2: null } });
+  H.changeClass('Swordman');
+  assert.ok(H.S.inv.some(x => x.id === high.id) || H.S.eq.weapon === null, 'the piece is off the body');
+  assert.notStrictEqual(high.wearer, 'Novice', 'the label must not blame a class that could never wear it');
+  assert.strictEqual(high.locked, true, 'it is still locked');
 });
 
 t('the collection bonus is wired into atk(), and reads each class own Base Lv', () => {
