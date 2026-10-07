@@ -151,7 +151,11 @@ t('the map panel renders every map and field', () => {
   assert.ok(h.includes('dropline') && h.includes('1.5%') && h.includes('1.2%') && h.includes('0.9%'), 'mob gear odds (v57: 3.6% total) must each be visible');
   assert.ok(h.includes('0.15%'), 'the card chance stays visible on the monster');
   assert.ok(h.includes('mapcard'), 'the map selector must be the scalable grid');
-  assert.strictEqual((h.match(/class="mapcard/g) || []).length, 10, 'one card per map');
+  // v68: Prontera Town is a card in this same grid - the same class, the same size as the ten
+  // fields - so the town reads as one more map to pick, not as something bolted on beside them.
+  assert.strictEqual((h.match(/class="mapcard/g) || []).length, 11, 'one card per field map, plus the town card');
+  assert.strictEqual((h.match(/data-a="selm"/g) || []).length, 10, 'only the ten fields select a stage list');
+  assert.ok(/class="mapcard town-card[^"]*" data-a="town"/.test(h), 'the town card walks you in from the same grid');
   // Every map card shows its recommended level range under the name (the old build printed the
   // word "farming" there instead). The current map keeps its dot marker.
   const cards = h.slice(h.indexOf('class="mapgrid'), h.indexOf('class="mapband fields'));

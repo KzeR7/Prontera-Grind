@@ -3890,3 +3890,38 @@ assigned for feel rather than fidelity. While reworking that, two shipped bugs s
   five NPCs and click-to-walk`. The two build-labelled reference pages
   (`Updates/cards-gear-audit/affix-ranges.html`, `equipment-cards-tuning.html`) and the deploy
   checklist carry the new tag, and v67 was prepended to the worksheet's `SAFE_PREVIOUS_BUILDS`.
+
+### 2026-10-07 — `grind-v68` follow-up: the town is a card in the map UI, click-to-talk, click-to-walk everywhere
+
+* **The owner's feedback:** "i want this map to be a new map in my current game", "to go to the map
+  will be in my current map UI. adjust the sizing", "1. click to talk to npc", "i cant live preview.
+  it brings me to my weapon proposal page". All four are addressed in the same v68 build.
+* **The town is a card in the World Map tab's grid now** (`class="mapcard town-card"`, the same
+  class and the same size as the ten fields, `data-a="town"`), marked *Safe · no mobs* and *● Safe
+  town* while you are in it. Standing in town swaps the band below for the town's own: **Leave
+  town** plus the five NPCs and what each one does — a map with no stages no longer shows a stage
+  picker. The roster in that band is `window.TOWN_NPC`, the same data the NPCs are built from, so a
+  sixth NPC added to `TOWN_NPC` shows up in the UI by itself. (`window.TOWN_NPC` is published from
+  the bootstrap line, not from the town block: `skill_sim.js` slices that block into a sandbox with
+  no `window`, and the assignment threw there — found by running the gate.)
+* **Clicking an NPC talks immediately** — in the plaza and on their name plate (the plates are the
+  big, forgiving target now). The character still walks over while the page is open; nothing is
+  gated on arrival any more.
+* **Click-to-walk works on every map, not just the town** — the same raycast and gold ring, with the
+  click target clamped to the field lane and the roam put on hold (`pl.wt=999`) until the hero gets
+  there, at which point the auto-roam resumes on its own. Combat still owns movement while a pack is
+  engaged, so a click mid-fight only drops the ring.
+* **The dev server's `/` is the game.** It used to map `/` to the weapon proposal page, which is
+  exactly why the owner's preview "brought me to my weapon proposal page". `/` and `/game` now serve
+  `index.html`; the proposal page keeps `/weapons` (and gained `/proposal`), `TOOLS-START-HERE.md`
+  and `READ-ME-FIRST.md` say so.
+* **Also in this pass:** the HUD's title/status line and the `#prog` banner say *🏘 Prontera Town /
+  Safe map · no monsters* instead of the last field's stage; the walk ring lives in the scene (not
+  the town group) and is stepped once per drawn frame, so it works in both worlds.
+* **Tests:** all suites green; `ui_sim`'s map-panel assertions were **updated on purpose** (eleven
+  `mapcard`s now: ten fields + the town, with only ten `data-a="selm"`), and `town_smoke.js` grew
+  from 23 to **28 steps** — the town card in the grid, the town band and its five-name roster, a
+  name-plate click, a world click talking at once, and click-to-walk in a field (held target, then
+  the roam taking over). The smoke test caught the field test's own timing assumption, not a game
+  bug.
+

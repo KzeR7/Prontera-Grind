@@ -177,7 +177,8 @@ t('no mobs can spawn in town, however long the player stands there', () => {
 t('clicking an NPC walks the hero over and opens the talk box with their page', () => {
   ev('townClose();pl.x=0;pl.z=6.5;pl.wx=0;pl.wz=6.5;');
   ev('townClick(...(()=>{const[sx,sy]=scr(TOWN.list[0].def.x,1.4,TOWN.list[0].def.z);return[sx,sy]})())');
-  assert.strictEqual(ev('TOWN.pending&&TOWN.pending.def.id'), 'kafra', 'clicking her starts the walk over');
+  assert.strictEqual(ev('TOWN.talk&&TOWN.talk.def.id'), 'kafra', 'clicking her opens her page at once');
+  assert.ok(ev('Math.hypot(pl.wx-TOWN.list[0].def.x,pl.wz-TOWN.list[0].def.z)<3'), 'and the hero walks over to stand in front of her');
   for (let i = 0; i < 600; i++) ev('update(1/60)');
   const open = ev('TOWN.talk&&TOWN.talk.def.id');
   assert.strictEqual(open, 'kafra', 'walking up to Kafra Elise opens her box');
@@ -279,6 +280,69 @@ t('the ring of buildings is either the kit crops or the block houses, never noth
   assert.ok(n >= 10, 'there are a lot of buildings round the plaza: ' + n);
   assert.strictEqual(ev('TOWN.houseBlk.visible'), !kit, 'the block ring shows exactly when the atlas did not');
   assert.strictEqual(ev('TOWN.houseKit.visible'), !!kit, 'and the kit ring shows exactly when it did');
+});
+
+t('the map tab lists Prontera Town as a card beside the ten fields', () => {
+  leave();
+  const h = ev('V.map()');
+  assert.strictEqual((h.match(/class="mapcard/g) || []).length, 11, 'ten field cards plus the town card');
+  assert.ok(/class="mapcard town-card[^"]*" data-a="town"/.test(h), 'the town card walks you in from the map grid');
+  assert.ok(h.includes('🏘 Prontera Town'), 'and it is labelled');
+  assert.ok(!h.includes('npcchip'), 'out of town the band below is the stage picker');
+  assert.strictEqual((h.match(/data-a="sell_"/g) || []).length, 10, 'with the ten stages of the picked field');
+});
+
+t('in town the same band becomes the town\u2019s own, listing the five NPCs instead of stages', () => {
+  enter();
+  const h = ev('V.map()');
+  assert.ok(h.includes('Leave town'), 'the band offers the way out');
+  assert.strictEqual((h.match(/class="npcchip"/g) || []).length, 5, 'all five townsfolk are listed');
+  for (const n of ['Kafra Elise', 'Captain Rondel', 'Sister Marina', 'Scholar Wren', 'Smith Gordon'])
+    assert.ok(h.includes(n), n + ' is on the plaza roster');
+  assert.ok(h.includes('Warp &amp; save point') || h.includes('Warp & save point'), 'with what they do for you');
+  assert.ok(!/data-a="sell_"/.test(h), 'a map with no stages shows no stage picker');
+  assert.ok(ev('JSON.stringify(TOWN_NPC.map(n=>n.id))') === '["kafra","captain","sister","wren","smith"]', 'the roster the card lists is the NPC data itself');
+});
+
+t('clicking an NPC name plate talks at once, without walking first', () => {
+  ev('townClose();pl.x=0;pl.z=9;pl.wx=0;pl.wz=9;');
+  const plates = [...doc.querySelectorAll('.npc-tag')];
+  assert.strictEqual(plates.length, 5);
+  const captain = plates.find(el => el.dataset.npc === 'captain');
+  assert.ok(captain, 'every plate knows which NPC it belongs to');
+  captain.dispatchEvent(new window.MouseEvent('pointerdown', { bubbles: true, cancelable: true }));
+  assert.strictEqual(ev('TOWN.talk&&TOWN.talk.def.id'), 'captain', 'the plate click opens their page');
+  assert.ok(ev('Math.hypot(pl.wx-TOWN.list[1].def.x,pl.wz-TOWN.list[1].def.z)<3'), 'and the hero starts walking over');
+});
+
+t('clicking the NPC in the world talks immediately too', () => {
+  ev('townClose();pl.x=0;pl.z=12;pl.wx=0;pl.wz=12;');
+  ev('townClick(...(()=>{const[sx,sy]=scr(TOWN.list[3].def.x,1.4,TOWN.list[3].def.z);return[sx,sy]})())');
+  assert.strictEqual(ev('TOWN.talk&&TOWN.talk.def.id'), 'wren', 'the box opens on the click, not on arrival');
+  assert.ok(ev('Math.hypot(pl.wx-TOWN.list[3].def.x,pl.wz-TOWN.list[3].def.z)<3'), 'the hero walks over while you read');
+});
+
+t('click-to-walk works in the fields as well: the roam holds the click target, then resumes', () => {
+  ev('townClose();');leave();
+  ev('S.mp=0;S.lvl=1;S.kl=0;mobs.length=0;respawn=999;');
+  ev('pl.x=0;pl.z=Z1-1.5;pl.wx=0;pl.wz=Z1-1.5;pl.wt=0;');
+  ev('fieldClick(760,600)');
+  const tx = ev('pl.wx'), tz = ev('pl.wz');
+  assert.ok(ev('pl.wt') > 100, 'the roam is held for the clicked spot');
+  assert.ok(tx >= ev('-BX_') && tx <= ev('BX_') && tz >= ev('Z0') && tz <= ev('Z1'), 'the spot is inside the lane');
+  assert.strictEqual(ev('TOWN.marker.visible'), true, 'the ring marks it');
+  let held = true, arrived = false;
+  for (let i = 0; i < 600 && !arrived; i++) {
+    ev('update(1/60)');
+    arrived = Math.hypot(ev('pl.x') - tx, ev('pl.z') - tz) < 1.3;   // the roam stops 1.2 out
+    if (!arrived && ev('pl.wt') < 100) held = false;                // and holds the spot until then
+  }
+  assert.ok(arrived, 'the hero walked to the clicked spot');
+  assert.ok(held, 'the roam never re-targeted the hero on the way');
+  for (let i = 0; i < 60; i++) ev('update(1/60)');
+  assert.ok(ev('pl.wt') < 100, 'on arrival the auto-roam took over again (wt ' + ev('pl.wt').toFixed(1) + ')');
+  assert.ok(ev('pl.wt') === ev('pl.wt'), true);
+  ev('respawn=.3;');
 });
 
 t('leaving the town restores the field HUD text and hint', () => {

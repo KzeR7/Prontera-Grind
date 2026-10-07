@@ -137,6 +137,10 @@ hr{border:0;border-top:1px dashed var(--edge);margin:6px 0}
 .mapcard:hover{background:#ffe9a8}.mapcard b{font-size:11px;white-space:nowrap;text-overflow:ellipsis;max-width:100%;overflow:hidden}.mapcard small{font-size:9px;opacity:.7}
 .mapcard.on{background:#ffe08a;border-color:var(--gold)}
 .mapcard.here{box-shadow:inset 0 0 0 2px #2f6fd6}
+.mapcard.town-card{border-color:#7c9a5a;background:#f3f8ea}.mapcard.town-card:hover{background:#e2f0cf}
+.npcrow{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,118px),1fr));gap:5px;margin:4px 0}
+.npcchip{display:flex;flex-direction:column;gap:1px;padding:4px 6px;border:2px solid var(--edge);border-radius:6px;background:#fffdf5;line-height:1.2;min-width:0}
+.npcchip b{font-size:11px;white-space:nowrap;text-overflow:ellipsis;overflow:hidden}.npcchip small{font-size:9px;opacity:.75}
 .wp.wide{flex:0 1 450px;width:450px;min-width:0}
 .mapband{padding:2px 0 6px;min-width:0}
 .mapband.fields{position:sticky;top:-1px;z-index:2;background:var(--panel);padding-top:4px;border-top:1px solid var(--edge2)}
@@ -310,7 +314,7 @@ button.tick.on{background:#ffe08a;border-color:var(--gold);font-weight:bold}
 <div id="saveTools" style="margin-top:6px;font-size:11px;text-align:center;opacity:.9"><a href="#" id="saveDl" title="Download every character saved in this browser as one file">⬇ Back up saves</a><span style="opacity:.5"> · </span><a href="#" id="saveUp" title="Load a backup file made by this button, on any address">⬆ Restore a backup</a><input type="file" id="saveFile" accept=".json,application/json" style="display:none"></div>
 <div id="buildTag" style="margin-top:6px;font-size:10px;opacity:.55;text-align:center"></div></div></div>
 <div id="wrap"><div class="title"><span id="stageTitle">Prontera Lv 1</span><span id="grindStatus" style="font-size:12px;opacity:.85"></span></div>
-<div id="view"><div id="ov"><div id="mobSpriteLayer" aria-hidden="true"></div><div id="weaponSpriteLayer" aria-hidden="true"></div><div id="npcLayer" aria-hidden="true"></div><div id="prog"></div><div id="tag"><b id="tn"></b><div class="bar"><i id="th" style="background:var(--hp)"></i></div></div><div id="heroTitle" class="hero-title" aria-live="polite"><span id="heroTitleMark" class="ht-mark" aria-hidden="true"></span><span id="heroTitleText"></span></div><div id="hint">Drag to rotate &middot; Scroll to zoom</div><div id="feedWrap"><div id="feedFilter" role="group" aria-label="Log filter"></div><div id="feedTabs"><button id="feedTab" type="button" aria-expanded="true" aria-controls="feed" title="Minimize or show the on-screen log">📃 Logs ▾</button><button id="feedFil" type="button" aria-expanded="false" aria-controls="feedFilter" aria-label="Filter the on-screen log" title="Filter the log - this row folds away by itself">▽</button></div><div id="feed"></div></div><div id="hudBuffs" role="status" aria-live="polite" aria-label="Active pet buffs - hover an icon for what it does"></div><div id="qp"></div><div id="dock"></div>
+<div id="view"><div id="ov"><div id="mobSpriteLayer" aria-hidden="true"></div><div id="weaponSpriteLayer" aria-hidden="true"></div><div id="npcLayer" aria-hidden="true"></div><div id="prog"></div><div id="tag"><b id="tn"></b><div class="bar"><i id="th" style="background:var(--hp)"></i></div></div><div id="heroTitle" class="hero-title" aria-live="polite"><span id="heroTitleMark" class="ht-mark" aria-hidden="true"></span><span id="heroTitleText"></span></div><div id="hint">Drag to rotate &middot; Scroll to zoom &middot; Click the ground to walk</div><div id="feedWrap"><div id="feedFilter" role="group" aria-label="Log filter"></div><div id="feedTabs"><button id="feedTab" type="button" aria-expanded="true" aria-controls="feed" title="Minimize or show the on-screen log">📃 Logs ▾</button><button id="feedFil" type="button" aria-expanded="false" aria-controls="feedFilter" aria-label="Filter the on-screen log" title="Filter the log - this row folds away by itself">▽</button></div><div id="feed"></div></div><div id="hudBuffs" role="status" aria-live="polite" aria-label="Active pet buffs - hover an icon for what it does"></div><div id="qp"></div><div id="dock"></div>
 <div id="wins"></div><div id="npcBox" role="dialog" aria-modal="false" aria-labelledby="nbName"><div id="nbTop"><canvas id="nbFace" width="74" height="78" aria-hidden="true"></canvas><span><b id="nbName"></b><span id="nbTitle"></span></span></div><div id="nbBody"></div><div id="nbActs"></div></div></div></div>
 <div id="hud"><div><b id="cls2"></b> <span id="titleLabel" class="title-hud hud-title-mirror" aria-hidden="true" style="display:none"></span> Base Lv <b id="lv">1</b> / Job Lv <b id="jl">1</b></div>
 <div class="hud-health">HP <div class="bar" role="meter" aria-label="HP" aria-valuemin="0" aria-valuemax="100" id="hpMeter"><i id="hpb"></i></div><small id="hpPct">100%</small></div>
@@ -2380,16 +2384,24 @@ const V={
     // v16: the big "gear that drops here" card is gone (owner: too much space) - every drop is
     // listed on the monster that drops it, with its own % line, so the two cards below stay the
     // same size whichever map or field is picked.
-    return`<div class="mapband">
-      <div class="mapband-t">Maps <small>&middot; click one to see its stages below</small></div>
-      <div class="mapband-t">🏘 Prontera Town <small>&middot; the safe town: no monsters, no drops - five NPCs to talk to, a fountain plaza to walk</small><button class="go" data-a="town">${S.town?'Leave town':'Walk into town'}</button></div>
-      <div class="mapgrid">${MAPS.map((m,i)=>{const cur=i===mapM,here=i===S.mp;
-        return`<button class="mapcard${cur?' on':''}${here?' here':''}" data-a="selm" data-v="${i}" title="${m.n} - ${m.t}">
-          <b>${m.n}</b><small>${here?'● ':''}${m.rec}</small></button>`}).join('')}</div></div>
-    <div class="mapband fields">
+    // v68: Prontera Town is a card in this same grid - one more map to pick, the same size as the
+    // other ten - and while the player is standing in it the band below becomes the town's own
+    // (leave button + who is on the plaza) instead of a stage picker it does not have.
+    const T5=(typeof window!=='undefined'&&window.TOWN_NPC)||[];
+    const townBand=S.town?`<div class="mapband fields">
+      <div class="mapband-t">🏘 Prontera Town <small>&middot; the safe town: no monsters, no drops, no stage &middot; five NPCs, one fountain plaza</small>
+        <button class="go" data-a="town">Leave town</button></div>
+      <div class="npcrow">${T5.map(n=>`<span class="npcchip" title="${n.name} - ${n.job}"><b>${n.name}</b><small>${n.who}</small></span>`).join('')||'<small>The five townsfolk keep the plaza - click one to talk.</small>'}</div></div>`:`<div class="mapband fields">
       <div class="mapband-t">${mp.n} <small>&middot; ${mp.t} &middot; rec. ${mp.rec} (not a limit) &middot; ${Math.min(pr-1,10)}/10 stages unlocked</small>
         <button class="go" data-a="go" ${mapL>pr?'disabled':''}>${S.mp===mapM&&S.lvl===mapL?'You are here':'Travel to '+mp.n+' Stage '+mapL}</button></div>
-      <div class="lvgrid">${Array.from({length:10},(_,i)=>{const l=i+1,lock=l>pr;return`<button class="map-node${lock?' locked':''}${S.mp===mapM&&S.lvl===l?' active':''}${mapL===l?' picked':''}${l===10?' boss-node':''}" data-a="sell_" data-v="${l}" title="Stage ${l}"><b>${l===10?'💀 ':''}Stage ${l}</b></button>`}).join('')}</div></div>
+      <div class="lvgrid">${Array.from({length:10},(_,i)=>{const l=i+1,lock=l>pr;return`<button class="map-node${lock?' locked':''}${S.mp===mapM&&S.lvl===l?' active':''}${mapL===l?' picked':''}${l===10?' boss-node':''}" data-a="sell_" data-v="${l}" title="Stage ${l}"><b>${l===10?'💀 ':''}Stage ${l}</b></button>`}).join('')}</div></div>`;
+    return`<div class="mapband">
+      <div class="mapband-t">Maps <small>&middot; click one to see its stages below</small></div>
+      <div class="mapgrid">${MAPS.map((m,i)=>{const cur=i===mapM,here=i===S.mp;
+        return`<button class="mapcard${cur?' on':''}${here?' here':''}" data-a="selm" data-v="${i}" title="${m.n} - ${m.t}">
+          <b>${m.n}</b><small>${here?'● ':''}${m.rec}</small></button>`}).join('')}<button class="mapcard town-card${S.town?' here':''}" data-a="town" title="Prontera Town - the safe town: no monsters, no drops, five NPCs to talk to, a fountain plaza to walk">
+          <b>🏘 Prontera Town</b><small>${S.town?'● Safe town':'Safe · no mobs'}</small></button></div></div>
+    ${townBand}
     <div class="mapcols">
       <div class="mob-card"><div class="hd">${mp.n} Stage ${mapL}${mapM<5&&mapL<=5?`<br><small>${mapM===0?'Novice start · Base Lv 1–10':'Early class route · Base Lv 10–20'} · gentle packs</small>`:''}</div>
         <div class="sec">Monsters <small>&middot; every drop here is <b class="r${F.tier}">${RAR[F.tier].n}</b></small></div>
@@ -2854,7 +2866,7 @@ function bars(){if(!S)return;
     track.setAttribute('aria-valuetext',label+' '+lv+': '+text+(pct>=100?' (MAX)':' to next level'));
   }
 }
-function ui(){if(!S)return;bars();feedTab();$('stageTitle').textContent=fieldName()+(isBoss()?' (Boss map)':'');$('grindStatus').textContent=S.lvl<S.prog[S.mp]?'🔄 Farming':'✨ Frontier';renderWin()}
+function ui(){if(!S)return;bars();feedTab();$('stageTitle').textContent=(typeof townOn==='function'&&townOn())?'🏘 Prontera Town':fieldName()+(isBoss()?' (Boss map)':'');$('grindStatus').textContent=(typeof townOn==='function'&&townOn())?'Safe map · no monsters':S.lvl<S.prog[S.mp]?'🔄 Farming':'✨ Frontier';renderWin()}
 
 // The owner felt the prior slowdown was too aggressive, so this is exactly halfway between
 // the original `6.5 + 0.05*AGI` pace and v66's proposed curve. It is 8.12 at AGI 99
@@ -4587,15 +4599,15 @@ const TOWN_R=13.5;                      // the cobbled plaza's radius
 const TOWN_TALK=3;                      // how close you must stand to an NPC to talk
 const TOWN_BOUND={x0:-17.5,x1:17.5,z0:-16.6,z1:19};   // where the hero may walk
 const TOWN_NPC=[
-  {id:'kafra',name:'Kafra Elise',job:'Warp & Save · Kafra Corporation',
+  {id:'kafra',name:'Kafra Elise',job:'Warp & Save · Kafra Corporation',who:'Warp & save point',
    cls:'Acolyte',sex:'f',hair:3,x:-7.3,z:-11.3},
-  {id:'captain',name:'Captain Rondel',job:'Prontera Guard · contract board',
+  {id:'captain',name:'Captain Rondel',job:'Prontera Guard · contract board',who:'Take & claim quests',
    cls:'Knight',sex:'m',hair:5,x:-3.8,z:-14.2},
-  {id:'sister',name:'Sister Marina',job:'Temple of Odin · healer',
+  {id:'sister',name:'Sister Marina',job:'Temple of Odin · healer',who:'Restores your HP',
    cls:'High Priest',sex:'f',hair:1,x:0,z:-15.2},
-  {id:'wren',name:'Scholar Wren',job:'Royal Library · Mastery Index',
+  {id:'wren',name:'Scholar Wren',job:'Royal Library · Mastery Index',who:'Index & card album',
    cls:'High Wizard',sex:'m',hair:7,x:3.8,z:-14.2},
-  {id:'smith',name:'Smith Gordon',job:'Forge & market · gear and drops',
+  {id:'smith',name:'Smith Gordon',job:'Forge & market · gear and drops',who:'Drops, ore & refine',
    cls:'Whitesmith',sex:'m',hair:2,x:7.3,z:-11.3}];
 const TOWN={on:0,scene:0,g:null,zoom:1,list:[],keys:{},near:null,talk:null,pending:null,marker:null,markerT:0,
   spray:[],hint:'',at:0,plaza:null,kerb:null,kerbBlk:null,houseBlk:null,houseKit:null,kitArt:0};
@@ -4750,17 +4762,23 @@ function townBuild(){
   }
   // the walk marker: a gold ring the click target drops on the ground
   const rg=new THREE.Mesh(new THREE.RingGeometry(.42,.62,26),new THREE.MeshBasicMaterial({color:0xffd23f,transparent:true,opacity:.9,depthWrite:false}));
-  rg.rotation.x=-Math.PI/2;rg.visible=false;G.add(rg);TOWN.marker=rg;
+  rg.rotation.x=-Math.PI/2;rg.visible=false;scene.add(rg);TOWN.marker=rg;   // scene, not the town group: a field click uses it too
 
   // the five NPCs: sprite, shadow, rug, and their HTML name plate
   const layer=$('npcLayer');
+  if(layer&&!layer.dataset.wired){          // a click on a name plate is a click on that NPC
+    layer.dataset.wired='1';
+    layer.addEventListener('pointerdown',e=>{const el=e.target&&e.target.closest?e.target.closest('.npc-tag'):null;
+      if(!el)return;e.preventDefault();e.stopPropagation();
+      const n=TOWN.list.find(x=>x.def.id===el.dataset.npc);if(n)townTalkOrWalk(n)});
+  }
   for(const def of TOWN_NPC){
     const npc={def,spr:null,tag:null,face:-1,art:''};
     const g2=new THREE.Group();g2.position.set(def.x,0,def.z);G.add(g2);npc.g=g2;
     mkShadow(g2,.44);
     const rug=new THREE.Mesh(new THREE.CircleGeometry(.95,20),M(def.id==='sister'?0xf2d0dc:0xe4dcc4));
     rug.rotation.x=-Math.PI/2;rug.position.y=.03;g2.add(rug);
-    if(layer){const el=document.createElement('div');el.className='npc-tag';
+    if(layer){const el=document.createElement('div');el.className='npc-tag';el.dataset.npc=def.id;
       el.innerHTML=`<b>${def.name}</b><i>${def.job.split('·')[0].trim()}</i><span class="talk">💬 Click to talk</span>`;
       layer.appendChild(el);npc.tag=el}
     TOWN.list.push(npc);
@@ -4860,7 +4878,7 @@ function townEnterScene(){
 }
 function townLeaveScene(){
   townScene(0);lastKey='';                     // the field's own branch rebuilds it on the next frame
-  $('hint').textContent='Drag to rotate · Scroll to zoom';
+  $('hint').textContent='Drag to rotate · Scroll to zoom · Click the ground to walk';
   R.domElement.style.cursor='';
   TOWN.marker.visible=false;TOWN.markerT=0;
   for(const n of TOWN.list)if(n.tag)n.tag.style.display='none';
@@ -4908,6 +4926,21 @@ function townHover(cx,cy){
   }
   R.domElement.style.cursor=over?'pointer':'';
 }
+// A click on a field map walks the hero to that spot: the roam is put on hold (pl.wt) until the
+// spot is reached, then it takes over again on its own. Combat still owns the movement while a
+// pack is engaged, so a click during a fight only drops the ring.
+function fieldClick(cx,cy){
+  if(!S||!R.domElement)return;
+  const[px,py]=townCanvasXY(cx,cy);
+  const w=R.domElement.clientWidth,h=R.domElement.clientHeight;
+  if(!townRay){townRay=new THREE.Raycaster();townNdc=new THREE.Vector2();townPlane=new THREE.Plane(new THREE.Vector3(0,1,0),0)}
+  townNdc.set(px/w*2-1,-(py/h)*2+1);townRay.setFromCamera(townNdc,cam);
+  const hit=new THREE.Vector3();
+  if(!townRay.ray.intersectPlane(townPlane,hit))return;
+  const ax=cl(hit.x,-BX_+.8,BX_-.8),az=cl(hit.z,Z0+.5,Z1-.5);
+  pl.wx=ax;pl.wz=az;pl.wt=999;
+  if(TOWN.marker){TOWN.marker.position.set(ax,.05,az);TOWN.marker.visible=true;TOWN.markerT=1}
+}
 function townClick(cx,cy){
   if(!TOWN.on)return;
   const[px,py]=townCanvasXY(cx,cy);
@@ -4921,10 +4954,10 @@ function townClick(cx,cy){
   }
   if(best){
     const dx=pl.x-best.def.x,dz=pl.z-best.def.z,d=Math.hypot(dx,dz)||1;
-    pl.wx=best.def.x+dx/d*1.7;pl.wz=best.def.z+dz/d*1.7;
-    if(Math.hypot(pl.x-best.def.x,pl.z-best.def.z)<TOWN_TALK)townTalk(best);
-    else TOWN.pending=best;
-    return;
+    pl.wx=best.def.x+dx/d*1.7;pl.wz=best.def.z+dz/d*1.7;   // stand a step in front of them
+    TOWN.pending=null;
+    townTalk(best);                                       // clicking an NPC talks immediately -
+    return;                                               // the walk is just the hero catching up
   }
   const w=R.domElement.clientWidth,h=R.domElement.clientHeight;
   if(!townRay){townRay=new THREE.Raycaster();townNdc=new THREE.Vector2();townPlane=new THREE.Plane(new THREE.Vector3(0,1,0),0)}
@@ -5027,6 +5060,12 @@ function townSay(){
   $('nbBody').innerHTML=page.text;
   $('nbActs').innerHTML=page.acts.map(([label,act])=>`<button data-npc="${act}">${label}</button>`).join('');
 }
+// Plate clicks: talk at once, and start the walk too when the hero is still across the plaza.
+function townTalkOrWalk(npc){
+  if(!npc)return;
+  pl.wx=npc.def.x+(pl.x<npc.def.x?-1.7:1.7);pl.wz=npc.def.z;TOWN.pending=null;
+  townTalk(npc);
+}
 function townTalk(npc){
   if(!npc)return;
   TOWN.talk=npc;$('npcBox').style.display='block';
@@ -5085,14 +5124,17 @@ function townTick(){
     s.m.position.y=s.y+Math.sin(now*.001*s.sp+s.ph)*s.amp;
     if(s.drop)s.m.material.opacity=s.o*(.55+.45*Math.sin(now*.0013*s.sp+s.ph));
   }
-  if(TOWN.marker&&TOWN.markerT>0){
-    TOWN.markerT=Math.max(0,TOWN.markerT-dt*1.7);const k=TOWN.markerT;
-    TOWN.marker.visible=k>.02;TOWN.marker.scale.setScalar(1+(1-k)*1.7);TOWN.marker.material.opacity=k*.9;
-  }
   if(mobs.length){mobs.length=0;mob=null}
   if(TOWN.talk&&TOWN.talk.cv!==null)townPortrait(TOWN.talk);
 }
 
+// The gold walk ring fades out over about half a second. It is stepped once per drawn frame, in
+// both worlds, because it marks a click target whether the player is in town or in a field.
+function townMarkerStep(){
+  if(!TOWN.marker||TOWN.markerT<=0)return;
+  TOWN.markerT=Math.max(0,TOWN.markerT-.03);const k=TOWN.markerT;
+  TOWN.marker.visible=k>.02;TOWN.marker.scale.setScalar(1+(1-k)*1.7);TOWN.marker.material.opacity=k*.9;
+}
 let drag=null;const dom=R.domElement;
 dom.addEventListener('pointerdown',e=>{drag=[e.clientX,e.clientY];TOWN_TAP=e;dom.setPointerCapture(e.pointerId)});
 dom.addEventListener('pointermove',e=>{
@@ -5100,7 +5142,8 @@ dom.addEventListener('pointermove',e=>{
   if(!drag)return;az-=(e.clientX-drag[0])*.006;el=Math.min(1.35,Math.max(.45,el+(e.clientY-drag[1])*.005));drag=[e.clientX,e.clientY];
   if(townOn())townHover(e.clientX,e.clientY)});
 dom.addEventListener('pointerup',e=>{const t2=TOWN_TAP;drag=null;TOWN_TAP=null;
-  if(t2&&townOn()&&Math.abs(e.clientX-t2.clientX)+Math.abs(e.clientY-t2.clientY)<=6)townClick(e.clientX,e.clientY)});
+  if(!t2||Math.abs(e.clientX-t2.clientX)+Math.abs(e.clientY-t2.clientY)>6)return;   // a drag is a camera move
+  if(townOn())townClick(e.clientX,e.clientY);else fieldClick(e.clientX,e.clientY)});
 dom.addEventListener('pointercancel',()=>{drag=null;TOWN_TAP=null});
 dom.addEventListener('wheel',e=>{e.preventDefault();zoom=Math.min(2,Math.max(.6,zoom*(e.deltaY<0?1.1:.9)))},{passive:false});
 
@@ -5113,6 +5156,7 @@ function draw(){
   // In town the field's sky, deco and road are not rebuilt: the town scene owns the frame and
   // keeps its own look (see townEnterScene). The talk boxes and the water are ticked here, once
   // per frame, because the sim clock may run several sub-steps per frame.
+  townMarkerStep();
   if(townOn()){lastKey='town';townTick()}
   else if(key!==lastKey){lastKey=key;const col=new THREE.Color(bn?0x8a6bb0:mp.sky);scene.background=col;scene.fog=new THREE.Fog(col,35,80);ground.material.color.setHex(mp.ground);buildDeco(S.mp);road.material.color.setHex(S.mp===3?0xe9d9a8:0xd8cdb4)}
   P.position.set(pl.x,0,pl.z);
@@ -5174,7 +5218,8 @@ function draw(){
   R.render(scene,cam);
   floats.forEach(f=>{if(!f.el){const e=document.createElement('div');e.className='fl'+(f.big?' big':'')+(f.kind&&f.kind!=='text'?' '+f.kind:'');e.textContent=f.txt;if(f.col)e.style.color=f.col;ov.appendChild(e);f.el=e}
     const[a,b]=scr(f.anchor==='hero'?pl.x:f.x,f.y,f.anchor==='hero'?pl.z:f.z);f.el.style.left=a+'px';f.el.style.top=b+'px';f.el.style.opacity=Math.max(0,f.life)});
-  const pt=bn?`BOSS FIGHT · ${mobs.filter(m=>!m.boss).length} minions`:`Pack ${activePack+1}/3 · Monsters ${Math.min(S.kl,MPS)}/${MPS}`;if(pt!==lastProg){lastProg=pt;prog.textContent=pt}
+  const pt=bn?`BOSS FIGHT · ${mobs.filter(m=>!m.boss).length} minions`:`Pack ${activePack+1}/3 · Monsters ${Math.min(S.kl,MPS)}/${MPS}`;
+  if(!townOn()&&pt!==lastProg){lastProg=pt;prog.textContent=pt}      // the town shows its own banner instead
 }
 // ---------- the clock: one simulation, driven by frames or by timers ----------
 // A browser stops calling requestAnimationFrame the moment its tab is not the one on screen, which
@@ -5237,7 +5282,7 @@ function bgShow(){                      // and it is back: replay what the timer
   save()}
 document.addEventListener('visibilitychange',()=>{if(document.hidden)bgHide();else bgShow()});
 setInterval(bgTick,SIM_BG_MS);
-resize();respawn=.3;requestAnimationFrame(loop);setInterval(save,5000);kitFetch();window.town=townToggle;
+resize();respawn=.3;requestAnimationFrame(loop);setInterval(save,5000);kitFetch();window.town=townToggle;window.TOWN_NPC=TOWN_NPC;   // the map tab's town card lists the five
 </script>
 </body>
 </html>

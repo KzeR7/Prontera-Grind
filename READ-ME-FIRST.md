@@ -34,8 +34,8 @@ deploy — but the host's build output directory must be `dist/`, never the repo
   changing the class art or the hero.**
 * `TOOLS-START-HERE.md` — **the tool map**: every dev page, generator and picker in `tools/`, what it answers
   and who owns it. Read that instead of guessing which of the two dozen pages is the live one.
-* `tools/weapon_proposal.html` — **the live weapon review page** (served at `/` by
-  `python3 tools/preview_server.py 8000`, or `/weapons`). Every one of the 19 classes on its own sprite
+* `tools/weapon_proposal.html` — **the live weapon review page** (served at `/weapons` by
+  `python3 tools/preview_server.py 8000`; `/` is the **game itself**, so the preview link opens it). Every one of the 19 classes on its own sprite
   with a real Ragnarok Online weapon on it. It opens **frozen** so the weapon can be placed against a
   still frame (`▶ Play animation` to animate, `,`/`.` to step a frame). Drag to move, wheel/`[`/`]` to
   rotate, `-`/`+` to size, `0` to reset. **🎯 Set hand** then a click on the sprite locks the weapon onto
@@ -82,8 +82,12 @@ in-game and stored in the browser (`pg_acc4`; saves under `pg_save3_<user>`).
 
 ## BUILD v68 — Prontera Town: a safe map, five NPCs and click-to-walk
 
-* **A new map, and it is a place, not a stage: Prontera Town.** Press **T** (or use **🏘 Walk into
-  town** on the World Map tab, or `window.town()` in the console). The field's monsters, kit deco,
+* **A new map, and it is a place, not a stage: Prontera Town.** It is **a card in the World Map
+  tab's own grid** — the same card class and the same size as the ten fields, sitting right beside
+  them, marked *Safe · no mobs* — so the way in is the map UI you already use. Press **T**, click
+  that card, or use `window.town()` in the console. While you are standing in town the band under
+  the map cards becomes the town's own: a **Leave town** button and the **five NPCs with what each
+  one does for you**, instead of a stage picker that a map with no stages should not have. The field's monsters, kit deco,
   road and sky are hidden while you are there, and the town has **no spawner at all** — nothing
   spawns, nothing attacks, nothing drops. It is the one map where the hero stops grinding.
 * **The layout the owner asked for:** a cobbled plaza (radius 13.5) around a **three-tier stone
@@ -111,8 +115,12 @@ in-game and stored in the browser (`pg_acc4`; saves under `pg_save3_<user>`).
   the same kind scaled to your level; the sister restores HP and explains HP, defeat and First Aid;
   the scholar opens the Mastery Index and the card album and explains the ladder and tokens; the
   smith explains which field drops which rarity, ore, refine and the boss-only Legendary rule.
-* **Mouse-click movement.** Click the ground and the hero walks there (a gold ring marks the spot);
-  click an NPC and the hero walks over and talks. **WASD and the arrow keys** walk too, and while in
+* **Click, on every map.** Click the ground and the hero walks there — in town *and* in the ten
+  fields (the gold ring marks the spot; a click simply holds the spot until the hero reaches it and
+  then the auto-roam takes over again). **Click an NPC and they talk at once** — the box opens on
+  the click, no walking required, and the hero walks over while you read. Their **name plates are
+  clickable** too, so the easiest target on the plaza is the one that works. **WASD and the arrow
+  keys** walk too, and while in
   town they take priority over the dock hotkeys. The basin is a wall, not a magnet: a target on the
   far side of the fountain is **walked around**, and the hero is clamped out of the fountain and out
   of the NPCs by the simulation itself (not by the frame that happens to draw it).
