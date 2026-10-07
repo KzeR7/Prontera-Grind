@@ -216,6 +216,43 @@ whose fountain is the market, the church north, **gates with moat water and brid
   the square and over the arch, the entrance street, the grounding shadows, the river's animation tick),
   and all 34 suites plus the five `--check` tools are green.
 
+## BUILD v75 — the water is below the road: a sunken river, quays cut at the bridge
+
+The v74 gate → bridge → river was all there and still read wrong through the game's own camera, so
+this pass went back over the channel itself. Every problem was geometry, not art.
+
+* **The river lay ON the road, not below it.** v74's water was a plane at y **.03** — level with the
+  street — between quay walls standing 1.1 above it: the camera saw a blue stripe with a lip, and the
+  bridge had nothing to arch over. `TOWN_RIVER` now carries the channel's own numbers (`water:-.85`,
+  `bed:-1.35`, `span:4.2`, `gap:5.8`, `kerb:.45`). The lawn is built as **two** planes around the band
+  (one lawn plane would have floated straight over the water), the bed takes the kit's `sand_gold`,
+  and the water sits .85 below the street between two quay walls whose retaining faces run from the
+  bed up to a low street parapet and its coping. The deck's crown is .87 and its underside .45, so it
+  clears the water by 1.3 units: a bridge over water you can see, which is what "below is a river"
+  asked for.
+* **The quay wall ran straight across the avenue.** Each quay was one 150-unit box at z 15/20, so a
+  wall crossed the road at both bridge mouths and the deck was buried in it. The run is now cut at the
+  deck: the parapet stops at |x| > 4.65, the wall continues underneath as the bridge's abutment, and
+  `town_smoke` guards it against the town's own box meshes — a long run whose span reaches into the
+  avenue near a quay line fails the suite.
+* **The arch cannot read (the town camera never looks down the river), so the channel carries it
+  instead:** the deck's shadow on the water (a gradient strip under it), the shaded waterline at the
+  foot of both quays, reeds inside the channel, a stair down to the water cut against the quay at
+  x ±21, and the piers dressed as cutwaters standing on the bed.
+* **All the masonry wears the kit's own stone.** The curtain wall, its watch towers, the gate towers,
+  both quay courses, the deck (`bridge_planks` — the kit's own deck tile, the one the fields' bridges
+  use) and the ramps name real kit tiles through `TOWN.tiles`, so no flat pastel box stands next to
+  painted art any more.
+* **The walk moved with it:** `townGroundY` takes its base from the bridge table (`B.base`), so the
+  hero climbs the ramp from the street to the crown and down again, and `TOWN_BOUND.z1` is **22.3**
+  (21.8 left the walk-out target standing on the journey's last metre of ramp).
+  `tools/preview_town_board.py` draws the quay runs **cut at the deck** too — a full-width strip on
+  the board was drawing the very bug the town had just been fixed for.
+* **Tests:** `town_smoke` is **35 scenarios** (the bridge pins and the walk-out line rebuilt against
+  the new numbers, the painted-shadow pair's off-by-one fixed, the masonry check guarded on
+  `TOWN.kitArt` and its tile names verified against `assets/kit/ro-tiles-hd.json`), and all **34**
+  suites plus the five `--check` tools are green.
+
 ## BUILD v72 — crit frame aligned, and the digits are the selection's own font and fill
 
 * **The font was the "design looks off" report.** The copy button prints its raw slider keys, and the

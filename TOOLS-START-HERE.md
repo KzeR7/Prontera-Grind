@@ -106,7 +106,10 @@ gate towers). The tool draws three boards from that one dump:
   gate, wall, forecourt, bridge, river and the street beyond, which is the shot the owner's round-5
   screenshots were taken from. **A bug that both boards together caught:** the ring's west arc was a mirrored angle list,
   which is the same list — all fourteen houses stood on the east side, exactly overlapping, invisible
-  on the plan and obvious on the camera view.
+  on the plan and obvious on the camera view. **Second bug it caught (v75):** the river ran as one
+  quay box straight across the avenue and lay flush with the street, so the bridge had nothing to arch
+  over — the channel is sunken now and `river_and_bridge()` draws the quay runs *cut at the deck*, so
+  a board can no longer show a wall crossing the road either.
 
 Lighting, colour and the real floor textures still need the game itself.
 

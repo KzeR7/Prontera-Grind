@@ -116,9 +116,15 @@ def river_and_bridge(dump, emit):
     segment tops the game builds the bridge from, so the board shows the hump the hero walks over."""
     rv, br = dump.get('river'), dump.get('bridge')
     if rv:
+        # the quay runs are CUT where the bridge crosses (the wall continues underneath as the
+        # abutment), so the board draws the same two outer runs the game builds - a full-width
+        # strip here would draw the very bug the town was fixed for.
+        abw = rv['half'] + .45
         for ez in (rv['z0'] - .4, rv['z1'] + .4):
-            emit([(-rv['w'] / 2, ez - .4), (rv['w'] / 2, ez - .4),
-                  (rv['w'] / 2, ez + .4), (-rv['w'] / 2, ez + .4)], QUAY, .9)
+            for sgn in (-1, 1):
+                x0, x1 = sgn * abw, sgn * (rv['w'] / 2)
+                if x0 > x1: x0, x1 = x1, x0
+                emit([(x0, ez - .4), (x1, ez - .4), (x1, ez + .4), (x0, ez + .4)], QUAY, .9)
     if br:
         seg, bl = br['seg'], (br['z1'] - br['z0']) / br['seg']
         for i in range(seg):

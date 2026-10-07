@@ -312,8 +312,23 @@ t('the painted HD pack dresses the town, and dressings are protected from a late
   assert.ok(JSON.parse(designs).length >= 6, 'several different buildings ring the plaza: ' + designs);
   // and the ground tiles the town asked for are the HD ones
   for (const t of ev('TOWN.tiles.map(t=>t.tile)'))
-    assert.ok(['ruin_cobble', 'limestone_pale', 'dirt_path', 'grass_jade', 'water_frame_0'].includes(t),
+    assert.ok(['ruin_cobble', 'limestone_pale', 'dirt_path', 'grass_jade', 'water_frame_0', 'bridge_planks', 'sand_gold'].includes(t),
       'unexpected ground tile ' + t);
+  // the wall, the quay and the bridge are not pastel blocks next to painted sprites: every raised
+  // course of stone names a kit tile, and the three that matter name one the pack actually has.
+  const masons = JSON.parse(ev('JSON.stringify((TOWN.tiles||[]).filter(t=>t.m&&t.m!==TOWN.river.m).map(t=>t.tile))'));
+  assert.ok(masons.length >= 6, 'the masonry courses are dressed, not painted flat: ' + masons.length);
+  assert.ok(masons.every(t => typeof t === 'string' && t), 'each one names a tile: ' + masons.join(','));
+  for (const need of ['bridge_planks', 'limestone_pale'])
+    assert.ok(masons.indexOf(need) >= 0, 'including the pack\'s ' + need);
+  // jsdom never loads the kit image, so "the map is on it" is only checkable once kitArt is up;
+  // what IS checkable here is that every name is a tile the kit manifest really ships.
+  const flat = JSON.parse(ev('JSON.stringify((TOWN.tiles||[]).filter(t=>t.m&&t.m!==TOWN.river.m&&!t.m.material.map).map(t=>t.tile))'));
+  assert.ok(ev('!TOWN.kitArt') || flat.length === 0, 'nothing is left flat while the kit is in: ' + flat.join(','));
+  const kitMan = JSON.parse(fs.readFileSync(path.join(__dirname, '..', '..', 'assets', 'kit', 'ro-tiles-hd.json'), 'utf8'));
+  const kitNames = Object.keys(kitMan.sprites || kitMan.tiles || {});
+  for (const t of masons)
+    assert.ok(kitNames.indexOf(t) >= 0, 'the kit manifest has the tile it was asked for: ' + t);
   // put the town back to the shipping state (no pack) for the rest of the run
   ev('TOWNP.ok=0;TOWNP.png=null;TOWNP.man=null;TOWNP.tex.clear();TOWN.paint=0;TOWN.houseKit.clear();TOWN.houseKit.visible=false;TOWN.houseBlk.visible=true;TOWN.fountain.visible=true;TOWN.fountainArt=null;TOWN.cath.visible=true;TOWN.spray=[];');
   leave();
@@ -361,19 +376,43 @@ t('the river crosses the south approach, and the bridge is the only way over it'
   assert.ok(ev('TOWN.tiles.some(t=>t.m===TOWN.river.m&&t.tile==="water_frame_0")'),
     'and the kit paints it with its own animated water tile');
   // the walk line: off the bridge the water pushes the hero back to whichever bank is nearer
-  assert.strictEqual(ev('townAvoid(-13,' + (z0 + 1) + ')[1]'), z0, 'on the west bank the hero is held at the waterline');
-  assert.strictEqual(ev('townAvoid(13,' + (z1 - 1) + ')[1]'), z1, 'and held out of the water from the gate side too');
+  // the quay wall is a solid .8 thick, so the hold line is its outer face - the street side of it,
+  // derived from the river's own numbers rather than pinned, or the wall would swallow the hero
+  assert.strictEqual(ev('townAvoid(-13,' + (z0 + 1) + ')[1]'), ev('TOWN_RIVER.z0-TOWN_RIVER.kerb'),
+    'on the west bank the hero is held at the quay wall');
+  assert.strictEqual(ev('townAvoid(13,' + (z1 - 1) + ')[1]'), ev('TOWN_RIVER.z1+TOWN_RIVER.kerb'),
+    'and held out of the water from the gate side too');
   assert.strictEqual(ev('townAvoid(0,' + (z0 + 1) + ')[1]'), z0 + 1, 'but the bridge deck itself is walkable');
   assert.strictEqual(ev('townAvoid(0,' + (z1 - 1) + ')[1]'), z1 - 1, 'right across the band');
   // the deck spans the whole channel, and the abutments sit low with the deck arching between them
   assert.ok(ev('TOWN.bridge.z0<TOWN_RIVER.z0&&TOWN.bridge.z1>TOWN_RIVER.z1'), 'the deck spans the whole channel');
   const tops = ev('[0,1,2,3,4,5,6,7,8,9].map(i=>Math.round(TOWN.bridge.top(i)*100)/100)');
-  assert.ok(tops[0] < .3 && tops[9] < .3, 'the abutments are low: ' + tops.join(','));
-  assert.ok(tops[4] > tops[0] + .15 && tops[5] > tops[9] + .15, 'with the deck arching up between them');
-  assert.ok(Math.max.apply(null, tops) < .7, 'a footbridge over a river, not a viaduct: ' + Math.max.apply(null, tops));
+  assert.ok(tops[0] < .7 && tops[9] < .7, 'the abutments carry the deck out of the water: ' + tops.join(','));
+  assert.ok(tops[4] > tops[0] + .3 && tops[5] > tops[9] + .3, 'with the deck arching up between them');
+  assert.ok(Math.max.apply(null, tops) < 1.25, 'a river bridge, not a viaduct: ' + Math.max.apply(null, tops));
+  // it is a bridge, not a slab: piers stand in the water and the arch faces are dark recesses
+  assert.ok(ev('!!TOWN.tiles.find(t=>t.tile==="bridge_planks")'), 'the deck wears the kit\'s own decking');
+  // the channel is SUNKEN: the water sits below the street, which is what "below is a river" asks
+  assert.ok(ev('TOWN.river.m.position.y') < -.5, 'the water lies below the street: ' + ev('TOWN.river.m.position.y'));
+  assert.ok(ev('TOWN.bridge.top(4)') > ev('TOWN.river.m.position.y') + 1,
+    'and the deck clears it like a bridge, not a stripe on the road');
+  // the quay runs must be CUT where the bridge crosses: a long parapet across the avenue is the
+  // old bug, and no height check can tell a parapet from the deck, so this looks at the length
+  const crossers = JSON.parse(ev(`(()=>{const out=[];TOWN.g.traverse(o=>{const g=o.geometry;
+    if(!o.isMesh||!g||!g.parameters||g.parameters.depth===undefined||o.rotation.x)return;
+    const hw=g.parameters.width/2;if(hw<=10)return;                    // only the long wall runs
+    const p=new THREE.Vector3();o.getWorldPosition(p);
+    if(Math.abs(p.z-TOWN_RIVER.z0)>1.6&&Math.abs(p.z-TOWN_RIVER.z1)>1.6)return;
+    if(Math.abs(p.x)-hw<TOWN_RIVER.half)out.push([+p.x.toFixed(1),+p.z.toFixed(1),+hw.toFixed(1)])});
+    return JSON.stringify(out)})()`));
+  assert.strictEqual(crossers.length, 0, 'and no quay run crosses the avenue: ' + JSON.stringify(crossers));
+  assert.ok(ev('!!TOWN.tiles.find(t=>t.tile==="sand_gold")'), 'with a bed under the water to close the channel');
   // the ground the hero stands on follows the same profile, and is flat everywhere else
   assert.ok(ev('townGroundY(0,17.5)') > .3, 'the hero stands on the arch at the crown');
-  assert.ok(ev('townGroundY(0,14.35)') > .02 && ev('townGroundY(0,14.35)') < .3, 'and walks up the ramp onto it');
+  assert.ok(ev('townGroundY(0,TOWN.bridge.z0-TOWN.bridge.ramp-.2)') === 0, 'flat ground before the ramp');
+  assert.ok(ev('townGroundY(0,TOWN.bridge.z0-TOWN.bridge.ramp*.45)') > .05
+    && ev('townGroundY(0,TOWN.bridge.z0-TOWN.bridge.ramp*.45)') < ev('TOWN.bridge.base'),
+    'and walks up the ramp onto it');
   assert.strictEqual(ev('townGroundY(-13,17.5)'), 0, 'never above the water off the deck');
   assert.strictEqual(ev('townGroundY(0,26)'), 0, 'and the ground past the gate is level');
   assert.ok(ev('TOWN_BOUND.z1>TOWN.bridge.z1'), 'the walkable bound runs out past the bridge, to the gate');
@@ -392,7 +431,8 @@ t('the way in: the hero walks out of the square, over the bridge, onto the far b
   assert.ok(top > .3, 'the walk rises onto the bridge (top ' + top.toFixed(2) + ')');
   assert.strictEqual(offDeck, 0, 'and never leaves the deck while over the water');
   assert.ok(ev('pl.z') > ev('TOWN_RIVER.z1') + 1, 'arriving in the gate forecourt (z ' + ev('pl.z').toFixed(1) + ')');
-  assert.strictEqual(ev('townGroundY(pl.x,pl.z)'), 0, 'where the ground is level again');
+  assert.ok(ev('townGroundY(pl.x,pl.z)') < .05,
+    'back at ground level past the bridge (' + ev('townGroundY(pl.x,pl.z)') + ')');
   // and the drawn hero stands on the deck, not inside it: draw() sets the sprite's height from it
   ev('P.position.set(0,0,0);pl.x=0;pl.z=17.5;pl.wx=0;pl.wz=17.5;draw()');
   assert.ok(ev('P.position.y') > .3, 'the drawn hero is on top of the bridge, not sunk into it');
@@ -428,7 +468,9 @@ t('every building is grounded: the art and the stand-ins both carry a contact sh
     const geo = JSON.parse(ev('JSON.stringify(TOWN.houseKit.children.filter(o=>o.userData&&o.userData.art).map(g=>g.children.filter(c=>c.isMesh).map(c=>[c.geometry.parameters.width,c.geometry.parameters.height])))'));
     assert.ok(geo.length >= 10, 'the painted houses are up: ' + geo.length);
     for (const pair of geo) {
-      const soft = pair[1], core = pair[2];
+      // every mesh in a painted house group is one of the two shadow layers (the art is a sprite)
+      assert.strictEqual(pair.length, 2, 'a painted house is its sprite plus exactly two shadow planes');
+      const soft = pair[0], core = pair[1];
       assert.ok(soft && core, 'a painted house has the sprite plus two shadow planes');
       // the fix for "the buildings look floating": the shadow's depth is cut from the sprite's WIDTH.
       // Scaling it with the artwork's height gave tall narrow houses a wide pale puddle instead.

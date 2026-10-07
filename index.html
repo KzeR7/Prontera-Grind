@@ -520,7 +520,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // script block, which is a SyntaxError - the game did not run on main at all. One line wins, and
 // it names both sides of this merge: the v38 balance patch (the weapon cut, the affix/card
 // give-back) and main's weapon-hold rendering work.
-const BUILD='2026-10-07 grind-v74 crit frames + HD Prontera Town: a walled gate, a bridge over the river, a street of shops';   // shown on the login card - confirms which file you loaded
+const BUILD='2026-10-07 grind-v75 crit frames + HD Prontera Town: a sunken river under the gate bridge, stone quays and a tiled wall';   // shown on the login card - confirms which file you loaded
 $('buildTag').textContent='build '+BUILD;
 
 // ---------- class tree: Novice -> 6 first jobs -> 6 second jobs -> 6 third jobs ----------
@@ -4964,11 +4964,14 @@ const TOWN_TALK=3;                      // how close you must stand to an NPC to
 // Where the hero may walk. The south end runs out to the wall the gate stands in: the river takes
 // z 15..20, the bridge is the only crossing, and past it the forecourt is walkable right up to the
 // arch - so the whole way in is a walk the player can actually make, over water.
-const TOWN_BOUND={x0:-17.5,x1:17.5,z0:-16.6,z1:21.8};
+const TOWN_BOUND={x0:-17.5,x1:17.5,z0:-16.6,z1:22.3};
 // The town sits on a waterway: a river runs east-west across its south side, and the stone bridge on
 // the avenue is the only crossing (a real city gate always had one). `half` is the bridge's own
 // half-width, so the walkable band through the river is exactly the deck.
-const TOWN_RIVER={z0:15.0,z1:20.0,half:4.2};
+// The river is a SUNKEN channel: the street is at 0, the water .85 below it, the bed 1.35 below,
+// held between two quay walls. `span` is the water's width between the quay faces, `gap` the band
+// of lawn the channel replaces. townGroundY and the bridge below are built off these numbers.
+const TOWN_RIVER={z0:15.0,z1:20.0,half:4.2,kerb:.45,water:-.85,bed:-1.35,span:4.2,gap:5.8};
 const TOWN_NPC=[
   {id:'kafra',name:'Kafra Elise',job:'Warp & Save · Kafra Corporation',who:'Warp & save point',
    cls:'Acolyte',sex:'f',hair:3,x:-7.3,z:-11.3},
@@ -4989,8 +4992,9 @@ const townCanvasXY=(cx,cy)=>{const r=R.domElement.getBoundingClientRect();return
 function townAvoid(x,z){
   x=cl(x,TOWN_BOUND.x0,TOWN_BOUND.x1);z=cl(z,TOWN_BOUND.z0,TOWN_BOUND.z1);
   // the river: inside the water band you are either on the bridge or you are not in the band at all
-  if(z>TOWN_RIVER.z0&&z<TOWN_RIVER.z1&&Math.abs(x)>TOWN_RIVER.half)
-    z=(z-TOWN_RIVER.z0<TOWN_RIVER.z1-z)?TOWN_RIVER.z0:TOWN_RIVER.z1;
+  if(z>TOWN_RIVER.z0-TOWN_RIVER.kerb&&z<TOWN_RIVER.z1+TOWN_RIVER.kerb&&Math.abs(x)>TOWN_RIVER.half)
+    z=(z-(TOWN_RIVER.z0-TOWN_RIVER.kerb)<TOWN_RIVER.z1+TOWN_RIVER.kerb-z)
+      ?TOWN_RIVER.z0-TOWN_RIVER.kerb:TOWN_RIVER.z1+TOWN_RIVER.kerb;
   const fr=4.5;                         // the fountain's basin: walk round it, never through it
   let ex=x,ez=z-TOWN_Z,ed=Math.hypot(ex,ez);
   if(ed<fr){if(ed<.001){ex=1;ez=0;ed=1}x=ex/ed*fr;z=TOWN_Z+ez/ed*fr}
@@ -5113,8 +5117,14 @@ function townBuild(){
   const flat=(cx,cz,w,d,c,rot,y)=>{const m=new THREE.Mesh(new THREE.PlaneGeometry(w,d),M(c));
     m.rotation.x=-Math.PI/2;if(rot)m.rotation.z=rot;m.position.set(cx,y||.02,cz);m.receiveShadow=true;G.add(m);
     TOWN.grounds.push({m,tile:null});return m};
-  const grass=new THREE.Mesh(new THREE.PlaneGeometry(150,150),M(C.grass));
-  grass.rotation.x=-Math.PI/2;grass.receiveShadow=true;G.add(grass);TOWN.grass=grass;
+  // The lawn is two planes, not one: the channel is a hole in the ground at 14.6..20.4 and grass
+  // laid across it would float over the water. (The quay walls close the cut exactly.)
+  const gN=TOWN_RIVER.z0-.4,gS=TOWN_RIVER.z1+.4;
+  const grassN=new THREE.Mesh(new THREE.PlaneGeometry(150,gN+75),M(C.grass));
+  grassN.rotation.x=-Math.PI/2;grassN.position.set(0,0,(gN-75)/2);grassN.receiveShadow=true;G.add(grassN);
+  const grassS=new THREE.Mesh(new THREE.PlaneGeometry(150,75-gS),M(C.grass));
+  grassS.rotation.x=-Math.PI/2;grassS.position.set(0,0,(gS+75)/2);grassS.receiveShadow=true;G.add(grassS);
+  TOWN.grass=grassN;
   const plaza=new THREE.Mesh(new THREE.CircleGeometry(TOWN_R,64),M(C.cob));
   plaza.rotation.x=-Math.PI/2;plaza.position.set(0,.02,TOWN_Z);plaza.receiveShadow=true;G.add(plaza);
   TOWN.plaza=plaza;
@@ -5123,57 +5133,102 @@ function townBuild(){
   TOWN.grounds.push({m:kerb,tile:null});
   // The avenue is split by the river: the town side runs from the plaza to the bridge, the far side
   // is the gate's forecourt. The bridge itself is the only paved crossing (see below).
-  const av=flat(0,10.2,9.0,8.6,C.path);                   // the avenue, plaza side of the river
+  const av=flat(0,10.2,9.0,8.8,C.path);                   // the avenue, plaza side of the river
   const avS=flat(0,23.0,9.0,5.0,C.path);                  // the gate's forecourt, river side
   const avO=flat(0,28.6,9.0,6.4,C.path);                  // the road out from the gate, outside the wall
   const ringPath=flat(-14.9,TOWN_Z,3.2,TOWN_R*1.6,C.path,0,.015),ringPath2=flat(14.9,TOWN_Z,3.2,TOWN_R*1.6,C.path,0,.015);
   // Tiles are laid at roughly one world unit each (the kit's own scale) so the paving reads as
   // paving and not as four giant slabs; `rep` is [across, along] where the mesh needs both.
   TOWN.tiles=[{m:plaza,tile:'ruin_cobble',rep:[23,23]},{m:kerb,tile:'limestone_pale',rep:[25,25]},
-    {m:av,tile:'dirt_path',rep:[7,9]},{m:avS,tile:'dirt_path',rep:[7,5]},{m:avO,tile:'dirt_path',rep:[7,6]},{m:grass,tile:'grass_jade',rep:[62,62]},
+    {m:av,tile:'dirt_path',rep:[7,9.2]},{m:avS,tile:'dirt_path',rep:[7,5]},{m:avO,tile:'dirt_path',rep:[7,6]},
+    {m:grassN,tile:'grass_jade',rep:[62,37]},{m:grassS,tile:'grass_jade',rep:[62,23]},
     {m:ringPath,tile:'limestone_pale',rep:[3,20]},{m:ringPath2,tile:'limestone_pale',rep:[3,20]}];
 
   // ---- the river, its banks and the bridge that crosses it ------------------------------------
   // Water is the kit's own animated HD pair (`water_frame_0/1`, the same tiles the fields' lakes
   // use), swapped every .55 s from townTick - so the river moves without the field's water list
   // (which buildKit() clears and disposes whenever a field is rebuilt).
-  const RZ=17.5,RW=5.0,RL=76;
-  const water=new THREE.Mesh(new THREE.PlaneGeometry(RL,RW),M(C.water));
-  water.rotation.x=-Math.PI/2;water.position.set(0,.03,RZ);water.receiveShadow=true;G.add(water);
-  TOWN.tiles.push({m:water,tile:'water_frame_0',rep:[RL,RW]});
+  // The channel is sunken (see TOWN_RIVER): the water sits .85 below the street between two quay
+  // walls, and the lawn is built in two halves around the band. That is what makes the bridge a
+  // bridge: the deck is carried over water you can see below the road, not laid on a blue stripe.
+  const RZ=17.5,RW=TOWN_RIVER.z1-TOWN_RIVER.z0,RL=150,WD=TOWN_RIVER.water,BD=TOWN_RIVER.bed;
+  const BH=TOWN_RIVER.half,seg=10,bz0=TOWN_RIVER.z0-.4,bz1=TOWN_RIVER.z1+.4,bl=(bz1-bz0)/seg;
+  TOWN.bridge={z0:bz0,z1:bz1,seg,ramp:1.5,base:.25,
+    top:i=>.25+.62*Math.sin(Math.PI*(cl(i,0,seg-1)+.5)/seg)};
+  const deckBot=i=>TOWN.bridge.top(i)-.42,abTop=deckBot(0)-.02,abW=BH+.45;
+  // the bed, the water, and (below) the quays that hold them: the bed closes the channel floor
+  const bed=new THREE.Mesh(new THREE.PlaneGeometry(RL,TOWN_RIVER.gap),M(0x8b7b5c));
+  bed.rotation.x=-Math.PI/2;bed.position.set(0,BD,RZ);bed.receiveShadow=true;G.add(bed);
+  TOWN.tiles.push({m:bed,tile:'sand_gold',rep:[RL,TOWN_RIVER.gap]});
+  const water=new THREE.Mesh(new THREE.PlaneGeometry(RL,TOWN_RIVER.span),M(C.water));
+  water.rotation.x=-Math.PI/2;water.position.set(0,WD,RZ);water.receiveShadow=true;G.add(water);
+  TOWN.tiles.push({m:water,tile:'water_frame_0',rep:[RL,TOWN_RIVER.span]});
   TOWN.river={m:water,maps:null,wt:0};
-  // the banks: a stone wall with a coping course down each side, so the water reads as a channel
+  // The quays: a retaining wall from the bed up to a low street parapet with a coping course, both
+  // wearing the kit's masonry. The parapet is cut where the bridge crosses and the wall continues
+  // under the deck as the abutment - a wall running straight across the avenue is what read as off.
   for(const sz of[RZ-RW/2,RZ+RW/2]){
-    bx(0,0,sz,RL,.9,.8,C.stone2);bx(0,.9,sz,RL,.22,.7,C.stone);
-    for(let i=0;i<2;i++){                     // steps down to the water at each end of the town
-      const sx=(i?1:-1)*21;bx(sx,0,sz+(sz<RZ?1.05:-1.05),3.0,.9,1.3,C.stone2);
-      bx(sx,0,sz+(sz<RZ?1.85:-1.85),3.0,.45,1.3,C.stone2);
+    const run=RL/2-abW;
+    for(const sx of[-1,1]){
+      const cr=bx(sx*(abW+run/2),BD-.25,sz,run,.25+.42-BD,.8,C.stone2);        // the retaining wall
+      const cp=bx(sx*(abW+run/2),.42,sz,run,.16,.95,C.stone);                  // its coping
+      TOWN.tiles.push({m:cr,tile:'limestone_pale',rep:[run/1.5,(.67-BD)/1.2]},
+                      {m:cp,tile:'limestone_pale',rep:[run/1.5,.55]});
+    }
+    const ab=bx(0,BD-.25,sz,abW*2,abTop-BD+.25,.8,C.stone2);                   // the abutment
+    TOWN.tiles.push({m:ab,tile:'limestone_pale',rep:[abW*1.2,(abTop-BD)/1.2]});
+    // a stair down to the water at each end of the town, cut against the quay like a real one
+    for(const sx of[-21,21])for(let k=0;k<3;k++){
+      const top=.42-k*.42,st=bx(sx,BD-.25,TOWN_RIVER.z0+.25+k*.5,2.6,top-BD+.25,.5,C.stone2);
+      if(k===0)TOWN.tiles.push({m:st,tile:'limestone_pale',rep:[1.8,1.1]});
     }
   }
-  // The bridge: a low stone arch on the avenue with parapets, cutwaters and lamps at the ends. One
-  // profile serves the deck and the ground the hero walks on (townGroundY), so the two cannot drift
-  // apart, and the abutments sit at .2 with ramps either side - you walk up onto it, not into it.
-  const BH=TOWN_RIVER.half,seg=10,bz0=TOWN_RIVER.z0-.4,bz1=TOWN_RIVER.z1+.4,bl=(bz1-bz0)/seg;
-  TOWN.bridge={z0:bz0,z1:bz1,seg,ramp:1.3,
-    top:i=>.2+.42*Math.sin(Math.PI*(cl(i,0,seg-1)+.5)/seg)};
+  // The bridge: a shallow stone arch on the avenue carried on piers, with parapets, cutwaters and a
+  // lamp at each corner. One profile serves the deck and the ground the hero walks on (townGroundY),
+  // so the walk goes up and over exactly the geometry you can see.
   for(let i=0;i<seg;i++){
     const z=bz0+bl*(i+.5),top=TOWN.bridge.top(i);
-    bx(0,top-.5,z,BH*2+.9,.5,bl+.02,C.stone);                               // the deck
-    for(const sx of[-BH,BH])bx(sx,top-.5,z,.5,.62,bl+.02,C.stone2);         // parapet
+    const de=bx(0,top-.42,z,abW*2,.42,bl+.02,C.stone);                        // the deck
+    TOWN.tiles.push({m:de,tile:'bridge_planks',rep:[5.2,bl/1.4]});
+    for(const sx of[-BH,BH]){                                                  // parapet + its cap
+      bx(sx,top-.42,z,.5,.62,bl+.02,C.stone2);
+      bx(sx,top+.2,z,.68,.16,bl+.02,C.stone);
+    }
   }
-  for(const e of[[bz0,-1],[bz1,1]]){                                        // ramps onto the abutments
-    const r2=bx(0,.05,e[0]+e[1]*.65,BH*2+.9,.12,1.5,C.stone);r2.rotation.x=e[1]*.14;
+  for(const e of[[bz0,-1],[bz1,1]]){                                          // the ramps onto it
+    const r2=bx(0,.03,e[0]+e[1]*.75,abW*2,.12,1.7,C.stone);r2.rotation.x=e[1]*.28;
+    TOWN.tiles.push({m:r2,tile:'bridge_planks',rep:[5.2,1.3]});
+  }
+  for(const sx of[-BH-.5,BH+.5]){                                             // the piers, nose upstream
+    const pt=deckBot(5),cut=bx(sx,BD-.25,RZ,.9,pt-BD+.25,1.4,C.stone2);
+    TOWN.tiles.push({m:cut,tile:'limestone_pale',rep:[.6,(pt-BD)/1.3]});
+    bx(sx,pt-.02,RZ,1.02,.24,1.52,C.stone);
   }
   for(const sx of[-BH,BH])for(const pz of[bz0+.2,bz1-.2]){
     bx(sx,0,pz,.9,1.05,.9,C.stone2);cy(sx,1.05,pz,.2,.26,.5,C.stone,10);
     const lamp=bx(sx,1.5,pz,.16,1.9,.16,C.wood),globe=sp(sx,3.5,pz,.26,0xffe08a);
     prop('lamp_post',sx,pz,TOWN_WH.lamp_post,false,[lamp,globe]);
   }
-  for(const sx of[-BH-.5,BH+.5]){bx(sx,.5,RZ,.9,1.0,1.4,C.stone2);}          // cutwaters
-  // reeds and grass tufts along both banks, so the water does not end in a razor line
+  // The vault's mouths face along the river, so what the town camera reads from above is the deck
+  // throwing its shadow on the water below it, and the shaded waterline at the foot of each quay.
+  // Those two lines are what make a channel look deep; without them water is a flat blue band.
+  const shadeTex=(()=>{const c=document.createElement('canvas');c.width=256;c.height=1;
+    const g2=c.getContext('2d');if(!g2)return null;const gr=g2.createLinearGradient(0,0,256,0);
+    gr.addColorStop(0,'rgba(16,34,52,0)');gr.addColorStop(.44,'rgba(16,34,52,.62)');
+    gr.addColorStop(.56,'rgba(16,34,52,.62)');gr.addColorStop(1,'rgba(16,34,52,0)');
+    g2.fillStyle=gr;g2.fillRect(0,0,256,1);const t2=new THREE.CanvasTexture(c);t2.needsUpdate=true;return t2})();
+  const flat2=(w,d,x,z,y,op)=>{const m2=new THREE.Mesh(new THREE.PlaneGeometry(w,d),
+    new THREE.MeshBasicMaterial(shadeTex?{map:shadeTex,transparent:true,depthWrite:false,opacity:op,color:0xffffff}
+      :{color:0x1a2a3a,transparent:true,depthWrite:false,opacity:op}));
+    m2.rotation.x=-Math.PI/2;m2.position.set(x,y,z);m2.renderOrder=1;G.add(m2);return m2};
+  flat2(19,TOWN_RIVER.span,0,RZ,WD+.012,.9);                                  // the bridge's shadow
+  for(const sz of[TOWN_RIVER.z0-.55,TOWN_RIVER.z1+.55])                       // the waterline shade
+    flat2(RL,.9,0,sz,WD+.008,.5);
+  // reeds and grass tufts along the waterline, so the water does not end in a razor line
   for(let i=0;i<30;i++){
-    const sx=-34+i*2.4+((i*7)%3)*.5,sz=(i%2?RZ+RW/2+.75:RZ-RW/2-.75);
-    mk(G,CY(.05,.02,.9,5),i%3?0x4f8f3a:0x6aa84f,sx,.45,sz);
+    const sx=-34+i*2.4+((i*7)%3)*.5,sz=(i%2?RZ+RW/2-.85:RZ-RW/2+.85);
+    if(Math.abs(sx)<5.6)continue;                                             // not under the deck
+    mk(G,CY(.05,.02,.9,5),i%3?0x4f8f3a:0x6aa84f,sx,WD+.45,sz);
   }
 
   // the BIG fountain: the painted HD fountain once the art pack is in, and the block-built
@@ -5309,7 +5364,8 @@ function townBuild(){
   // the south gate: two towers and a banner arch, with the road running through it. The gate group
   // is hidden when the painted arch is in (townArt), so the two never stand at once.
   TOWN.gateBlk=new THREE.Group();G.add(TOWN.gateBlk);
-  bx2(0,0,24.4,20,.4,3.2,C.stone);                      // the gate's own paved apron
+  const apron=bx2(0,0,24.4,20,.4,3.2,C.stone);           // the gate's own paved apron
+  TOWN.tiles.push({m:apron,tile:'ruin_cobble',rep:[13,2.1]});
   // two market tents on the forecourt beside the gate road, so the way in reads as a market street
   const fstall=(x,z,ry,c1,c2,name)=>{
     const g2=new THREE.Group();g2.position.set(x,0,z);g2.rotation.y=ry;TOWN.propBlk.add(g2);
@@ -5322,7 +5378,9 @@ function townBuild(){
   fstall(-7.0,22.2,.35,C.banner,C.trim,'stall_red');
   fstall( 7.0,22.2,-.35,C.banner2,C.trim,'stall_blue');
   for(const sx of[-5.4,5.4]){
-    bx2(sx,0,23,2.1,5.4,2.1,C.stone2);bx2(sx,5.4,23,2.5,.4,2.5,C.stone);
+    const gt=bx2(sx,0,23,2.1,5.4,2.1,C.stone2);
+    TOWN.tiles.push({m:gt,tile:'limestone_pale',rep:[1.4,3.6]});
+    bx2(sx,5.4,23,2.5,.4,2.5,C.stone);
     const tp=mk(TOWN.gateBlk,new THREE.ConeGeometry(1.7,1.5,4),C.roofBlue,sx,6.35,23);tp.rotation.y=Math.PI/4;
     sp2(sx,7.2,23,.26,C.gold);
   }
@@ -5335,14 +5393,18 @@ function townBuild(){
   // steps aside when the painted arch lands.
   for(const side of[-1,1]){
     const x0=side*6.45,x1=side*30,cx=(x0+x1)/2,long=Math.abs(x1-x0);
-    bx(cx,0,23,long,3.9,1.7,C.stone2);                       // the curtain
+    const cur=bx(cx,0,23,long,3.9,1.7,C.stone2);             // the curtain
     bx(cx,0,23,long,.6,2.1,C.stone2);                        // a plinth course at the foot
     bx(cx,2.7,23,long,.18,1.85,C.stone);                     // a string course to break the face up
-    bx(cx,3.9,23,long,.34,2.1,C.stone);                      // the walkway coping
+    const cope=bx(cx,3.9,23,long,.34,2.1,C.stone);           // the walkway coping
+    TOWN.tiles.push({m:cur,tile:'limestone_pale',rep:[long/1.5,2.6]},
+                    {m:cope,tile:'limestone_pale',rep:[long/1.5,.6]});
     for(let i=0;i<Math.floor(long/3.2);i++)                  // crenellations along the top
       bx(x0+side*(1.6+i*3.2),4.24,23,1.5,.7,1.7,C.stone2);
     for(const tx of[10.5,20.5,29.5]){                        // watch towers break the run up
-      bx(side*tx,0,23,3.0,6.6,3.0,C.stone2);bx(side*tx,4.7,23,3.1,.24,3.1,C.stone);
+      const wt=bx(side*tx,0,23,3.0,6.6,3.0,C.stone2);
+      TOWN.tiles.push({m:wt,tile:'limestone_pale',rep:[2.0,4.4]});
+      bx(side*tx,4.7,23,3.1,.24,3.1,C.stone);
       bx(side*tx,6.6,23,3.4,.4,3.4,C.stone);
       const tp=mk(G,new THREE.ConeGeometry(2.3,1.8,4),C.roofBlue,side*tx,8.05,23);tp.rotation.y=Math.PI/4;
       sp(side*tx,9.05,23,.3,C.gold);
@@ -5591,8 +5653,8 @@ function townGroundY(x,z){
   const B=TOWN.bridge;if(!B)return 0;
   if(Math.abs(x)>TOWN_RIVER.half+.45)return 0;
   if(z<B.z0-B.ramp||z>B.z1+B.ramp)return 0;
-  if(z<B.z0)return .2*(z-(B.z0-B.ramp))/B.ramp;                    // the ramps, same line as the slabs
-  if(z>B.z1)return .2*(B.z1+B.ramp-z)/B.ramp;
+  if(z<B.z0)return B.base*(z-(B.z0-B.ramp))/B.ramp;                // the ramps, same line as the slabs
+  if(z>B.z1)return B.base*(B.z1+B.ramp-z)/B.ramp;
   return B.top(Math.floor((z-B.z0)/((B.z1-B.z0)/B.seg)));
 }
 function townWalk(dt){
