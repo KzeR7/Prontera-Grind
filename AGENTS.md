@@ -4012,7 +4012,11 @@ assigned for feel rather than fidelity. While reworking that, two shipped bugs s
   7.6 units and the cathedral moved in from z -33 to -29.5 so it closes the skyline instead of
   floating; the fountain went **up** to 9.5 units (it is the centrepiece) and its water anchors
   (`TOWN.waterTop`/`waterBasin`) are derived from that height rather than hard-coded; the tree ring
-  moved out to r 18.6 and grew from 22 to 30, because the houses now stand on the old line.
+  moved out to r 18.6 and grew from 22 to 30 (27 place), because the houses now stand on the old line
+  — and its skip test was fixed while doing it: it used to drop any tree inside the walkable **box**
+  (x ±17.5 / z -16.6..19), which cut away the whole southern apron including trees that had nothing to
+  do with the bound; it now keeps the avenue clear (`|x| < 6.2 and z > 5`) and keeps the square itself
+  clear (`dist to plaza centre < 15.4`), so trees fill the ground a player actually walks past.
 * **A board, because this workspace has no browser.** `node tools/_town_dump.js` boots the real
   `index.html` in jsdom, walks into the town with the **real** atlas manifest, and writes
   `/tmp/town_placements.json` (every painted sprite: which art, where, how big, mirrored, which
