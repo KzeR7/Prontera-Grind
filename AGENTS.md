@@ -533,10 +533,13 @@ node tools/tests/scene_sim.js          # -> "8 passed, 0 failed" (per-map scener
 node tools/tests/starter_sim.js        # -> "8 passed, 0 failed" (the gentle starter stages)
 node tools/tests/stat_sim.js           # -> "7 passed, 0 failed"
 node tools/tests/weapon_joint_sim.js   # -> "7 passed, 0 failed"
-node tools/tests/ui_sim.js             # -> "37 passed, 0 failed"
+node tools/tests/ui_sim.js             # -> "42 passed, 0 failed"
 node tools/tests/sprite_viewer_sim.js  # -> "Sprite viewer: 154 PNGs, 7 trees, 19 class jobs; ..."
+node tools/tests/town_smoke.js         # -> "40/40 steps ok" (needs jsdom; skips cleanly without it)
 python3 tools/make_class_skins.py --check    # -> "Class skins are current."
 python3 tools/make_sprite_viewer.py --check  # -> "Sprite viewer is current."
+python3 tools/make_town_pack.py --check      # -> "Town art is current (20 sprites, atlas 4096x1793)."
+python3 tools/measure_town_ground.py --check # -> "Town ground offsets are current (20 sprites)."
 ```
 
 
@@ -557,6 +560,12 @@ moves a declaration can break a test without breaking the game. Traps, all hit o
 * A test that re-declares a game formula needs a **source pin** (a regex asserting the
   real formula is still there) or it will happily pass against a stale copy.
   `class_change_sim.js` and `save_load_sim.js` both have one.
+* `ui_sim.js` renders the **real** `V.*` panels against a fake save, so **anything a panel calls
+  must be in one of the spans it grabs** - not merely defined somewhere in `index.html`. A v77
+  panel asked `townUnlocked()`, which lived 2 500 lines away in the town block, and five map
+  tests threw `townUnlocked is not defined`. The fix is a `pick()` for the new helper next to the
+  `grab('const V={', ...)` entry plus any storage stub it reads (`lsGet`) - not a stub of the
+  helper, which would stop the panel's own gate being exercised.
 * `ui_sim.js` renders the **real** `V.*` panels against a fake save and fails on any
   `undefined` in the HTML and on any `data-a="…"` that is not a key in `ACT`. That lint
   is why the slot chooser's buttons are known to be wired; run it after touching a panel.
@@ -3864,6 +3873,82 @@ assigned for feel rather than fidelity. While reworking that, two shipped bugs s
 * **`📋 Copy everything` is unchanged** and still there for backups; it stays indented so it can be read. Nothing the owner can see in the game changed: `index.html` is untouched, `BUILD` is unchanged.
 * **Tests:** `tools/tests/weapon_proposal_sim.js` **567 checks, 0 failed** (was 565), the page script passes `node --check`, and all **30** suites are green. Pushed to PR #23 for eyeballing; do not merge it — that is the owner's call.
 
+### 2026-10-07 — `2026-10-07 grind-v68 prontera town: buildings, a fountain, five NPCs and click-to-walk`
+
+* **What the owner asked for:** a *new map* — Prontera-like, buildings all around, a big fountain in
+  the middle with an area for NPCs, **five NPCs with names and sprites**, **no mobs**, and
+  **mouse-click movement**, for players to walk around, take quests and read information. All six
+  points are in: the town is entered with **T** (or the World Map tab's town row), the plaza is
+  ringed by sixteen buildings, the fountain is three stone tiers with eight jets, and the terrace
+  holds Kafra Elise, Captain Rondel, Sister Marina, Scholar Wren and Smith Gordon — each of whom
+  has a working page (warp/save, contracts, healing, the Mastery Index, drops and refine).
+* **The town is a place, not a stage.** It is deliberately **not** a `MAPS` entry, so the Monster
+  Index, the drop tables, the leaderboard and the offline claim are untouched by its existence. It
+  has no spawner: the town branch in `update(dt)` returns before the respawn/roam block, so nothing
+  can spawn, attack, drop or unlock while the player is in it. `collect`/`kill` are unreachable
+  there, and the kill-rate sample that offline rewards are built from is not fed by town time.
+* **Every pixel is the game's own art** (house rule 1, crop only). The building ring uses the kit's
+  own `house_prontera` crops and `ruin_cobble` paving; the block-built RO houses stand in until the
+  atlas loads, exactly as the field's own fallback town does. The NPC sprites composite the class
+  sprite pack with the pack's own measured rules — **one idle row per NPC** (~0.5 MB) instead of a
+  full 24-row atlas (~13 MB) each, because five extra full atlases would have cost ~65 MB of canvas
+  for art that never animates; the drawn hero stands in until the pack loads. The fountain, gate,
+  terrace, stalls, lamps and banners are the same primitives and palette the fallback town uses.
+* **Click-to-move, and it goes round things.** A tap (not a drag — the camera keeps its
+  orbit/zoom) raycasts the ground, drops a gold ring and walks the hero there; a tap on an NPC walks
+  the hero over and opens their box. WASD/arrows walk as well and are routed ahead of the dock
+  hotkeys while in town, and **F** talks to the NPC beside you. The basin is a wall: if the straight
+  line to the target crosses it, `townWalk` hands the walk a tangent point so the hero rounds the
+  fountain; the hero and the stored target are clamped by the simulation, not by `draw()`.
+* **Five real bugs the new smoke test caught before this shipped** (all fixed): the field's roam
+  block still ran in town and re-targeted the hero at random field spots; the hero's clamp lived only
+  in `townTick` (called from `draw`), so a headless/simulation path let the hero walk into the
+  fountain; the tangent steer point was written back into `pl.wx/wz`, so the hero stopped at the rim
+  instead of going round; Kafra's warp accepted a **locked** stage (`S.prog[i]|0` of `undefined` read
+  as 1); and the kit house group reported itself visible while empty.
+* **The harness is in the repo:** `tools/tests/town_smoke.js` boots the real `index.html` in jsdom
+  with the real Three.js r128 and walks 23 town scenarios. It is deliberately **not** named
+  `*_sim.js` (it needs `npm i --no-save jsdom three@0.128.0`; it skips with exit 0 otherwise), so the
+  plain-node gate is unchanged. `node_modules/` is now ignored.
+* **Build and references:** `BUILD` is `2026-10-07 grind-v68 prontera town: buildings, a fountain,
+  five NPCs and click-to-walk`. The two build-labelled reference pages
+  (`Updates/cards-gear-audit/affix-ranges.html`, `equipment-cards-tuning.html`) and the deploy
+  checklist carry the new tag, and v67 was prepended to the worksheet's `SAFE_PREVIOUS_BUILDS`.
+
+### 2026-10-07 — `grind-v68` follow-up: the town is a card in the map UI, click-to-talk, click-to-walk everywhere
+
+* **The owner's feedback:** "i want this map to be a new map in my current game", "to go to the map
+  will be in my current map UI. adjust the sizing", "1. click to talk to npc", "i cant live preview.
+  it brings me to my weapon proposal page". All four are addressed in the same v68 build.
+* **The town is a card in the World Map tab's grid now** (`class="mapcard town-card"`, the same
+  class and the same size as the ten fields, `data-a="town"`), marked *Safe · no mobs* and *● Safe
+  town* while you are in it. Standing in town swaps the band below for the town's own: **Leave
+  town** plus the five NPCs and what each one does — a map with no stages no longer shows a stage
+  picker. The roster in that band is `window.TOWN_NPC`, the same data the NPCs are built from, so a
+  sixth NPC added to `TOWN_NPC` shows up in the UI by itself. (`window.TOWN_NPC` is published from
+  the bootstrap line, not from the town block: `skill_sim.js` slices that block into a sandbox with
+  no `window`, and the assignment threw there — found by running the gate.)
+* **Clicking an NPC talks immediately** — in the plaza and on their name plate (the plates are the
+  big, forgiving target now). The character still walks over while the page is open; nothing is
+  gated on arrival any more.
+* **Click-to-walk works on every map, not just the town** — the same raycast and gold ring, with the
+  click target clamped to the field lane and the roam put on hold (`pl.wt=999`) until the hero gets
+  there, at which point the auto-roam resumes on its own. Combat still owns movement while a pack is
+  engaged, so a click mid-fight only drops the ring.
+* **The dev server's `/` is the game.** It used to map `/` to the weapon proposal page, which is
+  exactly why the owner's preview "brought me to my weapon proposal page". `/` and `/game` now serve
+  `index.html`; the proposal page keeps `/weapons` (and gained `/proposal`), `TOOLS-START-HERE.md`
+  and `READ-ME-FIRST.md` say so.
+* **Also in this pass:** the HUD's title/status line and the `#prog` banner say *🏘 Prontera Town /
+  Safe map · no monsters* instead of the last field's stage; the walk ring lives in the scene (not
+  the town group) and is stepped once per drawn frame, so it works in both worlds.
+* **Tests:** all suites green; `ui_sim`'s map-panel assertions were **updated on purpose** (eleven
+  `mapcard`s now: ten fields + the town, with only ten `data-a="selm"`), and `town_smoke.js` grew
+  from 23 to **28 steps** — the town card in the grid, the town band and its five-name roster, a
+  name-plate click, a world click talking at once, and click-to-walk in a field (held target, then
+  the roam taking over). The smoke test caught the field test's own timing assumption, not a game
+  bug.
+
 ### 2026-10-07 — `map-kit-hd-option-b: Ultra-HD 256×256/512×512 Data.grf tiles + RO3 seamless splatmap, canopy light & 3D map details`
 
 * **What the owner asked for:** Ragnarok Online 3 style seamless map floors (**Option B: RO3 Seamless Splatmap Floor + Canopy Sunlight & Shadows**) upgraded to **crisp HD resolution** (zero blur, zero boxy grid repetition), plus **rich 3D ground details** (stones, grass tufts, RO1 herbs, mushrooms, crystals, curbs, lotus pads, fences) across all 10 maps and a **visual audit/harmonization of the 34 existing billboard sprites** against the new HD ground textures.
@@ -3881,6 +3966,181 @@ assigned for feel rather than fidelity. While reworking that, two shipped bugs s
 * **Preview boards & verification (`Updates/map-textures-preview/`):** `board-6-hd-option-b-zoom-comparison.png`, `board-7-hd-all-10-stages-option-b.png`, `board-8-hd-512-native-tiles-catalog.png`, `board-9-ingame-hd-option-b-verification.png`, and `board-10-3d-details-and-sprites-audit.png`.
 * **Tests:** `tools/tests/kit_sim.js` **35 passed, 0 failed**; `tools/tests/scene_sim.js` **8 passed, 0 failed**; `tools/tests/ui_sim.js` **42 passed, 0 failed**; `tools/tests/publish_sim.js` **10 passed, 0 failed**.
 
+### 2026-10-07 — `grind-v68` art pass: the town gets its own HD pack, and click-to-walk stays the town's
+
+* **The owner's feedback:** "click to walk is only for this town map. dont change the others." and
+  "the building sprite is awlful. make it as nice as ragnarok online 3. i already stated this
+  earlier. the details and fountain too. make it all HD & nice."
+* **Click-to-walk is the town's control again.** The field click from the previous pass is gone
+  (handler, helper and hint all removed); a tap on a field map does nothing, and the roam keeps
+  driving the hero exactly as it did before v68. `town_smoke.js` now proves it from the outside: a
+  real pointerdown/pointerup pair on the canvas in a field must not touch `pl.wt` and must not drop
+  the walk ring.
+* **The town has its own painted art pack.** `assets/town/town-atlas.png` + `.json` — nine RO3-style
+  painted buildings (town house, inn, shop, tall house, stone house, chapel, timber cottage, guild
+  hall, cathedral), a painted fountain, gate, market stalls, tree, lamp, statue, banner, bench and
+  flower beds. Painted to the owner's own art direction (HD Ragnarok Online 3 city art), then
+  chroma-keyed off a flat magenta backdrop, trimmed to the content box, downscaled to a 640 px
+  longest side and packed into one 4096x1281 atlas by `tools/make_town_pack.py` (`--check`
+  byte-compares, the same contract as the other builders). Paint sources stay in
+  `Updates/town-hd/work/`; the built atlas is mirrored into `Updates/town-hd/`.
+* **The buildings and the fountain are the pack's, not boxes any more.** Every building stands at its
+  true aspect with a soft contact shadow; the ring is seventeen spots dressed from eight designs
+  (mirrored and sized so the ring never repeats). The **painted fountain** replaces the block tiers
+  and keeps live water — droplets off the upper basin, spray off the crown, sparkle on the pool. The
+  painted cathedral replaces the block one, the painted gate arch replaces the block towers. Anything
+  not painted yet keeps its block stand-in, and a painted building always takes over the moment the
+  pack lands, even if the player is already in town.
+* **The ground is the kit's own HD terrain**, laid at about one world unit per tile: `ruin_cobble`
+  plaza, a `limestone_pale` kerb band and side paths, `dirt_path` avenue, `grass_jade` lawn.
+* **One real bug the smoke test caught in this pass:** the art pack finishes downloading on its own
+  clock, usually *before* the player ever walks in — `townArt()` dereferenced a town that did not
+  exist yet and would have thrown on boot. It now returns early when the town is not built, and the
+  suite pins that (`assert.doesNotThrow` with the pack "loaded" and the town unbuilt).
+* **Not painted yet** (they keep their code-built stand-ins, and the pack takes them over the moment
+  their art exists): gate arch, market stalls, trees, lamp posts, statue, banner poles, benches and
+  flower beds. Their names are already wired and the pack lists them as missing on every build.
+* **Tests:** all suites green; all five `--check` tools current (including the new town pack);
+  `town_smoke.js` is now **29 steps** — it stands in a stub manifest for the real atlas and asserts
+  the ring is painted, the block ring hides, the fountain is the painted one with a full spray list,
+  and the ground tiles are the HD set.
+
+### 2026-10-07 — `grind-v69` (town line): the plaza gets the rest of its art (twenty painted sprites), and the town square is laid out like a square
+
+* **Where this picks up:** the previous entry painted the nine buildings and the fountain and left a
+  list of props wired but unpainted ("gate arch, market stalls, trees, lamp posts, statue, banner
+  poles, benches and flower beds"). This pass paints that list and fixes the layout the painted art
+  exposed. Every one of the twenty sprites in `assets/town/town-atlas.*` is now used by the game.
+* **Nine new painted props + the memorial statue** (`Updates/town-hd/work/`, packed by
+  `tools/make_town_pack.py`, atlas now 4096x1793 / ~9 MB, 20 sprites, `--check` current): the gate
+  arch, a red and a blue market stall, the big shade tree, the lamp post, the banner pole, the bench,
+  two different flower beds, and a memorial statue of a knight. Painted to the same art direction as
+  the buildings (hand-painted RO3 city art, magenta backdrop, chroma-keyed, trimmed, 640 px longest
+  side), so the plaza reads as one set. **There is no bare block left in the town** — a painted prop
+  replaces its code-built stand-in the moment the pack loads.
+* **Two new prop spots the game did not have:** the statue (`x -6.6, z 9.6`, 3.4 units, beside the
+  avenue just inside the gate) and four flower beds on the plaza's own axes (r 9.6, so the ring
+  between the fountain and the lamps is not bare). The four code-built benches and the six banner
+  poles became prop spots too (`prop('bench',…)`, `prop('banner_pole',…)`), which needed `prop()` and
+  the `propSpots` list hoisted above them — they were defined after the benches, and `prop` in a
+  block is a `const`, so calling it earlier threw at build time (caught by the smoke test
+  immediately).
+* **The square is laid out like a square.** The painted ring made two things obvious, and
+  `tools/preview_town_board.py` (below) showed both: the ring was a wide scatter (r 19.4-22.4) with a
+  7.5-unit cottage next to a 2.3-unit tower, and its north side grew straight through the cathedral.
+  Now **fifteen houses wall the square** on the east and west at r 16.5-18.2, with the **gate corridor
+  south and the cathedral's north end left open**, and a house is sized by **how much street frontage
+  its slot owns** (`tw = (2*pi*r/22) * 0.99..1.12`, height from the art's own aspect) instead of by
+  the art's raw height — so the two rows meet like a street line. A slower rotation over 22 slots
+  replaces the old `% 8`, so no two neighbouring houses repeat. The gate arch came down from 8.4 to
+  7.6 units and the cathedral moved in from z -33 to -29.5 so it closes the skyline instead of
+  floating; the fountain went **up** to 9.5 units (it is the centrepiece) and its water anchors
+  (`TOWN.waterTop`/`waterBasin`) are derived from that height rather than hard-coded; the tree ring
+  moved out to r 18.6 and grew from 22 to 30 (27 place), because the houses now stand on the old line
+  — and its skip test was fixed while doing it: it used to drop any tree inside the walkable **box**
+  (x ±17.5 / z -16.6..19), which cut away the whole southern apron including trees that had nothing to
+  do with the bound; it now keeps the avenue clear (`|x| < 6.2 and z > 5`) and keeps the square itself
+  clear (`dist to plaza centre < 15.4`), so trees fill the ground a player actually walks past.
+* **A board, because this workspace has no browser.** `node tools/_town_dump.js` boots the real
+  `index.html` in jsdom, walks into the town with the **real** atlas manifest, and writes
+  `/tmp/town_placements.json` (every painted sprite: which art, where, how big, mirrored, which
+  group); `python3 tools/preview_town_board.py` composes those onto one 2:1 image at the real world
+  sizes with the game's own contact shadows, back to front, with the ground schematic. That is
+  `Updates/town-hd/board-1-town-layout.png` — it is how the overlap and the crowd round the north
+  end were caught, and it is the honest way to look at a layout with no Chrome to download. Neither
+  tool is in the `*_sim.js` gate (they need jsdom).
+* **Tests:** `node tools/tests/town_smoke.js` **29/29**; every `*_sim.js` green (including
+  `ui_sim`, which was pointed at the town card in the previous pass, and the two build-labelled
+  suites, which is why the label files below moved with the tag); all five `--check` tools current
+  (`make_town_pack.py --check` now reports 20 sprites).
+* **Build and references:** `BUILD` is now `2026-10-07 grind-v69 prontera town in HD: painted
+  buildings, fountain and a dressed plaza`. Both build-labelled reference pages
+  (`Updates/cards-gear-audit/affix-ranges.html`, `equipment-cards-tuning.html`) and
+  `tools/cloudflare-deploy-steps.md` carry it, and **v68 was prepended to `SAFE_PREVIOUS_BUILDS`**
+  (v68 lived in the tree long enough for the owner to make hand-backs against it). `READ-ME-FIRST.md`'s
+  town section is retitled **v69** and now describes the twenty-sprite pack, the painted list and the
+  town-only click control; `TOOLS-START-HERE.md` gained the town smoke suite, the town pack builder
+  and the two board tools. Files: `index.html`, `tools/make_town_pack.py` sources +
+  `Updates/town-hd/work/*` (10 new), `assets/town/town-atlas.*`, `Updates/town-hd/board-1-town-layout.png`,
+  `tools/_town_dump.js`, `tools/preview_town_board.py`, `tools/tests/town_smoke.js` (unchanged this
+  pass — it already asserted the painted ring, and it passed), the three label files, the three docs.
+
+### 2026-10-07 — `grind-v69` (town line) scale pass: every town sprite sized against the game's own art, trees moved outside the street
+
+* **The complaint:** "the building size looks off. existing trees and every details look off.
+  readjust it." It was right, and the cause was measurable: the town was sizing sprites by numbers
+  invented per call site, while the game already has an art scale to measure against.
+* **The scale the game already uses, used as the reference.** A hero is **2.7 units** (the sprite
+  pack draws 90 px of art at `PACK_K` = .03), the field's own house is **7.6 x 6.4** (crop 280x234 x
+  `KIT_PK` x .75), its big tree **10.9 x 9.7**, its stone lantern **1.7 x 3.2**, its tower **3.9 x
+  14.8**. New `TOWN_WH` table (next to `TOWNP`) gives every painted sprite its world height, and
+  **width always comes from the art's own aspect**, so nothing stretches: a normal town house is
+  7.2-8.8 tall, a shop 8.2, the guild hall 10.4, the cathedral 17.5, the gate arch 10.2, the
+  fountain 6.4, the statue 5.4, a lamp 5.6, a banner pole 7.2, a bench 1.3, a flower bed 1.3, a tree
+  8.4. `TOWN_BLK` holds the sizes the code-built stand-ins ask for, so the fallback is the same size
+  as the painted sprite that replaces it and nothing jumps when the pack lands.
+* **What that fixed, concretely:** buildings were **4.7 x 5.5** and are now ~**7.2-8.8**; the fountain
+  was **9.5** tall (taller than a house — it read as a chimney) and is **6.4**; the trees were
+  **4.6** tall and are now **8.4** with trunks and canopies to match (the code-built stand-in went
+  from a 1.5-unit pole to a 3.2-unit trunk under a 2.5-radius canopy); the gate arch was **9.8 x
+  12.6** (more city than the cathedral) and is **8.1 x 10.2**; lamps are 5.6 not 3.6, banners 7.2 not
+  4.3.
+* **The square is sized to its houses now.** Plaza radius **12.5 -> 11.4**, houses ring it at
+  **16.7-18.2** (was 16.5-19.1) with a 1.2-unit walkway between the kerb and the fronts, so the houses
+  wall the square instead of standing out in the grass looking small. Lamps moved to r 10.7, banners
+  to 11.9, the plaza's flower beds to 8.9, the fountain to 6.4 tall / 6.0 wide, and the ground tiles
+  were re-tiled at about one unit per tile for the new radius (23/25/…).
+* **The trees are outside the street, and the camera side is clear.** Trees were being placed at
+  r 21.4 on **every** arc, which put a forest south of the plaza — between the default camera (which
+  sits on +z, behind the gate) and the town. They now keep only the arcs behind and beside the town
+  (`sin(a) <= .42`), outside the house line at r 21.6-26.4, 13 of them, and the giant double trunk is
+  gone (a lot tree, not the field's wild ancient). The avenue guard stays (`|x| < 7.5 and z > 4`).
+* **Also measured, not guessed:** the street-line sizing now reads the same table — a house is as tall
+  as `TOWN_WH` says and as wide as its art makes it, capped at 1.12 of its slot's frontage so the
+  guild hall and the chapel cannot swallow a neighbour; `RING_DESIGNS` moved up beside the table so
+  the block fallback and the painted pack pick the *same* design for a slot (they were two separate
+  lists); and the block fountain's `.68` scale matches the painted 6.4 units.
+* **Verification:** `town_smoke.js` **29/29** (one assertion tightened on purpose: the plaza radius
+  floor moved from 12 to 11, since the square is deliberately tighter); all `*_sim.js` green; all five
+  `--check` tools current. The board
+  (`Updates/town-hd/board-1-town-layout.png`, from `tools/_town_dump.js` +
+  `tools/preview_town_board.py`) is what the new proportions were judged on — the sprite-size table in
+  this entry is the same numbers the board draws with.
+
+### 2026-10-07 — `grind-v69` (town line) camera pass: the town seen through the game's own camera (and the bug that caught), plus the flaky `api_sim`
+
+* **Why:** scale and layout were being judged on a plan board, and a plan is not what the player sees.
+  `tools/preview_town_board.py` now renders a **second** board — `Updates/town-hd/board-2-town-camera-view.png`
+  — by taking the camera the game itself would have and projecting every sprite through its real
+  view-projection matrix (`cam.matrixWorldInverse` x `cam.projectionMatrix`, both dumped by
+  `tools/_town_dump.js`). The dump now also enters the town the way the game does, applies the town's
+  own zoom clamp, pins the window to 16:9 and settles the camera on the spot the hero lands on
+  (`ct = pl*.6 / pl.z - CAMERA_LEAD_Z`), so the board is the honest "you just walked in" frame.
+* **The bug the camera board caught: the ring only ever walled the east side.** The two arcs were
+  generated as `side * (-66 + k*22)` degrees, and a mirrored angle list is the same list — fourteen
+  houses, seven pairs stacked on top of each other, all of them east of the fountain. The plan board
+  had hidden it because the pairs overlap exactly. The west arc is now `114 + k*22` degrees (a real
+  mirror), so the ring is seven houses east and seven west, x from -17.4 to 16.9. A regression guard
+  was added to `town_smoke.js` (houses on **both** sides, the avenue to the gate clear, the cathedral's
+  north end clear, fourteen houses) — the plan board could not have caught it, the camera board did.
+* **The town is framed for its own size.** The field's default pull-back (`18` units of view at zoom
+  `1`, the same for every map) shows about a third of a 44-unit town, so entering the town now clamps
+  the zoom to **<= .46** (was .62) and the wheel may go out to **.40** in town (the fields keep their
+  own `.6..2` exactly as before — `TOWN.scene` picks the floor). At .46 the square, the houses and
+  the gate are in frame together.
+* **Flower beds no longer grow through the roads.** The beds on the plaza's rim were placed at
+  r 15.4, which put them on the two `limestone_pale` side paths; they now sit at r 12.8-14.9 and skip
+  the strips (`|x| 12.4..17.4`, `|z-TZ| < 12.2`), so they dress the cobbles and the grass and never
+  the paving.
+* **`api_sim`'s flake, found and fixed at the root.** The suite had been failing intermittently (and
+  only in a back-to-back run) on "offline time is server-timed…": it computes `Date.now()-2h` for
+  `last_seen` and the handler credits the elapsed time **exactly**, so whenever a millisecond ticked
+  between the two calls the assertion saw `7200001 !== 7200000` and three later assertions (200 vs
+  428, kills 207 vs 7) cascaded off it. The test now freezes `Date.now` for that one call and restores
+  it in a `finally`. Four consecutive standalone runs and **two full `*_sim.js` loops: green**.
+* **Tests:** `town_smoke.js` **30/30** (the new ring guard); all `*_sim.js` green twice over; all five
+  `--check` tools current. `dist/` rebuilt. Build tag unchanged (`grind-v69`) — nothing in this pass
+  changes what a player sees in the fields.
 ### 2026-10-07 — `floats-proposal: three damage-number styles previewed; the missing crit explode frame diagnosed` (no game change, no BUILD bump, no PR, not pushed)
 
 * **What the owner asked for:** research on making the on-screen damage numbers look better with examples, the critical "explode frame" that went missing after the last update, a critical animation for **skill** criticals, and a clearer way to adjust the damage font & size — with a GIF reference for the fade. Three options and a proposal, **no PR**.
@@ -3991,6 +4251,19 @@ assigned for feel rather than fidelity. While reworking that, two shipped bugs s
 * **Tests:** all **34** suites pass; `ui_sim` 46, `class_change_sim` 27, `gear_sim` 32 groups, `crit_sim` 5. `node --check` clean, `git diff --check` clean.
 * **Not pushed** and no PR - the owner plays the build first.
 
+### 2026-10-07 — `2026-10-07 grind-v74 crit frames + HD Prontera Town: a walled gate, a bridge over the river, a street of shops`
+
+* **What the owner reported, screenshots this time:** "i would want the building on the left side also", "all the buildings looks floating", "the entrance looks so off. just a gate. maybe add bridge after gate to walk toward the center then below is a river" — plus "do more research and give me a more realistic design", and a request to fix the PR's merge conflicts. The PR (#28) was already **MERGEABLE/CLEAN** upstream, so nothing was merged: the local branch was realigned to `100445a` and the "conflicts" turned out to be a stale clone.
+* **"All the buildings look floating" was one shadow, and the numbers say why:** `townSprite` drew a single plane of `e.w*k*.9` by **`e.h*k*.3`** whose texture was then squashed by `scale(1,h/w)` — the depth came from the art's *height*, so a tall narrow building got a wide pale puddle and a low prop got almost nothing. Both layers are now cut from the sprite's **width**: a soft penumbra (1.22w × .44w, .30 peak alpha, opacity .85) and a tight dark core (.74w × .24w, .80 peak alpha, opacity .80), both nudged towards the camera the way a cast shadow falls; `blkShadow()` gives every block stand-in the same pair, so nothing changes shape when the pack lands.
+* **The entrance is now gate → bridge → river → avenue:** the avenue was split by a river (`TOWN_RIVER`, z 15..20) wearing the kit's own animated water pair (`water_frame_0/1`, swapped every .55 s from `townTick` — the field's `kitTick` only runs from `simSteps`, which never runs while the town owns the screen). A ten-segment stone bridge crosses it and `townGroundY()` serves **both** the deck geometry and the hero's height, so `draw()` walks the hero up and over (`P.position.set(pl.x,townOn()?townGroundY(pl.x,pl.z):0,pl.z)`) instead of through the stonework. `townAvoid` walls the water off the deck, the deck is walkable, and `TOWN_BOUND.z1` moved 19 → 21.8 so the whole way in is a walk the player can make.
+* **"Just a gate" was a missing wall, not a missing gate:** the gate now stands in a curtain wall (x ±6.45..30: plinth, string course, walkway, crenellations, three watch towers a side with blue roofs and gold finials), the painted `gate_arch` moved onto the wall's own plane (z 23) with the block gate, the forecourt carries two market tents, the road out of town is paved and two trees frame the approach.
+* **The left flank got its street:** `TOWN.street` — two houses on the west flank, one on the east — fronts the avenue between the square's southern corner houses and the river, on the same designs and sizing rule as the ring (`d` names the design so stand-in and art agree, `r` caps width like a ring slot). Placement came off dumped coordinates, not by eye: the ring's own corner houses already stand at (-7.1, 9.9) and (6.8, 9.3), so the street sits at x ±9.2..12.6, z 11.4..14.2.
+* **Research first (the owner asked for it):** fandom/irowiki/ragnaplace on Prontera — an imperial capital, dense blocks on all four sides, radial avenues off a central plaza whose fountain is the free market, the church at the north, **gates with moat water and bridges** (the south exit crosses a bridge) and cherry trees lining the blocks. The redesign took what the town did not have: buildings on both flanks of the avenue, water and a bridge at the entrance, and a wall to make the gate read as a gate.
+* **The boards grew a third view, because the second could not see any of this:** `tools/_town_dump.js` now also dumps `tiles` (every ground tile, its rect and its radius), `river`, `bridge` (the segment tops) and `boxes` (every visible box mesh — wall, deck, banks), plus a second camera `camGate` standing on the far bank looking in. `tools/preview_town_board.py` draws the ground *from the dump* instead of a redrawn schematic, draws those solids in the **same painter's order** as the sprites, and lays the game's two-layer contact shadows; `board-3-town-entrance-view.png` is the shot the owner's screenshot came from.
+* **Three stale smoke assertions, deliberately updated rather than deleted:** the fountain guard keyed on `TOWN.g.children.slice(0,60)` (the new river and bridge pushed the fountain out of that window) → asserts on `TOWN.fountain` itself now; the ground-tile whitelist needed `water_frame_0`; the ring guard accepts any of the three legitimate dressings (painted / kit crops / blocks) while still asserting the blocks are always built and the two rings never stand at once.
+* **Files touched:** `index.html` (BUILD, `TOWN_BOUND`/`TOWN_RIVER`, `townAvoid`, `townShadowTexture`/`townSprite`/`blkShadow`, the river/banks/bridge/wall/street/forecourt/approach build, `townGroundY`, `draw()`, the marker's y, `townTick` water, `townArt` street + frame pair); `tools/_town_dump.js`; `tools/preview_town_board.py`; `tools/tests/town_smoke.js`; boards 1–3; build-tag snapshots (`Updates/cards-gear-audit/affix-ranges.html` ×2, `equipment-cards-tuning.html` + `SAFE_PREVIOUS_BUILDS`, `tools/cloudflare-deploy-steps.md`); `READ-ME-FIRST.md`, `TOOLS-START-HERE.md`.
+* **Tests:** all **34** suites pass; `town_smoke` **35/35** with five new scenarios (river/bridge geometry and the walk line, the walk out of the square and over the arch to the wall, the entrance street, the grounding shadows, the river's own animation clock); five `--check` tools current; `bash tools/build_site.sh` 30M.
+
 ### 2026-10-07 — `2026-10-07 grind-v74.1 novices keep 1st-job gear, phone layout pass`
 
 * **Two owner follow-ups on v74, shipped as one build.** (1) *"make novices left alone, means
@@ -4095,6 +4368,17 @@ assigned for feel rather than fidelity. While reworking that, two shipped bugs s
   `economy_sim` 23). `node --check` clean.
 * **Not pushed** and no PR - the owner plays the build first.
 
+### 2026-10-07 — `2026-10-07 grind-v75 crit frames + HD Prontera Town: a sunken river under the gate bridge, stone quays and a tiled wall`
+
+* **What this pass is:** the round-5 realism pass on the town's way in, on top of v74, judged through the game's own camera (`board-2`/`board-3`) rather than the 2:1 plan.
+* **The river was ON the road:** v74's water plane sat at y **.03** (street level) between quay walls 1.1 tall, so the bridge had nothing to arch over. `TOWN_RIVER` now carries the channel (`water:-.85,bed:-1.35,span:4.2,gap:5.8,kerb:.45`); the lawn is **two** planes around the band (one plane floated over the water), the bed takes `sand_gold`, the water sits .85 below the street, and the deck's crown (.87, underside .45) clears it by 1.3 units.
+* **The quay wall crossed the avenue:** each quay was one 150-unit box at z 15/20 with the deck buried in it. The runs are cut at the deck (parapet |x| > 4.65; the wall continues underneath as the abutment), and `town_smoke` now walks the town's box meshes to fail on any long run whose span reaches into the avenue at a quay line.
+* **Depth is carried by what the camera can see** (the vault's mouths face along the river): the deck's shadow on the water (gradient strip), the shaded waterline at both quay feet, reeds inside the channel, stairs down to the water at x ±21, and cutwater piers standing on the bed.
+* **Masonry is dressed, not flat:** the curtain wall, watch towers, gate towers, both quay courses, the deck (`bridge_planks`, the kit's own deck tile) and the ramps all name real kit tiles in `TOWN.tiles`.
+* **Walk line:** `townGroundY`'s ramps take `B.base`; `TOWN_BOUND.z1` 21.8 → **22.3** (21.75 left the walk-out target standing on the ramp). Board tool: `river_and_bridge` draws the quay runs cut at the deck, so the board cannot show a wall across the avenue.
+* **Files touched:** `index.html` (BUILD, `TOWN_RIVER`, `townAvoid`, the lawn split, the river/quay/bridge/shade build, `TOWN_BOUND`), `tools/tests/town_smoke.js`, `tools/preview_town_board.py`, the label files, `READ-ME-FIRST.md`, `TOOLS-START-HERE.md`.
+* **Tests:** `town_smoke` **35/35** (bridge pins, ramp and walk-out assertions rebuilt, the painted shadow pair's off-by-one fixed, `sand_gold`/`bridge_planks` in the tile allowlist, masonry names checked against the kit manifest), all **33** `*_sim.js` suites green.
+
 ### 2026-10-07 — `2026-10-07 grind-v76 nightmare band and exclusive nightmare gear`
 
 * **Owner decision.** Asked how to fix Base Lv 100-150 ("this could be a buzz kill ... same map until
@@ -4174,6 +4458,14 @@ assigned for feel rather than fidelity. While reworking that, two shipped bugs s
 * **Files:** `functions/api/register.js`, `tools/dev_server.js`, `tools/tests/dev_server_sim.js`,
   `tools/cloudflare-deploy-steps.md`, `.gitignore`.
 
+### 2026-10-07 — `2026-10-07 grind-v76 crit frames + HD Prontera Town: a paved market square, a buttressed city wall and the sunken river`
+
+* **What this pass is:** a second realism pass over what the town camera shows, grounded in the Prontera references the owner asked for (the central fountain square is the market, and the city is a walled rectangle).
+* **The square is paved:** two 2.6-wide `limestone_pale` streets cross the plaza through the fountain and a paved apron (RingGeometry 5.0..7.2) rings its basin, so the square reads as the crossroads the market sits on; the flower beds moved from the axes to the diagonals, off the roads.
+* **The wall is masonry:** six buttresses a side on the face the camera sees, arrow slits between them, a corbel table under the walkway, and a corner bastion (with merlons and a blue roof) capping each end of the curtain.
+* **Files touched:** `index.html` (BUILD, plaza paving meshes, bed angles, the curtain-wall loop), `tools/tests/town_smoke.js` (the new scenario), the label files, `READ-ME-FIRST.md`.
+* **Tests:** `town_smoke` **36/36** (paving, beds off the streets, buttresses and slits, kit tile names); all 33 `*_sim.js` suites and the six `--check` tools green.
+
 ### 2026-10-07 — `2026-10-07 grind-v76.2 nightmare rarity, MVP naming, harder band`
 
 * **Owner play-test of v76** came back as six notes, all built here: a Nightmare rarity, bosses renamed
@@ -4220,6 +4512,20 @@ assigned for feel rather than fidelity. While reworking that, two shipped bugs s
   `READ-ME-FIRST.md`, the three BUILD mirrors, `Updates/v76-nightmare-report.md`.
 * **PR opened** at the owner's request; the trial dungeon is the next build (v77).
 
+### 2026-10-07 — `2026-10-07 grind-v77 crit frames + HD Prontera Town: locked until the owner opens it, houses facing the square, nothing floating or overlapping`
+
+* **What the owner reported (five items, all on the town in PR #76):** "could u block access to this town first before i open up to the public, i need to do more changes"; "the entrance is brown castle like but the wall beside it is white & blue roof. not relatable at all. also the gate & all houses spins together with the camera"; "all houses and trees look like it floats. maybe because the shadow below?"; "some trees are overlapping with the building"; "above the fountain there is a platform u build. its overlapping with the buildings".
+* **1 — the town ships shut.** `const TOWN_OPEN=false;` is the single switch, and `townUnlocked()` is the one gate: `TOWN_OPEN || S.gm || lsGet('pg_town_open')==='1'`. It guards `window.town()` (refuses with a log line), and the map panel **still shows the town card** — a greyed `.mapcard.town-card.closed` with the reason and no `data-a="town"` — so the slot is visible but there is no way in from the grid. **Leaving is never gated** (`townExit()`, `data-a="town"` handling, the button and the keyboard all stay open) and the GM account is always let through, so the gate can never strand anyone inside. `window.townUnlock()` (or `localStorage pg_town_open=1` before boot) opens it for a session; flipping `TOWN_OPEN` to `true` and bumping the build opens it for everybody — that flip is the whole release step.
+* **The HD art no longer downloads while the gate is shut.** The atlas fetch moved out of the boot path into `townEnter()` (guarded by `TOWNP.started`, so it still runs exactly once), so a locked town costs a player nothing; before this it was fetched at boot by every visitor.
+* **2 — the whole town was billboards.** Every building was a `THREE.Sprite`, and three.js turns a sprite to face the camera every frame, which is exactly the "gate & all houses spins together with the camera" report. `townSprite(name,units,flip,opt)` now takes `opt.yaw`: with it the art is a `THREE.Mesh(PlaneGeometry(w,h))` (`side:DoubleSide`, `alphaTest:.2`, `userData.face` = the art name) in a group carrying `userData.art`, so a building holds one bearing for good. The ring's yaw already pointed each front at the square, so the facades inherit it — measured, every house front's unit dot product to its facing target is **> .999**, and the block stand-ins' `rotation.y` deep-equals the ring's own yaw. Sprites that *should* face the player (NPCs, the hero) still do.
+* **2b — the wall and the gate now share one palette.** The curtain wall's long runs wear the kit's warm `cliff` tile (it was bare `limestone_pale`) and **every** cone on the gate line — gatehouse, watch towers, corner bastions — is capped `TOWN_MASON.roof`; the loose `0x3f6fb5` blue is gone from the wall code, so the brown castle entrance and the wall beside it are dressed from the same two colours.
+* **3 — the float was the art's own empty feet, not the shadow.** The first opaque scanline from the bottom of each sprite was measured: the town art carries **transparent margins beneath the painted ground line** (`house_town_a` 0.011, `stall_red` 0.018 … `stall_blue` 0.451 of the frame), so a plane cut to the image's edge put that gap *on* the ground and the contact shadow floated with it. `TOWN_SINK` holds the 20 measured offsets, `townSprite` sets `y = h/2 - TOWN_SINK[art]*h`, and **`tools/measure_town_ground.py` owns the table** (`--check` fails if a sprite's margin changes). The shadow is untouched, and it is now provably one sprite: a ring house carries exactly **one** `BoxGeometry` body and **two** flat shadow planes.
+* **4 — trees stood inside walls because they were planted before the buildings existed.** `townBlockers` is now filled **before** the tree loop, a house registers its **whole plot** (the facade stands at the spot and its body runs half a depth behind it, so the blocker straddles both, not the facade footprint), `townClear(x,z,r)` rejects any candidate that touches one, and each candidate tries seven radii stepping 1.6 before it is dropped. **`townClear` gained a `kind` filter** (`townAddBlocker(...,'house')`) so flower beds are still culled against houses only — a bed beside a street is fine, a bed inside a wall is not. 16 trees stand, every one measured clear of every blocker.
+* **5 — the terrace over the fountain is smaller and further back.** `TOWN.terrace` was shrunk and moved so it sits behind the five north houses instead of through them; it keeps its two defining traits (`|x0| < 9`, `z1 < -15`) and now measures **0 overlaps** against all 17 house plots.
+* **One more stand-in fixed while measuring:** the block tree was two cones with a visible gap between them; the canopy (CY 2.5→3.4, y 5.2) now starts below the trunk's top (CY 1.7→3.4), so it reads as one piece of the same silhouette as the painted art.
+* **Files touched:** `index.html` (BUILD, `TOWN_OPEN`/`townUnlocked`/`townUnlock`/`townEnter` gate, `townPackFetch` deferred + `TOWNP.started`, the closed card in `V.map`, `townSprite`'s yaw/mesh branch, `TOWN_SINK`, `townAddBlocker`/`townClear` kinds, the tree and terrace placement, the wall tiles and cone caps); `tools/measure_town_ground.py` (**new** generator + `--check`); `tools/tests/town_smoke.js` (40 scenarios, six new); `tools/tests/ui_sim.js` (the gate is pulled into its spans; the map panel's closed card and the GM's live card are both asserted); `tools/_town_dump.js` (the dev dump opens the gate the way the owner's console would); `tools/preview_town_board.py`; the three boards; `READ-ME-FIRST.md`; the build-tag snapshots.
+* **Tests:** `town_smoke` **40/40** (closed gate, GM/flag bypass, leaving never gated, no art fetched while shut, houses facing the square, no sprites, world quaternions unchanged after an `az` orbit, grounding, one body box, trees and terrace clearance, one-piece stand-in tree, wall/gate palette); **ui_sim 42**; all **34** suites green; seven `--check` tools current.
+* **To open the town:** set `TOWN_OPEN` to `true`, bump `BUILD`, push. Nothing else in the gate changes.
 ### 2026-10-08 — `2026-10-08 grind-v77 Endless Echo, doubled Nightmare band, N auto-sell`
 
 * **Endless Echo, the damage trial (owner: "start the dungeon … hd & realistic … undead & hell theme,

@@ -34,8 +34,8 @@ deploy — but the host's build output directory must be `dist/`, never the repo
   changing the class art or the hero.**
 * `TOOLS-START-HERE.md` — **the tool map**: every dev page, generator and picker in `tools/`, what it answers
   and who owns it. Read that instead of guessing which of the two dozen pages is the live one.
-* `tools/weapon_proposal.html` — **the live weapon review page** (served at `/` by
-  `python3 tools/preview_server.py 8000`, or `/weapons`). Every one of the 19 classes on its own sprite
+* `tools/weapon_proposal.html` — **the live weapon review page** (served at `/weapons` by
+  `python3 tools/preview_server.py 8000`; `/` is the **game itself**, so the preview link opens it). Every one of the 19 classes on its own sprite
   with a real Ragnarok Online weapon on it. It opens **frozen** so the weapon can be placed against a
   still frame (`▶ Play animation` to animate, `,`/`.` to step a frame). Drag to move, wheel/`[`/`]` to
   rotate, `-`/`+` to size, `0` to reset. **🎯 Set hand** then a click on the sprite locks the weapon onto
@@ -178,6 +178,36 @@ The dungeon is **built**: `2026-10-08 grind-v77 Endless Echo, doubled Nightmare 
   chests should sit. A fully decked Base Lv 150 character is expected around 65k–135k DPS, so the
   middle rungs are the ones that will matter.
 
+## BUILD v77 — the town is locked until the owner opens it; houses face the square; nothing floats or overlaps
+
+Everything here is the five-item list the owner left on the town PR (#76).
+
+* **The town ships shut.** `const TOWN_OPEN=false;` at the top of the town block is the switch;
+  `townUnlocked()` is the gate (`TOWN_OPEN || S.gm || localStorage pg_town_open==='1'`). While it is
+  shut the map still shows the town card — greyed, labelled **Closed**, with no way in — and the HD
+  atlas **is not fetched at all** (the fetch moved from boot into `townEnter`, so a locked town
+  costs visitors nothing). **Leaving is never gated**, so nobody can be stranded inside. Open it for
+  yourself with `window.townUnlock()` (or `localStorage pg_town_open=1` before boot); open it for
+  everybody by setting `TOWN_OPEN` to `true` and bumping `BUILD` — that flip is the whole release.
+* **Nothing billboards any more.** Every building was a `THREE.Sprite`, which three.js turns to face
+  the camera every frame — that was "the gate & all houses spins together with the camera". Buildings
+  are now `THREE.Mesh` planes with a fixed yaw, so each front keeps pointing at the square it stands
+  on (measured: every front's unit dot product to its target is > .999).
+* **The wall and the gate share one palette.** The curtain wall wears the kit's warm `cliff` stone
+  and every cone on the gate line (gatehouse, watch towers, corner bastions) is capped with the same
+  `TOWN_MASON.roof` — the brown castle entrance and the wall beside it are finally dressed alike.
+* **The float was the art's own empty feet.** The town sprites carry a transparent margin *below*
+  the painted ground line, so a plane cut to the image edge hung that gap over the ground. The
+  per-art offsets are measured, not guessed (`TOWN_SINK`, owned by `tools/measure_town_ground.py`,
+  whose `--check` fails if one drifts), and each facade sinks by that fraction of its height.
+* **Trees no longer grow out of walls.** The blocker list is filled before anything is planted, a
+  house blocks its whole plot (facade plus the body behind it), and each tree tries seven fallback
+  radii before it is dropped: 16 trees stand, every one measured clear.
+* **The platform over the fountain was shrunk and moved back** so it sits behind the north houses
+  instead of through them (0 overlaps against all 17 house plots).
+* **Tests:** `town_smoke` is **40 scenarios** now (the gate, the bypasses, the facings, the
+  grounding, the clearances), **ui_sim 42**, all **34** suites and the seven `--check` tools green.
+
 ## BUILD v76.2 — Nightmare rarity, MVP naming, a harder band, and the map fixes
 
 The owner's first play-test of v76 came back with six notes; this is all of them. **The difficulty and
@@ -216,23 +246,6 @@ drop figures below replace the v76 ones** (the v76 section is kept underneath as
   the rebuild was resetting it every time a stage was tapped. The rebuild now restores the outer
   scroll by number and only nudges the pressed control into view when it is off screen
   (`scrollIntoView({block:'nearest'})`), so a re-render in place stays perfectly still.
-
-## Testing the preview (and getting GM tools on it)
-
-```sh
-node tools/dev_server.js --gm-all --db tools/.devdb/preview.sqlite
-```
-
-* The preview's database is **in memory by default**, so restarting it wipes accounts and saves, and
-  the account you registered last time is gone. `--db <file>` keeps it instead (the path above is
-  gitignored).
-* **`--gm-all` makes every account registered on that preview an owner**, so a new preview can never
-  leave you on an account with no GM tools. It is preview-only — never set `DEV_GM_ALL` on the
-  Cloudflare project.
-* **On the live server**, the owner is the first account registered against that database. If you lose
-  it, the game's own `GM` login (username `GM` + the GM password) still gives you the GM tab in that
-  browser, and `tools/cloudflare-deploy-steps.md` → *If you lose the owner (GM) account* has the
-  one-line SQL to promote your cloud account back to `gm=2`.
 
 ## BUILD v76 — the Nightmare band (Base Lv 100-150) and its exclusive gear
 
@@ -276,6 +289,41 @@ Field power used to stop at **Abyss Stage 10 (power 99)** while the level cap is
 * **Testing the band:** the GM console has **Unlock Nightmare (Base Lv 150)**, which sets Base Lv 150
   and unlocks all five stages so you can walk straight into Nightmare Abyss 15.
 
+## BUILD v76 — the square is paved, and the wall is masonry
+
+A second realism pass over what the town camera actually shows, grounded in the Prontera references
+the owner asked for: the city is a **walled rectangle**, and the **streets around the central
+fountain are the market**.
+
+* **The plaza is a market square, not a grey disc.** Two paved streets (2.6 wide, `limestone_pale`)
+  cross the square through the fountain, and a paved apron (r 5.0..7.2) rings its basin, so the
+  square reads as the crossroads the market sits on. The **flower beds moved off the crossing
+  streets** onto the diagonals, behind the benches, so no bed stands in a road.
+* **The wall reads as a wall.** The face the camera sees now carries **six buttresses a side**,
+  **arrow slits** between them and a **corbel table** under the walkway, and each end of the curtain
+  is capped by a **corner bastion** with merlons and a blue roof — the wall stops at a tower instead
+  of stopping in the middle of a field.
+* **Tests:** `town_smoke` is **36 scenarios** now (the new one walks the plaza's paving, checks that
+  no bed stands in the crossing streets, counts the buttresses and slits, and re-checks that every
+  course still names a tile the kit ships), and all **34** suites plus the five `--check` tools are
+  green.
+## Testing the preview (and getting GM tools on it)
+
+```sh
+node tools/dev_server.js --gm-all --db tools/.devdb/preview.sqlite
+```
+
+* The preview's database is **in memory by default**, so restarting it wipes accounts and saves, and
+  the account you registered last time is gone. `--db <file>` keeps it instead (the path above is
+  gitignored).
+* **`--gm-all` makes every account registered on that preview an owner**, so a new preview can never
+  leave you on an account with no GM tools. It is preview-only — never set `DEV_GM_ALL` on the
+  Cloudflare project.
+* **On the live server**, the owner is the first account registered against that database. If you lose
+  it, the game's own `GM` login (username `GM` + the GM password) still gives you the GM tab in that
+  browser, and `tools/cloudflare-deploy-steps.md` → *If you lose the owner (GM) account* has the
+  one-line SQL to promote your cloud account back to `gm=2`.
+
 ## BUILD v75 — pet species passives and duplicate Bond
 
 Pets used to differ only in their drawing and their rarity: two pets of one rarity were the same
@@ -311,6 +359,43 @@ pet, and a duplicate was dead weight in a 40-slot bag. A species now has a job o
   **Pet bonuses** line naming each fighting pet's contribution; and the Drops panel and pet-drop log
   lines name the passive when a species arrives. `+1 duplicate on the selected pet` buttons in the
   GM console let you watch a Bond climb without farming fifteen drops.
+
+## BUILD v75 — the water is below the road: a sunken river, quays cut at the bridge
+
+The v74 gate → bridge → river was all there and still read wrong through the game's own camera, so
+this pass went back over the channel itself. Every problem was geometry, not art.
+
+* **The river lay ON the road, not below it.** v74's water was a plane at y **.03** — level with the
+  street — between quay walls standing 1.1 above it: the camera saw a blue stripe with a lip, and the
+  bridge had nothing to arch over. `TOWN_RIVER` now carries the channel's own numbers (`water:-.85`,
+  `bed:-1.35`, `span:4.2`, `gap:5.8`, `kerb:.45`). The lawn is built as **two** planes around the band
+  (one lawn plane would have floated straight over the water), the bed takes the kit's `sand_gold`,
+  and the water sits .85 below the street between two quay walls whose retaining faces run from the
+  bed up to a low street parapet and its coping. The deck's crown is .87 and its underside .45, so it
+  clears the water by 1.3 units: a bridge over water you can see, which is what "below is a river"
+  asked for.
+* **The quay wall ran straight across the avenue.** Each quay was one 150-unit box at z 15/20, so a
+  wall crossed the road at both bridge mouths and the deck was buried in it. The run is now cut at the
+  deck: the parapet stops at |x| > 4.65, the wall continues underneath as the bridge's abutment, and
+  `town_smoke` guards it against the town's own box meshes — a long run whose span reaches into the
+  avenue near a quay line fails the suite.
+* **The arch cannot read (the town camera never looks down the river), so the channel carries it
+  instead:** the deck's shadow on the water (a gradient strip under it), the shaded waterline at the
+  foot of both quays, reeds inside the channel, a stair down to the water cut against the quay at
+  x ±21, and the piers dressed as cutwaters standing on the bed.
+* **All the masonry wears the kit's own stone.** The curtain wall, its watch towers, the gate towers,
+  both quay courses, the deck (`bridge_planks` — the kit's own deck tile, the one the fields' bridges
+  use) and the ramps name real kit tiles through `TOWN.tiles`, so no flat pastel box stands next to
+  painted art any more.
+* **The walk moved with it:** `townGroundY` takes its base from the bridge table (`B.base`), so the
+  hero climbs the ramp from the street to the crown and down again, and `TOWN_BOUND.z1` is **22.3**
+  (21.8 left the walk-out target standing on the journey's last metre of ramp).
+  `tools/preview_town_board.py` draws the quay runs **cut at the deck** too — a full-width strip on
+  the board was drawing the very bug the town had just been fixed for.
+* **Tests:** `town_smoke` is **35 scenarios** (the bridge pins and the walk-out line rebuilt against
+  the new numbers, the painted-shadow pair's off-by-one fixed, the masonry check guarded on
+  `TOWN.kitArt` and its tile names verified against `assets/kit/ro-tiles-hd.json`), and all **34**
+  suites plus the five `--check` tools are green.
 
 ## BUILD v74.1 — novices keep 1st-job gear, and the phone layout pass
 
@@ -375,6 +460,37 @@ pet, and a duplicate was dead weight in a 40-slot bag. A species now has a job o
 * **Boss crit defence softened** (v73's ladder was too steep): Comodo/Louyang/Amatsu **-15%**,
   Niflheim **-20%**, Abyss **-30%**; maps 1-5 still resist nothing. A capped 60% build crits them
   **51/51/51/48/42%** of the time.
+
+## BUILD v74 — the town's way in: a walled gate, a bridge over the river, a street of shops
+
+This pass answers three things the owner saw in screenshots of the shipped town — "i would want the
+building on the left side also", "all the buildings looks floating", "the entrance looks so off. just a
+gate. maybe add bridge after gate to walk toward the center then below is a river" — and follows the
+research they asked for (Prontera: dense blocks on all four sides, radial avenues off a central plaza
+whose fountain is the market, the church north, **gates with moat water and bridges**).
+
+* **Grounding (why they read as floating):** the contact shadow was a single plane whose *depth* came
+  from the artwork's height (`e.h*k*.3`) with the texture squashed to match, so a tall narrow building
+  stood on a wide pale puddle and a low prop on almost nothing. Both layers are now cut from the
+  sprite's **width** — a soft penumbra and a tight dark core, offset slightly towards the camera — and
+  the block stand-ins get the same pair, so a building does not change shape when the art pack lands.
+* **The way in is a walk you can make:** the avenue is split by a **river** (z 15..20) drawn with the
+  kit's own animated water tiles, crossed by a **stone bridge** whose deck and whose *ground height*
+  come from one profile (`townGroundY`), so the hero walks up and over it; `townAvoid` keeps the hero
+  out of the water off the deck, and the walkable bound now runs out to the wall the gate stands in.
+  The gate itself moved into that **curtain wall** (crenellated, watch towers, gold finials), with market
+  tents on the forecourt outside, the road out of town paved and two trees framing the approach.
+* **The left flank is built:** three street houses (`TOWN.street`) front the avenue between the
+  square's southern corner houses and the river — placed off dumped coordinates, since the ring's own
+  corner houses already stand there.
+* **How it was judged without a browser:** the dump (`node tools/_town_dump.js`) now carries the real
+  ground tiles, the river, the bridge's segment tops, every solid box and a **second camera standing on
+  the far bank**, and `python3 tools/preview_town_board.py` draws three boards — the plan, the square
+  from the hero's landing spot, and **`board-3-town-entrance-view.png`**, the way in through the gate,
+  over the bridge and up the avenue. That last board is the shot the owner's screenshot came from.
+* **Tests:** `town_smoke` is **35 scenarios** now (the river and the bridge's walk line, the walk out of
+  the square and over the arch, the entrance street, the grounding shadows, the river's animation tick),
+  and all 34 suites plus the five `--check` tools are green.
 
 ## BUILD v73 — crit retune, Index Crit to 100%, lighter mid-map drops, boss crit resist
 
@@ -460,7 +576,111 @@ pet, and a duplicate was dead weight in a 40-slot bag. A species now has a job o
 * **Short form now starts at 100K (v70, the owner's rule):** 100,000 reads "100K", 1,000,000 reads "1M", and everything below — 99,999 included — stays in full digits. The Settings toggle still switches every float to full digits everywhere.
 * **v68:** the skill-name banner moved above the hero's head (world height 3.65, was forehead-level 3.15); multi-cast slots still stagger upward.
 * **Dev-only:** `Updates/damage-floats-proposal/` is the live tuner page that produced these settings (open with `python3 tools/preview_server.py 8000` → `/`; it has a **📋 Copy my selection** button). The weapon page moved to `/weapons`. Nothing in the proposal folder ships to players.
+## BUILD v69 — Prontera Town in HD: a safe map, five NPCs, painted buildings and a dressed plaza
 
+* **A new map, and it is a place, not a stage: Prontera Town.** It is **a card in the World Map
+  tab's own grid** — the same card class and the same size as the ten fields, sitting right beside
+  them, marked *Safe · no mobs* — so the way in is the map UI you already use. Press **T**, click
+  that card, or use `window.town()` in the console. While you are standing in town the band under
+  the map cards becomes the town's own: a **Leave town** button and the **five NPCs with what each
+  one does for you**, instead of a stage picker that a map with no stages should not have. The field's monsters, kit deco,
+  road and sky are hidden while you are there, and the town has **no spawner at all** — nothing
+  spawns, nothing attacks, nothing drops. It is the one map where the hero stops grinding.
+* **The layout the owner asked for:** a cobbled plaza (radius 11.4) around the **painted HD
+  fountain** (6.4 units tall over the square, with live water — droplets off the upper basin, spray
+  off the crown, sparkle on the pool), an **NPC terrace** behind it with stone pillars and banners,
+  the **gate arch** in from the south, **fourteen houses walling the square** east and west with the
+  avenue and the cathedral keeping the two ends open, four market stalls, four benches, eight lamps,
+  six banner poles, five flower beds on the plaza's axes, a **memorial statue** beside the gate and a
+  **cathedral** closing the skyline.
+* **Every sprite is sized against the game's own art scale, not by eye.** A hero is **2.7 units**, the
+  field's own house is **7.6 x 6.4**, its big tree **10.9 x 9.7**, its stone lantern **1.7 x 3.2** — so
+  a town house is 7.2-8.8 tall (the guild hall 10.4, the cathedral 17.5, the gate arch 10.2), the
+  fountain centerpiece 6.4, a lamp 5.6, a tree 8.4, a bench 1.3. Widths always come from the art's own
+  aspect, so nothing is stretched, and the code-built stand-ins use the same table — what you see
+  before the pack loads is the size you get after it. The trees are lot trees outside the street line
+  (the gate side is left clear, because the default camera looks in from there).
+* **The town's own HD art pack (`assets/town/town-atlas.*`, built by `tools/make_town_pack.py`).**
+  **Twenty RO3-style painted sprites** — nine buildings (town house, inn, shop, tall house, stone
+  house, chapel, timber cottage, guild hall, cathedral), the fountain, the gate arch, two market
+  stalls, a tree, a lamp post, a banner pole, a bench, two flower beds and the memorial statue — all
+  in one atlas, cropped at runtime exactly like the map kit's own sheet. **Nothing in the town is a
+  bare block any more:** every prop the plaza uses has painted art, and each painted sprite replaces
+  its code-built stand-in the moment the pack loads (even if the player is already standing in town).
+  The paint sources live in `Updates/town-hd/work/`; the builder chroma-keys the magenta backdrop,
+  trims each sprite to its content box, downscales the longest side to 640 px (about 2.6x
+  supersampling at the size a building is actually drawn) and packs them into
+  `assets/town/town-atlas.png` (4096x1793, ~9 MB). `--check` re-runs the build in memory and
+  byte-compares, so a stale atlas cannot ship. Every sprite is drawn at its true aspect and gets a
+  soft contact shadow, so it reads as standing on the ground rather than as a sticker. A building is
+  sized by how much street frontage its slot has (not by its art's height), so the two rows meet like
+  a street line instead of a scatter of cottages, and the mirror flag alternates so the ring never
+  repeats.
+* **The ground is the kit's own HD terrain**, laid at about one world unit per tile (the kit's own
+  scale): `ruin_cobble` paving for the plaza, a `limestone_pale` kerb band and side paths, `dirt_path`
+  for the avenue in from the gate, `grass_jade` for the lawn.
+* **Five NPCs with names and sprites, standing on the terrace:** **Kafra Elise** (warp & save),
+  **Captain Rondel** (the guard's contract board), **Sister Marina** (temple healer), **Scholar
+  Wren** (Royal Library / Mastery Index) and **Smith Gordon** (forge & market). Each has a name
+  plate over their head that lights up when you are close enough to talk. Click one and the hero
+  walks over and their box opens; **F** talks to whoever is beside you.
+  Their sprites are the class sprite pack composited with the game's own measured rules (body cell
+  + head at the pack's anchor), **one idle row per NPC** (~0.5 MB) rather than a full 24-row atlas
+  (~13 MB) each — five extra full atlases would have cost ~65 MB of canvas for art that never
+  animates. Until the pack has loaded each NPC wears the game's drawn hero, and the pack art
+  replaces it the moment it arrives.
+* **What talking gets you:** Kafra warps to any stage you have already unlocked — the same `S.prog`
+  rule the World Map enforces, checked in code so a locked stage is refused, not merely greyed — and
+  saves; the captain lists your contracts, pays out a finished one and drafts a fresh contract of
+  the same kind scaled to your level; the sister restores HP and explains HP, defeat and First Aid;
+  the scholar opens the Mastery Index and the card album and explains the ladder and tokens; the
+  smith explains which field drops which rarity, ore, refine and the boss-only Legendary rule.
+* **Click-to-walk belongs to the town, and only to the town.** The ten fields keep exactly the
+  controls they shipped with (WASD/arrows and the auto-roam) — a tap on a field does nothing. *An
+  earlier pass had given the fields a click target too; the owner asked for that back out — "click to
+  walk is only for this town map. dont change the others" — and out it came.* In town, clicking the
+  ground drops the gold ring and the hero walks there. **Click an NPC and they talk at once** — the box opens on
+  the click, no walking required, and the hero walks over while you read. Their **name plates are
+  clickable** too, so the easiest target on the plaza is the one that works. **WASD and the arrow
+  keys** walk too, and while in
+  town they take priority over the dock hotkeys. The basin is a wall, not a magnet: a target on the
+  far side of the fountain is **walked around**, and the hero is clamped out of the fountain and out
+  of the NPCs by the simulation itself (not by the frame that happens to draw it).
+* **Nothing about the balance moved.** The town is not an entry in `MAPS`: no monsters, no cards, no
+  drops, no stage, so the Monster Index, the drop tables, the leaderboard and the cloud offline claim
+  never have to know it exists. Time in town does not feed the kill-rate sample that offline rewards
+  are built from — parking in town does not throw away the credit for the time you were away. `S.town`
+  is a display-only flag (the World Map button reads it) and `load()` clears it.
+* **Testing:** all suites green plus the five `--check` tools. The town itself is driven end to end by
+  `node tools/tests/town_smoke.js` — a jsdom harness that boots the real `index.html` with the real
+  Three.js r128 (`npm i --no-save jsdom three@0.128.0`; it prints a skip line and exits 0 without
+  them, so a clean checkout is never blocked). It walks **35 town scenarios** (the count and the list
+  grew with each town pass; v74 added the river and the bridge's walk line, the walk out of the square
+  and over the arch to the wall, the entrance street, the grounding shadows and the river's own
+  animation tick — see the v74 section above): entry and scene swap,
+  the plaza/fountain/ring, the painted pack dressing every building and prop (with a stub manifest for
+  the real atlas), the five NPCs and every page they render, click-to-walk both across the plaza and
+  around the fountain, **the ten fields having no click-to-walk at all** (a real pointerdown/pointerup
+  on the canvas in a field must not touch the walk target), WASD, ten minutes of standing still with
+  zero spawns, healing, taking and claiming a contract, locked-stage warp refusal, warping out, the
+  field spawning again afterwards, the offline rate untouched, the pack art replacing the stand-ins,
+  and a save/load round trip. It has caught real bugs on the way: the field's roam running in town,
+  the hero not being clamped by the simulation, the steer point overwriting the walk target, Kafra
+  warping into a locked stage, an empty kit group reporting itself visible, and — this pass — the art
+  pack finishing its download *before* the town was ever built, which dereferenced a town that did not
+  exist yet and would have thrown on boot.
+* **How this pass was looked at without a browser:** this workspace cannot download Chrome, so the
+  town is checked by `node tools/_town_dump.js` (jsdom walks into the real town with the real atlas
+  manifest, takes the cameras the game would have — the hero's landing spot and the bank outside the
+  gate — and writes every sprite's placement plus the ground tiles, the river, the bridge's segment
+  tops and every solid box) and `python3 tools/preview_town_board.py`, which draws **three** boards: the
+  plan at 2:1 (`Updates/town-hd/board-1-town-layout.png`, real crops at real world sizes, back to
+  front), the **view through the game's own camera** (`board-2-town-camera-view.png`) and the
+  **entrance** (`board-3-town-entrance-view.png`, from the bank outside the gate). The camera board is what caught the last real bug - the
+  ring's west arc was a mirrored angle list, which is the *same* list, so all fourteen houses stood on
+  the east side exactly on top of each other, invisible on the plan and obvious from the camera.
+  Entering the town also pulls the camera back further than a field does (zoom .46, wheel to .40),
+  because the square does not fit in a field's frame.
 ## BUILD v67 — moderated movement, fixed combat floats, server-timed cloud idle claims
 
 * **Movement dialed back:** the speed is now exactly halfway between the old formula and v66's proposed slowdown. AGI 99 is **8.12** instead of 11.45 units/s (about **29.1% slower**, not 58%); AGI 120 is **8.68** instead of 12.5 (about **30.5% slower**, not 61%). The Speed x2/x4 button is unchanged.
@@ -635,7 +855,9 @@ PY
 python3 tools/make_sprite_viewer.py --check
 python3 tools/make_class_skins.py --check
 python3 tools/make_weapon_pack.py --check      # the weapon art under assets/weapons/
+python3 tools/make_town_pack.py --check        # the town's HD art under assets/town/ (needs pillow)
 for t in tools/tests/*_sim.js; do node "$t" || exit 1; done
+node tools/tests/town_smoke.js                 # optional: needs `npm i --no-save jsdom three@0.128.0`
 ```
 
 Run the suite before every push. `pack_sim.js` reads the extracted `/tmp/pack_block.js`; the

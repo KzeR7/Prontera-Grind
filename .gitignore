@@ -3,3 +3,5 @@ __pycache__/
 dist/
 
 tools/.devdb/
+# tools/tests/town_smoke.js installs these with --no-save; the game itself has no build step
+node_modules/
