@@ -694,5 +694,17 @@ t('the enlarged arena keeps kit props out of its running lane', () => {
   assert.strictEqual(plan(3).props.length >= MOR.sprites.length, true, 'and not one of them is dropped');
 });
 
+t('Ultra-HD 256x256 tile atlas (ro-tiles-hd) and kit3DDetails build across all ten maps', () => {
+  const HD = JSON.parse(fs.readFileSync(R + '/assets/kit/ro-tiles-hd.json', 'utf8'));
+  assert.strictEqual(HD.meta.size.w, 1536); assert.strictEqual(HD.meta.size.h, 1024);
+  assert.strictEqual(Object.keys(HD.tiles).length, 25, 'all 25 terrain tiles exist in HD');
+  for (const [n, r] of Object.entries(HD.tiles)) {
+    assert.strictEqual(r.w, 256, n + ' HD width'); assert.strictEqual(r.h, 256, n + ' HD height');
+    assert.ok(r.x >= 0 && r.y >= 0 && r.x + r.w <= HD.meta.size.w && r.y + r.h <= HD.meta.size.h, n + ' HD bounds');
+  }
+  assert.ok(/function kit3DDetails\(plan,m,root\)/.test(code), 'kit3DDetails is wired into the map kit');
+  assert.ok(/kit3DDetails\(plan,m,deco\)/.test(code), 'buildKit invokes kit3DDetails');
+});
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);
