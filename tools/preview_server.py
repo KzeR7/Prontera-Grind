@@ -5,8 +5,10 @@
 
 Routes:
 
-    /            the weapon proposal page  (weapons on the class sprites - the current one)
-    /weapons     the same page
+    /            the damage-floats proposal page (on-screen damage numbers: 3 options)
+    /damage      the same page
+    /crit        a live crit-frame comparison: the old misaligned burst vs the current one
+    /weapons     the weapon proposal page (weapons on the class sprites)
     /review      the older weapon review page (drag a weapon where it looks wrong)
     /standalone  the weapon review page with its data inlined (one file, no side requests)
     /picker      the attack pose + head picker (the owner's usual page)
@@ -28,6 +30,9 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # own routes underneath it.
 PAGES = {'/': 'index.html',
          '/game': 'index.html',
+         # the tuner pages (PR #29/#30) keep their own routes - they are tools, not the game
+         '/damage': 'Updates/damage-floats-proposal/index.html',
+         '/crit': 'Updates/crit-frame-compare/index.html',
          '/weapons': 'tools/weapon_proposal.html',
          '/proposal': 'tools/weapon_proposal.html',
          '/review': 'tools/weapon_review.html',

@@ -435,12 +435,12 @@ t('HP flips at 30%; one split bar fills Base from left and Job from right with c
 });
 
 t('damage floats stay screen-projected, restrained, and distinct by type', () => {
-  assert.ok(src.includes('.fl.damage,.fl.skill-damage,.fl.critical,.fl.incoming{position:absolute'),
+  assert.ok(src.includes('.fl.damage,.fl.skill-damage,.fl.critical,.fl.skill-critical,.fl.incoming{position:absolute'),
     'combat nodes must remain absolutely anchored to projected screen coordinates');
-  assert.ok(src.includes('.fl.damage{font-size:17px;color:#fff0a6!important;-webkit-text-stroke:'),
-    'ordinary damage uses a smaller, simpler gold Trebuchet treatment');
-  assert.ok(src.includes('.fl.critical{font-size:21px;')&&!src.includes('.fl.critical::before{'),
-    'critical damage is only modestly larger and has no oversized frame');
+  assert.ok(src.includes('.fl.damage{color:#fff0a6!important;-webkit-text-stroke:'),
+    'ordinary damage keeps the gold treatment (now in the selected game font)');
+  assert.ok(src.includes('.fl.critical,.fl.skill-critical{font:900 32px "Trebuchet MS",Verdana,sans-serif')&&!src.includes('.fl.critical::before{')&&!src.includes('>CRIT<'),
+    'critical damage carries the restored explode frame (child elements, no CRIT chip)');
   assert.ok(src.includes('.fl.miss,.fl.evade{position:absolute;')&&!src.includes('border:1px solid #d9e1ec'),
     'MISS and DODGE are plain text labels with no badge frame');
   assert.ok(src.includes('#xp-track{display:flex;width:100%;height:14px')&&src.includes('#xp-dock{flex:none;width:100%;padding:3px 10px 4px'),
@@ -458,7 +458,7 @@ t('damage floats stay screen-projected, restrained, and distinct by type', () =>
   F.damageFloat(1,2,3,879,false);F.damageFloat(1,2,3,1896,true);
   F.damageFloat(1,2,3,55,false,true);F.skillNameFloat('Bash',1);
   assert.deepStrictEqual(Array.from(F.floats,f=>f.kind),['damage','critical','incoming','skill']);
-  assert.strictEqual(F.floats[1].txt,'1.9K','a critical number is shortened like any other, never replaced by a label');
+  assert.strictEqual(F.floats[1].txt,'1896','a critical number uses one formatter; below 100K the owner rule keeps it in full digits');
   assert.strictEqual(F.floats[0].txt,'879','numbers under a thousand keep every digit');
   assert.strictEqual(F.floats[2].txt,'55','incoming damage follows the same setting');
   // the Show toggle really hides the numbers; the style toggle only changes the digits
@@ -467,11 +467,12 @@ t('damage floats stay screen-projected, restrained, and distinct by type', () =>
   assert.strictEqual(F.floats.length,4,'with damage numbers switched off, no damage float is pushed at all');
   F.dmgShow=true;
   assert.strictEqual(F.numTxt(1250000),'1.3M','rewards and damage share one short formatter');
-  assert.strictEqual(F.numTxt(20500),'20.5K');
+  assert.strictEqual(F.numTxt(20500),'20500'); // owner rule: below 100K stays full digits
+  assert.strictEqual(F.numTxt(205000),'205K');
   F.full=true;
   assert.strictEqual(F.numTxt(1250000),'1250000','and the full style prints every digit');
-  assert.deepStrictEqual([100000,1000000,12500,999,1000,2500000,999999,1234567].map(F.shortNum),
-    ['100K','1M','12.5K','999','1K','2.5M','1M','1.2M'],'the short form ladder');
+  assert.deepStrictEqual([100000,1000000,12500,999,1000,2500000,999999,1234567,99999].map(F.shortNum),
+    ['100K','1M','12500','999','1000','2.5M','1M','1.2M','99999'],'the short form ladder: short only from 100K (owner rule)');
   F.full=true;
   F.damageFloat(1,2,3,1000000,false);F.damageFloat(1,2,3,1896,true);
   assert.strictEqual(F.floats[4].txt,'1000000','the Settings switch shows every digit');
@@ -488,7 +489,7 @@ t('damage floats stay screen-projected, restrained, and distinct by type', () =>
     'actual critical strike must send its numeric damage into the burst renderer');
   assert.strictEqual(vm.runInContext('S.dmg',strikeBox)>0,true,
     'every player hit must add to the lifetime damage counter the DPS meter reads');
-  assert.strictEqual(F.floats[3].anchor,'hero');assert.strictEqual(F.floats[3].y,3.53);
+  assert.strictEqual(F.floats[3].anchor,'hero');assert.strictEqual(F.floats[3].y,4.03); // 3.65 base + .38 per slot (v68: banner above the head)
   const draw=grab('  floats.forEach(f=>{if(!f.el)', '  const pt=bn?');
   const scene={floats:F.floats,pl:F.pl,create:()=>({style:{}}),draw};
   vm.createContext(scene);
@@ -497,6 +498,11 @@ t('damage floats stay screen-projected, restrained, and distinct by type', () =>
   F.pl.x=8;vm.runInContext(draw,scene);
   assert.strictEqual(F.floats[3].el.style.left,'80px','skill names must track the moving hero');
   assert.strictEqual(F.floats[1].el.className,'fl critical');
+  const critHtml=F.floats[1].el.innerHTML;
+  assert.ok(critHtml.includes('class="fburst"')&&critHtml.includes('class="fring"'),'a critical float carries the explode frame');
+  assert.strictEqual((critHtml.match(/class="fstreak"/g)||[]).length,9,'a critical sprays 9 speed-line streaks');
+  assert.ok(critHtml.includes('class="fburst" style="width:108px'),'the burst box is sized from the finished number (1896 -> max(64, 4*32*.84) = 108)');
+  assert.strictEqual(F.floats[0].el.innerHTML,undefined,'ordinary hits stay plain text, with no frame markup');
 });
 
 t('Zeny and kill rates refresh every second using a rolling minute and reset after stalls', () => {

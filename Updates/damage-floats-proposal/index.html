@@ -1,0 +1,513 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Prontera Grind — on-screen damage numbers: 3 options</title>
+<style>
+:root{--parch:#e9d39a;--edge2:#8a6d3b;--bg:#141210;--panel:#1e1a14;--panel2:#26201780}
+*{box-sizing:border-box}
+body{margin:0;background:radial-gradient(1200px 600px at 50% -100px,#2a2317,#141210 70%);color:#e8dfc8;font:14px/1.5 "Trebuchet MS",Verdana,sans-serif;min-height:100vh}
+header{padding:18px 22px 6px;display:flex;align-items:baseline;gap:14px;flex-wrap:wrap}
+header h1{font-size:20px;margin:0;color:var(--parch);letter-spacing:.4px}
+header .tag{font-size:12px;color:#b9a97f;border:1px solid #5a4a2c;border-radius:4px;padding:2px 8px;background:#00000040}
+main{padding:10px 22px 40px;max-width:1180px;margin:0 auto}
+.note{background:#26201780;border:1px solid #5a4a2c;border-radius:8px;padding:10px 14px;margin:10px 0 16px;font-size:13px;color:#d8cba4}
+.note b{color:var(--parch)}
+/* ---------- control deck ---------- */
+#deck{background:var(--panel);border:1px solid var(--edge2);border-radius:10px;padding:12px 14px;margin-bottom:14px;box-shadow:0 4px 18px #0008}
+#deck .rows{display:flex;flex-wrap:wrap;gap:14px 26px;align-items:flex-end}
+.ctl{display:flex;flex-direction:column;gap:3px;min-width:130px}
+.ctl label{font-size:11px;color:#b9a97f;text-transform:uppercase;letter-spacing:.6px}
+.ctl input[type=range]{width:150px;accent-color:#d4a937}
+.ctl .val{font-size:11px;color:#f0e2b6}
+.ctl select{background:#2b2418;color:#efe3c0;border:1px solid #5a4a2c;border-radius:5px;padding:4px 6px;font:12px "Trebuchet MS",sans-serif}
+.btns{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+button{background:linear-gradient(#3a3021,#2a2317);color:#efe3c0;border:1px solid #6b5730;border-radius:6px;padding:7px 13px;font:700 13px "Trebuchet MS",sans-serif;cursor:pointer}
+button:hover{filter:brightness(1.2)}
+button:active{transform:translateY(1px)}
+button.gold{background:linear-gradient(#7a5b1d,#4d3a12);border-color:#b98d3e;color:#ffe9ad}
+button.on{outline:2px solid #d4a937}
+.sep{width:1px;align-self:stretch;background:#5a4a2c66;margin:0 4px}
+/* ---------- tabs ---------- */
+#tabs{display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap}
+#tabs button{font-size:12px;padding:6px 11px}
+/* ---------- strips ---------- */
+.strip{position:relative;height:190px;border:1px solid #00000088;border-radius:10px;margin-bottom:14px;overflow:hidden;
+ background:linear-gradient(#33402f 0%,#273323 55%,#1c261b 56%,#141c12 100%);box-shadow:inset 0 0 70px #000a, inset 0 14px 30px #ffffff08}
+.strip::after{content:"";position:absolute;inset:0;pointer-events:none;background:radial-gradient(480px 200px at 50% 110%,#ffe9ad0d,transparent 60%)}
+.strip .plate{position:absolute;left:10px;top:8px;z-index:5;display:flex;gap:8px;align-items:center}
+.strip .plate .name{font-weight:700;color:var(--parch);font-size:13px;text-shadow:0 1px 3px #000;background:#000000a8;padding:3px 10px;border-radius:5px;border:1px solid #5a4a2c}
+.strip .plate .desc{font-size:11px;color:#cfc19a;background:#000000a8;padding:3px 9px;border-radius:5px;border:1px solid #00000055;max-width:520px}
+.strip .plate .live{font-size:10px;color:#ffb0a6;border:1px solid #a05038;border-radius:4px;padding:1px 6px;background:#000000a8}
+.groundline{position:absolute;left:0;right:0;top:56%;height:2px;background:#00000042}
+/* placeholder target (deliberately generic - the numbers are what is on trial) */
+.dummy{position:absolute;left:60%;bottom:34px;width:58px;height:84px;transform:translateX(-50%);filter:drop-shadow(0 4px 4px #0007)}
+.dummy i{position:absolute;display:block}
+.dummy .head{left:50%;top:0;width:30px;height:30px;transform:translateX(-50%);border-radius:50%;background:radial-gradient(circle at 35% 30%,#e8c87a,#b98d3e 70%);border:2px solid #6e4f1d}
+.dummy .bar{left:50%;top:28px;width:10px;height:36px;transform:translateX(-50%);background:linear-gradient(90deg,#8a5a2b,#5e3b1a);border-radius:3px}
+.dummy .arm{left:6px;right:6px;top:36px;height:8px;background:linear-gradient(#93643a,#5e3b1a);border-radius:4px}
+.dummy .base{left:50%;bottom:0;width:46px;height:10px;transform:translateX(-50%);background:linear-gradient(#7a4f24,#4c2f13);border-radius:3px}
+.hero{position:absolute;left:18%;bottom:32px;width:36px;height:58px;transform:translateX(-50%);filter:drop-shadow(0 4px 4px #0007)}
+.hero i{position:absolute;display:block}
+.hero .robe{left:50%;bottom:0;width:26px;height:36px;transform:translateX(-50%);background:linear-gradient(#3d5f9e,#24386b);border-radius:8px 8px 4px 4px;border:1px solid #16244d}
+.hero .hood{left:50%;top:0;width:22px;height:22px;transform:translateX(-50%);border-radius:50% 50% 45% 45%;background:radial-gradient(circle at 35% 30%,#5a7cc0,#2c4479 70%);border:1px solid #16244d}
+/* ---------- floats ---------- */
+.pfh{position:absolute;width:0;height:0;pointer-events:none;z-index:9}
+.pf{position:absolute;left:0;top:0;transform:translate(-50%,-50%);pointer-events:none;z-index:10;white-space:nowrap;will-change:transform,opacity}
+.pf .txt{display:inline-block}
+.pf .burst{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);pointer-events:none}
+.pf .burst svg{display:block;width:100%;height:100%;overflow:visible}
+.pf .ring,.pf .spark,.pf .flash{position:absolute;left:50%;top:50%;pointer-events:none}
+
+footer{color:#8f8266;font-size:12px;padding:0 22px 30px;max-width:1180px;margin:0 auto}
+footer a{color:#c9b684}
+h2{color:var(--parch);font-size:15px;margin:22px 0 8px}
+ul.research{margin:6px 0;padding-left:20px;color:#cfc5a6}
+ul.research li{margin:4px 0}
+</style>
+</head>
+<body>
+<header>
+ <h1>⚔ Prontera Grind — on-screen damage numbers</h1>
+ <span class="tag">proposal only · nothing in the game changed · no PR</span>
+ <span class="tag">BUILD 2026-10-07 grind-v67</span>
+</header>
+<main>
+ <div class="note">
+  <b>What this page is.</b> Three ready-to-apply styles for the combat numbers, plus the restored critical
+  "explode frame" that v66 had and v67 removed, a brand-new <b>skill-critical</b> animation, and live
+  <b>font&nbsp;/&nbsp;size&nbsp;/&nbsp;fade</b> controls so you can dial the look in before anything is applied.
+  Fire a volley with the buttons (or press <b>Space</b>), switch tabs to inspect one option up close.
+  <b>Your GIF is in:</b> criticals in A and B reproduce it — chunky yellow digits on an irregular red starburst
+  with white-lavender speed-lines. <b>New — Pop-up type:</b> pick where numbers spawn and how they travel
+  (random scatter / front of body / sway up &amp; fade left / stack upward). The <b>CRIT chip is gone</b> from the
+  explode frame (crit and skill crit), and the burst now <b>stretches to fit 6–7 digit numbers</b> — try
+  <i>Big crit · 1.2M</i>.
+ </div>
+
+ <div id="deck">
+  <div class="rows">
+   <div class="ctl"><label>Fade style</label>
+    <select id="fadeStyle">
+     <option value="rise">Rise &amp; fade (RO-style)</option>
+     <option value="hop">Hop up, settle, fade</option>
+     <option value="arc">Toss in an arc</option>
+     <option value="hold">Hold in place, fade</option>
+    </select></div>
+   <div class="ctl"><label>Pop-up type</label>
+    <select id="spawn">
+     <option value="scatter">Random scatter (today)</option>
+     <option value="front">Front of body &middot; fade in place (GIF)</option>
+     <option value="sway">Sway up, fade left</option>
+     <option value="stack">Stack upward (cascade)</option>
+    </select></div>
+   <div class="ctl"><label>Font</label>
+    <select id="font">
+     <option value="game">Game (Trebuchet)</option>
+     <option value="classic">Chunky (Verdana 900)</option>
+     <option value="heavy">Heavy display (Arial Black)</option>
+    </select></div>
+   <div class="ctl"><label>Normal size <span class="val" id="v_sNorm"></span></label><input type="range" id="sNorm" min="12" max="30" step="1"></div>
+   <div class="ctl"><label>Crit size <span class="val" id="v_sCrit"></span></label><input type="range" id="sCrit" min="18" max="52" step="1"></div>
+   <div class="ctl"><label>Rise <span class="val" id="v_rise"></span></label><input type="range" id="rise" min="0" max="70" step="2"></div>
+   <div class="ctl"><label>Lifetime <span class="val" id="v_life"></span></label><input type="range" id="life" min="0.5" max="2" step="0.05"></div>
+   <div class="ctl"><label>Fade starts at <span class="val" id="v_fadeAt"></span></label><input type="range" id="fadeAt" min="20" max="90" step="5"></div>
+   <div class="ctl"><label>Impact punch <span class="val" id="v_punch"></span></label><input type="range" id="punch" min="0" max="2" step="0.1"></div>
+   <div class="ctl"><label>Spread <span class="val" id="v_drift"></span></label><input type="range" id="drift" min="0" max="40" step="2"></div>
+  </div>
+  <div class="rows" style="margin-top:10px">
+   <div class="btns">
+    <button id="fireVolley" class="gold">▶ Fire full volley</button>
+    <button data-role="damage">Hit</button>
+    <button data-role="crit">Critical</button>
+    <button data-role="skill">Skill hit</button>
+    <button data-role="skillcrit">Skill CRIT</button>
+    <button data-role="bigcrit" title="A 7-digit critical: proves the explode frame stretches to the number">Big crit &middot; 1.2M</button>
+    <button data-role="miss">Miss</button>
+    <button data-role="incoming">Incoming</button>
+    <button id="autoBtn">Auto-grind: off</button>
+    <button id="clearBtn">Clear</button>
+    <button id="copySel" title="Copies your exact slider picks as text - paste it to the agent to have it applied">📋 Copy my selection</button>
+    <span class="sep"></span>
+    <span style="font-size:11px;color:#b9a97f">Presets:</span>
+    <button data-preset="current">Game today</button>
+    <button data-preset="classic">RO classic</button>
+    <button data-preset="balanced" class="on">Balanced ★</button>
+    <button data-preset="juice">Maximum juice</button>
+   </div>
+  </div>
+ </div>
+
+ <div id="tabs">
+  <button data-tab="compare" class="on">Compare all</button>
+  <button data-tab="cur">Current v67</button>
+  <button data-tab="a">A · Classic RO</button>
+  <button data-tab="b">B · Burst restored</button>
+  <button data-tab="c">C · Modern action</button>
+ </div>
+
+ <div id="strips"></div>
+
+ <h2>Research this is based on</h2>
+ <ul class="research">
+  <li><b>Classic RO:</b> damage is drawn with the client's own digit sprites (<i>NewNumber.spr</i> / <i>damage number</i> textures) that pop above the target and fade; a critical hit "usually has a <b>red spike bubble</b> around the damage" — that burst is exactly the frame that v66 had and v67 dropped.</li>
+  <li><b>WoW's crit pop</b> is a 3-stage scale (small → big → medium) — the overshoot-then-settle punch used by every option here.</li>
+  <li><b>Gamedev consensus</b> (r/gamedev "making good floating damage text", Godot FCT recipe, Unity FCT write-ups): always move numbers vertically so new hits aren't hidden, add a small random spread so hits don't stack, scale-punch on spawn, fade near the end of life, keep crits bigger with extra punch, colour-code damage types sparingly, and merge fast DoT ticks into one refreshing number instead of a cascade.</li>
+  <li><b>Readability:</b> a hard dark outline (not a soft shadow) is what keeps digits legible on bright maps; every option keeps the game's outlined-text approach and adds a hold-then-fade curve instead of today's linear fade.</li>
+ </ul>
+</main>
+<footer>
+ Proposal page — dev-only, not shipped to players. Open with <code>python3 tools/preview_server.py 8000</code> →
+ <code>/Updates/damage-floats-proposal/</code>. Full write-up: <code>Updates/damage-floats-proposal/README.md</code>.
+</footer>
+
+<script>
+'use strict';
+/* ============================ state ============================ */
+const T={font:'game',sNorm:17,sCrit:30,rise:30,life:1.05,fadeAt:55,punch:1,drift:14,style:'rise',spawn:'sway'};
+const PRESETS={
+ current:{font:'game',sNorm:17,sCrit:21,rise:26,life:.95,fadeAt:35,punch:.8,drift:12,style:'rise',spawn:'scatter'},
+ classic:{font:'classic',sNorm:17,sCrit:34,rise:26,life:1.15,fadeAt:60,punch:1.1,drift:14,style:'hop',spawn:'front'},
+ balanced:{font:'game',sNorm:17,sCrit:30,rise:30,life:1.05,fadeAt:55,punch:1,drift:14,style:'rise',spawn:'sway'},
+ juice:{font:'heavy',sNorm:19,sCrit:40,rise:40,life:1.3,fadeAt:60,punch:1.6,drift:24,style:'arc',spawn:'sway'}
+};
+const FONTS={
+ game:'"Trebuchet MS",Verdana,sans-serif',
+ classic:'Verdana,"DejaVu Sans",Geneva,sans-serif',
+ heavy:'"Arial Black","Segoe UI Black",Impact,sans-serif'
+};
+const R=(a,b)=>a+Math.random()*(b-a);
+const RI=(a,b)=>Math.round(R(a,b));
+const $=s=>document.querySelector(s);
+
+/* ============================ options ============================ */
+const OPT={
+ cur:{name:'Current — v67 (live game)',desc:'Styling locked to the live game (17px Trebuchet, 21px crits, no frame, linear fade); the Pop-up type control still applies to this strip.',locked:true},
+ a:{name:'Option A — Classic RO (your GIF)',desc:'Chunky outlined digits; crits sit in the irregular red spike bubble with white-lavender speed-line streaks, exactly like your sinx crit GIF — no CRIT chip; hop-and-settle; hold-then-fade. Skill crits get a blue burst. Burst stretches for big numbers.'},
+ b:{name:'Option B — Burst restored ★ recommended',desc:'The v66 explode frame rebuilt cleanly, upgraded with the GIF speed-lines, and no CRIT chip: red-gold starburst + flash ring, skill crits blue-silver with shards. Burst stretches for big numbers.'},
+ c:{name:'Option C — Modern action',desc:'Arc toss with punch scale, spark ring on crits, shockwave + shatter on skill crits, DoT ticks merge into one number.'}
+};
+
+/* star polygon points */
+function starPts(spikes,Ro,Ri,rot){const p=[];for(let i=0;i<spikes*2;i++){const a=(rot||0)+Math.PI*i/spikes-Math.PI/2,r=i%2?Ri*R(.72,1.22):Ro*R(.8,1.15);p.push((Math.cos(a)*r).toFixed(1)+','+(Math.sin(a)*r).toFixed(1))}return p.join(' ')}
+function burstSVG(c1,c2,core,rot){const o=starPts(12,48,30,rot),i2=starPts(8,34,20,rot*.6);
+ return '<svg viewBox="-52 -52 104 104" preserveAspectRatio="none"><polygon points="'+o+'" fill="'+c1+'"/><polygon points="'+o+'" fill="none" stroke="#00000088" stroke-width="2"/><polygon points="'+i2+'" fill="'+c2+'"/><circle r="12" fill="'+core+'"/></svg>'}
+const el=(cls,html)=>{const d=document.createElement('div');d.className=cls;if(html!=null)d.innerHTML=html;return d};
+/* GIF reference: long thin speed-line streaks radiating out of the burst (ragnarokclassic-sinx-crit.gif) */
+function addStreaks(wrap,n,c1,c2){
+ for(let i=0;i<n;i++){
+  const st=el('spark');const a=R(0,6.28),len=R(30,74);
+  st.style.cssText='width:'+len+'px;height:'+R(2,3.4)+'px;border-radius:2px;background:linear-gradient(90deg,'+c1+','+c2+');box-shadow:0 0 3px '+c2+';transform-origin:center';
+  wrap.appendChild(st);
+  st.animate([
+   {transform:'translate(-50%,-50%) rotate('+a+'rad) scaleX(.15)',opacity:1},
+   {transform:'translate(-50%,-50%) rotate('+a+'rad) translateX('+R(26,54)+'px) scaleX(1)',opacity:0}
+  ],{duration:R(360,560),delay:R(0,60),easing:'cubic-bezier(.1,.7,.3,1)',fill:'forwards'}).onfinish=()=>st.remove();
+ }
+}
+
+/* outline helper: hard dark outline via layered text-shadow */
+function outline(w){let s=[];for(let x=-w;x<=w;x+=w)for(let y=-w;y<=w;y+=w){if(x||y)s.push(x+'px '+y+'px 0 #000')}return s.join(',')}
+
+/* fade/motion keyframes shared by the options: a pop on spawn, then the chosen
+   fade path (rise / hop / arc / hold) with opacity held until T.fadeAt, then gone. */
+function motionKeys(rise,driftX){
+ const fA=Math.min(.9,T.fadeAt/100);
+ let midY=-rise,endScale=.94,endY=-rise,endTop='-50%';
+ if(T.style==='hop')midY=-rise*.92;
+ if(T.style==='hold'){midY=-rise*.12;endY=-rise*.2;endScale=.92}
+ if(T.style==='arc'){endY=-rise*.55;endTop='-42%'}
+ const mid='translate(-50%,-50%) translateY('+midY+'px) translateX('+driftX+'px) scale(1)';
+ const end='translate(-50%,'+endTop+') translateY('+endY+'px) translateX('+driftX+'px) scale('+endScale+')';
+ return [
+  {transform:'translate(-50%,-50%) translateY(0px) translateX(0px) scale(1)',opacity:1,offset:0},
+  {transform:mid,opacity:1,offset:fA},
+  {transform:end,opacity:0,offset:1}
+ ];
+}
+
+function fadeOnly(D,fadeAt){return [{opacity:1,offset:0},{opacity:1,offset:fadeAt/100},{opacity:0,offset:1}]}
+
+/* pop-up type: scatter (today) | front (GIF: dead-centre, fade in place) | sway (sway up, fade left) | stack (cascade column).
+   The mode's motion lives on a zero-size holder; each option's own styling animation stays untouched on the float inside it. */
+function spawnBase(strip,role,txt,atMob){
+ const holder=el('pfh');
+ const mode=atMob?T.spawn:'scatter';
+ let x=(role==='incoming'||role==='heal')?18:60, y=(role==='incoming'||role==='heal')?52:46;
+ if(mode==='scatter'){x+=R(-T.drift,T.drift)*.5;y+=R(-4,4)}
+ holder.style.left=x+'%';holder.style.top=y+'%';
+ strip.appendChild(holder);
+ if(mode==='sway'){
+  holder.animate([
+   {transform:'translate(0px,0px)',opacity:1,offset:0},
+   {transform:'translate('+(9+R(0,5))+'px,'+(-T.rise*.3)+'px)',opacity:1,offset:.28},
+   {transform:'translate('+(-7+R(0,4))+'px,'+(-T.rise*.7)+'px)',opacity:1,offset:Math.min(.95,T.fadeAt/100)},
+   {transform:'translate('+(-26+R(0,8))+'px,'+(-T.rise*.95)+'px)',opacity:0,offset:1}
+  ],{duration:T.life*1000,easing:'cubic-bezier(.3,.6,.4,1)',fill:'forwards'});
+ }
+ if(mode==='stack'){
+  const list=strip.__stack||(strip.__stack=[]);
+  for(const h of list){h.__y=(h.__y||parseFloat(h.style.top))-7;h.style.transition='top .22s ease-out';h.style.top=h.__y+'%'}
+  list.push(holder);
+  setTimeout(()=>{const i=list.indexOf(holder);if(i>=0)list.splice(i,1)},T.life*1000+150);
+ }
+ setTimeout(()=>holder.remove(),T.life*1000+180);
+ const wrap=el('pf');
+ holder.appendChild(wrap);
+ return wrap;
+}
+/* horizontal wander for the float's own motion: none when the pop-up type owns the path */
+const driftX=atMob=>(atMob&&T.spawn!=='scatter')?0:R(-T.drift,T.drift);
+/* measured text width (estimate under jsdom/zero-layout), so bursts can fit big numbers */
+const textW=(t,txt,size)=>(t.getBoundingClientRect().width||String(txt).length*size*.62);
+
+/* ============================ per-option renderers ============================ */
+/* Each render(role, wrap, txt, T) builds content into `wrap` and runs its animations.
+   role: damage | crit | skill | skillcrit | miss | incoming | heal | dot */
+
+const RENDER={
+/* ---------------- current live styling (locked reference) ---------------- */
+cur(role,wrap,txt){
+ const t=el('txt',txt);wrap.appendChild(t);
+ const map={damage:['17px','#fff0a6','.5px #4b3514','0 1px 2px #000,0 0 3px #000'],
+            skill:['17px','#c9f1ff','.5px #123a57','0 1px 2px #000,0 0 4px #279cd1'],
+            crit:['21px','#ffe08a','.6px #57330a','0 1px 2px #000,0 0 4px #ffb52e'],
+            skillcrit:['21px','#ffe08a','.6px #57330a','0 1px 2px #000,0 0 4px #ffb52e'],
+            incoming:['16px','#ff9b94','.4px #4b1018','0 1px 2px #000,0 0 3px #f33'],
+            miss:['13px','#f1f3f6','0','0 1px 2px #000,0 0 3px #000'],
+            heal:['16px','#ff9db1','.4px #4a1024','0 1px 2px #000']};
+ const [fs,col,stroke,sh]=map[role]||map.damage;
+ t.style.cssText='font-family:'+FONTS.game+';font-weight:700;font-size:'+fs+';color:'+col+';-webkit-text-stroke:'+stroke+';text-shadow:'+sh+';font-variant-numeric:tabular-nums';
+ wrap.animate([
+  {transform:'translate(-50%,-35%) scale(.65)',opacity:1,offset:0},
+  {transform:'translate(-50%,-55%) scale(1.1)',opacity:1,offset:.19},
+  {transform:'translate(-50%,-50%) scale(1)',opacity:1,offset:.24},
+  {transform:'translate(-50%,-90%) scale(1)',opacity:0,offset:1}
+ ],{duration:T.life*1000,easing:'linear',fill:'forwards'}).onfinish=()=>wrap.remove();
+},
+
+/* ---------------- A · Classic RO ---------------- */
+a(role,wrap,txt,atMob){
+ const isC=role==='crit'||role==='skillcrit', isS=role==='skill'||role==='skillcrit';
+ if(isC){
+  const bs=el('burst',burstSVG(role==='crit'?'#c23325':'#2c6fb4',role==='crit'?'#e8624a':'#4f9fe0',role==='crit'?'#ffd9c4':'#dff1ff',R(0,3.14)));
+  bs.style.width=(T.sCrit*2.2)+'px';bs.style.height=(T.sCrit*2.3)+'px';wrap.appendChild(bs);
+  addStreaks(wrap,role==='crit'?9:8,'#ffffff',role==='crit'?'#e6d6ff':'#cfeeff');
+  bs.animate([{transform:'translate(-50%,-50%) scale(.25) rotate(-10deg)',opacity:.9},
+              {transform:'translate(-50%,-50%) scale(1.18) rotate(3deg)',opacity:1,offset:.35},
+              {transform:'translate(-50%,-50%) scale(1) rotate(0deg)',opacity:1,offset:.5},
+              {transform:'translate(-50%,-50%) scale(1.02)',opacity:.95,offset:1}],{duration:T.life*1000,easing:'cubic-bezier(.2,.9,.3,1.2)',fill:'forwards'});
+ }
+ const t=el('txt',txt);wrap.appendChild(t);
+ if(isC){const bs=wrap.querySelector('.burst');const tw=textW(t,txt,T.sCrit-2);
+  bs.style.width=Math.max(tw*1.3,T.sCrit*1.9)+'px';bs.style.height=(T.sCrit*2.3)+'px'}
+ const size=isC?T.sCrit-2:T.sNorm;
+ let col,sh;
+ if(isS){col=role==='skillcrit'?'#eaf6ff':'#cfeaff';sh=outline(2)+',0 0 5px '+(role==='skillcrit'?'#58c8ff88':'#58c8ff55')}
+ else if(isC){col='#ffd23f';sh=outline(2)+',0 2px 3px #000'}
+ else if(role==='incoming'){col='#ff9b94';sh=outline(2)}
+ else if(role==='miss'){col='#e7ebf0';sh='0 1px 2px #000'}
+ else if(role==='heal'){col='#8dff9e';sh=outline(2)}
+ else{col='#fffef5';sh=outline(2)+',0 2px 3px #000'}
+ t.style.cssText='font-family:'+FONTS[T.font]+';font-weight:'+(T.font==='game'?700:900)+';font-size:'+(role==='miss'?13:size)+'px;letter-spacing:.5px;color:'+col+';text-shadow:'+sh;
+ const m=motionKeys(T.rise*(isC?1.15:1),driftX(atMob));
+ wrap.animate([
+  {transform:'translate(-50%,-50%) scale('+(.55+.45*T.punch)+')',opacity:1,offset:0},
+  {transform:'translate(-50%,-46%) scale('+(1+.18*T.punch)+')',opacity:1,offset:.12},
+  {transform:'translate(-50%,-50%) scale(1)',opacity:1,offset:.22},
+  m[1],m[2]
+ ],{duration:T.life*1000,easing:'cubic-bezier(.25,.7,.4,1)',fill:'forwards'}).onfinish=()=>wrap.remove();
+},
+
+/* ---------------- B · Burst restored (v66, rebuilt) ---------------- */
+b(role,wrap,txt,atMob){
+ const isC=role==='crit'||role==='skillcrit';
+ if(isC){
+  const red=role==='crit';
+  const bs=el('burst',burstSVG(red?'#a01608':'#16324f',red?'#ffcf4d':'#4fd8ff',red?'#fff3c8':'#eaffff',R(0,3.14)));
+  bs.style.width=(T.sCrit*2.4)+'px';bs.style.height=(T.sCrit*2.5)+'px';wrap.appendChild(bs);
+  addStreaks(wrap,role==='crit'?9:8,'#ffffff',role==='crit'?'#e6d6ff':'#cfeeff');
+  bs.animate([{transform:'translate(-50%,-50%) scale(.3)',opacity:1},
+              {transform:'translate(-50%,-50%) scale(1.25)',opacity:1,offset:.3},
+              {transform:'translate(-50%,-50%) scale(1) rotate('+R(-6,6)+'deg)',opacity:1,offset:.55},
+              {transform:'translate(-50%,-50%) scale(1.05)',opacity:.9,offset:1}],{duration:T.life*1000,easing:'cubic-bezier(.2,.9,.3,1.25)',fill:'forwards'});
+  /* expanding impact ring */
+  const ring=el('ring');const rs=T.sCrit*1.4;ring.style.width=rs+'px';ring.style.height=rs+'px';
+  ring.style.border='2px solid '+(red?'#ffd88a':'#9fe8ff');ring.style.borderRadius='50%';wrap.appendChild(ring);
+  ring.animate([{transform:'translate(-50%,-50%) scale(.4)',opacity:.95},{transform:'translate(-50%,-50%) scale(2.1)',opacity:0}],
+   {duration:420,easing:'cubic-bezier(.1,.7,.3,1)',fill:'forwards'}).onfinish=()=>ring.remove();
+  /* no CRIT chip: the owner asked for the bare explode frame (removed per request) */
+ }
+ const t=el('txt',txt);wrap.appendChild(t);
+ const size=isC?T.sCrit:(role==='skill'?T.sNorm:role==='miss'?13:role==='incoming'?16:T.sNorm);
+ if(isC){const bs=wrap.querySelector('.burst');const tw=textW(t,txt,size);
+  bs.style.width=Math.max(tw*1.35,T.sCrit*2)+'px';bs.style.height=(T.sCrit*2.5)+'px'}
+ if(isC){
+  t.style.cssText='font-family:'+FONTS[T.font]+';font-weight:900;font-size:'+size+'px;background:linear-gradient('+(role==='crit'?'#fff3b0 10%,#ffc93c 90%':'#eafaff 10%,#7cd4ff 90%')+');-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-stroke:.6px '+(role==='crit'?'#57330a':'#0e2c58')+';filter:drop-shadow(0 1px 2px #000) drop-shadow(0 0 6px '+(role==='crit'?'#ffb52e77':'#4fd8ff77')+')';
+ }else{
+  t.style.cssText='font-family:'+FONTS[T.font]+';font-weight:700;font-size:'+size+'px;'
+   +(role==='skill'?'color:#c9f1ff;-webkit-text-stroke:.5px #123a57;text-shadow:0 1px 2px #000,0 0 4px #279cd1'
+    :role==='incoming'?'color:#ff9b94;-webkit-text-stroke:.4px #4b1018;text-shadow:0 1px 2px #000,0 0 3px #f33'
+    :role==='miss'?'color:#f1f3f6;letter-spacing:.3px;text-shadow:0 1px 2px #000'
+    :role==='heal'?'color:#8dff9e;text-shadow:'+outline(2)
+    :'color:#fff0a6;-webkit-text-stroke:.5px #4b3514;text-shadow:0 1px 2px #000,0 0 3px #000');
+ }
+ const m=motionKeys(T.rise*(isC?1.1:1),driftX(atMob));
+ wrap.animate([
+  {transform:'translate(-50%,-50%) scale('+(isC?1+.7*T.punch:1+.25*T.punch)+')',opacity:1,offset:0},
+  {transform:'translate(-50%,-52%) scale('+(isC?1-.06:1)+')',opacity:1,offset:.3},
+  {transform:'translate(-50%,-50%) scale(1)',opacity:1,offset:.42},
+  m[1],m[2]
+ ],{duration:T.life*1000,easing:'cubic-bezier(.2,.8,.3,1)',fill:'forwards'}).onfinish=()=>wrap.remove();
+ if(isC&&role==='skillcrit'){ /* crystal shards */
+  for(let i=0;i<6;i++){const sp=el('spark');const a=R(0,6.28),d=R(26,46);
+   sp.style.cssText='width:6px;height:10px;background:linear-gradient(#bfefff,#4fd8ff);transform:translate(-50%,-50%) rotate('+R(0,90)+'deg);box-shadow:0 0 4px #4fd8ff';
+   wrap.appendChild(sp);
+   sp.animate([{transform:'translate(-50%,-50%)',opacity:1},{transform:'translate('+(Math.cos(a)*d-4)+'px,'+(Math.sin(a)*d)+'px) rotate('+R(120,300)+'deg)',opacity:0}],
+    {duration:R(420,650),easing:'cubic-bezier(.1,.6,.4,1)',fill:'forwards'}).onfinish=()=>sp.remove()}
+ }
+},
+
+/* ---------------- C · Modern action ---------------- */
+c(role,wrap,txt,atMob){
+ const isC=role==='crit'||role==='skillcrit', isS=role==='skill'||role==='skillcrit';
+ if(isC||role==='skillcrit'){
+  /* impact flash plate */
+  const fl=el('flash');
+  fl.style.cssText+=';width:'+(T.sCrit*2.2)+'px;height:'+(T.sCrit*2.2)+'px;border-radius:50%;background:radial-gradient(circle,'+(isS?'#bfefffcc':'#fff6cfcc')+' 0%,transparent 65%)';
+  wrap.appendChild(fl);
+  fl.animate([{transform:'translate(-50%,-50%) scale(.5)',opacity:1},{transform:'translate(-50%,-50%) scale(1.6)',opacity:0}],
+   {duration:300,fill:'forwards'}).onfinish=()=>fl.remove();
+  /* spark ring */
+  const n=isS?10:8;
+  for(let i=0;i<n;i++){const sp=el('spark');const a=(i/n)*6.28+R(-.2,.2),d=R(30,52);
+   sp.style.cssText='width:5px;height:9px;border-radius:1px;background:'+(isS?'linear-gradient(#eaffff,#59c8ff)':'linear-gradient(#fff8dd,#ffd23f)')+';box-shadow:0 0 4px '+(isS?'#59c8ff':'#ffb52e');
+   wrap.appendChild(sp);
+   sp.animate([{transform:'translate(-50%,-50%) rotate('+a+'rad) translateX(6px)',opacity:1},
+               {transform:'translate(-50%,-50%) rotate('+a+'rad) translateX('+d+'px) translateY('+R(6,16)+'px) rotate('+(a+2)+'rad)',opacity:0}],
+    {duration:R(450,700),easing:'cubic-bezier(.15,.6,.4,1)',fill:'forwards'}).onfinish=()=>sp.remove()}
+ }
+ const t=el('txt',txt);wrap.appendChild(t);
+ const size=isC?T.sCrit+2:role==='miss'?13:role==='incoming'?16:isS?T.sNorm+1:T.sNorm;
+ if(isC||role==='skillcrit'){const tw=textW(t,txt,size);const fl=wrap.querySelector('.flash');
+  if(fl){fl.style.width=Math.max(tw*1.4,T.sCrit*2)+'px';fl.style.height=(T.sCrit*2.2)+'px'}}
+ t.style.cssText='font-family:'+FONTS[T.font]+';font-weight:900;font-size:'+size+'px;'
+  +(role==='skillcrit'?'color:'+'#dff4ff;text-shadow:'+outline(2)+',0 0 8px #59c8ffcc'
+   :isS?'color:#bfe6ff;text-shadow:'+outline(2)+',0 0 5px #59c8ff88'
+   :role==='crit'?'color:#fff;text-shadow:'+outline(3)+',0 0 10px #ffd23f88'
+   :role==='incoming'?'color:#ff8d84;text-shadow:'+outline(2)
+   :role==='miss'?'color:#dfe5ed;letter-spacing:.3px;text-shadow:0 1px 2px #000'
+   :role==='heal'?'color:#8dff9e;text-shadow:'+outline(2)
+   :'color:#ffffff;text-shadow:'+outline(2)+',0 2px 3px #0008');
+ if(isC)wrap.style.filter='drop-shadow(0 0 6px '+(isS?'#59c8ff66':'#ffd23f55')+')';
+ const drift=atMob?driftX(true):R(-T.drift,T.drift)*.4;
+ const D=T.life*1000;
+ wrap.animate([
+  {transform:'translate(-50%,-50%) scale('+(1+(isC?1.3:0.9)*T.punch)+')',opacity:1,offset:0},
+  {transform:'translate(-50%,-58%) translateY('+(-T.rise*.35)+'px) translateX('+drift*.4+'px) scale(1)',opacity:1,offset:.18},
+  {transform:'translate(-50%,-50%) translateY('+(-T.rise*.9)+'px) translateX('+drift*.75+'px) scale(.98)',opacity:1,offset:T.fadeAt/100},
+  {transform:'translate(-50%,-42%) translateY('+(-T.rise*.7)+'px) translateX('+drift+'px) scale(.9)',opacity:0,offset:1}
+ ],{duration:D,easing:'cubic-bezier(.22,.68,.36,1)',fill:'forwards'}).onfinish=()=>wrap.remove();
+}
+};
+
+/* DoT merge demo — one number refreshing in place (Option C idea, shown in the volley) */
+function fireDot(strip){
+ const wrap=spawnBase(strip,'dot','',true);wrap.style.left=(60+R(-6,6))+'%';
+ const t=el('txt','');wrap.appendChild(t);
+ t.style.cssText='font-family:'+FONTS[T.font]+';font-weight:900;font-size:'+(T.sNorm-1)+'px;color:#9fe86f;text-shadow:'+outline(2);
+ let v=0;const step=RI(2200,3200);const D=T.life*1000;
+ wrap.animate(fadeOnly(D,T.fadeAt),{duration:D,fill:'forwards'});
+ for(let i=0;i<4;i++){setTimeout(()=>{v+=step;t.textContent=String(v);
+  t.animate([{transform:'scale(1.35)'},{transform:'scale(1)'}],{duration:180,easing:'ease-out'})},i*(D/4.6))}
+ setTimeout(()=>wrap.remove(),D+60);
+}
+
+/* ============================ strips & volley ============================ */
+let view='compare';
+function buildStrips(){
+ const host=$('#strips');host.innerHTML='';
+ const keys=view==='compare'?['cur','a','b','c']:[view];
+ for(const k of keys){
+  const s=el('strip');
+  s.innerHTML='<div class="groundline"></div>'
+   +'<div class="plate"><span class="name">'+OPT[k].name+'</span>'+(OPT[k].locked?'<span class="live">locked to live settings</span>':'')+'<span class="desc">'+OPT[k].desc+'</span></div>'
+   +'<div class="hero"><i class="robe"></i><i class="hood"></i></div>'
+   +'<div class="dummy"><i class="head"></i><i class="bar"></i><i class="arm"></i><i class="base"></i></div>';
+  s.dataset.opt=k;s.style.height=(view==='compare'?'190px':'280px');
+  host.appendChild(s);
+ }
+}
+function fireRole(opt,role){
+ const s=document.querySelector('.strip[data-opt="'+opt+'"]');if(!s)return;
+ const atMob=!(role==='incoming'||role==='heal');
+ const txt={damage:RI(9000,16000).toLocaleString('en-US'),crit:RI(48000,92000).toLocaleString('en-US'),
+            skill:RI(22000,36000).toLocaleString('en-US'),skillcrit:RI(120000,480000).toLocaleString('en-US'),
+            bigcrit:'1,240,000',miss:'MISS',incoming:String(RI(300,800)),heal:'+'+RI(1100,1900)}[role];
+ const wrap=spawnBase(s,role,txt,atMob);
+ RENDER[opt](role==='bigcrit'?'crit':role,wrap,txt,atMob);
+}
+function fireVolley(){
+ const seq=[[0,'damage'],[200,'damage'],[420,'crit'],[760,'skill'],[980,'skill'],[1220,'skillcrit'],[1580,'miss'],[1900,'incoming'],[2140,'heal'],[2400,'dot']];
+ for(const s of document.querySelectorAll('.strip')){
+  const opt=s.dataset.opt;
+  for(const [d,r] of seq)setTimeout(()=>{r==='dot'?fireDot(s):fireRole(opt,r)},d);
+ }
+}
+let autoTimer=null;
+function setAuto(on){
+ if(autoTimer){clearInterval(autoTimer);autoTimer=null}
+ $('#autoBtn').textContent='Auto-grind: '+(on?'on':'off');
+ $('#autoBtn').classList.toggle('on',on);
+ if(on){fireVolley();autoTimer=setInterval(fireVolley,3200)}
+}
+
+/* ============================ wiring ============================ */
+function syncLabels(){
+ $('#v_sNorm').textContent=T.sNorm+'px';$('#sNorm').value=T.sNorm;
+ $('#v_sCrit').textContent=T.sCrit+'px';$('#sCrit').value=T.sCrit;
+ $('#v_rise').textContent=T.rise+'px';$('#rise').value=T.rise;
+ $('#v_life').textContent=T.life.toFixed(2)+'s';$('#life').value=T.life;
+ $('#v_fadeAt').textContent=T.fadeAt+'%';$('#fadeAt').value=T.fadeAt;
+ $('#v_punch').textContent='×'+T.punch.toFixed(1);$('#punch').value=T.punch;
+ $('#v_drift').textContent=T.drift+'px';$('#drift').value=T.drift;
+ $('#font').value=T.font;$('#fadeStyle').value=T.style;$('#spawn').value=T.spawn;
+}
+function applyPreset(p){Object.assign(T,PRESETS[p]);syncLabels();fireVolley()}
+function bindRange(id,key,fmt){$('#'+id).addEventListener('input',e=>{T[key]=parseFloat(e.target.value);syncLabels()})}
+syncLabels();
+bindRange('sNorm','sNorm');bindRange('sCrit','sCrit');bindRange('rise','rise');bindRange('life','life');
+bindRange('fadeAt','fadeAt');bindRange('punch','punch');bindRange('drift','drift');
+$('#font').addEventListener('change',e=>{T.font=e.target.value;fireVolley()});
+$('#fadeStyle').addEventListener('change',e=>{T.style=e.target.value;fireVolley()});
+$('#spawn').addEventListener('change',e=>{T.spawn=e.target.value;fireVolley()});
+document.querySelectorAll('[data-preset]').forEach(b=>b.addEventListener('click',()=>{
+ document.querySelectorAll('[data-preset]').forEach(x=>x.classList.remove('on'));b.classList.add('on');applyPreset(b.dataset.preset)}));
+$('#fireVolley').addEventListener('click',fireVolley);
+$('#clearBtn').addEventListener('click',()=>document.querySelectorAll('.pf').forEach(x=>x.remove()));
+$('#copySel').addEventListener('click',()=>{
+ const tab=document.querySelector('#tabs button.on');
+ const styleTab=tab&&tab.dataset.tab==='compare'?'compare - also say which strip (A, B or C)':''+(tab?tab.dataset.tab:'compare');
+ const lines=['damage-floats choice:','style tab: '+styleTab,'fade style: '+T.style,'pop-up type: '+T.spawn,'font: '+T.font,
+  'normal size: '+T.sNorm+'px','crit size: '+T.sCrit+'px','rise: '+T.rise+'px','lifetime: '+T.life.toFixed(2)+'s',
+  'fade starts at: '+T.fadeAt+'%','impact punch: x'+T.punch.toFixed(1),'spread: '+T.drift+'px'];
+ const txt=lines.join('\n');
+ const done=ok=>{const b=$('#copySel');b.textContent=ok?'\u2713 Copied - paste it in the chat':'\u2713 Selection shown - copy it manually';setTimeout(()=>{b.textContent='\ud83d\udccb Copy my selection'},2600);if(!ok)window.prompt('Copy your selection:',txt)};
+ let ok=false;const ta=document.createElement('textarea');ta.value=txt;ta.style.cssText='position:fixed;left:-9999px;top:0';document.body.appendChild(ta);ta.select();
+ try{ok=document.execCommand('copy')}catch(e){}
+ ta.remove();
+ if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(txt).then(()=>done(true)).catch(()=>done(ok));else done(ok);
+});
+$('#autoBtn').addEventListener('click',()=>setAuto(!autoTimer));
+document.querySelectorAll('#deck [data-role]').forEach(b=>b.addEventListener('click',()=>{
+ for(const s of document.querySelectorAll('.strip'))fireRole(s.dataset.opt,b.dataset.role)}));
+document.querySelectorAll('#tabs button').forEach(b=>b.addEventListener('click',()=>{
+ document.querySelectorAll('#tabs button').forEach(x=>x.classList.remove('on'));b.classList.add('on');
+ view=b.dataset.tab;buildStrips();fireVolley()}));
+window.addEventListener('keydown',e=>{if(e.code==='Space'&&!e.target.closest('input,select,button')){e.preventDefault();fireVolley()}});
+buildStrips();
+applyPreset('balanced');
+</script>
+</body>
+</html>
