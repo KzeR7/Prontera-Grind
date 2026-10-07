@@ -47,6 +47,7 @@ that case honestly; the pages may not).
 | `python3 tools/make_weapon_pack.py --source <client>` | `assets/weapons/`, `assets/weapons_data.js`, `assets/weapons_manifest.json` | `python3 tools/make_weapon_pack.py --check` |
 | `python3 tools/make_sprite_viewer.py` | `Updates/Sprite/index.html` | `python3 tools/make_sprite_viewer.py --check` |
 | `python3 tools/backup_apng_code.py` | `Updates/ApngAnimation/class_skin_animation.js` | `--check`, run by `class_skin_sim.js` |
+| `python3 tools/make_town_pack.py` | `assets/town/town-atlas.*` (the town's painted buildings, fountain and props) | `python3 tools/make_town_pack.py --check` |
 | `python3 tools/montage.py` | the four montage sheets | only when re-cutting them |
 
 ## History — do not open these expecting current art
@@ -70,6 +71,24 @@ h=open('index.html').read()
 open('/tmp/pack_block.js','w').write(h[h.index('const PACK_BODY='):h.index('function ensureHero(')])
 PY
 ```
+
+**One suite lives outside that loop:** `node tools/tests/town_smoke.js` drives the whole town
+(entry, the map card, the plaza and fountain, the painted art pack replacing every stand-in, the five
+NPCs and every page they open, click-to-walk and click-to-talk, and that the ten fields have no
+click-to-walk). It boots the real `index.html` in jsdom with the real Three.js, so it needs
+`npm i --no-save jsdom three@0.128.0`; without them it prints a skip line and exits 0, which is why it
+is not named `*_sim.js`. Run it after **any** change to the town, the pointer handlers or the map panel.
+
+**How to look at the town without a browser** (this workspace cannot download Chrome):
+
+```sh
+node tools/_town_dump.js            # needs jsdom + three: writes /tmp/town_placements.json
+python3 tools/preview_town_board.py # writes Updates/town-hd/board-1-town-layout.png
+```
+
+The dump enters the real town with the real `assets/town/town-atlas.json`, and the board composes
+those placements at 2:1 — real crops, real world sizes, back to front. Layout questions ("does the
+ring overlap", "is the fountain too big") get answered there; lighting and colour still need the game.
 
 `pack_sim.js` reads that slice; `sprite_viewer_sim.js` checks the canonical viewer against the
 PNG files. The rest pull live code out of `index.html` by string boundary, so moving a

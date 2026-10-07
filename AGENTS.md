@@ -3980,3 +3980,59 @@ assigned for feel rather than fidelity. While reworking that, two shipped bugs s
   `town_smoke.js` is now **29 steps** — it stands in a stub manifest for the real atlas and asserts
   the ring is painted, the block ring hides, the fountain is the painted one with a full spray list,
   and the ground tiles are the HD set.
+
+### 2026-10-07 — `grind-v69`: the plaza gets the rest of its art (twenty painted sprites), and the town square is laid out like a square
+
+* **Where this picks up:** the previous entry painted the nine buildings and the fountain and left a
+  list of props wired but unpainted ("gate arch, market stalls, trees, lamp posts, statue, banner
+  poles, benches and flower beds"). This pass paints that list and fixes the layout the painted art
+  exposed. Every one of the twenty sprites in `assets/town/town-atlas.*` is now used by the game.
+* **Nine new painted props + the memorial statue** (`Updates/town-hd/work/`, packed by
+  `tools/make_town_pack.py`, atlas now 4096x1793 / ~9 MB, 20 sprites, `--check` current): the gate
+  arch, a red and a blue market stall, the big shade tree, the lamp post, the banner pole, the bench,
+  two different flower beds, and a memorial statue of a knight. Painted to the same art direction as
+  the buildings (hand-painted RO3 city art, magenta backdrop, chroma-keyed, trimmed, 640 px longest
+  side), so the plaza reads as one set. **There is no bare block left in the town** — a painted prop
+  replaces its code-built stand-in the moment the pack loads.
+* **Two new prop spots the game did not have:** the statue (`x -6.6, z 9.6`, 3.4 units, beside the
+  avenue just inside the gate) and four flower beds on the plaza's own axes (r 9.6, so the ring
+  between the fountain and the lamps is not bare). The four code-built benches and the six banner
+  poles became prop spots too (`prop('bench',…)`, `prop('banner_pole',…)`), which needed `prop()` and
+  the `propSpots` list hoisted above them — they were defined after the benches, and `prop` in a
+  block is a `const`, so calling it earlier threw at build time (caught by the smoke test
+  immediately).
+* **The square is laid out like a square.** The painted ring made two things obvious, and
+  `tools/preview_town_board.py` (below) showed both: the ring was a wide scatter (r 19.4-22.4) with a
+  7.5-unit cottage next to a 2.3-unit tower, and its north side grew straight through the cathedral.
+  Now **fifteen houses wall the square** on the east and west at r 16.5-18.2, with the **gate corridor
+  south and the cathedral's north end left open**, and a house is sized by **how much street frontage
+  its slot owns** (`tw = (2*pi*r/22) * 0.99..1.12`, height from the art's own aspect) instead of by
+  the art's raw height — so the two rows meet like a street line. A slower rotation over 22 slots
+  replaces the old `% 8`, so no two neighbouring houses repeat. The gate arch came down from 8.4 to
+  7.6 units and the cathedral moved in from z -33 to -29.5 so it closes the skyline instead of
+  floating; the fountain went **up** to 9.5 units (it is the centrepiece) and its water anchors
+  (`TOWN.waterTop`/`waterBasin`) are derived from that height rather than hard-coded; the tree ring
+  moved out to r 18.6 and grew from 22 to 30, because the houses now stand on the old line.
+* **A board, because this workspace has no browser.** `node tools/_town_dump.js` boots the real
+  `index.html` in jsdom, walks into the town with the **real** atlas manifest, and writes
+  `/tmp/town_placements.json` (every painted sprite: which art, where, how big, mirrored, which
+  group); `python3 tools/preview_town_board.py` composes those onto one 2:1 image at the real world
+  sizes with the game's own contact shadows, back to front, with the ground schematic. That is
+  `Updates/town-hd/board-1-town-layout.png` — it is how the overlap and the crowd round the north
+  end were caught, and it is the honest way to look at a layout with no Chrome to download. Neither
+  tool is in the `*_sim.js` gate (they need jsdom).
+* **Tests:** `node tools/tests/town_smoke.js` **29/29**; every `*_sim.js` green (including
+  `ui_sim`, which was pointed at the town card in the previous pass, and the two build-labelled
+  suites, which is why the label files below moved with the tag); all five `--check` tools current
+  (`make_town_pack.py --check` now reports 20 sprites).
+* **Build and references:** `BUILD` is now `2026-10-07 grind-v69 prontera town in HD: painted
+  buildings, fountain and a dressed plaza`. Both build-labelled reference pages
+  (`Updates/cards-gear-audit/affix-ranges.html`, `equipment-cards-tuning.html`) and
+  `tools/cloudflare-deploy-steps.md` carry it, and **v68 was prepended to `SAFE_PREVIOUS_BUILDS`**
+  (v68 lived in the tree long enough for the owner to make hand-backs against it). `READ-ME-FIRST.md`'s
+  town section is retitled **v69** and now describes the twenty-sprite pack, the painted list and the
+  town-only click control; `TOOLS-START-HERE.md` gained the town smoke suite, the town pack builder
+  and the two board tools. Files: `index.html`, `tools/make_town_pack.py` sources +
+  `Updates/town-hd/work/*` (10 new), `assets/town/town-atlas.*`, `Updates/town-hd/board-1-town-layout.png`,
+  `tools/_town_dump.js`, `tools/preview_town_board.py`, `tools/tests/town_smoke.js` (unchanged this
+  pass — it already asserted the painted ring, and it passed), the three label files, the three docs.

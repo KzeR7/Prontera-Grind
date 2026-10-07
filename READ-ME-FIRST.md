@@ -80,7 +80,7 @@ is the live one; with no argument the tool prints how to set a new one). Since v
 `GM` / `test1234`; `localStorage.removeItem('pg_gm_local')` removes it. Normal accounts are made
 in-game and stored in the browser (`pg_acc4`; saves under `pg_save3_<user>`).
 
-## BUILD v68 — Prontera Town: a safe map, five NPCs and click-to-walk
+## BUILD v69 — Prontera Town in HD: a safe map, five NPCs, painted buildings and a dressed plaza
 
 * **A new map, and it is a place, not a stage: Prontera Town.** It is **a card in the World Map
   tab's own grid** — the same card class and the same size as the ten fields, sitting right beside
@@ -90,23 +90,29 @@ in-game and stored in the browser (`pg_acc4`; saves under `pg_save3_<user>`).
   one does for you**, instead of a stage picker that a map with no stages should not have. The field's monsters, kit deco,
   road and sky are hidden while you are there, and the town has **no spawner at all** — nothing
   spawns, nothing attacks, nothing drops. It is the one map where the hero stops grinding.
-* **The layout the owner asked for:** a cobbled plaza (radius 12.5) around a **painted HD fountain**
-  with live water (droplets off the upper basin, spray off the crown, sparkle on the pool), an **NPC
-  terrace** behind it with stone pillars and banners, a south gate, **a ring of seventeen painted
-  buildings** around the plaza, market stalls, benches, lamps, trees, flowers and a **cathedral** on
-  the skyline.
+* **The layout the owner asked for:** a cobbled plaza (radius 12.5) around the **painted HD
+  fountain** (standing 9.5 units over the square, with live water — droplets off the upper basin,
+  spray off the crown, sparkle on the pool), an **NPC terrace** behind it with stone pillars and
+  banners, the **gate arch** in from the south, **fifteen houses walling the square** east and west
+  with the avenue and the cathedral keeping the two ends open, four market stalls, four benches,
+  eight lamps, six banner poles, five flower beds on the plaza's axes, a **memorial statue** beside
+  the gate and a **cathedral** closing the skyline.
 * **The town's own HD art pack (`assets/town/town-atlas.*`, built by `tools/make_town_pack.py`).**
-  Nine RO3-style painted buildings (town house, inn, shop, tall house, stone house, chapel, timber
-  cottage, guild hall, cathedral), a painted fountain, gate, market stalls, trees, lamps, benches and
-  flower beds — all one atlas, cropped at runtime exactly like the map kit's own sheet. The paint
-  sources live in `Updates/town-hd/work/`; the builder chroma-keys the magenta backdrop, trims each
-  building to its content box, downscales the longest side to 640 px (about 2.6x supersampling at the
-  size a building is actually drawn) and packs them into `assets/town/town-atlas.png` (4096x1281,
-  ~6 MB). `--check` re-runs the build in memory and byte-compares, so a stale atlas cannot ship.
-  Every building is drawn at its true aspect and gets a soft contact shadow, so it reads as a building
-  rather than a sticker. A building that is not painted yet keeps its block-built stand-in, and a
-  **painted** building always replaces that stand-in the moment the pack loads — even if the player is
-  already standing in town.
+  **Twenty RO3-style painted sprites** — nine buildings (town house, inn, shop, tall house, stone
+  house, chapel, timber cottage, guild hall, cathedral), the fountain, the gate arch, two market
+  stalls, a tree, a lamp post, a banner pole, a bench, two flower beds and the memorial statue — all
+  in one atlas, cropped at runtime exactly like the map kit's own sheet. **Nothing in the town is a
+  bare block any more:** every prop the plaza uses has painted art, and each painted sprite replaces
+  its code-built stand-in the moment the pack loads (even if the player is already standing in town).
+  The paint sources live in `Updates/town-hd/work/`; the builder chroma-keys the magenta backdrop,
+  trims each sprite to its content box, downscales the longest side to 640 px (about 2.6x
+  supersampling at the size a building is actually drawn) and packs them into
+  `assets/town/town-atlas.png` (4096x1793, ~9 MB). `--check` re-runs the build in memory and
+  byte-compares, so a stale atlas cannot ship. Every sprite is drawn at its true aspect and gets a
+  soft contact shadow, so it reads as standing on the ground rather than as a sticker. A building is
+  sized by how much street frontage its slot has (not by its art's height), so the two rows meet like
+  a street line instead of a scatter of cottages, and the mirror flag alternates so the ring never
+  repeats.
 * **The ground is the kit's own HD terrain**, laid at about one world unit per tile (the kit's own
   scale): `ruin_cobble` paving for the plaza, a `limestone_pale` kerb band and side paths, `dirt_path`
   for the avenue in from the gate, `grass_jade` for the lawn.
@@ -126,9 +132,11 @@ in-game and stored in the browser (`pg_acc4`; saves under `pg_save3_<user>`).
   the same kind scaled to your level; the sister restores HP and explains HP, defeat and First Aid;
   the scholar opens the Mastery Index and the card album and explains the ladder and tokens; the
   smith explains which field drops which rarity, ore, refine and the boss-only Legendary rule.
-* **Click, on every map.** Click the ground and the hero walks there — in town *and* in the ten
-  fields (the gold ring marks the spot; a click simply holds the spot until the hero reaches it and
-  then the auto-roam takes over again). **Click an NPC and they talk at once** — the box opens on
+* **Click-to-walk belongs to the town, and only to the town.** The ten fields keep exactly the
+  controls they shipped with (WASD/arrows and the auto-roam) — a tap on a field does nothing. *An
+  earlier pass had given the fields a click target too; the owner asked for that back out — "click to
+  walk is only for this town map. dont change the others" — and out it came.* In town, clicking the
+  ground drops the gold ring and the hero walks there. **Click an NPC and they talk at once** — the box opens on
   the click, no walking required, and the hero walks over while you read. Their **name plates are
   clickable** too, so the easiest target on the plaza is the one that works. **WASD and the arrow
   keys** walk too, and while in
@@ -143,14 +151,25 @@ in-game and stored in the browser (`pg_acc4`; saves under `pg_save3_<user>`).
 * **Testing:** all suites green plus the four `--check` tools. The town itself is driven end to end by
   `node tools/tests/town_smoke.js` — a jsdom harness that boots the real `index.html` with the real
   Three.js r128 (`npm i --no-save jsdom three@0.128.0`; it prints a skip line and exits 0 without
-  them, so a clean checkout is never blocked). It walks **23 town scenarios**: entry and scene
-  swap, the plaza/fountain/building ring, the five NPCs and every page they render, click-to-walk
-  both across the plaza and around the fountain, WASD, ten minutes of standing still with zero
-  spawns, healing, taking and claiming a contract, locked-stage warp refusal, warping out, the field
-  spawning again afterwards, the offline rate untouched, the pack art replacing the stand-ins, and a
-  save/load round trip. It found and fixed five real bugs before this build shipped (the field's roam
-  running in town, the hero not being clamped by the simulation, the steer point overwriting the
-  walk target, Kafra warping into a locked stage, and an empty kit group reporting itself visible).
+  them, so a clean checkout is never blocked). It walks **29 town scenarios**: entry and scene swap,
+  the plaza/fountain/ring, the painted pack dressing every building and prop (with a stub manifest for
+  the real atlas), the five NPCs and every page they render, click-to-walk both across the plaza and
+  around the fountain, **the ten fields having no click-to-walk at all** (a real pointerdown/pointerup
+  on the canvas in a field must not touch the walk target), WASD, ten minutes of standing still with
+  zero spawns, healing, taking and claiming a contract, locked-stage warp refusal, warping out, the
+  field spawning again afterwards, the offline rate untouched, the pack art replacing the stand-ins,
+  and a save/load round trip. It has caught real bugs on the way: the field's roam running in town,
+  the hero not being clamped by the simulation, the steer point overwriting the walk target, Kafra
+  warping into a locked stage, an empty kit group reporting itself visible, and — this pass — the art
+  pack finishing its download *before* the town was ever built, which dereferenced a town that did not
+  exist yet and would have thrown on boot.
+* **How this pass was looked at without a browser:** this workspace cannot download Chrome, so the
+  town's layout is checked by `node tools/_town_dump.js` (jsdom walks into the real town with the real
+  atlas manifest and writes every sprite's placement) and `python3 tools/preview_town_board.py`, which
+  composes those onto one image at 2:1 — the buildings, fountain, gate, statue, stalls and props are
+  the real crops at their real world sizes, back to front, shadows and all. It is how the ring was
+  caught overlapping itself and the cathedral, and how the street line was tuned. The board is at
+  `Updates/town-hd/board-1-town-layout.png`.
 
 ## BUILD v67 — moderated movement, fixed combat floats, server-timed cloud idle claims
 

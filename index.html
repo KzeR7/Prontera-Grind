@@ -474,7 +474,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // script block, which is a SyntaxError - the game did not run on main at all. One line wins, and
 // it names both sides of this merge: the v38 balance patch (the weapon cut, the affix/card
 // give-back) and main's weapon-hold rendering work.
-const BUILD='2026-10-07 grind-v68 prontera town: buildings, a fountain, five NPCs and click-to-walk';   // shown on the login card - confirms which file you loaded
+const BUILD='2026-10-07 grind-v69 prontera town in HD: painted buildings, fountain and a dressed plaza';   // shown on the login card - confirms which file you loaded
 $('buildTag').textContent='build '+BUILD;
 
 // ---------- class tree: Novice -> 6 first jobs -> 6 second jobs -> 6 third jobs ----------
@@ -5083,10 +5083,12 @@ function townBuild(){
   // pack dresses those spots (see townArt); the block houses below are the stand-in that ships with
   // the game and the fallback if the pack never downloads.
   const ring=[];
-  for(let i=0;i<18;i++){
-    const a=i*Math.PI/9+.07;                   // a small twist so the gate is not dead centre south
-    if(Math.sin(a)>.58&&Math.abs(Math.cos(a))<.66)continue;     // the southern gate corridor
-    const r=19.4+((i*7)%3)*1.5,units=4.6+((i*5)%4)*.8;
+  // Fifteen houses wall the square: the south is left open for the gate and the avenue, the north
+  // for the cathedral, so the ring reads as a street line rather than a fence round the fountain.
+  for(let i=0;i<22;i++){
+    const a=i*Math.PI/11+.07;                  // a small twist so the gate is not dead centre south
+    if(Math.abs(Math.cos(a))<.49)continue;     // the gate corridor (-z south) and the cathedral (+z)
+    const r=16.5+((i*7)%3)*.85,units=5.0+((i*5)%4)*.75;
     ring.push({i,a,r,units,flip:i%2===1,x:Math.cos(a)*r,z:TOWN_Z+Math.sin(a)*r});
   }
   TOWN.ring=ring;
@@ -5110,24 +5112,30 @@ function townBuild(){
   };
   stall(-11.6,3.2,.5,C.banner,C.trim);stall(11.6,3.2,-.5,C.banner2,C.trim);
   stall(-11.4,-13.6,.9,C.banner2,C.trim);stall(11.4,-13.6,-.9,C.banner,C.trim);
+  TOWN.propSpots=[];TOWN.propBlk=new THREE.Group();G.add(TOWN.propBlk);
+  const prop=(n,x,z,units,flip,blk)=>{TOWN.propSpots.push({n,x,z,units,flip,blk});return blk};
   for(const a of[Math.PI*.25,Math.PI*.75,Math.PI*1.25,Math.PI*1.75]){
     const x=Math.cos(a)*7.6,z=TOWN_Z+Math.sin(a)*7.6;
     const g2=new THREE.Group();g2.position.set(x,0,z);g2.rotation.y=-a;G.add(g2);
     mk(g2,BX(2.2,.14,.6),C.wood,0,.6,0);for(const sx of[-.9,.9])mk(g2,BX(.14,.6,.5),C.stone2,sx,.3,0);
+    prop('bench',x,z,1.05,a>Math.PI, [g2]);
   }
-  TOWN.propSpots=[];TOWN.propBlk=new THREE.Group();G.add(TOWN.propBlk);
-  const prop=(n,x,z,units,flip,blk)=>{TOWN.propSpots.push({n,x,z,units,flip,blk});return blk};
   for(let i=0;i<8;i++){                        // lamp posts round the plaza
     const a=i*Math.PI/4+Math.PI/8,x=Math.cos(a)*11.6,z=TOWN_Z+Math.sin(a)*11.6;
     const p1=mk(TOWN.propBlk,new THREE.CylinderGeometry(.09,.12,2.7,8),C.wood,x,1.35,z);
     const p2=mk(TOWN.propBlk,SP(.22),0xffe08a,x,2.95,z);p2.castShadow=false;
     prop('lamp_post',x,z,3.6,false,[p1,p2]);
   }
+  for(const a of[0,Math.PI*.5,Math.PI,Math.PI*1.5]){   // flower beds on the plaza's axes
+    const x=Math.cos(a)*9.6,z=TOWN_Z+Math.sin(a)*9.6;
+    prop(a<1||a>5?'flower_bed':'flower_bed2',x,z,.95,false,[]);
+  }
   for(let i=0;i<6;i++){                        // banner poles on the plaza's rim
     const a=i*Math.PI/3+.4,x=Math.cos(a)*12.6,z=TOWN_Z+Math.sin(a)*12.6;
-    cy(x,0,z,.09,.11,3.4,C.wood,8);
+    const pl=cy(x,0,z,.09,.11,3.4,C.wood,8);
     const fl=mk(G,BX(1.1,1.5,.07),i%2?C.banner:C.banner2,x+Math.cos(a)*.6,3.6,z+Math.sin(a)*.6);
     fl.rotation.y=-a;
+    prop('banner_pole',x,z,4.3,false,[pl,fl]);
   }
   // the south gate: two towers and a banner arch, with the road running through it. The gate group
   // is hidden when the painted arch is in (townArt), so the two never stand at once.
@@ -5151,8 +5159,8 @@ function townBuild(){
   }
   mk(cath,BX(.2,1.5,.2),C.gold,0,13.2,0);mk(cath,BX(1.1,.2,.2),C.gold,0,13.7,0);
   // trees and flowers on the grass between the buildings
-  for(let i=0;i<22;i++){
-    const a=i*Math.PI/11+.22,r=16.4+((i*13)%5)*1.1,x=Math.cos(a)*r,z=TOWN_Z+Math.sin(a)*r;
+  for(let i=0;i<30;i++){
+    const a=i*Math.PI/15+.22,r=18.6+((i*13)%5)*1.3,x=Math.cos(a)*r,z=TOWN_Z+Math.sin(a)*r;
     if(x>TOWN_BOUND.x0-1.4&&x<TOWN_BOUND.x1+1.4&&z>TOWN_BOUND.z0-1.4&&z<TOWN_BOUND.z1+1.4)continue;
     const g2=new THREE.Group();g2.position.set(x,0,z);TOWN.propBlk.add(g2);
     mk(g2,CY(.16,.24,1.5),C.wood,0,.75,0);const tr=mk(g2,SP(1.05),i%2?0x3f9b4a:0x4fae4f,0,2.35,0);
@@ -5161,7 +5169,7 @@ function townBuild(){
   for(let i=0;i<26;i++){
     const a=i*Math.PI/13,r=15.4+((i*11)%4)*.9,x=Math.cos(a)*r,z=TOWN_Z+Math.sin(a)*r;
     const fl=mk(TOWN.propBlk,SP(.09),[0xff9db8,0xffe066,0xffffff][i%3],x,.1,z);fl.castShadow=false;
-    if(i%4===0)prop('flower_bed',x,z,.9,false,[fl]);
+    if(i%4===0)prop(i%8===0?'flower_bed':'flower_bed2',x,z,.9,false,[fl]);
   }
   // the walk marker: a gold ring the click target drops on the ground
   const rg=new THREE.Mesh(new THREE.RingGeometry(.42,.62,26),new THREE.MeshBasicMaterial({color:0xffd23f,transparent:true,opacity:.9,depthWrite:false}));
@@ -5250,19 +5258,27 @@ function townArt(){
     const designs=['house_town_a','house_inn','house_shop','house_tall','house_stone','house_chapel','house_timber','guild_hall'];
     if(TOWN.kitArt===1&&TOWN.houseKit.clear){TOWN.houseKit.clear();TOWN.kitArt=0}
     TOWN.houseKit.visible=true;
-    const nh=()=>{let n=0;for(const h of TOWN.ring||[]){const d=designs[(h.i*3)%designs.length];
-      if(put(d,h.x,h.z,h.units,h.i%2===1,TOWN.houseKit))n++;}return n};
+    let slot=0;
+    const nh=()=>{let n=0;for(const h of TOWN.ring||[]){const d=designs[slot++%designs.length];
+      const e=TOWNP.man.sprites[d];if(!e)continue;
+      // A building is judged by how much square it fronts, not how tall its art happens to be: each
+      // spot asks for a target width and the height follows from the art's own aspect, so the ring
+      // reads as one street line instead of a scatter of wildly different cottages.
+      const sp=Math.PI*2*h.r/22;               // how much street this slot owns
+      const tw=sp*((d==='guild_hall'?1.12:.99)+((h.i*5)%3)*.035),uH=tw*(e.h/e.w);
+      if(put(d,h.x,h.z,uH,h.i%2===1,TOWN.houseKit))n++;}return n};
     const n=nh();
     if(n){TOWN.houseBlk.visible=false}
     // the cathedral closes the north end of the town, behind the NPC terrace
     if(TOWNP.man.sprites.cathedral){if(TOWN.cath)TOWN.cath.visible=false;
-      put('cathedral',0,-33,13.5,false,TOWN.houseKit);}
+      put('cathedral',0,-29.5,13.5,false,TOWN.houseKit);}
     // the fountain: the painted one replaces the block tiers, and the water keeps moving
     if(TOWNP.man.sprites.fountain){
+      const FUH=9.5;                     // how tall the painted fountain stands over the plaza
       TOWN.fountain.visible=false;
-      TOWN.fountainArt=put('fountain',0,TOWN_Z,8.6,false,TOWN.g);
+      TOWN.fountainArt=put('fountain',0,TOWN_Z,FUH,false,TOWN.g);
       TOWN.fountainArt.position.set(0,.02,TOWN_Z);
-      TOWN.waterTop=8.6*.66;TOWN.waterBasin=8.6*.13;
+      TOWN.waterTop=FUH*.66;TOWN.waterBasin=FUH*.13;
       TOWN.waterFX=new THREE.Group();TOWN.waterFX.position.set(0,0,TOWN_Z);TOWN.g.add(TOWN.waterFX);
       const jet=()=>new THREE.MeshLambertMaterial({color:0xbfeaff,transparent:true,opacity:.9});
       TOWN.spray.forEach(sp2=>{if(sp2.m.parent)sp2.m.parent.remove(sp2.m)});TOWN.spray=[];
@@ -5285,7 +5301,10 @@ function townArt(){
     }
     // the south gate: painted arch if it is painted, otherwise the block towers stay
     if(TOWNP.man.sprites.gate_arch){if(TOWN.gateBlk)TOWN.gateBlk.visible=false;
-      put('gate_arch',0,22.5,8.4,false,TOWN.g);}
+      put('gate_arch',0,22.2,7.6,false,TOWN.g);}
+    // the memorial statue, left of the avenue just inside the gate
+    if(TOWNP.man.sprites.statue_hero)
+      TOWN.statue=put('statue_hero',-6.6,9.6,3.4,false,TOWN.g);
     // the market stalls beside the plaza
     if(TOWNP.man.sprites.stall_red)put('stall_red',-11.8,3.0,3.1,false,TOWN.g);
     if(TOWNP.man.sprites.stall_blue)put('stall_blue',11.8,3.0,3.1,true,TOWN.g);
