@@ -1,6 +1,10 @@
 # v76 "Nightmare" — what was coded, and the trial-dungeon answers
 
 Build: `2026-10-07 grind-v76 nightmare band and exclusive nightmare gear`.
+> **Later:** v77 (`2026-10-08`) doubled the band again (HP x48, ATK x3) and built the trial as
+> **Endless Echo** — see `AGENTS.md` 2026-10-08 and `READ-ME-FIRST.md` `## BUILD v77`. The three
+> open answers below became: payout by DPS ladder, the `TRIAL_STORE` price list, and chest rungs
+> still undecided (the name "Endless Echo" is a placeholder).
 This is the detailed summary you asked for, then the three open suggestions: **dungeon name**,
 **what Trial Shards exchange into**, and **what a one-off milestone chest should reward**.
 

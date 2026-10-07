@@ -650,7 +650,9 @@ t('the loader asks for files that exist, and a dead atlas falls back instead of 
 
 t('all ten maps have four complete themed scenes and no spawn or boss floor stamps', () => {
   K.setAssets();
-  assert.ok(/key=S.mp\+':'\+S.lvl\+':'\+bn/.test(src), 'stage changes must rebuild the scene');
+  // v77: the Endless Echo arena is a scene of its own, so the key now carries the mode as well.
+  assert.ok(/key=\(TRIAL\.on\?'trial:':'field:'\)\+S\.mp\+':'\+S\.lvl\+':'\+bn/.test(src),
+    'stage changes (and entering the trial) must rebuild the scene');
   assert.ok(!/function stageDress/.test(src), 'old spawn pads/boss floor layer must be removed');
   for(let m=0;m<10;m++){
     const old=plan(m),original=JSON.stringify(old);

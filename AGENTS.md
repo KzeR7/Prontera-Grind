@@ -4219,3 +4219,89 @@ assigned for feel rather than fidelity. While reworking that, two shipped bugs s
   constants, MVP text, renderWin + the two handlers), `tools/tests/{nightmare,gear,ui}_sim.js`,
   `READ-ME-FIRST.md`, the three BUILD mirrors, `Updates/v76-nightmare-report.md`.
 * **PR opened** at the owner's request; the trial dungeon is the next build (v77).
+
+### 2026-10-08 — `2026-10-08 grind-v77 Endless Echo, doubled Nightmare band, N auto-sell`
+
+* **Endless Echo, the damage trial (owner: "start the dungeon … hd & realistic … undead & hell theme,
+  purpleish … dummy and character stay in place … ranked (remaining tries) / training / store").** A
+  self-contained module in `index.html` in front of `const NMNAME=['Dread',…`:
+  - **Entry:** `#trial` (fixed overlay, `z-index:1150`, above the world and below `#modal`) +
+    `#trialBody`; the button is a purple `.dungeoncard` **inside the map grid** of the World Map panel
+    (`data-trial="lobby"`), not a band under the stages - the v76.2 `.mapband.dungeon` block and the
+    stage-panel entry were both deleted, so the map list is the one place it lives.
+  - **The lobby** offers exactly three doors: **Ranked** (`trialLeftToday()/2` printed on the button,
+    disabled at 0), **Training** (unlimited) and the **Shard Store**; the result screen re-offers
+    ranked when tries are left. `trialExit()` closes the overlay even when no run is on (Close used to
+    be a no-op once the lobby was open) and is what travel calls.
+  - **The run:** `TRIAL_SECS=300`, `TRIAL_RANKED_PER_DAY=2`, day rollover via
+    `trialDay()` = `new Date(Date.now()+8*3600000).toISOString().slice(0,10)` (Asia/Singapore, the
+    same wall clock the boards use). The clock ticks in `update(dt)`, the HUD swaps to
+    `Endless Echo · m:ss` / `🏛 Ranked run|Training` / `🏛 m:ss left · N damage` via
+    `hudTrial`+`hudTrialClock`, and `trialFinish()` books damage as `S.dmg - TRIAL.dmg0`.
+  - **The dummy** is a real mob object with `hp:Infinity,max:Infinity,at:Infinity,fixed:true` (so the
+    AI never makes it act or move), spawned at `(0,-4)`; the character is placed at `(0,-2.6)` -
+    1.4 units, inside the 1.2+0.45*size melee reach, so neither walks anywhere. `mobs=[dummy]`, no
+    packs, no respawn, no drops, no card.
+  - **The arena** is plain geometry (`trialArena()`): two rune rings, ten six-sided obsidian pillars
+    with ember crowns, bone/slab litter, a purple key light and an orange rim light. `draw()` swaps
+    sky/fog/ground (`0x2a1040`, ground `0x2f2338`) on the `trial:` scene key and calls `trialArena()`;
+    leaving restores map sky, ground and `buildDeco`.
+  - **Payout:** `TRIAL_PAY=[[5000,20],[15000,35],[40000,50],[80000,75],[120000,100]]` shards per ranked
+    run by DPS, `+10` for a personal best; training pays nothing. **The board is the best single run**
+    (`S.trial.best`), never a sum.
+  - **Store:** `TRIAL_STORE` = Oridecon x5 / Elunium x5 (10), Zeny cache 250k (25), Card Mastery
+    Token (40, writes `S.cardIndex.bonus`, spent by the Index card mastery roll), Legendary Card
+    Voucher (60), Nightmare Gear Token (120 → map picker → `trialGrantNm(mi)`, section 5 when
+    `nmOpen()>=5` else 4, at Lv 150, always a weapon the class can swing). The map-pick path re-checks
+    the shards so a double click cannot spend them twice.
+  - **Save shape:** `S.shards` (int), `S.trial={day,used,best,runs}`, `S.cardIndex.bonus`; `fresh()`
+    seeds all three and the loader repairs them, so pre-v77 saves wake up with 2 tries and the shards
+    they never had. `gotoField` opens with `trialExit()`, so travelling always ends a run.
+* **The Nightmare band doubled again (owner: "double the hp. atk can be increase too. ill test it").**
+  `NMHP/NMBOSSHP 24 → 48` (one doubling, from the v76.2 figure - not a compounding double) and
+  `NMATK 2.25 → 3`. Worked example the sim prints: Nightmare Abyss 15 mob **5,565,216 HP (99x** an
+  Abyss 10 mob) hit land for **2,035 (5.2x)** after a 75% DEF cut; the stage-15 MVP has **66.3M HP**.
+  `NMEXP 2.5` / `NMZENY 2.2` are unchanged. The in-file comment carries all three rounds of history
+  (12x → 24x → 48x) so nobody doubles it a third time by accident.
+* **The N rarity is in the auto-sell ticks.** `S.autoSell` is six slots (`RARALL=RAR.concat([RAR5])`)
+  and every drop path routes by `rarIdx(it)`/`sec`, so a section-4/5 Nightmare piece can be sold on
+  drop like any other band. The loader maps a legacy five-slot array to six (the new N slot starts
+  off), and the Bag prints the N tick from the same `RARALL`.
+* **Bag equipment icons are drawn sprites now** (owner: "sprites i mean for the bags equipments
+  icons. not on the character itself"). Two layers: `ITEM_ICON_SVG` (14 hand-written silhouettes -
+  card, ore, sword, dagger, axe, mace, staff, bow, katar, armor, head, off, leg, acc) selected by
+  `ITEM_ICON_KEY(it)` and drawn inline as `.ro-icon-svg`, and the Divine-Pride item art for the id
+  `gearItemIconId(it)` picks deterministically per item name. The `<img>` carries
+  `referrerpolicy="no-referrer"` - the art host refuses hotlinked requests that send a Referer, which
+  is what made a deployed build show placeholders - and its `error` listener swaps in the matching
+  silhouette instead of the old emoji. Cells tint the silhouette by rarity band
+  (`.cell.b0…b5 .ro-icon-fallback`), Nightmare cells add the purple glow.
+* **MVP names are bare everywhere, and no crit-res readout anywhere.** The card header shows just the
+  name (no `(boss)`, no `(MVP)`), the HUD tag is the name, and the two last prose leftovers now say
+  MVP too (the map panel's MVP card: "an MVP can drop zero or several pieces"; the refine hint:
+  "Stage 10 MVPs drop both at 2.5%"). `F.critRes` still feeds the field object and `crit_sim` still
+  pins `bossCritRes`, but nothing prints it.
+* **The map hop is fixed at the cause.** `renderWin` now saves and restores **both** scrollers
+  (`host.scrollTop`, i.e. `#wins` on a phone, and each window's `.wbody`), both null-guarded so a
+  window without a body cannot throw mid-rebuild, and the pressed control is nudged **by hand inside
+  its own `.wbody`** instead of `scrollIntoView()`. `scrollIntoView()` walks every scrollable
+  ancestor - window body, `#wins` and the page - so on a phone it moved the whole screen even when
+  the control was already visible, which is what read as hopping.
+* **Tests:** the new `tools/tests/trial_sim.js` (**13 assertions**) loads the whole module into a
+  vm with stubs and pins the clock, the two-a-day rule on the Singapore clock, the best-single-run
+  board, the payout ladder, the store, the save repair, the click wiring (including the shard guard
+  on the map picker), the stand-in-reach spawn and the always-closable lobby. `ui_sim` gained the
+  bare-name wordings and the two-scroller/hop pins; `nightmare_sim` pins `[48,3,2.5,2.2,48]` and the
+  new worked example; `gear_sim` + the offline suite follow the sixth auto-sell slot;
+  `drop_card_sheet_sim` was refreshed (the worksheet snapshot carries the new build label, nothing
+  else moved) and `affix-ranges.html` labels were re-stamped to the live BUILD. All **36 suites
+  green**, `node --check` clean.
+* **Files:** `index.html` (BUILD v77, the trial module + CSS + overlay, the map-grid dungeon card,
+  the sixth auto-sell slot and its loader repair, `ITEM_ICON_SVG`/`itemIconMarkup`, the NM constants,
+  `renderWin`), `tools/tests/{trial_sim.js (new),ui_sim.js,nightmare_sim.js,gear_sim.js,
+  offline_sim.js,save_load_sim.js}`, `Updates/cards-gear-audit/{affix-ranges.html,
+  equipment-cards-tuning.html}`, `Updates/{endgame-and-dps-trial-plan.md,v76-nightmare-report.md}`,
+  `tools/cloudflare-deploy-steps.md`, `READ-ME-FIRST.md`.
+* **Still the owner's call:** the dungeon's real name (Endless Echo is a placeholder), the Shard
+  Store prices, and the one-off milestone-chest rungs - the ladder is expressed in DPS
+  (5k/15k/40k/80k/120k) so a real run can set them.

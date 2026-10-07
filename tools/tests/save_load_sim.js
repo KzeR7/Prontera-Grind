@@ -416,7 +416,7 @@ t('the v39 tool settings repair: old saves get the quiet defaults', () => {
   const g = load();
   assert.strictEqual(g.feed, true, 'the on-screen log starts unfolded');
   assert.strictEqual(g.clickSell, false, 'a bag click inspects - it never sells - by default');
-  assert.deepStrictEqual(Array.from(g.autoSell), [false, false, false, false, false], 'nothing is auto-sold');
+  assert.deepStrictEqual(Array.from(g.autoSell), [false, false, false, false, false, false], 'nothing is auto-sold (six bands since v77: N swapped in)');
   assert.deepStrictEqual(Object.keys(g.logOff), [], 'every log filter starts ticked');
   // junk of every shape must be repaired, not carried
   sb.__l.setRaw({ lv: 5, cls: 'Novice', sk: { aid: 1 }, jobs: { Novice: { jl: 1, jx: 0 } },
@@ -424,7 +424,7 @@ t('the v39 tool settings repair: old saves get the quiet defaults', () => {
   const r = load();
   assert.strictEqual(r.feed, true, 'a junk fold flag falls back to open');
   assert.strictEqual(r.clickSell, false, 'a junk click-sell flag falls back to off');
-  assert.deepStrictEqual(Array.from(r.autoSell), [false, false, false, false, false], 'a junk auto-sell list falls back to nothing ticked');
+  assert.deepStrictEqual(Array.from(r.autoSell), [false, false, false, false, false, false], 'a junk auto-sell list falls back to nothing ticked');
   assert.deepStrictEqual(Object.keys(r.logOff), [], 'a junk filter list falls back to an empty object');
   // and deliberate choices survive the round trip, index by index
   sb.__l.setRaw({ lv: 5, cls: 'Novice', sk: { aid: 1 }, jobs: { Novice: { jl: 1, jx: 0 } },
@@ -432,7 +432,11 @@ t('the v39 tool settings repair: old saves get the quiet defaults', () => {
   const k = load();
   assert.strictEqual(k.feed, false, 'a deliberately folded log stays folded');
   assert.strictEqual(k.clickSell, true, 'a deliberately armed click-sell stays armed');
-  assert.deepStrictEqual(Array.from(k.autoSell), [true, false, false, false, true], 'every tick is read as a boolean, position by position');
+  assert.deepStrictEqual(Array.from(k.autoSell), [true, false, false, false, true, false], 'every tick is read as a boolean, position by position, and the new N band starts unticked');
+  // v77: a save written before the N band existed keeps its five choices and gains an unticked sixth
+  sb.__l.setRaw({ lv: 5, cls: 'Novice', sk: { aid: 1 }, jobs: { Novice: { jl: 1, jx: 0 } },
+    autoSell: [false, false, true, false, true] });
+  assert.deepStrictEqual(Array.from(load().autoSell), [false, false, true, false, true, false], 'an old five-band save keeps its ticks and gains an unticked N');
   assert.deepStrictEqual(Object.keys(k.logOff), ['gear'], 'a switched-off filter survives');
 });
 

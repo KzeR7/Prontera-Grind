@@ -82,7 +82,8 @@ const code = [
   grab('const gearIconHash=text=>', 'const gearItemIconId='),
   grab('const gearItemIconId=it=>', 'const itemIconUrl='),
   pick(/const itemIconUrl=id=>[^;]+;/, 'gear image URL'),
-  grab('const itemIconMarkup=it=>', 'const icon=it=>'),
+  grab('const ITEM_ICON_SVG=', 'const gearIconHash='),   // v77: the local silhouettes the fallback draws
+  grab('const itemIconMarkup=it=>', 'const icon=it=>'),  // ...and the markup that picks art or silhouette
   pick(/const icon=it=>[^;]+;/, 'icon'),
   pick(/const items=\(\)=>[^\n]*/, 'items/ev/iname/eqv'),
   pick(/const refCost=it=>[^;]+;/, 'refCost/refCh'),
@@ -101,7 +102,7 @@ const harness = `
 // stubs the pulled-in code needs at load time and when a panel renders
 const SLOTS={weapon:{label:'Weapon',stat:'ATK',ic:'sw'},armor:{label:'Armor',stat:'DEF',ic:'ar'},head:{label:'Headgear',stat:'HP',ic:'hd'},off:{label:'Shield',stat:'DEF',ic:'sh'},leg:{label:'Legwear',stat:'DEF',ic:'lg'},acc:{label:'Accessory',stat:'HP',ic:'ac'}};
 const RAR=[{n:'Common',m:1,w:60},{n:'Fine',m:1.35,w:25},{n:'Rare',m:1.9,w:10},{n:'Epic',m:2.8,w:4},{n:'Legendary',m:4.5,w:1}];
-const RAR5={n:'N'},rarIdx=it=>((it&&+it.sec>=4)?5:Math.max(0,Math.min(RAR.length-1,(it&&it.tier)||0))),rarOf=it=>(rarIdx(it)===5?RAR5:RAR[rarIdx(it)]),rarCls=it=>'r'+rarIdx(it);
+const RAR5={n:'N'},RARALL=RAR.concat([RAR5]),rarIdx=it=>((it&&+it.sec>=4)?5:Math.max(0,Math.min(RAR.length-1,(it&&it.tier)||0))),rarOf=it=>(rarIdx(it)===5?RAR5:RAR[rarIdx(it)]),rarCls=it=>'r'+rarIdx(it);
 const PW=[[90,9,1,0],[80,17,3,0],[70,24,5.5,.5],[60,30,9,1],[50,35,13,2],[40,38,18,4],[30,40,24,6],[22,40,30,8],[12,38,38,12],[5,30,45,20]];
 const MAXST=99,ELITELV=100,Z0=-14;
 const statCap=()=>99,selK=null,gp=id=>S&&S.pets.find(x=>String(x.id)===String(id)),classRec=()=>null,tb={};
@@ -176,8 +177,10 @@ t('the map panel renders every map and field', () => {
   U.mapM = 9; U.mapL = 15;
   const nmBoss = U.V.map();
   assert.ok(nmBoss.includes('Nightmare Abyss Stage 5'), 'the Nightmare field is titled Nightmare <map> Stage <1-5>');
-  assert.ok(nmBoss.includes('(MVP)'), 'the boss is called an MVP (v76.2 owner rename)');
-  assert.ok(!nmBoss.includes('(BOSS)'), 'and never BOSS any more');
+  // v77 (owner): "all boss to just have names, no (boss), no (MVP)" - the card is already headed
+  // "MVP & pets", so the name inside it stands alone.
+  assert.ok(/<b class="r4">[A-Z][a-z]+<\/b>/.test(nmBoss) && !nmBoss.includes('(MVP)') && !nmBoss.includes('(BOSS)'),
+    'the boss name stands alone on the Nightmare card (v77: no parenthetical at all)');
   assert.ok(!nmBoss.includes('Crit resistance'), 'the crit-defence line is gone from the MVP card (owner: the map already says it)');
   assert.ok(nmBoss.includes('MVP fights immediately'), 'stage 15 is an MVP field like stage 10');
   U.mapL = 13;
@@ -186,7 +189,7 @@ t('the map panel renders every map and field', () => {
   assert.ok(!nmNoBoss.includes('MVP appears at Stage 10.'), 'not the normal-ladder wording');
   U.mapL = 10;
   const normBoss = U.V.map();
-  assert.ok(normBoss.includes('Dark Lord (MVP)') && normBoss.includes('MVP appears at Stage 10.') === false, 'the normal stage-10 field still shows its MVP');
+  assert.ok(normBoss.includes('Dark Lord') && !normBoss.includes('(MVP)'), 'the normal stage-10 field still shows its MVP, bare');
   U.mapM = 0;
   assert.ok(b.includes('1% each') && b.includes('2.5% each'), 'v51 ore rates: 1% per monster, 2.5% per boss');
 });
@@ -235,7 +238,7 @@ t('map and boss-field panels stay inside narrow viewports', () => {
   assert.ok(src.includes('.mapband,.mapband.fields{position:static}'), 'the sticky field band must not clip in the stacked layout');
   U.S = mkS('Knight'); U.mapM = 9; U.mapL = 10;
   const boss = U.V.map();
-  assert.ok(boss.includes('Dark Lord') && boss.includes('(MVP)'), 'the last map and MVP field still render after selection');
+  assert.ok(boss.includes('Dark Lord') && !boss.includes('(MVP)'), 'the last map and its MVP field still render after selection, name bare (v77)');
   assert.ok(boss.includes('poolitem'), 'the selected boss field keeps its drop pool');
 });
 
@@ -621,7 +624,7 @@ t('damage floats stay screen-projected, restrained, and distinct by type', () =>
   assert.strictEqual(vm.runInContext('S.dmg',strikeBox)>0,true,
     'every player hit must add to the lifetime damage counter the DPS meter reads');
   assert.strictEqual(F.floats[3].anchor,'hero');assert.strictEqual(F.floats[3].y,4.03); // 3.65 base + .38 per slot (v68: banner above the head)
-  const draw=grab('  floats.forEach(f=>{if(!f.el)', '  const pt=bn?');
+  const draw=grab('  floats.forEach(f=>{if(!f.el)', '  const pt=');
   const scene={floats:F.floats,pl:F.pl,create:()=>({style:{}}),draw};
   vm.createContext(scene);
   vm.runInContext(`const document={createElement:()=>({style:{}})},ov={appendChild:()=>{}},scr=(x,y,z)=>[x*10,z*10];${draw}`,scene);
@@ -971,7 +974,7 @@ t('the bag shows its 1000-item limit and refuses loot once it is full', () => {
     let S={inv:[],cards:[],ore:{ori:0,elu:0},auto:false,zeny:0,autoSell:[false,false,false,false,false],clickSell:false},pl={x:1,z:2},msg='';
     const GRADE=['Common','Uncommon','Rare','Legendary'],GI=[0,1,2,4],ORE={ori:'Oridecon',elu:'Elunium'},
       RAR=[{n:'Common'},{n:'Fine'},{n:'Rare'},{n:'Epic'},{n:'Legendary'}];
-    const RAR5={n:'N'},rarIdx=it=>((it&&+it.sec>=4)?5:Math.max(0,Math.min(RAR.length-1,(it&&it.tier)||0))),rarOf=it=>(rarIdx(it)===5?RAR5:RAR[rarIdx(it)]),rarCls=it=>'r'+rarIdx(it);
+    const RAR5={n:'N'},RARALL=RAR.concat([RAR5]),rarIdx=it=>((it&&+it.sec>=4)?5:Math.max(0,Math.min(RAR.length-1,(it&&it.tier)||0))),rarOf=it=>(rarIdx(it)===5?RAR5:RAR[rarIdx(it)]),rarCls=it=>'r'+rarIdx(it);
     const cardTxt=c=>c.n,addFloat=()=>{},ui=()=>{},log=m=>{msg=m},qProg=()=>{},canUse=()=>false,equip=()=>{};
     const earnZeny=a=>{S.zeny+=a},save=()=>{};
     ${pick(/const BAGMAX=\d+;/, 'BAGMAX')}
@@ -1048,15 +1051,27 @@ t('the map panel states the fixed rarity of the field it is showing', () => {
   h = U.V.map();
 });
 
-t('the damage trial already has its place in the map panel (v76.2, before the dungeon is built)', () => {
+t('the damage trial is entered from the map selection, and the lobby offers the three doors', () => {
   U.S = mkS('Knight'); U.mapM = 9; U.mapL = 10;
   const h = U.V.map();
-  assert.ok(h.includes('Endless Echo'), 'the map panel names the trial');
-  assert.ok(h.includes('5:00'), 'and states the run length');
-  assert.ok(h.includes('2 ranked runs a day'), 'the ranked cap is on the card, not hidden in a menu');
-  assert.ok(h.includes('best single-run DPS'), 'and the board rule the owner set (never summed)');
-  assert.ok(h.includes('not built yet') && h.includes('<button class="go" disabled>'), 'with the entry disabled until the dungeon ships');
-  assert.ok(src.includes('.mapband.dungeon{'), 'and its own band in the map window');
+  // v77 (owner): "the dungeon button should be at the map selection itself not at the stages"
+  assert.ok(h.includes('Endless Echo'), 'the map window names the trial');
+  assert.ok(h.includes('data-trial="lobby"'), 'and its button sits with the map cards, opening the lobby');
+  assert.ok(h.includes('/2 ranked runs left today'), 'the card states the ranked tries left');
+  assert.ok(src.indexOf('dungeoncard') < src.indexOf('mapband fields'), 'the button is drawn with the map cards, above the stage list');
+  assert.ok(!src.includes('.mapband.dungeon{'), 'the old bottom band is gone');
+  // the lobby itself: ranked with the tries left, unlimited training, and the Shard Store. The
+  // rendered HTML is exercised by trial_sim.js; here the source is pinned.
+  const lobby = grab('function trialLobby(view){', 'function trialShopHtml(){');
+  assert.ok(lobby.includes('Ranked run') && lobby.includes('left today'), 'ranked shows the tries left');
+  assert.ok(lobby.includes('Training (unlimited)'), 'training is unlimited');
+  assert.ok(lobby.includes('Shard Store'), 'and the store is a door of its own');
+  assert.ok(lobby.includes('Personal best'), 'the lobby carries the personal best');
+  assert.ok(grab('function trialEnter(mode){', 'function trialFinish(){').includes('TRIAL_SECS'), 'a run is the full five minutes');
+  assert.ok(src.includes('const TRIAL_SECS=300'), '5:00 exactly');
+  assert.ok(src.includes('TRIAL_RANKED_PER_DAY=2'), 'two ranked runs a day');
+  const fin = grab('function trialFinish(){', 'function trialExit(){');
+  assert.ok(fin.includes('dps>st.best') && !fin.includes('st.best+='), 'the board metric is a single run at its best, never a sum');
 });
 
 
@@ -1207,9 +1222,9 @@ t('locked gear requires deliberate confirmation for manual sale and is skipped b
   assert.strictEqual(C.sell(91),true,'a second deliberate Sell action can now complete');
   assert.strictEqual(C.S.inv.length,0,'the unlocked item is sold only after that second action');
   assert.strictEqual(C.earned,C.sellVal(item),'the confirmed manual sale pays the ordinary sell value');
-  assert.ok(src.includes('S.inv.filter(i=>!i.locked&&autoSellOn(i.tier))'),'bulk sell omits locked gear');
-  assert.ok(src.includes('S.inv.some(i=>!i.locked&&autoSellOn(i.tier))'),'the bulk-sell button is disabled when only locked matches remain');
-  assert.ok(src.includes('if(!it.locked&&autoSellOn(it.tier))'),'drop auto-sell never consumes a locked item');
+  assert.ok(src.includes('S.inv.filter(i=>!i.locked&&autoSellOn(rarIdx(i)))'),'bulk sell omits locked gear');
+  assert.ok(src.includes('S.inv.some(i=>!i.locked&&autoSellOn(rarIdx(i)))'),'the bulk-sell button is disabled when only locked matches remain');
+  assert.ok(src.includes('if(!it.locked&&autoSellOn(rarIdx(it)))'),'drop auto-sell never consumes a locked item');
 });
 
 t('the lock toggle changes saved item state in either direction',()=>{
@@ -1263,7 +1278,7 @@ t('the Log window filters by category, and the on-screen feed folds away', () =>
     'and reads clearly on hover or focus');
   assert.ok(src.includes('#feedTab.filt::after{'), 'a quiet dot marks a filter that is hiding lines');
   assert.ok(src.includes("b.classList.toggle('filt',hid>0);"), 'and the dot is driven by the real filter state');
-  assert.ok(src.includes("feedTab();$('stageTitle')"), 'every redraw keeps the tab label honest');
+  assert.ok(src.includes('feedTab();') && src.includes("$('stageTitle').textContent=hudTrial?"), 'every redraw keeps the tab label honest');
   assert.ok(src.includes("feed:()=>{S.feed=!feedOn();feedTab();ui();save()}"), 'toggling it saves');
   const box = {}; vm.createContext(box);
   vm.runInContext(`
@@ -1447,7 +1462,9 @@ t('worn equipment can never be auto-sold or bulk-sold', () => {
   const sellnowFn = grab('sellnow:()=>{', 'clicksell:');
   const box = {}; vm.createContext(box);
   vm.runInContext(`let S=null,selB=null,z=0,sold=0;const earnZeny=v=>{z+=v},log=()=>{},ui=()=>{},save=()=>{sold++};
-    const autoSellOn=t=>!!(S.autoSell&&S.autoSell[t]);
+    const RAR=[{n:'Common'},{n:'Fine'},{n:'Rare'},{n:'Epic'},{n:'Legendary'}],RAR5={n:'N'},RARALL=RAR.concat([RAR5]);
+    const rarIdx=it=>((it&&+it.sec>=4)?5:Math.max(0,Math.min(RAR.length-1,(it&&it.tier)||0)));
+    const autoSellOn=t=>!!(S.autoSell&&S.autoSell[Math.max(0,Math.min(RARALL.length-1,Math.floor(+t||0)))]);
     ${sellValFn}
     const ACT={${sellnowFn}};
     this.__bulk={set S(v){S=v},get S(){return S},get z(){return z},get saved(){return sold},ACT};`, box);
@@ -1460,8 +1477,8 @@ t('worn equipment can never be auto-sold or bulk-sold', () => {
   assert.strictEqual(C.S.inv.length, 0, 'the matching bag copy is the one that sells');
   assert.strictEqual(C.S.eq.weapon, worn, 'the worn weapon is untouched: equipment is not in the bag list');
   assert.ok(C.z > 0, 'the sale still paid out');
-  assert.ok(src.includes('S.inv.filter(i=>!i.locked&&autoSellOn(i.tier))'), 'bulk sell only ever reads S.inv');
-  assert.ok(src.includes('if(!it.locked&&autoSellOn(it.tier)){const v=sellVal(it)'), 'drop auto-sell only ever reads S.inv');
+  assert.ok(src.includes('S.inv.filter(i=>!i.locked&&autoSellOn(rarIdx(i)))'), 'bulk sell only ever reads S.inv');
+  assert.ok(src.includes('if(!it.locked&&autoSellOn(rarIdx(it))){const v=sellVal(it)'), 'drop auto-sell only ever reads S.inv');
   assert.ok(src.includes('const i=S.inv.findIndex(x=>String(x.id)===String(id))'), 'manual Sell searches the bag, never S.eq');
 });
 
@@ -1507,13 +1524,19 @@ t('the reset buttons explain themselves, refuse on screen, and survive a rebuild
   // a click whose press and release span a kill's renderWin() must not be swallowed
   assert.ok(/if\(winPress\)\{winDirty=true;return\}/.test(src), 'renderWin must defer while a pointer is down');
   assert.ok(/addEventListener\('pointerup',winUp\)/.test(src), 'the deferred rebuild runs on pointerup');
-  // v76.2: a rebuild used to leave the phone's scroller (which is #wins, not .wbody, at <=700px)
-  // wherever the browser clamped it, so tapping a stage made the panel hop. The outer scroll is kept
-  // by number and the pressed control is only nudged when it is off-screen.
+  // v76.2/v76.3: a rebuild used to leave the phone's scroller (which is #wins, not .wbody, at
+  // <=700px) wherever the browser clamped it, so tapping a stage made the panel hop. Both scrollers
+  // are kept by number, and the pressed control is nudged inside its own window body by hand -
+  // scrollIntoView() also moves #wins and the page, which was the rest of the hop.
   assert.ok(/const outer=host\.scrollTop;/.test(src), 'the rebuild remembers the real scroller');
   assert.ok(/host\.scrollTop=outer;/.test(src), 'and puts it back');
-  assert.ok(/if\(anchor\)\{const el=host\.querySelector\(anchor\);if\(el&&typeof el\.scrollIntoView==='function'\)el\.scrollIntoView\(\{block:'nearest',inline:'nearest'\}\)\}/.test(src),
-    'and keeps the pressed control visible without moving anything that already is');
+  assert.ok(/const b=e\.querySelector\('\.wbody'\);if\(b\)old\[e\.dataset\.win\]=b\.scrollTop/.test(src)
+    && /const b=e\.querySelector\('\.wbody'\);if\(!b\)return;/.test(src)
+    && /if\(e\.dataset\.win==='log'\)b\.scrollTop=1e6;else b\.scrollTop=old\[e\.dataset\.win\]\|\|0/.test(src),
+    'both scrollers are read and written defensively (a window without a body cannot throw mid-rebuild)');
+  assert.ok(!src.includes('el.scrollIntoView('), 'nothing calls the browser scrollIntoView() any more');
+  assert.ok(/body\.scrollTop\+=er\.top-br\.top/.test(src) && /body\.scrollTop\+=er\.bottom-br\.bottom/.test(src),
+    'the pressed control is nudged inside its own window body when it fell outside');
   assert.ok(src.includes("sell_:v=>{mapL=+v;renderWin('[data-win=\"map\"] .map-node.picked')}"), 'a stage click anchors itself');
   assert.ok(src.includes("renderWin('[data-win=\"map\"] .mapcard.on')"), 'so does a map card click');
 

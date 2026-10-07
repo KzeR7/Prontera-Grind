@@ -143,7 +143,10 @@ t('the Nightmare rows are worth more than the high-tier row, and section 5 tops 
 });
 
 t('the difficulty knobs are the shipped ones and the live code reads them', () => {
-  assert.deepStrictEqual([N.NMHP, N.NMATK, N.NMEXP, N.NMZENY, N.NMBOSSHP], [24, 2.25, 2.5, 2.2, 24], 'the band constants are pinned (v76.2: the wall is doubled, the sting is half again)');
+  // v77: the owner asked for "double the hp, atk can be increase too", so the wall takes a second
+  // doubling (12 -> 24 in v76.2, now 24 -> 48) and the sting doubles too (1.5 -> 3). These numbers
+  // are what the live game ships; a later retune moves this line with it.
+  assert.deepStrictEqual([N.NMHP, N.NMATK, N.NMEXP, N.NMZENY, N.NMBOSSHP], [48, 3, 2.5, 2.2, 48], 'the band constants are pinned (v77: 48x HP, 3x ATK)');
   // spawn() is a game-loop function, so its wiring is checked at the source and the numbers are
   // worked out from the same formulas below.
   assert.ok(src.includes('nm1=S.lvl>10,nm=nm1?NMHP:1,na=nm1?NMATK:1,ne=nm1?NMEXP:1,nz=nm1?NMZENY:1'), 'spawn() reads the knobs once');
@@ -156,11 +159,11 @@ t('the difficulty knobs are the shipped ones and the live code reads them', () =
   const mb = 1 + 9 * .15 + Math.max(0, 9 - 4) * .2;
   const hp = l => Math.floor(42 * mb * Math.pow(l, 1.3));
   const atk = l => Math.floor((5 + l * 4.6) * mb);
-  const abyss10 = { hp: hp(100), atk: Math.round(atk(100) * .25) }, abyss15 = { hp: hp(175) * 24, atk: Math.round(atk(175) * 2.25 * .25) };
+  const abyss10 = { hp: hp(100), atk: Math.round(atk(100) * .25) }, abyss15 = { hp: hp(175) * 48, atk: Math.round(atk(175) * 3 * .25) };
   console.log('       Abyss Stage 10 : mob HP ' + abyss10.hp.toLocaleString() + ', a hit lands for ' + abyss10.atk.toLocaleString() + ' after a 75% DEF cut');
   console.log('       Nightmare 15   : mob HP ' + abyss15.hp.toLocaleString() + ' (' + (abyss15.hp / abyss10.hp).toFixed(0) + 'x), a hit lands for ' + abyss15.atk.toLocaleString() + ' (' + (abyss15.atk / abyss10.atk).toFixed(1) + 'x)');
-  console.log('       Abyss 15 boss  : ' + (Math.floor(500 * mb * Math.pow(175, 1.3)) * 24).toLocaleString() + ' HP');
-  assert.ok(abyss15.hp / abyss10.hp > 10, 'a Nightmare mob must take an order of magnitude longer to kill');
+  console.log('       Abyss 15 boss  : ' + (Math.floor(500 * mb * Math.pow(175, 1.3)) * 48).toLocaleString() + ' HP');
+  assert.ok(abyss15.hp / abyss10.hp > 50, 'a Nightmare mob takes a good two orders of magnitude longer to kill than a normal one');
   assert.ok(abyss15.atk / abyss10.atk > 1.3, 'and it must hit at least a third harder');
 });
 

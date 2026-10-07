@@ -6,7 +6,18 @@
 > (Nightmare 11-13, Abyssal Nightmare 14-15). What shipped, and the three still-open trial decisions,
 > are in **`Updates/v76-nightmare-report.md`**.
 >
-> The trial dungeon itself is **not built**. The owner has since set the rules that supersede the
+> **UPDATE — 2026-10-08.** The trial dungeon **is built, as v77 "Endless Echo"**
+> (`2026-10-08 grind-v77 Endless Echo, doubled Nightmare band, N auto-sell`). It took the shape this
+> plan recommended: `TRIAL_SECS=300`, unlimited practice, a dummy that never dies and never hits back,
+> **2 ranked runs a day** on the Asia/Singapore clock, a board metric of the **best single run**
+> (`S.trial.best`, never summed), and Shards from ranked runs only. What shipped instead of a draft:
+> the payout ladder `TRIAL_PAY=[[5000,20],[15000,35],[40000,50],[80000,75],[120000,100]]` (+10 for a
+> new best) and the `TRIAL_STORE` prices (Oridecon/Elunium x5 = 10, 250k Zeny = 25, Card Mastery
+> Token = 40, Legendary Card Voucher = 60, Nightmare Gear Token = 120). The name "Endless Echo" is
+> still a placeholder and the milestone chests are still only a ladder in DPS — both wait on the
+> owner. See the v77 entry in `AGENTS.md` and the `## BUILD v77` section in `READ-ME-FIRST.md`.
+>
+> The draft below predates it: the trial dungeon was **not built** at the time of writing. The owner has since set the rules that supersede the
 > draft in section 3: **5-minute runs** (not 60s), unlimited practice, the dummy does not hit back,
 > and **2 ranked attempts a day**. Endorsed rewards: titles, Trial Shards, a weekly season, a
 > personal-best bonus. **The board keeps the best DPS of a single 5-minute session — runs are never

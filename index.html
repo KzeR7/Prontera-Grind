@@ -197,9 +197,32 @@ hr{border:0;border-top:1px dashed var(--edge);margin:6px 0}
 .mapband-t button.go{margin-left:auto;padding:5px 12px;font-weight:bold;white-space:normal;max-width:100%}
 /* v76.2: where the damage trial will live. The owner asked for its place in the map panel before the
    dungeon itself is built, so the map stops being only fields. */
-.mapband.dungeon{margin-top:6px;padding:6px 9px;border:2px solid #8f4fd6;border-radius:6px;background:#f6ecff}
-.mapband.dungeon .mapband-t{color:#4a1f6b;margin-bottom:2px}
-.mapband.dungeon button.go[disabled]{opacity:.55;cursor:not-allowed}
+.dungeoncard{display:flex;flex-direction:column;align-items:flex-start;gap:1px;width:100%;margin-top:6px;padding:7px 10px;border:2px solid #8f4fd6;border-radius:6px;background:linear-gradient(#f6ecff,#e9d5ff);text-align:left;cursor:pointer}
+.dungeoncard:hover{background:#e9d5ff}
+#trial{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:#0009;z-index:1150;padding:14px}
+#trial.on{display:flex}
+.trial-card{width:min(430px,100%);max-height:calc(100dvh - 40px);overflow:auto;border-color:#8f4fd6;box-shadow:0 0 0 2px #f6ecff,0 6px 0 2px #6a2fa0}
+.trial-hd{display:flex;align-items:baseline;gap:6px;font-size:16px;color:#4a1f6b;margin-bottom:6px}
+.trial-hd small{font-weight:normal;opacity:.7;font-size:11px}
+.trial-card p{margin:0 0 8px}
+.trial-card .trial-row{display:flex;flex-direction:column;gap:6px;margin-top:8px}
+.trial-card button.trial-act{text-align:left;padding:8px 10px;background:linear-gradient(#f6ecff,#e9d5ff);border:2px solid #a874e0}
+.trial-card button.trial-act:hover{background:#e2c9ff}
+.trial-card button.trial-act b{color:#4a1f6b;display:block}
+.trial-card button.trial-act small{opacity:.75}
+.trial-card button:disabled{opacity:.5;cursor:not-allowed}
+.trial-foot{display:flex;gap:6px;justify-content:flex-end;margin-top:10px}
+#trial *{pointer-events:auto}
+.trial-stats{display:flex;gap:10px;flex-wrap:wrap;font-size:12px;margin:6px 0 2px}
+.trial-stats b{color:#4a1f6b}
+.trial-shop{border-top:1px solid var(--edge2);margin-top:8px;padding-top:6px}
+.trial-shop .shopline{display:flex;align-items:center;gap:8px;padding:4px 0;border-bottom:1px dashed var(--edge2)}
+.trial-shop .shopline>span{flex:1;min-width:0}
+.trial-shop .shopline small{display:block;opacity:.72}
+.trial-shop .mapgrid{margin-top:6px}
+.dungeoncard b{color:#4a1f6b}
+.dungeoncard b{color:#4a1f6b}
+.dungeoncard small{font-weight:normal;opacity:.8}
 .mapcols{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,280px),1fr));gap:8px;align-items:stretch;margin-top:8px;min-width:0}
 .mapcols .mob-card{margin-bottom:0;min-width:0;overflow-wrap:anywhere}
 .dropline{display:flex;justify-content:space-between;align-items:baseline;gap:8px;padding:1px 0;font-size:12px}
@@ -223,7 +246,11 @@ hr{border:0;border-top:1px dashed var(--edge);margin:6px 0}
 @media(max-width:560px){.ib{width:32px;height:32px;font-size:16px}#dock{gap:3px;padding:4px 6px;max-width:calc(100vw - 12px);flex-wrap:wrap;justify-content:center}.grid{grid-template-columns:repeat(5,1fr)}.skg{grid-template-columns:repeat(3,minmax(0,1fr))}.sk-master{grid-column:3}.hair-preview-card{gap:8px;padding:6px}.hair-preview-stage{flex-basis:128px;width:128px;height:138px}.hair-preview-stage canvas{width:128px;height:138px}}
 .atabs{display:flex;gap:4px;margin-bottom:14px;align-items:stretch}.atabs button{flex:1 1 0;min-width:0;height:34px;min-height:34px;padding:6px 8px;font-weight:bold;font-size:13px;line-height:20px;box-sizing:border-box}.atabs button.on{background:#ffe08a;border-color:var(--gold);height:34px;min-height:34px}
 #qp{position:absolute;right:12px;top:50%;transform:translateY(-50%);width:210px;background:rgba(30,20,10,.5);border:1px solid #ffffff44;border-radius:8px;padding:6px 8px;color:#fff;font:12px "Trebuchet MS",sans-serif;pointer-events:auto;z-index:5;line-height:1.3;display:none}#qp .pbar{margin:3px 0}
-.skg{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px}.sk{position:relative;min-width:0;min-height:146px;border:1px solid var(--sk-accent,#8a6a2c);border-radius:10px;background:linear-gradient(160deg,#fffdf7,#f4e7c8);text-align:center;padding:7px 5px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:4px;line-height:1.1;box-shadow:0 2px 5px #4b35151a,inset 0 1px 0 #fff}.sk:hover{transform:translateY(-1px);box-shadow:0 4px 9px #4b35152b}.sk.off{filter:grayscale(.45);opacity:.68}.sk.sel{outline:3px solid #2f6fd6;outline-offset:1px}.sk-head{width:100%;display:flex;justify-content:space-between;align-items:center;gap:2px}.sk-kind{font:700 8px/1.2 "Trebuchet MS",sans-serif;letter-spacing:.35px;padding:2px 4px;border-radius:7px;background:#3b2a1a12;color:#604723;white-space:nowrap}.sk-paused{font:700 8px/1.2 "Trebuchet MS",sans-serif;padding:2px 4px;border-radius:7px;background:#e5484d;color:#fff}.sk .si{width:48px;height:48px;display:grid;place-items:center;border:0;border-radius:13px;background:transparent;line-height:1;box-shadow:none;overflow:visible}.skill-art{display:block;width:46px;height:46px;overflow:visible;filter:drop-shadow(0 2px 2px #17101c99)}.ro-item-icon{display:block;width:30px;height:30px;object-fit:contain;image-rendering:pixelated;pointer-events:none;filter:drop-shadow(0 1px 1px #1b100c55)}.ro-icon-fallback{display:inline-block;line-height:1}.sk-detail-card{grid-column:1/-1;width:100%;cursor:default}.sk.auto-off .si{filter:grayscale(1);opacity:.55}.sk-name{width:100%;min-height:24px;font-size:10px;font-weight:700;line-height:1.15;overflow-wrap:anywhere}.sk-level{font-size:10px;color:#5c482c;white-space:nowrap}.sk button{margin-top:auto;padding:2px 9px;font-weight:bold}.sk button:disabled{opacity:.36}.sk-autocast{display:flex;align-items:center;justify-content:center;gap:4px;min-height:14px;font-size:9px;line-height:1;white-space:nowrap;cursor:pointer;color:#4b3c21}.sk-autocast input{width:12px;height:12px;margin:0;accent-color:#2f6fd6;cursor:pointer}.sk.auto-off .sk-autocast{color:#8d3939}
+.skg{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px}.sk{position:relative;min-width:0;min-height:146px;border:1px solid var(--sk-accent,#8a6a2c);border-radius:10px;background:linear-gradient(160deg,#fffdf7,#f4e7c8);text-align:center;padding:7px 5px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:4px;line-height:1.1;box-shadow:0 2px 5px #4b35151a,inset 0 1px 0 #fff}.sk:hover{transform:translateY(-1px);box-shadow:0 4px 9px #4b35152b}.sk.off{filter:grayscale(.45);opacity:.68}.sk.sel{outline:3px solid #2f6fd6;outline-offset:1px}.sk-head{width:100%;display:flex;justify-content:space-between;align-items:center;gap:2px}.sk-kind{font:700 8px/1.2 "Trebuchet MS",sans-serif;letter-spacing:.35px;padding:2px 4px;border-radius:7px;background:#3b2a1a12;color:#604723;white-space:nowrap}.sk-paused{font:700 8px/1.2 "Trebuchet MS",sans-serif;padding:2px 4px;border-radius:7px;background:#e5484d;color:#fff}.sk .si{width:48px;height:48px;display:grid;place-items:center;border:0;border-radius:13px;background:transparent;line-height:1;box-shadow:none;overflow:visible}.skill-art{display:block;width:46px;height:46px;overflow:visible;filter:drop-shadow(0 2px 2px #17101c99)}.ro-item-icon{display:block;width:30px;height:30px;object-fit:contain;image-rendering:pixelated;pointer-events:none;filter:drop-shadow(0 1px 1px #1b100c55)}.ro-icon-fallback{display:inline-block;line-height:1;color:#5b4a35}
+.ro-icon-fallback .ro-icon-svg,.ro-icon-svg{display:block;width:30px;height:30px;fill:currentColor}
+.cell.b0 .ro-icon-fallback{color:#7b7166}.cell.b1 .ro-icon-fallback{color:#2f7d32}
+.cell.b2 .ro-icon-fallback{color:#2b6cb0}.cell.b3 .ro-icon-fallback{color:#b45309}
+.cell.b4 .ro-icon-fallback{color:#a16207}.cell.b5 .ro-icon-fallback{color:#5b21b6}.sk-detail-card{grid-column:1/-1;width:100%;cursor:default}.sk.auto-off .si{filter:grayscale(1);opacity:.55}.sk-name{width:100%;min-height:24px;font-size:10px;font-weight:700;line-height:1.15;overflow-wrap:anywhere}.sk-level{font-size:10px;color:#5c482c;white-space:nowrap}.sk button{margin-top:auto;padding:2px 9px;font-weight:bold}.sk button:disabled{opacity:.36}.sk-autocast{display:flex;align-items:center;justify-content:center;gap:4px;min-height:14px;font-size:9px;line-height:1;white-space:nowrap;cursor:pointer;color:#4b3c21}.sk-autocast input{width:12px;height:12px;margin:0;accent-color:#2f6fd6;cursor:pointer}.sk.auto-off .sk-autocast{color:#8d3939}
 .hair-preview-card{display:flex;align-items:center;gap:12px;margin:9px 0;padding:8px;border:1px solid var(--edge);border-radius:8px;background:linear-gradient(145deg,#fffdf6,#f0e2bd);box-shadow:inset 0 1px 0 #fff}.hair-preview-stage{position:relative;flex:0 0 150px;width:150px;height:160px;display:flex;align-items:center;justify-content:center;overflow:hidden;border:1px solid #c9a35b;border-radius:8px;background:radial-gradient(circle at 50% 37%,#fff9df,#d9c18b)}.hair-preview-stage canvas{display:block;width:150px;height:160px;image-rendering:pixelated}.hair-preview-loading{position:absolute;font-size:10px;color:#5d4929;text-align:center}.hair-preview-info{display:flex;flex-direction:column;gap:5px;min-width:0}.hair-preview-info .eyebrow{font-weight:bold;font-size:9px;letter-spacing:.7px;color:#89672e}.hair-preview-info b{font-size:14px;overflow-wrap:anywhere}.hair-preview-info .hair-style-label{font-weight:bold;color:#63491f;font-size:12px}.hair-controls button{min-width:40px;font-weight:bold}.hair-controls span{font-weight:bold;font-size:12px}
 .doll{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;max-width:340px;margin:8px auto;padding:10px;border-radius:10px;background:radial-gradient(#ffe9a8,#e9d39a)}
 /* v51: the selected piece's detail card (refine, cards, unequip) drops into the grid directly
@@ -243,7 +270,10 @@ hr{border:0;border-top:1px dashed var(--edge);margin:6px 0}
 .chip{background:#fffdf5;border:2px solid var(--edge2);border-radius:14px;padding:2px 10px;font-size:12px}
 .trow .tn{font-size:10px;padding:3px 1px;word-break:break-word}.trow{gap:3px}.trunk{height:12px}
 .cell{background:#e9dcb8;border-width:3px;text-shadow:0 1px 2px #0005}.cell.empty{background:#d5c79f}
-.cell.b0{background:#eceae4;border-color:#8c8c8c}.cell.b1{background:#c9f2c9;border-color:#2e9e3e}.cell.b2{background:#c6dcff;border-color:#2f6fd6}.cell.b3{background:#e6c9ff;border-color:#9a3ae0}.cell.b4{background:#ffe3a0;border-color:#ff9a00;box-shadow:0 0 8px #ff9a00}
+.cell.b0{background:#eceae4;border-color:#8c8c8c}.cell.b1{background:#c9f2c9;border-color:#2e9e3e}.cell.b2{background:#c6dcff;border-color:#2f6fd6}.cell.b3{background:#e6c9ff;border-color:#9a3ae0}.cell.b5{background:#e8d5ff;border-color:#7c3aed;box-shadow:0 0 9px #7c3aedaa}
+.cell.nm::after{content:'N';position:absolute;top:-6px;right:-6px;background:#5b21b6;color:#fff;font:700 9px/1.3 sans-serif;padding:1px 4px;border-radius:6px;letter-spacing:.5px}
+.cell.nm img.ro-item-icon,.cell.nm .ro-icon-fallback{filter:drop-shadow(0 0 3px #7c3aed)}
+.cell.b4{background:#ffe3a0;border-color:#ff9a00;box-shadow:0 0 8px #ff9a00}
 .cell .rf{color:#fff;background:#000b;padding:0 3px;border-radius:3px;text-shadow:none}
 #qp{top:12px;transform:none}
 #wins{position:absolute;left:12px;right:12px;top:12px;bottom:76px;display:none;flex-direction:row-reverse;gap:8px;width:auto;max-width:none;min-width:0;pointer-events:none;z-index:20}
@@ -403,7 +433,13 @@ button.tick.on{background:#ffe08a;border-color:var(--gold);font-weight:bold}
   <div class="xp-side" id="jobTrack" tabindex="0" role="progressbar" aria-label="Job Level" aria-valuemin="0" aria-valuemax="100"><div class="xp-fill" id="jb"></div><span class="xp-pct" id="jobPct">0%</span><span class="xp-label job" id="jobLabel">Job Lv 1</span></div>
 </div></div>
 </div>
-<div id="modal"><div class="login-card"><p id="mt" style="font-size:14px;opacity:1;margin:0 0 12px"></p><div class="row" style="justify-content:center"><button id="my">Yes</button><button id="mn">Cancel</button></div></div></div><!-- The cloud conflict chooser. Two saves exist (this device and the account) and only the player can
+<div id="modal"><div class="login-card"><p id="mt" style="font-size:14px;opacity:1;margin:0 0 12px"></p><div class="row" style="justify-content:center"><button id="my">Yes</button><button id="mn">Cancel</button></div></div></div>
+<!-- v77: the Endless Echo lobby. The owner's spec: entering the trial asks first - ranked (with the
+     tries you have left today), training, or the Shard Store - and only then puts you in the arena. -->
+<div id="trial"><div class="login-card trial-card">
+  <div class="trial-hd">&#127963; <b>Endless Echo</b> <small>the damage trial</small></div>
+  <div id="trialBody"></div>
+</div></div><!-- The cloud conflict chooser. Two saves exist (this device and the account) and only the player can
      say which one is real, so it is a three-way question, not a yes/no: keep this device, keep the
      cloud, or decide later. Every path keeps both copies, so no answer can lose progress. -->
 <div id="conflict" style="display:none;position:fixed;inset:0;background:rgba(20,14,8,.72);z-index:60;align-items:center;justify-content:center"><div class="login-card" style="max-width:560px">
@@ -444,7 +480,7 @@ const RAR=[{n:'Common',m:1,w:60},{n:'Fine',m:1.35,w:25},{n:'Rare',m:1.9,w:10},{n
 // and painted dark purple, so the exclusive sections look exclusive. This is DISPLAY ONLY: it.tier
 // stays the drop band (4 for sections 4/5), because the autosell bands, the drop weights and the
 // value maths all index RAR and TC by tier. rarTier() is the only thing that knows about the 'N'.
-const RAR5={n:'N'},rarIdx=it=>((it&&+it.sec>=4)?5:Math.max(0,Math.min(RAR.length-1,(it&&it.tier)||0))),rarOf=it=>(rarIdx(it)===5?RAR5:RAR[rarIdx(it)]),rarCls=it=>'r'+rarIdx(it);
+const RAR5={n:'N'},RARALL=RAR.concat([RAR5]),rarIdx=it=>((it&&+it.sec>=4)?5:Math.max(0,Math.min(RAR.length-1,(it&&it.tier)||0))),rarOf=it=>(rarIdx(it)===5?RAR5:RAR[rarIdx(it)]),rarCls=it=>'r'+rarIdx(it);
 // v38 balance, three constants at once:
 //   AM x1.7 - affix magnitude, the first give-back for the weapon cut (a Legendary ATK
 //             affix goes +21% -> +36%)
@@ -562,7 +598,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // script block, which is a SyntaxError - the game did not run on main at all. One line wins, and
 // it names both sides of this merge: the v38 balance patch (the weapon cut, the affix/card
 // give-back) and main's weapon-hold rendering work.
-const BUILD='2026-10-07 grind-v76.2 nightmare rarity, MVP naming, harder band';   // shown on the login card - confirms which file you loaded
+const BUILD='2026-10-08 grind-v77 Endless Echo, doubled Nightmare band, N auto-sell';   // shown on the login card - confirms which file you loaded
 $('buildTag').textContent='build '+BUILD;
 
 // ---------- class tree: Novice -> 6 first jobs -> 6 second jobs -> 6 third jobs ----------
@@ -950,7 +986,7 @@ const CARD_REWARD_OPTIONS=[
   {id:'critPct',name:'Crit %',desc:'+1 Crit percentage point'}
 ];
 const CARD_REWARD_IDS=new Set(CARD_REWARD_OPTIONS.map(x=>x.id));
-const emptyCardIndex=()=>({donated:0,byName:{},mastery:{},rewards:{},rolls:[],stats:Object.fromEntries(MASTER_STATS.map(k=>[k,0]))});
+const emptyCardIndex=()=>({donated:0,byName:{},mastery:{},rewards:{},rolls:[],bonus:0,stats:Object.fromEntries(MASTER_STATS.map(k=>[k,0]))});
 const safeCount=v=>{const n=Number(v);return Number.isFinite(n)?Math.max(0,Math.min(Number.MAX_SAFE_INTEGER,Math.floor(n))):0};
 const indexExperience=()=>S&&Number.isFinite(Number(S.indexXp))?safeCount(S.indexXp):safeCount(S.kills);
 const indexRankForXp=xp=>{let rank=0;for(const t of INDEX_TITLES)if(xp>=t.xp)rank++;return rank};
@@ -985,7 +1021,7 @@ const cardMasteryKeys=()=>[...new Set([...Object.keys(S&&S.cardIndex&&S.cardInde
 const cardMasteryTotal=()=>cardMasteryKeys().reduce((sum,n)=>sum+cardMasteryLevel(n),0);
 const cardMasteryRolls=()=>Array.isArray(S&&S.cardIndex&&S.cardIndex.rolls)?S.cardIndex.rolls.filter(x=>CARD_REWARD_IDS.has(x)):[];
 const cardMasteryRolled=()=>cardMasteryRolls().length;
-const cardMasteryEarned=()=>cardMasteryTotal();               // one token per mastery rank
+const cardMasteryEarned=()=>cardMasteryTotal()+safeCount(S&&S.cardIndex&&S.cardIndex.bonus);   // one per rank, plus Shard Store tokens
 const cardMasterySpent=()=>cardMasteryRolled();               // one token per gacha roll
 const cardMasteryAvailable=()=>Math.max(0,cardMasteryEarned()-cardMasterySpent());
 const cardMasteryStat=k=>{
@@ -1079,6 +1115,7 @@ function repairMastery(f){
   // recorded gacha rolls, in the old order and under the same per-stat caps. An older save keeps
   // exactly the bonuses it had earned; from then on the roll list is the only reward ledger.
   if(!Array.isArray(ci.rolls))ci.rolls=[];
+  ci.bonus=safeCount(ci.bonus);   // Shard Store Card Mastery Tokens (v77)
   const rollUsed=Object.fromEntries(CARD_REWARD_OPTIONS.map(o=>[o.id,0]));
   ci.rolls=ci.rolls.filter(x=>CARD_REWARD_IDS.has(x));
   for(const x of ci.rolls)rollUsed[x]++;
@@ -1119,16 +1156,194 @@ const nmMax=()=>10+nmOpen();
 // sustain (leech, Divine Grace, healing skills) stops being optional. Tune these two, not the
 // formulas - every other number follows fieldPower.
 //
-// v76.2 (owner playtest: "i just tested its abit easy, maybe double?"): the wall is doubled and the
-// sting is only half again, on purpose. Doubling the damage as well would take a Nightmare Abyss 15
-// mob from ~1,000 to ~2,000 a hit through a 75% DEF cut, which is a two-mob pack deleting a full-HP
-// character in a round or two - that is not "hard", that is unplayable. The payouts move with the
-// time-per-kill so the band stays the best place to spend a 5-minute session.
-const NMHP=24,NMATK=2.25,NMEXP=2.5,NMZENY=2.2,NMBOSSHP=24;
+// History: v76 shipped 12x, the owner played it and called it easy ("maybe double?"), v76.2 took it
+// to 24x, and this build takes the wall to 48x with the sting at 3x - his words: "hard nightmare mobs
+// & bosses i mean double the hp. atk can be increase too. ill test it and see if this make sense".
+// What that costs, stated plainly, because it is the number to look at while play-testing: a Nightmare
+// Abyss 15 mob is now 5.57M HP against a normal Stage 10 mob's 56k (~99x), it hits for ~2,035 through
+// a 75% DEF cut (5.2x a normal stage 10 mob), and its boss is 66.3M HP. Every payout (EXP x2.5,
+// Zeny x2.2, the three drop tables) is unchanged, so the band is now a real wall rather than a
+// slightly tougher farm. If the playtest says it crossed the line, NMHP/NMBOSSHP back down to 24 is
+// the whole change - the two constants are read in one place and pinned by nightmare_sim.js.
+const NMHP=48,NMATK=3,NMEXP=2.5,NMZENY=2.2,NMBOSSHP=48;
 // Each map's Nightmare gear is its own high-tier row, renamed: same weapon families and slots (so
 // every class can still use its own weapon) and a per-map word that keeps every name unique. Section
 // 4 is the stage 11-13 drop, section 5 the stage 14-15 and boss drop. They exist NOWHERE else - the
 // only fields whose section index is 4 or 5 are Nightmare fields (see secField).
+// ========================= Endless Echo: the damage trial (v77) =========================
+// The owner's spec, verbatim: 5-minute run, a target that never dies and never hits back,
+// unlimited practice, ranked attempts capped at 2 a day, and a popup on entry asking for
+// ranked (with the tries left) / training / the Shard Store. The character and the dummy
+// stand still for the whole run - this is a measurement, not a fight.
+const TRIAL_SECS=300,TRIAL_RANKED_PER_DAY=2,TRIAL_BEST_BONUS=10;
+// The ranked day rolls over on the same clock the boards use (Asia/Singapore), so "2 a day"
+// means the same thing everywhere.
+const trialDay=()=>new Date(Date.now()+8*3600000).toISOString().slice(0,10);
+const trialLeftToday=()=>{const t=S&&S.trial;return t&&t.day===trialDay()?Math.max(0,TRIAL_RANKED_PER_DAY-(t.used|0)):TRIAL_RANKED_PER_DAY};
+const trialClock=()=>{const s=Math.max(0,Math.ceil(TRIAL.left));return Math.floor(s/60)+':'+String(s%60).padStart(2,'0')};
+// One payout ladder, in DPS, so the screen, the board and the milestone chests all speak the
+// same unit (the owner: "the rank board should be showing the best dps within 1 session").
+const TRIAL_PAY=[[5000,20],[15000,35],[40000,50],[80000,75],[120000,100]];
+const trialShardsFor=dps=>{let v=0;for(const[at,pay]of TRIAL_PAY)if(dps>=at)v=pay;return v};
+const TRIAL_STORE=[
+  {id:'ori',   c:10,  n:'Oridecon x5',              d:'Refine weapons (+1 to +10).'},
+  {id:'elu',   c:10,  n:'Elunium x5',               d:'Refine armour, shield, headgear, legs and accessories.'},
+  {id:'zeny',  c:25,  n:'Zeny Cache (250,000z)',    d:'Straight into the purse.'},
+  {id:'token', c:40,  n:'Card Mastery Token',       d:'One permanent-stat roll in the Index, no duplicate card needed.'},
+  {id:'lcard', c:60,  n:'Legendary Card Voucher',   d:'A random Legendary card from the trial chest.'},
+  {id:'nmgear',c:120, n:'Nightmare Gear Token',     d:'Pick a map and take one Nightmare item from its row.'},
+];
+const trialState=()=>{
+  if(!S.trial||typeof S.trial!=='object')S.trial={day:trialDay(),used:0,best:0,runs:0};
+  if(S.trial.day!==trialDay()){S.trial.day=trialDay();S.trial.used=0}
+  S.shards=Math.max(0,Math.floor(+S.shards||0));
+  return S.trial};
+const TRIAL={on:false,mode:'training',left:TRIAL_SECS,dmg:0,dmg0:0,dummy:null,shop:false};
+let hudTrial=false,hudTrialClock='';   // the HUD reads these instead of the field name while a run is on
+const trialEl=()=>typeof document!=='undefined'&&document.getElementById?document.getElementById('trial'):null;
+// ---------------------------------------------------------------- the lobby ----
+function trialLobby(view){
+  const el=trialEl();if(!el)return null;
+  const st=trialState(),left=trialLeftToday();
+  const body=document.getElementById('trialBody');if(!body)return el;
+  if(view==='store'){body.innerHTML=trialShopHtml();el.classList.add('on');return el}
+  if(view==='pickmap'){
+    body.innerHTML=`<div class="trial-hd">&#127963; <b>Nightmare Gear Token</b> <small>${TRIAL_STORE.find(x=>x.id==='nmgear').c} shards</small></div>
+      <p><small>Pick the map whose row you want. ${nmOpen()>=5?'Your band is fully open, so you get the <b>Abyssal</b> row (section 5).':'Until Nightmare 5 is unlocked you get the Nightmare row (section 4).'} One item, for the weapon your class fights with.</small></p>
+      <div class="mapgrid">${MAPS.map((m,i)=>`<button class="mapcard" data-nmmap="${i}"><b>${m.n}</b><small>${NMNAME[i]}</small></button>`).join('')}</div>
+      <div class="trial-foot"><button data-trial="store">Back</button></div>`;
+    el.classList.add('on');return el}
+  if(view==='result'){body.innerHTML=trialResultHtml();el.classList.add('on');return el}
+  body.innerHTML=`
+    <p>The target never dies and never fights back: <b>5:00</b> of uninterrupted damage, then the number.</p>
+    <div class="trial-stats">
+      <span>Ranked today <b>${left}/2</b></span><span>Personal best <b>${Math.round(st.best||0).toLocaleString()} DPS</b></span>
+      <span>Shards <b>${S.shards|0}</b></span><span>Runs <b>${st.runs|0}</b></span></div>
+    <div class="trial-row">
+      <button class="trial-act" data-trial="ranked" ${left?'':'disabled'}>
+        <b>Ranked run ${left?`(${left} left today)`:'(used up)'}</b>
+        <small>Counts for the board and pays Trial Shards: ${TRIAL_PAY.map(([d,p])=>d.toLocaleString()+' -> '+p).join(' · ')}${trialState().best?' · +'+TRIAL_BEST_BONUS+' on a new best':''}</small></button>
+      <button class="trial-act" data-trial="training">
+        <b>Training (unlimited)</b><small>Same five minutes, nothing saved, nothing spent.</small></button>
+      <button class="trial-act" data-trial="store">
+        <b>Shard Store</b><small>Spend Shards on ore, Zeny, cards and Nightmare gear.</small></button>
+    </div>
+    <div class="trial-foot"><button data-trial="close">Close</button></div>`;
+  el.classList.add('on');
+  return el}
+function trialShopHtml(){
+  const rows=TRIAL_STORE.map(s=>`<div class="shopline"><span><b>${s.n}</b><small>${s.d}</small></span>
+    <button data-buy="${s.id}" ${S.shards>=s.c?'':'disabled'}>${s.c} shards</button></div>`).join('');
+  return `<div class="trial-hd">&#127963; <b>Shard Store</b> <small>${S.shards|0} shards</small></div>
+    <p><small>Shards come from ranked runs only - practice pays nothing. Leftovers carry over.</small></p>
+    <div class="trial-shop">${rows}</div>
+    <div class="trial-foot"><button data-trial="lobby">Back</button><button data-trial="close">Close</button></div>`}
+function trialResultHtml(){
+  const r=TRIAL.result||{dmg:0,dps:0,shards:0,best:false,mode:'training'};
+  const st=trialState();
+  return `<div class="trial-hd">&#127963; <b>${r.mode==='ranked'?'Ranked run complete':'Training run'}</b></div>
+    <div class="trial-stats">
+      <span>Damage <b>${Math.round(r.dmg).toLocaleString()}</b></span>
+      <span>DPS <b>${Math.round(r.dps).toLocaleString()}</b></span>
+      <span>Personal best <b>${Math.round(st.best||0).toLocaleString()}</b></span>
+      <span>Shards <b>${S.shards|0}</b></span></div>
+    <p>${r.mode==='ranked'
+      ? `Pays <b>${r.shards} Shards</b>${r.best?` (includes the +${TRIAL_BEST_BONUS} new-best bonus)`:''}. Ranked runs left today: <b>${trialLeftToday()}/2</b>.`
+      : 'Practice run: nothing saved, nothing spent. Ranked pays Shards and sets your best.'}</p>
+    <div class="trial-foot">
+      ${trialLeftToday()&&r.mode==='ranked'?`<button data-trial="ranked">Run again</button>`:''}
+      ${r.mode!=='ranked'?`<button data-trial="ranked" ${trialLeftToday()?'':'disabled'}>Ranked run</button>`:''}
+      <button data-trial="store">Shard Store</button>
+      <button data-trial="close">Leave</button></div>`}
+// ---------------------------------------------------------------- the arena ----
+// Built from plain geometry so it cannot depend on the map kit: a rune circle, obsidian pillars
+// with ember crowns, a bone-strewn ground and a purple key light. It rebuilds whenever the scene
+// key changes, exactly like a field does.
+function trialArena(){
+  if(typeof deco==='undefined')return;
+  while(deco.children.length)deco.remove(deco.children[0]);
+  if(typeof townObjs!=='undefined')townObjs.forEach(o=>o.visible=false);
+  if(typeof road!=='undefined')road.visible=false;
+  if(typeof KIT!=='undefined'&&KIT.ground)KIT.ground.visible=false;
+  const rune=new THREE.Mesh(new THREE.RingGeometry(3.4,3.9,48),new THREE.MeshBasicMaterial({color:0x9a5cf0,transparent:true,opacity:.55,side:THREE.DoubleSide}));
+  rune.rotation.x=-Math.PI/2;rune.position.set(0,.02,-4);deco.add(rune);
+  const rune2=new THREE.Mesh(new THREE.RingGeometry(6.2,6.5,64),new THREE.MeshBasicMaterial({color:0x6a2fa0,transparent:true,opacity:.35,side:THREE.DoubleSide}));
+  rune2.rotation.x=-Math.PI/2;rune2.position.set(0,.02,-4);deco.add(rune2);
+  for(let i=0;i<10;i++){
+    const a=i/10*Math.PI*2,r=11+((i*37)%5)*.5,x=Math.cos(a)*r,z=-4+Math.sin(a)*r*.85;
+    const p=new THREE.Mesh(new THREE.CylinderGeometry(.55,.85,5.5+((i*13)%4)*.6,6),M(0x241a2e));
+    p.position.set(x,2.6,z);p.rotation.z=((i*7)%5-2)*.02;deco.add(p);
+    const cap=new THREE.Mesh(new THREE.SphereGeometry(.5,10,8),new THREE.MeshBasicMaterial({color:0xb07af0}));
+    cap.position.set(x,5.4,z);deco.add(cap);
+  }
+  for(let i=0;i<14;i++){                                   // bones and broken stone on the floor
+    const a=i/14*Math.PI*2+0.4,r=5.5+((i*29)%7)*.9;
+    const b=new THREE.Mesh(new THREE.BoxGeometry(.35+((i*17)%3)*.15,.22,.9+((i*11)%4)*.2),M(i%3?0xd8cdb4:0x3a2c46));
+    b.position.set(Math.cos(a)*r,.12,-4+Math.sin(a)*r*.8);b.rotation.y=a*1.7;deco.add(b);
+  }
+  const light=new THREE.PointLight(0x9a5cf0,1.35,34);light.position.set(0,6,-4);deco.add(light);
+  const light2=new THREE.PointLight(0xff7a3c,.7,26);light2.position.set(0,1.4,-9);deco.add(light2);
+}
+// ---------------------------------------------------------------- the run ----
+function trialEnter(mode){
+  const st=trialState();
+  if(mode==='ranked'&&!trialLeftToday()){log('No ranked runs left today - practice is always open.','r0','trial');ui();return}
+  TRIAL.on=true;TRIAL.mode=mode==='ranked'?'ranked':'training';TRIAL.left=TRIAL_SECS;TRIAL.dmg0=S.dmg||0;TRIAL.dmg=0;TRIAL.result=null;TRIAL.shop=false;
+  // the dummy: infinite HP, no attack timer, and flagged fixed so the AI leaves it alone
+  TRIAL.dummy={n:'Trial Dummy',x:0,z:-4,hp:Infinity,max:Infinity,at:Infinity,size:1.15,spriteScale:1.9,shape:'demon',c:0x7c3aed,
+    pack:0,boss:false,fixed:true,stun:0,run:false,hx:0,hz:-4,flash:0,atkAnim:0,drops:[],cardCh:0,mag:false};
+  mobs=[TRIAL.dummy];mob=TRIAL.dummy;activePack=0;respawn=0;pend=[];castQ=[];tb={};
+  // 1.4 units from the target: inside a melee reach of 1.2+0.45*1.15, so the character stands still
+  // and swings from the first frame instead of walking into range (owner: both stay in place).
+  pl.x=0;pl.z=-2.6;pl.wt=0;pl.orb=0;pAtkT=.2;mAtkT=1e9;
+  trialShow(trialEl(),false);
+  log(`${mode==='ranked'?'Ranked':'Training'} run started: five minutes, target never dies.`,'r3','trial');
+  hudTrial=true;ui();save()}
+function trialFinish(){
+  if(!TRIAL.on)return;
+  const dmg=Math.max(0,(S.dmg||0)-TRIAL.dmg0),dps=dmg/TRIAL_SECS,st=trialState();
+  let shards=0,best=false;
+  if(TRIAL.mode==='ranked'){
+    shards=trialShardsFor(dps);
+    if(dps>st.best){best=true;shards+=TRIAL_BEST_BONUS;st.best=dps}
+    st.used=(st.used|0)+1;st.runs=(st.runs|0)+1;S.shards=(S.shards|0)+shards;
+    log(`Endless Echo: ${Math.round(dmg).toLocaleString()} damage, ${Math.round(dps).toLocaleString()} DPS${best?' - new personal best!':''} (+${shards} shards)`,'r3','trial');
+  }else log(`Endless Echo practice: ${Math.round(dmg).toLocaleString()} damage, ${Math.round(dps).toLocaleString()} DPS (not saved).`,'r1','trial');
+  TRIAL.on=false;TRIAL.dummy=null;TRIAL.result={dmg,dps,shards,best,mode:TRIAL.mode};
+  mobs=[];mob=null;spawn();
+  hudTrial=false;trialLobby('result');ui();save()}
+function trialExit(){                                  // used by Close and by travel out of the arena
+  if(TRIAL.on){TRIAL.on=false;TRIAL.dummy=null;mobs=[];mob=null;spawn();hudTrial=false}
+  trialShow(trialEl(),false);ui();save()}               // the lobby closes even when no run is on
+function trialShow(node,on){if(node)node.classList.toggle('on',!!on);return node}
+// ---------------------------------------------------------------- the store ----
+function trialBuy(id){
+  const row=TRIAL_STORE.find(s=>s.id===id);if(!row)return;
+  if((S.shards|0)<row.c)return log('Not enough shards yet.','r0','trial');
+  const st=trialState();
+  if(id==='ori'||id==='elu'){S.ore[id]=(S.ore[id]|0)+5;log(`Shard Store: +5 ${ORE[id]}.`,'r3','trial')}
+  else if(id==='zeny'){earnZeny(250000);log('Shard Store: +250,000 Zeny.','r3','trial')}
+  else if(id==='token'){S.cardIndex.bonus=safeCount(S.cardIndex.bonus)+1;log('Shard Store: +1 Card Mastery Token (claim it in the Index).','r3','trial')}
+  else if(id==='lcard'){
+    const m=9,mp=MAPS[m],n=mp.mobs[(S.kills|0)%mp.mobs.length].n+' Card',stat=cardStat(3,(S.kills|0)%7+1);
+    S.cards.push({id:uid(),n,stat,g:3,v:cardVal(3,stat)});
+    log(`Shard Store: ${n} (${SU(stat)} +${cardVal(3,stat)}) added to the bag.`,'r3','trial')}
+  else if(id==='nmgear'){trialLobby('pickmap');return}
+  S.shards=Math.max(0,(S.shards|0)-row.c);save();
+  trialLobby('store')}
+// One Nightmare item, picked by map: section 5 where the band is fully open, section 4 otherwise,
+// and always a slot the character's class can actually wear.
+function trialGrantNm(mapIndex){
+  // Section 5 once the whole band is open, section 4 before that, and always a weapon the class can
+  // actually swing (falling back to armour for a class with no listed weapon type).
+  const sec=nmOpen()>=5?5:4,T=gearPool(mapIndex,sec===5?15:12),c=C();
+  let pool=T.filter(x=>c.wt&&c.wt.includes(x.k));
+  if(!pool.length)pool=T.filter(x=>x.k==='armor');
+  if(!pool.length)pool=T;
+  const chosen=pool[(S.kills|0)%pool.length];
+  const it=genGear(chosen,150,sec,false,4);
+  S.inv.push(it);log(`Shard Store: ${it.name} (${SECN[sec]}) is in your bag.`,'r5','trial')}
+
 const NMNAME=['Dread','Kraken','Void','Sandwraith','Spectral','Leviathan','Oni','Yokai','Helheim','Glast'];
 const NMNAME2=['Abyssal','Maelstrom','Singularity','Eclipse','Wraithlord','Trench','Yama','Kami','Nidhogg','Absolute'];
 const nmRow=(m,i)=>{const b=GEAR[m][3],w=(i?NMNAME2:NMNAME)[m],o={w:{}};
@@ -1458,7 +1673,7 @@ const uid=()=>Date.now()+Math.random(),rnd=(a,b)=>a+Math.random()*(b-a),ri=(a,b)
 // One roll fills both slots. The second pick is made from the skills the first did not take, so
 // the two can never match and there is no retry loop to spin if the dice are pinned.
 const PET_SKILL_WEIGHTS=[.35,.35,1,1,1,1,1,1,1,1,1,1],rollPetSkills=()=>{const a=pickW(PET_SKILL_WEIGHTS),rest=PET_SKILL_WEIGHTS.map((w,i)=>i).filter(i=>i!==a),b=rest[pickW(rest.map(i=>PET_SKILL_WEIGHTS[i]))];return[PET_SKILLS[a].id,PET_SKILLS[b].id]};
-const fresh=()=>({pets:[],bond:[],cls:'Novice',sex:'m',hair:0,lv:1,exp:0,hp:100,zeny:0,kills:0,indexXp:0,mobKills:{},equippedTitle:null,cardIndex:emptyCardIndex(),dmg:0,pts:10,jobs:{Novice:{jl:1,jx:0}},sk:{aid:1},skOff:{},dmgShort:true,dmgShow:true,base:{},mp:0,lvl:1,prog:[1,1,1,1,1],kl:0,auto:true,adv:true,feed:true,clickSell:false,bg:true,autoSell:[false,false,false,false,false],logOff:{},q:null,cards:[],ore:{ori:0,elu:0},offlineAt:0,offlineKph:0,offlineRateAt:0,offlineRateKills:0,offlineKillRemainder:0,gm:false,gmx:100,
+const fresh=()=>({pets:[],bond:[],cls:'Novice',sex:'m',hair:0,lv:1,exp:0,hp:100,zeny:0,kills:0,indexXp:0,mobKills:{},equippedTitle:null,shards:0,trial:{day:trialDay(),used:0,best:0,runs:0},cardIndex:emptyCardIndex(),dmg:0,pts:10,jobs:{Novice:{jl:1,jx:0}},sk:{aid:1},skOff:{},dmgShort:true,dmgShow:true,base:{},mp:0,lvl:1,prog:[1,1,1,1,1],kl:0,auto:true,adv:true,feed:true,clickSell:false,bg:true,autoSell:[false,false,false,false,false],logOff:{},q:null,cards:[],ore:{ori:0,elu:0},offlineAt:0,offlineKph:0,offlineRateAt:0,offlineRateKills:0,offlineKillRemainder:0,gm:false,gmx:100,
   st:{str:1,agi:1,dex:1,luk:1,int:1,vit:1},eq:{weapon:{id:1,slot:'weapon',wt:'dagger',tier:0,val:5,name:'Novice Knife',aff:[],slots:1,cards:[],sec:0},armor:null,head:null,off:null,leg:null,acc1:null,acc2:null},inv:[]});
 const saveKey=()=>'pg_save3_'+currentUser;
 const num_= (v,d)=>{v=+v;return Number.isFinite(v)?v:d};
@@ -1474,10 +1689,20 @@ function load(){try{const s=JSON.parse(lsGet(saveKey()));if(s&&s.lv){const F=fre
   f.bg=true;                                                 // v57: background grinding is permanent now
   // Auto-sell is repaired strictly (only a real true/1 arms a band): a corrupt entry must never
   // silently start selling a rarity the player never ticked.
-  if(!Array.isArray(f.autoSell))f.autoSell=[false,false,false,false,false];else f.autoSell=[0,1,2,3,4].map(i=>f.autoSell[i]===true||f.autoSell[i]===1);
+  // v77: six bands now - the N rarity is its own auto-sell tick, so Nightmare gear can be sold on the
+  // drop without touching ordinary Legendaries. A save with five entries just gains a false sixth.
+  if(!Array.isArray(f.autoSell))f.autoSell=[false,false,false,false,false,false];else f.autoSell=[0,1,2,3,4,5].map(i=>f.autoSell[i]===true||f.autoSell[i]===1);
   if(!f.logOff||typeof f.logOff!=='object'||Array.isArray(f.logOff))f.logOff={};
   for(const k of['str','agi','dex','luk','int','vit'])f.st[k]=Math.max(1,Math.min(MAXST,num_(f.st[k],1)));
   f.ore={ori:num_(f.ore&&f.ore.ori,0),elu:num_(f.ore&&f.ore.elu,0)};
+  // v77 (Endless Echo): Trial Shards and the ranked record. A save without them is simply a
+  // player who has never run the trial - the day field re-rolls on load, which is also what
+  // clears yesterday's two attempts.
+  f.shards=Math.max(0,Math.floor(num_(f.shards,0)));
+  if(!f.trial||typeof f.trial!=='object'||Array.isArray(f.trial))f.trial={day:trialDay(),used:0,best:0,runs:0};
+  f.trial.day=typeof f.trial.day==='string'?f.trial.day.slice(0,10):trialDay();
+  f.trial.used=Math.max(0,Math.min(TRIAL_RANKED_PER_DAY,Math.floor(num_(f.trial.used,0))));
+  f.trial.best=Math.max(0,num_(f.trial.best,0));f.trial.runs=Math.max(0,Math.floor(num_(f.trial.runs,0)));
   f.offlineAt=Math.max(0,Math.floor(num_(f.offlineAt,0)));f.offlineKph=cl(num_(f.offlineKph,0),0,OFFLINE_RATE_CAP);f.offlineRateAt=Math.max(0,Math.floor(num_(f.offlineRateAt,0)));f.offlineRateKills=safeCount(f.offlineRateKills);f.offlineKillRemainder=cl(num_(f.offlineKillRemainder,0),0,.999999);
   if(!Array.isArray(f.prog)||!f.prog.length)f.prog=F.prog.slice();else f.prog=f.prog.map(v=>num_(v,1));
   while(f.prog.length<MAPS.length)f.prog.push(1);
@@ -2073,15 +2298,43 @@ const autoAllocateSkills=()=>{if(!S.sk||typeof S.sk!=='object')S.sk={};let bough
   return bought;
 };
 const refCost=it=>Math.round(200*((it.r||0)+1)*(1+(it.sec||0)*.5)),refCh=it=>[70,70,70,70,49,42,35,28,21,14][it.r||0];
-const affTxt=a=>`${AL[a.k]} +${a.v}`,cardTxt=c=>`${c.n} (${SU(c.stat)} +${c.v})`,dtier=it=>it.card?GI[it.g]:it.ore?3:it.tier;
+const affTxt=a=>`${AL[a.k]} +${a.v}`,cardTxt=c=>`${c.n} (${SU(c.stat)} +${c.v})`,dtier=it=>it.card?GI[it.g]:it.ore?3:((it&&+it.sec>=4)?5:it.tier);
 const isBoss=()=>S.lvl===10||S.lvl===15,fieldName=()=>S.lvl>10?`Nightmare ${MAPS[S.mp].n} Stage ${S.lvl-10}`:`${MAPS[S.mp].n} Stage ${S.lvl}`;
 // Real RO item icons give each equipment family a recognizable shape and several name-based
 // variants. The existing held-weapon URL helper above remains unchanged for the 3D sprite layer.
 const RO_ITEM_ICON_CANDIDATES={weapon:{dagger:[1201,1202,1204,1205,1210,1212],katar:[1250,1251,1252,1253,1254,1255],staff:[1601,1602,1603,1604,1605,1606],bow:[1701,1702,1703,1704,1705,1706],axe:[1301,1302,1303,1304,1305,1306],sword:[1101,1104,1105,1106,1108,1110,1114],mace:[1501,1502,1503,1504,1505,1510]},armor:[2301,2302,2303,2304,2305,2306,2307,2308,2309,2310,2311,2312,2313],head:[2201,2202,2203,2204,2205,2206,2207,2208,2209,2210,2211,2212,2213,2214,2215,2216],off:[2101,2102,2103,2104,2105,2106,2107,2108],leg:[2401,2402,2403,2404,2405,2406,2407,2408],acc:[2601,2602,2603,2604,2605,2606,2607,2608,2609,2610]};
+// v77 (owner: "sprites i mean for the bags equipments icons. not on the character itself"): every
+// equipment family draws its own icon now. The official RO item art is still tried first over the
+// network, but when that cannot load - a slow phone, a blocked CDN, a plane - the tile falls back to
+// these flat vector silhouettes drawn in the rarity colour instead of an emoji, so the bag reads the
+// same on every device and a Nightmare piece has art of its own with no network at all.
+const ITEM_ICON_SVG={
+ card:'<rect x="4" y="3" width="16" height="18" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M8.6 12.2l2.2 2.2 4.4-4.6" fill="none" stroke="currentColor" stroke-width="2"/>',
+ ore:'<path d="M12 2l6 6.2L15.6 22H8.4L6 8.2z"/>',
+ sword:'<path d="M11.2 1h1.6l.6 3v7.6h-2.8V4z"/><path d="M7.2 11.8h9.6v1.8H7.2z"/><path d="M11.1 13.6h1.8V22h-1.8z"/><path d="M9 20.2h6V22H9z"/>',
+ dagger:'<path d="M12 3l1.5 3v5.6h-3V6z"/><path d="M8.6 11.6h6.8v1.7H8.6z"/><path d="M11.1 13.3h1.8V22h-1.8z"/>',
+ axe:'<path d="M11.2 2h1.6v20h-1.6z"/><path d="M13.4 3.2c3.4 1 5.6 3.4 5.6 6.4 0 3.2-2.2 5.6-5.8 6.4z"/>',
+ mace:'<path d="M11.2 9.6h1.6V22h-1.6z"/><circle cx="12" cy="6.4" r="4.4"/><path d="M12 0l1.4 2.6h-2.8zM19.4 6.4l-2.6 1.4V5zM4.6 6.4l2.6-1.4v2.8zM12 12.8L10.6 10.2h2.8z"/>',
+ staff:'<path d="M11.3 8h1.4v14h-1.4z"/><circle cx="12" cy="4.8" r="3.2"/><circle cx="12" cy="4.8" r="1.2" fill="#ffffff88"/>',
+ bow:'<path d="M6.4 2c5.8.6 9.6 4.8 9.6 10s-3.8 9.4-9.6 10c3.4-2 5.2-5.8 5.2-10S9.8 4 6.4 2z"/><path d="M6.8 2.4c1.4 3 2 6.4 2 9.6s-.6 6.6-2 9.6l-1.2-.6c1.3-2.8 1.9-6 1.9-9s-.6-6.2-1.9-9z"/>',
+ katar:'<path d="M3.6 15.4h9.8v4.2H3.6z"/><path d="M13.8 7.2h2.2v12.4h-2.2z"/><path d="M17.4 10.4h2.2v9.2h-2.2z"/>',
+ armor:'<path d="M6.2 3.4L12 5.4l5.8-2 2.2 4.4-2 11.6H6L4 7.8z"/><path d="M12 5.8v13" stroke="#ffffff66" stroke-width="1"/>',
+ head:'<path d="M4 14.2h16v3.2H4z"/><path d="M7.4 6.6c0-2.4 2-4.2 4.6-4.2s4.6 1.8 4.6 4.2v7.6H7.4z"/>',
+ off:'<path d="M12 1.8l8 3v7c0 4.8-3.4 8.6-8 10.2-4.6-1.6-8-5.4-8-10.2v-7z"/><path d="M12 6v11" stroke="#ffffff66" stroke-width="1"/>',
+ leg:'<path d="M7 2h6v9.6l5 4.4V21H7z"/><path d="M7.4 18.4h10.6" stroke="#ffffff66" stroke-width="1"/>',
+ acc:'<circle cx="12" cy="14.4" r="6.2" fill="none" stroke="currentColor" stroke-width="2.6"/><path d="M12 2l3.2 4.4H8.8z"/>'
+};
+const ITEM_ICON_KEY=it=>it&&it.card?'card':it&&it.ore?'ore':!it?'acc':it.slot==='weapon'?(ITEM_ICON_SVG[it.wt]?it.wt:'sword'):(ITEM_ICON_SVG[it.slot]?it.slot:'acc');
+const itemSvgMarkup=it=>`<svg class="ro-icon-svg" viewBox="0 0 24 24" aria-hidden="true">${ITEM_ICON_SVG[ITEM_ICON_KEY(it)]||ITEM_ICON_SVG.acc}</svg>`;
 const gearIconHash=text=>{let h=2166136261;for(let i=0;i<String(text).length;i++){h^=String(text).charCodeAt(i);h=Math.imul(h,16777619)}return h>>>0};
 const gearItemIconId=it=>{const list=it.slot==='weapon'?RO_ITEM_ICON_CANDIDATES.weapon[it.wt]:RO_ITEM_ICON_CANDIDATES[it.slot];if(!list||!list.length)return 0;const name=String(it.name||'').replace(/^(Common|Fine|Rare|Epic|Legendary)\s+/,'');return list[gearIconHash(it.slot+':'+name)%list.length]};
 const itemIconUrl=id=>id?`https://static.divine-pride.net/images/items/item/${id}.png`:'';
-const itemIconMarkup=it=>{if(it.card)return'🃏';if(it.ore)return'💎';const glyph=it.slot==='weapon'?(WICON[it.wt]||'⚔️'):SLOTS[it.slot].ic,id=gearItemIconId(it);return id?`<img class="ro-item-icon" src="${itemIconUrl(id)}" data-fallback="${glyph}" alt="" loading="lazy" decoding="async">`:`<span class="ro-icon-fallback">${glyph}</span>`};
+const itemIconMarkup=it=>{const svg=itemSvgMarkup(it),id=gearItemIconId(it);
+  // referrerpolicy matters: the item-art host refuses hotlinked requests that carry a Referer, which
+  // is exactly what a page on another domain sends - that is the difference between real art and a
+  // row of placeholder glyphs on a deployed build.
+  return id?`<img class="ro-item-icon" src="${itemIconUrl(id)}" data-svg="${ITEM_ICON_KEY(it)}" referrerpolicy="no-referrer" alt="" loading="lazy" decoding="async">`
+    :`<span class="ro-icon-fallback">${svg}</span>`};
 const icon=it=>itemIconMarkup(it);
 
 // ---------- mobs & loot ----------
@@ -2196,7 +2449,7 @@ function offlineMobForCurrentField(){
 }
 function offlineStoreGear(it,r){
   r.items++;r.drops++;
-  if(!it.locked&&autoSellOn(it.tier)){const value=sellVal(it);earnZeny(value);r.zeny+=value;r.autoSold++;qProg('loot');(it.cards||[]).forEach(c=>S.cards.push(c));return}
+  if(!it.locked&&autoSellOn(rarIdx(it))){const value=sellVal(it);earnZeny(value);r.zeny+=value;r.autoSold++;qProg('loot');(it.cards||[]).forEach(c=>S.cards.push(c));return}
   if(S.inv.length>=BAGMAX){r.overflow++;return}
   S.inv.push(it);r.storedItems++;qProg('loot');
   if(S.auto!==false&&canUse(it)){const k=ekey(it),cur=S.eq[k];if(!cur||ev(it)>ev(cur)){S.inv.splice(S.inv.indexOf(it),1);if(cur)S.inv.push(cur);S.eq[k]=it;S.hp=Math.min(S.hp,maxHp())}}
@@ -2443,7 +2696,7 @@ function collect(it){
   // v39: auto-sell runs BEFORE the bag cap and before auto-equip for unlocked drops, so a ticked
   // band can never be swallowed by a full bag or worn by accident. Locked gear bypasses the
   // filter, stays protected, and still counts for loot quests - the item was looted.
-  if(!it.locked&&autoSellOn(it.tier)){const v=sellVal(it);earnZeny(v);qProg('loot');(it.cards||[]).forEach(c=>S.cards.push(c));
+  if(!it.locked&&autoSellOn(rarIdx(it))){const v=sellVal(it);earnZeny(v);qProg('loot');(it.cards||[]).forEach(c=>S.cards.push(c));
     log(`Auto-sold [${rarOf(it).n}] ${it.name} (+${v.toLocaleString()}z)`,rarCls(it),'gear,zeny');ui();save();return}
   if(S.inv.length>=BAGMAX){log(`Bag full (${BAGMAX} items): sold nothing, left ${it.name} on the ground.`,'r0','gear');addFloat(pl.x,3,pl.z,'BAG FULL','#ff6b6b',true);ui();return}
   S.inv.push(it);qProg('loot');log(`Picked up [${rarOf(it).n}] ${it.name}`,rarCls(it),'gear');
@@ -2458,7 +2711,7 @@ function equip(id,quiet){const i=S.inv.findIndex(x=>x.id===id);if(i<0)return;con
 const sellVal=it=>Math.max(1,Math.round(50*(1+.9*(it.sec||0))*(1+1.4*(it.tier||0))*(1+.005*(it.lvl||0))));
 // v39 bag sell tools. autoSellOn(tier) is true when that rarity band is ticked in the Bag, and
 // clickSellOn() is the tap-to-sell mode; both read the save, so both survive a reload.
-const autoSellOn=t=>!!(S&&S.autoSell&&S.autoSell[Math.max(0,Math.min(4,Math.floor(+t||0)))]),clickSellOn=()=>!!(S&&S.clickSell);
+const autoSellOn=t=>!!(S&&S.autoSell&&S.autoSell[Math.max(0,Math.min(RARALL.length-1,Math.floor(+t||0)))]),clickSellOn=()=>!!(S&&S.clickSell);
 function sell(id){const i=S.inv.findIndex(x=>String(x.id)===String(id));if(i<0)return false;const it=S.inv[i];
   if(it.locked){ask(`${iname(it)} is locked. Unlock it before selling? It will stay in your bag until you sell again.`,()=>{it.locked=false;log(`${iname(it)} unlocked. Click Sell again to continue.`,'r3','gear');ui();save()});return false}
   S.inv.splice(i,1);earnZeny(sellVal(it));(it.cards||[]).forEach(c=>S.cards.push(c));if(selB==it.id)selB=null;ui();save();return true}
@@ -2572,7 +2825,7 @@ const find=id=>[...S.inv,...items(),...S.cards].find(x=>String(x.id)===String(id
 // It is never consulted by canUse() and cannot restrict equipping by Base Lv.
 const gearRefLevel=it=>Math.max(1,Math.min(150,Math.floor(+it.lvl||1)+10*Math.max(0,Math.min(4,Math.floor(+it.tier||0)))));
 function toggleGearLock(id){const it=find(id);if(!it||it.card||it.ore)return;it.locked=!it.locked;log(`${iname(it)} ${it.locked?'locked':'unlocked'}.`,it.locked?'r3':'','gear');ui();save()}
-const cell=(it,sel,extra='')=>`<div class="cell b${dtier(it)}${sel?' sel':''}" data-tip="${it.id}" ${extra}>${icon(it)}${it.locked?`<i class="lockstar" title="Locked gear" aria-label="Locked">&#9733;</i>`:''}${it.r?`<i class="rf">+${it.r}</i>`:''}</div>`;
+const cell=(it,sel,extra='')=>`<div class="cell b${dtier(it)}${it&&+it.sec>=4?' nm':''}${sel?' sel':''}" data-tip="${it.id}" ${extra}>${icon(it)}${it.locked?`<i class="lockstar" title="Locked gear" aria-label="Locked">&#9733;</i>`:''}${it.r?`<i class="rf">+${it.r}</i>`:''}</div>`;
 function itemMain(it){
   if(it.card)return`<b class="r${GI[it.g]}">${it.n}</b><div>${GRADE[it.g]} card &middot; <b>${SU(it.stat)} +${it.v}</b></div><div><small>Fits: ${CFL[CFIT[it.stat]]} only</small></div>`;
   // v74: the class tier of a piece is part of its description, and a piece that came off a class
@@ -2660,7 +2913,9 @@ const V={
       <div class="mapband-t">Maps <small>&middot; click one to see its stages below</small></div>
       <div class="mapgrid">${MAPS.map((m,i)=>{const cur=i===mapM,here=i===S.mp;
         return`<button class="mapcard${cur?' on':''}${here?' here':''}" data-a="selm" data-v="${i}" title="${m.n} - ${m.t}">
-          <b>${m.n}</b><small>${here?'● ':''}${m.rec}</small></button>`}).join('')}</div></div>
+          <b>${m.n}</b><small>${here?'● ':''}${m.rec}</small></button>`}).join('')}</div>
+        <button class="dungeoncard" data-trial="lobby" title="Endless Echo - the damage trial">
+          <b>&#127963; Endless Echo</b><small>damage trial &middot; 5:00 &middot; ${trialLeftToday()}/2 ranked runs left today &middot; ${S.shards|0} shards</small></button></div>
     <div class="mapband fields">
       <div class="mapband-t">${mp.n} <small>&middot; ${mp.t} &middot; rec. ${mp.rec} (not a limit) &middot; ${Math.min(pr-1,10)}/10 stages unlocked${nmo?` &middot; <b>Nightmare ${nmo}/5</b>`:' &middot; Nightmare unlocks at Base Lv '+NMLV[0]}</small>
         <button class="go" data-a="go" ${mapL>cap?'disabled':''}>${S.mp===mapM&&S.lvl===mapL?'You are here':'Travel to '+mp.n+' Stage '+mapL}</button></div>
@@ -2674,15 +2929,10 @@ const V={
           <div class="dropline"><span>🃏 ${m.card.n} <small>(${SU(m.card.stat)} +${cardVal(m.card.g,m.card.stat)}, ${GRADE[m.card.g]})</small></span><b>${m.cardCh}%</b></div>
           ${m.ore?`<div class="dropline ore"><span>🔶 Oridecon &middot; 🔷 Elunium</span><b>${m.oreCh*100}% each</b></div>`:''}
         </div>`).join('<hr>')}</div>
-      <div class="mapband dungeon">
-        <div class="mapband-t">&#127963; Endless Echo <small>&middot; the damage trial &middot; <b>built next</b></small></div>
-        <small>One <b>5:00</b> run against a target that never dies and never fights back. Practice as often as you like; only <b>2 ranked runs a day</b> count, and the board keeps your <b>best single-run DPS</b> - runs are never added together. Pays Trial Shards, titles, and a weekly season.</small>
-        <div class="row" style="margin-top:6px"><button class="go" disabled>Enter - not built yet</button><small>2 ranked runs a day &middot; best single-run DPS</small></div>
-      </div>
       <div class="mob-card"><div class="hd">MVP &amp; pets</div>${(mapL===10||mapL===15)?`<small>MVP fights immediately with ${mapM<5?3:5} monsters. Defeat the MVP to reset the fight.</small>`:''}
-        ${F.boss?`<div class="mobentry"><b class="r4">${F.boss.n} (MVP)</b>
+        ${F.boss?`<div class="mobentry"><b class="r4">${F.boss.n}</b>
           <div class="poollist">${F.boss.drops.map(([T,ch])=>`<span class="poolitem">${poolIc(T)} ${T.n}<b>${ch}%</b></span>`).join('')}</div>
-          <small>Every MVP drop is <b class="r4">Legendary</b> with random affixes. Each item rolls independently; a boss can drop zero or several pieces.</small>
+          <small>Every MVP drop is <b class="r4">Legendary</b> with random affixes. Each item rolls independently; an MVP can drop zero or several pieces.</small>
           <div class="dropline"><span>🃏 ${F.boss.card.n} <small>(${SU(F.boss.card.stat)} +${cardVal(3,F.boss.card.stat)}, Legendary)</small></span><b>${F.boss.cardCh}%</b></div>
           <div class="dropline ore"><span>🔶 Oridecon &middot; 🔷 Elunium</span><b>${F.boss.oreCh*100}% each</b></div>
         </div>`:`<small>MVP appears at ${mapL>10?'NM 5 (stage 15)':'Stage 10'}.</small>`}
@@ -2721,8 +2971,8 @@ const V={
     return (eqPick?equipChooser(eqPick):'')
     +`<div class="row"><span class="chip">🔶 Oridecon <b>${S.ore.ori}</b></span><span class="chip">🔷 Elunium <b>${S.ore.elu}</b></span></div>
     <div class="mob-card sellbox" style="margin-top:4px"><div class="hd">Selling tools</div>
-      <div class="row"><small>Auto-sell on drop:</small>${RAR.map((r,i)=>`<button class="tick${autoSellOn(i)?' on':''}" data-a="autosell" data-v="${i}" aria-pressed="${autoSellOn(i)}" title="Sell every ${r.n} item the moment it drops">${r.n}</button>`).join('')}</div>
-      <div class="row" style="margin-top:4px"><button data-a="sellnow" ${S.inv.some(i=>!i.locked&&autoSellOn(i.tier))?'':'disabled'}>Sell matching now</button><button class="tick${clickSellOn()?' on':''}" data-a="clicksell" aria-pressed="${clickSellOn()}">Click-sell: ${clickSellOn()?'ON':'OFF'}</button></div>
+      <div class="row"><small>Auto-sell on drop:</small>${RARALL.map((r,i)=>`<button class="tick${autoSellOn(i)?' on':''}" data-a="autosell" data-v="${i}" aria-pressed="${autoSellOn(i)}" title="Sell every ${r.n} item the moment it drops">${r.n}</button>`).join('')}</div>
+      <div class="row" style="margin-top:4px"><button data-a="sellnow" ${S.inv.some(i=>!i.locked&&autoSellOn(rarIdx(i)))?'':'disabled'}>Sell matching now</button><button class="tick${clickSellOn()?' on':''}" data-a="clicksell" aria-pressed="${clickSellOn()}">Click-sell: ${clickSellOn()?'ON':'OFF'}</button></div>
       <small>${clickSellOn()?'<b class="r0">Click-sell is ON</b> - the next unlocked bag item you click is sold instantly.':'Ticked rarities are sold the moment they drop, so they never enter the bag. Click-sell turns a single click in the grid into an instant sale.'}</small><small>&#9733; Locked gear stays at the top and is skipped by auto/bulk sell. Manual Sell asks you to confirm unlocking it.</small></div>
     <div class="row" style="margin-top:4px"><small class="${S.inv.length>=BAGMAX?'r0':''}">${S.inv.length}/${BAGMAX} items${S.inv.length>=BAGMAX?' &middot; BAG FULL':''}</small></div>
     <small>Selling pays a small flat amount - a bag dump never funds an upgrade.</small>
@@ -2733,7 +2983,7 @@ const V={
       // detail card and the tooltips all keep working.
       // v39: with click-sell ON, a plain tile sells on the click instead of selecting the item;
       // the hover tooltip stays, so what you are about to sell is still readable first.
-      const tile=fits?`<div class="cell b${dtier(it)}${on?' sel':''} fit" data-tip="${it.id}" aria-label="${iname(it)} - fits this slot, click to equip" data-a="eqpick" data-v="${it.id}:${eqPick}">${icon(it)}${it.locked?`<i class="lockstar" title="Locked gear" aria-label="Locked">&#9733;</i>`:''}${it.r?`<i class="rf">+${it.r}</i>`:''}</div>`
+      const tile=fits?`<div class="cell b${dtier(it)}${it&&+it.sec>=4?' nm':''}${on?' sel':''} fit" data-tip="${it.id}" aria-label="${iname(it)} - fits this slot, click to equip" data-a="eqpick" data-v="${it.id}:${eqPick}">${icon(it)}${it.locked?`<i class="lockstar" title="Locked gear" aria-label="Locked">&#9733;</i>`:''}${it.r?`<i class="rf">+${it.r}</i>`:''}</div>`
         :cell(it,on,clickSellOn()?`data-a="quicksell" data-v="${it.id}" aria-label="${iname(it)} - click to sell it now"`:`data-a="selb" data-v="${it.id}"`);
       // v51: the selected item's card drops into the grid directly under its own row, so the
       // Equip / Sell / Lock buttons are always next to the item you clicked - no scrolling to
@@ -2742,7 +2992,7 @@ const V={
     ${sel?'':'<div class="mob-card" style="margin-top:8px"><small>Click an item to see its stats. Hover for a quick tooltip.</small></div>'}`},
   equip(){const c=C(),sel=S.eq[selE];
     const slotCell=k=>{const code=EQK.find(x=>x[0]===k);if(!code||(k==='off'&&katarOnly()))return'<div class="cell empty"></div>';const[l,ic]=[code[1],code[2]],e=S.eq[k];
-      return `<div class="cell b${e?dtier(e):0}${selE===k?' sel':''}" data-a="seleq" data-v="${k}" ${e?`data-tip="${e.id}"`:''}>${e?icon(e)+(e.locked?'<i class="lockstar" title="Locked gear" aria-label="Locked">&#9733;</i>':'')+(e.r?`<i class="rf">+${e.r}</i>`:''):`<span style="opacity:.3">${ic}</span>`}<i class="rf" style="left:2px;right:auto;top:2px;bottom:auto;color:#fff;background:#3b2a1add;font-size:9px;font-style:normal">${k==='weapon'&&katarOnly()?'2H Katar':l}</i></div>`};
+      return `<div class="cell b${e?dtier(e):0}${e&&+e.sec>=4?' nm':''}${selE===k?' sel':''}" data-a="seleq" data-v="${k}" ${e?`data-tip="${e.id}"`:''}>${e?icon(e)+(e.locked?'<i class="lockstar" title="Locked gear" aria-label="Locked">&#9733;</i>':'')+(e.r?`<i class="rf">+${e.r}</i>`:''):`<span style="opacity:.3">${ic}</span>`}<i class="rf" style="left:2px;right:auto;top:2px;bottom:auto;color:#fff;background:#3b2a1add;font-size:9px;font-style:normal">${k==='weapon'&&katarOnly()?'2H Katar':l}</i></div>`};
     // v51: the detail card is inserted into the doll right below the row that owns the clicked
     // slot (head / hands+body / legs+accessories), so Refine, card slots and Unequip sit beside
     // the piece they act on instead of at the bottom of the window.
@@ -2754,9 +3004,9 @@ const V={
   cards(){const g={};S.cards.forEach(c=>(g[c.n]=g[c.n]||[]).push(c));const ks=Object.keys(g),sel=g[selC]?g[selC][0]:null;
     return`<div class="grid">${ks.map(n=>`<div class="cell b${GI[g[n][0].g]}${n===selC?' sel':''}" data-a="selc" data-v="${n}" data-tip="${g[n][0].id}">🃏<i class="rf">x${g[n].length}</i></div>`).join('')||'<small>No cards yet. Every monster drops its own card at a low chance.</small>'}</div>
     ${sel?`<div class="mob-card" style="margin-top:8px">${itemDetail(sel)}<div class="row" style="margin-top:6px">${EQK.map(([k,l])=>{const e=S.eq[k];return e&&(e.cards||[]).length<(e.slots||0)&&CFIT[sel.stat]===grp(e)?`<button data-a="sock" data-v="${sel.id}:${k}">&rarr; ${l}</button>`:''}).join('')}<button data-a="sellcard" data-v="${sel.id}">Sell ${sel.v*150}z</button></div></div>`:''}`},
-  refine(){return`<div class="hd">Oridecon: ${S.ore.ori} &middot; Elunium: ${S.ore.elu}</div><small>Weapons use Oridecon; armor, shield, legs, headgear and accessories use Elunium. Regular mobs drop both at 0.5% on Stages 1-9 and 1% on Stage 10; Stage 10 bosses drop both at 2.5%.</small>`
+  refine(){return`<div class="hd">Oridecon: ${S.ore.ori} &middot; Elunium: ${S.ore.elu}</div><small>Weapons use Oridecon; armor, shield, legs, headgear and accessories use Elunium. Regular mobs drop both at 0.5% on Stages 1-9 and 1% on Stage 10; Stage 10 MVPs drop both at 2.5%.</small>`
     +EQK.map(([k,l])=>{const it=S.eq[k];if(!it)return'';const r=it.r||0,o=it.slot==='weapon'?'ori':'elu',c=refCost(it);
-      return`<div class="slot" style="align-items:flex-start;gap:10px;margin-top:6px">${cell(it,false)}<div style="flex:1"><b class="r${it.tier}">${iname(it)}</b> <small>${l}</small><br><small>${SLOTS[it.slot].stat} +${ev(it)} &rarr; +${Math.round(it.val*(1+(r+1)*.15))} &middot; ${r>=10?'MAX':'Success '+refCh(it)+'% &middot; '+c.toLocaleString()+'z + 1 '+ORE[o]}</small><br><button data-a="refine" data-v="${k}" ${r>=10||S.ore[o]<1||S.zeny<c?'disabled':''}>Refine</button></div></div>`}).join('')},
+      return`<div class="slot" style="align-items:flex-start;gap:10px;margin-top:6px">${cell(it,false)}<div style="flex:1"><b class="${rarCls(it)}">${iname(it)}</b> <small>${l}</small><br><small>${SLOTS[it.slot].stat} +${ev(it)} &rarr; +${Math.round(it.val*(1+(r+1)*.15))} &middot; ${r>=10?'MAX':'Success '+refCh(it)+'% &middot; '+c.toLocaleString()+'z + 1 '+ORE[o]}</small><br><button data-a="refine" data-v="${k}" ${r>=10||S.ore[o]<1||S.zeny<c?'disabled':''}>Refine</button></div></div>`}).join('')},
   pet(){const P=S.pets,A=P.filter(p=>p.on).length,p=gp(selP);
     return`<div class="hd">Pets <small>Fighting ${A}/3 &middot; Collection ${P.length}</small></div><small>Pets drop from monsters, and every species has a signature passive - a duplicate folds into the copy you own and raises that species' Bond. Drop odds per map are on the World Map.</small><div class="grid" style="margin-top:6px">${P.map(q=>{const sp=PETS[q.sp];return`<div class="cell b${RCL[sp.r]}${selP===q.id?' sel':''}" style="font-size:30px" data-a="selp" data-v="${q.id}">${petIcon(sp)}${q.on?'<i class="rf" style="left:2px;right:auto;top:2px;bottom:auto;font-style:normal">ON</i>':''}${q.mut?`<i class="rf">G${q.mut}</i>`:''}${bondRank(q.sp)?`<i class="rf" style="left:2px;right:auto;top:auto;bottom:2px">B${bondRank(q.sp)}</i>`:''}</div>`}).join('')||'<small>No pets yet.</small>'}</div>`+(p?petDetail(p):'<small>Select a pet to manage it.</small>')},
   board(){const labels={daily:'Daily',weekly:'Weekly',all:'All-time'},data=boardCache[boardPeriod],esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -2819,9 +3069,9 @@ function slotAccepts(k,it){if(!it||it.card||it.ore||!S.inv.includes(it))return f
 // This banner is the header of that mode - what is being chosen, what is worn now, and how out.
 function equipChooser(k){
   const cur=S.eq[k],fit=S.inv.filter(it=>slotAccepts(k,it)),raw=EQK.find(x=>x[0]===k)||[,k,SLOTS.weapon.ic],nm=k==='weapon'&&katarOnly()?['weapon','two-handed Katar','🔪']:raw;
-  const deltas=fit.slice(0,6).map(it=>{const d=ev(it)-ev(cur||{val:0});return`<b class="r${it.tier}">${iname(it)}</b> <b class="${d>0?'r1':'r0'}">(${d>0?'+':''}${d})</b>`}).join(' &middot; ');
+  const deltas=fit.slice(0,6).map(it=>{const d=ev(it)-ev(cur||{val:0});return`<b class="${rarCls(it)}">${iname(it)}</b> <b class="${d>0?'r1':'r0'}">(${d>0?'+':''}${d})</b>`}).join(' &middot; ');
   return`<div class="mob-card chooser"><div class="hd">${nm[2]} Choosing a ${nm[1].toLowerCase()} <small>&middot; ${fit.length} highlighted item${fit.length===1?'':'s'} fit${fit.length?' below':''}</small><button class="x" data-a="eqclose">&#10005;</button></div>
-  <small>${cur?`Now worn: <b class="r${cur.tier}">${iname(cur)}</b> (${SLOTS[cur.slot].stat} +${ev(cur)})`:'Nothing worn in this slot.'} &middot; your class may use ${C().wt.join(', ')}${k==='off'?(canShield()?' + shields':katarOnly()?' · no off-hand weapon':''):''}${k==='weapon'&&katarOnly()?'; the Katar occupies both hands, so no shield or second weapon can be worn':''} &middot; click a green item to wear it; everything else in the bag can still be inspected or sold.</small>
+  <small>${cur?`Now worn: <b class="${rarCls(cur)}">${iname(cur)}</b> (${SLOTS[cur.slot].stat} +${ev(cur)})`:'Nothing worn in this slot.'} &middot; your class may use ${C().wt.join(', ')}${k==='off'?(canShield()?' + shields':katarOnly()?' · no off-hand weapon':''):''}${k==='weapon'&&katarOnly()?'; the Katar occupies both hands, so no shield or second weapon can be worn':''} &middot; click a green item to wear it; everything else in the bag can still be inspected or sold.</small>
   ${fit.length?`<small style="display:block;margin-top:4px">Compared to what you wear: ${deltas}${fit.length>6?` &middot; +${fit.length-6} more`:''}</small>`:'<small style="display:block;margin-top:4px">Nothing in your bag fits this slot.</small>'}</div>`}
 function equipIn(k,id){const it=S.inv.find(x=>String(x.id)===String(id));
   if(!it)return;if(!slotAccepts(k,it)){log('Your class cannot use that there.');return}
@@ -2970,12 +3220,24 @@ function renderWin(anchor){
   if(winPress){winDirty=true;return}
   $('dock').innerHTML=Object.entries(TABS).filter(([k])=>k!=='gm'||S.gm).map(([k,[ic,n,key]])=>`<button class="ib${tabs.includes(k)?' on':''}" data-t="${k}" title="${n} (${key})">${ic}<span class="k">${key}</span>${dot(k)?'<i class="dot"></i>':''}</button>`).join('');
   renderQ();const host=$('wins');host.style.display=tabs.length?'flex':'none';
-  const old={};host.querySelectorAll('[data-win]').forEach(e=>old[e.dataset.win]=e.querySelector('.wbody').scrollTop);
+  // v76.3: two scrollers matter. Every window body has its own, and on a phone #wins itself is the
+  // scroller - both are saved by number before the rebuild and put back after it, so a redraw in
+  // place never moves the page. This is the "map ui hopping around" the owner saw when he tapped a
+  // stage: the tap rebuilt every window and the browser re-clamped the scroll.
+  const old={};host.querySelectorAll('[data-win]').forEach(e=>{const b=e.querySelector('.wbody');if(b)old[e.dataset.win]=b.scrollTop});
   const outer=host.scrollTop;      // on a phone #wins is the scroller, not the window bodies
   host.innerHTML=tabs.map(k=>`<div class="win wp${k==='map'?' wide':''}" data-win="${k}"><div class="title"><span>${TABS[k][1]}</span><button data-x="${k}">&#10005;</button></div><div class="body wbody">${V[k]()}</div></div>`).join('');
-  host.querySelectorAll('[data-win]').forEach(e=>{e.querySelector('.wbody').scrollTop=e.dataset.win==='log'?1e6:(old[e.dataset.win]||0)});
+  host.querySelectorAll('[data-win]').forEach(e=>{const b=e.querySelector('.wbody');if(!b)return;
+    if(e.dataset.win==='log')b.scrollTop=1e6;else b.scrollTop=old[e.dataset.win]||0});
   host.scrollTop=outer;
-  if(anchor){const el=host.querySelector(anchor);if(el&&typeof el.scrollIntoView==='function')el.scrollIntoView({block:'nearest',inline:'nearest'})}
+  // v76.3 (owner: "the map ui hopping around when i click the stages"): the pressed control is
+  // nudged by hand, inside its own window body only. scrollIntoView() walks every scrollable
+  // ancestor - the window body, #wins and the page - so on a phone it moved the whole screen even
+  // when the control was already visible, which is what read as hopping.
+  if(anchor){const el=host.querySelector(anchor),body=el&&el.closest?el.closest('.wbody'):null;
+    if(body){const er=el.getBoundingClientRect(),br=body.getBoundingClientRect();
+      if(er.top<br.top)body.scrollTop+=er.top-br.top;
+      else if(er.bottom>br.bottom)body.scrollTop+=er.bottom-br.bottom}}
   if(tabs.includes('set'))drawAppearancePreview();if(tabs.includes('job'))drawClassPreview()}
 let winPress=false,winDirty=false;
 const winUp=()=>{winPress=false;if(winDirty){winDirty=false;renderWin()}};
@@ -2986,7 +3248,11 @@ const MAX_TABS=3;const openTab=k=>{if(k==='gm'&&!S.gm)return;const i=tabs.indexO
   // Reopening a window starts at its first sub-tab: Status shows Stats, Inventory shows Bag.
   if(k==='status')sub.status='stats';if(k==='bag')sub.bag='bag';
   if(k==='map'){mapM=S.mp;mapL=S.lvl}}renderWin();if(k==='board'&&tabs.includes('board'))boardRefresh(boardPeriod)};
-const gotoField=(m,l)=>{S.mp=m;S.lvl=l;S.kl=0;mobs=[];mob=null;respawn=.3;pend=[];castQ=[];qRefresh();ui();save()};
+const gotoField=(m,l)=>{
+  // v77: travelling cancels a run. Leaving the arena is the same door as pressing Leave - a ranked
+  // run that is abandoned is simply not paid.
+  if(typeof TRIAL!=='undefined'&&TRIAL.on)trialExit();
+  S.mp=m;S.lvl=l;S.kl=0;mobs=[];mob=null;respawn=.3;pend=[];castQ=[];qRefresh();ui();save()};
 const ACT={
   boardperiod:v=>{if(!['daily','weekly','all'].includes(v))return;boardPeriod=v;boardError='';renderWin();boardRefresh(v)},
   boardrefresh:()=>boardRefresh(boardPeriod),
@@ -3008,10 +3274,10 @@ const ACT={
     S.sk[id]=nx;S.skRepair=0;ui();save()},
   rskill:()=>{const c=rcost();if(S.zeny<c)return denied(c,'skills');S.zeny-=c;S.sk={aid:1};S.skOff={};S.skRepair=0;log('Skills reset'+(c?' -'+c.toLocaleString()+'z':'')+'; every skill auto-casts again.','','skill');ui();save()},
   selb:v=>{selB=v;renderWin()},equip:id=>equip(+id),sell:id=>sell(id),
-  autosell:v=>{const t=Math.max(0,Math.min(4,+v||0));if(!Array.isArray(S.autoSell))S.autoSell=[false,false,false,false,false];S.autoSell[t]=!S.autoSell[t];
-    log(`${RAR[t].n} items will ${S.autoSell[t]?'be sold automatically the moment they drop':'stay in the bag'}.`,S.autoSell[t]?'r3':'','gear');ui();save()},
+  autosell:v=>{const t=Math.max(0,Math.min(RARALL.length-1,+v||0));if(!Array.isArray(S.autoSell))S.autoSell=[false,false,false,false,false,false];S.autoSell[t]=!S.autoSell[t];
+    log(`${RARALL[t].n} items will ${S.autoSell[t]?'be sold automatically the moment they drop':'stay in the bag'}.`,S.autoSell[t]?'r3':'','gear');ui();save()},
   lockgear:id=>toggleGearLock(id),
-  sellnow:()=>{const list=S.inv.filter(i=>!i.locked&&autoSellOn(i.tier)).slice();if(!list.length)return log('No unlocked bag item matches the rarities you ticked. Locked gear stays safe.','r0','gear');
+  sellnow:()=>{const list=S.inv.filter(i=>!i.locked&&autoSellOn(rarIdx(i))).slice();if(!list.length)return log('No unlocked bag item matches the rarities you ticked. Locked gear stays safe.','r0','gear');
     let z=0;for(const i of list){z+=sellVal(i);(i.cards||[]).forEach(c=>S.cards.push(c));const k=S.inv.indexOf(i);if(k>=0)S.inv.splice(k,1)}
     earnZeny(z);if(selB&&!S.inv.some(x=>String(x.id)===String(selB)))selB=null;
     log(`Sold ${list.length} matching item${list.length>1?'s':''} (+${z.toLocaleString()}z).`,'r3','gear,zeny');ui();save()},
@@ -3109,6 +3375,22 @@ document.addEventListener('pointerdown',e=>{const target=e.target&&e.target.clos
 function closeEquipmentChooser(force=false){if(!eqPick&&!force)return;eqPick=null;selE=null;selB=null;const i=tabs.indexOf('bag');if(i>=0)tabs.splice(i,1);const tipEl=$('tooltip');if(tipEl)tipEl.style.display='none';renderWin()}
 document.addEventListener('click',e=>{
   const target=e.target&&e.target.closest?e.target:null;
+  // v77: the Endless Echo lobby. Its buttons are looked after here and the event stops, so nothing
+  // behind the overlay fires while a run is being set up.
+  const tb=target&&target.closest&&target.closest('[data-trial],[data-buy],[data-nmmap]');
+  if(tb){
+    if(tb.dataset.trial){
+      const v=tb.dataset.trial;
+      if(v==='close')trialExit();
+      else if(v==='store')trialLobby('store');
+      else if(v==='lobby')trialLobby();
+      else if(v==='ranked'||v==='training'){if(!TRIAL.on)trialEnter(v)}
+    }
+    else if(tb.dataset.buy)trialBuy(tb.dataset.buy);
+    else if(tb.dataset.nmmap!==undefined){const mi=Math.max(0,Math.min(MAPS.length-1,+tb.dataset.nmmap||0));
+      if((S.shards|0)<TRIAL_STORE.find(x=>x.id==='nmgear').c){e.stopPropagation();e.preventDefault();return}
+      trialGrantNm(mi);S.shards=Math.max(0,(S.shards|0)-TRIAL_STORE.find(x=>x.id==='nmgear').c);save();log('Token spent - enjoy the piece.','r3','trial');trialLobby('store')}
+    e.stopPropagation();e.preventDefault();return}
   // Another tab's click handler may already clear eqPick before this document listener runs.
   // The pointer-down snapshot still tells us a chooser was open, so close its Bag as well.
   if(chooserAtPointerDown&&!chooserPointerInside)closeEquipmentChooser(true);
@@ -3120,7 +3402,12 @@ document.addEventListener('click',e=>{
 addEventListener('keydown',e=>{if(!S||e.ctrlKey||e.metaKey||e.altKey||/INPUT|TEXTAREA/.test(e.target.tagName))return;const k=e.key.toUpperCase();if(k==='ESCAPE'){if(feedFilShown){feedFilHide();return}tabs.pop();renderWin();return}if(k==='Q'){qOpen=!qOpen;renderQ();return}const X={E:['status','equip'],C:['bag','cards'],R:['status','equip']}[k];if(X){const same=tabs.includes(X[0])&&sub[X[0]]===X[1];sub[X[0]]=X[1];if(same)openTab(X[0]);else{if(!tabs.includes(X[0])){if(tabs.length>=MAX_TABS)tabs.shift();tabs.push(X[0])}renderWin()}return}const f=Object.entries(TABS).find(([,v])=>v[2]===k);if(f)openTab(f[0])});
 $('spd').onclick=()=>{speed=speed===1?2:speed===2?4:1;$('spd').textContent='Speed x'+speed};
 const tip=$('tooltip');
-document.addEventListener('error',e=>{const img=e.target;if(!img||img.tagName!=='IMG'||!img.classList||!img.classList.contains('ro-item-icon'))return;const fallback=document.createElement('span');fallback.className='ro-icon-fallback';fallback.textContent=img.dataset.fallback||'✦';if(img.parentNode)img.parentNode.replaceChild(fallback,img)},true);
+document.addEventListener('error',e=>{const img=e.target;if(!img||img.tagName!=='IMG'||!img.classList||!img.classList.contains('ro-item-icon'))return;const fallback=document.createElement('span');fallback.className='ro-icon-fallback';
+  // v77: a failed item-art load swaps in the local silhouette for that family, not an emoji.
+  const key=img.dataset.svg||'',part=key&&ITEM_ICON_SVG[key];
+  if(part)fallback.innerHTML=`<svg class="ro-icon-svg" viewBox="0 0 24 24" aria-hidden="true">${part}</svg>`;
+  else fallback.textContent=img.dataset.fallback||'✦';
+  if(img.parentNode)img.parentNode.replaceChild(fallback,img)},true);
 document.addEventListener('mouseover',e=>{const c=S&&e.target.closest&&e.target.closest('[data-tip]');if(!c){tip.style.display='none';return}const it=find(c.dataset.tip);if(!it){tip.style.display='none';return}
   tip.innerHTML=itemDetail(it);tip.style.display='block'});
 document.addEventListener('mousemove',e=>{tip.style.left=Math.min(innerWidth-240,e.clientX+14)+'px';tip.style.top=Math.min(innerHeight-200,e.clientY+14)+'px'});
@@ -3189,14 +3476,23 @@ function bars(){if(!S)return;
     track.setAttribute('aria-valuetext',label+' '+lv+': '+text+(pct>=100?' (MAX)':' to next level'));
   }
 }
-function ui(){if(!S)return;bars();feedTab();$('stageTitle').textContent=fieldName()+(isBoss()?' (MVP map)':'');$('grindStatus').textContent=S.lvl<S.prog[S.mp]?'🔄 Farming':'✨ Frontier';renderWin()}
+function ui(){if(!S)return;bars();feedTab();
+  // v77: during an Endless Echo run the title is the clock and the status is the mode, so the player
+  // never has to open anything to see how long is left. The "(MVP map)" tag is gone with the other
+  // parentheticals - the MVP FIGHT line on the HUD carries that.
+  $('stageTitle').textContent=hudTrial?`Endless Echo · ${trialClock()}`:fieldName();
+  $('grindStatus').textContent=hudTrial?(TRIAL.mode==='ranked'?'🏛 Ranked run':'🏛 Training'):(S.lvl<S.prog[S.mp]?'🔄 Farming':'✨ Frontier');renderWin()}
 
 // The owner felt the prior slowdown was too aggressive, so this is exactly halfway between
 // the original `6.5 + 0.05*AGI` pace and v66's proposed curve. It is 8.12 at AGI 99
 // (29.1% slower than 11.45) and 8.68 at AGI 120 (30.5% slower than 12.5). The curve itself now
 // lives up with the other derived stats (see moveSpd), because the Character sheet prints it.
 function update(dt){
-  if(!S)return;t+=dt;atkAnim=Math.max(0,atkAnim-dt*2.35);hitAnim=Math.max(0,hitAnim-dt*4);shake=Math.max(0,shake-dt*20);
+  if(!S)return;t+=dt;
+  // v77: the Endless Echo clock. The HUD text is refreshed once a second, not every frame.
+  if(TRIAL.on){TRIAL.left-=dt;const tc=trialClock();if(tc!==hudTrialClock){hudTrialClock=tc;if(typeof $==='function'&&$('stageTitle'))$('stageTitle').textContent=`Endless Echo · ${tc}`}
+    if(TRIAL.left<=0)return trialFinish()}
+  atkAnim=Math.max(0,atkAnim-dt*2.35);hitAnim=Math.max(0,hitAnim-dt*4);shake=Math.max(0,shake-dt*20);
   for(const k in skCd)skCd[k]=Math.max(0,skCd[k]-dt);
   for(const id in petSkillCd)petSkillCd[id]=Math.max(0,petSkillCd[id]-dt);
   for(const id in petNote)petNote[id]=Math.max(0,petNote[id]-dt);
@@ -3254,7 +3550,7 @@ function update(dt){
       const ms=2.6+.3*m.size,wake=m.pack===activePack&&(isBoss()||Math.hypot(pl.x-m.x,pl.z-m.z)<AGGRO);
       const gx2=wake?pl.x+Math.cos(m.a)*ms:m.hx,gz2=wake?pl.z+Math.sin(m.a)*ms*.6:m.hz;
       const ex=gx2-m.x,ez=gz2-m.z,ed=Math.hypot(ex,ez);const stn=m.stun>0;m.run=ed>.12&&!stn;
-      if(ed>.1&&!stn){const v=Math.min(ed,dt*(m.boss?1.2:1.6)*(wake?1:.55));m.x+=ex/ed*v;m.z+=ez/ed*v}
+      if(ed>.1&&!stn&&!m.fixed){const v=Math.min(ed,dt*(m.boss?1.2:1.6)*(wake?1:.55));m.x+=ex/ed*v;m.z+=ez/ed*v}
       m.x=cl(m.x,-BX_,BX_);m.z=cl(m.z,Z0,Z1);m.ry=Math.atan2(pl.z-m.z,m.x-pl.x);
       if(wake&&Math.hypot(pl.x-m.x,pl.z-m.z)<=ms+.4&&!stn){m.at-=dt;if(m.at<=0){m.at=m.boss?1.2:1.5;
         if(Math.random()*100<flee())addFloat(pl.x,2.4,pl.z,'DODGE','#76eaff',false,'evade');
@@ -3279,8 +3575,11 @@ if(S.hp<=0){log('You were defeated... knocked back to the entrance.','r0','kills
     const ex=(o?o.x+(i-1)*.8:pl.x-1.2)-r.x,ez=(o?o.z+1.2:pl.z+(i-1)*1.1)-r.z,ed=Math.hypot(ex,ez);r.run=ed>.2;
     if(ed>.05){const v=Math.min(ed,6*dt);r.x+=ex/ed*v;r.z+=ez/ed*v}r.x=cl(r.x,-BX_,BX_);r.z=cl(r.z,Z0-1,Z1+1);r.lunge=Math.max(0,(r.lunge||0)-dt*4);
     if(o&&bd<2.4){r.at-=dt;if(r.at<=0){r.at=petInt(p);r.lunge=1;petHit(p,o)}}}
-  const px=tx-pl.x,pz=tz-pl.z,pd=Math.hypot(px,pz),spd=moveSpd();pl.run=pd>.15;
-  if(pd>.05){const s=Math.min(pd,spd*dt*(pd>3?1.4:1));pl.x+=px/pd*s;pl.z+=pz/pd*s}
+  const px=tx-pl.x,pz=tz-pl.z,pd=Math.hypot(px,pz),spd=moveSpd();
+  // v77: in the arena the character stands still on purpose - the dummy and the player both stay
+  // put, so the five minutes measure damage and nothing else.
+  pl.run=pd>.15&&!TRIAL.on;
+  if(pd>.05&&!TRIAL.on){const s=Math.min(pd,spd*dt*(pd>3?1.4:1));pl.x+=px/pd*s;pl.z+=pz/pd*s}
   pl.x=cl(pl.x,-BX_,BX_);pl.z=cl(pl.z,Z0,Z1);
   if(mob)pl.ry=-Math.atan2(mob.z-pl.z,mob.x-pl.x);else if(pl.run)pl.ry=-Math.atan2(pz,px);
   if(S.hp<maxHp()&&Math.floor(t*2)!==Math.floor((t-dt)*2))S.hp=Math.min(maxHp(),S.hp+Math.ceil(maxHp()*.008));
@@ -5211,8 +5510,12 @@ dom.addEventListener('wheel',e=>{e.preventDefault();zoom=Math.min(2,Math.max(.6,
 // pushed the avatar down into the lower third of the view.
 const CAMERA_FOCUS_Y=.28,CAMERA_LEAD_Z=.25,ct=new THREE.Vector3(0,CAMERA_FOCUS_Y,0);let lastKey='';
 function draw(){
-  if(!S)return;const bn=isBoss(),key=S.mp+':'+S.lvl+':'+bn,c=C(),mp=MAPS[S.mp];
-  if(key!==lastKey){lastKey=key;const col=new THREE.Color(bn?0x8a6bb0:mp.sky);scene.background=col;scene.fog=new THREE.Fog(col,35,80);ground.material.color.setHex(mp.ground);buildDeco(S.mp);road.material.color.setHex(S.mp===3?0xe9d9a8:0xd8cdb4)}
+  if(!S)return;const bn=isBoss(),key=(TRIAL.on?'trial:':'field:')+S.mp+':'+S.lvl+':'+bn,c=C(),mp=MAPS[S.mp];
+  if(key!==lastKey){lastKey=key;
+    // v77: the trial is a scene of its own. Entering and leaving changes the key, so the arena is
+    // built on the way in and the real field is rebuilt on the way out - exactly like a map move.
+    if(TRIAL.on){const col=new THREE.Color(0x2a1040);scene.background=col;scene.fog=new THREE.Fog(col,26,64);ground.material.color.setHex(0x2f2338);trialArena()}
+    else{const col=new THREE.Color(bn?0x8a6bb0:mp.sky);scene.background=col;scene.fog=new THREE.Fog(col,35,80);ground.material.color.setHex(mp.ground);buildDeco(S.mp);road.material.color.setHex(S.mp===3?0xe9d9a8:0xd8cdb4)}}
   P.position.set(pl.x,0,pl.z);
   const w=S.eq.weapon,wt=heroWeaponType(c.n,c.wt,w&&w.wt),clothN=S.eq.armor?TC[rarIdx(S.eq.armor)]:c.col,hairN=S.eq.head?TC[rarIdx(S.eq.head)]:0xd0492c,metalN=w?TC[rarIdx(w)]:0xc0c0c0;
   ensureHero({cls:c.n,cloth:hx(clothN),clothN,cape:c.cape?hx(c.cape):'',hair:hx(hairN),hairN,hat:c.hat?hx(c.hat):'',wt,metal:hx(metalN),skin:'#ffd2a8',look:lookOf(c.n),tier:c.tier||0,sex:S.sex||'m',hair:S.hair|0,shield:!!(S.eq.off&&S.eq.off.slot==='off')});
@@ -5234,7 +5537,10 @@ function draw(){
     const mFace=Math.atan2(pl.z-m.z,pl.x-m.x);
     if(!v.official)setCell(v.spr,viewDir(mFace),animRow(m.run,m.atkAnim||0,t+m.a,8));
     const fl=m.flash||0;v.spr.material.color.setRGB(1,1-fl*.8,1-fl*.8)}
-  if(mob){const s=mobVisualScale(mob),[qx,qy]=scr(mob.x,3.08*s+.15,mob.z);tag.style.display='block';tag.style.left=qx+'px';tag.style.top=qy+'px';$('tn').textContent=mob.n+(mob.boss?' (BOSS)':'')+(mob.boss&&mob.critRes?' · Crit Res '+Math.round(mob.critRes*100)+'%':'');$('th').style.width=Math.max(0,mob.hp/mob.max*100)+'%'}else tag.style.display='none';
+  if(mob){const s=mobVisualScale(mob),[qx,qy]=scr(mob.x,3.08*s+.15,mob.z);tag.style.display='block';tag.style.left=qx+'px';tag.style.top=qy+'px';// v77 (owner): "i want all boss to just have names, no (boss), no showing cri res". The tag is the
+  // bare name. The MVP FIGHT line on the HUD and the oversized health bar still say what you are up
+  // against, and crit resistance stays a hidden number only the damage roll sees.
+  $('tn').textContent=mob.n;$('th').style.width=(hudTrial?'100%':Math.max(0,mob.hp/mob.max*100)+'%')}else tag.style.display='none';
   // Equipped titles belong to the character in the world, not the crowded status bar. Project
   // one small transparent gold seal from below the hero's feet every frame so it follows
   // movement and camera rotation just like the skill names do. The rank mark rides on the left.
@@ -5292,7 +5598,7 @@ function draw(){
       f.el.style.transform='translate(-50%,-50%) translate('+dxx.toFixed(1)+'px,'+dy.toFixed(1)+'px) scale('+sc.toFixed(3)+')';
       f.el.style.opacity=Math.min(1,Math.max(0,r/.45))}
     else f.el.style.opacity=Math.max(0,f.life)});
-  const pt=bn?`MVP FIGHT · ${mobs.filter(m=>!m.boss).length} minions`:`Pack ${activePack+1}/3 · Monsters ${Math.min(S.kl,MPS)}/${MPS}`;if(pt!==lastProg){lastProg=pt;prog.textContent=pt}
+  const pt=hudTrial?`🏛 ${trialClock()} left · ${Math.round(Math.max(0,(S.dmg||0)-TRIAL.dmg0)).toLocaleString()} damage`:bn?`MVP FIGHT · ${mobs.filter(m=>!m.boss).length} minions`:`Pack ${activePack+1}/3 · Monsters ${Math.min(S.kl,MPS)}/${MPS}`;if(pt!==lastProg){lastProg=pt;prog.textContent=pt}
 }
 // ---------- the clock: one simulation, driven by frames or by timers ----------
 // A browser stops calling requestAnimationFrame the moment its tab is not the one on screen, which

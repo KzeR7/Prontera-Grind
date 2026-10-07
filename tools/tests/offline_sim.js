@@ -37,6 +37,8 @@ function harness() {
     const earnExp = n => {S.exp += n;expEarned += n};
     const recordMonsterKill = () => {}, qProg = () => {}, addJob = () => {}, checkLevel = () => {};
     const genGear = (T,l,sec,boss,tier) => ({id:++state.nextId,slot:'weapon',wt:'sword',tier:0,val:1,name:T.n,aff:[],cards:[],sec,lvl:l});
+    const RAR = [{n:'Common'},{n:'Fine'},{n:'Rare'},{n:'Epic'},{n:'Legendary'}], RAR5 = {n:'N'}, RARALL = RAR.concat([RAR5]);
+    const rarIdx = it => ((it && +it.sec >= 4) ? 5 : Math.max(0, Math.min(RAR.length - 1, (it && it.tier) || 0)));
     const autoSellOn = () => false, sellVal = () => 5;
     const canUse = () => true, ekey = () => 'weapon', ev = it => it.val, maxHp = () => 100;
     const cardVal = () => 1, uid = () => ++state.nextId;

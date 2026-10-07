@@ -80,6 +80,54 @@ is the live one; with no argument the tool prints how to set a new one). Since v
 `GM` / `test1234`; `localStorage.removeItem('pg_gm_local')` removes it. Normal accounts are made
 in-game and stored in the browser (`pg_acc4`; saves under `pg_save3_<user>`).
 
+## BUILD v77 — Endless Echo (the damage trial), the band doubled again, and five fixes
+
+The dungeon is **built**: `2026-10-08 grind-v77 Endless Echo, doubled Nightmare band, N auto-sell`.
+
+* **Endless Echo — the trial.** A purple **🏛 Endless Echo** card now sits in the World Map's own map
+  grid (not under the stages), and it opens the lobby with the three doors you asked for:
+  **Ranked** — the button prints the tries you have left (`2/2` down to `0/2`, then it greys out) —
+  **Training** (unlimited, pays nothing), and the **Shard Store**. A run is **five minutes**, counted
+  down in the top bar, against one **Trial Dummy** that has infinite HP and never hits back. The
+  character spawns 1.4 units from it (inside melee reach) and neither of them moves for the whole
+  run. Ranked is **2 a day** on the same Asia/Singapore clock as the boards. **The board score is your
+  best single run** — never a sum — and ranked runs also set `S.trial.best`, your personal best.
+* **The arena is the room you described:** rune circles cut into black stone, ten obsidian pillars with
+  ember crowns, bones and slabs on the floor, a purple key light with an orange rim light, and a
+  purple sky/fog theme. It rebuilds whenever you enter, and leaving puts the real map back.
+* **Trial Shards.** Ranked runs pay by DPS — **5,000→20 · 15,000→35 · 40,000→50 · 80,000→75 ·
+  120,000→100**, plus **+10** for a new personal best. Practice pays nothing; Shards carry over.
+  The store sells **Oridecon x5 / Elunium x5 (10)**, a **250,000z cache (25)**, a **Card Mastery
+  Token (40)**, a **Legendary Card Voucher (60)** and a **Nightmare Gear Token (120)** — that last
+  one asks which map, then hands over one Nightmare-roll item at Lv 150, from section 5 if the whole
+  band is open and section 4 before that, always a weapon your class can swing.
+* **The Nightmare band doubled again** (your words: *"double the hp. atk can be increase too. ill test
+  it and see if this make sense"*). Mob and MVP **HP x24 → x48**, and the sting goes **x2.25 → x3**.
+  Worked example: a Nightmare Abyss 15 mob now has **5,565,216 HP (99x an Abyss 10 mob)** and its hit
+  lands for **2,035** through a 75% DEF cut (5.2x); the stage-15 MVP has **66.3M HP**. EXP and Zeny in
+  the band are unchanged (`x2.5` / `x2.2`). It is one doubling from the shipped figure, not a
+  compounding one, so please play-test it and tell me if it went past "hard" into "silly".
+* **N is in the auto-sell ticks.** The Bag's auto-sell row is six ticks now (Common … Legendary **N**),
+  and a Nightmare piece can be sold on drop like anything else. Old saves get the sixth tick added,
+  switched off, so nothing sells itself the moment you log in.
+* **The Bag's equipment icons are sprites.** Every equipment family has a drawn silhouette (sword,
+  dagger, axe, mace, staff, bow, katar, armour, headgear, shield, boots, accessory, ore, card) that
+  shows instantly, in the rarity's colour; the real Ragnarok item art loads on top of it where the
+  art host allows it (the request now goes out without a Referer, which is what the host refused
+  before — that was why a deployed build showed placeholder marks). A Nightmare piece keeps its
+  purple tile and glow either way.
+* **Every MVP is just a name.** No `(boss)`, no `(MVP)`, and **no crit-resistance readout** anywhere —
+  not on the card, not in the map panel. The mechanic is untouched; only the text is gone.
+* **The map no longer hops when you tap a stage.** The old fix nudged the pressed stage with the
+  browser's `scrollIntoView()`, which walks *every* scrollable parent (the window body, `#wins`, the
+  page) — on a phone that moved the whole screen even when the stage was already visible. Now both
+  scroll positions are kept by number and the pressed node is nudged inside its own list only.
+* **Still your call (nothing blocks):** the dungeon's real **name** (Endless Echo is a placeholder I
+  can rename in one line), the **Shard Store prices**, and the one-off **milestone chest** rungs — the
+  ladder is in DPS (5,000 / 15,000 / 40,000 / 80,000 / 120,000) so one real run tells us where the
+  chests should sit. A fully decked Base Lv 150 character is expected around 65k–135k DPS, so the
+  middle rungs are the ones that will matter.
+
 ## BUILD v76.2 — Nightmare rarity, MVP naming, a harder band, and the map fixes
 
 The owner's first play-test of v76 came back with six notes; this is all of them. **The difficulty and
