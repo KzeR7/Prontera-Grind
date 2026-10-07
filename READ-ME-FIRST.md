@@ -80,6 +80,13 @@ is the live one; with no argument the tool prints how to set a new one). Since v
 `GM` / `test1234`; `localStorage.removeItem('pg_gm_local')` removes it. Normal accounts are made
 in-game and stored in the browser (`pg_acc4`; saves under `pg_save3_<user>`).
 
+## BUILD v70 — crit 32px, short form from 100K (on top of v68/v69 of this session)
+
+* **Damage numbers rebuilt to the owner's tuned pick (v69):** Verdana-900 chunky digits (17px normal, 32px critical after the v70 trim), arc punch on spawn, numbers spawn centred on the mob and **sway up then fade drifting left**, holding solid until 55% of their 1.05s life. Criticals and skill criticals carry the **restored explode frame** — irregular red starburst, speed-line streaks and an impact ring sized from the number (up to 7 digits), with **no "CRIT" chip**; skill criticals get their own silver-blue `skill-critical` look instead of borrowing the normal crit's.
+* **Short form now starts at 100K (v70, the owner's rule):** 100,000 reads "100K", 1,000,000 reads "1M", and everything below — 99,999 included — stays in full digits. The Settings toggle still switches every float to full digits everywhere.
+* **v68:** the skill-name banner moved above the hero's head (world height 3.65, was forehead-level 3.15); multi-cast slots still stagger upward.
+* **Dev-only:** `Updates/damage-floats-proposal/` is the live tuner page that produced these settings (open with `python3 tools/preview_server.py 8000` → `/`; it has a **📋 Copy my selection** button). The weapon page moved to `/weapons`. Nothing in the proposal folder ships to players.
+
 ## BUILD v67 — moderated movement, fixed combat floats, server-timed cloud idle claims
 
 * **Movement dialed back:** the speed is now exactly halfway between the old formula and v66's proposed slowdown. AGI 99 is **8.12** instead of 11.45 units/s (about **29.1% slower**, not 58%); AGI 120 is **8.68** instead of 12.5 (about **30.5% slower**, not 61%). The Speed x2/x4 button is unchanged.
