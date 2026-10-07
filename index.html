@@ -25,11 +25,31 @@ html, body { margin:0; padding:0; width:100vw; height:100vh; overflow:hidden; ba
 .fl.big{font-size:24px}
 .fl{pointer-events:none}
 /* Keep floats pinned to the projected hit point and use readable, restrained type by damage kind. */
-.fl.damage,.fl.skill-damage,.fl.critical,.fl.incoming{position:absolute;font-family:"Trebuchet MS",Verdana,sans-serif;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:0;z-index:24;animation:hit-pop .18s ease-out both}
-.fl.damage{font-size:17px;color:#fff0a6!important;-webkit-text-stroke:.5px #4b3514;text-shadow:0 1px 2px #000,0 0 3px #000}
-.fl.skill-damage{font-size:17px;color:#c9f1ff!important;-webkit-text-stroke:.5px #123a57;text-shadow:0 1px 2px #000,0 0 4px #279cd1}
-.fl.critical{font-size:21px;color:#ffe08a!important;-webkit-text-stroke:.6px #57330a;text-shadow:0 1px 2px #000,0 0 4px #ffb52e}
-.fl.incoming{font-size:16px;color:#ff9b94!important;-webkit-text-stroke:.4px #4b1018;text-shadow:0 1px 2px #000,0 0 3px #f33}
+/* v69 damage floats: the owner's Balanced pick from the proposal page - Chunky (Verdana 900),
+   17px normal / 32px critical, arc punch on spawn, sway-up-fade-left travel, hold-then-fade
+   from 55% of the life. Critical and skill-critical carry the restored explode frame
+   (irregular starburst + speed-line streaks + impact ring, no "CRIT" chip) as children of the
+   float, so the screen-projection registration is untouched; the burst is sized from the
+   number, so 6-7 digit crits fit. Motion for the damage family is JS-driven per frame. */
+.fl.damage,.fl.skill-damage,.fl.critical,.fl.skill-critical,.fl.incoming{position:absolute;font-variant-numeric:tabular-nums;letter-spacing:0;z-index:24}
+.fl.damage,.fl.skill-damage{font:900 17px Verdana,"DejaVu Sans",Geneva,sans-serif}
+.fl.damage{color:#fff0a6!important;-webkit-text-stroke:.5px #4b3514;text-shadow:0 1px 2px #000,0 0 3px #000}
+.fl.skill-damage{color:#c9f1ff!important;-webkit-text-stroke:.5px #123a57;text-shadow:0 1px 2px #000,0 0 4px #279cd1}
+.fl.critical,.fl.skill-critical{font:900 32px Verdana,"DejaVu Sans",Geneva,sans-serif;will-change:transform}
+.fl.critical{color:#ffd23f!important;-webkit-text-stroke:1px #4a0e04;text-shadow:-2px -2px 0 #2e0a02,2px -2px 0 #2e0a02,-2px 2px 0 #2e0a02,2px 2px 0 #2e0a02,0 3px 4px #000,0 0 8px #ffb52e88}
+.fl.skill-critical{color:#eaf6ff!important;-webkit-text-stroke:1px #0e2c58;text-shadow:-2px -2px 0 #081a33,2px -2px 0 #081a33,-2px 2px 0 #081a33,2px 2px 0 #081a33,0 3px 4px #000,0 0 8px #4fd8ff88}
+.fl.incoming{font-family:"Trebuchet MS",Verdana,sans-serif;font-weight:700;font-size:16px;color:#ff9b94!important;-webkit-text-stroke:.4px #4b1018;text-shadow:0 1px 2px #000,0 0 3px #f33;animation:hit-pop .18s ease-out both}
+.fburst,.fring,.fstreak{position:absolute;left:50%;top:50%;pointer-events:none}
+.fburst{transform:translate(-50%,-50%)}
+.fburst svg{width:100%;height:100%;display:block;overflow:visible;animation:fburst-pop .32s cubic-bezier(.2,.9,.3,1.25) both}
+.fring{border:2px solid #ffd88a;border-radius:50%;transform:translate(-50%,-50%);animation:fring-pop .42s cubic-bezier(.1,.7,.3,1) forwards}
+.fl.skill-critical .fring{border-color:#9fe8ff}
+.fstreak{width:56px;height:3px;margin:-1.5px 0 0 -28px;border-radius:2px;background:linear-gradient(90deg,#fff,#e6d6ff);box-shadow:0 0 3px #e6d6ff;transform-origin:center;animation:fstreak-fly .5s cubic-bezier(.1,.7,.3,1) forwards}
+.fl.skill-critical .fstreak{background:linear-gradient(90deg,#fff,#cfeeff);box-shadow:0 0 3px #9fe8ff}
+.fnum{position:relative}
+@keyframes fburst-pop{0%{transform:translate(-50%,-50%) scale(.3)}60%{transform:translate(-50%,-50%) scale(1.12)}100%{transform:translate(-50%,-50%) scale(1)}}
+@keyframes fring-pop{0%{opacity:.95;transform:translate(-50%,-50%) scale(.4)}100%{opacity:0;transform:translate(-50%,-50%) scale(2.1)}}
+@keyframes fstreak-fly{0%{transform:rotate(var(--a)) translateX(6px) scaleX(.15);opacity:1}100%{transform:rotate(var(--a)) translateX(50px) scaleX(1);opacity:0}}
 .fl.miss,.fl.evade{position:absolute;font:700 13px/1 "Trebuchet MS",Verdana,sans-serif;letter-spacing:.3px;padding:0;border:0;border-radius:0;background:transparent;color:#f1f3f6!important;-webkit-text-stroke:0;text-shadow:0 1px 2px #000,0 0 3px #000;box-shadow:none;z-index:25;animation:hit-pop .18s ease-out both}
 .fl.evade{color:#9eeaff!important;text-shadow:0 1px 2px #000,0 0 3px #14738a}
 .fl.skill{font:bold 14px "Trebuchet MS",sans-serif;color:#fff!important;background:linear-gradient(135deg,#30233fe8,#182b44e8);border:1px solid #b6eaff;border-radius:5px;padding:3px 9px;letter-spacing:.2px;text-shadow:0 1px 2px #000,0 0 5px #000;box-shadow:0 2px 8px #0008,0 0 8px #55dfff44;z-index:25}
@@ -442,7 +462,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // script block, which is a SyntaxError - the game did not run on main at all. One line wins, and
 // it names both sides of this merge: the v38 balance patch (the weapon cut, the affix/card
 // give-back) and main's weapon-hold rendering work.
-const BUILD='2026-10-07 grind-v67 measured movement, combat floats and server-timed offline rewards';   // shown on the login card - confirms which file you loaded
+const BUILD='2026-10-07 grind-v70 crit 32px, short form from 100K';   // shown on the login card - confirms which file you loaded
 $('buildTag').textContent='build '+BUILD;
 
 // ---------- class tree: Novice -> 6 first jobs -> 6 second jobs -> 6 third jobs ----------
@@ -1997,24 +2017,28 @@ function chainHit(src,dmg,col,n,skill=false){if(!src||!(dmg>0)||mobs.length<2)re
   const near=mobs.filter(o=>o!==src&&o.hp>0&&o.pack===src.pack).sort((a,b)=>Math.hypot(a.x-src.x,a.z-src.z)-Math.hypot(b.x-src.x,b.z-src.z)).slice(0,n||2);
   for(const o of near){shots.push({x0:src.x,z0:src.z,x1:o.x,z1:o.z,t:0,col:col||'#fff'});hurt(o,Math.max(1,Math.round(dmg)),col,false,skill)}}
 const mkDrop=it=>({it,wx:mob.x+rnd(-.7,.7),wz:mob.z+rnd(-.7,.7),y:0,vy:-220,t:0});
-const addFloat=(x,y,z,txt,col,big,kind='text')=>floats.push({x,y,z,txt,col,life:1,big,kind});
-// Floating combat numbers are shortened by default: 100,000 reads "100K", 1,000,000 reads "1M".
-// The Settings panel switches every damage float (normal, critical and incoming) to full digits.
-// One decimal is kept only where it carries information (1.2M, 12.5K), and a K that rounds up
-// to 1000 is promoted to M so the label never reads "1000K".
+const addFloat=(x,y,z,txt,col,big,kind='text')=>floats.push({x,y,z,txt,col,life:1,big,kind,rate:(kind==='damage'||kind==='skill-damage'||kind==='critical'||kind==='skill-critical')?.95:0});
+// Floating combat numbers are shortened by default, and only from 100,000 up (the owner's rule):
+// 100,000 reads "100K", 1,000,000 reads "1M", and anything below 100K - 99,999 included - stays
+// in full digits. The Settings panel switches every damage float to full digits everywhere.
+// One decimal is kept only where it carries information (1.2M), and a K that rounds up to 1000
+// is promoted to M so the label never reads "1000K".
 const shortNum=n=>{n=Math.round(Number(n)||0);const a=Math.abs(n),u=(v,s)=>{const r=Math.round(v*10)/10;return(Number.isInteger(r)?String(r):r.toFixed(1))+s};
   if(a>=1e9)return u(n/1e9,'B');
   if(a>=1e6)return u(n/1e6,'M');
-  if(a>=1e3)return Math.abs(Math.round(n/100)/10)>=1000?u(n/1e6,'M'):u(n/1e3,'K');
+  if(a>=1e5)return Math.abs(Math.round(n/100)/10)>=1000?u(n/1e6,'M'):u(n/1e3,'K');
   return String(n)};
 const fullNum=()=>typeof S!=='undefined'&&S&&S.dmgShort===false;
 // Two settings decide what a number looks like: 'Show damage numbers' (S.dmgShow) hides every
 // combat float when it is off, and 'Short form' (S.dmgShort) switches between 100K/1M and the
 // full digits. Reward floats (Zeny, EXP) follow the short/full style but are never hidden.
 const numTxt=n=>fullNum()?String(Math.round(n)):shortNum(n);
-const damageFloat=(x,y,z,amount,critical=false,incoming=false,skill=false)=>{if(S&&S.dmgShow===false)return;addFloat(x,y,z,numTxt(amount),null,false,incoming?'incoming':critical?'critical':skill?'skill-damage':'damage')};
+const damageFloat=(x,y,z,amount,critical=false,incoming=false,skill=false)=>{if(S&&S.dmgShow===false)return;addFloat(x,y,z,numTxt(amount),null,false,incoming?'incoming':critical?(skill?'skill-critical':'critical'):skill?'skill-damage':'damage')};
 // Skill labels track the moving player, rather than floating away from the cast location.
-const skillNameFloat=(name,slot=0)=>floats.push({x:pl.x,y:3.15+slot*.38,z:pl.z,txt:name,life:1.15,kind:'skill',anchor:'hero'});
+// The skill banner rides ABOVE the head (v68): 3.15 put the plate on the hero's forehead,
+// so the base now sits at 3.65 - the height the LEVEL UP! float already reads as clearly
+// above the head - and extra casts still stagger upward by slot.
+const skillNameFloat=(name,slot=0)=>floats.push({x:pl.x,y:3.65+slot*.38,z:pl.z,txt:name,life:1.15,kind:'skill',anchor:'hero'});
 // ---------- the log ----------
 // v39: one table names everything the Log window can filter on. A line's category is the third
 // argument of log(); a line with no third argument is 'misc'. A line can carry more than one
@@ -2072,11 +2096,11 @@ function log(m,cls,cat){const e={m,cls,cat};logs.push(e);if(logs.length>80)logs.
 // ---------- combat ----------
 function shot(col){if(!mob||heroWeaponType(C().n,C().wt,S.eq.weapon&&S.eq.weapon.wt)!=='bow')return;
   shots.push({x0:pl.x,z0:pl.z,x1:mob.x,z1:mob.z,t:0,col:col||'#fff',arrow:true})}
-function hurt(o,d,col,c,skill=false){S.dmg=(S.dmg||0)+d;o.hp-=d;o.flash=1;damageFloat(o.x+rnd(-.4,.4),1.2+.8*(o.spriteScale||o.size),o.z,d,c,false,skill);if(o.hp<=0)kill(o)}
+function hurt(o,d,col,c,skill=false){S.dmg=(S.dmg||0)+d;o.hp-=d;o.flash=1;damageFloat(o.x,1.2+.8*(o.spriteScale||o.size),o.z,d,c,false,skill);if(o.hp<=0)kill(o)}
 function strike(mult,col,magic=false,skill=false){
   if(!mob)return;if(Math.random()*100<missCh()){addFloat(mob.x,1.8,mob.z,'MISS','#dfe5ed',false,'miss');return}
   const c=Math.random()*100<crit(),base=magic?matk():atk(),d=Math.max(1,Math.round(base*mult*rnd(Math.min(.95,.7+st('dex')*.004),1.15)*(c?critD():1)));
-  S.dmg=(S.dmg||0)+d;mob.hp-=d;mob.flash=1;shake=c?6:2;const leech=typeof cardMasteryStat==='function'?cardMasteryStat('leech'):0;if(leech>0&&typeof maxHp==='function'){const h=Math.max(1,Math.round(d*leech/100));S.hp=Math.min(maxHp(),S.hp+h);addFloat(pl.x,2.7,pl.z,'+'+h,'#ff6b8a')}damageFloat(mob.x+rnd(-.4,.4),1.5*Math.max(1,(mob.spriteScale||mob.size)*.8)+.6,mob.z,d,c,false,skill);
+  S.dmg=(S.dmg||0)+d;mob.hp-=d;mob.flash=1;shake=c?6:2;const leech=typeof cardMasteryStat==='function'?cardMasteryStat('leech'):0;if(leech>0&&typeof maxHp==='function'){const h=Math.max(1,Math.round(d*leech/100));S.hp=Math.min(maxHp(),S.hp+h);addFloat(pl.x,2.7,pl.z,'+'+h,'#ff6b8a')}damageFloat(mob.x,1.5*Math.max(1,(mob.spriteScale||mob.size)*.8)+.6,mob.z,d,c,false,skill);
 }
 // Higher job tiers get more casts per swing: Novice 1, first job 2, second job 3, transcendent
 // 4 (tier is 0/1/2/3 - Assassin Cross and Lord Knight are tier 3, not 2). Every cast after the
@@ -2914,7 +2938,7 @@ if(S.hp<=0){log('You were defeated... knocked back to the entrance.','r0','kills
   if(mob)pl.ry=-Math.atan2(mob.z-pl.z,mob.x-pl.x);else if(pl.run)pl.ry=-Math.atan2(pz,px);
   if(S.hp<maxHp()&&Math.floor(t*2)!==Math.floor((t-dt)*2))S.hp=Math.min(maxHp(),S.hp+Math.ceil(maxHp()*.008));
   barT-=dt;if(barT<=0){barT=.15;bars()}
-  floats.forEach(f=>{f.life-=dt*1.1;if(f.kind!=='skill')f.y+=dt*(['damage','skill-damage','critical','incoming','miss','evade'].includes(f.kind) ? .3 : .8)});floats=floats.filter(f=>{if(f.life>0)return true;if(f.el)f.el.remove();return false});
+  floats.forEach(f=>{f.life-=dt*(f.rate||1.1);if(f.kind!=='skill')f.y+=dt*(f.rate?0:(['incoming','miss','evade'].includes(f.kind)?.3:.8))});floats=floats.filter(f=>{if(f.life>0)return true;if(f.el)f.el.remove();return false});
   drops.forEach(d=>{d.t+=dt;d.vy+=700*dt;d.y+=d.vy*dt;if(d.y>0){d.y=0;d.vy=-d.vy*.4;if(Math.abs(d.vy)<40)d.vy=0}});
   for(let i=drops.length-1;i>=0;i--)if(drops[i].t>.9){collect(drops[i].it);drops.splice(i,1)}
 }
@@ -4871,8 +4895,25 @@ function draw(){
   if(tabs.includes('set'))drawAppearancePreview();
   if(tabs.includes('job'))drawClassPreview();
   R.render(scene,cam);
-  floats.forEach(f=>{if(!f.el){const e=document.createElement('div');e.className='fl'+(f.big?' big':'')+(f.kind&&f.kind!=='text'?' '+f.kind:'');e.textContent=f.txt;if(f.col)e.style.color=f.col;ov.appendChild(e);f.el=e}
-    const[a,b]=scr(f.anchor==='hero'?pl.x:f.x,f.y,f.anchor==='hero'?pl.z:f.z);f.el.style.left=a+'px';f.el.style.top=b+'px';f.el.style.opacity=Math.max(0,f.life)});
+  floats.forEach(f=>{if(!f.el){const e=document.createElement('div');e.className='fl'+(f.big?' big':'')+(f.kind&&f.kind!=='text'?' '+f.kind:'');
+    if(f.kind==='critical'||f.kind==='skill-critical'){
+      // restored explode frame: irregular starburst + speed-line streaks + impact ring, no CRIT chip;
+      // the burst is sized from the number so 6-7 digit crits still fit inside it.
+      const sk=f.kind==='skill-critical',fs=32,len=String(f.txt).length,w=Math.max(fs*2.2,len*fs*.72).toFixed(0),hs=(fs*2.5).toFixed(0);
+      const pts=[];for(let i=0;i<24;i++){const a=Math.PI*i/12-Math.PI/2,r=(i%2?30*(0.72+Math.random()*.5):48*(0.8+Math.random()*.35));pts.push((Math.cos(a)*r).toFixed(1)+','+(Math.sin(a)*r).toFixed(1))}
+      let streaks='';for(let i=0;i<7;i++)streaks+='<i class="fstreak" style="--a:'+((i*360/7)+(Math.random()*24-12)).toFixed(0)+'deg;animation-delay:'+(Math.random()*.07).toFixed(2)+'s"></i>';
+      const c1=sk?'#16324f':'#a01608',c2=sk?'#4fd8ff':'#ffcf4d',c3=sk?'#eaffff':'#fff3c8';
+      e.innerHTML='<i class="fburst" style="width:'+w+'px;height:'+hs+'px"><svg viewBox="-52 -52 104 104" preserveAspectRatio="none"><polygon points="'+pts.join(' ')+'" fill="'+c1+'"/><polygon points="'+pts.join(' ')+'" fill="none" stroke="#00000088" stroke-width="2"/><circle r="26" fill="'+c2+'" opacity=".8"/><circle r="11" fill="'+c3+'"/></svg></i><i class="fring" style="width:'+(fs*1.3).toFixed(0)+'px;height:'+(fs*1.3).toFixed(0)+'px"></i>'+streaks+'<span class="fnum">'+f.txt+'</span>';
+    }else e.textContent=f.txt;
+    if(f.col)e.style.color=f.col;ov.appendChild(e);f.el=e}
+    const[a,b]=scr(f.anchor==='hero'?pl.x:f.x,f.y,f.anchor==='hero'?pl.z:f.z);f.el.style.left=a+'px';f.el.style.top=b+'px';
+    const dk=f.kind==='damage'||f.kind==='skill-damage'||f.kind==='critical'||f.kind==='skill-critical';
+    if(dk){ // the owner's motion pick: arc punch on spawn, sway up, fade drifting left, hold-then-fade from 55%
+      const r=Math.max(0,f.life),tt=1-r,cs=(f.kind==='critical'||f.kind==='skill-critical')?1:.25;
+      const dy=-30*Math.min(1,tt*1.15),dxx=tt<.28?10*(tt/.28):10-38*Math.min(1,(tt-.28)/.72),sc=1+cs*Math.max(0,1-tt/.2);
+      f.el.style.transform='translate(-50%,-50%) translate('+dxx.toFixed(1)+'px,'+dy.toFixed(1)+'px) scale('+sc.toFixed(3)+')';
+      f.el.style.opacity=Math.min(1,Math.max(0,r/.45))}
+    else f.el.style.opacity=Math.max(0,f.life)});
   const pt=bn?`BOSS FIGHT · ${mobs.filter(m=>!m.boss).length} minions`:`Pack ${activePack+1}/3 · Monsters ${Math.min(S.kl,MPS)}/${MPS}`;if(pt!==lastProg){lastProg=pt;prog.textContent=pt}
 }
 // ---------- the clock: one simulation, driven by frames or by timers ----------
