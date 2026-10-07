@@ -434,8 +434,8 @@ t('damage floats stay screen-projected, restrained, and distinct by type', () =>
   assert.ok(src.includes('.fl.damage,.fl.skill-damage,.fl.critical,.fl.skill-critical,.fl.incoming{position:absolute'),
     'combat nodes must remain absolutely anchored to projected screen coordinates');
   assert.ok(src.includes('.fl.damage{color:#fff0a6!important;-webkit-text-stroke:'),
-    'ordinary damage keeps the gold treatment (now in the owner-picked chunky font)');
-  assert.ok(src.includes('.fl.critical,.fl.skill-critical{font:900 32px Verdana')&&!src.includes('.fl.critical::before{')&&!src.includes('>CRIT<'),
+    'ordinary damage keeps the gold treatment (now in the selected game font)');
+  assert.ok(src.includes('.fl.critical,.fl.skill-critical{font:900 32px "Trebuchet MS",Verdana,sans-serif')&&!src.includes('.fl.critical::before{')&&!src.includes('>CRIT<'),
     'critical damage carries the restored explode frame (child elements, no CRIT chip)');
   assert.ok(src.includes('.fl.miss,.fl.evade{position:absolute;')&&!src.includes('border:1px solid #d9e1ec'),
     'MISS and DODGE are plain text labels with no badge frame');
@@ -494,6 +494,11 @@ t('damage floats stay screen-projected, restrained, and distinct by type', () =>
   F.pl.x=8;vm.runInContext(draw,scene);
   assert.strictEqual(F.floats[3].el.style.left,'80px','skill names must track the moving hero');
   assert.strictEqual(F.floats[1].el.className,'fl critical');
+  const critHtml=F.floats[1].el.innerHTML;
+  assert.ok(critHtml.includes('class="fburst"')&&critHtml.includes('class="fring"'),'a critical float carries the explode frame');
+  assert.strictEqual((critHtml.match(/class="fstreak"/g)||[]).length,9,'a critical sprays 9 speed-line streaks');
+  assert.ok(critHtml.includes('class="fburst" style="width:108px'),'the burst box is sized from the finished number (1896 -> max(64, 4*32*.84) = 108)');
+  assert.strictEqual(F.floats[0].el.innerHTML,undefined,'ordinary hits stay plain text, with no frame markup');
 });
 
 t('Zeny and kill rates refresh every second using a rolling minute and reset after stalls', () => {

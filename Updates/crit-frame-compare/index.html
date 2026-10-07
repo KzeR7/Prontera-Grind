@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Crit explode frame — v70/v71 (shipped) vs v72 (your selection applied)</title>
+<style>
+  :root{--bg:#6cbf5a}
+  body{margin:0;background:var(--bg);color:#12240f;font:14px/1.45 "Trebuchet MS",Verdana,sans-serif}
+  header{padding:14px 18px 10px;background:#12240f;color:#eaf6e4}
+  header h1{margin:0 0 4px;font-size:19px}
+  header p{margin:0;font-size:13px;opacity:.85;max-width:1080px}
+  header b{color:#ffd23f}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;padding:14px 18px 24px;max-width:1200px;margin:0 auto}
+  .col{background:linear-gradient(180deg,#79c766,#5fae4f);border:1px solid #2f4a26;border-radius:10px;overflow:hidden}
+  .col h2{margin:0;padding:9px 12px;font-size:14px;background:#2f4a26;color:#fff}
+  .col.bad h2{background:#7a2a20}
+  .col.good h2{background:#26603a}
+  .col ul{margin:0;padding:8px 12px 0 28px;font-size:12.5px}
+  .col li{margin:2px 0}
+  .stage{position:relative;height:330px;margin:10px;border-radius:8px;background:radial-gradient(circle at 50% 45%,#8ed07a,#4e9a41 70%);overflow:hidden}
+  .hint{padding:6px 12px 12px;font-size:12px;opacity:.85}
+  .ctl{padding:10px 18px;display:flex;flex-wrap:wrap;gap:10px;align-items:center;background:#eaf6e4;border-top:1px solid #b8d8ac}
+  .ctl button{font:600 13px "Trebuchet MS",sans-serif;padding:6px 12px;border-radius:7px;border:1px solid #2f4a26;background:#fff;cursor:pointer}
+  .ctl button:hover{background:#f6ffe9}
+  label{font-size:12.5px}
+
+  /* ---- the shared float shell ---- */
+  .fl{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);font-variant-numeric:tabular-nums;letter-spacing:0}
+  .fburst,.fring,.fstreak{position:absolute;left:50%;top:50%;pointer-events:none}
+  .fburst svg{width:100%;height:100%;display:block;overflow:visible}
+  .fring{border:2px solid #ffd88a;border-radius:50%;transform:translate(-50%,-50%);animation:fring-pop .42s cubic-bezier(.1,.7,.3,1) forwards}
+  .fl.skill-critical .fring{border-color:#9fe8ff}
+  .fstreak{width:var(--len,56px);height:var(--th,3px);margin:calc(-.5*var(--th,3px)) 0 0 calc(-.5*var(--len,56px));border-radius:2px;
+    background:linear-gradient(90deg,#fff,#e6d6ff);box-shadow:0 0 3px #e6d6ff;transform-origin:center;
+    animation:fstreak-fly .5s cubic-bezier(.1,.7,.3,1) forwards}
+  .fl.skill-critical .fstreak{background:linear-gradient(90deg,#fff,#cfeeff);box-shadow:0 0 3px #9fe8ff}
+  /* v70's curve (a quick pop that freezes) and v72's (the page's T.life curve: overshoot,
+     random wobble, slow bloom) */
+  @keyframes fburst-pop{0%{transform:translate(-50%,-50%) scale(.3)}60%{transform:translate(-50%,-50%) scale(1.12)}100%{transform:translate(-50%,-50%) scale(1)}}
+  @keyframes fburst-life{0%{transform:translate(-50%,-50%) scale(.3)}30%{transform:translate(-50%,-50%) scale(1.25)}55%{transform:translate(-50%,-50%) scale(1) rotate(var(--brot,0deg))}100%{transform:translate(-50%,-50%) scale(1.05);opacity:.9}}
+  @keyframes fnum-punch{0%{transform:translate(-50%,-50%) scale(2)}20%{transform:translate(-50%,-50%) scale(1)}100%{transform:translate(-50%,-50%) scale(1)}}
+  @keyframes fring-pop{0%{opacity:.95;transform:translate(-50%,-50%) scale(.4)}100%{opacity:0;transform:translate(-50%,-50%) scale(2.1)}}
+  @keyframes fstreak-fly{0%{transform:rotate(var(--a)) scaleX(.15);opacity:1}100%{transform:rotate(var(--a)) translateX(var(--d,44px)) scaleX(1);opacity:0}}
+
+  /* ---- v70/v71 exactly as shipped ---- */
+  .v70 .fl.critical,.v70 .fl.skill-critical{font:900 32px Verdana,"DejaVu Sans",Geneva,sans-serif}
+  .v70 .fl.critical{color:#ffd23f;-webkit-text-stroke:1px #4a0e04;
+    text-shadow:-2px -2px 0 #2e0a02,2px -2px 0 #2e0a02,-2px 2px 0 #2e0a02,2px 2px 0 #2e0a02,0 3px 4px #000,0 0 8px #ffb52e88}
+  .v70 .fl.skill-critical{color:#eaf6ff;-webkit-text-stroke:1px #0e2c58;
+    text-shadow:-2px -2px 0 #081a33,2px -2px 0 #081a33,-2px 2px 0 #081a33,2px 2px 0 #081a33,0 3px 4px #000,0 0 8px #4fd8ff88}
+  .v70 .fburst{animation:none}
+  .v70 .fburst svg{animation:fburst-pop .32s cubic-bezier(.2,.9,.3,1.25) both}   /* the misalignment */
+  .v70 .fstreak{animation-name:none}
+  .v70 .fl{animation:none}
+
+  /* ---- v72: the owner's picks (font: game, 32px) + the explode frame ---- */
+  .v72 .fl.critical,.v72 .fl.skill-critical{font:900 32px "Trebuchet MS",Verdana,sans-serif}
+  .v72 .fl.critical .fnum,.v72 .fl.skill-critical .fnum{text-shadow:none;-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+  .v72 .fl.critical .fnum{background-image:linear-gradient(#fff3b0 10%,#ffc93c 90%);color:#ffd23f;-webkit-text-stroke:.6px #57330a;
+    filter:drop-shadow(0 0 1px #2e0a02) drop-shadow(0 1px 2px #000) drop-shadow(0 0 6px #ffb52e77)}
+  .v72 .fl.skill-critical .fnum{background-image:linear-gradient(#eafaff 10%,#7cd4ff 90%);color:#eaf6ff;-webkit-text-stroke:.6px #0e2c58;
+    filter:drop-shadow(0 0 1px #081a33) drop-shadow(0 1px 2px #000) drop-shadow(0 0 6px #4fd8ff77)}
+  .v72 .fl{animation:fnum-punch 1.05s cubic-bezier(.25,.7,.4,1) both}
+  .v72 .fburst{transform:translate(-50%,-50%);animation:fburst-life 1.05s cubic-bezier(.2,.9,.3,1.25) both}
+</style>
+</head>
+<body>
+<header>
+  <h1>Critical frames — v70/v71 as shipped vs v72 (the screenshot + 📋 selection applied)</h1>
+  <p>Two changes are on show. <b>Alignment:</b> the pop animation used to live on the svg inside the
+  centred burst box, so its own <code>translate(-50%,-50%)</code> drew the starburst half a burst
+  up-left of the digits while the ring stayed on them. <b>Type:</b> the build shipped the
+  <i>Chunky (Verdana 900)</i> font while the selection said <code>font: game</code> — the copy
+  button's raw key for <i>Game (Trebuchet)</i>; <code>font: classic</code> is what Chunky prints as.
+  Both columns use the same markup builder and box maths as the game.</p>
+</header>
+
+<div class="grid">
+  <section class="col bad">
+    <h2>v70 / v71 — what you saw in game</h2>
+    <ul>
+      <li>burst drawn half a burst <b>up-left</b> of the digits (ring and burst disagree)</li>
+      <li>flat gold fill under a hard 4-way dark outline — the sticker look</li>
+      <li>Verdana 900, not the Game font you picked</li>
+      <li>burst popped in 0.32s and froze</li>
+    </ul>
+    <div class="stage v70" id="stageA"></div>
+  </section>
+
+  <section class="col good">
+    <h2>v72 — your selection applied</h2>
+    <ul>
+      <li>burst, ring and digits share one centre</li>
+      <li>strip B's cream→gold gradient fill, .6px maroon stroke, soft shadows</li>
+      <li>Game font (Trebuchet), 17px normal / 32px crit as tuned</li>
+      <li>burst breathes for the full 1.05s (overshoot → wobble → bloom)</li>
+    </ul>
+    <div class="stage v72" id="stageB"></div>
+    <div class="hint">1px dark rim added to the page's recipe so the thin stroke survives bright maps.</div>
+  </section>
+</div>
+
+<div class="ctl">
+  <button id="fire">Fire volley (Space)</button>
+  <label>crit size <input id="size" type="range" min="24" max="48" value="32"> <span id="sizev">32</span>px</label>
+  <label>streaks <input id="n" type="range" min="4" max="14" value="9"> <span id="nv">9</span></label>
+  <label>number <input id="txt" type="text" value="11653" size="10"></label>
+</div>
+
+<script>
+/* The builder below is the game's draw-loop builder, with one flag: bug=true emits
+   v70/v71's markup/animation, bug=false emits v72's. */
+const FS = () => +document.getElementById('size').value;
+const N  = () => +document.getElementById('n').value;
+const TXT= () => document.getElementById('txt').value || '11653';
+
+function frameHTML(kind, txt, bug){
+  const sk = kind === 'skill-critical', fs = FS(), len = String(txt).length;
+  const w = (bug ? Math.max(fs*2.2, len*fs*.72) : Math.max(fs*2, len*fs*.84)).toFixed(0);
+  const hs = (fs*2.5).toFixed(0);
+  const starPts = (spikes,Ro,Ri,rot)=>{const p=[];for(let i=0;i<spikes*2;i++){const a=rot+Math.PI*i/spikes-Math.PI/2,
+    r=i%2?Ri*(.72+Math.random()*.5):Ro*(.8+Math.random()*.35);p.push((Math.cos(a)*r).toFixed(1)+','+(Math.sin(a)*r).toFixed(1))}return p.join(' ')};
+  const rot = Math.random()*Math.PI, pts = starPts(12,48,30,rot);
+  let mid;
+  if (bug) mid = '<circle r="26" fill="'+(sk?'#4fd8ff':'#ffcf4d')+'" opacity=".8"/><circle r="11" fill="'+(sk?'#eaffff':'#fff3c8')+'"/>';
+  else     mid = '<polygon points="'+starPts(8,34,20,rot*.6)+'" fill="'+(sk?'#4fd8ff':'#ffcf4d')+'"/><circle r="12" fill="'+(sk?'#eaffff':'#fff3c8')+'"/>';
+  const c1 = sk ? '#16324f' : '#a01608';
+  let streaks = '';
+  for (let i = 0, n = bug ? 7 : N(); i < n; i++){
+    streaks += bug
+      ? '<i class="fstreak" style="--a:'+((i*360/7)+(Math.random()*24-12)).toFixed(0)+'deg;animation-delay:'+(Math.random()*.07).toFixed(2)+'s"></i>'
+      : '<i class="fstreak" style="--a:'+(Math.random()*360).toFixed(0)+'deg;--len:'+(30+Math.random()*44).toFixed(0)+'px;--th:'+(2+Math.random()*1.4).toFixed(1)+'px;--d:'+(26+Math.random()*28).toFixed(0)+'px;animation-duration:'+(360+Math.random()*200).toFixed(0)+'ms;animation-delay:'+(Math.random()*.06).toFixed(2)+'s"></i>';
+  }
+  const brot = bug ? '' : ';--brot:'+(Math.random()*12-6).toFixed(1)+'deg';
+  return '<i class="fburst" style="width:'+w+'px;height:'+hs+'px'+brot+'"><svg viewBox="-52 -52 104 104" preserveAspectRatio="none">'
+    + '<polygon points="'+pts+'" fill="'+c1+'"/><polygon points="'+pts+'" fill="none" stroke="#00000088" stroke-width="2"/>'
+    + mid + '</svg></i><i class="fring" style="width:'+(fs*(bug?1.3:1.4)).toFixed(0)+'px;height:'+(fs*(bug?1.3:1.4)).toFixed(0)+'px"></i>'
+    + streaks + '<span class="fnum">'+txt+'</span>';
+}
+
+function fire(stageEl, kind, bug){
+  const txt = TXT();
+  let e = stageEl.querySelector('.fl');
+  if (e) e.remove();
+  e = document.createElement('div');
+  e.className = 'fl ' + kind;
+  e.innerHTML = frameHTML(kind, txt, bug);
+  e.id = 'float';
+  stageEl.appendChild(e);
+  /* the whole float punches on spawn (scale 2 -> 1 for a crit) in v70/v71's arc style;
+     v72's shape and colour motion is the page's, so leave the digits to their own animation */
+  if (bug) e.animate([{transform:'translate(-50%,-50%) translate(0px,0px) scale(2)'},
+                      {transform:'translate(-50%,-50%) translate(0px,0px) scale(1)'}],
+                     {duration:340, easing:'cubic-bezier(.25,.7,.4,1)'});
+}
+function volley(){
+  fire(document.getElementById('stageA'), 'critical', true);
+  fire(document.getElementById('stageB'), 'critical', false);
+}
+document.getElementById('fire').onclick = volley;
+addEventListener('keydown', e => { if (e.code === 'Space'){ e.preventDefault(); volley() } });
+for (const id of ['size','n','txt']) document.getElementById(id).oninput = e => {
+  if (id === 'size') document.getElementById('sizev').textContent = e.target.value;
+  if (id === 'n')    document.getElementById('nv').textContent = e.target.value;
+  volley();
+};
+document.getElementById('sizev').textContent = document.getElementById('size').value;
+document.getElementById('nv').textContent = document.getElementById('n').value;
+volley();
+setInterval(volley, 2600);
+</script>
+</body>
+</html>

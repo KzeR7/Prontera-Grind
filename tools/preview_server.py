@@ -7,6 +7,7 @@ Routes:
 
     /            the damage-floats proposal page (on-screen damage numbers: 3 options)
     /damage      the same page
+    /crit        a live crit-frame comparison: the old misaligned burst vs the current one
     /weapons     the weapon proposal page (weapons on the class sprites)
     /review      the older weapon review page (drag a weapon where it looks wrong)
     /standalone  the weapon review page with its data inlined (one file, no side requests)
@@ -26,6 +27,7 @@ import sys
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 PAGES = {'/': 'Updates/damage-floats-proposal/index.html',
          '/damage': 'Updates/damage-floats-proposal/index.html',
+         '/crit': 'Updates/crit-frame-compare/index.html',
          '/weapons': 'tools/weapon_proposal.html',
          '/review': 'tools/weapon_review.html',
          '/standalone': 'tools/weapon_review_standalone.html',

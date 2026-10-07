@@ -1,6 +1,6 @@
 # On-screen damage numbers — research, the missing crit explode frame, and 3 options
 
-**Status: APPLIED (v69).** The owner picked the Balanced tuning on the proposal page
+**Status: APPLIED (v69, geometry corrected in v71).** The owner picked the Balanced tuning on the proposal page
 (arc fade · sway-up-fade-left · Chunky Verdana 900 · 17px/32px, strip B · rise 30 · life 1.05s ·
 fade at 55% · punch ×1.0 · spread 14) and that exact configuration now lives in the game,
 with Option B's explode frame (chip-free) as the critical look. A **📋 Copy my selection**
@@ -185,17 +185,37 @@ route table. When the owner asks to adjust the damage numbers again, the workflo
 
 | Setting (owner's final pick) | Where in `index.html` |
 |---|---|
-| Font **Verdana 900** ("Chunky"), **17px** normal/skill, **32px** critical/skill-critical | floats CSS block: `.fl.damage,.fl.skill-damage{font:900 17px …}` and `.fl.critical,.fl.skill-critical{font:900 32px …}` |
+| Font **Game (Trebuchet)** — the selection's key is `game`; **Chunky (Verdana 900)** is `classic` and **does not ship** — **17px** normal/skill, **32px** critical/skill-critical | floats CSS block: `.fl.damage,.fl.skill-damage{font:700 17px "Trebuchet MS"…}` and `.fl.critical,.fl.skill-critical{font:900 32px "Trebuchet MS"…}` |
+| Crit **fill** = this page's strip B, not flat gold: `linear-gradient(#fff3b0 10%,#ffc93c 90%)` clipped to the glyphs, `.6px` maroon stroke, soft shadows, plus a **1px dark rim** (added in v72: the page warns a thin stroke fails on bright maps). It sits on the digits span, so the burst is not filtered with the digits | `.fl.critical .fnum{background-image:…;color:#ffd23f;-webkit-text-stroke:.6px #57330a;filter:drop-shadow(0 0 1px #2e0a02) …}`; skill crits the same in `#eafaff → #7cd4ff` |
+| Burst runs this page's `T.life` curve: `scale .3 → 1.25 @30% → 1 with a random wobble @55% → 1.05`, not the old fixed 0.32s pop | `@keyframes fburst-pop{…}` + `--brot` on the `.fburst` markup |
 | Crit colour GIF-yellow + maroon outline; skill-crit silver-blue | `.fl.critical{color:#ffd23f…}` / `.fl.skill-critical{color:#eaf6ff…}` |
 | **Fade style: arc** — punch on spawn (scale 2→1 crits, 1.25→1 normals over the first 20%) | draw-loop float block: `sc=1+cs*Math.max(0,1-tt/.2)` with `cs` 1 for crits, .25 otherwise |
 | **Pop-up type: sway up, fade left** — up 30px, right 10px for the first 28%, then −28px left | draw-loop float block: `dy=-30*Math.min(1,tt*1.15)` and `dxx=tt<.28?10*(tt/.28):10-38*…` |
 | **Hold-then-fade from 55%** of the life | draw-loop float block: `opacity=Math.min(1,Math.max(0,r/.45))` |
 | **Lifetime 1.05s** | `addFloat` gives the damage family `rate:.95` (life decays at `rate×dt`; 1/0.95 ≈ 1.05s) |
 | **Spawn front of the mob's body** (no random scatter for damage numbers) | `hurt()`/`strike()`: `damageFloat(o.x,…)` / `damageFloat(mob.x,…)` — the old `rnd(-.4,.4)` jitter is gone |
-| **Explode frame** on crits & skill crits (24-point jagged starburst, 7 speed-line streaks, impact ring, **no CRIT chip**), sized from the number | float-creation block in the draw loop: `if(f.kind==='critical'||f.kind==='skill-critical'){…}` — `fs=32`, width `max(fs*2.2,len*fs*.72)`, height `fs*2.5` |
+| **Explode frame** on crits & skill crits (the page's own layered star — 12 jittered outer spikes + 8-spike inner star + pale core, **no CRIT chip**) with a random speed-line spray (9 crit / 8 skill crit) and an impact ring, sized from the number | float-creation block in the draw loop: `if(f.kind==='critical'||f.kind==='skill-critical'){…}` — `fs=32`, `starPts(12,48,30,rot)` + `starPts(8,34,20,rot*.6)`, width `max(fs*2,len*fs*.84)`, height `fs*2.5`, ring `fs*1.4` |
 | Skill crits are their own class | `damageFloat`: `critical?(skill?'skill-critical':'critical'):…` |
 | **Short form starts at 100K** (99,999 stays full digits) | `shortNum`: `if(a>=1e5)…` |
 | Skill-name banner above the head | `skillNameFloat`: world height `3.65`, +.38 per extra cast slot |
+
+**Read the copy button's keys literally (v72 lesson).** The button prints the raw slider values, and
+the **font** row is a key, not a label: `font: game` = **Game (Trebuchet)**, `font: classic` =
+**Chunky (Verdana 900)**, `font: heavy` = **Arial Black**. The v69 hand-back said "Chunky (Verdana
+900)", so the game shipped `classic` while the v72 selection said `game` — the digits were a
+different typeface from the strip that was tuned, which is the "design looks off" half of that
+report. If a paste and the page's dropdown label ever disagree, trust the key.
+
+**v71 geometry note (the "it doesnt look like what it was proposed" report).** The first game
+port of Option B moved the pop animation onto the `<svg>` inside the centred `.fburst` box. Its
+keyframes carry `translate(-50%,-50%)`, and on the svg that resolves against the svg's own size —
+a second shift stacked on the box's own centring, so the starburst drew half a burst up-left of the
+digits while the impact ring stayed on them. The same port had swapped B's 8-spike inner star for a
+flat gold disc and evened the streak spray into a 7-bar pinwheel. v71 restores this page's own
+geometry (inner star + core, random streaks, `max(fs*2,len*fs*.84)` box, ring `fs*1.4`) and puts the
+animation on the `.fburst` box, so **strip B on this page and the live crit frame are the same
+picture again** — if the two ever disagree, render the game's markup next to the page's before
+judging the tuning.
 
 **The style strips** (A = RO red spike bubble, B = the applied red-gold starburst,
 C = modern sparks/shockwave) are all still on the page — switching the game to A or C later

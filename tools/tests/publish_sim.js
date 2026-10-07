@@ -101,7 +101,7 @@ t('the published tree is small enough to stay honest', () => {
 
 t('.assetsignore covers the same dev material (the Cloudflare safety net)', () => {
   const ignore = fs.readFileSync(path.join(root, '.assetsignore'), 'utf8');
-  for (const f of ['tools/', 'Sprite/', 'image-search/', '_login.html', '_shot.html', 'logic2.js', 'Updates/ApngAnimation/']) {
+  for (const f of ['tools/', 'Sprite/', 'image-search/', '_login.html', '_shot.html', 'logic2.js', 'Updates/ApngAnimation/', 'Updates/damage-floats-proposal/', 'Updates/crit-frame-compare/']) {
     assert.ok(ignore.includes(f), '.assetsignore does not exclude ' + f);
   }
   assert.ok(!/^\s*!/.test(ignore.split('\n').filter(l => !l.startsWith('#')).join('\n')),
