@@ -5148,8 +5148,11 @@ function townBuild(){
   const pave=(w,d,x,z,y,tile,rep2)=>{const m2=new THREE.Mesh(new THREE.PlaneGeometry(w,d),M(C.stone));
     m2.rotation.x=-Math.PI/2;m2.position.set(x,y,z);m2.receiveShadow=true;G.add(m2);
     TOWN.tiles.push({m:m2,tile,rep:rep2});return m2};
-  pave(2.6,22.8,0,TOWN_Z,.025,'limestone_pale',[2.4,21]);
-  pave(22.8,2.6,0,TOWN_Z,.025,'limestone_pale',[21,2.4]);
+  // The streets run out of the square, not just across it: the north-south one meets the avenue at
+  // the gate side and carries on towards the church, the east-west one reaches the house fronts on
+  // both sides, so the paving is a crossroads and not a cross drawn in the middle of a plaza.
+  pave(2.6,27.4,0,TOWN_Z-1.3,.025,'limestone_pale',[2.4,25]);
+  pave(26,2.6,0,TOWN_Z,.025,'limestone_pale',[24,2.4]);
   const apron2=new THREE.Mesh(new THREE.RingGeometry(5.0,7.2,48),M(C.stone));
   apron2.rotation.x=-Math.PI/2;apron2.position.set(0,.029,TOWN_Z);apron2.receiveShadow=true;G.add(apron2);
   TOWN.tiles.push({m:apron2,tile:'limestone_pale',rep:[14.4,14.4]});
