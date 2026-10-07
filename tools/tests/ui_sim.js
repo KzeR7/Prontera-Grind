@@ -434,8 +434,8 @@ t('damage floats stay screen-projected, restrained, and distinct by type', () =>
   assert.ok(src.includes('.fl.damage,.fl.skill-damage,.fl.critical,.fl.skill-critical,.fl.incoming{position:absolute'),
     'combat nodes must remain absolutely anchored to projected screen coordinates');
   assert.ok(src.includes('.fl.damage{color:#fff0a6!important;-webkit-text-stroke:'),
-    'ordinary damage keeps the gold treatment (now in the owner-picked chunky font)');
-  assert.ok(src.includes('.fl.critical,.fl.skill-critical{font:900 32px Verdana')&&!src.includes('.fl.critical::before{')&&!src.includes('>CRIT<'),
+    'ordinary damage keeps the gold treatment (now in the selected game font)');
+  assert.ok(src.includes('.fl.critical,.fl.skill-critical{font:900 32px "Trebuchet MS",Verdana,sans-serif')&&!src.includes('.fl.critical::before{')&&!src.includes('>CRIT<'),
     'critical damage carries the restored explode frame (child elements, no CRIT chip)');
   assert.ok(src.includes('.fl.miss,.fl.evade{position:absolute;')&&!src.includes('border:1px solid #d9e1ec'),
     'MISS and DODGE are plain text labels with no badge frame');

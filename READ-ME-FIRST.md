@@ -80,6 +80,28 @@ is the live one; with no argument the tool prints how to set a new one). Since v
 `GM` / `test1234`; `localStorage.removeItem('pg_gm_local')` removes it. Normal accounts are made
 in-game and stored in the browser (`pg_acc4`; saves under `pg_save3_<user>`).
 
+## BUILD v72 — crit frame aligned, and the digits are the selection's own font and fill
+
+* **The font was the "design looks off" report.** The copy button prints its raw slider keys, and the
+  owner's paste said **`font: game`** — which on the proposal page is *Game (Trebuchet)*. The build
+  had shipped **Chunky (Verdana 900)**, whose key would print as `font: classic`. So the digits were
+  a different typeface from the strip they picked. Criticals are now Game (Trebuchet) at the tuned
+  32px, normals 17px, both at the page's weight.
+* **The crit fill is the page's, not a sticker.** Strip B draws the number as a **cream→gold gradient
+  clipped to the glyphs** (`#fff3b0 → #ffc93c`) with a **.6px maroon stroke** and two soft drop
+  shadows — not the flat gold fill under a heavy 4-way dark outline the game had. Skill crits get the
+  same treatment in silver-blue.
+* **One addition for the real map:** the page previews strip B on a dark background, where its thin
+  stroke reads fine; on Prontera's bright grass it washes out (the page's own research notes a hard
+  outline is what keeps digits legible there). A **1px dark drop-shadow rim** was added to the page's
+  recipe, so the look survives bright ground without going back to the thick outline. Rendered proof:
+  the four-row comparison in the report.
+* **The burst breathes for its whole life** now: the page's own curve (overshoot to ×1.25 at 30%,
+  settle with a small random rotation wobble, slow bloom to ×1.05), not a 0.32s pop that then froze.
+* **Unchanged:** the frame geometry and centring from v71, colours, no CRIT chip, the v69 motion
+  (arc punch, sway-up-fade-left, hold-then-fade from 55% of 1.05s), burst sizing from the number,
+  and the v67 screen projection.
+
 ## BUILD v71 — the crit explode frame is centred on the digits again
 
 * **What the owner saw:** after PR #29 the critical numbers did not look like the proposal page they

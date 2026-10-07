@@ -185,7 +185,9 @@ route table. When the owner asks to adjust the damage numbers again, the workflo
 
 | Setting (owner's final pick) | Where in `index.html` |
 |---|---|
-| Font **Verdana 900** ("Chunky"), **17px** normal/skill, **32px** critical/skill-critical | floats CSS block: `.fl.damage,.fl.skill-damage{font:900 17px …}` and `.fl.critical,.fl.skill-critical{font:900 32px …}` |
+| Font **Game (Trebuchet)** — the selection's key is `game`; **Chunky (Verdana 900)** is `classic` and **does not ship** — **17px** normal/skill, **32px** critical/skill-critical | floats CSS block: `.fl.damage,.fl.skill-damage{font:700 17px "Trebuchet MS"…}` and `.fl.critical,.fl.skill-critical{font:900 32px "Trebuchet MS"…}` |
+| Crit **fill** = this page's strip B, not flat gold: `linear-gradient(#fff3b0 10%,#ffc93c 90%)` clipped to the glyphs, `.6px` maroon stroke, soft shadows, plus a **1px dark rim** (added in v72: the page warns a thin stroke fails on bright maps). It sits on the digits span, so the burst is not filtered with the digits | `.fl.critical .fnum{background-image:…;color:#ffd23f;-webkit-text-stroke:.6px #57330a;filter:drop-shadow(0 0 1px #2e0a02) …}`; skill crits the same in `#eafaff → #7cd4ff` |
+| Burst runs this page's `T.life` curve: `scale .3 → 1.25 @30% → 1 with a random wobble @55% → 1.05`, not the old fixed 0.32s pop | `@keyframes fburst-pop{…}` + `--brot` on the `.fburst` markup |
 | Crit colour GIF-yellow + maroon outline; skill-crit silver-blue | `.fl.critical{color:#ffd23f…}` / `.fl.skill-critical{color:#eaf6ff…}` |
 | **Fade style: arc** — punch on spawn (scale 2→1 crits, 1.25→1 normals over the first 20%) | draw-loop float block: `sc=1+cs*Math.max(0,1-tt/.2)` with `cs` 1 for crits, .25 otherwise |
 | **Pop-up type: sway up, fade left** — up 30px, right 10px for the first 28%, then −28px left | draw-loop float block: `dy=-30*Math.min(1,tt*1.15)` and `dxx=tt<.28?10*(tt/.28):10-38*…` |
@@ -196,6 +198,13 @@ route table. When the owner asks to adjust the damage numbers again, the workflo
 | Skill crits are their own class | `damageFloat`: `critical?(skill?'skill-critical':'critical'):…` |
 | **Short form starts at 100K** (99,999 stays full digits) | `shortNum`: `if(a>=1e5)…` |
 | Skill-name banner above the head | `skillNameFloat`: world height `3.65`, +.38 per extra cast slot |
+
+**Read the copy button's keys literally (v72 lesson).** The button prints the raw slider values, and
+the **font** row is a key, not a label: `font: game` = **Game (Trebuchet)**, `font: classic` =
+**Chunky (Verdana 900)**, `font: heavy` = **Arial Black**. The v69 hand-back said "Chunky (Verdana
+900)", so the game shipped `classic` while the v72 selection said `game` — the digits were a
+different typeface from the strip that was tuned, which is the "design looks off" half of that
+report. If a paste and the page's dropdown label ever disagree, trust the key.
 
 **v71 geometry note (the "it doesnt look like what it was proposed" report).** The first game
 port of Option B moved the pop animation onto the `<svg>` inside the centred `.fburst` box. Its
