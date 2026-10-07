@@ -155,10 +155,13 @@ in-game and stored in the browser (`pg_acc4`; saves under `pg_save3_<user>`).
   never have to know it exists. Time in town does not feed the kill-rate sample that offline rewards
   are built from — parking in town does not throw away the credit for the time you were away. `S.town`
   is a display-only flag (the World Map button reads it) and `load()` clears it.
-* **Testing:** all suites green plus the four `--check` tools. The town itself is driven end to end by
+* **Testing:** all suites green plus the five `--check` tools. The town itself is driven end to end by
   `node tools/tests/town_smoke.js` — a jsdom harness that boots the real `index.html` with the real
   Three.js r128 (`npm i --no-save jsdom three@0.128.0`; it prints a skip line and exits 0 without
-  them, so a clean checkout is never blocked). It walks **29 town scenarios**: entry and scene swap,
+  them, so a clean checkout is never blocked). It walks **35 town scenarios** (the count and the list
+  grew with each town pass; v74 added the river and the bridge's walk line, the walk out of the square
+  and over the arch to the wall, the entrance street, the grounding shadows and the river's own
+  animation tick — see the v74 section above): entry and scene swap,
   the plaza/fountain/ring, the painted pack dressing every building and prop (with a stub manifest for
   the real atlas), the five NPCs and every page they render, click-to-walk both across the plaza and
   around the fountain, **the ten fields having no click-to-walk at all** (a real pointerdown/pointerup
@@ -172,15 +175,47 @@ in-game and stored in the browser (`pg_acc4`; saves under `pg_save3_<user>`).
   exist yet and would have thrown on boot.
 * **How this pass was looked at without a browser:** this workspace cannot download Chrome, so the
   town is checked by `node tools/_town_dump.js` (jsdom walks into the real town with the real atlas
-  manifest, takes the camera the game would have at the hero's landing spot, and writes every sprite's
-  placement) and `python3 tools/preview_town_board.py`, which draws **two** boards: the plan at 2:1
-  (`Updates/town-hd/board-1-town-layout.png`, real crops at real world sizes, back to front) and the
-  **view through the game's own camera** (`board-2-town-camera-view.png`, every sprite projected
-  through the real view-projection matrix). The camera board is what caught the last real bug - the
+  manifest, takes the cameras the game would have — the hero's landing spot and the bank outside the
+  gate — and writes every sprite's placement plus the ground tiles, the river, the bridge's segment
+  tops and every solid box) and `python3 tools/preview_town_board.py`, which draws **three** boards: the
+  plan at 2:1 (`Updates/town-hd/board-1-town-layout.png`, real crops at real world sizes, back to
+  front), the **view through the game's own camera** (`board-2-town-camera-view.png`) and the
+  **entrance** (`board-3-town-entrance-view.png`, from the bank outside the gate). The camera board is what caught the last real bug - the
   ring's west arc was a mirrored angle list, which is the *same* list, so all fourteen houses stood on
   the east side exactly on top of each other, invisible on the plan and obvious from the camera.
   Entering the town also pulls the camera back further than a field does (zoom .46, wheel to .40),
   because the square does not fit in a field's frame.
+## BUILD v74 — the town's way in: a walled gate, a bridge over the river, a street of shops
+
+This pass answers three things the owner saw in screenshots of the shipped town — "i would want the
+building on the left side also", "all the buildings looks floating", "the entrance looks so off. just a
+gate. maybe add bridge after gate to walk toward the center then below is a river" — and follows the
+research they asked for (Prontera: dense blocks on all four sides, radial avenues off a central plaza
+whose fountain is the market, the church north, **gates with moat water and bridges**).
+
+* **Grounding (why they read as floating):** the contact shadow was a single plane whose *depth* came
+  from the artwork's height (`e.h*k*.3`) with the texture squashed to match, so a tall narrow building
+  stood on a wide pale puddle and a low prop on almost nothing. Both layers are now cut from the
+  sprite's **width** — a soft penumbra and a tight dark core, offset slightly towards the camera — and
+  the block stand-ins get the same pair, so a building does not change shape when the art pack lands.
+* **The way in is a walk you can make:** the avenue is split by a **river** (z 15..20) drawn with the
+  kit's own animated water tiles, crossed by a **stone bridge** whose deck and whose *ground height*
+  come from one profile (`townGroundY`), so the hero walks up and over it; `townAvoid` keeps the hero
+  out of the water off the deck, and the walkable bound now runs out to the wall the gate stands in.
+  The gate itself moved into that **curtain wall** (crenellated, watch towers, gold finials), with market
+  tents on the forecourt outside, the road out of town paved and two trees framing the approach.
+* **The left flank is built:** three street houses (`TOWN.street`) front the avenue between the
+  square's southern corner houses and the river — placed off dumped coordinates, since the ring's own
+  corner houses already stand there.
+* **How it was judged without a browser:** the dump (`node tools/_town_dump.js`) now carries the real
+  ground tiles, the river, the bridge's segment tops, every solid box and a **second camera standing on
+  the far bank**, and `python3 tools/preview_town_board.py` draws three boards — the plan, the square
+  from the hero's landing spot, and **`board-3-town-entrance-view.png`**, the way in through the gate,
+  over the bridge and up the avenue. That last board is the shot the owner's screenshot came from.
+* **Tests:** `town_smoke` is **35 scenarios** now (the river and the bridge's walk line, the walk out of
+  the square and over the arch, the entrance street, the grounding shadows, the river's animation tick),
+  and all 34 suites plus the five `--check` tools are green.
+
 ## BUILD v72 — crit frame aligned, and the digits are the selection's own font and fill
 
 * **The font was the "design looks off" report.** The copy button prints its raw slider keys, and the

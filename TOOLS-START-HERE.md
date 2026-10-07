@@ -89,15 +89,22 @@ node tools/_town_dump.js            # needs jsdom + three: writes /tmp/town_plac
 python3 tools/preview_town_board.py # writes both boards below
 ```
 
-The dump enters the real town with the real `assets/town/town-atlas.json` and takes the camera the
-game itself would have at the hero's landing spot; the tool writes two boards from that one dump:
+The dump enters the real town with the real `assets/town/town-atlas.json` and takes the cameras the
+game itself would have — the hero's landing spot and the bank outside the gate — and it writes what
+those cameras actually see: every sprite's placement, the ground tiles with their real rects and radii,
+the river, the bridge's segment tops and **every solid box** (the curtain wall, the deck, the banks, the
+gate towers). The tool draws three boards from that one dump:
 
 * `board-1-town-layout.png` — the plan, 2:1, real crops at real world sizes, back to front. Use it for
   "does the ring overlap", "is the fountain too big".
 * `board-2-town-camera-view.png` — the same sprites projected through the game's own view-projection
   matrix from its own camera, which is the closest thing to a screenshot available here. Use it for
   framing: what is in shot when you walk in, whether the ring walls both sides, what a player sees
-  first. **A bug that both boards together caught:** the ring's west arc was a mirrored angle list,
+  first. Ground, water, the bridge and the wall are drawn from the dump, and each sprite carries the
+  game's own two-layer contact shadow, so "is this building grounded" is answered here.
+* `board-3-town-entrance-view.png` — the same camera stood on the bank outside the gate, looking in:
+  gate, wall, forecourt, bridge, river and the street beyond, which is the shot the owner's round-5
+  screenshots were taken from. **A bug that both boards together caught:** the ring's west arc was a mirrored angle list,
   which is the same list — all fourteen houses stood on the east side, exactly overlapping, invisible
   on the plan and obvious on the camera view.
 

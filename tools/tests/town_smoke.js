@@ -104,8 +104,10 @@ t('the town has a plaza, a three-tier fountain and buildings all around', () => 
   assert.ok(ev('TOWN.plaza.geometry.parameters.radius') >= 11, 'the plaza is a wide disc');
   assert.strictEqual(ev('TOWN.plaza.geometry.parameters.segments') >= 32, true, 'the plaza is round');
   assert.strictEqual(ev('TOWN.spray.length'), 20, 'eight side jets and twelve droplets');
-  const fountain = ev('TOWN.g.children.slice(0,60).filter(o=>o.isGroup&&o.position.z===-6).length');
-  assert.ok(fountain >= 1, 'the fountain group stands on the plaza centre');
+  // the fountain is the group at the square's centre - asserted on the group itself, because the
+  // river and the bridge now stand in TOWN.g ahead of it and a child index would drift
+  assert.strictEqual(ev('!!TOWN.fountain&&TOWN.fountain.position.x===0&&TOWN.fountain.position.z===-6'),
+    true, 'the fountain group stands on the plaza centre');
 });
 
 t('exactly five NPCs, each with a name, a job and a sprite', () => {
@@ -310,7 +312,8 @@ t('the painted HD pack dresses the town, and dressings are protected from a late
   assert.ok(JSON.parse(designs).length >= 6, 'several different buildings ring the plaza: ' + designs);
   // and the ground tiles the town asked for are the HD ones
   for (const t of ev('TOWN.tiles.map(t=>t.tile)'))
-    assert.ok(['ruin_cobble', 'limestone_pale', 'dirt_path', 'grass_jade'].includes(t), 'unexpected ground tile ' + t);
+    assert.ok(['ruin_cobble', 'limestone_pale', 'dirt_path', 'grass_jade', 'water_frame_0'].includes(t),
+      'unexpected ground tile ' + t);
   // put the town back to the shipping state (no pack) for the rest of the run
   ev('TOWNP.ok=0;TOWNP.png=null;TOWNP.man=null;TOWNP.tex.clear();TOWN.paint=0;TOWN.houseKit.clear();TOWN.houseKit.visible=false;TOWN.houseBlk.visible=true;TOWN.fountain.visible=true;TOWN.fountainArt=null;TOWN.cath.visible=true;TOWN.spray=[];');
   leave();
@@ -329,11 +332,124 @@ t('the ring walls both sides of the square, not one', () => {
   assert.strictEqual(ev('TOWN.ring.length'), 14, 'fourteen houses wall the square');
 });
 
-t('the ring of buildings is either the kit crops or the block houses, never nothing', () => {
-  const kit = ev('TOWN.kitArt'), n = ev('TOWN.houseBlk.children.length');
-  assert.ok(n >= 10, 'there are a lot of buildings round the plaza: ' + n);
-  assert.strictEqual(ev('TOWN.houseBlk.visible'), !kit, 'the block ring shows exactly when the atlas did not');
-  assert.strictEqual(ev('TOWN.houseKit.visible'), !!kit, 'and the kit ring shows exactly when it did');
+t('the ring of buildings is the painted ring, the kit crops or the block houses, never nothing', () => {
+  // The pack downloads on its own clock, so any of the three dressings is a legitimate shipping
+  // state - what must never happen is a bare square, or two rings standing at once.
+  const kit = ev('TOWN.kitArt'), paint = ev('TOWN.paint');
+  const blocks = ev('TOWN.houseBlk.children.length');
+  const painted = ev('TOWN.houseKit.children.filter(o=>o.userData&&o.userData.art).length');
+  const blkVis = ev('TOWN.houseBlk.visible'), kitVis = ev('TOWN.houseKit.visible');
+  assert.ok(blocks >= 10, 'the block houses are always built, as the fallback: ' + blocks);
+  if (paint) {
+    assert.ok(painted >= 10, 'the painted ring dresses the square: ' + painted);
+    assert.strictEqual(kitVis, true, 'and the ring group the painted houses live in is visible');
+    assert.strictEqual(blkVis, false, 'with the block stand-ins out of the way');
+  } else {
+    assert.strictEqual(painted, 0, 'no painted houses before the pack is applied');
+    assert.strictEqual(blkVis, !kit, 'the block ring shows exactly when the atlas did not: kitArt=' + kit);
+    assert.strictEqual(kitVis, !!kit, 'and the kit ring shows exactly when it did');
+  }
+  assert.ok(!(blkVis && kitVis), 'two rings never stand at once');
+});
+
+t('the river crosses the south approach, and the bridge is the only way over it', () => {
+  enter();
+  const z0 = ev('TOWN_RIVER.z0'), z1 = ev('TOWN_RIVER.z1'), half = ev('TOWN_RIVER.half');
+  assert.ok(z1 > z0 && half > 2, 'the water band is a real band: ' + [z0, z1, half].join('|'));
+  assert.ok(z0 > 12 && z1 < 22, 'and it lies between the square and the gate: ' + z0 + '..' + z1);
+  assert.strictEqual(ev('TOWN.river.m.parent===TOWN.g'), true, 'the river is a mesh in the town group');
+  assert.ok(ev('TOWN.tiles.some(t=>t.m===TOWN.river.m&&t.tile==="water_frame_0")'),
+    'and the kit paints it with its own animated water tile');
+  // the walk line: off the bridge the water pushes the hero back to whichever bank is nearer
+  assert.strictEqual(ev('townAvoid(-13,' + (z0 + 1) + ')[1]'), z0, 'on the west bank the hero is held at the waterline');
+  assert.strictEqual(ev('townAvoid(13,' + (z1 - 1) + ')[1]'), z1, 'and held out of the water from the gate side too');
+  assert.strictEqual(ev('townAvoid(0,' + (z0 + 1) + ')[1]'), z0 + 1, 'but the bridge deck itself is walkable');
+  assert.strictEqual(ev('townAvoid(0,' + (z1 - 1) + ')[1]'), z1 - 1, 'right across the band');
+  // the deck spans the whole channel, and the abutments sit low with the deck arching between them
+  assert.ok(ev('TOWN.bridge.z0<TOWN_RIVER.z0&&TOWN.bridge.z1>TOWN_RIVER.z1'), 'the deck spans the whole channel');
+  const tops = ev('[0,1,2,3,4,5,6,7,8,9].map(i=>Math.round(TOWN.bridge.top(i)*100)/100)');
+  assert.ok(tops[0] < .3 && tops[9] < .3, 'the abutments are low: ' + tops.join(','));
+  assert.ok(tops[4] > tops[0] + .15 && tops[5] > tops[9] + .15, 'with the deck arching up between them');
+  assert.ok(Math.max.apply(null, tops) < .7, 'a footbridge over a river, not a viaduct: ' + Math.max.apply(null, tops));
+  // the ground the hero stands on follows the same profile, and is flat everywhere else
+  assert.ok(ev('townGroundY(0,17.5)') > .3, 'the hero stands on the arch at the crown');
+  assert.ok(ev('townGroundY(0,14.35)') > .02 && ev('townGroundY(0,14.35)') < .3, 'and walks up the ramp onto it');
+  assert.strictEqual(ev('townGroundY(-13,17.5)'), 0, 'never above the water off the deck');
+  assert.strictEqual(ev('townGroundY(0,26)'), 0, 'and the ground past the gate is level');
+  assert.ok(ev('TOWN_BOUND.z1>TOWN.bridge.z1'), 'the walkable bound runs out past the bridge, to the gate');
+});
+
+t('the way in: the hero walks out of the square, over the bridge, onto the far bank', () => {
+  enter();
+  // walk the whole way in: from the square, over the arch, to the wall the gate stands in
+  ev('townClose();pl.x=0;pl.z=7.5;pl.wx=0;pl.wz=' + (ev('TOWN_BOUND.z1') - .05) + ';pl.wt=0;');
+  let top = 0, offDeck = 0;
+  for (let i = 0; i < 900; i++) {
+    ev('update(1/60)');
+    top = Math.max(top, ev('townGroundY(pl.x,pl.z)'));
+    if (!ev('!(pl.z>TOWN_RIVER.z0&&pl.z<TOWN_RIVER.z1)||Math.abs(pl.x)<=TOWN_RIVER.half+.45')) offDeck++;
+  }
+  assert.ok(top > .3, 'the walk rises onto the bridge (top ' + top.toFixed(2) + ')');
+  assert.strictEqual(offDeck, 0, 'and never leaves the deck while over the water');
+  assert.ok(ev('pl.z') > ev('TOWN_RIVER.z1') + 1, 'arriving in the gate forecourt (z ' + ev('pl.z').toFixed(1) + ')');
+  assert.strictEqual(ev('townGroundY(pl.x,pl.z)'), 0, 'where the ground is level again');
+  // and the drawn hero stands on the deck, not inside it: draw() sets the sprite's height from it
+  ev('P.position.set(0,0,0);pl.x=0;pl.z=17.5;pl.wx=0;pl.wz=17.5;draw()');
+  assert.ok(ev('P.position.y') > .3, 'the drawn hero is on top of the bridge, not sunk into it');
+  assert.ok(Math.abs(ev('P.position.y') - ev('townGroundY(0,17.5)')) < .001, 'at exactly the deck height');
+});
+
+t('the entrance street fronts the avenue on both flanks', () => {
+  enter();
+  const street = JSON.parse(ev('JSON.stringify(TOWN.street||[])'));
+  assert.ok(street.length >= 3, 'the entrance has a street of its own: ' + street.length + ' houses');
+  assert.ok(street.some(h => h.x < -8), 'and the west flank of the avenue is built up');
+  assert.ok(street.some(h => h.x > 8), 'and the east flank');
+  assert.ok(street.every(h => Math.abs(h.x) > 6), 'none of them stands in the avenue');
+  assert.ok(ev('TOWN.street.every(h=>h.z<TOWN_RIVER.z0)'), 'the whole street is on the town side of the river');
+  assert.ok(ev('TOWN.street.every(h=>h.z-TOWN_Z>-20)'), 'and clear of the cathedral');
+  assert.ok(street.every(h => !!h.d), 'each one names its design, so stand-in and art never disagree');
+  // one stand-in house per slot, and the painted ring is dressed from the same list
+  assert.strictEqual(ev('TOWN.houseBlk.children.filter(o=>o.isGroup).length'),
+    ev('TOWN.ring.length') + street.length, 'a stand-in house for every slot, street included');
+  const designs = ev('JSON.stringify([...new Set(TOWN.houseKit.children.filter(o=>o.userData&&o.userData.art).map(o=>o.userData.art))].sort())');
+  if (ev('TOWN.paint')) assert.ok(JSON.parse(designs).some(d => d === 'house_shop' || d === 'house_stone'),
+    'and the street houses are among the painted ones: ' + designs);
+});
+
+t('every building is grounded: the art and the stand-ins both carry a contact shadow', () => {
+  enter();
+  assert.strictEqual(ev('townShadowTex.has("core")&&townShadowTex.has("soft")'), true,
+    'one shared shadow pair is drawn once and reused');
+  // the block stand-ins: two shadow layers under every one of them, at the foot of the art
+  assert.strictEqual(ev('TOWN.houseBlk.children.filter(o=>o.isGroup).every(g=>g.children.filter(c=>c.isMesh&&c.rotation.x<0&&c.position.y<.05).length===2)'),
+    true, 'every block house stands on two shadow layers at its foot');
+  if (ev('TOWN.paint')) {
+    const geo = JSON.parse(ev('JSON.stringify(TOWN.houseKit.children.filter(o=>o.userData&&o.userData.art).map(g=>g.children.filter(c=>c.isMesh).map(c=>[c.geometry.parameters.width,c.geometry.parameters.height])))'));
+    assert.ok(geo.length >= 10, 'the painted houses are up: ' + geo.length);
+    for (const pair of geo) {
+      const soft = pair[1], core = pair[2];
+      assert.ok(soft && core, 'a painted house has the sprite plus two shadow planes');
+      // the fix for "the buildings look floating": the shadow's depth is cut from the sprite's WIDTH.
+      // Scaling it with the artwork's height gave tall narrow houses a wide pale puddle instead.
+      assert.ok(soft[1] / soft[0] < .5 && core[1] / core[0] < .5,
+        'the shadow is flat under the art, not a puddle: ' + JSON.stringify(pair));
+      assert.ok(core[0] < soft[0] && core[1] < soft[1], 'with a tight core inside the wider penumbra');
+    }
+  }
+});
+
+t('the river animates on the town clock, not the field one', () => {
+  enter();
+  const frames = ev('TOWN.river.maps?TOWN.river.maps.length:0');
+  assert.ok(frames === 0 || frames === 2, 'the river carries the kit frame pair when the kit is in: ' + frames);
+  // the field's water tick only runs from simSteps, so the town must swap its own frames
+  ev('TOWN.river.maps=[TOWN.river.m.material.map,{fake:1}];TOWN.river.wt=.6;townTick()');
+  assert.strictEqual(ev('TOWN.river.m.material.map===TOWN.river.maps[1]'), true,
+    'a town tick past the .55s frame swaps to the second water frame');
+  ev('TOWN.river.wt=.6;townTick()');
+  assert.strictEqual(ev('TOWN.river.m.material.map===TOWN.river.maps[0]'), true, 'and the next one swaps back');
+  ev('TOWN.river.maps=null;TOWN.river.wt=0;');        // put the river back the way townArt left it
 });
 
 t('the map tab lists Prontera Town as a card beside the ten fields', () => {

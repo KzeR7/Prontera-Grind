@@ -59,15 +59,57 @@ const out=JSON.parse(ev(`(()=>{
     });
   };
   [TOWN.houseKit,TOWN.propBlk,TOWN.g].forEach(walk);
+  // The solids: every visible box mesh in the town group (curtain wall, bridge deck, banks, gate
+  // towers). The board draws these as real boxes, because a wall made of boxes is invisible to a
+  // sprite-only board - and the wall is exactly what round 5 had to check.
+  const boxes=[];const seenB=new Set();
+  const walkBox=root=>{root.traverse(o=>{
+    if(!o.isMesh||seenB.has(o.id))return;seenB.add(o.id);
+    const g=o.geometry;if(!g||!g.parameters||!g.parameters.width||g.parameters.depth===undefined)return;
+    if(o.rotation&&o.rotation.x)return;                     // flat planes: the board draws those itself
+    let p2=o,vis=true;while(p2&&p2!==TOWN.g){if(p2.visible===false){vis=false;break}p2=p2.parent}
+    if(!vis)return;
+    const m=o.material;if(!m||!m.color)return;
+    const wp=new THREE.Vector3();o.getWorldPosition(wp);
+    boxes.push({c:'#'+m.color.getHexString(),x:+wp.x.toFixed(2),y:+(wp.y-g.parameters.height/2).toFixed(2),
+      z:+wp.z.toFixed(2),w:+g.parameters.width.toFixed(2),h:+g.parameters.height.toFixed(2),
+      d:+g.parameters.depth.toFixed(2),ry:o.rotation&&o.rotation.y?+o.rotation.y.toFixed(3):0});});};
+  walkBox(TOWN.g);
+  const dim=m=>{const q=m.geometry.parameters||{};
+    return [q.width||(q.radius||0)*2,q.height||(q.radius||0)*2];};
   return JSON.stringify({sprites:list,npc:TOWN.list.map(n=>({id:n.def.id,x:n.def.x,z:n.def.z})),
     plaza:{r:TOWN_R,z:TOWN_Z},
+    // the ground the town actually asks for, in the order it is drawn, and the river/bridge numbers,
+    // so the boards show the real water band and the deck's own arch profile instead of a redraw
+    grounds:(TOWN.grounds||[]).map(g=>{const[gw,gh]=dim(g.m);return {tile:g.tile,c:'#'+g.m.material.color.getHexString(),
+      x:+g.m.position.x.toFixed(2),z:+g.m.position.z.toFixed(2),y:+g.m.position.y.toFixed(3),
+      w:+gw.toFixed(2),h:+gh.toFixed(2)}}),
+    tiles:(TOWN.tiles||[]).map(t=>{const[tw,th]=dim(t.m);return {tile:t.tile,r:+(t.m.geometry.parameters.radius||0).toFixed(3),
+      x:+t.m.position.x.toFixed(2),z:+t.m.position.z.toFixed(2),y:+t.m.position.y.toFixed(3),
+      w:+tw.toFixed(2),h:+th.toFixed(2)}}),
+    river:{z0:TOWN_RIVER.z0,z1:TOWN_RIVER.z1,half:TOWN_RIVER.half,
+      x:+TOWN.river.m.position.x.toFixed(2),z:+TOWN.river.m.position.z.toFixed(2),
+      w:+TOWN.river.m.geometry.parameters.width.toFixed(2),h:+TOWN.river.m.geometry.parameters.height.toFixed(2)},
+    bridge:{z0:TOWN.bridge.z0,z1:TOWN.bridge.z1,half:TOWN_RIVER.half,seg:TOWN.bridge.seg,ramp:TOWN.bridge.ramp,
+      tops:Array.from({length:TOWN.bridge.seg},(_,i)=>+TOWN.bridge.top(i).toFixed(3))},
+    boxes:boxes,
     bound:TOWN_BOUND,
     cam:{pos:cam.position.toArray(),target:[ct.x,0,ct.z],
          proj:Array.from(cam.projectionMatrix.elements),
          view:Array.from(cam.matrixWorldInverse.elements),
          world:Array.from(cam.matrixWorld.elements),
          fov:cam.fov,near:cam.near,far:cam.far,aspect:cam.aspect,zoom:zoom,
-         viewW:1600,viewH:900}});
+         viewW:1600,viewH:900},
+    // The entrance view: the same camera, stood on the far bank looking north up the avenue. This is
+    // the shot the round-5 screenshots were taken from, so the board has to be able to show it.
+    camGate:(()=>{const g={x:0,z:TOWN_RIVER.z1+2.6,y:CAMERA_FOCUS_Y};
+      const p2=new THREE.PerspectiveCamera(cam.fov,cam.aspect,cam.near,cam.far);
+      p2.position.set(g.x+Math.sin(az)*Math.cos(el)*dd,Math.sin(el)*dd+.5,g.z+Math.cos(az)*Math.cos(el)*dd);
+      p2.lookAt(new THREE.Vector3(g.x,g.y,g.z));p2.updateMatrixWorld(true);p2.updateProjectionMatrix();
+      return {pos:p2.position.toArray(),target:[g.x,0,g.z],
+        proj:Array.from(p2.projectionMatrix.elements),
+        view:Array.from(p2.matrixWorldInverse.elements),
+        fov:p2.fov,near:p2.near,far:p2.far,aspect:p2.aspect,zoom:zoom,viewW:1600,viewH:900};})()});
 })()`));
 fs.writeFileSync('/tmp/town_placements.json',JSON.stringify(out,null,1));
 console.log('sprites:',out.sprites.length,'groups:',JSON.stringify(out.sprites.reduce((a,s)=>(a[s.grp]=(a[s.grp]||0)+1,a),{})));
