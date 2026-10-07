@@ -9,8 +9,10 @@
 > The trial dungeon itself is **not built**. The owner has since set the rules that supersede the
 > draft in section 3: **5-minute runs** (not 60s), unlimited practice, the dummy does not hit back,
 > and **2 ranked attempts a day**. Endorsed rewards: titles, Trial Shards, a weekly season, a
-> personal-best bonus. Open: the dungeon name, the Shard exchange list, the milestone-chest rewards —
-> drafts for all three are in the report above.
+> personal-best bonus. **The board keeps the best DPS of a single 5-minute session — runs are never
+> summed across sessions** — so the score, the board rows and the milestone chests are all expressed
+> in DPS. Open: the dungeon name, the Shard exchange list, and the exact chest rungs (provisional
+> until the owner's first real run) — drafts for all three are in the report above.
 
 *Two owner reports, one note. Every number was read out of `index.html` on `grind-v75` (the Field
 Tiers figures are now v76).*

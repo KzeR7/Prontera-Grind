@@ -146,6 +146,55 @@ that, because "load this file a stranger sent you" is otherwise a way to hand ou
   playing 4 hours a day the plan estimated roughly a quarter of the request allowance and under a
   tenth of the writes.
 
+## If you lose the owner (GM) account
+
+The owner is **the first account registered against that database** (`users.gm = 2`); every later
+account is a normal player. There are three separate ways back in, in order of how fast they are:
+
+**1. Right now, in the game, without touching the server.** The game has a local GM login that has
+nothing to do with cloud accounts: type the username **`GM`** (exactly that) and the GM password on
+the login card — GM tools come back even with the API on, because the GM branch is checked before the
+cloud branch. If the password is the part you lost, set a new one **in your own browser**, so it never
+goes into the repo:
+
+```js
+// open the game, then the browser console (F12), and run:
+localStorage.setItem('pg_gm_local', gmHash('pick-something-you-remember'))
+// from then on: username GM + that password. Undo with localStorage.removeItem('pg_gm_local')
+```
+
+That only unlocks GM tools in that one browser — it does not make your cloud account an owner.
+
+**2. Promote a cloud account (the real fix).** Run this against the production database, replacing the
+username with yours (it is case-insensitive):
+
+```sh
+npx wrangler d1 execute pg --remote --command "UPDATE users SET gm=2 WHERE username='YourName'"
+```
+
+Not sure what the account is actually called? List the candidates first:
+
+```sh
+npx wrangler d1 execute pg --remote --command "SELECT id, username, gm, created_at FROM users ORDER BY id LIMIT 10"
+```
+
+In the dashboard instead of the CLI: **Workers & Pages → D1 → `pg` → Console**, paste the same SQL,
+Run. `gm` values are `0` player, `1` GM, `2` owner; `2` also lets you promote others from the GM
+console, so you only need to do this once per database. If the *old* account is on a different
+database (a rebuilt one), copy nothing — just promote the account you are using now.
+
+**3. On a preview server.** Every preview is a throwaway process with an in-memory database, so the
+account you registered last time is gone and the new one may not be the first. Start the preview so
+that cannot happen again:
+
+```sh
+node tools/dev_server.js --gm-all               # every account registered here is an owner
+node tools/dev_server.js --gm-all --db tools/.devdb/preview.sqlite   # ...and the database survives restarts
+```
+
+`--gm-all` is a preview-only switch: **never** set `DEV_GM_ALL` on the Cloudflare project, because on
+the real server the first-account rule is exactly what protects your owner account.
+
 ## If something goes wrong
 
 | Symptom | Cause and fix |

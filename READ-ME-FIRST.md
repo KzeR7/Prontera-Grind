@@ -80,6 +80,23 @@ is the live one; with no argument the tool prints how to set a new one). Since v
 `GM` / `test1234`; `localStorage.removeItem('pg_gm_local')` removes it. Normal accounts are made
 in-game and stored in the browser (`pg_acc4`; saves under `pg_save3_<user>`).
 
+## Testing the preview (and getting GM tools on it)
+
+```sh
+node tools/dev_server.js --gm-all --db tools/.devdb/preview.sqlite
+```
+
+* The preview's database is **in memory by default**, so restarting it wipes accounts and saves, and
+  the account you registered last time is gone. `--db <file>` keeps it instead (the path above is
+  gitignored).
+* **`--gm-all` makes every account registered on that preview an owner**, so a new preview can never
+  leave you on an account with no GM tools. It is preview-only — never set `DEV_GM_ALL` on the
+  Cloudflare project.
+* **On the live server**, the owner is the first account registered against that database. If you lose
+  it, the game's own `GM` login (username `GM` + the GM password) still gives you the GM tab in that
+  browser, and `tools/cloudflare-deploy-steps.md` → *If you lose the owner (GM) account* has the
+  one-line SQL to promote your cloud account back to `gm=2`.
+
 ## BUILD v76 — the Nightmare band (Base Lv 100-150) and its exclusive gear
 
 Field power used to stop at **Abyss Stage 10 (power 99)** while the level cap is 150, so Base Lv

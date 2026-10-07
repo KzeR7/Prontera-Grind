@@ -6,6 +6,52 @@ This is the detailed summary you asked for, then the three open suggestions: **d
 
 ---
 
+## Part 0 — your two questions
+
+**"What do you mean by 25M being a realistic 5-minute ceiling?"** — I meant the *top rung* of the
+milestone-chest ladder in Part 4: it was the total damage dealt inside one 5-minute run. I picked 25M
+as a round number, because **nothing in the game measures damage yet** — the trial is what would
+measure it. So it was a guess, and you were right to question it. Here is the closest thing to a real
+measurement I can make from the shipped numbers:
+
+* Nightmare mob HP per kill, straight out of the game's formula (`42 x mapBonus x power^1.3`, x12 in
+  the band):
+
+  | Field | Mob HP | DPS that equals "one kill every 4.5s" |
+  |---|---|---|
+  | Comodo 10 | 20,127 | 4,473 |
+  | Abyss 10 (old ceiling) | 55,287 | 12,286 |
+  | NM Prontera 11 | 213,785 | 47,508 |
+  | NM Niflheim 13 | 1,081,985 | 240,441 |
+  | NM Abyss 15 | 1,391,313 | 309,181 |
+
+* The middle column is the game's **own** balance target: `tools/pacing_report.js` is solved on
+  **800 kills/hour**, i.e. one kill every 4.5 seconds on the level-appropriate field. Read backwards,
+  that says a hero who belongs on Nightmare Abyss 15 is expected to be pushing roughly **300,000 DPS**
+  while farming — packs, skills and pets included.
+* A trial dummy is **single target**: no pack splash, no walking, but also no boss crit immunity on
+  my draft. Single-target throughput is a fraction of farm throughput, so a fully decked 150 with
+  Abyssal Nightmare gear realistically lands somewhere in the **20-40M** band over 5 minutes — i.e.
+  **65,000-135,000 DPS**.
+* Verdict: **25M was in the right range for a top rung, but it was luck, not measurement.** The number
+  that should be locked is a DPS figure (see below), the rungs are **one array in the code**, and the
+  right moment to finalise them is after your first real run — v77 will ship them provisional and I
+  will move them from your measurement.
+
+**"The rank board should show the best DPS within one session, not accumulated."** — Recorded, and it
+changes three things:
+
+1. **Metric: best single-run DPS.** A ranked run is one 5-minute session; the board takes the
+   **maximum DPS of a single run**, never the sum of runs. Logging in 30 times a day cannot climb the
+   board, only one good run can.
+2. **Display: DPS is the headline** (`84,120 DPS`), with that run's total damage underneath
+   (`25.2M in 5:00`) and the loadout it was set with.
+3. **Storage: mirror of the kills board, but MAX instead of delta.** Same worker, same
+   `period=daily|weekly|all` shape and LIMIT 50 as `functions/api/board.js`, except the row keeps
+   `max(dps)` per (user, period) instead of an accumulating counter. Weekly season = the weekly row.
+
+---
+
 ## Part 1 — What I coded
 
 ### 1.1 The problem
@@ -50,11 +96,14 @@ resets the fight).
 You said the mobs had to be genuinely hard, so the band is not just a difficulty number. Against the
 same-power monster:
 
-| | Mob HP | Damage a landed hit does (after a 75% DEF cut) |
+| | Mob HP | The mob's hit on you (after your 75% DEF cut) |
 |---|---|---|
 | Abyss stage 10 (the old ceiling) | 56,013 | 389 |
 | **Nightmare Abyss 15** | **1,391,304 (25x)** | **1,017 (2.6x)** |
 | Nightmare Abyss 15 boss | 16,563,240 | — |
+
+(That second column is the *monster's* attack, not yours — a Nightmare Abyss 15 mob hits about two and
+a half times harder than an Abyss 10 mob does.)
 
 * **12x mob HP** and **1.5x mob damage** — the two knobs are single constants (`NMHP`, `NMATK`).
 * The stage-15 boss has **12x the HP** of a stage-10 boss (`NMBOSSHP`).
@@ -155,8 +204,9 @@ If you want it anchored to the map instead, **Abyss Trial Hall** is the safest s
 
 Design rule I used: **Shards buy things the game already has sinks for**, so nothing new has to be
 balanced — and the top of the list connects the trial to the v76 Nightmare band you just got. Ranked
-runs pay shards (2/day, scaled by damage band + personal best bonus), so the numbers below are sized
-so a normal week of ranked runs buys roughly two cheap things and one expensive thing.
+runs pay shards (2/day), banded by the DPS you reached in that run plus a personal-best bonus, so the
+numbers below are sized so a normal week of ranked runs buys roughly two cheap things and one
+expensive thing.
 
 | Cost | Item | What it does |
 |---|---|---|
@@ -186,16 +236,26 @@ These are **lifetime one-offs**, separate from the 2 ranked shard payouts a day 
 permanently, the first time a run crosses a line. That makes them a reason to *push* rather than a
 reason to log in twice. Suggested ladder:
 
-| Milestone | Chest holds |
-|---|---|
-| **Finish your first ranked run** | 25 Shards + title **Echo Novice** |
-| **1,000,000 damage in one run** | 50 Shards + Oridecon ×10 + Elunium ×10 |
-| **5,000,000 damage in one run** | 75 Shards + Pet Roll Ticket ×1 + Zeny Cache (250,000) |
-| **10,000,000 damage in one run** | 100 Shards + title **Echo Adept** + Card Index Token ×1 |
-| **25,000,000 damage in one run** | 150 Shards + Legendary Card Voucher ×1 |
-| **Beat your own personal best by 10%** | 20 Shards (repeatable — this is the "keep improving" drip) |
-| **Top 10 on a weekly board** | 100 Shards + title **Echo Breaker** |
-| **Perfect 5:00 with zero deaths** (no buffs) | title **Untouched** — cosmetic flex only, no currency |
+Since the board now ranks **DPS**, the rungs are DPS too — the same unit you will see on the screen,
+and the "damage in one run" column is just DPS x 300s for reading. **These five numbers are
+provisional**: they are the array I will re-set from your first real run (Part 0).
+
+| Milestone | = damage in one 5:00 run | Chest holds |
+|---|---|---|
+| **Finish your first ranked run** | — | 25 Shards + title **Echo Novice** |
+| **5,000 DPS** | 1.5M | 50 Shards + Oridecon ×10 + Elunium ×10 |
+| **15,000 DPS** | 4.5M | 75 Shards + Pet Roll Ticket ×1 + Zeny Cache (250,000) |
+| **40,000 DPS** | 12.0M | 100 Shards + title **Echo Adept** + Card Index Token ×1 |
+| **80,000 DPS** | 24.0M | 150 Shards + Legendary Card Voucher ×1 |
+| **120,000 DPS** | 36.0M | 200 Shards + title **Echo Breaker** |
+| **Beat your own personal best by 10%** | — | 20 Shards (repeatable — the "keep improving" drip) |
+| **Top 10 on a weekly board** | — | 150 Shards + a season badge |
+| **A full 5:00 with zero damage taken** (the dummy never swings, so this is really "no potions used") | — | title **Untouched** — cosmetic flex, no currency |
+
+Where the rungs sit, using Part 0's estimate: 5,000 DPS is "you can farm Comodo", 15,000 is "Abyss
+stage 10 is comfortable", 40,000 is "you are wearing Nightmare gear", 80,000 is a decked 150 in
+Abyssal gear, and 120,000 is the chase rung that needs a near-perfect build, a maxed pet and a
+favourable 5 minutes.
 
 Why this shape:
 
@@ -205,19 +265,21 @@ Why this shape:
   without gating either behind the other.
 * Titles carry **no stats** — they are the prestige, the Shards are the shopping, and the two
   expensive exchange items keep the shopping from breaking the drop economy.
-* Thresholds are easy to move: they are eight numbers in one array, and one test asserts the ladder
-  stays strictly increasing.
+* Thresholds are easy to move: they are a short array, and one test asserts the ladder stays strictly
+  increasing.
 
-**Open for you:** whether 25M (my top rung) is a 5-minute ceiling or a stretch, and whether the
-season board should be **best score** (my recommendation — it is what personal-best bonus rewards) or
-**total damage across the week**.
+**Decided (Part 0):** the board keeps the **best DPS of a single 5-minute session** and never sums runs
+across sessions, so the chest rungs are DPS. **Still open:** the exact five numbers — send me your
+first run's score (or just tell me when v77 is in your hands) and I will set them from the measurement
+instead of the estimate.
 
 ---
 
 ## Suggested next step
 
-If this reads right: I build the trial as **v77** — entry card on the Abyss map card, the 5-minute
-run in the existing field engine with a dummy that has no AI, a new `score` board in the same worker
+If this reads right: I build the trial as **v77** — entry card on the Abyss map card, the 5-minute run
+in the existing field engine with a dummy that has no AI, a **best-run-DPS board** in the same worker
 as the kills board (`period=weekly|all`, MAX instead of delta, LIMIT 50), Shards in the Index, the
-exchange table in Part 3, and the milestone ladder in Part 4. Nothing in it touches the Nightmare
-band you are about to play-test.
+exchange table in Part 3, and the DPS milestone ladder in Part 4. v77 also ships a `trial_sim` that
+computes expected DPS from the live formulas, so the ladder can be checked before a browser is
+involved. Nothing in it touches the Nightmare band you are about to play-test.

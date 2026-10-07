@@ -4147,3 +4147,29 @@ assigned for feel rather than fidelity. While reworking that, two shipped bugs s
   `Updates/cards-gear-audit/affix-ranges.html`, `tools/cloudflare-deploy-steps.md`, `READ-ME-FIRST.md`.
 * **Tests:** all **35** suites pass. `node --check` clean.
 * **Not pushed** and no PR - the owner plays the build first.
+
+### 2026-10-07 — tooling: the preview server can hand out GM tools (no BUILD bump)
+
+* **Owner report.** "after migrating into new online server i lost my gm account ... any live preview
+  made by u made me to register account again which doesnt have GM tools". Both halves are real: the
+  live owner account is just `users.gm=2` on the first row of that database, and a preview is a
+  throwaway process whose in-memory database is wiped on restart, so the account the owner registered
+  on the last preview is gone and the next one is not the first one.
+* **Nothing about the game changed**, so `BUILD` stays `grind-v76 ...` and the player-visible build is
+  untouched. Three fixes, in order of usefulness:
+  1. `functions/api/register.js` honours `env.DEV_GM_ALL='all'`: every account registered against that
+     env is `gm=2`. `tools/dev_server.js` sets it **only** with its new `--gm-all` flag. Production
+     never sets it, and the comment says so in both files — the first-account rule is what protects the
+     owner on the real server.
+  2. `tools/dev_server.js --db <file>` (or `DEV_DB`) makes the preview database a file instead of
+     `:memory:`, so accounts and saves survive my restarts. `tools/.devdb/` is gitignored.
+  3. `tools/cloudflare-deploy-steps.md` gained **"If you lose the owner (GM) account"**: the in-game
+     `GM` + GM-password login (checked before the cloud branch, so it works with the API on), the local
+     `localStorage.pg_gm_local` reset, the `wrangler d1 execute ... UPDATE users SET gm=2` promote (plus
+     the `SELECT` to find the right username) and the dashboard path, and the preview switches.
+* **Tests.** `dev_server_sim` gained a case that boots a second server with `gmAll:true` and asserts the
+  SECOND account is an owner and can reach `/api/gm/players`; the default (first account only) is still
+  pinned by the existing case. `api_sim` (28), `registration_sim`, `gm_auth_sim`, `gm_console_sim`,
+  `cloud_sim`, `save_load_sim`, `migration_sim` all still pass unchanged.
+* **Files:** `functions/api/register.js`, `tools/dev_server.js`, `tools/tests/dev_server_sim.js`,
+  `tools/cloudflare-deploy-steps.md`, `.gitignore`.

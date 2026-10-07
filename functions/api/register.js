@@ -30,6 +30,12 @@ export const onRequestPost = guard(async ({ request, env }) => {
   if (await db.userByName(D, username)) return fail('That username is already taken.', 409);
 
   const first = (await db.countUsers(D)) === 0;
+  // tools/dev_server.js can pass DEV_GM_ALL='all' when it runs a throwaway preview copy of this
+  // server (in-memory database, wiped on restart, reachable only from the sandbox URL). On a preview
+  // every account the owner registers must carry the GM tools, because the account they made last
+  // time is gone with the process. PRODUCTION MUST NEVER SET THIS: the first-account rule above is
+  // what keeps the owner account safe on the real server.
+  const devAll = String(env.DEV_GM_ALL || '') === 'all';
   // A caller may supply their own recovery code (so they can write it down first); otherwise we make
   // one and return it exactly once. Only its hash is stored.
   const code = recovery ? String(recovery).toUpperCase().trim() : recoveryCode();
@@ -39,7 +45,7 @@ export const onRequestPost = guard(async ({ request, env }) => {
     username,
     passHash: await hashPassword(password),
     recoveryHash: await hashRecovery(code),
-    gm: first ? 2 : 0,
+    gm: (first || devAll) ? 2 : 0,
   });
   const user = await db.userByName(D, username);
 
@@ -47,7 +53,7 @@ export const onRequestPost = guard(async ({ request, env }) => {
   await db.insertSession(D, await tokenHash(token), user.id, Date.now() + SESSION_DAYS * 86400000,
     userAgent(request), ip);
   await db.noteLogin(D, user.id);
-  await db.logEvent(D, username, user.id, 'register', first ? 'first account — owner' : '');
+  await db.logEvent(D, username, user.id, 'register', first ? 'first account — owner' : devAll ? 'preview account — GM (dev server)' : '');
 
   return json({ u: user.username, gm: user.gm, recovery: code, first },
     201, { 'Set-Cookie': sessionCookie(token) });
