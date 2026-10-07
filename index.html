@@ -598,7 +598,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // script block, which is a SyntaxError - the game did not run on main at all. One line wins, and
 // it names both sides of this merge: the v38 balance patch (the weapon cut, the affix/card
 // give-back) and main's weapon-hold rendering work.
-const BUILD='2026-10-08 grind-v77 Endless Echo, doubled Nightmare band, N auto-sell';   // shown on the login card - confirms which file you loaded
+const BUILD='2026-10-08 grind-v77.1 trial tuning, softer Nightmare sting, bigger band pay';   // shown on the login card - confirms which file you loaded
 $('buildTag').textContent='build '+BUILD;
 
 // ---------- class tree: Novice -> 6 first jobs -> 6 second jobs -> 6 third jobs ----------
@@ -1157,15 +1157,17 @@ const nmMax=()=>10+nmOpen();
 // formulas - every other number follows fieldPower.
 //
 // History: v76 shipped 12x, the owner played it and called it easy ("maybe double?"), v76.2 took it
-// to 24x, and this build takes the wall to 48x with the sting at 3x - his words: "hard nightmare mobs
-// & bosses i mean double the hp. atk can be increase too. ill test it and see if this make sense".
-// What that costs, stated plainly, because it is the number to look at while play-testing: a Nightmare
-// Abyss 15 mob is now 5.57M HP against a normal Stage 10 mob's 56k (~99x), it hits for ~2,035 through
-// a 75% DEF cut (5.2x a normal stage 10 mob), and its boss is 66.3M HP. Every payout (EXP x2.5,
-// Zeny x2.2, the three drop tables) is unchanged, so the band is now a real wall rather than a
-// slightly tougher farm. If the playtest says it crossed the line, NMHP/NMBOSSHP back down to 24 is
-// the whole change - the two constants are read in one place and pinned by nightmare_sim.js.
-const NMHP=48,NMATK=3,NMEXP=2.5,NMZENY=2.2,NMBOSSHP=48;
+// to 24x, v77 took the wall to 48x with the sting at 3x - and then the sting itself was called too
+// much: "i think we buffed the nightmare maps too much. tune it down on the damage. also adjust the
+// zeny & exp rate, make sure is relevant." So the wall stays at 48x, the sting comes down to 2x (still
+// a third above the 1.5x v76 shipped, below the 2.25x v76.2 shipped), and the band finally pays for the
+// time it takes: EXP 2.5 -> 4 and Zeny 2.2 -> 4.
+// The numbers to look at while play-testing: a Nightmare Abyss 15 mob is 5.57M HP against a normal
+// Stage 10 mob's 56k (~99x) and its hit lands for ~1,357 through a 75% DEF cut - 3.5x a stage 10 mob,
+// where v77 was 5.2x - and its boss is 66.3M HP. Per kill the band pays 9.3x a stage 10 mob's EXP and
+// 9.3x its Zeny (power 175 vs 99 is 2.3x on its own), so a kill that takes ~4x as long still pays well
+// over double per hour. The two HP constants are read in one place and pinned by nightmare_sim.js.
+const NMHP=48,NMATK=2,NMEXP=4,NMZENY=4,NMBOSSHP=48;
 // Each map's Nightmare gear is its own high-tier row, renamed: same weapon families and slots (so
 // every class can still use its own weapon) and a per-map word that keeps every name unique. Section
 // 4 is the stage 11-13 drop, section 5 the stage 14-15 and boss drop. They exist NOWHERE else - the
@@ -1175,7 +1177,11 @@ const NMHP=48,NMATK=3,NMEXP=2.5,NMZENY=2.2,NMBOSSHP=48;
 // unlimited practice, ranked attempts capped at 2 a day, and a popup on entry asking for
 // ranked (with the tries left) / training / the Shard Store. The character and the dummy
 // stand still for the whole run - this is a measurement, not a fight.
-const TRIAL_SECS=300,TRIAL_RANKED_PER_DAY=2,TRIAL_BEST_BONUS=10;
+const TRIAL_SECS=300,TRIAL_RANKED_PER_DAY=2,TRIAL_BEST_BONUS=15;
+// v77.1 (owner): "if leave within 10sec after enter doesnt minus the try count. after it counted as
+// -1" - leaving a ranked run inside this grace window gives the try back; after it, the try is spent
+// whether the five minutes finished or not (and nothing is paid for a run that did not finish).
+const TRIAL_GRACE=10;
 // The ranked day rolls over on the same clock the boards use (Asia/Singapore), so "2 a day"
 // means the same thing everywhere.
 const trialDay=()=>new Date(Date.now()+8*3600000).toISOString().slice(0,10);
@@ -1183,19 +1189,54 @@ const trialLeftToday=()=>{const t=S&&S.trial;return t&&t.day===trialDay()?Math.m
 const trialClock=()=>{const s=Math.max(0,Math.ceil(TRIAL.left));return Math.floor(s/60)+':'+String(s%60).padStart(2,'0')};
 // One payout ladder, in DPS, so the screen, the board and the milestone chests all speak the
 // same unit (the owner: "the rank board should be showing the best dps within 1 session").
-const TRIAL_PAY=[[5000,20],[15000,35],[40000,50],[80000,75],[120000,100]];
+// v77.1 (owner): "increase the shards pay by dps to higher milestone. starting from 5k is too easy"
+// - and the yardstick he gave for a Base Lv 150 build: ~1.5M DPS alone, ~4.5M with three pets. The
+// ladder is anchored on those two marks, so the rungs that matter are the ones a real endgame build
+// actually reaches, and the floor sits where a band newcomer lands rather than at a number any
+// level 100 field clear beats.
+const TRIAL_PAY=[[100000,5],[250000,12],[500000,20],[750000,28],[1000000,36],[1500000,50],[2250000,68],[3000000,85],[4500000,115]];
 const trialShardsFor=dps=>{let v=0;for(const[at,pay]of TRIAL_PAY)if(dps>=at)v=pay;return v};
+const trialPayNext=()=>{const st=trialState();return TRIAL_PAY.find(([at])=>at>st.best)||null};
+const trialShortDps=n=>n>=1e6?(Math.round(n/1e4)/100)+'M':(n>=1e3?Math.round(n/1e3)+'k':String(Math.round(n)));
+const trialLadderText=()=>'Shard ladder by DPS: '+TRIAL_PAY.map(([at,pay])=>trialShortDps(at)+' -> '+pay).join(' \u00b7 ')+' \u00b7 +'+TRIAL_BEST_BONUS+' on a new best.';
+// One-off chests (owner: "the store price & chests should be readjust for endless"), claimed in order
+// the first time a ranked run reaches the mark, so one huge run can open several at once. The two
+// named rungs are his own yardsticks: 1.5M is a fully decked Lv 150 character on its own, 4.5M is that
+// same character with three pets out.
+const TRIAL_CHESTS=[
+  [250000, {z:50000,  ori:5,  elu:5}],
+  [500000, {z:100000, ori:10, elu:10}],
+  [1000000,{shards:100}],
+  [1500000,{z:250000, ori:20, elu:20, shards:150}],   // the no-pet decked mark
+  [2250000,{shards:250}],
+  [3000000,{ori:40, elu:40}],
+  [4500000,{shards:500, ori:30, elu:30}],             // the three-pet mark
+];
+const trialChestText=c=>[c.shards?c.shards+' Shards':'',c.z?c.z.toLocaleString()+'z':'',(c.ori||c.elu)?((c.ori||0)+' Ori + '+(c.elu||0)+' Elu'):''].filter(Boolean).join(' + ');
+const trialChestNext=()=>{const st=trialState();return TRIAL_CHESTS[st.chest|0]||null};
+function trialGrantChest(c){
+  if(c.shards)S.shards=(S.shards|0)+c.shards;
+  if(c.z)earnZeny(c.z);
+  if(c.ori)S.ore.ori=(S.ore.ori|0)+c.ori;
+  if(c.elu)S.ore.elu=(S.ore.elu|0)+c.elu}
+// Prices follow the new ladder (owner: "daily join 2 times should be enough to purchase around 30 ori
+// or elu, card token mastery should be harder to get even harder for legendary then nightmare. for the
+// nightmare gear token should be very difficult and lock only to be purchase above 120level").
+// Worked against a fully petted Lv 150 run at ~4.5M DPS (~115 Shards, so ~230-260 in two ranked
+// days): 30 Ori is ~6 bundles, and the Card Mastery Token / Legendary Card / Nightmare token are
+// one, two and four days of the whole daily allowance. Ore is the steady buy; the rest is a save-up.
 const TRIAL_STORE=[
-  {id:'ori',   c:10,  n:'Oridecon x5',              d:'Refine weapons (+1 to +10).'},
-  {id:'elu',   c:10,  n:'Elunium x5',               d:'Refine armour, shield, headgear, legs and accessories.'},
-  {id:'zeny',  c:25,  n:'Zeny Cache (250,000z)',    d:'Straight into the purse.'},
-  {id:'token', c:40,  n:'Card Mastery Token',       d:'One permanent-stat roll in the Index, no duplicate card needed.'},
-  {id:'lcard', c:60,  n:'Legendary Card Voucher',   d:'A random Legendary card from the trial chest.'},
-  {id:'nmgear',c:120, n:'Nightmare Gear Token',     d:'Pick a map and take one Nightmare item from its row.'},
+  {id:'ori',   c:38,  n:'Oridecon x5',              d:'Refine weapons (+1 to +10). Two good ranked days buy about thirty.'},
+  {id:'elu',   c:38,  n:'Elunium x5',               d:'Refine armour, shield, headgear, legs and accessories.'},
+  {id:'zeny',  c:25,  n:'Zeny Cache (500,000z)',    d:'Straight into the purse - refine bills at Base Lv 150 are not small.'},
+  {id:'token', c:250, n:'Card Mastery Token',       d:'One permanent-stat roll in the Index, no duplicate card needed.'},
+  {id:'lcard', c:450, n:'Legendary Card Voucher',   d:'A random Legendary card from the trial chest.'},
+  {id:'nmgear',c:900, n:'Nightmare Gear Token',     d:'Pick a map and take one Nightmare item from its row.',lv:120},
 ];
 const trialState=()=>{
-  if(!S.trial||typeof S.trial!=='object')S.trial={day:trialDay(),used:0,best:0,runs:0};
+  if(!S.trial||typeof S.trial!=='object')S.trial={day:trialDay(),used:0,best:0,runs:0,chest:0};
   if(S.trial.day!==trialDay()){S.trial.day=trialDay();S.trial.used=0}
+  const ch=Math.floor(+S.trial.chest);S.trial.chest=Number.isFinite(ch)?Math.max(0,Math.min(TRIAL_CHESTS.length,ch)):0;
   S.shards=Math.max(0,Math.floor(+S.shards||0));
   return S.trial};
 const TRIAL={on:false,mode:'training',left:TRIAL_SECS,dmg:0,dmg0:0,dummy:null,shop:false};
@@ -1214,26 +1255,32 @@ function trialLobby(view){
       <div class="trial-foot"><button data-trial="store">Back</button></div>`;
     el.classList.add('on');return el}
   if(view==='result'){body.innerHTML=trialResultHtml();el.classList.add('on');return el}
+  const next=trialChestNext(),nx=trialPayNext();
   body.innerHTML=`
-    <p>The target never dies and never fights back: <b>5:00</b> of uninterrupted damage, then the number.</p>
+    <p>The target never dies and never fights back: <b>5:00</b> of uninterrupted damage, then the number.
+      A ranked try is only spent if you stay longer than <b>${TRIAL_GRACE} seconds</b>.</p>
     <div class="trial-stats">
       <span>Ranked today <b>${left}/2</b></span><span>Personal best <b>${Math.round(st.best||0).toLocaleString()} DPS</b></span>
-      <span>Shards <b>${S.shards|0}</b></span><span>Runs <b>${st.runs|0}</b></span></div>
+      <span>Shards <b>${S.shards|0}</b></span><span>Runs <b>${st.runs|0}</b></span>
+      <span>Chests <b>${st.chest|0}/${TRIAL_CHESTS.length}</b></span></div>
+    <p><small>${next?`<b>Next chest at ${next[0].toLocaleString()} DPS</b> - ${trialChestText(next[1])}. Chests are one-off and paid the first time a ranked run reaches the mark.`:'Every chest is claimed - the trial owes you nothing more.'}</small></p>
     <div class="trial-row">
       <button class="trial-act" data-trial="ranked" ${left?'':'disabled'}>
         <b>Ranked run ${left?`(${left} left today)`:'(used up)'}</b>
-        <small>Counts for the board and pays Trial Shards: ${TRIAL_PAY.map(([d,p])=>d.toLocaleString()+' -> '+p).join(' · ')}${trialState().best?' · +'+TRIAL_BEST_BONUS+' on a new best':''}</small></button>
+        <small>Ranks the run and pays Trial Shards by DPS${nx?` - next rung ${nx[0].toLocaleString()} DPS = ${nx[1]}`:' - top rung already reached'}; a full run today is worth ${trialShardsFor(st.best)}.</small></button>
       <button class="trial-act" data-trial="training">
         <b>Training (unlimited)</b><small>Same five minutes, nothing saved, nothing spent.</small></button>
       <button class="trial-act" data-trial="store">
         <b>Shard Store</b><small>Spend Shards on ore, Zeny, cards and Nightmare gear.</small></button>
     </div>
+    <p><small>${trialLadderText()}</small></p>
     <div class="trial-foot"><button data-trial="close">Close</button></div>`;
   el.classList.add('on');
   return el}
 function trialShopHtml(){
-  const rows=TRIAL_STORE.map(s=>`<div class="shopline"><span><b>${s.n}</b><small>${s.d}</small></span>
-    <button data-buy="${s.id}" ${S.shards>=s.c?'':'disabled'}>${s.c} shards</button></div>`).join('');
+  const rows=TRIAL_STORE.map(s=>{const lock=s.lv&&safeCount(S.lv)<s.lv;
+    return `<div class="shopline"><span><b>${s.n}</b><small>${s.d}${s.lv?` <b>Base Lv ${s.lv}+ only.</b>`:''}</small></span>
+    <button data-buy="${s.id}" ${(!lock&&S.shards>=s.c)?'':'disabled'}>${lock?`Lv ${s.lv}`:(s.c+' shards')}</button></div>`}).join('');
   return `<div class="trial-hd">&#127963; <b>Shard Store</b> <small>${S.shards|0} shards</small></div>
     <p><small>Shards come from ranked runs only - practice pays nothing. Leftovers carry over.</small></p>
     <div class="trial-shop">${rows}</div>
@@ -1247,7 +1294,9 @@ function trialResultHtml(){
       <span>DPS <b>${Math.round(r.dps).toLocaleString()}</b></span>
       <span>Personal best <b>${Math.round(st.best||0).toLocaleString()}</b></span>
       <span>Shards <b>${S.shards|0}</b></span></div>
-    <p>${r.mode==='ranked'
+    ${r.quit?`<p>You left after <b>${r.ran}s</b>: one of today's ranked tries is used and nothing is paid. Leave inside the first ${TRIAL_GRACE} seconds and the try is not spent.</p>`
+      :(r.chests&&r.chests.length?`<p><b>Chest${r.chests.length>1?'s':''} opened:</b> ${r.chests.map(([at,c])=>`<b>${at.toLocaleString()} DPS</b> - ${trialChestText(c)}`).join(' · ')}</p>`:'')}
+    <p>${r.quit?'':r.mode==='ranked'
       ? `Pays <b>${r.shards} Shards</b>${r.best?` (includes the +${TRIAL_BEST_BONUS} new-best bonus)`:''}. Ranked runs left today: <b>${trialLeftToday()}/2</b>.`
       : 'Practice run: nothing saved, nothing spent. Ranked pays Shards and sets your best.'}</p>
     <div class="trial-foot">
@@ -1302,27 +1351,45 @@ function trialEnter(mode){
 function trialFinish(){
   if(!TRIAL.on)return;
   const dmg=Math.max(0,(S.dmg||0)-TRIAL.dmg0),dps=dmg/TRIAL_SECS,st=trialState();
-  let shards=0,best=false;
+  let shards=0,best=false;const chests=[];
   if(TRIAL.mode==='ranked'){
     shards=trialShardsFor(dps);
     if(dps>st.best){best=true;shards+=TRIAL_BEST_BONUS;st.best=dps}
-    st.used=(st.used|0)+1;st.runs=(st.runs|0)+1;S.shards=(S.shards|0)+shards;
-    log(`Endless Echo: ${Math.round(dmg).toLocaleString()} damage, ${Math.round(dps).toLocaleString()} DPS${best?' - new personal best!':''} (+${shards} shards)`,'r3','trial');
+    st.used=(st.used|0)+1;st.runs=(st.runs|0)+1;
+    // one-off chests, lowest rung first, so a single big run opens everything it has passed
+    while((st.chest|0)<TRIAL_CHESTS.length&&dps>=TRIAL_CHESTS[st.chest|0][0]){
+      const row=TRIAL_CHESTS[st.chest|0];chests.push(row);st.chest=(st.chest|0)+1;trialGrantChest(row[1])}
+    S.shards=(S.shards|0)+shards;
+    log(`Endless Echo: ${Math.round(dmg).toLocaleString()} damage, ${Math.round(dps).toLocaleString()} DPS${best?' - new personal best!':''} (+${shards} shards${chests.length?`, ${chests.length} chest${chests.length>1?'s':''}`:''})`,'r3','trial');
+    chests.forEach(([at,c])=>log(`Trial chest at ${at.toLocaleString()} DPS: ${trialChestText(c)}.`,'r5','trial'));
   }else log(`Endless Echo practice: ${Math.round(dmg).toLocaleString()} damage, ${Math.round(dps).toLocaleString()} DPS (not saved).`,'r1','trial');
-  TRIAL.on=false;TRIAL.dummy=null;TRIAL.result={dmg,dps,shards,best,mode:TRIAL.mode};
+  TRIAL.on=false;TRIAL.dummy=null;TRIAL.result={dmg,dps,shards,best,mode:TRIAL.mode,chests};
   mobs=[];mob=null;spawn();
   hudTrial=false;trialLobby('result');ui();save()}
 function trialExit(){                                  // used by Close and by travel out of the arena
-  if(TRIAL.on){TRIAL.on=false;TRIAL.dummy=null;mobs=[];mob=null;spawn();hudTrial=false}
-  trialShow(trialEl(),false);ui();save()}               // the lobby closes even when no run is on
+  if(!TRIAL.on){trialShow(trialEl(),false);ui();save();return}   // the lobby closes even with no run on
+  const ranked=TRIAL.mode==='ranked',ran=TRIAL_SECS-Math.max(0,TRIAL.left);
+  TRIAL.on=false;TRIAL.dummy=null;mobs=[];mob=null;spawn();hudTrial=false;
+  // v77.1 (owner): "if leave within 10sec after enter doesnt minus the try count. after it counted as
+  // -1". The try is booked here rather than at the end, so walking out of a ranked run after the
+  // grace costs one of the day's two - and an abandoned run never pays or sets the board.
+  if(ranked&&ran>TRIAL_GRACE){
+    const st=trialState(),dmg=Math.max(0,(S.dmg||0)-TRIAL.dmg0);
+    st.used=(st.used|0)+1;st.runs=(st.runs|0)+1;
+    TRIAL.result={dmg,dps:dmg/TRIAL_SECS,shards:0,best:false,mode:'ranked',quit:true,ran:Math.round(ran),chests:[]};
+    log(`Ranked run abandoned after ${Math.round(ran)}s - one of today's tries is used and nothing is paid.`,'r0','trial');
+    trialLobby('result');                                // say so on screen, not only in the log
+  }else if(ranked)log(`Left inside the first ${TRIAL_GRACE} seconds - the ranked try is not spent.`,'r1','trial');
+  ui();save()}
 function trialShow(node,on){if(node)node.classList.toggle('on',!!on);return node}
 // ---------------------------------------------------------------- the store ----
 function trialBuy(id){
   const row=TRIAL_STORE.find(s=>s.id===id);if(!row)return;
+  if(row.lv&&safeCount(S.lv)<row.lv)return log(`The ${row.n} needs Base Lv ${row.lv} - come back when you are there.`,'r0','trial');
   if((S.shards|0)<row.c)return log('Not enough shards yet.','r0','trial');
   const st=trialState();
   if(id==='ori'||id==='elu'){S.ore[id]=(S.ore[id]|0)+5;log(`Shard Store: +5 ${ORE[id]}.`,'r3','trial')}
-  else if(id==='zeny'){earnZeny(250000);log('Shard Store: +250,000 Zeny.','r3','trial')}
+  else if(id==='zeny'){earnZeny(500000);log('Shard Store: +500,000 Zeny.','r3','trial')}
   else if(id==='token'){S.cardIndex.bonus=safeCount(S.cardIndex.bonus)+1;log('Shard Store: +1 Card Mastery Token (claim it in the Index).','r3','trial')}
   else if(id==='lcard'){
     const m=9,mp=MAPS[m],n=mp.mobs[(S.kills|0)%mp.mobs.length].n+' Card',stat=cardStat(3,(S.kills|0)%7+1);
@@ -2931,9 +2998,9 @@ const V={
         </div>`).join('<hr>')}</div>
       <div class="mob-card"><div class="hd">MVP &amp; pets</div>${(mapL===10||mapL===15)?`<small>MVP fights immediately with ${mapM<5?3:5} monsters. Defeat the MVP to reset the fight.</small>`:''}
         ${F.boss?`<div class="mobentry"><b class="r4">${F.boss.n}</b>
-          <div class="poollist">${F.boss.drops.map(([T,ch])=>`<span class="poolitem">${poolIc(T)} ${T.n}<b>${ch}%</b></span>`).join('')}</div>
-          <small>Every MVP drop is <b class="r4">Legendary</b> with random affixes. Each item rolls independently; an MVP can drop zero or several pieces.</small>
-          <div class="dropline"><span>🃏 ${F.boss.card.n} <small>(${SU(F.boss.card.stat)} +${cardVal(3,F.boss.card.stat)}, Legendary)</small></span><b>${F.boss.cardCh}%</b></div>
+          <div class="poollist">${F.boss.drops.map(([T,ch])=>`<span class="poolitem">${poolIc(T)} ${T.n} <small class="${rarCls(T)}">${rarOf(T).n}</small><b>${ch}%</b></span>`).join('')}</div>
+          <small>Every MVP drop is <b class="${F.sec>=4?'r5':'r4'}">${F.sec>=4?'N':'Legendary'}</b> with random affixes. Each item rolls independently; an MVP can drop zero or several pieces.</small>
+          <div class="dropline"><span>🃏 ${F.boss.card.n} <small>(${SU(F.boss.card.stat)} +${cardVal(F.boss.card.g,F.boss.card.stat)}, ${GRADE[F.boss.card.g]})</small></span><b>${F.boss.cardCh}%</b></div>
           <div class="dropline ore"><span>🔶 Oridecon &middot; 🔷 Elunium</span><b>${F.boss.oreCh*100}% each</b></div>
         </div>`:`<small>MVP appears at ${mapL>10?'NM 5 (stage 15)':'Stage 10'}.</small>`}
         <div class="sec">🐾 Pet drops</div><small>0.03% per kill, 0.5% from MVPs. Odds on ${mp.n}: ${PW[Math.min(mapM,9)].map((w,i)=>RN[i]+' '+w+'%').join(' &middot; ')}</small></div></div>`},
@@ -3388,7 +3455,9 @@ document.addEventListener('click',e=>{
     }
     else if(tb.dataset.buy)trialBuy(tb.dataset.buy);
     else if(tb.dataset.nmmap!==undefined){const mi=Math.max(0,Math.min(MAPS.length-1,+tb.dataset.nmmap||0));
-      if((S.shards|0)<TRIAL_STORE.find(x=>x.id==='nmgear').c){e.stopPropagation();e.preventDefault();return}
+      const nmrow=TRIAL_STORE.find(x=>x.id==='nmgear');
+      if(nmrow.lv&&safeCount(S.lv)<nmrow.lv){e.stopPropagation();e.preventDefault();return}
+      if((S.shards|0)<nmrow.c){e.stopPropagation();e.preventDefault();return}
       trialGrantNm(mi);S.shards=Math.max(0,(S.shards|0)-TRIAL_STORE.find(x=>x.id==='nmgear').c);save();log('Token spent - enjoy the piece.','r3','trial');trialLobby('store')}
     e.stopPropagation();e.preventDefault();return}
   // Another tab's click handler may already clear eqPick before this document listener runs.

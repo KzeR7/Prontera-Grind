@@ -80,6 +80,56 @@ is the live one; with no argument the tool prints how to set a new one). Since v
 `GM` / `test1234`; `localStorage.removeItem('pg_gm_local')` removes it. Normal accounts are made
 in-game and stored in the browser (`pg_acc4`; saves under `pg_save3_<user>`).
 
+## BUILD v77.1 — the trial's economy, the band's sting, and the ten-second grace
+
+Your six notes on the v77 trial, all built. **The trial and Nightmare figures below replace the v77
+ones** (the v77 section stays underneath as history).
+
+* **A ranked try has a grace window.** Leave a ranked run inside the first **10 seconds** and the try
+  is *not* spent — step out after that and it is used, and the run pays nothing and never touches your
+  best. The result screen says what happened and how long you lasted, so the rule is never a surprise.
+  Training is free whenever you leave it.
+* **The Shard ladder starts where you actually fight.** Your own yardstick sets it — ~1.5M DPS alone at
+  Lv 150, ~4.5M with three pets out: **100k→5 · 250k→12 · 500k→20 · 750k→28 · 1M→36 · 1.5M→50 ·
+  2.25M→68 · 3M→85 · 4.5M→115**, and a new personal best is **+15**. **5k DPS pays nothing any more**;
+  the old ladder's top rung (120k) is now the second one.
+* **The store is priced against two ranked days.** Oridecon x5 and Elunium x5 are **38** Shards each
+  (so two good ranked days buy about thirty of either), the Zeny cache is **500,000z for 25**, the
+  **Card Mastery Token is 250**, the **Legendary Card Voucher 450**, and the **Nightmare Gear Token is
+  900 — and it needs Base Lv 120**. The token is refused, greyed out and labelled below that level, and
+  it is about four days of the whole ranked allowance.
+* **Seven one-off chests.** Every rung below is paid once, the first time a *ranked* run reaches it
+  (one huge run opens everything it passed, practice opens nothing):
+
+  | DPS | Chest |
+  |---|---|
+  | 250,000 | 50,000z + 5 Ori + 5 Elu |
+  | 500,000 | 100,000z + 10 Ori + 10 Elu |
+  | 1,000,000 | 100 Shards |
+  | **1,500,000** (decked, no pets) | 250,000z + 20 Ori + 20 Elu + 150 Shards |
+  | 2,250,000 | 250 Shards |
+  | 3,000,000 | 40 Ori + 40 Elu |
+  | **4,500,000** (three pets out) | 500 Shards + 30 Ori + 30 Elu |
+
+  The lobby names the next chest you have not reached; the result screen lists the ones a run opened.
+* **The Nightmare sting came down and the band's pay went up.** The wall stays at the 48x HP you asked
+  for, the damage comes back from 3x to **2x**, and EXP and Zeny go from 2.5x/2.2x to **4x/4x** — the
+  band now pays **~9x a Stage 10 mob per kill** (power 175 against 99 is 2.3x of that on its own), so a
+  kill that takes a few times longer still pays well over double per hour. Worked example, printed by
+  the test: a Nightmare Abyss 15 mob's hit lands for **1,357** through a 75% DEF cut (3.5x a Stage 10
+  mob, where v77 was 5.2x); its HP and the 66.3M-HP boss are unchanged.
+* **The Nightmare MVP card now states its own rarity.** The MVP pool listed its Nightmare pieces with
+  no rarity mark and the card called every MVP drop "Legendary" — on a Nightmare field that is wrong
+  twice over. Each pool entry now carries its rarity (**N**), the sentence reads **N** on stages 11-15,
+  and the card line reads its own grade instead of the hardcoded one.
+* **Your data, double-checked.** All **ten maps** carry a full set of data — monsters, a boss, six gear
+  sections, its own kit recipe and design, a pet-odds row, both Nightmare name lists and a map
+  recommendation — and the two HD kit mirrors in `Updates/map-sprites-v2/` are byte-identical to the
+  live `assets/kit/` files (34 billboards, 25 HD tiles, every name the recipes ask for). The review
+  sheet matches the live tables exactly (10 maps, 6 sections, 588 items). Nothing was stale — if the
+  new town map you added is a **new map entry**, tell me its name and I will wire its row, recipe and
+  drop tables in one pass; I could not find a map in the repo that the game does not know about.
+
 ## BUILD v77 — Endless Echo (the damage trial), the band doubled again, and five fixes
 
 The dungeon is **built**: `2026-10-08 grind-v77 Endless Echo, doubled Nightmare band, N auto-sell`.

@@ -4305,3 +4305,83 @@ assigned for feel rather than fidelity. While reworking that, two shipped bugs s
 * **Still the owner's call:** the dungeon's real name (Endless Echo is a placeholder), the Shard
   Store prices, and the one-off milestone-chest rungs - the ladder is expressed in DPS
   (5k/15k/40k/80k/120k) so a real run can set them.
+
+### 2026-10-08 — `2026-10-08 grind-v77.1 trial tuning, softer Nightmare sting, bigger band pay`
+
+The owner's second pass over v77, six notes, all built.
+
+* **A ranked try has a ten-second grace (owner: "if leave within 10sec after enter doesnt minus the try
+  count. after it counted as -1").** New `TRIAL_GRACE=10`. `trialExit()` now books the try itself:
+  leaving a ranked run with `TRIAL_SECS-TRIAL.left <= TRIAL_GRACE` closes the arena with the try
+  intact (and says so in the log); past that it does `st.used++`, `st.runs++`, builds
+  `TRIAL.result={…,quit:true,ran:<seconds>}`, logs the cost and shows the result screen - **nothing is
+  paid and `st.best` is never touched by a run that did not finish**. Training still costs nothing
+  whenever it is left. `trialFinish()` keeps booking the try for finished runs, so the two paths cannot
+  double-count.
+* **The Shard ladder starts where the endgame fights (owner: "increase the shards pay by dps to higher
+  milestone. starting from 5k is too easy" + his own numbers: "a fully decked lv150 character dps is
+  around 1.5m. without pets, with 3 pets basically x3 the damage").**
+  `TRIAL_PAY=[[100000,5],[250000,12],[500000,20],[750000,28],[1000000,36],[1500000,50],[2250000,68],[3000000,85],[4500000,115]]`
+  and `TRIAL_BEST_BONUS 10 -> 15`. 1.5M (decked, no pets) and 4.5M (three pets) are rungs on purpose;
+  5k DPS now pays nothing. The lobby prints the whole ladder under the buttons, names the **next rung**
+  on the ranked button and the shards a run at your current best is worth.
+* **The store is priced against two ranked days (owner: "daily join 2 times should be enough to purchase
+  around 30 ori or elu, card token mastery should be harder to get even harder for legendary then
+  nightmare … the nightmare gear token should be very difficult and lock only to be purchase above
+  120level").** `TRIAL_STORE` = Oridecon x5 **38**, Elunium x5 **38**, Zeny Cache 500,000z **25**, Card
+  Mastery Token **250**, Legendary Card Voucher **450**, Nightmare Gear Token **900 with a new `lv:120`
+  field**. Worked against a fully petted 4.5M run (~115 Shards, ~230-260 a day): 30 Ori is ~6 bundles,
+  the token is one day, the voucher two and the Nightmare token about four. The level lock is enforced
+  in `trialBuy()` **and** in the `data-nmmap` click path (so the map picker cannot be reached around
+  it), shown as `Base Lv 120+ only` on the row, and the button reads `Lv 120` while locked. The Zeny
+  cache moved 250k -> 500k to stay relevant at 150 refine bills.
+* **Seven one-off chests, the thing v77 left as an open draft.** `TRIAL_CHESTS`, paid in order the first
+  time a **ranked** run reaches the rung (a huge run opens everything it passed; practice opens
+  nothing): 250k -> 50,000z + 5 Ori + 5 Elu · 500k -> 100,000z + 10 Ori + 10 Elu · 1M -> 100 Shards ·
+  **1.5M -> 250,000z + 20 Ori + 20 Elu + 150 Shards** (the no-pet decked mark) · 2.25M -> 250 Shards ·
+  3M -> 40 Ori + 40 Elu · **4.5M -> 500 Shards + 30 Ori + 30 Elu** (the three-pet mark). State is
+  `S.trial.chest` (count claimed), repaired and clamped by `trialState()`; `trialGrantChest()` pays
+  shards through `S.shards`, Zeny through `earnZeny`, ore through `S.ore`. The lobby names the next
+  unclaimed chest, the result screen lists the ones a run opened, and each is logged.
+* **The Nightmare sting came down, the band's pay went up (owner: "i think we buffed the nightmare maps
+  too much. tune it down on the damage. also adjust the zeny & exp rate, make sure is relevant").**
+  `NMATK 3 -> 2`, `NMEXP 2.5 -> 4`, `NMZENY 2.2 -> 4`; `NMHP`/`NMBOSSHP` stay at **48**. The in-file
+  comment now carries the whole history (12x -> 24x -> 48x, sting 1.5x -> 2.25x -> 3x -> 2x) and the
+  settled reasoning: per kill the band pays ~9.3x a Stage 10 mob's EXP and Zeny (power 175 vs 99 is
+  2.3x of that on its own), so a kill that takes a few times longer still pays well over double per
+  hour. The worked example `nightmare_sim` prints: Nightmare Abyss 15 mob 5,565,216 HP (99x), hit
+  **1,357** through a 75% DEF cut (**3.5x** a Stage 10 mob, was 5.2x), stage-15 MVP 66.3M HP. The sim
+  now multiplies by the live `NMHP/NMATK/NMBOSSHP` instead of copied literals, so a retune cannot leave
+  the printed example lying.
+* **The Nightmare MVP card tells the truth about its own drops.** The pool entries carried no rarity
+  and the card called every MVP drop **Legendary** - on stages 11-15 those are section 4/5 **N** pieces.
+  Every `poolitem` now carries `rarCls/rarOf` (so `N`, purple), the sentence switches to
+  `<b class="r5">N</b>` when `F.sec>=4`, and the card line reads `GRADE[F.boss.card.g]` +
+  `cardVal(F.boss.card.g,…)` instead of the hardcoded Legendary pair.
+* **The data was double-checked (owner: "also double check my data again as i added a new town map
+  earlier").** Audit result, all clean: ten maps, each with mobs (10 on the first five, 6 on the
+  endgame five), a boss, six gear sections, its own kit recipe + design, a `PW` pet-odds row, both
+  Nightmare name lists, and a `REC`/`MAPVAL` entry; every prop and tile name the recipes ask for exists
+  in the atlas (34 billboards, 25 HD tiles); `Updates/map-sprites-v2/*.json` are byte-identical to the
+  live `assets/kit/*.json`; the review sheet matches the live tables (10 maps, 6 sections, 588 items);
+  all 36 suites green. **No map in the repo is unknown to the game** - if the new town is a new map
+  entry, its name is what is needed to wire it, and that is asked for in the reply.
+* **Tests:** `trial_sim` grew to **15 assertions** - the new ladder, the six chest rungs pinned, the
+  grace window (three seconds free, a minute costs a try, exactly ten seconds still free, 10.1 not,
+  practice always free, an abandoned run pays nothing and never sets the best, the result screen says
+  `left after`), the chest flow (four rungs open at 1.5M, a matching second run pays the ladder only,
+  practice opens nothing), and the store prices + the Base Lv 120 lock from both doors.
+  `nightmare_sim` pins `[48,2,4,4,48]` and reads the live knobs for its worked example; `ui_sim` gained
+  the NM MVP-pool rarity pins. **All 36 suites green**, `node --check` clean, the worksheet snapshot
+  and the affix chart re-stamped to BUILD.
+* **Files:** `index.html` (BUILD v77.1, `TRIAL_GRACE`/`TRIAL_PAY`/`TRIAL_CHESTS`/`TRIAL_STORE`,
+  `trialPayNext`/`trialShortDps`/`trialLadderText`/`trialChestText`/`trialChestNext`/`trialGrantChest`,
+  the lobby/shop/result screens, `trialState` repair, `trialExit`/`trialFinish`/`trialBuy`, the
+  `data-nmmap` guard, the NM constants + comment, the MVP pool markup),
+  `tools/tests/{trial_sim.js,nightmare_sim.js,ui_sim.js}`,
+  `Updates/{cards-gear-audit/affix-ranges.html,cards-gear-audit/equipment-cards-tuning.html,
+  endgame-and-dps-trial-plan.md}`, `tools/cloudflare-deploy-steps.md`, `READ-ME-FIRST.md`.
+* **Still the owner's call:** the dungeon's real name (Endless Echo is a placeholder), whether the
+  milestone chests should also pay on a *practice* run (they do not, by design), and the trial's
+  **global** board - the personal best is live, but a server-side DPS board needs a `dps` metric on
+  `functions/api/board.js` and a D1 migration (the existing board is kills-only).

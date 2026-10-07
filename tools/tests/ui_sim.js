@@ -179,8 +179,10 @@ t('the map panel renders every map and field', () => {
   assert.ok(nmBoss.includes('Nightmare Abyss Stage 5'), 'the Nightmare field is titled Nightmare <map> Stage <1-5>');
   // v77 (owner): "all boss to just have names, no (boss), no (MVP)" - the card is already headed
   // "MVP & pets", so the name inside it stands alone.
-  assert.ok(/<b class="r4">[A-Z][a-z]+<\/b>/.test(nmBoss) && !nmBoss.includes('(MVP)') && !nmBoss.includes('(BOSS)'),
+  assert.ok(/<b class="r4">Dark Lord<\/b>/.test(nmBoss) && !nmBoss.includes('(MVP)') && !nmBoss.includes('(BOSS)'),
     'the boss name stands alone on the Nightmare card (v77: no parenthetical at all)');
+  assert.ok(nmBoss.includes('<small class="r5">N</small>') && !nmBoss.includes('Every MVP drop is <b class="r4">Legendary</b>'),
+    'and the Nightmare MVP pool states the N rarity it actually drops, not Legendary');
   assert.ok(!nmBoss.includes('Crit resistance'), 'the crit-defence line is gone from the MVP card (owner: the map already says it)');
   assert.ok(nmBoss.includes('MVP fights immediately'), 'stage 15 is an MVP field like stage 10');
   U.mapL = 13;

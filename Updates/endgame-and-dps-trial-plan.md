@@ -11,10 +11,13 @@
 > plan recommended: `TRIAL_SECS=300`, unlimited practice, a dummy that never dies and never hits back,
 > **2 ranked runs a day** on the Asia/Singapore clock, a board metric of the **best single run**
 > (`S.trial.best`, never summed), and Shards from ranked runs only. What shipped instead of a draft:
-> the payout ladder `TRIAL_PAY=[[5000,20],[15000,35],[40000,50],[80000,75],[120000,100]]` (+10 for a
-> new best) and the `TRIAL_STORE` prices (Oridecon/Elunium x5 = 10, 250k Zeny = 25, Card Mastery
-> Token = 40, Legendary Card Voucher = 60, Nightmare Gear Token = 120). The name "Endless Echo" is
-> still a placeholder and the milestone chests are still only a ladder in DPS — both wait on the
+> the payout ladder and the `TRIAL_STORE` prices - **both replaced in v77.1** after the owner's second
+> pass: `TRIAL_PAY=[[100000,5],[250000,12],[500000,20],[750000,28],[1000000,36],[1500000,50],
+> [2250000,68],[3000000,85],[4500000,115]]` (+15 for a new best, anchored on his own marks of ~1.5M DPS
+> alone and ~4.5M with three pets), the store at Oridecon/Elunium x5 = 38, 500k Zeny = 25, Card Mastery
+> Token = 250, Legendary Card Voucher = 450, Nightmare Gear Token = **900 and Base Lv 120+**, seven
+> one-off chests from 250k to 4.5M DPS, and a ten-second grace on a ranked try. The name "Endless Echo" is
+> still a placeholder (the chests are built now: seven rungs, 250k to 4.5M DPS) — both wait on the
 > owner. See the v77 entry in `AGENTS.md` and the `## BUILD v77` section in `READ-ME-FIRST.md`.
 >
 > The draft below predates it: the trial dungeon was **not built** at the time of writing. The owner has since set the rules that supersede the
