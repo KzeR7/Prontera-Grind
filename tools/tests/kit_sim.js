@@ -704,6 +704,10 @@ t('Ultra-HD 256x256 tile atlas (ro-tiles-hd) and kit3DDetails build across all t
   }
   assert.ok(/function kit3DDetails\(plan,m,root\)/.test(code), 'kit3DDetails is wired into the map kit');
   assert.ok(/kit3DDetails\(plan,m,deco\)/.test(code), 'buildKit invokes kit3DDetails');
+  const bakCode = fs.readFileSync(R + '/Updates/map-textures-preview/map_kit_hd_option_b.js', 'utf8');
+  assert.strictEqual(bakCode, code, 'verbatim map kit code backup matches index.html');
+  assert.strictEqual(fs.readFileSync(R + '/Updates/map-sprites-v2/ro-tiles-hd.json', 'utf8'),
+    fs.readFileSync(R + '/assets/kit/ro-tiles-hd.json', 'utf8'), 'HD tiles manifest backup matches live');
 });
 
 console.log(`\n${pass} passed, ${fail} failed`);
