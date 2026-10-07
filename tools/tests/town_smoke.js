@@ -101,7 +101,7 @@ t('window.town() walks in: the scene is built, the field is hidden, no mobs', ()
 
 t('the town has a plaza, a three-tier fountain and buildings all around', () => {
   assert.ok(ev('TOWN.g.children.length') > 40, 'the town group has the plaza, fountain, houses and props');
-  assert.ok(ev('TOWN.plaza.geometry.parameters.radius') >= 12, 'the plaza is a wide disc');
+  assert.ok(ev('TOWN.plaza.geometry.parameters.radius') >= 11, 'the plaza is a wide disc');
   assert.strictEqual(ev('TOWN.plaza.geometry.parameters.segments') >= 32, true, 'the plaza is round');
   assert.strictEqual(ev('TOWN.spray.length'), 20, 'eight side jets and twelve droplets');
   const fountain = ev('TOWN.g.children.slice(0,60).filter(o=>o.isGroup&&o.position.z===-6).length');

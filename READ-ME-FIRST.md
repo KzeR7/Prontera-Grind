@@ -90,13 +90,20 @@ in-game and stored in the browser (`pg_acc4`; saves under `pg_save3_<user>`).
   one does for you**, instead of a stage picker that a map with no stages should not have. The field's monsters, kit deco,
   road and sky are hidden while you are there, and the town has **no spawner at all** — nothing
   spawns, nothing attacks, nothing drops. It is the one map where the hero stops grinding.
-* **The layout the owner asked for:** a cobbled plaza (radius 12.5) around the **painted HD
-  fountain** (standing 9.5 units over the square, with live water — droplets off the upper basin,
-  spray off the crown, sparkle on the pool), an **NPC terrace** behind it with stone pillars and
-  banners, the **gate arch** in from the south, **fifteen houses walling the square** east and west
-  with the avenue and the cathedral keeping the two ends open, four market stalls, four benches,
-  eight lamps, six banner poles, five flower beds on the plaza's axes, a **memorial statue** beside
-  the gate and a **cathedral** closing the skyline.
+* **The layout the owner asked for:** a cobbled plaza (radius 11.4) around the **painted HD
+  fountain** (6.4 units tall over the square, with live water — droplets off the upper basin, spray
+  off the crown, sparkle on the pool), an **NPC terrace** behind it with stone pillars and banners,
+  the **gate arch** in from the south, **fourteen houses walling the square** east and west with the
+  avenue and the cathedral keeping the two ends open, four market stalls, four benches, eight lamps,
+  six banner poles, five flower beds on the plaza's axes, a **memorial statue** beside the gate and a
+  **cathedral** closing the skyline.
+* **Every sprite is sized against the game's own art scale, not by eye.** A hero is **2.7 units**, the
+  field's own house is **7.6 x 6.4**, its big tree **10.9 x 9.7**, its stone lantern **1.7 x 3.2** — so
+  a town house is 7.2-8.8 tall (the guild hall 10.4, the cathedral 17.5, the gate arch 10.2), the
+  fountain centerpiece 6.4, a lamp 5.6, a tree 8.4, a bench 1.3. Widths always come from the art's own
+  aspect, so nothing is stretched, and the code-built stand-ins use the same table — what you see
+  before the pack loads is the size you get after it. The trees are lot trees outside the street line
+  (the gate side is left clear, because the default camera looks in from there).
 * **The town's own HD art pack (`assets/town/town-atlas.*`, built by `tools/make_town_pack.py`).**
   **Twenty RO3-style painted sprites** — nine buildings (town house, inn, shop, tall house, stone
   house, chapel, timber cottage, guild hall, cathedral), the fountain, the gate arch, two market

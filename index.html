@@ -4909,7 +4909,7 @@ function syncSkillFx(){
 // town does not throw away the credit for the time you were away.
 let town=0;                             // 1 = the player is standing in the town (the field world is hidden)
 const TOWN_Z=-6;                        // the plaza's centre - the fountain stands here
-const TOWN_R=12.5;                      // the cobbled plaza's radius
+const TOWN_R=11.4;                      // the cobbled plaza's radius (the houses ring it at 16.8)
 const TOWN_TALK=3;                      // how close you must stand to an NPC to talk
 const TOWN_BOUND={x0:-17.5,x1:17.5,z0:-16.6,z1:19};   // where the hero may walk
 const TOWN_NPC=[
@@ -4946,6 +4946,22 @@ function townAvoid(x,z){
 // tools/make_town_pack.py into one sheet, exactly like the map kit's own sheet - so the whole town
 // costs one download and one crop per building, and nothing here is drawn by hand in code.
 const TOWNP={ok:0,man:null,png:null,tex:new Map()};
+// How tall every painted sprite stands, in world units - measured against the game's own art scale,
+// never guessed: the hero is 2.7 units (PACK: 90 px of art at PACK_K), the kit's house in the field
+// is 7.6 x 6.4 (crop 280x234 x KIT_PK x .75), its big tree 10.9 x 9.7, its stone lantern 1.7 x 3.2.
+// A town sprite is therefore about as tall as the thing the field already draws, and its width
+// always comes from the art's own aspect, so nothing is ever stretched.
+const TOWN_WH={house_town_a:7.6,house_inn:8.8,house_shop:8.2,house_tall:9.8,house_stone:7.2,
+  house_chapel:9.2,house_timber:7.4,guild_hall:10.4,cathedral:17.5,gate_arch:10.2,
+  fountain:6.4,statue_hero:5.4,tree_big:8.4,lamp_post:5.6,banner_pole:7.2,
+  bench:1.3,stall_red:3.2,stall_blue:3.2,flower_bed:1.3,flower_bed2:1.3};
+// The sizes the town's own code-built stand-ins ask for, so the fallback is the same size as the
+// painted sprite that replaces it and nothing jumps when the pack lands.
+const TOWN_BLK={house:.62,tree:10.0,lamp:5.4,banner:7.0,bench:1.3,bed:1.3,statue:5.4};
+// Which painted building stands in which ring slot, in order. The block fallback picks the same
+// design per slot, so what a player sees before the pack loads is what they get after it.
+const RING_DESIGNS=['house_town_a','house_inn','house_shop','house_tall','house_stone',
+  'house_chapel','house_timber','guild_hall'];
 function townPackFetch(){
   if(typeof fetch!=='function'||typeof Image!=='function')return;
   try{
@@ -5032,13 +5048,14 @@ function townBuild(){
   const ringPath=flat(-14.9,TOWN_Z,3.2,TOWN_R*1.6,C.path,0,.015),ringPath2=flat(14.9,TOWN_Z,3.2,TOWN_R*1.6,C.path,0,.015);
   // Tiles are laid at roughly one world unit each (the kit's own scale) so the paving reads as
   // paving and not as four giant slabs; `rep` is [across, along] where the mesh needs both.
-  TOWN.tiles=[{m:plaza,tile:'ruin_cobble',rep:[25,25]},{m:kerb,tile:'limestone_pale',rep:[27,27]},
+  TOWN.tiles=[{m:plaza,tile:'ruin_cobble',rep:[23,23]},{m:kerb,tile:'limestone_pale',rep:[25,25]},
     {m:av,tile:'dirt_path',rep:[7,14]},{m:grass,tile:'grass_jade',rep:[62,62]},
     {m:ringPath,tile:'limestone_pale',rep:[3,20]},{m:ringPath2,tile:'limestone_pale',rep:[3,20]}];
 
   // the BIG fountain: the painted HD fountain once the art pack is in, and the block-built
   // three-tier stone basin until then. Either way the water keeps moving (see townWaterFX).
   const f=new THREE.Group();f.position.set(0,0,TOWN_Z);G.add(f);TOWN.fountain=f;
+  f.scale.setScalar(.68);                      // the block tiers match the painted fountain's 6.4 units
   const fk=(g,c,y,seg)=>mk(f,g,c,0,y,0);
   fk(CY(4.3,4.7,.85,28),C.stone,.42);fk(CY(4.5,4.5,.14,28),C.stone2,.85);      // basin + rim
   fk(CY(3.95,3.95,.16,28),C.water,.8);
@@ -5083,17 +5100,24 @@ function townBuild(){
   // pack dresses those spots (see townArt); the block houses below are the stand-in that ships with
   // the game and the fallback if the pack never downloads.
   const ring=[];
-  // Fifteen houses wall the square: the south is left open for the gate and the avenue, the north
-  // for the cathedral, so the ring reads as a street line rather than a fence round the fountain.
-  for(let i=0;i<22;i++){
-    const a=i*Math.PI/11+.07;                  // a small twist so the gate is not dead centre south
-    if(Math.abs(Math.cos(a))<.49)continue;     // the gate corridor (-z south) and the cathedral (+z)
-    const r=16.5+((i*7)%3)*.85,units=5.0+((i*5)%4)*.75;
-    ring.push({i,a,r,units,flip:i%2===1,x:Math.cos(a)*r,z:TOWN_Z+Math.sin(a)*r});
+  // Fourteen houses wall the two long sides of the square - the gate and its avenue own the south,
+  // the cathedral owns the north - placed on arcs so their spacing is even (equal angles round a
+  // full circle crowd the sides and leave the ends bare). Each slot owns a slice of arc and the
+  // house it gets is as wide as that slice, which is what makes the fronts meet like a street.
+  for(const side of[1,-1]){
+    for(let k=0;k<7;k++){
+      const a=side*(-66+k*22)*Math.PI/180;
+      const r=16.7+((k*5+(side>0?0:1))%3)*.75;
+      ring.push({i:ring.length,a,r,units:0,flip:(side<0)!==(k%2===1),
+        x:Math.cos(a)*r,z:TOWN_Z+Math.sin(a)*r});
+    }
   }
   TOWN.ring=ring;
   for(const h of ring){                        // the block fallback, always built
-    const w=4.6+.6*(h.units-4.4),d=4.2+.5*(h.units-4.4),ht=h.units*.62;
+    const art=RING_DESIGNS[h.i%RING_DESIGNS.length];
+    const e=TOWNP.man&&TOWNP.man.sprites?TOWNP.man.sprites[art]:null;
+    const tw=(e?TOWN_WH[art]*(e.w/e.h):7.4)*.99;         // the painted house's own footprint
+    const w=tw,d=tw*.86,ht=tw*(e?(e.h/e.w):1.25)*TOWN_BLK.house;
     const g2=new THREE.Group();g2.position.set(h.x,0,h.z);g2.rotation.y=-h.a+Math.PI/2;TOWN.houseBlk.add(g2);
     mk(g2,BX(w,ht,d),C.wall,0,ht/2,0);
     const r2=mk(g2,new THREE.ConeGeometry(Math.max(w,d)*.78,ht*.62,4),h.flip?C.roof:C.roof2,0,ht+ht*.31,0);r2.rotation.y=Math.PI/4;
@@ -5118,24 +5142,24 @@ function townBuild(){
     const x=Math.cos(a)*7.6,z=TOWN_Z+Math.sin(a)*7.6;
     const g2=new THREE.Group();g2.position.set(x,0,z);g2.rotation.y=-a;G.add(g2);
     mk(g2,BX(2.2,.14,.6),C.wood,0,.6,0);for(const sx of[-.9,.9])mk(g2,BX(.14,.6,.5),C.stone2,sx,.3,0);
-    prop('bench',x,z,1.05,a>Math.PI, [g2]);
+    prop('bench',x,z,TOWN_WH.bench,a>Math.PI,[g2]);
   }
   for(let i=0;i<8;i++){                        // lamp posts round the plaza
-    const a=i*Math.PI/4+Math.PI/8,x=Math.cos(a)*11.6,z=TOWN_Z+Math.sin(a)*11.6;
-    const p1=mk(TOWN.propBlk,new THREE.CylinderGeometry(.09,.12,2.7,8),C.wood,x,1.35,z);
-    const p2=mk(TOWN.propBlk,SP(.22),0xffe08a,x,2.95,z);p2.castShadow=false;
-    prop('lamp_post',x,z,3.6,false,[p1,p2]);
+    const a=i*Math.PI/4+Math.PI/8,x=Math.cos(a)*10.7,z=TOWN_Z+Math.sin(a)*10.7;
+    const p1=mk(TOWN.propBlk,new THREE.CylinderGeometry(.13,.18,4.3,8),C.wood,x,2.15,z);
+    const p2=mk(TOWN.propBlk,SP(.34),0xffe08a,x,4.7,z);p2.castShadow=false;
+    prop('lamp_post',x,z,TOWN_WH.lamp_post,false,[p1,p2]);
   }
   for(const a of[0,Math.PI*.5,Math.PI,Math.PI*1.5]){   // flower beds on the plaza's axes
-    const x=Math.cos(a)*9.6,z=TOWN_Z+Math.sin(a)*9.6;
-    prop(a<1||a>5?'flower_bed':'flower_bed2',x,z,.95,false,[]);
+    const x=Math.cos(a)*8.9,z=TOWN_Z+Math.sin(a)*8.9;
+    prop(a<1||a>5?'flower_bed':'flower_bed2',x,z,TOWN_WH.flower_bed,false,[]);
   }
   for(let i=0;i<6;i++){                        // banner poles on the plaza's rim
-    const a=i*Math.PI/3+.4,x=Math.cos(a)*12.6,z=TOWN_Z+Math.sin(a)*12.6;
-    const pl=cy(x,0,z,.09,.11,3.4,C.wood,8);
-    const fl=mk(G,BX(1.1,1.5,.07),i%2?C.banner:C.banner2,x+Math.cos(a)*.6,3.6,z+Math.sin(a)*.6);
+    const a=i*Math.PI/3+.4,x=Math.cos(a)*11.9,z=TOWN_Z+Math.sin(a)*11.9;
+    const pl=cy(x,0,z,.12,.15,5.6,C.wood,8);
+    const fl=mk(G,BX(1.6,2.2,.08),i%2?C.banner:C.banner2,x+Math.cos(a)*.85,5.9,z+Math.sin(a)*.85);
     fl.rotation.y=-a;
-    prop('banner_pole',x,z,4.3,false,[pl,fl]);
+    prop('banner_pole',x,z,TOWN_WH.banner_pole,false,[pl,fl]);
   }
   // the south gate: two towers and a banner arch, with the road running through it. The gate group
   // is hidden when the painted arch is in (townArt), so the two never stand at once.
@@ -5159,18 +5183,21 @@ function townBuild(){
   }
   mk(cath,BX(.2,1.5,.2),C.gold,0,13.2,0);mk(cath,BX(1.1,.2,.2),C.gold,0,13.7,0);
   // trees and flowers on the grass between the buildings
-  for(let i=0;i<30;i++){
-    const a=i*Math.PI/15+.22,r=18.6+((i*13)%5)*1.3,x=Math.cos(a)*r,z=TOWN_Z+Math.sin(a)*r;
-    if(Math.abs(x)<6.2&&z>5)continue;                       // the avenue runs there
-    if(Math.hypot(x,z-TOWN_Z)<15.4)continue;                // nothing grows on the square
+  for(let i=0;i<20;i++){
+    // Outside the houses, where a town keeps its trees: the ring is the street line, so the green
+    // starts behind it. They are lot trees - about three heroes tall - not the field's wild giants,
+    // and the southern arc is left clear because that is the side the camera and the gate are on.
+    const a=i*Math.PI/10+.22,r=21.6+((i*13)%5)*1.6,x=Math.cos(a)*r,z=TOWN_Z+Math.sin(a)*r;
+    if(Math.sin(a)>.42)continue;                            // keep the gate side and the view clear
+    if(Math.abs(x)<7.5&&z>4)continue;                       // the avenue runs there
     const g2=new THREE.Group();g2.position.set(x,0,z);TOWN.propBlk.add(g2);
-    mk(g2,CY(.16,.24,1.5),C.wood,0,.75,0);const tr=mk(g2,SP(1.05),i%2?0x3f9b4a:0x4fae4f,0,2.35,0);
-    prop('tree_big',x,z,4.6+((i*7)%3)*.5,i%2===1,[g2]);
+    mk(g2,CY(.32,.46,3.2),C.wood,0,1.6,0);mk(g2,SP(2.5),i%2?0x3f9b4a:0x4fae4f,0,6.5,0);
+    prop('tree_big',x,z,TOWN_WH.tree_big+((i*7)%3)*.4,i%2===1,[g2]);
   }
   for(let i=0;i<26;i++){
     const a=i*Math.PI/13,r=15.4+((i*11)%4)*.9,x=Math.cos(a)*r,z=TOWN_Z+Math.sin(a)*r;
     const fl=mk(TOWN.propBlk,SP(.09),[0xff9db8,0xffe066,0xffffff][i%3],x,.1,z);fl.castShadow=false;
-    if(i%4===0)prop(i%8===0?'flower_bed':'flower_bed2',x,z,.9,false,[fl]);
+    if(i%4===0)prop(i%8===0?'flower_bed':'flower_bed2',x,z,TOWN_WH.flower_bed,false,[fl]);
   }
   // the walk marker: a gold ring the click target drops on the ground
   const rg=new THREE.Mesh(new THREE.RingGeometry(.42,.62,26),new THREE.MeshBasicMaterial({color:0xffd23f,transparent:true,opacity:.9,depthWrite:false}));
@@ -5256,26 +5283,25 @@ function townArt(){
       (parent||TOWN.g).add(G2);return G2;
     };
     // the ring of houses: eight painted designs, mirrored and sized so the ring never repeats
-    const designs=['house_town_a','house_inn','house_shop','house_tall','house_stone','house_chapel','house_timber','guild_hall'];
+    const designs=RING_DESIGNS;               // one list: a slot's fallback and its art agree
     if(TOWN.kitArt===1&&TOWN.houseKit.clear){TOWN.houseKit.clear();TOWN.kitArt=0}
     TOWN.houseKit.visible=true;
-    let slot=0;
-    const nh=()=>{let n=0;for(const h of TOWN.ring||[]){const d=designs[slot++%designs.length];
-      const e=TOWNP.man.sprites[d];if(!e)continue;
-      // A building is judged by how much square it fronts, not how tall its art happens to be: each
-      // spot asks for a target width and the height follows from the art's own aspect, so the ring
-      // reads as one street line instead of a scatter of wildly different cottages.
-      const sp=Math.PI*2*h.r/22;               // how much street this slot owns
-      const tw=sp*((d==='guild_hall'?1.12:.99)+((h.i*5)%3)*.035),uH=tw*(e.h/e.w);
-      if(put(d,h.x,h.z,uH,h.i%2===1,TOWN.houseKit))n++;}return n};
+    const nh=()=>{let n=0;for(const h of TOWN.ring||[]){
+      const d=designs[h.i%designs.length],e=TOWNP.man.sprites[d];if(!e)continue;
+      // The house is as tall as the size table says (a normal one is the field's own 7.6 x 6.4) and
+      // as wide as its art makes it at that height; where that would swallow a neighbour's frontage
+      // - only the guild hall and the chapel ever do - the width gives, never the aspect.
+      const tw0=TOWN_WH[d]*(e.w/e.h),slot=Math.PI*2*h.r/14;
+      const tw=Math.min(tw0,slot*1.12),uH=tw*(e.h/e.w);
+      if(put(d,h.x,h.z,uH,h.flip,TOWN.houseKit))n++;}return n};
     const n=nh();
     if(n){TOWN.houseBlk.visible=false}
     // the cathedral closes the north end of the town, behind the NPC terrace
     if(TOWNP.man.sprites.cathedral){if(TOWN.cath)TOWN.cath.visible=false;
-      put('cathedral',0,-29.5,13.5,false,TOWN.houseKit);}
+      put('cathedral',0,-31,TOWN_WH.cathedral,false,TOWN.houseKit);}
     // the fountain: the painted one replaces the block tiers, and the water keeps moving
     if(TOWNP.man.sprites.fountain){
-      const FUH=9.5;                     // how tall the painted fountain stands over the plaza
+      const FUH=TOWN_WH.fountain;        // the painted fountain's height - see the size table
       TOWN.fountain.visible=false;
       TOWN.fountainArt=put('fountain',0,TOWN_Z,FUH,false,TOWN.g);
       TOWN.fountainArt.position.set(0,.02,TOWN_Z);
@@ -5302,10 +5328,10 @@ function townArt(){
     }
     // the south gate: painted arch if it is painted, otherwise the block towers stay
     if(TOWNP.man.sprites.gate_arch){if(TOWN.gateBlk)TOWN.gateBlk.visible=false;
-      put('gate_arch',0,22.2,7.6,false,TOWN.g);}
+      put('gate_arch',0,22.4,TOWN_WH.gate_arch,false,TOWN.g);}
     // the memorial statue, left of the avenue just inside the gate
     if(TOWNP.man.sprites.statue_hero)
-      TOWN.statue=put('statue_hero',-6.6,9.6,3.4,false,TOWN.g);
+      TOWN.statue=put('statue_hero',-7.8,9.0,TOWN_WH.statue_hero,false,TOWN.g);
     // the market stalls beside the plaza
     if(TOWNP.man.sprites.stall_red)put('stall_red',-11.8,3.0,3.1,false,TOWN.g);
     if(TOWNP.man.sprites.stall_blue)put('stall_blue',11.8,3.0,3.1,true,TOWN.g);

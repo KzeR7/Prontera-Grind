@@ -4040,3 +4040,45 @@ assigned for feel rather than fidelity. While reworking that, two shipped bugs s
   `Updates/town-hd/work/*` (10 new), `assets/town/town-atlas.*`, `Updates/town-hd/board-1-town-layout.png`,
   `tools/_town_dump.js`, `tools/preview_town_board.py`, `tools/tests/town_smoke.js` (unchanged this
   pass — it already asserted the painted ring, and it passed), the three label files, the three docs.
+
+### 2026-10-07 — `grind-v69` scale pass: every town sprite sized against the game's own art, trees moved outside the street
+
+* **The complaint:** "the building size looks off. existing trees and every details look off.
+  readjust it." It was right, and the cause was measurable: the town was sizing sprites by numbers
+  invented per call site, while the game already has an art scale to measure against.
+* **The scale the game already uses, used as the reference.** A hero is **2.7 units** (the sprite
+  pack draws 90 px of art at `PACK_K` = .03), the field's own house is **7.6 x 6.4** (crop 280x234 x
+  `KIT_PK` x .75), its big tree **10.9 x 9.7**, its stone lantern **1.7 x 3.2**, its tower **3.9 x
+  14.8**. New `TOWN_WH` table (next to `TOWNP`) gives every painted sprite its world height, and
+  **width always comes from the art's own aspect**, so nothing stretches: a normal town house is
+  7.2-8.8 tall, a shop 8.2, the guild hall 10.4, the cathedral 17.5, the gate arch 10.2, the
+  fountain 6.4, the statue 5.4, a lamp 5.6, a banner pole 7.2, a bench 1.3, a flower bed 1.3, a tree
+  8.4. `TOWN_BLK` holds the sizes the code-built stand-ins ask for, so the fallback is the same size
+  as the painted sprite that replaces it and nothing jumps when the pack lands.
+* **What that fixed, concretely:** buildings were **4.7 x 5.5** and are now ~**7.2-8.8**; the fountain
+  was **9.5** tall (taller than a house — it read as a chimney) and is **6.4**; the trees were
+  **4.6** tall and are now **8.4** with trunks and canopies to match (the code-built stand-in went
+  from a 1.5-unit pole to a 3.2-unit trunk under a 2.5-radius canopy); the gate arch was **9.8 x
+  12.6** (more city than the cathedral) and is **8.1 x 10.2**; lamps are 5.6 not 3.6, banners 7.2 not
+  4.3.
+* **The square is sized to its houses now.** Plaza radius **12.5 -> 11.4**, houses ring it at
+  **16.7-18.2** (was 16.5-19.1) with a 1.2-unit walkway between the kerb and the fronts, so the houses
+  wall the square instead of standing out in the grass looking small. Lamps moved to r 10.7, banners
+  to 11.9, the plaza's flower beds to 8.9, the fountain to 6.4 tall / 6.0 wide, and the ground tiles
+  were re-tiled at about one unit per tile for the new radius (23/25/…).
+* **The trees are outside the street, and the camera side is clear.** Trees were being placed at
+  r 21.4 on **every** arc, which put a forest south of the plaza — between the default camera (which
+  sits on +z, behind the gate) and the town. They now keep only the arcs behind and beside the town
+  (`sin(a) <= .42`), outside the house line at r 21.6-26.4, 13 of them, and the giant double trunk is
+  gone (a lot tree, not the field's wild ancient). The avenue guard stays (`|x| < 7.5 and z > 4`).
+* **Also measured, not guessed:** the street-line sizing now reads the same table — a house is as tall
+  as `TOWN_WH` says and as wide as its art makes it, capped at 1.12 of its slot's frontage so the
+  guild hall and the chapel cannot swallow a neighbour; `RING_DESIGNS` moved up beside the table so
+  the block fallback and the painted pack pick the *same* design for a slot (they were two separate
+  lists); and the block fountain's `.68` scale matches the painted 6.4 units.
+* **Verification:** `town_smoke.js` **29/29** (one assertion tightened on purpose: the plaza radius
+  floor moved from 12 to 11, since the square is deliberately tighter); all `*_sim.js` green; all five
+  `--check` tools current. The board
+  (`Updates/town-hd/board-1-town-layout.png`, from `tools/_town_dump.js` +
+  `tools/preview_town_board.py`) is what the new proportions were judged on — the sprite-size table in
+  this entry is the same numbers the board draws with.
