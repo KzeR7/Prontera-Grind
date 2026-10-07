@@ -1,0 +1,1527 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Prontera Grind — Authentic RO Data.grf Map Texture Upgrade Catalog</title>
+<style>
+  :root {
+    --bg: #0f131a;
+    --panel: #161c26;
+    --card: #1d2533;
+    --border: #2d394f;
+    --gold: #f2d27a;
+    --green: #78dc9b;
+    --red: #e07a72;
+    --blue: #82d7ff;
+    --text: #e8eef7;
+    --muted: #9fb0c9;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 24px 28px 60px;
+    background: var(--bg); color: var(--text);
+    font: 13px/1.5 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  }
+  h1 { margin: 0 0 6px; font-size: 22px; color: var(--gold); letter-spacing: 0.3px; }
+  h2 { margin: 28px 0 10px; font-size: 16px; color: var(--gold); border-bottom: 1px solid var(--border); padding-bottom: 6px; }
+  p.sub { margin: 0 0 18px; color: var(--muted); font-size: 13.5px; }
+  .toolbar {
+    position: sticky; top: 0; z-index: 20;
+    background: rgba(15, 19, 26, 0.94); backdrop-filter: blur(8px);
+    border: 1px solid var(--border); border-radius: 10px;
+    padding: 12px 16px; margin-bottom: 20px;
+    display: flex; flex-wrap: wrap; gap: 14px; align-items: center; justify-content: space-between;
+  }
+  .btn-group { display: flex; gap: 8px; flex-wrap: wrap; }
+  button {
+    background: var(--card); color: var(--text); border: 1px solid var(--border);
+    padding: 7px 13px; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 12.5px;
+  }
+  button.active, button:hover { border-color: var(--gold); color: var(--gold); background: #252f42; }
+  .slot-card {
+    background: var(--panel); border: 1px solid var(--border); border-radius: 10px;
+    padding: 14px 16px; margin-bottom: 14px;
+  }
+  .slot-header {
+    display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 10px; flex-wrap: wrap; gap: 8px;
+  }
+  .slot-title { font-size: 15px; font-weight: 700; color: #fff; }
+  .slot-stages { font-size: 12px; color: var(--blue); background: rgba(130, 215, 255, 0.1); padding: 2px 9px; border-radius: 99px; }
+  .grid4 {
+    display: grid; grid-template-columns: repeat(4, minmax(230px, 1fr)); gap: 12px;
+  }
+  @media (max-width: 1100px) { .grid4 { grid-template-columns: repeat(2, 1fr); } }
+  .opt-box {
+    background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 10px;
+    display: flex; flex-direction: column; gap: 8px;
+  }
+  .opt-box.current { border-color: rgba(224, 122, 114, 0.5); }
+  .opt-box.candidate { border-color: rgba(120, 220, 155, 0.45); }
+  .swatch-row { display: flex; gap: 8px; align-items: center; }
+  .swatch {
+    width: 112px; height: 112px; border-radius: 5px; border: 1px solid #3a4863;
+    background-size: 100% 100%; background-repeat: no-repeat; flex-shrink: 0; position: relative;
+  }
+  .swatch.tiled {
+    background-size: 56px 56px; background-repeat: repeat;
+  }
+  .swatch.tiled3 {
+    background-size: 37.33px 37.33px; background-repeat: repeat;
+  }
+  .badge {
+    position: absolute; top: 4px; left: 4px; background: rgba(0,0,0,0.78);
+    color: #dfe8f7; font-size: 10px; padding: 1px 5px; border-radius: 3px; font-family: monospace;
+  }
+  .opt-title { font-weight: 700; font-size: 12.5px; }
+  .current .opt-title { color: var(--red); }
+  .candidate .opt-title { color: var(--green); }
+  .opt-kr { font-family: ui-monospace, SFMono-Regular, monospace; font-size: 11.5px; color: var(--gold); }
+  .opt-desc { font-size: 11.5px; color: var(--muted); }
+  .water-strip {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; margin-top: 12px;
+  }
+  .water-card {
+    background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 10px; text-align: center;
+  }
+  .water-card .swatch { margin: 0 auto 8px; width: 128px; height: 128px; }
+  .boards-grid { display: flex; flex-direction: column; gap: 20px; margin-top: 12px; }
+  .boards-grid img { max-width: 100%; border-radius: 8px; border: 1px solid var(--border); }
+</style>
+</head>
+<body>
+  <h1>Prontera Grind — Authentic Ragnarok Online (Data.grf) Map Texture Upgrade Catalog</h1>
+  <p class="sub">
+    Extracted directly from Gravity's official <code>Data.grf</code> (<code>data/texture/필드바닥/</code> 256×256 .BMP, <code>prontera_re/</code> 512×512 .BMP, <code>기타마을/</code>, and <code>워터/</code> 128×128 animated caustics) and cross-referenced against the exact cell usage counts in each region's official <code>.gnd</code> &amp; <code>.rsw</code> map files.
+  </p>
+
+  <div class="toolbar">
+    <div class="btn-group">
+      <button class="active" onclick="showTab('ro3', this)">★ RO3 Seamless Floors &amp; 4×4 De-Gridded Tiles</button>
+      <button onclick="showTab('interactive', this)">1. Raw 22-Slot Catalog (1x1 + Tiled)</button>
+      <button onclick="showTab('stageboard', this)">2. All 10 Stages Side-by-Side Field Composite</button>
+      <button onclick="showTab('water', this)">3. All 10 Official RO Animated Water Sets</button>
+      <button onclick="showTab('boards', this)">4. Full High-Res Summary Boards (PNG)</button>
+    </div>
+    <div class="btn-group">
+      <span style="color:var(--muted);align-self:center;font-size:12px;">Right Swatch Tiling:</span>
+      <button class="active" onclick="setTileScale('tiled', this)">2×2 Seamless Tile</button>
+      <button onclick="setTileScale('tiled3', this)">3×3 Seamless Tile</button>
+    </div>
+  </div>
+
+  
+  <div id="tab-ro3" style="display:block">
+    <h2>Ragnarok Online 3 (RO3) Reference Look — Why RO3 Floors Look Seamless &amp; Non-Boxy</h2>
+    <p class="sub">
+      In <strong>Ragnarok Online 3</strong>, the map floor avoids the repetitive, boxy grid look in two ways:
+      <strong>(1) De-gridded, low-contrast painterly base textures</strong> (no high-contrast blotches that repeat every tile), and
+      <strong>(2) Continuous Splatmap Terrain Blending</strong> (grass, shade turf, winding dirt roads, radial stone gate aprons, and wet shorelines feather smoothly into each other with soft overhead canopy shadows instead of stamping 90° square cells).
+    </p>
+    <div class="grid4" style="margin-bottom:22px">
+      <div class="opt-box candidate"><img src="ro3/ro3_ref_southgate.png" style="width:100%;border-radius:6px"><div class="opt-title">RO3 Prontera South Gate</div><div class="opt-desc">Velvety grass, feathered dirt clearing &amp; dappled tree shade</div></div>
+      <div class="opt-box candidate"><img src="ro3/ro3_ref_coastal.png" style="width:100%;border-radius:6px"><div class="opt-title">RO3 Coastal Field</div><div class="opt-desc">Smooth sandy earth blending organically into lush turf</div></div>
+      <div class="opt-box candidate"><img src="ro3/ro3_ref_beach.png" style="width:100%;border-radius:6px"><div class="opt-title">RO3 Poring Island Beach</div><div class="opt-desc">Seamless golden sand with palm shadows &amp; coastal grass</div></div>
+      <div class="opt-box candidate"><img src="ro3/ro3_ref_street.png" style="width:100%;border-radius:6px"><div class="opt-title">RO3 Prontera Cobble Street</div><div class="opt-desc">Warm low-contrast cobblestone with soft mortar joints</div></div>
+    </div>
+
+    <h2>All 10 Stages — Boxy Tile-Grid Floor vs. RO3 Seamless Splatmap Floor</h2>
+    <p class="sub">Because <code>Prontera-Grind</code> renders its ground onto a single <code>2048×2048</code> HTML5 canvas (<code>kitGroundTex</code> in <code>index.html</code>), we can replace the boxy 48×48 cell stamping directly with this continuous RO3 splatmap renderer.</p>
+
+    <div class="slot-card">
+      <div class="slot-header"><span class="slot-title">Stage 0: Prontera South Gate & Fields (prt_fild08 / prontera)</span></div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px">
+        <div class="opt-box current">
+          <img src="ro3/stage_0_boxy.png" style="width:100%;border-radius:6px;border:1px solid #633">
+          <div class="opt-title">BEFORE: Boxy Tile-Grid Floor</div>
+          <div class="opt-desc">Hard 90° square cells create stair-stepped roads &amp; repetitive grid seams</div>
+        </div>
+        <div class="opt-box candidate">
+          <img src="ro3/stage_0_flat.png" style="width:100%;border-radius:6px;border:1px solid #375">
+          <div class="opt-title">OPTION A: Seamless Splatmap Floor (Clean)</div>
+          <div class="opt-desc">Continuous noise-blended turf, feathered winding road, radial stone apron &amp; wet shore</div>
+        </div>
+        <div class="opt-box candidate" style="border-color:rgba(130,215,255,0.6)">
+          <img src="ro3/stage_0_ro3.png" style="width:100%;border-radius:6px;border:1px solid #479">
+          <div class="opt-title" style="color:var(--blue)">OPTION B: RO3 Seamless Floor + Canopy Light</div>
+          <div class="opt-desc">Adds RO3 dappled tree-canopy shade &amp; warm sunlit battle clearing glow</div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="slot-card">
+      <div class="slot-header"><span class="slot-title">Stage 1: Izlude Port & Golden Coast (izlude)</span></div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px">
+        <div class="opt-box current">
+          <img src="ro3/stage_1_boxy.png" style="width:100%;border-radius:6px;border:1px solid #633">
+          <div class="opt-title">BEFORE: Boxy Tile-Grid Floor</div>
+          <div class="opt-desc">Hard 90° square cells create stair-stepped roads &amp; repetitive grid seams</div>
+        </div>
+        <div class="opt-box candidate">
+          <img src="ro3/stage_1_flat.png" style="width:100%;border-radius:6px;border:1px solid #375">
+          <div class="opt-title">OPTION A: Seamless Splatmap Floor (Clean)</div>
+          <div class="opt-desc">Continuous noise-blended turf, feathered winding road, radial stone apron &amp; wet shore</div>
+        </div>
+        <div class="opt-box candidate" style="border-color:rgba(130,215,255,0.6)">
+          <img src="ro3/stage_1_ro3.png" style="width:100%;border-radius:6px;border:1px solid #479">
+          <div class="opt-title" style="color:var(--blue)">OPTION B: RO3 Seamless Floor + Canopy Light</div>
+          <div class="opt-desc">Adds RO3 dappled tree-canopy shade &amp; warm sunlit battle clearing glow</div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="slot-card">
+      <div class="slot-header"><span class="slot-title">Stage 2: Geffen Mystic Fields & Tower Plaza (gef_fild04 / geffen)</span></div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px">
+        <div class="opt-box current">
+          <img src="ro3/stage_2_boxy.png" style="width:100%;border-radius:6px;border:1px solid #633">
+          <div class="opt-title">BEFORE: Boxy Tile-Grid Floor</div>
+          <div class="opt-desc">Hard 90° square cells create stair-stepped roads &amp; repetitive grid seams</div>
+        </div>
+        <div class="opt-box candidate">
+          <img src="ro3/stage_2_flat.png" style="width:100%;border-radius:6px;border:1px solid #375">
+          <div class="opt-title">OPTION A: Seamless Splatmap Floor (Clean)</div>
+          <div class="opt-desc">Continuous noise-blended turf, feathered winding road, radial stone apron &amp; wet shore</div>
+        </div>
+        <div class="opt-box candidate" style="border-color:rgba(130,215,255,0.6)">
+          <img src="ro3/stage_2_ro3.png" style="width:100%;border-radius:6px;border:1px solid #479">
+          <div class="opt-title" style="color:var(--blue)">OPTION B: RO3 Seamless Floor + Canopy Light</div>
+          <div class="opt-desc">Adds RO3 dappled tree-canopy shade &amp; warm sunlit battle clearing glow</div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="slot-card">
+      <div class="slot-header"><span class="slot-title">Stage 3: Morocc Sograt Desert & Oasis (moc_fild04 / morocc)</span></div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px">
+        <div class="opt-box current">
+          <img src="ro3/stage_3_boxy.png" style="width:100%;border-radius:6px;border:1px solid #633">
+          <div class="opt-title">BEFORE: Boxy Tile-Grid Floor</div>
+          <div class="opt-desc">Hard 90° square cells create stair-stepped roads &amp; repetitive grid seams</div>
+        </div>
+        <div class="opt-box candidate">
+          <img src="ro3/stage_3_flat.png" style="width:100%;border-radius:6px;border:1px solid #375">
+          <div class="opt-title">OPTION A: Seamless Splatmap Floor (Clean)</div>
+          <div class="opt-desc">Continuous noise-blended turf, feathered winding road, radial stone apron &amp; wet shore</div>
+        </div>
+        <div class="opt-box candidate" style="border-color:rgba(130,215,255,0.6)">
+          <img src="ro3/stage_3_ro3.png" style="width:100%;border-radius:6px;border:1px solid #479">
+          <div class="opt-title" style="color:var(--blue)">OPTION B: RO3 Seamless Floor + Canopy Light</div>
+          <div class="opt-desc">Adds RO3 dappled tree-canopy shade &amp; warm sunlit battle clearing glow</div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="slot-card">
+      <div class="slot-header"><span class="slot-title">Stage 4: Payon Deep Pine Forest & Streams (pay_fild04 / payon)</span></div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px">
+        <div class="opt-box current">
+          <img src="ro3/stage_4_boxy.png" style="width:100%;border-radius:6px;border:1px solid #633">
+          <div class="opt-title">BEFORE: Boxy Tile-Grid Floor</div>
+          <div class="opt-desc">Hard 90° square cells create stair-stepped roads &amp; repetitive grid seams</div>
+        </div>
+        <div class="opt-box candidate">
+          <img src="ro3/stage_4_flat.png" style="width:100%;border-radius:6px;border:1px solid #375">
+          <div class="opt-title">OPTION A: Seamless Splatmap Floor (Clean)</div>
+          <div class="opt-desc">Continuous noise-blended turf, feathered winding road, radial stone apron &amp; wet shore</div>
+        </div>
+        <div class="opt-box candidate" style="border-color:rgba(130,215,255,0.6)">
+          <img src="ro3/stage_4_ro3.png" style="width:100%;border-radius:6px;border:1px solid #479">
+          <div class="opt-title" style="color:var(--blue)">OPTION B: RO3 Seamless Floor + Canopy Light</div>
+          <div class="opt-desc">Adds RO3 dappled tree-canopy shade &amp; warm sunlit battle clearing glow</div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="slot-card">
+      <div class="slot-header"><span class="slot-title">Stage 5: Comodo Tropical Beach & Lagoon — RO3 Poring Island Style (cmd_fild01)</span></div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px">
+        <div class="opt-box current">
+          <img src="ro3/stage_5_boxy.png" style="width:100%;border-radius:6px;border:1px solid #633">
+          <div class="opt-title">BEFORE: Boxy Tile-Grid Floor</div>
+          <div class="opt-desc">Hard 90° square cells create stair-stepped roads &amp; repetitive grid seams</div>
+        </div>
+        <div class="opt-box candidate">
+          <img src="ro3/stage_5_flat.png" style="width:100%;border-radius:6px;border:1px solid #375">
+          <div class="opt-title">OPTION A: Seamless Splatmap Floor (Clean)</div>
+          <div class="opt-desc">Continuous noise-blended turf, feathered winding road, radial stone apron &amp; wet shore</div>
+        </div>
+        <div class="opt-box candidate" style="border-color:rgba(130,215,255,0.6)">
+          <img src="ro3/stage_5_ro3.png" style="width:100%;border-radius:6px;border:1px solid #479">
+          <div class="opt-title" style="color:var(--blue)">OPTION B: RO3 Seamless Floor + Canopy Light</div>
+          <div class="opt-desc">Adds RO3 dappled tree-canopy shade &amp; warm sunlit battle clearing glow</div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="slot-card">
+      <div class="slot-header"><span class="slot-title">Stage 6: Louyang Highland & Jade Terraces (lou_fild01 / louyang)</span></div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px">
+        <div class="opt-box current">
+          <img src="ro3/stage_6_boxy.png" style="width:100%;border-radius:6px;border:1px solid #633">
+          <div class="opt-title">BEFORE: Boxy Tile-Grid Floor</div>
+          <div class="opt-desc">Hard 90° square cells create stair-stepped roads &amp; repetitive grid seams</div>
+        </div>
+        <div class="opt-box candidate">
+          <img src="ro3/stage_6_flat.png" style="width:100%;border-radius:6px;border:1px solid #375">
+          <div class="opt-title">OPTION A: Seamless Splatmap Floor (Clean)</div>
+          <div class="opt-desc">Continuous noise-blended turf, feathered winding road, radial stone apron &amp; wet shore</div>
+        </div>
+        <div class="opt-box candidate" style="border-color:rgba(130,215,255,0.6)">
+          <img src="ro3/stage_6_ro3.png" style="width:100%;border-radius:6px;border:1px solid #479">
+          <div class="opt-title" style="color:var(--blue)">OPTION B: RO3 Seamless Floor + Canopy Light</div>
+          <div class="opt-desc">Adds RO3 dappled tree-canopy shade &amp; warm sunlit battle clearing glow</div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="slot-card">
+      <div class="slot-header"><span class="slot-title">Stage 7: Amatsu Cherry Blossom Shrine & Canal (ama_fild01 / amatsu)</span></div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px">
+        <div class="opt-box current">
+          <img src="ro3/stage_7_boxy.png" style="width:100%;border-radius:6px;border:1px solid #633">
+          <div class="opt-title">BEFORE: Boxy Tile-Grid Floor</div>
+          <div class="opt-desc">Hard 90° square cells create stair-stepped roads &amp; repetitive grid seams</div>
+        </div>
+        <div class="opt-box candidate">
+          <img src="ro3/stage_7_flat.png" style="width:100%;border-radius:6px;border:1px solid #375">
+          <div class="opt-title">OPTION A: Seamless Splatmap Floor (Clean)</div>
+          <div class="opt-desc">Continuous noise-blended turf, feathered winding road, radial stone apron &amp; wet shore</div>
+        </div>
+        <div class="opt-box candidate" style="border-color:rgba(130,215,255,0.6)">
+          <img src="ro3/stage_7_ro3.png" style="width:100%;border-radius:6px;border:1px solid #479">
+          <div class="opt-title" style="color:var(--blue)">OPTION B: RO3 Seamless Floor + Canopy Light</div>
+          <div class="opt-desc">Adds RO3 dappled tree-canopy shade &amp; warm sunlit battle clearing glow</div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="slot-card">
+      <div class="slot-header"><span class="slot-title">Stage 8: Niflheim Realm of the Dead (nif_fild01 / niflheim)</span></div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px">
+        <div class="opt-box current">
+          <img src="ro3/stage_8_boxy.png" style="width:100%;border-radius:6px;border:1px solid #633">
+          <div class="opt-title">BEFORE: Boxy Tile-Grid Floor</div>
+          <div class="opt-desc">Hard 90° square cells create stair-stepped roads &amp; repetitive grid seams</div>
+        </div>
+        <div class="opt-box candidate">
+          <img src="ro3/stage_8_flat.png" style="width:100%;border-radius:6px;border:1px solid #375">
+          <div class="opt-title">OPTION A: Seamless Splatmap Floor (Clean)</div>
+          <div class="opt-desc">Continuous noise-blended turf, feathered winding road, radial stone apron &amp; wet shore</div>
+        </div>
+        <div class="opt-box candidate" style="border-color:rgba(130,215,255,0.6)">
+          <img src="ro3/stage_8_ro3.png" style="width:100%;border-radius:6px;border:1px solid #479">
+          <div class="opt-title" style="color:var(--blue)">OPTION B: RO3 Seamless Floor + Canopy Light</div>
+          <div class="opt-desc">Adds RO3 dappled tree-canopy shade &amp; warm sunlit battle clearing glow</div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="slot-card">
+      <div class="slot-header"><span class="slot-title">Stage 9: Abyss Lake & Dragon Cavern — RO3 Dungeon Slate Style (hu_fild05 / abyss)</span></div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px">
+        <div class="opt-box current">
+          <img src="ro3/stage_9_boxy.png" style="width:100%;border-radius:6px;border:1px solid #633">
+          <div class="opt-title">BEFORE: Boxy Tile-Grid Floor</div>
+          <div class="opt-desc">Hard 90° square cells create stair-stepped roads &amp; repetitive grid seams</div>
+        </div>
+        <div class="opt-box candidate">
+          <img src="ro3/stage_9_flat.png" style="width:100%;border-radius:6px;border:1px solid #375">
+          <div class="opt-title">OPTION A: Seamless Splatmap Floor (Clean)</div>
+          <div class="opt-desc">Continuous noise-blended turf, feathered winding road, radial stone apron &amp; wet shore</div>
+        </div>
+        <div class="opt-box candidate" style="border-color:rgba(130,215,255,0.6)">
+          <img src="ro3/stage_9_ro3.png" style="width:100%;border-radius:6px;border:1px solid #479">
+          <div class="opt-title" style="color:var(--blue)">OPTION B: RO3 Seamless Floor + Canopy Light</div>
+          <div class="opt-desc">Adds RO3 dappled tree-canopy shade &amp; warm sunlit battle clearing glow</div>
+        </div>
+      </div>
+    </div>
+    
+    <h2>De-Gridded 4×4 Seamless Tile Comparison (16 Tiles Side-by-Side)</h2>
+    <div class="boards-grid">
+      <img src="board-4-ro3-seamless-tiles.png" alt="Board 4 RO3 Seamless Tiles">
+    </div>
+  </div>
+
+  <div id="tab-interactive" style="display:none">
+
+    <div class="slot-card">
+      <div class="slot-header">
+        <span class="slot-title">1. grass_olive — Prontera / Izlude Meadow Grass</span>
+        <span class="slot-stages">Used in: Stages 0, 1, 5, 7</span>
+      </div>
+      <div class="grid4">
+        <div class="opt-box current">
+          <div class="swatch-row">
+            <div class="swatch" style="background-image:url('tex/cur_grass_olive.png')"><span class="badge">1x1</span></div>
+            <div class="swatch tile-target tiled" style="background-image:url('tex/cur_grass_olive.png')"><span class="badge">Tiled</span></div>
+          </div>
+          <div class="opt-title">CURRENT v2 (Live Screenshot Crop)</div>
+          <div class="opt-kr">128×128 upscaled + mirror-blended</div>
+          <div class="opt-desc">Blurry 100x100 screenshot crop (prt_fild08_1.jpg)</div>
+        </div>
+    
+        <div class="opt-box candidate">
+          <div class="swatch-row">
+            <div class="swatch" style="background-image:url('tex/prt_cho-won01.png')"><span class="badge">1x1</span></div>
+            <div class="swatch tile-target tiled" style="background-image:url('tex/prt_cho-won01.png')"><span class="badge">Tiled</span></div>
+          </div>
+          <div class="opt-title">Option A (Primary .gnd)</div>
+          <div class="opt-kr">필드바닥\prt_초원01.bmp (256x256)</div>
+          <div class="opt-desc">#1 on prt_fild08.gnd (15,741 cells) & prontera.gnd (6,189 cells)</div>
+        </div>
+        
+        <div class="opt-box candidate">
+          <div class="swatch-row">
+            <div class="swatch" style="background-image:url('tex/prt_city_g01.png')"><span class="badge">1x1</span></div>
+            <div class="swatch tile-target tiled" style="background-image:url('tex/prt_city_g01.png')"><span class="badge">Tiled</span></div>
+          </div>
+          <div class="opt-title">Option B (Renewal HD)</div>
+          <div class="opt-kr">prontera_re\prt_city_g01.bmp (512x512)</div>
+          <div class="opt-desc">Official Renewal HD Prontera lush meadow grass</div>
+        </div>
+        
+        <div class="opt-box candidate">
+          <div class="swatch-row">
+            <div class="swatch" style="background-image:url('tex/prt_cho-won04.png')"><span class="badge">1x1</span></div>
+            <div class="swatch tile-target tiled" style="background-image:url('tex/prt_cho-won04.png')"><span class="badge">Tiled</span></div>
+          </div>
+          <div class="opt-title">Option C (Clearing Accent)</div>
+          <div class="opt-kr">필드바닥\prt_초원04.bmp (256x256)</div>
+          <div class="opt-desc">prt_fild08.gnd (2,650 cells) grass with natural worn earth patch</div>
+        </div>
+        
+      </div>
+    </div>
+    
+    <div class="slot-card">
+      <div class="slot-header">
+        <span class="slot-title">2. grass_forest — Payon / Prontera Dark Forest Grass</span>
+        <span class="slot-stages">Used in: Stages 0, 1, 2, 4, 6</span>
+      </div>
+      <div class="grid4">
+        <div class="opt-box current">
+          <div class="swatch-row">
+            <div class="swatch" style="background-image:url('tex/cur_grass_forest.png')"><span class="badge">1x1</span></div>
+            <div class="swatch tile-target tiled" style="background-image:url('tex/cur_grass_forest.png')"><span class="badge">Tiled</span></div>
+          </div>
+          <div class="opt-title">CURRENT v2 (Live Screenshot Crop)</div>
+          <div class="opt-kr">128×128 upscaled + mirror-blended</div>
+          <div class="opt-desc">Darkened 95x95 screenshot crop (prt_fild08_1.jpg)</div>
+        </div>
+    
+        <div class="opt-box candidate">
+          <div class="swatch-row">
+            <div class="swatch" style="background-image:url('tex/sup-sok-badak-01.png')"><span class="badge">1x1</span></div>
+            <div class="swatch tile-target tiled" style="background-image:url('tex/sup-sok-badak-01.png')"><span class="badge">Tiled</span></div>
+          </div>
+          <div class="opt-title">Option A (Payon Primary .gnd)</div>
+          <div class="opt-kr">필드바닥\숲속바닥-01.bmp (256x256)</div>
+          <div class="opt-desc">#1 on pay_fild08.gnd (17,307 cells) & payon.gnd (9,848 cells)</div>
+        </div>
+        
+        <div class="opt-box candidate">
+          <div class="swatch-row">
+            <div class="swatch" style="background-image:url('tex/prt_cho-won06.png')"><span class="badge">1x1</span></div>
+            <div class="swatch tile-target tiled" style="background-image:url('tex/prt_cho-won06.png')"><span class="badge">Tiled</span></div>
+          </div>
+          <div class="opt-title">Option B (Izlude/Prontera Mossy)</div>
+          <div class="opt-kr">필드바닥\prt_초원06.bmp (256x256)</div>
+          <div class="opt-desc">#1 on izlude.gnd (5,169 cells) & prt_fild08 (1,789 cells) mossy stones</div>
+        </div>
+        
+        <div class="opt-box candidate">
+          <div class="swatch-row">
+            <div class="swatch" style="background-image:url('tex/prt_cho-won08.png')"><span class="badge">1x1</span></div>
+            <div class="swatch tile-target tiled" style="background-image:url('tex/prt_cho-won08.png')"><span class="badge">Tiled</span></div>
+          </div>
+          <div class="opt-title">Option C (Dense Clover/Stone)</div>
+          <div class="opt-kr">필드바닥\prt_초원08.bmp (256x256)</div>
+          <div class="opt-desc">#2 on izlude.gnd (4,913 cells) dark clover & field stones</div>
+        </div>
+        
+      </div>
+    </div>
+    
+    <div class="slot-card">
+      <div class="slot-header">
+        <span class="slot-title">3. grass_geffen — Geffen Mystic Blue-Green Turf</span>
+        <span class="slot-stages">Used in: Stages 2 (Geffen), 9 (Abyss)</span>
+      </div>
+      <div class="grid4">
+        <div class="opt-box current">
+          <div class="swatch-row">
+            <div class="swatch" style="background-image:url('tex/cur_grass_geffen.png')"><span class="badge">1x1</span></div>
+            <div class="swatch tile-target tiled" style="background-image:url('tex/cur_grass_geffen.png')"><span class="badge">Tiled</span></div>
+          </div>
+          <div class="opt-title">CURRENT v2 (Live Screenshot Crop)</div>
+          <div class="opt-kr">128×128 upscaled + mirror-blended</div>
+          <div class="opt-desc">100x100 screenshot crop (gef_fild04_2.jpg)</div>
+        </div>
+    
+        <div class="opt-box candidate">
+          <div class="swatch-row">
+            <div class="swatch" style="background-image:url('tex/geffen-field-04.png')"><span class="badge">1x1</span></div>
+            <div class="swatch tile-target tiled" style="background-image:url('tex/geffen-field-04.png')"><span class="badge">Tiled</span></div>
+          </div>
+          <div class="opt-title">Option A (Geffen Emerald-Teal)</div>
+          <div class="opt-kr">필드바닥\게펜필드-04.bmp (256x256)</div>
+          <div class="opt-desc">gef_fild04.gnd (10,055 cells) cool blue-green Geffen turf</div>
+        </div>
+        
+        <div class="opt-box candidate">
+          <div class="swatch-row">
+            <div class="swatch" style="background-image:url('tex/geffen-field-01.png')"><span class="badge">1x1</span></div>
+            <div class="swatch tile-target tiled" style="background-image:url('tex/geffen-field-01.png')"><span class="badge">Tiled</span></div>
+          </div>
+          <div class="opt-title">Option B (Geffen #1 Lichen)</div>
+          <div class="opt-kr">필드바닥\게펜필드-01.bmp (256x256)</div>
+          <div class="opt-desc">#1 on gef_fild04.gnd (13,250 cells) pale lichen-dappled grass</div>
+        </div>
+        
+        <div class="opt-box candidate">
+          <div class="swatch-row">
+            <div class="swatch" style="background-image:url('tex/geffen-field-00.png')"><span class="badge">1x1</span></div>
+            <div class="swatch tile-target tiled" style="background-image:url('tex/geffen-field-00.png')"><span class="badge">Tiled</span></div>
+          </div>
+          <div class="opt-title">Option C (Geffen Blend)</div>
+          <div class="opt-kr">필드바닥\게펜필드-00.bmp (256x256)</div>
+          <div class="opt-desc">gef_fild04.gnd clover & lichen transition turf</div>
+        </div>
+        
+      </div>
+    </div>
+    
+    <div class="slot-card">
+      <div class="slot-header">
+        <span class="slot-title">4. grass_jade — Louyang Highland Jade Grass</span>
+        <span class="slot-stages">Used in: Stage 6 (Louyang)</span>
+      </div>
+      <div class="grid4">
+        <div class="opt-box current">
+          <div class="swatch-row">
+            <div class="swatch" style="background-image:url('tex/cur_grass_jade.png')"><span class="badge">1x1</span></div>
+            <div class="swatch tile-target tiled" style="background-image:url('tex/cur_grass_jade.png')"><span class="badge">Tiled</span></div>
+          </div>
+          <div class="opt-title">CURRENT v2 (Live Screenshot Crop)</div>
+          <div class="opt-kr">128×128 upscaled + mirror-blended</div>
+          <div class="opt-desc">Screenshot crop with @grid lines baked in!</div>
+        </div>
+    
+        <div class="opt-box candidate">
+          <div class="swatch-row">
+            <div class="swatch" style="background-image:url('tex/jung-guk-badak06.png')"><span class="badge">1x1</span></div>
+            <div class="swatch tile-target tiled" style="background-image:url('tex/jung-guk-badak06.png')"><span class="badge">Tiled</span></div>
+          </div>
+          <div class="opt-title">Option A (Louyang #1 .gnd)</div>
+          <div class="opt-kr">필드바닥\중국바닥06.bmp (256x256)</div>
+          <div class="opt-desc">#1 on lou_fild01.gnd (30,407 cells) & louyang.gnd (20,762 cells)</div>
+        </div>
+        
+        <div class="opt-box candidate">
+          <div class="swatch-row">
+            <div class="swatch" style="background-image:url('tex/jung-guk-badak05.png')"><span class="badge">1x1</span></div>
+            <div class="swatch tile-target tiled" style="background-image:url('tex/jung-guk-badak05.png')"><span class="badge">Tiled</span></div>
+          </div>
+          <div class="opt-title">Option B (Louyang Wildflower)</div>
+          <div class="opt-kr">필드바닥\중국바닥05.bmp (256x256)</div>
+          <div class="opt-desc">lou_fild01.gnd (935 cells) wildflower-flecked highland grass</div>
+        </div>
+        
+        <div class="opt-box candidate">
+          <div class="swatch-row">
+            <div class="swatch" style="background-image:url('tex/hae-byeon-pul04.png')"><span class="badge">1x1</span></div>
+            <div class="swatch tile-target tiled" style="background-image:url('tex/hae-byeon-pul04.png')"><span class="badge">Tiled</span></div>
+          </div>
+          <div class="opt-title">Option C (Comodo Tropical)</div>
+          <div class="opt-kr">필드바닥\해변풀바닥04.bmp (256x256)</div>
+          <div class="opt-desc">#1 grass on cmd_fild01.gnd (7,414 cells) lush tropical turf</div>
+        </div>
+        
+      </div>
+    </div>
+    
+    <div class="slot-card">
+      <div class="slot-header">
+        <span class="slot-title">5. grass_blossom — Amatsu Spring Meadow Grass</span>
+        <span class="slot-stages">Used in: Stage 7 (Amatsu)</span>
+      </div>
+      <div class="grid4">
+        <div class="opt-box current">
+          <div class="swatch-row">
+            <div class="swatch" style="background-image:url('tex/cur_grass_blossom.png')"><span class="badge">1x1</span></div>
+            <div class="swatch tile-target tiled" style="background-image:url('tex/cur_grass_blossom.png')"><span class="badge">Tiled</span></div>
+          </div>
+          <div class="opt-title">CURRENT v2 (Live Screenshot Crop)</div>
+          <div class="opt-kr">128×128 upscaled + mirror-blended</div>
+          <div class="opt-desc">100x100 screenshot crop (ama_fild01_1.jpg)</div>
+        </div>
+    
+        <div class="opt-box candidate">
+          <div class="swatch-row">
+            <div class="swatch" style="background-image:url('tex/il-bon-badak11.png')"><span class="badge">1x1</span></div>
+            <div class="swatch tile-target tiled" style="background-image:url('tex/il-bon-badak11.png')"><span class="badge">Tiled</span></div>
+          </div>
+          <div class="opt-title">Option A (Amatsu #1 .gnd)</div>
+          <div class="opt-kr">필드바닥\일본바닥11.bmp (256x256)</div>
+          <div class="opt-desc">#1 on ama_fild01.gnd (29,154 cells) & amatsu.gnd (7,077 cells)</div>
+        </div>
+        
+        <div class="opt-box candidate">
+          <div class="swatch-row">
+            <div class="swatch" style="background-image:url('tex/il-bon-badak04.png')"><span class="badge">1x1</span></div>
+            <div class="swatch tile-target tiled" style="background-image:url('tex/il-bon-badak04.png')"><span class="badge">Tiled</span></div>
+          </div>
+          <div class="opt-title">Option B (Amatsu Garden Stone)</div>
+          <div class="opt-kr">필드바닥\일본바닥04.bmp (256x256)</div>
+          <div class="opt-desc">amatsu.gnd mossy Japanese garden stepping-stone grass</div>
+        </div>
+        
+        <div class="opt-box candidate">
+          <div class="swatch-row">
+            <div class="swatch" style="background-image:url('tex/il-bon-badak10.png')"><span class="badge">1x1</span></div>
+            <div class="swatch tile-target tiled" style="background-image:url('tex/il-bon-badak10.png')"><span class="badge">Tiled</span></div>
+          </div>
+          <div class="opt-title">Option C (Amatsu Meadow Blend)</div>
+          <div class="opt-kr">필드바닥\일본바닥10.bmp (256x256)</div>
+          <div class="opt-desc">ama_fild01.gnd (1,458 cells) spring grass-to-earth blend</div>
+        </div>
+        
+      </div>
+    </div>
+    
+    <div class="slot-card">
+      <div class="slot-header">
+        <span class="slot-title">6. dirt_path — Prontera / Field Packed Dirt Road</span>
+        <span class="slot-stages">Used in: Stages 0, 1, 2, 6, 7</span>
+      </div>
+      <div class="grid4">
+        <div class="opt-box current">
+          <div class="swatch-row">
+            <div class="swatch" style="background-image:url('tex/cur_dirt_path.png')"><span class="badge">1x1</span></div>
+            <div class="swatch tile-target tiled" style="background-image:url('tex/cur_dirt_path.png')"><span class="badge">Tiled</span></div>
+          </div>
+          <div class="opt-title">CURRENT v2 (Live Screenshot Crop)</div>
+          <div class="opt-kr">128×128 upscaled + mirror-blended</div>
+          <div class="opt-desc">Mirror-blended wood-grain artifact from screenshot!</div>
+        </div>
+    
+        <div class="opt-box candidate">
+          <div class="swatch-row">
+            <div class="swatch" style="background-image:url('tex/prt_heuk02.png')"><span class="badge">1x1</span></div>
+            <div class="swatch tile-target tiled" style="background-image:url('tex/prt_heuk02.png')"><span class="badge">Tiled</span></div>
+          </div>
+          <div class="opt-title">Option A (Prontera #1 Dirt .gnd)</div>
+          <div class="opt-kr">필드바닥\prt_흙02.bmp (256x256)</div>
+          <div class="opt-desc">#1 dirt road on prt_fild08.gnd (6,723 cells) & prontera.gnd</div>
+        </div>
+        
+        <div class="opt-box candidate">
+          <div class="swatch-row">
+            <div class="swatch" style="background-image:url('tex/jung-guk-badak08.png')"><span class="badge">1x1</span></div>
+            <div class="swatch tile-target tiled" style="background-image:url('tex/jung-guk-badak08.png')"><span class="badge">Tiled</span></div>
+          </div>
+          <div class="opt-title">Option B (Louyang/Amatsu Dirt)</div>
+          <div class="opt-kr">필드바닥\중국바닥08.bmp (256x256)</div>
+          <div class="opt-desc">lou_fild01.gnd (1,334 cells) warm ochre packed dirt trail</div>
+        </div>
+        
+        <div class="opt-box candidate">
+          <div class="swatch-row">
+            <div class="swatch" style="background-image:url('tex/prt_cho-won02.png')"><span class="badge">1x1</span></div>
+            <div class="swatch tile-target tiled" style="background-image:url('tex/prt_cho-won02.png')"><span class="badge">Tiled</span></div>
+          </div>
+          <div class="opt-title">Option C (Grass-Bordered Road)</div>
+          <div class="opt-kr">필드바닥\prt_초원02.bmp (256x256)</div>
+          <div class="opt-desc">prt_fild08.gnd (1,210 cells) country dirt road with grass borders</div>
+        </div>
+        
+      </div>
+    </div>
+    
+    <div class="slot-card">
+      <div class="slot-header">
+        <span class="slot-title">7. dirt_payon — Payon Dark Woodland Soil & Path</span>
+        <span class="slot-stages">Used in: Stage 4 (Payon)</span>
+      </div>
+      <div class="grid4">
+        <div class="opt-box current">
+          <div class="swatch-row">
+            <div class="swatch" style="background-image:url('tex/cur_dirt_payon.png')"><span class="badge">1x1</span></div>
+            <div class="swatch tile-target tiled" style="background-image:url('tex/cur_dirt_payon.png')"><span class="badge">Tiled</span></div>
+          </div>
+          <div class="opt-title">CURRENT v2 (Live Screenshot Crop)</div>
+          <div class="opt-kr">128×128 upscaled + mirror-blended</div>
+          <div class="opt-desc">100x100 screenshot crop with mirror seam</div>
+        </div>
+    
+        <div class="opt-box candidate">
+          <div class="swatch-row">
+            <div class="swatch" style="background-image:url('tex/sup-sok-badak-06.png')"><span class="badge">1x1</span></div>
+            <div class="swatch tile-target tiled" style="background-image:url('tex/sup-sok-badak-06.png')"><span class="badge">Tiled</span></div>
+          </div>
+          <div class="opt-title">Option A (Payon #1 Soil .gnd)</div>
+          <div class="opt-kr">필드바닥\숲속바닥-06.bmp (256x256)</div>
+          <div class="opt-desc">#1 woodland soil on pay_fild04.gnd (4,520 cells) & payon.gnd</div>
+        </div>
+        
+        <div class="opt-box candidate">
+          <div class="swatch-row">
+            <div class="swatch" style="background-image:url('tex/sup-sok-badak-10.png')"><span class="badge">1x1</span></div>
+            <div class="swatch tile-target tiled" style="background-image:url('tex/sup-sok-badak-10.png')"><span class="badge">Tiled</span></div>
+          </div>
+          <div class="opt-title">Option B (Moss-Bordered Soil)</div>
+          <div class="opt-kr">필드바닥\숲속바닥-10.bmp (256x256)</div>
+          <div class="opt-desc">pay_fild04.gnd (1,123 cells) mossy dark forest trail</div>
+        </div>
+        
+        <div class="opt-box candidate">
+          <div class="swatch-row">
+            <div class="swatch" style="background-image:url('tex/payon-maeul-03.png')"><span class="badge">1x1</span></div>
+            <div class="swatch tile-target tiled" style="background-image:url('tex/payon-maeul-03.png')"><span class="badge">Tiled</span></div>
+          </div>
+          <div class="opt-title">Option C (Payon Village Brick)</div>
+          <div class="opt-kr">필드바닥\페이욘마을바닥-03.bmp (256x256)</div>
+          <div class="opt-desc">payon.gnd village timber-and-brick walkway</div>
+        </div>
+        
+      </div>
+    </div>
+    
+    <div class="slot-card">
+      <div class="slot-header">
+        <span class="slot-title">8. ruin_cobble — Prontera Plaza & Ancient Cobblestone</span>
+        <span class="slot-stages">Used in: Stages 0, 1, 2, 3, 6, 7, 8</span>
+      </div>
+      <div class="grid4">
+        <div class="opt-box current">
+          <div class="swatch-row">
+            <div class="swatch" style="background-image:url('tex/cur_ruin_cobble.png')"><span class="badge">1x1</span></div>
+            <div class="swatch tile-target tiled" style="background-image:url('tex/cur_ruin_cobble.png')"><span class="badge">Tiled</span></div>
+          </div>
+          <div class="opt-title">CURRENT v2 (Live Screenshot Crop)</div>
+          <div class="opt-kr">128×128 upscaled + mirror-blended</div>
+          <div class="opt-desc">Tiny 65x65 angled screenshot crop (gef_fild04_1.jpg)</div>
+        </div>
+    
+        <div class="opt-box candidate">
+          <div class="swatch-row">
+            <div class="swatch" style="background-image:url('tex/prt_dosi02.png')"><span class="badge">1x1</span></div>
+            <div class="swatch tile-target tiled" style="background-image:url('tex/prt_dosi02.png')"><span class="badge">Tiled</span></div>
+          </div>
+          <div class="opt-title">Option A (Prontera #1 Street)</div>
+          <div class="opt-kr">필드바닥\prt_도시02.bmp (256x256)</div>
+          <div class="opt-desc">#1 street cobble on prontera.gnd (15,191 cells) & izlude.gnd</div>
+        </div>
+        
+        <div class="opt-box candidate">
+          <div class="swatch-row">
+            <div class="swatch" style="background-image:url('tex/prt_dosi01.png')"><span class="badge">1x1</span></div>
+            <div class="swatch tile-target tiled" style="background-image:url('tex/prt_dosi01.png')"><span class="badge">Tiled</span></div>
+          </div>
+          <div class="opt-title">Option B (Prontera Radial Plaza)</div>
+          <div class="opt-kr">필드바닥\prt_도시01.bmp (256x256)</div>
+          <div class="opt-desc">prontera.gnd (1,458 cells) iconic radial fountain fan-paving</div>
+        </div>
+        
+        <div class="opt-box candidate">
+          <div class="swatch-row">
+            <div class="swatch" style="background-image:url('tex/gef_00.png')"><span class="badge">1x1</span></div>
+            <div class="swatch tile-target tiled" style="background-image:url('tex/gef_00.png')"><span class="badge">Tiled</span></div>
+          </div>
+          <div class="opt-title">Option C (Geffen Dark Slate)</div>
+          <div class="opt-kr">필드바닥\gef_00.bmp (256x256)</div>
+          <div class="opt-desc">geffen.gnd (1,341 cells) dark blue-grey crazy-paving flagstones</div>
+        </div>
+        
+      </div>
+    </div>
+    
+    <div class="slot-card">
+      <div class="slot-header">
+        <span class="slot-title">9. sand — Morocc Sograt Desert Sand</span>
+        <span class="slot-stages">Used in: Stage 3 (Morocc)</span>
+      </div>
+      <div class="grid4">
+        <div class="opt-box current">
+          <div class="swatch-row">
+            <div class="swatch" style="background-image:url('tex/cur_sand.png')"><span class="badge">1x1</span></div>
+            <div class="swatch tile-target tiled" style="background-image:url('tex/cur_sand.png')"><span class="badge">Tiled</span></div>
+          </div>
+          <div class="opt-title">CURRENT v2 (Live Screenshot Crop)</div>
+          <div class="opt-kr">128×128 upscaled + mirror-blended</div>
+          <div class="opt-desc">Washed-out 75x75 screenshot crop with + seam</div>
+        </div>
+    
+        <div class="opt-box candidate">
+          <div class="swatch-row">
+            <div class="swatch" style="background-image:url('tex/moc_maen-ttang08.png')"><span class="badge">1x1</span></div>
+            <div class="swatch tile-target tiled" style="background-image:url('tex/moc_maen-ttang08.png')"><span class="badge">Tiled</span></div>
+          </div>
+          <div class="opt-title">Option A (Morocc #1 Sand .gnd)</div>
+          <div class="opt-kr">필드바닥\moc_맨땅08.bmp (256x256)</div>
+          <div class="opt-desc">#1 on morocc.gnd (14,535 cells) & moc_fild04.gnd (8,654 cells)</div>
+        </div>
+        
+        <div class="opt-box candidate">
+          <div class="swatch-row">
+            <div class="swatch" style="background-image:url('tex/moc_maen-ttang05.png')"><span class="badge">1x1</span></div>
+            <div class="swatch tile-target tiled" style="background-image:url('tex/moc_maen-ttang05.png')"><span class="badge">Tiled</span></div>
+          </div>
+          <div class="opt-title">Option B (Scrub Desert Sand)</div>
+          <div class="opt-kr">필드바닥\moc_맨땅05.bmp (256x256)</div>
+          <div class="opt-desc">#1 on moc_fild04.gnd (9,622 cells) desert sand with dry scrub edge</div>
+        </div>
+        
+        <div class="opt-box candidate">
+          <div class="swatch-row">
+            <div class="swatch" style="background-image:url('tex/moc_seong-nae01.png')"><span class="badge">1x1</span></div>
+            <div class="swatch tile-target tiled" style="background-image:url('tex/moc_seong-nae01.png')"><span class="badge">Tiled</span></div>
+          </div>
+          <div class="opt-title">Option C (Morocc Ruin Brick)</div>
+          <div class="opt-kr">필드바닥\moc_성내01.bmp (256x256)</div>
+          <div class="opt-desc">morocc.gnd sand-dusted ancient sandstone pavement</div>
+        </div>
+        
+      </div>
+    </div>
+    
+    <div class="slot-card">
+      <div class="slot-header">
+        <span class="slot-title">10. sand_dark — Desert Hardpan & Coral Reef Bed</span>
+        <span class="slot-stages">Used in: Stages 3 (Morocc), 5 (Comodo)</span>
+      </div>
+      <div class="grid4">
+        <div class="opt-box current">
+          <div class="swatch-row">
+            <div class="swatch" style="background-image:url('tex/cur_sand_dark.png')"><span class="badge">1x1</span></div>
+            <div class="swatch tile-target tiled" style="background-image:url('tex/cur_sand_dark.png')"><span class="badge">Tiled</span></div>
+          </div>
+          <div class="opt-title">CURRENT v2 (Live Screenshot Crop)</div>
+          <div class="opt-kr">128×128 upscaled + mirror-blended</div>
+          <div class="opt-desc">85x85 screenshot crop with mirror cross</div>
+        </div>
+    
+        <div class="opt-box candidate">
+          <div class="swatch-row">
+            <div class="swatch" style="background-image:url('tex/moc_maen-ttang06.png')"><span class="badge">1x1</span></div>
+            <div class="swatch tile-target tiled" style="background-image:url('tex/moc_maen-ttang06.png')"><span class="badge">Tiled</span></div>
+          </div>
+          <div class="opt-title">Option A (Morocc Dark Hardpan)</div>
+          <div class="opt-kr">필드바닥\moc_맨땅06.bmp (256x256)</div>
+          <div class="opt-desc">moc_fild04.gnd (4,507 cells) desert sand with dark rocky hardpan</div>
+        </div>
+        
+        <div class="opt-box candidate">
+          <div class="swatch-row">
+            <div class="swatch" style="background-image:url('tex/hae-byeon-morae07.png')"><span class="badge">1x1</span></div>
+            <div class="swatch tile-target tiled" style="background-image:url('tex/hae-byeon-morae07.png')"><span class="badge">Tiled</span></div>
+          </div>
+          <div class="opt-title">Option B (Comodo Shell Gravel)</div>
+          <div class="opt-kr">필드바닥\해변모래바닥07.bmp (256x256)</div>
+          <div class="opt-desc">cmd_fild01.gnd coarse coral & shell beach gravel</div>
+        </div>
+        
+        <div class="opt-box candidate">
+          <div class="swatch-row">
+            <div class="swatch" style="background-image:url('tex/hae-byeon-mul01.png')"><span class="badge">1x1</span></div>
+            <div class="swatch tile-target tiled" style="background-image:url('tex/hae-byeon-mul01.png')"><span class="badge">Tiled</span></div>
+          </div>
+          <div class="opt-title">Option C (Comodo Lagoon Bed)</div>
+          <div class="opt-kr">필드바닥\해변물바닥01.bmp (256x256)</div>
+          <div class="opt-desc">cmd_fild02.gnd (10,127 cells) dark wet reef lagoon floor</div>
+        </div>
+        
+      </div>
+    </div>
+    
+    <div class="slot-card">
+      <div class="slot-header">
+        <span class="slot-title">11. sand_gold — Comodo / Izlude Sunlit Beach Sand</span>
+        <span class="slot-stages">Used in: Stages 1 (Izlude), 5 (Comodo)</span>
+      </div>
+      <div class="grid4">
+        <div class="opt-box current">
+          <div class="swatch-row">
+            <div class="swatch" style="background-image:url('tex/cur_sand_gold.png')"><span class="badge">1x1</span></div>
+            <div class="swatch tile-target tiled" style="background-image:url('tex/cur_sand_gold.png')"><span class="badge">Tiled</span></div>
+          </div>
+          <div class="opt-title">CURRENT v2 (Live Screenshot Crop)</div>
+          <div class="opt-kr">128×128 upscaled + mirror-blended</div>
+          <div class="opt-desc">100x100 screenshot crop with horizontal streaks</div>
+        </div>
+    
+        <div class="opt-box candidate">
+          <div class="swatch-row">
+            <div class="swatch" style="background-image:url('tex/hae-byeon-morae01.png')"><span class="badge">1x1</span></div>
+            <div class="swatch tile-target tiled" style="background-image:url('tex/hae-byeon-morae01.png')"><span class="badge">Tiled</span></div>
+          </div>
+          <div class="opt-title">Option A (Comodo #1 Beach .gnd)</div>
+          <div class="opt-kr">필드바닥\해변모래바닥01.bmp (256x256)</div>
+          <div class="opt-desc">#1 on cmd_fild02.gnd (21,649 cells) & comodo.gnd (8,365 cells)</div>
+        </div>
+        
+        <div class="opt-box candidate">
+          <div class="swatch-row">
+            <div class="swatch" style="background-image:url('tex/hae-byeon-morae06.png')"><span class="badge">1x1</span></div>
+            <div class="swatch tile-target tiled" style="background-image:url('tex/hae-byeon-morae06.png')"><span class="badge">Tiled</span></div>
+          </div>
+          <div class="opt-title">Option B (Pebble Beach Sand)</div>
+          <div class="opt-kr">필드바닥\해변모래바닥06.bmp (256x256)</div>
+          <div class="opt-desc">comodo.gnd sunlit coral sand with natural pebble cluster</div>
+        </div>
+        
+        <div class="opt-box candidate">
+          <div class="swatch-row">
+            <div class="swatch" style="background-image:url('tex/tae-guk-mulsok15.png')"><span class="badge">1x1</span></div>
+            <div class="swatch tile-target tiled" style="background-image:url('tex/tae-guk-mulsok15.png')"><span class="badge">Tiled</span></div>
+          </div>
+          <div class="opt-title">Option C (Starfish Coral Sand)</div>
+          <div class="opt-kr">필드바닥\태국물속15.bmp (256x256)</div>
+          <div class="opt-desc">ayothaya.gnd tropical beach sand with starfish & shells</div>
+        </div>
+        
+      </div>
+    </div>
+    
+    <div class="slot-card">
+      <div class="slot-header">
+        <span class="slot-title">12. limestone_pale — Pale Limestone Curb & Abyss Shore</span>
+        <span class="slot-stages">Used in: Stages 0 (Prontera), 9 (Abyss)</span>
+      </div>
+      <div class="grid4">
+        <div class="opt-box current">
+          <div class="swatch-row">
+            <div class="swatch" style="background-image:url('tex/cur_limestone_pale.png')"><span class="badge">1x1</span></div>
+            <div class="swatch tile-target tiled" style="background-image:url('tex/cur_limestone_pale.png')"><span class="badge">Tiled</span></div>
+          </div>
+          <div class="opt-title">CURRENT v2 (Live Screenshot Crop)</div>
+          <div class="opt-kr">128×128 upscaled + mirror-blended</div>
+          <div class="opt-desc">Overexposed white blur from screenshot</div>
+        </div>
+    
+        <div class="opt-box candidate">
+          <div class="swatch-row">
+            <div class="swatch" style="background-image:url('tex/alberta-badak-00.png')"><span class="badge">1x1</span></div>
+            <div class="swatch tile-target tiled" style="background-image:url('tex/alberta-badak-00.png')"><span class="badge">Tiled</span></div>
+          </div>
+          <div class="opt-title">Option A (Cut White Limestone)</div>
+          <div class="opt-kr">필드바닥\알베르타마을바닥-00.bmp (256x256)</div>
+          <div class="opt-desc">alberta.gnd crisp white-grey cut limestone ashlar blocks</div>
+        </div>
+        
+        <div class="opt-box candidate">
+          <div class="swatch-row">
+            <div class="swatch" style="background-image:url('tex/abi_tex01.png')"><span class="badge">1x1</span></div>
+            <div class="swatch tile-target tiled" style="background-image:url('tex/abi_tex01.png')"><span class="badge">Tiled</span></div>
+          </div>
+          <div class="opt-title">Option B (Abyss Shore #1 .gnd)</div>
+          <div class="opt-kr">필드바닥\abi_tex01.bmp (256x256)</div>
+          <div class="opt-desc">#1 on hu_fild05.gnd (21,377 cells) Abyss Lake limestone & scrub</div>
+        </div>
+        
+        <div class="opt-box candidate">
+          <div class="swatch-row">
+            <div class="swatch" style="background-image:url('tex/alberta-badak-2.png')"><span class="badge">1x1</span></div>
+            <div class="swatch tile-target tiled" style="background-image:url('tex/alberta-badak-2.png')"><span class="badge">Tiled</span></div>
+          </div>
+          <div class="opt-title">Option C (Limestone Flagstone)</div>
+          <div class="opt-kr">필드바닥\알베르타마을바닥-2.bmp (256x256)</div>
+          <div class="opt-desc">alberta.gnd pale limestone crazy-paving flagstones</div>
+        </div>
+        
+      </div>
+    </div>
+    
+    <div class="slot-card">
+      <div class="slot-header">
+        <span class="slot-title">13. waste_nifl — Niflheim Dead Ashen Wasteland</span>
+        <span class="slot-stages">Used in: Stage 8 (Niflheim)</span>
+      </div>
+      <div class="grid4">
+        <div class="opt-box current">
+          <div class="swatch-row">
+            <div class="swatch" style="background-image:url('tex/cur_waste_nifl.png')"><span class="badge">1x1</span></div>
+            <div class="swatch tile-target tiled" style="background-image:url('tex/cur_waste_nifl.png')"><span class="badge">Tiled</span></div>
+          </div>
+          <div class="opt-title">CURRENT v2 (Live Screenshot Crop)</div>
+          <div class="opt-kr">128×128 upscaled + mirror-blended</div>
+          <div class="opt-desc">115x115 angled screenshot crop (nif_fild01_2.jpg)</div>
+        </div>
+    
+        <div class="opt-box candidate">
+          <div class="swatch-row">
+            <div class="swatch" style="background-image:url('tex/niflheim-badak15.png')"><span class="badge">1x1</span></div>
+            <div class="swatch tile-target tiled" style="background-image:url('tex/niflheim-badak15.png')"><span class="badge">Tiled</span></div>
+          </div>
+          <div class="opt-title">Option A (Niflheim #1 Ash .gnd)</div>
+          <div class="opt-kr">필드바닥\니플헤임바닥15.bmp (256x256)</div>
+          <div class="opt-desc">#1 on nif_fild01.gnd (32,164 cells) & niflheim.gnd (36,645 cells)</div>
+        </div>
+        
+        <div class="opt-box candidate">
+          <div class="swatch-row">
+            <div class="swatch" style="background-image:url('tex/niflheim-badak14.png')"><span class="badge">1x1</span></div>
+            <div class="swatch tile-target tiled" style="background-image:url('tex/niflheim-badak14.png')"><span class="badge">Tiled</span></div>
+          </div>
+          <div class="opt-title">Option B (Bruised Necrotic Rock)</div>
+          <div class="opt-kr">필드바닥\니플헤임바닥14.bmp (256x256)</div>
+          <div class="opt-desc">#2 on nif_fild01.gnd (4,507 cells) purple necrotic rock & ash</div>
+        </div>
+        
+        <div class="opt-box candidate">
+          <div class="swatch-row">
+            <div class="swatch" style="background-image:url('tex/niflheim-badak01.png')"><span class="badge">1x1</span></div>
+            <div class="swatch tile-target tiled" style="background-image:url('tex/niflheim-badak01.png')"><span class="badge">Tiled</span></div>
+          </div>
+          <div class="opt-title">Option C (Niflheim Cracked Cobble)</div>
+          <div class="opt-kr">필드바닥\니플헤임바닥01.bmp (256x256)</div>
+          <div class="opt-desc">niflheim.gnd (729 cells) cracked purple-grey cobblestone road</div>
+        </div>
+        
+      </div>
+    </div>
+    
+    <div class="slot-card">
+      <div class="slot-header">
+        <span class="slot-title">14. rock_abyss — Abyss Lake Dark Cavern Slate</span>
+        <span class="slot-stages">Used in: Stages 8, 9 (Abyss Lake)</span>
+      </div>
+      <div class="grid4">
+        <div class="opt-box current">
+          <div class="swatch-row">
+            <div class="swatch" style="background-image:url('tex/cur_rock_abyss.png')"><span class="badge">1x1</span></div>
+            <div class="swatch tile-target tiled" style="background-image:url('tex/cur_rock_abyss.png')"><span class="badge">Tiled</span></div>
+          </div>
+          <div class="opt-title">CURRENT v2 (Live Screenshot Crop)</div>
+          <div class="opt-kr">128×128 upscaled + mirror-blended</div>
+          <div class="opt-desc">100x100 dark cobble screenshot crop</div>
+        </div>
+    
+        <div class="opt-box candidate">
+          <div class="swatch-row">
+            <div class="swatch" style="background-image:url('tex/abyss-dong-gul03.png')"><span class="badge">1x1</span></div>
+            <div class="swatch tile-target tiled" style="background-image:url('tex/abyss-dong-gul03.png')"><span class="badge">Tiled</span></div>
+          </div>
+          <div class="opt-title">Option A (Abyss Cavern #1 .gnd)</div>
+          <div class="opt-kr">필드바닥\어비스동굴03.bmp (256x256)</div>
+          <div class="opt-desc">#1 on abyss_01.gnd (15,075 cells) dark crystalline cavern rock</div>
+        </div>
+        
+        <div class="opt-box candidate">
+          <div class="swatch-row">
+            <div class="swatch" style="background-image:url('tex/abyss-badak1.png')"><span class="badge">1x1</span></div>
+            <div class="swatch tile-target tiled" style="background-image:url('tex/abyss-badak1.png')"><span class="badge">Tiled</span></div>
+          </div>
+          <div class="opt-title">Option B (Abyss Blue-Grey Slate)</div>
+          <div class="opt-kr">필드바닥\어비스바닥1.bmp (256x256)</div>
+          <div class="opt-desc">#1 on abyss_03.gnd (14,500 cells) blue-grey abyssal slate floor</div>
+        </div>
+        
+        <div class="opt-box candidate">
+          <div class="swatch-row">
+            <div class="swatch" style="background-image:url('tex/abyss-badak6.png')"><span class="badge">1x1</span></div>
+            <div class="swatch tile-target tiled" style="background-image:url('tex/abyss-badak6.png')"><span class="badge">Tiled</span></div>
+          </div>
+          <div class="opt-title">Option C (Dragon Hoard Gold!)</div>
+          <div class="opt-kr">필드바닥\어비스바닥6.bmp (256x256)</div>
+          <div class="opt-desc">abyss_03.gnd (1,536 cells) glittering Dragon Treasure Gold Coins!</div>
+        </div>
+        
+      </div>
+    </div>
+    
+    <div class="slot-card">
+      <div class="slot-header">
+        <span class="slot-title">15. cliff_rock — Stratified Mountain Cliff Rock</span>
+        <span class="slot-stages">Used in: Stages 0, 2, 6, 8, 9</span>
+      </div>
+      <div class="grid4">
+        <div class="opt-box current">
+          <div class="swatch-row">
+            <div class="swatch" style="background-image:url('tex/cur_cliff_rock.png')"><span class="badge">1x1</span></div>
+            <div class="swatch tile-target tiled" style="background-image:url('tex/cur_cliff_rock.png')"><span class="badge">Tiled</span></div>
+          </div>
+          <div class="opt-title">CURRENT v2 (Live Screenshot Crop)</div>
+          <div class="opt-kr">128×128 upscaled + mirror-blended</div>
+          <div class="opt-desc">105x105 screenshot crop (prt_fild08_3.jpg)</div>
+        </div>
+    
+        <div class="opt-box candidate">
+          <div class="swatch-row">
+            <div class="swatch" style="background-image:url('tex/pron-jeol-byeok-01.png')"><span class="badge">1x1</span></div>
+            <div class="swatch tile-target tiled" style="background-image:url('tex/pron-jeol-byeok-01.png')"><span class="badge">Tiled</span></div>
+          </div>
+          <div class="opt-title">Option A (Prontera/Izlude Cliff)</div>
+          <div class="opt-kr">필드바닥\프론절벽-01.bmp (256x256)</div>
+          <div class="opt-desc">izlude.gnd & Prontera field horizontally stratified cliff rock</div>
+        </div>
+        
+        <div class="opt-box candidate">
+          <div class="swatch-row">
+            <div class="swatch" style="background-image:url('tex/pe-wall-001.png')"><span class="badge">1x1</span></div>
+            <div class="swatch tile-target tiled" style="background-image:url('tex/pe-wall-001.png')"><span class="badge">Tiled</span></div>
+          </div>
+          <div class="opt-title">Option B (Payon Mossy Cliff)</div>
+          <div class="opt-kr">필드바닥\pe-wall-001.bmp (256x256)</div>
+          <div class="opt-desc">pay_fild04.gnd mossy craggy mountain cliff wall</div>
+        </div>
+        
+        <div class="opt-box candidate">
+          <div class="swatch-row">
+            <div class="swatch" style="background-image:url('tex/abi_tex02.png')"><span class="badge">1x1</span></div>
+            <div class="swatch tile-target tiled" style="background-image:url('tex/abi_tex02.png')"><span class="badge">Tiled</span></div>
+          </div>
+          <div class="opt-title">Option C (Abyss Limestone Cliff)</div>
+          <div class="opt-kr">필드바닥\abi_tex02.bmp (256x256)</div>
+          <div class="opt-desc">#1 cliff on hu_fild05.gnd (8,470 wall cells) jagged limestone</div>
+        </div>
+        
+      </div>
+    </div>
+    
+    <div class="slot-card">
+      <div class="slot-header">
+        <span class="slot-title">16. cliff_sand / cliff — Desert & Coastal Sandstone Cliff</span>
+        <span class="slot-stages">Used in: Stages 3 (Morocc), 5 (Comodo)</span>
+      </div>
+      <div class="grid4">
+        <div class="opt-box current">
+          <div class="swatch-row">
+            <div class="swatch" style="background-image:url('tex/cur_cliff_sand.png')"><span class="badge">1x1</span></div>
+            <div class="swatch tile-target tiled" style="background-image:url('tex/cur_cliff_sand.png')"><span class="badge">Tiled</span></div>
+          </div>
+          <div class="opt-title">CURRENT v2 (Live Screenshot Crop)</div>
+          <div class="opt-kr">128×128 upscaled + mirror-blended</div>
+          <div class="opt-desc">110x110 screenshot crop (moc_fild04_2.jpg)</div>
+        </div>
+    
+        <div class="opt-box candidate">
+          <div class="swatch-row">
+            <div class="swatch" style="background-image:url('tex/mo-wall-01.png')"><span class="badge">1x1</span></div>
+            <div class="swatch tile-target tiled" style="background-image:url('tex/mo-wall-01.png')"><span class="badge">Tiled</span></div>
+          </div>
+          <div class="opt-title">Option A (Morocc Cliff Wall)</div>
+          <div class="opt-kr">필드바닥\mo-wall-01.bmp (256x256)</div>
+          <div class="opt-desc">Morocc stratified desert sandstone cliff wall</div>
+        </div>
+        
+        <div class="opt-box candidate">
+          <div class="swatch-row">
+            <div class="swatch" style="background-image:url('tex/comodo-jeol-byeok01.png')"><span class="badge">1x1</span></div>
+            <div class="swatch tile-target tiled" style="background-image:url('tex/comodo-jeol-byeok01.png')"><span class="badge">Tiled</span></div>
+          </div>
+          <div class="opt-title">Option B (Comodo Coastal Cliff)</div>
+          <div class="opt-kr">필드바닥\코모도절벽01.bmp (256x256)</div>
+          <div class="opt-desc">cmd_fild01.gnd & comodo.gnd warm coastal sandstone cliff</div>
+        </div>
+        
+        <div class="opt-box candidate">
+          <div class="swatch-row">
+            <div class="swatch" style="background-image:url('tex/moc_maen-ttang09.png')"><span class="badge">1x1</span></div>
+            <div class="swatch tile-target tiled" style="background-image:url('tex/moc_maen-ttang09.png')"><span class="badge">Tiled</span></div>
+          </div>
+          <div class="opt-title">Option C (Desert Mesa Slope)</div>
+          <div class="opt-kr">필드바닥\moc_맨땅09.bmp (256x256)</div>
+          <div class="opt-desc">moc_fild04.gnd eroded desert mesa cliff slope</div>
+        </div>
+        
+      </div>
+    </div>
+    
+    <div class="slot-card">
+      <div class="slot-header">
+        <span class="slot-title">17. riverbank_wall — Stone Embankment & Canal Wall</span>
+        <span class="slot-stages">Used in: Stages 4 (Payon), 7 (Amatsu)</span>
+      </div>
+      <div class="grid4">
+        <div class="opt-box current">
+          <div class="swatch-row">
+            <div class="swatch" style="background-image:url('tex/cur_riverbank_wall.png')"><span class="badge">1x1</span></div>
+            <div class="swatch tile-target tiled" style="background-image:url('tex/cur_riverbank_wall.png')"><span class="badge">Tiled</span></div>
+          </div>
+          <div class="opt-title">CURRENT v2 (Live Screenshot Crop)</div>
+          <div class="opt-kr">128×128 upscaled + mirror-blended</div>
+          <div class="opt-desc">80x80 screenshot crop (ama_fild01_2.jpg)</div>
+        </div>
+    
+        <div class="opt-box candidate">
+          <div class="swatch-row">
+            <div class="swatch" style="background-image:url('tex/il-bon-badak20.png')"><span class="badge">1x1</span></div>
+            <div class="swatch tile-target tiled" style="background-image:url('tex/il-bon-badak20.png')"><span class="badge">Tiled</span></div>
+          </div>
+          <div class="opt-title">Option A (Amatsu River Cobble)</div>
+          <div class="opt-kr">필드바닥\일본바닥20.bmp (256x256)</div>
+          <div class="opt-desc">amatsu.gnd stacked river cobble embankment wall</div>
+        </div>
+        
+        <div class="opt-box candidate">
+          <div class="swatch-row">
+            <div class="swatch" style="background-image:url('tex/il-bon-badak19.png')"><span class="badge">1x1</span></div>
+            <div class="swatch tile-target tiled" style="background-image:url('tex/il-bon-badak19.png')"><span class="badge">Tiled</span></div>
+          </div>
+          <div class="opt-title">Option B (Grass-Topped Cobble)</div>
+          <div class="opt-kr">필드바닥\일본바닥19.bmp (256x256)</div>
+          <div class="opt-desc">ama_fild01.gnd (1,053 wall cells) grass-rimmed river stone bank</div>
+        </div>
+        
+        <div class="opt-box candidate">
+          <div class="swatch-row">
+            <div class="swatch" style="background-image:url('tex/pe_smbr04.png')"><span class="badge">1x1</span></div>
+            <div class="swatch tile-target tiled" style="background-image:url('tex/pe_smbr04.png')"><span class="badge">Tiled</span></div>
+          </div>
+          <div class="opt-title">Option C (Payon Cut-Stone Wall)</div>
+          <div class="opt-kr">기타마을\pe_smbr04.bmp (256x128)</div>
+          <div class="opt-desc">payon.rsw bridge cut-stone retaining wall</div>
+        </div>
+        
+      </div>
+    </div>
+    
+    <div class="slot-card">
+      <div class="slot-header">
+        <span class="slot-title">18. bridge_planks — Wooden Bridge & Pier Planks</span>
+        <span class="slot-stages">Used in: Stages 1 (Izlude), 4 (Payon)</span>
+      </div>
+      <div class="grid4">
+        <div class="opt-box current">
+          <div class="swatch-row">
+            <div class="swatch" style="background-image:url('tex/cur_bridge_planks.png')"><span class="badge">1x1</span></div>
+            <div class="swatch tile-target tiled" style="background-image:url('tex/cur_bridge_planks.png')"><span class="badge">Tiled</span></div>
+          </div>
+          <div class="opt-title">CURRENT v2 (Live Screenshot Crop)</div>
+          <div class="opt-kr">128×128 upscaled + mirror-blended</div>
+          <div class="opt-desc">72x80 angled screenshot crop (izlude_3.jpg)</div>
+        </div>
+    
+        <div class="opt-box candidate">
+          <div class="swatch-row">
+            <div class="swatch" style="background-image:url('tex/adinship_01.png')"><span class="badge">1x1</span></div>
+            <div class="swatch tile-target tiled" style="background-image:url('tex/adinship_01.png')"><span class="badge">Tiled</span></div>
+          </div>
+          <div class="opt-title">Option A (Bolted Pier Planks)</div>
+          <div class="opt-kr">기타마을내부\adinship_01.bmp (128x128)</div>
+          <div class="opt-desc">Seamless bolted wooden pier & ship deck planks</div>
+        </div>
+        
+        <div class="opt-box candidate">
+          <div class="swatch-row">
+            <div class="swatch" style="background-image:url('tex/prt-bri-00.png')"><span class="badge">1x1</span></div>
+            <div class="swatch tile-target tiled" style="background-image:url('tex/prt-bri-00.png')"><span class="badge">Tiled</span></div>
+          </div>
+          <div class="opt-title">Option B (Lashed Log Bridge)</div>
+          <div class="opt-kr">외부소품\prt-bri-00.bmp (256x256)</div>
+          <div class="opt-desc">나무다리.rsm rope-lashed rustic wooden log bridge</div>
+        </div>
+        
+        <div class="opt-box candidate">
+          <div class="swatch-row">
+            <div class="swatch" style="background-image:url('tex/ch_tile02.png')"><span class="badge">1x1</span></div>
+            <div class="swatch tile-target tiled" style="background-image:url('tex/ch_tile02.png')"><span class="badge">Tiled</span></div>
+          </div>
+          <div class="opt-title">Option C (Weathered Planks)</div>
+          <div class="opt-kr">기타마을내부\ch_tile02.bmp (256x128)</div>
+          <div class="opt-desc">Louyang / Payon warm weathered timber planks</div>
+        </div>
+        
+      </div>
+    </div>
+    
+    <div class="slot-card">
+      <div class="slot-header">
+        <span class="slot-title">19. bridge_red — Amatsu Crimson Lacquer Bridge Deck</span>
+        <span class="slot-stages">Used in: Stage 7 (Amatsu)</span>
+      </div>
+      <div class="grid4">
+        <div class="opt-box current">
+          <div class="swatch-row">
+            <div class="swatch" style="background-image:url('tex/cur_bridge_red.png')"><span class="badge">1x1</span></div>
+            <div class="swatch tile-target tiled" style="background-image:url('tex/cur_bridge_red.png')"><span class="badge">Tiled</span></div>
+          </div>
+          <div class="opt-title">CURRENT v2 (Live Screenshot Crop)</div>
+          <div class="opt-kr">128×128 upscaled + mirror-blended</div>
+          <div class="opt-desc">60x60 screenshot crop (ama_fild01_1.jpg)</div>
+        </div>
+    
+        <div class="opt-box candidate">
+          <div class="swatch-row">
+            <div class="swatch" style="background-image:url('tex/japan_bottom02.png')"><span class="badge">1x1</span></div>
+            <div class="swatch tile-target tiled" style="background-image:url('tex/japan_bottom02.png')"><span class="badge">Tiled</span></div>
+          </div>
+          <div class="opt-title">Option A (Amatsu Redwood Deck)</div>
+          <div class="opt-kr">기타마을내부\japan_bottom02.bmp (128x128)</div>
+          <div class="opt-desc">Amatsu warm crimson-brown wood plank flooring</div>
+        </div>
+        
+        <div class="opt-box candidate">
+          <div class="swatch-row">
+            <div class="swatch" style="background-image:url('tex/jp_bridge01_deck.png')"><span class="badge">1x1</span></div>
+            <div class="swatch tile-target tiled" style="background-image:url('tex/jp_bridge01_deck.png')"><span class="badge">Tiled</span></div>
+          </div>
+          <div class="opt-title">Option B (Taiko-bashi Deck)</div>
+          <div class="opt-kr">기타마을\jp_bridge01.bmp (256x128)</div>
+          <div class="opt-desc">일본_다리1.rsm Amatsu arched bridge deck planks</div>
+        </div>
+        
+        <div class="opt-box candidate">
+          <div class="swatch-row">
+            <div class="swatch" style="background-image:url('tex/xmas_badak1.png')"><span class="badge">1x1</span></div>
+            <div class="swatch tile-target tiled" style="background-image:url('tex/xmas_badak1.png')"><span class="badge">Tiled</span></div>
+          </div>
+          <div class="opt-title">Option C (Cedar/Redwood Planks)</div>
+          <div class="opt-kr">기타마을내부\xmas_바닥1.bmp (256x256)</div>
+          <div class="opt-desc">Rich warm cedar/redwood plank deck</div>
+        </div>
+        
+      </div>
+    </div>
+    
+    <div class="slot-card">
+      <div class="slot-header">
+        <span class="slot-title">20. paddy_water — Louyang Shallow Pool & Stream Bed</span>
+        <span class="slot-stages">Used in: Stage 6 (Louyang)</span>
+      </div>
+      <div class="grid4">
+        <div class="opt-box current">
+          <div class="swatch-row">
+            <div class="swatch" style="background-image:url('tex/cur_paddy_water.png')"><span class="badge">1x1</span></div>
+            <div class="swatch tile-target tiled" style="background-image:url('tex/cur_paddy_water.png')"><span class="badge">Tiled</span></div>
+          </div>
+          <div class="opt-title">CURRENT v2 (Live Screenshot Crop)</div>
+          <div class="opt-kr">128×128 upscaled + mirror-blended</div>
+          <div class="opt-desc">Screenshot crop with @grid lines baked in!</div>
+        </div>
+    
+        <div class="opt-box candidate">
+          <div class="swatch-row">
+            <div class="swatch" style="background-image:url('tex/water200.png')"><span class="badge">1x1</span></div>
+            <div class="swatch tile-target tiled" style="background-image:url('tex/water200.png')"><span class="badge">Tiled</span></div>
+          </div>
+          <div class="opt-title">Option A (RO Water Type 2)</div>
+          <div class="opt-kr">워터\water200.jpg (128x128)</div>
+          <div class="opt-desc">Official RO water2 shallow jade-emerald lagoon water</div>
+        </div>
+        
+        <div class="opt-box candidate">
+          <div class="swatch-row">
+            <div class="swatch" style="background-image:url('tex/water500.png')"><span class="badge">1x1</span></div>
+            <div class="swatch tile-target tiled" style="background-image:url('tex/water500.png')"><span class="badge">Tiled</span></div>
+          </div>
+          <div class="opt-title">Option B (RO Water Type 5)</div>
+          <div class="opt-kr">워터\water500.jpg (128x128)</div>
+          <div class="opt-desc">Official RO water5 olive-ochre muddy paddy water</div>
+        </div>
+        
+        <div class="opt-box candidate">
+          <div class="swatch-row">
+            <div class="swatch" style="background-image:url('tex/myo-mul-badak-00.png')"><span class="badge">1x1</span></div>
+            <div class="swatch tile-target tiled" style="background-image:url('tex/myo-mul-badak-00.png')"><span class="badge">Tiled</span></div>
+          </div>
+          <div class="opt-title">Option C (Mossy Stream Bed)</div>
+          <div class="opt-kr">필드바닥\묘르닐물바닥-00.bmp (256x256)</div>
+          <div class="opt-desc">Mjolnir shallow mossy stream pebble bed</div>
+        </div>
+        
+      </div>
+    </div>
+    
+    <div class="slot-card">
+      <div class="slot-header">
+        <span class="slot-title">21. water_frame_0 & 1 — Animated Sea / River Caustics</span>
+        <span class="slot-stages">Used in: Stages 0, 1, 2, 3, 4, 5, 7</span>
+      </div>
+      <div class="grid4">
+        <div class="opt-box current">
+          <div class="swatch-row">
+            <div class="swatch" style="background-image:url('tex/cur_water_frame_0.png')"><span class="badge">1x1</span></div>
+            <div class="swatch tile-target tiled" style="background-image:url('tex/cur_water_frame_0.png')"><span class="badge">Tiled</span></div>
+          </div>
+          <div class="opt-title">CURRENT v2 (Live Screenshot Crop)</div>
+          <div class="opt-kr">128×128 upscaled + mirror-blended</div>
+          <div class="opt-desc">Cyan diamond grid screenshot crop!</div>
+        </div>
+    
+        <div class="opt-box candidate">
+          <div class="swatch-row">
+            <div class="swatch" style="background-image:url('tex/water000.png')"><span class="badge">1x1</span></div>
+            <div class="swatch tile-target tiled" style="background-image:url('tex/water000.png')"><span class="badge">Tiled</span></div>
+          </div>
+          <div class="opt-title">Option A (RO Water Type 0 Pair)</div>
+          <div class="opt-kr">워터\water000.jpg + water004.jpg (128x128)</div>
+          <div class="opt-desc">Official RO Type 0 water (Prontera, Izlude, Geffen, Morocc, Payon, Comodo)</div>
+        </div>
+        
+        <div class="opt-box candidate">
+          <div class="swatch-row">
+            <div class="swatch" style="background-image:url('tex/water100.png')"><span class="badge">1x1</span></div>
+            <div class="swatch tile-target tiled" style="background-image:url('tex/water100.png')"><span class="badge">Tiled</span></div>
+          </div>
+          <div class="opt-title">Option B (RO Water Type 1 Pair)</div>
+          <div class="opt-kr">워터\water100.jpg + water104.jpg (128x128)</div>
+          <div class="opt-desc">Official RO Type 1 water (prt_fild08, lou_fild01, hu_fild05)</div>
+        </div>
+        
+        <div class="opt-box candidate">
+          <div class="swatch-row">
+            <div class="swatch" style="background-image:url('tex/water200.png')"><span class="badge">1x1</span></div>
+            <div class="swatch tile-target tiled" style="background-image:url('tex/water200.png')"><span class="badge">Tiled</span></div>
+          </div>
+          <div class="opt-title">Option C (RO Water Type 2 Pair)</div>
+          <div class="opt-kr">워터\water200.jpg + water204.jpg (128x128)</div>
+          <div class="opt-desc">Official RO Type 2 water (bright tropical turquoise)</div>
+        </div>
+        
+      </div>
+    </div>
+    
+    <div class="slot-card">
+      <div class="slot-header">
+        <span class="slot-title">22. water_dark_0 & 1 — Animated Abyssal / Dark Water</span>
+        <span class="slot-stages">Used in: Stage 9 (Abyss Lake)</span>
+      </div>
+      <div class="grid4">
+        <div class="opt-box current">
+          <div class="swatch-row">
+            <div class="swatch" style="background-image:url('tex/cur_water_dark_0.png')"><span class="badge">1x1</span></div>
+            <div class="swatch tile-target tiled" style="background-image:url('tex/cur_water_dark_0.png')"><span class="badge">Tiled</span></div>
+          </div>
+          <div class="opt-title">CURRENT v2 (Live Screenshot Crop)</div>
+          <div class="opt-kr">128×128 upscaled + mirror-blended</div>
+          <div class="opt-desc">Dark screenshot crops with grid lines</div>
+        </div>
+    
+        <div class="opt-box candidate">
+          <div class="swatch-row">
+            <div class="swatch" style="background-image:url('tex/water300.png')"><span class="badge">1x1</span></div>
+            <div class="swatch tile-target tiled" style="background-image:url('tex/water300.png')"><span class="badge">Tiled</span></div>
+          </div>
+          <div class="opt-title">Option A (RO Water Type 3 Pair)</div>
+          <div class="opt-kr">워터\water300.jpg + water304.jpg (128x128)</div>
+          <div class="opt-desc">Official RO Type 3 water (ama_fild01 & deep indigo dungeons)</div>
+        </div>
+        
+        <div class="opt-box candidate">
+          <div class="swatch-row">
+            <div class="swatch" style="background-image:url('tex/water100.png')"><span class="badge">1x1</span></div>
+            <div class="swatch tile-target tiled" style="background-image:url('tex/water100.png')"><span class="badge">Tiled</span></div>
+          </div>
+          <div class="opt-title">Option B (RO Water Type 1 Pair)</div>
+          <div class="opt-kr">워터\water100.jpg + water104.jpg (128x128)</div>
+          <div class="opt-desc">Official RO Type 1 water (actual hu_fild05.rsw Abyss Lake water)</div>
+        </div>
+        
+        <div class="opt-box candidate">
+          <div class="swatch-row">
+            <div class="swatch" style="background-image:url('tex/water800.png')"><span class="badge">1x1</span></div>
+            <div class="swatch tile-target tiled" style="background-image:url('tex/water800.png')"><span class="badge">Tiled</span></div>
+          </div>
+          <div class="opt-title">Option C (RO Water Type 8 Swamp)</div>
+          <div class="opt-kr">워터\water800.jpg (128x128)</div>
+          <div class="opt-desc">Official RO Type 8 water (murky green algae swamp)</div>
+        </div>
+        
+      </div>
+    </div>
+    
+  </div>
+
+  <div id="tab-stageboard" style="display:none">
+    <h2>All 10 Stages Side-by-Side Simulated Field Composite (Current v2 vs. Authentic Data.grf)</h2>
+    <p class="sub">Left column shows the current live Map Kit v2 (128×128 screenshot crops); right column shows the exact same stage palette rendered with authentic 256×256 <code>Data.grf</code> <code>.bmp</code> &amp; <code>.jpg</code> textures.</p>
+    <div class="boards-grid">
+      <img src="board-3-10-stages-simulated-fields.png" alt="All 10 Stages Simulated Fields">
+    </div>
+  </div>
+
+  <div id="tab-water" style="display:none">
+    <h2>All 10 Official Ragnarok Online Animated Water Texture Families (data/texture/워터/water000..931.jpg)</h2>
+    <p class="sub">Top row animates live every 550ms (matching <code>index.html</code>'s <code>kitWaterMeshes</code> timer) between Frame 0 and Frame 4 of the official RO <code>.rsw</code> water sets.</p>
+    <div class="water-strip">
+      <div class="water-card">
+        <div class="swatch tiled anim-water" data-f0="tex/water000.png" data-f1="tex/water004.png" style="background-image:url('tex/water000.png')"><span class="badge">LIVE 2x2</span></div>
+        <div class="opt-title" style="color:var(--blue)">Type 0 (water000 + 004)</div>
+        <div class="opt-desc">Prontera, Izlude, Geffen, Morocc, Payon, Comodo</div>
+      </div>
+      <div class="water-card">
+        <div class="swatch tiled anim-water" data-f0="tex/water100.png" data-f1="tex/water104.png" style="background-image:url('tex/water100.png')"><span class="badge">LIVE 2x2</span></div>
+        <div class="opt-title" style="color:var(--blue)">Type 1 (water100 + 104)</div>
+        <div class="opt-desc">prt_fild08, lou_fild01, hu_fild05 (Abyss Lake)</div>
+      </div>
+      <div class="water-card">
+        <div class="swatch tiled anim-water" data-f0="tex/water200.png" data-f1="tex/water204.png" style="background-image:url('tex/water200.png')"><span class="badge">LIVE 2x2</span></div>
+        <div class="opt-title" style="color:var(--blue)">Type 2 (water200 + 204)</div>
+        <div class="opt-desc">Bright Tropical Lagoon / Shallow Pool</div>
+      </div>
+      <div class="water-card">
+        <div class="swatch tiled anim-water" data-f0="tex/water300.png" data-f1="tex/water304.png" style="background-image:url('tex/water300.png')"><span class="badge">LIVE 2x2</span></div>
+        <div class="opt-title" style="color:var(--blue)">Type 3 (water300 + 304)</div>
+        <div class="opt-desc">ama_fild01 &amp; Deep Indigo Cavern Water</div>
+      </div>
+      <div class="water-card">
+        <div class="swatch tiled anim-water" data-f0="tex/water500.png" data-f1="tex/water504.png" style="background-image:url('tex/water500.png')"><span class="badge">LIVE 2x2</span></div>
+        <div class="opt-title" style="color:var(--blue)">Type 5 (water500 + 504)</div>
+        <div class="opt-desc">Louyang Paddy / Olive Marsh Water</div>
+      </div>
+      <div class="water-card">
+        <div class="swatch tiled" style="background-image:url('tex/water400.png')"><span class="badge">2x2</span></div>
+        <div class="opt-title" style="color:var(--gold)">Type 4 (water400)</div>
+        <div class="opt-desc">Magma Dungeon Lava</div>
+      </div>
+      <div class="water-card">
+        <div class="swatch tiled" style="background-image:url('tex/water600.png')"><span class="badge">2x2</span></div>
+        <div class="opt-title" style="color:var(--gold)">Type 6 (water600)</div>
+        <div class="opt-desc">Thor Volcano Crusted Lava</div>
+      </div>
+      <div class="water-card">
+        <div class="swatch tiled" style="background-image:url('tex/water700.png')"><span class="badge">2x2</span></div>
+        <div class="opt-title" style="color:var(--gold)">Type 7 (water700)</div>
+        <div class="opt-desc">Niflheim / Arcane Violet Water</div>
+      </div>
+      <div class="water-card">
+        <div class="swatch tiled" style="background-image:url('tex/water800.png')"><span class="badge">2x2</span></div>
+        <div class="opt-title" style="color:var(--gold)">Type 8 (water800)</div>
+        <div class="opt-desc">Glast Heim / Algae Canal Water</div>
+      </div>
+      <div class="water-card">
+        <div class="swatch tiled" style="background-image:url('tex/water900.png')"><span class="badge">2x2</span></div>
+        <div class="opt-title" style="color:var(--gold)">Type 9 (water900)</div>
+        <div class="opt-desc">Ochre Mud / Rust Water</div>
+      </div>
+    </div>
+  </div>
+
+  <div id="tab-boards" style="display:none">
+    <h2>Full High-Resolution Comparison Boards</h2>
+    <div class="boards-grid">
+      <img src="board-1-terrain-roads-sands.png" alt="Board 1">
+      <img src="board-2-biomes-cliffs-bridges-water.png" alt="Board 2">
+      <img src="board-3-10-stages-simulated-fields.png" alt="Board 3">
+    </div>
+  </div>
+
+<script>
+  function showTab(id, btn) {
+    ['ro3', 'interactive', 'stageboard', 'water', 'boards'].forEach(t => {
+      document.getElementById('tab-' + t).style.display = (t === id) ? 'block' : 'none';
+    });
+    btn.parentElement.querySelectorAll('button').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+  }
+  function setTileScale(cls, btn) {
+    document.querySelectorAll('.tile-target').forEach(el => {
+      el.classList.remove('tiled', 'tiled3');
+      el.classList.add(cls);
+    });
+    btn.parentElement.querySelectorAll('button').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+  }
+  let wf = 0;
+  setInterval(() => {
+    wf ^= 1;
+    document.querySelectorAll('.anim-water').forEach(el => {
+      el.style.backgroundImage = `url('${wf ? el.dataset.f1 : el.dataset.f0}')`;
+    });
+  }, 550);
+</script>
+</body>
+</html>
