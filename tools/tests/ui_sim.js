@@ -311,7 +311,10 @@ t('the 3D view pinch-zooms on touch and still wheel-zooms on a mouse', () => {
   const code = grab('let drag=null;const dom=R.domElement;', '\n// Keep the character near the visual centre');
   const handlers = {};
   const domEl = { addEventListener: (n, f) => { (handlers[n] = handlers[n] || []).push(f) }, setPointerCapture() {}, releasePointerCapture() {} };
-  const box = { R: { domElement: domEl }, Math, console };
+  // v68's merge: the same pointer block now also carries the town's tap-to-walk and its wider zoom
+  // clamp, so the harness stands the town's hooks in (the town itself is town_smoke's job). With no
+  // town scene loaded the clamp is the field's 0.6 floor, which is what this test measures.
+  const box = { R: { domElement: domEl }, Math, console, TOWN: {}, townOn: () => false, townHover() {}, townClick() {} };
   vm.createContext(box);
   vm.runInContext('let az=0,el=.8,zoom=1;\n' + code + '\n;this.__cam=()=>({az,el,zoom})', box);
   const cam = () => box.__cam();

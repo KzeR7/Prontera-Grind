@@ -4691,3 +4691,53 @@ The owner's second pass over v77, six notes, all built.
   milestone chests should also pay on a *practice* run (they do not, by design), and the trial's
   **global** board - the personal best is live, but a server-side DPS board needs a `dps` metric on
   `functions/api/board.js` and a D1 migration (the existing board is kills-only).
+
+### 2026-10-08 — `2026-10-08 grind-v77.2 flat trial payout, store re-anchored on a daily payout, and the HD Prontera town`
+
+* **Three owner notes, one build.** (1) *"new personal best dont pay at endless. with or without new
+  personal best pays out a daily number"* — the payout is flat; (2) *"the daily payout should be able
+  to buy 30 ori or elu, card mastery maybe need 2 days. & nightmare needs around 2k"* — the Shard Store
+  is priced off one day of ranked pay; (3) *"the new map is already in my main. i merge already"* —
+  his own **HD Prontera Town** line came in through a real merge this build (below).
+* **The payout is one number per run.** `TRIAL_BEST_BONUS=15` is deleted — `trialFinish()` now reads
+  `if(dps>st.best){best=true;st.best=dps}`: the record still moves the board and the next-rung prompt,
+  the Shards do not. `trialLadderText()` says the pay is flat, and the result screen prints
+  `· new personal best` where it used to print `(includes the +15 new-best bonus)`. The ladder rungs
+  themselves are untouched (`100k→5 … 4.5M→115`), so the top of the economy is unchanged for a repeat
+  run and *lower* for a record run: a top day is **2 × 115 = 230** Shards, not 130 + 115 = 245.
+* **The store, priced off that day** — one day = the two ranked runs at the top rung = 230 Shards:
+  Oridecon x5 / Elunium x5 stay **38** (six bundles = 228 = the thirty he asked for), 500k Zeny stays
+  **25**, Card Mastery Token 250 → **460** (exactly two days), Legendary Card Voucher 450 → **900**,
+  Nightmare Gear Token 900 → **2,000** with the **Base Lv 120** gate unchanged (≈8.7 days of top pay).
+  The tiering order he asked for holds: card < legendary < nightmare.
+* **The town merge is a real divergence, not a fast-forward.** `origin/main` was 216 commits ahead
+  (PR #32: v74 way-in, v75 water, v76 square, v77 gate — the town line; none of it had my v74.1 phone
+  pass, v75 pets, v76 Nightmare band or v77/v77.1 trial). Merged as `31dac12`; 43 files, +3791/−39,
+  conflicts in 7 files — `index.html` (9 hunks), `AGENTS.md`, `READ-ME-FIRST.md`, `.gitignore`,
+  `affix-ranges.html`, `equipment-cards-tuning.html`, `cloudflare-deploy-steps.md`.
+* **What the resolution had to get right:** the fields' stage band keeps the **15-node ladder**
+  (stages 1-10 + the Nightmare 11-15) — main's grid still had 10; the trial card and the town card are
+  both in the map grid; entering either scene refuses the other (`trialEnter` leaves town,
+  `townEnter` refuses during a run); the pointer block carries the v74.1 pinch **and** the town's
+  tap-to-walk; `draw()` keeps my `rarIdx` tints, main's `townGroundY()` hero height and the trial's own
+  sky/fog. Two regressions the suites caught during the merge and fixed the same session: the field
+  hint had lost `or pinch` (ui_sim's phone pin), and the hero stood at y=0 in town instead of on the
+  town ground (found by comparing main's draw lines against the merged file). `TOWN_OPEN` is still
+  `false`: the town stays locked in-game until the owner opens it.
+* **The town's own tooling arrives with it** — `assets/town/town-atlas.{png,json}` (9.6 MB), the
+  `Updates/town-hd/` boards, `tools/make_town_pack.py --check` (needs pillow) and
+  `tools/tests/town_smoke.js` (jsdom + three r128, installed with `npm i --no-save`).
+* **Tests:** all **36** `*_sim.js` suites green, plus `town_smoke` **40/40** — **37 suites**. Repriced
+  pins: `trial_sim` 16 (new test *"the store is priced off a day of ranked pay"* proves 230/day buys
+  exactly 30 ore and that the token prices are 2 days / 2k; the old `5 + 15` pins became `5`, and the
+  constants test now asserts `TRIAL_BEST_BONUS` is undefined); `ui_sim` 49 (its pinch harness stubs the
+  town hooks main's merge added to the same pointer block); `town_smoke`'s stage-count pin 10 → 15.
+  All four asset `--check` tools pass (sprite viewer, class skins, weapon pack, town pack).
+* **Files touched:** `index.html` (BUILD, `TRIAL_BEST_BONUS` removed, `trialFinish`, `trialLadderText`,
+  the result line, `TRIAL_STORE` + its comment), `tools/tests/{trial_sim,ui_sim,town_smoke}.js`,
+  `AGENTS.md`, `READ-ME-FIRST.md`, `Updates/{endgame-and-dps-trial-plan.md,
+  cards-gear-audit/affix-ranges.html,cards-gear-audit/equipment-cards-tuning.html}` (the last one via
+  `drop_card_sheet_sim.js --refresh-snapshot`), `tools/cloudflare-deploy-steps.md`.
+* **Still the owner's call:** the dungeon's real name (Endless Echo is a placeholder), the chest rungs
+  (250k…4.5M DPS, unchanged this build) and the **global** DPS board (needs a `dps` metric on
+  `functions/api/board.js` + a D1 migration; the personal best is local today).

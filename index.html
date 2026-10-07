@@ -457,7 +457,7 @@ button.tick.on{background:#ffe08a;border-color:var(--gold);font-weight:bold}
 <div id="saveTools" style="margin-top:6px;font-size:11px;text-align:center;opacity:.9"><a href="#" id="saveDl" title="Download every character saved in this browser as one file">⬇ Back up saves</a><span style="opacity:.5"> · </span><a href="#" id="saveUp" title="Load a backup file made by this button, on any address">⬆ Restore a backup</a><input type="file" id="saveFile" accept=".json,application/json" style="display:none"></div>
 <div id="buildTag" style="margin-top:6px;font-size:10px;opacity:.55;text-align:center"></div></div></div>
 <div id="wrap"><div class="title"><span id="stageTitle">Prontera Lv 1</span><span id="grindStatus" style="font-size:12px;opacity:.85"></span></div>
-<div id="view"><div id="ov"><div id="mobSpriteLayer" aria-hidden="true"></div><div id="weaponSpriteLayer" aria-hidden="true"></div><div id="npcLayer" aria-hidden="true"></div><div id="prog"></div><div id="tag"><b id="tn"></b><div class="bar"><i id="th" style="background:var(--hp)"></i></div></div><div id="heroTitle" class="hero-title" aria-live="polite"><span id="heroTitleMark" class="ht-mark" aria-hidden="true"></span><span id="heroTitleText"></span></div><div id="hint">Drag to rotate &middot; Scroll to zoom</div><div id="feedWrap"><div id="feedFilter" role="group" aria-label="Log filter"></div><div id="feedTabs"><button id="feedTab" type="button" aria-expanded="true" aria-controls="feed" title="Minimize or show the on-screen log">📃 Logs ▾</button><button id="feedFil" type="button" aria-expanded="false" aria-controls="feedFilter" aria-label="Filter the on-screen log" title="Filter the log - this row folds away by itself">▽</button></div><div id="feed"></div></div><div id="hudBuffs" role="status" aria-live="polite" aria-label="Active pet buffs - hover an icon for what it does"></div><div id="qp"></div><div id="dock"></div>
+<div id="view"><div id="ov"><div id="mobSpriteLayer" aria-hidden="true"></div><div id="weaponSpriteLayer" aria-hidden="true"></div><div id="npcLayer" aria-hidden="true"></div><div id="prog"></div><div id="tag"><b id="tn"></b><div class="bar"><i id="th" style="background:var(--hp)"></i></div></div><div id="heroTitle" class="hero-title" aria-live="polite"><span id="heroTitleMark" class="ht-mark" aria-hidden="true"></span><span id="heroTitleText"></span></div><div id="hint">Drag to rotate &middot; Scroll or pinch to zoom</div><div id="feedWrap"><div id="feedFilter" role="group" aria-label="Log filter"></div><div id="feedTabs"><button id="feedTab" type="button" aria-expanded="true" aria-controls="feed" title="Minimize or show the on-screen log">📃 Logs ▾</button><button id="feedFil" type="button" aria-expanded="false" aria-controls="feedFilter" aria-label="Filter the on-screen log" title="Filter the log - this row folds away by itself">▽</button></div><div id="feed"></div></div><div id="hudBuffs" role="status" aria-live="polite" aria-label="Active pet buffs - hover an icon for what it does"></div><div id="qp"></div><div id="dock"></div>
 <div id="wins"></div><div id="npcBox" role="dialog" aria-modal="false" aria-labelledby="nbName"><div id="nbTop"><canvas id="nbFace" width="74" height="78" aria-hidden="true"></canvas><span><b id="nbName"></b><span id="nbTitle"></span></span></div><div id="nbBody"></div><div id="nbActs"></div></div></div></div>
 <div id="hud"><div><b id="cls2"></b> <span id="titleLabel" class="title-hud hud-title-mirror" aria-hidden="true" style="display:none"></span> Base Lv <b id="lv">1</b> / Job Lv <b id="jl">1</b></div>
 <div class="hud-health">HP <div class="bar" role="meter" aria-label="HP" aria-valuemin="0" aria-valuemax="100" id="hpMeter"><i id="hpb"></i></div><small id="hpPct">100%</small></div>
@@ -1212,7 +1212,10 @@ const NMHP=48,NMATK=2,NMEXP=4,NMZENY=4,NMBOSSHP=48;
 // unlimited practice, ranked attempts capped at 2 a day, and a popup on entry asking for
 // ranked (with the tries left) / training / the Shard Store. The character and the dummy
 // stand still for the whole run - this is a measurement, not a fight.
-const TRIAL_SECS=300,TRIAL_RANKED_PER_DAY=2,TRIAL_BEST_BONUS=15;
+const TRIAL_SECS=300,TRIAL_RANKED_PER_DAY=2;
+// v77.2 (owner): "new personal best dont pay at endless. with or without new personal best pays out a
+// daily number" - a run pays its own ladder rung and nothing else. A new best still moves the board
+// and the next-rung prompt; it does not move the Shards.
 // v77.1 (owner): "if leave within 10sec after enter doesnt minus the try count. after it counted as
 // -1" - leaving a ranked run inside this grace window gives the try back; after it, the try is spent
 // whether the five minutes finished or not (and nothing is paid for a run that did not finish).
@@ -1233,7 +1236,7 @@ const TRIAL_PAY=[[100000,5],[250000,12],[500000,20],[750000,28],[1000000,36],[15
 const trialShardsFor=dps=>{let v=0;for(const[at,pay]of TRIAL_PAY)if(dps>=at)v=pay;return v};
 const trialPayNext=()=>{const st=trialState();return TRIAL_PAY.find(([at])=>at>st.best)||null};
 const trialShortDps=n=>n>=1e6?(Math.round(n/1e4)/100)+'M':(n>=1e3?Math.round(n/1e3)+'k':String(Math.round(n)));
-const trialLadderText=()=>'Shard ladder by DPS: '+TRIAL_PAY.map(([at,pay])=>trialShortDps(at)+' -> '+pay).join(' \u00b7 ')+' \u00b7 +'+TRIAL_BEST_BONUS+' on a new best.';
+const trialLadderText=()=>'Shard ladder by DPS: '+TRIAL_PAY.map(([at,pay])=>trialShortDps(at)+' -> '+pay).join(' \u00b7 ')+' \u00b7 flat pay - a new personal best pays the same run as any other.';
 // One-off chests (owner: "the store price & chests should be readjust for endless"), claimed in order
 // the first time a ranked run reaches the mark, so one huge run can open several at once. The two
 // named rungs are his own yardsticks: 1.5M is a fully decked Lv 150 character on its own, 4.5M is that
@@ -1257,16 +1260,18 @@ function trialGrantChest(c){
 // Prices follow the new ladder (owner: "daily join 2 times should be enough to purchase around 30 ori
 // or elu, card token mastery should be harder to get even harder for legendary then nightmare. for the
 // nightmare gear token should be very difficult and lock only to be purchase above 120level").
-// Worked against a fully petted Lv 150 run at ~4.5M DPS (~115 Shards, so ~230-260 in two ranked
-// days): 30 Ori is ~6 bundles, and the Card Mastery Token / Legendary Card / Nightmare token are
-// one, two and four days of the whole daily allowance. Ore is the steady buy; the rest is a save-up.
+// v77.2 (owner): "the daily payout should be able to buy 30 ori or elu, card mastery maybe need 2
+// days. & nightmare needs around 2k" - one day is the two ranked runs at the top rung, 2 x 115 = 230
+// Shards. 30 Ori is six 5-bundles at 38 = 228, so a good day buys the thirty exactly; the Card
+// Mastery Token is two days (460), the Legendary voucher four (900) and the Nightmare token the far
+// save (2,000 - about nine good days). Ore is the steady buy; the other three are save-ups.
 const TRIAL_STORE=[
-  {id:'ori',   c:38,  n:'Oridecon x5',              d:'Refine weapons (+1 to +10). Two good ranked days buy about thirty.'},
-  {id:'elu',   c:38,  n:'Elunium x5',               d:'Refine armour, shield, headgear, legs and accessories.'},
+  {id:'ori',   c:38,  n:'Oridecon x5',              d:'Refine weapons (+1 to +10). One good ranked day buys thirty - six bundles.'},
+  {id:'elu',   c:38,  n:'Elunium x5',               d:'Refine armour, shield, headgear, legs and accessories. The same 38 a bundle.'},
   {id:'zeny',  c:25,  n:'Zeny Cache (500,000z)',    d:'Straight into the purse - refine bills at Base Lv 150 are not small.'},
-  {id:'token', c:250, n:'Card Mastery Token',       d:'One permanent-stat roll in the Index, no duplicate card needed.'},
-  {id:'lcard', c:450, n:'Legendary Card Voucher',   d:'A random Legendary card from the trial chest.'},
-  {id:'nmgear',c:900, n:'Nightmare Gear Token',     d:'Pick a map and take one Nightmare item from its row.',lv:120},
+  {id:'token', c:460, n:'Card Mastery Token',       d:'One permanent-stat roll in the Index, no duplicate card needed. About two good ranked days.'},
+  {id:'lcard', c:900, n:'Legendary Card Voucher',   d:'A random Legendary card from the trial chest. Two steps above the Card Token.'},
+  {id:'nmgear',c:2000,n:'Nightmare Gear Token',     d:'Pick a map and take one Nightmare item from its row. The long save - about nine good days.',lv:120},
 ];
 const trialState=()=>{
   if(!S.trial||typeof S.trial!=='object')S.trial={day:trialDay(),used:0,best:0,runs:0,chest:0};
@@ -1332,7 +1337,7 @@ function trialResultHtml(){
     ${r.quit?`<p>You left after <b>${r.ran}s</b>: one of today's ranked tries is used and nothing is paid. Leave inside the first ${TRIAL_GRACE} seconds and the try is not spent.</p>`
       :(r.chests&&r.chests.length?`<p><b>Chest${r.chests.length>1?'s':''} opened:</b> ${r.chests.map(([at,c])=>`<b>${at.toLocaleString()} DPS</b> - ${trialChestText(c)}`).join(' · ')}</p>`:'')}
     <p>${r.quit?'':r.mode==='ranked'
-      ? `Pays <b>${r.shards} Shards</b>${r.best?` (includes the +${TRIAL_BEST_BONUS} new-best bonus)`:''}. Ranked runs left today: <b>${trialLeftToday()}/2</b>.`
+      ? `Pays <b>${r.shards} Shards</b>${r.best?' \u00b7 new personal best':''}. Ranked runs left today: <b>${trialLeftToday()}/2</b>.`
       : 'Practice run: nothing saved, nothing spent. Ranked pays Shards and sets your best.'}</p>
     <div class="trial-foot">
       ${trialLeftToday()&&r.mode==='ranked'?`<button data-trial="ranked">Run again</button>`:''}
@@ -1390,7 +1395,7 @@ function trialFinish(){
   let shards=0,best=false;const chests=[];
   if(TRIAL.mode==='ranked'){
     shards=trialShardsFor(dps);
-    if(dps>st.best){best=true;shards+=TRIAL_BEST_BONUS;st.best=dps}
+    if(dps>st.best){best=true;st.best=dps}   // v77.2: the record moves, the payout does not
     st.used=(st.used|0)+1;st.runs=(st.runs|0)+1;
     // one-off chests, lowest rung first, so a single big run opens everything it has passed
     while((st.chest|0)<TRIAL_CHESTS.length&&dps>=TRIAL_CHESTS[st.chest|0][0]){
@@ -6549,7 +6554,7 @@ function townEnterScene(){
 }
 function townLeaveScene(){
   townScene(0);lastKey='';                     // the field's own branch rebuilds it on the next frame
-  $('hint').textContent='Drag to rotate · Scroll to zoom';
+  $('hint').textContent='Drag to rotate · Scroll or pinch to zoom';
   R.domElement.style.cursor='';
   TOWN.marker.visible=false;TOWN.markerT=0;
   for(const n of TOWN.list)if(n.tag)n.tag.style.display='none';
@@ -6863,7 +6868,7 @@ function draw(){
     // built on the way in and the real field is rebuilt on the way out - exactly like a map move.
     if(TRIAL.on){const col=new THREE.Color(0x2a1040);scene.background=col;scene.fog=new THREE.Fog(col,26,64);ground.material.color.setHex(0x2f2338);trialArena()}
     else{const col=new THREE.Color(bn?0x8a6bb0:mp.sky);scene.background=col;scene.fog=new THREE.Fog(col,35,80);ground.material.color.setHex(mp.ground);buildDeco(S.mp);road.material.color.setHex(S.mp===3?0xe9d9a8:0xd8cdb4)}}
-  P.position.set(pl.x,0,pl.z);
+  P.position.set(pl.x,townOn()?townGroundY(pl.x,pl.z):0,pl.z);
   const w=S.eq.weapon,wt=heroWeaponType(c.n,c.wt,w&&w.wt),clothN=S.eq.armor?TC[rarIdx(S.eq.armor)]:c.col,hairN=S.eq.head?TC[rarIdx(S.eq.head)]:0xd0492c,metalN=w?TC[rarIdx(w)]:0xc0c0c0;
   ensureHero({cls:c.n,cloth:hx(clothN),clothN,cape:c.cape?hx(c.cape):'',hair:hx(hairN),hairN,hat:c.hat?hx(c.hat):'',wt,metal:hx(metalN),skin:'#ffd2a8',look:lookOf(c.n),tier:c.tier||0,sex:S.sex||'m',hair:S.hair|0,shield:!!(S.eq.off&&S.eq.off.slot==='off')});
   const pFace=mob?Math.atan2(mob.z-pl.z,mob.x-pl.x):pl.run?-pl.ry: -az+Math.PI;

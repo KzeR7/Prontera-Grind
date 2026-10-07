@@ -80,6 +80,49 @@ is the live one; with no argument the tool prints how to set a new one). Since v
 `GM` / `test1234`; `localStorage.removeItem('pg_gm_local')` removes it. Normal accounts are made
 in-game and stored in the browser (`pg_acc4`; saves under `pg_save3_<user>`).
 
+## BUILD v77.2 — the trial pays a flat number, the store is priced on a day's pay, and your HD town is in
+
+Your three notes, all built — and the town you merged yourself is in the build too.
+
+* **A new personal best pays nothing extra.** *"new personal best dont pay at endless. with or without
+  new personal best pays out a daily number."* The +15 bonus is gone from the code, not just hidden:
+  a ranked run pays its ladder rung and that is the whole payout. The ladder itself is untouched
+  (100k → 5 Shards, 1.5 M → 50, 4.5 M → **115**), the record still sets your **personal best** on the
+  screen and the board, and the result screen now just notes *new personal best* next to the number
+  instead of adding to it. A perfect day is therefore **2 × 115 = 230 Shards** — earning it once is no
+  longer worth 130.
+* **The store is priced off that day** — one day = the day's two ranked runs at the top rung = **230
+  Shards**:
+
+  | Buy | Price | What a day of top pay gets you |
+  |---|---|---|
+  | Oridecon ×5 | **38** | six bundles = **228 → exactly the 30 you asked for** |
+  | Elunium ×5 | **38** | the same 30 |
+  | Zeny Cache (500,000z) | **25** | nine caches, ~4.5 M Zeny |
+  | Card Mastery Token | **460** | **two days** |
+  | Legendary Card Voucher | **900** | four days |
+  | Nightmare Gear Token | **2,000** | the long save — about nine days, still **Base Lv 120+** |
+
+  The order you set stands: card < legendary < nightmare. Ore stays the steady buy; the three tokens
+  are save-ups.
+* **Prontera Town is in this build — locked, as you asked.** Your town line was merged in (216 commits
+  of it: the walled way in, the sunken river, the paved square, the gate). The World Map tab's grid now
+  holds its card beside the ten fields and the purple **Endless Echo** card; while it is shut the card
+  is dashed and says so, and there is no way in. **To open it: set `TOWN_OPEN` to `true`, bump `BUILD`,
+  push** — nothing else in the gate changes. (GM accounts and the save-flag bypass already walk in, so
+  you can look at it without opening it to players.)
+* **The merge had to protect the game you already have**, and the suites caught two things it nearly
+  broke: the phone pinch-zoom hint and a hero standing at y=0 inside the town instead of on its ground.
+  Both fixed, plus the fields' stage ladder stayed at **15 nodes** (10 + the Nightmare band) rather than
+  the older 10 the town branch still carried. The trial and the town now refuse each other politely:
+  walking into one leaves the other.
+* **Tests:** all **36** `_sim` suites green, and the town's own smoke test **40/40** — 37 suites in
+  total, plus the four art `--check` tools. The trial suite grew a test that proves the store's
+  arithmetic above (230/day → exactly 30 ore, the tokens at two days and 2k).
+* **Still your call:** the dungeon's real name (Endless Echo is a placeholder), the chest rungs, and the
+  **global** DPS board — the personal best is local today; a shared board wants a `dps` column and a
+  small database migration, which is a build of its own.
+
 ## BUILD v77.1 — the trial's economy, the band's sting, and the ten-second grace
 
 Your six notes on the v77 trial, all built. **The trial and Nightmare figures below replace the v77

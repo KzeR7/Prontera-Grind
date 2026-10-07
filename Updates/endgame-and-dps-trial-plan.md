@@ -20,6 +20,19 @@
 > still a placeholder (the chests are built now: seven rungs, 250k to 4.5M DPS) — both wait on the
 > owner. See the v77 entry in `AGENTS.md` and the `## BUILD v77` section in `READ-ME-FIRST.md`.
 >
+> **UPDATE — 2026-10-08 (v77.2).** The payout is now **flat**: the owner reversed the personal-best
+> bonus (*"new personal best dont pay at endless. with or without new personal best pays out a daily
+> number"*), so `TRIAL_BEST_BONUS` is deleted and a run pays its ladder rung and nothing else — the
+> record still moves the board. He then anchored the store on a day of that pay: *"the daily payout
+> should be able to buy 30 ori or elu, card mastery maybe need 2 days. & nightmare needs around 2k"*.
+> One day = 2 x 115 = **230 Shards**, so Oridecon/Elunium x5 stay **38** (six bundles = 228 = the
+> thirty), 500k Zeny stays **25**, Card Mastery Token 250 -> **460 (two days)**, Legendary Card
+> Voucher 450 -> **900**, Nightmare Gear Token 900 -> **2,000** (Base Lv 120+ unchanged). The same
+> build merged the owner's own **HD Prontera Town** line (`origin/main`, PR #32 — 216 commits, PR #31
+> now carries both lines); the town card sits in the map grid and **`TOWN_OPEN` is still `false`**,
+> so it is locked in-game until he opens it.
+*The two owner reports below are the design work this plan started from.*
+
 > The draft below predates it: the trial dungeon was **not built** at the time of writing. The owner has since set the rules that supersede the
 > draft in section 3: **5-minute runs** (not 60s), unlimited practice, the dummy does not hit back,
 > and **2 ranked attempts a day**. Endorsed rewards: titles, Trial Shards, a weekly season, a
