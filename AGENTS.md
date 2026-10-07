@@ -3942,3 +3942,41 @@ assigned for feel rather than fidelity. While reworking that, two shipped bugs s
 * **Preview boards & verification (`Updates/map-textures-preview/`):** `board-6-hd-option-b-zoom-comparison.png`, `board-7-hd-all-10-stages-option-b.png`, `board-8-hd-512-native-tiles-catalog.png`, `board-9-ingame-hd-option-b-verification.png`, and `board-10-3d-details-and-sprites-audit.png`.
 * **Tests:** `tools/tests/kit_sim.js` **35 passed, 0 failed**; `tools/tests/scene_sim.js` **8 passed, 0 failed**; `tools/tests/ui_sim.js` **42 passed, 0 failed**; `tools/tests/publish_sim.js` **10 passed, 0 failed**.
 
+### 2026-10-07 — `grind-v68` art pass: the town gets its own HD pack, and click-to-walk stays the town's
+
+* **The owner's feedback:** "click to walk is only for this town map. dont change the others." and
+  "the building sprite is awlful. make it as nice as ragnarok online 3. i already stated this
+  earlier. the details and fountain too. make it all HD & nice."
+* **Click-to-walk is the town's control again.** The field click from the previous pass is gone
+  (handler, helper and hint all removed); a tap on a field map does nothing, and the roam keeps
+  driving the hero exactly as it did before v68. `town_smoke.js` now proves it from the outside: a
+  real pointerdown/pointerup pair on the canvas in a field must not touch `pl.wt` and must not drop
+  the walk ring.
+* **The town has its own painted art pack.** `assets/town/town-atlas.png` + `.json` — nine RO3-style
+  painted buildings (town house, inn, shop, tall house, stone house, chapel, timber cottage, guild
+  hall, cathedral), a painted fountain, gate, market stalls, tree, lamp, statue, banner, bench and
+  flower beds. Painted to the owner's own art direction (HD Ragnarok Online 3 city art), then
+  chroma-keyed off a flat magenta backdrop, trimmed to the content box, downscaled to a 640 px
+  longest side and packed into one 4096x1281 atlas by `tools/make_town_pack.py` (`--check`
+  byte-compares, the same contract as the other builders). Paint sources stay in
+  `Updates/town-hd/work/`; the built atlas is mirrored into `Updates/town-hd/`.
+* **The buildings and the fountain are the pack's, not boxes any more.** Every building stands at its
+  true aspect with a soft contact shadow; the ring is seventeen spots dressed from eight designs
+  (mirrored and sized so the ring never repeats). The **painted fountain** replaces the block tiers
+  and keeps live water — droplets off the upper basin, spray off the crown, sparkle on the pool. The
+  painted cathedral replaces the block one, the painted gate arch replaces the block towers. Anything
+  not painted yet keeps its block stand-in, and a painted building always takes over the moment the
+  pack lands, even if the player is already in town.
+* **The ground is the kit's own HD terrain**, laid at about one world unit per tile: `ruin_cobble`
+  plaza, a `limestone_pale` kerb band and side paths, `dirt_path` avenue, `grass_jade` lawn.
+* **One real bug the smoke test caught in this pass:** the art pack finishes downloading on its own
+  clock, usually *before* the player ever walks in — `townArt()` dereferenced a town that did not
+  exist yet and would have thrown on boot. It now returns early when the town is not built, and the
+  suite pins that (`assert.doesNotThrow` with the pack "loaded" and the town unbuilt).
+* **Not painted yet** (they keep their code-built stand-ins, and the pack takes them over the moment
+  their art exists): gate arch, market stalls, trees, lamp posts, statue, banner poles, benches and
+  flower beds. Their names are already wired and the pack lists them as missing on every build.
+* **Tests:** all suites green; all five `--check` tools current (including the new town pack);
+  `town_smoke.js` is now **29 steps** — it stands in a stub manifest for the real atlas and asserts
+  the ring is painted, the block ring hides, the fountain is the painted one with a full spray list,
+  and the ground tiles are the HD set.

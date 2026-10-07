@@ -1,0 +1,82 @@
+{
+ "meta": {
+  "description": "Prontera Town HD art - RO3-style painted buildings, fountain and props, built by tools/make_town_pack.py from Updates/town-hd/work/.",
+  "image": "town-atlas.png",
+  "size": {
+   "h": 1281,
+   "w": 4096
+  }
+ },
+ "sprites": {
+  "cathedral": {
+   "h": 640,
+   "kind": "bld",
+   "w": 592,
+   "x": 2930,
+   "y": 0
+  },
+  "fountain": {
+   "h": 640,
+   "kind": "prop",
+   "w": 551,
+   "x": 3530,
+   "y": 0
+  },
+  "guild_hall": {
+   "h": 633,
+   "kind": "bld",
+   "w": 640,
+   "x": 0,
+   "y": 648
+  },
+  "house_chapel": {
+   "h": 640,
+   "kind": "bld",
+   "w": 530,
+   "x": 2392,
+   "y": 0
+  },
+  "house_inn": {
+   "h": 640,
+   "kind": "bld",
+   "w": 517,
+   "x": 549,
+   "y": 0
+  },
+  "house_shop": {
+   "h": 640,
+   "kind": "bld",
+   "w": 598,
+   "x": 1074,
+   "y": 0
+  },
+  "house_stone": {
+   "h": 640,
+   "kind": "bld",
+   "w": 418,
+   "x": 1966,
+   "y": 0
+  },
+  "house_tall": {
+   "h": 640,
+   "kind": "bld",
+   "w": 278,
+   "x": 1680,
+   "y": 0
+  },
+  "house_timber": {
+   "h": 530,
+   "kind": "bld",
+   "w": 640,
+   "x": 648,
+   "y": 648
+  },
+  "house_town_a": {
+   "h": 640,
+   "kind": "bld",
+   "w": 541,
+   "x": 0,
+   "y": 0
+  }
+ }
+}

@@ -90,15 +90,26 @@ in-game and stored in the browser (`pg_acc4`; saves under `pg_save3_<user>`).
   one does for you**, instead of a stage picker that a map with no stages should not have. The field's monsters, kit deco,
   road and sky are hidden while you are there, and the town has **no spawner at all** — nothing
   spawns, nothing attacks, nothing drops. It is the one map where the hero stops grinding.
-* **The layout the owner asked for:** a cobbled plaza (radius 13.5) around a **three-tier stone
-  fountain** (eight side jets plus a ring of droplets, all animated), an **NPC terrace** behind it
-  with stone pillars and banners, a south gate with two towers, **sixteen buildings in a ring**
-  around the plaza, market stalls, benches, lamps, trees, flowers and a cathedral on the skyline.
-  Every pixel is the game's own art: the ring uses the kit's own `house_prontera` crops and the kit's
-  `ruin_cobble` paving once the atlas has loaded; until then the block-built RO houses stand in —
-  the same fallback the field's own town has always used. The fountain, gate, terrace and lamps are
-  the same primitives and palette (`bld`, `SP`, `BX`, the kit's stone/roof colours) the fallback town
-  already used. Nothing new was drawn.
+* **The layout the owner asked for:** a cobbled plaza (radius 12.5) around a **painted HD fountain**
+  with live water (droplets off the upper basin, spray off the crown, sparkle on the pool), an **NPC
+  terrace** behind it with stone pillars and banners, a south gate, **a ring of seventeen painted
+  buildings** around the plaza, market stalls, benches, lamps, trees, flowers and a **cathedral** on
+  the skyline.
+* **The town's own HD art pack (`assets/town/town-atlas.*`, built by `tools/make_town_pack.py`).**
+  Nine RO3-style painted buildings (town house, inn, shop, tall house, stone house, chapel, timber
+  cottage, guild hall, cathedral), a painted fountain, gate, market stalls, trees, lamps, benches and
+  flower beds — all one atlas, cropped at runtime exactly like the map kit's own sheet. The paint
+  sources live in `Updates/town-hd/work/`; the builder chroma-keys the magenta backdrop, trims each
+  building to its content box, downscales the longest side to 640 px (about 2.6x supersampling at the
+  size a building is actually drawn) and packs them into `assets/town/town-atlas.png` (4096x1281,
+  ~6 MB). `--check` re-runs the build in memory and byte-compares, so a stale atlas cannot ship.
+  Every building is drawn at its true aspect and gets a soft contact shadow, so it reads as a building
+  rather than a sticker. A building that is not painted yet keeps its block-built stand-in, and a
+  **painted** building always replaces that stand-in the moment the pack loads — even if the player is
+  already standing in town.
+* **The ground is the kit's own HD terrain**, laid at about one world unit per tile (the kit's own
+  scale): `ruin_cobble` paving for the plaza, a `limestone_pale` kerb band and side paths, `dirt_path`
+  for the avenue in from the gate, `grass_jade` for the lawn.
 * **Five NPCs with names and sprites, standing on the terrace:** **Kafra Elise** (warp & save),
   **Captain Rondel** (the guard's contract board), **Sister Marina** (temple healer), **Scholar
   Wren** (Royal Library / Mastery Index) and **Smith Gordon** (forge & market). Each has a name
@@ -315,7 +326,9 @@ PY
 python3 tools/make_sprite_viewer.py --check
 python3 tools/make_class_skins.py --check
 python3 tools/make_weapon_pack.py --check      # the weapon art under assets/weapons/
+python3 tools/make_town_pack.py --check        # the town's HD art under assets/town/ (needs pillow)
 for t in tools/tests/*_sim.js; do node "$t" || exit 1; done
+node tools/tests/town_smoke.js                 # optional: needs `npm i --no-save jsdom three@0.128.0`
 ```
 
 Run the suite before every push. `pack_sim.js` reads the extracted `/tmp/pack_block.js`; the

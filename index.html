@@ -314,7 +314,7 @@ button.tick.on{background:#ffe08a;border-color:var(--gold);font-weight:bold}
 <div id="saveTools" style="margin-top:6px;font-size:11px;text-align:center;opacity:.9"><a href="#" id="saveDl" title="Download every character saved in this browser as one file">⬇ Back up saves</a><span style="opacity:.5"> · </span><a href="#" id="saveUp" title="Load a backup file made by this button, on any address">⬆ Restore a backup</a><input type="file" id="saveFile" accept=".json,application/json" style="display:none"></div>
 <div id="buildTag" style="margin-top:6px;font-size:10px;opacity:.55;text-align:center"></div></div></div>
 <div id="wrap"><div class="title"><span id="stageTitle">Prontera Lv 1</span><span id="grindStatus" style="font-size:12px;opacity:.85"></span></div>
-<div id="view"><div id="ov"><div id="mobSpriteLayer" aria-hidden="true"></div><div id="weaponSpriteLayer" aria-hidden="true"></div><div id="npcLayer" aria-hidden="true"></div><div id="prog"></div><div id="tag"><b id="tn"></b><div class="bar"><i id="th" style="background:var(--hp)"></i></div></div><div id="heroTitle" class="hero-title" aria-live="polite"><span id="heroTitleMark" class="ht-mark" aria-hidden="true"></span><span id="heroTitleText"></span></div><div id="hint">Drag to rotate &middot; Scroll to zoom &middot; Click the ground to walk</div><div id="feedWrap"><div id="feedFilter" role="group" aria-label="Log filter"></div><div id="feedTabs"><button id="feedTab" type="button" aria-expanded="true" aria-controls="feed" title="Minimize or show the on-screen log">📃 Logs ▾</button><button id="feedFil" type="button" aria-expanded="false" aria-controls="feedFilter" aria-label="Filter the on-screen log" title="Filter the log - this row folds away by itself">▽</button></div><div id="feed"></div></div><div id="hudBuffs" role="status" aria-live="polite" aria-label="Active pet buffs - hover an icon for what it does"></div><div id="qp"></div><div id="dock"></div>
+<div id="view"><div id="ov"><div id="mobSpriteLayer" aria-hidden="true"></div><div id="weaponSpriteLayer" aria-hidden="true"></div><div id="npcLayer" aria-hidden="true"></div><div id="prog"></div><div id="tag"><b id="tn"></b><div class="bar"><i id="th" style="background:var(--hp)"></i></div></div><div id="heroTitle" class="hero-title" aria-live="polite"><span id="heroTitleMark" class="ht-mark" aria-hidden="true"></span><span id="heroTitleText"></span></div><div id="hint">Drag to rotate &middot; Scroll to zoom</div><div id="feedWrap"><div id="feedFilter" role="group" aria-label="Log filter"></div><div id="feedTabs"><button id="feedTab" type="button" aria-expanded="true" aria-controls="feed" title="Minimize or show the on-screen log">📃 Logs ▾</button><button id="feedFil" type="button" aria-expanded="false" aria-controls="feedFilter" aria-label="Filter the on-screen log" title="Filter the log - this row folds away by itself">▽</button></div><div id="feed"></div></div><div id="hudBuffs" role="status" aria-live="polite" aria-label="Active pet buffs - hover an icon for what it does"></div><div id="qp"></div><div id="dock"></div>
 <div id="wins"></div><div id="npcBox" role="dialog" aria-modal="false" aria-labelledby="nbName"><div id="nbTop"><canvas id="nbFace" width="74" height="78" aria-hidden="true"></canvas><span><b id="nbName"></b><span id="nbTitle"></span></span></div><div id="nbBody"></div><div id="nbActs"></div></div></div></div>
 <div id="hud"><div><b id="cls2"></b> <span id="titleLabel" class="title-hud hud-title-mirror" aria-hidden="true" style="display:none"></span> Base Lv <b id="lv">1</b> / Job Lv <b id="jl">1</b></div>
 <div class="hud-health">HP <div class="bar" role="meter" aria-label="HP" aria-valuemin="0" aria-valuemax="100" id="hpMeter"><i id="hpb"></i></div><small id="hpPct">100%</small></div>
@@ -4909,7 +4909,7 @@ function syncSkillFx(){
 // town does not throw away the credit for the time you were away.
 let town=0;                             // 1 = the player is standing in the town (the field world is hidden)
 const TOWN_Z=-6;                        // the plaza's centre - the fountain stands here
-const TOWN_R=13.5;                      // the cobbled plaza's radius
+const TOWN_R=12.5;                      // the cobbled plaza's radius
 const TOWN_TALK=3;                      // how close you must stand to an NPC to talk
 const TOWN_BOUND={x0:-17.5,x1:17.5,z0:-16.6,z1:19};   // where the hero may walk
 const TOWN_NPC=[
@@ -4931,7 +4931,7 @@ const townOn=()=>!!TOWN.on;
 const townCanvasXY=(cx,cy)=>{const r=R.domElement.getBoundingClientRect();return[cx-r.left,cy-r.top]};
 function townAvoid(x,z){
   x=cl(x,TOWN_BOUND.x0,TOWN_BOUND.x1);z=cl(z,TOWN_BOUND.z0,TOWN_BOUND.z1);
-  const fr=4.7;                         // the fountain's basin: walk round it, never through it
+  const fr=4.5;                         // the fountain's basin: walk round it, never through it
   let ex=x,ez=z-TOWN_Z,ed=Math.hypot(ex,ez);
   if(ed<fr){if(ed<.001){ex=1;ez=0;ed=1}x=ex/ed*fr;z=TOWN_Z+ez/ed*fr}
   for(const n of TOWN.list){            // and never stand inside somebody
@@ -4941,6 +4941,66 @@ function townAvoid(x,z){
   return[cl(x,TOWN_BOUND.x0,TOWN_BOUND.x1),cl(z,TOWN_BOUND.z0,TOWN_BOUND.z1)];
 }
 
+// ----- the town's HD art: one atlas of RO3-style painted buildings, cropped at runtime ---------
+// `assets/town/town-atlas.png` is painted art (Updates/town-hd/work/*.png) built by
+// tools/make_town_pack.py into one sheet, exactly like the map kit's own sheet - so the whole town
+// costs one download and one crop per building, and nothing here is drawn by hand in code.
+const TOWNP={ok:0,man:null,png:null,tex:new Map()};
+function townPackFetch(){
+  if(typeof fetch!=='function'||typeof Image!=='function')return;
+  try{
+    fetch('assets/town/town-atlas.json').then(r=>r&&r.ok?r.json():null).catch(()=>null).then(man=>{
+      if(!man||!man.sprites)return; TOWNP.man=man;
+      const img=new Image();
+      img.onload=()=>{TOWNP.png=img;TOWNP.ok=1;TOWNP.tex.clear();TOWN.art='';townArt()};
+      img.onerror=()=>{};
+      img.src='assets/town/town-atlas.png';
+    }).catch(()=>{});
+  }catch(e){}
+}
+// One crop, cached: `flip` mirrors the building so a ring of them never repeats itself.
+function townCrop(name,flip){
+  const key=name+(flip?'@f':''); if(TOWNP.tex.has(key))return TOWNP.tex.get(key);
+  const e=TOWNP.man&&TOWNP.man.sprites?TOWNP.man.sprites[name]:null;
+  if(!e||!TOWNP.png)return null;
+  const cv=document.createElement('canvas');cv.width=e.w;cv.height=e.h;
+  const g=cv.getContext('2d');if(!g)return null;
+  g.imageSmoothingEnabled=true;
+  if(flip){g.translate(e.w,0);g.scale(-1,1)}
+  g.drawImage(TOWNP.png,e.x,e.y,e.w,e.h,0,0,e.w,e.h);
+  const t=new THREE.CanvasTexture(cv);
+  t.magFilter=THREE.LinearFilter;t.minFilter=THREE.LinearMipMapLinearFilter;
+  t.wrapS=t.wrapT=THREE.ClampToEdgeWrapping;t.anisotropy=8;
+  TOWNP.tex.set(key,t);return t;
+}
+// A painted sprite standing on the ground, with the soft contact shadow that makes a billboard read
+// as a building rather than as a sticker: the shadow is drawn once per sprite size and reused.
+const townShadowTex=new Map();
+function townShadowTexture(w,h){
+  const key=w+':'+h; if(townShadowTex.has(key))return townShadowTex.get(key);
+  const cv=document.createElement('canvas');cv.width=cv.height=128;
+  const g=cv.getContext('2d');
+  if(!g||!g.createRadialGradient)return null;
+  const gr=g.createRadialGradient(64,64,6,64,64,62);
+  gr.addColorStop(0,'rgba(24,18,10,.55)');gr.addColorStop(.55,'rgba(24,18,10,.34)');gr.addColorStop(1,'rgba(24,18,10,0)');
+  g.save();g.translate(64,64);g.scale(1,h/w);g.translate(-64,-64);g.fillStyle=gr;g.fillRect(0,0,128,128);g.restore();
+  const t=new THREE.CanvasTexture(cv);townShadowTex.set(key,t);return t;
+}
+// `units` is how tall the sprite should stand in world units (the sprite is scaled from its own
+// pixels, so the art never stretches). The group's origin is the ground point at the sprite's feet.
+function townSprite(name,units,flip){
+  const t=townCrop(name,flip);if(!t)return null;
+  const e=TOWNP.man.sprites[name],k=units/e.h,G2=new THREE.Group();
+  const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:t,transparent:true,alphaTest:.2}));
+  sp.center.set(.5,0);sp.scale.set(e.w*k,e.h*k,1);G2.add(sp);
+  const st=townShadowTexture(e.w,e.h);
+  if(st){
+    const sh=new THREE.Mesh(new THREE.PlaneGeometry(e.w*k*.9,e.h*k*.3),
+      new THREE.MeshBasicMaterial({map:st,transparent:true,depthWrite:false,opacity:.9}));
+    sh.rotation.x=-Math.PI/2;sh.position.y=.03;sh.renderOrder=-1;G2.add(sh);
+  }
+  G2.userData.art=name;return G2;
+}
 // ----- the town scene: built once, kept hidden until the player walks in ----------------------
 function townBuild(){
   if(TOWN.g)return;
@@ -4951,17 +5011,34 @@ function townBuild(){
   const bx=(x,y,z,w,h,d,c,ry)=>{const m=mk(G,BX(w,h,d),c,x,y+h/2,z);if(ry)m.rotation.y=ry;return m};
   const cy=(x,y,z,r1,r2,h,c,seg)=>{const g=new THREE.CylinderGeometry(r1,r2,h,seg||10);return mk(G,g,c,x,y+h/2,z)};
   const sp=(x,y,z,r,c)=>{const m=mk(G,SP(r),c,x,y,z);return m};
-  // ground, plaza and the avenue in from the south gate
+  const bx2=(x,y,z,w,h,d,c)=>{const m=mk(TOWN.gateBlk,BX(w,h,d),c,x,y+h/2,z);return m};
+  const sp2=(x,y,z,r,c)=>{const m=mk(TOWN.gateBlk,SP(r),c,x,y,z);return m};
+  // ground: the grass, the plaza and the avenue all wear the HD kit's own painted tiles (the
+  // Ruin Cobble plaza, a Limestone kerb band, the Dirt Path avenue and Green Jade grass). Block
+  // colours underneath mean the town still reads correctly before the kit has loaded.
+  TOWN.grounds=[];
+  const flat=(cx,cz,w,d,c,rot,y)=>{const m=new THREE.Mesh(new THREE.PlaneGeometry(w,d),M(c));
+    m.rotation.x=-Math.PI/2;if(rot)m.rotation.z=rot;m.position.set(cx,y||.02,cz);m.receiveShadow=true;G.add(m);
+    TOWN.grounds.push({m,tile:null});return m};
   const grass=new THREE.Mesh(new THREE.PlaneGeometry(150,150),M(C.grass));
-  grass.rotation.x=-Math.PI/2;grass.receiveShadow=true;G.add(grass);
-  const plaza=new THREE.Mesh(new THREE.CircleGeometry(TOWN_R,56),M(C.cob));
+  grass.rotation.x=-Math.PI/2;grass.receiveShadow=true;G.add(grass);TOWN.grass=grass;
+  const plaza=new THREE.Mesh(new THREE.CircleGeometry(TOWN_R,64),M(C.cob));
   plaza.rotation.x=-Math.PI/2;plaza.position.set(0,.02,TOWN_Z);plaza.receiveShadow=true;G.add(plaza);
   TOWN.plaza=plaza;
-  const av=new THREE.Mesh(new THREE.PlaneGeometry(9.5,18),M(C.path));
-  av.rotation.x=-Math.PI/2;av.position.set(0,.021,15);av.receiveShadow=true;G.add(av);
+  const kerb=new THREE.Mesh(new THREE.CircleGeometry(TOWN_R+.45,64),M(C.stone));
+  kerb.rotation.x=-Math.PI/2;kerb.position.set(0,.016,TOWN_Z);kerb.receiveShadow=true;G.add(kerb);
+  TOWN.grounds.push({m:kerb,tile:null});
+  const av=flat(0,15.4,9.0,19,C.path);                    // the avenue in from the south gate
+  const ringPath=flat(-14.9,TOWN_Z,3.2,TOWN_R*1.6,C.path,0,.015),ringPath2=flat(14.9,TOWN_Z,3.2,TOWN_R*1.6,C.path,0,.015);
+  // Tiles are laid at roughly one world unit each (the kit's own scale) so the paving reads as
+  // paving and not as four giant slabs; `rep` is [across, along] where the mesh needs both.
+  TOWN.tiles=[{m:plaza,tile:'ruin_cobble',rep:[25,25]},{m:kerb,tile:'limestone_pale',rep:[27,27]},
+    {m:av,tile:'dirt_path',rep:[7,14]},{m:grass,tile:'grass_jade',rep:[62,62]},
+    {m:ringPath,tile:'limestone_pale',rep:[3,20]},{m:ringPath2,tile:'limestone_pale',rep:[3,20]}];
 
-  // the BIG fountain: three stone tiers, blue water, eight jets
-  const f=new THREE.Group();f.position.set(0,0,TOWN_Z);G.add(f);
+  // the BIG fountain: the painted HD fountain once the art pack is in, and the block-built
+  // three-tier stone basin until then. Either way the water keeps moving (see townWaterFX).
+  const f=new THREE.Group();f.position.set(0,0,TOWN_Z);G.add(f);TOWN.fountain=f;
   const fk=(g,c,y,seg)=>mk(f,g,c,0,y,0);
   fk(CY(4.3,4.7,.85,28),C.stone,.42);fk(CY(4.5,4.5,.14,28),C.stone2,.85);      // basin + rim
   fk(CY(3.95,3.95,.16,28),C.water,.8);
@@ -4981,8 +5058,8 @@ function townBuild(){
     m.position.set(Math.cos(a)*1.5,4.85,Math.sin(a)*1.5);f.add(m);
     TOWN.spray.push({m,y:4.85,sp:2.6+.4*(i%3),ph:i*.5,amp:.34,drop:1,o:.85});
   }
-  // plaza rim: a low stone kerb, cut from the kit when the atlas is there
-  const kerb=new THREE.Group();G.add(kerb);TOWN.kerb=kerb;
+  // plaza rim dressing: a low stone edging, cut from the kit's own props when the atlas is there
+  const rim=new THREE.Group();G.add(rim);TOWN.kerb=rim;
   TOWN.kerbBlk=new THREE.Group();G.add(TOWN.kerbBlk);
   for(let i=0;i<36;i++){const a=i*Math.PI/18;bx(Math.cos(a)*TOWN_R,.0,TOWN_Z+Math.sin(a)*TOWN_R,.9,.22,.5,C.stone2,a+Math.PI/2)}
 
@@ -5002,15 +5079,19 @@ function townBuild(){
 
   // the ring of buildings: kit billboards once the atlas is loaded, block RO houses until then
   TOWN.houseBlk=new THREE.Group();G.add(TOWN.houseBlk);TOWN.houseKit=new THREE.Group();TOWN.houseKit.visible=false;G.add(TOWN.houseKit);
+  // The ring is data first: every spot, its angle and the height its building should be. The HD art
+  // pack dresses those spots (see townArt); the block houses below are the stand-in that ships with
+  // the game and the fallback if the pack never downloads.
   const ring=[];
-  for(let i=0;i<16;i++){
-    const a=i*Math.PI/8;                       // skip the southern gate sector
-    if(Math.sin(a)>.62&&Math.abs(Math.cos(a))<.8)continue;
-    const r=21.5+((i*7)%3)*1.7;ring.push({a,r,s:.9+((i*5)%4)*.08,flip:i%2===1,
-      x:0+Math.cos(a)*r,z:TOWN_Z+Math.sin(a)*r});
+  for(let i=0;i<18;i++){
+    const a=i*Math.PI/9+.07;                   // a small twist so the gate is not dead centre south
+    if(Math.sin(a)>.58&&Math.abs(Math.cos(a))<.66)continue;     // the southern gate corridor
+    const r=19.4+((i*7)%3)*1.5,units=4.6+((i*5)%4)*.8;
+    ring.push({i,a,r,units,flip:i%2===1,x:Math.cos(a)*r,z:TOWN_Z+Math.sin(a)*r});
   }
+  TOWN.ring=ring;
   for(const h of ring){                        // the block fallback, always built
-    const w=4.6+.6*(h.s-0.9)*10,d=4.2+.5*(h.s-0.9)*10,ht=2.6+h.s*.9;
+    const w=4.6+.6*(h.units-4.4),d=4.2+.5*(h.units-4.4),ht=h.units*.62;
     const g2=new THREE.Group();g2.position.set(h.x,0,h.z);g2.rotation.y=-h.a+Math.PI/2;TOWN.houseBlk.add(g2);
     mk(g2,BX(w,ht,d),C.wall,0,ht/2,0);
     const r2=mk(g2,new THREE.ConeGeometry(Math.max(w,d)*.78,ht*.62,4),h.flip?C.roof:C.roof2,0,ht+ht*.31,0);r2.rotation.y=Math.PI/4;
@@ -5034,9 +5115,13 @@ function townBuild(){
     const g2=new THREE.Group();g2.position.set(x,0,z);g2.rotation.y=-a;G.add(g2);
     mk(g2,BX(2.2,.14,.6),C.wood,0,.6,0);for(const sx of[-.9,.9])mk(g2,BX(.14,.6,.5),C.stone2,sx,.3,0);
   }
+  TOWN.propSpots=[];TOWN.propBlk=new THREE.Group();G.add(TOWN.propBlk);
+  const prop=(n,x,z,units,flip,blk)=>{TOWN.propSpots.push({n,x,z,units,flip,blk});return blk};
   for(let i=0;i<8;i++){                        // lamp posts round the plaza
     const a=i*Math.PI/4+Math.PI/8,x=Math.cos(a)*11.6,z=TOWN_Z+Math.sin(a)*11.6;
-    cy(x,0,z,.09,.12,2.7,C.wood,8);sp(x,2.95,z,.22,0xffe08a).castShadow=false;
+    const p1=mk(TOWN.propBlk,new THREE.CylinderGeometry(.09,.12,2.7,8),C.wood,x,1.35,z);
+    const p2=mk(TOWN.propBlk,SP(.22),0xffe08a,x,2.95,z);p2.castShadow=false;
+    prop('lamp_post',x,z,3.6,false,[p1,p2]);
   }
   for(let i=0;i<6;i++){                        // banner poles on the plaza's rim
     const a=i*Math.PI/3+.4,x=Math.cos(a)*12.6,z=TOWN_Z+Math.sin(a)*12.6;
@@ -5044,16 +5129,18 @@ function townBuild(){
     const fl=mk(G,BX(1.1,1.5,.07),i%2?C.banner:C.banner2,x+Math.cos(a)*.6,3.6,z+Math.sin(a)*.6);
     fl.rotation.y=-a;
   }
-  // the south gate: two towers and a banner arch, with the road running through it
+  // the south gate: two towers and a banner arch, with the road running through it. The gate group
+  // is hidden when the painted arch is in (townArt), so the two never stand at once.
+  TOWN.gateBlk=new THREE.Group();G.add(TOWN.gateBlk);
   for(const sx of[-5.4,5.4]){
-    bx(sx,0,21,2.1,5.4,2.1,C.stone2);bx(sx,5.4,21,2.5,.4,2.5,C.stone);
-    mk(G,new THREE.ConeGeometry(1.7,1.5,4),C.roofBlue,sx,6.35,21).rotation.y=Math.PI/4;
-    sp(sx,7.2,21,.26,C.gold);
+    bx2(sx,0,21,2.1,5.4,2.1,C.stone2);bx2(sx,5.4,21,2.5,.4,2.5,C.stone);
+    const tp=mk(TOWN.gateBlk,new THREE.ConeGeometry(1.7,1.5,4),C.roofBlue,sx,6.35,21);tp.rotation.y=Math.PI/4;
+    sp2(sx,7.2,21,.26,C.gold);
   }
-  bx(0,5.7,21,13,.5,1.1,C.stone);bx(0,6.25,21,1.2,1,.8,C.wood);
-  bx(0,6.6,21.55,4.6,1.1,.08,C.banner);
+  bx2(0,5.7,21,13,.5,1.1,C.stone);bx2(0,6.25,21,1.2,1,.8,C.wood);
+  bx2(0,6.6,21.55,4.6,1.1,.08,C.banner);
   // the cathedral on the skyline behind the terrace (the RO Prontera silhouette)
-  const cath=new THREE.Group();cath.position.set(0,0,-31);G.add(cath);
+  const cath=new THREE.Group();cath.position.set(0,0,-31);G.add(cath);TOWN.cath=cath;
   mk(cath,BX(9,7.5,7),C.wall,0,3.75,0);
   const cr=mk(cath,new THREE.ConeGeometry(7.4,4.6,4),C.roofBlue,0,9.8,0);cr.rotation.y=Math.PI/4;
   mk(cath,BX(1.1,3.4,1.1),C.trim,0,7,3.7);
@@ -5067,12 +5154,14 @@ function townBuild(){
   for(let i=0;i<22;i++){
     const a=i*Math.PI/11+.22,r=16.4+((i*13)%5)*1.1,x=Math.cos(a)*r,z=TOWN_Z+Math.sin(a)*r;
     if(x>TOWN_BOUND.x0-1.4&&x<TOWN_BOUND.x1+1.4&&z>TOWN_BOUND.z0-1.4&&z<TOWN_BOUND.z1+1.4)continue;
-    const g2=new THREE.Group();g2.position.set(x,0,z);G.add(g2);
-    mk(g2,CY(.16,.24,1.5),C.wood,0,.75,0);mk(g2,SP(1.05),i%2?0x3f9b4a:0x4fae4f,0,2.35,0);
+    const g2=new THREE.Group();g2.position.set(x,0,z);TOWN.propBlk.add(g2);
+    mk(g2,CY(.16,.24,1.5),C.wood,0,.75,0);const tr=mk(g2,SP(1.05),i%2?0x3f9b4a:0x4fae4f,0,2.35,0);
+    prop('tree_big',x,z,4.6+((i*7)%3)*.5,i%2===1,[g2]);
   }
   for(let i=0;i<26;i++){
     const a=i*Math.PI/13,r=15.4+((i*11)%4)*.9,x=Math.cos(a)*r,z=TOWN_Z+Math.sin(a)*r;
-    sp(x,.1,z,.09,[0xff9db8,0xffe066,0xffffff][i%3]).castShadow=false;
+    const fl=mk(TOWN.propBlk,SP(.09),[0xff9db8,0xffe066,0xffffff][i%3],x,.1,z);fl.castShadow=false;
+    if(i%4===0)prop('flower_bed',x,z,.9,false,[fl]);
   }
   // the walk marker: a gold ring the click target drops on the ground
   const rg=new THREE.Mesh(new THREE.RingGeometry(.42,.62,26),new THREE.MeshBasicMaterial({color:0xffd23f,transparent:true,opacity:.9,depthWrite:false}));
@@ -5138,40 +5227,100 @@ function townNpcFace(npc,dir){
   else setCell(npc.spr,dir,0);
 }
 function townArt(){
+  // The art pack downloads on its own clock: it can finish before the player has ever walked in.
+  // Nothing to dress until the town exists - townEnter() builds it, and the scene build calls this.
+  if(!TOWN.g)return;
+  // NPC sprites (the pack composites, the drawn hero stands in until it loads)
   for(const npc of TOWN.list){
     if(npc.art!=='pack'&&packReady){
-      const old=npc.spr,s=townNpcSprite(npc);
-      if(s){if(old)npc.g.remove(old);npc.spr=s;npc.g.add(s);npc.face=-1;townNpcFace(npc,0)}
+      const old2=npc.spr,s=townNpcSprite(npc);
+      if(s){if(old2)npc.g.remove(old2);npc.spr=s;npc.g.add(s);npc.face=-1;townNpcFace(npc,0)}
     }else if(!npc.spr){npc.spr=townNpcSprite(npc);npc.g.add(npc.spr);townNpcFace(npc,0)}
   }
-  if(!TOWN.kitArt&&kitAtlas('kit')){
-    const A=kitAtlas('kit'),e=A&&A.sprites&&A.sprites.house_prontera;
-    if(e){
-      let n=0;
-      for(let i=0;i<16;i++){
-        const a=i*Math.PI/8;if(Math.sin(a)>.62&&Math.abs(Math.cos(a))<.8)continue;
-        const r=21.5+((i*7)%3)*1.7,s=.9+((i*5)%4)*.08;
-        const t=kitCrop('kit','sprite','house_prontera',i%2===1);if(!t)continue;
-        const k=kitPropScale('house_prontera',s),sp2=new THREE.Sprite(new THREE.SpriteMaterial({map:t,transparent:true,alphaTest:.18}));
-        sp2.center.set(.5,1);sp2.scale.set(e.w*k,e.h*k,1);
-        sp2.position.set(Math.cos(a)*r,0,TOWN_Z+Math.sin(a)*r);TOWN.houseKit.add(sp2);n++;
+  // ---- the HD art pack: the painted buildings, cathedral and fountain -------------------------
+  // Applied once, and re-applied if the pack only finishes downloading after the player walked in.
+  if(TOWNP.ok&&TOWN.paint!==1){
+    TOWN.paint=1;
+    const put=(name,x,z,units,flip,parent,rot)=>{
+      const G2=townSprite(name,units,flip);if(!G2)return null;
+      G2.position.set(x,0,z);if(rot)G2.rotation.y=rot;
+      (parent||TOWN.g).add(G2);return G2;
+    };
+    // the ring of houses: eight painted designs, mirrored and sized so the ring never repeats
+    const designs=['house_town_a','house_inn','house_shop','house_tall','house_stone','house_chapel','house_timber','guild_hall'];
+    if(TOWN.kitArt===1&&TOWN.houseKit.clear){TOWN.houseKit.clear();TOWN.kitArt=0}
+    TOWN.houseKit.visible=true;
+    const nh=()=>{let n=0;for(const h of TOWN.ring||[]){const d=designs[(h.i*3)%designs.length];
+      if(put(d,h.x,h.z,h.units,h.i%2===1,TOWN.houseKit))n++;}return n};
+    const n=nh();
+    if(n){TOWN.houseBlk.visible=false}
+    // the cathedral closes the north end of the town, behind the NPC terrace
+    if(TOWNP.man.sprites.cathedral){if(TOWN.cath)TOWN.cath.visible=false;
+      put('cathedral',0,-33,13.5,false,TOWN.houseKit);}
+    // the fountain: the painted one replaces the block tiers, and the water keeps moving
+    if(TOWNP.man.sprites.fountain){
+      TOWN.fountain.visible=false;
+      TOWN.fountainArt=put('fountain',0,TOWN_Z,8.6,false,TOWN.g);
+      TOWN.fountainArt.position.set(0,.02,TOWN_Z);
+      TOWN.waterTop=8.6*.66;TOWN.waterBasin=8.6*.13;
+      TOWN.waterFX=new THREE.Group();TOWN.waterFX.position.set(0,0,TOWN_Z);TOWN.g.add(TOWN.waterFX);
+      const jet=()=>new THREE.MeshLambertMaterial({color:0xbfeaff,transparent:true,opacity:.9});
+      TOWN.spray.forEach(sp2=>{if(sp2.m.parent)sp2.m.parent.remove(sp2.m)});TOWN.spray=[];
+      for(let i=0;i<10;i++){                 // the upper basin overflowing: droplets round the rim
+        const a=i*Math.PI/5,m=new THREE.Mesh(new THREE.SphereGeometry(.11,10,8),jet());
+        m.position.set(Math.cos(a)*1.5,TOWN.waterTop,Math.sin(a)*1.5);TOWN.waterFX.add(m);
+        TOWN.spray.push({m,y:TOWN.waterTop,sp:2.4+(i%3)*.4,ph:i*.55,amp:.42,drop:1,o:.9});
       }
-      if(n){TOWN.houseBlk.visible=false;TOWN.houseKit.visible=true;TOWN.kitArt=1}
+      for(let i=0;i<14;i++){                 // spray off the crowning jet
+        const a=i*Math.PI/7,m=new THREE.Mesh(new THREE.SphereGeometry(.085,8,6),jet());
+        m.position.set(Math.cos(a)*.35,TOWN.waterTop+1.05,Math.sin(a)*.35);TOWN.waterFX.add(m);
+        TOWN.spray.push({m,y:TOWN.waterTop+1.05,sp:3+(i%4)*.5,ph:i*.4,amp:.3,drop:1,o:.75});
+      }
+      for(let i=0;i<16;i++){                 // sparkle on the lower pool
+        const a=i*Math.PI/8,r2=.9+(i%4)*.42,m=new THREE.Mesh(new THREE.SphereGeometry(.06,6,6),
+          new THREE.MeshBasicMaterial({color:0xdff6ff,transparent:true,opacity:.5}));
+        m.position.set(Math.cos(a)*r2,.42,Math.sin(a)*r2);TOWN.waterFX.add(m);
+        TOWN.spray.push({m,y:.42,sp:3.4+(i%5)*.6,ph:i*.7,amp:.06,drop:1,o:.5});
+      }
     }
-    const cob=kitCrop('kit','tile','ruin_cobble');
-    if(cob&&TOWN.plaza){
-      const m=cob.clone();m.needsUpdate=true;
-      const n=Math.max(1,Math.round(TOWN_R/1.4));m.repeat.set(n,n);
-      TOWN.plaza.material.map=m;TOWN.plaza.material.color.setHex(0xffffff);TOWN.plaza.material.needsUpdate=true;
+    // the south gate: painted arch if it is painted, otherwise the block towers stay
+    if(TOWNP.man.sprites.gate_arch){if(TOWN.gateBlk)TOWN.gateBlk.visible=false;
+      put('gate_arch',0,22.5,8.4,false,TOWN.g);}
+    // the market stalls beside the plaza
+    if(TOWNP.man.sprites.stall_red)put('stall_red',-11.8,3.0,3.1,false,TOWN.g);
+    if(TOWNP.man.sprites.stall_blue)put('stall_blue',11.8,3.0,3.1,true,TOWN.g);
+    if(TOWNP.man.sprites.stall_red)put('stall_red',-11.6,-13.4,3.0,true,TOWN.g);
+    if(TOWNP.man.sprites.stall_blue)put('stall_blue',11.6,-13.4,3.0,false,TOWN.g);
+    // lamps, trees, benches and flowers dress what the code built
+    let propsPainted=0;
+    for(const L of TOWN.propSpots||[]){
+      if(!TOWNP.man.sprites[L.n])continue;         // that prop is not painted yet: keep the code one
+      if(put(L.n,L.x,L.z,L.units,L.flip,TOWN.propBlk)){propsPainted++;
+        for(const b2 of L.blk||[])b2.visible=false;}
     }
-    for(let i=0;i<24;i++){                     // stone kerb and lantern plants, cut from the kit
-      const a2=i*Math.PI/12+.13,x=Math.cos(a2)*(TOWN_R+.7),z=TOWN_Z+Math.sin(a2)*(TOWN_R+.7);
-      const t=kitCrop('kit','sprite',i%3===0?'lantern_stone':'ruin_curb',i%2===1);if(!t)continue;
-      const type=i%3===0?'lantern_stone':'ruin_curb',ee=A.sprites[type];if(!ee)continue;
-      const k=kitPropScale(type,1),s2=new THREE.Sprite(new THREE.SpriteMaterial({map:t,transparent:true,alphaTest:.18}));
-      s2.center.set(.5,1);s2.scale.set(ee.w*k,ee.h*k,1);s2.position.set(x,0,z);TOWN.kerb.add(s2);
+  }
+  // ---- the HD ground: the kit's painted tiles under the plaza, kerb, avenue and lawn ----------
+  if(!TOWN.kitArt&&kitAtlas('kit')){
+    const A=kitAtlas('kit');
+    for(const t of TOWN.tiles||[]){
+      const te=kitCrop('kit','tile',t.tile);if(!te)continue;
+      const m2=te.clone();m2.needsUpdate=true;
+      const[rx,ry]=Array.isArray(t.rep)?t.rep:[t.rep,t.rep];m2.repeat.set(rx,ry);
+      t.m.material.map=m2;t.m.material.color.setHex(0xffffff);t.m.material.needsUpdate=true;
     }
-    TOWN.kerbBlk.visible=false;
+    if(!(TOWNP.ok&&TOWNP.man.sprites.house_town_a&&TOWNP.man.sprites.guild_hall)){
+      // no HD pack yet: the kit's own town houses ring the plaza instead of the block houses
+      const e=A&&A.sprites&&A.sprites.house_prontera;
+      if(e){let n=0;
+        for(const h of TOWN.ring||[]){
+          const t=kitCrop('kit','sprite','house_prontera',h.i%2===1);if(!t)continue;
+          const k=kitPropScale('house_prontera',h.units/4.6),sp2=new THREE.Sprite(new THREE.SpriteMaterial({map:t,transparent:true,alphaTest:.18}));
+          sp2.center.set(.5,1);sp2.scale.set(e.w*k,e.h*k,1);
+          sp2.position.set(h.x,0,h.z);TOWN.houseKit.add(sp2);n++;
+        }
+        if(n){TOWN.houseBlk.visible=false;TOWN.houseKit.visible=true;TOWN.kitArt=1}
+      }
+    }
   }
 }
 // ----- scene visibility: the field and the town never share the screen ------------------------
@@ -5192,7 +5341,7 @@ function townEnterScene(){
 }
 function townLeaveScene(){
   townScene(0);lastKey='';                     // the field's own branch rebuilds it on the next frame
-  $('hint').textContent='Drag to rotate · Scroll to zoom · Click the ground to walk';
+  $('hint').textContent='Drag to rotate · Scroll to zoom';
   R.domElement.style.cursor='';
   TOWN.marker.visible=false;TOWN.markerT=0;
   for(const n of TOWN.list)if(n.tag)n.tag.style.display='none';
@@ -5211,7 +5360,7 @@ function townWalk(dt){
   // The fountain basin is a wall, not a magnet. If the straight line to the target runs through
   // it, hand the walk a tangent point on the rim instead, so the hero rounds the fountain the way
   // a player would - walk into the rim and the character would otherwise grind against it forever.
-  const bx=pl.wx-pl.x,bz=pl.wz-pl.z,bl=Math.hypot(bx,bz),fr=4.7,T2=Math.PI*2;
+  const bx=pl.wx-pl.x,bz=pl.wz-pl.z,bl=Math.hypot(bx,bz),fr=4.5,T2=Math.PI*2;
   const tR=Math.hypot(pl.wx,pl.wz-TOWN_Z);
   if(bl>1.2&&tR>fr+.5){          // a target on the far side, not one on the rim we are walking to
     const u=((0-pl.x)*bx+(TOWN_Z-pl.z)*bz)/(bl*bl),tt=cl(u,0,1);
@@ -5239,21 +5388,6 @@ function townHover(cx,cy){
     if(px>bx-w&&px<bx+w&&py>hy-12&&py<by+14){over=1;break}
   }
   R.domElement.style.cursor=over?'pointer':'';
-}
-// A click on a field map walks the hero to that spot: the roam is put on hold (pl.wt) until the
-// spot is reached, then it takes over again on its own. Combat still owns the movement while a
-// pack is engaged, so a click during a fight only drops the ring.
-function fieldClick(cx,cy){
-  if(!S||!R.domElement)return;
-  const[px,py]=townCanvasXY(cx,cy);
-  const w=R.domElement.clientWidth,h=R.domElement.clientHeight;
-  if(!townRay){townRay=new THREE.Raycaster();townNdc=new THREE.Vector2();townPlane=new THREE.Plane(new THREE.Vector3(0,1,0),0)}
-  townNdc.set(px/w*2-1,-(py/h)*2+1);townRay.setFromCamera(townNdc,cam);
-  const hit=new THREE.Vector3();
-  if(!townRay.ray.intersectPlane(townPlane,hit))return;
-  const ax=cl(hit.x,-BX_+.8,BX_-.8),az=cl(hit.z,Z0+.5,Z1-.5);
-  pl.wx=ax;pl.wz=az;pl.wt=999;
-  if(TOWN.marker){TOWN.marker.position.set(ax,.05,az);TOWN.marker.visible=true;TOWN.markerT=1}
 }
 function townClick(cx,cy){
   if(!TOWN.on)return;
@@ -5442,8 +5576,8 @@ function townTick(){
   if(TOWN.talk&&TOWN.talk.cv!==null)townPortrait(TOWN.talk);
 }
 
-// The gold walk ring fades out over about half a second. It is stepped once per drawn frame, in
-// both worlds, because it marks a click target whether the player is in town or in a field.
+// The gold walk ring fades out over about half a second. It is stepped once per drawn frame while
+// the player is in town, because that click target is the town's own control.
 function townMarkerStep(){
   if(!TOWN.marker||TOWN.markerT<=0)return;
   TOWN.markerT=Math.max(0,TOWN.markerT-.03);const k=TOWN.markerT;
@@ -5456,8 +5590,9 @@ dom.addEventListener('pointermove',e=>{
   if(!drag)return;az-=(e.clientX-drag[0])*.006;el=Math.min(1.35,Math.max(.45,el+(e.clientY-drag[1])*.005));drag=[e.clientX,e.clientY];
   if(townOn())townHover(e.clientX,e.clientY)});
 dom.addEventListener('pointerup',e=>{const t2=TOWN_TAP;drag=null;TOWN_TAP=null;
-  if(!t2||Math.abs(e.clientX-t2.clientX)+Math.abs(e.clientY-t2.clientY)>6)return;   // a drag is a camera move
-  if(townOn())townClick(e.clientX,e.clientY);else fieldClick(e.clientX,e.clientY)});
+  // Click-to-walk is the TOWN's control, on purpose: in the fields the hero is driven by the grind
+  // loop, and a stray click must never send them off to a corner. A tap outside the town does nothing.
+  if(t2&&townOn()&&Math.abs(e.clientX-t2.clientX)+Math.abs(e.clientY-t2.clientY)<=6)townClick(e.clientX,e.clientY)});
 dom.addEventListener('pointercancel',()=>{drag=null;TOWN_TAP=null});
 dom.addEventListener('wheel',e=>{e.preventDefault();zoom=Math.min(2,Math.max(.6,zoom*(e.deltaY<0?1.1:.9)))},{passive:false});
 
@@ -5596,7 +5731,7 @@ function bgShow(){                      // and it is back: replay what the timer
   save()}
 document.addEventListener('visibilitychange',()=>{if(document.hidden)bgHide();else bgShow()});
 setInterval(bgTick,SIM_BG_MS);
-resize();respawn=.3;requestAnimationFrame(loop);setInterval(save,5000);kitFetch();window.town=townToggle;window.TOWN_NPC=TOWN_NPC;   // the map tab's town card lists the five
+resize();respawn=.3;requestAnimationFrame(loop);setInterval(save,5000);kitFetch();townPackFetch();window.town=townToggle;window.TOWN_NPC=TOWN_NPC;   // the map tab's town card lists the five
 </script>
 </body>
 </html>
