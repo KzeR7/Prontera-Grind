@@ -5,8 +5,9 @@
 
 Routes:
 
-    /            the weapon proposal page  (weapons on the class sprites - the current one)
-    /weapons     the same page
+    /            the damage-floats proposal page (on-screen damage numbers: 3 options)
+    /damage      the same page
+    /weapons     the weapon proposal page (weapons on the class sprites)
     /review      the older weapon review page (drag a weapon where it looks wrong)
     /standalone  the weapon review page with its data inlined (one file, no side requests)
     /picker      the attack pose + head picker (the owner's usual page)
@@ -23,7 +24,8 @@ import os
 import sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-PAGES = {'/': 'tools/weapon_proposal.html',
+PAGES = {'/': 'Updates/damage-floats-proposal/index.html',
+         '/damage': 'Updates/damage-floats-proposal/index.html',
          '/weapons': 'tools/weapon_proposal.html',
          '/review': 'tools/weapon_review.html',
          '/standalone': 'tools/weapon_review_standalone.html',
