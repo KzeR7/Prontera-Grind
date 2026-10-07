@@ -44,7 +44,8 @@ const code = [
   'const pm=s=>{const[n,c,sh]=String(s).split(":");return{n,c:parseInt(c,16)||0,shape:sh,spriteId:0,spriteSize:"Medium",spriteScale:1}};',
   grab('const G=(w,a,h,o,l,ac,ac2)=>', 'const pw=()=>'),
   grab('function genGear(T,l,sec,boss,tier){', '// ---------- skill effects'),
-  grab('const PETS=[', 'const rollingSet=new Set'),      // roster, ladders, PEQ, the 12 skills, petDmg/petHit
+  grab('const PETS=[', 'const rollingSet=new Set'),      // roster, traits, bond ladder, PEQ, the 12 skills, petDmg/petHit
+  grab('function petFold(own,inc){', 'function petDetail(p){'),   // v75 folding
   pick(/const PET_SKILL_WEIGHTS=\[[^\n]*/, 'rollPetSkills'),
   pick(/const SKSLOTS=t=>[^;]+;/, 'SKSLOTS/SKFADE'),
   pick(/const skOff=id=>[^\n]*/, 'skOff/skillOn'),
@@ -68,6 +69,7 @@ this.__p={ PETS,PET_SKILLS,RN,RCL,MUT,GW,PT,PTG,GREAT,PEQ,EGG,PETGAP,PETBAL,petD
   rollPetSkills,petSkills,petBuffWhy,petLeech,petHit,tickPet,maxHp,
   MAPS,genGear,atk,matk,aspd,crit,critD,C,CLASSES,HPK,HPE,SKILLS,SKSLOTS,SKFADE,lineOf,st,pv,
   petBuff,petBuffSrc,PET_SKILL_WEIGHTS,setMobs:m=>{mobs=m},setDealt:v=>{dealt=v},getDealt:()=>dealt,
+  PETBOND,PET_TRAIT,bondCnt,bondRank,bondNext,traitVal,petPassive,petBonusList,petFold,foldDupPets,
   setRandom:v=>{Math.random=()=>v},
   resetPetState:()=>{for(const k in petSkillCd)delete petSkillCd[k];for(const k in petNote)delete petNote[k];
     for(const s of['atk','matk','hp','leech']){petBuff[s]=0;petBuff[s+'T']=0;petBuffSrc[s]=''}},
@@ -131,12 +133,17 @@ t('one gacha fills BOTH slots and never repeats a skill', () => {
   assert.strictEqual(seen.size, 12, 'after 200 rolls every skill must have come up at least once');
 });
 
-t('a pet arrives from a drop with one random skill already slotted (v59)', () => {
-  // the drop site rolls the SAME weighted pool the gacha uses, and stores one skill
-  const drop = src.match(/const gifted=pickW\(PET_SKILL_WEIGHTS\);[\s\S]*?'pet'\);/);
-  assert.ok(drop, 'the pet drop must roll one skill (const gifted = pickW(PET_SKILL_WEIGHTS))');
-  assert.ok(drop[0].includes('skills:[PET_SKILLS[gifted].id]'), 'and the pet must arrive with it slotted');
-  assert.ok(drop[0].includes('${PET_SKILLS[gifted].n}'), 'the drop message must name the skill it brought');
+t('a new species arrives with one rolled skill; a duplicate folds into Bond (v75)', () => {
+  // The LIVE drop site inside kill(), cut out by its own opening so the offline simulator (which
+  // has the same roll) cannot satisfy the match. Owner's v75 rule: a duplicate is not junk, it
+  // becomes Bond - so this branch, not the push, is what an owned species goes through.
+  const drop = grab('if(Math.random()*100<(mob.boss?.5:.03)){const r=pickW(PW[Math.min(S.mp,9)])', 'checkLevel();');
+  assert.ok(drop.includes('const own=S.pets.find(x=>x.sp===sp)'), 'the drop must look for a pet of that species you already own');
+  assert.ok(drop.includes('if(own){') && drop.includes('petFold(own,{'), 'a duplicate is folded in, never pushed as a second copy');
+  // a NEW species still rolls the SAME weighted pool the gacha uses, and stores one skill
+  assert.ok(drop.includes('const gifted=pickW(PET_SKILL_WEIGHTS);S.pets.push({'), 'a new species must roll one skill');
+  assert.ok(drop.includes('skills:[PET_SKILLS[gifted].id]'), 'and the pet must arrive with it slotted');
+  assert.ok(drop.includes('${PET_SKILLS[gifted].n}'), 'the drop message must name the skill it brought');
   // one filled slot, and the gacha is what completes the pair
   const p1 = { skills: ['warcry'] };
   assert.strictEqual(P.petSkills(p1).length, 1, 'a fresh pet holds exactly one skill');
@@ -291,6 +298,114 @@ t('Blood Siphon heals you for 3% of what the pet deals; Vital Aura moves the HP 
   P.resetPetState();
 });
 
+t('every species has ONE signature passive, 5% at Bond 0 and 10% at Bond 5 (v75)', () => {
+  // The owner's instruction: passives yes, "tune it down hard. i dont want any buff go above 10%".
+  assert.strictEqual(P.PET_TRAIT.length, 8, 'one trait per species');
+  assert.ok(P.PET_TRAIT.every(t => t.n && typeof t.d === 'function' && t.k.length >= 1), 'every trait is named, described and keyed');
+  const keys = P.PET_TRAIT.flatMap(t => t.k);
+  assert.deepStrictEqual([...new Set(keys)].sort(),
+    ['boss', 'dr', 'exp', 'gear', 'hp', 'move', 'ore', 'petdmg', 'zeny'], 'the nine hooks the game actually reads');
+  // the ceiling, tested at both ends of the ladder
+  assert.strictEqual(P.traitVal(0), 5, 'a pet you just tamed gives 5 percent');
+  P.S = { pets: [], bond: [] };
+  assert.strictEqual(P.bondRank(0), 0);
+  for(const t of P.PETBOND) assert.strictEqual(P.bondNext(0) > 0, true);
+  P.S.bond = [1];
+  assert.strictEqual(P.bondRank(0), 1, 'one folded duplicate is Bond 1');
+  P.S.bond = [3]; assert.strictEqual(P.bondRank(0), 2);
+  P.S.bond = [6]; assert.strictEqual(P.bondRank(0), 3);
+  P.S.bond = [10]; assert.strictEqual(P.bondRank(0), 4);
+  P.S.bond = [15]; assert.strictEqual(P.bondRank(0), 5, 'fifteen folds caps the species');
+  assert.strictEqual(P.bondNext(0), null, 'and nothing is left to chase at Bond 5');
+  assert.strictEqual(P.traitVal(0), 10, 'Bond 5 is exactly the owner 10% ceiling');
+  P.S.bond = [999]; assert.strictEqual(P.traitVal(0), 10, 'and it can never pass it');
+  P.S.bond = [0];
+  assert.strictEqual(P.traitVal(1), 5, 'the ladder is per species');
+  P.S.bond = Array(8).fill(999);
+  for(let sp = 0; sp < 8; sp++) assert.strictEqual(P.traitVal(sp), 10, P.PETS[sp].n + ' stops at 10%');
+});
+
+t('petPassive adds the FIGHTING pets, one copy per species, and nothing else', () => {
+  const pet = (sp, on) => ({ id: sp + 1, sp, mut: 0, eq: [0, 0, 0], skills: [], on });
+  P.S = { pets: [pet(0, true), pet(2, false), pet(4, true)], bond: [] };   // Poring + Peco Peco fight, the Wolf is benched
+  assert.strictEqual(P.petPassive('zeny'), 5, 'Poring pays +5% Zeny');
+  assert.strictEqual(P.petPassive('move'), 5, 'a fighting Peco Peco mounts you');
+  assert.strictEqual(P.petPassive('petdmg'), 0, 'a Wolf on the bench leads no pack');
+  P.S.pets[1].on = true;
+  assert.strictEqual(P.petPassive('petdmg'), 5, 'send the Wolf to battle and the pack follows');
+  assert.strictEqual(P.petPassive('move'), 5, 'send it to battle and the mount counts');
+  assert.strictEqual(P.petPassive('zeny') + P.petPassive('move'), 10, 'two species, two separate numbers');
+  // a hand-edited save cannot stack one species twice: the bonus is per SPECIES, not per pet
+  P.S = { pets: [pet(0, true), pet(0, true), pet(0, true)], bond: [15] };
+  assert.strictEqual(P.petPassive('zeny'), 10, 'three Porings still pay one Poring bonus (at Bond 5)');
+  P.S = { pets: [pet(7, true)], bond: [0, 0, 0, 0, 0, 0, 0, 15] };   // Bond 5 = 15 folded Angeling
+  const ag = P.petPassive('hp'), dr = P.petPassive('dr');
+  assert.ok(ag > 0 && ag === dr, 'Divine Grace raises Max HP and cuts damage taken by the same number');
+  assert.strictEqual(ag, 10, 'and that number obeys the ceiling');
+  const list = P.petBonusList();
+  assert.strictEqual(list.length, 1, 'the sheet lists one row per fighting species');
+  assert.ok(/Angeling Divine Grace \+10% Max HP and 10% less damage taken/.test(list[0]), 'and spells the bonus out: ' + list[0]);
+  P.S = { pets: [], bond: [] };
+  assert.strictEqual(P.petBonusList().length, 0, 'no pets, no rows');   // cross-realm: compare lengths, not realms
+});
+
+t('a duplicate folds in: best mutation, best gear, the missing skill, +1 Bond (v75)', () => {
+  const own = { id: 1, sp: 1, mut: 2, eq: [1, 0, 0], skills: ['warcry'], on: false };
+  const inc = { id: 2, sp: 1, mut: 1, eq: [0, 4, 2], skills: ['spiritbolt', 'warcry'], on: true };
+  P.S = { pets: [own], bond: [] };
+  const r = P.petFold(own, inc);
+  assert.strictEqual(own.mut, 2, 'the better mutation survives');
+  assert.deepStrictEqual(own.eq, [1, 4, 2], 'each gear slot keeps its better level');
+  assert.deepStrictEqual(own.skills, ['warcry', 'spiritbolt'], 'the missing skill is merged into the free slot, never a duplicate');
+  assert.deepStrictEqual([r.before, r.after, r.bond], [0, 1, 1], 'and the species gains exactly one Bond');
+  // a WORSE duplicate changes nothing but the Bond
+  const before = JSON.stringify([own.mut, own.eq, own.skills]);
+  P.petFold(own, { id: 3, sp: 1, mut: 0, eq: [0, 0, 0], skills: [] });
+  assert.strictEqual(JSON.stringify([own.mut, own.eq, own.skills]), before, 'a weak duplicate adds Bond and nothing else');
+  assert.strictEqual(P.bondCnt(1), 2, 'two folds, two Bond points');
+  // two slots is still the cap
+  const filled = { id: 4, sp: 3, mut: 0, eq: [0, 0, 0], skills: ['warcry', 'vital'], on: true };
+  P.S = { pets: [filled], bond: [] };
+  P.petFold(filled, { id: 5, sp: 3, mut: 0, eq: [0, 0, 0], skills: ['treasuresniff'] });
+  assert.deepStrictEqual(filled.skills, ['warcry', 'vital'], 'a third skill cannot squeeze into two slots');
+  // an old save with a stack of one species is folded on login, keeping the best copy and the ON flag
+  P.S = { pets: [{ id: 6, sp: 0, mut: 0, eq: [0, 0, 0], skills: ['tailwag'], on: false },
+                 { id: 7, sp: 0, mut: 4, eq: [2, 0, 0], skills: ['warmnuzzle'], on: true },
+                 { id: 8, sp: 0, mut: 0, eq: [0, 0, 0], skills: [], on: false },
+                 { id: 9, sp: 2, mut: 0, eq: [0, 0, 0], skills: [], on: true }], bond: [] };
+  const folded = P.foldDupPets();
+  assert.strictEqual(folded, 2, 'two Porings were folded');
+  assert.strictEqual(P.S.pets.length, 2, 'one Poring and the untouched Peco Peco are left');
+  const survivor = P.S.pets.find(p => p.sp === 0);
+  assert.strictEqual(survivor.mut, 4, 'the G4 copy survived');
+  assert.strictEqual(survivor.on, true, 'and it kept the fighting slot either copy had');
+  assert.ok(survivor.skills.includes('tailwag') && survivor.skills.includes('warmnuzzle'), 'both skills were merged in');
+  assert.strictEqual(P.bondCnt(0), 2, 'two folds = Bond 2');
+  assert.strictEqual(P.foldDupPets(), 0, 'a second sweep finds nothing to do');
+});
+
+t('every signature passive is wired into the real game (v75)', () => {
+  // A trait table nobody reads is a lie on a card. Each key is grepped at the exact site that
+  // consumes it, so renaming a hook without updating the trait (or the other way round) fails here.
+  const sites = {
+    zeny: /mob\.zeny\*\(1\+pv\('zeny'\)\/100\)\*\(1\+petPassive\('zeny'\)\/100\)/,
+    exp: /mob\.exp\*expRate\(\)\*\(1\+petPassive\('exp'\)\/100\)/,
+    gear: /ch\*\(1\+petPassive\('gear'\)\/100\)/,
+    ore: /mob\.oreCh\*\(1\+petPassive\('ore'\)\/100\)/,
+    petdmg: /MUT\[p\.mut\]\*\(1\+p\.eq\[0\]\*\.10\)\*\(1\+petPassive\('petdmg'\)\/100\)/,
+    boss: /mob\.boss\?1\+petPassive\('boss'\)\/100:1/,
+    hp: /maxHp=\(\)=>[^;]*\(1\+petPassive\('hp'\)\/100\)/,
+    dr: /\(1-cut\)\*\(1-petPassive\('dr'\)\/100\)/,
+    move: /moveSpd=\(\)=>heroMoveSpeedForAgi\(st\('agi'\)\)\*\(1\+petPassive\('move'\)\/100\)/,
+  };
+  for(const k of Object.keys(sites)) assert.ok(sites[k].test(src), k + ' is never read by index.html');
+  assert.ok(/spd=moveSpd\(\);/.test(src), 'the walk must call moveSpd(), or Swift Mount would only exist on the sheet');
+  assert.strictEqual((src.match(/petPassive\('dr'\)/g) || []).length, 1, 'Divine Grace is read once, on the hit you take');
+  // Executioner is read on all three damaging paths - your swing, your pet's skill and your
+  // pet's auto-attack - and nowhere else
+  assert.strictEqual((src.match(/petPassive\('boss'\)/g) || []).length, 3, 'Executioner covers your hit and both pet hits');
+});
+
 t('MEASUREMENT: one maxed pet must deal about as much as one maxed CHARACTER', () => {
   P.S = endgame('Lord Knight');
   const atk = P.atk(), auto = autoDps(), rot = rotMul(), full = auto * rot;
@@ -312,9 +427,17 @@ t('MEASUREMENT: one maxed pet must deal about as much as one maxed CHARACTER', (
   // THE BALANCE. The complete chain should stay in the requested 0.6-0.7x companion band.
   assert.ok(ratio >= .58 && ratio <= .72, 'a maxed pet must land around 0.6-0.7x of a maxed character (got ' + ratio.toFixed(3) + 'x)');
   assert.ok(worst / full > .08, 'even a Common pet must be a real companion (got ' + (worst / full).toFixed(2) + 'x)');
+  // v75: the SIGNATURE PASSIVES have to live inside this band too. Pack Leader (+10% pet damage
+  // for every fighting pet, at Bond 5) is the only one that touches this number, and the owner
+  // approved a bonus of at most 10% - so the band moves deliberately to at most 0.78x with the
+  // strongest legal pack running, and this line is what holds that promise.
+  const withPack = ratio * (1 + 10 / 100);
+  console.log('       with Pack Leader maxed (+10%) the same pet sits at ' + withPack.toFixed(3) + 'x, the v75 limit');
+  assert.ok(withPack <= .78, 'the passives must keep a maxed pet inside the companion band (got ' + withPack.toFixed(3) + 'x)');
 });
 
 t('the stepped simulation and the analytic model agree (real petHit, crits off)', () => {
+  P.S = endgame('Lord Knight');       // a full character: the new trait tests below it leave a bare fixture behind
   const p = maxedPet(7);
   const analytic = petDps(p, ['piercingfang', 'spiritbolt'], { crit: false });
   const stepped = simPetDps(p, 120);

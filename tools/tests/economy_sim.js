@@ -58,6 +58,9 @@ this.__pet = { PTG, GREAT, PT, peqCost: eval('(' + ${JSON.stringify('t=>' + peq.
 const needAt=L=>roundReq(L<=50?Math.floor(NA1*Math.pow(L,NE1)):L<=70?Math.floor(N50*Math.pow(L/50,NE2)):L<=99?Math.floor(N70*Math.pow(L/70,NE2B)):Math.floor(N100*Math.pow(L/100,NE3)));
 let S = null, PW = 1;
 const gx = () => S.gm ? (S.gmx || 100) : 1;
+// v75: the pet-cost slice above already brings the real trait table and petPassive() with it, so
+// the passives below answer to S.pets and S.bond like the game does. A pet on the field with no
+// bond pays the base 5%. The reward test asserts both sides of it.
 const pw = () => PW;
 this.__e = { expRate, qRefresh, newQuest, needAt, EXPK, BOSEK, ZK, BZK, QXP, QZ, zenAt, ZMIN, pwOf, epkOf, qrOf, JOFF,
              set S(v){S=v}, get S(){return S}, set PW(v){PW=v}, get PW(){return PW} };
@@ -166,9 +169,9 @@ t('normal EXP is 21x through Lv50, then 7x and one-third (the v56 one-tenth scal
     E.S.gm=true; assert.strictEqual(E.expRate(),100);
     E.S.gmx=25; assert.strictEqual(E.expRate(),25);
   }
-  assert.ok(src.includes('xp=Math.round(mob.exp*expRate())'), 'kill Base EXP wiring');
-  assert.ok(src.includes('addJob(Math.round(Math.round(mob.exp*.7)*expRate()))'), 'kill Job EXP wiring');
-  assert.ok(src.includes("mob.zeny*(1+pv('zeny')/100))*g"));
+  assert.ok(src.includes('xp=Math.round(mob.exp*expRate()*(1+petPassive(\'exp\')/100))'), 'kill Base EXP wiring, pet bonus included');
+  assert.ok(src.includes('addJob(Math.round(Math.round(mob.exp*.7)*expRate()*(1+petPassive(\'exp\')/100)))'), 'kill Job EXP wiring, pet bonus included');
+  assert.ok(src.includes("mob.zeny*(1+pv('zeny')/100)*(1+petPassive('zeny')/100))*g"), 'kill Zeny wiring, Greedy Gel included');
 });
 t('the real kill reward block boosts Base/Job EXP but leaves player Zeny unchanged', () => {
   const rewards=grab('  const g=gx();S.kills++','  addFloat(mob.x,2.4,mob.z,');
@@ -180,6 +183,7 @@ t('the real kill reward block boosts Base/Job EXP but leaves player Zeny unchang
       ${src.match(/const EXP_BOOST_LV=\d+,EXP_BOOST_X=\d+,EXP_RATE=\d+;/)[0]}
       ${src.match(/const expRate=[^;]+;/)[0]}
       const mob={n:'Test Mob',mapIndex:0,exp:100,zeny:10,boss:false},pv=()=>0,qProg=()=>{};
+      const petPassive=()=>0;   // no pet is fighting in this world: the reward maths is the subject
       let jobXP=0,pend=[],zenyEarned=0,expEarned=0,recorded=0;
       const addJob=x=>jobXP+=x,recordMonsterKill=()=>recorded++;
       ${grab('function earnZeny(amount){','function kill(o){')}
@@ -192,6 +196,30 @@ t('the real kill reward block boosts Base/Job EXP but leaves player Zeny unchang
     assert.strictEqual(world.result.z,gm?1000:10);
     assert.strictEqual(world.result.kills,1,'the reward block still increments the lifetime kill count');
     assert.strictEqual(world.result.recorded,1,'the kill is forwarded once to the per-monster index');
+  }
+  // v75: the same block with a fighting pet's passive at +5% - the reward is the multiplier, not a
+  // flat add, and it lands on Zeny and both EXP lanes
+  for(const level of [1,50,99,150])for(const gm of [false,true]){
+    const world={};vm.createContext(world);
+    vm.runInContext(`
+      const S={lv:${level},gm:${gm},gmx:100,kills:0,kl:0,zeny:0,exp:0};
+      const gx=()=>S.gm?S.gmx:1;
+      ${src.match(/const EXP_BOOST_LV=\d+,EXP_BOOST_X=\d+,EXP_RATE=\d+;/)[0]}
+      ${src.match(/const expRate=[^;]+;/)[0]}
+      const mob={n:'Test Mob',mapIndex:0,exp:100,zeny:10,boss:false},pv=()=>0,qProg=()=>{};
+      const petPassive=()=>5;   // one fighting pet, Bond 0: the base 5% of its species passive
+      let jobXP=0,pend=[],zenyEarned=0,expEarned=0,recorded=0;
+      const addJob=x=>jobXP+=x,recordMonsterKill=()=>recorded++;
+      ${grab('function earnZeny(amount){','function kill(o){')}
+      ${rewards}
+      this.result={xp:S.exp,z:S.zeny,jobXP};
+    `,world);
+    const rate=gm?100:level<=50?21:level<100?7:7/3;
+    assert.strictEqual(world.result.xp,Math.round(100*rate*1.05),'+5% EXP at Lv'+level+' (gm '+gm+')');
+    assert.strictEqual(world.result.jobXP,Math.round(70*rate*1.05),'+5% Job EXP at Lv'+level);
+    // the game rounds the base reward first and applies the GM multiplier after it, so the
+    // expectation has to do the same rather than scale the multiplied number
+    assert.strictEqual(world.result.z,Math.round(10*1.05)*(gm?100:1),'+5% Zeny at Lv'+level+' (gm '+gm+')');
   }
 });
 

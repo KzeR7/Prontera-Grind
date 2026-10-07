@@ -80,6 +80,42 @@ is the live one; with no argument the tool prints how to set a new one). Since v
 `GM` / `test1234`; `localStorage.removeItem('pg_gm_local')` removes it. Normal accounts are made
 in-game and stored in the browser (`pg_acc4`; saves under `pg_save3_<user>`).
 
+## BUILD v75 — pet species passives and duplicate Bond
+
+Pets used to differ only in their drawing and their rarity: two pets of one rarity were the same
+pet, and a duplicate was dead weight in a 40-slot bag. A species now has a job of its own.
+
+* **Every species carries one signature passive**, always on while that pet is one of the fighting
+  three. It is worth **+5% when you tame it and +10% at Bond 5** — the ceiling is your rule
+  ("*i dont want any buff go above 10%*"), and the ladder is five steps of +1%:
+
+  | Pet | Signature passive | What it does |
+  |---|---|---|
+  | Poring | Greedy Gel | Zeny from kills |
+  | Lunatic | Moonlit Study | EXP and Job EXP from kills |
+  | Wolf | Pack Leader | Damage for **every** fighting pet |
+  | Desert Wolf | Sand Tracker | Oridecon and Elunium drop chance |
+  | Peco Peco | Swift Mount | Movement speed (the sheet says so on the line itself) |
+  | Dragon Whelp | Hoarded Flame | Equipment drop chance |
+  | Baphomet Jr. | Executioner | Damage to bosses, yours **and** your pets' |
+  | Angeling | Divine Grace | Max HP, and less damage taken |
+
+* **A duplicate folds into the pet you already own.** One pet per species, ever: the second Poring
+  you find is merged into the first (best mutation kept, each gear slot keeps its better level, a
+  skill the older pet was missing moves into its free slot) and the species gains **+1 Bond**. Fifty
+  folded duplicates would be Bond 5 with nothing left to chase; the ladder is 1 / 3 / 6 / 10 / 15.
+* **Old saves are folded on login**, exactly like a new duplicate — nothing is thrown away, and a
+  stack of identical pets turns into one good pet plus Bond.
+* **Nothing is a hidden multiplier.** Six of the eight passives cannot touch pet damage at all; the
+  two that do (Pack Leader, Executioner) are held to the same companion band, and `pet_sim` now
+  asserts the band *with Pack Leader at its ceiling* (0.78x, not 0.72x) so the promise is tested
+  rather than assumed. No pet grants player crit chance — Index Crit is still the only path to 100%.
+* **Where you see it:** the pet card prints the passive, the number at its current Bond and how many
+  more duplicates the next rank wants; the pet list shows a `B2` badge; the Character sheet has a
+  **Pet bonuses** line naming each fighting pet's contribution; and the Drops panel and pet-drop log
+  lines name the passive when a species arrives. `+1 duplicate on the selected pet` buttons in the
+  GM console let you watch a Bond climb without farming fifteen drops.
+
 ## BUILD v74.1 — novices keep 1st-job gear, and the phone layout pass
 
 * **The lowest gear band is Novice + 1st-job.** v74 made a Novice starter-gear-only, which locked

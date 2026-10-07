@@ -4043,3 +4043,54 @@ assigned for feel rather than fidelity. While reworking that, two shipped bugs s
 * **Tests:** all **34** suites pass (`ui_sim` 48, `gear_sim` 32, `class_change_sim` 27,
   `weapon_proposal_sim` 567). `node --check` on the sliced page JS clean, `git diff --check` clean.
 * **Not pushed** and no PR - the owner plays the build first.
+
+### 2026-10-07 — `2026-10-07 grind-v75 pet species passives and duplicate bond`
+
+* **Owner decision.** Asked how to make players hunt a *species*, the four levers offered were
+  signature passives, per-map species drop tables, a pity counter, and duplicate Bond. The owner
+  picked **1 + 4 combined**: *"i like few options. option 1 looks like a good idea. but tune it down
+  hard. i dont want any buff go above 10%"* and *"option 4 is also good. duplicate give buff. we can
+  combine this 2 options."* The map tables and the pity counter are **not** in this build.
+* **`PET_TRAIT`** (one row per species, indexed like `PETS`) names each signature passive and its
+  key list: `zeny`, `exp`, `petdmg`, `ore`, `move`, `gear`, `boss`, `hp`, `dr`. Value is
+  `traitVal(sp)=5+min(5,bondRank(sp))` - **5% at Bond 0, 10% at Bond 5, never above** - and
+  `petPassive(k)` sums it over the FIGHTING pets, one copy per species (`seen[p.sp]`), so a
+  hand-edited save cannot stack three Porings. `PETBOND=[1,3,6,10,15]` is the folded-duplicate
+  ladder; `bondCnt/bondRank/bondNext` read `S.bond[sp]`, a new array in `fresh()`.
+* **The nine hooks** (all one-liners, each asserted in pet_sim's wiring test): `kill()` Zeny,
+  `kill()` Base and Job EXP, the gear gate `ch*(1+petPassive('gear')/100)`, the ore gate
+  `mob.oreCh*(1+petPassive('ore')/100)`, `petDmg()` (Pack Leader), `strike()` + both `petHit()`
+  damage paths when `mob.boss` (Executioner), `maxHp()`, the incoming-damage line
+  `(1-cut)*(1-petPassive('dr')/100)`, and `moveSpd()` - which the live walk now calls instead of
+  `heroMoveSpeedForAgi()`, so Swift Mount moves the character and not just the sheet.
+* **Folding.** `petFold(own,inc)` merges a duplicate: better mutation wins, `eq` keeps each slot's
+  max, a missing skill fills a free slot (never a third), `+1` on `S.bond`. `foldDupPets()` applies
+  the same rule to a whole save with a stack of one species (keep the better copy, keep the ON flag
+  if either was fighting) and runs from `initSession` and the cloud login next to the v74 gear
+  sweep. The drop site in `kill()` folds for an owned species and only pushes a genuinely new one;
+  the offline simulator mirrors it and the welcome-back line reports folds.
+* **"No buff above 10%" is a tested promise**, not a comment: the balance test in `pet_sim` prints
+  the ratio *with Pack Leader maxed* and asserts `<= .78` (0.72 was the pre-v75 ceiling), and the
+  trait test walks all eight species at 999 folded duplicates and asserts exactly 10%.
+* **UI.** Pet card: `Signature passive · <name>`, the number at this Bond, `Bond n/5` and the
+  duplicates to the next rank, plus the fold rule in plain words. Pet list cells show `Bn`. The
+  Character sheet adds `Pet bonuses (the fighting pets): …` via `petBonusList()`, and the movement
+  paragraph names the one pet that bends its own rule. GM console: `+1 / +5 duplicates on the
+  selected pet` (`gmbond`).
+* **Tests.** `pet_sim` 17 -> 5 new groups: the trait table and its ceiling, the passive summation
+  (fighting only, one per species, cross-realm compare by length), the fold (best mutation, per-slot
+  gear, merged skills, +1 Bond, an old save's stack collapsed, idempotent second sweep), the wiring
+  grep for all nine hooks, and the balance band re-pinned with Pack Leader. `ui_sim` 48 -> the pet
+  card and sheet assertions; `save_load_sim` 23 -> the bond ledger round-trips and starts empty;
+  `economy_sim` 23 -> the kill wiring lines updated to the v75 shapes plus a with/without-passive
+  pair over four levels and both GM modes; `gear_sim` 33 -> the gear and ore windows proved at the
+  exact percentage boundary. `pet_sim`'s old drop test was stale by construction (it matched the
+  offline roll first) and now slices the live `kill()` drop site and asserts the fold branch.
+* **Files touched:** `index.html` (BUILD v75, `PETBOND`/`PET_TRAIT`/`bond*`/`traitVal`/`petPassive`/
+  `petBonusList`, `petFold`/`foldDupPets`, the nine hooks, `fresh().bond`, the drop/fold sites, the
+  two login sweeps, pet card + list + sheet + GM buttons); `tools/tests/{pet,ui,save_load,economy,gear}_sim.js`;
+  `READ-ME-FIRST.md`; the two `Updates/cards-gear-audit/*.html` tag mirrors and
+  `tools/cloudflare-deploy-steps.md` build tag.
+* **Tests:** all **34** suites pass (`pet_sim` 17, `ui_sim` 48, `gear_sim` 33, `save_load_sim` 23,
+  `economy_sim` 23). `node --check` clean.
+* **Not pushed** and no PR - the owner plays the build first.

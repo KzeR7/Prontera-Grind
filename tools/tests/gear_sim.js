@@ -22,8 +22,11 @@ const pick = (re, name) => { const m = src.match(re); if (!m) throw new Error('c
 
 const killStart = src.indexOf('function kill(o){');
 const gearDropStart = src.indexOf('  for(const[T,ch]of mob.drops)', killStart);
-const gearDropEnd = src.indexOf('  if(Math.random()*100<mob.cardCh)', gearDropStart);
-if (killStart < 0 || gearDropStart < 0 || gearDropEnd < gearDropStart) throw new Error('cannot find the live kill() gear-drop loop');
+// The slice runs from the gear loop, past the card gate, to the ore gate. A fixture only carries
+// cardCh/card when a test wants the card branch, so the extra lines are inert for the rest - and
+// they let this suite drive the ore roll (Sand Tracker's hook) too.
+const gearDropEnd = src.indexOf("  if(Math.random()*100<(mob.boss?.5:.03)){", gearDropStart);
+if (killStart < 0 || gearDropStart < 0 || gearDropEnd < gearDropStart) throw new Error('cannot find the live kill() drop loops');
 const gearDropLoop = src.slice(gearDropStart, gearDropEnd);
 const code = [
   'const bon=()=>0;',
@@ -59,11 +62,16 @@ const code = [
 
 const harness = `
 ${code}
+// v75: the drop loops read the fighting pets' passives (Hoarded Flame / Sand Tracker). This suite
+// is about the drop TABLES, so the passives are held at zero here; pet_sim.js owns their maths.
+let PETPASSIVE=0;                      // a test raises this to prove the hook is live
+const petPassive=()=>PETPASSIVE;
+const ORE={ori:'Oridecon',elu:'Elunium'};    // the ore gate inside the slice names the two ores
 const SECN=['Starter gear','1st-job gear','2nd-job gear','High-tier gear'];
 const SLOTS={weapon:{label:'Weapon',stat:'ATK',ic:'A'},armor:{label:'Armor',stat:'DEF',ic:'B'},head:{label:'Headgear',stat:'HP',ic:'C'},off:{label:'Shield',stat:'DEF',ic:'D'},leg:{label:'Legwear',stat:'DEF',ic:'E'},acc:{label:'Accessory',stat:'HP',ic:'F'}};
 const rnd=(a,b)=>a+Math.random()*(b-a),ri=(a,b)=>Math.floor(rnd(a,b+1)),uid=()=>1;
 let S=null;
-this.__g={ MAPS, GEAR, gearPool, fieldOf, genGear, executeGearRoll, slotAccepts, canUse, canShield, katarOnly, CLASSES, lineOf, secOf, secField, SLOTS, BAGMAX, MAPTIER, MAPGRADE, MAPVAL, dropTier, sellVal, AM, AFF, AB, RAR, AFFIX_CDM_SCALE, scaleCritDamageAffix, affixValue, FIELD_GEAR, FIELD_GEAR_MID, BOSS_POOL_TOTAL, BOSS_CRIT_RES, bossCritRes, gearTierOf, classTierOf, gearTierOK, gearUserOf,
+this.__g={ MAPS, GEAR, gearPool, fieldOf, genGear, executeGearRoll, slotAccepts, canUse, canShield, katarOnly, CLASSES, lineOf, secOf, secField, SLOTS, BAGMAX, MAPTIER, MAPGRADE, set PETPASSIVE(v){PETPASSIVE=v}, get PETPASSIVE(){return PETPASSIVE}, MAPVAL, dropTier, sellVal, AM, AFF, AB, RAR, AFFIX_CDM_SCALE, scaleCritDamageAffix, affixValue, FIELD_GEAR, FIELD_GEAR_MID, BOSS_POOL_TOTAL, BOSS_CRIT_RES, bossCritRes, gearTierOf, classTierOf, gearTierOK, gearUserOf,
            set S(v){S=v}, get S(){return S} };
 `;
 const sb = { console };
@@ -263,7 +271,8 @@ t('the drop table: 3.6% a kill on maps 1-5, 2.52% from Comodo on, boss pools 6% 
 
 t('the real equipment-drop loop creates boss gear when an independent roll succeeds', () => {
   G.S = {st:{luk:0},eq:{}};
-  const F = G.fieldOf(0, 10), boss = {...F.boss,boss:true,lvl:10,sec:F.sec};
+  // ore:false because the slice now reaches the ore gate, and this test counts equipment
+  const F = G.fieldOf(0, 10), boss = {...F.boss,boss:true,lvl:10,sec:F.sec,ore:false};
   assert.strictEqual(boss.drops.length, G.gearPool(0,10).length, 'expected a roll for every boss-pool item');
   // The per-item gate is 6/n % (~0.86% on this 7-item pool): a 1.2% die pays out nothing,
   // a 0.5% die clears every entry.
@@ -274,7 +283,7 @@ t('the real equipment-drop loop creates boss gear when an independent roll succe
   assert.ok(drops.every(d => d.it && d.it.tier === G.MAPGRADE[0]), 'the boss drop must sit on the map grade cap');
   assert.ok(drops.every(d => d.it.slot), 'successful boss rolls must be real equipment objects');
   // The regular-mob branch is also the live loop: 0.8% clears all three gates (1.5/1.2/0.9).
-  const mob = {...G.fieldOf(0,1).mobs[0],boss:false,lvl:1,sec:0};
+  const mob = {...G.fieldOf(0,1).mobs[0],boss:false,lvl:1,sec:0,ore:false};
   const mobDrops = G.executeGearRoll(mob, .008);
   assert.strictEqual(mobDrops.length, 3, 'regular-mob equipment gates did not execute');
 });
@@ -582,9 +591,32 @@ t('selling gear is pocket money and never funds an upgrade', () => {
   }
 });
 
+t('a fighting pet widens the gear and ore windows, and nothing else (v75)', () => {
+  // Hoarded Flame (+gear chance) and Sand Tracker (+ore chance) are the only companion effects
+  // that bend a drop table, and this proves they bend exactly the windows they claim: a die that
+  // misses at 0% lands at +10%, and the card gate does not move with it.
+  const F = G.fieldOf(2, 5), mob = { ...F.mobs[0], boss: false, lvl: 5, sec: F.sec, tier: F.tier, ore: true, oreCh: 0.004 };
+  G.S = { st: { luk: 0 }, eq: {} };
+  // The field's three gear gates are 1.5 / 1.2 / 0.9 percent. A 0.98% die misses the last one...
+  G.PETPASSIVE = 0;
+  assert.strictEqual(G.executeGearRoll(mob, .0098).length, 2, 'at +0% a 0.98% die misses the 0.9% gate');
+  assert.strictEqual(G.executeGearRoll(mob, .0085).length, 3, 'and a 0.85% die already cleared it');
+  // ...and +10% widens that gate to exactly 0.99%, which is ten percent of the chance, not ten points
+  G.PETPASSIVE = 10;
+  assert.strictEqual(G.executeGearRoll(mob, .0098).length, 3, '+10% gear chance must let that die through');
+  assert.strictEqual(G.executeGearRoll(mob, .0099).length, 2, 'the widened gate stops at exactly 0.99%');
+  // the ore gate right below it is the same shape: 0.4% becomes 0.44%, so 0.42% is the dividing line
+  G.PETPASSIVE = 0;
+  assert.strictEqual(G.executeGearRoll(mob, .0042).filter(d => d.it && d.it.ore).length, 0, 'at +0% a 0.42% die finds no ore');
+  G.PETPASSIVE = 10;
+  assert.strictEqual(G.executeGearRoll(mob, .0042).filter(d => d.it && d.it.ore).length, 2, 'at +10% the same die finds both ores');
+  assert.strictEqual(G.executeGearRoll(mob, .0045).filter(d => d.it && d.it.ore).length, 0, 'and the widened gate stops at 0.44%');
+  G.PETPASSIVE = 0;
+});
+
 t('LUK does not touch drop odds, cards, ores or pets any more', () => {
   for (const l of [0, 99]) {
-    const F = G.fieldOf(2, 5), mob = { ...F.mobs[0], boss: false, lvl: 5, sec: F.sec, tier: F.tier };
+    const F = G.fieldOf(2, 5), mob = { ...F.mobs[0], boss: false, lvl: 5, sec: F.sec, tier: F.tier, ore: false };
     G.S = { st: { luk: l }, eq: {} };
     // A die of .008 (0.8%) clears all three gear gates (1.5/1.2/0.9%) under both builds.
     const drops = G.executeGearRoll(mob, .008);

@@ -551,7 +551,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // script block, which is a SyntaxError - the game did not run on main at all. One line wins, and
 // it names both sides of this merge: the v38 balance patch (the weapon cut, the affix/card
 // give-back) and main's weapon-hold rendering work.
-const BUILD='2026-10-07 grind-v74.1 novices keep 1st-job gear, phone layout pass';   // shown on the login card - confirms which file you loaded
+const BUILD='2026-10-07 grind-v75 pet species passives and duplicate bond';   // shown on the login card - confirms which file you loaded
 $('buildTag').textContent='build '+BUILD;
 
 // ---------- class tree: Novice -> 6 first jobs -> 6 second jobs -> 6 third jobs ----------
@@ -1281,6 +1281,35 @@ const RN=['Common','Rare','Epic','Legendary'],RCL=[0,2,3,4],MUT=[1,2,4,6,8,18,38
 // twenty that succeeds is a GREAT success and jumps two tiers instead of one.
 const EGG=3000,GW=[50,30,16.5,2.5,.8,.2],PT=['Wooden','Iron','Silver','Gold','Mythril'],PTG=[.4,.25,.15,.09,.05],GREAT=.05;
 const PEQ=[{n:'Claw',d:t=>`+${t*10}% pet damage`},{n:'Collar',d:t=>`+${t*7}% pet attack speed`},{n:'Charm',d:t=>`${t*5}% pet crit chance (x2 damage)`}];
+// v75: every species carries ONE signature passive. It is the species - not the rarity and not
+// the gacha - that decides what a pet is FOR, and it is worth 5% at Bond 0, +1% a rank, 10% at
+// Bond 5. That ceiling is the owner's own rule: "i dont want any buff go above 10%".
+// A duplicate of a pet you already own is never junk: it is folded into the one you have (best
+// mutation and gear kept, a skill the older pet was missing merged in) and adds +1 Bond, so the
+// species you farm is the species that gets better. One pet per species is also why petPassive()
+// can just add the fighting three up - two copies of one species can never stack a bonus.
+const PETBOND=[1,3,6,10,15];                 // folded duplicates that make Bond 1..5 (15 to cap)
+const PET_TRAIT=[
+  {n:'Greedy Gel',    k:['zeny'],    d:v=>`+${v}% Zeny from kills`},
+  {n:'Moonlit Study', k:['exp'],     d:v=>`+${v}% EXP and Job EXP from kills`},
+  {n:'Pack Leader',   k:['petdmg'],  d:v=>`+${v}% damage for every fighting pet`},
+  {n:'Sand Tracker',  k:['ore'],     d:v=>`+${v}% Oridecon and Elunium drop chance`},
+  {n:'Swift Mount',   k:['move'],    d:v=>`+${v}% movement speed`},
+  {n:'Hoarded Flame', k:['gear'],    d:v=>`+${v}% equipment drop chance`},
+  {n:'Executioner',   k:['boss'],    d:v=>`+${v}% damage to bosses, yours and your pets'`},
+  {n:'Divine Grace',  k:['hp','dr'], d:v=>`+${v}% Max HP and ${v}% less damage taken`}];
+const bondCnt=sp=>Math.max(0,Math.min(999,Number((S&&S.bond&&S.bond[sp])||0)));
+// Bond 0..5: 0 at none, 1 after the first folded duplicate, 5 after fifteen of them.
+const bondRank=sp=>{const c=bondCnt(sp);let r=0;while(r<5&&c>=PETBOND[r])r++;return r};
+const bondNext=sp=>{const c=bondCnt(sp);for(const t of PETBOND)if(c<t)return t;return null};
+const traitVal=sp=>5+Math.min(5,bondRank(sp));          // 5% -> 10%, the whole ladder in five steps
+// What the fighting pets add to a stat. Distinct species only: a save that somehow holds two
+// Porings still counts one.
+const petPassive=k=>{if(!S||!S.pets)return 0;let v=0;const seen={};
+  for(const p of S.pets){if(!p.on||seen[p.sp])continue;seen[p.sp]=1;const t=PET_TRAIT[p.sp];if(t&&t.k.includes(k))v+=traitVal(p.sp)}return v};
+// The same list again, written out, for the Character sheet and the pet card.
+const petBonusList=()=>{if(!S||!S.pets)return[];const seen={},out=[];
+  for(const p of S.pets){if(!p.on||seen[p.sp])continue;seen[p.sp]=1;const t=PET_TRAIT[p.sp];if(t)out.push(`${PETS[p.sp].n} ${t.n} ${t.d(traitVal(p.sp))}`)}return out};
 // Twelve gacha skills: four deliberately restrained player buffs, four attacks, and four
 // low-impact utility/comfort skills. War Cry and Arcane Blessing have lighter roll weights so
 // a two-slot pet is less likely to hand out the strongest ATK/MATK multiplier. Utility skills
@@ -1308,7 +1337,7 @@ const PET_SKILLS=[
   {id:'guardingchirp',n:'Guarding Chirp',kind:'utility',effect:'def',value:5,duration:20,cd:40,desc:'Utility: +5 DEF for 20s, no combat damage',vfx:'coat',color:'#8fe9ff',icon:'🛡️'},
   {id:'tailwag',n:'Tail Wag',kind:'utility',effect:'comfort',cd:28,desc:'Utility: a cosmetic morale emote, no combat damage',vfx:'aid',color:'#fff3a0',icon:'✨'}
 ];
-const petDmg=p=>Math.round(atk()*PETBAL*[.2,.32,.55,1][PETS[p.sp].r]*MUT[p.mut]*(1+p.eq[0]*.10)),petInt=p=>Math.max(.4,1.7-PETS[p.sp].r*.15)/(1+p.eq[1]*.07),peqCost=t=>1200*(t+1)*(t+1),rollCost=p=>2500*(1+PETS[p.sp].r),petSkillCost=p=>2000*(1+PETS[p.sp].r);
+const petDmg=p=>Math.round(atk()*PETBAL*[.2,.32,.55,1][PETS[p.sp].r]*MUT[p.mut]*(1+p.eq[0]*.10)*(1+petPassive('petdmg')/100)),petInt=p=>Math.max(.4,1.7-PETS[p.sp].r*.15)/(1+p.eq[1]*.07),peqCost=t=>1200*(t+1)*(t+1),rollCost=p=>2500*(1+PETS[p.sp].r),petSkillCost=p=>2000*(1+PETS[p.sp].r);
 const petSkills=p=>((p.skills)||[]).map(id=>PET_SKILLS.find(s=>s.id===id)).filter(Boolean);
 // Per-skill cooldowns live in the same map as the 7s gate, keyed petId|skillId. A pet that
 // rerolls or is released must not leave those timers behind.
@@ -1357,7 +1386,7 @@ function petHit(p,target){
       }else{
         const hitList=use.kind==='aoe'?mobs.slice().filter(o=>Math.hypot(o.x-target.x,o.z-target.z)<=use.radius):[target];
         let dealt=0;
-        for(const o of hitList)if(o&&o.hp>0){const d=Math.max(1,Math.round(petDmg(p)*use.power));hurt(o,d,use.color);dealt+=d}
+        for(const o of hitList)if(o&&o.hp>0){const d=Math.max(1,Math.round(petDmg(p)*use.power*(o.boss?1+petPassive('boss')/100:1)));hurt(o,d,use.color);dealt+=d}
         petLeech(dealt);
         addFloat(target.x,2.4,target.z,use.n,use.color,true);playSkillFx(use.vfx,target,use.color);
       }
@@ -1365,7 +1394,7 @@ function petHit(p,target){
     }
   }
   let d=petDmg(p)*rnd(.9,1.1);const c=Math.random()*100<p.eq[2]*5;if(c)d*=2;
-  const hit=Math.max(1,Math.round(d));
+  const hit=Math.max(1,Math.round(d*(target&&target.boss?1+petPassive('boss')/100:1)));
   hurt(target,hit,MC[p.mut]?'#'+MC[p.mut].toString(16).padStart(6,'0'):'#ff9dff',c);
   petLeech(hit);
   return false;
@@ -1379,7 +1408,7 @@ const uid=()=>Date.now()+Math.random(),rnd=(a,b)=>a+Math.random()*(b-a),ri=(a,b)
 // One roll fills both slots. The second pick is made from the skills the first did not take, so
 // the two can never match and there is no retry loop to spin if the dice are pinned.
 const PET_SKILL_WEIGHTS=[.35,.35,1,1,1,1,1,1,1,1,1,1],rollPetSkills=()=>{const a=pickW(PET_SKILL_WEIGHTS),rest=PET_SKILL_WEIGHTS.map((w,i)=>i).filter(i=>i!==a),b=rest[pickW(rest.map(i=>PET_SKILL_WEIGHTS[i]))];return[PET_SKILLS[a].id,PET_SKILLS[b].id]};
-const fresh=()=>({pets:[],cls:'Novice',sex:'m',hair:0,lv:1,exp:0,hp:100,zeny:0,kills:0,indexXp:0,mobKills:{},equippedTitle:null,cardIndex:emptyCardIndex(),dmg:0,pts:10,jobs:{Novice:{jl:1,jx:0}},sk:{aid:1},skOff:{},dmgShort:true,dmgShow:true,base:{},mp:0,lvl:1,prog:[1,1,1,1,1],kl:0,auto:true,adv:true,feed:true,clickSell:false,bg:true,autoSell:[false,false,false,false,false],logOff:{},q:null,cards:[],ore:{ori:0,elu:0},offlineAt:0,offlineKph:0,offlineRateAt:0,offlineRateKills:0,offlineKillRemainder:0,gm:false,gmx:100,
+const fresh=()=>({pets:[],bond:[],cls:'Novice',sex:'m',hair:0,lv:1,exp:0,hp:100,zeny:0,kills:0,indexXp:0,mobKills:{},equippedTitle:null,cardIndex:emptyCardIndex(),dmg:0,pts:10,jobs:{Novice:{jl:1,jx:0}},sk:{aid:1},skOff:{},dmgShort:true,dmgShow:true,base:{},mp:0,lvl:1,prog:[1,1,1,1,1],kl:0,auto:true,adv:true,feed:true,clickSell:false,bg:true,autoSell:[false,false,false,false,false],logOff:{},q:null,cards:[],ore:{ori:0,elu:0},offlineAt:0,offlineKph:0,offlineRateAt:0,offlineRateKills:0,offlineKillRemainder:0,gm:false,gmx:100,
   st:{str:1,agi:1,dex:1,luk:1,int:1,vit:1},eq:{weapon:{id:1,slot:'weapon',wt:'dagger',tier:0,val:5,name:'Novice Knife',aff:[],slots:1,cards:[],sec:0},armor:null,head:null,off:null,leg:null,acc1:null,acc2:null},inv:[]});
 const saveKey=()=>'pg_save3_'+currentUser;
 const num_= (v,d)=>{v=+v;return Number.isFinite(v)?v:d};
@@ -1562,6 +1591,7 @@ function initSession(gm,newAccount=false){
     // frame of a session, not only from the next class change. `from=null` means no wearer label:
     // the class it is being taken off was never legally wearing it.
     if(typeof canUse==='function'&&typeof stowUnfit==='function')stowUnfit(null);
+    if(typeof foldDupPets==='function')foldDupPets();        // v75: one pet per species, duplicates become Bond
     applyOfflineProgress();
     $('userBadge').textContent=(gm?'🛠 ':'👤 ')+currentUser;$('logoutBtn').style.display='inline-block';ui();
     $('loginOverlay').style.display='none';log(newAccount?`Account ready — welcome, ${currentUser}!`:`Welcome${gm?', Game Master':' back'}, ${currentUser}!`);
@@ -1756,6 +1786,7 @@ function cloudStart(u,gm){
   if(S.q)qRefresh();if(!S.q)S.q=['kill','loot','boss'].map(newQuest);
   if(S.mp>=MAPS.length||S.lvl>10){S.mp=0;S.lvl=1}
   if(typeof canUse==='function'&&typeof stowUnfit==='function')stowUnfit(null);   // v74: same repair on a cloud login
+  if(typeof foldDupPets==='function')foldDupPets();                                // v75: same fold on a cloud login
   cloudSession(u,gm);ui();$('loginOverlay').style.display='none';$('logoutBtn').style.display='inline-block';
 }
 async function initSessionFromCloud(u,gm,isNew){
@@ -1938,7 +1969,7 @@ const bon=k=>{let v=MASTER_STATS.includes(k)?cardMasteryStat(k):0;for(const it o
 // canUse is the single gate every equip path already goes through (bag highlight, chooser,
 // auto-equip, item tooltip).
 const st=k=>S.st[k]+bon(k),gearTierOf=it=>Math.max(0,Math.min(3,((it&&it.sec)|0)||0)),classTierOf=(cls=S.cls)=>Math.max(0,Math.min(3,(CLASSES[cls]&&CLASSES[cls].tier)||0)),gearTierOK=(it,cls=S.cls)=>gearTierOf(it)<=Math.max(1,classTierOf(cls)),gearUserOf=it=>['any class','Novice and 1st-job classes','2nd-job classes and up','transcendent classes only'][gearTierOf(it)],canUse=it=>gearTierOK(it)&&(it.slot==='off'?canShield():(it.slot!=='weapon'||!it.wt||C().wt.includes(it.wt)));
-const maxHp=()=>Math.round((80+S.lv*20+eqv('head')*4+(eqv('acc1')+eqv('acc2'))*3+st('vit')*8+bon('hp'))*C().hp*(1+(pv('hpp')+(typeof cardMasteryStat==='function'?cardMasteryStat('hpPct'):0))/100)*(1+(petBuff.hp||0)/100));
+const maxHp=()=>Math.round((80+S.lv*20+eqv('head')*4+(eqv('acc1')+eqv('acc2'))*3+st('vit')*8+bon('hp'))*C().hp*(1+(pv('hpp')+(typeof cardMasteryStat==='function'?cardMasteryStat('hpPct'):0))/100)*(1+(petBuff.hp||0)/100)*(1+petPassive('hp')/100));
 const atk=()=>Math.round((4+S.lv*2+eqv('weapon')+st(C().main)*1.5+(st('dex')+st('luk'))*.25)*C().atk*(1+(pv('atk')+bon('atk')+(typeof cardMasteryStat==='function'?cardMasteryStat('atkPct'):0)+(tb.atk||0)+(petBuff.atk||0))/100)*(1+collDmg()/100));
 const matk=()=>Math.round((4+S.lv*2+eqv('weapon')*.8+st('int')*1.5+st('dex')*.25)*C().atk*(1+(pv('matk')+bon('matk')+(typeof cardMasteryStat==='function'?cardMasteryStat('matkPct'):0)+(tb.matk||0)+(petBuff.matk||0))/100)*(1+collDmg()/100));
 const aspd=()=>Math.max(.2,.85*C().aspd*(1-Math.min(.5,st('agi')*.006))/(1+(pv('aspd')+bon('aspd')+(typeof cardMasteryStat==='function'?cardMasteryStat('aspdPct'):0)+(tb.aspd||0))/100));
@@ -1952,7 +1983,7 @@ const crit=()=>{const v=2+st('luk')*.25+pv('crit')+bon('crit')+(typeof cardMaste
 // the curve used to be a private constant inside update(). It is one named function now, shown on
 // the stat sheet as the world units per second the hero actually travels (the run multiplier
 // applies past 3 units, which is why the sheet also prints the sprint figure). Pinned by ui_sim.
-const heroMoveSpeedForAgi=agi=>5.3+Math.max(1,Number(agi)||1)*.025+Math.sqrt(Math.max(1,Number(agi)||1))*.035,moveSpd=()=>heroMoveSpeedForAgi(st('agi')),MOVE_RUN=1.4;
+const heroMoveSpeedForAgi=agi=>5.3+Math.max(1,Number(agi)||1)*.025+Math.sqrt(Math.max(1,Number(agi)||1))*.035,moveSpd=()=>heroMoveSpeedForAgi(st('agi'))*(1+petPassive('move')/100),MOVE_RUN=1.4;
 // v73 crit damage (owner: "cri damage is too overpowered"): the base multiplier drops 2.0 -> 1.9,
 // and the cdm route that fed it is slot-limited and lighter (see AB/genGear). LUK and DEX still
 // add a little on top, so a crit build stays the burst build - it just cannot stack seven slots.
@@ -2129,7 +2160,9 @@ function offlineAwardKill(mob,r){
   if(Math.random()*100<(mob.boss?.5:.03)){
     const rarity=pickW(PW[Math.min(S.mp,9)]),choices=PETS.filter(x=>x.r===rarity);
     if(choices.length){const sp=PETS.indexOf(choices[ri(0,choices.length-1)]);r.drops++;
-      if(S.pets.length<40){const gifted=pickW(PET_SKILL_WEIGHTS);S.pets.push({id:ri(1e6,9e6),sp,mut:0,eq:[0,0,0],skills:[PET_SKILLS[gifted].id],on:S.pets.filter(x=>x.on).length<3});r.pets++}
+      const own=S.pets.find(x=>x.sp===sp);
+      if(own){petFold(own,{sp,mut:0,eq:[0,0,0],skills:[PET_SKILLS[pickW(PET_SKILL_WEIGHTS)].id]});r.petFolds++}
+      else if(S.pets.length<40){const gifted=pickW(PET_SKILL_WEIGHTS);S.pets.push({id:ri(1e6,9e6),sp,mut:0,eq:[0,0,0],skills:[PET_SKILLS[gifted].id],on:S.pets.filter(x=>x.on).length<3});r.pets++}
       else{const refund=Math.floor(EGG*(.3+rarity*.4));earnZeny(refund);r.zeny+=refund;r.petRefunds++}}
   }
   if(mob.boss||(S.lvl<10&&S.kl>=MPS)){
@@ -2145,7 +2178,7 @@ function showOfflineReward(r){
   set('offlineKills','+'+r.kills.toLocaleString());set('offlineDrops','+'+r.drops.toLocaleString());set('offlineExp','+'+r.exp.toLocaleString());
   set('offlineItems','+'+r.items.toLocaleString());set('offlineCards','+'+r.cards.toLocaleString());set('offlineZeny','+'+r.zeny.toLocaleString());
   const detail=[];if(r.storedItems)detail.push(`${r.storedItems} stored`);if(r.autoSold)detail.push(`${r.autoSold} auto-sold`);if(r.overflow)detail.push(`${r.overflow} not stored (bag full)`);
-  if(r.ori||r.elu)detail.push(`Oridecon +${r.ori} · Elunium +${r.elu}`);if(r.pets)detail.push(`Pets +${r.pets}`);if(r.petRefunds)detail.push(`${r.petRefunds} full-collection pet refund${r.petRefunds===1?'':'s'}`);if(r.stages)detail.push(`${r.stages} stage${r.stages===1?'':'s'} advanced`);
+  if(r.ori||r.elu)detail.push(`Oridecon +${r.ori} · Elunium +${r.elu}`);if(r.pets)detail.push(`Pets +${r.pets}`);if(r.petFolds)detail.push(`${r.petFolds} duplicate pet${r.petFolds===1?'':'s'} folded into Bond`);if(r.petRefunds)detail.push(`${r.petRefunds} full-collection pet refund${r.petRefunds===1?'':'s'}`);if(r.stages)detail.push(`${r.stages} stage${r.stages===1?'':'s'} advanced`);
   const note=[];note.push(r.awayMs>OFFLINE_CAP_MS?'Away rewards are capped at four hours.':'Rewards use the time credited above.');
   note.push(r.rateKph>0?`Estimated at 50% of your recent online pace (${Math.round(r.rateKph).toLocaleString()} kills/hour).`:'No recent kill-rate sample was available, so no simulated kills were credited.');
   const details=$('offlineDetails');if(details)details.textContent=detail.length?detail.join(' · '):'No items, cards, ores or pets dropped this time.';
@@ -2173,7 +2206,7 @@ function applyOfflineProgress(now=Date.now(),serverClaim=null){
   // quiet - but still advance the timestamps so the same window can never be paid later.
   const awayStart=now-Math.max(0,Number(plan.awayMs)||0);
   const covered=!!plan.show&&Number.isFinite(awayStart)&&awayStart>=PAGE_BOOT_AT&&plan.awayMs<=OFFLINE_SIM_COVER_MS;
-  const r={...plan,show:!!plan.show&&!covered,covered,kills:0,drops:0,exp:0,zeny:0,items:0,storedItems:0,autoSold:0,overflow:0,cards:0,ori:0,elu:0,pets:0,petRefunds:0,stages:0};
+  const r={...plan,show:!!plan.show&&!covered,covered,kills:0,drops:0,exp:0,zeny:0,items:0,storedItems:0,autoSold:0,overflow:0,cards:0,ori:0,elu:0,pets:0,petRefunds:0,petFolds:0,stages:0};
   if(plan.show&&!covered){for(let i=0;i<plan.kills;i++)offlineAwardKill(offlineMobForCurrentField(),r);S.offlineKillRemainder=plan.remainder}
   S.offlineAt=now;S.offlineRateAt=now;S.offlineRateKills=safeCount(S.kills);save();zenyEarned=0;expEarned=0;
   if(plan.show&&!covered)showOfflineReward(r);return r;
@@ -2273,7 +2306,7 @@ function strike(mult,col,magic=false,skill=false){
   if(!mob)return;if(Math.random()*100<missCh()){addFloat(mob.x,1.8,mob.z,'MISS','#dfe5ed',false,'miss');return}
   // v73: the crit roll answers to the target - a boss carries its map's crit resistance
   // (BOSS_CRIT_RES) and every other monster resists nothing.
-  const c=Math.random()*100<Math.max(0,crit()*(1-(mob.critRes||0))),base=magic?matk():atk(),d=Math.max(1,Math.round(base*mult*rnd(Math.min(.95,.7+st('dex')*.004),1.15)*(c?critD():1)));
+  const c=Math.random()*100<Math.max(0,crit()*(1-(mob.critRes||0))),base=magic?matk():atk(),d=Math.max(1,Math.round(base*mult*rnd(Math.min(.95,.7+st('dex')*.004),1.15)*(c?critD():1)*(mob.boss?1+petPassive('boss')/100:1)));
   S.dmg=(S.dmg||0)+d;mob.hp-=d;mob.flash=1;shake=c?6:2;const leech=typeof cardMasteryStat==='function'?cardMasteryStat('leech'):0;if(leech>0&&typeof maxHp==='function'){const h=Math.max(1,Math.round(d*leech/100));S.hp=Math.min(maxHp(),S.hp+h);addFloat(pl.x,2.7,pl.z,'+'+h,'#ff6b8a')}damageFloat(mob.x,1.5*Math.max(1,(mob.spriteScale||mob.size)*.8)+.6,mob.z,d,c,false,skill);
 }
 // Higher job tiers get more casts per swing: Novice 1, first job 2, second job 3, transcendent
@@ -2331,16 +2364,19 @@ function earnZeny(amount){const n=Math.max(0,Number(amount)||0);S.zeny+=n;zenyEa
 function earnExp(amount){const n=Math.max(0,Number(amount)||0);S.exp+=n;expEarned+=n}
 function kill(o){const keep=mob;if(o)mob=o;if(!mob||!mobs.includes(mob)){mob=keep;return}
   const g=gx();S.kills++;recordMonsterKill(mob);S.kl++;qProg('kill');if(mob.boss)qProg('boss');
-  const z=Math.round(mob.zeny*(1+pv('zeny')/100))*g,xp=Math.round(mob.exp*expRate());earnZeny(z);earnExp(xp);addJob(Math.round(Math.round(mob.exp*.7)*expRate()));pend=[];castQ=[];
+  const z=Math.round(mob.zeny*(1+pv('zeny')/100)*(1+petPassive('zeny')/100))*g,xp=Math.round(mob.exp*expRate()*(1+petPassive('exp')/100));earnZeny(z);earnExp(xp);addJob(Math.round(Math.round(mob.exp*.7)*expRate()*(1+petPassive('exp')/100)));pend=[];castQ=[];
   addFloat(mob.x,2.4,mob.z,'+'+numTxt(z)+'z','#ffd23f');log(`${mob.n} defeated! +${xp.toLocaleString()} EXP, +${z.toLocaleString()} Zeny`,'','kills,zeny');
   // Drop odds are the field's own numbers: nothing on the character scales them, so LUK cannot
   // bend the tables (it still raises ATK through the crit/DEX side of the stat sheet, which is
   // what it is for).
-  for(const[T,ch]of mob.drops)if(Math.random()*100<ch)drops.push(mkDrop(genGear(T,mob.lvl,mob.sec,mob.boss,mob.tier)));
+  for(const[T,ch]of mob.drops)if(Math.random()*100<ch*(1+petPassive('gear')/100))drops.push(mkDrop(genGear(T,mob.lvl,mob.sec,mob.boss,mob.tier)));
   if(Math.random()*100<mob.cardCh){const g2=mob.card.g;drops.push(mkDrop({card:1,id:uid(),n:mob.card.n,g:g2,stat:mob.card.stat,v:cardVal(g2,mob.card.stat)}))}
-  if(mob.ore)for(const o of['ori','elu'])if(Math.random()<mob.oreCh)drops.push(mkDrop({ore:o,id:uid(),n:ORE[o]}));
-  if(Math.random()*100<(mob.boss?.5:.03)){const r=pickW(PW[Math.min(S.mp,9)]),c=PETS.filter(x=>x.r===r),sp=PETS.indexOf(c[ri(0,c.length-1)]);
-    if(S.pets.length<40){const gifted=pickW(PET_SKILL_WEIGHTS);S.pets.push({id:ri(1e6,9e6),sp,mut:0,eq:[0,0,0],skills:[PET_SKILLS[gifted].id],on:S.pets.filter(x=>x.on).length<3});log(`A ${RN[r]} pet followed you: ${PETS[sp].n} with ${PET_SKILLS[gifted].n}!`,'r'+RCL[r],'pet');addFloat(mob.x,3,mob.z,'PET!','#ff9dff',true)}
+  if(mob.ore)for(const o of['ori','elu'])if(Math.random()<mob.oreCh*(1+petPassive('ore')/100))drops.push(mkDrop({ore:o,id:uid(),n:ORE[o]}));
+  if(Math.random()*100<(mob.boss?.5:.03)){const r=pickW(PW[Math.min(S.mp,9)]),c=PETS.filter(x=>x.r===r),sp=PETS.indexOf(c[ri(0,c.length-1)]),T=PET_TRAIT[sp];
+    const own=S.pets.find(x=>x.sp===sp);
+    if(own){const b=petFold(own,{sp,mut:0,eq:[0,0,0],skills:[PET_SKILLS[pickW(PET_SKILL_WEIGHTS)].id]}),n=PETS[sp].n;
+      log(`A second ${n} followed you and folded into the one you had: ${n} is Bond ${b.after}/5, so ${T.n} is now ${T.d(traitVal(sp))}.`,'r'+RCL[r],'pet');addFloat(mob.x,3,mob.z,'PET!','#ff9dff',true)}
+    else if(S.pets.length<40){const gifted=pickW(PET_SKILL_WEIGHTS);S.pets.push({id:ri(1e6,9e6),sp,mut:0,eq:[0,0,0],skills:[PET_SKILLS[gifted].id],on:S.pets.filter(x=>x.on).length<3});log(`A ${RN[r]} pet followed you: ${PETS[sp].n} with ${PET_SKILLS[gifted].n} - ${T.n} ${T.d(traitVal(sp))} while it fights!`,'r'+RCL[r],'pet');addFloat(mob.x,3,mob.z,'PET!','#ff9dff',true)}
     else{const z=Math.floor(EGG*(.3+r*.4));earnZeny(z);log(`A ${RN[r]} ${PETS[sp].n} appeared but your pet collection is full (+${z}z).`,'','pet,zeny')}}
   checkLevel();
   if(mob.boss||(S.lvl<10&&S.kl>=MPS)){mobs=[];S.kl=0;if(S.lvl<10&&S.lvl>=S.prog[S.mp]){S.prog[S.mp]=S.lvl+1;log(`${fieldName()} cleared! Stage ${S.lvl+1} unlocked.`,'r3');if(S.adv&&S.lvl<10){S.lvl++}}}
@@ -2597,9 +2633,10 @@ const V={
         <div class="sec">🐾 Pet drops</div><small>0.03% per kill, 0.5% from bosses. Odds on ${mp.n}: ${PW[Math.min(mapM,9)].map((w,i)=>RN[i]+' '+w+'%').join(' &middot; ')}</small></div></div>`},
   stats(){const c=C(),b=k=>bon(k)?` <small class="r1">+${bon(k)}</small>`:'',idxC=typeof indexCrit==='function'?indexCrit():0;
     return`<div class="hd">${S.cls} &middot; Base Lv ${S.lv} &middot; Job Lv ${jobOf().jl}/${c.mj}</div><div class="hd">Stat points: ${S.pts} <small>(max ${statCap()} each${S.lv<ELITELV?' &middot; '+MAXST+' unlocks at Base Lv '+ELITELV:''} &middot; max Base Lv 150)</small></div><div class="hd">🏆 Class collection: ${playedClasses()}/${t3Total()} transcendent classes at Base Lv 100+ &middot; <b>+${collDmg()}% damage</b> <small>(+1% each, permanent${playedClasses()?'':' - take a transcendent class to Base Lv 100 to earn it'})</small></div>`
+    +(petBonusList().length?`<small><b>Pet bonuses</b> (the fighting pets): ${petBonusList().join(' &middot; ')}</small>`:'')
     +STATS.map(([k,l,d])=>`<div class="slot"><span><b>${l}</b> ${S.st[k]}${b(k)} <small>(${d})</small></span><span class="bts"><small>${cost(k)}pt</small><button data-a="stat" data-v="${k}" ${S.pts>=cost(k)&&S.st[k]<statCap()?'':'disabled'}>+1</button><button data-a="stat5" data-v="${k}" ${S.pts>=cost(k)&&S.st[k]<statCap()?'':'disabled'}>+5</button></span></div>`).join('')
     +`<div class="slot" style="flex-wrap:wrap"><span>ATK <b>${atk()}</b></span><span>MATK <b>${matk()}</b></span><span>DEF <b>${def()}</b></span><span>ASPD <b>${(1/aspd()).toFixed(2)}/s</b></span><span>Crit <b>${crit().toFixed(1)}%</b>${idxC?` <small>(+${idxC}% Index Crit)</small>`:''}</span><span>Crit DMG <b>x${critD().toFixed(2)}</b></span><span>MDEF <b>${mdef()}</b></span><span>Flee <b>${flee().toFixed(0)}%</b></span><span>HP <b>${maxHp()}</b></span><span>Move <b>${moveSpd().toFixed(2)}</b> <small>u/s · ${(moveSpd()*MOVE_RUN).toFixed(2)} sprinting</small></span></div>
-    <small><b>Movement speed</b> comes from AGI alone: ${moveSpd().toFixed(2)} units a second at AGI ${st('agi')} (${(moveSpd()*MOVE_RUN).toFixed(2)} when running, which is any trip longer than 3 units). Every point of AGI adds about 0.03 - it never touches damage, so it is a comfort stat.</small>
+    <small><b>Movement speed</b> comes from AGI alone: ${heroMoveSpeedForAgi(st('agi')).toFixed(2)} units a second at AGI ${st('agi')} (${(heroMoveSpeedForAgi(st('agi'))*MOVE_RUN).toFixed(2)} when running, which is any trip longer than 3 units). Every point of AGI adds about 0.03 - it never touches damage, so it is a comfort stat.${petPassive('move')?` A fighting Peco Peco's Swift Mount adds ${petPassive('move')}%.`:''}</small>
     <small>Crit is capped at 60% from stats, skills, gear and card mastery; above 45% each further point counts half. <b>Index Crit</b> (+${idxC}% of +40 max, from Hunt Titles) is the only source that passes the cap, and the total stops at 100%.</small>
     <small>Weapons: ${c.wt.join(', ')}${katarOnly()?' (two-handed Katar; no off-hand)':''} &middot; Main stat: ${SU(c.main)}</small><button class="full" data-a="rstat" ${rcost()&&S.zeny<rcost()?'disabled title="You need '+rcost().toLocaleString()+' Zeny to reset stats"':''}>Reset stats (${rcost()?rcost()+'z':'free below Base 20'})</button>`},
   job(){const lines=[['Swordman','Knight','Lord Knight'],['Mage','Wizard','High Wizard'],['Archer','Hunter','Sniper'],['Thief','Assassin','Assassin Cross'],['Acolyte','Priest','High Priest'],['Merchant','Blacksmith','Whitesmith']];
@@ -2665,7 +2702,7 @@ const V={
     +EQK.map(([k,l])=>{const it=S.eq[k];if(!it)return'';const r=it.r||0,o=it.slot==='weapon'?'ori':'elu',c=refCost(it);
       return`<div class="slot" style="align-items:flex-start;gap:10px;margin-top:6px">${cell(it,false)}<div style="flex:1"><b class="r${it.tier}">${iname(it)}</b> <small>${l}</small><br><small>${SLOTS[it.slot].stat} +${ev(it)} &rarr; +${Math.round(it.val*(1+(r+1)*.15))} &middot; ${r>=10?'MAX':'Success '+refCh(it)+'% &middot; '+c.toLocaleString()+'z + 1 '+ORE[o]}</small><br><button data-a="refine" data-v="${k}" ${r>=10||S.ore[o]<1||S.zeny<c?'disabled':''}>Refine</button></div></div>`}).join('')},
   pet(){const P=S.pets,A=P.filter(p=>p.on).length,p=gp(selP);
-    return`<div class="hd">Pets <small>Fighting ${A}/3 &middot; Collection ${P.length}</small></div><small>Pets drop from monsters. Drop odds per map are on the World Map.</small><div class="grid" style="margin-top:6px">${P.map(q=>{const sp=PETS[q.sp];return`<div class="cell b${RCL[sp.r]}${selP===q.id?' sel':''}" style="font-size:30px" data-a="selp" data-v="${q.id}">${petIcon(sp)}${q.on?'<i class="rf" style="left:2px;right:auto;top:2px;bottom:auto;font-style:normal">ON</i>':''}${q.mut?`<i class="rf">G${q.mut}</i>`:''}</div>`}).join('')||'<small>No pets yet.</small>'}</div>`+(p?petDetail(p):'<small>Select a pet to manage it.</small>')},
+    return`<div class="hd">Pets <small>Fighting ${A}/3 &middot; Collection ${P.length}</small></div><small>Pets drop from monsters, and every species has a signature passive - a duplicate folds into the copy you own and raises that species' Bond. Drop odds per map are on the World Map.</small><div class="grid" style="margin-top:6px">${P.map(q=>{const sp=PETS[q.sp];return`<div class="cell b${RCL[sp.r]}${selP===q.id?' sel':''}" style="font-size:30px" data-a="selp" data-v="${q.id}">${petIcon(sp)}${q.on?'<i class="rf" style="left:2px;right:auto;top:2px;bottom:auto;font-style:normal">ON</i>':''}${q.mut?`<i class="rf">G${q.mut}</i>`:''}${bondRank(q.sp)?`<i class="rf" style="left:2px;right:auto;top:auto;bottom:2px">B${bondRank(q.sp)}</i>`:''}</div>`}).join('')||'<small>No pets yet.</small>'}</div>`+(p?petDetail(p):'<small>Select a pet to manage it.</small>')},
   board(){const labels={daily:'Daily',weekly:'Weekly',all:'All-time'},data=boardCache[boardPeriod],esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
     const periods=['daily','weekly','all'],entries=data&&Array.isArray(data.entries)?data.entries:[];
     const rows=entries.map((r,i)=>`<div class="board-row"><span class="board-rank">${i+1}</span><b title="${esc(r.name)}">${esc(r.name)}</b><span class="board-level">Lv ${Math.max(1,Number(r.level)||1)}</span><strong class="board-kills">${Math.max(0,Number(r.kills)||0).toLocaleString()} kills</strong></div>`).join('');
@@ -2696,7 +2733,7 @@ const V={
     <div class="hd" style="margin-top:10px">Index mastery test controls</div><small>These use the real per-species ledger and the 10 / 250 / 5,000 / 50,000 kill ladder. Clear before trying another scenario.</small><div class="row"><button data-a="gmindex" data-v="one">+1 Poring kill</button><button data-a="gmindex" data-v="all1">1 kill every species</button><button data-a="gmindex" data-v="all100">100 kills every species</button><button data-a="gmindex" data-v="all1000">1,000 kills every species</button><button data-a="gmindex" data-v="all5000">5,000 kills every species</button><button data-a="gmindex" data-v="all50000">50,000 kills every species</button><button data-a="gmindex" data-v="xp10000">Set 10,000 XP title test</button><button data-a="gmindex" data-v="xp1000000">Set the final title</button><button data-a="gmindex" data-v="clear">Clear Index</button></div>
     <div class="hd" style="margin-top:10px">Card mastery test controls</div><small>Loose cards can be dedicated through the Card Mastery tab; every mastery rank is one gacha token. Roll every token fills the stat caps the slow way (one random roll at a time). Socketed cards stay untouched.</small><div class="row"><button data-a="gmcard" data-v="poring1">+1 Poring Card</button><button data-a="gmcard" data-v="poring5">+5 Poring Cards</button><button data-a="gmcard" data-v="poringMax">Max Poring 5/5</button><button data-a="gmcard" data-v="allMax">Max all cards 5/5</button><button data-a="gmcard" data-v="rollAll">Roll every token</button><button data-a="gmcard" data-v="clear">Reset card mastery</button></div>
     <div class="hd" style="margin-top:10px">Skill accounting test controls</div><small>Max the current class line, then use the normal Auto-allocate all skills button or let GM do both steps.</small><div class="row"><button data-a="gmskill" data-v="maxjobs">Max current line jobs</button><button data-a="gmskill" data-v="maxallocate">Max jobs + auto allocate</button><button data-a="gmskill" data-v="reset">Reset current line skills</button></div>
-    <div class="hd" style="margin-top:10px">Test pets</div><div class="row">${RN.map((n,i)=>`<button data-a="gmp" data-v="${i}">+ ${n} pet</button>`).join('')}</div><div class="row" style="margin-top:6px"><button data-a="gmm" data-v="4">All pets G4</button><button data-a="gmm" data-v="6">All pets G6</button><button data-a="gmpet" data-v="g6dps">Max G6 DPS pet</button><button data-a="gmpet" data-v="g6buff">Max G6 + buff slot</button><button data-a="gmpet" data-v="g6utility">Max G6 utility slots</button><button data-a="gmpet" data-v="clear">Clear pets</button></div>`}};
+    <div class="hd" style="margin-top:10px">Test pets</div><div class="row">${RN.map((n,i)=>`<button data-a="gmp" data-v="${i}">+ ${n} pet</button>`).join('')}</div><div class="row" style="margin-top:6px"><button data-a="gmbond" data-v="1">+1 duplicate on the selected pet (Bond)</button><button data-a="gmbond" data-v="5">+5 duplicates</button></div><div class="row" style="margin-top:6px"><button data-a="gmm" data-v="4">All pets G4</button><button data-a="gmm" data-v="6">All pets G6</button><button data-a="gmpet" data-v="g6dps">Max G6 DPS pet</button><button data-a="gmpet" data-v="g6buff">Max G6 + buff slot</button><button data-a="gmpet" data-v="g6utility">Max G6 utility slots</button><button data-a="gmpet" data-v="clear">Clear pets</button></div>`}};
 V.index=()=>`<div class="mastery-head"><div class="mastery-emblem">✦</div><div><b>Midgard Mastery Index</b><small>Individual monsters, Index XP and per-card rewards</small></div><span class="mastery-counter">${indexExperience().toLocaleString()} Index XP</span></div><div class="mastery-tabs"><button data-a="indexview" data-v="mobs" class="${indexMode==='mobs'?'on':''}" aria-pressed="${indexMode==='mobs'}">⚔ Mob Index</button><button data-a="indexview" data-v="cards" class="${indexMode==='cards'?'on':''}" aria-pressed="${indexMode==='cards'}">🃏 Card Mastery</button></div>${indexMode==='mobs'?renderMobIndex():renderCardIndex()}`;
 const EQK=[['head','Head','🎩'],['weapon','R.Hand','⚔️'],['armor','Body','🥼'],['off','L.Hand','🛡️'],['acc1','Acc 1','💍'],['leg','Legs','👖'],['acc2','Acc 2','💍']];
 const CFIT={str:'weapon',dex:'weapon',atk:'weapon',crit:'weapon',cdm:'weapon',agi:'armor',aspd:'armor',flee:'armor',vit:'armor',int:'head',hp:'head',luk:'acc'},CFL={weapon:'Weapons',armor:'Armor, Shield & Legwear',head:'Headgear',acc:'Accessories'};
@@ -2815,9 +2852,39 @@ function renderQ(){const e=$('qp');if(!S){e.style.display='none';return}e.style.
   e.innerHTML=`<div class="qp-head"><b>📜 Quests</b><div class="qp-actions"><button data-q="index" title="Open the Mob Index and Card Mastery">📚 Index</button><button data-q="t" aria-label="${qOpen?'Collapse':'Expand'} quests">${qOpen?'&minus;':'+'}</button></div></div>`+(qOpen?(S.q||[]).map((q,i)=>`<div style="margin-top:5px"><div>${qTxt(q)}</div><div class="pbar"><i style="width:${Math.min(100,q.prog/q.goal*100)}%"></i></div><div style="display:flex;justify-content:space-between;align-items:center"><small>${q.prog}/${q.goal} &middot; ${(q.z||0).toLocaleString()}z &middot; ${(q.xp||0).toLocaleString()}xp</small>${q.prog>=q.goal?`<button data-q="c${i}">Claim</button>`:''}</div></div>`).join(''):'')}
 $('qp').onclick=e=>{const b=e.target.closest('[data-q]');if(!b)return;const v=b.dataset.q;if(v==='index'){openTab('index');return}if(v==='t'){qOpen=!qOpen;renderQ()}else ACT.claim(v.slice(1))};
 function refineUI(it,k){const r=it.r||0,o=it.slot==='weapon'?'ori':'elu',c=refCost(it);return`<div class="sec">Refine</div><small>${SLOTS[it.slot].stat} +${ev(it)} &rarr; +${Math.round(it.val*(1+(r+1)*.15))} &middot; ${r>=10?'MAX':'Success '+refCh(it)+'% &middot; '+c.toLocaleString()+'z + 1 '+ORE[o]+' (you have '+S.ore[o]+')'}</small><div class="row" style="margin-top:4px"><button data-a="refine" data-v="${k}" ${r>=10||S.ore[o]<1||S.zeny<c?'disabled':''}>Refine</button></div>`}
+// v75: one pet per species. petFold() takes a duplicate and folds it into the pet you already
+// own - the better mutation survives, each gear slot keeps its better level, a skill the older
+// pet was missing moves into its free slot, and the species gains +1 Bond. It returns what
+// changed so the caller can say it in the log.
+function petFold(own,inc){
+  const sp=own.sp,before=bondRank(sp);
+  if(Number((inc&&inc.mut)||0)>Number(own.mut||0))own.mut=Number(inc.mut)||0;
+  if(inc&&inc.eq)own.eq=(own.eq||[0,0,0]).map((t,i)=>Math.max(Number(t)||0,Number(inc.eq[i])||0));
+  own.skills=own.skills||[];
+  for(const id of ((inc&&inc.skills)||[]))if(!own.skills.includes(id)&&own.skills.length<2)own.skills.push(id);
+  S.bond=S.bond||[];S.bond[sp]=bondCnt(sp)+1;
+  return{before,after:bondRank(sp),bond:bondCnt(sp)};
+}
+// A save written before v75 can hold several pets of one species. Fold them on login exactly like
+// a new duplicate: keep the better copy, +1 Bond for each, nothing is thrown away. Pinned by
+// pet_sim.js and save_load_sim.js.
+function foldDupPets(){
+  if(!S||!Array.isArray(S.pets))return 0;
+  let folded=0;
+  for(const p of S.pets.slice()){
+    const own=S.pets.find(x=>x!==p&&x.sp===p.sp&&S.pets.indexOf(x)<S.pets.indexOf(p));
+    if(!own)continue;
+    const better=Number(p.mut||0)>Number(own.mut||0)?p:own,worse=better===p?own:p;
+    better.on=!!(own.on||p.on);              // the survivor keeps fighting if either one was
+    S.pets=S.pets.filter(x=>x!==worse);
+    petFold(better,worse);folded++;
+  }
+  return folded;
+}
 function petDetail(p){const sp=PETS[p.sp],g=p.mut,sk=p.sk||[1,2,3],SL=petSkills(p);
   return`<div class="mob-card" style="margin-top:8px"><div class="hd r${RCL[sp.r]}">${petIcon(sp,true)} ${sp.n} <small>${RN[sp.r]}</small></div><small>Mutation: <b>${g?'Grade '+g+' (x'+MUT[g]+' dmg)':'none (x1)'}</b> &middot; ${petDmg(p).toLocaleString()} dmg every ${petInt(p).toFixed(2)}s</small>`
   +p.eq.map((t,i)=>`<div class="slot"><span><b>${PEQ[i].n} &middot; Level ${t}/${PT.length}</b> <small>(${t?PT[t-1]:'Untrained'})</small><br><small>${PEQ[i].d(t)}</small>${t<PT.length?`<br><small class="r0">${Math.round(PTG[t]*100)}% upgrade success &middot; ${t+2<=PT.length?Math.round(GREAT*100)+'% double upgrade chance on success':'double upgrade unavailable at this level'}</small>`:''}</span><button data-a="peq" data-v="${p.id}:${i}" ${t>=PT.length||S.zeny<peqCost(t)?'disabled':''}>${t>=PT.length?'MAX':'🎲 '+peqCost(t).toLocaleString()+'z'}</button></div>`).join('')
+  +`<div class="sec">Signature passive &middot; <b>${PET_TRAIT[p.sp].n}</b></div><small>${PET_TRAIT[p.sp].d(traitVal(p.sp))} while this pet is one of the fighting three. <b>Bond ${bondRank(p.sp)}/5</b>${bondNext(p.sp)?` &middot; ${bondNext(p.sp)-bondCnt(p.sp)} more ${sp.n} folded in reaches Bond ${Math.min(5,bondRank(p.sp)+1)}`:' &middot; maxed'}.<br>A duplicate of a pet you already own is folded into it automatically - the better mutation and gear are kept, a missing skill is merged in, and +1 Bond makes this passive stronger. One pet per species, so nothing is ever wasted.</small>`
   +`<div class="sec">Pet skills &middot; 2 slots</div>`
   +[0,1].map(i=>{const q=SL[i];return q?`<small><b>${q.icon} ${q.n}</b> &middot; ${q.kind==='buff'?'Player buff':q.kind==='aoe'?'AoE attack':q.kind==='single'?'Single-target attack':'Low-impact utility'} &middot; ${q.desc}</small>`:`<small>Slot ${i+1}: <b class="r0">empty</b> - one gacha fills the remaining slot.</small>`}).join('<br>')
   +`<div class="row" style="margin-top:4px"><button data-a="pskill" data-v="${p.id}" ${S.zeny<petSkillCost(p)?'disabled':''}>🎲 ${SL.length>=2?'Reroll both skills':SL.length===1?'Gacha the second skill':'Gacha both skills'} (${petSkillCost(p).toLocaleString()}z)</button></div>`
@@ -2859,7 +2926,12 @@ const gotoField=(m,l)=>{S.mp=m;S.lvl=l;S.kl=0;mobs=[];mob=null;respawn=.3;pend=[
 const ACT={
   boardperiod:v=>{if(!['daily','weekly','all'].includes(v))return;boardPeriod=v;boardError='';renderWin();boardRefresh(v)},
   boardrefresh:()=>boardRefresh(boardPeriod),
-  selm:v=>{mapM=+v;mapL=Math.min(mapL,Math.max(1,S.prog[mapM]));renderWin()}, sell_:v=>{mapL=+v;renderWin()},go:()=>{if(mapL<=S.prog[mapM]){gotoField(mapM,mapL);log(`Traveled to ${fieldName()}.`)}},
+  selm:v=>{mapM=+v;mapL=Math.min(mapL,Math.max(1,S.prog[mapM]));renderWin()},
+  // v75 test control: feed the selected pet (or the first one) n duplicates and let petFold do
+  // the rest, so the owner can watch a species' passive climb without farming 15 drops.
+  gmbond:v=>{const p=gp(selP)||S.pets[0];if(!p)return log('No pet to bond with.','r0','pet');
+    const n=Math.max(1,Math.min(15,+v||1));for(let i=0;i<n;i++)petFold(p,{sp:p.sp,mut:0,eq:[0,0,0],skills:[]});
+    log(`${PETS[p.sp].n} is Bond ${bondRank(p.sp)}/5 - ${PET_TRAIT[p.sp].n} ${PET_TRAIT[p.sp].d(traitVal(p.sp))}.`,'r3','pet');ui();save()}, sell_:v=>{mapL=+v;renderWin()},go:()=>{if(mapL<=S.prog[mapM]){gotoField(mapM,mapL);log(`Traveled to ${fieldName()}.`)}},
   stat:k=>{if(S.pts>=cost(k)&&S.st[k]<statCap()){S.pts-=cost(k);S.st[k]++;S.hp=Math.min(S.hp,maxHp());ui();save()}},
   stat5:k=>{for(let i=0;i<5;i++)if(S.pts>=cost(k)&&S.st[k]<statCap()){S.pts-=cost(k);S.st[k]++}S.hp=Math.min(S.hp,maxHp());ui();save()},
   selk:v=>{selK=v;renderWin()},job:n=>{if(n==='Novice'&&S.cls!=='Novice')ask('Restart as Novice? You go back to Base Lv 25, job levels cleared, and your stats are refunded. Classes you leave keep their own Base Lv, stats and gear, so you can switch back to them later.',()=>changeClass(n));else changeClass(n)},
@@ -3126,7 +3198,7 @@ function update(dt){
         // game is within a few percent of before, mid-gear cuts ~64%, endgame sits at the cap.
         // Pinned by ui_sim.js / save_load_sim.js (this is a game-loop line, not a constant).
         else{const md=m.mag?mdef():def(),cut=Math.min(.75,md/(md+4000));
-          const d=Math.max(1,Math.round(m.atk*rnd(.8,1.2)*(1-cut)));S.hp-=d;hitAnim=1;m.atkAnim=1;damageFloat(pl.x,2.4,pl.z,d,false,true);
+          const d=Math.max(1,Math.round(m.atk*rnd(.8,1.2)*(1-cut)*(1-petPassive('dr')/100)));S.hp-=d;hitAnim=1;m.atkAnim=1;damageFloat(pl.x,2.4,pl.z,d,false,true);
           // Defeat is the ONE thing that puts you back at the spawn point.
 if(S.hp<=0){log('You were defeated... knocked back to the entrance.','r0','kills');S.hp=maxHp();S.kl=0;mobs=[];mob=null;respawn=1.5;pend=[];castQ=[];tb={};
           pl.x=0;pl.z=Z1-1.5;pl.wt=0;ui();return}}}}
@@ -3141,7 +3213,7 @@ if(S.hp<=0){log('You were defeated... knocked back to the entrance.','r0','kills
     const ex=(o?o.x+(i-1)*.8:pl.x-1.2)-r.x,ez=(o?o.z+1.2:pl.z+(i-1)*1.1)-r.z,ed=Math.hypot(ex,ez);r.run=ed>.2;
     if(ed>.05){const v=Math.min(ed,6*dt);r.x+=ex/ed*v;r.z+=ez/ed*v}r.x=cl(r.x,-BX_,BX_);r.z=cl(r.z,Z0-1,Z1+1);r.lunge=Math.max(0,(r.lunge||0)-dt*4);
     if(o&&bd<2.4){r.at-=dt;if(r.at<=0){r.at=petInt(p);r.lunge=1;petHit(p,o)}}}
-  const px=tx-pl.x,pz=tz-pl.z,pd=Math.hypot(px,pz),spd=heroMoveSpeedForAgi(st('agi'));pl.run=pd>.15;
+  const px=tx-pl.x,pz=tz-pl.z,pd=Math.hypot(px,pz),spd=moveSpd();pl.run=pd>.15;
   if(pd>.05){const s=Math.min(pd,spd*dt*(pd>3?1.4:1));pl.x+=px/pd*s;pl.z+=pz/pd*s}
   pl.x=cl(pl.x,-BX_,BX_);pl.z=cl(pl.z,Z0,Z1);
   if(mob)pl.ry=-Math.atan2(mob.z-pl.z,mob.x-pl.x);else if(pl.run)pl.ry=-Math.atan2(pz,px);

@@ -866,6 +866,24 @@ t('pet details show Ragnarok sprites, named upgrade levels, and gacha skill odds
   const h2=U.V.pet();
   assert.ok(h2.includes('Slot 1: <b class="r0">empty</b>')&&h2.includes('Slot 2: <b class="r0">empty</b>'),'both empty slots are offered');
   assert.ok(h2.includes('Gacha both skills'),'and the button says what it will do');
+  // v75: the species' signature passive, its Bond, and how a duplicate is treated
+  U.S.pets=[{id:41,sp:0,mut:0,eq:[1,2,0],skills:['warcry'],sk:[1,2,3],on:true}];U.S.bond=[2,0,0,0,0,0,0,0];U.selP=41;
+  const h3=U.V.pet();
+  assert.ok(h3.includes('Signature passive &middot; <b>Greedy Gel</b>'),'the pet card must name its species passive');
+  assert.ok(h3.includes('+6% Zeny from kills'),'and state the number at its current Bond (Bond 1 = 6%)');
+  assert.ok(h3.includes('<b>Bond 1/5</b>')&&h3.includes('1 more Poring folded in reaches Bond 2'),'and show the ladder progress');
+  assert.ok(h3.includes('folded into it automatically'),'the fold rule must be explained where a duplicate lands');
+  const h4=(U.S.pets=[{id:43,sp:7,mut:0,eq:[0,0,0],skills:[],sk:[1,2,3],on:true}],U.selP=43,U.V.pet());
+  assert.ok(h4.includes('Divine Grace')&&h4.includes('+5% Max HP and 5% less damage taken'),'Divine Grace reads as one bonus with its number');
+  assert.ok(h4.includes('Bond 0/5'),'a pet with no duplicates starts at Bond 0');
+  // the Character sheet lists the fighting pets' bonuses, and the movement line owns up to the mount
+  U.S.pets=[{id:43,sp:7,mut:0,eq:[0,0,0],skills:[],sk:[1,2,3],on:true},
+            {id:44,sp:4,mut:0,eq:[0,0,0],skills:[],sk:[1,2,3],on:true}];       // Angeling + Peco Peco
+  const sheet=U.V.stats();
+  assert.ok(sheet.includes('<b>Pet bonuses</b> (the fighting pets): Angeling Divine Grace +5% Max HP and 5% less damage taken &middot; Peco Peco Swift Mount +5% movement speed'),
+    'the sheet sums the live pet passives, one row per fighting species');
+  assert.ok(sheet.includes("A fighting Peco Peco's Swift Mount adds 5%"),'the movement sentence must name the one pet that bends it');
+  U.S.bond=[];
 });
 
 t('the Skills panel prints the whole tree against what a maxed line earns', () => {

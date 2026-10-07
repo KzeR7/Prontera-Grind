@@ -134,6 +134,18 @@ t('card values are repaired per stat, not flattened to CV[grade]', () => {
   assert.strictEqual(byId(3).v, 6, 'an unknown stat should fall back to round(CV[grade 1]) = 6, not crash');
 });
 
+t('v75: the bond ledger round-trips, and a save without one starts empty', () => {
+  // S.bond is the per-species count of folded duplicates. It has to survive a cloud save and a
+  // reload like any other field, and an older save must arrive with it empty rather than absent.
+  assert.ok(Array.isArray(f.bond), 'a folded-duplicate ledger exists after load');
+  // the fixture's three pets are three different species, so nothing was folded into them
+  assert.strictEqual(f.bond.reduce((a, b) => a + (Number(b) || 0), 0), 0, 'a save with no duplicates starts at zero');
+  const round = JSON.parse(JSON.stringify(f));
+  assert.ok(Array.isArray(round.bond) && round.bond.length === f.bond.length, 'the ledger is plain JSON, so the round trip keeps it');
+  // and the sweep that folds an old save's duplicates lives in the game, guarded for old pages
+  assert.ok(/function foldDupPets\(\)\{/.test(src), 'foldDupPets() must exist');
+  assert.strictEqual((src.match(/foldDupPets\(\);/g) || []).length, 2, 'and run on both login paths (local and cloud)');
+});
 t('legacy saves default the monster ledger, card album, and equipped title safely',()=>{
   assert.deepStrictEqual(Object.keys(f.mobKills),[]);
   assert.strictEqual(f.equippedTitle,null);
