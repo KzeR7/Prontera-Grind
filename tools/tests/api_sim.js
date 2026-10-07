@@ -225,10 +225,17 @@ await T('offline time is server-timed, capped, half-rate, persistent until claim
   // A save request can be the first request after a long absence (for example, a tab that came
   // back online without running the visibility refresh). PUT must return a server claim rather than
   // silently accepting the save as online progress.
-  const directAway=Date.now()-2*60*60*1000;
+  // This path credits the elapsed time EXACTLY (2h is under the cap), so the clock must not tick
+  // between the arithmetic here and the handler's own Date.now(): a single millisecond used to fail
+  // the assertion below (7200001 !== 7200000) and cascade into three more. Freeze it for the call.
+  const realNow=Date.now,frozen=Date.now();
+  const directAway=frozen-2*60*60*1000;
   sqlite.prepare('UPDATE saves SET last_seen=?, rate_kph=? WHERE user_id=?').run(directAway,100,friendId);
   const directSave=JSON.parse(after.data.blob);directSave.kills+=100;
-  const direct=await api.putSave(env,c,{version:after.data.version,blob:JSON.stringify(directSave),offlineClaimId:directSave.offlineClaimId});
+  Date.now=()=>frozen;
+  let direct;
+  try{direct=await api.putSave(env,c,{version:after.data.version,blob:JSON.stringify(directSave),offlineClaimId:directSave.offlineClaimId});}
+  finally{Date.now=realNow}
   assert.strictEqual(direct.status,428,'a first-return PUT also requires the pending claim');
   // creditedMs is measured at request time, a few ms after last_seen was written: allow that
   // epsilon instead of an exact equality (the source of this suite's intermittent failure).

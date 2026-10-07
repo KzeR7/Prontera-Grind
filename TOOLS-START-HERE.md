@@ -15,10 +15,10 @@ which once left the owner staring at a blank page). It also serves the whole rep
 
 | route | page | use it when |
 | --- | --- | --- |
-| **`/`** (or `/damage`) | **`Updates/damage-floats-proposal/index.html`** | **the on-screen damage numbers** — four live strips (current game styling + options A/B/C) firing a combat volley; tune **fade style, pop-up type (scatter / front-of-body / sway / stack), font, sizes, rise, lifetime, fade start, impact punch, spread** with instant previews; presets; **Big crit · 1.2M** proves the explode frame fits 7-digit numbers; **📋 Copy my selection** copies the exact picks as text — the owner pastes that to the agent, who applies it (the folder's README carries the slider→code map and the apply checklist). This page produced the live v69/v70 look |
+| **`/`** or `/game` | **`index.html` — the game itself** | **you want to play it**: the preview link lands on the game (register/login, then **T** for Prontera Town). `/weapons` stays the proposal page |
+| **`/weapons`** or `/proposal` | **`tools/weapon_proposal.html`** | **you want to see weapons on the classes today** — opens frozen for placement, **male and female sprites** (each with its own numbers), **a placement per animation frame** (the weapon follows the body when you play), `🎯 Set hand` to lock the grip (the weapon snaps to the pixel you click), a checkbox per view (weapon or bare-handed), flip ⇄/⇅, drag/rotate/size, three designs per family, **Every class at a glance** (`▤ show the pictures`: 19 small live previews, one per class, each saying whose numbers that sprite is on), **Copy only what I changed** (the short paste-back) / **Copy everything** || `/review` | `tools/weapon_review.html` | the older per-frame weapon review (one tile per class/view/frame) from the v35 pass |
+| **`/damage`** | **`Updates/damage-floats-proposal/index.html`** | **the on-screen damage numbers** — four live strips (current game styling + options A/B/C) firing a combat volley; tune **fade style, pop-up type (scatter / front-of-body / sway / stack), font, sizes, rise, lifetime, fade start, impact punch, spread** with instant previews; presets; **Big crit · 1.2M** proves the explode frame fits 7-digit numbers; **📋 Copy my selection** copies the exact picks as text — the owner pastes that to the agent, who applies it (the folder's README carries the slider→code map and the apply checklist). This page produced the live v69/v70 look |
 | **`/crit`** | **`Updates/crit-frame-compare/index.html`** | **the critical frame and digits, before vs after** — two live stages: v70/v71 as shipped (burst drawn half a burst up-left of the digits, flat gold fill under a hard outline, Verdana 900) and v72 (centred frame, the selection's Game font, strip B's gradient fill + `.6px` stroke + soft shadows + 1px dark rim, the life-long burst curve). Same markup builder and box maths as the game; sliders for crit size, streak count and the number. Fire it whenever the crit frame is in question |
-| **`/weapons`** | **`tools/weapon_proposal.html`** | **you want to see weapons on the classes today** — opens frozen for placement, **male and female sprites** (each with its own numbers), **a placement per animation frame** (the weapon follows the body when you play), `🎯 Set hand` to lock the grip (the weapon snaps to the pixel you click), a checkbox per view (weapon or bare-handed), flip ⇄/⇅, drag/rotate/size, three designs per family, **Every class at a glance** (`▤ show the pictures`: 19 small live previews, one per class, each saying whose numbers that sprite is on), **Copy only what I changed** (the short paste-back) / **Copy everything** |
-| `/review` | `tools/weapon_review.html` | the older per-frame weapon review (one tile per class/view/frame) from the v35 pass |
 | `/standalone` | `tools/weapon_review_standalone.html` | the same page as one self-contained file, for a plain `file://` open |
 | `/picker` | `tools/sprite_picker.html` | the attack-pose + head-seat picker the owner uses for the class art itself |
 
@@ -31,7 +31,7 @@ that case honestly; the pages may not).
 | question | page / tool |
 | --- | --- |
 | What does the hero look like, wearing *this* class, walking and attacking? | `/weapons` → proposal page (animated), or `/picker` for pose/head editing |
-| What do the damage numbers look like, and how do I change them? | `/` → the damage-floats tuner; hand back with **📋 Copy my selection** (see `Updates/damage-floats-proposal/README.md`) |
+| What do the damage numbers look like, and how do I change them? | `/damage` → the damage-floats tuner; hand back with **📋 Copy my selection** (see `Updates/damage-floats-proposal/README.md`) |
 | The critical frame looks wrong / not like the proposal | `/crit` → the two frames side by side, live (see the v71 section of `READ-ME-FIRST.md` for the cause) |
 | Where does a weapon sit in the hand for each attack frame? | `/review` (older, per-frame tiles) |
 | Which map layout does stage N build? | `node tools/preview/dump_plans.js /tmp/plans.json 10` then `/tmp/venv/bin/python tools/preview/render_plans.py /tmp/plans.json /tmp/out` |
@@ -50,6 +50,7 @@ that case honestly; the pages may not).
 | `python3 tools/make_weapon_pack.py --source <client>` | `assets/weapons/`, `assets/weapons_data.js`, `assets/weapons_manifest.json` | `python3 tools/make_weapon_pack.py --check` |
 | `python3 tools/make_sprite_viewer.py` | `Updates/Sprite/index.html` | `python3 tools/make_sprite_viewer.py --check` |
 | `python3 tools/backup_apng_code.py` | `Updates/ApngAnimation/class_skin_animation.js` | `--check`, run by `class_skin_sim.js` |
+| `python3 tools/make_town_pack.py` | `assets/town/town-atlas.*` (the town's painted buildings, fountain and props) | `python3 tools/make_town_pack.py --check` |
 | `python3 tools/montage.py` | the four montage sheets | only when re-cutting them |
 
 ## History — do not open these expecting current art
@@ -73,6 +74,44 @@ h=open('index.html').read()
 open('/tmp/pack_block.js','w').write(h[h.index('const PACK_BODY='):h.index('function ensureHero(')])
 PY
 ```
+
+**One suite lives outside that loop:** `node tools/tests/town_smoke.js` drives the whole town
+(entry, the map card, the plaza and fountain, the painted art pack replacing every stand-in, the five
+NPCs and every page they open, click-to-walk and click-to-talk, and that the ten fields have no
+click-to-walk). It boots the real `index.html` in jsdom with the real Three.js, so it needs
+`npm i --no-save jsdom three@0.128.0`; without them it prints a skip line and exits 0, which is why it
+is not named `*_sim.js`. Run it after **any** change to the town, the pointer handlers or the map panel.
+
+**How to look at the town without a browser** (this workspace cannot download Chrome):
+
+```sh
+node tools/_town_dump.js            # needs jsdom + three: writes /tmp/town_placements.json
+python3 tools/preview_town_board.py # writes both boards below
+```
+
+The dump enters the real town with the real `assets/town/town-atlas.json` and takes the cameras the
+game itself would have — the hero's landing spot and the bank outside the gate — and it writes what
+those cameras actually see: every sprite's placement, the ground tiles with their real rects and radii,
+the river, the bridge's segment tops and **every solid box** (the curtain wall, the deck, the banks, the
+gate towers). The tool draws three boards from that one dump:
+
+* `board-1-town-layout.png` — the plan, 2:1, real crops at real world sizes, back to front. Use it for
+  "does the ring overlap", "is the fountain too big".
+* `board-2-town-camera-view.png` — the same sprites projected through the game's own view-projection
+  matrix from its own camera, which is the closest thing to a screenshot available here. Use it for
+  framing: what is in shot when you walk in, whether the ring walls both sides, what a player sees
+  first. Ground, water, the bridge and the wall are drawn from the dump, and each sprite carries the
+  game's own two-layer contact shadow, so "is this building grounded" is answered here.
+* `board-3-town-entrance-view.png` — the same camera stood on the bank outside the gate, looking in:
+  gate, wall, forecourt, bridge, river and the street beyond, which is the shot the owner's round-5
+  screenshots were taken from. **A bug that both boards together caught:** the ring's west arc was a mirrored angle list,
+  which is the same list — all fourteen houses stood on the east side, exactly overlapping, invisible
+  on the plan and obvious on the camera view. **Second bug it caught (v75):** the river ran as one
+  quay box straight across the avenue and lay flush with the street, so the bridge had nothing to arch
+  over — the channel is sunken now and `river_and_bridge()` draws the quay runs *cut at the deck*, so
+  a board can no longer show a wall crossing the road either.
+
+Lighting, colour and the real floor textures still need the game itself.
 
 `pack_sim.js` reads that slice; `sprite_viewer_sim.js` checks the canonical viewer against the
 PNG files. The rest pull live code out of `index.html` by string boundary, so moving a

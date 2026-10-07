@@ -87,6 +87,9 @@ const code = [
   pick(/const refCost=it=>[^;]+;/, 'refCost/refCh'),
   pick(/const affTxt=a=>[^;]+;/, 'affTxt/cardTxt/dtier'),
   grab('const V={', 'const ACT={'),                            // the panels themselves
+  // v77: the map panel asks the town gate whether to offer the town card or a closed one
+  pick(/const TOWN_OPEN=false;/, 'the town gate switch'),
+  pick(/const townUnlocked=\(\)=>[^\n]*/, 'townUnlocked: the town gate'),
   // v39: the Log window's filter table and its two readers, the on-screen log's fold helper, the
   // master auto-cast switch, and the Bag's two sell-tool readers.
   pick(/const LOGCATS=\[[\s\S]*?\];/, 'log category table'),
@@ -111,6 +114,7 @@ let S=null,mapM=0,mapL=1,selB=null,selC=null;   // remaining panel state comes i
 const mobs=[],drops=[],logs=[];
 let boardPeriod='daily',boardCache={},boardLoading=false,boardError='';
 const CLOUD={api:false,on:false};
+const lsGet=()=>null,mem={};   // no browser storage in here: the panels reach the town gate's flag through it
 const $=id=>({style:{},set innerHTML(v){globalThis['h_'+id]=v},get innerHTML(){return globalThis['h_'+id]||''},textContent:'',onclick:null});
 const dr=()=>1;
 ${code}
@@ -151,7 +155,20 @@ t('the map panel renders every map and field', () => {
   assert.ok(h.includes('dropline') && h.includes('1.5%') && h.includes('1.2%') && h.includes('0.9%'), 'mob gear odds (v57: 3.6% total) must each be visible');
   assert.ok(h.includes('0.15%'), 'the card chance stays visible on the monster');
   assert.ok(h.includes('mapcard'), 'the map selector must be the scalable grid');
-  assert.strictEqual((h.match(/class="mapcard/g) || []).length, 10, 'one card per map');
+  // v68: Prontera Town is a card in this same grid - the same class, the same size as the ten
+  // fields - so the town reads as one more map to pick, not as something bolted on beside them.
+  assert.strictEqual((h.match(/class="mapcard/g) || []).length, 11, 'one card per field map, plus the town card');
+  assert.strictEqual((h.match(/data-a="selm"/g) || []).length, 10, 'only the ten fields select a stage list');
+  // v77: the town ships SHUT (TOWN_OPEN), so the card is a greyed-out "closed" one with no way
+  // in - and the GM account, which the gate always lets through, gets the live card instead.
+  assert.ok(/class="mapcard town-card closed"/.test(h), 'while the town is shut the card says so');
+  assert.ok(!/data-a="town"/.test(h), 'and offers no way in from the grid');
+  assert.ok(h.includes('Closed'), 'it is labelled closed rather than simply vanishing');
+  U.S.gm = 1;
+  const gmH = U.V.map();
+  assert.ok(/class="mapcard town-card[^\"]*" data-a="town"/.test(gmH), 'the GM account is let through: it gets the live card');
+  assert.ok(gmH.includes('\ud83c\udfd8 Prontera Town'), 'and it is labelled');
+  U.S.gm = 0;
   // Every map card shows its recommended level range under the name (the old build printed the
   // word "farming" there instead). The current map keeps its dot marker.
   const cards = h.slice(h.indexOf('class="mapgrid'), h.indexOf('class="mapband fields'));

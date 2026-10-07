@@ -102,7 +102,7 @@ Open the `*.pages.dev` address Cloudflare gives the project, and walk this list:
 | Check | Expected |
 |---|---|
 | The login card | says **“☁ Cloud accounts are on — register or sign in…”** |
-| Build tag at the bottom of the card | `2026-10-07 grind-v72 crit frame aligned, page font+gradient look` |
+| Build tag at the bottom of the card | `2026-10-07 grind-v77 crit frames + HD Prontera Town: locked until the owner opens it, houses facing the square, nothing floating or overlapping` |
 | Register your own name | a dialog with a **recovery code** — copy it somewhere safe, it is shown once |
 | Play for a minute | the header badge goes `☁ …` → `☁ ✓` |
 | The same address in a second browser | sign in with the same name and password → **the same character loads** |

@@ -25,10 +25,16 @@ import os
 import sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-PAGES = {'/': 'Updates/damage-floats-proposal/index.html',
+# '/' is THE GAME. The preview link the owner clicks has to land on the game itself - it used to
+# open the weapon proposal page, which read as "the preview is broken". The dev pages keep their
+# own routes underneath it.
+PAGES = {'/': 'index.html',
+         '/game': 'index.html',
+         # the tuner pages (PR #29/#30) keep their own routes - they are tools, not the game
          '/damage': 'Updates/damage-floats-proposal/index.html',
          '/crit': 'Updates/crit-frame-compare/index.html',
          '/weapons': 'tools/weapon_proposal.html',
+         '/proposal': 'tools/weapon_proposal.html',
          '/review': 'tools/weapon_review.html',
          '/standalone': 'tools/weapon_review_standalone.html',
          '/picker': 'tools/sprite_picker.html'}
