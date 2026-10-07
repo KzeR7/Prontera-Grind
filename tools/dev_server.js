@@ -2,6 +2,8 @@
 //
 //   node tools/dev_server.js            # http://localhost:8788 (or PORT=xxxx)
 //   node tools/dev_server.js --port 0   # any free port; the chosen one is printed
+//   node tools/dev_server.js --gm-all   # every account registered here is an owner (preview use)
+//   node tools/dev_server.js --db tools/.devdb/preview.sqlite   # keep accounts across restarts
 //
 // Why this exists: the real server is Pages Functions + D1, and `wrangler pages dev` is the official
 // way to run that. This is the *offline* way — it serves the built site from dist/ and routes
@@ -75,10 +77,15 @@ const TYPES = {
 
 // The env a handler sees. DB is the shim; anything else a function might want is a deliberate
 // omission, so it fails loudly here instead of behaving differently in production.
-export function makeEnv(sqlite) { return { DB: makeD1(sqlite) }; }
+// DEV_GM_ALL is only ever set by this tool (see --gm-all below), never by Cloudflare. It makes every
+// account registered against this process an owner, which is what a throwaway preview server wants:
+// the database dies with the process, so "the account I made last time" is always gone.
+export function makeEnv(sqlite, { gmAll = false } = {}) {
+  return gmAll ? { DB: makeD1(sqlite), DEV_GM_ALL: 'all' } : { DB: makeD1(sqlite) };
+}
 
-export function createApp({ sqlite, site }) {
-  const env = makeEnv(sqlite);
+export function createApp({ sqlite, site, gmAll = false }) {
+  const env = makeEnv(sqlite, { gmAll });
   const dir = site || path.join(root, 'dist');
   const handlerCache = new Map();
 
@@ -128,9 +135,9 @@ function serveStatic(url, dir) {
 }
 
 // ------------------------------------------------------------------- boot -----
-export function start({ port = 8788, host = '127.0.0.1', site, dbFile } = {}) {
+export function start({ port = 8788, host = '127.0.0.1', site, dbFile, gmAll = false } = {}) {
   const sqlite = freshDb(dbFile);
-  const app = createApp({ sqlite, site });
+  const app = createApp({ sqlite, site, gmAll });
   const server = createServer(async (req, res) => {
     try {
       // Node's IncomingMessage is close enough to a Request for the handlers: they read method,
@@ -173,15 +180,22 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
     const b = spawnSync('bash', [path.join(root, 'tools', 'build_site.sh')], { stdio: 'inherit' });
     if (b.status !== 0) { console.error('build failed; nothing to serve'); process.exit(1); }
   }
-  const argPort = (process.argv.includes('--port') ? process.argv[process.argv.indexOf('--port') + 1] : null);
-  const port = Number(argPort ?? process.env.PORT ?? 8788);
+  const arg = name => (process.argv.includes(name) ? process.argv[process.argv.indexOf(name) + 1] : null);
+  const port = Number(arg('--port') ?? process.env.PORT ?? 8788);
   const host = process.env.HOST || '0.0.0.0';       // reachable from the preview/proxy, not just localhost
-  const { port: got, close } = await start({ port, host });
+  // --gm-all: every account registered here is an owner, so a preview can never strand the owner with
+  // an account that has no GM tools. --db <file>: keep accounts and saves across restarts instead of
+  // losing them with the process. Both are for the preview; the default stays the production rule.
+  const gmAll = process.argv.includes('--gm-all') || process.env.DEV_GM_ALL === 'all';
+  const dbFile = arg('--db') || process.env.DEV_DB || undefined;
+  const { port: got, close } = await start({ port, host, gmAll, dbFile });
   console.log('Prontera Grind — local server (Pages Functions + D1 shim, in memory)');
   console.log('  game    http://localhost:' + got + '/');
   console.log('  console http://localhost:' + got + '/gm.html');
   console.log('  api     ' + Object.keys(ROUTES).length + ' endpoints under /api/*');
-  console.log('  data    in memory - restarting this process wipes accounts and saves');
-  console.log('  the first account you register becomes the owner (gm=2)');
+  console.log('  data    ' + (dbFile ? 'kept in ' + dbFile + ' (accounts and saves survive a restart)' : 'in memory - restarting this process wipes accounts and saves'));
+  console.log(gmAll
+    ? '  gm      EVERY account registered here is an owner (gm=2) - this is a preview server'
+    : '  gm      the first account you register becomes the owner (gm=2); --gm-all makes every account one');
   for (const sig of ['SIGINT', 'SIGTERM']) process.on(sig, async () => { await close(); process.exit(0); });
 }

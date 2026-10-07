@@ -38,6 +38,7 @@ const code = [
   grab('const CD=[', 'const pm=s=>'),                       // classes + skills
   pick(/const C=\(\)=>[^;]+;/, 'C()'),
   pick(/const st=k=>[^\n]*canUse=it=>[^;]+;/, 'canUse'),
+  pick(/const heroMoveSpeedForAgi=[^\n]*MOVE_RUN=[\d.]+;/, 'movement speed curve'),
   pick(/const maxHp=\(\)=>[^\n]*/, 'maxHp'),
   pick(/const atk=\(\)=>[^\n]*/, 'atk'),
   pick(/const matk=\(\)=>[^\n]*/, 'matk'),
@@ -75,13 +76,14 @@ const code = [
   grab('function itemMain(it){', 'const cardSlots='),
 
   pick(/const cardSlots=[^\n]*/, 'cardSlots'),
-  grab('function insertUI(sel){', 'function renderWin(){'),
+  grab('function insertUI(sel){', 'function renderWin('),
   pick(/function refineUI\(it,k\)\{const[^\n]*/, 'refineUI'),
   pick(/const RO_ITEM_ICON_CANDIDATES=\{[^;]+;/, 'RO equipment image candidates'),
   grab('const gearIconHash=text=>', 'const gearItemIconId='),
   grab('const gearItemIconId=it=>', 'const itemIconUrl='),
   pick(/const itemIconUrl=id=>[^;]+;/, 'gear image URL'),
-  grab('const itemIconMarkup=it=>', 'const icon=it=>'),
+  grab('const ITEM_ICON_SVG=', 'const gearIconHash='),   // v77: the local silhouettes the fallback draws
+  grab('const itemIconMarkup=it=>', 'const icon=it=>'),  // ...and the markup that picks art or silhouette
   pick(/const icon=it=>[^;]+;/, 'icon'),
   pick(/const items=\(\)=>[^\n]*/, 'items/ev/iname/eqv'),
   pick(/const refCost=it=>[^;]+;/, 'refCost/refCh'),
@@ -103,6 +105,7 @@ const harness = `
 // stubs the pulled-in code needs at load time and when a panel renders
 const SLOTS={weapon:{label:'Weapon',stat:'ATK',ic:'sw'},armor:{label:'Armor',stat:'DEF',ic:'ar'},head:{label:'Headgear',stat:'HP',ic:'hd'},off:{label:'Shield',stat:'DEF',ic:'sh'},leg:{label:'Legwear',stat:'DEF',ic:'lg'},acc:{label:'Accessory',stat:'HP',ic:'ac'}};
 const RAR=[{n:'Common',m:1,w:60},{n:'Fine',m:1.35,w:25},{n:'Rare',m:1.9,w:10},{n:'Epic',m:2.8,w:4},{n:'Legendary',m:4.5,w:1}];
+const RAR5={n:'N'},RARALL=RAR.concat([RAR5]),rarIdx=it=>((it&&+it.sec>=4)?5:Math.max(0,Math.min(RAR.length-1,(it&&it.tier)||0))),rarOf=it=>(rarIdx(it)===5?RAR5:RAR[rarIdx(it)]),rarCls=it=>'r'+rarIdx(it);
 const PW=[[90,9,1,0],[80,17,3,0],[70,24,5.5,.5],[60,30,9,1],[50,35,13,2],[40,38,18,4],[30,40,24,6],[22,40,30,8],[12,38,38,12],[5,30,45,20]];
 const MAXST=99,ELITELV=100,Z0=-14;
 const statCap=()=>99,selK=null,gp=id=>S&&S.pets.find(x=>String(x.id)===String(id)),classRec=()=>null,tb={};
@@ -119,7 +122,7 @@ const $=id=>({style:{},set innerHTML(v){globalThis['h_'+id]=v},get innerHTML(){r
 const dr=()=>1;
 ${code}
 const skpAvail=()=>5,skTree=()=>4,skEarnedMax=()=>9,skLine=()=>['Novice'],skEarned=()=>9,skSpent=()=>0,pv=()=>0,bon=()=>0,qTxt=q=>'quest';
-this.__u={ V, SKILLS, SKILL_ICON, SKILL_TONE, SKILL_PICTO, skillIcon, logs, indexSectionOpen, indexToggleSection, set S(v){S=v}, get S(){return S}, set boardPeriod(v){boardPeriod=v}, set boardCache(v){boardCache=v}, set boardStatus(v){CLOUD.api=!!v.api;CLOUD.on=!!v.on}, set eqPick(v){eqPick=v}, get eqPick(){return eqPick},
+this.__u={ V, itemDetail, itemMain, SKILLS, SKILL_ICON, SKILL_TONE, SKILL_PICTO, skillIcon, logs, indexSectionOpen, indexToggleSection, set S(v){S=v}, get S(){return S}, set boardPeriod(v){boardPeriod=v}, set boardCache(v){boardCache=v}, set boardStatus(v){CLOUD.api=!!v.api;CLOUD.on=!!v.on}, set eqPick(v){eqPick=v}, get eqPick(){return eqPick},
            set indexMode(v){indexMode=v}, get indexMode(){return indexMode}, set mapM(v){mapM=v}, set mapL(v){mapL=v}, set selE(v){selE=v}, get selE(){return selE}, set selB(v){selB=v}, get selB(){return selB}, set selS(v){selS=v}, set selP(v){selP=v} };
 `;
 const sb = { console };
@@ -177,12 +180,36 @@ t('the map panel renders every map and field', () => {
   for(const m of [1,2,3,4]){U.mapM=m;assert.ok(U.V.map().includes('stages 1-5 Lv 10-20; 6-10 Lv 20-50'),'class map '+m+' states both stage-level bands')}
   U.mapM=0;
   assert.ok(cards.includes('Lv 90-99'), 'and every map carries one');
-  assert.strictEqual((h.match(/class="map-node/g) || []).length, 10, 'one node per field');
+  // v76: ten normal stages plus the five Nightmare stages - the same strip, a longer ladder
+  assert.strictEqual((h.match(/class="map-node/g) || []).length, 15, 'one node per field, Nightmare included');
+  assert.strictEqual((h.match(/nm-node/g) || []).length, 5, 'the five Nightmare nodes');
+  assert.ok(h.includes('Nightmare unlocks at Base Lv 100') || h.includes('Nightmare 5/5'), 'the band header states where Nightmare starts');
   // the boss field lists the whole pool with odds, and the new ore rates
   U.mapL = 10;
   const b = U.V.map();
   assert.ok(b.includes('<b>0.9%</b>') && b.includes('poolitem') && b.includes('Each item rolls independently'), 'the boss must list its whole pool at its 6%-total rate');
   assert.ok(b.includes('0.1%'), 'boss card odds must read 0.1% (v38)');
+  // v76: a Nightmare field's panel must speak the band - the NM boss hint, the NM crit ladder
+  // readout (not the normal one) and where the band's boss sits when it has none
+  U.mapM = 9; U.mapL = 15;
+  const nmBoss = U.V.map();
+  assert.ok(nmBoss.includes('Nightmare Abyss Stage 5'), 'the Nightmare field is titled Nightmare <map> Stage <1-5>');
+  // v77 (owner): "all boss to just have names, no (boss), no (MVP)" - the card is already headed
+  // "MVP & pets", so the name inside it stands alone.
+  assert.ok(/<b class="r4">Dark Lord<\/b>/.test(nmBoss) && !nmBoss.includes('(MVP)') && !nmBoss.includes('(BOSS)'),
+    'the boss name stands alone on the Nightmare card (v77: no parenthetical at all)');
+  assert.ok(nmBoss.includes('<small class="r5">N</small>') && !nmBoss.includes('Every MVP drop is <b class="r4">Legendary</b>'),
+    'and the Nightmare MVP pool states the N rarity it actually drops, not Legendary');
+  assert.ok(!nmBoss.includes('Crit resistance'), 'the crit-defence line is gone from the MVP card (owner: the map already says it)');
+  assert.ok(nmBoss.includes('MVP fights immediately'), 'stage 15 is an MVP field like stage 10');
+  U.mapL = 13;
+  const nmNoBoss = U.V.map();
+  assert.ok(nmNoBoss.includes('MVP appears at NM 5 (stage 15).'), 'a Nightmare field with no MVP says where the MVP is');
+  assert.ok(!nmNoBoss.includes('MVP appears at Stage 10.'), 'not the normal-ladder wording');
+  U.mapL = 10;
+  const normBoss = U.V.map();
+  assert.ok(normBoss.includes('Dark Lord') && !normBoss.includes('(MVP)'), 'the normal stage-10 field still shows its MVP, bare');
+  U.mapM = 0;
   assert.ok(b.includes('1% each') && b.includes('2.5% each'), 'v51 ore rates: 1% per monster, 2.5% per boss');
 });
 
@@ -199,7 +226,7 @@ t('the map tab is a compact two-band panel: maps on top, that map\'s fields unde
   assert.ok(iCols > iFields, 'the drop tables must come after the field band');
   // the field strip holds all ten levels of the picked map and the travel button lives in it
   const fieldBand = h.slice(iFields, iCols);
-  assert.strictEqual((fieldBand.match(/class="map-node/g) || []).length, 10, 'ten fields in the band');
+  assert.strictEqual((fieldBand.match(/class="map-node/g) || []).length, 15, 'fifteen fields in the band (10 + 5 Nightmare)');
   assert.ok(!/>1st job</.test(fieldBand) && !/>2nd job</.test(fieldBand) && !/>novice</.test(fieldBand),
     'stage buttons carry no job-tier description');
   assert.ok(!/1st-job gear/.test(h), 'the stage header no longer names the gear section');
@@ -207,7 +234,7 @@ t('the map tab is a compact two-band panel: maps on top, that map\'s fields unde
   assert.ok(fieldBand.includes('Stage 10'), 'the boss field is labelled');
   assert.ok(src.includes('.wp.wide{flex:0 1 450px;width:450px;min-width:0}'), 'map width is halved and does not grow');
   assert.ok(!/>Lv \d/.test(fieldBand), 'stages are not character levels');
-  assert.strictEqual((fieldBand.match(/<button class="map-node/g)||[]).length, 10, 'stages are keyboard-accessible buttons');
+  assert.strictEqual((fieldBand.match(/<button class="map-node/g)||[]).length, 15, 'stages are keyboard-accessible buttons (10 + 5 Nightmare)');
   // Compact wrapping rows rather than ten cramped columns.
   assert.ok(/\.lvgrid\{[^}]*repeat\(auto-fit,minmax\(min\(100%,\d+px\),1fr\)\)/.test(src), 'the field strip must shrink its tracks before overflowing');
   const min = +src.match(/\.lvgrid\{[^}]*minmax\(min\(100%,(\d+)px\)/)[1];
@@ -230,8 +257,107 @@ t('map and boss-field panels stay inside narrow viewports', () => {
   assert.ok(src.includes('.mapband,.mapband.fields{position:static}'), 'the sticky field band must not clip in the stacked layout');
   U.S = mkS('Knight'); U.mapM = 9; U.mapL = 10;
   const boss = U.V.map();
-  assert.ok(boss.includes('Dark Lord') && boss.includes('BOSS'), 'the last map and boss field still render after selection');
+  assert.ok(boss.includes('Dark Lord') && !boss.includes('(MVP)'), 'the last map and its MVP field still render after selection, name bare (v77)');
   assert.ok(boss.includes('poolitem'), 'the selected boss field keeps its drop pool');
+});
+
+t('the phone layout is sized from the real viewport, not a guessed one', () => {
+  // v74.1 - the owner played the deployed build on his phone and the UI was "abit messy and not
+  // in place". The root cause is that the layout assumed a desktop window: 100vh (which on a
+  // phone is the height WITH the URL bar retracted), a one-row flex HUD that re-flowed whenever a
+  // kill counter grew a digit, and overlays pinned to fixed offsets that the dock sat on top of.
+  assert.ok(src.includes('<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">'),
+    'the viewport meta must declare the device width and ask for the full screen area');
+  assert.ok(/html,\s*body\s*\{[^}]*height:100vh;\s*height:100dvh/.test(src),
+    'html/body must carry the dynamic viewport height, with 100vh as the fallback for old browsers');
+  assert.ok(/html,\s*body\s*\{[^}]*overscroll-behavior:none/.test(src),
+    'a swipe past the edge of the game must not rubber-band the whole page');
+  assert.ok(src.includes('#wrap{width:100vw;height:100vh;height:100dvh'), 'the play area must use the same dynamic height');
+  // one shared number for "how tall is the dock": the feed, the buff strip and the windows all
+  // read it, and resize() measures it from the dock element itself
+  assert.ok(src.includes('#feedWrap{position:absolute;left:12px;bottom:var(--docktop,76px)'),
+    'the log feed must sit above the dock, not under it');
+  assert.ok(src.includes('#hudBuffs{position:absolute;right:12px;bottom:var(--docktop,76px)'),
+    'the pet buff strip must sit above the dock on the other side');
+  assert.ok(/const dk=\$\('dock'\);[\s\S]*?offsetHeight[\s\S]*?setProperty\('--docktop'/.test(src),
+    'resize() must publish the measured dock height as --docktop, so no overlay guesses');
+  assert.ok(src.includes("if(window.visualViewport)visualViewport.addEventListener('resize',resize)"),
+    'the visual viewport must be watched too - iOS does not always fire window resize when the URL bar moves');
+  assert.ok(/function resize\(\)\{[\s\S]*?const dh=dk\.offsetHeight/.test(src), 'the measurement lives in resize()');
+  // the phone block is last, so it wins on source order against the desktop rules above it
+  const phone = src.lastIndexOf('@media(max-width:700px)');
+  assert.ok(phone > src.lastIndexOf('@media(max-width:900px)') && phone > src.lastIndexOf('@media(max-width:560px)'),
+    'the phone rules must come after every desktop/media rule they override');
+  assert.ok(src.includes('@media(max-width:430px){'), 'small phones get their own step down');
+  // touch targets: the desktop .ib is 28px, which is under every touch guideline
+  const ibSmall = src.slice(src.indexOf('@media(max-width:700px)')).match(/\.ib\{width:(\d+)px;height:\d+px/);
+  assert.ok(ibSmall && +ibSmall[1] >= 32, 'dock icons must grow to a tappable size on a phone');
+  assert.ok(src.includes('#dock{bottom:calc(12px + env(safe-area-inset-bottom,0px));'), 'the dock must clear a phone gesture bar');
+  assert.ok(src.includes('#xp-dock{padding-bottom:env(safe-area-inset-bottom,0px)}'), 'the bottom bar must clear the gesture bar too');
+  assert.ok(/@media\(max-width:700px\)\{[\s\S]*?#wins\{[^}]*bottom:var\(--docktop\)/.test(src) &&
+            /@media\(max-width:700px\)\{[\s\S]*?#wnd\{[^}]*bottom:var\(--docktop\)/.test(src),
+    'on a phone the map/boss windows and the tab window must end above the dock');
+  assert.ok(/@media\(max-width:700px\)\{[\s\S]*?#dock\{[^}]*flex-wrap:nowrap/.test(src) &&
+            src.includes('-webkit-overflow-scrolling:touch'), 'the tab dock is one scrolling row instead of a second row that pushes the layout');
+  assert.ok(src.includes('touch-action:manipulation'), 'touch screens get taps, not synthetic hovers');
+  // desktop must be untouched: the wide-screen offsets are still the fixed ones
+  assert.ok(src.includes('#wnd{position:absolute;right:12px;top:12px;bottom:76px;'), 'the desktop window geometry is unchanged');
+  assert.ok(src.includes('#wins{position:absolute;left:12px;right:12px;top:12px;bottom:76px;'), 'the desktop overlay geometry is unchanged');
+});
+
+t('the 3D view pinch-zooms on touch and still wheel-zooms on a mouse', () => {
+  // A phone has no wheel, so before v74.1 the camera could only ever be zoomed at a desk. The
+  // pointer block is sliced out of index.html and driven with fake two-finger gestures.
+  const code = grab('let drag=null;const dom=R.domElement;', '\n// Keep the character near the visual centre');
+  const handlers = {};
+  const domEl = { addEventListener: (n, f) => { (handlers[n] = handlers[n] || []).push(f) }, setPointerCapture() {}, releasePointerCapture() {} };
+  // v68's merge: the same pointer block now also carries the town's tap-to-walk and its wider zoom
+  // clamp, so the harness stands the town's hooks in (the town itself is town_smoke's job). With no
+  // town scene loaded the clamp is the field's 0.6 floor, which is what this test measures.
+  const box = { R: { domElement: domEl }, Math, console, TOWN: {}, townOn: () => false, townHover() {}, townClick() {} };
+  vm.createContext(box);
+  vm.runInContext('let az=0,el=.8,zoom=1;\n' + code + '\n;this.__cam=()=>({az,el,zoom})', box);
+  const cam = () => box.__cam();
+  const fire = (n, e) => (handlers[n] || []).forEach(f => f(e));
+  const pt = (id, x, y) => ({ pointerId: id, pointerType: 'touch', clientX: x, clientY: y });
+  assert.ok(handlers.pointerdown && handlers.pointermove && handlers.pointerup && handlers.pointercancel,
+    'the camera must listen on pointer events (they cover mouse, pen and touch)');
+  // one finger: rotate, exactly like the mouse drag does
+  fire('pointerdown', pt(1, 100, 100));
+  fire('pointermove', pt(1, 160, 100));
+  assert.ok(Math.abs(cam().az + 0.36) < 1e-9, 'a one-finger drag still rotates the camera, was ' + cam().az);
+  fire('pointerup', pt(1, 160, 100));
+  // two fingers: pinch out to zoom in, clamped by the same 2x ceiling the wheel uses
+  const z0 = cam().zoom;
+  fire('pointerdown', pt(1, 100, 100)); fire('pointerdown', pt(2, 200, 100));
+  fire('pointermove', pt(2, 300, 100));
+  assert.ok(cam().zoom > z0, 'pinching out must zoom the camera in');
+  fire('pointermove', pt(2, 1200, 100));
+  assert.strictEqual(cam().zoom, 2, 'the pinch respects the same 2x ceiling as the wheel');
+  // the second finger must not rotate while it is pinching
+  const azPinch = cam().az;
+  fire('pointermove', pt(2, 1200, 400));
+  assert.strictEqual(cam().az, azPinch, 'a pinching finger must not also swing the camera');
+  // pinch in to zoom out, clamped by the 0.6x floor
+  fire('pointermove', pt(2, 300, 100));
+  fire('pointermove', pt(2, 100, 100));
+  fire('pointermove', pt(2, 60, 100));
+  assert.strictEqual(cam().zoom, .6, 'pinching in respects the 0.6x floor');
+  // lifting one finger resumes rotation from where the other finger is, instead of jumping
+  fire('pointerup', pt(2, 60, 100));
+  const azBefore = cam().az;
+  fire('pointermove', pt(1, 115, 100));
+  assert.ok(Math.abs(cam().az - azBefore + 0.09) < 1e-9, 'after a pinch the camera must not jump: expected ' + (azBefore - 0.09) + ', got ' + cam().az);
+  fire('pointercancel', pt(1, 115, 100));
+  assert.deepStrictEqual([cam().az, cam().el], [azBefore - 0.09, .8], 'a cancelled pointer must not leave the camera armed');
+  // mouse wheel still works, and still zooms the same direction
+  const wheel = handlers.wheel[0];
+  let prevented = false;
+  wheel({ deltaY: -100, preventDefault: () => { prevented = true } });
+  assert.ok(prevented && Math.abs(cam().zoom - 0.66) < 1e-9, 'the wheel still zooms in, page scroll still suppressed');
+  // the on-screen hint must name the gesture a phone can actually make
+  assert.ok(src.includes('Scroll or pinch to zoom') && !src.includes('Drag to rotate &middot; Scroll to zoom<'),
+    'the hint must mention pinch, since a phone has no scroll wheel');
 });
 
 t('the leaderboard renders daily, weekly and all-time stamps with kills and Base Lv',()=>{
@@ -341,11 +467,28 @@ t('the equipment chooser temporarily promotes fitting gear and restores normal b
   const restored=U.V.bag0();
   assert.ok(restored.indexOf('data-a="selb" data-v="2"')<restored.indexOf('data-a="selb" data-v="9"'),
     'normal inventory order returns when the chooser closes');
-  assert.ok(src.includes("document.addEventListener('pointerdown'")&&src.includes('if(chooserAtPointerDown&&!bagPointerInside)closeEquipmentChooser(true)'),
+  assert.ok(src.includes("document.addEventListener('pointerdown'")&&src.includes('if(chooserAtPointerDown&&!chooserPointerInside)closeEquipmentChooser(true)'),
     'outside clicks use the chooser state captured at pointer-down even if another handler cleared it');
+  assert.ok(!src.includes('bagPointerInside'), 'the old bag-only "inside" test must be gone');
   assert.ok(src.includes('function closeEquipmentChooser(force=false){if(!eqPick&&!force)return;eqPick=null;selE=null;selB=null;'),
     'closing also clears the equipment selection and its detail card');
   assert.ok(src.includes("tabs.splice(i,1);const tipEl=$('tooltip')"), 'closing removes the Bag and hides its tooltip');
+});
+
+t('Refine, card sockets, Unequip and Lock are inside the picker and never dismiss it', () => {
+  // v73 owner report: clicking Refine (which lives in the Equipment window's detail card, the
+  // window the picker was opened from) used to count as "clicked elsewhere" and close it.
+  assert.ok(src.includes("chooserPointerInside=!!(target&&(target.closest('[data-win=\"bag\"]')||target.closest('[data-win=\"equip\"]')))"),
+    'the pointer-down snapshot must treat the Equipment window as inside the picker');
+  assert.ok(src.includes("if(chooserAtPointerDown&&!chooserPointerInside)closeEquipmentChooser(true)"),
+    'only a click outside both windows dismisses the picker');
+  // the controls that used to close it all live in that window's detail card
+  assert.ok(src.includes('const detail=`<div class="doll-detail">${sel?itemMain(sel)+refineUI(sel,selE)+cardSlots(sel,selE)+insertUI(sel)+`<div class="row" style="margin-top:6px"><button data-a="unequip"'),
+    'Refine, the card sockets and Unequip sit in the Equipment window');
+  assert.ok(src.includes('data-a="refine" data-v="${k}"')&&src.includes('data-a="lockgear"'),
+    'the Refine and Lock buttons are part of that same card');
+  // the ✕ on the picker banner and the dock tabs still close it (openTab clears eqPick)
+  assert.ok(src.includes("eqclose:()=>{eqPick=null;renderWin()}"), 'the banner ✕ still closes the picker');
 });
 
 t('the Skills grid fits all five class skills and selected descriptions dismiss outside', () => {
@@ -419,7 +562,7 @@ t('HP flips at 30%; one split bar fills Base from left and Job from right with c
   vm.runInContext(`
     const nodes={};const $=id=>nodes[id]||(nodes[id]={style:{},textContent:'',title:'',attrs:{},
       classList:{flags:{},toggle(k,v){this.flags[k]=v}},setAttribute(k,v){this.attrs[k]=v}});
-    let S={lv:20,exp:90,hp:31,kills:0,zeny:0},hudRate=null,zenyEarned=0,currentUser='A';
+    let S={lv:20,exp:90,hp:31,kills:0,zeny:0},hudRate=null,zenyEarned=0,expEarned=0,currentUser='A';
     const HUNT_TITLES=[{id:'field-scout',name:'Field Scout',kills:500}],titleUnlocked=t=>S.kills>=t.kills;
     // the pet buff chips bars() now draws: no pet buff is running in this fixture
     let petBuff={atk:0,matk:0,hp:0,leech:0,atkT:0,matkT:0,hpT:0,leechT:0},petBuffSrc={};
@@ -503,7 +646,7 @@ t('damage floats stay screen-projected, restrained, and distinct by type', () =>
   assert.strictEqual(vm.runInContext('S.dmg',strikeBox)>0,true,
     'every player hit must add to the lifetime damage counter the DPS meter reads');
   assert.strictEqual(F.floats[3].anchor,'hero');assert.strictEqual(F.floats[3].y,4.03); // 3.65 base + .38 per slot (v68: banner above the head)
-  const draw=grab('  floats.forEach(f=>{if(!f.el)', '  const pt=bn?');
+  const draw=grab('  floats.forEach(f=>{if(!f.el)', '  const pt=');
   const scene={floats:F.floats,pl:F.pl,create:()=>({style:{}}),draw};
   vm.createContext(scene);
   vm.runInContext(`const document={createElement:()=>({style:{}})},ov={appendChild:()=>{}},scr=(x,y,z)=>[x*10,z*10];${draw}`,scene);
@@ -528,7 +671,7 @@ t('Zeny and kill rates refresh every second using a rolling minute and reset aft
   assert.ok(src.includes('S.dmg=(S.dmg||0)+d'),'strike() and hurt() must bank every point of damage');
   const box={};vm.createContext(box);
   vm.runInContext(`
-    let S={zeny:200},zenyEarned=0;
+    let S={zeny:200},zenyEarned=0,expEarned=0;
     ${grab('function earnZeny(amount){','function kill(o){')}
     ${grab('const HUD_RATE_WINDOW=60000,HUD_IDLE_RESET=30000,HUD_RATE_REFRESH=1000;','const levelPct=')}
     this.__r={stepHudRate,earnZeny,S,get earned(){return zenyEarned}};
@@ -566,10 +709,43 @@ t('Zeny and kill rates refresh every second using a rolling minute and reset aft
     'ten minutes with no frames must not compress 879 accumulated kills into one second');
 });
 
+t('v74: the HUD shows EXP/min beside the kill rate, on the same rolling minute', () => {
+  assert.ok(src.includes('<div>EXP/min <b id=\"expmin\"'), 'the EXP/min chip must sit beside Kills/min');
+  assert.ok(src.includes('${stepHudRate(hudRate,currentUser,S.kills,zenyEarned,performance.now(),S.dmg,expEarned)}') ||
+            src.includes('stepHudRate(hudRate,currentUser,S.kills,zenyEarned,performance.now(),S.dmg,expEarned)'),
+    'bars() must feed the session EXP total into the rate');
+  assert.ok(src.includes("const expEl=$('expmin')"), 'the readout element is read once per refresh');
+  assert.ok(src.includes('function earnExp(amount){const n=Math.max(0,Number(amount)||0);S.exp+=n;expEarned+=n}'),
+    'EXP income is counted like Zeny: gross, never lowered by a level-up');
+  assert.ok(src.includes('earnZeny(z);earnExp(xp);addJob('), 'the kill reward pays through earnExp');
+  assert.ok(src.includes('earnZeny(z);r.zeny+=z;earnExp(xp);r.exp+=xp;'), 'offline kills count too');
+  assert.ok(src.includes('earnZeny(q.z||0);earnExp(q.xp||0);'), 'quest EXP counts as income');
+  const box={};vm.createContext(box);
+  vm.runInContext(`
+    let S={zeny:0,exp:0},zenyEarned=0,expEarned=0;
+    ${grab('function earnZeny(amount){','function kill(o){')}
+    ${grab('const HUD_RATE_WINDOW=60000,HUD_IDLE_RESET=30000,HUD_RATE_REFRESH=1000;','const levelPct=')}
+    this.__r={stepHudRate,earnExp,S,get exp(){return expEarned}};
+  `,box);
+  const R=box.__r;
+  R.earnExp(500);
+  assert.strictEqual(R.S.exp,500);assert.strictEqual(R.exp,500,'earnExp credits both the save and the session');
+  let state=null;
+  const s=(k,z,exp,time)=>{const m=R.stepHudRate(state,'p',k,z,time,0,exp);state=m.state;return m};
+  let m=s(0,0,0,0);
+  m=s(10,0,500,1000);
+  assert.strictEqual(m.exp,30000,'500 EXP in the first second reads 30,000/min');
+  m=s(10,0,500,1500);assert.strictEqual(m.exp,30000,'and it holds between whole seconds');
+  s(10,0,1500,2000);
+  assert.strictEqual(state.expPerMin,45000,'1,500 EXP in two seconds reads 45,000/min (the whole window counts)');
+  m=s(10,0,1500,40000);assert.strictEqual(m.exp,0,'a stall longer than 30s wipes the EXP rate too');
+  m=s(0,0,0,41000);assert.strictEqual(m.exp,0,'a counter reset (fresh save) starts at zero');
+});
+
 t('the DPS meter shares the rolling minute and resets with the save', () => {
   const box={};vm.createContext(box);
   vm.runInContext(`
-    let S={zeny:0},zenyEarned=0;
+    let S={zeny:0},zenyEarned=0,expEarned=0;
     ${grab('function earnZeny(amount){','function kill(o){')}
     ${grab('const HUD_RATE_WINDOW=60000,HUD_IDLE_RESET=30000,HUD_RATE_REFRESH=1000;','const levelPct=')}
     this.__r={stepHudRate,S};
@@ -660,6 +836,61 @@ t('the character + class panels show the class-collection bonus', () => {
   assert.ok(h.includes('+1% damage'));
 });
 
+t('v74: the Character sheet explains movement speed and where it comes from', () => {
+  U.S = mkS('Thief'); U.selE = 'weapon';
+  const h = U.V.stats();
+  assert.ok(/Move <b>[\d.]+<\/b> <small>u\/s/.test(h), 'a Move readout must sit with ATK/ASPD/Crit (got ' +
+    (h.match(/Move <b>[^<]*/) || ['none'])[0] + ')');
+  assert.ok(h.includes('Movement speed</b> comes from AGI alone'), 'the sheet must name the only source');
+  assert.ok(/at AGI \d+ \(\d/.test(h), 'it must print the AGI it is reading and the sprint figure');
+  // the number is the game's own curve, applied to the real st('agi')
+  const agi = U.S.st.agi;
+  const want = 5.3 + Math.max(1, agi) * .025 + Math.sqrt(Math.max(1, agi)) * .035;
+  assert.ok(h.includes('Move <b>' + want.toFixed(2) + '</b>'), 'the readout must be heroMoveSpeedForAgi(AGI) (wanted ' + want.toFixed(2) + ')');
+  assert.ok(h.includes((want * 1.4).toFixed(2) + ' sprinting'), 'the sprint figure is the run multiplier');
+  // AGI is the only input: a stat change moves it, and nothing else does
+  U.S.st.agi = agi + 20;
+  assert.ok(U.V.stats().includes('Move <b>' + (want + 20 * .025 + (Math.sqrt(agi + 20) - Math.sqrt(agi)) * .035).toFixed(2) + '</b>'), 'more AGI walks faster');
+  // the curve is declared once, in the derived-stat block, and update() uses that copy
+  assert.ok(src.includes('const heroMoveSpeedForAgi=agi=>5.3+'), 'the curve must stay a single named function');
+  assert.strictEqual((src.match(/const heroMoveSpeedForAgi=/g) || []).length, 1, 'no duplicate curve');
+  assert.ok(src.includes("Math.min(pd,spd*dt*(pd>3?1.4:1))"), 'update() still applies the 1.4 run multiplier past 3 units');
+  assert.ok(src.includes('MOVE_RUN=1.4'), 'and the sheet reads the same multiplier');
+});
+
+t('v74: the item card names the class tier a piece belongs to, and why a locked piece is locked', () => {
+  // A Novice reading the tiers: starter and 1st-job gear it may wear (v74.1: the low band is
+  // shared), a 2nd-job piece it may not, and a locked high-tier piece that came off its Lord Knight.
+  const starterSword = { id: 50, name: 'Short Sword', tier: 0, slot: 'weapon', wt: 'sword', val: 12, sec: 0, cards: [] };
+  const firstJobSword = { id: 51, name: 'Torn Blade', tier: 1, slot: 'weapon', wt: 'sword', val: 40, sec: 1, cards: [] };
+  const secondJobSword = { id: 53, name: 'Knight Blade', tier: 2, slot: 'weapon', wt: 'sword', val: 120, sec: 2, cards: [] };
+  const highTier = { id: 52, name: 'Grand Cross', tier: 4, slot: 'weapon', wt: 'sword', val: 400, sec: 3, cards: [], locked: true, wearer: 'Lord Knight' };
+  U.S = mkS('Novice'); U.S.inv = [starterSword, firstJobSword, secondJobSword, highTier];
+  U.S.eq = { head: null, weapon: firstJobSword, armor: null, off: null, acc1: null, leg: null, acc2: null };
+  U.selE = 'weapon';
+  const equip = U.V.equip();
+  assert.ok(equip.includes('Worn by: <b>Novice and 1st-job classes</b>'), 'the equipment card states which class tier may wear the piece');
+  // the two pieces the Novice cannot wear explain themselves in their detail cards
+  const refused = U.itemDetail(secondJobSword);
+  assert.ok(refused.includes('Locked to 2nd-job classes and up'), 'a piece this class cannot wear names the tier it needs');
+  assert.ok(refused.includes('your Novice cannot wear it'), 'and names the class that is reading it');
+  const stowed = U.itemDetail(highTier);
+  assert.ok(stowed.includes('Locked to transcendent classes only'), 'high-tier gear needs a transcendent class');
+  assert.ok(stowed.includes("goes straight back on when you switch to Lord Knight again"),
+    'and if it came off a class, the card says that class will wear it again');
+  assert.ok(stowed.includes('Locked &middot; protected from auto-sell'), 'the lock is still explained');
+  assert.ok(!U.itemDetail(starterSword).includes('Locked to'), 'a piece this class can wear carries no refusal');
+  assert.ok(!U.itemDetail(firstJobSword).includes('Locked to'), 'v74.1: and a Novice may wear 1st-job gear too');
+  assert.ok(!U.itemDetail(starterSword).includes('goes straight back'), 'and no stowage note either');
+  // the wearable bag copy renders the tier line too
+  U.S.inv = [starterSword];
+  assert.ok(U.V.bag0().includes('data-tip="50"'), 'the bag still renders the item cell');
+  // and the refusal text lives in the source, not only in one branch
+  assert.ok(src.includes('Locked to ${gearUserOf(it)}: your ${S.cls} cannot wear it.'), 'the refusal names the tier and the reader');
+  assert.ok(/\$\{gearUserOf\(it\)\}/.test(src), 'the tier name is interpolated from the one helper');
+  assert.ok(src.includes('it.wearer?` This was ${it.wearer'), 'the wearer note is attributed');
+});
+
 t('pet details show Ragnarok sprites, named upgrade levels, and gacha skill odds', () => {
   U.S=mkS('Novice');U.S.pets=[{id:41,sp:0,mut:0,eq:[1,2,0],skills:['warcry','spiritbolt'],sk:[1,2,3],on:false}];U.selP=41;
   const h=U.V.pet();
@@ -681,6 +912,24 @@ t('pet details show Ragnarok sprites, named upgrade levels, and gacha skill odds
   const h2=U.V.pet();
   assert.ok(h2.includes('Slot 1: <b class="r0">empty</b>')&&h2.includes('Slot 2: <b class="r0">empty</b>'),'both empty slots are offered');
   assert.ok(h2.includes('Gacha both skills'),'and the button says what it will do');
+  // v75: the species' signature passive, its Bond, and how a duplicate is treated
+  U.S.pets=[{id:41,sp:0,mut:0,eq:[1,2,0],skills:['warcry'],sk:[1,2,3],on:true}];U.S.bond=[2,0,0,0,0,0,0,0];U.selP=41;
+  const h3=U.V.pet();
+  assert.ok(h3.includes('Signature passive &middot; <b>Greedy Gel</b>'),'the pet card must name its species passive');
+  assert.ok(h3.includes('+6% Zeny from kills'),'and state the number at its current Bond (Bond 1 = 6%)');
+  assert.ok(h3.includes('<b>Bond 1/5</b>')&&h3.includes('1 more Poring folded in reaches Bond 2'),'and show the ladder progress');
+  assert.ok(h3.includes('folded into it automatically'),'the fold rule must be explained where a duplicate lands');
+  const h4=(U.S.pets=[{id:43,sp:7,mut:0,eq:[0,0,0],skills:[],sk:[1,2,3],on:true}],U.selP=43,U.V.pet());
+  assert.ok(h4.includes('Divine Grace')&&h4.includes('+5% Max HP and 5% less damage taken'),'Divine Grace reads as one bonus with its number');
+  assert.ok(h4.includes('Bond 0/5'),'a pet with no duplicates starts at Bond 0');
+  // the Character sheet lists the fighting pets' bonuses, and the movement line owns up to the mount
+  U.S.pets=[{id:43,sp:7,mut:0,eq:[0,0,0],skills:[],sk:[1,2,3],on:true},
+            {id:44,sp:4,mut:0,eq:[0,0,0],skills:[],sk:[1,2,3],on:true}];       // Angeling + Peco Peco
+  const sheet=U.V.stats();
+  assert.ok(sheet.includes('<b>Pet bonuses</b> (the fighting pets): Angeling Divine Grace +5% Max HP and 5% less damage taken &middot; Peco Peco Swift Mount +5% movement speed'),
+    'the sheet sums the live pet passives, one row per fighting species');
+  assert.ok(sheet.includes("A fighting Peco Peco's Swift Mount adds 5%"),'the movement sentence must name the one pet that bends it');
+  U.S.bond=[];
 });
 
 t('the Skills panel prints the whole tree against what a maxed line earns', () => {
@@ -747,6 +996,7 @@ t('the bag shows its 1000-item limit and refuses loot once it is full', () => {
     let S={inv:[],cards:[],ore:{ori:0,elu:0},auto:false,zeny:0,autoSell:[false,false,false,false,false],clickSell:false},pl={x:1,z:2},msg='';
     const GRADE=['Common','Uncommon','Rare','Legendary'],GI=[0,1,2,4],ORE={ori:'Oridecon',elu:'Elunium'},
       RAR=[{n:'Common'},{n:'Fine'},{n:'Rare'},{n:'Epic'},{n:'Legendary'}];
+    const RAR5={n:'N'},RARALL=RAR.concat([RAR5]),rarIdx=it=>((it&&+it.sec>=4)?5:Math.max(0,Math.min(RAR.length-1,(it&&it.tier)||0))),rarOf=it=>(rarIdx(it)===5?RAR5:RAR[rarIdx(it)]),rarCls=it=>'r'+rarIdx(it);
     const cardTxt=c=>c.n,addFloat=()=>{},ui=()=>{},log=m=>{msg=m},qProg=()=>{},canUse=()=>false,equip=()=>{};
     const earnZeny=a=>{S.zeny+=a},save=()=>{};
     ${pick(/const BAGMAX=\d+;/, 'BAGMAX')}
@@ -811,10 +1061,39 @@ t('the map panel states the fixed rarity of the field it is showing', () => {
   U.mapM = 9; U.mapL = 10;
   h = U.V.map();
   assert.ok(h.includes('every drop here is <b class="r4">Legendary</b>'), 'the Abyss boss field is Legendary');
-  assert.ok(h.includes('Every boss drop is <b class="r4">Legendary</b>'), 'the boss card says so');
+  assert.ok(h.includes('Every MVP drop is <b class="r4">Legendary</b>'), 'the MVP card says so');
+  // v76.2: the Nightmare band is its own rarity - tagged N, painted dark purple - and NOT
+  // presented as one more pile of Legendaries
+  U.mapM = 9; U.mapL = 15;
+  h = U.V.map();
+  assert.ok(h.includes('every drop here is <b class="r5">N</b>'), 'a Nightmare field states the N rarity, not Legendary');
+  assert.ok(h.includes('<small class="r5">N</small>'), 'and every drop line repeats the N tag');
+  assert.ok(!h.includes('every drop here is <b class="r4">'), 'no Legendary band badge on an N field');
   U.mapM = 5; U.mapL = 4;
   h = U.V.map();
-  assert.ok(h.includes('every drop here is <b class="r2">Rare</b>'), 'Comodo stage 4 is a Rare field');
+});
+
+t('the damage trial is entered from the map selection, and the lobby offers the three doors', () => {
+  U.S = mkS('Knight'); U.mapM = 9; U.mapL = 10;
+  const h = U.V.map();
+  // v77 (owner): "the dungeon button should be at the map selection itself not at the stages"
+  assert.ok(h.includes('Endless Echo'), 'the map window names the trial');
+  assert.ok(h.includes('data-trial="lobby"'), 'and its button sits with the map cards, opening the lobby');
+  assert.ok(h.includes('/2 ranked runs left today'), 'the card states the ranked tries left');
+  assert.ok(src.indexOf('dungeoncard') < src.indexOf('mapband fields'), 'the button is drawn with the map cards, above the stage list');
+  assert.ok(!src.includes('.mapband.dungeon{'), 'the old bottom band is gone');
+  // the lobby itself: ranked with the tries left, unlimited training, and the Shard Store. The
+  // rendered HTML is exercised by trial_sim.js; here the source is pinned.
+  const lobby = grab('function trialLobby(view){', 'function trialShopHtml(){');
+  assert.ok(lobby.includes('Ranked run') && lobby.includes('left today'), 'ranked shows the tries left');
+  assert.ok(lobby.includes('Training (unlimited)'), 'training is unlimited');
+  assert.ok(lobby.includes('Shard Store'), 'and the store is a door of its own');
+  assert.ok(lobby.includes('Personal best'), 'the lobby carries the personal best');
+  assert.ok(grab('function trialEnter(mode){', 'function trialFinish(){').includes('TRIAL_SECS'), 'a run is the full five minutes');
+  assert.ok(src.includes('const TRIAL_SECS=300'), '5:00 exactly');
+  assert.ok(src.includes('TRIAL_RANKED_PER_DAY=2'), 'two ranked runs a day');
+  const fin = grab('function trialFinish(){', 'function trialExit(){');
+  assert.ok(fin.includes('dps>st.best') && !fin.includes('st.best+='), 'the board metric is a single run at its best, never a sum');
 });
 
 
@@ -824,8 +1103,8 @@ t('pet buffs are icon tiles above the status bar, and the description waits for 
   const bar = src.slice(src.indexOf('<div id="hud">'), src.indexOf('<div id="xp-dock"'));
   assert.ok(play.includes('id="hudBuffs"'), 'the pet buff strip must live in the play area, above the status bar');
   assert.ok(!bar.includes('hudBuffs'), 'the status bar itself must not carry buff chips any more');
-  assert.ok(src.includes('#hudBuffs{position:absolute;right:12px;bottom:12px'),
-    'the strip is pinned to the far right, directly above the status bar');
+  assert.ok(src.includes('#hudBuffs{position:absolute;right:12px;bottom:var(--docktop,76px)'),
+    'the strip is pinned to the far right, directly above the status bar (v74.1 pads it above the dock)');
   assert.ok(!/\.pbf\b/.test(src), 'the old text chips are gone');
   assert.ok(src.includes('.pbx-fly{') && src.includes('.pbx:hover .pbx-fly,.pbx:focus .pbx-fly{opacity:1;visibility:visible}'),
     'the tile is an icon, and the description is hidden until it is hovered or focused');
@@ -834,7 +1113,7 @@ t('pet buffs are icon tiles above the status bar, and the description waits for 
   vm.runInContext(`
     const nodes={};const $=id=>nodes[id]||(nodes[id]={style:{},textContent:'',title:'',attrs:{},
       classList:{flags:{},toggle(k,v){this.flags[k]=v}},setAttribute(k,v){this.attrs[k]=v}});
-    let S={lv:20,exp:90,hp:80,kills:0,zeny:0},hudRate=null,zenyEarned=0,currentUser='A';
+    let S={lv:20,exp:90,hp:80,kills:0,zeny:0},hudRate=null,zenyEarned=0,expEarned=0,currentUser='A';
     const HUNT_TITLES=[{id:'field-scout',name:'Field Scout',kills:500}],titleUnlocked=t=>S.kills>=t.kills;
     let petBuff={atk:20,matk:0,hp:20,leech:0,atkT:12.4,matkT:0,hpT:3.2,leechT:0},petBuffSrc={atk:'Poring',hp:'Drops'};
     const performance={now:()=>1000},job={jl:10,jx:45},jobOf=()=>job,C=()=>({mj:50}),maxHp=()=>100,
@@ -936,8 +1215,8 @@ t('the Bag keeps insertion order, pins locked gear, and labels rarity-based equi
   U.S.autoSell[2]=true;U.selB=43;U.S.lv=1;h=U.V.bag0();
   const purge=h.slice(h.indexOf('data-a="sellnow"'),h.indexOf('data-a="sellnow"')+48);
   assert.ok(purge.includes('disabled'),'a locked matching rarity cannot be bulk-sold');
-  assert.ok(h.includes('Gear Lv 60')&&h.includes('reference only (no Base Lv equip restriction)'),
-    'same field-level gear shows a higher Rare-grade reference level without an equip gate');
+  assert.ok(h.includes('Gear Lv 60')&&h.includes('reference only: gear is gated by class tier, never by Base Lv'),
+    'same field-level gear shows a higher Rare-grade reference level, and the only equip gate is the class tier');
   assert.ok(h.includes('data-a="lockgear" data-v="43"')&&h.includes('aria-pressed="true"'),
     'the selected item exposes an explicit Unlock control');
   const equipButton=h.match(/<button data-a="equip" data-v="43"([^>]*)>/);
@@ -965,9 +1244,9 @@ t('locked gear requires deliberate confirmation for manual sale and is skipped b
   assert.strictEqual(C.sell(91),true,'a second deliberate Sell action can now complete');
   assert.strictEqual(C.S.inv.length,0,'the unlocked item is sold only after that second action');
   assert.strictEqual(C.earned,C.sellVal(item),'the confirmed manual sale pays the ordinary sell value');
-  assert.ok(src.includes('S.inv.filter(i=>!i.locked&&autoSellOn(i.tier))'),'bulk sell omits locked gear');
-  assert.ok(src.includes('S.inv.some(i=>!i.locked&&autoSellOn(i.tier))'),'the bulk-sell button is disabled when only locked matches remain');
-  assert.ok(src.includes('if(!it.locked&&autoSellOn(it.tier))'),'drop auto-sell never consumes a locked item');
+  assert.ok(src.includes('S.inv.filter(i=>!i.locked&&autoSellOn(rarIdx(i)))'),'bulk sell omits locked gear');
+  assert.ok(src.includes('S.inv.some(i=>!i.locked&&autoSellOn(rarIdx(i)))'),'the bulk-sell button is disabled when only locked matches remain');
+  assert.ok(src.includes('if(!it.locked&&autoSellOn(rarIdx(it)))'),'drop auto-sell never consumes a locked item');
 });
 
 t('the lock toggle changes saved item state in either direction',()=>{
@@ -1006,7 +1285,7 @@ t('the Log window filters by category, and the on-screen feed folds away', () =>
   U.S.logOff = { kills: 1, zeny: 1, gear: 1, card: 1, misc: 1 };
   assert.ok(U.V.log().includes('0 of 4 events shown'), 'hiding everything says so');
   // the tags really are on the real call sites
-  assert.ok(src.includes("log(`Picked up [${RAR[it.tier].n}] ${it.name}`,'r'+it.tier,'gear')"), 'pickups are tagged');
+  assert.ok(src.includes("log(`Picked up [${rarOf(it).n}] ${it.name}`,rarCls(it),'gear')"), 'pickups are tagged, and a Nightmare drop is tagged N');
   assert.ok(src.includes(",'kills,zeny');"), 'a kill is tagged as kills AND zeny');
   assert.ok(src.includes("log(`Got card: [${GRADE[it.g]}] ${cardTxt(it)}`,'r'+GI[it.g],'card')"), 'cards are tagged');
   // the on-screen log's own tab
@@ -1021,7 +1300,7 @@ t('the Log window filters by category, and the on-screen feed folds away', () =>
     'and reads clearly on hover or focus');
   assert.ok(src.includes('#feedTab.filt::after{'), 'a quiet dot marks a filter that is hiding lines');
   assert.ok(src.includes("b.classList.toggle('filt',hid>0);"), 'and the dot is driven by the real filter state');
-  assert.ok(src.includes("feedTab();$('stageTitle')"), 'every redraw keeps the tab label honest');
+  assert.ok(src.includes('feedTab();') && src.includes("$('stageTitle').textContent=hudTrial?"), 'every redraw keeps the tab label honest');
   assert.ok(src.includes("feed:()=>{S.feed=!feedOn();feedTab();ui();save()}"), 'toggling it saves');
   const box = {}; vm.createContext(box);
   vm.runInContext(`
@@ -1196,7 +1475,8 @@ t('refine controls sit with the piece: the ladder is the v51 30%-nerfed one', ()
   assert.ok(e.indexOf('Refine') > -1 && e.indexOf('Insert card') > -1, 'the weapon shows both sections');
   assert.ok(e.indexOf('Refine') < e.indexOf('Insert card'), 'Refine comes before the long card-insert list, not after it');
   assert.ok(src.includes('refCh=it=>[70,70,70,70,49,42,35,28,21,14][it.r||0]'), 'the refine chance table is the nerfed one');
-  assert.ok(src.includes('ore:true,oreCh:l===10?.01:.005') && src.includes('ore:true,oreCh:.025'), 'regular mobs drop both ores at 0.5% / 1%, Stage 10 boss at 2.5%');
+  assert.ok(src.includes('ore:true,oreCh:l>10?.015:l===10?.01:.005') && src.includes('ore:true,oreCh:.025'),
+    'regular mobs drop both ores at 0.5% / 1% (1.5% in the Nightmare band), Stage 10 boss at 2.5%');
 });
 
 t('worn equipment can never be auto-sold or bulk-sold', () => {
@@ -1204,7 +1484,9 @@ t('worn equipment can never be auto-sold or bulk-sold', () => {
   const sellnowFn = grab('sellnow:()=>{', 'clicksell:');
   const box = {}; vm.createContext(box);
   vm.runInContext(`let S=null,selB=null,z=0,sold=0;const earnZeny=v=>{z+=v},log=()=>{},ui=()=>{},save=()=>{sold++};
-    const autoSellOn=t=>!!(S.autoSell&&S.autoSell[t]);
+    const RAR=[{n:'Common'},{n:'Fine'},{n:'Rare'},{n:'Epic'},{n:'Legendary'}],RAR5={n:'N'},RARALL=RAR.concat([RAR5]);
+    const rarIdx=it=>((it&&+it.sec>=4)?5:Math.max(0,Math.min(RAR.length-1,(it&&it.tier)||0)));
+    const autoSellOn=t=>!!(S.autoSell&&S.autoSell[Math.max(0,Math.min(RARALL.length-1,Math.floor(+t||0)))]);
     ${sellValFn}
     const ACT={${sellnowFn}};
     this.__bulk={set S(v){S=v},get S(){return S},get z(){return z},get saved(){return sold},ACT};`, box);
@@ -1217,8 +1499,8 @@ t('worn equipment can never be auto-sold or bulk-sold', () => {
   assert.strictEqual(C.S.inv.length, 0, 'the matching bag copy is the one that sells');
   assert.strictEqual(C.S.eq.weapon, worn, 'the worn weapon is untouched: equipment is not in the bag list');
   assert.ok(C.z > 0, 'the sale still paid out');
-  assert.ok(src.includes('S.inv.filter(i=>!i.locked&&autoSellOn(i.tier))'), 'bulk sell only ever reads S.inv');
-  assert.ok(src.includes('if(!it.locked&&autoSellOn(it.tier)){const v=sellVal(it)'), 'drop auto-sell only ever reads S.inv');
+  assert.ok(src.includes('S.inv.filter(i=>!i.locked&&autoSellOn(rarIdx(i)))'), 'bulk sell only ever reads S.inv');
+  assert.ok(src.includes('if(!it.locked&&autoSellOn(rarIdx(it))){const v=sellVal(it)'), 'drop auto-sell only ever reads S.inv');
   assert.ok(src.includes('const i=S.inv.findIndex(x=>String(x.id)===String(id))'), 'manual Sell searches the bag, never S.eq');
 });
 
@@ -1264,6 +1546,22 @@ t('the reset buttons explain themselves, refuse on screen, and survive a rebuild
   // a click whose press and release span a kill's renderWin() must not be swallowed
   assert.ok(/if\(winPress\)\{winDirty=true;return\}/.test(src), 'renderWin must defer while a pointer is down');
   assert.ok(/addEventListener\('pointerup',winUp\)/.test(src), 'the deferred rebuild runs on pointerup');
+  // v76.2/v76.3: a rebuild used to leave the phone's scroller (which is #wins, not .wbody, at
+  // <=700px) wherever the browser clamped it, so tapping a stage made the panel hop. Both scrollers
+  // are kept by number, and the pressed control is nudged inside its own window body by hand -
+  // scrollIntoView() also moves #wins and the page, which was the rest of the hop.
+  assert.ok(/const outer=host\.scrollTop;/.test(src), 'the rebuild remembers the real scroller');
+  assert.ok(/host\.scrollTop=outer;/.test(src), 'and puts it back');
+  assert.ok(/const b=e\.querySelector\('\.wbody'\);if\(b\)old\[e\.dataset\.win\]=b\.scrollTop/.test(src)
+    && /const b=e\.querySelector\('\.wbody'\);if\(!b\)return;/.test(src)
+    && /if\(e\.dataset\.win==='log'\)b\.scrollTop=1e6;else b\.scrollTop=old\[e\.dataset\.win\]\|\|0/.test(src),
+    'both scrollers are read and written defensively (a window without a body cannot throw mid-rebuild)');
+  assert.ok(!src.includes('el.scrollIntoView('), 'nothing calls the browser scrollIntoView() any more');
+  assert.ok(/body\.scrollTop\+=er\.top-br\.top/.test(src) && /body\.scrollTop\+=er\.bottom-br\.bottom/.test(src),
+    'the pressed control is nudged inside its own window body when it fell outside');
+  assert.ok(src.includes("sell_:v=>{mapL=+v;renderWin('[data-win=\"map\"] .map-node.picked')}"), 'a stage click anchors itself');
+  assert.ok(src.includes("renderWin('[data-win=\"map\"] .mapcard.on')"), 'so does a map card click');
+
   assert.ok(/\$\('wins'\)\.addEventListener\('pointerdown'/.test(src), 'the guard arms on a window press');
 });
 

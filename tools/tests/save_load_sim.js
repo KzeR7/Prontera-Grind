@@ -134,6 +134,18 @@ t('card values are repaired per stat, not flattened to CV[grade]', () => {
   assert.strictEqual(byId(3).v, 6, 'an unknown stat should fall back to round(CV[grade 1]) = 6, not crash');
 });
 
+t('v75: the bond ledger round-trips, and a save without one starts empty', () => {
+  // S.bond is the per-species count of folded duplicates. It has to survive a cloud save and a
+  // reload like any other field, and an older save must arrive with it empty rather than absent.
+  assert.ok(Array.isArray(f.bond), 'a folded-duplicate ledger exists after load');
+  // the fixture's three pets are three different species, so nothing was folded into them
+  assert.strictEqual(f.bond.reduce((a, b) => a + (Number(b) || 0), 0), 0, 'a save with no duplicates starts at zero');
+  const round = JSON.parse(JSON.stringify(f));
+  assert.ok(Array.isArray(round.bond) && round.bond.length === f.bond.length, 'the ledger is plain JSON, so the round trip keeps it');
+  // and the sweep that folds an old save's duplicates lives in the game, guarded for old pages
+  assert.ok(/function foldDupPets\(\)\{/.test(src), 'foldDupPets() must exist');
+  assert.strictEqual((src.match(/foldDupPets\(\);/g) || []).length, 2, 'and run on both login paths (local and cloud)');
+});
 t('legacy saves default the monster ledger, card album, and equipped title safely',()=>{
   assert.deepStrictEqual(Object.keys(f.mobKills),[]);
   assert.strictEqual(f.equippedTitle,null);
@@ -404,7 +416,7 @@ t('the v39 tool settings repair: old saves get the quiet defaults', () => {
   const g = load();
   assert.strictEqual(g.feed, true, 'the on-screen log starts unfolded');
   assert.strictEqual(g.clickSell, false, 'a bag click inspects - it never sells - by default');
-  assert.deepStrictEqual(Array.from(g.autoSell), [false, false, false, false, false], 'nothing is auto-sold');
+  assert.deepStrictEqual(Array.from(g.autoSell), [false, false, false, false, false, false], 'nothing is auto-sold (six bands since v77: N swapped in)');
   assert.deepStrictEqual(Object.keys(g.logOff), [], 'every log filter starts ticked');
   // junk of every shape must be repaired, not carried
   sb.__l.setRaw({ lv: 5, cls: 'Novice', sk: { aid: 1 }, jobs: { Novice: { jl: 1, jx: 0 } },
@@ -412,7 +424,7 @@ t('the v39 tool settings repair: old saves get the quiet defaults', () => {
   const r = load();
   assert.strictEqual(r.feed, true, 'a junk fold flag falls back to open');
   assert.strictEqual(r.clickSell, false, 'a junk click-sell flag falls back to off');
-  assert.deepStrictEqual(Array.from(r.autoSell), [false, false, false, false, false], 'a junk auto-sell list falls back to nothing ticked');
+  assert.deepStrictEqual(Array.from(r.autoSell), [false, false, false, false, false, false], 'a junk auto-sell list falls back to nothing ticked');
   assert.deepStrictEqual(Object.keys(r.logOff), [], 'a junk filter list falls back to an empty object');
   // and deliberate choices survive the round trip, index by index
   sb.__l.setRaw({ lv: 5, cls: 'Novice', sk: { aid: 1 }, jobs: { Novice: { jl: 1, jx: 0 } },
@@ -420,7 +432,11 @@ t('the v39 tool settings repair: old saves get the quiet defaults', () => {
   const k = load();
   assert.strictEqual(k.feed, false, 'a deliberately folded log stays folded');
   assert.strictEqual(k.clickSell, true, 'a deliberately armed click-sell stays armed');
-  assert.deepStrictEqual(Array.from(k.autoSell), [true, false, false, false, true], 'every tick is read as a boolean, position by position');
+  assert.deepStrictEqual(Array.from(k.autoSell), [true, false, false, false, true, false], 'every tick is read as a boolean, position by position, and the new N band starts unticked');
+  // v77: a save written before the N band existed keeps its five choices and gains an unticked sixth
+  sb.__l.setRaw({ lv: 5, cls: 'Novice', sk: { aid: 1 }, jobs: { Novice: { jl: 1, jx: 0 } },
+    autoSell: [false, false, true, false, true] });
+  assert.deepStrictEqual(Array.from(load().autoSell), [false, false, true, false, true, false], 'an old five-band save keeps its ticks and gains an unticked N');
   assert.deepStrictEqual(Object.keys(k.logOff), ['gear'], 'a switched-off filter survives');
 });
 

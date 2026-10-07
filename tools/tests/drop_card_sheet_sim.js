@@ -19,8 +19,11 @@ function liveData(){
     `MAPS.forEach(mp=>{mp.mobs=mp.mobs.map(x=>({n:x.split(':')[0]}));mp.boss={n:mp.boss.split(':')[0]};});`,
     pick(/const REC=\[[^\]]*\];/,'map recommendations'),
     `MAPS.forEach((m,i)=>{m.b=[0,9,19,31,43,59,66,73,79,89][i];m.rec=REC[i]});`,
+    // v76: the Nightmare band's constants and the two extra catalogue rows per map, so the sheet
+    // shows exactly what the game ships
+    grab('const NMLV=[', 'GEAR.forEach((row,m)=>{row.push(nmRow(m,0),nmRow(m,1))});') + 'GEAR.forEach((row,m)=>{row.push(nmRow(m,0),nmRow(m,1))});',
     pick(/const EARLY_FIELD_PWR=\[[^;]+;/,'early-map power schedules'),
-    pick(/const fieldPower=\(m,l\)=>\{[^}]*\};/,'fieldPower'),
+    pick(/const fieldPower=\(m,l\)=>[^;]+;/, 'fieldPower'),   // v76: one ternary expression, no inner statement
     pick(/const secOf=[^;]+;/,'secOf'),
     pick(/const secField=\(m,l\)=>[^;]+;/,'secField'),
     pick(/const RAR=\[[^\]]*\];/,'equipment rarity table'),
@@ -35,6 +38,8 @@ function liveData(){
     pick(/const MAPGRADE=\[[^\]]*\];/,'map grade caps'),
     pick(/const MAPVAL=\[[^\]]*\];/,'map value bands'),
     pick(/const dropTier=\(m,l\)=>[^;]+;/,'dropTier'),
+    pick(/const FIELD_GEAR=\[[^\]]*\],FIELD_GEAR_MID=\[[^\]]*\],BOSS_POOL_TOTAL=\[[^\]]*\];/,'field drop tables'),
+    pick(/const BOSS_CRIT_RES=\[[^\]]*\],NM_CRIT_RES=\[[^\]]*\],bossCritRes=\(m,l\)=>[^;]+;/,'boss crit resistance'),
     grab('function gearPool(m,l){','// ---------- stat progression'),
     `const WICON=${pickValue(/const WICON=(\{[^}]*\})/,'weapon type table')};`,
     `this.__live={MAPS,RAR,GRADE,AFF,AB,K5,cardVal,cardStat,CFIT,SECN,WICON,fieldPower,fieldOf};`
@@ -103,8 +108,12 @@ console.log('equipment & card sheet: offline, live-source baseline\n');
 t('the embedded snapshot exactly matches the current game tables',()=>assert.deepStrictEqual(sheet,live));
 t('the worksheet covers all maps, gear sections, and field stages',()=>{
   assert.strictEqual(sheet.maps.length,10);
-  for(const m of sheet.maps){assert.strictEqual(m.sections.length,4,m.name);assert.strictEqual(m.stages.length,10,m.name);assert.ok(m.stages.every(s=>s.mobs.length===2),m.name+' field mob count')}
-  assert.strictEqual(sheet.maps.reduce((n,m)=>n+m.sections.reduce((a,s)=>a+s.items.length,0),0),378);
+  // v76: six sections per map - the four job tiers plus the two Nightmare rows that only the band
+  // above stage 10 rolls. The stage list stays the ten normal stages.
+  for(const m of sheet.maps){assert.strictEqual(m.sections.length,6,m.name);assert.strictEqual(m.stages.length,10,m.name);assert.ok(m.stages.every(s=>s.mobs.length===2),m.name+' field mob count')}
+  assert.ok(sheet.maps.every(m=>m.sections[4].name===undefined||m.sections[4].items.length>0),'the Nightmare rows carry items');
+  assert.strictEqual(sheet.sectionNames[4],'Nightmare gear');assert.strictEqual(sheet.sectionNames[5],'Abyssal Nightmare gear');
+  assert.strictEqual(sheet.maps.reduce((n,m)=>n+m.sections.reduce((a,s)=>a+s.items.length,0),0),588);
 });
 t('the worksheet snapshot carries the new field-power and gear-tier progression',()=>{
   assert.strictEqual(sheet.sectionNames[0],'Starter gear');
@@ -139,8 +148,9 @@ t('rarity, card grades, and Stage-10 boss pools are complete',()=>{
       for(const mob of s.mobs){assert.strictEqual(mob.drops.length,3);assert.strictEqual(mob.card.grade,cardGrade);assert.strictEqual(mob.card.name,mob.name+' Card')}
       if(s.stage===10){assert.ok(s.boss);assert.strictEqual(s.boss.drops.length,m.sections[s.section].items.length);
         // v57: the pool still lists every item, but the whole pool now totals ~6% per boss kill
-        const total=s.boss.drops.reduce((a,d)=>a+d.rate,0);
-        assert.ok(Math.abs(total-6)<1.2,'boss pool totals about 6%, got '+total.toFixed(2)+'%');
+        // v73: maps 6-10 (index 5+) pay 30% less, so their boss pool totals ~4.2% per kill
+        const total=s.boss.drops.reduce((a,d)=>a+d.rate,0),want=mi>=5?4.2:6;
+        assert.ok(Math.abs(total-want)<1.2,'boss pool totals about '+want+'%, got '+total.toFixed(2)+'%');
         assert.strictEqual(s.boss.card.grade,3);assert.strictEqual(s.boss.card.name,m.boss+' Card')}
       else assert.strictEqual(s.boss,null);
     }
@@ -152,7 +162,9 @@ t('card effect matrix uses the game’s actual rounded values and roll pools',()
   assert.deepStrictEqual(sheet.cardValues.map(g=>g.str),[3,6,10,16]);
   assert.deepStrictEqual(sheet.cardValues.map(g=>g.hp),[38,77,115,192]);
   assert.deepStrictEqual(sheet.cardValues.map(g=>g.atk),[3,5,8,13]);
-  assert.deepStrictEqual(sheet.cardValues.map(g=>g.cdm),[2,4,7,11]);
+  // v73: cdm cards use their own 3/7/10/13 ladder, and the criticards follow AB.crit .32
+  assert.deepStrictEqual(sheet.cardValues.map(g=>g.cdm),[3,7,10,13]);
+  assert.deepStrictEqual(sheet.cardValues.map(g=>g.crit),[1,2,3,5]);
 });
 t('worksheet migrates v45 edits through the merged class-skin + balance build',()=>{
   const script=html.match(/<script>\s*([\s\S]*?)\s*<\/script>/)[1];

@@ -8,7 +8,8 @@
 //   * the five base stats keep exactly the value they had before this change, so cards
 //     already sitting in a save do not silently shift;
 //   * a card's value scales with its stat's own weight AB, so an HP card is worth more
-//     than a STR card at the same grade instead of both being a flat CV[g];
+//     than a STR card at the same grade instead of both being a flat CV[g]; the cdm card
+//     (v73) is the one exception, paying a fixed 3/7/10/13 by grade;
 //   * every stat a card can roll has a CFIT entry - before this change the wider stats
 //     had none, so such a card could never be socketed into anything.
 const fs = require('fs'), vm = require('vm'), assert = require('assert');
@@ -92,15 +93,19 @@ t('the five base stats are CV[g] flat and rounded, never AB-weighted', () => {
   assert.strictEqual(C.cardVal(3, 'str'), 16);
 });
 
-t('wider stats scale by their AB weight instead of a flat CV[g]', () => {
+t('wider stats scale by their AB weight instead of a flat CV[g] (cdm is the v73 exception)', () => {
   // 16*12 = 192 and round(9.6*12) = 115 under v38's CV = [3.2, 6.4, 9.6, 16].
   assert.strictEqual(C.cardVal(3, 'hp'), 192, 'a Legendary HP card should be 16*12');
   assert.strictEqual(C.cardVal(2, 'hp'), 115, 'a Rare HP card should be round(9.6*12)');
-  // v38 cut the crit-damage weight (AB.cdm 1.5 -> 0.7), so a Legendary CDM card is +11% and now
-  // sits BELOW a Legendary STR card's +16: a percentage card is worth fewer points than a flat
-  // one, and crit damage is no longer the shortcut it was. Pinned as a deliberate relation.
-  assert.strictEqual(C.cardVal(3, 'cdm'), 11, 'a Legendary CDM card is +11%');
-  assert.ok(C.cardVal(3, 'cdm') < C.cardVal(3, 'str'), 'the cdm weight must not out-value a flat stat card');
+  // v73: the cdm CARD stopped following AB.cdm (that weight now describes the weaker,
+  // weapon/accessory-only GEAR affix) and pays its own fixed ladder 3/7/10/13 by grade. A
+  // Legendary CDM card is +13% and still sits BELOW a Legendary STR card's +16: a percentage
+  // card is worth fewer points than a flat one, and crit damage is not the shortcut it was.
+  assert.strictEqual(C.cardVal(3, 'cdm'), 13, 'a Legendary CDM card is +13%');
+  assert.strictEqual(C.cardVal(2, 'cdm'), 10, 'a Rare CDM card is +10%');
+  assert.strictEqual(C.cardVal(1, 'cdm'), 7, 'an Uncommon CDM card is +7%');
+  assert.strictEqual(C.cardVal(0, 'cdm'), 3, 'a Common CDM card is +3%');
+  assert.ok(C.cardVal(3, 'cdm') < C.cardVal(3, 'str'), 'the cdm ladder must not out-value a flat stat card');
   // Percentage stats deliberately show SMALLER numbers than flat stats: +4% ATK is worth far
   // more than +5 STR at endgame because it multiplies the whole attack total. Pin the ratio
   // so the relationship is intentional rather than accidental.

@@ -62,6 +62,30 @@ try {
     assert.strictEqual(me.data.u, 'KzeR');
   });
 
+  // The preview server (--gm-all) exists so the owner is never stranded on an account without GM
+  // tools: on a throwaway process every account it hands out is an owner. The default above stays the
+  // production rule, so this must be opt-in.
+  await t('--gm-all makes every account on that server an owner, not just the first', async () => {
+    const preview = await start({ port: 0, host: '127.0.0.1', site, gmAll: true });
+    try {
+      const host = 'http://127.0.0.1:' + preview.port;
+      const first = await fetch(host + '/api/register', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ u: 'Owner', p: 'a-long-owner-password' }),
+      });
+      const second = await fetch(host + '/api/register', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ u: 'Second', p: 'a-long-second-password' }),
+      });
+      const a = await first.json(), b = await second.json();
+      assert.strictEqual(a.gm, 2, 'the first preview account is an owner');
+      assert.strictEqual(b.gm, 2, 'and so is every later one - that is the point of --gm-all');
+      const cookie = second.headers.getSetCookie().map(c => c.split(';')[0]).join('; ');
+      const gm = await fetch(host + '/api/gm/players', { headers: { cookie } });
+      assert.strictEqual(gm.status, 200, 'the GM API must answer a preview account');
+    } finally { await preview.close(); }
+  });
+
   await t('a second player registers, is not a GM, and has their own empty save', async () => {
     const r = await call('friend', 'POST', '/api/register', { u: 'Friend', p: 'a-long-friend-password' });
     assert.strictEqual(r.status, 201);

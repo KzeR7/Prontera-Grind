@@ -22,8 +22,11 @@ const pick = (re, name) => { const m = src.match(re); if (!m) throw new Error('c
 
 const killStart = src.indexOf('function kill(o){');
 const gearDropStart = src.indexOf('  for(const[T,ch]of mob.drops)', killStart);
-const gearDropEnd = src.indexOf('  if(Math.random()*100<mob.cardCh)', gearDropStart);
-if (killStart < 0 || gearDropStart < 0 || gearDropEnd < gearDropStart) throw new Error('cannot find the live kill() gear-drop loop');
+// The slice runs from the gear loop, past the card gate, to the ore gate. A fixture only carries
+// cardCh/card when a test wants the card branch, so the extra lines are inert for the rest - and
+// they let this suite drive the ore roll (Sand Tracker's hook) too.
+const gearDropEnd = src.indexOf("  if(Math.random()*100<(mob.boss?.5:.03)){", gearDropStart);
+if (killStart < 0 || gearDropStart < 0 || gearDropEnd < gearDropStart) throw new Error('cannot find the live kill() drop loops');
 const gearDropLoop = src.slice(gearDropStart, gearDropEnd);
 const code = [
   'const bon=()=>0;',
@@ -34,8 +37,12 @@ const code = [
   pick(/const secOf=[^;]+;/, 'secOf'),
   pick(/const secField=\(m,l\)=>[^;]+;/, 'secField'),
   pick(/const RAR=\[[^\]]*\];/, 'RAR'),
+  pick(/const RAR5=\{[^;]*;/, 'the Nightmare N rarity helpers (v76.2)'),
   pick(/const AM=\[[^\]]*\],GRADE=\[[^\]]*\],GI=\[[^\]]*\],CV=\[[^\]]*\];/, 'rarity tables'),
   pick(/const AFF=\[[^\]]*\],AB=\{[^}]*\};/, 'AFF/AB'),
+  pick(/const FIELD_GEAR=\[[^\]]*\],FIELD_GEAR_MID=\[[^\]]*\],BOSS_POOL_TOTAL=\[[^\]]*\];/, 'field drop tables'),
+  pick(/const FIELD_GEAR_NM=\[[^\]]*\],FIELD_GEAR_MID_NM=\[[^\]]*\];/, 'the Nightmare drop tables'),
+  pick(/const BOSS_CRIT_RES=\[[^\]]*\],NM_CRIT_RES=\[[^\]]*\],bossCritRes=\(m,l\)=>[^;]+;/, 'boss crit resistance (+ the v76 Nightmare ladder)'),
   pick(/const AFFIX_CDM_SCALE=[^\n]+;/, 'gear-only Crit DMG post-roll scale'),
   pick(/K5=\[[^\]]*\];/, 'K5'),
   pick(/const cardVal=\(g,st\)=>[^;]+;/, 'cardVal'),
@@ -57,11 +64,16 @@ const code = [
 
 const harness = `
 ${code}
+// v75: the drop loops read the fighting pets' passives (Hoarded Flame / Sand Tracker). This suite
+// is about the drop TABLES, so the passives are held at zero here; pet_sim.js owns their maths.
+let PETPASSIVE=0;                      // a test raises this to prove the hook is live
+const petPassive=()=>PETPASSIVE;
+const ORE={ori:'Oridecon',elu:'Elunium'};    // the ore gate inside the slice names the two ores
 const SECN=['Starter gear','1st-job gear','2nd-job gear','High-tier gear'];
 const SLOTS={weapon:{label:'Weapon',stat:'ATK',ic:'A'},armor:{label:'Armor',stat:'DEF',ic:'B'},head:{label:'Headgear',stat:'HP',ic:'C'},off:{label:'Shield',stat:'DEF',ic:'D'},leg:{label:'Legwear',stat:'DEF',ic:'E'},acc:{label:'Accessory',stat:'HP',ic:'F'}};
 const rnd=(a,b)=>a+Math.random()*(b-a),ri=(a,b)=>Math.floor(rnd(a,b+1)),uid=()=>1;
 let S=null;
-this.__g={ MAPS, GEAR, gearPool, fieldOf, genGear, executeGearRoll, slotAccepts, canUse, canShield, katarOnly, CLASSES, lineOf, secOf, secField, SLOTS, BAGMAX, MAPTIER, MAPGRADE, MAPVAL, dropTier, sellVal, AM, AFF, AB, RAR, AFFIX_CDM_SCALE, scaleCritDamageAffix, affixValue,
+this.__g={ MAPS, GEAR, gearPool, fieldOf, genGear, rarIdx, rarOf, rarCls, RAR5, FIELD_GEAR_NM, FIELD_GEAR_MID_NM, executeGearRoll, slotAccepts, canUse, canShield, katarOnly, CLASSES, lineOf, secOf, secField, SLOTS, BAGMAX, MAPTIER, MAPGRADE, set PETPASSIVE(v){PETPASSIVE=v}, get PETPASSIVE(){return PETPASSIVE}, MAPVAL, dropTier, sellVal, AM, AFF, AB, RAR, AFFIX_CDM_SCALE, scaleCritDamageAffix, affixValue, FIELD_GEAR, FIELD_GEAR_MID, BOSS_POOL_TOTAL, BOSS_CRIT_RES, bossCritRes, gearTierOf, classTierOf, gearTierOK, gearUserOf,
            set S(v){S=v}, get S(){return S} };
 `;
 const sb = { console };
@@ -205,7 +217,8 @@ t('Abyss Stage 10 drops the complete top-tier weapon and armor pool',()=>{
   for(const slot of ARM)assert.ok(pool.some(x=>x.k===slot),'Abyss high-tier pool needs '+slot);
   assert.strictEqual(boss.drops.length,pool.length,'the boss still lists its whole pool');
   const total=boss.drops.reduce((a,d)=>a+d[1],0);
-  assert.ok(Math.abs(total-6)<1.2,'the boss pool totals about 6% per kill, got '+total.toFixed(2)+'%');
+  // v73: Abyss is a mid/endgame map, so its boss pool is the 30%-lighter one (~4.2% a kill).
+  assert.ok(Math.abs(total-4.2)<1.2,'the Abyss boss pool totals about 4.2% per kill, got '+total.toFixed(2)+'%');
   boss.drops.forEach(d=>assert.ok(pool.some(x=>x.n===d[0].n),'every boss entry comes from the map pool'));
   assert.strictEqual(G.MAPS[9].gear[3].a,'Dark Lord Mail','Abyss should retain its named best armor set');
 });
@@ -233,27 +246,35 @@ t('gear outnumbers cards on every field', () => {
   }
 });
 
-t('the drop table: mobs roll three gear chances at 3.6%, the boss rolls four at 1.5%', () => {
+t('the drop table: 3.6% a kill on maps 1-5, 2.52% from Comodo on, boss pools 6% / 4.2%', () => {
   for (let m = 0; m < G.MAPS.length; m++) for (let l = 1; l <= 10; l++) {
-    const F = G.fieldOf(m, l);
+    const F = G.fieldOf(m, l), mid = m >= 5;
     F.mobs.forEach(mob => {
       // v57 (owner: "30 min of grinding gave a bunch of legendaries"): the field roll is a
       // third of what it was - 3.6% per kill in total, cards 0.15%.
-      assert.deepStrictEqual(Array.from(mob.drops, d => d[1]), [1.5, 1.2, .9]);
+      // v73 (owner: "farming a few hours reaches the 1000 bag cap"): from Comodo on (map index
+      // 5) the field table drops another 30% - 1.05/.84/.63 = 2.52% a kill - and so does that
+      // map's Stage-10 boss pool. Maps 1-5 keep every original number, boss included.
+      assert.deepStrictEqual(Array.from(mob.drops, d => d[1]), mid ? [1.05, .84, .63] : [1.5, 1.2, .9]);
       assert.strictEqual(mob.cardCh, .15, 'regular-mob card chance changed');
     });
     if (l === 10) {
-      const total = F.boss.drops.reduce((a, d) => a + d[1], 0);
-      assert.ok(Math.abs(total - 6) < 1.2, 'the boss pool totals about 6%, got ' + total.toFixed(2) + '%');
+      const total = F.boss.drops.reduce((a, d) => a + d[1], 0), want = mid ? 4.2 : 6;
+      assert.ok(Math.abs(total - want) < 1.2, 'the boss pool totals about ' + want + '%, got ' + total.toFixed(2) + '%');
       assert.strictEqual(F.boss.drops.length, G.gearPool(m, 10).length, 'the boss still lists its whole pool');
       assert.strictEqual(F.boss.cardCh, .1, 'boss card chance changed');
+      assert.strictEqual(F.boss.critRes, G.bossCritRes(m), 'the boss carries its own map crit resistance');
     }
   }
+  // the mid table is exactly 30% below the original, not "roughly 30%"
+  G.FIELD_GEAR.forEach((v, i) => assert.ok(Math.abs(v * .7 - G.FIELD_GEAR_MID[i]) < 1e-9, 'FIELD_GEAR_MID[' + i + '] must be 30% below the original'));
+  assert.ok(Math.abs(G.BOSS_POOL_TOTAL[1] - G.BOSS_POOL_TOTAL[0] * .7) < 1e-9, 'the mid boss pool must be 30% below the early one');
 });
 
 t('the real equipment-drop loop creates boss gear when an independent roll succeeds', () => {
   G.S = {st:{luk:0},eq:{}};
-  const F = G.fieldOf(0, 10), boss = {...F.boss,boss:true,lvl:10,sec:F.sec};
+  // ore:false because the slice now reaches the ore gate, and this test counts equipment
+  const F = G.fieldOf(0, 10), boss = {...F.boss,boss:true,lvl:10,sec:F.sec,ore:false};
   assert.strictEqual(boss.drops.length, G.gearPool(0,10).length, 'expected a roll for every boss-pool item');
   // The per-item gate is 6/n % (~0.86% on this 7-item pool): a 1.2% die pays out nothing,
   // a 0.5% die clears every entry.
@@ -264,7 +285,7 @@ t('the real equipment-drop loop creates boss gear when an independent roll succe
   assert.ok(drops.every(d => d.it && d.it.tier === G.MAPGRADE[0]), 'the boss drop must sit on the map grade cap');
   assert.ok(drops.every(d => d.it.slot), 'successful boss rolls must be real equipment objects');
   // The regular-mob branch is also the live loop: 0.8% clears all three gates (1.5/1.2/0.9).
-  const mob = {...G.fieldOf(0,1).mobs[0],boss:false,lvl:1,sec:0};
+  const mob = {...G.fieldOf(0,1).mobs[0],boss:false,lvl:1,sec:0,ore:false};
   const mobDrops = G.executeGearRoll(mob, .008);
   assert.strictEqual(mobDrops.length, 3, 'regular-mob equipment gates did not execute');
 });
@@ -374,6 +395,43 @@ t('a slot only accepts its own slot, and never cards or ores', () => {
   assert.ok(G.slotAccepts('acc1', acc) && G.slotAccepts('acc2', acc), 'either accessory slot');
 });
 
+t('class tier gates gear: Novice and 1st jobs share the low band, transcendent gear needs a 3rd job', () => {
+  // v74 (owner): a sec-1 piece needs a real first job, sec-2 needs a promotion, sec-3 needs a
+  // transcendent class, and starter gear (sec 0) fits anyone. The gate lives in canUse(), which
+  // every equip path already goes through.
+  bag('Novice', []);
+  // a sword: the one weapon type the whole Novice -> Lord Knight ladder may hold, so the tier
+  // gate is the only thing that can refuse a piece here
+  const starter = item({ id: 1, sec: 0, wt: 'sword' });
+  const firstJob = item({ id: 2, sec: 1, wt: 'sword' });
+  const secondJob = item({ id: 3, sec: 2, wt: 'sword' });
+  const highTier = item({ id: 4, sec: 3, wt: 'sword' });
+  assert.strictEqual(G.gearTierOf(starter), 0); assert.strictEqual(G.gearTierOf(firstJob), 1);
+  assert.strictEqual(G.gearTierOf(secondJob), 2); assert.strictEqual(G.gearTierOf(highTier), 3);
+  assert.deepStrictEqual([starter, firstJob, secondJob, highTier].map(G.gearUserOf),
+    ['any class', 'Novice and 1st-job classes', '2nd-job classes and up', 'transcendent classes only']);
+  // v74.1: the lowest band is Novice + 1st-job gear, so a Novice wears sections 0 and 1
+  for (const [cls, want] of [['Novice', [0, 1]], ['Swordman', [0, 1]], ['Knight', [0, 1, 2]], ['Lord Knight', [0, 1, 2, 3]]]) {
+    bag(cls, [starter, firstJob, secondJob, highTier]);
+    const ok = [starter, firstJob, secondJob, highTier].map(it => G.slotAccepts('weapon', it));
+    assert.deepStrictEqual(ok.map((v, i) => v ? i : -1).filter(i => i >= 0), want, cls + ' gear tiers it may wear');
+  }
+  // and the same rule through the two argument form / the class the sweep uses
+  assert.ok(!G.gearTierOK(highTier, 'Swordman') && G.gearTierOK(highTier, 'Lord Knight'));
+  assert.ok(G.gearTierOK(secondJob, 'Knight') && !G.gearTierOK(secondJob, 'Swordman'));
+  assert.ok(G.gearTierOK(firstJob, 'Novice'), 'a Novice is left alone: 1st-job gear is the lowest band');
+  assert.ok(!G.gearTierOK(secondJob, 'Novice'), 'but 2nd-job gear is still out of reach for one');
+  // drops match the gate: by the time a map hands out a section, its own ladder can wear it
+  // (map 0 is Novice-only starter gear; maps 5-10 give high-tier from field level 3, and their
+  // Base Lv bands are 60+, where the second/third jobs live)
+  for (let m = 0; m < G.MAPS.length; m++) for (let l = 1; l <= 10; l++) {
+    const sec = G.secField(m, l);
+    assert.ok(sec <= G.MAPS[m].gear.length - 1, G.MAPS[m].n + ' level ' + l + ' asks for section ' + sec);
+  }
+  assert.ok(src.includes('canUse=it=>gearTierOK(it)&&'), 'the tier gate must stay part of canUse()');
+  assert.ok(src.includes("const st=k=>S.st[k]+bon(k),gearTierOf=it=>"), 'the gate sits on the shared stat line');
+});
+
 t('an item outside the bag is refused', () => {
   const s = item({ id: 11, wt: 'staff', slot: 'weapon' });
   bag('Mage', []);
@@ -448,6 +506,45 @@ t('the rarity band is fixed but the affixes are rolled every time', () => {
   assert.ok(mid.name.startsWith('Fine '), 'the item name states its fixed band: ' + mid.name);
 });
 
+t('a Nightmare item is its own rarity: tagged N, and still paid as a Legendary', () => {
+  // v76.2 (owner): "can the equipments rarity there be added a N ... make it look more exclusive
+  // rather than just plain ordinary rare or common equipment"
+  const nm = G.genGear({ k: 'sword', n: 'Dread Excalibur' }, 150, 4, false, 4);
+  const hi = G.genGear({ k: 'sword', n: 'Dark Lord Sword' }, 150, 3, true, 4);
+  assert.strictEqual(nm.tier, 4, 'mechanics keep the Legendary band: autosell and value read it');
+  assert.strictEqual(G.rarIdx(nm), 5, 'but the display rarity is the Nightmare one');
+  assert.strictEqual(G.rarOf(nm).n, 'N', 'which is tagged N');
+  assert.strictEqual(G.rarCls(nm), 'r5', 'and painted with .r5');
+  assert.ok(nm.name.startsWith('N '), 'the item name states it: ' + nm.name);
+  assert.ok(src.includes('.r5{color:#5b21b6;font-weight:bold}'), 'the N rarity is dark purple in the CSS');
+  assert.strictEqual(G.rarIdx(hi), 4, 'ordinary high-tier gear stays Legendary');
+  assert.ok(hi.name.startsWith('Legendary '), 'and keeps its own prefix: ' + hi.name);
+  const ab = G.genGear({ k: 'sword', n: 'Absolute Dark Lord Sword' }, 150, 5, true, 4);
+  assert.strictEqual(G.rarOf(ab).n, 'N', 'Abyssal Nightmare gear wears the same N');
+  // the two Nightmare rows are a clean third of the matching normal table (v76.2 drop nerf)
+  assert.strictEqual(G.FIELD_GEAR_NM.map(x => +(x * 3).toFixed(2)).join(','), '1.5,1.2,0.9');
+  assert.strictEqual(G.FIELD_GEAR_MID_NM.map(x => +(x * 3).toFixed(2)).join(','), '1.05,0.84,0.63');
+});
+
+t('the cdm affix only rolls on weapons and accessories, like the cdm card always has',()=>{
+  // v73 (owner: "players only target cri damage on all equipments"): gear Crit DMG is now a
+  // weapon/accessory affix. Armor, headgear, shield and legwear never roll it.
+  assert.ok(G.AFF.includes('cdm'),'cdm must stay in the master affix list');
+  const noCdm = ['armor','head','off','leg'], withCdm = ['sword','acc'];
+  for(const kind of noCdm)for(let i=0;i<150;i++){
+    const it=G.genGear({k:kind,n:'Test '+kind},99,3,false,4);
+    assert.ok(it.aff.length&&it.aff.every(a=>a.k!=='cdm'),kind+' must never roll cdm (roll '+i+')');
+  }
+  for(const kind of withCdm){
+    let seen=0;
+    for(let i=0;i<300;i++){const it=G.genGear({k:kind,n:'Test '+kind},99,3,false,4);if(it.aff.some(a=>a.k==='cdm'))seen++}
+    assert.ok(seen>0,kind+' must still be able to roll cdm');
+  }
+  // the cdm CARD follows the same slot rule through CFIT
+  assert.ok(src.includes("const CFIT={str:'weapon',dex:'weapon',atk:'weapon',crit:'weapon',cdm:'weapon'"),'the card fit table must keep cdm on weapons/accessories');
+  assert.ok(src.includes("(slot==='weapon'||slot==='acc'?AFF:AFF.filter(k=>k!=='cdm'))"),'the live affix pool must be slot-filtered');
+});
+
 t('gear Crit DMG alone is scaled to 70% after the existing rounded affix roll',()=>{
   assert.strictEqual(G.AFFIX_CDM_SCALE,.7,'gear CDM output multiplier');
   assert.strictEqual(G.scaleCritDamageAffix(100),70,'a prior rolled value of 100 becomes 70');
@@ -516,9 +613,32 @@ t('selling gear is pocket money and never funds an upgrade', () => {
   }
 });
 
+t('a fighting pet widens the gear and ore windows, and nothing else (v75)', () => {
+  // Hoarded Flame (+gear chance) and Sand Tracker (+ore chance) are the only companion effects
+  // that bend a drop table, and this proves they bend exactly the windows they claim: a die that
+  // misses at 0% lands at +10%, and the card gate does not move with it.
+  const F = G.fieldOf(2, 5), mob = { ...F.mobs[0], boss: false, lvl: 5, sec: F.sec, tier: F.tier, ore: true, oreCh: 0.004 };
+  G.S = { st: { luk: 0 }, eq: {} };
+  // The field's three gear gates are 1.5 / 1.2 / 0.9 percent. A 0.98% die misses the last one...
+  G.PETPASSIVE = 0;
+  assert.strictEqual(G.executeGearRoll(mob, .0098).length, 2, 'at +0% a 0.98% die misses the 0.9% gate');
+  assert.strictEqual(G.executeGearRoll(mob, .0085).length, 3, 'and a 0.85% die already cleared it');
+  // ...and +10% widens that gate to exactly 0.99%, which is ten percent of the chance, not ten points
+  G.PETPASSIVE = 10;
+  assert.strictEqual(G.executeGearRoll(mob, .0098).length, 3, '+10% gear chance must let that die through');
+  assert.strictEqual(G.executeGearRoll(mob, .0099).length, 2, 'the widened gate stops at exactly 0.99%');
+  // the ore gate right below it is the same shape: 0.4% becomes 0.44%, so 0.42% is the dividing line
+  G.PETPASSIVE = 0;
+  assert.strictEqual(G.executeGearRoll(mob, .0042).filter(d => d.it && d.it.ore).length, 0, 'at +0% a 0.42% die finds no ore');
+  G.PETPASSIVE = 10;
+  assert.strictEqual(G.executeGearRoll(mob, .0042).filter(d => d.it && d.it.ore).length, 2, 'at +10% the same die finds both ores');
+  assert.strictEqual(G.executeGearRoll(mob, .0045).filter(d => d.it && d.it.ore).length, 0, 'and the widened gate stops at 0.44%');
+  G.PETPASSIVE = 0;
+});
+
 t('LUK does not touch drop odds, cards, ores or pets any more', () => {
   for (const l of [0, 99]) {
-    const F = G.fieldOf(2, 5), mob = { ...F.mobs[0], boss: false, lvl: 5, sec: F.sec, tier: F.tier };
+    const F = G.fieldOf(2, 5), mob = { ...F.mobs[0], boss: false, lvl: 5, sec: F.sec, tier: F.tier, ore: false };
     G.S = { st: { luk: l }, eq: {} };
     // A die of .008 (0.8%) clears all three gear gates (1.5/1.2/0.9%) under both builds.
     const drops = G.executeGearRoll(mob, .008);

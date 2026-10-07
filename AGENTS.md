@@ -330,6 +330,21 @@ longer nudges the rarity roll (there is no roll to nudge); it still lifts the dr
 never funds an upgrade. The bag itself holds `BAGMAX = 1000` items; at capacity loot is refused
 and stays on the ground (cards live in their own, uncapped bag).
 
+**Class-tier gear gate (v74, widened in v74.1).** A piece belongs to a class TIER, not just a
+slot: `gearTierOf` is the item's `sec` (0 starter / 1 first job / 2 second job / 3 high tier) and
+`gearTierOK=(it,cls=S.cls)=>gearTierOf(it)<=Math.max(1,classTierOf(cls))` compares it with the
+class tree's own `CLASSES[cls].tier` - **the `max(1,...)` is the owner's v74.1 instruction** that
+the lowest band is starter + 1st-job gear, so a Novice and a first job both wear sections 0 and 1,
+a second job reaches section 2 and only a transcendent class section 3. (v74 originally read
+`gearTierOf(it)<=classTierOf(cls)`, which made the Novice starter-only; that was too strict.) It is
+folded into `canUse()`, which every equip path already goes through (bag highlight, chooser,
+auto-equip on drop, offline auto-equip, tooltip), so there is one rule and one place to change
+it. On a class change `stowUnfit()` takes every worn piece the new class cannot use off the body
+into the Bag, sets `locked=true` (auto-sell can never eat it) and stamps `wearer` with the class
+that was wearing it - and because `snapClass()` already stored those ids on the departing class,
+`equipRec()` wears them again on the way back. `initSession`/`cloudStart` run the same sweep, so
+a pre-v74 save loads legal.
+
 **Equipment database and drops.** `GEAR[map][section]` is the catalogue - 10 maps × 4 sections
 (Novice / 1st job / 2nd job / high tier), each section carrying 2-3 weapon types plus body,
 headgear, shield, legwear and two accessories (**96 weapon entries** in total; armour and
@@ -4208,6 +4223,34 @@ assigned for feel rather than fidelity. While reworking that, two shipped bugs s
 * **Files touched:** `index.html` (BUILD, float CSS block, `--brot` in the crit markup builder); `tools/tests/combat_float_sim.js` (new suite *"the digits use the selected font, and crits use the proposal's gradient fill and soft shadow"* — 8 assertions including the font family, gradient clip, thin stroke, `text-shadow:none`, soft shadow pair, rim, and the new curve + wobble; two old Verdana assertions flipped); `tools/tests/ui_sim.js` (font assertion flipped); build-tag snapshots (`affix-ranges.html` ×2, `equipment-cards-tuning.html`, `cloudflare-deploy-steps.md`); `READ-ME-FIRST.md` (v72 section); `Updates/crit-frame-compare/index.html` rewritten to show **both** fixes side by side (old misaligned frame + sticker digits vs v72).
 * **Tests:** all **33** suites pass (combat floats 11); the new suite is negative-controlled. Both pages' inline JS pass `node --check`; `git diff --check` clean.
 * **Dev-page note for the owner:** the copy button's keys are worth remembering when reporting a pick — `game` = Trebuchet (what they wanted), `classic` = Verdana 900, `heavy` = Arial Black. The v69/v70 hand-back said "Chunky (Verdana 900)", which is why the game shipped it; the fix is not that v69 was wrong to apply it, it is that the selection's key and the re-applied pick disagreed.
+
+### 2026-10-07 — `2026-10-07 grind-v73 crit retune, index crit, mid-map drop cut, boss crit resist`
+
+* **Four owner reports, one build.** (1) clicking **Refine** while the bag's "choose a slot" picker was open closed the picker; (2) a few hours of farming still fills the 1000-slot bag, and crit rate caps "too easily"; (3) crit damage is overpowered because every slot rolls cdm; (4) a **1-minute "offline reward"** modal keeps appearing during AFK play.
+* **The picker fix.** The document-level outside-click listener only treated `[data-win="bag"]` as inside, so any click in the **Equipment window** - where Refine, the card sockets, Unequip and Lock live - read as "clicked elsewhere" and ran `closeEquipmentChooser(true)`. The pointer-down snapshot now covers `[data-win="bag"]` **and** `[data-win="equip"]` (`chooserPointerInside`, was `bagPointerInside`), so only a click outside both windows (or the banner's ✕) dismisses the picker. Refine and friends now stay open for comparing several pieces, which is what the highlight mode was for.
+* **Drops -30% on maps 6-10 only.** New `FIELD_GEAR=[1.5,1.2,.9]` / `FIELD_GEAR_MID=[1.05,.84,.63]` (`fieldOf` picks by `m>=5`) and `BOSS_POOL_TOTAL=[600,420]`. A mid/endgame mob pays **2.52%** a kill (was 3.6%) and a map 6-10 Stage-10 boss pool totals **~4.2%** (was ~6%); Prontera + the four class maps (index 0-4) keep every original number for field and boss, `cardCh` (.15/.1) and ore chances untouched, and each boss still lists its whole pool so nothing became unobtainable. Loot-quest goals were left alone (a mid-map loot quest is ~40% slower - the goal can move off `3+L/3` if that drags).
+* **Crit rate: the "Retune + soft cap" package.** Base 3 → **2**, LUK **0.4 → 0.25** a point, `AB.crit` **0.45 → 0.32** (affix and crit cards: a Legendary crit card is +5, was +7), and above **45%** every further point from stats, skills, gear and card mastery counts **half**; the core still stops at **60%**. A Lv70 LUK-99 dump (24.75) plus both Hunter/Sniper crit passives (+30) lands ~50.9%, so the cap is a build again, not a stat dump.
+* **Index Crit - the 100% path that is not equipment and not stats.** Every Hunt Title adds a slice of **Index Crit** outside the 60% cap: `INDEX_CRIT=[1,1,2,2,3,4,5,6,7,9]` (Σ **+40**) via `indexCritBonus()`/`indexCrit()`. A complete Index (all ten titles, 1,000,000 Index XP, about twenty species hunted to their last rung) puts a fully capped build on exactly **100%** and the total stops there. Shown on the stats sheet (`+x% Index Crit`), the Index panel (`Index Crit +x% / +40%`) and each title row (`+n% Crit`); the GM panel's "Set the final title" (`gmindex xp1000000`) tests it in one click.
+* **Crit damage: cdm is a weapon/accessory affix now.** `genGear` filters `cdm` out of the roll pool for armor/head/shield/legwear, so at most three worn pieces can carry it (was seven); legacy gear keeps what it rolled. `AB.cdm` **0.7 → 0.45** and the 70% post-roll scale is unchanged, so a top-tier Legendary cdm affix is **+11-18** (was +18-27). The **cdm CARD** stopped following `AB.cdm` and pays its own **3/7/10/13** ladder (was 2/4/7/11). `critD()` base **2.0 → 1.9**.
+* **Boss crit defence.** `BOSS_CRIT_RES=[0,0,0,0,0,.2,.2,.25,.3,.4]` + `bossCritRes(m)`; the strike roll is `crit()*(1-(mob.critRes||0))`, so a capped 60% build crits **48 / 48 / 45 / 42 / 36%** on Comodo → Abyss bosses while maps 1-5 resist nothing. Shown on the map panel's boss card and on the boss nameplate (`· Crit Res 20%`); Stage-10 bosses inherit it offline through `fieldOf`. Escorts, regular mobs and pets are untouched.
+* **Pet companion band re-pinned.** The crit retune lowered the maxed-character ceiling and `pet_sim` caught pets at **0.900x** a maxed rotation (band 0.60-0.70). PETBAL **2.65 → 1.91** restores **0.649x**; no other pet rule moved.
+* **The 1-minute offline popup - root cause and fix.** Client and server both called any **60 s** gap "away", but a hidden tab is timer-throttled to about **once a minute** and grinds at 100% while hidden, so an ordinary background session minted a claim for time the page had already earned - that is the "1m offline reward" the owner saw. Both floors moved to **three minutes** (`OFFLINE_POPUP_MIN_MS`, `functions/api/save.js OFFLINE_MIN_MS`) and `applyOfflineProgress` now **acknowledges but does not pay** a claim whose window lies inside this page's lifetime and fits the sim's own `SIM_CATCHUP` replay budget (`OFFLINE_SIM_COVER_MS=10*60*1000`, `PAGE_BOOT_AT`): the claim id is recorded so the server clears it, the timestamps advance, nothing is simulated and no modal opens. A real absence - page closed, device asleep, or a window longer than the replay budget - still pays in full with its popup. The settings text now says a hidden tab is never "away".
+* **Files touched:** `index.html` (BUILD v73, crit/critD, Index Crit, `FIELD_GEAR*`/`BOSS_POOL_TOTAL`/`BOSS_CRIT_RES`/`bossCritRes`, `fieldOf`, `genGear`, `cardVal`, `applyOfflineProgress`, picker listeners, stats/Index/map/nameplate/settings text, PETBAL); `functions/api/save.js` (`OFFLINE_MIN_MS` 3 min); `tools/tests/crit_sim.js` (**new**, 5 tests); `tools/tests/ui_sim.js` (+1 picker test, chooser strings); `tools/tests/gear_sim.js` (drop-table/cdm/chart tests); `tools/tests/offline_sim.js` (+3 v73 tests); `tools/tests/card_sim.js`; `tools/tests/drop_card_sheet_sim.js`; `tools/tests/pet_sim.js`; `Updates/cards-gear-audit/affix-ranges.html` (regenerated crit/cdm rows, v73 tag, slot-limit note); `Updates/cards-gear-audit/equipment-cards-tuning.html` (snapshot refreshed); `tools/cloudflare-deploy-steps.md`; `READ-ME-FIRST.md`.
+* **Tests:** all **34** suites pass; `crit_sim` 5/5 covers the soft cap, the Index ladder/ceiling and the boss resistance; ui_sim 43, gear 31 groups, offline 11, drop sheet 12, card 13, pet 13. `node --check` clean on the page script and the function, `git diff --check` clean.
+* **Not pushed** and no PR - the owner plays the build first.
+
+### 2026-10-07 — `2026-10-07 grind-v74 class gear tiers, move speed, exp per min, softer boss crit resist`
+
+* **Four owner reports again.** (1) the boss crit defence from v73 was too harsh; (2) a high-level character who changes class keeps wearing gear that class should not be able to wear; (3) the Character sheet never explains movement speed; (4) the HUD should show EXP/min beside kills.
+* **Boss crit defence softened.** `BOSS_CRIT_RES` is now `[0,0,0,0,0,.15,.15,.15,.2,.3]` (was `-20/-20/-25/-30/-40`): Comodo, Louyang and Amatsu **-15%**, Niflheim **-20%**, Abyss **-30%**, maps 1-5 still zero. A capped 60% build therefore crits those bosses **51/51/51/48/42%**. Nothing else about the feature moved (strike roll, map panel line, nameplate, offline bosses).
+* **Class tier now gates equipment.** New `gearTierOf`/`classTierOf`/`gearTierOK`/`gearUserOf` on the shared stat line, folded into `canUse()`: an item's `sec` (0 starter / 1 first job / 2 second job / 3 high tier) may not exceed the wearer's class tier (Novice 0, first jobs 1, second jobs 2, transcendent 3). So 2nd/3rd-class gear is refused to a 1st class, exactly as the owner asked, and the refusal shows up everywhere the item does (bag highlight, chooser, auto-equip, offline auto-equip, tooltip) because every path already asks `canUse`.
+* **The change-class sweep.** `stowUnfit(from)` runs from `changeClass()`: every worn piece the new class cannot use goes into the Bag, is set `locked=true` (so auto-sell can never eat a stored loadout) and gets `wearer` stamped with the class that was legally wearing it. The item card reads `Locked to transcendent classes only: your Novice cannot wear it. This was Lord Knight's gear - it goes straight back on when you switch to Lord Knight again.` `snapClass()` already stored those ids on the departing class, so `equipRec()` wears them again on the way back - verified end-to-end (2 pieces off, locked, labelled; back on with an empty bag, no duplication). A piece the departing class could never legally wear (a legacy save) gets **no** `wearer` label, so the tooltip never lies. `initSession` and `cloudStart` run the same sweep, so a pre-v74 save is legal from its first frame.
+* **Movement speed on the Character sheet.** The AGI curve moved out of `update()` into one named `heroMoveSpeedForAgi` (unchanged maths: 8.12 u/s at AGI 99) beside `moveSpd()`/`MOVE_RUN`; the sheet prints `Move 7.35 u/s · 10.29 sprinting` and a sentence naming AGI as the only source and the sprint multiplier past 3 units.
+* **EXP/min in the HUD.** `stepHudRate` gained a sixth channel, fed by a new `earnExp()` session counter (the same idea as `earnZeny`: gross income, never confused by the level-up subtraction), and the header now reads `Kills/min · EXP/min · DPS`. The kill reward, offline kills and quest EXP all pay through `earnExp`.
+* **Files touched:** `index.html` (BUILD v74, the tier gate + sweep, session sweep, item card, movement line, `expEarned`/`earnExp`, `stepHudRate` + HUD chip, softer `BOSS_CRIT_RES`); `tools/tests/class_change_sim.js` (+2 tests, harness mirrors `canUse`/`stowUnfit`); `tools/tests/gear_sim.js` (+1 tier test); `tools/tests/ui_sim.js` (+3 tests: EXP/min, movement line, item card); `tools/tests/crit_sim.js` (new ladder); `tools/tests/economy_sim.js`, `tools/tests/offline_sim.js` (harness stubs for the two new helpers); build-tag snapshots (`affix-ranges.html` ×2, `equipment-cards-tuning.html` refreshed, `cloudflare-deploy-steps.md`); `AGENTS.md` balance map (+ class-tier paragraph); `READ-ME-FIRST.md` (v74).
+* **Tests:** all **34** suites pass; `ui_sim` 46, `class_change_sim` 27, `gear_sim` 32 groups, `crit_sim` 5. `node --check` clean, `git diff --check` clean.
+* **Not pushed** and no PR - the owner plays the build first.
+
 ### 2026-10-07 — `2026-10-07 grind-v74 crit frames + HD Prontera Town: a walled gate, a bridge over the river, a street of shops`
 
 * **What the owner reported, screenshots this time:** "i would want the building on the left side also", "all the buildings looks floating", "the entrance looks so off. just a gate. maybe add bridge after gate to walk toward the center then below is a river" — plus "do more research and give me a more realistic design", and a request to fix the PR's merge conflicts. The PR (#28) was already **MERGEABLE/CLEAN** upstream, so nothing was merged: the local branch was realigned to `100445a` and the "conflicts" turned out to be a stale clone.
@@ -4221,6 +4264,110 @@ assigned for feel rather than fidelity. While reworking that, two shipped bugs s
 * **Files touched:** `index.html` (BUILD, `TOWN_BOUND`/`TOWN_RIVER`, `townAvoid`, `townShadowTexture`/`townSprite`/`blkShadow`, the river/banks/bridge/wall/street/forecourt/approach build, `townGroundY`, `draw()`, the marker's y, `townTick` water, `townArt` street + frame pair); `tools/_town_dump.js`; `tools/preview_town_board.py`; `tools/tests/town_smoke.js`; boards 1–3; build-tag snapshots (`Updates/cards-gear-audit/affix-ranges.html` ×2, `equipment-cards-tuning.html` + `SAFE_PREVIOUS_BUILDS`, `tools/cloudflare-deploy-steps.md`); `READ-ME-FIRST.md`, `TOOLS-START-HERE.md`.
 * **Tests:** all **34** suites pass; `town_smoke` **35/35** with five new scenarios (river/bridge geometry and the walk line, the walk out of the square and over the arch to the wall, the entrance street, the grounding shadows, the river's own animation clock); five `--check` tools current; `bash tools/build_site.sh` 30M.
 
+### 2026-10-07 — `2026-10-07 grind-v74.1 novices keep 1st-job gear, phone layout pass`
+
+* **Two owner follow-ups on v74, shipped as one build.** (1) *"make novices left alone, means
+  lowest gear is novice + 1st class"* - the v74 gate had put a Novice below the 1st-job band and
+  it locked a fresh character out of gear a first job can wear a minute later; (2) *"i tested in my
+  mobile the ui is abit messy and not in place"* - the deployed page had never been laid out for a
+  phone.
+* **Novice band.** `gearTierOK` is `gearTierOf(it)<=Math.max(1,classTierOf(cls))` and
+  `gearUserOf` label 1 is `Novice and 1st-job classes`, so sections 0 and 1 of the gear list are one
+  band. 2nd-job and high-tier gear are gated exactly as in v74; the `stowUnfit` sweep, the
+  auto-lock and the auto re-wear are untouched - they simply have less to do on a Novice now.
+  `gear_sim` (Novice `[0,1]`, the new label), `class_change_sim` (the harness guard regex for the
+  new line shape, plus a Novice wearing a section-1 sword and still refusing section 2) and
+  `ui_sim` (a new `secondJobSword` fixture for the refused card) were updated in the same edit -
+  all three hold literal copies of that line.
+* **Phone layout.** Cause was one shape in five places: the layout assumed a desktop window.
+  `100vh` on a phone is the height with the URL bar *retracted*, so the page was taller than the
+  screen and the bottom HUD sat below the fold - `html,body`/`#wrap` now use `100dvh` (with `100vh`
+  first as the fallback), `visualViewport` is watched alongside `resize` (iOS does not always fire
+  one when the URL bar moves), `overscroll-behavior:none` stops pull-to-refresh reloading a farming
+  session, and the tap highlight is gone since every button here is a control. `resize()` now
+  publishes the measured dock height as `--docktop` (`offsetHeight` + the dock's computed `bottom`
+  + 6) and `#feedWrap`/`#hudBuffs`/`#wins`/`#wnd` all read it on a phone instead of overlapping the
+  dock. A `max-width:700px` block (plus `430px` and `pointer:coarse` steps) at the END of the
+  stylesheet - last so it wins on source order - turns the HUD into a fixed three-column grid (two
+  rows of numbers, account cluster on its own right-aligned row) so a kill counter going 9 → 10 →
+  100 cannot re-flow the bar, grows the dock icons to 34px (32px small) from 28px, makes the tab
+  dock one sideways-scrolling row instead of a second row, lets the map/boss/tab windows fill the
+  play area, and pads the dock and `#xp-dock` with `env(safe-area-inset-bottom)`. Desk layout is
+  untouched: the wide-screen `#wins`/`#wnd` geometry is byte-identical and asserted in `ui_sim`.
+* **Pinch-to-zoom.** A phone has no wheel, so before this build the 3D camera could not zoom on one
+  at all. The pointer block now tracks touch pointers by `pointerId`: one finger rotates exactly as
+  before, two fingers pinch (`zoom*d/pinch0`, same 0.6x-2x clamp the wheel uses) and a pinching
+  finger never swings the camera, and lifting one finger re-seeds `drag` from the finger still down
+  so rotation resumes without a jump. New `ui_sim` test drives the sliced-out block with fake
+  pointer events - rotate, pinch out to the ceiling, pinch in to the floor, resume after a lift,
+  cancel, and the wheel still zooming.
+* **APK asked about, PWA recommended.** Tuning the web build is the light path: `manifest.json` +
+  service worker + icons makes it installable from the browser ("Add to Home Screen" = full-screen
+  icon, no store, no signing). An APK is the same files in a wrapper (Capacitor / TWA) needing a
+  signing keystore and a release per build, with no performance gain. Not built - awaiting the
+  owner's call.
+* **Files touched:** `index.html` (BUILD v74.1, the `max(1,...)` gate + label, viewport meta,
+  `100dvh`/overscroll, `--docktop` in `resize()` + `#feedWrap`/`#hudBuffs`, the phone media blocks,
+  `visualViewport` hook, the pinch pointer block, the rotate hint); `tools/tests/ui_sim.js` (2 new
+  tests, 48 groups, the buff-strip pin updated to the dock-aware form); `tools/tests/gear_sim.js`,
+  `tools/tests/class_change_sim.js`; `READ-ME-FIRST.md` (v74.1 section, v74 gear bullet amended
+  inline); the two `Updates/cards-gear-audit/*.html` tag mirrors and `tools/cloudflare-deploy-steps.md`
+  build tag.
+* **Tests:** all **34** suites pass (`ui_sim` 48, `gear_sim` 32, `class_change_sim` 27,
+  `weapon_proposal_sim` 567). `node --check` on the sliced page JS clean, `git diff --check` clean.
+* **Not pushed** and no PR - the owner plays the build first.
+
+### 2026-10-07 — `2026-10-07 grind-v75 pet species passives and duplicate bond`
+
+* **Owner decision.** Asked how to make players hunt a *species*, the four levers offered were
+  signature passives, per-map species drop tables, a pity counter, and duplicate Bond. The owner
+  picked **1 + 4 combined**: *"i like few options. option 1 looks like a good idea. but tune it down
+  hard. i dont want any buff go above 10%"* and *"option 4 is also good. duplicate give buff. we can
+  combine this 2 options."* The map tables and the pity counter are **not** in this build.
+* **`PET_TRAIT`** (one row per species, indexed like `PETS`) names each signature passive and its
+  key list: `zeny`, `exp`, `petdmg`, `ore`, `move`, `gear`, `boss`, `hp`, `dr`. Value is
+  `traitVal(sp)=5+min(5,bondRank(sp))` - **5% at Bond 0, 10% at Bond 5, never above** - and
+  `petPassive(k)` sums it over the FIGHTING pets, one copy per species (`seen[p.sp]`), so a
+  hand-edited save cannot stack three Porings. `PETBOND=[1,3,6,10,15]` is the folded-duplicate
+  ladder; `bondCnt/bondRank/bondNext` read `S.bond[sp]`, a new array in `fresh()`.
+* **The nine hooks** (all one-liners, each asserted in pet_sim's wiring test): `kill()` Zeny,
+  `kill()` Base and Job EXP, the gear gate `ch*(1+petPassive('gear')/100)`, the ore gate
+  `mob.oreCh*(1+petPassive('ore')/100)`, `petDmg()` (Pack Leader), `strike()` + both `petHit()`
+  damage paths when `mob.boss` (Executioner), `maxHp()`, the incoming-damage line
+  `(1-cut)*(1-petPassive('dr')/100)`, and `moveSpd()` - which the live walk now calls instead of
+  `heroMoveSpeedForAgi()`, so Swift Mount moves the character and not just the sheet.
+* **Folding.** `petFold(own,inc)` merges a duplicate: better mutation wins, `eq` keeps each slot's
+  max, a missing skill fills a free slot (never a third), `+1` on `S.bond`. `foldDupPets()` applies
+  the same rule to a whole save with a stack of one species (keep the better copy, keep the ON flag
+  if either was fighting) and runs from `initSession` and the cloud login next to the v74 gear
+  sweep. The drop site in `kill()` folds for an owned species and only pushes a genuinely new one;
+  the offline simulator mirrors it and the welcome-back line reports folds.
+* **"No buff above 10%" is a tested promise**, not a comment: the balance test in `pet_sim` prints
+  the ratio *with Pack Leader maxed* and asserts `<= .78` (0.72 was the pre-v75 ceiling), and the
+  trait test walks all eight species at 999 folded duplicates and asserts exactly 10%.
+* **UI.** Pet card: `Signature passive · <name>`, the number at this Bond, `Bond n/5` and the
+  duplicates to the next rank, plus the fold rule in plain words. Pet list cells show `Bn`. The
+  Character sheet adds `Pet bonuses (the fighting pets): …` via `petBonusList()`, and the movement
+  paragraph names the one pet that bends its own rule. GM console: `+1 / +5 duplicates on the
+  selected pet` (`gmbond`).
+* **Tests.** `pet_sim` 17 -> 5 new groups: the trait table and its ceiling, the passive summation
+  (fighting only, one per species, cross-realm compare by length), the fold (best mutation, per-slot
+  gear, merged skills, +1 Bond, an old save's stack collapsed, idempotent second sweep), the wiring
+  grep for all nine hooks, and the balance band re-pinned with Pack Leader. `ui_sim` 48 -> the pet
+  card and sheet assertions; `save_load_sim` 23 -> the bond ledger round-trips and starts empty;
+  `economy_sim` 23 -> the kill wiring lines updated to the v75 shapes plus a with/without-passive
+  pair over four levels and both GM modes; `gear_sim` 33 -> the gear and ore windows proved at the
+  exact percentage boundary. `pet_sim`'s old drop test was stale by construction (it matched the
+  offline roll first) and now slices the live `kill()` drop site and asserts the fold branch.
+* **Files touched:** `index.html` (BUILD v75, `PETBOND`/`PET_TRAIT`/`bond*`/`traitVal`/`petPassive`/
+  `petBonusList`, `petFold`/`foldDupPets`, the nine hooks, `fresh().bond`, the drop/fold sites, the
+  two login sweeps, pet card + list + sheet + GM buttons); `tools/tests/{pet,ui,save_load,economy,gear}_sim.js`;
+  `READ-ME-FIRST.md`; the two `Updates/cards-gear-audit/*.html` tag mirrors and
+  `tools/cloudflare-deploy-steps.md` build tag.
+* **Tests:** all **34** suites pass (`pet_sim` 17, `ui_sim` 48, `gear_sim` 33, `save_load_sim` 23,
+  `economy_sim` 23). `node --check` clean.
+* **Not pushed** and no PR - the owner plays the build first.
+
 ### 2026-10-07 — `2026-10-07 grind-v75 crit frames + HD Prontera Town: a sunken river under the gate bridge, stone quays and a tiled wall`
 
 * **What this pass is:** the round-5 realism pass on the town's way in, on top of v74, judged through the game's own camera (`board-2`/`board-3`) rather than the 2:1 plan.
@@ -4232,6 +4379,85 @@ assigned for feel rather than fidelity. While reworking that, two shipped bugs s
 * **Files touched:** `index.html` (BUILD, `TOWN_RIVER`, `townAvoid`, the lawn split, the river/quay/bridge/shade build, `TOWN_BOUND`), `tools/tests/town_smoke.js`, `tools/preview_town_board.py`, the label files, `READ-ME-FIRST.md`, `TOOLS-START-HERE.md`.
 * **Tests:** `town_smoke` **35/35** (bridge pins, ramp and walk-out assertions rebuilt, the painted shadow pair's off-by-one fixed, `sand_gold`/`bridge_planks` in the tile allowlist, masonry names checked against the kit manifest), all **33** `*_sim.js` suites green.
 
+### 2026-10-07 — `2026-10-07 grind-v76 nightmare band and exclusive nightmare gear`
+
+* **Owner decision.** Asked how to fix Base Lv 100-150 ("this could be a buzz kill ... same map until
+  end game"), the owner picked **Field Tiers, named Nightmare**, with the mobs "strong enough to make
+  it hard" and the new gear **exclusive to the new maps**. (Same message: Baphomet Jr's Executioner
+  stays at 5-10% - "its ok for bap jr pet. cause it doesnt stack. so leave it".)
+* **Why it was needed.** `fieldPower` stopped at Abyss Stage 10 = **99** while the level cap is 150,
+  and the last gear section was 3, so levels 100-150 bought nothing but the stat cap. Every map now
+  carries stages **11-15**, `NMLV=[100,110,125,140,150]`, a pure level unlock - no save field, no
+  migration. `nmOpen()/nmMax()` drive the World Map nodes, the travel guard and the maps-panel header;
+  `isBoss()` is `S.lvl===10||S.lvl===15`; `fieldName()` prints `Nightmare <map> Stage <1-5>`.
+* **The curve** is `NMBASE(105)+m*NMSTEP(6)+(stage-11)*NMGAP(4)`: Nightmare Prontera 11 = 105,
+  Nightmare Abyss 15 = **175**. Every normal stage's power is unchanged (the audit sheet and
+  `nightmare_sim` both prove it).
+* **Difficulty** is two constants, `NMHP=12` and `NMATK=1.5`, read once in `spawn()` (`nm1=S.lvl>10`,
+  `nm/na/ne/nz`), with `NMEXP=1.5`, `NMZENY=1.6` and `NMBOSSHP=12` for the stage-15 boss. Measured in
+  the suite: a Nightmare 15 mob has 25x the HP of an Abyss 10 mob and lands 2.6x the damage after the
+  DEF cut. `fieldOf` also gives the band a 9% boss pool (`BOSS_POOL_TOTAL[2]=900`) and 1.5% ore.
+* **Gear exclusivity is structural.** `secField` returns **4 for stages 11-13** and **5 for 14-15**,
+  and nothing else in the game can: every stage 1-10 assertion in `gear_sim`, `nightmare_sim` and the
+  audit sheet pins `<=3`. Each map's two new rows are built by `nmRow(m,i)` from its own high-tier row
+  - same weapon families (no class loses a weapon), a per-map word (NMNAME/NMNAME2), **210 new items**,
+  names unique across the catalogue. `genGear` prices them from `[1,2.2,4,7,10.5,15][sec]` (1.5x and
+  15/7x the high-tier row) at the same Legendary grade, and `SECN` gained the two names.
+* **Nightmare bosses resist crit harder**: `NM_CRIT_RES=[.35,.35,.36,.36,.38,.38,.4,.4,.42,.45]`,
+  folded into the SAME `const` statement as `BOSS_CRIT_RES`/`bossCritRes` so every suite that slices
+  that line gets it. `bossCritRes(m,l)` returns the NM figure (indexed by **map**, so a map's five NM
+  stages share it) for `l>10` and the v74 normal figure otherwise; a capped 60% build crits Nightmare
+  Abyss at 33% and Nightmare Prontera at 39%. The map panel now passes `mapL` through, so a Nightmare
+  field prints the band's number, and a Nightmare field without a boss says "Boss appears at NM 5
+  (stage 15)" instead of "Stage 10". `ui_sim` pins both.
+* **Also fixed while wiring it:** `fieldOf`'s boss branch was `l===10` only, so stage 15 would have
+  been a normal field (caught by the new suite); `load()` accepted stages 1-10 and now accepts 1-15;
+  `initSession` pulls a character out of a stage it has not unlocked; `selm`/`go` cap at
+  `max(prog, nmMax())`; `bossCritRes(mapM,mapL)` on the map panel.
+* **GM:** new `Unlock Nightmare (Base Lv 150)` button + `gmnm` action (`S.gmnm=true`, Base Lv 150, all
+  stages unlocked) so the band can be play-tested without 150 levels of play.
+* **Tests.** New **35th suite `nightmare_sim`** (8 groups): the unlock ladder, the whole power schedule
+  map by map incl. the unchanged v1-10 bands, section exclusivity both ways, the renamed-row rule and
+  catalogue-wide name uniqueness, the value multipliers, the difficulty constants + the live spawn()
+  wiring + the worked HP/ATK example, the field tables (boss pool, ore, crit resistance, gear pool),
+  and the save/travel guards. Updated: `crit_sim` (+ the Nightmare ladder + the offline assertion),
+  `gear_sim`/`drop_card_sheet_sim` regexes for the new `bossCritRes(m,l)` and single-expression
+  `fieldPower`, `ui_sim` (15 nodes, five of them Nightmare), the audit sheet refreshed (6 sections per
+  map, 588 items).
+* **Files touched:** `index.html` (BUILD v76, the Nightmare block, fieldPower/secField/SECN/genGear,
+  BOSS_CRIT_RES/bossCritRes, fieldOf, spawn, isBoss/fieldName, load/sanitize/initSession, selm/go,
+  map panel + CSS, the GM switch); `tools/tests/{nightmare_sim(new),crit_sim,gear_sim,ui_sim,drop_card_sheet_sim}.js`;
+  `Updates/cards-gear-audit/equipment-cards-tuning.html` (refreshed baseline),
+  `Updates/cards-gear-audit/affix-ranges.html`, `tools/cloudflare-deploy-steps.md`, `READ-ME-FIRST.md`.
+* **Tests:** all **35** suites pass. `node --check` clean.
+* **Not pushed** and no PR - the owner plays the build first.
+
+### 2026-10-07 — tooling: the preview server can hand out GM tools (no BUILD bump)
+
+* **Owner report.** "after migrating into new online server i lost my gm account ... any live preview
+  made by u made me to register account again which doesnt have GM tools". Both halves are real: the
+  live owner account is just `users.gm=2` on the first row of that database, and a preview is a
+  throwaway process whose in-memory database is wiped on restart, so the account the owner registered
+  on the last preview is gone and the next one is not the first one.
+* **Nothing about the game changed**, so `BUILD` stays `grind-v76 ...` and the player-visible build is
+  untouched. Three fixes, in order of usefulness:
+  1. `functions/api/register.js` honours `env.DEV_GM_ALL='all'`: every account registered against that
+     env is `gm=2`. `tools/dev_server.js` sets it **only** with its new `--gm-all` flag. Production
+     never sets it, and the comment says so in both files — the first-account rule is what protects the
+     owner on the real server.
+  2. `tools/dev_server.js --db <file>` (or `DEV_DB`) makes the preview database a file instead of
+     `:memory:`, so accounts and saves survive my restarts. `tools/.devdb/` is gitignored.
+  3. `tools/cloudflare-deploy-steps.md` gained **"If you lose the owner (GM) account"**: the in-game
+     `GM` + GM-password login (checked before the cloud branch, so it works with the API on), the local
+     `localStorage.pg_gm_local` reset, the `wrangler d1 execute ... UPDATE users SET gm=2` promote (plus
+     the `SELECT` to find the right username) and the dashboard path, and the preview switches.
+* **Tests.** `dev_server_sim` gained a case that boots a second server with `gmAll:true` and asserts the
+  SECOND account is an owner and can reach `/api/gm/players`; the default (first account only) is still
+  pinned by the existing case. `api_sim` (28), `registration_sim`, `gm_auth_sim`, `gm_console_sim`,
+  `cloud_sim`, `save_load_sim`, `migration_sim` all still pass unchanged.
+* **Files:** `functions/api/register.js`, `tools/dev_server.js`, `tools/tests/dev_server_sim.js`,
+  `tools/cloudflare-deploy-steps.md`, `.gitignore`.
+
 ### 2026-10-07 — `2026-10-07 grind-v76 crit frames + HD Prontera Town: a paved market square, a buttressed city wall and the sunken river`
 
 * **What this pass is:** a second realism pass over what the town camera shows, grounded in the Prontera references the owner asked for (the central fountain square is the market, and the city is a walled rectangle).
@@ -4239,6 +4465,52 @@ assigned for feel rather than fidelity. While reworking that, two shipped bugs s
 * **The wall is masonry:** six buttresses a side on the face the camera sees, arrow slits between them, a corbel table under the walkway, and a corner bastion (with merlons and a blue roof) capping each end of the curtain.
 * **Files touched:** `index.html` (BUILD, plaza paving meshes, bed angles, the curtain-wall loop), `tools/tests/town_smoke.js` (the new scenario), the label files, `READ-ME-FIRST.md`.
 * **Tests:** `town_smoke` **36/36** (paving, beds off the streets, buttresses and slits, kit tile names); all 33 `*_sim.js` suites and the six `--check` tools green.
+
+### 2026-10-07 — `2026-10-07 grind-v76.2 nightmare rarity, MVP naming, harder band`
+
+* **Owner play-test of v76** came back as six notes, all built here: a Nightmare rarity, bosses renamed
+  to MVPs, the band too easy, the band's drops too generous, sprites/art expectations, and two UI asks
+  (the dungeon's place in the map panel, and the map panel hopping on a phone).
+* **The N rarity is display-only, on purpose.** `RAR5={n:'N'}` plus `rarIdx/rarOf/rarCls` sit next to
+  `RAR`; `rarIdx` returns 5 for `sec>=4` and the item's tier otherwise, so `it.tier` keeps driving
+  autosell bands, drop weights and the value maths, and `RAR[it.tier].n` is still Legendary. The
+  helpers are read by `genGear` (name prefix `N `), `dropTxt` (it now reads the ITEM, not the field
+  tier - a Nightmare drop is N even on a field whose band would be Legendary), the pickup/auto-sell
+  logs, the item card, the map panel's Monsters line, the hero's cloth/hair/metal colour (`TC` gained
+  a 6th dark purple, `TC[rarIdx(...)]`) and the field drop sparkle. CSS `.r5{color:#5b21b6}`.
+  `gearPool` entries now carry `sec`, which is what the map panel reads for the tag.
+* **MVP renames** touched only player-facing text: card header, `(MVP)` tag, fight/appears hints, HUD
+  (`MVP FIGHT`), quest text, the Executioner pet description, the refine ore hint, the pet-drop hint,
+  the stage title (`(MVP map)`) and the drop note. Code identifiers stay `boss*`. The **crit-resistance
+  dropline came off the MVP card** (owner: the map already says it) - the mechanic is untouched
+  (`bossCritRes` still ships and is still asserted by `crit_sim`).
+* **Difficulty (owner: "abit easy, maybe double?"):** `NMHP 12 -> 24`, `NMBOSSHP 12 -> 24`,
+  `NMATK 1.5 -> 2.25`, `NMEXP 1.5 -> 2.5`, `NMZENY 1.6 -> 2.2`. Damage was deliberately NOT doubled
+  with the HP - two mobs at ~2,000 a swing through a 75% DEF cut is a two-mob pack deleting a full-HP
+  character; the comment in the file says so. Worked example (now printed by `nightmare_sim`):
+  Nightmare Abyss 15 mob 2,782,608 HP (50x an Abyss 10 mob), 1,526 a hit (3.9x), stage-15 MVP 33.1M HP.
+* **Drop nerf (owner: "33% of the current rate"):** `FIELD_GEAR_NM=[.5,.4,.3]`,
+  `FIELD_GEAR_MID_NM=[.35,.28,.21]` (exact thirds, asserted against the normal tables), and the band's
+  MVP pool `BOSS_POOL_TOTAL[2] 900 -> 300` (3% total). `fieldOf` picks the band's table by STAGE, so a
+  stage 1-10 field cannot be affected by it.
+* **Dungeon UI first, dungeon later:** the map window gained a purple `.mapband.dungeon` band naming
+  **Endless Echo** with the settled rules (5:00, target that never dies or hits back, unlimited
+  practice, 2 ranked runs a day, best single-run DPS and never summed) and a disabled entry button, so
+  the map stops being fields-only ahead of v77.
+* **The map hop** was `#wins` being the real scroller at <=700px while `renderWin` only preserved
+  `.wbody.scrollTop`. `renderWin(anchor)` now also saves/restores the outer scroll and calls
+  `scrollIntoView({block:'nearest',inline:'nearest'})` on the pressed control (a stage node, a map
+  card) only when it is off screen.
+* **Tests:** `nightmare_sim` (constants, the doubled worked example, the third-rate tables, the pool
+  section tag), `gear_sim` (the N rarity, display-only tier, the exact thirds), `ui_sim` (the MVP
+  wording, no crit line on the card, the N badge in the map panel, the scroll-anchor shape, the
+  dungeon card). `drop_card_sheet_sim` needed no change - the sheet stores row names, not generated
+  item names. All **35 suites green**. `node --check` clean.
+* **Files:** `index.html` (BUILD v76.2, RAR5 helpers, CSS `.r5`/`.mapband.dungeon`, genGear/dropTxt/
+  logs/item card/map panel, TC, hero colours, drop sparkle, gearPool, fieldOf drop tables, the NM
+  constants, MVP text, renderWin + the two handlers), `tools/tests/{nightmare,gear,ui}_sim.js`,
+  `READ-ME-FIRST.md`, the three BUILD mirrors, `Updates/v76-nightmare-report.md`.
+* **PR opened** at the owner's request; the trial dungeon is the next build (v77).
 
 ### 2026-10-07 — `2026-10-07 grind-v77 crit frames + HD Prontera Town: locked until the owner opens it, houses facing the square, nothing floating or overlapping`
 
@@ -4254,3 +4526,218 @@ assigned for feel rather than fidelity. While reworking that, two shipped bugs s
 * **Files touched:** `index.html` (BUILD, `TOWN_OPEN`/`townUnlocked`/`townUnlock`/`townEnter` gate, `townPackFetch` deferred + `TOWNP.started`, the closed card in `V.map`, `townSprite`'s yaw/mesh branch, `TOWN_SINK`, `townAddBlocker`/`townClear` kinds, the tree and terrace placement, the wall tiles and cone caps); `tools/measure_town_ground.py` (**new** generator + `--check`); `tools/tests/town_smoke.js` (40 scenarios, six new); `tools/tests/ui_sim.js` (the gate is pulled into its spans; the map panel's closed card and the GM's live card are both asserted); `tools/_town_dump.js` (the dev dump opens the gate the way the owner's console would); `tools/preview_town_board.py`; the three boards; `READ-ME-FIRST.md`; the build-tag snapshots.
 * **Tests:** `town_smoke` **40/40** (closed gate, GM/flag bypass, leaving never gated, no art fetched while shut, houses facing the square, no sprites, world quaternions unchanged after an `az` orbit, grounding, one body box, trees and terrace clearance, one-piece stand-in tree, wall/gate palette); **ui_sim 42**; all **34** suites green; seven `--check` tools current.
 * **To open the town:** set `TOWN_OPEN` to `true`, bump `BUILD`, push. Nothing else in the gate changes.
+### 2026-10-08 — `2026-10-08 grind-v77 Endless Echo, doubled Nightmare band, N auto-sell`
+
+* **Endless Echo, the damage trial (owner: "start the dungeon … hd & realistic … undead & hell theme,
+  purpleish … dummy and character stay in place … ranked (remaining tries) / training / store").** A
+  self-contained module in `index.html` in front of `const NMNAME=['Dread',…`:
+  - **Entry:** `#trial` (fixed overlay, `z-index:1150`, above the world and below `#modal`) +
+    `#trialBody`; the button is a purple `.dungeoncard` **inside the map grid** of the World Map panel
+    (`data-trial="lobby"`), not a band under the stages - the v76.2 `.mapband.dungeon` block and the
+    stage-panel entry were both deleted, so the map list is the one place it lives.
+  - **The lobby** offers exactly three doors: **Ranked** (`trialLeftToday()/2` printed on the button,
+    disabled at 0), **Training** (unlimited) and the **Shard Store**; the result screen re-offers
+    ranked when tries are left. `trialExit()` closes the overlay even when no run is on (Close used to
+    be a no-op once the lobby was open) and is what travel calls.
+  - **The run:** `TRIAL_SECS=300`, `TRIAL_RANKED_PER_DAY=2`, day rollover via
+    `trialDay()` = `new Date(Date.now()+8*3600000).toISOString().slice(0,10)` (Asia/Singapore, the
+    same wall clock the boards use). The clock ticks in `update(dt)`, the HUD swaps to
+    `Endless Echo · m:ss` / `🏛 Ranked run|Training` / `🏛 m:ss left · N damage` via
+    `hudTrial`+`hudTrialClock`, and `trialFinish()` books damage as `S.dmg - TRIAL.dmg0`.
+  - **The dummy** is a real mob object with `hp:Infinity,max:Infinity,at:Infinity,fixed:true` (so the
+    AI never makes it act or move), spawned at `(0,-4)`; the character is placed at `(0,-2.6)` -
+    1.4 units, inside the 1.2+0.45*size melee reach, so neither walks anywhere. `mobs=[dummy]`, no
+    packs, no respawn, no drops, no card.
+  - **The arena** is plain geometry (`trialArena()`): two rune rings, ten six-sided obsidian pillars
+    with ember crowns, bone/slab litter, a purple key light and an orange rim light. `draw()` swaps
+    sky/fog/ground (`0x2a1040`, ground `0x2f2338`) on the `trial:` scene key and calls `trialArena()`;
+    leaving restores map sky, ground and `buildDeco`.
+  - **Payout:** `TRIAL_PAY=[[5000,20],[15000,35],[40000,50],[80000,75],[120000,100]]` shards per ranked
+    run by DPS, `+10` for a personal best; training pays nothing. **The board is the best single run**
+    (`S.trial.best`), never a sum.
+  - **Store:** `TRIAL_STORE` = Oridecon x5 / Elunium x5 (10), Zeny cache 250k (25), Card Mastery
+    Token (40, writes `S.cardIndex.bonus`, spent by the Index card mastery roll), Legendary Card
+    Voucher (60), Nightmare Gear Token (120 → map picker → `trialGrantNm(mi)`, section 5 when
+    `nmOpen()>=5` else 4, at Lv 150, always a weapon the class can swing). The map-pick path re-checks
+    the shards so a double click cannot spend them twice.
+  - **Save shape:** `S.shards` (int), `S.trial={day,used,best,runs}`, `S.cardIndex.bonus`; `fresh()`
+    seeds all three and the loader repairs them, so pre-v77 saves wake up with 2 tries and the shards
+    they never had. `gotoField` opens with `trialExit()`, so travelling always ends a run.
+* **The Nightmare band doubled again (owner: "double the hp. atk can be increase too. ill test it").**
+  `NMHP/NMBOSSHP 24 → 48` (one doubling, from the v76.2 figure - not a compounding double) and
+  `NMATK 2.25 → 3`. Worked example the sim prints: Nightmare Abyss 15 mob **5,565,216 HP (99x** an
+  Abyss 10 mob) hit land for **2,035 (5.2x)** after a 75% DEF cut; the stage-15 MVP has **66.3M HP**.
+  `NMEXP 2.5` / `NMZENY 2.2` are unchanged. The in-file comment carries all three rounds of history
+  (12x → 24x → 48x) so nobody doubles it a third time by accident.
+* **The N rarity is in the auto-sell ticks.** `S.autoSell` is six slots (`RARALL=RAR.concat([RAR5])`)
+  and every drop path routes by `rarIdx(it)`/`sec`, so a section-4/5 Nightmare piece can be sold on
+  drop like any other band. The loader maps a legacy five-slot array to six (the new N slot starts
+  off), and the Bag prints the N tick from the same `RARALL`.
+* **Bag equipment icons are drawn sprites now** (owner: "sprites i mean for the bags equipments
+  icons. not on the character itself"). Two layers: `ITEM_ICON_SVG` (14 hand-written silhouettes -
+  card, ore, sword, dagger, axe, mace, staff, bow, katar, armor, head, off, leg, acc) selected by
+  `ITEM_ICON_KEY(it)` and drawn inline as `.ro-icon-svg`, and the Divine-Pride item art for the id
+  `gearItemIconId(it)` picks deterministically per item name. The `<img>` carries
+  `referrerpolicy="no-referrer"` - the art host refuses hotlinked requests that send a Referer, which
+  is what made a deployed build show placeholders - and its `error` listener swaps in the matching
+  silhouette instead of the old emoji. Cells tint the silhouette by rarity band
+  (`.cell.b0…b5 .ro-icon-fallback`), Nightmare cells add the purple glow.
+* **MVP names are bare everywhere, and no crit-res readout anywhere.** The card header shows just the
+  name (no `(boss)`, no `(MVP)`), the HUD tag is the name, and the two last prose leftovers now say
+  MVP too (the map panel's MVP card: "an MVP can drop zero or several pieces"; the refine hint:
+  "Stage 10 MVPs drop both at 2.5%"). `F.critRes` still feeds the field object and `crit_sim` still
+  pins `bossCritRes`, but nothing prints it.
+* **The map hop is fixed at the cause.** `renderWin` now saves and restores **both** scrollers
+  (`host.scrollTop`, i.e. `#wins` on a phone, and each window's `.wbody`), both null-guarded so a
+  window without a body cannot throw mid-rebuild, and the pressed control is nudged **by hand inside
+  its own `.wbody`** instead of `scrollIntoView()`. `scrollIntoView()` walks every scrollable
+  ancestor - window body, `#wins` and the page - so on a phone it moved the whole screen even when
+  the control was already visible, which is what read as hopping.
+* **Tests:** the new `tools/tests/trial_sim.js` (**13 assertions**) loads the whole module into a
+  vm with stubs and pins the clock, the two-a-day rule on the Singapore clock, the best-single-run
+  board, the payout ladder, the store, the save repair, the click wiring (including the shard guard
+  on the map picker), the stand-in-reach spawn and the always-closable lobby. `ui_sim` gained the
+  bare-name wordings and the two-scroller/hop pins; `nightmare_sim` pins `[48,3,2.5,2.2,48]` and the
+  new worked example; `gear_sim` + the offline suite follow the sixth auto-sell slot;
+  `drop_card_sheet_sim` was refreshed (the worksheet snapshot carries the new build label, nothing
+  else moved) and `affix-ranges.html` labels were re-stamped to the live BUILD. All **36 suites
+  green**, `node --check` clean.
+* **Files:** `index.html` (BUILD v77, the trial module + CSS + overlay, the map-grid dungeon card,
+  the sixth auto-sell slot and its loader repair, `ITEM_ICON_SVG`/`itemIconMarkup`, the NM constants,
+  `renderWin`), `tools/tests/{trial_sim.js (new),ui_sim.js,nightmare_sim.js,gear_sim.js,
+  offline_sim.js,save_load_sim.js}`, `Updates/cards-gear-audit/{affix-ranges.html,
+  equipment-cards-tuning.html}`, `Updates/{endgame-and-dps-trial-plan.md,v76-nightmare-report.md}`,
+  `tools/cloudflare-deploy-steps.md`, `READ-ME-FIRST.md`.
+* **Still the owner's call:** the dungeon's real name (Endless Echo is a placeholder), the Shard
+  Store prices, and the one-off milestone-chest rungs - the ladder is expressed in DPS
+  (5k/15k/40k/80k/120k) so a real run can set them.
+
+### 2026-10-08 — `2026-10-08 grind-v77.1 trial tuning, softer Nightmare sting, bigger band pay`
+
+The owner's second pass over v77, six notes, all built.
+
+* **A ranked try has a ten-second grace (owner: "if leave within 10sec after enter doesnt minus the try
+  count. after it counted as -1").** New `TRIAL_GRACE=10`. `trialExit()` now books the try itself:
+  leaving a ranked run with `TRIAL_SECS-TRIAL.left <= TRIAL_GRACE` closes the arena with the try
+  intact (and says so in the log); past that it does `st.used++`, `st.runs++`, builds
+  `TRIAL.result={…,quit:true,ran:<seconds>}`, logs the cost and shows the result screen - **nothing is
+  paid and `st.best` is never touched by a run that did not finish**. Training still costs nothing
+  whenever it is left. `trialFinish()` keeps booking the try for finished runs, so the two paths cannot
+  double-count.
+* **The Shard ladder starts where the endgame fights (owner: "increase the shards pay by dps to higher
+  milestone. starting from 5k is too easy" + his own numbers: "a fully decked lv150 character dps is
+  around 1.5m. without pets, with 3 pets basically x3 the damage").**
+  `TRIAL_PAY=[[100000,5],[250000,12],[500000,20],[750000,28],[1000000,36],[1500000,50],[2250000,68],[3000000,85],[4500000,115]]`
+  and `TRIAL_BEST_BONUS 10 -> 15`. 1.5M (decked, no pets) and 4.5M (three pets) are rungs on purpose;
+  5k DPS now pays nothing. The lobby prints the whole ladder under the buttons, names the **next rung**
+  on the ranked button and the shards a run at your current best is worth.
+* **The store is priced against two ranked days (owner: "daily join 2 times should be enough to purchase
+  around 30 ori or elu, card token mastery should be harder to get even harder for legendary then
+  nightmare … the nightmare gear token should be very difficult and lock only to be purchase above
+  120level").** `TRIAL_STORE` = Oridecon x5 **38**, Elunium x5 **38**, Zeny Cache 500,000z **25**, Card
+  Mastery Token **250**, Legendary Card Voucher **450**, Nightmare Gear Token **900 with a new `lv:120`
+  field**. Worked against a fully petted 4.5M run (~115 Shards, ~230-260 a day): 30 Ori is ~6 bundles,
+  the token is one day, the voucher two and the Nightmare token about four. The level lock is enforced
+  in `trialBuy()` **and** in the `data-nmmap` click path (so the map picker cannot be reached around
+  it), shown as `Base Lv 120+ only` on the row, and the button reads `Lv 120` while locked. The Zeny
+  cache moved 250k -> 500k to stay relevant at 150 refine bills.
+* **Seven one-off chests, the thing v77 left as an open draft.** `TRIAL_CHESTS`, paid in order the first
+  time a **ranked** run reaches the rung (a huge run opens everything it passed; practice opens
+  nothing): 250k -> 50,000z + 5 Ori + 5 Elu · 500k -> 100,000z + 10 Ori + 10 Elu · 1M -> 100 Shards ·
+  **1.5M -> 250,000z + 20 Ori + 20 Elu + 150 Shards** (the no-pet decked mark) · 2.25M -> 250 Shards ·
+  3M -> 40 Ori + 40 Elu · **4.5M -> 500 Shards + 30 Ori + 30 Elu** (the three-pet mark). State is
+  `S.trial.chest` (count claimed), repaired and clamped by `trialState()`; `trialGrantChest()` pays
+  shards through `S.shards`, Zeny through `earnZeny`, ore through `S.ore`. The lobby names the next
+  unclaimed chest, the result screen lists the ones a run opened, and each is logged.
+* **The Nightmare sting came down, the band's pay went up (owner: "i think we buffed the nightmare maps
+  too much. tune it down on the damage. also adjust the zeny & exp rate, make sure is relevant").**
+  `NMATK 3 -> 2`, `NMEXP 2.5 -> 4`, `NMZENY 2.2 -> 4`; `NMHP`/`NMBOSSHP` stay at **48**. The in-file
+  comment now carries the whole history (12x -> 24x -> 48x, sting 1.5x -> 2.25x -> 3x -> 2x) and the
+  settled reasoning: per kill the band pays ~9.3x a Stage 10 mob's EXP and Zeny (power 175 vs 99 is
+  2.3x of that on its own), so a kill that takes a few times longer still pays well over double per
+  hour. The worked example `nightmare_sim` prints: Nightmare Abyss 15 mob 5,565,216 HP (99x), hit
+  **1,357** through a 75% DEF cut (**3.5x** a Stage 10 mob, was 5.2x), stage-15 MVP 66.3M HP. The sim
+  now multiplies by the live `NMHP/NMATK/NMBOSSHP` instead of copied literals, so a retune cannot leave
+  the printed example lying.
+* **The Nightmare MVP card tells the truth about its own drops.** The pool entries carried no rarity
+  and the card called every MVP drop **Legendary** - on stages 11-15 those are section 4/5 **N** pieces.
+  Every `poolitem` now carries `rarCls/rarOf` (so `N`, purple), the sentence switches to
+  `<b class="r5">N</b>` when `F.sec>=4`, and the card line reads `GRADE[F.boss.card.g]` +
+  `cardVal(F.boss.card.g,…)` instead of the hardcoded Legendary pair.
+* **The data was double-checked (owner: "also double check my data again as i added a new town map
+  earlier").** Audit result, all clean: ten maps, each with mobs (10 on the first five, 6 on the
+  endgame five), a boss, six gear sections, its own kit recipe + design, a `PW` pet-odds row, both
+  Nightmare name lists, and a `REC`/`MAPVAL` entry; every prop and tile name the recipes ask for exists
+  in the atlas (34 billboards, 25 HD tiles); `Updates/map-sprites-v2/*.json` are byte-identical to the
+  live `assets/kit/*.json`; the review sheet matches the live tables (10 maps, 6 sections, 588 items);
+  all 36 suites green. **No map in the repo is unknown to the game** - if the new town is a new map
+  entry, its name is what is needed to wire it, and that is asked for in the reply.
+* **Tests:** `trial_sim` grew to **15 assertions** - the new ladder, the six chest rungs pinned, the
+  grace window (three seconds free, a minute costs a try, exactly ten seconds still free, 10.1 not,
+  practice always free, an abandoned run pays nothing and never sets the best, the result screen says
+  `left after`), the chest flow (four rungs open at 1.5M, a matching second run pays the ladder only,
+  practice opens nothing), and the store prices + the Base Lv 120 lock from both doors.
+  `nightmare_sim` pins `[48,2,4,4,48]` and reads the live knobs for its worked example; `ui_sim` gained
+  the NM MVP-pool rarity pins. **All 36 suites green**, `node --check` clean, the worksheet snapshot
+  and the affix chart re-stamped to BUILD.
+* **Files:** `index.html` (BUILD v77.1, `TRIAL_GRACE`/`TRIAL_PAY`/`TRIAL_CHESTS`/`TRIAL_STORE`,
+  `trialPayNext`/`trialShortDps`/`trialLadderText`/`trialChestText`/`trialChestNext`/`trialGrantChest`,
+  the lobby/shop/result screens, `trialState` repair, `trialExit`/`trialFinish`/`trialBuy`, the
+  `data-nmmap` guard, the NM constants + comment, the MVP pool markup),
+  `tools/tests/{trial_sim.js,nightmare_sim.js,ui_sim.js}`,
+  `Updates/{cards-gear-audit/affix-ranges.html,cards-gear-audit/equipment-cards-tuning.html,
+  endgame-and-dps-trial-plan.md}`, `tools/cloudflare-deploy-steps.md`, `READ-ME-FIRST.md`.
+* **Still the owner's call:** the dungeon's real name (Endless Echo is a placeholder), whether the
+  milestone chests should also pay on a *practice* run (they do not, by design), and the trial's
+  **global** board - the personal best is live, but a server-side DPS board needs a `dps` metric on
+  `functions/api/board.js` and a D1 migration (the existing board is kills-only).
+
+### 2026-10-08 — `2026-10-08 grind-v77.2 flat trial payout, store re-anchored on a daily payout, and the HD Prontera town`
+
+* **Three owner notes, one build.** (1) *"new personal best dont pay at endless. with or without new
+  personal best pays out a daily number"* — the payout is flat; (2) *"the daily payout should be able
+  to buy 30 ori or elu, card mastery maybe need 2 days. & nightmare needs around 2k"* — the Shard Store
+  is priced off one day of ranked pay; (3) *"the new map is already in my main. i merge already"* —
+  his own **HD Prontera Town** line came in through a real merge this build (below).
+* **The payout is one number per run.** `TRIAL_BEST_BONUS=15` is deleted — `trialFinish()` now reads
+  `if(dps>st.best){best=true;st.best=dps}`: the record still moves the board and the next-rung prompt,
+  the Shards do not. `trialLadderText()` says the pay is flat, and the result screen prints
+  `· new personal best` where it used to print `(includes the +15 new-best bonus)`. The ladder rungs
+  themselves are untouched (`100k→5 … 4.5M→115`), so the top of the economy is unchanged for a repeat
+  run and *lower* for a record run: a top day is **2 × 115 = 230** Shards, not 130 + 115 = 245.
+* **The store, priced off that day** — one day = the two ranked runs at the top rung = 230 Shards:
+  Oridecon x5 / Elunium x5 stay **38** (six bundles = 228 = the thirty he asked for), 500k Zeny stays
+  **25**, Card Mastery Token 250 → **460** (exactly two days), Legendary Card Voucher 450 → **900**,
+  Nightmare Gear Token 900 → **2,000** with the **Base Lv 120** gate unchanged (≈8.7 days of top pay).
+  The tiering order he asked for holds: card < legendary < nightmare.
+* **The town merge is a real divergence, not a fast-forward.** `origin/main` was 216 commits ahead
+  (PR #32: v74 way-in, v75 water, v76 square, v77 gate — the town line; none of it had my v74.1 phone
+  pass, v75 pets, v76 Nightmare band or v77/v77.1 trial). Merged as `31dac12`; 43 files, +3791/−39,
+  conflicts in 7 files — `index.html` (9 hunks), `AGENTS.md`, `READ-ME-FIRST.md`, `.gitignore`,
+  `affix-ranges.html`, `equipment-cards-tuning.html`, `cloudflare-deploy-steps.md`.
+* **What the resolution had to get right:** the fields' stage band keeps the **15-node ladder**
+  (stages 1-10 + the Nightmare 11-15) — main's grid still had 10; the trial card and the town card are
+  both in the map grid; entering either scene refuses the other (`trialEnter` leaves town,
+  `townEnter` refuses during a run); the pointer block carries the v74.1 pinch **and** the town's
+  tap-to-walk; `draw()` keeps my `rarIdx` tints, main's `townGroundY()` hero height and the trial's own
+  sky/fog. Two regressions the suites caught during the merge and fixed the same session: the field
+  hint had lost `or pinch` (ui_sim's phone pin), and the hero stood at y=0 in town instead of on the
+  town ground (found by comparing main's draw lines against the merged file). `TOWN_OPEN` is still
+  `false`: the town stays locked in-game until the owner opens it.
+* **The town's own tooling arrives with it** — `assets/town/town-atlas.{png,json}` (9.6 MB), the
+  `Updates/town-hd/` boards, `tools/make_town_pack.py --check` (needs pillow) and
+  `tools/tests/town_smoke.js` (jsdom + three r128, installed with `npm i --no-save`).
+* **Tests:** all **36** `*_sim.js` suites green, plus `town_smoke` **40/40** — **37 suites**. Repriced
+  pins: `trial_sim` 16 (new test *"the store is priced off a day of ranked pay"* proves 230/day buys
+  exactly 30 ore and that the token prices are 2 days / 2k; the old `5 + 15` pins became `5`, and the
+  constants test now asserts `TRIAL_BEST_BONUS` is undefined); `ui_sim` 49 (its pinch harness stubs the
+  town hooks main's merge added to the same pointer block); `town_smoke`'s stage-count pin 10 → 15.
+  All four asset `--check` tools pass (sprite viewer, class skins, weapon pack, town pack).
+* **Files touched:** `index.html` (BUILD, `TRIAL_BEST_BONUS` removed, `trialFinish`, `trialLadderText`,
+  the result line, `TRIAL_STORE` + its comment), `tools/tests/{trial_sim,ui_sim,town_smoke}.js`,
+  `AGENTS.md`, `READ-ME-FIRST.md`, `Updates/{endgame-and-dps-trial-plan.md,
+  cards-gear-audit/affix-ranges.html,cards-gear-audit/equipment-cards-tuning.html}` (the last one via
+  `drop_card_sheet_sim.js --refresh-snapshot`), `tools/cloudflare-deploy-steps.md`.
+* **Still the owner's call:** the dungeon's real name (Endless Echo is a placeholder), the chest rungs
+  (250k…4.5M DPS, unchanged this build) and the **global** DPS board (needs a `dps` metric on
+  `functions/api/board.js` + a D1 migration; the personal best is local today).

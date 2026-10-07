@@ -598,7 +598,8 @@ t('the map tab lists Prontera Town as a card beside the ten fields', () => {
   assert.ok(/class="mapcard town-card[^"]*" data-a="town"/.test(h), 'the town card walks you in from the map grid');
   assert.ok(h.includes('🏘 Prontera Town'), 'and it is labelled');
   assert.ok(!h.includes('npcchip'), 'out of town the band below is the stage picker');
-  assert.strictEqual((h.match(/data-a="sell_"/g) || []).length, 10, 'with the ten stages of the picked field');
+  // the field's stage picker is fifteen nodes now: stages 1-10 plus the v76 Nightmare band 11-15
+  assert.strictEqual((h.match(/data-a="sell_"/g) || []).length, 15, 'with the fifteen stages of the picked field (10 + the Nightmare band)');
 });
 
 t('in town the same band becomes the town\u2019s own, listing the five NPCs instead of stages', () => {

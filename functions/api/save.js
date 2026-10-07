@@ -12,7 +12,10 @@ import * as db from '../_lib/db.js';
 
 const HISTORY_EVERY = 10;
 const OFFLINE_CAP_MS = 4 * 60 * 60 * 1000;
-const OFFLINE_MIN_MS = 60 * 1000;
+// v73: three minutes, not one. A backgrounded (throttled) tab syncs about once a minute, so a
+// 60s floor minted claims for a minute the client had already ground at full speed. The client
+// uses the same window (OFFLINE_POPUP_MIN_MS in index.html).
+const OFFLINE_MIN_MS = 3 * 60 * 1000;
 const OFFLINE_RATE_CAP = 30000;
 const OFFLINE_REWARD_MULT = .5;
 const RATE_SMOOTHING_MS = 5 * 60 * 1000;

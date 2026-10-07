@@ -80,6 +80,545 @@ is the live one; with no argument the tool prints how to set a new one). Since v
 `GM` / `test1234`; `localStorage.removeItem('pg_gm_local')` removes it. Normal accounts are made
 in-game and stored in the browser (`pg_acc4`; saves under `pg_save3_<user>`).
 
+## BUILD v77.2 — the trial pays a flat number, the store is priced on a day's pay, and your HD town is in
+
+Your three notes, all built — and the town you merged yourself is in the build too.
+
+* **A new personal best pays nothing extra.** *"new personal best dont pay at endless. with or without
+  new personal best pays out a daily number."* The +15 bonus is gone from the code, not just hidden:
+  a ranked run pays its ladder rung and that is the whole payout. The ladder itself is untouched
+  (100k → 5 Shards, 1.5 M → 50, 4.5 M → **115**), the record still sets your **personal best** on the
+  screen and the board, and the result screen now just notes *new personal best* next to the number
+  instead of adding to it. A perfect day is therefore **2 × 115 = 230 Shards** — earning it once is no
+  longer worth 130.
+* **The store is priced off that day** — one day = the day's two ranked runs at the top rung = **230
+  Shards**:
+
+  | Buy | Price | What a day of top pay gets you |
+  |---|---|---|
+  | Oridecon ×5 | **38** | six bundles = **228 → exactly the 30 you asked for** |
+  | Elunium ×5 | **38** | the same 30 |
+  | Zeny Cache (500,000z) | **25** | nine caches, ~4.5 M Zeny |
+  | Card Mastery Token | **460** | **two days** |
+  | Legendary Card Voucher | **900** | four days |
+  | Nightmare Gear Token | **2,000** | the long save — about nine days, still **Base Lv 120+** |
+
+  The order you set stands: card < legendary < nightmare. Ore stays the steady buy; the three tokens
+  are save-ups.
+* **Prontera Town is in this build — locked, as you asked.** Your town line was merged in (216 commits
+  of it: the walled way in, the sunken river, the paved square, the gate). The World Map tab's grid now
+  holds its card beside the ten fields and the purple **Endless Echo** card; while it is shut the card
+  is dashed and says so, and there is no way in. **To open it: set `TOWN_OPEN` to `true`, bump `BUILD`,
+  push** — nothing else in the gate changes. (GM accounts and the save-flag bypass already walk in, so
+  you can look at it without opening it to players.)
+* **The merge had to protect the game you already have**, and the suites caught two things it nearly
+  broke: the phone pinch-zoom hint and a hero standing at y=0 inside the town instead of on its ground.
+  Both fixed, plus the fields' stage ladder stayed at **15 nodes** (10 + the Nightmare band) rather than
+  the older 10 the town branch still carried. The trial and the town now refuse each other politely:
+  walking into one leaves the other.
+* **Tests:** all **36** `_sim` suites green, and the town's own smoke test **40/40** — 37 suites in
+  total, plus the four art `--check` tools. The trial suite grew a test that proves the store's
+  arithmetic above (230/day → exactly 30 ore, the tokens at two days and 2k).
+* **Still your call:** the dungeon's real name (Endless Echo is a placeholder), the chest rungs, and the
+  **global** DPS board — the personal best is local today; a shared board wants a `dps` column and a
+  small database migration, which is a build of its own.
+
+## BUILD v77.1 — the trial's economy, the band's sting, and the ten-second grace
+
+Your six notes on the v77 trial, all built. **The trial and Nightmare figures below replace the v77
+ones** (the v77 section stays underneath as history).
+
+* **A ranked try has a grace window.** Leave a ranked run inside the first **10 seconds** and the try
+  is *not* spent — step out after that and it is used, and the run pays nothing and never touches your
+  best. The result screen says what happened and how long you lasted, so the rule is never a surprise.
+  Training is free whenever you leave it.
+* **The Shard ladder starts where you actually fight.** Your own yardstick sets it — ~1.5M DPS alone at
+  Lv 150, ~4.5M with three pets out: **100k→5 · 250k→12 · 500k→20 · 750k→28 · 1M→36 · 1.5M→50 ·
+  2.25M→68 · 3M→85 · 4.5M→115**, and a new personal best is **+15**. **5k DPS pays nothing any more**;
+  the old ladder's top rung (120k) is now the second one.
+* **The store is priced against two ranked days.** Oridecon x5 and Elunium x5 are **38** Shards each
+  (so two good ranked days buy about thirty of either), the Zeny cache is **500,000z for 25**, the
+  **Card Mastery Token is 250**, the **Legendary Card Voucher 450**, and the **Nightmare Gear Token is
+  900 — and it needs Base Lv 120**. The token is refused, greyed out and labelled below that level, and
+  it is about four days of the whole ranked allowance.
+* **Seven one-off chests.** Every rung below is paid once, the first time a *ranked* run reaches it
+  (one huge run opens everything it passed, practice opens nothing):
+
+  | DPS | Chest |
+  |---|---|
+  | 250,000 | 50,000z + 5 Ori + 5 Elu |
+  | 500,000 | 100,000z + 10 Ori + 10 Elu |
+  | 1,000,000 | 100 Shards |
+  | **1,500,000** (decked, no pets) | 250,000z + 20 Ori + 20 Elu + 150 Shards |
+  | 2,250,000 | 250 Shards |
+  | 3,000,000 | 40 Ori + 40 Elu |
+  | **4,500,000** (three pets out) | 500 Shards + 30 Ori + 30 Elu |
+
+  The lobby names the next chest you have not reached; the result screen lists the ones a run opened.
+* **The Nightmare sting came down and the band's pay went up.** The wall stays at the 48x HP you asked
+  for, the damage comes back from 3x to **2x**, and EXP and Zeny go from 2.5x/2.2x to **4x/4x** — the
+  band now pays **~9x a Stage 10 mob per kill** (power 175 against 99 is 2.3x of that on its own), so a
+  kill that takes a few times longer still pays well over double per hour. Worked example, printed by
+  the test: a Nightmare Abyss 15 mob's hit lands for **1,357** through a 75% DEF cut (3.5x a Stage 10
+  mob, where v77 was 5.2x); its HP and the 66.3M-HP boss are unchanged.
+* **The Nightmare MVP card now states its own rarity.** The MVP pool listed its Nightmare pieces with
+  no rarity mark and the card called every MVP drop "Legendary" — on a Nightmare field that is wrong
+  twice over. Each pool entry now carries its rarity (**N**), the sentence reads **N** on stages 11-15,
+  and the card line reads its own grade instead of the hardcoded one.
+* **Your data, double-checked.** All **ten maps** carry a full set of data — monsters, a boss, six gear
+  sections, its own kit recipe and design, a pet-odds row, both Nightmare name lists and a map
+  recommendation — and the two HD kit mirrors in `Updates/map-sprites-v2/` are byte-identical to the
+  live `assets/kit/` files (34 billboards, 25 HD tiles, every name the recipes ask for). The review
+  sheet matches the live tables exactly (10 maps, 6 sections, 588 items). Nothing was stale — if the
+  new town map you added is a **new map entry**, tell me its name and I will wire its row, recipe and
+  drop tables in one pass; I could not find a map in the repo that the game does not know about.
+
+## BUILD v77 — Endless Echo (the damage trial), the band doubled again, and five fixes
+
+The dungeon is **built**: `2026-10-08 grind-v77 Endless Echo, doubled Nightmare band, N auto-sell`.
+
+* **Endless Echo — the trial.** A purple **🏛 Endless Echo** card now sits in the World Map's own map
+  grid (not under the stages), and it opens the lobby with the three doors you asked for:
+  **Ranked** — the button prints the tries you have left (`2/2` down to `0/2`, then it greys out) —
+  **Training** (unlimited, pays nothing), and the **Shard Store**. A run is **five minutes**, counted
+  down in the top bar, against one **Trial Dummy** that has infinite HP and never hits back. The
+  character spawns 1.4 units from it (inside melee reach) and neither of them moves for the whole
+  run. Ranked is **2 a day** on the same Asia/Singapore clock as the boards. **The board score is your
+  best single run** — never a sum — and ranked runs also set `S.trial.best`, your personal best.
+* **The arena is the room you described:** rune circles cut into black stone, ten obsidian pillars with
+  ember crowns, bones and slabs on the floor, a purple key light with an orange rim light, and a
+  purple sky/fog theme. It rebuilds whenever you enter, and leaving puts the real map back.
+* **Trial Shards.** Ranked runs pay by DPS — **5,000→20 · 15,000→35 · 40,000→50 · 80,000→75 ·
+  120,000→100**, plus **+10** for a new personal best. Practice pays nothing; Shards carry over.
+  The store sells **Oridecon x5 / Elunium x5 (10)**, a **250,000z cache (25)**, a **Card Mastery
+  Token (40)**, a **Legendary Card Voucher (60)** and a **Nightmare Gear Token (120)** — that last
+  one asks which map, then hands over one Nightmare-roll item at Lv 150, from section 5 if the whole
+  band is open and section 4 before that, always a weapon your class can swing.
+* **The Nightmare band doubled again** (your words: *"double the hp. atk can be increase too. ill test
+  it and see if this make sense"*). Mob and MVP **HP x24 → x48**, and the sting goes **x2.25 → x3**.
+  Worked example: a Nightmare Abyss 15 mob now has **5,565,216 HP (99x an Abyss 10 mob)** and its hit
+  lands for **2,035** through a 75% DEF cut (5.2x); the stage-15 MVP has **66.3M HP**. EXP and Zeny in
+  the band are unchanged (`x2.5` / `x2.2`). It is one doubling from the shipped figure, not a
+  compounding one, so please play-test it and tell me if it went past "hard" into "silly".
+* **N is in the auto-sell ticks.** The Bag's auto-sell row is six ticks now (Common … Legendary **N**),
+  and a Nightmare piece can be sold on drop like anything else. Old saves get the sixth tick added,
+  switched off, so nothing sells itself the moment you log in.
+* **The Bag's equipment icons are sprites.** Every equipment family has a drawn silhouette (sword,
+  dagger, axe, mace, staff, bow, katar, armour, headgear, shield, boots, accessory, ore, card) that
+  shows instantly, in the rarity's colour; the real Ragnarok item art loads on top of it where the
+  art host allows it (the request now goes out without a Referer, which is what the host refused
+  before — that was why a deployed build showed placeholder marks). A Nightmare piece keeps its
+  purple tile and glow either way.
+* **Every MVP is just a name.** No `(boss)`, no `(MVP)`, and **no crit-resistance readout** anywhere —
+  not on the card, not in the map panel. The mechanic is untouched; only the text is gone.
+* **The map no longer hops when you tap a stage.** The old fix nudged the pressed stage with the
+  browser's `scrollIntoView()`, which walks *every* scrollable parent (the window body, `#wins`, the
+  page) — on a phone that moved the whole screen even when the stage was already visible. Now both
+  scroll positions are kept by number and the pressed node is nudged inside its own list only.
+* **Still your call (nothing blocks):** the dungeon's real **name** (Endless Echo is a placeholder I
+  can rename in one line), the **Shard Store prices**, and the one-off **milestone chest** rungs — the
+  ladder is in DPS (5,000 / 15,000 / 40,000 / 80,000 / 120,000) so one real run tells us where the
+  chests should sit. A fully decked Base Lv 150 character is expected around 65k–135k DPS, so the
+  middle rungs are the ones that will matter.
+
+## BUILD v77 — the town is locked until the owner opens it; houses face the square; nothing floats or overlaps
+
+Everything here is the five-item list the owner left on the town PR (#76).
+
+* **The town ships shut.** `const TOWN_OPEN=false;` at the top of the town block is the switch;
+  `townUnlocked()` is the gate (`TOWN_OPEN || S.gm || localStorage pg_town_open==='1'`). While it is
+  shut the map still shows the town card — greyed, labelled **Closed**, with no way in — and the HD
+  atlas **is not fetched at all** (the fetch moved from boot into `townEnter`, so a locked town
+  costs visitors nothing). **Leaving is never gated**, so nobody can be stranded inside. Open it for
+  yourself with `window.townUnlock()` (or `localStorage pg_town_open=1` before boot); open it for
+  everybody by setting `TOWN_OPEN` to `true` and bumping `BUILD` — that flip is the whole release.
+* **Nothing billboards any more.** Every building was a `THREE.Sprite`, which three.js turns to face
+  the camera every frame — that was "the gate & all houses spins together with the camera". Buildings
+  are now `THREE.Mesh` planes with a fixed yaw, so each front keeps pointing at the square it stands
+  on (measured: every front's unit dot product to its target is > .999).
+* **The wall and the gate share one palette.** The curtain wall wears the kit's warm `cliff` stone
+  and every cone on the gate line (gatehouse, watch towers, corner bastions) is capped with the same
+  `TOWN_MASON.roof` — the brown castle entrance and the wall beside it are finally dressed alike.
+* **The float was the art's own empty feet.** The town sprites carry a transparent margin *below*
+  the painted ground line, so a plane cut to the image edge hung that gap over the ground. The
+  per-art offsets are measured, not guessed (`TOWN_SINK`, owned by `tools/measure_town_ground.py`,
+  whose `--check` fails if one drifts), and each facade sinks by that fraction of its height.
+* **Trees no longer grow out of walls.** The blocker list is filled before anything is planted, a
+  house blocks its whole plot (facade plus the body behind it), and each tree tries seven fallback
+  radii before it is dropped: 16 trees stand, every one measured clear.
+* **The platform over the fountain was shrunk and moved back** so it sits behind the north houses
+  instead of through them (0 overlaps against all 17 house plots).
+* **Tests:** `town_smoke` is **40 scenarios** now (the gate, the bypasses, the facings, the
+  grounding, the clearances), **ui_sim 42**, all **34** suites and the seven `--check` tools green.
+
+## BUILD v76.2 — Nightmare rarity, MVP naming, a harder band, and the map fixes
+
+The owner's first play-test of v76 came back with six notes; this is all of them. **The difficulty and
+drop figures below replace the v76 ones** (the v76 section is kept underneath as history).
+
+* **Nightmare gear is its own rarity.** Sections 4 and 5 are no longer "Legendary": they are tagged
+  **N** and their names are painted **dark purple** (`.r5`), so an exclusive piece never reads as one
+  more pile of ordinary endgame loot. It is display-only — the mechanics still pay them at the
+  Legendary band, so autosell, values and drop weights are untouched. The look carries through to the
+  character: **wearing Nightmare armour, headgear or weapon tints the worn model dark purple** (the
+  same rarity colour table that paints Legendary gear gold), and a Nightmare drop sparkles purple in
+  the field. The item's own name states it too: `N Dread Excalibur`.
+* **Bosses are MVPs now.** Every player-facing mention — the card header (`MVP & pets`), the tag
+  (`Dark Lord (MVP)`), the hints (`MVP fights immediately…`, `MVP appears at NM 5`), the HUD
+  (`MVP FIGHT · 3 minions`), the quest text, the Executioner pet description, the ore hint and the
+  stage title (`(MVP map)`) — says MVP. The internal names (`isBoss`, `bossCritRes`, the CSS classes)
+  did not change, so nothing else moved.
+* **The crit-resistance line came off the MVP card.** The mechanic is unchanged (MVPs still cut your
+  Crit%), but the figure is no longer printed under the name.
+* **The band is twice the wall and half again the sting.** `NMHP 12 → 24`, `NMBOSSHP 12 → 24`,
+  `NMATK 1.5 → 2.25`. A Nightmare Abyss 15 mob now has **2,782,608 HP (50x an Abyss 10 mob)** and its
+  hit lands for **1,526** through a 75% DEF cut (3.9x); the stage-15 MVP has **33.1M HP**. Damage was
+  deliberately not doubled with the HP: two Nightmare mobs hitting for ~2,000 a swing would delete a
+  full-HP character in a round. Payouts moved with the extra time (`NMEXP 1.5 → 2.5`,
+  `NMZENY 1.6 → 2.2`) so the band is still the best place to spend five minutes.
+* **Nightmare drops are a third of what they were** (owner: "nerf the nightmare drop rate to 33% of
+  the current rate"). New tables `FIELD_GEAR_NM=[.5,.4,.3]` and `FIELD_GEAR_MID_NM=[.35,.28,.21]` are
+  exactly a third of the matching normal table, and the band's MVP pool is a third too
+  (`BOSS_POOL_TOTAL[2] 900 → 300`, i.e. 3% total instead of 9%). Cards, ore and EXP are untouched.
+* **The damage trial has its place in the map panel already.** A purple **Endless Echo** band now sits
+  at the bottom of the World Map window stating the rules that are settled — 5:00 run, a target that
+  never dies and never hits back, unlimited practice, **2 ranked runs a day**, and a board that keeps
+  the **best single-run DPS** (runs are never summed). The entry button is disabled until v77 builds
+  the dungeon itself.
+* **The map panel stopped hopping.** The real scroller on a phone is `#wins`, not the window body, so
+  the rebuild was resetting it every time a stage was tapped. The rebuild now restores the outer
+  scroll by number and only nudges the pressed control into view when it is off screen
+  (`scrollIntoView({block:'nearest'})`), so a re-render in place stays perfectly still.
+
+## BUILD v76 — the Nightmare band (Base Lv 100-150) and its exclusive gear
+
+Field power used to stop at **Abyss Stage 10 (power 99)** while the level cap is 150, so Base Lv
+100-150 had nothing to climb and no new drops. Every map now carries five more stages.
+
+* **The band.** Each map gains **stages 11-15**, labelled `NM 1` … `NM 5` on the World Map in their
+  own purple nodes. They open on **Base Lv 100 / 110 / 125 / 140 / 150** — a pure level unlock, so
+  there is nothing new to save and no migration. Stage 15 of every map ends with a boss, exactly like
+  stage 10 does.
+* **The power ladder keeps going.** `fieldPower` continues past the old ceiling: Nightmare Prontera
+  Stage 11 is power 105, and **Nightmare Abyss Stage 15 is power 175** — the deepest field in the
+  game. Every normal stage's power is byte-for-byte what it was.
+* **They are genuinely hard.** Nightmare monsters take **12x** the HP of a normal monster at the same
+  power and hit **1.5x** as hard (both are single constants, `NMHP` and `NMATK`, if you want them
+  tuned after a playtest). Worked example from the test suite, measured against Abyss Stage 10:
+
+  | | mob HP | a hit that lands (after a 75% DEF cut) |
+  |---|---|---|
+  | Abyss Stage 10 | 56,013 | 389 |
+  | Nightmare Abyss 15 | 1,391,304 | 1,017 |
+  | Nightmare Abyss 15 boss | 16,563,240 | — |
+
+  Nightmare monsters also pay **1.5x EXP** and **1.6x Zeny**, drop ore at **1.5%** a kill (regular
+  monsters pay 0.5%, and 1% on a normal stage-10 boss field), and their bosses carry a **9% drop
+  pool** instead of 6% (4.2% on the mid/endgame maps).
+* **Nightmare bosses resist crit harder.** Their five stages share one figure per map, rising the
+  same way the normal ladder does: **35 / 35 / 36 / 36 / 38 / 38 / 40 / 40 / 42 / 45%** from Nightmare
+  Prontera to Nightmare Abyss. A capped 60% crit build crits a Nightmare Abyss boss **33%** of the
+  time (39% on Nightmare Prontera). The normal bosses are untouched (v74's 15/15/15/20/30), and the
+  map panel prints whichever ladder the field you are reading belongs to.
+* **Two gear sections that exist nowhere else.** Nightmare fields roll **section 4 (Nightmare gear)**
+  on stages 11-13 and **section 5 (Abyssal Nightmare gear)** on stages 14-15 and off their bosses —
+  and those are the *only* fields in the game whose section index is 4 or 5, so the exclusivity is
+  structural, not a rule someone has to remember. Each section is its own map's high-tier row,
+  **renamed with a per-map word** (Dread, Kraken, Void, Sandwraith, Spectral, Leviathan, Oni, Yokai,
+  Helheim, Glast / Abyssal, Maelstrom, Singularity, Eclipse, Wraithlord, Trench, Yama, Kami,
+  Nidhogg, Absolute) — same weapon families so no class loses a weapon, all-new names, **210 new
+  items**. A **Nightmare** item is worth **1.5x** the high-tier row and an **Abyssal Nightmare** item
+  **15/7x** it, at the same Legendary grade.
+* **Testing the band:** the GM console has **Unlock Nightmare (Base Lv 150)**, which sets Base Lv 150
+  and unlocks all five stages so you can walk straight into Nightmare Abyss 15.
+
+## BUILD v76 — the square is paved, and the wall is masonry
+
+A second realism pass over what the town camera actually shows, grounded in the Prontera references
+the owner asked for: the city is a **walled rectangle**, and the **streets around the central
+fountain are the market**.
+
+* **The plaza is a market square, not a grey disc.** Two paved streets (2.6 wide, `limestone_pale`)
+  cross the square through the fountain, and a paved apron (r 5.0..7.2) rings its basin, so the
+  square reads as the crossroads the market sits on. The **flower beds moved off the crossing
+  streets** onto the diagonals, behind the benches, so no bed stands in a road.
+* **The wall reads as a wall.** The face the camera sees now carries **six buttresses a side**,
+  **arrow slits** between them and a **corbel table** under the walkway, and each end of the curtain
+  is capped by a **corner bastion** with merlons and a blue roof — the wall stops at a tower instead
+  of stopping in the middle of a field.
+* **Tests:** `town_smoke` is **36 scenarios** now (the new one walks the plaza's paving, checks that
+  no bed stands in the crossing streets, counts the buttresses and slits, and re-checks that every
+  course still names a tile the kit ships), and all **34** suites plus the five `--check` tools are
+  green.
+## Testing the preview (and getting GM tools on it)
+
+```sh
+node tools/dev_server.js --gm-all --db tools/.devdb/preview.sqlite
+```
+
+* The preview's database is **in memory by default**, so restarting it wipes accounts and saves, and
+  the account you registered last time is gone. `--db <file>` keeps it instead (the path above is
+  gitignored).
+* **`--gm-all` makes every account registered on that preview an owner**, so a new preview can never
+  leave you on an account with no GM tools. It is preview-only — never set `DEV_GM_ALL` on the
+  Cloudflare project.
+* **On the live server**, the owner is the first account registered against that database. If you lose
+  it, the game's own `GM` login (username `GM` + the GM password) still gives you the GM tab in that
+  browser, and `tools/cloudflare-deploy-steps.md` → *If you lose the owner (GM) account* has the
+  one-line SQL to promote your cloud account back to `gm=2`.
+
+## BUILD v75 — pet species passives and duplicate Bond
+
+Pets used to differ only in their drawing and their rarity: two pets of one rarity were the same
+pet, and a duplicate was dead weight in a 40-slot bag. A species now has a job of its own.
+
+* **Every species carries one signature passive**, always on while that pet is one of the fighting
+  three. It is worth **+5% when you tame it and +10% at Bond 5** — the ceiling is your rule
+  ("*i dont want any buff go above 10%*"), and the ladder is five steps of +1%:
+
+  | Pet | Signature passive | What it does |
+  |---|---|---|
+  | Poring | Greedy Gel | Zeny from kills |
+  | Lunatic | Moonlit Study | EXP and Job EXP from kills |
+  | Wolf | Pack Leader | Damage for **every** fighting pet |
+  | Desert Wolf | Sand Tracker | Oridecon and Elunium drop chance |
+  | Peco Peco | Swift Mount | Movement speed (the sheet says so on the line itself) |
+  | Dragon Whelp | Hoarded Flame | Equipment drop chance |
+  | Baphomet Jr. | Executioner | Damage to bosses, yours **and** your pets' |
+  | Angeling | Divine Grace | Max HP, and less damage taken |
+
+* **A duplicate folds into the pet you already own.** One pet per species, ever: the second Poring
+  you find is merged into the first (best mutation kept, each gear slot keeps its better level, a
+  skill the older pet was missing moves into its free slot) and the species gains **+1 Bond**. Fifty
+  folded duplicates would be Bond 5 with nothing left to chase; the ladder is 1 / 3 / 6 / 10 / 15.
+* **Old saves are folded on login**, exactly like a new duplicate — nothing is thrown away, and a
+  stack of identical pets turns into one good pet plus Bond.
+* **Nothing is a hidden multiplier.** Six of the eight passives cannot touch pet damage at all; the
+  two that do (Pack Leader, Executioner) are held to the same companion band, and `pet_sim` now
+  asserts the band *with Pack Leader at its ceiling* (0.78x, not 0.72x) so the promise is tested
+  rather than assumed. No pet grants player crit chance — Index Crit is still the only path to 100%.
+* **Where you see it:** the pet card prints the passive, the number at its current Bond and how many
+  more duplicates the next rank wants; the pet list shows a `B2` badge; the Character sheet has a
+  **Pet bonuses** line naming each fighting pet's contribution; and the Drops panel and pet-drop log
+  lines name the passive when a species arrives. `+1 duplicate on the selected pet` buttons in the
+  GM console let you watch a Bond climb without farming fifteen drops.
+
+## BUILD v75 — the water is below the road: a sunken river, quays cut at the bridge
+
+The v74 gate → bridge → river was all there and still read wrong through the game's own camera, so
+this pass went back over the channel itself. Every problem was geometry, not art.
+
+* **The river lay ON the road, not below it.** v74's water was a plane at y **.03** — level with the
+  street — between quay walls standing 1.1 above it: the camera saw a blue stripe with a lip, and the
+  bridge had nothing to arch over. `TOWN_RIVER` now carries the channel's own numbers (`water:-.85`,
+  `bed:-1.35`, `span:4.2`, `gap:5.8`, `kerb:.45`). The lawn is built as **two** planes around the band
+  (one lawn plane would have floated straight over the water), the bed takes the kit's `sand_gold`,
+  and the water sits .85 below the street between two quay walls whose retaining faces run from the
+  bed up to a low street parapet and its coping. The deck's crown is .87 and its underside .45, so it
+  clears the water by 1.3 units: a bridge over water you can see, which is what "below is a river"
+  asked for.
+* **The quay wall ran straight across the avenue.** Each quay was one 150-unit box at z 15/20, so a
+  wall crossed the road at both bridge mouths and the deck was buried in it. The run is now cut at the
+  deck: the parapet stops at |x| > 4.65, the wall continues underneath as the bridge's abutment, and
+  `town_smoke` guards it against the town's own box meshes — a long run whose span reaches into the
+  avenue near a quay line fails the suite.
+* **The arch cannot read (the town camera never looks down the river), so the channel carries it
+  instead:** the deck's shadow on the water (a gradient strip under it), the shaded waterline at the
+  foot of both quays, reeds inside the channel, a stair down to the water cut against the quay at
+  x ±21, and the piers dressed as cutwaters standing on the bed.
+* **All the masonry wears the kit's own stone.** The curtain wall, its watch towers, the gate towers,
+  both quay courses, the deck (`bridge_planks` — the kit's own deck tile, the one the fields' bridges
+  use) and the ramps name real kit tiles through `TOWN.tiles`, so no flat pastel box stands next to
+  painted art any more.
+* **The walk moved with it:** `townGroundY` takes its base from the bridge table (`B.base`), so the
+  hero climbs the ramp from the street to the crown and down again, and `TOWN_BOUND.z1` is **22.3**
+  (21.8 left the walk-out target standing on the journey's last metre of ramp).
+  `tools/preview_town_board.py` draws the quay runs **cut at the deck** too — a full-width strip on
+  the board was drawing the very bug the town had just been fixed for.
+* **Tests:** `town_smoke` is **35 scenarios** (the bridge pins and the walk-out line rebuilt against
+  the new numbers, the painted-shadow pair's off-by-one fixed, the masonry check guarded on
+  `TOWN.kitArt` and its tile names verified against `assets/kit/ro-tiles-hd.json`), and all **34**
+  suites plus the five `--check` tools are green.
+
+## BUILD v74.1 — novices keep 1st-job gear, and the phone layout pass
+
+* **The lowest gear band is Novice + 1st-job.** v74 made a Novice starter-gear-only, which locked
+  a fresh character out of the very pieces a first job can wear a minute later. The gate is now
+  `gearTierOf(item) <= max(1, classTierOf(you))`, so **sections 0 and 1 of the gear list are one
+  band** (`Worn by: Novice and 1st-job classes`) and everyone from Novice to a 1st job wears both.
+  2nd-job gear still needs a 2nd job; transcendent gear still needs a transcendent class. Nothing
+  else about the tier system changed - the auto-stow-on-class-change, the auto-lock and the
+  auto re-wear all still work, they just have less to do on a Novice.
+* **The phone layout was rebuilt.** The owner played the deployed build on his phone and the UI
+  was "abit messy and not in place". The causes were all the same shape - the layout assumed a
+  desktop window:
+  * **Viewport height.** `100vh` on a phone is the height with the URL bar *retracted*, so the
+    game was taller than the screen and the bottom of the HUD sat below the fold. Everything that
+    measures the screen now uses `100dvh` (with `100vh` kept first as the fallback), the visual
+    viewport is watched as well as `resize` (iOS does not always fire one when the URL bar
+    moves), and pull-to-refresh can no longer reload a farming session (`overscroll-behavior:none`).
+  * **The dock is measured, not guessed.** `resize()` publishes the real dock height as
+    `--docktop`, and the log feed, the pet-buff strip and the map/tab windows all sit just above
+    it instead of being covered by it.
+  * **The HUD is a fixed grid on a phone.** Two rows - identity / HP / Zeny, then `Kills/min ·
+    EXP/min · DPS` - plus the account cluster on its own row. Numbers going from 9 to 10 to 100
+    used to re-flow the whole bar.
+  * **Tappable controls and reachable tabs.** Dock icons grow to 34px (32px on a small phone) from
+    the 28px desktop size, the tab row scrolls sideways instead of wrapping into a second row, the
+    panels fill the play area instead of being stacked into slivers, and the dock and the bottom
+    bar clear a gesture bar via `env(safe-area-inset-bottom)`.
+  * **Pinch to zoom.** A phone has no scroll wheel, so before this build the 3D camera could not be
+    zoomed at all on one. One finger still rotates; two fingers pinch to zoom between the same
+    0.6x and 2x limits the wheel uses; the finger that is not pinching never swings the camera, and
+    lifting one finger resumes rotation from where the other one is instead of jumping.
+  * Desktop is untouched - every one of those rules lives in `@media(max-width:700px)`,
+    `max-width:430px` or `pointer:coarse` at the end of the stylesheet.
+* **The APK question.** Tuning the web build (this section) is the right first move: the page is
+  already installable from the browser once a `manifest.json` + service worker + icons are added
+  ("Add to Home Screen" then gives a full-screen icon, no store, no signing), and an APK would be
+  the *same files* inside a wrapper (Capacitor / Trusted Web Activity) needing a signing key and an
+  account for every release, with no performance gain. Ask for the PWA files if the home-screen
+  icon is wanted; ask for an APK only if a store listing is the goal.
+
+## BUILD v74 — class gear tiers, movement speed on the sheet, EXP/min, softer boss crit resist
+
+* **Equipment is gated by class tier now.** A piece belongs to a class tier (Starter / 1st-job /
+  2nd-job / High-tier), and you must *be* that tier to wear it: a first job reaches 1st-job gear, a
+  second job 2nd-job gear, and **High-tier gear is transcendent classes only**. So 2nd/3rd-class
+  equipment can no longer be worn by a 1st class, and the item card says which tier a piece is for
+  (`Worn by: 2nd-job classes and up`). **(v74.1: a Novice shares the first band with the 1st-job
+  classes — see the v74.1 section below. The original v74 rule "a Novice wears starter gear only"
+  was too strict and is rescinded.)**
+* **Changing class takes the wrong gear off — safely.** Every worn piece your new class cannot use
+  is moved to the Bag and **auto-locked**, so auto-sell can never eat it, and it remembers its
+  wearer: *"This was Lord Knight's gear — it goes straight back on when you switch to Lord Knight
+  again."* Switch back and it is worn again automatically, nothing duplicated. Saves made before
+  this build are swept on login, so the rule applies from the first frame.
+* **Movement speed is on the Character sheet.** `Move 7.35 u/s · 10.29 sprinting` beside ATK/ASPD,
+  with a line explaining that AGI is the only stat that moves it (about +0.03 a point) and that
+  the sprint multiplier applies on trips longer than 3 units. Nothing about the curve changed.
+* **The HUD shows EXP/min.** The header row is now `Kills/min · EXP/min · DPS`, all on the same
+  rolling 60-second window with the same stall reset; EXP counts gross income (a level-up no
+  longer makes the meter dip).
+* **Boss crit defence softened** (v73's ladder was too steep): Comodo/Louyang/Amatsu **-15%**,
+  Niflheim **-20%**, Abyss **-30%**; maps 1-5 still resist nothing. A capped 60% build crits them
+  **51/51/51/48/42%** of the time.
+
+## BUILD v74 — the town's way in: a walled gate, a bridge over the river, a street of shops
+
+This pass answers three things the owner saw in screenshots of the shipped town — "i would want the
+building on the left side also", "all the buildings looks floating", "the entrance looks so off. just a
+gate. maybe add bridge after gate to walk toward the center then below is a river" — and follows the
+research they asked for (Prontera: dense blocks on all four sides, radial avenues off a central plaza
+whose fountain is the market, the church north, **gates with moat water and bridges**).
+
+* **Grounding (why they read as floating):** the contact shadow was a single plane whose *depth* came
+  from the artwork's height (`e.h*k*.3`) with the texture squashed to match, so a tall narrow building
+  stood on a wide pale puddle and a low prop on almost nothing. Both layers are now cut from the
+  sprite's **width** — a soft penumbra and a tight dark core, offset slightly towards the camera — and
+  the block stand-ins get the same pair, so a building does not change shape when the art pack lands.
+* **The way in is a walk you can make:** the avenue is split by a **river** (z 15..20) drawn with the
+  kit's own animated water tiles, crossed by a **stone bridge** whose deck and whose *ground height*
+  come from one profile (`townGroundY`), so the hero walks up and over it; `townAvoid` keeps the hero
+  out of the water off the deck, and the walkable bound now runs out to the wall the gate stands in.
+  The gate itself moved into that **curtain wall** (crenellated, watch towers, gold finials), with market
+  tents on the forecourt outside, the road out of town paved and two trees framing the approach.
+* **The left flank is built:** three street houses (`TOWN.street`) front the avenue between the
+  square's southern corner houses and the river — placed off dumped coordinates, since the ring's own
+  corner houses already stand there.
+* **How it was judged without a browser:** the dump (`node tools/_town_dump.js`) now carries the real
+  ground tiles, the river, the bridge's segment tops, every solid box and a **second camera standing on
+  the far bank**, and `python3 tools/preview_town_board.py` draws three boards — the plan, the square
+  from the hero's landing spot, and **`board-3-town-entrance-view.png`**, the way in through the gate,
+  over the bridge and up the avenue. That last board is the shot the owner's screenshot came from.
+* **Tests:** `town_smoke` is **35 scenarios** now (the river and the bridge's walk line, the walk out of
+  the square and over the arch, the entrance street, the grounding shadows, the river's animation tick),
+  and all 34 suites plus the five `--check` tools are green.
+
+## BUILD v73 — crit retune, Index Crit to 100%, lighter mid-map drops, boss crit resist
+
+* **Refine no longer closes the slot picker.** While you are choosing a weapon/armour for a slot,
+  clicking **Refine** (or a card socket, Unequip or Lock) used to shut the picker — those controls
+  live in the **Equipment window**, and only the Bag counted as "inside". Both windows count now, so
+  the picker survives a refine and you can compare the next piece. A click outside both windows (or
+  the banner's ✕) still closes it.
+* **Crit rate is a build again.** Base **2** (was 3), LUK pays **0.25** a point (was 0.4), the crit
+  affix/card weight is **0.32** (was 0.45), and above **45%** every further point counts **half**.
+  The core still caps at **60%**. A Lv70 LUK-99 dump plus both Hunter/Sniper crit passives lands
+  ~51%, so you need gear to finish the cap.
+* **Index Crit — the way to 100% without equipment or stats.** Every **Hunt Title** adds Index Crit
+  that sits **outside** the 60% cap: +1/+1/+2/+2/+3/+4/+5/+6/+7/+9 → **+40** at a complete Index
+  (all ten titles, 1,000,000 Index XP). A fully capped build plus a full Index is exactly **100%**.
+  It is on the stats sheet, the Index panel and every title row; the GM panel's "Set the final title"
+  tries it instantly.
+* **Crit damage (cdm) can no longer be worn on every slot.** The **cdm affix now rolls on weapons
+  and accessories only** (legacy gear keeps its rolls), its weight dropped **0.7 → 0.45** and the
+  70% post-roll scale is unchanged: a top Legendary affix is +11-18 instead of +18-27, on at most
+  three worn pieces. The **cdm card** keeps its own **3/7/10/13** ladder. The crit multiplier base
+  moved **2.0 → 1.9**.
+* **High-level bosses resist crits.** Comodo/Louyang/Amatsu **-20/-25%**, Niflheim **-30%**,
+  Abyss **-40%** of your Crit %; maps 1-5 bosses resist nothing. Shown on the map panel and on the
+  boss nameplate (`· Crit Res 20%`). **(v74 softened this to -15/-15/-15/-20/-30 — it was too
+  steep.)**
+* **Drops are 30% lighter from Comodo on.** Maps 6-10 pay **2.52%** gear a kill (was 3.6%) and their
+  Stage-10 boss pools total **~4.2%** (was ~6%); Prontera and the four class maps keep every original
+  number, and every boss still lists all of its items.
+* **The 1-minute "offline reward" popup is gone.** A hidden tab is timer-throttled to about once a
+  minute and grinds at full speed, so the old **60 s** "away" floor was paying twice for ordinary
+  background play. The floor is now **three minutes** on both the client and the server, and a claim
+  that lands inside the time this page has been open (and fits the sim's own 10-minute replay
+  budget) is acknowledged without rewards or popup. A real absence still pays in full.
+* **Pets:** PETBAL 2.65 → 1.91 so a maxed pet stays in the 0.6-0.7x companion band next to the
+  re-tuned character ceiling.
+
+## BUILD v72 — crit frame aligned, and the digits are the selection's own font and fill
+
+* **The font was the "design looks off" report.** The copy button prints its raw slider keys, and the
+  owner's paste said **`font: game`** — which on the proposal page is *Game (Trebuchet)*. The build
+  had shipped **Chunky (Verdana 900)**, whose key would print as `font: classic`. So the digits were
+  a different typeface from the strip they picked. Criticals are now Game (Trebuchet) at the tuned
+  32px, normals 17px, both at the page's weight.
+* **The crit fill is the page's, not a sticker.** Strip B draws the number as a **cream→gold gradient
+  clipped to the glyphs** (`#fff3b0 → #ffc93c`) with a **.6px maroon stroke** and two soft drop
+  shadows — not the flat gold fill under a heavy 4-way dark outline the game had. Skill crits get the
+  same treatment in silver-blue.
+* **One addition for the real map:** the page previews strip B on a dark background, where its thin
+  stroke reads fine; on Prontera's bright grass it washes out (the page's own research notes a hard
+  outline is what keeps digits legible there). A **1px dark drop-shadow rim** was added to the page's
+  recipe, so the look survives bright ground without going back to the thick outline. Rendered proof:
+  the four-row comparison in the report.
+* **The burst breathes for its whole life** now: the page's own curve (overshoot to ×1.25 at 30%,
+  settle with a small random rotation wobble, slow bloom to ×1.05), not a 0.32s pop that then froze.
+* **Unchanged:** the frame geometry and centring from v71, colours, no CRIT chip, the v69 motion
+  (arc punch, sway-up-fade-left, hold-then-fade from 55% of 1.05s), burst sizing from the number,
+  and the v67 screen projection.
+
+## BUILD v71 — the crit explode frame is centred on the digits again
+
+* **What the owner saw:** after PR #29 the critical numbers did not look like the proposal page they
+  were picked from. They were right — the frame was being drawn **half a burst up and left of the
+  number**, so it read as a sun sitting beside the digits rather than a splash behind them.
+* **The bug:** the pop animation sat on the `<svg>` *inside* the centred `.fburst` box. Its keyframes
+  carry `translate(-50%,-50%)`, and on the svg that resolves against the svg's own width and height —
+  a second half-box shift added on top of the box's own centring. The impact ring (which was animated
+  correctly) stayed on the digits, which is what made the mismatch obvious.
+* **Also restored to the proposal's own burst while fixing it:** the middle layer is the proposal's
+  **8-spike inner star + pale core** again (a flat `r=26` gold disc had swallowed the middle of the
+  starburst); the speed-lines are a **random spray** — length, thickness, angle, travel and duration
+  all vary, 9 on a critical and 8 on a skill critical — instead of an even pinwheel; and the burst and
+  ring follow the proposal's sizing (`max(2×fs, len×fs×.84)` wide, `2.5×fs` tall, ring `1.4×fs`).
+* **Unchanged:** the colours, the 32px chunky digits, the absence of a CRIT chip, the v69 motion (arc
+  punch on spawn, sway up then fade drifting left, hold-then-fade from 55% of the 1.05s life), the
+  number-first sizing rule for 6–7 digit crits, and the v67 screen-projection registration.
+* **Dev-only:** `Updates/damage-floats-proposal/` is the tuner page these settings come from — its
+  strip B is now the same geometry the game draws, so the two can be compared side by side.
+
+## BUILD v70 — crit 32px, short form from 100K (on top of v68/v69 of this session)
+
+* **Damage numbers rebuilt to the owner's tuned pick (v69):** Verdana-900 chunky digits (17px normal, 32px critical after the v70 trim), arc punch on spawn, numbers spawn centred on the mob and **sway up then fade drifting left**, holding solid until 55% of their 1.05s life. Criticals and skill criticals carry the **restored explode frame** — irregular red starburst, speed-line streaks and an impact ring sized from the number (up to 7 digits), with **no "CRIT" chip**; skill criticals get their own silver-blue `skill-critical` look instead of borrowing the normal crit's.
+* **Short form now starts at 100K (v70, the owner's rule):** 100,000 reads "100K", 1,000,000 reads "1M", and everything below — 99,999 included — stays in full digits. The Settings toggle still switches every float to full digits everywhere.
+* **v68:** the skill-name banner moved above the hero's head (world height 3.65, was forehead-level 3.15); multi-cast slots still stagger upward.
+* **Dev-only:** `Updates/damage-floats-proposal/` is the live tuner page that produced these settings (open with `python3 tools/preview_server.py 8000` → `/`; it has a **📋 Copy my selection** button). The weapon page moved to `/weapons`. Nothing in the proposal folder ships to players.
 ## BUILD v69 — Prontera Town in HD: a safe map, five NPCs, painted buildings and a dressed plaza
 
 * **A new map, and it is a place, not a stage: Prontera Town.** It is **a card in the World Map
@@ -185,171 +724,6 @@ in-game and stored in the browser (`pg_acc4`; saves under `pg_save3_<user>`).
   the east side exactly on top of each other, invisible on the plan and obvious from the camera.
   Entering the town also pulls the camera back further than a field does (zoom .46, wheel to .40),
   because the square does not fit in a field's frame.
-## BUILD v74 — the town's way in: a walled gate, a bridge over the river, a street of shops
-
-This pass answers three things the owner saw in screenshots of the shipped town — "i would want the
-building on the left side also", "all the buildings looks floating", "the entrance looks so off. just a
-gate. maybe add bridge after gate to walk toward the center then below is a river" — and follows the
-research they asked for (Prontera: dense blocks on all four sides, radial avenues off a central plaza
-whose fountain is the market, the church north, **gates with moat water and bridges**).
-
-* **Grounding (why they read as floating):** the contact shadow was a single plane whose *depth* came
-  from the artwork's height (`e.h*k*.3`) with the texture squashed to match, so a tall narrow building
-  stood on a wide pale puddle and a low prop on almost nothing. Both layers are now cut from the
-  sprite's **width** — a soft penumbra and a tight dark core, offset slightly towards the camera — and
-  the block stand-ins get the same pair, so a building does not change shape when the art pack lands.
-* **The way in is a walk you can make:** the avenue is split by a **river** (z 15..20) drawn with the
-  kit's own animated water tiles, crossed by a **stone bridge** whose deck and whose *ground height*
-  come from one profile (`townGroundY`), so the hero walks up and over it; `townAvoid` keeps the hero
-  out of the water off the deck, and the walkable bound now runs out to the wall the gate stands in.
-  The gate itself moved into that **curtain wall** (crenellated, watch towers, gold finials), with market
-  tents on the forecourt outside, the road out of town paved and two trees framing the approach.
-* **The left flank is built:** three street houses (`TOWN.street`) front the avenue between the
-  square's southern corner houses and the river — placed off dumped coordinates, since the ring's own
-  corner houses already stand there.
-* **How it was judged without a browser:** the dump (`node tools/_town_dump.js`) now carries the real
-  ground tiles, the river, the bridge's segment tops, every solid box and a **second camera standing on
-  the far bank**, and `python3 tools/preview_town_board.py` draws three boards — the plan, the square
-  from the hero's landing spot, and **`board-3-town-entrance-view.png`**, the way in through the gate,
-  over the bridge and up the avenue. That last board is the shot the owner's screenshot came from.
-* **Tests:** `town_smoke` is **35 scenarios** now (the river and the bridge's walk line, the walk out of
-  the square and over the arch, the entrance street, the grounding shadows, the river's animation tick),
-  and all 34 suites plus the five `--check` tools are green.
-
-## BUILD v75 — the water is below the road: a sunken river, quays cut at the bridge
-
-The v74 gate → bridge → river was all there and still read wrong through the game's own camera, so
-this pass went back over the channel itself. Every problem was geometry, not art.
-
-* **The river lay ON the road, not below it.** v74's water was a plane at y **.03** — level with the
-  street — between quay walls standing 1.1 above it: the camera saw a blue stripe with a lip, and the
-  bridge had nothing to arch over. `TOWN_RIVER` now carries the channel's own numbers (`water:-.85`,
-  `bed:-1.35`, `span:4.2`, `gap:5.8`, `kerb:.45`). The lawn is built as **two** planes around the band
-  (one lawn plane would have floated straight over the water), the bed takes the kit's `sand_gold`,
-  and the water sits .85 below the street between two quay walls whose retaining faces run from the
-  bed up to a low street parapet and its coping. The deck's crown is .87 and its underside .45, so it
-  clears the water by 1.3 units: a bridge over water you can see, which is what "below is a river"
-  asked for.
-* **The quay wall ran straight across the avenue.** Each quay was one 150-unit box at z 15/20, so a
-  wall crossed the road at both bridge mouths and the deck was buried in it. The run is now cut at the
-  deck: the parapet stops at |x| > 4.65, the wall continues underneath as the bridge's abutment, and
-  `town_smoke` guards it against the town's own box meshes — a long run whose span reaches into the
-  avenue near a quay line fails the suite.
-* **The arch cannot read (the town camera never looks down the river), so the channel carries it
-  instead:** the deck's shadow on the water (a gradient strip under it), the shaded waterline at the
-  foot of both quays, reeds inside the channel, a stair down to the water cut against the quay at
-  x ±21, and the piers dressed as cutwaters standing on the bed.
-* **All the masonry wears the kit's own stone.** The curtain wall, its watch towers, the gate towers,
-  both quay courses, the deck (`bridge_planks` — the kit's own deck tile, the one the fields' bridges
-  use) and the ramps name real kit tiles through `TOWN.tiles`, so no flat pastel box stands next to
-  painted art any more.
-* **The walk moved with it:** `townGroundY` takes its base from the bridge table (`B.base`), so the
-  hero climbs the ramp from the street to the crown and down again, and `TOWN_BOUND.z1` is **22.3**
-  (21.8 left the walk-out target standing on the journey's last metre of ramp).
-  `tools/preview_town_board.py` draws the quay runs **cut at the deck** too — a full-width strip on
-  the board was drawing the very bug the town had just been fixed for.
-* **Tests:** `town_smoke` is **35 scenarios** (the bridge pins and the walk-out line rebuilt against
-  the new numbers, the painted-shadow pair's off-by-one fixed, the masonry check guarded on
-  `TOWN.kitArt` and its tile names verified against `assets/kit/ro-tiles-hd.json`), and all **34**
-  suites plus the five `--check` tools are green.
-
-## BUILD v77 — the town is locked until the owner opens it; houses face the square; nothing floats or overlaps
-
-Everything here is the five-item list the owner left on the town PR (#76).
-
-* **The town ships shut.** `const TOWN_OPEN=false;` at the top of the town block is the switch;
-  `townUnlocked()` is the gate (`TOWN_OPEN || S.gm || localStorage pg_town_open==='1'`). While it is
-  shut the map still shows the town card — greyed, labelled **Closed**, with no way in — and the HD
-  atlas **is not fetched at all** (the fetch moved from boot into `townEnter`, so a locked town
-  costs visitors nothing). **Leaving is never gated**, so nobody can be stranded inside. Open it for
-  yourself with `window.townUnlock()` (or `localStorage pg_town_open=1` before boot); open it for
-  everybody by setting `TOWN_OPEN` to `true` and bumping `BUILD` — that flip is the whole release.
-* **Nothing billboards any more.** Every building was a `THREE.Sprite`, which three.js turns to face
-  the camera every frame — that was "the gate & all houses spins together with the camera". Buildings
-  are now `THREE.Mesh` planes with a fixed yaw, so each front keeps pointing at the square it stands
-  on (measured: every front's unit dot product to its target is > .999).
-* **The wall and the gate share one palette.** The curtain wall wears the kit's warm `cliff` stone
-  and every cone on the gate line (gatehouse, watch towers, corner bastions) is capped with the same
-  `TOWN_MASON.roof` — the brown castle entrance and the wall beside it are finally dressed alike.
-* **The float was the art's own empty feet.** The town sprites carry a transparent margin *below*
-  the painted ground line, so a plane cut to the image edge hung that gap over the ground. The
-  per-art offsets are measured, not guessed (`TOWN_SINK`, owned by `tools/measure_town_ground.py`,
-  whose `--check` fails if one drifts), and each facade sinks by that fraction of its height.
-* **Trees no longer grow out of walls.** The blocker list is filled before anything is planted, a
-  house blocks its whole plot (facade plus the body behind it), and each tree tries seven fallback
-  radii before it is dropped: 16 trees stand, every one measured clear.
-* **The platform over the fountain was shrunk and moved back** so it sits behind the north houses
-  instead of through them (0 overlaps against all 17 house plots).
-* **Tests:** `town_smoke` is **40 scenarios** now (the gate, the bypasses, the facings, the
-  grounding, the clearances), **ui_sim 42**, all **34** suites and the seven `--check` tools green.
-
-## BUILD v76 — the square is paved, and the wall is masonry
-
-A second realism pass over what the town camera actually shows, grounded in the Prontera references
-the owner asked for: the city is a **walled rectangle**, and the **streets around the central
-fountain are the market**.
-
-* **The plaza is a market square, not a grey disc.** Two paved streets (2.6 wide, `limestone_pale`)
-  cross the square through the fountain, and a paved apron (r 5.0..7.2) rings its basin, so the
-  square reads as the crossroads the market sits on. The **flower beds moved off the crossing
-  streets** onto the diagonals, behind the benches, so no bed stands in a road.
-* **The wall reads as a wall.** The face the camera sees now carries **six buttresses a side**,
-  **arrow slits** between them and a **corbel table** under the walkway, and each end of the curtain
-  is capped by a **corner bastion** with merlons and a blue roof — the wall stops at a tower instead
-  of stopping in the middle of a field.
-* **Tests:** `town_smoke` is **36 scenarios** now (the new one walks the plaza's paving, checks that
-  no bed stands in the crossing streets, counts the buttresses and slits, and re-checks that every
-  course still names a tile the kit ships), and all **34** suites plus the five `--check` tools are
-  green.
-
-## BUILD v72 — crit frame aligned, and the digits are the selection's own font and fill
-
-* **The font was the "design looks off" report.** The copy button prints its raw slider keys, and the
-  owner's paste said **`font: game`** — which on the proposal page is *Game (Trebuchet)*. The build
-  had shipped **Chunky (Verdana 900)**, whose key would print as `font: classic`. So the digits were
-  a different typeface from the strip they picked. Criticals are now Game (Trebuchet) at the tuned
-  32px, normals 17px, both at the page's weight.
-* **The crit fill is the page's, not a sticker.** Strip B draws the number as a **cream→gold gradient
-  clipped to the glyphs** (`#fff3b0 → #ffc93c`) with a **.6px maroon stroke** and two soft drop
-  shadows — not the flat gold fill under a heavy 4-way dark outline the game had. Skill crits get the
-  same treatment in silver-blue.
-* **One addition for the real map:** the page previews strip B on a dark background, where its thin
-  stroke reads fine; on Prontera's bright grass it washes out (the page's own research notes a hard
-  outline is what keeps digits legible there). A **1px dark drop-shadow rim** was added to the page's
-  recipe, so the look survives bright ground without going back to the thick outline. Rendered proof:
-  the four-row comparison in the report.
-* **The burst breathes for its whole life** now: the page's own curve (overshoot to ×1.25 at 30%,
-  settle with a small random rotation wobble, slow bloom to ×1.05), not a 0.32s pop that then froze.
-* **Unchanged:** the frame geometry and centring from v71, colours, no CRIT chip, the v69 motion
-  (arc punch, sway-up-fade-left, hold-then-fade from 55% of 1.05s), burst sizing from the number,
-  and the v67 screen projection.
-
-## BUILD v71 — the crit explode frame is centred on the digits again
-
-* **What the owner saw:** after PR #29 the critical numbers did not look like the proposal page they
-  were picked from. They were right — the frame was being drawn **half a burst up and left of the
-  number**, so it read as a sun sitting beside the digits rather than a splash behind them.
-* **The bug:** the pop animation sat on the `<svg>` *inside* the centred `.fburst` box. Its keyframes
-  carry `translate(-50%,-50%)`, and on the svg that resolves against the svg's own width and height —
-  a second half-box shift added on top of the box's own centring. The impact ring (which was animated
-  correctly) stayed on the digits, which is what made the mismatch obvious.
-* **Also restored to the proposal's own burst while fixing it:** the middle layer is the proposal's
-  **8-spike inner star + pale core** again (a flat `r=26` gold disc had swallowed the middle of the
-  starburst); the speed-lines are a **random spray** — length, thickness, angle, travel and duration
-  all vary, 9 on a critical and 8 on a skill critical — instead of an even pinwheel; and the burst and
-  ring follow the proposal's sizing (`max(2×fs, len×fs×.84)` wide, `2.5×fs` tall, ring `1.4×fs`).
-* **Unchanged:** the colours, the 32px chunky digits, the absence of a CRIT chip, the v69 motion (arc
-  punch on spawn, sway up then fade drifting left, hold-then-fade from 55% of the 1.05s life), the
-  number-first sizing rule for 6–7 digit crits, and the v67 screen-projection registration.
-* **Dev-only:** `Updates/damage-floats-proposal/` is the tuner page these settings come from — its
-  strip B is now the same geometry the game draws, so the two can be compared side by side.
-
-## BUILD v70 — crit 32px, short form from 100K (on top of v68/v69 of this session)
-
-* **Damage numbers rebuilt to the owner's tuned pick (v69):** Verdana-900 chunky digits (17px normal, 32px critical after the v70 trim), arc punch on spawn, numbers spawn centred on the mob and **sway up then fade drifting left**, holding solid until 55% of their 1.05s life. Criticals and skill criticals carry the **restored explode frame** — irregular red starburst, speed-line streaks and an impact ring sized from the number (up to 7 digits), with **no "CRIT" chip**; skill criticals get their own silver-blue `skill-critical` look instead of borrowing the normal crit's.
-* **Short form now starts at 100K (v70, the owner's rule):** 100,000 reads "100K", 1,000,000 reads "1M", and everything below — 99,999 included — stays in full digits. The Settings toggle still switches every float to full digits everywhere.
-* **v68:** the skill-name banner moved above the hero's head (world height 3.65, was forehead-level 3.15); multi-cast slots still stagger upward.
-* **Dev-only:** `Updates/damage-floats-proposal/` is the live tuner page that produced these settings (open with `python3 tools/preview_server.py 8000` → `/`; it has a **📋 Copy my selection** button). The weapon page moved to `/weapons`. Nothing in the proposal folder ships to players.
 ## BUILD v67 — moderated movement, fixed combat floats, server-timed cloud idle claims
 
 * **Movement dialed back:** the speed is now exactly halfway between the old formula and v66's proposed slowdown. AGI 99 is **8.12** instead of 11.45 units/s (about **29.1% slower**, not 58%); AGI 120 is **8.68** instead of 12.5 (about **30.5% slower**, not 61%). The Speed x2/x4 button is unchanged.
