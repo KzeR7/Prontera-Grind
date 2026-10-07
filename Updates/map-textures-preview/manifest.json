@@ -1,0 +1,662 @@
+[
+  {
+    "slot": "grass_olive",
+    "title": "1. grass_olive — Prontera / Izlude Meadow Grass",
+    "stages": "Stages 0, 1, 5, 7",
+    "cur_img": "tex/cur_grass_olive.png",
+    "cur_note": "Blurry 100x100 screenshot crop (prt_fild08_1.jpg)",
+    "options": [
+      {
+        "label": "Option A (Primary .gnd)",
+        "img": "tex/prt_cho-won01.png",
+        "kr": "필드바닥\\prt_초원01.bmp",
+        "dim": "256x256",
+        "desc": "#1 on prt_fild08.gnd (15,741 cells) & prontera.gnd (6,189 cells)"
+      },
+      {
+        "label": "Option B (Renewal HD)",
+        "img": "tex/prt_city_g01.png",
+        "kr": "prontera_re\\prt_city_g01.bmp",
+        "dim": "512x512",
+        "desc": "Official Renewal HD Prontera lush meadow grass"
+      },
+      {
+        "label": "Option C (Clearing Accent)",
+        "img": "tex/prt_cho-won04.png",
+        "kr": "필드바닥\\prt_초원04.bmp",
+        "dim": "256x256",
+        "desc": "prt_fild08.gnd (2,650 cells) grass with natural worn earth patch"
+      }
+    ]
+  },
+  {
+    "slot": "grass_forest",
+    "title": "2. grass_forest — Payon / Prontera Dark Forest Grass",
+    "stages": "Stages 0, 1, 2, 4, 6",
+    "cur_img": "tex/cur_grass_forest.png",
+    "cur_note": "Darkened 95x95 screenshot crop (prt_fild08_1.jpg)",
+    "options": [
+      {
+        "label": "Option A (Payon Primary .gnd)",
+        "img": "tex/sup-sok-badak-01.png",
+        "kr": "필드바닥\\숲속바닥-01.bmp",
+        "dim": "256x256",
+        "desc": "#1 on pay_fild08.gnd (17,307 cells) & payon.gnd (9,848 cells)"
+      },
+      {
+        "label": "Option B (Izlude/Prontera Mossy)",
+        "img": "tex/prt_cho-won06.png",
+        "kr": "필드바닥\\prt_초원06.bmp",
+        "dim": "256x256",
+        "desc": "#1 on izlude.gnd (5,169 cells) & prt_fild08 (1,789 cells) mossy stones"
+      },
+      {
+        "label": "Option C (Dense Clover/Stone)",
+        "img": "tex/prt_cho-won08.png",
+        "kr": "필드바닥\\prt_초원08.bmp",
+        "dim": "256x256",
+        "desc": "#2 on izlude.gnd (4,913 cells) dark clover & field stones"
+      }
+    ]
+  },
+  {
+    "slot": "grass_geffen",
+    "title": "3. grass_geffen — Geffen Mystic Blue-Green Turf",
+    "stages": "Stages 2 (Geffen), 9 (Abyss)",
+    "cur_img": "tex/cur_grass_geffen.png",
+    "cur_note": "100x100 screenshot crop (gef_fild04_2.jpg)",
+    "options": [
+      {
+        "label": "Option A (Geffen Emerald-Teal)",
+        "img": "tex/geffen-field-04.png",
+        "kr": "필드바닥\\게펜필드-04.bmp",
+        "dim": "256x256",
+        "desc": "gef_fild04.gnd (10,055 cells) cool blue-green Geffen turf"
+      },
+      {
+        "label": "Option B (Geffen #1 Lichen)",
+        "img": "tex/geffen-field-01.png",
+        "kr": "필드바닥\\게펜필드-01.bmp",
+        "dim": "256x256",
+        "desc": "#1 on gef_fild04.gnd (13,250 cells) pale lichen-dappled grass"
+      },
+      {
+        "label": "Option C (Geffen Blend)",
+        "img": "tex/geffen-field-00.png",
+        "kr": "필드바닥\\게펜필드-00.bmp",
+        "dim": "256x256",
+        "desc": "gef_fild04.gnd clover & lichen transition turf"
+      }
+    ]
+  },
+  {
+    "slot": "grass_jade",
+    "title": "4. grass_jade — Louyang Highland Jade Grass",
+    "stages": "Stage 6 (Louyang)",
+    "cur_img": "tex/cur_grass_jade.png",
+    "cur_note": "Screenshot crop with @grid lines baked in!",
+    "options": [
+      {
+        "label": "Option A (Louyang #1 .gnd)",
+        "img": "tex/jung-guk-badak06.png",
+        "kr": "필드바닥\\중국바닥06.bmp",
+        "dim": "256x256",
+        "desc": "#1 on lou_fild01.gnd (30,407 cells) & louyang.gnd (20,762 cells)"
+      },
+      {
+        "label": "Option B (Louyang Wildflower)",
+        "img": "tex/jung-guk-badak05.png",
+        "kr": "필드바닥\\중국바닥05.bmp",
+        "dim": "256x256",
+        "desc": "lou_fild01.gnd (935 cells) wildflower-flecked highland grass"
+      },
+      {
+        "label": "Option C (Comodo Tropical)",
+        "img": "tex/hae-byeon-pul04.png",
+        "kr": "필드바닥\\해변풀바닥04.bmp",
+        "dim": "256x256",
+        "desc": "#1 grass on cmd_fild01.gnd (7,414 cells) lush tropical turf"
+      }
+    ]
+  },
+  {
+    "slot": "grass_blossom",
+    "title": "5. grass_blossom — Amatsu Spring Meadow Grass",
+    "stages": "Stage 7 (Amatsu)",
+    "cur_img": "tex/cur_grass_blossom.png",
+    "cur_note": "100x100 screenshot crop (ama_fild01_1.jpg)",
+    "options": [
+      {
+        "label": "Option A (Amatsu #1 .gnd)",
+        "img": "tex/il-bon-badak11.png",
+        "kr": "필드바닥\\일본바닥11.bmp",
+        "dim": "256x256",
+        "desc": "#1 on ama_fild01.gnd (29,154 cells) & amatsu.gnd (7,077 cells)"
+      },
+      {
+        "label": "Option B (Amatsu Garden Stone)",
+        "img": "tex/il-bon-badak04.png",
+        "kr": "필드바닥\\일본바닥04.bmp",
+        "dim": "256x256",
+        "desc": "amatsu.gnd mossy Japanese garden stepping-stone grass"
+      },
+      {
+        "label": "Option C (Amatsu Meadow Blend)",
+        "img": "tex/il-bon-badak10.png",
+        "kr": "필드바닥\\일본바닥10.bmp",
+        "dim": "256x256",
+        "desc": "ama_fild01.gnd (1,458 cells) spring grass-to-earth blend"
+      }
+    ]
+  },
+  {
+    "slot": "dirt_path",
+    "title": "6. dirt_path — Prontera / Field Packed Dirt Road",
+    "stages": "Stages 0, 1, 2, 6, 7",
+    "cur_img": "tex/cur_dirt_path.png",
+    "cur_note": "Mirror-blended wood-grain artifact from screenshot!",
+    "options": [
+      {
+        "label": "Option A (Prontera #1 Dirt .gnd)",
+        "img": "tex/prt_heuk02.png",
+        "kr": "필드바닥\\prt_흙02.bmp",
+        "dim": "256x256",
+        "desc": "#1 dirt road on prt_fild08.gnd (6,723 cells) & prontera.gnd"
+      },
+      {
+        "label": "Option B (Louyang/Amatsu Dirt)",
+        "img": "tex/jung-guk-badak08.png",
+        "kr": "필드바닥\\중국바닥08.bmp",
+        "dim": "256x256",
+        "desc": "lou_fild01.gnd (1,334 cells) warm ochre packed dirt trail"
+      },
+      {
+        "label": "Option C (Grass-Bordered Road)",
+        "img": "tex/prt_cho-won02.png",
+        "kr": "필드바닥\\prt_초원02.bmp",
+        "dim": "256x256",
+        "desc": "prt_fild08.gnd (1,210 cells) country dirt road with grass borders"
+      }
+    ]
+  },
+  {
+    "slot": "dirt_payon",
+    "title": "7. dirt_payon — Payon Dark Woodland Soil & Path",
+    "stages": "Stage 4 (Payon)",
+    "cur_img": "tex/cur_dirt_payon.png",
+    "cur_note": "100x100 screenshot crop with mirror seam",
+    "options": [
+      {
+        "label": "Option A (Payon #1 Soil .gnd)",
+        "img": "tex/sup-sok-badak-06.png",
+        "kr": "필드바닥\\숲속바닥-06.bmp",
+        "dim": "256x256",
+        "desc": "#1 woodland soil on pay_fild04.gnd (4,520 cells) & payon.gnd"
+      },
+      {
+        "label": "Option B (Moss-Bordered Soil)",
+        "img": "tex/sup-sok-badak-10.png",
+        "kr": "필드바닥\\숲속바닥-10.bmp",
+        "dim": "256x256",
+        "desc": "pay_fild04.gnd (1,123 cells) mossy dark forest trail"
+      },
+      {
+        "label": "Option C (Payon Village Brick)",
+        "img": "tex/payon-maeul-03.png",
+        "kr": "필드바닥\\페이욘마을바닥-03.bmp",
+        "dim": "256x256",
+        "desc": "payon.gnd village timber-and-brick walkway"
+      }
+    ]
+  },
+  {
+    "slot": "ruin_cobble",
+    "title": "8. ruin_cobble — Prontera Plaza & Ancient Cobblestone",
+    "stages": "Stages 0, 1, 2, 3, 6, 7, 8",
+    "cur_img": "tex/cur_ruin_cobble.png",
+    "cur_note": "Tiny 65x65 angled screenshot crop (gef_fild04_1.jpg)",
+    "options": [
+      {
+        "label": "Option A (Prontera #1 Street)",
+        "img": "tex/prt_dosi02.png",
+        "kr": "필드바닥\\prt_도시02.bmp",
+        "dim": "256x256",
+        "desc": "#1 street cobble on prontera.gnd (15,191 cells) & izlude.gnd"
+      },
+      {
+        "label": "Option B (Prontera Radial Plaza)",
+        "img": "tex/prt_dosi01.png",
+        "kr": "필드바닥\\prt_도시01.bmp",
+        "dim": "256x256",
+        "desc": "prontera.gnd (1,458 cells) iconic radial fountain fan-paving"
+      },
+      {
+        "label": "Option C (Geffen Dark Slate)",
+        "img": "tex/gef_00.png",
+        "kr": "필드바닥\\gef_00.bmp",
+        "dim": "256x256",
+        "desc": "geffen.gnd (1,341 cells) dark blue-grey crazy-paving flagstones"
+      }
+    ]
+  },
+  {
+    "slot": "sand",
+    "title": "9. sand — Morocc Sograt Desert Sand",
+    "stages": "Stage 3 (Morocc)",
+    "cur_img": "tex/cur_sand.png",
+    "cur_note": "Washed-out 75x75 screenshot crop with + seam",
+    "options": [
+      {
+        "label": "Option A (Morocc #1 Sand .gnd)",
+        "img": "tex/moc_maen-ttang08.png",
+        "kr": "필드바닥\\moc_맨땅08.bmp",
+        "dim": "256x256",
+        "desc": "#1 on morocc.gnd (14,535 cells) & moc_fild04.gnd (8,654 cells)"
+      },
+      {
+        "label": "Option B (Scrub Desert Sand)",
+        "img": "tex/moc_maen-ttang05.png",
+        "kr": "필드바닥\\moc_맨땅05.bmp",
+        "dim": "256x256",
+        "desc": "#1 on moc_fild04.gnd (9,622 cells) desert sand with dry scrub edge"
+      },
+      {
+        "label": "Option C (Morocc Ruin Brick)",
+        "img": "tex/moc_seong-nae01.png",
+        "kr": "필드바닥\\moc_성내01.bmp",
+        "dim": "256x256",
+        "desc": "morocc.gnd sand-dusted ancient sandstone pavement"
+      }
+    ]
+  },
+  {
+    "slot": "sand_dark",
+    "title": "10. sand_dark — Desert Hardpan & Coral Reef Bed",
+    "stages": "Stages 3 (Morocc), 5 (Comodo)",
+    "cur_img": "tex/cur_sand_dark.png",
+    "cur_note": "85x85 screenshot crop with mirror cross",
+    "options": [
+      {
+        "label": "Option A (Morocc Dark Hardpan)",
+        "img": "tex/moc_maen-ttang06.png",
+        "kr": "필드바닥\\moc_맨땅06.bmp",
+        "dim": "256x256",
+        "desc": "moc_fild04.gnd (4,507 cells) desert sand with dark rocky hardpan"
+      },
+      {
+        "label": "Option B (Comodo Shell Gravel)",
+        "img": "tex/hae-byeon-morae07.png",
+        "kr": "필드바닥\\해변모래바닥07.bmp",
+        "dim": "256x256",
+        "desc": "cmd_fild01.gnd coarse coral & shell beach gravel"
+      },
+      {
+        "label": "Option C (Comodo Lagoon Bed)",
+        "img": "tex/hae-byeon-mul01.png",
+        "kr": "필드바닥\\해변물바닥01.bmp",
+        "dim": "256x256",
+        "desc": "cmd_fild02.gnd (10,127 cells) dark wet reef lagoon floor"
+      }
+    ]
+  },
+  {
+    "slot": "sand_gold",
+    "title": "11. sand_gold — Comodo / Izlude Sunlit Beach Sand",
+    "stages": "Stages 1 (Izlude), 5 (Comodo)",
+    "cur_img": "tex/cur_sand_gold.png",
+    "cur_note": "100x100 screenshot crop with horizontal streaks",
+    "options": [
+      {
+        "label": "Option A (Comodo #1 Beach .gnd)",
+        "img": "tex/hae-byeon-morae01.png",
+        "kr": "필드바닥\\해변모래바닥01.bmp",
+        "dim": "256x256",
+        "desc": "#1 on cmd_fild02.gnd (21,649 cells) & comodo.gnd (8,365 cells)"
+      },
+      {
+        "label": "Option B (Pebble Beach Sand)",
+        "img": "tex/hae-byeon-morae06.png",
+        "kr": "필드바닥\\해변모래바닥06.bmp",
+        "dim": "256x256",
+        "desc": "comodo.gnd sunlit coral sand with natural pebble cluster"
+      },
+      {
+        "label": "Option C (Starfish Coral Sand)",
+        "img": "tex/tae-guk-mulsok15.png",
+        "kr": "필드바닥\\태국물속15.bmp",
+        "dim": "256x256",
+        "desc": "ayothaya.gnd tropical beach sand with starfish & shells"
+      }
+    ]
+  },
+  {
+    "slot": "limestone_pale",
+    "title": "12. limestone_pale — Pale Limestone Curb & Abyss Shore",
+    "stages": "Stages 0 (Prontera), 9 (Abyss)",
+    "cur_img": "tex/cur_limestone_pale.png",
+    "cur_note": "Overexposed white blur from screenshot",
+    "options": [
+      {
+        "label": "Option A (Cut White Limestone)",
+        "img": "tex/alberta-badak-00.png",
+        "kr": "필드바닥\\알베르타마을바닥-00.bmp",
+        "dim": "256x256",
+        "desc": "alberta.gnd crisp white-grey cut limestone ashlar blocks"
+      },
+      {
+        "label": "Option B (Abyss Shore #1 .gnd)",
+        "img": "tex/abi_tex01.png",
+        "kr": "필드바닥\\abi_tex01.bmp",
+        "dim": "256x256",
+        "desc": "#1 on hu_fild05.gnd (21,377 cells) Abyss Lake limestone & scrub"
+      },
+      {
+        "label": "Option C (Limestone Flagstone)",
+        "img": "tex/alberta-badak-2.png",
+        "kr": "필드바닥\\알베르타마을바닥-2.bmp",
+        "dim": "256x256",
+        "desc": "alberta.gnd pale limestone crazy-paving flagstones"
+      }
+    ]
+  },
+  {
+    "slot": "waste_nifl",
+    "title": "13. waste_nifl — Niflheim Dead Ashen Wasteland",
+    "stages": "Stage 8 (Niflheim)",
+    "cur_img": "tex/cur_waste_nifl.png",
+    "cur_note": "115x115 angled screenshot crop (nif_fild01_2.jpg)",
+    "options": [
+      {
+        "label": "Option A (Niflheim #1 Ash .gnd)",
+        "img": "tex/niflheim-badak15.png",
+        "kr": "필드바닥\\니플헤임바닥15.bmp",
+        "dim": "256x256",
+        "desc": "#1 on nif_fild01.gnd (32,164 cells) & niflheim.gnd (36,645 cells)"
+      },
+      {
+        "label": "Option B (Bruised Necrotic Rock)",
+        "img": "tex/niflheim-badak14.png",
+        "kr": "필드바닥\\니플헤임바닥14.bmp",
+        "dim": "256x256",
+        "desc": "#2 on nif_fild01.gnd (4,507 cells) purple necrotic rock & ash"
+      },
+      {
+        "label": "Option C (Niflheim Cracked Cobble)",
+        "img": "tex/niflheim-badak01.png",
+        "kr": "필드바닥\\니플헤임바닥01.bmp",
+        "dim": "256x256",
+        "desc": "niflheim.gnd (729 cells) cracked purple-grey cobblestone road"
+      }
+    ]
+  },
+  {
+    "slot": "rock_abyss",
+    "title": "14. rock_abyss — Abyss Lake Dark Cavern Slate",
+    "stages": "Stages 8, 9 (Abyss Lake)",
+    "cur_img": "tex/cur_rock_abyss.png",
+    "cur_note": "100x100 dark cobble screenshot crop",
+    "options": [
+      {
+        "label": "Option A (Abyss Cavern #1 .gnd)",
+        "img": "tex/abyss-dong-gul03.png",
+        "kr": "필드바닥\\어비스동굴03.bmp",
+        "dim": "256x256",
+        "desc": "#1 on abyss_01.gnd (15,075 cells) dark crystalline cavern rock"
+      },
+      {
+        "label": "Option B (Abyss Blue-Grey Slate)",
+        "img": "tex/abyss-badak1.png",
+        "kr": "필드바닥\\어비스바닥1.bmp",
+        "dim": "256x256",
+        "desc": "#1 on abyss_03.gnd (14,500 cells) blue-grey abyssal slate floor"
+      },
+      {
+        "label": "Option C (Dragon Hoard Gold!)",
+        "img": "tex/abyss-badak6.png",
+        "kr": "필드바닥\\어비스바닥6.bmp",
+        "dim": "256x256",
+        "desc": "abyss_03.gnd (1,536 cells) glittering Dragon Treasure Gold Coins!"
+      }
+    ]
+  },
+  {
+    "slot": "cliff_rock",
+    "title": "15. cliff_rock — Stratified Mountain Cliff Rock",
+    "stages": "Stages 0, 2, 6, 8, 9",
+    "cur_img": "tex/cur_cliff_rock.png",
+    "cur_note": "105x105 screenshot crop (prt_fild08_3.jpg)",
+    "options": [
+      {
+        "label": "Option A (Prontera/Izlude Cliff)",
+        "img": "tex/pron-jeol-byeok-01.png",
+        "kr": "필드바닥\\프론절벽-01.bmp",
+        "dim": "256x256",
+        "desc": "izlude.gnd & Prontera field horizontally stratified cliff rock"
+      },
+      {
+        "label": "Option B (Payon Mossy Cliff)",
+        "img": "tex/pe-wall-001.png",
+        "kr": "필드바닥\\pe-wall-001.bmp",
+        "dim": "256x256",
+        "desc": "pay_fild04.gnd mossy craggy mountain cliff wall"
+      },
+      {
+        "label": "Option C (Abyss Limestone Cliff)",
+        "img": "tex/abi_tex02.png",
+        "kr": "필드바닥\\abi_tex02.bmp",
+        "dim": "256x256",
+        "desc": "#1 cliff on hu_fild05.gnd (8,470 wall cells) jagged limestone"
+      }
+    ]
+  },
+  {
+    "slot": "cliff_sand",
+    "title": "16. cliff_sand / cliff — Desert & Coastal Sandstone Cliff",
+    "stages": "Stages 3 (Morocc), 5 (Comodo)",
+    "cur_img": "tex/cur_cliff_sand.png",
+    "cur_note": "110x110 screenshot crop (moc_fild04_2.jpg)",
+    "options": [
+      {
+        "label": "Option A (Morocc Cliff Wall)",
+        "img": "tex/mo-wall-01.png",
+        "kr": "필드바닥\\mo-wall-01.bmp",
+        "dim": "256x256",
+        "desc": "Morocc stratified desert sandstone cliff wall"
+      },
+      {
+        "label": "Option B (Comodo Coastal Cliff)",
+        "img": "tex/comodo-jeol-byeok01.png",
+        "kr": "필드바닥\\코모도절벽01.bmp",
+        "dim": "256x256",
+        "desc": "cmd_fild01.gnd & comodo.gnd warm coastal sandstone cliff"
+      },
+      {
+        "label": "Option C (Desert Mesa Slope)",
+        "img": "tex/moc_maen-ttang09.png",
+        "kr": "필드바닥\\moc_맨땅09.bmp",
+        "dim": "256x256",
+        "desc": "moc_fild04.gnd eroded desert mesa cliff slope"
+      }
+    ]
+  },
+  {
+    "slot": "riverbank_wall",
+    "title": "17. riverbank_wall — Stone Embankment & Canal Wall",
+    "stages": "Stages 4 (Payon), 7 (Amatsu)",
+    "cur_img": "tex/cur_riverbank_wall.png",
+    "cur_note": "80x80 screenshot crop (ama_fild01_2.jpg)",
+    "options": [
+      {
+        "label": "Option A (Amatsu River Cobble)",
+        "img": "tex/il-bon-badak20.png",
+        "kr": "필드바닥\\일본바닥20.bmp",
+        "dim": "256x256",
+        "desc": "amatsu.gnd stacked river cobble embankment wall"
+      },
+      {
+        "label": "Option B (Grass-Topped Cobble)",
+        "img": "tex/il-bon-badak19.png",
+        "kr": "필드바닥\\일본바닥19.bmp",
+        "dim": "256x256",
+        "desc": "ama_fild01.gnd (1,053 wall cells) grass-rimmed river stone bank"
+      },
+      {
+        "label": "Option C (Payon Cut-Stone Wall)",
+        "img": "tex/pe_smbr04.png",
+        "kr": "기타마을\\pe_smbr04.bmp",
+        "dim": "256x128",
+        "desc": "payon.rsw bridge cut-stone retaining wall"
+      }
+    ]
+  },
+  {
+    "slot": "bridge_planks",
+    "title": "18. bridge_planks — Wooden Bridge & Pier Planks",
+    "stages": "Stages 1 (Izlude), 4 (Payon)",
+    "cur_img": "tex/cur_bridge_planks.png",
+    "cur_note": "72x80 angled screenshot crop (izlude_3.jpg)",
+    "options": [
+      {
+        "label": "Option A (Bolted Pier Planks)",
+        "img": "tex/adinship_01.png",
+        "kr": "기타마을내부\\adinship_01.bmp",
+        "dim": "128x128",
+        "desc": "Seamless bolted wooden pier & ship deck planks"
+      },
+      {
+        "label": "Option B (Lashed Log Bridge)",
+        "img": "tex/prt-bri-00.png",
+        "kr": "외부소품\\prt-bri-00.bmp",
+        "dim": "256x256",
+        "desc": "나무다리.rsm rope-lashed rustic wooden log bridge"
+      },
+      {
+        "label": "Option C (Weathered Planks)",
+        "img": "tex/ch_tile02.png",
+        "kr": "기타마을내부\\ch_tile02.bmp",
+        "dim": "256x128",
+        "desc": "Louyang / Payon warm weathered timber planks"
+      }
+    ]
+  },
+  {
+    "slot": "bridge_red",
+    "title": "19. bridge_red — Amatsu Crimson Lacquer Bridge Deck",
+    "stages": "Stage 7 (Amatsu)",
+    "cur_img": "tex/cur_bridge_red.png",
+    "cur_note": "60x60 screenshot crop (ama_fild01_1.jpg)",
+    "options": [
+      {
+        "label": "Option A (Amatsu Redwood Deck)",
+        "img": "tex/japan_bottom02.png",
+        "kr": "기타마을내부\\japan_bottom02.bmp",
+        "dim": "128x128",
+        "desc": "Amatsu warm crimson-brown wood plank flooring"
+      },
+      {
+        "label": "Option B (Taiko-bashi Deck)",
+        "img": "tex/jp_bridge01_deck.png",
+        "kr": "기타마을\\jp_bridge01.bmp",
+        "dim": "256x128",
+        "desc": "일본_다리1.rsm Amatsu arched bridge deck planks"
+      },
+      {
+        "label": "Option C (Cedar/Redwood Planks)",
+        "img": "tex/xmas_badak1.png",
+        "kr": "기타마을내부\\xmas_바닥1.bmp",
+        "dim": "256x256",
+        "desc": "Rich warm cedar/redwood plank deck"
+      }
+    ]
+  },
+  {
+    "slot": "paddy_water",
+    "title": "20. paddy_water — Louyang Shallow Pool & Stream Bed",
+    "stages": "Stage 6 (Louyang)",
+    "cur_img": "tex/cur_paddy_water.png",
+    "cur_note": "Screenshot crop with @grid lines baked in!",
+    "options": [
+      {
+        "label": "Option A (RO Water Type 2)",
+        "img": "tex/water200.png",
+        "kr": "워터\\water200.jpg",
+        "dim": "128x128",
+        "desc": "Official RO water2 shallow jade-emerald lagoon water"
+      },
+      {
+        "label": "Option B (RO Water Type 5)",
+        "img": "tex/water500.png",
+        "kr": "워터\\water500.jpg",
+        "dim": "128x128",
+        "desc": "Official RO water5 olive-ochre muddy paddy water"
+      },
+      {
+        "label": "Option C (Mossy Stream Bed)",
+        "img": "tex/myo-mul-badak-00.png",
+        "kr": "필드바닥\\묘르닐물바닥-00.bmp",
+        "dim": "256x256",
+        "desc": "Mjolnir shallow mossy stream pebble bed"
+      }
+    ]
+  },
+  {
+    "slot": "water_frame_0_1",
+    "title": "21. water_frame_0 & 1 — Animated Sea / River Caustics",
+    "stages": "Stages 0, 1, 2, 3, 4, 5, 7",
+    "cur_img": "tex/cur_water_frame_0.png",
+    "cur_note": "Cyan diamond grid screenshot crop!",
+    "options": [
+      {
+        "label": "Option A (RO Water Type 0 Pair)",
+        "img": "tex/water000.png",
+        "kr": "워터\\water000.jpg + water004.jpg",
+        "dim": "128x128",
+        "desc": "Official RO Type 0 water (Prontera, Izlude, Geffen, Morocc, Payon, Comodo)"
+      },
+      {
+        "label": "Option B (RO Water Type 1 Pair)",
+        "img": "tex/water100.png",
+        "kr": "워터\\water100.jpg + water104.jpg",
+        "dim": "128x128",
+        "desc": "Official RO Type 1 water (prt_fild08, lou_fild01, hu_fild05)"
+      },
+      {
+        "label": "Option C (RO Water Type 2 Pair)",
+        "img": "tex/water200.png",
+        "kr": "워터\\water200.jpg + water204.jpg",
+        "dim": "128x128",
+        "desc": "Official RO Type 2 water (bright tropical turquoise)"
+      }
+    ]
+  },
+  {
+    "slot": "water_dark_0_1",
+    "title": "22. water_dark_0 & 1 — Animated Abyssal / Dark Water",
+    "stages": "Stage 9 (Abyss Lake)",
+    "cur_img": "tex/cur_water_dark_0.png",
+    "cur_note": "Dark screenshot crops with grid lines",
+    "options": [
+      {
+        "label": "Option A (RO Water Type 3 Pair)",
+        "img": "tex/water300.png",
+        "kr": "워터\\water300.jpg + water304.jpg",
+        "dim": "128x128",
+        "desc": "Official RO Type 3 water (ama_fild01 & deep indigo dungeons)"
+      },
+      {
+        "label": "Option B (RO Water Type 1 Pair)",
+        "img": "tex/water100.png",
+        "kr": "워터\\water100.jpg + water104.jpg",
+        "dim": "128x128",
+        "desc": "Official RO Type 1 water (actual hu_fild05.rsw Abyss Lake water)"
+      },
+      {
+        "label": "Option C (RO Water Type 8 Swamp)",
+        "img": "tex/water800.png",
+        "kr": "워터\\water800.jpg",
+        "dim": "128x128",
+        "desc": "Official RO Type 8 water (murky green algae swamp)"
+      }
+    ]
+  }
+]
