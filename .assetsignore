@@ -17,6 +17,8 @@ image-search/
 # --- Updates/ : only Sprite/ ships (the animated class PNGs) -------------------
 Updates/ApngAnimation/
 Updates/cards-gear-audit/
+Updates/damage-floats-proposal/
+Updates/crit-frame-compare/
 Updates/map-sprites-v2/
 Updates/retired-v1-kit/
 Updates/v27-organic-field/

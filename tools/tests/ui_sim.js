@@ -494,6 +494,11 @@ t('damage floats stay screen-projected, restrained, and distinct by type', () =>
   F.pl.x=8;vm.runInContext(draw,scene);
   assert.strictEqual(F.floats[3].el.style.left,'80px','skill names must track the moving hero');
   assert.strictEqual(F.floats[1].el.className,'fl critical');
+  const critHtml=F.floats[1].el.innerHTML;
+  assert.ok(critHtml.includes('class="fburst"')&&critHtml.includes('class="fring"'),'a critical float carries the explode frame');
+  assert.strictEqual((critHtml.match(/class="fstreak"/g)||[]).length,9,'a critical sprays 9 speed-line streaks');
+  assert.ok(critHtml.includes('class="fburst" style="width:108px'),'the burst box is sized from the finished number (1896 -> max(64, 4*32*.84) = 108)');
+  assert.strictEqual(F.floats[0].el.innerHTML,undefined,'ordinary hits stay plain text, with no frame markup');
 });
 
 t('Zeny and kill rates refresh every second using a rolling minute and reset after stalls', () => {

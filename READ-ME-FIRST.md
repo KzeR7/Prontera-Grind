@@ -80,6 +80,26 @@ is the live one; with no argument the tool prints how to set a new one). Since v
 `GM` / `test1234`; `localStorage.removeItem('pg_gm_local')` removes it. Normal accounts are made
 in-game and stored in the browser (`pg_acc4`; saves under `pg_save3_<user>`).
 
+## BUILD v71 — the crit explode frame is centred on the digits again
+
+* **What the owner saw:** after PR #29 the critical numbers did not look like the proposal page they
+  were picked from. They were right — the frame was being drawn **half a burst up and left of the
+  number**, so it read as a sun sitting beside the digits rather than a splash behind them.
+* **The bug:** the pop animation sat on the `<svg>` *inside* the centred `.fburst` box. Its keyframes
+  carry `translate(-50%,-50%)`, and on the svg that resolves against the svg's own width and height —
+  a second half-box shift added on top of the box's own centring. The impact ring (which was animated
+  correctly) stayed on the digits, which is what made the mismatch obvious.
+* **Also restored to the proposal's own burst while fixing it:** the middle layer is the proposal's
+  **8-spike inner star + pale core** again (a flat `r=26` gold disc had swallowed the middle of the
+  starburst); the speed-lines are a **random spray** — length, thickness, angle, travel and duration
+  all vary, 9 on a critical and 8 on a skill critical — instead of an even pinwheel; and the burst and
+  ring follow the proposal's sizing (`max(2×fs, len×fs×.84)` wide, `2.5×fs` tall, ring `1.4×fs`).
+* **Unchanged:** the colours, the 32px chunky digits, the absence of a CRIT chip, the v69 motion (arc
+  punch on spawn, sway up then fade drifting left, hold-then-fade from 55% of the 1.05s life), the
+  number-first sizing rule for 6–7 digit crits, and the v67 screen-projection registration.
+* **Dev-only:** `Updates/damage-floats-proposal/` is the tuner page these settings come from — its
+  strip B is now the same geometry the game draws, so the two can be compared side by side.
+
 ## BUILD v70 — crit 32px, short form from 100K (on top of v68/v69 of this session)
 
 * **Damage numbers rebuilt to the owner's tuned pick (v69):** Verdana-900 chunky digits (17px normal, 32px critical after the v70 trim), arc punch on spawn, numbers spawn centred on the mob and **sway up then fade drifting left**, holding solid until 55% of their 1.05s life. Criticals and skill criticals carry the **restored explode frame** — irregular red starburst, speed-line streaks and an impact ring sized from the number (up to 7 digits), with **no "CRIT" chip**; skill criticals get their own silver-blue `skill-critical` look instead of borrowing the normal crit's.
