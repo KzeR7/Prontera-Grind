@@ -184,6 +184,9 @@ hr{border:0;border-top:1px dashed var(--edge);margin:6px 0}
 .mapcard.on{background:#ffe08a;border-color:var(--gold)}
 .mapcard.here{box-shadow:inset 0 0 0 2px #2f6fd6}
 .mapcard.town-card{border-color:#7c9a5a;background:#f3f8ea}.mapcard.town-card:hover{background:#e2f0cf}
+/* the town while it is shut (TOWN_OPEN): a card that says so, with no way in to click */
+.mapcard.closed{border-style:dashed;background:#f2f2f0;color:#6b6b64;cursor:default;opacity:.85}
+.mapcard.closed:hover{background:#f2f2f0}
 .npcrow{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,118px),1fr));gap:5px;margin:4px 0}
 .npcchip{display:flex;flex-direction:column;gap:1px;padding:4px 6px;border:2px solid var(--edge);border-radius:6px;background:#fffdf5;line-height:1.2;min-width:0}
 .npcchip b{font-size:11px;white-space:nowrap;text-overflow:ellipsis;overflow:hidden}.npcchip small{font-size:9px;opacity:.75}
@@ -520,7 +523,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // script block, which is a SyntaxError - the game did not run on main at all. One line wins, and
 // it names both sides of this merge: the v38 balance patch (the weapon cut, the affix/card
 // give-back) and main's weapon-hold rendering work.
-const BUILD='2026-10-07 grind-v76 crit frames + HD Prontera Town: a paved market square, a buttressed city wall and the sunken river';   // shown on the login card - confirms which file you loaded
+const BUILD='2026-10-07 grind-v77 crit frames + HD Prontera Town: locked until the owner opens it, houses facing the square, nothing floating or overlapping';   // shown on the login card - confirms which file you loaded
 $('buildTag').textContent='build '+BUILD;
 
 // ---------- class tree: Novice -> 6 first jobs -> 6 second jobs -> 6 third jobs ----------
@@ -2449,8 +2452,10 @@ const V={
       <div class="mapband-t">Maps <small>&middot; click one to see its stages below</small></div>
       <div class="mapgrid">${MAPS.map((m,i)=>{const cur=i===mapM,here=i===S.mp;
         return`<button class="mapcard${cur?' on':''}${here?' here':''}" data-a="selm" data-v="${i}" title="${m.n} - ${m.t}">
-          <b>${m.n}</b><small>${here?'● ':''}${m.rec}</small></button>`}).join('')}<button class="mapcard town-card${S.town?' here':''}" data-a="town" title="Prontera Town - the safe town: no monsters, no drops, five NPCs to talk to, a fountain plaza to walk">
-          <b>🏘 Prontera Town</b><small>${S.town?'● Safe town':'Safe · no mobs'}</small></button></div></div>
+          <b>${m.n}</b><small>${here?'● ':''}${m.rec}</small></button>`}).join('')}${townUnlocked()?`<button class="mapcard town-card${S.town?' here':''}" data-a="town" title="Prontera Town - the safe town: no monsters, no drops, five NPCs to talk to, a fountain plaza to walk">
+          <b>🏘 Prontera Town</b><small>${S.town?'● Safe town':'Safe · no mobs'}</small></button>`
+        :`<div class="mapcard town-card closed" title="Prontera Town is not open yet - it is still being finished">
+          <b>🔒 Prontera Town</b><small>Closed · being finished</small></div>`}</div></div>
     ${townBand}
     <div class="mapcols">
       <div class="mob-card"><div class="hd">${mp.n} Stage ${mapL}${mapM<5&&mapL<=5?`<br><small>${mapM===0?'Novice start · Base Lv 1–10':'Early class route · Base Lv 10–20'} · gentle packs</small>`:''}</div>
@@ -4983,6 +4988,18 @@ const TOWN_NPC=[
    cls:'High Wizard',sex:'m',hair:7,x:3.8,z:-14.2},
   {id:'smith',name:'Smith Gordon',job:'Forge & market · gear and drops',who:'Drops, ore & refine',
    cls:'Whitesmith',sex:'m',hair:2,x:7.3,z:-11.3}];
+// ----- the town is closed while it is being finished -----------------------------------------
+// ONE switch, and it is shut: the owner asked for the town to be blocked until the game opens to
+// the public. While it is shut no route into the town works - not the World Map card, not the
+// console helper - and the HD atlas (9.6 MB) is not even requested, so a player who cannot get in
+// never pays for the download. Leaving is never blocked: a gate must not trap somebody inside.
+// The owner opens it again without a rebuild with `window.townUnlock()` in the browser console
+// (or `localStorage.setItem('pg_town_open','1')`); the GM account is always let through; and
+// flipping TOWN_OPEN to true opens it for everybody.
+const TOWN_OPEN=false;
+const townUnlocked=()=>!!(TOWN_OPEN||(S&&S.gm)||lsGet('pg_town_open')==='1');
+function townUnlock(){try{localStorage.setItem('pg_town_open','1')}catch(e){mem.pg_town_open='1'}
+  return townUnlocked()}
 const TOWN={on:0,scene:0,g:null,zoom:1,list:[],keys:{},near:null,talk:null,pending:null,marker:null,markerT:0,
   spray:[],hint:'',at:0,plaza:null,kerb:null,kerbBlk:null,houseBlk:null,houseKit:null,kitArt:0};
 let TOWN_TAP=null;                      // the last canvas press, so a click can be told from a drag
@@ -5026,8 +5043,36 @@ const TOWN_BLK={house:.62,tree:10.0,lamp:5.4,banner:7.0,bench:1.3,bed:1.3,statue
 // design per slot, so what a player sees before the pack loads is what they get after it.
 const RING_DESIGNS=['house_town_a','house_inn','house_shop','house_tall','house_stone',
   'house_chapel','house_timber','guild_hall'];
+// How far each painted sprite is sunk INTO the ground, as a fraction of its own height. Measured,
+// not guessed - `python3 tools/measure_town_ground.py` re-measures them from the atlas and
+// `--check` fails when this table goes stale. The rule: for every column of the sprite, find the
+// lowest painted pixel; take the median of those over the columns that reach into the lower half
+// of the art (so a roof eave or a canopy edge cannot drag the number up); sink the sprite by that
+// much. The buildings are painted in three-quarter view, so their base is a parallelogram whose
+// near corner is the lowest pixel of the crop: hung by that corner, the rest of the wall - up to a
+// whole unit of it on a house - stands in the air above its own shadow, which is what "all houses
+// and trees look like it floats" was looking at. Sinking by the median plants the middle of the
+// base on the ground; the ground is opaque and the camera looks down at it, so the near corner
+// that goes under is simply hidden.
+const TOWN_SINK={banner_pole:.016,bench:.275,cathedral:.113,flower_bed:.063,flower_bed2:.037,
+  fountain:.038,gate_arch:.051,guild_hall:.100,house_chapel:.093,house_inn:.056,house_shop:.107,
+  house_stone:.059,house_tall:.034,house_timber:.074,house_town_a:.090,lamp_post:.016,
+  stall_blue:.105,stall_red:.086,statue_hero:.024,tree_big:.032};
+// The gate and its curtain wall are ONE building, so they wear one palette - and it is the gate's
+// own: `stone` is the mean colour of the painted arch's towers (measured off the art), `lite` its
+// sunlit face, `roof` its roof tiles. The wall used to be pale limestone with blue cones next to a
+// brown castle gate, which is what "the entrance is brown castle like but the wall beside it is
+// white & blue roof, not relatable at all" was looking at.
+const TOWN_MASON={stone:0x8c6341,stone2:0x7a5537,lite:0xa77850,dark:0x5f3f2c,roof:0xa55032,
+  slit:0x2a1c14};
+// The north recess. The terrace and the cathedral own the head of the square, so the two ring
+// slots either side of them stand back instead of standing in the terrace's footprint (that
+// overlap is what "above the fountain there is a platform, it is overlapping with the buildings"
+// was). `from` is the |sin| of the slot's angle above which a slot is counted as north-facing.
+const TOWN_RECESS={back:3.1,from:.62};
 function townPackFetch(){
-  if(typeof fetch!=='function'||typeof Image!=='function')return;
+  if(TOWNP.started||typeof fetch!=='function'||typeof Image!=='function')return;
+  TOWNP.started=1;          // townEnter asks every time it opens; the art is only ever fetched once
   try{
     fetch('assets/town/town-atlas.json').then(r=>r&&r.ok?r.json():null).catch(()=>null).then(man=>{
       if(!man||!man.sprites)return; TOWNP.man=man;
@@ -5078,21 +5123,61 @@ function townShadowTexture(kind){
 }
 // `units` is how tall the sprite should stand in world units (the sprite is scaled from its own
 // pixels, so the art never stretches). The group's origin is the ground point at the sprite's feet.
-function townSprite(name,units,flip){
-  const t=townCrop(name,flip);if(!t)return null;
+// `opt` carries what a building needs and a lamp post does not:
+//   yaw   - a fixed facing, in radians. With one, the sprite is a FACADE: a plane nailed to the
+//           ground at that angle, the way a real house front is, instead of a THREE.Sprite, which
+//           swings round to keep facing the camera. A gate and a whole street of houses that turn
+//           as you orbit is what "the gate & all houses spins together with the camera" was.
+//   solid - the depth, in world units, of the body that stands behind the facade, so a building
+//           has a back and two sides when the camera is not square on to its front. Props omit it.
+function townSprite(name,units,flip,opt){
+  const o=opt||{},t=townCrop(name,flip);if(!t)return null;
   const e=TOWNP.man.sprites[name],k=units/e.h,G2=new THREE.Group();
-  const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:t,transparent:true,alphaTest:.2}));
-  sp.center.set(.5,0);sp.scale.set(e.w*k,e.h*k,1);G2.add(sp);
-  const w=e.w*k;                                    // how wide the sprite stands, in world units
+  const w=e.w*k,h=e.h*k,sink=(TOWN_SINK[name]||0)*h;    // see TOWN_SINK: plant the base, not the corner
+  if(o.yaw!=null){
+    const fa=new THREE.Mesh(new THREE.PlaneGeometry(w,h),
+      new THREE.MeshBasicMaterial({map:t,transparent:true,alphaTest:.2,side:THREE.DoubleSide}));
+    fa.position.set(0,h/2-sink,0);fa.userData.face=name;G2.add(fa);
+    G2.rotation.y=o.yaw;                                // the group is turned; the camera is not followed
+    if(o.solid){                                        // a body behind the front, under the roof line
+      const d=Math.min(o.solid,h*.9),bw=w*.94,bh=h*.62;
+      const bd=mk(G2,BX(bw,bh,d),o.colour||TOWN_MASON.stone,0,bh/2-sink,-d/2-.02);
+      bd.receiveShadow=true;
+    }
+  }else{
+    const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:t,transparent:true,alphaTest:.2}));
+    sp.center.set(.5,0);sp.scale.set(w,h,1);sp.position.y=-sink;G2.add(sp);
+  }
+  // how wide the sprite stands, in world units
   const layer=(kind,sw,sd,y,op,fwd)=>{
     const tex=townShadowTexture(kind);if(!tex)return;
     const sh=new THREE.Mesh(new THREE.PlaneGeometry(w*sw,w*sd),
       new THREE.MeshBasicMaterial({map:tex,transparent:true,depthWrite:false,opacity:op}));
     sh.rotation.x=-Math.PI/2;sh.position.set(0,y,w*fwd);sh.renderOrder=-1;G2.add(sh);
   };
-  layer('soft',1.22,.44,.026,.85,.05);
-  layer('core',.74,.24,.034,.80,.045);
-  G2.userData.art=name;return G2;
+  // A contact shadow, not a puddle: the core is tight and dark and sits right under the feet (it
+  // is the thing that pins the sprite down), the soft ring is only a little wider and much
+  // fainter. The old pair was nearly twice this wide and half as dark, which read as a pale pool
+  // hovering under the art rather than the shadow of something standing on the ground.
+  layer('soft',1.10,.36,.026,.70,.05);
+  layer('core',.70,.22,.034,1,.045);
+  G2.userData.art=name;G2.userData.yaw=(o.yaw==null?null:o.yaw);return G2;
+}
+// ----- what a prop may not stand in ----------------------------------------------------------
+// The town's fixed pieces, as the footprints they occupy, so a tree (or a flower bed) can be
+// placed against them instead of being sprinkled on an arc. townBuild() fills this in as it goes;
+// townClear() is the question the tree ring asks. Houses are taken as their axis-aligned box
+// turned by their own facing, which is a shade generous - the right way round for a clearance.
+const townBlockers=[];
+const townAddBlocker=(x,z,hw,hd,kind)=>{townBlockers.push({x:x,z:z,hw:hw,hd:hd,kind:kind||'fix'})};
+// `kind` narrows the question: a tree is tested against everything, a flower bed only against the
+// houses (a bed laid beside a street is a bed beside a street; a bed inside a wall is not).
+function townClear(x,z,r,kind){
+  for(const b of townBlockers){
+    if(kind&&b.kind!==kind)continue;
+    if(Math.abs(x-b.x)<b.hw+r&&Math.abs(z-b.z)<b.hd+r)return 0;
+  }
+  return 1;
 }
 // ----- the town scene: built once, kept hidden until the player walks in ----------------------
 function townBuild(){
@@ -5100,7 +5185,14 @@ function townBuild(){
   const G=new THREE.Group();G.visible=false;scene.add(G);TOWN.g=G;
   const C={grass:0x7cc46a,grass2:0x6cb954,cob:0xcfc6b0,path:0xd9cfb6,stone:0xd8d4c8,stone2:0xbdb7a8,
     wall:0xf6ead0,wall2:0xf2e2c0,roof:0xc03a2e,roof2:0xa82e26,roofBlue:0x3f6fb5,wood:0x6b4a2a,
-    trim:0xf8f0dc,water:0x5ab8f0,water2:0x9fe0ff,banner:0x3f6fb5,banner2:0xd04a3e,gold:0xd8b83a};
+    trim:0xf8f0dc,water:0x5ab8f0,water2:0x9fe0ff,banner:0x3f6fb5,banner2:0xd04a3e,gold:0xd8b83a,
+    // the gate's own masonry, measured off the painted arch (see TOWN_MASON): the curtain wall,
+    // its towers and the gatehouse are all one building and all wear these
+    mason:TOWN_MASON.stone,mason2:TOWN_MASON.stone2,masonLite:TOWN_MASON.lite,
+    masonDark:TOWN_MASON.dark,masonRoof:TOWN_MASON.roof,
+    // the stand-in houses wear the painted houses' colours (tan walls, terracotta roofs, measured
+    // off house_town_a) so the block street is the street the pack will dress
+    houseWall:0x8a6a44,houseRoof:0xa55032,houseRoof2:0x8f4429,houseTrim:0xc7a877};
   const bx=(x,y,z,w,h,d,c,ry)=>{const m=mk(G,BX(w,h,d),c,x,y+h/2,z);if(ry)m.rotation.y=ry;return m};
   const cy=(x,y,z,r1,r2,h,c,seg)=>{const g=new THREE.CylinderGeometry(r1,r2,h,seg||10);return mk(G,g,c,x,y+h/2,z)};
   const sp=(x,y,z,r,c)=>{const m=mk(G,SP(r),c,x,y,z);return m};
@@ -5275,19 +5367,28 @@ function townBuild(){
   TOWN.kerbBlk=new THREE.Group();G.add(TOWN.kerbBlk);
   for(let i=0;i<36;i++){const a=i*Math.PI/18;bx(Math.cos(a)*TOWN_R,.0,TOWN_Z+Math.sin(a)*TOWN_R,.9,.22,.5,C.stone2,a+Math.PI/2)}
 
-  // the NPC terrace behind the fountain: a low stone platform with pillars and banners
-  const tx0=-14,tx1=14,tz=-20.6,td=6.6;
+  // The NPC terrace behind the fountain: a low stone platform with pillars and banners - the head
+  // of the square, with the five of them standing in front of it. It is narrower and further
+  // forward than it was: the old platform was 28 wide and 6.6 deep at z -20.6, which ran straight
+  // through the two ring houses at the north corners and through their neighbours on the arc -
+  // "above the fountain there is a platform u build, its overlapping with the buildings". It now
+  // sits inside the gap the ring leaves (the corner slots stand back, TOWN_RECESS) and its ends
+  // clear the houses either side of it.
+  const tx0=-7.8,tx1=7.8,tz=-18.4,td=3.6;
+  TOWN.terrace={x0:tx0,x1:tx1,z0:tz-td/2,z1:tz+td/2};
   bx((tx0+tx1)/2,0,tz,tx1-tx0,.42,td,C.stone2);
   bx((tx0+tx1)/2,.42,tz,(tx1-tx0)-.8,.1,td-.8,C.stone);
-  for(const x of[-13.2,-6.6,0,6.6,13.2]){
-    cy(x,.5,tz+td/2-.6,.42,.5,3.6,C.stone2,12);
-    sp(x,4.2,tz+td/2-.6,.3,C.gold);
+  for(const x of[-6,0,6]){
+    cy(x,.5,tz+td/2-.55,.42,.5,3.6,C.stone2,12);
+    sp(x,4.2,tz+td/2-.55,.3,C.gold);
   }
-  for(let i=0;i<3;i++){const x=(i-1)*8.4;          // banners on the back wall
+  for(let i=0;i<3;i++){const x=(i-1)*4.8;          // banners on the back wall
     bx(x,4.4,tz-td/2+.12,.14,1.6,.14,C.wood);
     bx(x,4.9,tz-td/2+.3,1.5,2.3,.08,i%2?C.banner:C.banner2);
   }
-  for(let i=0;i<3;i++)bx(0,.42+i*.14,tz+td/2+.4+i*.5,tx1-tx0-i*2,.14,.5,C.stone2);   // steps down
+  // the steps come DOWN off the front of it (the old ones rose as they came away from the platform)
+  for(let i=0;i<2;i++)
+    bx(0,.28-.14*i,tz+td/2+.28+i*.45,(tx1-tx0)-2.4+i*1.4,.14,.45,C.stone2);
 
   // the ring of buildings: kit billboards once the atlas is loaded, block RO houses until then
   TOWN.houseBlk=new THREE.Group();G.add(TOWN.houseBlk);TOWN.houseKit=new THREE.Group();TOWN.houseKit.visible=false;G.add(TOWN.houseKit);
@@ -5305,7 +5406,9 @@ function townBuild(){
       // west (a mirrored angle list would have walked the east arc backwards - which is exactly the
       // bug the camera board caught: fourteen houses, all of them on the east side, doubled).
       const a=((side>0?-66:114)+k*22)*Math.PI/180;
-      const r=16.7+((k*5+(side>0?0:1))%3)*.75;
+      // the two slots at the head of the square stand back: the terrace and the cathedral own that
+      // end, and a house on the ring arc there is a house standing inside the terrace's platform
+      const r=16.7+((k*5+(side>0?0:1))%3)*.75+(Math.sin(a)<-TOWN_RECESS.from?TOWN_RECESS.back:0);
       ring.push({i:ring.length,a,r,units:0,flip:(side<0)!==(k%2===1),
         x:Math.cos(a)*r,z:TOWN_Z+Math.sin(a)*r});
     }
@@ -5318,9 +5421,15 @@ function townBuild(){
   // ring by the dump (tools/_town_dump.js) rather than by eye. `d` names the design outright, so the
   // stand-in and the painted house always agree; `r` caps the width the way a ring slot does.
   TOWN.street=[
-    {i:14,d:'house_shop', x:-12.6,z:11.4,a:Math.PI,  r:15.0,units:0,flip:false},
-    {i:15,d:'house_stone',x: -9.2,z:14.2,a:Math.PI,  r:15.0,units:0,flip:true},
-    {i:16,d:'house_stone',x: 11.9,z:12.6,a:0,        r:15.0,units:0,flip:false}];
+    {i:14,d:'house_shop', x:-12.6,z:11.4,a:Math.PI,  r:15.0,units:0,flip:false,fx:0,fz:11.4},
+    {i:15,d:'house_stone',x: -9.2,z:14.2,a:Math.PI,  r:15.0,units:0,flip:true, fx:0,fz:14.2},
+    {i:16,d:'house_stone',x: 11.9,z:12.6,a:0,        r:15.0,units:0,flip:false,fx:0,fz:12.6}];
+  // Which way a house faces: towards the thing it fronts on to - the square for the ring, the
+  // avenue for the entrance street. One number, stored on the spot, that BOTH dressings use, so
+  // the painted facade and the block stand-in underneath it look the same way. (They used to face
+  // outwards, so the doors and windows were on the side nobody walks past.)
+  for(const h of ring)h.yaw=Math.atan2((h.fx||0)-h.x,(h.fz==null?TOWN_Z:h.fz)-h.z);
+  for(const h of TOWN.street)h.yaw=Math.atan2((h.fx||0)-h.x,(h.fz==null?TOWN_Z:h.fz)-h.z);
   // a stand-in house is grounded by the same ellipse its painted art will get, so nothing jumps
   const blkShadow=(g2,r)=>{const tex=townShadowTexture('soft');if(!tex)return;
     const sh=new THREE.Mesh(new THREE.PlaneGeometry(r*2.9,r*1.15),
@@ -5335,15 +5444,36 @@ function townBuild(){
     const e=TOWNP.man&&TOWNP.man.sprites?TOWNP.man.sprites[art]:null;
     const tw=(e?TOWN_WH[art]*(e.w/e.h):7.4)*.99;         // the painted house's own footprint
     const w=tw,d=tw*.86,ht=tw*(e?(e.h/e.w):1.25)*TOWN_BLK.house;
-    const g2=new THREE.Group();g2.position.set(h.x,0,h.z);g2.rotation.y=-h.a+Math.PI/2;TOWN.houseBlk.add(g2);
+    h.foot={w:w,d:d};                          // what the spot occupies: the tree ring reads this
+    const g2=new THREE.Group();g2.position.set(h.x,0,h.z);g2.rotation.y=h.yaw;TOWN.houseBlk.add(g2);
     blkShadow(g2,tw/2);                        // the stand-in is grounded like its painted art will be
-    mk(g2,BX(w,ht,d),C.wall,0,ht/2,0);
-    const r2=mk(g2,new THREE.ConeGeometry(Math.max(w,d)*.78,ht*.62,4),h.flip?C.roof:C.roof2,0,ht+ht*.31,0);r2.rotation.y=Math.PI/4;
-    mk(g2,BX(Math.max(w,d)*1.06,.16,.16),0x8a4a2a,0,ht+ht*.62,0);
-    mk(g2,BX(w+.5,.14,d+.5),C.trim,0,ht+.02,0);
+    mk(g2,BX(w,ht,d),C.houseWall,0,ht/2,0);
+    const r2=mk(g2,new THREE.ConeGeometry(Math.max(w,d)*.78,ht*.62,4),h.flip?C.houseRoof:C.houseRoof2,0,ht+ht*.31,0);r2.rotation.y=Math.PI/4;
+    mk(g2,BX(Math.max(w,d)*1.06,.16,.16),C.masonDark,0,ht+ht*.62,0);
+    mk(g2,BX(w+.5,.14,d+.5),C.houseTrim,0,ht+.02,0);
     mk(g2,BX(.9,1.4,.1),C.wood,0,.7,d/2+.02);
     for(const wx of[-w*.28,w*.28])mk(g2,BX(.55,.55,.1),0x9ad7f5,wx,ht*.62,d/2+.02);
   }
+  // ---- what a prop is not allowed to stand in ------------------------------------------------
+  // Every footprint the town's fixed pieces occupy, collected here so the tree ring can be tested
+  // against them instead of being drawn on an arc and hoped for. The house boxes come from the
+  // sizes above (the block footprint, which is the wider of the two dressings, plus a margin);
+  // the rest are the structures themselves.
+  townBlockers.length=0;
+  for(const h of ring.concat(TOWN.street)){
+    // the whole plot, not just the front: the facade stands at the spot and its body runs back
+    // from it, so the plot's middle is half a depth behind the spot
+    const f=h.foot||{w:7.4,d:6.4},c=Math.abs(Math.cos(h.yaw)),s=Math.abs(Math.sin(h.yaw));
+    townAddBlocker(h.x-Math.sin(h.yaw)*f.d/2,h.z-Math.cos(h.yaw)*f.d/2,
+      f.w/2*c+f.d/2*s+.5,f.w/2*s+f.d/2*c+.5,'house');
+  }
+  townAddBlocker((TOWN.terrace.x0+TOWN.terrace.x1)/2,(TOWN.terrace.z0+TOWN.terrace.z1)/2,
+    (TOWN.terrace.x1-TOWN.terrace.x0)/2+.4,(TOWN.terrace.z1-TOWN.terrace.z0)/2+.4);   // the terrace
+  townAddBlocker(0,-31,5.2,4.6);                            // the cathedral
+  townAddBlocker(0,23,33,2.6);                              // the curtain wall, end to end
+  townAddBlocker(0,17.5,75,3.6);                            // the river and its banks
+  townAddBlocker(0,TOWN_Z+9,5.4,16);                        // the avenue, plaza side
+  townAddBlocker(-7.8,9,1.6,1.6);                           // the memorial statue
   // market stalls on the plaza's rim, benches round the fountain, lamps and banners
   const stall=(x,z,ry,c1,c2)=>{
     const g2=new THREE.Group();g2.position.set(x,0,z);g2.rotation.y=ry;G.add(g2);
@@ -5393,14 +5523,16 @@ function townBuild(){
   };
   fstall(-7.0,22.2,.35,C.banner,C.trim,'stall_red');
   fstall( 7.0,22.2,-.35,C.banner2,C.trim,'stall_blue');
+  // The gatehouse wears the same colours as the wall it stands in (TOWN_MASON): it used to be
+  // pale limestone with blue cones beside a brown painted arch, and the two did not relate.
   for(const sx of[-5.4,5.4]){
-    const gt=bx2(sx,0,23,2.1,5.4,2.1,C.stone2);
-    TOWN.tiles.push({m:gt,tile:'limestone_pale',rep:[1.4,3.6]});
-    bx2(sx,5.4,23,2.5,.4,2.5,C.stone);
-    const tp=mk(TOWN.gateBlk,new THREE.ConeGeometry(1.7,1.5,4),C.roofBlue,sx,6.35,23);tp.rotation.y=Math.PI/4;
+    const gt=bx2(sx,0,23,2.1,5.4,2.1,C.mason2);
+    TOWN.tiles.push({m:gt,tile:'cliff',rep:[1.4,3.6]});
+    bx2(sx,5.4,23,2.5,.4,2.5,C.masonLite);
+    const tp=mk(TOWN.gateBlk,new THREE.ConeGeometry(1.7,1.5,4),C.masonRoof,sx,6.35,23);tp.rotation.y=Math.PI/4;
     sp2(sx,7.2,23,.26,C.gold);
   }
-  bx2(0,5.7,23,13,.5,1.1,C.stone);bx2(0,6.25,23,1.2,1,.8,C.wood);
+  bx2(0,5.7,23,13,.5,1.1,C.masonLite);bx2(0,6.25,23,1.2,1,.8,C.wood);
   bx2(0,6.6,23.55,4.6,1.1,.08,C.banner);
   // The curtain wall. Without it the gate is a gatehouse standing on its own in a field - which is
   // exactly what "the entrance looks so off, just a gate" was looking at. It runs out from the
@@ -5409,41 +5541,45 @@ function townBuild(){
   // steps aside when the painted arch lands.
   for(const side of[-1,1]){
     const x0=side*6.45,x1=side*29.4,cx=(x0+x1)/2,long=Math.abs(x1-x0);
-    const cur=bx(cx,0,23,long,3.9,1.7,C.stone2);             // the curtain
-    bx(cx,0,23,long,.6,2.1,C.stone2);                        // a plinth course at the foot
-    bx(cx,2.7,23,long,.18,1.85,C.stone);                     // a string course to break the face up
-    const cope=bx(cx,3.9,23,long,.34,2.1,C.stone);           // the walkway coping
-    TOWN.tiles.push({m:cur,tile:'limestone_pale',rep:[long/1.5,2.6]},
-                    {m:cope,tile:'limestone_pale',rep:[long/1.5,.6]});
+    const cur=bx(cx,0,23,long,3.9,1.7,C.mason2);             // the curtain
+    bx(cx,0,23,long,.6,2.1,C.masonDark);                     // a plinth course at the foot
+    bx(cx,2.7,23,long,.18,1.85,C.masonLite);                 // a string course to break the face up
+    const cope=bx(cx,3.9,23,long,.34,2.1,C.masonLite);       // the walkway coping
+    // the kit's `cliff` tile is the warm one (its mean colour is #bb9a6c, against limestone_pale's
+    // #afad9f): a pale limestone wall beside a brown castle gate is what "not relatable at all" was
+    TOWN.tiles.push({m:cur,tile:'cliff',rep:[long/1.5,2.6]},
+                    {m:cope,tile:'cliff',rep:[long/1.5,.6]});
     for(let i=0;i<Math.floor(long/3.2);i++)                  // crenellations along the top
-      bx(x0+side*(1.6+i*3.2),4.24,23,1.5,.7,1.7,C.stone2);
+      bx(x0+side*(1.6+i*3.2),4.24,23,1.5,.7,1.7,C.mason2);
     // Masonry, not a slab: the face the camera sees gets buttresses, arrow slits between them and a
     // corbel table under the walkway - the three lines that make a wall read as a wall at distance.
-    const slit=new THREE.MeshBasicMaterial({color:0x241f1a});
+    const slit=new THREE.MeshBasicMaterial({color:TOWN_MASON.slit});
     for(let i=0;i<6;i++){
       const bxx=x0+side*(1.9+i*3.9);
-      bx(bxx,0,23.95,1.0,4.05,.5,C.stone2);
-      bx(bxx,4.05,23.95,1.2,.22,.6,C.stone);
+      bx(bxx,0,23.95,1.0,4.05,.5,C.mason2);
+      bx(bxx,4.05,23.95,1.2,.22,.6,C.masonLite);
     }
     for(let i=0;i<5;i++){
       const sx=x0+side*(3.85+i*3.9);
-      const sl=bx(sx,1.7,23.9,.18,1.15,.14,C.stone);sl.material=slit;sl.castShadow=false;
+      const sl=bx(sx,1.7,23.9,.18,1.15,.14,C.masonLite);sl.material=slit;sl.castShadow=false;
     }
     for(let i=0;i<9;i++)
-      bx(x0+side*(1.4+i*2.35),3.52,23.95,.62,.26,.4,C.stone2);
+      bx(x0+side*(1.4+i*2.35),3.52,23.95,.62,.26,.4,C.mason2);
     for(const tx of[10.5,19.5]){                             // watch towers break the run up
-      const wt=bx(side*tx,0,23,3.0,6.6,3.0,C.stone2);
-      TOWN.tiles.push({m:wt,tile:'limestone_pale',rep:[2.0,4.4]});
-      bx(side*tx,4.7,23,3.1,.24,3.1,C.stone);
-      bx(side*tx,6.6,23,3.4,.4,3.4,C.stone);
-      const tp=mk(G,new THREE.ConeGeometry(2.3,1.8,4),C.roofBlue,side*tx,8.05,23);tp.rotation.y=Math.PI/4;
+      const wt=bx(side*tx,0,23,3.0,6.6,3.0,C.mason2);
+      TOWN.tiles.push({m:wt,tile:'cliff',rep:[2.0,4.4]});
+      bx(side*tx,4.7,23,3.1,.24,3.1,C.masonLite);
+      bx(side*tx,6.6,23,3.4,.4,3.4,C.masonLite);
+      // the caps are the gate's own roof red, not the blue they were - the blue cones on a brown
+      // wall were half of "white & blue roof, not relatable at all"
+      const tp=mk(G,new THREE.ConeGeometry(2.3,1.8,4),C.masonRoof,side*tx,8.05,23);tp.rotation.y=Math.PI/4;
       sp(side*tx,9.05,23,.3,C.gold);
     }
     // and the wall does not just stop at the edge of the field: a corner bastion caps each end
-    const kx=side*31.3,kt=bx(kx,0,23,4.4,7.2,4.4,C.stone2);
-    TOWN.tiles.push({m:kt,tile:'limestone_pale',rep:[2.9,4.8]});
-    bx(kx,7.2,23,4.8,.5,4.8,C.stone);bx(kx,5.1,23,4.5,.24,4.5,C.stone);
-    const kt2=mk(G,new THREE.ConeGeometry(3.2,2.6,4),C.roofBlue,kx,9.0,23);kt2.rotation.y=Math.PI/4;
+    const kx=side*31.3,kt=bx(kx,0,23,4.4,7.2,4.4,C.mason2);
+    TOWN.tiles.push({m:kt,tile:'cliff',rep:[2.9,4.8]});
+    bx(kx,7.2,23,4.8,.5,4.8,C.masonLite);bx(kx,5.1,23,4.5,.24,4.5,C.masonLite);
+    const kt2=mk(G,new THREE.ConeGeometry(3.2,2.6,4),C.masonRoof,kx,9.0,23);kt2.rotation.y=Math.PI/4;
     sp(kx,10.4,23,.36,C.gold);
     for(let i=0;i<4;i++)                                     // its own merlons
       bx(kx-1.65+i*1.1,7.7,23,0.8,.55,2.6,C.stone2);
@@ -5451,39 +5587,57 @@ function townBuild(){
   // the approach outside the wall: two trees either side of the road out, so the gate is framed
   for(const tx of[-10.6,10.6]){
     const g2=new THREE.Group();g2.position.set(tx,0,27.6);g2.rotation.y=.3;
-    mk(g2,CY(.34,.46,3.4,8),C.wood,0,1.7,0);
-    mk(g2,CY(2.5,3.4,2.4,6),0x2f6b34,0,3.4,0);
+    mk(g2,CY(.34,.46,3.4,8),C.wood,0,1.7,0);                  // trunk
+    mk(g2,CY(2.5,3.4,5.0,6),0x2f6b34,0,5.2,0);                // canopy, sat on the trunk
     TOWN.propBlk.add(g2);
     prop('tree_big',tx,27.6,TOWN_WH.tree_big,false,[g2]);
   }
   // the cathedral on the skyline behind the terrace (the RO Prontera silhouette)
+  // the stand-in wears the painted cathedral's own two colours (measured off the art: #947f6e
+  // walls, #6c696b slates), not the town's blue cones, so it is the same building before and after
   const cath=new THREE.Group();cath.position.set(0,0,-31);G.add(cath);TOWN.cath=cath;
-  mk(cath,BX(9,7.5,7),C.wall,0,3.75,0);
-  const cr=mk(cath,new THREE.ConeGeometry(7.4,4.6,4),C.roofBlue,0,9.8,0);cr.rotation.y=Math.PI/4;
+  mk(cath,BX(9,7.5,7),0x9a8570,0,3.75,0);
+  const cr=mk(cath,new THREE.ConeGeometry(7.4,4.6,4),0x6c696b,0,9.8,0);cr.rotation.y=Math.PI/4;
   mk(cath,BX(1.1,3.4,1.1),C.trim,0,7,3.7);
   for(const sx of[-4.1,4.1]){
-    mk(cath,BX(2.2,10,2.2),C.wall2,sx,5,3.1);
-    const t=mk(cath,new THREE.ConeGeometry(1.7,3.4,4),C.roofBlue,sx,11.7,3.1);t.rotation.y=Math.PI/4;
+    mk(cath,BX(2.2,10,2.2),0xa89480,sx,5,3.1);
+    const t=mk(cath,new THREE.ConeGeometry(1.7,3.4,4),0x6c696b,sx,11.7,3.1);t.rotation.y=Math.PI/4;
     mk(cath,SP(.42),C.gold,sx,13.6,3.1).castShadow=false;
   }
   mk(cath,BX(.2,1.5,.2),C.gold,0,13.2,0);mk(cath,BX(1.1,.2,.2),C.gold,0,13.7,0);
-  // trees and flowers on the grass between the buildings
-  for(let i=0;i<20;i++){
-    // Outside the houses, where a town keeps its trees: the ring is the street line, so the green
-    // starts behind it. They are lot trees - about three heroes tall - not the field's wild giants,
-    // and the southern arc is left clear because that is the side the camera and the gate are on.
-    const a=i*Math.PI/10+.22,r=21.6+((i*13)%5)*1.6,x=Math.cos(a)*r,z=TOWN_Z+Math.sin(a)*r;
+  // trees and flowers on the grass between the buildings. A tree stands where NOTHING ELSE DOES:
+  // every candidate is measured against the house footprints, the terrace, the cathedral, the gate
+  // and its wall, the river and the avenue, and pushed further out until it clears them. The old
+  // ring was one fixed arc at r=21.6 with no such test, and a house 7 units wide standing at
+  // r=16.7 reaches past it - which is what "some trees are overlapping with the building" was.
+  TOWN.trees=[];
+  for(let i=0;i<32;i++){
+    const a=i*Math.PI/16+.22;
     if(Math.sin(a)>.42)continue;                            // keep the gate side and the view clear
-    if(Math.abs(x)<7.5&&z>4)continue;                       // the avenue runs there
-    const g2=new THREE.Group();g2.position.set(x,0,z);TOWN.propBlk.add(g2);
-    mk(g2,CY(.32,.46,3.2),C.wood,0,1.6,0);mk(g2,SP(2.5),i%2?0x3f9b4a:0x4fae4f,0,6.5,0);
-    prop('tree_big',x,z,TOWN_WH.tree_big+((i*7)%3)*.4,i%2===1,[g2]);
+    let r=23.4+((i*13)%5)*1.2;
+    for(let t2=0;t2<6;t2++,r+=1.6){
+      const x=Math.cos(a)*r,z=TOWN_Z+Math.sin(a)*r;
+      if(Math.abs(x)<6.4)break;                             // the avenue and the way up to the gate
+      if(z>13.2&&z<21.8)break;                              // the river, its banks and the bridge
+      if(z>20.4&&z<26.8)break;                              // the curtain wall and the gate forecourt
+      if(!townClear(x,z,2.7))continue;                      // through a house: try a little further out
+      TOWN.trees.push({x:x,z:z,r:2.7});
+      const g2=new THREE.Group();g2.position.set(x,0,z);TOWN.propBlk.add(g2);
+      // a lot tree, about three heroes tall - and the canopy sits ON the trunk. The old stand-in
+      // hung its ball of leaves .8 of a unit above the top of the trunk, which is a tree with its
+      // head in the air - part of "all houses and trees look like it floats".
+      mk(g2,CY(.32,.46,3.6),C.wood,0,1.8,0);
+      mk(g2,SP(2.5),i%2?0x3f9b4a:0x4fae4f,0,5.5,0);
+      prop('tree_big',x,z,TOWN_WH.tree_big+((i*7)%3)*.4,i%2===1,[g2]);
+      break;
+    }
   }
   for(let i=0;i<26;i++){
     const a=i*Math.PI/13,r=12.8+((i*11)%4)*.7,x=Math.cos(a)*r,z=TOWN_Z+Math.sin(a)*r;
     if(Math.abs(x)>12.4&&Math.abs(x)<17.4&&z>TOWN_Z-12.2&&z<TOWN_Z+12.2)continue;   // not on the paths
     const fl=mk(TOWN.propBlk,SP(.09),[0xff9db8,0xffe066,0xffffff][i%3],x,.1,z);fl.castShadow=false;
-    if(i%4===0)prop(i%8===0?'flower_bed':'flower_bed2',x,z,TOWN_WH.flower_bed,false,[fl]);
+    if(i%4===0&&townClear(x,z,1.9,'house'))
+      prop(i%8===0?'flower_bed':'flower_bed2',x,z,TOWN_WH.flower_bed,false,[fl]);
   }
   // the walk marker: a gold ring the click target drops on the ground
   const rg=new THREE.Mesh(new THREE.RingGeometry(.42,.62,26),new THREE.MeshBasicMaterial({color:0xffd23f,transparent:true,opacity:.9,depthWrite:false}));
@@ -5563,11 +5717,15 @@ function townArt(){
   // Applied once, and re-applied if the pack only finishes downloading after the player walked in.
   if(TOWNP.ok&&TOWN.paint!==1){
     TOWN.paint=1;
-    const put=(name,x,z,units,flip,parent,rot)=>{
-      const G2=townSprite(name,units,flip);if(!G2)return null;
-      G2.position.set(x,0,z);if(rot)G2.rotation.y=rot;
+    // `opt` carries the facade's fixed facing (and the depth of the body behind it) through to
+    // townSprite: a house is a front nailed to the ground, not a card that turns to face whoever
+    // is looking at it.
+    const put=(name,x,z,units,flip,parent,opt)=>{
+      const G2=townSprite(name,units,flip,opt);if(!G2)return null;
+      G2.position.set(x,0,z);
       (parent||TOWN.g).add(G2);return G2;
     };
+    const face=(x,z)=>Math.atan2(0-x,TOWN_Z-z);       // the yaw that looks at the middle of the square
     // the ring of houses: eight painted designs, mirrored and sized so the ring never repeats
     const designs=RING_DESIGNS;               // one list: a slot's fallback and its art agree
     if(TOWN.kitArt===1&&TOWN.houseKit.clear){TOWN.houseKit.clear();TOWN.kitArt=0}
@@ -5579,12 +5737,18 @@ function townArt(){
       // - only the guild hall and the chapel ever do - the width gives, never the aspect.
       const tw0=TOWN_WH[d]*(e.w/e.h),slot=Math.PI*2*h.r/14;
       const tw=Math.min(tw0,slot*1.12),uH=tw*(e.h/e.w);
-      if(put(d,h.x,h.z,uH,h.flip,TOWN.houseKit))n++;}return n};
+      // a facade: its front faces the square (or the avenue, for the entrance street) and never
+      // moves again, with a body behind it so it is a building and not a cut-out when the camera
+      // swings round the side of it
+      if(put(d,h.x,h.z,uH,h.flip,TOWN.houseKit,
+        {yaw:h.yaw,solid:Math.min(tw*.86,6.5),colour:C.houseWall}))n++;}return n};
     const n=nh();
     if(n){TOWN.houseBlk.visible=false}
-    // the cathedral closes the north end of the town, behind the NPC terrace
+    // the cathedral closes the north end of the town, behind the NPC terrace. Facade only, no body
+    // behind it: at 16 units wide a body deep enough to read would reach back into the two houses
+    // that stand either side of the close, and nothing walks behind it anyway.
     if(TOWNP.man.sprites.cathedral){if(TOWN.cath)TOWN.cath.visible=false;
-      put('cathedral',0,-31,TOWN_WH.cathedral,false,TOWN.houseKit);}
+      put('cathedral',0,-31,TOWN_WH.cathedral,false,TOWN.houseKit,{yaw:face(0,-31)});}
     // the fountain: the painted one replaces the block tiers, and the water keeps moving
     if(TOWNP.man.sprites.fountain){
       const FUH=TOWN_WH.fountain;        // the painted fountain's height - see the size table
@@ -5612,17 +5776,19 @@ function townArt(){
         TOWN.spray.push({m,y:.42,sp:3.4+(i%5)*.6,ph:i*.7,amp:.06,drop:1,o:.5});
       }
     }
-    // the south gate: painted arch if it is painted, otherwise the block towers stay
+    // The south gate: painted arch if it is painted, otherwise the block towers stay. Fixed facing
+    // south, down the road the player arrives on - and deliberately no body behind it, so the
+    // archway stays an archway you can see through from inside the wall.
     if(TOWNP.man.sprites.gate_arch){if(TOWN.gateBlk)TOWN.gateBlk.visible=false;
-      put('gate_arch',0,23.0,TOWN_WH.gate_arch,false,TOWN.g);}
+      put('gate_arch',0,23.0,TOWN_WH.gate_arch,false,TOWN.g,{yaw:0});}
     // the memorial statue, left of the avenue just inside the gate
     if(TOWNP.man.sprites.statue_hero)
       TOWN.statue=put('statue_hero',-7.8,9.0,TOWN_WH.statue_hero,false,TOWN.g);
-    // the market stalls beside the plaza
-    if(TOWNP.man.sprites.stall_red)put('stall_red',-11.8,3.0,3.1,false,TOWN.g);
-    if(TOWNP.man.sprites.stall_blue)put('stall_blue',11.8,3.0,3.1,true,TOWN.g);
-    if(TOWNP.man.sprites.stall_red)put('stall_red',-11.6,-13.4,3.0,true,TOWN.g);
-    if(TOWNP.man.sprites.stall_blue)put('stall_blue',11.6,-13.4,3.0,false,TOWN.g);
+    // the market stalls beside the plaza - fronts turned into the square, like the houses
+    if(TOWNP.man.sprites.stall_red)put('stall_red',-11.8,3.0,3.1,false,TOWN.g,{yaw:face(-11.8,3.0),solid:1.8});
+    if(TOWNP.man.sprites.stall_blue)put('stall_blue',11.8,3.0,3.1,true,TOWN.g,{yaw:face(11.8,3.0),solid:1.8});
+    if(TOWNP.man.sprites.stall_red)put('stall_red',-11.6,-13.4,3.0,true,TOWN.g,{yaw:face(-11.6,-13.4),solid:1.8});
+    if(TOWNP.man.sprites.stall_blue)put('stall_blue',11.6,-13.4,3.0,false,TOWN.g,{yaw:face(11.6,-13.4),solid:1.8});
     // lamps, trees, benches and flowers dress what the code built
     let propsPainted=0;
     for(const L of TOWN.propSpots||[]){
@@ -5767,7 +5933,10 @@ function townClick(cx,cy){
 }
 // ----- entering and leaving -------------------------------------------------------------------
 function townEnter(quiet){
-  if(!S)return;
+  if(!S)return 0;
+  if(TOWN.on)return 1;
+  if(!townUnlocked())return 0;      // the town is closed while it is being finished (see TOWN_OPEN)
+  townPackFetch();                  // ...and only somebody who can get in pays for the HD atlas
   townBuild();
   TOWN.on=1;town=1;S.town=1;
   TOWN.zoom=zoom;zoom=Math.min(zoom,.46);       // a town is wide: the whole square, station and gate
@@ -5777,7 +5946,7 @@ function townEnter(quiet){
   for(const n of TOWN.list){if(!n.spr){n.spr=townNpcSprite(n);n.g.add(n.spr);townNpcFace(n,0)}}
   townEnterScene();
   if(!quiet){log('Entered Prontera Town - a safe map with no monsters. Click the ground to walk, click an NPC to talk (or press F next to one).','r2','misc')}
-  ui();save();
+  ui();save();return 1;
 }
 function townLeave(quiet){
   if(!TOWN.on)return;
@@ -5789,7 +5958,11 @@ function townLeave(quiet){
   if(!quiet){log('Back in the field - the grind resumes.','','misc')}
   ui();save();
 }
-function townToggle(){if(TOWN.on)townLeave();else townEnter()}
+function townToggle(){
+  if(TOWN.on){townLeave();return 1}
+  if(!townUnlocked()){log('Prontera Town is closed - the gates are still being finished.','','misc');return 0}
+  return townEnter();
+}
 // ----- the talk box ---------------------------------------------------------------------------
 function townPortrait(npc){
   const cv=$('nbFace');if(!cv)return;const g=cv.getContext('2d');
@@ -6106,7 +6279,7 @@ function bgShow(){                      // and it is back: replay what the timer
   save()}
 document.addEventListener('visibilitychange',()=>{if(document.hidden)bgHide();else bgShow()});
 setInterval(bgTick,SIM_BG_MS);
-resize();respawn=.3;requestAnimationFrame(loop);setInterval(save,5000);kitFetch();townPackFetch();window.town=townToggle;window.TOWN_NPC=TOWN_NPC;   // the map tab's town card lists the five
+resize();respawn=.3;requestAnimationFrame(loop);setInterval(save,5000);kitFetch();if(townUnlocked())townPackFetch();window.town=townToggle;window.townUnlock=townUnlock;window.TOWN_NPC=TOWN_NPC;   // the map tab's town card lists the five
 </script>
 </body>
 </html>

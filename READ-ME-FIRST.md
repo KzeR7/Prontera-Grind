@@ -253,6 +253,36 @@ this pass went back over the channel itself. Every problem was geometry, not art
   `TOWN.kitArt` and its tile names verified against `assets/kit/ro-tiles-hd.json`), and all **34**
   suites plus the five `--check` tools are green.
 
+## BUILD v77 — the town is locked until the owner opens it; houses face the square; nothing floats or overlaps
+
+Everything here is the five-item list the owner left on the town PR (#76).
+
+* **The town ships shut.** `const TOWN_OPEN=false;` at the top of the town block is the switch;
+  `townUnlocked()` is the gate (`TOWN_OPEN || S.gm || localStorage pg_town_open==='1'`). While it is
+  shut the map still shows the town card — greyed, labelled **Closed**, with no way in — and the HD
+  atlas **is not fetched at all** (the fetch moved from boot into `townEnter`, so a locked town
+  costs visitors nothing). **Leaving is never gated**, so nobody can be stranded inside. Open it for
+  yourself with `window.townUnlock()` (or `localStorage pg_town_open=1` before boot); open it for
+  everybody by setting `TOWN_OPEN` to `true` and bumping `BUILD` — that flip is the whole release.
+* **Nothing billboards any more.** Every building was a `THREE.Sprite`, which three.js turns to face
+  the camera every frame — that was "the gate & all houses spins together with the camera". Buildings
+  are now `THREE.Mesh` planes with a fixed yaw, so each front keeps pointing at the square it stands
+  on (measured: every front's unit dot product to its target is > .999).
+* **The wall and the gate share one palette.** The curtain wall wears the kit's warm `cliff` stone
+  and every cone on the gate line (gatehouse, watch towers, corner bastions) is capped with the same
+  `TOWN_MASON.roof` — the brown castle entrance and the wall beside it are finally dressed alike.
+* **The float was the art's own empty feet.** The town sprites carry a transparent margin *below*
+  the painted ground line, so a plane cut to the image edge hung that gap over the ground. The
+  per-art offsets are measured, not guessed (`TOWN_SINK`, owned by `tools/measure_town_ground.py`,
+  whose `--check` fails if one drifts), and each facade sinks by that fraction of its height.
+* **Trees no longer grow out of walls.** The blocker list is filled before anything is planted, a
+  house blocks its whole plot (facade plus the body behind it), and each tree tries seven fallback
+  radii before it is dropped: 16 trees stand, every one measured clear.
+* **The platform over the fountain was shrunk and moved back** so it sits behind the north houses
+  instead of through them (0 overlaps against all 17 house plots).
+* **Tests:** `town_smoke` is **40 scenarios** now (the gate, the bypasses, the facings, the
+  grounding, the clearances), **ui_sim 42**, all **34** suites and the seven `--check` tools green.
+
 ## BUILD v76 — the square is paved, and the wall is masonry
 
 A second realism pass over what the town camera actually shows, grounded in the Prontera references

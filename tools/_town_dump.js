@@ -15,6 +15,9 @@ const dom=new JSDOM(html,{runScripts:'dangerously',url:'http://localhost/',befor
  Object.defineProperty(w.HTMLCanvasElement.prototype,'toDataURL',{value:()=>'data:,'});
  w.Element.prototype.getBoundingClientRect=()=>({left:0,top:0,width:1200,height:800});
  w.requestAnimationFrame=()=>1; w.fetch=()=>Promise.reject(new Error('x')); w.eval(three);
+ // v77: the town ships shut to the public (TOWN_OPEN). This tool looks at the town, so it opens
+ // the gate the same way the owner's console would.
+ try{ w.localStorage.setItem('pg_town_open','1'); }catch(e){}
  w.eval(`THREE.WebGLRenderer=function(){this.domElement=document.createElement('canvas');this.shadowMap={enabled:false};this.setSize=()=>{};this.setPixelRatio=()=>{};this.render=()=>{};this.outputEncoding=0;this.toneMapping=0}`);
  for(const f of ['assets/sprite_pack_data.js','assets/class_skins_data.js','assets/weapon_joints_data.js'])w.eval(fs.readFileSync(path.join(ROOT,f),'utf8'));
 }});
@@ -39,18 +42,28 @@ const out=JSON.parse(ev(`(()=>{
   const seen=new Set(),list=[];
   const walk=(root)=>{
     root.traverse(o=>{
-      if(!o.isSprite)return;
+      // a building is a FACADE (a plane with a fixed facing) since the spin fix; a prop is still a
+      // THREE.Sprite. Both are "the art", and neither is the shadow plane or the body box that
+      // stand in the same group - those carry no userData.face and are not sprites.
+      if(!o.isSprite&&!(o.userData&&o.userData.face))return;
       let p=o,art=null;
       while(p){if(p.userData&&p.userData.art){art=p.userData.art;break}p=p.parent}
       if(!art)return;
       if(seen.has(o.id))return;seen.add(o.id);
       const map=o.material.map;
       const key=art+'@'+root.uuid+'@'+o.id;
+      const wh=o.isSprite?[o.scale.x,o.scale.y]
+        :[o.geometry.parameters.width,o.geometry.parameters.height];
       list.push({art,
         x:+p.position.x.toFixed(3),
         z:+p.position.z.toFixed(3),
         y:+(p.position.y||0).toFixed(3),
-        w:+o.scale.x.toFixed(3),h:+o.scale.y.toFixed(3),
+        // how far the art is sunk into the ground (TOWN_SINK), so the board plants the base the
+        // way the game does instead of hanging the crop by its lowest pixel
+        sink:+(TOWN_SINK[art]||0).toFixed(4),
+        face:o.isSprite?0:1,
+        yaw:+(p.rotation.y||0).toFixed(3),
+        w:+wh[0].toFixed(3),h:+wh[1].toFixed(3),
         flip:!!(map&&TOWNP.tex.get(art+'@f')===map),
         off:map?[+map.offset.x.toFixed(5),+map.offset.y.toFixed(5)]:null,
         rep:map?[+map.repeat.x.toFixed(5),+map.repeat.y.toFixed(5)]:null,

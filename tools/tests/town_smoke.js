@@ -65,6 +65,9 @@ const dom = new JSDOM(html, {
     // the three data files the page loads with <script src="assets/...">
     for (const f of ['assets/sprite_pack_data.js', 'assets/class_skins_data.js', 'assets/weapon_joints_data.js'])
       window.eval(fs.readFileSync(path.join(ROOT, f), 'utf8'));
+    // The town ships SHUT (TOWN_OPEN). This suite is the owner's build, so it opens it the way the
+    // owner does - the browser flag - and the "gate is shut" test below proves the locked side.
+    try { window.localStorage.setItem('pg_town_open', '1'); } catch (e) {}
   },
 });
 const { window } = dom;
@@ -76,6 +79,9 @@ const ev = code => window.eval(code);
 ev(`currentUser='smoketester';initSession(false);`);
 assert.ok(ev('!!S'), 'a session boots');
 
+// the palette the gate and its wall share, read out of the game so the wall test below pins the
+// shipped numbers rather than a copy of them
+const TOWN_MASON_ROOF = ev('TOWN_MASON&&TOWN_MASON.roof');
 const enter = () => { if (!ev('townOn()')) ev('window.town()'); };
 const leave = () => { if (ev('townOn()')) ev('window.town()'); };
 const check = [];
@@ -87,6 +93,30 @@ window.addEventListener('error', e => errors.push(String(e.message)));
 t('the field starts with the field town hidden and the town object unbuilt', () => {
   assert.strictEqual(ev('!!TOWN.g'), false, 'the town group is built lazily');
   assert.strictEqual(ev('townOn()'), false);
+});
+
+t('the gate is shut while the town is being finished: no way in, and never no way out', () => {
+  leave();
+  ev(`localStorage.removeItem('pg_town_open')`);
+  assert.strictEqual(ev('townUnlocked()'), false, 'with the switch off, the town is locked');
+  ev('window.town()');
+  assert.strictEqual(ev('townOn()'), false, 'the console helper does not walk in');
+  assert.strictEqual(ev('townEnter()'), 0, 'and neither does the entry itself');
+  const h = ev('V.map()');
+  assert.ok(!/data-a="town"/.test(h), 'the map tab offers no way in while it is shut');
+  assert.ok(/Closed/.test(h) && /Prontera Town/.test(h), 'it says the town is closed instead');
+  assert.strictEqual((h.match(/class="mapcard/g) || []).length, 11,
+    'the card is still in the grid, greyed out - not silently missing');
+  assert.ok(/mapcard town-card closed/.test(h), 'and dressed as a shut card, not a live one');
+  // ...but a gate must never shut somebody IN: leaving is never gated
+  ev(`localStorage.setItem('pg_town_open','1')`);
+  enter();
+  assert.strictEqual(ev('townOn()'), true, 'the owner (flag set) walks straight in');
+  ev(`localStorage.removeItem('pg_town_open')`);
+  ev('window.town()');
+  assert.strictEqual(ev('townOn()'), false, 'and can always leave, even with the gate shut behind them');
+  ev(`localStorage.setItem('pg_town_open','1')`);      // the rest of the suite runs as the owner
+  assert.strictEqual(ev('townUnlocked()'), true, 'and the flag is what opens it');
 });
 
 t('window.town() walks in: the scene is built, the field is hidden, no mobs', () => {
@@ -312,8 +342,8 @@ t('the painted HD pack dresses the town, and dressings are protected from a late
   assert.ok(JSON.parse(designs).length >= 6, 'several different buildings ring the plaza: ' + designs);
   // and the ground tiles the town asked for are the HD ones
   for (const t of ev('TOWN.tiles.map(t=>t.tile)'))
-    assert.ok(['ruin_cobble', 'limestone_pale', 'dirt_path', 'grass_jade', 'water_frame_0', 'bridge_planks', 'sand_gold'].includes(t),
-      'unexpected ground tile ' + t);
+    assert.ok(['ruin_cobble', 'limestone_pale', 'dirt_path', 'grass_jade', 'water_frame_0', 'bridge_planks',
+      'sand_gold', 'cliff'].includes(t), 'unexpected ground tile ' + t);
   // the wall, the quay and the bridge are not pastel blocks next to painted sprites: every raised
   // course of stone names a kit tile, and the three that matter name one the pack actually has.
   const masons = JSON.parse(ev('JSON.stringify((TOWN.tiles||[]).filter(t=>t.m&&t.m!==TOWN.river.m).map(t=>t.tile))'));
@@ -465,17 +495,35 @@ t('every building is grounded: the art and the stand-ins both carry a contact sh
   assert.strictEqual(ev('TOWN.houseBlk.children.filter(o=>o.isGroup).every(g=>g.children.filter(c=>c.isMesh&&c.rotation.x<0&&c.position.y<.05).length===2)'),
     true, 'every block house stands on two shadow layers at its foot');
   if (ev('TOWN.paint')) {
-    const geo = JSON.parse(ev('JSON.stringify(TOWN.houseKit.children.filter(o=>o.userData&&o.userData.art).map(g=>g.children.filter(c=>c.isMesh).map(c=>[c.geometry.parameters.width,c.geometry.parameters.height])))'));
-    assert.ok(geo.length >= 10, 'the painted houses are up: ' + geo.length);
-    for (const pair of geo) {
-      // every mesh in a painted house group is one of the two shadow layers (the art is a sprite)
-      assert.strictEqual(pair.length, 2, 'a painted house is its sprite plus exactly two shadow planes');
-      const soft = pair[0], core = pair[1];
-      assert.ok(soft && core, 'a painted house has the sprite plus two shadow planes');
+    const parts = JSON.parse(ev(`JSON.stringify(TOWN.houseKit.children.filter(o=>o.userData&&o.userData.art).map(g=>{
+      const f=g.children.find(c=>c.userData&&c.userData.face)||{};
+      return {art:g.userData.art,
+        face:f.geometry?{w:f.geometry.parameters.width,h:f.geometry.parameters.height,y:f.position.y,
+                         mat:f.material&&f.material.type,mesh:!!f.isMesh}:null,
+        bodies:g.children.filter(c=>c.isMesh&&c.geometry.type==='BoxGeometry').length,
+        sink:TOWN_SINK[g.userData.art]||0,
+        shadows:g.children.filter(c=>c.isMesh&&c.rotation.x<0&&c.position.y<.05)
+          .map(c=>[c.geometry.parameters.width,c.geometry.parameters.height])};}))`));
+    assert.ok(parts.length >= 10, 'the painted houses are up: ' + parts.length);
+    for (const p of parts) {
+      assert.ok(p.face && p.face.mesh, p.art + ' is a facade (a plane with a fixed facing), not a sprite: ' + JSON.stringify(p.face));
+      assert.strictEqual(p.face.mat, 'MeshBasicMaterial', p.art + ' is dressed with the painted art');
+      // THE FLOAT FIX: the art is planted, not hung by its lowest pixel. The facade's centre sits
+      // half a height up MINUS the sink the atlas was measured for, so the middle of the painted
+      // base lands on the ground and the near corner that goes under is hidden by it.
+      const want = p.face.h / 2 - p.sink * p.face.h;
+      assert.ok(Math.abs(p.face.y - want) < 1e-6,
+        p.art + ' is sunk by ' + p.sink + ' of its height (' + p.face.y.toFixed(3) + ' vs ' + want.toFixed(3) + ')');
+      assert.ok(p.sink > 0, p.art + ' has a measured ground offset at all');
+      // and it is a building, not a cut-out: one body box standing behind the front
+      assert.strictEqual(p.bodies, p.art === 'cathedral' ? 0 : 1,
+        p.art + ' has a body behind its front (none for the cathedral, which nothing walks behind)');
+      assert.strictEqual(p.shadows.length, 2, p.art + ' stands on exactly two shadow planes');
+      const soft = p.shadows[0], core = p.shadows[1];
       // the fix for "the buildings look floating": the shadow's depth is cut from the sprite's WIDTH.
       // Scaling it with the artwork's height gave tall narrow houses a wide pale puddle instead.
       assert.ok(soft[1] / soft[0] < .5 && core[1] / core[0] < .5,
-        'the shadow is flat under the art, not a puddle: ' + JSON.stringify(pair));
+        'the shadow is flat under the art, not a puddle: ' + JSON.stringify(p.shadows));
       assert.ok(core[0] < soft[0] && core[1] < soft[1], 'with a tight core inside the wider penumbra');
     }
   }
@@ -505,7 +553,7 @@ t('the square is a paved market square, and the wall reads as masonry', () => {
     const p=new THREE.Vector3();o.getWorldPosition(p);
     if(Math.abs(p.z-23.95)>.6)return;
     if(g.parameters.width>=.9&&g.parameters.height>3.5)but++;                       // buttress shafts
-    if(o.material&&o.material.color&&o.material.color.getHex()===0x241f1a)slit++;   // arrow slits
+    if(o.material&&o.material.color&&o.material.color.getHex()===TOWN_MASON.slit)slit++;  // arrow slits
     });return JSON.stringify([but,slit])})()`));
   assert.ok(wall[0] >= 10, 'the wall carries buttresses: ' + wall[0]);
   assert.ok(wall[1] >= 8, 'and arrow slits between them: ' + wall[1]);
@@ -513,6 +561,21 @@ t('the square is a paved market square, and the wall reads as masonry', () => {
   const names = JSON.parse(ev("JSON.stringify([...new Set((TOWN.tiles||[]).map(t=>t.tile))])"));
   assert.ok(names.indexOf('limestone_pale') >= 0 && names.indexOf('bridge_planks') >= 0,
     'the masonry and the deck are still kit tiles: ' + names.join(','));
+  // THE ENTRANCE FIX: the curtain wall is the gate's building, so it wears the gate's stone. It
+  // used to be pale limestone with blue cones beside a brown castle gate - "not relatable at all".
+  const wallTile = JSON.parse(ev("JSON.stringify([...new Set((TOWN.tiles||[]).filter(t=>t.m&&t.m.geometry.type==='BoxGeometry'&&Math.abs(t.m.position.z-23)<.6&&t.m.geometry.parameters.width>6).map(t=>t.tile))])"));
+  assert.ok(wallTile.length > 0 && wallTile.every(t => t === 'cliff'),
+    'the long wall runs wear the warm stone tile, not pale limestone: ' + wallTile.join(','));
+  // the caps: every cone on the gate line - gatehouse, watch towers, bastions - is the gate's own
+  // roof red, measured off the painted arch. They were 0x3f6fb5 blue, which is half of what
+  // "the entrance is brown castle like but the wall beside it is white & blue roof" was looking at.
+  const rooves = JSON.parse(ev(`(()=>{const s=new Set();TOWN.g.traverse(o=>{
+    if(!o.isMesh||!o.geometry||o.geometry.type!=='ConeGeometry')return;
+    const p=new THREE.Vector3();o.getWorldPosition(p);
+    if(Math.abs(p.z-23)>3.5)return;s.add(o.material.color.getHexString())});
+    return JSON.stringify([...s])})()`));
+  assert.deepStrictEqual(rooves, [('000000' + TOWN_MASON_ROOF.toString(16)).slice(-6)],
+    'the gate\'s towers and bastions are capped in its own roof red, not blue: ' + rooves.join(','));
 });
 
 t('the river animates on the town clock, not the field one', () => {
@@ -612,6 +675,79 @@ t('the town survives a save/load round trip', () => {
   enter();
   assert.strictEqual(ev('townOn()'), true, 'and the town can be re-entered after a load');
   leave();
+});
+
+t('the houses keep their own facing: nothing swings round to follow the camera', () => {
+  enter();
+  const spots = 'TOWN.ring.concat(TOWN.street)';
+  const yaws = JSON.parse(ev(`JSON.stringify(${spots}.map(h=>+h.yaw.toFixed(4)))`));
+  assert.ok(yaws.length >= 17, 'every house slot carries the facing it was given: ' + yaws.length);
+  // a front looks AT the thing it fronts on to - the square, or the avenue - never away from it.
+  // (They used to face outward, so the doors were on the side nobody walks down.)
+  const dots = JSON.parse(ev(`JSON.stringify(${spots}.map(h=>{
+    const fx=(h.fx||0)-h.x,fz=(h.fz==null?TOWN_Z:h.fz)-h.z,l=Math.hypot(fx,fz)||1;
+    return +(Math.sin(h.yaw)*fx/l+Math.cos(h.yaw)*fz/l).toFixed(3)}))`));
+  assert.ok(dots.every(d => d > .999), 'every house front faces the square: ' + dots.join(','));
+  // the block stand-ins are turned to exactly the angle the painted facade will take over them
+  const blk = JSON.parse(ev(`JSON.stringify(TOWN.houseBlk.children.filter(o=>o.isGroup).map(g=>+g.rotation.y.toFixed(4)))`));
+  assert.deepStrictEqual(blk, yaws, 'a stand-in and the house that replaces it look the same way');
+  // and the fix for "the gate & all houses spins together with the camera": the buildings are
+  // real geometry with a fixed facing, not THREE.Sprites (which are re-aimed at the camera every
+  // frame by the renderer, so no amount of checking their matrix would tell you).
+  const sprites = JSON.parse(ev(`JSON.stringify(TOWN.houseBlk.children.filter(o=>o.isGroup)
+    .reduce((n,g)=>n+g.children.filter(c=>c.isSprite).length,0))`));
+  assert.strictEqual(sprites, 0, 'no house is a billboard: ' + sprites);
+  const q = () => ev(`JSON.stringify(TOWN.houseBlk.children.filter(o=>o.isGroup)
+    .map(g=>g.getWorldQuaternion(new THREE.Quaternion()).toArray().map(v=>+v.toFixed(5))))`);
+  const before = q();
+  ev('az=1.1;draw();az=2.6;draw();az=-.7;draw()');
+  assert.strictEqual(q(), before, 'orbiting the camera leaves every house facing where it was');
+  ev('az=0;draw()');
+});
+
+t('no tree stands inside a building, and the terrace stands clear of the ring', () => {
+  enter();
+  // the terrace: measured against every house plot, not eyeballed. "Above the fountain there is a
+  // platform, its overlapping with the buildings" was this platform, 28 wide at z -20.6, running
+  // through the two houses at the head of the square.
+  const T = JSON.parse(ev('JSON.stringify(TOWN.terrace)'));
+  const plots = JSON.parse(ev(`JSON.stringify(TOWN.ring.concat(TOWN.street).map(h=>{
+    const c=Math.abs(Math.cos(h.yaw)),s=Math.abs(Math.sin(h.yaw)),d=(h.foot||{d:6.4}).d,w=(h.foot||{w:7.4}).w;
+    return {x:h.x-Math.sin(h.yaw)*d/2,z:h.z-Math.cos(h.yaw)*d/2,
+            hw:w/2*c+d/2*s+.5,hd:w/2*s+d/2*c+.5}}))`));
+  for (const p of plots)
+    assert.ok(!(Math.abs(p.x) < (T.x1 - T.x0) / 2 + p.hw && Math.abs(p.z - (T.z0 + T.z1) / 2) < (T.z1 - T.z0) / 2 + p.hd),
+      'the terrace is clear of the house at ' + p.x.toFixed(1) + ',' + p.z.toFixed(1));
+  assert.ok(Math.abs(T.x0) < 9 && T.z1 < -15, 'and it is still behind the five of them: ' + JSON.stringify(T));
+  // the trees: every one of them is tested against the house plots before it is planted
+  const trees = JSON.parse(ev('JSON.stringify(TOWN.trees||[])'));
+  assert.ok(trees.length >= 8, 'the town keeps its trees: ' + trees.length);
+  for (const tr of trees) {
+    assert.ok(ev(`townClear(${tr.x},${tr.z},${tr.r})`),
+      'the tree at ' + tr.x.toFixed(1) + ',' + tr.z.toFixed(1) + ' clears every building');
+    assert.ok(Math.hypot(tr.x, tr.z - ev('TOWN_Z')) > 21, 'and stands outside the house line');
+  }
+  // the flower beds get the same test
+  const beds = JSON.parse(ev(`JSON.stringify((TOWN.propSpots||[]).filter(p=>p.n.indexOf('flower_bed')===0).map(p=>[p.x,p.z]))`));
+  assert.ok(beds.length >= 4, 'the flower beds survived the clearance too: ' + beds.length);
+  for (const b of beds)
+    assert.ok(ev(`townClear(${b[0]},${b[1]},1.9,'house')`),
+      'the bed at ' + b[0].toFixed(1) + ',' + b[1].toFixed(1) + ' is not inside a house');
+});
+
+t('the stand-in tree is one piece: the canopy sits on the trunk, not above it', () => {
+  enter();
+  const trees = JSON.parse(ev(`JSON.stringify((TOWN.trees||[]).map(t=>{
+    const g=TOWN.propBlk.children.find(o=>o.isGroup&&Math.abs(o.position.x-t.x)<.01&&Math.abs(o.position.z-t.z)<.01);
+    if(!g)return null;
+    const cy=g.children.find(o=>o.geometry&&o.geometry.type==='CylinderGeometry');
+    const sp=g.children.find(o=>o.geometry&&o.geometry.type==='SphereGeometry');
+    return cy&&sp?[cy.position.y+cy.geometry.parameters.height/2,sp.position.y-sp.geometry.parameters.radius]:null;}))`));
+  const seen = trees.filter(Boolean);
+  assert.ok(seen.length >= 8, 'the stand-in trees are in the prop group: ' + seen.length);
+  for (const [trunkTop, canopyBottom] of seen)
+    assert.ok(canopyBottom < trunkTop, 'the canopy overlaps the top of its trunk (' +
+      canopyBottom.toFixed(2) + ' < ' + trunkTop.toFixed(2) + ') - a gap here is a tree with its head in the air');
 });
 
 for (const [st, name] of check) console.log((st === 'ok' ? '  ok   ' : '  FAIL ') + name);

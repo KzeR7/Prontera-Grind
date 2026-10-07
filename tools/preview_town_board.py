@@ -181,8 +181,9 @@ def camera_board(man, dump, atlas, camkey='cam', heading='Prontera Town — thro
     for sp in dump['sprites']:
         w = sp['w']
         # the game's own alphas: the soft penumbra tops out at .34, the tight core at .82
-        for sw, sdepth, off, col, blur, a in ((1.22, .44, .05, (24, 18, 10), 0, 76),
-                                              (.74, .24, .045, (16, 12, 7), 0, 196)):
+        # the game's own layers (townSprite): soft 1.10 x .36 at .70, core .70 x .22 at 1.0
+        for sw, sdepth, off, col, blur, a in ((1.10, .36, .05, (24, 18, 10), 0, 63),
+                                              (.70, .22, .045, (16, 12, 7), 0, 204)):
             hw, hd = w * sw / 2, w * sdepth / 2
             cz = sp['z'] + w * off
             pts = [(sp['x'] - hw, cz - hd), (sp['x'] + hw, cz - hd), (sp['x'] + hw, cz + hd), (sp['x'] - hw, cz + hd)]
@@ -215,8 +216,9 @@ def camera_board(man, dump, atlas, camkey='cam', heading='Prontera Town — thro
         e = man['sprites'].get(sp['art'])
         if not e:
             continue
-        anchor = project(vp, sp['x'], sp.get('y', 0), sp['z'], W, H)
-        top = project(vp, sp['x'], sp.get('y', 0) + sp['h'], sp['z'], W, H)
+        sink = sp.get('sink', 0) * sp['h']          # the art is planted, not hung (TOWN_SINK)
+        anchor = project(vp, sp['x'], sp.get('y', 0) - sink, sp['z'], W, H)
+        top = project(vp, sp['x'], sp.get('y', 0) + sp['h'] - sink, sp['z'], W, H)
         if not anchor or not top:
             continue
         dist = ((sp['x'] - c['pos'][0]) ** 2 + (sp['z'] - c['pos'][2]) ** 2) ** .5
@@ -307,7 +309,7 @@ def main():
             crop = crop.transpose(Image.FLIP_LEFT_RIGHT)
         pw, ph = max(1, round(s['w'] * S)), max(1, round(s['h'] * S))
         crop = crop.resize((pw, ph), Image.LANCZOS)
-        x, z, y = s['x'], s['z'], s.get('y', 0)
+        x, z, y = s['x'], s['z'], s.get('y', 0) - s.get('sink', 0) * s['h']
         sx, sy = proj(x, z, y)
         box = (round(sx - pw / 2), round(sy - ph))
         # the same soft contact shadow the game draws, so the sprite reads as standing on the ground

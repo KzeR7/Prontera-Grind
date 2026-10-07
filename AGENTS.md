@@ -518,10 +518,13 @@ node tools/tests/scene_sim.js          # -> "8 passed, 0 failed" (per-map scener
 node tools/tests/starter_sim.js        # -> "8 passed, 0 failed" (the gentle starter stages)
 node tools/tests/stat_sim.js           # -> "7 passed, 0 failed"
 node tools/tests/weapon_joint_sim.js   # -> "7 passed, 0 failed"
-node tools/tests/ui_sim.js             # -> "37 passed, 0 failed"
+node tools/tests/ui_sim.js             # -> "42 passed, 0 failed"
 node tools/tests/sprite_viewer_sim.js  # -> "Sprite viewer: 154 PNGs, 7 trees, 19 class jobs; ..."
+node tools/tests/town_smoke.js         # -> "40/40 steps ok" (needs jsdom; skips cleanly without it)
 python3 tools/make_class_skins.py --check    # -> "Class skins are current."
 python3 tools/make_sprite_viewer.py --check  # -> "Sprite viewer is current."
+python3 tools/make_town_pack.py --check      # -> "Town art is current (20 sprites, atlas 4096x1793)."
+python3 tools/measure_town_ground.py --check # -> "Town ground offsets are current (20 sprites)."
 ```
 
 
@@ -542,6 +545,12 @@ moves a declaration can break a test without breaking the game. Traps, all hit o
 * A test that re-declares a game formula needs a **source pin** (a regex asserting the
   real formula is still there) or it will happily pass against a stale copy.
   `class_change_sim.js` and `save_load_sim.js` both have one.
+* `ui_sim.js` renders the **real** `V.*` panels against a fake save, so **anything a panel calls
+  must be in one of the spans it grabs** - not merely defined somewhere in `index.html`. A v77
+  panel asked `townUnlocked()`, which lived 2 500 lines away in the town block, and five map
+  tests threw `townUnlocked is not defined`. The fix is a `pick()` for the new helper next to the
+  `grab('const V={', ...)` entry plus any storage stub it reads (`lsGet`) - not a stub of the
+  helper, which would stop the panel's own gate being exercised.
 * `ui_sim.js` renders the **real** `V.*` panels against a fake save and fails on any
   `undefined` in the HTML and on any `data-a="…"` that is not a key in `ACT`. That lint
   is why the slot chooser's buttons are known to be wired; run it after touching a panel.
@@ -4230,3 +4239,18 @@ assigned for feel rather than fidelity. While reworking that, two shipped bugs s
 * **The wall is masonry:** six buttresses a side on the face the camera sees, arrow slits between them, a corbel table under the walkway, and a corner bastion (with merlons and a blue roof) capping each end of the curtain.
 * **Files touched:** `index.html` (BUILD, plaza paving meshes, bed angles, the curtain-wall loop), `tools/tests/town_smoke.js` (the new scenario), the label files, `READ-ME-FIRST.md`.
 * **Tests:** `town_smoke` **36/36** (paving, beds off the streets, buttresses and slits, kit tile names); all 33 `*_sim.js` suites and the six `--check` tools green.
+
+### 2026-10-07 — `2026-10-07 grind-v77 crit frames + HD Prontera Town: locked until the owner opens it, houses facing the square, nothing floating or overlapping`
+
+* **What the owner reported (five items, all on the town in PR #76):** "could u block access to this town first before i open up to the public, i need to do more changes"; "the entrance is brown castle like but the wall beside it is white & blue roof. not relatable at all. also the gate & all houses spins together with the camera"; "all houses and trees look like it floats. maybe because the shadow below?"; "some trees are overlapping with the building"; "above the fountain there is a platform u build. its overlapping with the buildings".
+* **1 — the town ships shut.** `const TOWN_OPEN=false;` is the single switch, and `townUnlocked()` is the one gate: `TOWN_OPEN || S.gm || lsGet('pg_town_open')==='1'`. It guards `window.town()` (refuses with a log line), and the map panel **still shows the town card** — a greyed `.mapcard.town-card.closed` with the reason and no `data-a="town"` — so the slot is visible but there is no way in from the grid. **Leaving is never gated** (`townExit()`, `data-a="town"` handling, the button and the keyboard all stay open) and the GM account is always let through, so the gate can never strand anyone inside. `window.townUnlock()` (or `localStorage pg_town_open=1` before boot) opens it for a session; flipping `TOWN_OPEN` to `true` and bumping the build opens it for everybody — that flip is the whole release step.
+* **The HD art no longer downloads while the gate is shut.** The atlas fetch moved out of the boot path into `townEnter()` (guarded by `TOWNP.started`, so it still runs exactly once), so a locked town costs a player nothing; before this it was fetched at boot by every visitor.
+* **2 — the whole town was billboards.** Every building was a `THREE.Sprite`, and three.js turns a sprite to face the camera every frame, which is exactly the "gate & all houses spins together with the camera" report. `townSprite(name,units,flip,opt)` now takes `opt.yaw`: with it the art is a `THREE.Mesh(PlaneGeometry(w,h))` (`side:DoubleSide`, `alphaTest:.2`, `userData.face` = the art name) in a group carrying `userData.art`, so a building holds one bearing for good. The ring's yaw already pointed each front at the square, so the facades inherit it — measured, every house front's unit dot product to its facing target is **> .999**, and the block stand-ins' `rotation.y` deep-equals the ring's own yaw. Sprites that *should* face the player (NPCs, the hero) still do.
+* **2b — the wall and the gate now share one palette.** The curtain wall's long runs wear the kit's warm `cliff` tile (it was bare `limestone_pale`) and **every** cone on the gate line — gatehouse, watch towers, corner bastions — is capped `TOWN_MASON.roof`; the loose `0x3f6fb5` blue is gone from the wall code, so the brown castle entrance and the wall beside it are dressed from the same two colours.
+* **3 — the float was the art's own empty feet, not the shadow.** The first opaque scanline from the bottom of each sprite was measured: the town art carries **transparent margins beneath the painted ground line** (`house_town_a` 0.011, `stall_red` 0.018 … `stall_blue` 0.451 of the frame), so a plane cut to the image's edge put that gap *on* the ground and the contact shadow floated with it. `TOWN_SINK` holds the 20 measured offsets, `townSprite` sets `y = h/2 - TOWN_SINK[art]*h`, and **`tools/measure_town_ground.py` owns the table** (`--check` fails if a sprite's margin changes). The shadow is untouched, and it is now provably one sprite: a ring house carries exactly **one** `BoxGeometry` body and **two** flat shadow planes.
+* **4 — trees stood inside walls because they were planted before the buildings existed.** `townBlockers` is now filled **before** the tree loop, a house registers its **whole plot** (the facade stands at the spot and its body runs half a depth behind it, so the blocker straddles both, not the facade footprint), `townClear(x,z,r)` rejects any candidate that touches one, and each candidate tries seven radii stepping 1.6 before it is dropped. **`townClear` gained a `kind` filter** (`townAddBlocker(...,'house')`) so flower beds are still culled against houses only — a bed beside a street is fine, a bed inside a wall is not. 16 trees stand, every one measured clear of every blocker.
+* **5 — the terrace over the fountain is smaller and further back.** `TOWN.terrace` was shrunk and moved so it sits behind the five north houses instead of through them; it keeps its two defining traits (`|x0| < 9`, `z1 < -15`) and now measures **0 overlaps** against all 17 house plots.
+* **One more stand-in fixed while measuring:** the block tree was two cones with a visible gap between them; the canopy (CY 2.5→3.4, y 5.2) now starts below the trunk's top (CY 1.7→3.4), so it reads as one piece of the same silhouette as the painted art.
+* **Files touched:** `index.html` (BUILD, `TOWN_OPEN`/`townUnlocked`/`townUnlock`/`townEnter` gate, `townPackFetch` deferred + `TOWNP.started`, the closed card in `V.map`, `townSprite`'s yaw/mesh branch, `TOWN_SINK`, `townAddBlocker`/`townClear` kinds, the tree and terrace placement, the wall tiles and cone caps); `tools/measure_town_ground.py` (**new** generator + `--check`); `tools/tests/town_smoke.js` (40 scenarios, six new); `tools/tests/ui_sim.js` (the gate is pulled into its spans; the map panel's closed card and the GM's live card are both asserted); `tools/_town_dump.js` (the dev dump opens the gate the way the owner's console would); `tools/preview_town_board.py`; the three boards; `READ-ME-FIRST.md`; the build-tag snapshots.
+* **Tests:** `town_smoke` **40/40** (closed gate, GM/flag bypass, leaving never gated, no art fetched while shut, houses facing the square, no sprites, world quaternions unchanged after an `az` orbit, grounding, one body box, trees and terrace clearance, one-piece stand-in tree, wall/gate palette); **ui_sim 42**; all **34** suites green; seven `--check` tools current.
+* **To open the town:** set `TOWN_OPEN` to `true`, bump `BUILD`, push. Nothing else in the gate changes.
