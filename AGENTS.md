@@ -4173,3 +4173,49 @@ assigned for feel rather than fidelity. While reworking that, two shipped bugs s
   `cloud_sim`, `save_load_sim`, `migration_sim` all still pass unchanged.
 * **Files:** `functions/api/register.js`, `tools/dev_server.js`, `tools/tests/dev_server_sim.js`,
   `tools/cloudflare-deploy-steps.md`, `.gitignore`.
+
+### 2026-10-07 — `2026-10-07 grind-v76.2 nightmare rarity, MVP naming, harder band`
+
+* **Owner play-test of v76** came back as six notes, all built here: a Nightmare rarity, bosses renamed
+  to MVPs, the band too easy, the band's drops too generous, sprites/art expectations, and two UI asks
+  (the dungeon's place in the map panel, and the map panel hopping on a phone).
+* **The N rarity is display-only, on purpose.** `RAR5={n:'N'}` plus `rarIdx/rarOf/rarCls` sit next to
+  `RAR`; `rarIdx` returns 5 for `sec>=4` and the item's tier otherwise, so `it.tier` keeps driving
+  autosell bands, drop weights and the value maths, and `RAR[it.tier].n` is still Legendary. The
+  helpers are read by `genGear` (name prefix `N `), `dropTxt` (it now reads the ITEM, not the field
+  tier - a Nightmare drop is N even on a field whose band would be Legendary), the pickup/auto-sell
+  logs, the item card, the map panel's Monsters line, the hero's cloth/hair/metal colour (`TC` gained
+  a 6th dark purple, `TC[rarIdx(...)]`) and the field drop sparkle. CSS `.r5{color:#5b21b6}`.
+  `gearPool` entries now carry `sec`, which is what the map panel reads for the tag.
+* **MVP renames** touched only player-facing text: card header, `(MVP)` tag, fight/appears hints, HUD
+  (`MVP FIGHT`), quest text, the Executioner pet description, the refine ore hint, the pet-drop hint,
+  the stage title (`(MVP map)`) and the drop note. Code identifiers stay `boss*`. The **crit-resistance
+  dropline came off the MVP card** (owner: the map already says it) - the mechanic is untouched
+  (`bossCritRes` still ships and is still asserted by `crit_sim`).
+* **Difficulty (owner: "abit easy, maybe double?"):** `NMHP 12 -> 24`, `NMBOSSHP 12 -> 24`,
+  `NMATK 1.5 -> 2.25`, `NMEXP 1.5 -> 2.5`, `NMZENY 1.6 -> 2.2`. Damage was deliberately NOT doubled
+  with the HP - two mobs at ~2,000 a swing through a 75% DEF cut is a two-mob pack deleting a full-HP
+  character; the comment in the file says so. Worked example (now printed by `nightmare_sim`):
+  Nightmare Abyss 15 mob 2,782,608 HP (50x an Abyss 10 mob), 1,526 a hit (3.9x), stage-15 MVP 33.1M HP.
+* **Drop nerf (owner: "33% of the current rate"):** `FIELD_GEAR_NM=[.5,.4,.3]`,
+  `FIELD_GEAR_MID_NM=[.35,.28,.21]` (exact thirds, asserted against the normal tables), and the band's
+  MVP pool `BOSS_POOL_TOTAL[2] 900 -> 300` (3% total). `fieldOf` picks the band's table by STAGE, so a
+  stage 1-10 field cannot be affected by it.
+* **Dungeon UI first, dungeon later:** the map window gained a purple `.mapband.dungeon` band naming
+  **Endless Echo** with the settled rules (5:00, target that never dies or hits back, unlimited
+  practice, 2 ranked runs a day, best single-run DPS and never summed) and a disabled entry button, so
+  the map stops being fields-only ahead of v77.
+* **The map hop** was `#wins` being the real scroller at <=700px while `renderWin` only preserved
+  `.wbody.scrollTop`. `renderWin(anchor)` now also saves/restores the outer scroll and calls
+  `scrollIntoView({block:'nearest',inline:'nearest'})` on the pressed control (a stage node, a map
+  card) only when it is off screen.
+* **Tests:** `nightmare_sim` (constants, the doubled worked example, the third-rate tables, the pool
+  section tag), `gear_sim` (the N rarity, display-only tier, the exact thirds), `ui_sim` (the MVP
+  wording, no crit line on the card, the N badge in the map panel, the scroll-anchor shape, the
+  dungeon card). `drop_card_sheet_sim` needed no change - the sheet stores row names, not generated
+  item names. All **35 suites green**. `node --check` clean.
+* **Files:** `index.html` (BUILD v76.2, RAR5 helpers, CSS `.r5`/`.mapband.dungeon`, genGear/dropTxt/
+  logs/item card/map panel, TC, hero colours, drop sparkle, gearPool, fieldOf drop tables, the NM
+  constants, MVP text, renderWin + the two handlers), `tools/tests/{nightmare,gear,ui}_sim.js`,
+  `READ-ME-FIRST.md`, the three BUILD mirrors, `Updates/v76-nightmare-report.md`.
+* **PR opened** at the owner's request; the trial dungeon is the next build (v77).

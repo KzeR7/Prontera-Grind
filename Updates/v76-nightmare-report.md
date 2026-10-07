@@ -99,23 +99,25 @@ same-power monster:
 | | Mob HP | The mob's hit on you (after your 75% DEF cut) |
 |---|---|---|
 | Abyss stage 10 (the old ceiling) | 56,013 | 389 |
-| **Nightmare Abyss 15** | **1,391,304 (25x)** | **1,017 (2.6x)** |
-| Nightmare Abyss 15 boss | 16,563,240 | — |
+| **Nightmare Abyss 15** | **2,782,608 (50x)** | **1,526 (3.9x)** |
+| Nightmare Abyss 15 MVP | 33,126,480 | — |
 
 (That second column is the *monster's* attack, not yours — a Nightmare Abyss 15 mob hits about two and
 a half times harder than an Abyss 10 mob does.)
 
-* **12x mob HP** and **1.5x mob damage** — the two knobs are single constants (`NMHP`, `NMATK`).
-* The stage-15 boss has **12x the HP** of a stage-10 boss (`NMBOSSHP`).
-* Nightmare monsters pay **1.5x EXP** and **1.6x Zeny** (`NMEXP`, `NMZENY`) — you get paid for the
+* **24x mob HP** and **2.25x mob damage** — the two knobs are single constants (`NMHP`, `NMATK`).
+  (v76 shipped 12x / 1.5x; your play-test said it was a bit easy — see Part 5.)
+* The stage-15 MVP has **24x the HP** of a stage-10 one (`NMBOSSHP`).
+* Nightmare monsters pay **2.5x EXP** and **2.2x Zeny** (`NMEXP`, `NMZENY`) — you get paid for the
   extra time, not just punished by it.
-* **Ore** drops at **1.5%** a kill in the band (0.5% normally, 1% on a stage-10 boss field).
-* Boss drop pool **9%** total instead of 6% (4.2% on the mid/endgame maps).
-* **Bosses resist crit harder**, one figure per map, rising like the normal ladder:
+* **Ore** drops at **1.5%** a kill in the band (0.5% normally, 1% on a stage-10 MVP field).
+* MVP drop pool **3%** total (6% on the first five maps, 4.2% on the mid/endgame ones) — the band's
+  drops are a third of what they were, per your v76.2 note.
+* **MVPs resist crit harder**, one figure per map, rising like the normal ladder:
   **35 / 35 / 36 / 36 / 38 / 38 / 40 / 40 / 42 / 45%**. A capped 60% crit build crits a Nightmare
-  Abyss boss **33%** of the time (39% on Nightmare Prontera). The old ladder (15/15/15/20/30) is
-  untouched for stages 1-10, and the map panel now prints whichever ladder the field you are reading
-  actually uses — before this pass it printed the normal number on a Nightmare field.
+  Abyss MVP **33%** of the time (39% on Nightmare Prontera). The old ladder (15/15/15/20/30) is
+  untouched for stages 1-10. The mechanic is unchanged; as of v76.2 the figure is no longer printed
+  under the MVP's name (your note: the map already says it).
 
 ### 1.4 Two new gear sections, exclusive to the band
 
@@ -133,8 +135,9 @@ a half times harder than an Abyss 10 mob does.)
   Hermes*, *Sandwraith Bloody Roar*, *Leviathan Trident Bow*, *Oni Dragon Slayer*, *Yokai Masamune*,
   *Helheim Deathbringer*, *Glast Dark Lord Sword* — with section 5 versions one word further
   (*Abyssal, Maelstrom, Singularity, Eclipse, Wraithlord, Trench, Yama, Kami, Nidhogg, Absolute*).
-* **210 new items**, names checked unique across the whole catalogue, same Legendary grade as the row
-  they come from.
+* **210 new items**, names checked unique across the whole catalogue, and **they are their own rarity
+  now: tagged `N`, painted dark purple**, never "Legendary" (v76.2 — see Part 5). Mechanically they
+  still pay at the Legendary band, so autosell, values and drop weights are untouched.
 * Value: a **Nightmare** item is **1.5x** the high-tier row, an **Abyssal Nightmare** item **15/7x**
   it. There is no new grade — it is a new section whose numbers sit where the 100-150 grind needs
   them, so the Legendary chase you already know still means something.
@@ -272,6 +275,36 @@ Why this shape:
 across sessions, so the chest rungs are DPS. **Still open:** the exact five numbers — send me your
 first run's score (or just tell me when v77 is in your hands) and I will set them from the measurement
 instead of the estimate.
+
+---
+
+## Part 5 — v76.2: your play-test notes, all six built
+
+1. **The N rarity.** Nightmare and Abyssal Nightmare gear is tagged **N** with **dark purple names**
+   instead of "Legendary", and the look carries: wearing Nightmare armour/headgear/weapon tints the
+   worn model dark purple (the same colour table that paints Legendary gear gold), a Nightmare drop
+   sparkles purple in the field, and the item name itself leads with `N ` — `N Dread Excalibur`.
+   It is display-only; the numbers and the autosell bands are untouched.
+2. **Bosses are MVPs everywhere**: the card header, the `(MVP)` tag, the fight hints, the HUD
+   (`MVP FIGHT · 3 minions`), the quest text, the Executioner pet line, the ore hint and the stage
+   title all say MVP now.
+3. **The band is harder.** You said "abit easy, maybe double?" — the wall is doubled and the sting is
+   only half again on purpose: `NMHP 12 → 24`, `NMBOSSHP 12 → 24`, `NMATK 1.5 → 2.25`. A Nightmare
+   Abyss 15 mob is now **2.78M HP (50x an Abyss 10 mob)** and hits for **1,526** through your 75% DEF
+   cut; its MVP has **33.1M HP**. Doubling the damage as well would have meant two mobs at ~2,000 a
+   swing, i.e. a pack deleting a full-HP character in a round — not hard, just unplayable. Say the
+   word and I will go further anyway; it is one constant.
+4. **Nightmare drops are 33% of what they were** — exact thirds of the matching normal table, mob
+   rolls and the band's MVP pool both.
+5. **Sprites: there are none to add, and here is why.** Gear is drawn per *weapon type* — every sword
+   in the game draws the same sword, every bow the same bow — so a renamed row was already using the
+   right art. What actually distinguishes gear on the character is the **rarity colour**, and that is
+   what the N rarity now owns. If you want the 210 Nightmare items to have genuinely *unique* art
+   (new silhouettes, not a recolour), that is a sprite-pack job of its own; the recolour is live now.
+6. **The map panel.** Endless Echo's card is in the map window with the settled rules and a disabled
+   entry button until v77, and the hopping is fixed: the real scroller on a phone is the window stack,
+   not the panel body, so a rebuild was resetting it every time you tapped a stage. It now restores
+   the scroll by number and only nudges the control you pressed when it is actually off screen.
 
 ---
 

@@ -80,6 +80,45 @@ is the live one; with no argument the tool prints how to set a new one). Since v
 `GM` / `test1234`; `localStorage.removeItem('pg_gm_local')` removes it. Normal accounts are made
 in-game and stored in the browser (`pg_acc4`; saves under `pg_save3_<user>`).
 
+## BUILD v76.2 — Nightmare rarity, MVP naming, a harder band, and the map fixes
+
+The owner's first play-test of v76 came back with six notes; this is all of them. **The difficulty and
+drop figures below replace the v76 ones** (the v76 section is kept underneath as history).
+
+* **Nightmare gear is its own rarity.** Sections 4 and 5 are no longer "Legendary": they are tagged
+  **N** and their names are painted **dark purple** (`.r5`), so an exclusive piece never reads as one
+  more pile of ordinary endgame loot. It is display-only — the mechanics still pay them at the
+  Legendary band, so autosell, values and drop weights are untouched. The look carries through to the
+  character: **wearing Nightmare armour, headgear or weapon tints the worn model dark purple** (the
+  same rarity colour table that paints Legendary gear gold), and a Nightmare drop sparkles purple in
+  the field. The item's own name states it too: `N Dread Excalibur`.
+* **Bosses are MVPs now.** Every player-facing mention — the card header (`MVP & pets`), the tag
+  (`Dark Lord (MVP)`), the hints (`MVP fights immediately…`, `MVP appears at NM 5`), the HUD
+  (`MVP FIGHT · 3 minions`), the quest text, the Executioner pet description, the ore hint and the
+  stage title (`(MVP map)`) — says MVP. The internal names (`isBoss`, `bossCritRes`, the CSS classes)
+  did not change, so nothing else moved.
+* **The crit-resistance line came off the MVP card.** The mechanic is unchanged (MVPs still cut your
+  Crit%), but the figure is no longer printed under the name.
+* **The band is twice the wall and half again the sting.** `NMHP 12 → 24`, `NMBOSSHP 12 → 24`,
+  `NMATK 1.5 → 2.25`. A Nightmare Abyss 15 mob now has **2,782,608 HP (50x an Abyss 10 mob)** and its
+  hit lands for **1,526** through a 75% DEF cut (3.9x); the stage-15 MVP has **33.1M HP**. Damage was
+  deliberately not doubled with the HP: two Nightmare mobs hitting for ~2,000 a swing would delete a
+  full-HP character in a round. Payouts moved with the extra time (`NMEXP 1.5 → 2.5`,
+  `NMZENY 1.6 → 2.2`) so the band is still the best place to spend five minutes.
+* **Nightmare drops are a third of what they were** (owner: "nerf the nightmare drop rate to 33% of
+  the current rate"). New tables `FIELD_GEAR_NM=[.5,.4,.3]` and `FIELD_GEAR_MID_NM=[.35,.28,.21]` are
+  exactly a third of the matching normal table, and the band's MVP pool is a third too
+  (`BOSS_POOL_TOTAL[2] 900 → 300`, i.e. 3% total instead of 9%). Cards, ore and EXP are untouched.
+* **The damage trial has its place in the map panel already.** A purple **Endless Echo** band now sits
+  at the bottom of the World Map window stating the rules that are settled — 5:00 run, a target that
+  never dies and never hits back, unlimited practice, **2 ranked runs a day**, and a board that keeps
+  the **best single-run DPS** (runs are never summed). The entry button is disabled until v77 builds
+  the dungeon itself.
+* **The map panel stopped hopping.** The real scroller on a phone is `#wins`, not the window body, so
+  the rebuild was resetting it every time a stage was tapped. The rebuild now restores the outer
+  scroll by number and only nudges the pressed control into view when it is off screen
+  (`scrollIntoView({block:'nearest'})`), so a re-render in place stays perfectly still.
+
 ## Testing the preview (and getting GM tools on it)
 
 ```sh

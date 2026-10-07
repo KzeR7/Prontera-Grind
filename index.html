@@ -119,7 +119,7 @@ html, body { margin:0; padding:0; width:100vw; height:100vh; height:100dvh; over
 @media(max-width:560px){#hud{gap:6px 10px;padding:7px 10px;font-size:11px}.hud-health .bar{width:94px}.hud-health small{min-width:28px}#xp-track{height:22px}.xp-label,.xp-label.job{left:0;right:0;top:0;text-align:center;font-size:9px;line-height:10px}.xp-pct{top:10px;line-height:10px;font-size:9px}}
 .body{padding:8px;font-size:13px}
 .slot{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:5px 8px;border:1px solid var(--edge);background:#fffdf5;margin-bottom:4px;border-radius:4px;min-height:36px}
-.r0{color:#555}.r1{color:#2a9d3f}.r2{color:#2f6fd6}.r3{color:#a23fd6}.r4{color:#e07b00;font-weight:bold}
+.r0{color:#555}.r1{color:#2a9d3f}.r2{color:#2f6fd6}.r3{color:#a23fd6}.r4{color:#e07b00;font-weight:bold}.r5{color:#5b21b6;font-weight:bold}
 button{font:inherit;font-size:12px;background:linear-gradient(#fff,#efe0b8);border:1px solid var(--edge2);border-radius:3px;padding:3px 10px;cursor:pointer;color:var(--ink)}
 button:hover{background:#ffe9a8}button:focus-visible{outline:2px solid #2f6fd6}
 .wide{grid-column:1/-1}small{opacity:.7}button:disabled{opacity:.4;cursor:default}
@@ -195,6 +195,11 @@ hr{border:0;border-top:1px dashed var(--edge);margin:6px 0}
 .mapband-t{display:flex;flex-wrap:wrap;align-items:center;gap:6px;font-weight:bold;margin:2px 0 4px;min-width:0}
 .mapband-t small{font-weight:normal;opacity:.75;min-width:0;flex:1 1 180px;overflow-wrap:anywhere}
 .mapband-t button.go{margin-left:auto;padding:5px 12px;font-weight:bold;white-space:normal;max-width:100%}
+/* v76.2: where the damage trial will live. The owner asked for its place in the map panel before the
+   dungeon itself is built, so the map stops being only fields. */
+.mapband.dungeon{margin-top:6px;padding:6px 9px;border:2px solid #8f4fd6;border-radius:6px;background:#f6ecff}
+.mapband.dungeon .mapband-t{color:#4a1f6b;margin-bottom:2px}
+.mapband.dungeon button.go[disabled]{opacity:.55;cursor:not-allowed}
 .mapcols{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,280px),1fr));gap:8px;align-items:stretch;margin-top:8px;min-width:0}
 .mapcols .mob-card{margin-bottom:0;min-width:0;overflow-wrap:anywhere}
 .dropline{display:flex;justify-content:space-between;align-items:baseline;gap:8px;padding:1px 0;font-size:12px}
@@ -435,6 +440,11 @@ button.tick.on{background:#ffe08a;border-color:var(--gold);font-weight:bold}
 <script>
 const $=id=>document.getElementById(id);
 const RAR=[{n:'Common',m:1,w:60},{n:'Fine',m:1.35,w:25},{n:'Rare',m:1.9,w:10},{n:'Epic',m:2.8,w:4},{n:'Legendary',m:4.5,w:1}];
+// v76.2 (owner): Nightmare gear is not another pile of Legendaries - it is its own rarity, tagged N
+// and painted dark purple, so the exclusive sections look exclusive. This is DISPLAY ONLY: it.tier
+// stays the drop band (4 for sections 4/5), because the autosell bands, the drop weights and the
+// value maths all index RAR and TC by tier. rarTier() is the only thing that knows about the 'N'.
+const RAR5={n:'N'},rarIdx=it=>((it&&+it.sec>=4)?5:Math.max(0,Math.min(RAR.length-1,(it&&it.tier)||0))),rarOf=it=>(rarIdx(it)===5?RAR5:RAR[rarIdx(it)]),rarCls=it=>'r'+rarIdx(it);
 // v38 balance, three constants at once:
 //   AM x1.7 - affix magnitude, the first give-back for the weapon cut (a Legendary ATK
 //             affix goes +21% -> +36%)
@@ -552,7 +562,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // script block, which is a SyntaxError - the game did not run on main at all. One line wins, and
 // it names both sides of this merge: the v38 balance patch (the weapon cut, the affix/card
 // give-back) and main's weapon-hold rendering work.
-const BUILD='2026-10-07 grind-v76 nightmare band and exclusive nightmare gear';   // shown on the login card - confirms which file you loaded
+const BUILD='2026-10-07 grind-v76.2 nightmare rarity, MVP naming, harder band';   // shown on the login card - confirms which file you loaded
 $('buildTag').textContent='build '+BUILD;
 
 // ---------- class tree: Novice -> 6 first jobs -> 6 second jobs -> 6 third jobs ----------
@@ -1108,7 +1118,13 @@ const nmMax=()=>10+nmOpen();
 // The difficulty knobs, in one place: Nightmare monsters are tanky and they hit hard enough that
 // sustain (leech, Divine Grace, healing skills) stops being optional. Tune these two, not the
 // formulas - every other number follows fieldPower.
-const NMHP=12,NMATK=1.5,NMEXP=1.5,NMZENY=1.6,NMBOSSHP=12;
+//
+// v76.2 (owner playtest: "i just tested its abit easy, maybe double?"): the wall is doubled and the
+// sting is only half again, on purpose. Doubling the damage as well would take a Nightmare Abyss 15
+// mob from ~1,000 to ~2,000 a hit through a 75% DEF cut, which is a two-mob pack deleting a full-HP
+// character in a round or two - that is not "hard", that is unplayable. The payouts move with the
+// time-per-kill so the band stays the best place to spend a 5-minute session.
+const NMHP=24,NMATK=2.25,NMEXP=2.5,NMZENY=2.2,NMBOSSHP=24;
 // Each map's Nightmare gear is its own high-tier row, renamed: same weapon families and slots (so
 // every class can still use its own weapon) and a per-map word that keeps every name unique. Section
 // 4 is the stage 11-13 drop, section 5 the stage 14-15 and boss drop. They exist NOWHERE else - the
@@ -1146,7 +1162,11 @@ const BAGMAX=1000;
 // Stage-10 boss pools drop with them. Prontera and the four class maps (index 0-4) keep their
 // original numbers for field and boss alike, so the early game is untouched: a starter field
 // still pays 3.6% a kill, the mid/endgame fields pay 2.52%. Pinned by gear_sim.js.
-const FIELD_GEAR=[1.5,1.2,.9],FIELD_GEAR_MID=[1.05,.84,.63],BOSS_POOL_TOTAL=[600,420,900];
+const FIELD_GEAR=[1.5,1.2,.9],FIELD_GEAR_MID=[1.05,.84,.63],BOSS_POOL_TOTAL=[600,420,300];
+// v76.2 (owner): "nerf the nightmare drop rate to 33% of the current rate". Exactly a third of the
+// matching normal table, per roll, so the band's exclusive gear stays a chase; the MVP pool is
+// divided the same way (BOSS_POOL_TOTAL above, 3% total instead of 9%).
+const FIELD_GEAR_NM=[.5,.4,.3],FIELD_GEAR_MID_NM=[.35,.28,.21];
 // v73 (owner): high-level bosses resist crits. The number is the share of the crit chance that
 // is removed when you swing at that boss: a capped 60% build crits Comodo, Louyang and Amatsu's
 // bosses 51% of the time, Niflheim's Lord of Death 48% and the Abyss Dark Lord 42%. Maps 1-5
@@ -1194,18 +1214,22 @@ const dropTier=(m,l)=>Math.min(MAPGRADE[Math.max(0,Math.min(MAPGRADE.length-1,m|
 // but the drop's *section* is floored at 2, not taken from secOf(l), which for stages 1-2 is 0
 // (Novice gear: fine on Prontera, vendor trash on Abyss at level 90). Pinned by gear_sim.js.
 const secField=(m,l)=>(l|0)>13?5:(l|0)>10?4:m===0?0:m<=4?(l<=5?0:l<=7?1:l<=9?2:3):(l>=3?3:2);
-function gearPool(m,l){const sg=MAPS[m].gear[secField(m,l)],T=[];
-  for(const k in sg.w)T.push({k,n:sg.w[k]});
-  T.push({k:'armor',n:sg.a},{k:'head',n:sg.h});
-  if(sg.o)T.push({k:'off',n:sg.o});
-  T.push({k:'leg',n:sg.l},{k:'acc',n:sg.ac});
-  if(sg.ac2)T.push({k:'acc',n:sg.ac2});
+function gearPool(m,l){const sec=secField(m,l),sg=MAPS[m].gear[sec],T=[];
+  // v76.2: every pool entry carries the section it came from, so the map panel (and anything else
+  // reading a drop table) can tag a Nightmare drop as the N rarity without re-deriving the field.
+  const add=(k,n)=>T.push({k,n,sec});
+  for(const k in sg.w)add(k,sg.w[k]);
+  add('armor',sg.a);add('head',sg.h);
+  if(sg.o)add('off',sg.o);
+  add('leg',sg.l);add('acc',sg.ac);
+  if(sg.ac2)add('acc',sg.ac2);
   return T}
 function fieldOf(m,l){const mp=MAPS[m],sec=secField(m,l),T=gearPool(m,l),n=T.length,ft=dropTier(m,l);
   // three gear rolls per mob, spread across the pool so two mobs on one field do not pay out
   // the same item; gear is the common drop and a card is the rare one. From Comodo on the
-  // table is the 30% lighter v73 one (FIELD_GEAR_MID); maps 1-5 use the original.
-  const gch=m>=5?FIELD_GEAR_MID:FIELD_GEAR;
+  // table is the 30% lighter v73 one (FIELD_GEAR_MID); maps 1-5 use the original. The Nightmare
+  // band (v76.2) pays a third of whichever table its map would pay below stage 11.
+  const gch=l>10?(m>=5?FIELD_GEAR_MID_NM:FIELD_GEAR_NM):(m>=5?FIELD_GEAR_MID:FIELD_GEAR);
   const mobs=[0,1].map(j=>{const mm=mp.mobs[(l-1+j)%mp.mobs.length],cg=l<=3?0:l<=7?1:2;
     return{...mm,tier:ft,drops:[[T[(l*3+2*j)%n],gch[0]],[T[(l*3+2*j+1)%n],gch[1]],[T[(l*3+2*j+2)%n],gch[2]]],card:{n:mm.n+' Card',stat:cardStat(cg,(m*10+l+j)*3+1),g:cg},cardCh:.15,ore:true,oreCh:l>10?.015:l===10?.01:.005}});
   return{m,l,sec,tier:ft,mobs,boss:(l===10||l===15)?{...mp.boss,tier:ft,
@@ -1218,7 +1242,7 @@ function fieldOf(m,l){const mp=MAPS[m],sec=secField(m,l),T=gearPool(m,l),n=T.len
     card:{n:mp.boss.n+' Card',stat:cardStat(3,m),g:3},cardCh:.1,ore:true,oreCh:.025}:null}}
 // One drop line for the map panel: icon + name + the fixed rarity on the left, the % on the right.
 const poolIc=T=>gearSlot(T)==='weapon'?(WICON[T.k]||'⚔️'):{armor:'🥼',head:'🎩',off:'🛡️',leg:'👖',acc:'💍'}[T.k];
-const dropTxt=([T,ch],tier)=>`<div class="dropline"><span>${poolIc(T)} ${T.n} <small class="r${tier||0}">${RAR[tier||0].n}</small></span><b>${ch}%</b></div>`;
+const dropTxt=([T,ch])=>`<div class="dropline"><span>${poolIc(T)} ${T.n} <small class="${rarCls(T)}">${rarOf(T).n}</small></span><b>${ch}%</b></div>`;
 
 // ---------- stat progression ----------
 // Stats cap at 99 until Base Lv 100, then the elite tier opens up to 120. Raising a stat
@@ -1322,7 +1346,7 @@ const PET_TRAIT=[
   {n:'Sand Tracker',  k:['ore'],     d:v=>`+${v}% Oridecon and Elunium drop chance`},
   {n:'Swift Mount',   k:['move'],    d:v=>`+${v}% movement speed`},
   {n:'Hoarded Flame', k:['gear'],    d:v=>`+${v}% equipment drop chance`},
-  {n:'Executioner',   k:['boss'],    d:v=>`+${v}% damage to bosses, yours and your pets'`},
+  {n:'Executioner',   k:['boss'],    d:v=>`+${v}% damage to MVPs, yours and your pets'`},
   {n:'Divine Grace',  k:['hp','dr'], d:v=>`+${v}% Max HP and ${v}% less damage taken`}];
 const bondCnt=sp=>Math.max(0,Math.min(999,Number((S&&S.bond&&S.bond[sp])||0)));
 // Bond 0..5: 0 at none, 1 after the first folded duplicate, 5 after fifteen of them.
@@ -2156,7 +2180,7 @@ function genGear(T,l,sec,boss,tier){
   for(let i=0;i<n;i++){const k=pool.splice(ri(0,pool.length-1),1)[0];aff.push({k,v:affixValue(k,sec,t,rnd(.8,1.25))})}
   // Katars and bows always have four card sockets; every other weapon keeps the existing 1-3 roll.
   const slots=slot==='weapon'&&(T.k==='katar'||T.k==='bow')?4:slot==='weapon'?Math.min(3,1+ri(0,1)+(t>=3?1:0)):Math.min(1,ri(0,1)+(t>=3?1:0));
-  return{id:uid(),slot,wt:slot==='weapon'?T.k:undefined,tier:t,val,name:(t?RAR[t].n+' ':'')+T.n,aff,slots,cards:[],sec,lvl:l};
+  return{id:uid(),slot,wt:slot==='weapon'?T.k:undefined,tier:t,val,name:(sec>=4?'N ':t?RAR[t].n+' ':'')+T.n,aff,slots,cards:[],sec,lvl:l};
 }
 // Away time is earned from the same map/stage and drop tables as online play. The browser records
 // a rolling real-time kill rate, credits at most four hours, and simulates half that many kills.
@@ -2420,9 +2444,9 @@ function collect(it){
   // band can never be swallowed by a full bag or worn by accident. Locked gear bypasses the
   // filter, stays protected, and still counts for loot quests - the item was looted.
   if(!it.locked&&autoSellOn(it.tier)){const v=sellVal(it);earnZeny(v);qProg('loot');(it.cards||[]).forEach(c=>S.cards.push(c));
-    log(`Auto-sold [${RAR[it.tier].n}] ${it.name} (+${v.toLocaleString()}z)`,'r'+it.tier,'gear,zeny');ui();save();return}
+    log(`Auto-sold [${rarOf(it).n}] ${it.name} (+${v.toLocaleString()}z)`,rarCls(it),'gear,zeny');ui();save();return}
   if(S.inv.length>=BAGMAX){log(`Bag full (${BAGMAX} items): sold nothing, left ${it.name} on the ground.`,'r0','gear');addFloat(pl.x,3,pl.z,'BAG FULL','#ff6b6b',true);ui();return}
-  S.inv.push(it);qProg('loot');log(`Picked up [${RAR[it.tier].n}] ${it.name}`,'r'+it.tier,'gear');
+  S.inv.push(it);qProg('loot');log(`Picked up [${rarOf(it).n}] ${it.name}`,rarCls(it),'gear');
   if(S.auto!==false&&canUse(it)){const cur=S.eq[ekey(it)];if(!cur||ev(it)>ev(cur))equip(it.id,true)}ui();
 }
 function equip(id,quiet){const i=S.inv.findIndex(x=>x.id===id);if(i<0)return;const it=S.inv[i];if(!canUse(it)){log(`Your class cannot use ${it.name}.`);return}
@@ -2453,9 +2477,9 @@ function qScale(q){const L=S?S.lv:1;
   q.at=L;return q}
 function newQuest(type){return qScale({type,goal:1,prog:0})}
 function qRefresh(){if(!S||!Array.isArray(S.q))return;(S.q||[]).forEach(q=>{if(q&&q.type)qScale(q)})}
-const qTxt=q=>q.type==='kill'?`Defeat ${q.goal} monsters`:q.type==='loot'?`Collect ${q.goal} equipment drops`:`Defeat ${q.goal} boss${q.goal>1?'es':''}`;
+const qTxt=q=>q.type==='kill'?`Defeat ${q.goal} monsters`:q.type==='loot'?`Collect ${q.goal} equipment drops`:`Defeat ${q.goal} MVP${q.goal>1?'s':''}`;
 function refine(sl){const it=S.eq[sl];if(!it||(it.r||0)>=10)return;const o=it.slot==='weapon'?'ori':'elu',c=refCost(it);
-  if(S.ore[o]<1){log(`You need 1 ${ORE[o]}. Regular mobs drop both ores at 0.5% on Stages 1-9 and 1% on Stage 10; the Stage 10 boss drops them at 2.5%.`);return}if(S.zeny<c){log('Not enough Zeny.');return}
+  if(S.ore[o]<1){log(`You need 1 ${ORE[o]}. Regular mobs drop both ores at 0.5% on Stages 1-9 and 1% on Stage 10; the Stage 10 MVP drops them at 2.5%.`);return}if(S.zeny<c){log('Not enough Zeny.');return}
   S.ore[o]--;S.zeny-=c;if(Math.random()*100<refCh(it)){it.r=(it.r||0)+1;log(`Refine success! ${iname(it)}`,'r3','gear');addFloat(pl.x,3,pl.z,'Refine +'+it.r,'#ffd23f')}
   else{if(it.r>=5){it.r--;log(`Refine failed... dropped to +${it.r}.`,'r0','gear')}else log('Refine failed.','r0','gear');addFloat(pl.x,3,pl.z,'Failed','#ff6b6b')}ui();save()}
 
@@ -2554,7 +2578,7 @@ function itemMain(it){
   // v74: the class tier of a piece is part of its description, and a piece that came off a class
   // remembers who was wearing it so the lock is never a mystery: "it is locked BECAUSE Knight had
   // it on, and it goes back on the moment you switch to Knight again".
-  return`<b class="r${it.tier}">${iname(it)}</b><div><small>${RAR[it.tier].n} ${SLOTS[it.slot].label}${it.wt?' ('+it.wt+')':''} &middot; ${SECN[it.sec||0]}</small></div>
+  return`<b class="${rarCls(it)}">${iname(it)}</b><div><small>${rarOf(it).n} ${SLOTS[it.slot].label}${it.wt?' ('+it.wt+')':''} &middot; ${SECN[it.sec||0]}</small></div>
   <div><small>Worn by: <b>${gearUserOf(it)}</b></small></div>
   <div><small>Gear Lv ${gearRefLevel(it)} &middot; reference only: gear is gated by class tier, never by Base Lv</small></div>${it.locked?`<div><small class="r3">&#9733; Locked &middot; protected from auto-sell</small></div>`:''}
   ${gearTierOK(it)?'':`<div><small class="r0">Locked to ${gearUserOf(it)}: your ${S.cls} cannot wear it.${it.wearer?` This was ${it.wearer}'s gear - it goes straight back on when you switch to ${it.wearer} again.`:''}</small></div>`}
@@ -2644,21 +2668,25 @@ const V={
       ${nmo?'':`<small>Stages 11-15 are the <b>Nightmare band</b>: the same map, far harder monsters, and gear that exists nowhere else. Stage ${11+nmo} opens at Base Lv ${NMLV[nmo]}.</small>`}</div>
     <div class="mapcols">
       <div class="mob-card"><div class="hd">${mapL>10?'Nightmare ':''}${mp.n} Stage ${mapL>10?mapL-10:mapL}${mapM<5&&mapL<=5?`<br><small>${mapM===0?'Novice start · Base Lv 1–10':'Early class route · Base Lv 10–20'} · gentle packs</small>`:''}</div>
-        <div class="sec">Monsters <small>&middot; every drop here is <b class="r${F.tier}">${RAR[F.tier].n}</b></small></div>
+        <div class="sec">Monsters <small>&middot; every drop here is <b class="${F.sec>=4?'r5':'r'+F.tier}">${F.sec>=4?'N':RAR[F.tier].n}</b></small></div>
         ${F.mobs.map(m=>`<div class="mobentry"><b>${m.n}</b>
-          ${m.drops.map(d=>dropTxt(d,F.tier)).join('')}
+          ${m.drops.map(d=>dropTxt(d)).join('')}
           <div class="dropline"><span>🃏 ${m.card.n} <small>(${SU(m.card.stat)} +${cardVal(m.card.g,m.card.stat)}, ${GRADE[m.card.g]})</small></span><b>${m.cardCh}%</b></div>
           ${m.ore?`<div class="dropline ore"><span>🔶 Oridecon &middot; 🔷 Elunium</span><b>${m.oreCh*100}% each</b></div>`:''}
         </div>`).join('<hr>')}</div>
-      <div class="mob-card"><div class="hd">Boss &amp; pets</div>${(mapL===10||mapL===15)?`<small>Boss fights immediately with ${mapM<5?3:5} monsters. Defeat the boss to reset the fight.</small>`:''}
-        ${F.boss?`<div class="mobentry"><b class="r4">${F.boss.n} (BOSS)</b>
+      <div class="mapband dungeon">
+        <div class="mapband-t">&#127963; Endless Echo <small>&middot; the damage trial &middot; <b>built next</b></small></div>
+        <small>One <b>5:00</b> run against a target that never dies and never fights back. Practice as often as you like; only <b>2 ranked runs a day</b> count, and the board keeps your <b>best single-run DPS</b> - runs are never added together. Pays Trial Shards, titles, and a weekly season.</small>
+        <div class="row" style="margin-top:6px"><button class="go" disabled>Enter - not built yet</button><small>2 ranked runs a day &middot; best single-run DPS</small></div>
+      </div>
+      <div class="mob-card"><div class="hd">MVP &amp; pets</div>${(mapL===10||mapL===15)?`<small>MVP fights immediately with ${mapM<5?3:5} monsters. Defeat the MVP to reset the fight.</small>`:''}
+        ${F.boss?`<div class="mobentry"><b class="r4">${F.boss.n} (MVP)</b>
           <div class="poollist">${F.boss.drops.map(([T,ch])=>`<span class="poolitem">${poolIc(T)} ${T.n}<b>${ch}%</b></span>`).join('')}</div>
-          ${bossCritRes(mapM,mapL)?`<div class="dropline"><span>🛡 Crit resistance <small>your Crit % is cut by this much against this boss</small></span><b>${Math.round(bossCritRes(mapM,mapL)*100)}%</b></div>`:''}
-          <small>Every boss drop is <b class="r4">Legendary</b> with random affixes. Each item rolls independently; a boss can drop zero or several pieces.</small>
+          <small>Every MVP drop is <b class="r4">Legendary</b> with random affixes. Each item rolls independently; a boss can drop zero or several pieces.</small>
           <div class="dropline"><span>🃏 ${F.boss.card.n} <small>(${SU(F.boss.card.stat)} +${cardVal(3,F.boss.card.stat)}, Legendary)</small></span><b>${F.boss.cardCh}%</b></div>
           <div class="dropline ore"><span>🔶 Oridecon &middot; 🔷 Elunium</span><b>${F.boss.oreCh*100}% each</b></div>
-        </div>`:`<small>Boss appears at ${mapL>10?'NM 5 (stage 15)':'Stage 10'}.</small>`}
-        <div class="sec">🐾 Pet drops</div><small>0.03% per kill, 0.5% from bosses. Odds on ${mp.n}: ${PW[Math.min(mapM,9)].map((w,i)=>RN[i]+' '+w+'%').join(' &middot; ')}</small></div></div>`},
+        </div>`:`<small>MVP appears at ${mapL>10?'NM 5 (stage 15)':'Stage 10'}.</small>`}
+        <div class="sec">🐾 Pet drops</div><small>0.03% per kill, 0.5% from MVPs. Odds on ${mp.n}: ${PW[Math.min(mapM,9)].map((w,i)=>RN[i]+' '+w+'%').join(' &middot; ')}</small></div></div>`},
   stats(){const c=C(),b=k=>bon(k)?` <small class="r1">+${bon(k)}</small>`:'',idxC=typeof indexCrit==='function'?indexCrit():0;
     return`<div class="hd">${S.cls} &middot; Base Lv ${S.lv} &middot; Job Lv ${jobOf().jl}/${c.mj}</div><div class="hd">Stat points: ${S.pts} <small>(max ${statCap()} each${S.lv<ELITELV?' &middot; '+MAXST+' unlocks at Base Lv '+ELITELV:''} &middot; max Base Lv 150)</small></div><div class="hd">🏆 Class collection: ${playedClasses()}/${t3Total()} transcendent classes at Base Lv 100+ &middot; <b>+${collDmg()}% damage</b> <small>(+1% each, permanent${playedClasses()?'':' - take a transcendent class to Base Lv 100 to earn it'})</small></div>`
     +(petBonusList().length?`<small><b>Pet bonuses</b> (the fighting pets): ${petBonusList().join(' &middot; ')}</small>`:'')
@@ -2927,7 +2955,12 @@ function petDetail(p){const sp=PETS[p.sp],g=p.mut,sk=p.sk||[1,2,3],SL=petSkills(
 function ask(msg,yes,labels={}){$('mt').textContent=msg;$('my').textContent=labels.yes||'Yes';$('mn').textContent=labels.no||'Cancel';$('modal').style.display='flex';$('my').onclick=()=>{$('modal').style.display='none';yes()};$('mn').onclick=()=>{$('modal').style.display='none'}}
 function insertUI(sel){if(!(sel.slots>0))return'<small>No card slots on this item.</small>';if((sel.cards||[]).length>=sel.slots)return'';const fit=S.cards.filter(c=>CFIT[c.stat]===grp(sel));
   return'<div class="sec">Insert card</div>'+([...new Map(fit.map(c=>[c.n,c])).values()].map(c=>`<div class="slot"><span class="r${GI[c.g]}">🃏 ${c.n} <small>${SU(c.stat)} +${c.v} &middot; x${fit.filter(x=>x.n===c.n).length}</small></span><button data-a="sock" data-v="${c.id}:${selE}">Insert</button></div>`).join('')||'<small>No compatible cards in your bag.</small>')}
-function renderWin(){
+// v76.2: `anchor` is a selector for the control the player just pressed (a stage node, a map card).
+// A rebuild replaces every window, so on its own it can leave the tapped control off-screen - that is
+// the "hopping" the owner saw on a phone. The scroll of the real scroller is restored by number, and
+// the anchor is only nudged into view when it is not already visible (block:'nearest' does nothing if
+// it is), so a rebuild in place stays perfectly still.
+function renderWin(anchor){
   if(!S)return;
   // A kill, a level-up or any panel refresh rebuilds every open window from scratch. A click whose
   // press and release span one of those rebuilds used to be swallowed - the button the pointer went
@@ -2938,8 +2971,11 @@ function renderWin(){
   $('dock').innerHTML=Object.entries(TABS).filter(([k])=>k!=='gm'||S.gm).map(([k,[ic,n,key]])=>`<button class="ib${tabs.includes(k)?' on':''}" data-t="${k}" title="${n} (${key})">${ic}<span class="k">${key}</span>${dot(k)?'<i class="dot"></i>':''}</button>`).join('');
   renderQ();const host=$('wins');host.style.display=tabs.length?'flex':'none';
   const old={};host.querySelectorAll('[data-win]').forEach(e=>old[e.dataset.win]=e.querySelector('.wbody').scrollTop);
+  const outer=host.scrollTop;      // on a phone #wins is the scroller, not the window bodies
   host.innerHTML=tabs.map(k=>`<div class="win wp${k==='map'?' wide':''}" data-win="${k}"><div class="title"><span>${TABS[k][1]}</span><button data-x="${k}">&#10005;</button></div><div class="body wbody">${V[k]()}</div></div>`).join('');
   host.querySelectorAll('[data-win]').forEach(e=>{e.querySelector('.wbody').scrollTop=e.dataset.win==='log'?1e6:(old[e.dataset.win]||0)});
+  host.scrollTop=outer;
+  if(anchor){const el=host.querySelector(anchor);if(el&&typeof el.scrollIntoView==='function')el.scrollIntoView({block:'nearest',inline:'nearest'})}
   if(tabs.includes('set'))drawAppearancePreview();if(tabs.includes('job'))drawClassPreview()}
 let winPress=false,winDirty=false;
 const winUp=()=>{winPress=false;if(winDirty){winDirty=false;renderWin()}};
@@ -2954,14 +2990,14 @@ const gotoField=(m,l)=>{S.mp=m;S.lvl=l;S.kl=0;mobs=[];mob=null;respawn=.3;pend=[
 const ACT={
   boardperiod:v=>{if(!['daily','weekly','all'].includes(v))return;boardPeriod=v;boardError='';renderWin();boardRefresh(v)},
   boardrefresh:()=>boardRefresh(boardPeriod),
-  selm:v=>{mapM=+v;mapL=Math.min(mapL,Math.max(1,Math.max(S.prog[mapM],nmMax())));renderWin()},
+  selm:v=>{mapM=+v;mapL=Math.min(mapL,Math.max(1,Math.max(S.prog[mapM],nmMax())));renderWin('[data-win="map"] .mapcard.on')},
   // v75 test control: feed the selected pet (or the first one) n duplicates and let petFold do
   // the rest, so the owner can watch a species' passive climb without farming 15 drops.
   gmnm:()=>{S.gmnm=true;S.lv=Math.max(S.lv,150);S.prog=MAPS.map(()=>10);S.hp=Math.min(S.hp,maxHp());
     log('Nightmare band unlocked: all five stages, Base Lv '+S.lv+'. Travel from the World Map (stages 11-15).','r4');ui();save()},
   gmbond:v=>{const p=gp(selP)||S.pets[0];if(!p)return log('No pet to bond with.','r0','pet');
     const n=Math.max(1,Math.min(15,+v||1));for(let i=0;i<n;i++)petFold(p,{sp:p.sp,mut:0,eq:[0,0,0],skills:[]});
-    log(`${PETS[p.sp].n} is Bond ${bondRank(p.sp)}/5 - ${PET_TRAIT[p.sp].n} ${PET_TRAIT[p.sp].d(traitVal(p.sp))}.`,'r3','pet');ui();save()}, sell_:v=>{mapL=+v;renderWin()},go:()=>{if(mapL<=Math.max(S.prog[mapM],nmMax())){gotoField(mapM,mapL);log(`Traveled to ${fieldName()}.`)}},
+    log(`${PETS[p.sp].n} is Bond ${bondRank(p.sp)}/5 - ${PET_TRAIT[p.sp].n} ${PET_TRAIT[p.sp].d(traitVal(p.sp))}.`,'r3','pet');ui();save()}, sell_:v=>{mapL=+v;renderWin('[data-win="map"] .map-node.picked')},go:()=>{if(mapL<=Math.max(S.prog[mapM],nmMax())){gotoField(mapM,mapL);log(`Traveled to ${fieldName()}.`)}},
   stat:k=>{if(S.pts>=cost(k)&&S.st[k]<statCap()){S.pts-=cost(k);S.st[k]++;S.hp=Math.min(S.hp,maxHp());ui();save()}},
   stat5:k=>{for(let i=0;i<5;i++)if(S.pts>=cost(k)&&S.st[k]<statCap()){S.pts-=cost(k);S.st[k]++}S.hp=Math.min(S.hp,maxHp());ui();save()},
   selk:v=>{selK=v;renderWin()},job:n=>{if(n==='Novice'&&S.cls!=='Novice')ask('Restart as Novice? You go back to Base Lv 25, job levels cleared, and your stats are refunded. Classes you leave keep their own Base Lv, stats and gear, so you can switch back to them later.',()=>changeClass(n));else changeClass(n)},
@@ -3153,7 +3189,7 @@ function bars(){if(!S)return;
     track.setAttribute('aria-valuetext',label+' '+lv+': '+text+(pct>=100?' (MAX)':' to next level'));
   }
 }
-function ui(){if(!S)return;bars();feedTab();$('stageTitle').textContent=fieldName()+(isBoss()?' (Boss map)':'');$('grindStatus').textContent=S.lvl<S.prog[S.mp]?'🔄 Farming':'✨ Frontier';renderWin()}
+function ui(){if(!S)return;bars();feedTab();$('stageTitle').textContent=fieldName()+(isBoss()?' (MVP map)':'');$('grindStatus').textContent=S.lvl<S.prog[S.mp]?'🔄 Farming':'✨ Frontier';renderWin()}
 
 // The owner felt the prior slowdown was too aggressive, so this is exactly halfway between
 // the original `6.5 + 0.05*AGI` pace and v66's proposed curve. It is 8.12 at AGI 99
@@ -3281,7 +3317,7 @@ addEventListener('resize',resize);
 // turned, and iOS does not always follow that with a window resize event. Re-measure both.
 if(window.visualViewport)visualViewport.addEventListener('resize',resize);
 
-const TC=[0xbbbbbb,0x5cb85c,0x4a86e8,0xb05ce0,0xffb020];
+const TC=[0xbbbbbb,0x5cb85c,0x4a86e8,0xb05ce0,0xffb020,0x6a2fa0];   // + the Nightmare dark purple
 const M=c=>new THREE.MeshLambertMaterial({color:c});
 const SP=(r=.5)=>new THREE.SphereGeometry(r,16,12),BX=(a,b,c)=>new THREE.BoxGeometry(a,b,c),
       CN=(r,h)=>new THREE.ConeGeometry(r,h,8),CY=(a,b,h)=>new THREE.CylinderGeometry(a,b,h,8);
@@ -5178,7 +5214,7 @@ function draw(){
   if(!S)return;const bn=isBoss(),key=S.mp+':'+S.lvl+':'+bn,c=C(),mp=MAPS[S.mp];
   if(key!==lastKey){lastKey=key;const col=new THREE.Color(bn?0x8a6bb0:mp.sky);scene.background=col;scene.fog=new THREE.Fog(col,35,80);ground.material.color.setHex(mp.ground);buildDeco(S.mp);road.material.color.setHex(S.mp===3?0xe9d9a8:0xd8cdb4)}
   P.position.set(pl.x,0,pl.z);
-  const w=S.eq.weapon,wt=heroWeaponType(c.n,c.wt,w&&w.wt),clothN=S.eq.armor?TC[S.eq.armor.tier]:c.col,hairN=S.eq.head?TC[S.eq.head.tier]:0xd0492c,metalN=w?TC[w.tier]:0xc0c0c0;
+  const w=S.eq.weapon,wt=heroWeaponType(c.n,c.wt,w&&w.wt),clothN=S.eq.armor?TC[rarIdx(S.eq.armor)]:c.col,hairN=S.eq.head?TC[rarIdx(S.eq.head)]:0xd0492c,metalN=w?TC[rarIdx(w)]:0xc0c0c0;
   ensureHero({cls:c.n,cloth:hx(clothN),clothN,cape:c.cape?hx(c.cape):'',hair:hx(hairN),hairN,hat:c.hat?hx(c.hat):'',wt,metal:hx(metalN),skin:'#ffd2a8',look:lookOf(c.n),tier:c.tier||0,sex:S.sex||'m',hair:S.hair|0,shield:!!(S.eq.off&&S.eq.off.slot==='off')});
   const pFace=mob?Math.atan2(mob.z-pl.z,mob.x-pl.x):pl.run?-pl.ry: -az+Math.PI;
   if(heroSpr){const hd=viewDir(pFace),sk=heroSpr.userData.skin;
@@ -5216,7 +5252,7 @@ function draw(){
   });
   const live=new Set();
   drops.forEach(d=>{live.add(d);let m=dmesh.get(d);
-    if(!m){const i=d.it,sl=i.card?'card':i.ore?'ore':i.slot,col=i.ore?(i.ore==='ori'?0xff9d3c:0x6cd3ff):TC[dtier(i)];
+    if(!m){const i=d.it,sl=i.card?'card':i.ore?'ore':i.slot,col=i.ore?(i.ore==='ori'?0xff9d3c:0x6cd3ff):TC[rarIdx(i)];
       m=mk(scene,sl==='weapon'?BX(.14,.75,.14):sl==='armor'?BX(.45,.45,.25):sl==='card'?BX(.3,.42,.04):sl==='ore'?new THREE.OctahedronGeometry(.22):SP(.24),col);
       m.material.emissive.setHex(col).multiplyScalar(.45);dmesh.set(d,m)}
     m.position.set(d.wx,.35+Math.max(0,-d.y)/60,d.wz);m.rotation.y=t*3});
@@ -5256,7 +5292,7 @@ function draw(){
       f.el.style.transform='translate(-50%,-50%) translate('+dxx.toFixed(1)+'px,'+dy.toFixed(1)+'px) scale('+sc.toFixed(3)+')';
       f.el.style.opacity=Math.min(1,Math.max(0,r/.45))}
     else f.el.style.opacity=Math.max(0,f.life)});
-  const pt=bn?`BOSS FIGHT · ${mobs.filter(m=>!m.boss).length} minions`:`Pack ${activePack+1}/3 · Monsters ${Math.min(S.kl,MPS)}/${MPS}`;if(pt!==lastProg){lastProg=pt;prog.textContent=pt}
+  const pt=bn?`MVP FIGHT · ${mobs.filter(m=>!m.boss).length} minions`:`Pack ${activePack+1}/3 · Monsters ${Math.min(S.kl,MPS)}/${MPS}`;if(pt!==lastProg){lastProg=pt;prog.textContent=pt}
 }
 // ---------- the clock: one simulation, driven by frames or by timers ----------
 // A browser stops calling requestAnimationFrame the moment its tab is not the one on screen, which

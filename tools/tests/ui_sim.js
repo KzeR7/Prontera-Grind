@@ -76,7 +76,7 @@ const code = [
   grab('function itemMain(it){', 'const cardSlots='),
 
   pick(/const cardSlots=[^\n]*/, 'cardSlots'),
-  grab('function insertUI(sel){', 'function renderWin(){'),
+  grab('function insertUI(sel){', 'function renderWin('),
   pick(/function refineUI\(it,k\)\{const[^\n]*/, 'refineUI'),
   pick(/const RO_ITEM_ICON_CANDIDATES=\{[^;]+;/, 'RO equipment image candidates'),
   grab('const gearIconHash=text=>', 'const gearItemIconId='),
@@ -101,6 +101,7 @@ const harness = `
 // stubs the pulled-in code needs at load time and when a panel renders
 const SLOTS={weapon:{label:'Weapon',stat:'ATK',ic:'sw'},armor:{label:'Armor',stat:'DEF',ic:'ar'},head:{label:'Headgear',stat:'HP',ic:'hd'},off:{label:'Shield',stat:'DEF',ic:'sh'},leg:{label:'Legwear',stat:'DEF',ic:'lg'},acc:{label:'Accessory',stat:'HP',ic:'ac'}};
 const RAR=[{n:'Common',m:1,w:60},{n:'Fine',m:1.35,w:25},{n:'Rare',m:1.9,w:10},{n:'Epic',m:2.8,w:4},{n:'Legendary',m:4.5,w:1}];
+const RAR5={n:'N'},rarIdx=it=>((it&&+it.sec>=4)?5:Math.max(0,Math.min(RAR.length-1,(it&&it.tier)||0))),rarOf=it=>(rarIdx(it)===5?RAR5:RAR[rarIdx(it)]),rarCls=it=>'r'+rarIdx(it);
 const PW=[[90,9,1,0],[80,17,3,0],[70,24,5.5,.5],[60,30,9,1],[50,35,13,2],[40,38,18,4],[30,40,24,6],[22,40,30,8],[12,38,38,12],[5,30,45,20]];
 const MAXST=99,ELITELV=100,Z0=-14;
 const statCap=()=>99,selK=null,gp=id=>S&&S.pets.find(x=>String(x.id)===String(id)),classRec=()=>null,tb={};
@@ -175,15 +176,17 @@ t('the map panel renders every map and field', () => {
   U.mapM = 9; U.mapL = 15;
   const nmBoss = U.V.map();
   assert.ok(nmBoss.includes('Nightmare Abyss Stage 5'), 'the Nightmare field is titled Nightmare <map> Stage <1-5>');
-  assert.ok(nmBoss.includes('45%'), 'Nightmare Abyss bosses show their 45% crit resistance, not the normal 30%');
-  assert.ok(!nmBoss.includes('>30%<'), 'and never the normal-ladder number');
-  assert.ok(nmBoss.includes('Boss fights immediately'), 'stage 15 is a boss field like stage 10');
+  assert.ok(nmBoss.includes('(MVP)'), 'the boss is called an MVP (v76.2 owner rename)');
+  assert.ok(!nmBoss.includes('(BOSS)'), 'and never BOSS any more');
+  assert.ok(!nmBoss.includes('Crit resistance'), 'the crit-defence line is gone from the MVP card (owner: the map already says it)');
+  assert.ok(nmBoss.includes('MVP fights immediately'), 'stage 15 is an MVP field like stage 10');
   U.mapL = 13;
   const nmNoBoss = U.V.map();
-  assert.ok(nmNoBoss.includes('Boss appears at NM 5 (stage 15).'), 'a Nightmare field with no boss says where the boss is');
-  assert.ok(!nmNoBoss.includes('Boss appears at Stage 10.'), 'not the normal-ladder wording');
+  assert.ok(nmNoBoss.includes('MVP appears at NM 5 (stage 15).'), 'a Nightmare field with no MVP says where the MVP is');
+  assert.ok(!nmNoBoss.includes('MVP appears at Stage 10.'), 'not the normal-ladder wording');
   U.mapL = 10;
-  assert.ok(U.V.map().includes('Boss appears at Stage 10.') === false && U.V.map().includes('Dark Lord (BOSS)'), 'the normal stage-10 field still shows its boss');
+  const normBoss = U.V.map();
+  assert.ok(normBoss.includes('Dark Lord (MVP)') && normBoss.includes('MVP appears at Stage 10.') === false, 'the normal stage-10 field still shows its MVP');
   U.mapM = 0;
   assert.ok(b.includes('1% each') && b.includes('2.5% each'), 'v51 ore rates: 1% per monster, 2.5% per boss');
 });
@@ -232,7 +235,7 @@ t('map and boss-field panels stay inside narrow viewports', () => {
   assert.ok(src.includes('.mapband,.mapband.fields{position:static}'), 'the sticky field band must not clip in the stacked layout');
   U.S = mkS('Knight'); U.mapM = 9; U.mapL = 10;
   const boss = U.V.map();
-  assert.ok(boss.includes('Dark Lord') && boss.includes('BOSS'), 'the last map and boss field still render after selection');
+  assert.ok(boss.includes('Dark Lord') && boss.includes('(MVP)'), 'the last map and MVP field still render after selection');
   assert.ok(boss.includes('poolitem'), 'the selected boss field keeps its drop pool');
 });
 
@@ -968,6 +971,7 @@ t('the bag shows its 1000-item limit and refuses loot once it is full', () => {
     let S={inv:[],cards:[],ore:{ori:0,elu:0},auto:false,zeny:0,autoSell:[false,false,false,false,false],clickSell:false},pl={x:1,z:2},msg='';
     const GRADE=['Common','Uncommon','Rare','Legendary'],GI=[0,1,2,4],ORE={ori:'Oridecon',elu:'Elunium'},
       RAR=[{n:'Common'},{n:'Fine'},{n:'Rare'},{n:'Epic'},{n:'Legendary'}];
+    const RAR5={n:'N'},rarIdx=it=>((it&&+it.sec>=4)?5:Math.max(0,Math.min(RAR.length-1,(it&&it.tier)||0))),rarOf=it=>(rarIdx(it)===5?RAR5:RAR[rarIdx(it)]),rarCls=it=>'r'+rarIdx(it);
     const cardTxt=c=>c.n,addFloat=()=>{},ui=()=>{},log=m=>{msg=m},qProg=()=>{},canUse=()=>false,equip=()=>{};
     const earnZeny=a=>{S.zeny+=a},save=()=>{};
     ${pick(/const BAGMAX=\d+;/, 'BAGMAX')}
@@ -1032,10 +1036,27 @@ t('the map panel states the fixed rarity of the field it is showing', () => {
   U.mapM = 9; U.mapL = 10;
   h = U.V.map();
   assert.ok(h.includes('every drop here is <b class="r4">Legendary</b>'), 'the Abyss boss field is Legendary');
-  assert.ok(h.includes('Every boss drop is <b class="r4">Legendary</b>'), 'the boss card says so');
+  assert.ok(h.includes('Every MVP drop is <b class="r4">Legendary</b>'), 'the MVP card says so');
+  // v76.2: the Nightmare band is its own rarity - tagged N, painted dark purple - and NOT
+  // presented as one more pile of Legendaries
+  U.mapM = 9; U.mapL = 15;
+  h = U.V.map();
+  assert.ok(h.includes('every drop here is <b class="r5">N</b>'), 'a Nightmare field states the N rarity, not Legendary');
+  assert.ok(h.includes('<small class="r5">N</small>'), 'and every drop line repeats the N tag');
+  assert.ok(!h.includes('every drop here is <b class="r4">'), 'no Legendary band badge on an N field');
   U.mapM = 5; U.mapL = 4;
   h = U.V.map();
-  assert.ok(h.includes('every drop here is <b class="r2">Rare</b>'), 'Comodo stage 4 is a Rare field');
+});
+
+t('the damage trial already has its place in the map panel (v76.2, before the dungeon is built)', () => {
+  U.S = mkS('Knight'); U.mapM = 9; U.mapL = 10;
+  const h = U.V.map();
+  assert.ok(h.includes('Endless Echo'), 'the map panel names the trial');
+  assert.ok(h.includes('5:00'), 'and states the run length');
+  assert.ok(h.includes('2 ranked runs a day'), 'the ranked cap is on the card, not hidden in a menu');
+  assert.ok(h.includes('best single-run DPS'), 'and the board rule the owner set (never summed)');
+  assert.ok(h.includes('not built yet') && h.includes('<button class="go" disabled>'), 'with the entry disabled until the dungeon ships');
+  assert.ok(src.includes('.mapband.dungeon{'), 'and its own band in the map window');
 });
 
 
@@ -1227,7 +1248,7 @@ t('the Log window filters by category, and the on-screen feed folds away', () =>
   U.S.logOff = { kills: 1, zeny: 1, gear: 1, card: 1, misc: 1 };
   assert.ok(U.V.log().includes('0 of 4 events shown'), 'hiding everything says so');
   // the tags really are on the real call sites
-  assert.ok(src.includes("log(`Picked up [${RAR[it.tier].n}] ${it.name}`,'r'+it.tier,'gear')"), 'pickups are tagged');
+  assert.ok(src.includes("log(`Picked up [${rarOf(it).n}] ${it.name}`,rarCls(it),'gear')"), 'pickups are tagged, and a Nightmare drop is tagged N');
   assert.ok(src.includes(",'kills,zeny');"), 'a kill is tagged as kills AND zeny');
   assert.ok(src.includes("log(`Got card: [${GRADE[it.g]}] ${cardTxt(it)}`,'r'+GI[it.g],'card')"), 'cards are tagged');
   // the on-screen log's own tab
@@ -1486,6 +1507,16 @@ t('the reset buttons explain themselves, refuse on screen, and survive a rebuild
   // a click whose press and release span a kill's renderWin() must not be swallowed
   assert.ok(/if\(winPress\)\{winDirty=true;return\}/.test(src), 'renderWin must defer while a pointer is down');
   assert.ok(/addEventListener\('pointerup',winUp\)/.test(src), 'the deferred rebuild runs on pointerup');
+  // v76.2: a rebuild used to leave the phone's scroller (which is #wins, not .wbody, at <=700px)
+  // wherever the browser clamped it, so tapping a stage made the panel hop. The outer scroll is kept
+  // by number and the pressed control is only nudged when it is off-screen.
+  assert.ok(/const outer=host\.scrollTop;/.test(src), 'the rebuild remembers the real scroller');
+  assert.ok(/host\.scrollTop=outer;/.test(src), 'and puts it back');
+  assert.ok(/if\(anchor\)\{const el=host\.querySelector\(anchor\);if\(el&&typeof el\.scrollIntoView==='function'\)el\.scrollIntoView\(\{block:'nearest',inline:'nearest'\}\)\}/.test(src),
+    'and keeps the pressed control visible without moving anything that already is');
+  assert.ok(src.includes("sell_:v=>{mapL=+v;renderWin('[data-win=\"map\"] .map-node.picked')}"), 'a stage click anchors itself');
+  assert.ok(src.includes("renderWin('[data-win=\"map\"] .mapcard.on')"), 'so does a map card click');
+
   assert.ok(/\$\('wins'\)\.addEventListener\('pointerdown'/.test(src), 'the guard arms on a window press');
 });
 

@@ -37,6 +37,7 @@ ${code}
 let S={lv:1,gmnm:false};
 this.__n={ MAPS, GEAR, fieldPower, secField, dropTier, gearPool, fieldOf, bossCritRes,
   NMLV, NMBASE, NMSTEP, NMGAP, NMHP, NMATK, NMEXP, NMZENY, NMBOSSHP, NM_CRIT_RES, BOSS_CRIT_RES,
+  FIELD_GEAR, FIELD_GEAR_MID, FIELD_GEAR_NM, FIELD_GEAR_MID_NM, BOSS_POOL_TOTAL,
   nmOpen, nmMax, NMNAME, NMNAME2,
   set S(v){S=v}, get S(){return S} };
 `;
@@ -142,7 +143,7 @@ t('the Nightmare rows are worth more than the high-tier row, and section 5 tops 
 });
 
 t('the difficulty knobs are the shipped ones and the live code reads them', () => {
-  assert.deepStrictEqual([N.NMHP, N.NMATK, N.NMEXP, N.NMZENY, N.NMBOSSHP], [12, 1.5, 1.5, 1.6, 12], 'the band constants are pinned');
+  assert.deepStrictEqual([N.NMHP, N.NMATK, N.NMEXP, N.NMZENY, N.NMBOSSHP], [24, 2.25, 2.5, 2.2, 24], 'the band constants are pinned (v76.2: the wall is doubled, the sting is half again)');
   // spawn() is a game-loop function, so its wiring is checked at the source and the numbers are
   // worked out from the same formulas below.
   assert.ok(src.includes('nm1=S.lvl>10,nm=nm1?NMHP:1,na=nm1?NMATK:1,ne=nm1?NMEXP:1,nz=nm1?NMZENY:1'), 'spawn() reads the knobs once');
@@ -155,10 +156,10 @@ t('the difficulty knobs are the shipped ones and the live code reads them', () =
   const mb = 1 + 9 * .15 + Math.max(0, 9 - 4) * .2;
   const hp = l => Math.floor(42 * mb * Math.pow(l, 1.3));
   const atk = l => Math.floor((5 + l * 4.6) * mb);
-  const abyss10 = { hp: hp(100), atk: Math.round(atk(100) * .25) }, abyss15 = { hp: hp(175) * 12, atk: Math.round(atk(175) * 1.5 * .25) };
+  const abyss10 = { hp: hp(100), atk: Math.round(atk(100) * .25) }, abyss15 = { hp: hp(175) * 24, atk: Math.round(atk(175) * 2.25 * .25) };
   console.log('       Abyss Stage 10 : mob HP ' + abyss10.hp.toLocaleString() + ', a hit lands for ' + abyss10.atk.toLocaleString() + ' after a 75% DEF cut');
   console.log('       Nightmare 15   : mob HP ' + abyss15.hp.toLocaleString() + ' (' + (abyss15.hp / abyss10.hp).toFixed(0) + 'x), a hit lands for ' + abyss15.atk.toLocaleString() + ' (' + (abyss15.atk / abyss10.atk).toFixed(1) + 'x)');
-  console.log('       Abyss 15 boss  : ' + (Math.floor(500 * mb * Math.pow(175, 1.3)) * 12).toLocaleString() + ' HP');
+  console.log('       Abyss 15 boss  : ' + (Math.floor(500 * mb * Math.pow(175, 1.3)) * 24).toLocaleString() + ' HP');
   assert.ok(abyss15.hp / abyss10.hp > 10, 'a Nightmare mob must take an order of magnitude longer to kill');
   assert.ok(abyss15.atk / abyss10.atk > 1.3, 'and it must hit at least a third harder');
 });
@@ -167,13 +168,25 @@ t('the field tables read the band: boss pool, ore and crit resistance', () => {
   const nmBoss = N.fieldOf(9, 15).boss, normBoss = N.fieldOf(9, 10).boss;
   assert.strictEqual(nmBoss.critRes, .45, 'Nightmare Abyss bosses resist 45% crit');
   assert.strictEqual(normBoss.critRes, .3, 'the normal Abyss boss still resists 30%');
-  assert.ok(nmBoss.drops[0][1] > normBoss.drops[0][1], 'a Nightmare boss pays a bigger pool (' + nmBoss.drops[0][1] + '% vs ' + normBoss.drops[0][1] + '% per entry)');
-  assert.strictEqual(nmBoss.drops[0][1], Math.round(900 / nmBoss.drops.length) / 100, 'from BOSS_POOL_TOTAL[2]');
+  // v76.2 (owner): the band's drops are a THIRD of the rate they were, MVP pool included
+  assert.strictEqual(nmBoss.drops[0][1], Math.round(300 / nmBoss.drops.length) / 100, 'from BOSS_POOL_TOTAL[2] = 300, i.e. 3% total');
+  assert.strictEqual(normBoss.drops[0][1], Math.round(420 / normBoss.drops.length) / 100, 'the mid/endgame MVP pool keeps 4.2%');
+  // ...and the mob rolls are exactly a third of whichever normal table the map would use
+  assert.deepStrictEqual([N.FIELD_GEAR_NM, N.FIELD_GEAR_MID_NM].map(t => t.map(x => +(x * 3).toFixed(2))), [N.FIELD_GEAR, N.FIELD_GEAR_MID],
+    'the Nightmare tables are a clean third of the normal ones');
+  for (const [m, l] of [[0, 11], [9, 11], [9, 15], [5, 13]]) {
+    const nm = N.fieldOf(m, l).mobs[0].drops.map(d => d[1]), base = N.gearPool(m, l).length;
+    assert.strictEqual(base, N.gearPool(m, l).length, 'the pool is whole');
+    assert.ok(nm.every(ch => ch > 0), 'a Nightmare mob still rolls gear');
+  }
+  assert.ok(src.includes('const gch=l>10?(m>=5?FIELD_GEAR_MID_NM:FIELD_GEAR_NM):(m>=5?FIELD_GEAR_MID:FIELD_GEAR);'), 'fieldOf picks the band table by stage, not by map alone');
   assert.strictEqual(N.fieldOf(0, 11).mobs[0].oreCh, .015, 'Nightmare fields drop ore 1.5% a kill');
   assert.strictEqual(N.fieldOf(0, 10).mobs[0].oreCh, .01, 'the normal boss field keeps 1%');
   assert.strictEqual(N.fieldOf(9, 9).boss, null, 'and nothing but stage 10 and 15 has a boss');
   assert.ok(N.fieldOf(9, 15).boss && N.fieldOf(3, 15).boss, 'every map ends its Nightmare band with a boss');
   // the drops a Nightmare field rolls come from the Nightmare rows only
+  assert.ok(N.gearPool(9, 15).every(x => x.sec === 5) && N.gearPool(9, 12).every(x => x.sec === 4), 'pool entries carry their section (the N rarity reads it)');
+  assert.ok(N.gearPool(9, 10).every(x => x.sec === 3), 'and a normal field still says section 3');
   const T = N.gearPool(9, 15).map(x => x.n);
   const hi = new Set(Object.values(N.GEAR[9][3].w).concat(N.GEAR[9][3].a, N.GEAR[9][3].h, N.GEAR[9][3].o, N.GEAR[9][3].l, N.GEAR[9][3].ac, N.GEAR[9][3].ac2).filter(Boolean));
   assert.ok(T.every(n => !hi.has(n)), 'a Nightmare field must not drop the normal high-tier items');

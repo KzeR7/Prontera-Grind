@@ -37,9 +37,11 @@ const code = [
   pick(/const secOf=[^;]+;/, 'secOf'),
   pick(/const secField=\(m,l\)=>[^;]+;/, 'secField'),
   pick(/const RAR=\[[^\]]*\];/, 'RAR'),
+  pick(/const RAR5=\{[^;]*;/, 'the Nightmare N rarity helpers (v76.2)'),
   pick(/const AM=\[[^\]]*\],GRADE=\[[^\]]*\],GI=\[[^\]]*\],CV=\[[^\]]*\];/, 'rarity tables'),
   pick(/const AFF=\[[^\]]*\],AB=\{[^}]*\};/, 'AFF/AB'),
   pick(/const FIELD_GEAR=\[[^\]]*\],FIELD_GEAR_MID=\[[^\]]*\],BOSS_POOL_TOTAL=\[[^\]]*\];/, 'field drop tables'),
+  pick(/const FIELD_GEAR_NM=\[[^\]]*\],FIELD_GEAR_MID_NM=\[[^\]]*\];/, 'the Nightmare drop tables'),
   pick(/const BOSS_CRIT_RES=\[[^\]]*\],NM_CRIT_RES=\[[^\]]*\],bossCritRes=\(m,l\)=>[^;]+;/, 'boss crit resistance (+ the v76 Nightmare ladder)'),
   pick(/const AFFIX_CDM_SCALE=[^\n]+;/, 'gear-only Crit DMG post-roll scale'),
   pick(/K5=\[[^\]]*\];/, 'K5'),
@@ -71,7 +73,7 @@ const SECN=['Starter gear','1st-job gear','2nd-job gear','High-tier gear'];
 const SLOTS={weapon:{label:'Weapon',stat:'ATK',ic:'A'},armor:{label:'Armor',stat:'DEF',ic:'B'},head:{label:'Headgear',stat:'HP',ic:'C'},off:{label:'Shield',stat:'DEF',ic:'D'},leg:{label:'Legwear',stat:'DEF',ic:'E'},acc:{label:'Accessory',stat:'HP',ic:'F'}};
 const rnd=(a,b)=>a+Math.random()*(b-a),ri=(a,b)=>Math.floor(rnd(a,b+1)),uid=()=>1;
 let S=null;
-this.__g={ MAPS, GEAR, gearPool, fieldOf, genGear, executeGearRoll, slotAccepts, canUse, canShield, katarOnly, CLASSES, lineOf, secOf, secField, SLOTS, BAGMAX, MAPTIER, MAPGRADE, set PETPASSIVE(v){PETPASSIVE=v}, get PETPASSIVE(){return PETPASSIVE}, MAPVAL, dropTier, sellVal, AM, AFF, AB, RAR, AFFIX_CDM_SCALE, scaleCritDamageAffix, affixValue, FIELD_GEAR, FIELD_GEAR_MID, BOSS_POOL_TOTAL, BOSS_CRIT_RES, bossCritRes, gearTierOf, classTierOf, gearTierOK, gearUserOf,
+this.__g={ MAPS, GEAR, gearPool, fieldOf, genGear, rarIdx, rarOf, rarCls, RAR5, FIELD_GEAR_NM, FIELD_GEAR_MID_NM, executeGearRoll, slotAccepts, canUse, canShield, katarOnly, CLASSES, lineOf, secOf, secField, SLOTS, BAGMAX, MAPTIER, MAPGRADE, set PETPASSIVE(v){PETPASSIVE=v}, get PETPASSIVE(){return PETPASSIVE}, MAPVAL, dropTier, sellVal, AM, AFF, AB, RAR, AFFIX_CDM_SCALE, scaleCritDamageAffix, affixValue, FIELD_GEAR, FIELD_GEAR_MID, BOSS_POOL_TOTAL, BOSS_CRIT_RES, bossCritRes, gearTierOf, classTierOf, gearTierOK, gearUserOf,
            set S(v){S=v}, get S(){return S} };
 `;
 const sb = { console };
@@ -502,6 +504,26 @@ t('the rarity band is fixed but the affixes are rolled every time', () => {
   assert.strictEqual(mid.tier, 1);
   assert.ok(mid.aff.length >= 1 && mid.aff.length <= 2, 'Fine gear rolls one or two affixes');
   assert.ok(mid.name.startsWith('Fine '), 'the item name states its fixed band: ' + mid.name);
+});
+
+t('a Nightmare item is its own rarity: tagged N, and still paid as a Legendary', () => {
+  // v76.2 (owner): "can the equipments rarity there be added a N ... make it look more exclusive
+  // rather than just plain ordinary rare or common equipment"
+  const nm = G.genGear({ k: 'sword', n: 'Dread Excalibur' }, 150, 4, false, 4);
+  const hi = G.genGear({ k: 'sword', n: 'Dark Lord Sword' }, 150, 3, true, 4);
+  assert.strictEqual(nm.tier, 4, 'mechanics keep the Legendary band: autosell and value read it');
+  assert.strictEqual(G.rarIdx(nm), 5, 'but the display rarity is the Nightmare one');
+  assert.strictEqual(G.rarOf(nm).n, 'N', 'which is tagged N');
+  assert.strictEqual(G.rarCls(nm), 'r5', 'and painted with .r5');
+  assert.ok(nm.name.startsWith('N '), 'the item name states it: ' + nm.name);
+  assert.ok(src.includes('.r5{color:#5b21b6;font-weight:bold}'), 'the N rarity is dark purple in the CSS');
+  assert.strictEqual(G.rarIdx(hi), 4, 'ordinary high-tier gear stays Legendary');
+  assert.ok(hi.name.startsWith('Legendary '), 'and keeps its own prefix: ' + hi.name);
+  const ab = G.genGear({ k: 'sword', n: 'Absolute Dark Lord Sword' }, 150, 5, true, 4);
+  assert.strictEqual(G.rarOf(ab).n, 'N', 'Abyssal Nightmare gear wears the same N');
+  // the two Nightmare rows are a clean third of the matching normal table (v76.2 drop nerf)
+  assert.strictEqual(G.FIELD_GEAR_NM.map(x => +(x * 3).toFixed(2)).join(','), '1.5,1.2,0.9');
+  assert.strictEqual(G.FIELD_GEAR_MID_NM.map(x => +(x * 3).toFixed(2)).join(','), '1.05,0.84,0.63');
 });
 
 t('the cdm affix only rolls on weapons and accessories, like the cdm card always has',()=>{
