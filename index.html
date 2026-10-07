@@ -209,6 +209,7 @@ hr{border:0;border-top:1px dashed var(--edge);margin:6px 0}
 .map-node small{display:block;font-size:10px;opacity:.75}.map-node:focus-visible{outline:3px solid #2f6fd6}
 .map-node:hover{background:#ffe9a8}.map-node.active{background:#ffe08a;border-color:var(--gold)}.map-node.picked{outline:3px solid #2f6fd6}
 .map-node.locked{opacity:.4;filter:grayscale(1)}.map-node.boss-node{border-color:#a23fd6}
+.map-node.nm-node{background:#f6ecff;border-color:#8f4fd6;color:#4a1f6b;font-size:11px}.map-node.nm-node:hover{background:#e9d5ff}.map-node.nm-node.active{background:#c9a0ff;border-color:#6a2fa0}.map-node.nm-node.locked{background:#efe9f6}
 .tree{display:flex;flex-direction:column;gap:6px}.trow{display:flex;align-items:center;gap:2px}.arw{font-size:9px;color:#8a6a2c}
 .trunk{width:2px;height:10px;background:#8a6a2c;margin:-4px auto}
 .tn{flex:1;min-width:0;text-align:center;border:2px solid var(--edge);border-radius:6px;padding:4px 2px;font-size:11px;background:#fffdf5;cursor:pointer;display:flex;flex-direction:column;line-height:1.2}
@@ -444,7 +445,7 @@ const RAR=[{n:'Common',m:1,w:60},{n:'Fine',m:1.35,w:25},{n:'Rare',m:1.9,w:10},{n
 //   and card_sim.js; measured in Updates/cards-gear-audit/.
 const AM=[1.7,2.72,4.42,6.8,11.05],GRADE=['Common','Uncommon','Rare','Legendary'],GI=[0,1,2,4],CV=[3.2,6.4,9.6,16];
 const SLOTS={weapon:{label:'Weapon',stat:'ATK',ic:'⚔️'},armor:{label:'Armor',stat:'DEF',ic:'🥼'},head:{label:'Headgear',stat:'HP',ic:'🎩'},off:{label:'Shield',stat:'DEF',ic:'🛡️'},leg:{label:'Legwear',stat:'DEF',ic:'👖'},acc:{label:'Accessory',stat:'HP',ic:'💍'}};
-const WICON={dagger:'🗡️',katar:'🔪',staff:'🪄',bow:'🏹',axe:'🪓',sword:'⚔️',mace:'🔨'},ORE={ori:'Oridecon',elu:'Elunium'},SECN=['Starter gear','1st-job gear','2nd-job gear','High-tier gear'];
+const WICON={dagger:'🗡️',katar:'🔪',staff:'🪄',bow:'🏹',axe:'🪓',sword:'⚔️',mace:'🔨'},ORE={ori:'Oridecon',elu:'Elunium'},SECN=['Starter gear','1st-job gear','2nd-job gear','High-tier gear','Nightmare gear','Abyssal Nightmare gear'];
 // Canonical item-database sprites by weapon family. These display the same recognizable
 // weapon shape for every class, regardless of the game's custom gear name.
 const WEAPON_ITEM_IDS={dagger:1202,katar:1250,staff:1601,bow:1701,axe:1301,sword:1106,mace:1501};
@@ -551,7 +552,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // script block, which is a SyntaxError - the game did not run on main at all. One line wins, and
 // it names both sides of this merge: the v38 balance patch (the weapon cut, the affix/card
 // give-back) and main's weapon-hold rendering work.
-const BUILD='2026-10-07 grind-v75 pet species passives and duplicate bond';   // shown on the login card - confirms which file you loaded
+const BUILD='2026-10-07 grind-v76 nightmare band and exclusive nightmare gear';   // shown on the login card - confirms which file you loaded
 $('buildTag').textContent='build '+BUILD;
 
 // ---------- class tree: Novice -> 6 first jobs -> 6 second jobs -> 6 third jobs ----------
@@ -1093,10 +1094,35 @@ function repairMastery(f){
 }
 const REC=['Lv 1-10','Lv 10-50','Lv 10-50','Lv 10-50','Lv 10-50','Lv 60-67','Lv 67-74','Lv 74-80','Lv 80-90','Lv 90-99'];
 MAPS.forEach((m,i)=>{m.b=[0,9,19,31,43,59,66,73,79,89][i];m.rec=REC[i]});
+// ---------- v76: the Nightmare band ----------
+// Field power STOPPED at Abyss Stage 10 (power 100) while the level cap is 150, so Base Lv 100-150
+// had nothing to climb. Every map now carries five more stages (11-15), a "Nightmare" version of
+// itself: same art, same monsters, much harder numbers, and two gear catalogue sections that exist
+// nowhere else. The band opens on Base Lv 100 / 110 / 125 / 140 / 150 - a pure level unlock, so
+// there is nothing new to save and nothing to migrate.
+const NMLV=[100,110,125,140,150],NMBASE=105,NMSTEP=6,NMGAP=4;
+// How many Nightmare stages the character has unlocked right now (0-5). The GM switch opens all
+// five for testing without levelling a character to 150 first.
+const nmOpen=()=>{if(S&&S.gmnm)return 5;if(!S)return 0;let n=0;for(const v of NMLV)if(S.lv>=v)n++;return n};
+const nmMax=()=>10+nmOpen();
+// The difficulty knobs, in one place: Nightmare monsters are tanky and they hit hard enough that
+// sustain (leech, Divine Grace, healing skills) stops being optional. Tune these two, not the
+// formulas - every other number follows fieldPower.
+const NMHP=12,NMATK=1.5,NMEXP=1.5,NMZENY=1.6,NMBOSSHP=12;
+// Each map's Nightmare gear is its own high-tier row, renamed: same weapon families and slots (so
+// every class can still use its own weapon) and a per-map word that keeps every name unique. Section
+// 4 is the stage 11-13 drop, section 5 the stage 14-15 and boss drop. They exist NOWHERE else - the
+// only fields whose section index is 4 or 5 are Nightmare fields (see secField).
+const NMNAME=['Dread','Kraken','Void','Sandwraith','Spectral','Leviathan','Oni','Yokai','Helheim','Glast'];
+const NMNAME2=['Abyssal','Maelstrom','Singularity','Eclipse','Wraithlord','Trench','Yama','Kami','Nidhogg','Absolute'];
+const nmRow=(m,i)=>{const b=GEAR[m][3],w=(i?NMNAME2:NMNAME)[m],o={w:{}};
+  for(const k in b.w)o.w[k]=w+' '+b.w[k];
+  o.a=w+' '+b.a;o.h=w+' '+b.h;o.o=b.o?w+' '+b.o:null;o.l=w+' '+b.l;o.ac=w+' '+b.ac;o.ac2=b.ac2?w+' '+b.ac2:null;return o};
+GEAR.forEach((row,m)=>{row.push(nmRow(m,0),nmRow(m,1))});
 // Player-power targets: Prontera spans Base Lv 1-10; the four class maps serve Lv 10-20
 // on stages 1-5, then Lv 20-50 on stages 6-10. Later maps keep their existing b+stage curve.
 const EARLY_FIELD_PWR=[[1,2,3,4,5,6,7,8,9,10],[10,12,15,17,20,20,28,35,43,50]];
-const fieldPower=(m,l)=>{const s=Math.max(1,Math.min(10,l|0))-1;return m===0?EARLY_FIELD_PWR[0][s]:m<=4?EARLY_FIELD_PWR[1][s]:MAPS[m].b+s+1};
+const fieldPower=(m,l)=>(l|0)>10?NMBASE+Math.max(0,Math.min(9,m|0))*NMSTEP+((l|0)-11)*NMGAP:(m===0?EARLY_FIELD_PWR[0][Math.max(1,Math.min(10,l|0))-1]:m<=4?EARLY_FIELD_PWR[1][Math.max(1,Math.min(10,l|0))-1]:MAPS[m].b+Math.max(1,Math.min(10,l|0)));
 const pw=()=>fieldPower(S.mp,S.lvl),DR=1;
 const secOf=l=>l<=3?0:l<=7?1:l<=9?2:3,secOf0=l=>l<=3?0:l<=7?1:l<=9?2:3;
 // ---------- cards ----------
@@ -1120,14 +1146,14 @@ const BAGMAX=1000;
 // Stage-10 boss pools drop with them. Prontera and the four class maps (index 0-4) keep their
 // original numbers for field and boss alike, so the early game is untouched: a starter field
 // still pays 3.6% a kill, the mid/endgame fields pay 2.52%. Pinned by gear_sim.js.
-const FIELD_GEAR=[1.5,1.2,.9],FIELD_GEAR_MID=[1.05,.84,.63],BOSS_POOL_TOTAL=[600,420];
+const FIELD_GEAR=[1.5,1.2,.9],FIELD_GEAR_MID=[1.05,.84,.63],BOSS_POOL_TOTAL=[600,420,900];
 // v73 (owner): high-level bosses resist crits. The number is the share of the crit chance that
 // is removed when you swing at that boss: a capped 60% build crits Comodo, Louyang and Amatsu's
 // bosses 51% of the time, Niflheim's Lord of Death 48% and the Abyss Dark Lord 42%. Maps 1-5
 // resist nothing - their bosses are a first wall, not a crit check - and escorts, regular mobs
 // and pets are untouched. v74 (owner): the first pass was too steep (-20/-25/-30/-40), so the
 // ladder is -15/-15/-15/-20/-30 instead.
-const BOSS_CRIT_RES=[0,0,0,0,0,.15,.15,.15,.2,.3],bossCritRes=m=>BOSS_CRIT_RES[Math.max(0,Math.min(BOSS_CRIT_RES.length-1,m|0))]||0;
+const BOSS_CRIT_RES=[0,0,0,0,0,.15,.15,.15,.2,.3],NM_CRIT_RES=[.35,.35,.36,.36,.38,.38,.4,.4,.42,.45],bossCritRes=(m,l)=>(l|0)>10?NM_CRIT_RES[Math.max(0,Math.min(NM_CRIT_RES.length-1,m|0))]||0:BOSS_CRIT_RES[Math.max(0,Math.min(BOSS_CRIT_RES.length-1,m|0))]||0;
 // v73 (owner: "afk, it suddenly pops the offline reward of 1min"): the away window is now three
 // minutes, not one. A hidden tab only clamped to ~1s timers used to sync about once a minute, so
 // a perfectly ordinary background minute read as "away" and paid for time the tab had already
@@ -1167,7 +1193,7 @@ const dropTier=(m,l)=>Math.min(MAPGRADE[Math.max(0,Math.min(MAPGRADE.length-1,m|
 // you arrived. Now the high tier starts at field level 3 and stages 1-2 hand out 2nd-job gear -
 // but the drop's *section* is floored at 2, not taken from secOf(l), which for stages 1-2 is 0
 // (Novice gear: fine on Prontera, vendor trash on Abyss at level 90). Pinned by gear_sim.js.
-const secField=(m,l)=>m===0?0:m<=4?(l<=5?0:l<=7?1:l<=9?2:3):(l>=3?3:2);
+const secField=(m,l)=>(l|0)>13?5:(l|0)>10?4:m===0?0:m<=4?(l<=5?0:l<=7?1:l<=9?2:3):(l>=3?3:2);
 function gearPool(m,l){const sg=MAPS[m].gear[secField(m,l)],T=[];
   for(const k in sg.w)T.push({k,n:sg.w[k]});
   T.push({k:'armor',n:sg.a},{k:'head',n:sg.h});
@@ -1181,14 +1207,14 @@ function fieldOf(m,l){const mp=MAPS[m],sec=secField(m,l),T=gearPool(m,l),n=T.len
   // table is the 30% lighter v73 one (FIELD_GEAR_MID); maps 1-5 use the original.
   const gch=m>=5?FIELD_GEAR_MID:FIELD_GEAR;
   const mobs=[0,1].map(j=>{const mm=mp.mobs[(l-1+j)%mp.mobs.length],cg=l<=3?0:l<=7?1:2;
-    return{...mm,tier:ft,drops:[[T[(l*3+2*j)%n],gch[0]],[T[(l*3+2*j+1)%n],gch[1]],[T[(l*3+2*j+2)%n],gch[2]]],card:{n:mm.n+' Card',stat:cardStat(cg,(m*10+l+j)*3+1),g:cg},cardCh:.15,ore:true,oreCh:l===10?.01:.005}});
-  return{m,l,sec,tier:ft,mobs,boss:l===10?{...mp.boss,tier:ft,
+    return{...mm,tier:ft,drops:[[T[(l*3+2*j)%n],gch[0]],[T[(l*3+2*j+1)%n],gch[1]],[T[(l*3+2*j+2)%n],gch[2]]],card:{n:mm.n+' Card',stat:cardStat(cg,(m*10+l+j)*3+1),g:cg},cardCh:.15,ore:true,oreCh:l>10?.015:l===10?.01:.005}});
+  return{m,l,sec,tier:ft,mobs,boss:(l===10||l===15)?{...mp.boss,tier:ft,
     // v57: the boss still lists its whole pool - every item stays obtainable - but the pool now
     // totals ~6% per boss instead of one 1% roll per entry (13 entries used to mean 13%). The
     // pool is a chase again: about three boss pieces an hour at the tuned kill rate.
     // v73: mid/endgame bosses (map index 5+) pay 30% less, so their pool totals ~4.2%; the
     // first five maps keep the original ~6%. A boss also carries its map's crit resistance.
-    drops:T.map(x=>[x,Math.round(BOSS_POOL_TOTAL[m>=5?1:0]/n)/100]),critRes:bossCritRes(m),
+    drops:T.map(x=>[x,Math.round(BOSS_POOL_TOTAL[l>10?2:(m>=5?1:0)]/n)/100]),critRes:bossCritRes(m,l),
     card:{n:mp.boss.n+' Card',stat:cardStat(3,m),g:3},cardCh:.1,ore:true,oreCh:.025}:null}}
 // One drop line for the map panel: icon + name + the fixed rarity on the left, the % on the right.
 const poolIc=T=>gearSlot(T)==='weapon'?(WICON[T.k]||'⚔️'):{armor:'🥼',head:'🎩',off:'🛡️',leg:'👖',acc:'💍'}[T.k];
@@ -1431,7 +1457,7 @@ function load(){try{const s=JSON.parse(lsGet(saveKey()));if(s&&s.lv){const F=fre
   f.offlineAt=Math.max(0,Math.floor(num_(f.offlineAt,0)));f.offlineKph=cl(num_(f.offlineKph,0),0,OFFLINE_RATE_CAP);f.offlineRateAt=Math.max(0,Math.floor(num_(f.offlineRateAt,0)));f.offlineRateKills=safeCount(f.offlineRateKills);f.offlineKillRemainder=cl(num_(f.offlineKillRemainder,0),0,.999999);
   if(!Array.isArray(f.prog)||!f.prog.length)f.prog=F.prog.slice();else f.prog=f.prog.map(v=>num_(v,1));
   while(f.prog.length<MAPS.length)f.prog.push(1);
-  f.mp=Math.max(0,Math.min(MAPS.length-1,Math.floor(f.mp||0)));f.lvl=Math.max(1,Math.min(10,Math.floor(f.lvl||1)));
+  f.mp=Math.max(0,Math.min(MAPS.length-1,Math.floor(f.mp||0)));f.lvl=Math.max(1,Math.min(15,Math.floor(f.lvl||1)));
   if(!f.jobs||typeof f.jobs!=='object'||Array.isArray(f.jobs))f.jobs=F.jobs;
   for(const n of Object.keys(f.jobs)){
     const c=CLASSES[n],j=f.jobs[n];
@@ -1590,6 +1616,7 @@ function initSession(gm,newAccount=false){
     // Novice in High-tier armour). The sweep runs here too, so the rule holds from the first
     // frame of a session, not only from the next class change. `from=null` means no wearer label:
     // the class it is being taken off was never legally wearing it.
+    S.lvl=Math.min(S.lvl,10+nmOpen());                       // v76: a save cannot sit in a locked Nightmare stage
     if(typeof canUse==='function'&&typeof stowUnfit==='function')stowUnfit(null);
     if(typeof foldDupPets==='function')foldDupPets();        // v75: one pet per species, duplicates become Bond
     applyOfflineProgress();
@@ -1784,7 +1811,7 @@ async function cloudProbe(){
 function cloudStart(u,gm){
   S=load();S.gm=!!gm;
   if(S.q)qRefresh();if(!S.q)S.q=['kill','loot','boss'].map(newQuest);
-  if(S.mp>=MAPS.length||S.lvl>10){S.mp=0;S.lvl=1}
+  if(S.mp>=MAPS.length||S.lvl>15){S.mp=0;S.lvl=1}
   if(typeof canUse==='function'&&typeof stowUnfit==='function')stowUnfit(null);   // v74: same repair on a cloud login
   if(typeof foldDupPets==='function')foldDupPets();                                // v75: same fold on a cloud login
   cloudSession(u,gm);ui();$('loginOverlay').style.display='none';$('logoutBtn').style.display='inline-block';
@@ -2023,7 +2050,7 @@ const autoAllocateSkills=()=>{if(!S.sk||typeof S.sk!=='object')S.sk={};let bough
 };
 const refCost=it=>Math.round(200*((it.r||0)+1)*(1+(it.sec||0)*.5)),refCh=it=>[70,70,70,70,49,42,35,28,21,14][it.r||0];
 const affTxt=a=>`${AL[a.k]} +${a.v}`,cardTxt=c=>`${c.n} (${SU(c.stat)} +${c.v})`,dtier=it=>it.card?GI[it.g]:it.ore?3:it.tier;
-const isBoss=()=>S.lvl===10,fieldName=()=>`${MAPS[S.mp].n} Stage ${S.lvl}`;
+const isBoss=()=>S.lvl===10||S.lvl===15,fieldName=()=>S.lvl>10?`Nightmare ${MAPS[S.mp].n} Stage ${S.lvl-10}`:`${MAPS[S.mp].n} Stage ${S.lvl}`;
 // Real RO item icons give each equipment family a recognizable shape and several name-based
 // variants. The existing held-weapon URL helper above remains unchanged for the 3D sprite layer.
 const RO_ITEM_ICON_CANDIDATES={weapon:{dagger:[1201,1202,1204,1205,1210,1212],katar:[1250,1251,1252,1253,1254,1255],staff:[1601,1602,1603,1604,1605,1606],bow:[1701,1702,1703,1704,1705,1706],axe:[1301,1302,1303,1304,1305,1306],sword:[1101,1104,1105,1106,1108,1110,1114],mace:[1501,1502,1503,1504,1505,1510]},armor:[2301,2302,2303,2304,2305,2306,2307,2308,2309,2310,2311,2312,2313],head:[2201,2202,2203,2204,2205,2206,2207,2208,2209,2210,2211,2212,2213,2214,2215,2216],off:[2101,2102,2103,2104,2105,2106,2107,2108],leg:[2401,2402,2403,2404,2405,2406,2407,2408],acc:[2601,2602,2603,2604,2605,2606,2607,2608,2609,2610]};
@@ -2082,18 +2109,18 @@ const starterStage=(m,l)=>m<5&&l<=5;
 const starterHp=l=>Math.floor(12*Math.pow(6+5*(l-1),HPE));
 const starterAtk=l=>6+3*(l-1);
 function spawn(){
-  const F=fieldOf(S.mp,S.lvl),l=pw(),mb=1+S.mp*.15+Math.max(0,S.mp-4)*.2;mobs=[];activePack=0;
+  const F=fieldOf(S.mp,S.lvl),l=pw(),mb=1+S.mp*.15+Math.max(0,S.mp-4)*.2,nm1=S.lvl>10,nm=nm1?NMHP:1,na=nm1?NMATK:1,ne=nm1?NMEXP:1,nz=nm1?NMZENY:1;mobs=[];activePack=0;
   const bossWave=!!F.boss,sites=bossWave?null:packSites();
   const addMinion=pack=>{
     const early=starterStage(S.mp,S.lvl),m=F.mobs[ri(0,1)];
-    const hp=early?Math.min(starterHp(S.lvl),Math.floor(HPK*mb*Math.pow(l,HPE))):Math.floor(HPK*mb*Math.pow(l,HPE));
-    mobs.push({...m,mapIndex:S.mp,boss:false,pack,hp,max:hp,atk:early?starterAtk(S.lvl):Math.floor((5+l*4.6)*mb),
-      exp:Math.max(1,Math.floor(EXPK*Math.pow(l,1.5)/50)),zeny:Math.max(ZMIN,Math.floor(ri(ZK[0],ZK[1])*l*l/1000)),
+    const hp=early?Math.min(starterHp(S.lvl),Math.floor(HPK*mb*Math.pow(l,HPE))):Math.floor(HPK*mb*Math.pow(l,HPE)*nm);
+    mobs.push({...m,mapIndex:S.mp,boss:false,pack,hp,max:hp,atk:early?starterAtk(S.lvl):Math.floor((5+l*4.6)*mb*na),
+      exp:Math.max(1,Math.floor(EXPK*Math.pow(l,1.5)/50*ne)),zeny:Math.max(ZMIN,Math.floor(ri(ZK[0],ZK[1])*l*l/1000*nz)),
       size:.6,mag:['demon','tree','blob'].includes(m.shape),lvl:l,sec:F.sec});
   };
   if(bossWave){
-    const hp=Math.floor(500*mb*Math.pow(l,HPE));
-    mobs.push({...F.boss,mapIndex:S.mp,boss:true,pack:0,hp,max:hp,atk:Math.floor((8+l*6.5)*mb),
+    const hp=Math.floor(500*mb*Math.pow(l,HPE)*(nm1?NMBOSSHP:1));
+    mobs.push({...F.boss,mapIndex:S.mp,boss:true,pack:0,hp,max:hp,atk:Math.floor((8+l*6.5)*mb*na),
       exp:Math.max(1,Math.floor(BOSEK*Math.pow(l,1.5)/50)),zeny:Math.max(ZMIN,Math.floor(ri(BZK[0],BZK[1])*l*l/1000)),
       size:1.3,mag:true,lvl:l,sec:F.sec});
     // The first five maps bring three escorts; the five later maps bring five.
@@ -2120,7 +2147,7 @@ function genGear(T,l,sec,boss,tier){
   // biggest power source a character owns, and dividing the base divides it at every level.
   // Armor/head/shield/legwear/accessory keep their value: headgear (maxHp x4) and accessory
   // (maxHp x3) are the HP slots and armour/legs/shield carry DEF, which is the anti-death stat.
-  const val=Math.max(1,Math.round({weapon:2,armor:4,head:10,off:3,leg:3,acc:5}[slot]*[1,2.2,4,7][sec]*(1+l*.15)*RAR[t].m*(MAPVAL[Math.max(0,Math.min(MAPVAL.length-1,(S&&S.mp|0)||0))])*rnd(.9,1.12)));
+  const val=Math.max(1,Math.round({weapon:2,armor:4,head:10,off:3,leg:3,acc:5}[slot]*[1,2.2,4,7,10.5,15][sec]*(1+l*.15)*RAR[t].m*(MAPVAL[Math.max(0,Math.min(MAPVAL.length-1,(S&&S.mp|0)||0))])*rnd(.9,1.12)));
   // v73 (owner): the cdm affix is a weapon/accessory roll, so "crit damage on all seven slots"
   // cannot exist any more. This follows the spirit of the cdm CARD's fit rule (CFIT['cdm'] puts
   // those cards on weapons), widened to accessories because both are the offensive slots. Every
@@ -2598,7 +2625,7 @@ function gmPetTest(mode){
   ui();save();
 }
 const V={
-  map(){const F=fieldOf(mapM,mapL),mp=MAPS[mapM],pr=S.prog[mapM];
+  map(){const F=fieldOf(mapM,mapL),mp=MAPS[mapM],pr=S.prog[mapM],nmo=nmOpen(),cap=Math.max(pr,nmMax());
     // The map tab is a compact 450px, two-band panel: pick a map on the top band, walk its fields on the
     // next one, read the drop tables underneath. The field band is sticky, so the level you are
     // choosing stays on screen while the tables below it scroll - no scrolling down to find it.
@@ -2611,25 +2638,26 @@ const V={
         return`<button class="mapcard${cur?' on':''}${here?' here':''}" data-a="selm" data-v="${i}" title="${m.n} - ${m.t}">
           <b>${m.n}</b><small>${here?'● ':''}${m.rec}</small></button>`}).join('')}</div></div>
     <div class="mapband fields">
-      <div class="mapband-t">${mp.n} <small>&middot; ${mp.t} &middot; rec. ${mp.rec} (not a limit) &middot; ${Math.min(pr-1,10)}/10 stages unlocked</small>
-        <button class="go" data-a="go" ${mapL>pr?'disabled':''}>${S.mp===mapM&&S.lvl===mapL?'You are here':'Travel to '+mp.n+' Stage '+mapL}</button></div>
-      <div class="lvgrid">${Array.from({length:10},(_,i)=>{const l=i+1,lock=l>pr;return`<button class="map-node${lock?' locked':''}${S.mp===mapM&&S.lvl===l?' active':''}${mapL===l?' picked':''}${l===10?' boss-node':''}" data-a="sell_" data-v="${l}" title="Stage ${l}"><b>${l===10?'💀 ':''}Stage ${l}</b></button>`}).join('')}</div></div>
+      <div class="mapband-t">${mp.n} <small>&middot; ${mp.t} &middot; rec. ${mp.rec} (not a limit) &middot; ${Math.min(pr-1,10)}/10 stages unlocked${nmo?` &middot; <b>Nightmare ${nmo}/5</b>`:' &middot; Nightmare unlocks at Base Lv '+NMLV[0]}</small>
+        <button class="go" data-a="go" ${mapL>cap?'disabled':''}>${S.mp===mapM&&S.lvl===mapL?'You are here':'Travel to '+mp.n+' Stage '+mapL}</button></div>
+      <div class="lvgrid">${Array.from({length:15},(_,i)=>{const l=i+1,nm=l>10,lock=l>cap;return`<button class="map-node${lock?' locked':''}${nm?' nm-node':''}${S.mp===mapM&&S.lvl===l?' active':''}${mapL===l?' picked':''}${l===10||l===15?' boss-node':''}" data-a="sell_" data-v="${l}" title="${nm?'Nightmare ':''}Stage ${nm?l-10:l}${lock&&nm?' - locked until Base Lv '+NMLV[l-11]:''}"><b>${l===10||l===15?'💀 ':''}${nm?'NM '+((l-10)):'Stage '+l}</b></button>`}).join('')}</div>
+      ${nmo?'':`<small>Stages 11-15 are the <b>Nightmare band</b>: the same map, far harder monsters, and gear that exists nowhere else. Stage ${11+nmo} opens at Base Lv ${NMLV[nmo]}.</small>`}</div>
     <div class="mapcols">
-      <div class="mob-card"><div class="hd">${mp.n} Stage ${mapL}${mapM<5&&mapL<=5?`<br><small>${mapM===0?'Novice start · Base Lv 1–10':'Early class route · Base Lv 10–20'} · gentle packs</small>`:''}</div>
+      <div class="mob-card"><div class="hd">${mapL>10?'Nightmare ':''}${mp.n} Stage ${mapL>10?mapL-10:mapL}${mapM<5&&mapL<=5?`<br><small>${mapM===0?'Novice start · Base Lv 1–10':'Early class route · Base Lv 10–20'} · gentle packs</small>`:''}</div>
         <div class="sec">Monsters <small>&middot; every drop here is <b class="r${F.tier}">${RAR[F.tier].n}</b></small></div>
         ${F.mobs.map(m=>`<div class="mobentry"><b>${m.n}</b>
           ${m.drops.map(d=>dropTxt(d,F.tier)).join('')}
           <div class="dropline"><span>🃏 ${m.card.n} <small>(${SU(m.card.stat)} +${cardVal(m.card.g,m.card.stat)}, ${GRADE[m.card.g]})</small></span><b>${m.cardCh}%</b></div>
           ${m.ore?`<div class="dropline ore"><span>🔶 Oridecon &middot; 🔷 Elunium</span><b>${m.oreCh*100}% each</b></div>`:''}
         </div>`).join('<hr>')}</div>
-      <div class="mob-card"><div class="hd">Boss &amp; pets</div>${mapL===10?`<small>Boss fights immediately with ${mapM<5?3:5} monsters. Defeat the boss to reset the fight.</small>`:''}
+      <div class="mob-card"><div class="hd">Boss &amp; pets</div>${(mapL===10||mapL===15)?`<small>Boss fights immediately with ${mapM<5?3:5} monsters. Defeat the boss to reset the fight.</small>`:''}
         ${F.boss?`<div class="mobentry"><b class="r4">${F.boss.n} (BOSS)</b>
           <div class="poollist">${F.boss.drops.map(([T,ch])=>`<span class="poolitem">${poolIc(T)} ${T.n}<b>${ch}%</b></span>`).join('')}</div>
-          ${bossCritRes(mapM)?`<div class="dropline"><span>🛡 Crit resistance <small>your Crit % is cut by this much against this boss</small></span><b>${Math.round(bossCritRes(mapM)*100)}%</b></div>`:''}
+          ${bossCritRes(mapM,mapL)?`<div class="dropline"><span>🛡 Crit resistance <small>your Crit % is cut by this much against this boss</small></span><b>${Math.round(bossCritRes(mapM,mapL)*100)}%</b></div>`:''}
           <small>Every boss drop is <b class="r4">Legendary</b> with random affixes. Each item rolls independently; a boss can drop zero or several pieces.</small>
           <div class="dropline"><span>🃏 ${F.boss.card.n} <small>(${SU(F.boss.card.stat)} +${cardVal(3,F.boss.card.stat)}, Legendary)</small></span><b>${F.boss.cardCh}%</b></div>
           <div class="dropline ore"><span>🔶 Oridecon &middot; 🔷 Elunium</span><b>${F.boss.oreCh*100}% each</b></div>
-        </div>`:`<small>Boss appears at Stage 10.</small>`}
+        </div>`:`<small>Boss appears at ${mapL>10?'NM 5 (stage 15)':'Stage 10'}.</small>`}
         <div class="sec">🐾 Pet drops</div><small>0.03% per kill, 0.5% from bosses. Odds on ${mp.n}: ${PW[Math.min(mapM,9)].map((w,i)=>RN[i]+' '+w+'%').join(' &middot; ')}</small></div></div>`},
   stats(){const c=C(),b=k=>bon(k)?` <small class="r1">+${bon(k)}</small>`:'',idxC=typeof indexCrit==='function'?indexCrit():0;
     return`<div class="hd">${S.cls} &middot; Base Lv ${S.lv} &middot; Job Lv ${jobOf().jl}/${c.mj}</div><div class="hd">Stat points: ${S.pts} <small>(max ${statCap()} each${S.lv<ELITELV?' &middot; '+MAXST+' unlocks at Base Lv '+ELITELV:''} &middot; max Base Lv 150)</small></div><div class="hd">🏆 Class collection: ${playedClasses()}/${t3Total()} transcendent classes at Base Lv 100+ &middot; <b>+${collDmg()}% damage</b> <small>(+1% each, permanent${playedClasses()?'':' - take a transcendent class to Base Lv 100 to earn it'})</small></div>`
@@ -2729,7 +2757,7 @@ const V={
     <small>Background grinding keeps playing while the tab is hidden - a hidden tab is never "away". The welcome-back reward only starts after <b>three minutes</b> without a save, so an ordinary background session never opens it.</small>
     <p><small>Drag to rotate, scroll or pinch to zoom. Hotkeys: M S J K B E C Q R L P I V O, Esc to close.</small></p><button class="full" data-a="reset">Erase this account's save &amp; restart</button><button class="full" data-a="logout">Logout</button>`},
   gm(){return`<div class="hd">GM multiplier (EXP, Job EXP, Zeny, quests)</div><div class="row">${[1,10,100,1000].map(x=>`<button data-a="gmx" data-v="${x}" ${S.gmx===x?'style="background:#ffe08a"':''}>x${x}</button>`).join('')}</div>
-    <div class="row" style="margin-top:8px"><button data-a="gmz">+1,000,000 Zeny</button><button data-a="gmo">+20 Oridecon &amp; Elunium</button><button data-a="gml">+10 Base Levels</button><button data-a="gmj">Max Job Lv (current class)</button><button data-a="gmu">Unlock all map levels</button></div>
+    <div class="row" style="margin-top:8px"><button data-a="gmz">+1,000,000 Zeny</button><button data-a="gmo">+20 Oridecon &amp; Elunium</button><button data-a="gml">+10 Base Levels</button><button data-a="gmnm">Unlock Nightmare (Base Lv 150)</button><button data-a="gmj">Max Job Lv (current class)</button><button data-a="gmu">Unlock all map levels</button></div>
     <div class="hd" style="margin-top:10px">Index mastery test controls</div><small>These use the real per-species ledger and the 10 / 250 / 5,000 / 50,000 kill ladder. Clear before trying another scenario.</small><div class="row"><button data-a="gmindex" data-v="one">+1 Poring kill</button><button data-a="gmindex" data-v="all1">1 kill every species</button><button data-a="gmindex" data-v="all100">100 kills every species</button><button data-a="gmindex" data-v="all1000">1,000 kills every species</button><button data-a="gmindex" data-v="all5000">5,000 kills every species</button><button data-a="gmindex" data-v="all50000">50,000 kills every species</button><button data-a="gmindex" data-v="xp10000">Set 10,000 XP title test</button><button data-a="gmindex" data-v="xp1000000">Set the final title</button><button data-a="gmindex" data-v="clear">Clear Index</button></div>
     <div class="hd" style="margin-top:10px">Card mastery test controls</div><small>Loose cards can be dedicated through the Card Mastery tab; every mastery rank is one gacha token. Roll every token fills the stat caps the slow way (one random roll at a time). Socketed cards stay untouched.</small><div class="row"><button data-a="gmcard" data-v="poring1">+1 Poring Card</button><button data-a="gmcard" data-v="poring5">+5 Poring Cards</button><button data-a="gmcard" data-v="poringMax">Max Poring 5/5</button><button data-a="gmcard" data-v="allMax">Max all cards 5/5</button><button data-a="gmcard" data-v="rollAll">Roll every token</button><button data-a="gmcard" data-v="clear">Reset card mastery</button></div>
     <div class="hd" style="margin-top:10px">Skill accounting test controls</div><small>Max the current class line, then use the normal Auto-allocate all skills button or let GM do both steps.</small><div class="row"><button data-a="gmskill" data-v="maxjobs">Max current line jobs</button><button data-a="gmskill" data-v="maxallocate">Max jobs + auto allocate</button><button data-a="gmskill" data-v="reset">Reset current line skills</button></div>
@@ -2926,12 +2954,14 @@ const gotoField=(m,l)=>{S.mp=m;S.lvl=l;S.kl=0;mobs=[];mob=null;respawn=.3;pend=[
 const ACT={
   boardperiod:v=>{if(!['daily','weekly','all'].includes(v))return;boardPeriod=v;boardError='';renderWin();boardRefresh(v)},
   boardrefresh:()=>boardRefresh(boardPeriod),
-  selm:v=>{mapM=+v;mapL=Math.min(mapL,Math.max(1,S.prog[mapM]));renderWin()},
+  selm:v=>{mapM=+v;mapL=Math.min(mapL,Math.max(1,Math.max(S.prog[mapM],nmMax())));renderWin()},
   // v75 test control: feed the selected pet (or the first one) n duplicates and let petFold do
   // the rest, so the owner can watch a species' passive climb without farming 15 drops.
+  gmnm:()=>{S.gmnm=true;S.lv=Math.max(S.lv,150);S.prog=MAPS.map(()=>10);S.hp=Math.min(S.hp,maxHp());
+    log('Nightmare band unlocked: all five stages, Base Lv '+S.lv+'. Travel from the World Map (stages 11-15).','r4');ui();save()},
   gmbond:v=>{const p=gp(selP)||S.pets[0];if(!p)return log('No pet to bond with.','r0','pet');
     const n=Math.max(1,Math.min(15,+v||1));for(let i=0;i<n;i++)petFold(p,{sp:p.sp,mut:0,eq:[0,0,0],skills:[]});
-    log(`${PETS[p.sp].n} is Bond ${bondRank(p.sp)}/5 - ${PET_TRAIT[p.sp].n} ${PET_TRAIT[p.sp].d(traitVal(p.sp))}.`,'r3','pet');ui();save()}, sell_:v=>{mapL=+v;renderWin()},go:()=>{if(mapL<=S.prog[mapM]){gotoField(mapM,mapL);log(`Traveled to ${fieldName()}.`)}},
+    log(`${PETS[p.sp].n} is Bond ${bondRank(p.sp)}/5 - ${PET_TRAIT[p.sp].n} ${PET_TRAIT[p.sp].d(traitVal(p.sp))}.`,'r3','pet');ui();save()}, sell_:v=>{mapL=+v;renderWin()},go:()=>{if(mapL<=Math.max(S.prog[mapM],nmMax())){gotoField(mapM,mapL);log(`Traveled to ${fieldName()}.`)}},
   stat:k=>{if(S.pts>=cost(k)&&S.st[k]<statCap()){S.pts-=cost(k);S.st[k]++;S.hp=Math.min(S.hp,maxHp());ui();save()}},
   stat5:k=>{for(let i=0;i<5;i++)if(S.pts>=cost(k)&&S.st[k]<statCap()){S.pts-=cost(k);S.st[k]++}S.hp=Math.min(S.hp,maxHp());ui();save()},
   selk:v=>{selK=v;renderWin()},job:n=>{if(n==='Novice'&&S.cls!=='Novice')ask('Restart as Novice? You go back to Base Lv 25, job levels cleared, and your stats are refunded. Classes you leave keep their own Base Lv, stats and gear, so you can switch back to them later.',()=>changeClass(n));else changeClass(n)},

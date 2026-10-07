@@ -40,7 +40,7 @@ const code = [
   pick(/const AM=\[[^\]]*\],GRADE=\[[^\]]*\],GI=\[[^\]]*\],CV=\[[^\]]*\];/, 'rarity tables'),
   pick(/const AFF=\[[^\]]*\],AB=\{[^}]*\};/, 'AFF/AB'),
   pick(/const FIELD_GEAR=\[[^\]]*\],FIELD_GEAR_MID=\[[^\]]*\],BOSS_POOL_TOTAL=\[[^\]]*\];/, 'field drop tables'),
-  pick(/const BOSS_CRIT_RES=\[[^\]]*\],bossCritRes=m=>[^;]+;/, 'boss crit resistance'),
+  pick(/const BOSS_CRIT_RES=\[[^\]]*\],NM_CRIT_RES=\[[^\]]*\],bossCritRes=\(m,l\)=>[^;]+;/, 'boss crit resistance (+ the v76 Nightmare ladder)'),
   pick(/const AFFIX_CDM_SCALE=[^\n]+;/, 'gear-only Crit DMG post-roll scale'),
   pick(/K5=\[[^\]]*\];/, 'K5'),
   pick(/const cardVal=\(g,st\)=>[^;]+;/, 'cardVal'),

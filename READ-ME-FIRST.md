@@ -80,6 +80,48 @@ is the live one; with no argument the tool prints how to set a new one). Since v
 `GM` / `test1234`; `localStorage.removeItem('pg_gm_local')` removes it. Normal accounts are made
 in-game and stored in the browser (`pg_acc4`; saves under `pg_save3_<user>`).
 
+## BUILD v76 — the Nightmare band (Base Lv 100-150) and its exclusive gear
+
+Field power used to stop at **Abyss Stage 10 (power 99)** while the level cap is 150, so Base Lv
+100-150 had nothing to climb and no new drops. Every map now carries five more stages.
+
+* **The band.** Each map gains **stages 11-15**, labelled `NM 1` … `NM 5` on the World Map in their
+  own purple nodes. They open on **Base Lv 100 / 110 / 125 / 140 / 150** — a pure level unlock, so
+  there is nothing new to save and no migration. Stage 15 of every map ends with a boss, exactly like
+  stage 10 does.
+* **The power ladder keeps going.** `fieldPower` continues past the old ceiling: Nightmare Prontera
+  Stage 11 is power 105, and **Nightmare Abyss Stage 15 is power 175** — the deepest field in the
+  game. Every normal stage's power is byte-for-byte what it was.
+* **They are genuinely hard.** Nightmare monsters take **12x** the HP of a normal monster at the same
+  power and hit **1.5x** as hard (both are single constants, `NMHP` and `NMATK`, if you want them
+  tuned after a playtest). Worked example from the test suite, measured against Abyss Stage 10:
+
+  | | mob HP | a hit that lands (after a 75% DEF cut) |
+  |---|---|---|
+  | Abyss Stage 10 | 56,013 | 389 |
+  | Nightmare Abyss 15 | 1,391,304 | 1,017 |
+  | Nightmare Abyss 15 boss | 16,563,240 | — |
+
+  Nightmare monsters also pay **1.5x EXP** and **1.6x Zeny**, drop ore at **1.5%** a kill (regular
+  monsters pay 0.5%, and 1% on a normal stage-10 boss field), and their bosses carry a **9% drop
+  pool** instead of 6% (4.2% on the mid/endgame maps).
+* **Nightmare bosses resist crit harder.** Their five stages share one figure per map, rising the
+  same way the normal ladder does: **35 / 35 / 36 / 36 / 38 / 38 / 40 / 40 / 42 / 45%** from Nightmare
+  Prontera to Nightmare Abyss. A capped 60% crit build crits a Nightmare Abyss boss **33%** of the
+  time (39% on Nightmare Prontera). The normal bosses are untouched (v74's 15/15/15/20/30), and the
+  map panel prints whichever ladder the field you are reading belongs to.
+* **Two gear sections that exist nowhere else.** Nightmare fields roll **section 4 (Nightmare gear)**
+  on stages 11-13 and **section 5 (Abyssal Nightmare gear)** on stages 14-15 and off their bosses —
+  and those are the *only* fields in the game whose section index is 4 or 5, so the exclusivity is
+  structural, not a rule someone has to remember. Each section is its own map's high-tier row,
+  **renamed with a per-map word** (Dread, Kraken, Void, Sandwraith, Spectral, Leviathan, Oni, Yokai,
+  Helheim, Glast / Abyssal, Maelstrom, Singularity, Eclipse, Wraithlord, Trench, Yama, Kami,
+  Nidhogg, Absolute) — same weapon families so no class loses a weapon, all-new names, **210 new
+  items**. A **Nightmare** item is worth **1.5x** the high-tier row and an **Abyssal Nightmare** item
+  **15/7x** it, at the same Legendary grade.
+* **Testing the band:** the GM console has **Unlock Nightmare (Base Lv 150)**, which sets Base Lv 150
+  and unlocks all five stages so you can walk straight into Nightmare Abyss 15.
+
 ## BUILD v75 — pet species passives and duplicate Bond
 
 Pets used to differ only in their drawing and their rarity: two pets of one rarity were the same

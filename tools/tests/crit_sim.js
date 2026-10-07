@@ -19,7 +19,7 @@ const code = [
   pick(/const INDEX_TITLES=\[[\s\S]*?\n\];/, 'INDEX_TITLES'),
   pick(/const indexRankForXp=[^\n]+/, 'indexRankForXp'),
   pick(/const indexExperience=[^\n]+/, 'indexExperience'),
-  pick(/const BOSS_CRIT_RES=\[[^\]]*\],bossCritRes=m=>[^;]+;/, 'boss crit resistance'),
+  pick(/const BOSS_CRIT_RES=\[[^\]]*\],NM_CRIT_RES=\[[^\]]*\],bossCritRes=\(m,l\)=>[^;]+;/, 'boss crit resistance (+ the v76 Nightmare ladder)'),
   pick(/const crit=\(\)=>[^\n]*/, 'crit/flee/missCh'),
 ];
 const harness = `
@@ -28,7 +28,7 @@ const safeCount = v => {const n=Number(v);return Number.isFinite(n)?Math.max(0,M
 let PV = 0, BON = 0, CM = 0;
 const S = { st:{luk:1,dex:1}, lv:1, indexXp:0, eq:{} };
 const st = k => S.st[k] || 1, pv = k => PV, bon = k => BON, cardMasteryStat = k => CM;
-this.__c = { crit, bossCritRes, indexCrit, indexCritBonus, INDEX_CRIT, INDEX_TITLES, BOSS_CRIT_RES,
+this.__c = { crit, bossCritRes, indexCrit, indexCritBonus, INDEX_CRIT, INDEX_TITLES, BOSS_CRIT_RES, NM_CRIT_RES,
   set(pv, bon, cm, luk, xp){ PV = pv; BON = bon; CM = cm; S.st.luk = luk; S.indexXp = xp; } };
 `;
 
@@ -106,8 +106,14 @@ t('high-level bosses cut the crit chance rolled against them', () => {
   // a capped 60% build crits those bosses 51 / 51 / 51 / 48 / 42 percent of the time
   assert.deepStrictEqual(Array.from(C.BOSS_CRIT_RES).slice(5).map(r => +(60 * (1 - r)).toFixed(1)), [51, 51, 51, 48, 42]);
   assert.ok(src.includes("Math.max(0,crit()*(1-(mob.critRes||0)))"), 'the live strike must apply the resistance');
-  assert.ok(src.includes('drops:T.map(x=>[x,Math.round(BOSS_POOL_TOTAL[m>=5?1:0]/n)/100]),critRes:bossCritRes(m),'), 'every Stage-10 boss carries its map figure');
-  assert.ok(src.includes('critRes:bossCritRes(m)') && src.includes('offlineMobForCurrentField'), 'offline boss kills carry it too');
+  assert.ok(src.includes('drops:T.map(x=>[x,Math.round(BOSS_POOL_TOTAL[l>10?2:(m>=5?1:0)]/n)/100]),critRes:bossCritRes(m,l),'), 'every Stage-10 boss carries its map figure');
+  // v76: the Nightmare band has its own, steeper ladder - the endgame walls the owner asked for
+  assert.deepStrictEqual(Array.from(C.NM_CRIT_RES), [.35,.35,.36,.36,.38,.38,.4,.4,.42,.45], 'the Nightmare ladder is pinned');
+  assert.strictEqual(C.bossCritRes(9, 15), .45, 'Nightmare Abyss Stage 15 cuts crit by 45%');
+  assert.strictEqual(C.bossCritRes(0, 11), .35, 'Nightmare Prontera Stage 11 cuts 35%');
+  assert.strictEqual(C.bossCritRes(9), .3, 'and the normal Abyss boss is untouched');
+  assert.deepStrictEqual(Array.from(C.NM_CRIT_RES).map(r => +(60 * (1 - r)).toFixed(1)), [39, 39, 38.4, 38.4, 37.2, 37.2, 36, 36, 34.8, 33], 'a capped 60% build crits a Nightmare boss 33-39% of the time');
+  assert.ok(src.includes('critRes:bossCritRes(m,l)') && src.includes('offlineMobForCurrentField'), 'offline boss kills carry the band figure too');
   // the real strike() rolls against the reduced chance
   const strikeBox = {};
   vm.createContext(strikeBox);

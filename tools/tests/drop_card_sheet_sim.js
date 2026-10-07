@@ -19,8 +19,11 @@ function liveData(){
     `MAPS.forEach(mp=>{mp.mobs=mp.mobs.map(x=>({n:x.split(':')[0]}));mp.boss={n:mp.boss.split(':')[0]};});`,
     pick(/const REC=\[[^\]]*\];/,'map recommendations'),
     `MAPS.forEach((m,i)=>{m.b=[0,9,19,31,43,59,66,73,79,89][i];m.rec=REC[i]});`,
+    // v76: the Nightmare band's constants and the two extra catalogue rows per map, so the sheet
+    // shows exactly what the game ships
+    grab('const NMLV=[', 'GEAR.forEach((row,m)=>{row.push(nmRow(m,0),nmRow(m,1))});') + 'GEAR.forEach((row,m)=>{row.push(nmRow(m,0),nmRow(m,1))});',
     pick(/const EARLY_FIELD_PWR=\[[^;]+;/,'early-map power schedules'),
-    pick(/const fieldPower=\(m,l\)=>\{[^}]*\};/,'fieldPower'),
+    pick(/const fieldPower=\(m,l\)=>[^;]+;/, 'fieldPower'),   // v76: one ternary expression, no inner statement
     pick(/const secOf=[^;]+;/,'secOf'),
     pick(/const secField=\(m,l\)=>[^;]+;/,'secField'),
     pick(/const RAR=\[[^\]]*\];/,'equipment rarity table'),
@@ -36,7 +39,7 @@ function liveData(){
     pick(/const MAPVAL=\[[^\]]*\];/,'map value bands'),
     pick(/const dropTier=\(m,l\)=>[^;]+;/,'dropTier'),
     pick(/const FIELD_GEAR=\[[^\]]*\],FIELD_GEAR_MID=\[[^\]]*\],BOSS_POOL_TOTAL=\[[^\]]*\];/,'field drop tables'),
-    pick(/const BOSS_CRIT_RES=\[[^\]]*\],bossCritRes=m=>[^;]+;/,'boss crit resistance'),
+    pick(/const BOSS_CRIT_RES=\[[^\]]*\],NM_CRIT_RES=\[[^\]]*\],bossCritRes=\(m,l\)=>[^;]+;/,'boss crit resistance'),
     grab('function gearPool(m,l){','// ---------- stat progression'),
     `const WICON=${pickValue(/const WICON=(\{[^}]*\})/,'weapon type table')};`,
     `this.__live={MAPS,RAR,GRADE,AFF,AB,K5,cardVal,cardStat,CFIT,SECN,WICON,fieldPower,fieldOf};`
@@ -105,8 +108,12 @@ console.log('equipment & card sheet: offline, live-source baseline\n');
 t('the embedded snapshot exactly matches the current game tables',()=>assert.deepStrictEqual(sheet,live));
 t('the worksheet covers all maps, gear sections, and field stages',()=>{
   assert.strictEqual(sheet.maps.length,10);
-  for(const m of sheet.maps){assert.strictEqual(m.sections.length,4,m.name);assert.strictEqual(m.stages.length,10,m.name);assert.ok(m.stages.every(s=>s.mobs.length===2),m.name+' field mob count')}
-  assert.strictEqual(sheet.maps.reduce((n,m)=>n+m.sections.reduce((a,s)=>a+s.items.length,0),0),378);
+  // v76: six sections per map - the four job tiers plus the two Nightmare rows that only the band
+  // above stage 10 rolls. The stage list stays the ten normal stages.
+  for(const m of sheet.maps){assert.strictEqual(m.sections.length,6,m.name);assert.strictEqual(m.stages.length,10,m.name);assert.ok(m.stages.every(s=>s.mobs.length===2),m.name+' field mob count')}
+  assert.ok(sheet.maps.every(m=>m.sections[4].name===undefined||m.sections[4].items.length>0),'the Nightmare rows carry items');
+  assert.strictEqual(sheet.sectionNames[4],'Nightmare gear');assert.strictEqual(sheet.sectionNames[5],'Abyssal Nightmare gear');
+  assert.strictEqual(sheet.maps.reduce((n,m)=>n+m.sections.reduce((a,s)=>a+s.items.length,0),0),588);
 });
 t('the worksheet snapshot carries the new field-power and gear-tier progression',()=>{
   assert.strictEqual(sheet.sectionNames[0],'Starter gear');

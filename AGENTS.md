@@ -4094,3 +4094,56 @@ assigned for feel rather than fidelity. While reworking that, two shipped bugs s
 * **Tests:** all **34** suites pass (`pet_sim` 17, `ui_sim` 48, `gear_sim` 33, `save_load_sim` 23,
   `economy_sim` 23). `node --check` clean.
 * **Not pushed** and no PR - the owner plays the build first.
+
+### 2026-10-07 — `2026-10-07 grind-v76 nightmare band and exclusive nightmare gear`
+
+* **Owner decision.** Asked how to fix Base Lv 100-150 ("this could be a buzz kill ... same map until
+  end game"), the owner picked **Field Tiers, named Nightmare**, with the mobs "strong enough to make
+  it hard" and the new gear **exclusive to the new maps**. (Same message: Baphomet Jr's Executioner
+  stays at 5-10% - "its ok for bap jr pet. cause it doesnt stack. so leave it".)
+* **Why it was needed.** `fieldPower` stopped at Abyss Stage 10 = **99** while the level cap is 150,
+  and the last gear section was 3, so levels 100-150 bought nothing but the stat cap. Every map now
+  carries stages **11-15**, `NMLV=[100,110,125,140,150]`, a pure level unlock - no save field, no
+  migration. `nmOpen()/nmMax()` drive the World Map nodes, the travel guard and the maps-panel header;
+  `isBoss()` is `S.lvl===10||S.lvl===15`; `fieldName()` prints `Nightmare <map> Stage <1-5>`.
+* **The curve** is `NMBASE(105)+m*NMSTEP(6)+(stage-11)*NMGAP(4)`: Nightmare Prontera 11 = 105,
+  Nightmare Abyss 15 = **175**. Every normal stage's power is unchanged (the audit sheet and
+  `nightmare_sim` both prove it).
+* **Difficulty** is two constants, `NMHP=12` and `NMATK=1.5`, read once in `spawn()` (`nm1=S.lvl>10`,
+  `nm/na/ne/nz`), with `NMEXP=1.5`, `NMZENY=1.6` and `NMBOSSHP=12` for the stage-15 boss. Measured in
+  the suite: a Nightmare 15 mob has 25x the HP of an Abyss 10 mob and lands 2.6x the damage after the
+  DEF cut. `fieldOf` also gives the band a 9% boss pool (`BOSS_POOL_TOTAL[2]=900`) and 1.5% ore.
+* **Gear exclusivity is structural.** `secField` returns **4 for stages 11-13** and **5 for 14-15**,
+  and nothing else in the game can: every stage 1-10 assertion in `gear_sim`, `nightmare_sim` and the
+  audit sheet pins `<=3`. Each map's two new rows are built by `nmRow(m,i)` from its own high-tier row
+  - same weapon families (no class loses a weapon), a per-map word (NMNAME/NMNAME2), **210 new items**,
+  names unique across the catalogue. `genGear` prices them from `[1,2.2,4,7,10.5,15][sec]` (1.5x and
+  15/7x the high-tier row) at the same Legendary grade, and `SECN` gained the two names.
+* **Nightmare bosses resist crit harder**: `NM_CRIT_RES=[.35,.35,.36,.36,.38,.38,.4,.4,.42,.45]`,
+  folded into the SAME `const` statement as `BOSS_CRIT_RES`/`bossCritRes` so every suite that slices
+  that line gets it. `bossCritRes(m,l)` returns the NM figure (indexed by **map**, so a map's five NM
+  stages share it) for `l>10` and the v74 normal figure otherwise; a capped 60% build crits Nightmare
+  Abyss at 33% and Nightmare Prontera at 39%. The map panel now passes `mapL` through, so a Nightmare
+  field prints the band's number, and a Nightmare field without a boss says "Boss appears at NM 5
+  (stage 15)" instead of "Stage 10". `ui_sim` pins both.
+* **Also fixed while wiring it:** `fieldOf`'s boss branch was `l===10` only, so stage 15 would have
+  been a normal field (caught by the new suite); `load()` accepted stages 1-10 and now accepts 1-15;
+  `initSession` pulls a character out of a stage it has not unlocked; `selm`/`go` cap at
+  `max(prog, nmMax())`; `bossCritRes(mapM,mapL)` on the map panel.
+* **GM:** new `Unlock Nightmare (Base Lv 150)` button + `gmnm` action (`S.gmnm=true`, Base Lv 150, all
+  stages unlocked) so the band can be play-tested without 150 levels of play.
+* **Tests.** New **35th suite `nightmare_sim`** (8 groups): the unlock ladder, the whole power schedule
+  map by map incl. the unchanged v1-10 bands, section exclusivity both ways, the renamed-row rule and
+  catalogue-wide name uniqueness, the value multipliers, the difficulty constants + the live spawn()
+  wiring + the worked HP/ATK example, the field tables (boss pool, ore, crit resistance, gear pool),
+  and the save/travel guards. Updated: `crit_sim` (+ the Nightmare ladder + the offline assertion),
+  `gear_sim`/`drop_card_sheet_sim` regexes for the new `bossCritRes(m,l)` and single-expression
+  `fieldPower`, `ui_sim` (15 nodes, five of them Nightmare), the audit sheet refreshed (6 sections per
+  map, 588 items).
+* **Files touched:** `index.html` (BUILD v76, the Nightmare block, fieldPower/secField/SECN/genGear,
+  BOSS_CRIT_RES/bossCritRes, fieldOf, spawn, isBoss/fieldName, load/sanitize/initSession, selm/go,
+  map panel + CSS, the GM switch); `tools/tests/{nightmare_sim(new),crit_sim,gear_sim,ui_sim,drop_card_sheet_sim}.js`;
+  `Updates/cards-gear-audit/equipment-cards-tuning.html` (refreshed baseline),
+  `Updates/cards-gear-audit/affix-ranges.html`, `tools/cloudflare-deploy-steps.md`, `READ-ME-FIRST.md`.
+* **Tests:** all **35** suites pass. `node --check` clean.
+* **Not pushed** and no PR - the owner plays the build first.

@@ -161,12 +161,30 @@ t('the map panel renders every map and field', () => {
   for(const m of [1,2,3,4]){U.mapM=m;assert.ok(U.V.map().includes('stages 1-5 Lv 10-20; 6-10 Lv 20-50'),'class map '+m+' states both stage-level bands')}
   U.mapM=0;
   assert.ok(cards.includes('Lv 90-99'), 'and every map carries one');
-  assert.strictEqual((h.match(/class="map-node/g) || []).length, 10, 'one node per field');
+  // v76: ten normal stages plus the five Nightmare stages - the same strip, a longer ladder
+  assert.strictEqual((h.match(/class="map-node/g) || []).length, 15, 'one node per field, Nightmare included');
+  assert.strictEqual((h.match(/nm-node/g) || []).length, 5, 'the five Nightmare nodes');
+  assert.ok(h.includes('Nightmare unlocks at Base Lv 100') || h.includes('Nightmare 5/5'), 'the band header states where Nightmare starts');
   // the boss field lists the whole pool with odds, and the new ore rates
   U.mapL = 10;
   const b = U.V.map();
   assert.ok(b.includes('<b>0.9%</b>') && b.includes('poolitem') && b.includes('Each item rolls independently'), 'the boss must list its whole pool at its 6%-total rate');
   assert.ok(b.includes('0.1%'), 'boss card odds must read 0.1% (v38)');
+  // v76: a Nightmare field's panel must speak the band - the NM boss hint, the NM crit ladder
+  // readout (not the normal one) and where the band's boss sits when it has none
+  U.mapM = 9; U.mapL = 15;
+  const nmBoss = U.V.map();
+  assert.ok(nmBoss.includes('Nightmare Abyss Stage 5'), 'the Nightmare field is titled Nightmare <map> Stage <1-5>');
+  assert.ok(nmBoss.includes('45%'), 'Nightmare Abyss bosses show their 45% crit resistance, not the normal 30%');
+  assert.ok(!nmBoss.includes('>30%<'), 'and never the normal-ladder number');
+  assert.ok(nmBoss.includes('Boss fights immediately'), 'stage 15 is a boss field like stage 10');
+  U.mapL = 13;
+  const nmNoBoss = U.V.map();
+  assert.ok(nmNoBoss.includes('Boss appears at NM 5 (stage 15).'), 'a Nightmare field with no boss says where the boss is');
+  assert.ok(!nmNoBoss.includes('Boss appears at Stage 10.'), 'not the normal-ladder wording');
+  U.mapL = 10;
+  assert.ok(U.V.map().includes('Boss appears at Stage 10.') === false && U.V.map().includes('Dark Lord (BOSS)'), 'the normal stage-10 field still shows its boss');
+  U.mapM = 0;
   assert.ok(b.includes('1% each') && b.includes('2.5% each'), 'v51 ore rates: 1% per monster, 2.5% per boss');
 });
 
@@ -183,7 +201,7 @@ t('the map tab is a compact two-band panel: maps on top, that map\'s fields unde
   assert.ok(iCols > iFields, 'the drop tables must come after the field band');
   // the field strip holds all ten levels of the picked map and the travel button lives in it
   const fieldBand = h.slice(iFields, iCols);
-  assert.strictEqual((fieldBand.match(/class="map-node/g) || []).length, 10, 'ten fields in the band');
+  assert.strictEqual((fieldBand.match(/class="map-node/g) || []).length, 15, 'fifteen fields in the band (10 + 5 Nightmare)');
   assert.ok(!/>1st job</.test(fieldBand) && !/>2nd job</.test(fieldBand) && !/>novice</.test(fieldBand),
     'stage buttons carry no job-tier description');
   assert.ok(!/1st-job gear/.test(h), 'the stage header no longer names the gear section');
@@ -191,7 +209,7 @@ t('the map tab is a compact two-band panel: maps on top, that map\'s fields unde
   assert.ok(fieldBand.includes('Stage 10'), 'the boss field is labelled');
   assert.ok(src.includes('.wp.wide{flex:0 1 450px;width:450px;min-width:0}'), 'map width is halved and does not grow');
   assert.ok(!/>Lv \d/.test(fieldBand), 'stages are not character levels');
-  assert.strictEqual((fieldBand.match(/<button class="map-node/g)||[]).length, 10, 'stages are keyboard-accessible buttons');
+  assert.strictEqual((fieldBand.match(/<button class="map-node/g)||[]).length, 15, 'stages are keyboard-accessible buttons (10 + 5 Nightmare)');
   // Compact wrapping rows rather than ten cramped columns.
   assert.ok(/\.lvgrid\{[^}]*repeat\(auto-fit,minmax\(min\(100%,\d+px\),1fr\)\)/.test(src), 'the field strip must shrink its tracks before overflowing');
   const min = +src.match(/\.lvgrid\{[^}]*minmax\(min\(100%,(\d+)px\)/)[1];
@@ -1399,7 +1417,8 @@ t('refine controls sit with the piece: the ladder is the v51 30%-nerfed one', ()
   assert.ok(e.indexOf('Refine') > -1 && e.indexOf('Insert card') > -1, 'the weapon shows both sections');
   assert.ok(e.indexOf('Refine') < e.indexOf('Insert card'), 'Refine comes before the long card-insert list, not after it');
   assert.ok(src.includes('refCh=it=>[70,70,70,70,49,42,35,28,21,14][it.r||0]'), 'the refine chance table is the nerfed one');
-  assert.ok(src.includes('ore:true,oreCh:l===10?.01:.005') && src.includes('ore:true,oreCh:.025'), 'regular mobs drop both ores at 0.5% / 1%, Stage 10 boss at 2.5%');
+  assert.ok(src.includes('ore:true,oreCh:l>10?.015:l===10?.01:.005') && src.includes('ore:true,oreCh:.025'),
+    'regular mobs drop both ores at 0.5% / 1% (1.5% in the Nightmare band), Stage 10 boss at 2.5%');
 });
 
 t('worn equipment can never be auto-sold or bulk-sold', () => {
