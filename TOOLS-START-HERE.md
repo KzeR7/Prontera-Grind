@@ -15,7 +15,8 @@ which once left the owner staring at a blank page). It also serves the whole rep
 
 | route | page | use it when |
 | --- | --- | --- |
-| **`/`** or `/weapons` | **`tools/weapon_proposal.html`** | **you want to see weapons on the classes today** — opens frozen for placement, **male and female sprites** (each with its own numbers), **a placement per animation frame** (the weapon follows the body when you play), `🎯 Set hand` to lock the grip (the weapon snaps to the pixel you click), a checkbox per view (weapon or bare-handed), flip ⇄/⇅, drag/rotate/size, three designs per family, **Every class at a glance** (`▤ show the pictures`: 19 small live previews, one per class, each saying whose numbers that sprite is on), **Copy only what I changed** (the short paste-back) / **Copy everything** |
+| **`/`** (or `/damage`) | **`Updates/damage-floats-proposal/index.html`** | **the on-screen damage numbers** — four live strips (current game styling + options A/B/C) firing a combat volley; tune **fade style, pop-up type (scatter / front-of-body / sway / stack), font, sizes, rise, lifetime, fade start, impact punch, spread** with instant previews; presets; **Big crit · 1.2M** proves the explode frame fits 7-digit numbers; **📋 Copy my selection** copies the exact picks as text — the owner pastes that to the agent, who applies it (the folder's README carries the slider→code map and the apply checklist). This page produced the live v69/v70 look |
+| **`/weapons`** | **`tools/weapon_proposal.html`** | **you want to see weapons on the classes today** — opens frozen for placement, **male and female sprites** (each with its own numbers), **a placement per animation frame** (the weapon follows the body when you play), `🎯 Set hand` to lock the grip (the weapon snaps to the pixel you click), a checkbox per view (weapon or bare-handed), flip ⇄/⇅, drag/rotate/size, three designs per family, **Every class at a glance** (`▤ show the pictures`: 19 small live previews, one per class, each saying whose numbers that sprite is on), **Copy only what I changed** (the short paste-back) / **Copy everything** |
 | `/review` | `tools/weapon_review.html` | the older per-frame weapon review (one tile per class/view/frame) from the v35 pass |
 | `/standalone` | `tools/weapon_review_standalone.html` | the same page as one self-contained file, for a plain `file://` open |
 | `/picker` | `tools/sprite_picker.html` | the attack-pose + head-seat picker the owner uses for the class art itself |
@@ -28,7 +29,8 @@ that case honestly; the pages may not).
 
 | question | page / tool |
 | --- | --- |
-| What does the hero look like, wearing *this* class, walking and attacking? | `/` → proposal page (animated), or `/picker` for pose/head editing |
+| What does the hero look like, wearing *this* class, walking and attacking? | `/weapons` → proposal page (animated), or `/picker` for pose/head editing |
+| What do the damage numbers look like, and how do I change them? | `/` → the damage-floats tuner; hand back with **📋 Copy my selection** (see `Updates/damage-floats-proposal/README.md`) |
 | Where does a weapon sit in the hand for each attack frame? | `/review` (older, per-frame tiles) |
 | Which map layout does stage N build? | `node tools/preview/dump_plans.js /tmp/plans.json 10` then `/tmp/venv/bin/python tools/preview/render_plans.py /tmp/plans.json /tmp/out` |
 | What do the class skins look like, frame by frame, per class? | `python3 tools/preview_class_skins.py` (writes QC sheets) |

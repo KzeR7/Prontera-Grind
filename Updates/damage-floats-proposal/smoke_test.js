@@ -1,5 +1,6 @@
 // Smoke test for Updates/damage-floats-proposal/index.html
-// jsdom has no Web Animations API, so Element.animate is stubbed before the page runs.
+// Run:  cd Updates/damage-floats-proposal && npm i jsdom && node smoke_test.js
+// (jsdom has no Web Animations API, so Element.animate is stubbed before the page runs.)
 const fs = require('node:fs');
 const { JSDOM } = require('jsdom');
 const html = fs.readFileSync('/home/user/Prontera-Grind/Updates/damage-floats-proposal/index.html', 'utf8');

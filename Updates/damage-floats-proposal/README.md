@@ -161,3 +161,44 @@ machinery comes free once B is in.
 
 *Research page smoke-checked headlessly (13/13) and the inline JS passes `node --check`;
 the page is dev-only and does not ship to players.*
+
+---
+
+## Handover — for the next agent (and the owner's future "change it again")
+
+**This folder is the keeper.** It is committed to the repo (PR #29, `main` after merge), the
+preview server serves it at **`/`** (`/damage` too), and `TOOLS-START-HERE.md` lists it in its
+route table. When the owner asks to adjust the damage numbers again, the workflow is:
+
+1. `python3 tools/preview_server.py 8000` → open **`/`**.
+2. Let the owner retune (sliders, pop-up types, style strips A/B/C, presets).
+3. They press **📋 Copy my selection** and paste the text into the chat.
+4. Apply it with the slider→code map below, update `tools/tests/combat_float_sim.js` and
+   `tools/tests/ui_sim.js` to the new values, bump `BUILD` plus the build-tag snapshots
+   (`Updates/cards-gear-audit/affix-ranges.html`, `equipment-cards-tuning.html`,
+   `tools/cloudflare-deploy-steps.md`), and append the `AGENTS.md` log entry.
+5. Re-run this folder's smoke check: `npm i jsdom` then
+   `node Updates/damage-floats-proposal/smoke_test.js` (the test stubs the Web Animations
+   API itself, since jsdom lacks it).
+
+**Live settings applied to the game (BUILD v70) and where they live in `index.html`:**
+
+| Setting (owner's final pick) | Where in `index.html` |
+|---|---|
+| Font **Verdana 900** ("Chunky"), **17px** normal/skill, **32px** critical/skill-critical | floats CSS block: `.fl.damage,.fl.skill-damage{font:900 17px …}` and `.fl.critical,.fl.skill-critical{font:900 32px …}` |
+| Crit colour GIF-yellow + maroon outline; skill-crit silver-blue | `.fl.critical{color:#ffd23f…}` / `.fl.skill-critical{color:#eaf6ff…}` |
+| **Fade style: arc** — punch on spawn (scale 2→1 crits, 1.25→1 normals over the first 20%) | draw-loop float block: `sc=1+cs*Math.max(0,1-tt/.2)` with `cs` 1 for crits, .25 otherwise |
+| **Pop-up type: sway up, fade left** — up 30px, right 10px for the first 28%, then −28px left | draw-loop float block: `dy=-30*Math.min(1,tt*1.15)` and `dxx=tt<.28?10*(tt/.28):10-38*…` |
+| **Hold-then-fade from 55%** of the life | draw-loop float block: `opacity=Math.min(1,Math.max(0,r/.45))` |
+| **Lifetime 1.05s** | `addFloat` gives the damage family `rate:.95` (life decays at `rate×dt`; 1/0.95 ≈ 1.05s) |
+| **Spawn front of the mob's body** (no random scatter for damage numbers) | `hurt()`/`strike()`: `damageFloat(o.x,…)` / `damageFloat(mob.x,…)` — the old `rnd(-.4,.4)` jitter is gone |
+| **Explode frame** on crits & skill crits (24-point jagged starburst, 7 speed-line streaks, impact ring, **no CRIT chip**), sized from the number | float-creation block in the draw loop: `if(f.kind==='critical'||f.kind==='skill-critical'){…}` — `fs=32`, width `max(fs*2.2,len*fs*.72)`, height `fs*2.5` |
+| Skill crits are their own class | `damageFloat`: `critical?(skill?'skill-critical':'critical'):…` |
+| **Short form starts at 100K** (99,999 stays full digits) | `shortNum`: `if(a>=1e5)…` |
+| Skill-name banner above the head | `skillNameFloat`: world height `3.65`, +.38 per extra cast slot |
+
+**The style strips** (A = RO red spike bubble, B = the applied red-gold starburst,
+C = modern sparks/shockwave) are all still on the page — switching the game to A or C later
+is a small CSS/markup swap in the same blocks, not a rewrite. MISS/DODGE, incoming damage,
+heal/level floats and the skill banner sit outside this system and were intentionally left
+unchanged.
