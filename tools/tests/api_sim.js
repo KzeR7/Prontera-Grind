@@ -26,20 +26,30 @@ const root = path.join(here, '..', '..');
 assert.ok(globalThis.crypto?.subtle, 'this suite needs Node 22+ (global crypto.subtle)');
 assert.ok(typeof globalThis.btoa === 'function', 'this suite needs global btoa (Node 16+)');
 
-function makeD1(sqlite) {
-  const wrap = (stmt, args = []) => ({
-    _stmt: stmt, _args: args,
-    bind: (...more) => wrap(stmt, args.concat(more)),
+// Every row WRITTEN is counted, because rows written is the free plan's tightest limit and the
+// point of the v82 usage diet: an accepted save sync must cost exactly one. The counter reads the
+// statement's own SQL, so a hidden extra UPDATE (the old `touchSeen` on every request) shows up.
+function makeD1(sqlite, stats) {
+  const note = (sql) => {
+    if (!stats) return;
+    stats.writes++;
+    const m = /^\s*(INSERT(?:\s+OR\s+\w+)?\s+INTO|UPDATE|DELETE\s+FROM)\s+([a-z_]+)/i.exec(sql);
+    if (m) { const t = m[2].toLowerCase(); stats.byTable[t] = (stats.byTable[t] || 0) + 1; }
+    stats.sql.push(sql.replace(/\s+/g, ' ').trim().slice(0, 60));
+  };
+  const wrap = (stmt, args = [], sql = '') => ({
+    _stmt: stmt, _args: args, _sql: sql,
+    bind: (...more) => wrap(stmt, args.concat(more), sql),
     first: async () => stmt.get(...args) ?? null,
     all: async () => ({ results: stmt.all(...args) }),
-    run: async () => ({ success: true, meta: stmt.run(...args) }),
+    run: async () => { note(sql); return { success: true, meta: stmt.run(...args) }; },
   });
   return {
-    prepare: sql => wrap(sqlite.prepare(sql)),
+    prepare: sql => wrap(sqlite.prepare(sql), [], sql),
     batch: async statements => {
       sqlite.exec('BEGIN IMMEDIATE');
       try {
-        const results = statements.map(q => ({ success: true, meta: q._stmt.run(...q._args) }));
+        const results = statements.map(q => { note(q._sql || ''); return { success: true, meta: q._stmt.run(...q._args) }; });
         sqlite.exec('COMMIT'); return results;
       } catch (e) { sqlite.exec('ROLLBACK'); throw e; }
     },
@@ -52,7 +62,8 @@ function freshEnv() {
   for (const name of fs.readdirSync(dir).filter(n => /^\d+_.*\.sql$/.test(n)).sort()) {
     sqlite.exec(fs.readFileSync(path.join(dir, name), 'utf8'));
   }
-  return { env: { DB: makeD1(sqlite) }, sqlite };
+  const stats = { writes: 0, byTable: {}, sql: [] };
+  return { env: { DB: makeD1(sqlite, stats) }, sqlite, stats };
 }
 
 // A tiny HTTP-shaped request; the handlers only use headers/get/text/url.
@@ -98,6 +109,7 @@ const api = {
   player: (env, cookie, id) => call('onRequestGet', 'api/gm/player.js', { request: req('GET', `/api/gm/player?id=${id}`, { cookie }), env }),
   act: (env, cookie, body) => call('onRequestPost', 'api/gm/player.js', { request: req('POST', '/api/gm/player', { cookie, body }), env }),
   log: (env, cookie) => call('onRequestGet', 'api/gm/log.js', { request: req('GET', '/api/gm/log', { cookie }), env }),
+  usage: (env, cookie) => call('onRequestGet', 'api/gm/usage.js', { request: req('GET', '/api/gm/usage', { cookie }), env }),
 };
 
 // A save that looks like the real thing (the fields the game's load() insists on).
@@ -459,6 +471,105 @@ await T('two accounts never collide on the same save', async () => {
   await api.putSave(e3, b.cookie, { version: 0, blob: saveBlob(20, 2), savedAt: 1 });
   assert.strictEqual(JSON.parse((await api.getSave(e3, a.cookie)).data.blob).lv, 10);
   assert.strictEqual(JSON.parse((await api.getSave(e3, b.cookie)).data.blob).lv, 20);
+});
+
+// ------------------------------------------- the v82 usage diet (D1 writes) ----
+// Rows written is the hardest free-plan limit (100,000/day, then D1 stops answering for the rest of
+// the day), so the number of writes per sync is pinned here rather than left to review.
+await T('an accepted sync writes the save row exactly once', async () => {
+  const h = freshEnv();
+  const me = await api.register(h.env, { u: 'DIET', p: 'diet-password-1' });
+  assert.strictEqual((await api.putSave(h.env, me.cookie, { version: 0, blob: saveBlob(10, 5), savedAt: 1 })).status, 200);
+  const inserted = h.stats.byTable.saves || 0;
+  assert.strictEqual(inserted, 1, 'the first save is one INSERT, got ' + inserted);
+  const before = h.stats.byTable.saves || 0;
+  const r = await api.putSave(h.env, me.cookie, { version: 1, blob: saveBlob(11, 6), savedAt: 2 });
+  assert.strictEqual(r.status, 200);
+  assert.strictEqual((h.stats.byTable.saves || 0) - before, 1,
+    'one accepted sync must write the saves row once - a second UPDATE (the old per-request last_seen touch) doubles every player\'s daily writes. Statements were: ' + h.stats.sql.join(' | '));
+  // ...and the away baseline still moved (it is written by that same UPDATE).
+  const row = h.sqlite.prepare('SELECT last_seen, version FROM saves WHERE user_id = ?').get(
+    h.sqlite.prepare('SELECT id FROM users WHERE username = ?').get('DIET').id);
+  assert.strictEqual(row.version, 2);
+  assert.ok(row.last_seen > 1, 'the accepted save carries the new last_seen with it');
+});
+
+await T('a conflict (or a claim demand) still moves the away baseline', async () => {
+  const h = freshEnv();
+  const me = await api.register(h.env, { u: 'BASELINE', p: 'baseline-password' });
+  await api.putSave(h.env, me.cookie, { version: 0, blob: saveBlob(10, 5), savedAt: 1 });
+  const id = h.sqlite.prepare('SELECT id FROM users WHERE username = ?').get('BASELINE').id;
+  const stale = Date.now() - 60000;                   // a minute ago: under the 3-minute claim window
+  h.sqlite.prepare('UPDATE saves SET last_seen = ? WHERE user_id = ?').run(stale, id);
+  const conflict = await api.putSave(h.env, me.cookie, { version: 99, blob: saveBlob(12, 7), savedAt: 3 });
+  assert.strictEqual(conflict.status, 409);
+  const after = h.sqlite.prepare('SELECT last_seen FROM saves WHERE user_id = ?').get(id).last_seen;
+  assert.ok(after > stale, 'a refused sync must still move the baseline, or retry time counts as away time');
+});
+
+await T('the usage card is GM-only, and without an Analytics token it still answers', async () => {
+  const { env: e4 } = freshEnv();
+  const owner = (await api.register(e4, { u: 'KzeR', p: 'owner-password-1' })).cookie;
+  const player = (await api.register(e4, { u: 'PLAYER', p: 'player-password' })).cookie;
+  assert.strictEqual((await api.usage(e4, null)).status, 401);
+  assert.strictEqual((await api.usage(e4, player)).status, 403, 'a player must not read the account usage');
+  await api.putSave(e4, player, { version: 0, blob: saveBlob(30, 1234), savedAt: 1 });
+  const r = await api.usage(e4, owner);
+  assert.strictEqual(r.status, 200);
+  assert.strictEqual(r.data.source, 'ledger', 'no token -> our own books, never a fabricated number');
+  assert.strictEqual(r.data.requests, null, 'an unmeasured counter must be null, not zero');
+  assert.strictEqual(r.data.d1, null);
+  assert.strictEqual(r.data.ledger.accounts, 2);
+  assert.strictEqual(r.data.ledger.saves, 1);
+  assert.ok(r.data.ledger.saveBytes > 100, 'the save size is part of the ledger');
+  assert.ok(/CF_ANALYTICS_TOKEN/.test(r.data.hint || ''), 'the card must say how to switch the real numbers on');
+  assert.strictEqual(r.data.limits.rowsWritten, 100000);
+});
+
+await T('the usage card reads Cloudflare\'s own counters when the token is set', async () => {
+  const h = freshEnv();
+  const owner = (await api.register(h.env, { u: 'OWNER', p: 'owner-password-1' })).cookie;
+  const realFetch = globalThis.fetch;
+  let seen = null;
+  globalThis.fetch = async (url, init) => {
+    seen = { url: String(url), init };
+    return {
+      ok: true, status: 200,
+      json: async () => ({ data: { viewer: { accounts: [{
+        // Two invocation rows (one per status) and one D1 row: the card must ADD them up.
+        workersInvocationsAdaptive: [{ sum: { requests: 120, errors: 0 } }, { sum: { requests: 30, errors: 4 } }],
+        d1AnalyticsAdaptiveGroups: [{ sum: { rowsRead: 900, rowsWritten: 61, readQueries: 9, writeQueries: 6 } }],
+      }] } } }),
+    };
+  };
+  try {
+    const r = await api.usage({ ...h.env, CF_ACCOUNT_ID: 'acct-123', CF_ANALYTICS_TOKEN: 'tok-abc' }, owner);
+    assert.strictEqual(r.status, 200);
+    assert.strictEqual(r.data.source, 'analytics');
+    assert.strictEqual(r.data.requests.used, 150, 'the rows are summed, not just the first one read');
+    assert.strictEqual(r.data.requests.errors, 4);
+    assert.strictEqual(r.data.d1.rowsWritten, 61);
+    assert.ok(seen && seen.url.includes('/client/v4/graphql'), 'it must ask Cloudflare, not guess');
+    assert.match(seen.init.headers.Authorization, /^Bearer tok-abc$/);
+    assert.ok(!JSON.stringify(r.data).includes('tok-abc'), 'the token must never come back in a response');
+    const body = JSON.parse(seen.init.body);
+    assert.match(body.variables.dayStart, /T00:00:00\.000Z$/, 'the free-plan day starts at midnight UTC');
+    assert.ok(body.query.includes('workersInvocationsAdaptive') && body.query.includes('d1AnalyticsAdaptiveGroups'));
+  } finally { globalThis.fetch = realFetch; }
+});
+
+await T('a broken Analytics token degrades to the ledger instead of breaking the console', async () => {
+  const h = freshEnv();
+  const owner = (await api.register(h.env, { u: 'OWNER', p: 'owner-password-1' })).cookie;
+  const realFetch = globalThis.fetch;
+  globalThis.fetch = async () => ({ ok: false, status: 403, json: async () => ({ errors: [{ message: 'Authentication error' }] }) });
+  try {
+    const r = await api.usage({ ...h.env, CF_ACCOUNT_ID: 'acct-123', CF_ANALYTICS_TOKEN: 'bad' }, owner);
+    assert.strictEqual(r.status, 200, 'the GM console must still load');
+    assert.strictEqual(r.data.source, 'ledger');
+    assert.match(r.data.error, /Authentication error/);
+    assert.ok(r.data.ledger.accounts >= 1);
+  } finally { globalThis.fetch = realFetch; }
 });
 
 // ------------------------------------------------- sanity on the source ----

@@ -117,7 +117,10 @@ function harness(opts = {}) {
   const EXPORTS = ['CLOUD','cloudProbe','cloudPush','cloudFlush','cloudFlushNow','cloudConflict',
     'cloudAdopt','cloudPull','cloudApplyGrants','ptsSpent','cloudAuth','cloudLogout','cloudTouch',
     'cloudSession','initSessionFromCloud','saveKeyFor','cloudBadge','cloudSay','cloudFetch',
-    'cloudJoin','cloudRefresh','cloudStart','saveBackup','restoreBackup'];
+    'cloudJoin','cloudRefresh','cloudStart','saveBackup','restoreBackup',
+    // v82 usage diet: the cadence constants and the poll tick are asserted on directly.
+    'CLOUD_DEBOUNCE','CLOUD_HIDDEN_DEBOUNCE','CLOUD_POLL_MS','CLOUD_HIDDEN_POLL_MS',
+    'cloudPollTick','cloudHidden'];
   vm.createContext(sandbox);
   vm.runInContext(cloudCode + '\n;' + EXPORTS.map(n => `globalThis.${n}=${n};`).join(''), sandbox);
   return { sandbox, state, calls, els, store };
@@ -500,6 +503,95 @@ await T('the poll fetches announcements and gifts, and never the save itself', a
   assert.ok(h.state.logs.some(l => /Server restart/.test(l.m)), 'the announcement reaches the log');
   assert.strictEqual(h.calls.filter(c => c.url === '/api/save').length, 0,
     'a poll must not touch the save: that is what keeps it from ever overwriting play');
+});
+
+// ------------------------------------------------- the v82 usage diet ----
+// Every push is one Function request and one D1 row written, so the cadence IS the cost. These
+// pin the numbers the free-plan arithmetic in tools/server-shift-plan.md §3b is built on.
+await T('a push waits a minute while you play, and five while the tab is hidden', async () => {
+  const h = harness({ routes: { '/save': { status: 200, body: { version: 2 } } } });
+  h.sandbox.CLOUD.api = true; h.sandbox.CLOUD.on = true; h.sandbox.CLOUD.ver = 1; h.sandbox.currentUser = 'X';
+  assert.strictEqual(h.sandbox.CLOUD_DEBOUNCE, 60000, 'the plan\'s own budget assumes a 60-second debounce');
+  assert.strictEqual(h.sandbox.CLOUD_HIDDEN_DEBOUNCE, 300000, 'a hidden tab backs off to five minutes');
+  const realNow = Date.now;
+  try {
+    let t = realNow();
+    Date.now = () => t;
+    h.sandbox.CLOUD.lastPush = t; h.sandbox.CLOUD.dirty = true;
+    t += 45000;
+    assert.strictEqual(await h.sandbox.cloudFlush(), 'idle', '45s is inside the visible debounce');
+    t += 20000;
+    assert.strictEqual(await h.sandbox.cloudFlush(), 'ok', 'just past a minute sends');
+    h.sandbox.document.hidden = true;
+    assert.strictEqual(h.sandbox.cloudHidden(), true, 'the block must notice a background tab');
+    h.sandbox.CLOUD.dirty = true; t += 60000;
+    assert.strictEqual(await h.sandbox.cloudFlush(), 'idle', 'a hidden tab does not push every minute');
+    t += 300000;
+    assert.strictEqual(await h.sandbox.cloudFlush(), 'ok', 'five minutes hidden is the cadence');
+    // ...and a forced flush (tab closing, player chose a save) always sends, whatever the clock says.
+    h.sandbox.CLOUD.dirty = true;
+    assert.strictEqual(await h.sandbox.cloudFlushNow(), 'ok', 'a forced flush ignores the back-off');
+  } finally { Date.now = realNow; }
+});
+
+await T('the announcement poll asks every 5 minutes visible, every 15 hidden', async () => {
+  const h = harness({ routes: { '/grants': { body: { grants: [] } }, '/messages': { body: { messages: [] } } } });
+  h.sandbox.CLOUD.api = true; h.sandbox.CLOUD.on = true; h.sandbox.currentUser = 'X';
+  const realNow = Date.now;
+  const asks = () => h.calls.filter(c => c.url === '/api/grants').length;
+  try {
+    let t = realNow();
+    Date.now = () => t;
+    h.sandbox.cloudPollTick();
+    assert.strictEqual(asks(), 1, 'the first tick asks');
+    t += 60000; h.sandbox.cloudPollTick();
+    assert.strictEqual(asks(), 1, 'a minute later is still quiet');
+    t += 300000; h.sandbox.cloudPollTick();
+    assert.strictEqual(asks(), 2, 'five minutes of a visible tab asks');
+    h.sandbox.document.hidden = true;
+    t += 600000; h.sandbox.cloudPollTick();
+    assert.strictEqual(asks(), 2, 'ten minutes hidden is still quiet');
+    t += 600000; h.sandbox.cloudPollTick();
+    assert.strictEqual(asks(), 3, 'fifteen minutes hidden asks');
+  } finally { Date.now = realNow; }
+});
+
+await T('a tab that comes back holding unsynced progress pushes it instead of opening the chooser', async () => {
+  // The normal cause: the browser suspended the tab (phone in a pocket) so no push happened, and it
+  // wakes up with a newer save and an old version number. The server has not moved on, so there is
+  // only one right answer - asking would be a dialog with one button.
+  const onServer = JSON.stringify({ lv: 20, cls: 'Novice', zeny: 10, kills: 3, st: { str: 1 } });
+  const here = JSON.stringify({ lv: 20, cls: 'Novice', zeny: 900, kills: 40, st: { str: 1 } });
+  const h = harness({ storage: { 'pg_save3_X': here },
+    S: { lv: 20, cls: 'Novice', zeny: 900, kills: 40, st: { str: 1 } },
+    routes: { '/save': (n, init) => init && init.method === 'PUT'
+      ? { status: 200, body: { version: 8 } } : { status: 200, body: { version: 7, blob: onServer, savedAt: 1 } } } });
+  h.sandbox.CLOUD.api = true; h.sandbox.CLOUD.on = true; h.sandbox.CLOUD.ver = 7;
+  h.sandbox.CLOUD.dirty = true; h.sandbox.currentUser = 'X';
+  await h.sandbox.cloudRefresh();
+  assert.notStrictEqual(h.els.get('conflict').style.display, 'flex', 'no chooser for a dialog with one answer');
+  const put = h.calls.filter(c => c.url === '/api/save' && c.init.method === 'PUT');
+  assert.strictEqual(put.length, 1, 'the newer local copy is pushed');
+  assert.ok(JSON.parse(put[0].init.body).blob.includes('"zeny":900'), 'and it is THIS device\'s save that was sent');
+  // A REAL conflict - another device wrote while this one was away - still asks.
+  const h2 = harness({ storage: { 'pg_save3_X': here }, S: { lv: 20, cls: 'Novice', zeny: 900, kills: 40, st: { str: 1 } },
+    routes: { '/save': { status: 200, body: { version: 9, blob: onServer, savedAt: 2 } } } });
+  h2.sandbox.CLOUD.api = true; h2.sandbox.CLOUD.on = true; h2.sandbox.CLOUD.ver = 7;
+  h2.sandbox.CLOUD.dirty = true; h2.sandbox.currentUser = 'X';
+  await h2.sandbox.cloudRefresh();
+  assert.strictEqual(h2.els.get('conflict').style.display, 'flex', 'a version we have never seen is the player\'s call');
+});
+
+await T('the town\'s 9.6 MB atlas is only downloaded by somebody heading for town', async () => {
+  // The single biggest download in the game. It used to start at boot for every account with the
+  // town open - players who never walked through the gate included.
+  assert.ok(!/if\(townUnlocked\(\)\)townPackFetch\(\)/.test(src),
+    'the boot-time town fetch must be gone (it downloads 9.6 MB before anyone asks for the town)');
+  const boot = src.slice(src.indexOf('resize();respawn=.3;requestAnimationFrame(loop)'));
+  assert.ok(!boot.slice(0, 500).includes('townPackFetch()'), 'nothing on the boot line may fetch the town atlas');
+  assert.match(src, /\[data-a="town"\]/, 'the Town card is what warms the atlas now');
+  assert.match(src, /function townEnter\(quiet\)\{[\s\S]{0,1200}?townPackFetch\(\)/,
+    'walking in must still start the download for sure');
 });
 
 console.log('\n' + pass + ' passed, ' + fail + ' failed');

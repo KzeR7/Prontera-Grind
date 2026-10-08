@@ -36,3 +36,12 @@ database_id = "50a6448b-1f12-466c-a28a-10544bedf750"   # printed by `wrangler d1
 
 # Optional: a second GM-only path could be bound here later (Variables/secrets go in the dashboard,
 # never in this file).
+#
+# The GM console's "Cloudflare usage today" card (functions/api/gm/usage.js) reads Cloudflare's own
+# counters when the project has these two values, set in the dashboard (Settings -> Variables and
+# Secrets) rather than here, because one of them is a secret:
+#   CF_ACCOUNT_ID       the account id (a plain variable)
+#   CF_ANALYTICS_TOKEN  an API token with Account Analytics: Read (a SECRET - never commit it)
+#   CF_D1_ID            optional: scope the D1 numbers to the `pg` database alone
+# Without them the card still works, reporting our own ledger instead of the metered numbers.
+# Deployment steps: tools/cloudflare-deploy-steps.md §8.

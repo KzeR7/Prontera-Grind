@@ -102,7 +102,7 @@ Open the `*.pages.dev` address Cloudflare gives the project, and walk this list:
 | Check | Expected |
 |---|---|
 | The login card | says **“☁ Cloud accounts are on — register or sign in…”** |
-| Build tag at the bottom of the card | `2026-10-08 grind-v79.6 claw slashes + v78.2 equipment progression` |
+| Build tag at the bottom of the card | `2026-10-08 grind-v82 the usage diet: a lighter cloud sync, and the town art arrives when you do` |
 | Register your own name | a dialog with a **recovery code** — copy it somewhere safe, it is shown once |
 | Play for a minute | the header badge goes `☁ …` → `☁ ✓` |
 | The same address in a second browser | sign in with the same name and password → **the same character loads** |
@@ -142,9 +142,43 @@ that, because "load this file a stranger sent you" is otherwise a way to hand ou
 * The GM console's **Backups** tab can put a player's own save back if a mistake is made — every
   restore first stores the current save as a version, so it is reversible.
 * Free-plan ceilings, so you know when you would notice: 100,000 Function requests/day, 5 M D1 row
-  reads/day, 100,000 D1 row writes/day, and static file serving is not billed at all. At 20 players
-  playing 4 hours a day the plan estimated roughly a quarter of the request allowance and under a
-  tenth of the writes.
+  reads/day, 100,000 D1 row writes/day, and static file serving is not billed at all. After the v82
+  usage diet, 20 players playing 4 hours a day is roughly **7% of the request allowance and 5% of
+  the writes** — and the GM console shows today's real numbers against both bars (§8).
+
+## 8. Keeping it free: the usage card
+
+The free plan does not send a bill when it fills up — D1 simply stops answering for the rest of the
+UTC day once the daily write allowance is crossed. So the GM console now opens with a **Cloudflare
+usage today** card (it is also refreshed by the ↻ Refresh button):
+
+| What it shows | Where the number comes from |
+|---|---|
+| Function requests, D1 rows written, D1 rows read — each against its free allowance, with a bar | Cloudflare's own Analytics API, when the two values below are set |
+| accounts, cloud saves, save storage (and the biggest save), backup-history size, live sessions, today's logins and GM actions | our own D1 tables — always available, costs one request |
+
+To turn on the metered numbers, add two values to the Pages project:
+**Workers & Pages → your project → Settings → Variables and Secrets**:
+
+1. `CF_ACCOUNT_ID` — the account id (it is in the dashboard URL). A plain variable.
+2. `CF_ANALYTICS_TOKEN` — **secret**. Create it at *My Profile → API Tokens → Create Token → Custom
+   token* with a single permission: **Account → Account Analytics → Read**. Nothing else.
+3. Optional: `CF_D1_ID` — set it to the `pg` database id (the UUID in `wrangler.toml`) to scope the
+   D1 numbers to that one database instead of every database on the account.
+
+Without the token the card still works: the meters say *not measured here* and a line tells you what
+to set. With a wrong or expired token the card says why and keeps showing the ledger — it never
+invents a number, and it never breaks the console.
+
+**What the numbers should look like at this scale.** 20 players playing 4 hours a day cost roughly
+**~6,700 Function requests and ~5,300 D1 rows written per day** — about 7% and 5% of the allowances —
+and the game's own design work that down (v82 halved the writes twice over; see
+`tools/server-shift-plan.md` §3b.1). If rows written ever climbs past ~50% on an ordinary day, the
+first thing to look at is how many tabs are left open: each one syncs while hidden, just slowly.
+
+**What is *not* metered, so you never have to think about it:** the 30 MB of game art, the sprites,
+the town atlas and index.html itself. Static file requests are free and unlimited on every plan, so
+"the download is big" is a player's data plan, never a bill. The card is the only place worth looking.
 
 ## If you lose the owner (GM) account
 

@@ -4,6 +4,12 @@
 // The browser still runs the game simulation, but cloud offline time and kill budgets are derived
 // from D1 server clocks/rates, never the device clock or a client-supplied offlineKph. A claim is
 // persistent until a versioned save carrying its ID is accepted, so a retry cannot mint it twice.
+//
+// WRITE ECONOMY (v82): rows written is the free plan's tightest limit (100,000/day) and every sync
+// is one. An accepted PUT therefore writes the save row EXACTLY once — its own UPDATE carries
+// last_seen — and only the paths that write no save (GET, 409, 428, a raced update) pay for a
+// separate baseline touch. The old code touched last_seen on every request and then wrote the save
+// again on top, i.e. 2 rows written per sync; tools/tests/api_sim.js now pins this at 1.
 
 import { currentUser } from '../_lib/auth.js';
 import { json, guard, readJson, fail } from '../_lib/http.js';
@@ -48,11 +54,21 @@ async function pendingOrIssueOfflineClaim(D, userId, row, now) {
       pending = await db.pendingOfflineClaim(D, userId);
     }
   }
-  // Any authenticated save exchange is a server-observed return. Move the baseline even if this
-  // response must first deliver a 428 claim or a 409 conflict, so retry time is not counted twice.
-  await db.touchSeen(D, userId, now);
+  // NOTE: this deliberately does NOT move the away baseline. Any authenticated save exchange is a
+  // server-observed return, so the baseline must move - but the caller moves it, because WHERE it
+  // moves costs a D1 row write:
+  //   * an accepted PUT already writes last_seen as part of its own UPDATE (touchSeen here would be
+  //     a second write on the same row, i.e. double the rows written by every single sync);
+  //   * a GET, a 409 or a 428 has no such UPDATE, so those paths touch explicitly below.
   return pending;
 }
+
+// The early-exit door for PUT: hand back the conflict/claim answer and move the away baseline, so a
+// retry is not later counted as time spent away.
+const earlyReturn = (D, userId, at) => async (payload, status) => {
+  await db.touchSeen(D, userId, at);
+  return json(payload, status);
+};
 
 // Measure actual server-accepted kill-count increases between syncs. Subtract a pending offline
 // claim's approved kills so away progress is never mislearned as online farming speed.
@@ -75,8 +91,10 @@ export const onRequestGet = guard(async ({ request, env }) => {
 
   if (row) {
     // Return a pending claim unchanged after a lost response/reload. Otherwise snapshot server time,
-    // persisted server rate and remainder once. The authenticated GET also advances the baseline.
+    // persisted server rate and remainder once. The authenticated GET advances the baseline itself
+    // (it writes no save row, so it must).
     const pendingClaim = await pendingOrIssueOfflineClaim(D, user.id, row, now);
+    await db.touchSeen(D, user.id, now);
     offlineClaim = publicClaim(pendingClaim);
     row = await db.saveByUser(D, user.id);
   }
@@ -106,25 +124,26 @@ export const onRequestPut = guard(async ({ request, env }) => {
   }
 
   const pending = await pendingOrIssueOfflineClaim(D, user.id, row, savedAt);
+  const early = earlyReturn(D, user.id, savedAt);
   if (clientVersion !== row.version) {
-    return json({ conflict: true, version: row.version, blob: row.blob, savedAt: row.saved_at,
+    return early({ conflict: true, version: row.version, blob: row.blob, savedAt: row.saved_at,
       updatedAt: row.updated_at, offlineClaim: publicClaim(pending) }, 409);
   }
 
   const requestedClaimId = body.offlineClaimId == null ? null : Number(body.offlineClaimId);
   if (pending && (requestedClaimId !== Number(pending.id) || Number(save.offlineClaimId) !== Number(pending.id))) {
-    return json({ offlineClaimRequired: true, err: 'A server-timed offline claim must be applied before this cloud save can sync.',
+    return early({ offlineClaimRequired: true, err: 'A server-timed offline claim must be applied before this cloud save can sync.',
       version: row.version, offlineClaim: publicClaim(pending) }, 428);
   }
   if (requestedClaimId != null && Number(save.offlineClaimId) !== requestedClaimId)
-    return fail('Offline claim ID does not match the save.', 400);
+    return early({ err: 'Offline claim ID does not match the save.' }, 400);
 
   let appliedClaim = null;
   if (requestedClaimId != null) {
     const known = await db.offlineClaimById(D, user.id, requestedClaimId);
-    if (!known) return fail('Unknown offline claim.', 400);
+    if (!known) return early({ err: 'Unknown offline claim.' }, 400);
     if (!known.claimed_at) {
-      if (!pending || Number(pending.id) !== requestedClaimId) return fail('Offline claim is not pending.', 409);
+      if (!pending || Number(pending.id) !== requestedClaimId) return early({ err: 'Offline claim is not pending.' }, 409);
       appliedClaim = known;
     }
   }
@@ -142,7 +161,7 @@ export const onRequestPut = guard(async ({ request, env }) => {
     const acknowledged = Number(results?.[1]?.meta?.changes ?? results?.[1]?.meta?.rows_written ?? 0);
     if (!changed || !acknowledged) {
       const latest = await db.saveByUser(D, user.id);
-      return json({ conflict: true, version: latest?.version ?? row.version, blob: latest?.blob ?? row.blob,
+      return early({ conflict: true, version: latest?.version ?? row.version, blob: latest?.blob ?? row.blob,
         savedAt: latest?.saved_at ?? row.saved_at, updatedAt: latest?.updated_at ?? row.updated_at,
         offlineClaim: publicClaim(await db.pendingOfflineClaim(D, user.id)) }, 409);
     }
@@ -150,7 +169,7 @@ export const onRequestPut = guard(async ({ request, env }) => {
     const result = await update.run();
     if (!Number(result?.meta?.changes)) {
       const latest = await db.saveByUser(D, user.id);
-      return json({ conflict: true, version: latest?.version ?? row.version, blob: latest?.blob ?? row.blob,
+      return early({ conflict: true, version: latest?.version ?? row.version, blob: latest?.blob ?? row.blob,
         savedAt: latest?.saved_at ?? row.saved_at, updatedAt: latest?.updated_at ?? row.updated_at,
         offlineClaim: publicClaim(await db.pendingOfflineClaim(D, user.id)) }, 409);
     }
