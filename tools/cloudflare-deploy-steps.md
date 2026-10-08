@@ -102,7 +102,7 @@ Open the `*.pages.dev` address Cloudflare gives the project, and walk this list:
 | Check | Expected |
 |---|---|
 | The login card | says **“☁ Cloud accounts are on — register or sign in…”** |
-| Build tag at the bottom of the card | `2026-10-08 grind-v86 camp-refill fix, endgame damage retune, RO-style ASPD` |
+| Build tag at the bottom of the card | `2026-10-08 grind-v87 mob hit rating & armor pierce (buff the mobs, not the character), 8s field restock` |
 | Register your own name | a dialog with a **recovery code** — copy it somewhere safe, it is shown once |
 | Play for a minute | the header badge goes `☁ …` → `☁ ✓` |
 | The same address in a second browser | sign in with the same name and password → **the same character loads** |

@@ -665,7 +665,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // script block, which is a SyntaxError - the game did not run on main at all. One line wins, and
 // it names both sides of this merge: the v38 balance patch (the weapon cut, the affix/card
 // give-back) and main's weapon-hold rendering work.
-const BUILD='2026-10-08 grind-v86 camp-refill fix, endgame damage retune, RO-style ASPD';   // shown on the login card - confirms which file you loaded
+const BUILD='2026-10-08 grind-v87 mob hit rating & armor pierce (buff the mobs, not the character), 8s field restock';   // shown on the login card - confirms which file you loaded
 $('buildTag').textContent='build '+BUILD;
 
 // ---------- class tree: Novice -> 6 first jobs -> 6 second jobs -> 6 third jobs ----------
@@ -1262,6 +1262,21 @@ const nmZenyOf=l=>NMZENY+(Math.max(11,Math.min(15,l|0))-11);
 // (5+l*4.6) formula, so a decked character was mathematically untouchable on the deepest maps; this
 // is the owner's "bosses and mobs do no damage" report, on top of the flee/DEF cap changes.
 const eaOf=l=>(l|0)>=90?1.4:1;
+// v87 (owner: "buff the mobs & bosses instead" of nerfing the character): the v86 character-side
+// caps are REVERTED (flee cap back to 60, DEF cut cap back to 75) and the monsters carry the buff
+// instead, on their own stat line. Both helpers read the monster's own field power (m.lvl) and
+// ramp from power 60, so nothing at or below Payon changes and the pressure builds through
+// Niflheim into Abyss/Nightmare:
+//   mhOf - monster HIT rating, subtracted from the player's dodge at the swing (cap +30, bosses
+//          +40; the roll keeps a 5% dodge floor = a 95% hit ceiling). A dodge-stacked character
+//          still reads 60% Flee on the sheet - endgame monsters are simply accurate enough to
+//          punch through most of it, while a weak stray still whiffs as before.
+//   prOf - monster armor pierce, thinning the player's DEF before the def/(def+4000) cut (up to
+//          60%, bosses 70%). This is what un-sits the tank: the old cut formula plateaus at
+//          12k DEF and the cap made everything above it identical - pierce scales with the
+//          attacker, so the deepest maps keep biting no matter how much armor you stack.
+const mhOf=m=>Math.min(30,Math.max(0,((m.lvl|0)-60)*1.25))*(m.boss?4/3:1);
+const prOf=m=>Math.min(.6,Math.max(0,((m.lvl|0)-60)*.02))+(m.boss?.1:0);
 // Each map's Nightmare gear is its own high-tier row, renamed: same weapon families and slots (so
 // every class can still use its own weapon) and a per-map word that keeps every name unique. Section
 // 4 is the stage 11-13 drop, section 5 the stage 14-15 and boss drop. They exist NOWHERE else - the
@@ -2526,7 +2541,7 @@ const aspd=()=>Math.max(.13,.85*C().aspd*(1-Math.min(.68,st('agi')*.0058))/(1+(p
 // stats, skills, gear and card mastery counts half. A Lv70 LUK dump with both Hunter/Sniper crit
 // passives lands ~51%, so the last stretch to 60 is a real build. Index Crit (above) is the only
 // source that passes the 60 cap, and the total stops at 100.
-const crit=()=>{const v=2+st('luk')*.25+pv('crit')+bon('crit')+(typeof cardMasteryStat==='function'?cardMasteryStat('critPct'):0),core=Math.min(60,v<=45?v:45+(v-45)*.5);return Math.min(100,core+(typeof indexCrit==='function'?indexCrit():0))},flee=()=>Math.min(30,st('agi')*.5+S.lv*.1+pv('flee')+bon('flee')+(typeof cardMasteryStat==='function'?cardMasteryStat('fleePct'):0)),missCh=()=>Math.max(0,15-st('dex')*.25);
+const crit=()=>{const v=2+st('luk')*.25+pv('crit')+bon('crit')+(typeof cardMasteryStat==='function'?cardMasteryStat('critPct'):0),core=Math.min(60,v<=45?v:45+(v-45)*.5);return Math.min(100,core+(typeof indexCrit==='function'?indexCrit():0))},flee=()=>Math.min(60,st('agi')*.5+S.lv*.1+pv('flee')+bon('flee')+(typeof cardMasteryStat==='function'?cardMasteryStat('fleePct'):0)),missCh=()=>Math.max(0,15-st('dex')*.25);
 // v74 (owner: "add a movement speed description"): AGI is the only stat that moves the hero, and
 // the curve used to be a private constant inside update(). It is one named function now, shown on
 // the stat sheet as the world units per second the hero actually travels (the run multiplier
@@ -2619,7 +2634,7 @@ let mobs=[],mob=null,pAtkT=0,mAtkT=0,respawn=0,activePack=0,camps=[];
 // monsters 1.6-3.2 units apart, and each camp refilling itself 4-8 seconds after it is emptied.
 // A camp is still the unit the pets, the AoE cap and the last-kill routing work with (m.pack), so
 // nothing downstream had to change - only how the field is filled, and that it now stays filled.
-const CAMP_GAP=5.5,CAMP_REFILL_MIN=4,CAMP_REFILL_MAX=8;
+const CAMP_GAP=5.5,CAMP_REFILL_MIN=4,CAMP_REFILL_MAX=7;   // v87 owner: worst camp wait 7s, so a wiped field is fully restocked inside 8s
 const NEIGHBOUR_GAP=2.7;                 // and NEIGHBOUR_GAP keeps two camps from touching
 const campCount=m=>m<3?8:m<7?10:12;      // the 8 / 10 / 12 the owner picked on /spawn
 const campMobs=(m,l)=>starterStage(m,l)?ri(1,2):ri(2,3);
@@ -4045,15 +4060,17 @@ function update(dt){
       }
       m.x=cl(m.x,-BX_,BX_);m.z=cl(m.z,Z0,Z1);m.ry=Math.atan2(pl.z-m.z,m.x-pl.x);
       if(wake&&Math.hypot(pl.x-m.x,pl.z-m.z)<=ms+.4&&!stn){m.at-=dt;if(m.at<=0){m.at=m.boss?1.2:1.5;
-        if(Math.random()*100<flee())addFloat(pl.x,2.4,pl.z,'DODGE','#76eaff',false,'evade');
+        if(Math.random()*100<Math.max(5,flee()-mhOf(m)))addFloat(pl.x,2.4,pl.z,'DODGE','#76eaff',false,'evade');
         // Incoming damage: a capped percentage cut, not a flat subtraction. The old line took
         // def*0.6 off every hit with a floor of 1, so a geared character took exactly 1 damage
-        // from every monster and every boss in the game. def/(def+4000) now caps at 60% (v86,
-        // was 75%: endgame gear sat at the cap, so landed hits lost three quarters and - with
-        // the flee cap also halved - an endgame fight could not hurt at all). The naked game is
-        // within a few percent of before, mid-gear cuts ~60%, endgame sits at the new cap.
+        // from every monster and every boss in the game. v87 (owner: buff the mobs, not the
+        // character): the 75% cap is back and the MONSTER pierces armor first - prOf thins the
+        // player's DEF by up to 60% (bosses 70%) on the deep fields, so the cut never plateaus
+        // into immunity the way the v86 60%-cap fix forced. The naked game is unchanged (prOf is
+        // zero below power 60); endgame lands ~14% harder on mobs and ~20% harder on bosses than
+        // the v86 caps did, and tanks stacking DEF past 12k now have a reason to dodge.
         // Pinned by combat_damage_sim.js (this is a game-loop line, not a constant).
-        else{const md=m.mag?mdef():def(),cut=Math.min(.6,md/(md+4000));
+        else{const raw=m.mag?mdef():def(),md=raw*(1-prOf(m)),cut=Math.min(.75,md/(md+4000));
           const d=Math.max(1,Math.round(m.atk*rnd(.8,1.2)*(1-cut)*(1-petPassive('dr')/100)));S.hp-=d;hitAnim=1;m.atkAnim=1;damageFloat(pl.x,2.4,pl.z,d,false,true);
           // Defeat is the ONE thing that puts you back at the spawn point.
 if(S.hp<=0){log('You were defeated... knocked back to the entrance.','r0','kills');S.hp=maxHp();S.kl=0;mobs=[];mob=null;camps=[];engageTgt=null;respawn=1.5;tb={};
