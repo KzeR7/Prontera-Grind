@@ -1,0 +1,409 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Prontera Grind — skill effect sprite preview (RO research)</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="/assets/class_skins_data.js"></script>
+<script src="/assets/weapon_proposal_data.js"></script>
+<script src="/assets/weapons_data.js"></script>
+<script src="/assets/sprite_pack_data.js"></script>
+<style>
+  :root{color-scheme:dark}
+  *{box-sizing:border-box}
+  body{margin:0;background:#0d0f14;color:#e8ecf4;font:14px/1.45 "Trebuchet MS",Verdana,sans-serif;height:100vh;display:flex;flex-direction:column;overflow:hidden}
+  header{display:flex;align-items:center;gap:14px;padding:8px 14px;background:#14171f;border-bottom:1px solid #2a2f3d;flex-wrap:wrap}
+  header h1{font-size:15px;margin:0;letter-spacing:.3px}
+  header h1 small{color:#8b93a7;font-weight:400}
+  .ctl{display:flex;align-items:center;gap:6px;font-size:12px;color:#aab3c5;background:#1a1e29;border:1px solid #2a2f3d;border-radius:8px;padding:4px 9px}
+  .ctl input[type=range]{width:90px;accent-color:#e8bd4d}
+  .ctl select{background:#10131b;color:#e8ecf4;border:1px solid #333a4c;border-radius:6px;padding:2px 4px;font:inherit}
+  .ctl label{display:flex;align-items:center;gap:4px;cursor:pointer}
+  button.go{background:linear-gradient(160deg,#e8bd4d,#b9862e);border:0;border-radius:8px;color:#221703;font:700 12px/1 "Trebuchet MS",sans-serif;padding:6px 12px;cursor:pointer}
+  button.go.dim{background:#232937;color:#aab3c5;border:1px solid #2a2f3d}
+  main{flex:1;display:grid;grid-template-columns:270px 1fr 300px;min-height:0}
+  aside{overflow:auto;background:#12151d;border-right:1px solid #232836;padding:8px}
+  aside.right{border-right:0;border-left:1px solid #232836}
+  .jobhead{font:700 11px/1.2 "Trebuchet MS",sans-serif;letter-spacing:.6px;color:#e8bd4d;margin:10px 4px 4px;text-transform:uppercase}
+  .skrow{display:flex;align-items:center;gap:8px;padding:4px 8px;border-radius:7px;cursor:pointer;border:1px solid transparent}
+  .skrow:hover{background:#1a1f2b}
+  .skrow.on{background:#232a3c;border-color:#3b4763}
+  .skrow .dot{width:10px;height:10px;border-radius:50%;flex:0 0 auto;box-shadow:0 0 5px currentColor}
+  .skrow .nm{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:12.5px}
+  .skrow .kd{font-size:10px;color:#77809a}
+  #stage{position:relative;min-width:0;min-height:0;background:radial-gradient(120% 90% at 50% 30%,#1a2030 0%,#0d0f14 70%)}
+  #stage canvas{display:block;width:100%;height:100%}
+  #banner{position:absolute;top:14px;left:50%;transform:translateX(-50%);font:900 26px/1 "Trebuchet MS",sans-serif;letter-spacing:1px;color:#fff;text-shadow:0 2px 8px #000,0 0 18px #e8bd4d88;opacity:0;transition:opacity .18s;pointer-events:none;text-align:center}
+  #banner small{display:block;font:600 12px/1.6 "Trebuchet MS",sans-serif;color:#c9d2e6;letter-spacing:.4px}
+  #hint{position:absolute;bottom:8px;left:50%;transform:translateX(-50%);font-size:11px;color:#68718a;pointer-events:none}
+  .note{background:#171b26;border:1px solid #262c3c;border-radius:10px;padding:10px 12px;margin:8px 4px}
+  .note h3{margin:0 0 4px;font-size:13px;color:#ffe18b}
+  .note p{margin:4px 0;font-size:12px;color:#b8c0d4}
+  .note .tag{display:inline-block;font-size:10px;color:#8fd0ff;background:#12253a;border:1px solid #1d3d5e;border-radius:6px;padding:1px 7px;margin-right:4px}
+  #status{font-size:11px;color:#8b93a7;padding:6px 10px;border-top:1px solid #232836;background:#12151d}
+</style>
+</head>
+<body>
+<header>
+  <h1>⚔ Skill effect sprites <small>— researched on Ragnarok Online (.str layers), ROM and RO3</small></h1>
+  <span class="ctl">hero <select id="heroSel"></select></span>
+  <span class="ctl"><select id="sexSel"><option value="m">♂ male</option><option value="f">♀ female</option></select></span>
+  <span class="ctl">target <select id="targetSel">
+    <option value="1002">Poring</option><option value="1031">Poporing</option><option value="1063">Lunatic</option>
+    <option value="1011">Chonchon</option><option value="1167">Savage Bebe</option><option value="blob">drawn dummy</option>
+  </select></span>
+  <span class="ctl">speed <input type="range" id="speed" min="0.2" max="2" step="0.05" value="1"><b id="speedVal">1.0×</b></span>
+  <span class="ctl"><label><input type="checkbox" id="loop" checked> loop</label></span>
+  <button class="go" id="playAll">▶ Play every skill</button>
+  <button class="go dim" id="stopAll">■ stop</button>
+</header>
+<main>
+  <aside id="list"></aside>
+  <div id="stage">
+    <div id="banner"></div>
+    <div id="hint">drag to orbit · wheel to zoom · click a skill (or press →) to cast it</div>
+  </div>
+  <aside class="right">
+    <div class="note"><h3>How this reads</h3>
+      <p>Every skill fires an <b>animated sprite effect</b> built the way the original client builds its
+      <code>.str</code> effects: several texture layers on their own timelines, blended additively. The sheets
+      re-render the classic effect vocabulary — pok bursts, rings, lens glows, slash streaks, ice shards, bolts,
+      holy pillars, meteors, poison bubbles, zeny coins, the falcon. The mage line now strikes <b>from the sky</b>.</p>
+      <p>The hero is the game's own <b>updated class skin</b> — the animated APNG art with the saved weapon
+      sprite, decoded by the game's own decoder — and what plays on the field is the game's own effect code,
+      lifted out of <code>index.html</code> at load time.</p></div>
+    <div id="info"></div>
+  </aside>
+</main>
+<div id="status">loading the game's skill code…</div>
+<script>
+'use strict';
+const $=id=>document.getElementById(id);
+// ---------- research notes: how each family looks in RO / ROM / RO3 ----------
+const FX_NOTES={
+ impact:['Close-range smash','Classic Bash shows a single bright slash "pok" burst on the target; ROM adds a second mirrored streak and a hot lens flash at the moment of contact.'],
+ shockwave:['Spinning area blow','Bowling Bash / Cart family: the client pairs a big impact burst with an expanding ground shockwave — ROM widens the ring into a full AoE decal.'],
+ multiSlash:['Rapid slash flurry',"Sonic Blow is one of the few hardcoded client effects: a fast flurry of criss-cross slashes on the target. Kept as four staggered streaks plus a finishing burst."],
+ thrust:['Spear lunge','Pierce / Spear Boomerang: a single hard thrust line with a small impact at the tip; the boomerang spins the streak on its way out.'],
+ spearThrow:['Thrown spear','Spear Boomerang flies as a spinning streak to the target and bursts there — the same two-beat timing the client uses for thrown weapons.'],
+ spiral:['Drilling pierce','Spiral Pierce winds up as stacked rotating crescents around the hit — RO3 exaggerates the drill with a light ring under the target.'],
+ fireBolt:['Bolts from the sky','Fire Bolt drops a few single fire bolts out of the sky, each with its own landing burst. Napalm Vulcan instead fires a ghost orb from the caster that detonates on the mob.'],
+ psychic:['Ghost comet','Napalm Beat: a ghost comet falls from above and blooms into a purple lens pulse with a ring — the classic napalm read, vertical.'],
+ iceStorm:['Gust of storm','Storm Gust is the RO1 blizzard read: two counter-spinning vortex discs over a wide frost ring, ice daggers whirling in the gust, snow sparkles and rolling mist.'],
+ iceNova:['Ring of shards','Frost Nova freezes around the caster: one expanding ring with shards bursting up along it.'],
+ iceHit:['Diving freeze','Frost Diver: the shard dives from the sky and freezes the target solid in a cluster of ice.'],
+ lightning:['Single bolt','Jupitel Thunder in the classic client is a pale bolt with a ground flash; the mobile versions keep the bolt and add a lens bloom at the base.'],
+ lightningStorm:['Bolt field','Thunder Storm and Lord of Vermilion strike several staggered bolts over a ground marker; LoV burns red with a cross flash.'],
+ meteor:['Falling rocks','Meteor Storm is the showpiece: dark cratered rocks with molten rims fall the whole way from the sky and blast shockwaves on landing — rebuilt as real stones after the first pass read as doodles.'],
+ gravity:['Crushing vortex','Gravitational Field: a purple vortex that spins while sparkles get pulled into it — the mobile ports add a darker press-down lens.'],
+ arrowBurst:['Paired arrows','Double Strafe / Focused Arrow: one-two arrow streaks into the target with a small impact each.'],
+ arrowLine:['Piercing shot','Sharp Shooting reads as one heavy streak that carries through the line of targets, with a lens flash at the entry.'],
+ arrowRain:['Arrow field','Arrow Shower: streaks fall at an angle onto a ground marker — the client staggers the landings, so the layers carry offsets.'],
+ falcon:['Falcon strike','Blitz Beat / Falcon Assault: the falcon stoops as a wing-flap silhouette with speed lines; ROM adds a glow trail but the silhouette is the read.'],
+ poison:['Poison splash','Envenom bursts a focused poison splash on the target; Venom Dust keeps its lingering low cloud — the thief-line poisons are three different reads now.'],
+ poisonBomb:['Delayed poison burst','Venom Splasher plants a poison bomb that erupts in bubbles and a purple burst.'],
+ shadow:['Hidden strike','Grimtooth hits from hiding: dark upward slashes over a shadow vortex with smoke — the client keeps it deliberately dim.'],
+ radial:['Horizontal purple whirl','Meteor Assault ships as purpleslash.tga in the client; the crescents now whirl horizontally around the caster - four camera-facing slashes striking at his sides over an expanding ring, no floor blades.'],
+ soulBolt:['One slash wave','Soul Breaker is a single clean crescent wave riding from the player into the mob; Soul Destroyer is the same one wave in purple with a soul burst.'],
+ holyBolt:['Light from above, no projectile','Holy Light brings a pillar of light down onto the target where it blooms with cross and ring - it is no longer a projectile. Judex drops a gold cross-star from the sky into a judgement starburst.'],
+ holyField:['Pillars rain from the sky','Magnus Exorcismus: four holy pillars fall out of the sky one after another inside the gold field marker, cross flash and rising sparkles on top. Signum Crucis keeps its cross-wave sweep.'],
+ holyNova:['Holy wave','Turn Undead obliterates with an expanding ring, a pillar and a shower of gold sparkles.'],
+ goldStrike:['Zeny explosion','Mammonite is the classic zeny-burst: gold coins scatter with a bright impact flash. ROM polishes each coin but keeps the scatter.'],
+ hammerFall:['Swinging light-hammer','Hammer Fall swings a translucent hammer of light down onto the mob - additive and coloured, not a solid object - then stun star, shockwave and dust.'],
+ cartCrash:['Cart smash','Cart Revolution spins its rings; Cart Termination is one enormous slam with a star flash and dust.'],
+ fireNova:['Ring, thrown ball, burning weapon','Magnum Break keeps the ground ring sweep; Fire Ball is a burning ball shot from the player that explodes on arrival; Meltdown chars the weapon with organic flame before the heat lashes out.'],
+ sand:['Blinding dust','Sand Attack: a tan dust cloud with a low ring and grit sparkles, kept small like the original.'],
+ earthTrap:['Ground trap','Land Mine: an earth marker arms, rock spikes burst up and the charge blows with dust.'],
+ bleed:['Crushing blow','Traumatic Blow: a heavy burst with a dark slash and blood-red sparkles drifting off the hit.'],
+ windAura:['Wind buff','The AGI family — Quicken blade-wind, Concentration aim-lens, Increase AGI column, Wind Walk feathers, Cart Boost wheel-rings.'],
+ shieldAura:['Shield buff','Energy Coat / Kyrie Eleison: the client draws a shield ring with a lens sheen; Kyrie gets the cross-bearing kyrie.str bubble.'],
+ frenzyAura:['Rage buff','Frenzy burns, Overthrust sparks off the weapon, Provoke shouts in roar waves — power at a cost, three reads.'],
+ venomAura:['Deadly Poison','A purple bubble column with smoke: the assassin weapon-coat read from the classic enchant-poison effect.'],
+ holyAura:['Basilica / blessing','Pillars of light raise the dome over a gold decal with rising sparkles — the priestly read the mobile versions stylize further.'],
+ heal:['Green pulse','First Aid / Heal: the classic Heal effect is ring_white plus pok sparkles; here a green-tinted ring with rising light and a cross.']
+};
+// ---------- pull the REAL game code out of index.html ----------
+let SKILLS=null,SKILL_VFX=null,fxApi=null,CDATA=null,skinApi=null;
+const cl=(v,a,b)=>Math.max(a,Math.min(b,v));
+async function boot(){
+  const src=await (await fetch('/index.html')).text();
+  const grab=(a,b)=>{const i=src.indexOf(a),j=src.indexOf(b,i);if(i<0||j<0)throw new Error('missing '+a);return src.slice(i,j)};
+  const roster=grab('const CD=[','const pm=s=>');
+  const renderer=grab('const SKILL_FX_GEOMETRY=','let drag=null;const dom=R.domElement;');
+  // the game's own class-skin pieces: APNG decoder, weapon constants and weapon painter
+  const skinConst=grab('const SKIN_WEAPON_DEFAULTS','// One constant scale per class and gender');
+  const skinDecodeHelpers=grab('function skinBytes(','async function skinDecodeView(');
+  const skinDecode=grab('async function skinDecodePng(','async function skinDecodeView(');
+  const skinWeaponDraw=grab('function skinWeaponImage(','// Paint the frame that is due');
+  const scene=new THREE.Scene();
+  const cam=new THREE.PerspectiveCamera(38,2,.1,200);
+  const pl={x:-1.55,z:0};
+  const skillFx=[];
+  const api=new Function('THREE','scene','cam','pl','cl','skillFx','document',
+    roster+'\n'+renderer+'\n;return{CD,SKILLS,SKILL_VFX,playSkillFx,tickSkillFx,syncSkillFx,skillFxSpec};')
+    (THREE,scene,cam,pl,cl,skillFx,document);
+  skinApi=new Function('window','document','fetch','Response','DecompressionStream','performance',
+    'const PACK_K=.03;const SKIN_H=72*PACK_K;\n'+skinConst+'\n'+skinDecodeHelpers+'\n'+skinDecode+'\n'+skinWeaponDraw+
+    '\n;return{skinDecodePng,drawSkinWeapon,SKIN_H};')
+    (window,document,fetch.bind(window),Response,DecompressionStream,performance);
+  SKILLS=api.SKILLS;SKILL_VFX=api.SKILL_VFX;CDATA=api.CD;
+  fxApi={...api,scene,cam,pl,skillFx};
+  buildList();buildStage();
+  status('ready — '+SKILLS.filter(s=>s.type!=='pas').length+' active skills, '+Object.keys(SKILL_VFX).length+' with battlefield effects');
+}
+function status(s){$('status').textContent='skill-fx preview · '+s}
+// ---------- skill list ----------
+const JOB_ORDER=['Novice','Swordman','Knight','Lord Knight','Mage','Wizard','High Wizard','Archer','Hunter','Sniper',
+ 'Thief','Assassin','Assassin Cross','Acolyte','Priest','High Priest','Merchant','Blacksmith','Whitesmith'];
+function buildList(){
+  const list=$('list');list.innerHTML='';
+  for(const job of JOB_ORDER){
+    const skills=SKILLS.filter(s=>s.from===job&&s.type!=='pas');
+    if(!skills.length)continue;
+    const h=document.createElement('div');h.className='jobhead';h.textContent=job;list.appendChild(h);
+    for(const s of skills){
+      const row=document.createElement('div');row.className='skrow';row.dataset.id=s.id;
+      const spec=SKILL_VFX[s.id];
+      row.innerHTML='<span class="dot" style="background:'+(s.col||'#fff')+';color:'+(s.col||'#fff')+'"></span>'
+        +'<span class="nm">'+s.n+'</span><span class="kd">'+(spec?spec.kind:'—')+'</span>';
+      row.onclick=()=>castSkill(s.id);
+      list.appendChild(row);
+    }
+  }
+}
+// ---------- three stage ----------
+let renderer3,scene,cam,targetSpr=null;
+let castT=-1,orbit={yaw:.45,pitch:.3,dist:10.5},dragging=null,autoQ=[],autoT=0;
+const TARGET_X=1.55;
+function buildStage(){
+  const stage=$('stage');
+  renderer3=new THREE.WebGLRenderer({antialias:true,alpha:true});
+  renderer3.setPixelRatio(Math.min(2,devicePixelRatio||1));
+  stage.appendChild(renderer3.domElement);
+  scene=fxApi.scene;cam=fxApi.cam;
+  scene.background=new THREE.Color('#10141d');
+  scene.fog=new THREE.Fog('#10141d',18,38);
+  const gc=document.createElement('canvas');gc.width=gc.height=256;const g=gc.getContext('2d');
+  g.fillStyle='#2c3648';g.fillRect(0,0,256,256);
+  for(let i=0;i<420;i++){const x=Math.random()*256,y=Math.random()*256,r=6+Math.random()*10;
+    g.fillStyle=['#33405a','#2a3446','#3a4763','#252e3f'][i%4];
+    g.beginPath();g.ellipse(x,y,r,r*.62,Math.random()*3,0,7);g.fill()}
+  const gtex=new THREE.CanvasTexture(gc);gtex.wrapS=gtex.wrapT=THREE.RepeatWrapping;gtex.repeat.set(6,6);
+  const ground=new THREE.Mesh(new THREE.PlaneGeometry(30,30),new THREE.MeshBasicMaterial({map:gtex}));
+  ground.rotation.x=-Math.PI/2;scene.add(ground);
+  const glowC=document.createElement('canvas');glowC.width=glowC.height=128;const gg=glowC.getContext('2d');
+  const grd=gg.createRadialGradient(64,64,4,64,64,64);grd.addColorStop(0,'rgba(232,189,77,.5)');grd.addColorStop(1,'rgba(232,189,77,0)');
+  gg.fillStyle=grd;gg.fillRect(0,0,128,128);
+  const glow=new THREE.Mesh(new THREE.PlaneGeometry(8,8),new THREE.MeshBasicMaterial({map:new THREE.CanvasTexture(glowC),transparent:true,depthWrite:false}));
+  glow.rotation.x=-Math.PI/2;glow.position.y=.02;scene.add(glow);
+  loadHero();setTarget($('targetSel').value);
+  const dom=renderer3.domElement;
+  dom.addEventListener('pointerdown',e=>{dragging=[e.clientX,e.clientY]});
+  addEventListener('pointermove',e=>{if(!dragging)return;
+    orbit.yaw-=(e.clientX-dragging[0])*.006;orbit.pitch=cl(orbit.pitch+(e.clientY-dragging[1])*.004,.08,1.2);
+    dragging=[e.clientX,e.clientY]});
+  addEventListener('pointerup',()=>dragging=null);
+  dom.addEventListener('wheel',e=>{orbit.dist=cl(orbit.dist+e.deltaY*.008,5,20);e.preventDefault()},{passive:false});
+  addEventListener('keydown',e=>{if(e.key==='ArrowRight')stepAuto(1);else if(e.key==='ArrowLeft')stepAuto(-1)});
+  $('heroSel').onchange=()=>loadHero();
+  $('sexSel').onchange=()=>loadHero();
+  $('targetSel').onchange=()=>setTarget($('targetSel').value);
+  $('speed').oninput=()=>{$('speedVal').textContent=(+$('speed').value).toFixed(2)+'×'};
+  $('playAll').onclick=()=>{autoQ=SKILLS.filter(s=>s.type!=='pas'&&SKILL_VFX[s.id]).map(s=>s.id);autoT=1.4};
+  $('stopAll').onclick=()=>{autoQ=[];autoT=0};
+  new ResizeObserver(resize).observe(stage);resize();
+  requestAnimationFrame(loop);
+}
+function resize(){const st=$('stage'),w=st.clientWidth,h=st.clientHeight;
+  renderer3.setSize(w,h,false);cam.aspect=w/h;cam.updateProjectionMatrix()}
+// ---------- hero: the game's OWN updated class skin (animated APNG + saved weapon) ----------
+const hero={spr:null,cv:null,tex:null,rec:null,sex:'m',cls:'',strips:{},secs:{},total:{},weapon:'',t0:0,mode:'idle'};
+function heroClass(){$('heroSel').options.length||fillHeroSel();return $('heroSel').value||'Lord Knight'}
+function fillHeroSel(){const sel=$('heroSel');
+  for(const j of JOB_ORDER){const o=document.createElement('option');o.value=o.textContent=j;sel.appendChild(o)}
+  sel.value='Lord Knight'}
+async function loadHero(){
+  if(!$('heroSel').options.length)fillHeroSel();
+  const cls=$('heroSel').value,sex=$('sexSel').value==='f'?'f':'m';
+  const all=window.CLASS_SKINS,rec=all&&all.classes&&all.classes[cls]?all.classes[cls][sex]:null;
+  const row=CDATA.find(r=>r[0]===cls);
+  hero.weapon=row&&row[7]&&row[7][0]||'';
+  if(!rec){status('no skin for '+cls+' — showing the fallback pack art');return loadPackHero(cls)}
+  hero.cls=cls;hero.sex=sex;hero.rec=rec;hero.strips={};hero.secs={};hero.total={};
+  for(const v in rec.files){const d=rec.delays[v]||[];
+    hero.secs[v]=d.map(e=>e[0]/(e[1]||100));hero.total[v]=hero.secs[v].reduce((a,b)=>a+b,0)}
+  status('decoding '+cls+' '+sex+' skin…');
+  try{
+    const views=Object.keys(rec.files);
+    await Promise.all(views.map(async v=>{
+      const res=await fetch(encodeURI(all.dir+'/'+rec.files[v]));
+      if(!res.ok)throw Error('HTTP '+res.status);
+      hero.strips[v]=await skinApi.skinDecodePng(new Uint8Array(await res.arrayBuffer()));
+    }));
+    if(!hero.strips.attack&&!hero.strips.SE)throw Error('no usable views');
+    makeSkinHero();
+    status(cls+' '+sex+' — the game\'s own animated skin'+(hero.weapon?', '+hero.weapon+' in hand':''));
+  }catch(e){status('skin decode failed ('+e.message+') — showing the fallback pack art');loadPackHero(cls)}
+}
+function skinFrameIndex(view,ms){
+  const secs=hero.secs[view],total=hero.total[view]||0;
+  if(!secs||!secs.length||!(total>0))return 0;
+  let t=(ms/1000)%total;if(t<0)t+=total;
+  for(let i=0;i<secs.length;i++){t-=secs[i];if(t<0)return i}
+  return secs.length-1;
+}
+function makeSkinHero(){
+  const SKIN_SIZE=200,rec=hero.rec;
+  if(hero.spr){scene.remove(hero.spr);hero.tex.dispose();hero.spr.material.dispose()}
+  hero.cv=document.createElement('canvas');hero.cv.width=SKIN_SIZE;hero.cv.height=SKIN_SIZE;
+  hero.tex=new THREE.CanvasTexture(hero.cv);
+  hero.tex.magFilter=hero.tex.minFilter=THREE.NearestFilter;hero.tex.generateMipmaps=false;
+  const s=new THREE.Sprite(new THREE.SpriteMaterial({map:hero.tex,transparent:true,alphaTest:.12}));
+  const px=skinApi.SKIN_H/(rec.height||90);
+  s.scale.set(SKIN_SIZE*px,SKIN_SIZE*px,1);
+  s.center.set((rec.anchor[0]||SKIN_SIZE/2)/SKIN_SIZE,1-(rec.anchor[1]||SKIN_SIZE)/SKIN_SIZE);
+  s.position.set(fxApi.pl.x,0,0);
+  scene.add(s);hero.spr=s;hero.mode='idle';
+  paintHero(performance.now());
+}
+function packFor(cls){
+  const all=window.CLASS_SKINS,rec=hero.rec;
+  return {cls,sex:hero.sex,files:rec.files,frames:rec.frames,delays:rec.delays,poses:rec.poses,height:rec.height,anchor:rec.anchor};
+}
+function paintHero(nowMs){
+  const SKIN_SIZE=200,strips=hero.strips;
+  const attacking=current&&castT>=0;
+  const view=attacking&&strips.attack?'attack':(strips.SE?'SE':'S');
+  const strip=strips[view];if(!strip)return;
+  let ms;
+  if(view==='attack'){if(hero.mode!=='attack'){hero.mode='attack';hero.t0=nowMs}
+    ms=Math.min(nowMs-hero.t0,(hero.total.attack||0)*1000)}        // play the swing once, hold the last frame
+  else{if(hero.mode!=='idle'){hero.mode='idle';hero.t0=nowMs}ms=nowMs-hero.t0}
+  const fi=skinFrameIndex(view,ms),f=Math.min(fi,strip.n-1);
+  const ctx=hero.cv.getContext('2d');
+  ctx.clearRect(0,0,SKIN_SIZE,SKIN_SIZE);ctx.imageSmoothingEnabled=false;
+  ctx.drawImage(strip.cv,f*strip.w,0,strip.w,strip.h,0,0,SKIN_SIZE,SKIN_SIZE);
+  try{skinApi.drawSkinWeapon(ctx,packFor(hero.cls),{view,mirror:false,weaponType:hero.weapon},f)}catch(e){}
+  hero.tex.needsUpdate=true;
+}
+// fallback: the old static pack art, only if a skin cannot be decoded
+function loadPackHero(cls){
+  const body=String(cls).toLowerCase().replace(/[^a-z0-9]+/g,'_');
+  const PK=window.SPRITE_PACK;
+  if(!PK||!PK.bodies||!PK.bodies[body])return;
+  const B=PK.bodies[body],img=new Image();
+  img.onload=()=>{
+    const cv=document.createElement('canvas');cv.width=PK.cellW*6;cv.height=PK.cellH;
+    const c=cv.getContext('2d');c.imageSmoothingEnabled=false;
+    const a=2,d=7;
+    for(let f=0;f<6;f++){c.drawImage(img,f*96,(a*8+d)*96,96,96,f*PK.cellW+PK.padL,PK.padT,96,96)}
+    if(hero.spr){scene.remove(hero.spr);hero.tex.dispose();hero.spr.material.dispose()}
+    const tex=new THREE.CanvasTexture(cv);tex.magFilter=tex.minFilter=THREE.NearestFilter;tex.generateMipmaps=false;
+    tex.repeat.set(1/6,1);hero.tex=tex;
+    const geo=new THREE.PlaneGeometry(PK.cellW*.03,PK.cellH*.03);
+    geo.translate(0,(PK.pivotY-PK.cellH/2)*.03,0);
+    hero.spr=new THREE.Mesh(geo,new THREE.MeshBasicMaterial({map:tex,transparent:true,alphaTest:.1,side:THREE.DoubleSide}));
+    hero.spr.position.set(fxApi.pl.x,0,0);
+    hero.cv=null;hero.rec=null;
+    scene.add(hero.spr);
+  };
+  img.src=B.atlas;
+}
+function heroAnim(dt){
+  if(!hero.spr)return;
+  if(hero.rec){paintHero(performance.now());
+    if(current&&castT>=0){const q=cl(castT/.55,0,1);hero.spr.position.x=fxApi.pl.x+Math.sin(q*Math.PI)*.5}
+    else hero.spr.position.x=fxApi.pl.x;
+    return}
+  // pack fallback animation
+  if(current&&castT>=0){const q=cl(castT/.55,0,1);
+    hero.spr.position.x=fxApi.pl.x+Math.sin(q*Math.PI)*.5;
+    hero.spr.material.map.offset.x=Math.min(5,Math.floor(cl(castT/.5,0,1)*6))/6}
+  else{hero.spr.material.map.offset.x=0;hero.spr.position.x=fxApi.pl.x}
+}
+// ---------- target ----------
+function setTarget(val){
+  if(targetSpr){scene.remove(targetSpr);
+    if(targetSpr.material.map)targetSpr.material.map.dispose();
+    targetSpr.material.dispose();targetSpr.geometry.dispose();targetSpr=null}
+  if(val==='blob'){targetSpr=makeFlat(drawnDummy(),1.7,1.45);targetSpr.position.set(TARGET_X,0,0);scene.add(targetSpr);return}
+  const mat=new THREE.MeshBasicMaterial({transparent:true,alphaTest:.1,side:THREE.DoubleSide});
+  targetSpr=new THREE.Mesh(new THREE.PlaneGeometry(1,1),mat);
+  targetSpr.position.set(TARGET_X,0,0);scene.add(targetSpr);
+  const loader=new THREE.TextureLoader();loader.setCrossOrigin('anonymous');
+  loader.load('https://static.divine-pride.net/images/mobs/png/'+val+'.png',tex=>{
+    tex.magFilter=tex.minFilter=THREE.NearestFilter;tex.generateMipmaps=false;
+    const im=tex.image,r=im.width/Math.max(1,im.height),h=1.9;
+    mat.map=tex;mat.needsUpdate=true;
+    targetSpr.scale.set(h*r,h,1);targetSpr.geometry.translate(0,h/2,0);
+  },undefined,()=>{mat.map=drawnDummy();mat.needsUpdate=true;
+    targetSpr.scale.set(1.7,1.45,1);targetSpr.geometry.translate(0,1.45/2,0)});
+}
+function makeFlat(tex,w,h){
+  const m=new THREE.Mesh(new THREE.PlaneGeometry(w,h),new THREE.MeshBasicMaterial({map:tex,transparent:true,alphaTest:.1,side:THREE.DoubleSide}));
+  m.geometry.translate(0,h/2,0);return m;
+}
+function drawnDummy(){
+  const cv=document.createElement('canvas');cv.width=128;cv.height=110;const c=cv.getContext('2d');
+  c.fillStyle='#f6a8c0';c.beginPath();c.ellipse(64,66,52,42,0,0,7);c.fill();
+  c.fillStyle='#f9c3d4';c.beginPath();c.ellipse(52,52,20,14,-.5,0,7);c.fill();
+  c.fillStyle='#5a2233';
+  c.beginPath();c.ellipse(46,64,6,8,0,0,7);c.fill();c.beginPath();c.ellipse(80,64,6,8,0,0,7);c.fill();
+  c.beginPath();c.ellipse(63,82,9,6,0,0,Math.PI);c.fill();
+  c.strokeStyle='#d17a98';c.lineWidth=3;c.beginPath();c.moveTo(30,40);c.quadraticCurveTo(36,20,52,26);c.stroke();
+  const t=new THREE.CanvasTexture(cv);t.magFilter=t.minFilter=THREE.NearestFilter;return t;
+}
+// ---------- casting ----------
+let current=null,fxFired=false;
+function castSkill(id){
+  const s=SKILLS.find(x=>x.id===id);if(!s||!SKILL_VFX[id])return;
+  current=id;castT=0;fxFired=false;setRow(id);showInfo(s);
+  const b=$('banner');b.innerHTML=s.n+'<small>'+SKILL_VFX[id].kind+' · anchored '+(SKILL_VFX[id].at||'target')+'</small>';
+  b.style.opacity=1;setTimeout(()=>b.style.opacity=0,900);
+}
+function setRow(id){document.querySelectorAll('.skrow').forEach(r=>r.classList.toggle('on',r.dataset.id===id))}
+function showInfo(s){
+  const spec=SKILL_VFX[s.id],notes=FX_NOTES[spec?spec.kind:'']||['',''];
+  $('info').innerHTML='<div class="note"><h3>'+s.n+'</h3>'
+    +'<p><span class="tag">'+s.from+'</span><span class="tag">'+s.type+'</span>'+(spec?'<span class="tag">'+spec.kind+'</span>':'')+'</p>'
+    +'<p>'+(typeof s.d==='function'?s.d(s.max):'')+'</p></div>'
+    +'<div class="note"><h3>'+notes[0]+'</h3><p>'+notes[1]+'</p>'
+    +'<p style="color:#77809a">Layers play like the client\'s .str effect: each sprite on its own frame timeline, additive blend.</p></div>';
+}
+function stepAuto(dir){
+  const ids=SKILLS.filter(s=>s.type!=='pas'&&SKILL_VFX[s.id]).map(s=>s.id);
+  if(!ids.length)return;
+  const i=Math.max(0,ids.indexOf(current||ids[0]));
+  castSkill(ids[(i+dir+ids.length)%ids.length]);
+}
+// ---------- main loop ----------
+let last=0;
+function loop(ts){
+  requestAnimationFrame(loop);
+  const now=ts/1000,dt=Math.min(.1,now-(last||now));last=now;
+  const speed=+$('speed').value;
+  if(autoQ.length){autoT+=dt*speed;
+    if(autoT>=1.5){autoT=0;castSkill(autoQ.shift());if(!autoQ.length)setRow(current)}}
+  if(current&&castT>=0){
+    castT+=dt*speed;
+    const life=(SKILL_VFX[current]||{}).life||.7;
+    if(!fxFired&&castT>=.16){fxFired=true;
+      fxApi.playSkillFx(current,{x:TARGET_X,z:0},(SKILLS.find(s=>s.id===current)||{}).col)}
+    if(castT>life+.55){
+      if($('loop').checked&&!autoQ.length){castT=0;fxFired=false}
+      else{current=null;castT=-1;fxFired=false}
+    }
+  }
+  heroAnim(dt);
+  if(targetSpr)targetSpr.position.y=Math.abs(Math.sin(now*2.4))*.06;
+  fxApi.tickSkillFx(dt*speed);fxApi.syncSkillFx();
+  const cy=Math.cos(orbit.pitch)*orbit.dist;
+  cam.position.set(Math.sin(orbit.yaw)*cy,1.2+Math.sin(orbit.pitch)*orbit.dist*.6,Math.cos(orbit.yaw)*cy);
+  cam.lookAt(0,1.2,0);
+  renderer3.render(scene,cam);
+}
+boot().catch(e=>status('FAILED: '+e.message));
+</script>
+</body>
+</html>

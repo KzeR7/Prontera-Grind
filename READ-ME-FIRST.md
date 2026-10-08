@@ -34,6 +34,10 @@ deploy — but the host's build output directory must be `dist/`, never the repo
   changing the class art or the hero.**
 * `TOOLS-START-HERE.md` — **the tool map**: every dev page, generator and picker in `tools/`, what it answers
   and who owns it. Read that instead of guessing which of the two dozen pages is the live one.
+* `tools/skill_fx_preview.html` — **the skill-effect preview** (served at `/skillfx`): every active
+  skill's RO-style animated sprite effect on a small stage — click to cast, pick hero class and
+  target, slow-mo, loop, **▶ Play every skill**. It runs the game's own effect code (extracted from
+  `index.html` at load), and the right panel carries the RO/ROM/RO3 research note per effect family.
 * `tools/weapon_proposal.html` — **the live weapon review page** (served at `/weapons` by
   `python3 tools/preview_server.py 8000`; `/` is the **game itself**, so the preview link opens it). Every one of the 19 classes on its own sprite
   with a real Ragnarok Online weapon on it. It opens **frozen** so the weapon can be placed against a
@@ -79,6 +83,127 @@ is the live one; with no argument the tool prints how to set a new one). Since v
 `localStorage.setItem('pg_gm_local', gmHash('test1234'))` in the game's console once, then log in as
 `GM` / `test1234`; `localStorage.removeItem('pg_gm_local')` removes it. Normal accounts are made
 in-game and stored in the browser (`pg_acc4`; saves under `pg_save3_<user>`).
+
+## BUILD v79.6 — sharp claw slashes: tapered blades, no fat round blobs (on the v79 sprite system)
+
+The owner compared the preview against a real-client capture: RO's slashes are **claws** —
+crescent blades that taper to sharp points — while the old sheets drew thick round-capped
+strokes that read as fat circular blobs (Sonic Blow, Grimtooth, Soul Breaker, Spiral Pierce,
+Bowling Bash and every other slash family).
+* New `fxClaw` helper draws a crescent as an outer arc plus a tapered inner arc that meets it at
+  **sharp tips**; `slash` is now a big claw + a thinner echo claw + tip spark, `wave` a tapered
+  shockwave with sharp horns, `vortex` three tapered winding claws. Every family that uses those
+  sheets (impact, multiSlash, spiral, shadow, radial, soulBolt, sdestroy, shockwave, fireNova…)
+  inherits the sharp read.
+* `skill_sim` 58/58, sheets rendered to PNG and visually checked against the reference capture.
+
+## BUILD v79.5 — the box-bands bug is dead: UV spin fixed, soul wave & hammer strike polished
+
+The owner's screenshots finally showed the "boxes": horizontal bands. Root cause found and fixed —
+it was never the art sizes: `skillFxSpriteUv` rotated the UVs by mixing **u (a 1/n sliver of the
+sheet) with v (the full height)**, so any layer with a rotation (`ang` or `spin`) smeared its
+v-span across the whole sheet and rendered as a stretched rectangular band. The rotation now
+happens in cell-normalised space (both axes 0..1 over the frame cell) and maps back — a true
+in-place spin. Every effect that ever showed a band is fixed by this one change.
+* **Soul Breaker / Soul Destroyer** re-polished on the fixed pipeline: one bigger clean wave
+  (Breaker with a light trail + bloom; Destroyer wrapped in its purple vortex).
+* **Hammer Fall** now reads as the strike the research describes ("slams the targeted cell with
+  the equipped weapon"): the translucent coloured light-hammer starts raised and swings DOWN
+  onto the mob (swing direction verified frame-by-frame as an image before shipping), then stun
+  star, shockwave and dust.
+* **Meteor Assault**'s side slashes now genuinely spin into a horizontal whirl.
+* `skill_sim` gained a regression test that fails if any spun layer's UVs ever smear across the
+  sheet again (58 tests). Timings/balance untouched; `/skillfx` to watch everything.
+
+## BUILD v79.4 — organic streaks, single soul slash, swinging light-hammer (on the v79 sprite system)
+
+The owner sent screenshots: the thin straight streak sheets (arrows, slashes) read as floating
+rectangles at field scale, the Meteor Assault floor blades looked like giant boxes, and the solid
+falling hammer was wrong. Fixed at the art level this time.
+* **Arrow and slash sheets redrawn organic.** The arrow is now one tapered comet streak with a
+  soft glow head (the separate rectangular speed-lines that read as "boxes" are gone); the slash
+  is a thick soft-edged energy crescent. Every arrow/slash family inherits the fix, and Arrow
+  Shower dropped from five stacked streaks to three smaller comets.
+* **Soul Breaker / Soul Destroyer** are now **one clean slash wave** riding from the player into
+  the mob (Destroyer's in purple with a soul burst) — no more stacked wave boxes.
+* **Hammer Fall** is a **translucent hammer of light that swings down** onto the mob (additive,
+  tinted, UV-swung through ~90°) instead of a solid steel hammer falling from the sky; the stun
+  star, shockwave and dust land as it connects.
+* **Meteor Assault** whirls **horizontally** with four camera-facing slashes striking at the
+  caster's sides over the expanding ring — the giant floor blades are gone.
+* `skill_sim` pins all four shapes (57 tests). Everything else unchanged; `/skillfx` to view.
+
+## BUILD v79.3 — reworked casts, ground-fight-free decals, real hammer fall (on the v79 sprite system)
+
+Third watch-through, twelve notes, all addressed.
+* **No more square patches under effects.** The ground rings/decals were sitting exactly coplanar
+  with the terrain, so the additive quads z-fought the floor into flickering squares. Ground
+  layers now hover at y≥.08 with a polygon offset, and the UV cells got a wider inset — the box
+  outline is gone everywhere, not just where the art margins fixed it.
+* **Fire Bolt** now drops **a few single fire bolts out of the sky**, each with its own landing
+  burst. **Fire Ball** is a **burning ball shot from the player** that explodes on arrival.
+* **Storm Gust** is the RO1 **gust of storm**: two counter-spinning vortex discs over a wide frost
+  ring, ice daggers whirling in the gust, snow sparkles and rolling mist.
+* **Napalm Vulcan** fires a **ghost orb from the caster** that detonates on the mob (it shared the
+  sky-fire read before; it does not anymore).
+* **Meteor Assault** sweeps **horizontally**: three spinning purpleslash crescents on the ground
+  around the caster instead of vertical slashes.
+* **Soul Breaker / Soul Destroyer** ride a **wave of slices from the player into the mob** — the
+  Destroyer's wave is wrapped in a purple soul-storm.
+* **Holy Light is no longer a projectile**: a pillar of light comes down on the target and blooms.
+  **Judex** drops a gold cross-star from the sky into a judgement starburst. **Magnus
+  Exorcismus** rains four holy pillars out of the sky inside its field.
+* **Hammer Fall is literal**: a new baked-colour **war-hammer sheet** (steel head, wooden haft,
+  normal-blended so the steel reads as steel) drops head-first on the mob, then stun star,
+  shockwave and dust.
+* **Flames are organic now** — bezier tongues with gradient bodies, hot cores and rising embers
+  instead of flat triangles — which fixes the "fake fire" on Meltdown everywhere fire plays.
+* Sheet count 21 → **22** (`hammer`). `skill_sim` now pins the new cast shapes (57 tests).
+  Timings/anchors of untouched skills unchanged; see `/skillfx`.
+
+## BUILD v79.2 — sharp unboxed effects, real meteors, split poisons (on the v79 sprite system)
+
+Follow-up pass on the v79 sprite effects after the owner's second watch-through.
+* **No more square edges.** Every painter was redrawn on the new **144px sheet frames** with a
+  ~66px radius margin, so nothing touches the frame — the faint "box" around some effects is gone.
+* **Sharpness.** The 1.5× higher source resolution stops the blur the v79.1 2× size-up introduced.
+* **Meteor Storm no longer reads like a doodle.** The rocks are now dark cratered stones with a
+  molten rim and converging trail, blended **normally** (additive blending can't draw dark rock),
+  falling the whole way from the sky and landing shockwave-per-shockwave on the marker.
+* **The thief-line poisons are three different reads:** Envenom bursts a focused splash on the
+  target, Venom Dust keeps its lingering low cloud (no burst), Venom Splasher is a sticky bomb
+  that erupts after a beat. New **shard sheet** (diving ice dagger) carries Storm Gust and
+  Frost Diver's falling layers.
+* Sheet count 20 → **21**; `skill_sim` grew to the sheet-pin + poison-differentiation checks and
+  still pins every cast's timing. `/skillfx` shows everything; timings and anchors are untouched.
+
+## BUILD v79.1 — sky-fall mage skills, bigger sprite effects, more variety (on the v79 sprite system)
+
+The v79 sprite-effect system, retuned after the owner's first watch-through. **Every effect is
+roughly twice the size** (the field camera sits far away), the **mage line now strikes from the
+sky** — Fire Bolt and Napalm Vulcan drop fireballs onto the target, Napalm Beat a ghost comet,
+Frost Diver a diving shard, Storm Gust rains shards into its frost field — and **shared families
+no longer read as copies**: eighteen skills got their own recipes (Thunder Storm vs Lord of
+Vermilion, Fire Ball vs Magnum Break vs Meltdown, Cart Termination vs Cart Revolution, the five
+AGI-buff reads, Kyrie's cross bubble, Judex's starburst, Falcon Assault vs Blitz Beat…). Four new
+sheets joined the vocabulary: crescent wave, vortex, holy cross and starburst. Timings, anchors
+and balance remain untouched; the `/skillfx` preview shows all of it, now with **the game's own
+updated class skins** (animated APNG + saved weapon sprite, both genders) as the casting hero.
+
+## BUILD v79 — RO-style animated sprite effects for every skill
+
+Every active skill, auto-buff and First Aid now plays an **animated sprite effect** built the way
+the original client builds its `.str` effects: several texture layers on their own frame timelines,
+blended additively. Sixteen procedurally rendered sheets rebuild the classic effect vocabulary the
+client itself ships (pok impact bursts, expanding rings, lens glows, slash streaks — Meteor Assault
+is literally `purpleslash.tga` — ice shards, lightning bolts, holy pillars, falling meteors, poison
+bubbles, zeny coins, the falcon, smoke, sparkles, and a ROM-style ground AoE decal); the 40 effect
+families in `SKILL_FX_SPR` compose them, one recipe per family, with each skill's own colour as the
+tint. The old geometry recipes remain in the file untouched as the no-canvas fallback, and every
+timing, anchor and balance number is unchanged. **Watch them at `/skillfx`**
+(`python3 tools/preview_server.py 8000`, then open the preview link + `/skillfx`): click any skill
+to cast it, slow time down, loop it, or play the whole roster — with the research note for each
+family in the side panel.
 
 ## BUILD v78.2 — map-stage equipment progression for every class
 
