@@ -82,7 +82,8 @@ t('Novice encounters stay one or two low-HP monsters per camp, spread over the w
 t('non-boss stages retain their combat formulas and boss escorts use normal mob stats',()=>{
  for(let m=0;m<10;m++)for(let l=1;l<10;l++)if(!H.starterStage(m,l)){
   const pack=spawn(m,l),p=H.fieldPower(m,l),mb=1+m*.15+Math.max(0,m-4)*.2;
-  for(const mob of pack){assert.strictEqual(mob.hp,Math.floor(H.HPK*mb*Math.pow(p,H.HPE)));assert.strictEqual(mob.atk,Math.floor((5+p*4.6)*mb))}
+  // v86: fields of power 90+ (Abyss from stage 1, Niflheim's last stages) swing 1.4x harder
+  for(const mob of pack){assert.strictEqual(mob.hp,Math.floor(H.HPK*mb*Math.pow(p,H.HPE)));assert.strictEqual(mob.atk,Math.floor((5+p*4.6)*mb*(p>=90?1.4:1)))}
   assert.ok(pack.length>=H.camps.length&&pack.length<=3*H.camps.length,'every camp holds one to three monsters');
  }
  for(let m=0;m<10;m++){
@@ -94,7 +95,7 @@ t('non-boss stages retain their combat formulas and boss escorts use normal mob 
   const p=H.fieldPower(m,10),mb=1+m*.15+Math.max(0,m-4)*.2;
   assert.strictEqual(H.mobs[0].hp,Math.floor(500*mb*Math.pow(p,H.HPE)));
   for(const escort of wave.slice(1)){assert.strictEqual(escort.hp,Math.floor(H.HPK*mb*Math.pow(p,H.HPE)));
-   assert.strictEqual(escort.atk,Math.floor((5+p*4.6)*mb))}
+   assert.strictEqual(escort.atk,Math.floor((5+p*4.6)*mb*(p>=90?1.4:1)))}   // v86 endgame bump
  }
 });
 t('camps scatter over the whole lane, each one a small group instead of a single point',()=>{

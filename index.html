@@ -665,7 +665,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // script block, which is a SyntaxError - the game did not run on main at all. One line wins, and
 // it names both sides of this merge: the v38 balance patch (the weapon cut, the affix/card
 // give-back) and main's weapon-hold rendering work.
-const BUILD='2026-10-08 grind-v85 quest-exact doubling, Nightmare pay ramp, early-job half cost';   // shown on the login card - confirms which file you loaded
+const BUILD='2026-10-08 grind-v86 camp-refill fix, endgame damage retune, RO-style ASPD';   // shown on the login card - confirms which file you loaded
 $('buildTag').textContent='build '+BUILD;
 
 // ---------- class tree: Novice -> 6 first jobs -> 6 second jobs -> 6 third jobs ----------
@@ -1257,6 +1257,11 @@ const NMHP=48,NMATK=2,NMEXP=4,NMZENY=4,NMBOSSHP=48;
 // pays the flat NMEXP/NMZENY, and the offline simulator reads the same two helpers.
 const nmExpOf=l=>NMEXP*2*(Math.max(11,Math.min(15,l|0))-9);
 const nmZenyOf=l=>NMZENY+(Math.max(11,Math.min(15,l|0))-11);
+// v86: mob and MVP ATK get one endgame bump - fields of power 90+ (Niflheim and Abyss, and every
+// Nightmare stage by construction) swing 1.4x harder. Player HP/DEF grew far faster than the flat
+// (5+l*4.6) formula, so a decked character was mathematically untouchable on the deepest maps; this
+// is the owner's "bosses and mobs do no damage" report, on top of the flee/DEF cap changes.
+const eaOf=l=>(l|0)>=90?1.4:1;
 // Each map's Nightmare gear is its own high-tier row, renamed: same weapon families and slots (so
 // every class can still use its own weapon) and a per-map word that keeps every name unique. Section
 // 4 is the stage 11-13 drop, section 5 the stage 14-15 and boss drop. They exist NOWHERE else - the
@@ -2506,13 +2511,22 @@ const st=k=>S.st[k]+bon(k),gearTierOf=it=>Math.max(0,Math.min(3,((it&&it.sec)|0)
 const maxHp=()=>Math.round((80+S.lv*20+eqv('head')*4+(eqv('acc1')+eqv('acc2'))*3+st('vit')*8+bon('hp'))*C().hp*(1+(pv('hpp')+(typeof cardMasteryStat==='function'?cardMasteryStat('hpPct'):0))/100)*(1+(petBuff.hp||0)/100)*(1+petPassive('hp')/100));
 const atk=()=>Math.round((4+S.lv*2+eqv('weapon')+(S.eq.off&&S.eq.off.wt==='dagger'?eqv('off'):0)+st(C().main)*1.5+(st('dex')+st('luk'))*.25)*C().atk*(1+(pv('atk')+bon('atk')+(typeof cardMasteryStat==='function'?cardMasteryStat('atkPct'):0)+(tb.atk||0)+(petBuff.atk||0))/100)*(1+collDmg()/100));
 const matk=()=>Math.round((4+S.lv*2+eqv('weapon')*.8+st('int')*1.5+st('dex')*.25)*C().atk*(1+(pv('matk')+bon('matk')+(typeof cardMasteryStat==='function'?cardMasteryStat('matkPct'):0)+(tb.matk||0)+(petBuff.matk||0))/100)*(1+collDmg()/100));
-const aspd=()=>Math.max(.2,.85*C().aspd*(1-Math.min(.5,st('agi')*.006))/(1+(pv('aspd')+bon('aspd')+(typeof cardMasteryStat==='function'?cardMasteryStat('aspdPct'):0)+(tb.aspd||0))/100));
+// Attack interval in seconds (the sheet prints the RO-style ASPD number beside it). v86 (owner:
+// "attack speed is too slow with max agi 99 or 120, check ragnarok online as reference"): the old
+// AGI term capped at a 50% reduction, which AGI 83 already reached - AGI 99 -> 120 gave literally
+// zero attack speed - and the .2s floor capped every class at 5 hits/s. Now: the AGI reduction
+// climbs to 68% (rate .0058, so AGI 99 cuts 57.4% and AGI 120 hits the 68% cap - maxing AGI is
+// ~25% faster than AGI 99), and the floor is .13s (~7.7 hits/s, the RO 190+ machine-gun feel the
+// owner asked for; class speed ordering is preserved until the floor). Typical endgame intervals:
+// Assassin Cross ~.14s, Sniper ~.15s, Lord Knight ~.20s before gear ASPD%; with gear ASPD% most
+// trans classes ride the .13 floor.
+const aspd=()=>Math.max(.13,.85*C().aspd*(1-Math.min(.68,st('agi')*.0058))/(1+(pv('aspd')+bon('aspd')+(typeof cardMasteryStat==='function'?cardMasteryStat('aspdPct'):0)+(tb.aspd||0))/100));
 // v73 crit retune (owner): reaching the 60% cap used to be a LUK dump - LUK 99 alone paid
 // 39.6%. LUK now pays 0.25 a point, the flat base is 2, and above 45% every further point from
 // stats, skills, gear and card mastery counts half. A Lv70 LUK dump with both Hunter/Sniper crit
 // passives lands ~51%, so the last stretch to 60 is a real build. Index Crit (above) is the only
 // source that passes the 60 cap, and the total stops at 100.
-const crit=()=>{const v=2+st('luk')*.25+pv('crit')+bon('crit')+(typeof cardMasteryStat==='function'?cardMasteryStat('critPct'):0),core=Math.min(60,v<=45?v:45+(v-45)*.5);return Math.min(100,core+(typeof indexCrit==='function'?indexCrit():0))},flee=()=>Math.min(60,st('agi')*.5+S.lv*.1+pv('flee')+bon('flee')+(typeof cardMasteryStat==='function'?cardMasteryStat('fleePct'):0)),missCh=()=>Math.max(0,15-st('dex')*.25);
+const crit=()=>{const v=2+st('luk')*.25+pv('crit')+bon('crit')+(typeof cardMasteryStat==='function'?cardMasteryStat('critPct'):0),core=Math.min(60,v<=45?v:45+(v-45)*.5);return Math.min(100,core+(typeof indexCrit==='function'?indexCrit():0))},flee=()=>Math.min(30,st('agi')*.5+S.lv*.1+pv('flee')+bon('flee')+(typeof cardMasteryStat==='function'?cardMasteryStat('fleePct'):0)),missCh=()=>Math.max(0,15-st('dex')*.25);
 // v74 (owner: "add a movement speed description"): AGI is the only stat that moves the hero, and
 // the curve used to be a private constant inside update(). It is one named function now, shown on
 // the stat sheet as the world units per second the hero actually travels (the run multiplier
@@ -2650,7 +2664,7 @@ function minionDef(pack){
   const F=fieldOf(S.mp,S.lvl),l=pw(),mb=1+S.mp*.15+Math.max(0,S.mp-4)*.2,nm1=S.lvl>10,nm=nm1?NMHP:1,na=nm1?NMATK:1,ne=nm1?nmExpOf(S.lvl):1,nz=nm1?nmZenyOf(S.lvl):1;
   const early=starterStage(S.mp,S.lvl),m=F.mobs[ri(0,1)];
   const hp=early?Math.min(starterHp(S.lvl),Math.floor(HPK*mb*Math.pow(l,HPE))):Math.floor(HPK*mb*Math.pow(l,HPE)*nm);
-  return{...m,mapIndex:S.mp,boss:false,pack,hp,max:hp,atk:early?starterAtk(S.lvl):Math.floor((5+l*4.6)*mb*na),
+  return{...m,mapIndex:S.mp,boss:false,pack,hp,max:hp,atk:early?starterAtk(S.lvl):Math.floor((5+l*4.6)*mb*na*eaOf(l)),
     exp:Math.max(1,Math.floor(EXPK*Math.pow(l,1.5)/50*ne)),zeny:Math.max(ZMIN,Math.floor(ri(ZK[0],ZK[1])*l*l/1000*nz)),
     size:.6,mag:['demon','tree','blob'].includes(m.shape),lvl:l,sec:F.sec,
     spawn:0,ry:0,at:rnd(.6,1.6),a:rnd(0,Math.PI*2),wt:rnd(1,4)};
@@ -2683,7 +2697,7 @@ function spawn(){
   const bossWave=!!F.boss;
   if(bossWave){
     const hp=Math.floor(500*mb*Math.pow(l,HPE)*(nm1?NMBOSSHP:1));
-    mobs.push({...F.boss,mapIndex:S.mp,boss:true,pack:0,hp,max:hp,atk:Math.floor((8+l*6.5)*mb*na),
+    mobs.push({...F.boss,mapIndex:S.mp,boss:true,pack:0,hp,max:hp,atk:Math.floor((8+l*6.5)*mb*na*eaOf(l)),
       exp:Math.max(1,Math.floor(BOSEK*Math.pow(l,1.5)/50*ne)),zeny:Math.max(ZMIN,Math.floor(ri(BZK[0],BZK[1])*l*l/1000*nz)),
       size:1.3,mag:true,lvl:l,sec:F.sec});
     // The first five maps bring three escorts; the five later maps bring five.
@@ -2960,7 +2974,7 @@ const SKSLOTS=t=>1+(t||0),SKFADE=[1,.55,.3,.18];
 // swing over 1.5s - three casts meant three hits in three different poses. They now land on the same
 // contact frame as the animation they belong to, because the animation, not a timer, is what the
 // player reads; SKGCD had no other use, so the constant is gone.
-const SWING_MIN_T=.3,SWING_MAX_T=.55;      // seconds: the shortest and longest drawn attack animation
+const SWING_MIN_T=.14,SWING_MAX_T=.55;     // seconds: the shortest and longest drawn attack animation (v86: .14 so a fast ASPD actually LOOKS fast - .3 was slower than the v86 attack floor)
 // dot.pow is the fraction of the triggering hit dealt PER SECOND, so a .05/4s dot adds 20% of
 // the hit spread over time. chain.pow is the fraction each bounce deals, once per target.
 function castSkill(sk,k){
@@ -3348,7 +3362,7 @@ const V={
     return`<div class="hd">${S.cls} &middot; Base Lv ${S.lv} &middot; Job Lv ${jobOf().jl}/${c.mj}</div><div class="hd">Stat points: ${S.pts} <small>(max ${statCap()} each${S.lv<ELITELV?' &middot; '+MAXST+' unlocks at Base Lv '+ELITELV:''} &middot; max Base Lv 150)</small></div><div class="hd">🏆 Class collection: ${playedClasses()}/${t3Total()} transcendent classes at Base Lv 100+ &middot; <b>+${collDmg()}% damage</b> <small>(+1% each, permanent${playedClasses()?'':' - take a transcendent class to Base Lv 100 to earn it'})</small></div>`
     +(petBonusList().length?`<small><b>Pet bonuses</b> (the fighting pets): ${petBonusList().join(' &middot; ')}</small>`:'')
     +STATS.map(([k,l,d])=>`<div class="slot"><span><b>${l}</b> ${S.st[k]}${b(k)} <small>(${d})</small></span><span class="bts"><small>${cost(k)}pt</small><button data-a="stat" data-v="${k}" ${S.pts>=cost(k)&&S.st[k]<statCap()?'':'disabled'}>+1</button><button data-a="stat5" data-v="${k}" ${S.pts>=cost(k)&&S.st[k]<statCap()?'':'disabled'}>+5</button></span></div>`).join('')
-    +`<div class="slot" style="flex-wrap:wrap"><span>ATK <b>${atk()}</b></span><span>MATK <b>${matk()}</b></span><span>DEF <b>${def()}</b></span><span>ASPD <b>${(1/aspd()).toFixed(2)}/s</b></span><span>Crit <b>${crit().toFixed(1)}%</b>${idxC?` <small>(+${idxC}% Index Crit)</small>`:''}</span><span>Crit DMG <b>x${critD().toFixed(2)}</b></span><span>MDEF <b>${mdef()}</b></span><span>Flee <b>${flee().toFixed(0)}%</b></span><span>HP <b>${maxHp()}</b></span><span>Move <b>${moveSpd().toFixed(2)}</b> <small>u/s · ${(moveSpd()*MOVE_RUN).toFixed(2)} sprinting</small></span></div>
+    +`<div class="slot" style="flex-wrap:wrap"><span>ATK <b>${atk()}</b></span><span>MATK <b>${matk()}</b></span><span>DEF <b>${def()}</b></span><span>ASPD <b>${Math.min(193,Math.round(144+5/Math.max(.13,aspd())))}</b> <small>${(1/aspd()).toFixed(2)}/s &middot; RO-style</small></span><span>Crit <b>${crit().toFixed(1)}%</b>${idxC?` <small>(+${idxC}% Index Crit)</small>`:''}</span><span>Crit DMG <b>x${critD().toFixed(2)}</b></span><span>MDEF <b>${mdef()}</b></span><span>Flee <b>${flee().toFixed(0)}%</b></span><span>HP <b>${maxHp()}</b></span><span>Move <b>${moveSpd().toFixed(2)}</b> <small>u/s · ${(moveSpd()*MOVE_RUN).toFixed(2)} sprinting</small></span></div>
     <small><b>Movement speed</b> comes from AGI alone: ${heroMoveSpeedForAgi(st('agi')).toFixed(2)} units a second at AGI ${st('agi')} (${(heroMoveSpeedForAgi(st('agi'))*MOVE_RUN).toFixed(2)} when running, which is any trip longer than 3 units). Every point of AGI adds about 0.03 - it never touches damage, so it is a comfort stat.${petPassive('move')?` A fighting Peco Peco's Swift Mount adds ${petPassive('move')}%.`:''}</small>
     <small>Crit is capped at 60% from stats, skills, gear and card mastery; above 45% each further point counts half. <b>Index Crit</b> (+${idxC}% of +40 max, from Hunt Titles) is the only source that passes the cap, and the total stops at 100%.</small>
     <small>Weapons: ${c.wt.join(', ')}${katarOnly()?' (a two-handed Katar, or a dagger in each hand)':''} &middot; Main stat: ${SU(c.main)}</small><button class="full" data-a="rstat" ${rcost()&&S.zeny<rcost()?'disabled title="You need '+rcost().toLocaleString()+' Zeny to reset stats"':''}>Reset stats (${rcost()?rcost()+'z':'free below Base 20'})</button>`},
@@ -3986,7 +4000,15 @@ function update(dt){
   // v83: an empty field is only rebuilt when there are no camps to rebuild it (a fresh map, the boss
   // arena, or the walk back after a defeat). A camp field refills itself below instead - the field the
   // player walks through stays stocked, so there is no whole-field wave reset any more.
-  if(!mobs.length){if(!camps.length){respawn-=dt;if(respawn<=0)spawn()}
+  if(!mobs.length){
+    if(!camps.length){respawn-=dt;if(respawn<=0)spawn()}
+    // v86 bugfix: a WHOLE-FIELD wipe (a far-level character clearing every camp in seconds) used to
+    // freeze the map for good - the per-camp refill sweep below only ran while at least one mob was
+    // alive, so with mobs=[] and camps still listed neither the refill timers nor the respawn
+    // fallback ever ticked again. The camps keep counting here now, and a camp that restocks takes
+    // over as the active pack: the old activePack died with the wipe, and without this nothing
+    // would ever wake, chase or fight even though monsters were standing on the field again.
+    else for(const c of camps)if(!mobs.some(m=>m.pack===c.i)){c.t+=dt;if(c.t>=c.wait){c.t=0;c.wait=campWait(c);fillCamp(c.i,c);activePack=nearestPack()}}
     // Roam: pick a fresh spot when the timer runs out or the current one is reached.
     // Stage 10 is the boss arena, and there the roam has to stay with the boss: the old
     // field-wide wander sent the character off to the far corners, where the freshly spawned
@@ -4026,10 +4048,12 @@ function update(dt){
         if(Math.random()*100<flee())addFloat(pl.x,2.4,pl.z,'DODGE','#76eaff',false,'evade');
         // Incoming damage: a capped percentage cut, not a flat subtraction. The old line took
         // def*0.6 off every hit with a floor of 1, so a geared character took exactly 1 damage
-        // from every monster and every boss in the game. def/(def+4000) caps at 75%: the naked
-        // game is within a few percent of before, mid-gear cuts ~64%, endgame sits at the cap.
-        // Pinned by ui_sim.js / save_load_sim.js (this is a game-loop line, not a constant).
-        else{const md=m.mag?mdef():def(),cut=Math.min(.75,md/(md+4000));
+        // from every monster and every boss in the game. def/(def+4000) now caps at 60% (v86,
+        // was 75%: endgame gear sat at the cap, so landed hits lost three quarters and - with
+        // the flee cap also halved - an endgame fight could not hurt at all). The naked game is
+        // within a few percent of before, mid-gear cuts ~60%, endgame sits at the new cap.
+        // Pinned by combat_damage_sim.js (this is a game-loop line, not a constant).
+        else{const md=m.mag?mdef():def(),cut=Math.min(.6,md/(md+4000));
           const d=Math.max(1,Math.round(m.atk*rnd(.8,1.2)*(1-cut)*(1-petPassive('dr')/100)));S.hp-=d;hitAnim=1;m.atkAnim=1;damageFloat(pl.x,2.4,pl.z,d,false,true);
           // Defeat is the ONE thing that puts you back at the spawn point.
 if(S.hp<=0){log('You were defeated... knocked back to the entrance.','r0','kills');S.hp=maxHp();S.kl=0;mobs=[];mob=null;camps=[];engageTgt=null;respawn=1.5;tb={};

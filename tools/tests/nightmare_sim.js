@@ -158,10 +158,10 @@ t('the difficulty knobs are the shipped ones and the live code reads them', () =
   assert.ok(src.includes('exp:Math.max(1,Math.floor(BOSEK*Math.pow(l,1.5)/50*ne)),zeny:Math.max(ZMIN,Math.floor(ri(BZK[0],BZK[1])*l*l/1000*nz))'), 'MVP EXP/Zeny x NMEXP/NMZENY');
   assert.ok(src.includes('nm1=stage>10,ne=nm1?nmExpOf(stage):1,nz=nm1?nmZenyOf(stage):1'), 'the offline simulator mirrors the band pay');
   assert.ok(src.includes('hp=early?Math.min(starterHp(S.lvl),Math.floor(HPK*mb*Math.pow(l,HPE))):Math.floor(HPK*mb*Math.pow(l,HPE)*nm)'), 'mob HP x NMHP');
-  assert.ok(src.includes('atk:early?starterAtk(S.lvl):Math.floor((5+l*4.6)*mb*na)'), 'mob ATK x NMATK');
+  assert.ok(src.includes('atk:early?starterAtk(S.lvl):Math.floor((5+l*4.6)*mb*na*eaOf(l))'), 'mob ATK x NMATK (and the v86 endgame bump)');
   assert.ok(src.includes('exp:Math.max(1,Math.floor(EXPK*Math.pow(l,1.5)/50*ne))'), 'mob EXP x NMEXP');
   assert.ok(src.includes('Math.floor(500*mb*Math.pow(l,HPE)*(nm1?NMBOSSHP:1))'), 'boss HP x NMBOSSHP');
-  assert.ok(src.includes('atk:Math.floor((8+l*6.5)*mb*na)'), 'boss ATK shares the band multiplier');
+  assert.ok(src.includes('atk:Math.floor((8+l*6.5)*mb*na*eaOf(l))'), 'boss ATK shares the band multiplier and the v86 endgame bump');
   // A worked example using the live field powers (99 and 175). Keep spawn()'s flooring order too:
   // the HP/ATK multipliers are applied before Math.floor, not to an already-rounded base value.
   const mb = 1 + 9 * .15 + Math.max(0, 9 - 4) * .2;
@@ -173,7 +173,7 @@ t('the difficulty knobs are the shipped ones and the live code reads them', () =
   const abyss15 = { hp: hp(abyss15Power, N.NMHP), atk: Math.round(atk(abyss15Power, N.NMATK) * .25) };
   const abyss15BossHp = Math.floor(500 * mb * Math.pow(abyss15Power, 1.3) * N.NMBOSSHP);
   assert.deepStrictEqual([abyss10Power, abyss10.hp, abyss10.atk], [99, 55286, 386], 'Abyss Stage 10 uses its live power-99 baseline');
-  assert.deepStrictEqual([abyss15Power, abyss15.hp, abyss15.atk, abyss15BossHp], [175, 5565251, 1357, 66252994], 'the Nightmare example follows spawn() rounding');
+  assert.deepStrictEqual([abyss15Power, abyss15.hp, abyss15.atk, abyss15BossHp], [175, 5565251, 1357, 66252994], 'the Nightmare example follows spawn() rounding (v86 ATK bump included)');
   console.log('       Abyss Stage 10 : mob HP ' + abyss10.hp.toLocaleString() + ', a hit lands for ' + abyss10.atk.toLocaleString() + ' after a 75% DEF cut');
   console.log('       Nightmare Abyss 15: mob HP ' + abyss15.hp.toLocaleString() + ' (' + (abyss15.hp / abyss10.hp).toFixed(0) + 'x), a hit lands for ' + abyss15.atk.toLocaleString() + ' (' + (abyss15.atk / abyss10.atk).toFixed(1) + 'x)');
   console.log('       Abyss Stage 15 boss: ' + abyss15BossHp.toLocaleString() + ' HP');
