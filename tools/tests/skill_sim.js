@@ -50,14 +50,31 @@ class FakeObject {
 }
 class FakeMesh extends FakeObject { constructor(geometry,material){super();this.geometry=geometry;this.material=material} }
 class FakeLine extends FakeMesh {}
+// Sprite-layer surface: the v79 skill effects draw procedurally rendered sheets on a canvas
+// and play them as animated billboard/ground quads, so the stand-ins grow a plane with a
+// writable UV attribute, a CanvasTexture, and a fake 2D context every draw call can no-op.
+class FakePlaneGeometry extends FakeGeometry {
+  constructor(...args){super(...args);this.attributes={uv:{xy:[],setXY(i,x,y){this.xy[i]=[x,y]},needsUpdate:false}}}
+}
+class FakeCanvasTexture { constructor(image){this.image=image;this.generateMipmaps=true;this.minFilter=0;this.magFilter=0} dispose(){this.disposed=true} }
+function fakeCanvas(){
+  const grad={addColorStop(){}};
+  const ctx={canvas:null,globalAlpha:1,fillStyle:'',strokeStyle:'',lineWidth:1,lineCap:'',lineJoin:'',
+    save(){},restore(){},translate(){},rotate(){},scale(){},beginPath(){},closePath(){},moveTo(){},lineTo(){},
+    quadraticCurveTo(){},bezierCurveTo(){},arc(){},ellipse(){},rect(){},fill(){},stroke(){},clearRect(){},fillRect(){},
+    setLineDash(){},createRadialGradient:()=>grad,createLinearGradient:()=>grad};
+  const cv={width:0,height:0,style:{},getContext:()=>ctx};ctx.canvas=cv;return cv;
+}
 const fakeThree={RingGeometry:FakeGeometry,TorusGeometry:FakeGeometry,IcosahedronGeometry:FakeGeometry,ConeGeometry:FakeGeometry,
-  BoxGeometry:FakeGeometry,CircleGeometry:FakeGeometry,MeshBasicMaterial:FakeMaterial,LineBasicMaterial:FakeMaterial,
+  BoxGeometry:FakeGeometry,CircleGeometry:FakeGeometry,PlaneGeometry:FakePlaneGeometry,MeshBasicMaterial:FakeMaterial,LineBasicMaterial:FakeMaterial,
+  CanvasTexture:FakeCanvasTexture,LinearFilter:1006,NormalBlending:1,
   Mesh:FakeMesh,Line:FakeLine,Group:FakeObject,BufferGeometry:FakeBufferGeometry,Vector3:FakeVec3,DoubleSide:2,AdditiveBlending:3};
 const vfxBox={THREE:fakeThree,removed:[],scene:{add(){},remove(o){vfxBox.removed.push(o)}},cam:{quaternion:{}},pl:{x:0,z:0},cl:(v,a,b)=>Math.max(a,Math.min(b,v)),
+  document:{createElement:t=>t==='canvas'?fakeCanvas():{}},
   skillFx:[],SKILL_VFX:JSON.parse(JSON.stringify(K.SKILL_VFX))};
 vm.createContext(vfxBox);
 vm.runInContext(grab('function skillFxSpec(id,color)', '// ---------- world:')+'\n'+grab('const SKILL_FX_GEOMETRY=', 'let drag=null;const dom=R.domElement;')+
-  '\nthis.__renderer={playSkillFx,tickSkillFx,syncSkillFx,get effects(){return skillFx}};',vfxBox);
+  '\nthis.__renderer={playSkillFx,tickSkillFx,syncSkillFx,get effects(){return skillFx},get sprRecipes(){return SKILL_FX_SPR},get sheets(){return SKILL_FX_SHEETS}};',vfxBox);
 
 // Pull the tradeoff activation and expiry blocks out of update() by brace matching, so the
 // test runs the REAL code. A structural test cannot catch this class of bug: v8/v9 shipped
@@ -390,6 +407,129 @@ t('the live combat loop starts and renders skill visuals from casts, buffs and F
   assert.ok(src.includes('playSkillFx(s.id,null,s.col)'), 'temporary auto-buffs do not show their cast cue');
   assert.ok(src.includes('tickSkillFx(dt);') && src.includes('syncSkillFx();'), 'skill effects are advanced and drawn in the game loop');
   assert.ok(src.includes('function disposeSkillFx(fx)'), 'finished effects release their scene objects');
+});
+
+t('every visual family has a sprite recipe over the researched RO effect sheets', () => {
+  const fxr=vfxBox.__renderer;
+  // the classic client's effect vocabulary the sheets rebuild: pok bursts, rings, lens glows,
+  // slash streaks (purpleslash), ice, the diving shard, bolts, pillars, meteors, bubbles,
+  // arrows, coins, the falcon, smoke, sparkles, a ground AoE decal, and the v79.1 accents:
+  // wave, vortex, cross, star
+  for(const sh of ['pok','ring','lens','slash','flame','ice','shard','bolt','pillar','meteor','bubble','arrow','coin','falcon','smoke','spark','decal','wave','vortex','cross','star','hammer'])
+    assert.ok(fxr.sheets[sh],'sheet '+sh+' is missing');
+  const kinds=new Set(Object.values(K.SKILL_VFX).map(v=>v.kind));
+  const ids=new Set(K.SKILLS.map(s=>s.id));
+  for(const k of Object.keys(fxr.sprRecipes)){
+    assert.ok(kinds.has(k)||ids.has(k),k+' recipe matches no skill and no family');
+    const layers=fxr.sprRecipes[k];
+    assert.ok(Array.isArray(layers)&&layers.length,k+' has no sprite recipe');
+    for(const L of layers){
+      assert.ok(fxr.sheets[L.sh],k+' uses unknown sheet '+L.sh);
+      assert.ok(!(L.d0!=null&&L.d1!=null&&L.d1<=L.d0),k+' has an inverted layer window');
+      assert.ok(L.sc==null||L.sc>0,k+' has a sizeless layer');
+      assert.ok(L.face==null||L.face==='cam'||L.face==='ground',k+' has an unknown facing');
+    }
+  }
+  for(const k of kinds) assert.ok(fxr.sprRecipes[k],'family '+k+' lost its recipe');
+});
+
+t('shared families no longer read as copies: the visible overrides differ', () => {
+  const fxr=vfxBox.__renderer;
+  const eff=id=>fxr.sprRecipes[id]||fxr.sprRecipes[K.SKILL_VFX[id].kind];
+  const sig=id=>JSON.stringify(eff(id));
+  for(const [a,b] of [['tstorm','vermilion'],['cart','cartrev'],['quick','wwalk'],['quick','iconc'],['iagi','cboost'],
+    ['fireball','mbrk'],['mbrk','meltdown'],['signum','magnus'],['judex','holy'],['kyrie','coat'],['fire','napalm'],
+    ['blitz','falcon'],['focus','pharrow'],['vdust','env'],['sdestroy','soulb'],['provoke','frenzy'],['ovthrust','frenzy'],
+    ['env','vsplash'],['vdust','vsplash']]){
+    assert.ok(eff(a)&&eff(b),a+' or '+b+' has no recipe');
+    assert.notStrictEqual(sig(a),sig(b),a+' and '+b+' still play the identical effect');
+  }
+});
+
+t('the mage line strikes from the sky', () => {
+  const fxr=vfxBox.__renderer;
+  for(const id of ['fire','nap','fdiver']){
+    assert.strictEqual(K.SKILL_VFX[id].at||'target','target',id+' must land on the target, not fly a path');
+    const layers=fxr.sprRecipes[id]||fxr.sprRecipes[K.SKILL_VFX[id].kind];
+    const sky=layers.filter(L=>L.y>=4&&L.rise<=-3);
+    assert.ok(sky.length,id+' has nothing falling from the sky');
+  }
+  // Fire Bolt is a few single bolts dropping out of the sky
+  assert.ok((fxr.sprRecipes.fire||[]).filter(L=>L.sh==='bolt'&&L.y>=4&&L.rise<=-3).length>=2,
+    'Fire Bolt lost its falling bolts');
+});
+
+t('v79.3 cast reworks: paths, targets and the literal hammer', () => {
+  const fxr=vfxBox.__renderer;
+  const eff=id=>fxr.sprRecipes[id]||fxr.sprRecipes[K.SKILL_VFX[id].kind];
+  // Fire Ball and Napalm Vulcan are projectiles fired from the caster
+  for(const id of ['fireball','napalm'])
+    assert.strictEqual(K.SKILL_VFX[id].at,'path',id+' must fly the caster-to-target path');
+  // Holy Light and Judex appear on the target - no projectile
+  for(const id of ['holy','judex'])
+    assert.strictEqual(K.SKILL_VFX[id].at,'target',id+' must not be a projectile');
+  // Meteor Assault sweeps horizontally: slashes strike at the caster's sides, none vertical
+  const ma=eff('mAss').filter(L=>L.sh==='slash');
+  assert.ok(ma.filter(L=>Math.abs(L.x||0)>=1).length>=2,'Meteor Assault has no side slashes');
+  assert.ok(!ma.some(L=>L.face==='ground'),'Meteor Assault must not lay giant blades on the floor');
+  // Soul Breaker / Soul Destroyer: ONE clean slash wave riding caster to target
+  for(const id of ['soulb','sdestroy']){
+    assert.strictEqual(K.SKILL_VFX[id].at,'path',id+' must travel caster to target');
+    assert.strictEqual(eff(id).filter(L=>L.sh==='slash').length,1,id+' must be a single slash wave');
+  }
+  // Hammer Fall: a translucent light-hammer swings down (spin), then the impact lands
+  const hm=(eff('hammer')||[]).find(L=>L.sh==='hammer');
+  assert.ok(hm,'Hammer Fall has no hammer layer');
+  assert.ok(hm.spin&&hm.ang!=null,'the hammer must swing, not fall');
+  assert.notStrictEqual(hm.blend,'normal','the hammer is translucent light, not a solid object');
+  assert.ok((eff('hammer')||[]).some(L=>L.sh==='star'&&L.d0>=.3),'no impact beat after the swing');
+  // Storm Gust is a gust: a swirling vortex field, not just falling shards
+  assert.ok(eff('storm').filter(L=>L.sh==='vortex').length>=2,'Storm Gust lost its swirl');
+  // Magnus pillars rain out of the sky
+  assert.ok(eff('magnus').filter(L=>L.sh==='pillar'&&L.rise<=-3).length>=3,'Magnus pillars do not fall');
+  // ground layers never sit coplanar with the terrain
+  for(const [key,layers] of Object.entries(fxr.sprRecipes))for(const L of layers)
+    if(L.face==='ground')assert.ok((L.y||0)>=0,'ground layer of '+key+' at the floor would z-fight');
+});
+
+t('spun layers rotate in place and never smear across the sheet (the v79 box-bands bug)', () => {
+  const fxr=vfxBox.__renderer;
+  fxr.playSkillFx('hammer',{x:2,z:0},'#ffcf6a');   // the light-hammer swings (spin)
+  fxr.playSkillFx('spiral',{x:2,z:0},'#ffffff');   // vortex + slash spin
+  for(let i=0;i<6;i++){fxr.tickSkillFx(.03);fxr.syncSkillFx()}
+  let checked=0;
+  for(const fx of fxr.effects)for(const p of fx.parts){
+    const uv=p.mesh.geometry&&p.mesh.geometry.attributes&&p.mesh.geometry.attributes.uv;
+    if(!uv||!uv.xy||uv.xy.length<4)continue;
+    const n=p.n,us=uv.xy.map(q=>q[0]),vs=uv.xy.map(q=>q[1]);
+    const cx=us.reduce((a,b)=>a+b,0)/4;
+    for(const u of us)assert.ok(Math.abs(u-cx)<=.75/n+1e-6,'u smeared across the sheet: '+u.toFixed(3));
+    // corners may poke past v (they clamp onto the transparent frame margin); the visible art
+    // (radius <= ~.46 of the cell) never leaves its own frame
+    for(const v of vs)assert.ok(v>-.3&&v<1.3,'v out of range: '+v.toFixed(3));
+    checked++;
+  }
+  assert.ok(checked>=2,'no spun sprite parts were checked');
+  for(let i=0;i<40;i++)fxr.tickSkillFx(.05);   // let them expire for the next tests
+});
+
+t('skill effects build animated sprite layers and advance their frames in flight', () => {
+  const fxr=vfxBox.__renderer;
+  for(const id of Object.keys(K.SKILL_VFX)){
+    const before=fxr.effects.length;
+    fxr.playSkillFx(id,{x:1,z:-2},'#ffc94a');
+    const fx=fxr.effects[before];fxr.syncSkillFx();
+    const spr=fx.parts.filter(p=>p.spr);
+    assert.ok(spr.length,id+' produced no sprite layers');
+    for(const p of spr){
+      assert.ok(p.mesh.material.map,id+' sprite layer has no sheet texture');
+      assert.ok(Number.isInteger(p.frame)&&p.frame>=0&&p.frame<p.n,id+' sprite frame is out of range');
+      assert.ok(Number.isFinite(p.mesh.material.opacity),id+' sprite opacity is not finite');
+    }
+    fx.age=fx.life*.6;fxr.syncSkillFx();
+    fxr.tickSkillFx(fx.life);
+  }
+  assert.strictEqual(fxr.effects.length,0,'effects remained active after expiry');
 });
 
 t('every job line has skills to spend points on', () => {
