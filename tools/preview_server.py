@@ -5,8 +5,9 @@
 
 Routes:
 
-    /            the damage-floats proposal page (on-screen damage numbers: 3 options)
-    /damage      the same page
+    /            the game itself (index.html)
+    /game        explicit alias for the game
+    /damage      the damage-floats proposal page (on-screen damage numbers: 3 options)
     /crit        a live crit-frame comparison: the old misaligned burst vs the current one
     /weapons     the weapon proposal page (weapons on the class sprites)
     /review      the older weapon review page (drag a weapon where it looks wrong)
@@ -91,6 +92,6 @@ class Handler(http.server.SimpleHTTPRequestHandler):
 if __name__ == '__main__':
     port = int(sys.argv[1]) if len(sys.argv) > 1 else int(os.environ.get('PORT', '8000'))
     handler = functools.partial(Handler, directory=ROOT)
-    print('serving %s on 0.0.0.0:%d   ( / weapon review, /picker pose picker )'
+    print('serving %s on 0.0.0.0:%d   ( / game, /weapons proposal, /picker pose picker )'
           % (ROOT, port), file=sys.stderr, flush=True)
     http.server.ThreadingHTTPServer(('0.0.0.0', port), handler).serve_forever()

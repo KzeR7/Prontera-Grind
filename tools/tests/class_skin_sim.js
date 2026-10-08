@@ -67,7 +67,7 @@ function makeCanvas(w = 300, h = 150) {
   return cv;
 }
 function ctxFor(cv) {
-  let m = [1, 0, 0, 1, 0, 0], drawn = [];
+  let m = [1, 0, 0, 1, 0, 0], drawn = [], transforms = [], stack = [];
   const blit = (x, y, w, h, pixel) => {
     const x0 = Math.max(0, Math.round(x)), y0 = Math.max(0, Math.round(y));
     const x1 = Math.min(cv.width, Math.round(x + w)), y1 = Math.min(cv.height, Math.round(y + h));
@@ -79,10 +79,14 @@ function ctxFor(cv) {
   return {
     imageSmoothingEnabled: false,
     get drawn() { return drawn; },
+    get transforms() { return transforms; },
     clearRect(x, y, w, h) { blit(x, y, w, h, () => [0, 0, 0, 0]); },
+    save() { stack.push({ matrix: m.slice(), smoothing: this.imageSmoothingEnabled }); },
+    restore() { const state = stack.pop(); if (state) { m = state.matrix; this.imageSmoothingEnabled = state.smoothing; } },
     setTransform(a = 1, b = 0, c = 0, d = 1, e = 0, f = 0) { m = [a, b, c, d, e, f]; },
     resetTransform() { m = [1, 0, 0, 1, 0, 0]; },
     translate(tx, ty) { m = [m[0], m[1], m[2], m[3], m[0] * tx + m[2] * ty + m[4], m[1] * tx + m[3] * ty + m[5]]; },
+    rotate(r) { const co = Math.cos(r), si = Math.sin(r); m = [m[0] * co + m[2] * si, m[1] * co + m[3] * si, m[2] * co - m[0] * si, m[3] * co - m[1] * si, m[4], m[5]]; },
     scale(sx, sy) { m = [m[0] * sx, m[1] * sx, m[2] * sy, m[3] * sy, m[4], m[5]]; },
     putImageData(image, dx, dy) {
       for (let y = 0; y < image.height; y++) for (let x = 0; x < image.width; x++) {
@@ -92,7 +96,7 @@ function ctxFor(cv) {
       }
     },
     drawImage(source, sx, sy, sw, sh, dx, dy, dw, dh) {
-      drawn.push(Array.from(arguments));
+      drawn.push(Array.from(arguments));transforms.push(m.slice());
       if (!source || !source._data) return;                   // <img>: no pixels here, the args are the proof
       assert.ok(m[1] === 0 && m[2] === 0, 'the game only ever uses scale / flip transforms, not skew or rotation');
       blit(dx, dy, dw, dh, (px, py) => {
@@ -148,6 +152,10 @@ function boot(options = {}) {
     bodies[name] = { atlas: 'data:image/png;base64,AA', anchors };
   box.window.SPRITE_PACK = { cellW: 126, cellH: 134, padL: 15, padT: 38, pivotX: 63, pivotY: 128, frames: [1, 8, 6], hairStyles: 19, bodies, heads: { male: 'data:image/png;base64,AA', female: 'data:image/png;base64,AA' } };
   if (!options.noSkins) box.window.CLASS_SKINS = CLASS_SKINS;
+  if (options.withWeapons) {
+    box.window.WEAPON_ART = WEAPON_ART;
+    box.window.WEAPON_PROPOSAL_DEFAULT = WEAPON_PROPOSAL_DEFAULT;
+  }
   box.__imageStub = ImageStub;
   box.__appended = appended;
   box.__fetched = fetched;
@@ -196,6 +204,8 @@ function boot(options = {}) {
     + `\nthis.__x={SKIN_SIZE,SKIN_VIEW,SKIN_ATTACK_MIRROR,SKIN_H,PACK_K,SKIN_CACHE_MAX,SKIN_STRIP_KEEP,SKIN_DECODE,
         skinPack,skinDoc,skinImage,skinLoaded,skinViewReady,skinRoute,skinFrameIndex,skinFrameOf,skinStrip,skinStrips,skinStripOrder,
         skinDecodePng,skinDecodeView,skinDecoding,mkSkinHero,captureSkinFrame,ensureHero,skinNow,
+        skinWeaponPlacement,drawSkinWeapon,SKIN_WEAPON_DEFAULTS,SKIN_WEAPON_ART,
+        SKIN_WEAPON_GRIP,SKIN_WEAPON_ANGLE,SKIN_WEAPON_HAND,SKIN_WEAPON_DESIGN,SKIN_WEAPON_BASE_SCALE,
         images:()=>images,logged:()=>logged,fetched:()=>__fetched,
         setS:(v)=>{S=v},selK:(v)=>{selK=v},
         broken:()=>skinBroken,hero:()=>heroSpr,appended:()=>__appended};`, box);
@@ -208,6 +218,12 @@ const dataBox = { window: {} };
 vm.createContext(dataBox);
 vm.runInContext(manifestSrc + '\nthis.__s={CLASS_SKINS:window.CLASS_SKINS};', dataBox);
 const CLASS_SKINS = dataBox.__s.CLASS_SKINS;
+const weaponAssetsBox = { window: {} };
+vm.createContext(weaponAssetsBox);
+vm.runInContext(fs.readFileSync(path.join(ROOT, 'assets/weapons_data.js'), 'utf8'), weaponAssetsBox);
+vm.runInContext(fs.readFileSync(path.join(ROOT, 'assets/weapon_proposal_data.js'), 'utf8'), weaponAssetsBox);
+const WEAPON_ART = weaponAssetsBox.window.WEAPON_ART;
+const WEAPON_PROPOSAL_DEFAULT = weaponAssetsBox.window.WEAPON_PROPOSAL_DEFAULT;
 const SPRITE_DIR = path.join(ROOT, CLASS_SKINS.dir);
 const fixturePath = path.join(ROOT, 'tools/tests/fixtures/apng_frame_sha.json');
 assert.ok(fs.existsSync(fixturePath),
@@ -654,6 +670,86 @@ const settle = async (X, limit = 2000) => {
   });
 
   // ---------- asset loading and the hero ----------
+  await t('the saved weapon proposals load before the game and composite onto the matching APNG frames', async () => {
+    const artTag=src.indexOf('<script src="assets/weapons_data.js?v=1"></script>');
+    const proposalTag=src.indexOf('<script src="assets/weapon_proposal_data.js?v=1"></script>');
+    const gameScript=src.indexOf('<script>\nconst $=');
+    assert.ok(artTag>=0&&proposalTag>artTag&&gameScript>proposalTag,'weapon art and saved placements load before the game code');
+    const Y=boot({withWeapons:true});
+    const proposalPage=fs.readFileSync(path.join(ROOT,'tools/weapon_proposal.html'),'utf8');
+    const pageObject=name=>{
+      const prefix=`const ${name} = `,start=proposalPage.indexOf(prefix);
+      assert(start>=0,`the proposal page still defines ${name}`);
+      const literalStart=start+prefix.length,end=proposalPage.indexOf('};',literalStart);
+      assert(end>literalStart,`${name} is still a complete object`);
+      const box={};vm.createContext(box);vm.runInContext('this.value='+proposalPage.slice(literalStart,end+1),box);return plain(box.value);
+    };
+    const familyDesigns=pageObject('DESIGNS'),fallbackDesigns=Object.fromEntries(Object.entries(familyDesigns).map(([family,ids])=>[family,ids[0]]));
+    deepEq(Y.SKIN_WEAPON_GRIP,pageObject('GRIP'),'runtime grip points stay identical to the proposal renderer');
+    deepEq(Y.SKIN_WEAPON_ANGLE,pageObject('ANGLE'),'runtime resting angles stay identical to the proposal renderer');
+    deepEq(Y.SKIN_WEAPON_HAND,pageObject('HAND'),'automatic hand guesses stay identical to the proposal renderer');
+    deepEq(Y.SKIN_WEAPON_DESIGN,fallbackDesigns,'alternate equipped families use the proposal\'s first design');
+    const scaleMatch=proposalPage.match(/const BASE_SCALE = ([0-9.]+);/);
+    assert(scaleMatch,'the proposal has its saved weapon scale');
+    assert.strictEqual(Y.SKIN_WEAPON_BASE_SCALE,+scaleMatch[1],'runtime artwork scale matches the proposal page');
+    assert.strictEqual(Object.keys(WEAPON_PROPOSAL_DEFAULT.classes).length,19,'the runtime defaults cover all 19 jobs');
+    for(const [name,record] of Object.entries(WEAPON_PROPOSAL_DEFAULT.classes))
+      assert.ok(WEAPON_ART[record.design],`${name} selected design ${record.design} is bundled locally`);
+
+    let checkedPlacements=0;
+    for(const [name,record] of Object.entries(WEAPON_PROPOSAL_DEFAULT.classes))for(const sex of ['m','f']){
+      const skin=CLASS_SKINS.classes[name][sex],pose={cls:name,sex,frames:skin.frames,poses:skin.poses};
+      for(const [view,saved] of Object.entries(record.views[sex])){
+        const count=skin.frames[view]||1;
+        for(let fi=0;fi<count;fi++){
+          const P=Y.skinWeaponPlacement(pose,record,view,fi);
+          assert.strictEqual(!!P,!!saved.weapon,`${name}/${sex}/${view} frame ${fi} respects its weapon checkbox`);
+          if(P){for(const f of ['hx','hy','dx','dy','rot','scale'])assert.ok(Number.isFinite(P[f]),`${name}/${sex}/${view} frame ${fi} has finite ${f}`);checkedPlacements++}
+        }
+      }
+    }
+    assert.ok(checkedPlacements>100,`the runtime resolves the full saved frame matrix (${checkedPlacements} armed frames)`);
+    const p=Y.skinPack('Novice','m');await settle(Y);
+    assert.strictEqual(p.cls,'Novice','the decoded skin carries its class key');
+    assert.strictEqual(p.sex,'m','the decoded skin carries its gender key');
+    const spr=Y.mkSkinHero(p),ctx=spr.userData.skin.cv.getContext('2d');
+    Y.captureSkinFrame(spr,{view:'attack',mirror:false,weaponType:'dagger'},0);
+    assert.strictEqual(ctx.drawn.length,2,'the attack frame and one weapon sprite are painted together');
+    assert.strictEqual(ctx.drawn[1][0].src,'data:image/png;base64,'+WEAPON_ART.dagger_broken,'the saved Novice design is the actual bundled PNG');
+    const noviceFrame=Y.skinWeaponPlacement(p,WEAPON_PROPOSAL_DEFAULT.classes.Novice,'attack',0);
+    deepEq(noviceFrame,{hx:87,hy:115,dx:0,dy:0,rot:-344,scale:.6,fx:1,fy:1},'the first saved attack frame resolves to its own hand, angle and flip');
+    const archer=Y.skinPack('Archer','m');await settle(Y);
+    deepEq(Y.skinWeaponPlacement(archer,WEAPON_PROPOSAL_DEFAULT.classes.Archer,'attack',5),
+      {hx:119.67,hy:110.67,dx:0,dy:0,rot:45.33,scale:1.3,fx:-1,fy:1},
+      'an unkeyed Archer frame blends between the saved keys just like the proposal page');
+    assert.ok(src.includes('route.weaponType=wt'),'the equipped class weapon family reaches the canvas compositor');
+    close(ctx.transforms[1][4],87,'the weapon grip is positioned on the chosen hand x');
+    close(ctx.transforms[1][5],115,'the weapon grip is positioned on the chosen hand y');
+    deepEq(ctx.drawn[1].slice(1),[-75,-129,150,150],'the image uses the proposal page\'s 1.25x scale and dagger grip point');
+
+    ctx.drawn.length=0;ctx.transforms.length=0;
+    Y.captureSkinFrame(spr,{view:'attack',mirror:true,weaponType:'dagger'},0);
+    assert.strictEqual(ctx.drawn.length,2,'the mirrored attack still carries one weapon');
+    close(ctx.transforms[1][4],113,'the overlay is mirrored with the body around the 200px sprite centre');
+    close(ctx.transforms[1][5],115,'mirroring preserves the hand height');
+    ctx.drawn.length=0;ctx.transforms.length=0;
+    Y.captureSkinFrame(spr,{view:'S',mirror:false,weaponType:'dagger'},0);
+    assert.strictEqual(ctx.drawn.length,1,'the Novice remains bare on a view whose saved toggle is off');
+
+    const F=boot({withWeapons:true}),female=F.skinPack('Novice','f');await settle(F);
+    const fspr=F.mkSkinHero(female),fctx=fspr.userData.skin.cv.getContext('2d');
+    F.captureSkinFrame(fspr,{view:'attack',mirror:false,weaponType:'dagger'},0);
+    assert.strictEqual(fctx.drawn[1][0].src,'data:image/png;base64,'+WEAPON_ART.dagger_broken,'female art keeps the class\'s selected design');
+    close(fctx.transforms[1][4],74,'the female hand-back offset is applied to her own first frame');
+    close(fctx.transforms[1][5],78,'the female frame uses its own vertical offset');
+
+    const M=boot({withWeapons:true}),merchant=M.skinPack('Merchant','m');await settle(M);
+    const mspr=M.mkSkinHero(merchant),mctx=mspr.userData.skin.cv.getContext('2d');
+    M.captureSkinFrame(mspr,{view:'attack',mirror:false,weaponType:'mace'},0);
+    assert.strictEqual(mctx.drawn[1][0].src,'data:image/png;base64,'+WEAPON_ART.mace_gold,
+      'a Merchant equipped with a mace gets matching local art even though the saved class pick is an axe');
+  });
+
   await t('the page loads the manifest and asks for the class\'s own files, once each', async () => {
     assert.ok(src.includes('<script src="assets/class_skins_data.js?v=1"></script>'), 'the manifest is loaded by the page');
     assert.ok(src.includes('await fetch(encodeURI(url))'), 'the loader URL-encodes the source path (it contains spaces)');

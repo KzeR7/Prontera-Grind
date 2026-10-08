@@ -26,6 +26,24 @@ const SKIN_VIEW={0:['S',0],1:['SE',1],2:['SE',1],3:['NE',1],4:['NE',0],5:['NE',0
 // Attacking is drawn by the single SE attack animation: the left-hand facings (SW, W, NW) get it
 // mirrored, everything else the drawn swing.  Both are named here, in one list, so it is testable.
 const SKIN_ATTACK_MIRROR=[0,1,1,1,0,0,0,0];
+// The saved proposal is now the runtime source of truth for per-class, per-view weapon overlays.
+// Its coordinates are in this same 200x200 source space; the weapon art is local base64 PNG data.
+const SKIN_WEAPON_DEFAULTS=(window.WEAPON_PROPOSAL_DEFAULT&&window.WEAPON_PROPOSAL_DEFAULT.classes)||{};
+const SKIN_WEAPON_ART=window.WEAPON_ART||{};
+const SKIN_WEAPON_BASE_SCALE=1.25;
+const SKIN_WEAPON_DESIGN={dagger:'dagger_chill',sword:'sword_knight',katar:'katar_plain',bow:'bow_chill',
+  staff:'staff_gold',mace:'mace_gold',axe:'axe_chill',spear:'spear_chill'};
+const SKIN_WEAPON_GRIP={dagger:[.50,.86],sword:[.50,.90],katar:[.50,.55],bow:[.50,.50],
+  staff:[.50,.74],mace:[.50,.88],axe:[.50,.86],spear:[.50,.60]};
+const SKIN_WEAPON_ANGLE={
+  dagger:{S:6,SE:10,NE:8,attack:-30,N:4}, sword:{S:8,SE:14,NE:10,attack:-38,N:6},
+  katar:{S:0,SE:6,NE:4,attack:-20,N:0}, bow:{S:0,SE:0,NE:0,attack:-8,N:0},
+  staff:{S:6,SE:8,NE:6,attack:-26,N:4}, mace:{S:8,SE:12,NE:10,attack:-34,N:6},
+  axe:{S:10,SE:14,NE:12,attack:-40,N:8}, spear:{S:6,SE:8,NE:6,attack:-24,N:4}
+};
+const SKIN_WEAPON_HAND={S:[.02,.66],SE:[.99,.64],NE:[.04,.64],attack:[1,.56],N:[.06,.64]};
+const SKIN_WEAPON_FIELDS=['hx','hy','dx','dy','rot','scale'];
+const skinWeaponImages=new Map();
 // One constant scale per class and gender: the hero already stood 72px of the old pack cell tall.
 const SKIN_H=72*PACK_K;
 const SKIN_STRIP_KEEP=18;                  // decoded view strips kept alive at once (~23 MB of canvas)
@@ -178,7 +196,8 @@ function skinPack(cls,sex){
   if(cached!==undefined)return cached;
   const all=window.CLASS_SKINS,rec=all&&all.classes&&all.classes[cls]?all.classes[cls][sex==='f'?'f':'m']:null;
   let p=null;
-  if(rec){p={dir:all.dir,name:String(cls)+' '+(sex==='f'?'female':'male'),files:rec.files,frames:rec.frames,delays:rec.delays,secs:{},total:{},height:rec.height,anchor:rec.anchor};
+  if(rec){p={dir:all.dir,name:String(cls)+' '+(sex==='f'?'female':'male'),cls:String(cls),sex:sex==='f'?'f':'m',
+      files:rec.files,frames:rec.frames,delays:rec.delays,poses:rec.poses,secs:{},total:{},height:rec.height,anchor:rec.anchor};
     for(const v in rec.files){
       const d=rec.delays[v]||[];
       // an APNG delay denominator of 0 means 100 (spec); seconds here, the unit the clock is in
@@ -221,14 +240,70 @@ function skinFrameOf(p,view,now){
   if(strip)return{img:strip.cv,sx:skinFrameIndex(p,view,now===undefined?skinNow():now)*strip.w,sw:strip.w,sh:strip.h};
   const im=skinImage(p,view);
   return im?{img:im,sx:0,sw:SKIN_SIZE,sh:SKIN_SIZE}:null}
-// Paint the frame that is due for this facing onto the hero's canvas; the browser-playing-the-file
-// version of this could not be trusted to advance, so the clock and the frames are both ours now.
+function skinWeaponImage(id){
+  const data=SKIN_WEAPON_ART[id];if(!data)return null;
+  if(skinWeaponImages.has(id)){
+    const cached=skinWeaponImages.get(id);
+    return cached&&cached.complete&&cached.naturalWidth>0?cached:null;
+  }
+  const im=new Image();im.alt='';im.decoding='async';im.src='data:image/png;base64,'+data;
+  skinWeaponImages.set(id,im);
+  return im.complete&&im.naturalWidth>0?im:null;
+}
+function skinWeaponPlacement(p,clsRec,view,fi){
+  const sex=p.sex==='f'?'f':'m',V=clsRec&&clsRec.views&&clsRec.views[sex]&&clsRec.views[sex][view];
+  if(!V||!V.weapon)return null;
+  const base=V.base||{},pose=p.poses&&p.poses[view]||[70,60,60,100],guess=SKIN_WEAPON_HAND[view]||[.5,.6];
+  const hand=Array.isArray(base.hand)?base.hand:[pose[0]+pose[2]*guess[0],pose[1]+pose[3]*guess[1]];
+  const flip=Array.isArray(base.flip)?base.flip:[1,1],num=(v,d)=>Number.isFinite(+v)?+v:d;
+  const B={hx:num(hand[0],100),hy:num(hand[1],100),dx:num(base.dx,0),dy:num(base.dy,0),
+    rot:num(base.rot,0),scale:num(base.scale,1),fx:flip[0]===-1?-1:1,fy:flip[1]===-1?-1:1};
+  const frames=V.frames||{},count=Math.max(1,(p.frames&&p.frames[view])|0||1);
+  fi=Math.max(0,Math.min(fi|0,count-1));
+  const own=frames[String(fi)];
+  const merge=row=>{
+    if(!row)return Object.assign({},B);
+    const h=Array.isArray(row.hand)?row.hand:[B.hx,B.hy],f=Array.isArray(row.flip)?row.flip:[B.fx,B.fy];
+    return{hx:num(h[0],B.hx),hy:num(h[1],B.hy),dx:num(row.dx,B.dx),dy:num(row.dy,B.dy),
+      rot:num(row.rot,B.rot),scale:num(row.scale,B.scale),fx:f[0]===-1?-1:1,fy:f[1]===-1?-1:1};
+  };
+  if(own&&Object.keys(own).length)return merge(own);
+  const keys=Object.keys(frames).map(Number).filter(k=>Number.isFinite(k)&&frames[String(k)]&&Object.keys(frames[String(k)]).length).sort((a,b)=>a-b);
+  if(V.blend&&keys.length>=2){
+    let a=keys[0],b=keys[keys.length-1];
+    for(const k of keys){if(k<=fi)a=k;if(k>=fi)b=k}
+    if(a===b)return merge(frames[String(a)]);
+    const ra=merge(frames[String(a)]),rb=merge(frames[String(b)]),t=(fi-a)/(b-a),out={};
+    for(const f of SKIN_WEAPON_FIELDS)out[f]=+(ra[f]+(rb[f]-ra[f])*t).toFixed(2);
+    out.fx=t<.5?ra.fx:rb.fx;out.fy=t<.5?ra.fy:rb.fy;
+    return out;
+  }
+  return B;
+}
+function drawSkinWeapon(ctx,p,route,fi){
+  const clsRec=SKIN_WEAPON_DEFAULTS[p.cls];if(!clsRec)return false;
+  const viewRec=clsRec.views&&clsRec.views[p.sex==='f'?'f':'m']&&clsRec.views[p.sex==='f'?'f':'m'][route.view];
+  if(!viewRec||!viewRec.weapon)return false;
+  const family=SKIN_WEAPON_GRIP[route.weaponType]?route.weaponType:clsRec.family;
+  const design=family===clsRec.family&&SKIN_WEAPON_ART[clsRec.design]?clsRec.design:SKIN_WEAPON_DESIGN[family]||clsRec.design;
+  const im=skinWeaponImage(design);if(!im)return false;
+  const P=skinWeaponPlacement(p,clsRec,route.view,fi);if(!P)return false;
+  const[gx,gy]=SKIN_WEAPON_GRIP[family]||[.5,.85],scale=SKIN_WEAPON_BASE_SCALE*(P.scale||1);
+  const angle=((SKIN_WEAPON_ANGLE[family]&&SKIN_WEAPON_ANGLE[family][route.view])||0)+(P.rot||0);
+  const w=im.naturalWidth*scale,h=im.naturalHeight*scale;
+  ctx.save();ctx.imageSmoothingEnabled=false;ctx.translate(P.hx+(P.dx||0),P.hy+(P.dy||0));
+  ctx.rotate(angle*Math.PI/180);ctx.scale(P.fx===-1?-1:1,P.fy===-1?-1:1);
+  ctx.drawImage(im,-gx*w,-gy*h,w,h);ctx.restore();
+  return true;
+}
+// Paint the frame that is due for this facing onto the hero's canvas; its weapon follows the same
+// frame index, per-view toggle, mirror and hand placement saved by the proposal page.
 function captureSkinFrame(spr,route,now){
   const sk=spr.userData.skin,p=sk.p,nowMs=now===undefined?skinNow():now;
   const key=route.view+(route.mirror?'|m':'');
   const changed=sk.route!==key;
   if(changed){sk.route=key;sk.t0=nowMs}               // a new view or a new swing starts at its frame 0
-  const frame=skinFrameOf(p,route.view,nowMs-sk.t0);
+  const frameIndex=skinFrameIndex(p,route.view,nowMs-sk.t0),frame=skinFrameOf(p,route.view,nowMs-sk.t0);
   if(!frame){
     // nothing to draw: for the facing already on screen keep the frame it is showing (a decoded
     // view that was dropped from the cache reloads in the background), but never show one facing's
@@ -243,6 +318,7 @@ function captureSkinFrame(spr,route,now){
   ctx.imageSmoothingEnabled=false;                    // pixel art stays pixel art
   if(route.mirror){ctx.translate(SKIN_SIZE,0);ctx.scale(-1,1)}
   ctx.drawImage(frame.img,frame.sx,0,frame.sw,frame.sh,0,0,SKIN_SIZE,SKIN_SIZE);
+  drawSkinWeapon(ctx,p,route,frameIndex);               // class art is composited with its matching frame placement
   ctx.setTransform(1,0,0,1,0,0);
   sk.view=route.view;sk.mirror=route.mirror;
   sk.tex.needsUpdate=true;                            // the GPU texture follows the canvas next render
