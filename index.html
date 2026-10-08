@@ -635,7 +635,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // script block, which is a SyntaxError - the game did not run on main at all. One line wins, and
 // it names both sides of this merge: the v38 balance patch (the weapon cut, the affix/card
 // give-back) and main's weapon-hold rendering work.
-const BUILD='2026-10-08 grind-v79.5 fixed UV spin (the box bands), polished soul wave and hammer strike';   // shown on the login card - confirms which file you loaded
+const BUILD='2026-10-08 grind-v79.6 sharp claw slashes - tapered blades, no fat round blobs';   // shown on the login card - confirms which file you loaded
 $('buildTag').textContent='build '+BUILD;
 
 // ---------- class tree: Novice -> 6 first jobs -> 6 second jobs -> 6 third jobs ----------
@@ -5616,6 +5616,13 @@ function skillFxLine(fx,points,color,alpha=.9){
 const FX_FR=144;
 const fxLcg=s=>()=>((s=(s*1664525+1013904223)>>>0)%4294967296)/4294967296;
 const fxGlow=(g,x,y,r,c0,c1)=>{const gr=g.createRadialGradient(x,y,0,x,y,r);gr.addColorStop(0,c0);gr.addColorStop(1,c1);g.fillStyle=gr;g.beginPath();g.arc(x,y,r,0,6.2832);g.fill()};
+const fxClaw=(g,cx,cy,r,a0,a1,w,al)=>{ // crescent blade: outer arc out, tapered inner arc back, sharp tips
+  g.globalAlpha=al;g.fillStyle='#fff';g.beginPath();
+  const st=16;
+  for(let i=0;i<=st;i++){const a=a0+(a1-a0)*i/st;const x=cx+Math.cos(a)*r,y=cy+Math.sin(a)*r;i?g.lineTo(x,y):g.moveTo(x,y)}
+  for(let i=st;i>=0;i--){const a=a0+(a1-a0)*i/st;const rr=r-w*Math.sin(Math.PI*i/st);
+    g.lineTo(cx+Math.cos(a)*rr,cy+Math.sin(a)*rr)}
+  g.closePath();g.fill();g.globalAlpha=1};
 const fxStar=(g,x,y,r)=>{g.beginPath();g.moveTo(x,y-r);g.quadraticCurveTo(x,y,x+r,y);g.quadraticCurveTo(x,y,x,y+r);g.quadraticCurveTo(x,y,x-r,y);g.quadraticCurveTo(x,y,x,y-r);g.closePath();g.fill()};
 // v79.2: sheets are rendered at 144px so doubled-size effects stay sharp, and every painter
 // keeps its art inside a ~66px radius, so the additive quad edges never clip a visible glow -
@@ -5644,15 +5651,13 @@ const SKILL_FX_SHEETS={
     g.globalAlpha=.6*s;g.fillStyle='#fff';
     g.beginPath();g.ellipse(C,C,46*s,6*s,0,0,6.2832);g.fill();
     g.beginPath();g.ellipse(C,C,6*s,34*s,0,0,6.2832);g.fill();g.globalAlpha=1}},
-  // slash (purpleslash): a soft tapered energy crescent with a hot leading spark
-  slash:{n:6,paint(g,f,R){const C=72,t=f/5,a0=-2.7,sw=.5+2.3*t;
-    for(let k=2;k>=0;k--){g.strokeStyle='#fff';g.globalAlpha=[.18,.42,.95][k]*(1-t*.3);
-      g.lineWidth=(6+k*7)*1.6;g.lineCap='round';
-      g.beginPath();g.arc(C,C,42-k*3,a0,a0+sw*(1-k*.05));g.stroke()}
-    g.globalAlpha=.7*(1-t*.3);
-    fxGlow(g,C+Math.cos(a0+sw*.5)*42,C+Math.sin(a0+sw*.5)*42,16,'rgba(255,255,255,.6)','rgba(255,255,255,0)');
+  // slash (purpleslash): sharp claw crescents - tapered blades with pointed tips
+  slash:{n:6,paint(g,f,R){const C=72,t=f/5,a0=-2.7,sw=.6+2.2*t;
+    fxClaw(g,C,C,46,a0,a0+sw,15*(.6+.4*Math.sin(t*Math.PI)),.95);
+    fxClaw(g,C,C,33,a0+.5,a0+sw+.35,8,.6);
+    g.globalAlpha=.7;fxGlow(g,C+Math.cos(a0+sw)*46,C+Math.sin(a0+sw)*46,9,'rgba(255,255,255,.8)','rgba(255,255,255,0)');
     g.globalAlpha=1-t*.3;g.fillStyle='#fff';
-    fxStar(g,C+Math.cos(a0+sw)*42,C+Math.sin(a0+sw)*42,7*(1-t*.4));g.globalAlpha=1}},
+    fxStar(g,C+Math.cos(a0+sw)*46,C+Math.sin(a0+sw)*46,6*(1-t*.4));g.globalAlpha=1}},
   // flame: organic swaying tongues, gradient bodies with hot cores, drifting embers
   flame:{n:8,paint(g,f,R){const C=72,t=f/7,sway=Math.sin(t*Math.PI*2)*4;
     const tongues=[[0,46,16],[-19,36,11],[19,38,12],[-33,27,8],[33,28,8]];
@@ -5795,18 +5800,20 @@ const SKILL_FX_SHEETS={
       g.beginPath();g.moveTo(C+Math.cos(a)*(r-9),C+Math.sin(a)*(r-9));
       g.lineTo(C+Math.cos(a)*(r+10),C+Math.sin(a)*(r+10));g.stroke()}
     g.globalAlpha=.22+.1*Math.sin(t*6.3);fxGlow(g,C,C,r-5,'rgba(255,255,255,.7)','rgba(255,255,255,0)');g.globalAlpha=1}},
-  // wide crescent shockwave sweeping sideways
-  wave:{n:6,paint(g,f,R){const C=72,t=f/5,r=15+t*44;
-    g.strokeStyle='#fff';
-    g.globalAlpha=.25*(1-t*.5);g.lineWidth=14-t*8;
-    g.beginPath();g.ellipse(C,104,r,r*.45,0,Math.PI,6.2832);g.stroke();
-    g.globalAlpha=.9*(1-t*.4);g.lineWidth=6-t*3;
-    g.beginPath();g.ellipse(C,104,r,r*.45,0,Math.PI,6.2832);g.stroke();
-    g.globalAlpha=.5*(1-t);fxGlow(g,C,104,r*.5,'rgba(255,255,255,.5)','rgba(255,255,255,0)');g.globalAlpha=1}},
-  // swirling vortex disc
+  // wide shockwave crescent, tapered to sharp horns
+  wave:{n:6,paint(g,f,R){const C=72,t=f/5,r=16+t*44;
+    const draw=(rw,al)=>{g.globalAlpha=al;g.fillStyle='#fff';g.beginPath();
+      const st=18;
+      for(let i2=0;i2<=st;i2++){const a=Math.PI+Math.PI*i2/st;
+        const x=C+Math.cos(a)*r,y=104+Math.sin(a)*r*.45;i2?g.lineTo(x,y):g.moveTo(x,y)}
+      for(let i2=st;i2>=0;i2--){const a=Math.PI+Math.PI*i2/st;
+        const rr=r-rw*Math.sin(Math.PI*i2/st);g.lineTo(C+Math.cos(a)*rr,104+Math.sin(a)*rr*.45)}
+      g.closePath();g.fill();g.globalAlpha=1};
+    draw(9*(1-t*.5),.9);draw(15*(1-t*.5),.25);
+    g.globalAlpha=.5*(1-t);fxGlow(g,C,104,r*.4,'rgba(255,255,255,.5)','rgba(255,255,255,0)');g.globalAlpha=1}},
+  // swirling vortex: three tapered claw arcs winding in
   vortex:{n:6,paint(g,f,R){const C=72,t=f/5,base=t*2.6;
-    for(let k=0;k<3;k++){g.strokeStyle='#fff';g.globalAlpha=.85-k*.22;g.lineWidth=8-k*2;g.lineCap='round';
-      g.beginPath();g.arc(C,C,(11+k*9+t*7)*1.5,base+k*2.1,base+k*2.1+1.9);g.stroke()}
+    for(let k=0;k<3;k++)fxClaw(g,C,C,(11+k*9+t*7)*1.5,base+k*2.1,base+k*2.1+1.9,(7-k*2)*1.4,.85-k*.22);
     g.globalAlpha=.5;fxGlow(g,C,C,17,'rgba(255,255,255,.85)','rgba(255,255,255,0)');
     g.globalAlpha=.75*(1-t*.4);g.fillStyle='#fff';
     for(let i=0;i<5;i++){const a=base*1.7+i*1.26,r=(30+i*3)*1.5;fxStar(g,C+Math.cos(a)*r,C+Math.sin(a)*r,3.6)}

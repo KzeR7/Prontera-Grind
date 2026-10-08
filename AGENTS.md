@@ -5017,3 +5017,21 @@ The owner's second pass over v77, six notes, all built.
 * **Lesson for future rounds:** the sandbox has no browser, so WebGL output was invisible until
   the owner sent screenshots; the uv-rotation unit-mixing bug was provable from code but only
   obvious from pixels. Keep the PNG sheet/swing renders going and ask for screenshots early.
+
+### 2026-10-08 — `grind-v79.6: sharp claw slashes - tapered blades, no fat round blobs`
+
+* **Owner feedback with a real-client capture (Soul Breaker on iRO):** the client's slash is a
+  sharp tapered claw/scythe swoosh; our round-capped thick strokes read as "fat circular" blobs
+  on Sonic Blow, Grimtooth, Soul Breaker/Destroyer, Spiral Pierce, Bowling Bash "and a few more".
+* **Art fix:** new `fxClaw` painter helper (outer arc + sine-tapered inner arc meeting at sharp
+  points). `slash` = main claw + echo claw + tip spark; `wave` = tapered shockwave with sharp
+  horns; `vortex` = three tapered winding claws. All slash/wave/vortex consumers inherit it.
+* **Self-inflicted regression caught by skill_sim:** the vortex block replacement range ran to
+  the hammer comment and silently deleted the `cross` sheet; the sheet-pin test failed
+  ("sheet cross is missing") and the sheet was restored. Lesson: block splices must list every
+  sheet comment they cross.
+* **Files touched:** `index.html` (fxClaw helper, slash/wave/vortex redraws, `BUILD` v79.6,
+  cross restore), `READ-ME-FIRST.md`, BUILD-tag snapshots refreshed, this log.
+* **Tests:** skill_sim 58/58, all 36 suites green, town_smoke 40/40. Sheets + claws rendered to
+  PNG and compared against the owner's reference image before shipping.
+* **Branches / PR:** `arena/5d3fe321-prontera-grind`; **no PR opened**, as asked.

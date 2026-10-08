@@ -84,6 +84,19 @@ is the live one; with no argument the tool prints how to set a new one). Since v
 `GM` / `test1234`; `localStorage.removeItem('pg_gm_local')` removes it. Normal accounts are made
 in-game and stored in the browser (`pg_acc4`; saves under `pg_save3_<user>`).
 
+## BUILD v79.6 — sharp claw slashes: tapered blades, no fat round blobs (on the v79 sprite system)
+
+The owner compared the preview against a real-client capture: RO's slashes are **claws** —
+crescent blades that taper to sharp points — while the old sheets drew thick round-capped
+strokes that read as fat circular blobs (Sonic Blow, Grimtooth, Soul Breaker, Spiral Pierce,
+Bowling Bash and every other slash family).
+* New `fxClaw` helper draws a crescent as an outer arc plus a tapered inner arc that meets it at
+  **sharp tips**; `slash` is now a big claw + a thinner echo claw + tip spark, `wave` a tapered
+  shockwave with sharp horns, `vortex` three tapered winding claws. Every family that uses those
+  sheets (impact, multiSlash, spiral, shadow, radial, soulBolt, sdestroy, shockwave, fireNova…)
+  inherits the sharp read.
+* `skill_sim` 58/58, sheets rendered to PNG and visually checked against the reference capture.
+
 ## BUILD v79.5 — the box-bands bug is dead: UV spin fixed, soul wave & hammer strike polished
 
 The owner's screenshots finally showed the "boxes": horizontal bands. Root cause found and fixed —
