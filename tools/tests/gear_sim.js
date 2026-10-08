@@ -112,14 +112,22 @@ t('every section has weapons and its available armour/accessory slots', () => {
   console.log('       ' + weapons + ' weapon entries across 40 sections');
 });
 
-t('names do not repeat inside a map (no two slots offer the same item)', () => {
-  G.MAPS.forEach(mp => mp.gear.forEach((sg, sec) => {
-    const names = Object.keys(sg.w).map(k => sg.w[k]).concat([sg.a, sg.h, sg.o, sg.l, sg.ac, sg.ac2].filter(Boolean));
-    assert.strictEqual(new Set(names).size, names.length, mp.n + ' section ' + sec + ' repeats a name');
-  }));
+t('names do not repeat inside a map (no two slots or gear sets offer the same item)', () => {
+  G.MAPS.forEach(mp => {
+    const sets=[...mp.gear,...(mp.gearUpgrade?[mp.gearUpgrade]:[])];
+    sets.forEach((sg, sec) => {
+      const names = Object.keys(sg.w).map(k => sg.w[k]).concat([sg.a, sg.h, sg.o, sg.l, sg.ac, sg.ac2].filter(Boolean));
+      assert.strictEqual(new Set(names).size, names.length, mp.n + ' gear set ' + sec + ' repeats a name');
+    });
+    if(mp.gearUpgrade){
+      const old=new Set(mp.gear.flatMap(sg=>Object.keys(sg.w).map(k=>sg.w[k]).concat([sg.a,sg.h,sg.o,sg.l,sg.ac,sg.ac2].filter(Boolean))));
+      Object.keys(mp.gearUpgrade.w).map(k=>mp.gearUpgrade.w[k]).concat([mp.gearUpgrade.a,mp.gearUpgrade.h,mp.gearUpgrade.o,mp.gearUpgrade.l,mp.gearUpgrade.ac,mp.gearUpgrade.ac2].filter(Boolean))
+        .forEach(name=>assert.ok(!old.has(name),mp.n+' higher-tier set repeats '+name));
+    }
+  });
 });
 
-t('early maps use novice equipment first, then class-tier gear through the Lv50 boss stage', () => {
+t('the five early maps retain their existing job-tier progression', () => {
   for(let l=1;l<=10;l++)assert.strictEqual(G.secField(0,l),0,'Prontera must stay on Novice gear');
   const novicePool=G.gearPool(0,10),noviceTypes=new Set(novicePool.filter(x=>!['armor','head','off','leg','acc'].includes(x.k)).map(x=>x.k));
   assert.deepStrictEqual([...noviceTypes].sort(),['dagger','sword']);
@@ -140,9 +148,51 @@ t('early maps use novice equipment first, then class-tier gear through the Lv50 
   assert.ok(G.gearPool(4,10).some(x=>x.n==='Gakkung Bow'),'Payon boss tier must include its Archer weapon');
 });
 
+t('mid/endgame stages route second- and third-job equipment as requested',()=>{
+  const expected={5:Array(10).fill(2),6:Array(10).fill(2),7:Array(10).fill(2),
+    8:[2,2,2,2,2,3,3,3,3,3],9:Array(10).fill(3)};
+  for(const [mapText,stages] of Object.entries(expected)){
+    const m=+mapText,mp=G.MAPS[m];
+    for(let l=1;l<=10;l++)assert.strictEqual(G.secField(m,l),stages[l-1],`${mp.n} stage ${l} job section`);
+  }
+  for(let m=5;m<=7;m++){
+    for(let l=1;l<=10;l++)assert.ok(G.gearPool(m,l).every(x=>x.sec===2),`${G.MAPS[m].n} Stage ${l} must drop section-2 gear`);
+  }
+  for(let l=1;l<=5;l++)assert.ok(G.gearPool(8,l).every(x=>x.sec===2),`Niflheim Stage ${l} is improved second-job gear`);
+  for(let l=6;l<=10;l++)assert.ok(G.gearPool(8,l).every(x=>x.sec===3),`Niflheim Stage ${l} is third-job gear`);
+  for(let l=1;l<=5;l++)assert.ok(G.gearPool(9,l).every(x=>x.sec===3&&x.quality===1),`Abyss Stage ${l} is standard third-job gear`);
+  for(let l=6;l<=10;l++)assert.ok(G.gearPool(9,l).every(x=>x.sec===3&&x.quality===1.25),`Abyss Stage ${l} is higher-quality third-job gear`);
+  for(let m=5;m<=9;m++)for(let l=1;l<=10;l++){
+    const pool=G.gearPool(m,l),types=new Set(pool.filter(x=>!['armor','head','off','leg','acc'].includes(x.k)).map(x=>x.k));
+    assert.deepStrictEqual([...types].sort(),[...WEP].sort(),`${G.MAPS[m].n} Stage ${l} must carry all class weapon families`);
+    for(const slot of ['armor','head','off','leg','acc'])assert.ok(pool.some(x=>x.k===slot),`${G.MAPS[m].n} Stage ${l} has no ${slot} drop`);
+    for(const [cls,c] of Object.entries(G.CLASSES)){
+      const gate=G.secField(m,l);
+      if(G.classTierOf(cls)>=gate)assert.ok(c.wt.some(wt=>types.has(wt)),`${G.MAPS[m].n} Stage ${l} has no usable weapon for ${cls}`);
+    }
+  }
+});
+
+t('Abyss higher-tier third-job gear improves item values without changing section or rarity',()=>{
+  const standard=G.gearPool(9,5).find(x=>x.k==='armor'),advanced=G.gearPool(9,6).find(x=>x.k==='armor');
+  assert.strictEqual(standard.sec,advanced.sec,'both sets retain the third-job section');
+  assert.strictEqual(standard.tier,advanced.tier,'the map rarity band is unchanged');
+  const set=G.gearPool(9,6).map(x=>x.n).join('|');
+  assert.notStrictEqual(set,G.gearPool(9,5).map(x=>x.n).join('|'),'Stage 6 starts a distinct higher-tier set');
+  vm.runInContext('globalThis.__oldRandom=Math.random;Math.random=()=>.5',sb);
+  try{
+    G.S={mp:9};
+    const normal=G.genGear(standard,99,3,false,3),upgraded=G.genGear(advanced,99,3,false,3);
+    assert.ok(upgraded.val>normal.val,'upgraded base item value must be stronger');
+    assert.deepStrictEqual(upgraded.aff.map(a=>a.k),normal.aff.map(a=>a.k),'same rarity rolls the same affix kinds');
+    assert.ok(upgraded.aff.every((a,i)=>a.v>=normal.aff[i].v),'upgraded affixes must not be weaker');
+    assert.ok(upgraded.aff.some((a,i)=>a.v>normal.aff[i].v),'the higher quality must improve affixes too');
+  }finally{vm.runInContext('Math.random=globalThis.__oldRandom;delete globalThis.__oldRandom',sb)}
+});
+
 t('armour and accessory names are unique across the whole game', () => {
   const seen = new Map();
-  G.MAPS.forEach(mp => mp.gear.forEach(sg => [sg.a, sg.h, sg.o, sg.l, sg.ac, sg.ac2].filter(Boolean).forEach(n => {
+  G.MAPS.forEach(mp => [...mp.gear,...(mp.gearUpgrade?[mp.gearUpgrade]:[])].forEach(sg => [sg.a, sg.h, sg.o, sg.l, sg.ac, sg.ac2].filter(Boolean).forEach(n => {
     if (seen.has(n)) throw new Error(n + ' is both ' + seen.get(n) + ' and ' + mp.n);
     seen.set(n, mp.n);
   })));
@@ -302,6 +352,28 @@ t('fieldOf only hands out items from that field pool', () => {
   }
 });
 
+t('the field table and live gear drops preserve each normal map rarity tier', () => {
+  for (let m = 0; m < G.MAPS.length; m++) for (let l = 1; l <= 10; l++) {
+    const F = G.fieldOf(m, l), expected = G.dropTier(m, l);
+    for (const mob of F.mobs) for (const [item] of mob.drops) {
+      assert.strictEqual(item.tier, expected, G.MAPS[m].n + ' Stage ' + l + ' drop-table tier');
+      assert.strictEqual(G.rarIdx(item), item.sec >= 4 ? 5 : expected, G.MAPS[m].n + ' Stage ' + l + ' displayed item rarity');
+    }
+    if (F.boss) for (const [item] of F.boss.drops) {
+      assert.strictEqual(item.tier, expected, G.MAPS[m].n + ' Stage ' + l + ' MVP drop-table tier');
+      assert.strictEqual(G.rarIdx(item), item.sec >= 4 ? 5 : expected, G.MAPS[m].n + ' Stage ' + l + ' MVP item rarity');
+    }
+  }
+  // Normal generation still passes the field's rarity to the actual item, not just the preview.
+  for (const [map, tier, label] of [[5,2,'Rare'],[7,3,'Epic']]) {
+    const F=G.fieldOf(map,1),mob={...F.mobs[0],boss:false,lvl:1,sec:F.sec,ore:false,cardCh:0};
+    G.S={st:{luk:0},eq:{},mp:map};
+    const items=G.executeGearRoll(mob,.005);
+    assert.strictEqual(items.length,3, G.MAPS[map].n+' fixture must clear all three gear gates');
+    assert.ok(items.every(x=>x.it.tier===tier&&x.it.name.startsWith(label+' ')),G.MAPS[map].n+' actual equipment must remain '+label);
+  }
+});
+
 t('regular mobs drop both ores on every stage and Stage 10 keeps its stronger boss rate', () => {
   for (let m = 0; m < G.MAPS.length; m++) {
     for (let l = 1; l < 10; l++) {
@@ -319,35 +391,34 @@ t('regular mobs drop both ores on every stage and Stage 10 keeps its stronger bo
   assert.strictEqual(G.fieldOf(0, 1).mobs[0].card.g, 0, 'low fields keep common cards');
 });
 
-t('the pool is exactly the section set and only grows as you climb', () => {
+t('the pool is the routed stage set, with the requested progression on late maps', () => {
   G.MAPS.forEach((mp, m) => {
     let prev = 0;
     for (let l = 1; l <= 10; l++) {
-      const pool = G.gearPool(m, l), sec = mp.gear[G.secField(m, l)];
-      const names = Object.keys(sec.w).map(k => sec.w[k]).concat([sec.a, sec.h, sec.o, sec.l, sec.ac, sec.ac2].filter(Boolean));
-      assert.strictEqual(pool.map(x => x.n).join('|'), names.join('|'), mp.n + ' Lv' + l + ' pool must be the section set');
+      const pool = G.gearPool(m, l), sec = G.secField(m, l);
+      const set = m === 9 && l >= 6 ? mp.gearUpgrade : mp.gear[sec];
+      const names = Object.keys(set.w).map(k => set.w[k]).concat([set.a, set.h, set.o, set.l, set.ac, set.ac2].filter(Boolean));
+      assert.strictEqual(pool.map(x => x.n).join('|'), names.join('|'), mp.n + ' Lv' + l + ' pool must be the routed gear set');
+      assert.ok(pool.every(x=>x.sec===sec),mp.n+' Lv'+l+' item/job section mismatch');
+      assert.ok(pool.every(x=>x.quality===(m===9&&l>=6?1.25:1)),mp.n+' Lv'+l+' quality variant mismatch');
       assert.ok(pool.length >= prev, mp.n + ' Lv' + l + ' pool shrank');
       assert.ok(pool.length >= 7, mp.n + ' Lv' + l + ' pool is thin: ' + pool.length);
       prev = pool.length;
     }
-    // Prontera is locked to Novice gear on every stage. The four class maps hold their first
-    // tier through stage 5, then progress at stages 6, 8 and 10. The level 60+ maps stay pinned
-    // to one high-tier set on purpose, so their whole pool never offers a starter item.
     if (m === 0) {
       const novice = G.gearPool(m, 1).map(x => x.n).join('|');
-      for(let l=2;l<=10;l++)assert.strictEqual(G.gearPool(m,l).map(x=>x.n).join('|'),novice,'Prontera must stay on Novice gear');
+      for(let l=2;l<=10;l++)assert.strictEqual(G.gearPool(m,l).map(x => x.n).join('|'),novice,'Prontera must stay on Novice gear');
     } else if (m < 5) {
       const s0 = G.gearPool(m, 1).map(x => x.n);
       [6, 8, 10].forEach(l => assert.ok(G.gearPool(m, l).some(n => !s0.includes(n.n)), mp.n + ' later sections add nothing'));
+    } else if (m <= 7) {
+      for(let l=1;l<=10;l++)assert.ok(G.gearPool(m,l).every(x=>x.sec===2),mp.n+' must stay on second-job gear all normal stages');
+    } else if (m === 8) {
+      for(let l=1;l<=5;l++)assert.ok(G.gearPool(m,l).every(x=>x.sec===2),'Niflheim stages 1-5 are second-job gear');
+      for(let l=6;l<=10;l++)assert.ok(G.gearPool(m,l).every(x=>x.sec===3),'Niflheim stages 6-10 are third-job gear');
     } else {
-      // v38: the high tier starts at field level 3, and stages 1-2 hand out section 2 (the
-      // Comodo cliff floor) instead of the old "high tier from level 1".
-      const top = G.gearPool(m, 3).map(x => x.n).join('|');
-      assert.strictEqual(G.gearPool(m, 10).map(x => x.n).join('|'), top, mp.n + ' Lv10 must use the high-tier set');
-      assert.strictEqual(G.gearPool(m, 2).map(x => x.n).join('|'), G.gearPool(m, 1).map(x => x.n).join('|'),
-        mp.n + ' stages 1 and 2 must share the floored section');
-      assert.notStrictEqual(G.gearPool(m, 1).map(x => x.n).join('|'), top,
-        mp.n + ' stages 1-2 must not already hand out the top section');
+      for(let l=1;l<=5;l++)assert.strictEqual(G.fieldOf(m,l).gearSet,'base','Abyss stages 1-5 use standard third-job gear');
+      assert.notStrictEqual(G.gearPool(m,5).map(x=>x.n).join('|'),G.gearPool(m,6).map(x=>x.n).join('|'),'Abyss Stage 6 must start the higher third-job set');
     }
   });
 });
@@ -421,6 +492,20 @@ t('class tier gates gear: Novice and 1st jobs share the low band, transcendent g
   assert.ok(G.gearTierOK(secondJob, 'Knight') && !G.gearTierOK(secondJob, 'Swordman'));
   assert.ok(G.gearTierOK(firstJob, 'Novice'), 'a Novice is left alone: 1st-job gear is the lowest band');
   assert.ok(!G.gearTierOK(secondJob, 'Novice'), 'but 2nd-job gear is still out of reach for one');
+  // Explicit stage checks from the owner's correction: a Thief cannot use 2nd-job gear; an
+  // Assassin (2nd job) cannot use either Nightmare section; a transcendent class can.
+  const nightmare = item({ id: 5, sec: 4, wt: 'sword' }), abyssal = item({ id: 6, sec: 5, wt: 'sword' });
+  assert.ok(!G.gearTierOK(secondJob, 'Thief') && G.gearTierOK(secondJob, 'Assassin'),
+    'section 2 is for second-job classes, not first-job Thieves');
+  assert.strictEqual(G.gearTierOf(nightmare), 3); assert.strictEqual(G.gearTierOf(abyssal), 3);
+  assert.ok(!G.gearTierOK(nightmare, 'Assassin') && !G.gearTierOK(abyssal, 'Assassin'),
+    'a second-job Assassin cannot wear Nightmare or Abyssal Nightmare gear');
+  assert.ok(!G.gearTierOK(nightmare, 'Thief') && !G.gearTierOK(abyssal, 'Thief'),
+    'a first-job Thief cannot wear either Nightmare section');
+  assert.ok(G.gearTierOK(nightmare, 'Assassin Cross') && G.gearTierOK(abyssal, 'Assassin Cross'),
+    'the third-job Assassin Cross meets the Nightmare class-stage gate');
+  assert.deepStrictEqual([G.gearUserOf(nightmare), G.gearUserOf(abyssal)],
+    ['transcendent classes only', 'transcendent classes only']);
   // drops match the gate: by the time a map hands out a section, its own ladder can wear it
   // (map 0 is Novice-only starter gear; maps 5-10 give high-tier from field level 3, and their
   // Base Lv bands are 60+, where the second/third jobs live)
@@ -506,22 +591,25 @@ t('the rarity band is fixed but the affixes are rolled every time', () => {
   assert.ok(mid.name.startsWith('Fine '), 'the item name states its fixed band: ' + mid.name);
 });
 
-t('a Nightmare item is its own rarity: tagged N, and still paid as a Legendary', () => {
-  // v76.2 (owner): "can the equipments rarity there be added a N ... make it look more exclusive
-  // rather than just plain ordinary rare or common equipment"
-  const nm = G.genGear({ k: 'sword', n: 'Dread Excalibur' }, 150, 4, false, 4);
+t('Nightmare equipment is its own N rarity, separate from Legendary and map quality', () => {
+  // v76.2 owner: Nightmare equipment has its own rarity N. Its normal field-quality value must not
+  // be promoted to Legendary just because the item comes from a Nightmare section.
+  const lowMapTier = G.dropTier(0, 12);
+  const nm = G.genGear({ k: 'sword', n: 'Dread Excalibur' }, 150, 4, false, lowMapTier);
   const hi = G.genGear({ k: 'sword', n: 'Dark Lord Sword' }, 150, 3, true, 4);
-  assert.strictEqual(nm.tier, 4, 'mechanics keep the Legendary band: autosell and value read it');
-  assert.strictEqual(G.rarIdx(nm), 5, 'but the display rarity is the Nightmare one');
-  assert.strictEqual(G.rarOf(nm).n, 'N', 'which is tagged N');
-  assert.strictEqual(G.rarCls(nm), 'r5', 'and painted with .r5');
+  assert.strictEqual(nm.tier, lowMapTier, 'Nightmare gear keeps its map field-quality value');
+  assert.notStrictEqual(nm.tier, 4, 'Prontera Nightmare gear is not forced to Legendary quality');
+  assert.strictEqual(G.rarIdx(nm), 5, 'section 4 selects the independent N rarity');
+  assert.strictEqual(G.rarOf(nm).n, 'N', 'the rarity label is N, not Legendary');
+  assert.strictEqual(G.rarCls(nm), 'r5', 'and N is painted with .r5');
   assert.ok(nm.name.startsWith('N '), 'the item name states it: ' + nm.name);
   assert.ok(src.includes('.r5{color:#5b21b6;font-weight:bold}'), 'the N rarity is dark purple in the CSS');
   assert.strictEqual(G.rarIdx(hi), 4, 'ordinary high-tier gear stays Legendary');
   assert.ok(hi.name.startsWith('Legendary '), 'and keeps its own prefix: ' + hi.name);
-  const ab = G.genGear({ k: 'sword', n: 'Absolute Dark Lord Sword' }, 150, 5, true, 4);
-  assert.strictEqual(G.rarOf(ab).n, 'N', 'Abyssal Nightmare gear wears the same N');
-  // the two Nightmare rows are a clean third of the matching normal table (v76.2 drop nerf)
+  const ab = G.genGear({ k: 'sword', n: 'Absolute Dark Lord Sword' }, 150, 5, true, G.dropTier(9, 15));
+  assert.strictEqual(G.rarIdx(ab), 5, 'Abyssal Nightmare is also N, not Legendary');
+  assert.strictEqual(G.rarOf(ab).n, 'N', 'both Nightmare sections use the N category');
+  // The owner's Nightmare drop-rate tables are unchanged: one third of their normal counterparts.
   assert.strictEqual(G.FIELD_GEAR_NM.map(x => +(x * 3).toFixed(2)).join(','), '1.5,1.2,0.9');
   assert.strictEqual(G.FIELD_GEAR_MID_NM.map(x => +(x * 3).toFixed(2)).join(','), '1.05,0.84,0.63');
 });

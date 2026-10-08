@@ -205,6 +205,46 @@ timing, anchor and balance number is unchanged. **Watch them at `/skillfx`**
 to cast it, slow time down, loop it, or play the whole roster — with the research note for each
 family in the side panel.
 
+## BUILD v78.2 — map-stage equipment progression for every class
+
+The normal route now matches the class gear you asked for while keeping job eligibility (`section`),
+rarity (`tier` / N), and drop odds separate.
+
+* **Comodo, Louyang, and Amatsu:** all normal stages 1-10 drop section-2, second-job gear.
+* **Niflheim:** stages 1-5 drop its stronger section-2 second-job set; stages 6-10 switch to
+  section-3 third-job/high-tier gear.
+* **Abyss:** stages 1-5 drop the standard section-3 third-job set. Stages 6-10 switch at Stage 6 to
+  a distinct upgraded third-job set with 25% stronger item values and affixes. It remains section 3,
+  so the third-job/transcendent equip gate still applies; it is not Nightmare N or a new rarity tier.
+* **Every class has a weapon to hunt in each stage band.** The active pools retain all seven weapon
+  families, and the stage rotations cover those families across Comodo, Louyang, Amatsu, both
+  Niflheim bands, and both Abyss bands. Non-weapon slots remain available in those gear sets too.
+* **Rarity and drop chances are unchanged.** Map-based rarity caps, Stage 10's full-field cap, and
+  all equipment drop rates stay as before. Nightmare sections 4-5 remain the separate N category.
+* **Checks:** all **36** `*_sim.js` suites passed; Town smoke passed **40/40**. Focused results:
+  `gear_sim` 37/37, `drop_card_sheet_sim` 13/13, `nightmare_sim` 9/9, `ui_sim` 50/50, and
+  `trial_sim` 16/16.
+
+## BUILD v78.1 — Nightmare N rarity, equipment gates, and field-tier corrections
+
+This follow-up corrected the Nightmare classification while keeping the v78 saved weapon sprites.
+Its earlier map-stage routing below has since been superseded by the v78.2 distribution above.
+
+* **Nightmare gear is N, not Legendary.** Sections 4-5 use the independent N rarity and auto-sell
+  bucket. The all-maps numeric tier-4 override is removed; generated quality follows the selected
+  map cap, and the Nightmare Gear Token uses the same rule. The selected-item auto-sell control now
+  targets N rather than indexing the normal rarity list.
+* **Class-stage equipment gates are confirmed.** On the mid-level maps (Comodo, Louyang, Amatsu and
+  Niflheim), normal stages 1-2 drop section-2 gear for second-job classes; stages 3-10 switch to
+  section-3 high-tier gear, which requires a third-job/transcendent class. Nightmare sections 4-5
+  share that highest class gate: Assassin and Thief cannot wear them; Assassin Cross can.
+* **Normal drops and odds are preserved.** Prontera/Izlude remain Common on stages 1-9. The Stage 10
+  map cap applies to the whole field, escorts and MVP included. No map's equipment drop chances changed.
+* Stage 10 clears follow the normal map route when Auto-advance is on, and Town / Endless Echo remain
+  together in their compact destination row. Normal drop-table previews carry the same map rarity as
+  their generated equipment instead of defaulting to Common.
+* **Checks:** all **36** `*_sim.js` suites passed; Town smoke passed **40/40**. Focused results: `gear_sim` 35/35, `nightmare_sim` 9/9, `ui_sim` 50/50, `trial_sim` 16/16, `class_skin_sim` 40/40, and `drop_card_sheet_sim` 12/12.
+
 ## BUILD v78 — saved class weapon sprites on the updated v77.2 game
 
 The new build keeps the v77.2 trial payout, daily-priced Shard Store, and HD Prontera town, and adds the saved weapon art to the live animated hero.
