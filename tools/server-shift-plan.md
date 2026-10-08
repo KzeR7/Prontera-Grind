@@ -206,6 +206,49 @@ Two conclusions:
    sync, not one per column. Storage is trivial: 20 players × ~100 KB + 5 backups each ≈ 12 MB
    against a 5 GB allowance.
 
+### 3b.1 What the client actually shipped — the v82 usage diet (2026-10-08)
+
+The table above priced a 60-second debounce; the first implementation shipped 30 seconds **and** paid
+for a second D1 row write on every sync (an explicit `last_seen` UPDATE, followed by the save's own
+UPDATE writing `last_seen` again). Both gaps are now closed, plus three more savings, which together
+take the same 20-player workload to about a quarter of its writes:
+
+| Change (all v82) | What it saves |
+|---|---|
+| An accepted `PUT /api/save` writes the save row **exactly once** — its own UPDATE carries `last_seen`, and only the paths that write no save (GET, 409, 428, a raced update) touch the baseline | **half** of all D1 rows written |
+| The push debounce is **60 s** while the tab is being played (was 30 s) | half of the sync requests *and* half of the writes per player |
+| A **hidden** tab pushes every **5 min** instead of ~1/min (a background tab's timers are clamped to ~1 s, so the old cadence was the real one) | a tab left open overnight: ~1,400 writes a day becomes ~290 |
+| The announcement/gift poll is **5 min visible / 15 min hidden** (the tick still runs every minute; it only asks when due) | most of a background tab's poll requests |
+| The town's **9.6 MB** atlas is fetched when a player heads for town, not at boot | 9.6 MB per cold load for every player who never goes there — *player* bandwidth, not the server's quota, but it is the difference between a ~12 MB and a ~22 MB first visit |
+
+Per player, per active hour, and then for 20 players at 4 h/day each:
+
+| Line | Before v82 | After v82 |
+|---|---|---|
+| Save pushes | 120/h (30 s) | 60/h (60 s) |
+| D1 rows written (saves + history) | ~252/h (2 per sync + snapshots) | **~66/h** (1 per sync + snapshots) |
+| Polls (`/api/grants` + `/api/messages`) | 24/h | 24/h visible, 4/h hidden |
+| Function requests | ~144/h | ~84/h |
+| **20 players × 4 h/day** | ~11,500 requests, ~20,000 writes/day | **~6,700 requests (~7%), ~5,300 writes (~5%)/day** |
+
+Writes are the number that matters: D1 *hard-stops* for the rest of the UTC day once the 100,000 is
+crossed, so a player-facing feature that spends writes (a heartbeat, a chat poll, a more eager sync)
+is spending the one allowance that can end a day early. Two things were checked and deliberately left
+alone:
+
+* **The leaderboard is already lazy.** `/api/board` is called when the Board tab is opened, not at
+  login, so there was nothing to defer.
+* **Static files are not metered at all** ("requests to static assets are free and unlimited" —
+  developers.cloudflare.com/pages/functions/pricing). Moving bytes into the player's browser
+  therefore saves the *player's* bandwidth, never the server's quota; the metered things are Function
+  requests, D1 rows and CPU time, which is exactly what the table above cuts.
+
+The GM console's **Cloudflare usage today** card (`functions/api/gm/usage.js`) reports the day's spend
+against the free allowances. Set `CF_ACCOUNT_ID` (a plain variable) and `CF_ANALYTICS_TOKEN` (a
+secret with *Account Analytics: Read*) on the Pages project and it reads Cloudflare's own counters;
+without them it reports our own ledger — accounts, save bytes, history rows — and says what to set.
+See `tools/cloudflare-deploy-steps.md` §8.
+
 ### 3c. CPU — the trap nobody mentions
 
 A plain free Worker gets **10 ms of CPU per request**. Login has to hash a password. PBKDF2-SHA256

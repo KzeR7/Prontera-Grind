@@ -654,7 +654,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // script block, which is a SyntaxError - the game did not run on main at all. One line wins, and
 // it names both sides of this merge: the v38 balance patch (the weapon cut, the affix/card
 // give-back) and main's weapon-hold rendering work.
-const BUILD='2026-10-08 grind-v81 Assassin dual wield: a dagger in each hand, the second blade at half rate';   // shown on the login card - confirms which file you loaded
+const BUILD='2026-10-08 grind-v82 the usage diet: a lighter cloud sync, and the town art arrives when you do';   // shown on the login card - confirms which file you loaded
 $('buildTag').textContent='build '+BUILD;
 
 // ---------- class tree: Novice -> 6 first jobs -> 6 second jobs -> 6 third jobs ----------
@@ -2065,11 +2065,24 @@ $('loginForm').addEventListener('submit',submitAuth);$('tabLogin').onclick=()=>s
 const CLOUD={api:false,on:false,user:null,gm:false,ver:0,dirty:false,lastPush:0,pushing:false,
   offline:false,paused:false};
 let boardPeriod='daily',boardCache=Object.create(null),boardLoading=false,boardError='',boardRequest=0;
-const CLOUD_DEBOUNCE=30000;      // push at most this often while playing
-const CLOUD_MAX_AGE=900000;      // a tab hidden longer than this re-pulls before pushing again
+// ---------- the sync cadence (v82 usage diet) ----------
+// Every push is one Function request and one D1 row written on the free plan, so the numbers here
+// are a budget, not a preference: the plan's own arithmetic (tools/server-shift-plan.md §3b) assumes
+// a 60-second debounce, and localStorage still saves every 5 seconds, so nothing can be lost by
+// syncing less often - the cloud is a vault, not the running state.
+const CLOUD_DEBOUNCE=60000;          // push at most this often while the tab is being played
+const CLOUD_HIDDEN_DEBOUNCE=300000;  // ...and this often while it is hidden (a hidden tab's timers
+                                     // are clamped to ~1/minute anyway, so without this a tab left
+                                     // open overnight wrote ~1,400 save rows by morning)
+const CLOUD_POLL_MS=300000;          // announcements and gifts while the tab is visible
+const CLOUD_HIDDEN_POLL_MS=900000;   // ...and while it is hidden: a message may wait 15 minutes
+const CLOUD_MAX_AGE=900000;          // a tab hidden longer than this re-pulls before pushing again
 const saveKeyFor=u=>'pg_save3_'+u;
 const cloudUrl=p=>'/api'+p;
 const cloudSay=(m,cls)=>log(m,cls||'r3','cloud');
+// Is this tab in the background? Guarded so the headless suites (which run this block with no real
+// document) still load it.
+const cloudHidden=()=>{try{return typeof document!=='undefined'&&!!document.hidden}catch(e){return false}};
 function cloudBadge(txt,tip){const e=$('cloudBadge');if(e){e.textContent=txt||'';e.title=tip||''}}
 function cloudLoginLine(txt){const e=$('loginCloud');if(e)e.textContent=txt||''}
 async function cloudFetch(path,opt){return fetch(cloudUrl(path),Object.assign({credentials:'same-origin',headers:{'Content-Type':'application/json'}},opt||{}))}
@@ -2092,7 +2105,11 @@ function cloudTouch(){if(!CLOUD.on||CLOUD.paused)return;CLOUD.dirty=true;cloudBa
 // network must not interrupt play - it only leaves the local copy leading, and the badge says so.
 async function cloudPush(push){
   if(!CLOUD.on||!S||!currentUser||CLOUD.paused)return 'idle';
-  if(!push&&(!CLOUD.dirty||Date.now()-CLOUD.lastPush<CLOUD_DEBOUNCE))return 'idle';
+  // A forced push (the tab is going away, a 428 round trip, the player chose a save) always sends.
+  // An ordinary flush waits for the debounce that fits where the tab is: a minute while it is being
+  // played, five while it is hidden - the game keeps grinding while hidden, but nobody is watching
+  // the badge, and "how fast the server hears about it" is the whole cost of this feature.
+  if(!push&&(!CLOUD.dirty||Date.now()-CLOUD.lastPush<(cloudHidden()?CLOUD_HIDDEN_DEBOUNCE:CLOUD_DEBOUNCE)))return 'idle';
   if(CLOUD.pushing)return 'idle';
   CLOUD.pushing=true;cloudBadge('☁ ⇅','Syncing…');
   try{
@@ -2170,6 +2187,11 @@ async function cloudRefresh(){
   const local=localStorage.getItem(saveKeyFor(currentUser));
   if(data.blob===local){CLOUD.ver=data.version;CLOUD.dirty=false;
     if(data.offlineClaim){applyOfflineProgress(Date.now(),data.offlineClaim);await cloudPush(true)}return}
+  // v82: the server's version is the one THIS tab last synced from, so no other device has written
+  // since - our copy is strictly newer and asking the player to choose between them would be a
+  // dialog with one right answer. (The normal cause is a tab the browser suspended for an hour: it
+  // wakes up holding an unsynced save and an old version number.) Push instead of prompting.
+  if(CLOUD.dirty&&Number(data.version)===Number(CLOUD.ver)){await cloudPush(true);return}
   if(CLOUD.dirty)cloudConflict(data);else await cloudAdopt(data);
 }
 
@@ -2185,6 +2207,16 @@ async function cloudPull(){
       cloudFetch('/messages',{method:'POST',body:JSON.stringify({ids:m.messages.map(x=>x.id)})}).catch(()=>{});
     }
   }catch(e){}
+}
+
+// The poll's own clock. A visible tab asks every five minutes, a hidden one every fifteen (a hidden
+// tab is not reading announcements; it is grinding unattended, and this is most of what a left-open
+// tab used to cost). The tick itself is a Date.now() compare, so it can run every minute for free.
+let cloudLastPoll=0;
+function cloudPollTick(){
+  const wait=cloudHidden()?CLOUD_HIDDEN_POLL_MS:CLOUD_POLL_MS;
+  if(Date.now()-cloudLastPoll<wait)return;
+  cloudLastPoll=Date.now();cloudPull();
 }
 
 // GM gifts: the client owns the save format and its repair rules, so it applies them here and then
@@ -2266,7 +2298,8 @@ async function initSessionFromCloud(u,gm,isNew){
       log('Welcome, '+u+'! Your progress will follow you to any device.','r1','cloud');
     }
   }
-  await cloudPull();
+  cloudLastPoll=Date.now();
+  await cloudPull();          // announcements and gifts land at login, then cloudPollTick takes over
 }
 
 // Cloud register/login, used by submitAuth whenever the API is present.
@@ -2364,7 +2397,7 @@ function restoreBackup(file){
  if(fi)fi.onchange=()=>{const f=fi.files&&fi.files[0];fi.value='';if(f)restoreBackup(f)};
 }
 addEventListener('load',()=>{setTimeout(cloudProbe,80)});
-setInterval(cloudPull,300000);   // announcements and gifts every 5 min; never the save itself
+setInterval(cloudPollTick,60000);   // announcements and gifts on cloudPollTick's clock - never the save itself
 
 
 addEventListener('load',()=>{if(typeof THREE==='undefined')showErr('3D engine failed to load. Check your internet connection and reload.')});
@@ -3594,6 +3627,11 @@ $('feedFilter').addEventListener('mouseleave',()=>{if(feedFilShown)feedFilArm()}
 $('feedFilter').addEventListener('focusin',()=>{if(feedFilTimer)clearTimeout(feedFilTimer)});
 $('feedFilter').addEventListener('focusout',()=>{if(feedFilShown)feedFilArm()});
 $('wins').onclick=e=>{const x=e.target.closest('[data-x]');if(x){openTab(x.dataset.x);return}const b=e.target.closest('[data-a]');if(b&&b.dataset.a==='ssel'&&e.target.closest('.sk-autocast'))return;if(b&&!b.disabled&&ACT[b.dataset.a]){if(b.dataset.a==='idxmap'&&e.target.closest('summary'))e.preventDefault();ACT[b.dataset.a](b.dataset.v)}};
+// v82: heading for town starts the 9.6 MB atlas a moment early, so the painted square is usually
+// already there when the hero walks in - and a player who never touches the Town card never pays
+// for it (the boot-time fetch that used to do that is gone; see the bottom of the file).
+{const townWarm=e=>{const t=e.target&&e.target.closest?e.target.closest('[data-a="town"]'):null;if(t&&typeof townPackFetch==='function')townPackFetch()};
+ if(typeof document!=='undefined'&&document.addEventListener){document.addEventListener('mouseover',townWarm,true);document.addEventListener('pointerdown',townWarm,true);document.addEventListener('focusin',townWarm,true)}}
 // v73: the picker's "inside" is the Bag window AND the Equipment window that opened it. The
 // Refine button, the card sockets, Unequip and Lock all live in the Equipment window's detail
 // card, so a click on any of them used to count as "clicked elsewhere" and shut the picker the
@@ -7812,7 +7850,13 @@ function bgShow(){                      // and it is back: replay what the timer
   save()}
 document.addEventListener('visibilitychange',()=>{if(document.hidden)bgHide();else bgShow()});
 setInterval(bgTick,SIM_BG_MS);
-resize();respawn=.3;requestAnimationFrame(loop);setInterval(save,5000);kitFetch();if(townUnlocked())townPackFetch();window.town=townToggle;window.townUnlock=townUnlock;window.TOWN_NPC=TOWN_NPC;   // the map tab's town card lists the five
+// v82: the town's atlas is NOT fetched here any more. It is 9.6 MB - the single biggest download in
+// the game - and it used to start on every load for every account with the town open, including the
+// players who never once walked through the gate. It now starts when somebody actually heads for
+// town (hovering or pressing the Town card warms it, townEnter() fetches it for sure), so only the
+// players who go there pay for it. Nothing else changed: the pack still arrives on its own clock and
+// townArt() still dresses the square when it lands.
+resize();respawn=.3;requestAnimationFrame(loop);setInterval(save,5000);kitFetch();window.town=townToggle;window.townUnlock=townUnlock;window.TOWN_NPC=TOWN_NPC;   // the map tab's town card lists the five
 </script>
 </body>
 </html>

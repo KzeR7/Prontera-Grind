@@ -51,6 +51,13 @@ tr:hover{background:#2a2014;cursor:pointer}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .stat{background:#1d160e;border:1px solid var(--edge);border-radius:6px;padding:6px 8px}
 .stat b{display:block;font-size:15px;color:var(--gold)}
+.col{display:flex;flex-direction:column;gap:12px;min-width:0}
+.meter{margin-top:6px}
+.meter .top{display:flex;justify-content:space-between;font-size:11px}
+.meter .track{height:6px;background:#160f0a;border:1px solid var(--edge);border-radius:4px;overflow:hidden}
+.meter .fill{height:100%;background:#2a9d3f}
+.meter .fill.warn{background:#e9b949}
+.meter .fill.bad{background:#e5484d}
 </style>
 </head>
 <body>
@@ -64,6 +71,12 @@ tr:hover{background:#2a2014;cursor:pointer}
 </header>
 
 <main>
+  <div class="col">
+  <section class="card">
+    <h2>Cloudflare usage today <span id="usagewhen" class="small"></span></h2>
+    <div id="usagebody" class="small">Loading…</div>
+  </section>
+
   <section class="card">
     <h2>Players <span id="count" class="small"></span></h2>
     <div class="row"><input id="search" placeholder="filter by name" style="flex:1"></div>
@@ -72,6 +85,7 @@ tr:hover{background:#2a2014;cursor:pointer}
     </thead><tbody></tbody></table></div>
     <p class="small">Click a player to open them. “never” means they have not synced a save yet.</p>
   </section>
+  </div>
 
   <section id="detail" class="card hide"></section>
 </main>
@@ -92,6 +106,43 @@ const api = async (path, opt) => {
 const when = t => t ? new Date(t).toLocaleString() : 'never';
 const nfmt = n => (n == null ? '—' : Number(n).toLocaleString());
 const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+// ---------- usage: what the game costs Cloudflare today ----------
+// Static files are not metered at all; Function requests and D1 rows are, and the D1 ones hard-stop
+// the day's writes when crossed. So this card puts the metered numbers against the free allowances,
+// and always shows our own ledger (accounts, save bytes, history) next to them.
+const bytes = n => n == null ? '—' : n < 1024 ? n + ' B'
+  : n < 1048576 ? (n / 1024).toFixed(1) + ' KB'
+  : n < 1073741824 ? (n / 1048576).toFixed(1) + ' MB' : (n / 1073741824).toFixed(2) + ' GB';
+
+function meter(label, used, cap, hint) {
+  if (used == null) return `<div class="meter"><div class="top"><span>${label}</span><span class="small">not measured here</span></div></div>`;
+  const pct = cap ? Math.min(100, used / cap * 100) : 0;
+  const cls = pct >= 80 ? 'bad' : pct >= 50 ? 'warn' : '';
+  return `<div class="meter"><div class="top"><span>${label}</span><span class="small">${nfmt(used)} / ${nfmt(cap)} · ${pct.toFixed(1)}%${hint ? ' · ' + hint : ''}</span></div>
+    <div class="track"><div class="fill ${cls}" style="width:${pct.toFixed(1)}%"></div></div></div>`;
+}
+
+async function loadUsage() {
+  let d = null;
+  try { d = await api('/gm/usage'); } catch (e) { $('usagebody').innerHTML = `<span class="bad">Could not read usage: ${esc(e.message)}</span>`; return; }
+  const L = d.ledger || {};
+  $('usagewhen').textContent = '· ' + d.utcDay + ' UTC';
+  $('usagebody').innerHTML = [
+    meter('Function requests (all Workers on the account)', d.requests?.used, d.limits.requests, d.requests ? nfmt(d.requests.errors) + ' errors' : ''),
+    meter('D1 rows written (the tight one)', d.d1?.rowsWritten, d.limits.rowsWritten, d.d1 && !d.d1.scoped ? 'all databases' : ''),
+    meter('D1 rows read', d.d1?.rowsRead, d.limits.rowsRead, ''),
+    `<div class="grid2" style="margin-top:8px">
+      <div class="stat">accounts<b>${nfmt(L.accounts)}</b><span class="small">${nfmt(L.saves)} with a cloud save · ${nfmt(L.liveSessions)} live sessions</span></div>
+      <div class="stat">save storage<b>${bytes(L.saveBytes)}</b><span class="small">biggest ${bytes(L.biggestSave)}</span></div>
+      <div class="stat">save history<b>${bytes(L.historyBytes)}</b><span class="small">${nfmt(L.historyRows)} backup rows (5 per player)</span></div>
+      <div class="stat">today<b>${nfmt(L.eventsToday)}</b><span class="small">logins &amp; GM actions · ${nfmt(L.grantsWaiting)} gifts waiting</span></div>
+    </div>`,
+    `<p class="small" style="margin:8px 0 0">${esc(d.note)}</p>`,
+    d.error ? `<p class="small bad" style="margin:6px 0 0">Analytics: ${esc(d.error)}</p>` : '',
+    d.hint ? `<p class="small" style="margin:6px 0 0">${esc(d.hint)}</p>` : '',
+  ].join('');
+}
 
 async function loadPlayers() {
   const d = await api('/gm/players');
@@ -114,7 +165,9 @@ $('players').onclick = e => {
   const tr = e.target.closest('tr[data-id]');
   if (tr) openPlayer(+tr.dataset.id);
 };
-$('refresh').onclick = () => (SEL ? openPlayer(SEL.account.id) : loadPlayers()).then(() => say('Refreshed.'));
+// Refresh reloads the usage card too: it is the screen the owner checks when they want to know what
+// the game is costing, and a stale number there would be worse than the one extra request.
+$('refresh').onclick = () => Promise.all([loadUsage(), SEL ? openPlayer(SEL.account.id) : loadPlayers()]).then(() => say('Refreshed.'));
 $('logout').onclick = async () => { try { await api('/sessions', { method: 'DELETE', body: '{}' }); } catch (e) {} location.href = '/'; };
 
 async function openPlayer(id) {
@@ -145,7 +198,7 @@ function renderDetail() {
       <div class="stat"><b>${s ? nfmt(s.kills) : '—'}</b><span class="small">lifetime kills</span></div>
     </div>
     <div class="tabs">
-      ${['account', 'send', 'announce', 'history', 'log'].map(t => `<button data-tab="${t}" class="${TAB === t ? 'on' : ''}">${({ account: 'Account', send: 'Send items & Zeny', announce: 'Announce', history: 'Backups', log: 'This player\\'s log' })[t]}</button>`).join('')}
+      ${['account', 'send', 'announce', 'history', 'log'].map(t => `<button data-tab="${t}" class="${TAB === t ? 'on' : ''}">${({ account: 'Account', send: 'Send items & Zeny', announce: 'Announce', history: 'Backups', log: "This player's log" })[t]}</button>`).join('')}
     </div>
     <div id="tabbody"></div>`;
   renderTab();
@@ -276,6 +329,7 @@ $('detail').addEventListener('click', async e => {
   try {
     const me = await api('/me');
     if (!me.gm) { document.body.innerHTML = '<main><section class="card"><h2>Not a GM</h2><p>Sign in with the owner account in the game first, then come back. <a href="/" style="color:var(--gold)">Back to the game</a></p></section></main>'; return; }
+    await loadUsage();          // both cards in parallel: the usage call is the slow one (Cloudflare API)
     await loadPlayers();
   } catch (e) {
     document.body.innerHTML = '<main><section class="card"><h2>Sign in first</h2><p>This console works from the session you already have in the game. <a href="/" style="color:var(--gold)">Open the game and sign in</a>, then return here.</p></section></main>';

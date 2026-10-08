@@ -5221,3 +5221,88 @@ The owner's second pass over v77, six notes, all built.
     Assassin is better off in a single katar.
   * A main-hand dagger now feeds `matk()` at full rate, exactly as a katar always did. That is a
     small, unintended MATK gain for the two jobs and was left alone rather than special-cased.
+
+### 2026-10-08 — `grind-v82 the usage diet: a lighter cloud sync, and the town art arrives when you do`
+
+* **Why:** the owner migrated the game to Cloudflare Pages and asked whether the "keep Cloudflare's
+  metered usage minimal, cost stays $0" design was actually holding. Reading the code against the
+  plan (`tools/server-shift-plan.md` §3b) found that it was **not** quite: the sync pushed twice as
+  often as the plan priced (30 s, not 60 s) **and** paid for a second D1 row write on every single
+  sync. Static files were already fine — they are not metered at all — so every saving here is about
+  the two things that are: **Function requests** and **D1 rows written**.
+* **What changed for the player:**
+  * **Nothing breaks and nothing moves.** The save is still written to this browser every 5 seconds,
+    so closing the tab, losing the network or reloading mid-fight loses exactly as much as before.
+    What changed is how often the *cloud copy* is refreshed: **60 s** while you are playing, and five
+    minutes while the tab is in the background (where before a hidden tab quietly synced about once a
+    minute all night). Leaving the tab to close, or the "two saves" dialog being answered, still
+    syncs immediately.
+  * **Announcements and GM gifts** arrive every 5 minutes while you are watching, and every 15 while
+    the tab is hidden. A message can therefore wait up to 15 minutes on a background tab; a visible
+    one is unchanged.
+  * **A tab that comes back after being suspended** (a phone in a pocket, a laptop lid closed) no
+    longer opens the "Two different saves — which do you keep?" dialog when there is only one
+    possible answer. If this device is the only one that has written anything, its save is simply
+    pushed. The dialog still appears for a *real* conflict — another device that synced while this
+    one was away.
+  * **Prontera Town's painted art (9.6 MB) is now downloaded by the players who actually go there.**
+    It used to start on every load for every account with the town open, including the players who
+    never walked through the gate. Hovering or pressing the Town card starts it a moment early so the
+    square is usually already painted when the hero arrives; walking in fetches it for sure.
+  * **The GM console** opens with a new **"Cloudflare usage today"** card: the day's Function
+    requests and D1 rows against the free allowances, next to our own ledger (accounts, save
+    storage, backups, sessions). Set two values on the Pages project and it reads Cloudflare's own
+    counters; without them it says so and shows the ledger instead. See
+    `tools/cloudflare-deploy-steps.md` §8.
+* **What the diet is worth** (the arithmetic behind it, per player per active hour, then 20 players at
+  4 h/day): save pushes 120→60, D1 rows written ~252→**~66**, polls 24/h (24 visible, 4 hidden),
+  requests ~144→~84 — so about **~6,700 requests (~7% of the free allowance) and ~5,300 writes (~5%)
+  a day** for 20 players, against ~11,500 and ~20,000 before. Rows written is the limit that matters:
+  D1 hard-stops for the rest of the UTC day once it is crossed. Written up in
+  `tools/server-shift-plan.md` §3b.1.
+* **Found and fixed while in there — the GM console page was dead.** `gm.html`'s single inline script
+  contained `log: 'This player\\'s log'`: two backslashes closed the string early, so the page threw a
+  SyntaxError before running a single line. The header rendered, and then nothing — no player list, no
+  sign-in card, no actions. Every test that touched `gm.html` read it as *text*, so none of them
+  noticed. It is now `log: "This player's log"`, and `gm_console_sim.js` parses the page's real
+  JavaScript with `node --check` so this class of failure cannot come back. (This predates the v82
+  work; the clone here has one commit, so the exact introduction date cannot be determined from it.)
+* **Files touched:** `index.html` (the sync cadence block: `CLOUD_DEBOUNCE` 60 s,
+  `CLOUD_HIDDEN_DEBOUNCE` 5 min, `CLOUD_POLL_MS`/`CLOUD_HIDDEN_POLL_MS`, `cloudHidden()`,
+  `cloudPollTick()`, the `cloudRefresh` push-instead-of-prompt branch, the Town-card warm hook, the
+  boot line's town fetch removed, `BUILD`), `functions/api/save.js` (the accepted PUT writes the save
+  row once; `earlyReturn` moves the away baseline only where no save is written), `functions/api/gm/usage.js`
+  (new), `functions/_lib/usage.js` (new), `functions/_lib/db.js` (`usageLedger`), `gm.html` (the usage
+  card + meters, the `col` layout, the escape fix), `tools/dev_server.js` (`GET /api/gm/usage` route;
+  `--db` now creates its directory), `tools/tests/api_sim.js` (D1 write counter + 5 new checks),
+  `tools/tests/cloud_sim.js` (4 new checks), `tools/tests/gm_console_sim.js` (syntax guard + usage-card
+  checks), `tools/tests/dev_server_sim.js` (usage over HTTP), `tools/tests/publish_sim.js` (`/gm/usage`),
+  `Updates/cards-gear-audit/affix-ranges.html` and `.../equipment-cards-tuning.html` (build label,
+  refreshed with `--refresh-snapshot`), `tools/server-shift-plan.md` (§3b.1),
+  `tools/cloudflare-deploy-steps.md` (§8 + the build-tag check + the ceilings line), `wrangler.toml`
+  (a comment naming the two optional values), `AGENTS.md`.
+* **Art:** no sheets added, removed or rebuilt; `tools/montage.py` was not used. `sprite_pack_data.js`
+  and the class skins are untouched.
+* **Tests:** every suite green — 38 of them (`api_sim` 33, `cloud_sim` 35, `dev_server_sim` 16,
+  `gm_console_sim` 11, `publish_sim` 10, `leaderboard_sim` 6, `migration_sim` 7, `offline_sim` 12,
+  `registration_sim` 7, `save_load_sim` 23, `gear_sim` 38, `ui_sim` 50, `skill_sim` 58, `class_skin_sim`
+  40, `kit_sim` 35, `class_change_sim` 27, `economy_sim` 23, `picker_sim` 19, `pet_sim` 17, `drop_card_sheet_sim`
+  13, `card_sim` 13, `weapon_review_sim` 13, `sprite_sim` 12, `background_sim` 12, `gm_auth_sim` 12,
+  `dual_wield_sim` 11, `combat_float_sim` 11, `nightmare_sim` 9, `starter_sim` 9, `scene_sim` 8,
+  `stat_sim` 7, `weapon_joint_sim` 7, `trial_sim` 16, `crit_sim` 5, `weapon_proposal_sim` 587,
+  `pack_sim` 19 bodies, `sprite_viewer_sim` 154 PNGs/19 jobs). `town_smoke.js` **40/40 steps ok**
+  (run after `npm i --no-save jsdom three@0.128.0`) — including "the painted HD pack dresses the town,
+  and dressings are protected from a late load", which is exactly the lazy-atlas path. Two of the
+  new checks were verified to *fail* against the old code (the redundant `touchSeen` write, and the
+  `gm.html` syntax error) before being left green.
+* **Branches / PR:** `arena/919fe08e-prontera-grind` → PR opened against `main` (link in the reply).
+* **Known limits / follow-ups:**
+  * The metered numbers need `CF_ACCOUNT_ID` + `CF_ANALYTICS_TOKEN` on the Pages project to read
+    Cloudflare's counters rather than our ledger. Until then the card is honest but partial, and the
+    dashboard (`Workers & Pages → the project`, `D1 → pg → Metrics`) is the fallback.
+  * The last 1-2 minutes of Cloudflare's analytics are not final while their aggregation catches up;
+    a number read at 23:59 UTC can move slightly.
+  * The page-facing savings (the lazy town atlas) are *player* bandwidth, not server quota: static
+    files are unmetered on every Cloudflare plan. They are still worth having on phones.
+  * Nothing here makes the leaderboard, chat or presence cheaper; those are still the phase-2 items
+    in `tools/server-shift-plan.md`, and a `/api/live` poll would be the next thing to spend requests.

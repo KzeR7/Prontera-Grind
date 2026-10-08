@@ -208,6 +208,33 @@ export const logEvent = (db, actor, userId, kind, detail) =>
 export const recentEvents = (db, limit = 100) =>
   db.prepare('SELECT * FROM events ORDER BY id DESC LIMIT ?').bind(limit).all();
 
+// ----------------------------------------------------------------- usage ----
+// One read-only snapshot of what this account costs to keep: a handful of small aggregate reads,
+// used by the GM console's Usage card. Everything the free plan meters on Cloudflare's side
+// (Function requests, D1 rows) is NOT derivable from these tables — that needs the Analytics API —
+// so this is deliberately the "our own books" half of the picture (_lib/usage.js is the other).
+export const usageLedger = async (db, sinceMs) => {
+  const r = await db.prepare(`SELECT
+      (SELECT COUNT(*) FROM users)                            AS accounts,
+      (SELECT COUNT(*) FROM saves)                             AS saves,
+      (SELECT COALESCE(SUM(LENGTH(blob)), 0) FROM saves)       AS save_bytes,
+      (SELECT COALESCE(MAX(LENGTH(blob)), 0) FROM saves)       AS biggest_save,
+      (SELECT COUNT(*) FROM save_history)                      AS history_rows,
+      (SELECT COALESCE(SUM(LENGTH(blob)), 0) FROM save_history) AS history_bytes,
+      (SELECT COUNT(*) FROM sessions WHERE expires_at > ?)     AS live_sessions,
+      (SELECT COUNT(*) FROM events WHERE at >= ?)              AS events_today,
+      (SELECT COUNT(*) FROM grants WHERE claimed_at IS NULL)   AS grants_waiting`)
+    .bind(sinceMs, sinceMs).first();
+  const n = (v) => Number(v) || 0;
+  return {
+    accounts: n(r?.accounts), saves: n(r?.saves),
+    saveBytes: n(r?.save_bytes), biggestSave: n(r?.biggest_save),
+    historyRows: n(r?.history_rows), historyBytes: n(r?.history_bytes),
+    liveSessions: n(r?.live_sessions), eventsToday: n(r?.events_today),
+    grantsWaiting: n(r?.grants_waiting),
+  };
+};
+
 // ----------------------------------------------------------- rate limits ----
 // Windows are fixed-size: cheap, good enough, and it keeps the SQL tiny.
 export async function hitRate(db, key, limit, windowMs) {

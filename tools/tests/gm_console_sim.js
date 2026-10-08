@@ -1,7 +1,9 @@
 // The GM console page is a client, not a door: it must fetch nothing but /api, authorise nothing
 // itself, and never carry a secret.   node tools/tests/gm_console_sim.js
 import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
+import cp from 'node:child_process';
 import assert from 'node:assert';
 import { fileURLToPath } from 'node:url';
 const root = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
@@ -68,6 +70,30 @@ t('the page is safe to serve publicly: it degrades to a sign-in card', () => {
   assert.match(src, /Sign in first/, 'a signed-out visitor must see instructions, not data');
   assert.match(src, /if \(!me\.gm\)/, 'a signed-in non-GM must be turned away');
   assert.ok(src.indexOf('if (!me.gm)') < src.indexOf('await loadPlayers()'), 'the check must come before any data call');
+});
+
+// The console is ONE script block: a single bad escape anywhere in it stops the whole page dead -
+// header, player list, usage card, nothing runs. That happened (a `\\'` inside a template literal,
+// which closed the string early), and no test noticed for a release, because the other suites all
+// read gm.html as text. So the page's own JavaScript is now parsed for real.
+t('the inline console JavaScript is valid JavaScript (the whole page dies if it is not)', () => {
+  const blocks = [...src.matchAll(/<script>([\s\S]*?)<\/script>/g)].map(m => m[1]);
+  assert.strictEqual(blocks.length, 1, 'the console is expected to have exactly one inline script');
+  const tmp = path.join(os.tmpdir(), `pg-gm-console-${process.pid}.js`);
+  try {
+    fs.writeFileSync(tmp, blocks[0]);
+    cp.execFileSync(process.execPath, ['--check', tmp], { stdio: 'pipe' });
+  } catch (e) {
+    assert.fail('gm.html\'s inline script does not parse: ' + String(e.stderr || e.message).split('\n').slice(0, 4).join(' '));
+  } finally { try { fs.unlinkSync(tmp); } catch (_) {} }
+});
+
+t('the usage card is wired to the GM-only usage endpoint', () => {
+  assert.match(src, /api\('\/gm\/usage'\)/, 'the console must read the usage endpoint');
+  assert.match(src, /Function requests|D1 rows written/, 'and show the metered numbers, not just the ledger');
+  const server = fs.readFileSync(path.join(root, 'functions/api/gm/usage.js'), 'utf8');
+  assert.match(server, /isGm\(user\)/, 'the endpoint must be GM-only');
+  assert.ok(!/CF_ANALYTICS_TOKEN\s*=\s*['"]/.test(server), 'no token may be hard-coded in the handler');
 });
 
 console.log('\n' + pass + ' passed, ' + fail + ' failed');

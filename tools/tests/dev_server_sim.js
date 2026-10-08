@@ -161,6 +161,17 @@ try {
     assert.strictEqual(msgs.data.messages[0].body, 'Servers up!');
   });
 
+  await t('the usage card answers over HTTP, for the owner only, without an analytics token', async () => {
+    const asOwner = await call('owner', 'GET', '/api/gm/usage');
+    assert.strictEqual(asOwner.status, 200);
+    assert.strictEqual(asOwner.data.source, 'ledger', 'no token here -> our own books');
+    assert.strictEqual(asOwner.data.requests, null, 'unmeasured counters are null, never zero');
+    assert.ok(asOwner.data.ledger.saves >= 1, 'the ledger counts the saves in this database');
+    assert.strictEqual(asOwner.data.limits.rowsWritten, 100000);
+    assert.strictEqual((await call('friend', 'GET', '/api/gm/usage')).status, 403, 'a player must not read it');
+    assert.strictEqual((await call('anon', 'GET', '/api/gm/usage')).status, 401);
+  });
+
   await t('every GM action wrote an audit row', async () => {
     const log = await call('owner', 'GET', '/api/gm/log');
     assert.strictEqual(log.status, 200);

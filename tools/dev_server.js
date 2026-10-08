@@ -38,6 +38,10 @@ export function makeD1(sqlite) {
 }
 
 export function freshDb(file) {
+  // `--db tools/.devdb/preview.sqlite` is the documented way to keep accounts across restarts, but
+  // that directory is gitignored - so a fresh clone has no `.devdb/` and SQLite refuses to create a
+  // file inside a missing directory ("unable to open database file"). Make it, then open it.
+  if (file) fs.mkdirSync(path.dirname(path.resolve(file)), { recursive: true });
   const sqlite = new DatabaseSync(file || ':memory:');
   const migrations = path.join(root, 'migrations');
   for (const name of fs.readdirSync(migrations).filter(n => /^\d+_.*\.sql$/.test(n)).sort()) {
@@ -66,6 +70,7 @@ export const ROUTES = {
   'GET /api/gm/player': ['onRequestGet', 'api/gm/player.js'],
   'POST /api/gm/player': ['onRequestPost', 'api/gm/player.js'],
   'GET /api/gm/log': ['onRequestGet', 'api/gm/log.js'],
+  'GET /api/gm/usage': ['onRequestGet', 'api/gm/usage.js'],
 };
 
 const TYPES = {

@@ -86,7 +86,7 @@ t('every API path the client calls exists as a Function file', () => {
   for (const p of ['/register', '/sessions', '/me', '/save', '/messages', '/grants', '/board'])
     assert.ok(fs.existsSync(path.join(root, 'functions', 'api', p.slice(1) + '.js')), 'missing handler: functions/api' + p + '.js');
   assert.ok(calls.length >= 4, 'the client should be naming API paths');
-  for (const p of ['/gm/players', '/gm/player', '/gm/log'])
+  for (const p of ['/gm/players', '/gm/player', '/gm/log', '/gm/usage'])
     assert.ok(fs.existsSync(path.join(root, 'functions', 'api', p.slice(1) + '.js')), 'missing handler: ' + p);
 });
 
