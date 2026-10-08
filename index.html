@@ -665,7 +665,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // script block, which is a SyntaxError - the game did not run on main at all. One line wins, and
 // it names both sides of this merge: the v38 balance patch (the weapon cut, the affix/card
 // give-back) and main's weapon-hold rendering work.
-const BUILD='2026-10-08 grind-v83.3 your critical is back exactly as you had it, and the picker now starts from it';   // shown on the login card - confirms which file you loaded
+const BUILD='2026-10-08 grind-v84 Base 100+ EXP doubled (owner playtest: the band cleared in a day)';   // shown on the login card - confirms which file you loaded
 $('buildTag').textContent='build '+BUILD;
 
 // ---------- class tree: Novice -> 6 first jobs -> 6 second jobs -> 6 third jobs ----------
@@ -1658,7 +1658,9 @@ const MAXST=120,BASECAP=99,ELITELV=100,statCap=()=>S.lv>=ELITELV?MAXST:BASECAP;
 // and the 3x early boost now ends at Base 50 - so Base 51-70 is the mid-game wall instead of
 // a formality. Base 1-50 keeps its v51 speed (~2.5 min to Lv10, ~14 min to Lv50), Base 50-70
 // takes about 1 h 20 m (levels ramp from seconds to ~10 minutes each), Base 99 lands at about
-// 7 hours and the post-reset 100-150 tail is still the two-day climb. Base 70-99 requirements
+// 7 hours and the post-reset 100-150 tail is the v84 doubled climb (~81 h model, ~3.4 days at
+// 800 kills/h - the owner doubled the Base 100+ requirements after clearing the band in a day).
+// Base 70-99 requirements
 // barely climb (130k -> 167k), which is what pays for the wall; per level it plays as a steady
 // ~11 minute plateau. Time estimates use 800 kills/hour and an average boss every 16 kills;
 // the live Stage-10 boss-with-escorts fight is not a literal part of that model. Mob EXP is
@@ -1695,10 +1697,15 @@ const EXP_BOOST_LV=50,EXP_BOOST_X=3,EXP_RATE=7;
 const expRate=()=>S.gm?gx():(S.lv<=EXP_BOOST_LV?EXP_RATE*EXP_BOOST_X:(S.lv<100?EXP_RATE:EXP_RATE/3));
 // Base-EXP requirements: three continuous power segments through Lv99 (1-50 keeps the v51
 // shape, 50-70 is the v56 stretch, 70-99 climbs gently), then the intentional reset at Lv100
-// and the separate post-99 ramp. Every value is shown at three significant figures, so the
+// and the separate post-99 ramp. v84 (owner, playtest: "i can basically lv 100 to lv 150 in a
+// day"): every requirement from Base 100 up is DOUBLED - N100 carries the x2 (43260 -> 86520),
+// NE3 is untouched, so the whole 100-150 band costs exactly twice the EXP it did and the old
+// cheap 100-103 dip below Lv 99's cost is gone (Lv 100 now costs ~156% of Lv 99 in real time).
+// Quest EXP reads needAt(), so quest rewards rise with the curve and the wall-clock cost of the
+// band rises ~1.7x rather than the full 2x - the kill requirement itself is exactly doubled. Every value is shown at three significant figures, so the
 // bar reads 360 / 1,490 / 35,000 instead of 3,574 / 1,404,641. Tuned to the level-appropriate
 // map route, the live EXP multipliers and the shipped quest rewards in tools/tune_pacing.js.
-const NA1=18.705917193,NE1=1.28684215,N50=Math.floor(NA1*Math.pow(50,NE1)),NE2=11.33248639,N70=Math.floor(N50*Math.pow(1.4,NE2)),NE2B=0.72933977,N100=43260,NE3=8.2928141;
+const NA1=18.705917193,NE1=1.28684215,N50=Math.floor(NA1*Math.pow(50,NE1)),NE2=11.33248639,N70=Math.floor(N50*Math.pow(1.4,NE2)),NE2B=0.72933977,N100=86520,NE3=8.2928141;
 // Round to three significant figures (a step of 1, 10, 100 or 1000 by magnitude) and keep the
 // value at least 1, so a requirement is always a readable number and never zero.
 const roundReq=n=>{const a=Math.abs(n),m=a<100?1:a<1e4?10:a<1e5?100:1e3;return Math.max(1,Math.round(n/m)*m)};
