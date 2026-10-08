@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Damage numbers — your starburst, resize &amp; re-height (Prontera Grind)</title>
+<style>
+  :root{--ink:#1b1710;--card:#fffdf6;--line:#e2d7bd;--gold:#a37a1f}
+  *{box-sizing:border-box}
+  body{margin:0;background:#f3efe2;color:var(--ink);font:14px/1.45 "Trebuchet MS",Verdana,sans-serif}
+  header{background:#241d12;color:#f6e9c9;padding:14px 18px 12px}
+  header h1{margin:0 0 4px;font-size:19px}
+  header p{margin:0;font-size:12.5px;color:#cbb98d;max-width:1060px}
+  header .tag{display:inline-block;margin-top:6px;background:#3a2f1c;color:#e8d7a8;border-radius:99px;padding:2px 9px;font-size:11.5px}
+  .wrap{max-width:1180px;margin:0 auto;padding:14px 18px 60px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin:0 0 14px;box-shadow:0 1px 0 #fff inset,0 1px 3px #0001}
+  .card h2{margin:0 0 2px;font-size:15px}
+  .card h2 small{font-weight:400;color:#7d6d4b;font-size:12px}
+  .sub{color:#6d5f43;font-size:12.5px;margin:2px 0 10px}
+  .note{font-size:12px;color:#6d5f43}
+  .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+  button{font:inherit;background:#fff;border:1px solid #cbbb95;border-radius:8px;padding:5px 10px;cursor:pointer}
+  button:hover{background:#fff8e6}
+  button.on{background:#241d12;color:#ffe9b0;border-color:#241d12}
+  .pill{display:inline-block;border:1px solid #cbbb95;border-radius:99px;padding:4px 10px;cursor:pointer;background:#fff;font-size:12.5px}
+  .pill.on{background:#241d12;color:#ffe9b0;border-color:#241d12}
+  .gold{background:#241d12;color:#ffe9b0;border-color:#241d12}
+  #stage{position:relative;height:420px;border-radius:12px;overflow:hidden;border:1px solid #2a2114;
+    background:linear-gradient(#cfe9ff 0%,#bde0f7 26%,#8fd07a 26.5%,#5cb14f 62%,#3f8f3a 100%)}
+  #stage.payon{background:linear-gradient(#cfe9ff 0%,#bde0f7 22%,#6fae55 22.5%,#41813c 62%,#2c5c2c 100%)}
+  #stage.abyss{background:linear-gradient(#2a1b3d 0%,#3a2450 26%,#31234a 26.5%,#241a35 62%,#1a1226 100%)}
+  #stage .ground{position:absolute;left:0;right:0;bottom:0;height:12px;background:#0003}
+  .spr{position:absolute;transform-origin:50% 100%;pointer-events:none}
+  .spr.hit{animation:mobhit .22s ease-out}
+  @keyframes mobhit{0%{transform:translateY(0)}35%{transform:translateY(-3px)}100%{transform:translateY(0)}}
+  .hero{position:absolute;transform-origin:50% 100%;pointer-events:none;filter:drop-shadow(0 3px 3px #0004)}
+  .nameplate{position:absolute;transform:translate(-50%,-100%);font-size:11px;color:#fff;background:#0007;border-radius:6px;padding:1px 5px;pointer-events:none;white-space:nowrap}
+  /* the pit: how high the number climbs, in px, measured from the monster's head */
+  .ruler{position:absolute;left:0;top:0;bottom:0;width:52px;border-right:1px dashed #ffffff55;pointer-events:none}
+  .tk{position:absolute;left:0;width:52px;border-top:1px dashed #ffffff44}
+  .tk i{position:absolute;left:3px;top:-11px;font:9.5px/1 ui-monospace,Consolas,monospace;font-style:normal;color:#fff;opacity:.75;text-shadow:0 1px 2px #000}
+  .peakline{position:absolute;left:0;right:0;border-top:2px dashed #ffd166;pointer-events:none}
+  .peakline i,.fadeline i{position:absolute;right:5px;top:-14px;font:10px/1.4 ui-monospace,Consolas,monospace;font-style:normal;color:#fff6d8;
+    background:#000000a0;border-radius:4px;padding:0 4px;white-space:nowrap}
+  .fadeline{position:absolute;left:0;right:0;border-top:1px dashed #ffffffaa;pointer-events:none}
+  .ghost{position:absolute;width:8px;height:8px;border-radius:50%;background:#fff;opacity:0;transform:translate(-50%,-50%);
+    box-shadow:0 0 7px #fff9;pointer-events:none;z-index:5}
+  /* ---------------- the float styles: copied from index.html v82/v83.3 ---------------- */
+  .fl{position:absolute;left:0;top:0;font-variant-numeric:tabular-nums;z-index:40;will-change:transform,opacity;pointer-events:none;font-family:"Trebuchet MS",Verdana,sans-serif}
+  .fl.damage,.fl.skill-damage{font-weight:700}
+  .fl.damage{color:#fff0a6!important;-webkit-text-stroke:.5px #4b3514;text-shadow:0 1px 2px #000,0 0 3px #000}
+  .fl.skill-damage{color:#c9f1ff!important;-webkit-text-stroke:.5px #123a57;text-shadow:0 1px 2px #000,0 0 4px #279cd1}
+  .fl.critical,.fl.skill-critical{font-weight:900}
+  .fl.critical .fnum,.fl.skill-critical .fnum{text-shadow:none;-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+  .fl.critical .fnum{background-image:linear-gradient(#fff3b0 10%,#ffc93c 90%);color:#ffd23f;-webkit-text-stroke:.6px #57330a;filter:drop-shadow(0 0 1px #2e0a02) drop-shadow(0 1px 2px #000) drop-shadow(0 0 6px #ffb52e77)}
+  .fl.skill-critical .fnum{background-image:linear-gradient(#eafaff 10%,#7cd4ff 90%);color:#eaf6ff;-webkit-text-stroke:.6px #0e2c58;filter:drop-shadow(0 0 1px #081a33) drop-shadow(0 1px 2px #000) drop-shadow(0 0 6px #4fd8ff77)}
+  .fl.incoming{font-weight:700;color:#ff9b94!important;-webkit-text-stroke:.4px #4b1018;text-shadow:0 1px 2px #000,0 0 3px #f33}
+  .fnum{position:relative}
+  .fbubble{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);pointer-events:none;border-radius:50%;
+    background:radial-gradient(closest-side,#ffeec2 0%,#ffc267 32%,#f4571f 66%,#9e1a08 96%);
+    box-shadow:0 0 14px #ff6a2acc,0 2px 5px #000a,inset 0 -2px 10px #7d0f0d99,inset 0 2px 8px #fff3c866}
+  .fburst,.fring,.fstreak{position:absolute;left:50%;top:50%;pointer-events:none}
+  .fburst{transform:translate(-50%,-50%);animation:fburst-pop 1.05s cubic-bezier(.2,.9,.3,1.25) both}
+  .fburst svg{width:100%;height:100%;display:block;overflow:visible}
+  .fring{border:2px solid #ffd88a;border-radius:50%;transform:translate(-50%,-50%);animation:fring-pop .42s cubic-bezier(.1,.7,.3,1) forwards}
+  .fstreak{width:var(--len,56px);height:var(--th,3px);margin:calc(-.5*var(--th,3px)) 0 0 calc(-.5*var(--len,56px));border-radius:2px;
+    background:linear-gradient(90deg,#fff,#e6d6ff);box-shadow:0 0 3px #e6d6ff;transform-origin:center;animation:fstreak-fly .5s cubic-bezier(.1,.7,.3,1) forwards}
+  @keyframes fburst-pop{0%{transform:translate(-50%,-50%) scale(.3)}30%{transform:translate(-50%,-50%) scale(1.25)}55%{transform:translate(-50%,-50%) scale(1) rotate(var(--brot,0deg))}100%{transform:translate(-50%,-50%) scale(1.05);opacity:.9}}
+  @keyframes fring-pop{0%{opacity:.95;transform:translate(-50%,-50%) scale(.4)}100%{opacity:0;transform:translate(-50%,-50%) scale(2.1)}}
+  @keyframes fstreak-fly{0%{transform:rotate(var(--a)) scaleX(.15);opacity:1}100%{transform:rotate(var(--a)) translateX(var(--d,44px)) scaleX(1);opacity:0}}
+  /* ---------------- controls ---------------- */
+  .ctl{margin:0 0 10px}
+  .ctl b{display:block;font-size:12.5px;color:#4c4028;margin-bottom:3px}
+  .ctl output{color:var(--gold);font-weight:700}
+  input[type=range]{width:100%;accent-color:#a37a1f}
+  .ctl .opts{display:flex;gap:6px;flex-wrap:wrap;margin-top:4px}
+  .ctl .opts button{font-size:12px;padding:3px 8px}
+  .grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:18px}
+  #critRow{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
+  .tile{position:relative;height:142px;border:1px solid var(--line);border-radius:10px;overflow:hidden;cursor:pointer;
+    background:linear-gradient(#dff0ff 0 30%,#8fd07a 30.5% 100%)}
+  .tile.on{outline:3px solid #195c33;outline-offset:-3px}
+  .tile.yours .who{background:#195c33;color:#eafff0;border-top-color:#195c33}
+  .tile .who{position:absolute;left:0;right:0;bottom:0;background:#fffdf6ee;border-top:1px solid var(--line);padding:3px 6px;font-size:11px}
+  .tile .pickdot{position:absolute;right:5px;top:5px;width:18px;height:18px;border-radius:50%;border:1px solid #241d12;background:#fff;font:700 11px/16px sans-serif;text-align:center}
+  .tile.on .pickdot{background:#195c33;color:#fff;border-color:#195c33}
+  .tile img{position:absolute;transform-origin:50% 100%}
+  #sel{white-space:pre-wrap;font:12px/1.5 ui-monospace,Consolas,monospace;background:#241d12;color:#ffe9b0;border-radius:8px;padding:10px}
+  @media (max-width:900px){#critRow{grid-template-columns:repeat(2,1fr)}}
+</style>
+</head>
+<body>
+<header>
+  <h1>Your damage numbers — resize them and change how high they fly</h1>
+  <p><b>Your look is untouched.</b> This page starts from exactly what the game does now: the <b>starburst</b>
+  critical you tuned (12 jittered spikes, the inner star, the speed lines, the impact ring), 17px digits, 32px
+  crits, a 30px climb and the hold-then-fade. Change the sliders below and the fight replays with your numbers —
+  nothing is applied to the game until you tell me.</p>
+  <span class="tag">real sprites · the real rule set, copied from index.html · no login, no GM tools</span>
+</header>
+
+<div class="wrap">
+
+  <!-- ==================================================== the fight -->
+  <div class="card">
+    <h2>1. The fight — <small>your settings, live</small></h2>
+    <p class="sub">Every swing prints one number per monster (as shipped). The dashed lines mark how far your
+    numbers travel: <b>gold</b> is the top of the climb, <b>white</b> is where the fade starts. The dots are the
+    flight path, so you can see the difference between two settings without having to remember them.</p>
+    <div class="row" style="margin-bottom:10px">
+      <button id="playBtn" class="on">⏸ pause</button>
+      <button id="slowBtn">🐢 slow motion</button>
+      <button id="burstBtn">⚡ burst (see them overlap)</button>
+      <button id="dotsBtn" class="on">👣 flight dots on</button>
+      <button id="ghostBtn">👁 also draw the game's current numbers</button>
+      <span class="pill" data-zone="field">Prontera grass</span><span class="pill" data-zone="payon">Payon</span><span class="pill" data-zone="abyss">Abyss</span>
+      <span class="pill" data-mob="poring">Poring</span><span class="pill on" data-mob="lunatic">Lunatic</span><span class="pill" data-mob="peco">Peco Peco</span><span class="pill" data-mob="mastering">Mastering</span>
+    </div>
+    <div id="stage">
+      <div class="ground"></div>
+      <div class="ruler"></div>
+    </div>
+    <p class="note" style="margin-top:8px">Hero art is the game's own animated PNG
+    (<code>Updates/Sprite/Archer/archer male attack SE.png</code>) and the monsters are the shipped
+    <code>assets/mob_*.png</code> sheets, at the game's own drawn sizes. Numbers spawn above the sprite's real head
+    (found by reading the image's transparent padding — the head rule is <code>3.15 × mobVisualScale − 0.3</code>).</p>
+  </div>
+
+  <!-- ==================================================== size -->
+  <div class="card">
+    <h2>2. Size <small>— the first of the two things you wanted to change</small></h2>
+    <div class="grid2" style="align-items:start">
+      <div>
+        <div class="ctl"><b>Normal hit — <output id="oN">17</output>px <i>(the game today)</i></b>
+          <input type="range" id="rN" min="12" max="40" step="1" value="17">
+          <div class="opts"><button data-size="14">14</button><button data-size="17">17 (today)</button><button data-size="20">20</button><button data-size="24">24</button><button data-size="28">28</button></div>
+        </div>
+        <div class="ctl"><b>Skill hit — <output id="oS">17</output>px <i>(the game today)</i></b>
+          <input type="range" id="rS" min="12" max="40" step="1" value="17">
+        </div>
+        <div class="ctl"><b>Critical hit — <output id="oC">32</output>px <i>(the game today)</i></b>
+          <input type="range" id="rC" min="16" max="56" step="1" value="32">
+        </div>
+      </div>
+      <div class="note" style="align-self:center">
+        <p style="margin:0 0 6px"><b>How big is each step, really?</b> The digits are drawn at the size you pick,
+        and the crit's starburst is built from that size — a bigger crit size makes a bigger star, not just bigger
+        numbers.</p>
+        <p style="margin:0">Today: normal and skill are both <b>17px</b> (the colour is what tells them apart) and a
+        crit is <b>32px</b>, which is nearly double. If 24px feels right for the crit you may also want the normal
+        hits at 20–22px so the crit still stands out.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================================================== climb -->
+  <div class="card">
+    <h2>3. How high it flies <small>— the other thing you wanted to change</small></h2>
+    <p class="sub">The number climbs, settles at the top and fades there. Today the climb is <b>30px</b> — about one
+    monster-head above the head. Dragging this moves the gold line on the fight above, so you can judge it against
+    the monster rather than against a description.</p>
+    <div class="ctl" style="max-width:680px">
+      <b>Climb — <output id="oR">30</output>px above the head</b>
+      <input type="range" id="rR" min="0" max="150" step="2" value="30">
+      <div class="opts">
+        <button data-rise="0">0 (it stays put, like the very old builds)</button>
+        <button data-rise="30">30 (today)</button><button data-rise="50">50</button><button data-rise="78">78 (last round's try)</button><button data-rise="110">110</button>
+      </div>
+    </div>
+    <p class="note">Long numbers and short numbers travel the same distance — the climb is a distance in pixels, not
+    a multiple of the number's size, so it never drifts off the screen on a boss fight.</p>
+  </div>
+
+  <!-- ==================================================== crit -->
+  <div class="card">
+    <h2>4. The critical <small>— your starburst is the one in the game; the rest are only there if you ever change your mind</small></h2>
+    <p class="sub">Nothing here needs changing — you said you had already tuned this. It is on the page so that the
+    size slider above can be judged on the frame you actually have. Each tile fires the same hit on a loop.</p>
+    <div id="critRow"></div>
+  </div>
+
+  <!-- ==================================================== the rest -->
+  <div class="card">
+    <h2>5. The rest of the motion <small>— defaults are what the game does today</small></h2>
+    <div class="grid2">
+      <div>
+        <div class="ctl"><b>How long a number lives — <output id="oL">1.05</output>s</b><input type="range" id="rL" min="0.4" max="2" step="0.05" value="1.05"></div>
+        <div class="ctl"><b>Starts fading at — <output id="oF">55</output>% of its life</b><input type="range" id="rF" min="20" max="90" step="5" value="55"></div>
+      </div>
+      <div>
+        <div class="ctl"><b>Where it starts — <output id="oP">above the head</output></b>
+          <div class="opts"><button data-spawn="head+">a little higher</button><button data-spawn="head">above the head (today)</button></div>
+        </div>
+        <div class="ctl"><b>Sideways spread — ±<output id="oX">0</output>px</b><input type="range" id="rX" min="0" max="20" step="1" value="0"></div>
+      </div>
+    </div>
+    <div class="row" style="margin-top:4px">
+      <span class="note" style="margin-right:6px">presets:</span>
+      <button class="pill on" data-preset="yours">in the game now (yours)</button>
+      <button class="pill" data-preset="bigger">bigger numbers, same look</button>
+      <button class="pill" data-preset="higher">fly higher (78px)</button>
+      <button class="pill" data-preset="quick">quicker (0.7s)</button>
+      <button class="pill" data-preset="maxbutton">max readability</button>
+    </div>
+  </div>
+
+  <!-- ==================================================== selection -->
+  <div class="card">
+    <h2>6. What to send me</h2>
+    <p class="sub">Press the button and paste the text back — or just tell me the numbers ("size 20, climb 60").
+    Nothing on this page is applied to the game by itself.</p>
+    <div class="row" style="margin-bottom:8px">
+      <button id="copyBtn" class="gold">📋 Copy my numbers</button>
+      <span class="note" id="copyMsg"></span>
+    </div>
+    <div id="sel"></div>
+    <p class="note" style="margin-top:8px">The older proposal tool is still there too: <a href="/damage">/damage</a>
+    (it has "Compare all" strips). This page is the same idea, but it runs the game's real sprites and the exact
+    rule set from <code>index.html</code>.</p>
+  </div>
+</div>
+
+<script>
+'use strict';
+/* =====================================================================================
+   What the game does today (v83.3 - the owner's own tuned v82 look, restored):
+     crit frame : .fburst (12 jittered spikes + 8-spike inner star + pale core, red-gold;
+                  blue-silver for skill crits) + .fring impact ring + 9 .fstreak speed lines
+     digits     : normal 17px #fff0a6, skill 17px #c9f1ff, critical 32px gradient gold
+     life       : rate .95  ->  ~1.05s
+     climb      : dy = -RISE * min(1, tt*1.15)      (RISE 30: tops out at 87% of the life)
+     sway       : 10px right over the first 28%, then drifts 38px left - the owner's arc
+     punch      : scale = 1 + cs*max(0,1-tt/.2), cs 1 for a crit / .25 for a normal hit
+     fade       : opacity = min(1, max(0, r/.45)) -> solid for the first 55% of the life, gone at the end
+   Everything below is a faithful copy of that, with the two knobs the owner asked for (size, climb) on top.
+   ===================================================================================== */
+
+const GAME = {nSize:17,sSize:17,cSize:32,rise:30,life:1.05,fade:.55,spread:0,spawn:'head',crit:'star'};
+const S = Object.assign({}, GAME, {ghost:false, dots:true, slow:false, zone:'field', mob:'lunatic'});
+
+const MOBS = {poring:{f:'assets/mob_poring.png',n:'Poring',h:78},
+              lunatic:{f:'assets/mob_lunatic.png',n:'Lunatic',h:96},
+              peco:{f:'assets/mob_peco_peco.png',n:'Peco Peco',h:128},
+              mastering:{f:'assets/mob_mastering.png',n:'Mastering',h:140}};
+const HEAD_FRAC = {poring:.072,lunatic:.052,peco:.060,mastering:.070};   // measured off the shipped sheets
+const HERO='Updates/Sprite/Archer/archer%20male%20attack%20SE.png';
+const PATTERN=['damage','damage','critical','damage','skill-damage','critical','damage','skill-critical'];
+const VALS=[1024,88,4507,231,12340,67,3118,905];
+
+const stage=document.getElementById('stage');
+const $=s=>document.querySelector(s);
+const el=(tag,cls,parent)=>{const e=document.createElement(tag);if(cls)e.className=cls;if(parent)parent.appendChild(e);return e};
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+
+let mobs=[], hero=null, floats=[], bi=0, beat=0, playing=true, S_clock=0, heroAnim=0;
+const BEAT=1.5;
+const heroHeadY=()=>0;
+
+/* ---------------------------------------------------------------- the stage */
+function buildStage(){
+  [...stage.querySelectorAll('.spr,.hero,.nameplate,.fl,.ghost,.tk,.peakline,.fadeline')].forEach(e=>e.remove());
+  mobs=[]; floats=[];
+  hero=new Image(); hero.src=HERO; hero.className='hero'; stage.appendChild(hero);
+  hero.style.width='190px'; hero.style.height='190px'; hero.style.left='110px'; hero.style.bottom='56px';
+  const m=MOBS[S.mob];
+  [[420,122],[600,98],[780,84]].forEach(([x,h],i)=>{
+    const w=Math.round(h*(512/960)), bottom=132-i*14;
+    const im=new Image(); im.src=m.f; im.className='spr'; stage.appendChild(im);
+    im.style.height=h+'px'; im.style.width=w+'px'; im.style.left=x+'px'; im.style.bottom=bottom+'px';
+    const plate=el('div','nameplate',stage); plate.textContent=m.n;
+    plate.style.left=(x+w/2)+'px'; plate.style.bottom=(bottom+h+3)+'px';
+    mobs.push({im,plate,x,w,h,bottom,headFrac:HEAD_FRAC[S.mob],hit:0});
+  });
+  measureHead(img(MOBS[S.mob].f),ratio=>mobs.forEach(o=>{o.headFrac=ratio; drawGuide()}));
+  drawGuide();
+}
+function img(src){const i=new Image();i.src=src;return i}
+function measureHead(src,done){
+  const read=()=>{
+    let ratio=.62;
+    try{
+      const c=document.createElement('canvas');c.width=src.naturalWidth;c.height=src.naturalHeight;
+      const x=c.getContext('2d');x.drawImage(src,0,0);
+      const d=x.getImageData(0,0,c.width,c.height).data;
+      let top=c.height;const w=c.width;
+      outer:for(let y=0;y<c.height;y+=2)for(let px=0;px<w;px+=2)
+        if(d[(y*w+px)*4+3]>8){top=y;break outer}
+      ratio=top/c.height;
+    }catch(e){/* canvas blocked: the measured default per sheet is close enough */}
+    done(ratio);
+  };
+  if(src.complete&&src.naturalWidth)read(); else src.onload=read;
+}
+// the head of the middle monster, in stage pixels from the top - the ruler and the floats both hang off it
+function headY(o){
+  const box=o;                                     // {h,bottom,headFrac}
+  const H=stage.clientHeight;
+  return H-(box.bottom+box.h)-box.h*(box.headFrac||.62)+box.h*(box.headFrac||.62)*0 + 0
+}
+function headYOf(o){
+  const H=stage.clientHeight;                       // the sprite's feet sit (bottom) up from the stage floor
+  return H-o.bottom-o.h*(1-(o.headFrac||.62));      // its top edge is H-bottom-h, the head sits headFrac in
+}
+function drawGuide(){
+  [...stage.querySelectorAll('.tk,.peakline,.fadeline')].forEach(e=>e.remove());
+  const o=mobs[1]||mobs[0]; if(!o)return;
+  const hy=headYOf(o);
+  for(let v=25;v<=Math.min(150,Math.round(hy-14));v+=25){
+    const t=el('div','tk',stage); t.style.top=(hy-v)+'px';
+    const i=el('i',null,t); i.textContent=v;
+  }
+  const dy=riseAt(1);
+  const pk=el('div','peakline',stage); pk.style.top=Math.max(6,hy-dy)+'px';
+  el('i',null,pk).textContent='numbers top out here · +'+Math.round(dy)+'px';
+  const fd=el('div','fadeline',stage); fd.style.top=Math.max(6,hy-riseAt(S.fade))+'px';
+  el('i',null,fd).textContent='fade starts · +'+Math.round(riseAt(S.fade))+'px';
+}
+const riseAt=t=>S.rise*Math.min(1,t*1.15);          // the game's climb curve
+
+/* ---------------------------------------------------------------- the numbers */
+function burstSVG(sk){
+  const rot=Math.random()*Math.PI;
+  const starPts=(spikes,Ro,Ri,ro)=>{const p=[];for(let i=0;i<spikes*2;i++){const a=ro+Math.PI*i/spikes-Math.PI/2,r=i%2?Ri*(.72+Math.random()*.5):Ro*(.8+Math.random()*.35);p.push((Math.cos(a)*r).toFixed(1)+','+(Math.sin(a)*r).toFixed(1))}return p.join(' ')};
+  const pts=starPts(12,48,30,rot),pts2=starPts(8,34,20,rot*.6);
+  const c1=sk?'#16324f':'#a01608',c2=sk?'#4fd8ff':'#ffcf4d',c3=sk?'#eaffff':'#fff3c8';
+  return '<svg viewBox="-52 -52 104 104" preserveAspectRatio="none"><polygon points="'+pts+'" fill="'+c1+'"/><polygon points="'+pts+'" fill="none" stroke="#00000088" stroke-width="2"/><polygon points="'+pts2+'" fill="'+c2+'"/><circle r="12" fill="'+c3+'"/></svg>';
+}
+function markup(kind,size,critStyle){
+  const sk=kind==='skill-critical';
+  if(!(kind==='critical'||sk))return '<span class="fnum"></span>';
+  const fs=size,len=6,w=Math.max(fs*2,len*fs*.84).toFixed(0),hs=(fs*2.5).toFixed(0);
+  const c=critStyle||S.crit;
+  if(c==='star'){
+    let streaks='';for(let i=0,n=sk?8:9;i<n;i++)streaks+='<i class="fstreak" style="--a:'+(Math.random()*360).toFixed(0)+'deg;--len:'+(30+Math.random()*44).toFixed(0)+'px;--th:'+(2+Math.random()*1.4).toFixed(1)+'px;--d:'+(26+Math.random()*28).toFixed(0)+'px;animation-duration:'+(360+Math.random()*200).toFixed(0)+'ms"></i>';
+    return '<i class="fburst" style="width:'+w+'px;height:'+hs+'px;--brot:'+(Math.random()*12-6).toFixed(1)+'deg">'+burstSVG(sk)+'</i>'
+      +'<i class="fring" style="width:'+(fs*1.4).toFixed(0)+'px;height:'+(fs*1.4).toFixed(0)+'px"></i>'+streaks+'<span class="fnum"></span>';
+  }
+  if(c==='nostreak')return '<i class="fburst" style="width:'+w+'px;height:'+hs+'px;--brot:'+(Math.random()*12-6).toFixed(1)+'deg">'+burstSVG(sk)+'</i><span class="fnum"></span>';
+  if(c==='blob')return '<i class="fbubble" style="width:'+w+'px;height:'+hs+'px"></i><span class="fnum"></span>';
+  if(c==='ring')return '<i class="fring" style="width:'+(fs*1.6).toFixed(0)+'px;height:'+(fs*1.6).toFixed(0)+'px"></i><span class="fnum"></span>';
+  return '<span class="fnum"></span>';
+}
+// p = the parameter set the float is born with (your pick, or the game's current numbers for the
+// faded reference). dim=1 draws the game's numbers behind yours so the two can be compared in motion.
+function fire(o,p,dim){
+  const kind=PATTERN[bi%PATTERN.length], txt=Number(VALS[bi%VALS.length]).toLocaleString('en-US');
+  const size=(kind==='critical'||kind==='skill-critical')?p.cSize:(kind==='skill-damage'?p.sSize:p.nSize);
+  const e=el('div','fl '+kind,stage);
+  e.style.fontSize=size+'px';
+  e.innerHTML=markup(kind,size,p.crit);
+  const num=e.querySelector('.fnum'); if(num)num.textContent=txt;
+  const hy=headYOf(o)-(p.spawn==='head+'?12:0);
+  e.style.left=(o.x+o.w/2+(dim?16:0))+'px'; e.style.top=hy+'px';
+  e.style.transform='translate(-50%,-50%) scale(.5)';
+  if(dim)e.style.filter='saturate(.55) brightness(.9)';
+  if(!dim){o.im.classList.remove('hit'); void o.im.offsetWidth; o.im.classList.add('hit')}
+  const rise=t=>p.rise*Math.min(1,t*1.15);
+  const f={t0:S_clock,el:e,kind,p,rise,life:p.life,fade:p.fade,sw:(Math.random()*2-1)*p.spread,ghosts:[],dim:!!dim};
+  if(!dim&&S.dots){
+    [.25,.5,.75,1].forEach(t=>{
+      const d=el('div','ghost',stage);
+      d.style.left=e.style.left;
+      d.style.top=(hy-rise(t))+'px'; d.style.opacity='0';
+      f.ghosts.push({el:d,t});
+    });
+  }
+  floats.push(f);
+  return f;
+}
+function stepFloat(f){
+  const t=(S_clock-f.t0)/f.life;
+  if(t>=1){f.el.remove();f.ghosts.forEach(g=>g.el.remove());return false}
+  const crit=f.kind==='critical'||f.kind==='skill-critical';
+  const cs=crit?1:.25;
+  const sway=t<.28?10*(t/.28):10-38*Math.min(1,(t-.28)/.72);
+  const dy=-f.rise(t), dxx=sway+f.sw*Math.min(1,t/.22), sc=1+cs*Math.max(0,1-t/.2);
+  f.el.style.transform='translate(-50%,-50%) translate('+dxx.toFixed(1)+'px,'+dy.toFixed(1)+'px) scale('+sc.toFixed(3)+')';
+  const hold=t<f.fade?1:Math.max(0,1-(t-f.fade)/Math.max(.05,1-f.fade));
+  f.el.style.opacity=(f.dim?.42:1)*hold;
+  f.ghosts.forEach(g=>{g.el.style.opacity = t>=g.t ? (.3*(1-t)) : 0});
+  return true;
+}
+
+/* ---------------------------------------------------------------- the crit tiles */
+const CRITS=[['star','starburst + streaks + ring','YOURS — in the game'],['nostreak','starburst alone',''],
+             ['blob','round blob (the v83 try)',''],['ring','thin impact ring only',''],['none','no frame, just digits','']];
+function buildCrits(){
+  const host=$('#critRow'); host.innerHTML='';
+  CRITS.forEach(([k,label,note])=>{
+    const t=el('div','tile'+(S.crit===k?' on':'')+(k==='star'?' yours':''),host);
+    const im=new Image(); im.src=MOBS[S.mob].f;
+    im.style.height='84px'; im.style.width=Math.round(84*(512/960))+'px'; im.style.left='50%'; im.style.marginLeft=(-Math.round(84*(512/960))/2)+'px'; im.style.bottom='26px';
+    t.appendChild(im);
+    const dot=el('div','pickdot',t); dot.textContent=S.crit===k?'✓':'';
+    const who=el('div','who',t); who.innerHTML='<b>'+(k==='star'?'your starburst':label)+'</b>'+(note?' — <i>'+note+'</i>':'');
+    const fl=el('div','fl critical',t); fl.style.fontSize='30px'; fl.style.left='50%'; fl.style.top='56px';
+    fl.innerHTML=markup('critical',30,k)+'';
+    fl.querySelector('.fnum').textContent='4,507';
+    let t0=null;
+    (function loop(ts){
+      if(!t.isConnected)return;
+      if(t0===null)t0=ts;
+      const tt=((ts-t0)/1000/1.05)%1, dy=-26*Math.min(1,tt*1.15);
+      const sc=1+1*Math.max(0,1-tt/.2);
+      fl.style.transform='translate(-50%,-50%) translate(0,'+dy.toFixed(1)+'px) scale('+sc.toFixed(3)+')';
+      fl.style.opacity= tt<.55?1:Math.max(0,1-(tt-.55)/.45);
+      if(tt>.99){fl.innerHTML=markup('critical',30,k);fl.querySelector('.fnum').textContent='4,507'}
+      requestAnimationFrame(loop);
+    })(0);
+    t.onclick=()=>{S.crit=k;buildCrits()};
+  });
+}
+
+/* ---------------------------------------------------------------- controls + readout */
+function refresh(){
+  const pairs=[['#rN','#oN','nSize'],['#rS','#oS','sSize'],['#rC','#oC','cSize'],['#rR','#oR','rise'],['#rL','#oL','life'],['#rX','#oX','spread']];
+  pairs.forEach(([r,o,key])=>{ $(r).value=S[key]; $(o).value = key==='life'?S.life.toFixed(2):S[key] });
+  $('#rF').value=Math.round(S.fade*100); $('#oF').value=Math.round(S.fade*100);
+  $('#oP').value = S.spawn==='head+'?'a little higher':'above the head';
+  $('#sel').textContent='DAMAGE NUMBERS I WANT\n'
+    +'normal '+S.nSize+'px · skill '+S.sSize+'px · critical '+S.cSize+'px   (the game today: 17/17/32)\n'
+    +'climb '+S.rise+'px   (the game today: 30px)\n'
+    +'lives '+S.life.toFixed(2)+'s · starts fading at '+Math.round(S.fade*100)+'% of that   (today: 1.05s / 55%)\n'
+    +'starts '+$('#oP').value+' · side spread ±'+S.spread+'px\n'
+    +'CRITICAL: unchanged — your starburst';
+  drawGuide();
+}
+const bind=(r,key,cast)=>{$(r).addEventListener('input',()=>{S[key]=cast($(r).value);refresh()})};
+bind('#rN','nSize',Number); bind('#rS','sSize',Number); bind('#rC','cSize',Number);
+bind('#rR','rise',Number); bind('#rL','life',Number); bind('#rF','fade',v=>Number(v)/100); bind('#rX','spread',Number);
+document.querySelectorAll('[data-size]').forEach(b=>b.addEventListener('click',()=>{S.nSize=+b.dataset.size;S.sSize=S.nSize;refresh()}));
+document.querySelectorAll('[data-rise]').forEach(b=>b.addEventListener('click',()=>{S.rise=+b.dataset.rise;refresh()}));
+document.querySelectorAll('[data-spawn]').forEach(b=>b.addEventListener('click',()=>{S.spawn=b.dataset.spawn;refresh()}));
+const PRESETS={
+  yours:GAME,
+  bigger:{nSize:21,sSize:21,cSize:36,rise:30,life:1.05,fade:.55,spread:0,spawn:'head'},
+  higher:{nSize:17,sSize:17,cSize:32,rise:78,life:1.05,fade:.55,spread:0,spawn:'head'},
+  quick:{nSize:17,sSize:17,cSize:32,rise:30,life:.70,fade:.45,spread:0,spawn:'head'},
+  maxbutton:{nSize:22,sSize:22,cSize:38,rise:60,life:1.20,fade:.55,spread:6,spawn:'head'}
+};
+document.querySelectorAll('[data-preset]').forEach(b=>b.addEventListener('click',()=>{
+  Object.assign(S,PRESETS[b.dataset.preset]); refresh()}));
+document.querySelectorAll('[data-zone]').forEach(b=>b.addEventListener('click',()=>{
+  S.zone=b.dataset.zone; stage.className=S.zone==='field'?'':S.zone;
+  document.querySelectorAll('[data-zone]').forEach(x=>x.classList.toggle('on',x===b))}));
+document.querySelectorAll('[data-mob]').forEach(b=>b.addEventListener('click',()=>{
+  if(S.mob===b.dataset.mob)return; S.mob=b.dataset.mob;
+  document.querySelectorAll('[data-mob]').forEach(x=>x.classList.toggle('on',x===b));
+  buildStage(); buildCrits()}));
+$('#playBtn').onclick=e=>{playing=!playing;e.target.classList.toggle('on',playing);e.target.textContent=playing?'⏸ pause':'▶ play'};
+$('#slowBtn').onclick=e=>{S.slow=!S.slow;e.target.classList.toggle('on',S.slow);e.target.textContent=S.slow?'🐢 slow motion on':'🐢 slow motion'};
+$('#dotsBtn').onclick=e=>{S.dots=!S.dots;e.target.classList.toggle('on',S.dots);e.target.textContent=S.dots?'👣 flight dots on':'👣 flight dots off'};
+$('#ghostBtn').onclick=e=>{S.ghost=!S.ghost;e.target.classList.toggle('on',S.ghost);
+  e.target.textContent=S.ghost?'👁 the numbers the game has now are drawn too (faded)':'👁 also draw the numbers the game has now'};
+$('#burstBtn').onclick=()=>{mobs.forEach(m=>{fire(m,S); if(S.ghost)fire(m,GAME,true)});bi++;beat=BEAT};
+$('#copyBtn').onclick=()=>{const t=$('#sel').textContent;
+  const done=()=>{$('#copyMsg').textContent='copied — paste it to me'};
+  if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(t).then(done,done); else done()};
+
+/* ---------------------------------------------------------------- the clock */
+let last=0;
+function frame(now){
+  if(!last)last=now;
+  let dt=Math.min(.06,(now-last)/1000); last=now;
+  dt*=S.slow?.25:1; S_clock+=dt;
+  if(playing){
+    beat-=dt;
+    if(beat<=0){
+      beat=BEAT;
+      mobs.forEach(m=>{fire(m,S); if(S.ghost)fire(m,GAME,true)});
+      bi++;
+    }
+  }
+  floats=floats.filter(f=>stepFloat(f));
+  requestAnimationFrame(frame);
+}
+buildStage(); refresh(); buildCrits(); requestAnimationFrame(frame);
+</script>
+</body>
+</html>

@@ -43,7 +43,7 @@ const poseBox = { window: { SPRITE_PACK: { padL: 15, padT: 38 } } };
 vm.createContext(poseBox);
 vm.runInContext(grab('const SPR_W=64', 'function drawWep(') + '\nthis.__pose={poseOf,heroPoseFrame,weaponHandPoint,weaponSpritePixel,PACK_WEAPON_ADJUST};', poseBox);
 const { poseOf, heroPoseFrame, weaponHandPoint, weaponSpritePixel, PACK_WEAPON_ADJUST } = poseBox.__pose;
-const mobBox = {};
+const mobBox = { pl: { x: 0, z: 0 } };
 vm.createContext(mobBox);
 vm.runInContext(grab('function mobMotion(m,clock){', 'function syncMobImage(') + '\nthis.__motion=mobMotion;', mobBox);
 const mobMotion = mobBox.__motion;
@@ -226,10 +226,38 @@ t('Poring-like mobs hop while moving; other moving sprites also bob', () => {
   assert.ok(idleBlob.hop > 0 && idleBlob.hop < .04, 'an idle Poring only breathes slightly');
   const movingBug = mobMotion({shape:'bug',run:true,a:0}, Math.PI/16);
   assert.ok(movingBug.hop > 0, 'moving non-blob mobs still have a small motion cue');
-  assert.strictEqual(mobMotion({shape:'worm',run:false,a:0}, 1).hop, 0, 'stationary non-blob mobs do not float');
   assert.ok(src.includes("im.style.top=(base[1]-motion.hop*h/3.05)+'px'"), 'the hop is applied to the official DOM sprite');
-  assert.ok(src.includes('v.spr.position.y=motion.hop;') && src.includes('v.spr.scale.set(v.officialWidth*motion.sx'), 'the official GPU-texture path receives the same hop and squash');
+  assert.ok(src.includes('v.spr.position.set(lx,motion.hop,lz)') && src.includes('v.spr.scale.set(v.officialWidth*motion.sx'), 'the official GPU-texture path receives the same hop and squash');
   assert.ok(src.includes('h*ratio*motion.sx') && src.includes('h*motion.sy'), 'blob squash and stretch reach the rendered image');
+});
+
+t('every creature animates: idle breath, attack lunge, hit recoil (v83 owner request)', () => {
+  // idle breathing: even a worm that used to stand perfectly frozen moves a little and scales
+  const still = mobMotion({shape:'worm',run:false,a:0}, 1);
+  assert.ok(Math.abs(still.hop) > 0 && Math.abs(still.hop) < .03, 'an idle creature breathes instead of standing frozen');
+  assert.notStrictEqual(still.sy, 1, 'the breath also scales the sprite');
+  assert.ok(Math.abs(still.sy - 1) <= .02, 'the breath stays a subtle 2%');
+  // attack lunge: the sprite drives at the hero and leans into the swing, and comes back
+  const wind = mobMotion({shape:'worm',run:false,a:0,atkAnim:1}, 1), strikeFrame = mobMotion({shape:'worm',run:false,a:0,atkAnim:.55}, 1), after = mobMotion({shape:'worm',run:false,a:0,atkAnim:.05}, 1);
+  assert.ok(Math.abs(wind.lunge) < .05, 'the swing starts from the creature\'s own spot');
+  assert.ok(strikeFrame.lunge > .3, 'mid-swing the creature lunges at the hero');
+  assert.ok(Math.abs(after.lunge) < .08, 'and settles back instead of parking inside the hero');
+  assert.ok(strikeFrame.tilt > .05, 'the lunge leans the sprite forward');
+  // a boss winds up further than a field monster
+  assert.ok(mobMotion({shape:'worm',run:false,a:0,atkAnim:.55,boss:true}, 1).lunge > strikeFrame.lunge, 'bosses wind up harder');
+  // hit recoil: pushed back, squashed, briefly
+  const hit = mobMotion({shape:'worm',run:false,a:0,hitAnim:1}, 1);
+  assert.ok(hit.lunge < -.1, 'a hit knocks the creature away from the hero');
+  assert.ok(hit.sx < 1 && hit.sy < 1, 'and squashes it for the frame');
+  assert.strictEqual(mobMotion({shape:'worm',run:false,a:0,hitAnim:0}, 1).lunge, 0, 'no recoil without a hit');
+  // pets carry their own lunge through the same motion
+  assert.ok(mobMotion({shape:'bug',run:false,a:0,lunge:1}, 1).lunge > .3, 'a pet lunge reaches the shared motion');
+  // and the sprite paths really use it
+  assert.ok(src.includes('v.spr.material.rotation=motion.tilt||0'), 'the official sprite takes the lean');
+  assert.ok(src.includes('if(motion.tilt)im.style.transform='), 'the DOM fallback sprite takes the lean too');
+  assert.ok(src.includes('m.hitAnim=Math.max(0,(m.hitAnim||0)-dt*4.5)') && src.includes('mob.hitAnim=1') && src.includes('o.hitAnim=1'),
+    'attacks and hits set the recoil on the monster that took it');
+  assert.ok(!/die|death/i.test(src.match(/function mobMotion\(m,clock\)\{[\s\S]*?\n\}/)[0]), 'no death animation: mobs still vanish on kill');
 });
 
 t('official sprites are loaded over the procedural art with safe fallbacks', () => {

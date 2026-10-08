@@ -498,10 +498,13 @@ props, and `landmark()` places the large structures that frame the avenue.
    `skin` and `phys` - that is a large refactor, not a deletion. Note also that the real
    punishment today is not dying, it is that defeat sets `S.kl=0`, which throws away progress
    toward the 15-kill boss threshold.
-3. **Ranged engagement is still special-cased to one skill.** The 5-unit "you may attack from
-   range" check in `update()` is hardcoded to `skillOn('soulb')`, so the `rng` flag on any other
-   skill does almost nothing. Generalising it would buff every ranged class at once - do it
-   deliberately, with the kills/hour number in hand.
+3. **Ranged engagement is generalised (v83), and it is a balance lever.** The 5-unit
+   "you may attack from range" check used to be hardcoded to `skillOn('soulb')`; the stand-off is now
+   `heroStandoff(mob)` - the best ready ranged skill's own range (Soul Breaker / Soul Destroyer carry
+   `rng:5`), else the class band (bow 5, staff 4.5, melee `1.2 + 0.45*size`) - so every ranged class
+   now fights from range instead of walking to a 3-unit class ring. That is a real DPS/safety buff to
+   the bow and staff lines: re-measure kills/hour before touching the bands, and note that a melee
+   class holding a ranged skill stops closing in too (`field_loop_smoke.js` pins all of this).
 4. **The shadow map went 1024 -> 2048** when the field got longer, and landmarks added ~40 shadow
    casters. Watch frame rate on weak machines before adding more scenery.
 
@@ -516,27 +519,28 @@ node tools/tests/pack_sim.js           # -> "bodies in pack (19): ..."
 node tools/tests/class_change_sim.js   # -> "27 passed, 0 failed"
 node tools/tests/class_skin_sim.js     # -> "39 passed, 0 failed" (live class skins, both genders, mirrors)
 node tools/tests/kit_sim.js            # -> "34 passed, 0 failed" (v2 atlas + KIT_PS, payon recipe, ten identities)
-node tools/tests/skill_sim.js          # -> "58 passed, 0 failed" (91-skill roster, caps, cooldowns, GCD queue)
+node tools/tests/skill_sim.js          # -> "58 passed, 0 failed" (91-skill roster, caps, cooldowns, swing-frame casts)
 node tools/tests/dual_wield_sim.js     # -> "11 passed, 0 failed" (v81: Assassin dagger + dual-wield rules)
 node tools/tests/save_load_sim.js      # -> "23 passed, 0 failed"
 node tools/tests/economy_sim.js        # -> "23 passed, 0 failed"
 node tools/tests/gear_sim.js           # -> "38 passed, 0 failed"
 node tools/tests/picker_sim.js         # -> "19 passed, 0 failed" (the picker, booted under a DOM stub)
 node tools/tests/card_sim.js           # -> "13 passed, 0 failed"
-node tools/tests/drop_card_sheet_sim.js # -> "12 passed, 0 failed"
+node tools/tests/drop_card_sheet_sim.js # -> "13 passed, 0 failed"
 node tools/tests/weapon_review_sim.js  # -> "13 passed, 0 failed"
 node tools/tests/pet_sim.js            # -> "13 passed, 0 failed" (+ printed pet data and the maxed-pet balance measurement)
-node tools/tests/sprite_sim.js         # -> "12 passed, 0 failed"
+node tools/tests/sprite_sim.js         # -> "13 passed, 0 failed" (v83: idle breath, lunge, hit recoil)
 node tools/tests/background_sim.js     # -> "12 passed, 0 failed" (grinding is permanent)
 node tools/tests/gm_auth_sim.js        # -> "12 passed, 0 failed" (GM password hashed; local GM password; tool/game agree)
 node tools/tests/publish_sim.js        # -> "7 passed, 0 failed" (runs the real build; only game files ship)
 node tools/tests/scene_sim.js          # -> "8 passed, 0 failed" (per-map scenery, water, clear lane)
-node tools/tests/starter_sim.js        # -> "8 passed, 0 failed" (the gentle starter stages)
+node tools/tests/starter_sim.js        # -> "10 passed, 0 failed" (the gentle starter stages, v83 camps + per-camp refill)
 node tools/tests/stat_sim.js           # -> "7 passed, 0 failed"
 node tools/tests/weapon_joint_sim.js   # -> "7 passed, 0 failed"
 node tools/tests/ui_sim.js             # -> "50 passed, 0 failed"
 node tools/tests/sprite_viewer_sim.js  # -> "Sprite viewer: 154 PNGs, 7 trees, 19 class jobs; ..."
 node tools/tests/town_smoke.js         # -> "40/40 steps ok" (needs jsdom; skips cleanly without it)
+node tools/tests/field_loop_smoke.js   # -> "6/6 steps ok" (v83: the real field loop - camps, refill, login card, stand-off, printed damage, and the ranged hold that stops kiting)
 python3 tools/make_class_skins.py --check    # -> "Class skins are current."
 python3 tools/make_sprite_viewer.py --check  # -> "Sprite viewer is current."
 python3 tools/make_town_pack.py --check      # -> "Town art is current (20 sprites, atlas 4096x1793)."
@@ -5306,3 +5310,236 @@ The owner's second pass over v77, six notes, all built.
     files are unmetered on every Cloudflare plan. They are still worth having on phones.
   * Nothing here makes the leaderboard, chat or presence cheaper; those are still the phase-2 items
     in `tools/server-shift-plan.md`, and a `/api/live` poll would be the next thing to spend requests.
+
+### 2026-10-08 — `grind-v83 the RO feel: camps across the field, numbers that fly off the head, a login every time`
+
+* **Why:** the owner confirmed a seven-item list after seeing two live proposal pages (`/dmg2`, `/spawn`)
+  and the confirmation sheet (`Updates/ro-feel-plan.md`), under a standing rule: **"no pr. lets confirm
+  everything first."** The proposals were read off the real constants, so the numbers below are the
+  ones that were on those pages.
+* **What changed for the player:**
+  * **Damage numbers are readable and they get out of the way.** Normal hits are 24px, skill hits 22px
+    and criticals 30px; every damage number (normal, skill, crit and DoT) climbs 78px over 0.7s, starts
+    fading at 45% of its life,
+    and spawns **above the monster's head** (`3.15 x mobVisualScale - .3`, min 1.7) instead of on its
+    body. The critical is read from the **number**, not from a shape: the 64x80px starburst, its speed
+    lines and its impact ring are gone, replaced by a soft red-orange **RO bubble behind the digits**
+    (candidate **A** of four; the other three are still rendered side by side on `/dmg2`).
+  * **One swing, one number per monster.** `playerAttack()` no longer fires instantly: it *schedules* a
+    swing at the attack animation's contact frame (45% through a 0.30-0.55s animation stretched to the
+    attack interval) and `resolveSwing()` lands the whole swing there - the tier's cast(s), every
+    multi-hit and the normal strike in the same frame - then `flushDamageGroup()` prints **one number
+    per monster** for all of it. The old 90ms per-hit queue, the 0.5s per-cast queue (`SKGCD`, now
+    deleted) and Double Attack's own timer are gone. A damage-over-time burn keeps **one** number per
+    monster and climbs it instead of sprinkling a new tick every 0.5s.
+  * **Ranged classes fight from range.** `heroStandoff(mob)` replaces the class ring: the best ready
+    ranged skill's own range (Soul Breaker and Soul Destroyer now carry `rng:5`), else the class band -
+    bow 5, staff 4.5, melee `1.2 + 0.45*size`. The hero holds that distance (no kiting), and the
+    monster's own stand-off dropped from `2.6 + 0.3*size` (~3.0) to `1.9 + 0.25*size` (~2.05), with the
+    new attack lunge carrying the hit across the last of the gap.
+  * **The field is a place, not three clumps.** `packSites()`'s three overlapping packs are replaced by
+    **camps**: 8 (maps 0-2), 10 (3-6), 12 (7-10) of them across the whole 26x40 lane, at least 5.5 units
+    apart (2.6 when water squeezes the lane), each holding 1-3 monsters 1.6-3.2 units from the camp
+    site and never standing in a water band. An emptied camp refills itself after 4-8s (a stable
+    per-camp timer, the `/spawn` page's own), idle monsters wander 1-2 units on a 2-5s timer, and awake
+    ones keep their own approach angle with a separation push. **The 15-kill counter still opens the
+    next stage, but it no longer throws the field away** - only the boss wave resets, and a
+    camp-less field (a fresh map, the walk back after a defeat, the boss arena) still spawns on the
+    `respawn` timer.
+  * **Creatures look alive.** `mobMotion()` gained an idle breath (2px, +/-2%), an attack lunge (0.45
+    units toward the hero, 0.62 for a boss, with a forward lean) and a hit recoil (0.2 units away,
+    squashed) - and `syncMobImage()` applies them to **both** sprite paths, the GPU sprite (position,
+    scale, material rotation) and the DOM fallback (transform), so the official Divine Pride art
+    animates too. Pets ride the same motion. **No death animation**, as the owner confirmed.
+  * **A login on every load, GM included.** `cloudProbe()` used to be a door: a live session cookie made
+    `/me` answer 200 and the game walked straight in (`initSessionFromCloud`). It now answers one
+    question - is there a real API - always returns `false`, and **deletes the leftover session**
+    (`DELETE /api/sessions`) so cookies cannot pile up in D1. `initSessionFromCloud()` is reachable only
+    from `cloudAuth()`; Remember me still pre-fills the username (a name, not a session).
+* **Files touched:** `index.html` (BUILD; the float CSS block - sizes, the `.fbubble` treatment, the
+  `.fl.dot` style; `DMG_LIFE/DMG_RISE/DMG_FADE`, `showDamage`/`flushDamageGroup`/`dotTick`/`mobDamageY`;
+  `hurt`/`strike`/`kill`; `SWING_CONTACT`/`SWING_MIN_T`/`SWING_MAX_T`/`swingLength`/`playerAttack`/
+  `resolveSwing`; the `update()` swing block; `camps`/`campSites`/`campWait`/`fillCamp`/`minionDef`/
+  `spawn`; the field loop's camp refill, idle wander, separation push and the camp-less respawn guard;
+  the stage-unlock branch; `heroStandoff`/`CLASS_BAND` and the walk-to-range line; `mobMotion`/
+  `syncMobImage`; `cloudProbe`; the dead `pend`/`castQ` state; the skill help line about the GCD),
+  `tools/tests/{combat_float_sim,crit_sim,skill_sim,save_load_sim,sprite_sim,starter_sim,cloud_sim,ui_sim}.js`
+  (updated) and **new** `tools/tests/field_loop_smoke.js`, `Updates/ro-feel-plan.md` (now the shipped
+  record), `Updates/{damage-numbers-v2,spawn-field}/index.html` (build tag), `tools/preview_server.py`
+  (the `/dmg2` and `/spawn` routes), `.assetsignore` (the two proposal pages never ship), build-tag
+  snapshots (`Updates/cards-gear-audit/affix-ranges.html` x2, `equipment-cards-tuning.html`,
+  `tools/cloudflare-deploy-steps.md`), this log.
+* **Art:** untouched. Nothing was drawn, recoloured or substituted: the whole creature-animation item is
+  transform/scale/rotation on the existing sprites, per house rule 1. `tools/montage.py` not used.
+* **Tests:** every suite green. Updated: `combat_float_sim` 14 (was 11 - the bubble, the RO motion and
+  three new runtime checks for the grouping, the merged DoT number and the swing's contact frame),
+  `crit_sim` 5 (the `strike()` harness stubs `showDamage`/`mobDamageY`), `skill_sim` 58, `sprite_sim` 13
+  (was 12: idle breath / lunge / recoil, and no death animation), `starter_sim` 10 (was 8: camps, the
+  ring, the refill block run against the real code), `cloud_sim` 36 (was 35: the probe is no longer a
+  door, for the GM too), `save_load_sim` 23, `ui_sim` 50. `town_smoke.js` **40/40 steps ok**
+  (`npm i --no-save jsdom three@0.128.0`), and the new `field_loop_smoke.js` **5/5**: it boots the real
+  page, proves the login card is what a live cookie sees, spawns a real field (8 camps, ring, timers),
+  kills a camp and watches it refill, steps the real loop and asserts the numbers printed add up to
+  exactly the damage dealt, then measures the settled stand-off per class band (Hunter ~4.25, Mage
+  ~3.83, Novice ~1.2) against one motionless target.
+* **Branches / PR:** `arena/905d1900-prontera-grind` only. **No PR**, per the owner's instruction - the
+  work waits on the branch until they confirm the one open pick (the critical treatment: A shipped, B/C/D
+  are still on `/dmg2`).
+* **Known limits / follow-ups:**
+  * The crit treatment is a **pick, not a decision**: A (the RO bubble) is in because it matches the
+    complaint ("a shape covering the monster"), and switching to B/C/D is a small edit to the crit
+    branch plus `combat_float_sim.js` / `ui_sim.js`.
+  * One number per monster means a transcendent swing's 40 hits print as a handful of numbers; the
+    damage itself is unchanged (proved by `field_loop_smoke.js`'s printed-vs-dealt equality), but the
+    *drama* of a big multi-hit build now comes from the size of the total, not from a flurry.
+  * Camps mean walking between them: `starter_sim.js` keeps the survivability budget green, but the
+    per-kill travel time went up (that is what the `/spawn` page measured), so a kills/hour sample
+    should be taken before any further spawn tuning.
+  * `m.atkAnim` drives the lunge for **all** shapes, so the blob hop and the lunge can stack; the
+    Poring-like shapes were tuned to keep the combined motion small, but a future shape with its own
+    `mobMotion` branch must remember to add the lunge in.
+
+### 2026-10-08 — `grind-v83.1 the ranged hold: no more backing away, and a picker page for the numbers`
+
+* **Why:** the owner asked two things after v83: (a) a preview page where the damage-number look and the
+  critical treatment can be picked **without a GM account or a live fight** — "i cant test it well in game
+  now cause i dont have gm account tools" — and (b) whether a ranged class kites too much for an idle game,
+  compared with melee characters. The second question exposed a real bug in v83.
+* **What changed for the player:**
+  * **Ranged classes no longer back away.** v83 made the hero walk to its stand-off, but the walk target
+    was a ring *around the monster*, recomputed from the monster's position every frame: as the monster
+    closed in, the hero re-walked out to the ring and retreated for as long as the monster chased it.
+    Measured (real page in jsdom, one monster, 30s): **112.5 units of retreat**, the hero still moving at
+    the end, pinned against the lane edge with the monster 6.3 units away, and **0 hits taken** — a ranged
+    class simply could not be hit. The hero now **latches** into the fight (`engageTgt`): walking in ends
+    when the target is in range, the hero stands exactly where it is (`tx=pl.x, tz=pl.z`), and swings only
+    while the target really is in range. Same measurement after: **2.3 units of movement, monster settles
+    at 1.96 units, 20 hits landed on the hero.** The latch breaks when the target is a different monster or
+    gets 1.2 units beyond the range (kept inside the 6.5-unit wake radius so a latched hero can never stand
+    still next to a sleeping monster), and it is cleared by `spawn()`, a defeat, the town and the trial.
+  * **A real number picker, no GM tools needed:** `Updates/damage-numbers-v2/index.html` (served at
+    `/dmg2`) was rebuilt. It now runs the **real sprites** — the shipped `assets/mob_*.png` sheets and the
+    game's own animated hero PNG (`Updates/Sprite/Archer/archer male attack SE.png`) — on a field-like
+    stage, with the real spawn rule (the head is found by measuring each sheet's transparent padding with
+    an offscreen canvas, then `3.15 × mobVisualScale − .3`), the real float motion
+    (`-RISE·(1−(1−min(1,t·1.08))²)`, spread over 0.22s, fade from `DMG_FADE`), and one number per swing.
+    Five presets (v83 shipped / v82 before / bigger / quick / max), every constant adjustable, five
+    **clickable critical tiles** (A bubble, B ring, C halved starburst, D starburst above the head, E no
+    frame) each firing on a loop, an optional ghost of the v82 numbers drawn next to the live ones, three
+    zones, four mobs, the creature-animation cards, and a copy button that prints the whole selection.
+* **Balance note (measured, not guessed):** holding at range is **not** a damage advantage, because the game
+  has no per-class attack powers — a bow shot and a sword swing are the same `atk()` roll. Seeded
+  same-class comparison over 60s (identical stats and RNG, only the stand-off changed): **10 kills /
+  1,475 damage taken at 1.5 units vs 9 kills / 1,620 taken at 5 units** — inside the noise. What ranged
+  buys is fewer steps (28 vs 14 units walked) and, in a single-monster duel, the monster's walk-in time.
+  If the owner still wants ranged *weaker*, the lever is the class band itself (bow 5 → 4), not a hidden
+  damage penalty — recorded in `Updates/ro-feel-plan.md` §2.
+* **Files touched:** `index.html` (BUILD; `engageTgt` in the field loop and its four clear sites),
+  `Updates/damage-numbers-v2/index.html` (rebuilt), `Updates/ro-feel-plan.md` (§2 measured before/after),
+  `tools/tests/field_loop_smoke.js` (two new steps: "a ranged hero holds its ground: the monster closes in
+  and hits back", and the stand-off step now asserts the hero settles at its own band instead of a ring),
+  build-tag snapshots (`affix-ranges.html` ×2, `equipment-cards-tuning.html`, `tools/cloudflare-deploy-steps.md`),
+  this log.
+* **Tests:** every `*_sim.js` suite green (nothing else touched), `town_smoke.js` **40/40**,
+  `field_loop_smoke.js` **6/6** (was 5/5 — the new no-kite step pins movement, distance and hits taken).
+
+### 2026-10-08 — `grind-v83.2 a rounder critical, a bow range of four, and the picker where you can find it`
+
+* **Why:** three things came back from the owner after v83.1: (1) **"change the bow range to 4 tiles"**;
+  (2) **"i dont see the picker"** — the page existed at `/dmg2` but the preview they click lands on `/`,
+  so a page that is only reachable by editing the URL is a page that does not exist as far as the owner is
+  concerned; (3) **"the critical bar seems to be broken. i only see red box. not the boom effect"** — a real
+  visual bug.
+* **The bug, exactly:** v83's `.fbubble` was a `radial-gradient` on a plain **rectangle**. Nothing clipped
+  the corners, so the outer stop (`#7d0f0d`) painted the whole box and every critical drew a **dark red
+  rectangle** behind the digits instead of a blob. Fixed with `border-radius:50%`, a brighter centre
+  (`#ffeec2 → #ffc267 → #f4571f → #9e1a08`), inset shading so it reads as a lit sphere, and — for the
+  "boom" the owner expected — a new **`.fflash`**: a white-hot ring that blows out of the impact
+  (scale .42 → 1.62) and is gone in **0.26s**, painted *under* the blob and the digits. The skill-critical
+  variant is the same in silver-blue. Both are transform/opacity only, on one element each: nothing covers
+  the monster's body, and no sprite art is touched (house rule 1).
+* **Bow range 4.** `CLASS_BAND` now reads `bow 4, staff 4.5`; the 5-tile figure that remains belongs to
+  **Soul Breaker / Soul Destroyer**, which are **Assassin Cross** skills — a melee class — so learning one
+  still pulls that class out to 5 tiles, and bow classes are 4 everywhere. (`field_loop_smoke.js` pins
+  both halves, and now uses an Assassin Cross for the ranged-skill case instead of the impossible
+  "Sniper with Soul Breaker".)
+* **The picker is now impossible to miss:** a **second preview server** runs on port **8001** with
+  `PREVIEW_PAGE=Updates/damage-numbers-v2/index.html`, so the UI shows a separate live preview labelled
+  "Number & crit picker" whose root IS the picker. The game keeps `/` on 8000, and `tools/preview_server.py`
+  grew `/dmg` and `/numbers` aliases beside `/dmg2`.
+* **Files touched:** `index.html` (BUILD; float CSS `.fbubble`/`.fflash`; the crit markup builder; the
+  `CLASS_BAND` comment and value), `Updates/damage-numbers-v2/index.html` (same blob/flash fix, tile A
+  relabelled "RO blob + impact flash", a note about the rectangle bug),
+  `tools/preview_server.py` (two aliases), `tools/tests/combat_float_sim.js` (the blob/flash assertions:
+  14 checks), `tools/tests/field_loop_smoke.js` (bow 4 + the Assassin Cross ranged-skill case),
+  `Updates/ro-feel-plan.md` (§2 band note), build-tag snapshots (`affix-ranges.html` ×2,
+  `equipment-cards-tuning.html`, `tools/cloudflare-deploy-steps.md`), this log.
+* **Tests:** every `*_sim.js` suite green (`combat_float_sim` 14), `town_smoke.js` **40/40**,
+  `field_loop_smoke.js` **6/6**.
+
+### 2026-10-08 — dev page: the number picker is a **side-by-side comparison** now (no game change)
+
+* **Why:** the owner tried the picker and could not judge it — "i cant really see the difference on the one u
+  made". They are not deciding on the critical any more (**"i would like to keep my current one"** — A, the RO
+  blob); the only open questions are **(1) the size of the numbers and (2) how far they climb before they
+  disappear**, which is exactly what the old page they used (`Updates/damage-floats-proposal`, `/damage`) let
+  them do with its "Compare all" strips. One animated number at a time is impossible to compare from memory.
+* **What changed (dev-only, `Updates/damage-numbers-v2/index.html`, served at `/dmg2` and as the root of the
+  second preview):** the page is rebuilt around **thirteen lanes that all fire the same hit on the same beat**:
+  * **three compare lanes** — *game today (v83)* / *your pick* / *before (v82)* — each with a **px ruler above
+    the monster's head**, a **gold dashed line at the top of the flight** (labelled with the exact pixels) and a
+    white dashed line where the fade starts;
+  * a **size ladder** (16 / 20 / 24 / 28 / 34px, all climbing 78px, the closest step outlined);
+  * a **climb ladder** (30 / 50 / 78 / 100 / 130px at your size, the top line labelled on every strip).
+  Every lane leaves a **trail of dots at 25/50/75/100% of the flight**, so the arc is visible without watching
+  it live; there is **slow motion (0.25×)**, pause, and a fire-once button. Lane boxes are sized so the tallest
+  climb the slider allows (150px) still fits above the head.
+* **The critical is untouched and marked as kept** (A), and the notes on the page say so. The old `/damage`
+  page is linked from the footer and still works.
+* **No game change:** nothing in `index.html` moved, so the BUILD tag stays `grind-v83.2` and no suite needed
+  re-running (the last full sweep was green: `*_sim.js` 0 failures, `town_smoke` 40/40, `field_loop_smoke` 6/6).
+  The page itself was checked in jsdom: 13 lanes built, all firing, sliders move size and climb, the ladder
+  highlight follows the nearest step, the labels read back correctly, no console errors.
+
+### 2026-10-08 — `grind-v83.3 your critical is back exactly as you had it, and the picker now starts from it`
+
+* **Why:** the owner came back with two things, and the first one was a correction of the last round:
+  * **"bring back my old damage picker"** — the picker page they had learned to use (the critic tiles and all
+    the knobs) had been replaced by the three-lane comparison page.
+  * **"my current damage is not a blob its like your starburst. but i already tune that to my liking i just want
+    to readjust."** — they play the **deployed v82** build, whose crit is the **starburst**, and they had already
+    tuned it. v83 had swapped it for the RO blob: a regression against the thing they actually see and like.
+* **Where the truth was:** `git show HEAD:index.html` is the last committed build (**grind-v82**, the deployed
+  one) and it carries `.fburst` + `.fring` + `.fstreak` and the 30px sway motion at 17px/32px digits. The v83
+  work in this session is uncommitted, so nothing the owner plays had ever seen the blob.
+* **What changed in the game (index.html):** the float look is **v82 again, byte-for-byte** — verified by
+  diffing the CSS rules and the crit markup builder against `HEAD` (identical). The crit is the 12-jittered-spike
+  starburst (fresh rotation every hit) with the dark registration stroke, the 8-spike inner star, the pale core,
+  the impact ring and the 9 speed lines, red-gold / blue-silver; digits 17px / 17px / 32px; `DMG_RISE` 30 with
+  v82's sway (10px right, then 38px left) and the hold-then-fade (`opacity = min(1, max(0, r/.45))`, i.e. solid
+  for the first 55% of the life); life rate .95 (~1.05s). The random ±7px spread is gone with it (v82 had none).
+  **Nothing else was reverted:** the v83 behaviour the owner confirmed stays (one number per swing, DoT merging,
+  camps, the login every time, the creature animation), and so do the v83.1 ranged hold and the v83.2 bow range
+  of 4.
+* **Tests re-pinned to the owner's look:** `combat_float_sim.js` (14 checks: the starburst markup and its
+  keyframes, the 32px/17px sizes, the 30px climb, the sway, hold-then-fade, the punch), `ui_sim.js` (the crit
+  markup that the renderer actually writes — `width:108px;height:80px` for `1,896` — and the pale-gold ordinary
+  digits), and the build-tag snapshots (`affix-ranges.html` ×2, `equipment-cards-tuning.html`,
+  `tools/cloudflare-deploy-steps.md`). All suites green: `*_sim.js` 0 failures, `town_smoke.js` **40/40**,
+  `field_loop_smoke.js` **6/6**.
+* **The picker is back, and it starts from the owner's own look** (`Updates/damage-numbers-v2/index.html`):
+  a live fight with the real hero PNG and the shipped mob sheets, the crit tiles (the **starburst first, marked
+  "YOURS — in the game"**, then starburst-without-streaks, the round blob, the ring, and no frame at all), the
+  size sliders (17/17/32 as the game today), the **climb** slider (30px as the game today, with buttons for 0 / 30
+  / 50 / 78 / 110), the lifetime and fade knobs, presets ("in the game now (yours)" / bigger / fly higher /
+  quicker / max readability), and a 📋 copy box that prints the whole selection. The **gold peak line**, the
+  **white fade line**, the px ruler and the flight dots are there because the owner could not compare one
+  animated number at a time — and **"👁 also draw the numbers the game has now"** paints the game's own numbers,
+  faded and offset, next to the pick so the two can be judged in motion.
+* **Shipped as PR #38** (`arena/905d1900-prontera-grind` → `main`, 19 files) once the owner confirmed the crit
+  and the numbers stay exactly as v82 had them: *"i want my critical & number as previous version. dont do
+  anything else to it."*
+* **Files touched:** `index.html` (BUILD; the crit CSS block, the digits sizes, the motion block and the
+  constants), `Updates/damage-numbers-v2/index.html` (rebuilt around the owner's look),
+  `tools/tests/combat_float_sim.js`, `tools/tests/ui_sim.js`, the two audit pages, `tools/cloudflare-deploy-steps.md`,
+  `Updates/ro-feel-plan.md`, this log.

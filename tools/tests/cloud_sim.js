@@ -150,6 +150,26 @@ await T('an API that answers 401 turns the cloud on and invites the player to si
   assert.match(h.els.get('loginCloud').textContent, /register or sign in/i);
 });
 
+await T('a live session cookie is not a door: every load stops at the login card (v83 owner request)', async () => {
+  for (const me of [{ status: 200, body: { u: 'FRIEND', gm: 0 } }, { status: 200, body: { u: 'GM', gm: 2 } }, { status: 401, body: {} }]) {
+    const h = harness({ routes: { '/me': me } });
+    assert.strictEqual(await h.sandbox.cloudProbe(), false, 'the probe must never start a session by itself');
+    assert.strictEqual(h.sandbox.CLOUD.on, false, 'nobody is signed in until a password is typed');
+    assert.strictEqual(h.sandbox.currentUser, null, 'no account is adopted behind the card');
+  }
+  const h = harness({ routes: { '/me': { status: 200, body: { u: 'FRIEND', gm: 0 } } } });
+  await h.sandbox.cloudProbe();
+  await new Promise(r => setImmediate(r));
+  assert.strictEqual(h.sandbox.CLOUD.api, true, 'a real API is still detected - only the free pass is gone');
+  assert.ok(h.calls.some(c => c.url === '/api/sessions' && c.init.method === 'DELETE'),
+    'the leftover cookie session is deleted instead of being left to pile up on the server');
+  assert.match(h.els.get('loginCloud').textContent, /sign in to continue|register or sign in/i);
+  // the GM account has no shortcut around the card, and neither does a remembered name
+  assert.ok(src.includes("addEventListener('load',()=>{setTimeout(cloudProbe,80)});"), 'every load still runs the probe, which now only reports the API');
+  assert.ok(!/cloudProbe[\s\S]{0,600}initSessionFromCloud/.test(src), 'the probe must not be able to log anybody in');
+  assert.ok(/function restoreRememberedUser\(\)\{[\s\S]*?field\.value=name/.test(src), 'Remember me only pre-fills the username');
+});
+
 await T('cloud login hands the server claim to the reward applier and syncs its claim ID', async () => {
   const blob=JSON.stringify({lv:12,cls:'Novice',zeny:100,kills:5,st:{str:1}});
   const offlineClaim={id:41,awayMs:8*3600000,creditedMs:4*3600000,rateKph:100,kills:200,remainder:0};

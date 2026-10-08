@@ -157,8 +157,15 @@ t('magical class skills route through MATK, while physical classes remain ATK-ba
   for (const id of ['bash','dstr','mammo','env']) assert.ok(!byId(id).magic,id+' should deal physical ATK damage');
   assert.strictEqual(byId('amp').key,'matk','Amplify Magic must raise MATK, not physical ATK');
   assert.strictEqual(byId('mystic').key,'matk','Mystical Amplification must raise MATK, not physical ATK');
-  assert.ok(src.includes('strike(m,sk.col,!!sk.magic,true)')&&src.includes('magic:!!sk.magic,skill:true')&&src.includes('strike(p.m,p.col,!!p.magic,!!p.skill)'),
+  assert.ok(src.includes('strike(1,sk.col,!!sk.magic,true)'),
     'skill hits must keep their blue skill-damage style while multi-hit spells preserve the MATK path');
+  // v83: a multi-hit skill no longer queues extra hits behind a timer - the whole swing lands on the
+  // attack animation's contact frame, and every hit of the same skill still routes through the
+  // magic flag (so MATK classes keep hitting MATK).
+  assert.ok(src.includes('for(let i=1;i<sk.hits;i++){if(!mob||!mobs.includes(mob)||mob.hp<=0)break;strike(1,sk.col,!!sk.magic,true)}'),
+    'every extra hit of a multi-hit skill resolves in the same swing frame');
+  assert.ok(!src.includes('pend.push({t:i*.09')&&!src.includes('castQ.push('),
+    'the per-hit and per-cast timers that spread one swing over a second are gone');
 });
 
 t('player ATK and MATK formulas consume only their matching pet buffs and passives', () => {
@@ -186,7 +193,8 @@ t('player ATK and MATK formulas consume only their matching pet buffs and passiv
   const strikeBox={};vm.createContext(strikeBox);
   vm.runInContext(`
     let mob={x:0,z:0,hp:10000,size:.6,spriteScale:1},shake=0,S={dmg:0};
-    const atk=()=>100,matk=()=>200,missCh=()=>0,crit=()=>0,st=()=>0,critD=()=>2,rnd=(a,b)=>a,addFloat=()=>{},damageFloat=()=>{};
+    const atk=()=>100,matk=()=>200,missCh=()=>0,crit=()=>0,st=()=>0,critD=()=>2,rnd=(a,b)=>a,addFloat=()=>{},damageFloat=()=>{},
+      showDamage=(o,x,y,z,a,c,sk)=>damageFloat(x,y,z,a,c,false,sk),mobDamageY=()=>1.9;
     ${STRIKE_SRC}
     const hp=mob.hp;strike(1,'#fff',false);const physical=hp-mob.hp;mob.hp=hp;strike(1,'#fff',true);this.damage={physical,magical:hp-mob.hp};
   `,strikeBox);
@@ -676,7 +684,7 @@ t('area casts cannot spill into a different pack when a kill changes target mid-
   assert.ok(context.result.near<=0,'the first pack should take the area hit');
   assert.strictEqual(context.result.mob,1,'the test must switch targets during the cast');
   assert.strictEqual(context.result.waiting,100,'the waiting pack must not be hit despite being nearby');
-  assert.ok(/mob.pack!==pack/.test(src), 'multi-cast swings must stop at pack boundaries');
+  assert.ok(/mob.pack!==s.pack/.test(src), 'multi-cast swings must stop at pack boundaries');
 });
 
 t('invented and wrong-job skills are gone', () => {

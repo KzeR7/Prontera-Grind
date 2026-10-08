@@ -120,7 +120,8 @@ t('high-level bosses cut the crit chance rolled against them', () => {
   vm.runInContext(`
     let mob={x:1,z:3,hp:1e9,size:1,critRes:.3},shake=0,hit=null,S={dmg:0};
     const missCh=()=>0,crit=()=>50,atk=()=>100,matk=()=>200,st=()=>0,critD=()=>2,
-      rnd=(a,b)=>a,addFloat=()=>{},damageFloat=(...a)=>{hit=a};
+      rnd=(a,b)=>a,addFloat=()=>{},damageFloat=(...a)=>{hit=a},
+      showDamage=(o,x,y,z,a,c,sk)=>damageFloat(x,y,z,a,c,false,sk),mobDamageY=()=>1.9;
     ${grab('function strike(mult,col,magic=false,skill=false){', '// Higher job tiers get more casts per swing:')}
     Math.random=()=>.4;
     strike(1,'#fff');
