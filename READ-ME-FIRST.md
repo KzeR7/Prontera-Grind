@@ -84,6 +84,23 @@ is the live one; with no argument the tool prints how to set a new one). Since v
 `GM` / `test1234`; `localStorage.removeItem('pg_gm_local')` removes it. Normal accounts are made
 in-game and stored in the browser (`pg_acc4`; saves under `pg_save3_<user>`).
 
+## BUILD v83.5 — damage numbers start above the head (grind-v83.5): nothing covers what you fight
+
+* **The owner asked for the numbers to start above the mob's head** (bosses included) so they stop
+  covering the monsters — and the hero. Before, the digits sat on the monster's head and the crit's
+  97.5px starburst lay over its whole upper body; incoming damage sat at a fixed 2.4, on the hero's
+  chest.
+* **How:** `mobDamageY(o,crit)` measures the clearance in **screen px** through the same projection
+  the floats use (`scr`), from the sprite's own head line (`3.05*mobVisualScale(o)` — the height
+  `syncMobImage` draws the sprite). It holds at every zoom, and it follows the mob's drawn scale, so
+  **bosses start higher** than regulars. A crit clears its whole burst box (54.75px), an ordinary hit
+  its digits (22.8px); the old 1.7 floor stays for mobs still spawning in. Incoming damage gets
+  `heroDamageY()` — above the hero's head (the 2.92-tall billboard's top) instead of 2.4.
+* **Short form checked — it goes well:** every damage number is formatted by `numTxt` (short by
+  default, full via Settings), the starburst sizes itself from the finished label (`1.3M` → the same
+  131×98px box as `1896`), and the gradient digit fill carries the K/M/B suffix as-is. Pinned by a
+  new ui_sim check.
+
 ## BUILD v73 — the number retune (grind-v83.4): 28/39px digits, a 70px flight, ×1.9 punch, and a real spread
 
 * **The owner retuned the damage numbers from the tuner** (`Updates/damage-floats-proposal/`, strip B):

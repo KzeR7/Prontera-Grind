@@ -63,7 +63,11 @@ html, body { margin:0; padding:0; width:100vw; height:100vh; height:100dvh; over
    and the impact punch is x1.9 (crits peak at x2.33, normals at x1.475). The font, the gradient
    fill, the 1px rim and the v71 centring are untouched. The page's Spread slider is real now too:
    every damage number rolls its own +-14px horizontal offset at spawn (DMG_SPREAD), so a
-   multi-mob volley fans out instead of piling on one pixel. */
+   multi-mob volley fans out instead of piling on one pixel.
+   v83.5 (owner): the number STARTS above the head - the whole crit frame included - measured in
+   screen px through the same projection, so it holds at any zoom and follows the mob's drawn
+   scale (bosses start higher); incoming damage lifts above the hero's head too (2.4 sat on the
+   chest). */
 .fl.damage,.fl.skill-damage,.fl.critical,.fl.skill-critical,.fl.incoming,.fl.dot{position:absolute;font-variant-numeric:tabular-nums;letter-spacing:0;z-index:24}
 .fl.dot{font:700 18px "Trebuchet MS",Verdana,sans-serif;-webkit-text-stroke:.6px #14320f;text-shadow:0 2px 3px #000}
 .fl.damage,.fl.skill-damage{font:700 28px "Trebuchet MS",Verdana,sans-serif}
@@ -672,7 +676,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // script block, which is a SyntaxError - the game did not run on main at all. One line wins, and
 // it names both sides of this merge: the v38 balance patch (the weapon cut, the affix/card
 // give-back) and main's weapon-hold rendering work.
-const BUILD='2026-10-08 grind-v83.4 your number retune applied: 28px and 39px digits, a 70px flight, a x1.9 punch, and a spread that fans the volley out';   // shown on the login card - confirms which file you loaded
+const BUILD='2026-10-08 grind-v83.5 damage numbers start above the head - the whole crit frame clears the monster, bosses included, and incoming damage lifts off the hero';   // shown on the login card - confirms which file you loaded
 $('buildTag').textContent='build '+BUILD;
 
 // ---------- class tree: Novice -> 6 first jobs -> 6 second jobs -> 6 third jobs ----------
@@ -2847,9 +2851,27 @@ function dotTick(o,d,col,skill){
   const f={x:o.x,y:mobDamageY(o),z:o.z,txt:numTxt(d),val:d,col:col||'#7dff6b',life:1,big:false,kind:'dot',sw:rnd(-6,6),st:0,rate:DMG_RATE,sp:rnd(-DMG_SPREAD,DMG_SPREAD)};
   o._dotF=f;floats.push(f);
 }
-// The height a damage number starts at: just above the monster's head (the tag line), never on its
-// body. mobVisualScale is the same scale the sprite is drawn at, so this follows every size.
-function mobDamageY(o){return Math.max(1.7,3.15*mobVisualScale(o)-.3)}
+// v83.5 (owner): a damage number STARTS above the monster's head - the whole crit frame
+// included - so a hit never sits on the monster (or on the hero standing behind it). The
+// sprite's head is at 3.05*mobVisualScale(o) world (syncMobImage draws the sprite exactly that
+// tall); the clearance is measured in screen px through the same projection the floats use, so
+// it holds at every zoom, and it follows the mob's drawn scale, so bosses start higher than
+// regulars. crit=true clears the 97.5px burst box, not just the 28px digits. The 1.7 floor is
+// the old one, kept: a mob's sprite grows from nothing to full over its spawn-in, and 1.7 stays
+// above even a Small mob's head (1.32), so a number printed on a spawning mob is never on it.
+function mobDamageY(o,crit=false){
+  const s=mobVisualScale(o),head=3.05*s;
+  const half=(crit?97.5:28*1.2)/2+6,b=scr(o.x,0,o.z),t=scr(o.x,Math.max(head,.5),o.z);
+  const ppu=Math.abs(b[1]-t[1])/Math.max(head,.5);
+  return Math.max(1.7,head+Math.min(2,half/Math.max(1e-6,ppu)));
+}
+// v83.5 (owner): incoming damage starts above the HERO's head too - 2.4 sat on the hero's
+// chest. The drawn hero's head is at 2.92 world (the 1.95x2.92 billboard, anchored at the feet),
+// so the number's box is lifted clear of it in screen px, exactly like the mob numbers.
+function heroDamageY(){
+  const half=16*1.2/2+4,b=scr(pl.x,0,pl.z),t=scr(pl.x,1,pl.z);
+  return 2.92+Math.min(2,half/Math.max(1e-6,Math.abs(b[1]-t[1])));
+}
 // Skill labels track the moving player, rather than floating away from the cast location.
 // The skill banner rides ABOVE the head (v68): 3.15 put the plate on the hero's forehead,
 // so the base now sits at 3.65 - the height the LEVEL UP! float already reads as clearly
@@ -2930,13 +2952,13 @@ function heroStandoff(m){
 }
 function shot(col){if(!mob||heroWeaponType(C().n,C().wt,S.eq.weapon&&S.eq.weapon.wt)!=='bow')return;
   shots.push({x0:pl.x,z0:pl.z,x1:mob.x,z1:mob.z,t:0,col:col||'#fff',arrow:true})}
-function hurt(o,d,col,c,skill=false){S.dmg=(S.dmg||0)+d;o.hp-=d;o.flash=1;o.hitAnim=1;showDamage(o,o.x,mobDamageY(o),o.z,d,c,skill);if(o.hp<=0)kill(o)}
+function hurt(o,d,col,c,skill=false){S.dmg=(S.dmg||0)+d;o.hp-=d;o.flash=1;o.hitAnim=1;showDamage(o,o.x,mobDamageY(o,c),o.z,d,c,skill);if(o.hp<=0)kill(o)}
 function strike(mult,col,magic=false,skill=false){
   if(!mob)return;if(Math.random()*100<missCh()){addFloat(mob.x,1.8,mob.z,'MISS','#dfe5ed',false,'miss');return}
   // v73: the crit roll answers to the target - a boss carries its map's crit resistance
   // (BOSS_CRIT_RES) and every other monster resists nothing.
   const c=Math.random()*100<Math.max(0,crit()*(1-(mob.critRes||0))),base=magic?matk():atk(),d=Math.max(1,Math.round(base*mult*rnd(Math.min(.95,.7+st('dex')*.004),1.15)*(c?critD():1)*(mob.boss?1+petPassive('boss')/100:1)));
-  S.dmg=(S.dmg||0)+d;mob.hp-=d;mob.flash=1;mob.hitAnim=1;shake=c?6:2;const leech=typeof cardMasteryStat==='function'?cardMasteryStat('leech'):0;if(leech>0&&typeof maxHp==='function'){const h=Math.max(1,Math.round(d*leech/100));S.hp=Math.min(maxHp(),S.hp+h);addFloat(pl.x,2.7,pl.z,'+'+h,'#ff6b8a')}showDamage(mob,mob.x,mobDamageY(mob),mob.z,d,c,skill);
+  S.dmg=(S.dmg||0)+d;mob.hp-=d;mob.flash=1;mob.hitAnim=1;shake=c?6:2;const leech=typeof cardMasteryStat==='function'?cardMasteryStat('leech'):0;if(leech>0&&typeof maxHp==='function'){const h=Math.max(1,Math.round(d*leech/100));S.hp=Math.min(maxHp(),S.hp+h);addFloat(pl.x,2.7,pl.z,'+'+h,'#ff6b8a')}showDamage(mob,mob.x,mobDamageY(mob,c),mob.z,d,c,skill);
 }
 // Higher job tiers get more casts per swing: Novice 1, first job 2, second job 3, transcendent
 // 4 (tier is 0/1/2/3 - Assassin Cross and Lord Knight are tier 3, not 2). Every cast after the
@@ -4014,7 +4036,7 @@ function update(dt){
         // game is within a few percent of before, mid-gear cuts ~64%, endgame sits at the cap.
         // Pinned by ui_sim.js / save_load_sim.js (this is a game-loop line, not a constant).
         else{const md=m.mag?mdef():def(),cut=Math.min(.75,md/(md+4000));
-          const d=Math.max(1,Math.round(m.atk*rnd(.8,1.2)*(1-cut)*(1-petPassive('dr')/100)));S.hp-=d;hitAnim=1;m.atkAnim=1;damageFloat(pl.x,2.4,pl.z,d,false,true);
+          const d=Math.max(1,Math.round(m.atk*rnd(.8,1.2)*(1-cut)*(1-petPassive('dr')/100)));S.hp-=d;hitAnim=1;m.atkAnim=1;damageFloat(pl.x,heroDamageY(),pl.z,d,false,true);
           // Defeat is the ONE thing that puts you back at the spawn point.
 if(S.hp<=0){log('You were defeated... knocked back to the entrance.','r0','kills');S.hp=maxHp();S.kl=0;mobs=[];mob=null;camps=[];engageTgt=null;respawn=1.5;tb={};
           pl.x=0;pl.z=Z1-1.5;pl.wt=0;ui();return}}}}

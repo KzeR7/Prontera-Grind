@@ -5600,3 +5600,44 @@ The owner's second pass over v77, six notes, all built.
 * **Branches / PR:** shipped as **PR #39** (`arena/4a7f511c-prontera-grind` → `main`, 13 files). No migration, no API change; the
   preview server (`python3 tools/preview_server.py 8000` with `PREVIEW_PAGE=Updates/damage-floats-proposal/index.html`)
   serves the tuner at `/`, the game at `/game` and the crit comparison at `/crit`.
+
+### 2026-10-08 — `grind-v83.5 damage numbers start above the head - the whole crit frame clears the monster, bosses included, and incoming damage lifts off the hero`
+
+* **Why:** two asks after the owner played the retune: (1) damage numbers should **start above the
+  mob's head** — bosses too — so they stop blocking the monsters and the hero; (2) confirm the
+  game's **short-form option** (100K / 1M) goes well with the float code.
+* **What changed in the game (index.html):** `mobDamageY(o,crit=false)` is now px-exact — the head
+  line is the sprite's own top (`3.05*mobVisualScale(o)`, the height `syncMobImage` draws it), the
+  clearance is measured in screen px through `scr` (half the 28px line box + 6px for a normal, half
+  the 97.5px burst box + 6px for a crit), capped at 2 world units, with the old **1.7 floor kept**
+  for mobs still spawning in (their sprite grows 0→full; 1.7 stays above even a Small mob's 1.32
+  head). It follows the mob's drawn scale, so **bosses (×1.18) start higher**. `hurt()`/`strike()`
+  pass the crit flag (`mobDamageY(o,c)` / `mobDamageY(mob,c)`); the merged swing group keeps the
+  highest spawn. Incoming damage gets `heroDamageY()` — above the hero's head (the 1.95×2.92
+  billboard's top at 2.92) instead of a fixed 2.4 on the chest. The 70px flight, the punch, the
+  spread and the whole v73 retune are untouched; MISS/DODGE and the reward floats keep their spots
+  (the ask was damage).
+* **Short form: verified, no code change.** `damageFloat`/`dotTick`/the swing group all format
+  through `numTxt` (short by default, full via the Settings `dmgfmt` switch), the burst box sizes
+  from the finished label (`w=Math.max(fs*2,len*fs*.84)` — `1.3M` → the same 131×98px box as
+  `1896`, `1M` → 78px, full-mode `1250000` → 229px), and the v72 gradient fill on `.fnum` is
+  glyph-agnostic so the K/M/B suffix rides it as-is. The tuner needed no change either — its
+  strips already anchored the spawn in px above the mob's head (`spawnBase`).
+* **Tests:** `combat_float_sim.js` re-pinned (the new `mobDamageY`/`heroDamageY` source strings,
+  the crit-aware call sites, the incoming call site, plus runtime checks of the exact px clearance
+  against a stubbed 50px-per-world-unit projection); `ui_sim.js` +1 check (51 total) — short-form
+  labels flow into the floats and size the burst from the label, full mode included. The build-tag
+  snapshots (`affix-ranges.html` ×2, `equipment-cards-tuning.html`, `tools/cloudflare-deploy-steps.md`)
+  now carry the full v83.5 BUILD string. All suites green: the 37 `tools/tests/*_sim.js` suites
+  exit 0 with no FAIL lines, `town_smoke.js` **40/40**, `field_loop_smoke.js` **6/6** (re-run 6× —
+  the px-exact spawn briefly dropped the 1.7 floor and flaked that suite's `y > 1.5` head-height
+  check on mobs caught mid-spawn-in; the floor is back), the tuner smoke test **15/15**, and
+  `node --check` passes on the inline JS of `index.html` and both dev pages.
+* **Files touched:** `index.html` (BUILD → grind-v83.5; `mobDamageY` px-exact + `heroDamageY`;
+  the two `showDamage` call sites; the incoming `damageFloat` call site; the `.fl` history comment),
+  `tools/tests/combat_float_sim.js`, `tools/tests/ui_sim.js`, the two audit pages,
+  `tools/cloudflare-deploy-steps.md`, `READ-ME-FIRST.md` (the BUILD v83.5 section),
+  `Updates/damage-floats-proposal/README.md` (the spawn map row + the v83.5 handover note), this log.
+* **Branches / PR:** pushed to `arena/4a7f511c-prontera-grind`, which updates **PR #39** (the retune
+  PR — same feature line). No migration, no API change; the preview server keeps serving the tuner
+  at `/`, the game at `/game` and the crit comparison at `/crit`.

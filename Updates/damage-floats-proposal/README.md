@@ -198,7 +198,7 @@ route table. When the owner asks to adjust the damage numbers again, the workflo
 | **Lifetime 1.75s** | `addFloat` gives the damage family `rate:.571` (life decays at `rate×dt`; 1/0.571 ≈ 1.75s) |
 | **Spread 14px, wired in (v73)** — every damage number (hits, skill hits, crits, skill crits, DoT) rolls its own **±14px horizontal offset at spawn**, ridden on top of the sway so a multi-mob volley fans out. The page's `driftX` rule honours it in sway mode too | constants `DMG_SPREAD=14`; `addFloat`: `…rate:isDamageFloat(kind)?DMG_RATE:0,sp:isDamageFloat(kind)?rnd(-DMG_SPREAD,DMG_SPREAD):0}` (the merged DoT float rolls one too); draw loop: `dxx=sway+(f.sw||0)*Math.min(1,tt/.22)+(f.sp||0)` |
 | The constants line carries the whole pick | `const DMG_LIFE=1/.571,DMG_RISE=70,DMG_FADE=.9,DMG_RATE=.571,DMG_SPREAD=14;` |
-| **Spawn front of the mob's body** (no random scatter for damage numbers) | `hurt()`/`strike()`: `damageFloat(o.x,…)` / `damageFloat(mob.x,…)` — the old `rnd(-.4,.4)` jitter is gone |
+| **Spawn above the mob's head (v83.5)** — the number starts clear of the head: crits clear of the whole 97.5px burst box, ordinary hits of their 28px digits, measured in screen px through `scr` so it holds at any zoom. It follows the mob's drawn scale, so **bosses start higher**; incoming damage clears the hero's head too (`heroDamageY()`, was a fixed 2.4 on the chest). No random scatter for damage numbers | `mobDamageY(o,crit)`: head line `3.05*mobVisualScale(o)` (the height `syncMobImage` draws the sprite), clearance `(crit?97.5:28*1.2)/2+6` px above it, 1.7 floor kept for mobs still spawning in; `heroDamageY()`: head line `2.92` (the hero billboard's top); call sites `showDamage(o,o.x,mobDamageY(o,c),o.z,…)` in `hurt()`/`strike()` and `damageFloat(pl.x,heroDamageY(),pl.z,…)` for incoming — the old `rnd(-.4,.4)` jitter is gone |
 | **Explode frame** on crits & skill crits (the page's own layered star — 12 jittered outer spikes + 8-spike inner star + pale core, **no CRIT chip**) with a random speed-line spray (9 crit / 8 skill crit) and an impact ring, sized from the number | float-creation block in the draw loop: `if(f.kind==='critical'||f.kind==='skill-critical'){…}` — `fs=39`, `starPts(12,48,30,rot)` + `starPts(8,34,20,rot*.6)`, width `max(fs*2,len*fs*.84)`, height `fs*2.5`, ring `fs*1.4` |
 | Skill crits are their own class | `damageFloat`: `critical?(skill?'skill-critical':'critical'):…` |
 | **Short form starts at 100K** (99,999 stays full digits) | `shortNum`: `if(a>=1e5)…` |
@@ -240,6 +240,24 @@ sizes, `fs=39` in the burst builder, the `fburst-pop` duration stretched to 1.75
 1px rim are untouched. `volley-before-after-v73.png` in this folder is the same volley rendered
 at the old (v72) vs new (v73) settings — a rendering from the game's own motion math, not a
 screenshot (no browser in the sandbox).
+
+**v83.5 handover note (grind-v83.5, spawn above the head + the short-form check).** The owner
+asked for two things after playing the retune: damage numbers should **start above the mob's
+head** — bosses too — so they stop covering the monsters (and the hero), and a check that the
+game's **short-form option** (100K / 1M) goes well with the float code. The game now spawns every
+damage number clear of its mob's head: `mobDamageY(o,crit)` measures the clearance in screen px
+through the same projection the floats use (`scr`), from the sprite's own head line
+(`3.05*mobVisualScale(o)`, the height `syncMobImage` draws the sprite), so it holds at every zoom
+and follows the mob's drawn scale (bosses start higher); a crit clears its whole 97.5px burst box,
+an ordinary hit its 28px digits, and the old 1.7 floor stays for mobs still spawning in. Incoming
+damage lifts above the hero's head too (`heroDamageY()`, from the 2.92-tall hero billboard; it
+used to sit at a fixed 2.4, on the chest). **The short form checks out — no code change needed:**
+every damage number is formatted by `numTxt` (short by default, full via the Settings switch),
+the starburst sizes itself from the finished label (`1.3M` gets the same 131×98px box as `1896`,
+`1M` the 78px minimum, full-mode `1250000` stretches to 229px), and the gradient digit fill
+carries the K/M/B suffix as-is. Pinned by a new ui_sim check; `combat_float_sim` re-pins the spawn
+helpers. This page needed no change — its strips already anchored the spawn in px above the
+mob's head (`spawnBase`); the game now does the same.
 
 **The style strips** (A = RO red spike bubble, B = the applied red-gold starburst,
 C = modern sparks/shockwave) are all still on the page — switching the game to A or C later

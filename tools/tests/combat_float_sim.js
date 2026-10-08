@@ -10,9 +10,10 @@ assert.ok(start >= 0 && end > start, 'cannot locate the production damageFloat h
 const damageCode = src.slice(start, end);
 const emitted = [];
 const box = { S: {}, numTxt: n => 'n' + n, addFloat: (...args) => emitted.push(args), floats: [], rnd: (a, b) => (a + b) / 2, mobVisualScale: () => 1,
+  scr: (x, y, z) => [0, 600 - y * 50], pl: { x: 0, z: 0 },   // 50 screen px per world unit, for the px-exact spawn helpers
   DMG_LIFE: 1 / .571, DMG_RISE: 70, DMG_FADE: .9, DMG_RATE: .571, DMG_SPREAD: 14 };
 vm.createContext(box);
-vm.runInContext(damageCode + ';globalThis.__damageFloat=damageFloat;globalThis.__d={showDamage,flushDamageGroup,dotTick,open:()=>{dmgGroup=new Map()}};', box);
+vm.runInContext(damageCode + ';globalThis.__damageFloat=damageFloat;globalThis.__d={showDamage,flushDamageGroup,dotTick,mobDamageY,heroDamageY,open:()=>{dmgGroup=new Map()}};', box);
 let pass = 0, fail = 0;
 function t(name, fn) {
   try { fn(); console.log('  ok   ' + name); pass++; }
@@ -100,10 +101,25 @@ t('the starburst is centred on the digits, re-jittered every hit, and dies with 
   assert.ok(src.includes('@keyframes fburst-pop')&&src.includes('@keyframes fring-pop')&&src.includes('@keyframes fstreak-fly'), 'all three frame animations are present');
   assert.ok(src.includes('const c1=sk?\'#16324f\':\'#a01608\',c2=sk?\'#4fd8ff\':\'#ffcf4d\',c3=sk?\'#eaffff\':\'#fff3c8\''), 'red-gold for a physical crit, blue-silver for a skill crit');
 });
-t('damage numbers spawn above the head and fly the owner\'s retuned arc: 70px over ~1.75s, hold-then-fade from 90%', () => {
-  assert.ok(src.includes('function mobDamageY(o){return Math.max(1.7,3.15*mobVisualScale(o)-.3)}'), 'numbers spawn just above the monster head, following its drawn scale');
-  assert.ok(src.includes("showDamage(o,o.x,mobDamageY(o),o.z,d,c,skill)"), 'AoE and hurt numbers spawn at the head');
-  assert.ok(src.includes("showDamage(mob,mob.x,mobDamageY(mob),mob.z,d,c,skill)"), 'strike numbers spawn at the head');
+t('damage numbers START above the head - the whole crit frame clears it - and fly the owner\'s retuned arc: 70px over ~1.75s, hold-then-fade from 90%', () => {
+  assert.ok(src.includes('function mobDamageY(o,crit=false){'), 'the spawn height is crit-aware: a crit clears its burst box, an ordinary hit clears its digits');
+  assert.ok(src.includes('const s=mobVisualScale(o),head=3.05*s;'), 'the head line is the sprite\'s own top (syncMobImage draws the sprite exactly 3.05*scale tall)');
+  assert.ok(src.includes('const half=(crit?97.5:28*1.2)/2+6,b=scr(o.x,0,o.z),t=scr(o.x,Math.max(head,.5),o.z);'), 'the clearance is measured in screen px through the same projection the floats use, so it holds at every zoom');
+  assert.ok(src.includes('return Math.max(1.7,head+Math.min(2,half/Math.max(1e-6,ppu)));'), 'the spawn sits that many px above the head, following the mob\'s drawn scale (bosses start higher), with the old 1.7 floor kept for mobs still spawning in');
+  assert.ok(src.includes("showDamage(o,o.x,mobDamageY(o,c),o.z,d,c,skill)"), 'AoE and hurt numbers spawn above the head, crit-aware');
+  assert.ok(src.includes("showDamage(mob,mob.x,mobDamageY(mob,c),mob.z,d,c,skill)"), 'strike numbers spawn above the head, crit-aware');
+  assert.ok(src.includes('function heroDamageY(){'), 'incoming damage gets its own above-the-hero-head spawn');
+  assert.ok(src.includes('return 2.92+Math.min(2,half/Math.max(1e-6,Math.abs(b[1]-t[1])));'), 'the hero\'s head line is the top of the 1.95x2.92 billboard');
+  assert.ok(src.includes('damageFloat(pl.x,heroDamageY(),pl.z,d,false,true);'), 'incoming damage lifts off the hero\'s chest (was a fixed 2.4, on the body)');
+  assert.ok(!src.includes('damageFloat(pl.x,2.4,pl.z,d,false,true)'), 'no incoming damage spawns on the hero\'s body any more');
+  // runtime, against the stubbed projection (50 screen px per world unit): the clearance is exact
+  const D = box.__d;
+  assert.ok(Math.abs(D.mobDamageY({ x: 1, z: 2 }) - (3.05 + 22.8 / 50)) < 1e-9,
+    'an ordinary number\'s box bottom sits 22.8px above the head (half the 28px line box + a 6px gap)');
+  assert.ok(Math.abs(D.mobDamageY({ x: 1, z: 2 }, true) - (3.05 + 54.75 / 50)) < 1e-9,
+    'a crit clears its whole 97.5px burst box (54.75px) above the head, digits included');
+  assert.ok(Math.abs(D.heroDamageY() - (2.92 + 13.6 / 50)) < 1e-9,
+    'incoming damage clears the hero\'s head by half its 16px line box + a 4px gap');
   assert.ok(src.includes('const DMG_LIFE=1/.571,DMG_RISE=70,DMG_FADE=.9,DMG_RATE=.571,DMG_SPREAD=14;'), 'the climb, the life and the fade window are the owner-retuned v73 values: 70px / ~1.75s / fade from 90%');
   assert.ok(src.includes('const dy=-DMG_RISE*Math.min(1,tt*1.15)'), 'the number climbs 70px (the top end of the page\'s Rise slider) and settles');
   assert.ok(src.includes('const sway=tt<.28?10*(tt/.28):10-38*Math.min(1,(tt-.28)/.72)'), 'the sway: out to the right, then drifting 38px left as it fades');
