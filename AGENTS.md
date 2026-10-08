@@ -5536,6 +5536,9 @@ The owner's second pass over v77, six notes, all built.
   **white fade line**, the px ruler and the flight dots are there because the owner could not compare one
   animated number at a time — and **"👁 also draw the numbers the game has now"** paints the game's own numbers,
   faded and offset, next to the pick so the two can be judged in motion.
+* **Shipped as PR #38** (`arena/905d1900-prontera-grind` → `main`, 19 files) once the owner confirmed the crit
+  and the numbers stay exactly as v82 had them: *"i want my critical & number as previous version. dont do
+  anything else to it."*
 * **Files touched:** `index.html` (BUILD; the crit CSS block, the digits sizes, the motion block and the
   constants), `Updates/damage-numbers-v2/index.html` (rebuilt around the owner's look),
   `tools/tests/combat_float_sim.js`, `tools/tests/ui_sim.js`, the two audit pages, `tools/cloudflare-deploy-steps.md`,
