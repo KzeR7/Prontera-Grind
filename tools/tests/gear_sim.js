@@ -34,6 +34,7 @@ const code = [
   pick(/const C=\(\)=>[^;]+;/, 'C()'),
   pick(/const st=k=>[^\n]*canUse=it=>[^;]+;/, 'canUse'),
   grab('const pm=s=>', 'const REC='),                        // pm() + MAPS
+  grab('const NMNAME=', 'const EARLY_FIELD_PWR'),             // the two Nightmare rows appended to GEAR
   pick(/const secOf=[^;]+;/, 'secOf'),
   pick(/const secField=\(m,l\)=>[^;]+;/, 'secField'),
   pick(/const RAR=\[[^\]]*\];/, 'RAR'),
@@ -73,7 +74,7 @@ const SECN=['Starter gear','1st-job gear','2nd-job gear','High-tier gear'];
 const SLOTS={weapon:{label:'Weapon',stat:'ATK',ic:'A'},armor:{label:'Armor',stat:'DEF',ic:'B'},head:{label:'Headgear',stat:'HP',ic:'C'},off:{label:'Shield',stat:'DEF',ic:'D'},leg:{label:'Legwear',stat:'DEF',ic:'E'},acc:{label:'Accessory',stat:'HP',ic:'F'}};
 const rnd=(a,b)=>a+Math.random()*(b-a),ri=(a,b)=>Math.floor(rnd(a,b+1)),uid=()=>1;
 let S=null;
-this.__g={ MAPS, GEAR, gearPool, fieldOf, genGear, rarIdx, rarOf, rarCls, RAR5, FIELD_GEAR_NM, FIELD_GEAR_MID_NM, executeGearRoll, slotAccepts, canUse, canShield, katarOnly, CLASSES, lineOf, secOf, secField, SLOTS, BAGMAX, MAPTIER, MAPGRADE, set PETPASSIVE(v){PETPASSIVE=v}, get PETPASSIVE(){return PETPASSIVE}, MAPVAL, dropTier, sellVal, AM, AFF, AB, RAR, AFFIX_CDM_SCALE, scaleCritDamageAffix, affixValue, FIELD_GEAR, FIELD_GEAR_MID, BOSS_POOL_TOTAL, BOSS_CRIT_RES, bossCritRes, gearTierOf, classTierOf, gearTierOK, gearUserOf,
+this.__g={ MAPS, GEAR, gearPool, fieldOf, genGear, rarIdx, rarOf, rarCls, RAR5, RAR6, RARALL, FIELD_GEAR_NM, FIELD_GEAR_MID_NM, executeGearRoll, slotAccepts, canUse, canShield, katarOnly, dualWield, CLASSES, lineOf, secOf, secField, SLOTS, BAGMAX, MAPTIER, MAPGRADE, set PETPASSIVE(v){PETPASSIVE=v}, get PETPASSIVE(){return PETPASSIVE}, MAPVAL, dropTier, sellVal, AM, AFF, AB, RAR, AFFIX_CDM_SCALE, scaleCritDamageAffix, affixValue, FIELD_GEAR, FIELD_GEAR_MID, BOSS_POOL_TOTAL, BOSS_CRIT_RES, bossCritRes, gearTierOf, classTierOf, gearTierOK, gearUserOf,
            set S(v){S=v}, get S(){return S} };
 `;
 const sb = { console };
@@ -87,12 +88,17 @@ console.log('gear: catalogue, per-map relevance, drop mix, slot chooser\n');
 const WEP = ['sword', 'dagger', 'katar', 'staff', 'bow', 'axe', 'mace'];
 
 // ---- 1. the catalogue itself -------------------------------------------------
-t('ten maps, four sections each, all of them populated', () => {
+t('ten maps, four job sections each, all of them populated', () => {
   assert.strictEqual(G.MAPS.length, 10, 'map count');
   assert.strictEqual(G.GEAR.length, 10, 'gear set count - one per map');
   G.MAPS.forEach((mp, i) => {
     assert.ok(mp.gear === G.GEAR[i], mp.n + ' must use GEAR[' + i + ']');
-    assert.strictEqual(mp.gear.length, 4, mp.n + ' needs four sections');
+    // v79: the two Nightmare rows are appended to the same array at load, so a map's gear table
+    // carries six rows: four job sections (0-3) plus sections 4-5, which only the Nightmare
+    // band's fields (stages 11-15) ever roll.
+    assert.strictEqual(mp.gear.length, 6, mp.n + ' needs four job sections plus the two Nightmare rows');
+    for (let sec = 0; sec < 4; sec++) assert.ok(mp.gear[sec] && Object.keys(mp.gear[sec].w).length, mp.n + ' section ' + sec + ' is empty');
+    assert.ok(mp.gear[4] && mp.gear[5], mp.n + ' needs its two Nightmare rows');
   });
 });
 
@@ -139,12 +145,17 @@ t('the five early maps retain their existing job-tier progression', () => {
     assert.ok(weaponTypes(1,sec).includes('sword'),'Izlude needs Swordman swords in every tier');
     assert.ok(weaponTypes(1,sec).includes('axe')&&weaponTypes(1,sec).includes('mace'),'Izlude needs Merchant weapons in every tier');
     assert.ok(weaponTypes(2,sec).includes('staff'),'Geffen needs Mage staves');
-    assert.ok(weaponTypes(3,sec).includes('dagger'),'Morroc needs Thief daggers');
+    // v80 (owner): Morroc's weapon follows the job. Daggers while a Thief can wear the section,
+    // katars once only an Assassin or Assassin Cross can - neither can wield a dagger.
+    assert.ok(sec<2?weaponTypes(3,sec).includes('dagger'):weaponTypes(3,sec).includes('katar'),
+      'Morroc needs its Thief-line weapon in every tier');
     assert.ok(weaponTypes(4,sec).includes('bow'),'Payon needs Archer bows');
   }
   assert.ok(G.gearPool(1,10).some(x=>x.n==='Golden Axe'||x.n==='Loaded Mace'),'Izlude boss tier must include a Merchant weapon');
   assert.ok(G.gearPool(2,10).some(x=>x.n==='Wand of Hermes'),'Geffen boss tier must include its Mage weapon');
-  assert.ok(G.gearPool(3,10).some(x=>x.n==='Sandstorm Dagger'),'Morroc boss tier must include its Thief weapon');
+  // v80 (owner): Morroc's boss tier is third-job gear, so its Thief-line weapon is a katar -
+  // an Assassin Cross cannot wield the dagger the map used to list there.
+  assert.ok(G.gearPool(3,10).some(x=>x.k==='katar'),'Morroc boss tier must include its Assassin weapon');
   assert.ok(G.gearPool(4,10).some(x=>x.n==='Gakkung Bow'),'Payon boss tier must include its Archer weapon');
 });
 
@@ -201,13 +212,22 @@ t('armour and accessory names are unique across the whole game', () => {
 // ---- 2. per-map relevance ----------------------------------------------------
 // The five early maps are class-themed. Every mixed late map now carries a weapon family
 // for every class, so all class lines can return there to hunt their own gear.
+// v80: Geffen and Payon each gained a second weapon family so neither map is a one-weapon shelf
+// (a mage got staves and nothing else, an archer bows and nothing else). The line that uses the
+// new family is listed with the map, because a shelf only counts as served if somebody who levels
+// there can pick the thing up: Geffen now carries a Thief's dagger low down and an Assassin's
+// katar up high, Payon a Swordman's sword.
+// v80 (owner): on the Thief line the weapon follows the JOB, not the map. A Thief wields a
+// dagger; Assassin and Assassin Cross wield nothing else, and neither can wear a dagger at all.
+// So Geffen and Morroc hand out daggers on the sections a Thief can wear (starter and 1st-job)
+// and katars on the ones only an Assassin or Assassin Cross can wear (2nd-job and high tier).
 const EVERY_CLASS=Object.keys(G.CLASSES);
 const MAP_LINES = [
   ['Novice', 'Swordman'],
   ['Swordman', 'Knight', 'Lord Knight', 'Merchant', 'Blacksmith', 'Whitesmith'],
-  ['Mage', 'Wizard', 'High Wizard'],
+  ['Mage', 'Wizard', 'High Wizard', 'Thief', 'Assassin', 'Assassin Cross'],
   ['Thief', 'Assassin', 'Assassin Cross'],
-  ['Archer', 'Hunter', 'Sniper'],
+  ['Archer', 'Hunter', 'Sniper', 'Swordman'],
   EVERY_CLASS, EVERY_CLASS, EVERY_CLASS, EVERY_CLASS, EVERY_CLASS,
 ];
 const wtsOf = cls => G.CLASSES[cls].wt || [];
@@ -340,6 +360,43 @@ t('the real equipment-drop loop creates boss gear when an independent roll succe
   assert.strictEqual(mobDrops.length, 3, 'regular-mob equipment gates did not execute');
 });
 
+t('every field allocates a weapon first, and never lists an item twice (v79)', () => {
+  // v79 owner: "my equipment drops allocation is messy & confusing". The old window handed each mob
+  // three consecutive pool entries from T[(l*3+2*j)%n], so 20 of the 100 normal fields dropped no
+  // weapon at all and one item was listed on both mobs at two different rates. Roll 1 is now always
+  // a weapon, rolls 2-3 are armour or an accessory, and nothing repeats unless the map has a single
+  // weapon family - which after v80 no normal map does (Geffen carries a dagger or a katar beside
+  // its staves, Payon a sword beside its bows), so every field offers its mobs a real choice.
+  for (let m = 0; m < G.MAPS.length; m++) for (let l = 1; l <= 15; l++) {
+    const F = G.fieldOf(m, l), where = G.MAPS[m].n + ' stage ' + l;
+    const pool = G.gearPool(m, l), weapons = pool.filter(x => !['armor','head','off','leg','acc'].includes(x.k));
+    for (const mob of F.mobs) {
+      const [w, ...rest] = mob.drops.map(d => d[0]);
+      assert.ok(weapons.some(x => x.n === w.n), where + ': roll 1 must be a weapon');
+      rest.forEach(x => assert.ok(['armor','head','off','leg','acc'].includes(x.k), where + ': rolls 2-3 must be armour or accessories'));
+      if (weapons.length > 1) assert.strictEqual(new Set(mob.drops.map(d => d[0].n)).size, 3, where + ': one mob lists an item twice');
+    }
+    // the two mobs never repeat a defensive piece, and their weapons differ when there is a choice
+    const a = F.mobs[0].drops.map(d => d[0].n), b = F.mobs[1].drops.map(d => d[0].n);
+    a.slice(1).forEach(n => assert.ok(!b.slice(1).includes(n), where + ': ' + n + ' is on both mobs'));
+    if (weapons.length > 1) assert.notStrictEqual(a[0], b[0], where + ': both mobs carry the same weapon');
+    // each stage walks the shelf: stage 1 starts at the head of the weapon list
+    assert.strictEqual(a[0], weapons[(2 * (l - 1)) % weapons.length].n, where + ': weapon rotation');
+    // the three rates are the field's own, in the same order as before (weapon, then two pieces)
+    assert.deepStrictEqual(F.mobs[0].drops.map(d => d[1]), G.fieldOf(m, l).mobs[0].drops.map(d => d[1]), where + ': rates');
+  }
+  // a map's whole weapon list is reachable from its own stages, band by band
+  for (const [m, levels] of [[0,[1,2]],[1,[1,2]],[5,[1,2,3,4,5,6,7,8,9,10]],[8,[1,2,3,4,5]],[9,[1,2,3,4,5]]]) {
+    const got = new Set(), all = new Set();
+    for (const l of levels) {
+      const pool = G.gearPool(m, l);
+      pool.filter(x => !['armor','head','off','leg','acc'].includes(x.k)).forEach(x => all.add(x.k));
+      G.fieldOf(m, l).mobs.forEach(mm => mm.drops.forEach(([x]) => { if (!['armor','head','off','leg','acc'].includes(x.k)) got.add(x.k); }));
+    }
+    assert.deepStrictEqual([...got].sort(), [...all].sort(), G.MAPS[m].n + ' stages ' + levels[0] + '-' + levels[levels.length-1] + ' must reach every weapon family');
+  }
+});
+
 t('fieldOf only hands out items from that field pool', () => {
   for (let m = 0; m < G.MAPS.length; m++) for (let l = 1; l <= 10; l++) {
     const pool = G.gearPool(m, l).map(x => x.n), F = G.fieldOf(m, l);
@@ -357,11 +414,11 @@ t('the field table and live gear drops preserve each normal map rarity tier', ()
     const F = G.fieldOf(m, l), expected = G.dropTier(m, l);
     for (const mob of F.mobs) for (const [item] of mob.drops) {
       assert.strictEqual(item.tier, expected, G.MAPS[m].n + ' Stage ' + l + ' drop-table tier');
-      assert.strictEqual(G.rarIdx(item), item.sec >= 4 ? 5 : expected, G.MAPS[m].n + ' Stage ' + l + ' displayed item rarity');
+      assert.strictEqual(G.rarIdx(item), item.sec >= 5 ? 6 : item.sec >= 4 ? 5 : expected, G.MAPS[m].n + ' Stage ' + l + ' displayed item rarity');
     }
     if (F.boss) for (const [item] of F.boss.drops) {
       assert.strictEqual(item.tier, expected, G.MAPS[m].n + ' Stage ' + l + ' MVP drop-table tier');
-      assert.strictEqual(G.rarIdx(item), item.sec >= 4 ? 5 : expected, G.MAPS[m].n + ' Stage ' + l + ' MVP item rarity');
+      assert.strictEqual(G.rarIdx(item), item.sec >= 5 ? 6 : item.sec >= 4 ? 5 : expected, G.MAPS[m].n + ' Stage ' + l + ' MVP item rarity');
     }
   }
   // Normal generation still passes the field's rarity to the actual item, not just the preview.
@@ -401,7 +458,11 @@ t('the pool is the routed stage set, with the requested progression on late maps
       assert.strictEqual(pool.map(x => x.n).join('|'), names.join('|'), mp.n + ' Lv' + l + ' pool must be the routed gear set');
       assert.ok(pool.every(x=>x.sec===sec),mp.n+' Lv'+l+' item/job section mismatch');
       assert.ok(pool.every(x=>x.quality===(m===9&&l>=6?1.25:1)),mp.n+' Lv'+l+' quality variant mismatch');
-      assert.ok(pool.length >= prev, mp.n + ' Lv' + l + ' pool shrank');
+      // v80 (owner): the Thief line gives its dagger up for the Assassin katar, so Morroc's
+      // 2nd-job and high-tier shelves carry one weapon family where the lower ones carry two.
+      // A one-family section may therefore be one item shorter than the section below it.
+      const families = Object.keys(set.w).length;
+      assert.ok(pool.length >= prev - (families === 1 ? 1 : 0), mp.n + ' Lv' + l + ' pool shrank');
       assert.ok(pool.length >= 7, mp.n + ' Lv' + l + ' pool is thin: ' + pool.length);
       prev = pool.length;
     }
@@ -436,7 +497,7 @@ t('a weapon slot offers only weapons of a type the class may use', () => {
   assert.ok(G.slotAccepts('weapon', bow) && !G.slotAccepts('weapon', sword), 'Archer is bow-only');
 });
 
-t('off-hand shields stay class-gated; Assassins use one Katar and cannot off-hand weapons', () => {
+t('off-hand shields stay class-gated; Assassins dual-wield daggers but never a shield', () => {
   const shield = item({ id: 3, slot: 'off' }), dagger = item({ id: 4, slot: 'weapon', wt: 'dagger' }),
     katar = item({ id: 5, slot: 'weapon', wt: 'katar' }), sword = item({ id: 6, wt: 'sword' });
   bag('Swordman', [shield, dagger, katar, sword]);
@@ -446,12 +507,18 @@ t('off-hand shields stay class-gated; Assassins use one Katar and cannot off-han
   bag('Knight', [shield]);
   assert.ok(G.slotAccepts('off', shield), 'Knight keeps the shield');
   for(const cls of ['Assassin','Assassin Cross']){
-    assert.deepStrictEqual(Array.from(G.CLASSES[cls].wt),['katar'],cls+' must be katar-only');
+    assert.deepStrictEqual(Array.from(G.CLASSES[cls].wt),['katar','dagger'],cls+' may wield katar and dagger');
     bag(cls,[shield,dagger,katar]);
-    assert.ok(G.katarOnly(),cls+' should be marked as a single-katar class');
-    assert.ok(G.slotAccepts('weapon',katar),cls+' may equip a katar in the main hand');
-    assert.ok(!G.slotAccepts('weapon',dagger),cls+' may not equip a dagger');
-    assert.ok(!G.slotAccepts('off',shield)&&!G.slotAccepts('off',dagger)&&!G.slotAccepts('off',katar),cls+' has no usable off-hand');
+    assert.ok(G.katarOnly(),cls+' still counts as the two-handed Katar class');
+    assert.ok(G.dualWield(),cls+' may dual-wield');
+    assert.ok(G.slotAccepts('weapon',katar)&&G.slotAccepts('weapon',dagger),cls+' may equip either blade in the main hand');
+    assert.ok(G.slotAccepts('off',dagger),cls+' may hold a dagger in the left hand');
+    assert.ok(!G.slotAccepts('off',shield),cls+' still may not hold a shield');
+    assert.ok(!G.slotAccepts('off',katar)&&!G.slotAccepts('off',sword),cls+' may not hold a sword or katar in the left hand');
+  bag('Swordman',[sword]);
+  assert.ok(!G.dualWield(),'a Swordman does not dual-wield');
+  bag('Archer',[item({id:9,wt:'bow'})]);
+  assert.ok(!G.dualWield(),'an Archer does not dual-wield');
   }
 });
 
@@ -594,6 +661,9 @@ t('the rarity band is fixed but the affixes are rolled every time', () => {
 t('Nightmare equipment is its own N rarity, separate from Legendary and map quality', () => {
   // v76.2 owner: Nightmare equipment has its own rarity N. Its normal field-quality value must not
   // be promoted to Legendary just because the item comes from a Nightmare section.
+  // v79 owner: the two Nightmare rows are split - section 4 is N, section 5 (Abyssal, the 15/7x
+  // row) is N+, with its own colour, name prefix and auto-sell bucket, so ticking N can never
+  // auto-sell the better row.
   const lowMapTier = G.dropTier(0, 12);
   const nm = G.genGear({ k: 'sword', n: 'Dread Excalibur' }, 150, 4, false, lowMapTier);
   const hi = G.genGear({ k: 'sword', n: 'Dark Lord Sword' }, 150, 3, true, 4);
@@ -607,8 +677,12 @@ t('Nightmare equipment is its own N rarity, separate from Legendary and map qual
   assert.strictEqual(G.rarIdx(hi), 4, 'ordinary high-tier gear stays Legendary');
   assert.ok(hi.name.startsWith('Legendary '), 'and keeps its own prefix: ' + hi.name);
   const ab = G.genGear({ k: 'sword', n: 'Absolute Dark Lord Sword' }, 150, 5, true, G.dropTier(9, 15));
-  assert.strictEqual(G.rarIdx(ab), 5, 'Abyssal Nightmare is also N, not Legendary');
-  assert.strictEqual(G.rarOf(ab).n, 'N', 'both Nightmare sections use the N category');
+  assert.strictEqual(G.rarIdx(ab), 6, 'Abyssal Nightmare is N+, its own band - not Legendary, and not the same N as section 4');
+  assert.strictEqual(G.rarOf(ab).n, 'N+', 'section 5 reads N+');
+  assert.strictEqual(G.rarCls(ab), 'r6', 'and is painted with .r6');
+  assert.ok(ab.name.startsWith('N+ '), 'the item name states it: ' + ab.name);
+  assert.ok(src.includes('.r6{color:#c026d3;font-weight:bold}'), 'N+ is its own colour in the CSS');
+  assert.strictEqual(G.RARALL.length, 7, 'seven rarity bands: five ordinary + N + N+');
   // The owner's Nightmare drop-rate tables are unchanged: one third of their normal counterparts.
   assert.strictEqual(G.FIELD_GEAR_NM.map(x => +(x * 3).toFixed(2)).join(','), '1.5,1.2,0.9');
   assert.strictEqual(G.FIELD_GEAR_MID_NM.map(x => +(x * 3).toFixed(2)).join(','), '1.05,0.84,0.63');

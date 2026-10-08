@@ -210,8 +210,8 @@ t('drop-table items keep N section identity separate from map field quality', ()
   assert.strictEqual(N.dropTier(0, 11), N.dropTier(0, 10), 'Prontera Nightmare quality is not forced to Legendary');
   assert.strictEqual(N.dropTier(0, 11), 1, 'the early map quality band stays at its map cap');
   assert.strictEqual(N.dropTier(9, 15), 4, 'the Abyss map quality cap remains as tuned');
-  assert.ok(src.includes("const RAR5={n:'N'}") && src.includes("(it&&+it.sec>=4)?5"),
-    'sections 4/5 select the separate N rarity regardless of the numeric map quality');
+  assert.ok(src.includes("const RAR5={n:'N'}") && src.includes("RAR6={n:'N+'}") && src.includes("(it&&+it.sec>=5)?6:(it&&+it.sec>=4)?5"),
+    'sections 4/5 select the separate N / N+ rarity regardless of the numeric map quality');
   for (let m = 0; m < N.MAPS.length; m++) for (let l = 1; l <= 15; l++) {
     const F=N.fieldOf(m,l),tier=N.dropTier(m,l),sec=N.secField(m,l);
     for (const mob of F.mobs) for (const [item] of mob.drops) {

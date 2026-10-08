@@ -62,16 +62,21 @@ let pass = 0, fail = 0;
 const t = (n, f) => { try { f(); console.log('  ok   ' + n); pass++; } catch (e) { console.log('  FAIL ' + n + ' -> ' + e.message); fail++; } };
 console.log('class change: restart on load, keep what you stepped away from\n');
 
-t('Assassin jobs keep one Katar and stow a legacy off-hand weapon on promotion', () => {
-  assert.deepStrictEqual(Array.from(H.CLASSES.Assassin.wt), ['katar']);
-  assert.deepStrictEqual(Array.from(H.CLASSES['Assassin Cross'].wt), ['katar']);
-  const katar={id:701,slot:'weapon',wt:'katar',name:'Katar'},oldDagger={id:702,slot:'weapon',wt:'dagger',name:'Old off-hand Dagger'};
-  H.S=mk({cls:'Assassin',lv:100,jobs:{Novice:{jl:10,jx:0},Thief:{jl:40,jx:0},Assassin:{jl:50,jx:0}},
-    eq:{weapon:katar,armor:null,head:null,off:oldDagger,leg:null,acc1:null,acc2:null}});
+t('Assassin jobs keep the Katar, or a dagger in each hand, and still stow a shield on promotion', () => {
+  assert.deepStrictEqual(Array.from(H.CLASSES.Assassin.wt), ['katar','dagger']);
+  assert.deepStrictEqual(Array.from(H.CLASSES['Assassin Cross'].wt), ['katar','dagger']);
+  const katar={id:701,slot:'weapon',wt:'katar',name:'Katar'},dagger={id:702,slot:'weapon',wt:'dagger',name:'Dagger'},
+    shield={id:703,slot:'off',name:'Legacy Shield'};
+  const jobs={Novice:{jl:10,jx:0},Thief:{jl:40,jx:0},Assassin:{jl:50,jx:0}};
+  H.S=mk({cls:'Assassin',lv:100,jobs,eq:{weapon:katar,armor:null,head:null,off:dagger,leg:null,acc1:null,acc2:null}});
   H.changeClass('Assassin Cross');
   assert.strictEqual(H.S.eq.weapon.id,katar.id,'the Katar should remain equipped');
-  assert.strictEqual(H.S.eq.off,null,'an off-hand weapon must be removed');
-  assert.ok(H.S.inv.some(i=>i.id===oldDagger.id),'the old off-hand must be preserved in the bag');
+  assert.strictEqual(H.S.eq.off.id,dagger.id,'v80: a dagger in the left hand is legal now and stays on');
+  H.S=mk({cls:'Assassin',lv:100,jobs,eq:{weapon:dagger,armor:null,head:null,off:shield,leg:null,acc1:null,acc2:null}});
+  H.changeClass('Assassin Cross');
+  assert.strictEqual(H.S.eq.weapon.id,dagger.id,'the main-hand dagger should remain equipped');
+  assert.strictEqual(H.S.eq.off,null,'a shield must still be removed');
+  assert.ok(H.S.inv.some(i=>i.id===shield.id),'the old shield must be preserved in the bag');
 });
 
 t('new second and transcendent jobs preserve every stat and unspent point', () => {

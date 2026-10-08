@@ -71,15 +71,15 @@ t('valid records survive a save/load', () => {
 t('legacy Assassin daggers and off-hand weapons are preserved in the bag, not worn',()=>{
   for(const cls of ['Assassin','Assassin Cross']){
     const old={...JSON.parse(JSON.stringify(save)),cls,
-      eq:{weapon:{id:901,slot:'weapon',wt:'dagger',name:'Old Dagger',val:20,aff:[],cards:[]},
+      eq:{weapon:{id:901,slot:'weapon',wt:'dagger',name:'Dagger',val:20,aff:[],cards:[]},
         armor:null,head:null,off:{id:902,slot:'weapon',wt:'katar',name:'Old off-hand Katar',val:25,aff:[],cards:[]},
         leg:null,acc1:null,acc2:null},inv:[]};
     const box={};vm.createContext(box);
     const custom=harness.replace(/const lsGet = \(\) => .*?;/,'const lsGet = () => '+JSON.stringify(JSON.stringify(old))+';');
     vm.runInContext(custom,box);const migrated=box.__l.loadRaw();
-    assert.strictEqual(migrated.eq.weapon,null,cls+' must not retain a main-hand dagger');
-    assert.strictEqual(migrated.eq.off,null,cls+' must not retain an off-hand weapon');
-    assert.deepStrictEqual(Array.from(migrated.inv,x=>x.id).sort(),[901,902],cls+' gear should be stowed without being lost');
+    assert.strictEqual(migrated.eq.weapon.id,901,cls+' v80: a main-hand dagger is legal now and stays worn');
+    assert.strictEqual(migrated.eq.off,null,cls+' must not retain an off-hand katar');
+    assert.deepStrictEqual(Array.from(migrated.inv,x=>x.id).sort(),[902],cls+' gear should be stowed without being lost');
     const valid={...old,eq:{weapon:{id:903,slot:'weapon',wt:'katar',name:'Valid Katar',val:30,aff:[],cards:[]},armor:null,head:null,off:null,leg:null,acc1:null,acc2:null},inv:[]};
     const validBox={};vm.createContext(validBox);
     vm.runInContext(harness.replace(/const lsGet = \(\) => .*?;/,'const lsGet = () => '+JSON.stringify(JSON.stringify(valid))+';'),validBox);
@@ -416,7 +416,7 @@ t('the v39 tool settings repair: old saves get the quiet defaults', () => {
   const g = load();
   assert.strictEqual(g.feed, true, 'the on-screen log starts unfolded');
   assert.strictEqual(g.clickSell, false, 'a bag click inspects - it never sells - by default');
-  assert.deepStrictEqual(Array.from(g.autoSell), [false, false, false, false, false, false], 'nothing is auto-sold (six bands since v77: N swapped in)');
+  assert.deepStrictEqual(Array.from(g.autoSell), [false, false, false, false, false, false, false], 'nothing is auto-sold (seven bands since v79: N and N+)');
   assert.deepStrictEqual(Object.keys(g.logOff), [], 'every log filter starts ticked');
   // junk of every shape must be repaired, not carried
   sb.__l.setRaw({ lv: 5, cls: 'Novice', sk: { aid: 1 }, jobs: { Novice: { jl: 1, jx: 0 } },
@@ -424,7 +424,7 @@ t('the v39 tool settings repair: old saves get the quiet defaults', () => {
   const r = load();
   assert.strictEqual(r.feed, true, 'a junk fold flag falls back to open');
   assert.strictEqual(r.clickSell, false, 'a junk click-sell flag falls back to off');
-  assert.deepStrictEqual(Array.from(r.autoSell), [false, false, false, false, false, false], 'a junk auto-sell list falls back to nothing ticked');
+  assert.deepStrictEqual(Array.from(r.autoSell), [false, false, false, false, false, false, false], 'a junk auto-sell list falls back to nothing ticked');
   assert.deepStrictEqual(Object.keys(r.logOff), [], 'a junk filter list falls back to an empty object');
   // and deliberate choices survive the round trip, index by index
   sb.__l.setRaw({ lv: 5, cls: 'Novice', sk: { aid: 1 }, jobs: { Novice: { jl: 1, jx: 0 } },
@@ -432,11 +432,11 @@ t('the v39 tool settings repair: old saves get the quiet defaults', () => {
   const k = load();
   assert.strictEqual(k.feed, false, 'a deliberately folded log stays folded');
   assert.strictEqual(k.clickSell, true, 'a deliberately armed click-sell stays armed');
-  assert.deepStrictEqual(Array.from(k.autoSell), [true, false, false, false, true, false], 'every tick is read as a boolean, position by position, and the new N band starts unticked');
+  assert.deepStrictEqual(Array.from(k.autoSell), [true, false, false, false, true, false, false], 'every tick is read as a boolean, position by position, and the new N and N+ bands start unticked');
   // v77: a save written before the N band existed keeps its five choices and gains an unticked sixth
   sb.__l.setRaw({ lv: 5, cls: 'Novice', sk: { aid: 1 }, jobs: { Novice: { jl: 1, jx: 0 } },
     autoSell: [false, false, true, false, true] });
-  assert.deepStrictEqual(Array.from(load().autoSell), [false, false, true, false, true, false], 'an old five-band save keeps its ticks and gains an unticked N');
+  assert.deepStrictEqual(Array.from(load().autoSell), [false, false, true, false, true, false, false], 'an old five-band save keeps its ticks and gains unticked N and N+ bands');
   assert.deepStrictEqual(Object.keys(k.logOff), ['gear'], 'a switched-off filter survives');
 });
 

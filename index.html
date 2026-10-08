@@ -119,7 +119,7 @@ html, body { margin:0; padding:0; width:100vw; height:100vh; height:100dvh; over
 @media(max-width:560px){#hud{gap:6px 10px;padding:7px 10px;font-size:11px}.hud-health .bar{width:94px}.hud-health small{min-width:28px}#xp-track{height:22px}.xp-label,.xp-label.job{left:0;right:0;top:0;text-align:center;font-size:9px;line-height:10px}.xp-pct{top:10px;line-height:10px;font-size:9px}}
 .body{padding:8px;font-size:13px}
 .slot{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:5px 8px;border:1px solid var(--edge);background:#fffdf5;margin-bottom:4px;border-radius:4px;min-height:36px}
-.r0{color:#555}.r1{color:#2a9d3f}.r2{color:#2f6fd6}.r3{color:#a23fd6}.r4{color:#e07b00;font-weight:bold}.r5{color:#5b21b6;font-weight:bold}
+.r0{color:#555}.r1{color:#2a9d3f}.r2{color:#2f6fd6}.r3{color:#a23fd6}.r4{color:#e07b00;font-weight:bold}.r5{color:#5b21b6;font-weight:bold}.r6{color:#c026d3;font-weight:bold}
 button{font:inherit;font-size:12px;background:linear-gradient(#fff,#efe0b8);border:1px solid var(--edge2);border-radius:3px;padding:3px 10px;cursor:pointer;color:var(--ink)}
 button:hover{background:#ffe9a8}button:focus-visible{outline:2px solid #2f6fd6}
 .wide{grid-column:1/-1}small{opacity:.7}button:disabled{opacity:.4;cursor:default}
@@ -238,6 +238,13 @@ hr{border:0;border-top:1px dashed var(--edge);margin:6px 0}
 .dropline b{white-space:nowrap;font-weight:600}
 .dropline.ore b{color:#6cd3ff}
 .mobentry{margin-bottom:2px;min-width:0}
+.dropgrp{margin:5px 0 1px;font-size:10px;letter-spacing:.4px;text-transform:uppercase;color:#8a7442;border-bottom:1px dotted var(--edge2)}
+.dropgrp small{font-weight:bold}
+.dropline.cant{opacity:.45}
+.dropline.cant b{text-decoration:line-through}
+.dropline.worse{opacity:.7}
+.dropline.worse .dwho{opacity:.45}
+.dwho{opacity:.6;font-style:italic}
 .poollist{display:flex;flex-wrap:wrap;gap:3px;margin:3px 0;min-width:0}
 .poolitem{border:1px solid var(--edge2);border-radius:4px;padding:1px 5px;font-size:11px;background:rgba(0,0,0,.045);max-width:100%;overflow-wrap:anywhere}
 .poolitem b{margin-left:4px;opacity:.75}
@@ -263,7 +270,7 @@ hr{border:0;border-top:1px dashed var(--edge);margin:6px 0}
 .ro-icon-fallback .ro-icon-svg,.ro-icon-svg{display:block;width:30px;height:30px;fill:currentColor}
 .cell.b0 .ro-icon-fallback{color:#7b7166}.cell.b1 .ro-icon-fallback{color:#2f7d32}
 .cell.b2 .ro-icon-fallback{color:#2b6cb0}.cell.b3 .ro-icon-fallback{color:#b45309}
-.cell.b4 .ro-icon-fallback{color:#a16207}.cell.b5 .ro-icon-fallback{color:#5b21b6}.sk-detail-card{grid-column:1/-1;width:100%;cursor:default}.sk.auto-off .si{filter:grayscale(1);opacity:.55}.sk-name{width:100%;min-height:24px;font-size:10px;font-weight:700;line-height:1.15;overflow-wrap:anywhere}.sk-level{font-size:10px;color:#5c482c;white-space:nowrap}.sk button{margin-top:auto;padding:2px 9px;font-weight:bold}.sk button:disabled{opacity:.36}.sk-autocast{display:flex;align-items:center;justify-content:center;gap:4px;min-height:14px;font-size:9px;line-height:1;white-space:nowrap;cursor:pointer;color:#4b3c21}.sk-autocast input{width:12px;height:12px;margin:0;accent-color:#2f6fd6;cursor:pointer}.sk.auto-off .sk-autocast{color:#8d3939}
+.cell.b4 .ro-icon-fallback{color:#a16207}.cell.b5 .ro-icon-fallback{color:#5b21b6}.cell.b6 .ro-icon-fallback{color:#c026d3}.sk-detail-card{grid-column:1/-1;width:100%;cursor:default}.sk.auto-off .si{filter:grayscale(1);opacity:.55}.sk-name{width:100%;min-height:24px;font-size:10px;font-weight:700;line-height:1.15;overflow-wrap:anywhere}.sk-level{font-size:10px;color:#5c482c;white-space:nowrap}.sk button{margin-top:auto;padding:2px 9px;font-weight:bold}.sk button:disabled{opacity:.36}.sk-autocast{display:flex;align-items:center;justify-content:center;gap:4px;min-height:14px;font-size:9px;line-height:1;white-space:nowrap;cursor:pointer;color:#4b3c21}.sk-autocast input{width:12px;height:12px;margin:0;accent-color:#2f6fd6;cursor:pointer}.sk.auto-off .sk-autocast{color:#8d3939}
 .hair-preview-card{display:flex;align-items:center;gap:12px;margin:9px 0;padding:8px;border:1px solid var(--edge);border-radius:8px;background:linear-gradient(145deg,#fffdf6,#f0e2bd);box-shadow:inset 0 1px 0 #fff}.hair-preview-stage{position:relative;flex:0 0 150px;width:150px;height:160px;display:flex;align-items:center;justify-content:center;overflow:hidden;border:1px solid #c9a35b;border-radius:8px;background:radial-gradient(circle at 50% 37%,#fff9df,#d9c18b)}.hair-preview-stage canvas{display:block;width:150px;height:160px;image-rendering:pixelated}.hair-preview-loading{position:absolute;font-size:10px;color:#5d4929;text-align:center}.hair-preview-info{display:flex;flex-direction:column;gap:5px;min-width:0}.hair-preview-info .eyebrow{font-weight:bold;font-size:9px;letter-spacing:.7px;color:#89672e}.hair-preview-info b{font-size:14px;overflow-wrap:anywhere}.hair-preview-info .hair-style-label{font-weight:bold;color:#63491f;font-size:12px}.hair-controls button{min-width:40px;font-weight:bold}.hair-controls span{font-weight:bold;font-size:12px}
 .doll{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;max-width:340px;margin:8px auto;padding:10px;border-radius:10px;background:radial-gradient(#ffe9a8,#e9d39a)}
 /* v51: the selected piece's detail card (refine, cards, unequip) drops into the grid directly
@@ -284,6 +291,8 @@ hr{border:0;border-top:1px dashed var(--edge);margin:6px 0}
 .trow .tn{font-size:10px;padding:3px 1px;word-break:break-word}.trow{gap:3px}.trunk{height:12px}
 .cell{background:#e9dcb8;border-width:3px;text-shadow:0 1px 2px #0005}.cell.empty{background:#d5c79f}
 .cell.b0{background:#eceae4;border-color:#8c8c8c}.cell.b1{background:#c9f2c9;border-color:#2e9e3e}.cell.b2{background:#c6dcff;border-color:#2f6fd6}.cell.b3{background:#e6c9ff;border-color:#9a3ae0}.cell.b5{background:#e8d5ff;border-color:#7c3aed;box-shadow:0 0 9px #7c3aedaa}
+.cell.b6{background:#f7d6fe;border-color:#c026d3;box-shadow:0 0 10px #c026d3bb}
+.cell.worse{filter:saturate(.4);opacity:.82}
 .cell.nm::after{content:'N';position:absolute;top:-6px;right:-6px;background:#5b21b6;color:#fff;font:700 9px/1.3 sans-serif;padding:1px 4px;border-radius:6px;letter-spacing:.5px}
 .cell.nm img.ro-item-icon,.cell.nm .ro-icon-fallback{filter:drop-shadow(0 0 3px #7c3aed)}
 .cell.b4{background:#ffe3a0;border-color:#ff9a00;box-shadow:0 0 8px #ff9a00}
@@ -523,7 +532,11 @@ const RAR=[{n:'Common',m:1,w:60},{n:'Fine',m:1.35,w:25},{n:'Rare',m:1.9,w:10},{n
 // Sections 4/5 select N for names, cards, field/drop labels, colors and the sixth auto-sell bucket;
 // the item's numeric `tier` remains a separate field-quality input for existing stat/value rolls.
 // Nightmare gear is never classified or auto-sold as Legendary just because its numeric tier is 4.
-const RAR5={n:'N'},RARALL=RAR.concat([RAR5]),rarIdx=it=>((it&&+it.sec>=4)?5:Math.max(0,Math.min(RAR.length-1,(it&&it.tier)||0))),rarOf=it=>(rarIdx(it)===5?RAR5:RAR[rarIdx(it)]),rarCls=it=>'r'+rarIdx(it);
+// v79 (owner): the two Nightmare rows are no longer one bucket. Section 4 (Nightmare gear) stays N;
+// section 5 (Abyssal Nightmare gear, worth 15/7x the high-tier row against section 4's 1.5x) is N+,
+// painted its own colour and given its own auto-sell tick - ticking "N" used to be able to eat the
+// better row on drop without the player ever seeing which one they had sold.
+const RAR5={n:'N'},RAR6={n:'N+'},RARALL=RAR.concat([RAR5,RAR6]),rarIdx=it=>((it&&+it.sec>=5)?6:(it&&+it.sec>=4)?5:Math.max(0,Math.min(RAR.length-1,(it&&it.tier)||0))),rarOf=it=>(rarIdx(it)===6?RAR6:rarIdx(it)===5?RAR5:RAR[rarIdx(it)]),rarCls=it=>'r'+rarIdx(it);
 // v38 balance, three constants at once:
 //   AM x1.7 - affix magnitude, the first give-back for the weapon cut (a Legendary ATK
 //             affix goes +21% -> +36%)
@@ -641,7 +654,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // script block, which is a SyntaxError - the game did not run on main at all. One line wins, and
 // it names both sides of this merge: the v38 balance patch (the weapon cut, the affix/card
 // give-back) and main's weapon-hold rendering work.
-const BUILD='2026-10-08 grind-v79.6 claw slashes + v78.2 equipment progression';   // shown on the login card - confirms which file you loaded
+const BUILD='2026-10-08 grind-v81 Assassin dual wield: a dagger in each hand, the second blade at half rate';   // shown on the login card - confirms which file you loaded
 $('buildTag').textContent='build '+BUILD;
 
 // ---------- class tree: Novice -> 6 first jobs -> 6 second jobs -> 6 third jobs ----------
@@ -651,10 +664,10 @@ const CD=[['Novice',0,1,1,1,'e8dcc0','',['dagger','sword'],'str',0],
 ['Archer','Novice',.85,1.15,.9,'2e7d32','1b4d1e',['bow'],'dex',1],['Thief','Novice',.8,1.1,.95,'4a7c3a','2e7d32',['dagger'],'agi',0],
 ['Acolyte','Novice',1,1.05,1.05,'e0c870','a08830',['mace'],'int',0],['Merchant','Novice',.9,1.2,1.2,'d08030','905010',['axe','mace'],'str',0],
 ['Knight','Swordman',.85,1.5,1.5,'801010','500000',['sword'],'str',0],['Wizard','Mage',1,1.8,.85,'153075','',['staff'],'int',1,'1f2f70'],
-['Hunter','Archer',.7,1.4,.95,'105015','003005',['bow'],'dex',1],['Assassin','Thief',.62,1.45,1,'2c2c3c','1b1b28',['katar'],'agi',0],
+['Hunter','Archer',.7,1.4,.95,'105015','003005',['bow'],'dex',1],['Assassin','Thief',.62,1.45,1,'2c2c3c','1b1b28',['katar','dagger'],'agi',0],
 ['Priest','Acolyte',.9,1.3,1.1,'b09020','705000',['mace'],'int',0],['Blacksmith','Merchant',.8,1.6,1.4,'a05000','602000',['axe','mace'],'str',0],
 ['Lord Knight','Knight',.72,1.95,1.8,'600808','300000',['sword'],'str',0],['High Wizard','Wizard',.9,2.4,1,'0a1a55','',['staff'],'int',1,'0a1040'],
-['Sniper','Hunter',.55,1.85,1.05,'0a3a0a','002000',['bow'],'dex',1],['Assassin Cross','Assassin',.5,1.9,1.15,'1a1a28','0a0a14',['katar'],'agi',0],
+['Sniper','Hunter',.55,1.85,1.05,'0a3a0a','002000',['bow'],'dex',1],['Assassin Cross','Assassin',.5,1.9,1.15,'1a1a28','0a0a14',['katar','dagger'],'agi',0],
 ['High Priest','Priest',.8,1.7,1.25,'c8a820','604000',['mace'],'int',0],['Whitesmith','Blacksmith',.7,2,1.6,'c06000','502000',['axe','mace'],'str',0]];
 const CLASSES={};
 CD.forEach(([n,par,aspd,atk,hp,col,cape,wt,main,rng,hat])=>CLASSES[n]={n,par,aspd,atk,hp,col:parseInt(col,16),cape:cape?parseInt(cape,16):0,wt,main,rng,hat:hat?parseInt(hat,16):0,kids:[]});
@@ -907,21 +920,27 @@ const GEAR=[
   G(['sword:Cutlass','axe:Battle Axe','mace:Flail'],'Mariner Vest','Bandana','Iron Shield','Mariner Slacks','Brass Ring','Coin Pendant'),
   G(['sword:Sea Saber','axe:Great Axe','mace:Iron Mace'],'Sea Mail','Iron Cap','Tower Shield','Sea Greaves','Merchant Ring','Ledger Pendant'),
   G(['sword:Admiral Saber','axe:Golden Axe','mace:Loaded Mace'],'Admiral Coat','Captain Hat','Admiral Guard','Admiral Boots','Guild Ring','Guild Pendant')],
- // --- Geffen: Mage line (staves only) ---
- [G(['staff:Rod'],'Mage Shirt','Hairband','Novice Buckler','Mage Trousers','Apprentice Ring','Glass Bead'),
-  G(['staff:Staff of Soul'],'Silk Robe','Wizard Cap','Rune Shield','Silk Leggings','Apprentice Pendant','Moon Bead'),
-  G(['staff:Arc Wand'],'Mage Robe','Wizard Hat','Magic Guard','Rune Trousers','Mystic Ring','Star Bead'),
-  G(['staff:Wand of Hermes'],'Archmage Robe','Mage Crown','Arcane Guard','Archmage Boots','Archmage Ring','Mana Pendant')],
- // --- Morroc: Thief daggers and Assassin Katars (Assassin jobs use only the two-handed Katar) ---
+ // --- Geffen: the Mage line's staves, and the Thief line climbing to its Assassin katar ---
+ // (v81: an Assassin now swings a dagger too, so the knives on the lower sections are a second
+ //  blade waiting to happen; the claws on the upper ones are the two-handed upgrade)
+ [G(['staff:Rod','dagger:Dirk'],'Mage Shirt','Hairband','Novice Buckler','Mage Trousers','Apprentice Ring','Glass Bead'),
+  G(['staff:Staff of Soul','dagger:Ice Pick'],'Silk Robe','Wizard Cap','Rune Shield','Silk Leggings','Apprentice Pendant','Moon Bead'),
+  G(['staff:Arc Wand','katar:Ghoul Claw'],'Mage Robe','Wizard Hat','Magic Guard','Rune Trousers','Mystic Ring','Star Bead'),
+  G(['staff:Wand of Hermes','katar:Baphomet Claw'],'Archmage Robe','Mage Crown','Arcane Guard','Archmage Boots','Archmage Ring','Mana Pendant')],
+ // --- Morroc: the Thief line - a dagger while you are still a Thief, a katar once you are not ---
+ // (v81: the sections only an Assassin can wear carry a claw rather than a knife, because a shelf
+ //  holds one weapon per family and the katar is the two-handed half of that family. The knives
+ //  further up the ladder are what fill the left hand - both mobs on a field carry the same
+ //  weapon, at the same rate.)
  [G(['dagger:Desert Knife','katar:Jur'],'Desert Shirt','Turban','Dune Buckler','Desert Pants','Sand Ring','Scorpion Charm'),
   G(['dagger:Gladius','katar:Katar'],'Thief Clothes','Thief Hood','Shadow Shield','Thief Slacks','Thief Ring','Silent Charm'),
-  G(['dagger:Sword Breaker','katar:Jamadhar'],'Assassin Garb','Black Hood','Assassin Guard','Assassin Boots','Assassin Ring','Venom Charm'),
-  G(['dagger:Sandstorm Dagger','katar:Bloody Roar'],'Shadow Cloak','Shadow Mask','Night Guard','Shadow Boots','Cross Ring','Reaper Charm')],
- // --- Payon: Archer / Hunter lines (bows only) ---
- [G(['bow:Short Bow'],'Leather Shirt','Straw Hat','Quiver Guard','Leather Pants','Hunter Ring','Feather Charm'),
-  G(['bow:Composite Bow'],'Hunter Vest','Feather Cap','Leaf Shield','Hunter Slacks','Falcon Ring','Arrow Charm'),
-  G(['bow:Great Bow'],'Hunter Suit','Archer Hat','Falcon Guard','Hunter Boots','Eagle Ring','Falcon Charm'),
-  G(['bow:Gakkung Bow'],'Ranger Coat','Elven Hat','Elven Guard','Ranger Boots','Elven Ring','Wind Charm')],
+  G(['katar:Jamadhar'],'Assassin Garb','Black Hood','Assassin Guard','Assassin Boots','Assassin Ring','Venom Charm'),
+  G(['katar:Bloody Roar'],'Shadow Cloak','Shadow Mask','Night Guard','Shadow Boots','Cross Ring','Reaper Charm')],
+ // --- Payon: Archer / Hunter lines (bows) and the sword a Swordman levels on there ---
+ [G(['bow:Short Bow','sword:Hunting Sword'],'Leather Shirt','Straw Hat','Quiver Guard','Leather Pants','Hunter Ring','Feather Charm'),
+  G(['bow:Composite Bow','sword:Haedonggum'],'Hunter Vest','Feather Cap','Leaf Shield','Hunter Slacks','Falcon Ring','Arrow Charm'),
+  G(['bow:Great Bow','sword:Chrome Sword'],'Hunter Suit','Archer Hat','Falcon Guard','Hunter Boots','Eagle Ring','Falcon Charm'),
+  G(['bow:Gakkung Bow','sword:Emerald Blade'],'Ranger Coat','Elven Hat','Elven Guard','Ranger Boots','Elven Ring','Wind Charm')],
  // --- Comodo: coral beach, mixed - every class line is served here ---
  [G(['katar:Coral Claw','mace:Tide Mace','staff:Tide Rod'],'Coral Shirt','Shell Cap','Barnacle Buckler','Coral Shorts','Shell Ring','Sea Glass'),
   G(['bow:Reef Bow','axe:Crab Axe','sword:Reef Sabre'],'Fishing Vest','Sea Breeze Band','Coral Shield','Reef Trousers','Pearl Ring','Mermaid Tear'),
@@ -960,13 +979,13 @@ const MAPS=[
 {n:'Izlude',t:'Swordman & Merchant · stages 1-5 Lv 10-20; 6-10 Lv 20-50',ground:0x6fc2b0,sky:0x8ee0f0,boss:'Drake:4a5a8a:demon',
  mobs:['Marina:5ad1c8:blob','Pupa:e0c070:worm','Crab:e0605a:bug','Sea Otter:8a6a4a:cat','Muka:6aa84f:tree','Anacondaq:3f8a3f:worm','Thief Bug:3a3a55:bug','Marse:6a8ae0:blob','Ambernite:e07aa0:worm','Kukre:d98a3a:bug'],
  gear:GEAR[1]},
-{n:'Geffen',t:'Mage · stages 1-5 Lv 10-20; 6-10 Lv 20-50',ground:0x8c8caa,sky:0x9a90c8,boss:'Baphomet:6a3fa0:demon',
+{n:'Geffen',t:'Mage & Thief · staves; daggers, then katars · stages 1-5 Lv 10-20; 6-10 Lv 20-50',ground:0x8c8caa,sky:0x9a90c8,boss:'Baphomet:6a3fa0:demon',
  mobs:['Skeleton:e8e8e8:bunny','Zombie:7a9a6a:worm','Ghoul:6a7a5a:demon','Poison Spore:8a5aa0:tree','Whisper:bfd0ff:blob','Bat Familiar:5a3a6a:bug','Dark Priest:3a2a4a:demon','Wraith:8a8ab0:blob','Evil Druid:4a3a5a:tree','Marionette:ff8ad0:bunny'],
  gear:GEAR[2]},
-{n:'Morroc',t:'Thief · stages 1-5 Lv 10-20; 6-10 Lv 20-50',ground:0xdcc78e,sky:0xf0d9a0,boss:'Phreeoni:c9a040:bug',
+{n:'Morroc',t:'Thief & Assassin · daggers, then katars · stages 1-5 Lv 10-20; 6-10 Lv 20-50',ground:0xdcc78e,sky:0xf0d9a0,boss:'Phreeoni:c9a040:bug',
  mobs:['Scorpion:d9a84a:bug','Sand Man:e0c78a:blob','Desert Wolf:c9a86a:cat','Cactus:5aa050:tree','Pasana:c94a2a:demon','Horn:a08050:bug','Mummy:d9d0b0:worm','Isis:ffcf6a:cat','Anubis:2a2a3a:demon','Minorous:8a4a2a:demon'],
  gear:GEAR[3]},
-{n:'Payon',t:'Archer · stages 1-5 Lv 10-20; 6-10 Lv 20-50',ground:0x4f8f4a,sky:0x8fc8a0,boss:'Eddga:e67a2e:cat',
+{n:'Payon',t:'Archer & Swordman · bows and swords · stages 1-5 Lv 10-20; 6-10 Lv 20-50',ground:0x4f8f4a,sky:0x8fc8a0,boss:'Eddga:e67a2e:cat',
  mobs:['Spore:d06a6a:tree','Wolf:8a8a95:cat','Elder Willow:4a7a3a:tree','Hornet:e8c840:bug','Bigfoot:9a7a5a:demon','Zenorc:5a8a4a:demon','Skel Archer:d0d0c0:bunny','Ancient Worm:b0a080:worm','Orc Warrior:4a7a3a:demon','Orc Archer:6a8a3a:demon'],
  gear:GEAR[4]},
 {n:'Comodo',t:'Coral beach · 2nd-job gear on all stages (Lv 60-80)',ground:0x3fae9a,sky:0x7fe0e0,boss:'Kraken:2a6a9a:blob',mobs:['Merman:3a9ad0:demon','Sea Witch:9a5ac0:bunny','Coral Crab:ff7a6a:bug','Giant Eel:4a8aa0:worm','Siren:7ad0e0:cat','Deep Jelly:aa7aff:blob'],gear:GEAR[5]},
@@ -1489,8 +1508,18 @@ const secOf=l=>l<=3?0:l<=7?1:l<=9?2:3,secOf0=l=>l<=3?0:l<=7?1:l<=9?2:3;
 const cardVal=(g,st)=>st==='cdm'?([3,7,10,13][g]||1):Math.max(1,Math.round((CV[g]||1)*(AB[st]||1)));
 const cardStat=(g,seed)=>{const p=g>=2?AFF:K5;return p[((seed%p.length)+p.length)%p.length]};
 // A pool entry's k is its weapon type for weapons ('sword', 'bow', ...) and its slot for
-// everything else, so the UI asks gearSlot() which panel group an entry belongs to.
-const ARM=['armor','head','off','leg','acc'],gearSlot=x=>ARM.includes(x.k)?x.k:'weapon';
+// everything else, so the UI asks gearSlot() which panel group an entry belongs to. A generated
+// item spells the same thing out on `slot` + `wt`, so both shapes go through the same readers and
+// the map panel's drop line and the bag's item card explain themselves in the same words.
+const ARM=['armor','head','off','leg','acc'],gearSlot=x=>x.slot?x.slot:ARM.includes(x.k)?x.k:'weapon',
+ gearKind=x=>x.slot?(x.slot==='weapon'?x.wt:x.slot):x.k,
+ canWield=x=>gearTierOK(x)&&(gearSlot(x)==='off'?canShield():gearSlot(x)!=='weapon'||C().wt.includes(gearKind(x))),
+ // v80: "you cannot use this" has three different causes and the bag used to say none of them.
+ // One sentence, whichever shape the gear arrives in: the class tier, the weapon family, or the
+ // shield rule. This is the same line the map panel puts on a dimmed drop (v79).
+ whyNot=x=>canWield(x)?'':!gearTierOK(x)?`Locked to ${gearUserOf(x)}: your ${S.cls} cannot wear it yet.`
+  :gearSlot(x)==='weapon'?`Your ${S.cls} cannot wield ${/^[aeiou]/.test(gearKind(x))?'an':'a'} ${gearKind(x)}.`
+  :gearSlot(x)==='off'?`Your ${S.cls} cannot hold a shield.`:'Your ${S.cls} cannot use this.';
 // ---------- bag capacity & fixed drop rarity ----------
 // The bag holds 1000 items. Loot is refused once it is full (the drop stays on the ground and
 // is reported) so a long farm cannot silently grow an unbounded save.
@@ -1562,13 +1591,26 @@ function gearPool(m,l){const sec=secField(m,l),tier=dropTier(m,l),enhanced=m===9
   if(sg.ac2)add('acc',sg.ac2);
   return T}
 function fieldOf(m,l){const mp=MAPS[m],sec=secField(m,l),T=gearPool(m,l),n=T.length,ft=dropTier(m,l),gearSet=m===9&&sec===3&&l>=6&&l<=10?'abyss-ascended':'base';
-  // three gear rolls per mob, spread across the pool so two mobs on one field do not pay out
-  // the same item; gear is the common drop and a card is the rare one. From Comodo on the
-  // table is the 30% lighter v73 one (FIELD_GEAR_MID); maps 1-5 use the original. The Nightmare
-  // band (v76.2) pays a third of whichever table its map would pay below stage 11.
+  // three gear rolls per mob; gear is the common drop and a card is the rare one. From Comodo on
+  // the table is the 30% lighter v73 one (FIELD_GEAR_MID); maps 1-5 use the original. The
+  // Nightmare band (v76.2) pays a third of whichever table its map would pay below stage 11.
   const gch=l>10?(m>=5?FIELD_GEAR_MID_NM:FIELD_GEAR_NM):(m>=5?FIELD_GEAR_MID:FIELD_GEAR);
+  // v79: the three rolls are ALLOCATED, not windowed. The old code handed each mob three
+  // consecutive pool entries from a window that slid three slots per stage (T[(l*3+2*j)%n]), so
+  // which item you could farm was an accident of arithmetic: 20 of the 100 normal fields handed
+  // out no weapon at all (Izlude S1, Geffen S3/5/10, Payon S3/5/10, Morroc S1/6/9, Stage 7 of
+  // every late map), one item was listed twice on the same field at two different rates, and only
+  // 5 of a 13-item pool was reachable. Now the pool is split once - weapons first (the thing a
+  // player actually hunts), then the defensive slots - and every mob gets ONE weapon plus TWO
+  // defensive pieces, so the weapon is always on the table and nothing repeats. The rates, the
+  // pool and the boss table are untouched: the total gear chance per kill is still 3.6% (early
+  // maps) / 2.52% (mid) - only the share of it that is a weapon moves, 2.21% -> 2.55% a kill on
+  // average, and no field can be weapon-less. Each stage walks two weapons and four defensive
+  // pieces further along the shelf, so a map's whole list is farmable across its stages and the
+  // panel says which stage carries which.
+  const SLOTK=['armor','head','off','leg','acc'],WP=T.filter(x=>!SLOTK.includes(x.k)),DF=T.filter(x=>SLOTK.includes(x.k)),nw=WP.length,nd=DF.length;
   const mobs=[0,1].map(j=>{const mm=mp.mobs[(l-1+j)%mp.mobs.length],cg=l<=3?0:l<=7?1:2;
-    return{...mm,tier:ft,drops:[[T[(l*3+2*j)%n],gch[0]],[T[(l*3+2*j+1)%n],gch[1]],[T[(l*3+2*j+2)%n],gch[2]]],card:{n:mm.n+' Card',stat:cardStat(cg,(m*10+l+j)*3+1),g:cg},cardCh:.15,ore:true,oreCh:l>10?.015:l===10?.01:.005}});
+    return{...mm,tier:ft,drops:[[WP[(2*(l-1)+j)%nw],gch[0]],[DF[(4*(l-1)+j*2)%nd],gch[1]],[DF[(4*(l-1)+j*2+1)%nd],gch[2]]],card:{n:mm.n+' Card',stat:cardStat(cg,(m*10+l+j)*3+1),g:cg},cardCh:.15,ore:true,oreCh:l>10?.015:l===10?.01:.005}});
   return{m,l,sec,tier:ft,gearSet,mobs,boss:(l===10||l===15)?{...mp.boss,tier:ft,
     // v57: the boss still lists its whole pool - every item stays obtainable - but the pool now
     // totals ~6% per boss instead of one 1% roll per entry (13 entries used to mean 13%). The
@@ -1577,9 +1619,20 @@ function fieldOf(m,l){const mp=MAPS[m],sec=secField(m,l),T=gearPool(m,l),n=T.len
     // first five maps keep the original ~6%. A boss also carries its map's crit resistance.
     drops:T.map(x=>[x,Math.round(BOSS_POOL_TOTAL[l>10?2:(m>=5?1:0)]/n)/100]),critRes:bossCritRes(m,l),
     card:{n:mp.boss.n+' Card',stat:cardStat(3,m),g:3},cardCh:.1,ore:true,oreCh:.025}:null}}
-// One drop line for the map panel: icon + name + the fixed rarity on the left, the % on the right.
+// One drop line for the map panel: icon + name + the field's fixed rarity + which monster carries
+// it, with the % on the right. v79: a piece the player's own class cannot wear is dimmed and says
+// why on hover - the class gate is part of choosing where to farm, not a surprise that only turns
+// up in the bag after the drop.
 const poolIc=T=>gearSlot(T)==='weapon'?(WICON[T.k]||'⚔️'):{armor:'🥼',head:'🎩',off:'🛡️',leg:'👖',acc:'💍'}[T.k];
-const dropTxt=([T,ch])=>`<div class="dropline"><span>${poolIc(T)} ${T.n} <small class="${rarCls(T)}">${rarOf(T).n}</small></span><b>${ch}%</b></div>`;
+// v80: is this drop strictly weaker than the piece already worn in its slot? Compared on the same
+// Gear Lv reference the item card prints (field level + 10 per quality step), so the panel can say
+// "this field is behind you" without pretending to know the affix roll. An empty slot is never a
+// comparison, and a drop from the field you are standing on is only ever worse than gear from
+// further along the same ladder.
+const dropIsWorse=T=>{const cur=gearSlot(T)==='acc'?(S.eq.acc1||S.eq.acc2):S.eq[gearSlot(T)];
+  return !!cur&&gearRefLevel({lvl:mapL,tier:T.tier})<gearRefLevel(cur)};
+const dropTxt=([T,ch],who)=>{const why=whyNot(T),worse=dropIsWorse(T),cls='dropline'+(why?' cant':'')+(worse?' worse':''),tip=[why,worse?`Weaker than the ${SLOTS[gearSlot(T)].label.toLowerCase()} you are wearing`:''].filter(Boolean).join(' · ')
+ return`<div class="${cls}"${tip?` title="${tip}"`:''}><span>${poolIc(T)} ${T.n} <small class="${rarCls(T)}">${rarOf(T).n}</small>${who?` <small class="dwho">${who}</small>`:''}</span><b>${ch}%</b></div>`};
 
 // ---------- stat progression ----------
 // Stats cap at 99 until Base Lv 100, then the elite tier opens up to 120. Raising a stat
@@ -1795,7 +1848,7 @@ const uid=()=>Date.now()+Math.random(),rnd=(a,b)=>a+Math.random()*(b-a),ri=(a,b)
 // One roll fills both slots. The second pick is made from the skills the first did not take, so
 // the two can never match and there is no retry loop to spin if the dice are pinned.
 const PET_SKILL_WEIGHTS=[.35,.35,1,1,1,1,1,1,1,1,1,1],rollPetSkills=()=>{const a=pickW(PET_SKILL_WEIGHTS),rest=PET_SKILL_WEIGHTS.map((w,i)=>i).filter(i=>i!==a),b=rest[pickW(rest.map(i=>PET_SKILL_WEIGHTS[i]))];return[PET_SKILLS[a].id,PET_SKILLS[b].id]};
-const fresh=()=>({pets:[],bond:[],cls:'Novice',sex:'m',hair:0,lv:1,exp:0,hp:100,zeny:0,kills:0,indexXp:0,mobKills:{},equippedTitle:null,shards:0,trial:{day:trialDay(),used:0,best:0,runs:0},cardIndex:emptyCardIndex(),dmg:0,pts:10,jobs:{Novice:{jl:1,jx:0}},sk:{aid:1},skOff:{},dmgShort:true,dmgShow:true,base:{},mp:0,lvl:1,prog:[1,1,1,1,1],kl:0,auto:true,adv:true,feed:true,clickSell:false,bg:true,autoSell:[false,false,false,false,false],logOff:{},q:null,cards:[],ore:{ori:0,elu:0},offlineAt:0,offlineKph:0,offlineRateAt:0,offlineRateKills:0,offlineKillRemainder:0,gm:false,gmx:100,
+const fresh=()=>({pets:[],bond:[],cls:'Novice',sex:'m',hair:0,lv:1,exp:0,hp:100,zeny:0,kills:0,indexXp:0,mobKills:{},equippedTitle:null,shards:0,trial:{day:trialDay(),used:0,best:0,runs:0},cardIndex:emptyCardIndex(),dmg:0,pts:10,jobs:{Novice:{jl:1,jx:0}},sk:{aid:1},skOff:{},dmgShort:true,dmgShow:true,base:{},mp:0,lvl:1,prog:[1,1,1,1,1],kl:0,auto:true,adv:true,feed:true,clickSell:false,bg:true,autoSell:[false,false,false,false,false,false,false],logOff:{},q:null,cards:[],ore:{ori:0,elu:0},offlineAt:0,offlineKph:0,offlineRateAt:0,offlineRateKills:0,offlineKillRemainder:0,gm:false,gmx:100,
   st:{str:1,agi:1,dex:1,luk:1,int:1,vit:1},eq:{weapon:{id:1,slot:'weapon',wt:'dagger',tier:0,val:5,name:'Novice Knife',aff:[],slots:1,cards:[],sec:0},armor:null,head:null,off:null,leg:null,acc1:null,acc2:null},inv:[]});
 const saveKey=()=>'pg_save3_'+currentUser;
 const num_= (v,d)=>{v=+v;return Number.isFinite(v)?v:d};
@@ -1814,7 +1867,7 @@ function load(){try{const s=JSON.parse(lsGet(saveKey()));if(s&&s.lv){const F=fre
   // silently start selling a rarity the player never ticked.
   // v77: six bands now - the N rarity is its own auto-sell tick, so Nightmare gear can be sold on the
   // drop without touching ordinary Legendaries. A save with five entries just gains a false sixth.
-  if(!Array.isArray(f.autoSell))f.autoSell=[false,false,false,false,false,false];else f.autoSell=[0,1,2,3,4,5].map(i=>f.autoSell[i]===true||f.autoSell[i]===1);
+  if(!Array.isArray(f.autoSell))f.autoSell=[false,false,false,false,false,false,false];else f.autoSell=[0,1,2,3,4,5,6].map(i=>f.autoSell[i]===true||f.autoSell[i]===1);
   if(!f.logOff||typeof f.logOff!=='object'||Array.isArray(f.logOff))f.logOff={};
   for(const k of['str','agi','dex','luk','int','vit'])f.st[k]=Math.max(1,Math.min(MAXST,num_(f.st[k],1)));
   f.ore={ori:num_(f.ore&&f.ore.ori,0),elu:num_(f.ore&&f.ore.elu,0)};
@@ -2356,8 +2409,14 @@ const skMasterTile=()=>{const on=skAllOn(),n=skTog().length,done=skillsFullyAllo
 const skillDetailCard=sel=>{const SL=lv(sel.id),soff=!!(SL&&sel.type!=='pas'&&skOff(sel.id));
   return`<div class="mob-card sk-detail-card" data-skill-detail="${sel.id}"><div class="sk-detail-head"><b>${sel.n}</b> <small>${sel.type==='pas'?'Passive':sel.type==='heal'?'Auto-heal':sel.type==='to'?'Tradeoff (auto-cast)':'Active (auto-cast)'}${sel.rng?' &middot; RANGED':''}${sel.aoe?' &middot; AREA':''}${sel.dot?' &middot; DOT':''}${sel.stun?' &middot; STUN':''}${sel.chain?' &middot; CHAIN':''}</small></div><div class="sk-detail-autocast">${SL&&sel.type!=='pas'?`<label class="sk-autocast"><input type="checkbox" data-a="sktog" data-v="${sel.id}" ${soff?'':'checked'} aria-label="Auto cast ${sel.n}"> Auto cast this skill</label><small class="${soff?'r0':''}">${soff?'Paused - it will not be used until you check this again.':'Cast automatically every time you attack.'}</small>`:'<small>Passive or not learned yet - nothing to auto-cast.</small>'}</div><small>${sel.d(Math.max(1,SL))}</small>${SL&&SL<sel.max?`<br><small>Next: ${sel.d(SL+1)}</small>`:''}</div>`};
 const pv=k=>SKILLS.reduce((a,s)=>a+(s.type==='pas'&&s.key===k&&skillOn(s.id)?s.f(lv(s.id)):0),0);
-const items=()=>Object.values(S.eq).filter(Boolean),ev=it=>Math.round(it.val*(1+(it.r||0)*.15)),iname=it=>(it.r?'+'+it.r+' ':'')+it.name,eqv=k=>S.eq[k]?ev(S.eq[k]):0;
-const bon=k=>{let v=MASTER_STATS.includes(k)?cardMasteryStat(k):0;for(const it of items()){for(const a of it.aff||[])if(a.k===k)v+=a.v;for(const c of it.cards||[])if(c.stat===k)v+=c.v}return v};
+// v81 dual wield (owner): "let set that assasin & assassin cross can wield daggers. 2 hands."
+// A two-handed katar is TWO_HANDED weapons and a left-hand dagger is DUAL of one, so a pair of
+// equal daggers is 1.5 weapons of base value - exactly what a katar is. Both rules live here,
+// in the one reader every stat formula already calls, so nothing new has to be wired into
+// atk(): it reads the left hand as eqv('off'), which is only non-zero for a dagger. A shield
+// still reads as its own DEF, which is why def() keeps its slot==='off' guard.
+const items=()=>Object.values(S.eq).filter(Boolean),ev=it=>Math.round(it.val*(1+(it.r||0)*.15)),iname=it=>(it.r?'+'+it.r+' ':'')+it.name,DUAL=.5,TWO_HANDED=1.5,eqv=k=>{const it=S.eq[k];return it?k==='off'&&it.wt==='dagger'?ev(it)*DUAL:ev(it)*(it.wt==='katar'?TWO_HANDED:1):0};
+const bon=k=>{let v=MASTER_STATS.includes(k)?cardMasteryStat(k):0;for(const it of items()){const f=it===S.eq.off&&it.wt==='dagger'?DUAL:1;for(const a of it.aff||[])if(a.k===k)v+=a.v*f;for(const c of it.cards||[])if(c.stat===k)v+=c.v*f}return v};
 // v74 (owner: "second class or 3rd class equipment cannot be worn by 1st class"): a piece belongs
 // to a class TIER, not just a slot. The tier ladder is the class tree's own (`c.tier`: Novice 0,
 // first jobs 1, second 2, third 3) and the gate is `gearTierOf(it) <= max(1, classTierOf(cls))`.
@@ -2370,7 +2429,7 @@ const bon=k=>{let v=MASTER_STATS.includes(k)?cardMasteryStat(k):0;for(const it o
 // auto-equip, item tooltip).
 const st=k=>S.st[k]+bon(k),gearTierOf=it=>Math.max(0,Math.min(3,((it&&it.sec)|0)||0)),classTierOf=(cls=S.cls)=>Math.max(0,Math.min(3,(CLASSES[cls]&&CLASSES[cls].tier)||0)),gearTierOK=(it,cls=S.cls)=>gearTierOf(it)<=Math.max(1,classTierOf(cls)),gearUserOf=it=>['any class','Novice and 1st-job classes','2nd-job classes and up','transcendent classes only'][gearTierOf(it)],canUse=it=>gearTierOK(it)&&(it.slot==='off'?canShield():(it.slot!=='weapon'||!it.wt||C().wt.includes(it.wt)));
 const maxHp=()=>Math.round((80+S.lv*20+eqv('head')*4+(eqv('acc1')+eqv('acc2'))*3+st('vit')*8+bon('hp'))*C().hp*(1+(pv('hpp')+(typeof cardMasteryStat==='function'?cardMasteryStat('hpPct'):0))/100)*(1+(petBuff.hp||0)/100)*(1+petPassive('hp')/100));
-const atk=()=>Math.round((4+S.lv*2+eqv('weapon')+st(C().main)*1.5+(st('dex')+st('luk'))*.25)*C().atk*(1+(pv('atk')+bon('atk')+(typeof cardMasteryStat==='function'?cardMasteryStat('atkPct'):0)+(tb.atk||0)+(petBuff.atk||0))/100)*(1+collDmg()/100));
+const atk=()=>Math.round((4+S.lv*2+eqv('weapon')+(S.eq.off&&S.eq.off.wt==='dagger'?eqv('off'):0)+st(C().main)*1.5+(st('dex')+st('luk'))*.25)*C().atk*(1+(pv('atk')+bon('atk')+(typeof cardMasteryStat==='function'?cardMasteryStat('atkPct'):0)+(tb.atk||0)+(petBuff.atk||0))/100)*(1+collDmg()/100));
 const matk=()=>Math.round((4+S.lv*2+eqv('weapon')*.8+st('int')*1.5+st('dex')*.25)*C().atk*(1+(pv('matk')+bon('matk')+(typeof cardMasteryStat==='function'?cardMasteryStat('matkPct'):0)+(tb.matk||0)+(petBuff.matk||0))/100)*(1+collDmg()/100));
 const aspd=()=>Math.max(.2,.85*C().aspd*(1-Math.min(.5,st('agi')*.006))/(1+(pv('aspd')+bon('aspd')+(typeof cardMasteryStat==='function'?cardMasteryStat('aspdPct'):0)+(tb.aspd||0))/100));
 // v73 crit retune (owner): reaching the 60% cap used to be a LUK dump - LUK 99 alone paid
@@ -2422,7 +2481,7 @@ const autoAllocateSkills=()=>{if(!S.sk||typeof S.sk!=='object')S.sk={};let bough
   return bought;
 };
 const refCost=it=>Math.round(200*((it.r||0)+1)*(1+(it.sec||0)*.5)),refCh=it=>[70,70,70,70,49,42,35,28,21,14][it.r||0];
-const affTxt=a=>`${AL[a.k]} +${a.v}`,cardTxt=c=>`${c.n} (${SU(c.stat)} +${c.v})`,dtier=it=>it.card?GI[it.g]:it.ore?3:((it&&+it.sec>=4)?5:it.tier);
+const affTxt=a=>`${AL[a.k]} +${a.v}`,cardTxt=c=>`${c.n} (${SU(c.stat)} +${c.v})`,dtier=it=>it.card?GI[it.g]:it.ore?3:((it&&+it.sec>=5)?6:(it&&+it.sec>=4)?5:it.tier);
 const isBoss=()=>S.lvl===10||S.lvl===15,fieldName=()=>S.lvl>10?`Nightmare ${MAPS[S.mp].n} Stage ${S.lvl-10}`:`${MAPS[S.mp].n} Stage ${S.lvl}`;
 // Real RO item icons give each equipment family a recognizable shape and several name-based
 // variants. The existing held-weapon URL helper above remains unchanged for the 3D sprite layer.
@@ -2557,7 +2616,7 @@ function genGear(T,l,sec,boss,tier){
   for(let i=0;i<n;i++){const k=pool.splice(ri(0,pool.length-1),1)[0];aff.push({k,v:Math.max(1,Math.round(affixValue(k,sec,t,rnd(.8,1.25))*quality))})}
   // Katars and bows always have four card sockets; every other weapon keeps the existing 1-3 roll.
   const slots=slot==='weapon'&&(T.k==='katar'||T.k==='bow')?4:slot==='weapon'?Math.min(3,1+ri(0,1)+(t>=3?1:0)):Math.min(1,ri(0,1)+(t>=3?1:0));
-  return{id:uid(),slot,wt:slot==='weapon'?T.k:undefined,tier:t,val,name:(sec>=4?'N ':t?RAR[t].n+' ':'')+T.n,aff,slots,cards:[],sec,lvl:l};
+  return{id:uid(),slot,wt:slot==='weapon'?T.k:undefined,tier:t,val,name:(sec>=5?'N+ ':sec>=4?'N ':t?RAR[t].n+' ':'')+T.n,aff,slots,cards:[],sec,lvl:l};
 }
 // Away time is earned from the same map/stage and drop tables as online play. The browser records
 // a rolling real-time kill rate, credits at most four hours, and simulates half that many kills.
@@ -2961,18 +3020,25 @@ const find=id=>[...S.inv,...items(),...S.cards].find(x=>String(x.id)===String(id
 // It is not the item's rarity label (Nightmare equipment is N), and never gates use by Base Lv.
 const gearRefLevel=it=>Math.max(1,Math.min(150,Math.floor(+it.lvl||1)+10*Math.max(0,Math.min(4,Math.floor(+it.tier||0)))));
 function toggleGearLock(id){const it=find(id);if(!it||it.card||it.ore)return;it.locked=!it.locked;log(`${iname(it)} ${it.locked?'locked':'unlocked'}.`,it.locked?'r3':'','gear');ui();save()}
-const cell=(it,sel,extra='')=>`<div class="cell b${dtier(it)}${it&&+it.sec>=4?' nm':''}${sel?' sel':''}" data-tip="${it.id}" ${extra}>${icon(it)}${it.locked?`<i class="lockstar" title="Locked gear" aria-label="Locked">&#9733;</i>`:''}${it.r?`<i class="rf">+${it.r}</i>`:''}</div>`;
+// v80: a bag tile that is strictly weaker than the piece already worn in its slot is marked, so a
+// full bag reads as "sell this" instead of a wall of near-identical tiles. An empty slot is never
+// a comparison (nothing worn reads as unbeatable), and the worn piece is never flagged against
+// itself - ev(it)<ev(it) is false by definition.
+const cell=(it,sel,extra='')=>`<div class="cell b${dtier(it)}${it&&+it.sec>=4?' nm':''}${sel?' sel':''}${it&&it.slot&&ev(it)<ev(it.slot==='acc'?(S.eq.acc1||S.eq.acc2):S.eq[it.slot]||{val:1e9})?' worse':''}" data-tip="${it.id}" ${extra}>${icon(it)}${it.locked?`<i class="lockstar" title="Locked gear" aria-label="Locked">&#9733;</i>`:''}${it.r?`<i class="rf">+${it.r}</i>`:''}</div>`;
 function itemMain(it){
   if(it.card)return`<b class="r${GI[it.g]}">${it.n}</b><div>${GRADE[it.g]} card &middot; <b>${SU(it.stat)} +${it.v}</b></div><div><small>Fits: ${CFL[CFIT[it.stat]]} only</small></div>`;
   // v74: the class tier of a piece is part of its description, and a piece that came off a class
   // remembers who was wearing it so the lock is never a mystery: "it is locked BECAUSE Knight had
   // it on, and it goes back on the moment you switch to Knight again".
+  // v80: the lock line is whyNot() - the same sentence the map panel puts on a dimmed drop - so
+  // "cannot use this" finally names its cause (class tier, weapon family or the shield rule)
+  // instead of leaving the player to guess which of the three it was.
   return`<b class="${rarCls(it)}">${iname(it)}</b><div><small>${rarOf(it).n} ${SLOTS[it.slot].label}${it.wt?' ('+it.wt+')':''} &middot; ${SECN[it.sec||0]}</small></div>
   <div><small>Worn by: <b>${gearUserOf(it)}</b></small></div>
   <div><small>Gear Lv ${gearRefLevel(it)} &middot; reference only: gear is gated by class tier, never by Base Lv</small></div>${it.locked?`<div><small class="r3">&#9733; Locked &middot; protected from auto-sell</small></div>`:''}
-  ${gearTierOK(it)?'':`<div><small class="r0">Locked to ${gearUserOf(it)}: your ${S.cls} cannot wear it.${it.wearer?` This was ${it.wearer}'s gear - it goes straight back on when you switch to ${it.wearer} again.`:''}</small></div>`}
-  <div><b>${SLOTS[it.slot].stat} +${ev(it)}</b>${it.r?` <small>(base ${it.val})</small>`:''}</div>${(it.aff||[]).length?`<div class="sec">Affixes <small>(${it.aff.length} random)</small></div>`:''}${(it.aff||[]).map(a=>`<div class="r1">&#9670; ${affTxt(a)}</div>`).join('')}`}
-function itemDetail(it){if(it.card)return itemMain(it);const cs=it.cards||[];return itemMain(it)+Array.from({length:it.slots||0},(_,i)=>`<div><small>${cs[i]?'&#9670; '+cardTxt(cs[i]):'&#9671; empty card slot'}</small></div>`).join('')+(gearTierOK(it)&&!canUse(it)?'<div class="r0"><small>Your class cannot use this.</small></div>':'')}
+  ${canUse(it)?'':`<div><small class="r0">${whyNot(it)}${it.wearer?` This was ${it.wearer}'s gear - it goes straight back on when you switch to ${it.wearer} again.`:''}</small></div>`}
+  <div><b>${SLOTS[it.slot].stat} +${ev(it)}</b>${it.r?` <small>(base ${it.val})</small>`:''}</div>${it.slot&&ev(it)<ev(it.slot==='acc'?(S.eq.acc1||S.eq.acc2):S.eq[it.slot]||{val:1e9})?`<div><small class="r0">Weaker than the ${SLOTS[it.slot].label.toLowerCase()} you are wearing (${SLOTS[it.slot].stat} +${ev(it.slot==='acc'?(S.eq.acc1||S.eq.acc2):S.eq[it.slot])}) - sell it, or keep it for a set you are still building.</small></div>`:''}${(it.aff||[]).length?`<div class="sec">Affixes <small>(${it.aff.length} random)</small></div>`:''}${(it.aff||[]).map(a=>`<div class="r1">&#9670; ${affTxt(a)}</div>`).join('')}`}
+function itemDetail(it){if(it.card)return itemMain(it);const cs=it.cards||[];return itemMain(it)+Array.from({length:it.slots||0},(_,i)=>`<div><small>${cs[i]?'&#9670; '+cardTxt(cs[i]):'&#9671; empty card slot'}</small></div>`).join('')}
 const cardSlots=(it,k)=>Array.from({length:it.slots||0},(_,i)=>{const c=(it.cards||[])[i];return c?`<div><small class="r${GI[c.g]}">&#9670; ${cardTxt(c)}</small> <button data-a="unsock" data-v="${k}:${i}">Remove ${200*(c.g+1)}z</button></div>`:'<div><small>&#9671; empty slot</small></div>'}).join('');
 const tnode=n=>{const c=CLASSES[n],pj=S.jobs[n],cur=n===S.cls,blk=classBlock(n);return`<div class="tn ${cur?'cur':blk?(pj?'played':'lock'):'ok'}${selK===n?' pick':''}" data-a="selk" data-v="${n}"><b>${n}</b><small>${pj?`Job ${pj.jl}/${c.mj}`:'Lv '+c.rj+' req'}</small></div>`};
 // ---------- GM test controls for the v48 mastery and skill systems ----------
@@ -3071,16 +3137,21 @@ const V={
     ${townBand}
     <div class="mapcols">
       <div class="mob-card"><div class="hd">${mapL>10?'Nightmare ':''}${mp.n} Stage ${mapL>10?mapL-10:mapL}${mapM<5&&mapL<=5?`<br><small>${mapM===0?'Novice start · Base Lv 1–10':'Early class route · Base Lv 10–20'} · gentle packs</small>`:''}</div>
-        <div class="sec">Monsters <small>&middot; every drop here is <b class="${F.sec>=4?'r5':'r'+F.tier}">${F.sec>=4?'N':RAR[F.tier].n}</b></small></div>
-        ${F.mobs.map(m=>`<div class="mobentry"><b>${m.n}</b>
-          ${m.drops.map(d=>dropTxt(d)).join('')}
-          <div class="dropline"><span>🃏 ${m.card.n} <small>(${SU(m.card.stat)} +${cardVal(m.card.g,m.card.stat)}, ${GRADE[m.card.g]})</small></span><b>${m.cardCh}%</b></div>
-          ${m.ore?`<div class="dropline ore"><span>🔶 Oridecon &middot; 🔷 Elunium</span><b>${m.oreCh*100}% each</b></div>`:''}
-        </div>`).join('<hr>')}</div>
+        <div class="sec">Drops on this field <small>&middot; every drop is <b class="${rarCls({sec:F.sec,tier:F.tier})}">${rarOf({sec:F.sec,tier:F.tier}).n}</b> &middot; <b>${SECN[F.sec]}</b>, worn by ${gearUserOf({sec:F.sec})}${gearTierOK({sec:F.sec})?'':` &middot; <span class="r0">your ${S.cls} cannot wear this yet</span>`}</small></div>
+        ${(()=>{const d=F.mobs[0].drops,t=Math.round(d.reduce((a,x)=>a+x[1],0)*100)/100;
+          return`<div class="dropline"><span>Gear chance per kill</span><b>${t}%</b></div>
+          <small>Weapon <b>${d[0][1]}%</b> &middot; armour &amp; accessory <b>${Math.round((t-d[0][1])*100)/100}%</b> - three independent rolls, so one kill can pay one piece, none, or several.</small>`})()}
+        ${(()=>{const lines=F.mobs.flatMap(m=>m.drops.map(d=>[d,m.n])),isW=([d])=>gearSlot(d[0])==='weapon',
+          grp=(t,ls)=>`<div class="dropgrp"><small>${t}</small></div>`+ls.map(([d,n])=>dropTxt(d,n)).join('');
+          return grp('Weapons',lines.filter(isW))+grp('Armour &amp; accessories',lines.filter(l=>!isW(l)))
+            +`<div class="dropgrp"><small>Cards &amp; ore</small></div>`
+            +F.mobs.map(m=>`<div class="dropline"><span>🃏 ${m.card.n} <small>(${SU(m.card.stat)} +${cardVal(m.card.g,m.card.stat)}, ${GRADE[m.card.g]})</small> <small class="dwho">${m.n}</small></span><b>${m.cardCh}%</b></div>`).join('')
+            +(F.mobs[0].ore?`<div class="dropline ore"><span>🔶 Oridecon &middot; 🔷 Elunium</span><b>${F.mobs[0].oreCh*100}% each</b></div>`:'')
+            +(!F.boss&&gearPool(mapM,mapL).length>lines.length?`<small>This field's monsters carry ${lines.length} of the ${gearPool(mapM,mapL).length} pieces on ${mp.n}'s shelf - the rest drop from the Stage 10 MVP, listed beside this card.</small>`:'')})()}</div>
       <div class="mob-card"><div class="hd">MVP &amp; pets</div>${(mapL===10||mapL===15)?`<small>MVP fights immediately with ${mapM<5?3:5} monsters. Defeat the MVP to reset the fight.</small>`:''}
         ${F.boss?`<div class="mobentry"><b class="r4">${F.boss.n}</b>
           <div class="poollist">${F.boss.drops.map(([T,ch])=>`<span class="poolitem">${poolIc(T)} ${T.n} <small class="${rarCls(T)}">${rarOf(T).n}</small><b>${ch}%</b></span>`).join('')}</div>
-          <small>Every MVP drop is <b class="${F.sec>=4?'r5':'r'+F.boss.tier}">${F.sec>=4?'N':RAR[F.boss.tier].n}</b> with random affixes. Each item rolls independently; an MVP can drop zero or several pieces.</small>
+          <small>Every MVP drop is <b class="${rarCls({sec:F.sec,tier:F.boss.tier})}">${rarOf({sec:F.sec,tier:F.boss.tier}).n}</b> with random affixes. Each item rolls independently; an MVP can drop zero or several pieces.</small>
           <div class="dropline"><span>🃏 ${F.boss.card.n} <small>(${SU(F.boss.card.stat)} +${cardVal(F.boss.card.g,F.boss.card.stat)}, ${GRADE[F.boss.card.g]})</small></span><b>${F.boss.cardCh}%</b></div>
           <div class="dropline ore"><span>🔶 Oridecon &middot; 🔷 Elunium</span><b>${F.boss.oreCh*100}% each</b></div>
         </div>`:`<small>MVP appears at ${mapL>10?'NM 5 (stage 15)':'Stage 10'}.</small>`}
@@ -3092,7 +3163,7 @@ const V={
     +`<div class="slot" style="flex-wrap:wrap"><span>ATK <b>${atk()}</b></span><span>MATK <b>${matk()}</b></span><span>DEF <b>${def()}</b></span><span>ASPD <b>${(1/aspd()).toFixed(2)}/s</b></span><span>Crit <b>${crit().toFixed(1)}%</b>${idxC?` <small>(+${idxC}% Index Crit)</small>`:''}</span><span>Crit DMG <b>x${critD().toFixed(2)}</b></span><span>MDEF <b>${mdef()}</b></span><span>Flee <b>${flee().toFixed(0)}%</b></span><span>HP <b>${maxHp()}</b></span><span>Move <b>${moveSpd().toFixed(2)}</b> <small>u/s · ${(moveSpd()*MOVE_RUN).toFixed(2)} sprinting</small></span></div>
     <small><b>Movement speed</b> comes from AGI alone: ${heroMoveSpeedForAgi(st('agi')).toFixed(2)} units a second at AGI ${st('agi')} (${(heroMoveSpeedForAgi(st('agi'))*MOVE_RUN).toFixed(2)} when running, which is any trip longer than 3 units). Every point of AGI adds about 0.03 - it never touches damage, so it is a comfort stat.${petPassive('move')?` A fighting Peco Peco's Swift Mount adds ${petPassive('move')}%.`:''}</small>
     <small>Crit is capped at 60% from stats, skills, gear and card mastery; above 45% each further point counts half. <b>Index Crit</b> (+${idxC}% of +40 max, from Hunt Titles) is the only source that passes the cap, and the total stops at 100%.</small>
-    <small>Weapons: ${c.wt.join(', ')}${katarOnly()?' (two-handed Katar; no off-hand)':''} &middot; Main stat: ${SU(c.main)}</small><button class="full" data-a="rstat" ${rcost()&&S.zeny<rcost()?'disabled title="You need '+rcost().toLocaleString()+' Zeny to reset stats"':''}>Reset stats (${rcost()?rcost()+'z':'free below Base 20'})</button>`},
+    <small>Weapons: ${c.wt.join(', ')}${katarOnly()?' (a two-handed Katar, or a dagger in each hand)':''} &middot; Main stat: ${SU(c.main)}</small><button class="full" data-a="rstat" ${rcost()&&S.zeny<rcost()?'disabled title="You need '+rcost().toLocaleString()+' Zeny to reset stats"':''}>Reset stats (${rcost()?rcost()+'z':'free below Base 20'})</button>`},
   job(){const lines=[['Swordman','Knight','Lord Knight'],['Mage','Wizard','High Wizard'],['Archer','Hunter','Sniper'],['Thief','Assassin','Assassin Cross'],['Acolyte','Priest','High Priest'],['Merchant','Blacksmith','Whitesmith']];
     const k=selK||S.cls,c=CLASSES[k],blk=classBlock(k),pj=S.jobs[k],rec=classRec(k);
     return`<div class="tree"><div class="trow" style="justify-content:center">${tnode('Novice')}</div><div class="trunk"></div>
@@ -3139,7 +3210,7 @@ const V={
       return tile+(on?detail:'')}).join('')}</div>
     ${sel?'':'<div class="mob-card" style="margin-top:8px"><small>Click an item to see its stats. Hover for a quick tooltip.</small></div>'}`},
   equip(){const c=C(),sel=S.eq[selE];
-    const slotCell=k=>{const code=EQK.find(x=>x[0]===k);if(!code||(k==='off'&&katarOnly()))return'<div class="cell empty"></div>';const[l,ic]=[code[1],code[2]],e=S.eq[k];
+    const slotCell=k=>{const code=EQK.find(x=>x[0]===k);if(!code||(k==='off'&&!canShield()&&!dualWield()))return'<div class="cell empty"></div>';const[l,ic]=[code[1],code[2]],e=S.eq[k];
       return `<div class="cell b${e?dtier(e):0}${e&&+e.sec>=4?' nm':''}${selE===k?' sel':''}" data-a="seleq" data-v="${k}" ${e?`data-tip="${e.id}"`:''}>${e?icon(e)+(e.locked?'<i class="lockstar" title="Locked gear" aria-label="Locked">&#9733;</i>':'')+(e.r?`<i class="rf">+${e.r}</i>`:''):`<span style="opacity:.3">${ic}</span>`}<i class="rf" style="left:2px;right:auto;top:2px;bottom:auto;color:#fff;background:#3b2a1add;font-size:9px;font-style:normal">${k==='weapon'&&katarOnly()?'2H Katar':l}</i></div>`};
     // v51: the detail card is inserted into the doll right below the row that owns the clicked
     // slot (head / hands+body / legs+accessories), so Refine, card slots and Unequip sit beside
@@ -3148,7 +3219,7 @@ const V={
     const rows=[['','head',''],['weapon','armor','off'],['acc1','leg','acc2']];
     const rowAt=rows.findIndex(r=>r.includes(selE));
     return`<div class="doll">${rows.map((r,i)=>r.map(slotCell).join('')+(i===rowAt?detail:'')).join('')}</div>`
-    +`<small>Weapons: ${c.wt.join(', ')} &middot; ${canShield()?'Shield allowed':'No shield'}${katarOnly()?' &middot; <b>Two-handed Katar; no off-hand weapon</b>':''}</small>`},
+    +`<small>Weapons: ${c.wt.join(', ')} &middot; ${canShield()?'Shield allowed':'No shield'}${katarOnly()?' &middot; <b>Two-handed Katar, or a dagger in each hand</b>':''}</small>`},
   cards(){const g={};S.cards.forEach(c=>(g[c.n]=g[c.n]||[]).push(c));const ks=Object.keys(g),sel=g[selC]?g[selC][0]:null;
     return`<div class="grid">${ks.map(n=>`<div class="cell b${GI[g[n][0].g]}${n===selC?' sel':''}" data-a="selc" data-v="${n}" data-tip="${g[n][0].id}">🃏<i class="rf">x${g[n].length}</i></div>`).join('')||'<small>No cards yet. Every monster drops its own card at a low chance.</small>'}</div>
     ${sel?`<div class="mob-card" style="margin-top:8px">${itemDetail(sel)}<div class="row" style="margin-top:6px">${EQK.map(([k,l])=>{const e=S.eq[k];return e&&(e.cards||[]).length<(e.slots||0)&&CFIT[sel.stat]===grp(e)?`<button data-a="sock" data-v="${sel.id}:${k}">&rarr; ${l}</button>`:''}).join('')}<button data-a="sellcard" data-v="${sel.id}">Sell ${sel.v*150}z</button></div></div>`:''}`},
@@ -3194,6 +3265,9 @@ const CFIT={str:'weapon',dex:'weapon',atk:'weapon',crit:'weapon',cdm:'weapon',ag
 const grp=it=>it.slot==='weapon'?'weapon':it.slot==='head'?'head':it.slot==='acc'?'acc':'armor';
 function canShield(){return /^(Novice|Swordman|Knight|Lord Knight|Acolyte|Priest|High Priest|Merchant|Blacksmith|Whitesmith)$/.test(S.cls)}
 function katarOnly(cls=S.cls){return cls==='Assassin'||cls==='Assassin Cross'}
+// v81 dual wield (owner): the two Assassin jobs hold a dagger in each hand. A Thief does not -
+// one blade, and the katar is not theirs either. dualWield() is what opens the left-hand slot.
+function dualWield(cls=S.cls){const c=CLASSES[cls]||CLASSES.Novice;return c.wt.includes('dagger')&&c.wt.includes('katar')}
 function ekey(it){if(it.slot==='acc')return S.eq.acc1&&!S.eq.acc2?'acc2':'acc1';return it.slot}
 const tabs=[];let selP=null,selS=null,selE='weapon',qOpen=true,eqPick=null,indexMode='mobs';const sub={status:'stats',bag:'bag'};
 // The Index window is rebuilt on every game update, so a native <details> would slam shut the
@@ -3205,21 +3279,24 @@ const indexToggleSection=(tab,map)=>{const st=indexOpenSections[tab]||(indexOpen
 // ---------- equipping from a slot ----------
 // Clicking a slot in the Equipment panel opens the bag right there, already filtered to what
 // that slot will take for THIS class: weapon type and class restrictions, shields only for the
-// classes that may hold one and accessories in either accessory slot. Katar users have no
-// off-hand weapon: the Katar is their single equipped weapon.
+// classes that may hold one and accessories in either accessory slot. The left hand takes a
+// shield for the shield classes and a second dagger for the two Assassin jobs - a katar still
+// occupies both hands, so it is never an off-hand item.
 function slotAccepts(k,it){if(!it||it.card||it.ore||!S.inv.includes(it))return false;
   if(!canUse(it))return false;
   if(k==='acc1'||k==='acc2')return it.slot==='acc';
-  if(k==='off')return it.slot==='off'&&canShield();
+  // v81 dual wield: the left hand takes a shield for the classes that may hold one, and a
+  // dagger - and only a dagger - for the two Assassin jobs.
+  if(k==='off')return it.slot==='off'?canShield():(it.wt==='dagger'&&dualWield());
   return it.slot===k}
 // Choosing a slot does not open a second window: it switches to the real Bag tab and highlights
 // the items that fit that slot (see V.bag0, which rings them green and wires the click to equip).
 // This banner is the header of that mode - what is being chosen, what is worn now, and how out.
 function equipChooser(k){
-  const cur=S.eq[k],fit=S.inv.filter(it=>slotAccepts(k,it)),raw=EQK.find(x=>x[0]===k)||[,k,SLOTS.weapon.ic],nm=k==='weapon'&&katarOnly()?['weapon','two-handed Katar','🔪']:raw;
+  const cur=S.eq[k],fit=S.inv.filter(it=>slotAccepts(k,it)),raw=EQK.find(x=>x[0]===k)||[,k,SLOTS.weapon.ic],nm=k==='weapon'&&katarOnly()?['weapon','two-handed Katar','🔪']:k==='off'&&dualWield()&&!canShield()?['off','dagger','🗡️']:raw;   // v81: the Assassin's left hand takes a blade, not a shield
   const deltas=fit.slice(0,6).map(it=>{const d=ev(it)-ev(cur||{val:0});return`<b class="${rarCls(it)}">${iname(it)}</b> <b class="${d>0?'r1':'r0'}">(${d>0?'+':''}${d})</b>`}).join(' &middot; ');
   return`<div class="mob-card chooser"><div class="hd">${nm[2]} Choosing a ${nm[1].toLowerCase()} <small>&middot; ${fit.length} highlighted item${fit.length===1?'':'s'} fit${fit.length?' below':''}</small><button class="x" data-a="eqclose">&#10005;</button></div>
-  <small>${cur?`Now worn: <b class="${rarCls(cur)}">${iname(cur)}</b> (${SLOTS[cur.slot].stat} +${ev(cur)})`:'Nothing worn in this slot.'} &middot; your class may use ${C().wt.join(', ')}${k==='off'?(canShield()?' + shields':katarOnly()?' · no off-hand weapon':''):''}${k==='weapon'&&katarOnly()?'; the Katar occupies both hands, so no shield or second weapon can be worn':''} &middot; click a green item to wear it; everything else in the bag can still be inspected or sold.</small>
+  <small>${cur?`Now worn: <b class="${rarCls(cur)}">${iname(cur)}</b> (${SLOTS[cur.slot].stat} +${ev(cur)})`:'Nothing worn in this slot.'} &middot; your class may use ${C().wt.join(', ')}${k==='off'?(canShield()?' + shields':dualWield()?' + a second dagger':' · no off-hand weapon'):''}${k==='weapon'&&katarOnly()?'; the Katar occupies both hands, so no shield or second weapon can be worn':''} &middot; click a green item to wear it; everything else in the bag can still be inspected or sold.</small>
   ${fit.length?`<small style="display:block;margin-top:4px">Compared to what you wear: ${deltas}${fit.length>6?` &middot; +${fit.length-6} more`:''}</small>`:'<small style="display:block;margin-top:4px">Nothing in your bag fits this slot.</small>'}</div>`}
 function equipIn(k,id){const it=S.inv.find(x=>String(x.id)===String(id));
   if(!it)return;if(!slotAccepts(k,it)){log('Your class cannot use that there.');return}
@@ -3425,7 +3502,7 @@ const ACT={
     S.sk[id]=nx;S.skRepair=0;ui();save()},
   rskill:()=>{const c=rcost();if(S.zeny<c)return denied(c,'skills');S.zeny-=c;S.sk={aid:1};S.skOff={};S.skRepair=0;log('Skills reset'+(c?' -'+c.toLocaleString()+'z':'')+'; every skill auto-casts again.','','skill');ui();save()},
   selb:v=>{selB=v;renderWin()},equip:id=>equip(+id),sell:id=>sell(id),
-  autosell:v=>{const t=Math.max(0,Math.min(RARALL.length-1,+v||0));if(!Array.isArray(S.autoSell))S.autoSell=[false,false,false,false,false,false];S.autoSell[t]=!S.autoSell[t];
+  autosell:v=>{const t=Math.max(0,Math.min(RARALL.length-1,+v||0));if(!Array.isArray(S.autoSell))S.autoSell=[false,false,false,false,false,false,false];S.autoSell[t]=!S.autoSell[t];
     log(`${RARALL[t].n} items will ${S.autoSell[t]?'be sold automatically the moment they drop':'stay in the bag'}.`,S.autoSell[t]?'r3':'','gear');ui();save()},
   lockgear:id=>toggleGearLock(id),
   sellnow:()=>{const list=S.inv.filter(i=>!i.locked&&autoSellOn(rarIdx(i))).slice();if(!list.length)return log('No unlocked bag item matches the rarities you ticked. Locked gear stays safe.','r0','gear');
@@ -3799,7 +3876,7 @@ addEventListener('resize',resize);
 // turned, and iOS does not always follow that with a window resize event. Re-measure both.
 if(window.visualViewport)visualViewport.addEventListener('resize',resize);
 
-const TC=[0xbbbbbb,0x5cb85c,0x4a86e8,0xb05ce0,0xffb020,0x6a2fa0];   // + the Nightmare dark purple
+const TC=[0xbbbbbb,0x5cb85c,0x4a86e8,0xb05ce0,0xffb020,0x6a2fa0,0xc026d3];   // + the Nightmare dark purple, + the Abyssal N+
 const M=c=>new THREE.MeshLambertMaterial({color:c});
 const SP=(r=.5)=>new THREE.SphereGeometry(r,16,12),BX=(a,b,c)=>new THREE.BoxGeometry(a,b,c),
       CN=(r,h)=>new THREE.ConeGeometry(r,h,8),CY=(a,b,h)=>new THREE.CylinderGeometry(a,b,h,8);
@@ -7439,11 +7516,19 @@ function townPage(npc){
       <b>${seen}</b> of <b>${total}</b> species and earned <b>${safeCount(S.indexXp).toLocaleString()}</b> Index XP${title?`, wearing the title <b>${title.name}</b>`:''}.<br>
       <small>Every species has its own ladder - 10, 50, 250, 1,000, 5,000, 10,000, 25,000 and 50,000 kills - and each rung pays Index XP once. Donating five copies of a card to the album earns a mastery token; a token rolls one permanent stat from the gacha. ${cardMasteryAvailable()} token${cardMasteryAvailable()===1?'':'s'} ready now.</small>`};
   }
-  const bands=MAPS.map((m,i)=>`${m.n}${S.prog[i]>=1?'':' (locked)'} <b class="tier${MAPGRADE[i]}">${RAR[MAPGRADE[i]].n}</b>`).join(' · ');
+  // v79: the ladder is GENERATED from the live tables (MAPTIER / MAPGRADE / secField), so the
+  // smith can never describe a build the game is not running. The old copy claimed "only a Stage
+  // 10 boss rolls Legendary, on any map" - false since v58, when MAPGRADE was cut to
+  // [1,2,2,3,3,3,3,3,3,4] and only the Abyss can reach Legendary at all. It also never mentioned
+  // the stages 1-9 band, the class tier a map's gear is gated to, or the Nightmare rows.
+  const bands=MAPS.map((m,i)=>`${m.n}${S.prog[i]>=1?'':' (locked)'} <b class="tier${MAPGRADE[i]}">${RAR[MAPGRADE[i]].n}</b> <small>(${RAR[MAPTIER[i]].n} on stages 1-9 · ${SECN[secField(i,10)]}, ${gearUserOf({sec:secField(i,10)})})</small>`).join(' · ');
+  const legend=MAPS.filter((m,i)=>MAPGRADE[i]>=4).map(m=>m.n).join(' and ');
   return{acts:[['🗺️ World Map','tab:map'],['🎒 Inventory','tab:bag'],['⚙️ Auto-sell rules','tab:set'],['✕ Close','close']],
     text:`Every field has its own shelf, and a low field never sells endgame gear. The bands today:<br>
       <div class="tbands">${bands}</div>
-      <small>Only a <b>Stage 10 boss</b> rolls Legendary, on any map, so boss runs are where the good pieces come from. Ore (Oridecon, Elunium) drops from ordinary monsters on every stage and refines a weapon or armour +1 per success; auto-sell rules in Settings keep the bag clear of what you have outgrown.
+      <small>Each map's monsters drop its own shelf, and <b>every monster on a field carries a weapon</b> plus armour - the World Map lists exactly which. <b>Stage 10</b> is the MVP field: the whole field, escorts included, steps up to the map's cap grade. <b>${legend}</b> is the only map that can roll <b>Legendary</b>, so its Stage 10 MVP is the best drop in the normal route.<br>
+      Stages 11-15 are <b>Nightmare</b>: <b>N</b> gear on stages 11-13 and <b>N+</b> (Abyssal) on 14-15, both worn by transcendent classes only and worth 1.5x and about 2.1x the high-tier row. They are their own rarities, so an auto-sell tick on N will never eat an N+ piece.<br>
+      Ore (Oridecon, Elunium) drops from ordinary monsters on every stage and refines a weapon or armour +1 per success; auto-sell rules in Settings keep the bag clear of what you have outgrown.
       You are Base Lv <b>${S.lv}</b>${played?` (${S.cls} has been played to Base Lv ${played} before)`:''} - the recommended fields are on the World Map's own labels.</small>`};
 }
 function townSay(){

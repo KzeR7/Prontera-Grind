@@ -513,13 +513,14 @@ h=open('index.html').read()
 open('/tmp/pack_block.js','w').write(h[h.index('const PACK_BODY='):h.index('function ensureHero(')])
 PYPACK
 node tools/tests/pack_sim.js           # -> "bodies in pack (19): ..."
-node tools/tests/class_change_sim.js   # -> "25 passed, 0 failed"
+node tools/tests/class_change_sim.js   # -> "27 passed, 0 failed"
 node tools/tests/class_skin_sim.js     # -> "39 passed, 0 failed" (live class skins, both genders, mirrors)
 node tools/tests/kit_sim.js            # -> "34 passed, 0 failed" (v2 atlas + KIT_PS, payon recipe, ten identities)
-node tools/tests/skill_sim.js          # -> "52 passed, 0 failed" (91-skill roster, caps, cooldowns, GCD queue)
-node tools/tests/save_load_sim.js      # -> "22 passed, 0 failed"
+node tools/tests/skill_sim.js          # -> "58 passed, 0 failed" (91-skill roster, caps, cooldowns, GCD queue)
+node tools/tests/dual_wield_sim.js     # -> "11 passed, 0 failed" (v81: Assassin dagger + dual-wield rules)
+node tools/tests/save_load_sim.js      # -> "23 passed, 0 failed"
 node tools/tests/economy_sim.js        # -> "23 passed, 0 failed"
-node tools/tests/gear_sim.js           # -> "30 passed, 0 failed"
+node tools/tests/gear_sim.js           # -> "38 passed, 0 failed"
 node tools/tests/picker_sim.js         # -> "19 passed, 0 failed" (the picker, booted under a DOM stub)
 node tools/tests/card_sim.js           # -> "13 passed, 0 failed"
 node tools/tests/drop_card_sheet_sim.js # -> "12 passed, 0 failed"
@@ -533,7 +534,7 @@ node tools/tests/scene_sim.js          # -> "8 passed, 0 failed" (per-map scener
 node tools/tests/starter_sim.js        # -> "8 passed, 0 failed" (the gentle starter stages)
 node tools/tests/stat_sim.js           # -> "7 passed, 0 failed"
 node tools/tests/weapon_joint_sim.js   # -> "7 passed, 0 failed"
-node tools/tests/ui_sim.js             # -> "42 passed, 0 failed"
+node tools/tests/ui_sim.js             # -> "50 passed, 0 failed"
 node tools/tests/sprite_viewer_sim.js  # -> "Sprite viewer: 154 PNGs, 7 trees, 19 class jobs; ..."
 node tools/tests/town_smoke.js         # -> "40/40 steps ok" (needs jsdom; skips cleanly without it)
 python3 tools/make_class_skins.py --check    # -> "Class skins are current."
@@ -807,15 +808,17 @@ assigned for feel rather than fidelity. While reworking that, two shipped bugs s
     each mob's rolls and card odds. Adding an eleventh map adds a card and nothing else.
   * **A real equipment database.** 40 sections (10 maps × 4 tiers), 96 weapon entries, and weapons
     matched to the classes that actually level there - merchants get axes/maces, mages staves,
-    archers bows, thieves daggers then katars, and the five level 60+ mixed maps carry all seven
-    types across their sections. Armour and accessory names are unique game-wide.
+    archers bows, thieves daggers, Assassins a dagger then a katar (v81: a dagger in each hand,
+    the second blade at half rate), and the five level 60+ mixed maps carry all seven types
+    across their sections. Armour and accessory names are unique game-wide.
   * **Gear drops are relevant and outnumber cards.** Three gear rolls per mob (2.4/2.0/1.6 %)
     drawn from that field's own pool, against a 0.45 % card - about 13:1, where the old field
     rolled two gear items and three mobs' worth of cards.
   * **Clicking an equipment slot opens the bag, filtered.** Weapon shows only weapons your class
-    can actually use, shield only if the class may hold one (otherwise the off-hand dagger/katar
-    for the dual-wielders), legwear/headgear/accessory only their own slot - cards and ores never
-    appear. Items are ranked by value with a "(+N better)" delta against what you are wearing.
+    can actually use, the left hand a shield for the shield classes and a second dagger for the
+    two Assassin jobs (v81; a katar still occupies both hands and is never an off-hand item),
+    legwear/headgear/accessory only their own slot - cards and ores never appear. Items are ranked
+    by value with a "(+N better)" delta against what you are wearing.
   * **The skill-point overflow is fixed at the root.** Two bugs, both in the ledger: it pooled the
     job levels of *every class you had ever played* against one global skill table, and it
     subtracted a skill's *level* while the + button charged the *cumulative* cost (1+2+3+4+5 = 15
@@ -5058,3 +5061,163 @@ The owner's second pass over v77, six notes, all built.
 * **Files:** `index.html` (v78.2 stage routing, Abyss ascended gear variant),
   `tools/tests/{gear_sim,drop_card_sheet_sim}.js`, the embedded equipment worksheet baseline,
   `READ-ME-FIRST.md`, and this log.
+
+### 2026-10-08 — `grind-v79 weapon-first field drops, one pool list, class gates, N+ rarity`
+
+* **Owner's constraint:** drop *rates* are final. This patch is allocation and clarity only -
+  still three independent equipment rolls per mob (weapon / armour / accessory) with exactly the
+  percentages they had before. Nothing in `MAPTIER`, `MAPGRADE`, the Stage-10 whole-field cap, or
+  the field/boss equipment rates was touched.
+* **What changed for the player:**
+  * Every field now drops at least one weapon. The pool is split into weapons `WP` and armour
+    `DF`; mob `j` on stage `l` takes `WP[(2*(l-1)+j)%nw]` for its weapon roll and
+    `DF[(4*(l-1)+j*2)%nd]`, `DF[(4*(l-1)+j*2+1)%nd]` for its armour rolls. Twenty of the hundred
+    stage/field combinations that previously listed no weapon at all (Izlude S1, Geffen S3/5/10,
+    Payon S3/5/10, Morroc S1/6/9, Stage 7 of every late map) now do. Measured over the ten field
+    maps, the weapon roll's share of total gear % moved 22.09% -> 25.50%; total gear % per kill is
+    unchanged (7.20% early maps, 5.04% mid maps). Geffen and Payon still offer a single weapon
+    family (W=1) because their shelf only has one - that is a shelf gap, not a rotation gap.
+  * The map window shows one list per field with a **Weapons** / **Armour & accessories** /
+    **Cards & ore** grouping instead of the old per-mob entry, plus a "This field's monsters carry
+    N of the M pieces on X's shelf - the rest drop from the Stage 10 MVP" line so a short list reads
+    as a rotation rather than a missing shelf. The boss card keeps its own item list.
+  * Every drop line says why you cannot use it yet, dimmed: `cannot wear 2nd-job gear yet`,
+    `cannot wear Nightmare gear yet`, `cannot wield a axe`, `cannot hold a shield`. The header
+    names the gear section and its class gate in the same breath as the rarity.
+  * Abyssal Nightmare gear is its own rarity band `N+` (`RAR6`, `.r6`, tier index 5) instead of
+    collapsing onto Nightmare N; the auto-sell grid gained a sixth column so N+ can be sold on
+    pickup without touching N.
+* **Checks:** all 36 `*_sim.js` suites passed; Town smoke passed 40/40. Focused: `gear_sim` 38/38,
+  `drop_card_sheet_sim` 13/13, `ui_sim` 50/50, `nightmare_sim` 9/9, `save_load_sim` 23/23.
+  New pins: `gear_sim` "every field allocates a weapon first, and never lists an item twice (v79)";
+  `drop_card_sheet_sim` "every stage item assignment follows the allocated weapon-first rotation".
+  `git diff --check` is clean.
+* **Files:** `index.html` (v79 weapon-first allocation, single drop list with reasons, `RAR6`,
+  `poolWhy`/`dropAttr`, `N+` name prefix in `genGear`, sixth auto-sell column, `BUILD`),
+  `tools/tests/{gear_sim,drop_card_sheet_sim,ui_sim,save_load_sim,nightmare_sim}.js`,
+  `Updates/cards-gear-audit/{affix-ranges,equipment-cards-tuning}.html`, and this log.
+* **Known limits / follow-ups:**
+  * The dimmed reason lives on the drop line as a `title` tooltip; the bag list has no equivalent
+    per-line "why can't I use this" yet, so an unusable drop is only explained once you open it.
+  * Geffen and Payon now carry two weapon families, but Morroc's 2nd-job and high-tier shelves
+    carry only one (a katar), so both mobs there list the same weapon. Two claws on one shelf
+    would need the gear table to hold more than one weapon per family - `G()` keys `w` by weapon
+    type, so `['katar:Jamadhar','katar:Khukri']` silently collapses to Khukri. Worth doing if the
+    owner wants the variety back; nothing in the rates depends on it.
+  * The map panel compares gear by tier only; it does not yet tell you a dropped weapon is weaker
+    than what you already wear.
+
+### 2026-10-08 — `grind-v80 class-gate reasons in the bag, Geffen/Payon second weapon, Thief-line katars, per-kill rates, downgrade flags`
+
+* **Owner's constraint:** unchanged from v79 - drop *rates* are final. Three independent equipment
+  rolls per mob (weapon / armour / accessory) at exactly the percentages they had before. This is
+  allocation and clarity only: nothing in `MAPTIER`, `MAPGRADE`, the Stage-10 whole-field cap, or
+  the field/boss equipment rates was touched.
+* **What changed for the player:**
+  * An unusable piece now explains itself **in the bag**, not only on the map's drop list. One
+    sentence, `whyNot(x)`, is shared by the bag card and the dimmed drop line, and it names the
+    cause: the class tier (`Locked to 2nd-job classes and up: your Novice cannot wear it yet.`),
+    the weapon family (`Your Novice cannot wield a katar.`), or the shield rule
+    (`Your Novice cannot hold a shield.`). Before, the bag said a bare "cannot use this" and left
+    the player to guess which of the three it was.
+  * Geffen and Payon each gained a **second weapon family**, so the two early class fields stop
+    offering one weapon to everyone: swords beside Payon's bows (`Hunting Sword / Haedonggum /
+    Chrome Sword / Emerald Blade`), and on Geffen the Thief line's own weapon climbing with the
+    job - `Dirk / Ice Pick` on the sections a Thief can wear, `Ghoul Claw / Baphomet Claw` on the
+    ones only an Assassin can. The class `wt` table is untouched - the second family serves
+    whoever else farms that field, it does not hand a Mage a dagger. Because the Nightmare rows
+    are generated from each map's own section 3, all six rows of both maps grew by one piece.
+  * **The Thief line's weapon follows the job, not the map (owner).** A Thief wields a dagger;
+    Assassin and Assassin Cross wield nothing else, and neither can wear a dagger at all. So
+    Morroc's 2nd-job and high-tier shelves now carry a katar (`Jamadhar`, `Bloody Roar`) where
+    they used to list a dagger beside one, and Geffen's do the same. An Assassin on Morroc stage
+    8 no longer watches a dimmed `Sword Breaker` go past. A shelf holds one weapon per family, so
+    those sections offer a single katar - both mobs on the field carry it, at the same rate, and
+    the pool is one item shorter than the section below it (8 -> 7, still above the thin-pool
+    floor).
+  * The map panel prints the **per-kill gear chance** on the field's drop list (a weapon share and
+    an armour+accessory share, summing to the field total, e.g. 3.6% on the early maps) derived
+    from `F.mobs[0].drops`, so the readout can never drift from the table it describes. The
+    per-mob lines are untouched.
+  * A drop that is **weaker than the piece you already wear** is flagged, on the drop line
+    (`worse`) and in the bag ("Weaker than the <slot> you are wearing"). An empty slot never
+    flags. This is a flag only - it changes nothing about what drops.
+* **Checks:** all 36 `*_sim.js` suites passed (two report with their own formats: `pack_sim`,
+  `sprite_viewer_sim`). Focused: `gear_sim` 38/38, `drop_card_sheet_sim` 13/13, `ui_sim` 50/50,
+  `nightmare_sim` 9/9, `save_load_sim` 23/23. `git diff --check` is clean. Worksheet baseline
+  refreshed twice (613 items after the second weapon family, 609 after the katar swap).
+* **Files:** `index.html` (`whyNot`/`canWield`/`gearKind`/`dropIsWorse`, second weapon family in
+  `GEAR[2]` and `GEAR[4]`, the Thief-line katar swap in `GEAR[2]`/`GEAR[3]`, both `MAPS` subtitles,
+  the per-kill gear-chance line, `.dropline.worse` / `.cell.worse`, `BUILD`),
+  `tools/tests/{gear_sim,drop_card_sheet_sim,ui_sim}.js`
+  (`MAP_LINES` rows 2 and 4, the section-item pin 601 -> 613, the shared-reason pins),
+  `Updates/cards-gear-audit/{affix-ranges,equipment-cards-tuning}.html`, and this log.
+* **Known limits / follow-ups:**
+  * `gearRefLevel` is a display number, and its Nightmare tiers are numeric (N and N+ both read
+    +40), so the "weaker than worn" flag is a heuristic rather than a power meter.
+  * The class gate still hides a piece's exact job requirement; `whyNot` names the tier, not the
+    individual job that unlocks it.
+
+### 2026-10-08 — `grind-v81 Assassin dual wield: a dagger in each hand, the second blade at half rate`
+
+* **Owner's constraint:** "let set that assasin & assassin cross can wield daggers. 2 hands. ...
+  the 2nd dagger reduces damage; compensated by more cards; katar stays two-handed." Drop rates
+  and everything else in the balance remain untouched. The scheme is **Scheme A**, as approved:
+  the off-hand dagger is worth **x0.5** of its base value, its affixes and its cards; the
+  two-handed katar is worth **x1.5** of its base value. A dagger keeps its own 1-3 socket roll -
+  no Thief buff, no four-socket daggers. Assassins are **not** given shields: `canShield()` still
+  excludes them, because dagger + shield would be free DEF and would dominate.
+* **What changed for the player:**
+  * Assassin and Assassin Cross gain `dagger` in their weapon list (`['katar','dagger']`), and
+    the equipment doll grows a **left-hand slot** for them - labelled `L.Hand` like every other
+    class's, filled with a second dagger. Every other class, Thief included, keeps one blade.
+  * The class sheet and the doll footer now read "a two-handed Katar, or a dagger in each hand",
+    and the left-hand chooser says "your class may use katar, dagger + a second dagger". The
+    main-hand katar is still badged `2H Katar` and the chooser still warns that "the Katar
+    occupies both hands".
+  * The second blade is a real tax, not a cosmetic one: a pair of equal daggers is worth exactly
+    the same weapon value as one katar (`ev + ev*0.5` against `ev*1.5`), so the katar's multiplier
+    is drawn from the dagger's rather than stacked on top of it, and the off-hand dagger's cards
+    and affixes pay half rate.
+* **Under the hood:**
+  * `DUAL=.5` and `TWO_HANDED=1.5` sit on the `items()/ev()/iname()/eqv()` line, and both rules
+    live in `eqv(k)` itself. That is deliberate: `eqv` is the one reader every stat formula
+    already calls, so `atk()` and `matk()` needed no new symbol - `skill_sim` and
+    `starter_sim` eval those lines in a vm box whose only stubs are `S`, `C`, `eqv`, `st`,
+    `bon`, `collDmg`, `pv`, `petBuff` and `tb`, and a fresh name there would be a `ReferenceError`.
+  * `atk()` reads the left hand as `S.eq.off&&S.eq.off.wt==='dagger'?eqv('off'):0`, so a shield
+    in that slot never adds ATK. `matk()` is untouched (main hand only).
+  * `bon()` carries `const f=it===S.eq.off&&it.wt==='dagger'?DUAL:1` over both the affix loop and
+    the card loop. This was the real leak: `bon` sums over `items()` - every equipped slot - so
+    without the factor an off-hand dagger would have donated full card power for free.
+  * `dualWield(cls)` is the new gate beside `katarOnly()`: `CLASSES[cls].wt` holds **both**
+    `dagger` and `katar`. `slotAccepts`'s off-hand branch is
+    `it.slot==='off'?canShield():(it.wt==='dagger'&&dualWield())`.
+  * The doll's `slotCell` hides the left hand only when the class can hold neither a shield nor a
+    second blade (`k==='off'&&!canShield()&&!dualWield()`).
+  * The socket roll is **unchanged**: `slot==='weapon'&&(T.k==='katar'||T.k==='bow')?4 : slot===
+    'weapon'?min(3,1+ri(0,1)+(t>=3?1:0)) : ...`. So a katar holds four cards and a dual pair holds
+    two to six - the extra sockets are the compensation the owner asked for.
+* **Checks:** all 37 `*_sim.js` suites passed (`pack_sim` and `sprite_viewer_sim` report in their
+  own formats; `town_smoke` is not a `*_sim.js`). Focused: `dual_wield_sim` 11/11 (new),
+  `gear_sim` 38/38, `ui_sim` 50/50, `save_load_sim` 23/23, `class_change_sim` 27/27,
+  `skill_sim` 52/52, `starter_sim` 9/9, `pet_sim` 17/17, `weapon_proposal_sim` 587/587,
+  `drop_card_sheet_sim` 13/13. `git diff --check` is clean.
+* **Files:** `index.html` (`CD` rows for Assassin and Assassin Cross, `eqv` with `DUAL`/
+  `TWO_HANDED`, `atk()`'s off-hand term, `bon()`'s per-item factor, `dualWield()`,
+  `slotAccepts`'s off-hand branch, `slotCell`, the class-sheet / doll-footer / chooser copy, the
+  `GEAR[2]` and `GEAR[3]` comments, `BUILD`), `tools/tests/dual_wield_sim.js` (new),
+  `tools/tests/{gear_sim,ui_sim,class_change_sim,save_load_sim}.js` (rewritten pins),
+  `tools/weapon_proposal.html` (the class -> family table),
+  `Updates/cards-gear-audit/{affix-ranges,equipment-cards-tuning}.html`, and this log.
+* **Known limits / follow-ups:**
+  * `G()` keys a section's weapons by weapon type, so one `GEAR` row cannot carry two katars.
+    A data-shape refactor would be needed to let a single shelf offer a matched pair; not done.
+  * ASPD has no weapon-type term at all, so a second tax on the off-hand blade (if one is ever
+    wanted) has an unused lever waiting in `aspd()`.
+  * A dual pair is strictly behind a katar until **both** daggers roll three sockets (three full
+    cards plus three half ones is 4.5 cards of power against the katar's four). That is the
+    intended shape - the second blade is a long-term investment - but it does mean an early
+    Assassin is better off in a single katar.
+  * A main-hand dagger now feeds `matk()` at full rate, exactly as a katar always did. That is a
+    small, unintended MATK gain for the two jobs and was left alone rather than special-cased.
