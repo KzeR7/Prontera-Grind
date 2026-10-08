@@ -137,6 +137,25 @@ const T = async (name, fn) => { try { await fn(); check.push(['ok', name]); } ca
     assert.ok(ev('camps.length') === 8, 'the camp list survives a cleared camp');
   });
 
+  // ---------------------------------------------------------------- 3b. the whole-field wipe (v86, 8s target v87)
+  t('a WHOLE-FIELD wipe restocks itself within 8s and the hero retargets (the v86 freeze)', () => {
+    ev(`S.mp=0;S.lvl=4;mapM=0;mapL=4;spawn();`);
+    // every camp dies inside the same couple of seconds - what a far-level character does on a low map
+    ev(`for(const m of mobs.slice())kill(m);`);
+    assert.strictEqual(ev('mobs.length'), 0, 'the field is fully wiped');
+    assert.ok(ev('camps.length') === 8, 'the camp list is still there (that is exactly the frozen state)');
+    let waited = 0;
+    // v87 owner: 8 seconds, not "eventually" - the worst camp refill wait is now 7s (CAMP_REFILL_MAX)
+    while (ev('mobs.length') === 0 && waited < 8) { ev('update(1)'); waited++; }
+    assert.ok(ev('mobs.length') > 0, 'the field restocked itself after ' + waited + 's (target <=8s; the old code froze forever)');
+    assert.ok(waited <= 8, 'the restock met the 8s budget (took ' + waited + 's)');
+    assert.ok(ev('camps.length') === 8, 'the camp list survives the wipe');
+    // one small step so the mobs branch runs: the hero must have a target again, from a LIVE pack
+    ev('update(.05)');
+    assert.ok(ev('!!mob'), 'the hero has a target again');
+    assert.ok(ev('mobs.some(m=>m.pack===activePack)'), 'the active pack is a live one (the old stale id woke nobody)');
+  });
+
   // ---------------------------------------------------------------- 4. the loop
   t('the field loop runs clean, prints head-height numbers, and loses no damage to the grouping', () => {
     // the floats themselves are the record: a damage number is a float whose txt is the printed

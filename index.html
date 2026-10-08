@@ -665,7 +665,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // script block, which is a SyntaxError - the game did not run on main at all. One line wins, and
 // it names both sides of this merge: the v38 balance patch (the weapon cut, the affix/card
 // give-back) and main's weapon-hold rendering work.
-const BUILD='2026-10-08 grind-v83.3 your critical is back exactly as you had it, and the picker now starts from it';   // shown on the login card - confirms which file you loaded
+const BUILD='2026-10-08 grind-v87 mob hit rating & armor pierce (buff the mobs, not the character), 8s field restock';   // shown on the login card - confirms which file you loaded
 $('buildTag').textContent='build '+BUILD;
 
 // ---------- class tree: Novice -> 6 first jobs -> 6 second jobs -> 6 third jobs ----------
@@ -1247,6 +1247,36 @@ const nmMax=()=>10+nmOpen();
 // 9.3x its Zeny (power 175 vs 99 is 2.3x on its own), so a kill that takes ~4x as long still pays well
 // over double per hour. The two HP constants are read in one place and pinned by nightmare_sim.js.
 const NMHP=48,NMATK=2,NMEXP=4,NMZENY=4,NMBOSSHP=48;
+// v85: the Nightmare PAY ramps by stage while NMHP stays the single difficulty dial. The owner
+// doubled the Base 100+ EXP requirements in v84, so the band's mob pay is tuned to the new
+// curve: mob EXP runs 16/24/32/40/48 (NMEXP x2x(stage-9)), which lands every Nightmare field at
+// roughly 2,200 display EXP per million HP - on par with grinding Abyss Stage 10 mobs and still
+// below the Stage 10 MVP wave - so kill counts per level stay in a ~25-240 band across 100-150
+// instead of the 50-480 the flat x4 gave. Zeny ramps only gently (4/5/6/7/8, NMZENY + stage-11):
+// the owner asked for "just a little higher" on Zeny. The Stage 15 MVP (the only Nightmare MVP)
+// pays the flat NMEXP/NMZENY, and the offline simulator reads the same two helpers.
+const nmExpOf=l=>NMEXP*2*(Math.max(11,Math.min(15,l|0))-9);
+const nmZenyOf=l=>NMZENY+(Math.max(11,Math.min(15,l|0))-11);
+// v86: mob and MVP ATK get one endgame bump - fields of power 90+ (Niflheim and Abyss, and every
+// Nightmare stage by construction) swing 1.4x harder. Player HP/DEF grew far faster than the flat
+// (5+l*4.6) formula, so a decked character was mathematically untouchable on the deepest maps; this
+// is the owner's "bosses and mobs do no damage" report, on top of the flee/DEF cap changes.
+const eaOf=l=>(l|0)>=90?1.4:1;
+// v87 (owner: "buff the mobs & bosses instead" of nerfing the character): the v86 character-side
+// caps are REVERTED (flee cap back to 60, DEF cut cap back to 75) and the monsters carry the buff
+// instead, on their own stat line. Both helpers read the monster's own field power (m.lvl) and
+// ramp from power 60, so nothing at or below Payon changes and the pressure builds through
+// Niflheim into Abyss/Nightmare:
+//   mhOf - monster HIT rating, subtracted from the player's dodge at the swing (cap +30, bosses
+//          +40; the roll keeps a 5% dodge floor = a 95% hit ceiling). A dodge-stacked character
+//          still reads 60% Flee on the sheet - endgame monsters are simply accurate enough to
+//          punch through most of it, while a weak stray still whiffs as before.
+//   prOf - monster armor pierce, thinning the player's DEF before the def/(def+4000) cut (up to
+//          60%, bosses 70%). This is what un-sits the tank: the old cut formula plateaus at
+//          12k DEF and the cap made everything above it identical - pierce scales with the
+//          attacker, so the deepest maps keep biting no matter how much armor you stack.
+const mhOf=m=>Math.min(30,Math.max(0,((m.lvl|0)-60)*1.25))*(m.boss?4/3:1);
+const prOf=m=>Math.min(.6,Math.max(0,((m.lvl|0)-60)*.02))+(m.boss?.1:0);
 // Each map's Nightmare gear is its own high-tier row, renamed: same weapon families and slots (so
 // every class can still use its own weapon) and a per-map word that keeps every name unique. Section
 // 4 is the stage 11-13 drop, section 5 the stage 14-15 and boss drop. They exist NOWHERE else - the
@@ -1658,7 +1688,10 @@ const MAXST=120,BASECAP=99,ELITELV=100,statCap=()=>S.lv>=ELITELV?MAXST:BASECAP;
 // and the 3x early boost now ends at Base 50 - so Base 51-70 is the mid-game wall instead of
 // a formality. Base 1-50 keeps its v51 speed (~2.5 min to Lv10, ~14 min to Lv50), Base 50-70
 // takes about 1 h 20 m (levels ramp from seconds to ~10 minutes each), Base 99 lands at about
-// 7 hours and the post-reset 100-150 tail is still the two-day climb. Base 70-99 requirements
+// 7 hours and the post-reset 100-150 tail is the v84 doubled climb with v85's quest decoupling
+// (~101 h model, ~4.2 days at 800 kills/h - the requirements doubled AND quests no longer double
+// their pay with the curve above Base 99, so the whole band including quests costs ~2x).
+// Base 70-99 requirements
 // barely climb (130k -> 167k), which is what pays for the wall; per level it plays as a steady
 // ~11 minute plateau. Time estimates use 800 kills/hour and an average boss every 16 kills;
 // the live Stage-10 boss-with-escorts fight is not a literal part of that model. Mob EXP is
@@ -1695,10 +1728,15 @@ const EXP_BOOST_LV=50,EXP_BOOST_X=3,EXP_RATE=7;
 const expRate=()=>S.gm?gx():(S.lv<=EXP_BOOST_LV?EXP_RATE*EXP_BOOST_X:(S.lv<100?EXP_RATE:EXP_RATE/3));
 // Base-EXP requirements: three continuous power segments through Lv99 (1-50 keeps the v51
 // shape, 50-70 is the v56 stretch, 70-99 climbs gently), then the intentional reset at Lv100
-// and the separate post-99 ramp. Every value is shown at three significant figures, so the
+// and the separate post-99 ramp. v84 (owner, playtest: "i can basically lv 100 to lv 150 in a
+// day"): every requirement from Base 100 up is DOUBLED - N100 carries the x2 (43260 -> 86520),
+// NE3 is untouched, so the whole 100-150 band costs exactly twice the EXP it did and the old
+// cheap 100-103 dip below Lv 99's cost is gone (Lv 100 now costs ~156% of Lv 99 in real time).
+// Quest EXP reads needAt(), so quest rewards rise with the curve and the wall-clock cost of the
+// band rises ~1.7x rather than the full 2x - the kill requirement itself is exactly doubled. Every value is shown at three significant figures, so the
 // bar reads 360 / 1,490 / 35,000 instead of 3,574 / 1,404,641. Tuned to the level-appropriate
 // map route, the live EXP multipliers and the shipped quest rewards in tools/tune_pacing.js.
-const NA1=18.705917193,NE1=1.28684215,N50=Math.floor(NA1*Math.pow(50,NE1)),NE2=11.33248639,N70=Math.floor(N50*Math.pow(1.4,NE2)),NE2B=0.72933977,N100=43260,NE3=8.2928141;
+const NA1=18.705917193,NE1=1.28684215,N50=Math.floor(NA1*Math.pow(50,NE1)),NE2=11.33248639,N70=Math.floor(N50*Math.pow(1.4,NE2)),NE2B=0.72933977,N100=86520,NE3=8.2928141;
 // Round to three significant figures (a step of 1, 10, 100 or 1000 by magnitude) and keep the
 // value at least 1, so a requirement is always a readable number and never zero.
 const roundReq=n=>{const a=Math.abs(n),m=a<100?1:a<1e4?10:a<1e5?100:1e3;return Math.max(1,Math.round(n/m)*m)};
@@ -2442,7 +2480,14 @@ const C=()=>CLASSES[S.cls]||CLASSES.Novice,lv=id=>S.sk[id]||0,jobOf=()=>S.jobs[S
 // Job level j of the current tier costs the job exp (70% of mob exp) that the mirrored
 // base level pays out, so each job bar fills in step with the base bar and the three job
 // changes land on the pacing anchors. Pinned by economy_sim.js.
-const jneed=j=>{const L=j+JOFF[C().tier||0],n=needAt(L),e=epkOf(L);return Math.max(1,Math.floor(.7*n*e/(e+n*qrOf(L))))};
+// v85: the first 15 job levels of every real class line cost HALF job EXP, so the four skills of
+// a freshly changed class (the last unlocks at Job Lv 10 with the 1/3/6/10 point ladder) come
+// quickly after a job change - the owner's ask. From Job Lv 16 the full mirrored cost returns
+// and the lockstep with the base bar resumes (which is what paces the job gates at 10/40/50:
+// all above the discount). Novice is untouched: its ten levels are the game's opening minutes
+// and it correctly has only First Aid.
+const JOB_EARLY=.5,EARLY_JOB_LV=15;
+const jneed=j=>{const t=C().tier||0,L=j+JOFF[t],n=(t>0&&j<=EARLY_JOB_LV?needAt(L)*JOB_EARLY:needAt(L)),e=epkOf(L);return Math.max(1,Math.floor(.7*n*e/(e+n*qrOf(L))))};
 // A skill is usable when it has levels, the current class inherits it, and the player has
 // not switched its auto-cast off in the Skills panel.
 const skOff=id=>!!(S.skOff&&S.skOff[id]),skillOn=id=>lv(id)>0&&SKILLS.find(s=>s.id===id).cls.includes(S.cls)&&!skOff(id);
@@ -2481,7 +2526,16 @@ const st=k=>S.st[k]+bon(k),gearTierOf=it=>Math.max(0,Math.min(3,((it&&it.sec)|0)
 const maxHp=()=>Math.round((80+S.lv*20+eqv('head')*4+(eqv('acc1')+eqv('acc2'))*3+st('vit')*8+bon('hp'))*C().hp*(1+(pv('hpp')+(typeof cardMasteryStat==='function'?cardMasteryStat('hpPct'):0))/100)*(1+(petBuff.hp||0)/100)*(1+petPassive('hp')/100));
 const atk=()=>Math.round((4+S.lv*2+eqv('weapon')+(S.eq.off&&S.eq.off.wt==='dagger'?eqv('off'):0)+st(C().main)*1.5+(st('dex')+st('luk'))*.25)*C().atk*(1+(pv('atk')+bon('atk')+(typeof cardMasteryStat==='function'?cardMasteryStat('atkPct'):0)+(tb.atk||0)+(petBuff.atk||0))/100)*(1+collDmg()/100));
 const matk=()=>Math.round((4+S.lv*2+eqv('weapon')*.8+st('int')*1.5+st('dex')*.25)*C().atk*(1+(pv('matk')+bon('matk')+(typeof cardMasteryStat==='function'?cardMasteryStat('matkPct'):0)+(tb.matk||0)+(petBuff.matk||0))/100)*(1+collDmg()/100));
-const aspd=()=>Math.max(.2,.85*C().aspd*(1-Math.min(.5,st('agi')*.006))/(1+(pv('aspd')+bon('aspd')+(typeof cardMasteryStat==='function'?cardMasteryStat('aspdPct'):0)+(tb.aspd||0))/100));
+// Attack interval in seconds (the sheet prints the RO-style ASPD number beside it). v86 (owner:
+// "attack speed is too slow with max agi 99 or 120, check ragnarok online as reference"): the old
+// AGI term capped at a 50% reduction, which AGI 83 already reached - AGI 99 -> 120 gave literally
+// zero attack speed - and the .2s floor capped every class at 5 hits/s. Now: the AGI reduction
+// climbs to 68% (rate .0058, so AGI 99 cuts 57.4% and AGI 120 hits the 68% cap - maxing AGI is
+// ~25% faster than AGI 99), and the floor is .13s (~7.7 hits/s, the RO 190+ machine-gun feel the
+// owner asked for; class speed ordering is preserved until the floor). Typical endgame intervals:
+// Assassin Cross ~.14s, Sniper ~.15s, Lord Knight ~.20s before gear ASPD%; with gear ASPD% most
+// trans classes ride the .13 floor.
+const aspd=()=>Math.max(.13,.85*C().aspd*(1-Math.min(.68,st('agi')*.0058))/(1+(pv('aspd')+bon('aspd')+(typeof cardMasteryStat==='function'?cardMasteryStat('aspdPct'):0)+(tb.aspd||0))/100));
 // v73 crit retune (owner): reaching the 60% cap used to be a LUK dump - LUK 99 alone paid
 // 39.6%. LUK now pays 0.25 a point, the flat base is 2, and above 45% every further point from
 // stats, skills, gear and card mastery counts half. A Lv70 LUK dump with both Hunter/Sniper crit
@@ -2580,7 +2634,7 @@ let mobs=[],mob=null,pAtkT=0,mAtkT=0,respawn=0,activePack=0,camps=[];
 // monsters 1.6-3.2 units apart, and each camp refilling itself 4-8 seconds after it is emptied.
 // A camp is still the unit the pets, the AoE cap and the last-kill routing work with (m.pack), so
 // nothing downstream had to change - only how the field is filled, and that it now stays filled.
-const CAMP_GAP=5.5,CAMP_REFILL_MIN=4,CAMP_REFILL_MAX=8;
+const CAMP_GAP=5.5,CAMP_REFILL_MIN=4,CAMP_REFILL_MAX=7;   // v87 owner: worst camp wait 7s, so a wiped field is fully restocked inside 8s
 const NEIGHBOUR_GAP=2.7;                 // and NEIGHBOUR_GAP keeps two camps from touching
 const campCount=m=>m<3?8:m<7?10:12;      // the 8 / 10 / 12 the owner picked on /spawn
 const campMobs=(m,l)=>starterStage(m,l)?ri(1,2):ri(2,3);
@@ -2622,10 +2676,10 @@ const starterAtk=l=>6+3*(l-1);
 // One field monster, before it is placed. Shared by the wave builder and by every camp refill, so a
 // monster that walks back in is exactly the monster the field started with.
 function minionDef(pack){
-  const F=fieldOf(S.mp,S.lvl),l=pw(),mb=1+S.mp*.15+Math.max(0,S.mp-4)*.2,nm1=S.lvl>10,nm=nm1?NMHP:1,na=nm1?NMATK:1,ne=nm1?NMEXP:1,nz=nm1?NMZENY:1;
+  const F=fieldOf(S.mp,S.lvl),l=pw(),mb=1+S.mp*.15+Math.max(0,S.mp-4)*.2,nm1=S.lvl>10,nm=nm1?NMHP:1,na=nm1?NMATK:1,ne=nm1?nmExpOf(S.lvl):1,nz=nm1?nmZenyOf(S.lvl):1;
   const early=starterStage(S.mp,S.lvl),m=F.mobs[ri(0,1)];
   const hp=early?Math.min(starterHp(S.lvl),Math.floor(HPK*mb*Math.pow(l,HPE))):Math.floor(HPK*mb*Math.pow(l,HPE)*nm);
-  return{...m,mapIndex:S.mp,boss:false,pack,hp,max:hp,atk:early?starterAtk(S.lvl):Math.floor((5+l*4.6)*mb*na),
+  return{...m,mapIndex:S.mp,boss:false,pack,hp,max:hp,atk:early?starterAtk(S.lvl):Math.floor((5+l*4.6)*mb*na*eaOf(l)),
     exp:Math.max(1,Math.floor(EXPK*Math.pow(l,1.5)/50*ne)),zeny:Math.max(ZMIN,Math.floor(ri(ZK[0],ZK[1])*l*l/1000*nz)),
     size:.6,mag:['demon','tree','blob'].includes(m.shape),lvl:l,sec:F.sec,
     spawn:0,ry:0,at:rnd(.6,1.6),a:rnd(0,Math.PI*2),wt:rnd(1,4)};
@@ -2653,13 +2707,13 @@ function fillCamp(i,c){
   }
 }
 function spawn(){
-  const F=fieldOf(S.mp,S.lvl),l=pw(),mb=1+S.mp*.15+Math.max(0,S.mp-4)*.2,nm1=S.lvl>10,nm=nm1?NMHP:1,na=nm1?NMATK:1;
+  const F=fieldOf(S.mp,S.lvl),l=pw(),mb=1+S.mp*.15+Math.max(0,S.mp-4)*.2,nm1=S.lvl>10,nm=nm1?NMHP:1,na=nm1?NMATK:1,ne=nm1?NMEXP:1,nz=nm1?NMZENY:1;
   mobs=[];activePack=0;camps=[];engageTgt=null;
   const bossWave=!!F.boss;
   if(bossWave){
     const hp=Math.floor(500*mb*Math.pow(l,HPE)*(nm1?NMBOSSHP:1));
-    mobs.push({...F.boss,mapIndex:S.mp,boss:true,pack:0,hp,max:hp,atk:Math.floor((8+l*6.5)*mb*na),
-      exp:Math.max(1,Math.floor(BOSEK*Math.pow(l,1.5)/50)),zeny:Math.max(ZMIN,Math.floor(ri(BZK[0],BZK[1])*l*l/1000)),
+    mobs.push({...F.boss,mapIndex:S.mp,boss:true,pack:0,hp,max:hp,atk:Math.floor((8+l*6.5)*mb*na*eaOf(l)),
+      exp:Math.max(1,Math.floor(BOSEK*Math.pow(l,1.5)/50*ne)),zeny:Math.max(ZMIN,Math.floor(ri(BZK[0],BZK[1])*l*l/1000*nz)),
       size:1.3,mag:true,lvl:l,sec:F.sec});
     // The first five maps bring three escorts; the five later maps bring five.
     for(let i=0;i<(S.mp<5?3:5);i++)mobs.push(minionDef(0));
@@ -2697,13 +2751,13 @@ function genGear(T,l,sec,boss,tier){
 // Away time is earned from the same map/stage and drop tables as online play. The browser records
 // a rolling real-time kill rate, credits at most four hours, and simulates half that many kills.
 function offlineMobForCurrentField(){
-  const m=S.mp,stage=S.lvl,F=fieldOf(m,stage),l=fieldPower(m,stage),mb=1+m*.15+Math.max(0,m-4)*.2;
+  const m=S.mp,stage=S.lvl,F=fieldOf(m,stage),l=fieldPower(m,stage),mb=1+m*.15+Math.max(0,m-4)*.2,nm1=stage>10,ne=nm1?nmExpOf(stage):1,nz=nm1?nmZenyOf(stage):1;
   const regular=entry=>({...entry,mapIndex:m,boss:false,lvl:l,sec:F.sec,
-    exp:Math.max(1,Math.floor(EXPK*Math.pow(l,1.5)/50)),
-    zeny:Math.max(ZMIN,Math.floor(ri(ZK[0],ZK[1])*l*l/1000))});
+    exp:Math.max(1,Math.floor(EXPK*Math.pow(l,1.5)/50*ne)),
+    zeny:Math.max(ZMIN,Math.floor(ri(ZK[0],ZK[1])*l*l/1000*nz))});
   if(F.boss&&Math.random()<1/(1+(m<5?3:5)))return{...F.boss,mapIndex:m,boss:true,lvl:l,sec:F.sec,
-    exp:Math.max(1,Math.floor(BOSEK*Math.pow(l,1.5)/50)),
-    zeny:Math.max(ZMIN,Math.floor(ri(BZK[0],BZK[1])*l*l/1000))};
+    exp:Math.max(1,Math.floor(BOSEK*Math.pow(l,1.5)/50*ne)),
+    zeny:Math.max(ZMIN,Math.floor(ri(BZK[0],BZK[1])*l*l/1000*nz))};
   return regular(F.mobs[ri(0,F.mobs.length-1)]);
 }
 function offlineStoreGear(it,r){
@@ -2935,7 +2989,7 @@ const SKSLOTS=t=>1+(t||0),SKFADE=[1,.55,.3,.18];
 // swing over 1.5s - three casts meant three hits in three different poses. They now land on the same
 // contact frame as the animation they belong to, because the animation, not a timer, is what the
 // player reads; SKGCD had no other use, so the constant is gone.
-const SWING_MIN_T=.3,SWING_MAX_T=.55;      // seconds: the shortest and longest drawn attack animation
+const SWING_MIN_T=.14,SWING_MAX_T=.55;     // seconds: the shortest and longest drawn attack animation (v86: .14 so a fast ASPD actually LOOKS fast - .3 was slower than the v86 attack floor)
 // dot.pow is the fraction of the triggering hit dealt PER SECOND, so a .05/4s dot adds 20% of
 // the hit spread over time. chain.pow is the fraction each bounce deals, once per target.
 function castSkill(sk,k){
@@ -3081,7 +3135,10 @@ function qScale(q){const L=S?S.lv:1;
   q.goal=Math.max(1,g);if(q.prog>q.goal)q.prog=q.goal;
   const m=S?gx():1,z0=S?zenAt(pw()):1;
   q.z=Math.max(1,Math.floor(q.goal*QZ[q.type]*z0*m));
-  q.xp=Math.max(1,Math.floor(needAt(L)*QXP[q.type]*(S?expRate():1)));
+  // v85: quest EXP pays the pre-v84 curve above Base 99 (needAt/2 there), so the v84 doubling of
+  // the Base 100+ requirements is NOT offset by quest rewards doubling with it - the owner wants
+  // the whole band, quests included, to cost about twice as long (model tail 77.5 h -> ~101 h).
+  q.xp=Math.max(1,Math.floor((L>99?needAt(L)/2:needAt(L))*QXP[q.type]*(S?expRate():1)));
   q.at=L;return q}
 function newQuest(type){return qScale({type,goal:1,prog:0})}
 function qRefresh(){if(!S||!Array.isArray(S.q))return;(S.q||[]).forEach(q=>{if(q&&q.type)qScale(q)})}
@@ -3320,7 +3377,7 @@ const V={
     return`<div class="hd">${S.cls} &middot; Base Lv ${S.lv} &middot; Job Lv ${jobOf().jl}/${c.mj}</div><div class="hd">Stat points: ${S.pts} <small>(max ${statCap()} each${S.lv<ELITELV?' &middot; '+MAXST+' unlocks at Base Lv '+ELITELV:''} &middot; max Base Lv 150)</small></div><div class="hd">🏆 Class collection: ${playedClasses()}/${t3Total()} transcendent classes at Base Lv 100+ &middot; <b>+${collDmg()}% damage</b> <small>(+1% each, permanent${playedClasses()?'':' - take a transcendent class to Base Lv 100 to earn it'})</small></div>`
     +(petBonusList().length?`<small><b>Pet bonuses</b> (the fighting pets): ${petBonusList().join(' &middot; ')}</small>`:'')
     +STATS.map(([k,l,d])=>`<div class="slot"><span><b>${l}</b> ${S.st[k]}${b(k)} <small>(${d})</small></span><span class="bts"><small>${cost(k)}pt</small><button data-a="stat" data-v="${k}" ${S.pts>=cost(k)&&S.st[k]<statCap()?'':'disabled'}>+1</button><button data-a="stat5" data-v="${k}" ${S.pts>=cost(k)&&S.st[k]<statCap()?'':'disabled'}>+5</button></span></div>`).join('')
-    +`<div class="slot" style="flex-wrap:wrap"><span>ATK <b>${atk()}</b></span><span>MATK <b>${matk()}</b></span><span>DEF <b>${def()}</b></span><span>ASPD <b>${(1/aspd()).toFixed(2)}/s</b></span><span>Crit <b>${crit().toFixed(1)}%</b>${idxC?` <small>(+${idxC}% Index Crit)</small>`:''}</span><span>Crit DMG <b>x${critD().toFixed(2)}</b></span><span>MDEF <b>${mdef()}</b></span><span>Flee <b>${flee().toFixed(0)}%</b></span><span>HP <b>${maxHp()}</b></span><span>Move <b>${moveSpd().toFixed(2)}</b> <small>u/s · ${(moveSpd()*MOVE_RUN).toFixed(2)} sprinting</small></span></div>
+    +`<div class="slot" style="flex-wrap:wrap"><span>ATK <b>${atk()}</b></span><span>MATK <b>${matk()}</b></span><span>DEF <b>${def()}</b></span><span>ASPD <b>${Math.min(193,Math.round(144+5/Math.max(.13,aspd())))}</b> <small>${(1/aspd()).toFixed(2)}/s &middot; RO-style</small></span><span>Crit <b>${crit().toFixed(1)}%</b>${idxC?` <small>(+${idxC}% Index Crit)</small>`:''}</span><span>Crit DMG <b>x${critD().toFixed(2)}</b></span><span>MDEF <b>${mdef()}</b></span><span>Flee <b>${flee().toFixed(0)}%</b></span><span>HP <b>${maxHp()}</b></span><span>Move <b>${moveSpd().toFixed(2)}</b> <small>u/s · ${(moveSpd()*MOVE_RUN).toFixed(2)} sprinting</small></span></div>
     <small><b>Movement speed</b> comes from AGI alone: ${heroMoveSpeedForAgi(st('agi')).toFixed(2)} units a second at AGI ${st('agi')} (${(heroMoveSpeedForAgi(st('agi'))*MOVE_RUN).toFixed(2)} when running, which is any trip longer than 3 units). Every point of AGI adds about 0.03 - it never touches damage, so it is a comfort stat.${petPassive('move')?` A fighting Peco Peco's Swift Mount adds ${petPassive('move')}%.`:''}</small>
     <small>Crit is capped at 60% from stats, skills, gear and card mastery; above 45% each further point counts half. <b>Index Crit</b> (+${idxC}% of +40 max, from Hunt Titles) is the only source that passes the cap, and the total stops at 100%.</small>
     <small>Weapons: ${c.wt.join(', ')}${katarOnly()?' (a two-handed Katar, or a dagger in each hand)':''} &middot; Main stat: ${SU(c.main)}</small><button class="full" data-a="rstat" ${rcost()&&S.zeny<rcost()?'disabled title="You need '+rcost().toLocaleString()+' Zeny to reset stats"':''}>Reset stats (${rcost()?rcost()+'z':'free below Base 20'})</button>`},
@@ -3958,7 +4015,15 @@ function update(dt){
   // v83: an empty field is only rebuilt when there are no camps to rebuild it (a fresh map, the boss
   // arena, or the walk back after a defeat). A camp field refills itself below instead - the field the
   // player walks through stays stocked, so there is no whole-field wave reset any more.
-  if(!mobs.length){if(!camps.length){respawn-=dt;if(respawn<=0)spawn()}
+  if(!mobs.length){
+    if(!camps.length){respawn-=dt;if(respawn<=0)spawn()}
+    // v86 bugfix: a WHOLE-FIELD wipe (a far-level character clearing every camp in seconds) used to
+    // freeze the map for good - the per-camp refill sweep below only ran while at least one mob was
+    // alive, so with mobs=[] and camps still listed neither the refill timers nor the respawn
+    // fallback ever ticked again. The camps keep counting here now, and a camp that restocks takes
+    // over as the active pack: the old activePack died with the wipe, and without this nothing
+    // would ever wake, chase or fight even though monsters were standing on the field again.
+    else for(const c of camps)if(!mobs.some(m=>m.pack===c.i)){c.t+=dt;if(c.t>=c.wait){c.t=0;c.wait=campWait(c);fillCamp(c.i,c);activePack=nearestPack()}}
     // Roam: pick a fresh spot when the timer runs out or the current one is reached.
     // Stage 10 is the boss arena, and there the roam has to stay with the boss: the old
     // field-wide wander sent the character off to the far corners, where the freshly spawned
@@ -3995,13 +4060,17 @@ function update(dt){
       }
       m.x=cl(m.x,-BX_,BX_);m.z=cl(m.z,Z0,Z1);m.ry=Math.atan2(pl.z-m.z,m.x-pl.x);
       if(wake&&Math.hypot(pl.x-m.x,pl.z-m.z)<=ms+.4&&!stn){m.at-=dt;if(m.at<=0){m.at=m.boss?1.2:1.5;
-        if(Math.random()*100<flee())addFloat(pl.x,2.4,pl.z,'DODGE','#76eaff',false,'evade');
+        if(Math.random()*100<Math.max(5,flee()-mhOf(m)))addFloat(pl.x,2.4,pl.z,'DODGE','#76eaff',false,'evade');
         // Incoming damage: a capped percentage cut, not a flat subtraction. The old line took
         // def*0.6 off every hit with a floor of 1, so a geared character took exactly 1 damage
-        // from every monster and every boss in the game. def/(def+4000) caps at 75%: the naked
-        // game is within a few percent of before, mid-gear cuts ~64%, endgame sits at the cap.
-        // Pinned by ui_sim.js / save_load_sim.js (this is a game-loop line, not a constant).
-        else{const md=m.mag?mdef():def(),cut=Math.min(.75,md/(md+4000));
+        // from every monster and every boss in the game. v87 (owner: buff the mobs, not the
+        // character): the 75% cap is back and the MONSTER pierces armor first - prOf thins the
+        // player's DEF by up to 60% (bosses 70%) on the deep fields, so the cut never plateaus
+        // into immunity the way the v86 60%-cap fix forced. The naked game is unchanged (prOf is
+        // zero below power 60); endgame lands ~14% harder on mobs and ~20% harder on bosses than
+        // the v86 caps did, and tanks stacking DEF past 12k now have a reason to dodge.
+        // Pinned by combat_damage_sim.js (this is a game-loop line, not a constant).
+        else{const raw=m.mag?mdef():def(),md=raw*(1-prOf(m)),cut=Math.min(.75,md/(md+4000));
           const d=Math.max(1,Math.round(m.atk*rnd(.8,1.2)*(1-cut)*(1-petPassive('dr')/100)));S.hp-=d;hitAnim=1;m.atkAnim=1;damageFloat(pl.x,2.4,pl.z,d,false,true);
           // Defeat is the ONE thing that puts you back at the spawn point.
 if(S.hp<=0){log('You were defeated... knocked back to the entrance.','r0','kills');S.hp=maxHp();S.kl=0;mobs=[];mob=null;camps=[];engageTgt=null;respawn=1.5;tb={};
