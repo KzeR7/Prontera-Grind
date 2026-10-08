@@ -60,7 +60,7 @@ deploy — but the host's build output directory must be `dist/`, never the repo
   tuned yet) — the worklist for the female pass. Click a picture to work on that class. The art is real RO client art, decoded and cropped by
   `python3 tools/make_weapon_pack.py --source <extracted client>` (`--check` verifies `assets/`);
   `tools/weapon-art-notes.md` documents the SPR/ACT formats, the two traps and the provenance.
-  **Nothing from this pass is in the game.**
+  **The saved defaults are live in the game from v78.** New edits made here are still proposals until they are copied back into `assets/weapon_proposal_data.js` and integrated.
 * `tools/` — the art pipelines (`make_sprite_pack.py`, `make_class_skins.py`, `make_weapon_pack.py`,
   `make_sprite_viewer.py`, `make_simple_apng.py`, `montage.py`), the test suites (`tools/tests/`)
   and a dev-only plan previewer (`tools/preview/`).
@@ -79,6 +79,15 @@ is the live one; with no argument the tool prints how to set a new one). Since v
 `localStorage.setItem('pg_gm_local', gmHash('test1234'))` in the game's console once, then log in as
 `GM` / `test1234`; `localStorage.removeItem('pg_gm_local')` removes it. Normal accounts are made
 in-game and stored in the browser (`pg_acc4`; saves under `pg_save3_<user>`).
+
+## BUILD v78 — saved class weapon sprites on the updated v77.2 game
+
+The new build keeps the v77.2 trial payout, daily-priced Shard Store, and HD Prontera town, and adds the saved weapon art to the live animated hero.
+
+* The game loads the local weapon sprite pack and saved proposal defaults, then composites the matching weapon over each decoded class-skin frame using its class, gender, view, and frame placement. Saved grip, offset, rotation, scale, flip, per-view bare/armed choices, and frame interpolation are respected.
+* All 19 playable jobs are covered for both male and female sprites. A class uses its saved design for the selected weapon family; another equippable family falls back to that family's first bundled design. Combat and equipment stats are unchanged, and the remote square-item overlay remains disabled.
+* The proposal page starts from the defaults used by the game. Later edits in that page remain proposals until copied back and integrated.
+* **Checks:** all **36** `*_sim.js` suites passed; `town_smoke.js` passed **40/40**. Focused results: `class_skin_sim` 40/40, `weapon_proposal_sim` 587/587, and `drop_card_sheet_sim` 12/12. The preview's game, proposal page, and both weapon-data assets return HTTP 200.
 
 ## BUILD v77.2 — the trial pays a flat number, the store is priced on a day's pay, and your HD town is in
 

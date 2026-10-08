@@ -162,10 +162,12 @@ ok(/views\[sex\]\[v\]=\{weapon:viewOn\(n,v,sex\)/.test(page),
 ok(/dx:V\.dx\|\|0/.test(page) && /dy:V\.dy\|\|0/.test(page) && /rot:V\.rot\|\|0/.test(page),
   'the export carries each view\'s own offset, rotation and size');
 
-// honesty: the page must say the art is real client art and that nothing is in the game
+// honesty: the page says the art is real client art, the shipped defaults are live, and new edits remain proposals
 ok(/Ragnarok Online/.test(page), 'the page says where the art is from');
-ok(/not in the game|Not in the game|nothing is baked|Nothing is baked/i.test(page),
-  'the page says the game is untouched');
+ok(/shipped saved defaults are live in the game/i.test(page),
+  'the page says its saved defaults are what the game uses');
+ok(/new edits here stay a proposal/i.test(page) && /edits here do not change the shipped defaults/i.test(page),
+  'the page distinguishes unsaved proposals from the live defaults');
 
 // the tool that made the art
 const tool = read('tools/make_weapon_pack.py');
@@ -237,12 +239,13 @@ ok(DEF.classes && Object.keys(DEF.classes).length === 19,
     'hands the owner left on automatic are stored as null, so each sprite guesses its own');
   // this revision's own choices, which are easy to lose in a re-import
   ok(DEF.classes.Thief.design === 'dagger_broken' && DEF.classes.Thief.views.m.S.weapon === false &&
-     DEF.classes.Thief.views.f.S.weapon === true,
-    'the Thief is on the Broken Blade, bare on the male sprite and armed on the female one');
+     DEF.classes.Thief.views.f.S.weapon === false && DEF.classes.Thief.views.f.attack.weapon === true,
+    'the Thief stays on the Broken Blade, with the female sprite bare while walking and armed on attack');
   ok(DEF.classes.Knight.views.m.S.weapon === false && DEF.classes.Knight.views.m.SE.weapon === false &&
      DEF.classes.Knight.views.m.NE.weapon === false && DEF.classes.Knight.views.m.attack.weapon === true &&
-     DEF.classes.Knight.views.f.S.weapon === true,
-    'the Knight walks bare-handed on his three walks and carries the sword on the attack, while hers stay armed on every view');
+     DEF.classes.Knight.views.f.S.weapon === false && DEF.classes.Knight.views.f.SE.weapon === false &&
+     DEF.classes.Knight.views.f.NE.weapon === false && DEF.classes.Knight.views.f.attack.weapon === true,
+    'the Knight walks bare-handed on both sprites and carries the sword only on attack');
   ok(Object.entries(DEF.classes.Knight.views.m).filter(([, V]) => !V.weapon)
        .every(([, V]) => Object.keys(V.frames).length === 0),
     'his bare walks carry no frame numbers either, so nothing is hidden behind them');
@@ -253,10 +256,41 @@ ok(DEF.classes && Object.keys(DEF.classes).length === 19,
     'the Blacksmith, Lord Knight, High Wizard, Sniper and Assassin Cross are on their newly picked designs');
   const bareWalks = ['Blacksmith', 'Lord Knight', 'High Wizard', 'Sniper'].every(n =>
     ['S', 'SE', 'NE'].every(v => DEF.classes[n].views.m[v].weapon === false) &&
-    DEF.classes[n].views.m.attack.weapon === true &&
-    ['S', 'SE', 'NE', 'attack'].every(v => DEF.classes[n].views.f[v].weapon === true));
+    DEF.classes[n].views.m.attack.weapon === true) &&
+    ['Blacksmith', 'Lord Knight', 'Sniper'].every(n =>
+      ['S', 'SE', 'NE'].every(v => DEF.classes[n].views.f[v].weapon === false) &&
+      DEF.classes[n].views.f.attack.weapon === true) &&
+    DEF.classes['High Wizard'].views.f.S.weapon === true &&
+    DEF.classes['High Wizard'].views.f.SE.weapon === false &&
+    DEF.classes['High Wizard'].views.f.NE.weapon === false &&
+    DEF.classes['High Wizard'].views.f.attack.weapon === true;
   ok(bareWalks,
-    'those four walk bare-handed on the male sprite and carry the weapon only on his attack, her sprite armed throughout');
+    'the four jobs keep their separate male/female per-view weapon switches');
+  const v5Checks = {
+    Novice: DEF.classes.Novice.views.f.attack.base.handAuto === false && DEF.classes.Novice.views.f.attack.frames['0'].dx === -13,
+    Swordman: Object.keys(DEF.classes.Swordman.views.f.attack.frames).length === 9 && DEF.classes.Swordman.views.f.attack.frames['1'].rot === 316,
+    Mage: DEF.classes.Mage.views.f.attack.frames['2'].dx === 7 && DEF.classes.Mage.views.f.attack.frames['3'].hand[0] === 118,
+    Thief: DEF.classes.Thief.views.f.S.weapon === false && DEF.classes.Thief.views.f.attack.frames['0'].dx === -38,
+    Acolyte: DEF.classes.Acolyte.views.f.attack.frames['3'].rot === 124,
+    Merchant: DEF.classes.Merchant.views.f.attack.base.rot === -8 && DEF.classes.Merchant.views.f.attack.frames['8'].dx === 30,
+    Knight: DEF.classes.Knight.views.f.attack.frames['4'].dx === 30,
+    Wizard: DEF.classes.Wizard.views.f.attack.weapon === false,
+    Hunter: DEF.classes.Hunter.views.f.attack.frames['7'].rot === 214,
+    Assassin: DEF.classes.Assassin.views.f.NE.weapon === false && DEF.classes.Assassin.views.f.attack.frames['6'].flip[0] === -1,
+    Priest: DEF.classes.Priest.views.f.attack.weapon === false && DEF.classes.Priest.views.f.attack.frames['2'].scale === 0.4,
+    Blacksmith: DEF.classes.Blacksmith.views.f.attack.frames['6'].flip[0] === -1,
+    'Lord Knight': DEF.classes['Lord Knight'].views.f.attack.frames['4'].dx === 34,
+    'High Wizard': DEF.classes['High Wizard'].views.f.S.weapon === true && DEF.classes['High Wizard'].views.f.attack.frames['7'].dy === 15,
+    Sniper: DEF.classes.Sniper.views.f.attack.frames['7'].dy === -16,
+    'Assassin Cross': DEF.classes['Assassin Cross'].views.f.NE.weapon === false && DEF.classes['Assassin Cross'].views.f.attack.frames['7'].flip[0] === -1,
+    'High Priest': DEF.classes['High Priest'].design === 'mace_forge' && DEF.classes['High Priest'].views.m.attack.frames['4'].rot === 84 && DEF.classes['High Priest'].views.f.attack.frames['3'].flip[0] === -1,
+    Whitesmith: DEF.classes.Whitesmith.views.m.attack.weapon === false && DEF.classes.Whitesmith.views.f.attack.weapon === false
+  };
+  for (const [name, matches] of Object.entries(v5Checks))
+    ok(matches, `${name}: latest v5 weapon change is saved in the default`);
+  const untouchedV5 = Object.keys(DEF.classes).filter(name => !Object.hasOwn(v5Checks, name));
+  ok(Object.keys(v5Checks).length === 18 && untouchedV5.join(',') === 'Archer',
+    'the latest pasted v5 delta covers 18 of 19 classes; Archer was not in it');
   ok(Object.keys(DEF.classes.Knight.views.m.attack.frames).length === 9 &&
      DEF.classes.Knight.views.m.attack.frames['4'].dx === 63 &&
      DEF.classes.Knight.views.m.attack.frames['4'].rot === -58 &&
@@ -516,8 +550,9 @@ import vm from 'vm';
       const kn = JSON.parse(probe.proposalJSON()).classes.Knight.views;
       ok(kn.m.attack.frames.filter(f => f.src === 'frame').length === 9,
         'the Knight default carries the owner\'s nine male attack frames');
-      ok(kn.f.attack.frames.length === 5 && kn.f.attack.frames.every(f => f.src === 'shared'),
-        'and her five are left on the shared numbers, because his nine mean nothing on her art');
+      ok(kn.f.attack.frames.filter(f => f.src === 'frame').length === 5 &&
+         kn.f.attack.frames[0].hand[0] === 124 && kn.f.attack.frames[0].dx === -14,
+        'her five attack drawings carry the separate placements from the latest female pass');
       probe.state.sex = 'f'; probe.state.sel = 'Knight'; probe.state.view = 'attack';
       probe.refreshAll();
       ok(/drawings against his/.test(probe.el('nSex').innerHTML),
@@ -602,11 +637,11 @@ import vm from 'vm';
       // a design swap and a per-view off switch travel too, and only what changed
       probe.el('default').onclick();
       probe.entry('Knight').design = 'sword_elem';
-      probe.vw('Knight', 'SE', 'f').on = false;
+      probe.vw('Knight', 'attack', 'f').on = false;
       const twoObj = JSON.parse(probe.changedJSON());
       ok(twoObj.classes.Knight.design === 'sword_elem',
         'a design swap is in the short hand-back');
-      ok(twoObj.classes.Knight.views.f.SE.weapon === false,
+      ok(twoObj.classes.Knight.views.f.attack.weapon === false,
         'so is switching the weapon off on one view');
       ok(twoObj.classes.Knight.views.m === undefined,
         'and nothing else rides along');
@@ -683,20 +718,23 @@ import vm from 'vm';
       ok(tiles.every(t => t.cls && probe.sheetViewOf(t.cls, 'm') !== undefined),
         'every tile knows which view it shows');
       const her = probe.order.filter(n => probe.tunedState(n, 'f') === 'other');
-      ok(her.join(',') === 'Novice,Swordman,Mage,Archer,Merchant',
-        'the classes still showing his numbers are flagged (' + her.join(', ') + ')');
-      ok(probe.order.filter(n => probe.tunedState(n, 'f') === 'none').length === 14,
-        'and her other fourteen are flagged as not tuned yet');
-      ok(probe.order.filter(n => probe.tunedState(n, 'f') === 'own').length === 0,
-        'nothing of hers is claimed as her own work before she has done any');
+      ok(her.join(',') === 'Archer',
+        'the one class still using identical male/female placements is flagged (' + her.join(', ') + ')');
+      ok(probe.order.filter(n => probe.tunedState(n, 'f') === 'none').length === 2,
+        'only two female sprites are still untuned');
+      ok(probe.order.filter(n => probe.tunedState(n, 'f') === 'own').length === 14 &&
+         probe.order.filter(n => probe.tunedState(n, 'f') === 'mixed').length === 2,
+        'the female overview distinguishes fourteen tuned, two partly tuned and one still matching the male');
       const hisNone = probe.order.filter(n => probe.tunedState(n, 'm') === 'none');
-      ok(hisNone.join(',') === 'High Priest,Whitesmith',
-        'his side is recorded as untouched on exactly the two classes he never tuned (' + hisNone.join(', ') + ')');
+      ok(hisNone.join(',') === 'Whitesmith',
+        'High Priest now has male placements; Whitesmith remains the one untuned male sprite');
       probe.state.sex = 'f'; probe.refreshAll();
       ok(/female/.test(probe.el('sheetTag').textContent),
         'the strip follows the ♂/♀ switch');
-      ok(/still his numbers: <b>5<\/b>/.test(probe.el('sheetNote').innerHTML) &&
-         /not tuned yet: <b>14<\/b>/.test(probe.el('sheetNote').innerHTML),
+      ok(/on her own numbers: <b>14<\/b>/.test(probe.el('sheetNote').innerHTML) &&
+         /still his numbers: <b>1<\/b>/.test(probe.el('sheetNote').innerHTML) &&
+         /partly his, part untouched: <b>2<\/b>/.test(probe.el('sheetNote').innerHTML) &&
+         /not tuned yet: <b>2<\/b>/.test(probe.el('sheetNote').innerHTML),
         'the line above the tiles says where her pass stands: '
         + probe.el('sheetNote').innerHTML.replace(/<[^>]+>/g, ''));
       tiles[6].t.onclick();

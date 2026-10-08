@@ -4741,3 +4741,25 @@ The owner's second pass over v77, six notes, all built.
 * **Still the owner's call:** the dungeon's real name (Endless Echo is a placeholder), the chest rungs
   (250k…4.5M DPS, unchanged this build) and the **global** DPS board (needs a `dps` metric on
   `functions/api/board.js` + a D1 migration; the personal best is local today).
+
+### 2026-10-08 — `weapon proposal: save the v5 hand-back as the new default`
+
+* **What the owner asked:** save the pasted weapon changes as the proposal page's defaults, and check whether every class was changed.
+* **Saved:** merged the v5 `kind: "changes"` export into `assets/weapon_proposal_data.js`. The full default still covers all 19 classes; this delta contains updates for **15**. `Novice`, `Swordman`, `Mage` and `Archer` were not included, so their previous saved defaults remain intact. The High Priest's design is now `mace_forge`; the rest of the pasted per-view and per-frame settings are carried over for the listed classes/sprites.
+* **Checks:** `tools/tests/weapon_proposal_sim.js` **583 passed, 0 failed**; the default data passes `node --check`; `git diff --check` is clean. The proposal remains dev-only: `index.html` and `BUILD` were not changed.
+
+### 2026-10-08 — `weapon proposal follow-up: save the remaining attack placements`
+
+* **What the owner sent:** the next v5 change hand-back, adding the Novice, Swordman and Mage female attack passes alongside the earlier changes.
+* **Saved:** added Novice's five edited female attack frames, Swordman's nine female attack frames, and Mage's six female attack frames to the defaults. The repeated entries for the previous 15 classes are already saved. The complete default still includes all 19 classes, but this hand-back now covers **18**; **Archer is still absent**, so its previous default stays unchanged.
+* **Checks:** `tools/tests/weapon_proposal_sim.js` **586 passed, 0 failed**; the default data passes `node --check`; `git diff --check` is clean. This remains a proposal-page change only; `index.html` and `BUILD` are unchanged.
+
+### 2026-10-08 — `grind-v78: integrate the saved weapon sprites into the updated v77.2 game`
+
+* **What the owner asked:** implement all saved class weapon sprites in the game, show a live preview first, and do not open a PR.
+* **Updated base:** fast-forwarded this fixed branch to `origin/main` at `40272f1` (v77.2), then reapplied the saved sprite work. The flat trial payout, daily-priced Shard Store, HD Prontera town, and other v77.2 changes remain in the game; `BUILD` now identifies the combined integration as v78.
+* **Runtime integration:** `index.html` loads `assets/weapons_data.js` and `assets/weapon_proposal_data.js`. The live APNG compositor draws the local PNG after the matching class frame, using the saved class/gender/view/frame hand, offset, rotation, scale and flip. It carries the body mirror through to the weapon, honors each saved bare/armed view, and blends unkeyed frames the same way as the proposal page.
+* **All 19 playable jobs are covered** for both sprites. The selected class design is kept for its chosen weapon family; a different weapon family that the class can equip gets that family's first bundled design. The square remote item-icon overlay stays disabled; combat and equipment stats are unchanged. The proposal page now says the saved defaults are live while later edits remain proposals.
+* **Files:** `index.html`, `assets/weapon_proposal_data.js` (runtime-use note), `tools/tests/class_skin_sim.js`, the APNG code backup, the preview-server route note, `tools/weapon_proposal.html`, `tools/tests/weapon_proposal_sim.js`, `TOOLS-START-HERE.md`, the build-tag snapshots, `READ-ME-FIRST.md`, and this log.
+* **Tests:** all **36** `*_sim.js` suites passed; `town_smoke.js` passed **40/40**. Focused results: `class_skin_sim` **40/40**, `weapon_proposal_sim` **587/587**, and `drop_card_sheet_sim` **12/12**. Inline game JavaScript passes `node --check`; `git diff --check` is clean. The runtime suite covers the saved frame matrix, male/female placements, frame blending, bare-view toggles, mirror transforms, family fallback and parity with the proposal renderer.
+* **Live preview:** `python3 tools/preview_server.py 8000` serves the game at `/` and the review tool at `/weapons`; both pages plus the skin manifest and weapon data assets returned HTTP 200 with the expected v78/default markers. **No PR was opened and nothing was pushed.**
