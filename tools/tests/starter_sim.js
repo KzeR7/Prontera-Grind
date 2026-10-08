@@ -15,10 +15,10 @@ ${grab('const maxHp=()=>','const totalPts=')}
 ${grab('const KIT_MAP={','const KIT_TILE=')}
 ${grab('const STAGE_SCENES=[','function kitRect(d,gx0,gx1,gy){')}
 ${grab('let mobs=[],mob=null','function genGear(')}
-const gx=()=>1,addJob=()=>{},checkLevel=()=>{},qProg=()=>{},addFloat=()=>{},log=()=>{},save=()=>{},ui=()=>{},numTxt=n=>String(Math.round(n));
+const gx=()=>1,addJob=()=>{},checkLevel=()=>{},qProg=()=>{},addFloat=()=>{},log=m=>logs.push(String(m)),save=()=>{},ui=()=>{},numTxt=n=>String(Math.round(n));
 const mkDrop=()=>null,genGear=()=>null;
 ${grab('function earnZeny(amount){','function collect(it){')}
-this.H={fresh,CLASSES,spawn,kill,atk,aspd,maxHp,def,mdef,starterStage,fieldPower,HPK,HPE,MAPS,AGGRO,PACK_GAP,PACK_MAX,PACK_JITTER,packSites,stageSpec,nearestPack,pl,
+this.H={fresh,CLASSES,spawn,kill,atk,aspd,maxHp,def,mdef,starterStage,fieldPower,HPK,HPE,MAPS,AGGRO,PACK_GAP,PACK_MAX,PACK_JITTER,packSites,stageSpec,nearestPack,pl,logs,mapSelection:()=>[mapM,mapL],
 set S(v){S=v},get S(){return S},get mobs(){return mobs},get mob(){return mob},get activePack(){return activePack}};
 `,ctx);
 const H=ctx.H;
@@ -139,9 +139,28 @@ t('clearing a pack selects the nearest surviving pack, regardless of its number'
  assert.strictEqual(new Set(seen).size,3);assert.strictEqual(H.S.kl,all);
  H.spawn();assert.strictEqual(H.activePack,H.nearestPack());assert.strictEqual(H.mob.pack,H.activePack);
 });
-t('stage 10 starts with boss plus 3 or 5 escorts and boss defeat resets the whole fight',()=>{
+t('clearing normal Stage 10 advances to the next map when Auto-advance is on',()=>{
+ for(let m=0;m<9;m++){
+  spawn(m,10);H.S.adv=true;mapM=m;mapL=10;
+  const boss=H.mobs.find(x=>x.boss),before=H.logs.length;assert.ok(boss);
+  boss.drops=[];boss.cardCh=0;boss.ore=false;
+  const random=seededMath.random;seededMath.random=()=>.999999;
+  try{H.kill(boss)}finally{seededMath.random=random}
+  assert.strictEqual(H.S.mp,m+1,H.MAPS[m].n+' should continue to '+H.MAPS[m+1].n);
+  assert.strictEqual(H.S.lvl,1,'the next map starts at Stage 1');
+  assert.deepStrictEqual(Array.from(H.mapSelection()),[m+1,1],'the map preview follows the automatic route');
+  assert.ok(H.logs.slice(before).some(x=>x.includes(H.MAPS[m].n+' Stage 10 cleared!')&&x.includes(H.MAPS[m+1].n+' Stage 1')),'the clear message names the next map');
+ }
+ spawn(9,10);H.S.adv=true;mapM=9;mapL=10;
+ const finalBoss=H.mobs.find(x=>x.boss),before=H.logs.length;finalBoss.drops=[];finalBoss.cardCh=0;finalBoss.ore=false;
+ const random=seededMath.random;seededMath.random=()=>.999999;
+ try{H.kill(finalBoss)}finally{seededMath.random=random}
+ assert.strictEqual(H.S.mp,9,'Abyss remains the last normal map');assert.strictEqual(H.S.lvl,10,'Stage 10 does not auto-jump into the Nightmare band');
+ assert.ok(H.logs.slice(before).some(x=>x.includes('normal map route is complete')&&x.includes('Nightmare is a separate challenge')),'the last clear keeps Nightmare separate');
+});
+t('stage 10 starts with boss plus 3 or 5 escorts and boss defeat resets the whole fight when farming',()=>{
  for(const m of [0,4,5,9]){
-  spawn(m,10);assert.strictEqual(H.mobs.length,m<5?4:6);
+  spawn(m,10);H.S.adv=false;assert.strictEqual(H.mobs.length,m<5?4:6);
   const boss=H.mobs.find(x=>x.boss);assert.ok(Math.hypot(boss.x,boss.z+4)<1.5);
   assert.ok(H.mobs.every(x=>Math.hypot(x.x-boss.x,x.z-boss.z)<5));
   boss.drops=[];boss.cardCh=0;boss.ore=false;H.kill(boss);

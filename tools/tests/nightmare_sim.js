@@ -4,7 +4,7 @@
 //
 // The rules being checked:
 //   * the unlock ladder is Base Lv 100 / 110 / 125 / 140 / 150 and nothing else - no new save field;
-//   * fieldPower keeps climbing past the old ceiling of 100 (Abyss Stage 10) up to 175 (Nightmare
+//   * fieldPower keeps climbing past the old ceiling of 99 (Abyss Stage 10) up to 175 (Nightmare
 //     Abyss Stage 15), and every normal stage's power is byte-for-byte what it was;
 //   * secField returns 4 or 5 ONLY above stage 10, so Nightmare gear cannot leak into the normal
 //     game, and every map carries exactly six catalogue rows;
@@ -146,7 +146,7 @@ t('the difficulty knobs are the shipped ones and the live code reads them', () =
   // v77.1 (owner): "i think we buffed the nightmare maps too much. tune it down on the damage. also
   // adjust the zeny & exp rate, make sure is relevant." The wall keeps v77's 48x, the sting comes
   // back down to 2x (above v76's 1.5x, below v76.2's 2.25x), and the band pays per kill like the
-  // 99x-HP wall it is: EXP 2.5 -> 4, Zeny 2.2 -> 4. These numbers are what the live game ships; a
+  // ~101x-HP wall it is: EXP 2.5 -> 4, Zeny 2.2 -> 4. These numbers are what the live game ships; a
   // later retune moves this line with it.
   assert.deepStrictEqual([N.NMHP, N.NMATK, N.NMEXP, N.NMZENY, N.NMBOSSHP], [48, 2, 4, 4, 48], 'the band constants are pinned (v77.1: 48x HP, 2x ATK, 4x EXP/Zeny)');
   // spawn() is a game-loop function, so its wiring is checked at the source and the numbers are
@@ -157,15 +157,21 @@ t('the difficulty knobs are the shipped ones and the live code reads them', () =
   assert.ok(src.includes('exp:Math.max(1,Math.floor(EXPK*Math.pow(l,1.5)/50*ne))'), 'mob EXP x NMEXP');
   assert.ok(src.includes('Math.floor(500*mb*Math.pow(l,HPE)*(nm1?NMBOSSHP:1))'), 'boss HP x NMBOSSHP');
   assert.ok(src.includes('atk:Math.floor((8+l*6.5)*mb*na)'), 'boss ATK shares the band multiplier');
-  // a worked example, so the band can be judged without playing it: mb is the same map bonus spawn()
+  // A worked example using the live field powers (99 and 175). Keep spawn()'s flooring order too:
+  // the HP/ATK multipliers are applied before Math.floor, not to an already-rounded base value.
   const mb = 1 + 9 * .15 + Math.max(0, 9 - 4) * .2;
-  const hp = l => Math.floor(42 * mb * Math.pow(l, 1.3));
-  const atk = l => Math.floor((5 + l * 4.6) * mb);
+  const abyss10Power = N.fieldPower(9, 10), abyss15Power = N.fieldPower(9, 15);
+  const hp = (l, mult = 1) => Math.floor(42 * mb * Math.pow(l, 1.3) * mult);
+  const atk = (l, mult = 1) => Math.floor((5 + l * 4.6) * mb * mult);
   // the live knobs, not copied numbers: a retune of NMHP/NMATK moves this example with it
-  const abyss10 = { hp: hp(100), atk: Math.round(atk(100) * .25) }, abyss15 = { hp: hp(175) * N.NMHP, atk: Math.round(atk(175) * N.NMATK * .25) };
+  const abyss10 = { hp: hp(abyss10Power), atk: Math.round(atk(abyss10Power) * .25) };
+  const abyss15 = { hp: hp(abyss15Power, N.NMHP), atk: Math.round(atk(abyss15Power, N.NMATK) * .25) };
+  const abyss15BossHp = Math.floor(500 * mb * Math.pow(abyss15Power, 1.3) * N.NMBOSSHP);
+  assert.deepStrictEqual([abyss10Power, abyss10.hp, abyss10.atk], [99, 55286, 386], 'Abyss Stage 10 uses its live power-99 baseline');
+  assert.deepStrictEqual([abyss15Power, abyss15.hp, abyss15.atk, abyss15BossHp], [175, 5565251, 1357, 66252994], 'the Nightmare example follows spawn() rounding');
   console.log('       Abyss Stage 10 : mob HP ' + abyss10.hp.toLocaleString() + ', a hit lands for ' + abyss10.atk.toLocaleString() + ' after a 75% DEF cut');
-  console.log('       Nightmare 15   : mob HP ' + abyss15.hp.toLocaleString() + ' (' + (abyss15.hp / abyss10.hp).toFixed(0) + 'x), a hit lands for ' + abyss15.atk.toLocaleString() + ' (' + (abyss15.atk / abyss10.atk).toFixed(1) + 'x)');
-  console.log('       Abyss 15 boss  : ' + (Math.floor(500 * mb * Math.pow(175, 1.3)) * N.NMBOSSHP).toLocaleString() + ' HP');
+  console.log('       Nightmare Abyss 15: mob HP ' + abyss15.hp.toLocaleString() + ' (' + (abyss15.hp / abyss10.hp).toFixed(0) + 'x), a hit lands for ' + abyss15.atk.toLocaleString() + ' (' + (abyss15.atk / abyss10.atk).toFixed(1) + 'x)');
+  console.log('       Abyss Stage 15 boss: ' + abyss15BossHp.toLocaleString() + ' HP');
   assert.ok(abyss15.hp / abyss10.hp > 50, 'a Nightmare mob takes a good two orders of magnitude longer to kill than a normal one');
   assert.ok(abyss15.atk / abyss10.atk > 1.3, 'and it must hit at least a third harder');
   assert.ok(abyss15.atk / abyss10.atk < 4, 'but not so hard that v77\u2019s 5.2x is back - the sting was tuned down on purpose');
@@ -198,6 +204,25 @@ t('the field tables read the band: boss pool, ore and crit resistance', () => {
   const T = N.gearPool(9, 15).map(x => x.n);
   const hi = new Set(Object.values(N.GEAR[9][3].w).concat(N.GEAR[9][3].a, N.GEAR[9][3].h, N.GEAR[9][3].o, N.GEAR[9][3].l, N.GEAR[9][3].ac, N.GEAR[9][3].ac2).filter(Boolean));
   assert.ok(T.every(n => !hi.has(n)), 'a Nightmare field must not drop the normal high-tier items');
+});
+
+t('drop-table items keep N section identity separate from map field quality', () => {
+  assert.strictEqual(N.dropTier(0, 11), N.dropTier(0, 10), 'Prontera Nightmare quality is not forced to Legendary');
+  assert.strictEqual(N.dropTier(0, 11), 1, 'the early map quality band stays at its map cap');
+  assert.strictEqual(N.dropTier(9, 15), 4, 'the Abyss map quality cap remains as tuned');
+  assert.ok(src.includes("const RAR5={n:'N'}") && src.includes("(it&&+it.sec>=4)?5"),
+    'sections 4/5 select the separate N rarity regardless of the numeric map quality');
+  for (let m = 0; m < N.MAPS.length; m++) for (let l = 1; l <= 15; l++) {
+    const F=N.fieldOf(m,l),tier=N.dropTier(m,l),sec=N.secField(m,l);
+    for (const mob of F.mobs) for (const [item] of mob.drops) {
+      assert.strictEqual(item.sec,sec,N.MAPS[m].n+' Stage '+l+' item section');
+      assert.strictEqual(item.tier,tier,N.MAPS[m].n+' Stage '+l+' item field quality');
+    }
+    if(F.boss)for(const [item]of F.boss.drops){
+      assert.strictEqual(item.sec,sec,N.MAPS[m].n+' Stage '+l+' MVP section');
+      assert.strictEqual(item.tier,tier,N.MAPS[m].n+' Stage '+l+' MVP field quality');
+    }
+  }
 });
 
 t('a save cannot be left standing in a locked Nightmare stage', () => {

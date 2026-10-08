@@ -105,8 +105,8 @@ t('the gate is shut while the town is being finished: no way in, and never no wa
   const h = ev('V.map()');
   assert.ok(!/data-a="town"/.test(h), 'the map tab offers no way in while it is shut');
   assert.ok(/Closed/.test(h) && /Prontera Town/.test(h), 'it says the town is closed instead');
-  assert.strictEqual((h.match(/class="mapcard/g) || []).length, 11,
-    'the card is still in the grid, greyed out - not silently missing');
+  assert.strictEqual((h.match(/class="mapcard/g) || []).length, 12,
+    'the closed Town card remains beside Endless Echo below the ten fields');
   assert.ok(/mapcard town-card closed/.test(h), 'and dressed as a shut card, not a live one');
   // ...but a gate must never shut somebody IN: leaving is never gated
   ev(`localStorage.setItem('pg_town_open','1')`);
@@ -591,12 +591,14 @@ t('the river animates on the town clock, not the field one', () => {
   ev('TOWN.river.maps=null;TOWN.river.wt=0;');        // put the river back the way townArt left it
 });
 
-t('the map tab lists Prontera Town as a card beside the ten fields', () => {
+t('the map tab lists Prontera Town and Endless Echo in a shared destination row', () => {
   leave();
   const h = ev('V.map()');
-  assert.strictEqual((h.match(/class="mapcard/g) || []).length, 11, 'ten field cards plus the town card');
-  assert.ok(/class="mapcard town-card[^"]*" data-a="town"/.test(h), 'the town card walks you in from the map grid');
+  assert.strictEqual((h.match(/class="mapcard/g) || []).length, 12, 'ten field cards plus Town and Endless Echo');
+  assert.ok(/class="mapcard town-card[^"]*" data-a="town"/.test(h), 'the town card walks you in from the map selector');
   assert.ok(h.includes('🏘 Prontera Town'), 'and it is labelled');
+  const i=h.indexOf('class="map-specials'),j=h.indexOf('class="mapband fields'),row=h.slice(i,j);
+  assert.ok(i>=0&&j>i&&row.includes('dungeoncard')&&(row.match(/class="mapcard/g)||[]).length===2, 'Town and Echo render side by side in their special row');
   assert.ok(!h.includes('npcchip'), 'out of town the band below is the stage picker');
   // the field's stage picker is fifteen nodes now: stages 1-10 plus the v76 Nightmare band 11-15
   assert.strictEqual((h.match(/data-a="sell_"/g) || []).length, 15, 'with the fifteen stages of the picked field (10 + the Nightmare band)');
