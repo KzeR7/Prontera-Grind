@@ -122,8 +122,10 @@ t('the worksheet covers all maps, gear sections, and field stages',()=>{
   assert.ok(sheet.maps.every(m=>m.sections[4].name===undefined||m.sections[4].items.length>0),'the Nightmare rows carry items');
   assert.strictEqual(sheet.sectionNames[4],'Nightmare gear');assert.strictEqual(sheet.sectionNames[5],'Abyssal Nightmare gear');
   // v80: Geffen and Payon each gained a second weapon family, and the Nightmare rows are generated
-  // from each map's own section 3, so all six of their rows grew by one: 601 -> 613.
-  assert.strictEqual(sheet.maps.reduce((n,m)=>n+m.sections.reduce((a,s)=>a+s.items.length,0),0),613);
+  // from each map's own section 3, so all six of their rows grew by one: 601 -> 613. The Thief-line
+  // katar swap then took four back: Morroc's 2nd-job and high-tier shelves (and the two Nightmare
+  // rows built from the high-tier one) now carry a single katar where they carried a dagger too.
+  assert.strictEqual(sheet.maps.reduce((n,m)=>n+m.sections.reduce((a,s)=>a+s.items.length,0),0),609);
 });
 t('the worksheet snapshot carries the map-specific equipment progression',()=>{
   assert.strictEqual(sheet.sectionNames[0],'Starter gear');

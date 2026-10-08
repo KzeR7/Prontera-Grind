@@ -654,7 +654,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // script block, which is a SyntaxError - the game did not run on main at all. One line wins, and
 // it names both sides of this merge: the v38 balance patch (the weapon cut, the affix/card
 // give-back) and main's weapon-hold rendering work.
-const BUILD='2026-10-08 grind-v80 class-gate reasons in the bag, Geffen/Payon second weapon, per-kill rates, downgrade flags';   // shown on the login card - confirms which file you loaded
+const BUILD='2026-10-08 grind-v80 class-gate reasons in the bag, Geffen/Payon second weapon, Thief-line katars, per-kill rates, downgrade flags';   // shown on the login card - confirms which file you loaded
 $('buildTag').textContent='build '+BUILD;
 
 // ---------- class tree: Novice -> 6 first jobs -> 6 second jobs -> 6 third jobs ----------
@@ -920,16 +920,21 @@ const GEAR=[
   G(['sword:Cutlass','axe:Battle Axe','mace:Flail'],'Mariner Vest','Bandana','Iron Shield','Mariner Slacks','Brass Ring','Coin Pendant'),
   G(['sword:Sea Saber','axe:Great Axe','mace:Iron Mace'],'Sea Mail','Iron Cap','Tower Shield','Sea Greaves','Merchant Ring','Ledger Pendant'),
   G(['sword:Admiral Saber','axe:Golden Axe','mace:Loaded Mace'],'Admiral Coat','Captain Hat','Admiral Guard','Admiral Boots','Guild Ring','Guild Pendant')],
- // --- Geffen: Mage line (staves) and the knife a thief levels on there ---
+ // --- Geffen: the Mage line's staves, and the Thief line climbing to its Assassin katar ---
+ // (a Thief swings a dagger, but Assassin and Assassin Cross hold nothing else, so the shelf
+ //  hands out knives on the sections a Thief can wear and claws on the ones only an Assassin can)
  [G(['staff:Rod','dagger:Dirk'],'Mage Shirt','Hairband','Novice Buckler','Mage Trousers','Apprentice Ring','Glass Bead'),
   G(['staff:Staff of Soul','dagger:Ice Pick'],'Silk Robe','Wizard Cap','Rune Shield','Silk Leggings','Apprentice Pendant','Moon Bead'),
-  G(['staff:Arc Wand','dagger:Damascus'],'Mage Robe','Wizard Hat','Magic Guard','Rune Trousers','Mystic Ring','Star Bead'),
-  G(['staff:Wand of Hermes','dagger:Ginnungagap'],'Archmage Robe','Mage Crown','Arcane Guard','Archmage Boots','Archmage Ring','Mana Pendant')],
- // --- Morroc: Thief daggers and Assassin Katars (Assassin jobs use only the two-handed Katar) ---
+  G(['staff:Arc Wand','katar:Ghoul Claw'],'Mage Robe','Wizard Hat','Magic Guard','Rune Trousers','Mystic Ring','Star Bead'),
+  G(['staff:Wand of Hermes','katar:Baphomet Claw'],'Archmage Robe','Mage Crown','Arcane Guard','Archmage Boots','Archmage Ring','Mana Pendant')],
+ // --- Morroc: the Thief line - a dagger while you are still a Thief, a katar once you are not ---
+ // (same rule: Assassin and Assassin Cross cannot wield a dagger, so the sections only they can
+ //  wear carry a claw rather than a knife. A shelf holds one weapon per family, so those sections
+ //  offer a single katar - both mobs on the field carry it, at the same rate.)
  [G(['dagger:Desert Knife','katar:Jur'],'Desert Shirt','Turban','Dune Buckler','Desert Pants','Sand Ring','Scorpion Charm'),
   G(['dagger:Gladius','katar:Katar'],'Thief Clothes','Thief Hood','Shadow Shield','Thief Slacks','Thief Ring','Silent Charm'),
-  G(['dagger:Sword Breaker','katar:Jamadhar'],'Assassin Garb','Black Hood','Assassin Guard','Assassin Boots','Assassin Ring','Venom Charm'),
-  G(['dagger:Sandstorm Dagger','katar:Bloody Roar'],'Shadow Cloak','Shadow Mask','Night Guard','Shadow Boots','Cross Ring','Reaper Charm')],
+  G(['katar:Jamadhar'],'Assassin Garb','Black Hood','Assassin Guard','Assassin Boots','Assassin Ring','Venom Charm'),
+  G(['katar:Bloody Roar'],'Shadow Cloak','Shadow Mask','Night Guard','Shadow Boots','Cross Ring','Reaper Charm')],
  // --- Payon: Archer / Hunter lines (bows) and the sword a Swordman levels on there ---
  [G(['bow:Short Bow','sword:Hunting Sword'],'Leather Shirt','Straw Hat','Quiver Guard','Leather Pants','Hunter Ring','Feather Charm'),
   G(['bow:Composite Bow','sword:Haedonggum'],'Hunter Vest','Feather Cap','Leaf Shield','Hunter Slacks','Falcon Ring','Arrow Charm'),
@@ -973,10 +978,10 @@ const MAPS=[
 {n:'Izlude',t:'Swordman & Merchant · stages 1-5 Lv 10-20; 6-10 Lv 20-50',ground:0x6fc2b0,sky:0x8ee0f0,boss:'Drake:4a5a8a:demon',
  mobs:['Marina:5ad1c8:blob','Pupa:e0c070:worm','Crab:e0605a:bug','Sea Otter:8a6a4a:cat','Muka:6aa84f:tree','Anacondaq:3f8a3f:worm','Thief Bug:3a3a55:bug','Marse:6a8ae0:blob','Ambernite:e07aa0:worm','Kukre:d98a3a:bug'],
  gear:GEAR[1]},
-{n:'Geffen',t:'Mage & Thief · staves and daggers · stages 1-5 Lv 10-20; 6-10 Lv 20-50',ground:0x8c8caa,sky:0x9a90c8,boss:'Baphomet:6a3fa0:demon',
+{n:'Geffen',t:'Mage & Thief · staves; daggers, then katars · stages 1-5 Lv 10-20; 6-10 Lv 20-50',ground:0x8c8caa,sky:0x9a90c8,boss:'Baphomet:6a3fa0:demon',
  mobs:['Skeleton:e8e8e8:bunny','Zombie:7a9a6a:worm','Ghoul:6a7a5a:demon','Poison Spore:8a5aa0:tree','Whisper:bfd0ff:blob','Bat Familiar:5a3a6a:bug','Dark Priest:3a2a4a:demon','Wraith:8a8ab0:blob','Evil Druid:4a3a5a:tree','Marionette:ff8ad0:bunny'],
  gear:GEAR[2]},
-{n:'Morroc',t:'Thief · stages 1-5 Lv 10-20; 6-10 Lv 20-50',ground:0xdcc78e,sky:0xf0d9a0,boss:'Phreeoni:c9a040:bug',
+{n:'Morroc',t:'Thief & Assassin · daggers, then katars · stages 1-5 Lv 10-20; 6-10 Lv 20-50',ground:0xdcc78e,sky:0xf0d9a0,boss:'Phreeoni:c9a040:bug',
  mobs:['Scorpion:d9a84a:bug','Sand Man:e0c78a:blob','Desert Wolf:c9a86a:cat','Cactus:5aa050:tree','Pasana:c94a2a:demon','Horn:a08050:bug','Mummy:d9d0b0:worm','Isis:ffcf6a:cat','Anubis:2a2a3a:demon','Minorous:8a4a2a:demon'],
  gear:GEAR[3]},
 {n:'Payon',t:'Archer & Swordman · bows and swords · stages 1-5 Lv 10-20; 6-10 Lv 20-50',ground:0x4f8f4a,sky:0x8fc8a0,boss:'Eddga:e67a2e:cat',

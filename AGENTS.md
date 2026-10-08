@@ -4847,12 +4847,15 @@ The owner's second pass over v77, six notes, all built.
 * **Known limits / follow-ups:**
   * The dimmed reason lives on the drop line as a `title` tooltip; the bag list has no equivalent
     per-line "why can't I use this" yet, so an unusable drop is only explained once you open it.
-  * Geffen/Payon weapon variety comes from the shelf, not the rotation - a second weapon family in
-    `gearPool` for those two maps would fix it without touching any rate.
+  * Geffen and Payon now carry two weapon families, but Morroc's 2nd-job and high-tier shelves
+    carry only one (a katar), so both mobs there list the same weapon. Two claws on one shelf
+    would need the gear table to hold more than one weapon per family - `G()` keys `w` by weapon
+    type, so `['katar:Jamadhar','katar:Khukri']` silently collapses to Khukri. Worth doing if the
+    owner wants the variety back; nothing in the rates depends on it.
   * The map panel compares gear by tier only; it does not yet tell you a dropped weapon is weaker
     than what you already wear.
 
-### 2026-10-08 — `grind-v80 class-gate reasons in the bag, Geffen/Payon second weapon, per-kill rates, downgrade flags`
+### 2026-10-08 — `grind-v80 class-gate reasons in the bag, Geffen/Payon second weapon, Thief-line katars, per-kill rates, downgrade flags`
 
 * **Owner's constraint:** unchanged from v79 - drop *rates* are final. Three independent equipment
   rolls per mob (weapon / armour / accessory) at exactly the percentages they had before. This is
@@ -4866,11 +4869,20 @@ The owner's second pass over v77, six notes, all built.
     (`Your Novice cannot hold a shield.`). Before, the bag said a bare "cannot use this" and left
     the player to guess which of the three it was.
   * Geffen and Payon each gained a **second weapon family**, so the two early class fields stop
-    offering one weapon to everyone: daggers beside Geffen's staves (`Dirk / Ice Pick /
-    Damascus / Ginnungagap`) and swords beside Payon's bows (`Hunting Sword / Haedonggum /
-    Chrome Sword / Emerald Blade`). The class `wt` table is untouched - the second family serves
+    offering one weapon to everyone: swords beside Payon's bows (`Hunting Sword / Haedonggum /
+    Chrome Sword / Emerald Blade`), and on Geffen the Thief line's own weapon climbing with the
+    job - `Dirk / Ice Pick` on the sections a Thief can wear, `Ghoul Claw / Baphomet Claw` on the
+    ones only an Assassin can. The class `wt` table is untouched - the second family serves
     whoever else farms that field, it does not hand a Mage a dagger. Because the Nightmare rows
     are generated from each map's own section 3, all six rows of both maps grew by one piece.
+  * **The Thief line's weapon follows the job, not the map (owner).** A Thief wields a dagger;
+    Assassin and Assassin Cross wield nothing else, and neither can wear a dagger at all. So
+    Morroc's 2nd-job and high-tier shelves now carry a katar (`Jamadhar`, `Bloody Roar`) where
+    they used to list a dagger beside one, and Geffen's do the same. An Assassin on Morroc stage
+    8 no longer watches a dimmed `Sword Breaker` go past. A shelf holds one weapon per family, so
+    those sections offer a single katar - both mobs on the field carry it, at the same rate, and
+    the pool is one item shorter than the section below it (8 -> 7, still above the thin-pool
+    floor).
   * The map panel prints the **per-kill gear chance** on the field's drop list (a weapon share and
     an armour+accessory share, summing to the field total, e.g. 3.6% on the early maps) derived
     from `F.mobs[0].drops`, so the readout can never drift from the table it describes. The
@@ -4880,10 +4892,11 @@ The owner's second pass over v77, six notes, all built.
     flags. This is a flag only - it changes nothing about what drops.
 * **Checks:** all 36 `*_sim.js` suites passed (two report with their own formats: `pack_sim`,
   `sprite_viewer_sim`). Focused: `gear_sim` 38/38, `drop_card_sheet_sim` 13/13, `ui_sim` 50/50,
-  `nightmare_sim` 9/9, `save_load_sim` 23/23. `git diff --check` is clean.
+  `nightmare_sim` 9/9, `save_load_sim` 23/23. `git diff --check` is clean. Worksheet baseline
+  refreshed twice (613 items after the second weapon family, 609 after the katar swap).
 * **Files:** `index.html` (`whyNot`/`canWield`/`gearKind`/`dropIsWorse`, second weapon family in
-  `GEAR[2]` and `GEAR[4]`, both `MAPS` subtitles, the per-kill gear-chance line, `.dropline.worse`
-  / `.cell.worse`, `BUILD`),
+  `GEAR[2]` and `GEAR[4]`, the Thief-line katar swap in `GEAR[2]`/`GEAR[3]`, both `MAPS` subtitles,
+  the per-kill gear-chance line, `.dropline.worse` / `.cell.worse`, `BUILD`),
   `tools/tests/{gear_sim,drop_card_sheet_sim,ui_sim}.js`
   (`MAP_LINES` rows 2 and 4, the section-item pin 601 -> 613, the shared-reason pins),
   `Updates/cards-gear-audit/{affix-ranges,equipment-cards-tuning}.html`, and this log.

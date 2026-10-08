@@ -145,12 +145,17 @@ t('the five early maps retain their existing job-tier progression', () => {
     assert.ok(weaponTypes(1,sec).includes('sword'),'Izlude needs Swordman swords in every tier');
     assert.ok(weaponTypes(1,sec).includes('axe')&&weaponTypes(1,sec).includes('mace'),'Izlude needs Merchant weapons in every tier');
     assert.ok(weaponTypes(2,sec).includes('staff'),'Geffen needs Mage staves');
-    assert.ok(weaponTypes(3,sec).includes('dagger'),'Morroc needs Thief daggers');
+    // v80 (owner): Morroc's weapon follows the job. Daggers while a Thief can wear the section,
+    // katars once only an Assassin or Assassin Cross can - neither can wield a dagger.
+    assert.ok(sec<2?weaponTypes(3,sec).includes('dagger'):weaponTypes(3,sec).includes('katar'),
+      'Morroc needs its Thief-line weapon in every tier');
     assert.ok(weaponTypes(4,sec).includes('bow'),'Payon needs Archer bows');
   }
   assert.ok(G.gearPool(1,10).some(x=>x.n==='Golden Axe'||x.n==='Loaded Mace'),'Izlude boss tier must include a Merchant weapon');
   assert.ok(G.gearPool(2,10).some(x=>x.n==='Wand of Hermes'),'Geffen boss tier must include its Mage weapon');
-  assert.ok(G.gearPool(3,10).some(x=>x.n==='Sandstorm Dagger'),'Morroc boss tier must include its Thief weapon');
+  // v80 (owner): Morroc's boss tier is third-job gear, so its Thief-line weapon is a katar -
+  // an Assassin Cross cannot wield the dagger the map used to list there.
+  assert.ok(G.gearPool(3,10).some(x=>x.k==='katar'),'Morroc boss tier must include its Assassin weapon');
   assert.ok(G.gearPool(4,10).some(x=>x.n==='Gakkung Bow'),'Payon boss tier must include its Archer weapon');
 });
 
@@ -210,12 +215,17 @@ t('armour and accessory names are unique across the whole game', () => {
 // v80: Geffen and Payon each gained a second weapon family so neither map is a one-weapon shelf
 // (a mage got staves and nothing else, an archer bows and nothing else). The line that uses the
 // new family is listed with the map, because a shelf only counts as served if somebody who levels
-// there can pick the thing up: Geffen now carries a Thief's dagger, Payon a Swordman's sword.
+// there can pick the thing up: Geffen now carries a Thief's dagger low down and an Assassin's
+// katar up high, Payon a Swordman's sword.
+// v80 (owner): on the Thief line the weapon follows the JOB, not the map. A Thief wields a
+// dagger; Assassin and Assassin Cross wield nothing else, and neither can wear a dagger at all.
+// So Geffen and Morroc hand out daggers on the sections a Thief can wear (starter and 1st-job)
+// and katars on the ones only an Assassin or Assassin Cross can wear (2nd-job and high tier).
 const EVERY_CLASS=Object.keys(G.CLASSES);
 const MAP_LINES = [
   ['Novice', 'Swordman'],
   ['Swordman', 'Knight', 'Lord Knight', 'Merchant', 'Blacksmith', 'Whitesmith'],
-  ['Mage', 'Wizard', 'High Wizard', 'Thief'],
+  ['Mage', 'Wizard', 'High Wizard', 'Thief', 'Assassin', 'Assassin Cross'],
   ['Thief', 'Assassin', 'Assassin Cross'],
   ['Archer', 'Hunter', 'Sniper', 'Swordman'],
   EVERY_CLASS, EVERY_CLASS, EVERY_CLASS, EVERY_CLASS, EVERY_CLASS,
@@ -355,8 +365,8 @@ t('every field allocates a weapon first, and never lists an item twice (v79)', (
   // three consecutive pool entries from T[(l*3+2*j)%n], so 20 of the 100 normal fields dropped no
   // weapon at all and one item was listed on both mobs at two different rates. Roll 1 is now always
   // a weapon, rolls 2-3 are armour or an accessory, and nothing repeats unless the map has a single
-  // weapon family - which after v80 no normal map does (Geffen carries a dagger beside its staves,
-  // Payon a sword beside its bows), so every field offers its mobs a real choice.
+  // weapon family - which after v80 no normal map does (Geffen carries a dagger or a katar beside
+  // its staves, Payon a sword beside its bows), so every field offers its mobs a real choice.
   for (let m = 0; m < G.MAPS.length; m++) for (let l = 1; l <= 15; l++) {
     const F = G.fieldOf(m, l), where = G.MAPS[m].n + ' stage ' + l;
     const pool = G.gearPool(m, l), weapons = pool.filter(x => !['armor','head','off','leg','acc'].includes(x.k));
@@ -448,7 +458,11 @@ t('the pool is the routed stage set, with the requested progression on late maps
       assert.strictEqual(pool.map(x => x.n).join('|'), names.join('|'), mp.n + ' Lv' + l + ' pool must be the routed gear set');
       assert.ok(pool.every(x=>x.sec===sec),mp.n+' Lv'+l+' item/job section mismatch');
       assert.ok(pool.every(x=>x.quality===(m===9&&l>=6?1.25:1)),mp.n+' Lv'+l+' quality variant mismatch');
-      assert.ok(pool.length >= prev, mp.n + ' Lv' + l + ' pool shrank');
+      // v80 (owner): the Thief line gives its dagger up for the Assassin katar, so Morroc's
+      // 2nd-job and high-tier shelves carry one weapon family where the lower ones carry two.
+      // A one-family section may therefore be one item shorter than the section below it.
+      const families = Object.keys(set.w).length;
+      assert.ok(pool.length >= prev - (families === 1 ? 1 : 0), mp.n + ' Lv' + l + ' pool shrank');
       assert.ok(pool.length >= 7, mp.n + ' Lv' + l + ' pool is thin: ' + pool.length);
       prev = pool.length;
     }
