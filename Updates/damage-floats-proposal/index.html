@@ -40,7 +40,7 @@ button.on{outline:2px solid #d4a937}
 .strip .plate .name{font-weight:700;color:var(--parch);font-size:13px;text-shadow:0 1px 3px #000;background:#000000a8;padding:3px 10px;border-radius:5px;border:1px solid #5a4a2c}
 .strip .plate .desc{font-size:11px;color:#cfc19a;background:#000000a8;padding:3px 9px;border-radius:5px;border:1px solid #00000055;max-width:520px}
 .strip .plate .live{font-size:10px;color:#ffb0a6;border:1px solid #a05038;border-radius:4px;padding:1px 6px;background:#000000a8}
-.groundline{position:absolute;left:0;right:0;top:56%;height:2px;background:#00000042}
+.groundline{position:absolute;left:0;right:0;bottom:84px;height:2px;background:#00000042}
 /* placeholder target (deliberately generic - the numbers are what is on trial) */
 .dummy{position:absolute;left:60%;bottom:34px;width:58px;height:84px;transform:translateX(-50%);filter:drop-shadow(0 4px 4px #0007)}
 .dummy i{position:absolute;display:block}
@@ -70,8 +70,8 @@ ul.research li{margin:4px 0}
 <body>
 <header>
  <h1>⚔ Prontera Grind — on-screen damage numbers</h1>
- <span class="tag">proposal only · nothing in the game changed · no PR</span>
- <span class="tag">BUILD 2026-10-07 grind-v67</span>
+ <span class="tag">dev-only tuner · nothing ships · defaults to your pick</span>
+ <span class="tag">BUILD 2026-10-08 grind-v83.4</span>
 </header>
 <main>
  <div class="note">
@@ -165,11 +165,15 @@ ul.research li{margin:4px 0}
 <script>
 'use strict';
 /* ============================ state ============================ */
-const T={font:'game',sNorm:17,sCrit:30,rise:30,life:1.05,fadeAt:55,punch:1,drift:14,style:'rise',spawn:'sway'};
+// v73 (grind-v83.4): the defaults ARE the owner's retuned pick - strip B, arc fade, sway pop-up,
+// Game (Trebuchet), 28px/39px, a 70px rise (the top end of the slider), 1.75s of life, the fade
+// starting at 90%, a x1.9 impact punch, and a 14px spread - so the 📋 button prints exactly the
+// selection that is live in the game.
+const T={font:'game',sNorm:28,sCrit:39,rise:70,life:1.75,fadeAt:90,punch:1.9,drift:14,style:'arc',spawn:'sway'};
 const PRESETS={
  current:{font:'game',sNorm:17,sCrit:21,rise:26,life:.95,fadeAt:35,punch:.8,drift:12,style:'rise',spawn:'scatter'},
  classic:{font:'classic',sNorm:17,sCrit:34,rise:26,life:1.15,fadeAt:60,punch:1.1,drift:14,style:'hop',spawn:'front'},
- balanced:{font:'game',sNorm:17,sCrit:30,rise:30,life:1.05,fadeAt:55,punch:1,drift:14,style:'rise',spawn:'sway'},
+ balanced:{font:'game',sNorm:28,sCrit:39,rise:70,life:1.75,fadeAt:90,punch:1.9,drift:14,style:'arc',spawn:'sway'},
  juice:{font:'heavy',sNorm:19,sCrit:40,rise:40,life:1.3,fadeAt:60,punch:1.6,drift:24,style:'arc',spawn:'sway'}
 };
 const FONTS={
@@ -229,14 +233,26 @@ function motionKeys(rise,driftX){
 
 function fadeOnly(D,fadeAt){return [{opacity:1,offset:0},{opacity:1,offset:fadeAt/100},{opacity:0,offset:1}]}
 
+/* pop-up type: scatter (today) | front (GIF: dead-centre, fade in place) | sway (sway up, fade left) | stpx) scale(1)',opacity:1,offset:0},
+  {transform:mid,opacity:1,offset:fA},
+  {transform:end,opacity:0,offset:1}
+ ];
+}
+
+function fadeOnly(D,fadeAt){return [{opacity:1,offset:0},{opacity:1,offset:fadeAt/100},{opacity:0,offset:1}]}
+
 /* pop-up type: scatter (today) | front (GIF: dead-centre, fade in place) | sway (sway up, fade left) | stack (cascade column).
    The mode's motion lives on a zero-size holder; each option's own styling animation stays untouched on the float inside it. */
 function spawnBase(strip,role,txt,atMob){
  const holder=el('pfh');
  const mode=atMob?T.spawn:'scatter';
- let x=(role==='incoming'||role==='heal')?18:60, y=(role==='incoming'||role==='heal')?52:46;
- if(mode==='scatter'){x+=R(-T.drift,T.drift)*.5;y+=R(-4,4)}
- holder.style.left=x+'%';holder.style.top=y+'%';
+ // v73: the spawn point is anchored in px above the mob's head (or the hero's), so it stays glued
+ // to the body when the stage grows to fit a taller flight - at the old 190px strip this is the
+ // same 46% / 52% the page always used.
+ const H=+strip.dataset.h||190;
+ let x=(role==='incoming'||role==='heal')?18:60, y=(role==='incoming'||role==='heal')?H-91:H-103;
+ if(mode==='scatter'){x+=R(-T.drift,T.drift)*.5;y+=R(-8,8)}
+ holder.style.left=x+'%';holder.style.top=y+'px';
  strip.appendChild(holder);
  if(mode==='sway'){
   holder.animate([
@@ -248,7 +264,7 @@ function spawnBase(strip,role,txt,atMob){
  }
  if(mode==='stack'){
   const list=strip.__stack||(strip.__stack=[]);
-  for(const h of list){h.__y=(h.__y||parseFloat(h.style.top))-7;h.style.transition='top .22s ease-out';h.style.top=h.__y+'%'}
+  for(const h of list){h.__y=(h.__y||parseFloat(h.style.top))-7;h.style.transition='top .22s ease-out';h.style.top=h.__y+'px'}
   list.push(holder);
   setTimeout(()=>{const i=list.indexOf(holder);if(i>=0)list.splice(i,1)},T.life*1000+150);
  }
@@ -257,8 +273,10 @@ function spawnBase(strip,role,txt,atMob){
  holder.appendChild(wrap);
  return wrap;
 }
-/* horizontal wander for the float's own motion: none when the pop-up type owns the path */
-const driftX=atMob=>(atMob&&T.spawn!=='scatter')?0:R(-T.drift,T.drift);
+/* horizontal wander for the float's own motion. v73: sway honours the spread like the game does -
+   the sway path owns the sideways travel, so the spread used to be inert there; now every number in
+   sway mode also rolls its own +-T.drift px offset at spawn. Front-of-body and stack stay put. */
+const driftX=atMob=>(atMob&&T.spawn!=='scatter'&&T.spawn!=='sway')?0:R(-T.drift,T.drift);
 /* measured text width (estimate under jsdom/zero-layout), so bursts can fit big numbers */
 const textW=(t,txt,size)=>(t.getBoundingClientRect().width||String(txt).length*size*.62);
 
@@ -426,6 +444,15 @@ function fireDot(strip){
 
 /* ============================ strips & volley ============================ */
 let view='compare';
+/* v73: the stage grows with the flight - a 70px rise plus the burst needs room above the mob's
+   head, so the strips get taller instead of clipping the numbers mid-flight. The 109px is the
+   spawn point's distance from the top (the head centre), 2x the rise is the worst-case travel
+   (the sway holder plus the float's own arc), and 1.25x the crit size is the burst's half-height. */
+function syncStage(){
+ const need=Math.ceil(109+2*T.rise+1.25*T.sCrit);
+ const h=Math.max(view==='compare'?190:280,need);
+ document.querySelectorAll('.strip').forEach(s=>{s.style.height=h+'px';s.dataset.h=h});
+}
 function buildStrips(){
  const host=$('#strips');host.innerHTML='';
  const keys=view==='compare'?['cur','a','b','c']:[view];
@@ -435,9 +462,10 @@ function buildStrips(){
    +'<div class="plate"><span class="name">'+OPT[k].name+'</span>'+(OPT[k].locked?'<span class="live">locked to live settings</span>':'')+'<span class="desc">'+OPT[k].desc+'</span></div>'
    +'<div class="hero"><i class="robe"></i><i class="hood"></i></div>'
    +'<div class="dummy"><i class="head"></i><i class="bar"></i><i class="arm"></i><i class="base"></i></div>';
-  s.dataset.opt=k;s.style.height=(view==='compare'?'190px':'280px');
+  s.dataset.opt=k;
   host.appendChild(s);
  }
+ syncStage();
 }
 function fireRole(opt,role){
  const s=document.querySelector('.strip[data-opt="'+opt+'"]');if(!s)return;
@@ -473,6 +501,7 @@ function syncLabels(){
  $('#v_punch').textContent='×'+T.punch.toFixed(1);$('#punch').value=T.punch;
  $('#v_drift').textContent=T.drift+'px';$('#drift').value=T.drift;
  $('#font').value=T.font;$('#fadeStyle').value=T.style;$('#spawn').value=T.spawn;
+ syncStage();
 }
 function applyPreset(p){Object.assign(T,PRESETS[p]);syncLabels();fireVolley()}
 function bindRange(id,key,fmt){$('#'+id).addEventListener('input',e=>{T[key]=parseFloat(e.target.value);syncLabels()})}

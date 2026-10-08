@@ -10,7 +10,7 @@ assert.ok(start >= 0 && end > start, 'cannot locate the production damageFloat h
 const damageCode = src.slice(start, end);
 const emitted = [];
 const box = { S: {}, numTxt: n => 'n' + n, addFloat: (...args) => emitted.push(args), floats: [], rnd: (a, b) => (a + b) / 2, mobVisualScale: () => 1,
-  DMG_LIFE: 1 / .95, DMG_RISE: 30, DMG_FADE: .55, DMG_RATE: .95 };
+  DMG_LIFE: 1 / .571, DMG_RISE: 70, DMG_FADE: .9, DMG_RATE: .571, DMG_SPREAD: 14 };
 vm.createContext(box);
 vm.runInContext(damageCode + ';globalThis.__damageFloat=damageFloat;globalThis.__d={showDamage,flushDamageGroup,dotTick,open:()=>{dmgGroup=new Map()}};', box);
 let pass = 0, fail = 0;
@@ -50,7 +50,7 @@ t('miss and dodge have explicit labels and styled classes', () => {
 });
 t('projected hit numbers stay absolute; crits carry the owner\'s starburst frame with no CRIT chip', () => {
   assert.ok(src.includes('.fl.damage,.fl.skill-damage,.fl.critical,.fl.skill-critical,.fl.incoming,.fl.dot{position:absolute'), 'screen projection needs absolute nodes');
-  assert.ok(src.includes('.fl.critical,.fl.skill-critical{font:900 32px "Trebuchet MS",Verdana,sans-serif'), 'criticals use the 32px size the owner has been playing with');
+  assert.ok(src.includes('.fl.critical,.fl.skill-critical{font:900 39px "Trebuchet MS",Verdana,sans-serif'), 'criticals use the 39px size the owner retuned to (v73)');
   assert.ok(!src.includes('.fl.critical::before{')&&!src.includes('.fl.critical::after{'), 'the bubble is a child element, not a pseudo-element');
   assert.ok(src.includes('.fl.skill-critical .fnum{background-image:linear-gradient(#eafaff 10%,#7cd4ff 90%)'), 'skill criticals get the same gradient digits in silver-blue');
   assert.ok(src.includes('class="fburst"'), 'the critical frame is the v82 starburst behind the digits');
@@ -66,8 +66,10 @@ t('projected hit numbers stay absolute; crits carry the owner\'s starburst frame
 // chunky one, so the digits did not look like the strip they tuned. Criticals now also take strip
 // B's exact fill: a cream-to-gold gradient clipped to the glyphs with a thin maroon stroke and
 // soft drop shadows, not a flat gold fill under a heavy 4-way outline.
+// v73 (the retune): the same font and fill, bigger - 28px normals / 39px crits - with a 70px climb,
+// a 1.75s life, the fade starting at 90%, a x1.9 punch, and the spread wired in.
 t('the digits use the selected font at the readable size, with the gradient crit fill and soft shadow', () => {
-  assert.ok(src.includes('.fl.damage,.fl.skill-damage{font:700 17px "Trebuchet MS",Verdana,sans-serif'), 'normal/skill digits are the game font at the 17px the owner plays with');
+  assert.ok(src.includes('.fl.damage,.fl.skill-damage{font:700 28px "Trebuchet MS",Verdana,sans-serif'), 'normal/skill digits are the game font at the 28px the owner retuned to (v73)');
   assert.ok(src.includes('.fl.critical .fnum{background-image:linear-gradient(#fff3b0 10%,#ffc93c 90%)')&&src.includes('-webkit-background-clip:text'), 'the crit fill is the page\'s gradient, clipped to the digits span');
   assert.ok(src.includes('-webkit-text-stroke:.6px #57330a'), 'the crit stroke is the page\'s thin maroon one, not a fat dark outline');
   assert.ok(src.includes('.fnum{text-shadow:none;-webkit-background-clip:text'), 'transparent gradient text must not carry a text-shadow silhouette, and the filter stays off the burst');
@@ -85,9 +87,9 @@ t('the digits use the selected font at the readable size, with the gradient crit
 // the geometry to the proposal page's own burst (12 outer spikes + 8 inner spikes + pale core).
 t('the starburst is centred on the digits, re-jittered every hit, and dies with them', () => {
   assert.ok(src.includes('.fburst,.fring,.fstreak{position:absolute;left:50%;top:50%;pointer-events:none'), 'the three frame pieces are all centred on the digits box');
-  assert.ok(src.includes('.fburst{transform:translate(-50%,-50%);animation:fburst-pop 1.05s'), 'the star pops with the page\'s 1.05s burst curve, on the box and not on the svg (v71 misalignment rule)');
+  assert.ok(src.includes('.fburst{transform:translate(-50%,-50%);animation:fburst-pop 1.75s'), 'the star pops with the page\'s 1.75s burst curve (stretched to the retuned life), on the box and not on the svg (v71 misalignment rule)');
   assert.ok(src.includes('.fburst svg{width:100%;height:100%;display:block;overflow:visible'), 'the svg fills the box and may overflow it');
-  assert.ok(src.includes('const sk=f.kind===\'skill-critical\',fs=32,len=String(f.txt).length,w=Math.max(fs*2,len*fs*.84)'), 'the frame is sized from the finished number (v70 rule)');
+  assert.ok(src.includes('const sk=f.kind===\'skill-critical\',fs=39,len=String(f.txt).length,w=Math.max(fs*2,len*fs*.84)'), 'the frame is sized from the finished number at the retuned 39px (v70 rule, v73 size)');
   assert.ok(src.includes('starPts(12,48,30,rot)')&&src.includes('starPts(8,34,20,rot*.6)'), '12 jittered outer spikes and an 8-spike inner star, as on the proposal page');
   assert.ok(src.includes('const rot=Math.random()*Math.PI'), 'a fresh rotation every hit, so no two crits are identical');
   assert.ok(src.includes("'<i class=\"fstreak\" style=\"--a:'"), 'the speed lines carry their own angle, length, thickness and travel');
@@ -98,18 +100,29 @@ t('the starburst is centred on the digits, re-jittered every hit, and dies with 
   assert.ok(src.includes('@keyframes fburst-pop')&&src.includes('@keyframes fring-pop')&&src.includes('@keyframes fstreak-fly'), 'all three frame animations are present');
   assert.ok(src.includes('const c1=sk?\'#16324f\':\'#a01608\',c2=sk?\'#4fd8ff\':\'#ffcf4d\',c3=sk?\'#eaffff\':\'#fff3c8\''), 'red-gold for a physical crit, blue-silver for a skill crit');
 });
-t('damage numbers spawn above the head and fly the owner\'s tuned arc: 30px over ~1.05s, hold-then-fade', () => {
+t('damage numbers spawn above the head and fly the owner\'s retuned arc: 70px over ~1.75s, hold-then-fade from 90%', () => {
   assert.ok(src.includes('function mobDamageY(o){return Math.max(1.7,3.15*mobVisualScale(o)-.3)}'), 'numbers spawn just above the monster head, following its drawn scale');
   assert.ok(src.includes("showDamage(o,o.x,mobDamageY(o),o.z,d,c,skill)"), 'AoE and hurt numbers spawn at the head');
   assert.ok(src.includes("showDamage(mob,mob.x,mobDamageY(mob),mob.z,d,c,skill)"), 'strike numbers spawn at the head');
-  assert.ok(src.includes('const DMG_LIFE=1/.95,DMG_RISE=30,DMG_FADE=.55,DMG_RATE=.95;'), 'the climb, the life and the fade window are the owner-tuned v82 values: 30px / ~1.05s / fade from 55%');
-  assert.ok(src.includes('const dy=-DMG_RISE*Math.min(1,tt*1.15)'), 'the number climbs 30px and settles - v82\'s arc, unchanged');
+  assert.ok(src.includes('const DMG_LIFE=1/.571,DMG_RISE=70,DMG_FADE=.9,DMG_RATE=.571,DMG_SPREAD=14;'), 'the climb, the life and the fade window are the owner-retuned v73 values: 70px / ~1.75s / fade from 90%');
+  assert.ok(src.includes('const dy=-DMG_RISE*Math.min(1,tt*1.15)'), 'the number climbs 70px (the top end of the page\'s Rise slider) and settles');
   assert.ok(src.includes('const sway=tt<.28?10*(tt/.28):10-38*Math.min(1,(tt-.28)/.72)'), 'the sway: out to the right, then drifting 38px left as it fades');
-  assert.ok(src.includes('f.el.style.opacity=Math.min(1,Math.max(0,r/.45))'), 'hold-then-fade: solid for the first 55% of the life, then gone by the end of it');
-  assert.ok(src.includes('const r=Math.max(0,f.life),tt=1-r,cs=(f.kind===\'critical\'||f.kind===\'skill-critical\')?1:.25;'), 'criticals punch to double size on spawn, ordinary hits to a quarter');
+  assert.ok(src.includes('f.el.style.opacity=Math.min(1,Math.max(0,r/.1))'), 'hold-then-fade: solid for the first 90% of the life, then gone by the end of it');
+  assert.ok(src.includes('const r=Math.max(0,f.life),tt=1-r,cs=(f.kind===\'critical\'||f.kind===\'skill-critical\')?1.33:.475;'), 'the x1.9 punch: criticals peak at x2.33 on spawn, ordinary hits at x1.475');
   const incomingRule = (src.match(/\.fl\.incoming\{[^}]*\}/) || [''])[0];
   assert.ok(incomingRule.includes('-webkit-text-stroke:.4px') && incomingRule.includes('animation:hit-pop .18s ease-out both'),
     'incoming damage keeps v82\'s 16px digits and its little hit pop (MISS/DODGE keep their own)');
+});
+
+t('v73: the spread is real - every damage number rolls its own +-14px offset at spawn', () => {
+  assert.ok(src.includes('rate:isDamageFloat(kind)?DMG_RATE:0,sp:isDamageFloat(kind)?rnd(-DMG_SPREAD,DMG_SPREAD):0}'),
+    'addFloat gives the whole damage family (hits, skill hits, crits, skill crits, dots) a random +-DMG_SPREAD px spawn offset');
+  assert.ok(src.includes("kind:'dot',sw:rnd(-6,6),st:0,rate:DMG_RATE,sp:rnd(-DMG_SPREAD,DMG_SPREAD)}"),
+    'a merged DoT number keeps its own spread offset too (its sw sway is separate)');
+  assert.ok(src.includes('dxx=sway+(f.sw||0)*Math.min(1,tt/.22)+(f.sp||0)'),
+    'the draw loop rides the spread on top of the sway path, so a multi-mob volley fans out');
+  assert.ok(!src.includes('rate:isDamageFloat(kind)?DMG_RATE:0});'),
+    'no damage float is created without its spread offset');
 });
 t('direct, AoE, chain and DoT hits retain their skill visual type', () => {
   assert.ok(src.includes('strike(1,sk.col,!!sk.magic,true)'), 'the skill hit still prints as a skill hit');

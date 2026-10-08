@@ -5543,3 +5543,60 @@ The owner's second pass over v77, six notes, all built.
   constants), `Updates/damage-numbers-v2/index.html` (rebuilt around the owner's look),
   `tools/tests/combat_float_sim.js`, `tools/tests/ui_sim.js`, the two audit pages, `tools/cloudflare-deploy-steps.md`,
   `Updates/ro-feel-plan.md`, this log.
+
+### 2026-10-08 — `grind-v83.4 your number retune applied: 28px and 39px digits, a 70px flight, a x1.9 punch, and a spread that fans the volley out`
+
+* **Why:** the owner pasted a new strip-B selection from the tuner (`Updates/damage-floats-proposal/`,
+  the 📋 Copy-my-selection output: style tab b · fade style arc · pop-up type sway · font game ·
+  28px/39px · lifetime 1.75s · fade 90% · punch ×1.9 · spread 14px) plus two asks beyond the
+  sliders: **make the numbers float higher** (the Rise slider's top end, 70px) and **make Spread
+  actually do something** (it was inert in sway mode — the sway path owned the sideways motion —
+  and the game had no spread at all, so a multi-mob volley piled onto one pixel).
+* **What changed in the game (index.html):** the retune landed exactly where the tuner's
+  slider→code map says. Digits **17→28px** normal/skill and **32→39px** crit/skill-crit
+  (`.fl.damage,.fl.skill-damage{font:700 28px…}`, `.fl.critical,.fl.skill-critical{font:900 39px…}`,
+  and `fs=39` in the burst builder so the starburst scales with the number). The flight
+  **30→70px** (`DMG_RISE=70`, the top end of the page's Rise slider — hits, skill hits, crits and
+  skill crits all travel it). The life **1.05s→1.75s** (`DMG_RATE=.571`, `DMG_LIFE=1/.571`) with
+  `fburst-pop` stretched to 1.75s so the burst breathes for the whole life. The hold-then-fade now
+  starts at **90%** of the life (`opacity=min(1,max(0,r/.1))`, `DMG_FADE=.9`). The impact punch
+  **×1.0→×1.9** (`cs` 1→**1.33** on crits / .25→**.475** on normals — peaks ×2.33 / ×1.475, the
+  page's `1+.7*punch` / `1+.25*punch` mapping). **The spread is wired in:** `DMG_SPREAD=14`,
+  `addFloat` (and the merged DoT float) roll `sp:rnd(-DMG_SPREAD,DMG_SPREAD)` once at spawn, and
+  the draw loop rides it on top of the sway (`dxx=sway+(f.sw||0)*Math.min(1,tt/.22)+(f.sp||0)`) —
+  a multi-mob volley now fans out instead of piling onto one pixel. **Not regressed:** v71's
+  centring (the pop animation on the `.fburst` box, not the svg) and v72's digit fill (the gradient
+  on `.fl.critical .fnum` + the 1px dark rim); the font stays `game` = Game (Trebuchet), never
+  `classic` (Chunky).
+* **The tuner matches the game:** its sliders and its Balanced preset now **default to this exact
+  pick** (so the 📋 button prints what is live), `driftX` **honours the spread in sway mode**
+  (front-of-body and stack still stay put), and the stage grows with the flight (`syncStage` —
+  taller strips, spawn point glued to the mob's head in px) so the 70px rise stays on the strip
+  instead of clipping mid-flight. `/crit` (`Updates/crit-frame-compare/`) shows the good column at
+  the new sizes/lifetime/punch/spread: 39px crit digits, 1.75s burst breath, ×2.33 punch peak, and
+  every hit landing ±14px off centre.
+* **Before/after:** `Updates/damage-floats-proposal/volley-before-after-v73.png` renders the same
+  five-mob camp volley at the old (grind-v83.3) vs new (grind-v83.4) settings — a rendering from
+  the game's own draw-loop motion math (no browser in the sandbox, so not a screenshot), with the
+  rise rulers, the life/fade timeline bars and the deltas strip on it.
+* **Tests re-pinned to the new look:** `combat_float_sim.js` (15 checks: the 28/39px sizes, `fs=39`,
+  the constants line, the 70px climb, `r/.1`, `cs` 1.33/.475, plus a new check that the spread is
+  rolled at spawn and ridden on the sway), `ui_sim.js` (50 checks: the 39px crit rule, the
+  constants line in both sandboxes, and the crit markup the renderer writes —
+  `width:131px;height:98px` for `1896` at fs=39), the tuner smoke test (15 checks — new: the
+  defaults are the pick, sway honours spread, the stage grows), and the build-tag snapshots
+  (`affix-ranges.html` ×2, `equipment-cards-tuning.html`, `tools/cloudflare-deploy-steps.md`).
+  All suites green: the 37 `tools/tests/*_sim.js` suites 0 failures, `town_smoke.js` **40/40**,
+  `field_loop_smoke.js` **6/6**, the tuner smoke test **15/15**, and `node --check` passes on the
+  inline JS of `index.html` and both dev pages.
+* **Files touched:** `index.html` (BUILD → grind-v83.4; the `.fl` digit sizes, the `fburst-pop`
+  duration, the constants line, the `addFloat`/`dotTick` spread, the draw-loop motion block, the
+  burst builder's `fs`), `Updates/damage-floats-proposal/index.html` (defaults/preset, `driftX`,
+  the stage growth, the header tag), `Updates/damage-floats-proposal/README.md` (status, the
+  slider→code map, the v73 handover note), `Updates/damage-floats-proposal/smoke_test.js`,
+  `Updates/crit-frame-compare/index.html`, `tools/tests/combat_float_sim.js`,
+  `tools/tests/ui_sim.js`, the two audit pages, `tools/cloudflare-deploy-steps.md`,
+  `READ-ME-FIRST.md` (the BUILD v73 section), `Updates/damage-floats-proposal/volley-before-after-v73.png`, this log.
+* **Branches / PR:** shipped as **PR #39** (`arena/4a7f511c-prontera-grind` → `main`, 13 files). No migration, no API change; the
+  preview server (`python3 tools/preview_server.py 8000` with `PREVIEW_PAGE=Updates/damage-floats-proposal/index.html`)
+  serves the tuner at `/`, the game at `/game` and the crit comparison at `/crit`.
