@@ -641,7 +641,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // script block, which is a SyntaxError - the game did not run on main at all. One line wins, and
 // it names both sides of this merge: the v38 balance patch (the weapon cut, the affix/card
 // give-back) and main's weapon-hold rendering work.
-const BUILD='2026-10-08 grind-v78.1 Nightmare N rarity and class gates';   // shown on the login card - confirms which file you loaded
+const BUILD='2026-10-08 grind-v78.2 map-stage equipment progression';   // shown on the login card - confirms which file you loaded
 $('buildTag').textContent='build '+BUILD;
 
 // ---------- class tree: Novice -> 6 first jobs -> 6 second jobs -> 6 third jobs ----------
@@ -947,6 +947,12 @@ const GEAR=[
   G(['katar:Chaos Katar','sword:Cursed Blade','bow:Cursed Bow'],'Abyss Mail','Shadow Beast Mask','Cursed Shield','Abyss Greaves','Chaos Ring','Doom Charm'),
   G(['sword:Hell Slayer','katar:Bloody Tears','mace:Doom Mace','dagger:Chaos Dagger','staff:Hell Staff','bow:Doom Bow','axe:Doom Axe'],'Lava Armor','Lava Mask','Lava Guard','Lava Boots','Lava Ring','Lava Pendant'),
   G(['sword:Dark Lord Sword','katar:Guillotine Claw','staff:Dark Lord Staff','dagger:Dark Lord Dagger','bow:Dark Lord Bow','axe:Dark Lord Axe','mace:Dark Lord Mace'],'Dark Lord Mail','Dark Lord Mask','Dark Lord Guard','Dark Lord Boots','Dark Lord Ring','Dark Lord Pendant')]];
+// Abyss stages 6-10 use a stronger item set without changing section-3 job eligibility or the
+// map's normal rarity band. The 1.25 stat-quality multiplier applies to item value and affixes;
+// every weapon family remains represented so each eligible class has a real drop to hunt.
+const ABYSS_ASCENDED=G(['sword:Oblivion Edge','katar:Void Emperor Claw','staff:World End Staff','dagger:Black Star Dagger','bow:Nightfall Recurve','axe:Cataclysm Axe','mace:Endbringer Maul'],
+  'Eternal Abyss Mail','Void Sovereign Crown','World End Guard','Nightfall Greaves','Void Emperor Ring','Oblivion Pendant');
+const ABYSS_ASCENDED_QUALITY=1.25;
 const MAPS=[
 {n:'Prontera',t:'Novice start · easy Lv 1-10',ground:0x7cc46a,sky:0x8ecff5,boss:'Mastering:7ae86a:blob',
  mobs:['Poring:ff9ec4:blob','Fabre:b8e05a:worm','Lunatic:fff4f4:bunny','Drops:ffb84a:blob','Chonchon:7ab8f0:bug','Willow:7ac04a:tree','Rocker:c86a3a:bug','Poporing:9ae84a:blob','Savage Bebe:c09a5a:cat','Peco Peco:ffd850:bug'],
@@ -963,11 +969,11 @@ const MAPS=[
 {n:'Payon',t:'Archer · stages 1-5 Lv 10-20; 6-10 Lv 20-50',ground:0x4f8f4a,sky:0x8fc8a0,boss:'Eddga:e67a2e:cat',
  mobs:['Spore:d06a6a:tree','Wolf:8a8a95:cat','Elder Willow:4a7a3a:tree','Hornet:e8c840:bug','Bigfoot:9a7a5a:demon','Zenorc:5a8a4a:demon','Skel Archer:d0d0c0:bunny','Ancient Worm:b0a080:worm','Orc Warrior:4a7a3a:demon','Orc Archer:6a8a3a:demon'],
  gear:GEAR[4]},
-{n:'Comodo',t:'Coral beach (Lv 60-80)',ground:0x3fae9a,sky:0x7fe0e0,boss:'Kraken:2a6a9a:blob',mobs:['Merman:3a9ad0:demon','Sea Witch:9a5ac0:bunny','Coral Crab:ff7a6a:bug','Giant Eel:4a8aa0:worm','Siren:7ad0e0:cat','Deep Jelly:aa7aff:blob'],gear:GEAR[5]},
-{n:'Louyang',t:'Bamboo valley (Lv 60-80)',ground:0x7aa85a,sky:0xc8e0a0,boss:'Dragon Lord:c04a2a:demon',mobs:['Jiangshi:8aa08a:demon','Bamboo Fox:e0a050:cat','Wild Boar:7a5a3a:cat','Stone Golem:9a9a8a:tree','Mantis:6ac04a:bug','Dragon Pup:e05a3a:worm'],gear:GEAR[6]},
-{n:'Amatsu',t:'Sakura shrine (Lv 60-80)',ground:0xd88aa8,sky:0xf0c0d8,boss:'Shiranui:d03a5a:demon',mobs:['Oni:c03a3a:demon','Kappa:4aa07a:blob','Kitsune:ffd09a:cat','Tengu:a04a4a:bug','Yuki Onna:d0e8ff:bunny','Spirit Lantern:ffe08a:blob'],gear:GEAR[7]},
-{n:'Niflheim',t:'Frozen underworld (Lv 80-99)',ground:0x6a6a8a,sky:0x4a3a5a,boss:'Lord of Death:3a1a5a:demon',mobs:['Ghost Hound:8a8ab0:cat','Banshee:c0c0ff:blob','Death Knight:4a3a6a:demon','Bone Worm:d0d0c0:worm','Frost Wraith:9ad0ff:bunny','Soul Eater:5a2a7a:bug'],gear:GEAR[8]},
-{n:'Abyss',t:'Glast Heim Abyss (Lv 80-99)',ground:0x3a2a3a,sky:0x1a1020,boss:'Dark Lord:7a0a2a:demon',mobs:['Abyss Knight:5a1a3a:demon','Lava Slime:ff5a1a:blob','Chaos Imp:a02a6a:bug','Shadow Beast:2a1a3a:cat','Doom Tree:3a2a1a:tree','Hell Worm:c04a1a:worm'],gear:GEAR[9]}];
+{n:'Comodo',t:'Coral beach · 2nd-job gear on all stages (Lv 60-80)',ground:0x3fae9a,sky:0x7fe0e0,boss:'Kraken:2a6a9a:blob',mobs:['Merman:3a9ad0:demon','Sea Witch:9a5ac0:bunny','Coral Crab:ff7a6a:bug','Giant Eel:4a8aa0:worm','Siren:7ad0e0:cat','Deep Jelly:aa7aff:blob'],gear:GEAR[5]},
+{n:'Louyang',t:'Bamboo valley · 2nd-job gear on all stages (Lv 60-80)',ground:0x7aa85a,sky:0xc8e0a0,boss:'Dragon Lord:c04a2a:demon',mobs:['Jiangshi:8aa08a:demon','Bamboo Fox:e0a050:cat','Wild Boar:7a5a3a:cat','Stone Golem:9a9a8a:tree','Mantis:6ac04a:bug','Dragon Pup:e05a3a:worm'],gear:GEAR[6]},
+{n:'Amatsu',t:'Sakura shrine · 2nd-job gear on all stages (Lv 60-80)',ground:0xd88aa8,sky:0xf0c0d8,boss:'Shiranui:d03a5a:demon',mobs:['Oni:c03a3a:demon','Kappa:4aa07a:blob','Kitsune:ffd09a:cat','Tengu:a04a4a:bug','Yuki Onna:d0e8ff:bunny','Spirit Lantern:ffe08a:blob'],gear:GEAR[7]},
+{n:'Niflheim',t:'Frozen underworld · 2nd-job, then high-tier gear (Lv 80-99)',ground:0x6a6a8a,sky:0x4a3a5a,boss:'Lord of Death:3a1a5a:demon',mobs:['Ghost Hound:8a8ab0:cat','Banshee:c0c0ff:blob','Death Knight:4a3a6a:demon','Bone Worm:d0d0c0:worm','Frost Wraith:9ad0ff:bunny','Soul Eater:5a2a7a:bug'],gear:GEAR[8]},
+{n:'Abyss',t:'Glast Heim · 3rd-job gear; ascended from Stage 6 (Lv 80-99)',ground:0x3a2a3a,sky:0x1a1020,boss:'Dark Lord:7a0a2a:demon',mobs:['Abyss Knight:5a1a3a:demon','Lava Slime:ff5a1a:blob','Chaos Imp:a02a6a:bug','Shadow Beast:2a1a3a:cat','Doom Tree:3a2a1a:tree','Hell Worm:c04a1a:worm'],gear:GEAR[9],gearUpgrade:ABYSS_ASCENDED}];
 MAPS.forEach(mp=>{mp.mobs=mp.mobs.map(pm);mp.boss=pm(mp.boss)});
 // ---------- mastery index ----------
 // The index is a ledger of *individual species*, not one counter for "all monsters". Each
@@ -1539,22 +1545,23 @@ const dropTier=(m,l)=>Math.min(MAPGRADE[Math.max(0,Math.min(MAPGRADE.length-1,m|
 // v42: Prontera uses Novice gear on every stage. Izlude/Geffen/Morroc/Payon use Novice tier for
 // stages 1-5, 1st-job for 6-7, 2nd-job for 8-9 and high-tier for stage 10. Their map power curve
 // is independently set above so those bands target Base Lv 10-20, then 20-50.
-// v38: maps 5-10 used to hand out high-tier gear from field level 1, a x3.2 value step the moment
-// you arrived. Now the high tier starts at field level 3 and stages 1-2 hand out 2nd-job gear -
-// but the drop's *section* is floored at 2, not taken from secOf(l), which for stages 1-2 is 0
-// (Novice gear: fine on Prontera, vendor trash on Abyss at level 90). Pinned by gear_sim.js.
-const secField=(m,l)=>(l|0)>13?5:(l|0)>10?4:m===0?0:m<=4?(l<=5?0:l<=7?1:l<=9?2:3):(l>=3?3:2);
-function gearPool(m,l){const sec=secField(m,l),tier=dropTier(m,l),sg=MAPS[m].gear[sec],T=[];
-  // Each table entry carries both its gear section (so sections 4/5 display as N) and its real
-  // field rarity. Without tier here the map preview calls every normal piece Common by default.
-  const add=(k,n)=>T.push({k,n,sec,tier});
+// Normal gear is stage-routed by job section, not by its rarity tier: the early maps keep their
+// existing ladders; Comodo/Louyang/Amatsu stay on section 2 throughout; Niflheim moves from section
+// 2 to section 3 at Stage 6; and Abyss is section 3 throughout. Abyss Stage 6+ selects a stronger
+// section-3 variant, so its equip gate stays third-job while its base values and affixes improve.
+const secField=(m,l)=>(l|0)>13?5:(l|0)>10?4:m===0?0:m<=4?(l<=5?0:l<=7?1:l<=9?2:3):m<=7?2:m===8?(l<=5?2:3):3;
+function gearPool(m,l){const sec=secField(m,l),tier=dropTier(m,l),enhanced=m===9&&sec===3&&l>=6&&l<=10,
+    sg=enhanced?MAPS[m].gearUpgrade:MAPS[m].gear[sec],quality=enhanced?ABYSS_ASCENDED_QUALITY:1,T=[];
+  // Each table entry carries its job section and field rarity separately. Abyss's upgraded set is
+  // still section 3 (so it has the same class gate); its higher item quality never becomes a rarity.
+  const add=(k,n)=>T.push({k,n,sec,tier,quality});
   for(const k in sg.w)add(k,sg.w[k]);
   add('armor',sg.a);add('head',sg.h);
   if(sg.o)add('off',sg.o);
   add('leg',sg.l);add('acc',sg.ac);
   if(sg.ac2)add('acc',sg.ac2);
   return T}
-function fieldOf(m,l){const mp=MAPS[m],sec=secField(m,l),T=gearPool(m,l),n=T.length,ft=dropTier(m,l);
+function fieldOf(m,l){const mp=MAPS[m],sec=secField(m,l),T=gearPool(m,l),n=T.length,ft=dropTier(m,l),gearSet=m===9&&sec===3&&l>=6&&l<=10?'abyss-ascended':'base';
   // three gear rolls per mob, spread across the pool so two mobs on one field do not pay out
   // the same item; gear is the common drop and a card is the rare one. From Comodo on the
   // table is the 30% lighter v73 one (FIELD_GEAR_MID); maps 1-5 use the original. The Nightmare
@@ -1562,7 +1569,7 @@ function fieldOf(m,l){const mp=MAPS[m],sec=secField(m,l),T=gearPool(m,l),n=T.len
   const gch=l>10?(m>=5?FIELD_GEAR_MID_NM:FIELD_GEAR_NM):(m>=5?FIELD_GEAR_MID:FIELD_GEAR);
   const mobs=[0,1].map(j=>{const mm=mp.mobs[(l-1+j)%mp.mobs.length],cg=l<=3?0:l<=7?1:2;
     return{...mm,tier:ft,drops:[[T[(l*3+2*j)%n],gch[0]],[T[(l*3+2*j+1)%n],gch[1]],[T[(l*3+2*j+2)%n],gch[2]]],card:{n:mm.n+' Card',stat:cardStat(cg,(m*10+l+j)*3+1),g:cg},cardCh:.15,ore:true,oreCh:l>10?.015:l===10?.01:.005}});
-  return{m,l,sec,tier:ft,mobs,boss:(l===10||l===15)?{...mp.boss,tier:ft,
+  return{m,l,sec,tier:ft,gearSet,mobs,boss:(l===10||l===15)?{...mp.boss,tier:ft,
     // v57: the boss still lists its whole pool - every item stays obtainable - but the pool now
     // totals ~6% per boss instead of one 1% roll per entry (13 entries used to mean 13%). The
     // pool is a chase again: about three boss pieces an hour at the tuned kill rate.
@@ -2536,18 +2543,18 @@ function genGear(T,l,sec,boss,tier){
   // The numeric field-quality input (see dropTier) feeds the existing stat/value rolls. The item
   // rarity identity is resolved separately: normal equipment follows its map band, while sections
   // 4/5 are N. Nightmare items are not forced into the Legendary numeric band.
-  const t=Number.isFinite(tier)?tier:dropTier(S.mp,S.lvl);
+  const t=Number.isFinite(tier)?tier:dropTier(S.mp,S.lvl),quality=Number.isFinite(+T.quality)?Math.max(1,+T.quality):1;
   // v38 balance: the weapon's flat value is divided by 3 (6 -> 2). Weapons are the single
   // biggest power source a character owns, and dividing the base divides it at every level.
   // Armor/head/shield/legwear/accessory keep their value: headgear (maxHp x4) and accessory
   // (maxHp x3) are the HP slots and armour/legs/shield carry DEF, which is the anti-death stat.
-  const val=Math.max(1,Math.round({weapon:2,armor:4,head:10,off:3,leg:3,acc:5}[slot]*[1,2.2,4,7,10.5,15][sec]*(1+l*.15)*RAR[t].m*(MAPVAL[Math.max(0,Math.min(MAPVAL.length-1,(S&&S.mp|0)||0))])*rnd(.9,1.12)));
+  const val=Math.max(1,Math.round({weapon:2,armor:4,head:10,off:3,leg:3,acc:5}[slot]*[1,2.2,4,7,10.5,15][sec]*(1+l*.15)*RAR[t].m*quality*(MAPVAL[Math.max(0,Math.min(MAPVAL.length-1,(S&&S.mp|0)||0))])*rnd(.9,1.12)));
   // v73 (owner): the cdm affix is a weapon/accessory roll, so "crit damage on all seven slots"
   // cannot exist any more. This follows the spirit of the cdm CARD's fit rule (CFIT['cdm'] puts
   // those cards on weapons), widened to accessories because both are the offensive slots. Every
   // other affix still rolls anywhere; gear that already carries a legacy cdm roll keeps it.
   const n=[1,1+ri(0,1),2,2+ri(0,1),3][t],pool=(slot==='weapon'||slot==='acc'?AFF:AFF.filter(k=>k!=='cdm')).slice(),aff=[];
-  for(let i=0;i<n;i++){const k=pool.splice(ri(0,pool.length-1),1)[0];aff.push({k,v:affixValue(k,sec,t,rnd(.8,1.25))})}
+  for(let i=0;i<n;i++){const k=pool.splice(ri(0,pool.length-1),1)[0];aff.push({k,v:Math.max(1,Math.round(affixValue(k,sec,t,rnd(.8,1.25))*quality))})}
   // Katars and bows always have four card sockets; every other weapon keeps the existing 1-3 roll.
   const slots=slot==='weapon'&&(T.k==='katar'||T.k==='bow')?4:slot==='weapon'?Math.min(3,1+ri(0,1)+(t>=3?1:0)):Math.min(1,ri(0,1)+(t>=3?1:0));
   return{id:uid(),slot,wt:slot==='weapon'?T.k:undefined,tier:t,val,name:(sec>=4?'N ':t?RAR[t].n+' ':'')+T.n,aff,slots,cards:[],sec,lvl:l};

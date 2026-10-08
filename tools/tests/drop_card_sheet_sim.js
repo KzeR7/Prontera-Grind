@@ -64,11 +64,19 @@ function liveData(){
   };
   for(let mi=0;mi<X.MAPS.length;mi++){
     const mp=X.MAPS[mi];
-    const sections=Array.from(mp.gear,(g,si)=>{
+    const sectionItems=(g,mi,si)=>{
       const raw=[...Object.entries(g.w).map(([weaponType,name])=>({slot:'weapon',weaponType,name})),
         {slot:'armor',name:g.a},{slot:'head',name:g.h},...(g.o?[{slot:'off',name:g.o}]:[]),
         {slot:'leg',name:g.l},{slot:'acc',name:g.ac},{slot:'acc',name:g.ac2}];
-      return {index:si,items:raw.map((item,i)=>({id:`m${mi}-s${si}-i${i}`,...item}))};
+      return raw.map((item,i)=>({id:`m${mi}-s${si}-i${i}`,...item}));
+    };
+    const sections=Array.from(mp.gear,(g,si)=>{
+      const items=sectionItems(g,mi,si);
+      if(mi===9&&si===3){
+        const added=sectionItems(mp.gearUpgrade,mi,si).map((item,i)=>({...item,id:`m${mi}-s${si}-u-i${i}`,gearSet:'abyss-ascended'}));
+        items.push(...added);
+      }
+      return {index:si,items};
     });
     const stages=[];
     for(let level=1;level<=10;level++){
@@ -80,7 +88,7 @@ function liveData(){
       };
       const card=c=>({name:c.n,grade:c.g,stat:c.stat,value:X.cardVal(c.g,c.stat)});
       stages.push({
-        stage:level,power:X.fieldPower(mi,level),section:sec,tier:F.tier,rarity:X.RAR[F.tier].n,
+        stage:level,power:X.fieldPower(mi,level),section:sec,gearSet:F.gearSet,tier:F.tier,rarity:X.RAR[F.tier].n,
         mobs:Array.from(F.mobs,m=>({name:m.n,drops:Array.from(m.drops,([item,rate])=>({itemId:itemId(item),rate})),card:card(m.card),cardRate:m.cardCh,ore:!!m.ore,oreRate:m.oreCh||0})),
         boss:F.boss?{name:F.boss.n,drops:Array.from(F.boss.drops,([item,rate])=>({itemId:itemId(item),rate})),card:card(F.boss.card),cardRate:F.boss.cardCh,ore:!!F.boss.ore,oreRate:F.boss.oreCh||0}:null
       });
@@ -108,14 +116,14 @@ console.log('equipment & card sheet: offline, live-source baseline\n');
 t('the embedded snapshot exactly matches the current game tables',()=>assert.deepStrictEqual(sheet,live));
 t('the worksheet covers all maps, gear sections, and field stages',()=>{
   assert.strictEqual(sheet.maps.length,10);
-  // v76: six sections per map - the four job tiers plus the two Nightmare rows that only the band
-  // above stage 10 rolls. The stage list stays the ten normal stages.
+  // Each map has four normal job sections plus the two separate Nightmare rows; the Abyss's
+  // enhanced third-job set is listed as a variant inside section 3, not a new equip-gate section.
   for(const m of sheet.maps){assert.strictEqual(m.sections.length,6,m.name);assert.strictEqual(m.stages.length,10,m.name);assert.ok(m.stages.every(s=>s.mobs.length===2),m.name+' field mob count')}
   assert.ok(sheet.maps.every(m=>m.sections[4].name===undefined||m.sections[4].items.length>0),'the Nightmare rows carry items');
   assert.strictEqual(sheet.sectionNames[4],'Nightmare gear');assert.strictEqual(sheet.sectionNames[5],'Abyssal Nightmare gear');
-  assert.strictEqual(sheet.maps.reduce((n,m)=>n+m.sections.reduce((a,s)=>a+s.items.length,0),0),588);
+  assert.strictEqual(sheet.maps.reduce((n,m)=>n+m.sections.reduce((a,s)=>a+s.items.length,0),0),601);
 });
-t('the worksheet snapshot carries the new field-power and gear-tier progression',()=>{
+t('the worksheet snapshot carries the map-specific equipment progression',()=>{
   assert.strictEqual(sheet.sectionNames[0],'Starter gear');
   assert.ok(!sheet.maps[0].sections[0].items.some(x=>x.slot==='off'),'Novice starter drops must exclude shields');
   assert.deepStrictEqual(sheet.maps[0].stages.map(s=>s.power),[1,2,3,4,5,6,7,8,9,10]);
@@ -129,15 +137,39 @@ t('the worksheet snapshot carries the new field-power and gear-tier progression'
     assert.ok(sheet.maps[mi].t.includes('stages 1-5 Lv 10-20; 6-10 Lv 20-50'));
   }
   assert.ok(sheet.maps[0].t.includes('Lv 1-10'));
-  for(let mi=5;mi<10;mi++)assert.deepStrictEqual(sheet.maps[mi].stages.map(s=>s.section),[2,2,3,3,3,3,3,3,3,3]);
+  for(let mi=5;mi<=7;mi++)assert.deepStrictEqual(sheet.maps[mi].stages.map(s=>s.section),Array(10).fill(2),sheet.maps[mi].name+' keeps second-job gear all stages');
+  assert.deepStrictEqual(sheet.maps[8].stages.map(s=>s.section),[2,2,2,2,2,3,3,3,3,3],'Niflheim: better second-job gear, then third-job gear');
+  assert.deepStrictEqual(sheet.maps[9].stages.map(s=>s.section),Array(10).fill(3),'Abyss stays third-job eligible throughout');
+  assert.deepStrictEqual(sheet.maps[9].stages.slice(0,5).map(s=>s.gearSet),Array(5).fill('base'));
+  assert.deepStrictEqual(sheet.maps[9].stages.slice(5).map(s=>s.gearSet),Array(5).fill('abyss-ascended'));
+  assert.ok(sheet.maps[9].sections[3].items.some(x=>x.gearSet==='abyss-ascended'),'enhanced gear is catalogued under the same section-3 gate');
 });
 t('every stage item assignment follows the real pool rotation',()=>{
   for(let mi=0;mi<sheet.maps.length;mi++)for(const stage of sheet.maps[mi].stages){
-    const pool=sheet.maps[mi].sections[stage.section].items;
+    const pool=sheet.maps[mi].sections[stage.section].items.filter(x=>(x.gearSet||'base')===stage.gearSet);
     for(let mob=0;mob<stage.mobs.length;mob++)for(let d=0;d<3;d++){
       const expected=pool[(stage.stage*3+2*mob+d)%pool.length].id;
       assert.strictEqual(stage.mobs[mob].drops[d].itemId,expected,`${sheet.maps[mi].name} stage ${stage.stage} mob ${mob+1} roll ${d+1}`);
     }
+  }
+});
+t('every requested stage band drops weapon families for all eligible class lines',()=>{
+  const weaponTypes=[...sheet.weaponTypes].sort(),groups=[
+    [5,Array.from({length:10},(_,i)=>i+1)],[6,Array.from({length:10},(_,i)=>i+1)],[7,Array.from({length:10},(_,i)=>i+1)],
+    [8,[1,2,3,4,5]],[8,[6,7,8,9,10]],[9,[1,2,3,4,5]],[9,[6,7,8,9,10]]
+  ];
+  for(const [mi,levels] of groups){
+    const types=new Set(),dropped=new Set(),droppedSlots=new Set();
+    for(const level of levels){
+      const stage=sheet.maps[mi].stages[level-1],pool=sheet.maps[mi].sections[stage.section].items.filter(x=>(x.gearSet||'base')===stage.gearSet);
+      pool.filter(x=>x.slot==='weapon').forEach(x=>types.add(x.weaponType));
+      stage.mobs.flatMap(m=>m.drops).forEach(d=>{
+        const item=pool.find(x=>x.id===d.itemId);if(item){droppedSlots.add(item.slot);if(item.slot==='weapon')dropped.add(item.weaponType)}
+      });
+    }
+    assert.deepStrictEqual([...types].sort(),weaponTypes,`${sheet.maps[mi].name} stages ${levels[0]}-${levels.at(-1)} catalogue coverage`);
+    assert.deepStrictEqual([...dropped].sort(),weaponTypes,`${sheet.maps[mi].name} stages ${levels[0]}-${levels.at(-1)} actual drops cover every class weapon family`);
+    assert.deepStrictEqual([...droppedSlots].sort(),['acc','armor','head','leg','off','weapon'],`${sheet.maps[mi].name} stages ${levels[0]}-${levels.at(-1)} actual drops cover each equipment slot`);
   }
 });
 t('rarity, card grades, and Stage-10 boss pools are complete',()=>{
@@ -146,7 +178,7 @@ t('rarity, card grades, and Stage-10 boss pools are complete',()=>{
     for(const s of m.stages){
       const cardGrade=s.stage<=3?0:s.stage<=7?1:2;
       for(const mob of s.mobs){assert.strictEqual(mob.drops.length,3);assert.strictEqual(mob.card.grade,cardGrade);assert.strictEqual(mob.card.name,mob.name+' Card')}
-      if(s.stage===10){assert.ok(s.boss);assert.strictEqual(s.boss.drops.length,m.sections[s.section].items.length);
+      if(s.stage===10){assert.ok(s.boss);const stagePool=m.sections[s.section].items.filter(x=>(x.gearSet||'base')===s.gearSet);assert.strictEqual(s.boss.drops.length,stagePool.length);
         // v57: the pool still lists every item, but the whole pool now totals ~6% per boss kill
         // v73: maps 6-10 (index 5+) pay 30% less, so their boss pool totals ~4.2% per kill
         const total=s.boss.drops.reduce((a,d)=>a+d.rate,0),want=mi>=5?4.2:6;
@@ -168,6 +200,7 @@ t('card effect matrix uses the game’s actual rounded values and roll pools',()
 });
 t('worksheet migrates v45 edits through the merged class-skin + balance build',()=>{
   const script=html.match(/<script>\s*([\s\S]*?)\s*<\/script>/)[1];
+  assert.ok(script.includes("'2026-10-08 grind-v78.1 Nightmare N rarity and class gates'"),'v78.1 worksheet edits survive the stage-progression update');
   assert.ok(script.includes("'2026-10-08 grind-v78 saved class weapon sprites'"),'v78 worksheet edits survive the N-tier correction');
   assert.ok(script.includes("'2026-10-08 grind-v77.3 map clears advance, Stage 10 normal-mode cue, town and Echo row'"),'v77.3 worksheet edits survive the rarity-display correction');
   assert.ok(script.includes("'2026-10-05 skin-v53 class animations decoded in-game'"),'skin-v53 becomes a safe previous build once the merged snapshot is written');

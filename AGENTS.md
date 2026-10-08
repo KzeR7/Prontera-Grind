@@ -4787,3 +4787,25 @@ The owner's second pass over v77, six notes, all built.
   `tools/tests/{gear_sim,nightmare_sim,trial_sim,ui_sim,drop_card_sheet_sim,offline_sim,starter_sim,town_smoke}.js`,
   `Updates/cards-gear-audit/{affix-ranges,equipment-cards-tuning}.html`, deployment/build notes,
   `READ-ME-FIRST.md`, and this log.
+
+### 2026-10-08 — `grind-v78.2 stage-routed second- and third-job equipment`
+
+* **Owner's requested map distribution:** Comodo, Louyang, and Amatsu use section 2 on every normal
+  stage. Niflheim uses its improved section-2 set on stages 1-5, then section 3 on stages 6-10.
+  Abyss uses standard section-3 gear on stages 1-5 and a distinct upgraded section-3 set on stages
+  6-10 (the upgrade begins at Stage 6, not Stage 5).
+* **Job eligibility stays separate from quality:** the Abyss upgrade keeps `sec=3`, preserving the
+  third-job/transcendent equip gate. Its 1.25 quality factor improves generated base values and
+  affixes without changing its map-based rarity, turning it into Nightmare N, or changing drop odds.
+* **Class coverage:** each active stage pool carries all seven supported weapon families. The
+  stage-rotation checks confirm actual drops cover every family in each of the Comodo/Louyang/Amatsu,
+  Niflheim 1-5, Niflheim 6-10, Abyss 1-5, and Abyss 6-10 bands. Second-job and third-job gates remain
+  pinned separately; no class gains access to a section it could not equip before.
+* **Normal rarity and chances:** `MAPTIER`, `MAPGRADE`, Stage 10's whole-field cap, and all field/boss
+  equipment rates remain unchanged. Nightmare sections 4-5 still use the independent N identity.
+* **Checks:** all 36 `*_sim.js` suites passed; Town smoke passed 40/40. Focused: `gear_sim` 37/37,
+  `drop_card_sheet_sim` 13/13, `nightmare_sim` 9/9, `ui_sim` 50/50, and `trial_sim` 16/16.
+  `git diff --check` is clean.
+* **Files:** `index.html` (v78.2 stage routing, Abyss ascended gear variant),
+  `tools/tests/{gear_sim,drop_card_sheet_sim}.js`, the embedded equipment worksheet baseline,
+  `READ-ME-FIRST.md`, and this log.

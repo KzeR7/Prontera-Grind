@@ -80,19 +80,30 @@ is the live one; with no argument the tool prints how to set a new one). Since v
 `GM` / `test1234`; `localStorage.removeItem('pg_gm_local')` removes it. Normal accounts are made
 in-game and stored in the browser (`pg_acc4`; saves under `pg_save3_<user>`).
 
-## BUILD v78 — saved class weapon sprites on the updated v77.2 game
+## BUILD v78.2 — map-stage equipment progression for every class
 
-The new build keeps the v77.2 trial payout, daily-priced Shard Store, and HD Prontera town, and adds the saved weapon art to the live animated hero.
+The normal route now matches the class gear you asked for while keeping job eligibility (`section`),
+rarity (`tier` / N), and drop odds separate.
 
-* The game loads the local weapon sprite pack and saved proposal defaults, then composites the matching weapon over each decoded class-skin frame using its class, gender, view, and frame placement. Saved grip, offset, rotation, scale, flip, per-view bare/armed choices, and frame interpolation are respected.
-* All 19 playable jobs are covered for both male and female sprites. A class uses its saved design for the selected weapon family; another equippable family falls back to that family's first bundled design. Combat and equipment stats are unchanged, and the remote square-item overlay remains disabled.
-* The proposal page starts from the defaults used by the game. Later edits in that page remain proposals until copied back and integrated.
-* **Checks:** all **36** `*_sim.js` suites passed; `town_smoke.js` passed **40/40**. Focused results: `class_skin_sim` 40/40, `weapon_proposal_sim` 587/587, and `drop_card_sheet_sim` 12/12. The preview's game, proposal page, and both weapon-data assets return HTTP 200.
+* **Comodo, Louyang, and Amatsu:** all normal stages 1-10 drop section-2, second-job gear.
+* **Niflheim:** stages 1-5 drop its stronger section-2 second-job set; stages 6-10 switch to
+  section-3 third-job/high-tier gear.
+* **Abyss:** stages 1-5 drop the standard section-3 third-job set. Stages 6-10 switch at Stage 6 to
+  a distinct upgraded third-job set with 25% stronger item values and affixes. It remains section 3,
+  so the third-job/transcendent equip gate still applies; it is not Nightmare N or a new rarity tier.
+* **Every class has a weapon to hunt in each stage band.** The active pools retain all seven weapon
+  families, and the stage rotations cover those families across Comodo, Louyang, Amatsu, both
+  Niflheim bands, and both Abyss bands. Non-weapon slots remain available in those gear sets too.
+* **Rarity and drop chances are unchanged.** Map-based rarity caps, Stage 10's full-field cap, and
+  all equipment drop rates stay as before. Nightmare sections 4-5 remain the separate N category.
+* **Checks:** all **36** `*_sim.js` suites passed; Town smoke passed **40/40**. Focused results:
+  `gear_sim` 37/37, `drop_card_sheet_sim` 13/13, `nightmare_sim` 9/9, `ui_sim` 50/50, and
+  `trial_sim` 16/16.
 
 ## BUILD v78.1 — Nightmare N rarity, equipment gates, and field-tier corrections
 
-This follow-up corrects the Nightmare classification while keeping the v78 saved weapon sprites and
-all normal map/drop tuning intact.
+This follow-up corrected the Nightmare classification while keeping the v78 saved weapon sprites.
+Its earlier map-stage routing below has since been superseded by the v78.2 distribution above.
 
 * **Nightmare gear is N, not Legendary.** Sections 4-5 use the independent N rarity and auto-sell
   bucket. The all-maps numeric tier-4 override is removed; generated quality follows the selected
@@ -108,6 +119,15 @@ all normal map/drop tuning intact.
   together in their compact destination row. Normal drop-table previews carry the same map rarity as
   their generated equipment instead of defaulting to Common.
 * **Checks:** all **36** `*_sim.js` suites passed; Town smoke passed **40/40**. Focused results: `gear_sim` 35/35, `nightmare_sim` 9/9, `ui_sim` 50/50, `trial_sim` 16/16, `class_skin_sim` 40/40, and `drop_card_sheet_sim` 12/12.
+
+## BUILD v78 — saved class weapon sprites on the updated v77.2 game
+
+The new build keeps the v77.2 trial payout, daily-priced Shard Store, and HD Prontera town, and adds the saved weapon art to the live animated hero.
+
+* The game loads the local weapon sprite pack and saved proposal defaults, then composites the matching weapon over each decoded class-skin frame using its class, gender, view, and frame placement. Saved grip, offset, rotation, scale, flip, per-view bare/armed choices, and frame interpolation are respected.
+* All 19 playable jobs are covered for both male and female sprites. A class uses its saved design for the selected weapon family; another equippable family falls back to that family's first bundled design. Combat and equipment stats are unchanged, and the remote square-item overlay remains disabled.
+* The proposal page starts from the defaults used by the game. Later edits in that page remain proposals until copied back and integrated.
+* **Checks:** all **36** `*_sim.js` suites passed; `town_smoke.js` passed **40/40**. Focused results: `class_skin_sim` 40/40, `weapon_proposal_sim` 587/587, and `drop_card_sheet_sim` 12/12. The preview's game, proposal page, and both weapon-data assets return HTTP 200.
 
 ## BUILD v77.2 — the trial pays a flat number, the store is priced on a day's pay, and your HD town is in
 
