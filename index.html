@@ -242,6 +242,8 @@ hr{border:0;border-top:1px dashed var(--edge);margin:6px 0}
 .dropgrp small{font-weight:bold}
 .dropline.cant{opacity:.45}
 .dropline.cant b{text-decoration:line-through}
+.dropline.worse{opacity:.7}
+.dropline.worse .dwho{opacity:.45}
 .dwho{opacity:.6;font-style:italic}
 .poollist{display:flex;flex-wrap:wrap;gap:3px;margin:3px 0;min-width:0}
 .poolitem{border:1px solid var(--edge2);border-radius:4px;padding:1px 5px;font-size:11px;background:rgba(0,0,0,.045);max-width:100%;overflow-wrap:anywhere}
@@ -290,6 +292,7 @@ hr{border:0;border-top:1px dashed var(--edge);margin:6px 0}
 .cell{background:#e9dcb8;border-width:3px;text-shadow:0 1px 2px #0005}.cell.empty{background:#d5c79f}
 .cell.b0{background:#eceae4;border-color:#8c8c8c}.cell.b1{background:#c9f2c9;border-color:#2e9e3e}.cell.b2{background:#c6dcff;border-color:#2f6fd6}.cell.b3{background:#e6c9ff;border-color:#9a3ae0}.cell.b5{background:#e8d5ff;border-color:#7c3aed;box-shadow:0 0 9px #7c3aedaa}
 .cell.b6{background:#f7d6fe;border-color:#c026d3;box-shadow:0 0 10px #c026d3bb}
+.cell.worse{filter:saturate(.4);opacity:.82}
 .cell.nm::after{content:'N';position:absolute;top:-6px;right:-6px;background:#5b21b6;color:#fff;font:700 9px/1.3 sans-serif;padding:1px 4px;border-radius:6px;letter-spacing:.5px}
 .cell.nm img.ro-item-icon,.cell.nm .ro-icon-fallback{filter:drop-shadow(0 0 3px #7c3aed)}
 .cell.b4{background:#ffe3a0;border-color:#ff9a00;box-shadow:0 0 8px #ff9a00}
@@ -651,7 +654,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // script block, which is a SyntaxError - the game did not run on main at all. One line wins, and
 // it names both sides of this merge: the v38 balance patch (the weapon cut, the affix/card
 // give-back) and main's weapon-hold rendering work.
-const BUILD='2026-10-08 grind-v79 weapon-first field drops, one pool list, class gates, N+ rarity';   // shown on the login card - confirms which file you loaded
+const BUILD='2026-10-08 grind-v80 class-gate reasons in the bag, Geffen/Payon second weapon, per-kill rates, downgrade flags';   // shown on the login card - confirms which file you loaded
 $('buildTag').textContent='build '+BUILD;
 
 // ---------- class tree: Novice -> 6 first jobs -> 6 second jobs -> 6 third jobs ----------
@@ -917,21 +920,21 @@ const GEAR=[
   G(['sword:Cutlass','axe:Battle Axe','mace:Flail'],'Mariner Vest','Bandana','Iron Shield','Mariner Slacks','Brass Ring','Coin Pendant'),
   G(['sword:Sea Saber','axe:Great Axe','mace:Iron Mace'],'Sea Mail','Iron Cap','Tower Shield','Sea Greaves','Merchant Ring','Ledger Pendant'),
   G(['sword:Admiral Saber','axe:Golden Axe','mace:Loaded Mace'],'Admiral Coat','Captain Hat','Admiral Guard','Admiral Boots','Guild Ring','Guild Pendant')],
- // --- Geffen: Mage line (staves only) ---
- [G(['staff:Rod'],'Mage Shirt','Hairband','Novice Buckler','Mage Trousers','Apprentice Ring','Glass Bead'),
-  G(['staff:Staff of Soul'],'Silk Robe','Wizard Cap','Rune Shield','Silk Leggings','Apprentice Pendant','Moon Bead'),
-  G(['staff:Arc Wand'],'Mage Robe','Wizard Hat','Magic Guard','Rune Trousers','Mystic Ring','Star Bead'),
-  G(['staff:Wand of Hermes'],'Archmage Robe','Mage Crown','Arcane Guard','Archmage Boots','Archmage Ring','Mana Pendant')],
+ // --- Geffen: Mage line (staves) and the knife a thief levels on there ---
+ [G(['staff:Rod','dagger:Dirk'],'Mage Shirt','Hairband','Novice Buckler','Mage Trousers','Apprentice Ring','Glass Bead'),
+  G(['staff:Staff of Soul','dagger:Ice Pick'],'Silk Robe','Wizard Cap','Rune Shield','Silk Leggings','Apprentice Pendant','Moon Bead'),
+  G(['staff:Arc Wand','dagger:Damascus'],'Mage Robe','Wizard Hat','Magic Guard','Rune Trousers','Mystic Ring','Star Bead'),
+  G(['staff:Wand of Hermes','dagger:Ginnungagap'],'Archmage Robe','Mage Crown','Arcane Guard','Archmage Boots','Archmage Ring','Mana Pendant')],
  // --- Morroc: Thief daggers and Assassin Katars (Assassin jobs use only the two-handed Katar) ---
  [G(['dagger:Desert Knife','katar:Jur'],'Desert Shirt','Turban','Dune Buckler','Desert Pants','Sand Ring','Scorpion Charm'),
   G(['dagger:Gladius','katar:Katar'],'Thief Clothes','Thief Hood','Shadow Shield','Thief Slacks','Thief Ring','Silent Charm'),
   G(['dagger:Sword Breaker','katar:Jamadhar'],'Assassin Garb','Black Hood','Assassin Guard','Assassin Boots','Assassin Ring','Venom Charm'),
   G(['dagger:Sandstorm Dagger','katar:Bloody Roar'],'Shadow Cloak','Shadow Mask','Night Guard','Shadow Boots','Cross Ring','Reaper Charm')],
- // --- Payon: Archer / Hunter lines (bows only) ---
- [G(['bow:Short Bow'],'Leather Shirt','Straw Hat','Quiver Guard','Leather Pants','Hunter Ring','Feather Charm'),
-  G(['bow:Composite Bow'],'Hunter Vest','Feather Cap','Leaf Shield','Hunter Slacks','Falcon Ring','Arrow Charm'),
-  G(['bow:Great Bow'],'Hunter Suit','Archer Hat','Falcon Guard','Hunter Boots','Eagle Ring','Falcon Charm'),
-  G(['bow:Gakkung Bow'],'Ranger Coat','Elven Hat','Elven Guard','Ranger Boots','Elven Ring','Wind Charm')],
+ // --- Payon: Archer / Hunter lines (bows) and the sword a Swordman levels on there ---
+ [G(['bow:Short Bow','sword:Hunting Sword'],'Leather Shirt','Straw Hat','Quiver Guard','Leather Pants','Hunter Ring','Feather Charm'),
+  G(['bow:Composite Bow','sword:Haedonggum'],'Hunter Vest','Feather Cap','Leaf Shield','Hunter Slacks','Falcon Ring','Arrow Charm'),
+  G(['bow:Great Bow','sword:Chrome Sword'],'Hunter Suit','Archer Hat','Falcon Guard','Hunter Boots','Eagle Ring','Falcon Charm'),
+  G(['bow:Gakkung Bow','sword:Emerald Blade'],'Ranger Coat','Elven Hat','Elven Guard','Ranger Boots','Elven Ring','Wind Charm')],
  // --- Comodo: coral beach, mixed - every class line is served here ---
  [G(['katar:Coral Claw','mace:Tide Mace','staff:Tide Rod'],'Coral Shirt','Shell Cap','Barnacle Buckler','Coral Shorts','Shell Ring','Sea Glass'),
   G(['bow:Reef Bow','axe:Crab Axe','sword:Reef Sabre'],'Fishing Vest','Sea Breeze Band','Coral Shield','Reef Trousers','Pearl Ring','Mermaid Tear'),
@@ -970,13 +973,13 @@ const MAPS=[
 {n:'Izlude',t:'Swordman & Merchant · stages 1-5 Lv 10-20; 6-10 Lv 20-50',ground:0x6fc2b0,sky:0x8ee0f0,boss:'Drake:4a5a8a:demon',
  mobs:['Marina:5ad1c8:blob','Pupa:e0c070:worm','Crab:e0605a:bug','Sea Otter:8a6a4a:cat','Muka:6aa84f:tree','Anacondaq:3f8a3f:worm','Thief Bug:3a3a55:bug','Marse:6a8ae0:blob','Ambernite:e07aa0:worm','Kukre:d98a3a:bug'],
  gear:GEAR[1]},
-{n:'Geffen',t:'Mage · stages 1-5 Lv 10-20; 6-10 Lv 20-50',ground:0x8c8caa,sky:0x9a90c8,boss:'Baphomet:6a3fa0:demon',
+{n:'Geffen',t:'Mage & Thief · staves and daggers · stages 1-5 Lv 10-20; 6-10 Lv 20-50',ground:0x8c8caa,sky:0x9a90c8,boss:'Baphomet:6a3fa0:demon',
  mobs:['Skeleton:e8e8e8:bunny','Zombie:7a9a6a:worm','Ghoul:6a7a5a:demon','Poison Spore:8a5aa0:tree','Whisper:bfd0ff:blob','Bat Familiar:5a3a6a:bug','Dark Priest:3a2a4a:demon','Wraith:8a8ab0:blob','Evil Druid:4a3a5a:tree','Marionette:ff8ad0:bunny'],
  gear:GEAR[2]},
 {n:'Morroc',t:'Thief · stages 1-5 Lv 10-20; 6-10 Lv 20-50',ground:0xdcc78e,sky:0xf0d9a0,boss:'Phreeoni:c9a040:bug',
  mobs:['Scorpion:d9a84a:bug','Sand Man:e0c78a:blob','Desert Wolf:c9a86a:cat','Cactus:5aa050:tree','Pasana:c94a2a:demon','Horn:a08050:bug','Mummy:d9d0b0:worm','Isis:ffcf6a:cat','Anubis:2a2a3a:demon','Minorous:8a4a2a:demon'],
  gear:GEAR[3]},
-{n:'Payon',t:'Archer · stages 1-5 Lv 10-20; 6-10 Lv 20-50',ground:0x4f8f4a,sky:0x8fc8a0,boss:'Eddga:e67a2e:cat',
+{n:'Payon',t:'Archer & Swordman · bows and swords · stages 1-5 Lv 10-20; 6-10 Lv 20-50',ground:0x4f8f4a,sky:0x8fc8a0,boss:'Eddga:e67a2e:cat',
  mobs:['Spore:d06a6a:tree','Wolf:8a8a95:cat','Elder Willow:4a7a3a:tree','Hornet:e8c840:bug','Bigfoot:9a7a5a:demon','Zenorc:5a8a4a:demon','Skel Archer:d0d0c0:bunny','Ancient Worm:b0a080:worm','Orc Warrior:4a7a3a:demon','Orc Archer:6a8a3a:demon'],
  gear:GEAR[4]},
 {n:'Comodo',t:'Coral beach · 2nd-job gear on all stages (Lv 60-80)',ground:0x3fae9a,sky:0x7fe0e0,boss:'Kraken:2a6a9a:blob',mobs:['Merman:3a9ad0:demon','Sea Witch:9a5ac0:bunny','Coral Crab:ff7a6a:bug','Giant Eel:4a8aa0:worm','Siren:7ad0e0:cat','Deep Jelly:aa7aff:blob'],gear:GEAR[5]},
@@ -1499,8 +1502,18 @@ const secOf=l=>l<=3?0:l<=7?1:l<=9?2:3,secOf0=l=>l<=3?0:l<=7?1:l<=9?2:3;
 const cardVal=(g,st)=>st==='cdm'?([3,7,10,13][g]||1):Math.max(1,Math.round((CV[g]||1)*(AB[st]||1)));
 const cardStat=(g,seed)=>{const p=g>=2?AFF:K5;return p[((seed%p.length)+p.length)%p.length]};
 // A pool entry's k is its weapon type for weapons ('sword', 'bow', ...) and its slot for
-// everything else, so the UI asks gearSlot() which panel group an entry belongs to.
-const ARM=['armor','head','off','leg','acc'],gearSlot=x=>ARM.includes(x.k)?x.k:'weapon';
+// everything else, so the UI asks gearSlot() which panel group an entry belongs to. A generated
+// item spells the same thing out on `slot` + `wt`, so both shapes go through the same readers and
+// the map panel's drop line and the bag's item card explain themselves in the same words.
+const ARM=['armor','head','off','leg','acc'],gearSlot=x=>x.slot?x.slot:ARM.includes(x.k)?x.k:'weapon',
+ gearKind=x=>x.slot?(x.slot==='weapon'?x.wt:x.slot):x.k,
+ canWield=x=>gearTierOK(x)&&(gearSlot(x)==='off'?canShield():gearSlot(x)!=='weapon'||C().wt.includes(gearKind(x))),
+ // v80: "you cannot use this" has three different causes and the bag used to say none of them.
+ // One sentence, whichever shape the gear arrives in: the class tier, the weapon family, or the
+ // shield rule. This is the same line the map panel puts on a dimmed drop (v79).
+ whyNot=x=>canWield(x)?'':!gearTierOK(x)?`Locked to ${gearUserOf(x)}: your ${S.cls} cannot wear it yet.`
+  :gearSlot(x)==='weapon'?`Your ${S.cls} cannot wield ${/^[aeiou]/.test(gearKind(x))?'an':'a'} ${gearKind(x)}.`
+  :gearSlot(x)==='off'?`Your ${S.cls} cannot hold a shield.`:'Your ${S.cls} cannot use this.';
 // ---------- bag capacity & fixed drop rarity ----------
 // The bag holds 1000 items. Loot is refused once it is full (the drop stays on the ground and
 // is reported) so a long farm cannot silently grow an unbounded save.
@@ -1605,13 +1618,15 @@ function fieldOf(m,l){const mp=MAPS[m],sec=secField(m,l),T=gearPool(m,l),n=T.len
 // why on hover - the class gate is part of choosing where to farm, not a surprise that only turns
 // up in the bag after the drop.
 const poolIc=T=>gearSlot(T)==='weapon'?(WICON[T.k]||'⚔️'):{armor:'🥼',head:'🎩',off:'🛡️',leg:'👖',acc:'💍'}[T.k];
-// Why (if at all) the player's own class cannot use a pool entry - the class gate is part of
-// choosing where to farm, not a surprise that only turns up in the bag after the drop. The reason
-// is spelled out, because "you cannot use this" has three different causes: the class tier, the
-// weapon family, and the shield rule.
-const poolWhy=T=>gearTierOK(T)?(gearSlot(T)==='weapon'&&!C().wt.includes(T.k)?`Your ${S.cls} cannot wield ${/^[aeiou]/.test(T.k)?'an':'a'} ${T.k}`:gearSlot(T)==='off'&&!canShield()?`Your ${S.cls} cannot hold a shield`:''):`Your ${S.cls} cannot wear ${SECN[T.sec]} yet`;
-const dropAttr=T=>{const w=poolWhy(T);return w?` class="dropline cant" title="${w}"`:' class="dropline"'};
-const dropTxt=([T,ch],who)=>`<div${dropAttr(T)}><span>${poolIc(T)} ${T.n} <small class="${rarCls(T)}">${rarOf(T).n}</small>${who?` <small class="dwho">${who}</small>`:''}</span><b>${ch}%</b></div>`;
+// v80: is this drop strictly weaker than the piece already worn in its slot? Compared on the same
+// Gear Lv reference the item card prints (field level + 10 per quality step), so the panel can say
+// "this field is behind you" without pretending to know the affix roll. An empty slot is never a
+// comparison, and a drop from the field you are standing on is only ever worse than gear from
+// further along the same ladder.
+const dropIsWorse=T=>{const cur=gearSlot(T)==='acc'?(S.eq.acc1||S.eq.acc2):S.eq[gearSlot(T)];
+  return !!cur&&gearRefLevel({lvl:mapL,tier:T.tier})<gearRefLevel(cur)};
+const dropTxt=([T,ch],who)=>{const why=whyNot(T),worse=dropIsWorse(T),cls='dropline'+(why?' cant':'')+(worse?' worse':''),tip=[why,worse?`Weaker than the ${SLOTS[gearSlot(T)].label.toLowerCase()} you are wearing`:''].filter(Boolean).join(' · ')
+ return`<div class="${cls}"${tip?` title="${tip}"`:''}><span>${poolIc(T)} ${T.n} <small class="${rarCls(T)}">${rarOf(T).n}</small>${who?` <small class="dwho">${who}</small>`:''}</span><b>${ch}%</b></div>`};
 
 // ---------- stat progression ----------
 // Stats cap at 99 until Base Lv 100, then the elite tier opens up to 120. Raising a stat
@@ -2993,18 +3008,25 @@ const find=id=>[...S.inv,...items(),...S.cards].find(x=>String(x.id)===String(id
 // It is not the item's rarity label (Nightmare equipment is N), and never gates use by Base Lv.
 const gearRefLevel=it=>Math.max(1,Math.min(150,Math.floor(+it.lvl||1)+10*Math.max(0,Math.min(4,Math.floor(+it.tier||0)))));
 function toggleGearLock(id){const it=find(id);if(!it||it.card||it.ore)return;it.locked=!it.locked;log(`${iname(it)} ${it.locked?'locked':'unlocked'}.`,it.locked?'r3':'','gear');ui();save()}
-const cell=(it,sel,extra='')=>`<div class="cell b${dtier(it)}${it&&+it.sec>=4?' nm':''}${sel?' sel':''}" data-tip="${it.id}" ${extra}>${icon(it)}${it.locked?`<i class="lockstar" title="Locked gear" aria-label="Locked">&#9733;</i>`:''}${it.r?`<i class="rf">+${it.r}</i>`:''}</div>`;
+// v80: a bag tile that is strictly weaker than the piece already worn in its slot is marked, so a
+// full bag reads as "sell this" instead of a wall of near-identical tiles. An empty slot is never
+// a comparison (nothing worn reads as unbeatable), and the worn piece is never flagged against
+// itself - ev(it)<ev(it) is false by definition.
+const cell=(it,sel,extra='')=>`<div class="cell b${dtier(it)}${it&&+it.sec>=4?' nm':''}${sel?' sel':''}${it&&it.slot&&ev(it)<ev(it.slot==='acc'?(S.eq.acc1||S.eq.acc2):S.eq[it.slot]||{val:1e9})?' worse':''}" data-tip="${it.id}" ${extra}>${icon(it)}${it.locked?`<i class="lockstar" title="Locked gear" aria-label="Locked">&#9733;</i>`:''}${it.r?`<i class="rf">+${it.r}</i>`:''}</div>`;
 function itemMain(it){
   if(it.card)return`<b class="r${GI[it.g]}">${it.n}</b><div>${GRADE[it.g]} card &middot; <b>${SU(it.stat)} +${it.v}</b></div><div><small>Fits: ${CFL[CFIT[it.stat]]} only</small></div>`;
   // v74: the class tier of a piece is part of its description, and a piece that came off a class
   // remembers who was wearing it so the lock is never a mystery: "it is locked BECAUSE Knight had
   // it on, and it goes back on the moment you switch to Knight again".
+  // v80: the lock line is whyNot() - the same sentence the map panel puts on a dimmed drop - so
+  // "cannot use this" finally names its cause (class tier, weapon family or the shield rule)
+  // instead of leaving the player to guess which of the three it was.
   return`<b class="${rarCls(it)}">${iname(it)}</b><div><small>${rarOf(it).n} ${SLOTS[it.slot].label}${it.wt?' ('+it.wt+')':''} &middot; ${SECN[it.sec||0]}</small></div>
   <div><small>Worn by: <b>${gearUserOf(it)}</b></small></div>
   <div><small>Gear Lv ${gearRefLevel(it)} &middot; reference only: gear is gated by class tier, never by Base Lv</small></div>${it.locked?`<div><small class="r3">&#9733; Locked &middot; protected from auto-sell</small></div>`:''}
-  ${gearTierOK(it)?'':`<div><small class="r0">Locked to ${gearUserOf(it)}: your ${S.cls} cannot wear it.${it.wearer?` This was ${it.wearer}'s gear - it goes straight back on when you switch to ${it.wearer} again.`:''}</small></div>`}
-  <div><b>${SLOTS[it.slot].stat} +${ev(it)}</b>${it.r?` <small>(base ${it.val})</small>`:''}</div>${(it.aff||[]).length?`<div class="sec">Affixes <small>(${it.aff.length} random)</small></div>`:''}${(it.aff||[]).map(a=>`<div class="r1">&#9670; ${affTxt(a)}</div>`).join('')}`}
-function itemDetail(it){if(it.card)return itemMain(it);const cs=it.cards||[];return itemMain(it)+Array.from({length:it.slots||0},(_,i)=>`<div><small>${cs[i]?'&#9670; '+cardTxt(cs[i]):'&#9671; empty card slot'}</small></div>`).join('')+(gearTierOK(it)&&!canUse(it)?'<div class="r0"><small>Your class cannot use this.</small></div>':'')}
+  ${canUse(it)?'':`<div><small class="r0">${whyNot(it)}${it.wearer?` This was ${it.wearer}'s gear - it goes straight back on when you switch to ${it.wearer} again.`:''}</small></div>`}
+  <div><b>${SLOTS[it.slot].stat} +${ev(it)}</b>${it.r?` <small>(base ${it.val})</small>`:''}</div>${it.slot&&ev(it)<ev(it.slot==='acc'?(S.eq.acc1||S.eq.acc2):S.eq[it.slot]||{val:1e9})?`<div><small class="r0">Weaker than the ${SLOTS[it.slot].label.toLowerCase()} you are wearing (${SLOTS[it.slot].stat} +${ev(it.slot==='acc'?(S.eq.acc1||S.eq.acc2):S.eq[it.slot])}) - sell it, or keep it for a set you are still building.</small></div>`:''}${(it.aff||[]).length?`<div class="sec">Affixes <small>(${it.aff.length} random)</small></div>`:''}${(it.aff||[]).map(a=>`<div class="r1">&#9670; ${affTxt(a)}</div>`).join('')}`}
+function itemDetail(it){if(it.card)return itemMain(it);const cs=it.cards||[];return itemMain(it)+Array.from({length:it.slots||0},(_,i)=>`<div><small>${cs[i]?'&#9670; '+cardTxt(cs[i]):'&#9671; empty card slot'}</small></div>`).join('')}
 const cardSlots=(it,k)=>Array.from({length:it.slots||0},(_,i)=>{const c=(it.cards||[])[i];return c?`<div><small class="r${GI[c.g]}">&#9670; ${cardTxt(c)}</small> <button data-a="unsock" data-v="${k}:${i}">Remove ${200*(c.g+1)}z</button></div>`:'<div><small>&#9671; empty slot</small></div>'}).join('');
 const tnode=n=>{const c=CLASSES[n],pj=S.jobs[n],cur=n===S.cls,blk=classBlock(n);return`<div class="tn ${cur?'cur':blk?(pj?'played':'lock'):'ok'}${selK===n?' pick':''}" data-a="selk" data-v="${n}"><b>${n}</b><small>${pj?`Job ${pj.jl}/${c.mj}`:'Lv '+c.rj+' req'}</small></div>`};
 // ---------- GM test controls for the v48 mastery and skill systems ----------
@@ -3104,6 +3126,9 @@ const V={
     <div class="mapcols">
       <div class="mob-card"><div class="hd">${mapL>10?'Nightmare ':''}${mp.n} Stage ${mapL>10?mapL-10:mapL}${mapM<5&&mapL<=5?`<br><small>${mapM===0?'Novice start · Base Lv 1–10':'Early class route · Base Lv 10–20'} · gentle packs</small>`:''}</div>
         <div class="sec">Drops on this field <small>&middot; every drop is <b class="${rarCls({sec:F.sec,tier:F.tier})}">${rarOf({sec:F.sec,tier:F.tier}).n}</b> &middot; <b>${SECN[F.sec]}</b>, worn by ${gearUserOf({sec:F.sec})}${gearTierOK({sec:F.sec})?'':` &middot; <span class="r0">your ${S.cls} cannot wear this yet</span>`}</small></div>
+        ${(()=>{const d=F.mobs[0].drops,t=Math.round(d.reduce((a,x)=>a+x[1],0)*100)/100;
+          return`<div class="dropline"><span>Gear chance per kill</span><b>${t}%</b></div>
+          <small>Weapon <b>${d[0][1]}%</b> &middot; armour &amp; accessory <b>${Math.round((t-d[0][1])*100)/100}%</b> - three independent rolls, so one kill can pay one piece, none, or several.</small>`})()}
         ${(()=>{const lines=F.mobs.flatMap(m=>m.drops.map(d=>[d,m.n])),isW=([d])=>gearSlot(d[0])==='weapon',
           grp=(t,ls)=>`<div class="dropgrp"><small>${t}</small></div>`+ls.map(([d,n])=>dropTxt(d,n)).join('');
           return grp('Weapons',lines.filter(isW))+grp('Armour &amp; accessories',lines.filter(l=>!isW(l)))

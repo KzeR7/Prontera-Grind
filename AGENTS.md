@@ -4851,3 +4851,44 @@ The owner's second pass over v77, six notes, all built.
     `gearPool` for those two maps would fix it without touching any rate.
   * The map panel compares gear by tier only; it does not yet tell you a dropped weapon is weaker
     than what you already wear.
+
+### 2026-10-08 — `grind-v80 class-gate reasons in the bag, Geffen/Payon second weapon, per-kill rates, downgrade flags`
+
+* **Owner's constraint:** unchanged from v79 - drop *rates* are final. Three independent equipment
+  rolls per mob (weapon / armour / accessory) at exactly the percentages they had before. This is
+  allocation and clarity only: nothing in `MAPTIER`, `MAPGRADE`, the Stage-10 whole-field cap, or
+  the field/boss equipment rates was touched.
+* **What changed for the player:**
+  * An unusable piece now explains itself **in the bag**, not only on the map's drop list. One
+    sentence, `whyNot(x)`, is shared by the bag card and the dimmed drop line, and it names the
+    cause: the class tier (`Locked to 2nd-job classes and up: your Novice cannot wear it yet.`),
+    the weapon family (`Your Novice cannot wield a katar.`), or the shield rule
+    (`Your Novice cannot hold a shield.`). Before, the bag said a bare "cannot use this" and left
+    the player to guess which of the three it was.
+  * Geffen and Payon each gained a **second weapon family**, so the two early class fields stop
+    offering one weapon to everyone: daggers beside Geffen's staves (`Dirk / Ice Pick /
+    Damascus / Ginnungagap`) and swords beside Payon's bows (`Hunting Sword / Haedonggum /
+    Chrome Sword / Emerald Blade`). The class `wt` table is untouched - the second family serves
+    whoever else farms that field, it does not hand a Mage a dagger. Because the Nightmare rows
+    are generated from each map's own section 3, all six rows of both maps grew by one piece.
+  * The map panel prints the **per-kill gear chance** on the field's drop list (a weapon share and
+    an armour+accessory share, summing to the field total, e.g. 3.6% on the early maps) derived
+    from `F.mobs[0].drops`, so the readout can never drift from the table it describes. The
+    per-mob lines are untouched.
+  * A drop that is **weaker than the piece you already wear** is flagged, on the drop line
+    (`worse`) and in the bag ("Weaker than the <slot> you are wearing"). An empty slot never
+    flags. This is a flag only - it changes nothing about what drops.
+* **Checks:** all 36 `*_sim.js` suites passed (two report with their own formats: `pack_sim`,
+  `sprite_viewer_sim`). Focused: `gear_sim` 38/38, `drop_card_sheet_sim` 13/13, `ui_sim` 50/50,
+  `nightmare_sim` 9/9, `save_load_sim` 23/23. `git diff --check` is clean.
+* **Files:** `index.html` (`whyNot`/`canWield`/`gearKind`/`dropIsWorse`, second weapon family in
+  `GEAR[2]` and `GEAR[4]`, both `MAPS` subtitles, the per-kill gear-chance line, `.dropline.worse`
+  / `.cell.worse`, `BUILD`),
+  `tools/tests/{gear_sim,drop_card_sheet_sim,ui_sim}.js`
+  (`MAP_LINES` rows 2 and 4, the section-item pin 601 -> 613, the shared-reason pins),
+  `Updates/cards-gear-audit/{affix-ranges,equipment-cards-tuning}.html`, and this log.
+* **Known limits / follow-ups:**
+  * `gearRefLevel` is a display number, and its Nightmare tiers are numeric (N and N+ both read
+    +40), so the "weaker than worn" flag is a heuristic rather than a power meter.
+  * The class gate still hides a piece's exact job requirement; `whyNot` names the tier, not the
+    individual job that unlocks it.

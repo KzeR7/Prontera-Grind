@@ -207,13 +207,17 @@ t('armour and accessory names are unique across the whole game', () => {
 // ---- 2. per-map relevance ----------------------------------------------------
 // The five early maps are class-themed. Every mixed late map now carries a weapon family
 // for every class, so all class lines can return there to hunt their own gear.
+// v80: Geffen and Payon each gained a second weapon family so neither map is a one-weapon shelf
+// (a mage got staves and nothing else, an archer bows and nothing else). The line that uses the
+// new family is listed with the map, because a shelf only counts as served if somebody who levels
+// there can pick the thing up: Geffen now carries a Thief's dagger, Payon a Swordman's sword.
 const EVERY_CLASS=Object.keys(G.CLASSES);
 const MAP_LINES = [
   ['Novice', 'Swordman'],
   ['Swordman', 'Knight', 'Lord Knight', 'Merchant', 'Blacksmith', 'Whitesmith'],
-  ['Mage', 'Wizard', 'High Wizard'],
+  ['Mage', 'Wizard', 'High Wizard', 'Thief'],
   ['Thief', 'Assassin', 'Assassin Cross'],
-  ['Archer', 'Hunter', 'Sniper'],
+  ['Archer', 'Hunter', 'Sniper', 'Swordman'],
   EVERY_CLASS, EVERY_CLASS, EVERY_CLASS, EVERY_CLASS, EVERY_CLASS,
 ];
 const wtsOf = cls => G.CLASSES[cls].wt || [];
@@ -351,7 +355,8 @@ t('every field allocates a weapon first, and never lists an item twice (v79)', (
   // three consecutive pool entries from T[(l*3+2*j)%n], so 20 of the 100 normal fields dropped no
   // weapon at all and one item was listed on both mobs at two different rates. Roll 1 is now always
   // a weapon, rolls 2-3 are armour or an accessory, and nothing repeats unless the map has a single
-  // weapon family (Geffen's staves, Payon's bows) - where there is no alternative to repeat.
+  // weapon family - which after v80 no normal map does (Geffen carries a dagger beside its staves,
+  // Payon a sword beside its bows), so every field offers its mobs a real choice.
   for (let m = 0; m < G.MAPS.length; m++) for (let l = 1; l <= 15; l++) {
     const F = G.fieldOf(m, l), where = G.MAPS[m].n + ' stage ' + l;
     const pool = G.gearPool(m, l), weapons = pool.filter(x => !['armor','head','off','leg','acc'].includes(x.k));

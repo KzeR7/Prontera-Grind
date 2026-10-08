@@ -893,7 +893,10 @@ t('v74: the item card names the class tier a piece belongs to, and why a locked 
   U.S.inv = [starterSword];
   assert.ok(U.V.bag0().includes('data-tip="50"'), 'the bag still renders the item cell');
   // and the refusal text lives in the source, not only in one branch
-  assert.ok(src.includes('Locked to ${gearUserOf(it)}: your ${S.cls} cannot wear it.'), 'the refusal names the tier and the reader');
+  // v80: it lives in whyNot(), shared with the map panel's dimmed drop lines, so the bag and the
+  // drop line name the same cause in the same words.
+  assert.ok(src.includes("whyNot=x=>canWield(x)?'':!gearTierOK(x)?`Locked to ${gearUserOf(x)}: your ${S.cls} cannot wear it yet.`"),
+    'the refusal names the tier and the reader');
   assert.ok(/\$\{gearUserOf\(it\)\}/.test(src), 'the tier name is interpolated from the one helper');
   assert.ok(src.includes('it.wearer?` This was ${it.wearer'), 'the wearer note is attributed');
 });
@@ -1082,7 +1085,10 @@ t('the map panel states the actual equipment rarity, class gate and weapon-first
   assert.ok(h.includes('<small class="r2">Rare</small>'), 'normal item lines must show the field tier, not default to Common');
   assert.ok(h.includes('<b>2nd-job gear</b>, worn by 2nd-job classes and up'), 'and Comodo states its second-job gate');
   // a Novice on a second-job field sees the gate on the line itself, dimmed, not just in the bag
-  assert.ok(/class="dropline cant"/.test(h) && h.includes('cannot wear 2nd-job gear yet'), 'a piece the class cannot wear is marked on the drop line');
+  // v80: the reason is the shared whyNot() sentence - the tier the piece is locked to, then the
+  // class doing the reading - so the drop line and the bag card agree word for word.
+  assert.ok(/class=\"dropline cant\"/.test(h) && h.includes('Locked to 2nd-job classes and up: your Novice cannot wear it yet'),
+    'a piece the class cannot wear is marked on the drop line');
   U.S = mkS('Knight'); U.mapM = 5; U.mapL = 1;
   h = U.V.map();
   // a Knight passes the tier gate, so only the weapon family it cannot swing is dimmed - and the
