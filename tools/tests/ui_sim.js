@@ -448,17 +448,25 @@ t('clicking a slot highlights the fit in the REAL bag tab - no extra pop-out', (
   assert.ok(src.includes("if(k==='status')sub.status='stats';if(k==='bag')sub.bag='bag';"), 'reopening a window resets its sub-tab');
 });
 
-t('Assassin equipment UI describes and renders one two-handed Katar only',()=>{
+t('Assassin equipment UI describes the two-handed Katar and the dual-wielded daggers',()=>{
   U.S=mkS('Assassin');U.selE='weapon';
   U.S.eq.weapon={id:88,name:'Katar',tier:3,slot:'weapon',wt:'katar',val:80,slots:4,cards:[]};
   const h=U.V.equip();
-  assert.ok(h.includes('Weapons: katar'), 'the allowed weapon list should only say katar');
-  assert.ok(h.includes('Two-handed Katar; no off-hand weapon'), 'the one-weapon rule should be explicit');
+  assert.ok(h.includes('Weapons: katar, dagger'), 'both ways to hold a blade are listed');
+  assert.ok(h.includes('Two-handed Katar, or a dagger in each hand'), 'the dual-wield rule should be explicit');
   assert.ok(h.includes('2H Katar'), 'the main-hand slot should identify Katar as a two-handed weapon');
-  assert.ok(!h.includes('L.Hand'), 'Assassin should not get a second-hand equipment slot');
+  assert.ok(h.includes('L.Hand'), 'Assassin now gets a left-hand slot for the second dagger');
   assert.strictEqual((h.match(/empty slot/g)||[]).length,4,'a Katar should expose four card sockets');
   U.S=mkS('Archer');U.S.eq.weapon={id:89,name:'Four Slot Bow',tier:3,slot:'weapon',wt:'bow',val:80,slots:4,cards:[]};U.selE='weapon';
   const bow=U.V.equip();assert.strictEqual((bow.match(/empty slot/g)||[]).length,4,'a bow should expose four card sockets');
+  // v80: the left hand takes a dagger and nothing else - never a shield for these two classes
+  U.S=mkS('Assassin');U.S.eq.weapon={id:88,name:'Katar',tier:3,slot:'weapon',wt:'katar',val:80,slots:4,cards:[]};U.selE='off';U.eqPick='off';
+  const off=U.V.bag0();
+  assert.ok(off.includes('+ a second dagger'), 'the left-hand chooser says what fits there');
+  assert.ok(!off.includes('+ shields'), 'and it is not a shield slot');
+  U.S=mkS('Swordman');U.selE='off';U.S.eq.off=null;
+  assert.ok(U.V.bag0().includes('+ shields'), 'a Swordman still reads the left hand as a shield slot');
+  U.eqPick=null;
   U.S=mkS('Assassin');U.S.eq.weapon={id:88,name:'Katar',tier:3,slot:'weapon',wt:'katar',val:80,slots:4,cards:[]};U.selE='weapon';
   U.eqPick='weapon';const bag=U.V.bag0();
   assert.ok(bag.includes('Choosing a two-handed katar')&&bag.includes('occupies both hands'), 'the chooser should explain the two-handed restriction');

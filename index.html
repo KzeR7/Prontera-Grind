@@ -654,7 +654,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // script block, which is a SyntaxError - the game did not run on main at all. One line wins, and
 // it names both sides of this merge: the v38 balance patch (the weapon cut, the affix/card
 // give-back) and main's weapon-hold rendering work.
-const BUILD='2026-10-08 grind-v80 class-gate reasons in the bag, Geffen/Payon second weapon, Thief-line katars, per-kill rates, downgrade flags';   // shown on the login card - confirms which file you loaded
+const BUILD='2026-10-08 grind-v81 Assassin dual wield: a dagger in each hand, the second blade at half rate';   // shown on the login card - confirms which file you loaded
 $('buildTag').textContent='build '+BUILD;
 
 // ---------- class tree: Novice -> 6 first jobs -> 6 second jobs -> 6 third jobs ----------
@@ -664,10 +664,10 @@ const CD=[['Novice',0,1,1,1,'e8dcc0','',['dagger','sword'],'str',0],
 ['Archer','Novice',.85,1.15,.9,'2e7d32','1b4d1e',['bow'],'dex',1],['Thief','Novice',.8,1.1,.95,'4a7c3a','2e7d32',['dagger'],'agi',0],
 ['Acolyte','Novice',1,1.05,1.05,'e0c870','a08830',['mace'],'int',0],['Merchant','Novice',.9,1.2,1.2,'d08030','905010',['axe','mace'],'str',0],
 ['Knight','Swordman',.85,1.5,1.5,'801010','500000',['sword'],'str',0],['Wizard','Mage',1,1.8,.85,'153075','',['staff'],'int',1,'1f2f70'],
-['Hunter','Archer',.7,1.4,.95,'105015','003005',['bow'],'dex',1],['Assassin','Thief',.62,1.45,1,'2c2c3c','1b1b28',['katar'],'agi',0],
+['Hunter','Archer',.7,1.4,.95,'105015','003005',['bow'],'dex',1],['Assassin','Thief',.62,1.45,1,'2c2c3c','1b1b28',['katar','dagger'],'agi',0],
 ['Priest','Acolyte',.9,1.3,1.1,'b09020','705000',['mace'],'int',0],['Blacksmith','Merchant',.8,1.6,1.4,'a05000','602000',['axe','mace'],'str',0],
 ['Lord Knight','Knight',.72,1.95,1.8,'600808','300000',['sword'],'str',0],['High Wizard','Wizard',.9,2.4,1,'0a1a55','',['staff'],'int',1,'0a1040'],
-['Sniper','Hunter',.55,1.85,1.05,'0a3a0a','002000',['bow'],'dex',1],['Assassin Cross','Assassin',.5,1.9,1.15,'1a1a28','0a0a14',['katar'],'agi',0],
+['Sniper','Hunter',.55,1.85,1.05,'0a3a0a','002000',['bow'],'dex',1],['Assassin Cross','Assassin',.5,1.9,1.15,'1a1a28','0a0a14',['katar','dagger'],'agi',0],
 ['High Priest','Priest',.8,1.7,1.25,'c8a820','604000',['mace'],'int',0],['Whitesmith','Blacksmith',.7,2,1.6,'c06000','502000',['axe','mace'],'str',0]];
 const CLASSES={};
 CD.forEach(([n,par,aspd,atk,hp,col,cape,wt,main,rng,hat])=>CLASSES[n]={n,par,aspd,atk,hp,col:parseInt(col,16),cape:cape?parseInt(cape,16):0,wt,main,rng,hat:hat?parseInt(hat,16):0,kids:[]});
@@ -921,16 +921,17 @@ const GEAR=[
   G(['sword:Sea Saber','axe:Great Axe','mace:Iron Mace'],'Sea Mail','Iron Cap','Tower Shield','Sea Greaves','Merchant Ring','Ledger Pendant'),
   G(['sword:Admiral Saber','axe:Golden Axe','mace:Loaded Mace'],'Admiral Coat','Captain Hat','Admiral Guard','Admiral Boots','Guild Ring','Guild Pendant')],
  // --- Geffen: the Mage line's staves, and the Thief line climbing to its Assassin katar ---
- // (a Thief swings a dagger, but Assassin and Assassin Cross hold nothing else, so the shelf
- //  hands out knives on the sections a Thief can wear and claws on the ones only an Assassin can)
+ // (v81: an Assassin now swings a dagger too, so the knives on the lower sections are a second
+ //  blade waiting to happen; the claws on the upper ones are the two-handed upgrade)
  [G(['staff:Rod','dagger:Dirk'],'Mage Shirt','Hairband','Novice Buckler','Mage Trousers','Apprentice Ring','Glass Bead'),
   G(['staff:Staff of Soul','dagger:Ice Pick'],'Silk Robe','Wizard Cap','Rune Shield','Silk Leggings','Apprentice Pendant','Moon Bead'),
   G(['staff:Arc Wand','katar:Ghoul Claw'],'Mage Robe','Wizard Hat','Magic Guard','Rune Trousers','Mystic Ring','Star Bead'),
   G(['staff:Wand of Hermes','katar:Baphomet Claw'],'Archmage Robe','Mage Crown','Arcane Guard','Archmage Boots','Archmage Ring','Mana Pendant')],
  // --- Morroc: the Thief line - a dagger while you are still a Thief, a katar once you are not ---
- // (same rule: Assassin and Assassin Cross cannot wield a dagger, so the sections only they can
- //  wear carry a claw rather than a knife. A shelf holds one weapon per family, so those sections
- //  offer a single katar - both mobs on the field carry it, at the same rate.)
+ // (v81: the sections only an Assassin can wear carry a claw rather than a knife, because a shelf
+ //  holds one weapon per family and the katar is the two-handed half of that family. The knives
+ //  further up the ladder are what fill the left hand - both mobs on a field carry the same
+ //  weapon, at the same rate.)
  [G(['dagger:Desert Knife','katar:Jur'],'Desert Shirt','Turban','Dune Buckler','Desert Pants','Sand Ring','Scorpion Charm'),
   G(['dagger:Gladius','katar:Katar'],'Thief Clothes','Thief Hood','Shadow Shield','Thief Slacks','Thief Ring','Silent Charm'),
   G(['katar:Jamadhar'],'Assassin Garb','Black Hood','Assassin Guard','Assassin Boots','Assassin Ring','Venom Charm'),
@@ -2408,8 +2409,14 @@ const skMasterTile=()=>{const on=skAllOn(),n=skTog().length,done=skillsFullyAllo
 const skillDetailCard=sel=>{const SL=lv(sel.id),soff=!!(SL&&sel.type!=='pas'&&skOff(sel.id));
   return`<div class="mob-card sk-detail-card" data-skill-detail="${sel.id}"><div class="sk-detail-head"><b>${sel.n}</b> <small>${sel.type==='pas'?'Passive':sel.type==='heal'?'Auto-heal':sel.type==='to'?'Tradeoff (auto-cast)':'Active (auto-cast)'}${sel.rng?' &middot; RANGED':''}${sel.aoe?' &middot; AREA':''}${sel.dot?' &middot; DOT':''}${sel.stun?' &middot; STUN':''}${sel.chain?' &middot; CHAIN':''}</small></div><div class="sk-detail-autocast">${SL&&sel.type!=='pas'?`<label class="sk-autocast"><input type="checkbox" data-a="sktog" data-v="${sel.id}" ${soff?'':'checked'} aria-label="Auto cast ${sel.n}"> Auto cast this skill</label><small class="${soff?'r0':''}">${soff?'Paused - it will not be used until you check this again.':'Cast automatically every time you attack.'}</small>`:'<small>Passive or not learned yet - nothing to auto-cast.</small>'}</div><small>${sel.d(Math.max(1,SL))}</small>${SL&&SL<sel.max?`<br><small>Next: ${sel.d(SL+1)}</small>`:''}</div>`};
 const pv=k=>SKILLS.reduce((a,s)=>a+(s.type==='pas'&&s.key===k&&skillOn(s.id)?s.f(lv(s.id)):0),0);
-const items=()=>Object.values(S.eq).filter(Boolean),ev=it=>Math.round(it.val*(1+(it.r||0)*.15)),iname=it=>(it.r?'+'+it.r+' ':'')+it.name,eqv=k=>S.eq[k]?ev(S.eq[k]):0;
-const bon=k=>{let v=MASTER_STATS.includes(k)?cardMasteryStat(k):0;for(const it of items()){for(const a of it.aff||[])if(a.k===k)v+=a.v;for(const c of it.cards||[])if(c.stat===k)v+=c.v}return v};
+// v81 dual wield (owner): "let set that assasin & assassin cross can wield daggers. 2 hands."
+// A two-handed katar is TWO_HANDED weapons and a left-hand dagger is DUAL of one, so a pair of
+// equal daggers is 1.5 weapons of base value - exactly what a katar is. Both rules live here,
+// in the one reader every stat formula already calls, so nothing new has to be wired into
+// atk(): it reads the left hand as eqv('off'), which is only non-zero for a dagger. A shield
+// still reads as its own DEF, which is why def() keeps its slot==='off' guard.
+const items=()=>Object.values(S.eq).filter(Boolean),ev=it=>Math.round(it.val*(1+(it.r||0)*.15)),iname=it=>(it.r?'+'+it.r+' ':'')+it.name,DUAL=.5,TWO_HANDED=1.5,eqv=k=>{const it=S.eq[k];return it?k==='off'&&it.wt==='dagger'?ev(it)*DUAL:ev(it)*(it.wt==='katar'?TWO_HANDED:1):0};
+const bon=k=>{let v=MASTER_STATS.includes(k)?cardMasteryStat(k):0;for(const it of items()){const f=it===S.eq.off&&it.wt==='dagger'?DUAL:1;for(const a of it.aff||[])if(a.k===k)v+=a.v*f;for(const c of it.cards||[])if(c.stat===k)v+=c.v*f}return v};
 // v74 (owner: "second class or 3rd class equipment cannot be worn by 1st class"): a piece belongs
 // to a class TIER, not just a slot. The tier ladder is the class tree's own (`c.tier`: Novice 0,
 // first jobs 1, second 2, third 3) and the gate is `gearTierOf(it) <= max(1, classTierOf(cls))`.
@@ -2422,7 +2429,7 @@ const bon=k=>{let v=MASTER_STATS.includes(k)?cardMasteryStat(k):0;for(const it o
 // auto-equip, item tooltip).
 const st=k=>S.st[k]+bon(k),gearTierOf=it=>Math.max(0,Math.min(3,((it&&it.sec)|0)||0)),classTierOf=(cls=S.cls)=>Math.max(0,Math.min(3,(CLASSES[cls]&&CLASSES[cls].tier)||0)),gearTierOK=(it,cls=S.cls)=>gearTierOf(it)<=Math.max(1,classTierOf(cls)),gearUserOf=it=>['any class','Novice and 1st-job classes','2nd-job classes and up','transcendent classes only'][gearTierOf(it)],canUse=it=>gearTierOK(it)&&(it.slot==='off'?canShield():(it.slot!=='weapon'||!it.wt||C().wt.includes(it.wt)));
 const maxHp=()=>Math.round((80+S.lv*20+eqv('head')*4+(eqv('acc1')+eqv('acc2'))*3+st('vit')*8+bon('hp'))*C().hp*(1+(pv('hpp')+(typeof cardMasteryStat==='function'?cardMasteryStat('hpPct'):0))/100)*(1+(petBuff.hp||0)/100)*(1+petPassive('hp')/100));
-const atk=()=>Math.round((4+S.lv*2+eqv('weapon')+st(C().main)*1.5+(st('dex')+st('luk'))*.25)*C().atk*(1+(pv('atk')+bon('atk')+(typeof cardMasteryStat==='function'?cardMasteryStat('atkPct'):0)+(tb.atk||0)+(petBuff.atk||0))/100)*(1+collDmg()/100));
+const atk=()=>Math.round((4+S.lv*2+eqv('weapon')+(S.eq.off&&S.eq.off.wt==='dagger'?eqv('off'):0)+st(C().main)*1.5+(st('dex')+st('luk'))*.25)*C().atk*(1+(pv('atk')+bon('atk')+(typeof cardMasteryStat==='function'?cardMasteryStat('atkPct'):0)+(tb.atk||0)+(petBuff.atk||0))/100)*(1+collDmg()/100));
 const matk=()=>Math.round((4+S.lv*2+eqv('weapon')*.8+st('int')*1.5+st('dex')*.25)*C().atk*(1+(pv('matk')+bon('matk')+(typeof cardMasteryStat==='function'?cardMasteryStat('matkPct'):0)+(tb.matk||0)+(petBuff.matk||0))/100)*(1+collDmg()/100));
 const aspd=()=>Math.max(.2,.85*C().aspd*(1-Math.min(.5,st('agi')*.006))/(1+(pv('aspd')+bon('aspd')+(typeof cardMasteryStat==='function'?cardMasteryStat('aspdPct'):0)+(tb.aspd||0))/100));
 // v73 crit retune (owner): reaching the 60% cap used to be a LUK dump - LUK 99 alone paid
@@ -3156,7 +3163,7 @@ const V={
     +`<div class="slot" style="flex-wrap:wrap"><span>ATK <b>${atk()}</b></span><span>MATK <b>${matk()}</b></span><span>DEF <b>${def()}</b></span><span>ASPD <b>${(1/aspd()).toFixed(2)}/s</b></span><span>Crit <b>${crit().toFixed(1)}%</b>${idxC?` <small>(+${idxC}% Index Crit)</small>`:''}</span><span>Crit DMG <b>x${critD().toFixed(2)}</b></span><span>MDEF <b>${mdef()}</b></span><span>Flee <b>${flee().toFixed(0)}%</b></span><span>HP <b>${maxHp()}</b></span><span>Move <b>${moveSpd().toFixed(2)}</b> <small>u/s · ${(moveSpd()*MOVE_RUN).toFixed(2)} sprinting</small></span></div>
     <small><b>Movement speed</b> comes from AGI alone: ${heroMoveSpeedForAgi(st('agi')).toFixed(2)} units a second at AGI ${st('agi')} (${(heroMoveSpeedForAgi(st('agi'))*MOVE_RUN).toFixed(2)} when running, which is any trip longer than 3 units). Every point of AGI adds about 0.03 - it never touches damage, so it is a comfort stat.${petPassive('move')?` A fighting Peco Peco's Swift Mount adds ${petPassive('move')}%.`:''}</small>
     <small>Crit is capped at 60% from stats, skills, gear and card mastery; above 45% each further point counts half. <b>Index Crit</b> (+${idxC}% of +40 max, from Hunt Titles) is the only source that passes the cap, and the total stops at 100%.</small>
-    <small>Weapons: ${c.wt.join(', ')}${katarOnly()?' (two-handed Katar; no off-hand)':''} &middot; Main stat: ${SU(c.main)}</small><button class="full" data-a="rstat" ${rcost()&&S.zeny<rcost()?'disabled title="You need '+rcost().toLocaleString()+' Zeny to reset stats"':''}>Reset stats (${rcost()?rcost()+'z':'free below Base 20'})</button>`},
+    <small>Weapons: ${c.wt.join(', ')}${katarOnly()?' (a two-handed Katar, or a dagger in each hand)':''} &middot; Main stat: ${SU(c.main)}</small><button class="full" data-a="rstat" ${rcost()&&S.zeny<rcost()?'disabled title="You need '+rcost().toLocaleString()+' Zeny to reset stats"':''}>Reset stats (${rcost()?rcost()+'z':'free below Base 20'})</button>`},
   job(){const lines=[['Swordman','Knight','Lord Knight'],['Mage','Wizard','High Wizard'],['Archer','Hunter','Sniper'],['Thief','Assassin','Assassin Cross'],['Acolyte','Priest','High Priest'],['Merchant','Blacksmith','Whitesmith']];
     const k=selK||S.cls,c=CLASSES[k],blk=classBlock(k),pj=S.jobs[k],rec=classRec(k);
     return`<div class="tree"><div class="trow" style="justify-content:center">${tnode('Novice')}</div><div class="trunk"></div>
@@ -3203,7 +3210,7 @@ const V={
       return tile+(on?detail:'')}).join('')}</div>
     ${sel?'':'<div class="mob-card" style="margin-top:8px"><small>Click an item to see its stats. Hover for a quick tooltip.</small></div>'}`},
   equip(){const c=C(),sel=S.eq[selE];
-    const slotCell=k=>{const code=EQK.find(x=>x[0]===k);if(!code||(k==='off'&&katarOnly()))return'<div class="cell empty"></div>';const[l,ic]=[code[1],code[2]],e=S.eq[k];
+    const slotCell=k=>{const code=EQK.find(x=>x[0]===k);if(!code||(k==='off'&&!canShield()&&!dualWield()))return'<div class="cell empty"></div>';const[l,ic]=[code[1],code[2]],e=S.eq[k];
       return `<div class="cell b${e?dtier(e):0}${e&&+e.sec>=4?' nm':''}${selE===k?' sel':''}" data-a="seleq" data-v="${k}" ${e?`data-tip="${e.id}"`:''}>${e?icon(e)+(e.locked?'<i class="lockstar" title="Locked gear" aria-label="Locked">&#9733;</i>':'')+(e.r?`<i class="rf">+${e.r}</i>`:''):`<span style="opacity:.3">${ic}</span>`}<i class="rf" style="left:2px;right:auto;top:2px;bottom:auto;color:#fff;background:#3b2a1add;font-size:9px;font-style:normal">${k==='weapon'&&katarOnly()?'2H Katar':l}</i></div>`};
     // v51: the detail card is inserted into the doll right below the row that owns the clicked
     // slot (head / hands+body / legs+accessories), so Refine, card slots and Unequip sit beside
@@ -3212,7 +3219,7 @@ const V={
     const rows=[['','head',''],['weapon','armor','off'],['acc1','leg','acc2']];
     const rowAt=rows.findIndex(r=>r.includes(selE));
     return`<div class="doll">${rows.map((r,i)=>r.map(slotCell).join('')+(i===rowAt?detail:'')).join('')}</div>`
-    +`<small>Weapons: ${c.wt.join(', ')} &middot; ${canShield()?'Shield allowed':'No shield'}${katarOnly()?' &middot; <b>Two-handed Katar; no off-hand weapon</b>':''}</small>`},
+    +`<small>Weapons: ${c.wt.join(', ')} &middot; ${canShield()?'Shield allowed':'No shield'}${katarOnly()?' &middot; <b>Two-handed Katar, or a dagger in each hand</b>':''}</small>`},
   cards(){const g={};S.cards.forEach(c=>(g[c.n]=g[c.n]||[]).push(c));const ks=Object.keys(g),sel=g[selC]?g[selC][0]:null;
     return`<div class="grid">${ks.map(n=>`<div class="cell b${GI[g[n][0].g]}${n===selC?' sel':''}" data-a="selc" data-v="${n}" data-tip="${g[n][0].id}">🃏<i class="rf">x${g[n].length}</i></div>`).join('')||'<small>No cards yet. Every monster drops its own card at a low chance.</small>'}</div>
     ${sel?`<div class="mob-card" style="margin-top:8px">${itemDetail(sel)}<div class="row" style="margin-top:6px">${EQK.map(([k,l])=>{const e=S.eq[k];return e&&(e.cards||[]).length<(e.slots||0)&&CFIT[sel.stat]===grp(e)?`<button data-a="sock" data-v="${sel.id}:${k}">&rarr; ${l}</button>`:''}).join('')}<button data-a="sellcard" data-v="${sel.id}">Sell ${sel.v*150}z</button></div></div>`:''}`},
@@ -3258,6 +3265,9 @@ const CFIT={str:'weapon',dex:'weapon',atk:'weapon',crit:'weapon',cdm:'weapon',ag
 const grp=it=>it.slot==='weapon'?'weapon':it.slot==='head'?'head':it.slot==='acc'?'acc':'armor';
 function canShield(){return /^(Novice|Swordman|Knight|Lord Knight|Acolyte|Priest|High Priest|Merchant|Blacksmith|Whitesmith)$/.test(S.cls)}
 function katarOnly(cls=S.cls){return cls==='Assassin'||cls==='Assassin Cross'}
+// v81 dual wield (owner): the two Assassin jobs hold a dagger in each hand. A Thief does not -
+// one blade, and the katar is not theirs either. dualWield() is what opens the left-hand slot.
+function dualWield(cls=S.cls){const c=CLASSES[cls]||CLASSES.Novice;return c.wt.includes('dagger')&&c.wt.includes('katar')}
 function ekey(it){if(it.slot==='acc')return S.eq.acc1&&!S.eq.acc2?'acc2':'acc1';return it.slot}
 const tabs=[];let selP=null,selS=null,selE='weapon',qOpen=true,eqPick=null,indexMode='mobs';const sub={status:'stats',bag:'bag'};
 // The Index window is rebuilt on every game update, so a native <details> would slam shut the
@@ -3269,21 +3279,24 @@ const indexToggleSection=(tab,map)=>{const st=indexOpenSections[tab]||(indexOpen
 // ---------- equipping from a slot ----------
 // Clicking a slot in the Equipment panel opens the bag right there, already filtered to what
 // that slot will take for THIS class: weapon type and class restrictions, shields only for the
-// classes that may hold one and accessories in either accessory slot. Katar users have no
-// off-hand weapon: the Katar is their single equipped weapon.
+// classes that may hold one and accessories in either accessory slot. The left hand takes a
+// shield for the shield classes and a second dagger for the two Assassin jobs - a katar still
+// occupies both hands, so it is never an off-hand item.
 function slotAccepts(k,it){if(!it||it.card||it.ore||!S.inv.includes(it))return false;
   if(!canUse(it))return false;
   if(k==='acc1'||k==='acc2')return it.slot==='acc';
-  if(k==='off')return it.slot==='off'&&canShield();
+  // v81 dual wield: the left hand takes a shield for the classes that may hold one, and a
+  // dagger - and only a dagger - for the two Assassin jobs.
+  if(k==='off')return it.slot==='off'?canShield():(it.wt==='dagger'&&dualWield());
   return it.slot===k}
 // Choosing a slot does not open a second window: it switches to the real Bag tab and highlights
 // the items that fit that slot (see V.bag0, which rings them green and wires the click to equip).
 // This banner is the header of that mode - what is being chosen, what is worn now, and how out.
 function equipChooser(k){
-  const cur=S.eq[k],fit=S.inv.filter(it=>slotAccepts(k,it)),raw=EQK.find(x=>x[0]===k)||[,k,SLOTS.weapon.ic],nm=k==='weapon'&&katarOnly()?['weapon','two-handed Katar','🔪']:raw;
+  const cur=S.eq[k],fit=S.inv.filter(it=>slotAccepts(k,it)),raw=EQK.find(x=>x[0]===k)||[,k,SLOTS.weapon.ic],nm=k==='weapon'&&katarOnly()?['weapon','two-handed Katar','🔪']:k==='off'&&dualWield()&&!canShield()?['off','dagger','🗡️']:raw;   // v81: the Assassin's left hand takes a blade, not a shield
   const deltas=fit.slice(0,6).map(it=>{const d=ev(it)-ev(cur||{val:0});return`<b class="${rarCls(it)}">${iname(it)}</b> <b class="${d>0?'r1':'r0'}">(${d>0?'+':''}${d})</b>`}).join(' &middot; ');
   return`<div class="mob-card chooser"><div class="hd">${nm[2]} Choosing a ${nm[1].toLowerCase()} <small>&middot; ${fit.length} highlighted item${fit.length===1?'':'s'} fit${fit.length?' below':''}</small><button class="x" data-a="eqclose">&#10005;</button></div>
-  <small>${cur?`Now worn: <b class="${rarCls(cur)}">${iname(cur)}</b> (${SLOTS[cur.slot].stat} +${ev(cur)})`:'Nothing worn in this slot.'} &middot; your class may use ${C().wt.join(', ')}${k==='off'?(canShield()?' + shields':katarOnly()?' · no off-hand weapon':''):''}${k==='weapon'&&katarOnly()?'; the Katar occupies both hands, so no shield or second weapon can be worn':''} &middot; click a green item to wear it; everything else in the bag can still be inspected or sold.</small>
+  <small>${cur?`Now worn: <b class="${rarCls(cur)}">${iname(cur)}</b> (${SLOTS[cur.slot].stat} +${ev(cur)})`:'Nothing worn in this slot.'} &middot; your class may use ${C().wt.join(', ')}${k==='off'?(canShield()?' + shields':dualWield()?' + a second dagger':' · no off-hand weapon'):''}${k==='weapon'&&katarOnly()?'; the Katar occupies both hands, so no shield or second weapon can be worn':''} &middot; click a green item to wear it; everything else in the bag can still be inspected or sold.</small>
   ${fit.length?`<small style="display:block;margin-top:4px">Compared to what you wear: ${deltas}${fit.length>6?` &middot; +${fit.length-6} more`:''}</small>`:'<small style="display:block;margin-top:4px">Nothing in your bag fits this slot.</small>'}</div>`}
 function equipIn(k,id){const it=S.inv.find(x=>String(x.id)===String(id));
   if(!it)return;if(!slotAccepts(k,it)){log('Your class cannot use that there.');return}

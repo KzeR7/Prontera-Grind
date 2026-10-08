@@ -74,7 +74,7 @@ const SECN=['Starter gear','1st-job gear','2nd-job gear','High-tier gear'];
 const SLOTS={weapon:{label:'Weapon',stat:'ATK',ic:'A'},armor:{label:'Armor',stat:'DEF',ic:'B'},head:{label:'Headgear',stat:'HP',ic:'C'},off:{label:'Shield',stat:'DEF',ic:'D'},leg:{label:'Legwear',stat:'DEF',ic:'E'},acc:{label:'Accessory',stat:'HP',ic:'F'}};
 const rnd=(a,b)=>a+Math.random()*(b-a),ri=(a,b)=>Math.floor(rnd(a,b+1)),uid=()=>1;
 let S=null;
-this.__g={ MAPS, GEAR, gearPool, fieldOf, genGear, rarIdx, rarOf, rarCls, RAR5, RAR6, RARALL, FIELD_GEAR_NM, FIELD_GEAR_MID_NM, executeGearRoll, slotAccepts, canUse, canShield, katarOnly, CLASSES, lineOf, secOf, secField, SLOTS, BAGMAX, MAPTIER, MAPGRADE, set PETPASSIVE(v){PETPASSIVE=v}, get PETPASSIVE(){return PETPASSIVE}, MAPVAL, dropTier, sellVal, AM, AFF, AB, RAR, AFFIX_CDM_SCALE, scaleCritDamageAffix, affixValue, FIELD_GEAR, FIELD_GEAR_MID, BOSS_POOL_TOTAL, BOSS_CRIT_RES, bossCritRes, gearTierOf, classTierOf, gearTierOK, gearUserOf,
+this.__g={ MAPS, GEAR, gearPool, fieldOf, genGear, rarIdx, rarOf, rarCls, RAR5, RAR6, RARALL, FIELD_GEAR_NM, FIELD_GEAR_MID_NM, executeGearRoll, slotAccepts, canUse, canShield, katarOnly, dualWield, CLASSES, lineOf, secOf, secField, SLOTS, BAGMAX, MAPTIER, MAPGRADE, set PETPASSIVE(v){PETPASSIVE=v}, get PETPASSIVE(){return PETPASSIVE}, MAPVAL, dropTier, sellVal, AM, AFF, AB, RAR, AFFIX_CDM_SCALE, scaleCritDamageAffix, affixValue, FIELD_GEAR, FIELD_GEAR_MID, BOSS_POOL_TOTAL, BOSS_CRIT_RES, bossCritRes, gearTierOf, classTierOf, gearTierOK, gearUserOf,
            set S(v){S=v}, get S(){return S} };
 `;
 const sb = { console };
@@ -497,7 +497,7 @@ t('a weapon slot offers only weapons of a type the class may use', () => {
   assert.ok(G.slotAccepts('weapon', bow) && !G.slotAccepts('weapon', sword), 'Archer is bow-only');
 });
 
-t('off-hand shields stay class-gated; Assassins use one Katar and cannot off-hand weapons', () => {
+t('off-hand shields stay class-gated; Assassins dual-wield daggers but never a shield', () => {
   const shield = item({ id: 3, slot: 'off' }), dagger = item({ id: 4, slot: 'weapon', wt: 'dagger' }),
     katar = item({ id: 5, slot: 'weapon', wt: 'katar' }), sword = item({ id: 6, wt: 'sword' });
   bag('Swordman', [shield, dagger, katar, sword]);
@@ -507,12 +507,18 @@ t('off-hand shields stay class-gated; Assassins use one Katar and cannot off-han
   bag('Knight', [shield]);
   assert.ok(G.slotAccepts('off', shield), 'Knight keeps the shield');
   for(const cls of ['Assassin','Assassin Cross']){
-    assert.deepStrictEqual(Array.from(G.CLASSES[cls].wt),['katar'],cls+' must be katar-only');
+    assert.deepStrictEqual(Array.from(G.CLASSES[cls].wt),['katar','dagger'],cls+' may wield katar and dagger');
     bag(cls,[shield,dagger,katar]);
-    assert.ok(G.katarOnly(),cls+' should be marked as a single-katar class');
-    assert.ok(G.slotAccepts('weapon',katar),cls+' may equip a katar in the main hand');
-    assert.ok(!G.slotAccepts('weapon',dagger),cls+' may not equip a dagger');
-    assert.ok(!G.slotAccepts('off',shield)&&!G.slotAccepts('off',dagger)&&!G.slotAccepts('off',katar),cls+' has no usable off-hand');
+    assert.ok(G.katarOnly(),cls+' still counts as the two-handed Katar class');
+    assert.ok(G.dualWield(),cls+' may dual-wield');
+    assert.ok(G.slotAccepts('weapon',katar)&&G.slotAccepts('weapon',dagger),cls+' may equip either blade in the main hand');
+    assert.ok(G.slotAccepts('off',dagger),cls+' may hold a dagger in the left hand');
+    assert.ok(!G.slotAccepts('off',shield),cls+' still may not hold a shield');
+    assert.ok(!G.slotAccepts('off',katar)&&!G.slotAccepts('off',sword),cls+' may not hold a sword or katar in the left hand');
+  bag('Swordman',[sword]);
+  assert.ok(!G.dualWield(),'a Swordman does not dual-wield');
+  bag('Archer',[item({id:9,wt:'bow'})]);
+  assert.ok(!G.dualWield(),'an Archer does not dual-wield');
   }
 });
 

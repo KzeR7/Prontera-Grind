@@ -71,15 +71,15 @@ t('valid records survive a save/load', () => {
 t('legacy Assassin daggers and off-hand weapons are preserved in the bag, not worn',()=>{
   for(const cls of ['Assassin','Assassin Cross']){
     const old={...JSON.parse(JSON.stringify(save)),cls,
-      eq:{weapon:{id:901,slot:'weapon',wt:'dagger',name:'Old Dagger',val:20,aff:[],cards:[]},
+      eq:{weapon:{id:901,slot:'weapon',wt:'dagger',name:'Dagger',val:20,aff:[],cards:[]},
         armor:null,head:null,off:{id:902,slot:'weapon',wt:'katar',name:'Old off-hand Katar',val:25,aff:[],cards:[]},
         leg:null,acc1:null,acc2:null},inv:[]};
     const box={};vm.createContext(box);
     const custom=harness.replace(/const lsGet = \(\) => .*?;/,'const lsGet = () => '+JSON.stringify(JSON.stringify(old))+';');
     vm.runInContext(custom,box);const migrated=box.__l.loadRaw();
-    assert.strictEqual(migrated.eq.weapon,null,cls+' must not retain a main-hand dagger');
-    assert.strictEqual(migrated.eq.off,null,cls+' must not retain an off-hand weapon');
-    assert.deepStrictEqual(Array.from(migrated.inv,x=>x.id).sort(),[901,902],cls+' gear should be stowed without being lost');
+    assert.strictEqual(migrated.eq.weapon.id,901,cls+' v80: a main-hand dagger is legal now and stays worn');
+    assert.strictEqual(migrated.eq.off,null,cls+' must not retain an off-hand katar');
+    assert.deepStrictEqual(Array.from(migrated.inv,x=>x.id).sort(),[902],cls+' gear should be stowed without being lost');
     const valid={...old,eq:{weapon:{id:903,slot:'weapon',wt:'katar',name:'Valid Katar',val:30,aff:[],cards:[]},armor:null,head:null,off:null,leg:null,acc1:null,acc2:null},inv:[]};
     const validBox={};vm.createContext(validBox);
     vm.runInContext(harness.replace(/const lsGet = \(\) => .*?;/,'const lsGet = () => '+JSON.stringify(JSON.stringify(valid))+';'),validBox);

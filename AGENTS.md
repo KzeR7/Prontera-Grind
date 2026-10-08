@@ -513,13 +513,14 @@ h=open('index.html').read()
 open('/tmp/pack_block.js','w').write(h[h.index('const PACK_BODY='):h.index('function ensureHero(')])
 PYPACK
 node tools/tests/pack_sim.js           # -> "bodies in pack (19): ..."
-node tools/tests/class_change_sim.js   # -> "25 passed, 0 failed"
+node tools/tests/class_change_sim.js   # -> "27 passed, 0 failed"
 node tools/tests/class_skin_sim.js     # -> "39 passed, 0 failed" (live class skins, both genders, mirrors)
 node tools/tests/kit_sim.js            # -> "34 passed, 0 failed" (v2 atlas + KIT_PS, payon recipe, ten identities)
 node tools/tests/skill_sim.js          # -> "52 passed, 0 failed" (91-skill roster, caps, cooldowns, GCD queue)
-node tools/tests/save_load_sim.js      # -> "22 passed, 0 failed"
+node tools/tests/dual_wield_sim.js     # -> "11 passed, 0 failed" (v81: Assassin dagger + dual-wield rules)
+node tools/tests/save_load_sim.js      # -> "23 passed, 0 failed"
 node tools/tests/economy_sim.js        # -> "23 passed, 0 failed"
-node tools/tests/gear_sim.js           # -> "30 passed, 0 failed"
+node tools/tests/gear_sim.js           # -> "38 passed, 0 failed"
 node tools/tests/picker_sim.js         # -> "19 passed, 0 failed" (the picker, booted under a DOM stub)
 node tools/tests/card_sim.js           # -> "13 passed, 0 failed"
 node tools/tests/drop_card_sheet_sim.js # -> "12 passed, 0 failed"
@@ -533,7 +534,7 @@ node tools/tests/scene_sim.js          # -> "8 passed, 0 failed" (per-map scener
 node tools/tests/starter_sim.js        # -> "8 passed, 0 failed" (the gentle starter stages)
 node tools/tests/stat_sim.js           # -> "7 passed, 0 failed"
 node tools/tests/weapon_joint_sim.js   # -> "7 passed, 0 failed"
-node tools/tests/ui_sim.js             # -> "42 passed, 0 failed"
+node tools/tests/ui_sim.js             # -> "50 passed, 0 failed"
 node tools/tests/sprite_viewer_sim.js  # -> "Sprite viewer: 154 PNGs, 7 trees, 19 class jobs; ..."
 node tools/tests/town_smoke.js         # -> "40/40 steps ok" (needs jsdom; skips cleanly without it)
 python3 tools/make_class_skins.py --check    # -> "Class skins are current."
@@ -807,15 +808,17 @@ assigned for feel rather than fidelity. While reworking that, two shipped bugs s
     each mob's rolls and card odds. Adding an eleventh map adds a card and nothing else.
   * **A real equipment database.** 40 sections (10 maps × 4 tiers), 96 weapon entries, and weapons
     matched to the classes that actually level there - merchants get axes/maces, mages staves,
-    archers bows, thieves daggers then katars, and the five level 60+ mixed maps carry all seven
-    types across their sections. Armour and accessory names are unique game-wide.
+    archers bows, thieves daggers, Assassins a dagger then a katar (v81: a dagger in each hand,
+    the second blade at half rate), and the five level 60+ mixed maps carry all seven types
+    across their sections. Armour and accessory names are unique game-wide.
   * **Gear drops are relevant and outnumber cards.** Three gear rolls per mob (2.4/2.0/1.6 %)
     drawn from that field's own pool, against a 0.45 % card - about 13:1, where the old field
     rolled two gear items and three mobs' worth of cards.
   * **Clicking an equipment slot opens the bag, filtered.** Weapon shows only weapons your class
-    can actually use, shield only if the class may hold one (otherwise the off-hand dagger/katar
-    for the dual-wielders), legwear/headgear/accessory only their own slot - cards and ores never
-    appear. Items are ranked by value with a "(+N better)" delta against what you are wearing.
+    can actually use, the left hand a shield for the shield classes and a second dagger for the
+    two Assassin jobs (v81; a katar still occupies both hands and is never an off-hand item),
+    legwear/headgear/accessory only their own slot - cards and ores never appear. Items are ranked
+    by value with a "(+N better)" delta against what you are wearing.
   * **The skill-point overflow is fixed at the root.** Two bugs, both in the ledger: it pooled the
     job levels of *every class you had ever played* against one global skill table, and it
     subtracted a skill's *level* while the + button charged the *cumulative* cost (1+2+3+4+5 = 15
@@ -4905,3 +4908,67 @@ The owner's second pass over v77, six notes, all built.
     +40), so the "weaker than worn" flag is a heuristic rather than a power meter.
   * The class gate still hides a piece's exact job requirement; `whyNot` names the tier, not the
     individual job that unlocks it.
+
+### 2026-10-08 — `grind-v81 Assassin dual wield: a dagger in each hand, the second blade at half rate`
+
+* **Owner's constraint:** "let set that assasin & assassin cross can wield daggers. 2 hands. ...
+  the 2nd dagger reduces damage; compensated by more cards; katar stays two-handed." Drop rates
+  and everything else in the balance remain untouched. The scheme is **Scheme A**, as approved:
+  the off-hand dagger is worth **x0.5** of its base value, its affixes and its cards; the
+  two-handed katar is worth **x1.5** of its base value. A dagger keeps its own 1-3 socket roll -
+  no Thief buff, no four-socket daggers. Assassins are **not** given shields: `canShield()` still
+  excludes them, because dagger + shield would be free DEF and would dominate.
+* **What changed for the player:**
+  * Assassin and Assassin Cross gain `dagger` in their weapon list (`['katar','dagger']`), and
+    the equipment doll grows a **left-hand slot** for them - labelled `L.Hand` like every other
+    class's, filled with a second dagger. Every other class, Thief included, keeps one blade.
+  * The class sheet and the doll footer now read "a two-handed Katar, or a dagger in each hand",
+    and the left-hand chooser says "your class may use katar, dagger + a second dagger". The
+    main-hand katar is still badged `2H Katar` and the chooser still warns that "the Katar
+    occupies both hands".
+  * The second blade is a real tax, not a cosmetic one: a pair of equal daggers is worth exactly
+    the same weapon value as one katar (`ev + ev*0.5` against `ev*1.5`), so the katar's multiplier
+    is drawn from the dagger's rather than stacked on top of it, and the off-hand dagger's cards
+    and affixes pay half rate.
+* **Under the hood:**
+  * `DUAL=.5` and `TWO_HANDED=1.5` sit on the `items()/ev()/iname()/eqv()` line, and both rules
+    live in `eqv(k)` itself. That is deliberate: `eqv` is the one reader every stat formula
+    already calls, so `atk()` and `matk()` needed no new symbol - `skill_sim` and
+    `starter_sim` eval those lines in a vm box whose only stubs are `S`, `C`, `eqv`, `st`,
+    `bon`, `collDmg`, `pv`, `petBuff` and `tb`, and a fresh name there would be a `ReferenceError`.
+  * `atk()` reads the left hand as `S.eq.off&&S.eq.off.wt==='dagger'?eqv('off'):0`, so a shield
+    in that slot never adds ATK. `matk()` is untouched (main hand only).
+  * `bon()` carries `const f=it===S.eq.off&&it.wt==='dagger'?DUAL:1` over both the affix loop and
+    the card loop. This was the real leak: `bon` sums over `items()` - every equipped slot - so
+    without the factor an off-hand dagger would have donated full card power for free.
+  * `dualWield(cls)` is the new gate beside `katarOnly()`: `CLASSES[cls].wt` holds **both**
+    `dagger` and `katar`. `slotAccepts`'s off-hand branch is
+    `it.slot==='off'?canShield():(it.wt==='dagger'&&dualWield())`.
+  * The doll's `slotCell` hides the left hand only when the class can hold neither a shield nor a
+    second blade (`k==='off'&&!canShield()&&!dualWield()`).
+  * The socket roll is **unchanged**: `slot==='weapon'&&(T.k==='katar'||T.k==='bow')?4 : slot===
+    'weapon'?min(3,1+ri(0,1)+(t>=3?1:0)) : ...`. So a katar holds four cards and a dual pair holds
+    two to six - the extra sockets are the compensation the owner asked for.
+* **Checks:** all 37 `*_sim.js` suites passed (`pack_sim` and `sprite_viewer_sim` report in their
+  own formats; `town_smoke` is not a `*_sim.js`). Focused: `dual_wield_sim` 11/11 (new),
+  `gear_sim` 38/38, `ui_sim` 50/50, `save_load_sim` 23/23, `class_change_sim` 27/27,
+  `skill_sim` 52/52, `starter_sim` 9/9, `pet_sim` 17/17, `weapon_proposal_sim` 587/587,
+  `drop_card_sheet_sim` 13/13. `git diff --check` is clean.
+* **Files:** `index.html` (`CD` rows for Assassin and Assassin Cross, `eqv` with `DUAL`/
+  `TWO_HANDED`, `atk()`'s off-hand term, `bon()`'s per-item factor, `dualWield()`,
+  `slotAccepts`'s off-hand branch, `slotCell`, the class-sheet / doll-footer / chooser copy, the
+  `GEAR[2]` and `GEAR[3]` comments, `BUILD`), `tools/tests/dual_wield_sim.js` (new),
+  `tools/tests/{gear_sim,ui_sim,class_change_sim,save_load_sim}.js` (rewritten pins),
+  `tools/weapon_proposal.html` (the class -> family table),
+  `Updates/cards-gear-audit/{affix-ranges,equipment-cards-tuning}.html`, and this log.
+* **Known limits / follow-ups:**
+  * `G()` keys a section's weapons by weapon type, so one `GEAR` row cannot carry two katars.
+    A data-shape refactor would be needed to let a single shelf offer a matched pair; not done.
+  * ASPD has no weapon-type term at all, so a second tax on the off-hand blade (if one is ever
+    wanted) has an unused lever waiting in `aspd()`.
+  * A dual pair is strictly behind a katar until **both** daggers roll three sockets (three full
+    cards plus three half ones is 4.5 cards of power against the katar's four). That is the
+    intended shape - the second blade is a long-term investment - but it does mean an early
+    Assassin is better off in a single katar.
+  * A main-hand dagger now feeds `matk()` at full rate, exactly as a katar always did. That is a
+    small, unintended MATK gain for the two jobs and was left alone rather than special-cased.
