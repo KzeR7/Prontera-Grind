@@ -2,8 +2,8 @@
 // (7x normal EXP below Base 100, 7/3x at 100+), ends the 3x early band at Base 50, and makes
 // 50-70 the deliberate mid-game wall (~80 min) - which lands Base 10 at ~2.5 min, Base 50 at
 // ~14 min and Base 99 at ~6 h 55 m. v84 (owner playtest: the band cleared in a day) DOUBLED
-// every Base 100+ requirement (N100 43260 -> 86520), so the tail is the ~77.5 h model climb
-// (wall-clock ~1.6x the old 48 h, because quest EXP follows needAt and rises with the curve).
+// every Base 100+ requirement (N100 43260 -> 86520); v85 stopped quest EXP from doubling with
+// the curve above Base 99, so the whole band including quests costs ~2x - the ~96 h model tail.
 // Covers the quest
 // formulas, the doubled-gear loot cadence, the Lv100 reset and the low-level Zeny floor.
 // Economy: EXP / Zeny / quest rewards, against the real constants and formulas
@@ -12,8 +12,8 @@
 //
 // The rules being tested:
 //   * live pacing anchors hold (owner): about 2.5 min to Base Lv10, Base 50 at ~14 min, the
-//     deliberate ~80-minute Base 50-70 wall, ~7 hours to Base 99 and the v84-doubled ~77.5 h
-//     post-reset tail, using the level-appropriate map-stage power path at ~800 kills/hour;
+//     deliberate ~80-minute Base 50-70 wall, ~7 hours to Base 99 and the v85 fully-doubled
+//     ~96 h post-reset tail, using the level-appropriate map-stage power path at ~800 kills/hour;
 //   * job bars mirror the base curve (JOFF lockstep), so the job gates land on those
 //     same anchors;
 //   * quests pay a fraction of need(Lv) and can never carry more than ~40% of a level
@@ -91,14 +91,16 @@ const bossZeny = p => ((E.BZK[0] + E.BZK[1]) / 2) * p * p / 1000;
 const killZeny = p => Math.max(E.ZMIN, Math.floor(mobZeny(p)));   // what spawn() actually pays
 const zenyPerKill = p => (MPS * killZeny(p) + Math.max(E.ZMIN, Math.floor(bossZeny(p)))) / (MPS + 1);
 const rateFor = L => L <= 50 ? 21 : L < 100 ? 7 : 7 / 3;   // mirrors expRate(): 3x band through Lv50
+// v85: quest EXP pays the pre-v84 curve above Base 99, so the model's quest income halves there
+const questFactor = L => L > 99 ? .5 : 1;
 const killsFor = L => { const p = pwFor(L), n = E.needAt(L), rate = rateFor(L);
-  return Math.ceil(n / (expPerKill(p) * rate + n * E.qrOf(L) * rate)); };
+  return Math.ceil(n / (expPerKill(p) * rate + n * E.qrOf(L) * rate * questFactor(L))); };
 
 function baseTimeline() {
   let hours = 0, questXp = 0, totalNeed = 0, worst = 0, worstLow = 0; const T = { 1: 0 };
   for (let L = 1; L < 150; L++) {
     const p = pwFor(L), n = E.needAt(L), rate = rateFor(L), kills = killsFor(L);
-    const mobXp = kills * expPerKill(p) * rate, qxp = kills * n * E.qrOf(L) * rate;
+    const mobXp = kills * expPerKill(p) * rate, qxp = kills * n * E.qrOf(L) * rate * questFactor(L);
     worst = Math.max(worst, qxp / (mobXp + qxp));
     if (L <= 99) worstLow = Math.max(worstLow, qxp / (mobXp + qxp));
     questXp += qxp; totalNeed += n; hours += kills / KILLS_PER_HOUR; T[L + 1] = hours;
@@ -120,7 +122,10 @@ function jobGates() {
     let je = 0.7 * killsFor(L) * expPerKill(p) * rateFor(L);   // quests pay Base EXP only
     while (je > 0 && tier < 3) {
       if (jl[tier] >= GATE[tier]) { tier++; continue; }
-      const Lj = jl[tier] + E.JOFF[tier], n = E.needAt(Lj), r = rateFor(Lj), e = E.epkOf(Lj) * r, q = E.qrOf(Lj) * r;
+      const Lj = jl[tier] + E.JOFF[tier];
+      // v85: the game's jneed halves the mirrored need for job levels 1-15 on tiers 1-3
+      let n = E.needAt(Lj); if (tier > 0 && jl[tier] <= 15) n *= .5;
+      const r = rateFor(Lj), e = E.epkOf(Lj) * r, q = E.qrOf(Lj) * r;
       const cost = Math.max(1, Math.floor(.7 * n * e / (e + n * q)));
       const take = Math.min(je, cost - jx[tier]); jx[tier] += take; je -= take;
       if (jx[tier] >= cost) { jl[tier]++; jx[tier] = 0; if (jl[tier] >= GATE[tier]) gates[tier] = { hours, base: L + 1 }; }
@@ -237,16 +242,17 @@ t('saved quests refresh to the new EXP rate without losing progress', () => {
   E.qRefresh(); assert.strictEqual(E.S.q[0].prog,12);
   assert.strictEqual(E.S.q[0].xp,Math.floor(E.needAt(99)*E.QXP.kill*7));
   E.S.lv=100; E.qRefresh();
-  assert.strictEqual(E.S.q[0].xp,Math.floor(E.needAt(100)*E.QXP.kill*(7/3)));
+  // v85: above Base 99 quest EXP pays the pre-v84 curve (needAt/2 there)
+  assert.strictEqual(E.S.q[0].xp,Math.floor(E.needAt(100)/2*E.QXP.kill*(7/3)));
 });
 
 t('quests pay a fraction of need(Lv), not a flat number', () => {
   E.S = { lv: 150, gm: false }; E.PW = 99;
-  const n = E.needAt(150);
+  const n = E.needAt(150) / 2;   // v85: quest EXP pays the pre-v84 curve above Base 99
   assert.strictEqual(E.newQuest('kill').xp, Math.floor(n * E.QXP.kill * (7/3)));
   assert.strictEqual(E.newQuest('loot').xp, Math.floor(n * E.QXP.loot * (7/3)));
   assert.strictEqual(E.newQuest('boss').xp, Math.floor(n * E.QXP.boss * (7/3)));
-  assert.strictEqual(E.newQuest('boss').xp, 69361, 'boss quest xp at Lv150 (v84: doubled curve)');
+  assert.strictEqual(E.newQuest('boss').xp, 34680, 'boss quest xp at Lv150 (v85: requirements doubled, quest pay not)');
 });
 
 t('quest EXP scales with need(Lv) instead of drifting', () => {
@@ -256,7 +262,7 @@ t('quest EXP scales with need(Lv) instead of drifting', () => {
   // At rebirth, both the requirement curve and the live EXP multiplier reset; the
   // quest reward must follow need(Lv) times whatever expRate() currently returns
   // (Lv50 sits inside the v56 3x band, Lv100 in the one-third band).
-  const curve = (E.needAt(100) * rb) / (E.needAt(50) * ra);
+  const curve = (E.needAt(100) / 2 * rb) / (E.needAt(50) * ra);   // v85: halved quest pay above 99
   assert.ok(b > 0 && a > 0, 'quest rewards must stay positive across the reset');
   assert.ok(Math.abs(b / a - curve) / curve < 0.05, 'quest exp grew off-curve: ' + (b / a).toFixed(2) + ' vs ' + curve.toFixed(2));
 });
@@ -306,10 +312,12 @@ t('pacing anchor: Base Lv 50 to 99 takes about 6 h 40 m (got ' + (TL.T[99] - TL.
   assert.ok(TL.T[99] > 6.5 && TL.T[99] < 7.3, 'Base 99 total should be about 6 h 55 min: ' + TL.T[99].toFixed(2) + ' h');
 });
 
-t('pacing anchor: Base 100-150 is the v84 doubled ~77.5 h climb after the reset (got ' + (TL.hours - TL.T[100]).toFixed(1) + ' h)', () => {
+t('pacing anchor: Base 100-150 is the v85 fully-doubled ~96 h climb after the reset (got ' + (TL.hours - TL.T[100]).toFixed(1) + ' h)', () => {
   const tail = TL.hours - TL.T[100];
-  assert.ok(tail > 71, 'tail too short: ' + tail.toFixed(1) + ' h');
-  assert.ok(tail < 84, 'tail too long: ' + tail.toFixed(1) + ' h');
+  // v84 doubled the requirements (48 h -> ~77.5 h); v85 stopped quest EXP from doubling with
+  // the curve above Base 99, so the WHOLE band including quests costs ~2x the old 48 h.
+  assert.ok(tail > 90, 'tail too short: ' + tail.toFixed(1) + ' h');
+  assert.ok(tail < 102, 'tail too long: ' + tail.toFixed(1) + ' h');
   console.log('       1->150 total: ' + TL.hours.toFixed(1) + ' h (' + TL.T[99].toFixed(1) + ' h to 99 + ' +
     tail.toFixed(1) + ' h tail) at ' + KILLS_PER_HOUR + ' kills/h');
 });
@@ -317,8 +325,9 @@ t('pacing anchor: Base 100-150 is the v84 doubled ~77.5 h climb after the reset 
 t('job gates land on the anchors: base ' + GATES.map(g => g && g.base).join('/') +
   ' at ' + GATES.map(g => g && g.hours.toFixed(1) + 'h').join('/'), () => {
   assert.ok(Math.abs(GATES[0].base - 10) <= 1, '1st job gate at base ' + GATES[0].base);
-  assert.ok(Math.abs(GATES[1].base - 48) <= 2, '2nd job gate at base ' + GATES[1].base);
-  assert.ok(Math.abs(GATES[2].base - 99) <= 2, 'transcendent gate at base ' + GATES[2].base);
+  // v85: the first-15 job-level half cost lets a line reach its gate about one base level sooner
+  assert.ok(Math.abs(GATES[1].base - 48) <= 3, '2nd job gate at base ' + GATES[1].base);
+  assert.ok(Math.abs(GATES[2].base - 99) <= 3, 'transcendent gate at base ' + GATES[2].base);
   assert.ok(GATES[0].hours > 0.03 && GATES[0].hours < 0.06, '1st job after ' + GATES[0].hours.toFixed(2) + ' h');
   const firstJobInterval = GATES[1].hours - GATES[0].hours;
   assert.ok(firstJobInterval > 0.14 && firstJobInterval < 0.20, 'first-job levels should align to the 11-minute Base 10->50 interval; got ' + (firstJobInterval*60).toFixed(1) + ' min');

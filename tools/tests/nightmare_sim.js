@@ -36,7 +36,7 @@ const harness = `
 ${code}
 let S={lv:1,gmnm:false};
 this.__n={ MAPS, GEAR, fieldPower, secField, dropTier, gearPool, fieldOf, bossCritRes,
-  NMLV, NMBASE, NMSTEP, NMGAP, NMHP, NMATK, NMEXP, NMZENY, NMBOSSHP, NM_CRIT_RES, BOSS_CRIT_RES,
+  NMLV, NMBASE, NMSTEP, NMGAP, NMHP, NMATK, NMEXP, NMZENY, NMBOSSHP, NM_CRIT_RES, BOSS_CRIT_RES, nmExpOf, nmZenyOf,
   FIELD_GEAR, FIELD_GEAR_MID, FIELD_GEAR_NM, FIELD_GEAR_MID_NM, BOSS_POOL_TOTAL,
   nmOpen, nmMax, NMNAME, NMNAME2,
   set S(v){S=v}, get S(){return S} };
@@ -151,7 +151,12 @@ t('the difficulty knobs are the shipped ones and the live code reads them', () =
   assert.deepStrictEqual([N.NMHP, N.NMATK, N.NMEXP, N.NMZENY, N.NMBOSSHP], [48, 2, 4, 4, 48], 'the band constants are pinned (v77.1: 48x HP, 2x ATK, 4x EXP/Zeny)');
   // spawn() is a game-loop function, so its wiring is checked at the source and the numbers are
   // worked out from the same formulas below.
-  assert.ok(src.includes('nm1=S.lvl>10,nm=nm1?NMHP:1,na=nm1?NMATK:1,ne=nm1?NMEXP:1,nz=nm1?NMZENY:1'), 'spawn() reads the knobs once');
+  assert.ok(src.includes('nm1=S.lvl>10,nm=nm1?NMHP:1,na=nm1?NMATK:1,ne=nm1?nmExpOf(S.lvl):1,nz=nm1?nmZenyOf(S.lvl):1'), 'minionDef reads the knobs once (v85: stage ramp)');
+  // v85: the Stage 15 MVP pays the band EXP/Zeny too (the v76 line had neither - a 66M-HP MVP
+  // paid less EXP than two of its own map's mobs), and the offline simulator mirrors the ramps.
+  assert.ok(src.includes('na=nm1?NMATK:1,ne=nm1?NMEXP:1,nz=nm1?NMZENY:1;'), 'spawn() reads the MVP knobs once');
+  assert.ok(src.includes('exp:Math.max(1,Math.floor(BOSEK*Math.pow(l,1.5)/50*ne)),zeny:Math.max(ZMIN,Math.floor(ri(BZK[0],BZK[1])*l*l/1000*nz))'), 'MVP EXP/Zeny x NMEXP/NMZENY');
+  assert.ok(src.includes('nm1=stage>10,ne=nm1?nmExpOf(stage):1,nz=nm1?nmZenyOf(stage):1'), 'the offline simulator mirrors the band pay');
   assert.ok(src.includes('hp=early?Math.min(starterHp(S.lvl),Math.floor(HPK*mb*Math.pow(l,HPE))):Math.floor(HPK*mb*Math.pow(l,HPE)*nm)'), 'mob HP x NMHP');
   assert.ok(src.includes('atk:early?starterAtk(S.lvl):Math.floor((5+l*4.6)*mb*na)'), 'mob ATK x NMATK');
   assert.ok(src.includes('exp:Math.max(1,Math.floor(EXPK*Math.pow(l,1.5)/50*ne))'), 'mob EXP x NMEXP');
@@ -176,6 +181,28 @@ t('the difficulty knobs are the shipped ones and the live code reads them', () =
   assert.ok(abyss15.atk / abyss10.atk > 1.3, 'and it must hit at least a third harder');
   assert.ok(abyss15.atk / abyss10.atk < 4, 'but not so hard that v77\u2019s 5.2x is back - the sting was tuned down on purpose');
   assert.ok(N.NMEXP > 3 && N.NMZENY > 3, 'and the band pays for the time its wall costs');
+});
+
+t('the pay ramps by stage (v85): EXP 16/24/32/40/48, Zeny 4/5/6/7/8', () => {
+  // The owner doubled the Base 100+ requirements in v84, then asked for the band's mob pay to
+  // be retuned against the new curve: EXP ramps so kill counts per level stay in a ~25-240 band
+  // across 100-150 (flat x4 gave 50-480), Zeny ramps only "a little higher" (their words).
+  assert.deepStrictEqual([11, 12, 13, 14, 15].map(N.nmExpOf), [16, 24, 32, 40, 48], 'EXP ramp = NMEXP x 2 x (stage-9)');
+  assert.deepStrictEqual([11, 12, 13, 14, 15].map(N.nmZenyOf), [4, 5, 6, 7, 8], 'Zeny ramp = NMZENY + (stage-11)');
+  assert.deepStrictEqual([1, 10, 16].map(N.nmExpOf), [16, 16, 48], 'the helpers clamp to the band');
+  // Efficiency per HP (raw EXP per million HP - the x7/3 display rate cancels in ratios): the
+  // ramp walks the deepest map into parity with plain Abyss Stage 10 mob grinding (1,953) by the
+  // capstone, while the on-ramp field (NM Prontera 11, the mb=1 map) is AT parity from the first
+  // stage. The MVP wave (3,610) stays the exp-optimal camp - the band is the intended route, not
+  // a forced one, and its exclusive N/N+ gear is the reason to be there.
+  const perM = (m, st) => { const p = N.fieldPower(m, st), mb = 1 + m * .15 + Math.max(0, m - 4) * .2;
+    return N.nmExpOf(st) * Math.floor(5.5 * Math.pow(p, 1.5) / 50) / (42 * mb * Math.pow(p, 1.3) * N.NMHP) * 1e6; };
+  assert.ok(Math.abs(perM(0, 11) - 2208) < 30, 'NM Prontera S11 pays ~2,208/HP (parity with Abyss mob grinding from stage one)');
+  assert.ok(perM(9, 11) > 690 && perM(9, 11) < 740, 'NM Abyss S11 pays ' + perM(9, 11).toFixed(0) + '/HP - the deep-map HP multiplier still bites early');
+  assert.ok(perM(9, 15) > 2150 && perM(9, 15) < 2230, 'NM Abyss S15 pays ' + perM(9, 15).toFixed(0) + '/HP - the capstone reaches parity');
+  assert.ok(perM(9, 15) / perM(9, 11) > 2.9, 'deepening the stage more than triples the deep map\u2019s pay per HP');
+  console.log('       EXP per million HP - NM Prontera 11: ' + perM(0, 11).toFixed(0) + ', NM Abyss 11: ' + perM(9, 11).toFixed(0) +
+    ', NM Abyss 15: ' + perM(9, 15).toFixed(0) + ' (Abyss S10 mob = 1,953, MVP wave = 3,610)');
 });
 
 t('the field tables read the band: boss pool, ore and crit resistance', () => {

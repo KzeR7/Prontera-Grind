@@ -665,7 +665,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // script block, which is a SyntaxError - the game did not run on main at all. One line wins, and
 // it names both sides of this merge: the v38 balance patch (the weapon cut, the affix/card
 // give-back) and main's weapon-hold rendering work.
-const BUILD='2026-10-08 grind-v84 Base 100+ EXP doubled (owner playtest: the band cleared in a day)';   // shown on the login card - confirms which file you loaded
+const BUILD='2026-10-08 grind-v85 quest-exact doubling, Nightmare pay ramp, early-job half cost';   // shown on the login card - confirms which file you loaded
 $('buildTag').textContent='build '+BUILD;
 
 // ---------- class tree: Novice -> 6 first jobs -> 6 second jobs -> 6 third jobs ----------
@@ -1247,6 +1247,16 @@ const nmMax=()=>10+nmOpen();
 // 9.3x its Zeny (power 175 vs 99 is 2.3x on its own), so a kill that takes ~4x as long still pays well
 // over double per hour. The two HP constants are read in one place and pinned by nightmare_sim.js.
 const NMHP=48,NMATK=2,NMEXP=4,NMZENY=4,NMBOSSHP=48;
+// v85: the Nightmare PAY ramps by stage while NMHP stays the single difficulty dial. The owner
+// doubled the Base 100+ EXP requirements in v84, so the band's mob pay is tuned to the new
+// curve: mob EXP runs 16/24/32/40/48 (NMEXP x2x(stage-9)), which lands every Nightmare field at
+// roughly 2,200 display EXP per million HP - on par with grinding Abyss Stage 10 mobs and still
+// below the Stage 10 MVP wave - so kill counts per level stay in a ~25-240 band across 100-150
+// instead of the 50-480 the flat x4 gave. Zeny ramps only gently (4/5/6/7/8, NMZENY + stage-11):
+// the owner asked for "just a little higher" on Zeny. The Stage 15 MVP (the only Nightmare MVP)
+// pays the flat NMEXP/NMZENY, and the offline simulator reads the same two helpers.
+const nmExpOf=l=>NMEXP*2*(Math.max(11,Math.min(15,l|0))-9);
+const nmZenyOf=l=>NMZENY+(Math.max(11,Math.min(15,l|0))-11);
 // Each map's Nightmare gear is its own high-tier row, renamed: same weapon families and slots (so
 // every class can still use its own weapon) and a per-map word that keeps every name unique. Section
 // 4 is the stage 11-13 drop, section 5 the stage 14-15 and boss drop. They exist NOWHERE else - the
@@ -1658,8 +1668,9 @@ const MAXST=120,BASECAP=99,ELITELV=100,statCap=()=>S.lv>=ELITELV?MAXST:BASECAP;
 // and the 3x early boost now ends at Base 50 - so Base 51-70 is the mid-game wall instead of
 // a formality. Base 1-50 keeps its v51 speed (~2.5 min to Lv10, ~14 min to Lv50), Base 50-70
 // takes about 1 h 20 m (levels ramp from seconds to ~10 minutes each), Base 99 lands at about
-// 7 hours and the post-reset 100-150 tail is the v84 doubled climb (~81 h model, ~3.4 days at
-// 800 kills/h - the owner doubled the Base 100+ requirements after clearing the band in a day).
+// 7 hours and the post-reset 100-150 tail is the v84 doubled climb with v85's quest decoupling
+// (~101 h model, ~4.2 days at 800 kills/h - the requirements doubled AND quests no longer double
+// their pay with the curve above Base 99, so the whole band including quests costs ~2x).
 // Base 70-99 requirements
 // barely climb (130k -> 167k), which is what pays for the wall; per level it plays as a steady
 // ~11 minute plateau. Time estimates use 800 kills/hour and an average boss every 16 kills;
@@ -2449,7 +2460,14 @@ const C=()=>CLASSES[S.cls]||CLASSES.Novice,lv=id=>S.sk[id]||0,jobOf=()=>S.jobs[S
 // Job level j of the current tier costs the job exp (70% of mob exp) that the mirrored
 // base level pays out, so each job bar fills in step with the base bar and the three job
 // changes land on the pacing anchors. Pinned by economy_sim.js.
-const jneed=j=>{const L=j+JOFF[C().tier||0],n=needAt(L),e=epkOf(L);return Math.max(1,Math.floor(.7*n*e/(e+n*qrOf(L))))};
+// v85: the first 15 job levels of every real class line cost HALF job EXP, so the four skills of
+// a freshly changed class (the last unlocks at Job Lv 10 with the 1/3/6/10 point ladder) come
+// quickly after a job change - the owner's ask. From Job Lv 16 the full mirrored cost returns
+// and the lockstep with the base bar resumes (which is what paces the job gates at 10/40/50:
+// all above the discount). Novice is untouched: its ten levels are the game's opening minutes
+// and it correctly has only First Aid.
+const JOB_EARLY=.5,EARLY_JOB_LV=15;
+const jneed=j=>{const t=C().tier||0,L=j+JOFF[t],n=(t>0&&j<=EARLY_JOB_LV?needAt(L)*JOB_EARLY:needAt(L)),e=epkOf(L);return Math.max(1,Math.floor(.7*n*e/(e+n*qrOf(L))))};
 // A skill is usable when it has levels, the current class inherits it, and the player has
 // not switched its auto-cast off in the Skills panel.
 const skOff=id=>!!(S.skOff&&S.skOff[id]),skillOn=id=>lv(id)>0&&SKILLS.find(s=>s.id===id).cls.includes(S.cls)&&!skOff(id);
@@ -2629,7 +2647,7 @@ const starterAtk=l=>6+3*(l-1);
 // One field monster, before it is placed. Shared by the wave builder and by every camp refill, so a
 // monster that walks back in is exactly the monster the field started with.
 function minionDef(pack){
-  const F=fieldOf(S.mp,S.lvl),l=pw(),mb=1+S.mp*.15+Math.max(0,S.mp-4)*.2,nm1=S.lvl>10,nm=nm1?NMHP:1,na=nm1?NMATK:1,ne=nm1?NMEXP:1,nz=nm1?NMZENY:1;
+  const F=fieldOf(S.mp,S.lvl),l=pw(),mb=1+S.mp*.15+Math.max(0,S.mp-4)*.2,nm1=S.lvl>10,nm=nm1?NMHP:1,na=nm1?NMATK:1,ne=nm1?nmExpOf(S.lvl):1,nz=nm1?nmZenyOf(S.lvl):1;
   const early=starterStage(S.mp,S.lvl),m=F.mobs[ri(0,1)];
   const hp=early?Math.min(starterHp(S.lvl),Math.floor(HPK*mb*Math.pow(l,HPE))):Math.floor(HPK*mb*Math.pow(l,HPE)*nm);
   return{...m,mapIndex:S.mp,boss:false,pack,hp,max:hp,atk:early?starterAtk(S.lvl):Math.floor((5+l*4.6)*mb*na),
@@ -2660,13 +2678,13 @@ function fillCamp(i,c){
   }
 }
 function spawn(){
-  const F=fieldOf(S.mp,S.lvl),l=pw(),mb=1+S.mp*.15+Math.max(0,S.mp-4)*.2,nm1=S.lvl>10,nm=nm1?NMHP:1,na=nm1?NMATK:1;
+  const F=fieldOf(S.mp,S.lvl),l=pw(),mb=1+S.mp*.15+Math.max(0,S.mp-4)*.2,nm1=S.lvl>10,nm=nm1?NMHP:1,na=nm1?NMATK:1,ne=nm1?NMEXP:1,nz=nm1?NMZENY:1;
   mobs=[];activePack=0;camps=[];engageTgt=null;
   const bossWave=!!F.boss;
   if(bossWave){
     const hp=Math.floor(500*mb*Math.pow(l,HPE)*(nm1?NMBOSSHP:1));
     mobs.push({...F.boss,mapIndex:S.mp,boss:true,pack:0,hp,max:hp,atk:Math.floor((8+l*6.5)*mb*na),
-      exp:Math.max(1,Math.floor(BOSEK*Math.pow(l,1.5)/50)),zeny:Math.max(ZMIN,Math.floor(ri(BZK[0],BZK[1])*l*l/1000)),
+      exp:Math.max(1,Math.floor(BOSEK*Math.pow(l,1.5)/50*ne)),zeny:Math.max(ZMIN,Math.floor(ri(BZK[0],BZK[1])*l*l/1000*nz)),
       size:1.3,mag:true,lvl:l,sec:F.sec});
     // The first five maps bring three escorts; the five later maps bring five.
     for(let i=0;i<(S.mp<5?3:5);i++)mobs.push(minionDef(0));
@@ -2704,13 +2722,13 @@ function genGear(T,l,sec,boss,tier){
 // Away time is earned from the same map/stage and drop tables as online play. The browser records
 // a rolling real-time kill rate, credits at most four hours, and simulates half that many kills.
 function offlineMobForCurrentField(){
-  const m=S.mp,stage=S.lvl,F=fieldOf(m,stage),l=fieldPower(m,stage),mb=1+m*.15+Math.max(0,m-4)*.2;
+  const m=S.mp,stage=S.lvl,F=fieldOf(m,stage),l=fieldPower(m,stage),mb=1+m*.15+Math.max(0,m-4)*.2,nm1=stage>10,ne=nm1?nmExpOf(stage):1,nz=nm1?nmZenyOf(stage):1;
   const regular=entry=>({...entry,mapIndex:m,boss:false,lvl:l,sec:F.sec,
-    exp:Math.max(1,Math.floor(EXPK*Math.pow(l,1.5)/50)),
-    zeny:Math.max(ZMIN,Math.floor(ri(ZK[0],ZK[1])*l*l/1000))});
+    exp:Math.max(1,Math.floor(EXPK*Math.pow(l,1.5)/50*ne)),
+    zeny:Math.max(ZMIN,Math.floor(ri(ZK[0],ZK[1])*l*l/1000*nz))});
   if(F.boss&&Math.random()<1/(1+(m<5?3:5)))return{...F.boss,mapIndex:m,boss:true,lvl:l,sec:F.sec,
-    exp:Math.max(1,Math.floor(BOSEK*Math.pow(l,1.5)/50)),
-    zeny:Math.max(ZMIN,Math.floor(ri(BZK[0],BZK[1])*l*l/1000))};
+    exp:Math.max(1,Math.floor(BOSEK*Math.pow(l,1.5)/50*ne)),
+    zeny:Math.max(ZMIN,Math.floor(ri(BZK[0],BZK[1])*l*l/1000*nz))};
   return regular(F.mobs[ri(0,F.mobs.length-1)]);
 }
 function offlineStoreGear(it,r){
@@ -3088,7 +3106,10 @@ function qScale(q){const L=S?S.lv:1;
   q.goal=Math.max(1,g);if(q.prog>q.goal)q.prog=q.goal;
   const m=S?gx():1,z0=S?zenAt(pw()):1;
   q.z=Math.max(1,Math.floor(q.goal*QZ[q.type]*z0*m));
-  q.xp=Math.max(1,Math.floor(needAt(L)*QXP[q.type]*(S?expRate():1)));
+  // v85: quest EXP pays the pre-v84 curve above Base 99 (needAt/2 there), so the v84 doubling of
+  // the Base 100+ requirements is NOT offset by quest rewards doubling with it - the owner wants
+  // the whole band, quests included, to cost about twice as long (model tail 77.5 h -> ~101 h).
+  q.xp=Math.max(1,Math.floor((L>99?needAt(L)/2:needAt(L))*QXP[q.type]*(S?expRate():1)));
   q.at=L;return q}
 function newQuest(type){return qScale({type,goal:1,prog:0})}
 function qRefresh(){if(!S||!Array.isArray(S.q))return;(S.q||[]).forEach(q=>{if(q&&q.type)qScale(q)})}

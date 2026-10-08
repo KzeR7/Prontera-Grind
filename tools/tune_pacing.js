@@ -38,7 +38,7 @@ const RESET_RATIO = 1.9306;                                    // v84: owner dou
 const DEFAULT_NE3 = 8.2928141;
 
 // Targets, in the units the report prints.
-const TGT = { T10: 2.5 / 60, T50: 13.9 / 60, WALL: 80 / 60, T99: 6.9, TAIL: 77.5 };
+const TGT = { T10: 2.5 / 60, T50: 13.9 / 60, WALL: 80 / 60, T99: 6.9, TAIL: 96 };
 
 const EARLY_PWR = [[11,10],[14,12],[16,15],[19,17],[27,20],[34,28],[42,35],[49,43],[59,50]];
 const pwFor = lv => { if (lv <= 10) return Math.max(1, lv | 0);
@@ -68,8 +68,11 @@ function simulate(p) {
   const needAt = build(p), T = { 1: 0 }; let hours = 0, qx = 0, tot = 0, worst = 0, worstLow = 0;
   for (let L = 1; L < 150; L++) {
     const n = needAt(L), r = rateAt(L), epk = expPerKill(pwFor(L));
-    const kills = Math.ceil(n / (epk * r + n * qrate(L) * r));
-    const q = kills * n * qrate(L) * r, mob = kills * epk * r;
+    // v85: quest EXP pays the pre-v84 curve above Base 99 (needAt/2 there), so the quest term
+    // of the per-kill income halves in the tail and the v84 doubling is not offset by quests.
+    const qf = L > 99 ? .5 : 1;
+    const kills = Math.ceil(n / (epk * r + n * qrate(L) * r * qf));
+    const q = kills * n * qrate(L) * r * qf, mob = kills * epk * r;
     worst = Math.max(worst, q / (mob + q));
     if (L <= 99) worstLow = Math.max(worstLow, q / (mob + q));
     qx += q; tot += n; hours += kills / KPH; T[L + 1] = hours;
@@ -119,7 +122,7 @@ if (arg === '--verify' || arg === undefined || /^[\d.]/.test(arg)) {
       ['Base 50 lands at ~13.9 min', Math.abs(T[50] * 60 - 13.9) < 0.6, (T[50] * 60).toFixed(2) + ' min'],
       ['Base 50->70 is the ~80 minute wall', Math.abs((T[70] - T[50]) * 60 - 80) < 5, ((T[70] - T[50]) * 60).toFixed(0) + ' min'],
       ['Base 99 lands at ~6.9 h', Math.abs(T[99] - 6.9) < 0.3, T[99].toFixed(2) + ' h'],
-      ['Base 100-150 tail is ~77.5 h (v84 doubled)', Math.abs((s.hours - T[100]) - 77.5) < 2, (s.hours - T[100]).toFixed(1) + ' h'],
+      ['Base 100-150 tail is ~96 h (v85 quest-exact doubling)', Math.abs((s.hours - T[100]) - 96) < 2, (s.hours - T[100]).toFixed(1) + ' h'],
       ['the Base-100 reset drops ~1.9x (v84: owner doubled the band)', needAt(99) / needAt(100) > 1.8 && needAt(99) / needAt(100) < 2.05, (needAt(99) / needAt(100)).toFixed(2) + 'x'],
       ['requirements only drop at Base 100', (() => { let prev = 0; for (let L = 1; L < 150; L++) { if (L === 100) { prev = needAt(L); continue } const n = needAt(L); if (n <= prev) return false; prev = n } return true })(), 'strict inside each phase'],
       ['quests stay a side dish', s.share > 0.12 && s.share < 0.42, (s.share * 100).toFixed(1) + '%'],
