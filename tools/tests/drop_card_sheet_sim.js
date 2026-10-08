@@ -144,13 +144,43 @@ t('the worksheet snapshot carries the map-specific equipment progression',()=>{
   assert.deepStrictEqual(sheet.maps[9].stages.slice(5).map(s=>s.gearSet),Array(5).fill('abyss-ascended'));
   assert.ok(sheet.maps[9].sections[3].items.some(x=>x.gearSet==='abyss-ascended'),'enhanced gear is catalogued under the same section-3 gate');
 });
-t('every stage item assignment follows the real pool rotation',()=>{
+t('every stage item assignment follows the allocated weapon-first rotation',()=>{
+  // v79: the sliding window is gone. Roll 1 is ALWAYS a weapon, rolls 2-3 are armour or an
+  // accessory, each stage walks two weapons and four defensive pieces along the map's shelf, and
+  // no item is ever listed twice on one field (the old window listed one item on both mobs at two
+  // different rates, and left 20 of 100 normal fields with no weapon at all).
   for(let mi=0;mi<sheet.maps.length;mi++)for(const stage of sheet.maps[mi].stages){
     const pool=sheet.maps[mi].sections[stage.section].items.filter(x=>(x.gearSet||'base')===stage.gearSet);
+    const weapons=pool.filter(x=>x.slot==='weapon'),defensive=pool.filter(x=>x.slot!=='weapon');
+    const where=`${sheet.maps[mi].name} stage ${stage.stage}`,seen=new Set();
     for(let mob=0;mob<stage.mobs.length;mob++)for(let d=0;d<3;d++){
-      const expected=pool[(stage.stage*3+2*mob+d)%pool.length].id;
-      assert.strictEqual(stage.mobs[mob].drops[d].itemId,expected,`${sheet.maps[mi].name} stage ${stage.stage} mob ${mob+1} roll ${d+1}`);
+      const item=pool.find(x=>x.id===stage.mobs[mob].drops[d].itemId);
+      assert.ok(item,`${where} mob ${mob+1} roll ${d+1} is not in the field pool`);
+      if(d===0)assert.ok(weapons.includes(item),`${where} mob ${mob+1} roll 1 must be a weapon`);
+      else{
+        assert.ok(defensive.includes(item),`${where} mob ${mob+1} roll ${d+1} must be armour or an accessory`);
+        // a defensive piece is never listed twice on one field - the old window did exactly that
+        assert.ok(!seen.has(item.id),`${where} lists ${item.name} twice`);
+        seen.add(item.id);
+      }
     }
+    if(weapons.length>1)assert.notStrictEqual(stage.mobs[0].drops[0].itemId,stage.mobs[1].drops[0].itemId,
+      `${where} both mobs carry the same weapon`);
+    assert.strictEqual(stage.mobs[0].drops[0].itemId,weapons[(2*(stage.stage-1))%weapons.length].id,`${where} weapon rotation`);
+    assert.strictEqual(stage.mobs[1].drops[0].itemId,weapons[(2*(stage.stage-1)+1)%weapons.length].id,`${where} second mob weapon`);
+  }
+  // a map's whole weapon list is farmable across its own stages, band by band
+  for(const [mi,levels] of [[0,[1,2]],[1,[1,2]],[5,Array.from({length:10},(_,i)=>i+1)],[8,[1,2,3,4,5]],[9,[1,2,3,4,5]]]){
+    const got=new Set();
+    for(const level of levels){
+      const stage=sheet.maps[mi].stages[level-1];
+      stage.mobs.forEach(m=>m.drops.forEach(d=>{
+        const pool=sheet.maps[mi].sections[stage.section].items.filter(x=>(x.gearSet||'base')===stage.gearSet);
+        const item=pool.find(x=>x.id===d.itemId);if(item&&item.slot==='weapon')got.add(item.weaponType);
+      }));
+    }
+    const all=new Set(sheet.maps[mi].sections[sheet.maps[mi].stages[levels[0]-1].section].items.filter(x=>x.slot==='weapon').map(x=>x.weaponType));
+    assert.deepStrictEqual([...got].sort(),[...all].sort(),`${sheet.maps[mi].name} stages ${levels[0]}-${levels.at(-1)} must reach every weapon family`);
   }
 });
 t('every requested stage band drops weapon families for all eligible class lines',()=>{

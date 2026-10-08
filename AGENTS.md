@@ -4809,3 +4809,45 @@ The owner's second pass over v77, six notes, all built.
 * **Files:** `index.html` (v78.2 stage routing, Abyss ascended gear variant),
   `tools/tests/{gear_sim,drop_card_sheet_sim}.js`, the embedded equipment worksheet baseline,
   `READ-ME-FIRST.md`, and this log.
+
+### 2026-10-08 — `grind-v79 weapon-first field drops, one pool list, class gates, N+ rarity`
+
+* **Owner's constraint:** drop *rates* are final. This patch is allocation and clarity only -
+  still three independent equipment rolls per mob (weapon / armour / accessory) with exactly the
+  percentages they had before. Nothing in `MAPTIER`, `MAPGRADE`, the Stage-10 whole-field cap, or
+  the field/boss equipment rates was touched.
+* **What changed for the player:**
+  * Every field now drops at least one weapon. The pool is split into weapons `WP` and armour
+    `DF`; mob `j` on stage `l` takes `WP[(2*(l-1)+j)%nw]` for its weapon roll and
+    `DF[(4*(l-1)+j*2)%nd]`, `DF[(4*(l-1)+j*2+1)%nd]` for its armour rolls. Twenty of the hundred
+    stage/field combinations that previously listed no weapon at all (Izlude S1, Geffen S3/5/10,
+    Payon S3/5/10, Morroc S1/6/9, Stage 7 of every late map) now do. Measured over the ten field
+    maps, the weapon roll's share of total gear % moved 22.09% -> 25.50%; total gear % per kill is
+    unchanged (7.20% early maps, 5.04% mid maps). Geffen and Payon still offer a single weapon
+    family (W=1) because their shelf only has one - that is a shelf gap, not a rotation gap.
+  * The map window shows one list per field with a **Weapons** / **Armour & accessories** /
+    **Cards & ore** grouping instead of the old per-mob entry, plus a "This field's monsters carry
+    N of the M pieces on X's shelf - the rest drop from the Stage 10 MVP" line so a short list reads
+    as a rotation rather than a missing shelf. The boss card keeps its own item list.
+  * Every drop line says why you cannot use it yet, dimmed: `cannot wear 2nd-job gear yet`,
+    `cannot wear Nightmare gear yet`, `cannot wield a axe`, `cannot hold a shield`. The header
+    names the gear section and its class gate in the same breath as the rarity.
+  * Abyssal Nightmare gear is its own rarity band `N+` (`RAR6`, `.r6`, tier index 5) instead of
+    collapsing onto Nightmare N; the auto-sell grid gained a sixth column so N+ can be sold on
+    pickup without touching N.
+* **Checks:** all 36 `*_sim.js` suites passed; Town smoke passed 40/40. Focused: `gear_sim` 38/38,
+  `drop_card_sheet_sim` 13/13, `ui_sim` 50/50, `nightmare_sim` 9/9, `save_load_sim` 23/23.
+  New pins: `gear_sim` "every field allocates a weapon first, and never lists an item twice (v79)";
+  `drop_card_sheet_sim` "every stage item assignment follows the allocated weapon-first rotation".
+  `git diff --check` is clean.
+* **Files:** `index.html` (v79 weapon-first allocation, single drop list with reasons, `RAR6`,
+  `poolWhy`/`dropAttr`, `N+` name prefix in `genGear`, sixth auto-sell column, `BUILD`),
+  `tools/tests/{gear_sim,drop_card_sheet_sim,ui_sim,save_load_sim,nightmare_sim}.js`,
+  `Updates/cards-gear-audit/{affix-ranges,equipment-cards-tuning}.html`, and this log.
+* **Known limits / follow-ups:**
+  * The dimmed reason lives on the drop line as a `title` tooltip; the bag list has no equivalent
+    per-line "why can't I use this" yet, so an unusable drop is only explained once you open it.
+  * Geffen/Payon weapon variety comes from the shelf, not the rotation - a second weapon family in
+    `gearPool` for those two maps would fix it without touching any rate.
+  * The map panel compares gear by tier only; it does not yet tell you a dropped weapon is weaker
+    than what you already wear.

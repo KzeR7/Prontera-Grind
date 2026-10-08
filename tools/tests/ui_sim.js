@@ -105,7 +105,7 @@ const harness = `
 // stubs the pulled-in code needs at load time and when a panel renders
 const SLOTS={weapon:{label:'Weapon',stat:'ATK',ic:'sw'},armor:{label:'Armor',stat:'DEF',ic:'ar'},head:{label:'Headgear',stat:'HP',ic:'hd'},off:{label:'Shield',stat:'DEF',ic:'sh'},leg:{label:'Legwear',stat:'DEF',ic:'lg'},acc:{label:'Accessory',stat:'HP',ic:'ac'}};
 const RAR=[{n:'Common',m:1,w:60},{n:'Fine',m:1.35,w:25},{n:'Rare',m:1.9,w:10},{n:'Epic',m:2.8,w:4},{n:'Legendary',m:4.5,w:1}];
-const RAR5={n:'N'},RARALL=RAR.concat([RAR5]),rarIdx=it=>((it&&+it.sec>=4)?5:Math.max(0,Math.min(RAR.length-1,(it&&it.tier)||0))),rarOf=it=>(rarIdx(it)===5?RAR5:RAR[rarIdx(it)]),rarCls=it=>'r'+rarIdx(it);
+const RAR5={n:'N'},RAR6={n:'N+'},RARALL=RAR.concat([RAR5,RAR6]),rarIdx=it=>((it&&+it.sec>=5)?6:(it&&+it.sec>=4)?5:Math.max(0,Math.min(RAR.length-1,(it&&it.tier)||0))),rarOf=it=>(rarIdx(it)===6?RAR6:rarIdx(it)===5?RAR5:RAR[rarIdx(it)]),rarCls=it=>'r'+rarIdx(it);
 const PW=[[90,9,1,0],[80,17,3,0],[70,24,5.5,.5],[60,30,9,1],[50,35,13,2],[40,38,18,4],[30,40,24,6],[22,40,30,8],[12,38,38,12],[5,30,45,20]];
 const MAXST=99,ELITELV=100,Z0=-14;
 const statCap=()=>99,selK=null,gp=id=>S&&S.pets.find(x=>String(x.id)===String(id)),classRec=()=>null,tb={};
@@ -197,8 +197,8 @@ t('the map panel renders every map and field', () => {
   // "MVP & pets", so the name inside it stands alone.
   assert.ok(/<b class="r4">Dark Lord<\/b>/.test(nmBoss) && !nmBoss.includes('(MVP)') && !nmBoss.includes('(BOSS)'),
     'the boss name stands alone on the Nightmare card (v77: no parenthetical at all)');
-  assert.ok(nmBoss.includes('<small class="r5">N</small>') && !nmBoss.includes('Every MVP drop is <b class="r4">Legendary</b>'),
-    'and the Nightmare MVP pool states the N rarity it actually drops, not Legendary');
+  assert.ok(nmBoss.includes('<small class="r6">N+</small>') && !nmBoss.includes('Every MVP drop is <b class="r4">Legendary</b>'),
+    'and the Nightmare MVP pool states the N+ rarity its Abyssal row actually drops, not Legendary');
   assert.ok(!nmBoss.includes('Crit resistance'), 'the crit-defence line is gone from the MVP card (owner: the map already says it)');
   assert.ok(nmBoss.includes('MVP fights immediately'), 'stage 15 is an MVP field like stage 10');
   U.mapL = 13;
@@ -232,7 +232,11 @@ t('the map tab is a compact two-band panel: maps on top, that map\'s fields unde
   assert.strictEqual((fieldBand.match(/class="map-node/g) || []).length, 15, 'fifteen fields in the band (10 + 5 Nightmare)');
   assert.ok(!/>1st job</.test(fieldBand) && !/>2nd job</.test(fieldBand) && !/>novice</.test(fieldBand),
     'stage buttons carry no job-tier description');
-  assert.ok(!/1st-job gear/.test(h), 'the stage header no longer names the gear section');
+  // v79: the gear section moved OFF the stage buttons and ONTO the drop list, where the class gate
+  // belongs - "2nd-job gear, worn by 2nd-job classes and up" - so a player can see what a field's
+  // gear is gated to before travelling there.
+  assert.ok(h.includes('<b>2nd-job gear</b>, worn by 2nd-job classes and up'), 'the drop list states the gear section and its class gate');
+  assert.ok(!/1st-job gear/.test(fieldBand), 'the stage strip itself still names no gear section');
   assert.ok(fieldBand.includes('data-a="go"'), 'travel sits with the fields, not in its own sticky bar');
   assert.ok(fieldBand.includes('Stage 10'), 'the boss field is labelled');
   assert.ok(src.includes('.wp.wide{flex:0 1 450px;width:450px;min-width:0}'), 'map width is halved and does not grow');
@@ -999,7 +1003,7 @@ t('the bag shows its 1000-item limit and refuses loot once it is full', () => {
     let S={inv:[],cards:[],ore:{ori:0,elu:0},auto:false,zeny:0,autoSell:[false,false,false,false,false],clickSell:false},pl={x:1,z:2},msg='';
     const GRADE=['Common','Uncommon','Rare','Legendary'],GI=[0,1,2,4],ORE={ori:'Oridecon',elu:'Elunium'},
       RAR=[{n:'Common'},{n:'Fine'},{n:'Rare'},{n:'Epic'},{n:'Legendary'}];
-    const RAR5={n:'N'},RARALL=RAR.concat([RAR5]),rarIdx=it=>((it&&+it.sec>=4)?5:Math.max(0,Math.min(RAR.length-1,(it&&it.tier)||0))),rarOf=it=>(rarIdx(it)===5?RAR5:RAR[rarIdx(it)]),rarCls=it=>'r'+rarIdx(it);
+    const RAR5={n:'N'},RAR6={n:'N+'},RARALL=RAR.concat([RAR5,RAR6]),rarIdx=it=>((it&&+it.sec>=5)?6:(it&&+it.sec>=4)?5:Math.max(0,Math.min(RAR.length-1,(it&&it.tier)||0))),rarOf=it=>(rarIdx(it)===6?RAR6:rarIdx(it)===5?RAR5:RAR[rarIdx(it)]),rarCls=it=>'r'+rarIdx(it);
     const cardTxt=c=>c.n,addFloat=()=>{},ui=()=>{},log=m=>{msg=m},qProg=()=>{},canUse=()=>false,equip=()=>{};
     const earnZeny=a=>{S.zeny+=a},save=()=>{};
     ${pick(/const BAGMAX=\d+;/, 'BAGMAX')}
@@ -1061,30 +1065,53 @@ t('Settings carries BOTH damage-number toggles (show/hide and short/full) and re
   assert.ok(src.includes("damageFloat=(x,y,z,amount,critical=false,incoming=false,skill=false)=>{if(S&&S.dmgShow===false)return;"), 'hiding skips the float entirely');
 });
 
-t('the map panel states the actual equipment rarity on normal and Nightmare fields', () => {
+t('the map panel states the actual equipment rarity, class gate and weapon-first drops', () => {
   U.S = mkS('Novice'); U.mapM = 0; U.mapL = 1;
   let h = U.V.map();
-  assert.ok(h.includes('every drop here is <b class="r0">Common</b>'), 'Prontera stage 1 is a Common field');
+  // v79: one "Drops on this field" list replaces the per-monster split. The header states the
+  // rarity band, the gear section and who may wear it; every line carries its single % and the
+  // monster that carries it; the weapons sit in their own group above the armour.
+  assert.ok(h.includes('every drop is <b class="r0">Common</b>'), 'Prontera stage 1 is a Common field');
   assert.ok(h.includes('<small class="r0">Common</small>'), 'Prontera item lines show Common');
+  assert.ok(h.includes('<b>Starter gear</b>, worn by any class'), 'the header names the gear section and its class gate');
+  assert.ok(h.includes('>Weapons<') && h.includes('>Armour &amp; accessories<'), 'weapons are grouped above the armour');
+  assert.ok(!/Gear that drops here/.test(h), 'the v16 bulky card stays retired');
   U.mapM = 5; U.mapL = 1;
   h = U.V.map();
-  assert.ok(h.includes('every drop here is <b class="r2">Rare</b>'), 'Comodo stage 1 keeps its Rare field band');
+  assert.ok(h.includes('every drop is <b class="r2">Rare</b>'), 'Comodo stage 1 keeps its Rare field band');
   assert.ok(h.includes('<small class="r2">Rare</small>'), 'normal item lines must show the field tier, not default to Common');
+  assert.ok(h.includes('<b>2nd-job gear</b>, worn by 2nd-job classes and up'), 'and Comodo states its second-job gate');
+  // a Novice on a second-job field sees the gate on the line itself, dimmed, not just in the bag
+  assert.ok(/class="dropline cant"/.test(h) && h.includes('cannot wear 2nd-job gear yet'), 'a piece the class cannot wear is marked on the drop line');
+  U.S = mkS('Knight'); U.mapM = 5; U.mapL = 1;
+  h = U.V.map();
+  // a Knight passes the tier gate, so only the weapon family it cannot swing is dimmed - and the
+  // line says which family, rather than blaming the class tier
+  const dimmed = h.match(/class="dropline cant" title="([^"]+)"/g) || [];
+  assert.strictEqual(dimmed.length, 1, 'only the weapon the Knight cannot swing is dimmed');
+  assert.ok(dimmed[0].includes('cannot wield a katar'), 'and it names the family: ' + dimmed[0]);
+  assert.ok(h.includes('Pearl Saber') && !/dropline cant"[^>]*>.{0,40}Pearl Saber/.test(h), 'the sword stays bright for a Knight');
+  U.S = mkS('Novice');
   U.mapM = 1; U.mapL = 10;
   h = U.V.map();
-  assert.ok(h.includes('every drop here is <b class="r2">Rare</b>'), 'Izlude MVP drops use the map cap');
+  assert.ok(h.includes('every drop is <b class="r2">Rare</b>'), 'Izlude MVP drops use the map cap');
   assert.ok(h.includes('Every MVP drop is <b class="r2">Rare</b>'), 'the normal MVP description agrees with its actual cap');
   U.mapM = 9; U.mapL = 10;
   h = U.V.map();
-  assert.ok(h.includes('every drop here is <b class="r4">Legendary</b>'), 'the Abyss MVP field is Legendary');
+  assert.ok(h.includes('every drop is <b class="r4">Legendary</b>'), 'the Abyss MVP field is Legendary');
   assert.ok(h.includes('Every MVP drop is <b class="r4">Legendary</b>'), 'the Abyss MVP card says so');
   // v76.2: the Nightmare band is its own rarity - tagged N, painted dark purple - and NOT
-  // presented as one more pile of Legendaries.
+  // presented as one more pile of Legendaries. v79: section 5 (Abyssal) is N+.
+  U.mapM = 9; U.mapL = 12;
+  h = U.V.map();
+  assert.ok(h.includes('every drop is <b class="r5">N</b>'), 'a Nightmare field states the N rarity, not Legendary');
+  assert.ok(h.includes('<small class="r5">N</small>'), 'and every drop line repeats the N tag');
+  assert.ok(!h.includes('every drop is <b class="r4">'), 'no Legendary band badge on an N field');
   U.mapM = 9; U.mapL = 15;
   h = U.V.map();
-  assert.ok(h.includes('every drop here is <b class="r5">N</b>'), 'a Nightmare field states the N rarity, not Legendary');
-  assert.ok(h.includes('<small class="r5">N</small>'), 'and every drop line repeats the N tag');
-  assert.ok(!h.includes('every drop here is <b class="r4">'), 'no Legendary band badge on an N field');
+  assert.ok(h.includes('every drop is <b class="r6">N+</b>'), 'the Abyssal row is N+, its own band');
+  assert.ok(h.includes('<small class="r6">N+</small>'), 'and its drop lines say N+');
+  assert.ok(h.includes('<b>Abyssal Nightmare gear</b>, worn by transcendent classes only'), 'the Abyssal row names its own section and gate');
   U.mapM = 5; U.mapL = 4;
   h = U.V.map();
 });
@@ -1192,7 +1219,7 @@ t('the Bag sells by rarity, on the drop or on a click', () => {
   U.S = mkS('Knight'); U.selB = null;
   let h = U.V.bag0();
   assert.ok(h.includes('Selling tools'), 'the bag carries the selling tools');
-  const RAR_NAMES = ['Common', 'Fine', 'Rare', 'Epic', 'Legendary', 'N'];
+  const RAR_NAMES = ['Common', 'Fine', 'Rare', 'Epic', 'Legendary', 'N', 'N+'];
   RAR_NAMES.forEach((n, i) => assert.ok(h.includes(`data-a="autosell" data-v="${i}"`), 'a tick for ' + n));
   assert.ok(h.includes('data-a="clicksell"') && h.includes('Click-sell: OFF'), 'click-sell starts OFF');
   assert.ok(h.includes('data-a="sellnow" ') || h.includes('data-a="sellnow"'), 'and the matching purge is offered');
@@ -1518,8 +1545,8 @@ t('worn equipment can never be auto-sold or bulk-sold', () => {
   const sellnowFn = grab('sellnow:()=>{', 'clicksell:');
   const box = {}; vm.createContext(box);
   vm.runInContext(`let S=null,selB=null,z=0,sold=0;const earnZeny=v=>{z+=v},log=()=>{},ui=()=>{},save=()=>{sold++};
-    const RAR=[{n:'Common'},{n:'Fine'},{n:'Rare'},{n:'Epic'},{n:'Legendary'}],RAR5={n:'N'},RARALL=RAR.concat([RAR5]);
-    const rarIdx=it=>((it&&+it.sec>=4)?5:Math.max(0,Math.min(RAR.length-1,(it&&it.tier)||0)));
+    const RAR=[{n:'Common'},{n:'Fine'},{n:'Rare'},{n:'Epic'},{n:'Legendary'}],RAR5={n:'N'},RAR6={n:'N+'},RARALL=RAR.concat([RAR5,RAR6]);
+    const rarIdx=it=>((it&&+it.sec>=5)?6:(it&&+it.sec>=4)?5:Math.max(0,Math.min(RAR.length-1,(it&&it.tier)||0)));
     const autoSellOn=t=>!!(S.autoSell&&S.autoSell[Math.max(0,Math.min(RARALL.length-1,Math.floor(+t||0)))]);
     ${sellValFn}
     const ACT={${sellnowFn}};
