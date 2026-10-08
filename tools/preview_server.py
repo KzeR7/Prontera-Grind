@@ -5,8 +5,10 @@
 
 Routes:
 
-    /            the game itself (index.html)
-    /game        explicit alias for the game
+    /            the game itself (index.html) - or, with PREVIEW_PAGE=<repo-relative page>
+                 set in the environment, that page instead (e.g. the skill-fx preview)
+    /game        explicit alias for the game, always index.html
+    /skillfx     the skill-effect sprite preview (every skill's RO-style effect, on demand)
     /damage      the damage-floats proposal page (on-screen damage numbers: 3 options)
     /crit        a live crit-frame comparison: the old misaligned burst vs the current one
     /weapons     the weapon proposal page (weapons on the class sprites)
@@ -28,10 +30,14 @@ import sys
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # '/' is THE GAME. The preview link the owner clicks has to land on the game itself - it used to
 # open the weapon proposal page, which read as "the preview is broken". The dev pages keep their
-# own routes underneath it.
-PAGES = {'/': 'index.html',
+# own routes underneath it. EXCEPTION: set PREVIEW_PAGE to a repo-relative page (e.g.
+# PREVIEW_PAGE=tools/skill_fx_preview.html) and '/' serves that page instead - use it when a
+# dev page IS the thing the owner should see, without un-pinning the game as the default.
+_root_page = os.environ.get('PREVIEW_PAGE', 'index.html')
+PAGES = {'/': _root_page,
          '/game': 'index.html',
          # the tuner pages (PR #29/#30) keep their own routes - they are tools, not the game
+         '/skillfx': 'tools/skill_fx_preview.html',
          '/damage': 'Updates/damage-floats-proposal/index.html',
          '/crit': 'Updates/crit-frame-compare/index.html',
          '/weapons': 'tools/weapon_proposal.html',

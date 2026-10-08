@@ -516,7 +516,7 @@ node tools/tests/pack_sim.js           # -> "bodies in pack (19): ..."
 node tools/tests/class_change_sim.js   # -> "27 passed, 0 failed"
 node tools/tests/class_skin_sim.js     # -> "39 passed, 0 failed" (live class skins, both genders, mirrors)
 node tools/tests/kit_sim.js            # -> "34 passed, 0 failed" (v2 atlas + KIT_PS, payon recipe, ten identities)
-node tools/tests/skill_sim.js          # -> "52 passed, 0 failed" (91-skill roster, caps, cooldowns, GCD queue)
+node tools/tests/skill_sim.js          # -> "58 passed, 0 failed" (91-skill roster, caps, cooldowns, GCD queue)
 node tools/tests/dual_wield_sim.js     # -> "11 passed, 0 failed" (v81: Assassin dagger + dual-wield rules)
 node tools/tests/save_load_sim.js      # -> "23 passed, 0 failed"
 node tools/tests/economy_sim.js        # -> "23 passed, 0 failed"
@@ -4767,29 +4767,278 @@ The owner's second pass over v77, six notes, all built.
 * **Tests:** all **36** `*_sim.js` suites passed; `town_smoke.js` passed **40/40**. Focused results: `class_skin_sim` **40/40**, `weapon_proposal_sim` **587/587**, and `drop_card_sheet_sim` **12/12**. Inline game JavaScript passes `node --check`; `git diff --check` is clean. The runtime suite covers the saved frame matrix, male/female placements, frame blending, bare-view toggles, mirror transforms, family fallback and parity with the proposal renderer.
 * **Live preview:** `python3 tools/preview_server.py 8000` serves the game at `/` and the review tool at `/weapons`; both pages plus the skin manifest and weapon data assets returned HTTP 200 with the expected v78/default markers. **No PR was opened and nothing was pushed.**
 
-### 2026-10-08 — `grind-v78.1 Nightmare N rarity, field quality, and class-stage gates`
+### 2026-10-08 — `grind-v79: skill effects become RO-style animated sprites`
 
-* **Owner's correction:** Nightmare gear is the independent **N / Nightmare** rarity, not Legendary.
-  `dropTier()` no longer forces Nightmare items to numeric tier 4; field quality follows the selected
-  map cap, and `trialGrantNm()` uses that same map quality. N labels, the dedicated auto-sell category,
-  and the selected-item detail control remain tied to the rarity identity rather than `it.tier`.
-* **Section eligibility remains separate from rarity:** section 2 requires a second-job class, so a
-  Thief cannot equip it. Sections 4-5 require class tier 3, so an Assassin cannot equip Nightmare
-  gear; an Assassin Cross can. Stage-3 high-tier gear follows the same third-job/transcendent gate.
-* **Mid-level map confirmation:** Comodo, Louyang, Amatsu, and Niflheim stages 1-2 drop section-2
-  second-job gear; stages 3-10 drop section-3 high-tier gear. Thus second-class gear is present on
-  these maps, but only at stages 1-2. No map's gear-drop chances changed.
-* **Normal progression and rarity stay intact:** Prontera/Izlude remain Common on stages 1-9, and the
-  Stage 10 map cap covers the whole field, escorts and MVP included. Stage-10 routing and the compact
-  Town / Endless Echo row remain; normal drop previews retain the actual map rarity instead of
-  defaulting to Common. The v78 saved class weapon sprite integration remains included.
-* **Checks:** all 36 `*_sim.js` suites and Town smoke passed after the rebase; focused assertions cover
-  gear eligibility, Nightmare category, map-tier token generation, detail auto-sell, worksheet migration,
-  and the Stage-10 route. `git diff --check` is clean.
-* **Files:** `index.html` (v78.1, independent N category and map-capped field quality),
-  `tools/tests/{gear_sim,nightmare_sim,trial_sim,ui_sim,drop_card_sheet_sim,offline_sim,starter_sim,town_smoke}.js`,
-  `Updates/cards-gear-audit/{affix-ranges,equipment-cards-tuning}.html`, deployment/build notes,
-  `READ-ME-FIRST.md`, and this log.
+* **What the owner asked:** put real sprites on every skill — when a skill fires, an effect should
+  play — researched on Ragnarok Online, Ragnarok Mobile and RO3, with a preview simulation to view
+  it in. No PR.
+* **The research:** the classic client draws its skill effects as `.str` files — several texture
+  layers, each on its own keyframe timeline (frame, position, rotation, scale, alpha), blended
+  additively over the battlefield. The community-mapped texture list is the vocabulary of the game:
+  `pok1/pok3.tga` impact bursts, `ring_white/yellow/blue.tga` expanding rings, `lens1/lens2.tga`
+  glows, `purpleslash.tga` (Meteor Assault), `ice.tga`, `smoke.tga`, `kyrie.str` for Kyrie Eleison,
+  with a few effects hardcoded (Sonic Blow's slash flurry, Heal's ring + sparkles). ROM and RO3 keep
+  those silhouettes and timings and only add glow and bigger ground AoE markers.
+* **What changed in the game:** the battlefield effects are now sprite animations in that same
+  shape. Sixteen procedurally rendered 96px sheets rebuild the classic vocabulary — pok burst, ring,
+  lens glow, slash crescent, flame, ice shards, lightning bolt, holy pillar, meteor, poison bubbles,
+  arrow streak, zeny coins, falcon stoop, smoke, rising sparkles and a ROM-style ground AoE decal —
+  and every one of the 40 effect families (all 60 skill/buff/entry mappings in `SKILL_VFX`) is now a
+  recipe of animated sprite layers with its own life window, spin, scale and tint, played on
+  camera-facing billboards and ground decals. Skill colours still tint each effect, so Fire Bolt
+  stays orange and Napalm Beat stays purple. The old geometry recipes stay in the file untouched as
+  the fallback for a context with no canvas, and every timing, anchor and colour in `SKILL_VFX` is
+  unchanged, so combat feel is identical — only the look moved from geometric shapes to animated
+  RO-style sprite frames.
+* **House rule 1 note:** no client art was downloaded or traced; the sheets are the game's own
+  procedural render of the researched effect vocabulary (the same standing the SVG skill icons and
+  the town's block-built props have), and no class/monster art was touched.
+* **The preview:** `tools/skill_fx_preview.html`, served at **`/skillfx`** by
+  `python3 tools/preview_server.py 8000`. It lifts the real effect code out of `index.html` (the
+  same string-boundary extraction the test suites use), so what plays there is exactly the field
+  effect. All active skills are listed by job line; click one to cast it, pick any hero class and a
+  Divine Pride target, slow time to 0.2×, loop one skill or **▶ Play every skill**, and the right
+  panel carries the RO/ROM/RO3 research note behind each family.
+* **Files touched:** `index.html` (the sprite sheets, the layer recipes, the sprite-part builder,
+  the sprite branch in `syncSkillFx`, `BUILD` v79), `tools/skill_fx_preview.html` (new),
+  `tools/preview_server.py` (the `/skillfx` route), `tools/tests/skill_sim.js` (fake canvas +
+  plane/CanvasTexture stand-ins and two new tests), `TOOLS-START-HERE.md`, `READ-ME-FIRST.md`,
+  this log.
+* **Art:** no uploaded sprite sheets were added, removed or rebuilt; `tools/montage.py` was not
+  used. The sixteen effect sheets are rendered by the game at runtime.
+* **Tests:** all **36** `*_sim.js` suites green — `skill_sim` now **54/54**, with two new tests:
+  *"every visual family has a sprite recipe over the researched RO effect sheets"* (every
+  `SKILL_VFX` family maps to layers over real sheets, sane windows/sizes/facings) and *"skill
+  effects build animated sprite layers and advance their frames in flight"* (every cast builds
+  sprite parts with a sheet texture, frames advance, everything disposes). `town_smoke.js` passed
+  **40/40** in jsdom, where no canvas 2D context exists — which proves the geometry fallback still
+  builds when sprites cannot. The preview's own extraction harness was run headless against the
+  live file (60 effects queued, all animated and expired cleanly).
+* **Branches / PR:** `arena/5d3fe321-prontera-grind`; **no PR opened**, as asked.
+* **Known limits / follow-ups:** the recipes are first passes tuned from the research; any single
+  family's look is one entry in `SKILL_FX_SPR` to adjust (layers, sizes, timing windows), and the
+  preview page at `/skillfx` is the place to judge changes before they ship.
+
+### 2026-10-08 — `preview server: PREVIEW_PAGE override, so /skillfx lands at the root`
+
+* **What the owner saw:** the live preview link opened the **game**, not the new skill-effect
+  preview — the preview server pins `/` to `index.html` on purpose, and the skill page was only
+  reachable at `/skillfx`.
+* **What changed:** `tools/preview_server.py` now honors a `PREVIEW_PAGE` environment variable
+  (a repo-relative page) that overrides only the `/` route; `/game` stays the game, every other
+  route is untouched, and without the variable the default behavior is exactly as before. The
+  skill-fx preview process runs with `PREVIEW_PAGE=tools/skill_fx_preview.html`, so the preview
+  link opens straight onto the skill page.
+* **Files touched:** `tools/preview_server.py`, this log. Dev-tooling only — `index.html`, `BUILD`
+  and the game are unchanged.
+* **Tests:** `dev_server_sim` **15/15** after the change; `/`, `/skillfx`, `/index.html`, `/game`
+  and `/assets/sprite_pack_data.js` all returned HTTP 200 with the right page.
+
+### 2026-10-08 — `grind-v79.1: sky-fall mage skills, bigger effects, more variety, real skins in the preview`
+
+* **What the owner sent back after watching the preview:** the preview hero was the old pack art
+  (use the updated skins), some skills — mainly the mage tree — should drop from the sky (Fire
+  Bolt was named), the effects were too small to see, and too many skills looked the same.
+* **All four fixed:**
+  * **Bigger:** every layer size in `SKILL_FX_SPR` was roughly doubled (decals more), so the
+    effects read at the field camera's distance.
+  * **Sky-fall mages:** Fire Bolt and Napalm Vulcan (`fireBolt`) now drop a fireball from above
+    the target and detonate it over a scorch decal; Napalm Beat a ghost comet; Frost Diver a
+    diving ice shard; Storm Gust rains shards into a much bigger frost field. Those four casts
+    anchor on the target now (`at:'target'`), with slightly longer lives (all still ≤1.2s).
+  * **Variety:** recipes can override by skill id (lookup is id first, then family), and eighteen
+    skills got their own: Thunder Storm vs Lord of Vermilion (red storm + cross flash), Fire Ball
+    (flying ball → blast) vs Magnum Break (ring sweep) vs Meltdown (burning weapon), Cart
+    Termination (enormous slam) vs Cart Revolution (spin rings), the five AGI buffs (blade-wind /
+    aim lens / wind column / feathers / wheel-rings), Frenzy vs Overthrust vs Provoke, Magnus vs
+    Signum Crucis, Holy Light vs Judex (starburst), Focused Arrow vs Phantasmic Arrow, Blitz Beat
+    vs Falcon Assault, Venom Dust vs Envenom, Soul Destroyer's vortex, Kyrie's cross bubble,
+    Basilica's pillars, Joint Beat's twin cracks. Four new sheets joined the vocabulary:
+    `wave` (crescent shockwave), `vortex` (swirl disc), `cross` (holy cross), `star` (starburst).
+  * **Preview hero:** `/skillfx` now runs the game's OWN updated class art — the animated APNG
+    skins from `assets/class_skins_data.js`, decoded by the game's own APNG decoder (lifted out
+    of `index.html` the same way as the effect code), playing the walk view at idle and the
+    attack view on the cast clock, with the saved v78 weapon sprite composited per frame and a
+    ♂/♀ switch. The old pack art stays only as the decode-failure fallback.
+* **Files touched:** `index.html` (new table + four sheets, id-first lookup, `SKILL_VFX` at/life
+  for the mage line, `BUILD` v79.1), `tools/skill_fx_preview.html` (skin hero, gender, sky notes),
+  `tools/tests/skill_sim.js` (three new tests: sheet set incl. the four new ones + override
+  validity, the sixteen shared-family pairs must differ, the four mage casts must fall from the
+  sky), the BUILD-tag snapshots (`Updates/cards-gear-audit/equipment-cards-tuning.html` via
+  `--refresh-snapshot`, `affix-ranges.html`, `tools/cloudflare-deploy-steps.md`), `READ-ME-FIRST.md`,
+  this log.
+* **Art:** no uploaded sprite sheets changed; `tools/montage.py` untouched. The four new effect
+  sheets are runtime-rendered like the other sixteen.
+* **Tests:** all **36** `*_sim.js` suites green — `skill_sim` now **56/56** — and `town_smoke.js`
+  **40/40**. The preview's full extraction (skill code + skin decoder + weapon painter) was run
+  headless against the live file: 60 casts queued and expired cleanly, the skin API builds, and
+  all 19 classes × both genders have their attack APNG on disk. Inline JS passes `node --check`.
+* **Branches / PR:** `arena/5d3fe321-prontera-grind`; **no PR opened**, as asked.
+* **Known limits / follow-ups:** sky-fall is the mage line's read now; if another family should
+  also come from above (or a sky skill should go back to a horizontal bolt), its entry in
+  `SKILL_FX_SPR` plus the `at:` line in `SKILL_VFX` are the two knobs, judged at `/skillfx`.
+
+### 2026-10-08 — `grind-v79.2: sharp unboxed effects, real meteors, split poisons`
+
+* **What the owner sent back after the v79.1 watch-through:** some effects still had a visible
+  square outline ("like in a box"), the doubled size made the art soft/blurry, the thief-line
+  poisons (Envenom / Venom Dust / Venom Splasher) all looked the same, and the mage AoE —
+  Meteor named — looked fake, "like a kids drawing".
+* **All four fixed:**
+  * **Box edges:** the edges were painters drawing past the 96px frame and the additive quad's
+    clipped glow showing the boundary. Every sheet painter was redrawn on **144px frames**
+    (`FX_FR` 96 → 144) with a ~66px radius margin — nothing touches the frame edge anymore.
+  * **Sharpness:** the 1.5× source-resolution bump removes the blur; every stroke was retuned
+    for the bigger canvas (crisper cores, tighter gradient stops).
+  * **Real meteors:** a rock can't be additive. The `meteor` sheet was redrawn with **baked
+    real colors** (dark cratered stone, molten rim, converging trail) and the recipe plays the
+    rocks on **normal-blend** layers (`L.blend==='normal'` → `THREE.NormalBlending`, new branch
+    in `skillFxSpritePart`) falling the whole way from y≈6 to the ground, with a per-impact
+    shockwave (`wave`) + blast (`pok`) timed to each landing (.45/.63/.79s), then flame, smoke,
+    sparks. Frost Diver and Storm Gust's falling layers now use the new **`shard` sheet** — a
+    diving ice dagger, tip down — instead of the rising `ice` crystal.
+  * **Poison trio split:** Envenom (`env`) is a focused splash burst (bubbles + white pok +
+    ring); Venom Dust keeps its low lingering cloud with **no burst**; Venom Splasher's
+    `poisonBomb` is now two-stage — a sticky bomb that pulses for ~0.4s, then erupts with a
+    decal, burst, scattered shrapnel bubbles and smoke. `skill_sim` pins all three pairs differ.
+* **Files touched:** `index.html` (all 21 sheet painters rewritten, `FX_FR=144`, blend branch in
+  `skillFxSpritePart`, meteor/shard/poison recipes, `BUILD` v79.2), `tools/tests/skill_sim.js`
+  (sheet pin 20 → 21 with `shard`, `NormalBlending` in the fake THREE, +2 poison diff pairs),
+  `tools/skill_fx_preview.html` (meteor + poison notes), the BUILD-tag snapshots
+  (`equipment-cards-tuning.html` via `--refresh-snapshot`, `affix-ranges.html`,
+  `tools/cloudflare-deploy-steps.md`), `READ-ME-FIRST.md`, this log.
+* **Tests:** all **36** `*_sim.js` suites green — `skill_sim` still **56/56** with the bigger
+  pins — and `town_smoke.js` **40/40**. Headless run of the new block: 21 sheets paint, 3
+  normal-blend meteor layers, all 28 casts queue and expire, meteor rocks all `rise ≤ −5`.
+  Inline JS passes `node --check`.
+* **Branches / PR:** `arena/5d3fe321-prontera-grind`; **no PR opened**, as asked.
+* **Known limits / follow-ups:** the preview hero and skin pipeline are untouched this round;
+  `env` / `vdust` / `poisonBomb` entries in `SKILL_FX_SPR` are the knobs if any of the three
+  poison reads still blends into the others.
+
+### 2026-10-08 — `grind-v79.3: reworked casts, ground-fight-free decals, real hammer fall`
+
+* **What the owner sent back (third watch-through, 12 notes):** Fire Bolt & Fire Ball disliked
+  (bolts from sky / ball from player), Storm Gust should be the RO1 gust, Napalm Vulcan not nice,
+  **every** skill still showed a box outline, Meteor Assault should sweep horizontally, Soul
+  Breaker & Soul Destroyer a wave of slices from the player (Destroyer purple), Holy Light not a
+  projectile, Magnus + Judex better, Hammer Fall literally a hammer falling, Meltdown fire fake.
+* **The box outline, root-caused:** the sheet art was clean (rendered every sheet to PNG and
+  inspected it - margins hold), so the squares were **z-fighting**: every `face:'ground'` layer
+  sat at y=0, exactly coplanar with the terrain, so the additive quad flickered into a square
+  patch under nearly every effect. Fix: ground layers lift to y≥.08 with
+  `polygonOffset(-2,-2)` in `skillFxSpritePart`, plus the UV cell inset widened .8%→2%.
+* **Cast reworks (all in `SKILL_FX_SPR` + a few `SKILL_VFX` anchors):** `fire` override = three
+  single `bolt` sheets falling from y≈6 with per-landing pok; `fireball` override + `at:'path'` =
+  burning lens/flame ball riding the caster→target arc, exploding on arrival; `napalm` override +
+  `at:'path'` = ghost lens/bubble orb volley; `iceStorm` (Storm Gust) = two counter-spinning
+  `vortex` discs, ground ring, four whirling shards, gust waves, snow sparkles, mist; `radial`
+  (Meteor Assault) = three `slash` layers on the GROUND with ±8 spin (horizontal sweep);
+  `soulBolt`/`sdestroy` = 3 staggered slash crescents riding the path (Destroyer adds a purple
+  vortex + bubbles); `holy` + `at:'target'` = pillar descending (y 4.8, rise −4.2) into cross +
+  ring bloom; `judex` + `at:'target'` = cross-star falling from y 5.2 into star/pillar burst;
+  `magnus` = four pillars raining (rise ≤ −4.8) inside the field + cross flash; `hammerFall` =
+  new `hammer` sheet on a normal-blend layer falling head-first, then star/pok/wave/decal/dust;
+  `meltdown` re-layered on the new organic flame.
+* **Flame sheet redrawn:** flat triangle tongues were the "kid's fire" — now swaying bezier
+  tongues with vertical-gradient bodies, per-tongue hot-core glows and rising ember glows; every
+  fire family inherits the fix. New `hammer` sheet: steel head with gradient shading + dark
+  outline, wooden haft, hot striking rim, speed streaks (baked colour, white-tint normal blend).
+* **Files touched:** `index.html` (ground lift + polygonOffset in `skillFxSpritePart`, UV inset
+  2%, flame redraw, hammer sheet, 12 recipe/anchor changes, `BUILD` v79.3),
+  `tools/tests/skill_sim.js` (hammer in the sheet pin, sky test now fire/nap/fdiver + bolt count,
+  new v79.3 test: paths, targets, horizontal sweep, slices, hammer, gust, magnus rain, coplanar
+  guard — 57/57), `tools/skill_fx_preview.html` (8 research notes), the BUILD-tag snapshots
+  (`equipment-cards-tuning.html` via `--refresh-snapshot`, `affix-ranges.html` ×2,
+  `tools/cloudflare-deploy-steps.md` ×1), `READ-ME-FIRST.md`, this log.
+* **Tests:** all **36** `*_sim.js` suites green (skill_sim 57/57), `town_smoke.js` 40/40 after
+  `npm i --no-save jsdom three@0.128.0` (node_modules is not snapshotted). Headless harness: 22
+  sheets paint, min ground-layer y .08, all 28 casts queue and expire.
+* **Branches / PR:** `arena/5d3fe321-prontera-grind`; **no PR opened**, as asked.
+* **Known limits / follow-ups:** the hammer and meteor are the only normal-blend (baked-colour)
+  sheets; if the owner wants more "real object" reads (e.g. a thrown cart), the same recipe
+  pattern applies.
+
+### 2026-10-08 — `grind-v79.4: organic streaks, single soul slash, swinging light-hammer`
+
+* **What the owner sent:** three screenshots of the preview showing the "boxes" at last — thin
+  horizontal rectangular bands floating in the air (the arrow/slash streak art at field scale),
+  giant purple floor blades (Meteor Assault's ground slashes), plus three notes: soul break /
+  soul destroyer should be ONE slash wave (currently "boxes of wave"), and the hammer should be
+  transparent/coloured and STRIKE, not a solid hammer falling from the sky.
+* **Root cause of the bands:** not a pipeline bug at all — the `arrow` sheet's separate thin
+  speed-lines and the old slash's hard-edged crescent literally ARE thin rectangles, and at the
+  field camera's distance an additive quad of that art reads as a floating box. Art-level fix:
+  `arrow` redrawn as ONE tapered comet streak (gradient body, glow head, two tiny fletching
+  ticks), `slash` redrawn as a thick soft-edged energy crescent with round caps and a soft tip
+  glow. Arrow Shower cut from 5 stacked streaks to 3 smaller comets.
+* **Soul Breaker / Soul Destroyer:** one `slash` layer riding the caster→target path + lens +
+  arrival pok (Destroyer adds a purple vortex + bubbles). Pinned in skill_sim: exactly one slash
+  per skill.
+* **Hammer Fall:** hammer sheet redrawn as a translucent light-hammer (three-pass glow
+  line-art, additive — no baked steel), swung through ~90° by UV spin (ang −2.4, spin 4.2) at
+  chest height, then star/pok/wave/decal/dust on the connect. No longer sky-falling, no longer
+  normal-blend.
+* **Meteor Assault:** horizontal whirl = four camera-facing slashes offset to the caster's sides
+  (|x|≥1 / ±z) with tangential `ang`, over the ground ring + pok + lens. The giant
+  ground-spinning blades were removed. skill_sim pins side slashes and forbids floor slashes.
+* **Files touched:** `index.html` (arrow/slash/hammer redraws, soulBolt/sdestroy/radial/
+  hammerFall/arrowRain recipes, `BUILD` v79.4), `tools/tests/skill_sim.js` (v79.3-test block
+  rewritten for the new shapes), `tools/skill_fx_preview.html` (3 notes), the BUILD-tag snapshots
+  (`equipment-cards-tuning.html` via `--refresh-snapshot`, `affix-ranges.html` ×2,
+  `tools/cloudflare-deploy-steps.md` ×1), `READ-ME-FIRST.md`, this log.
+* **Tests:** all 36 `*_sim.js` green (skill_sim 57/57), town_smoke 40/40. Sheets rendered to PNG
+  and visually inspected before shipping (arrow comet, slash crescent, light-hammer).
+* **Branches / PR:** `arena/5d3fe321-prontera-grind`; **no PR opened**, as asked.
+* **Known limits / follow-ups:** with no browser in the sandbox the owner's screenshots are the
+  only ground truth for the WebGL look — keep asking for one screenshot per round; each sheet can
+  be re-rendered to PNG locally for art review.
+
+### 2026-10-08 — `grind-v79.5: fixed UV spin (the box bands), polished soul wave and hammer strike`
+
+* **THE box bug, found at last.** The owner's nine screenshots showed un-rotated layers rendering
+  fine (big crescents, ground rings) while every `ang`/`spin` layer rendered as a horizontal
+  band. `skillFxSpriteUv` rotated raw UV coordinates where u spans a 1/n sliver of the sheet but
+  v spans the full height — mixing those units in the rotation matrix stretched the v-range
+  across the whole sheet for any non-zero angle. That is the "square outline" reported since
+  v79.1; the v79.2/v79.3 margin and z-fight changes were real but secondary. Fix: rotate in
+  cell-normalised 0..1 space on both axes, then map back into the cell rect.
+* **Regression test:** skill_sim now records the fake PlaneGeometry's UV writes and asserts that
+  after spinning, all four u corners stay within .75/n of the frame centre and v stays in
+  [-.3,1.3] (corners legitimately poke past v onto the transparent margin; the visible art,
+  radius ≤ .46 of the cell, never leaves its frame). 58/58.
+* **Polish on top of the fix:** soulBolt = one bigger wave + light trail + bloom; sdestroy = one
+  purple wave inside its vortex; hammerFall swing re-signed (ang −1, spin −4.8) after rendering
+  the GPU-view rotation as images — the hammer now starts raised and strikes DOWN (research:
+  ratemyserver/fandom "slams the targeted cell with the equipped weapon"); radial's side slashes
+  spin into a real horizontal whirl.
+* **Files touched:** `index.html` (skillFxSpriteUv rewrite, four recipe polishes, `BUILD` v79.5),
+  `tools/tests/skill_sim.js` (uv-recording FakePlaneGeometry + smear regression test), the
+  BUILD-tag snapshots, `READ-ME-FIRST.md`, this log.
+* **Tests:** all 36 `*_sim.js` green (skill_sim 58/58), town_smoke 40/40.
+* **Branches / PR:** `arena/5d3fe321-prontera-grind`; **no PR opened**, as asked.
+* **Lesson for future rounds:** the sandbox has no browser, so WebGL output was invisible until
+  the owner sent screenshots; the uv-rotation unit-mixing bug was provable from code but only
+  obvious from pixels. Keep the PNG sheet/swing renders going and ask for screenshots early.
+
+### 2026-10-08 — `grind-v79.6: sharp claw slashes - tapered blades, no fat round blobs`
+
+* **Owner feedback with a real-client capture (Soul Breaker on iRO):** the client's slash is a
+  sharp tapered claw/scythe swoosh; our round-capped thick strokes read as "fat circular" blobs
+  on Sonic Blow, Grimtooth, Soul Breaker/Destroyer, Spiral Pierce, Bowling Bash "and a few more".
+* **Art fix:** new `fxClaw` painter helper (outer arc + sine-tapered inner arc meeting at sharp
+  points). `slash` = main claw + echo claw + tip spark; `wave` = tapered shockwave with sharp
+  horns; `vortex` = three tapered winding claws. All slash/wave/vortex consumers inherit it.
+* **Self-inflicted regression caught by skill_sim:** the vortex block replacement range ran to
+  the hammer comment and silently deleted the `cross` sheet; the sheet-pin test failed
+  ("sheet cross is missing") and the sheet was restored. Lesson: block splices must list every
+  sheet comment they cross.
+* **Files touched:** `index.html` (fxClaw helper, slash/wave/vortex redraws, `BUILD` v79.6,
+  cross restore), `READ-ME-FIRST.md`, BUILD-tag snapshots refreshed, this log.
+* **Tests:** skill_sim 58/58, all 36 suites green, town_smoke 40/40. Sheets + claws rendered to
+  PNG and compared against the owner's reference image before shipping.
+* **Branches / PR:** `arena/5d3fe321-prontera-grind`; **no PR opened**, as asked.
+
 
 ### 2026-10-08 — `grind-v78.2 stage-routed second- and third-job equipment`
 
