@@ -10,7 +10,7 @@ const from = (a, b) => {
   assert.ok(i >= 0 && j > i, `missing source boundary ${a}`);
   return src.slice(i, j);
 };
-const config = from('const BAGMAX=1000;', '// Rarity is a property of WHERE an item drops');
+const config = from('const BAGMAX=1000;', 'const MAPTIER=');
 const helpers = from('function offlineRateSample(now=Date.now()){', '// ---------- accounts (stored in this browser; real cross-device accounts need a server) ----------');
 const simulation = from('function offlineMobForCurrentField(){', '// ---------- skill effects: damage over time, stun, chain ----------');
 
@@ -24,6 +24,7 @@ function harness() {
   const setup = `
     let S = null, currentUser = 'Test', zenyEarned = 0, expEarned = 0;
     const CLOUD = { on: false };
+    const MAPS = Array.from({length:10},(_,i)=>({n:'Map '+i})); let mapM=0,mapL=1;
     const cl = (v,a,b) => Math.max(a,Math.min(b,v));
     const safeCount = v => {const n=Number(v);return Number.isFinite(n)?Math.max(0,Math.min(Number.MAX_SAFE_INTEGER,Math.floor(n))):0};
     const lsPut = (k,v) => {state.writes.push([k,v]);state.saves++};
@@ -46,7 +47,8 @@ function harness() {
   `;
   const code = config + '\n' + helpers + '\n' + simulation + `
     globalThis.api = {
-      offlinePlan, offlineRateSample, applyOfflineProgress,
+      offlinePlan, offlineRateSample, applyOfflineProgress, offlineAwardKill,
+      mapSelection(){return[mapM,mapL]},
       OFFLINE_POPUP_MIN_MS, OFFLINE_SIM_COVER_MS, OFFLINE_CAP_MS,
       setState(v){S=v}, getState(){return S}, setNow(v){clock.now=v}, setCloud(v){CLOUD.on=!!v},
       setPageBoot(v){PAGE_BOOT_AT=v}, getPageBoot(){return PAGE_BOOT_AT}, elements, $, state
@@ -85,6 +87,23 @@ t('fractional kills carry forward, while sub-minute absences do not open a rewar
   assert.strictEqual(p.remainder, 0);
   assert.strictEqual(h.offlinePlan(1, 1 + 59999, 1000, 0).show, false);
   assert.strictEqual(h.offlinePlan(0, 3600001, 1000, 0).show, false);
+});
+
+t('offline normal Stage 10 boss clears follow Auto-advance but never jump into Nightmare', () => {
+  const award = (map, adv) => {
+    const S={offlineAt:1,kills:0,kl:0,mp:map,lvl:10,prog:Array(10).fill(1),adv,zeny:0,exp:0,
+      ore:{ori:0,elu:0},cards:[],inv:[],eq:{},pets:[],auto:false,autoSell:[],q:[]};
+    h.setState(S);const r={kills:0,zeny:0,exp:0,stages:0};
+    h.offlineAwardKill({boss:true,zeny:1,exp:1,drops:[],cardCh:0,ore:false,lvl:1,sec:0},r);
+    return {S,r,selection:h.mapSelection()};
+  };
+  const next=award(3,true);
+  assert.deepStrictEqual([next.S.mp,next.S.lvl,next.r.stages], [4,1,1], 'a boss clear advances to the next normal map');
+  assert.deepStrictEqual(Array.from(next.selection),[4,1], 'the map selection follows the offline route');
+  const farm=award(3,false);
+  assert.deepStrictEqual([farm.S.mp,farm.S.lvl,farm.r.stages],[3,10,0], 'Auto-advance off leaves the MVP field farmable');
+  const last=award(9,true);
+  assert.deepStrictEqual([last.S.mp,last.S.lvl,last.r.stages],[9,10,0], 'Abyss Stage 10 never auto-jumps into Nightmare');
 });
 
 t('cloud accounts use the server-authorized kill budget and cannot reuse a claim ID', () => {

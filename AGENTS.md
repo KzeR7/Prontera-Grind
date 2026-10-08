@@ -4763,3 +4763,27 @@ The owner's second pass over v77, six notes, all built.
 * **Files:** `index.html`, `assets/weapon_proposal_data.js` (runtime-use note), `tools/tests/class_skin_sim.js`, the APNG code backup, the preview-server route note, `tools/weapon_proposal.html`, `tools/tests/weapon_proposal_sim.js`, `TOOLS-START-HERE.md`, the build-tag snapshots, `READ-ME-FIRST.md`, and this log.
 * **Tests:** all **36** `*_sim.js` suites passed; `town_smoke.js` passed **40/40**. Focused results: `class_skin_sim` **40/40**, `weapon_proposal_sim` **587/587**, and `drop_card_sheet_sim` **12/12**. Inline game JavaScript passes `node --check`; `git diff --check` is clean. The runtime suite covers the saved frame matrix, male/female placements, frame blending, bare-view toggles, mirror transforms, family fallback and parity with the proposal renderer.
 * **Live preview:** `python3 tools/preview_server.py 8000` serves the game at `/` and the review tool at `/weapons`; both pages plus the skin manifest and weapon data assets returned HTTP 200 with the expected v78/default markers. **No PR was opened and nothing was pushed.**
+
+### 2026-10-08 — `grind-v78.1 Nightmare N rarity, field quality, and class-stage gates`
+
+* **Owner's correction:** Nightmare gear is the independent **N / Nightmare** rarity, not Legendary.
+  `dropTier()` no longer forces Nightmare items to numeric tier 4; field quality follows the selected
+  map cap, and `trialGrantNm()` uses that same map quality. N labels, the dedicated auto-sell category,
+  and the selected-item detail control remain tied to the rarity identity rather than `it.tier`.
+* **Section eligibility remains separate from rarity:** section 2 requires a second-job class, so a
+  Thief cannot equip it. Sections 4-5 require class tier 3, so an Assassin cannot equip Nightmare
+  gear; an Assassin Cross can. Stage-3 high-tier gear follows the same third-job/transcendent gate.
+* **Mid-level map confirmation:** Comodo, Louyang, Amatsu, and Niflheim stages 1-2 drop section-2
+  second-job gear; stages 3-10 drop section-3 high-tier gear. Thus second-class gear is present on
+  these maps, but only at stages 1-2. No map's gear-drop chances changed.
+* **Normal progression and rarity stay intact:** Prontera/Izlude remain Common on stages 1-9, and the
+  Stage 10 map cap covers the whole field, escorts and MVP included. Stage-10 routing and the compact
+  Town / Endless Echo row remain; normal drop previews retain the actual map rarity instead of
+  defaulting to Common. The v78 saved class weapon sprite integration remains included.
+* **Checks:** all 36 `*_sim.js` suites and Town smoke passed after the rebase; focused assertions cover
+  gear eligibility, Nightmare category, map-tier token generation, detail auto-sell, worksheet migration,
+  and the Stage-10 route. `git diff --check` is clean.
+* **Files:** `index.html` (v78.1, independent N category and map-capped field quality),
+  `tools/tests/{gear_sim,nightmare_sim,trial_sim,ui_sim,drop_card_sheet_sim,offline_sim,starter_sim,town_smoke}.js`,
+  `Updates/cards-gear-audit/{affix-ranges,equipment-cards-tuning}.html`, deployment/build notes,
+  `READ-ME-FIRST.md`, and this log.

@@ -302,6 +302,28 @@ t('fieldOf only hands out items from that field pool', () => {
   }
 });
 
+t('the field table and live gear drops preserve each normal map rarity tier', () => {
+  for (let m = 0; m < G.MAPS.length; m++) for (let l = 1; l <= 10; l++) {
+    const F = G.fieldOf(m, l), expected = G.dropTier(m, l);
+    for (const mob of F.mobs) for (const [item] of mob.drops) {
+      assert.strictEqual(item.tier, expected, G.MAPS[m].n + ' Stage ' + l + ' drop-table tier');
+      assert.strictEqual(G.rarIdx(item), item.sec >= 4 ? 5 : expected, G.MAPS[m].n + ' Stage ' + l + ' displayed item rarity');
+    }
+    if (F.boss) for (const [item] of F.boss.drops) {
+      assert.strictEqual(item.tier, expected, G.MAPS[m].n + ' Stage ' + l + ' MVP drop-table tier');
+      assert.strictEqual(G.rarIdx(item), item.sec >= 4 ? 5 : expected, G.MAPS[m].n + ' Stage ' + l + ' MVP item rarity');
+    }
+  }
+  // Normal generation still passes the field's rarity to the actual item, not just the preview.
+  for (const [map, tier, label] of [[5,2,'Rare'],[7,3,'Epic']]) {
+    const F=G.fieldOf(map,1),mob={...F.mobs[0],boss:false,lvl:1,sec:F.sec,ore:false,cardCh:0};
+    G.S={st:{luk:0},eq:{},mp:map};
+    const items=G.executeGearRoll(mob,.005);
+    assert.strictEqual(items.length,3, G.MAPS[map].n+' fixture must clear all three gear gates');
+    assert.ok(items.every(x=>x.it.tier===tier&&x.it.name.startsWith(label+' ')),G.MAPS[map].n+' actual equipment must remain '+label);
+  }
+});
+
 t('regular mobs drop both ores on every stage and Stage 10 keeps its stronger boss rate', () => {
   for (let m = 0; m < G.MAPS.length; m++) {
     for (let l = 1; l < 10; l++) {
@@ -421,6 +443,20 @@ t('class tier gates gear: Novice and 1st jobs share the low band, transcendent g
   assert.ok(G.gearTierOK(secondJob, 'Knight') && !G.gearTierOK(secondJob, 'Swordman'));
   assert.ok(G.gearTierOK(firstJob, 'Novice'), 'a Novice is left alone: 1st-job gear is the lowest band');
   assert.ok(!G.gearTierOK(secondJob, 'Novice'), 'but 2nd-job gear is still out of reach for one');
+  // Explicit stage checks from the owner's correction: a Thief cannot use 2nd-job gear; an
+  // Assassin (2nd job) cannot use either Nightmare section; a transcendent class can.
+  const nightmare = item({ id: 5, sec: 4, wt: 'sword' }), abyssal = item({ id: 6, sec: 5, wt: 'sword' });
+  assert.ok(!G.gearTierOK(secondJob, 'Thief') && G.gearTierOK(secondJob, 'Assassin'),
+    'section 2 is for second-job classes, not first-job Thieves');
+  assert.strictEqual(G.gearTierOf(nightmare), 3); assert.strictEqual(G.gearTierOf(abyssal), 3);
+  assert.ok(!G.gearTierOK(nightmare, 'Assassin') && !G.gearTierOK(abyssal, 'Assassin'),
+    'a second-job Assassin cannot wear Nightmare or Abyssal Nightmare gear');
+  assert.ok(!G.gearTierOK(nightmare, 'Thief') && !G.gearTierOK(abyssal, 'Thief'),
+    'a first-job Thief cannot wear either Nightmare section');
+  assert.ok(G.gearTierOK(nightmare, 'Assassin Cross') && G.gearTierOK(abyssal, 'Assassin Cross'),
+    'the third-job Assassin Cross meets the Nightmare class-stage gate');
+  assert.deepStrictEqual([G.gearUserOf(nightmare), G.gearUserOf(abyssal)],
+    ['transcendent classes only', 'transcendent classes only']);
   // drops match the gate: by the time a map hands out a section, its own ladder can wear it
   // (map 0 is Novice-only starter gear; maps 5-10 give high-tier from field level 3, and their
   // Base Lv bands are 60+, where the second/third jobs live)
@@ -506,22 +542,25 @@ t('the rarity band is fixed but the affixes are rolled every time', () => {
   assert.ok(mid.name.startsWith('Fine '), 'the item name states its fixed band: ' + mid.name);
 });
 
-t('a Nightmare item is its own rarity: tagged N, and still paid as a Legendary', () => {
-  // v76.2 (owner): "can the equipments rarity there be added a N ... make it look more exclusive
-  // rather than just plain ordinary rare or common equipment"
-  const nm = G.genGear({ k: 'sword', n: 'Dread Excalibur' }, 150, 4, false, 4);
+t('Nightmare equipment is its own N rarity, separate from Legendary and map quality', () => {
+  // v76.2 owner: Nightmare equipment has its own rarity N. Its normal field-quality value must not
+  // be promoted to Legendary just because the item comes from a Nightmare section.
+  const lowMapTier = G.dropTier(0, 12);
+  const nm = G.genGear({ k: 'sword', n: 'Dread Excalibur' }, 150, 4, false, lowMapTier);
   const hi = G.genGear({ k: 'sword', n: 'Dark Lord Sword' }, 150, 3, true, 4);
-  assert.strictEqual(nm.tier, 4, 'mechanics keep the Legendary band: autosell and value read it');
-  assert.strictEqual(G.rarIdx(nm), 5, 'but the display rarity is the Nightmare one');
-  assert.strictEqual(G.rarOf(nm).n, 'N', 'which is tagged N');
-  assert.strictEqual(G.rarCls(nm), 'r5', 'and painted with .r5');
+  assert.strictEqual(nm.tier, lowMapTier, 'Nightmare gear keeps its map field-quality value');
+  assert.notStrictEqual(nm.tier, 4, 'Prontera Nightmare gear is not forced to Legendary quality');
+  assert.strictEqual(G.rarIdx(nm), 5, 'section 4 selects the independent N rarity');
+  assert.strictEqual(G.rarOf(nm).n, 'N', 'the rarity label is N, not Legendary');
+  assert.strictEqual(G.rarCls(nm), 'r5', 'and N is painted with .r5');
   assert.ok(nm.name.startsWith('N '), 'the item name states it: ' + nm.name);
   assert.ok(src.includes('.r5{color:#5b21b6;font-weight:bold}'), 'the N rarity is dark purple in the CSS');
   assert.strictEqual(G.rarIdx(hi), 4, 'ordinary high-tier gear stays Legendary');
   assert.ok(hi.name.startsWith('Legendary '), 'and keeps its own prefix: ' + hi.name);
-  const ab = G.genGear({ k: 'sword', n: 'Absolute Dark Lord Sword' }, 150, 5, true, 4);
-  assert.strictEqual(G.rarOf(ab).n, 'N', 'Abyssal Nightmare gear wears the same N');
-  // the two Nightmare rows are a clean third of the matching normal table (v76.2 drop nerf)
+  const ab = G.genGear({ k: 'sword', n: 'Absolute Dark Lord Sword' }, 150, 5, true, G.dropTier(9, 15));
+  assert.strictEqual(G.rarIdx(ab), 5, 'Abyssal Nightmare is also N, not Legendary');
+  assert.strictEqual(G.rarOf(ab).n, 'N', 'both Nightmare sections use the N category');
+  // The owner's Nightmare drop-rate tables are unchanged: one third of their normal counterparts.
   assert.strictEqual(G.FIELD_GEAR_NM.map(x => +(x * 3).toFixed(2)).join(','), '1.5,1.2,0.9');
   assert.strictEqual(G.FIELD_GEAR_MID_NM.map(x => +(x * 3).toFixed(2)).join(','), '1.05,0.84,0.63');
 });

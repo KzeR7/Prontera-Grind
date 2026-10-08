@@ -158,9 +158,8 @@ t('the map panel renders every map and field', () => {
   assert.ok(h.includes('dropline') && h.includes('1.5%') && h.includes('1.2%') && h.includes('0.9%'), 'mob gear odds (v57: 3.6% total) must each be visible');
   assert.ok(h.includes('0.15%'), 'the card chance stays visible on the monster');
   assert.ok(h.includes('mapcard'), 'the map selector must be the scalable grid');
-  // v68: Prontera Town is a card in this same grid - the same class, the same size as the ten
-  // fields - so the town reads as one more map to pick, not as something bolted on beside them.
-  assert.strictEqual((h.match(/class="mapcard/g) || []).length, 11, 'one card per field map, plus the town card');
+  // v77.3: Town and Endless Echo share a compact two-card row beneath the ten field maps.
+  assert.strictEqual((h.match(/class="mapcard/g) || []).length, 12, 'ten field cards plus Town and Endless Echo');
   assert.strictEqual((h.match(/data-a="selm"/g) || []).length, 10, 'only the ten fields select a stage list');
   // v77: the town ships SHUT (TOWN_OPEN), so the card is a greyed-out "closed" one with no way
   // in - and the GM account, which the gate always lets through, gets the live card instead.
@@ -209,6 +208,10 @@ t('the map panel renders every map and field', () => {
   U.mapL = 10;
   const normBoss = U.V.map();
   assert.ok(normBoss.includes('Dark Lord') && !normBoss.includes('(MVP)'), 'the normal stage-10 field still shows its MVP, bare');
+  const stage10Node = normBoss.match(/<button class="map-node[^\"]*normal-boss-node[^\"]*"[^>]*data-v="10"[^>]*><b>💀 Stage 10<\/b><\/button>/);
+  assert.ok(stage10Node && !stage10Node[0].includes('nm-node'), 'Stage 10 is styled as a normal-mode boss, not a Nightmare node');
+  assert.ok(normBoss.includes('Stages 1-10 are Normal') && normBoss.includes('Purple nodes are Nightmare stages 11-15'), 'the field picker explicitly separates normal and Nightmare stages');
+  assert.ok(src.includes('.map-node.normal-boss-node{background:#fff5d7;border-color:#c1842b'), 'the normal Stage 10 boss has a warm accent, not the Nightmare purple');
   U.mapM = 0;
   assert.ok(b.includes('1% each') && b.includes('2.5% each'), 'v51 ore rates: 1% per monster, 2.5% per boss');
 });
@@ -1030,6 +1033,11 @@ t('the bag shows its 1000-item limit and refuses loot once it is full', () => {
   assert.ok(C.S.inv.some(i=>i&&i.id===9&&i.locked),'a locked incoming item bypasses the auto-sell filter');
   assert.strictEqual(C.S.zeny,0,'keeping a locked item pays no sale value');
   assert.ok(!C.msg.includes('Auto-sold'),'the locked item is never reported as auto-sold');
+  C.S.inv.length=0;C.S.autoSell=[false,false,false,false,false,true];C.clear();
+  const nGear={id:10,name:'N Dread Katar',tier:4,slot:'weapon',wt:'katar',val:80,sec:4,lvl:120,cards:[]};
+  C.collect(nGear);
+  assert.strictEqual(C.S.inv.length,0,'a ticked N item is auto-sold before it enters the bag');
+  assert.ok(C.msg.includes('Auto-sold [N] N Dread Katar'),'the auto-sale is logged as N, not Legendary');
 });
 
 t('Settings carries BOTH damage-number toggles (show/hide and short/full) and remembers them', () => {
@@ -1053,17 +1061,25 @@ t('Settings carries BOTH damage-number toggles (show/hide and short/full) and re
   assert.ok(src.includes("damageFloat=(x,y,z,amount,critical=false,incoming=false,skill=false)=>{if(S&&S.dmgShow===false)return;"), 'hiding skips the float entirely');
 });
 
-t('the map panel states the fixed rarity of the field it is showing', () => {
+t('the map panel states the actual equipment rarity on normal and Nightmare fields', () => {
   U.S = mkS('Novice'); U.mapM = 0; U.mapL = 1;
   let h = U.V.map();
   assert.ok(h.includes('every drop here is <b class="r0">Common</b>'), 'Prontera stage 1 is a Common field');
-  assert.ok(h.includes('<small class="r0">Common</small>'), 'and each drop line repeats the band');
+  assert.ok(h.includes('<small class="r0">Common</small>'), 'Prontera item lines show Common');
+  U.mapM = 5; U.mapL = 1;
+  h = U.V.map();
+  assert.ok(h.includes('every drop here is <b class="r2">Rare</b>'), 'Comodo stage 1 keeps its Rare field band');
+  assert.ok(h.includes('<small class="r2">Rare</small>'), 'normal item lines must show the field tier, not default to Common');
+  U.mapM = 1; U.mapL = 10;
+  h = U.V.map();
+  assert.ok(h.includes('every drop here is <b class="r2">Rare</b>'), 'Izlude MVP drops use the map cap');
+  assert.ok(h.includes('Every MVP drop is <b class="r2">Rare</b>'), 'the normal MVP description agrees with its actual cap');
   U.mapM = 9; U.mapL = 10;
   h = U.V.map();
-  assert.ok(h.includes('every drop here is <b class="r4">Legendary</b>'), 'the Abyss boss field is Legendary');
-  assert.ok(h.includes('Every MVP drop is <b class="r4">Legendary</b>'), 'the MVP card says so');
+  assert.ok(h.includes('every drop here is <b class="r4">Legendary</b>'), 'the Abyss MVP field is Legendary');
+  assert.ok(h.includes('Every MVP drop is <b class="r4">Legendary</b>'), 'the Abyss MVP card says so');
   // v76.2: the Nightmare band is its own rarity - tagged N, painted dark purple - and NOT
-  // presented as one more pile of Legendaries
+  // presented as one more pile of Legendaries.
   U.mapM = 9; U.mapL = 15;
   h = U.V.map();
   assert.ok(h.includes('every drop here is <b class="r5">N</b>'), 'a Nightmare field states the N rarity, not Legendary');
@@ -1078,9 +1094,12 @@ t('the damage trial is entered from the map selection, and the lobby offers the 
   const h = U.V.map();
   // v77 (owner): "the dungeon button should be at the map selection itself not at the stages"
   assert.ok(h.includes('Endless Echo'), 'the map window names the trial');
-  assert.ok(h.includes('data-trial="lobby"'), 'and its button sits with the map cards, opening the lobby');
+  assert.ok(h.includes('data-trial="lobby"'), 'and its button opens the lobby');
   assert.ok(h.includes('/2 ranked runs left today'), 'the card states the ranked tries left');
-  assert.ok(src.indexOf('dungeoncard') < src.indexOf('mapband fields'), 'the button is drawn with the map cards, above the stage list');
+  const iSpecial=h.indexOf('class="map-specials'),iFields=h.indexOf('class="mapband fields'),specials=h.slice(iSpecial,iFields);
+  assert.ok(iSpecial>=0&&iFields>iSpecial, 'Town and Endless Echo sit above the stage list');
+  assert.ok(specials.includes('town-card')&&specials.includes('dungeoncard')&&(specials.match(/class="mapcard/g)||[]).length===2, 'the two destinations share one compact row');
+  assert.ok(src.includes('.map-specials{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))'), 'Town and Endless Echo stay horizontally aligned at narrow widths too');
   assert.ok(!src.includes('.mapband.dungeon{'), 'the old bottom band is gone');
   // the lobby itself: ranked with the tries left, unlimited training, and the Shard Store. The
   // rendered HTML is exercised by trial_sim.js; here the source is pinned.
@@ -1173,7 +1192,7 @@ t('the Bag sells by rarity, on the drop or on a click', () => {
   U.S = mkS('Knight'); U.selB = null;
   let h = U.V.bag0();
   assert.ok(h.includes('Selling tools'), 'the bag carries the selling tools');
-  const RAR_NAMES = ['Common', 'Fine', 'Rare', 'Epic', 'Legendary'];
+  const RAR_NAMES = ['Common', 'Fine', 'Rare', 'Epic', 'Legendary', 'N'];
   RAR_NAMES.forEach((n, i) => assert.ok(h.includes(`data-a="autosell" data-v="${i}"`), 'a tick for ' + n));
   assert.ok(h.includes('data-a="clicksell"') && h.includes('Click-sell: OFF'), 'click-sell starts OFF');
   assert.ok(h.includes('data-a="sellnow" ') || h.includes('data-a="sellnow"'), 'and the matching purge is offered');
@@ -1197,6 +1216,21 @@ t('the Bag sells by rarity, on the drop or on a click', () => {
   U.S.clickSell = false; h = U.V.bag0();
   assert.ok(h.includes('data-a="selb" data-v="2"') && !h.includes('data-a="quicksell"'), 'OFF restores inspecting');
   assert.ok(!src.includes('data-a="sellbelow"'), 'the old two purge buttons are gone');
+});
+
+t('Nightmare gear detail and auto-sell use the separate N category, not Legendary',()=>{
+  U.S=mkS('Assassin');U.eqPick=null;U.S.clickSell=false;
+  const nGear={id:55,name:'N Dread Katar',tier:4,slot:'weapon',wt:'katar',val:70,r:0,sec:4,lvl:120,cards:[],aff:[],slots:0};
+  U.S.inv=[nGear];U.S.autoSell=[false,false,false,false,true,false];U.selB=55;
+  let h=U.V.bag0();
+  assert.ok(h.includes('N Weapon (katar)')&&h.includes('Nightmare gear'), 'the selected section-4 item is labeled N');
+  assert.ok(h.includes('Worn by: <b>transcendent classes only</b>')&&h.includes('your Assassin cannot wear it'),
+    'the detail card makes the second-job class restriction explicit');
+  let detail=h.match(/<button class="tick([^"]*)" data-a="autosell" data-v="5" title="Auto-sell every N item on drop">Auto-sell N<\/button>/);
+  assert.ok(detail&&!detail[1].includes(' on'), 'a Legendary auto-sell tick does not activate N gear');
+  U.S.autoSell[4]=false;U.S.autoSell[5]=true;h=U.V.bag0();
+  detail=h.match(/<button class="tick([^"]*)" data-a="autosell" data-v="5" title="Auto-sell every N item on drop">Auto-sell N<\/button>/);
+  assert.ok(detail&&detail[1].includes(' on'), 'the detail button toggles the dedicated N auto-sell slot');
 });
 
 t('the Bag keeps insertion order, pins locked gear, and labels rarity-based equipment levels',()=>{

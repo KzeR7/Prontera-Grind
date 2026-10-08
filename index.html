@@ -202,10 +202,14 @@ hr{border:0;border-top:1px dashed var(--edge);margin:6px 0}
 .mapband-t{display:flex;flex-wrap:wrap;align-items:center;gap:6px;font-weight:bold;margin:2px 0 4px;min-width:0}
 .mapband-t small{font-weight:normal;opacity:.75;min-width:0;flex:1 1 180px;overflow-wrap:anywhere}
 .mapband-t button.go{margin-left:auto;padding:5px 12px;font-weight:bold;white-space:normal;max-width:100%}
-/* v76.2: where the damage trial will live. The owner asked for its place in the map panel before the
-   dungeon itself is built, so the map stops being only fields. */
-.dungeoncard{display:flex;flex-direction:column;align-items:flex-start;gap:1px;width:100%;margin-top:6px;padding:7px 10px;border:2px solid #8f4fd6;border-radius:6px;background:linear-gradient(#f6ecff,#e9d5ff);text-align:left;cursor:pointer}
+/* The two safe/non-field destinations share a tidy side-by-side row below the ten regular maps. */
+.map-specials{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:5px;margin:5px 0 2px;min-width:0}
+.map-specials>.mapcard,.map-specials>.dungeoncard{width:100%;min-width:0;min-height:46px;box-sizing:border-box}
+/* Endless Echo keeps the purple Nightmare-era accent, but uses the same compact footprint as Town. */
+.dungeoncard{display:flex;flex-direction:column;justify-content:center;align-items:flex-start;gap:1px;width:100%;min-width:0;margin:0;padding:4px 6px;border:2px solid #8f4fd6;border-radius:6px;background:linear-gradient(#f6ecff,#e9d5ff);text-align:left;line-height:1.2;cursor:pointer;overflow:hidden}
 .dungeoncard:hover{background:#e9d5ff}
+.dungeoncard b{display:block;max-width:100%;font-size:11px;color:#4a1f6b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dungeoncard small{display:block;max-width:100%;font-size:9px;font-weight:normal;opacity:.8;overflow-wrap:anywhere}
 #trial{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:#0009;z-index:1150;padding:14px}
 #trial.on{display:flex}
 .trial-card{width:min(430px,100%);max-height:calc(100dvh - 40px);overflow:auto;border-color:#8f4fd6;box-shadow:0 0 0 2px #f6ecff,0 6px 0 2px #6a2fa0}
@@ -227,9 +231,6 @@ hr{border:0;border-top:1px dashed var(--edge);margin:6px 0}
 .trial-shop .shopline>span{flex:1;min-width:0}
 .trial-shop .shopline small{display:block;opacity:.72}
 .trial-shop .mapgrid{margin-top:6px}
-.dungeoncard b{color:#4a1f6b}
-.dungeoncard b{color:#4a1f6b}
-.dungeoncard small{font-weight:normal;opacity:.8}
 .mapcols{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,280px),1fr));gap:8px;align-items:stretch;margin-top:8px;min-width:0}
 .mapcols .mob-card{margin-bottom:0;min-width:0;overflow-wrap:anywhere}
 .dropline{display:flex;justify-content:space-between;align-items:baseline;gap:8px;padding:1px 0;font-size:12px}
@@ -245,6 +246,11 @@ hr{border:0;border-top:1px dashed var(--edge);margin:6px 0}
 .map-node:hover{background:#ffe9a8}.map-node.active{background:#ffe08a;border-color:var(--gold)}.map-node.picked{outline:3px solid #2f6fd6}
 .map-node.locked{opacity:.4;filter:grayscale(1)}.map-node.boss-node{border-color:#a23fd6}
 .map-node.nm-node{background:#f6ecff;border-color:#8f4fd6;color:#4a1f6b;font-size:11px}.map-node.nm-node:hover{background:#e9d5ff}.map-node.nm-node.active{background:#c9a0ff;border-color:#6a2fa0}.map-node.nm-node.locked{background:#efe9f6}
+/* Stage 10 is the normal-mode MVP; reserve purple for the actual Nightmare nodes 11-15. */
+.map-node.normal-boss-node{background:#fff5d7;border-color:#c1842b;color:#5e3e13}
+.map-node.normal-boss-node:hover{background:#ffe9a8}
+.map-node.normal-boss-node.active{background:#ffe08a;border-color:var(--gold);color:var(--ink)}
+.map-stage-note{display:block;margin-top:4px;font-size:9px;line-height:1.35;opacity:.8}
 .tree{display:flex;flex-direction:column;gap:6px}.trow{display:flex;align-items:center;gap:2px}.arw{font-size:9px;color:#8a6a2c}
 .trunk{width:2px;height:10px;background:#8a6a2c;margin:-4px auto}
 .tn{flex:1;min-width:0;text-align:center;border:2px solid var(--edge);border-radius:6px;padding:4px 2px;font-size:11px;background:#fffdf5;cursor:pointer;display:flex;flex-direction:column;line-height:1.2}
@@ -513,10 +519,10 @@ button.tick.on{background:#ffe08a;border-color:var(--gold);font-weight:bold}
 <script>
 const $=id=>document.getElementById(id);
 const RAR=[{n:'Common',m:1,w:60},{n:'Fine',m:1.35,w:25},{n:'Rare',m:1.9,w:10},{n:'Epic',m:2.8,w:4},{n:'Legendary',m:4.5,w:1}];
-// v76.2 (owner): Nightmare gear is not another pile of Legendaries - it is its own rarity, tagged N
-// and painted dark purple, so the exclusive sections look exclusive. This is DISPLAY ONLY: it.tier
-// stays the drop band (4 for sections 4/5), because the autosell bands, the drop weights and the
-// value maths all index RAR and TC by tier. rarTier() is the only thing that knows about the 'N'.
+// v76.2 (owner): Nightmare equipment has its own N rarity category, separate from Legendary.
+// Sections 4/5 select N for names, cards, field/drop labels, colors and the sixth auto-sell bucket;
+// the item's numeric `tier` remains a separate field-quality input for existing stat/value rolls.
+// Nightmare gear is never classified or auto-sold as Legendary just because its numeric tier is 4.
 const RAR5={n:'N'},RARALL=RAR.concat([RAR5]),rarIdx=it=>((it&&+it.sec>=4)?5:Math.max(0,Math.min(RAR.length-1,(it&&it.tier)||0))),rarOf=it=>(rarIdx(it)===5?RAR5:RAR[rarIdx(it)]),rarCls=it=>'r'+rarIdx(it);
 // v38 balance, three constants at once:
 //   AM x1.7 - affix magnitude, the first give-back for the weapon cut (a Legendary ATK
@@ -635,7 +641,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // script block, which is a SyntaxError - the game did not run on main at all. One line wins, and
 // it names both sides of this merge: the v38 balance patch (the weapon cut, the affix/card
 // give-back) and main's weapon-hold rendering work.
-const BUILD='2026-10-08 grind-v78 saved class weapon sprites';   // shown on the login card - confirms which file you loaded
+const BUILD='2026-10-08 grind-v78.1 Nightmare N rarity and class gates';   // shown on the login card - confirms which file you loaded
 $('buildTag').textContent='build '+BUILD;
 
 // ---------- class tree: Novice -> 6 first jobs -> 6 second jobs -> 6 third jobs ----------
@@ -1179,7 +1185,7 @@ function repairMastery(f){
 const REC=['Lv 1-10','Lv 10-50','Lv 10-50','Lv 10-50','Lv 10-50','Lv 60-67','Lv 67-74','Lv 74-80','Lv 80-90','Lv 90-99'];
 MAPS.forEach((m,i)=>{m.b=[0,9,19,31,43,59,66,73,79,89][i];m.rec=REC[i]});
 // ---------- v76: the Nightmare band ----------
-// Field power STOPPED at Abyss Stage 10 (power 100) while the level cap is 150, so Base Lv 100-150
+// Field power STOPPED at Abyss Stage 10 (power 99) while the level cap is 150, so Base Lv 100-150
 // had nothing to climb. Every map now carries five more stages (11-15), a "Nightmare" version of
 // itself: same art, same monsters, much harder numbers, and two gear catalogue sections that exist
 // nowhere else. The band opens on Base Lv 100 / 110 / 125 / 140 / 150 - a pure level unlock, so
@@ -1200,8 +1206,8 @@ const nmMax=()=>10+nmOpen();
 // a third above the 1.5x v76 shipped, below the 2.25x v76.2 shipped), and the band finally pays for the
 // time it takes: EXP 2.5 -> 4 and Zeny 2.2 -> 4.
 // The numbers to look at while play-testing: a Nightmare Abyss 15 mob is 5.57M HP against a normal
-// Stage 10 mob's 56k (~99x) and its hit lands for ~1,357 through a 75% DEF cut - 3.5x a stage 10 mob,
-// where v77 was 5.2x - and its boss is 66.3M HP. Per kill the band pays 9.3x a stage 10 mob's EXP and
+// Stage 10 mob's 55.3k (~101x) and its hit lands for ~1,357 through a 75% DEF cut - 3.5x a stage 10
+// mob, where v77 was 5.2x - and its boss is 66.3M HP. Per kill the band pays 9.3x a stage 10 mob's EXP and
 // 9.3x its Zeny (power 175 vs 99 is 2.3x on its own), so a kill that takes ~4x as long still pays well
 // over double per hour. The two HP constants are read in one place and pinned by nightmare_sim.js.
 const NMHP=48,NMATK=2,NMEXP=4,NMZENY=4,NMBOSSHP=48;
@@ -1451,7 +1457,7 @@ function trialGrantNm(mapIndex){
   if(!pool.length)pool=T.filter(x=>x.k==='armor');
   if(!pool.length)pool=T;
   const chosen=pool[(S.kills|0)%pool.length];
-  const it=genGear(chosen,150,sec,false,4);
+  const it=genGear(chosen,150,sec,false,dropTier(mapIndex,sec===5?15:12));
   S.inv.push(it);log(`Shard Store: ${it.name} (${SECN[sec]}) is in your bag.`,'r5','trial')}
 
 const NMNAME=['Dread','Kraken','Void','Sandwraith','Spectral','Leviathan','Oni','Yokai','Helheim','Glast'];
@@ -1510,22 +1516,21 @@ const OFFLINE_CAP_MS=4*60*60*1000,OFFLINE_REWARD_MULT=.5,OFFLINE_POPUP_MIN_MS=3*
 const OFFLINE_SIM_COVER_MS=10*60*1000;
 // set once when the script parses; `let` only so a test harness can move this page's birth time
 let PAGE_BOOT_AT=Date.now();   // a claim that starts before this moment covers time this page did not run
-// Rarity is a property of WHERE an item drops, not of the roll - and the MAP decides it, at every
-// stage it has. A low map never rolls above its own band, so a Prontera field can never hand out
-// Rare or Epic gear; the only route to Legendary is a Stage 10 boss, on any map. Only the
-// affixes (and the refine/card slots) stay random, so two drops of the same item still differ.
-// Bands: maps 1-2 Common, 3-4 Fine, 5-6 Rare, 7-10 Epic, every Stage 10 boss Legendary.
+// Equipment rarity is fixed by the field/section, not rolled: normal stages 1-9 use the map's
+// MAPTIER band, the Stage 10 field uses that map's MAPGRADE cap, and Nightmare sections 4/5 have
+// their separate N rarity. The numeric field-quality value is not the N rarity label. Normal
+// bands: maps 1-2 Common, 3-4 Fine, 5-6 Rare, 7-10 Epic; only the Abyss Stage 10 MVP reaches
+// Legendary in the normal route. The drop preview carries the same fields as the item generator.
 // Pinned by gear_sim.js.
 const MAPTIER=[0,0,1,1,2,2,3,3,3,3];
 // v57: every map owns a value band and a grade cap, so a low-level boss can never hand out
 // endgame gear. The owner's tiers: Prontera (Lv1-10) and the four class maps (Izlude, Geffen,
 // Morroc, Payon - Lv10-50) are EARLY; Comodo, Louyang, Amatsu and Niflheim (Lv60-99) are MID;
-// and Abyss is the only ENDGAME map. MAPGRADE caps the best rarity each map can roll, so the
-// early maps top out at Fine/Rare/Epic and the four mid maps stop at Epic - only Abyss can
-// print Legendary gear. MAPVAL is the value band: each map's items are worth about 15% more
-// than the map below, so Abyss Epic (2.8x1.15=3.22) beats every mid-game Legendary-grade item
-// (4.5x0.92=4.14 for the strongest possible mid item, which can no longer drop anyway) and
-// beats the mid maps' best reachable grade by a wide margin.
+// and Abyss is the only ENDGAME map. MAPGRADE caps the normal route's Stage 10 field (escorts and
+// MVP): Prontera tops out at Fine, Izlude/Geffen at Rare, Morroc through Niflheim at Epic, and Abyss at Legendary.
+// Nightmare sections are tagged with their own N rarity; they are not forced to Legendary.
+// MAPVAL is the value band: each map's items are worth about 15% more than the map below, so Abyss
+// Epic (2.8x1.15=3.22) beats the mid maps' best reachable normal grade by a wide margin.
 const MAPGRADE=[1,2,2,3,3,3,3,3,3,4];
 const MAPVAL=[0.34,0.40,0.47,0.56,0.66,0.72,0.78,0.84,0.92,1.15];
 const dropTier=(m,l)=>Math.min(MAPGRADE[Math.max(0,Math.min(MAPGRADE.length-1,m|0))],l>=10?4:MAPTIER[Math.max(0,Math.min(MAPTIER.length-1,m|0))]);
@@ -1539,10 +1544,10 @@ const dropTier=(m,l)=>Math.min(MAPGRADE[Math.max(0,Math.min(MAPGRADE.length-1,m|
 // but the drop's *section* is floored at 2, not taken from secOf(l), which for stages 1-2 is 0
 // (Novice gear: fine on Prontera, vendor trash on Abyss at level 90). Pinned by gear_sim.js.
 const secField=(m,l)=>(l|0)>13?5:(l|0)>10?4:m===0?0:m<=4?(l<=5?0:l<=7?1:l<=9?2:3):(l>=3?3:2);
-function gearPool(m,l){const sec=secField(m,l),sg=MAPS[m].gear[sec],T=[];
-  // v76.2: every pool entry carries the section it came from, so the map panel (and anything else
-  // reading a drop table) can tag a Nightmare drop as the N rarity without re-deriving the field.
-  const add=(k,n)=>T.push({k,n,sec});
+function gearPool(m,l){const sec=secField(m,l),tier=dropTier(m,l),sg=MAPS[m].gear[sec],T=[];
+  // Each table entry carries both its gear section (so sections 4/5 display as N) and its real
+  // field rarity. Without tier here the map preview calls every normal piece Common by default.
+  const add=(k,n)=>T.push({k,n,sec,tier});
   for(const k in sg.w)add(k,sg.w[k]);
   add('armor',sg.a);add('head',sg.h);
   if(sg.o)add('off',sg.o);
@@ -2351,8 +2356,9 @@ const bon=k=>{let v=MASTER_STATS.includes(k)?cardMasteryStat(k):0;for(const it o
 // first jobs 1, second 2, third 3) and the gate is `gearTierOf(it) <= max(1, classTierOf(cls))`.
 // v74.1 (owner: "make novices left alone, means lowest gear is novice + 1st class"): the `max(1)`
 // is that instruction - the LOWEST band of gear is starter + 1st-job gear, and both a Novice and a
-// first job wear it. From there a second job reaches section 2 and only a transcendent class
-// section 3. This lives on the same line as st()/canUse() so the tests that slice it keep working;
+// first job wear it. From there section 2 needs a second job, section 3 needs a transcendent class,
+// and Nightmare sections 4/5 use that same highest class gate (so Assassin cannot wear N gear).
+// This lives on the same line as st()/canUse() so the tests that slice it keep working;
 // canUse is the single gate every equip path already goes through (bag highlight, chooser,
 // auto-equip, item tooltip).
 const st=k=>S.st[k]+bon(k),gearTierOf=it=>Math.max(0,Math.min(3,((it&&it.sec)|0)||0)),classTierOf=(cls=S.cls)=>Math.max(0,Math.min(3,(CLASSES[cls]&&CLASSES[cls].tier)||0)),gearTierOK=(it,cls=S.cls)=>gearTierOf(it)<=Math.max(1,classTierOf(cls)),gearUserOf=it=>['any class','Novice and 1st-job classes','2nd-job classes and up','transcendent classes only'][gearTierOf(it)],canUse=it=>gearTierOK(it)&&(it.slot==='off'?canShield():(it.slot!=='weapon'||!it.wt||C().wt.includes(it.wt)));
@@ -2527,9 +2533,9 @@ function spawn(){
 }
 function genGear(T,l,sec,boss,tier){
   const slot=['armor','head','off','leg','acc'].includes(T.k)?T.k:'weapon';
-  // Rarity is fixed by the field (see dropTier): the roll only decides the AFFIXES, the refine
-  // room and the value inside that band. The drop loop still passes mob.boss and mob.tier - a
-  // Stage 10 boss field is the one place dropTier returns Legendary.
+  // The numeric field-quality input (see dropTier) feeds the existing stat/value rolls. The item
+  // rarity identity is resolved separately: normal equipment follows its map band, while sections
+  // 4/5 are N. Nightmare items are not forced into the Legendary numeric band.
   const t=Number.isFinite(tier)?tier:dropTier(S.mp,S.lvl);
   // v38 balance: the weapon's flat value is divided by 3 (6 -> 2). Weapons are the single
   // biggest power source a character owns, and dividing the base divides it at every level.
@@ -2582,7 +2588,8 @@ function offlineAwardKill(mob,r){
   }
   if(mob.boss||(S.lvl<10&&S.kl>=MPS)){
     S.kl=0;
-    if(S.lvl<10&&S.lvl>=S.prog[S.mp]){S.prog[S.mp]=S.lvl+1;if(S.adv&&S.lvl<10){S.lvl++;r.stages++}}
+    if(mob.boss&&S.lvl===10&&S.adv&&S.mp<MAPS.length-1){S.mp++;S.lvl=1;mapM=S.mp;mapL=1;r.stages++}
+    else if(S.lvl<10&&S.lvl>=S.prog[S.mp]){S.prog[S.mp]=S.lvl+1;if(S.adv&&S.lvl<10){S.lvl++;r.stages++}}
   }
 }
 function offlineDuration(ms){const sec=Math.floor(Math.max(0,ms)/1000),days=Math.floor(sec/86400),hours=Math.floor(sec%86400/3600),mins=Math.floor(sec%3600/60),seconds=sec%60;
@@ -2794,7 +2801,18 @@ function kill(o){const keep=mob;if(o)mob=o;if(!mob||!mobs.includes(mob)){mob=kee
     else if(S.pets.length<40){const gifted=pickW(PET_SKILL_WEIGHTS);S.pets.push({id:ri(1e6,9e6),sp,mut:0,eq:[0,0,0],skills:[PET_SKILLS[gifted].id],on:S.pets.filter(x=>x.on).length<3});log(`A ${RN[r]} pet followed you: ${PETS[sp].n} with ${PET_SKILLS[gifted].n} - ${T.n} ${T.d(traitVal(sp))} while it fights!`,'r'+RCL[r],'pet');addFloat(mob.x,3,mob.z,'PET!','#ff9dff',true)}
     else{const z=Math.floor(EGG*(.3+r*.4));earnZeny(z);log(`A ${RN[r]} ${PETS[sp].n} appeared but your pet collection is full (+${z}z).`,'','pet,zeny')}}
   checkLevel();
-  if(mob.boss||(S.lvl<10&&S.kl>=MPS)){mobs=[];S.kl=0;if(S.lvl<10&&S.lvl>=S.prog[S.mp]){S.prog[S.mp]=S.lvl+1;log(`${fieldName()} cleared! Stage ${S.lvl+1} unlocked.`,'r3');if(S.adv&&S.lvl<10){S.lvl++}}}
+  if(mob.boss||(S.lvl<10&&S.kl>=MPS)){
+    mobs=[];S.kl=0;
+    if(mob.boss&&S.lvl===10){
+      const nextMap=S.mp+1,current=MAPS[S.mp].n;
+      if(nextMap<MAPS.length){
+        log(`${current} Stage 10 cleared! ${MAPS[nextMap].n} Stage 1 is ready${S.adv?' — auto-advancing.':'.'}`,'r3');
+        if(S.adv){S.mp=nextMap;S.lvl=1;mapM=nextMap;mapL=1}
+      }else log(`${current} Stage 10 cleared! The normal map route is complete; Nightmare is a separate challenge.`,'r3');
+    }else if(S.lvl<10&&S.lvl>=S.prog[S.mp]){
+      S.prog[S.mp]=S.lvl+1;log(`${fieldName()} cleared! Stage ${S.lvl+1} unlocked.`,'r3');if(S.adv&&S.lvl<10)S.lvl++
+    }
+  }
   mobs=mobs.filter(x=>x!==mob);
   if(mobs.length&&!mobs.some(x=>x.pack===activePack))activePack=nearestPack();
   mob=packMob();respawn=.7;save();ui();
@@ -2815,13 +2833,13 @@ function collect(it){
 }
 function equip(id,quiet){const i=S.inv.findIndex(x=>x.id===id);if(i<0)return;const it=S.inv[i];if(!canUse(it)){log(`Your class cannot use ${it.name}.`);return}
   S.inv.splice(i,1);const k=ekey(it),old=S.eq[k];if(old)S.inv.push(old);S.eq[k]=it;S.hp=Math.min(S.hp,maxHp());if(!quiet)log('Equipped '+iname(it),'','gear');selB=null;ui();save()}
-// Selling is pocket money, deliberately: it scales with the item's rarity band, its stage
-// section and its level, but stays far below the Zeny a field actually pays - a Common starter
-// piece sells for ~50z and the best Legendary Abyss gear for under 2,000z, so dumping a full
-// bag never funds an upgrade. Pinned by gear_sim.js.
+// Selling is pocket money, deliberately: it scales with numeric field quality, the gear section
+// and level, but stays far below the Zeny a field actually pays - a Common starter piece sells
+// for ~50z and the best normal Abyss gear for under 2,000z, so dumping a full bag never funds an
+// upgrade. N gear has its own auto-sell category, separate from normal rarity labels.
 const sellVal=it=>Math.max(1,Math.round(50*(1+.9*(it.sec||0))*(1+1.4*(it.tier||0))*(1+.005*(it.lvl||0))));
-// v39 bag sell tools. autoSellOn(tier) is true when that rarity band is ticked in the Bag, and
-// clickSellOn() is the tap-to-sell mode; both read the save, so both survive a reload.
+// v39 bag sell tools. autoSellOn(index) reads the matching RARALL bucket (including N at index 5),
+// and clickSellOn() is the tap-to-sell mode; both read the save, so both survive a reload.
 const autoSellOn=t=>!!(S&&S.autoSell&&S.autoSell[Math.max(0,Math.min(RARALL.length-1,Math.floor(+t||0)))]),clickSellOn=()=>!!(S&&S.clickSell);
 function sell(id){const i=S.inv.findIndex(x=>String(x.id)===String(id));if(i<0)return false;const it=S.inv[i];
   if(it.locked){ask(`${iname(it)} is locked. Unlock it before selling? It will stay in your bag until you sell again.`,()=>{it.locked=false;log(`${iname(it)} unlocked. Click Sell again to continue.`,'r3','gear');ui();save()});return false}
@@ -2932,8 +2950,8 @@ function changeClass(n){if(classBlock(n))return;
 const TABS={map:['🗺️','World Map','M'],status:['📊','Character','S'],job:['🌳','Class Tree','J'],skills:['✨','Skills','K'],bag:['🎒','Inventory','B'],log:['📃','Log','L'],pet:['🐾','Pets','P'],index:['📚','Mastery Index','I'],board:['🏆','Leaderboard','V'],set:['⚙️','Settings','O'],gm:['🛠️','GM Tools','G']};
 const dot=k=>{if(!S)return false;if(k==='status')return S.pts>0;if(k==='skills')return skpAvail()>0;if(k==='quest')return!!(S.q&&S.q.some(q=>q.prog>=q.goal));if(k==='cards')return S.cards.length>0;if(k==='index'){const rank=HUNT_TITLES.findIndex(t=>t.id===S.equippedTitle);return cardMasteryAvailable()>0||HUNT_TITLES.some((t,i)=>i>rank&&titleUnlocked(t))}return false};
 const find=id=>[...S.inv,...items(),...S.cards].find(x=>String(x.id)===String(id));
-// Gear level is a display-only grade: field level +10 per rarity step (Common +0 through Legendary +40).
-// It is never consulted by canUse() and cannot restrict equipping by Base Lv.
+// Gear Lv is a display-only field-quality reference: field level +10 per numeric quality step.
+// It is not the item's rarity label (Nightmare equipment is N), and never gates use by Base Lv.
 const gearRefLevel=it=>Math.max(1,Math.min(150,Math.floor(+it.lvl||1)+10*Math.max(0,Math.min(4,Math.floor(+it.tier||0)))));
 function toggleGearLock(id){const it=find(id);if(!it||it.card||it.ore)return;it.locked=!it.locked;log(`${iname(it)} ${it.locked?'locked':'unlocked'}.`,it.locked?'r3':'','gear');ui();save()}
 const cell=(it,sel,extra='')=>`<div class="cell b${dtier(it)}${it&&+it.sec>=4?' nm':''}${sel?' sel':''}" data-tip="${it.id}" ${extra}>${icon(it)}${it.locked?`<i class="lockstar" title="Locked gear" aria-label="Locked">&#9733;</i>`:''}${it.r?`<i class="rf">+${it.r}</i>`:''}</div>`;
@@ -3020,9 +3038,9 @@ const V={
     // v16: the big "gear that drops here" card is gone (owner: too much space) - every drop is
     // listed on the monster that drops it, with its own % line, so the two cards below stay the
     // same size whichever map or field is picked.
-    // v68: Prontera Town is a card in this same grid - one more map to pick, the same size as the
-    // other ten - and while the player is standing in it the band below becomes the town's own
-    // (leave button + who is on the plaza) instead of a stage picker it does not have.
+    // v77.3: the ten fields keep their own grid; Town and Endless Echo share a compact destination
+    // row beneath them. While standing in Town, the band below becomes the town's own (leave button
+    // + who is on the plaza) instead of a stage picker it does not have.
     const T5=(typeof window!=='undefined'&&window.TOWN_NPC)||[];
     const townBand=S.town?`<div class="mapband fields">
       <div class="mapband-t">🏘 Prontera Town <small>&middot; the safe town: no monsters, no drops, no stage &middot; five NPCs, one fountain plaza</small>
@@ -3030,17 +3048,19 @@ const V={
       <div class="npcrow">${T5.map(n=>`<span class="npcchip" title="${n.name} - ${n.job}"><b>${n.name}</b><small>${n.who}</small></span>`).join('')||'<small>The five townsfolk keep the plaza - click one to talk.</small>'}</div></div>`:`<div class="mapband fields">
       <div class="mapband-t">${mp.n} <small>&middot; ${mp.t} &middot; rec. ${mp.rec} (not a limit) &middot; ${Math.min(pr-1,10)}/10 stages unlocked${nmo?` &middot; <b>Nightmare ${nmo}/5</b>`:' &middot; Nightmare unlocks at Base Lv '+NMLV[0]}</small>
         <button class="go" data-a="go" ${mapL>cap?'disabled':''}>${S.mp===mapM&&S.lvl===mapL?'You are here':'Travel to '+mp.n+' Stage '+mapL}</button></div>
-      <div class="lvgrid">${Array.from({length:15},(_,i)=>{const l=i+1,nm=l>10,lock=l>cap;return`<button class="map-node${lock?' locked':''}${nm?' nm-node':''}${S.mp===mapM&&S.lvl===l?' active':''}${mapL===l?' picked':''}${l===10||l===15?' boss-node':''}" data-a="sell_" data-v="${l}" title="${nm?'Nightmare ':''}Stage ${nm?l-10:l}${lock&&nm?' - locked until Base Lv '+NMLV[l-11]:''}"><b>${l===10||l===15?'💀 ':''}${nm?'NM '+((l-10)):'Stage '+l}</b></button>`}).join('')}</div>
-      ${nmo?'':`<small>Stages 11-15 are the <b>Nightmare band</b>: the same map, far harder monsters, and gear that exists nowhere else. Stage ${11+nmo} opens at Base Lv ${NMLV[nmo]}.</small>`}</div>`;
+      <div class="lvgrid">${Array.from({length:15},(_,i)=>{const l=i+1,nm=l>10,lock=l>cap;return`<button class="map-node${lock?' locked':''}${nm?' nm-node':''}${S.mp===mapM&&S.lvl===l?' active':''}${mapL===l?' picked':''}${l===10||l===15?' boss-node':''}${l===10?' normal-boss-node':''}" data-a="sell_" data-v="${l}" title="${nm?'Nightmare ':'Normal '}${nm?`Stage ${l-10}`:`Stage ${l}`}${l===10?' - normal mode MVP':''}${lock&&nm?' - locked until Base Lv '+NMLV[l-11]:''}"><b>${l===10||l===15?'💀 ':''}${nm?'NM '+((l-10)):'Stage '+l}</b></button>`}).join('')}</div>
+      <small class="map-stage-note"><b>Stages 1-10 are Normal</b>; Stage 10 is the normal MVP field. Purple nodes are Nightmare stages 11-15. ${nmo<5?`Next unlock: Stage ${11+nmo} at Base Lv ${NMLV[nmo]}.`:'All five Nightmare stages are unlocked.'}</small></div>`;
     return`<div class="mapband">
       <div class="mapband-t">Maps <small>&middot; click one to see its stages below</small></div>
       <div class="mapgrid">${MAPS.map((m,i)=>{const cur=i===mapM,here=i===S.mp;
         return`<button class="mapcard${cur?' on':''}${here?' here':''}" data-a="selm" data-v="${i}" title="${m.n} - ${m.t}">
-          <b>${m.n}</b><small>${here?'● ':''}${m.rec}</small></button>`}).join('')}${townUnlocked()?`<button class="mapcard town-card${S.town?' here':''}" data-a="town" title="Prontera Town - the safe town: no monsters, no drops, five NPCs to talk to, a fountain plaza to walk">
+          <b>${m.n}</b><small>${here?'● ':''}${m.rec}</small></button>`}).join('')}</div>
+      <div class="map-specials">${townUnlocked()?`<button class="mapcard town-card${S.town?' here':''}" data-a="town" title="Prontera Town - the safe town: no monsters, no drops, five NPCs to talk to, a fountain plaza to walk">
           <b>🏘 Prontera Town</b><small>${S.town?'● Safe town':'Safe · no mobs'}</small></button>`
         :`<div class="mapcard town-card closed" title="Prontera Town is not open yet - it is still being finished">
-          <b>🔒 Prontera Town</b><small>Closed · being finished</small></div>`}        <button class="dungeoncard" data-trial="lobby" title="Endless Echo - the damage trial">
-          <b>&#127963; Endless Echo</b><small>damage trial &middot; 5:00 &middot; ${trialLeftToday()}/2 ranked runs left today &middot; ${S.shards|0} shards</small></button></div></div>
+          <b>🔒 Prontera Town</b><small>Closed · being finished</small></div>`}
+        <button class="mapcard dungeoncard" data-trial="lobby" title="Endless Echo - the damage trial">
+          <b>&#127963; Endless Echo</b><small>Damage trial · 5:00</small><small>${trialLeftToday()}/2 ranked runs left today · ${S.shards|0} Shards</small></button></div></div>
     ${townBand}
     <div class="mapcols">
       <div class="mob-card"><div class="hd">${mapL>10?'Nightmare ':''}${mp.n} Stage ${mapL>10?mapL-10:mapL}${mapM<5&&mapL<=5?`<br><small>${mapM===0?'Novice start · Base Lv 1–10':'Early class route · Base Lv 10–20'} · gentle packs</small>`:''}</div>
@@ -3053,7 +3073,7 @@ const V={
       <div class="mob-card"><div class="hd">MVP &amp; pets</div>${(mapL===10||mapL===15)?`<small>MVP fights immediately with ${mapM<5?3:5} monsters. Defeat the MVP to reset the fight.</small>`:''}
         ${F.boss?`<div class="mobentry"><b class="r4">${F.boss.n}</b>
           <div class="poollist">${F.boss.drops.map(([T,ch])=>`<span class="poolitem">${poolIc(T)} ${T.n} <small class="${rarCls(T)}">${rarOf(T).n}</small><b>${ch}%</b></span>`).join('')}</div>
-          <small>Every MVP drop is <b class="${F.sec>=4?'r5':'r4'}">${F.sec>=4?'N':'Legendary'}</b> with random affixes. Each item rolls independently; an MVP can drop zero or several pieces.</small>
+          <small>Every MVP drop is <b class="${F.sec>=4?'r5':'r'+F.boss.tier}">${F.sec>=4?'N':RAR[F.boss.tier].n}</b> with random affixes. Each item rolls independently; an MVP can drop zero or several pieces.</small>
           <div class="dropline"><span>🃏 ${F.boss.card.n} <small>(${SU(F.boss.card.stat)} +${cardVal(F.boss.card.g,F.boss.card.stat)}, ${GRADE[F.boss.card.g]})</small></span><b>${F.boss.cardCh}%</b></div>
           <div class="dropline ore"><span>🔶 Oridecon &middot; 🔷 Elunium</span><b>${F.boss.oreCh*100}% each</b></div>
         </div>`:`<small>MVP appears at ${mapL>10?'NM 5 (stage 15)':'Stage 10'}.</small>`}
@@ -3088,7 +3108,7 @@ const V={
         <button data-a="skill" data-v="${s.id}" aria-label="Increase ${s.n}" title="${L<s.max?'level '+(L+1)+' costs '+skCost(L+1)+' points':'max level'}" ${av>=skCost(L+1)&&L<s.max?'':'disabled'}>${L<s.max?'+'+skCost(L+1):'MAX'}</button></div>${selS===s.id?skillDetailCard(s):''}`}).join('')}${from==='Novice'?skMasterTile():''}</div>`:''}).join('')
     +`<button class="full" data-a="rskill" ${rcost()&&S.zeny<rcost()?'disabled title="You need '+rcost().toLocaleString()+' Zeny to reset skills"':''}>Reset skills (${rcost()?rcost()+'z':'free below Base 20'})</button>`},
   bag0(){const sel=selB&&S.inv.find(x=>String(x.id)===String(selB));const n=Math.max(30,Math.ceil(S.inv.length/6)*6);const inv=S.inv.map((it,i)=>({it,i})).sort((a,b)=>{const af=!!eqPick&&slotAccepts(eqPick,a.it),bf=!!eqPick&&slotAccepts(eqPick,b.it);return Number(bf)-Number(af)||Number(!!b.it.locked)-Number(!!a.it.locked)||a.i-b.i}).map(x=>x.it);
-    const detail=sel?`<div class="mob-card grid-detail">${itemDetail(sel)}<div class="row" style="margin-top:6px"><button data-a="equip" data-v="${sel.id}" ${canUse(sel)?'':'disabled'}>Equip</button><button data-a="sell" data-v="${sel.id}">Sell ${sellVal(sel)}z</button><button class="tick${sel.locked?' on':''}" data-a="lockgear" data-v="${sel.id}" aria-pressed="${!!sel.locked}" title="Locked gear stays pinned and protected from auto-sell">${sel.locked?'&#9733; Unlock':'☆ Lock'}</button><button class="tick${autoSellOn(sel.tier||0)?' on':''}" data-a="autosell" data-v="${sel.tier||0}" title="Auto-sell every ${RAR[sel.tier||0].n} item on drop">Auto-sell ${RAR[sel.tier||0].n}</button></div></div>`:'';
+    const detail=sel?`<div class="mob-card grid-detail">${itemDetail(sel)}<div class="row" style="margin-top:6px"><button data-a="equip" data-v="${sel.id}" ${canUse(sel)?'':'disabled'}>Equip</button><button data-a="sell" data-v="${sel.id}">Sell ${sellVal(sel)}z</button><button class="tick${sel.locked?' on':''}" data-a="lockgear" data-v="${sel.id}" aria-pressed="${!!sel.locked}" title="Locked gear stays pinned and protected from auto-sell">${sel.locked?'&#9733; Unlock':'☆ Lock'}</button><button class="tick${autoSellOn(rarIdx(sel))?' on':''}" data-a="autosell" data-v="${rarIdx(sel)}" title="Auto-sell every ${rarOf(sel).n} item on drop">Auto-sell ${rarOf(sel).n}</button></div></div>`:'';
     return (eqPick?equipChooser(eqPick):'')
     +`<div class="row"><span class="chip">🔶 Oridecon <b>${S.ore.ori}</b></span><span class="chip">🔷 Elunium <b>${S.ore.elu}</b></span></div>
     <div class="mob-card sellbox" style="margin-top:4px"><div class="hd">Selling tools</div>
@@ -3152,7 +3172,7 @@ const V={
     <div class="row"><button data-a="dmgshow" data-v="on" class="${S.dmgShow!==false?'on':''}" aria-pressed="${S.dmgShow!==false}">Show: On</button><button data-a="dmgshow" data-v="off" class="${S.dmgShow===false?'on':''}" aria-pressed="${S.dmgShow===false}">Show: Off</button></div>
     <div class="row" style="margin-top:4px"><button data-a="dmgfmt" data-v="short" class="${S.dmgShort!==false?'on':''}" aria-pressed="${S.dmgShort!==false}">Short &middot; 100K / 1M</button><button data-a="dmgfmt" data-v="full" class="${S.dmgShort===false?'on':''}" aria-pressed="${S.dmgShort===false}">Full &middot; 100,000</button></div>
     <small>On or off, and how the numbers read. Saved with your account.</small>
-    <div class="hd" style="margin-top:10px">Gameplay</div><label><input type="checkbox" data-a="auto" ${S.auto!==false?'checked':''}> Auto-equip better gear</label><br><label><input type="checkbox" data-a="adv" ${S.adv!==false?'checked':''}> Auto-advance to next level (turn off to farm)</label><br><label title="Always on - the game cannot be paused by hiding the tab any more"><span class="lockmark">&#10003;</span> Keeps grinding while this tab is in the background</label>
+    <div class="hd" style="margin-top:10px">Gameplay</div><label><input type="checkbox" data-a="auto" ${S.auto!==false?'checked':''}> Auto-equip better gear</label><br><label><input type="checkbox" data-a="adv" ${S.adv!==false?'checked':''}> Auto-advance through stages and maps (turn off to farm)</label><br><label title="Always on - the game cannot be paused by hiding the tab any more"><span class="lockmark">&#10003;</span> Keeps grinding while this tab is in the background</label>
     <small>Background grinding keeps playing while the tab is hidden - a hidden tab is never "away". The welcome-back reward only starts after <b>three minutes</b> without a save, so an ordinary background session never opens it.</small>
     <p><small>Drag to rotate, scroll or pinch to zoom. Hotkeys: M S J K B E C Q R L P I V O, Esc to close.</small></p><button class="full" data-a="reset">Erase this account's save &amp; restart</button><button class="full" data-a="logout">Logout</button>`},
   gm(){return`<div class="hd">GM multiplier (EXP, Job EXP, Zeny, quests)</div><div class="row">${[1,10,100,1000].map(x=>`<button data-a="gmx" data-v="${x}" ${S.gmx===x?'style="background:#ffe08a"':''}>x${x}</button>`).join('')}</div>

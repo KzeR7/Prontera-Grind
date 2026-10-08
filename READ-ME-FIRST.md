@@ -89,6 +89,26 @@ The new build keeps the v77.2 trial payout, daily-priced Shard Store, and HD Pro
 * The proposal page starts from the defaults used by the game. Later edits in that page remain proposals until copied back and integrated.
 * **Checks:** all **36** `*_sim.js` suites passed; `town_smoke.js` passed **40/40**. Focused results: `class_skin_sim` 40/40, `weapon_proposal_sim` 587/587, and `drop_card_sheet_sim` 12/12. The preview's game, proposal page, and both weapon-data assets return HTTP 200.
 
+## BUILD v78.1 — Nightmare N rarity, equipment gates, and field-tier corrections
+
+This follow-up corrects the Nightmare classification while keeping the v78 saved weapon sprites and
+all normal map/drop tuning intact.
+
+* **Nightmare gear is N, not Legendary.** Sections 4-5 use the independent N rarity and auto-sell
+  bucket. The all-maps numeric tier-4 override is removed; generated quality follows the selected
+  map cap, and the Nightmare Gear Token uses the same rule. The selected-item auto-sell control now
+  targets N rather than indexing the normal rarity list.
+* **Class-stage equipment gates are confirmed.** On the mid-level maps (Comodo, Louyang, Amatsu and
+  Niflheim), normal stages 1-2 drop section-2 gear for second-job classes; stages 3-10 switch to
+  section-3 high-tier gear, which requires a third-job/transcendent class. Nightmare sections 4-5
+  share that highest class gate: Assassin and Thief cannot wear them; Assassin Cross can.
+* **Normal drops and odds are preserved.** Prontera/Izlude remain Common on stages 1-9. The Stage 10
+  map cap applies to the whole field, escorts and MVP included. No map's equipment drop chances changed.
+* Stage 10 clears follow the normal map route when Auto-advance is on, and Town / Endless Echo remain
+  together in their compact destination row. Normal drop-table previews carry the same map rarity as
+  their generated equipment instead of defaulting to Common.
+* **Checks:** all **36** `*_sim.js` suites passed; Town smoke passed **40/40**. Focused results: `gear_sim` 35/35, `nightmare_sim` 9/9, `ui_sim` 50/50, `trial_sim` 16/16, `class_skin_sim` 40/40, and `drop_card_sheet_sim` 12/12.
+
 ## BUILD v77.2 — the trial pays a flat number, the store is priced on a day's pay, and your HD town is in
 
 Your three notes, all built — and the town you merged yourself is in the build too.

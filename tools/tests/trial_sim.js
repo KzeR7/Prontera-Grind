@@ -51,6 +51,8 @@ function arena(opts = {}) {
     const MAPS=[{n:'Prontera',mobs:[{n:'Poring'},{n:'Fabre'}]},{n:'Izlude',mobs:[{n:'Drops'}]},{n:'Geffen',mobs:[{n:'Willow'}]},
       {n:'Morroc',mobs:[{n:'Roda'}]},{n:'Payon',mobs:[{n:'Muka'}]},{n:'Comodo',mobs:[{n:'Shell'}]},
       {n:'Louyang',mobs:[{n:'Jiangshi'}]},{n:'Amatsu',mobs:[{n:'Tengu'}]},{n:'Niflheim',mobs:[{n:'Ghoul'}]},{n:'Abyss',mobs:[{n:'Dread'}]}];
+    const MAPTIER=[0,0,1,1,2,2,3,3,3,3],MAPGRADE=[1,2,2,3,3,3,3,3,3,4];
+    const dropTier=(m,l)=>Math.min(MAPGRADE[Math.max(0,Math.min(9,m|0))],l>=10?4:MAPTIER[Math.max(0,Math.min(9,m|0))]);
     let nmOpenVal=${opts.nmOpen === undefined ? 3 : opts.nmOpen};
     const nmOpen=()=>nmOpenVal;
     const C=()=>({ ...${JSON.stringify(opts.cls || { wt: ['sword'] })} });
@@ -58,7 +60,7 @@ function arena(opts = {}) {
       for(let i=0;i<3;i++)pool.push({k:'armor',n:'Row '+m+'/'+l+' coat '+i,sec:0});return pool};
     const spawn=()=>spawnCalls.push(1);
     const made=[];
-    const genGear=(k,lv,sec,rare,tier)=>{const it={id:uid(),name:'Nightmare '+k.n,slot:k.k,sec,tier:4,val:10,cards:[]};made.push({it,sec,lv});return it};
+    const genGear=(k,lv,sec,rare,tier)=>{const it={id:uid(),name:'Nightmare '+k.n,slot:k.k,sec,tier,val:10,cards:[]};made.push({it,sec,lv,tier});return it};
     // ---- a document just real enough for the lobby ----
     const nodes={};
     const document={getElementById:id=>nodes[id]||(nodes[id]={classList:{add(){this.on=true},toggle(v){this.on=!!v},contains(){return !!this.on}},innerHTML:'',style:{},dataset:{}})};
@@ -283,8 +285,15 @@ t('the Nightmare Gear Token hands over a real piece from the map you picked', ()
   A.trialGrantNm(9);
   assert.strictEqual(A.made.length, 1, 'picking a map makes exactly one piece');
   assert.strictEqual(A.made[0].sec, 4, 'section 4 until the whole band is open');
+  assert.strictEqual(A.made[0].tier, 4, 'the Abyss item keeps the map quality cap while its rarity remains N');
   assert.strictEqual(A.S.inv.length, 1, 'and it is in the bag, not on the ground');
   assert.ok(/Nightmare .* is in your bag/.test(A.logs[A.logs.length - 1]), 'the log says so');
+  const early = arena({ shards: 2000, lv: 150 });
+  early.trialGrantNm(0);
+  assert.strictEqual(early.made[0].sec, 4, 'the early-map reward is still Nightmare section 4');
+  assert.strictEqual(early.made[0].tier, 1, 'the token does not force Prontera N gear to Legendary quality');
+  assert.ok(src.includes('genGear(chosen,150,sec,false,dropTier(mapIndex,sec===5?15:12))'),
+    'the token preserves the selected map’s field quality');
   const B = arena({ shards: 2000, lv: 150, nmOpen: 5 });
   B.trialGrantNm(9);
   assert.strictEqual(B.made[0].sec, 5, 'section 5 once Nightmare 5 is unlocked');
