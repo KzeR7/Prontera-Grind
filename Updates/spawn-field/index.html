@@ -1,0 +1,352 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Prontera Grind — spawn system: today vs two proposals</title>
+<style>
+:root{--parch:#e9d39a;--edge2:#8a6d3b;--panel:#1e1a14}
+*{box-sizing:border-box}
+body{margin:0;background:radial-gradient(1200px 600px at 50% -100px,#2a2317,#141210 70%);color:#e8dfc8;font:14px/1.5 "Trebuchet MS",Verdana,sans-serif;min-height:100vh}
+header{padding:16px 22px 4px;display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
+header h1{font-size:19px;margin:0;color:var(--parch)}
+.tag{font-size:12px;color:#b9a97f;border:1px solid #5a4a2c;border-radius:4px;padding:2px 8px;background:#00000040}
+main{padding:8px 22px 40px;max-width:1280px;margin:0 auto}
+.note{background:#26201780;border:1px solid #5a4a2c;border-radius:8px;padding:10px 14px;margin:8px 0 14px;font-size:13px;color:#d8cba4}
+.note b{color:var(--parch)}
+#deck{background:var(--panel);border:1px solid var(--edge2);border-radius:10px;padding:12px 14px;margin-bottom:14px;display:flex;flex-wrap:wrap;gap:12px 22px;align-items:flex-end}
+.ctl{display:flex;flex-direction:column;gap:3px}
+.ctl label{font-size:11px;color:#b9a97f;text-transform:uppercase;letter-spacing:.5px}
+.ctl .val{font-size:11px;color:#f0e2b6}
+.ctl input[type=range]{width:150px;accent-color:#d4a937}
+.ctl select{background:#2b2418;color:#efe3c0;border:1px solid #5a4a2c;border-radius:5px;padding:4px 6px;font:12px "Trebuchet MS",sans-serif}
+button{background:linear-gradient(#3a3021,#2a2317);color:#efe3c0;border:1px solid #6b5730;border-radius:6px;padding:7px 12px;font:700 13px "Trebuchet MS",sans-serif;cursor:pointer}
+button:hover{filter:brightness(1.2)}
+button.gold{background:linear-gradient(#7a5b1d,#4d3a12);border-color:#b98d3e;color:#ffe9ad}
+#panels{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:12px}
+.panel{background:var(--panel);border:1px solid var(--edge2);border-radius:10px;padding:8px 10px 10px}
+.panel h2{font-size:13px;margin:2px 0 4px;color:var(--parch)}
+.panel .sub{font-size:11px;color:#b9a97f;min-height:44px}
+.panel canvas{width:100%;height:auto;display:block;border-radius:8px;border:1px solid #00000066;background:#4d9442}
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:2px 10px;margin-top:8px;font-size:11px;color:#cfc19a}
+.stats b{color:#ffe9ad;font-size:13px}
+.legend{display:flex;gap:12px;flex-wrap:wrap;font-size:11px;color:#b9a97f;margin-top:6px}
+.legend i{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:4px;vertical-align:middle}
+footer{color:#8f8266;font-size:12px;padding:0 22px 30px;max-width:1280px;margin:0 auto}
+code{background:#00000055;border:1px solid #5a4a2c66;border-radius:4px;padding:0 4px;font-size:12px}
+.pick{margin-top:10px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+</style>
+</head>
+<body>
+<header>
+ <h1>🧭 Spawn system — today vs two proposals</h1>
+ <span class="tag">proposal only · nothing changed · no PR</span>
+ <span class="tag">game BUILD 2026-10-08 grind-v83</span>
+</header>
+<main>
+ <div class="note">
+  <b>What this page is.</b> The real play area (<code>x −13…13, z −28…12</code>, 26×40 units) with the real
+  water bands of the chosen map, animated at the real constants. A simulated hero walks to the nearest
+  monster and kills at your chosen rate; the three panels are the three spawn systems. Watch the numbers
+  under each panel — <b>“mobs within 10”</b> is the honest answer to “the map feels empty”, and
+  <b>“walk per 10 kills”</b> is how much of the field you never see. <b>Payon stage 1 has a creek</b> in the
+  middle of the lane and Izlude has a shoreline, so switch maps to see how each system handles water.
+ </div>
+
+ <div id="deck">
+  <div class="ctl"><label>Map</label>
+   <select id="map">
+    <option value="0">Prontera · stage 1 (no water, starting map)</option>
+    <option value="4">Payon · stage 1 (creek across the lane)</option>
+    <option value="1">Izlude · stage 5 (shoreline)</option>
+    <option value="9">Abyss · stage 8 (dark lake)</option>
+   </select></div>
+  <div class="ctl"><label>Kill rate <span class="val" id="v_k"></span></label><input type="range" id="k" min="0.2" max="3" step="0.1"></div>
+  <div class="ctl"><label>Time speed <span class="val" id="v_t"></span></label><input type="range" id="t" min="1" max="8" step="1"></div>
+  <div class="ctl" style="flex-direction:row;gap:8px;align-items:center">
+   <button class="gold" id="pause">Pause</button><button id="reset">Reset</button><button id="fast">Run 60s</button>
+  </div>
+  <div class="pick">
+   <button id="copy">📋 Copy my pick</button><span id="out" style="font-size:12px;color:#b9a97f"></span>
+  </div>
+ </div>
+
+ <div id="panels">
+  <div class="panel">
+   <h2>1 · Today — 3 clumped packs, wave respawn</h2>
+   <div class="sub">Three sites rolled inside a 18×24 box in the middle of the lane; 2–3 mobs of one species
+    within ±0.7 units of the *same point*; the whole field is thrown away and re-rolled 0.7s after the last
+    mob dies.</div>
+   <canvas id="cToday" width="330" height="400"></canvas>
+   <div class="stats" id="sToday"></div>
+  </div>
+  <div class="panel">
+   <h2>2 · Proposal A — camps + scatter <span style="color:#ffe9ad">★</span></h2>
+   <div class="sub">8–12 camps over the whole lane (min 5.5 apart); 1–3 mobs per camp spaced 1.6–3.2 units;
+    each camp refills on its own 4–8s timer; idle mobs wander around their camp.</div>
+   <canvas id="cA" width="330" height="400"></canvas>
+   <div class="stats" id="sA"></div>
+  </div>
+  <div class="panel">
+   <h2>3 · Proposal B — individual spawn points</h2>
+   <div class="sub">No camps at all: ~18 single-monster spawn points, each with its own 5–9s respawn timer,
+    scattered the same way. More RO-honest, but pets, AoE and target routing lose their pack grouping.</div>
+   <canvas id="cB" width="330" height="400"></canvas>
+   <div class="stats" id="sB"></div>
+  </div>
+ </div>
+
+ <div class="legend">
+  <span><i style="background:#ffd23f"></i>hero</span>
+  <span><i style="background:#e0574a"></i>sleeping mob</span>
+  <span><i style="background:#ff9ec4"></i>awake mob (inside AGGRO 6.5)</span>
+  <span><i style="background:#7fd6ff"></i>water band (spawns avoid it ±2)</span>
+  <span><i style="background:#5b5b4a"></i>scenery belt — props live here, nothing walks here</span>
+ </div>
+</main>
+<footer>Constants on this page come from <code>index.html</code>: <code>BX_=13, Z0=−28, Z1=12, AGGRO=6.5,
+PACK_GAP=13, PACK_MAX=18.5, PACK_JITTER=0.7</code>, plus the real <code>packSites()</code> roll and the real
+water bands of each stage. The walk speed and kill rate are yours to set.</footer>
+<script>
+// ---------------------------------------------------------------- real constants (index.html v82)
+const BX_=13,Z0=-28,Z1=12,AGGRO=6.5,PACK_GAP=13,PACK_MAX=18.5,PACK_JITTER=.7;
+const rnd=(a,b)=>a+Math.random()*(b-a),ri=(a,b)=>Math.floor(rnd(a,b+1));
+const scoutW=BX_+3.5;                                        // how much scenery belt the canvas shows
+// Field setups: the real water band of that stage (read out of KIT_MAP / STAGE_SCENES), the map index
+// (which sets the proposed camp count) and the mobs a camp holds on that map.
+const FIELDS={
+  '0':{name:'Prontera · stage 1',map:0,stage:1,band:null,           camps:8, per:[1,2]},
+  '4':{name:'Payon · stage 1',   map:4,stage:1,band:[-7.8,-5],      camps:10,per:[2,3]},
+  '1':{name:'Izlude · stage 5',  map:1,stage:5,band:[-32,-24],      camps:8, per:[1,2]},
+  '9':{name:'Abyss · stage 8',   map:9,stage:8,band:[-32,-23],      camps:12,per:[2,3]}
+};
+const FIELD=()=>FIELDS[document.getElementById('map').value]||FIELDS['0'];
+
+// ---------------------------------------------------------------- simulation
+function mkSim(mode,F){
+  const band=F.band;
+  const s={mode,band,mobs:[],player:{x:0,z:Z1-1.5},kills:0,walk:0,refills:0,
+    hist:{alive:0,near:0,samples:0},killCd:0,waveT:0,sampleT:0};
+  const dry=(x,z)=>Math.abs(x)<BX_-.6&&z>Z0+.6&&z<Z1-.6&&!(band&&z>=band[0]-1.2&&z<=band[1]+1.2);
+  s.dry=dry;
+  if(mode==='today'){
+    spawnWave(s);
+  }else if(mode==='A'){
+    s.camps=campSites(F.camps,dry,5.5);
+    s.camps.forEach(c=>fillCamp(s,c));
+  }else{
+    const want=F.camps+8;                        // option B: more, smaller points
+    s.points=[];
+    for(let i=0;i<4000&&s.points.length<want;i++){
+      const x=rnd(-BX_+.8,BX_-.8),z=rnd(Z0+.8,Z1-.8);
+      if(!dry(x,z))continue;
+      if(s.points.some(p=>Math.hypot(p.x-x,p.z-z)<3.4))continue;
+      s.points.push({x,z,mob:{x,z,hx:x,hz:z,wt:rnd(1,4),tx:x,tz:z,awake:false},t:rnd(0,6)});
+      s.points[s.points.length-1].mob.point=s.points[s.points.length-1];
+    }
+    s.mobs=s.points.map(p=>p.mob);
+  }
+  s.player.x=rnd(-4,4);s.player.z=rnd(-4,4);
+  return s;
+}
+// The game's own packSites() roll, unchanged: 3 sites inside an 18x24 box in the middle of the lane,
+// 13 to 18.5 units apart, and a site in the water band is rejected and re-rolled.
+function waveSites(band){
+  const wet=(z)=>band&&z>=band[0]-2&&z<=band[1]+2;
+  for(let layout=0;layout<36;layout++){
+    const sites=[];
+    for(let i=0;i<3;i++){
+      for(let attempt=0;attempt<250;attempt++){
+        const x=rnd(i===0?-6:-9,i===0?6:9),z=rnd(i===0?-12:-16,i===0?4:8);
+        if(wet(z))continue;
+        if(sites.some(p=>{const d=Math.hypot(p[0]-x,p[1]-z);return d<PACK_GAP||d>PACK_MAX}))continue;
+        sites.push([x,z]);break}
+      if(sites.length!==i+1)break}
+    if(sites.length===3)return sites;
+  }
+  const sites=[];
+  for(let i=0;i<3;i++)for(let attempt=0;attempt<10000;attempt++){
+    const x=rnd(-9,9),z=rnd(-16,8);
+    if(wet(z))continue;
+    if(sites.some(p=>Math.hypot(p[0]-x,p[1]-z)<PACK_GAP))continue;
+    sites.push([x,z]);break;
+  }
+  return sites;
+}
+function spawnWave(s){
+  const sites=waveSites(s.band);s.mobs=[];
+  sites.forEach(([x,z],pack)=>{
+    const n=ri(2,3);
+    for(let i=0;i<n;i++)s.mobs.push({x:x+rnd(-PACK_JITTER,PACK_JITTER),z:z+rnd(-PACK_JITTER,PACK_JITTER),
+      hx:x,hz:z,wt:rnd(1,4),tx:x,tz:z,pack,awake:false});
+  });
+}
+function campSites(n,dry,gap){
+  const out=[];
+  for(let i=0;i<6000&&out.length<n;i++){
+    const x=rnd(-BX_+.9,BX_-.9),z=rnd(Z0+.9,Z1-.9);
+    if(!dry(x,z))continue;
+    if(out.some(c=>Math.hypot(c.x-x,c.z-z)<gap))continue;
+    out.push({x,z,mobs:[],t:0});
+  }
+  // if water steals too much room, relax the gap rather than spawn in the lake
+  if(out.length<n)return campSites(n,dry,Math.max(2.6,gap-.6));
+  return out;
+}
+function fillCamp(s,c){
+  const F=FIELD(),n=ri(F.per[0],F.per[1]);
+  for(let i=0;i<n;i++){
+    const a=rnd(0,Math.PI*2),r=rnd(1.6,3.2);
+    let x=c.x+Math.cos(a)*r,z=c.z+Math.sin(a)*r;
+    if(s.band&&z>=s.band[0]-1.2&&z<=s.band[1]+1.2){x=c.x;z=c.z+rnd(-1.4,1.4)}
+    x=Math.max(-BX_+.6,Math.min(BX_-.6,x));z=Math.max(Z0+.6,Math.min(Z1-.6,z));
+    const m={camp:c,x,z,hx:x,hz:z,wt:rnd(1,5),tx:x,tz:z,awake:false};
+    c.mobs.push(m);s.mobs.push(m);
+  }
+}
+function step(s,dt,killRate){
+  const P=s.player;
+  // ---- spawner bookkeeping
+  if(s.mode==='today'){
+    if(!s.mobs.length){s.waveT+=dt;if(s.waveT>=.7){s.waveT=0;spawnWave(s)}}
+  }else if(s.mode==='A'){
+    for(const c of s.camps){
+      if(!c.mobs.length){c.t+=dt;
+        const wait=4+Math.abs(Math.sin(c.x*12.9898+c.z*78.233))*(8-4);   // 4-8s, stable per camp
+        if(c.t>=wait){c.t=0;s.refills++;fillCamp(s,c)}}
+    }
+  }else{
+    for(const p of s.points){
+      if(!p.mob){p.t+=dt;if(p.t>=5+Math.abs(Math.sin(p.x*12.9+p.z*78.2))*4){p.t=0;s.refills++;
+        const m={x:p.x,z:p.z,hx:p.x,hz:p.z,wt:rnd(1,4),tx:p.x,tz:p.z,awake:false,point:p};
+        p.mob=m;s.mobs.push(m)}}
+    }
+  }
+  // ---- idle wander + wake
+  for(const m of s.mobs){
+    m.awake=Math.hypot(m.x-P.x,m.z-P.z)<AGGRO;
+    if(!m.awake){
+      m.wt-=dt;
+      if(m.wt<=0){m.wt=rnd(2,5);m.tx=m.hx+rnd(-1.6,1.6);m.tz=m.hz+rnd(-1.6,1.6)}
+      const ex=m.tx-m.x,ez=m.tz-m.z,ed=Math.hypot(ex,ez);
+      if(ed>.05){const v=Math.min(ed,dt*.55);m.x+=ex/ed*v;m.z+=ez/ed*v}
+      m.x=Math.max(-BX_+.4,Math.min(BX_-.4,m.x));m.z=Math.max(Z0+.4,Math.min(Z1-.4,m.z));
+    }else{
+      // awake mobs walk at the hero but keep their own stand-off ring (no stacking)
+      const ex=P.x-m.x,ez=P.z-m.z,ed=Math.hypot(ex,ez)||.01,stand=2.6;
+      if(ed>stand+.35){const v=Math.min(ed-stand,dt*1.6);m.x+=ex/ed*v;m.z+=ez/ed*v}
+    }
+  }
+  // ---- the hero: nearest mob, walk, kill
+  let target=null,bd=1e9;
+  for(const m of s.mobs){const d=Math.hypot(m.x-P.x,m.z-P.z);if(d<bd){bd=d;target=m}}
+  const REACH=1.6,STAND=1.3;
+  if(target&&bd>REACH){
+    const ex=target.x-P.x,ez=target.z-P.z,ed=Math.hypot(ex,ez)||.01,v=Math.min(Math.max(0,ed-STAND),dt*3.6);
+    if(v>0){P.x+=ex/ed*v;P.z+=ez/ed*v;s.walk+=v}
+  }
+  s.killCd-=dt;
+  if(target&&bd<=REACH&&s.killCd<=0){
+    s.killCd=1/killRate;s.kills++;
+    if(s.mode==='today'){s.mobs=s.mobs.filter(x=>x!==target)}
+    else if(s.mode==='A'){s.mobs=s.mobs.filter(x=>x!==target);if(target.camp)target.camp.mobs=target.camp.mobs.filter(x=>x!==target)}
+    else{const p=target.point;s.mobs=s.mobs.filter(x=>x!==target);p.mob=null;p.t=0}
+  }
+  // ---- stats
+  s.sampleT=(s.sampleT||0)+dt;
+  if(s.sampleT>=.25){s.sampleT=0;
+    let near=0;for(const m of s.mobs)if(Math.hypot(m.x-P.x,m.z-P.z)<10)near++;
+    s.hist.alive+=s.mobs.length;s.hist.near+=near;s.hist.samples++;
+    if(s.mobs.length<=1)s.hist.empty=(s.hist.empty||0)+1;
+  }
+}
+
+// ---------------------------------------------------------------- drawing
+const VIEW={x0:-BX_-scoutW,x1:BX_+scoutW,z0:Z0,z1:Z1};
+function project(cv,x,z){const W=cv.width,H=cv.height;
+  return[(x-VIEW.x0)/(VIEW.x1-VIEW.x0)*W,(z-VIEW.z0)/(VIEW.z1-VIEW.z0)*H]}
+function draw(cv,s){
+  const g=cv.getContext('2d'),W=cv.width,H=cv.height;
+  g.clearRect(0,0,W,H);
+  // scenery belt (props live outside |x|=13.9)
+  g.fillStyle='#3f3a2c';g.fillRect(0,0,W,H);
+  const[lx0]=project(cv,-BX_-.9,0),[lx1]=project(cv,BX_+.9,0);
+  const[,tz]=project(cv,0,Z0),[,bz]=project(cv,0,Z1);
+  const grd=g.createLinearGradient(0,0,0,H);grd.addColorStop(0,'#5aa64d');grd.addColorStop(1,'#4d9442');
+  g.fillStyle=grd;g.fillRect(lx0,tz,lx1-lx0,bz-tz);
+  // water band + its spawn margin
+  if(s.band){
+    const zA=Math.max(Z0,s.band[0]),zB=Math.min(Z1,s.band[1]);
+    if(zB>zA){
+      const[,y0]=project(cv,0,zA),[,y1]=project(cv,0,zB);
+      g.fillStyle='#7fd6ff';g.fillRect(lx0,y0,lx1-lx0,y1-y0);
+      g.strokeStyle='#ffffff66';g.setLineDash([4,3]);
+      const[,m0]=project(cv,0,zA-2),[,m1]=project(cv,0,zB+2);
+      g.strokeRect(lx0,m0,lx1-lx0,m1-m0);g.setLineDash([]);
+    }
+  }
+  // lane border
+  g.strokeStyle='#00000055';g.strokeRect(lx0+.5,tz+.5,lx1-lx0-1,bz-tz-1);
+  // mobs
+  for(const m of s.mobs){
+    const[px,py]=project(cv,m.x,m.z);
+    g.beginPath();g.arc(px,py,m.awake?4.4:3.6,0,7);
+    g.fillStyle=m.awake?'#ff9ec4':'#e0574a';g.fill();
+    g.strokeStyle='#00000088';g.lineWidth=1;g.stroke();
+  }
+  // hero + aggro ring
+  const[px,py]=project(cv,s.player.x,s.player.z);
+  g.beginPath();g.arc(px,py,(AGGRO)/(VIEW.x1-VIEW.x0)*W,0,7);g.strokeStyle='#ffd23f55';g.setLineDash([3,4]);g.stroke();g.setLineDash([]);
+  g.beginPath();g.arc(px,py,5,0,7);g.fillStyle='#ffd23f';g.fill();g.strokeStyle='#3a2a05';g.lineWidth=1.5;g.stroke();
+}
+function stats(s){
+  const h=s.hist,n=Math.max(1,h.samples);
+  return {alive:s.mobs.length,avgAlive:(h.alive/n).toFixed(1),near:(h.near/n).toFixed(1),
+    empty:((h.empty||0)/n*100).toFixed(0),
+    walk:(s.kills?s.walk/s.kills*10:0).toFixed(1),kills:s.kills,refills:s.refills};
+}
+function showStats(id,s){
+  const st=stats(s);
+  document.getElementById(id).innerHTML=
+    '<div>alive now: <b>'+st.alive+'</b></div><div>avg alive: <b>'+st.avgAlive+'</b></div>'+
+    '<div>mobs within 10: <b>'+st.near+'</b></div><div>field nearly empty: <b>'+st.empty+'%</b></div>'+
+    '<div>avg walk / 10 kills: <b>'+st.walk+'u</b></div><div>kills: <b>'+st.kills+'</b> · refills: <b>'+st.refills+'</b></div>';
+}
+
+// ---------------------------------------------------------------- app
+const MAPSEL=document.getElementById('map');
+let sims={},paused=false,speed=2,killRate=1,last=performance.now();
+function build(){
+  const F=FIELD();
+  sims={today:mkSim('today',F),A:mkSim('A',F),B:mkSim('B',F)};
+}
+const CV={today:document.getElementById('cToday'),A:document.getElementById('cA'),B:document.getElementById('cB')};
+function frame(now){
+  const dtReal=Math.min(.05,(now-last)/1000);last=now;
+  if(!paused){
+    const dt=dtReal*speed;
+    for(const k in sims)step(sims[k],dt,killRate);
+  }
+  for(const k in sims){draw(CV[k],sims[k]);showStats(k==='today'?'sToday':k==='A'?'sA':'sB',sims[k])}
+  requestAnimationFrame(frame);
+}
+document.getElementById('k').oninput=e=>{killRate=parseFloat(e.target.value);document.getElementById('v_k').textContent=killRate.toFixed(1)+' kills/s'};
+document.getElementById('t').oninput=e=>{speed=parseInt(e.target.value,10);document.getElementById('v_t').textContent=speed+'×'};
+document.getElementById('v_k').textContent=killRate.toFixed(1)+' kills/s';document.getElementById('v_t').textContent=speed+'×';
+document.getElementById('pause').onclick=e=>{paused=!paused;e.target.textContent=paused?'Resume':'Pause'};
+document.getElementById('reset').onclick=()=>{build()};
+document.getElementById('fast').onclick=()=>{for(let i=0;i<60*20;i++)for(const k in sims)step(sims[k],1/20,killRate)};
+MAPSEL.onchange=()=>build();
+document.getElementById('copy').onclick=()=>{
+  const txt='SPAWN SYSTEM pick\nmap shown: '+MAPSEL.options[MAPSEL.selectedIndex].text+'\nkill rate: '+killRate.toFixed(1)+'/s\nsystem: '+(document.getElementById('out').textContent||'A (camps + scatter)');
+  navigator.clipboard&&navigator.clipboard.writeText(txt);document.getElementById('out').textContent='copied: '+txt.replace(/\n/g,' | ');
+};
+document.querySelectorAll('.panel').forEach((p,i)=>{
+  p.style.cursor='pointer';
+  p.addEventListener('click',e=>{if(e.target.tagName==='CANVAS'){const names=['1 — today','2 — A camps + scatter','3 — B individual points'];
+    document.getElementById('out').textContent=names[i]}});
+});
+build();requestAnimationFrame(frame);
+</script>
+</body>
+</html>

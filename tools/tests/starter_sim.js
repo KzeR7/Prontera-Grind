@@ -18,17 +18,18 @@ ${grab('let mobs=[],mob=null','function genGear(')}
 const gx=()=>1,addJob=()=>{},checkLevel=()=>{},qProg=()=>{},addFloat=()=>{},log=m=>logs.push(String(m)),save=()=>{},ui=()=>{},numTxt=n=>String(Math.round(n));
 const mkDrop=()=>null,genGear=()=>null;
 ${grab('function earnZeny(amount){','function collect(it){')}
-this.H={fresh,CLASSES,spawn,kill,atk,aspd,maxHp,def,mdef,starterStage,fieldPower,HPK,HPE,MAPS,AGGRO,PACK_GAP,PACK_MAX,PACK_JITTER,packSites,stageSpec,nearestPack,pl,logs,mapSelection:()=>[mapM,mapL],
-set S(v){S=v},get S(){return S},get mobs(){return mobs},get mob(){return mob},get activePack(){return activePack}};
+this.H={fresh,CLASSES,spawn,kill,atk,aspd,maxHp,def,mdef,starterStage,fieldPower,HPK,HPE,MAPS,AGGRO,
+ campCount,campMobs,campSites,campWait,fillCamp,minionDef,CAMP_GAP,NEIGHBOUR_GAP,CAMP_REFILL_MIN,CAMP_REFILL_MAX,stageSpec,nearestPack,pl,logs,mapSelection:()=>[mapM,mapL],
+set S(v){S=v},get S(){return S},get mobs(){return mobs},get mob(){return mob},get activePack(){return activePack},get camps(){return camps}};
 `,ctx);
 const H=ctx.H;
 let pass=0,fail=0;const t=(n,f)=>{try{f();console.log('  ok   '+n);pass++}catch(e){console.error('  FAIL '+n+' -> '+e.message);fail++}};
 const spawn=(m,l,cls='Mage',lv=10)=>{H.S=H.fresh();Object.assign(H.S,{mp:m,lvl:l,cls,lv});H.spawn();return H.mobs};
-t('all 25 starter stages have gentler HP/ATK and only one or two per encounter',()=>{
+t('all 25 starter stages have gentler HP/ATK and only one or two per camp',()=>{
  for(let m=0;m<5;m++)for(let l=1;l<=5;l++)for(let trial=0;trial<12;trial++){
   const pack=spawn(m,l),p=H.fieldPower(m,l),mb=1+m*.15;
-  assert.strictEqual(new Set(pack.map(x=>x.pack)).size,3);
-  assert.ok(pack.every(x=>pack.filter(y=>y.pack===x.pack).length<=2));for(const mob of pack){
+  assert.strictEqual(new Set(pack.map(x=>x.pack)).size,H.campCount(m),'every camp on the map is stocked');
+  assert.ok(pack.every(x=>pack.filter(y=>y.pack===x.pack).length<=2),'starter camps hold one or two monsters');for(const mob of pack){
    assert.ok(mob.hp<=Math.floor(H.HPK*mb*Math.pow(p,H.HPE)));
    assert.ok(mob.atk<Math.floor((5+p*4.6)*mb));
    assert.strictEqual(mob.lvl,p,'gear power must remain map-specific');
@@ -70,15 +71,19 @@ t('class-map starter packs are survivable at target level with focused stats and
  }
  console.log('       worst conservative pack budget: '+(worst*100).toFixed(1)+'% HP');
 });
-t('Novice encounters stay one low-HP monster at a time, in three separate packs',()=>{
- const pack=spawn(0,1,'Novice',1);assert.strictEqual(pack.length,3);
+t('Novice encounters stay one or two low-HP monsters per camp, spread over the whole lane',()=>{
+ const pack=spawn(0,1,'Novice',1);
+ assert.strictEqual(H.camps.length,8,'Prontera fields eight camps');
+ assert.ok(pack.length>=8&&pack.length<=16,'eight camps of one or two Novice-level monsters');
+ assert.strictEqual(new Set(pack.map(x=>x.pack)).size,8,'every camp holds something to kill');
  for(const m of pack)assert.strictEqual(m.hp,42);
+ assert.ok(pack.every(x=>Math.abs(x.x)<13&&x.z>-28&&x.z<12),'camps stay inside the play area');
 });
 t('non-boss stages retain their combat formulas and boss escorts use normal mob stats',()=>{
  for(let m=0;m<10;m++)for(let l=1;l<10;l++)if(!H.starterStage(m,l)){
   const pack=spawn(m,l),p=H.fieldPower(m,l),mb=1+m*.15+Math.max(0,m-4)*.2;
   for(const mob of pack){assert.strictEqual(mob.hp,Math.floor(H.HPK*mb*Math.pow(p,H.HPE)));assert.strictEqual(mob.atk,Math.floor((5+p*4.6)*mb))}
-  assert.ok(pack.length>=3&&pack.length<=9);
+  assert.ok(pack.length>=H.camps.length&&pack.length<=3*H.camps.length,'every camp holds one to three monsters');
  }
  for(let m=0;m<10;m++){
   const wave=spawn(m,10);assert.strictEqual(wave.length,1+(m<5?3:5));
@@ -92,31 +97,73 @@ t('non-boss stages retain their combat formulas and boss escorts use normal mob 
    assert.strictEqual(escort.atk,Math.floor((5+p*4.6)*mb))}
  }
 });
-t('medium-distance packs reroll on each spawn but stay separate and on dry ground',()=>{
- assert.strictEqual(H.PACK_GAP,13);assert.strictEqual(H.PACK_MAX,18.5);
+t('camps scatter over the whole lane, each one a small group instead of a single point',()=>{
+ assert.strictEqual(H.CAMP_GAP,5.5);
  const positions=new Set();
  for(let m=0;m<10;m++)for(let l=1;l<10;l++)for(let i=0;i<8;i++){
-  const pack=spawn(m,l),groups=[0,1,2].map(k=>pack.filter(x=>x.pack===k));
-  assert.ok(groups.every(g=>g.length), 'all three packs must spawn');
-  for(let a=0;a<3;a++)for(let b=a+1;b<3;b++)for(const u of groups[a])for(const v of groups[b])
-   assert.ok(Math.hypot(u.x-v.x,u.z-v.z)>H.AGGRO+.5, 'packs too close to stay apart');
-  for(let a=0;a<3;a++)for(let b=a+1;b<3;b++)
-    assert.ok(Math.hypot(groups[a][0].x-groups[b][0].x,groups[a][0].z-groups[b][0].z)<H.PACK_MAX+2, 'packs too far apart');
-  if(m===4&&l===4)positions.add(groups.map(g=>g[0].x.toFixed(1)+','+g[0].z.toFixed(1)).join('|'));
-  assert.ok(pack.every(x=>Math.abs(x.x)<10.5&&x.z>-18&&x.z<10), 'pack outside the play area');
+  const pack=spawn(m,l),camps=H.camps;
+  assert.strictEqual(camps.length,H.campCount(m),'camp count follows the map');
+  assert.ok(pack.every(x=>x.pack>=0&&x.pack<camps.length),'every monster belongs to a camp');
+  for(let a=0;a<camps.length;a++)for(let b=a+1;b<camps.length;b++)
+   assert.ok(Math.hypot(camps[a].x-camps[b].x,camps[a].z-camps[b].z)>=2.6,'two camps must not share a spot');
+  // inside a camp: 1.6-3.2 units apart; neighbouring camps at least NEIGHBOUR_GAP apart as well
+  for(const c of camps){
+   const g=pack.filter(x=>x.pack===c.i);
+   assert.ok(g.length>=1&&g.length<=3,'a camp holds one to three monsters');
+   // the camp's own ring: every monster stands 1.6-3.2 units from the camp site
+   for(const x of g)assert.ok(Math.hypot(x.x-c.x,x.z-c.z)<=3.35,'camp-mate outside its 1.6-3.2 ring');
+  }
+  // the scatter itself: camps reach both halves of the lane instead of hugging the middle
+  const zs=camps.map(c=>c.z);
+  assert.ok(Math.max(...zs)-Math.min(...zs)>12,'camps must use the whole lane, not hug the middle');
+  if(m===4&&l===4)positions.add(camps.map(c=>c.x.toFixed(1)+','+c.z.toFixed(1)).join('|'));
+  assert.ok(pack.every(x=>Math.abs(x.x)<13&&x.z>-28&&x.z<12),'camp outside the play area');
   const water=H.stageSpec(m,l).f&&H.stageSpec(m,l).f.water;
-  if(water)assert.ok(pack.every(x=>x.z<water[0]-1||x.z>water[1]+1), 'map '+m+' stage '+l+' water '+water+' packs '+pack.map(x=>x.z.toFixed(1)).join(','));
+  if(water)assert.ok(pack.every(x=>x.z<water[0]-1||x.z>water[1]+1),'map '+m+' stage '+l+' water '+water+' camps '+pack.map(x=>x.z.toFixed(1)).join(','));
+  // a camp is a group, not one blob: its monsters are never stacked on one pixel
+  for(const c of camps){
+   const g=pack.filter(x=>x.pack===c.i);
+   for(let a=0;a<g.length;a++)for(let b=a+1;b<g.length;b++)
+    assert.ok(Math.hypot(g[a].x-g[b].x,g[a].z-g[b].z)>=1.5,'camp-mates stand apart, not on one pixel');
+  }
+  for(let a=0;a<camps.length;a++)for(let b=a+1;b<camps.length;b++)
+   for(const u of pack.filter(x=>x.pack===camps[a].i))for(const v of pack.filter(x=>x.pack===camps[b].i))
+    assert.ok(Math.hypot(u.x-v.x,u.z-v.z)>=2,'two camps must not touch');
  }
- assert.ok(positions.size>5,'respawns keep reusing the same pack positions');
- const firstPacks=new Set();
- for(let k=0;k<60;k++){H.pl.x=0;H.pl.z=0;spawn(1,6);firstPacks.add(H.activePack);
-  assert.strictEqual(H.activePack,H.nearestPack(),'initial pack is not the closest one')}
- assert.ok(firstPacks.size>1,'player always starts on numbered pack 1');
+ assert.ok(positions.size>5,'respawns keep reusing the same camp positions');
+ const firstCamps=new Set();
+ for(let k=0;k<60;k++){H.pl.x=0;H.pl.z=0;spawn(1,6);firstCamps.add(H.activePack);
+  assert.strictEqual(H.activePack,H.nearestPack(),'initial camp is not the closest one')}
+ assert.ok(firstCamps.size>1,'player always starts on numbered camp 1');
  assert.ok(!/PACK_SPOTS/.test(src),'fixed pack points came back');
- assert.ok(/m.pack===activePack&&\(isBoss\(\)\|\|Math.hypot/.test(src), 'only the active pack should wake');
- assert.ok(/if\(wake&&Math.hypot/.test(src), 'sleeping packs must not attack');
- assert.ok(/if\(m.pack!==activePack\)continue/.test(src), 'pets should follow the active pack');
- assert.ok(/o.pack===src.pack/.test(src) && /o.pack===target.pack/.test(src), 'area and chain hits cannot wake remote packs');
+ assert.ok(/m.pack===activePack&&\(isBoss\(\)\|\|Math.hypot/.test(src),'only the active camp should wake');
+ assert.ok(/if\(wake&&Math.hypot/.test(src),'sleeping camps must not attack');
+ assert.ok(/if\(m.pack!==activePack\|\|/.test(src),'pets should follow the active camp');
+ assert.ok(/o.pack===src.pack/.test(src) && /o.pack===target.pack/.test(src),'area and chain hits cannot wake remote camps');
+});
+
+t('an emptied camp refills itself, and clearing the field no longer throws the map away',()=>{
+ // the camp refill block, run against the real code
+ const box={};vm.createContext(box);
+ vm.runInContext(`
+   let mobs=[{pack:1,hp:9}],camps=[{i:0,x:2,z:3,t:0,wait:4},{i:1,x:9,z:9,t:3,wait:6}],filled=[];
+   const fillCamp=(i,c)=>filled.push(i),campWait=c=>c.wait,rnd=(a,b)=>a,CAMP_REFILL_MIN=4,CAMP_REFILL_MAX=8;
+   this.run=dt=>{for(const c of camps)if(!mobs.some(m=>m.pack===c.i)){c.t+=dt;if(c.t>=c.wait){c.t=0;fillCamp(c.i,c)}}else c.t=0;return {camps,filled,mobs}};
+ `,box);
+ assert.strictEqual(box.run(3.9).filled.length,0,'a camp that is still refilling waits its own timer out');
+ const r=box.run(.2);
+ assert.deepStrictEqual(Array.from(r.filled),[0],'the emptied camp is stocked again');
+ assert.strictEqual(r.camps[0].t,0,'and its timer restarts');
+ assert.strictEqual(r.camps[1].t,0,'a camp that still holds monsters keeps its timer at zero');
+ // the game must not clear the field when the kill counter fills: only a boss wave resets
+ assert.ok(/if\(mob\.boss\)\{\n    mobs=\[\];camps=\[\];S\.kl=0;/.test(src),'only the boss wave resets the field');
+ assert.ok(!/mobs=\[\];S\.kl=0;/.test(src),'the 15-kill field reset is gone (the offline model keeps its own, stage-only gate)');
+ assert.ok(/else if\(S\.lvl<10&&S\.kl>=MPS\)\{/.test(src),'the 15-kill counter still opens the next stage');
+ // the refill timer is per camp and stable, so a watched camp comes back on a rhythm
+ assert.strictEqual(H.campWait({x:2,z:3}),H.campWait({x:2,z:3}));
+ const waits=Array.from({length:40},(_,i)=>H.campWait({x:i*.7-12,z:i*.31-4}));
+ assert.ok(waits.every(w=>w>=H.CAMP_REFILL_MIN-.001&&w<=H.CAMP_REFILL_MAX+.001),'refill waits stay inside 4-8s');
+ assert.ok(new Set(waits.map(w=>w.toFixed(2))).size>10,'and they differ from camp to camp');
 });
 t('clearing a pack selects the nearest surviving pack, regardless of its number',()=>{
  const group=spawn(0,4),all=group.length;assert.ok(all>=6);
@@ -136,7 +183,7 @@ t('clearing a pack selects the nearest surviving pack, regardless of its number'
   if(H.mobs.length){assert.strictEqual(H.activePack,H.nearestPack());
     assert.strictEqual(H.mob.pack,H.activePack)}
  }
- assert.strictEqual(new Set(seen).size,3);assert.strictEqual(H.S.kl,all);
+ assert.strictEqual(new Set(seen).size,H.camps.length,'every camp gets its turn as the active one');assert.strictEqual(H.S.kl,all);
  H.spawn();assert.strictEqual(H.activePack,H.nearestPack());assert.strictEqual(H.mob.pack,H.activePack);
 });
 t('clearing normal Stage 10 advances to the next map when Auto-advance is on',()=>{
@@ -165,6 +212,7 @@ t('stage 10 starts with boss plus 3 or 5 escorts and boss defeat resets the whol
   assert.ok(H.mobs.every(x=>Math.hypot(x.x-boss.x,x.z-boss.z)<5));
   boss.drops=[];boss.cardCh=0;boss.ore=false;H.kill(boss);
   assert.strictEqual(H.mobs.length,0,'escorts should clear when boss falls');
+  assert.strictEqual(H.camps.length,0,'the boss wave carries no camps');
   assert.strictEqual(H.S.kl,0,'boss kill resets wave progress');
   H.spawn();assert.strictEqual(H.mobs.length,m<5?4:6,'boss should respawn immediately without fifteen more kills');
  }

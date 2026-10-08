@@ -63,7 +63,6 @@ const code = [
   pick(/const SKILL_PICTO=\{[\s\S]*?\n\};/, 'local vector skill art'),
   grab('const skillIcon=id=>', '// The CDM affix stays'),
   pick(/const SKSLOTS=t=>[^;]+;/, 'SKSLOTS/SKFADE'),
-  pick(/const SKGCD=[\d.]+;/, 'SKGCD'),
   pick(/const tnode=n=>[^\n]*/, 'tnode'),
   pick(/const crit=\(\)=>[^\n]*/, 'crit/flee/missCh'),
   pick(/const def=\(\)=>[^\n]*/, 'def/mdef/critD/needAt/need/cost'),
@@ -606,22 +605,22 @@ t('HP flips at 30%; one split bar fills Base from left and Job from right with c
 });
 
 t('damage floats stay screen-projected, restrained, and distinct by type', () => {
-  assert.ok(src.includes('.fl.damage,.fl.skill-damage,.fl.critical,.fl.skill-critical,.fl.incoming{position:absolute'),
+  assert.ok(src.includes('.fl.damage,.fl.skill-damage,.fl.critical,.fl.skill-critical,.fl.incoming,.fl.dot{position:absolute'),
     'combat nodes must remain absolutely anchored to projected screen coordinates');
-  assert.ok(src.includes('.fl.damage{color:#fff0a6!important;-webkit-text-stroke:'),
-    'ordinary damage keeps the gold treatment (now in the selected game font)');
+  assert.ok(src.includes('.fl.damage{color:#fff0a6!important;-webkit-text-stroke:.5px #4b3514'),
+    'ordinary damage keeps the pale-gold treatment the owner plays with');
   assert.ok(src.includes('.fl.critical,.fl.skill-critical{font:900 32px "Trebuchet MS",Verdana,sans-serif')&&!src.includes('.fl.critical::before{')&&!src.includes('>CRIT<'),
-    'critical damage carries the restored explode frame (child elements, no CRIT chip)');
+    'critical damage carries the owner\'s starburst frame (a child element, no CRIT chip)');
   assert.ok(src.includes('.fl.miss,.fl.evade{position:absolute;')&&!src.includes('border:1px solid #d9e1ec'),
     'MISS and DODGE are plain text labels with no badge frame');
   assert.ok(src.includes('#xp-track{display:flex;width:100%;height:14px')&&src.includes('#xp-dock{flex:none;width:100%;padding:3px 10px 4px'),
     'the shared Base/Job bar must be slimmer than before');
-  assert.ok(src.includes('skillNameFloat(sk.n,cast-1)')&&src.includes("skillNameFloat('First Aid')")&&src.includes('skillNameFloat(s.n)'),
+  assert.ok(src.includes('skillNameFloat(c.sk.n)')&&src.includes("skillNameFloat('First Aid')")&&src.includes('skillNameFloat(s.n)'),
     'active, healing and buff skills must show a name above the caster');
   const box={};vm.createContext(box);
   vm.runInContext(`
-    let S={dmgShort:true,dmgShow:true},floats=[],pl={x:2,z:4};
-    ${grab('const addFloat=(x,y,z,txt,col,big,kind=', 'function log(m,cls,cat){')}
+    let S={dmgShort:true,dmgShow:true},floats=[],pl={x:2,z:4},rnd=(a,b)=>(a+b)/2;
+    ${grab('const DMG_LIFE=1/.95,DMG_RISE=30,DMG_FADE=.55,DMG_RATE=.95;', 'function log(m,cls,cat){')}
     this.__f={floats,pl,damageFloat,skillNameFloat,shortNum,numTxt,get S(){return S},set full(v){S.dmgShort=!v},
       get dmgShow(){return S.dmgShow!==false},set dmgShow(v){S.dmgShow=v==='on'||v===true}};
   `,box);
@@ -652,7 +651,8 @@ t('damage floats stay screen-projected, restrained, and distinct by type', () =>
   vm.runInContext(`
     let mob={x:1,z:3,hp:10000,size:1},shake=0,hit=null,S={dmg:0};
     const missCh=()=>0,crit=()=>100,atk=()=>100,matk=()=>200,st=()=>0,critD=()=>2,
-      rnd=(a,b)=>a,addFloat=()=>{},damageFloat=(...args)=>{hit=args};
+      rnd=(a,b)=>a,addFloat=()=>{},damageFloat=(...args)=>{hit=args},
+      showDamage=(o,x,y,z,a,c,sk)=>damageFloat(x,y,z,a,c,false,sk),mobDamageY=()=>1.9;
     ${grab('function strike(mult,col,magic=false,skill=false){','// Higher job tiers get more casts per swing:')}
     strike(1,'#fff');this.__hit={mob,hit,shake};
   `,strikeBox);
@@ -664,15 +664,18 @@ t('damage floats stay screen-projected, restrained, and distinct by type', () =>
   const draw=grab('  floats.forEach(f=>{if(!f.el)', '  const pt=');
   const scene={floats:F.floats,pl:F.pl,create:()=>({style:{}}),draw};
   vm.createContext(scene);
-  vm.runInContext(`const document={createElement:()=>({style:{}})},ov={appendChild:()=>{}},scr=(x,y,z)=>[x*10,z*10];${draw}`,scene);
+  vm.runInContext(`const document={createElement:()=>({style:{}})},ov={appendChild:()=>{}},scr=(x,y,z)=>[x*10,z*10],
+    DMG_LIFE=1/.95,DMG_RISE=30,DMG_FADE=.55,DMG_RATE=.95;${draw}`,scene);
   assert.strictEqual(F.floats[3].el.style.left,'20px');
   F.pl.x=8;vm.runInContext(draw,scene);
   assert.strictEqual(F.floats[3].el.style.left,'80px','skill names must track the moving hero');
   assert.strictEqual(F.floats[1].el.className,'fl critical');
   const critHtml=F.floats[1].el.innerHTML;
-  assert.ok(critHtml.includes('class="fburst"')&&critHtml.includes('class="fring"'),'a critical float carries the explode frame');
-  assert.strictEqual((critHtml.match(/class="fstreak"/g)||[]).length,9,'a critical sprays 9 speed-line streaks');
-  assert.ok(critHtml.includes('class="fburst" style="width:108px'),'the burst box is sized from the finished number (1896 -> max(64, 4*32*.84) = 108)');
+  assert.ok(critHtml.includes('class="fburst"'),'a critical float carries the owner\'s starburst frame behind its digits');
+  assert.ok(critHtml.includes('class="fring"')&&critHtml.includes('class="fstreak"'),'with the impact ring and the speed-line spray');
+  assert.ok(!critHtml.includes('fbubble')&&!critHtml.includes('fflash'),'and no blob or flash: the v83 frame is gone again');
+  assert.ok(critHtml.includes('class="fburst" style="width:108px;height:80px'),'the star is sized from the finished number (1896 -> max(64, round(4*32*.84)) = 108 wide, 80 tall)');
+  assert.strictEqual(critHtml.split('<span class="fnum">')[0].includes('1,896'),false,'the digits are painted after the frame, never inside it');
   assert.strictEqual(F.floats[0].el.innerHTML,undefined,'ordinary hits stay plain text, with no frame markup');
 });
 

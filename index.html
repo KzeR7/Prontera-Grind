@@ -30,8 +30,14 @@ html, body { margin:0; padding:0; width:100vw; height:100vh; height:100dvh; over
 .fl.big{font-size:24px}
 .fl{pointer-events:none}
 /* Keep floats pinned to the projected hit point and use readable, restrained type by damage kind. */
-/* v69 damage floats: the owner's Balanced pick from the proposal page - Chunky (Verdana 900),
-   17px normal / 32px critical, arc punch on spawn, sway-up-fade-left travel, hold-then-fade
+/* v83 (owner): the RO look. The v69 pick was tuned on a dark proposal page; on the field it read
+   wrong - 17px normal numbers could not be seen, the 32px crit with its 64x80px starburst sat ON the
+   monster, and the numbers held their position for half a second (the rise stopped at 87% of the
+   life and the fade only started at 55%). Now: 24px normal / 30px crit, the number climbs ~78px and
+   is gone in 0.7s, the fade starts at 45%, and the crit frame is a soft red-orange RO bubble BEHIND
+   the digits that dies with them. Damage numbers also spawn above the monster's head and stack
+   upward, and one swing prints one number per monster (see showDamage/flushDamageGroup).
+   Original v69 note: Chunky (Verdana 900), 17px normal / 32px critical, arc punch on spawn, sway-up-fade-left travel, hold-then-fade
    from 55% of the life. Critical and skill-critical carry the restored explode frame
    (irregular starburst + speed-line streaks + impact ring, no "CRIT" chip) as children of the
    float, so the screen-projection registration is untouched; the burst is sized from the
@@ -51,16 +57,15 @@ html, body { margin:0; padding:0; width:100vw; height:100vh; height:100dvh; over
    (overshoot 1.25 -> wobble -> bloom 1.05). One addition to the page's rule: a tight 1px dark
    drop-shadow rim, because the page itself notes a hard outline is what keeps digits legible on
    bright maps - strip B is previewed on a dark page, the game plays on bright grass. */
-.fl.damage,.fl.skill-damage,.fl.critical,.fl.skill-critical,.fl.incoming{position:absolute;font-variant-numeric:tabular-nums;letter-spacing:0;z-index:24}
+.fl.damage,.fl.skill-damage,.fl.critical,.fl.skill-critical,.fl.incoming,.fl.dot{position:absolute;font-variant-numeric:tabular-nums;letter-spacing:0;z-index:24}
+.fl.dot{font:700 18px "Trebuchet MS",Verdana,sans-serif;-webkit-text-stroke:.6px #14320f;text-shadow:0 2px 3px #000}
 .fl.damage,.fl.skill-damage{font:700 17px "Trebuchet MS",Verdana,sans-serif}
 .fl.damage{color:#fff0a6!important;-webkit-text-stroke:.5px #4b3514;text-shadow:0 1px 2px #000,0 0 3px #000}
 .fl.skill-damage{color:#c9f1ff!important;-webkit-text-stroke:.5px #123a57;text-shadow:0 1px 2px #000,0 0 4px #279cd1}
-/* v72: criticals are the proposal page's Option B treatment with the owner's own font pick
-   (font: game = Trebuchet, which the copy-button prints as "font: game"; "Chunky" would be
-   "font: classic"). Gradient-clipped digits with a thin maroon stroke and soft drop shadows,
-   exactly as strip B renders them - the old flat gold fill + 4-way hard outline was the chunky
-   sticker look that did not match the page. text-shadow must be none: on transparent gradient
-   text it would paint a solid glyph silhouette behind the digits. */
+/* v83: the digits keep the v72 gradient fill and thin maroon stroke (they read well on bright
+   grass); what changed is what sits behind them. The starburst + speed-lines + impact ring are gone
+   and a soft red-orange bubble takes their place, drawn behind the digits and fading with them, so a
+   critical is read from the number instead of a shape covering the monster. */
 .fl.critical,.fl.skill-critical{font:900 32px "Trebuchet MS",Verdana,sans-serif;will-change:transform}
 /* the fill/stroke/shadow pair lives on the digits span, not on the float: a filter on the float
    would also glow the starburst and streaks behind it, which the proposal page does not do */
@@ -68,6 +73,12 @@ html, body { margin:0; padding:0; width:100vw; height:100vh; height:100dvh; over
 .fl.critical .fnum{background-image:linear-gradient(#fff3b0 10%,#ffc93c 90%);color:#ffd23f;-webkit-text-stroke:.6px #57330a;filter:drop-shadow(0 0 1px #2e0a02) drop-shadow(0 1px 2px #000) drop-shadow(0 0 6px #ffb52e77)}
 .fl.skill-critical .fnum{background-image:linear-gradient(#eafaff 10%,#7cd4ff 90%);color:#eaf6ff;-webkit-text-stroke:.6px #0e2c58;filter:drop-shadow(0 0 1px #081a33) drop-shadow(0 1px 2px #000) drop-shadow(0 0 6px #4fd8ff77)}
 .fl.incoming{font-family:"Trebuchet MS",Verdana,sans-serif;font-weight:700;font-size:16px;color:#ff9b94!important;-webkit-text-stroke:.4px #4b1018;text-shadow:0 1px 2px #000,0 0 3px #f33;animation:hit-pop .18s ease-out both}
+/* v83.3 (owner): the v82 explode frame is BACK. The v83 bubble was my mistake - the owner has been
+   playing the v82 build and had already tuned this look to their liking ("my current damage is not a
+   blob, its like your starburst"), so the blob and its flash are gone again. 12 jittered outer spikes
+   (a fresh jitter every hit, so no two crits are identical), the dark registration stroke, an 8-spike
+   inner star, a pale core, the speed-line spray and the impact ring - all children of the float, so
+   they ride the number and die with it. Sizes come from the finished number: 6-7 digit crits still fit. */
 .fburst,.fring,.fstreak{position:absolute;left:50%;top:50%;pointer-events:none}
 .fburst{transform:translate(-50%,-50%);animation:fburst-pop 1.05s cubic-bezier(.2,.9,.3,1.25) both}
 .fburst svg{width:100%;height:100%;display:block;overflow:visible}
@@ -75,12 +86,12 @@ html, body { margin:0; padding:0; width:100vw; height:100vh; height:100dvh; over
 .fl.skill-critical .fring{border-color:#9fe8ff}
 .fstreak{width:var(--len,56px);height:var(--th,3px);margin:calc(-.5*var(--th,3px)) 0 0 calc(-.5*var(--len,56px));border-radius:2px;background:linear-gradient(90deg,#fff,#e6d6ff);box-shadow:0 0 3px #e6d6ff;transform-origin:center;animation:fstreak-fly .5s cubic-bezier(.1,.7,.3,1) forwards}
 .fl.skill-critical .fstreak{background:linear-gradient(90deg,#fff,#cfeeff);box-shadow:0 0 3px #9fe8ff}
-.fnum{position:relative}
 /* the page's burst curve: overshoot to 1.25 at 30%, settle with a small random wobble at 55%,
-   then a slow bloom to 1.05 - it breathes for the whole 1.05s life instead of a quick 0.32s pop */
+   then a slow bloom to 1.05 - it breathes for the whole 1.05s life instead of a quick pop */
 @keyframes fburst-pop{0%{transform:translate(-50%,-50%) scale(.3)}30%{transform:translate(-50%,-50%) scale(1.25)}55%{transform:translate(-50%,-50%) scale(1) rotate(var(--brot,0deg))}100%{transform:translate(-50%,-50%) scale(1.05);opacity:.9}}
 @keyframes fring-pop{0%{opacity:.95;transform:translate(-50%,-50%) scale(.4)}100%{opacity:0;transform:translate(-50%,-50%) scale(2.1)}}
 @keyframes fstreak-fly{0%{transform:rotate(var(--a)) scaleX(.15);opacity:1}100%{transform:rotate(var(--a)) translateX(var(--d,44px)) scaleX(1);opacity:0}}
+.fnum{position:relative}
 .fl.miss,.fl.evade{position:absolute;font:700 13px/1 "Trebuchet MS",Verdana,sans-serif;letter-spacing:.3px;padding:0;border:0;border-radius:0;background:transparent;color:#f1f3f6!important;-webkit-text-stroke:0;text-shadow:0 1px 2px #000,0 0 3px #000;box-shadow:none;z-index:25;animation:hit-pop .18s ease-out both}
 .fl.evade{color:#9eeaff!important;text-shadow:0 1px 2px #000,0 0 3px #14738a}
 .fl.skill{font:bold 14px "Trebuchet MS",sans-serif;color:#fff!important;background:linear-gradient(135deg,#30233fe8,#182b44e8);border:1px solid #b6eaff;border-radius:5px;padding:3px 9px;letter-spacing:.2px;text-shadow:0 1px 2px #000,0 0 5px #000;box-shadow:0 2px 8px #0008,0 0 8px #55dfff44;z-index:25}
@@ -654,7 +665,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // script block, which is a SyntaxError - the game did not run on main at all. One line wins, and
 // it names both sides of this merge: the v38 balance patch (the weapon cut, the affix/card
 // give-back) and main's weapon-hold rendering work.
-const BUILD='2026-10-08 grind-v82 the usage diet: a lighter cloud sync, and the town art arrives when you do';   // shown on the login card - confirms which file you loaded
+const BUILD='2026-10-08 grind-v83.3 your critical is back exactly as you had it, and the picker now starts from it';   // shown on the login card - confirms which file you loaded
 $('buildTag').textContent='build '+BUILD;
 
 // ---------- class tree: Novice -> 6 first jobs -> 6 second jobs -> 6 third jobs ----------
@@ -806,7 +817,7 @@ SKILLS.push(
 for(const k in FX){const s=SKILLS.find(x=>x.id===k);if(s)Object.assign(s,FX[k])}
 for(const id of ['nap','env']){const s=SKILLS.find(x=>x.id===id),desc=s.d;s.d=L=>desc(L)+' &middot; AREA: splashes nearby enemies.'}
 
-SKILLS.find(s=>s.id==='soulb').rng=1;SKILLS.find(s=>s.id==='mAss').aoe=1;SKILLS.find(s=>s.id==='sdestroy').rng=1;SKILLS.find(s=>s.id==='soulb').d=L=>`Auto RANGED (up to 5 tiles): 2 hits of ${Math.round((1+.2*L)*100)}% dmg &middot; CD 3s`;SKILLS.find(s=>s.id==='mAss').d=L=>`Auto AREA: 4 hits of ${Math.round((.7+.15*L)*100)}% dmg, hits all nearby &middot; CD 5s`;
+SKILLS.find(s=>s.id==='soulb').rng=5;SKILLS.find(s=>s.id==='mAss').aoe=1;SKILLS.find(s=>s.id==='sdestroy').rng=5;SKILLS.find(s=>s.id==='soulb').d=L=>`Auto RANGED (up to 5 tiles): 2 hits of ${Math.round((1+.2*L)*100)}% dmg &middot; CD 3s`;SKILLS.find(s=>s.id==='mAss').d=L=>`Auto AREA: 4 hits of ${Math.round((.7+.15*L)*100)}% dmg, hits all nearby &middot; CD 5s`;
 
 // One visible battlefield effect for every active skill and temporary buff. These are
 // lightweight Three.js geometry recipes (not replacement character art). Their silhouettes
@@ -1415,7 +1426,7 @@ function trialEnter(mode){
   // the dummy: infinite HP, no attack timer, and flagged fixed so the AI leaves it alone
   TRIAL.dummy={n:'Trial Dummy',x:0,z:-4,hp:Infinity,max:Infinity,at:Infinity,size:1.15,spriteScale:1.9,shape:'demon',c:0x7c3aed,
     pack:0,boss:false,fixed:true,stun:0,run:false,hx:0,hz:-4,flash:0,atkAnim:0,drops:[],cardCh:0,mag:false};
-  mobs=[TRIAL.dummy];mob=TRIAL.dummy;activePack=0;respawn=0;pend=[];castQ=[];tb={};
+  mobs=[TRIAL.dummy];mob=TRIAL.dummy;activePack=0;camps=[];engageTgt=null;respawn=0;tb={};
   // 1.4 units from the target: inside a melee reach of 1.2+0.45*1.15, so the character stands still
   // and swings from the first frame instead of walking into range (owner: both stay in place).
   pl.x=0;pl.z=-2.6;pl.wt=0;pl.orb=0;pAtkT=.2;mAtkT=1e9;
@@ -1701,7 +1712,7 @@ const JOFF=[0,9,49,98];
 // ---------- state ----------
 // expEarned (v74) is a session counter like zenyEarned: it counts what this login actually
 // earned, so the HUD's EXP/min readout is income, never a level-up's subtraction of it.
-let currentUser=null,S=null,speed=1,zenyEarned=0,expEarned=0,floats=[],drops=[],t=0,shake=0,atkAnim=0,hitAnim=0,pend=[],castQ=[],shots=[],skillFx=[],barT=0,hudRate=null,logs=[],tab=null,selB=null,selC=null,selK=null,mapM=0,mapL=1;
+let currentUser=null,S=null,speed=1,zenyEarned=0,expEarned=0,floats=[],drops=[],t=0,shake=0,atkAnim=0,hitAnim=0,shots=[],skillFx=[],barT=0,hudRate=null,logs=[],tab=null,selB=null,selC=null,selK=null,mapM=0,mapL=1;
 // wt/wx/wz are the roam target: with no mobs on the field the character wanders instead of
 // trudging back to the spawn point. Only a defeat sends you home (see the death handler).
 const pl={x:0,z:Z1-1.5,ry:0,orb:0,run:0,wt:0,wx:0,wz:Z1-1.5},skCd={},petR={};
@@ -2248,7 +2259,14 @@ function cloudSession(u,gm){
   const gbtn=$('gmBtn');if(gbtn)gbtn.style.display=gm?'inline-block':'none';
 }
 
-// The caller's first look at the server: is there an API, and is this browser already signed in?
+// The caller's first look at the server. It answers ONE question - is there a real API behind this
+// address - because the caller is not signed in and never will be without typing a password.
+//
+// v83 (owner): this used to be a door. A live session cookie made /me answer 200, and the game walked
+// straight in: refresh after the login, come back an hour later, or hand the unlocked device to
+// somebody else, and the account opened by itself. Now every load stops at the login card, cookies
+// included (the GM account is no exception). A leftover session is deleted here rather than left to
+// pile up on the server until it expires.
 async function cloudProbe(){
   let r;
   try{r=await cloudFetch('/me',{cache:'no-store'})}catch(e){cloudLoginLine('');return false}
@@ -2257,11 +2275,10 @@ async function cloudProbe(){
   const ct=(r.headers.get('Content-Type')||'');
   if(!ct.includes('json')){CLOUD.api=false;cloudLoginLine('');return false}
   CLOUD.api=(r.status===200||r.status===401);
-  if(r.status===401){cloudLoginLine('☁ Cloud accounts are on - register or sign in to play on any device.');return false}
-  if(!r.ok)return false;
-  const d=await r.json();
-  try{await initSessionFromCloud(d.u,d.gm,false);return true}
-  catch(e){cloudLoginLine('A cloud session existed but the game could not start: '+e.message);return false}
+  const line='☁ Cloud accounts are on - '+($('username')&&$('username').value?'sign in to continue.':'register or sign in to play on any device.');
+  if(r.status===200)cloudFetch('/sessions',{method:'DELETE',body:JSON.stringify({})}).catch(()=>{});
+  cloudLoginLine(line);
+  return false;
 }
 
 // The session itself. WHICH copy is live is decided by cloudJoin, never here.
@@ -2554,38 +2571,39 @@ const itemIconMarkup=it=>{const svg=itemSvgMarkup(it),id=gearItemIconId(it);
 const icon=it=>itemIconMarkup(it);
 
 // ---------- mobs & loot ----------
-let mobs=[],mob=null,pAtkT=0,mAtkT=0,respawn=0,activePack=0;
-// Pick three new sites on every respawn, within the clear 26x40 battle lane. They are
-// closer than v28 but still separated by 13-18.5 units centre-to-centre. A site on a
-// creek or sea strip is rejected; scenery/landmarks remain outside the running lane.
-const PACK_GAP=13,PACK_MAX=18.5,PACK_JITTER=.7;
-function packSites(){
-  const spec=stageSpec(S.mp,S.lvl),water=spec.f&&spec.f.water;
-  // Restart the whole roll if a first site leaves no room for the other two (especially
-  // across Payon/Amatsu creeks). Do not fall back to a fixed triangle in water.
-  for(let layout=0;layout<36;layout++){
-    const sites=[];
-    for(let i=0;i<3;i++){
-      for(let attempt=0;attempt<250;attempt++){
-        const x=rnd(i===0?-6:-9,i===0?6:9),z=rnd(i===0?-12:-16,i===0?4:8);
-        if(water&&z>=water[0]-2&&z<=water[1]+2)continue;
-        if(sites.some(p=>{const d=Math.hypot(p[0]-x,p[1]-z);return d<PACK_GAP||d>PACK_MAX}))continue;
-        sites.push([x,z]);break;
-      }
-      if(sites.length!==i+1)break;
+let mobs=[],mob=null,pAtkT=0,mAtkT=0,respawn=0,activePack=0,camps=[];
+// ---------- the field's population (v83, owner) ----------
+// v28..v82 spawned the whole field as THREE packs of 2-3 monsters inside +-0.7 units of one point,
+// in the middle 18x24 of a 26x40 lane, and threw the field away 0.7s after the last monster died -
+// which is exactly why the field read as three clumps surrounded by empty grass. It is now a set of
+// CAMPS: 8-12 scattered sites across the whole lane (the count follows the map), each holding 1-3
+// monsters 1.6-3.2 units apart, and each camp refilling itself 4-8 seconds after it is emptied.
+// A camp is still the unit the pets, the AoE cap and the last-kill routing work with (m.pack), so
+// nothing downstream had to change - only how the field is filled, and that it now stays filled.
+const CAMP_GAP=5.5,CAMP_REFILL_MIN=4,CAMP_REFILL_MAX=8;
+const NEIGHBOUR_GAP=2.7;                 // and NEIGHBOUR_GAP keeps two camps from touching
+const campCount=m=>m<3?8:m<7?10:12;      // the 8 / 10 / 12 the owner picked on /spawn
+const campMobs=(m,l)=>starterStage(m,l)?ri(1,2):ri(2,3);
+// 4-8 seconds, but the SAME number every time for a given camp (the /spawn page's own timer), so a
+// camp the player is watching comes back on a rhythm instead of rolling a new dice.
+const campWait=c=>CAMP_REFILL_MIN+Math.abs(Math.sin(c.x*12.9898+c.z*78.233))*(CAMP_REFILL_MAX-CAMP_REFILL_MIN);
+function campSites(n){
+  const spec=stageSpec(S.mp,S.lvl),water=spec.f&&spec.f.water;let best=[];
+  // Give every camp room first (5.5 units apart); on a map whose creek or shoreline eats the lane,
+  // tighten the spacing rather than spawn in water or on half the lane.
+  for(let gap=CAMP_GAP;gap>=2.6;gap-=.6){
+    const out=[];
+    for(let i=0;i<6000&&out.length<n;i++){
+      const x=rnd(-BX_+.9,BX_-.9),z=rnd(Z0+.9,Z1-.9);
+      // the site has to keep its whole 1.6-3.2 ring dry, so the margin is the ring plus a step
+      if(water&&z>=water[0]-4.4&&z<=water[1]+4.4)continue;
+      if(out.some(c=>Math.hypot(c.x-x,c.z-z)<gap))continue;
+      out.push({x,z,t:0,wait:campWait({x,z})});
     }
-    if(sites.length===3)return sites;
+    if(out.length>best.length)best=out;
+    if(out.length>=n)return out;
   }
-  // If a future map fills almost the whole field with water, retain dry, separated
-  // spawns even when the normal closeness cap cannot fit them.
-  const sites=[];
-  for(let i=0;i<3;i++)for(let attempt=0;attempt<10000;attempt++){
-    const x=rnd(-9,9),z=rnd(-16,8);
-    if(water&&z>=water[0]-2&&z<=water[1]+2)continue;
-    if(sites.some(p=>Math.hypot(p[0]-x,p[1]-z)<PACK_GAP))continue;
-    sites.push([x,z]);break;
-  }
-  return sites;
+  return best;
 }
 const nearestPack=()=>{
   let id=0,dist=Infinity;
@@ -2601,33 +2619,58 @@ const packMob=()=>{
 const starterStage=(m,l)=>m<5&&l<=5;
 const starterHp=l=>Math.floor(12*Math.pow(6+5*(l-1),HPE));
 const starterAtk=l=>6+3*(l-1);
+// One field monster, before it is placed. Shared by the wave builder and by every camp refill, so a
+// monster that walks back in is exactly the monster the field started with.
+function minionDef(pack){
+  const F=fieldOf(S.mp,S.lvl),l=pw(),mb=1+S.mp*.15+Math.max(0,S.mp-4)*.2,nm1=S.lvl>10,nm=nm1?NMHP:1,na=nm1?NMATK:1,ne=nm1?NMEXP:1,nz=nm1?NMZENY:1;
+  const early=starterStage(S.mp,S.lvl),m=F.mobs[ri(0,1)];
+  const hp=early?Math.min(starterHp(S.lvl),Math.floor(HPK*mb*Math.pow(l,HPE))):Math.floor(HPK*mb*Math.pow(l,HPE)*nm);
+  return{...m,mapIndex:S.mp,boss:false,pack,hp,max:hp,atk:early?starterAtk(S.lvl):Math.floor((5+l*4.6)*mb*na),
+    exp:Math.max(1,Math.floor(EXPK*Math.pow(l,1.5)/50*ne)),zeny:Math.max(ZMIN,Math.floor(ri(ZK[0],ZK[1])*l*l/1000*nz)),
+    size:.6,mag:['demon','tree','blob'].includes(m.shape),lvl:l,sec:F.sec,
+    spawn:0,ry:0,at:rnd(.6,1.6),a:rnd(0,Math.PI*2),wt:rnd(1,4)};
+}
+// A camp's monsters stand 1.6-3.2 units apart (a group, not one blob) and remember their own spot as
+// the anchor they wander around.
+function fillCamp(i,c){
+  for(let k=0,n=campMobs(S.mp,S.lvl);k<n;k++){
+    // Pick the roomiest spot of a handful of ring positions, so two neighbouring camps never end up
+    // touching and a camp-mate never lands on its neighbour's head (NEIGHBOUR_GAP).
+    const water=stageSpec(S.mp,S.lvl).f&&stageSpec(S.mp,S.lvl).f.water;
+    let bx=c.x,bz=c.z,best=-1;
+    for(let a=0;a<24;a++){
+      const ang=rnd(0,Math.PI*2),r=rnd(1.6,3.2);
+      const x=cl(c.x+Math.cos(ang)*r,-BX_+.6,BX_-.6),z=cl(c.z+Math.sin(ang)*r,Z0+.6,Z1-.6);
+      if(water&&z>=water[0]-1.2&&z<=water[1]+1.2)continue;   // never stand in the creek or the sea
+      let near=Infinity;
+      for(const o of mobs)near=Math.min(near,Math.hypot(o.x-x,o.z-z));
+      if(near>best){best=near;bx=x;bz=z}
+      if(near>=NEIGHBOUR_GAP)break;
+    }
+    const m=minionDef(i);
+    m.x=bx;m.z=bz;m.hx=m.x;m.hz=m.z;m.wx=null;m.wz=null;
+    mobs.push(m);
+  }
+}
 function spawn(){
-  const F=fieldOf(S.mp,S.lvl),l=pw(),mb=1+S.mp*.15+Math.max(0,S.mp-4)*.2,nm1=S.lvl>10,nm=nm1?NMHP:1,na=nm1?NMATK:1,ne=nm1?NMEXP:1,nz=nm1?NMZENY:1;mobs=[];activePack=0;
-  const bossWave=!!F.boss,sites=bossWave?null:packSites();
-  const addMinion=pack=>{
-    const early=starterStage(S.mp,S.lvl),m=F.mobs[ri(0,1)];
-    const hp=early?Math.min(starterHp(S.lvl),Math.floor(HPK*mb*Math.pow(l,HPE))):Math.floor(HPK*mb*Math.pow(l,HPE)*nm);
-    mobs.push({...m,mapIndex:S.mp,boss:false,pack,hp,max:hp,atk:early?starterAtk(S.lvl):Math.floor((5+l*4.6)*mb*na),
-      exp:Math.max(1,Math.floor(EXPK*Math.pow(l,1.5)/50*ne)),zeny:Math.max(ZMIN,Math.floor(ri(ZK[0],ZK[1])*l*l/1000*nz)),
-      size:.6,mag:['demon','tree','blob'].includes(m.shape),lvl:l,sec:F.sec});
-  };
+  const F=fieldOf(S.mp,S.lvl),l=pw(),mb=1+S.mp*.15+Math.max(0,S.mp-4)*.2,nm1=S.lvl>10,nm=nm1?NMHP:1,na=nm1?NMATK:1;
+  mobs=[];activePack=0;camps=[];engageTgt=null;
+  const bossWave=!!F.boss;
   if(bossWave){
     const hp=Math.floor(500*mb*Math.pow(l,HPE)*(nm1?NMBOSSHP:1));
     mobs.push({...F.boss,mapIndex:S.mp,boss:true,pack:0,hp,max:hp,atk:Math.floor((8+l*6.5)*mb*na),
       exp:Math.max(1,Math.floor(BOSEK*Math.pow(l,1.5)/50)),zeny:Math.max(ZMIN,Math.floor(ri(BZK[0],BZK[1])*l*l/1000)),
       size:1.3,mag:true,lvl:l,sec:F.sec});
     // The first five maps bring three escorts; the five later maps bring five.
-    for(let i=0;i<(S.mp<5?3:5);i++)addMinion(0);
+    for(let i=0;i<(S.mp<5?3:5);i++)mobs.push(minionDef(0));
+    mobs.forEach((m,i)=>{
+      const a=(i-1)*Math.PI*2/Math.max(1,mobs.length-1),r=2.3+(i%2)*.65;
+      const x=m.boss?0:Math.cos(a)*r,z=m.boss?BOSSZ:BOSSZ+Math.sin(a)*r;
+      m.x=x;m.z=z;m.hx=x;m.hz=z;m.spawn=0;m.ry=0;m.at=rnd(.6,1.6);m.a=i*2.4});
   }else{
-    const early=starterStage(S.mp,S.lvl),perPack=early?(S.lvl===1?1:2):(S.lvl>=5||S.mp>=5)?ri(2,3):1;
-    for(let pack=0;pack<3;pack++)for(let i=0;i<perPack;i++)addMinion(pack);
+    camps=campSites(campCount(S.mp));
+    camps.forEach((c,i)=>{c.i=i;fillCamp(i,c)});
   }
-  mobs.forEach((m,i)=>{
-    const a=(i-1)*Math.PI*2/Math.max(1,mobs.length-1),r=2.3+(i%2)*.65;
-    const [x,z]=bossWave?(m.boss?[0,BOSSZ]:[Math.cos(a)*r,BOSSZ+Math.sin(a)*r]):sites[m.pack];
-    m.x=x+rnd(-PACK_JITTER,PACK_JITTER);m.z=z+rnd(-PACK_JITTER,PACK_JITTER);
-    m.hx=m.x;m.hz=m.z;m.spawn=0;m.ry=0;m.at=rnd(.6,1.6);m.a=i*2.4;
-  });
   activePack=nearestPack();mob=bossWave?mobs[0]:packMob();pAtkT=.3;
 }
 function genGear(T,l,sec,boss,tier){
@@ -2743,7 +2786,13 @@ function chainHit(src,dmg,col,n,skill=false){if(!src||!(dmg>0)||mobs.length<2)re
   const near=mobs.filter(o=>o!==src&&o.hp>0&&o.pack===src.pack).sort((a,b)=>Math.hypot(a.x-src.x,a.z-src.z)-Math.hypot(b.x-src.x,b.z-src.z)).slice(0,n||2);
   for(const o of near){shots.push({x0:src.x,z0:src.z,x1:o.x,z1:o.z,t:0,col:col||'#fff'});hurt(o,Math.max(1,Math.round(dmg)),col,false,skill)}}
 const mkDrop=it=>({it,wx:mob.x+rnd(-.7,.7),wz:mob.z+rnd(-.7,.7),y:0,vy:-220,t:0});
-const addFloat=(x,y,z,txt,col,big,kind='text')=>floats.push({x,y,z,txt,col,life:1,big,kind,rate:(kind==='damage'||kind==='skill-damage'||kind==='critical'||kind==='skill-critical')?.95:0});
+// v83.3 (owner): the number motion is v82's again - the owner had already tuned it and only wants to
+// READJUST size and height, not have them changed for them. DMG_RATE .95 gives ~1.05s of life, the
+// climb is 30px with the arc sway, and the digits stay solid until the last 45% of the counter, which
+// is the hold-then-fade. DMG_FADE is kept for the picker's sake: the fade begins at 55% of the life.
+const DMG_LIFE=1/.95,DMG_RISE=30,DMG_FADE=.55,DMG_RATE=.95;
+const isDamageFloat=k=>k==='damage'||k==='skill-damage'||k==='critical'||k==='skill-critical'||k==='dot';
+const addFloat=(x,y,z,txt,col,big,kind='text')=>floats.push({x,y,z,txt,col,life:1,big,kind,sw:0,st:0,rate:isDamageFloat(kind)?DMG_RATE:0});
 // Floating combat numbers are shortened by default, and only from 100,000 up (the owner's rule):
 // 100,000 reads "100K", 1,000,000 reads "1M", and anything below 100K - 99,999 included - stays
 // in full digits. The Settings panel switches every damage float to full digits everywhere.
@@ -2760,6 +2809,35 @@ const fullNum=()=>typeof S!=='undefined'&&S&&S.dmgShort===false;
 // full digits. Reward floats (Zeny, EXP) follow the short/full style but are never hidden.
 const numTxt=n=>fullNum()?String(Math.round(n)):shortNum(n);
 const damageFloat=(x,y,z,amount,critical=false,incoming=false,skill=false)=>{if(S&&S.dmgShow===false)return;addFloat(x,y,z,numTxt(amount),null,false,incoming?'incoming':critical?(skill?'skill-critical':'critical'):skill?'skill-damage':'damage')};
+// v83: ONE number per monster per swing. While a swing resolves, every hit on the same monster is
+// collected in dmgGroup and printed as a single number when the group closes - so a transcendent
+// swing (4 casts, up to 10 hits each) shows one number per monster instead of six to eleven.
+// Only the display changes: every hit still rolls its own crit and its own damage.
+let dmgGroup=null;
+function showDamage(subject,x,y,z,amount,crit,skill){
+  if(S&&S.dmgShow===false)return;
+  if(dmgGroup&&subject){const g=dmgGroup.get(subject)||{sum:0,n:0,crit:false,skill:false,x,y,z};
+    g.sum+=amount;g.n++;if(crit)g.crit=true;if(skill)g.skill=true;g.x=x;g.y=Math.max(g.y||0,y);g.z=z;
+    dmgGroup.set(subject,g);return}
+  damageFloat(x,y,z,amount,crit,false,skill);
+}
+function flushDamageGroup(){
+  const g=dmgGroup;dmgGroup=null;if(!g)return;
+  for(const[,a]of g){if(!a.n)continue;damageFloat(a.x,a.y,a.z,a.sum,a.crit,false,a.skill)}
+}
+// A damage-over-time effect ticks twice a second; on its own that is a sprinkle of small numbers.
+// It now keeps ONE number per monster: the second tick tops the value up and re-punches the float,
+// so a burn reads as one climbing number that fades when the burn stops.
+function dotTick(o,d,col,skill){
+  if(S&&S.dmgShow===false)return;
+  const live=o._dotF&&o._dotF.life>0;
+  if(live){const f=o._dotF;f.val=(f.val||0)+d;f.txt=numTxt(f.val);f.life=1;f.dirty=1;f.x=o.x;f.z=o.z;return}
+  const f={x:o.x,y:mobDamageY(o),z:o.z,txt:numTxt(d),val:d,col:col||'#7dff6b',life:1,big:false,kind:'dot',sw:rnd(-6,6),st:0,rate:DMG_RATE};
+  o._dotF=f;floats.push(f);
+}
+// The height a damage number starts at: just above the monster's head (the tag line), never on its
+// body. mobVisualScale is the same scale the sprite is drawn at, so this follows every size.
+function mobDamageY(o){return Math.max(1.7,3.15*mobVisualScale(o)-.3)}
 // Skill labels track the moving player, rather than floating away from the cast location.
 // The skill banner rides ABOVE the head (v68): 3.15 put the plate on the hero's forehead,
 // so the base now sits at 3.65 - the height the LEVEL UP! float already reads as clearly
@@ -2820,25 +2898,44 @@ function log(m,cls,cat){const e={m,cls,cat};logs.push(e);if(logs.length>80)logs.
   if(tabs.includes('log'))renderWin()}
 
 // ---------- combat ----------
+// ---------- v83 (owner): who stands where ----------
+// The hero used to walk to a ring set by its CLASS whatever it was about to do, so a melee class
+// carrying a 5-tile skill still closed to knifing distance, and a bow never used its reach. The
+// stand-off is now the range of the attack that is actually available: the best ranged skill
+// (5 tiles), else the class's own band - bow 4 (owner, v83.2: it was 5 and outranged the staff),
+// staff 4.5, melee 1.2 + 0.45*size.
+const CLASS_BAND=cls=>cls&&cls.rng?(/^(Mage|Wizard|High Wizard)$/.test(cls.n)?4.5:4):0;   // v83.2 owner: bow 4, staff 4.5
+let standC={t:-9,r:0},engageTgt=null;   // engageTgt: latched into a stand-and-trade fight (v83.1)
+function heroStandoff(m){
+  let r=CLASS_BAND(C());
+  for(const s of SKILLS)if(s.type==='act'&&s.rng&&skillOn(s.id)&&(skCd[s.id]||0)<=0)r=Math.max(r,s.rng>1?s.rng:5);
+  if(!r)r=1.2+.45*(m&&m.size?m.size:1);
+  // hold the last stand-off for 1.5s, so a skill coming off cooldown does not make the hero pace.
+  // The hold is anchored to the moment the value CHANGED - refreshing it on every call would ratchet
+  // the old, longer stand-off forever, which is how a melee class could get stuck at bow range.
+  if(r>standC.r||t-standC.t>=1.5)standC={t,r};
+  return standC.r;
+}
 function shot(col){if(!mob||heroWeaponType(C().n,C().wt,S.eq.weapon&&S.eq.weapon.wt)!=='bow')return;
   shots.push({x0:pl.x,z0:pl.z,x1:mob.x,z1:mob.z,t:0,col:col||'#fff',arrow:true})}
-function hurt(o,d,col,c,skill=false){S.dmg=(S.dmg||0)+d;o.hp-=d;o.flash=1;damageFloat(o.x,1.2+.8*(o.spriteScale||o.size),o.z,d,c,false,skill);if(o.hp<=0)kill(o)}
+function hurt(o,d,col,c,skill=false){S.dmg=(S.dmg||0)+d;o.hp-=d;o.flash=1;o.hitAnim=1;showDamage(o,o.x,mobDamageY(o),o.z,d,c,skill);if(o.hp<=0)kill(o)}
 function strike(mult,col,magic=false,skill=false){
   if(!mob)return;if(Math.random()*100<missCh()){addFloat(mob.x,1.8,mob.z,'MISS','#dfe5ed',false,'miss');return}
   // v73: the crit roll answers to the target - a boss carries its map's crit resistance
   // (BOSS_CRIT_RES) and every other monster resists nothing.
   const c=Math.random()*100<Math.max(0,crit()*(1-(mob.critRes||0))),base=magic?matk():atk(),d=Math.max(1,Math.round(base*mult*rnd(Math.min(.95,.7+st('dex')*.004),1.15)*(c?critD():1)*(mob.boss?1+petPassive('boss')/100:1)));
-  S.dmg=(S.dmg||0)+d;mob.hp-=d;mob.flash=1;shake=c?6:2;const leech=typeof cardMasteryStat==='function'?cardMasteryStat('leech'):0;if(leech>0&&typeof maxHp==='function'){const h=Math.max(1,Math.round(d*leech/100));S.hp=Math.min(maxHp(),S.hp+h);addFloat(pl.x,2.7,pl.z,'+'+h,'#ff6b8a')}damageFloat(mob.x,1.5*Math.max(1,(mob.spriteScale||mob.size)*.8)+.6,mob.z,d,c,false,skill);
+  S.dmg=(S.dmg||0)+d;mob.hp-=d;mob.flash=1;mob.hitAnim=1;shake=c?6:2;const leech=typeof cardMasteryStat==='function'?cardMasteryStat('leech'):0;if(leech>0&&typeof maxHp==='function'){const h=Math.max(1,Math.round(d*leech/100));S.hp=Math.min(maxHp(),S.hp+h);addFloat(pl.x,2.7,pl.z,'+'+h,'#ff6b8a')}showDamage(mob,mob.x,mobDamageY(mob),mob.z,d,c,skill);
 }
 // Higher job tiers get more casts per swing: Novice 1, first job 2, second job 3, transcendent
 // 4 (tier is 0/1/2/3 - Assassin Cross and Lord Knight are tier 3, not 2). Every cast after the
 // first lands softer (SKFADE), so the extra spam reads as pressure rather than as a flat
 // doubling of single-target damage.
 const SKSLOTS=t=>1+(t||0),SKFADE=[1,.55,.3,.18];
-// v59: skills share one global cooldown. A swing's first skill lands instantly and the extra
-// casts (tier 2 and 3) land SKGCD later each, so a three-skill swing is pressure over the
-// swing instead of three hits on the same frame. Raise or lower SKGCD to move the whole feel.
-const SKGCD=.5;
+// v83 (owner): the swing owns its timing now. The old SKGCD (0.5s) staggered the extra casts of a
+// swing over 1.5s - three casts meant three hits in three different poses. They now land on the same
+// contact frame as the animation they belong to, because the animation, not a timer, is what the
+// player reads; SKGCD had no other use, so the constant is gone.
+const SWING_MIN_T=.3,SWING_MAX_T=.55;      // seconds: the shortest and longest drawn attack animation
 // dot.pow is the fraction of the triggering hit dealt PER SECOND, so a .05/4s dot adds 20% of
 // the hit spread over time. chain.pow is the fraction each bounce deals, once per target.
 function castSkill(sk,k){
@@ -2851,24 +2948,51 @@ function castSkill(sk,k){
   if(sk.chain&&target&&mobs.includes(target))chainHit(target,base*m*(sk.chain.pow||.5),sk.col,Math.min(4,(sk.chain.n||2)+Math.floor(lv(sk.id)/2)),true);
   if(sk.dot&&target&&target.hp>0)applyDot(target,base*m*(sk.dot.pow||.05),sk.dot.dur||4,sk.dot.col||sk.col,true);
   if(sk.stun&&target&&target.hp>0)applyStun(target,(sk.stun.dur||.8)*(1+lv(sk.id)*.08));
-  if(target&&mobs.includes(target))for(let i=1;i<sk.hits;i++)pend.push({t:i*.09,m,col:sk.col,magic:!!sk.magic,skill:true});
+  // v83: the extra hits of a multi-hit skill resolve in the same swing frame as the first one. The
+  // damage is identical (one full hit each); what changed is that they are summed into the swing's
+  // single number instead of arriving as five more floats over the next 400ms.
+  if(target&&mobs.includes(target))for(let i=1;i<sk.hits;i++){if(!mob||!mobs.includes(mob)||mob.hp<=0)break;strike(1,sk.col,!!sk.magic,true)}
+}
+// v83 (owner): the swing. The attack animation IS the swing, so its damage lands on the animation's
+// contact frame instead of the instant the key was pressed, and the whole swing resolves there: the
+// first cast, the extra casts (tier 2 and 3) and every multi-hit are one impact. That, plus one
+// number per monster (showDamage), is what puts the numbers back on the sprite's pose.
+const SWING_CONTACT=.45;                   // where in the animation the hit lands
+let swingDur=.42,swing=null;
+function swingLength(){                    // the drawn attack animation, never longer than the attack rate
+  const sk=heroSpr&&heroSpr.userData&&heroSpr.userData.skin;
+  const file=sk&&sk.p&&sk.p.total?(sk.p.total.attack||0):0,interval=Math.max(.2,aspd());
+  return cl(Math.min(interval,file||interval,SWING_MAX_T),SWING_MIN_T,SWING_MAX_T);
 }
 function playerAttack(){
-  pAtkT=aspd();atkAnim=1;
-  const far=mob&&Math.hypot(mob.x-pl.x,mob.z-pl.z)>(C().rng?3:1.2+.45*mob.size)+.6;
+  if(!mob)return;
+  const interval=aspd(),far=Math.hypot(mob.x-pl.x,mob.z-pl.z)>heroStandoff(mob)+.6;
+  pAtkT=interval;atkAnim=1;swingDur=swingLength();
   const ready=SKILLS.filter(s=>s.type==='act'&&skillOn(s.id)&&(skCd[s.id]||0)<=0&&(!far||s.rng))
     .sort((a,b)=>b.mul(lv(b.id))*b.hits-a.mul(lv(a.id))*a.hits);
-  const pack=mob&&mob.pack;let cast=0;
-  for(const sk of ready){
-    if(cast>=SKSLOTS(C().tier))break;
-    const k=SKFADE[cast]||.3;cast++;
-    skillNameFloat(sk.n,cast-1);
-    if(cast===1){skCd[sk.id]=sk.cd;castSkill(sk,k)}else castQ.push({t:SKGCD*(cast-1),sk,k});
-    if(!mob||mob.hp<=0||mob.pack!==pack)break;
+  const casts=[];for(const sk of ready){if(casts.length>=SKSLOTS(C().tier))break;casts.push(sk)}
+  const d=pv('dbl');
+  swing={t:swingDur*SWING_CONTACT,target:mob,pack:mob.pack,casts:casts.map((sk,i)=>({sk,k:SKFADE[i]||.3})),
+    far,double:d&&Math.random()<d/100+st('dex')*.003};
+}
+function resolveSwing(s){
+  // the monster picked when the key went down may already be dead (pet, DoT or the previous swing):
+  // the hit moves to the nearest survivor of the same camp instead of being thrown away.
+  let tgt=s.target;
+  if(!tgt||!mobs.includes(tgt)||tgt.hp<=0)tgt=mobs.find(m=>m.pack===s.pack&&m.hp>0)||mob;
+  if(!tgt||!mobs.includes(tgt)||tgt.hp<=0)return;
+  mob=tgt;
+  dmgGroup=new Map();
+  if(s.casts.length){
+    for(const c of s.casts){
+      // a kill mid-swing must never send the next cast at the camp next door
+      if(!mob||!mobs.includes(mob)||mob.hp<=0||mob.pack!==s.pack)break;
+      skCd[c.sk.id]=c.sk.cd;skillNameFloat(c.sk.n);castSkill(c.sk,c.k)}
+  }else if(!s.far){
+    strike(1);shot();
+    if(s.double){skillNameFloat('Double Attack');if(mob&&mob.hp>0)strike(1)}
   }
-  if(cast||far)return;
-  strike(1);shot();const d=pv('dbl');
-  if(d&&Math.random()<d/100+st('dex')*.003){pend.push({t:.15,m:1,col:'#aef'});skillNameFloat('Double Attack')}
+  flushDamageGroup();
 }
 function addJob(x){const j=jobOf(),c=C();if(j.jl>=c.mj)return;j.jx+=x;
   while(j.jl<c.mj&&j.jx>=jneed(j.jl)){j.jx-=jneed(j.jl);const before=skEarned();j.jl++;const gained=skEarned()-before;log(`JOB LEVEL UP! ${S.cls} Job Lv ${j.jl}${gained?` (+${gained} skill point${gained===1?'':'s'})`:' (skill budget already full)'}`,'r3','lvl');addFloat(pl.x,3.2,pl.z,'JOB UP!','#8fe9ff',true)}
@@ -2885,7 +3009,7 @@ function earnZeny(amount){const n=Math.max(0,Number(amount)||0);S.zeny+=n;zenyEa
 function earnExp(amount){const n=Math.max(0,Number(amount)||0);S.exp+=n;expEarned+=n}
 function kill(o){const keep=mob;if(o)mob=o;if(!mob||!mobs.includes(mob)){mob=keep;return}
   const g=gx();S.kills++;recordMonsterKill(mob);S.kl++;qProg('kill');if(mob.boss)qProg('boss');
-  const z=Math.round(mob.zeny*(1+pv('zeny')/100)*(1+petPassive('zeny')/100))*g,xp=Math.round(mob.exp*expRate()*(1+petPassive('exp')/100));earnZeny(z);earnExp(xp);addJob(Math.round(Math.round(mob.exp*.7)*expRate()*(1+petPassive('exp')/100)));pend=[];castQ=[];
+  const z=Math.round(mob.zeny*(1+pv('zeny')/100)*(1+petPassive('zeny')/100))*g,xp=Math.round(mob.exp*expRate()*(1+petPassive('exp')/100));earnZeny(z);earnExp(xp);addJob(Math.round(Math.round(mob.exp*.7)*expRate()*(1+petPassive('exp')/100)));
   addFloat(mob.x,2.4,mob.z,'+'+numTxt(z)+'z','#ffd23f');log(`${mob.n} defeated! +${xp.toLocaleString()} EXP, +${z.toLocaleString()} Zeny`,'','kills,zeny');
   // Drop odds are the field's own numbers: nothing on the character scales them, so LUK cannot
   // bend the tables (it still raises ATK through the crit/DEX side of the stat sheet, which is
@@ -2900,17 +3024,20 @@ function kill(o){const keep=mob;if(o)mob=o;if(!mob||!mobs.includes(mob)){mob=kee
     else if(S.pets.length<40){const gifted=pickW(PET_SKILL_WEIGHTS);S.pets.push({id:ri(1e6,9e6),sp,mut:0,eq:[0,0,0],skills:[PET_SKILLS[gifted].id],on:S.pets.filter(x=>x.on).length<3});log(`A ${RN[r]} pet followed you: ${PETS[sp].n} with ${PET_SKILLS[gifted].n} - ${T.n} ${T.d(traitVal(sp))} while it fights!`,'r'+RCL[r],'pet');addFloat(mob.x,3,mob.z,'PET!','#ff9dff',true)}
     else{const z=Math.floor(EGG*(.3+r*.4));earnZeny(z);log(`A ${RN[r]} ${PETS[sp].n} appeared but your pet collection is full (+${z}z).`,'','pet,zeny')}}
   checkLevel();
-  if(mob.boss||(S.lvl<10&&S.kl>=MPS)){
-    mobs=[];S.kl=0;
-    if(mob.boss&&S.lvl===10){
+  // v83: an emptied field is not thrown away any more. The 15-kill counter still opens the next
+  // stage, and the boss wave still resets - the camps simply keep refilling around the player.
+  if(mob.boss){
+    mobs=[];camps=[];S.kl=0;
+    if(S.lvl===10){
       const nextMap=S.mp+1,current=MAPS[S.mp].n;
       if(nextMap<MAPS.length){
         log(`${current} Stage 10 cleared! ${MAPS[nextMap].n} Stage 1 is ready${S.adv?' — auto-advancing.':'.'}`,'r3');
         if(S.adv){S.mp=nextMap;S.lvl=1;mapM=nextMap;mapL=1}
       }else log(`${current} Stage 10 cleared! The normal map route is complete; Nightmare is a separate challenge.`,'r3');
-    }else if(S.lvl<10&&S.lvl>=S.prog[S.mp]){
-      S.prog[S.mp]=S.lvl+1;log(`${fieldName()} cleared! Stage ${S.lvl+1} unlocked.`,'r3');if(S.adv&&S.lvl<10)S.lvl++
     }
+  }else if(S.lvl<10&&S.kl>=MPS){
+    S.kl=0;
+    if(S.lvl>=S.prog[S.mp]){S.prog[S.mp]=S.lvl+1;log(`${fieldName()} cleared! Stage ${S.lvl+1} unlocked.`,'r3');if(S.adv&&S.lvl<10)S.lvl++}
   }
   mobs=mobs.filter(x=>x!==mob);
   if(mobs.length&&!mobs.some(x=>x.pack===activePack))activePack=nearestPack();
@@ -3210,7 +3337,7 @@ const V={
     <small><b>A class you have played before is one click away</b> - its Base Lv, job level, skills, stats and gear are still on it, so there is no Novice reset needed to go back to it. A class you have <i>never</i> played still has to be unlocked from its parent (or from the Novice).</small>
     <button class="full" data-a="job" data-v="Novice" ${S.cls==='Novice'?'disabled':''}>Restart as Novice (Base Lv 25, job levels cleared)</button>`},
   skills(){const line=lineOf(S.cls),av=skpAvail(),sel=SKILLS.find(s=>s.id===selS);
-    return`${S.skRepair?`<div class="row" style="margin-bottom:4px"><small class="r0"><b>Repaired an older save:</b> ${S.skRepair} skill point${S.skRepair>1?'s were':' was'} refunded - the old shop minted points, so this line was carrying levels it had never earned. Nothing else to do.</small></div>`:''}<div class="hd">Skill points: ${av} <small>(${skEarned()} earned on this line, ${Math.max(0,skSpent()-(S.sk.aid?1:0))} spent &middot; this line's tree costs ${skTree()}, a maxed line earns ${skEarnedMax()} - <b>${Math.max(0,skEarnedMax()-skTree())} to spare</b>)</small></div><small>Skill levels cost 1 point each. Most skills cap at 10 and a few utility skills stop at 5 (RO-style), so a maxed line spends 139 of its 156 points - job levels pay out all the way to 50, and a line you promoted out of early may not finish &middot; ${SKSLOTS(C().tier)} skill${SKSLOTS(C().tier)>1?'s cast':''} per swing at this job tier &middot; later casts in the same swing land at ${SKFADE.slice(1).map(f=>Math.round(f*100)+'%').join(' / ')} on a ${SKGCD}s shared global cooldown &middot; active skills auto-cast when learned; use the Auto cast checkbox on a skill to pause it, or the ALL tile beside First Aid to pause or resume the whole line at once</small>`
+    return`${S.skRepair?`<div class="row" style="margin-bottom:4px"><small class="r0"><b>Repaired an older save:</b> ${S.skRepair} skill point${S.skRepair>1?'s were':' was'} refunded - the old shop minted points, so this line was carrying levels it had never earned. Nothing else to do.</small></div>`:''}<div class="hd">Skill points: ${av} <small>(${skEarned()} earned on this line, ${Math.max(0,skSpent()-(S.sk.aid?1:0))} spent &middot; this line's tree costs ${skTree()}, a maxed line earns ${skEarnedMax()} - <b>${Math.max(0,skEarnedMax()-skTree())} to spare</b>)</small></div><small>Skill levels cost 1 point each. Most skills cap at 10 and a few utility skills stop at 5 (RO-style), so a maxed line spends 139 of its 156 points - job levels pay out all the way to 50, and a line you promoted out of early may not finish &middot; ${SKSLOTS(C().tier)} skill${SKSLOTS(C().tier)>1?'s cast':''} per swing at this job tier &middot; later casts in the same swing land together at ${SKFADE.slice(1).map(f=>Math.round(f*100)+'%').join(' / ')} of the first one, on the swing's own contact frame &middot; active skills auto-cast when learned; use the Auto cast checkbox on a skill to pause it, or the ALL tile beside First Aid to pause or resume the whole line at once</small>`
     +line.map(from=>{const ss=SKILLS.filter(s=>s.from===from);return ss.length?`<div class="sec">${from}</div><div class="skg">${ss.map(s=>{const L=lv(s.id),off=!!(L&&s.type!=='pas'&&skOff(s.id)),kind=s.type==='pas'?'PASSIVE':s.type==='to'?'TRADEOFF':s.type==='heal'?'HEAL':'ACTIVE';
       return`<div class="sk${L?'':' off'}${off?' auto-off':''}${selS===s.id?' sel':''}" style="--sk-accent:${s.col||'#8a6a2c'}" data-a="ssel" data-v="${s.id}">
         <div class="sk-head"><span class="sk-kind">${kind}</span>${off?'<span class="sk-paused">OFF</span>':''}</div>
@@ -3512,7 +3639,7 @@ const gotoField=(m,l)=>{
   if(typeof TRIAL!=='undefined'&&TRIAL.on)trialExit();
   // v68: and it walks out of town the same way, so the town scene never outlives the visit.
   if(typeof townOn==='function'&&townOn())townLeave(1);
-  S.mp=m;S.lvl=l;S.kl=0;mobs=[];mob=null;respawn=.3;pend=[];castQ=[];qRefresh();ui();save()};
+  S.mp=m;S.lvl=l;S.kl=0;mobs=[];mob=null;camps=[];respawn=.3;qRefresh();ui();save()};
 const ACT={
   town:()=>townToggle(),
   boardperiod:v=>{if(!['daily','weekly','all'].includes(v))return;boardPeriod=v;boardError='';renderWin();boardRefresh(v)},
@@ -3613,7 +3740,7 @@ const ACT={
   sex:v=>{S.sex=v==='f'?'f':v==='m'?'m':(S.sex==='f'?'m':'f');heroKey='';log(`Appearance: ${S.sex==='f'?'female':'male'}.`);ui();save()},
   costume:()=>{log('Costumes arrive in a future patch - they will restyle a class without changing its stats.','','misc');ui()},
   hair:v=>{S.hair=(((S.hair|0)+(+v||1))%19+19)%19;heroKey='';ui();save()},
-  reset:()=>{ask('Erase this account save and start over?',()=>{const gm=S.gm;hudRate=null;zenyEarned=0;expEarned=0;S=fresh();S.gm=gm;S.q=['kill','loot','boss'].map(newQuest);floats.forEach(f=>f.el&&f.el.remove());floats=[];drops=[];pend=[];castQ=[];mobs=[];mob=null;respawn=.3;logs=[];log('New adventure started.');ui();save()})},
+  reset:()=>{ask('Erase this account save and start over?',()=>{const gm=S.gm;hudRate=null;zenyEarned=0;expEarned=0;S=fresh();S.gm=gm;S.q=['kill','loot','boss'].map(newQuest);floats.forEach(f=>f.el&&f.el.remove());floats=[];drops=[];mobs=[];mob=null;respawn=.3;logs=[];log('New adventure started.');ui();save()})},
   gmx:v=>{S.gmx=+v;ui();save()},gmz:()=>{S.zeny+=1e6;ui();save()},gmo:()=>{S.ore.ori+=20;S.ore.elu+=20;ui();save()},gml:()=>{S.lv=Math.min(150,S.lv+10);S.pts+=30;S.hp=maxHp();ui();save()},
   gmj:()=>{const j=jobOf();j.jl=C().mj;j.jx=0;ui();save()},gmu:()=>{S.prog=MAPS.map(()=>10);ui();save()},gmindex:v=>gmIndexTest(v),gmcard:v=>gmCardTest(v),gmskill:v=>gmSkillTest(v),gmpet:v=>gmPetTest(v),gmp:v=>{if(S.pets.length>=40)S.pets.shift();const c=PETS.filter(x=>x.r===+v);S.pets.push({id:ri(1e6,9e6),sp:PETS.indexOf(c[ri(0,c.length-1)]),mut:0,eq:[0,0,0],skills:[],on:S.pets.filter(x=>x.on).length<3});ui();save()},gmm:v=>{S.pets.forEach(p=>p.mut=+v);ui();save()},gmc:()=>{S.pets=[];ui();save()}};
 $('dock').onclick=e=>{const b=e.target.closest('[data-t]');if(b)openTab(b.dataset.t)};
@@ -3766,7 +3893,7 @@ function update(dt){
   // v77: the Endless Echo clock. The HUD text is refreshed once a second, not every frame.
   if(TRIAL.on){TRIAL.left-=dt;const tc=trialClock();if(tc!==hudTrialClock){hudTrialClock=tc;if(typeof $==='function'&&$('stageTitle'))$('stageTitle').textContent=`Endless Echo · ${tc}`}
     if(TRIAL.left<=0)return trialFinish()}
-  atkAnim=Math.max(0,atkAnim-dt*2.35);hitAnim=Math.max(0,hitAnim-dt*4);shake=Math.max(0,shake-dt*20);
+  atkAnim=Math.max(0,atkAnim-dt/Math.max(.05,swingDur));hitAnim=Math.max(0,hitAnim-dt*4);shake=Math.max(0,shake-dt*20);
   for(const k in skCd)skCd[k]=Math.max(0,skCd[k]-dt);
   for(const id in petSkillCd)petSkillCd[id]=Math.max(0,petSkillCd[id]-dt);
   for(const id in petNote)petNote[id]=Math.max(0,petNote[id]-dt);
@@ -3776,10 +3903,9 @@ function update(dt){
   shots.forEach(s=>s.t+=dt*7);shots=shots.filter(s=>{if(s.t<1)return true;if(s.m)scene.remove(s.m);return false});
   tickSkillFx(dt);
   if(skillOn('aid')&&S.hp<maxHp()*.5&&(skCd.aid||0)<=0){skCd.aid=6;const h=Math.ceil(maxHp()*(.1+.05*lv('aid')));S.hp=Math.min(maxHp(),S.hp+h);playSkillFx('aid',null,'#7dff7d');skillNameFloat('First Aid');addFloat(pl.x,2.6,pl.z,'+'+h,'#7dff7d')}
-  for(let i=pend.length-1;i>=0;i--){const p=pend[i];p.t-=dt;if(p.t<=0){pend.splice(i,1);strike(p.m,p.col,!!p.magic,!!p.skill);shot(p.col);if(mob&&mob.hp<=0){kill();break}}}
-  // queued extra casts of a swing: they fire on their own delay and set their cooldown when they do
-  for(let i=castQ.length-1;i>=0;i--){const c=castQ[i];c.t-=dt;if(c.t<=0){castQ.splice(i,1);
-    if(!mob||mob.hp<=0)continue;skCd[c.sk.id]=c.sk.cd;skillNameFloat(c.sk.n);castSkill(c.sk,c.k);if(mob&&mob.hp<=0)break}}
+  // the swing lands on the animation's contact frame (see playerAttack): the cast(s), the extra hits
+  // and the normal strike all resolve here, and they print one number per monster.
+  if(swing){swing.t-=dt;if(swing.t<=0){const sw=swing;swing=null;resolveSwing(sw);if(mob&&mob.hp<=0&&mobs.includes(mob))kill()}}
   // a timed tradeoff buff ticks down, drains HP if it says so, and clears when it expires
   // tb.t is undefined until the first cast, so every read of it defaults to 0. Without that,
   // 'tb.t>0' is false and the buff never ticks, and 'tb.t<=0' is false and it never re-casts.
@@ -3789,7 +3915,7 @@ function update(dt){
   if(mobs.length)for(const m of mobs.slice()){
     m.stun=Math.max(0,(m.stun||0)-dt);
     const ds=m.dots;if(ds&&ds.length)for(let i=ds.length-1;i>=0;i--){const d=ds[i];d.dur-=dt;d.t+=dt;
-      if(d.t>=.5){d.t-=.5;if(m.hp>0)hurt(m,Math.max(1,Math.round(d.dps*.5)),d.col,false,!!d.skill)}
+      if(d.t>=.5){d.t-=.5;if(m.hp>0){const dv=Math.max(1,Math.round(d.dps*.5));S.dmg=(S.dmg||0)+dv;m.hp-=dv;m.flash=1;m.hitAnim=1;dotTick(m,dv,d.col,!!d.skill);if(m.hp<=0){kill(m);continue}}}
       if(d.dur<=0)ds.splice(i,1)}}
   // tradeoff skills cast themselves the moment they are ready and you are healthy enough
   // The to.* fields are functions of skill level, so they must be CALLED here: storing them
@@ -3829,7 +3955,10 @@ function update(dt){
     return;
   }
   let tx=0,tz=Z1-1.5,reach=1.4;
-  if(!mobs.length){respawn-=dt;if(respawn<=0)spawn();
+  // v83: an empty field is only rebuilt when there are no camps to rebuild it (a fresh map, the boss
+  // arena, or the walk back after a defeat). A camp field refills itself below instead - the field the
+  // player walks through stays stocked, so there is no whole-field wave reset any more.
+  if(!mobs.length){if(!camps.length){respawn-=dt;if(respawn<=0)spawn()}
     // Roam: pick a fresh spot when the timer runs out or the current one is reached.
     // Stage 10 is the boss arena, and there the roam has to stay with the boss: the old
     // field-wide wander sent the character off to the far corners, where the freshly spawned
@@ -3842,13 +3971,28 @@ function update(dt){
       else{pl.wx=rnd(-BX_+.8,BX_-.8);pl.wz=rnd(Z0+3,Z1-.8)}}
     tx=pl.wx;tz=pl.wz}
   else{
-    const rng=C().rng;
+    // v83: an emptied camp refills itself on its own timer - the field the player walks through stays
+    // stocked, and there is no whole-field wave reset any more.
+    for(const c of camps)if(!mobs.some(m=>m.pack===c.i)){c.t+=dt;if(c.t>=c.wait){c.t=0;c.wait=campWait(c);fillCamp(c.i,c)}}else c.t=0;
     for(const m of mobs){
-      m.spawn=Math.min(1,m.spawn+dt*3);m.flash=Math.max(0,(m.flash||0)-dt*6);m.atkAnim=Math.max(0,(m.atkAnim||0)-dt*2.35);
-      const ms=2.6+.3*m.size,wake=m.pack===activePack&&(isBoss()||Math.hypot(pl.x-m.x,pl.z-m.z)<AGGRO);
-      const gx2=wake?pl.x+Math.cos(m.a)*ms:m.hx,gz2=wake?pl.z+Math.sin(m.a)*ms*.6:m.hz;
-      const ex=gx2-m.x,ez=gz2-m.z,ed=Math.hypot(ex,ez);const stn=m.stun>0;m.run=ed>.12&&!stn;
-      if(ed>.1&&!stn&&!m.fixed){const v=Math.min(ed,dt*(m.boss?1.2:1.6)*(wake?1:.55));m.x+=ex/ed*v;m.z+=ez/ed*v}
+      m.spawn=Math.min(1,m.spawn+dt*3);m.flash=Math.max(0,(m.flash||0)-dt*6);
+      m.atkAnim=Math.max(0,(m.atkAnim||0)-dt*2.35);m.hitAnim=Math.max(0,(m.hitAnim||0)-dt*4.5);
+      // v83 owner: 1.9 + 0.25*size instead of 2.6 + 0.3*size - monsters used to swing from about
+      // three units away, further than the hero's own reach, which is half of what looked wrong
+      // about close combat. The lunge (mobMotion) carries the hit across the last of the gap.
+      const ms=1.9+.25*m.size,wake=m.pack===activePack&&(isBoss()||Math.hypot(pl.x-m.x,pl.z-m.z)<AGGRO),stn=m.stun>0;
+      // An idle monster drifts around its own anchor instead of standing frozen on it - that is most
+      // of what makes a stocked field read as alive.
+      if(!wake&&!stn&&!m.fixed&&m.hx!=null){
+        m.wt=(m.wt||0)-dt;
+        if(m.wt<=0){m.wt=rnd(2,5);m.wx=cl(m.hx+rnd(-1.6,1.6),-BX_+.6,BX_-.6);m.wz=cl(m.hz+rnd(-1.6,1.6),Z0+.6,Z1-.6)}
+        const wx=m.wx==null?m.hx:m.wx,wz=m.wz==null?m.hz:m.wz,dx3=wx-m.x,dz3=wz-m.z,dd=Math.hypot(dx3,dz3);
+        m.run=dd>.15;if(dd>.05){const v=Math.min(dd,dt*.7);m.x+=dx3/dd*v;m.z+=dz3/dd*v}
+      }else{
+        const gx2=wake?pl.x+Math.cos(m.a)*ms:m.hx,gz2=wake?pl.z+Math.sin(m.a)*ms*.6:m.hz;
+        const ex=gx2-m.x,ez=gz2-m.z,ed=Math.hypot(ex,ez);m.run=ed>.12&&!stn;
+        if(ed>.1&&!stn&&!m.fixed){const v=Math.min(ed,dt*(m.boss?1.2:1.6)*(wake?1:.55));m.x+=ex/ed*v;m.z+=ez/ed*v}
+      }
       m.x=cl(m.x,-BX_,BX_);m.z=cl(m.z,Z0,Z1);m.ry=Math.atan2(pl.z-m.z,m.x-pl.x);
       if(wake&&Math.hypot(pl.x-m.x,pl.z-m.z)<=ms+.4&&!stn){m.at-=dt;if(m.at<=0){m.at=m.boss?1.2:1.5;
         if(Math.random()*100<flee())addFloat(pl.x,2.4,pl.z,'DODGE','#76eaff',false,'evade');
@@ -3860,13 +4004,38 @@ function update(dt){
         else{const md=m.mag?mdef():def(),cut=Math.min(.75,md/(md+4000));
           const d=Math.max(1,Math.round(m.atk*rnd(.8,1.2)*(1-cut)*(1-petPassive('dr')/100)));S.hp-=d;hitAnim=1;m.atkAnim=1;damageFloat(pl.x,2.4,pl.z,d,false,true);
           // Defeat is the ONE thing that puts you back at the spawn point.
-if(S.hp<=0){log('You were defeated... knocked back to the entrance.','r0','kills');S.hp=maxHp();S.kl=0;mobs=[];mob=null;respawn=1.5;pend=[];castQ=[];tb={};
+if(S.hp<=0){log('You were defeated... knocked back to the entrance.','r0','kills');S.hp=maxHp();S.kl=0;mobs=[];mob=null;camps=[];engageTgt=null;respawn=1.5;tb={};
           pl.x=0;pl.z=Z1-1.5;pl.wt=0;ui();return}}}}
     }
+    // Awake monsters keep their own approach angle and are pushed apart, so a camp surrounds the hero
+    // instead of stacking on one pixel (the other half of "all sticking together").
+    for(const m of mobs){
+      if(m.pack!==activePack||m.boss||m.fixed)continue;
+      for(const o of mobs){if(o===m||o.pack!==activePack)continue;
+        const dx=m.x-o.x,dz=m.z-o.z,dd=Math.hypot(dx,dz);
+        if(dd>.001&&dd<1.1){const push=(1.1-dd)*dt*1.6;m.x+=dx/dd*push;m.z+=dz/dd*push}}
+    }
     if(!mob||!mobs.includes(mob)||mob.pack!==activePack)mob=mobs.find(m=>m.boss)||packMob();
-    if(mob){reach=rng?3:1.2+.45*mob.size;pl.orb+=dt*.8;const r=rng?3:reach*.8;tx=mob.x+Math.cos(pl.orb)*r;tz=mob.z+Math.sin(pl.orb)*r;
+    if(mob){reach=heroStandoff(mob);
       const dist=Math.hypot(mob.x-pl.x,mob.z-pl.z)||.01;
-      if(dist<=reach+.6||(dist<=5&&skillOn('soulb')&&(skCd.soulb||0)<=0)){pAtkT-=dt;if(pAtkT<=0){playerAttack();if(mob&&mob.hp<=0){kill();return}}}}
+      // v83.1 (owner): HOLD means hold, and the hero has to be latched into the fight to do it. The
+      // walk target used to be a ring AROUND the monster, recomputed from its position every frame:
+      // as the monster closed in, the hero re-walked out to the ring and retreated for as long as the
+      // monster chased it (measured before this fix: 112 units of retreat in 30s, ending pinned on
+      // the lane edge with the monster still outside its attack range - i.e. a ranged class could
+      // never be hit). Walking in now ends when the target is in range and only restarts when the
+      // target really gets away (or is a different monster), so both sides settle into a stand-and-
+      // trade fight: the monster walks into its own stand-off and hits back.
+      // The break radius is kept inside the 6.5-unit wake radius, so a latched hero can never stand
+      // still watching a monster that has gone back to sleep.
+      if(dist<=reach+.6)engageTgt=mob;
+      else if(engageTgt!==mob||dist>reach+1.2)engageTgt=null;
+      if(engageTgt===mob){tx=pl.x;tz=pl.z;                          // stand: this is the whole point
+        // ...and swing only while the target really is in range. The 1.2-unit break radius is a
+        // stand-still window, not an attack window: a monster a step out walks back in rather than
+        // making the hero shuffle after it.
+        if(dist<=reach+.6){pAtkT-=dt;if(pAtkT<=0){playerAttack();if(mob&&mob.hp<=0){kill();return}}}}
+      else{pl.orb+=dt*.8;const r=reach*.85;tx=mob.x+Math.cos(pl.orb)*r;tz=mob.z+Math.sin(pl.orb)*r}}
   }
   const AP=S.pets.filter(p=>p.on);for(const p of AP){const r=petR[p.id]||(petR[p.id]={x:pl.x-1,z:pl.z+1,at:rnd(0,1)}),i=AP.indexOf(p);let o=null,bd=1e9;
     for(const m of mobs){if(m.pack!==activePack)continue;const d=Math.hypot(m.x-r.x,m.z-r.z);if(d<bd){bd=d;o=m}}
@@ -5624,21 +5793,44 @@ function useMobTexture(v,texture){if(!texture||v.official)return;
   v.spr.material.map=map;v.spr.material.needsUpdate=true;
   const im=map.image||texture.image,ratio=im&&im.height?im.width/im.height:2.05/3.05;
   v.officialWidth=3.05*ratio;v.officialHeight=3.05;v.spr.scale.set(v.officialWidth,v.officialHeight,1);v.official=true}
+// v83 (owner): creatures used to move only while walking - and an official mob (the Divine Pride art,
+// which is nearly all of them) is a still picture, so attacking, being hit and idling all looked
+// frozen and half-baked. Three states are added here, all of them transform only (no art is redrawn,
+// per house rule 1): an idle breath, a lunge toward the hero on the attack (m.atkAnim), and a recoil
+// away from it on the hit (m.hitAnim). Pets pass their own lunge through m.lunge.
 function mobMotion(m,clock){
   const phase=(clock+(m.a||0))*8,step=Math.sin(phase),lift=Math.max(0,step),land=Math.max(0,Math.cos(phase));
+  const breath=Math.sin(clock*2.1+(m.a||0));
+  let o;
   if(m.shape==='blob'){
-    if(!m.run){const idle=Math.sin(phase*.35);return{hop:Math.max(0,idle)*.035,sx:1,sy:1+idle*.025}}
-    return{hop:.46*lift,sx:1+.08*land-.05*lift,sy:1-.12*land+.1*lift}}
-  if(m.run)return{hop:.12*lift,sx:1+.02*Math.sin(phase*2),sy:1};
-  return{hop:0,sx:1,sy:1}}
+    if(!m.run){const idle=Math.sin(phase*.35);o={hop:Math.max(0,idle)*.035,sx:1,sy:1+idle*.025}}
+    else o={hop:.46*lift,sx:1+.08*land-.05*lift,sy:1-.12*land+.1*lift}
+  }else if(m.run)o={hop:.12*lift,sx:1+.02*Math.sin(phase*2),sy:1};
+  else o={hop:0,sx:1,sy:1};
+  const a=Math.max(0,Math.min(1,m.atkAnim||0));                 // 1 -> 0 through the swing
+  const out=a>0?Math.sin(Math.PI*Math.min(1,(1-a)/.7)):0;       // wind up, lunge, settle back
+  const hit=Math.max(0,Math.min(1,m.hitAnim||0)),hitS=hit;   // strongest on the impact frame, released as it decays
+  const own=Math.max(0,Math.min(1,m.lunge||0));
+  o.hop+=breath*.02-own*.06;
+  o.sx*=(1+out*.06)*(1-hitS*.10);
+  o.sy*=(1+breath*.02)*(1-hitS*.09)*(1-out*.03);
+  o.tilt=(m.run?-.05:0)+out*.12-hitS*.10;
+  o.lunge=out*(m.boss?.62:.45)-hitS*.2+own*.45;
+  o.dir=Math.atan2(pl.z-m.z,pl.x-m.x);
+  return o}
 function syncMobImage(v,m,s){const im=v.image,motion=mobMotion(m,t);
-  if(v.official){if(im)im.style.display='none';v.spr.visible=true;v.spr.position.y=motion.hop;
-    v.spr.scale.set(v.officialWidth*motion.sx,v.officialHeight*motion.sy,1);return}
+  if(v.official){if(im)im.style.display='none';v.spr.visible=true;
+    const lx=motion.lunge?Math.cos(motion.dir)*motion.lunge:0,lz=motion.lunge?Math.sin(motion.dir)*motion.lunge:0;
+    v.spr.position.set(lx,motion.hop,lz);
+    v.spr.scale.set(v.officialWidth*motion.sx,v.officialHeight*motion.sy,1);
+    if(v.spr.material.rotation!==(motion.tilt||0))v.spr.material.rotation=motion.tilt||0;
+    return}
   v.spr.position.y=0;if(!im)return;
   const ready=!v.imageFailed&&im.complete&&im.naturalWidth>0;
   im.style.display=ready?'block':'none';v.spr.visible=!ready;if(!ready)return;
   const base=scr(m.x,0,m.z),mid=scr(m.x,1.525*s,m.z),top=scr(m.x,3.05*s,m.z),h=Math.max(14,Math.min(240,Math.abs(base[1]-top[1]))),ratio=im.naturalWidth/Math.max(1,im.naturalHeight);
   im.style.left=mid[0]+'px';im.style.top=(base[1]-motion.hop*h/3.05)+'px';im.style.width=Math.max(12,h*ratio*motion.sx)+'px';im.style.height=h*motion.sy+'px';im.style.zIndex=String(Math.max(1,Math.round(base[1])));
+  if(motion.tilt)im.style.transform='translate(-50%,-100%) rotate('+(motion.tilt*57.3).toFixed(1)+'deg)';
   im.style.filter=m.flash?`brightness(${1+m.flash*.55}) saturate(${1+m.flash})`:'none'}
 function buildMob(m){
   const G=new THREE.Group();
@@ -7478,7 +7670,7 @@ function townEnter(quiet){
   townBuild();
   TOWN.on=1;town=1;S.town=1;
   TOWN.zoom=zoom;zoom=Math.min(zoom,.46);       // a town is wide: the whole square, station and gate
-  mobs.length=0;mob=null;pend=[];castQ=[];tb={};
+  mobs.length=0;mob=null;camps=[];engageTgt=null;tb={};
   pl.wx=pl.x=0;pl.wz=pl.z=6.5;pl.wt=0;pl.run=0;
   townArt();
   for(const n of TOWN.list){if(!n.spr){n.spr=townNpcSprite(n);n.g.add(n.spr);townNpcFace(n,0)}}
@@ -7735,7 +7927,7 @@ function draw(){
   if(heroTitle&&heroTitleText){if(equipped){const [txh,tyh]=scr(pl.x,0.16,pl.z);heroTitle.style.display='block';heroTitle.style.left=txh+'px';heroTitle.style.top=tyh+'px';if(heroTitleMark)heroTitleMark.textContent=equipped.mark||'✦';heroTitleText.textContent=equipped.name;heroTitle.title='Index title · '+(equipped.xp??equipped.kills).toLocaleString()+' Index XP'}else heroTitle.style.display='none'}
   const pids=new Set(S.pets.filter(p=>p.on).map(p=>p.id));petMesh.forEach((v,id)=>{if(!pids.has(id)){disposeCreatureVisual(v);petMesh.delete(id)}});
   S.pets.filter(p=>p.on).forEach(p=>{const sp=PETS[p.sp],r=petR[p.id];if(!sp||!r)return;let v=petMesh.get(p.id);
-    const pet={x:r.x,z:r.z,run:r.run,a:p.id,shape:petFallbackShape(sp),c:sp.c,spriteId:sp.spriteId,flash:0};
+    const pet={x:r.x,z:r.z,run:r.run,a:p.id,shape:petFallbackShape(sp),c:sp.c,spriteId:sp.spriteId,flash:0,lunge:r.lunge||0};
     if(!v){v=buildMob(pet);petMesh.set(p.id,v)}
     const rec=mobTextureCache.get(sp.spriteId);if(rec&&rec.state==='ready')useMobTexture(v,rec.texture);
     v.G.position.set(r.x,0,r.z);v.G.scale.setScalar(PET_VISUAL_SCALE);
@@ -7758,7 +7950,7 @@ function draw(){
   cam.lookAt(ct);cam.updateMatrixWorld(true);
   for(const m of mobs){const v=mobMesh.get(m);if(v)syncMobImage(v,m,mobVisualScale(m))}
   for(const p of S.pets.filter(p=>p.on)){const v=petMesh.get(p.id),r=petR[p.id],sp=PETS[p.sp];
-    if(v&&r&&sp)syncMobImage(v,{x:r.x,z:r.z,run:r.run,a:p.id,shape:petFallbackShape(sp),flash:0},PET_VISUAL_SCALE)}
+    if(v&&r&&sp)syncMobImage(v,{x:r.x,z:r.z,run:r.run,a:p.id,shape:petFallbackShape(sp),flash:0,lunge:r.lunge||0},PET_VISUAL_SCALE)}
   syncSkillFx();syncWeaponSprites(pFace,c);
   if(tabs.includes('set'))drawAppearancePreview();
   if(tabs.includes('job'))drawClassPreview();
@@ -7769,6 +7961,8 @@ function draw(){
       // the dark registration stroke, an 8-spike inner star and a pale core - plus the random
       // speed-line spray and the impact ring, all children of the projected float. No CRIT chip.
       // The star is sized from the finished number, so 6-7 digit crits still fit (v70 rule).
+      // v83.3 (owner): the v82 frame, restored exactly - a fresh jitter on every hit, so no two
+      // crits look alike, and the star is sized from the finished number (6-7 digit crits fit).
       const sk=f.kind==='skill-critical',fs=32,len=String(f.txt).length,w=Math.max(fs*2,len*fs*.84).toFixed(0),hs=(fs*2.5).toFixed(0);
       const starPts=(spikes,Ro,Ri,rot)=>{const p=[];for(let i=0;i<spikes*2;i++){const a=rot+Math.PI*i/spikes-Math.PI/2,r=i%2?Ri*(.72+Math.random()*.5):Ro*(.8+Math.random()*.35);p.push((Math.cos(a)*r).toFixed(1)+','+(Math.sin(a)*r).toFixed(1))}return p.join(' ')};
       const rot=Math.random()*Math.PI,pts=starPts(12,48,30,rot),pts2=starPts(8,34,20,rot*.6);
@@ -7777,11 +7971,16 @@ function draw(){
       e.innerHTML='<i class="fburst" style="width:'+w+'px;height:'+hs+'px;--brot:'+(Math.random()*12-6).toFixed(1)+'deg"><svg viewBox="-52 -52 104 104" preserveAspectRatio="none"><polygon points="'+pts+'" fill="'+c1+'"/><polygon points="'+pts+'" fill="none" stroke="#00000088" stroke-width="2"/><polygon points="'+pts2+'" fill="'+c2+'"/><circle r="12" fill="'+c3+'"/></svg></i><i class="fring" style="width:'+(fs*1.4).toFixed(0)+'px;height:'+(fs*1.4).toFixed(0)+'px"></i>'+streaks+'<span class="fnum">'+f.txt+'</span>';
     }else e.textContent=f.txt;
     if(f.col)e.style.color=f.col;ov.appendChild(e);f.el=e}
+    if(f.dirty&&f.el){f.dirty=0;const nd=f.el.querySelector('.fnum')||f.el;nd.textContent=f.txt}   // a merged DoT tick updates in place
     const[a,b]=scr(f.anchor==='hero'?pl.x:f.x,f.y,f.anchor==='hero'?pl.z:f.z);f.el.style.left=a+'px';f.el.style.top=b+'px';
-    const dk=f.kind==='damage'||f.kind==='skill-damage'||f.kind==='critical'||f.kind==='skill-critical';
-    if(dk){ // the owner's motion pick: arc punch on spawn, sway up, fade drifting left, hold-then-fade from 55%
+    const dk=f.kind==='damage'||f.kind==='skill-damage'||f.kind==='critical'||f.kind==='skill-critical'||f.kind==='dot';
+    if(dk){ // v83.3 (owner): v82's motion, back and untouched - the arc punch on spawn, the sway up
+             // (10px right, then drifting 38px left), and the hold-then-fade that keeps the digits
+             // solid for the first 55% of the life. SIZE and CLIMB are what the owner wants to readjust;
+             // DMG_RISE is the only knob in here for that, and the picker page owns the decision.
       const r=Math.max(0,f.life),tt=1-r,cs=(f.kind==='critical'||f.kind==='skill-critical')?1:.25;
-      const dy=-30*Math.min(1,tt*1.15),dxx=tt<.28?10*(tt/.28):10-38*Math.min(1,(tt-.28)/.72),sc=1+cs*Math.max(0,1-tt/.2);
+      const sway=tt<.28?10*(tt/.28):10-38*Math.min(1,(tt-.28)/.72);
+      const dy=-DMG_RISE*Math.min(1,tt*1.15),dxx=sway+(f.sw||0)*Math.min(1,tt/.22),sc=1+cs*Math.max(0,1-tt/.2);
       f.el.style.transform='translate(-50%,-50%) translate('+dxx.toFixed(1)+'px,'+dy.toFixed(1)+'px) scale('+sc.toFixed(3)+')';
       f.el.style.opacity=Math.min(1,Math.max(0,r/.45))}
     else f.el.style.opacity=Math.max(0,f.life)});

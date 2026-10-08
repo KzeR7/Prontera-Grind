@@ -293,8 +293,12 @@ t('the field is roamed, not marched back to the spawn point', () => {
   // with no mobs the character wanders; only a defeat returns it to the entrance
   assert.ok(/pl=\{x:0,z:Z1-1\.5,ry:0,orb:0,run:0,wt:0,wx:0,wz:Z1-1\.5\}/.test(src),
     'pl lost its roam target fields');
-  assert.ok(/if\(!mobs\.length\)\{respawn-=dt;if\(respawn<=0\)spawn\(\);/.test(src),
+  // v83: a field with camps refills itself instead of being rebuilt - only a camp-less field (a
+  // fresh map, the boss arena, the walk back after a defeat) still spawns on the respawn timer.
+  assert.ok(/if\(!mobs\.length\)\{if\(!camps\.length\)\{respawn-=dt;if\(respawn<=0\)spawn\(\)\}/.test(src),
     'the empty-field branch changed shape');
+  assert.ok(/for\(const c of camps\)if\(!mobs\.some\(m=>m\.pack===c\.i\)\)/.test(src),
+    'the camps must be the thing that refills an emptied field');
   assert.ok(/tx=pl\.wx;tz=pl\.wz/.test(src), 'the roam target is not fed into movement');
   // the 'let tx=0,tz=Z1-1.5' default is fine: both branches overwrite it before it is used
   assert.ok(/tx=pl\.wx;tz=pl\.wz\}/.test(src), 'the roam target does not close the empty-field branch');
@@ -405,7 +409,7 @@ t('the arena really is vertical: mobs hold the far end, the player the near end'
   assert.ok(z1 - z0 >= 14, `the field is only ${z1 - z0} deep - not the long vertical avenue`);
   assert.ok(z0 < 0 && z1 > 0, 'the field should straddle the origin');
   // the camera sits on +Z looking toward -Z, so low Z is the TOP of the screen
-  assert.ok(/function packSites\(\)/.test(src) && /nearestPack\(\)/.test(src), 'the random closest-pack route is missing');
+  assert.ok(/function campSites\(n\)/.test(src) && /nearestPack\(\)/.test(src), 'the random closest-camp route is missing');
   assert.ok(/pl=\{x:0,z:Z1-1\.5/.test(src), 'the player no longer starts at the near (bottom) end');
   console.log('       field depth ' + (z1 - z0) + ' units; player at Z1-1.5, three randomized packs across the arena');
 });
