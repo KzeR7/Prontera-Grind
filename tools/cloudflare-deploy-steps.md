@@ -102,7 +102,7 @@ Open the `*.pages.dev` address Cloudflare gives the project, and walk this list:
 | Check | Expected |
 |---|---|
 | The login card | says **“☁ Cloud accounts are on — register or sign in…”** |
-| Build tag at the bottom of the card | `2026-10-08 grind-v83.5 damage numbers start above the head - the whole crit frame clears the monster, bosses included, and incoming damage lifts off the hero` |
+| Build tag at the bottom of the card | `2026-10-08 grind-v87.1 the number retune from the tuner (28/39px digits, a 70px flight, x1.9 punch, spread) and damage numbers start above the head` |
 | Register your own name | a dialog with a **recovery code** — copy it somewhere safe, it is shown once |
 | Play for a minute | the header badge goes `☁ …` → `☁ ✓` |
 | The same address in a second browser | sign in with the same name and password → **the same character loads** |

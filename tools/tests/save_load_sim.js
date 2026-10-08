@@ -295,7 +295,7 @@ t('the field is roamed, not marched back to the spawn point', () => {
     'pl lost its roam target fields');
   // v83: a field with camps refills itself instead of being rebuilt - only a camp-less field (a
   // fresh map, the boss arena, the walk back after a defeat) still spawns on the respawn timer.
-  assert.ok(/if\(!mobs\.length\)\{if\(!camps\.length\)\{respawn-=dt;if\(respawn<=0\)spawn\(\)\}/.test(src),
+  assert.ok(/if\(!mobs\.length\)\{\s*if\(!camps\.length\)\{respawn-=dt;if\(respawn<=0\)spawn\(\)\}/.test(src),
     'the empty-field branch changed shape');
   assert.ok(/for\(const c of camps\)if\(!mobs\.some\(m=>m\.pack===c\.i\)\)/.test(src),
     'the camps must be the thing that refills an emptied field');

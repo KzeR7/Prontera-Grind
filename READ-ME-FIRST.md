@@ -84,6 +84,20 @@ is the live one; with no argument the tool prints how to set a new one). Since v
 `GM` / `test1234`; `localStorage.removeItem('pg_gm_local')` removes it. Normal accounts are made
 in-game and stored in the browser (`pg_acc4`; saves under `pg_save3_<user>`).
 
+## BUILD v87.1 — merged with main (grind-v87.1): the number retune + above-head spawn on top of v87
+
+* PR #39 went **conflicting** when `main` merged PR #40 (grind-v84 double Base 100+ EXP · v85
+  quest-exact Base 100+ doubling / Nightmare pay ramp / first-15 job half cost · v86 camp-refill
+  freeze fix + endgame damage retune + RO-style ASPD · v87 mob HIT rating & armor pierce + 8s
+  field restock). Resolved by hand: v84–v87 are balance/economy only — the float visual code on
+  main was still the pre-retune version — so this branch's float work applies cleanly on top.
+  See **BUILD v83.5** and **BUILD v73** below for the retune and the above-head spawn.
+* **BUILD re-bumped to `grind-v87.1`** so the login card names the merged file: *the number retune
+  from the tuner (28/39px digits, a 70px flight, ×1.9 punch, spread) and damage numbers start
+  above the head*.
+* The incoming-damage line carries both changes: v87's `prOf` armor-pierce formula **and** this
+  branch's `heroDamageY()` spawn above the hero's head.
+
 ## BUILD v83.5 — damage numbers start above the head (grind-v83.5): nothing covers what you fight
 
 * **The owner asked for the numbers to start above the mob's head** (bosses included) so they stop
