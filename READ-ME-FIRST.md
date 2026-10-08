@@ -84,6 +84,65 @@ is the live one; with no argument the tool prints how to set a new one). Since v
 `GM` / `test1234`; `localStorage.removeItem('pg_gm_local')` removes it. Normal accounts are made
 in-game and stored in the browser (`pg_acc4`; saves under `pg_save3_<user>`).
 
+## BUILD v87.1 — merged with main (grind-v87.1): the number retune + above-head spawn on top of v87
+
+* PR #39 went **conflicting** when `main` merged PR #40 (grind-v84 double Base 100+ EXP · v85
+  quest-exact Base 100+ doubling / Nightmare pay ramp / first-15 job half cost · v86 camp-refill
+  freeze fix + endgame damage retune + RO-style ASPD · v87 mob HIT rating & armor pierce + 8s
+  field restock). Resolved by hand: v84–v87 are balance/economy only — the float visual code on
+  main was still the pre-retune version — so this branch's float work applies cleanly on top.
+  See **BUILD v83.5** and **BUILD v73** below for the retune and the above-head spawn.
+* **BUILD re-bumped to `grind-v87.1`** so the login card names the merged file: *the number retune
+  from the tuner (28/39px digits, a 70px flight, ×1.9 punch, spread) and damage numbers start
+  above the head*.
+* The incoming-damage line carries both changes: v87's `prOf` armor-pierce formula **and** this
+  branch's `heroDamageY()` spawn above the hero's head.
+
+## BUILD v83.5 — damage numbers start above the head (grind-v83.5): nothing covers what you fight
+
+* **The owner asked for the numbers to start above the mob's head** (bosses included) so they stop
+  covering the monsters — and the hero. Before, the digits sat on the monster's head and the crit's
+  97.5px starburst lay over its whole upper body; incoming damage sat at a fixed 2.4, on the hero's
+  chest.
+* **How:** `mobDamageY(o,crit)` measures the clearance in **screen px** through the same projection
+  the floats use (`scr`), from the sprite's own head line (`3.05*mobVisualScale(o)` — the height
+  `syncMobImage` draws the sprite). It holds at every zoom, and it follows the mob's drawn scale, so
+  **bosses start higher** than regulars. A crit clears its whole burst box (54.75px), an ordinary hit
+  its digits (22.8px); the old 1.7 floor stays for mobs still spawning in. Incoming damage gets
+  `heroDamageY()` — above the hero's head (the 2.92-tall billboard's top) instead of 2.4.
+* **Short form checked — it goes well:** every damage number is formatted by `numTxt` (short by
+  default, full via Settings), the starburst sizes itself from the finished label (`1.3M` → the same
+  131×98px box as `1896`), and the gradient digit fill carries the K/M/B suffix as-is. Pinned by a
+  new ui_sim check.
+
+## BUILD v73 — the number retune (grind-v83.4): 28/39px digits, a 70px flight, ×1.9 punch, and a real spread
+
+* **The owner retuned the damage numbers from the tuner** (`Updates/damage-floats-proposal/`, strip B):
+  arc fade · sway up, fade left · Game (Trebuchet) · **28px** normal / **39px** critical · **rise 70px**
+  (the top end of the page's Rise slider) · **1.75s** life · fade starting at **90%** · impact punch
+  **×1.9** · spread **14px**. The font, the gradient crit fill and the 1px dark rim from v72 are
+  untouched, and so is the v71 centring of the explode frame.
+* **Bigger and higher:** the digits grow 17→28px (normals) and 32→39px (crits), the starburst scales
+  with them (`fs=39` in the builder), and the whole flight climbs **70px** instead of 30px — normal
+  hits, skill hits, crits and skill crits all travel it.
+* **Longer, and it fades later:** the life stretches 1.05s → **1.75s** (`DMG_RATE` .95 → .571) and the
+  burst breathes for all of it (`fburst-pop` 1.05s → 1.75s); the hold-then-fade now keeps the digits
+  solid until **90%** of the life (was 55%).
+* **Punchier:** the impact punch is ×1.9 — crits pop to **×2.33** on spawn, ordinary hits to **×1.475**
+  (was ×2 / ×1.25).
+* **The spread is real now:** it used to be inert in sway mode (the sway path owned the sideways
+  motion) and the game had no spread at all, so a multi-mob volley piled onto one pixel. Every damage
+  number now rolls its own **±14px** horizontal offset at spawn (`DMG_SPREAD`), ridden on top of the
+  sway, so the volley fans out. The tuner's `driftX` rule honours it too, and its sliders default to
+  this pick, so the 📋 button prints exactly what is live.
+* **Unchanged:** the colours, the gradient crit fill + 1px rim, no CRIT chip, the sway path (10px right,
+  then 38px left), one number per monster per swing, DoT merging, the short form from 100K, and the
+  v67 screen projection.
+* **Dev-only:** `Updates/damage-floats-proposal/` (the tuner, at `/damage`) and
+  `Updates/crit-frame-compare/` (the crit-frame comparison, at `/crit`) both show the new pick, and
+  `volley-before-after-v73.png` in the tuner folder renders the same volley at the old vs new
+  settings. Nothing in the proposal folders ships to players.
+
 ## BUILD v79.6 — sharp claw slashes: tapered blades, no fat round blobs (on the v79 sprite system)
 
 The owner compared the preview against a real-client capture: RO's slashes are **claws** —

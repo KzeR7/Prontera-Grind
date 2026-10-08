@@ -47,6 +47,22 @@ let finished = false;
   t('initial preset fired floats into every strip', () => {
     if (document.querySelectorAll('.pf').length < 4) throw new Error('no floats after load volley');
   });
+  t('v73: the tuner defaults to the owner\'s pick and sway honours the spread', () => {
+    for (const s of ["const T={font:'game',sNorm:28,sCrit:39,rise:70,life:1.75,fadeAt:90,punch:1.9,drift:14,style:'arc',spawn:'sway'};",
+                     "balanced:{font:'game',sNorm:28,sCrit:39,rise:70,life:1.75,fadeAt:90,punch:1.9,drift:14,style:'arc',spawn:'sway'}",
+                     "const driftX=atMob=>(atMob&&T.spawn!=='scatter'&&T.spawn!=='sway')?0:R(-T.drift,T.drift);"])
+      if (!html.includes(s)) throw new Error('page is missing: ' + s.slice(0, 70));
+    if (document.getElementById('sNorm').value !== '28' || document.getElementById('sCrit').value !== '39' ||
+        document.getElementById('rise').value !== '70' || document.getElementById('life').value !== '1.75' ||
+        document.getElementById('fadeAt').value !== '90' || document.getElementById('punch').value !== '1.9')
+      throw new Error('the sliders do not show the owner\'s pick');
+  });
+  t('v73: the stage grows so a 70px flight stays on the strip', () => {
+    const s = document.querySelector('.strip[data-opt="b"]');
+    if (!(parseFloat(s.style.height) >= 280)) throw new Error('strip too short for the flight: ' + s.style.height);
+    const pfh = s.querySelector('.pfh');
+    if (!pfh || !/px$/.test(pfh.style.top)) throw new Error('the spawn holder is not px-anchored above the mob');
+  });
   await sleep(150);
   t('full volley appends floats in every option', () => {
     window.document.querySelector('#fireVolley').click();

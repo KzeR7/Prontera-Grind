@@ -609,8 +609,8 @@ t('damage floats stay screen-projected, restrained, and distinct by type', () =>
     'combat nodes must remain absolutely anchored to projected screen coordinates');
   assert.ok(src.includes('.fl.damage{color:#fff0a6!important;-webkit-text-stroke:.5px #4b3514'),
     'ordinary damage keeps the pale-gold treatment the owner plays with');
-  assert.ok(src.includes('.fl.critical,.fl.skill-critical{font:900 32px "Trebuchet MS",Verdana,sans-serif')&&!src.includes('.fl.critical::before{')&&!src.includes('>CRIT<'),
-    'critical damage carries the owner\'s starburst frame (a child element, no CRIT chip)');
+  assert.ok(src.includes('.fl.critical,.fl.skill-critical{font:900 39px "Trebuchet MS",Verdana,sans-serif')&&!src.includes('.fl.critical::before{')&&!src.includes('>CRIT<'),
+    'critical damage carries the owner\'s starburst frame at the retuned 39px (a child element, no CRIT chip)');
   assert.ok(src.includes('.fl.miss,.fl.evade{position:absolute;')&&!src.includes('border:1px solid #d9e1ec'),
     'MISS and DODGE are plain text labels with no badge frame');
   assert.ok(src.includes('#xp-track{display:flex;width:100%;height:14px')&&src.includes('#xp-dock{flex:none;width:100%;padding:3px 10px 4px'),
@@ -620,7 +620,7 @@ t('damage floats stay screen-projected, restrained, and distinct by type', () =>
   const box={};vm.createContext(box);
   vm.runInContext(`
     let S={dmgShort:true,dmgShow:true},floats=[],pl={x:2,z:4},rnd=(a,b)=>(a+b)/2;
-    ${grab('const DMG_LIFE=1/.95,DMG_RISE=30,DMG_FADE=.55,DMG_RATE=.95;', 'function log(m,cls,cat){')}
+    ${grab('const DMG_LIFE=1/.571,DMG_RISE=70,DMG_FADE=.9,DMG_RATE=.571,DMG_SPREAD=14;', 'function log(m,cls,cat){')}
     this.__f={floats,pl,damageFloat,skillNameFloat,shortNum,numTxt,get S(){return S},set full(v){S.dmgShort=!v},
       get dmgShow(){return S.dmgShow!==false},set dmgShow(v){S.dmgShow=v==='on'||v===true}};
   `,box);
@@ -665,7 +665,7 @@ t('damage floats stay screen-projected, restrained, and distinct by type', () =>
   const scene={floats:F.floats,pl:F.pl,create:()=>({style:{}}),draw};
   vm.createContext(scene);
   vm.runInContext(`const document={createElement:()=>({style:{}})},ov={appendChild:()=>{}},scr=(x,y,z)=>[x*10,z*10],
-    DMG_LIFE=1/.95,DMG_RISE=30,DMG_FADE=.55,DMG_RATE=.95;${draw}`,scene);
+    DMG_LIFE=1/.571,DMG_RISE=70,DMG_FADE=.9,DMG_RATE=.571,DMG_SPREAD=14;${draw}`,scene);
   assert.strictEqual(F.floats[3].el.style.left,'20px');
   F.pl.x=8;vm.runInContext(draw,scene);
   assert.strictEqual(F.floats[3].el.style.left,'80px','skill names must track the moving hero');
@@ -674,9 +674,45 @@ t('damage floats stay screen-projected, restrained, and distinct by type', () =>
   assert.ok(critHtml.includes('class="fburst"'),'a critical float carries the owner\'s starburst frame behind its digits');
   assert.ok(critHtml.includes('class="fring"')&&critHtml.includes('class="fstreak"'),'with the impact ring and the speed-line spray');
   assert.ok(!critHtml.includes('fbubble')&&!critHtml.includes('fflash'),'and no blob or flash: the v83 frame is gone again');
-  assert.ok(critHtml.includes('class="fburst" style="width:108px;height:80px'),'the star is sized from the finished number (1896 -> max(64, round(4*32*.84)) = 108 wide, 80 tall)');
+  assert.ok(critHtml.includes('class="fburst" style="width:131px;height:98px'),'the star is sized from the finished number at the retuned 39px (1896 -> max(78, round(4*39*.84)) = 131 wide, 98 tall)');
   assert.strictEqual(critHtml.split('<span class="fnum">')[0].includes('1,896'),false,'the digits are painted after the frame, never inside it');
   assert.strictEqual(F.floats[0].el.innerHTML,undefined,'ordinary hits stay plain text, with no frame markup');
+});
+
+t('the short-form option (100K / 1M) goes well with the floats: labels size the burst, the fill carries the suffix', () => {
+  const box={};vm.createContext(box);
+  vm.runInContext(`
+    let S={dmgShort:true,dmgShow:true},floats=[],pl={x:2,z:4},rnd=(a,b)=>(a+b)/2;
+    ${grab('const DMG_LIFE=1/.571,DMG_RISE=70,DMG_FADE=.9,DMG_RATE=.571,DMG_SPREAD=14;', 'function log(m,cls,cat){')}
+    this.__f={floats,damageFloat,shortNum,numTxt,get S(){return S},set full(v){S.dmgShort=!v}};
+  `,box);
+  const F=box.__f;
+  F.damageFloat(1,2,3,1250000,true);   // 1.3M in the default short style
+  F.damageFloat(1,2,3,1000000,true);   // 1M
+  F.damageFloat(1,2,3,240000,false);   // 240K, an ordinary hit
+  F.damageFloat(1,2,3,550000,false,true); // 550K incoming
+  assert.strictEqual(F.floats[0].txt,'1.3M','a big crit prints short by default (the owner\'s 100K/1M option)');
+  assert.strictEqual(F.floats[1].txt,'1M','so does a round million');
+  assert.strictEqual(F.floats[2].txt,'240K','ordinary hits shorten too, from 100,000 up');
+  assert.strictEqual(F.floats[3].txt,'550K','incoming damage follows the same setting (and 55,000 would stay full - short starts at 100K)');
+  assert.strictEqual(F.floats[0].kind,'critical','and keeps its critical treatment');
+  const draw=grab('  floats.forEach(f=>{if(!f.el)', '  const pt=');
+  const scene={floats:F.floats,pl:F.pl,create:()=>({style:{}}),draw};
+  vm.createContext(scene);
+  vm.runInContext(`const document={createElement:()=>({style:{}})},ov={appendChild:()=>{}},scr=(x,y,z)=>[x*10,z*10],
+    DMG_LIFE=1/.571,DMG_RISE=70,DMG_FADE=.9,DMG_RATE=.571,DMG_SPREAD=14;${draw}`,scene);
+  const html=i=>F.floats[i].el.innerHTML;
+  assert.ok(html(0).includes('class="fburst" style="width:131px;height:98px'),
+    'a 4-character short label (1.3M) sizes the star exactly like a 4-digit one (1896 -> max(78, 4*39*.84) = 131 wide, 98 tall)');
+  assert.ok(html(0).includes('<span class="fnum">1.3M</span>'),'the gradient-filled digits carry the M suffix as-is (the fill is CSS on .fnum, glyph-agnostic)');
+  assert.ok(html(1).includes('class="fburst" style="width:78px;height:98px'),'a 2-character label (1M) gets the minimum-width star (fs*2 = 78)');
+  assert.strictEqual(F.floats[2].el.textContent,'240K','an ordinary short hit stays plain text, no frame markup');
+  F.full=true;                                  // the Settings "Full" switch prints every digit
+  F.damageFloat(1,2,3,1250000,true);
+  assert.strictEqual(F.floats[4].txt,'1250000','and full mode shows all seven digits');
+  vm.runInContext(draw,scene);
+  assert.ok(F.floats[4].el.innerHTML.includes('class="fburst" style="width:229px;height:98px'),
+    'a 7-digit label stretches the star the same way (max(78, 7*39*.84) = 229 wide) - short and full both size from the finished label');
 });
 
 t('Zeny and kill rates refresh every second using a rolling minute and reset after stalls', () => {

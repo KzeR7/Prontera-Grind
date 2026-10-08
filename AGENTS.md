@@ -5544,6 +5544,104 @@ The owner's second pass over v77, six notes, all built.
   `tools/tests/combat_float_sim.js`, `tools/tests/ui_sim.js`, the two audit pages, `tools/cloudflare-deploy-steps.md`,
   `Updates/ro-feel-plan.md`, this log.
 
+### 2026-10-08 — `grind-v83.4 your number retune applied: 28px and 39px digits, a 70px flight, a x1.9 punch, and a spread that fans the volley out`
+
+* **Why:** the owner pasted a new strip-B selection from the tuner (`Updates/damage-floats-proposal/`,
+  the 📋 Copy-my-selection output: style tab b · fade style arc · pop-up type sway · font game ·
+  28px/39px · lifetime 1.75s · fade 90% · punch ×1.9 · spread 14px) plus two asks beyond the
+  sliders: **make the numbers float higher** (the Rise slider's top end, 70px) and **make Spread
+  actually do something** (it was inert in sway mode — the sway path owned the sideways motion —
+  and the game had no spread at all, so a multi-mob volley piled onto one pixel).
+* **What changed in the game (index.html):** the retune landed exactly where the tuner's
+  slider→code map says. Digits **17→28px** normal/skill and **32→39px** crit/skill-crit
+  (`.fl.damage,.fl.skill-damage{font:700 28px…}`, `.fl.critical,.fl.skill-critical{font:900 39px…}`,
+  and `fs=39` in the burst builder so the starburst scales with the number). The flight
+  **30→70px** (`DMG_RISE=70`, the top end of the page's Rise slider — hits, skill hits, crits and
+  skill crits all travel it). The life **1.05s→1.75s** (`DMG_RATE=.571`, `DMG_LIFE=1/.571`) with
+  `fburst-pop` stretched to 1.75s so the burst breathes for the whole life. The hold-then-fade now
+  starts at **90%** of the life (`opacity=min(1,max(0,r/.1))`, `DMG_FADE=.9`). The impact punch
+  **×1.0→×1.9** (`cs` 1→**1.33** on crits / .25→**.475** on normals — peaks ×2.33 / ×1.475, the
+  page's `1+.7*punch` / `1+.25*punch` mapping). **The spread is wired in:** `DMG_SPREAD=14`,
+  `addFloat` (and the merged DoT float) roll `sp:rnd(-DMG_SPREAD,DMG_SPREAD)` once at spawn, and
+  the draw loop rides it on top of the sway (`dxx=sway+(f.sw||0)*Math.min(1,tt/.22)+(f.sp||0)`) —
+  a multi-mob volley now fans out instead of piling onto one pixel. **Not regressed:** v71's
+  centring (the pop animation on the `.fburst` box, not the svg) and v72's digit fill (the gradient
+  on `.fl.critical .fnum` + the 1px dark rim); the font stays `game` = Game (Trebuchet), never
+  `classic` (Chunky).
+* **The tuner matches the game:** its sliders and its Balanced preset now **default to this exact
+  pick** (so the 📋 button prints what is live), `driftX` **honours the spread in sway mode**
+  (front-of-body and stack still stay put), and the stage grows with the flight (`syncStage` —
+  taller strips, spawn point glued to the mob's head in px) so the 70px rise stays on the strip
+  instead of clipping mid-flight. `/crit` (`Updates/crit-frame-compare/`) shows the good column at
+  the new sizes/lifetime/punch/spread: 39px crit digits, 1.75s burst breath, ×2.33 punch peak, and
+  every hit landing ±14px off centre.
+* **Before/after:** `Updates/damage-floats-proposal/volley-before-after-v73.png` renders the same
+  five-mob camp volley at the old (grind-v83.3) vs new (grind-v83.4) settings — a rendering from
+  the game's own draw-loop motion math (no browser in the sandbox, so not a screenshot), with the
+  rise rulers, the life/fade timeline bars and the deltas strip on it.
+* **Tests re-pinned to the new look:** `combat_float_sim.js` (15 checks: the 28/39px sizes, `fs=39`,
+  the constants line, the 70px climb, `r/.1`, `cs` 1.33/.475, plus a new check that the spread is
+  rolled at spawn and ridden on the sway), `ui_sim.js` (50 checks: the 39px crit rule, the
+  constants line in both sandboxes, and the crit markup the renderer writes —
+  `width:131px;height:98px` for `1896` at fs=39), the tuner smoke test (15 checks — new: the
+  defaults are the pick, sway honours spread, the stage grows), and the build-tag snapshots
+  (`affix-ranges.html` ×2, `equipment-cards-tuning.html`, `tools/cloudflare-deploy-steps.md`).
+  All suites green: the 37 `tools/tests/*_sim.js` suites 0 failures, `town_smoke.js` **40/40**,
+  `field_loop_smoke.js` **6/6**, the tuner smoke test **15/15**, and `node --check` passes on the
+  inline JS of `index.html` and both dev pages.
+* **Files touched:** `index.html` (BUILD → grind-v83.4; the `.fl` digit sizes, the `fburst-pop`
+  duration, the constants line, the `addFloat`/`dotTick` spread, the draw-loop motion block, the
+  burst builder's `fs`), `Updates/damage-floats-proposal/index.html` (defaults/preset, `driftX`,
+  the stage growth, the header tag), `Updates/damage-floats-proposal/README.md` (status, the
+  slider→code map, the v73 handover note), `Updates/damage-floats-proposal/smoke_test.js`,
+  `Updates/crit-frame-compare/index.html`, `tools/tests/combat_float_sim.js`,
+  `tools/tests/ui_sim.js`, the two audit pages, `tools/cloudflare-deploy-steps.md`,
+  `READ-ME-FIRST.md` (the BUILD v73 section), `Updates/damage-floats-proposal/volley-before-after-v73.png`, this log.
+* **Branches / PR:** shipped as **PR #39** (`arena/4a7f511c-prontera-grind` → `main`, 13 files). No migration, no API change; the
+  preview server (`python3 tools/preview_server.py 8000` with `PREVIEW_PAGE=Updates/damage-floats-proposal/index.html`)
+  serves the tuner at `/`, the game at `/game` and the crit comparison at `/crit`.
+
+### 2026-10-08 — `grind-v83.5 damage numbers start above the head - the whole crit frame clears the monster, bosses included, and incoming damage lifts off the hero`
+
+* **Why:** two asks after the owner played the retune: (1) damage numbers should **start above the
+  mob's head** — bosses too — so they stop blocking the monsters and the hero; (2) confirm the
+  game's **short-form option** (100K / 1M) goes well with the float code.
+* **What changed in the game (index.html):** `mobDamageY(o,crit=false)` is now px-exact — the head
+  line is the sprite's own top (`3.05*mobVisualScale(o)`, the height `syncMobImage` draws it), the
+  clearance is measured in screen px through `scr` (half the 28px line box + 6px for a normal, half
+  the 97.5px burst box + 6px for a crit), capped at 2 world units, with the old **1.7 floor kept**
+  for mobs still spawning in (their sprite grows 0→full; 1.7 stays above even a Small mob's 1.32
+  head). It follows the mob's drawn scale, so **bosses (×1.18) start higher**. `hurt()`/`strike()`
+  pass the crit flag (`mobDamageY(o,c)` / `mobDamageY(mob,c)`); the merged swing group keeps the
+  highest spawn. Incoming damage gets `heroDamageY()` — above the hero's head (the 1.95×2.92
+  billboard's top at 2.92) instead of a fixed 2.4 on the chest. The 70px flight, the punch, the
+  spread and the whole v73 retune are untouched; MISS/DODGE and the reward floats keep their spots
+  (the ask was damage).
+* **Short form: verified, no code change.** `damageFloat`/`dotTick`/the swing group all format
+  through `numTxt` (short by default, full via the Settings `dmgfmt` switch), the burst box sizes
+  from the finished label (`w=Math.max(fs*2,len*fs*.84)` — `1.3M` → the same 131×98px box as
+  `1896`, `1M` → 78px, full-mode `1250000` → 229px), and the v72 gradient fill on `.fnum` is
+  glyph-agnostic so the K/M/B suffix rides it as-is. The tuner needed no change either — its
+  strips already anchored the spawn in px above the mob's head (`spawnBase`).
+* **Tests:** `combat_float_sim.js` re-pinned (the new `mobDamageY`/`heroDamageY` source strings,
+  the crit-aware call sites, the incoming call site, plus runtime checks of the exact px clearance
+  against a stubbed 50px-per-world-unit projection); `ui_sim.js` +1 check (51 total) — short-form
+  labels flow into the floats and size the burst from the label, full mode included. The build-tag
+  snapshots (`affix-ranges.html` ×2, `equipment-cards-tuning.html`, `tools/cloudflare-deploy-steps.md`)
+  now carry the full v83.5 BUILD string. All suites green: the 37 `tools/tests/*_sim.js` suites
+  exit 0 with no FAIL lines, `town_smoke.js` **40/40**, `field_loop_smoke.js` **6/6** (re-run 6× —
+  the px-exact spawn briefly dropped the 1.7 floor and flaked that suite's `y > 1.5` head-height
+  check on mobs caught mid-spawn-in; the floor is back), the tuner smoke test **15/15**, and
+  `node --check` passes on the inline JS of `index.html` and both dev pages.
+* **Files touched:** `index.html` (BUILD → grind-v83.5; `mobDamageY` px-exact + `heroDamageY`;
+  the two `showDamage` call sites; the incoming `damageFloat` call site; the `.fl` history comment),
+  `tools/tests/combat_float_sim.js`, `tools/tests/ui_sim.js`, the two audit pages,
+  `tools/cloudflare-deploy-steps.md`, `READ-ME-FIRST.md` (the BUILD v83.5 section),
+  `Updates/damage-floats-proposal/README.md` (the spawn map row + the v83.5 handover note), this log.
+* **Branches / PR:** pushed to `arena/4a7f511c-prontera-grind`, which updates **PR #39** (the retune
+  PR — same feature line). No migration, no API change; the preview server keeps serving the tuner
+  at `/`, the game at `/game` and the crit comparison at `/crit`.
+
 ### 2026-10-08 — `2026-10-08 grind-v84 Base 100+ EXP doubled (owner playtest)`
 
 * **Owner report, two items.** (1) "i feel that lv 100 onwards level very easily compare to lv 70-99 ... i can basically lv 100 to lv 150 in a day. i feel double the exp needed starting from lv 100" — so the Base 100+ requirements are DOUBLED, exactly as asked. (2) The Nightmare maps (100-150) give worse EXP than camping the Abyss Stage-10 MVP wave because of the HP spike — measured, written up, and **left for a later build** (owner chose "advice only, don't change anything yet").
@@ -5595,3 +5693,33 @@ The owner's second pass over v77, six notes, all built.
 * **Art:** none. **Tests:** all **38** `*_sim.js` suites pass; `town_smoke.js` **40/40**; `field_loop_smoke.js` **7/7**; `tune_pacing --verify --real` green (EXP untouched); inline page JavaScript passes `node --check`; `git diff --check` clean.
 * **Branches / PR:** committed to `arena/477c9ee2-prontera-grind`; pushed, **no PR** - owner playtests first.
 * **Known limits / follow-ups:** the four v87 dials are single constants if the tuning needs a nudge after a real run - `mhOf` (rate 1.25, cap 30, boss x4/3), `prOf` (rate .02, cap .6, boss +.1), `CAMP_REFILL_MAX=7`, and `eaOf` (1.4 @ pw 90) from v86; the pierce ramp makes pw 60-89 maps up to ~40% punchier vs mid-gear characters (intended - "buff the mobs"), watch that band in playtest; pet nerf is the owner's own upcoming change.
+
+### 2026-10-08 — `grind-v87.1` merge resolution: this branch (the number retune, v83.4/v83.5) merged with `main` (grind-v84–v87)
+
+* **Why:** PR #39 went **CONFLICTING** when `main` moved — PR #40 (grind-v84 double Base 100+ EXP,
+  v85 quest-exact Base 100+ doubling / Nightmare pay ramp / first-15 job half cost, v86
+  camp-refill freeze fix + endgame damage retune + RO-style ASPD, v87 mob HIT rating & armor
+  pierce + 8s field restock) merged while this branch sat on `10815e2`. The owner asked for a
+  merge check.
+* **Conflicts (5), all resolved by hand:** `index.html` — the BUILD line (re-bumped to
+  **grind-v87.1**, below) and the incoming-damage block, where both sides had edited adjacent
+  lines: the merge keeps v87's comment + `prOf` armor-pierce formula and this branch's
+  `damageFloat(pl.x,heroDamageY(),pl.z,…)` above-the-head spawn. `AGENTS.md` — both sides
+  appended at the tail: kept in version order (v83.4, v83.5, then v84–v87), this entry last.
+  The three build-tag mirrors (`affix-ranges.html` ×2, `equipment-cards-tuning.html`,
+  `tools/cloudflare-deploy-steps.md`) — took main's side (v87 strings; the affix tables are
+  unchanged by v84–v87) and re-pinned the BUILD string to grind-v87.1.
+* **No semantic overlap:** v84–v87 are balance/economy only (EXP curves, job EXP, mob ATK `eaOf`,
+  `mhOf`/`prOf`, `CAMP_REFILL_MAX`, ASPD) — the float visual code on main was still the
+  pre-retune version, so this branch's retune + above-head spawn apply cleanly on top.
+  `combat_damage_sim.js` (new on main) and `field_loop_smoke` step 3b (the 8s restock) merged in
+  untouched.
+* **BUILD:** re-bumped to **`grind-v87.1`** — the merged file is v87 + this branch's float work,
+  and the login card must say so: `2026-10-08 grind-v87.1 the number retune from the tuner
+  (28/39px digits, a 70px flight, x1.9 punch, spread) and damage numbers start above the head`.
+* **Tests after the merge:** all **38** `tools/tests/*_sim.js` suites green (37 + main's new
+  `combat_damage_sim.js`), `town_smoke.js` **40/40**, `field_loop_smoke.js` **7/7** (main's step 3b
+  included; the `y > 1.5` head-height check still holds with the 1.7 floor), the tuner smoke test
+  **15/15**, `node --check` clean on the inline JS of `index.html` and both dev pages,
+  `git diff --check` clean. READ-ME-FIRST gained a v87.1 section at the top of the BUILD list.
+* **Branches / PR:** merge commit on `arena/4a7f511c-prontera-grind`; PR #39 is mergeable again.
