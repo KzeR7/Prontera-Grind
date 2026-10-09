@@ -102,7 +102,7 @@ Open the `*.pages.dev` address Cloudflare gives the project, and walk this list:
 | Check | Expected |
 |---|---|
 | The login card | says **“☁ Cloud accounts are on — register or sign in…”** |
-| Build tag at the bottom of the card | `2026-10-08 grind-v87.1 the number retune from the tuner (28/39px digits, a 70px flight, x1.9 punch, spread) and damage numbers start above the head` |
+| Build tag at the bottom of the card | `2026-10-08 grind-v88 Prontera Town removed; sheet and settings tidied; auto-equip learns dual wield; the swing matches attack speed; auto-advance catches up; the page reloads itself on a new deploy` |
 | Register your own name | a dialog with a **recovery code** — copy it somewhere safe, it is shown once |
 | Play for a minute | the header badge goes `☁ …` → `☁ ✓` |
 | The same address in a second browser | sign in with the same name and password → **the same character loads** |

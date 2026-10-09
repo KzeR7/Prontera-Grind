@@ -129,5 +129,20 @@ t('the drawn swing keeps up: minimum animation .14s, and the sheet shows the RO-
   assert.strictEqual(roAspd(.13), 182, 'the machine-gun floor reads 182');
 });
 
+t('v88: the drawn swing follows the real attack rate (owner: "the atk animation does not match the atk speed")', () => {
+  // The old swingLength() floored its interval at .2s (Math.max(.2,aspd())), so anyone faster than
+  // 5 hits/s attacked on the real timer but DREW a slower swing - the two visibly drifted. The
+  // interval must be the real aspd(); the clamp still floors the DRAWN length at SWING_MIN_T.
+  const m = src.match(/function swingLength\(\)\{[\s\S]*?\n\}/);
+  assert.ok(m, 'swingLength() is where the drawn animation length comes from');
+  assert.ok(!/Math\.max\(\.2,aspd\(\)\)/.test(m[0]), 'no .2s floor on the animation interval any more');
+  assert.ok(/interval=aspd\(\)/.test(m[0]), 'the animation interval IS the attack rate');
+  assert.ok(/cl\(Math\.min\(interval,file\|\|interval,SWING_MAX_T\),SWING_MIN_T,SWING_MAX_T\)/.test(m[0]),
+    'the drawn length is clamped between SWING_MIN_T and SWING_MAX_T');
+  // ...and the rate itself is untouched: playerAttack still waits the real aspd() between swings
+  const pa = src.match(/function playerAttack\(\)\{[\s\S]*?\n\}/);
+  assert.ok(pa && /pAtkT=interval;atkAnim=1;swingDur=swingLength\(\)/.test(pa[0]), 'the swing timer and the animation share one duration');
+});
+
 console.log(`\ncombat damage: ${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

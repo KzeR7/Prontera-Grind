@@ -106,6 +106,23 @@ t('offline normal Stage 10 boss clears follow Auto-advance but never jump into N
   assert.deepStrictEqual([last.S.mp,last.S.lvl,last.r.stages],[9,10,0], 'Abyss Stage 10 never auto-jumps into Nightmare');
 });
 
+t('v88: offline catch-up - Auto-advance on walks a parked player forward, off leaves them farming (owner: "sometimes it does nothing")', () => {
+  // The harness's MPS is 100, so one kill from kl=99 fires the stage gate.
+  const award = (lvl, prog, adv) => {
+    const S={offlineAt:1,kills:0,kl:99,mp:0,lvl,prog:Array(10).fill(prog),adv,zeny:0,exp:0,
+      ore:{ori:0,elu:0},cards:[],inv:[],eq:{},pets:[],auto:false,autoSell:[],q:[]};
+    h.setState(S);const r={kills:0,zeny:0,exp:0,stages:0};
+    h.offlineAwardKill({boss:false,zeny:1,exp:1,drops:[],cardCh:0,ore:false,lvl:1,sec:0},r);
+    return {S,r};
+  };
+  const up=award(3,10,true);
+  assert.deepStrictEqual([up.S.lvl,up.S.prog[0],up.r.stages],[4,10,1],'fifteen-kill gate below the frontier advances one stage when Auto-advance is on');
+  const farm=award(3,10,false);
+  assert.deepStrictEqual([farm.S.lvl,farm.S.prog[0],farm.r.stages],[3,10,0],'Auto-advance off still farms the stage');
+  const frontier=award(5,5,false);
+  assert.deepStrictEqual([frontier.S.lvl,frontier.S.prog[0],frontier.r.stages],[5,6,0],'the frontier clear still unlocks the next stage with the switch off');
+});
+
 t('cloud accounts use the server-authorized kill budget and cannot reuse a claim ID', () => {
   const S = { offlineAt:1,offlineKph:30000,offlineRateAt:0,offlineRateKills:0,offlineKillRemainder:0,
     kills:0,kl:0,mp:0,lvl:1,prog:[1],exp:0,zeny:0,ore:{ori:0,elu:0},cards:[],inv:[],eq:{},

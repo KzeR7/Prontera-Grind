@@ -15,7 +15,7 @@ ${grab('const maxHp=()=>','const totalPts=')}
 ${grab('const KIT_MAP={','const KIT_TILE=')}
 ${grab('const STAGE_SCENES=[','function kitRect(d,gx0,gx1,gy){')}
 ${grab('let mobs=[],mob=null','function genGear(')}
-const gx=()=>1,addJob=()=>{},checkLevel=()=>{},qProg=()=>{},addFloat=()=>{},log=m=>logs.push(String(m)),save=()=>{},ui=()=>{},numTxt=n=>String(Math.round(n));
+const gx=()=>1,fieldName=()=>'Prontera',addJob=()=>{},checkLevel=()=>{},qProg=()=>{},addFloat=()=>{},log=m=>logs.push(String(m)),save=()=>{},ui=()=>{},numTxt=n=>String(Math.round(n));
 const mkDrop=()=>null,genGear=()=>null;
 ${grab('function earnZeny(amount){','function collect(it){')}
 this.H={fresh,CLASSES,spawn,kill,atk,aspd,maxHp,def,mdef,starterStage,fieldPower,HPK,HPE,MAPS,AGGRO,
@@ -218,5 +218,27 @@ t('stage 10 starts with boss plus 3 or 5 escorts and boss defeat resets the whol
   H.spawn();assert.strictEqual(H.mobs.length,m<5?4:6,'boss should respawn immediately without fifteen more kills');
  }
  assert.ok(/m.pack===activePack&&\(isBoss\(\)\|\|/.test(src),'all boss escorts should engage with the boss');
+});
+t('v88: Auto-advance catches a player up who is parked below the unlocked frontier (owner: "sometimes it does nothing")',()=>{
+ // The old code only advanced at exactly S.lvl>=S.prog, so with the switch ON a player farming
+ // below the frontier (an old map revisited, a stage farmed with the switch off, a map arrived on
+ // whose stages were already unlocked) never moved. The switch must walk you forward again.
+ spawn(0,3);H.S.adv=true;H.S.prog=Array(10).fill(10);       // stage 3 of 10 unlocked, switch ON
+ for(let i=0;i<15;i++){if(!H.mobs.length)H.spawn();const v=H.mob||H.mobs[0];v.drops=[];v.cardCh=0;v.ore=false;H.kill(v)}
+ assert.strictEqual(H.S.lvl,4,'fifteen kills below the frontier advance one stage when Auto-advance is on');
+ assert.strictEqual(H.S.prog[0],10,'the unlocked frontier itself does not move while catching up');
+ // ... and it keeps walking until it reaches the frontier, then unlocks past it as before
+ for(let stage=4;stage<10;stage++){for(let i=0;i<15;i++){if(!H.mobs.length)H.spawn();const v=H.mob||H.mobs[0];v.drops=[];v.cardCh=0;v.ore=false;H.kill(v)}}
+ assert.strictEqual(H.S.lvl,10,'catching up walks all the way to Stage 10');
+ // with the switch OFF the same fifteen kills change nothing (farming stays possible)
+ spawn(0,3);H.S.adv=false;H.S.prog=Array(10).fill(10);
+ for(let i=0;i<15;i++){if(!H.mobs.length)H.spawn();const v=H.mob||H.mobs[0];v.drops=[];v.cardCh=0;v.ore=false;H.kill(v)}
+ assert.strictEqual(H.S.lvl,3,'Auto-advance off still farms where you stand');
+ assert.strictEqual(H.S.prog[0],10,'and unlocks nothing while below the frontier');
+ // at the frontier with the switch off the next stage still unlocks (the old behaviour, kept)
+ spawn(0,5);H.S.adv=false;H.S.prog=Array(10).fill(5);
+ for(let i=0;i<15;i++){if(!H.mobs.length)H.spawn();const v=H.mob||H.mobs[0];v.drops=[];v.cardCh=0;v.ore=false;H.kill(v)}
+ assert.strictEqual(H.S.prog[0],6,'the frontier clear still unlocks the next stage with the switch off');
+ assert.strictEqual(H.S.lvl,5,'but does not move you off it');
 });
 console.log(`\n${pass} passed, ${fail} failed`);process.exitCode=fail?1:0;

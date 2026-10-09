@@ -2,8 +2,7 @@
 //   node tools/tests/field_loop_smoke.js
 //
 // NOT part of the `*_sim.js` gate: those suites run on plain node, and this one boots the real
-// index.html in jsdom against the real Three.js r128, so it needs the same two packages as the
-// town smoke test:
+// index.html in jsdom against the real Three.js r128, so it needs the same two packages:
 //
 //     npm i --no-save jsdom three@0.128.0
 //

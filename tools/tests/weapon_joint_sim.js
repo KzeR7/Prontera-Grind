@@ -112,7 +112,7 @@ t('the old sine model did move the weapon between frames (why it is parked)', ()
 });
 
 t('the game loads the joints file and consults it (source pins)', () => {
-  assert.ok(src.includes('<script src="assets/weapon_joints_data.js?v=1"></script>'),
+  assert.ok(src.includes('<script src="assets/weapon_joints_data.js?v=2"></script>'),
     'index.html must load assets/weapon_joints_data.js');
   assert.ok(src.includes('function weaponJointPixel(body,dir,fr){') &&
             src.includes('const J=window.WEAPON_JOINTS,PK=window.SPRITE_PACK;'),

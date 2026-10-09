@@ -237,5 +237,79 @@ t('MATK reads the main hand only, so the left-hand dagger never feeds it', () =>
   assert.strictEqual(H.matk(), alone, 'a mage stat is not what the second blade is for');
 });
 
+// ---- 5. v88: the two auto-unequip reports ---------------------------------
+// The owner's report: "my assassin using 2 daggers, sometimes the off-hand dagger is auto
+// unequipped". Two causes, both fixed and pinned here:
+//   (a) the save-load repair predated v81 dual wield and stowed ANY off-hand piece that was not
+//       a shield - so the second dagger came off on every load, login and cloud sync;
+//   (b) auto-equip only ever compared the main hand, so "auto-equip better gear" never understood
+//       the pair (and could leave a katar and a dagger worn together, which the game forbids).
+t('v88a: the save-load repair keeps an Assassin\'s off-hand dagger on', () => {
+  const repair = grab('// Assassin jobs use one two-handed Katar', 'const fx=c=>{c.v=cardVal(c.g,c.stat)};');
+  const run = (cls, eq) => {
+    const box = { CLASSES: H.CLASSES, dualWield: H.dualWield, f: { cls, eq: Object.assign(empty(), eq), inv: [] } };
+    vm.createContext(box);
+    vm.runInContext(repair + '\nthis.__f=f;', box);
+    return box.__f;
+  };
+  // the v81 pair survives a load, a login and a cloud sync - nothing is stowed
+  let f = run('Assassin', { weapon: dagger({ id: 1, val: 80 }), off: dagger({ id: 2, val: 60 }) });
+  assert.ok(f.eq.off && f.eq.off.id === 2, 'the off-hand dagger stays on through a load');
+  assert.strictEqual(f.inv.length, 0, 'and nothing is moved into the bag');
+  f = run('Assassin Cross', { weapon: dagger({ id: 1, val: 80 }), off: dagger({ id: 2, val: 60 }) });
+  assert.ok(f.eq.off && f.eq.off.id === 2, 'the same for the Assassin Cross');
+  // a katar in the main hand still empties the left hand: the katar occupies both hands
+  f = run('Assassin', { weapon: katar({ id: 1 }), off: dagger({ id: 2, val: 60 }) });
+  assert.ok(!f.eq.off, 'a katar still takes both hands on load');
+  assert.strictEqual(f.inv.length, 1, 'the blade is kept, in the bag');
+  // a shield class keeps its shield, and a class that may not use the weapon still loses it
+  f = run('Knight', { weapon: wpn({ id: 1, wt: 'sword' }), off: shield({ id: 3 }) });
+  assert.ok(f.eq.off && f.eq.off.id === 3, 'a shield survives for a shield class');
+  f = run('Mage', { weapon: wpn({ id: 1, wt: 'sword' }) });
+  assert.ok(!f.eq.weapon, 'a Mage still cannot keep a sword on load');
+  // a Thief keeps the main-hand dagger but not a second one in the left
+  f = run('Thief', { weapon: dagger({ id: 1 }), off: dagger({ id: 2, val: 60 }) });
+  assert.ok(!f.eq.off, 'a Thief does not dual-wield, so the left-hand blade is stowed');
+  assert.ok(f.eq.weapon, 'but the main-hand dagger stays on');
+});
+
+t('v88b: auto-equip is dual-wield aware - a dagger takes the better hand, a katar takes both', () => {
+  const fn = pick(/function autoEquip\(it\)\{[\s\S]*?\n\}/, 'autoEquip');
+  // dualWield() reads S from its own scope, so the box runs the REAL function source against the
+  // box's own S - not the outer harness's copy, which would answer for the wrong class.
+  const dw = pick(/function dualWield\(cls=S\.cls\)\{[^}]*\}/, 'dualWield');
+  const box = { CLASSES: H.CLASSES, ev: H.ev, ekey: it => it.slot, DUAL: .5, TWO_HANDED: 1.5, maxHp: () => 100 };
+  vm.createContext(box);
+  vm.runInContext(dw + '\n' + fn + '\nthis.__ae=autoEquip;', box);
+  const ae = box.__ae;
+  const run = (cls, eq, extraInv, drop) => {
+    const it = Object.assign(dagger({ id: 99 }), drop);
+    box.S = { cls, eq: Object.assign(empty(), eq), inv: extraInv.concat([it]), hp: 100 };
+    const moved = ae(it);
+    return { S: box.S, moved, dropStillInBag: box.S.inv.includes(it) };
+  };
+  // a dagger better than the off-hand but worse than the main hand goes to the LEFT hand
+  let r = run('Assassin', { weapon: dagger({ id: 1, val: 100 }), off: dagger({ id: 2, val: 60 }) }, [], { val: 80 });
+  assert.ok(r.moved && r.S.eq.off && r.S.eq.off.id === 99, 'the new dagger takes the off-hand when that raises the pair');
+  assert.ok(r.S.eq.weapon.id === 1, 'the better main-hand dagger stays put');
+  assert.ok(r.S.inv.some(x => x.id === 2), 'the replaced blade goes to the bag');
+  // a dagger better than the main hand takes the main hand
+  r = run('Assassin', { weapon: dagger({ id: 1, val: 60 }), off: dagger({ id: 2, val: 50 }) }, [], { val: 100 });
+  assert.ok(r.S.eq.weapon.id === 99 && r.S.inv.some(x => x.id === 1), 'the best dagger takes the main hand, the old one goes to the bag');
+  // a katar that beats the pair takes the main hand and stows the off-hand blade
+  r = run('Assassin', { weapon: dagger({ id: 1, val: 60 }), off: dagger({ id: 2, val: 50 }) }, [], { wt: 'katar', val: 100 });
+  assert.ok(r.S.eq.weapon.wt === 'katar' && !r.S.eq.off, 'a winning katar occupies both hands');
+  assert.ok(r.S.inv.some(x => x.id === 2), 'the off-hand blade is kept in the bag');
+  // a worse drop is not equipped at all
+  r = run('Assassin', { weapon: dagger({ id: 1, val: 100 }), off: dagger({ id: 2, val: 90 }) }, [], { val: 10 });
+  assert.ok(!r.moved && r.dropStillInBag, 'a worse dagger stays in the bag');
+  // a single-wield class still only compares the main hand
+  r = run('Thief', { weapon: dagger({ id: 1, val: 60 }) }, [], { val: 100 });
+  assert.ok(r.S.eq.weapon.id === 99, 'a Thief auto-equips the main hand exactly as before');
+  // a non-weapon drop (a shield) still uses its own slot
+  r = run('Knight', { weapon: wpn({ id: 1, wt: 'sword', val: 50 }) }, [], { slot: 'off', wt: 'shield', name: 'Shield', val: 40 });
+  assert.ok(r.S.eq.off && r.S.eq.off.val === 40, 'a shield drop still auto-equips to the off-hand');
+});
+
 console.log('\ndual wield: ' + pass + ' passed, ' + fail + ' failed');
 process.exit(fail ? 1 : 0);

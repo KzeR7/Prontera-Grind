@@ -43,7 +43,7 @@ t('every asset path index.html names statically ships with it', () => {
   // The game names three data files statically (sprite pack, class skins, weapon joints); the map
   // kit is fetched at runtime and the mob fallbacks go through a template string, so they are covered
   // by the directory copies and the group check above.
-  const bare = staticRefs.map(r => r.replace(/[?#].*$/, ''));   // the game cache-busts with ?v=1
+  const bare = staticRefs.map(r => r.replace(/[?#].*$/, ''));   // the game cache-busts with ?v=2
   for (const must of ['assets/sprite_pack_data.js', 'assets/class_skins_data.js', 'assets/weapon_joints_data.js']) {
     assert.ok(bare.includes(must), 'index.html no longer references ' + must + ' - update this test if that is deliberate');
   }
