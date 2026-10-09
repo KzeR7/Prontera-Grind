@@ -1,22 +1,30 @@
 # On-screen damage numbers — research, the missing crit explode frame, and 3 options
 
-**Status: APPLIED (v69, geometry corrected in v71, font/fill in v72, retuned in v73 / grind-v83.4).** The owner
-picked the Balanced tuning on the proposal page (arc fade · sway-up-fade-left · Chunky Verdana 900 ·
-17px/32px, strip B · rise 30 · life 1.05s · fade at 55% · punch ×1.0 · spread 14) and that exact
-configuration now lives in the game, with Option B's explode frame (chip-free) as the critical look.
-The owner's **new strip-B selection** (arc fade · sway up, fade left · Game (Trebuchet) · **28px/39px** ·
-**rise 70** · **life 1.75s** · **fade at 90%** · **punch ×1.9** · **spread 14**) is applied too — and this
-time the spread is **wired in**, not just shown. A **📋 Copy my selection** button on the page copies
-the current picks as text to paste into the chat, so a change of heart is one paste away (it also
-names the focused strip A/B/C). This page stays as the live tuner for further tweaks, and its sliders
-now **default to the live pick**, so the 📋 button prints exactly what is in the game.
+**Status: APPLIED (v69, geometry corrected in v71, font/fill in v72, retuned in v73 / grind-v83.4,
+retuned again in v74 / grind-v88.7).** The owner picked the Balanced tuning on the proposal page
+(arc fade · sway-up-fade-left · Chunky Verdana 900 · 17px/32px, strip B · rise 30 · life 1.05s ·
+fade at 55% · punch ×1.0 · spread 14) and that exact configuration now lives in the game, with
+Option B's explode frame (chip-free) as the critical look. The owner then retuned it twice from this
+page's own sliders: first to **28px/39px · rise 70 · life 1.75s · fade at 90% · punch ×1.9 · spread 14**
+(v73 — and that time the spread was **wired in**, not just shown), and now to the **live pick**
+(arc fade · sway up, fade left · Game (Trebuchet) · **20px/32px** · **rise 70** · **life 1.15s** ·
+**fade at 75%** · **punch ×1.5** · **spread 14**) — the digits come back down and the numbers clear
+the screen faster, while the climb and the fan-out stay exactly as the owner set them. A **📋 Copy my
+selection** button on the page copies the current picks as text to paste into the chat, so a change
+of heart is one paste away (it also names the focused strip A/B/C). This page stays as the live tuner
+for further tweaks, and its sliders and the Balanced preset now **default to the v74 pick**, so the
+📋 button prints exactly what is in the game.
 
 **How to view it:** run `python3 tools/preview_server.py 8000` and open **`/`** (or `/damage`,
-or `/Updates/damage-floats-proposal/`). You get four live strips — the current game styling plus
-the three options — all firing the same combat volley (hits, crits, skill hits, **skill
-crits**, miss, incoming, heal, and a merged DoT). Sliders let you tune font, size, rise,
-lifetime, fade start and impact punch live; presets: *Game today / RO classic / Balanced ★ /
-Maximum juice*. Press **Space** to fire. The weapon page moved to **`/weapons`**.
+or `/Updates/damage-floats-proposal/`). To put the tuner itself on `/` for the Arena preview,
+run it with `PREVIEW_PAGE=Updates/damage-floats-proposal/index.html`. You get four live strips —
+the current game styling plus the three options — all firing the same combat volley (hits, crits,
+skill hits, **skill crits**, miss, incoming, heal, and a merged DoT). Sliders let you tune font,
+size, rise, lifetime, fade start and impact punch live; presets: *Game today / RO classic /
+Balanced ★ / Maximum juice*, and the sliders plus *Balanced* now open on the **v74 pick**
+(20px/32px · rise 70 · life 1.15s · fade 75% · punch ×1.5 · spread 14). Press **Space** to fire.
+The weapon page moved to **`/weapons`**. To render two tunings side by side without a browser:
+`/tmp/venv/bin/python tools/render_float_volley.py` → `volley-before-after-v74.png`.
 
 ---
 
@@ -162,7 +170,8 @@ machinery comes free once B is in.
 4. Sanity-run behind the preview server first; Cloudflare deploy unchanged (no API/migration
    work).
 
-*Research page smoke-checked headlessly (13/13) and the inline JS passes `node --check`;
+*Research page smoke-checked headlessly (15/15, incl. the v74 default checks) and the inline JS
+passes `node --check`;
 the page is dev-only and does not ship to players.*
 
 ---
@@ -184,22 +193,22 @@ route table. When the owner asks to adjust the damage numbers again, the workflo
    `node Updates/damage-floats-proposal/smoke_test.js` (the test stubs the Web Animations
    API itself, since jsdom lacks it).
 
-**Live settings applied to the game (BUILD grind-v83.4) and where they live in `index.html`:**
+**Live settings applied to the game (BUILD grind-v88.7, the v74 retune) and where they live in `index.html`:**
 
 | Setting (owner's final pick) | Where in `index.html` |
 |---|---|
-| Font **Game (Trebuchet)** — the selection's key is `game`; **Chunky (Verdana 900)** is `classic` and **does not ship** — **28px** normal/skill, **39px** critical/skill-critical (v73 retune) | floats CSS block: `.fl.damage,.fl.skill-damage{font:700 28px "Trebuchet MS"…}` and `.fl.critical,.fl.skill-critical{font:900 39px "Trebuchet MS"…}` |
+| Font **Game (Trebuchet)** — the selection's key is `game`; **Chunky (Verdana 900)** is `classic` and **does not ship** — **20px** normal/skill, **32px** critical/skill-critical (v74 retune; v73 was 28px/39px) | floats CSS block: `.fl.damage,.fl.skill-damage{font:700 20px "Trebuchet MS"…}` and `.fl.critical,.fl.skill-critical{font:900 32px "Trebuchet MS"…}` |
 | Crit **fill** = this page's strip B, not flat gold: `linear-gradient(#fff3b0 10%,#ffc93c 90%)` clipped to the glyphs, `.6px` maroon stroke, soft shadows, plus a **1px dark rim** (added in v72: the page warns a thin stroke fails on bright maps). It sits on the digits span, so the burst is not filtered with the digits | `.fl.critical .fnum{background-image:…;color:#ffd23f;-webkit-text-stroke:.6px #57330a;filter:drop-shadow(0 0 1px #2e0a02) …}`; skill crits the same in `#eafaff → #7cd4ff` |
-| Burst runs this page's `T.life` curve: `scale .3 → 1.25 @30% → 1 with a random wobble @55% → 1.05`, not the old fixed 0.32s pop — stretched to the 1.75s life | `@keyframes fburst-pop{…}` + `--brot` on the `.fburst` markup; `.fburst{…animation:fburst-pop 1.75s…}` |
+| Burst runs this page's `T.life` curve: `scale .3 → 1.25 @30% → 1 with a random wobble @55% → 1.05`, not the old fixed 0.32s pop — always stretched to the whole life, so **1.15s at the v74 pick** (it was 1.75s at v73) | `@keyframes fburst-pop{…}` + `--brot` on the `.fburst` markup; `.fburst{…animation:fburst-pop 1.15s…}` |
 | Crit colour GIF-yellow + maroon outline; skill-crit silver-blue | `.fl.critical{color:#ffd23f…}` / `.fl.skill-critical{color:#eaf6ff…}` |
-| **Fade style: arc** — punch on spawn (crits peak **×2.33**, normals **×1.475**, settling over the first 20%; the page maps the ×1.9 punch as `1+.7*punch` on crits, `1+.25*punch` on normals) | draw-loop float block: `sc=1+cs*Math.max(0,1-tt/.2)` with `cs` **1.33** for crits, **.475** otherwise |
+| **Fade style: arc** — punch on spawn (v74: crits peak **×2.05**, normals **×1.375**, settling over the first 20%; the page maps the ×1.5 punch as `1+.7*punch` on crits, `1+.25*punch` on normals — v73's ×1.9 was ×2.33 / ×1.475) | draw-loop float block: `sc=1+cs*Math.max(0,1-tt/.2)` with `cs` **1.05** for crits, **.375** otherwise |
 | **Pop-up type: sway up, fade left** — up **70px** (the top end of the page's Rise slider), right 10px for the first 28%, then −28px left | draw-loop float block: `dy=-DMG_RISE*Math.min(1,tt*1.15)` with `DMG_RISE=70`, and `dxx=sway+(f.sw||0)*Math.min(1,tt/.22)+(f.sp||0)` |
-| **Hold-then-fade from 90%** of the life | draw-loop float block: `opacity=Math.min(1,Math.max(0,r/.1))` |
-| **Lifetime 1.75s** | `addFloat` gives the damage family `rate:.571` (life decays at `rate×dt`; 1/0.571 ≈ 1.75s) |
+| **Hold-then-fade from 75%** of the life (v74 — the last quarter of it is the fade; v73 held until 90%) | draw-loop float block: `opacity=Math.min(1,Math.max(0,r/.25))` — the divisor is `1-DMG_FADE` |
+| **Lifetime 1.15s** (v74; v73 was 1.75s) | `addFloat` gives the damage family `rate:.8696` (life decays at `rate×dt`; 1/0.8696 ≈ 1.15s) |
 | **Spread 14px, wired in (v73)** — every damage number (hits, skill hits, crits, skill crits, DoT) rolls its own **±14px horizontal offset at spawn**, ridden on top of the sway so a multi-mob volley fans out. The page's `driftX` rule honours it in sway mode too | constants `DMG_SPREAD=14`; `addFloat`: `…rate:isDamageFloat(kind)?DMG_RATE:0,sp:isDamageFloat(kind)?rnd(-DMG_SPREAD,DMG_SPREAD):0}` (the merged DoT float rolls one too); draw loop: `dxx=sway+(f.sw||0)*Math.min(1,tt/.22)+(f.sp||0)` |
-| The constants line carries the whole pick | `const DMG_LIFE=1/.571,DMG_RISE=70,DMG_FADE=.9,DMG_RATE=.571,DMG_SPREAD=14;` |
-| **Spawn above the mob's head (v83.5)** — the number starts clear of the head: crits clear of the whole 97.5px burst box, ordinary hits of their 28px digits, measured in screen px through `scr` so it holds at any zoom. It follows the mob's drawn scale, so **bosses start higher**; incoming damage clears the hero's head too (`heroDamageY()`, was a fixed 2.4 on the chest). No random scatter for damage numbers | `mobDamageY(o,crit)`: head line `3.05*mobVisualScale(o)` (the height `syncMobImage` draws the sprite), clearance `(crit?97.5:28*1.2)/2+6` px above it, 1.7 floor kept for mobs still spawning in; `heroDamageY()`: head line `2.92` (the hero billboard's top); call sites `showDamage(o,o.x,mobDamageY(o,c),o.z,…)` in `hurt()`/`strike()` and `damageFloat(pl.x,heroDamageY(),pl.z,…)` for incoming — the old `rnd(-.4,.4)` jitter is gone |
-| **Explode frame** on crits & skill crits (the page's own layered star — 12 jittered outer spikes + 8-spike inner star + pale core, **no CRIT chip**) with a random speed-line spray (9 crit / 8 skill crit) and an impact ring, sized from the number | float-creation block in the draw loop: `if(f.kind==='critical'||f.kind==='skill-critical'){…}` — `fs=39`, `starPts(12,48,30,rot)` + `starPts(8,34,20,rot*.6)`, width `max(fs*2,len*fs*.84)`, height `fs*2.5`, ring `fs*1.4` |
+| The constants line carries the whole pick | `const DMG_LIFE=1/.8696,DMG_RISE=70,DMG_FADE=.75,DMG_RATE=.8696,DMG_SPREAD=14;` |
+| **Spawn above the mob's head (v83.5)** — the number starts clear of the head: crits clear of the whole burst box (**80px** at the v74 32px crits, was 97.5px), ordinary hits of their **20px** digits, measured in screen px through `scr` so it holds at any zoom. It follows the mob's drawn scale, so **bosses start higher**; incoming damage clears the hero's head too (`heroDamageY()`, was a fixed 2.4 on the chest). No random scatter for damage numbers | `mobDamageY(o,crit)`: head line `3.05*mobVisualScale(o)` (the height `syncMobImage` draws the sprite), clearance `(crit?80:20*1.2)/2+6` px above it (46px for a crit, 18px for a hit), 1.7 floor kept for mobs still spawning in; `heroDamageY()`: head line `2.92` (the hero billboard's top); call sites `showDamage(o,o.x,mobDamageY(o,c),o.z,…)` in `hurt()`/`strike()` and `damageFloat(pl.x,heroDamageY(),pl.z,…)` for incoming — the old `rnd(-.4,.4)` jitter is gone |
+| **Explode frame** on crits & skill crits (the page's own layered star — 12 jittered outer spikes + 8-spike inner star + pale core, **no CRIT chip**) with a random speed-line spray (9 crit / 8 skill crit) and an impact ring, sized from the number | float-creation block in the draw loop: `if(f.kind==='critical'||f.kind==='skill-critical'){…}` — `fs=32` (v74: follows the crit digit size, was 39), `starPts(12,48,30,rot)` + `starPts(8,34,20,rot*.6)`, width `max(fs*2,len*fs*.84)`, height `fs*2.5`, ring `fs*1.4` |
 | Skill crits are their own class | `damageFloat`: `critical?(skill?'skill-critical':'critical'):…` |
 | **Short form starts at 100K** (99,999 stays full digits) | `shortNum`: `if(a>=1e5)…` |
 | Skill-name banner above the head | `skillNameFloat`: world height `3.65`, +.38 per extra cast slot |
@@ -248,16 +257,40 @@ game's **short-form option** (100K / 1M) goes well with the float code. The game
 damage number clear of its mob's head: `mobDamageY(o,crit)` measures the clearance in screen px
 through the same projection the floats use (`scr`), from the sprite's own head line
 (`3.05*mobVisualScale(o)`, the height `syncMobImage` draws the sprite), so it holds at every zoom
-and follows the mob's drawn scale (bosses start higher); a crit clears its whole 97.5px burst box,
-an ordinary hit its 28px digits, and the old 1.7 floor stays for mobs still spawning in. Incoming
+and follows the mob's drawn scale (bosses start higher); a crit clears its whole burst box (97.5px
+at the v73 crits — **80px since v74**), an ordinary hit its digits (28px at v73 — **20px since
+v74**), and the old 1.7 floor stays for mobs still spawning in. Incoming
 damage lifts above the hero's head too (`heroDamageY()`, from the 2.92-tall hero billboard; it
 used to sit at a fixed 2.4, on the chest). **The short form checks out — no code change needed:**
 every damage number is formatted by `numTxt` (short by default, full via the Settings switch),
-the starburst sizes itself from the finished label (`1.3M` gets the same 131×98px box as `1896`,
-`1M` the 78px minimum, full-mode `1250000` stretches to 229px), and the gradient digit fill
-carries the K/M/B suffix as-is. Pinned by a new ui_sim check; `combat_float_sim` re-pins the spawn
-helpers. This page needed no change — its strips already anchored the spawn in px above the
-mob's head (`spawnBase`); the game now does the same.
+the starburst sizes itself from the finished label (at the v74 32px crits: `1.3M` gets the same
+108×80px box as `1896`, `1M` the 64px minimum, full-mode `1250000` stretches to 188px), and the
+gradient digit fill carries the K/M/B suffix as-is. Pinned by a ui_sim check; `combat_float_sim`
+re-pins the spawn helpers. This page needed no change — its strips already anchored the spawn in
+px above the mob's head (`spawnBase`); the game now does the same.
+
+**v74 handover note (grind-v88.7, the second retune — smaller digits, quicker off the screen).**
+The owner pasted a new strip-B selection from this page — `style tab: b`, `fade style: arc`,
+`pop-up type: sway`, `font: game`, **normal 20px / crit 32px**, **rise 70px**, **lifetime 1.15s**,
+**fade starts at 75%**, **impact punch ×1.5**, **spread 14px**. Only three of those differ from
+v73: the digits come back down (28/39 → 20/32), the life is shorter (1.75s → 1.15s) and the punch
+is gentler (×1.9 → ×1.5, so crits peak at ×2.05 instead of ×2.33 and ordinary hits at ×1.375
+instead of ×1.475); the 70px climb and the 14px fan-out are unchanged. What moved in the game:
+the two digit sizes, the constants line
+(`DMG_LIFE=1/.8696,DMG_RISE=70,DMG_FADE=.75,DMG_RATE=.8696,DMG_SPREAD=14` — `1/.8696 ≈ 1.15s`),
+the fade (`opacity=r/.25`, i.e. the last quarter of the life), the punch pair (`cs` **1.05** /
+**.375**), `fs=32` in the burst builder (so the star shrank with the digits, an `1896` crit is now
+108×80px), the `fburst-pop` duration to 1.15s, and `mobDamageY`'s clearance, which follows the new
+sizes (`(crit?80:20*1.2)/2+6` → 46px for a crit, 18px for a hit, was 54.75 / 22.8). Untouched:
+the font and its gradient fill, the v72 1px rim, the v71 centring, the sway path, the spread, the
+explode frame's shape and the above-the-head spawn. On this page the **sliders and the Balanced
+preset now default to the v74 pick**, so the 📋 button prints what is live.
+`volley-before-after-v74.png` in this folder is the same volley rendered at the v73 settings (left)
+and the v74 settings (right) — **a rendering from the game's own motion math, not a screenshot**
+(no browser in the sandbox), and it is reproducible:
+`/tmp/venv/bin/python tools/render_float_volley.py` (Pillow only; the digits are set in DejaVu Sans
+Bold because Trebuchet MS is not installed here). Two things the picture makes plain: the numbers
+are gone from the screen in 1.15s instead of 1.75s, and the spawn punch is visibly calmer.
 
 **The style strips** (A = RO red spike bubble, B = the applied red-gold starburst,
 C = modern sparks/shockwave) are all still on the page — switching the game to A or C later

@@ -47,17 +47,17 @@ let finished = false;
   t('initial preset fired floats into every strip', () => {
     if (document.querySelectorAll('.pf').length < 4) throw new Error('no floats after load volley');
   });
-  t('v73: the tuner defaults to the owner\'s pick and sway honours the spread', () => {
-    for (const s of ["const T={font:'game',sNorm:28,sCrit:39,rise:70,life:1.75,fadeAt:90,punch:1.9,drift:14,style:'arc',spawn:'sway'};",
-                     "balanced:{font:'game',sNorm:28,sCrit:39,rise:70,life:1.75,fadeAt:90,punch:1.9,drift:14,style:'arc',spawn:'sway'}",
+  t('v74: the tuner defaults to the owner\'s new pick and sway honours the spread', () => {
+    for (const s of ["const T={font:'game',sNorm:20,sCrit:32,rise:70,life:1.15,fadeAt:75,punch:1.5,drift:14,style:'arc',spawn:'sway'};",
+                     "balanced:{font:'game',sNorm:20,sCrit:32,rise:70,life:1.15,fadeAt:75,punch:1.5,drift:14,style:'arc',spawn:'sway'}",
                      "const driftX=atMob=>(atMob&&T.spawn!=='scatter'&&T.spawn!=='sway')?0:R(-T.drift,T.drift);"])
       if (!html.includes(s)) throw new Error('page is missing: ' + s.slice(0, 70));
-    if (document.getElementById('sNorm').value !== '28' || document.getElementById('sCrit').value !== '39' ||
-        document.getElementById('rise').value !== '70' || document.getElementById('life').value !== '1.75' ||
-        document.getElementById('fadeAt').value !== '90' || document.getElementById('punch').value !== '1.9')
+    if (document.getElementById('sNorm').value !== '20' || document.getElementById('sCrit').value !== '32' ||
+        document.getElementById('rise').value !== '70' || document.getElementById('life').value !== '1.15' ||
+        document.getElementById('fadeAt').value !== '75' || document.getElementById('punch').value !== '1.5')
       throw new Error('the sliders do not show the owner\'s pick');
   });
-  t('v73: the stage grows so a 70px flight stays on the strip', () => {
+  t('v74: the stage grows so a 70px flight stays on the strip', () => {
     const s = document.querySelector('.strip[data-opt="b"]');
     if (!(parseFloat(s.style.height) >= 280)) throw new Error('strip too short for the flight: ' + s.style.height);
     const pfh = s.querySelector('.pfh');

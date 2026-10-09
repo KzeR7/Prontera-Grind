@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Prontera Grind — set a local GM password</title>
+<!--
+  DEV ONLY. `tools/` is in .assetsignore, so this page never reaches a deployed site - it exists so
+  the owner can get into the game with the GM tab on a preview server without opening devtools.
+
+  What it does, and the one rule it follows:
+
+  * It bakes in NO password and NO hash. You type a password, this page hashes it, and the hash goes
+    into YOUR browser's localStorage under `pg_gm_local` - the second, local GM door the game has
+    supported since v61 (see the comment above `gmOk` in index.html).
+  * It never re-implements the hash. It fetches /index.html and lifts the game's own `hashPw()` and
+    `GM_ROUNDS` straight out of it - the same trick tools/make_gm_hash.js uses - so this page and the
+    game cannot drift apart. If the game's hash changes shape, this page says so instead of writing a
+    value the game will never match.
+
+  The file's own GM password (`GM_PASS_HASH`) is untouched by anything here, and other players cannot
+  read your browser storage, so a password you set here weakens nothing for anyone else.
+-->
+<style>
+:root{--bg:#17120c;--card:#221a12;--edge:#4a3a26;--edge2:#6b5433;--ink:#f2e6cf;--dim:#b9a486;--gold:#e9d39a;--good:#2a9d3f;--bad:#e5484d}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.55 system-ui,-apple-system,Segoe UI,Roboto,sans-serif;padding:24px 16px}
+main{max-width:620px;margin:0 auto}
+h1{font-size:18px;margin:0 0 4px}
+.badge{display:inline-block;font-size:11px;background:var(--gold);color:#221a12;padding:2px 7px;border-radius:4px;font-weight:700;margin-bottom:10px}
+p{margin:8px 0;color:var(--dim)}
+.card{background:var(--card);border:1px solid var(--edge);border-radius:8px;padding:16px;margin:14px 0}
+label{display:block;font-size:12px;color:var(--dim);margin-bottom:5px}
+input{width:100%;background:#120e09;color:var(--ink);border:1px solid var(--edge2);border-radius:5px;padding:9px 10px;font:inherit}
+input:focus{outline:2px solid var(--gold);outline-offset:1px}
+.row{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+button{background:#2e2418;color:var(--ink);border:1px solid var(--edge2);border-radius:5px;padding:9px 14px;font:inherit;cursor:pointer}
+button:hover{background:#3a2d1d}
+button.primary{background:var(--gold);color:#221a12;font-weight:700;border-color:var(--gold)}
+button.danger{border-color:var(--bad);color:#ffb3b5}
+a{color:var(--gold)}
+code{background:#120e09;border:1px solid var(--edge);border-radius:4px;padding:1px 5px;font-size:12.5px;color:var(--gold)}
+pre{background:#120e09;border:1px solid var(--edge);border-radius:6px;padding:10px;overflow:auto;font-size:12.5px;color:var(--gold);margin:8px 0}
+#msg{min-height:20px;font-weight:600}
+#msg.ok{color:#7ee08a}#msg.bad{color:#ff9b9e}
+.state{font-size:12.5px;color:var(--dim)}
+ol{color:var(--dim);padding-left:20px;margin:8px 0}
+ol b{color:var(--ink)}
+</style>
+</head>
+<body>
+<main>
+  <span class="badge">dev only · never deployed</span>
+  <h1>Set a local GM password</h1>
+  <p>The game's GM tab is unlocked by logging in as <code>GM</code>. On a preview server there is no
+     server-side GM account, so this page writes the game's <em>local</em> GM door
+     (<code>pg_gm_local</code>) into this browser. You pick the password; nothing is stored here or in
+     the repo.</p>
+
+  <div class="card">
+    <label for="pw">Choose a GM password for this browser</label>
+    <input id="pw" type="text" autocomplete="off" spellcheck="false" placeholder="anything you like — it never leaves this browser">
+    <div class="row">
+      <button class="primary" id="set">Set it</button>
+      <button class="danger" id="clear">Remove local GM</button>
+    </div>
+    <p id="msg" role="status"></p>
+    <p class="state" id="state">checking…</p>
+  </div>
+
+  <div class="card">
+    <p style="margin-top:0"><b style="color:var(--ink)">Then log in:</b></p>
+    <ol>
+      <li><a class="primary" href="/game" style="display:inline-block;background:var(--gold);color:#221a12;font-weight:700;padding:9px 14px;border-radius:5px;text-decoration:none">Open the game &rarr;</a>
+          <span style="color:var(--dim)">(that is <code>/game</code> — the preview root <code>/</code> is this page right now)</span></li>
+      <li>Username <code>GM</code>, password <b>the one you just chose</b></li>
+      <li>The <b>GM</b> tab appears in the dock. For testing the attack animation you want:
+        <code>+10 Lv</code> a few times, or <b>Unlock Nightmare</b> (jumps to Base 150 and opens every
+        map), then spend the stat points on <b>AGI</b> — that is the fast-attack build where the
+        swing/number drift used to show.</li>
+    </ol>
+  </div>
+
+  <p style="font-size:12.5px">Prefer the console? On the game page this is the same thing:<br>
+     <pre>localStorage.setItem('pg_gm_local', gmHash('test1234'))</pre>
+     Remove it with <code>localStorage.removeItem('pg_gm_local')</code>. The game's own
+     <code>GM_PASS_HASH</code> is separate and unchanged by either route.</p>
+</main>
+
+<script>
+const KEY='pg_gm_local';
+const $=id=>document.getElementById(id);
+function say(m,ok){const e=$('msg');e.textContent=m;e.className=ok?'ok':'bad'}
+let liftNote='reading the game…';
+// One line, both facts: where the hash came from, and whether a local GM password is set right now.
+// (These were two writes to the same element, so the second always hid the first.)
+function state(){
+  const v=localStorage.getItem(KEY);
+  $('state').textContent=liftNote+' · '+(v?('a local GM password IS set on this browser ('+v+')')
+                                          :'no local GM password is set on this browser');
+}
+
+// Lift the game's OWN hash out of the served page - the same way tools/make_gm_hash.js does, so this
+// page and the game can never drift. gmHash is hashPw run GM_ROUNDS+1 times over a salted start.
+let gmHash=null,liftError='';
+async function loadGameHash(){
+  try{
+    const r=await fetch('/index.html',{cache:'no-store'});
+    if(!r.ok)throw new Error('/index.html answered '+r.status);
+    const src=await r.text();
+    const a=src.indexOf('function hashPw(p){');
+    const b=src.indexOf('\n',src.indexOf('return(h2>>>0)',a));
+    if(a<0||b<0)throw new Error('could not find hashPw() in index.html - has it been renamed?');
+    const rounds=src.match(/const GM_ROUNDS=(\d+)/);
+    if(!rounds)throw new Error('could not find GM_ROUNDS in index.html');
+    const hashPw=new Function('return '+src.slice(a,b))();
+    const n=+rounds[1];
+    gmHash=p=>{let h=hashPw('pg-gm:'+p);for(let i=0;i<n;i++)h=hashPw(h);return h};
+    return n;
+  }catch(e){liftError=e&&e.message||String(e);gmHash=null;return 0}
+}
+
+function init(rounds){
+  if(!gmHash){
+    say('Cannot read the game: '+liftError,false);
+    liftNote='open this page from the preview server (python3 tools/preview_server.py 8000 -> /gmsetup)';
+  }else liftNote='using the game\'s own hashPw, '+rounds+' extra rounds';
+  state();
+}
+
+$('set').onclick=async()=>{
+  const pw=$('pw').value;
+  if(!pw)return say('Type a password first.',false);
+  if(!gmHash){const r=await loadGameHash();init(r);if(!gmHash)return}
+  localStorage.setItem(KEY,gmHash(pw));
+  $('pw').value='';
+  say('Set. Log in as GM with that password.',true);
+  state();
+};
+$('clear').onclick=()=>{localStorage.removeItem(KEY);say('Removed.',true);state()};
+
+(async()=>{init(await loadGameHash())})();
+</script>
+</body>
+</html>

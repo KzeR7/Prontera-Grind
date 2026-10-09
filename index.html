@@ -67,17 +67,22 @@ html, body { margin:0; padding:0; width:100vw; height:100vh; height:100dvh; over
    v83.5 (owner): the number STARTS above the head - the whole crit frame included - measured in
    screen px through the same projection, so it holds at any zoom and follows the mob's drawn
    scale (bosses start higher); incoming damage lifts above the hero's head too (2.4 sat on the
-   chest). */
+   chest).
+   v74 (owner's second retune, strip B, grind-v88.7): the digits come back down to 20px normal /
+   32px crit, the life shortens to 1.15s (the burst curve and the fade follow it), the fade now
+   starts at 75% of the life instead of 90%, and the punch eases to x1.5 (crits peak at x2.05,
+   normals at x1.375). The font, the gradient fill, the 1px rim, the v71 centring, the 70px rise
+   and the 14px spread are all unchanged - only the size, the pacing and the punch moved. */
 .fl.damage,.fl.skill-damage,.fl.critical,.fl.skill-critical,.fl.incoming,.fl.dot{position:absolute;font-variant-numeric:tabular-nums;letter-spacing:0;z-index:24}
 .fl.dot{font:700 18px "Trebuchet MS",Verdana,sans-serif;-webkit-text-stroke:.6px #14320f;text-shadow:0 2px 3px #000}
-.fl.damage,.fl.skill-damage{font:700 28px "Trebuchet MS",Verdana,sans-serif}
+.fl.damage,.fl.skill-damage{font:700 20px "Trebuchet MS",Verdana,sans-serif}
 .fl.damage{color:#fff0a6!important;-webkit-text-stroke:.5px #4b3514;text-shadow:0 1px 2px #000,0 0 3px #000}
 .fl.skill-damage{color:#c9f1ff!important;-webkit-text-stroke:.5px #123a57;text-shadow:0 1px 2px #000,0 0 4px #279cd1}
 /* v83: the digits keep the v72 gradient fill and thin maroon stroke (they read well on bright
    grass); what changed is what sits behind them. The starburst + speed-lines + impact ring are gone
    and a soft red-orange bubble takes their place, drawn behind the digits and fading with them, so a
    critical is read from the number instead of a shape covering the monster. */
-.fl.critical,.fl.skill-critical{font:900 39px "Trebuchet MS",Verdana,sans-serif;will-change:transform}
+.fl.critical,.fl.skill-critical{font:900 32px "Trebuchet MS",Verdana,sans-serif;will-change:transform}
 /* the fill/stroke/shadow pair lives on the digits span, not on the float: a filter on the float
    would also glow the starburst and streaks behind it, which the proposal page does not do */
 .fl.critical .fnum,.fl.skill-critical .fnum{text-shadow:none;-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
@@ -91,14 +96,15 @@ html, body { margin:0; padding:0; width:100vw; height:100vh; height:100dvh; over
    inner star, a pale core, the speed-line spray and the impact ring - all children of the float, so
    they ride the number and die with it. Sizes come from the finished number: 6-7 digit crits still fit. */
 .fburst,.fring,.fstreak{position:absolute;left:50%;top:50%;pointer-events:none}
-.fburst{transform:translate(-50%,-50%);animation:fburst-pop 1.75s cubic-bezier(.2,.9,.3,1.25) both}
+.fburst{transform:translate(-50%,-50%);animation:fburst-pop 1.15s cubic-bezier(.2,.9,.3,1.25) both}
 .fburst svg{width:100%;height:100%;display:block;overflow:visible}
 .fring{border:2px solid #ffd88a;border-radius:50%;transform:translate(-50%,-50%);animation:fring-pop .42s cubic-bezier(.1,.7,.3,1) forwards}
 .fl.skill-critical .fring{border-color:#9fe8ff}
 .fstreak{width:var(--len,56px);height:var(--th,3px);margin:calc(-.5*var(--th,3px)) 0 0 calc(-.5*var(--len,56px));border-radius:2px;background:linear-gradient(90deg,#fff,#e6d6ff);box-shadow:0 0 3px #e6d6ff;transform-origin:center;animation:fstreak-fly .5s cubic-bezier(.1,.7,.3,1) forwards}
 .fl.skill-critical .fstreak{background:linear-gradient(90deg,#fff,#cfeeff);box-shadow:0 0 3px #9fe8ff}
 /* the page's burst curve: overshoot to 1.25 at 30%, settle with a small random wobble at 55%,
-   then a slow bloom to 1.05 - it breathes for the whole 1.75s life instead of a quick pop */
+   then a slow bloom to 1.05 - it breathes for the whole 1.15s life instead of a quick pop
+   (v74: the duration follows the retuned life, so the star still finishes with the number) */
 @keyframes fburst-pop{0%{transform:translate(-50%,-50%) scale(.3)}30%{transform:translate(-50%,-50%) scale(1.25)}55%{transform:translate(-50%,-50%) scale(1) rotate(var(--brot,0deg))}100%{transform:translate(-50%,-50%) scale(1.05);opacity:.9}}
 @keyframes fring-pop{0%{opacity:.95;transform:translate(-50%,-50%) scale(.4)}100%{opacity:0;transform:translate(-50%,-50%) scale(2.1)}}
 @keyframes fstreak-fly{0%{transform:rotate(var(--a)) scaleX(.15);opacity:1}100%{transform:rotate(var(--a)) translateX(var(--d,44px)) scaleX(1);opacity:0}}
@@ -3057,7 +3063,11 @@ const mkDrop=it=>({it,wx:mob.x+rnd(-.7,.7),wz:mob.z+rnd(-.7,.7),y:0,vy:-220,t:0}
 // x1.9 impact punch (crits peak at x2.33, normals at x1.475 - see the punch cs in the draw loop).
 // DMG_SPREAD is the page's Spread slider made real: every damage number rolls its own +-14px horizontal
 // offset at spawn, so a multi-mob volley fans out instead of piling onto one pixel.
-const DMG_LIFE=1/.571,DMG_RISE=70,DMG_FADE=.9,DMG_RATE=.571,DMG_SPREAD=14;
+// v74 (owner's SECOND retune, strip B): the digits come back down to 20px/32px and the pacing tightens -
+// a 1.15s life (DMG_RATE .8696 = 1/1.15), the hold-then-fade starting at 75% of it (DMG_FADE .75, so the
+// last quarter of the life is the fade), and a x1.5 impact punch (crits peak at x2.05, normals at x1.375).
+// The 70px climb and the 14px spread are the owner's pick again and stay exactly as they were.
+const DMG_LIFE=1/.8696,DMG_RISE=70,DMG_FADE=.75,DMG_RATE=.8696,DMG_SPREAD=14;
 const isDamageFloat=k=>k==='damage'||k==='skill-damage'||k==='critical'||k==='skill-critical'||k==='dot';
 const addFloat=(x,y,z,txt,col,big,kind='text')=>floats.push({x,y,z,txt,col,life:1,big,kind,sw:0,st:0,rate:isDamageFloat(kind)?DMG_RATE:0,sp:isDamageFloat(kind)?rnd(-DMG_SPREAD,DMG_SPREAD):0});
 // Floating combat numbers are shortened by default, and only from 100,000 up (the owner's rule):
@@ -3107,12 +3117,13 @@ function dotTick(o,d,col,skill){
 // sprite's head is at 3.05*mobVisualScale(o) world (syncMobImage draws the sprite exactly that
 // tall); the clearance is measured in screen px through the same projection the floats use, so
 // it holds at every zoom, and it follows the mob's drawn scale, so bosses start higher than
-// regulars. crit=true clears the 97.5px burst box, not just the 28px digits. The 1.7 floor is
+// regulars. crit=true clears the 80px burst box (v74: the 32px crits), not just the 20px
+// digits. The 1.7 floor is
 // the old one, kept: a mob's sprite grows from nothing to full over its spawn-in, and 1.7 stays
 // above even a Small mob's head (1.32), so a number printed on a spawning mob is never on it.
 function mobDamageY(o,crit=false){
   const s=mobVisualScale(o),head=3.05*s;
-  const half=(crit?97.5:28*1.2)/2+6,b=scr(o.x,0,o.z),t=scr(o.x,Math.max(head,.5),o.z);
+  const half=(crit?80:20*1.2)/2+6,b=scr(o.x,0,o.z),t=scr(o.x,Math.max(head,.5),o.z);
   const ppu=Math.abs(b[1]-t[1])/Math.max(head,.5);
   return Math.max(1.7,head+Math.min(2,half/Math.max(1e-6,ppu)));
 }
@@ -3243,15 +3254,27 @@ function castSkill(sk,k){
 // first cast, the extra casts (tier 2 and 3) and every multi-hit are one impact. That, plus one
 // number per monster (showDamage), is what puts the numbers back on the sprite's pose.
 const SWING_CONTACT=.45;                   // where in the animation the hit lands
+// v88.8 (owner: "damage coming 10 numbers but attack animation only 3 slashes"): a swing must END
+// before the next attack starts. atkAnim runs 1 -> 0 across swingDur and the attack pose is drawn
+// only while atkAnim > 0, so a swing as long as the attack interval never released - atkAnim hit
+// zero in the same update() that fired the next playerAttack(), the hero never went back to its
+// walk, and the attack animation never restarted. Measured on the real loop: an Assassin Cross at
+// aspd .423s attacked 47 times in 20s while its drawn slash restarted 25 times, because .423s is
+// exactly the drawn length it was given. .9 of the interval is the swing, the last .1 is the
+// release, so the two counts can no longer come apart.
+const SWING_FIT=.9;
 let swingDur=.42,swing=null;
 function swingLength(){                    // the drawn attack animation, never longer than the attack rate
   const sk=heroSpr&&heroSpr.userData&&heroSpr.userData.skin;
   // v88 (owner: "the atk animation does not match the atk speed"): the interval is the REAL attack
   // rate - the old Math.max(.2,…) floor drew a .2s swing for anyone faster than 5 hits/s, so a fast
   // ASPD attacked on the timer but animated slower, and the two visibly drifted apart. The clamp
-  // below still floors the DRAWN length at SWING_MIN_T (.14s), which is the v86 intent.
+  // below still floors the DRAWN length at SWING_MIN_T (.14s), which is the v86 intent - unless the
+  // attack rate itself is faster than that floor, in which case fitting inside the interval wins
+  // (a swing that overlaps the next one is the drift this whole function exists to prevent).
   const file=sk&&sk.p&&sk.p.total?(sk.p.total.attack||0):0,interval=aspd();
-  return cl(Math.min(interval,file||interval,SWING_MAX_T),SWING_MIN_T,SWING_MAX_T);
+  const room=Math.min(file||interval,SWING_MAX_T,interval*SWING_FIT);
+  return cl(room,Math.min(SWING_MIN_T,room),SWING_MAX_T);
 }
 function playerAttack(){
   if(!mob)return;
@@ -5986,6 +6009,25 @@ function skinFrameIndex(p,view,ms){
   let t=(ms/1000)%total;if(t<0)t+=total;
   for(let i=0;i<secs.length;i++){t-=secs[i];if(t<0)return i}
   return secs.length-1}
+// v88.8 (owner: "damage coming 10 numbers but attack animation only 3 slashes"): the attack
+// animation IS one swing, so its frames are read off the swing and not off the wall clock.
+// playerAttack() sets atkAnim=1 and update() runs it down to 0 across swingDur, so 1-atkAnim is the
+// swing's own progress; scaled by the file's total it plays the whole attack art exactly once per
+// swing, first frame to last, at whatever length that swing is. The walking views keep the wall
+// clock - a stroll has no start, and it keeps the file's own looping pace.
+// Why it was wrong: the attack view used that same wall clock, restarted only when the VIEW changed,
+// so the APNG just looped on its own 0.5-0.9s cycle and the drawn slashes ran at 1/fileTotal per
+// second whatever the attack rate was. Measured on the real loop (tools/tests/attack_sync_sim.js):
+// an Assassin Cross attacked 47 times in 20s and printed 43 damage numbers while its slash restarted
+// 25 times (20s / the .8s file), and a Lord Knight drew 65 slashes for 33 attacks. Both counts come
+// from the swing now, so one attack draws one complete slash and every number lands on the pose that
+// made it.
+function skinSwingMs(p){
+  const total=p&&p.total?(p.total.attack||0):0;
+  if(!(total>0))return 0;
+  const prog=cl(1-atkAnim,0,1);
+  return Math.min(total*1000-.001,prog*total*1000);   // the last frame, never a wrap back to the first
+}
 // The source to copy from for a view, and where its due frame starts in that source.
 function skinFrameOf(p,view,now){
   const strip=skinStrip(p,view);
@@ -6054,8 +6096,12 @@ function captureSkinFrame(spr,route,now){
   const sk=spr.userData.skin,p=sk.p,nowMs=now===undefined?skinNow():now;
   const key=route.view+(route.mirror?'|m':'');
   const changed=sk.route!==key;
-  if(changed){sk.route=key;sk.t0=nowMs}               // a new view or a new swing starts at its frame 0
-  const frameIndex=skinFrameIndex(p,route.view,nowMs-sk.t0),frame=skinFrameOf(p,route.view,nowMs-sk.t0);
+  if(changed){sk.route=key;sk.t0=nowMs}               // a new view starts at its frame 0
+  // The attack view is clocked by the swing itself (see skinSwingMs): one swing plays the whole
+  // attack art once, from its first frame to its last, at the swing's own length. Every other view
+  // keeps the file's own wall clock, which is what makes a stroll loop on forever.
+  const ms=route.view==='attack'?skinSwingMs(p):nowMs-sk.t0;
+  const frameIndex=skinFrameIndex(p,route.view,ms),frame=skinFrameOf(p,route.view,ms);
   if(!frame){
     // nothing to draw: for the facing already on screen keep the frame it is showing (a decoded
     // view that was dropped from the cache reloads in the background), but never show one facing's
@@ -7094,7 +7140,8 @@ function draw(){
       // v83.3 (owner): the v82 frame, restored exactly - a fresh jitter on every hit, so no two
       // crits look alike, and the star is sized from the finished number (6-7 digit crits fit).
       // v73: fs follows the retuned 39px crit digits, so the burst scales with the number.
-      const sk=f.kind==='skill-critical',fs=39,len=String(f.txt).length,w=Math.max(fs*2,len*fs*.84).toFixed(0),hs=(fs*2.5).toFixed(0);
+      // v74: fs follows the new 32px crit digits - the star shrinks with the number.
+      const sk=f.kind==='skill-critical',fs=32,len=String(f.txt).length,w=Math.max(fs*2,len*fs*.84).toFixed(0),hs=(fs*2.5).toFixed(0);
       const starPts=(spikes,Ro,Ri,rot)=>{const p=[];for(let i=0;i<spikes*2;i++){const a=rot+Math.PI*i/spikes-Math.PI/2,r=i%2?Ri*(.72+Math.random()*.5):Ro*(.8+Math.random()*.35);p.push((Math.cos(a)*r).toFixed(1)+','+(Math.sin(a)*r).toFixed(1))}return p.join(' ')};
       const rot=Math.random()*Math.PI,pts=starPts(12,48,30,rot),pts2=starPts(8,34,20,rot*.6);
       let streaks='';for(let i=0,n=sk?8:9;i<n;i++)streaks+='<i class="fstreak" style="--a:'+(Math.random()*360).toFixed(0)+'deg;--len:'+(30+Math.random()*44).toFixed(0)+'px;--th:'+(2+Math.random()*1.4).toFixed(1)+'px;--d:'+(26+Math.random()*28).toFixed(0)+'px;animation-duration:'+(360+Math.random()*200).toFixed(0)+'ms;animation-delay:'+(Math.random()*.06).toFixed(2)+'s"></i>';
@@ -7107,14 +7154,16 @@ function draw(){
     const dk=f.kind==='damage'||f.kind==='skill-damage'||f.kind==='critical'||f.kind==='skill-critical'||f.kind==='dot';
     if(dk){ // v83.3 (owner): v82's motion, back and untouched - the arc punch on spawn, the sway up
              // (10px right, then drifting 38px left), and the hold-then-fade. v73 (the owner's retune):
-             // a 70px climb (DMG_RISE), a x1.9 punch (crits peak x2.33, normals x1.475), the fade
-             // starting at 90% of the 1.75s life, and the spread - every damage number carries its own
+             // a 70px climb (DMG_RISE) and the spread - every damage number carries its own
              // +-DMG_SPREAD px offset from spawn, ridden on top of the sway so a volley fans out.
-      const r=Math.max(0,f.life),tt=1-r,cs=(f.kind==='critical'||f.kind==='skill-critical')?1.33:.475;
+             // v74 (the second retune): a x1.5 punch (crits peak x2.05, normals x1.375 - the page maps
+             // the punch as 1+.7*punch on crits and 1+.25*punch on normals) and the fade starting at
+             // 75% of the 1.15s life, so the last quarter of it is the fade (r/(1-DMG_FADE)).
+      const r=Math.max(0,f.life),tt=1-r,cs=(f.kind==='critical'||f.kind==='skill-critical')?1.05:.375;
       const sway=tt<.28?10*(tt/.28):10-38*Math.min(1,(tt-.28)/.72);
       const dy=-DMG_RISE*Math.min(1,tt*1.15),dxx=sway+(f.sw||0)*Math.min(1,tt/.22)+(f.sp||0),sc=1+cs*Math.max(0,1-tt/.2);
       f.el.style.transform='translate(-50%,-50%) translate('+dxx.toFixed(1)+'px,'+dy.toFixed(1)+'px) scale('+sc.toFixed(3)+')';
-      f.el.style.opacity=Math.min(1,Math.max(0,r/.1))}
+      f.el.style.opacity=Math.min(1,Math.max(0,r/.25))}
     else f.el.style.opacity=Math.max(0,f.life)});
   const pt=hudTrial?`🏛 ${trialClock()} left · ${Math.round(Math.max(0,(S.dmg||0)-TRIAL.dmg0)).toLocaleString()} damage`:bn?`MVP FIGHT · ${mobs.filter(m=>!m.boss).length} minions`:`Pack ${activePack+1}/3 · Monsters ${Math.min(S.kl,MPS)}/${MPS}`;if(pt!==lastProg){lastProg=pt;prog.textContent=pt}
 }

@@ -189,6 +189,11 @@ function boot(options = {}) {
     const images=[];
     function Image(){const im=__imageStub();images.push(im);return im}
     let heroKey='',heroSpr=null,heroHeadSpr=null,heroDirty=false,selK=null;
+    // the page's own clamp and the swing counter skinSwingMs reads: the attack view is clocked by
+    // the swing now (v88.8), so the extracted block needs both. atkAnim=1 is a swing on its first
+    // frame, which is the state the hero is in whenever the attack view is the one being painted.
+    const cl=(v,a,b)=>Math.max(a,Math.min(b,v));
+    let atkAnim=1;
     const P={added:[],add(s){this.added.push(s)},remove(){}};
     let S=null;
     const $=()=>null;
@@ -203,7 +208,8 @@ function boot(options = {}) {
     + grab('function ensureHero(opt){', 'const mobTextureLoader=')
     + `\nthis.__x={SKIN_SIZE,SKIN_VIEW,SKIN_ATTACK_MIRROR,SKIN_H,PACK_K,SKIN_CACHE_MAX,SKIN_STRIP_KEEP,SKIN_DECODE,
         skinPack,skinDoc,skinImage,skinLoaded,skinViewReady,skinRoute,skinFrameIndex,skinFrameOf,skinStrip,skinStrips,skinStripOrder,
-        skinDecodePng,skinDecodeView,skinDecoding,mkSkinHero,captureSkinFrame,ensureHero,skinNow,
+        skinDecodePng,skinDecodeView,skinDecoding,mkSkinHero,captureSkinFrame,ensureHero,skinNow,skinSwingMs,
+        setAtk:(v)=>{atkAnim=v},getAtk:()=>atkAnim,
         skinWeaponPlacement,drawSkinWeapon,SKIN_WEAPON_DEFAULTS,SKIN_WEAPON_ART,
         SKIN_WEAPON_GRIP,SKIN_WEAPON_ANGLE,SKIN_WEAPON_HAND,SKIN_WEAPON_DESIGN,SKIN_WEAPON_BASE_SCALE,
         images:()=>images,logged:()=>logged,fetched:()=>__fetched,
@@ -381,22 +387,49 @@ const settle = async (X, limit = 2000) => {
     console.log(`   the hero canvas byte-matches Pillow frame after frame, and ${seen.size} distinct pictures play per cycle of ${rel}`);
   });
 
-  await t('an attack plays the file\'s attack frames from its first frame', async () => {
+  await t("an attack plays the file's attack frames once per swing, driven by the swing not the clock", async () => {
     const p = X.skinPack('High Wizard', 'f');
     await settle(X);
     const spr = X.mkSkinHero(p);
     const want = FIXTURE.files[p.files.attack].frames;
     const delays = CLASS_SKINS.classes['High Wizard'].f.delays.attack;
-    const step = delays[0][0] / delays[0][1] * 1000;
-    // walking first, so switching to the swing has to restart the clock at frame 0 of the attack
+    const totalMs = p.total.attack * 1000;
+    // walking first, so switching to the swing has to start the attack on its first frame
+    X.setAtk(0);
     X.captureSkinFrame(spr, { view: 'S', mirror: false }, 0);
-    X.captureSkinFrame(spr, { view: 'attack', mirror: false }, 0);       // the swing starts here
-    for (const ms of [0, step / 2, step, step * 2, step * 2.5]) {
-      X.captureSkinFrame(spr, { view: 'attack', mirror: false }, ms);
-      const index = dueIndex(delays, ms);
+    const seen = [];
+    // playerAttack() sets atkAnim=1 and update() runs it to 0 across swingDur, so 1-atkAnim is the
+    // swing's own progress and the file's delays decide which frame that progress is on.
+    for (const atk of [1, .75, .5, .25, .0001]) {
+      X.setAtk(atk);
+      X.captureSkinFrame(spr, { view: 'attack', mirror: false }, 0);
+      const index = dueIndex(delays, (1 - atk) * totalMs);
       assert.strictEqual(sha(canvasBytes(spr.userData.skin.cv)), want[index],
-        `an attack at ${ms}ms shows attack frame ${index + 1}, as the file's own delays say`);
+        `a swing ${Math.round((1 - atk) * 100)}% through shows attack frame ${index + 1}, as the file's own delays say`);
+      seen.push(index);
     }
+    assert.strictEqual(seen[0], 0, "the swing starts on the attack file's first frame");
+    assert.strictEqual(seen[seen.length - 1], delays.length - 1, 'and ends on its last one');
+    assert.strictEqual(new Set(seen).size, seen.length, 'it really walks the file, frame by frame, as the swing runs');
+    // The whole point of the change: the wall clock no longer advances the swing. It used to, so a
+    // swing as long as the attack rate simply looped the APNG on its own cycle - which is what put
+    // ten damage numbers against three drawn slashes.
+    X.setAtk(.5);
+    X.captureSkinFrame(spr, { view: 'attack', mirror: false }, 0);
+    const half = sha(canvasBytes(spr.userData.skin.cv));
+    for (const ms of [totalMs, totalMs * 2.5, totalMs * 9]) {
+      X.captureSkinFrame(spr, { view: 'attack', mirror: false }, ms);
+      assert.strictEqual(sha(canvasBytes(spr.userData.skin.cv)), half,
+        `the same point in the swing paints the same frame at ${ms}ms - the attack art cannot loop mid-swing`);
+    }
+    // and the frame clock is exactly the swing, mapped onto the file's own length
+    X.setAtk(1);
+    close(X.skinSwingMs(p), 0, 'a swing on its first frame sits at 0ms of the attack file', 1e-6);
+    X.setAtk(.5);
+    close(X.skinSwingMs(p), totalMs / 2, 'half a swing is half the attack file', 1e-6);
+    X.setAtk(0);
+    close(X.skinSwingMs(p), totalMs - .001, 'a finished swing holds the last frame instead of wrapping to the first', 1e-6);
+    X.setAtk(1);
   });
 
   await t('SW / NW / attack SW are the same frames mirrored - drawn flipped, never re-encoded', async () => {

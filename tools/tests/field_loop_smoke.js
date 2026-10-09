@@ -279,6 +279,74 @@ const T = async (name, fn) => { try { await fn(); check.push(['ok', name]); } ca
     assert.ok(d <= ev('heroStandoff(mob)') + .6, 'and end inside its own reach (settled at ' + d.toFixed(2) + ')');
   });
 
+  // ---------------------------------------------------------------- 7. the animation follows the damage (v88.8)
+  t('one attack draws one complete slash, and no swing prints more numbers than there are slashes', () => {
+    // Owner: "damage coming 10 numbers but attack animation only 3 slashes." The numbers were right
+    // (v83: one per monster per swing) and the swing TIMER was right (v88); what drifted was the
+    // class-skin attack ART, which ran on the APNG's own wall clock and was never re-synced to a
+    // swing. This counts what the render path really paints: skinRoute() picks the attack view while
+    // atkAnim > 0, and captureSkinFrame() takes that view's frame from skinSwingMs().
+    const fileTotal = cls => JSON.parse(ev(
+      `(function(){const r=window.CLASS_SKINS.classes['${cls}'].m;return JSON.stringify((r.delays&&r.delays.attack)||[])})()`
+    )).reduce((a, e) => a + e[0] / (e[1] || 100), 0);
+    const rows = [];
+    // ONE hook install: wrapping playerAttack again per class would stack the wrappers and count
+    // every attack once per class already run.
+    ev(`window.__sw=0;{const real=playerAttack;playerAttack=function(){window.__sw++;return real.apply(this,arguments)}}`);
+    for (const [cls, lv, mp, lvl] of [['Novice', 10, 0, 1], ['Swordman', 35, 1, 3], ['Knight', 60, 3, 5],
+                                      ['Assassin Cross', 99, 6, 7], ['Lord Knight', 150, 9, 9]]) {
+      const file = +fileTotal(cls).toFixed(3);
+      ev(`
+        S.cls='${cls}';S.lv=${lv};S.mp=${mp};S.lvl=${lvl};mapM=${mp};mapL=${lvl};spawn();
+        floats.length=0;S.hp=1e9;S.dmg=0;
+        window.__sw=0;window.__slash=0;window.__prevIdx=-1;window.__prevView='';window.__nums=0;window.__miss=0;
+        window.__now=0;window.__t0=0;window.__seenF=new WeakSet();
+        {const m=mobs.reduce((a,x)=>Math.hypot(x.x-pl.x,x.z-pl.z)<Math.hypot(a.x-pl.x,a.z-pl.z)?x:a);
+         mobs=[m];camps=[];mob=m;activePack=m.pack;m.hp=m.max=1e12;m.fixed=true;m.x=0;m.z=0;m.hx=0;m.hz=0;m.a=0;m.at=1e9;
+         pl.x=heroStandoff(m);pl.z=0;pl.wt=99;pAtkT=0;engageTgt=m;engageWait=0;swing=null;atkAnim=0;
+         // jsdom cannot decode the APNGs, so hand the render path this class's real measured art data -
+         // otherwise the attack file's length silently reads as 0 and the case proves nothing.
+         heroSpr=heroSpr||{};heroSpr.userData=heroSpr.userData||{};
+         heroSpr.userData.skin={p:{total:{attack:${file}},secs:{attack:new Array(5).fill(${file / 5})}},
+                                cv:null,tex:null,view:'',mirror:null,route:'',t0:0};}
+      `);
+      for (let i = 0; i < 20 * 60; i++) {
+        ev('update(1/60)'); ev('S.hp=1e9');
+        ev(`{const sk=heroSpr.userData.skin,p=sk.p,route=skinRoute(p,3,atkAnim);
+            window.__now+=1000/60;
+            if(window.__prevView!==route.view)window.__t0=window.__now;   // captureSkinFrame's own sk.t0
+            if(route.view==='attack'){
+              // the shipped clock if the page has one, otherwise the wall clock the fix replaced - so
+              // this step still RUNS against the old code and reports the drift instead of a symbol error
+              const ms=(typeof skinSwingMs==='function')?skinSwingMs(p):(window.__now-window.__t0);
+              const idx=skinFrameIndex(p,'attack',ms);
+              // the attack art restarts when its frame index goes BACK (it wrapped to a new play),
+              // or when the attack view comes back on after the walk frames between two swings
+              if(idx<window.__prevIdx||window.__prevView!=='attack')window.__slash++;
+              window.__prevIdx=idx;
+            }else window.__prevIdx=-1;
+            window.__prevView=route.view;
+            floats.forEach(f=>{if(window.__seenF.has(f))return;window.__seenF.add(f);
+              const k=f.kind;
+              if(k==='damage'||k==='skill-damage'||k==='critical'||k==='skill-critical')window.__nums++;
+              else if(k==='miss')window.__miss++})}`);
+      }
+      const r = JSON.parse(ev('JSON.stringify({sw:window.__sw,slash:window.__slash,nums:window.__nums,miss:window.__miss})'));
+      rows.push(Object.assign({ cls, aspd: +ev('aspd()').toFixed(3), file, swingDur: +ev('swingDur').toFixed(3) }, r));
+    }
+    assert.strictEqual(errors.length, 0, 'page errors: ' + errors.join(' | '));
+    for (const r of rows) {
+      assert.ok(r.sw > 5, r.cls + ' actually fought (' + r.sw + ' attacks)');
+      assert.strictEqual(r.slash, r.sw,
+        `${r.cls}: one drawn slash per attack - drew ${r.slash} for ${r.sw} attacks (aspd ${r.aspd}s, file ${r.file}s, swing ${r.swingDur}s)`);
+      assert.ok(r.nums <= r.sw,
+        `${r.cls}: never more damage numbers than slashes on one target (${r.nums} numbers, ${r.sw} slashes)`);
+      assert.ok(r.nums + r.miss >= r.sw * .9,
+        `${r.cls}: every swing showed something - ${r.nums} numbers + ${r.miss} misses for ${r.sw} attacks`);
+    }
+    console.log('   ' + rows.map(r => `${r.cls} aspd ${r.aspd}/file ${r.file}: ${r.sw} attacks, ${r.slash} slashes, ${r.nums} numbers`).join('\n   '));
+  });
+
   for (const [st, name] of check) console.log((st === 'ok' ? '  ok   ' : '  FAIL ') + name);
   const bad = check.filter(c => c[0] === 'FAIL').length + errors.length;
   if (errors.length) console.log('page errors:', errors);

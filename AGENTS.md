@@ -6060,6 +6060,150 @@ The owner's second pass over v77, six notes, all built.
      the Cloudflare dashboard after the deploy.
   5. Verified in jsdom and over the local server, not in a real browser (there is no browser in the sandbox).
 
+### 2026-10-09 — `2026-10-09 grind-v88.7 damage numbers retuned to the new strip-B pick: 20px/32px digits, a 1.15s life, the fade from 75%, a x1.5 punch`
+* **What changed for the player:**
+  * The owner pasted a new selection off the damage-floats tuner (`style tab: b`, `fade style: arc`,
+    `pop-up type: sway`, `font: game`, **normal 20px / crit 32px**, **rise 70px**, **lifetime 1.15s**,
+    **fade starts at 75%**, **impact punch ×1.5**, **spread 14px**) and asked for it to be redone on
+    those settings. It is applied to the game and to the tuner's defaults.
+  * **What you will notice:** the numbers are smaller than the v73 build (ordinary hits 28px → 20px,
+    criticals 39px → 32px, so the starburst behind a crit shrank with the digits), they clear the
+    screen faster (1.75s of life → 1.15s), they start fading a quarter of the way from the end
+    instead of a tenth, and the spawn punch is calmer (a crit pops to ×2.05 instead of ×2.33, an
+    ordinary hit to ×1.375 instead of ×1.475). The flight is unchanged: still **70px of climb** with
+    the same sway up-and-left and the same **14px fan-out** across a pack, and the numbers still
+    start above the monster's head (a crit clears its whole burst box, 80px now instead of 97.5px).
+  * Nothing else about the numbers moved: same Game (Trebuchet) font, same cream-to-gold gradient
+    crit digits with the thin maroon stroke and the dark rim, same chip-free starburst with its
+    speed-lines and impact ring, same skill-crit silver-blue, same 100K/1M short form.
+* **Why:** the v73 retune (28/39px, 1.75s, fade at 90%, ×1.9) read as too big and too slow in play;
+  the owner re-dialled the same strip B on the tuner page and pasted the new numbers.
+* **Fix:**
+  * `index.html`: the two digit rules (`20px` normal/skill, `32px` critical/skill-critical), the
+    constants line `const DMG_LIFE=1/.8696,DMG_RISE=70,DMG_FADE=.75,DMG_RATE=.8696,DMG_SPREAD=14;`
+    (`1/.8696 ≈ 1.15s`), the fade `opacity=Math.min(1,Math.max(0,r/.25))` (the divisor is
+    `1-DMG_FADE`), the punch pair `cs` **1.05** / **.375** (`1+.7*punch` on crits, `1+.25*punch` on
+    normals), `fs=32` in the burst builder, the `fburst-pop` duration 1.75s → 1.15s so the star
+    still finishes with the number, and `mobDamageY`'s clearance `(crit?80:20*1.2)/2+6` (46px for a
+    crit, 18px for a hit). `BUILD` → grind-v88.7.
+  * `Updates/damage-floats-proposal/index.html` (the dev-only tuner): the sliders and the *Balanced*
+    preset now open on the v74 pick, so the 📋 Copy my selection button prints exactly what is live.
+  * `Updates/damage-floats-proposal/README.md`: the status line, the slider→code map and a new v74
+    handover note.
+  * New `tools/render_float_volley.py` (Pillow) renders two tunings side by side from the game's own
+    motion maths → `Updates/damage-floats-proposal/volley-before-after-v74.png`.
+* **Files touched:** `index.html` (the retune; `BUILD` grind-v88.7); `Updates/damage-floats-proposal/`
+  (`index.html`, `smoke_test.js`, `README.md`, new `volley-before-after-v74.png`); new
+  `tools/render_float_volley.py`; `tools/tests/combat_float_sim.js` (the retuned values, plus one new
+  v74 test that reads the constants back out and checks the pick as a set), `tools/tests/ui_sim.js`
+  (digit sizes and the new burst boxes: 108×80 for `1896`/`1.3M`, 64×80 for `1M`, 188×80 for
+  `1250000`); build-tag mirrors (`Updates/cards-gear-audit/affix-ranges.html` ×2,
+  `equipment-cards-tuning.html` refreshed with `drop_card_sheet_sim.js --refresh-snapshot`,
+  `tools/cloudflare-deploy-steps.md`); `READ-ME-FIRST.md` (a v88.7 section above v88.6); this log.
+* **Art:** none.
+* **Tests:** all **43** suites in `tools/tests/` exit 0 on this build, with `jsdom` and `three@0.128.0`
+  installed for `field_loop_smoke` (8/8) and `save_owner_boot_smoke` (5/5). `combat_float_sim` 16
+  (one new), `ui_sim` 52. The tuner's own `smoke_test.js` is 15/15 (needs `npm i jsdom` in
+  `Updates/damage-floats-proposal/`) and its inline JS passes `node --check`.
+* **Branches / PR:** this session's branch is `arena/ad7c4b03-prontera-grind`, pushed there.
+* **Known limits / follow-ups:**
+  1. Not verified in a real browser (there is no browser in the sandbox): the new picture was checked
+     in jsdom and as a rendering from the game's motion maths, not as a screenshot.
+  2. `volley-before-after-v74.png` sets its digits in DejaVu Sans Bold, because Trebuchet MS is not
+     installed in the sandbox — the sizes, the flight and the fade are exact, the typeface is not.
+  3. The climb finishes at 87% of the life while the fade now starts at 75%, so the last sixth of the
+     climb happens while the number is fading. That is the sliders' arithmetic, not a bug; say the
+     word if you want the rise to complete before the fade starts.
+  4. `tools/render_float_volley.py` needs Pillow (`python3 -m venv /tmp/venv && /tmp/venv/bin/pip
+     install pillow`); nothing in the game or in the test loop depends on it.
+
+### 2026-10-09 — `2026-10-09 grind-v88.8 the attack animation follows the damage: one attack draws one complete slash`
+* **What changed for the player:** the character's attack animation now plays once per attack and
+  finishes inside that attack, so the swings you watch match the damage numbers you read. The owner's
+  report: *"my character attack animation are not following the damage animation. example damage
+  coming 10 numbers but attack animation only 3 slashes. there is an update code on this but it seems
+  to be not working."*
+* **Why the earlier update looked like it was not working:** it was live and it was correct - it just
+  was not the whole story. v83 ("one number per monster per swing") was printing the right numbers and
+  v88 ("the swing matches attack speed") was running the swing TIMER at the real attack rate. What
+  nobody had touched was the class-skin attack ART, which is what the player actually watches, and it
+  was on a clock of its own:
+  * `captureSkinFrame()` picked the attack frame from `nowMs - sk.t0` (the wall clock, the same clock
+    the walking views use), and `sk.t0` was only reset when the ROUTE changed - i.e. when the view
+    flipped between walk and attack. So the attack APNG simply looped on its own 0.5-0.9s file cycle
+    and was never re-synced to a swing.
+  * `swingLength()` could hand back a swing exactly as long as the attack interval, so `atkAnim` never
+    reached 0 between attacks, the view never flipped back to the walk, and `sk.t0` never reset at all.
+* **Measured on the real loop before the fix** (20s against one unkillable target, 60fps, the real
+  `index.html` booted in jsdom - `tools/tests/field_loop_smoke.js`):
+
+  | class | aspd | attack file | attacks | drawn slashes | damage numbers |
+  | --- | --- | --- | --- | --- | --- |
+  | Assassin Cross | 0.423s | 0.80s | 47 | **25** | 43 |
+  | Assassin | 0.524s | 0.80s | 38 | **25** | 31 |
+  | Lord Knight | 0.608s | 0.50s | 33 | **65** | 27 |
+  | Novice | 0.845s | 0.50s | 24 | **46** | 18 |
+
+  The slash count was the file's own loop rate (20s / 0.8s = 25) or a double-play - never the attack
+  count. At the ASPD floor (0.13s, ~7.7 hits/s) a 0.9s file draws 1.1 slashes a second against 7.7
+  damage numbers; the owner's 10:3 is the same drift at a mid-game rate.
+* **Fix:**
+  * `index.html` - new `skinSwingMs(p)`: the attack view's frame clock is the swing itself.
+    `playerAttack()` sets `atkAnim=1` and `update()` runs it to 0 across `swingDur`, so `1-atkAnim` is
+    the swing's progress; scaled by the file's own total it plays the whole attack art exactly once per
+    swing, first frame to last, at whatever length that swing is. `captureSkinFrame()` uses it for the
+    attack view only - every other view keeps the file's wall clock, which is what makes a stroll loop
+    on forever. The fallback paths (`heroPoseFrame`, `animRow`) already drove their attack frames from
+    `(1-atk)`; only the APNG class skins had drifted, and they are now pinned so they cannot drift back.
+  * `index.html` - `swingLength()` now caps the drawn swing at `SWING_FIT` (.9) of the attack interval,
+    so a swing always ENDS before the next attack starts and the hero really does release back to its
+    walk between swings. The v86 `SWING_MIN_T` (.14s) floor is kept, but it now yields to fitting
+    inside the interval - at the .13s ASPD floor the floor itself would overlap the next attack, which
+    is the drift this function exists to prevent.
+  * `BUILD` → grind-v88.8.
+* **Files touched:** `index.html` (`skinSwingMs`, `captureSkinFrame`, `swingLength`, `SWING_FIT`;
+  `BUILD` grind-v88.8); `Updates/ApngAnimation/class_skin_animation.js` (regenerated with
+  `tools/backup_apng_code.py` - the changed block is inside its range); **new**
+  `tools/tests/attack_sync_sim.js` (8: runs the SHIPPED `swingLength`/`skinSwingMs` in a vm and sweeps
+  1,075 attack-rate x attack-file combinations); `tools/tests/field_loop_smoke.js` (a new step 7 that
+  counts attacks vs drawn slashes vs damage numbers for five classes in the real loop);
+  `tools/tests/class_skin_sim.js` (the vm prelude now provides the page's `cl` and `atkAnim`, exports
+  `skinSwingMs`/`setAtk`, and the attack-frame test asserts the new swing-driven contract);
+  `tools/tests/combat_damage_sim.js` and `tools/tests/combat_float_sim.js` (the two pins on
+  `swingLength`'s old shape); build-tag mirrors (`Updates/cards-gear-audit/affix-ranges.html` x2,
+  `equipment-cards-tuning.html` refreshed with `drop_card_sheet_sim.js --refresh-snapshot`,
+  `tools/cloudflare-deploy-steps.md`); `READ-ME-FIRST.md` (a v88.8 section above v88.7); this log.
+* **Testing it (follow-up, owner: "i cant test at the preview as i dont have gm tools"):** **new**
+  `tools/gm_setup.html` on the preview route **`/gmsetup`** - type any password and it writes the
+  game's own `gmHash` of it into that browser's `pg_gm_local` (the v61 local GM door), so logging in
+  as `GM` works without devtools. It bakes in no password and no hash: it lifts `hashPw()` and
+  `GM_ROUNDS` out of the served `index.html` the way `tools/make_gm_hash.js` does, and it fails
+  loudly and writes nothing if it cannot read the game. `tools/` is in `.assetsignore`, so the page
+  can never reach a deployed site. **New** `tools/tests/gm_setup_sim.js` (5) boots the page in jsdom
+  behind the real `index.html`, checks the stored value against the game's real `gmOk()`, and pins
+  "no secret in the page". Route registered in `tools/preview_server.py`; row added to
+  `TOOLS-START-HERE.md`. Verified on this build in jsdom: `gmOk('test1234')` true / wrong password
+  false, login as `GM` sets `S.gm`, the GM tab reaches the dock, and the tab's own actions run
+  (`gml` Lv 1 -> 11 +40 points, `gmnm` Lv 150 with all ten maps at stage 10).
+* **Art:** none. No sheets added, removed or rebuilt; the APNG files and their delays are untouched -
+  only WHEN each frame is shown changed.
+* **Tests:** all **42** `*_sim.js` suites exit 0 (1,307 counted assertions), plus `field_loop_smoke.js`
+  **9/9** and `save_owner_boot_smoke.js` **5/5** with jsdom + three@0.128.0 installed. Both new checks
+  were run against the PRE-FIX page to prove they catch the bug: `attack_sync_sim` 6/8 fail, and
+  `field_loop_smoke` step 7 fails with "Novice: drew 36 for 24 attacks". The inline page JavaScript
+  passes `node --check`, and `python3 tools/backup_apng_code.py --check` is clean.
+* **Branches / PR:** committed to `arena/a9062b8c-prontera-grind`.
+* **Known limits / follow-ups:**
+  1. Not verified in a real browser (there is no browser in the sandbox). The frame sequence was proven
+     by running the page's own `skinRoute`/`skinSwingMs`/`skinFrameIndex` in jsdom, not by looking at
+     pixels; `python3 tools/preview_server.py 8000` → `/` is the way to eyeball it.
+  2. A swing now uses at most 90% of the attack interval, so the drawn swing is up to 10% shorter than
+     v88's. At the ASPD floor that is 0.117s instead of 0.14s.
+  3. A swing that hits several monsters still prints one number PER MONSTER (v83, deliberate and
+     tested), so an AoE over a full camp shows several numbers on one slash. That is RO's own behaviour;
+     say the word if the owner would rather see one summed number per swing.
+  4. The 10% release is a fixed share of the interval, not a fixed time - at a very fast ASPD it is
+     only ~13ms, which is one frame at 60fps and may read as no pause at all on a slower display.
 ### 2026-10-09 — `2026-10-09 grind-v89 Nightmare balance: Stage 5 +30% HP and ATK, N+ drops halved and shared by every class, N/N+ flat affixes lowered, pet damage -37%`
 * **What changed for the player:**
   * **Nightmare Stage 5** (Stage 15, the MVP stage on every map) is harder. Its monsters, escorts and MVP carry **+30% HP and +30% ATK**. Abyss Stage 5 mobs go from 5,565,251 to 7,234,826 HP and hit for 1,764 instead of 1,357. Stages 11-14 are unchanged.
