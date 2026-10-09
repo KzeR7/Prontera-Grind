@@ -45,7 +45,13 @@ export const onRequestPost = guard(async ({ request, env }) => {
     userAgent(request), ip);
   await db.noteLogin(D, user.id);
   await db.clearRate(D, `login-ip:${ip || 'noip'}`);
-  await db.touchSeen(D, user.id);
+  // NO touchSeen here. saves.last_seen is the OFFLINE away baseline (a claim pays for
+  // now - last_seen), and a returning player signs in BEFORE the game asks for its claim - a
+  // login that moved the baseline erased the player's own away window, so cloud accounts
+  // silently stopped receiving offline rewards (the local no-cloud path was never affected).
+  // The sign-in itself is recorded in users.last_login_at (noteLogin, above) for the GM player
+  // list, and the away baseline moves on the first save exchange of the session (GET/PUT
+  // /api/save), which is the server-observed return the offline reward is timed from.
   await db.logEvent(D, user.username, user.id, 'login', null);
 
   return json({ u: user.username, gm: user.gm }, 200, { 'Set-Cookie': sessionCookie(token) });

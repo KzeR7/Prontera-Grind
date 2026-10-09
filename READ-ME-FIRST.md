@@ -84,6 +84,69 @@ is the live one; with no argument the tool prints how to set a new one). Since v
 `GM` / `test1234`; `localStorage.removeItem('pg_gm_local')` removes it. Normal accounts are made
 in-game and stored in the browser (`pg_acc4`; saves under `pg_save3_<user>`).
 
+## BUILD v88.1 — offline rewards pay out again on cloud accounts (grind-v88.1)
+
+The owner reported the offline reward "seems to be not working" (it should be 4 hours max at 50%
+of the recent pace). Checked both paths end to end:
+
+* **Local accounts (no cloud): fine.** Booted the real page in jsdom, planted a 4-hour-old save
+  with a 1200 kills/hour pace: the welcome-back card credited exactly 4 hours and 2,400 kills
+  (1200 × 4 × 50%); a 10-hour absence still credited only 4 hours; under 3 minutes still shows
+  nothing.
+* **Cloud accounts: broken, now fixed.** The away time is measured server-side from
+  `saves.last_seen`, but `functions/api/sessions.js` stamped `last_seen = now` on every successful
+  **login** — and a returning player signs in *before* the game asks for its claim, so the away
+  window was already zero when the claim was computed. No cloud account ever received an offline
+  reward. The login no longer touches the away baseline (the sign-in is still recorded in
+  `users.last_login_at` for the GM list, and the baseline moves on the first save sync of the
+  session, as designed). Verified end to end against the real handlers + a real database: away 4
+  hours, log in, the card credits 4 hours at 50% of the server-measured pace, and the claim is
+  one-use as before.
+* **Test:** new `api_sim.js` case pins the real sequence (away → login → claim), and it fails if
+  the login touch comes back. All 39 suites green; `field_loop_smoke` 7/7.
+
+## BUILD v88 — the town is gone, the sheets are tidy, and the page updates itself (grind-v88)
+
+The owner's nine-item list, all in `index.html` unless noted:
+
+* **Prontera Town is fully removed** — the map card, the town band, the whole engine, the NPC talk
+  box and its CSS/HTML, the `window.town*` console hooks, and every file: `assets/town/` (the 9.2 MB
+  HD atlas), `Updates/town-hd/` (the 59 MB source art), the four town tools and the `town_smoke.js`
+  suite. Nothing references it and nothing loads it; the Endless Echo card now takes the whole
+  destination row on the World Map. The Prontera **field** (map 1, the Novice start) is untouched —
+  that is a grinding map, not the town.
+* **The Character sheet is tidied**: the "RO-style" tag is gone from the ASPD readout, the readout
+  says **Movement speed** (one number, no sprint figure), and the six stat descriptions now list
+  what each stat actually does (LUK no longer claims drop rate — nothing on the character bends the
+  drop tables).
+* **"Auto-equip better gear" moved to the Bag tab**, above the selling tools.
+* **"Auto-advance through stages and maps" moved to the World Map tab**, next to the stage picker.
+* **Auto-advance fixed**: with the switch on, a player parked *below* the unlocked frontier (an
+  old map revisited, a stage farmed with the switch off) never moved — the old code only advanced
+  at exactly the frontier. It now catches you up ("turn off to farm" is the whole contract), in
+  the live game and in the offline simulation alike.
+* **Dual-wield fix**: the save-load repair predated v81 and stowed any off-hand piece that was not
+  a shield, so an Assassin's second dagger silently came off on every load, login and cloud sync.
+  The repair now keeps a dual-wield dagger (and still empties the left hand for a katar). Auto-equip
+  is dual-wield aware too: a dropped dagger takes whichever hand raises the pair, and a katar that
+  beats the pair takes both hands.
+* **Refine no longer closes the bag**: the picker's "clicked elsewhere" test looked for an
+  Equipment *window* that does not exist (the panel is the Status window's Equipment sub-tab), so
+  the Refine button counted as outside. The paper doll is now "inside".
+* **The skills grid no longer jumps when you press a skill**: the press is anchored to its own
+  tile after the rebuild, and the window bodies opt out of the browser's scroll anchoring.
+* **The attack animation matches the attack speed**: the drawn swing no longer floors at .2s, so a
+  fast ASPD looks as fast as it is.
+* **The page reloads itself when a deploy lands**: `/api/version` (a new Pages Function) answers
+  with the deployed BUILD string, read straight out of the served `index.html`; the page polls it
+  once a minute and hard-refreshes on a mismatch (PC and mobile). A static host without the
+  endpoint simply never reloads. The four data `<script>` tags also moved `?v=1` → `?v=2`.
+* **Tests:** all 39 `*_sim.js` suites green (1201 assertions), plus the jsdom field smoke 7/7.
+  New: `update_watch_sim.js` (the watcher and the endpoint), and new cases in `starter_sim`,
+  `offline_sim` (auto-advance catch-up), `dual_wield_sim` (the load repair and auto-equip),
+  `combat_damage_sim` (the swing follows the real attack rate) and `ui_sim` (the moved switches,
+  the tidied sheet, the single-card destination row).
+
 ## BUILD v87.1 — merged with main (grind-v87.1): the number retune + above-head spawn on top of v87
 
 * PR #39 went **conflicting** when `main` merged PR #40 (grind-v84 double Base 100+ EXP · v85

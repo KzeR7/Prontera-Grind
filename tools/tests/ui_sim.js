@@ -88,9 +88,6 @@ const code = [
   pick(/const refCost=it=>[^;]+;/, 'refCost/refCh'),
   pick(/const affTxt=a=>[^;]+;/, 'affTxt/cardTxt/dtier'),
   grab('const V={', 'const ACT={'),                            // the panels themselves
-  // v77: the map panel asks the town gate whether to offer the town card or a closed one
-  pick(/const TOWN_OPEN=false;/, 'the town gate switch'),
-  pick(/const townUnlocked=\(\)=>[^\n]*/, 'townUnlocked: the town gate'),
   // v39: the Log window's filter table and its two readers, the on-screen log's fold helper, the
   // master auto-cast switch, and the Bag's two sell-tool readers.
   pick(/const LOGCATS=\[[\s\S]*?\];/, 'log category table'),
@@ -116,7 +113,7 @@ let S=null,mapM=0,mapL=1,selB=null,selC=null;   // remaining panel state comes i
 const mobs=[],drops=[],logs=[];
 let boardPeriod='daily',boardCache={},boardLoading=false,boardError='';
 const CLOUD={api:false,on:false};
-const lsGet=()=>null,mem={};   // no browser storage in here: the panels reach the town gate's flag through it
+const lsGet=()=>null,mem={};   // no browser storage in here
 const $=id=>({style:{},set innerHTML(v){globalThis['h_'+id]=v},get innerHTML(){return globalThis['h_'+id]||''},textContent:'',onclick:null});
 const dr=()=>1;
 ${code}
@@ -157,19 +154,14 @@ t('the map panel renders every map and field', () => {
   assert.ok(h.includes('dropline') && h.includes('1.5%') && h.includes('1.2%') && h.includes('0.9%'), 'mob gear odds (v57: 3.6% total) must each be visible');
   assert.ok(h.includes('0.15%'), 'the card chance stays visible on the monster');
   assert.ok(h.includes('mapcard'), 'the map selector must be the scalable grid');
-  // v77.3: Town and Endless Echo share a compact two-card row beneath the ten field maps.
-  assert.strictEqual((h.match(/class="mapcard/g) || []).length, 12, 'ten field cards plus Town and Endless Echo');
+  // v88: the town is gone, so the ten field cards are the whole grid, Endless Echo alone takes the
+  // destination row, and the Auto-advance switch lives on this tab next to the stage picker.
+  assert.strictEqual((h.match(/class="mapcard/g) || []).length, 11, 'ten field cards plus Endless Echo');
   assert.strictEqual((h.match(/data-a="selm"/g) || []).length, 10, 'only the ten fields select a stage list');
-  // v77: the town ships SHUT (TOWN_OPEN), so the card is a greyed-out "closed" one with no way
-  // in - and the GM account, which the gate always lets through, gets the live card instead.
-  assert.ok(/class="mapcard town-card closed"/.test(h), 'while the town is shut the card says so');
-  assert.ok(!/data-a="town"/.test(h), 'and offers no way in from the grid');
-  assert.ok(h.includes('Closed'), 'it is labelled closed rather than simply vanishing');
-  U.S.gm = 1;
-  const gmH = U.V.map();
-  assert.ok(/class="mapcard town-card[^\"]*" data-a="town"/.test(gmH), 'the GM account is let through: it gets the live card');
-  assert.ok(gmH.includes('\ud83c\udfd8 Prontera Town'), 'and it is labelled');
-  U.S.gm = 0;
+  assert.ok(!/data-a="town"/.test(h), 'the town card is gone with the map');
+  assert.ok(!/town-card/.test(h), 'and so is its style hook');
+  assert.ok(h.includes('Auto-advance through stages and maps'), 'the Auto-advance switch moved here from Settings');
+  assert.ok(/data-a="adv"/.test(h), 'and it is wired to the same action');
   // Every map card shows its recommended level range under the name (the old build printed the
   // word "farming" there instead). The current map keeps its dot marker.
   const cards = h.slice(h.indexOf('class="mapgrid'), h.indexOf('class="mapband fields'));
@@ -317,10 +309,9 @@ t('the 3D view pinch-zooms on touch and still wheel-zooms on a mouse', () => {
   const code = grab('let drag=null;const dom=R.domElement;', '\n// Keep the character near the visual centre');
   const handlers = {};
   const domEl = { addEventListener: (n, f) => { (handlers[n] = handlers[n] || []).push(f) }, setPointerCapture() {}, releasePointerCapture() {} };
-  // v68's merge: the same pointer block now also carries the town's tap-to-walk and its wider zoom
-  // clamp, so the harness stands the town's hooks in (the town itself is town_smoke's job). With no
-  // town scene loaded the clamp is the field's 0.6 floor, which is what this test measures.
-  const box = { R: { domElement: domEl }, Math, console, TOWN: {}, townOn: () => false, townHover() {}, townClick() {} };
+  // The pointer block is the camera's alone again (the town's tap-to-walk went with the town), so the
+  // harness needs no stand-ins: the clamp it measures is the field's own 0.6 floor.
+  const box = { R: { domElement: domEl }, Math, console };
   vm.createContext(box);
   vm.runInContext('let az=0,el=.8,zoom=1;\n' + code + '\n;this.__cam=()=>({az,el,zoom})', box);
   const cam = () => box.__cam();
@@ -447,6 +438,18 @@ t('clicking a slot highlights the fit in the REAL bag tab - no extra pop-out', (
   assert.ok(src.includes("if(k==='status')sub.status='stats';if(k==='bag')sub.bag='bag';"), 'reopening a window resets its sub-tab');
 });
 
+t('v88: the Auto-equip switch lives on the Bag tab, not in Settings (owner: "move it, arrange it tidy")', () => {
+  U.S = mkS('Swordman'); U.selB = null; U.eqPick = null;
+  const bag = U.V.bag0();
+  assert.ok(bag.includes('Auto-equip better gear'), 'the Bag tab names the switch');
+  assert.ok(/data-a="auto"/.test(bag), 'and it is wired to the same action');
+  assert.ok(bag.indexOf('Auto-equip better gear') < bag.indexOf('Selling tools'), 'it sits tidily above the selling tools, under the ore chips');
+  const set = U.V.set();
+  assert.ok(!/data-a="auto"/.test(set), 'Settings no longer carries the gear switch');
+  assert.ok(!/data-a="adv"/.test(set), 'nor the advance switch');
+  assert.ok(set.includes('Bag</b> tab') && set.includes('World Map</b> tab'), 'Settings points to where both switches went');
+});
+
 t('Assassin equipment UI describes the two-handed Katar and the dual-wielded daggers',()=>{
   U.S=mkS('Assassin');U.selE='weapon';
   U.S.eq.weapon={id:88,name:'Katar',tier:3,slot:'weapon',wt:'katar',val:80,slots:4,cards:[]};
@@ -492,8 +495,8 @@ t('the equipment chooser temporarily promotes fitting gear and restores normal b
 t('Refine, card sockets, Unequip and Lock are inside the picker and never dismiss it', () => {
   // v73 owner report: clicking Refine (which lives in the Equipment window's detail card, the
   // window the picker was opened from) used to count as "clicked elsewhere" and close it.
-  assert.ok(src.includes("chooserPointerInside=!!(target&&(target.closest('[data-win=\"bag\"]')||target.closest('[data-win=\"equip\"]')))"),
-    'the pointer-down snapshot must treat the Equipment window as inside the picker');
+  assert.ok(src.includes("chooserPointerInside=!!(target&&(target.closest('[data-win=\"bag\"]')||target.closest('.doll')))"),
+    'the pointer-down snapshot must treat the Equipment panel (its paper doll, which holds the Refine button) as inside the picker');
   assert.ok(src.includes("if(chooserAtPointerDown&&!chooserPointerInside)closeEquipmentChooser(true)"),
     'only a click outside both windows dismisses the picker');
   // the controls that used to close it all live in that window's detail card
@@ -583,7 +586,7 @@ t('HP flips at 30%; one split bar fills Base from left and Job from right with c
     ${grab('const PET_SKILLS=[', 'const petDmg=')}
     const performance={now:()=>1000},job={jl:10,jx:45},jobOf=()=>job,C=()=>({mj:50}),maxHp=()=>100,
       jneed=()=>100,need=()=>200;
-    ${grab('const HUD_RATE_WINDOW=60000,HUD_IDLE_RESET=30000,HUD_RATE_REFRESH=1000;','function ui(){')}
+    ${grab('const HUD_RATE_WINDOW=60000,HUD_IDLE_RESET=30000,HUD_RATE_REFRESH=1000;','function ui(anchor){')}
     bars();this.__h={nodes,S,job,bars};
   `,box);
   const h=box.__h,d=h.nodes;
@@ -890,25 +893,26 @@ t('the character + class panels show the class-collection bonus', () => {
   assert.ok(h.includes('+1% damage'));
 });
 
-t('v74: the Character sheet explains movement speed and where it comes from', () => {
+t('v88: the Character sheet names movement speed once, with no sprint figure (owner: the sheet was messy)', () => {
   U.S = mkS('Thief'); U.selE = 'weapon';
   const h = U.V.stats();
-  assert.ok(/Move <b>[\d.]+<\/b> <small>u\/s/.test(h), 'a Move readout must sit with ATK/ASPD/Crit (got ' +
-    (h.match(/Move <b>[^<]*/) || ['none'])[0] + ')');
+  assert.ok(/Movement speed <b>[\d.]+<\/b> <small>u\/s/.test(h), 'a Movement speed readout must sit with ATK/ASPD/Crit (got ' +
+    (h.match(/Movement speed <b>[^<]*/) || ['none'])[0] + ')');
   assert.ok(h.includes('Movement speed</b> comes from AGI alone'), 'the sheet must name the only source');
-  assert.ok(/at AGI \d+ \(\d/.test(h), 'it must print the AGI it is reading and the sprint figure');
+  assert.ok(/at AGI \d+\./.test(h), 'it must print the AGI it is reading');
+  assert.ok(!/sprinting/.test(h), 'the sprint figure is gone - one speed, one number (owner)');
+  assert.ok(!/RO-style/.test(h), 'and the RO-style tag is gone from the ASPD readout (owner)');
   // the number is the game's own curve, applied to the real st('agi')
   const agi = U.S.st.agi;
   const want = 5.3 + Math.max(1, agi) * .025 + Math.sqrt(Math.max(1, agi)) * .035;
-  assert.ok(h.includes('Move <b>' + want.toFixed(2) + '</b>'), 'the readout must be heroMoveSpeedForAgi(AGI) (wanted ' + want.toFixed(2) + ')');
-  assert.ok(h.includes((want * 1.4).toFixed(2) + ' sprinting'), 'the sprint figure is the run multiplier');
+  assert.ok(h.includes('Movement speed <b>' + want.toFixed(2) + '</b>'), 'the readout must be heroMoveSpeedForAgi(AGI) (wanted ' + want.toFixed(2) + ')');
   // AGI is the only input: a stat change moves it, and nothing else does
   U.S.st.agi = agi + 20;
-  assert.ok(U.V.stats().includes('Move <b>' + (want + 20 * .025 + (Math.sqrt(agi + 20) - Math.sqrt(agi)) * .035).toFixed(2) + '</b>'), 'more AGI walks faster');
+  assert.ok(U.V.stats().includes('Movement speed <b>' + (want + 20 * .025 + (Math.sqrt(agi + 20) - Math.sqrt(agi)) * .035).toFixed(2) + '</b>'), 'more AGI walks faster');
   // the curve is declared once, in the derived-stat block, and update() uses that copy
   assert.ok(src.includes('const heroMoveSpeedForAgi=agi=>5.3+'), 'the curve must stay a single named function');
   assert.strictEqual((src.match(/const heroMoveSpeedForAgi=/g) || []).length, 1, 'no duplicate curve');
-  assert.ok(src.includes("Math.min(pd,spd*dt*(pd>3?1.4:1))"), 'update() still applies the 1.4 run multiplier past 3 units');
+  assert.ok(src.includes("Math.min(pd,spd*dt*(pd>3?1.4:1))"), 'the run multiplier itself still applies past 3 units in the world');
   assert.ok(src.includes('MOVE_RUN=1.4'), 'and the sheet reads the same multiplier');
 });
 
@@ -1177,9 +1181,9 @@ t('the damage trial is entered from the map selection, and the lobby offers the 
   assert.ok(h.includes('data-trial="lobby"'), 'and its button opens the lobby');
   assert.ok(h.includes('/2 ranked runs left today'), 'the card states the ranked tries left');
   const iSpecial=h.indexOf('class="map-specials'),iFields=h.indexOf('class="mapband fields'),specials=h.slice(iSpecial,iFields);
-  assert.ok(iSpecial>=0&&iFields>iSpecial, 'Town and Endless Echo sit above the stage list');
-  assert.ok(specials.includes('town-card')&&specials.includes('dungeoncard')&&(specials.match(/class="mapcard/g)||[]).length===2, 'the two destinations share one compact row');
-  assert.ok(src.includes('.map-specials{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))'), 'Town and Endless Echo stay horizontally aligned at narrow widths too');
+  assert.ok(iSpecial>=0&&iFields>iSpecial, 'the destination row sits above the stage list');
+  assert.ok(specials.includes('dungeoncard')&&!specials.includes('town-card')&&(specials.match(/class="mapcard/g)||[]).length===1, 'Endless Echo alone takes the whole row');
+  assert.ok(src.includes('.map-specials{display:grid;grid-template-columns:minmax(0,1fr);'), 'the row is a single full-width column now that the town is gone');
   assert.ok(!src.includes('.mapband.dungeon{'), 'the old bottom band is gone');
   // the lobby itself: ranked with the tries left, unlimited training, and the Shard Store. The
   // rendered HTML is exercised by trial_sim.js; here the source is pinned.
@@ -1218,7 +1222,7 @@ t('pet buffs are icon tiles above the status bar, and the description waits for 
     const performance={now:()=>1000},job={jl:10,jx:45},jobOf=()=>job,C=()=>({mj:50}),maxHp=()=>100,
       jneed=()=>100,need=()=>200;
     ${grab('const PET_SKILLS=[', 'const petDmg=')}
-    ${grab('const HUD_RATE_WINDOW=60000,HUD_IDLE_RESET=30000,HUD_RATE_REFRESH=1000;', 'function ui(){')}
+    ${grab('const HUD_RATE_WINDOW=60000,HUD_IDLE_RESET=30000,HUD_RATE_REFRESH=1000;', 'function ui(anchor){')}
     bars();this.__b={nodes};
   `, box);
   const html = box.__b.nodes.hudBuffs.innerHTML;

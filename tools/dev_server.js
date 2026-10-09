@@ -55,6 +55,7 @@ export function freshDb(file) {
 // JSON rather than falling through to the static site, so the client's "is there an API here?"
 // probe is answered honestly either way.
 export const ROUTES = {
+  'GET /api/version': ['onRequestGet', 'api/version.js'],
   'POST /api/register': ['onRequestPost', 'api/register.js'],
   'POST /api/sessions': ['onRequestPost', 'api/sessions.js'],
   'DELETE /api/sessions': ['onRequestDelete', 'api/sessions.js'],
@@ -92,6 +93,9 @@ export function makeEnv(sqlite, { gmAll = false } = {}) {
 export function createApp({ sqlite, site, gmAll = false }) {
   const env = makeEnv(sqlite, { gmAll });
   const dir = site || path.join(root, 'dist');
+  // The Pages asset store, shimmed locally: /api/version reads the served index.html through it,
+  // exactly like the real binding does on Cloudflare.
+  env.ASSETS = { fetch: u => serveStatic(u instanceof URL ? u : new URL(u, 'http://local'), dir) };
   const handlerCache = new Map();
 
   const loadHandler = async file => {

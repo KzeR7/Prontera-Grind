@@ -5723,3 +5723,122 @@ The owner's second pass over v77, six notes, all built.
   **15/15**, `node --check` clean on the inline JS of `index.html` and both dev pages,
   `git diff --check` clean. READ-ME-FIRST gained a v87.1 section at the top of the BUILD list.
 * **Branches / PR:** merge commit on `arena/4a7f511c-prontera-grind`; PR #39 is mergeable again.
+
+### 2026-10-08 — `2026-10-08 grind-v88 Prontera Town removed; sheet and settings tidied; auto-equip learns dual wield; the swing matches attack speed; auto-advance catches up; the page reloads itself on a new deploy`
+* **What changed for the player:** the owner's nine-item list, all of it in `index.html` unless noted.
+  * **Prontera Town is fully removed.** The safe town map is gone from the game: the town card and
+    the town band on the World Map, the whole town engine (walking, NPCs, the talk box, the HD art
+    loader), the town CSS and HTML, the WASD/F hotkeys, the HUD title branch, the town branch in the
+    game loop, the `window.town`/`townUnlock`/`TOWN_NPC` console hooks, and every file that only
+    existed for it: `assets/town/` (the 9.2 MB painted atlas), `Updates/town-hd/` (the 59 MB HD
+    source art), the four town tools (`make_town_pack.py`, `_town_dump.js`,
+    `measure_town_ground.py`, `preview_town_board.py`) and the `town_smoke.js` test suite. Nothing
+    references the town and nothing downloads it any more. **Endless Echo now takes the whole
+    destination row** under the ten field maps. The Prontera **field** (the first grinding map, the
+    Novice start) is untouched - that is a normal map, not the town.
+  * **The Character sheet is tidied.** The "RO-style" tag is gone from the attack-speed readout;
+    the movement readout says **Movement speed** and shows one number (the old second "sprinting"
+    figure is gone; the run itself still works in the world); and the six stat descriptions now say
+    what each stat really does - LUK no longer claims drop rate, because nothing on the character
+    changes drop odds.
+  * **"Auto-equip better gear" moved from Settings to the Bag tab**, in its own small card above
+    the selling tools.
+  * **"Auto-advance through stages and maps" moved from Settings to the World Map tab**, right
+    under the stage picker.
+  * **Auto-advance actually works now.** The old code only advanced a player sitting exactly at the
+    unlocked frontier, so with the switch ON someone farming below it (an old map revisited, a stage
+    farmed with the switch off, a map arrived on whose stages were already unlocked) never moved -
+    the owner's "sometimes it does nothing". Now the switch always walks you forward again ("turn
+    off to farm" is the whole deal), in the live game and in the offline reward simulation alike.
+    Nightmare stages (11-15) stay manual, as before.
+  * **The Assassin's off-hand dagger no longer comes off by itself.** The save-load repair predated
+    dual wield and stowed ANY left-hand piece that was not a shield - so the second dagger was
+    silently moved into the bag on every load, login and cloud sync ("sometimes auto unequip").
+    The repair now keeps a dual-wield dagger (and still empties the left hand when the main hand
+    holds the two-handed katar). **Auto-equip also learned dual wield**: a dropped dagger takes
+    whichever hand makes the pair stronger (the old code only ever compared the main hand), and a
+    katar that beats the whole pair takes the main hand and puts the second blade in the bag.
+  * **Pressing Refine no longer closes the bag.** The picker's "you clicked somewhere else" test
+    looked for an Equipment *window* that does not exist - the equipment panel is a sub-tab of the
+    Character window - so the Refine button counted as "outside" and shut the chooser the moment
+    the refine landed. The paper doll (which holds the Refine button, the card sockets, Unequip
+    and Lock) now counts as inside.
+  * **The skills grid no longer jumps to the bottom when you press a skill.** The press is now
+    anchored to its own tile after the panel redraws, and the window bodies opt out of the
+    browser's scroll-anchoring, which could fight the redraw.
+  * **The attack animation matches the attack speed.** The drawn swing used to be floored at 0.2s,
+    so anyone faster than 5 hits per second attacked on the real timer but animated slower - visibly
+    out of sync. The animation now follows the real attack rate (still floored at 0.14s).
+  * **The page refreshes itself when a deploy lands.** New endpoint `/api/version`
+    (`functions/api/version.js`): it answers with the BUILD string read straight out of the served
+    `index.html` through the Pages asset store, always `no-store`. The page polls it once a minute
+    and, when the answer differs from the BUILD it is running, reloads itself - a hard refresh on
+    PC and mobile, since Cloudflare revalidates everything on reload. On a plain static host (no
+    endpoint) it simply never fires. The four data `<script>` tags also moved `?v=1` -> `?v=2` so
+    this deploy cannot serve a stale data file.
+* **Files touched:** `index.html` (all of the above + `BUILD` grind-v88); **new**
+  `functions/api/version.js`; **new** `tools/tests/update_watch_sim.js`; `tools/dev_server.js`
+  (the `/api/version` route and a local `ASSETS` shim); `tools/tests/ui_sim.js` (the moved
+  switches, the tidied sheet, the single-card destination row, the `.doll` inside-test, the
+  `ui(anchor)` grab boundaries); `tools/tests/cloud_sim.js` (the town-atlas test replaced by a
+  "the town is fully gone" sweep); `tools/tests/starter_sim.js` + `tools/tests/offline_sim.js`
+  (auto-advance catch-up); `tools/tests/dual_wield_sim.js` (the load repair and the dual-wield
+  auto-equip); `tools/tests/combat_damage_sim.js` (the swing follows the real attack rate);
+  `tools/tests/class_skin_sim.js`, `tools/tests/weapon_joint_sim.js`, `tools/tests/publish_sim.js`
+  (the `?v=2` script-tag pins); `tools/tests/field_loop_smoke.js` (a stale comment);
+  **deleted** `assets/town/`, `Updates/town-hd/`, `tools/_town_dump.js`, `tools/make_town_pack.py`,
+  `tools/measure_town_ground.py`, `tools/preview_town_board.py`, `tools/tests/town_smoke.js`;
+  build-tag mirrors (`affix-ranges.html` x2, `equipment-cards-tuning.html` via
+  `--refresh-snapshot`, `tools/cloudflare-deploy-steps.md`); `READ-ME-FIRST.md` (a v88 section at
+  the top of the BUILD list); `TOOLS-START-HERE.md` (the town tool rows, the town suite note and
+  the town preview section removed).
+* **Art:** none. No sheets added, removed or rebuilt; `tools/montage.py` not used. The town's art
+  was deleted with the town; the map kit's `house_prontera` crops stay because the Prontera FIELD
+  map (map 1) still dresses with them.
+* **Tests:** all **39** `*_sim.js` suites pass (**1201** assertions), including the new
+  `update_watch_sim` (5); `field_loop_smoke.js` **7/7** with jsdom + three installed (it boots the
+  real `index.html`, so the town removal is proven to boot clean); inline page JavaScript passes
+  `node --check`; `git diff --check` clean.
+* **Branches / PR:** committed to `arena/80c940d4-prontera-grind`; **not pushed and no PR** - the owner plays the build first.
+* **Known limits / follow-ups:** (1) the update watcher reloads mid-run if a deploy lands during an
+  Endless Echo ranked run - the run is forfeited, the save is safe (autosave every 5s plus the
+  offline reward); say the word if it should wait for the run to end. (2) The watcher polls every
+  60s, so players refresh within a minute of a deploy. (3) Nightmare auto-advance stays manual by
+  design - extending it into stages 11-15 is a separate balance call. (4) The sprint mechanic
+  itself (long trips walk 1.4x) is unchanged; only its readout was removed from the sheet.
+
+### 2026-10-09 — `2026-10-09 grind-v88.1 cloud login no longer erases the away window, so offline rewards pay out again (4h max, 50%)`
+* **What changed for the player:** the offline reward works again for cloud accounts. The owner
+  reported it "seems to be not working" (it should pay 4 hours max at 50% of the recent pace).
+  * **Checked, not assumed:** the local no-cloud path was verified fine first (the real page in
+    jsdom, a 4-hour-old save at 1200 kills/hour -> the welcome-back card credits exactly 4 hours and
+    2,400 kills; 10 hours away still caps at 4; under 3 minutes still shows nothing). The bug was
+    only on the cloud path.
+  * **Root cause:** away time is measured server-side from `saves.last_seen`, but
+    `functions/api/sessions.js` ran `db.touchSeen()` on every successful LOGIN - and a returning
+    player signs in BEFORE the game asks `/api/save` for its claim, so the login erased the
+    player's own away window and the claim came back empty. No cloud account ever received an
+    offline reward.
+  * **Fix:** the login no longer touches `saves.last_seen`. The sign-in is still recorded in
+    `users.last_login_at` (`noteLogin`) for the GM player list, and the away baseline still moves
+    on the first save exchange of the session (GET/PUT `/api/save`), which is the server-observed
+    return the reward is timed from. One line removed, plus a comment saying why it must not come
+    back.
+  * **Verified end to end:** the real `index.html` in jsdom against the real `functions/api/*`
+    handlers and a real SQLite database - register, play, sync, 4 hours pass, fresh page, log in:
+    the card credits 4 hours at 50% of the server-measured pace (662 kills at 331/hour), the claim
+    is acknowledged one-use (`claimed_at` set), and the two-saves chooser cannot double-pay it.
+* **Files touched:** `functions/api/sessions.js` (the one-line fix + comment); `tools/tests/api_sim.js`
+  (new case: "a login does not erase the away window" - pins the REAL sequence away -> login ->
+  claim, and fails if the login touch returns); `index.html` (`BUILD` grind-v88.1); build-tag
+  mirrors (`affix-ranges.html` x2, `equipment-cards-tuning.html` via `--refresh-snapshot`,
+  `tools/cloudflare-deploy-steps.md`); `READ-ME-FIRST.md` (a v88.1 section at the top of the BUILD
+  list).
+* **Art:** none.
+* **Tests:** all **39** `*_sim.js` suites pass (incl. the new `api_sim` case, 34 in that suite);
+  `field_loop_smoke.js` **7/7**; `drop_card_sheet_sim.js` 13/13 after the snapshot refresh.
+* **Branches / PR:** committed to `arena/80c940d4-prontera-grind` (on top of the pushed v88
+  `dd9bd2f`); pushed; **no PR** - the owner plays the build first.
+* **Known limits / follow-ups:** none new. The fix is server-side only, so the deployed
+  `functions/api/sessions.js` must be redeployed with the page (the v88 auto-refresh reloads
+  players onto the new page; the Function ships with the same `wrangler pages deploy`).

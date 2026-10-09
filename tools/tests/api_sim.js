@@ -260,6 +260,36 @@ await T('offline time is server-timed, capped, half-rate, persistent until claim
   assert.strictEqual(directAccepted.status,200,'the corrected retry acknowledges the issued claim');
 });
 
+await T('a login does not erase the away window: the offline claim survives signing in', async () => {
+  // The real sequence (v88.1 owner report: "offline reward seems not to be working" on cloud
+  // accounts): the player syncs, is gone four hours, and COMES BACK - which means logging in
+  // FIRST, and only then does the game ask /api/save for its claim. The login used to touch
+  // saves.last_seen, so the away window was already zero when the claim was computed and no
+  // cloud account ever received an offline reward. This pins the real order, not a hand-staged one.
+  const h = freshEnv();
+  const reg = await api.register(h.env, { u: 'RETURNING', p: 'returning-password' });
+  await api.putSave(h.env, reg.cookie, { version: 0, blob: saveBlob(10, 5), savedAt: 1 });
+  const id = h.sqlite.prepare('SELECT id FROM users WHERE username = ?').get('RETURNING').id;
+  const awayMs = 4 * 60 * 60 * 1000, goneAt = Date.now() - awayMs;
+  h.sqlite.prepare('UPDATE saves SET last_seen = ?, rate_kph = ? WHERE user_id = ?').run(goneAt, 100, id);
+  const back = await api.login(h.env, { u: 'RETURNING', p: 'returning-password' });
+  assert.strictEqual(back.status, 200);
+  const seen = h.sqlite.prepare('SELECT last_seen FROM saves WHERE user_id = ?').get(id).last_seen;
+  assert.strictEqual(seen, goneAt,
+    'login must not move the away baseline (it records the sign-in in users.last_login_at instead)');
+  const got = await api.getSave(h.env, back.cookie);
+  const claim = got.data.offlineClaim;
+  assert.ok(claim && claim.id > 0, 'the return after a real login still earns a server-timed claim');
+  assert.ok(claim.awayMs >= awayMs, 'the away window is the full four hours the player was gone');
+  assert.strictEqual(claim.creditedMs, 4 * 60 * 60 * 1000, 'still capped at four hours');
+  assert.strictEqual(claim.kills, 200, '100 kills/hour × 4 hours × 50%');
+  const base = JSON.parse(got.data.blob); base.kills += claim.kills; base.offlineClaimId = claim.id;
+  const accepted = await api.putSave(h.env, back.cookie, { version: got.data.version, blob: JSON.stringify(base), offlineClaimId: claim.id, savedAt: 2 });
+  assert.strictEqual(accepted.status, 200, 'the claim is acknowledged with the next sync');
+  const again = await api.getSave(h.env, back.cookie);
+  assert.strictEqual(again.data.offlineClaim, null, 'the same period cannot be claimed twice');
+});
+
 await T('a stale write is refused with the server copy, never silently applied', async () => {
   const c = globalThis.__friend, current = (await api.getSave(env, c)).data.version;
   const stale = await api.putSave(env, c, { version: current - 1, blob: saveBlob(99, 1), savedAt: 3 });

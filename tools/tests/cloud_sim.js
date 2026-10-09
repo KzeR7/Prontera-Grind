@@ -602,16 +602,19 @@ await T('a tab that comes back holding unsynced progress pushes it instead of op
   assert.strictEqual(h2.els.get('conflict').style.display, 'flex', 'a version we have never seen is the player\'s call');
 });
 
-await T('the town\'s 9.6 MB atlas is only downloaded by somebody heading for town', async () => {
-  // The single biggest download in the game. It used to start at boot for every account with the
-  // town open - players who never walked through the gate included.
-  assert.ok(!/if\(townUnlocked\(\)\)townPackFetch\(\)/.test(src),
-    'the boot-time town fetch must be gone (it downloads 9.6 MB before anyone asks for the town)');
-  const boot = src.slice(src.indexOf('resize();respawn=.3;requestAnimationFrame(loop)'));
-  assert.ok(!boot.slice(0, 500).includes('townPackFetch()'), 'nothing on the boot line may fetch the town atlas');
-  assert.match(src, /\[data-a="town"\]/, 'the Town card is what warms the atlas now');
-  assert.match(src, /function townEnter\(quiet\)\{[\s\S]{0,1200}?townPackFetch\(\)/,
-    'walking in must still start the download for sure');
+await T('v88: the town is fully gone - no code, no card, no atlas, no console hooks', async () => {
+  // The owner asked for the Prontera Town map removed outright: no space, no loading, nowhere.
+  for (const gone of ['function townEnter(', 'function townLeave(', 'function townToggle(', 'function townWalk(',
+                      'const TOWN_NPC=', 'const TOWN_OPEN=', 'townPackFetch', 'townUnlocked', 'townMarkerStep',
+                      'window.town=', 'window.townUnlock=', 'window.TOWN_NPC=', "data-a=\"town\"",
+                      'mapcard town-card', 'mapcard.closed', 'class=\"npcrow\"', 'class=\"npcchip\"',
+                      'id=\"npcBox\"', 'id=\"npcLayer\"', '#npcBox{', '.npc-tag{', 'assets/town/', 'S.town']) {
+    assert.ok(!src.includes(gone), 'index.html must not contain ' + gone);
+  }
+  assert.ok(!fs.existsSync(path.join(root, 'assets', 'town')), 'assets/town/ is deleted (the 9.2 MB atlas)');
+  assert.ok(!fs.existsSync(path.join(root, 'Updates', 'town-hd')), 'Updates/town-hd/ is deleted (the HD source art)');
+  assert.ok(!fs.existsSync(path.join(root, 'tools', 'tests', 'town_smoke.js')), 'the town smoke suite is deleted with the map');
+  assert.ok(!fs.existsSync(path.join(root, 'tools', 'make_town_pack.py')), 'the town pack tool is deleted too');
 });
 
 console.log('\n' + pass + ' passed, ' + fail + ' failed');

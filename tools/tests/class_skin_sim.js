@@ -671,8 +671,8 @@ const settle = async (X, limit = 2000) => {
 
   // ---------- asset loading and the hero ----------
   await t('the saved weapon proposals load before the game and composite onto the matching APNG frames', async () => {
-    const artTag=src.indexOf('<script src="assets/weapons_data.js?v=1"></script>');
-    const proposalTag=src.indexOf('<script src="assets/weapon_proposal_data.js?v=1"></script>');
+    const artTag=src.indexOf('<script src="assets/weapons_data.js?v=2"></script>');
+    const proposalTag=src.indexOf('<script src="assets/weapon_proposal_data.js?v=2"></script>');
     const gameScript=src.indexOf('<script>\nconst $=');
     assert.ok(artTag>=0&&proposalTag>artTag&&gameScript>proposalTag,'weapon art and saved placements load before the game code');
     const Y=boot({withWeapons:true});
@@ -751,7 +751,7 @@ const settle = async (X, limit = 2000) => {
   });
 
   await t('the page loads the manifest and asks for the class\'s own files, once each', async () => {
-    assert.ok(src.includes('<script src="assets/class_skins_data.js?v=1"></script>'), 'the manifest is loaded by the page');
+    assert.ok(src.includes('<script src="assets/class_skins_data.js?v=2"></script>'), 'the manifest is loaded by the page');
     assert.ok(src.includes('await fetch(encodeURI(url))'), 'the loader URL-encodes the source path (it contains spaces)');
     const Y = boot();
     const p = Y.skinPack('Lord Knight', 'f');
