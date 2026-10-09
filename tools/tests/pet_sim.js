@@ -65,7 +65,7 @@ const tickPet=dt=>{${grab("for(const id in petSkillCd)petSkillCd[id]=Math.max(0,
 // The passive-skill half of the derived stats: the real pv() walk over the line's passives, so
 // Aura Blade / Owl's Eye and friends are counted in the player's numbers below.
 const pv=k=>SKILLS.reduce((a,s)=>a+(s.type==='pas'&&s.key===k&&skillOn(s.id)?s.f(lv(s.id)):0),0);
-this.__p={ PETS,PET_SKILLS,RN,RCL,MUT,GW,PT,PTG,GREAT,PEQ,EGG,PETGAP,PETBAL,petDmg,petInt,peqCost,rollCost,petSkillCost,
+this.__p={ PETS,PET_SKILLS,RN,RCL,MUT,GW,PT,PTG,GREAT,PEQ,EGG,PETGAP,PETBAL,petDmg,petInt,peqCost,peqCostOf,rollCost,petSkillCost,
   rollPetSkills,petSkills,petBuffWhy,petLeech,petHit,tickPet,maxHp,
   MAPS,genGear,atk,matk,aspd,crit,critD,C,CLASSES,HPK,HPE,SKILLS,SKSLOTS,SKFADE,lineOf,st,pv,
   petBuff,petBuffSrc,PET_SKILL_WEIGHTS,setMobs:m=>{mobs=m},setDealt:v=>{dealt=v},getDealt:()=>dealt,
@@ -476,7 +476,21 @@ t('roster and costs are visible data (for the Pets panel and the notes)', () => 
   const line = P.PETS.map((p, i) => p.n + ' (' + P.RN[p.r] + ', ' + P.rollCost({ sp: i }) + 'z per mutation roll)').join(' | ');
   console.log('       ' + line);
   console.log('       maxing one stat: ' + JSON.stringify(P.PT) + ' at ' + P.PTG.map(x => Math.round(x * 100) + '%').join('/') + ' per roll, ' + P.peqCost(0) + '-' + P.peqCost(4) + 'z per roll');
-  P.PETS.forEach((p, i) => assert.ok(P.rollCost({ sp: i }) === 2500 * (1 + p.r), 'mutation roll price'));
+  P.PETS.forEach((p, i) => assert.ok(P.rollCost({ sp: i }) === 2500 * (1 + p.r) * (p.r === 3 ? 2 : 1), 'mutation roll price'));
+});
+
+t('Legendary pets cost twice as much on every pet price (v90), and nothing else moves', () => {
+  // v90 (owner): every Legendary pet (r===3) doubles its mutation roll, its skill gacha and its upgrade step.
+  const leg = P.PETS.findIndex(p => p.r === 3), common = P.PETS.findIndex(p => p.r === 0);
+  assert.ok(leg >= 0 && common >= 0, 'the roster has both a Legendary and a Common pet');
+  assert.strictEqual(P.rollCost({ sp: common }), 2500, 'a Common mutation roll is unchanged at 2500z');
+  assert.strictEqual(P.rollCost({ sp: leg }), 20000, 'a Legendary mutation roll is 20000z (was 10000z)');
+  assert.strictEqual(P.petSkillCost({ sp: common }), 2000, 'a Common skill gacha is unchanged at 2000z');
+  assert.strictEqual(P.petSkillCost({ sp: leg }), 16000, 'a Legendary skill gacha is 16000z (was 8000z)');
+  assert.strictEqual(P.peqCostOf({ sp: common }, 0), 1200, 'a Common upgrade step 1 is unchanged');
+  assert.strictEqual(P.peqCostOf({ sp: leg }, 0), 2400, 'a Legendary upgrade step 1 is 2400z (was 1200z)');
+  assert.strictEqual(P.peqCostOf({ sp: leg }, 4), 60000, 'a Legendary top upgrade step is 60000z (was 30000z)');
+  assert.strictEqual(P.peqCost(4), 30000, 'the base upgrade ladder itself is unchanged');
 });
 
 console.log('\n' + pass + ' passed, ' + fail + ' failed');

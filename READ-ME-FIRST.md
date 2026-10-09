@@ -84,6 +84,29 @@ is the live one; with no argument the tool prints how to set a new one). Since v
 `GM` / `test1234`; `localStorage.removeItem('pg_gm_local')` removes it. Normal accounts are made
 in-game and stored in the browser (`pg_acc4`; saves under `pg_save3_<user>`).
 
+## BUILD v90 — Affix nerf on Flee/ATK/ASPD/CRIT, refine and Legendary pet costs up, Black Market for endgame Zeny (grind-v90)
+
+Four owner requests in one build. Every number is a named constant or a single formula, so a later retune is one edit.
+
+* **Four N and N+ affixes are nerfed a little more** (`NM_MUL`, `nmMulOf()`, read by `affixValue()`, sections 4 and 5 only):
+  Flee **x3.0 / x3.4** (was x3.5 / x4); ATK %, ASPD % and Crit % **x4.2 / x5.0** (was x5 / x6). Top Abyss rolls: N+ Flee
+  44 → **38**, N Flee 39 → **33**, N+ ATK 66 → **55**, N+ ASPD 50 → **41**, N+ Crit 27 → **22**. STR, AGI, DEX, LUK, INT,
+  Max HP and Crit DMG keep their v89 numbers.
+* **Refining costs more.** Zeny per step is `400 × (level + 1) × (1 + section × 0.5)` (was 200). Ore per attempt is
+  `refOre()`: **1** for Common and Fine, **2** for Rare and Epic, **3** for Legendary and N, **4** for N+ (was 1 for all).
+* **Legendary pets cost 2×** (`r === 3` only): mutation roll **20,000z**, skill gacha **16,000z**, upgrade steps doubled
+  (`peqCostOf(p, t)`, the pet panel and the upgrade action both read it). Common, Rare and Epic pets are unchanged.
+* **New Black Market tab (key `X`, 🏪), unlocked at Base Lv 100** (`BM_LV`). Two Zeny sinks:
+  * **Ore:** Oridecon or Elunium, **100,000z each** (`BM_ORE`), one at a time.
+  * **Reforge** one affix on any worn piece that has affixes (`reforge()`): one affix is dropped at random and a new one
+    the piece does not have is rolled at the drop roll. Price **150,000z × (rarity + 1)** (`BM_REFORGE`): 1,050,000z for N+.
+    Armor and other non-weapon pieces never roll Crit DMG here, the same rule as drops.
+* **Why:** past Base Lv 100 the grind earns about **178,000z an hour** at power 99 (800 kills an hour), more on Nightmare, and
+  the old sinks cost a few thousand to 20,000z. The Black Market turns that Zeny into ore and reforges.
+* **Open:** the owner's "for fairness, remain the drop on stage 4 & 5" request is **not** done. It needs confirming first,
+  because it could mean the Nightmare Abyss Stage 4/5 N+ weapon split or the Prontera Stage 4/5 drop. The Black Market
+  prices are a first guess (see the v90 entry in `AGENTS.md`). Reforges roll at quality 1, since gear does not store its quality.
+
 ## BUILD v89 — Nightmare balance: Stage 5 harder, N+ drops halved and shared, N/N+ flat affixes lowered, pets -37% (grind-v89)
 
 Five owner balance requests in one build. Every number is a single named constant, so a later retune is one edit.

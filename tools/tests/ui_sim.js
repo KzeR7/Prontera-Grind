@@ -86,6 +86,13 @@ const code = [
   pick(/const icon=it=>[^;]+;/, 'icon'),
   pick(/const items=\(\)=>[^\n]*/, 'items/ev/iname/eqv'),
   pick(/const refCost=it=>[^;]+;/, 'refCost/refCh'),
+  grab('const BM_LV=', '// ---------- class change ----------'),   // v90: the Black Market helpers (ore, reforge, price)
+  pick(/const AL=\{[^}]*\};/, 'affix labels'),
+  pick(/const uid=[^\n]*/, 'rnd and ri'),
+  pick(/const AFFIX_CDM_SCALE=[^\n]+;/, 'gear-only Crit DMG post-roll scale'),
+  pick(/const NM_FLAT=\[[^\]]*\],NM_FLAT_MUL=\[[^\]]*\],NM_MUL=\{[^}]*\};/, 'v90 Nightmare affix multipliers'),
+  pick(/const nmMulOf=\(k,section\)=>[^\n]*/, 'nmMulOf'),
+  pick(/const affixValue=\(k,section,tier,roll\)=>\{[^}]+\};/, 'affixValue'),
   pick(/const affTxt=a=>[^;]+;/, 'affTxt/cardTxt/dtier'),
   grab('const V={', 'const ACT={'),                            // the panels themselves
   // v39: the Log window's filter table and its two readers, the on-screen log's fold helper, the
@@ -120,6 +127,8 @@ ${code}
 const skpAvail=()=>5,skTree=()=>4,skEarnedMax=()=>9,skLine=()=>['Novice'],skEarned=()=>9,skSpent=()=>0,pv=()=>0,bon=()=>0,qTxt=q=>'quest';
 this.__u={ V, itemDetail, itemMain, SKILLS, SKILL_ICON, SKILL_TONE, SKILL_PICTO, skillIcon, logs, indexSectionOpen, indexToggleSection, set S(v){S=v}, get S(){return S}, set boardPeriod(v){boardPeriod=v}, set boardCache(v){boardCache=v}, set boardStatus(v){CLOUD.api=!!v.api;CLOUD.on=!!v.on}, set eqPick(v){eqPick=v}, get eqPick(){return eqPick},
            set indexMode(v){indexMode=v}, get indexMode(){return indexMode}, set mapM(v){mapM=v}, set mapL(v){mapL=v}, set selE(v){selE=v}, get selE(){return selE}, set selB(v){selB=v}, get selB(){return selB}, set selS(v){selS=v}, set selP(v){selP=v} };
+const log=(m,c,k)=>{logs.push(m)},ui=()=>{},save=()=>{};   // the Black Market's writes (stubs here)
+this.__bm={buyOre,reforge,reforgeCost,bmOpen,refCost,refOre};
 `;
 const sb = { console };
 vm.createContext(sb); vm.runInContext(harness, sb);
@@ -951,6 +960,60 @@ t('v74: the item card names the class tier a piece belongs to, and why a locked 
   assert.ok(/\$\{gearUserOf\(it\)\}/.test(src), 'the tier name is interpolated from the one helper');
   assert.ok(src.includes('it.wearer?` This was ${it.wearer'), 'the wearer note is attributed');
 });
+
+t('v90 Black Market: locked under Base Lv 100, then sells ore and reforges one affix on a worn piece', () => {
+  U.S=mkS('Novice');U.S.lv=99;U.S.zeny=10000000;U.S.ore={ori:0,elu:0};
+  U.S.eq.armor={id:501,name:'Test Coat',tier:3,slot:'armor',val:40,sec:5,aff:[{k:'str',v:55},{k:'flee',v:38}],slots:0,cards:[]};
+  let h=U.V.market();
+  assert.ok(h.includes('opens at Base Lv 100'),'the Black Market says when it opens');
+  assert.ok(!h.includes('data-a="bmore"'),'no ore is for sale below Base Lv 100');
+  U.S.lv=100;
+  h=U.V.market();
+  assert.ok(h.includes('data-a="bmore" data-v="ori"')&&h.includes('data-a="bmore" data-v="elu"'),'Oridecon and Elunium are both for sale from Base Lv 100');
+  assert.ok(h.includes('100,000z each'),'ore is priced at 100,000z');
+  assert.ok(h.includes('data-a="bmref" data-v="armor"'),'a worn piece with affixes can be reforged');
+  assert.ok(h.includes('Reroll one affix: 1,050,000z'),'an N+ piece costs rarity 6 + 1 times 150,000z to reforge');
+  assert.ok(!h.includes('data-a="bmref" data-v="weapon"'),'an empty slot is not offered a reforge');
+  const bm=sb.__bm;
+  bm.buyOre('ori');
+  assert.strictEqual(U.S.ore.ori,1,'one Oridecon is bought');
+  assert.strictEqual(U.S.zeny,10000000-100000,'the ore costs 100,000z');
+  U.S.zeny=50000;bm.buyOre('elu');
+  assert.strictEqual(U.S.ore.elu,0,'an unaffordable ore purchase is refused');
+  assert.strictEqual(U.S.zeny,50000,'and charges nothing');
+  U.S.zeny=10000000;
+  vm.runInContext('Math.random=()=>.5',sb);
+  const before=U.S.eq.armor.aff.map(a=>a.k);
+  bm.reforge('armor');
+  const after=U.S.eq.armor.aff;
+  assert.strictEqual(after.length,2,'a reforge keeps the number of affixes');
+  assert.strictEqual(U.S.zeny,10000000-1050000,'a reforge charges the rarity price');
+  assert.strictEqual(after.filter(a=>before.includes(a.k)).length,1,'exactly one affix is replaced');
+  assert.ok(after.every(a=>a.v>=1),'every rolled value is at least 1');
+  U.S.zeny=100;bm.reforge('armor');
+  assert.strictEqual(U.S.zeny,100,'an unaffordable reforge charges nothing');
+  U.S.zeny=10000000;U.S.eq.armor.aff=[];bm.reforge('armor');
+  assert.strictEqual(U.S.zeny,10000000,'a piece with no affix cannot be reforged');
+  U.S.eq.armor.aff=[{k:'str',v:55}];
+  vm.runInContext('Math.random=()=>.99',sb);
+  bm.reforge('armor');
+  assert.ok(U.S.eq.armor.aff[0].k!=='cdm','armor never rolls Crit DMG in a reforge');
+  vm.runInContext('Math.random=Math.random',sb);
+});
+
+t('v90 refine: rarer pieces eat more ore per attempt and every step costs twice the Zeny', () => {
+  const bm=sb.__bm;
+  assert.strictEqual(bm.refOre({r:0,tier:0}),1,'Common takes 1 ore');
+  assert.strictEqual(bm.refOre({r:0,tier:1}),1,'Fine takes 1 ore');
+  assert.strictEqual(bm.refOre({r:0,tier:2}),2,'Rare takes 2 ore');
+  assert.strictEqual(bm.refOre({r:0,tier:3}),2,'Epic takes 2 ore');
+  assert.strictEqual(bm.refOre({r:0,tier:4}),3,'Legendary takes 3 ore');
+  assert.strictEqual(bm.refOre({r:0,tier:0,sec:4}),3,'N takes 3 ore');
+  assert.strictEqual(bm.refOre({r:0,tier:0,sec:5}),4,'N+ takes 4 ore');
+  assert.strictEqual(bm.refCost({r:0,sec:0}),400,'the first step costs 400z (was 200)');
+  assert.strictEqual(bm.refCost({r:0,sec:3}),1000,'a high-tier first step costs 1000z');
+});
+
 
 t('pet details show Ragnarok sprites, named upgrade levels, and gacha skill odds', () => {
   U.S=mkS('Novice');U.S.pets=[{id:41,sp:0,mut:0,eq:[1,2,0],skills:['warcry','spiritbolt'],sk:[1,2,3],on:false}];U.selP=41;

@@ -337,13 +337,31 @@ t('job gates land on the anchors: base ' + GATES.map(g => g && g.base).join('/')
 
 t('a full run earns enough Zeny for the endgame sinks', () => {
   const z = totalZeny();
-  const refCost = (r, sec) => Math.round(200 * (r + 1) * (1 + sec * .5));
+  const refCost = (r, sec) => Math.round(400 * (r + 1) * (1 + sec * .5));   // v90: twice the v51 base of 200
   const refCh = [70,70,70,70,49,42,35,28,21,14];   // v51: every step nerfed 30%
   let oneSlot = 0; for (let r = 0; r < 10; r++) oneSlot += refCost(r, 3) / (refCh[r] / 100);
   const fullSetup = oneSlot * 7;
   assert.ok(z > fullSetup * 5, 'only ' + Math.round(z / fullSetup) + 'x a full +10 setup - refining is unaffordable');
   assert.ok(z > 200 * 10000, 'only ' + Math.round(z / 10000) + ' pet mutation rolls affordable');
   console.log('       ' + Math.round(z).toLocaleString() + 'z total = ' + (z / fullSetup).toFixed(1) + 'x a 7-slot +10 setup, ' + Math.round(z / 10000) + ' pet rolls');
+});
+
+t('the Black Market gives endgame Zeny somewhere to go (v90)', () => {
+  // the prices are read from the live source so a retune here is a retune there
+  const bmOre = +src.match(/BM_ORE=(\d+)/)[1], bmRef = +src.match(/BM_REFORGE=(\d+)/)[1];
+  const perHour = zenyPerKill(99) * KILLS_PER_HOUR;
+  // one ore is a buyable shortcut, not a free one: under an hour of pw99 grinding each
+  assert.ok(bmOre / perHour < 1, 'one ore is ' + (bmOre / perHour).toFixed(2) + ' h of pw99 grinding - too cheap');
+  assert.ok(bmOre / perHour > .25, 'one ore is ' + (bmOre / perHour).toFixed(2) + ' h of pw99 grinding - not a sink');
+  // a reforge on an N+ piece (rarity 6, price 7 x 150,000z) takes a few hours of pw99 grinding
+  const hours = bmRef * 7 / perHour;
+  assert.ok(hours > 2 && hours < 10, 'an N+ reforge takes ' + hours.toFixed(1) + ' h of pw99 grinding');
+  // a full +10 N+ refine from scratch needs about 114 ore in attempts (4 per attempt): a long ore sink
+  let attempts = 0; const refCh = [70,70,70,70,49,42,35,28,21,14];
+  for (let r = 0; r < 10; r++) attempts += 4 / (refCh[r] / 100);
+  const oreZeny = attempts * bmOre;
+  assert.ok(oreZeny > 5000000, 'buying a full N+ +10 ore costs ' + Math.round(oreZeny).toLocaleString() + 'z - too cheap to matter');
+  console.log('       Black Market: ore ' + (bmOre / perHour).toFixed(2) + ' h, N+ reforge ' + hours.toFixed(1) + ' h, full N+ +10 ore ' + Math.round(oreZeny / 1e6) + 'M z');
 });
 
 t('endgame Zeny per kill is on the same scale as a refine attempt', () => {

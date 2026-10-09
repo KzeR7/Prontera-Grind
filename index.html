@@ -628,8 +628,12 @@ const AFFIX_CDM_SCALE=.7,scaleCritDamageAffix=v=>Math.max(1,Math.round(v*AFFIX_C
 // Section 4 is x3.5 (was x5) and section 5 is x4 (was x6), so the top flat roll on Abyss falls from 83 to 55
 // STR and from 66 to 44 Flee - the same ceiling the high-tier Legendary already rolls. Max HP, ATK %, ASPD,
 // Crit % and Crit DMG keep their Nightmare multipliers. Sections 0-3 are untouched.
-const NM_FLAT=['str','agi','dex','luk','int','flee'],NM_FLAT_MUL=[3.5,4];
-const affixValue=(k,section,tier,roll)=>{const mul=(section>=4&&NM_FLAT.includes(k))?NM_FLAT_MUL[Math.min(1,section-4)]:1+section;const raw=Math.max(1,Math.round(mul*AM[tier]*AB[k]*roll));return k==='cdm'?scaleCritDamageAffix(raw):raw};
+// v90 (owner: a slightly harder nerf on Flee, ATK, ASPD and CRIT in the N and N+ rows): Flee drops
+// to x3.0 / x3.4 (was x3.5 / x4) and ATK %, ASPD % and Crit % drop to x4.2 / x5.0 (was x5 / x6).
+// STR, AGI, DEX, LUK and INT keep x3.5 / x4. Max HP and Crit DMG keep the plain 1+section.
+const NM_FLAT=['str','agi','dex','luk','int'],NM_FLAT_MUL=[3.5,4],NM_MUL={flee:[3,3.4],atk:[4.2,5],aspd:[4.2,5],crit:[4.2,5]};
+const nmMulOf=(k,section)=>{const i=Math.min(1,section-4);return NM_FLAT.includes(k)?NM_FLAT_MUL[i]:NM_MUL[k]?NM_MUL[k][i]:1+section};
+const affixValue=(k,section,tier,roll)=>{const mul=section>=4?nmMulOf(k,section):1+section;const raw=Math.max(1,Math.round(mul*AM[tier]*AB[k]*roll));return k==='cdm'?scaleCritDamageAffix(raw):raw};
 const AL={str:'STR',agi:'AGI',dex:'DEX',luk:'LUK',int:'INT',hp:'Max HP',atk:'ATK %',crit:'Crit %',aspd:'ASPD %',flee:'Flee %',cdm:'Crit DMG %',vit:'VIT'};
 // The field is a vertical avenue: the player starts at the near end (high Z, bottom of the
 // screen) and mobs hold the far end (low Z, top of the screen), so you run up to engage.
@@ -653,7 +657,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // script block, which is a SyntaxError - the game did not run on main at all. One line wins, and
 // it names both sides of this merge: the v38 balance patch (the weapon cut, the affix/card
 // give-back) and main's weapon-hold rendering work.
-const BUILD='2026-10-09 grind-v89 Nightmare Stage 5 +30% HP and ATK, N+ drops halved and shared by every class, N/N+ flat affixes lowered, pet damage -37%';   // shown on the login card - confirms which file you loaded
+const BUILD='2026-10-09 grind-v90 Flee/ATK/ASPD/CRIT nerfed on N and N+, refine costs 2x Zeny and rarity-scaled ore, Legendary pets cost 2x, new Black Market (Base Lv 100): buy ore and reforge affixes';   // shown on the login card - confirms which file you loaded
 $('buildTag').textContent='build '+BUILD;
 
 // ---------- class tree: Novice -> 6 first jobs -> 6 second jobs -> 6 third jobs ----------
@@ -1831,7 +1835,9 @@ const PET_SKILLS=[
   {id:'guardingchirp',n:'Guarding Chirp',kind:'utility',effect:'def',value:5,duration:20,cd:40,desc:'Utility: +5 DEF for 20s, no combat damage',vfx:'coat',color:'#8fe9ff',icon:'🛡️'},
   {id:'tailwag',n:'Tail Wag',kind:'utility',effect:'comfort',cd:28,desc:'Utility: a cosmetic morale emote, no combat damage',vfx:'aid',color:'#fff3a0',icon:'✨'}
 ];
-const petDmg=p=>Math.round(atk()*PETBAL*[.2,.32,.55,1][PETS[p.sp].r]*MUT[p.mut]*(1+p.eq[0]*.10)*(1+petPassive('petdmg')/100)),petInt=p=>Math.max(.4,1.7-PETS[p.sp].r*.15)/(1+p.eq[1]*.07),peqCost=t=>1200*(t+1)*(t+1),rollCost=p=>2500*(1+PETS[p.sp].r),petSkillCost=p=>2000*(1+PETS[p.sp].r);
+const petDmg=p=>Math.round(atk()*PETBAL*[.2,.32,.55,1][PETS[p.sp].r]*MUT[p.mut]*(1+p.eq[0]*.10)*(1+petPassive('petdmg')/100)),petInt=p=>Math.max(.4,1.7-PETS[p.sp].r*.15)/(1+p.eq[1]*.07);
+// v90 (owner): every Legendary pet (r===3) costs twice as much - a mutation roll, a skill gacha and an upgrade step.
+const peqCost=t=>1200*(t+1)*(t+1),peqCostOf=(p,t)=>peqCost(t)*(PETS[p.sp].r===3?2:1),rollCost=p=>2500*(1+PETS[p.sp].r)*(PETS[p.sp].r===3?2:1),petSkillCost=p=>2000*(1+PETS[p.sp].r)*(PETS[p.sp].r===3?2:1);
 const petSkills=p=>((p.skills)||[]).map(id=>PET_SKILLS.find(s=>s.id===id)).filter(Boolean);
 // Per-skill cooldowns live in the same map as the 7s gate, keyed petId|skillId. A pet that
 // rerolls or is released must not leave those timers behind.
@@ -2704,7 +2710,10 @@ const autoAllocateSkills=()=>{if(!S.sk||typeof S.sk!=='object')S.sk={};let bough
   }
   return bought;
 };
-const refCost=it=>Math.round(200*((it.r||0)+1)*(1+(it.sec||0)*.5)),refCh=it=>[70,70,70,70,49,42,35,28,21,14][it.r||0];
+// v90 (owner: Zeny overflows after level 100): a refine step costs twice the Zeny it did (200 -> 400 base), and
+// every attempt eats more ore the rarer the piece: 1 for Common and Fine, 2 for Rare and Epic, 3 for Legendary
+// and N, 4 for N+. refOre() is the ore one attempt takes.
+const refCost=it=>Math.round(400*((it.r||0)+1)*(1+(it.sec||0)*.5)),refOre=it=>1+(rarIdx(it)>>1),refCh=it=>[70,70,70,70,49,42,35,28,21,14][it.r||0];
 const affTxt=a=>`${AL[a.k]} +${a.v}`,cardTxt=c=>`${c.n} (${SU(c.stat)} +${c.v})`,dtier=it=>it.card?GI[it.g]:it.ore?3:((it&&+it.sec>=5)?6:(it&&+it.sec>=4)?5:it.tier);
 const isBoss=()=>S.lvl===10||S.lvl===15,fieldName=()=>S.lvl>10?`Nightmare ${MAPS[S.mp].n} Stage ${S.lvl-10}`:`${MAPS[S.mp].n} Stage ${S.lvl}`;
 // Real RO item icons give each equipment family a recognizable shape and several name-based
@@ -3333,10 +3342,30 @@ function qScale(q){const L=S?S.lv:1;
 function newQuest(type){return qScale({type,goal:1,prog:0})}
 function qRefresh(){if(!S||!Array.isArray(S.q))return;(S.q||[]).forEach(q=>{if(q&&q.type)qScale(q)})}
 const qTxt=q=>q.type==='kill'?`Defeat ${q.goal} monsters`:q.type==='loot'?`Collect ${q.goal} equipment drops`:`Defeat ${q.goal} MVP${q.goal>1?'s':''}`;
-function refine(sl){const it=S.eq[sl];if(!it||(it.r||0)>=10)return;const o=it.slot==='weapon'?'ori':'elu',c=refCost(it);
-  if(S.ore[o]<1){log(`You need 1 ${ORE[o]}. Regular mobs drop both ores at 0.5% on Stages 1-9 and 1% on Stage 10; the Stage 10 MVP drops them at 2.5%.`);return}if(S.zeny<c){log('Not enough Zeny.');return}
-  S.ore[o]--;S.zeny-=c;if(Math.random()*100<refCh(it)){it.r=(it.r||0)+1;log(`Refine success! ${iname(it)}`,'r3','gear');addFloat(pl.x,3,pl.z,'Refine +'+it.r,'#ffd23f')}
+function refine(sl){const it=S.eq[sl];if(!it||(it.r||0)>=10)return;const o=it.slot==='weapon'?'ori':'elu',c=refCost(it),need=refOre(it);
+  if(S.ore[o]<need){log(`You need ${need} ${ORE[o]} for this piece. Regular mobs drop both ores at 0.5% on Stages 1-9 and 1% on Stage 10; the Stage 10 MVP drops them at 2.5%.`);return}if(S.zeny<c){log('Not enough Zeny.');return}
+  S.ore[o]-=need;S.zeny-=c;if(Math.random()*100<refCh(it)){it.r=(it.r||0)+1;log(`Refine success! ${iname(it)}`,'r3','gear');addFloat(pl.x,3,pl.z,'Refine +'+it.r,'#ffd23f')}
   else{if(it.r>=5){it.r--;log(`Refine failed... dropped to +${it.r}.`,'r0','gear')}else log('Refine failed.','r0','gear');addFloat(pl.x,3,pl.z,'Failed','#ff6b6b')}ui();save()}
+
+// ---------- v90: Black Market - the endgame Zeny sinks (Base Lv 100+) ----------
+// Zeny overflows once a character is past Base Lv 100, so the Black Market gives it two places to go:
+// Oridecon and Elunium bought outright, and a reforge that rerolls one affix on a worn piece. Both
+// open at Base Lv 100 and are priced in the hundreds of thousands, so they are a Zeny sink, not a shop.
+const BM_LV=100,BM_ORE=100000,BM_REFORGE=150000;
+const bmOpen=()=>(S.lv|0)>=BM_LV;
+const reforgeCost=it=>BM_REFORGE*(rarIdx(it)+1);
+function buyOre(o){if(!bmOpen()||!ORE[o])return;if(S.zeny<BM_ORE){log('Not enough Zeny for the Black Market.','','zeny');ui();return}
+  S.zeny-=BM_ORE;S.ore[o]=(S.ore[o]|0)+1;log(`Black Market: bought 1 ${ORE[o]} for ${BM_ORE.toLocaleString()}z.`,'r3','zeny');ui();save()}
+// A reforge takes one worn piece, drops one of its affixes at random and rolls a new affix it does not
+// already have, using the same roll as a drop (affixValue at the piece's own section and tier).
+function reforge(sl){const it=S.eq[sl];if(!bmOpen()||!it)return;const aff=it.aff||[];
+  if(!aff.length){log('That piece has no affix to reroll.','','zeny');ui();return}
+  const c=reforgeCost(it);if(S.zeny<c){log('Not enough Zeny to reforge.','','zeny');ui();return}
+  const pool=it.slot==='weapon'||it.slot==='acc'?AFF:AFF.filter(k=>k!=='cdm'),taken=new Set(aff.map(a=>a.k)),fresh=pool.filter(k=>!taken.has(k));
+  if(!fresh.length){log('Every affix this piece can take is already on it.','','zeny');ui();return}
+  const i=ri(0,aff.length-1),k=fresh[ri(0,fresh.length-1)],old=aff[i];
+  S.zeny-=c;aff[i]={k,v:Math.max(1,Math.round(affixValue(k,it.sec||0,it.tier||0,rnd(.8,1.25))))};
+  log(`Reforged ${iname(it)}: ${AL[old.k]} ${old.v} became ${AL[k]} ${aff[i].v}.`,'r3','zeny');ui();save()}
 
 // ---------- class change ----------
 // Changing job is a restart: a class's own levels are not kept, so loading it up again
@@ -3420,7 +3449,7 @@ function changeClass(n){if(classBlock(n))return;
   addFloat(pl.x,3.6,pl.z,n+'!','#fff',true);ui();save()}
 
 // ---------- UI ----------
-const TABS={map:['🗺️','World Map','M'],status:['📊','Character','S'],job:['🌳','Class Tree','J'],skills:['✨','Skills','K'],bag:['🎒','Inventory','B'],log:['📃','Log','L'],pet:['🐾','Pets','P'],index:['📚','Mastery Index','I'],board:['🏆','Leaderboard','V'],set:['⚙️','Settings','O'],gm:['🛠️','GM Tools','G']};
+const TABS={map:['🗺️','World Map','M'],status:['📊','Character','S'],job:['🌳','Class Tree','J'],skills:['✨','Skills','K'],bag:['🎒','Inventory','B'],log:['📃','Log','L'],pet:['🐾','Pets','P'],index:['📚','Mastery Index','I'],board:['🏆','Leaderboard','V'],market:['🏪','Black Market','X'],set:['⚙️','Settings','O'],gm:['🛠️','GM Tools','G']};
 const dot=k=>{if(!S)return false;if(k==='status')return S.pts>0;if(k==='skills')return skpAvail()>0;if(k==='quest')return!!(S.q&&S.q.some(q=>q.prog>=q.goal));if(k==='cards')return S.cards.length>0;if(k==='index'){const rank=HUNT_TITLES.findIndex(t=>t.id===S.equippedTitle);return cardMasteryAvailable()>0||HUNT_TITLES.some((t,i)=>i>rank&&titleUnlocked(t))}return false};
 const find=id=>[...S.inv,...items(),...S.cards].find(x=>String(x.id)===String(id));
 // Gear Lv is a display-only field-quality reference: field level +10 per numeric quality step.
@@ -3627,9 +3656,9 @@ const V={
   cards(){const g={};S.cards.forEach(c=>(g[c.n]=g[c.n]||[]).push(c));const ks=Object.keys(g),sel=g[selC]?g[selC][0]:null;
     return`<div class="grid">${ks.map(n=>`<div class="cell b${GI[g[n][0].g]}${n===selC?' sel':''}" data-a="selc" data-v="${n}" data-tip="${g[n][0].id}">🃏<i class="rf">x${g[n].length}</i></div>`).join('')||'<small>No cards yet. Every monster drops its own card at a low chance.</small>'}</div>
     ${sel?`<div class="mob-card" style="margin-top:8px">${itemDetail(sel)}<div class="row" style="margin-top:6px">${EQK.map(([k,l])=>{const e=S.eq[k];return e&&(e.cards||[]).length<(e.slots||0)&&CFIT[sel.stat]===grp(e)?`<button data-a="sock" data-v="${sel.id}:${k}">&rarr; ${l}</button>`:''}).join('')}<button data-a="sellcard" data-v="${sel.id}">Sell ${sel.v*150}z</button></div></div>`:''}`},
-  refine(){return`<div class="hd">Oridecon: ${S.ore.ori} &middot; Elunium: ${S.ore.elu}</div><small>Weapons use Oridecon; armor, shield, legs, headgear and accessories use Elunium. Regular mobs drop both at 0.5% on Stages 1-9 and 1% on Stage 10; Stage 10 MVPs drop both at 2.5%.</small>`
+  refine(){return`<div class="hd">Oridecon: ${S.ore.ori} &middot; Elunium: ${S.ore.elu}</div><small>Weapons use Oridecon; armor, shield, legs, headgear and accessories use Elunium. Regular mobs drop both at 0.5% on Stages 1-9 and 1% on Stage 10; Stage 10 MVPs drop both at 2.5%. Each attempt costs 1 ore on Common and Fine pieces, 2 on Rare and Epic, 3 on Legendary and N, 4 on N+.</small>`
     +EQK.map(([k,l])=>{const it=S.eq[k];if(!it)return'';const r=it.r||0,o=it.slot==='weapon'?'ori':'elu',c=refCost(it);
-      return`<div class="slot" style="align-items:flex-start;gap:10px;margin-top:6px">${cell(it,false)}<div style="flex:1"><b class="${rarCls(it)}">${iname(it)}</b> <small>${l}</small><br><small>${SLOTS[it.slot].stat} +${ev(it)} &rarr; +${Math.round(it.val*(1+(r+1)*.15))} &middot; ${r>=10?'MAX':'Success '+refCh(it)+'% &middot; '+c.toLocaleString()+'z + 1 '+ORE[o]}</small><br><button data-a="refine" data-v="${k}" ${r>=10||S.ore[o]<1||S.zeny<c?'disabled':''}>Refine</button></div></div>`}).join('')},
+      return`<div class="slot" style="align-items:flex-start;gap:10px;margin-top:6px">${cell(it,false)}<div style="flex:1"><b class="${rarCls(it)}">${iname(it)}</b> <small>${l}</small><br><small>${SLOTS[it.slot].stat} +${ev(it)} &rarr; +${Math.round(it.val*(1+(r+1)*.15))} &middot; ${r>=10?'MAX':'Success '+refCh(it)+'% &middot; '+c.toLocaleString()+'z + '+refOre(it)+' '+ORE[o]}</small><br><button data-a="refine" data-v="${k}" ${r>=10||S.ore[o]<refOre(it)||S.zeny<c?'disabled':''}>Refine</button></div></div>`}).join('')},
   pet(){const P=S.pets,A=P.filter(p=>p.on).length,p=gp(selP);
     return`<div class="hd">Pets <small>Fighting ${A}/3 &middot; Collection ${P.length}</small></div><small>Pets drop from monsters, and every species has a signature passive - a duplicate folds into the copy you own and raises that species' Bond. Drop odds per map are on the World Map.</small><div class="grid" style="margin-top:6px">${P.map(q=>{const sp=PETS[q.sp];return`<div class="cell b${RCL[sp.r]}${selP===q.id?' sel':''}" style="font-size:30px" data-a="selp" data-v="${q.id}">${petIcon(sp)}${q.on?'<i class="rf" style="left:2px;right:auto;top:2px;bottom:auto;font-style:normal">ON</i>':''}${q.mut?`<i class="rf">G${q.mut}</i>`:''}${bondRank(q.sp)?`<i class="rf" style="left:2px;right:auto;top:auto;bottom:2px">B${bondRank(q.sp)}</i>`:''}</div>`}).join('')||'<small>No pets yet.</small>'}</div>`+(p?petDetail(p):'<small>Select a pet to manage it.</small>')},
   board(){const labels={daily:'Daily',weekly:'Weekly',all:'All-time'},data=boardCache[boardPeriod],esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -3663,6 +3692,13 @@ const V={
     <div class="hd" style="margin-top:10px">Card mastery test controls</div><small>Loose cards can be dedicated through the Card Mastery tab; every mastery rank is one gacha token. Roll every token fills the stat caps the slow way (one random roll at a time). Socketed cards stay untouched.</small><div class="row"><button data-a="gmcard" data-v="poring1">+1 Poring Card</button><button data-a="gmcard" data-v="poring5">+5 Poring Cards</button><button data-a="gmcard" data-v="poringMax">Max Poring 5/5</button><button data-a="gmcard" data-v="allMax">Max all cards 5/5</button><button data-a="gmcard" data-v="rollAll">Roll every token</button><button data-a="gmcard" data-v="clear">Reset card mastery</button></div>
     <div class="hd" style="margin-top:10px">Skill accounting test controls</div><small>Max the current class line, then use the normal Auto-allocate all skills button or let GM do both steps.</small><div class="row"><button data-a="gmskill" data-v="maxjobs">Max current line jobs</button><button data-a="gmskill" data-v="maxallocate">Max jobs + auto allocate</button><button data-a="gmskill" data-v="reset">Reset current line skills</button></div>
     <div class="hd" style="margin-top:10px">Test pets</div><div class="row">${RN.map((n,i)=>`<button data-a="gmp" data-v="${i}">+ ${n} pet</button>`).join('')}</div><div class="row" style="margin-top:6px"><button data-a="gmbond" data-v="1">+1 duplicate on the selected pet (Bond)</button><button data-a="gmbond" data-v="5">+5 duplicates</button></div><div class="row" style="margin-top:6px"><button data-a="gmm" data-v="4">All pets G4</button><button data-a="gmm" data-v="6">All pets G6</button><button data-a="gmpet" data-v="g6dps">Max G6 DPS pet</button><button data-a="gmpet" data-v="g6buff">Max G6 + buff slot</button><button data-a="gmpet" data-v="g6utility">Max G6 utility slots</button><button data-a="gmpet" data-v="clear">Clear pets</button></div>`}};
+// v90: the Black Market panel. Locked until Base Lv 100; ore is bought one at a time and a reforge is
+// offered for every worn piece that has an affix.
+V.market=()=>{if(!bmOpen())return`<div class="hd">Black Market</div><small>The Black Market opens at Base Lv ${BM_LV}. It takes the Zeny the grind pays out past that point, so nothing here is worth buying before then.</small>`;
+  const ores=['ori','elu'].map(o=>`<div class="slot" style="align-items:center;gap:10px;margin-top:6px"><div style="flex:1"><b>${ORE[o]}</b> <small>you have ${S.ore[o]|0}</small><br><small>Refine ore. ${BM_ORE.toLocaleString()}z each.</small></div><button data-a="bmore" data-v="${o}" ${S.zeny<BM_ORE?'disabled':''}>Buy 1</button></div>`).join('');
+  const rf=EQK.map(([k,l])=>{const it=S.eq[k];if(!it||!(it.aff&&it.aff.length))return'';const c=reforgeCost(it);
+    return`<div class="slot" style="align-items:flex-start;gap:10px;margin-top:6px">${cell(it,false)}<div style="flex:1"><b class="${rarCls(it)}">${iname(it)}</b> <small>${l}</small><br><small>${it.aff.map(a=>AL[a.k]+' +'+a.v).join(' &middot; ')}</small><br><small>Reroll one affix: ${c.toLocaleString()}z</small><br><button data-a="bmref" data-v="${k}" ${S.zeny<c?'disabled':''}>Reforge</button></div></div>`}).join('');
+  return`<div class="hd">Black Market <small>Zeny ${S.zeny.toLocaleString()}</small></div><small>Zeny sinks for Base Lv ${BM_LV}+. Ore is sold here, and a reforge rerolls one affix on a worn piece; the rarity of the piece sets the price.</small>`+ores+'<div class="sec" style="margin-top:8px">Reforge</div>'+(rf||'<small>Wear a piece with affixes to reforge it.</small>')};
 V.index=()=>`<div class="mastery-head"><div class="mastery-emblem">✦</div><div><b>Midgard Mastery Index</b><small>Individual monsters, Index XP and per-card rewards</small></div><span class="mastery-counter">${indexExperience().toLocaleString()} Index XP</span></div><div class="mastery-tabs"><button data-a="indexview" data-v="mobs" class="${indexMode==='mobs'?'on':''}" aria-pressed="${indexMode==='mobs'}">⚔ Mob Index</button><button data-a="indexview" data-v="cards" class="${indexMode==='cards'?'on':''}" aria-pressed="${indexMode==='cards'}">🃏 Card Mastery</button></div>${indexMode==='mobs'?renderMobIndex():renderCardIndex()}`;
 const EQK=[['head','Head','🎩'],['weapon','R.Hand','⚔️'],['armor','Body','🥼'],['off','L.Hand','🛡️'],['acc1','Acc 1','💍'],['leg','Legs','👖'],['acc2','Acc 2','💍']];
 const CFIT={str:'weapon',dex:'weapon',atk:'weapon',crit:'weapon',cdm:'weapon',agi:'armor',aspd:'armor',flee:'armor',vit:'armor',int:'head',hp:'head',luk:'acc'},CFL={weapon:'Weapons',armor:'Armor, Shield & Legwear',head:'Headgear',acc:'Accessories'};
@@ -3786,7 +3822,7 @@ function renderCardIndex(){
 function renderQ(){const e=$('qp');if(!S){e.style.display='none';return}e.style.display=tabs.length?'none':'block';
   e.innerHTML=`<div class="qp-head"><b>📜 Quests</b><div class="qp-actions"><button data-q="index" title="Open the Mob Index and Card Mastery">📚 Index</button><button data-q="t" aria-label="${qOpen?'Collapse':'Expand'} quests">${qOpen?'&minus;':'+'}</button></div></div>`+(qOpen?(S.q||[]).map((q,i)=>`<div style="margin-top:5px"><div>${qTxt(q)}</div><div class="pbar"><i style="width:${Math.min(100,q.prog/q.goal*100)}%"></i></div><div style="display:flex;justify-content:space-between;align-items:center"><small>${q.prog}/${q.goal} &middot; ${(q.z||0).toLocaleString()}z &middot; ${(q.xp||0).toLocaleString()}xp</small>${q.prog>=q.goal?`<button data-q="c${i}">Claim</button>`:''}</div></div>`).join(''):'')}
 $('qp').onclick=e=>{const b=e.target.closest('[data-q]');if(!b)return;const v=b.dataset.q;if(v==='index'){openTab('index');return}if(v==='t'){qOpen=!qOpen;renderQ()}else ACT.claim(v.slice(1))};
-function refineUI(it,k){const r=it.r||0,o=it.slot==='weapon'?'ori':'elu',c=refCost(it);return`<div class="sec">Refine</div><small>${SLOTS[it.slot].stat} +${ev(it)} &rarr; +${Math.round(it.val*(1+(r+1)*.15))} &middot; ${r>=10?'MAX':'Success '+refCh(it)+'% &middot; '+c.toLocaleString()+'z + 1 '+ORE[o]+' (you have '+S.ore[o]+')'}</small><div class="row" style="margin-top:4px"><button data-a="refine" data-v="${k}" ${r>=10||S.ore[o]<1||S.zeny<c?'disabled':''}>Refine</button></div>`}
+function refineUI(it,k){const r=it.r||0,o=it.slot==='weapon'?'ori':'elu',c=refCost(it),need=refOre(it);return`<div class="sec">Refine</div><small>${SLOTS[it.slot].stat} +${ev(it)} &rarr; +${Math.round(it.val*(1+(r+1)*.15))} &middot; ${r>=10?'MAX':'Success '+refCh(it)+'% &middot; '+c.toLocaleString()+'z + '+need+' '+ORE[o]+' (you have '+S.ore[o]+')'}</small><div class="row" style="margin-top:4px"><button data-a="refine" data-v="${k}" ${r>=10||S.ore[o]<need||S.zeny<c?'disabled':''}>Refine</button></div>`}
 // v75: one pet per species. petFold() takes a duplicate and folds it into the pet you already
 // own - the better mutation survives, each gear slot keeps its better level, a skill the older
 // pet was missing moves into its free slot, and the species gains +1 Bond. It returns what
@@ -3818,7 +3854,7 @@ function foldDupPets(){
 }
 function petDetail(p){const sp=PETS[p.sp],g=p.mut,sk=p.sk||[1,2,3],SL=petSkills(p);
   return`<div class="mob-card" style="margin-top:8px"><div class="hd r${RCL[sp.r]}">${petIcon(sp,true)} ${sp.n} <small>${RN[sp.r]}</small></div><small>Mutation: <b>${g?'Grade '+g+' (x'+MUT[g]+' dmg)':'none (x1)'}</b> &middot; ${petDmg(p).toLocaleString()} dmg every ${petInt(p).toFixed(2)}s</small>`
-  +p.eq.map((t,i)=>`<div class="slot"><span><b>${PEQ[i].n} &middot; Level ${t}/${PT.length}</b> <small>(${t?PT[t-1]:'Untrained'})</small><br><small>${PEQ[i].d(t)}</small>${t<PT.length?`<br><small class="r0">${Math.round(PTG[t]*100)}% upgrade success &middot; ${t+2<=PT.length?Math.round(GREAT*100)+'% double upgrade chance on success':'double upgrade unavailable at this level'}</small>`:''}</span><button data-a="peq" data-v="${p.id}:${i}" ${t>=PT.length||S.zeny<peqCost(t)?'disabled':''}>${t>=PT.length?'MAX':'🎲 '+peqCost(t).toLocaleString()+'z'}</button></div>`).join('')
+  +p.eq.map((t,i)=>`<div class="slot"><span><b>${PEQ[i].n} &middot; Level ${t}/${PT.length}</b> <small>(${t?PT[t-1]:'Untrained'})</small><br><small>${PEQ[i].d(t)}</small>${t<PT.length?`<br><small class="r0">${Math.round(PTG[t]*100)}% upgrade success &middot; ${t+2<=PT.length?Math.round(GREAT*100)+'% double upgrade chance on success':'double upgrade unavailable at this level'}</small>`:''}</span><button data-a="peq" data-v="${p.id}:${i}" ${t>=PT.length||S.zeny<peqCostOf(p,t)?'disabled':''}>${t>=PT.length?'MAX':'🎲 '+peqCostOf(p,t).toLocaleString()+'z'}</button></div>`).join('')
   +`<div class="sec">Signature passive &middot; <b>${PET_TRAIT[p.sp].n}</b></div><small>${PET_TRAIT[p.sp].d(traitVal(p.sp))} while this pet is one of the fighting three. <b>Bond ${bondRank(p.sp)}/5</b>${bondNext(p.sp)?` &middot; ${bondNext(p.sp)-bondCnt(p.sp)} more ${sp.n} folded in reaches Bond ${Math.min(5,bondRank(p.sp)+1)}`:' &middot; maxed'}.<br>A duplicate of a pet you already own is folded into it automatically - the better mutation and gear are kept, a missing skill is merged in, and +1 Bond makes this passive stronger. One pet per species, so nothing is ever wasted.</small>`
   +`<div class="sec">Pet skills &middot; 2 slots</div>`
   +[0,1].map(i=>{const q=SL[i];return q?`<small><b>${q.icon} ${q.n}</b> &middot; ${q.kind==='buff'?'Player buff':q.kind==='aoe'?'AoE attack':q.kind==='single'?'Single-target attack':'Low-impact utility'} &middot; ${q.desc}</small>`:`<small>Slot ${i+1}: <b class="r0">empty</b> - one gacha fills the remaining slot.</small>`}).join('<br>')
@@ -3942,7 +3978,7 @@ const ACT={
     log(`🃏 ${name}: dedicated ${r.donated} cop${r.donated===1?'y':'ies'} - mastery ${r.level}/${CARD_MASTERY_PER_CARD}${r.left?`, ${r.left} left in the bag`:''}.`,'r3','card');
     addFloat(pl.x,2.6,pl.z,`🃏 ${name} ${r.level}/${CARD_MASTERY_PER_CARD}`,'#ffd23f');ui();save()},
   indexcard:all=>all,
-  refine:k=>refine(k),sub:v=>{const[t,k]=v.split(':');sub[t]=k;if(t==='bag'&&k!=='bag')eqPick=null;renderWin()},selp:v=>{selP=+v;renderWin()},
+  refine:k=>refine(k),bmore:o=>buyOre(o),bmref:k=>reforge(k),sub:v=>{const[t,k]=v.split(':');sub[t]=k;if(t==='bag'&&k!=='bag')eqPick=null;renderWin()},selp:v=>{selP=+v;renderWin()},
   pon:id=>{const p=gp(id);if(!p)return;if(p.on)p.on=false;else if(S.pets.filter(x=>x.on).length<3)p.on=true;else log('Only 3 pets can fight at once. Remove one first.','','pet');ui();save()},
   pskill:id=>{const p=gp(id);if(!p)return;const c=petSkillCost(p);if(S.zeny<c){log('Not enough Zeny for a pet skill roll.');ui();return}S.zeny-=c;const[a,b]=rollPetSkills();p.skills=[a,b];
     clearPetCd(p.id);
@@ -3966,7 +4002,7 @@ const ACT={
     if(S.skOff[id])delete S.skOff[id];else S.skOff[id]=1;
     log(s.n+': auto-cast '+(S.skOff[id]?'OFF - you will not use it':'ON')+'.',S.skOff[id]?'r0':'r3','skill');ui('[data-win="skills"] .sk-detail-card');save()},
   unequip:k=>{const it=S.eq[k];if(!it)return;S.inv.push(it);S.eq[k]=null;S.hp=Math.min(S.hp,maxHp());ui();save()},
-  peq:v=>{const[id,i]=v.split(':'),p=gp(id);if(!p)return;const k=+i,t=p.eq[k];if(!(t<PT.length))return;const c=peqCost(t);
+  peq:v=>{const[id,i]=v.split(':'),p=gp(id);if(!p)return;const k=+i,t=p.eq[k];if(!(t<PT.length))return;const c=peqCostOf(p,t);
     if(S.zeny<c){log('Not enough Zeny to train.');ui();return}
     S.zeny-=c;
     if(Math.random()<PTG[t]){const great=Math.random()<GREAT&&t+2<=PT.length,gain=great?2:1;p.eq[k]=t+gain;

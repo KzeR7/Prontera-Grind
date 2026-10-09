@@ -58,7 +58,8 @@ const code = [
   pick(/const dropTier=\(m,l\)=>[^;]+;/, 'dropTier'),
   pick(/const sellVal=it=>[^;]+;/, 'sellVal'),
   grab('function genGear(T,l,sec,boss,tier){', '// ---------- skill effects'),
-  pick(/const NM_FLAT=\[[^\]]*\],NM_FLAT_MUL=\[[^\]]*\];/, 'the v89 Nightmare flat-affix multipliers'),
+  pick(/const NM_FLAT=\[[^\]]*\],NM_FLAT_MUL=\[[^\]]*\],NM_MUL=\{[^}]*\};/, 'the v89/v90 Nightmare affix multipliers'),
+  pick(/const nmMulOf=\(k,section\)=>[^\n]*/, 'nmMulOf'),
   pick(/const affixValue=\(k,section,tier,roll\)=>\{[^}]+\};/, 'affixValue'),
   `function executeGearRoll(mob,roll){const old=Math.random;Math.random=()=>roll;const drops=[],mkDrop=it=>({it});try{${gearDropLoop}}finally{Math.random=old}return drops}`,
   grab('function canShield(){', 'function ekey(it)'),        // shield and single-katar class rules
@@ -76,7 +77,7 @@ const SECN=['Starter gear','1st-job gear','2nd-job gear','High-tier gear'];
 const SLOTS={weapon:{label:'Weapon',stat:'ATK',ic:'A'},armor:{label:'Armor',stat:'DEF',ic:'B'},head:{label:'Headgear',stat:'HP',ic:'C'},off:{label:'Shield',stat:'DEF',ic:'D'},leg:{label:'Legwear',stat:'DEF',ic:'E'},acc:{label:'Accessory',stat:'HP',ic:'F'}};
 const rnd=(a,b)=>a+Math.random()*(b-a),ri=(a,b)=>Math.floor(rnd(a,b+1)),uid=()=>1;
 let S=null;
-this.__g={ MAPS, GEAR, gearPool, fieldOf, genGear, rarIdx, rarOf, rarCls, RAR5, RAR6, RARALL, FIELD_GEAR_NM, FIELD_GEAR_MID_NM, NMPLUS_DROP, NM_FLAT, NM_FLAT_MUL, executeGearRoll, slotAccepts, canUse, canShield, katarOnly, dualWield, CLASSES, lineOf, secOf, secField, SLOTS, BAGMAX, MAPTIER, MAPGRADE, set PETPASSIVE(v){PETPASSIVE=v}, get PETPASSIVE(){return PETPASSIVE}, MAPVAL, dropTier, sellVal, AM, AFF, AB, RAR, AFFIX_CDM_SCALE, scaleCritDamageAffix, affixValue, FIELD_GEAR, FIELD_GEAR_MID, BOSS_POOL_TOTAL, BOSS_CRIT_RES, bossCritRes, gearTierOf, classTierOf, gearTierOK, gearUserOf,
+this.__g={ MAPS, GEAR, gearPool, fieldOf, genGear, rarIdx, rarOf, rarCls, RAR5, RAR6, RARALL, FIELD_GEAR_NM, FIELD_GEAR_MID_NM, NMPLUS_DROP, NM_FLAT, NM_FLAT_MUL, NM_MUL, nmMulOf, executeGearRoll, slotAccepts, canUse, canShield, katarOnly, dualWield, CLASSES, lineOf, secOf, secField, SLOTS, BAGMAX, MAPTIER, MAPGRADE, set PETPASSIVE(v){PETPASSIVE=v}, get PETPASSIVE(){return PETPASSIVE}, MAPVAL, dropTier, sellVal, AM, AFF, AB, RAR, AFFIX_CDM_SCALE, scaleCritDamageAffix, affixValue, FIELD_GEAR, FIELD_GEAR_MID, BOSS_POOL_TOTAL, BOSS_CRIT_RES, bossCritRes, gearTierOf, classTierOf, gearTierOK, gearUserOf,
            set S(v){S=v}, get S(){return S} };
 `;
 const sb = { console };
@@ -436,14 +437,12 @@ t('N+ flat affixes (v89): STR and Flee top out near the high-tier ceiling, the o
   // section multipliers 3.5 (N, section 4) and 4 (N+, section 5) instead of 5 and 6.
   assert.deepStrictEqual(Array.from(G.NM_FLAT_MUL), [3.5, 4], 'the flat-stat multipliers are pinned');
   assert.strictEqual(G.affixValue('str', 5, 4, 1.25), 55, 'N+ STR top roll on Abyss is 55 (was 83)');
-  assert.strictEqual(G.affixValue('flee', 5, 4, 1.25), 44, 'N+ Flee top roll on Abyss is 44 (was 66)');
   assert.strictEqual(G.affixValue('str', 4, 4, 1.25), 48, 'N STR top roll on Abyss is 48 (was 69)');
-  assert.strictEqual(G.affixValue('flee', 4, 4, 1.25), 39, 'N Flee top roll on Abyss is 39 (was 55)');
   // the ceiling N+ flat stats reach is the one a Legendary high-tier piece already rolls
   assert.strictEqual(G.affixValue('str', 3, 4, 1.25), 55, 'the high-tier Legendary STR top roll is the same 55');
   // the other affixes keep their Nightmare multipliers, and sections 0-3 never change
-  assert.strictEqual(G.affixValue('atk', 5, 4, 1.25), Math.round(6 * G.AM[4] * G.AB.atk * 1.25), 'N+ ATK % keeps x6');
   assert.strictEqual(G.affixValue('hp', 5, 4, 1.25), Math.round(6 * G.AM[4] * G.AB.hp * 1.25), 'N+ Max HP keeps x6');
+  assert.strictEqual(G.affixValue('cdm', 5, 4, 1.25), G.scaleCritDamageAffix(Math.round(6 * G.AM[4] * G.AB.cdm * 1.25)), 'N+ Crit DMG keeps x6 and its gear scale');
   assert.strictEqual(G.affixValue('str', 3, 4, .8), Math.round(4 * G.AM[4] * G.AB.str * .8), 'section 3 (high tier) is untouched');
   assert.strictEqual(G.affixValue('flee', 2, 2, 1), Math.round(3 * G.AM[2] * G.AB.flee), 'section 2 flee is untouched');
 });
@@ -756,6 +755,29 @@ t('the cdm affix only rolls on weapons and accessories, like the cdm card always
   // the cdm CARD follows the same slot rule through CFIT
   assert.ok(src.includes("const CFIT={str:'weapon',dex:'weapon',atk:'weapon',crit:'weapon',cdm:'weapon'"),'the card fit table must keep cdm on weapons/accessories');
   assert.ok(src.includes("(slot==='weapon'||slot==='acc'?AFF:AFF.filter(k=>k!=='cdm'))"),'the live affix pool must be slot-filtered');
+});
+
+t('N and N+ Flee, ATK, ASPD and Crit % take the v90 nerf; STR, Max HP and Crit DMG do not move', () => {
+  // v90 (owner): a slightly higher nerf on Flee, ATK, ASPD and CRIT in sections 4/5. Flee x3.0 / x3.4,
+  // ATK %, ASPD % and Crit % x4.2 / x5.0. The flat stats stay on x3.5 / x4.
+  assert.deepStrictEqual(Array.from(G.NM_MUL.flee), [3, 3.4], 'Flee multipliers are pinned');
+  assert.deepStrictEqual(Array.from(G.NM_MUL.atk), [4.2, 5], 'ATK multipliers are pinned');
+  assert.deepStrictEqual(Array.from(G.NM_MUL.aspd), [4.2, 5], 'ASPD multipliers are pinned');
+  assert.deepStrictEqual(Array.from(G.NM_MUL.crit), [4.2, 5], 'Crit multipliers are pinned');
+  assert.strictEqual(G.affixValue('flee', 5, 4, 1.25), 38, 'N+ Flee top roll on Abyss is 38 (was 44)');
+  assert.strictEqual(G.affixValue('flee', 4, 4, 1.25), 33, 'N Flee top roll on Abyss is 33 (was 39)');
+  assert.strictEqual(G.affixValue('atk', 5, 4, 1.25), 55, 'N+ ATK top roll is 55 (was 66)');
+  assert.strictEqual(G.affixValue('atk', 4, 4, 1.25), 46, 'N ATK top roll is 46');
+  assert.strictEqual(G.affixValue('aspd', 5, 4, 1.25), 41, 'N+ ASPD top roll is 41');
+  assert.strictEqual(G.affixValue('crit', 4, 4, 1.25), 19, 'N Crit % top roll is 19');
+  assert.strictEqual(G.affixValue('crit', 5, 4, 1.25), 22, 'N+ Crit % top roll is 22');
+  assert.strictEqual(G.affixValue('str', 5, 4, 1.25), 55, 'N+ STR is unchanged at 55');
+  assert.strictEqual(G.affixValue('hp', 5, 4, 1.25), 995, 'N+ Max HP is unchanged at 995');
+  // the nerf is only on sections 4 and 5: section 3 keeps its plain 1+section multiplier
+  assert.strictEqual(G.affixValue('flee', 3, 4, 1), Math.round(4 * G.AM[4] * G.AB.flee), 'section 3 Flee is untouched');
+  assert.strictEqual(G.affixValue('atk', 3, 4, 1), Math.round(4 * G.AM[4] * G.AB.atk), 'section 3 ATK is untouched');
+  assert.strictEqual(G.nmMulOf('flee', 5), 3.4, 'nmMulOf picks the N+ column');
+  assert.strictEqual(G.nmMulOf('flee', 4), 3, 'nmMulOf picks the N column');
 });
 
 t('gear Crit DMG alone is scaled to 70% after the existing rounded affix roll',()=>{

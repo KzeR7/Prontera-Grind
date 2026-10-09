@@ -100,6 +100,7 @@ const PET_SKILL_COST_SRC = pick(/petSkillCost=p=>[^,;]+/, 'pet skill gacha cost'
 const PET_TRAINING_SRC = pick(/const EGG=3000,GW=\[[^\]]*\],PT=\[[^\]]*\],PTG=\[[^\]]*\],GREAT=[^;]+;/, 'pet training odds');
 const PET_UPGRADE_DATA = pick(/const PEQ=\[[\s\S]*?\];/, 'Claw/Collar/Charm names');
 const PET_UPGRADE_COST_SRC = pick(/peqCost=t=>[^,;]+/, 'pet upgrade cost');
+const PET_UPGRADE_OF_SRC = pick(/peqCostOf=\(p,t\)=>[^,;]+/, 'rarity-aware pet upgrade cost (v90)');
 const PET_UPGRADE_ACTION = block('peq:v=>');
 const PET_RELEASE_ACTION = block('prel:id=>');
 const PET_SKILL_GAP = pick(/const PETGAP=\d+/, 'the per-pet skill gap');
@@ -253,6 +254,8 @@ t('the live pet upgrade handler applies its 40%/15% odds, cost and 5% double suc
     ${PET_TRAINING_SRC}
     ${PET_UPGRADE_DATA}
     const ${PET_UPGRADE_COST_SRC};
+    const PETS=[{n:'Poring',r:0}];   // Common, so the Legendary x2 does not apply here
+    const ${PET_UPGRADE_OF_SRC};
     let S={zeny:50000,pets:[{id:7,sp:0,eq:[0,2,0]}]},rows=[],uiCount=0,saveCount=0,rolls=[],ri=0;
     const gp=id=>S.pets.find(p=>String(p.id)===String(id)),log=(...x)=>rows.push(x),ui=()=>uiCount++,save=()=>saveCount++,addFloat=()=>{},pl={x:0,z:0};
     const upgrade=${action};
