@@ -233,7 +233,12 @@ t('a swing resolves on the attack animation contact frame, not on the key press'
   `, box2);
   const S = box2.__swing, pressed = S.press();
   assert.strictEqual(pressed.n, 0, 'pressing attack prints nothing: the swing is scheduled, not resolved');
-  assert.ok(Math.abs(pressed.t - .5 * .45) < 1e-9, 'the hit is scheduled at 45% of the drawn attack animation');
+  // v88.8: the drawn swing takes SWING_FIT (.9) of the attack interval, so it always ends before the
+  // next attack starts - a swing as long as the interval never released, and the attack animation
+  // never restarted (the owner's "10 numbers, 3 slashes"). The contact frame is 45% of THAT length.
+  assert.ok(Math.abs(pressed.dur - .5 * .9) < 1e-9, 'the drawn swing fits inside the attack interval (' + pressed.dur + ')');
+  assert.ok(pressed.dur < .5, 'and is strictly shorter than the .5s attack interval it belongs to');
+  assert.ok(Math.abs(pressed.t - .5 * .9 * .45) < 1e-9, 'the hit is scheduled at 45% of the drawn attack animation');
   assert.strictEqual(pressed.atkAnim, 1, 'the attack animation starts on the press');
   assert.strictEqual(pressed.pAtkT, .5, 'the swing runs on the real attack interval');
   const r = S.resolve();

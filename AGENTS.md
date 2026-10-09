@@ -6116,3 +6116,79 @@ The owner's second pass over v77, six notes, all built.
      word if you want the rise to complete before the fade starts.
   4. `tools/render_float_volley.py` needs Pillow (`python3 -m venv /tmp/venv && /tmp/venv/bin/pip
      install pillow`); nothing in the game or in the test loop depends on it.
+
+### 2026-10-09 — `2026-10-09 grind-v88.8 the attack animation follows the damage: one attack draws one complete slash`
+* **What changed for the player:** the character's attack animation now plays once per attack and
+  finishes inside that attack, so the swings you watch match the damage numbers you read. The owner's
+  report: *"my character attack animation are not following the damage animation. example damage
+  coming 10 numbers but attack animation only 3 slashes. there is an update code on this but it seems
+  to be not working."*
+* **Why the earlier update looked like it was not working:** it was live and it was correct - it just
+  was not the whole story. v83 ("one number per monster per swing") was printing the right numbers and
+  v88 ("the swing matches attack speed") was running the swing TIMER at the real attack rate. What
+  nobody had touched was the class-skin attack ART, which is what the player actually watches, and it
+  was on a clock of its own:
+  * `captureSkinFrame()` picked the attack frame from `nowMs - sk.t0` (the wall clock, the same clock
+    the walking views use), and `sk.t0` was only reset when the ROUTE changed - i.e. when the view
+    flipped between walk and attack. So the attack APNG simply looped on its own 0.5-0.9s file cycle
+    and was never re-synced to a swing.
+  * `swingLength()` could hand back a swing exactly as long as the attack interval, so `atkAnim` never
+    reached 0 between attacks, the view never flipped back to the walk, and `sk.t0` never reset at all.
+* **Measured on the real loop before the fix** (20s against one unkillable target, 60fps, the real
+  `index.html` booted in jsdom - `tools/tests/field_loop_smoke.js`):
+
+  | class | aspd | attack file | attacks | drawn slashes | damage numbers |
+  | --- | --- | --- | --- | --- | --- |
+  | Assassin Cross | 0.423s | 0.80s | 47 | **25** | 43 |
+  | Assassin | 0.524s | 0.80s | 38 | **25** | 31 |
+  | Lord Knight | 0.608s | 0.50s | 33 | **65** | 27 |
+  | Novice | 0.845s | 0.50s | 24 | **46** | 18 |
+
+  The slash count was the file's own loop rate (20s / 0.8s = 25) or a double-play - never the attack
+  count. At the ASPD floor (0.13s, ~7.7 hits/s) a 0.9s file draws 1.1 slashes a second against 7.7
+  damage numbers; the owner's 10:3 is the same drift at a mid-game rate.
+* **Fix:**
+  * `index.html` - new `skinSwingMs(p)`: the attack view's frame clock is the swing itself.
+    `playerAttack()` sets `atkAnim=1` and `update()` runs it to 0 across `swingDur`, so `1-atkAnim` is
+    the swing's progress; scaled by the file's own total it plays the whole attack art exactly once per
+    swing, first frame to last, at whatever length that swing is. `captureSkinFrame()` uses it for the
+    attack view only - every other view keeps the file's wall clock, which is what makes a stroll loop
+    on forever. The fallback paths (`heroPoseFrame`, `animRow`) already drove their attack frames from
+    `(1-atk)`; only the APNG class skins had drifted, and they are now pinned so they cannot drift back.
+  * `index.html` - `swingLength()` now caps the drawn swing at `SWING_FIT` (.9) of the attack interval,
+    so a swing always ENDS before the next attack starts and the hero really does release back to its
+    walk between swings. The v86 `SWING_MIN_T` (.14s) floor is kept, but it now yields to fitting
+    inside the interval - at the .13s ASPD floor the floor itself would overlap the next attack, which
+    is the drift this function exists to prevent.
+  * `BUILD` → grind-v88.8.
+* **Files touched:** `index.html` (`skinSwingMs`, `captureSkinFrame`, `swingLength`, `SWING_FIT`;
+  `BUILD` grind-v88.8); `Updates/ApngAnimation/class_skin_animation.js` (regenerated with
+  `tools/backup_apng_code.py` - the changed block is inside its range); **new**
+  `tools/tests/attack_sync_sim.js` (8: runs the SHIPPED `swingLength`/`skinSwingMs` in a vm and sweeps
+  1,075 attack-rate x attack-file combinations); `tools/tests/field_loop_smoke.js` (a new step 7 that
+  counts attacks vs drawn slashes vs damage numbers for five classes in the real loop);
+  `tools/tests/class_skin_sim.js` (the vm prelude now provides the page's `cl` and `atkAnim`, exports
+  `skinSwingMs`/`setAtk`, and the attack-frame test asserts the new swing-driven contract);
+  `tools/tests/combat_damage_sim.js` and `tools/tests/combat_float_sim.js` (the two pins on
+  `swingLength`'s old shape); build-tag mirrors (`Updates/cards-gear-audit/affix-ranges.html` x2,
+  `equipment-cards-tuning.html` refreshed with `drop_card_sheet_sim.js --refresh-snapshot`,
+  `tools/cloudflare-deploy-steps.md`); `READ-ME-FIRST.md` (a v88.8 section above v88.7); this log.
+* **Art:** none. No sheets added, removed or rebuilt; the APNG files and their delays are untouched -
+  only WHEN each frame is shown changed.
+* **Tests:** all **42** `*_sim.js` suites exit 0 (1,307 counted assertions), plus `field_loop_smoke.js`
+  **9/9** and `save_owner_boot_smoke.js` **5/5** with jsdom + three@0.128.0 installed. Both new checks
+  were run against the PRE-FIX page to prove they catch the bug: `attack_sync_sim` 6/8 fail, and
+  `field_loop_smoke` step 7 fails with "Novice: drew 36 for 24 attacks". The inline page JavaScript
+  passes `node --check`, and `python3 tools/backup_apng_code.py --check` is clean.
+* **Branches / PR:** committed to `arena/a9062b8c-prontera-grind`.
+* **Known limits / follow-ups:**
+  1. Not verified in a real browser (there is no browser in the sandbox). The frame sequence was proven
+     by running the page's own `skinRoute`/`skinSwingMs`/`skinFrameIndex` in jsdom, not by looking at
+     pixels; `python3 tools/preview_server.py 8000` → `/` is the way to eyeball it.
+  2. A swing now uses at most 90% of the attack interval, so the drawn swing is up to 10% shorter than
+     v88's. At the ASPD floor that is 0.117s instead of 0.14s.
+  3. A swing that hits several monsters still prints one number PER MONSTER (v83, deliberate and
+     tested), so an AoE over a full camp shows several numbers on one slash. That is RO's own behaviour;
+     say the word if the owner would rather see one summed number per swing.
+  4. The 10% release is a fixed share of the interval, not a fixed time - at a very fast ASPD it is
+     only ~13ms, which is one frame at 60fps and may read as no pause at all on a slower display.
