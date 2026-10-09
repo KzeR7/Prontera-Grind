@@ -84,6 +84,27 @@ is the live one; with no argument the tool prints how to set a new one). Since v
 `GM` / `test1234`; `localStorage.removeItem('pg_gm_local')` removes it. Normal accounts are made
 in-game and stored in the browser (`pg_acc4`; saves under `pg_save3_<user>`).
 
+## BUILD v88.1 — offline rewards pay out again on cloud accounts (grind-v88.1)
+
+The owner reported the offline reward "seems to be not working" (it should be 4 hours max at 50%
+of the recent pace). Checked both paths end to end:
+
+* **Local accounts (no cloud): fine.** Booted the real page in jsdom, planted a 4-hour-old save
+  with a 1200 kills/hour pace: the welcome-back card credited exactly 4 hours and 2,400 kills
+  (1200 × 4 × 50%); a 10-hour absence still credited only 4 hours; under 3 minutes still shows
+  nothing.
+* **Cloud accounts: broken, now fixed.** The away time is measured server-side from
+  `saves.last_seen`, but `functions/api/sessions.js` stamped `last_seen = now` on every successful
+  **login** — and a returning player signs in *before* the game asks for its claim, so the away
+  window was already zero when the claim was computed. No cloud account ever received an offline
+  reward. The login no longer touches the away baseline (the sign-in is still recorded in
+  `users.last_login_at` for the GM list, and the baseline moves on the first save sync of the
+  session, as designed). Verified end to end against the real handlers + a real database: away 4
+  hours, log in, the card credits 4 hours at 50% of the server-measured pace, and the claim is
+  one-use as before.
+* **Test:** new `api_sim.js` case pins the real sequence (away → login → claim), and it fails if
+  the login touch comes back. All 39 suites green; `field_loop_smoke` 7/7.
+
 ## BUILD v88 — the town is gone, the sheets are tidy, and the page updates itself (grind-v88)
 
 The owner's nine-item list, all in `index.html` unless noted:

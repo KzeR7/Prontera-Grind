@@ -5806,3 +5806,39 @@ The owner's second pass over v77, six notes, all built.
   60s, so players refresh within a minute of a deploy. (3) Nightmare auto-advance stays manual by
   design - extending it into stages 11-15 is a separate balance call. (4) The sprint mechanic
   itself (long trips walk 1.4x) is unchanged; only its readout was removed from the sheet.
+
+### 2026-10-09 — `2026-10-09 grind-v88.1 cloud login no longer erases the away window, so offline rewards pay out again (4h max, 50%)`
+* **What changed for the player:** the offline reward works again for cloud accounts. The owner
+  reported it "seems to be not working" (it should pay 4 hours max at 50% of the recent pace).
+  * **Checked, not assumed:** the local no-cloud path was verified fine first (the real page in
+    jsdom, a 4-hour-old save at 1200 kills/hour -> the welcome-back card credits exactly 4 hours and
+    2,400 kills; 10 hours away still caps at 4; under 3 minutes still shows nothing). The bug was
+    only on the cloud path.
+  * **Root cause:** away time is measured server-side from `saves.last_seen`, but
+    `functions/api/sessions.js` ran `db.touchSeen()` on every successful LOGIN - and a returning
+    player signs in BEFORE the game asks `/api/save` for its claim, so the login erased the
+    player's own away window and the claim came back empty. No cloud account ever received an
+    offline reward.
+  * **Fix:** the login no longer touches `saves.last_seen`. The sign-in is still recorded in
+    `users.last_login_at` (`noteLogin`) for the GM player list, and the away baseline still moves
+    on the first save exchange of the session (GET/PUT `/api/save`), which is the server-observed
+    return the reward is timed from. One line removed, plus a comment saying why it must not come
+    back.
+  * **Verified end to end:** the real `index.html` in jsdom against the real `functions/api/*`
+    handlers and a real SQLite database - register, play, sync, 4 hours pass, fresh page, log in:
+    the card credits 4 hours at 50% of the server-measured pace (662 kills at 331/hour), the claim
+    is acknowledged one-use (`claimed_at` set), and the two-saves chooser cannot double-pay it.
+* **Files touched:** `functions/api/sessions.js` (the one-line fix + comment); `tools/tests/api_sim.js`
+  (new case: "a login does not erase the away window" - pins the REAL sequence away -> login ->
+  claim, and fails if the login touch returns); `index.html` (`BUILD` grind-v88.1); build-tag
+  mirrors (`affix-ranges.html` x2, `equipment-cards-tuning.html` via `--refresh-snapshot`,
+  `tools/cloudflare-deploy-steps.md`); `READ-ME-FIRST.md` (a v88.1 section at the top of the BUILD
+  list).
+* **Art:** none.
+* **Tests:** all **39** `*_sim.js` suites pass (incl. the new `api_sim` case, 34 in that suite);
+  `field_loop_smoke.js` **7/7**; `drop_card_sheet_sim.js` 13/13 after the snapshot refresh.
+* **Branches / PR:** committed to `arena/80c940d4-prontera-grind` (on top of the pushed v88
+  `dd9bd2f`); pushed; **no PR** - the owner plays the build first.
+* **Known limits / follow-ups:** none new. The fix is server-side only, so the deployed
+  `functions/api/sessions.js` must be redeployed with the page (the v88 auto-refresh reloads
+  players onto the new page; the Function ships with the same `wrangler pages deploy`).
