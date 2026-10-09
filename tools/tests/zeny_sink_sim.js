@@ -2,8 +2,8 @@
 // and the wiring that makes both reachable from the game.   node tools/tests/zeny_sink_sim.js
 //
 // The rules being checked:
-//   * a regular Nightmare mob (section 4 or 5) pays Zeny on NM_ZENY_CH of its kills, and the amount is
-//     a random NM_ZENY_LO to NM_ZENY_HI times the old value, so the mean is about 0.6 of before;
+//   * a regular Nightmare mob (section 4 or 5) pays Zeny on NM_ZENY_CH (90%) of its kills, and the amount is
+//     a random NM_ZENY_LO to NM_ZENY_HI (0.5x to 1.0x) of the old value, so the mean is about 0.675 of before;
 //   * bosses, and every mob outside Nightmare, always pay in full (multiplier 1);
 //   * buyMat() sells one Nightmare material for BM_MAT_PRICE Zeny, only from Base Lv BM_LV, and only
 //     when the player can pay it; a refused purchase changes nothing;
@@ -46,25 +46,25 @@ vm.runInContext(`
 const M = sandbox.__m;
 
 t('a regular Nightmare mob pays Zeny on NM_ZENY_CH of its kills (sections 4 and 5)', () => {
-  assert.strictEqual(M.NM_ZENY_CH, 0.6, 'the chance is 60% (v90.8)');
-  M.RND = 0.5; // 0.5 < 0.6 -> pays
+  assert.strictEqual(M.NM_ZENY_CH, 0.9, 'the chance is 90%, so 10% of kills drop no Zeny (v90.9)');
+  M.RND = 0.5; // 0.5 < 0.9 -> pays
   assert.ok(M.nmZenyRoll({ sec: 4, boss: false }) > 0, 'section 4 pays on a 0.5 roll');
   assert.ok(M.nmZenyRoll({ sec: 5, boss: false }) > 0, 'section 5 pays on a 0.5 roll');
-  M.RND = 0.7; // 0.7 >= 0.6 -> no Zeny at all
-  assert.strictEqual(M.nmZenyRoll({ sec: 4, boss: false }), 0, 'section 4 pays nothing on a 0.7 roll');
-  assert.strictEqual(M.nmZenyRoll({ sec: 5, boss: false }), 0, 'section 5 pays nothing on a 0.7 roll');
+  M.RND = 0.95; // 0.95 >= 0.9 -> no Zeny at all
+  assert.strictEqual(M.nmZenyRoll({ sec: 4, boss: false }), 0, 'section 4 pays nothing on a 0.95 roll');
+  assert.strictEqual(M.nmZenyRoll({ sec: 5, boss: false }), 0, 'section 5 pays nothing on a 0.95 roll');
 });
 
-t('a paying Nightmare kill is 0.5x to 1.5x the old value', () => {
+t('a paying Nightmare kill is 0.5x to 1.0x the old value', () => {
   M.SEQ = [0.1, 0]; // chance roll pays, amount roll at its floor
   assert.strictEqual(M.nmZenyRoll({ sec: 5, boss: false }), 0.5, 'the low end is 0.5x');
   M.SEQ = [0.1, 0.9999]; // chance roll pays, amount roll at its ceiling
   const hi = M.nmZenyRoll({ sec: 5, boss: false });
-  assert.ok(hi > 1.49 && hi <= 1.5, 'the high end is 1.5x: ' + hi);
+  assert.ok(hi > 0.99 && hi <= 1, 'the high end is 1.0x: ' + hi);
   M.SEQ = null;
 });
 
-t('the mean payout over many real rolls is about 0.6 of the old value', () => {
+t('the mean payout over many real rolls is about 0.675 of the old value', () => {
   M.RND = null; // real randomness drives the sample
   const n = 200000;
   let sum = 0, paid = 0;
@@ -73,8 +73,8 @@ t('the mean payout over many real rolls is about 0.6 of the old value', () => {
     sum += v; if (v > 0) paid++;
   }
   const mean = sum / n, rate = paid / n;
-  assert.ok(Math.abs(rate - 0.6) < 0.01, 'about 60% of kills pay: ' + rate.toFixed(4));
-  assert.ok(Math.abs(mean - 0.6) < 0.01, 'the mean is about 0.6x the old value: ' + mean.toFixed(4));
+  assert.ok(Math.abs(rate - 0.9) < 0.01, 'about 90% of kills pay: ' + rate.toFixed(4));
+  assert.ok(Math.abs(mean - 0.675) < 0.01, 'the mean is about 0.675x the old value: ' + mean.toFixed(4));
 });
 
 t('bosses and non-Nightmare mobs always pay in full', () => {

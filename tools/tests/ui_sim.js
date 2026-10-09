@@ -97,7 +97,9 @@ const code = [
   pick(/const AFFIX_CDM_SCALE=[^\n]+;/, 'gear-only Crit DMG post-roll scale'),
   pick(/const NM_FLAT=\[[^\]]*\],NM_FLAT_MUL=\[[^\]]*\],NM_MUL=\{[^}]*\};/, 'v90 Nightmare affix multipliers'),
   pick(/const nmMulOf=\(k,section\)=>[^\n]*/, 'nmMulOf'),
-  pick(/const affixValue=\(k,section,tier,roll\)=>\{[^}]+\};/, 'affixValue'),
+  pick(/const NM_ABYSS_AFF=[^;]+;/, 'NM_ABYSS_AFF'),
+  pick(/const nmAffMapOf=[^\n]*/, 'nmAffMapOf'),
+  pick(/const affixValue=\(k,section,tier,roll[^)]*\)=>\{[^}]+\};/, 'affixValue'),
   pick(/const affTxt=a=>[^;]+;/, 'affTxt/cardTxt/dtier'),
   grab('const V={', 'const ACT={'),                            // the panels themselves
   // v39: the Log window's filter table and its two readers, the on-screen log's fold helper, the
@@ -187,7 +189,7 @@ t('the map panel renders every map and field', () => {
   // v76: ten normal stages plus the five Nightmare stages - the same strip, a longer ladder
   assert.strictEqual((h.match(/class="map-node/g) || []).length, 15, 'one node per field, Nightmare included');
   assert.strictEqual((h.match(/nm-node/g) || []).length, 5, 'the five Nightmare nodes');
-  assert.ok(h.includes('Nightmare unlocks at Base Lv 100') || h.includes('Nightmare 5/5'), 'the band header states where Nightmare starts');
+  assert.ok(h.includes('Nightmare unlocks at Base Lv 120') || h.includes('Nightmare 5/5'), 'the band header states where Nightmare starts');
   // the boss field lists the whole pool with odds, and the new ore rates
   U.mapL = 10;
   const b = U.V.map();

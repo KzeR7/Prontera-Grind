@@ -62,7 +62,9 @@ const code = [
   grab('function genGear(T,l,sec,boss,tier){', '// ---------- skill effects'),
   pick(/const NM_FLAT=\[[^\]]*\],NM_FLAT_MUL=\[[^\]]*\],NM_MUL=\{[^}]*\};/, 'the v89/v90 Nightmare affix multipliers'),
   pick(/const nmMulOf=\(k,section\)=>[^\n]*/, 'nmMulOf'),
-  pick(/const affixValue=\(k,section,tier,roll\)=>\{[^}]+\};/, 'affixValue'),
+  pick(/const NM_ABYSS_AFF=[^;]+;/, 'NM_ABYSS_AFF'),
+  pick(/const nmAffMapOf=[^\n]*/, 'nmAffMapOf'),
+  pick(/const affixValue=\(k,section,tier,roll[^)]*\)=>\{[^}]+\};/, 'affixValue'),
   `function executeGearRoll(mob,roll){const old=Math.random;Math.random=()=>roll;const drops=[],mkDrop=it=>({it});try{${gearDropLoop}}finally{Math.random=old}return drops}`,
   grab('function canShield(){', 'function ekey(it)'),        // shield and single-katar class rules
   grab('function slotAccepts(k,it){', 'function equipChooser(k){'),
@@ -79,7 +81,7 @@ const SECN=['Starter gear','1st-job gear','2nd-job gear','High-tier gear'];
 const SLOTS={weapon:{label:'Weapon',stat:'ATK',ic:'A'},armor:{label:'Armor',stat:'DEF',ic:'B'},head:{label:'Headgear',stat:'HP',ic:'C'},off:{label:'Shield',stat:'DEF',ic:'D'},leg:{label:'Legwear',stat:'DEF',ic:'E'},acc:{label:'Accessory',stat:'HP',ic:'F'}};
 const rnd=(a,b)=>a+Math.random()*(b-a),ri=(a,b)=>Math.floor(rnd(a,b+1)),uid=()=>1;
 let S=null;
-this.__g={ MAPS, GEAR, gearPool, fieldOf, genGear, rarIdx, rarOf, rarCls, RAR5, RAR6, RARALL, FIELD_GEAR_NM, FIELD_GEAR_MID_NM, NMPLUS_DROP, NM_MAT, NM_MAT_CH, NM_FLAT, NM_FLAT_MUL, NM_MUL, nmMulOf, executeGearRoll, slotAccepts, canUse, canShield, katarOnly, dualWield, CLASSES, lineOf, secOf, secField, SLOTS, BAGMAX, MAPTIER, MAPGRADE, set PETPASSIVE(v){PETPASSIVE=v}, get PETPASSIVE(){return PETPASSIVE}, MAPVAL, dropTier, sellVal, AM, AFF, AB, RAR, AFFIX_CDM_SCALE, scaleCritDamageAffix, affixValue, FIELD_GEAR, FIELD_GEAR_MID, BOSS_POOL_TOTAL, BOSS_CRIT_RES, bossCritRes, gearTierOf, classTierOf, gearTierOK, gearUserOf,
+this.__g={ MAPS, GEAR, gearPool, fieldOf, genGear, rarIdx, rarOf, rarCls, RAR5, RAR6, RARALL, FIELD_GEAR_NM, FIELD_GEAR_MID_NM, NMPLUS_DROP, NM_MAT, NM_MAT_CH, NM_FLAT, NM_FLAT_MUL, NM_MUL, nmMulOf, NM_ABYSS_AFF, nmAffMapOf, executeGearRoll, slotAccepts, canUse, canShield, katarOnly, dualWield, CLASSES, lineOf, secOf, secField, SLOTS, BAGMAX, MAPTIER, MAPGRADE, set PETPASSIVE(v){PETPASSIVE=v}, get PETPASSIVE(){return PETPASSIVE}, MAPVAL, dropTier, sellVal, AM, AFF, AB, RAR, AFFIX_CDM_SCALE, scaleCritDamageAffix, affixValue, FIELD_GEAR, FIELD_GEAR_MID, BOSS_POOL_TOTAL, BOSS_CRIT_RES, bossCritRes, gearTierOf, classTierOf, gearTierOK, gearUserOf,
            set S(v){S=v}, get S(){return S} };
 `;
 const sb = { console };
@@ -743,6 +745,44 @@ t('Nightmare equipment is its own N rarity, separate from Legendary and map qual
   // The owner's Nightmare drop-rate tables are unchanged: one third of their normal counterparts.
   assert.strictEqual(G.FIELD_GEAR_NM.map(x => +(x * 3).toFixed(2)).join(','), '1.5,1.2,0.9');
   assert.strictEqual(G.FIELD_GEAR_MID_NM.map(x => +(x * 3).toFixed(2)).join(','), '1.05,0.84,0.63');
+});
+
+t('v90.9 Abyss affixes sit 5% under Nightmare Prontera; the maps between ramp linearly', () => {
+  // Only affixes move with the map. The base value is flat (v90.8), so Prontera and Abyss N+ gear
+  // differ only in their affix rolls. Map 0 is x1, map 9 (Abyss) is x0.95.
+  assert.strictEqual(G.NM_ABYSS_AFF, 0.95, 'the Abyss affix factor is 0.95');
+  assert.strictEqual(G.nmAffMapOf(0), 1, 'Nightmare Prontera (map 0) is x1');
+  assert.strictEqual(G.nmAffMapOf(9), 0.95, 'Abyss (map 9) is x0.95');
+  assert.ok(Math.abs(G.nmAffMapOf(4) - (1 - 0.05 * 4 / 9)) < 1e-9, 'map 4 sits on the linear ramp');
+  assert.strictEqual(G.nmAffMapOf(undefined), 1, 'with no map given the factor is x1 (old callers unchanged)');
+  for (const k of ['str', 'hp', 'atk', 'flee', 'crit']) {
+    const atMap0 = G.affixValue(k, 5, 4, 1.25, 0), atMap9 = G.affixValue(k, 5, 4, 1.25, 9);
+    assert.strictEqual(atMap9, Math.round(G.nmMulOf(k, 5) * 0.95 * G.AM[4] * G.AB[k] * 1.25), k + ' on Abyss is the 0.95 roll');
+    assert.ok(atMap9 < atMap0, k + ' on Abyss is below Prontera at the same roll: ' + atMap9 + ' < ' + atMap0);
+  }
+  // Same seeded random stream for both maps, so each drop makes the same picks and only the affix factor differs.
+  const seedRandom = seed => vm.runInContext('__seedA=' + seed + ';Math.random=function(){__seedA=(__seedA+0x6D2B79F5)|0;let t=Math.imul(__seedA^(__seedA>>>15),1|__seedA);t=(t+Math.imul(t^(t>>>7),61|t))^t;return((t^(t>>>14))>>>0)/4294967296};', sb);
+  const sumAff = mp => {
+    seedRandom(12345);
+    G.S = { st: { luk: 0 }, eq: {}, mp };
+    let sum = 0;
+    for (let i = 0; i < 400; i++) {
+      const it = G.genGear({ k: 'sword', n: 'Absolute Dark Lord Sword' }, 150, 5, false, 4);
+      for (const a of it.aff) sum += a.v;
+    }
+    return sum;
+  };
+  const origRandom = vm.runInContext('Math.random', sb);
+  let ratio;
+  try { ratio = sumAff(9) / sumAff(0); }
+  finally { vm.runInContext('Math.random=__origRandom', Object.assign(sb, { __origRandom: origRandom })); }
+  assert.ok(Math.abs(ratio - 0.95) < 0.01, 'the N+ affix total on Abyss is 0.95 of Prontera on the same rolls: ' + ratio.toFixed(4));
+  G.S = { st: { luk: 0 }, eq: {}, mp: 9 };
+  const ab = G.genGear({ k: 'sword', n: 'Absolute Dark Lord Sword' }, 150, 5, false, 4);
+  assert.strictEqual(ab.mp, 9, 'an N+ piece records the map it dropped on, for reforge');
+  G.S = { st: { luk: 0 }, eq: {}, mp: 9 };
+  const hi3 = G.genGear({ k: 'sword', n: 'Dark Lord Sword' }, 150, 3, true, 4);
+  assert.strictEqual(hi3.mp, undefined, 'a non-Nightmare piece records no map');
 });
 
 t('v90.8 flat Nightmare power: the same N+ gear is worth the same on the lowest and the Abyss map', () => {

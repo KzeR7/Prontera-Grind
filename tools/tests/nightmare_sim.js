@@ -51,19 +51,19 @@ let pass = 0, fail = 0;
 const t = (n, f) => { try { f(); console.log('  ok   ' + n); pass++; } catch (e) { console.log('  FAIL ' + n + ' -> ' + e.message); fail++; } };
 console.log('nightmare: the Base Lv 100-150 band\n');
 
-t('the band opens on Base Lv 100 / 110 / 125 / 140 / 150, and nowhere else', () => {
-  assert.deepStrictEqual(Array.from(N.NMLV), [100, 110, 125, 140, 150], 'the unlock ladder is pinned');
+t('the band opens on Base Lv 120 (Stages 11-13) and Base Lv 140 (Stages 14-15), and nowhere else', () => {
+  // v90.9 (owner): Stages 11-13 at Base Lv 120, Stages 14-15 at Base Lv 140.
+  assert.deepStrictEqual(Array.from(N.NMLV), [120, 120, 120, 140, 140], 'the unlock ladder is pinned');
   const open = lv => { N.S = { lv, gmnm: false }; return N.nmOpen(); };
   assert.strictEqual(open(1), 0, 'a new character has no Nightmare stages');
   assert.strictEqual(open(99), 0, 'Base Lv 99 is still the old ceiling');
-  assert.strictEqual(open(100), 1, 'Base 100 opens Nightmare stage 11');
-  assert.strictEqual(open(109), 1);
-  assert.strictEqual(open(110), 2);
-  assert.strictEqual(open(124), 2);
-  assert.strictEqual(open(125), 3);
-  assert.strictEqual(open(140), 4);
-  assert.strictEqual(open(149), 4);
-  assert.strictEqual(open(150), 5, 'Base 150 opens the last one');
+  assert.strictEqual(open(100), 0, 'Base 100 no longer opens Nightmare (v90.9)');
+  assert.strictEqual(open(119), 0, 'Base 119 is still shut');
+  assert.strictEqual(open(120), 3, 'Base 120 opens Nightmare stages 11, 12 and 13');
+  assert.strictEqual(open(139), 3, 'Stage 14 is still shut at Base 139');
+  assert.strictEqual(open(140), 5, 'Base 140 opens Nightmare stages 14 and 15');
+  assert.strictEqual(open(149), 5);
+  assert.strictEqual(open(150), 5, 'nothing more opens above 140');
   assert.strictEqual(N.nmMax(), 15, 'so stage 15 is the deepest field in the game');
   N.S = { lv: 1, gmnm: true };
   assert.strictEqual(N.nmOpen(), 5, 'and the GM switch opens all five for testing');

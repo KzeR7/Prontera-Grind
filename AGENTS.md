@@ -6214,3 +6214,21 @@ The owner's second pass over v77, six notes, all built.
   2. The Zeny cut and the Black Market price are untuned against real kill times. The owner's 150M-a-day figure has not been re-derived from the new numbers.
   3. The flat gear raises the lower maps' N+ value about 11x. Check whether the lower maps' gear now outshines Abyss's gear on any stat that matters (the per-map affix values are unchanged).
   4. Verified with the harness and source checks, not in a real browser.
+
+### 2026-10-09 — `2026-10-09 grind-v90.9 Nightmare tuning: Abyss affixes sit 5% under Nightmare Prontera, Stages 11-13 unlock at Base Lv 120 and Stages 14-15 at Base Lv 140, and a regular Nightmare kill pays Zeny 90% of the time at 0.5x to 1.0x`
+
+* **What changed for the player:**
+  * **Abyss affixes are nerfed (owner):** Nightmare Prontera (map 0) rolls its affixes at x1. Abyss (map 9) rolls them at x0.95, and the maps between ramp linearly (`NM_ABYSS_AFF`, `nmAffMapOf()`). This only moves affix values. The base value of N and N+ gear is still flat across maps (v90.8).
+  * **Unlock ladder (owner):** Stages 11-13 open at Base Lv 120 and Stages 14-15 at Base Lv 140 (`NMLV` = 120, 120, 120, 140, 140). It was 100 / 110 / 125 / 140 / 150. The UI text reads `NMLV`, so the header and the "Next unlock" line update with it.
+  * **Zeny payout (owner):** a regular Nightmare mob (sections 4 and 5) pays Zeny on 90% of kills, so 10% drop no Zeny. Each payout is a random 0.5x to 1.0x of the old value (`NM_ZENY_CH` = .9, `NM_ZENY_LO` = .5, `NM_ZENY_HI` = 1). The mean is 0.675 of before (v90.8 was 0.6). Bosses still always pay in full. The owner's "10% drops no zeny" was read as regular mob kills only, the same scope as v90.8.
+* **Consequence the owner should see:** Prontera now has the best Nightmare affixes and the higher drop chance (N+ weapon 0.25% per mob, against Abyss 0.17%). Abyss has no gear reason left: the base value is flat and its affixes are the lowest. The owner asked for the 5% nerf, so this is the result. If Abyss should keep a reason to be farmed, the affix nerf or the flat base value would need another look.
+* **Files touched:** `index.html` (`BUILD` grind-v90.9; `NMLV`; `NM_ABYSS_AFF`, `nmAffMapOf()` beside `nmMulOf()`; `affixValue()` takes an optional map (`mp`) as its fifth argument, and a missing map is x1 so the old pinned values hold; `genGear()` passes the current map and stores `mp` on Nightmare pieces (sections 4-5) so reforge can use it; `reforge()` passes `it.mp`; `NM_ZENY_CH`, `NM_ZENY_LO`, `NM_ZENY_HI`); build-tag mirrors `Updates/cards-gear-audit/affix-ranges.html` (x2), `Updates/cards-gear-audit/equipment-cards-tuning.html`, `tools/cloudflare-deploy-steps.md`; tests `tools/tests/nightmare_sim.js` (the new ladder, with thresholds on each side of 120 and 140), `tools/tests/zeny_sink_sim.js` (90% pay chance, 0.5x to 1.0x, mean 0.675), `tools/tests/gear_sim.js` (new v90.9 test: the 0.95 factor per affix, the map-0 to map-9 ramp, an N+ piece records `mp`, a non-Nightmare piece records none; the Abyss-to-Prontera total is checked on the same seeded rolls), `tools/tests/ui_sim.js` (band header states Base Lv 120), `tools/tests/pet_sim.js` and `ui_sim.js` (new `affixValue` pick signature); `READ-ME-FIRST.md` (v90.9 section); this log.
+* **Art:** none.
+* **Tests:** all `*_sim.js` and `*_smoke.js` suites in `tools/tests/` exit 0 on this build. The smoke suites run with `jsdom` and `three` installed without saving them to the repo.
+* **Branches / PR:** `arena/4ce84185-prontera-grind`. No pull request was opened.
+* **Known limits / follow-ups:**
+  1. Nightmare pieces that dropped before this build have no `mp`. Reforging one rolls its new affix at x1 (Prontera's level), not the Abyss x0.95. This is a small one-off and only affects reforge.
+  2. The Abyss-has-no-gear-reason consequence above is open for the owner.
+  3. Characters already past the new gates keep their stages. A character below Base Lv 120 who was in Stage 11 to 13 is moved back by the existing `initSession` cap (`S.lvl=Math.min(S.lvl,10+nmOpen())`).
+  4. The refine damage impact is still not measured.
+  5. Verified with the harness and jsdom, not in a real browser.

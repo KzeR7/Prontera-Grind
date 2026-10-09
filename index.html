@@ -633,7 +633,11 @@ const AFFIX_CDM_SCALE=.7,scaleCritDamageAffix=v=>Math.max(1,Math.round(v*AFFIX_C
 // STR, AGI, DEX, LUK and INT keep x3.5 / x4. Max HP and Crit DMG keep the plain 1+section.
 const NM_FLAT=['str','agi','dex','luk','int'],NM_FLAT_MUL=[3.5,4],NM_MUL={flee:[3,3.4],atk:[4.2,5],aspd:[4.2,5],crit:[4.2,5]};
 const nmMulOf=(k,section)=>{const i=Math.min(1,section-4);return NM_FLAT.includes(k)?NM_FLAT_MUL[i]:NM_MUL[k]?NM_MUL[k][i]:1+section};
-const affixValue=(k,section,tier,roll)=>{const mul=section>=4?nmMulOf(k,section):1+section;const raw=Math.max(1,Math.round(mul*AM[tier]*AB[k]*roll));return k==='cdm'?scaleCritDamageAffix(raw):raw};
+// v90.9 (owner): Abyss (map 9) affixes are slightly below Nightmare Prontera's (map 0). Map 0 is x1, map 9 is x0.95,
+// and the maps between ramp linearly. Only affixes move with the map; the item's base value is flat.
+const NM_ABYSS_AFF=.95;
+const nmAffMapOf=mp=>Number.isFinite(mp)?1-(1-NM_ABYSS_AFF)*Math.min(9,Math.max(0,mp))/9:1;
+const affixValue=(k,section,tier,roll,mp)=>{const mul=section>=4?nmMulOf(k,section)*nmAffMapOf(mp):1+section;const raw=Math.max(1,Math.round(mul*AM[tier]*AB[k]*roll));return k==='cdm'?scaleCritDamageAffix(raw):raw};
 const AL={str:'STR',agi:'AGI',dex:'DEX',luk:'LUK',int:'INT',hp:'Max HP',atk:'ATK %',crit:'Crit %',aspd:'ASPD %',flee:'Flee %',cdm:'Crit DMG %',vit:'VIT'};
 // The field is a vertical avenue: the player starts at the near end (high Z, bottom of the
 // screen) and mobs hold the far end (low Z, top of the screen), so you run up to engage.
@@ -657,7 +661,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // script block, which is a SyntaxError - the game did not run on main at all. One line wins, and
 // it names both sides of this merge: the v38 balance patch (the weapon cut, the affix/card
 // give-back) and main's weapon-hold rendering work.
-const BUILD='2026-10-09 grind-v90.8 Zeny sinks and Nightmare gear: Nightmare N and N+ gear has one power on every map, refine Zeny x3, Nightmare mobs do not always pay Zeny, Black Market sells Nightmare materials; Crafting: Nightmare Stage 15 bosses drop a material at 1%; 20 of any mix make a Drop Protection Scroll, which stops a failed refine at +5 or higher dropping a rank; Abyss keeps its old EXP and Zeny, the lower maps are tuned down to match per HP; katar icon is a boxing glove; class-locked drops say Not equitable on current class';   // shown on the login card - confirms which file you loaded
+const BUILD='2026-10-09 grind-v90.9 Nightmare tuning: Abyss affixes sit 5% under Nightmare Prontera, Nightmare Stages 11-13 unlock at Base Lv 120 and Stages 14-15 at Base Lv 140, and a regular Nightmare kill pays Zeny 90% of the time at 0.5x to 1.0x (the mean is 0.675 of before).';
 $('buildTag').textContent='build '+BUILD;
 
 // ---------- class tree: Novice -> 6 first jobs -> 6 second jobs -> 6 third jobs ----------
@@ -1218,7 +1222,8 @@ MAPS.forEach((m,i)=>{m.b=[0,9,19,31,43,59,66,73,79,89][i];m.rec=REC[i]});
 // itself: same art, same monsters, much harder numbers, and two gear catalogue sections that exist
 // nowhere else. The band opens on Base Lv 100 / 110 / 125 / 140 / 150 - a pure level unlock, so
 // there is nothing new to save and nothing to migrate.
-const NMLV=[100,110,125,140,150],NMBASE=105,NMSTEP=6,NMGAP=4;
+// v90.9 (owner): Stages 11-13 unlock at Base Lv 120, Stages 14-15 at Base Lv 140.
+const NMLV=[120,120,120,140,140],NMBASE=105,NMSTEP=6,NMGAP=4;
 // How many Nightmare stages the character has unlocked right now (0-5). The GM switch opens all
 // five for testing without levelling a character to 150 first.
 const nmOpen=()=>{if(S&&S.gmnm)return 5;if(!S)return 0;let n=0;for(const v of NMLV)if(S.lv>=v)n++;return n};
@@ -1587,9 +1592,9 @@ const NM_MAT=['Dread Essence','Kraken Scale','Void Core','Sandwraith Dust','Spec
 const NM_MAT_CH=1;
 // v90.7 (owner): a Drop Protection Scroll costs 20 Nightmare materials, any mix from any maps.
 const DPS_MATS=20;
-// v90.8 (owner: Zeny overflow): a regular Nightmare mob pays Zeny on NM_ZENY_CH of its kills, and the
-// payout is a random NM_ZENY_LO to NM_ZENY_HI times the old value (mean 0.6 of before). Bosses always pay.
-const NM_ZENY_CH=.6,NM_ZENY_LO=.5,NM_ZENY_HI=1.5;
+// v90.9 (owner): a regular Nightmare mob pays Zeny on NM_ZENY_CH (90%) of its kills, and the payout is a random
+// NM_ZENY_LO to NM_ZENY_HI (0.5x to 1.0x) of the old value: mean 0.675 of before. Bosses always pay.
+const NM_ZENY_CH=.9,NM_ZENY_LO=.5,NM_ZENY_HI=1;
 function nmZenyRoll(mob){if(mob.boss||!(mob.sec>=4))return 1;return Math.random()<NM_ZENY_CH?rnd(NM_ZENY_LO,NM_ZENY_HI):0}
 // v90.8 (owner): the Black Market sells one Nightmare material for BM_MAT_PRICE Zeny.
 const BM_MAT_PRICE=3000000;
@@ -2895,10 +2900,10 @@ function genGear(T,l,sec,boss,tier){
   // those cards on weapons), widened to accessories because both are the offensive slots. Every
   // other affix still rolls anywhere; gear that already carries a legacy cdm roll keeps it.
   const n=[1,1+ri(0,1),2,2+ri(0,1),3][t],pool=(slot==='weapon'||slot==='acc'?AFF:AFF.filter(k=>k!=='cdm')).slice(),aff=[];
-  for(let i=0;i<n;i++){const k=pool.splice(ri(0,pool.length-1),1)[0];aff.push({k,v:Math.max(1,Math.round(affixValue(k,sec,t,rnd(.8,1.25))*quality))})}
+  for(let i=0;i<n;i++){const k=pool.splice(ri(0,pool.length-1),1)[0];aff.push({k,v:Math.max(1,Math.round(affixValue(k,sec,t,rnd(.8,1.25),(S&&S.mp|0)||0)*quality))})}
   // Katars and bows always have four card sockets; every other weapon keeps the existing 1-3 roll.
   const slots=slot==='weapon'&&(T.k==='katar'||T.k==='bow')?4:slot==='weapon'?Math.min(3,1+ri(0,1)+(t>=3?1:0)):Math.min(1,ri(0,1)+(t>=3?1:0));
-  return{id:uid(),slot,wt:slot==='weapon'?T.k:undefined,tier:t,val,name:(sec>=5?'N+ ':sec>=4?'N ':t?RAR[t].n+' ':'')+T.n,aff,slots,cards:[],sec,lvl:l};
+  return{id:uid(),slot,wt:slot==='weapon'?T.k:undefined,tier:t,val,name:(sec>=5?'N+ ':sec>=4?'N ':t?RAR[t].n+' ':'')+T.n,aff,slots,cards:[],sec,lvl:l,...(sec>=4?{mp:(S&&S.mp|0)||0}:{})};
 }
 // Away time is earned from the same map/stage and drop tables as online play. The browser records
 // a rolling real-time kill rate, credits at most four hours, and simulates half that many kills.
@@ -3397,7 +3402,7 @@ function reforge(sl){const it=S.eq[sl];if(!bmOpen()||!it)return;const aff=it.aff
   const pool=it.slot==='weapon'||it.slot==='acc'?AFF:AFF.filter(k=>k!=='cdm'),taken=new Set(aff.map(a=>a.k)),fresh=pool.filter(k=>!taken.has(k));
   if(!fresh.length){log('Every affix this piece can take is already on it.','','zeny');ui();return}
   const i=ri(0,aff.length-1),k=fresh[ri(0,fresh.length-1)],old=aff[i];
-  S.zeny-=c;aff[i]={k,v:Math.max(1,Math.round(affixValue(k,it.sec||0,it.tier||0,rnd(.8,1.25))))};
+  S.zeny-=c;aff[i]={k,v:Math.max(1,Math.round(affixValue(k,it.sec||0,it.tier||0,rnd(.8,1.25),it.mp)))};
   log(`Reforged ${iname(it)}: ${AL[old.k]} ${old.v} became ${AL[k]} ${aff[i].v}.`,'r3','zeny');ui();save()}
 
 // ---------- class change ----------

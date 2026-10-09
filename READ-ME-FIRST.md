@@ -84,6 +84,15 @@ is the live one; with no argument the tool prints how to set a new one). Since v
 `GM` / `test1234`; `localStorage.removeItem('pg_gm_local')` removes it. Normal accounts are made
 in-game and stored in the browser (`pg_acc4`; saves under `pg_save3_<user>`).
 
+## BUILD v90.9 — Nightmare tuning: Abyss affixes, unlock ladder, Zeny payout (grind-v90.9)
+
+* **Abyss affixes:** Nightmare Prontera is x1, Abyss (map 9) is x0.95, and the maps between ramp linearly (`NM_ABYSS_AFF`, `nmAffMapOf()`). Only affixes move; the base value stays flat.
+* **Unlock ladder:** Stages 11-13 at Base Lv 120, Stages 14-15 at Base Lv 140 (`NMLV`).
+* **Zeny:** a regular Nightmare kill pays 90% of the time (10% pay nothing), at a random 0.5x to 1.0x (mean 0.675). Bosses still pay in full.
+* **Open:** Prontera now has the best affixes and the higher drop rate, so Abyss has no gear reason left. This is the result of the 5% nerf the owner asked for. Reforge of pieces dropped before this build uses x1.
+
+Files: `index.html` (`NMLV`, `NM_ABYSS_AFF`, `nmAffMapOf()`, `affixValue()`, `genGear()`, `reforge()`, `NM_ZENY_*`); tests `nightmare_sim.js`, `zeny_sink_sim.js`, `gear_sim.js`, `ui_sim.js`, `pet_sim.js`; mirrors and this file are bumped to grind-v90.9.
+
 ## BUILD v90.8 — Zeny sinks and flat Nightmare gear (grind-v90.8)
 
 * **Flat Nightmare gear:** every Nightmare N and N+ piece rolls the top tier (4) and the top map value on every map, with three affixes. Lower maps are as strong as Abyss. Prontera's N+ base value rises about 11x; Abyss's is unchanged. This is a buff to the lower maps' gear.
