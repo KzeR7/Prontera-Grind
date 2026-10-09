@@ -6428,3 +6428,11 @@ The owner's second pass over v77, six notes, all built.
 * **Refine Scroll:** inert saved reserve `S.refineScrolls`, shown on the Refine panel, not read or consumed by `refine()`. It does not replace the Drop Protection Scroll (`S.dps` / `craftDps()`).
 * **Merge:** this branch was fast-forwarded onto current `main` (`grind-v90.10`) before the Echo changes were reapplied, so Nightmare tiers, the Zeny roll, Black Market and Drop Protection Scroll stay. Build tag is grind-v91.
 * **Files touched:** `index.html`; `tools/tests/{trial_sim,ui_sim,kit_sim,save_load_sim,scene_sim}.js`; `Updates/endgame-and-dps-trial-plan.md`; `Updates/map-textures-preview/map_kit_hd_option_b.js`; build-tag mirrors; `READ-ME-FIRST.md`; this log.
+
+### 2026-10-09 — `grind-v91.1 class-switch bag and equipment fix`
+* **What changed for the player:** Switching classes can leave equipment slots empty. The Bag and equipment details now compare gear only when something is actually worn in the matching slot, preventing broken panels and false “weaker” labels. Try switching a geared Lord Knight to Novice, opening Bag and Equipment, then switching back.
+* **Files touched:** `index.html`, `tools/tests/ui_sim.js`, the build labels in the two cards/gear audit pages and `tools/cloudflare-deploy-steps.md`, and this log.
+* **Art:** none.
+* **Tests:** UI 62/62, class change 27/27, gear 43/43, dual wield 13/13, save/load 27/27, drop/card sheet 13/13. New regression exercises the real class switch, empty slots, both accessory positions, panels, item details, and restoring the previous loadout.
+* **Branches / PR:** working branch `coderabbit/fix-class-switch-inventory-ui/8450d21c`; not published.
+* **Known limits / follow-ups:** Verified with the Node simulation harness; no live browser playtest.
