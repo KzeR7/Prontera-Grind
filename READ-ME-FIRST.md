@@ -84,6 +84,14 @@ is the live one; with no argument the tool prints how to set a new one). Since v
 `GM` / `test1234`; `localStorage.removeItem('pg_gm_local')` removes it. Normal accounts are made
 in-game and stored in the browser (`pg_acc4`; saves under `pg_save3_<user>`).
 
+## BUILD v90.3 — katar icon, and a clear label on class-locked drops (grind-v90.3)
+
+Two small owner requests, plus a design question that is still open.
+
+* **Katar icon (grind-v90.3):** on the world map the katar showed the dagger's 🔪 in its line of text. It now shows 🥊 (`WICON.katar` in `index.html`). The katar silhouette in the sprite-style SVG is unchanged.
+* **"Not equitable" label (grind-v90.3):** a drop that the current class cannot wear used to have its rate struck through. The rate now stays readable (dimmed a little), and a small red note follows it: `(Not equitable on current class)`. The wording is the owner's exact text. The strike-through rule is gone (`dropTxt` in `index.html` wraps the rate in `.drr`; the note is `.dnot`).
+* **Open: Nightmare fairness.** The owner asked how to solve it. Low Nightmare maps give almost the same N gear as Abyss but far weaker bosses, so players farm one map. Option (C), an exclusive N+ piece from each map's Stage 15 boss, paired with option (B), per-kill reward scaled per HP, is the current recommendation. **Nothing was built for this yet.** It needs a balance sim and the owner's choice first.
+
 ## BUILD v90 — Affix nerf on Flee/ATK/ASPD/CRIT, refine and Legendary pet costs up, Black Market for endgame Zeny (grind-v90, v90.1, v90.2)
 
 Four owner requests in one build. Every number is a named constant or a single formula, so a later retune is one edit.

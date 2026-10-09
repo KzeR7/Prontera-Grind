@@ -6129,3 +6129,16 @@ The owner's second pass over v77, six notes, all built.
   2. **The Markets group is hidden while a window is open,** because it sits in the quest panel. To switch from one window to the Black Market, close the window first (or press its key).
   3. **Ore at 10 a try is a big sink.** A full N+ +10 refine now needs about 285 N+ ore from scratch, roughly 28.5M z at the Black Market price.
   4. Verified in the jsdom and panel-render harnesses, not in a real browser (there is no browser in the sandbox).
+
+### 2026-10-09 — `2026-10-09 grind-v90.3 Katar icon is a boxing glove on the world map; drops a class cannot wear say so beside the rate
+
+* **What changed for the player:** the katar on the world map now shows a boxing glove (🥊) instead of the dagger (🔪). A drop the current class cannot wear no longer has its rate struck through. The rate stays readable and a small note beside it says `(Not equitable on current class)`.
+* **Nightmare fairness (not built):** the owner asked how to stop players farming one low Nightmare map. Found that per-kill EXP and zeny are the same on every map for each stage, while gear value scales about 11× from Prontera to Abyss for N+. Options: (A) flat gear quality, rejected because low maps would become faster; (B) scale per-kill reward by map so reward per HP is about equal; (C) an exclusive N+ piece per map from its Stage 15 boss. Recommended: C with B. No code changed for this. Waiting for the owner to pick.
+* **Files touched:** `index.html` (`BUILD` grind-v90.3; `WICON.katar` is 🥊; `dropTxt` wraps the rate in `.drr` and adds `.dnot`; the CSS for `.dropline.cant` and `.dnot` replaces the old strike-through rule); the build-tag mirrors `Updates/cards-gear-audit/affix-ranges.html` (x2), `Updates/cards-gear-audit/equipment-cards-tuning.html`, `tools/cloudflare-deploy-steps.md`; tests `tools/tests/ui_sim.js` (two new tests: the label is present and not struck through; the katar icon differs from the dagger); `READ-ME-FIRST.md` (v90.3 section); this log.
+* **Art:** none. No sprite was drawn, traced or cropped.
+* **Tests:** all **43** `*_sim.js` and `*_smoke.js` suites in `tools/tests/` exit 0 on this build, run after the new tests were added. `ui_sim` reports 59 passed, 0 failed.
+* **Branches / PR:** `arena/4ce84185-prontera-grind`. No pull request was opened.
+* **Known limits / follow-ups:**
+  1. The 🥊 is an emoji, so it looks different on each device. If the owner wants a katar-shaped icon, that needs new art and a sprite-pack check.
+  2. The Nightmare fairness fix still needs the owner's choice, then a balance sim before any code.
+  3. Verified in the jsdom and vm harnesses, not in a real browser.

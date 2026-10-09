@@ -255,8 +255,8 @@ hr{border:0;border-top:1px dashed var(--edge);margin:6px 0}
 .mobentry{margin-bottom:2px;min-width:0}
 .dropgrp{margin:5px 0 1px;font-size:10px;letter-spacing:.4px;text-transform:uppercase;color:#8a7442;border-bottom:1px dotted var(--edge2)}
 .dropgrp small{font-weight:bold}
-.dropline.cant{opacity:.45}
-.dropline.cant b{text-decoration:line-through}
+.dropline.cant{opacity:.7}
+.dropline .drr{display:flex;align-items:baseline;gap:6px;white-space:nowrap}.dropline.cant .dnot{color:#ffb4a8;font-size:11px}
 .dropline.worse{opacity:.7}
 .dropline.worse .dwho{opacity:.45}
 .dwho{opacity:.6;font-style:italic}
@@ -537,7 +537,7 @@ const RAR5={n:'N'},RAR6={n:'N+'},RARALL=RAR.concat([RAR5,RAR6]),rarIdx=it=>((it&
 //   and card_sim.js; measured in Updates/cards-gear-audit/.
 const AM=[1.7,2.72,4.42,6.8,11.05],GRADE=['Common','Uncommon','Rare','Legendary'],GI=[0,1,2,4],CV=[3.2,6.4,9.6,16];
 const SLOTS={weapon:{label:'Weapon',stat:'ATK',ic:'⚔️'},armor:{label:'Armor',stat:'DEF',ic:'🥼'},head:{label:'Headgear',stat:'HP',ic:'🎩'},off:{label:'Shield',stat:'DEF',ic:'🛡️'},leg:{label:'Legwear',stat:'DEF',ic:'👖'},acc:{label:'Accessory',stat:'HP',ic:'💍'}};
-const WICON={dagger:'🗡️',katar:'🔪',staff:'🪄',bow:'🏹',axe:'🪓',sword:'⚔️',mace:'🔨'},ORE={ori:'Oridecon',elu:'Elunium'},SECN=['Starter gear','1st-job gear','2nd-job gear','High-tier gear','Nightmare gear','Abyssal Nightmare gear'];
+const WICON={dagger:'🗡️',katar:'🥊',staff:'🪄',bow:'🏹',axe:'🪓',sword:'⚔️',mace:'🔨'},ORE={ori:'Oridecon',elu:'Elunium'},SECN=['Starter gear','1st-job gear','2nd-job gear','High-tier gear','Nightmare gear','Abyssal Nightmare gear'];
 // Canonical item-database sprites by weapon family. These display the same recognizable
 // weapon shape for every class, regardless of the game's custom gear name.
 const WEAPON_ITEM_IDS={dagger:1202,katar:1250,staff:1601,bow:1701,axe:1301,sword:1106,mace:1501};
@@ -657,7 +657,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // script block, which is a SyntaxError - the game did not run on main at all. One line wins, and
 // it names both sides of this merge: the v38 balance patch (the weapon cut, the affix/card
 // give-back) and main's weapon-hold rendering work.
-const BUILD='2026-10-09 grind-v90.2 Refine ore: Legendary 5, N and N+ 10 a try; Black Market and Leaderboard moved under the quest panel; skill details no longer shift the skill grid';   // shown on the login card - confirms which file you loaded
+const BUILD='2026-10-09 grind-v90.3 Katar icon is a boxing glove on the world map; drops a class cannot wear say so beside the rate; refine ore Legendary 5, N and N+ 10; Black Market and Leaderboard under the quest panel; skill grid no longer shifts';   // shown on the login card - confirms which file you loaded
 $('buildTag').textContent='build '+BUILD;
 
 // ---------- class tree: Novice -> 6 first jobs -> 6 second jobs -> 6 third jobs ----------
@@ -1678,7 +1678,7 @@ const poolIc=T=>gearSlot(T)==='weapon'?(WICON[T.k]||'⚔️'):{armor:'🥼',head
 const dropIsWorse=T=>{const cur=gearSlot(T)==='acc'?(S.eq.acc1||S.eq.acc2):S.eq[gearSlot(T)];
   return !!cur&&gearRefLevel({lvl:mapL,tier:T.tier})<gearRefLevel(cur)};
 const dropTxt=([T,ch],who)=>{const why=whyNot(T),worse=dropIsWorse(T),cls='dropline'+(why?' cant':'')+(worse?' worse':''),tip=[why,worse?`Weaker than the ${SLOTS[gearSlot(T)].label.toLowerCase()} you are wearing`:''].filter(Boolean).join(' · ')
- return`<div class="${cls}"${tip?` title="${tip}"`:''}><span>${poolIc(T)} ${T.n} <small class="${rarCls(T)}">${rarOf(T).n}</small>${who?` <small class="dwho">${who}</small>`:''}</span><b>${Math.round(ch*1e4)/1e4}%</b></div>`};
+ return`<div class="${cls}"${tip?` title="${tip}"`:''}><span>${poolIc(T)} ${T.n} <small class="${rarCls(T)}">${rarOf(T).n}</small>${who?` <small class="dwho">${who}</small>`:''}</span><span class="drr">${why?'<small class="dnot">(Not equitable on current class)</small>':''}<b>${Math.round(ch*1e4)/1e4}%</b></span></div>`};
 
 // ---------- stat progression ----------
 // Stats cap at 99 until Base Lv 100, then the elite tier opens up to 120. Raising a stat

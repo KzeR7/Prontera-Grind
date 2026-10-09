@@ -998,6 +998,22 @@ t('v90.2: picking a skill does not shift the skill grid', () => {
   U.selS = null;
 });
 
+t('v90.3: a drop the class cannot wear says so beside its rate, with no strike-through', () => {
+  // the Knight cannot wear the Abyss N+ weapons, so the world map must label them, not slash their rate
+  U.S = mkS('Knight'); U.mapM = 9; U.mapL = 14;
+  const h = U.V.map();
+  assert.ok(h.includes('<small class="dnot">(Not equitable on current class)</small>'), 'a class-locked drop names the reason beside its rate');
+  assert.ok(h.includes('class="dropline cant"'), 'the row is still marked as not equitable');
+  assert.ok(!/dropline\.cant b\{text-decoration/.test(src), 'the old strike-through on the rate is gone');
+  assert.ok(src.includes(".dropline.cant .dnot{color:#ffb4a8;font-size:11px}"), 'the label has its own style');
+});
+
+t('v90.3: the katar icon on the world map is no longer the dagger icon', () => {
+  const dagger = src.match(/WICON=\{dagger:'([^']+)'/)[1], katar = src.match(/WICON=\{[^}]*katar:'([^']+)'/)[1];
+  assert.notStrictEqual(katar, dagger, 'a katar must look different from a dagger');
+  assert.strictEqual(katar, '🥊', 'the katar is a punch-dagger, shown as a boxing glove');
+});
+
 t('v90 Black Market: locked under Base Lv 100, then sells ore and reforges one affix on a worn piece', () => {
   U.S=mkS('Novice');U.S.lv=99;U.S.zeny=10000000;U.S.ore={ori:0,elu:0};
   U.S.eq.armor={id:501,name:'Test Coat',tier:3,slot:'armor',val:40,sec:5,aff:[{k:'str',v:55},{k:'flee',v:38}],slots:0,cards:[]};
