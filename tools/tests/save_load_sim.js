@@ -10,7 +10,9 @@ const body = src.slice(src.indexOf('function load(){try{') + 19, src.indexOf('}c
 // point is written as Z1-1.5. Hardcoding the field size here would silently drift from the
 // real one, and the vertical-arena check below reads the same constants.
 const arena = grab('const SU=k=>', ',K5=[') + ';';
-const code = [arena, grab('const CD=[', 'const fresh=()=>'), grab('const fresh=()=>', 'const saveKey='), 'function loadRaw(){' + body + '}'].join('\n');
+// v88.6: load() refuses a save stamped for another account, so the stamp helpers come along with it.
+const stamp = grab('// ---------- the save-owner stamp (v88.6) ----------', 'const num_= (v,d)');
+const code = [arena, grab('const CD=[', 'const fresh=()=>'), grab('const fresh=()=>', 'const saveKey='), stamp, 'function loadRaw(){' + body + '}'].join('\n');
 
 const save = {pets:[
     {id:1,sp:0,on:true,eq:[1,2,3],skills:['warcry','spiritbolt']},
@@ -43,6 +45,7 @@ const K5 = ['str','agi','dex','luk','int'];
 let RAW = ${JSON.stringify(JSON.stringify(save))};
 const lsGet = () => RAW;
 const saveKey = () => 'k';
+currentUser = 'Owner';   // the account this browser is loading (v88.6: a save names its owner); the game's own let declares it
 const newQuest = () => ({type:'kill', goal:1, prog:0, z:0, xp:0});
 this.__l = {loadRaw, setRaw: v => { RAW = JSON.stringify(v) }, setState:v=>{S=v}, getState:()=>S, emptyCardIndex, recordMonsterKill, donateCardToMastery, cardMasteryTotal, cardMasteryEarned, cardMasteryAvailable, cardMasteryRolled, cardMasteryStat, cardMasteryGacha, cardMasteryReset, cardMasteryLegendaryCard, cardMasteryLegendaryCards, donateAllToMastery, cardMasteryLevel, CARD_REWARD_OPTIONS, indexXpForCount, INDEX_MOB_MILESTONES, INDEX_MILESTONE_XP, INDEX_TITLES, MONSTER_INDEX, CARD_NAMES, CARD_REWARD_CAPS, CARD_REWARD_IDS};
 `;
@@ -443,6 +446,28 @@ t('the v39 tool settings repair: old saves get the quiet defaults', () => {
   assert.deepStrictEqual(Array.from(load().autoSell), [false, false, true, false, true, false, false], 'an old five-band save keeps its ticks and gains unticked N and N+ bands');
   assert.deepStrictEqual(Object.keys(k.logOff), ['gear'], 'a switched-off filter survives');
 });
+
+// v88.6 (save-owner stamp): load() never hands over another account's save. The current account is
+// 'Owner' (set in the harness above); a save stamped 'Owner' loads, one stamped anyone else does not.
+t('v88.6: a save stamped for another account is refused: the game gets a fresh character, not theirs', () => {
+  sb.__l.setRaw(Object.assign({}, save, { owner: 'Someone Else' }));
+  const g = load();
+  assert.strictEqual(g.lv, 1, 'the other account\'s level is not loaded');
+  assert.strictEqual(g.cls, 'Novice', 'nor its class');
+  assert.strictEqual(g.base.Swordman, undefined, 'nor its per-class records');
+});
+t('v88.6: a save stamped for this account loads as before, and the stamp is compared without regard to case', () => {
+  sb.__l.setRaw(Object.assign({}, save, { owner: 'Owner' }));
+  assert.strictEqual(load().lv, 60, 'its own save loads');
+  sb.__l.setRaw(Object.assign({}, save, { owner: 'owner' }));
+  assert.strictEqual(load().lv, 60, 'the same account in another case is still this account');
+});
+t('v88.6: a save written before the stamp existed loads as it always did', () => {
+  sb.__l.setRaw(save);                       // no owner field at all
+  assert.strictEqual(load().lv, 60);
+  assert.strictEqual(load().cls, 'Swordman');
+});
+sb.__l.setRaw(save);                         // leave the harness on the ordinary save
 
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

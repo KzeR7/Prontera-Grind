@@ -19,7 +19,7 @@
 
 import { currentUser, isGm, hashPassword } from '../../_lib/auth.js';
 import { json, guard, readJson, fail } from '../../_lib/http.js';
-import { checkGrant, checkAnnouncement, GRANT_KINDS, checkSaveBlob, publicFields } from '../../_lib/validate.js';
+import { checkGrant, checkAnnouncement, GRANT_KINDS, checkSaveBlob, publicFields, savedElsewhere } from '../../_lib/validate.js';
 import * as db from '../../_lib/db.js';
 
 async function loadAccount(D, id) {
@@ -128,6 +128,12 @@ export const onRequestPost = guard(async ({ request, env }) => {
       const version = Math.floor(Number(body.version));
       const blob = await db.historyBlob(D, id, version);
       if (!blob) return fail('That backup is not kept any more.', 404);
+      // v88.6 (save-owner stamp): a backup that names another account is never put back on this one.
+      // (A restore OVER a live save that names another account is allowed - that is how a bad copy is
+      // repaired - and the live copy is kept in the history, as always.)
+      if (savedElsewhere(blob.blob, target.username)) {
+        return fail('That backup belongs to a different account, so it was not restored.', 409);
+      }
       const live = await db.saveByUser(D, id);
       if (!live) return fail('That account has no live save to replace.', 400);
       // Keep the save we are about to overwrite, so even a mistaken restore is reversible.

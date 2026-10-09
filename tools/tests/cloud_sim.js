@@ -26,7 +26,11 @@ console.log('client cloud layer: offline-first sync with a conflict-safe save\n'
 const start = src.indexOf('// ---------- cloud accounts and saves (optional) ----------');
 const end = src.indexOf("addEventListener('load',()=>{setTimeout(cloudProbe,80)});", start);
 assert.ok(start > 0 && end > start, 'the cloud block is not where this suite expects it');
-const cloudCode = src.slice(start, end + "addEventListener('load',()=>{setTimeout(cloudProbe,80)});".length);
+// v88.6: the save-owner stamp helpers (saveRefusal, sameSave, ...) sit with the save code, just above this
+// block, and the block calls them - so they are extracted with it.
+const stampStart = src.indexOf('// ---------- the save-owner stamp (v88.6) ----------'), stampEnd = src.indexOf('const num_= (v,d)', stampStart);
+assert.ok(stampStart > 0 && stampEnd > stampStart, 'the save-owner helpers are not where this suite expects them');
+const cloudCode = src.slice(stampStart, stampEnd) + '\n' + src.slice(start, end + "addEventListener('load',()=>{setTimeout(cloudProbe,80)});".length);
 
 // Every dependency the block has on the game, stubbed so the suite can drive it directly.
 function harness(opts = {}) {
@@ -121,7 +125,10 @@ function harness(opts = {}) {
     'cloudJoin','cloudRefresh','cloudStart','saveBackup','restoreBackup',
     // v82 usage diet: the cadence constants and the poll tick are asserted on directly.
     'CLOUD_DEBOUNCE','CLOUD_HIDDEN_DEBOUNCE','CLOUD_POLL_MS','CLOUD_HIDDEN_POLL_MS',
-    'cloudPollTick','cloudHidden'];
+    'cloudPollTick','cloudHidden',
+    // v88.6: the save-owner stamp - the helpers the cloud paths use to refuse another account's save
+    'saveRefusal','sameAccount','sameSave','saveOwnerOf','cloudReadSave','cloudSaveRefused',
+    'saveBlockedText','cloudRefusedText','accountOfSaveKey'];
   vm.createContext(sandbox);
   vm.runInContext(cloudCode + '\n;' + EXPORTS.map(n => `globalThis.${n}=${n};`).join(''), sandbox);
   return { sandbox, state, calls, els, store };
@@ -660,6 +667,140 @@ await T('a login does not adopt another account\'s cloud save into this tab', as
   assert.notStrictEqual(h.els.get('conflict').style.display, 'flex', 'no two-saves chooser offering the other account\'s save');
   assert.strictEqual(h.sandbox.CLOUD.paused, true);
   assert.strictEqual(h.store.has('pg_save3_OWNERGM'), false, 'nothing is written under this account');
+});
+
+// --------------------------------------------- v88.6: the save-owner stamp ----
+// Every save names the account it belongs to, inside the save. A save stamped for anyone else is never
+// loaded, never written over anything, never uploaded, and never restored under a name that is not its own.
+const OTHER_REFUSED = 'belongs to another account';
+await T('v88.6: every upload is stamped with the account it belongs to', async () => {
+  const h = harness({ routes: { '/save': { status: 200, body: { version: 2 } } } });
+  h.sandbox.CLOUD.api = true; h.sandbox.CLOUD.on = true; h.sandbox.CLOUD.ver = 1;
+  h.sandbox.currentUser = 'FRIEND'; h.sandbox.CLOUD.user = 'FRIEND';
+  assert.strictEqual(await h.sandbox.cloudPush(true), 'ok');
+  const sent = JSON.parse(JSON.parse(h.calls.find(c => c.url === '/api/save').init.body).blob);
+  assert.strictEqual(sent.owner, 'FRIEND', 'the save names the account it is uploaded for');
+  assert.strictEqual(h.sandbox.S.owner, 'FRIEND', 'and the live save carries the same stamp');
+});
+
+await T('v88.6: a live save stamped for another account is never uploaded, and this tab stops syncing', async () => {
+  const h = harness({ routes: { '/save': { status: 200, body: { version: 2 } } } });
+  h.sandbox.CLOUD.api = true; h.sandbox.CLOUD.on = true; h.sandbox.CLOUD.ver = 1;
+  h.sandbox.currentUser = 'FRIEND'; h.sandbox.CLOUD.user = 'FRIEND';
+  h.sandbox.S.owner = 'SOMEONE';
+  assert.strictEqual(await h.sandbox.cloudPush(true), 'idle');
+  assert.strictEqual(h.calls.filter(c => c.url === '/api/save').length, 0, 'nothing is sent');
+  assert.strictEqual(h.sandbox.CLOUD.paused, true, 'sync stops in this tab');
+  assert.ok(h.state.logs.some(l => /another account/.test(l.m)), 'and the player is told why');
+});
+
+await T('v88.6: the server refusing a save for its account stops sync and says why, with no two-saves question', async () => {
+  const h = harness({ routes: { '/save': { status: 409, body: { err: 'This save belongs to a different account, so nothing was saved or loaded.', saveMismatch: true, owner: 'FRIEND' } } } });
+  h.sandbox.CLOUD.api = true; h.sandbox.CLOUD.on = true; h.sandbox.CLOUD.ver = 3;
+  h.sandbox.currentUser = 'FRIEND'; h.sandbox.CLOUD.user = 'FRIEND';
+  assert.strictEqual(await h.sandbox.cloudPush(true), 'idle');
+  assert.strictEqual(h.sandbox.CLOUD.paused, true, 'sync is paused in this tab');
+  assert.notStrictEqual(h.els.get('conflict').style.display, 'flex', 'a refusal is not a two-saves question');
+  assert.match(h.els.get('cloudBadge').textContent, /⛔/, 'the badge says sync stopped');
+  assert.ok(h.state.logs.some(l => /nothing was saved or loaded/.test(l.m)), 'the server\'s reason reaches the log');
+});
+
+await T('v88.6: a cloud save stamped for another account is not joined, and the device copy is left alone', async () => {
+  const local = JSON.stringify({ lv: 20, cls: 'Mage', zeny: 10, kills: 1, st: { str: 1 }, q: [] });
+  const foreign = JSON.stringify({ lv: 99, cls: 'Merchant', owner: 'SOMEONE' });
+  const h = harness({ storage: { 'pg_save3_X': local }, routes: { '/save': { status: 200, body: { version: 4, blob: foreign, savedAt: 1 } } } });
+  h.sandbox.CLOUD.api = true; h.sandbox.CLOUD.on = true; h.sandbox.currentUser = 'X'; h.sandbox.CLOUD.user = 'X';
+  await h.sandbox.cloudJoin('X', local);
+  assert.strictEqual(h.sandbox.CLOUD.paused, true, 'sync stops');
+  assert.notStrictEqual(h.els.get('conflict').style.display, 'flex', 'and no chooser offers the other save');
+  assert.strictEqual(h.store.get('pg_save3_X'), local, 'the device copy is untouched');
+  assert.ok(!h.calls.some(c => c.url === '/api/save' && c.init.method === 'PUT'), 'nothing is uploaded over it');
+});
+
+await T('v88.6: a server that refuses to hand a save out (409) stops the join - it is never read as "no save yet"', async () => {
+  const local = JSON.stringify({ lv: 20, cls: 'Mage', zeny: 10, kills: 1, st: { str: 1 }, q: [] });
+  const h = harness({ storage: { 'pg_save3_X': local }, routes: { '/save': { status: 409, body: { err: 'refused', saveMismatch: true, owner: 'X' } } } });
+  h.sandbox.CLOUD.api = true; h.sandbox.CLOUD.on = true; h.sandbox.currentUser = 'X'; h.sandbox.CLOUD.user = 'X';
+  await h.sandbox.cloudJoin('X', local);
+  assert.strictEqual(h.sandbox.CLOUD.paused, true);
+  assert.ok(!h.calls.some(c => c.url === '/api/save' && c.init.method === 'PUT'),
+    'a refused read must not turn into an upload at version 0');
+  assert.strictEqual(h.store.get('pg_save3_X'), local);
+});
+
+await T('v88.6: a refresh that finds a foreign save changes nothing', async () => {
+  const foreign = JSON.stringify({ lv: 60, owner: 'SOMEONE' });
+  const h = harness({ storage: { 'pg_save3_X': JSON.stringify({ lv: 40 }) }, routes: { '/save': { status: 200, body: { version: 8, blob: foreign } } } });
+  h.sandbox.CLOUD.api = true; h.sandbox.CLOUD.on = true; h.sandbox.CLOUD.dirty = false;
+  h.sandbox.currentUser = 'X'; h.sandbox.CLOUD.user = 'X';
+  await h.sandbox.cloudRefresh();
+  assert.strictEqual(h.store.get('pg_save3_X'), JSON.stringify({ lv: 40 }), 'the device copy is not replaced');
+  assert.strictEqual(h.sandbox.CLOUD.paused, true);
+});
+
+await T('v88.6: a device copy that belongs to another account blocks the login, and nothing starts', async () => {
+  const foreign = JSON.stringify({ lv: 77, cls: 'Knight', zeny: 1, kills: 1, st: { str: 1 }, q: [], owner: 'SOMEONE' });
+  const h = harness({ storage: { 'pg_save3_X': foreign }, routes: { '/save': { status: 200, body: { version: 2, blob: null } } } });
+  h.sandbox.CLOUD.api = true;
+  await h.sandbox.initSessionFromCloud('X', 0, false);
+  assert.strictEqual(h.sandbox.CLOUD.on, false, 'no cloud session is started');
+  assert.strictEqual(h.sandbox.currentUser, null, 'and no account is left in use');
+  assert.match(h.state.err, /belongs to “SOMEONE”/, 'the login card says whose it is');
+  assert.match(h.state.err, /Your cloud save was not touched/);
+  assert.strictEqual(h.store.get('pg_save3_X'), foreign, 'nothing is written over it');
+  assert.ok(!h.calls.some(c => c.url === '/api/save'), 'and the cloud is not asked to start a save');
+});
+
+await T('v88.6: a new device whose cloud save belongs to another account is not started', async () => {
+  const h = harness({ routes: { '/save': { status: 409, body: { err: 'This save belongs to a different account, so nothing was saved or loaded.', saveMismatch: true, owner: 'X' } } } });
+  h.sandbox.CLOUD.api = true;
+  await h.sandbox.initSessionFromCloud('X', 0, false);
+  assert.strictEqual(h.sandbox.CLOUD.on, false);
+  assert.match(h.state.err, /belongs to another account/);
+  assert.strictEqual(h.store.has('pg_save3_X'), false, 'nothing is written');
+  assert.ok(!h.calls.some(c => c.url === '/api/save' && c.init.method === 'PUT'), 'and no fresh character is pushed over it');
+});
+
+await T('v88.6: a cloud copy stamped for another account is never adopted, and no stash is made', async () => {
+  const h = harness({ storage: { 'pg_save3_X': JSON.stringify({ lv: 12 }) } });
+  h.sandbox.CLOUD.on = true; h.sandbox.CLOUD.user = 'X'; h.sandbox.currentUser = 'X';
+  await h.sandbox.cloudAdopt({ version: 6, blob: JSON.stringify({ lv: 44, owner: 'SOMEONE' }), savedAt: 5 });
+  assert.strictEqual(h.store.get('pg_save3_X'), JSON.stringify({ lv: 12 }), 'the device copy is kept');
+  assert.strictEqual(h.sandbox.CLOUD.paused, true);
+  assert.strictEqual([...h.store.keys()].filter(k => k.includes('_local_')).length, 0, 'and nothing is stashed either');
+});
+
+await T('v88.6: a backup cannot write another account\'s save under this account\'s name, and says so', async () => {
+  const h = loginHarness({ storage: {}, answerAsk: true });
+  const file = { text: JSON.stringify({ kind: 'save-backup', keys: {
+    'pg_save3_KzeR': JSON.stringify({ lv: 70, owner: 'KzeR' }),
+    'pg_save3_Friend': JSON.stringify({ lv: 12, owner: 'SOMEONE' }),   // filed under Friend, but it is someone else's
+    'pg_acc4': '{}',
+  } }) };
+  h.sandbox.restoreBackup(file);
+  assert.strictEqual(h.store.get('pg_save3_KzeR'), JSON.stringify({ lv: 70, owner: 'KzeR' }), 'the matching save is restored');
+  assert.strictEqual(h.store.get('pg_save3_Friend'), undefined, 'the mismatched one is not written under Friend');
+  assert.match(h.state.asks[0], /belong to another account: Friend/, 'and the question says it was left out');
+});
+
+await T('v88.6: a backup of this device\'s stashed copy restores under its own account name', async () => {
+  const h = loginHarness({ storage: {}, answerAsk: true });
+  const stash = JSON.stringify({ lv: 33, owner: 'KzeR' });
+  h.sandbox.restoreBackup({ text: JSON.stringify({ kind: 'save-backup', keys: { 'pg_save3_KzeR_local_1700000000000': stash } }) });
+  assert.strictEqual(h.store.get('pg_save3_KzeR_local_1700000000000'), stash, 'the stash is restored as it was');
+});
+
+await T('v88.6: the same progress with and without the stamp is one save, so no two-saves question', async () => {
+  const local = JSON.stringify({ lv: 20, cls: 'Mage', zeny: 10, kills: 1, st: { str: 1 }, q: [] });
+  const onServer = JSON.stringify(Object.assign(JSON.parse(local), { owner: 'X' }));
+  const h = loginHarness({ storage: { 'pg_save3_X': local }, routes: {
+    '/save': { status: 200, body: { version: 9, blob: onServer, savedAt: 7 } },
+    '/grants': { status: 200, body: { grants: [] } }, '/messages': { status: 200, body: { messages: [] } } } });
+  h.sandbox.CLOUD.api = true;
+  await h.sandbox.cloudJoin('X', local);
+  assert.strictEqual(h.els.get('conflict').style.display || 'none', 'none', 'identical progress needs no question');
+  assert.strictEqual(h.sandbox.CLOUD.ver, 9, 'the version is agreed');
+  assert.strictEqual(h.sandbox.CLOUD.dirty, false);
 });
 
 console.log('\n' + pass + ' passed, ' + fail + ' failed');

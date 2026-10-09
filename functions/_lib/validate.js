@@ -40,6 +40,35 @@ export function checkSaveBlob(blob) {
   return save;
 }
 
+// ------------------------------------------------------------ save owner ----
+// The save-owner stamp (v88.6). The page writes the name of the account into the save itself, as
+// `owner`, so every stored save says whose it is. The server compares that stamp with the account the
+// request is signed in as: a save stamped for anyone else is never stored over, handed out or restored.
+// A save with no stamp was written before v88.6 and is accepted as it always was.
+export const SAVE_MISMATCH = 'This save belongs to a different account, so nothing was saved or loaded.';
+
+// The stamp inside a parsed save: '' when there is none.
+export function saveOwnerStamp(save) {
+  return save && typeof save === 'object' && typeof save.owner === 'string' ? save.owner.trim() : '';
+}
+
+// Account names are case-insensitive everywhere else (users.username is COLLATE NOCASE), so the stamp is too.
+export function sameAccount(a, b) {
+  return !!a && String(a).trim().toLowerCase() === String(b ?? '').trim().toLowerCase();
+}
+
+// The stamp inside a stored save (a JSON string). '' when it has none or is not readable JSON.
+export function storedSaveOwner(blob) {
+  if (typeof blob !== 'string' || !blob) return '';
+  try { return saveOwnerStamp(JSON.parse(blob)); } catch { return ''; }
+}
+
+// True when a stored save names some account other than `name`.
+export function savedElsewhere(blob, name) {
+  const stamp = storedSaveOwner(blob);
+  return !!stamp && !sameAccount(stamp, name);
+}
+
 // What the server stores for the leaderboard/GM list, taken from the save the client just sent.
 // Never trust a free-form object from the client.
 export function publicFields(save) {

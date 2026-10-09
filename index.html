@@ -647,7 +647,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // script block, which is a SyntaxError - the game did not run on main at all. One line wins, and
 // it names both sides of this merge: the v38 balance patch (the weapon cut, the affix/card
 // give-back) and main's weapon-hold rendering work.
-const BUILD='2026-10-09 grind-v88.5 a character beside a monster it cannot reach now walks in and fights, instead of standing still while being hit';   // shown on the login card - confirms which file you loaded
+const BUILD='2026-10-09 grind-v88.6 every save now records whose it is, and a save belonging to another account is refused on load and on write';   // shown on the login card - confirms which file you loaded
 $('buildTag').textContent='build '+BUILD;
 
 // ---------- class tree: Novice -> 6 first jobs -> 6 second jobs -> 6 third jobs ----------
@@ -1881,8 +1881,24 @@ const PET_SKILL_WEIGHTS=[.35,.35,1,1,1,1,1,1,1,1,1,1],rollPetSkills=()=>{const a
 const fresh=()=>({pets:[],bond:[],cls:'Novice',sex:'m',hair:0,lv:1,exp:0,hp:100,zeny:0,kills:0,indexXp:0,mobKills:{},equippedTitle:null,shards:0,trial:{day:trialDay(),used:0,best:0,runs:0},cardIndex:emptyCardIndex(),dmg:0,pts:10,jobs:{Novice:{jl:1,jx:0}},sk:{aid:1},skOff:{},dmgShort:true,dmgShow:true,base:{},mp:0,lvl:1,prog:[1,1,1,1,1],kl:0,auto:true,adv:true,feed:true,clickSell:false,bg:true,autoSell:[false,false,false,false,false,false,false],logOff:{},q:null,cards:[],ore:{ori:0,elu:0},offlineAt:0,offlineKph:0,offlineRateAt:0,offlineRateKills:0,offlineKillRemainder:0,gm:false,gmx:100,
   st:{str:1,agi:1,dex:1,luk:1,int:1,vit:1},eq:{weapon:{id:1,slot:'weapon',wt:'dagger',tier:0,val:5,name:'Novice Knife',aff:[],slots:1,cards:[],sec:0},armor:null,head:null,off:null,leg:null,acc1:null,acc2:null},inv:[]});
 const saveKey=()=>'pg_save3_'+currentUser;
+// ---------- the save-owner stamp (v88.6) ----------
+// Every save says whose it is: the account name is written INTO the save as `owner`, in the local copy
+// and in the cloud copy alike. A save stamped for a DIFFERENT account is never loaded, never written over
+// anything and never uploaded - whichever tab, backup file or server answer it came from. A save with no
+// stamp was written before v88.6: it is accepted, and it is stamped the next time it is written.
+const saveOwnerOf=raw=>{let s=raw;if(typeof raw==='string'){if(!raw)return null;try{s=JSON.parse(raw)}catch(e){return null}}const o=s&&typeof s==='object'&&!Array.isArray(s)?s.owner:null;return typeof o==='string'&&o.trim()?o.trim():null};
+const sameAccount=(a,b)=>!!a&&!!b&&String(a).trim().toLowerCase()===String(b).trim().toLowerCase();
+// The OTHER account a save belongs to, or null when `name` may use it.
+const saveRefusal=(raw,name)=>{const o=saveOwnerOf(raw);return o&&!sameAccount(o,name)?o:null};
+// Two copies of the same progress are the same save even when only one of them carries the stamp.
+const sameSave=(a,b)=>{if(a===b)return true;try{const x=JSON.parse(a),y=JSON.parse(b);delete x.owner;delete y.owner;return JSON.stringify(x)===JSON.stringify(y)}catch(e){return false}};
+// The login card's words when a save in this browser belongs to somebody else.
+const saveBlockedText=(who,other,cloud)=>'The save kept in this browser for “'+who+'” belongs to “'+other+'”, so it was not loaded and nothing was written over it. Restore “'+who+'”’s own save from a backup, or remove that copy from this browser, then log in again.'+(cloud?' Your cloud save was not touched.':'');
+// The login card's words when the cloud copy of a save belongs to another account (the server refused it).
+const cloudRefusedText=who=>'The cloud save for “'+who+'” belongs to another account, so it was not loaded and nothing was uploaded over it. Ask the owner to restore it from the save history.';
 const num_= (v,d)=>{v=+v;return Number.isFinite(v)?v:d};
-function load(){try{const s=JSON.parse(lsGet(saveKey()));if(s&&s.lv){const F=fresh(),f=Object.assign(F,s),hadIndexXp=Object.prototype.hasOwnProperty.call(s,'indexXp');f.st=Object.assign(fresh().st,s.st||{});if(!CLASSES[f.cls])f.cls='Novice';
+function load(){try{const raw=lsGet(saveKey());if(saveRefusal(raw,currentUser))return fresh();   // v88.6: another account's save is never loaded
+const s=JSON.parse(raw);if(s&&s.lv){const F=fresh(),f=Object.assign(F,s),hadIndexXp=Object.prototype.hasOwnProperty.call(s,'indexXp');f.st=Object.assign(fresh().st,s.st||{});if(!CLASSES[f.cls])f.cls='Novice';
 // repair top-level numbers corrupted by older/test saves (null -> crash on .toLocaleString())
   for(const k of['lv','exp','hp','zeny','kills','indexXp','dmg','pts','mp','lvl','kl','gmx'])f[k]=num_(f[k],F[k]);if(!hadIndexXp)delete f.indexXp;
   if(f.dmgShort!==true&&f.dmgShort!==false)f.dmgShort=true;   // damage digits: short unless deliberately switched
@@ -1991,7 +2007,16 @@ function offlineRateSample(now=Date.now()){
   const elapsed=now-at;if(elapsed<OFFLINE_RATE_SAMPLE_MS)return;
   S.offlineKph=cl((kills-base)*3600000/elapsed,0,OFFLINE_RATE_CAP);S.offlineRateAt=now;S.offlineRateKills=kills;
 }
-function save(){if(!currentUser||!S)return;const now=Date.now();offlineRateSample(now);S.offlineAt=now;lsPut(saveKey(),JSON.stringify(S));cloudTouch()}
+// v88.6: a save that belongs to another account is never written over this one. The live state still
+// syncs to the cloud, because that copy is this account's own; only the local slot refuses the other save.
+let saveElsewhereSaid=null;   // the last refusal said aloud, so a refused slot does not spam the log every 5 seconds
+function saveElsewhere(other){if(saveElsewhereSaid===other)return;saveElsewhereSaid=other;log('This browser\'s save for '+currentUser+' belongs to '+other+', so nothing was written over it. '+(CLOUD.on?'Your progress still syncs to your account.':'Progress from now on is not kept in this browser.')+' Restore this browser\'s copy from a backup to save here again.','r0')}
+function save(){if(!currentUser||!S)return;const now=Date.now();
+  if(S.owner&&!sameAccount(S.owner,currentUser)){saveElsewhere(S.owner);return}   // never write a save stamped for someone else
+  offlineRateSample(now);S.offlineAt=now;S.owner=currentUser;
+  const other=saveRefusal(lsGet(saveKey()),currentUser);
+  if(other)saveElsewhere(other);else lsPut(saveKey(),JSON.stringify(S));
+  cloudTouch()}
 function offlinePlan(lastAt,now,rateKph,remainder=0){
   const start=Number(lastAt),current=Number(now),awayMs=Number.isFinite(start)&&Number.isFinite(current)?Math.max(0,current-start):0,carry=cl(Number(remainder)||0,0,.999999);
   if(!start||awayMs<OFFLINE_POPUP_MIN_MS)return{show:false,awayMs,creditedMs:0,kills:0,remainder:carry,rateKph:0};
@@ -2070,6 +2095,10 @@ function submitAuth(e,confirmed=false){
 $('loginForm').addEventListener('submit',submitAuth);$('tabLogin').onclick=()=>setMode('login');$('tabReg').onclick=()=>setMode('reg');
 function logout(){save();cloudLogout();location.reload()}
 function initSession(gm,newAccount=false){
+  // v88.6: a save in this browser that belongs to another account is not loaded - nothing starts, and
+  // nothing is written over it. The login card says why.
+  const elsewhere=saveRefusal(lsGet(saveKey()),currentUser);
+  if(elsewhere){const who=currentUser;currentUser=null;showErr(saveBlockedText(who,elsewhere,false));return}
   try{
     hudRate=null;zenyEarned=0;expEarned=0;S=load();S.gm=gm;if(S.q)qRefresh();if(!S.q)S.q=['kill','loot','boss'].map(newQuest);if(S.mp>=MAPS.length||S.lvl>10){S.mp=0;S.lvl=1}
     // v74: a save made before the class-tier gate can be wearing gear its class may not use (a
@@ -2146,10 +2175,14 @@ async function cloudPush(push){
   // the badge, and "how fast the server hears about it" is the whole cost of this feature.
   if(!push&&(!CLOUD.dirty||Date.now()-CLOUD.lastPush<(cloudHidden()?CLOUD_HIDDEN_DEBOUNCE:CLOUD_DEBOUNCE)))return 'idle';
   if(CLOUD.pushing)return 'idle';
+  // v88.6: a save that belongs to another account is never uploaded; this tab stops syncing instead.
+  if(S.owner&&!sameAccount(S.owner,currentUser)){cloudSaveRefused();return 'idle'}
+  S.owner=currentUser;                 // the stamp: the save names the account it is uploaded for
   CLOUD.pushing=true;cloudBadge('☁ ⇅','Syncing…');
   try{
     const r=await cloudFetch('/save',{method:'PUT',body:JSON.stringify({version:CLOUD.ver,owner:CLOUD.user,blob:JSON.stringify(S),savedAt:Date.now(),offlineClaimId:S.offlineClaimId||null})});
     if(r.status===409){const c=await r.json();
+      if(c.saveMismatch){cloudSaveRefused(c.err);return 'idle'}
       if(c.accountMismatch){cloudAccountMismatch(c.owner);return 'idle'}
       cloudBadge('☁ ⚠','Two saves - choose which to keep');cloudConflict(c);return 'conflict'}
     if(r.status===428){const d=await r.json().catch(()=>({}));if(d.offlineClaim){applyOfflineProgress(Date.now(),d.offlineClaim);CLOUD.dirty=true;setTimeout(()=>cloudPush(true),0);return 'offline-claim'}throw new Error(d.err||'A server-timed offline claim is required.')}
@@ -2177,6 +2210,24 @@ function cloudAccountMismatch(other){
 // Does a save or gift list returned by the server belong to `name`? A server that sends no owner is
 // the older one, and is trusted as before.
 const cloudOwnedBy=(data,name)=>!data||!data.owner||String(data.owner).toLowerCase()===String(name||'').toLowerCase();
+// GET /api/save for the signed-in account. -> { data } (data is null when there is no save yet, or the
+// server gave no answer it can read), { refused } when the server will not hand the save out because it
+// belongs to another account (v88.6), or { offline: true } when the server cannot be reached at all.
+async function cloudReadSave(){
+  let r;
+  try{r=await cloudFetch('/save')}catch(e){return{offline:true}}
+  try{
+    if(r.status===409){const d=await r.json().catch(()=>({}));return d&&d.saveMismatch?{refused:d}:{data:null}}
+    return{data:r.ok?await r.json():null};
+  }catch(e){return{offline:true}}
+}
+// v88.6: a save that belongs to another account is never loaded or uploaded. This tab stops syncing (so
+// nothing is written over that save), keeps its local copy, and says why on the badge and in the log.
+function cloudSaveRefused(why){
+  CLOUD.paused=true;
+  cloudBadge('☁ ⛔','Sync stopped: this save belongs to another account');
+  cloudSay((why||'This save belongs to another account, so it was not used.')+' Nothing was uploaded, and your local copy is kept.','r0');
+}
 function cloudFlush(){return cloudPush(false)}
 function cloudFlushNow(){return cloudPush(true)}
 
@@ -2200,6 +2251,8 @@ function cloudConflict(server,initial=false){
 // Take the server's copy as the live save. This device's copy is stashed under its own backup key
 // first, so "keep cloud" is never a deletion either.
 async function cloudAdopt(server,resumeOffline=false){
+  // v88.6: a copy that belongs to another account is never written into this account's slot.
+  if(saveRefusal(server.blob,currentUser)){cloudSaveRefused();return}
   try{const old=localStorage.getItem(saveKeyFor(currentUser));if(old)localStorage.setItem(saveKeyFor(currentUser)+'_local_'+Date.now(),old)}catch(e){}
   lsPut(saveKeyFor(currentUser),server.blob);
   const wasGm=S&&S.gm;S=load();S.gm=!!wasGm;
@@ -2216,12 +2269,14 @@ async function cloudAdopt(server,resumeOffline=false){
 // guesses: identical copies just agree on the version, an empty cloud adopts this device's progress,
 // and two different copies open the chooser (which keeps BOTH of them whatever the player decides).
 async function cloudJoin(u,localBlob){
-  let data=null;
-  try{const r=await cloudFetch('/save');if(r.ok)data=await r.json()}
-  catch(e){cloudBadge('☁ ✕','Offline - playing from this device');return}
+  const got=await cloudReadSave();
+  if(got.offline){cloudBadge('☁ ✕','Offline - playing from this device');return}
+  if(got.refused){cloudSaveRefused(got.refused.err);return}
+  const data=got.data||null;
   if(!cloudOwnedBy(data,u)){cloudAccountMismatch(data.owner);return}
   if(!data||!data.blob){CLOUD.ver=0;CLOUD.dirty=true;if(data&&data.offlineClaim)applyOfflineProgress(Date.now(),data.offlineClaim);await cloudPush(true);return}
-  if(data.blob===localBlob){CLOUD.ver=data.version;CLOUD.dirty=false;cloudBadge('☁ ✓','In sync · v'+data.version);
+  if(saveRefusal(data.blob,u)){cloudSaveRefused();return}
+  if(sameSave(data.blob,localBlob)){CLOUD.ver=data.version;CLOUD.dirty=false;cloudBadge('☁ ✓','In sync · v'+data.version);
     if(data.offlineClaim){applyOfflineProgress(Date.now(),data.offlineClaim);await cloudPush(true)}return}
   cloudConflict(data,true);
 }
@@ -2230,13 +2285,15 @@ async function cloudJoin(u,localBlob){
 // this tab has nothing unsynced of its own to lose; anything else is the player's call.
 async function cloudRefresh(){
   if(!CLOUD.on||CLOUD.paused)return;
-  let data=null;
-  try{const r=await cloudFetch('/save');if(r.ok)data=await r.json()}
-  catch(e){cloudBadge('☁ ✕','Offline - progress is safe on this device');return}
+  const got=await cloudReadSave();
+  if(got.offline){cloudBadge('☁ ✕','Offline - progress is safe on this device');return}
+  if(got.refused){cloudSaveRefused(got.refused.err);return}
+  const data=got.data||null;
   if(!cloudOwnedBy(data,CLOUD.user)){cloudAccountMismatch(data.owner);return}
   if(!data||!data.blob)return;
+  if(saveRefusal(data.blob,currentUser)){cloudSaveRefused();return}   // v88.6
   const local=localStorage.getItem(saveKeyFor(currentUser));
-  if(data.blob===local){CLOUD.ver=data.version;CLOUD.dirty=false;
+  if(sameSave(data.blob,local)){CLOUD.ver=data.version;CLOUD.dirty=false;
     if(data.offlineClaim){applyOfflineProgress(Date.now(),data.offlineClaim);await cloudPush(true)}return}
   // v82: the server's version is the one THIS tab last synced from, so no other device has written
   // since - our copy is strictly newer and asking the player to choose between them would be a
@@ -2336,6 +2393,9 @@ function cloudStart(u,gm){
 async function initSessionFromCloud(u,gm,isNew){
   currentUser=u;hudRate=null;zenyEarned=0;expEarned=0;
   const local=localStorage.getItem(saveKeyFor(u));
+  // v88.6: a copy in this browser that belongs to another account is not loaded, and nothing is written over it.
+  const elsewhere=saveRefusal(local,u);
+  if(elsewhere){currentUser=null;showErr(saveBlockedText(u,elsewhere,true));return}
   if(local){
     // Progress for this name already exists in THIS browser - which is exactly the situation of a
     // player who grinded before the server existed and is now registering. That save is real work, so
@@ -2344,9 +2404,11 @@ async function initSessionFromCloud(u,gm,isNew){
     log(isNew?'Account created. This device\'s progress is now your cloud save.':'Welcome back, '+u+'!','r1','cloud');
     await cloudJoin(u,local);
   }else{
-    let data=null;
-    try{const r=await cloudFetch('/save');if(r.ok)data=await r.json()}catch(e){}
+    const got=await cloudReadSave();
+    if(got.refused){currentUser=null;showErr(cloudRefusedText(u));return}   // v88.6
+    let data=got.data||null;
     if(!cloudOwnedBy(data,u))data=null;        // the cookie is someone else's: nothing of theirs is applied
+    if(data&&data.blob&&saveRefusal(data.blob,u)){currentUser=null;showErr(cloudRefusedText(u));return}   // v88.6
     if(data&&data.blob){                       // a new device: the cloud has the character
       lsPut(saveKeyFor(u),data.blob);
       cloudStart(u,gm);CLOUD.ver=data.version;CLOUD.dirty=false;
@@ -2428,6 +2490,8 @@ const BACKUP_SAVES='pg_save3_';              // only these prefixes are ever exp
 const BACKUP_LOCAL='pg_acc4';                // the browser account list, so a no-server browser moves too
 const backupMovable=k=>k.startsWith(BACKUP_SAVES)||k===BACKUP_LOCAL;
 const backupNames=keys=>keys.filter(k=>k.startsWith(BACKUP_SAVES)).map(k=>k.slice(BACKUP_SAVES.length));
+// The account a save key belongs to: `pg_save3_<name>`, or the cloudAdopt stash `pg_save3_<name>_local_<time>`.
+const accountOfSaveKey=k=>k.slice(BACKUP_SAVES.length).replace(/_local_\d+$/,'');
 
 function saveBackup(){
   const keys=[];
@@ -2455,12 +2519,17 @@ function restoreBackup(file){
     // A backup file can come from anyone, so it may only ever write game saves - never any other key
     // in localStorage. (The browser-local GM marker lives in localStorage too: a file that could
     // write arbitrary keys would be a way to grant yourself the GM tools.)
-    const keys=Object.keys(d.keys).filter(backupMovable);
+    const listed=Object.keys(d.keys).filter(backupMovable);
+    // v88.6 (save-owner stamp): a save that names another account is never written under this account's
+    // name. Such saves are left out of the restore, and the question says so.
+    const elsewhere=listed.filter(k=>k.startsWith(BACKUP_SAVES)&&saveRefusal(d.keys[k],accountOfSaveKey(k)));
+    const keys=listed.filter(k=>!elsewhere.includes(k));
     const names=backupNames(keys);
-    if(!keys.length)return showErr('That backup holds no characters.');
+    if(!keys.length)return showErr(elsewhere.length?'Nothing in that backup belongs to the account it is filed under, so nothing was restored.':'That backup holds no characters.');
     const overwrite=names.filter(n=>localStorage.getItem(BACKUP_SAVES+n)!=null);
     ask('Restore '+names.length+' character'+(names.length===1?'':'s')+' from this file?\n\n'+names.join(', ')+
-        (overwrite.length?'\n\nThis replaces the copy already on this device for: '+overwrite.join(', '):''),
+        (overwrite.length?'\n\nThis replaces the copy already on this device for: '+overwrite.join(', '):'')+
+        (elsewhere.length?'\n\nLeft out, because they belong to another account: '+backupNames(elsewhere).join(', '):''),
       ()=>{
         for(const k of keys)lsPut(k,d.keys[k]);
         showErr('Restored '+names.length+' character'+(names.length===1?'':'s')+'. Log in with the account name.');

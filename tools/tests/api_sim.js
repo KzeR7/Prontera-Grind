@@ -100,12 +100,15 @@ const api = {
   logout: (env, cookie) => call('onRequestDelete', 'api/sessions.js', { request: req('DELETE', '/api/sessions', { cookie }), env }),
   me: (env, cookie) => call('onRequestGet', 'api/me.js', { request: req('GET', '/api/me', { cookie }), env }),
   getSave: (env, cookie) => call('onRequestGet', 'api/save.js', { request: req('GET', '/api/save', { cookie }), env }),
-  // a well-behaved client names the account it is playing; a test may still pass its own owner to show the refusal
+  // a well-behaved client names the account it is playing AND stamps the save it sends (v88.6); a test
+  // may still pass its own owner or its own stamp to show the refusal
   putSave: async (env, cookie, body) => {
     const me = await api.me(env, cookie);
     const owner = me.data && me.data.u;
-    return call('onRequestPut', 'api/save.js', { request: req('PUT', '/api/save', { cookie, body: Object.assign({ owner }, body) }), env });
+    return call('onRequestPut', 'api/save.js', { request: req('PUT', '/api/save', { cookie, body: Object.assign({ owner }, stampFor(body, owner)) }), env });
   },
+  // exactly what is sent, with no stamping and no owner added: for the refusals themselves
+  putRaw: (env, cookie, body) => call('onRequestPut', 'api/save.js', { request: req('PUT', '/api/save', { cookie, body }), env }),
   grants: (env, cookie) => call('onRequestGet', 'api/grants.js', { request: req('GET', '/api/grants', { cookie }), env }),
   claim: (env, cookie, ids) => call('onRequestPost', 'api/grants.js', { request: req('POST', '/api/grants', { cookie, body: { ids } }), env }),
   messages: (env, cookie) => call('onRequestGet', 'api/messages.js', { request: req('GET', '/api/messages', { cookie }), env }),
@@ -117,12 +120,21 @@ const api = {
   usage: (env, cookie) => call('onRequestGet', 'api/gm/usage.js', { request: req('GET', '/api/gm/usage', { cookie }), env }),
 };
 
-// A save that looks like the real thing (the fields the game's load() insists on).
+// A save that looks like the real thing (the fields the game's load() insists on). It carries no
+// owner stamp: putSave() adds the signed-in account's, the way the page does.
 const saveBlob = (lv, zeny) => JSON.stringify({
   pets: [], cls: 'Novice', sex: 'm', lv, exp: 12, hp: 300, zeny, kills: 7, pts: 4,
   jobs: { Novice: { jl: 1, jx: 0 } }, sk: { aid: 1 }, st: { str: 9, agi: 1, dex: 1, luk: 1, int: 1, vit: 5 },
   eq: {}, inv: [], base: {}, mp: 0, lvl: 1, prog: [1, 1, 1, 1, 1], q: null, cards: [], ore: { ori: 0, elu: 0 },
 });
+// v88.6: the page stamps every save with its account. Adds the stamp unless the test wrote its own.
+function stampFor(body, owner) {
+  if (typeof body.blob !== 'string') return body;
+  let save;
+  try { save = JSON.parse(body.blob); } catch { return body; }
+  if (!save || typeof save !== 'object' || Array.isArray(save) || 'owner' in save) return body;
+  return Object.assign({}, body, { blob: JSON.stringify(Object.assign({}, save, { owner })) });
+}
 
 let pass = 0, fail = 0;
 const t = (n, fn) => {
@@ -200,7 +212,8 @@ await T('saves: first upload, then versions bump, and the blob is stored verbati
   const second = await api.putSave(env, c, { version: 1, blob: saveBlob(21, 99999), savedAt: 2 });
   assert.strictEqual(second.data.version, 2);
   const got = await api.getSave(env, c);
-  assert.deepStrictEqual(JSON.parse(got.data.blob), JSON.parse(saveBlob(21, 99999)));
+  // the blob is stored as sent, plus the owner stamp the page adds (v88.6)
+  assert.deepStrictEqual(JSON.parse(got.data.blob), Object.assign(JSON.parse(saveBlob(21, 99999)), { owner: 'FRIEND' }));
   assert.strictEqual(got.data.version, 2);
 });
 
@@ -534,6 +547,108 @@ await T('a write must name its account, and every save or gift read names its ow
   assert.strictEqual(ok.status, 200);
   assert.strictEqual((await api.getSave(e5, me.cookie)).data.owner, 'NAMED');
   assert.strictEqual((await api.grants(e5, me.cookie)).data.owner, 'NAMED');
+});
+
+// ------------------------------------------- the v88.6 save-owner stamp ----
+// Every save names the account it belongs to, inside the save. The server stores that stamp as sent,
+// refuses to store a save stamped for anyone else, and never hands one out.
+await T('v88.6: the stored save carries the account it belongs to, and the owner is the signed-in name', async () => {
+  const { env: e6 } = freshEnv();
+  const me = await api.register(e6, { u: 'STAMPME', p: 'stamp-password-1' });
+  const ok = await api.putSave(e6, me.cookie, { version: 0, blob: saveBlob(10, 1), savedAt: 1 });
+  assert.strictEqual(ok.status, 200);
+  const got = await api.getSave(e6, me.cookie);
+  assert.strictEqual(JSON.parse(got.data.blob).owner, 'STAMPME', 'the save records its account');
+  assert.strictEqual(got.data.owner, 'STAMPME');
+});
+
+await T('v88.6: a save with no stamp is refused as out of date, and nothing is written', async () => {
+  const { env: e7 } = freshEnv();
+  const me = await api.register(e7, { u: 'NOSTAMP', p: 'nostamp-password' });
+  const r = await api.putRaw(e7, me.cookie, { owner: 'NOSTAMP', version: 0, blob: saveBlob(10, 1), savedAt: 1 });
+  assert.strictEqual(r.status, 400, 'an unstamped save is refused');
+  assert.match(r.data.err, /out of date/, 'and the page is told to reload');
+  assert.strictEqual((await api.getSave(e7, me.cookie)).data.blob, null, 'nothing was written');
+});
+
+await T('v88.6: a save stamped for another account is refused on write, and the account keeps its own', async () => {
+  const { env: e8 } = freshEnv();
+  await api.register(e8, { u: 'OWNERX', p: 'owner-password-x' });
+  const mine = await api.register(e8, { u: 'MINEX', p: 'mine-password-x1' });
+  await api.putSave(e8, mine.cookie, { version: 0, blob: saveBlob(12, 350), savedAt: 1 });
+  // the tab names MINEX (the account it is playing), but the save inside is stamped OWNERX
+  const foreign = JSON.stringify(Object.assign(JSON.parse(saveBlob(150, 999999)), { owner: 'OWNERX' }));
+  const r = await api.putRaw(e8, mine.cookie, { owner: 'MINEX', version: 1, blob: foreign, savedAt: 2 });
+  assert.strictEqual(r.status, 409, 'refused');
+  assert.strictEqual(r.data.saveMismatch, true, 'the client is told it is a save-owner refusal');
+  assert.strictEqual(r.data.owner, 'MINEX', 'and whose session it is - never the other account\'s name');
+  assert.ok(!JSON.stringify(r.data).includes('OWNERX'), 'the other account\'s name is not sent back');
+  const after = await api.getSave(e8, mine.cookie);
+  assert.strictEqual(JSON.parse(after.data.blob).lv, 12, 'the account keeps its own character');
+  assert.strictEqual(after.data.version, 1, 'and its version did not move');
+});
+
+await T('v88.6: the stamp is compared without regard to case, like every account name', async () => {
+  const { env: e9 } = freshEnv();
+  const me = await api.register(e9, { u: 'CaseName', p: 'case-password-1' });
+  const r = await api.putRaw(e9, me.cookie, { owner: 'CASENAME', version: 0, blob: JSON.stringify(Object.assign(JSON.parse(saveBlob(10, 1)), { owner: 'casename' })), savedAt: 1 });
+  assert.strictEqual(r.status, 200, 'a stamp in another case is the same account');
+});
+
+await T('v88.6: a stored save that names another account is never handed out, and never written over', async () => {
+  const h = freshEnv();
+  const me = await api.register(h.env, { u: 'VICTIM', p: 'victim-password-1' });
+  await api.putSave(h.env, me.cookie, { version: 0, blob: saveBlob(20, 5), savedAt: 1 });
+  const id = h.sqlite.prepare('SELECT id FROM users WHERE username = ?').get('VICTIM').id;
+  // something other than the page put another account's save into this row (a bad restore, a DB edit)
+  h.sqlite.prepare('UPDATE saves SET blob = ? WHERE user_id = ?')
+    .run(JSON.stringify(Object.assign(JSON.parse(saveBlob(99, 9)), { owner: 'SOMEONE' })), id);
+  const got = await api.getSave(h.env, me.cookie);
+  assert.strictEqual(got.status, 409, 'the foreign save is not handed out, even to its own row\'s session');
+  assert.strictEqual(got.data.saveMismatch, true);
+  assert.strictEqual(got.data.blob, undefined, 'and its contents are not sent');
+  const put = await api.putSave(h.env, me.cookie, { version: 1, blob: saveBlob(21, 6), savedAt: 2 });
+  assert.strictEqual(put.status, 409, 'and it is not overwritten either');
+  assert.strictEqual(put.data.saveMismatch, true);
+  const still = h.sqlite.prepare('SELECT blob, version FROM saves WHERE user_id = ?').get(id);
+  assert.strictEqual(JSON.parse(still.blob).owner, 'SOMEONE', 'the stored save is exactly as it was');
+  assert.strictEqual(still.version, 1);
+});
+
+await T('v88.6: a save written before the stamp existed still loads, and is stamped on its next write', async () => {
+  const h = freshEnv();
+  const me = await api.register(h.env, { u: 'LEGACYAC', p: 'legacy-password-1' });
+  const id = h.sqlite.prepare('SELECT id FROM users WHERE username = ?').get('LEGACYAC').id;
+  // a row from before v88.6: no stamp inside the save. Its away baseline is "just now", so no offline
+  // claim is due and this test is only about the stamp.
+  const now = Date.now();
+  h.sqlite.prepare(`INSERT INTO saves(user_id, version, blob, saved_at, updated_at, last_seen, rate_kph,
+                      kills_total, level, cls, zeny, playtime) VALUES(?, 3, ?, ?, ?, ?, 0, 7, 20, 'Novice', 0, 0)`)
+    .run(id, saveBlob(20, 5), now, now, now);
+  const got = await api.getSave(h.env, me.cookie);
+  assert.strictEqual(got.status, 200, 'an unstamped save is not locked out by the upgrade');
+  assert.strictEqual(JSON.parse(got.data.blob).lv, 20);
+  const next = await api.putSave(h.env, me.cookie, { version: 3, blob: got.data.blob, savedAt: 2 });
+  assert.strictEqual(next.status, 200, 'the page writes it back with its stamp');
+  assert.strictEqual(JSON.parse((await api.getSave(h.env, me.cookie)).data.blob).owner, 'LEGACYAC');
+});
+
+await T('v88.6: the GM cannot restore another account\'s backup onto a player, but can restore that player\'s own', async () => {
+  const h = freshEnv();
+  const owner = (await api.register(h.env, { u: 'KzeR', p: 'owner-password-1' })).cookie;
+  const player = await api.register(h.env, { u: 'PLAYERR', p: 'player-password-1' });
+  await api.putSave(h.env, player.cookie, { version: 0, blob: saveBlob(15, 5), savedAt: 1 });
+  const pid = h.sqlite.prepare('SELECT id FROM users WHERE username = ?').get('PLAYERR').id;
+  // a backup row that names somebody else, filed under the player's history
+  h.sqlite.prepare('INSERT OR REPLACE INTO save_history(user_id, version, blob, saved_at) VALUES(?, 7, ?, 1)')
+    .run(pid, JSON.stringify(Object.assign(JSON.parse(saveBlob(80, 1)), { owner: 'SOMEONE' })));
+  const bad = await api.act(h.env, owner, { id: pid, action: 'restore', version: 7 });
+  assert.strictEqual(bad.status, 409, 'a backup stamped for another account is refused');
+  assert.strictEqual(JSON.parse(h.sqlite.prepare('SELECT blob FROM saves WHERE user_id = ?').get(pid).blob).lv, 15,
+    'the live save is untouched');
+  const good = await api.act(h.env, owner, { id: pid, action: 'restore', version: 1 });
+  assert.strictEqual(good.status, 200, 'the player\'s own backup restores as before');
+  assert.strictEqual(JSON.parse((await api.getSave(h.env, player.cookie)).data.blob).owner, 'PLAYERR');
 });
 
 // ------------------------------------------- the v82 usage diet (D1 writes) ----

@@ -5972,3 +5972,90 @@ The owner's second pass over v77, six notes, all built.
   seconds. About 160 further Swordman runs did not reproduce it, and its cause is not known; it needs a look
   if it is seen in play.
   The one-second wait is a judgement call; change `engageWait` in `update()` if it feels slow.
+
+### 2026-10-09 — `2026-10-09 grind-v88.6 every save now records whose it is, and a save belonging to another account is refused on load and on write`
+* **What changed for the player:** every save now carries the name of the account it belongs to. A save
+  that belongs to a different account is never loaded, never written over, never uploaded to the cloud,
+  and never restored from a backup under the wrong name. Nothing changes on a normal login or a normal save.
+  * **What you will notice, only when something is wrong:** if this browser holds a save that belongs to
+    another account (for example a bad backup file, or a copy edited by hand), the login card says whose it
+    is and does not start the game, and nothing is written over it. A cloud account's cloud save is not
+    touched. If a save for another account would be written into the slot of the game you are playing, the
+    game keeps your progress in the cloud (for a cloud account) and writes a line in the log instead.
+  * **Backups:** a backup file that contains a save for a different account has that save left out of the
+    restore, and the question says which saves were left out.
+  * **Older saves:** nothing to do. A save made before this version has no name in it yet; it loads as it
+    always did and gets its name the next time it is saved.
+  * **Old tabs:** a tab still running the previous build is told by the server to reload before it saves
+    again. The page already reloads itself within about a minute of a new deploy, and the local save is kept
+    in the meantime.
+* **Checked, not assumed:**
+  * The real server handlers against a real SQLite database (`api_sim`, 43 checks, 7 new): a save stamped
+    for another account is refused on write with 409 and the other account's name is not sent back; a save
+    with no stamp is refused as out of date; a stored save stamped for another account is never handed out
+    and never written over (checked by planting one directly in the database); a save from before this
+    version still loads and is stamped on its next write; a GM restore of another account's backup is refused
+    while the player's own backup still restores.
+  * The real page booted in jsdom and logged in through its own login form (`save_owner_boot_smoke.js`, 5
+    checks, needs `npm i --no-save jsdom three@0.128.0`): another account's save blocks the login with the
+    name on the card, nothing starts and the stored save is byte-for-byte unchanged; the same account's save
+    logs in; an older save with no stamp logs in; while playing, another account's save that appears in the
+    slot is not overwritten by any number of autosaves.
+  * The real cloud block, the real save/load code and the real `save()` pulled out of `index.html`
+    (`cloud_sim` 52 checks, 12 new; `save_load_sim` 26, 3 new; `save_owner_sim` 17, new; `offline_sim` 13).
+  * Over real HTTP (`dev_server_sim`, 17 checks, 1 new): the refusal reaches the client as a 409 and the
+    player's save is unchanged.
+  * **Mutation check:** I broke each guard on purpose, one at a time (15 breaks: the server's upload check,
+    its read check, its overwrite check, the GM restore check, the load check, the save-slot check, the login
+    check, the cloud upload refusal, the cloud upload stamp, the join's handling of a refused read, the adopt
+    refusal, the backup restore filter, the stamp on each save, the comparison that ignores the stamp, and the
+    stash name rule). Every break failed at least one test, and each file was restored afterwards.
+* **Root cause:** v88.4 stopped a tab from writing over another account by checking the account its request
+  names against the signed-in cookie. The save itself never said whose it was, so a save that had ended up
+  under the wrong name was loaded and written without anything checking its contents.
+* **Fix:**
+  * The page writes `owner` into every save, in the local copy and the cloud copy, when it saves (`save()`
+    and `cloudPush()`).
+  * The server (`functions/api/save.js`) refuses a write whose save names another account (409
+    `saveMismatch`), refuses to overwrite a stored save that names another account, refuses to hand one out
+    (GET, 409), and refuses a write with no name at all (400 "out of date", the same answer as a missing
+    account name). `functions/api/gm/player.js` refuses a restore of a backup that names another account. The
+    stamp is compared without regard to case, like every account name.
+  * The page refuses to load (`load()`, login), write (`save()`), upload (`cloudPush()`), join, refresh or
+    adopt a save that names another account, and restores from a backup leave those saves out. A cloud sync
+    that meets such a save stops in that tab and says why.
+  * A copy of the same progress counts as the same save whether or not it carries the stamp, so an older copy
+    and a stamped copy of identical progress do not raise the two-saves question.
+  * The build tag moved to `grind-v88.6` in `index.html` and in the mirrors: `affix-ranges.html` (×2),
+    `equipment-cards-tuning.html` (snapshot refreshed with `drop_card_sheet_sim.js --refresh-snapshot`; only the
+    `build` key changed), `tools/cloudflare-deploy-steps.md`. `update_watch_sim.js` now fails if a mirror
+    names an older build.
+* **Files touched:** `index.html` (`BUILD` grind-v88.6; the stamp helpers beside `saveKey`; `load()`, `save()`,
+  `initSession()`, `cloudPush()`, `cloudReadSave()` (new), `cloudSaveRefused()` (new), `cloudJoin()`,
+  `cloudRefresh()`, `initSessionFromCloud()`, `cloudAdopt()`, `restoreBackup()`, `accountOfSaveKey()` (new));
+  `functions/_lib/validate.js` (the stamp helpers); `functions/api/save.js` (GET and PUT checks);
+  `functions/api/gm/player.js` (restore check); new `tools/tests/save_owner_sim.js` and
+  `tools/tests/save_owner_boot_smoke.js`; `tools/tests/api_sim.js`, `cloud_sim.js`, `save_load_sim.js`,
+  `offline_sim.js` (harness now includes the stamp helpers), `dev_server_sim.js`, `leaderboard_sim.js`
+  (saves now carry their stamp), `update_watch_sim.js` (mirror check); build-tag mirrors
+  (`Updates/cards-gear-audit/affix-ranges.html`, `Updates/cards-gear-audit/equipment-cards-tuning.html`,
+  `tools/cloudflare-deploy-steps.md`); `READ-ME-FIRST.md` (a v88.6 section above v88.5); `TOOLS-START-HERE.md`
+  (the boot smoke is outside the `*_sim.js` loop as well); this log.
+* **Art:** none.
+* **Tests:** all **43** suites in `tools/tests/` exit 0 on this build, with `jsdom` and `three@0.128.0`
+  installed for `field_loop_smoke` (8/8) and `save_owner_boot_smoke` (5/5).
+* **Branches / PR:** this session's branch is `arena/5f0c228f-prontera-grind`, pushed there. PR #42 had already
+  been merged into `main` (merge commit `4f87f31`) before this work started, so this change is not part of
+  PR #42. No pull request was opened. Not deployed.
+* **Known limits / follow-ups:**
+  1. Server-side changes (`functions/`) take effect only after the Cloudflare deploy, which must carry this
+     `index.html` and the Functions together. Until then the live site keeps the previous behaviour.
+  2. A cloud account whose **device** copy names another account is blocked on that browser until the copy
+     is removed or a good backup is restored. Its cloud save is not touched. Whether this should instead move
+     the device copy aside automatically is the owner's call.
+  3. The GM can still restore a backup over a live save that names another account: that is the repair path,
+     and the live copy stays in the history. Only a backup that names another account is refused.
+  4. The check reads the save text on each save and each sync. The cost is small, but it is CPU on the free
+     Workers plan's 10 ms budget. The GM usage card does not show CPU time; check the Workers CPU figures in
+     the Cloudflare dashboard after the deploy.
+  5. Verified in jsdom and over the local server, not in a real browser (there is no browser in the sandbox).
