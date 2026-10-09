@@ -102,7 +102,7 @@ Open the `*.pages.dev` address Cloudflare gives the project, and walk this list:
 | Check | Expected |
 |---|---|
 | The login card | says **“☁ Cloud accounts are on — register or sign in…”** |
-| Build tag at the bottom of the card | `2026-10-09 grind-v90.9 Nightmare tuning: Abyss affixes sit 5% under Nightmare Prontera, Nightmare Stages 11-13 unlock at Base Lv 120 and Stages 14-15 at Base Lv 140, and a regular Nightmare kill pays Zeny 90% of the time at 0.5x to 1.0x (the mean is 0.675 of before).` |
+| Build tag at the bottom of the card | `2026-10-09 grind-v90.10 Nightmare tiers: Nightmare Prontera to Payon (Base Lv 120, N gear) and Nightmare Comodo to Abyss (Base Lv 140, N+ gear), each five maps; the tier entry is a big step over Abyss normal, and the second tier a small one; Zeny roll covers Niflheim, Abyss and all Nightmare kills at 90% and 0.5x to 1.0x.` |
 | Register your own name | a dialog with a **recovery code** — copy it somewhere safe, it is shown once |
 | Play for a minute | the header badge goes `☁ …` → `☁ ✓` |
 | The same address in a second browser | sign in with the same name and password → **the same character loads** |

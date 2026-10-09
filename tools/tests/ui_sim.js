@@ -1289,7 +1289,7 @@ t('the map panel states the actual equipment rarity, class gate and weapon-first
   assert.ok(h.includes('Every MVP drop is <b class="r4">Legendary</b>'), 'the Abyss MVP card says so');
   // v76.2: the Nightmare band is its own rarity - tagged N, painted dark purple - and NOT
   // presented as one more pile of Legendaries. v79: section 5 (Abyssal) is N+.
-  U.mapM = 9; U.mapL = 12;
+  U.mapM = 0; U.mapL = 12;   // v90.10: tier 1 (Prontera to Payon) is the N row
   h = U.V.map();
   assert.ok(h.includes('every drop is <b class="r5">N</b>'), 'a Nightmare field states the N rarity, not Legendary');
   assert.ok(h.includes('<small class="r5">N</small>'), 'and every drop line repeats the N tag');
@@ -1316,9 +1316,9 @@ t('the N+ stages walk the weapon shelf again, with the halved rate and one weapo
   for (const w of shelf) assert.ok(h.split(w).length - 1 <= 1, w + ' is listed at most once on a stage, not once per mob');
   U.mapL = 15; const h15 = U.V.map();
   assert.ok(h15.includes('Stage 5'), 'Stage 15 is labelled as Stage 5');
-  U.mapM = 0; U.mapL = 14; const hp = U.V.map();
-  assert.ok(hp.includes('Weapon <b>0.25%'), 'Prontera N+ weapon roll is 0.25% (half of 0.5%)');
-  assert.ok(!hp.includes('3 families'), 'Prontera N+ does not share a per-family chance any more');
+  U.mapM = 0; U.mapL = 14; const hp = U.V.map();   // v90.10: Prontera is tier 1, so Stage 14 is the N row, not halved
+  assert.ok(hp.includes('Weapon <b>0.5%'), 'Prontera N weapon roll is the full 0.5% (no N+ halving on tier 1)');
+  assert.ok(!hp.includes('3 families'), 'Prontera N does not share a per-family chance any more');
 });
 
 t('the damage trial is entered from the map selection, and the lobby offers the three doors', () => {

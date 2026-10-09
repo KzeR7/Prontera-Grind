@@ -6232,3 +6232,34 @@ The owner's second pass over v77, six notes, all built.
   3. Characters already past the new gates keep their stages. A character below Base Lv 120 who was in Stage 11 to 13 is moved back by the existing `initSession` cap (`S.lvl=Math.min(S.lvl,10+nmOpen())`).
   4. The refine damage impact is still not measured.
   5. Verified with the harness and jsdom, not in a real browser.
+
+### 2026-10-09 — `2026-10-09 grind-v90.10 Nightmare tiers (round 6, UNCONFIRMED by owner): two tiers of five maps replace the per-stage ladder. Tier 1 (Nightmare Prontera to Payon, Base Lv 120) drops N gear; tier 2 (Nightmare Comodo to Abyss, Base Lv 140) drops N+ gear. Each tier has its own power entry, and the Abyss-normal to tier 1 step is much bigger than the tier 1 to tier 2 step. The Zeny roll (90% pay, 0.5x to 1.0x) now covers Niflheim, Abyss and every Nightmare kill, bosses included. Travel and the map panel check the stage's own map, not the global cap.`
+
+* **Summary:** Round 6 of the owner's Nightmare brief, applied as a best reading of the request. Nothing here is confirmed yet. The owner has been asked to approve or change the design (see open decisions below).
+* **Design in code:**
+  * Tiers: `NMLV=[120,140]`. `nmTierOf(m)` is 0 for maps 0-4 (Prontera to Payon) and 1 for maps 5-9 (Comodo to Abyss). `nmTierOpen()` and `nmMapOpen(m)` gate a map on its own tier; `nmMaxFor(m)` is 15 when that map is open and 10 when it is not.
+  * Power: tier 1 entry `NMBASE`=130, tier 2 entry `NMBASE2`=160, +`NMSTEP`=2 per map inside a tier, +`NMGAP`=3 per Nightmare stage. `nmPowerOf()` and `fieldPower()` use this on Nightmare stages. Normal stages are unchanged (Abyss Stage 10 stays at power 99).
+  * Power steps: Abyss normal (99) to Nightmare Prontera Stage 11 (130) is x1.31. Payon Stage 15 (150) to Comodo Stage 11 (160) is x1.07. The first step is about 4.7 times the second.
+  * Gear: `secField()` is section 4 (N) on tier 1 and section 5 (N+) on tier 2, on Nightmare stages only. Normal stages never roll Nightmare gear. The Stage 15 boss material drop (`mat`) is `l>13`, so all ten maps drop their material from Stage 15 as before.
+  * Zeny: `NM_ZENY_FROM` is 8, so the roll covers Niflheim (map 8) onward. `nmZenyRoll()` no longer exempts bosses. Every kill from map 8 on, normal stages included, pays on 90% of kills at a random 0.5x to 1.0x. Everything else pays in full.
+  * Fixes found while testing: travel (`go:`) checked the global `nmMax()` and let a shut map's stage be picked. It now checks `nmMaxFor(mapM)`. The map panel, the stage picker and the `initSession` clamp use the map's own gate.
+* **Numbers (measured with the harness, not in a live browser):**
+  * Abyss Stage 15 is power 180: HP 7,504,693, ATK 1,814, boss HP 89,341,585. The old pin (power 175) is replaced.
+  * Abyss Stage 10 is still power 99, HP 55,286, ATK 386.
+  * Abyss Stage 15 pays about 2,203 Zeny per HP. Nightmare Prontera Stage 11 pays about 2,310 per HP. Abyss Stage 11 pays about 725 per HP.
+* **Files touched:** `index.html` (`BUILD` grind-v90.10; `NMLV`, `NMBASE2`, `nmTierOf`, `nmTierOpen`, `nmMapOpen`, `nmMaxFor`, `nmPowerOf`, `fieldPower`, `secField`, `NM_ZENY_FROM`, `nmZenyRoll`, `trialGrantNm`, map panel text, `selm`, the `go:` travel check, the `initSession` clamp, the `mat` gate). Build-tag mirrors `Updates/cards-gear-audit/affix-ranges.html` (x2), `Updates/cards-gear-audit/equipment-cards-tuning.html` (the snapshot was refreshed with `drop_card_sheet_sim.js --refresh-snapshot`), `tools/cloudflare-deploy-steps.md`. Tests `nightmare_sim.js` (ladder, power schedule, tier gear, knobs, pay ramp, pool, save cap), `zeny_sink_sim.js` (90%, 0.5x to 1.0x, mean 0.675, the roll's coverage), `ui_sim.js` (N rarity on tier 1, N+ weapon chance on tier 1 is 0.5%), `gear_sim.js` (N and N+ by tier, and the total chance), `trial_sim.js` (tier helpers and the Prontera and Abyss tokens), `offline_sim.js` (`rnd` in the copied block). Also `READ-ME-FIRST.md` (v90.10 section, above v90.9); this log.
+* **Art:** none.
+* **Tests:** all `*_sim.js` and `*_smoke.js` suites in `tools/tests/` exit 0 on this build (45 suites, 0 failing).
+* **Branches / PR:** `arena/4ce84185-prontera-grind`. No pull request was opened.
+* **Open decisions for the owner:**
+  1. Is the tier split right (maps 0-4 and 5-9, at Base Lv 120 and 140)?
+  2. Are the gates right (Base Lv 120 and 140)?
+  3. What does "jump" mean here: power (as built), HP, or Zeny pay? As built, the power step is x1.31 for the first and x1.07 for the second. In HP (the harness formula, mob HP at each entry) the first step is about 20 times (55k to 1.13M) and the second about 1.3 times (2.18M to 2.88M).
+  4. Should N and N+ gear follow the tier (as built), or stay flat across all maps as in v90.8?
+  5. Abyss Normal farms gear: the Abyss normal stages keep their normal gear table, which is section 3 and below. Whether that counts as a gear reason is not settled.
+* **Known limits / follow-ups:**
+  1. Characters below Base Lv 120 who were on maps 0-4 Stages 11-13, or below Base Lv 140 who were on maps 5-9 Stages 11-15, are pulled back to Stage 10 by the `initSession` clamp.
+  2. Nightmare pieces that dropped before this build have no `mp`. Reforging one rolls at x1 (the Prontera level), as in v90.9.
+  3. The refine damage impact is still not measured.
+  4. `tools/tests/material_sim.js` has a stale header comment, still to fix.
+  5. Verified with the harness and jsdom, not in a real browser.

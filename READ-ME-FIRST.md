@@ -84,6 +84,17 @@ is the live one; with no argument the tool prints how to set a new one). Since v
 `GM` / `test1234`; `localStorage.removeItem('pg_gm_local')` removes it. Normal accounts are made
 in-game and stored in the browser (`pg_acc4`; saves under `pg_save3_<user>`).
 
+## BUILD v90.10 — Nightmare tiers, round 6 (grind-v90.10) — UNCONFIRMED
+
+The owner has not yet approved this design. The tier split, the gates, and the meaning of "jump" are open decisions (see the AGENTS.md entry).
+
+* **Tiers:** two tiers of five maps. Tier 1 is Nightmare Prontera to Payon (maps 0-4, Base Lv 120, N gear). Tier 2 is Nightmare Comodo to Abyss (maps 5-9, Base Lv 140, N+ gear). Each Nightmare stage is 11-15.
+* **Power:** tier 1 starts at 130 and tier 2 at 160. Abyss Stage 15 is 180. The step from Abyss normal (99) to tier 1 is about 31%. The step from tier 1 to tier 2 is about 7%.
+* **Zeny:** every kill from Niflheim onward, normal stages included, and every Nightmare stage, bosses included, pays on 90% of kills at a random 0.5x to 1.0x.
+* **Travel:** a map's stage can only be picked up to that map's own gate.
+
+Files: `index.html` (`nmTierOf`, `nmMapOpen`, `nmMaxFor`, `fieldPower`, `secField`, `nmZenyRoll`); tests `nightmare_sim.js`, `zeny_sink_sim.js`, `ui_sim.js`, `gear_sim.js`, `trial_sim.js`, `offline_sim.js`; mirrors and this file are bumped to grind-v90.10.
+
 ## BUILD v90.9 — Nightmare tuning: Abyss affixes, unlock ladder, Zeny payout (grind-v90.9)
 
 * **Abyss affixes:** Nightmare Prontera is x1, Abyss (map 9) is x0.95, and the maps between ramp linearly (`NM_ABYSS_AFF`, `nmAffMapOf()`). Only affixes move; the base value stays flat.

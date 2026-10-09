@@ -34,7 +34,7 @@ function harness() {
     const lsGet = () => null, log = () => {};   // save() reads the slot's stamp and logs a refusal (v88.6)
     const cloudTouch = () => {};
     const fieldOf = () => ({sec:0,boss:null,mobs:[{n:'Poring',drops:[[ {k:'sword',n:'Training Sword'},100 ]],card:{n:'Poring Card',g:0,stat:'str'},cardCh:100,ore:true,oreCh:1}]});
-    const fieldPower = () => 1, EXPK = 50, ZMIN = 1, ZK = [1000,1000], MPS = 100;
+    const rnd = (a,b)=>a+Math.random()*(b-a), fieldPower = () => 1, EXPK = 50, ZMIN = 1, ZK = [1000,1000], MPS = 100;
     const ri = (a,b) => Math.floor(a + Math.random()*(b-a+1));
     const pv = () => 0, gx = () => 1, expRate = () => 1;
     const earnZeny = n => {S.zeny += n;zenyEarned += n};

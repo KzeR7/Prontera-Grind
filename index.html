@@ -661,7 +661,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // script block, which is a SyntaxError - the game did not run on main at all. One line wins, and
 // it names both sides of this merge: the v38 balance patch (the weapon cut, the affix/card
 // give-back) and main's weapon-hold rendering work.
-const BUILD='2026-10-09 grind-v90.9 Nightmare tuning: Abyss affixes sit 5% under Nightmare Prontera, Nightmare Stages 11-13 unlock at Base Lv 120 and Stages 14-15 at Base Lv 140, and a regular Nightmare kill pays Zeny 90% of the time at 0.5x to 1.0x (the mean is 0.675 of before).';
+const BUILD='2026-10-09 grind-v90.10 Nightmare tiers: Nightmare Prontera to Payon (Base Lv 120, N gear) and Nightmare Comodo to Abyss (Base Lv 140, N+ gear), each five maps; the tier entry is a big step over Abyss normal, and the second tier a small one; Zeny roll covers Niflheim, Abyss and all Nightmare kills at 90% and 0.5x to 1.0x.';
 $('buildTag').textContent='build '+BUILD;
 
 // ---------- class tree: Novice -> 6 first jobs -> 6 second jobs -> 6 third jobs ----------
@@ -1223,11 +1223,20 @@ MAPS.forEach((m,i)=>{m.b=[0,9,19,31,43,59,66,73,79,89][i];m.rec=REC[i]});
 // nowhere else. The band opens on Base Lv 100 / 110 / 125 / 140 / 150 - a pure level unlock, so
 // there is nothing new to save and nothing to migrate.
 // v90.9 (owner): Stages 11-13 unlock at Base Lv 120, Stages 14-15 at Base Lv 140.
-const NMLV=[120,120,120,140,140],NMBASE=105,NMSTEP=6,NMGAP=4;
-// How many Nightmare stages the character has unlocked right now (0-5). The GM switch opens all
-// five for testing without levelling a character to 150 first.
-const nmOpen=()=>{if(S&&S.gmnm)return 5;if(!S)return 0;let n=0;for(const v of NMLV)if(S.lv>=v)n++;return n};
-const nmMax=()=>10+nmOpen();
+// v90.10 (owner): two Nightmare DIFFICULTY TIERS, each one a block of five maps with stages 11-15.
+//   tier 0 = Nightmare Prontera, Izlude, Geffen, Morroc, Payon (maps 0-4), unlocks at Base Lv 120, N gear (section 4)
+//   tier 1 = Nightmare Comodo, Louyang, Amatsu, Niflheim, Abyss (maps 5-9), unlocks at Base Lv 140, N+ gear (section 5)
+// NMBASE is tier 0's stage-11 entry power (Abyss normal stage 10 is 99, so that step is the big one),
+// NMBASE2 is tier 1's entry (only about +7% over tier 0's top, Payon stage 15), NMSTEP is the power a map
+// adds inside its tier, and NMGAP the power a stage adds.
+const NMLV=[120,140],NMBASE=130,NMSTEP=2,NMBASE2=160,NMGAP=3;
+const nmTierOf=m=>(m|0)<=4?0:1;
+// How many Nightmare tiers the character has unlocked right now (0-2). The GM switch opens both.
+const nmTierOpen=t=>{if(S&&S.gmnm)return true;return !!S&&(S.lv|0)>=NMLV[t]};
+const nmMapOpen=m=>nmTierOpen(nmTierOf(m));
+const nmOpen=()=>{if(S&&S.gmnm)return 2;if(!S)return 0;let n=0;for(const v of NMLV)if((S.lv|0)>=v)n++;return n};
+const nmMaxFor=m=>nmMapOpen(m)?15:10;
+const nmMax=()=>nmOpen()?15:10;
 // The difficulty knobs, in one place: Nightmare monsters are tanky and they hit hard enough that
 // sustain (leech, Divine Grace, healing skills) stops being optional. Tune these two, not the
 // formulas - every other number follows fieldPower.
@@ -1372,7 +1381,7 @@ function trialLobby(view){
   if(view==='store'){body.innerHTML=trialShopHtml();el.classList.add('on');return el}
   if(view==='pickmap'){
     body.innerHTML=`<div class="trial-hd">&#127963; <b>Nightmare Gear Token</b> <small>${TRIAL_STORE.find(x=>x.id==='nmgear').c} shards</small></div>
-      <p><small>Pick the map whose row you want. ${nmOpen()>=5?'Your band is fully open, so you get the <b>Abyssal</b> row (section 5).':'Until Nightmare 5 is unlocked you get the Nightmare row (section 4).'} One item, for the weapon your class fights with.</small></p>
+      <p><small>Pick the map whose row you want. ${'Maps Nightmare Prontera to Payon give the <b>Nightmare</b> row (section 4); maps Nightmare Comodo to Abyss give the <b>Abyssal</b> row (section 5).'} One item, for the weapon your class fights with.</small></p>
       <div class="mapgrid">${MAPS.map((m,i)=>`<button class="mapcard" data-nmmap="${i}"><b>${m.n}</b><small>${NMNAME[i]}</small></button>`).join('')}</div>
       <div class="trial-foot"><button data-trial="store">Back</button></div>`;
     el.classList.add('on');return el}
@@ -1525,12 +1534,12 @@ function trialBuy(id){
 function trialGrantNm(mapIndex){
   // Section 5 once the whole band is open, section 4 before that, and always a weapon the class can
   // actually swing (falling back to armour for a class with no listed weapon type).
-  const sec=nmOpen()>=5?5:4,T=gearPool(mapIndex,sec===5?15:12),c=C();
+  const sec=secField(mapIndex,12),T=gearPool(mapIndex,12),c=C();
   let pool=T.filter(x=>c.wt&&c.wt.includes(x.k));
   if(!pool.length)pool=T.filter(x=>x.k==='armor');
   if(!pool.length)pool=T;
   const chosen=pool[(S.kills|0)%pool.length];
-  const it=genGear(chosen,150,sec,false,dropTier(mapIndex,sec===5?15:12));
+  const it=genGear(chosen,150,sec,false,dropTier(mapIndex,12));
   S.inv.push(it);log(`Shard Store: ${it.name} (${SECN[sec]}) is in your bag.`,'r5','trial')}
 
 const NMNAME=['Dread','Kraken','Void','Sandwraith','Spectral','Leviathan','Oni','Yokai','Helheim','Glast'];
@@ -1542,7 +1551,8 @@ GEAR.forEach((row,m)=>{row.push(nmRow(m,0),nmRow(m,1))});
 // Player-power targets: Prontera spans Base Lv 1-10; the four class maps serve Lv 10-20
 // on stages 1-5, then Lv 20-50 on stages 6-10. Later maps keep their existing b+stage curve.
 const EARLY_FIELD_PWR=[[1,2,3,4,5,6,7,8,9,10],[10,12,15,17,20,20,28,35,43,50]];
-const fieldPower=(m,l)=>(l|0)>10?NMBASE+Math.max(0,Math.min(9,m|0))*NMSTEP+((l|0)-11)*NMGAP:(m===0?EARLY_FIELD_PWR[0][Math.max(1,Math.min(10,l|0))-1]:m<=4?EARLY_FIELD_PWR[1][Math.max(1,Math.min(10,l|0))-1]:MAPS[m].b+Math.max(1,Math.min(10,l|0)));
+const nmPowerOf=(m,l)=>{const t=nmTierOf(m),j=Math.max(0,Math.min(9,m|0))-(t?5:0);return(t?NMBASE2:NMBASE)+j*NMSTEP+((l|0)-11)*NMGAP};
+const fieldPower=(m,l)=>(l|0)>10?nmPowerOf(m,l):(m===0?EARLY_FIELD_PWR[0][Math.max(1,Math.min(10,l|0))-1]:m<=4?EARLY_FIELD_PWR[1][Math.max(1,Math.min(10,l|0))-1]:MAPS[m].b+Math.max(1,Math.min(10,l|0)));
 const pw=()=>fieldPower(S.mp,S.lvl),DR=1;
 const secOf=l=>l<=3?0:l<=7?1:l<=9?2:3,secOf0=l=>l<=3?0:l<=7?1:l<=9?2:3;
 // ---------- cards ----------
@@ -1594,8 +1604,10 @@ const NM_MAT_CH=1;
 const DPS_MATS=20;
 // v90.9 (owner): a regular Nightmare mob pays Zeny on NM_ZENY_CH (90%) of its kills, and the payout is a random
 // NM_ZENY_LO to NM_ZENY_HI (0.5x to 1.0x) of the old value: mean 0.675 of before. Bosses always pay.
-const NM_ZENY_CH=.9,NM_ZENY_LO=.5,NM_ZENY_HI=1;
-function nmZenyRoll(mob){if(mob.boss||!(mob.sec>=4))return 1;return Math.random()<NM_ZENY_CH?rnd(NM_ZENY_LO,NM_ZENY_HI):0}
+const NM_ZENY_CH=.9,NM_ZENY_LO=.5,NM_ZENY_HI=1,NM_ZENY_FROM=8;
+// v90.10 (owner): the roll covers every mob and boss from Niflheim (map 8) on, normal stages included, and
+// every Nightmare stage. Prontera to Amatsu normal kills always pay in full.
+function nmZenyRoll(mob){if(!(S.mp>=NM_ZENY_FROM||S.lvl>10))return 1;return Math.random()<NM_ZENY_CH?rnd(NM_ZENY_LO,NM_ZENY_HI):0}
 // v90.8 (owner): the Black Market sells one Nightmare material for BM_MAT_PRICE Zeny.
 const BM_MAT_PRICE=3000000;
 function buyMat(m){if(!bmOpen()||!NM_MAT[m]){return}if(S.zeny<BM_MAT_PRICE){log('Not enough Zeny for a Nightmare material.','','zeny');ui();return}S.zeny-=BM_MAT_PRICE;S.nmMat[m]=safeCount(S.nmMat[m])+1;log(`Black Market: bought 1 ${NM_MAT[m]} for ${BM_MAT_PRICE.toLocaleString()}z.`,'','zeny');ui();save()}
@@ -1644,7 +1656,7 @@ const dropTier=(m,l)=>Math.min(MAPGRADE[Math.max(0,Math.min(MAPGRADE.length-1,m|
 // existing ladders; Comodo/Louyang/Amatsu stay on section 2 throughout; Niflheim moves from section
 // 2 to section 3 at Stage 6; and Abyss is section 3 throughout. Abyss Stage 6+ selects a stronger
 // section-3 variant, so its equip gate stays third-job while its base values and affixes improve.
-const secField=(m,l)=>(l|0)>13?5:(l|0)>10?4:m===0?0:m<=4?(l<=5?0:l<=7?1:l<=9?2:3):m<=7?2:m===8?(l<=5?2:3):3;
+const secField=(m,l)=>(l|0)>10?(nmTierOf(m)?5:4):m===0?0:m<=4?(l<=5?0:l<=7?1:l<=9?2:3):m<=7?2:m===8?(l<=5?2:3):3;
 function gearPool(m,l){const sec=secField(m,l),tier=dropTier(m,l),enhanced=m===9&&sec===3&&l>=6&&l<=10,
     sg=enhanced?MAPS[m].gearUpgrade:MAPS[m].gear[sec],quality=enhanced?ABYSS_ASCENDED_QUALITY:1,T=[];
   // Each table entry carries its job section and field rarity separately. Abyss's upgraded set is
@@ -1689,7 +1701,7 @@ function fieldOf(m,l){const mp=MAPS[m],sec=secField(m,l),T=gearPool(m,l),n=T.len
     // v73: mid/endgame bosses (map index 5+) pay 30% less, so their pool totals ~4.2%; the
     // first five maps keep the original ~6%. A boss also carries its map's crit resistance.
     drops:T.map(x=>[x,Math.round(BOSS_POOL_TOTAL[l>10?2:(m>=5?1:0)]*(sec===5?NMPLUS_DROP:1)/n)/100]),critRes:bossCritRes(m,l),
-    card:{n:mp.boss.n+' Card',stat:cardStat(3,m),g:3},cardCh:.1,ore:true,oreCh:.025,mat:sec===5?{m,n:NM_MAT[m]}:null}:null}}
+    card:{n:mp.boss.n+' Card',stat:cardStat(3,m),g:3},cardCh:.1,ore:true,oreCh:.025,mat:l>13?{m,n:NM_MAT[m]}:null}:null}}
 // One drop line for the map panel: icon + name + the field's fixed rarity + which monster carries
 // it, with the % on the right. v79: a piece the player's own class cannot wear is dimmed and says
 // why on hover - the class gate is part of choosing where to farm, not a surprise that only turns
@@ -2160,7 +2172,7 @@ function initSession(gm,newAccount=false){
     // Novice in High-tier armour). The sweep runs here too, so the rule holds from the first
     // frame of a session, not only from the next class change. `from=null` means no wearer label:
     // the class it is being taken off was never legally wearing it.
-    S.lvl=Math.min(S.lvl,10+nmOpen());                       // v76: a save cannot sit in a locked Nightmare stage
+    if((S.lvl|0)>10&&!nmMapOpen(S.mp|0))S.lvl=10;             // v76/v90.10: a save cannot sit in a locked Nightmare tier
     if(typeof canUse==='function'&&typeof stowUnfit==='function')stowUnfit(null);
     if(typeof foldDupPets==='function')foldDupPets();        // v75: one pet per species, duplicates become Bond
     applyOfflineProgress();
@@ -3581,7 +3593,7 @@ function gmPetTest(mode){
   ui();save();
 }
 const V={
-  map(){const F=fieldOf(mapM,mapL),mp=MAPS[mapM],pr=S.prog[mapM],nmo=nmOpen(),cap=Math.max(pr,nmMax());
+  map(){const F=fieldOf(mapM,mapL),mp=MAPS[mapM],pr=S.prog[mapM],nmo=nmMapOpen(mapM),cap=Math.max(pr,nmMaxFor(mapM));
     // The map tab is a compact 450px, two-band panel: pick a map on the top band, walk its fields on the
     // next one, read the drop tables underneath. The field band is sticky, so the level you are
     // choosing stays on screen while the tables below it scroll - no scrolling down to find it.
@@ -3592,10 +3604,10 @@ const V={
     // and Endless Echo takes the whole destination row under the map grid. The Auto-advance switch
     // lives here too, next to the stages it walks you through.
     const fieldBand=`<div class="mapband fields">
-      <div class="mapband-t">${mp.n} <small>&middot; ${mp.t} &middot; rec. ${mp.rec} (not a limit) &middot; ${Math.min(pr-1,10)}/10 stages unlocked${nmo?` &middot; <b>Nightmare ${nmo}/5</b>`:' &middot; Nightmare unlocks at Base Lv '+NMLV[0]}</small>
+      <div class="mapband-t">${mp.n} <small>&middot; ${mp.t} &middot; rec. ${mp.rec} (not a limit) &middot; ${Math.min(pr-1,10)}/10 stages unlocked${nmo?' &middot; <b>Nightmare open</b>':' &middot; Nightmare unlocks at Base Lv '+NMLV[nmTierOf(mapM)]}</small>
         <button class="go" data-a="go" ${mapL>cap?'disabled':''}>${S.mp===mapM&&S.lvl===mapL?'You are here':'Travel to '+mp.n+' Stage '+mapL}</button></div>
-      <div class="lvgrid">${Array.from({length:15},(_,i)=>{const l=i+1,nm=l>10,lock=l>cap;return`<button class="map-node${lock?' locked':''}${nm?' nm-node':''}${S.mp===mapM&&S.lvl===l?' active':''}${mapL===l?' picked':''}${l===10||l===15?' boss-node':''}${l===10?' normal-boss-node':''}" data-a="sell_" data-v="${l}" title="${nm?'Nightmare ':'Normal '}${nm?`Stage ${l-10}`:`Stage ${l}`}${l===10?' - normal mode MVP':''}${lock&&nm?' - locked until Base Lv '+NMLV[l-11]:''}"><b>${l===10||l===15?'💀 ':''}${nm?'NM '+((l-10)):'Stage '+l}</b></button>`}).join('')}</div>
-      <small class="map-stage-note"><b>Stages 1-10 are Normal</b>; Stage 10 is the normal MVP field. Purple nodes are Nightmare stages 11-15. ${nmo<5?`Next unlock: Stage ${11+nmo} at Base Lv ${NMLV[nmo]}.`:'All five Nightmare stages are unlocked.'}</small>
+      <div class="lvgrid">${Array.from({length:15},(_,i)=>{const l=i+1,nm=l>10,lock=l>cap;return`<button class="map-node${lock?' locked':''}${nm?' nm-node':''}${S.mp===mapM&&S.lvl===l?' active':''}${mapL===l?' picked':''}${l===10||l===15?' boss-node':''}${l===10?' normal-boss-node':''}" data-a="sell_" data-v="${l}" title="${nm?'Nightmare ':'Normal '}${nm?`Stage ${l-10}`:`Stage ${l}`}${l===10?' - normal mode MVP':''}${lock&&nm?' - locked until Base Lv '+NMLV[nmTierOf(mapM)]:''}"><b>${l===10||l===15?'💀 ':''}${nm?'NM '+((l-10)):'Stage '+l}</b></button>`}).join('')}</div>
+      <small class="map-stage-note"><b>Stages 1-10 are Normal</b>; Stage 10 is the normal MVP field. Purple nodes are Nightmare stages 11-15. ${nmOpen()<2?`Next unlock: ${nmOpen()<1?'Nightmare Prontera to Payon (maps 1-5) at Base Lv '+NMLV[0]:'Nightmare Comodo to Abyss (maps 6-10) at Base Lv '+NMLV[1]}.`:'Both Nightmare tiers are unlocked.'}</small>
       <div class="row" style="align-items:center"><label><input type="checkbox" data-a="adv" ${S.adv!==false?'checked':''}> Auto-advance through stages and maps</label><small style="opacity:.75">turn off to farm where you stand</small></div></div>`;
     return`<div class="mapband">
       <div class="mapband-t">Maps <small>&middot; click one to see its stages below</small></div>
@@ -3965,14 +3977,14 @@ const gotoField=(m,l)=>{
 const ACT={
   boardperiod:v=>{if(!['daily','weekly','all'].includes(v))return;boardPeriod=v;boardError='';renderWin();boardRefresh(v)},
   boardrefresh:()=>boardRefresh(boardPeriod),
-  selm:v=>{mapM=+v;mapL=Math.min(mapL,Math.max(1,Math.max(S.prog[mapM],nmMax())));renderWin('[data-win="map"] .mapcard.on')},
+  selm:v=>{mapM=+v;mapL=Math.min(mapL,Math.max(1,Math.max(S.prog[mapM],nmMaxFor(mapM))));renderWin('[data-win="map"] .mapcard.on')},
   // v75 test control: feed the selected pet (or the first one) n duplicates and let petFold do
   // the rest, so the owner can watch a species' passive climb without farming 15 drops.
   gmnm:()=>{S.gmnm=true;S.lv=Math.max(S.lv,150);S.prog=MAPS.map(()=>10);S.hp=Math.min(S.hp,maxHp());
     log('Nightmare band unlocked: all five stages, Base Lv '+S.lv+'. Travel from the World Map (stages 11-15).','r4');ui();save()},
   gmbond:v=>{const p=gp(selP)||S.pets[0];if(!p)return log('No pet to bond with.','r0','pet');
     const n=Math.max(1,Math.min(15,+v||1));for(let i=0;i<n;i++)petFold(p,{sp:p.sp,mut:0,eq:[0,0,0],skills:[]});
-    log(`${PETS[p.sp].n} is Bond ${bondRank(p.sp)}/5 - ${PET_TRAIT[p.sp].n} ${PET_TRAIT[p.sp].d(traitVal(p.sp))}.`,'r3','pet');ui();save()}, sell_:v=>{mapL=+v;renderWin('[data-win="map"] .map-node.picked')},go:()=>{if(mapL<=Math.max(S.prog[mapM],nmMax())){gotoField(mapM,mapL);log(`Traveled to ${fieldName()}.`)}},
+    log(`${PETS[p.sp].n} is Bond ${bondRank(p.sp)}/5 - ${PET_TRAIT[p.sp].n} ${PET_TRAIT[p.sp].d(traitVal(p.sp))}.`,'r3','pet');ui();save()}, sell_:v=>{mapL=+v;renderWin('[data-win="map"] .map-node.picked')},go:()=>{if(mapL<=Math.max(S.prog[mapM],nmMaxFor(mapM))){gotoField(mapM,mapL);log(`Traveled to ${fieldName()}.`)}},
   stat:k=>{if(S.pts>=cost(k)&&S.st[k]<statCap()){S.pts-=cost(k);S.st[k]++;S.hp=Math.min(S.hp,maxHp());ui();save()}},
   stat5:k=>{for(let i=0;i<5;i++)if(S.pts>=cost(k)&&S.st[k]<statCap()){S.pts-=cost(k);S.st[k]++}S.hp=Math.min(S.hp,maxHp());ui();save()},
   selk:v=>{selK=v;renderWin()},job:n=>{if(n==='Novice'&&S.cls!=='Novice')ask('Restart as Novice? You go back to Base Lv 25, job levels cleared, and your stats are refunded. Classes you leave keep their own Base Lv, stats and gear, so you can switch back to them later.',()=>changeClass(n));else changeClass(n)},

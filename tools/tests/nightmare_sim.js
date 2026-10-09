@@ -37,9 +37,9 @@ ${code}
 const HPE=1.3;
 let S={lv:1,gmnm:false};
 this.__n={ MAPS, GEAR, fieldPower, secField, dropTier, gearPool, fieldOf, bossCritRes,
-  NMLV, NMBASE, NMSTEP, NMGAP, NMHP, NMATK, NMEXP, NMZENY, NMBOSSHP, NM_CRIT_RES, BOSS_CRIT_RES, nmExpOf, nmZenyOf,
+  NMLV, NMBASE, NMBASE2, NMSTEP, NMGAP, NMHP, NMATK, NMEXP, NMZENY, NMBOSSHP, NM_CRIT_RES, BOSS_CRIT_RES, nmExpOf, nmZenyOf,
   FIELD_GEAR, FIELD_GEAR_MID, FIELD_GEAR_NM, FIELD_GEAR_MID_NM, BOSS_POOL_TOTAL, NMPLUS_DROP, NM15_BUFF, nm15Of,
-  nmOpen, nmMax, NMNAME, NMNAME2,
+  nmOpen, nmMax, nmTierOf, nmPowerOf, nmMapOpen, nmMaxFor, nmTierOpen, NMNAME, NMNAME2,
   nmPayOf, NM_MAT, NM_MAT_CH,
   set S(v){S=v}, get S(){return S} };
 `;
@@ -51,39 +51,49 @@ let pass = 0, fail = 0;
 const t = (n, f) => { try { f(); console.log('  ok   ' + n); pass++; } catch (e) { console.log('  FAIL ' + n + ' -> ' + e.message); fail++; } };
 console.log('nightmare: the Base Lv 100-150 band\n');
 
-t('the band opens on Base Lv 120 (Stages 11-13) and Base Lv 140 (Stages 14-15), and nowhere else', () => {
-  // v90.9 (owner): Stages 11-13 at Base Lv 120, Stages 14-15 at Base Lv 140.
-  assert.deepStrictEqual(Array.from(N.NMLV), [120, 120, 120, 140, 140], 'the unlock ladder is pinned');
+t('the tiers open on Base Lv 120 (Nightmare Prontera to Payon) and Base Lv 140 (Nightmare Comodo to Abyss), and nowhere else', () => {
+  // v90.10 (owner): two difficulty tiers of five maps each replace the per-stage ladder.
+  assert.deepStrictEqual(Array.from(N.NMLV), [120, 140], 'the tier unlock levels are pinned');
   const open = lv => { N.S = { lv, gmnm: false }; return N.nmOpen(); };
-  assert.strictEqual(open(1), 0, 'a new character has no Nightmare stages');
-  assert.strictEqual(open(99), 0, 'Base Lv 99 is still the old ceiling');
-  assert.strictEqual(open(100), 0, 'Base 100 no longer opens Nightmare (v90.9)');
+  assert.strictEqual(open(1), 0, 'a new character has no Nightmare tier');
+  assert.strictEqual(open(99), 0, 'Base Lv 99 is the old ceiling');
   assert.strictEqual(open(119), 0, 'Base 119 is still shut');
-  assert.strictEqual(open(120), 3, 'Base 120 opens Nightmare stages 11, 12 and 13');
-  assert.strictEqual(open(139), 3, 'Stage 14 is still shut at Base 139');
-  assert.strictEqual(open(140), 5, 'Base 140 opens Nightmare stages 14 and 15');
-  assert.strictEqual(open(149), 5);
-  assert.strictEqual(open(150), 5, 'nothing more opens above 140');
-  assert.strictEqual(N.nmMax(), 15, 'so stage 15 is the deepest field in the game');
+  assert.strictEqual(open(120), 1, 'Base 120 opens tier 1: Nightmare Prontera to Payon');
+  assert.strictEqual(open(139), 1, 'tier 2 is still shut at Base 139');
+  assert.strictEqual(open(140), 2, 'Base 140 opens tier 2: Nightmare Comodo to Abyss');
+  assert.strictEqual(open(150), 2, 'nothing more opens above 140');
   N.S = { lv: 1, gmnm: true };
-  assert.strictEqual(N.nmOpen(), 5, 'and the GM switch opens all five for testing');
+  assert.strictEqual(N.nmOpen(), 2, 'and the GM switch opens both for testing');
+  N.S = { lv: 1, gmnm: false };
+  assert.strictEqual(N.nmMax(), 10, 'with no tier open, the deepest field is Stage 10');
+  // per map: tier 1 is maps 0-4, tier 2 is maps 5-9
+  for (let m = 0; m < 10; m++) assert.strictEqual(N.nmTierOf(m), m <= 4 ? 0 : 1, N.MAPS[m].n + ' is in tier ' + (m <= 4 ? 1 : 2));
+  N.S = { lv: 120, gmnm: false };
+  assert.ok(N.nmMapOpen(0) && N.nmMapOpen(4), 'at Base 120 the Prontera-to-Payon maps open');
+  assert.ok(!N.nmMapOpen(5) && !N.nmMapOpen(9), 'and the Comodo-to-Abyss maps stay shut');
+  assert.strictEqual(N.nmMaxFor(0), 15, 'an open map goes to Stage 15');
+  assert.strictEqual(N.nmMaxFor(9), 10, 'a shut map stops at Stage 10');
+  N.S = { lv: 140, gmnm: false };
+  assert.ok(N.nmMapOpen(9), 'at Base 140 Abyss opens');
   N.S = { lv: 1, gmnm: false };
 });
 
-t('field power keeps climbing: 99 at Abyss 10 becomes 175 at Nightmare Abyss 15', () => {
-  // the published schedule, map by map: stage 11 starts 5 levels past the old ceiling and every map
-  // steps 6, every stage 4
-  const expect = m => [0, 1, 2, 3, 4].map(k => N.NMBASE + m * N.NMSTEP + k * N.NMGAP);
+t('field power: tier 1 starts at 130, tier 2 at 160, Abyss Stage 15 is 180, and the Abyss normal step is the big one', () => {
+  // v90.10 (owner): the jump from Abyss normal (Stage 10, power 99) to the first Nightmare tier should be
+  // significant; the jump from the top of tier 1 (Payon Stage 15) to tier 2 should be smaller.
+  const expect = m => [0, 1, 2, 3, 4].map(k => (N.nmTierOf(m) ? N.NMBASE2 : N.NMBASE) + (m % 5) * N.NMSTEP + k * N.NMGAP);
   for (let m = 0; m < 10; m++)
     assert.deepStrictEqual([11, 12, 13, 14, 15].map(l => N.fieldPower(m, l)), expect(m), N.MAPS[m].n + ' Nightmare schedule');
-  assert.strictEqual(N.fieldPower(0, 11), 105, 'Nightmare Prontera Stage 11 is power 105');
-  assert.strictEqual(N.fieldPower(9, 15), 175, 'Nightmare Abyss Stage 15 is the endgame: 175');
-  assert.strictEqual(N.fieldPower(9, 10), 99, 'and the old ceiling (Abyss Stage 10 = power 99) is exactly where it was');
-  assert.strictEqual(N.fieldPower(9, 11), 159, 'the first Nightmare stage on Abyss already beats it by 60 levels');
-  assert.strictEqual(N.fieldPower(1, 11), 111, 'and Nightmare Izlude Stage 11 opens at 111');
-  // no stage can ever be easier than the one before it on any map (the early maps' published band
-  // is flat at 20 for stages 5-6, so this is >= and not >), and the Nightmare band itself is strictly
-  // steeper: every one of its stages is harder than the last
+  assert.strictEqual(N.fieldPower(0, 11), 130, 'Nightmare Prontera Stage 11 is power 130');
+  assert.strictEqual(N.fieldPower(4, 15), 150, 'Nightmare Payon Stage 15, the top of tier 1, is 150');
+  assert.strictEqual(N.fieldPower(5, 11), 160, 'Nightmare Comodo Stage 11 opens tier 2 at 160');
+  assert.strictEqual(N.fieldPower(9, 15), 180, 'Nightmare Abyss Stage 15 is the endgame: 180');
+  assert.strictEqual(N.fieldPower(9, 10), 99, 'and the Abyss normal ceiling (Stage 10 = power 99) is unchanged');
+  const jumpA = N.fieldPower(0, 11) / N.fieldPower(9, 10), jumpB = N.fieldPower(5, 11) / N.fieldPower(4, 15);
+  assert.ok(jumpA >= 1.25, 'Abyss normal to Nightmare Prontera is a significant step: x' + jumpA.toFixed(3));
+  assert.ok(jumpB > 1 && jumpB < 1.1, 'tier 1 to tier 2 is a smaller step: x' + jumpB.toFixed(3));
+  assert.ok(jumpA - 1 >= 3 * (jumpB - 1), 'the first step is at least three times the second');
+  // no stage can ever be easier than the one before it on any map, and every Nightmare stage is harder than the last
   for (let m = 0; m < 10; m++) for (let l = 2; l <= 10; l++)
     assert.ok(N.fieldPower(m, l) >= N.fieldPower(m, l - 1), N.MAPS[m].n + ' stage ' + l + ' must not be easier than ' + (l - 1));
   for (let m = 0; m < 10; m++) for (let l = 12; l <= 15; l++)
@@ -92,15 +102,15 @@ t('field power keeps climbing: 99 at Abyss 10 becomes 175 at Nightmare Abyss 15'
   const band = [10, 12, 15, 17, 20, 20, 28, 35, 43, 50];
   for (let m = 1; m <= 4; m++) assert.deepStrictEqual([1,2,3,4,5,6,7,8,9,10].map(l => N.fieldPower(m, l)), band, N.MAPS[m].n);
   assert.deepStrictEqual([1,2,3,4,5,6,7,8,9,10].map(l => N.fieldPower(0, l)), [1,2,3,4,5,6,7,8,9,10], 'Prontera');
-  assert.deepStrictEqual([1,2,3,4,5,6,7,8,9,10].map(l => N.fieldPower(9, l)), [90,91,92,93,94,95,96,97,98,99,100].slice(0, 10), 'Abyss b+stage');
+  assert.deepStrictEqual([1,2,3,4,5,6,7,8,9,10].map(l => N.fieldPower(9, l)), [90,91,92,93,94,95,96,97,98,99], 'Abyss b+stage');
 });
 
-t('Nightmare gear is exclusive: sections 4 and 5 exist only above stage 10', () => {
+t('Nightmare gear is by tier: N (section 4) on maps 1-5, N+ (section 5) on maps 6-10; sections exist only above stage 10', () => {
   for (let m = 0; m < 10; m++) {
     for (let l = 1; l <= 10; l++)
       assert.ok(N.secField(m, l) <= 3, N.MAPS[m].n + ' stage ' + l + ' must never roll Nightmare gear (got ' + N.secField(m, l) + ')');
-    for (const l of [11, 12, 13]) assert.strictEqual(N.secField(m, l), 4, N.MAPS[m].n + ' stage ' + l + ' is Nightmare gear');
-    for (const l of [14, 15]) assert.strictEqual(N.secField(m, l), 5, N.MAPS[m].n + ' stage ' + l + ' is Abyssal Nightmare gear');
+    const want = m <= 4 ? 4 : 5;
+    for (const l of [11, 12, 13, 14, 15]) assert.strictEqual(N.secField(m, l), want, N.MAPS[m].n + ' stage ' + l + ' is section ' + want);
   }
   // and the two new rows really exist, one pair per map
   assert.strictEqual(N.GEAR.length, 10, 'ten maps');
@@ -176,7 +186,7 @@ t('the difficulty knobs are the shipped ones and the live code reads them', () =
   const abyss15 = { hp: hp(abyss15Power, N.NMHP * N.NM15_BUFF), atk: Math.round(atk(abyss15Power, N.NMATK * N.NM15_BUFF) * .25) };
   const abyss15BossHp = Math.floor(500 * mb * Math.pow(abyss15Power, 1.3) * (N.NMBOSSHP * N.NM15_BUFF));
   assert.deepStrictEqual([abyss10Power, abyss10.hp, abyss10.atk], [99, 55286, 386], 'Abyss Stage 10 uses its live power-99 baseline');
-  assert.deepStrictEqual([abyss15Power, abyss15.hp, abyss15.atk, abyss15BossHp], [175, 7234826, 1764, 86128892], 'the Nightmare example follows spawn() rounding (v86 ATK bump and v89 x1.3 included)');
+  assert.deepStrictEqual([abyss15Power, abyss15.hp, abyss15.atk, abyss15BossHp], [180, 7504693, 1814, 89341585], 'the Nightmare example follows spawn() rounding (v86 ATK bump and v89 x1.3 included; v90.10 power 180)');
   console.log('       Abyss Stage 10 : mob HP ' + abyss10.hp.toLocaleString() + ', a hit lands for ' + abyss10.atk.toLocaleString() + ' after a 75% DEF cut');
   console.log('       Nightmare Abyss 15: mob HP ' + abyss15.hp.toLocaleString() + ' (' + (abyss15.hp / abyss10.hp).toFixed(0) + 'x), a hit lands for ' + abyss15.atk.toLocaleString() + ' (' + (abyss15.atk / abyss10.atk).toFixed(1) + 'x)');
   console.log('       Abyss Stage 15 boss: ' + abyss15BossHp.toLocaleString() + ' HP');
@@ -200,7 +210,7 @@ t('the pay ramps by stage (v85): EXP 16/24/32/40/48, Zeny 4/5/6/7/8', () => {
   // a forced one, and its exclusive N/N+ gear is the reason to be there.
   const perM = (m, st) => { const p = N.fieldPower(m, st), mb = 1 + m * .15 + Math.max(0, m - 4) * .2;
     return N.nmExpOf(st) * Math.floor(5.5 * Math.pow(p, 1.5) / 50) / (42 * mb * Math.pow(p, 1.3) * N.NMHP) * 1e6; };
-  assert.ok(Math.abs(perM(0, 11) - 2208) < 30, 'NM Prontera S11 pays ~2,208/HP (parity with Abyss mob grinding from stage one)');
+  assert.ok(Math.abs(perM(0, 11) - 2310) < 30, 'NM Prontera S11 pays ~2,310/HP (v90.10: tier 1 entry at power 130)');
   assert.ok(perM(9, 11) > 690 && perM(9, 11) < 740, 'NM Abyss S11 pays ' + perM(9, 11).toFixed(0) + '/HP - the deep-map HP multiplier still bites early');
   assert.ok(perM(9, 15) > 2150 && perM(9, 15) < 2230, 'NM Abyss S15 pays ' + perM(9, 15).toFixed(0) + '/HP - the capstone reaches parity');
   assert.ok(perM(9, 15) / perM(9, 11) > 2.9, 'deepening the stage more than triples the deep map\u2019s pay per HP');
@@ -233,7 +243,7 @@ t('the field tables read the band: boss pool, ore and crit resistance', () => {
   assert.strictEqual(N.fieldOf(9, 9).boss, null, 'and nothing but stage 10 and 15 has a boss');
   assert.ok(N.fieldOf(9, 15).boss && N.fieldOf(3, 15).boss, 'every map ends its Nightmare band with a boss');
   // the drops a Nightmare field rolls come from the Nightmare rows only
-  assert.ok(N.gearPool(9, 15).every(x => x.sec === 5) && N.gearPool(9, 12).every(x => x.sec === 4), 'pool entries carry their section (the N rarity reads it)');
+  assert.ok(N.gearPool(9, 12).every(x => x.sec === 5) && N.gearPool(0, 12).every(x => x.sec === 4), 'pool entries carry their tier section (N on maps 1-5, N+ on maps 6-10)');
   assert.ok(N.gearPool(9, 10).every(x => x.sec === 3), 'and a normal field still says section 3');
   const T = N.gearPool(9, 15).map(x => x.n);
   const hi = new Set(Object.values(N.GEAR[9][3].w).concat(N.GEAR[9][3].a, N.GEAR[9][3].h, N.GEAR[9][3].o, N.GEAR[9][3].l, N.GEAR[9][3].ac, N.GEAR[9][3].ac2).filter(Boolean));
@@ -262,10 +272,10 @@ t('drop-table items keep N section identity separate from map field quality', ()
 t('a save cannot be left standing in a locked Nightmare stage', () => {
   assert.ok(src.includes('f.lvl=Math.max(1,Math.min(15,Math.floor(f.lvl||1)))'), 'load() accepts stage 15');
   assert.ok(src.includes('if(S.mp>=MAPS.length||S.lvl>15){S.mp=0;S.lvl=1}'), 'and the sanitizer treats 15 as legal');
-  assert.ok(src.includes('S.lvl=Math.min(S.lvl,10+nmOpen())'), 'initSession pulls a character out of a stage it has not unlocked');
-  assert.ok(src.includes('go:()=>{if(mapL<=Math.max(S.prog[mapM],nmMax()))'), 'travel allows an unlocked Nightmare stage');
-  assert.ok(src.includes('nmo=nmOpen(),cap=Math.max(pr,nmMax())'), 'the map panel caps at the band');
-  assert.ok(src.includes('mapL=Math.min(mapL,Math.max(1,Math.max(S.prog[mapM],nmMax())))'), 'and the stage picker cannot be clamped below the band');
+  assert.ok(src.includes('if((S.lvl|0)>10&&!nmMapOpen(S.mp|0))S.lvl=10;'), 'initSession pulls a character out of a Nightmare tier it has not unlocked');
+  assert.ok(src.includes('go:()=>{if(mapL<=Math.max(S.prog[mapM],nmMaxFor(mapM)))'), 'travel allows an unlocked Nightmare stage on that map');
+  assert.ok(src.includes('nmo=nmMapOpen(mapM),cap=Math.max(pr,nmMaxFor(mapM))'), 'the map panel caps at the band of that map');
+  assert.ok(src.includes('mapL=Math.min(mapL,Math.max(1,Math.max(S.prog[mapM],nmMaxFor(mapM))))'), 'and the stage picker cannot be clamped below the band');
 });
 
 t('v90.3 (B): reward per HP is the same on every Nightmare map at each stage', () => {

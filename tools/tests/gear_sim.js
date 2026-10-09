@@ -36,6 +36,8 @@ const code = [
   grab('const pm=s=>', 'const REC='),                        // pm() + MAPS
   grab('const NMNAME=', 'const EARLY_FIELD_PWR'),             // the two Nightmare rows appended to GEAR
   pick(/const secOf=[^;]+;/, 'secOf'),
+  pick(/const NMLV=[^;]+;/, 'NMLV'),
+  pick(/const nmTierOf=[^\n]*/, 'nmTierOf'),
   pick(/const secField=\(m,l\)=>[^;]+;/, 'secField'),
   pick(/const RAR=\[[^\]]*\];/, 'RAR'),
   pick(/const RAR5=\{[^;]*;/, 'the Nightmare N rarity helpers (v76.2)'),
@@ -406,17 +408,19 @@ t('every field allocates a weapon first, and never lists an item twice (v79)', (
   }
 });
 
-t('N+ (stages 14-15, v90): the weapon walk is back on every map, and the N+ halving stays', () => {
+t('N and N+ by tier (v90.10): the weapon walk is back on every map, and the N+ halving stays on tier 2', () => {
   // v90 (owner: \"for fairness, let's just remain the drop on stage 4 & 5\"). v89 had every mob on stages 14-15
   // list the whole N+ shelf; that split is reverted, so those stages walk the shelf exactly as stages 1-13 do:
   // each mob carries ONE weapon, the weapon list advances two per stage, and the two mobs differ. The
   // N+ halving (NMPLUS_DROP) is kept: the weapon chance is half the Nightmare table, and the MVP pool is half.
   const isW = T => !['armor', 'head', 'off', 'leg', 'acc'].includes(T.k);
+  // v90.10: tier 1 (maps 0-4) is the N row, section 4; tier 2 (maps 5-9) is the N+ row, section 5, halved
   for (let m = 0; m < G.MAPS.length; m++) for (const l of [14, 15]) {
-    const F = G.fieldOf(m, l), where = G.MAPS[m].n + ' N+ stage ' + l;
+    const wantSec = m >= 5 ? 5 : 4;
+    const F = G.fieldOf(m, l), where = G.MAPS[m].n + ' Nightmare stage ' + l;
     const weapons = G.gearPool(m, l).filter(isW);
-    assert.strictEqual(F.sec, 5, where + ' must be section 5');
-    const wantWeapon = (m >= 5 ? G.FIELD_GEAR_MID_NM[0] : G.FIELD_GEAR_NM[0]) * G.NMPLUS_DROP;
+    assert.strictEqual(F.sec, wantSec, where + ' must be section ' + wantSec);
+    const wantWeapon = (m >= 5 ? G.FIELD_GEAR_MID_NM[0] : G.FIELD_GEAR_NM[0]) * (wantSec === 5 ? G.NMPLUS_DROP : 1);
     F.mobs.forEach((mob, j) => {
       const weaponRolls = mob.drops.filter(([T]) => isW(T));
       assert.strictEqual(weaponRolls.length, 1, where + ': one weapon roll per mob, not the whole shelf');
@@ -429,8 +433,10 @@ t('N+ (stages 14-15, v90): the weapon walk is back on every map, and the N+ halv
     if (weapons.length > 1) assert.notStrictEqual(F.mobs[0].drops[0][0].n, F.mobs[1].drops[0][0].n, where + ': both mobs carry the same weapon');
   }
   // the weapon chance per kill is one walk roll at the halved rate, not more and not less
-  const total = G.fieldOf(0, 14).mobs[0].drops.filter(([T]) => isW(T)).reduce((a, [, c]) => a + c, 0);
-  assert.ok(Math.abs(total - G.FIELD_GEAR_NM[0] * G.NMPLUS_DROP) < 1e-3, 'Prontera N+ weapon chance is half the Nightmare table, got ' + total);
+  const total = G.fieldOf(9, 14).mobs[0].drops.filter(([T]) => isW(T)).reduce((a, [, c]) => a + c, 0);
+  assert.ok(Math.abs(total - G.FIELD_GEAR_MID_NM[0] * G.NMPLUS_DROP) < 1e-3, 'Abyss N+ weapon chance is half the Nightmare table, got ' + total);
+  const totalN = G.fieldOf(0, 14).mobs[0].drops.filter(([T]) => isW(T)).reduce((a, [, c]) => a + c, 0);
+  assert.ok(Math.abs(totalN - G.FIELD_GEAR_NM[0]) < 1e-3, 'Prontera N weapon chance is the full Nightmare table (no halving on tier 1), got ' + totalN);
   // the MVP pool is halved as well (v89): 300 x .5 = 150 spread over the whole pool
   const bossTotal = G.fieldOf(9, 15).boss.drops.reduce((a, [, c]) => a + c, 0);
   assert.ok(Math.abs(bossTotal - 1.5) < 0.1, 'the Stage 5 MVP pool must total about 1.5% (13 entries, each rounded to .01), got ' + bossTotal.toFixed(3));
