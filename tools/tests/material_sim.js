@@ -1,4 +1,4 @@
-// Drop Protection Scroll (v90.6): the crafting materials, the scroll craft, and the refine rule that a
+// Drop Protection Scroll (v90.6; recipe set to 20 materials of any mix in v90.7): the crafting materials, the scroll craft, and the refine rule that a
 // scroll keeps the rank on a failed refine at +5 or higher.   node tools/tests/material_sim.js
 //
 // The rules being checked:

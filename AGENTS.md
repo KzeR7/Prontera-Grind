@@ -6263,3 +6263,5 @@ The owner's second pass over v77, six notes, all built.
   3. The refine damage impact is still not measured.
   4. `tools/tests/material_sim.js` has a stale header comment, still to fix.
   5. Verified with the harness and jsdom, not in a real browser.
+
+* **Owner reply (round 6):** "tiers, Prontera till Payon Nightmare are Lv 120, Comodo above Lv 140". The owner confirmed the tier split (maps 0-4 and 5-9) and both gates (Base Lv 120 and 140), which match the build. Still open: what "jump" means (power as built, or HP, or Zeny), whether N+ gear follows the tier (as built) or stays flat as in v90.8, and whether Abyss Normal's gear counts as a reason to farm it.
