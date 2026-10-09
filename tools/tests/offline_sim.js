@@ -11,6 +11,8 @@ const from = (a, b) => {
   return src.slice(i, j);
 };
 const config = from('const BAGMAX=1000;', 'const MAPTIER=');
+// v88.6: save() is inside the span below and checks the save-owner stamp, so the stamp helpers come along.
+const stamp = from('// ---------- the save-owner stamp (v88.6) ----------', 'const num_= (v,d)');
 const helpers = from('function offlineRateSample(now=Date.now()){', '// ---------- accounts (stored in this browser; real cross-device accounts need a server) ----------');
 const simulation = from('function offlineMobForCurrentField(){', '// ---------- skill effects: damage over time, stun, chain ----------');
 
@@ -29,6 +31,7 @@ function harness() {
     const safeCount = v => {const n=Number(v);return Number.isFinite(n)?Math.max(0,Math.min(Number.MAX_SAFE_INTEGER,Math.floor(n))):0};
     const lsPut = (k,v) => {state.writes.push([k,v]);state.saves++};
     const saveKey = () => 'pg_save3_Test';
+    const lsGet = () => null, log = () => {};   // save() reads the slot's stamp and logs a refusal (v88.6)
     const cloudTouch = () => {};
     const fieldOf = () => ({sec:0,boss:null,mobs:[{n:'Poring',drops:[[ {k:'sword',n:'Training Sword'},100 ]],card:{n:'Poring Card',g:0,stat:'str'},cardCh:100,ore:true,oreCh:1}]});
     const fieldPower = () => 1, EXPK = 50, ZMIN = 1, ZK = [1000,1000], MPS = 100;
@@ -45,7 +48,7 @@ function harness() {
     const cardVal = () => 1, uid = () => ++state.nextId;
     const pickW = () => 0, PW = [[100]], PETS = [], PET_SKILL_WEIGHTS = [], PET_SKILLS = [], EGG = 1;
   `;
-  const code = config + '\n' + helpers + '\n' + simulation + `
+  const code = config + '\n' + stamp + '\n' + helpers + '\n' + simulation + `
     globalThis.api = {
       offlinePlan, offlineRateSample, applyOfflineProgress, offlineAwardKill,
       mapSelection(){return[mapM,mapL]},

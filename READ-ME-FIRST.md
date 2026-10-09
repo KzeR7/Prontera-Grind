@@ -84,6 +84,23 @@ is the live one; with no argument the tool prints how to set a new one). Since v
 `GM` / `test1234`; `localStorage.removeItem('pg_gm_local')` removes it. Normal accounts are made
 in-game and stored in the browser (`pg_acc4`; saves under `pg_save3_<user>`).
 
+## BUILD v88.6 — every save records whose it is, and another account's save is refused (grind-v88.6)
+
+Every save now carries the name of the account it belongs to. The game and the server refuse to load,
+write, upload or restore a save that names a different account, so one account's progress can no longer
+end up under another name.
+
+* **What you will notice:** nothing on a normal login or save. If this browser holds a save that belongs to
+  another account, the login card says whose it is, the game does not start, and nothing is written over it.
+  A cloud account's cloud save is not touched. If a backup file holds a save for another account, that save is
+  left out of the restore and the question says so. Saves made before this version keep working and get their
+  name the next time they are saved. A tab still open on the previous build is asked by the server to reload
+  before it can save again; the page does that itself within about a minute of a deploy.
+* **To see it:** `node tools/tests/save_owner_sim.js`, `node tools/tests/api_sim.js`,
+  `node tools/tests/cloud_sim.js`, and `node tools/tests/save_owner_boot_smoke.js` (the last one needs
+  `npm i --no-save jsdom three@0.128.0`, like `field_loop_smoke.js`).
+* **Not live yet:** the server half is in `functions/`, so it takes effect with the Cloudflare deploy.
+
 ## BUILD v88.5 — a melee character no longer stands still beside a monster it cannot reach (grind-v88.5)
 
 A player reported: a Merchant gets stuck while attacking mobs. It keeps taking hits, and only dying

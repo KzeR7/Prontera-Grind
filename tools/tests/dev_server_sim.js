@@ -39,7 +39,8 @@ const call = async (who, method, url, body) => {
   const type = r.headers.get('content-type') || '';
   return { status: r.status, type, data: type.includes('json') ? await r.json() : await r.text() };
 };
-const save = lv => JSON.stringify({ lv, cls: 'Novice', zeny: lv * 100, kills: lv, st: { str: 1 }, q: [], inv: [], v: 20 });
+// the page stamps every save with the account it belongs to (v88.6); these saves are all the Friend account's
+const save = lv => JSON.stringify({ lv, cls: 'Novice', zeny: lv * 100, kills: lv, st: { str: 1 }, q: [], inv: [], v: 20, owner: 'Friend' });
 
 try {
   await t('the API answers as JSON, which is what makes the client turn the cloud on', async () => {
@@ -118,6 +119,16 @@ try {
     const r = await call('friend', 'PUT', '/api/save', { owner: 'friend', version: 0, blob: save(99), savedAt: Date.now() });
     assert.strictEqual(r.status, 409);
     assert.strictEqual(JSON.parse(r.data.blob).lv, 17, 'the client needs the server copy to offer a choice');
+  });
+
+  await t('a save stamped for another account is refused over the wire (409), and the player keeps their own', async () => {
+    const r = await call('friend', 'PUT', '/api/save', { owner: 'friend', version: 1, savedAt: Date.now(),
+      blob: JSON.stringify({ lv: 99, cls: 'Novice', zeny: 0, kills: 0, owner: 'SomeoneElse' }) });
+    assert.strictEqual(r.status, 409, 'the other account\'s save is refused on the wire');
+    assert.strictEqual(r.data.saveMismatch, true, 'and the page is told it is an owner refusal');
+    const get = await call('friend', 'GET', '/api/save');
+    assert.strictEqual(JSON.parse(get.data.blob).lv, 17, 'the player\'s own save is unchanged');
+    assert.strictEqual(get.data.version, 1, 'and its version did not move');
   });
 
   await t('the leaderboard route returns the player\'s all-time score and records new synced kills', async () => {

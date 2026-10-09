@@ -76,7 +76,9 @@ open('/tmp/pack_block.js','w').write(h[h.index('const PACK_BODY='):h.index('func
 PY
 ```
 
-**One suite lives outside that loop:** `node tools/tests/field_loop_smoke.js` boots the real
+**Two suites live outside that loop:** `node tools/tests/field_loop_smoke.js` boots the real
 `index.html` in jsdom with the real Three.js r128 and drives the farming loop end to end (camps,
-refills, the swing, the floats). It needs `npm i --no-save jsdom three@0.128.0`; without them it
-prints a skip line and exits 0, which is why it is not named `*_sim.js`.
+refills, the swing, the floats). `node tools/tests/save_owner_boot_smoke.js` boots the same page and
+logs in through its own login form, to check the save-owner stamp on the real login card. Both need
+`npm i --no-save jsdom three@0.128.0`; without them each prints a skip line and exits 0, which is why
+neither is named `*_sim.js`.

@@ -1,6 +1,12 @@
 // GET  /api/save -> save plus a server-issued offline claim, if a return is due.
 // PUT  /api/save { version, blob, owner, offlineClaimId? } -> versioned cloud save (owner must be the signed-in account).
 //
+// SAVE-OWNER STAMP (v88.6): the save itself names its account (`blob.owner`), and the server checks it
+// both ways. A PUT whose save is stamped for another account is refused (409 saveMismatch) and so is
+// one that would overwrite a stored save stamped for another account; a GET never hands out such a
+// save. A PUT whose save has no stamp is refused as out of date (400), like a request with no owner.
+// Saves written before v88.6 carry no stamp and keep working; they are stamped on their next write.
+//
 // The browser still runs the game simulation, but cloud offline time and kill budgets are derived
 // from D1 server clocks/rates, never the device clock or a client-supplied offlineKph. A claim is
 // persistent until a versioned save carrying its ID is accepted, so a retry cannot mint it twice.
@@ -13,7 +19,7 @@
 
 import { currentUser } from '../_lib/auth.js';
 import { json, guard, readJson, fail } from '../_lib/http.js';
-import { checkSaveBlob, publicFields } from '../_lib/validate.js';
+import { checkSaveBlob, publicFields, saveOwnerStamp, sameAccount, savedElsewhere, SAVE_MISMATCH } from '../_lib/validate.js';
 import * as db from '../_lib/db.js';
 
 const HISTORY_EVERY = 10;
@@ -25,6 +31,9 @@ const OFFLINE_MIN_MS = 3 * 60 * 1000;
 const OFFLINE_RATE_CAP = 30000;
 const OFFLINE_REWARD_MULT = .5;
 const RATE_SMOOTHING_MS = 5 * 60 * 1000;
+// The answer for a save that belongs to another account (v88.6). It names the account the request is
+// signed in as, never the other one.
+const saveMismatch = user => json({ err: SAVE_MISMATCH, saveMismatch: true, owner: user.username }, 409);
 
 const clamp = (n, lo, hi) => Math.max(lo, Math.min(hi, Number(n) || 0));
 const publicClaim = row => row ? ({
@@ -90,6 +99,9 @@ export const onRequestGet = guard(async ({ request, env }) => {
   let row = await db.saveByUser(D, user.id), offlineClaim = null;
 
   if (row) {
+    // v88.6: a stored save that names another account is never handed out - not even to its own
+    // account's session. Checked before any claim is issued or any baseline moves.
+    if (savedElsewhere(row.blob, user.username)) return saveMismatch(user);
     // Return a pending claim unchanged after a lost response/reload. Otherwise snapshot server time,
     // persisted server rate and remainder once. The authenticated GET advances the baseline itself
     // (it writes no save row, so it must).
@@ -123,6 +135,11 @@ export const onRequestPut = guard(async ({ request, env }) => {
       owner: user.username }, 409);
   }
   const save = checkSaveBlob(body.blob);
+  // v88.6: the save itself must name its account, and that account must be the one signed in. A save
+  // with no stamp comes from a page that predates the stamp: it is told to reload, as for a bad owner.
+  const stamp = saveOwnerStamp(save);
+  if (!stamp) return fail('This page is out of date. Reload it before saving again.', 400);
+  if (!sameAccount(stamp, user.username)) return saveMismatch(user);
   const pub = publicFields(save);
   const savedAt = Date.now(); // ignore client time for cloud-save ordering and audit timestamps
   const clientVersion = Math.floor(Number(body.version) || 0);
@@ -133,6 +150,8 @@ export const onRequestPut = guard(async ({ request, env }) => {
     await db.pushHistory(D, user.id, 1, body.blob, savedAt);
     return json({ version: 1, bytes: body.blob.length });
   }
+  // v88.6: the copy already stored must not belong to someone else either. It is never written over.
+  if (savedElsewhere(row.blob, user.username)) return saveMismatch(user);
 
   const pending = await pendingOrIssueOfflineClaim(D, user.id, row, savedAt);
   const early = earlyReturn(D, user.id, savedAt);

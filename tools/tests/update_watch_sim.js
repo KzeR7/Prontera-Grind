@@ -103,5 +103,16 @@ await T('the endpoint is routed on Cloudflare (_routes.json) and in the local de
   assert.ok(dev.includes('env.ASSETS'), 'with the asset store shimmed, so local dev behaves like Pages');
 });
 
+// The build tag is copied into a few documents so a reader can tell which build a sheet or a note is about.
+// A bump that leaves one of those copies behind would show a stale build name to whoever reads it.
+t('every build-tag mirror names the BUILD this page runs (a bump that misses one fails here)', () => {
+  for (const m of ['Updates/cards-gear-audit/affix-ranges.html',
+                   'Updates/cards-gear-audit/equipment-cards-tuning.html',
+                   'tools/cloudflare-deploy-steps.md']) {
+    const text = fs.readFileSync(path.join(__dirname, '..', '..', m), 'utf8');
+    assert.ok(text.includes(BUILD), m + ' still names an older build');
+  }
+});
+
 console.log('\nupdate watcher: ' + pass + ' passed, ' + fail + ' failed');
 process.exit(fail ? 1 : 0);
