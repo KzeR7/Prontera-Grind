@@ -1,5 +1,5 @@
 // GET  /api/save -> save plus a server-issued offline claim, if a return is due.
-// PUT  /api/save { version, blob, offlineClaimId? } -> versioned cloud save.
+// PUT  /api/save { version, blob, owner, offlineClaimId? } -> versioned cloud save (owner must be the signed-in account).
 //
 // The browser still runs the game simulation, but cloud offline time and kill budgets are derived
 // from D1 server clocks/rates, never the device clock or a client-supplied offlineKph. A claim is
@@ -101,9 +101,10 @@ export const onRequestGet = guard(async ({ request, env }) => {
 
   const grants = await db.pendingGrants(D, user.id);
   const pending = grants.results.map(g => ({ id: g.id, kind: g.kind, payload: JSON.parse(g.payload || '{}'), note: g.note }));
-  if (!row) return json({ version: 0, blob: null, savedAt: null, offlineClaim: null, pending });
+  // `owner` says whose save this is, so a tab playing another account never applies it (see PUT).
+  if (!row) return json({ version: 0, blob: null, savedAt: null, offlineClaim: null, pending, owner: user.username });
   return json({ version: row.version, blob: row.blob, savedAt: row.saved_at,
-    updatedAt: row.updated_at, serverNow: now, offlineClaim, pending });
+    updatedAt: row.updated_at, serverNow: now, offlineClaim, pending, owner: user.username });
 });
 
 export const onRequestPut = guard(async ({ request, env }) => {
@@ -111,6 +112,16 @@ export const onRequestPut = guard(async ({ request, env }) => {
   if (!user) return fail('Not logged in.', 401);
   const D = env.DB;
   const body = await readJson(request, 600_000);
+  // Whose save is this? The session cookie is shared by every tab of the site: a tab still playing
+  // account A keeps pushing its save after account B has signed in elsewhere, and without this check
+  // the write would land on B (the GM's character appeared on a player's account this way). The tab
+  // names the account it is playing, and the server refuses to write it anywhere else.
+  const playing = String(body.owner || '').trim().toLowerCase();
+  if (!playing) return fail('This page is out of date. Reload it before saving again.', 400);
+  if (playing !== String(user.username).toLowerCase()) {
+    return json({ err: 'This tab is playing a different account. Nothing was saved.', accountMismatch: true,
+      owner: user.username }, 409);
+  }
   const save = checkSaveBlob(body.blob);
   const pub = publicFields(save);
   const savedAt = Date.now(); // ignore client time for cloud-save ordering and audit timestamps

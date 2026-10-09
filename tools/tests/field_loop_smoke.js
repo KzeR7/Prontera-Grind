@@ -258,6 +258,27 @@ const T = async (name, fn) => { try { await fn(); check.push(['ok', name]); } ca
     assert.ok(html.includes('engageTgt'), 'the latch that ends the walk-in must stay in the source');
   });
 
+  // ---------------------------------------------------------------- 6. the walk-in (v88.4)
+  t('a latched hero closes in on a monster that will not walk into reach (no deadlock)', () => {
+    // v88.4: a small monster's own approach ring can sit just outside the hero's attack window.
+    // The hero had latched on and stood still, the monster stood still at 2.1 units, and both
+    // waited while the monster kept hitting - until the hero died. Pinned with a monster that
+    // will not move at all: the hero must wait a beat, then walk in and strike.
+    ev(`S.cls='Novice';S.lv=10;S.mp=0;S.lvl=1;spawn();
+      {const m=mobs[0];mobs=[m];mob=m;camps=[];activePack=m.pack;m.hp=m.max=1e9;m.size=.6;m.fixed=true;
+       m.x=2.1;m.z=0;m.hx=2.1;m.hz=0;m.a=Math.PI;m.at=.5;pl.x=0;pl.z=0;pl.wt=99;pl.orb=0;pAtkT=0;S.hp=1e7;
+       engageTgt=m;engageWait=0;standC={t:-9,r:0};}`);
+    const reachNow = ev('heroStandoff(mob)');
+    assert.ok(ev('Math.hypot(mob.x-pl.x,mob.z-pl.z)') > reachNow + .6, 'the set-up is out of reach while latched');
+    const dmg0 = ev('S.dmg||0'), start = ev('JSON.stringify([pl.x,pl.z])');
+    for (let i = 0; i < 5; i++) ev('update(0.1)');
+    assert.strictEqual(ev('JSON.stringify([pl.x,pl.z])'), start, 'the hero still waits its beat before it moves');
+    for (let i = 0; i < 55; i++) ev('update(0.1)');
+    assert.ok(ev('S.dmg||0') > dmg0, 'the hero must close in and strike (dealt ' + (ev('S.dmg||0') - dmg0) + ')');
+    const d = ev('Math.hypot(mob.x-pl.x,mob.z-pl.z)');
+    assert.ok(d <= ev('heroStandoff(mob)') + .6, 'and end inside its own reach (settled at ' + d.toFixed(2) + ')');
+  });
+
   for (const [st, name] of check) console.log((st === 'ok' ? '  ok   ' : '  FAIL ') + name);
   const bad = check.filter(c => c[0] === 'FAIL').length + errors.length;
   if (errors.length) console.log('page errors:', errors);

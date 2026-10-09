@@ -53,6 +53,7 @@ function harness(opts = {}) {
   };
   const sandbox = {
     console, JSON, Math, Date, Number, String, Array, Object, Promise, Blob,
+    AbortController, clearTimeout,   // cloudAuth gives up after AUTH_TIMEOUT_MS (v88.3); setTimeout is stubbed below
     fetch: fetchStub,
     localStorage: {
       get length() { return store.size; },
@@ -615,6 +616,50 @@ await T('v88: the town is fully gone - no code, no card, no atlas, no console ho
   assert.ok(!fs.existsSync(path.join(root, 'Updates', 'town-hd')), 'Updates/town-hd/ is deleted (the HD source art)');
   assert.ok(!fs.existsSync(path.join(root, 'tools', 'tests', 'town_smoke.js')), 'the town smoke suite is deleted with the map');
   assert.ok(!fs.existsSync(path.join(root, 'tools', 'make_town_pack.py')), 'the town pack tool is deleted too');
+});
+
+// ------------------------------------------ one cookie, two tabs: whose save is it? ----
+// The browser's session cookie is shared by every tab. A tab that is still playing account A must
+// never upload to, adopt from, or take gifts from account B (the GM character reached a player's
+// account this way). The server refuses the write; these pin the client's stop and its message.
+await T('a save refused for another account stops this tab and uploads nothing', async () => {
+  const h = harness({ routes: { '/save': { status: 409, body: { err: 'This tab is playing a different account.', accountMismatch: true, owner: 'SECOND' } } } });
+  h.sandbox.CLOUD.on = true; h.sandbox.CLOUD.user = 'OWNERGM'; h.sandbox.currentUser = 'OWNERGM';
+  const res = await h.sandbox.cloudPush(true);
+  assert.strictEqual(res, 'idle');
+  assert.strictEqual(h.sandbox.CLOUD.paused, true, 'sync is stopped in this tab');
+  assert.strictEqual(h.state.asks.length, 0, 'no two-saves dialog for a different account');
+  assert.ok(h.state.logs.some(l => /Nothing from this tab was uploaded/.test(l.m) && /OWNERGM/.test(l.m) && /SECOND/.test(l.m)), 'the player is told why');
+  const put = h.calls.find(c => c.url === '/api/save' && c.init.method === 'PUT');
+  assert.strictEqual(JSON.parse(put.init.body).owner, 'OWNERGM', 'every write names the account it is playing');
+});
+
+await T('a gift list for another account is never applied or claimed', async () => {
+  const h = harness({ routes: { '/grants': { status: 200, body: { grants: [{ id: 1, kind: 'zeny', payload: { amount: 999 } }], owner: 'SECOND' } } } });
+  h.sandbox.CLOUD.on = true; h.sandbox.CLOUD.user = 'OWNERGM';
+  const before = h.sandbox.S.zeny;
+  await h.sandbox.cloudPull();
+  assert.strictEqual(h.sandbox.S.zeny, before, 'the other account\'s gift does not reach this character');
+  assert.strictEqual(h.sandbox.CLOUD.paused, true);
+  assert.ok(!h.calls.some(c => c.url === '/api/grants' && c.init.method === 'POST'), 'and is not claimed');
+});
+
+await T('gifts for the account this tab is playing are still applied', async () => {
+  const h = harness({ routes: { '/grants': { status: 200, body: { grants: [{ id: 1, kind: 'zeny', payload: { amount: 999 } }], owner: 'OWNERGM' } } } });
+  h.sandbox.CLOUD.on = true; h.sandbox.CLOUD.user = 'OWNERGM';
+  const before = h.sandbox.S.zeny;
+  await h.sandbox.cloudPull();
+  assert.strictEqual(h.sandbox.S.zeny, before + 999);
+  assert.strictEqual(h.sandbox.CLOUD.paused, false);
+});
+
+await T('a login does not adopt another account\'s cloud save into this tab', async () => {
+  const h = harness({ routes: { '/save': { status: 200, body: { version: 4, blob: JSON.stringify({ lv: 99, cls: 'Merchant' }), owner: 'SECOND' } } } });
+  h.sandbox.CLOUD.on = true;
+  await h.sandbox.cloudJoin('OWNERGM', JSON.stringify(h.sandbox.S));
+  assert.notStrictEqual(h.els.get('conflict').style.display, 'flex', 'no two-saves chooser offering the other account\'s save');
+  assert.strictEqual(h.sandbox.CLOUD.paused, true);
+  assert.strictEqual(h.store.has('pg_save3_OWNERGM'), false, 'nothing is written under this account');
 });
 
 console.log('\n' + pass + ' passed, ' + fail + ' failed');

@@ -647,7 +647,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // script block, which is a SyntaxError - the game did not run on main at all. One line wins, and
 // it names both sides of this merge: the v38 balance patch (the weapon cut, the affix/card
 // give-back) and main's weapon-hold rendering work.
-const BUILD='2026-10-09 grind-v88.1 cloud login no longer erases the away window, so offline rewards pay out again (4h max, 50%)';   // shown on the login card - confirms which file you loaded
+const BUILD='2026-10-09 grind-v88.5 a character beside a monster it cannot reach now walks in and fights, instead of standing still while being hit';   // shown on the login card - confirms which file you loaded
 $('buildTag').textContent='build '+BUILD;
 
 // ---------- class tree: Novice -> 6 first jobs -> 6 second jobs -> 6 third jobs ----------
@@ -2148,8 +2148,10 @@ async function cloudPush(push){
   if(CLOUD.pushing)return 'idle';
   CLOUD.pushing=true;cloudBadge('☁ ⇅','Syncing…');
   try{
-    const r=await cloudFetch('/save',{method:'PUT',body:JSON.stringify({version:CLOUD.ver,blob:JSON.stringify(S),savedAt:Date.now(),offlineClaimId:S.offlineClaimId||null})});
-    if(r.status===409){const c=await r.json();cloudBadge('☁ ⚠','Two saves - choose which to keep');cloudConflict(c);return 'conflict'}
+    const r=await cloudFetch('/save',{method:'PUT',body:JSON.stringify({version:CLOUD.ver,owner:CLOUD.user,blob:JSON.stringify(S),savedAt:Date.now(),offlineClaimId:S.offlineClaimId||null})});
+    if(r.status===409){const c=await r.json();
+      if(c.accountMismatch){cloudAccountMismatch(c.owner);return 'idle'}
+      cloudBadge('☁ ⚠','Two saves - choose which to keep');cloudConflict(c);return 'conflict'}
     if(r.status===428){const d=await r.json().catch(()=>({}));if(d.offlineClaim){applyOfflineProgress(Date.now(),d.offlineClaim);CLOUD.dirty=true;setTimeout(()=>cloudPush(true),0);return 'offline-claim'}throw new Error(d.err||'A server-timed offline claim is required.')}
     if(!r.ok)throw new Error('HTTP '+r.status);
     const d=await r.json();CLOUD.ver=d.version;CLOUD.dirty=false;CLOUD.lastPush=Date.now();CLOUD.offline=false;
@@ -2163,6 +2165,18 @@ async function cloudPush(push){
     return 'offline';
   }finally{CLOUD.pushing=false}
 }
+// The session cookie is shared by every tab of the site. If another tab (or a sign-in on this device)
+// has put a different account in it, this tab must stop syncing: it keeps its own character on this
+// device, and nothing from it is uploaded or applied to the other account. The server refuses such
+// writes too (functions/api/save.js); this is the message and the stop.
+function cloudAccountMismatch(other){
+  CLOUD.paused=true;
+  cloudBadge('☁ ⛔','Sync stopped: signed in as '+(other||'another account')+' in another tab');
+  cloudSay('This tab is playing '+CLOUD.user+', but this browser is now signed in as '+(other||'another account')+' in another tab. Nothing from this tab was uploaded, and your local copy is kept. Reload this tab and log in as '+CLOUD.user+' to keep syncing.','r0');
+}
+// Does a save or gift list returned by the server belong to `name`? A server that sends no owner is
+// the older one, and is trusted as before.
+const cloudOwnedBy=(data,name)=>!data||!data.owner||String(data.owner).toLowerCase()===String(name||'').toLowerCase();
 function cloudFlush(){return cloudPush(false)}
 function cloudFlushNow(){return cloudPush(true)}
 
@@ -2205,6 +2219,7 @@ async function cloudJoin(u,localBlob){
   let data=null;
   try{const r=await cloudFetch('/save');if(r.ok)data=await r.json()}
   catch(e){cloudBadge('☁ ✕','Offline - playing from this device');return}
+  if(!cloudOwnedBy(data,u)){cloudAccountMismatch(data.owner);return}
   if(!data||!data.blob){CLOUD.ver=0;CLOUD.dirty=true;if(data&&data.offlineClaim)applyOfflineProgress(Date.now(),data.offlineClaim);await cloudPush(true);return}
   if(data.blob===localBlob){CLOUD.ver=data.version;CLOUD.dirty=false;cloudBadge('☁ ✓','In sync · v'+data.version);
     if(data.offlineClaim){applyOfflineProgress(Date.now(),data.offlineClaim);await cloudPush(true)}return}
@@ -2218,6 +2233,7 @@ async function cloudRefresh(){
   let data=null;
   try{const r=await cloudFetch('/save');if(r.ok)data=await r.json()}
   catch(e){cloudBadge('☁ ✕','Offline - progress is safe on this device');return}
+  if(!cloudOwnedBy(data,CLOUD.user)){cloudAccountMismatch(data.owner);return}
   if(!data||!data.blob)return;
   const local=localStorage.getItem(saveKeyFor(currentUser));
   if(data.blob===local){CLOUD.ver=data.version;CLOUD.dirty=false;
@@ -2234,7 +2250,10 @@ async function cloudRefresh(){
 // overwrite what is being played. Called at login and every few minutes after it.
 async function cloudPull(){
   if(!CLOUD.on||CLOUD.paused)return;
-  try{const g=await (await cloudFetch('/grants')).json();if(g.grants&&g.grants.length)cloudApplyGrants(g.grants)}catch(e){}
+  try{const g=await (await cloudFetch('/grants')).json();
+    // another account's gifts are never applied to this tab's character
+    if(!cloudOwnedBy(g,CLOUD.user)){cloudAccountMismatch(g.owner);return}
+    if(g.grants&&g.grants.length)cloudApplyGrants(g.grants)}catch(e){}
   try{
     const m=await (await cloudFetch('/messages')).json();
     if(m.messages&&m.messages.length){
@@ -2327,6 +2346,7 @@ async function initSessionFromCloud(u,gm,isNew){
   }else{
     let data=null;
     try{const r=await cloudFetch('/save');if(r.ok)data=await r.json()}catch(e){}
+    if(!cloudOwnedBy(data,u))data=null;        // the cookie is someone else's: nothing of theirs is applied
     if(data&&data.blob){                       // a new device: the cloud has the character
       lsPut(saveKeyFor(u),data.blob);
       cloudStart(u,gm);CLOUD.ver=data.version;CLOUD.dirty=false;
@@ -2344,11 +2364,21 @@ async function initSessionFromCloud(u,gm,isNew){
 }
 
 // Cloud register/login, used by submitAuth whenever the API is present.
+// The longest a sign-in may take before the card says so. Before this, a slow or stalled server left the
+// card showing nothing at all: no message, no busy state, so a hang looked exactly like a dead button.
+const AUTH_TIMEOUT_MS=20000;
 async function cloudAuth(u,p,isReg){
+  const btn=$('authBtn'),ac=new AbortController(),timer=setTimeout(()=>ac.abort(),AUTH_TIMEOUT_MS);
+  // Show that work is under way, and block a second click from sending a second request.
+  showErr(isReg?'Creating your account…':'Signing in…',true);
+  if(btn)btn.disabled=true;
   try{
-    const r=await cloudFetch(isReg?'/register':'/sessions',{method:'POST',body:JSON.stringify({u,p})});
-    const d=await r.json().catch(()=>({}));
-    if(!r.ok)return showErr(d.err||('Error '+r.status));
+    const r=await cloudFetch(isReg?'/register':'/sessions',{method:'POST',body:JSON.stringify({u,p}),signal:ac.signal});
+    const d=await r.json().catch(()=>null);
+    clearTimeout(timer);
+    if(!r.ok)return showErr((d&&d.err)||('Error '+r.status));
+    if(!d||!d.u)throw new Error('the server sent an unreadable answer');
+    showErr('');
     rememberUserId(d.u||u,!!isReg);
     CLOUD.ver=0;CLOUD.dirty=false;
     if(isReg&&d.recovery){
@@ -2359,8 +2389,19 @@ async function cloudAuth(u,p,isReg){
         {yes:'I saved it — enter the game',no:'Not now'});
       return;
     }
-    return initSessionFromCloud(d.u,d.gm,isReg);
-  }catch(e){showErr('Could not reach the server: '+e.message+'. You can still play offline.')}
+    // Awaited on purpose. Without the await, a throw while the session starts (a save that will not
+    // load, a UI step) skipped this catch and became an unhandled promise: the server had already
+    // signed the player in, but the card stayed open with no message at all.
+    try{await initSessionFromCloud(d.u,d.gm,isReg)}
+    catch(e){showErr('Signed in, but the game could not start: '+e.message+'. Your account is fine - reload the page and log in again.')}
+    return;
+  }catch(e){
+    showErr(ac.signal.aborted?'The server did not answer in time. Check your connection and try again.'
+      :'Could not reach the server: '+e.message+'. You can still play offline.');
+  }finally{
+    clearTimeout(timer);
+    if(btn)btn.disabled=false;
+  }
 }
 function cloudLogout(){
   if(!CLOUD.on)return;
@@ -3006,7 +3047,7 @@ function log(m,cls,cat){const e={m,cls,cat};logs.push(e);if(logs.length>80)logs.
 // (5 tiles), else the class's own band - bow 4 (owner, v83.2: it was 5 and outranged the staff),
 // staff 4.5, melee 1.2 + 0.45*size.
 const CLASS_BAND=cls=>cls&&cls.rng?(/^(Mage|Wizard|High Wizard)$/.test(cls.n)?4.5:4):0;   // v83.2 owner: bow 4, staff 4.5
-let standC={t:-9,r:0},engageTgt=null;   // engageTgt: latched into a stand-and-trade fight (v83.1)
+let standC={t:-9,r:0},engageTgt=null,engageWait=0;   // engageTgt: latched into a stand-and-trade fight (v83.1); engageWait: seconds latched while out of reach (v88.4)
 function heroStandoff(m){
   let r=CLASS_BAND(C());
   for(const s of SKILLS)if(s.type==='act'&&s.rng&&skillOn(s.id)&&(skCd[s.id]||0)<=0)r=Math.max(r,s.rng>1?s.rng:5);
@@ -3071,6 +3112,7 @@ function swingLength(){                    // the drawn attack animation, never 
 }
 function playerAttack(){
   if(!mob)return;
+  engageWait=0;   // a swing is the proof the fight is live: the walk-in wait starts again (v88.4)
   const interval=aspd(),far=Math.hypot(mob.x-pl.x,mob.z-pl.z)>heroStandoff(mob)+.6;
   pAtkT=interval;atkAnim=1;swingDur=swingLength();
   const ready=SKILLS.filter(s=>s.type==='act'&&skillOn(s.id)&&(skCd[s.id]||0)<=0&&(!far||s.rng))
@@ -4126,12 +4168,23 @@ if(S.hp<=0){log('You were defeated... knocked back to the entrance.','r0','kills
       // still watching a monster that has gone back to sleep.
       if(dist<=reach+.6)engageTgt=mob;
       else if(engageTgt!==mob||dist>reach+1.2)engageTgt=null;
-      if(engageTgt===mob){tx=pl.x;tz=pl.z;                          // stand: this is the whole point
+      if(engageTgt===mob){
         // ...and swing only while the target really is in range. The 1.2-unit break radius is a
         // stand-still window, not an attack window: a monster a step out walks back in rather than
         // making the hero shuffle after it.
-        if(dist<=reach+.6){pAtkT-=dt;if(pAtkT<=0){playerAttack();if(mob&&mob.hp<=0){kill();return}}}}
-      else{pl.orb+=dt*.8;const r=reach*.85;tx=mob.x+Math.cos(pl.orb)*r;tz=mob.z+Math.sin(pl.orb)*r}}
+        // v88.4 (owner: "the character gets stuck attacking, it still takes hits, only dying fixes it"):
+        // that assumption fails for a small monster. Its own approach ring (1.9 + 0.25*size) can sit
+        // just outside the hero's attack window (reach + 0.6), so it stops there, never walks in, and
+        // the hero waits forever for it - both stand still while the monster keeps hitting. Found by
+        // a repeated-run sweep of Novice, Swordman, Thief and Merchant fights (tools/tests/field_loop_smoke.js pins it).
+        // Now a latched hero waits one second for the walk-in; if the target is still out of reach it
+        // closes to its attack distance itself. Walking in never happens while the target is in reach.
+        // The wait is not reset by a frame in reach: a monster that dances across the edge of the window
+        // would keep the count below one second for ever. Only a swing (playerAttack) or a broken latch clears it.
+        if(dist<=reach+.6){tx=pl.x;tz=pl.z;pAtkT-=dt;if(pAtkT<=0){playerAttack();if(mob&&mob.hp<=0){kill();return}}}
+        else if((engageWait+=dt)<1){tx=pl.x;tz=pl.z}
+        else{const k=reach*.85/dist;tx=mob.x+(pl.x-mob.x)*k;tz=mob.z+(pl.z-mob.z)*k}}
+      else{engageWait=0;pl.orb+=dt*.8;const r=reach*.85;tx=mob.x+Math.cos(pl.orb)*r;tz=mob.z+Math.sin(pl.orb)*r}}
   }
   const AP=S.pets.filter(p=>p.on);for(const p of AP){const r=petR[p.id]||(petR[p.id]={x:pl.x-1,z:pl.z+1,at:rnd(0,1)}),i=AP.indexOf(p);let o=null,bd=1e9;
     for(const m of mobs){if(m.pack!==activePack)continue;const d=Math.hypot(m.x-r.x,m.z-r.z);if(d<bd){bd=d;o=m}}

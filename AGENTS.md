@@ -5842,3 +5842,133 @@ The owner's second pass over v77, six notes, all built.
 * **Known limits / follow-ups:** none new. The fix is server-side only, so the deployed
   `functions/api/sessions.js` must be redeployed with the page (the v88 auto-refresh reloads
   players onto the new page; the Function ships with the same `wrangler pages deploy`).
+
+### 2026-10-09 — `2026-10-09 grind-v88.2 a cloud sign-in that fails while the game starts now says why on the login card, instead of doing nothing`
+* **What changed for the player:** if signing in to a cloud account fails while the game is starting,
+  the login card now says why, instead of staying open with no message. The message reads "Signed in,
+  but the game could not start: <reason>. Your account is fine - reload the page and log in again."
+  Nothing changes when login works.
+  * **Checked, not assumed:** the server login was tested end to end against the real `functions/api/*`
+    handlers over HTTP (register, login, wrong password, the session cookie, the save read). The real
+    `index.html` was run in jsdom against a running dev server: register, log in with a new name, log
+    in with a wrong password, and an unknown name all behaved correctly.
+  * **Root cause (of the silent failure):** in `cloudAuth()`, the final `return initSessionFromCloud(...)`
+    sat inside the `try` without an `await`. A throw while the session started therefore skipped the
+    `catch` and became an unhandled promise. The server had already accepted the login and set the
+    cookie, so the player saw nothing. Forcing a failure in jsdom reproduced exactly that: cookie set,
+    empty error line, card still open.
+  * **Fix:** `await` the session start inside its own `try`, and show the error on the card. The
+    register path's recovery-code prompt already had its own `.catch`, so it was not affected.
+  * **Not yet known:** the cause of the owner's specific login problem. A failing login now shows its
+    reason on the card, and that text is what identifies the cause. No server change was needed.
+* **Files touched:** `index.html` (the fix; `BUILD` grind-v88.2); new `tools/tests/cloud_login_error_sim.js`
+  (6 cases, extracted from the real `cloudAuth`; 2 fail on the previous build); build-tag mirrors
+  (`Updates/cards-gear-audit/affix-ranges.html` x2, `equipment-cards-tuning.html`,
+  `tools/cloudflare-deploy-steps.md`); `READ-ME-FIRST.md` (a v88.2 section at the top of the BUILD list);
+  this log.
+* **Art:** none.
+* **Tests:** the new suite passes 6/6; all 41 suites (the 40 `*_sim.js` files plus `field_loop_smoke.js`) exit 0 on this build.
+* **Branches / PR:** committed to `arena/f15fe482-prontera-grind`; no PR opened.
+* **Known limits / follow-ups:** none for this fix. The owner's specific login problem still needs the
+  message the card shows, or the browser's console output, to diagnose.
+
+### 2026-10-09 — `2026-10-09 grind-v88.3 a sign-in now shows a Signing in line while it waits, and gives up with a message after 20 seconds instead of sitting silent`
+* **What changed for the player:** the login card now answers while it waits. It shows "Signing in…"
+  (or "Creating your account…") and greys out the Login button until the server replies. If the server
+  has not replied after 20 seconds, the card says the server did not answer in time and the button comes
+  back. A normal login looks the same as before.
+  * **Checked, not assumed:** the real `index.html` in jsdom against the dev server with the login answer
+    delayed. Before this change, for 6 seconds and for 30 seconds, the card showed no text and the button
+    stayed enabled. After it: the 6-second delay shows "Signing in…" with the button locked, then signs in;
+    the 30-second stall shows the timeout message at 20 seconds and the button comes back.
+  * **Root cause:** `cloudAuth()` had no busy state and no timeout. A slow or stalled request looked
+    exactly like a dead button. The v88.2 fix only covered failures after the server had answered.
+  * **Fix:** a busy line and a disabled button while the request is in flight, a 20-second
+    `AbortController` on the sign-in request, and a clear message when it fires. The busy line is cleared
+    before the game starts, so no stale text remains.
+  * **Not confirmed:** whether the player's earlier "nothing happens" was this stall. They report that it
+    works now, so the cause was probably intermittent. If it returns, the card now says which step failed.
+* **Files touched:** `index.html` (`AUTH_TIMEOUT_MS`, `cloudAuth()`; `BUILD` grind-v88.3); `tools/tests/cloud_login_error_sim.js`
+  (now 9 cases: the busy state, the timeout, and the earlier error cases); `tools/tests/cloud_sim.js` (its sandbox gets `AbortController`, which `cloudAuth` now uses); build-tag mirrors
+  (`affix-ranges.html` x2, `equipment-cards-tuning.html`, `tools/cloudflare-deploy-steps.md`);
+  `READ-ME-FIRST.md` (a v88.3 section at the top of the BUILD list); this log.
+* **Art:** none.
+* **Tests:** all 41 suites exit 0 on this build (the 40 `*_sim.js` files plus `field_loop_smoke.js`, run with jsdom and three available); `cloud_login_error_sim` 9/9, `cloud_sim` 36/36, `drop_card_sheet_sim` 13/13.
+* **Branches / PR:** committed to `arena/f15fe482-prontera-grind`; no PR opened.
+* **Known limits / follow-ups:** the 20-second limit is a judgement call; change `AUTH_TIMEOUT_MS` if the
+  real server is slower. The server was not measured on Cloudflare, only locally.
+
+### 2026-10-09 — `2026-10-09 grind-v88.4 a tab playing one account can no longer save over another account on the same browser`
+* **What changed for the player:** a browser holds one login cookie that every tab shares. If one tab was
+  playing the GM account and another tab then signed in as a second account, the first tab could save
+  its character over the second account's save. The second account then showed the GM's character and
+  progress. Now the server refuses a save that does not belong to the account the cookie is signed in
+  as, and the game stops syncing in that tab instead of overwriting anything. The tab says so on the
+  login card. Nothing is uploaded from that tab, and nothing from the other account is applied to it.
+* **Checked, not assumed:** with the dev server, one cookie and two accounts: the GM account saved a
+  character; the second account signed in and saved its own; then a save from the GM tab was sent with
+  the second account's cookie. Before this change the server accepted it (version went 1 to 2) and the
+  second account's save became the GM character. After it, that save is refused with a 409 and the
+  second account's save is unchanged.
+* **Root cause:** `functions/api/save.js` checked only the save version, never which account the save
+  belongs to. The client also never sent the account name, and it did not check the account on sign-in
+  or when it pulled gifts.
+* **Fix:** every save write must name its account (`owner`). A write without one gets a 400 asking the
+  page to reload. A write for another account gets a 409 with `accountMismatch`. Both reads (`GET
+  /api/save` and `GET /api/grants`) return the owner. The client stops sync on a mismatch, and checks
+  the owner before it adopts a save on sign-in, before it applies gifts, and in the refresh check.
+* **Not changed:** a new tab still signs out the cookie session that the other tab uses (the page-load
+  check in `cloudProbe`). Such a tab is now refused by the server until it signs in again, instead of
+  overwriting another account's save.
+* **Files touched:** `functions/api/save.js`, `functions/api/grants.js`, `index.html` (`cloudPush`,
+  `cloudAccountMismatch`, `cloudOwnedBy`, `cloudJoin`, `cloudRefresh`, `cloudPull`,
+  `initSessionFromCloud`; `BUILD` grind-v88.4); `tools/tests/api_sim.js` (the test PUT now sends the
+  owner; two new cases: a stale tab is refused, and an owner is required); `tools/tests/cloud_sim.js`
+  (four new cases); `tools/tests/leaderboard_sim.js` and `tools/tests/dev_server_sim.js` (their PUTs now
+  send the owner); build-tag mirrors (`affix-ranges.html` x2, `equipment-cards-tuning.html`,
+  `tools/cloudflare-deploy-steps.md`); `READ-ME-FIRST.md` (a v88.4 section above v88.3); this log.
+* **Art:** none.
+* **Tests:** all 40 `*_sim.js` suites exit 0 on this build; `field_loop_smoke` 7/7 (jsdom and three
+  available). `api_sim` 36/36 (its two new cases fail on the previous save.js). `cloud_sim` 40/40 (three
+  of its four new cases fail on the previous index.html; the fourth, that a matching owner still gets
+  its gifts, passes on both, so the guard does not block the normal case).
+* **Branches / PR:** committed to `arena/f15fe482-prontera-grind`; no PR opened. Not deployed.
+* **Known limits / follow-ups:** the server side needs the Cloudflare deploy to take effect; nothing
+  here is live until that is done and checked on the real site.
+
+### 2026-10-09 — `2026-10-09 grind-v88.5 a character beside a monster it cannot reach now walks in and fights, instead of standing still while being hit`
+* **What changed for the player:** a melee character (Merchant, Novice, Swordman, Thief and the rest)
+  could settle beside a monster that was just outside its attack range and then wait for it to come
+  in. Some small monsters never did, so both stood still and the monster kept hitting until the
+  character died. Now the character waits about one second, then walks in and fights. A monster that
+  walks into range on its own is still waited for, as before.
+* **Checked, not assumed:** a real field loop (the game's own update step, in jsdom) with a monster
+  that will not move. On the previous build the character never struck it. On this build it waits
+  about a second, then closes in and deals damage, and ends inside its own reach. Across repeated
+  fights of 300 seconds each, the stall came up in roughly one run in four for Novice, Swordman, Thief
+  and Merchant on the previous build, and on this build: none in 12 runs each for Novice, Thief and Merchant, and one
+  in about 160 Swordman runs (that run stopped at 1.6 units, which is inside reach; see follow-ups).
+* **Root cause:** the hero's rule was "latch on, stand still, and let the monster walk into reach".
+  A small monster's own approach ring (1.9 + 0.25 × size) sits just outside the hero's attack window
+  (reach + 0.6), so the monster stopped where the hero would not strike, and neither moved. Only dying
+  reset the fight.
+* **Fix:** a latched hero waits one second while the target is out of reach; then it closes to its
+  attack distance. The wait is not reset by a frame in reach (a monster that drifts across the edge
+  would keep resetting it). It is cleared by a swing or when the latch breaks.
+* **Not the cause (checked):** the attack-speed value for every class (all sane), the Merchant's skills
+  (none has a range, so the stand-off is the same for Merchant as for other melee), and the Merchant
+  art (drawn, not a movement issue).
+* **Files touched:** `index.html` (`heroStandoff` untouched; the latched-stand block in `update()`,
+  `engageWait` next to `engageTgt`, `playerAttack()`; `BUILD` grind-v88.5); `tools/tests/field_loop_smoke.js`
+  (new case 6: a latched hero with a monster that will not move must wait, then strike and end in reach);
+  build-tag mirrors (`affix-ranges.html` x2, `equipment-cards-tuning.html`, `tools/cloudflare-deploy-steps.md`);
+  `READ-ME-FIRST.md` (a v88.5 section above v88.4); this log.
+* **Art:** none.
+* **Tests:** all 40 `*_sim.js` suites and `field_loop_smoke` exit 0 on this build (`field_loop_smoke` 8/8,
+  run with jsdom and three available). The new case fails on the previous index.html (`dealt 0`).
+* **Branches / PR:** committed to `arena/f15fe482-prontera-grind`; no PR opened. Not deployed.
+* **Known limits / follow-ups:** verified in the jsdom field loop, not in a real browser (no browser in the
+  sandbox). One Swordman run in about 160 on this build stopped at 1.6 units with no damage for five
+  seconds. About 160 further Swordman runs did not reproduce it, and its cause is not known; it needs a look
+  if it is seen in play.
+  The one-second wait is a judgement call; change `engageWait` in `update()` if it feels slow.

@@ -84,6 +84,61 @@ is the live one; with no argument the tool prints how to set a new one). Since v
 `GM` / `test1234`; `localStorage.removeItem('pg_gm_local')` removes it. Normal accounts are made
 in-game and stored in the browser (`pg_acc4`; saves under `pg_save3_<user>`).
 
+## BUILD v88.5 — a melee character no longer stands still beside a monster it cannot reach (grind-v88.5)
+
+A player reported: a Merchant gets stuck while attacking mobs. It keeps taking hits, and only dying
+(which sends it back to the entrance) gets it moving again. Reproduced in a real field loop: the
+hero stood still, out of reach of a small monster, and the monster stood still just outside the
+hero's attack range and kept hitting. The same stall showed up for Novice, Swordman and Thief, so it
+is not specific to the Merchant.
+
+* **What you will notice:** a melee character that has settled beside a monster it cannot reach
+  waits about a second for the monster to step in, then walks in and fights. A monster that walks
+  into reach on its own is still waited for, so a normal fight looks the same.
+* **To see it:** `node tools/tests/field_loop_smoke.js` (its new case 6 fails on the previous build).
+
+## BUILD v88.4 — a save from one account can no longer land on another (grind-v88.4)
+
+A player reported: after playing the GM account, logging into a second account showed the second
+name with the GM character and its gameplay. Reproduced with two accounts and one browser session: a
+save from the first account, sent while the cookie already belonged to the second, was accepted by
+the server and replaced the second account's save.
+
+* **What you will notice:** nothing on a normal login. If a tab is still playing one account while the
+  browser has signed in as another, that tab stops syncing and says so on the card. Nothing from it
+  is uploaded and nothing from the other account is applied to it. The local copy is kept.
+* **To see it:** `node tools/tests/api_sim.js` (the stale-tab and owner cases fail on the previous
+  save.js) and `node tools/tests/cloud_sim.js` (the owner cases fail on the previous index.html).
+
+## BUILD v88.3 — the login card answers while it waits (grind-v88.3)
+
+A player reported: type the password, click Login, and nothing happens. Checked the real login card
+with a slow server: the card showed nothing, and the Login button stayed live, so a player who waited
+or clicked again got no sign that anything was happening. A stalled request never ended. The v88.2
+fix only covered a failure after the server had answered.
+
+* **What you will notice:** while the server answers, the card says "Signing in…" (or "Creating your
+  account…") and the Login button is greyed out. If the server has not answered after 20 seconds, the
+  card says "The server did not answer in time. Check your connection and try again." and the button
+  comes back. A normal login is unchanged.
+* **To see it:** `node tools/tests/cloud_login_error_sim.js` (9 cases; the wait and timeout cases fail on
+  the previous build).
+
+## BUILD v88.2 — cloud sign-in errors are shown on the login card (grind-v88.2)
+
+The owner reported being unable to log in. Checked both halves: the server login (register, login,
+wrong password, the session cookie) works end to end against the real `functions/api/*` handlers, and
+the real page in jsdom signs in fine. The defect found: when the server accepted the login but the game
+then failed while starting (for example a save that would not load), the error was swallowed. The card
+stayed open with no message, and the server had already created the session.
+
+* **What you will notice:** that failure now shows a message on the login card: "Signed in, but the game
+  could not start: <reason>. Your account is fine - reload the page and log in again." Nothing else changes.
+* **To see it:** the regression suite is `node tools/tests/cloud_login_error_sim.js` (6 cases; 2 fail on
+  the previous build).
+* **Still open:** a login that fails with an error message on the card is the one to report; the message
+  text is what identifies the cause.
+
 ## BUILD v88.1 — offline rewards pay out again on cloud accounts (grind-v88.1)
 
 The owner reported the offline reward "seems to be not working" (it should be 4 hours max at 50%

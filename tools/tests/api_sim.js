@@ -100,7 +100,12 @@ const api = {
   logout: (env, cookie) => call('onRequestDelete', 'api/sessions.js', { request: req('DELETE', '/api/sessions', { cookie }), env }),
   me: (env, cookie) => call('onRequestGet', 'api/me.js', { request: req('GET', '/api/me', { cookie }), env }),
   getSave: (env, cookie) => call('onRequestGet', 'api/save.js', { request: req('GET', '/api/save', { cookie }), env }),
-  putSave: (env, cookie, body) => call('onRequestPut', 'api/save.js', { request: req('PUT', '/api/save', { cookie, body }), env }),
+  // a well-behaved client names the account it is playing; a test may still pass its own owner to show the refusal
+  putSave: async (env, cookie, body) => {
+    const me = await api.me(env, cookie);
+    const owner = me.data && me.data.u;
+    return call('onRequestPut', 'api/save.js', { request: req('PUT', '/api/save', { cookie, body: Object.assign({ owner }, body) }), env });
+  },
   grants: (env, cookie) => call('onRequestGet', 'api/grants.js', { request: req('GET', '/api/grants', { cookie }), env }),
   claim: (env, cookie, ids) => call('onRequestPost', 'api/grants.js', { request: req('POST', '/api/grants', { cookie, body: { ids } }), env }),
   messages: (env, cookie) => call('onRequestGet', 'api/messages.js', { request: req('GET', '/api/messages', { cookie }), env }),
@@ -501,6 +506,34 @@ await T('two accounts never collide on the same save', async () => {
   await api.putSave(e3, b.cookie, { version: 0, blob: saveBlob(20, 2), savedAt: 1 });
   assert.strictEqual(JSON.parse((await api.getSave(e3, a.cookie)).data.blob).lv, 10);
   assert.strictEqual(JSON.parse((await api.getSave(e3, b.cookie)).data.blob).lv, 20);
+});
+
+await T('a stale tab cannot write its save onto another account (the shared cookie)', async () => {
+  // Real incident: the GM's character appeared on a player's account. The GM tab was still open, the
+  // browser's one session cookie had moved to the player, and the tab's save went out under the player.
+  const { env: e4 } = freshEnv();
+  await api.register(e4, { u: 'OWNERGM', p: 'owner-password-1' });
+  const second = await api.register(e4, { u: 'SECONDAC', p: 'second-password-2' });
+  await api.putSave(e4, second.cookie, { version: 0, blob: saveBlob(12, 350), savedAt: 1 });
+  const stale = await api.putSave(e4, second.cookie, { owner: 'OWNERGM', version: 1, blob: saveBlob(150, 999999), savedAt: 2 });
+  assert.strictEqual(stale.status, 409, 'refused');
+  assert.strictEqual(stale.data.accountMismatch, true, 'the client is told why');
+  assert.strictEqual(stale.data.owner, 'SECONDAC', 'and whose session it is');
+  const after = await api.getSave(e4, second.cookie);
+  assert.strictEqual(JSON.parse(after.data.blob).lv, 12, 'the other account keeps its own character');
+  assert.strictEqual(after.data.version, 1, 'and its version did not move');
+});
+
+await T('a write must name its account, and every save or gift read names its owner', async () => {
+  const { env: e5 } = freshEnv();
+  const me = await api.register(e5, { u: 'NAMED', p: 'named-password-1' });
+  const noOwner = await api.putSave(e5, me.cookie, { owner: undefined, version: 0, blob: saveBlob(10, 1), savedAt: 1 });
+  assert.strictEqual(noOwner.status, 400, 'an out-of-date page is told to reload, not silently accepted');
+  assert.strictEqual((await api.getSave(e5, me.cookie)).data.blob, null, 'nothing was written');
+  const ok = await api.putSave(e5, me.cookie, { version: 0, blob: saveBlob(10, 1), savedAt: 1 });
+  assert.strictEqual(ok.status, 200);
+  assert.strictEqual((await api.getSave(e5, me.cookie)).data.owner, 'NAMED');
+  assert.strictEqual((await api.grants(e5, me.cookie)).data.owner, 'NAMED');
 });
 
 // ------------------------------------------- the v82 usage diet (D1 writes) ----

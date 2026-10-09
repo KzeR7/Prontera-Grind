@@ -47,8 +47,10 @@ async function register(u, p) {
   return out.res.headers.get('Set-Cookie').split(';')[0];
 }
 async function put(cookie, version, lv, kills) {
+  // the account this tab is playing (the server refuses a save for any other account, v88.4)
+  const me = await call('api/me.js', 'onRequestGet', 'GET', '/api/me', { cookie });
   return call('api/save.js', 'onRequestPut', 'PUT', '/api/save', {
-    cookie, body: { version, savedAt: Date.now(), blob: JSON.stringify({ lv, kills, cls: 'Novice', zeny: 0 }) },
+    cookie, body: { owner: me.data.u, version, savedAt: Date.now(), blob: JSON.stringify({ lv, kills, cls: 'Novice', zeny: 0 }) },
   });
 }
 async function board(cookie, period) {
