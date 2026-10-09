@@ -6410,3 +6410,11 @@ The owner's second pass over v77, six notes, all built.
 
 * **Owner reply (round 6):** "tiers, Prontera till Payon Nightmare are Lv 120, Comodo above Lv 140". The owner confirmed the tier split (maps 0-4 and 5-9) and both gates (Base Lv 120 and 140), which match the build. Still open: what "jump" means (power as built, or HP, or Zeny), whether N+ gear follows the tier (as built) or stays flat as in v90.8, and whether Abyss Normal's gear counts as a reason to farm it.
 * **Owner reply 2 (round 6, decisions):** (1) "jump" means players need better gear to farm the jump map, so the step is a gear check and not a reward. (2) All Nightmare stages (11-15) drop Nightmare equipment. N+ comes from Nightmare Comodo to Abyss, and N comes from Nightmare Prontera to Payon. The build already does this (`secField`: section 4 on maps 0-4, section 5 on maps 5-9, stages 11-15 only). Still not measured: whether Abyss Normal gear is actually too weak for Nightmare Prontera Stage 11 (HP about 20 times the Abyss normal entry), and the refine damage impact.
+
+### 2026-10-09 — `2026-10-09 grind-v90.10 merged onto current main: this session's work (grind-v89 to grind-v90.10) now sits on top of main's v88.7 and v88.8`
+
+* **What happened:** `main` was replaced by a new root commit (`f730e21`, build v88.8). The branch's old base (`98600fa`, v88.6) was no longer in its history, so a PR would have shown unrelated histories and could have dropped main's v88.7 and v88.8 changes. The branch was merged with main (merge commit `7ad9f62`) so the PR is clean and nothing from main is lost.
+* **Conflicts resolved:** only the build-tag lines (`index.html`, `Updates/cards-gear-audit/affix-ranges.html` x2, `Updates/cards-gear-audit/equipment-cards-tuning.html`, `tools/cloudflare-deploy-steps.md`) took the grind-v90.10 tag. `AGENTS.md` keeps main's v88.7 and v88.8 entries before the v89 to v90.10 entries. `READ-ME-FIRST.md` keeps the v90.10 to v89 sections above main's v88.8 and v88.7 sections. `tools/tests/ui_sim.js` merged textually.
+* **Check:** the only lines from main that the merge removes are main's v88.8 build-tag lines, which are replaced on purpose.
+* **Tests:** all 47 suites in `tools/tests/` exit 0 on the merged tree (main added two suites).
+* **Not merged:** the PR is open for review. It has not been merged.
