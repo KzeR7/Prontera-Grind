@@ -53,6 +53,7 @@ function harness(opts = {}) {
   };
   const sandbox = {
     console, JSON, Math, Date, Number, String, Array, Object, Promise, Blob,
+    AbortController, clearTimeout,   // cloudAuth gives up after AUTH_TIMEOUT_MS (v88.3); setTimeout is stubbed below
     fetch: fetchStub,
     localStorage: {
       get length() { return store.size; },

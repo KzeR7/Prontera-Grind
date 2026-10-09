@@ -84,6 +84,20 @@ is the live one; with no argument the tool prints how to set a new one). Since v
 `GM` / `test1234`; `localStorage.removeItem('pg_gm_local')` removes it. Normal accounts are made
 in-game and stored in the browser (`pg_acc4`; saves under `pg_save3_<user>`).
 
+## BUILD v88.3 — the login card answers while it waits (grind-v88.3)
+
+A player reported: type the password, click Login, and nothing happens. Checked the real login card
+with a slow server: the card showed nothing, and the Login button stayed live, so a player who waited
+or clicked again got no sign that anything was happening. A stalled request never ended. The v88.2
+fix only covered a failure after the server had answered.
+
+* **What you will notice:** while the server answers, the card says "Signing in…" (or "Creating your
+  account…") and the Login button is greyed out. If the server has not answered after 20 seconds, the
+  card says "The server did not answer in time. Check your connection and try again." and the button
+  comes back. A normal login is unchanged.
+* **To see it:** `node tools/tests/cloud_login_error_sim.js` (9 cases; the wait and timeout cases fail on
+  the previous build).
+
 ## BUILD v88.2 — cloud sign-in errors are shown on the login card (grind-v88.2)
 
 The owner reported being unable to log in. Checked both halves: the server login (register, login,

@@ -647,7 +647,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // script block, which is a SyntaxError - the game did not run on main at all. One line wins, and
 // it names both sides of this merge: the v38 balance patch (the weapon cut, the affix/card
 // give-back) and main's weapon-hold rendering work.
-const BUILD='2026-10-09 grind-v88.2 a cloud sign-in that fails while the game starts now says why on the login card, instead of doing nothing';   // shown on the login card - confirms which file you loaded
+const BUILD='2026-10-09 grind-v88.3 a sign-in now shows a Signing in line while it waits, and gives up with a message after 20 seconds instead of sitting silent';   // shown on the login card - confirms which file you loaded
 $('buildTag').textContent='build '+BUILD;
 
 // ---------- class tree: Novice -> 6 first jobs -> 6 second jobs -> 6 third jobs ----------
@@ -2344,11 +2344,21 @@ async function initSessionFromCloud(u,gm,isNew){
 }
 
 // Cloud register/login, used by submitAuth whenever the API is present.
+// The longest a sign-in may take before the card says so. Before this, a slow or stalled server left the
+// card showing nothing at all: no message, no busy state, so a hang looked exactly like a dead button.
+const AUTH_TIMEOUT_MS=20000;
 async function cloudAuth(u,p,isReg){
+  const btn=$('authBtn'),ac=new AbortController(),timer=setTimeout(()=>ac.abort(),AUTH_TIMEOUT_MS);
+  // Show that work is under way, and block a second click from sending a second request.
+  showErr(isReg?'Creating your account…':'Signing in…',true);
+  if(btn)btn.disabled=true;
   try{
-    const r=await cloudFetch(isReg?'/register':'/sessions',{method:'POST',body:JSON.stringify({u,p})});
-    const d=await r.json().catch(()=>({}));
-    if(!r.ok)return showErr(d.err||('Error '+r.status));
+    const r=await cloudFetch(isReg?'/register':'/sessions',{method:'POST',body:JSON.stringify({u,p}),signal:ac.signal});
+    const d=await r.json().catch(()=>null);
+    clearTimeout(timer);
+    if(!r.ok)return showErr((d&&d.err)||('Error '+r.status));
+    if(!d||!d.u)throw new Error('the server sent an unreadable answer');
+    showErr('');
     rememberUserId(d.u||u,!!isReg);
     CLOUD.ver=0;CLOUD.dirty=false;
     if(isReg&&d.recovery){
@@ -2365,7 +2375,13 @@ async function cloudAuth(u,p,isReg){
     try{await initSessionFromCloud(d.u,d.gm,isReg)}
     catch(e){showErr('Signed in, but the game could not start: '+e.message+'. Your account is fine - reload the page and log in again.')}
     return;
-  }catch(e){showErr('Could not reach the server: '+e.message+'. You can still play offline.')}
+  }catch(e){
+    showErr(ac.signal.aborted?'The server did not answer in time. Check your connection and try again.'
+      :'Could not reach the server: '+e.message+'. You can still play offline.');
+  }finally{
+    clearTimeout(timer);
+    if(btn)btn.disabled=false;
+  }
 }
 function cloudLogout(){
   if(!CLOUD.on)return;

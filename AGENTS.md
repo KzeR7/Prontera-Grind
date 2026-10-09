@@ -5871,3 +5871,29 @@ The owner's second pass over v77, six notes, all built.
 * **Branches / PR:** committed to `arena/f15fe482-prontera-grind`; no PR opened.
 * **Known limits / follow-ups:** none for this fix. The owner's specific login problem still needs the
   message the card shows, or the browser's console output, to diagnose.
+
+### 2026-10-09 — `2026-10-09 grind-v88.3 a sign-in now shows a Signing in line while it waits, and gives up with a message after 20 seconds instead of sitting silent`
+* **What changed for the player:** the login card now answers while it waits. It shows "Signing in…"
+  (or "Creating your account…") and greys out the Login button until the server replies. If the server
+  has not replied after 20 seconds, the card says the server did not answer in time and the button comes
+  back. A normal login looks the same as before.
+  * **Checked, not assumed:** the real `index.html` in jsdom against the dev server with the login answer
+    delayed. Before this change, for 6 seconds and for 30 seconds, the card showed no text and the button
+    stayed enabled. After it: the 6-second delay shows "Signing in…" with the button locked, then signs in;
+    the 30-second stall shows the timeout message at 20 seconds and the button comes back.
+  * **Root cause:** `cloudAuth()` had no busy state and no timeout. A slow or stalled request looked
+    exactly like a dead button. The v88.2 fix only covered failures after the server had answered.
+  * **Fix:** a busy line and a disabled button while the request is in flight, a 20-second
+    `AbortController` on the sign-in request, and a clear message when it fires. The busy line is cleared
+    before the game starts, so no stale text remains.
+  * **Not confirmed:** whether the player's earlier "nothing happens" was this stall. They report that it
+    works now, so the cause was probably intermittent. If it returns, the card now says which step failed.
+* **Files touched:** `index.html` (`AUTH_TIMEOUT_MS`, `cloudAuth()`; `BUILD` grind-v88.3); `tools/tests/cloud_login_error_sim.js`
+  (now 9 cases: the busy state, the timeout, and the earlier error cases); `tools/tests/cloud_sim.js` (its sandbox gets `AbortController`, which `cloudAuth` now uses); build-tag mirrors
+  (`affix-ranges.html` x2, `equipment-cards-tuning.html`, `tools/cloudflare-deploy-steps.md`);
+  `READ-ME-FIRST.md` (a v88.3 section at the top of the BUILD list); this log.
+* **Art:** none.
+* **Tests:** all 41 suites exit 0 on this build (the 40 `*_sim.js` files plus `field_loop_smoke.js`, run with jsdom and three available); `cloud_login_error_sim` 9/9, `cloud_sim` 36/36, `drop_card_sheet_sim` 13/13.
+* **Branches / PR:** committed to `arena/f15fe482-prontera-grind`; no PR opened.
+* **Known limits / follow-ups:** the 20-second limit is a judgement call; change `AUTH_TIMEOUT_MS` if the
+  real server is slower. The server was not measured on Cloudflare, only locally.
