@@ -102,7 +102,7 @@ Open the `*.pages.dev` address Cloudflare gives the project, and walk this list:
 | Check | Expected |
 |---|---|
 | The login card | says **“☁ Cloud accounts are on — register or sign in…”** |
-| Build tag at the bottom of the card | `2026-10-09 grind-v90.4 Nightmare fairness: each map Stage 15 boss drops its own Crown, and Nightmare EXP and Zeny follow the HP a mob takes, so no map pays better per time spent; katar icon is a boxing glove; class-locked drops say Not equitable on current class` |
+| Build tag at the bottom of the card | `2026-10-09 grind-v90.5 Nightmare pay: Abyss keeps its old EXP and Zeny, the lower maps are tuned down to match per HP; each map Stage 15 boss drops its own Crown; katar icon is a boxing glove; class-locked drops say Not equitable on current class` |
 | Register your own name | a dialog with a **recovery code** — copy it somewhere safe, it is shown once |
 | Play for a minute | the header badge goes `☁ …` → `☁ ✓` |
 | The same address in a second browser | sign in with the same name and password → **the same character loads** |

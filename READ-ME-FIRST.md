@@ -84,6 +84,12 @@ is the live one; with no argument the tool prints how to set a new one). Since v
 `GM` / `test1234`; `localStorage.removeItem('pg_gm_local')` removes it. Normal accounts are made
 in-game and stored in the browser (`pg_acc4`; saves under `pg_save3_<user>`).
 
+## BUILD v90.5 — Nightmare pay anchored to Abyss (grind-v90.5)
+
+The owner asked not to buff Abyss but to tune the lower maps down, since Zeny already overflows. v90.4 had raised Abyss to about 3.1x EXP and 2.6x Zeny per kill at Stage 15. Now `nmPayOf` is taken relative to Abyss at the same stage, so Abyss keeps its pre-v90.4 pay (1) and every other map is lower. Each map still pays the same per HP as the others. At Stage 15 Prontera pays about 0.32x EXP and 0.39x Zeny per kill. Stages 1-10 are unchanged. Tests: `nightmare_sim.js` (new v90.5 test: Abyss is 1, the rest are below 1).
+
+Still open: the Crown (see the v90.4 section). It does not yet give a reason to farm the lower maps.
+
 ## BUILD v90.4 — Nightmare fairness: a Crown per map, and pay per HP (grind-v90.4)
 
 The owner picked option C with B from the "how do we solve this" question: low Nightmare maps were far weaker than Abyss, and players farmed one map and skipped the rest.

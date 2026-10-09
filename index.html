@@ -657,7 +657,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // script block, which is a SyntaxError - the game did not run on main at all. One line wins, and
 // it names both sides of this merge: the v38 balance patch (the weapon cut, the affix/card
 // give-back) and main's weapon-hold rendering work.
-const BUILD='2026-10-09 grind-v90.4 Nightmare fairness: each map Stage 15 boss drops its own Crown, and Nightmare EXP and Zeny follow the HP a mob takes, so no map pays better per time spent; katar icon is a boxing glove; class-locked drops say Not equitable on current class';   // shown on the login card - confirms which file you loaded
+const BUILD='2026-10-09 grind-v90.5 Nightmare pay: Abyss keeps its old EXP and Zeny, the lower maps are tuned down to match per HP; each map Stage 15 boss drops its own Crown; katar icon is a boxing glove; class-locked drops say Not equitable on current class';   // shown on the login card - confirms which file you loaded
 $('buildTag').textContent='build '+BUILD;
 
 // ---------- class tree: Novice -> 6 first jobs -> 6 second jobs -> 6 third jobs ----------
@@ -1252,8 +1252,9 @@ const nmZenyOf=l=>NMZENY+(Math.max(11,Math.min(15,l|0))-11);
 // v90.3 (owner, option B): Nightmare pay follows the HP a mob takes, not the map's name. A mob's HP is
 // mb*power^HPE, and time per kill goes with HP, so each map should pay the same per HP. EXP grows as
 // power^1.5 and Zeny as power^2 in the base formulas, so each stream gets its own factor:
-// pay = mb*(power/Prontera power)^(HPE-k), where k is 1.5 for EXP and 2 for Zeny. Stages 1-10 stay 1.
-const nmPayOf=(m,l,k)=>{if((l|0)<=10)return 1;const mb=1+(m|0)*.15+Math.max(0,(m|0)-4)*.2;return mb*Math.pow(fieldPower(m|0,l|0)/fieldPower(0,l|0),HPE-k)};
+// pay = mb*power^(HPE-k) relative to Abyss (map 9) at the same stage, where k is 1.5 for EXP and 2 for Zeny.
+// Abyss is the anchor, so it keeps its pre-v90.4 pay (1) and the lower maps are tuned down to match. Stages 1-10 stay 1.
+const nmPayOf=(m,l,k)=>{if((l|0)<=10)return 1;const r=x=>(1+x*.15+Math.max(0,x-4)*.2)*Math.pow(fieldPower(x,l|0),HPE-k);return r(m|0)/r(9)};
 // v89 (owner): Nightmare Stage 5 - the MVP stage on every map - hits and takes harder. Its monsters,
 // its escorts and its MVP all carry +30% HP and +30% ATK on top of the band numbers above. Read by
 // minionDef() and spawn(); every other stage keeps 1x.

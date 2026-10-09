@@ -295,6 +295,18 @@ t('v90.3 (B): reward per HP is the same on every Nightmare map at each stage', (
   for (let m = 0; m < 10; m++) for (let l = 1; l <= 10; l++) assert.strictEqual(N.nmPayOf(m, l, 1.5), 1, 'stage ' + l + ' pays 1');
 });
 
+t('v90.5: Abyss keeps its old pay; the lower maps are tuned down to match it', () => {
+  for (let l = 11; l <= 15; l++) {
+    assert.strictEqual(N.nmPayOf(9, l, 1.5), 1, 'Abyss EXP pay is 1 at stage ' + l);
+    assert.strictEqual(N.nmPayOf(9, l, 2), 1, 'Abyss Zeny pay is 1 at stage ' + l);
+    for (let m = 0; m < 9; m++) {
+      assert.ok(N.nmPayOf(m, l, 1.5) < 1, 'map ' + m + ' EXP pay is below Abyss at stage ' + l);
+      assert.ok(N.nmPayOf(m, l, 2) < 1, 'map ' + m + ' Zeny pay is below Abyss at stage ' + l);
+    }
+  }
+  console.log('       Stage 15 pay vs Abyss (EXP / Zeny): Prontera ' + N.nmPayOf(0, 15, 1.5).toFixed(3) + ' / ' + N.nmPayOf(0, 15, 2).toFixed(3) + ', Niflheim ' + N.nmPayOf(8, 15, 1.5).toFixed(3) + ' / ' + N.nmPayOf(8, 15, 2).toFixed(3));
+});
+
 t('v90.3 (C): each Nightmare map has one boss-only Crown, on the Stage 15 boss only', () => {
   const names = new Set();
   for (let m = 0; m < 10; m++) {

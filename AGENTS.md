@@ -6156,3 +6156,15 @@ The owner's second pass over v77, six notes, all built.
   1. A Crown's power follows its map (the same MAPVAL as the rest of the N+ pool), so a Prontera Crown is much weaker than an Abyss one. If the owner wants every Crown equal, change the value in `fieldOf`.
   2. The 3% Crown chance and the Stage 15 pay factor are untuned guesses. Play-test how long a Stage 15 boss takes to kill before changing them.
   3. The economy estimate (`epkOf`) still uses the old per-stage model, so its numbers for Nightmare are stale. Check `economy_sim.js` before relying on them.
+
+### 2026-10-09 — `2026-10-09 grind-v90.5 Nightmare pay anchored to Abyss: Abyss keeps its old EXP and Zeny, the lower maps are tuned down to match
+
+* **What changed for the player:** the owner asked for Abyss not to be buffed. v90.4 had raised Abyss to about 3.1x EXP and 2.6x Zeny per kill at Stage 15, which adds to a Zeny overflow the owner already has. `nmPayOf` now divides each map's pay by Abyss's pay at the same stage. Abyss stays at its pre-v90.4 numbers (factor 1). Every other map pays less, but still the same per HP as Abyss, so farming one map is still no faster than another. At Stage 15, Prontera pays about 0.32x EXP and 0.39x Zeny per kill of Abyss's. Stages 1-10 are unchanged.
+* **Known issue, not fixed:** the Crown (grind-v90.4) does not work as a reason to farm the lower maps. Its power follows the map's value, so the Abyss Crown is the strongest and a player can skip the other nine and farm only Abyss. It is an open design question for the owner.
+* **Files touched:** `index.html` (`BUILD` grind-v90.5; `nmPayOf` now relative to Abyss; its comment updated); the build-tag mirrors `Updates/cards-gear-audit/affix-ranges.html` (x2), `Updates/cards-gear-audit/equipment-cards-tuning.html`, `tools/cloudflare-deploy-steps.md`; tests `tools/tests/nightmare_sim.js` (new v90.5 test: Abyss pays exactly 1 at Stages 11-15 and every other map pays less); `READ-ME-FIRST.md` (v90.5 section); this log.
+* **Art:** none.
+* **Tests:** every `*_sim.js` and `*_smoke.js` suite in `tools/tests/` is run and must exit 0 on this build.
+* **Branches / PR:** `arena/4ce84185-prontera-grind`. No pull request was opened.
+* **Known limits / follow-ups:**
+  1. The Crown problem above. Options were not yet chosen.
+  2. The Nightmare gear value still scales steeply with map (Abyss N+ is about 10x Prontera's), so Abyss stays the best farm for gear even though its pay per HP is no longer higher.
