@@ -137,8 +137,10 @@ t('v88: the drawn swing follows the real attack rate (owner: "the atk animation 
   assert.ok(m, 'swingLength() is where the drawn animation length comes from');
   assert.ok(!/Math\.max\(\.2,aspd\(\)\)/.test(m[0]), 'no .2s floor on the animation interval any more');
   assert.ok(/interval=aspd\(\)/.test(m[0]), 'the animation interval IS the attack rate');
-  assert.ok(/cl\(Math\.min\(interval,file\|\|interval,SWING_MAX_T\),SWING_MIN_T,SWING_MAX_T\)/.test(m[0]),
-    'the drawn length is clamped between SWING_MIN_T and SWING_MAX_T');
+  assert.ok(/room=Math\.min\(file\|\|interval,SWING_MAX_T,interval\*SWING_FIT\)/.test(m[0]),
+    'the drawn length starts from the attack file, capped by SWING_MAX_T and by the attack rate');
+  assert.ok(/cl\(room,Math\.min\(SWING_MIN_T,room\),SWING_MAX_T\)/.test(m[0]),
+    'the drawn length is clamped between SWING_MIN_T and SWING_MAX_T - and the floor yields to the rate');
   // ...and the rate itself is untouched: playerAttack still waits the real aspd() between swings
   const pa = src.match(/function playerAttack\(\)\{[\s\S]*?\n\}/);
   assert.ok(pa && /pAtkT=interval;atkAnim=1;swingDur=swingLength\(\)/.test(pa[0]), 'the swing timer and the animation share one duration');

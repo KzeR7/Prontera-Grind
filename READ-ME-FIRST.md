@@ -84,6 +84,48 @@ is the live one; with no argument the tool prints how to set a new one). Since v
 `GM` / `test1234`; `localStorage.removeItem('pg_gm_local')` removes it. Normal accounts are made
 in-game and stored in the browser (`pg_acc4`; saves under `pg_save3_<user>`).
 
+## BUILD v88.8 — the attack animation follows the damage (grind-v88.8)
+
+Your report: *"my character attack animation are not following the damage animation. example damage
+coming 10 numbers but attack animation only 3 slashes. there is an update code on this but it seems to
+be not working."* The update code **was** live and **was** correct — it just was not the whole story.
+v83 prints one number per monster per swing (right), and v88 runs the swing timer at the real attack
+rate (right). What had never been touched was the class **art**, which is the part you watch.
+
+* **What was wrong:** the attack animation was on a clock of its own. `captureSkinFrame()` picked the
+  attack frame from the wall clock — the same clock the walking views use — and only restarted it when
+  the view flipped between walk and attack. So the attack APNG simply looped on its own 0.5–0.9s file
+  cycle and never re-synced to a swing. Worse, `swingLength()` could hand back a swing exactly as long
+  as the attack interval, so the hero never went back to its walk at all and the restart never happened.
+* **Measured before the fix** (20s against one target, the real page in jsdom): an Assassin Cross
+  attacked **47** times and printed **43** damage numbers while drawing only **25** slashes — 25 being
+  20s ÷ its 0.8s animation file, i.e. the file's own loop rate. A Lord Knight went the other way: **65**
+  slashes for **33** attacks. At the attack-speed floor (0.13s, ~7.7 hits/s) a 0.9s file draws 1.1
+  slashes a second against 7.7 numbers — your 10:3, only further apart.
+* **The fix:** the attack frames are now read off the swing, not off the clock. `atkAnim` runs 1 → 0
+  across the swing, so one attack plays the whole attack animation exactly once, first frame to last,
+  at that swing's own length (new `skinSwingMs()`). And a swing is now capped at 90% of the attack
+  interval (`SWING_FIT`), so it always ends before the next one starts and the hero visibly releases
+  between swings. The walking animations are untouched — a stroll still loops on the file's own pace.
+* **What you will notice:** every swing you see is a complete slash, one per attack, and the numbers
+  land on the pose that made them. The drawn swing is up to 10% shorter than v88's.
+* **To see it:** fight anything on any map — fastest on a high-AGI Assassin Cross, which was the worst
+  case. `python3 tools/preview_server.py 8000` → `/`.
+* **Getting there fast (the GM tab):** open **`/gmsetup`**, type any password, then log in as `GM` with
+  it — the page writes the game's own `gmHash` of it into your browser's `pg_gm_local` (the v61 local
+  GM door) and bakes in no secret of its own. Or, on the game page:
+  `localStorage.setItem('pg_gm_local', gmHash('test1234'))`, reload, log in as `GM` / `test1234`.
+  In the GM tab, **Unlock Nightmare** jumps you to Base 150 with every map open; spend the points on
+  **AGI** and you are on the fast-attack build where the drift used to show.
+* **Tests:** **new** `node tools/tests/attack_sync_sim.js` (8 — runs the shipped `swingLength` /
+  `skinSwingMs` and sweeps 1,075 attack-rate × animation-length combinations), and a new step in
+  `node tools/tests/field_loop_smoke.js` (9/9) that counts attacks vs drawn slashes vs damage numbers
+  for five classes in the real loop. Both were run against the pre-fix page and fail there. All 42
+  `*_sim.js` suites green (1,307 assertions).
+* **Still by design:** a swing that hits several monsters prints one number **per monster** (v83), so
+  an AoE over a full camp shows several numbers on one slash — that is RO's own behaviour. Say the word
+  if you would rather have one summed number per swing.
+
 ## BUILD v88.7 — damage numbers retuned: smaller digits, quicker off the screen (grind-v88.7)
 
 The combat numbers were re-dialled on the tuner page and the new pick is in the game: ordinary hits

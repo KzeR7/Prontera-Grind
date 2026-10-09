@@ -234,6 +234,25 @@ function skinFrameIndex(p,view,ms){
   let t=(ms/1000)%total;if(t<0)t+=total;
   for(let i=0;i<secs.length;i++){t-=secs[i];if(t<0)return i}
   return secs.length-1}
+// v88.8 (owner: "damage coming 10 numbers but attack animation only 3 slashes"): the attack
+// animation IS one swing, so its frames are read off the swing and not off the wall clock.
+// playerAttack() sets atkAnim=1 and update() runs it down to 0 across swingDur, so 1-atkAnim is the
+// swing's own progress; scaled by the file's total it plays the whole attack art exactly once per
+// swing, first frame to last, at whatever length that swing is. The walking views keep the wall
+// clock - a stroll has no start, and it keeps the file's own looping pace.
+// Why it was wrong: the attack view used that same wall clock, restarted only when the VIEW changed,
+// so the APNG just looped on its own 0.5-0.9s cycle and the drawn slashes ran at 1/fileTotal per
+// second whatever the attack rate was. Measured on the real loop (tools/tests/attack_sync_sim.js):
+// an Assassin Cross attacked 47 times in 20s and printed 43 damage numbers while its slash restarted
+// 25 times (20s / the .8s file), and a Lord Knight drew 65 slashes for 33 attacks. Both counts come
+// from the swing now, so one attack draws one complete slash and every number lands on the pose that
+// made it.
+function skinSwingMs(p){
+  const total=p&&p.total?(p.total.attack||0):0;
+  if(!(total>0))return 0;
+  const prog=cl(1-atkAnim,0,1);
+  return Math.min(total*1000-.001,prog*total*1000);   // the last frame, never a wrap back to the first
+}
 // The source to copy from for a view, and where its due frame starts in that source.
 function skinFrameOf(p,view,now){
   const strip=skinStrip(p,view);
@@ -302,8 +321,12 @@ function captureSkinFrame(spr,route,now){
   const sk=spr.userData.skin,p=sk.p,nowMs=now===undefined?skinNow():now;
   const key=route.view+(route.mirror?'|m':'');
   const changed=sk.route!==key;
-  if(changed){sk.route=key;sk.t0=nowMs}               // a new view or a new swing starts at its frame 0
-  const frameIndex=skinFrameIndex(p,route.view,nowMs-sk.t0),frame=skinFrameOf(p,route.view,nowMs-sk.t0);
+  if(changed){sk.route=key;sk.t0=nowMs}               // a new view starts at its frame 0
+  // The attack view is clocked by the swing itself (see skinSwingMs): one swing plays the whole
+  // attack art once, from its first frame to its last, at the swing's own length. Every other view
+  // keeps the file's own wall clock, which is what makes a stroll loop on forever.
+  const ms=route.view==='attack'?skinSwingMs(p):nowMs-sk.t0;
+  const frameIndex=skinFrameIndex(p,route.view,ms),frame=skinFrameOf(p,route.view,ms);
   if(!frame){
     // nothing to draw: for the facing already on screen keep the frame it is showing (a decoded
     // view that was dropped from the cache reloads in the background), but never show one facing's
