@@ -5946,8 +5946,8 @@ The owner's second pass over v77, six notes, all built.
   that will not move. On the previous build the character never struck it. On this build it waits
   about a second, then closes in and deals damage, and ends inside its own reach. Across repeated
   fights of 300 seconds each, the stall came up in roughly one run in four for Novice, Swordman, Thief
-  and Merchant on the previous build, and in none of 48 runs on this build (one Swordman run stopped
-  at 1.6 units, which is inside reach, and was not reproduced again; see follow-ups).
+  and Merchant on the previous build, and on this build: none in 12 runs each for Novice, Thief and Merchant, and one
+  in about 160 Swordman runs (that run stopped at 1.6 units, which is inside reach; see follow-ups).
 * **Root cause:** the hero's rule was "latch on, stand still, and let the monster walk into reach".
   A small monster's own approach ring (1.9 + 0.25 × size) sits just outside the hero's attack window
   (reach + 0.6), so the monster stopped where the hero would not strike, and neither moved. Only dying
@@ -5968,6 +5968,7 @@ The owner's second pass over v77, six notes, all built.
   run with jsdom and three available). The new case fails on the previous index.html (`dealt 0`).
 * **Branches / PR:** committed to `arena/f15fe482-prontera-grind`; no PR opened. Not deployed.
 * **Known limits / follow-ups:** verified in the jsdom field loop, not in a real browser (no browser in the
-  sandbox). One Swordman run in roughly 150 on this build stopped at 1.6 units with no damage for five
-  seconds. It was not reproduced again and its cause is not known; it needs a look if it is seen in play.
+  sandbox). One Swordman run in about 160 on this build stopped at 1.6 units with no damage for five
+  seconds. About 160 further Swordman runs did not reproduce it, and its cause is not known; it needs a look
+  if it is seen in play.
   The one-second wait is a judgement call; change `engageWait` in `update()` if it feels slow.
