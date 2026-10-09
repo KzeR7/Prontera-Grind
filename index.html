@@ -647,7 +647,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // script block, which is a SyntaxError - the game did not run on main at all. One line wins, and
 // it names both sides of this merge: the v38 balance patch (the weapon cut, the affix/card
 // give-back) and main's weapon-hold rendering work.
-const BUILD='2026-10-09 grind-v88.4 a tab playing one account can no longer save over another account on the same browser';   // shown on the login card - confirms which file you loaded
+const BUILD='2026-10-09 grind-v88.5 a character beside a monster it cannot reach now walks in and fights, instead of standing still while being hit';   // shown on the login card - confirms which file you loaded
 $('buildTag').textContent='build '+BUILD;
 
 // ---------- class tree: Novice -> 6 first jobs -> 6 second jobs -> 6 third jobs ----------
@@ -3047,7 +3047,7 @@ function log(m,cls,cat){const e={m,cls,cat};logs.push(e);if(logs.length>80)logs.
 // (5 tiles), else the class's own band - bow 4 (owner, v83.2: it was 5 and outranged the staff),
 // staff 4.5, melee 1.2 + 0.45*size.
 const CLASS_BAND=cls=>cls&&cls.rng?(/^(Mage|Wizard|High Wizard)$/.test(cls.n)?4.5:4):0;   // v83.2 owner: bow 4, staff 4.5
-let standC={t:-9,r:0},engageTgt=null;   // engageTgt: latched into a stand-and-trade fight (v83.1)
+let standC={t:-9,r:0},engageTgt=null,engageWait=0;   // engageTgt: latched into a stand-and-trade fight (v83.1); engageWait: seconds latched while out of reach (v88.4)
 function heroStandoff(m){
   let r=CLASS_BAND(C());
   for(const s of SKILLS)if(s.type==='act'&&s.rng&&skillOn(s.id)&&(skCd[s.id]||0)<=0)r=Math.max(r,s.rng>1?s.rng:5);
@@ -3112,6 +3112,7 @@ function swingLength(){                    // the drawn attack animation, never 
 }
 function playerAttack(){
   if(!mob)return;
+  engageWait=0;   // a swing is the proof the fight is live: the walk-in wait starts again (v88.4)
   const interval=aspd(),far=Math.hypot(mob.x-pl.x,mob.z-pl.z)>heroStandoff(mob)+.6;
   pAtkT=interval;atkAnim=1;swingDur=swingLength();
   const ready=SKILLS.filter(s=>s.type==='act'&&skillOn(s.id)&&(skCd[s.id]||0)<=0&&(!far||s.rng))
@@ -4167,12 +4168,23 @@ if(S.hp<=0){log('You were defeated... knocked back to the entrance.','r0','kills
       // still watching a monster that has gone back to sleep.
       if(dist<=reach+.6)engageTgt=mob;
       else if(engageTgt!==mob||dist>reach+1.2)engageTgt=null;
-      if(engageTgt===mob){tx=pl.x;tz=pl.z;                          // stand: this is the whole point
+      if(engageTgt===mob){
         // ...and swing only while the target really is in range. The 1.2-unit break radius is a
         // stand-still window, not an attack window: a monster a step out walks back in rather than
         // making the hero shuffle after it.
-        if(dist<=reach+.6){pAtkT-=dt;if(pAtkT<=0){playerAttack();if(mob&&mob.hp<=0){kill();return}}}}
-      else{pl.orb+=dt*.8;const r=reach*.85;tx=mob.x+Math.cos(pl.orb)*r;tz=mob.z+Math.sin(pl.orb)*r}}
+        // v88.4 (owner: "the character gets stuck attacking, it still takes hits, only dying fixes it"):
+        // that assumption fails for a small monster. Its own approach ring (1.9 + 0.25*size) can sit
+        // just outside the hero's attack window (reach + 0.6), so it stops there, never walks in, and
+        // the hero waits forever for it - both stand still while the monster keeps hitting. Found by
+        // a repeated-run sweep of Novice, Swordman, Thief and Merchant fights (tools/tests/field_loop_smoke.js pins it).
+        // Now a latched hero waits one second for the walk-in; if the target is still out of reach it
+        // closes to its attack distance itself. Walking in never happens while the target is in reach.
+        // The wait is not reset by a frame in reach: a monster that dances across the edge of the window
+        // would keep the count below one second for ever. Only a swing (playerAttack) or a broken latch clears it.
+        if(dist<=reach+.6){tx=pl.x;tz=pl.z;pAtkT-=dt;if(pAtkT<=0){playerAttack();if(mob&&mob.hp<=0){kill();return}}}
+        else if((engageWait+=dt)<1){tx=pl.x;tz=pl.z}
+        else{const k=reach*.85/dist;tx=mob.x+(pl.x-mob.x)*k;tz=mob.z+(pl.z-mob.z)*k}}
+      else{engageWait=0;pl.orb+=dt*.8;const r=reach*.85;tx=mob.x+Math.cos(pl.orb)*r;tz=mob.z+Math.sin(pl.orb)*r}}
   }
   const AP=S.pets.filter(p=>p.on);for(const p of AP){const r=petR[p.id]||(petR[p.id]={x:pl.x-1,z:pl.z+1,at:rnd(0,1)}),i=AP.indexOf(p);let o=null,bd=1e9;
     for(const m of mobs){if(m.pack!==activePack)continue;const d=Math.hypot(m.x-r.x,m.z-r.z);if(d<bd){bd=d;o=m}}

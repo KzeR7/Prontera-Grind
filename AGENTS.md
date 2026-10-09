@@ -5935,3 +5935,39 @@ The owner's second pass over v77, six notes, all built.
 * **Branches / PR:** committed to `arena/f15fe482-prontera-grind`; no PR opened. Not deployed.
 * **Known limits / follow-ups:** the server side needs the Cloudflare deploy to take effect; nothing
   here is live until that is done and checked on the real site.
+
+### 2026-10-09 — `2026-10-09 grind-v88.5 a character beside a monster it cannot reach now walks in and fights, instead of standing still while being hit`
+* **What changed for the player:** a melee character (Merchant, Novice, Swordman, Thief and the rest)
+  could settle beside a monster that was just outside its attack range and then wait for it to come
+  in. Some small monsters never did, so both stood still and the monster kept hitting until the
+  character died. Now the character waits about one second, then walks in and fights. A monster that
+  walks into range on its own is still waited for, as before.
+* **Checked, not assumed:** a real field loop (the game's own update step, in jsdom) with a monster
+  that will not move. On the previous build the character never struck it. On this build it waits
+  about a second, then closes in and deals damage, and ends inside its own reach. Across repeated
+  fights of 300 seconds each, the stall came up in roughly one run in four for Novice, Swordman, Thief
+  and Merchant on the previous build, and in none of 48 runs on this build (one Swordman run stopped
+  at 1.6 units, which is inside reach, and was not reproduced again; see follow-ups).
+* **Root cause:** the hero's rule was "latch on, stand still, and let the monster walk into reach".
+  A small monster's own approach ring (1.9 + 0.25 × size) sits just outside the hero's attack window
+  (reach + 0.6), so the monster stopped where the hero would not strike, and neither moved. Only dying
+  reset the fight.
+* **Fix:** a latched hero waits one second while the target is out of reach; then it closes to its
+  attack distance. The wait is not reset by a frame in reach (a monster that drifts across the edge
+  would keep resetting it). It is cleared by a swing or when the latch breaks.
+* **Not the cause (checked):** the attack-speed value for every class (all sane), the Merchant's skills
+  (none has a range, so the stand-off is the same for Merchant as for other melee), and the Merchant
+  art (drawn, not a movement issue).
+* **Files touched:** `index.html` (`heroStandoff` untouched; the latched-stand block in `update()`,
+  `engageWait` next to `engageTgt`, `playerAttack()`; `BUILD` grind-v88.5); `tools/tests/field_loop_smoke.js`
+  (new case 6: a latched hero with a monster that will not move must wait, then strike and end in reach);
+  build-tag mirrors (`affix-ranges.html` x2, `equipment-cards-tuning.html`, `tools/cloudflare-deploy-steps.md`);
+  `READ-ME-FIRST.md` (a v88.5 section above v88.4); this log.
+* **Art:** none.
+* **Tests:** all 40 `*_sim.js` suites and `field_loop_smoke` exit 0 on this build (`field_loop_smoke` 8/8,
+  run with jsdom and three available). The new case fails on the previous index.html (`dealt 0`).
+* **Branches / PR:** committed to `arena/f15fe482-prontera-grind`; no PR opened. Not deployed.
+* **Known limits / follow-ups:** verified in the jsdom field loop, not in a real browser (no browser in the
+  sandbox). One Swordman run in roughly 150 on this build stopped at 1.6 units with no damage for five
+  seconds. It was not reproduced again and its cause is not known; it needs a look if it is seen in play.
+  The one-second wait is a judgement call; change `engageWait` in `update()` if it feels slow.

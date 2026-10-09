@@ -84,6 +84,19 @@ is the live one; with no argument the tool prints how to set a new one). Since v
 `GM` / `test1234`; `localStorage.removeItem('pg_gm_local')` removes it. Normal accounts are made
 in-game and stored in the browser (`pg_acc4`; saves under `pg_save3_<user>`).
 
+## BUILD v88.5 — a melee character no longer stands still beside a monster it cannot reach (grind-v88.5)
+
+A player reported: a Merchant gets stuck while attacking mobs. It keeps taking hits, and only dying
+(which sends it back to the entrance) gets it moving again. Reproduced in a real field loop: the
+hero stood still, out of reach of a small monster, and the monster stood still just outside the
+hero's attack range and kept hitting. The same stall showed up for Novice, Swordman and Thief, so it
+is not specific to the Merchant.
+
+* **What you will notice:** a melee character that has settled beside a monster it cannot reach
+  waits about a second for the monster to step in, then walks in and fights. A monster that walks
+  into reach on its own is still waited for, so a normal fight looks the same.
+* **To see it:** `node tools/tests/field_loop_smoke.js` (its new case 6 fails on the previous build).
+
 ## BUILD v88.4 — a save from one account can no longer land on another (grind-v88.4)
 
 A player reported: after playing the GM account, logging into a second account showed the second
