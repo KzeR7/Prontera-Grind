@@ -162,10 +162,11 @@ button:hover{background:#ffe9a8}button:focus-visible{outline:2px solid #2f6fd6}
 /* v41: the funnel beside the Logs tab opens the SAME tick row the Log window uses, right above
    the tab, holds it open while you are reading it, and folds it away by itself. The row is the
    same state, flipped in two places - the play screen never gains permanent filter furniture. */
+#feedBar{position:relative;align-self:flex-start;max-width:100%;pointer-events:none}
 #feedTabs{display:flex;align-items:center;gap:4px;align-self:flex-start;pointer-events:auto}
 #feedFil{font:700 12px/1.3 "Trebuchet MS",sans-serif;background:rgba(59,42,26,.42);color:rgba(255,233,168,.78);border:1px solid rgba(255,255,255,.15);border-radius:8px;padding:2px 8px;cursor:pointer;transition:background .15s,color .15s,border-color .15s}
 #feedFil:hover,#feedFil:focus-visible,#feedFil.on{background:rgba(59,42,26,.9);color:#ffe9a8;border-color:var(--edge)}
-#feedFilter{pointer-events:auto;display:none;flex-wrap:wrap;gap:4px 10px;align-items:center;width:max-content;max-width:min(92vw,560px);background:rgba(24,18,12,.94);border:1px solid var(--edge);border-radius:8px;padding:6px 9px;font:12px "Trebuchet MS",sans-serif;color:#ffe9a8;box-shadow:0 4px 14px #0008}
+#feedFilter{position:absolute;left:0;bottom:calc(100% + 4px);z-index:2;pointer-events:auto;display:none;flex-wrap:wrap;gap:4px 10px;align-items:center;width:max-content;max-width:min(92vw,560px);background:rgba(24,18,12,.94);border:1px solid var(--edge);border-radius:8px;padding:6px 9px;font:12px "Trebuchet MS",sans-serif;color:#ffe9a8;box-shadow:0 4px 14px #0008}
 #feedFilter .logf{display:flex;align-items:center;gap:3px;white-space:nowrap;cursor:pointer;color:#ffe9a8}
 #feedFilter .logf input{width:14px;height:14px;margin:0;accent-color:#ffd23f;cursor:pointer}
 #feedFilter .sp{margin-left:auto;display:flex;gap:4px}
@@ -722,7 +723,7 @@ a{color:var(--brass)}small{opacity:.85}summary{cursor:pointer}
 <div id="saveTools" style="margin-top:6px;font-size:11px;text-align:center;opacity:.9"><a href="#" id="saveDl" title="Download every character saved in this browser as one file">⬇ Back up saves</a><span style="opacity:.5"> · </span><a href="#" id="saveUp" title="Load a backup file made by this button, on any address">⬆ Restore a backup</a><input type="file" id="saveFile" accept=".json,application/json" style="display:none"></div>
 <div id="buildTag" style="margin-top:6px;font-size:10px;opacity:.55;text-align:center"></div></div></div>
 <div id="wrap"><div class="title"><span id="stageTitle">Prontera Lv 1</span><span id="grindStatus" style="font-size:12px;opacity:.85"></span></div>
-<div id="view"><div id="ov"><div id="mobSpriteLayer" aria-hidden="true"></div><div id="weaponSpriteLayer" aria-hidden="true"></div><div id="prog"></div><div id="tag"><b id="tn"></b><div class="bar"><i id="th" style="background:var(--hp)"></i></div></div><div id="heroTitle" class="hero-title" aria-live="polite"><span id="heroTitleMark" class="ht-mark" aria-hidden="true"></span><span id="heroTitleText"></span></div><div id="hint">Drag to rotate &middot; Scroll or pinch to zoom</div><div id="feedWrap"><div id="feedFilter" role="group" aria-label="Log filter"></div><div id="feedTabs"><button id="feedTab" type="button" aria-expanded="true" aria-controls="feed" title="Minimize or show the on-screen log">📃 Logs ▾</button><button id="feedFil" type="button" aria-expanded="false" aria-controls="feedFilter" aria-label="Filter the on-screen log" title="Filter the log - this row folds away by itself">▽</button></div><div id="feed"></div></div><div id="hudBuffs" role="status" aria-live="polite" aria-label="Active pet buffs - hover an icon for what it does"></div><div id="qp"></div><div id="dock"></div>
+<div id="view"><div id="ov"><div id="mobSpriteLayer" aria-hidden="true"></div><div id="weaponSpriteLayer" aria-hidden="true"></div><div id="prog"></div><div id="tag"><b id="tn"></b><div class="bar"><i id="th" style="background:var(--hp)"></i></div></div><div id="heroTitle" class="hero-title" aria-live="polite"><span id="heroTitleMark" class="ht-mark" aria-hidden="true"></span><span id="heroTitleText"></span></div><div id="hint">Drag to rotate &middot; Scroll or pinch to zoom</div><div id="feedWrap"><div id="feed"></div><div id="feedBar"><div id="feedFilter" role="group" aria-label="Log filter"></div><div id="feedTabs"><button id="feedTab" type="button" aria-expanded="true" aria-controls="feed" title="Minimize or show the on-screen log">📃 Logs ▾</button><button id="feedFil" type="button" aria-expanded="false" aria-controls="feedFilter" aria-label="Filter the on-screen log" title="Filter the log - this row folds away by itself">▽</button></div></div></div><div id="hudBuffs" role="status" aria-live="polite" aria-label="Active pet buffs - hover an icon for what it does"></div><div id="qp"></div><div id="dock"></div>
 <div id="wins"></div></div></div>
 <div id="hud"><div><b id="cls2"></b> <span id="titleLabel" class="title-hud hud-title-mirror" aria-hidden="true" style="display:none"></span> Base Lv <b id="lv">1</b> / Job Lv <b id="jl">1</b></div>
 <div class="hud-health">HP <div class="bar" role="meter" aria-label="HP" aria-valuemin="0" aria-valuemax="100" id="hpMeter"><i id="hpb"></i></div><small id="hpPct">100%</small></div>
@@ -923,7 +924,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // script block, which is a SyntaxError - the game did not run on main at all. One line wins, and
 // it names both sides of this merge: the v38 balance patch (the weapon cut, the affix/card
 // give-back) and main's weapon-hold rendering work.
-const BUILD='2026-10-09 grind-v93 tab layout redesign';   // shown on the login card - confirms which file you loaded
+const BUILD='2026-10-09 grind-v94 log tab stays put';   // shown on the login card - confirms which file you loaded
 $('buildTag').textContent='build '+BUILD;
 
 // ---------- class tree: Novice -> 6 first jobs -> 6 second jobs -> 6 third jobs ----------

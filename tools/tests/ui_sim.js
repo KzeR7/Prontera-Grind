@@ -1667,10 +1667,17 @@ t('the Log window filters by category, and the on-screen feed folds away', () =>
 });
 
 t('the funnel on the Logs tab opens the same tick row and folds itself away', () => {
-  // markup: the row lives inside the feed wrapper, ABOVE the tab - so opening it pushes nothing
+  // markup: the lines come first, then one bar holding the row and the tab. The tab is the bottom
+  // of the stack, so a new log line grows the stack UPWARD and never moves the Logs tab (the tab
+  // used to sit above the lines, so every kill pushed it up the screen).
   assert.ok(src.includes('id="feedFil"') && src.includes('id="feedFilter"'), 'the funnel and its row exist');
-  assert.ok(src.indexOf('id="feedFilter"') < src.indexOf('id="feedTab"'),
-    'the row sits before the tab in the markup, so it opens upward and the log lines stay put');
+  assert.ok(src.indexOf('id="feed"') < src.indexOf('id="feedBar"') && src.indexOf('id="feedBar"') < src.indexOf('id="feedTab"'),
+    'the log lines come before the tab bar in the markup, so the tab stays pinned as lines arrive');
+  assert.ok(src.indexOf('id="feedFilter"') > src.indexOf('id="feedBar"') && src.indexOf('id="feedFilter"') < src.indexOf('id="feedTab"'),
+    'the row sits inside the bar, before the tab');
+  assert.ok(/#feedFilter\{position:absolute;left:0;bottom:calc\(100% \+ 4px\)/.test(src),
+    'the open row floats above the tab bar, so opening it moves neither the lines nor the tab');
+  assert.ok(/#feedBar\{position:relative;/.test(src), 'the bar is the positioning box for the row');
   assert.ok(src.includes('aria-controls="feedFilter"') && src.includes('aria-expanded="false"'),
     'the funnel is a real disclosure control');
   // it really is the same row: built from the same category table as the Log window's
