@@ -81,6 +81,7 @@ const code = [
   pick(/function nmMatCounts\(\)\{[^\n]*/, 'nmMatCounts'),
   pick(/function dpsPanel\(\)\{[^\n]*/, 'dpsPanel'),
 
+  pick(/const WEAPON_ITEM_IDS=\{[^;]+;/, 'canonical weapon icons'),
   pick(/const RO_ITEM_ICON_CANDIDATES=\{[^;]+;/, 'RO equipment image candidates'),
   grab('const gearIconHash=text=>', 'const gearItemIconId='),
   grab('const gearItemIconId=it=>', 'const itemIconUrl='),
@@ -1010,7 +1011,7 @@ t('v74: the item card names the class tier a piece belongs to, and why a locked 
   assert.ok(src.includes('it.wearer?` This was ${it.wearer'), 'the wearer note is attributed');
 });
 
-t('v90.2: the Black Market and Leaderboard sit under the quest panel behind one open/hide arrow', () => {
+t('market and leaderboard retain quest shortcuts and gain labeled dock entries', () => {
   const bm = sb.__bm;
   bm.setSide(false);
   let h = bm.qpSide();
@@ -1023,8 +1024,9 @@ t('v90.2: the Black Market and Leaderboard sit under the quest panel behind one 
   bm.tabs.push('market'); h = bm.qpSide();
   assert.ok(h.includes('qp-side-tab on'), 'an open window is marked on its button');
   bm.tabs.length = 0; bm.setSide(false);
-  assert.ok(src.includes("const dock=$('dock')")||src.includes("$('dock').innerHTML=Object.entries(TABS).filter(([k])=>(k!=='gm'||S.gm)&&!SIDE_TABS.includes(k))"),
-    'the dock no longer lists the two moved tabs');
+  const dock=grab("$('dock').innerHTML=", '  renderQ();');
+  assert.ok(dock.includes("'market','board'") && dock.includes('ui-nav-label'),
+    'market and leaderboard are directly reachable from the labeled dock');
   assert.ok(src.includes("market:['🏪','Black Market','X']") && src.includes("board:['🏆','Leaderboard','V']"),
     'the X and V hotkeys still open them');
   assert.ok(src.includes("if(v==='side'){sideOpen=!sideOpen;renderQ();return}"), 'the arrow toggles the group');
@@ -1888,6 +1890,29 @@ t('the reset buttons explain themselves, refuse on screen, and survive a rebuild
   assert.ok(src.includes("renderWin('[data-win=\"map\"] .mapcard.on')"), 'so does a map card click');
 
   assert.ok(/\$\('wins'\)\.addEventListener\('pointerdown'/.test(src), 'the guard arms on a window press');
+});
+
+t('compact bag keeps all selling actions and both Nightmare rarity controls', () => {
+  U.S = mkS('Lord Knight'); U.selB = null; U.eqPick = null;
+  U.S.autoSell = [false,false,false,false,false,false,false];
+  let h = U.V.bag0();
+  assert.ok(/<details[^>]*data-ui-disclosure="bag-selling"/.test(h));
+  assert.ok(!/<details[^>]*\bopen\b/.test(h), 'selling starts collapsed');
+  for (let tier=0;tier<7;tier++) assert.ok(h.includes(`data-a="autosell" data-v="${tier}"`));
+  for (const action of ['auto','sellnow','clicksell']) assert.ok(h.includes(`data-a="${action}"`));
+  assert.ok(h.includes('class="r5">N</span>') && h.includes('class="r6">N+</span>'));
+  U.S.clickSell = true; h = U.V.bag0();
+  assert.ok(/<details[^>]*\bopen\b/.test(h), 'quick sell must never start hidden');
+  assert.ok(h.includes('Quick sell ON'), 'the summary identifies the destructive click mode');
+});
+
+t('weapon artwork follows the actual weapon family, regardless of item name or rarity', () => {
+  U.S = mkS('Lord Knight');
+  const ids = {dagger:1202,katar:1250,staff:1601,bow:1701,axe:1301,sword:1106,mace:1501};
+  for (const [wt,id] of Object.entries(ids)) for (const sec of [1,4,5]) {
+    const h = U.cell({...sword,wt,sec,name:'Unrelated custom name'},false);
+    assert.ok(h.includes(`/item/${id}.png`), `${wt} section ${sec} must show its weapon shape`);
+  }
 });
 
 console.log(`\n${pass} passed, ${fail} failed`);

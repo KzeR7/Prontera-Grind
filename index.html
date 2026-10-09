@@ -460,6 +460,196 @@ button.tick.on{background:#ffe08a;border-color:var(--gold);font-weight:bold}
 .tbands{margin-top:4px;font-size:11px;line-height:1.7}
 .tbands b.tier0{color:#6b6b6b}.tbands b.tier1{color:#2f6f2f}.tbands b.tier2{color:#2f5b9e}
 .tbands b.tier3{color:#7a3fa8}.tbands b.tier4{color:#c08a12}
+/* Moss & brass: shared interface surfaces; world and sprite rendering keep their own palette. */
+:root{color-scheme:dark;--ink:#dae2d9;--panel:#1d2928;--edge:#43564c;--edge2:#576c5e;--gold:#c8ae79;--hp:#ce7d75;--exp:#8aacc4;--surface:#263631;--muted:#a4b5aa;--brass:#dec28b;--focus:#e4cc99}
+html,body{background:#131e1d;font-family:"Trebuchet MS",Verdana,sans-serif}
+button,input,select,textarea{color:var(--ink);font-family:inherit}
+button{background:#30443a;border-color:#576c5e;border-radius:5px;padding:5px 9px;transition:background .12s,border-color .12s}
+button:hover{background:#40584a;border-color:#90a18a}
+button:disabled{opacity:.48;cursor:not-allowed}
+button:focus-visible,input:focus-visible,select:focus-visible,summary:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+input,select,textarea,.form-group input,.card-pick,.card-reward-pick select{background:#15231f;border:1px solid var(--edge2);border-radius:5px;color:var(--ink);accent-color:var(--gold)}
+a{color:var(--brass)}small{opacity:.85}summary{cursor:pointer}
+.win,.login-card,.offline-card,.trial-card{background:var(--panel);border:1px solid var(--edge2);border-radius:9px;box-shadow:0 12px 34px #07130e66;color:var(--ink)}
+.title{background:#283a32;border-bottom:1px solid var(--edge);padding:9px 12px;font-size:12px;letter-spacing:.25px;color:#eee8d5}
+.title button{background:transparent;border-color:transparent;padding:2px 6px;color:#afc0b0}
+.title button:hover{background:#405247;color:#fff}
+#wrap>.title{background:#1b2a24;padding:7px 14px;font-size:12px}
+.body{padding:10px;font-size:12px;line-height:1.4}
+.wp{flex:0 1 360px}.wp.wide{flex:0 1 430px;width:430px}.wp[data-win="skills"]{flex-basis:450px}
+.wbody{scrollbar-width:thin;scrollbar-color:#607761 #1d2928}
+.slot,.job-card,.mob-card,.chip,.mapcard,.map-node,.tn,.mastery-summary,.mastery-progress-card,.mastery-stat,.mastery-card-row,.mastery-empty,.card-reward-legend,.mastery-map,.card-roll-recent,.offline-stat{background:var(--surface);border:1px solid var(--edge);box-shadow:none;color:var(--ink)}
+.hd{color:#e4e7d9}.sec{border-color:var(--edge);font-size:11px;padding-bottom:4px;color:#cbd8c5;letter-spacing:.3px}
+.chip{font-size:10px;border-radius:5px;padding:4px 7px}.row{gap:6px}.slot{padding:7px 8px;gap:7px}
+.r0{color:#b7c2b9}.r1{color:#96c6a2}.r2{color:#9ebedc}.r3{color:#c1a5db}.r4{color:#e1c180}.r5{color:#bba6ee}.r6{color:#efaad1}
+.atabs button,.gt button,.mastery-tabs button,.board-periods button{background:transparent;border-color:var(--edge);color:#b4c4b6}
+.atabs button.on,.row button.on,.gt button.on,button.tick.on,.mastery-tabs button.on,.board-periods button.on{background:#465442;border-color:#bda773;color:#f1d9a4;box-shadow:none}
+#hud{background:#1c2b25;border-color:var(--edge);box-shadow:none;color:#a9bbac;font-size:11px;gap:8px 16px;padding:8px 12px}
+#hud b{color:#e3e5d7}.hud-zeny,#hud .hud-zeny b{color:#e0c58c}
+#userBadge{background:#314435!important;color:#d6e2cf}
+#xp-dock{background:#14211c;box-shadow:none;padding:4px 10px}
+#xp-track{border-color:#4e6456;background:#101c19;box-shadow:none}
+#xpb{background:linear-gradient(90deg,#476756,#86a888)}#jb{background:linear-gradient(90deg,#7c6993,#544867)}
+.bar{border-color:#536452;background:#182820;box-shadow:none}#hpb{background:linear-gradient(90deg,#527952,#a1c285);box-shadow:none}
+#hpb.critical{background:#c97165;box-shadow:none}
+#dock{background:#1b2b24f5;border:1px solid #61725b;border-radius:8px;gap:5px;padding:6px 8px;box-shadow:0 4px 18px #0a170d66}
+.ib{width:38px;height:38px;font-size:18px;border:1px solid #4c624f;border-radius:5px;background:#2b4032}
+.ib:hover{background:#3c5340;transform:translateY(-1px)}.ib.on{background:#5a6046;color:#f5ddb0;border-color:#c5ab75;transform:none}
+#prog,#qp,#feedFilter{background:#1c2d24ed;border:1px solid #5d705b;color:#e1e8d6;border-radius:7px;box-shadow:0 4px 15px #101a1244}
+#feedTab,#feedFil{background:#1b2c24dd;border-color:#4f6551;color:#d4dec9;border-radius:5px}
+#feedTab:hover,#feedFil:hover,#feedFil.on{background:#384f3c;color:#f1dab0}
+#feedFilter .logf{color:#e0e4d4}#feedFilter input{accent-color:var(--gold)}
+#tooltip,.pbx-fly,.hud-flyout{background:#15251ff7;border:1px solid #718467;color:#e3e9da;box-shadow:0 7px 25px #07130d88}
+.pbx{background:#314835;border:1px solid #61765a;border-radius:6px}.pbx .s{background:#24372b;color:#edd9a9}
+#hint{color:#e2e8d9}.pbar,.mastery-track{background:#13251d}.pbar i{background:#91af8d}
+/* Calm item tiles: shape first, seven distinct rarity accents and explicit Nightmare labels. */
+.cell{background:#2b3b32;border:1px solid #50614f;border-bottom:3px solid var(--rarity,#819387);border-radius:5px;text-shadow:none;box-shadow:none!important}
+.cell.b0{--rarity:#a8b4ac}.cell.b1{--rarity:#96c6a2}.cell.b2{--rarity:#9ebedc}.cell.b3{--rarity:#c1a5db}.cell.b4{--rarity:#e1c180}.cell.b5{--rarity:#bba6ee}.cell.b6{--rarity:#efaad1}
+.cell:is(.b0,.b1,.b2,.b3,.b4,.b5,.b6){background:#2b3b32;border-color:#50614f;border-bottom-color:var(--rarity)}
+.cell.empty{background:#192c22;opacity:.65;border:1px dashed #465b49}
+.cell.sel{outline:2px solid var(--focus);outline-offset:1px;background:#474c35}.cell.fit{outline:2px solid #a7cf9b;outline-offset:1px}
+.cell.nm::after{content:'N';top:2px;right:2px;border-radius:3px;background:#2c253d;color:#dac9ff;padding:1px 3px;font-size:9px}
+.cell.b6.nm::after{content:'N+';background:#3e2939;color:#ffc3e3}
+.cell.fit::after{content:'✓';background:#31533a;color:#ceefc6}
+.cell.nm.fit::after{content:'N ✓'}.cell.b6.nm.fit::after{content:'N+ ✓'}
+.cell .lockstar{left:3px;right:auto;top:2px;color:#ebd298;font-size:11px;text-shadow:none}
+.cell .rf{background:#16241c;color:#e4e9d8;font-size:9px;border-radius:2px}
+.cell .ro-icon-fallback{color:var(--rarity)!important}.cell.nm img.ro-item-icon,.cell.nm .ro-icon-fallback{filter:drop-shadow(0 1px 1px #0008)}
+.cell.worse{opacity:.85;filter:saturate(.7)}
+.doll{background:#213a2b;border:1px solid var(--edge);padding:8px;gap:8px}
+.doll-detail,.grid-detail{border-color:#71805d}.grid-detail{background:#2c3b2e;padding:10px;border:1px solid #777956;border-radius:6px}
+.grid-detail [data-a="equip"],.mapband-t button.go,.login-btn,#my{background:#c8ae79;border-color:#c8ae79;color:#1a271d;font-weight:bold}
+.grid-detail [data-a="sell"]{background:transparent;border-color:#826554;color:#efb29c}
+.bag-top{display:flex;align-items:center;justify-content:space-between;gap:6px;margin-bottom:8px}.bag-count{font-size:10px;color:#c1cebc}
+.bag-auto{font-size:11px;display:flex;align-items:center;gap:5px;padding:8px 0}
+.bag-tools{margin:4px 0 10px;border:1px solid var(--edge);border-radius:5px;background:#22362a}
+.bag-tools>summary{padding:7px 9px;color:#dfc58f;font-size:11px}.bag-tools .sellbox{border:0;margin:0;background:transparent;padding:0 9px 9px}
+.bag-key{display:flex;gap:7px;flex-wrap:wrap;margin:7px 0;font-size:9px}.bag-key span{border-bottom:2px solid currentColor;padding-bottom:2px}
+/* Maps, class progression, skills and collections share the same surface hierarchy. */
+.mapcard:hover,.map-node:hover,.tn:hover{background:#3b513d}.mapcard.on,.map-node.active,.tn.cur{background:#51563b;border-color:var(--gold);box-shadow:none}
+.mapcard.here{box-shadow:inset 0 0 0 1px #a1b59c}.map-node.picked,.tn.pick{outline:2px solid var(--focus)}
+.map-node.normal-boss-node{background:#3f412b;border-color:#a98c5d;color:#e8ce9c}
+.map-node.normal-boss-node:hover,.map-node.normal-boss-node.active{background:#575a37;color:#f7e4b6}
+.map-node.nm-node,.map-node.nm-node.locked{background:#352e42;border-color:#927cb5;color:#d4c3ed}
+.map-node.nm-node:hover,.map-node.nm-node.active{background:#594569;border-color:#d3b0ec}
+.tn.ok{background:#2b4935;border-color:#73996c}.tn.played{background:#2b4048;border-color:#789aa2}
+.arw{color:#9caf8a}.trunk{background:#627c55}.dropgrp{color:#b1c29c;border-color:var(--edge)}
+.sk,.sk-master,.sk-alloc{background:#293d30;border:1px solid #587251;box-shadow:none;color:var(--ink);border-radius:6px}
+.sk:hover,.sk-master:hover{background:#354c38;box-shadow:none}.sk.sel{outline:2px solid var(--focus)}
+.sk-kind{background:#182a20;color:#c3d1b5}.sk-level,.sk-autocast,.sk-master .sk-autocast,.sk-alloc small{color:#b6c8ae}
+.sk-autocast input{accent-color:var(--gold)}.sk-slot-empty{border-color:var(--edge2);background:#203528}
+.sk-detail-autocast{background:#2c4130;border:1px solid var(--edge2)}.sk-detail-autocast .sk-autocast{color:#d7e4c9}
+.sk-master .si{background:#344e37;border:1px solid #68805b;box-shadow:none}
+.hair-preview-card{background:#263d2c;border:1px solid var(--edge);box-shadow:none}.hair-preview-stage{background:radial-gradient(#5c7450,#233b2a);border-color:var(--edge2)}
+.hair-preview-info .eyebrow,.hair-preview-info .hair-style-label,.hair-preview-loading{color:#c0cfac}
+.mastery-head,.mastery-title,.mastery-title.earned{background:#2b3f30;border-color:var(--edge);box-shadow:none}
+.mastery-title{border-left-color:var(--foil)}
+.mastery-head>div:nth-child(2) b,.mastery-counter,.mastery-summary b,.mastery-section-title,.mastery-title-copy>b,.mastery-count,.card-reward-legend b,.card-reward-pick small,.roll-chip small,.card-roll-recent>span{color:#d6dfc6}
+.mastery-section-title{border-color:var(--edge)}.mastery-map>summary{background:#304733}.mastery-mob{border-color:#4a6247}
+.mastery-mob.found>span:nth-child(2)>b{color:#a8d199}.mastery-track{border-color:#516846}.mastery-track i{background:var(--foil,#b6aa6c)}
+.mastery-emblem,.mastery-medal{box-shadow:none;text-shadow:none}.mastery-medal small{background:#273c2b;color:#e8dfbf}
+.mastery-pips i{background:#263b2c;border-color:#71835a}.mastery-pips i.filled{background:#c5af78;border-color:#d4bf8a;box-shadow:none}
+.roll-chip{background:#3e4931;color:#ebd5a4;border-color:#7a8056}.roll-chip.new{box-shadow:none}
+.card-pick.off{background:#23372a;border-color:#5e7253;color:#afc19e}.card-reward-summary{color:#d3c59e!important}
+.board-row.me{background:#394d34}.board-row:first-child{color:#e6cf9f}
+/* Echo lobby/store, offline summary, confirmation and save-conflict dialogs. */
+.dungeoncard,.dungeoncard:hover,.trial-head,.trial-intro,.trial-result-banner,.trial-stat,.trial-next-cache,.trial-card button.trial-act,.trial-card button.trial-act:hover,.trial-reward-details,.trial-reward-details summary,.trial-rung{background:#2a3932;border-color:#5e6a51;box-shadow:none}
+.dungeoncard{border-left-color:#a18bb9}
+.dungeoncard .echo-copy>b,.dungeoncard .echo-sub,.echo-meta b,.trial-brand b,.trial-brand small,.trial-hd,.trial-intro>b,.trial-intro>span,.trial-result-banner small,.trial-result-banner b,.trial-result-banner span,.trial-stat small,.trial-stat b,.trial-next-cache>span,.trial-next-cache>b,.trial-card button.trial-act b,.trial-rung b,.trial-rung small,.trial-note,.trial-shop .shopline b{color:#d7d7c4}
+.dungeoncard .echo-meta small,.dungeoncard .echo-open,.trial-choice-timer{background:#384337;border-color:#74785c;color:#e5d9b4}
+.dungeoncard .echo-mark,.trial-seal,.trial-card button.trial-act .trial-choice-mark{background:#493e53;border:1px solid #9c86ad;color:#e5d4ee;box-shadow:none;text-shadow:none}
+.trial-close{background:#364b3b}.trial-shop,.trial-shop .shopline{border-color:var(--edge)}
+.offline-card .eyebrow,.offline-stat small,#offlineExplanation{color:#b8c8ac}#offlineDetails{background:#2c3e2e;border-color:#697d58}
+#modal,#offlineModal,#conflict{background:#0a160ed9!important;backdrop-filter:blur(5px)}
+.login-card{max-height:calc(100dvh - 24px);overflow:auto}
+/* Login: a quiet atlas, with a separate brand area on wide screens. */
+#loginOverlay{background:radial-gradient(ellipse at 18% 20%,#57714a55,transparent 55%),radial-gradient(ellipse at 85% 90%,#9a7c3433,transparent 50%),#13231c;backdrop-filter:none;gap:80px;padding:30px;overflow:auto;isolation:isolate}
+#loginOverlay::before{content:'';position:absolute;inset:0;z-index:-1;pointer-events:none;opacity:.22;background:repeating-radial-gradient(ellipse at 12% 90%,transparent 0 46px,#85967366 47px 48px,transparent 49px 86px);mask-image:linear-gradient(90deg,#000,transparent)}
+.login-brand{max-width:390px;flex:1}.login-eyebrow{font-size:10px;letter-spacing:3px;color:#b9caa7;text-transform:uppercase}
+.login-brand h1{font:60px/1.05 Georgia,serif;letter-spacing:-2px;color:#efdfb9;margin:21px 0}
+.login-brand p{max-width:290px;font-size:14px;line-height:1.8;color:#b3c6a9}.login-brand .login-footnote{border-top:1px solid #61704b;padding-top:18px;margin-top:34px;font-size:10px;letter-spacing:2px;color:#bac49d}
+#loginOverlay>.login-card{width:360px;flex:none;padding:25px;text-align:left;background:#1c2d22f5;border:1px solid #6b7955;box-shadow:0 22px 70px #07150aaa;border-radius:10px}
+#loginOverlay .login-card h2{font:24px Georgia,serif;color:#ece1c4;margin:0 0 7px}
+.login-intro{color:#b5c7aa;font-size:12px;margin:0 0 21px!important}
+#loginOverlay .atabs{gap:0;border-bottom:1px solid #526447;margin-bottom:20px}
+#loginOverlay .atabs button{border:0;background:transparent;border-radius:0;color:#aabc9e}
+#loginOverlay .atabs button.on{color:#f0d69c;border-bottom:2px solid #c8ae79;background:transparent}
+.form-group label{font-size:10px;letter-spacing:1px;color:#b7c8a8}.form-group input{padding:10px 11px}
+.remember-user{font-size:10px;color:#b5c6a6}.remember-user input{accent-color:var(--gold)}
+.login-btn:hover{background:#e0c793;color:#18241b}.login-err{color:#f09b87}.login-card a{color:#dcc38b}
+#loginHint{display:block;font-size:10px;line-height:1.6}#saveTools{padding-top:13px;border-top:1px solid var(--edge)}
+@media(min-width:901px){.wp{max-height:100%}}
+@media(max-width:900px){.wp,.wp.wide,.wp[data-win="skills"]{flex:1 1 auto;width:100%;max-width:100%}}
+@media(max-width:760px){#loginOverlay{gap:0;padding:16px}.login-brand{display:none}#loginOverlay>.login-card{width:min(360px,100%)}.title{padding:8px 10px}.body{padding:8px}}
+@media(max-width:560px){#hud{font-size:10px;gap:4px 9px;padding:6px 8px}.ib{width:32px;height:32px;font-size:16px}#dock{gap:3px;padding:4px 6px}.grid{grid-template-columns:repeat(6,minmax(0,1fr))}.cell .ro-item-icon,.cell .ro-icon-svg{width:28px;height:28px}.row button{min-height:30px}}
+@media(prefers-reduced-motion:reduce){button,.bar i,.xp-fill{transition:none}}
+
+#wins{z-index:40}
+.board-state,.logfbar{background:var(--surface);border-color:var(--edge);color:var(--ink)}
+.board-rank,.logfbar .logf{color:#d7c597}.tbands b.tier0{color:#bac6ba}.tbands b.tier1{color:#9bc599}.tbands b.tier2{color:#a4bddb}.tbands b.tier3{color:#ccafe2}.tbands b.tier4{color:#e4c680}
+.row button[style*="background:#ffe08a"]{background:#465442!important;color:#f1d9a4;border-color:#bda773}
+.grid{grid-auto-flow:row dense}.bag-count{white-space:nowrap}
+/* Task layouts: catalogues and inspectors share a compact/expanded window system. */
+.wp{container-type:inline-size;flex:0 1 370px}.wp.wide{flex-basis:400px;width:400px}.wp[data-win="skills"]{flex-basis:400px}
+#wins>.wp.ui-expanded{flex-basis:660px;width:660px;max-width:100%}
+.ui-window-tools{display:flex;align-items:center;gap:3px}.ui-window-tools button{min-width:24px}
+.ui-panel{padding:0!important;background:#192725}.ui-panel>.atabs,.ui-panel>.mastery-tabs{padding:7px 12px 0;margin:0;border-bottom:1px solid #3b5046;gap:12px;display:flex;background:#22342e}
+.ui-panel>.atabs button,.ui-panel>.mastery-tabs button{border:0;border-bottom:2px solid transparent;background:none;border-radius:0;padding:6px 3px;height:34px;min-height:34px;flex:1;color:#a7baac;font-size:11px}
+.ui-panel>.atabs button.on,.ui-panel>.mastery-tabs button.on{border-bottom-color:var(--gold);color:#ead19b;background:none}
+.ui-hero{padding:17px 15px 13px;border-bottom:1px solid #354b40;background:linear-gradient(120deg,#273d30,#1e3028)}
+.ui-eyebrow{font:700 8px/1.4 Arial,sans-serif;letter-spacing:2px;color:#a2b497}
+.ui-hero h2{margin:5px 0;font:24px/1.15 Georgia,serif;color:#f0dfb7;letter-spacing:-.3px}.ui-hero p{margin:0;font-size:10px;line-height:1.5;color:#b6c6ae}
+.ui-content{padding:12px;display:flex;flex-direction:column;gap:12px;min-width:0}.ui-content>*{margin-top:0!important;margin-bottom:0!important}
+.ui-section{min-width:0;margin:0}.ui-section-label{font-size:9px;letter-spacing:1px;text-transform:uppercase;font-weight:600;color:#b6c5ad;margin:0 0 9px;padding:0;line-height:1.4}
+.ui-split{display:grid;grid-template-columns:minmax(0,1fr);gap:12px;min-width:0;align-items:start}
+.ui-inspector{padding:11px;background:#293a2d;border:1px solid #697255;border-radius:7px;min-width:0}
+.ui-inspector>.mob-card,.ui-inspector>.doll-detail,.ui-inspector>.grid-detail{border:0;padding:0;margin:0;background:none;box-shadow:none}
+.ui-inspector .ui-section-label{color:#e2c58d;border-bottom:1px solid #56654b;padding-bottom:7px}
+.ui-empty{font-size:11px;line-height:1.7;color:#a6b99f;margin:0;padding:9px 0}
+.ui-catalog{max-height:310px;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin;scrollbar-color:#60765b #192725;min-width:0;padding:2px 3px 4px 2px}
+.ui-catalog .grid{gap:6px;grid-template-columns:repeat(5,minmax(0,1fr))}.ui-catalog .grid>small{grid-column:1/-1}
+.ui-catalog .cell{aspect-ratio:1;min-height:44px}.ui-catalog .cell.sel{outline-offset:0}
+.ui-inventory .ui-catalog{max-height:240px}.ui-inventory .bag-top{border-top:1px solid #394d3e;padding-top:8px;margin:8px 0 0;flex-wrap:wrap}
+.ui-inventory .bag-count{display:none}.ui-item-art{width:48px;height:48px;float:left;margin:0 9px 7px 0;border:1px solid #707b59;border-radius:6px;background:#3c4934;display:grid;place-items:center}
+.ui-item-art .ro-item-icon,.ui-item-art .ro-icon-svg{width:40px;height:40px}.ui-inspector .row{clear:both}.ui-inspector .grid-detail>.hd{font-size:13px;padding:4px 0;line-height:1.4}
+.ui-management{padding-top:10px;border-top:1px solid #40513f}.ui-management .bag-auto{padding:0 0 8px;margin:0}.ui-management .bag-tools{margin:0}
+.ui-fold{border:1px solid #40563f;border-radius:6px;background:#203428;overflow:hidden;min-width:0}
+.ui-fold>summary{padding:9px 10px;font-size:10px;line-height:1.5;font-weight:600;color:#d6cba9;cursor:pointer;overflow-wrap:anywhere}
+.ui-fold[open]>summary{border-bottom:1px solid #3a513b}.ui-fold-body{padding:10px;display:flex;flex-direction:column;gap:8px;min-width:0}.ui-fold-body:empty{display:none}.ui-fold-body>.mob-card{margin:0}
+.ui-primary-action{margin-top:10px;display:flex}.ui-primary-action button{width:100%;padding:10px!important;background:#b6a276;color:#172720;border-color:#d0bd8d;font-weight:700}
+.ui-destinations .mapgrid{grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;margin:0 0 7px}
+.ui-destinations .mapcard{display:grid;grid-template-columns:1fr auto;align-items:center;gap:8px;padding:10px;border-width:1px;min-height:40px;border-radius:5px}
+.ui-destinations .mapcard b{font-size:11px}.ui-destinations .mapcard small{font-size:9px}.ui-destinations .mapcard.here{box-shadow:inset 3px 0 #9cbe86}
+.ui-route{background:#24392b;padding:12px;border:1px solid #4b6346;border-radius:7px}
+.ui-route .fields{position:static;border:0;padding:0;background:none}.ui-route .mapband-t{font:20px Georgia,serif;margin:0 0 12px;background:none;display:block}
+.ui-route .lvgrid{grid-template-columns:repeat(5,minmax(0,1fr));gap:5px}.ui-route .map-node{min-height:37px;padding:7px 3px;border-width:1px;font-size:10px}
+.ui-route .row{margin:11px 0;font-size:10px}.ui-route .ui-fold{margin-top:10px}.ui-field-guide{display:grid;gap:7px}.ui-field-guide .ui-section-label{margin-bottom:0}
+.ui-challenge .dungeoncard{min-height:70px;padding:8px;grid-template-columns:32px 1fr 50px;gap:7px}.ui-challenge .echo-mark{width:30px;height:30px;font-size:20px}.ui-challenge .echo-copy>b{font-size:13px}.ui-challenge .echo-sub{font-size:9px}.ui-challenge .echo-meta small{font-size:8px}.ui-challenge .map-specials{margin:0}
+.ui-metrics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}.ui-metrics>.ui-section-label{grid-column:1/-1;margin:0}
+.ui-metrics>span{display:flex;flex-direction:column;justify-content:center;padding:9px 7px;background:#23392a;border:1px solid #3e573d;border-radius:5px;font-size:9px;color:#b4c5a7;line-height:1.6}.ui-metrics>span>b{font-size:16px;color:#ece2c1}.ui-metrics>span>small{font-size:8px}
+.ui-attributes{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}.ui-attributes .slot{display:block;padding:9px;border:1px solid #476145;background:#253c2b;margin:0;font-size:11px}.ui-attributes .slot>span:first-child{display:block;min-height:32px}.ui-attributes .bts{justify-content:flex-end;margin-top:7px;gap:4px}.ui-attributes .bts small{margin-right:auto;width:auto}.ui-attributes .bts button{width:33px}
+.ui-job-paths{display:flex;flex-direction:column;gap:7px}.ui-job-paths .ui-section-label{margin:0}.ui-job-start .trow{display:block}.ui-job-start .tn{padding:8px}
+.ui-job-path{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;position:relative;align-items:stretch}.ui-job-path:before{content:'';height:1px;background:#536b4b;position:absolute;top:50%;left:12%;right:12%}.ui-job-path .tn{position:relative;z-index:1;min-height:50px;padding:9px 4px;border-width:1px;font-size:10px;justify-content:center;word-break:normal;overflow-wrap:anywhere}
+.ui-job-path .tn small{font-size:8px;margin-top:4px}.ui-job-paths .legend{margin:3px 0 0}.ui-job-paths .legend .tn{font-size:8px;border-width:1px}
+.ui-panel[data-layout="job"] .hair-preview-card{flex-direction:row;padding:0;border:0;background:none;margin-bottom:9px;gap:10px}.ui-panel[data-layout="job"] .hair-preview-stage{flex-basis:100px;width:100px;height:116px;background:radial-gradient(#556e43,#243b2a)}.ui-panel[data-layout="job"] .hair-preview-stage canvas{width:100px;height:106px}.ui-panel[data-layout="job"] .hair-preview-info b{font-size:15px}.ui-panel[data-layout="job"] .hair-preview-info .hair-style-label{font-size:10px}
+.ui-skill-catalog{display:flex;flex-direction:column;gap:8px}.ui-skill-catalog>.ui-section-label{margin:0}.ui-skill-catalog .ui-fold-body{padding:5px}.ui-skill-catalog .skg{grid-template-columns:1fr;gap:5px}
+.ui-skill-catalog .sk{display:grid;grid-template-columns:38px minmax(0,1fr) 35px;grid-template-rows:auto auto;gap:0 8px;min-height:61px;padding:7px;text-align:left;align-items:center;border:1px solid #486343;border-radius:5px}
+.ui-skill-catalog .sk .si{grid-column:1;grid-row:1/3;width:36px;height:36px;border:0}.ui-skill-catalog .skill-art{width:34px;height:34px}.ui-skill-catalog .sk-head{grid-column:2;grid-row:2;justify-content:start;gap:5px}.ui-skill-catalog .sk-kind{font-size:7px;background:none;padding:0;color:#9db58f}.ui-skill-catalog .sk-name{grid-column:2;grid-row:1;font-size:11px;min-height:0;text-align:left}.ui-skill-catalog .sk-level{grid-column:3;grid-row:1;font-size:8px;align-self:end;text-align:center}.ui-skill-catalog .sk>button{grid-column:3;grid-row:2;padding:3px 4px;min-height:23px;margin-top:3px;font-size:9px}.ui-skill-catalog .sk.off{opacity:.7;filter:none}.ui-skill-catalog .sk:hover{transform:none}
+.ui-panel[data-layout="skills"] .ui-catalog{max-height:390px}.ui-automation .sk-tools{display:flex;gap:7px;grid-column:auto}.ui-automation .sk-master,.ui-automation .sk-alloc{min-height:72px;flex:1;padding:8px;gap:3px;font-size:10px;max-width:100%}.ui-automation .sk-master .si{display:none}.ui-automation .sk-master small,.ui-automation .sk-alloc small{font-size:8px}.ui-automation .sk-master .sk-name{min-height:0}
+.ui-loadout.doll{display:block;max-width:none;padding:0;margin:0;background:none;border:0}.ui-loadout-slots{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px}.ui-loadout-slots .cell{min-height:68px;aspect-ratio:auto;padding:15px 0 8px}.ui-loadout-slots>.cell:not([data-a]){display:none}.ui-loadout .doll-detail{margin:0;padding:0;border:0}.ui-loadout .rf{max-width:90%;white-space:nowrap;font-size:8px!important}.ui-loadout .cell .lockstar{top:auto;bottom:2px}.ui-loadout .cell.nm::after{top:auto;bottom:2px}
+.ui-pet-catalog .grid{grid-template-columns:repeat(3,minmax(0,1fr))}.ui-pet-catalog .cell{aspect-ratio:auto;min-height:82px;flex-direction:column;gap:5px;padding:12px 4px}.ui-pet-name{font-size:9px;line-height:1.2;text-align:center;color:#d4dfc7}.ui-inspector .mob-card>small{display:block;margin:5px 0}.ui-inspector .ui-fold{margin-top:7px}.ui-inspector .slot{flex-wrap:wrap}
+.ui-store-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}.ui-store-grid>.ui-section-label{grid-column:1/-1;margin:0}.ui-store-grid .slot{display:flex;flex-direction:column;align-items:stretch!important;margin:0!important;padding:11px;gap:9px!important}.ui-store-grid .slot small{font-size:9px}.ui-store-grid .slot>div{width:100%;min-width:0}.ui-store-grid .slot button{width:100%;background:#41573a;color:#f1d9a2}.ui-reforge .slot{padding:10px}.ui-reforge .cell{width:46px;flex:none;min-height:46px;max-height:46px}
+.ui-journal-summary.mastery-head{padding:10px;margin:0;border:0;background:none}.ui-journal-summary .mastery-emblem{display:none}.ui-journal-summary>div:nth-child(2) b{font-size:13px}.ui-journal-summary .mastery-counter{font-size:10px}.ui-panel[data-layout="index"] .mastery-summary{padding:10px}.ui-panel[data-layout="index"] .mastery-summary>span{font-size:12px;margin-top:7px}.ui-panel[data-layout="index"] .mastery-title-list{max-height:340px;overflow:auto;scrollbar-width:thin}.ui-panel[data-layout="index"] .ui-fold-body>.mastery-section-title{display:none}
+.ui-board-toolbar{display:flex;flex-direction:column;gap:8px}.ui-board-toolbar .board-head{justify-content:space-between}.ui-standings .ui-catalog{max-height:450px}.ui-standings .board-row{padding:12px 7px;grid-template-columns:22px minmax(0,1fr) auto auto;border:0;border-bottom:1px solid #344d38;gap:6px}.ui-standings .board-row:nth-child(2){background:#3e4b31;border-radius:5px}.ui-standings .board-state{padding:25px 14px;line-height:1.8}
+.ui-log-summary{font-size:10px;color:#becbae}.ui-panel[data-layout="log"] .ui-events{max-height:520px;display:flex;flex-direction:column;gap:0}.ui-events>div{padding:9px 8px;border-bottom:1px solid #344c38;font-size:11px;line-height:1.6}.ui-panel .logfbar{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));padding:0;border:0;gap:8px}.ui-panel .logfbar .sp{grid-column:1/-1;margin:0}
+.ui-settings-section{padding:12px;background:#233a2b;border:1px solid #405a3e;border-radius:7px}.ui-settings-section>.ui-section-label{color:#e0cb9b}.ui-settings-section>.row{display:flex;gap:6px;margin:8px 0}.ui-settings-section>.row>button{flex:1}.ui-settings-section .hair-preview-card{padding:8px 0;background:none;border:0}.ui-settings-section .hair-preview-stage{width:100px;flex-basis:100px;height:116px}.ui-settings-section .hair-preview-stage canvas{width:100px;height:106px}.ui-account{padding-top:10px;border-top:1px solid #476143;display:flex;flex-direction:column;gap:9px}.ui-account>.ui-section-label{margin:0}.ui-account .full{margin:0}
+#dock{gap:3px;padding:5px;max-width:calc(100vw - 20px);overflow-x:auto;scrollbar-width:none;flex-wrap:nowrap}
+#dock .ib{width:58px;height:46px;flex:none;display:flex;flex-direction:column;justify-content:center;gap:4px;align-items:center;background:transparent;border-color:transparent;border-radius:5px}
+#dock .ib.on{background:#46543b;border-color:#978b5d}.ui-nav-icon{font-size:16px;line-height:1}.ui-nav-label{font-size:8px;font-weight:600;line-height:1.1;color:#d6dfc7}#dock .k{font-size:6px;top:2px;bottom:auto;right:3px;color:#acba9c}
+@container(min-width:520px){.ui-split{grid-template-columns:minmax(0,1fr) 250px;align-items:start}.ui-split>.ui-catalog,.ui-split .ui-item-scroll{max-height:340px}.ui-inspector{position:sticky;top:0}.ui-destinations .mapgrid{grid-template-columns:repeat(5,minmax(0,1fr))}.ui-destinations .mapcard{display:flex;padding:10px 8px}.ui-attributes{grid-template-columns:repeat(3,minmax(0,1fr))}.ui-metrics{grid-template-columns:repeat(5,minmax(0,1fr))}.ui-job-paths .ui-job-path{gap:9px}.ui-pet-catalog .grid{grid-template-columns:repeat(3,minmax(0,1fr))}.ui-store-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+
+@media(max-width:900px){#wins{overflow-y:auto;overscroll-behavior:contain}#wins>.wp,#wins>.wp.ui-expanded{flex:0 0 100%;height:100%;width:100%;max-width:100%}}
+
 /* v74.1 phone layout. The desktop rules above are fine at a desk; on a phone they produced a
    HUD that re-flowed every time a number grew, a tab dock that overlapped the log feed and the
    pet-buff bar, and windows that were squeezed into slivers. This block is the phone shape, and
@@ -467,6 +657,8 @@ button.tick.on{background:#ffe08a;border-color:var(--gold);font-weight:bold}
    430px (small phones). --docktop is the one number the feed, the buff bar and the windows agree
    on: the distance from the bottom of the play area to just above the dock. */
 @media(max-width:700px){
+  #wins>.wp.ui-expanded{flex-basis:auto;width:100%;max-width:100%}
+  #dock .ib{width:51px;height:43px}
   :root{--docktop:66px}
   /* A fixed three-column grid: identity / HP / Zeny on the first row, the three live rates on the
      second, and the account cluster (badge / Speed / Logout) on a row of its own, right-aligned.
@@ -513,10 +705,11 @@ button.tick.on{background:#ffe08a;border-color:var(--gold);font-weight:bold}
   button,[data-a],.mapcard,.cell{touch-action:manipulation}
   button{cursor:pointer}
 }
+
 </style>
 </head>
 <body>
-<div id="loginOverlay"><div class="login-card"><h2>⚔️ Prontera Grind</h2>
+<div id="loginOverlay"><section class="login-brand" aria-label="Prontera Grind"><div class="login-eyebrow">Your next adventure awaits</div><h1>Prontera<br>Grind<span style="color:var(--gold)">.</span></h1><p>Build your character. Find your next upgrade. Leave your mark on the world.</p><div class="login-footnote">EXPLORE · GROW · CONQUER</div></section><div class="login-card"><h2>Prontera Grind</h2><p class="login-intro">Welcome, adventurer.</p>
 <div class="atabs"><button type="button" id="tabLogin" class="on">Login</button><button type="button" id="tabReg">Register</button></div>
 <form id="loginForm" autocomplete="on">
 <div class="form-group"><label for="username">Account Name</label><input type="text" id="username" required autocomplete="username"></div>
@@ -730,7 +923,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // script block, which is a SyntaxError - the game did not run on main at all. One line wins, and
 // it names both sides of this merge: the v38 balance patch (the weapon cut, the affix/card
 // give-back) and main's weapon-hold rendering work.
-const BUILD='2026-10-09 grind-v91.1 class-switch bag and equipment fix';   // shown on the login card - confirms which file you loaded
+const BUILD='2026-10-09 grind-v93 tab layout redesign';   // shown on the login card - confirms which file you loaded
 $('buildTag').textContent='build '+BUILD;
 
 // ---------- class tree: Novice -> 6 first jobs -> 6 second jobs -> 6 third jobs ----------
@@ -2839,8 +3032,8 @@ const autoAllocateSkills=()=>{if(!S.sk||typeof S.sk!=='object')S.sk={};let bough
 const REF_ZENY_MUL=3,refCost=it=>Math.round(REF_ZENY_MUL*400*((it.r||0)+1)*(1+(it.sec||0)*.5)),REF_ORE=[1,1,2,2,5,10,10],refOre=it=>REF_ORE[rarIdx(it)],refCh=it=>[70,70,70,70,49,42,35,28,21,14][it.r||0];
 const affTxt=a=>`${AL[a.k]} +${a.v}`,cardTxt=c=>`${c.n} (${SU(c.stat)} +${c.v})`,dtier=it=>it.card?GI[it.g]:it.ore?3:((it&&+it.sec>=5)?6:(it&&+it.sec>=4)?5:it.tier);
 const isBoss=()=>S.lvl===10||S.lvl===15,fieldName=()=>S.lvl>10?`Nightmare ${MAPS[S.mp].n} Stage ${S.lvl-10}`:`${MAPS[S.mp].n} Stage ${S.lvl}`;
-// Real RO item icons give each equipment family a recognizable shape and several name-based
-// variants. The existing held-weapon URL helper above remains unchanged for the 3D sprite layer.
+// Equipment icons use a stable, recognizable weapon silhouette for each actual weapon type.
+// Other equipment keeps its name-based variants. The existing held-weapon URL helper above remains unchanged for the 3D sprite layer.
 const RO_ITEM_ICON_CANDIDATES={weapon:{dagger:[1201,1202,1204,1205,1210,1212],katar:[1250,1251,1252,1253,1254,1255],staff:[1601,1602,1603,1604,1605,1606],bow:[1701,1702,1703,1704,1705,1706],axe:[1301,1302,1303,1304,1305,1306],sword:[1101,1104,1105,1106,1108,1110,1114],mace:[1501,1502,1503,1504,1505,1510]},armor:[2301,2302,2303,2304,2305,2306,2307,2308,2309,2310,2311,2312,2313],head:[2201,2202,2203,2204,2205,2206,2207,2208,2209,2210,2211,2212,2213,2214,2215,2216],off:[2101,2102,2103,2104,2105,2106,2107,2108],leg:[2401,2402,2403,2404,2405,2406,2407,2408],acc:[2601,2602,2603,2604,2605,2606,2607,2608,2609,2610]};
 // v77 (owner: "sprites i mean for the bags equipments icons. not on the character itself"): every
 // equipment family draws its own icon now. The official RO item art is still tried first over the
@@ -2866,7 +3059,7 @@ const ITEM_ICON_SVG={
 const ITEM_ICON_KEY=it=>it&&it.card?'card':it&&it.ore?'ore':!it?'acc':it.slot==='weapon'?(ITEM_ICON_SVG[it.wt]?it.wt:'sword'):(ITEM_ICON_SVG[it.slot]?it.slot:'acc');
 const itemSvgMarkup=it=>`<svg class="ro-icon-svg" viewBox="0 0 24 24" aria-hidden="true">${ITEM_ICON_SVG[ITEM_ICON_KEY(it)]||ITEM_ICON_SVG.acc}</svg>`;
 const gearIconHash=text=>{let h=2166136261;for(let i=0;i<String(text).length;i++){h^=String(text).charCodeAt(i);h=Math.imul(h,16777619)}return h>>>0};
-const gearItemIconId=it=>{const list=it.slot==='weapon'?RO_ITEM_ICON_CANDIDATES.weapon[it.wt]:RO_ITEM_ICON_CANDIDATES[it.slot];if(!list||!list.length)return 0;const name=String(it.name||'').replace(/^(Common|Fine|Rare|Epic|Legendary)\s+/,'');return list[gearIconHash(it.slot+':'+name)%list.length]};
+const gearItemIconId=it=>{if(it.slot==='weapon')return WEAPON_ITEM_IDS[it.wt]||0;const list=RO_ITEM_ICON_CANDIDATES[it.slot];if(!list||!list.length)return 0;const name=String(it.name||'').replace(/^(Common|Fine|Rare|Epic|Legendary)\s+/,'');return list[gearIconHash(it.slot+':'+name)%list.length]};
 const itemIconUrl=id=>id?`https://static.divine-pride.net/images/items/item/${id}.png`:'';
 const itemIconMarkup=it=>{const svg=itemSvgMarkup(it),id=gearItemIconId(it);
   // referrerpolicy matters: the item-art host refuses hotlinked requests that carry a Referer, which
@@ -3605,6 +3798,7 @@ function changeClass(n){if(classBlock(n))return;
 // instead of taking dock slots. The keys X and V still open them. v91: the World Map tab uses a tower icon.
 const SIDE_TABS=['market','board'];
 const TABS={map:['🗼','World Map','M'],status:['📊','Character','S'],job:['🌳','Class Tree','J'],skills:['✨','Skills','K'],bag:['🎒','Inventory','B'],log:['📃','Log','L'],pet:['🐾','Pets','P'],index:['📚','Mastery Index','I'],board:['🏆','Leaderboard','V'],market:['🏪','Black Market','X'],set:['⚙️','Settings','O'],gm:['🛠️','GM Tools','G']};
+const expandedPanels=new Set();
 const dot=k=>{if(!S)return false;if(k==='status')return S.pts>0;if(k==='skills')return skpAvail()>0;if(k==='quest')return!!(S.q&&S.q.some(q=>q.prog>=q.goal));if(k==='cards')return S.cards.length>0;if(k==='index'){const rank=HUNT_TITLES.findIndex(t=>t.id===S.equippedTitle);return cardMasteryAvailable()>0||HUNT_TITLES.some((t,i)=>i>rank&&titleUnlocked(t))}return false};
 const find=id=>[...S.inv,...items(),...S.cards].find(x=>String(x.id)===String(id));
 // Gear Lv is a display-only field-quality reference: field level +10 per numeric quality step.
@@ -3781,16 +3975,14 @@ const V={
   bag0(){const sel=selB&&S.inv.find(x=>String(x.id)===String(selB));const n=Math.max(30,Math.ceil(S.inv.length/6)*6);const inv=S.inv.map((it,i)=>({it,i})).sort((a,b)=>{const af=!!eqPick&&slotAccepts(eqPick,a.it),bf=!!eqPick&&slotAccepts(eqPick,b.it);return Number(bf)-Number(af)||Number(!!b.it.locked)-Number(!!a.it.locked)||a.i-b.i}).map(x=>x.it);
     const detail=sel?`<div class="mob-card grid-detail">${itemDetail(sel)}<div class="row" style="margin-top:6px"><button data-a="equip" data-v="${sel.id}" ${canUse(sel)?'':'disabled'}>Equip</button><button data-a="sell" data-v="${sel.id}">Sell ${sellVal(sel)}z</button><button class="tick${sel.locked?' on':''}" data-a="lockgear" data-v="${sel.id}" aria-pressed="${!!sel.locked}" title="Locked gear stays pinned and protected from auto-sell">${sel.locked?'&#9733; Unlock':'☆ Lock'}</button><button class="tick${autoSellOn(rarIdx(sel))?' on':''}" data-a="autosell" data-v="${rarIdx(sel)}" title="Auto-sell every ${rarOf(sel).n} item on drop">Auto-sell ${rarOf(sel).n}</button></div></div>`:'';
     return (eqPick?equipChooser(eqPick):'')
-    +`<div class="row"><span class="chip">🔶 Oridecon <b>${S.ore.ori}</b></span><span class="chip">🔷 Elunium <b>${S.ore.elu}</b></span></div>
-    <div class="mob-card" style="margin-top:4px"><div class="hd">Wearing</div>
-      <label><input type="checkbox" data-a="auto" ${S.auto!==false?'checked':''}> Auto-equip better gear</label><br>
-      <small>A drop that beats what you wear is equipped straight away and the old piece goes to the bag - every slot, and a second dagger for an Assassin's left hand included.</small></div>
-    <div class="mob-card sellbox" style="margin-top:4px"><div class="hd">Selling tools</div>
+    +`<div class="bag-top"><div class="row"><span class="chip">Oridecon <b>${S.ore.ori}</b></span><span class="chip">Elunium <b>${S.ore.elu}</b></span></div><span class="bag-count">${S.inv.length}/${BAGMAX} items</span></div>
+    <label class="bag-auto" title="Better drops equip automatically, including an Assassin's second dagger."><input type="checkbox" data-a="auto" ${S.auto!==false?'checked':''}> Auto-equip better gear</label>
+    <details class="bag-tools" data-ui-disclosure="bag-selling" ${clickSellOn()?'open':''}><summary>Selling &amp; automation${clickSellOn()?' · Quick sell ON':''}</summary><div class="mob-card sellbox"><div class="hd">Selling tools</div>
       <div class="row"><small>Auto-sell on drop:</small>${RARALL.map((r,i)=>`<button class="tick${autoSellOn(i)?' on':''}" data-a="autosell" data-v="${i}" aria-pressed="${autoSellOn(i)}" title="Sell every ${r.n} item the moment it drops">${r.n}</button>`).join('')}</div>
       <div class="row" style="margin-top:4px"><button data-a="sellnow" ${S.inv.some(i=>!i.locked&&autoSellOn(rarIdx(i)))?'':'disabled'}>Sell matching now</button><button class="tick${clickSellOn()?' on':''}" data-a="clicksell" aria-pressed="${clickSellOn()}">Click-sell: ${clickSellOn()?'ON':'OFF'}</button></div>
-      <small>${clickSellOn()?'<b class="r0">Click-sell is ON</b> - the next unlocked bag item you click is sold instantly.':'Ticked rarities are sold the moment they drop, so they never enter the bag. Click-sell turns a single click in the grid into an instant sale.'}</small><small>&#9733; Locked gear stays at the top and is skipped by auto/bulk sell. Manual Sell asks you to confirm unlocking it.</small></div>
-    <div class="row" style="margin-top:4px"><small class="${S.inv.length>=BAGMAX?'r0':''}">${S.inv.length}/${BAGMAX} items${S.inv.length>=BAGMAX?' &middot; BAG FULL':''}</small></div>
-    <small>Selling pays a small flat amount - a bag dump never funds an upgrade.</small>
+      <small>${clickSellOn()?'<b class="r0">Click-sell is ON</b> - the next unlocked bag item you click is sold instantly.':'Ticked rarities are sold the moment they drop, so they never enter the bag. Click-sell turns a single click in the grid into an instant sale.'}</small><small>&#9733; Locked gear stays at the top and is skipped by auto/bulk sell. Manual Sell asks you to confirm unlocking it.</small></div></details>
+    ${S.inv.length>=BAGMAX?'<div class="row"><small class="r4">BAG FULL</small></div>':''}
+    <div class="bag-key" aria-label="Equipment rarities">${RARALL.map((r,i)=>`<span class="r${i}">${r.n}</span>`).join('')}</div>
     <div class="grid${clickSellOn()?' sellmode':''}">${Array.from({length:n},(_,i)=>{const it=inv[i];if(!it)return'<div class="cell empty"></div>';
       const on=!!(sel&&sel.id===it.id),fits=!!eqPick&&slotAccepts(eqPick,it);
       // While a slot is being chosen, every item that fits it is ringed in green and equips on
@@ -4040,6 +4232,106 @@ function insertUI(sel){if(!(sel.slots>0))return'<small>No card slots on this ite
 // the "hopping" the owner saw on a phone. The scroll of the real scroller is restored by number, and
 // the anchor is only nudged into view when it is not already visible (block:'nearest' does nothing if
 // it is), so a rebuild in place stays perfectly still.
+// Presentation composition: move the existing controls into task-specific layouts. Nodes are
+// moved, never recreated, so action values, disabled states, confirmation paths and tooltips
+// remain owned by the original renderers. No game/save state is changed here.
+function arrangePanel(k,root){
+  const make=(tag,cls,text)=>{const e=document.createElement(tag);if(cls)e.className=cls;if(text)e.textContent=text;return e};
+  const put=(parent,...nodes)=>{nodes.flat().filter(Boolean).forEach(n=>parent.append(n));return parent};
+  const section=(label,cls='')=>put(make('section','ui-section '+cls),make('h3','ui-section-label',label));
+  const fold=(label,nodes,id,open=false)=>{const d=make('details','ui-fold');d.dataset.uiDisclosure=k+'-'+id;d.open=open;return put(d,make('summary','',label),put(make('div','ui-fold-body'),nodes))};
+  const split=(catalog,detail)=>put(make('div','ui-split'),catalog,detail);
+  const inspector=(label,nodes)=>put(section(label,'ui-inspector'),nodes);
+  const scroll=(id,nodes,cls='')=>{const e=put(make('div','ui-catalog '+cls),nodes);e.dataset.panelScroll=id;return e};
+  const original=[...root.childNodes],body=put(make('div','ui-content'),original);
+  root.classList.add('ui-panel');root.dataset.layout=k;root.append(body);
+  const q=s=>body.querySelector(s),all=s=>[...body.querySelectorAll(s)];
+  const direct=()=>[...body.children];
+  const tabs=q('.atabs');if(tabs)root.prepend(tabs);
+  const mode=k==='status'?sub.status:k==='bag'?sub.bag:k;
+  const labels={map:['EXPLORE','World atlas','Choose a destination, then a stage.'],stats:['CHARACTER',S.cls,'Base '+S.lv+' · Job '+jobOf().jl+' · '+S.pts+' stat points'],equip:['CHARACTER','Your loadout','Select a slot to compare, refine or socket.'],job:['PROGRESSION','Class paths','Browse a path. Inspect a class. Make your next move.'],skills:['COMBAT','Skill library',skpAvail()+' points available · '+S.cls],bag:['INVENTORY','Field kit',S.inv.length+' / '+BAGMAX+' items'+(S.inv.length>=BAGMAX?' · BAG FULL':'')+(clickSellOn()?' · CLICK-SELL ACTIVE':'')],cards:['INVENTORY','Card collection',(S.cards||[]).length+' loose cards · select one to socket or sell'],pet:['COMPANIONS','Your party',S.pets.filter(p=>p.on).length+' / 3 in battle · '+S.pets.length+' collected'],market:['TRADE','Black Market',S.zeny.toLocaleString()+' Zeny available'],index:['COLLECTION','Mastery journal','Track discoveries and permanent rewards.'],board:['COMMUNITY','Leaderboard','Your place among the adventurers.'],log:['SESSION','Activity feed','Filter your feed without interrupting the grind.'],set:['PREFERENCES','Make it yours','Appearance, combat display and account controls.'],gm:['ADMINISTRATION','Game tools','Test controls grouped by system.']};
+  const info=labels[mode]||labels[k];
+  if(info){const h=make('header','ui-hero');put(h,make('span','ui-eyebrow',info[0]),make('h2','',info[1]),make('p','',info[2]));root.insertBefore(h,body)}
+  if(k==='map'){
+    const band=q('.mapband:not(.fields)'),maps=q('.mapgrid'),fields=q('.fields'),special=q('.map-specials'),drops=q('.mapcols');
+    const destinations=section('01 / Destination','ui-destinations');put(destinations,maps);if(band)put(destinations,fold('About destinations',[...band.childNodes].filter(n=>n!==special),'destinations'));
+    const route=section('02 / Stage & travel','ui-route');put(route,fields);
+    if(fields){const notes=[...fields.querySelectorAll('.map-stage-note,.mapband-t>small')];put(fields,fold('Stage rules & requirements',notes,'stage-rules'));const go=fields.querySelector('.go');if(go)put(fields,put(make('div','ui-primary-action'),go))}
+    body.replaceChildren(destinations,route);
+    if(drops){const intel=section('03 / Field guide','ui-field-guide');[...drops.children].forEach((card,i)=>{const hd=card.querySelector('.hd');put(intel,fold(hd?hd.textContent:'Drop information',card,'drops-'+i,false))});put(body,intel)}
+    if(special)put(body,put(section('CHALLENGE / Endless Echo','ui-challenge'),special));
+  }else if(mode==='stats'){
+    const slots=direct().filter(e=>e.classList.contains('slot')),attrs=slots.filter(e=>e.querySelector('[data-a="stat"]')),combat=slots.find(e=>!e.querySelector('[data-a="stat"]')),reset=q('[data-a="rstat"]');
+    const attributes=section('Allocate attributes','ui-attribute-section');put(attributes,put(make('div','ui-attributes'),attrs));
+    const metrics=section('Combat overview','ui-metrics');if(combat)put(metrics,[...combat.children]);
+    const notes=direct().filter(e=>e!==combat&&!attrs.includes(e)&&e!==reset);body.replaceChildren(metrics,attributes,fold('Build notes & progression',notes,'build-notes'),fold('Reset attributes',reset,'respec'));
+  }else if(k==='job'){
+    const tree=q('.tree'),preview=q('.hair-preview-card'),detail=q('.mob-card'),legend=q('.legend'),restart=q('[data-a="job"][data-v="Novice"].full');
+    const paths=section('Six paths. Your next class.','ui-job-paths');
+    if(tree){const rows=[...tree.querySelectorAll('.trow')],start=rows.shift();if(start)put(paths,put(make('div','ui-job-start'),start));for(let i=0;i<6;i++){const row=make('div','ui-job-path');rows.forEach(r=>{const node=r.querySelectorAll('.tn')[0];if(node)row.append(node)});put(paths,row)}}
+    if(legend)put(paths,legend);
+    const picked=inspector('Selected class',[preview,detail]);
+    const notes=direct().filter(e=>e!==tree&&e!==preview&&e!==detail&&e!==legend&&e!==restart);
+    body.replaceChildren(split(paths,picked),fold('Class switching & collection',notes,'class-notes'),fold('Restart as Novice',restart,'restart'));
+  }else if(k==='skills'){
+    const slot=q('.sk-slot'),tools=q('.sk-tools'),reset=q('[data-a="rskill"]'),grids=all('.skg'),intro=direct().filter(e=>!e.matches('.sk-slot,.skg,.sec')&&e!==reset);
+    const catalog=section('Skills by class','ui-skill-catalog');
+    grids.forEach((g,i)=>{const label=g.previousElementSibling?.textContent||'Skills';const d=fold(label,g,'skill-line-'+i,true);put(catalog,d)});
+    if(tools)tools.remove();
+    const chosen=slot?.querySelector('.sk-detail-card');
+    const detail=inspector('Skill details',chosen||make('p','ui-empty','Select a skill to inspect its effects and auto-cast settings.'));
+    const footer=put(section('Automation','ui-automation'),tools);
+    // The allocation tile can be a sibling of the master tile in older saves/builds.
+    const masters=all('.sk-master,.sk-alloc');masters.forEach(e=>{if(!footer.contains(e))footer.append(e)});
+    body.replaceChildren(split(scroll('skills',catalog),detail),footer,fold('Skill points & combat rules',intro,'skill-notes'),fold('Reset skills',reset,'respec'));
+  }else if(mode==='bag'||mode==='cards'){
+    const grid=q('.grid'),detail=q('.grid-detail')||(mode==='cards'?q('.mob-card'):null),top=q('.bag-top'),auto=q('.bag-auto'),tools=q('.bag-tools'),key=q('.bag-key'),chooser=q('.chooser');
+    if(detail)detail.remove();
+    const catalog=section(mode==='cards'?'Loose cards':'Equipment','ui-inventory');put(catalog,key,scroll('inventory',grid,'ui-item-scroll'));
+    if(top)put(catalog,top);
+    const selected=inspector(mode==='cards'?'Card details':'Item details',detail||make('p','ui-empty',mode==='cards'?'Select a card to see its bonus and available equipment slots.':'Select equipment to compare its stats, equip it, lock it or sell it.'));
+    if(detail&&mode==='bag'){const item=S.inv.find(it=>String(it.id)===String(selB));if(item){const art=make('div','ui-item-art');art.innerHTML=icon(item);detail.prepend(art)}}
+    const leftovers=direct().filter(e=>![grid,detail,top,auto,tools,key,chooser].includes(e));
+    body.replaceChildren();put(body,chooser,split(catalog,selected));
+    if(auto||tools)put(body,put(section('Bag management','ui-management'),auto,tools));
+    if(leftovers.length)put(body,fold('Inventory information',leftovers,'inventory-notes'));
+  }else if(mode==='equip'){
+    const doll=q('.doll');if(doll){const detail=doll.querySelector('.doll-detail'),cells=[...doll.querySelectorAll(':scope > .cell')];const slots=put(make('div','ui-loadout-slots'),cells);const catalog=put(section('Equipped slots'),slots);const inspect=inspector('Equipment details',detail||make('p','ui-empty','Choose an equipment slot to inspect or replace it.'));doll.replaceChildren(split(catalog,inspect));doll.classList.add('ui-loadout')}
+    const notes=direct().filter(e=>e!==doll);body.replaceChildren();put(body,doll,fold('Weapon compatibility',notes,'equipment-notes'));
+  }else if(k==='pet'){
+    const grid=q('.grid'),detail=q('.mob-card'),notes=direct().filter(e=>e!==grid&&e!==detail);
+    if(grid){[...grid.querySelectorAll('.cell')].forEach(tile=>{const p=S.pets.find(p=>String(p.id)===tile.dataset.v);if(p)tile.append(make('span','ui-pet-name',PETS[p.sp].n))})}
+    const catalog=put(section('Companions','ui-pet-catalog'),scroll('pets',grid));
+    const panel=inspector('Companion details',detail||make('p','ui-empty','Select a companion to train it, manage skills or send it into battle.'));
+    if(detail){const headings=[...detail.querySelectorAll(':scope > .sec')];headings.forEach((h,i)=>{const nodes=[];let next=h.nextSibling;while(next&&!(next.nodeType===1&&next.classList.contains('sec'))){const current=next;next=next.nextSibling;nodes.push(current)}const d=fold(h.textContent,nodes,'pet-detail-'+i,true);h.replaceWith(d)})}
+    body.replaceChildren(split(catalog,panel),fold('Pet drops & bonding',notes,'pet-notes'));
+  }else if(k==='market'){
+    if(!bmOpen())return;
+    const ore=all('.slot').filter(e=>e.querySelector('[data-a="bmore"]')),materials=all('.slot').filter(e=>e.querySelector('[data-a="bmmat"]')),reforge=all('.slot').filter(e=>e.querySelector('[data-a="bmref"]'));
+    const notes=direct().filter(e=>!ore.includes(e)&&!materials.includes(e)&&!reforge.includes(e));
+    body.replaceChildren(put(section('Refining supplies','ui-store-grid'),ore),fold('Nightmare materials · '+materials.length,put(make('div','ui-store-grid'),materials),'materials'),put(section('Reforge worn equipment','ui-reforge'),reforge.length?reforge:make('p','ui-empty','Wear equipment with affixes to reforge it.')),fold('Market information',notes,'market-notes'));
+  }else if(k==='index'){
+    const head=q('.mastery-head'),tabs=q('.mastery-tabs');if(head)head.classList.add('ui-journal-summary');if(tabs)root.insertBefore(tabs,body);
+    // Group each named collection section, keeping its controls and catalogue together.
+    const titles=direct().filter(e=>e.classList.contains('mastery-section-title'));
+    titles.forEach((h,i)=>{const nodes=[];let n=h.nextSibling;while(n&&!(n.nodeType===1&&n.classList.contains('mastery-section-title'))){const cur=n;n=n.nextSibling;nodes.push(cur)}h.replaceWith(fold(h.textContent,nodes,'journal-section-'+i,i===0))});
+    all('.mastery-summary').forEach((summary,i)=>{const notes=[...summary.querySelectorAll(':scope > small')];if(notes.length)summary.append(fold('How it works',notes,'mastery-info-'+i))});
+  }else if(k==='board'){
+    const panel=q('.board-panel');if(panel){const periods=q('.board-periods'),head=q('.board-head'),note=q('.board-note');const standings=put(section('Standings','ui-standings'),scroll('leaderboard',[...panel.children].filter(e=>![periods,head,note].includes(e))));body.replaceChildren(put(make('div','ui-board-toolbar'),periods,head),standings,fold('Scoring & periods',note,'board-notes'))}
+  }else if(k==='log'){
+    const filters=q('.logfbar'),count=q('small');const events=direct().filter(e=>e!==filters&&e!==count);const feed=scroll('events',events,'ui-events');body.replaceChildren(put(make('div','ui-log-summary'),count),fold('Filter events',filters,'filters'),feed);
+  }else if(k==='set'||k==='gm'){
+    const nodes=direct(),groups=[];let group;
+    nodes.forEach(n=>{if(n.classList.contains('hd')){group=section(n.textContent,'ui-settings-section');groups.push(group)}else{if(!group){group=section('General');groups.push(group)}group.append(n)}});
+    const reset=nodes.find(n=>n.matches('[data-a="reset"]')),logout=nodes.find(n=>n.matches('[data-a="logout"]'));
+    if(reset)reset.remove();if(logout)logout.remove();
+    if(k==='set'){
+      groups.forEach((g,i)=>{const help=[...g.children].filter(e=>e.matches('small,p'));if(help.length)g.append(fold('Details',help,'settings-notes-'+i))});
+      body.replaceChildren(...groups,put(section('Account','ui-account'),logout,fold('Reset save',reset,'reset-save')));
+    }else body.replaceChildren(...groups.map((g,i)=>fold(g.querySelector('h3').textContent,g,'gm-'+i,i===0)));
+  }
+}
+
 function renderWin(anchor){
   if(!S)return;
   // A kill, a level-up or any panel refresh rebuilds every open window from scratch. A click whose
@@ -4048,17 +4340,22 @@ function renderWin(anchor){
   // others) feel broken. While a pointer is held inside the windows the rebuild is held too, and
   // the deferred one runs the moment the pointer comes up.
   if(winPress){winDirty=true;return}
-  $('dock').innerHTML=Object.entries(TABS).filter(([k])=>(k!=='gm'||S.gm)&&!SIDE_TABS.includes(k)).map(([k,[ic,n,key]])=>`<button class="ib${tabs.includes(k)?' on':''}" data-t="${k}" title="${n} (${key})">${ic}<span class="k">${key}</span>${dot(k)?'<i class="dot"></i>':''}</button>`).join('');
+  $('dock').innerHTML=['map','status','job','skills','bag','pet','index','market','board','log','set','gm'].filter(k=>k!=='gm'||S.gm).map(k=>[k,TABS[k]]).map(([k,[ic,n,key]])=>`<button class="ib${tabs.includes(k)?' on':''}" data-t="${k}" title="${n} (${key})" aria-label="${n}" aria-pressed="${tabs.includes(k)}"><span class="ui-nav-icon" aria-hidden="true">${ic}</span><span class="ui-nav-label">${({map:'World',status:'Character',job:'Jobs',skills:'Skills',bag:'Bag',pet:'Pets',index:'Mastery',market:'Market',board:'Ranks',log:'Log',set:'Settings',gm:'GM'})[k]}</span><span class="k">${key}</span>${dot(k)?'<i class="dot"></i>':''}</button>`).join('');
   renderQ();const host=$('wins');host.style.display=tabs.length?'flex':'none';
   // v76.3: two scrollers matter. Every window body has its own, and on a phone #wins itself is the
   // scroller - both are saved by number before the rebuild and put back after it, so a redraw in
   // place never moves the page. This is the "map ui hopping around" the owner saw when he tapped a
   // stage: the tap rebuilt every window and the browser re-clamped the scroll.
   const old={};host.querySelectorAll('[data-win]').forEach(e=>{const b=e.querySelector('.wbody');if(b)old[e.dataset.win]=b.scrollTop});
+  const disclosures=new Map([...host.querySelectorAll('details[data-ui-disclosure]')].map(e=>[e.dataset.uiDisclosure,e.open]));
+  const nestedScroll=new Map([...host.querySelectorAll('[data-panel-scroll]')].map(e=>[e.closest('[data-win]').dataset.win+':'+e.dataset.panelScroll,e.scrollTop]));
   const outer=host.scrollTop;      // on a phone #wins is the scroller, not the window bodies
-  host.innerHTML=tabs.map(k=>`<div class="win wp${k==='map'?' wide':''}" data-win="${k}"><div class="title"><span>${TABS[k][1]}</span><button data-x="${k}">&#10005;</button></div><div class="body wbody">${V[k]()}</div></div>`).join('');
+  host.innerHTML=tabs.map(k=>`<div class="win wp${k==='map'?' wide':''}" data-win="${k}"><div class="title"><span>${TABS[k][1]}</span><span class="ui-window-tools"><button data-ui-expand="${k}" aria-label="${expandedPanels.has(k)?'Compact':'Expand'} ${TABS[k][1]}" aria-pressed="${expandedPanels.has(k)}" title="Toggle compact / expanded layout">${expandedPanels.has(k)?'↙':'↗'}</button><button data-x="${k}" aria-label="Close ${TABS[k][1]}">&#10005;</button></span></div><div class="body wbody">${V[k]()}</div></div>`).join('');
   host.querySelectorAll('[data-win]').forEach(e=>{const b=e.querySelector('.wbody');if(!b)return;
+    e.classList.toggle('ui-expanded',expandedPanels.has(e.dataset.win));arrangePanel(e.dataset.win,b);
     if(e.dataset.win==='log')b.scrollTop=1e6;else b.scrollTop=old[e.dataset.win]||0});
+  host.querySelectorAll('details[data-ui-disclosure]').forEach(e=>{if(disclosures.has(e.dataset.uiDisclosure))e.open=disclosures.get(e.dataset.uiDisclosure)});
+  host.querySelectorAll('[data-panel-scroll]').forEach(e=>{e.scrollTop=e.dataset.panelScroll==='events'?1e6:(nestedScroll.get(e.closest('[data-win]').dataset.win+':'+e.dataset.panelScroll)||0)});
   host.scrollTop=outer;
   // v76.3 (owner: "the map ui hopping around when i click the stages"): the pressed control is
   // nudged by hand, inside its own window body only. scrollIntoView() walks every scrollable
@@ -4203,7 +4500,7 @@ $('feedFilter').addEventListener('mouseenter',()=>{if(feedFilTimer)clearTimeout(
 $('feedFilter').addEventListener('mouseleave',()=>{if(feedFilShown)feedFilArm()});
 $('feedFilter').addEventListener('focusin',()=>{if(feedFilTimer)clearTimeout(feedFilTimer)});
 $('feedFilter').addEventListener('focusout',()=>{if(feedFilShown)feedFilArm()});
-$('wins').onclick=e=>{const x=e.target.closest('[data-x]');if(x){openTab(x.dataset.x);return}const b=e.target.closest('[data-a]');if(b&&b.dataset.a==='ssel'&&e.target.closest('.sk-autocast'))return;if(b&&!b.disabled&&ACT[b.dataset.a]){if(b.dataset.a==='idxmap'&&e.target.closest('summary'))e.preventDefault();ACT[b.dataset.a](b.dataset.v)}};
+$('wins').onclick=e=>{const expand=e.target.closest('[data-ui-expand]');if(expand){e.stopPropagation();chooserAtPointerDown=null;chooserPointerInside=false;skillPointerInside=false;skillCardPointerInside=false;const k=expand.dataset.uiExpand;if(expandedPanels.has(k))expandedPanels.delete(k);else expandedPanels.add(k);renderWin();return}const x=e.target.closest('[data-x]');if(x){openTab(x.dataset.x);return}const b=e.target.closest('[data-a]');if(b&&b.dataset.a==='ssel'&&e.target.closest('.sk-autocast'))return;if(b&&!b.disabled&&ACT[b.dataset.a]){if(b.dataset.a==='idxmap'&&e.target.closest('summary'))e.preventDefault();ACT[b.dataset.a](b.dataset.v)}};
 // v73: the picker's "inside" is the Bag window AND the Equipment panel that opened it. The
 // Refine button, the card sockets, Unequip and Lock all live in the Equipment panel's detail
 // card, so a click on any of them used to count as "clicked elsewhere" and shut the picker the
