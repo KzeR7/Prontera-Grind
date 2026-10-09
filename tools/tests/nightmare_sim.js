@@ -37,7 +37,7 @@ ${code}
 let S={lv:1,gmnm:false};
 this.__n={ MAPS, GEAR, fieldPower, secField, dropTier, gearPool, fieldOf, bossCritRes,
   NMLV, NMBASE, NMSTEP, NMGAP, NMHP, NMATK, NMEXP, NMZENY, NMBOSSHP, NM_CRIT_RES, BOSS_CRIT_RES, nmExpOf, nmZenyOf,
-  FIELD_GEAR, FIELD_GEAR_MID, FIELD_GEAR_NM, FIELD_GEAR_MID_NM, BOSS_POOL_TOTAL,
+  FIELD_GEAR, FIELD_GEAR_MID, FIELD_GEAR_NM, FIELD_GEAR_MID_NM, BOSS_POOL_TOTAL, NMPLUS_DROP, NM15_BUFF, nm15Of,
   nmOpen, nmMax, NMNAME, NMNAME2,
   set S(v){S=v}, get S(){return S} };
 `;
@@ -151,16 +151,16 @@ t('the difficulty knobs are the shipped ones and the live code reads them', () =
   assert.deepStrictEqual([N.NMHP, N.NMATK, N.NMEXP, N.NMZENY, N.NMBOSSHP], [48, 2, 4, 4, 48], 'the band constants are pinned (v77.1: 48x HP, 2x ATK, 4x EXP/Zeny)');
   // spawn() is a game-loop function, so its wiring is checked at the source and the numbers are
   // worked out from the same formulas below.
-  assert.ok(src.includes('nm1=S.lvl>10,nm=nm1?NMHP:1,na=nm1?NMATK:1,ne=nm1?nmExpOf(S.lvl):1,nz=nm1?nmZenyOf(S.lvl):1'), 'minionDef reads the knobs once (v85: stage ramp)');
+  assert.ok(src.includes('nm1=S.lvl>10,nm=nm1?NMHP*nm15Of(S.lvl):1,na=nm1?NMATK*nm15Of(S.lvl):1,ne=nm1?nmExpOf(S.lvl):1,nz=nm1?nmZenyOf(S.lvl):1'), 'minionDef reads the knobs once (v85: stage ramp; v89: x1.3 on Stage 15)');
   // v85: the Stage 15 MVP pays the band EXP/Zeny too (the v76 line had neither - a 66M-HP MVP
   // paid less EXP than two of its own map's mobs), and the offline simulator mirrors the ramps.
-  assert.ok(src.includes('na=nm1?NMATK:1,ne=nm1?NMEXP:1,nz=nm1?NMZENY:1;'), 'spawn() reads the MVP knobs once');
+  assert.ok(src.includes('na=nm1?NMATK*nm15Of(S.lvl):1,ne=nm1?NMEXP:1,nz=nm1?NMZENY:1;'), 'spawn() reads the MVP knobs once (v89: ATK x1.3 on Stage 15)');
   assert.ok(src.includes('exp:Math.max(1,Math.floor(BOSEK*Math.pow(l,1.5)/50*ne)),zeny:Math.max(ZMIN,Math.floor(ri(BZK[0],BZK[1])*l*l/1000*nz))'), 'MVP EXP/Zeny x NMEXP/NMZENY');
   assert.ok(src.includes('nm1=stage>10,ne=nm1?nmExpOf(stage):1,nz=nm1?nmZenyOf(stage):1'), 'the offline simulator mirrors the band pay');
   assert.ok(src.includes('hp=early?Math.min(starterHp(S.lvl),Math.floor(HPK*mb*Math.pow(l,HPE))):Math.floor(HPK*mb*Math.pow(l,HPE)*nm)'), 'mob HP x NMHP');
   assert.ok(src.includes('atk:early?starterAtk(S.lvl):Math.floor((5+l*4.6)*mb*na*eaOf(l))'), 'mob ATK x NMATK (and the v86 endgame bump)');
   assert.ok(src.includes('exp:Math.max(1,Math.floor(EXPK*Math.pow(l,1.5)/50*ne))'), 'mob EXP x NMEXP');
-  assert.ok(src.includes('Math.floor(500*mb*Math.pow(l,HPE)*(nm1?NMBOSSHP:1))'), 'boss HP x NMBOSSHP');
+  assert.ok(src.includes('Math.floor(500*mb*Math.pow(l,HPE)*(nm1?NMBOSSHP*nm15Of(S.lvl):1))'), 'boss HP x NMBOSSHP (v89: x1.3 on Stage 15)');
   assert.ok(src.includes('atk:Math.floor((8+l*6.5)*mb*na*eaOf(l))'), 'boss ATK shares the band multiplier and the v86 endgame bump');
   // A worked example using the live field powers (99 and 175). Keep spawn()'s flooring order too:
   // the HP/ATK multipliers are applied before Math.floor, not to an already-rounded base value.
@@ -170,16 +170,17 @@ t('the difficulty knobs are the shipped ones and the live code reads them', () =
   const atk = (l, mult = 1) => Math.floor((5 + l * 4.6) * mb * mult);
   // the live knobs, not copied numbers: a retune of NMHP/NMATK moves this example with it
   const abyss10 = { hp: hp(abyss10Power), atk: Math.round(atk(abyss10Power) * .25) };
-  const abyss15 = { hp: hp(abyss15Power, N.NMHP), atk: Math.round(atk(abyss15Power, N.NMATK) * .25) };
-  const abyss15BossHp = Math.floor(500 * mb * Math.pow(abyss15Power, 1.3) * N.NMBOSSHP);
+  // v89 (owner): Stage 5 - the MVP stage on every map - carries +30% HP and +30% ATK (N.NM15_BUFF)
+  const abyss15 = { hp: hp(abyss15Power, N.NMHP * N.NM15_BUFF), atk: Math.round(atk(abyss15Power, N.NMATK * N.NM15_BUFF) * .25) };
+  const abyss15BossHp = Math.floor(500 * mb * Math.pow(abyss15Power, 1.3) * (N.NMBOSSHP * N.NM15_BUFF));
   assert.deepStrictEqual([abyss10Power, abyss10.hp, abyss10.atk], [99, 55286, 386], 'Abyss Stage 10 uses its live power-99 baseline');
-  assert.deepStrictEqual([abyss15Power, abyss15.hp, abyss15.atk, abyss15BossHp], [175, 5565251, 1357, 66252994], 'the Nightmare example follows spawn() rounding (v86 ATK bump included)');
+  assert.deepStrictEqual([abyss15Power, abyss15.hp, abyss15.atk, abyss15BossHp], [175, 7234826, 1764, 86128892], 'the Nightmare example follows spawn() rounding (v86 ATK bump and v89 x1.3 included)');
   console.log('       Abyss Stage 10 : mob HP ' + abyss10.hp.toLocaleString() + ', a hit lands for ' + abyss10.atk.toLocaleString() + ' after a 75% DEF cut');
   console.log('       Nightmare Abyss 15: mob HP ' + abyss15.hp.toLocaleString() + ' (' + (abyss15.hp / abyss10.hp).toFixed(0) + 'x), a hit lands for ' + abyss15.atk.toLocaleString() + ' (' + (abyss15.atk / abyss10.atk).toFixed(1) + 'x)');
   console.log('       Abyss Stage 15 boss: ' + abyss15BossHp.toLocaleString() + ' HP');
   assert.ok(abyss15.hp / abyss10.hp > 50, 'a Nightmare mob takes a good two orders of magnitude longer to kill than a normal one');
   assert.ok(abyss15.atk / abyss10.atk > 1.3, 'and it must hit at least a third harder');
-  assert.ok(abyss15.atk / abyss10.atk < 4, 'but not so hard that v77\u2019s 5.2x is back - the sting was tuned down on purpose');
+  assert.ok(abyss15.atk / abyss10.atk < 5.2, 'but not so hard that v77\u2019s 5.2x is back - the sting was tuned down on purpose (v89: +30% puts Stage 5 at ~4.6x, still under it)');
   assert.ok(N.NMEXP > 3 && N.NMZENY > 3, 'and the band pays for the time its wall costs');
 });
 
@@ -201,6 +202,10 @@ t('the pay ramps by stage (v85): EXP 16/24/32/40/48, Zeny 4/5/6/7/8', () => {
   assert.ok(perM(9, 11) > 690 && perM(9, 11) < 740, 'NM Abyss S11 pays ' + perM(9, 11).toFixed(0) + '/HP - the deep-map HP multiplier still bites early');
   assert.ok(perM(9, 15) > 2150 && perM(9, 15) < 2230, 'NM Abyss S15 pays ' + perM(9, 15).toFixed(0) + '/HP - the capstone reaches parity');
   assert.ok(perM(9, 15) / perM(9, 11) > 2.9, 'deepening the stage more than triples the deep map\u2019s pay per HP');
+  // v89 (owner): Stage 5 has +30% HP, and the pay was NOT retuned with it, so the capstone's pay per HP
+  // falls from parity (~2,190) to about 1,690 - the pre-buff figure above is kept so the ramp is still
+  // read on its own. Any EXP/Zeny rebalance of Stage 5 is the owner's call.
+  assert.ok(perM(9, 15) / N.NM15_BUFF > 1650 && perM(9, 15) / N.NM15_BUFF < 1720, 'with the v89 Stage 5 HP the capstone pays ' + (perM(9, 15) / N.NM15_BUFF).toFixed(0) + '/HP');
   console.log('       EXP per million HP - NM Prontera 11: ' + perM(0, 11).toFixed(0) + ', NM Abyss 11: ' + perM(9, 11).toFixed(0) +
     ', NM Abyss 15: ' + perM(9, 15).toFixed(0) + ' (Abyss S10 mob = 1,953, MVP wave = 3,610)');
 });
@@ -210,7 +215,7 @@ t('the field tables read the band: boss pool, ore and crit resistance', () => {
   assert.strictEqual(nmBoss.critRes, .45, 'Nightmare Abyss bosses resist 45% crit');
   assert.strictEqual(normBoss.critRes, .3, 'the normal Abyss boss still resists 30%');
   // v76.2 (owner): the band's drops are a THIRD of the rate they were, MVP pool included
-  assert.strictEqual(nmBoss.drops[0][1], Math.round(300 / nmBoss.drops.length) / 100, 'from BOSS_POOL_TOTAL[2] = 300, i.e. 3% total');
+  assert.strictEqual(nmBoss.drops[0][1], Math.round(300 * N.NMPLUS_DROP / nmBoss.drops.length) / 100, 'from BOSS_POOL_TOTAL[2] = 300, halved for N+ (v89): 1.5% total');
   assert.strictEqual(normBoss.drops[0][1], Math.round(420 / normBoss.drops.length) / 100, 'the mid/endgame MVP pool keeps 4.2%');
   // ...and the mob rolls are exactly a third of whichever normal table the map would use
   assert.deepStrictEqual([N.FIELD_GEAR_NM, N.FIELD_GEAR_MID_NM].map(t => t.map(x => +(x * 3).toFixed(2))), [N.FIELD_GEAR, N.FIELD_GEAR_MID],
@@ -220,7 +225,7 @@ t('the field tables read the band: boss pool, ore and crit resistance', () => {
     assert.strictEqual(base, N.gearPool(m, l).length, 'the pool is whole');
     assert.ok(nm.every(ch => ch > 0), 'a Nightmare mob still rolls gear');
   }
-  assert.ok(src.includes('const gch=l>10?(m>=5?FIELD_GEAR_MID_NM:FIELD_GEAR_NM):(m>=5?FIELD_GEAR_MID:FIELD_GEAR);'), 'fieldOf picks the band table by stage, not by map alone');
+  assert.ok(src.includes('const gch=(l>10?(m>=5?FIELD_GEAR_MID_NM:FIELD_GEAR_NM):(m>=5?FIELD_GEAR_MID:FIELD_GEAR)).map(x=>sec===5?x*NMPLUS_DROP:x);'), 'fieldOf picks the band table by stage, not by map alone, and halves N+ (v89)');
   assert.strictEqual(N.fieldOf(0, 11).mobs[0].oreCh, .015, 'Nightmare fields drop ore 1.5% a kill');
   assert.strictEqual(N.fieldOf(0, 10).mobs[0].oreCh, .01, 'the normal boss field keeps 1%');
   assert.strictEqual(N.fieldOf(9, 9).boss, null, 'and nothing but stage 10 and 15 has a boss');

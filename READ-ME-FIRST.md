@@ -84,6 +84,30 @@ is the live one; with no argument the tool prints how to set a new one). Since v
 `GM` / `test1234`; `localStorage.removeItem('pg_gm_local')` removes it. Normal accounts are made
 in-game and stored in the browser (`pg_acc4`; saves under `pg_save3_<user>`).
 
+## BUILD v89 — Nightmare balance: Stage 5 harder, N+ drops halved and shared, N/N+ flat affixes lowered, pets -37% (grind-v89)
+
+Five owner balance requests in one build. Every number is a single named constant, so a later retune is one edit.
+
+* **Stage 5 (Nightmare Stage 15, the MVP stage on every map) hits and takes harder:** its monsters, escorts and
+  MVP carry **+30% HP and +30% ATK** (`NM15_BUFF = 1.3`, `nm15Of()`, read by `minionDef()` and `spawn()`). Abyss
+  Stage 5 mob HP goes from 5,565,251 to **7,234,826** and its hit from 1,357 to **1,764**. Stages 11-14 are unchanged.
+* **N+ drops are halved** (`NMPLUS_DROP = .5`): every N+ gear roll on Nightmare Stages 4 and 5 (section 5), and the
+  Stage 5 MVP pool (3% → 1.5%). Cards, ore and pets are not touched. N (section 4) keeps the v76.2 third.
+* **N+ drops are fair across classes:** before, Abyss Stage 4 normal mobs dropped only axe and mace, and staff,
+  dagger and bow were on the Stage 5 MVP alone. Now every mob on Stages 4 and 5 lists **every weapon family** on its
+  map's N+ shelf, each at an equal share of the stage's weapon chance (Abyss: 0.025% a kill per family, 0.175%
+  in total). No class needs the boss for its weapon. Stages 1-13 still walk the shelf as before.
+* **Pets are nerfed** (`PETBAL 1.91 → 1.2`, about −37% on every pet hit). One maxed Legendary pet now deals about
+  **0.26x** a maxed character (was 0.42x). Rarity, mutation grade, Claw and skill multipliers are unchanged, so the
+  whole band moves together.
+* **N and N+ flat affixes are lowered:** STR, AGI, DEX, LUK, INT and Flee roll at section multiplier **×3.5 (N)** and
+  **×4 (N+)** instead of ×5 and ×6. The top Abyss N+ roll goes from **83 to 55 STR** and from **66 to 44 Flee**; N goes from
+  69 to 48 STR and from 55 to 39 Flee. Max HP, ATK %, ASPD, Crit % and Crit DMG keep their Nightmare numbers. Sections 0-3 are untouched.
+* **Known consequence (not changed, owner's call):** Stage 5's pay was not retuned, so its EXP and Zeny per HP fall about 23%
+  (the capstone was at parity with Abyss mob grinding; it now sits at about 1,690 EXP per HP against 1,953).
+* **To see it:** `node tools/tests/gear_sim.js` (N+ shelf and halving), `node tools/tests/nightmare_sim.js` (Stage 5
+  buff and worked numbers), `node tools/tests/pet_sim.js` (the pet band), `node tools/tests/ui_sim.js` (the N+ map panel).
+
 ## BUILD v88.6 — every save records whose it is, and another account's save is refused (grind-v88.6)
 
 Every save now carries the name of the account it belongs to. The game and the server refuse to load,

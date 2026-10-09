@@ -623,7 +623,13 @@ const skillIcon=id=>{const motif=SKILL_ICON[id]||'rune',tone=SKILL_TONE[motif]||
 // cards pay less per point. The range chart mirrors both. Pinned by gear_sim/card_sim/crit_sim.
 const AFF=['str','agi','dex','luk','int','hp','atk','crit','aspd','flee','cdm'],AB={str:1,agi:1,dex:1,luk:1,int:1,hp:12,atk:.8,crit:.32,aspd:.6,flee:.8,cdm:.45};
 const AFFIX_CDM_SCALE=.7,scaleCritDamageAffix=v=>Math.max(1,Math.round(v*AFFIX_CDM_SCALE));
-const affixValue=(k,section,tier,roll)=>{const raw=Math.max(1,Math.round((1+section)*AM[tier]*AB[k]*roll));return k==='cdm'?scaleCritDamageAffix(raw):raw};
+// v89 (owner: "n+ affix are giving 60+ flee % and 60+ str is too much"): the Nightmare rows (section 4 = N,
+// section 5 = N+) roll their FLAT stats (STR, AGI, DEX, LUK, INT) and Flee at a lower section multiplier.
+// Section 4 is x3.5 (was x5) and section 5 is x4 (was x6), so the top flat roll on Abyss falls from 83 to 55
+// STR and from 66 to 44 Flee - the same ceiling the high-tier Legendary already rolls. Max HP, ATK %, ASPD,
+// Crit % and Crit DMG keep their Nightmare multipliers. Sections 0-3 are untouched.
+const NM_FLAT=['str','agi','dex','luk','int','flee'],NM_FLAT_MUL=[3.5,4];
+const affixValue=(k,section,tier,roll)=>{const mul=(section>=4&&NM_FLAT.includes(k))?NM_FLAT_MUL[Math.min(1,section-4)]:1+section;const raw=Math.max(1,Math.round(mul*AM[tier]*AB[k]*roll));return k==='cdm'?scaleCritDamageAffix(raw):raw};
 const AL={str:'STR',agi:'AGI',dex:'DEX',luk:'LUK',int:'INT',hp:'Max HP',atk:'ATK %',crit:'Crit %',aspd:'ASPD %',flee:'Flee %',cdm:'Crit DMG %',vit:'VIT'};
 // The field is a vertical avenue: the player starts at the near end (high Z, bottom of the
 // screen) and mobs hold the far end (low Z, top of the screen), so you run up to engage.
@@ -647,7 +653,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // script block, which is a SyntaxError - the game did not run on main at all. One line wins, and
 // it names both sides of this merge: the v38 balance patch (the weapon cut, the affix/card
 // give-back) and main's weapon-hold rendering work.
-const BUILD='2026-10-09 grind-v88.6 every save now records whose it is, and a save belonging to another account is refused on load and on write';   // shown on the login card - confirms which file you loaded
+const BUILD='2026-10-09 grind-v89 Nightmare Stage 5 +30% HP and ATK, N+ drops halved and shared by every class, N/N+ flat affixes lowered, pet damage -37%';   // shown on the login card - confirms which file you loaded
 $('buildTag').textContent='build '+BUILD;
 
 // ---------- class tree: Novice -> 6 first jobs -> 6 second jobs -> 6 third jobs ----------
@@ -1239,6 +1245,11 @@ const NMHP=48,NMATK=2,NMEXP=4,NMZENY=4,NMBOSSHP=48;
 // pays the flat NMEXP/NMZENY, and the offline simulator reads the same two helpers.
 const nmExpOf=l=>NMEXP*2*(Math.max(11,Math.min(15,l|0))-9);
 const nmZenyOf=l=>NMZENY+(Math.max(11,Math.min(15,l|0))-11);
+// v89 (owner): Nightmare Stage 5 - the MVP stage on every map - hits and takes harder. Its monsters,
+// its escorts and its MVP all carry +30% HP and +30% ATK on top of the band numbers above. Read by
+// minionDef() and spawn(); every other stage keeps 1x.
+const NM15_BUFF=1.3;
+const nm15Of=l=>(l|0)===15?NM15_BUFF:1;
 // v86: mob and MVP ATK get one endgame bump - fields of power 90+ (Niflheim and Abyss, and every
 // Nightmare stage by construction) swing 1.4x harder. Player HP/DEF grew far faster than the flat
 // (5+l*4.6) formula, so a decked character was mathematically untouchable on the deepest maps; this
@@ -1555,6 +1566,10 @@ const FIELD_GEAR=[1.5,1.2,.9],FIELD_GEAR_MID=[1.05,.84,.63],BOSS_POOL_TOTAL=[600
 // matching normal table, per roll, so the band's exclusive gear stays a chase; the MVP pool is
 // divided the same way (BOSS_POOL_TOTAL above, 3% total instead of 9%).
 const FIELD_GEAR_NM=[.5,.4,.3],FIELD_GEAR_MID_NM=[.35,.28,.21];
+// v89 (owner: "nerf all nightmare stage drop rate on N+ equipments"): section 5 - the N+ rows, Nightmare
+// Stages 4 and 5 - rolls HALF of its table, on normal mobs and in the Stage 5 MVP pool alike. Cards, ore
+// and pets are not touched. Section 4 (N, Stages 1-3 of the band) keeps the v76.2 third.
+const NMPLUS_DROP=.5;
 // v73 (owner): high-level bosses resist crits. The number is the share of the crit chance that
 // is removed when you swing at that boss: a capped 60% build crits Comodo, Louyang and Amatsu's
 // bosses 51% of the time, Niflheim's Lord of Death 48% and the Abyss Dark Lord 42%. Maps 1-5
@@ -1616,7 +1631,7 @@ function fieldOf(m,l){const mp=MAPS[m],sec=secField(m,l),T=gearPool(m,l),n=T.len
   // three gear rolls per mob; gear is the common drop and a card is the rare one. From Comodo on
   // the table is the 30% lighter v73 one (FIELD_GEAR_MID); maps 1-5 use the original. The
   // Nightmare band (v76.2) pays a third of whichever table its map would pay below stage 11.
-  const gch=l>10?(m>=5?FIELD_GEAR_MID_NM:FIELD_GEAR_NM):(m>=5?FIELD_GEAR_MID:FIELD_GEAR);
+  const gch=(l>10?(m>=5?FIELD_GEAR_MID_NM:FIELD_GEAR_NM):(m>=5?FIELD_GEAR_MID:FIELD_GEAR)).map(x=>sec===5?x*NMPLUS_DROP:x);
   // v79: the three rolls are ALLOCATED, not windowed. The old code handed each mob three
   // consecutive pool entries from a window that slid three slots per stage (T[(l*3+2*j)%n]), so
   // which item you could farm was an accident of arithmetic: 20 of the 100 normal fields handed
@@ -1631,15 +1646,21 @@ function fieldOf(m,l){const mp=MAPS[m],sec=secField(m,l),T=gearPool(m,l),n=T.len
   // pieces further along the shelf, so a map's whole list is farmable across its stages and the
   // panel says which stage carries which.
   const SLOTK=['armor','head','off','leg','acc'],WP=T.filter(x=>!SLOTK.includes(x.k)),DF=T.filter(x=>SLOTK.includes(x.k)),nw=WP.length,nd=DF.length;
-  const mobs=[0,1].map(j=>{const mm=mp.mobs[(l-1+j)%mp.mobs.length],cg=l<=3?0:l<=7?1:2;
-    return{...mm,tier:ft,drops:[[WP[(2*(l-1)+j)%nw],gch[0]],[DF[(4*(l-1)+j*2)%nd],gch[1]],[DF[(4*(l-1)+j*2+1)%nd],gch[2]]],card:{n:mm.n+' Card',stat:cardStat(cg,(m*10+l+j)*3+1),g:cg},cardCh:.15,ore:true,oreCh:l>10?.015:l===10?.01:.005}});
+  // v89 (owner: "some classes drop N+ on stage 4 from normal mobs, others only from the stage 5 boss"):
+  // on the N+ rows (section 5) the weapon walk is replaced. Every mob on Stages 4 and 5 lists EVERY
+  // weapon family on its map's N+ shelf, each at an equal share of the stage's weapon chance, so every
+  // class reaches its own weapon from normal mobs on both stages and the MVP is never the only route.
+  // The stage total is the same as the walk's (one weapon chance per mob), just split evenly.
+  const mobs=[0,1].map(j=>{const mm=mp.mobs[(l-1+j)%mp.mobs.length],cg=l<=3?0:l<=7?1:2,
+    wr=sec===5?WP.map(w=>[w,gch[0]/nw]):[[WP[(2*(l-1)+j)%nw],gch[0]]];
+    return{...mm,tier:ft,drops:[...wr,[DF[(4*(l-1)+j*2)%nd],gch[1]],[DF[(4*(l-1)+j*2+1)%nd],gch[2]]],card:{n:mm.n+' Card',stat:cardStat(cg,(m*10+l+j)*3+1),g:cg},cardCh:.15,ore:true,oreCh:l>10?.015:l===10?.01:.005}});
   return{m,l,sec,tier:ft,gearSet,mobs,boss:(l===10||l===15)?{...mp.boss,tier:ft,
     // v57: the boss still lists its whole pool - every item stays obtainable - but the pool now
     // totals ~6% per boss instead of one 1% roll per entry (13 entries used to mean 13%). The
     // pool is a chase again: about three boss pieces an hour at the tuned kill rate.
     // v73: mid/endgame bosses (map index 5+) pay 30% less, so their pool totals ~4.2%; the
     // first five maps keep the original ~6%. A boss also carries its map's crit resistance.
-    drops:T.map(x=>[x,Math.round(BOSS_POOL_TOTAL[l>10?2:(m>=5?1:0)]/n)/100]),critRes:bossCritRes(m,l),
+    drops:T.map(x=>[x,Math.round(BOSS_POOL_TOTAL[l>10?2:(m>=5?1:0)]*(sec===5?NMPLUS_DROP:1)/n)/100]),critRes:bossCritRes(m,l),
     card:{n:mp.boss.n+' Card',stat:cardStat(3,m),g:3},cardCh:.1,ore:true,oreCh:.025}:null}}
 // One drop line for the map panel: icon + name + the field's fixed rarity + which monster carries
 // it, with the % on the right. v79: a piece the player's own class cannot wear is dimmed and says
@@ -1654,7 +1675,7 @@ const poolIc=T=>gearSlot(T)==='weapon'?(WICON[T.k]||'⚔️'):{armor:'🥼',head
 const dropIsWorse=T=>{const cur=gearSlot(T)==='acc'?(S.eq.acc1||S.eq.acc2):S.eq[gearSlot(T)];
   return !!cur&&gearRefLevel({lvl:mapL,tier:T.tier})<gearRefLevel(cur)};
 const dropTxt=([T,ch],who)=>{const why=whyNot(T),worse=dropIsWorse(T),cls='dropline'+(why?' cant':'')+(worse?' worse':''),tip=[why,worse?`Weaker than the ${SLOTS[gearSlot(T)].label.toLowerCase()} you are wearing`:''].filter(Boolean).join(' · ')
- return`<div class="${cls}"${tip?` title="${tip}"`:''}><span>${poolIc(T)} ${T.n} <small class="${rarCls(T)}">${rarOf(T).n}</small>${who?` <small class="dwho">${who}</small>`:''}</span><b>${ch}%</b></div>`};
+ return`<div class="${cls}"${tip?` title="${tip}"`:''}><span>${poolIc(T)} ${T.n} <small class="${rarCls(T)}">${rarOf(T).n}</small>${who?` <small class="dwho">${who}</small>`:''}</span><b>${Math.round(ch*1e4)/1e4}%</b></div>`};
 
 // ---------- stat progression ----------
 // Stats cap at 99 until Base Lv 100, then the elite tier opens up to 120. Raising a stat
@@ -1792,7 +1813,10 @@ const petBonusList=()=>{if(!S||!S.pets)return[];const seen={},out=[];
 // of the crit-damage stacking a maxed build used to wear - so the knob is scaled down with it
 // (2.65 -> 1.91, exactly the ratio the companion band moved) rather than letting pets creep
 // towards parity. Pets are otherwise untouched. Pinned by pet_sim.js.
-const PETGAP=7,PETBAL=1.91;
+// v89 (owner: "nerf pets, currently hits too hard"): PETBAL 1.91 -> 1.2, about -37% on every pet hit. The
+// same knob scales every rarity, mutation grade, Claw and skill multiplier, so the whole pet band moves
+// together: one maxed Legendary pet now sits near 0.26x a maxed character (was 0.42x). Pinned by pet_sim.js.
+const PETGAP=7,PETBAL=1.2;
 const PET_SKILLS=[
   {id:'warcry',n:'War Cry',kind:'buff',stat:'atk',power:15,duration:30,cd:60,desc:'Player ATK +15% for 30s, 60s cooldown. Never stacks with another pet, and cannot run next to MATK',vfx:'frenzy',color:'#ffd050',icon:'⚔️'},
   {id:'arcane',n:'Arcane Blessing',kind:'buff',stat:'matk',power:15,duration:30,cd:60,desc:'Player MATK +15% for 30s, 60s cooldown. Never stacks with another pet, and cannot run next to ATK',vfx:'magnus',color:'#a58bff',icon:'✦'},
@@ -2772,7 +2796,7 @@ const starterAtk=l=>6+3*(l-1);
 // One field monster, before it is placed. Shared by the wave builder and by every camp refill, so a
 // monster that walks back in is exactly the monster the field started with.
 function minionDef(pack){
-  const F=fieldOf(S.mp,S.lvl),l=pw(),mb=1+S.mp*.15+Math.max(0,S.mp-4)*.2,nm1=S.lvl>10,nm=nm1?NMHP:1,na=nm1?NMATK:1,ne=nm1?nmExpOf(S.lvl):1,nz=nm1?nmZenyOf(S.lvl):1;
+  const F=fieldOf(S.mp,S.lvl),l=pw(),mb=1+S.mp*.15+Math.max(0,S.mp-4)*.2,nm1=S.lvl>10,nm=nm1?NMHP*nm15Of(S.lvl):1,na=nm1?NMATK*nm15Of(S.lvl):1,ne=nm1?nmExpOf(S.lvl):1,nz=nm1?nmZenyOf(S.lvl):1;
   const early=starterStage(S.mp,S.lvl),m=F.mobs[ri(0,1)];
   const hp=early?Math.min(starterHp(S.lvl),Math.floor(HPK*mb*Math.pow(l,HPE))):Math.floor(HPK*mb*Math.pow(l,HPE)*nm);
   return{...m,mapIndex:S.mp,boss:false,pack,hp,max:hp,atk:early?starterAtk(S.lvl):Math.floor((5+l*4.6)*mb*na*eaOf(l)),
@@ -2803,11 +2827,11 @@ function fillCamp(i,c){
   }
 }
 function spawn(){
-  const F=fieldOf(S.mp,S.lvl),l=pw(),mb=1+S.mp*.15+Math.max(0,S.mp-4)*.2,nm1=S.lvl>10,nm=nm1?NMHP:1,na=nm1?NMATK:1,ne=nm1?NMEXP:1,nz=nm1?NMZENY:1;
+  const F=fieldOf(S.mp,S.lvl),l=pw(),mb=1+S.mp*.15+Math.max(0,S.mp-4)*.2,nm1=S.lvl>10,nm=nm1?NMHP*nm15Of(S.lvl):1,na=nm1?NMATK*nm15Of(S.lvl):1,ne=nm1?NMEXP:1,nz=nm1?NMZENY:1;
   mobs=[];activePack=0;camps=[];engageTgt=null;
   const bossWave=!!F.boss;
   if(bossWave){
-    const hp=Math.floor(500*mb*Math.pow(l,HPE)*(nm1?NMBOSSHP:1));
+    const hp=Math.floor(500*mb*Math.pow(l,HPE)*(nm1?NMBOSSHP*nm15Of(S.lvl):1));
     mobs.push({...F.boss,mapIndex:S.mp,boss:true,pack:0,hp,max:hp,atk:Math.floor((8+l*6.5)*mb*na*eaOf(l)),
       exp:Math.max(1,Math.floor(BOSEK*Math.pow(l,1.5)/50*ne)),zeny:Math.max(ZMIN,Math.floor(ri(BZK[0],BZK[1])*l*l/1000*nz)),
       size:1.3,mag:true,lvl:l,sec:F.sec});
@@ -3514,10 +3538,11 @@ const V={
     <div class="mapcols">
       <div class="mob-card"><div class="hd">${mapL>10?'Nightmare ':''}${mp.n} Stage ${mapL>10?mapL-10:mapL}${mapM<5&&mapL<=5?`<br><small>${mapM===0?'Novice start · Base Lv 1–10':'Early class route · Base Lv 10–20'} · gentle packs</small>`:''}</div>
         <div class="sec">Drops on this field <small>&middot; every drop is <b class="${rarCls({sec:F.sec,tier:F.tier})}">${rarOf({sec:F.sec,tier:F.tier}).n}</b> &middot; <b>${SECN[F.sec]}</b>, worn by ${gearUserOf({sec:F.sec})}${gearTierOK({sec:F.sec})?'':` &middot; <span class="r0">your ${S.cls} cannot wear this yet</span>`}</small></div>
-        ${(()=>{const d=F.mobs[0].drops,t=Math.round(d.reduce((a,x)=>a+x[1],0)*100)/100;
+        ${(()=>{const d=F.mobs[0].drops,r4=v=>Math.round(v*1e4)/1e4,t=r4(d.reduce((a,x)=>a+x[1],0)),W=d.filter(x=>gearSlot(x[0])==='weapon'),wt=r4(W.reduce((a,x)=>a+x[1],0)),
+          fam=W.length>1?` (${r4(W[0][1])}% each, ${W.length} families)`:'';
           return`<div class="dropline"><span>Gear chance per kill</span><b>${t}%</b></div>
-          <small>Weapon <b>${d[0][1]}%</b> &middot; armour &amp; accessory <b>${Math.round((t-d[0][1])*100)/100}%</b> - three independent rolls, so one kill can pay one piece, none, or several.</small>`})()}
-        ${(()=>{const lines=F.mobs.flatMap(m=>m.drops.map(d=>[d,m.n])),isW=([d])=>gearSlot(d[0])==='weapon',
+          <small>Weapon <b>${wt}%</b>${fam} &middot; armour &amp; accessory <b>${r4(t-wt)}%</b> - ${d.length} independent rolls, so one kill can pay one piece, none, or several.</small>`})()}
+        ${(()=>{const lines=F.mobs.flatMap(m=>m.drops.map(d=>[d,m.n])).filter(([d],i,a)=>a.findIndex(([e])=>e[0].n===d[0].n)===i),isW=([d])=>gearSlot(d[0])==='weapon',
           grp=(t,ls)=>`<div class="dropgrp"><small>${t}</small></div>`+ls.map(([d,n])=>dropTxt(d,n)).join('');
           return grp('Weapons',lines.filter(isW))+grp('Armour &amp; accessories',lines.filter(l=>!isW(l)))
             +`<div class="dropgrp"><small>Cards &amp; ore</small></div>`

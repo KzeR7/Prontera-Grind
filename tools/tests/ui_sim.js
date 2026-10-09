@@ -1173,6 +1173,21 @@ t('the map panel states the actual equipment rarity, class gate and weapon-first
   h = U.V.map();
 });
 
+t('the N+ stages list every weapon family once, with the per-family share (v89)', () => {
+  // v89 (owner): on Nightmare Stages 4-5 every mob carries the whole weapon shelf. The panel must
+  // list each family ONCE (not once per mob), state the per-family share, and total the kill.
+  U.S = mkS('Knight'); U.mapM = 9; U.mapL = 14;
+  const h = U.V.map();
+  assert.ok(h.includes('(0.025% each, 7 families)'), 'the weapon line states the per-family share');
+  assert.ok(h.includes('<b>0.42%</b>'), 'the gear chance per kill totals 0.42% (weapons .175 + armour and accessories .245)');
+  assert.ok(h.includes('9 independent rolls'), 'the roll count follows the mob (7 weapons + 2 pieces)');
+  assert.strictEqual(h.split('Absolute Dark Lord Staff').length - 1, 1, 'a weapon is listed once, not once per mob');
+  U.mapL = 15; const h15 = U.V.map();
+  assert.ok(h15.includes('Stage 5'), 'Stage 15 is labelled as Stage 5');
+  U.mapM = 0; U.mapL = 14; const hp = U.V.map();
+  assert.ok(hp.includes('(0.0833% each, 3 families)'), 'Prontera N+ shares its weapon chance over its three families');
+});
+
 t('the damage trial is entered from the map selection, and the lobby offers the three doors', () => {
   U.S = mkS('Knight'); U.mapM = 9; U.mapL = 10;
   const h = U.V.map();
