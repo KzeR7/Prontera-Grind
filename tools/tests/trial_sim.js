@@ -20,7 +20,9 @@ const t = (n, f) => { try { f(); console.log('  ok   ' + n); pass++; } catch (e)
 console.log('endless echo: the five-minute damage trial\n');
 
 const DAY = new Date(Date.now() + 8 * 3600000).toISOString().slice(0, 10);
-const trialBlock = grab('// ========================= Endless Echo', 'const NMNAME=');
+// v90.10: the tier helpers the Nightmare gear token reads (secField picks the section by tier)
+const tierHelpers = [/const nmTierOf=[^\n]*/, /const secField=\(m,l\)=>[^;]+;/].map(re => src.match(re)[0]).join('\n');
+const trialBlock = tierHelpers + '\n' + grab('// ========================= Endless Echo', 'const NMNAME=');
 const nmNames = grab("const NMNAME=['Dread'", 'const NMNAME2=');
 
 // ---- one arena, with the DOM and the world stubbed the way a run needs them ----------------
@@ -284,15 +286,15 @@ t('the Nightmare Gear Token hands over a real piece from the map you picked', ()
   assert.ok(A.trialBody.includes('data-nmmap="9"'), 'every map is offered, including Abyss');
   A.trialGrantNm(9);
   assert.strictEqual(A.made.length, 1, 'picking a map makes exactly one piece');
-  assert.strictEqual(A.made[0].sec, 4, 'section 4 until the whole band is open');
-  assert.strictEqual(A.made[0].tier, 4, 'the Abyss item keeps the map quality cap while its rarity remains N');
+  assert.strictEqual(A.made[0].sec, 5, 'v90.10: Abyss is tier 2, so its token gives the N+ row (section 5)');
+  assert.strictEqual(A.made[0].tier, 4, 'flat Nightmare gear: the top tier on every map (v90.8)');
   assert.strictEqual(A.S.inv.length, 1, 'and it is in the bag, not on the ground');
   assert.ok(/Nightmare .* is in your bag/.test(A.logs[A.logs.length - 1]), 'the log says so');
   const early = arena({ shards: 2000, lv: 150 });
   early.trialGrantNm(0);
-  assert.strictEqual(early.made[0].sec, 4, 'the early-map reward is still Nightmare section 4');
-  assert.strictEqual(early.made[0].tier, 1, 'the token does not force Prontera N gear to Legendary quality');
-  assert.ok(src.includes('genGear(chosen,150,sec,false,dropTier(mapIndex,sec===5?15:12))'),
+  assert.strictEqual(early.made[0].sec, 4, 'v90.10: Prontera is tier 1, so its token gives the N row (section 4)');
+  assert.strictEqual(early.made[0].tier, 1, 'the token passes map 0\'s own tier; genGear flattens N gear to the top tier (v90.8)');
+  assert.ok(src.includes('genGear(chosen,150,sec,false,dropTier(mapIndex,12))'),
     'the token preserves the selected map’s field quality');
   const B = arena({ shards: 2000, lv: 150, nmOpen: 5 });
   B.trialGrantNm(9);

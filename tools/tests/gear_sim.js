@@ -36,6 +36,8 @@ const code = [
   grab('const pm=s=>', 'const REC='),                        // pm() + MAPS
   grab('const NMNAME=', 'const EARLY_FIELD_PWR'),             // the two Nightmare rows appended to GEAR
   pick(/const secOf=[^;]+;/, 'secOf'),
+  pick(/const NMLV=[^;]+;/, 'NMLV'),
+  pick(/const nmTierOf=[^\n]*/, 'nmTierOf'),
   pick(/const secField=\(m,l\)=>[^;]+;/, 'secField'),
   pick(/const RAR=\[[^\]]*\];/, 'RAR'),
   pick(/const RAR5=\{[^;]*;/, 'the Nightmare N rarity helpers (v76.2)'),
@@ -43,6 +45,9 @@ const code = [
   pick(/const AFF=\[[^\]]*\],AB=\{[^}]*\};/, 'AFF/AB'),
   pick(/const FIELD_GEAR=\[[^\]]*\],FIELD_GEAR_MID=\[[^\]]*\],BOSS_POOL_TOTAL=\[[^\]]*\];/, 'field drop tables'),
   pick(/const FIELD_GEAR_NM=\[[^\]]*\],FIELD_GEAR_MID_NM=\[[^\]]*\];/, 'the Nightmare drop tables'),
+  pick(/const NMPLUS_DROP=[^;]+;/, 'the v89 N+ drop halving'),
+  pick(/const NM_MAT=\[[^\]]*\];/, 'the Nightmare crafting materials'),
+  pick(/const NM_MAT_CH=[^;]+;/, 'the material drop chance'),
   pick(/const BOSS_CRIT_RES=\[[^\]]*\],NM_CRIT_RES=\[[^\]]*\],bossCritRes=\(m,l\)=>[^;]+;/, 'boss crit resistance (+ the v76 Nightmare ladder)'),
   pick(/const AFFIX_CDM_SCALE=[^\n]+;/, 'gear-only Crit DMG post-roll scale'),
   pick(/K5=\[[^\]]*\];/, 'K5'),
@@ -57,7 +62,11 @@ const code = [
   pick(/const dropTier=\(m,l\)=>[^;]+;/, 'dropTier'),
   pick(/const sellVal=it=>[^;]+;/, 'sellVal'),
   grab('function genGear(T,l,sec,boss,tier){', '// ---------- skill effects'),
-  pick(/const affixValue=\(k,section,tier,roll\)=>\{[^}]+\};/, 'affixValue'),
+  pick(/const NM_FLAT=\[[^\]]*\],NM_FLAT_MUL=\[[^\]]*\],NM_MUL=\{[^}]*\};/, 'the v89/v90 Nightmare affix multipliers'),
+  pick(/const nmMulOf=\(k,section\)=>[^\n]*/, 'nmMulOf'),
+  pick(/const NM_ABYSS_AFF=[^;]+;/, 'NM_ABYSS_AFF'),
+  pick(/const nmAffMapOf=[^\n]*/, 'nmAffMapOf'),
+  pick(/const affixValue=\(k,section,tier,roll[^)]*\)=>\{[^}]+\};/, 'affixValue'),
   `function executeGearRoll(mob,roll){const old=Math.random;Math.random=()=>roll;const drops=[],mkDrop=it=>({it});try{${gearDropLoop}}finally{Math.random=old}return drops}`,
   grab('function canShield(){', 'function ekey(it)'),        // shield and single-katar class rules
   grab('function slotAccepts(k,it){', 'function equipChooser(k){'),
@@ -74,7 +83,7 @@ const SECN=['Starter gear','1st-job gear','2nd-job gear','High-tier gear'];
 const SLOTS={weapon:{label:'Weapon',stat:'ATK',ic:'A'},armor:{label:'Armor',stat:'DEF',ic:'B'},head:{label:'Headgear',stat:'HP',ic:'C'},off:{label:'Shield',stat:'DEF',ic:'D'},leg:{label:'Legwear',stat:'DEF',ic:'E'},acc:{label:'Accessory',stat:'HP',ic:'F'}};
 const rnd=(a,b)=>a+Math.random()*(b-a),ri=(a,b)=>Math.floor(rnd(a,b+1)),uid=()=>1;
 let S=null;
-this.__g={ MAPS, GEAR, gearPool, fieldOf, genGear, rarIdx, rarOf, rarCls, RAR5, RAR6, RARALL, FIELD_GEAR_NM, FIELD_GEAR_MID_NM, executeGearRoll, slotAccepts, canUse, canShield, katarOnly, dualWield, CLASSES, lineOf, secOf, secField, SLOTS, BAGMAX, MAPTIER, MAPGRADE, set PETPASSIVE(v){PETPASSIVE=v}, get PETPASSIVE(){return PETPASSIVE}, MAPVAL, dropTier, sellVal, AM, AFF, AB, RAR, AFFIX_CDM_SCALE, scaleCritDamageAffix, affixValue, FIELD_GEAR, FIELD_GEAR_MID, BOSS_POOL_TOTAL, BOSS_CRIT_RES, bossCritRes, gearTierOf, classTierOf, gearTierOK, gearUserOf,
+this.__g={ MAPS, GEAR, gearPool, fieldOf, genGear, rarIdx, rarOf, rarCls, RAR5, RAR6, RARALL, FIELD_GEAR_NM, FIELD_GEAR_MID_NM, NMPLUS_DROP, NM_MAT, NM_MAT_CH, NM_FLAT, NM_FLAT_MUL, NM_MUL, nmMulOf, NM_ABYSS_AFF, nmAffMapOf, executeGearRoll, slotAccepts, canUse, canShield, katarOnly, dualWield, CLASSES, lineOf, secOf, secField, SLOTS, BAGMAX, MAPTIER, MAPGRADE, set PETPASSIVE(v){PETPASSIVE=v}, get PETPASSIVE(){return PETPASSIVE}, MAPVAL, dropTier, sellVal, AM, AFF, AB, RAR, AFFIX_CDM_SCALE, scaleCritDamageAffix, affixValue, FIELD_GEAR, FIELD_GEAR_MID, BOSS_POOL_TOTAL, BOSS_CRIT_RES, bossCritRes, gearTierOf, classTierOf, gearTierOK, gearUserOf,
            set S(v){S=v}, get S(){return S} };
 `;
 const sb = { console };
@@ -367,7 +376,9 @@ t('every field allocates a weapon first, and never lists an item twice (v79)', (
   // a weapon, rolls 2-3 are armour or an accessory, and nothing repeats unless the map has a single
   // weapon family - which after v80 no normal map does (Geffen carries a dagger or a katar beside
   // its staves, Payon a sword beside its bows), so every field offers its mobs a real choice.
-  for (let m = 0; m < G.MAPS.length; m++) for (let l = 1; l <= 15; l++) {
+  // v89: stages 14-15 (the N+ rows) no longer walk the shelf - each mob lists every weapon family -
+  // so that band has its own test below. This walk test covers the walked stages 1-13.
+  for (let m = 0; m < G.MAPS.length; m++) for (let l = 1; l <= 13; l++) {
     const F = G.fieldOf(m, l), where = G.MAPS[m].n + ' stage ' + l;
     const pool = G.gearPool(m, l), weapons = pool.filter(x => !['armor','head','off','leg','acc'].includes(x.k));
     for (const mob of F.mobs) {
@@ -395,6 +406,57 @@ t('every field allocates a weapon first, and never lists an item twice (v79)', (
     }
     assert.deepStrictEqual([...got].sort(), [...all].sort(), G.MAPS[m].n + ' stages ' + levels[0] + '-' + levels[levels.length-1] + ' must reach every weapon family');
   }
+});
+
+t('N and N+ by tier (v90.10): the weapon walk is back on every map, and the N+ halving stays on tier 2', () => {
+  // v90 (owner: \"for fairness, let's just remain the drop on stage 4 & 5\"). v89 had every mob on stages 14-15
+  // list the whole N+ shelf; that split is reverted, so those stages walk the shelf exactly as stages 1-13 do:
+  // each mob carries ONE weapon, the weapon list advances two per stage, and the two mobs differ. The
+  // N+ halving (NMPLUS_DROP) is kept: the weapon chance is half the Nightmare table, and the MVP pool is half.
+  const isW = T => !['armor', 'head', 'off', 'leg', 'acc'].includes(T.k);
+  // v90.10: tier 1 (maps 0-4) is the N row, section 4; tier 2 (maps 5-9) is the N+ row, section 5, halved
+  for (let m = 0; m < G.MAPS.length; m++) for (const l of [14, 15]) {
+    const wantSec = m >= 5 ? 5 : 4;
+    const F = G.fieldOf(m, l), where = G.MAPS[m].n + ' Nightmare stage ' + l;
+    const weapons = G.gearPool(m, l).filter(isW);
+    assert.strictEqual(F.sec, wantSec, where + ' must be section ' + wantSec);
+    const wantWeapon = (m >= 5 ? G.FIELD_GEAR_MID_NM[0] : G.FIELD_GEAR_NM[0]) * (wantSec === 5 ? G.NMPLUS_DROP : 1);
+    F.mobs.forEach((mob, j) => {
+      const weaponRolls = mob.drops.filter(([T]) => isW(T));
+      assert.strictEqual(weaponRolls.length, 1, where + ': one weapon roll per mob, not the whole shelf');
+      assert.strictEqual(weaponRolls[0][0].n, weapons[(2 * (l - 1) + j) % weapons.length].n, where + ' mob ' + j + ': the walk picks the weapon');
+      assert.ok(Math.abs(weaponRolls[0][1] - wantWeapon) < 1e-3, where + ': weapon rate ' + weaponRolls[0][1] + ' != ' + wantWeapon);
+      const defensive = mob.drops.filter(([T]) => !isW(T));
+      assert.strictEqual(defensive.length, 2, where + ': two armour/accessory rolls');
+      assert.ok(defensive.every(([T]) => ['armor', 'head', 'off', 'leg', 'acc'].includes(T.k)), where + ': defensive rolls must be armour or accessories');
+    });
+    if (weapons.length > 1) assert.notStrictEqual(F.mobs[0].drops[0][0].n, F.mobs[1].drops[0][0].n, where + ': both mobs carry the same weapon');
+  }
+  // the weapon chance per kill is one walk roll at the halved rate, not more and not less
+  const total = G.fieldOf(9, 14).mobs[0].drops.filter(([T]) => isW(T)).reduce((a, [, c]) => a + c, 0);
+  assert.ok(Math.abs(total - G.FIELD_GEAR_MID_NM[0] * G.NMPLUS_DROP) < 1e-3, 'Abyss N+ weapon chance is half the Nightmare table, got ' + total);
+  const totalN = G.fieldOf(0, 14).mobs[0].drops.filter(([T]) => isW(T)).reduce((a, [, c]) => a + c, 0);
+  assert.ok(Math.abs(totalN - G.FIELD_GEAR_NM[0]) < 1e-3, 'Prontera N weapon chance is the full Nightmare table (no halving on tier 1), got ' + totalN);
+  // the MVP pool is halved as well (v89): 300 x .5 = 150 spread over the whole pool
+  const bossTotal = G.fieldOf(9, 15).boss.drops.reduce((a, [, c]) => a + c, 0);
+  assert.ok(Math.abs(bossTotal - 1.5) < 0.1, 'the Stage 5 MVP pool must total about 1.5% (13 entries, each rounded to .01), got ' + bossTotal.toFixed(3));
+  // and the N+ table is one half of the Nightmare table it used to be, in both bands
+  assert.strictEqual(G.NMPLUS_DROP, .5, 'the N+ nerf is one half');
+});
+
+t('N+ flat affixes (v89): STR and Flee top out near the high-tier ceiling, the other affixes keep their numbers', () => {
+  // v89 (owner: \"n+ affix are giving 60+ flee % and 60+ str is too much\"). Flat stats and Flee use
+  // section multipliers 3.5 (N, section 4) and 4 (N+, section 5) instead of 5 and 6.
+  assert.deepStrictEqual(Array.from(G.NM_FLAT_MUL), [3.5, 4], 'the flat-stat multipliers are pinned');
+  assert.strictEqual(G.affixValue('str', 5, 4, 1.25), 55, 'N+ STR top roll on Abyss is 55 (was 83)');
+  assert.strictEqual(G.affixValue('str', 4, 4, 1.25), 48, 'N STR top roll on Abyss is 48 (was 69)');
+  // the ceiling N+ flat stats reach is the one a Legendary high-tier piece already rolls
+  assert.strictEqual(G.affixValue('str', 3, 4, 1.25), 55, 'the high-tier Legendary STR top roll is the same 55');
+  // the other affixes keep their Nightmare multipliers, and sections 0-3 never change
+  assert.strictEqual(G.affixValue('hp', 5, 4, 1.25), Math.round(6 * G.AM[4] * G.AB.hp * 1.25), 'N+ Max HP keeps x6');
+  assert.strictEqual(G.affixValue('cdm', 5, 4, 1.25), G.scaleCritDamageAffix(Math.round(6 * G.AM[4] * G.AB.cdm * 1.25)), 'N+ Crit DMG keeps x6 and its gear scale');
+  assert.strictEqual(G.affixValue('str', 3, 4, .8), Math.round(4 * G.AM[4] * G.AB.str * .8), 'section 3 (high tier) is untouched');
+  assert.strictEqual(G.affixValue('flee', 2, 2, 1), Math.round(3 * G.AM[2] * G.AB.flee), 'section 2 flee is untouched');
 });
 
 t('fieldOf only hands out items from that field pool', () => {
@@ -667,8 +729,11 @@ t('Nightmare equipment is its own N rarity, separate from Legendary and map qual
   const lowMapTier = G.dropTier(0, 12);
   const nm = G.genGear({ k: 'sword', n: 'Dread Excalibur' }, 150, 4, false, lowMapTier);
   const hi = G.genGear({ k: 'sword', n: 'Dark Lord Sword' }, 150, 3, true, 4);
-  assert.strictEqual(nm.tier, lowMapTier, 'Nightmare gear keeps its map field-quality value');
-  assert.notStrictEqual(nm.tier, 4, 'Prontera Nightmare gear is not forced to Legendary quality');
+  // v90.8 (owner: flatten N+ power): Nightmare gear no longer follows its map's quality. Every
+  // Nightmare piece rolls the top tier, so the lower map's N gear is as strong as Abyss's.
+  assert.strictEqual(nm.tier, 4, 'v90.8: Nightmare gear is flat - the top tier on every map, not the map field-quality value');
+  assert.strictEqual(nm.tier, G.dropTier(9, 15), 'v90.8: the lowest map drops the same power as the Abyss map');
+  assert.strictEqual(nm.aff.length, 3, 'v90.8: flat Nightmare gear rolls three affixes on every map');
   assert.strictEqual(G.rarIdx(nm), 5, 'section 4 selects the independent N rarity');
   assert.strictEqual(G.rarOf(nm).n, 'N', 'the rarity label is N, not Legendary');
   assert.strictEqual(G.rarCls(nm), 'r5', 'and N is painted with .r5');
@@ -688,6 +753,59 @@ t('Nightmare equipment is its own N rarity, separate from Legendary and map qual
   assert.strictEqual(G.FIELD_GEAR_MID_NM.map(x => +(x * 3).toFixed(2)).join(','), '1.05,0.84,0.63');
 });
 
+t('v90.9 Abyss affixes sit 5% under Nightmare Prontera; the maps between ramp linearly', () => {
+  // Only affixes move with the map. The base value is flat (v90.8), so Prontera and Abyss N+ gear
+  // differ only in their affix rolls. Map 0 is x1, map 9 (Abyss) is x0.95.
+  assert.strictEqual(G.NM_ABYSS_AFF, 0.95, 'the Abyss affix factor is 0.95');
+  assert.strictEqual(G.nmAffMapOf(0), 1, 'Nightmare Prontera (map 0) is x1');
+  assert.strictEqual(G.nmAffMapOf(9), 0.95, 'Abyss (map 9) is x0.95');
+  assert.ok(Math.abs(G.nmAffMapOf(4) - (1 - 0.05 * 4 / 9)) < 1e-9, 'map 4 sits on the linear ramp');
+  assert.strictEqual(G.nmAffMapOf(undefined), 1, 'with no map given the factor is x1 (old callers unchanged)');
+  for (const k of ['str', 'hp', 'atk', 'flee', 'crit']) {
+    const atMap0 = G.affixValue(k, 5, 4, 1.25, 0), atMap9 = G.affixValue(k, 5, 4, 1.25, 9);
+    assert.strictEqual(atMap9, Math.round(G.nmMulOf(k, 5) * 0.95 * G.AM[4] * G.AB[k] * 1.25), k + ' on Abyss is the 0.95 roll');
+    assert.ok(atMap9 < atMap0, k + ' on Abyss is below Prontera at the same roll: ' + atMap9 + ' < ' + atMap0);
+  }
+  // Same seeded random stream for both maps, so each drop makes the same picks and only the affix factor differs.
+  const seedRandom = seed => vm.runInContext('__seedA=' + seed + ';Math.random=function(){__seedA=(__seedA+0x6D2B79F5)|0;let t=Math.imul(__seedA^(__seedA>>>15),1|__seedA);t=(t+Math.imul(t^(t>>>7),61|t))^t;return((t^(t>>>14))>>>0)/4294967296};', sb);
+  const sumAff = mp => {
+    seedRandom(12345);
+    G.S = { st: { luk: 0 }, eq: {}, mp };
+    let sum = 0;
+    for (let i = 0; i < 400; i++) {
+      const it = G.genGear({ k: 'sword', n: 'Absolute Dark Lord Sword' }, 150, 5, false, 4);
+      for (const a of it.aff) sum += a.v;
+    }
+    return sum;
+  };
+  const origRandom = vm.runInContext('Math.random', sb);
+  let ratio;
+  try { ratio = sumAff(9) / sumAff(0); }
+  finally { vm.runInContext('Math.random=__origRandom', Object.assign(sb, { __origRandom: origRandom })); }
+  assert.ok(Math.abs(ratio - 0.95) < 0.01, 'the N+ affix total on Abyss is 0.95 of Prontera on the same rolls: ' + ratio.toFixed(4));
+  G.S = { st: { luk: 0 }, eq: {}, mp: 9 };
+  const ab = G.genGear({ k: 'sword', n: 'Absolute Dark Lord Sword' }, 150, 5, false, 4);
+  assert.strictEqual(ab.mp, 9, 'an N+ piece records the map it dropped on, for reforge');
+  G.S = { st: { luk: 0 }, eq: {}, mp: 9 };
+  const hi3 = G.genGear({ k: 'sword', n: 'Dark Lord Sword' }, 150, 3, true, 4);
+  assert.strictEqual(hi3.mp, undefined, 'a non-Nightmare piece records no map');
+});
+
+t('v90.8 flat Nightmare power: the same N+ gear is worth the same on the lowest and the Abyss map', () => {
+  // Prontera (map 0) and Abyss (map 9) used to differ about 11x in N+ base value. The mean of 300
+  // rolls must now match within 10%, and the value must not depend on the map at all.
+  const mean = mp => {
+    G.S = { st: { luk: 0 }, eq: {}, mp };
+    let sum = 0;
+    for (let i = 0; i < 300; i++) sum += G.genGear({ k: 'sword', n: 'Absolute Dark Lord Sword' }, 150, 5, false, G.dropTier(mp, 15)).val;
+    return sum / 300;
+  };
+  const lo = mean(0), hi = mean(9);
+  assert.ok(Math.abs(lo - hi) / hi < 0.1, 'the N+ mean is flat across maps: map 0 ' + lo.toFixed(1) + ' vs map 9 ' + hi.toFixed(1));
+  const n = G.genGear({ k: 'sword', n: 'Dread Excalibur' }, 150, 4, false, G.dropTier(0, 12));
+  assert.strictEqual(n.tier, 4, 'v90.8: N gear on the lowest map is top-tier too');
+});
+
 t('the cdm affix only rolls on weapons and accessories, like the cdm card always has',()=>{
   // v73 (owner: "players only target cri damage on all equipments"): gear Crit DMG is now a
   // weapon/accessory affix. Armor, headgear, shield and legwear never roll it.
@@ -705,6 +823,29 @@ t('the cdm affix only rolls on weapons and accessories, like the cdm card always
   // the cdm CARD follows the same slot rule through CFIT
   assert.ok(src.includes("const CFIT={str:'weapon',dex:'weapon',atk:'weapon',crit:'weapon',cdm:'weapon'"),'the card fit table must keep cdm on weapons/accessories');
   assert.ok(src.includes("(slot==='weapon'||slot==='acc'?AFF:AFF.filter(k=>k!=='cdm'))"),'the live affix pool must be slot-filtered');
+});
+
+t('N and N+ Flee, ATK, ASPD and Crit % take the v90 nerf; STR, Max HP and Crit DMG do not move', () => {
+  // v90 (owner): a slightly higher nerf on Flee, ATK, ASPD and CRIT in sections 4/5. Flee x3.0 / x3.4,
+  // ATK %, ASPD % and Crit % x4.2 / x5.0. The flat stats stay on x3.5 / x4.
+  assert.deepStrictEqual(Array.from(G.NM_MUL.flee), [3, 3.4], 'Flee multipliers are pinned');
+  assert.deepStrictEqual(Array.from(G.NM_MUL.atk), [4.2, 5], 'ATK multipliers are pinned');
+  assert.deepStrictEqual(Array.from(G.NM_MUL.aspd), [4.2, 5], 'ASPD multipliers are pinned');
+  assert.deepStrictEqual(Array.from(G.NM_MUL.crit), [4.2, 5], 'Crit multipliers are pinned');
+  assert.strictEqual(G.affixValue('flee', 5, 4, 1.25), 38, 'N+ Flee top roll on Abyss is 38 (was 44)');
+  assert.strictEqual(G.affixValue('flee', 4, 4, 1.25), 33, 'N Flee top roll on Abyss is 33 (was 39)');
+  assert.strictEqual(G.affixValue('atk', 5, 4, 1.25), 55, 'N+ ATK top roll is 55 (was 66)');
+  assert.strictEqual(G.affixValue('atk', 4, 4, 1.25), 46, 'N ATK top roll is 46');
+  assert.strictEqual(G.affixValue('aspd', 5, 4, 1.25), 41, 'N+ ASPD top roll is 41');
+  assert.strictEqual(G.affixValue('crit', 4, 4, 1.25), 19, 'N Crit % top roll is 19');
+  assert.strictEqual(G.affixValue('crit', 5, 4, 1.25), 22, 'N+ Crit % top roll is 22');
+  assert.strictEqual(G.affixValue('str', 5, 4, 1.25), 55, 'N+ STR is unchanged at 55');
+  assert.strictEqual(G.affixValue('hp', 5, 4, 1.25), 995, 'N+ Max HP is unchanged at 995');
+  // the nerf is only on sections 4 and 5: section 3 keeps its plain 1+section multiplier
+  assert.strictEqual(G.affixValue('flee', 3, 4, 1), Math.round(4 * G.AM[4] * G.AB.flee), 'section 3 Flee is untouched');
+  assert.strictEqual(G.affixValue('atk', 3, 4, 1), Math.round(4 * G.AM[4] * G.AB.atk), 'section 3 ATK is untouched');
+  assert.strictEqual(G.nmMulOf('flee', 5), 3.4, 'nmMulOf picks the N+ column');
+  assert.strictEqual(G.nmMulOf('flee', 4), 3, 'nmMulOf picks the N column');
 });
 
 t('gear Crit DMG alone is scaled to 70% after the existing rounded affix roll',()=>{

@@ -13,7 +13,7 @@
 //   * the training ladder is the shipped one: PTG .40/.25/.15/.09/.05, GREAT 5% double-ups,
 //     peqCost(t) = 1200(t+1)^2, Claw +10%/tier, Collar +7% attack speed/tier, Charm +5% crit/tier;
 //   * petDmg() is the real formula - atk() x PETBAL x rarity x mutation x Claw;
-//   * BALANCE: one fully maxed pet should deal about 0.42x ONE fully maxed character's (0.6-0.7x before the v86 ASPD buff)
+//   * BALANCE: one fully maxed pet should deal about 0.26x ONE fully maxed character's (v89: was 0.42x at PETBAL 1.91; 0.6-0.7x before the v86 ASPD buff)
 //     sustained rotation. The complete chain is asserted, not just base auto-attacks.
 //   * MEASUREMENT: a stepped simulation drives the REAL petHit() over 120 seconds with crits
 //     switched off and checks the analytic damage model used for the balance assertion.
@@ -34,7 +34,9 @@ const code = [
   pick(/const AM=\[[^\]]*\],GRADE=\[[^\]]*\],GI=\[[^\]]*\],CV=\[[^\]]*\];/, 'AM/GRADE/GI/CV'),
   pick(/const AFF=\[[^\]]*\],AB=\{[^}]*\};/, 'AFF/AB'),
   pick(/const AFFIX_CDM_SCALE=[^\n]+;/, 'gear-only Crit DMG post-roll scale'),
-  pick(/const affixValue=\(k,section,tier,roll\)=>\{[^}]+\};/, 'affixValue'),
+  pick(/const NM_ABYSS_AFF=[^;]+;/, 'NM_ABYSS_AFF'),
+  pick(/const nmAffMapOf=[^\n]*/, 'nmAffMapOf'),
+  pick(/const affixValue=\(k,section,tier,roll[^)]*\)=>\{[^}]+\};/, 'affixValue'),
   pick(/const MAPTIER=\[[^\]]*\];/, 'MAPTIER'),
   pick(/const MAPGRADE=\[[^\]]*\];/, 'MAPGRADE'),
   pick(/const MAPVAL=\[[^\]]*\];/, 'MAPVAL'),
@@ -65,7 +67,7 @@ const tickPet=dt=>{${grab("for(const id in petSkillCd)petSkillCd[id]=Math.max(0,
 // The passive-skill half of the derived stats: the real pv() walk over the line's passives, so
 // Aura Blade / Owl's Eye and friends are counted in the player's numbers below.
 const pv=k=>SKILLS.reduce((a,s)=>a+(s.type==='pas'&&s.key===k&&skillOn(s.id)?s.f(lv(s.id)):0),0);
-this.__p={ PETS,PET_SKILLS,RN,RCL,MUT,GW,PT,PTG,GREAT,PEQ,EGG,PETGAP,PETBAL,petDmg,petInt,peqCost,rollCost,petSkillCost,
+this.__p={ PETS,PET_SKILLS,RN,RCL,MUT,GW,PT,PTG,GREAT,PEQ,EGG,PETGAP,PETBAL,petDmg,petInt,peqCost,peqCostOf,rollCost,petSkillCost,
   rollPetSkills,petSkills,petBuffWhy,petLeech,petHit,tickPet,maxHp,
   MAPS,genGear,atk,matk,aspd,crit,critD,C,CLASSES,HPK,HPE,SKILLS,SKSLOTS,SKFADE,lineOf,st,pv,
   petBuff,petBuffSrc,PET_SKILL_WEIGHTS,setMobs:m=>{mobs=m},setDealt:v=>{dealt=v},getDealt:()=>dealt,
@@ -422,14 +424,16 @@ t('MEASUREMENT: one maxed pet must deal about as much as one maxed CHARACTER', (
   const best = rows[7].dps, worst = rows[0].dps, ratio = best / full;
   console.log('       x3 pets on the field: ' + Math.round(best * 3).toLocaleString() + ' DPS at the top, ' + Math.round(worst * 3).toLocaleString() + ' at the bottom');
   console.log('       Abyss stage-10 boss HP ' + bossHp().toLocaleString() + ' -> one maxed Angeling alone kills it in ' + (bossHp() / best).toFixed(2) + 's');
-  console.log('       PETBAL ' + P.PETBAL + ' delivers ' + ratio.toFixed(3) + 'x the maxed rotation (the target is 0.60-0.70x)');
+  console.log('       PETBAL ' + P.PETBAL + ' delivers ' + ratio.toFixed(3) + 'x the maxed rotation (v89 band: 0.22-0.30x)');
   assert.ok(best > 0 && Number.isFinite(best), 'the measurement must produce a number');
   // THE BALANCE. The complete chain should stay in the requested companion band. v86: the owner's
   // RO-style ASPD buff made the maxed CHARACTER ~1.4x faster (more swings, more casts per second)
   // while pets are swing-independent, so the old 0.6-0.7x band now reads ~0.42x. The band follows
   // the measurement; rebuffing pets to restore 0.6-0.7x is the owner's separate call.
-  assert.ok(ratio >= .36 && ratio <= .48, 'a maxed pet must land around 0.42x of the v86-faster maxed character (got ' + ratio.toFixed(3) + 'x)');
-  assert.ok(worst / full > .05, 'even a Common pet must be a real companion (got ' + (worst / full).toFixed(2) + 'x; .08 before the v86 ASPD buff)');
+  // v89 (owner: "nerf pets, currently hits too hard"): PETBAL 1.91 -> 1.2, so one maxed pet lands near
+  // 0.26x a maxed character (was 0.42x). The band moves deliberately; a later retune moves it again.
+  assert.ok(ratio >= .22 && ratio <= .30, 'a maxed pet must land around 0.26x of the v86-faster maxed character (got ' + ratio.toFixed(3) + 'x)');
+  assert.ok(worst / full > .02, 'even a Common pet must be a real companion (got ' + (worst / full).toFixed(3) + 'x; .06 before the v89 nerf)');
   // v75: the SIGNATURE PASSIVES have to live inside this band too. Pack Leader (+10% pet damage
   // for every fighting pet, at Bond 5) is the only one that touches this number, and the owner
   // approved a bonus of at most 10% - so the band moves deliberately to at most 0.78x with the
@@ -474,7 +478,21 @@ t('roster and costs are visible data (for the Pets panel and the notes)', () => 
   const line = P.PETS.map((p, i) => p.n + ' (' + P.RN[p.r] + ', ' + P.rollCost({ sp: i }) + 'z per mutation roll)').join(' | ');
   console.log('       ' + line);
   console.log('       maxing one stat: ' + JSON.stringify(P.PT) + ' at ' + P.PTG.map(x => Math.round(x * 100) + '%').join('/') + ' per roll, ' + P.peqCost(0) + '-' + P.peqCost(4) + 'z per roll');
-  P.PETS.forEach((p, i) => assert.ok(P.rollCost({ sp: i }) === 2500 * (1 + p.r), 'mutation roll price'));
+  P.PETS.forEach((p, i) => assert.ok(P.rollCost({ sp: i }) === 2500 * (1 + p.r) * (p.r === 3 ? 2 : 1), 'mutation roll price'));
+});
+
+t('Legendary pets cost twice as much on every pet price (v90), and nothing else moves', () => {
+  // v90 (owner): every Legendary pet (r===3) doubles its mutation roll, its skill gacha and its upgrade step.
+  const leg = P.PETS.findIndex(p => p.r === 3), common = P.PETS.findIndex(p => p.r === 0);
+  assert.ok(leg >= 0 && common >= 0, 'the roster has both a Legendary and a Common pet');
+  assert.strictEqual(P.rollCost({ sp: common }), 2500, 'a Common mutation roll is unchanged at 2500z');
+  assert.strictEqual(P.rollCost({ sp: leg }), 20000, 'a Legendary mutation roll is 20000z (was 10000z)');
+  assert.strictEqual(P.petSkillCost({ sp: common }), 2000, 'a Common skill gacha is unchanged at 2000z');
+  assert.strictEqual(P.petSkillCost({ sp: leg }), 16000, 'a Legendary skill gacha is 16000z (was 8000z)');
+  assert.strictEqual(P.peqCostOf({ sp: common }, 0), 1200, 'a Common upgrade step 1 is unchanged');
+  assert.strictEqual(P.peqCostOf({ sp: leg }, 0), 2400, 'a Legendary upgrade step 1 is 2400z (was 1200z)');
+  assert.strictEqual(P.peqCostOf({ sp: leg }, 4), 60000, 'a Legendary top upgrade step is 60000z (was 30000z)');
+  assert.strictEqual(P.peqCost(4), 30000, 'the base upgrade ladder itself is unchanged');
 });
 
 console.log('\n' + pass + ' passed, ' + fail + ' failed');

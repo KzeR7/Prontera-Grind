@@ -84,6 +84,135 @@ is the live one; with no argument the tool prints how to set a new one). Since v
 `GM` / `test1234`; `localStorage.removeItem('pg_gm_local')` removes it. Normal accounts are made
 in-game and stored in the browser (`pg_acc4`; saves under `pg_save3_<user>`).
 
+## BUILD v90.10 — Nightmare tiers, round 6 (grind-v90.10)
+
+The owner confirmed the tier split and the gates (Nightmare Prontera to Payon at Base Lv 120, Comodo onward at Base Lv 140). Owner's decisions: "jump" is a gear check (players need better gear to farm the jump map); all Nightmare stages drop Nightmare gear, N from Nightmare Prontera to Payon and N+ from Nightmare Comodo to Abyss. Not yet measured: whether Abyss Normal gear is actually too weak for Nightmare Prontera Stage 11 (see the AGENTS.md entry).
+
+* **Tiers:** two tiers of five maps. Tier 1 is Nightmare Prontera to Payon (maps 0-4, Base Lv 120, N gear). Tier 2 is Nightmare Comodo to Abyss (maps 5-9, Base Lv 140, N+ gear). Each Nightmare stage is 11-15.
+* **Power:** tier 1 starts at 130 and tier 2 at 160. Abyss Stage 15 is 180. The step from Abyss normal (99) to tier 1 is about 31%. The step from tier 1 to tier 2 is about 7%.
+* **Zeny:** every kill from Niflheim onward, normal stages included, and every Nightmare stage, bosses included, pays on 90% of kills at a random 0.5x to 1.0x.
+* **Travel:** a map's stage can only be picked up to that map's own gate.
+
+Files: `index.html` (`nmTierOf`, `nmMapOpen`, `nmMaxFor`, `fieldPower`, `secField`, `nmZenyRoll`); tests `nightmare_sim.js`, `zeny_sink_sim.js`, `ui_sim.js`, `gear_sim.js`, `trial_sim.js`, `offline_sim.js`; mirrors and this file are bumped to grind-v90.10.
+
+## BUILD v90.9 — Nightmare tuning: Abyss affixes, unlock ladder, Zeny payout (grind-v90.9)
+
+* **Abyss affixes:** Nightmare Prontera is x1, Abyss (map 9) is x0.95, and the maps between ramp linearly (`NM_ABYSS_AFF`, `nmAffMapOf()`). Only affixes move; the base value stays flat.
+* **Unlock ladder:** Stages 11-13 at Base Lv 120, Stages 14-15 at Base Lv 140 (`NMLV`).
+* **Zeny:** a regular Nightmare kill pays 90% of the time (10% pay nothing), at a random 0.5x to 1.0x (mean 0.675). Bosses still pay in full.
+* **Open:** Prontera now has the best affixes and the higher drop rate, so Abyss has no gear reason left. This is the result of the 5% nerf the owner asked for. Reforge of pieces dropped before this build uses x1.
+
+Files: `index.html` (`NMLV`, `NM_ABYSS_AFF`, `nmAffMapOf()`, `affixValue()`, `genGear()`, `reforge()`, `NM_ZENY_*`); tests `nightmare_sim.js`, `zeny_sink_sim.js`, `gear_sim.js`, `ui_sim.js`, `pet_sim.js`; mirrors and this file are bumped to grind-v90.9.
+
+## BUILD v90.8 — Zeny sinks and flat Nightmare gear (grind-v90.8)
+
+* **Flat Nightmare gear:** every Nightmare N and N+ piece rolls the top tier (4) and the top map value on every map, with three affixes. Lower maps are as strong as Abyss. Prontera's N+ base value rises about 11x; Abyss's is unchanged. This is a buff to the lower maps' gear.
+* **Refine costs Zeny x3** (`REF_ZENY_MUL`). An N+ weapon's first step is 1,200 Zeny. +0 to +10 without a scroll is about 19.4M Zeny; with the scroll about 606k. Ore is unchanged.
+* **Regular Nightmare kills pay Zeny unevenly:** 60% of kills pay (`NM_ZENY_CH`), at a random 0.5x to 1.5x of the old value (`NM_ZENY_LO`, `NM_ZENY_HI`). The mean is about 0.6x. Bosses and every non-Nightmare mob pay in full.
+* **Black Market:** one button per Nightmare material at 3,000,000 Zeny (`BM_MAT_PRICE`), from Base Lv 100. Twenty of them, which is one scroll, cost 60M Zeny.
+* **Open:** the refine damage impact is still not measured. The Zeny and Black Market numbers are untuned against real kill times.
+
+Files: `index.html` (`genGear()`, `REF_ZENY_MUL`, `nmZenyRoll()`, `buyMat()`, the Black Market rows, the kill payouts); tests `tools/tests/zeny_sink_sim.js` (new), `gear_sim.js`, `economy_sim.js`, `material_sim.js`, `ui_sim.js`; mirrors and this file are bumped to grind-v90.8.
+
+## BUILD v90.7 — the scroll costs 20 materials at 1% (grind-v90.7)
+
+* **Materials:** each Nightmare Stage 15 boss drops its map's material at 1% a kill (`NM_MAT_CH`, was 25%).
+* **Drop Protection Scroll:** 20 materials of any mix, from any maps (`DPS_MATS`), make one scroll. Crafting spends exactly 20; extra materials stay in the stacks.
+* **What the scroll does:** it only stops a failed refine at +5 or higher from dropping a rank. A +7 that fails stays +7. It does not guarantee success; the success chances are unchanged.
+* **Balance (open):** at 1% a kill, one scroll is about 2,000 Stage 15 boss kills, and a +10 with protection is about 16 scrolls, roughly 32,000 boss kills. That is the owner's chosen rate and is one constant (`NM_MAT_CH`) to change.
+
+Files: `index.html` (`NM_MAT_CH`, `DPS_MATS`, `craftDps()`, `dpsPanel()`); tests `tools/tests/material_sim.js`, `nightmare_sim.js`; mirrors and this file are bumped to grind-v90.7.
+
+## BUILD v90.6 — crafting: Nightmare materials make a Drop Protection Scroll (grind-v90.6)
+
+The owner scrapped the Crown and picked option 3 from the Nightmare list: each map's material, used in a craft.
+
+* **Materials:** each Nightmare map's Stage 15 boss drops that map's own material (Dread Essence, Kraken Scale, Void Core, Sandwraith Dust, Spectral Ectoplasm, Leviathan Fin, Oni Horn, Yokai Mask, Helheim Rune, Glast Fragment). The chance is `NM_MAT_CH` = 25% per boss kill. Materials go straight to a stack and do not use bag space.
+* **Drop Protection Scroll:** crafted from one of each of the ten materials, on the Refine tab. It is used automatically when a failed refine would drop a rank (a failure at +5 or higher). The scroll is spent and the rank stays. A failure below +5 never uses a scroll, and a success is unchanged.
+* **Crown:** removed. Its code and its constant are gone.
+* **Balance (open):** at 25% per boss kill, one scroll needs about 40 Stage 15 boss kills (about 4 per map). A full +0 to +10 N+ weapon with protection needs about 16 scrolls, so about 640 boss kills. That is a lot. Tune `NM_MAT_CH` and the recipe after a play-test.
+
+Files: `index.html` (`NM_MAT`, `NM_MAT_CH`, the boss `mat`, the live and offline kill rolls, `collect()` pickup, `refine()`, `craftDps()`, `nmMatCounts()`, `dpsPanel()`, the `craftdps` action, the save fields `nmMat` and `dps`); tests: new `tools/tests/material_sim.js` (9 checks: materials, craft, panel, refine with and without a scroll, success chance and cost, and the wiring); `nightmare_sim.js`, `gear_sim.js`, `crit_sim.js`, `ui_sim.js` (the Crown checks are now material checks, and the boss pool test is back to its plain form). Mirrors and this file are bumped to grind-v90.6.
+
+Refine numbers (for reference): success is 70% at +0 to +3, 49% at +4, 42% at +5, 35% at +6, 28% at +7, 21% at +8 and 14% at +9. Each +1 adds 15% of the piece's base value. See the v90.6 log entry.
+## BUILD v90.5 — Nightmare pay anchored to Abyss (grind-v90.5)
+
+The owner asked not to buff Abyss but to tune the lower maps down, since Zeny already overflows. v90.4 had raised Abyss to about 3.1x EXP and 2.6x Zeny per kill at Stage 15. Now `nmPayOf` is taken relative to Abyss at the same stage, so Abyss keeps its pre-v90.4 pay (1) and every other map is lower. Each map still pays the same per HP as the others. At Stage 15 Prontera pays about 0.32x EXP and 0.39x Zeny per kill. Stages 1-10 are unchanged. Tests: `nightmare_sim.js` (new v90.5 test: Abyss is 1, the rest are below 1).
+
+Still open: the Crown (see the v90.4 section). It does not yet give a reason to farm the lower maps.
+
+## BUILD v90.4 — Nightmare fairness: a Crown per map, and pay per HP (grind-v90.4)
+
+The owner picked option C with B from the "how do we solve this" question: low Nightmare maps were far weaker than Abyss, and players farmed one map and skipped the rest.
+
+* **Pay per HP, not per map (B):** Nightmare mob EXP and Zeny now scale by the HP a mob takes. Each map's factor is `nmPayOf(m, l, k)` = its map HP factor mb (1 + 0.15 per map index, plus 0.2 more past index 4) x (its power / Prontera's power)^(1.3 - k), with k = 1.5 for EXP and 2 for Zeny. The EXP and Zeny formulas grow faster than HP, so each stream carries its own exponent. The sim (`nightmare_sim.js`) prints EXP/HP and Zeny/HP per map and stage: every map is 1.000 of Prontera at Stages 11-15. Stages 1-10 are unchanged. The Stage 15 boss uses the same factor.
+* **One Crown per map (C):** each map's Stage 15 boss can drop that map's own headgear, the Crown (for example Dread Crown, Glast Crown). It has its own name, is boss-only, and is outside the field pools. The chance is `NM_SIG_CH` = 3% per Stage 15 boss kill. It is rolled at the map's own N+ value, so the Abyss Crown is the strongest.
+* **Katar icon and the "Not equitable on current class" label** from grind-v90.3 are unchanged.
+
+Files: `index.html` (`nmPayOf`, `NM_SIG_CH`, the Crown in `fieldOf`'s boss drops, and the EXP/Zeny pay in `minionDef`, `spawn` and the offline simulator). Tests: `nightmare_sim.js` (balance table, Crown rules), `gear_sim.js` and `crit_sim.js` (the boss-pool total excludes the Crown). Mirrors and this file are bumped to grind-v90.4.
+
+Still open: the Crown's power follows its map, so a Prontera Crown is much weaker than an Abyss one. If the owner wants every Crown to be the same power, that is a one-line change in `fieldOf`.
+
+## BUILD v90.3 — katar icon, and a clear label on class-locked drops (grind-v90.3)
+
+Two small owner requests, plus a design question that is still open.
+
+* **Katar icon (grind-v90.3):** on the world map the katar showed the dagger's 🔪 in its line of text. It now shows 🥊 (`WICON.katar` in `index.html`). The katar silhouette in the sprite-style SVG is unchanged.
+* **"Not equitable" label (grind-v90.3):** a drop that the current class cannot wear used to have its rate struck through. The rate now stays readable (dimmed a little), and a small red note follows it: `(Not equitable on current class)`. The wording is the owner's exact text. The strike-through rule is gone (`dropTxt` in `index.html` wraps the rate in `.drr`; the note is `.dnot`).
+* **Open: Nightmare fairness.** The owner asked how to solve it. Low Nightmare maps give almost the same N gear as Abyss but far weaker bosses, so players farm one map. Option (C), an exclusive N+ piece from each map's Stage 15 boss, paired with option (B), per-kill reward scaled per HP, is the current recommendation. **Nothing was built for this yet.** It needs a balance sim and the owner's choice first.
+
+## BUILD v90 — Affix nerf on Flee/ATK/ASPD/CRIT, refine and Legendary pet costs up, Black Market for endgame Zeny (grind-v90, v90.1, v90.2)
+
+Four owner requests in one build. Every number is a named constant or a single formula, so a later retune is one edit.
+
+* **Four N and N+ affixes are nerfed a little more** (`NM_MUL`, `nmMulOf()`, read by `affixValue()`, sections 4 and 5 only):
+  Flee **x3.0 / x3.4** (was x3.5 / x4); ATK %, ASPD % and Crit % **x4.2 / x5.0** (was x5 / x6). Top Abyss rolls: N+ Flee
+  44 → **38**, N Flee 39 → **33**, N+ ATK 66 → **55**, N+ ASPD 50 → **41**, N+ Crit 27 → **22**. STR, AGI, DEX, LUK, INT,
+  Max HP and Crit DMG keep their v89 numbers.
+* **Refining costs more.** Zeny per step is `400 × (level + 1) × (1 + section × 0.5)` (was 200). Ore per attempt is
+  `refOre()` (`REF_ORE`): **1** for Common and Fine, **2** for Rare and Epic, **5** for Legendary, **5** for Legendary and **10** for N and N+ (v90.2; was 1 for all).
+* **Legendary pets cost 2×** (`r === 3` only): mutation roll **20,000z**, skill gacha **16,000z**, upgrade steps doubled
+  (`peqCostOf(p, t)`, the pet panel and the upgrade action both read it). Common, Rare and Epic pets are unchanged.
+* **New Black Market tab (key `X`, 🏪), unlocked at Base Lv 100** (`BM_LV`). Two Zeny sinks:
+  * **Ore:** Oridecon or Elunium, **100,000z each** (`BM_ORE`), one at a time.
+  * **Reforge** one affix on any worn piece that has affixes (`reforge()`): one affix is dropped at random and a new one
+    the piece does not have is rolled at the drop roll. Price **150,000z × (rarity + 1)** (`BM_REFORGE`): 1,050,000z for N+.
+    Armor and other non-weapon pieces never roll Crit DMG here, the same rule as drops.
+* **Why:** past Base Lv 100 the grind earns about **178,000z an hour** at power 99 (800 kills an hour), more on Nightmare, and
+  the old sinks cost a few thousand to 20,000z. The Black Market turns that Zeny into ore and reforges.
+* **Markets under the quest panel (grind-v90.2):** the Black Market and the Leaderboard left the dock. They sit under the
+  quest panel behind one open/hide arrow (`qpSide()`, `sideOpen`, `SIDE_TABS`). `X` and `V` still open them.
+* **Skills no longer shift (grind-v90.2):** the selected skill's detail card moved out of the skill grid into a fixed
+  220px slot above the families (`.sk-slot`), so picking a skill never moves the grid. It says "Pick a skill" when empty.
+* **Fairness, stages 14-15 (grind-v90.1):** the owner's "for fairness, let's just remain the drop on stage 4 & 5" meant
+  **Nightmare Stages 14-15 on every map**. The v89 N+ weapon split is reverted: those stages walk the weapon shelf one
+  weapon per mob again (`fieldOf()`), and the N+ halving (`NMPLUS_DROP`) stays.
+* **Open:** the Black Market prices are a first guess (see the v90 entries in `AGENTS.md`). Reforges roll at quality 1,
+  since gear does not store its quality.
+
+## BUILD v89 — Nightmare balance: Stage 5 harder, N+ drops halved and shared, N/N+ flat affixes lowered, pets -37% (grind-v89)
+
+Five owner balance requests in one build. Every number is a single named constant, so a later retune is one edit.
+
+* **Stage 5 (Nightmare Stage 15, the MVP stage on every map) hits and takes harder:** its monsters, escorts and
+  MVP carry **+30% HP and +30% ATK** (`NM15_BUFF = 1.3`, `nm15Of()`, read by `minionDef()` and `spawn()`). Abyss
+  Stage 5 mob HP goes from 5,565,251 to **7,234,826** and its hit from 1,357 to **1,764**. Stages 11-14 are unchanged.
+* **N+ drops are halved** (`NMPLUS_DROP = .5`): every N+ gear roll on Nightmare Stages 4 and 5 (section 5), and the
+  Stage 5 MVP pool (3% → 1.5%). Cards, ore and pets are not touched. N (section 4) keeps the v76.2 third.
+* **N+ drops are fair across classes:** before, Abyss Stage 4 normal mobs dropped only axe and mace, and staff,
+  dagger and bow were on the Stage 5 MVP alone. Now every mob on Stages 4 and 5 lists **every weapon family** on its
+  map's N+ shelf, each at an equal share of the stage's weapon chance (Abyss: 0.025% a kill per family, 0.175%
+  in total). No class needs the boss for its weapon. Stages 1-13 still walk the shelf as before.
+* **Pets are nerfed** (`PETBAL 1.91 → 1.2`, about −37% on every pet hit). One maxed Legendary pet now deals about
+  **0.26x** a maxed character (was 0.42x). Rarity, mutation grade, Claw and skill multipliers are unchanged, so the
+  whole band moves together.
+* **N and N+ flat affixes are lowered:** STR, AGI, DEX, LUK, INT and Flee roll at section multiplier **×3.5 (N)** and
+  **×4 (N+)** instead of ×5 and ×6. The top Abyss N+ roll goes from **83 to 55 STR** and from **66 to 44 Flee**; N goes from
+  69 to 48 STR and from 55 to 39 Flee. Max HP, ATK %, ASPD, Crit % and Crit DMG keep their Nightmare numbers. Sections 0-3 are untouched.
+* **Known consequence (not changed, owner's call):** Stage 5's pay was not retuned, so its EXP and Zeny per HP fall about 23%
+  (the capstone was at parity with Abyss mob grinding; it now sits at about 1,690 EXP per HP against 1,953).
+* **To see it:** `node tools/tests/gear_sim.js` (N+ shelf and halving), `node tools/tests/nightmare_sim.js` (Stage 5
+  buff and worked numbers), `node tools/tests/pet_sim.js` (the pet band), `node tools/tests/ui_sim.js` (the N+ map panel).
 ## BUILD v88.8 — the attack animation follows the damage (grind-v88.8)
 
 Your report: *"my character attack animation are not following the damage animation. example damage

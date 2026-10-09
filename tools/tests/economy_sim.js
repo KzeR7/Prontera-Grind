@@ -185,7 +185,8 @@ t('normal EXP is 21x through Lv50, then 7x and one-third (the v56 one-tenth scal
   }
   assert.ok(src.includes('xp=Math.round(mob.exp*expRate()*(1+petPassive(\'exp\')/100))'), 'kill Base EXP wiring, pet bonus included');
   assert.ok(src.includes('addJob(Math.round(Math.round(mob.exp*.7)*expRate()*(1+petPassive(\'exp\')/100)))'), 'kill Job EXP wiring, pet bonus included');
-  assert.ok(src.includes("mob.zeny*(1+pv('zeny')/100)*(1+petPassive('zeny')/100))*g"), 'kill Zeny wiring, Greedy Gel included');
+  assert.ok(src.includes("mob.zeny*(1+pv('zeny')/100)*(1+petPassive('zeny')/100)*nmZenyRoll(mob))*g"), 'kill Zeny wiring, Greedy Gel and the v90.8 Nightmare roll included');
+  assert.ok(src.includes("Math.round(mob.zeny*(1+pv('zeny')/100)*nmZenyRoll(mob))*gx()"), 'offline kill Zeny wiring carries the v90.8 Nightmare roll');
 });
 t('the real kill reward block boosts Base/Job EXP but leaves player Zeny unchanged', () => {
   const rewards=grab('  const g=gx();S.kills++','  addFloat(mob.x,2.4,mob.z,');
@@ -200,6 +201,8 @@ t('the real kill reward block boosts Base/Job EXP but leaves player Zeny unchang
       const petPassive=()=>0;   // no pet is fighting in this world: the reward maths is the subject
       let jobXP=0,pend=[],zenyEarned=0,expEarned=0,recorded=0;
       const addJob=x=>jobXP+=x,recordMonsterKill=()=>recorded++;
+      ${src.match(/const NM_ZENY_CH=[^;]+;/)[0]}
+      ${src.match(/function nmZenyRoll\(mob\)\{[^\n]*/)[0]}
       ${grab('function earnZeny(amount){','function kill(o){')}
       ${rewards}
       this.result={xp:S.exp,z:S.zeny,jobXP,kills:S.kills,recorded};
@@ -224,6 +227,8 @@ t('the real kill reward block boosts Base/Job EXP but leaves player Zeny unchang
       const petPassive=()=>5;   // one fighting pet, Bond 0: the base 5% of its species passive
       let jobXP=0,pend=[],zenyEarned=0,expEarned=0,recorded=0;
       const addJob=x=>jobXP+=x,recordMonsterKill=()=>recorded++;
+      ${src.match(/const NM_ZENY_CH=[^;]+;/)[0]}
+      ${src.match(/function nmZenyRoll\(mob\)\{[^\n]*/)[0]}
       ${grab('function earnZeny(amount){','function kill(o){')}
       ${rewards}
       this.result={xp:S.exp,z:S.zeny,jobXP};
@@ -337,13 +342,31 @@ t('job gates land on the anchors: base ' + GATES.map(g => g && g.base).join('/')
 
 t('a full run earns enough Zeny for the endgame sinks', () => {
   const z = totalZeny();
-  const refCost = (r, sec) => Math.round(200 * (r + 1) * (1 + sec * .5));
+  const refCost = (r, sec) => Math.round(400 * (r + 1) * (1 + sec * .5));   // v90: twice the v51 base of 200
   const refCh = [70,70,70,70,49,42,35,28,21,14];   // v51: every step nerfed 30%
   let oneSlot = 0; for (let r = 0; r < 10; r++) oneSlot += refCost(r, 3) / (refCh[r] / 100);
   const fullSetup = oneSlot * 7;
   assert.ok(z > fullSetup * 5, 'only ' + Math.round(z / fullSetup) + 'x a full +10 setup - refining is unaffordable');
   assert.ok(z > 200 * 10000, 'only ' + Math.round(z / 10000) + ' pet mutation rolls affordable');
   console.log('       ' + Math.round(z).toLocaleString() + 'z total = ' + (z / fullSetup).toFixed(1) + 'x a 7-slot +10 setup, ' + Math.round(z / 10000) + ' pet rolls');
+});
+
+t('the Black Market gives endgame Zeny somewhere to go (v90)', () => {
+  // the prices are read from the live source so a retune here is a retune there
+  const bmOre = +src.match(/BM_ORE=(\d+)/)[1], bmRef = +src.match(/BM_REFORGE=(\d+)/)[1];
+  const perHour = zenyPerKill(99) * KILLS_PER_HOUR;
+  // one ore is a buyable shortcut, not a free one: under an hour of pw99 grinding each
+  assert.ok(bmOre / perHour < 1, 'one ore is ' + (bmOre / perHour).toFixed(2) + ' h of pw99 grinding - too cheap');
+  assert.ok(bmOre / perHour > .25, 'one ore is ' + (bmOre / perHour).toFixed(2) + ' h of pw99 grinding - not a sink');
+  // a reforge on an N+ piece (rarity 6, price 7 x 150,000z) takes a few hours of pw99 grinding
+  const hours = bmRef * 7 / perHour;
+  assert.ok(hours > 2 && hours < 10, 'an N+ reforge takes ' + hours.toFixed(1) + ' h of pw99 grinding');
+  // a full +10 N+ refine from scratch needs about 285 ore in attempts (10 per attempt, v90.2): a long ore sink
+  let attempts = 0; const refCh = [70,70,70,70,49,42,35,28,21,14];
+  for (let r = 0; r < 10; r++) attempts += 10 / (refCh[r] / 100);
+  const oreZeny = attempts * bmOre;
+  assert.ok(oreZeny > 5000000, 'buying a full N+ +10 ore costs ' + Math.round(oreZeny).toLocaleString() + 'z - too cheap to matter');
+  console.log('       Black Market: ore ' + (bmOre / perHour).toFixed(2) + ' h, N+ reforge ' + hours.toFixed(1) + ' h, full N+ +10 ore ' + Math.round(oreZeny / 1e6) + 'M z');
 });
 
 t('endgame Zeny per kill is on the same scale as a refine attempt', () => {

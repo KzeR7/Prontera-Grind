@@ -77,6 +77,9 @@ const code = [
   pick(/const cardSlots=[^\n]*/, 'cardSlots'),
   grab('function insertUI(sel){', 'function renderWin('),
   pick(/function refineUI\(it,k\)\{const[^\n]*/, 'refineUI'),
+  pick(/function nmMatCounts\(\)\{[^\n]*/, 'nmMatCounts'),
+  pick(/function dpsPanel\(\)\{[^\n]*/, 'dpsPanel'),
+
   pick(/const RO_ITEM_ICON_CANDIDATES=\{[^;]+;/, 'RO equipment image candidates'),
   grab('const gearIconHash=text=>', 'const gearItemIconId='),
   grab('const gearItemIconId=it=>', 'const itemIconUrl='),
@@ -85,7 +88,18 @@ const code = [
   grab('const itemIconMarkup=it=>', 'const icon=it=>'),  // ...and the markup that picks art or silhouette
   pick(/const icon=it=>[^;]+;/, 'icon'),
   pick(/const items=\(\)=>[^\n]*/, 'items/ev/iname/eqv'),
-  pick(/const refCost=it=>[^;]+;/, 'refCost/refCh'),
+  pick(/const REF_ZENY_MUL=3,refCost=it=>[^;]+;/, 'refCost/refCh'),
+  grab('const BM_LV=', '// ---------- class change ----------'),   // v90: the Black Market helpers (ore, reforge, price)
+  pick(/const AL=\{[^}]*\};/, 'affix labels'),
+  pick(/const uid=[^\n]*/, 'rnd and ri'),
+  pick(/const TABS=\{[^\n]*\};/, 'dock tab table'),
+  pick(/const SIDE_TABS=\[[^\]]*\];/, 'markets group tabs (v90.2)'),
+  pick(/const AFFIX_CDM_SCALE=[^\n]+;/, 'gear-only Crit DMG post-roll scale'),
+  pick(/const NM_FLAT=\[[^\]]*\],NM_FLAT_MUL=\[[^\]]*\],NM_MUL=\{[^}]*\};/, 'v90 Nightmare affix multipliers'),
+  pick(/const nmMulOf=\(k,section\)=>[^\n]*/, 'nmMulOf'),
+  pick(/const NM_ABYSS_AFF=[^;]+;/, 'NM_ABYSS_AFF'),
+  pick(/const nmAffMapOf=[^\n]*/, 'nmAffMapOf'),
+  pick(/const affixValue=\(k,section,tier,roll[^)]*\)=>\{[^}]+\};/, 'affixValue'),
   pick(/const affTxt=a=>[^;]+;/, 'affTxt/cardTxt/dtier'),
   grab('const V={', 'const ACT={'),                            // the panels themselves
   // v39: the Log window's filter table and its two readers, the on-screen log's fold helper, the
@@ -120,6 +134,8 @@ ${code}
 const skpAvail=()=>5,skTree=()=>4,skEarnedMax=()=>9,skLine=()=>['Novice'],skEarned=()=>9,skSpent=()=>0,pv=()=>0,bon=()=>0,qTxt=q=>'quest';
 this.__u={ V, itemDetail, itemMain, SKILLS, SKILL_ICON, SKILL_TONE, SKILL_PICTO, skillIcon, logs, indexSectionOpen, indexToggleSection, set S(v){S=v}, get S(){return S}, set boardPeriod(v){boardPeriod=v}, set boardCache(v){boardCache=v}, set boardStatus(v){CLOUD.api=!!v.api;CLOUD.on=!!v.on}, set eqPick(v){eqPick=v}, get eqPick(){return eqPick},
            set indexMode(v){indexMode=v}, get indexMode(){return indexMode}, set mapM(v){mapM=v}, set mapL(v){mapL=v}, set selE(v){selE=v}, get selE(){return selE}, set selB(v){selB=v}, get selB(){return selB}, set selS(v){selS=v}, set selP(v){selP=v} };
+const log=(m,c,k)=>{logs.push(m)},ui=()=>{},save=()=>{};   // the Black Market's writes (stubs here)
+this.__bm={buyOre,reforge,reforgeCost,bmOpen,refCost,refOre,qpSide,tabs,setSide:v=>{sideOpen=v}};
 `;
 const sb = { console };
 vm.createContext(sb); vm.runInContext(harness, sb);
@@ -173,7 +189,7 @@ t('the map panel renders every map and field', () => {
   // v76: ten normal stages plus the five Nightmare stages - the same strip, a longer ladder
   assert.strictEqual((h.match(/class="map-node/g) || []).length, 15, 'one node per field, Nightmare included');
   assert.strictEqual((h.match(/nm-node/g) || []).length, 5, 'the five Nightmare nodes');
-  assert.ok(h.includes('Nightmare unlocks at Base Lv 100') || h.includes('Nightmare 5/5'), 'the band header states where Nightmare starts');
+  assert.ok(h.includes('Nightmare unlocks at Base Lv 120') || h.includes('Nightmare 5/5'), 'the band header states where Nightmare starts');
   // the boss field lists the whole pool with odds, and the new ore rates
   U.mapL = 10;
   const b = U.V.map();
@@ -952,6 +968,120 @@ t('v74: the item card names the class tier a piece belongs to, and why a locked 
   assert.ok(src.includes('it.wearer?` This was ${it.wearer'), 'the wearer note is attributed');
 });
 
+t('v90.2: the Black Market and Leaderboard sit under the quest panel behind one open/hide arrow', () => {
+  const bm = sb.__bm;
+  bm.setSide(false);
+  let h = bm.qpSide();
+  assert.ok(h.includes('data-q="side"') && h.includes('&#9662; Markets'), 'a closed group shows the open arrow');
+  assert.ok(!h.includes('data-t="market"') && !h.includes('data-t="board"'), 'and hides both tabs');
+  bm.setSide(true);
+  h = bm.qpSide();
+  assert.ok(h.includes('&#9652; Hide markets'), 'an open group shows the hide arrow');
+  assert.ok(h.includes('data-t="market"') && h.includes('data-t="board"'), 'and lists the Black Market and the Leaderboard');
+  bm.tabs.push('market'); h = bm.qpSide();
+  assert.ok(h.includes('qp-side-tab on'), 'an open window is marked on its button');
+  bm.tabs.length = 0; bm.setSide(false);
+  assert.ok(src.includes("const dock=$('dock')")||src.includes("$('dock').innerHTML=Object.entries(TABS).filter(([k])=>(k!=='gm'||S.gm)&&!SIDE_TABS.includes(k))"),
+    'the dock no longer lists the two moved tabs');
+  assert.ok(src.includes("market:['🏪','Black Market','X']") && src.includes("board:['🏆','Leaderboard','V']"),
+    'the X and V hotkeys still open them');
+  assert.ok(src.includes("if(v==='side'){sideOpen=!sideOpen;renderQ();return}"), 'the arrow toggles the group');
+});
+
+t('v90.2: picking a skill does not shift the skill grid', () => {
+  U.S = mkS('Mage'); U.S.sk.fire = 1; U.S.skOff = {}; U.selS = null;
+  const h0 = U.V.skills();
+  assert.ok(h0.includes('sk-slot-empty'), 'with nothing picked the detail slot is still there, empty');
+  U.selS = 'fire';
+  const h1 = U.V.skills();
+  const slotAt = h1.indexOf('<div class="sk-slot">'), firstFamily = h1.indexOf('<div class="sec">');
+  assert.ok(slotAt >= 0 && slotAt < firstFamily, 'the detail card sits in a fixed slot above the skill families');
+  assert.ok(h1.slice(slotAt, firstFamily).includes('sk-detail-card'), 'the card is in that slot');
+  assert.ok(!h1.slice(firstFamily).includes('sk-detail-card'), 'and not inside the grid any more');
+  const strip = h => h.replace(/<div class="sk-slot">[\s\S]*?(?=<div class="sec">)/, '').replace(/ sel"/g, '"');
+  assert.strictEqual(strip(h1), strip(h0), 'the grid renders the same whether or not a skill is picked');
+  U.selS = null;
+});
+
+t('v90.3: a drop the class cannot wear says so beside its rate, with no strike-through', () => {
+  // the Knight cannot wear the Abyss N+ weapons, so the world map must label them, not slash their rate
+  U.S = mkS('Knight'); U.mapM = 9; U.mapL = 14;
+  const h = U.V.map();
+  assert.ok(h.includes('<small class="dnot">(Not equitable on current class)</small>'), 'a class-locked drop names the reason beside its rate');
+  assert.ok(h.includes('class="dropline cant"'), 'the row is still marked as not equitable');
+  assert.ok(!/dropline\.cant b\{text-decoration/.test(src), 'the old strike-through on the rate is gone');
+  assert.ok(src.includes(".dropline.cant .dnot{color:#ffb4a8;font-size:11px}"), 'the label has its own style');
+});
+
+t('v90.3: the katar icon on the world map is no longer the dagger icon', () => {
+  const dagger = src.match(/WICON=\{dagger:'([^']+)'/)[1], katar = src.match(/WICON=\{[^}]*katar:'([^']+)'/)[1];
+  assert.notStrictEqual(katar, dagger, 'a katar must look different from a dagger');
+  assert.strictEqual(katar, '🥊', 'the katar is a punch-dagger, shown as a boxing glove');
+});
+
+t('v90 Black Market: locked under Base Lv 100, then sells ore and reforges one affix on a worn piece', () => {
+  U.S=mkS('Novice');U.S.lv=99;U.S.zeny=10000000;U.S.ore={ori:0,elu:0};
+  U.S.eq.armor={id:501,name:'Test Coat',tier:3,slot:'armor',val:40,sec:5,aff:[{k:'str',v:55},{k:'flee',v:38}],slots:0,cards:[]};
+  let h=U.V.market();
+  assert.ok(h.includes('opens at Base Lv 100'),'the Black Market says when it opens');
+  assert.ok(!h.includes('data-a="bmmat"'),'no Nightmare material is for sale below Base Lv 100');
+  assert.ok(!h.includes('data-a="bmore"'),'no ore is for sale below Base Lv 100');
+  U.S.lv=100;
+  h=U.V.market();
+  assert.ok(h.includes('data-a="bmore" data-v="ori"')&&h.includes('data-a="bmore" data-v="elu"'),'Oridecon and Elunium are both for sale from Base Lv 100');
+  assert.ok(h.includes('100,000z each'),'ore is priced at 100,000z');
+  assert.ok(h.includes('data-a="bmref" data-v="armor"'),'a worn piece with affixes can be reforged');
+  assert.ok(h.includes('Reroll one affix: 1,050,000z'),'an N+ piece costs rarity 6 + 1 times 150,000z to reforge');
+  assert.ok(!h.includes('data-a="bmref" data-v="weapon"'),'an empty slot is not offered a reforge');
+  // v90.8: the ten Nightmare materials are sold here, one Buy 1 button each
+  assert.ok(h.includes('Nightmare materials') && h.includes('3,000,000z each'),'the Nightmare materials are listed and priced at 3,000,000z');
+  assert.strictEqual(h.split('data-a="bmmat"').length-1,10,'ten material rows, one button each');
+  assert.ok(h.includes('data-a="bmmat" data-v="9"'),'the last material (Glast Fragment) has its own button');
+  U.S.zeny=2999999; h=U.V.market();
+  assert.ok(/data-a="bmmat" data-v="0" disabled/.test(h),'a material button is disabled when the player cannot pay 3,000,000z');
+  U.S.zeny=10000000; h=U.V.market();
+  assert.ok(!/data-a="bmmat" data-v="0" disabled/.test(h),'a material button is enabled when the player can pay');
+  const bm=sb.__bm;
+  bm.buyOre('ori');
+  assert.strictEqual(U.S.ore.ori,1,'one Oridecon is bought');
+  assert.strictEqual(U.S.zeny,10000000-100000,'the ore costs 100,000z');
+  U.S.zeny=50000;bm.buyOre('elu');
+  assert.strictEqual(U.S.ore.elu,0,'an unaffordable ore purchase is refused');
+  assert.strictEqual(U.S.zeny,50000,'and charges nothing');
+  U.S.zeny=10000000;
+  vm.runInContext('Math.random=()=>.5',sb);
+  const before=U.S.eq.armor.aff.map(a=>a.k);
+  bm.reforge('armor');
+  const after=U.S.eq.armor.aff;
+  assert.strictEqual(after.length,2,'a reforge keeps the number of affixes');
+  assert.strictEqual(U.S.zeny,10000000-1050000,'a reforge charges the rarity price');
+  assert.strictEqual(after.filter(a=>before.includes(a.k)).length,1,'exactly one affix is replaced');
+  assert.ok(after.every(a=>a.v>=1),'every rolled value is at least 1');
+  U.S.zeny=100;bm.reforge('armor');
+  assert.strictEqual(U.S.zeny,100,'an unaffordable reforge charges nothing');
+  U.S.zeny=10000000;U.S.eq.armor.aff=[];bm.reforge('armor');
+  assert.strictEqual(U.S.zeny,10000000,'a piece with no affix cannot be reforged');
+  U.S.eq.armor.aff=[{k:'str',v:55}];
+  vm.runInContext('Math.random=()=>.99',sb);
+  bm.reforge('armor');
+  assert.ok(U.S.eq.armor.aff[0].k!=='cdm','armor never rolls Crit DMG in a reforge');
+  vm.runInContext('Math.random=Math.random',sb);
+});
+
+t('v90 refine: rarer pieces eat more ore per attempt and every step costs twice the Zeny', () => {
+  const bm=sb.__bm;
+  assert.strictEqual(bm.refOre({r:0,tier:0}),1,'Common takes 1 ore');
+  assert.strictEqual(bm.refOre({r:0,tier:1}),1,'Fine takes 1 ore');
+  assert.strictEqual(bm.refOre({r:0,tier:2}),2,'Rare takes 2 ore');
+  assert.strictEqual(bm.refOre({r:0,tier:3}),2,'Epic takes 2 ore');
+  assert.strictEqual(bm.refOre({r:0,tier:4}),5,'Legendary takes 5 ore (v90.2)');
+  assert.strictEqual(bm.refOre({r:0,tier:0,sec:4}),10,'N takes 10 ore (v90.2)');
+  assert.strictEqual(bm.refOre({r:0,tier:0,sec:5}),10,'N+ takes 10 ore (v90.2)');
+  assert.strictEqual(bm.refCost({r:0,sec:0}),1200,'the first step costs 1200z (v90.8: x3 of 400)');
+  assert.strictEqual(bm.refCost({r:0,sec:3}),3000,'a high-tier first step costs 3000z (v90.8: x3 of 1000)');
+});
+
+
 t('pet details show Ragnarok sprites, named upgrade levels, and gacha skill odds', () => {
   U.S=mkS('Novice');U.S.pets=[{id:41,sp:0,mut:0,eq:[1,2,0],skills:['warcry','spiritbolt'],sk:[1,2,3],on:false}];U.selP=41;
   const h=U.V.pet();
@@ -1159,7 +1289,7 @@ t('the map panel states the actual equipment rarity, class gate and weapon-first
   assert.ok(h.includes('Every MVP drop is <b class="r4">Legendary</b>'), 'the Abyss MVP card says so');
   // v76.2: the Nightmare band is its own rarity - tagged N, painted dark purple - and NOT
   // presented as one more pile of Legendaries. v79: section 5 (Abyssal) is N+.
-  U.mapM = 9; U.mapL = 12;
+  U.mapM = 0; U.mapL = 12;   // v90.10: tier 1 (Prontera to Payon) is the N row
   h = U.V.map();
   assert.ok(h.includes('every drop is <b class="r5">N</b>'), 'a Nightmare field states the N rarity, not Legendary');
   assert.ok(h.includes('<small class="r5">N</small>'), 'and every drop line repeats the N tag');
@@ -1171,6 +1301,24 @@ t('the map panel states the actual equipment rarity, class gate and weapon-first
   assert.ok(h.includes('<b>Abyssal Nightmare gear</b>, worn by transcendent classes only'), 'the Abyssal row names its own section and gate');
   U.mapM = 5; U.mapL = 4;
   h = U.V.map();
+});
+
+t('the N+ stages walk the weapon shelf again, with the halved rate and one weapon per mob (v90)', () => {
+  // v90 (owner: \"for fairness, let's just remain the drop on stage 4 & 5\"): Nightmare Stages 14-15 go back to
+  // the one-weapon-per-mob walk. The panel lists each mob's weapon with its share, the gear total is the
+  // halved N+ table (weapon .175 + armour and accessory .245 = 0.42% a kill), and the roll count is 3.
+  U.S = mkS('Knight'); U.mapM = 9; U.mapL = 14;
+  const h = U.V.map();
+  assert.ok(h.includes('<b>0.42%</b>'), 'the gear chance per kill totals 0.42% (weapons .175 + armour and accessories .245)');
+  assert.ok(h.includes('3 independent rolls'), 'the roll count follows the mob (one weapon + two pieces)');
+  assert.ok(!h.includes('each, 7 families'), 'the v89 per-family share line is gone');
+  const shelf = ['Absolute Dark Lord Axe', 'Absolute Dark Lord Mace', 'Absolute Dark Lord Staff', 'Absolute Dark Lord Dagger', 'Absolute Dark Lord Bow'];
+  for (const w of shelf) assert.ok(h.split(w).length - 1 <= 1, w + ' is listed at most once on a stage, not once per mob');
+  U.mapL = 15; const h15 = U.V.map();
+  assert.ok(h15.includes('Stage 5'), 'Stage 15 is labelled as Stage 5');
+  U.mapM = 0; U.mapL = 14; const hp = U.V.map();   // v90.10: Prontera is tier 1, so Stage 14 is the N row, not halved
+  assert.ok(hp.includes('Weapon <b>0.5%'), 'Prontera N weapon roll is the full 0.5% (no N+ halving on tier 1)');
+  assert.ok(!hp.includes('3 families'), 'Prontera N does not share a per-family chance any more');
 });
 
 t('the damage trial is entered from the map selection, and the lobby offers the three doors', () => {
