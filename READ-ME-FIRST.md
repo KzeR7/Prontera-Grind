@@ -84,6 +84,25 @@ is the live one; with no argument the tool prints how to set a new one). Since v
 `GM` / `test1234`; `localStorage.removeItem('pg_gm_local')` removes it. Normal accounts are made
 in-game and stored in the browser (`pg_acc4`; saves under `pg_save3_<user>`).
 
+## BUILD v88.7 — damage numbers retuned: smaller digits, quicker off the screen (grind-v88.7)
+
+The combat numbers were re-dialled on the tuner page and the new pick is in the game: ordinary hits
+**20px** (were 28px), criticals **32px** (were 39px, so the starburst behind a crit shrank with the
+digits), a **1.15s** life (was 1.75s), the fade starting at **75%** of the life (was 90%), and a
+**×1.5** spawn punch (was ×1.9 — a crit now pops to ×2.05 instead of ×2.33). The flight did not
+change: still a 70px climb with the sway up-and-left, still a 14px fan-out across a pack, still
+starting above the monster's head. The font, the gradient crit digits, the chip-free starburst and
+the 100K/1M short form are all untouched.
+
+* **What you will notice:** numbers that read at a glance instead of filling the screen, and a screen
+  that clears between swings.
+* **To see it:** fight anything on any map. To compare the two tunings without a browser,
+  `/tmp/venv/bin/python tools/render_float_volley.py` writes
+  `Updates/damage-floats-proposal/volley-before-after-v74.png` (v73 left, v74 right). To tune it
+  further, `python3 tools/preview_server.py 8000` → `/damage` (the sliders open on this pick).
+* **Tests:** `node tools/tests/combat_float_sim.js` (16, one new: it reads the constants back out and
+  checks the pick as a set) and `node tools/tests/ui_sim.js` (52).
+
 ## BUILD v88.6 — every save records whose it is, and another account's save is refused (grind-v88.6)
 
 Every save now carries the name of the account it belongs to. The game and the server refuse to load,

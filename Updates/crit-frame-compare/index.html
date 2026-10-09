@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Crit explode frame — v70/v71 (shipped) vs v73 (your new selection applied)</title>
+<title>Crit explode frame — v70/v71 (shipped) vs v74 (your new selection applied)</title>
 <style>
   :root{--bg:#6cbf5a}
   body{margin:0;background:var(--bg);color:#12240f;font:14px/1.45 "Trebuchet MS",Verdana,sans-serif}
@@ -35,11 +35,11 @@
     background:linear-gradient(90deg,#fff,#e6d6ff);box-shadow:0 0 3px #e6d6ff;transform-origin:center;
     animation:fstreak-fly .5s cubic-bezier(.1,.7,.3,1) forwards}
   .fl.skill-critical .fstreak{background:linear-gradient(90deg,#fff,#cfeeff);box-shadow:0 0 3px #9fe8ff}
-  /* v70's curve (a quick pop that freezes) and v73's (the page's T.life curve: overshoot,
+  /* v70's curve (a quick pop that freezes) and v74's (the page's T.life curve: overshoot,
      random wobble, slow bloom) */
   @keyframes fburst-pop{0%{transform:translate(-50%,-50%) scale(.3)}60%{transform:translate(-50%,-50%) scale(1.12)}100%{transform:translate(-50%,-50%) scale(1)}}
   @keyframes fburst-life{0%{transform:translate(-50%,-50%) scale(.3)}30%{transform:translate(-50%,-50%) scale(1.25)}55%{transform:translate(-50%,-50%) scale(1) rotate(var(--brot,0deg))}100%{transform:translate(-50%,-50%) scale(1.05);opacity:.9}}
-  @keyframes fnum-punch{0%{transform:translate(-50%,-50%) scale(2.33)}20%{transform:translate(-50%,-50%) scale(1)}100%{transform:translate(-50%,-50%) scale(1)}}
+  @keyframes fnum-punch{0%{transform:translate(-50%,-50%) scale(2.05)}20%{transform:translate(-50%,-50%) scale(1)}100%{transform:translate(-50%,-50%) scale(1)}}
   @keyframes fring-pop{0%{opacity:.95;transform:translate(-50%,-50%) scale(.4)}100%{opacity:0;transform:translate(-50%,-50%) scale(2.1)}}
   @keyframes fstreak-fly{0%{transform:rotate(var(--a)) scaleX(.15);opacity:1}100%{transform:rotate(var(--a)) translateX(var(--d,44px)) scaleX(1);opacity:0}}
 
@@ -54,29 +54,30 @@
   .v70 .fstreak{animation-name:none}
   .v70 .fl{animation:none}
 
-  /* ---- v73: the owner's retuned pick (font: game, 39px crit, x1.9 punch, 1.75s life) + the explode frame ---- */
-  .v73 .fl.critical,.v73 .fl.skill-critical{font:900 39px "Trebuchet MS",Verdana,sans-serif}
-  .v73 .fl.critical .fnum,.v73 .fl.skill-critical .fnum{text-shadow:none;-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
-  .v73 .fl.critical .fnum{background-image:linear-gradient(#fff3b0 10%,#ffc93c 90%);color:#ffd23f;-webkit-text-stroke:.6px #57330a;
+  /* ---- v74: the owner's latest pick (font: game, 32px crit, x1.5 punch, 1.15s life) + the explode frame ---- */
+  .v74 .fl.critical,.v74 .fl.skill-critical{font:900 32px "Trebuchet MS",Verdana,sans-serif}
+  .v74 .fl.critical .fnum,.v74 .fl.skill-critical .fnum{text-shadow:none;-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+  .v74 .fl.critical .fnum{background-image:linear-gradient(#fff3b0 10%,#ffc93c 90%);color:#ffd23f;-webkit-text-stroke:.6px #57330a;
     filter:drop-shadow(0 0 1px #2e0a02) drop-shadow(0 1px 2px #000) drop-shadow(0 0 6px #ffb52e77)}
-  .v73 .fl.skill-critical .fnum{background-image:linear-gradient(#eafaff 10%,#7cd4ff 90%);color:#eaf6ff;-webkit-text-stroke:.6px #0e2c58;
+  .v74 .fl.skill-critical .fnum{background-image:linear-gradient(#eafaff 10%,#7cd4ff 90%);color:#eaf6ff;-webkit-text-stroke:.6px #0e2c58;
     filter:drop-shadow(0 0 1px #081a33) drop-shadow(0 1px 2px #000) drop-shadow(0 0 6px #4fd8ff77)}
-  .v73 .fl{animation:fnum-punch 1.75s cubic-bezier(.25,.7,.4,1) both}
-  .v73 .fburst{transform:translate(-50%,-50%);animation:fburst-life 1.75s cubic-bezier(.2,.9,.3,1.25) both}
+  .v74 .fl{animation:fnum-punch 1.15s cubic-bezier(.25,.7,.4,1) both}
+  .v74 .fburst{transform:translate(-50%,-50%);animation:fburst-life 1.15s cubic-bezier(.2,.9,.3,1.25) both}
 </style>
 </head>
 <body>
 <header>
-  <h1>Critical frames — v70/v71 as shipped vs v73 (your new 📋 selection applied)</h1>
+  <h1>Critical frames — v70/v71 as shipped vs v74 (your new 📋 selection applied)</h1>
   <p>Three things are on show. <b>Alignment (v71):</b> the pop animation used to live on the svg inside
   the centred burst box, so its own <code>translate(-50%,-50%)</code> drew the starburst half a burst
   up-left of the digits while the ring stayed on them. <b>Type (v72):</b> the build shipped the
   <i>Chunky (Verdana 900)</i> font while the selection said <code>font: game</code> — the copy
   button's raw key for <i>Game (Trebuchet)</i>; <code>font: classic</code> is what Chunky prints as.
-  <b>Retune (v73 / grind-v83.4):</b> the good column now carries your new pick — <b>39px</b> crit
-  digits (28px normals), a <b>1.75s</b> life with the burst breathing for all of it, a <b>×1.9 impact
-  punch</b> (the digits peak at ×2.33), and a <b>±14px spread</b> — every hit lands off centre, so a
-  volley fans out. Both columns use the same markup builder and box maths as the game.</p>
+  <b>Retune (v74 / grind-v88.7):</b> the good column now carries your latest pick — <b>32px</b> crit
+  digits (20px normals, down from 28/39px), a <b>1.15s</b> life (was 1.75s) with the burst breathing for
+  all of it, a <b>×1.5 impact punch</b> (the digits peak at ×2.05, was ×2.33), and a <b>±14px spread</b>
+  — every hit lands off centre, so a volley fans out. Both columns use the same markup builder and box
+  maths as the game.</p>
 </header>
 
 <div class="grid">
@@ -92,30 +93,30 @@
   </section>
 
   <section class="col good">
-    <h2>v73 — your new selection applied</h2>
+    <h2>v74 — your new selection applied</h2>
     <ul>
       <li>burst, ring and digits share one centre</li>
       <li>strip B's cream→gold gradient fill, .6px maroon stroke, soft shadows</li>
-      <li>Game font (Trebuchet), 28px normal / 39px crit as tuned</li>
-      <li>burst breathes for the full 1.75s (overshoot → wobble → bloom)</li>
-      <li>digits punch to ×2.33 on spawn — your ×1.9 impact punch</li>
+      <li>Game font (Trebuchet), 20px normal / 32px crit as tuned (v74)</li>
+      <li>burst breathes for the full 1.15s (overshoot → wobble → bloom)</li>
+      <li>digits punch to ×2.05 on spawn — your ×1.5 impact punch (v73 was ×2.33 / ×1.9)</li>
       <li>every hit lands ±14px off centre — the spread fans the volley out</li>
     </ul>
-    <div class="stage v73" id="stageB"></div>
+    <div class="stage v74" id="stageB"></div>
     <div class="hint">1px dark rim added to the page's recipe so the thin stroke survives bright maps.</div>
   </section>
 </div>
 
 <div class="ctl">
   <button id="fire">Fire volley (Space)</button>
-  <label>crit size <input id="size" type="range" min="24" max="48" value="39"> <span id="sizev">39</span>px</label>
+  <label>crit size <input id="size" type="range" min="24" max="48" value="32"> <span id="sizev">32</span>px</label>
   <label>streaks <input id="n" type="range" min="4" max="14" value="9"> <span id="nv">9</span></label>
   <label>number <input id="txt" type="text" value="11653" size="10"></label>
 </div>
 
 <script>
 /* The builder below is the game's draw-loop builder, with one flag: bug=true emits
-   v70/v71's markup/animation, bug=false emits v73's (the current game). */
+   v70/v71's markup/animation, bug=false emits v74's (the current game). */
 const FS = () => +document.getElementById('size').value;
 const N  = () => +document.getElementById('n').value;
 const TXT= () => document.getElementById('txt').value || '11653';
@@ -152,10 +153,10 @@ function fire(stageEl, kind, bug){
   e.className = 'fl ' + kind;
   e.innerHTML = frameHTML(kind, txt, bug);
   e.id = 'float';
-  if (!bug) e.style.left = 'calc(50% + ' + (Math.random()*28-14).toFixed(1) + 'px)';   // v73: the spread - every hit lands +-14px off centre
+  if (!bug) e.style.left = 'calc(50% + ' + (Math.random()*28-14).toFixed(1) + 'px)';   // v73 (kept in v74): the spread - every hit lands +-14px off centre
   stageEl.appendChild(e);
   /* the whole float punches on spawn (scale 2 -> 1 for a crit) in v70/v71's arc style;
-     v73's shape and colour motion is the page's, so leave the digits to their own animation */
+     v74's shape and colour motion is the page's, so leave the digits to their own animation */
   if (bug) e.animate([{transform:'translate(-50%,-50%) translate(0px,0px) scale(2)'},
                       {transform:'translate(-50%,-50%) translate(0px,0px) scale(1)'}],
                      {duration:340, easing:'cubic-bezier(.25,.7,.4,1)'});

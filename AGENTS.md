@@ -6059,3 +6059,60 @@ The owner's second pass over v77, six notes, all built.
      Workers plan's 10 ms budget. The GM usage card does not show CPU time; check the Workers CPU figures in
      the Cloudflare dashboard after the deploy.
   5. Verified in jsdom and over the local server, not in a real browser (there is no browser in the sandbox).
+
+### 2026-10-09 — `2026-10-09 grind-v88.7 damage numbers retuned to the new strip-B pick: 20px/32px digits, a 1.15s life, the fade from 75%, a x1.5 punch`
+* **What changed for the player:**
+  * The owner pasted a new selection off the damage-floats tuner (`style tab: b`, `fade style: arc`,
+    `pop-up type: sway`, `font: game`, **normal 20px / crit 32px**, **rise 70px**, **lifetime 1.15s**,
+    **fade starts at 75%**, **impact punch ×1.5**, **spread 14px**) and asked for it to be redone on
+    those settings. It is applied to the game and to the tuner's defaults.
+  * **What you will notice:** the numbers are smaller than the v73 build (ordinary hits 28px → 20px,
+    criticals 39px → 32px, so the starburst behind a crit shrank with the digits), they clear the
+    screen faster (1.75s of life → 1.15s), they start fading a quarter of the way from the end
+    instead of a tenth, and the spawn punch is calmer (a crit pops to ×2.05 instead of ×2.33, an
+    ordinary hit to ×1.375 instead of ×1.475). The flight is unchanged: still **70px of climb** with
+    the same sway up-and-left and the same **14px fan-out** across a pack, and the numbers still
+    start above the monster's head (a crit clears its whole burst box, 80px now instead of 97.5px).
+  * Nothing else about the numbers moved: same Game (Trebuchet) font, same cream-to-gold gradient
+    crit digits with the thin maroon stroke and the dark rim, same chip-free starburst with its
+    speed-lines and impact ring, same skill-crit silver-blue, same 100K/1M short form.
+* **Why:** the v73 retune (28/39px, 1.75s, fade at 90%, ×1.9) read as too big and too slow in play;
+  the owner re-dialled the same strip B on the tuner page and pasted the new numbers.
+* **Fix:**
+  * `index.html`: the two digit rules (`20px` normal/skill, `32px` critical/skill-critical), the
+    constants line `const DMG_LIFE=1/.8696,DMG_RISE=70,DMG_FADE=.75,DMG_RATE=.8696,DMG_SPREAD=14;`
+    (`1/.8696 ≈ 1.15s`), the fade `opacity=Math.min(1,Math.max(0,r/.25))` (the divisor is
+    `1-DMG_FADE`), the punch pair `cs` **1.05** / **.375** (`1+.7*punch` on crits, `1+.25*punch` on
+    normals), `fs=32` in the burst builder, the `fburst-pop` duration 1.75s → 1.15s so the star
+    still finishes with the number, and `mobDamageY`'s clearance `(crit?80:20*1.2)/2+6` (46px for a
+    crit, 18px for a hit). `BUILD` → grind-v88.7.
+  * `Updates/damage-floats-proposal/index.html` (the dev-only tuner): the sliders and the *Balanced*
+    preset now open on the v74 pick, so the 📋 Copy my selection button prints exactly what is live.
+  * `Updates/damage-floats-proposal/README.md`: the status line, the slider→code map and a new v74
+    handover note.
+  * New `tools/render_float_volley.py` (Pillow) renders two tunings side by side from the game's own
+    motion maths → `Updates/damage-floats-proposal/volley-before-after-v74.png`.
+* **Files touched:** `index.html` (the retune; `BUILD` grind-v88.7); `Updates/damage-floats-proposal/`
+  (`index.html`, `smoke_test.js`, `README.md`, new `volley-before-after-v74.png`); new
+  `tools/render_float_volley.py`; `tools/tests/combat_float_sim.js` (the retuned values, plus one new
+  v74 test that reads the constants back out and checks the pick as a set), `tools/tests/ui_sim.js`
+  (digit sizes and the new burst boxes: 108×80 for `1896`/`1.3M`, 64×80 for `1M`, 188×80 for
+  `1250000`); build-tag mirrors (`Updates/cards-gear-audit/affix-ranges.html` ×2,
+  `equipment-cards-tuning.html` refreshed with `drop_card_sheet_sim.js --refresh-snapshot`,
+  `tools/cloudflare-deploy-steps.md`); `READ-ME-FIRST.md` (a v88.7 section above v88.6); this log.
+* **Art:** none.
+* **Tests:** all **43** suites in `tools/tests/` exit 0 on this build, with `jsdom` and `three@0.128.0`
+  installed for `field_loop_smoke` (8/8) and `save_owner_boot_smoke` (5/5). `combat_float_sim` 16
+  (one new), `ui_sim` 52. The tuner's own `smoke_test.js` is 15/15 (needs `npm i jsdom` in
+  `Updates/damage-floats-proposal/`) and its inline JS passes `node --check`.
+* **Branches / PR:** this session's branch is `arena/ad7c4b03-prontera-grind`, pushed there.
+* **Known limits / follow-ups:**
+  1. Not verified in a real browser (there is no browser in the sandbox): the new picture was checked
+     in jsdom and as a rendering from the game's motion maths, not as a screenshot.
+  2. `volley-before-after-v74.png` sets its digits in DejaVu Sans Bold, because Trebuchet MS is not
+     installed in the sandbox — the sizes, the flight and the fade are exact, the typeface is not.
+  3. The climb finishes at 87% of the life while the fade now starts at 75%, so the last sixth of the
+     climb happens while the number is fading. That is the sliders' arithmetic, not a bug; say the
+     word if you want the rise to complete before the fade starts.
+  4. `tools/render_float_volley.py` needs Pillow (`python3 -m venv /tmp/venv && /tmp/venv/bin/pip
+     install pillow`); nothing in the game or in the test loop depends on it.
