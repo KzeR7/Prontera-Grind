@@ -84,6 +84,18 @@ is the live one; with no argument the tool prints how to set a new one). Since v
 `GM` / `test1234`; `localStorage.removeItem('pg_gm_local')` removes it. Normal accounts are made
 in-game and stored in the browser (`pg_acc4`; saves under `pg_save3_<user>`).
 
+## BUILD v90.4 — Nightmare fairness: a Crown per map, and pay per HP (grind-v90.4)
+
+The owner picked option C with B from the "how do we solve this" question: low Nightmare maps were far weaker than Abyss, and players farmed one map and skipped the rest.
+
+* **Pay per HP, not per map (B):** Nightmare mob EXP and Zeny now scale by the HP a mob takes. Each map's factor is `nmPayOf(m, l, k)` = its map HP factor mb (1 + 0.15 per map index, plus 0.2 more past index 4) x (its power / Prontera's power)^(1.3 - k), with k = 1.5 for EXP and 2 for Zeny. The EXP and Zeny formulas grow faster than HP, so each stream carries its own exponent. The sim (`nightmare_sim.js`) prints EXP/HP and Zeny/HP per map and stage: every map is 1.000 of Prontera at Stages 11-15. Stages 1-10 are unchanged. The Stage 15 boss uses the same factor.
+* **One Crown per map (C):** each map's Stage 15 boss can drop that map's own headgear, the Crown (for example Dread Crown, Glast Crown). It has its own name, is boss-only, and is outside the field pools. The chance is `NM_SIG_CH` = 3% per Stage 15 boss kill. It is rolled at the map's own N+ value, so the Abyss Crown is the strongest.
+* **Katar icon and the "Not equitable on current class" label** from grind-v90.3 are unchanged.
+
+Files: `index.html` (`nmPayOf`, `NM_SIG_CH`, the Crown in `fieldOf`'s boss drops, and the EXP/Zeny pay in `minionDef`, `spawn` and the offline simulator). Tests: `nightmare_sim.js` (balance table, Crown rules), `gear_sim.js` and `crit_sim.js` (the boss-pool total excludes the Crown). Mirrors and this file are bumped to grind-v90.4.
+
+Still open: the Crown's power follows its map, so a Prontera Crown is much weaker than an Abyss one. If the owner wants every Crown to be the same power, that is a one-line change in `fieldOf`.
+
 ## BUILD v90.3 — katar icon, and a clear label on class-locked drops (grind-v90.3)
 
 Two small owner requests, plus a design question that is still open.

@@ -34,11 +34,13 @@ const code = [
 
 const harness = `
 ${code}
+const HPE=1.3;
 let S={lv:1,gmnm:false};
 this.__n={ MAPS, GEAR, fieldPower, secField, dropTier, gearPool, fieldOf, bossCritRes,
   NMLV, NMBASE, NMSTEP, NMGAP, NMHP, NMATK, NMEXP, NMZENY, NMBOSSHP, NM_CRIT_RES, BOSS_CRIT_RES, nmExpOf, nmZenyOf,
   FIELD_GEAR, FIELD_GEAR_MID, FIELD_GEAR_NM, FIELD_GEAR_MID_NM, BOSS_POOL_TOTAL, NMPLUS_DROP, NM15_BUFF, nm15Of,
   nmOpen, nmMax, NMNAME, NMNAME2,
+  nmPayOf, NM_SIG_CH,
   set S(v){S=v}, get S(){return S} };
 `;
 const sb = { console };
@@ -151,12 +153,12 @@ t('the difficulty knobs are the shipped ones and the live code reads them', () =
   assert.deepStrictEqual([N.NMHP, N.NMATK, N.NMEXP, N.NMZENY, N.NMBOSSHP], [48, 2, 4, 4, 48], 'the band constants are pinned (v77.1: 48x HP, 2x ATK, 4x EXP/Zeny)');
   // spawn() is a game-loop function, so its wiring is checked at the source and the numbers are
   // worked out from the same formulas below.
-  assert.ok(src.includes('nm1=S.lvl>10,nm=nm1?NMHP*nm15Of(S.lvl):1,na=nm1?NMATK*nm15Of(S.lvl):1,ne=nm1?nmExpOf(S.lvl):1,nz=nm1?nmZenyOf(S.lvl):1'), 'minionDef reads the knobs once (v85: stage ramp; v89: x1.3 on Stage 15)');
+  assert.ok(src.includes('nm1=S.lvl>10,nm=nm1?NMHP*nm15Of(S.lvl):1,na=nm1?NMATK*nm15Of(S.lvl):1,ne=nm1?nmExpOf(S.lvl)*nmPayOf(S.mp,S.lvl,1.5):1,nz=nm1?nmZenyOf(S.lvl)*nmPayOf(S.mp,S.lvl,2):1'), 'minionDef reads the knobs once (v85: stage ramp; v89: x1.3 on Stage 15; v90.3: map pay)');
   // v85: the Stage 15 MVP pays the band EXP/Zeny too (the v76 line had neither - a 66M-HP MVP
   // paid less EXP than two of its own map's mobs), and the offline simulator mirrors the ramps.
-  assert.ok(src.includes('na=nm1?NMATK*nm15Of(S.lvl):1,ne=nm1?NMEXP:1,nz=nm1?NMZENY:1;'), 'spawn() reads the MVP knobs once (v89: ATK x1.3 on Stage 15)');
+  assert.ok(src.includes('na=nm1?NMATK*nm15Of(S.lvl):1,ne=nm1?NMEXP*nmPayOf(S.mp,S.lvl,1.5):1,nz=nm1?NMZENY*nmPayOf(S.mp,S.lvl,2):1;'), 'spawn() reads the MVP knobs once (v89: ATK x1.3 on Stage 15; v90.3: map pay)');
   assert.ok(src.includes('exp:Math.max(1,Math.floor(BOSEK*Math.pow(l,1.5)/50*ne)),zeny:Math.max(ZMIN,Math.floor(ri(BZK[0],BZK[1])*l*l/1000*nz))'), 'MVP EXP/Zeny x NMEXP/NMZENY');
-  assert.ok(src.includes('nm1=stage>10,ne=nm1?nmExpOf(stage):1,nz=nm1?nmZenyOf(stage):1'), 'the offline simulator mirrors the band pay');
+  assert.ok(src.includes('nm1=stage>10,ne=nm1?nmExpOf(stage)*nmPayOf(m,stage,1.5):1,nz=nm1?nmZenyOf(stage)*nmPayOf(m,stage,2):1'), 'the offline simulator mirrors the band pay (v90.3: map pay)');
   assert.ok(src.includes('hp=early?Math.min(starterHp(S.lvl),Math.floor(HPK*mb*Math.pow(l,HPE))):Math.floor(HPK*mb*Math.pow(l,HPE)*nm)'), 'mob HP x NMHP');
   assert.ok(src.includes('atk:early?starterAtk(S.lvl):Math.floor((5+l*4.6)*mb*na*eaOf(l))'), 'mob ATK x NMATK (and the v86 endgame bump)');
   assert.ok(src.includes('exp:Math.max(1,Math.floor(EXPK*Math.pow(l,1.5)/50*ne))'), 'mob EXP x NMEXP');
@@ -215,7 +217,7 @@ t('the field tables read the band: boss pool, ore and crit resistance', () => {
   assert.strictEqual(nmBoss.critRes, .45, 'Nightmare Abyss bosses resist 45% crit');
   assert.strictEqual(normBoss.critRes, .3, 'the normal Abyss boss still resists 30%');
   // v76.2 (owner): the band's drops are a THIRD of the rate they were, MVP pool included
-  assert.strictEqual(nmBoss.drops[0][1], Math.round(300 * N.NMPLUS_DROP / nmBoss.drops.length) / 100, 'from BOSS_POOL_TOTAL[2] = 300, halved for N+ (v89): 1.5% total');
+  assert.strictEqual(nmBoss.drops[0][1], Math.round(300 * N.NMPLUS_DROP / (nmBoss.drops.length - 1)) / 100, 'from BOSS_POOL_TOTAL[2] = 300, halved for N+ (v89): 1.5% total (the v90.3 Crown is not part of the pool)');
   assert.strictEqual(normBoss.drops[0][1], Math.round(420 / normBoss.drops.length) / 100, 'the mid/endgame MVP pool keeps 4.2%');
   // ...and the mob rolls are exactly a third of whichever normal table the map would use
   assert.deepStrictEqual([N.FIELD_GEAR_NM, N.FIELD_GEAR_MID_NM].map(t => t.map(x => +(x * 3).toFixed(2))), [N.FIELD_GEAR, N.FIELD_GEAR_MID],
@@ -264,6 +266,50 @@ t('a save cannot be left standing in a locked Nightmare stage', () => {
   assert.ok(src.includes('go:()=>{if(mapL<=Math.max(S.prog[mapM],nmMax()))'), 'travel allows an unlocked Nightmare stage');
   assert.ok(src.includes('nmo=nmOpen(),cap=Math.max(pr,nmMax())'), 'the map panel caps at the band');
   assert.ok(src.includes('mapL=Math.min(mapL,Math.max(1,Math.max(S.prog[mapM],nmMax())))'), 'and the stage picker cannot be clamped below the band');
+});
+
+t('v90.3 (B): reward per HP is the same on every Nightmare map at each stage', () => {
+  // Mob HP is mb*power^HPE and time per kill goes with HP, so EXP and Zeny per HP should be the
+  // same on every map at each stage. Prints the table, then checks each map against Prontera.
+  const lines = [];
+  for (let l = 11; l <= 15; l++) {
+    const per = m => {
+      const mb = 1 + m * .15 + Math.max(0, m - 4) * .2, p = N.fieldPower(m, l);
+      const hp = 42 * mb * Math.pow(p, 1.3) * N.NMHP * N.nm15Of(l);
+      return {
+        e: 5.5 * Math.pow(p, 1.5) / 50 * N.nmExpOf(l) * N.nmPayOf(m, l, 1.5) / hp,
+        z: 11 * p * p / 1000 * N.nmZenyOf(l) * N.nmPayOf(m, l, 2) / hp,
+      };
+    };
+    const ref = per(0);
+    const row = [];
+    for (let m = 0; m < 10; m++) {
+      const r = per(m), e = r.e / ref.e, z = r.z / ref.z;
+      row.push('m' + m + ' ' + e.toFixed(3) + '/' + z.toFixed(3));
+      assert.ok(Math.abs(e - 1) < .005, 'EXP per HP on map ' + m + ' stage ' + l + ' is ' + e.toFixed(4) + ' of Prontera');
+      assert.ok(Math.abs(z - 1) < .005, 'Zeny per HP on map ' + m + ' stage ' + l + ' is ' + z.toFixed(4) + ' of Prontera');
+    }
+    lines.push('       Stage ' + l + ' (EXP/Zeny per HP vs Prontera): ' + row.join('  '));
+  }
+  lines.forEach(x => console.log(x));
+  for (let m = 0; m < 10; m++) for (let l = 1; l <= 10; l++) assert.strictEqual(N.nmPayOf(m, l, 1.5), 1, 'stage ' + l + ' pays 1');
+});
+
+t('v90.3 (C): each Nightmare map has one boss-only Crown, on the Stage 15 boss only', () => {
+  const names = new Set();
+  for (let m = 0; m < 10; m++) {
+    const F = N.fieldOf(m, 15), sig = F.boss.drops.filter(([it]) => it.sig);
+    assert.strictEqual(sig.length, 1, N.MAPS[m].n + ' carries exactly one Crown');
+    const [it, ch] = sig[0];
+    assert.strictEqual(it.n, N.NMNAME[m] + ' Crown', 'named for its map');
+    assert.strictEqual(it.k, 'head', 'a headgear piece every class can wear');
+    assert.strictEqual(ch, N.NM_SIG_CH, 'Crown chance is NM_SIG_CH percent per boss kill');
+    names.add(it.n);
+    for (const mob of F.mobs) assert.ok(!mob.drops.some(([x]) => x.sig), 'no mob carries the Crown');
+    assert.ok(!N.fieldOf(m, 10).boss.drops.some(([x]) => x.sig), 'the Stage 10 boss has no Crown');
+    assert.ok(!N.fieldOf(m, 11).mobs.some(mob => mob.drops.some(([x]) => x.sig)), 'Stage 11 has no Crown');
+  }
+  assert.strictEqual(names.size, 10, 'all ten Crowns have their own name');
 });
 
 const total = pass + fail;

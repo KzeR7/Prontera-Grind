@@ -6142,3 +6142,17 @@ The owner's second pass over v77, six notes, all built.
   1. The 🥊 is an emoji, so it looks different on each device. If the owner wants a katar-shaped icon, that needs new art and a sprite-pack check.
   2. The Nightmare fairness fix still needs the owner's choice, then a balance sim before any code.
   3. Verified in the jsdom and vm harnesses, not in a real browser.
+
+### 2026-10-09 — `2026-10-09 grind-v90.4 Nightmare fairness: each map Stage 15 boss drops its own Crown, and Nightmare EXP and Zeny follow the HP a mob takes
+
+* **What changed for the player:** the owner picked option C with B for the Nightmare fairness question. (B) Nightmare mob EXP and Zeny now scale per map so that reward per HP is the same on every map at each stage. Before, the Abyss mobs had about 5x the HP of Prontera's and paid the same, so a low map was faster per hour and players farmed it. (C) Each map's Stage 15 boss can now drop that map's own Crown (Dread Crown, Kraken Crown, and so on through Glast Crown), a headgear piece that is kept out of the field pools. The chance is 3% per Stage 15 boss kill.
+* **Numbers:** `nmPayOf(m, l, k)` = map HP factor mb x (power / Prontera power)^(1.3 - k), with k = 1.5 for EXP and 2 for Zeny. The live pay at Stage 15 is about 3.1x EXP and 2.6x Zeny per kill on Abyss versus Prontera, and the boss gets the same factor. Stages 1-10 pay 1, as before.
+* **Balance sim:** the sim in `nightmare_sim.js` prints EXP/HP and Zeny/HP per map for each stage. All are 1.000 of Prontera. Its pass threshold is 0.5%.
+* **Files touched:** `index.html` (`BUILD` grind-v90.4; `nmPayOf` beside `nmZenyOf`; `NM_SIG_CH` beside `NMPLUS_DROP`; the Crown in `fieldOf`'s boss `drops`; the EXP/Zeny pay in `minionDef`, `spawn()` and `offlineMobForCurrentField()`); the build-tag mirrors `Updates/cards-gear-audit/affix-ranges.html` (x2), `Updates/cards-gear-audit/equipment-cards-tuning.html`, `tools/cloudflare-deploy-steps.md`; tests `tools/tests/nightmare_sim.js` (the balance table, plus two new tests: pay per HP, and the Crown rules; the boss-pool test no longer counts the Crown; the source-string asserts follow the new pay), `tools/tests/gear_sim.js` (`NM_SIG_CH` is exposed; the boss pool total excludes the Crown), `tools/tests/crit_sim.js` (the boss drop-list assert follows the new text); `READ-ME-FIRST.md` (v90.4 section); this log.
+* **Art:** none. The Crowns are text names and use the existing headgear art.
+* **Tests:** every `*_sim.js` and `*_smoke.js` suite in `tools/tests/` is run and must exit 0 on this build.
+* **Branches / PR:** `arena/4ce84185-prontera-grind`. No pull request was opened.
+* **Known limits / follow-ups:**
+  1. A Crown's power follows its map (the same MAPVAL as the rest of the N+ pool), so a Prontera Crown is much weaker than an Abyss one. If the owner wants every Crown equal, change the value in `fieldOf`.
+  2. The 3% Crown chance and the Stage 15 pay factor are untuned guesses. Play-test how long a Stage 15 boss takes to kill before changing them.
+  3. The economy estimate (`epkOf`) still uses the old per-stage model, so its numbers for Nightmare are stale. Check `economy_sim.js` before relying on them.
