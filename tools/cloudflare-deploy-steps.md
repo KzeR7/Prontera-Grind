@@ -102,7 +102,7 @@ Open the `*.pages.dev` address Cloudflare gives the project, and walk this list:
 | Check | Expected |
 |---|---|
 | The login card | says **“☁ Cloud accounts are on — register or sign in…”** |
-| Build tag at the bottom of the card | `2026-10-09 grind-v88.1 cloud login no longer erases the away window, so offline rewards pay out again (4h max, 50%)` |
+| Build tag at the bottom of the card | `2026-10-09 grind-v88.2 a cloud sign-in that fails while the game starts now says why on the login card, instead of doing nothing` |
 | Register your own name | a dialog with a **recovery code** — copy it somewhere safe, it is shown once |
 | Play for a minute | the header badge goes `☁ …` → `☁ ✓` |
 | The same address in a second browser | sign in with the same name and password → **the same character loads** |

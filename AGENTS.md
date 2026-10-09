@@ -5842,3 +5842,32 @@ The owner's second pass over v77, six notes, all built.
 * **Known limits / follow-ups:** none new. The fix is server-side only, so the deployed
   `functions/api/sessions.js` must be redeployed with the page (the v88 auto-refresh reloads
   players onto the new page; the Function ships with the same `wrangler pages deploy`).
+
+### 2026-10-09 — `2026-10-09 grind-v88.2 a cloud sign-in that fails while the game starts now says why on the login card, instead of doing nothing`
+* **What changed for the player:** if signing in to a cloud account fails while the game is starting,
+  the login card now says why, instead of staying open with no message. The message reads "Signed in,
+  but the game could not start: <reason>. Your account is fine - reload the page and log in again."
+  Nothing changes when login works.
+  * **Checked, not assumed:** the server login was tested end to end against the real `functions/api/*`
+    handlers over HTTP (register, login, wrong password, the session cookie, the save read). The real
+    `index.html` was run in jsdom against a running dev server: register, log in with a new name, log
+    in with a wrong password, and an unknown name all behaved correctly.
+  * **Root cause (of the silent failure):** in `cloudAuth()`, the final `return initSessionFromCloud(...)`
+    sat inside the `try` without an `await`. A throw while the session started therefore skipped the
+    `catch` and became an unhandled promise. The server had already accepted the login and set the
+    cookie, so the player saw nothing. Forcing a failure in jsdom reproduced exactly that: cookie set,
+    empty error line, card still open.
+  * **Fix:** `await` the session start inside its own `try`, and show the error on the card. The
+    register path's recovery-code prompt already had its own `.catch`, so it was not affected.
+  * **Not yet known:** the cause of the owner's specific login problem. A failing login now shows its
+    reason on the card, and that text is what identifies the cause. No server change was needed.
+* **Files touched:** `index.html` (the fix; `BUILD` grind-v88.2); new `tools/tests/cloud_login_error_sim.js`
+  (6 cases, extracted from the real `cloudAuth`; 2 fail on the previous build); build-tag mirrors
+  (`Updates/cards-gear-audit/affix-ranges.html` x2, `equipment-cards-tuning.html`,
+  `tools/cloudflare-deploy-steps.md`); `READ-ME-FIRST.md` (a v88.2 section at the top of the BUILD list);
+  this log.
+* **Art:** none.
+* **Tests:** the new suite passes 6/6; all 41 suites (the 40 `*_sim.js` files plus `field_loop_smoke.js`) exit 0 on this build.
+* **Branches / PR:** committed to `arena/f15fe482-prontera-grind`; no PR opened.
+* **Known limits / follow-ups:** none for this fix. The owner's specific login problem still needs the
+  message the card shows, or the browser's console output, to diagnose.

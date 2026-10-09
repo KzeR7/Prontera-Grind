@@ -84,6 +84,21 @@ is the live one; with no argument the tool prints how to set a new one). Since v
 `GM` / `test1234`; `localStorage.removeItem('pg_gm_local')` removes it. Normal accounts are made
 in-game and stored in the browser (`pg_acc4`; saves under `pg_save3_<user>`).
 
+## BUILD v88.2 — cloud sign-in errors are shown on the login card (grind-v88.2)
+
+The owner reported being unable to log in. Checked both halves: the server login (register, login,
+wrong password, the session cookie) works end to end against the real `functions/api/*` handlers, and
+the real page in jsdom signs in fine. The defect found: when the server accepted the login but the game
+then failed while starting (for example a save that would not load), the error was swallowed. The card
+stayed open with no message, and the server had already created the session.
+
+* **What you will notice:** that failure now shows a message on the login card: "Signed in, but the game
+  could not start: <reason>. Your account is fine - reload the page and log in again." Nothing else changes.
+* **To see it:** the regression suite is `node tools/tests/cloud_login_error_sim.js` (6 cases; 2 fail on
+  the previous build).
+* **Still open:** a login that fails with an error message on the card is the one to report; the message
+  text is what identifies the cause.
+
 ## BUILD v88.1 — offline rewards pay out again on cloud accounts (grind-v88.1)
 
 The owner reported the offline reward "seems to be not working" (it should be 4 hours max at 50%
