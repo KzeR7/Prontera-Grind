@@ -3,7 +3,7 @@
 //
 // The rules being checked:
 //   * each Nightmare map's Stage 15 boss drops that map's own material; mobs and the Stage 10 boss do not;
-//   * craftDps() needs one of each of the ten materials and turns them into one scroll;
+//   * craftDps() spends DPS_MATS (20) materials of any mix from the stacks and makes one scroll (v90.7);
 //   * a failed refine at +5 or higher drops a rank, unless a scroll is in the bag, in which case the scroll
 //     is spent and the rank stays; a failure below +5 never uses a scroll;
 //   * the refine rule itself (success chance, rank drop) is unchanged for every other attempt.
@@ -20,7 +20,7 @@ ${pick(/const NM_MAT_CH=[^;]+;/, 'NM_MAT_CH')}
 ${pick(/const DPS_MATS=\d+;/, 'DPS_MATS')}
 const safeCount=v=>{const n=Number(v);return Number.isFinite(n)?Math.max(0,Math.min(Number.MAX_SAFE_INTEGER,Math.floor(n))):0};
 const rarIdx=it=>((it&&+it.sec>=5)?6:(it&&+it.sec>=4)?5:Math.max(0,Math.min(4,(it&&it.tier)||0)));
-${grab('const refCost=', 'const affTxt=')}
+${grab('const REF_ZENY_MUL=3,refCost=', 'const affTxt=')}
 const ORE={ori:'Oridecon',elu:'Elunium'};
 const iname=it=>(it.r?'+'+it.r+' ':'')+it.name;
 ${grab('function refine(sl){', '// ---------- v90: Black Market')}
@@ -112,11 +112,11 @@ t('a successful refine is unchanged and keeps the scroll', () => {
   assert.strictEqual(M.S.dps, 1, 'the scroll is kept');
 });
 
-t('the success chance and the attempt cost are the same as before v90.6', () => {
-  // refCh is read from the source: +5 is 42%, and an N+ piece at +0 costs 1,400 Zeny x 1 with 10 ore.
+t('the success chance is the same as before v90.6, and the attempt cost is x3 since v90.8', () => {
+  // refCh is read from the source: +5 is 42%. v90.8 (owner, Zeny sink): an N+ piece at +0 costs 4,200 Zeny (was 1,400) with 10 ore.
   assert.strictEqual(M.refCh(piece(5)), 42, 'success at +5 is 42%');
   assert.strictEqual(M.refCh(piece(0)), 70, 'success at +0 is 70%');
-  assert.strictEqual(M.refCost(piece(0)), 1400, 'attempt cost at +0, N+ weapon');
+  assert.strictEqual(M.refCost(piece(0)), 4200, 'attempt cost at +0, N+ weapon: 3 x 1,400 (v90.8)');
   assert.strictEqual(M.refOre(piece(0)), 10, 'N+ takes 10 ore a try');
 });
 

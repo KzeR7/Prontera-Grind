@@ -88,7 +88,7 @@ const code = [
   grab('const itemIconMarkup=it=>', 'const icon=it=>'),  // ...and the markup that picks art or silhouette
   pick(/const icon=it=>[^;]+;/, 'icon'),
   pick(/const items=\(\)=>[^\n]*/, 'items/ev/iname/eqv'),
-  pick(/const refCost=it=>[^;]+;/, 'refCost/refCh'),
+  pick(/const REF_ZENY_MUL=3,refCost=it=>[^;]+;/, 'refCost/refCh'),
   grab('const BM_LV=', '// ---------- class change ----------'),   // v90: the Black Market helpers (ore, reforge, price)
   pick(/const AL=\{[^}]*\};/, 'affix labels'),
   pick(/const uid=[^\n]*/, 'rnd and ri'),
@@ -1022,6 +1022,7 @@ t('v90 Black Market: locked under Base Lv 100, then sells ore and reforges one a
   U.S.eq.armor={id:501,name:'Test Coat',tier:3,slot:'armor',val:40,sec:5,aff:[{k:'str',v:55},{k:'flee',v:38}],slots:0,cards:[]};
   let h=U.V.market();
   assert.ok(h.includes('opens at Base Lv 100'),'the Black Market says when it opens');
+  assert.ok(!h.includes('data-a="bmmat"'),'no Nightmare material is for sale below Base Lv 100');
   assert.ok(!h.includes('data-a="bmore"'),'no ore is for sale below Base Lv 100');
   U.S.lv=100;
   h=U.V.market();
@@ -1030,6 +1031,14 @@ t('v90 Black Market: locked under Base Lv 100, then sells ore and reforges one a
   assert.ok(h.includes('data-a="bmref" data-v="armor"'),'a worn piece with affixes can be reforged');
   assert.ok(h.includes('Reroll one affix: 1,050,000z'),'an N+ piece costs rarity 6 + 1 times 150,000z to reforge');
   assert.ok(!h.includes('data-a="bmref" data-v="weapon"'),'an empty slot is not offered a reforge');
+  // v90.8: the ten Nightmare materials are sold here, one Buy 1 button each
+  assert.ok(h.includes('Nightmare materials') && h.includes('3,000,000z each'),'the Nightmare materials are listed and priced at 3,000,000z');
+  assert.strictEqual(h.split('data-a="bmmat"').length-1,10,'ten material rows, one button each');
+  assert.ok(h.includes('data-a="bmmat" data-v="9"'),'the last material (Glast Fragment) has its own button');
+  U.S.zeny=2999999; h=U.V.market();
+  assert.ok(/data-a="bmmat" data-v="0" disabled/.test(h),'a material button is disabled when the player cannot pay 3,000,000z');
+  U.S.zeny=10000000; h=U.V.market();
+  assert.ok(!/data-a="bmmat" data-v="0" disabled/.test(h),'a material button is enabled when the player can pay');
   const bm=sb.__bm;
   bm.buyOre('ori');
   assert.strictEqual(U.S.ore.ori,1,'one Oridecon is bought');
@@ -1066,8 +1075,8 @@ t('v90 refine: rarer pieces eat more ore per attempt and every step costs twice 
   assert.strictEqual(bm.refOre({r:0,tier:4}),5,'Legendary takes 5 ore (v90.2)');
   assert.strictEqual(bm.refOre({r:0,tier:0,sec:4}),10,'N takes 10 ore (v90.2)');
   assert.strictEqual(bm.refOre({r:0,tier:0,sec:5}),10,'N+ takes 10 ore (v90.2)');
-  assert.strictEqual(bm.refCost({r:0,sec:0}),400,'the first step costs 400z (was 200)');
-  assert.strictEqual(bm.refCost({r:0,sec:3}),1000,'a high-tier first step costs 1000z');
+  assert.strictEqual(bm.refCost({r:0,sec:0}),1200,'the first step costs 1200z (v90.8: x3 of 400)');
+  assert.strictEqual(bm.refCost({r:0,sec:3}),3000,'a high-tier first step costs 3000z (v90.8: x3 of 1000)');
 });
 
 

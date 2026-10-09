@@ -721,8 +721,11 @@ t('Nightmare equipment is its own N rarity, separate from Legendary and map qual
   const lowMapTier = G.dropTier(0, 12);
   const nm = G.genGear({ k: 'sword', n: 'Dread Excalibur' }, 150, 4, false, lowMapTier);
   const hi = G.genGear({ k: 'sword', n: 'Dark Lord Sword' }, 150, 3, true, 4);
-  assert.strictEqual(nm.tier, lowMapTier, 'Nightmare gear keeps its map field-quality value');
-  assert.notStrictEqual(nm.tier, 4, 'Prontera Nightmare gear is not forced to Legendary quality');
+  // v90.8 (owner: flatten N+ power): Nightmare gear no longer follows its map's quality. Every
+  // Nightmare piece rolls the top tier, so the lower map's N gear is as strong as Abyss's.
+  assert.strictEqual(nm.tier, 4, 'v90.8: Nightmare gear is flat - the top tier on every map, not the map field-quality value');
+  assert.strictEqual(nm.tier, G.dropTier(9, 15), 'v90.8: the lowest map drops the same power as the Abyss map');
+  assert.strictEqual(nm.aff.length, 3, 'v90.8: flat Nightmare gear rolls three affixes on every map');
   assert.strictEqual(G.rarIdx(nm), 5, 'section 4 selects the independent N rarity');
   assert.strictEqual(G.rarOf(nm).n, 'N', 'the rarity label is N, not Legendary');
   assert.strictEqual(G.rarCls(nm), 'r5', 'and N is painted with .r5');
@@ -740,6 +743,21 @@ t('Nightmare equipment is its own N rarity, separate from Legendary and map qual
   // The owner's Nightmare drop-rate tables are unchanged: one third of their normal counterparts.
   assert.strictEqual(G.FIELD_GEAR_NM.map(x => +(x * 3).toFixed(2)).join(','), '1.5,1.2,0.9');
   assert.strictEqual(G.FIELD_GEAR_MID_NM.map(x => +(x * 3).toFixed(2)).join(','), '1.05,0.84,0.63');
+});
+
+t('v90.8 flat Nightmare power: the same N+ gear is worth the same on the lowest and the Abyss map', () => {
+  // Prontera (map 0) and Abyss (map 9) used to differ about 11x in N+ base value. The mean of 300
+  // rolls must now match within 10%, and the value must not depend on the map at all.
+  const mean = mp => {
+    G.S = { st: { luk: 0 }, eq: {}, mp };
+    let sum = 0;
+    for (let i = 0; i < 300; i++) sum += G.genGear({ k: 'sword', n: 'Absolute Dark Lord Sword' }, 150, 5, false, G.dropTier(mp, 15)).val;
+    return sum / 300;
+  };
+  const lo = mean(0), hi = mean(9);
+  assert.ok(Math.abs(lo - hi) / hi < 0.1, 'the N+ mean is flat across maps: map 0 ' + lo.toFixed(1) + ' vs map 9 ' + hi.toFixed(1));
+  const n = G.genGear({ k: 'sword', n: 'Dread Excalibur' }, 150, 4, false, G.dropTier(0, 12));
+  assert.strictEqual(n.tier, 4, 'v90.8: N gear on the lowest map is top-tier too');
 });
 
 t('the cdm affix only rolls on weapons and accessories, like the cdm card always has',()=>{

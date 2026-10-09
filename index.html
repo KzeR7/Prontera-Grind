@@ -657,7 +657,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // script block, which is a SyntaxError - the game did not run on main at all. One line wins, and
 // it names both sides of this merge: the v38 balance patch (the weapon cut, the affix/card
 // give-back) and main's weapon-hold rendering work.
-const BUILD='2026-10-09 grind-v90.7 Crafting: Nightmare Stage 15 bosses drop a material at 1%; 20 of any mix make a Drop Protection Scroll, which stops a failed refine at +5 or higher dropping a rank; Abyss keeps its old EXP and Zeny, the lower maps are tuned down to match per HP; katar icon is a boxing glove; class-locked drops say Not equitable on current class';   // shown on the login card - confirms which file you loaded
+const BUILD='2026-10-09 grind-v90.8 Zeny sinks and Nightmare gear: Nightmare N and N+ gear has one power on every map, refine Zeny x3, Nightmare mobs do not always pay Zeny, Black Market sells Nightmare materials; Crafting: Nightmare Stage 15 bosses drop a material at 1%; 20 of any mix make a Drop Protection Scroll, which stops a failed refine at +5 or higher dropping a rank; Abyss keeps its old EXP and Zeny, the lower maps are tuned down to match per HP; katar icon is a boxing glove; class-locked drops say Not equitable on current class';   // shown on the login card - confirms which file you loaded
 $('buildTag').textContent='build '+BUILD;
 
 // ---------- class tree: Novice -> 6 first jobs -> 6 second jobs -> 6 third jobs ----------
@@ -1587,6 +1587,13 @@ const NM_MAT=['Dread Essence','Kraken Scale','Void Core','Sandwraith Dust','Spec
 const NM_MAT_CH=1;
 // v90.7 (owner): a Drop Protection Scroll costs 20 Nightmare materials, any mix from any maps.
 const DPS_MATS=20;
+// v90.8 (owner: Zeny overflow): a regular Nightmare mob pays Zeny on NM_ZENY_CH of its kills, and the
+// payout is a random NM_ZENY_LO to NM_ZENY_HI times the old value (mean 0.6 of before). Bosses always pay.
+const NM_ZENY_CH=.6,NM_ZENY_LO=.5,NM_ZENY_HI=1.5;
+function nmZenyRoll(mob){if(mob.boss||!(mob.sec>=4))return 1;return Math.random()<NM_ZENY_CH?rnd(NM_ZENY_LO,NM_ZENY_HI):0}
+// v90.8 (owner): the Black Market sells one Nightmare material for BM_MAT_PRICE Zeny.
+const BM_MAT_PRICE=3000000;
+function buyMat(m){if(!bmOpen()||!NM_MAT[m]){return}if(S.zeny<BM_MAT_PRICE){log('Not enough Zeny for a Nightmare material.','','zeny');ui();return}S.zeny-=BM_MAT_PRICE;S.nmMat[m]=safeCount(S.nmMat[m])+1;log(`Black Market: bought 1 ${NM_MAT[m]} for ${BM_MAT_PRICE.toLocaleString()}z.`,'','zeny');ui();save()}
 // v73 (owner): high-level bosses resist crits. The number is the share of the crit chance that
 // is removed when you swing at that boss: a capped 60% build crits Comodo, Louyang and Amatsu's
 // bosses 51% of the time, Niflheim's Lord of Death 48% and the Abyss Dark Lord 42%. Maps 1-5
@@ -2726,7 +2733,8 @@ const autoAllocateSkills=()=>{if(!S.sk||typeof S.sk!=='object')S.sk={};let bough
 // v90 (owner: Zeny overflows after level 100): a refine step costs twice the Zeny it did (200 -> 400 base), and
 // every attempt eats more ore the rarer the piece. v90.2 (owner): Legendary takes 5 ore a try, N and N+ take 10.
 // REF_ORE is indexed by rarIdx (Common, Fine, Rare, Epic, Legendary, N, N+); refOre() is the ore one attempt takes.
-const refCost=it=>Math.round(400*((it.r||0)+1)*(1+(it.sec||0)*.5)),REF_ORE=[1,1,2,2,5,10,10],refOre=it=>REF_ORE[rarIdx(it)],refCh=it=>[70,70,70,70,49,42,35,28,21,14][it.r||0];
+// v90.8 (owner: Zeny sink): refine Zeny is x3 (REF_ZENY_MUL).
+const REF_ZENY_MUL=3,refCost=it=>Math.round(REF_ZENY_MUL*400*((it.r||0)+1)*(1+(it.sec||0)*.5)),REF_ORE=[1,1,2,2,5,10,10],refOre=it=>REF_ORE[rarIdx(it)],refCh=it=>[70,70,70,70,49,42,35,28,21,14][it.r||0];
 const affTxt=a=>`${AL[a.k]} +${a.v}`,cardTxt=c=>`${c.n} (${SU(c.stat)} +${c.v})`,dtier=it=>it.card?GI[it.g]:it.ore?3:((it&&+it.sec>=5)?6:(it&&+it.sec>=4)?5:it.tier);
 const isBoss=()=>S.lvl===10||S.lvl===15,fieldName=()=>S.lvl>10?`Nightmare ${MAPS[S.mp].n} Stage ${S.lvl-10}`:`${MAPS[S.mp].n} Stage ${S.lvl}`;
 // Real RO item icons give each equipment family a recognizable shape and several name-based
@@ -2874,12 +2882,14 @@ function genGear(T,l,sec,boss,tier){
   // The numeric field-quality input (see dropTier) feeds the existing stat/value rolls. The item
   // rarity identity is resolved separately: normal equipment follows its map band, while sections
   // 4/5 are N. Nightmare items are not forced into the Legendary numeric band.
-  const t=Number.isFinite(tier)?tier:dropTier(S.mp,S.lvl),quality=Number.isFinite(+T.quality)?Math.max(1,+T.quality):1;
+  // v90.8 (owner: flatten N+ power): Nightmare gear (sections 4-5) has one power on every map - tier 4
+  // and the top map value - so the lower maps' N and N+ pieces are as strong as Abyss's.
+  const t=sec>=4?4:(Number.isFinite(tier)?tier:dropTier(S.mp,S.lvl)),quality=Number.isFinite(+T.quality)?Math.max(1,+T.quality):1;
   // v38 balance: the weapon's flat value is divided by 3 (6 -> 2). Weapons are the single
   // biggest power source a character owns, and dividing the base divides it at every level.
   // Armor/head/shield/legwear/accessory keep their value: headgear (maxHp x4) and accessory
   // (maxHp x3) are the HP slots and armour/legs/shield carry DEF, which is the anti-death stat.
-  const val=Math.max(1,Math.round({weapon:2,armor:4,head:10,off:3,leg:3,acc:5}[slot]*[1,2.2,4,7,10.5,15][sec]*(1+l*.15)*RAR[t].m*quality*(MAPVAL[Math.max(0,Math.min(MAPVAL.length-1,(S&&S.mp|0)||0))])*rnd(.9,1.12)));
+  const val=Math.max(1,Math.round({weapon:2,armor:4,head:10,off:3,leg:3,acc:5}[slot]*[1,2.2,4,7,10.5,15][sec]*(1+l*.15)*RAR[t].m*quality*(sec>=4?MAPVAL[MAPVAL.length-1]:MAPVAL[Math.max(0,Math.min(MAPVAL.length-1,(S&&S.mp|0)||0))])*rnd(.9,1.12)));
   // v73 (owner): the cdm affix is a weapon/accessory roll, so "crit damage on all seven slots"
   // cannot exist any more. This follows the spirit of the cdm CARD's fit rule (CFIT['cdm'] puts
   // those cards on weapons), widened to accessories because both are the offensive slots. Every
@@ -2941,7 +2951,7 @@ function offlineStoreGear(it,r){
 }
 function offlineAwardKill(mob,r){
   if(!mob)return;r.kills++;S.kills=safeCount(S.kills)+1;recordMonsterKill(mob);S.kl=safeCount(S.kl)+1;qProg('kill');if(mob.boss)qProg('boss');
-  const z=Math.round(mob.zeny*(1+pv('zeny')/100))*gx(),xp=Math.round(mob.exp*expRate());earnZeny(z);r.zeny+=z;earnExp(xp);r.exp+=xp;
+  const z=Math.round(mob.zeny*(1+pv('zeny')/100)*nmZenyRoll(mob))*gx(),xp=Math.round(mob.exp*expRate());earnZeny(z);r.zeny+=z;earnExp(xp);r.exp+=xp;
   addJob(Math.round(Math.round(mob.exp*.7)*expRate()));checkLevel();
   for(const[T,ch]of mob.drops)if(Math.random()*100<ch)offlineStoreGear(genGear(T,mob.lvl,mob.sec,mob.boss,mob.tier),r);
   if(Math.random()*100<mob.cardCh){const g=mob.card.g;S.cards.push({card:1,id:uid(),n:mob.card.n,g,stat:mob.card.stat,v:cardVal(g,mob.card.stat)});r.cards++;r.drops++}
@@ -3272,7 +3282,7 @@ function earnZeny(amount){const n=Math.max(0,Number(amount)||0);S.zeny+=n;zenyEa
 function earnExp(amount){const n=Math.max(0,Number(amount)||0);S.exp+=n;expEarned+=n}
 function kill(o){const keep=mob;if(o)mob=o;if(!mob||!mobs.includes(mob)){mob=keep;return}
   const g=gx();S.kills++;recordMonsterKill(mob);S.kl++;qProg('kill');if(mob.boss)qProg('boss');
-  const z=Math.round(mob.zeny*(1+pv('zeny')/100)*(1+petPassive('zeny')/100))*g,xp=Math.round(mob.exp*expRate()*(1+petPassive('exp')/100));earnZeny(z);earnExp(xp);addJob(Math.round(Math.round(mob.exp*.7)*expRate()*(1+petPassive('exp')/100)));
+  const z=Math.round(mob.zeny*(1+pv('zeny')/100)*(1+petPassive('zeny')/100)*nmZenyRoll(mob))*g,xp=Math.round(mob.exp*expRate()*(1+petPassive('exp')/100));earnZeny(z);earnExp(xp);addJob(Math.round(Math.round(mob.exp*.7)*expRate()*(1+petPassive('exp')/100)));
   addFloat(mob.x,2.4,mob.z,'+'+numTxt(z)+'z','#ffd23f');log(`${mob.n} defeated! +${xp.toLocaleString()} EXP, +${z.toLocaleString()} Zeny`,'','kills,zeny');
   // Drop odds are the field's own numbers: nothing on the character scales them, so LUK cannot
   // bend the tables (it still raises ATK through the crit/DEX side of the stat sheet, which is
@@ -3725,7 +3735,8 @@ V.market=()=>{if(!bmOpen())return`<div class="hd">Black Market</div><small>The B
   const ores=['ori','elu'].map(o=>`<div class="slot" style="align-items:center;gap:10px;margin-top:6px"><div style="flex:1"><b>${ORE[o]}</b> <small>you have ${S.ore[o]|0}</small><br><small>Refine ore. ${BM_ORE.toLocaleString()}z each.</small></div><button data-a="bmore" data-v="${o}" ${S.zeny<BM_ORE?'disabled':''}>Buy 1</button></div>`).join('');
   const rf=EQK.map(([k,l])=>{const it=S.eq[k];if(!it||!(it.aff&&it.aff.length))return'';const c=reforgeCost(it);
     return`<div class="slot" style="align-items:flex-start;gap:10px;margin-top:6px">${cell(it,false)}<div style="flex:1"><b class="${rarCls(it)}">${iname(it)}</b> <small>${l}</small><br><small>${it.aff.map(a=>AL[a.k]+' +'+a.v).join(' &middot; ')}</small><br><small>Reroll one affix: ${c.toLocaleString()}z</small><br><button data-a="bmref" data-v="${k}" ${S.zeny<c?'disabled':''}>Reforge</button></div></div>`}).join('');
-  return`<div class="hd">Black Market <small>Zeny ${S.zeny.toLocaleString()}</small></div><small>Zeny sinks for Base Lv ${BM_LV}+. Ore is sold here, and a reforge rerolls one affix on a worn piece; the rarity of the piece sets the price.</small>`+ores+'<div class="sec" style="margin-top:8px">Reforge</div>'+(rf||'<small>Wear a piece with affixes to reforge it.</small>')};
+  const matRows=NM_MAT.map((n,i)=>`<div class="slot" style="align-items:center;gap:10px;margin-top:6px"><div style="flex:1"><b>${n}</b> <small>you have ${safeCount(S.nmMat&&S.nmMat[i])}</small><br><small>Nightmare material. ${BM_MAT_PRICE.toLocaleString()}z each.</small></div><button data-a="bmmat" data-v="${i}" ${S.zeny<BM_MAT_PRICE?'disabled':''}>Buy 1</button></div>`).join('');
+  return`<div class="hd">Black Market <small>Zeny ${S.zeny.toLocaleString()}</small></div><small>Zeny sinks for Base Lv ${BM_LV}+. Ore is sold here, and a reforge rerolls one affix on a worn piece; the rarity of the piece sets the price.</small>`+ores+'<div class="sec" style="margin-top:8px">Nightmare materials</div>'+matRows+'<div class="sec" style="margin-top:8px">Reforge</div>'+(rf||'<small>Wear a piece with affixes to reforge it.</small>')};
 V.index=()=>`<div class="mastery-head"><div class="mastery-emblem">✦</div><div><b>Midgard Mastery Index</b><small>Individual monsters, Index XP and per-card rewards</small></div><span class="mastery-counter">${indexExperience().toLocaleString()} Index XP</span></div><div class="mastery-tabs"><button data-a="indexview" data-v="mobs" class="${indexMode==='mobs'?'on':''}" aria-pressed="${indexMode==='mobs'}">⚔ Mob Index</button><button data-a="indexview" data-v="cards" class="${indexMode==='cards'?'on':''}" aria-pressed="${indexMode==='cards'}">🃏 Card Mastery</button></div>${indexMode==='mobs'?renderMobIndex():renderCardIndex()}`;
 const EQK=[['head','Head','🎩'],['weapon','R.Hand','⚔️'],['armor','Body','🥼'],['off','L.Hand','🛡️'],['acc1','Acc 1','💍'],['leg','Legs','👖'],['acc2','Acc 2','💍']];
 const CFIT={str:'weapon',dex:'weapon',atk:'weapon',crit:'weapon',cdm:'weapon',agi:'armor',aspd:'armor',flee:'armor',vit:'armor',int:'head',hp:'head',luk:'acc'},CFL={weapon:'Weapons',armor:'Armor, Shield & Legwear',head:'Headgear',acc:'Accessories'};
@@ -4006,7 +4017,7 @@ const ACT={
     log(`🃏 ${name}: dedicated ${r.donated} cop${r.donated===1?'y':'ies'} - mastery ${r.level}/${CARD_MASTERY_PER_CARD}${r.left?`, ${r.left} left in the bag`:''}.`,'r3','card');
     addFloat(pl.x,2.6,pl.z,`🃏 ${name} ${r.level}/${CARD_MASTERY_PER_CARD}`,'#ffd23f');ui();save()},
   indexcard:all=>all,
-  refine:k=>refine(k),craftdps:()=>craftDps(),bmore:o=>buyOre(o),bmref:k=>reforge(k),sub:v=>{const[t,k]=v.split(':');sub[t]=k;if(t==='bag'&&k!=='bag')eqPick=null;renderWin()},selp:v=>{selP=+v;renderWin()},
+  refine:k=>refine(k),craftdps:()=>craftDps(),bmmat:o=>buyMat(+o),bmore:o=>buyOre(o),bmref:k=>reforge(k),sub:v=>{const[t,k]=v.split(':');sub[t]=k;if(t==='bag'&&k!=='bag')eqPick=null;renderWin()},selp:v=>{selP=+v;renderWin()},
   pon:id=>{const p=gp(id);if(!p)return;if(p.on)p.on=false;else if(S.pets.filter(x=>x.on).length<3)p.on=true;else log('Only 3 pets can fight at once. Remove one first.','','pet');ui();save()},
   pskill:id=>{const p=gp(id);if(!p)return;const c=petSkillCost(p);if(S.zeny<c){log('Not enough Zeny for a pet skill roll.');ui();return}S.zeny-=c;const[a,b]=rollPetSkills();p.skills=[a,b];
     clearPetCd(p.id);

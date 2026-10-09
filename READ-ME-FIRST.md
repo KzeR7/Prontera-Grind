@@ -84,6 +84,16 @@ is the live one; with no argument the tool prints how to set a new one). Since v
 `GM` / `test1234`; `localStorage.removeItem('pg_gm_local')` removes it. Normal accounts are made
 in-game and stored in the browser (`pg_acc4`; saves under `pg_save3_<user>`).
 
+## BUILD v90.8 — Zeny sinks and flat Nightmare gear (grind-v90.8)
+
+* **Flat Nightmare gear:** every Nightmare N and N+ piece rolls the top tier (4) and the top map value on every map, with three affixes. Lower maps are as strong as Abyss. Prontera's N+ base value rises about 11x; Abyss's is unchanged. This is a buff to the lower maps' gear.
+* **Refine costs Zeny x3** (`REF_ZENY_MUL`). An N+ weapon's first step is 1,200 Zeny. +0 to +10 without a scroll is about 19.4M Zeny; with the scroll about 606k. Ore is unchanged.
+* **Regular Nightmare kills pay Zeny unevenly:** 60% of kills pay (`NM_ZENY_CH`), at a random 0.5x to 1.5x of the old value (`NM_ZENY_LO`, `NM_ZENY_HI`). The mean is about 0.6x. Bosses and every non-Nightmare mob pay in full.
+* **Black Market:** one button per Nightmare material at 3,000,000 Zeny (`BM_MAT_PRICE`), from Base Lv 100. Twenty of them, which is one scroll, cost 60M Zeny.
+* **Open:** the refine damage impact is still not measured. The Zeny and Black Market numbers are untuned against real kill times.
+
+Files: `index.html` (`genGear()`, `REF_ZENY_MUL`, `nmZenyRoll()`, `buyMat()`, the Black Market rows, the kill payouts); tests `tools/tests/zeny_sink_sim.js` (new), `gear_sim.js`, `economy_sim.js`, `material_sim.js`, `ui_sim.js`; mirrors and this file are bumped to grind-v90.8.
+
 ## BUILD v90.7 — the scroll costs 20 materials at 1% (grind-v90.7)
 
 * **Materials:** each Nightmare Stage 15 boss drops its map's material at 1% a kill (`NM_MAT_CH`, was 25%).

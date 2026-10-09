@@ -10,7 +10,7 @@ const pick = (re, name) => { const m = src.match(re); if (!m) throw new Error('c
 const roster = grab('const CD=[', 'const pm=s=>');
 // the whole effect-helper block (applyDot / applyStun / chainHit). chainHit is pulled in but
 // never called here - it needs mobs, shots and hurt(), which belong to the live game loop.
-const ledger = grab('const skLine=()=>lineOf(S.cls);', 'const refCost=it=>');
+const ledger = grab('const skLine=()=>lineOf(S.cls);', 'const REF_ZENY_MUL=3,refCost=it=>');
 const helpers = [
   grab('// ---------- skill effects: damage over time, stun, chain ----------', 'const mkDrop='),
   pick(/const SKSLOTS=[^;]+;/, 'SKSLOTS'),

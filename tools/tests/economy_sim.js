@@ -185,7 +185,8 @@ t('normal EXP is 21x through Lv50, then 7x and one-third (the v56 one-tenth scal
   }
   assert.ok(src.includes('xp=Math.round(mob.exp*expRate()*(1+petPassive(\'exp\')/100))'), 'kill Base EXP wiring, pet bonus included');
   assert.ok(src.includes('addJob(Math.round(Math.round(mob.exp*.7)*expRate()*(1+petPassive(\'exp\')/100)))'), 'kill Job EXP wiring, pet bonus included');
-  assert.ok(src.includes("mob.zeny*(1+pv('zeny')/100)*(1+petPassive('zeny')/100))*g"), 'kill Zeny wiring, Greedy Gel included');
+  assert.ok(src.includes("mob.zeny*(1+pv('zeny')/100)*(1+petPassive('zeny')/100)*nmZenyRoll(mob))*g"), 'kill Zeny wiring, Greedy Gel and the v90.8 Nightmare roll included');
+  assert.ok(src.includes("Math.round(mob.zeny*(1+pv('zeny')/100)*nmZenyRoll(mob))*gx()"), 'offline kill Zeny wiring carries the v90.8 Nightmare roll');
 });
 t('the real kill reward block boosts Base/Job EXP but leaves player Zeny unchanged', () => {
   const rewards=grab('  const g=gx();S.kills++','  addFloat(mob.x,2.4,mob.z,');
@@ -200,6 +201,8 @@ t('the real kill reward block boosts Base/Job EXP but leaves player Zeny unchang
       const petPassive=()=>0;   // no pet is fighting in this world: the reward maths is the subject
       let jobXP=0,pend=[],zenyEarned=0,expEarned=0,recorded=0;
       const addJob=x=>jobXP+=x,recordMonsterKill=()=>recorded++;
+      ${src.match(/const NM_ZENY_CH=[^;]+;/)[0]}
+      ${src.match(/function nmZenyRoll\(mob\)\{[^\n]*/)[0]}
       ${grab('function earnZeny(amount){','function kill(o){')}
       ${rewards}
       this.result={xp:S.exp,z:S.zeny,jobXP,kills:S.kills,recorded};
@@ -224,6 +227,8 @@ t('the real kill reward block boosts Base/Job EXP but leaves player Zeny unchang
       const petPassive=()=>5;   // one fighting pet, Bond 0: the base 5% of its species passive
       let jobXP=0,pend=[],zenyEarned=0,expEarned=0,recorded=0;
       const addJob=x=>jobXP+=x,recordMonsterKill=()=>recorded++;
+      ${src.match(/const NM_ZENY_CH=[^;]+;/)[0]}
+      ${src.match(/function nmZenyRoll\(mob\)\{[^\n]*/)[0]}
       ${grab('function earnZeny(amount){','function kill(o){')}
       ${rewards}
       this.result={xp:S.exp,z:S.zeny,jobXP};
