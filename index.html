@@ -730,7 +730,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // script block, which is a SyntaxError - the game did not run on main at all. One line wins, and
 // it names both sides of this merge: the v38 balance patch (the weapon cut, the affix/card
 // give-back) and main's weapon-hold rendering work.
-const BUILD='2026-10-09 grind-v91 Endless Echo: Lord of Death Illusion, dark court, 1-50 Shards & inert Refine Scroll';   // shown on the login card - confirms which file you loaded
+const BUILD='2026-10-09 grind-v91.1 class-switch bag and equipment fix';   // shown on the login card - confirms which file you loaded
 $('buildTag').textContent='build '+BUILD;
 
 // ---------- class tree: Novice -> 6 first jobs -> 6 second jobs -> 6 third jobs ----------
@@ -3615,8 +3615,10 @@ function toggleGearLock(id){const it=find(id);if(!it||it.card||it.ore)return;it.
 // full bag reads as "sell this" instead of a wall of near-identical tiles. An empty slot is never
 // a comparison (nothing worn reads as unbeatable), and the worn piece is never flagged against
 // itself - ev(it)<ev(it) is false by definition.
-const cell=(it,sel,extra='')=>`<div class="cell b${dtier(it)}${it&&+it.sec>=4?' nm':''}${sel?' sel':''}${it&&it.slot&&ev(it)<ev(it.slot==='acc'?(S.eq.acc1||S.eq.acc2):S.eq[it.slot]||{val:1e9})?' worse':''}" data-tip="${it.id}" ${extra}>${icon(it)}${it.locked?`<i class="lockstar" title="Locked gear" aria-label="Locked">&#9733;</i>`:''}${it.r?`<i class="rf">+${it.r}</i>`:''}</div>`;
+const weakerGear=it=>{const worn=it&&it.slot&&(it.slot==='acc'?(S.eq.acc1||S.eq.acc2):S.eq[it.slot]);return worn&&ev(it)<ev(worn)?worn:null};
+const cell=(it,sel,extra='')=>`<div class="cell b${dtier(it)}${it&&+it.sec>=4?' nm':''}${sel?' sel':''}${weakerGear(it)?' worse':''}" data-tip="${it.id}" ${extra}>${icon(it)}${it.locked?`<i class="lockstar" title="Locked gear" aria-label="Locked">&#9733;</i>`:''}${it.r?`<i class="rf">+${it.r}</i>`:''}</div>`;
 function itemMain(it){
+  const worn=weakerGear(it);
   if(it.card)return`<b class="r${GI[it.g]}">${it.n}</b><div>${GRADE[it.g]} card &middot; <b>${SU(it.stat)} +${it.v}</b></div><div><small>Fits: ${CFL[CFIT[it.stat]]} only</small></div>`;
   // v74: the class tier of a piece is part of its description, and a piece that came off a class
   // remembers who was wearing it so the lock is never a mystery: "it is locked BECAUSE Knight had
@@ -3628,7 +3630,7 @@ function itemMain(it){
   <div><small>Worn by: <b>${gearUserOf(it)}</b></small></div>
   <div><small>Gear Lv ${gearRefLevel(it)} &middot; reference only: gear is gated by class tier, never by Base Lv</small></div>${it.locked?`<div><small class="r3">&#9733; Locked &middot; protected from auto-sell</small></div>`:''}
   ${canUse(it)?'':`<div><small class="r0">${whyNot(it)}${it.wearer?` This was ${it.wearer}'s gear - it goes straight back on when you switch to ${it.wearer} again.`:''}</small></div>`}
-  <div><b>${SLOTS[it.slot].stat} +${ev(it)}</b>${it.r?` <small>(base ${it.val})</small>`:''}</div>${it.slot&&ev(it)<ev(it.slot==='acc'?(S.eq.acc1||S.eq.acc2):S.eq[it.slot]||{val:1e9})?`<div><small class="r0">Weaker than the ${SLOTS[it.slot].label.toLowerCase()} you are wearing (${SLOTS[it.slot].stat} +${ev(it.slot==='acc'?(S.eq.acc1||S.eq.acc2):S.eq[it.slot])}) - sell it, or keep it for a set you are still building.</small></div>`:''}${(it.aff||[]).length?`<div class="sec">Affixes <small>(${it.aff.length} random)</small></div>`:''}${(it.aff||[]).map(a=>`<div class="r1">&#9670; ${affTxt(a)}</div>`).join('')}`}
+  <div><b>${SLOTS[it.slot].stat} +${ev(it)}</b>${it.r?` <small>(base ${it.val})</small>`:''}</div>${worn?`<div><small class="r0">Weaker than the ${SLOTS[it.slot].label.toLowerCase()} you are wearing (${SLOTS[it.slot].stat} +${ev(worn)}) - sell it, or keep it for a set you are still building.</small></div>`:''}${(it.aff||[]).length?`<div class="sec">Affixes <small>(${it.aff.length} random)</small></div>`:''}${(it.aff||[]).map(a=>`<div class="r1">&#9670; ${affTxt(a)}</div>`).join('')}`}
 function itemDetail(it){if(it.card)return itemMain(it);const cs=it.cards||[];return itemMain(it)+Array.from({length:it.slots||0},(_,i)=>`<div><small>${cs[i]?'&#9670; '+cardTxt(cs[i]):'&#9671; empty card slot'}</small></div>`).join('')}
 const cardSlots=(it,k)=>Array.from({length:it.slots||0},(_,i)=>{const c=(it.cards||[])[i];return c?`<div><small class="r${GI[c.g]}">&#9670; ${cardTxt(c)}</small> <button data-a="unsock" data-v="${k}:${i}">Remove ${200*(c.g+1)}z</button></div>`:'<div><small>&#9671; empty slot</small></div>'}).join('');
 const tnode=n=>{const c=CLASSES[n],pj=S.jobs[n],cur=n===S.cls,blk=classBlock(n);return`<div class="tn ${cur?'cur':blk?(pj?'played':'lock'):'ok'}${selK===n?' pick':''}" data-a="selk" data-v="${n}"><b>${n}</b><small>${pj?`Job ${pj.jl}/${c.mj}`:'Lv '+c.rj+' req'}</small></div>`};

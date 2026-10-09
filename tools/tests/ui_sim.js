@@ -56,6 +56,7 @@ const code = [
   pick(/const WICON=\{[^}]*\},ORE=\{[^}]*\},SECN=\[[^\]]*\];/, 'WICON/ORE/SECN'),
   pick(/const gearRefLevel=it=>[^;]+;/, 'gear reference level'),
   pick(/const sellVal=it=>[^;]+;/, 'sell value'),
+  pick(/const weakerGear=[^\n]*/, 'worn gear comparison'),
   pick(/const cell=\(it,sel,extra=''\)=>[^\n]*/, 'cell'),
   pick(/const STATS=\[[\s\S]*?\];/, 'STATS'),
   pick(/const SKILL_ICON=\{[^}]*\};/, 'per-skill pictogram map'),
@@ -67,7 +68,7 @@ const code = [
   pick(/const crit=\(\)=>[^\n]*/, 'crit/flee/missCh'),
   pick(/const def=\(\)=>[^\n]*/, 'def/mdef/critD/needAt/need/cost'),
   pick(/const totalPts=\(\)=>[^\n]*/, 'totalPts/rcost'),
-  grab('function playedClass(n){', 'function changeClass(n){'),
+  grab('function classRec(n){', '// ---------- UI ----------'),
   pick(/const dropTxt=[^;]+;/, 'dropTxt'),
   grab('function canShield(){', 'function ekey(it)'),
   grab('function slotAccepts(k,it){', 'function equipChooser(k){'),
@@ -118,7 +119,7 @@ const RAR=[{n:'Common',m:1,w:60},{n:'Fine',m:1.35,w:25},{n:'Rare',m:1.9,w:10},{n
 const RAR5={n:'N'},RAR6={n:'N+'},RARALL=RAR.concat([RAR5,RAR6]),rarIdx=it=>((it&&+it.sec>=5)?6:(it&&+it.sec>=4)?5:Math.max(0,Math.min(RAR.length-1,(it&&it.tier)||0))),rarOf=it=>(rarIdx(it)===6?RAR6:rarIdx(it)===5?RAR5:RAR[rarIdx(it)]),rarCls=it=>'r'+rarIdx(it);
 const PW=[[90,9,1,0],[80,17,3,0],[70,24,5.5,.5],[60,30,9,1],[50,35,13,2],[40,38,18,4],[30,40,24,6],[22,40,30,8],[12,38,38,12],[5,30,45,20]];
 const MAXST=99,ELITELV=100,Z0=-14;
-const statCap=()=>99,selK=null,gp=id=>S&&S.pets.find(x=>String(x.id)===String(id)),classRec=()=>null,tb={};
+const statCap=()=>99,selK=null,gp=id=>S&&S.pets.find(x=>String(x.id)===String(id)),tb={};
 let skinBroken=false,skinNote='';   // the Appearance panel's class-skin state (loaded with the game in the real page)
 const skCost=x=>x,skOff=id=>!!(S&&S.skOff&&S.skOff[id]);
 let petBuff={atk:0,matk:0,hp:0,leech:0,atkT:0,matkT:0,hpT:0,leechT:0},petBuffSrc={},petSkillCd={},petNote={};
@@ -132,8 +133,9 @@ const $=id=>({style:{},set innerHTML(v){globalThis['h_'+id]=v},get innerHTML(){r
 const dr=()=>1;
 ${code}
 const skpAvail=()=>5,skTree=()=>4,skEarnedMax=()=>9,skLine=()=>['Novice'],skEarned=()=>9,skSpent=()=>0,pv=()=>0,bon=()=>0,qTxt=q=>'quest';
-this.__u={ V, itemDetail, itemMain, SKILLS, SKILL_ICON, SKILL_TONE, SKILL_PICTO, skillIcon, logs, indexSectionOpen, indexToggleSection, set S(v){S=v}, get S(){return S}, set boardPeriod(v){boardPeriod=v}, set boardCache(v){boardCache=v}, set boardStatus(v){CLOUD.api=!!v.api;CLOUD.on=!!v.on}, set eqPick(v){eqPick=v}, get eqPick(){return eqPick},
+this.__u={ V, itemDetail, itemMain, changeClass, cell, SKILLS, SKILL_ICON, SKILL_TONE, SKILL_PICTO, skillIcon, logs, indexSectionOpen, indexToggleSection, set S(v){S=v}, get S(){return S}, set boardPeriod(v){boardPeriod=v}, set boardCache(v){boardCache=v}, set boardStatus(v){CLOUD.api=!!v.api;CLOUD.on=!!v.on}, set eqPick(v){eqPick=v}, get eqPick(){return eqPick},
            set indexMode(v){indexMode=v}, get indexMode(){return indexMode}, set mapM(v){mapM=v}, set mapL(v){mapL=v}, set selE(v){selE=v}, get selE(){return selE}, set selB(v){selB=v}, get selB(){return selB}, set selS(v){selS=v}, set selP(v){selP=v} };
+const addFloat=()=>{},pl={x:0,z:0};
 const log=(m,c,k)=>{logs.push(m)},ui=()=>{},save=()=>{};   // the Black Market's writes (stubs here)
 this.__bm={buyOre,reforge,reforgeCost,bmOpen,refCost,refOre,qpSide,tabs,setSide:v=>{sideOpen=v}};
 `;
@@ -152,6 +154,45 @@ const mkS = (cls) => ({
   eq: { head: null, weapon: sword, armor, off: null, acc1: ring, leg: null, acc2: null },
   inv: [armor, ring, { id: 9, name: 'Broad Sword', tier: 2, slot: 'weapon', wt: 'sword', val: 70, r: 0, sec: 1, cards: [] }], cards: [card], pets: [], ore: { ori: 2, elu: 1 }, prog: [1, 1, 1, 10, 10, 5, 3, 1, 1, 1],
   q: [], kills_: 0, buff: 0, auto: true, feed: true, clickSell: false, autoSell: [false, false, false, false, false], logOff: {}, refineScrolls: 0,
+});
+
+t('class switches leave bag, equipment and item details usable with empty slots', () => {
+  U.S = mkS('Lord Knight');
+  const gear = [
+    {...sword, sec:3}, {...armor, sec:3}, {...ring, sec:3},
+    {id:40,name:'Boots',slot:'leg',sec:3,tier:2,val:20,cards:[]},
+  ];
+  U.S.inv=[];
+  U.S.eq={weapon:gear[0],armor:gear[1],acc1:gear[2],acc2:null,leg:gear[3],head:null,off:null};
+  U.changeClass('Novice');
+  assert.strictEqual(U.S.inv.length,4);
+  for(const it of gear){
+    assert.ok(!U.cell(it,false).includes(' worse'), 'empty slots do not make gear weaker');
+    assert.ok(!U.itemDetail(it).includes('Weaker than'), 'empty slots have no worn comparison');
+    U.selB=it.id;
+    assert.ok(!/undefined|NaN/.test(U.V.bag()));
+  }
+  for(const slot of Object.keys(U.S.eq)){
+    U.selE=slot; U.eqPick=slot;
+    assert.ok(!/undefined|NaN/.test(U.V.equip()));
+    assert.ok(!/undefined|NaN/.test(U.V.bag()));
+  }
+  U.eqPick=null;
+  U.changeClass('Lord Knight');
+  assert.strictEqual(U.S.inv.length,0,'return restores the original gear');
+  for(const it of gear)assert.ok(Object.values(U.S.eq).includes(it));
+});
+
+t('weaker comparisons require an occupied matching slot, including accessories', () => {
+  U.S=mkS('Knight');
+  for(const it of [sword,armor,ring]){
+    const weaker={...it,id:80,val:1,r:0};
+    assert.ok(U.cell(weaker,false).includes(' worse'));
+    assert.ok(U.itemDetail(weaker).includes('Weaker than'));
+    assert.ok(!U.cell(it,false).includes(' worse'));
+  }
+  U.S.eq.acc2=U.S.eq.acc1; U.S.eq.acc1=null;
+  assert.ok(U.itemDetail({...ring,val:1}).includes('Weaker than'),'second accessory is compared when first is empty');
 });
 
 t('the map panel renders every map and field', () => {
