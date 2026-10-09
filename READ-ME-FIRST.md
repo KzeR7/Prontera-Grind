@@ -111,6 +111,12 @@ rate (right). What had never been touched was the class **art**, which is the pa
   land on the pose that made them. The drawn swing is up to 10% shorter than v88's.
 * **To see it:** fight anything on any map — fastest on a high-AGI Assassin Cross, which was the worst
   case. `python3 tools/preview_server.py 8000` → `/`.
+* **Getting there fast (the GM tab):** open **`/gmsetup`**, type any password, then log in as `GM` with
+  it — the page writes the game's own `gmHash` of it into your browser's `pg_gm_local` (the v61 local
+  GM door) and bakes in no secret of its own. Or, on the game page:
+  `localStorage.setItem('pg_gm_local', gmHash('test1234'))`, reload, log in as `GM` / `test1234`.
+  In the GM tab, **Unlock Nightmare** jumps you to Base 150 with every map open; spend the points on
+  **AGI** and you are on the fast-attack build where the drift used to show.
 * **Tests:** **new** `node tools/tests/attack_sync_sim.js` (8 — runs the shipped `swingLength` /
   `skinSwingMs` and sweeps 1,075 attack-rate × animation-length combinations), and a new step in
   `node tools/tests/field_loop_smoke.js` (9/9) that counts attacks vs drawn slashes vs damage numbers

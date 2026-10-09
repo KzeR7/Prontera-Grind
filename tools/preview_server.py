@@ -49,7 +49,9 @@ PAGES = {'/': _root_page,
          '/proposal': 'tools/weapon_proposal.html',
          '/review': 'tools/weapon_review.html',
          '/standalone': 'tools/weapon_review_standalone.html',
-         '/picker': 'tools/sprite_picker.html'}
+         '/picker': 'tools/sprite_picker.html',
+         # the local GM door, without devtools (dev only - tools/ is in .assetsignore)
+         '/gmsetup': 'tools/gm_setup.html'}
 
 
 class Handler(http.server.SimpleHTTPRequestHandler):
@@ -103,6 +105,6 @@ class Handler(http.server.SimpleHTTPRequestHandler):
 if __name__ == '__main__':
     port = int(sys.argv[1]) if len(sys.argv) > 1 else int(os.environ.get('PORT', '8000'))
     handler = functools.partial(Handler, directory=ROOT)
-    print('serving %s on 0.0.0.0:%d   ( / game, /weapons proposal, /picker pose picker )'
+    print('serving %s on 0.0.0.0:%d   ( / game, /gmsetup local GM, /weapons proposal, /picker pose picker )'
           % (ROOT, port), file=sys.stderr, flush=True)
     http.server.ThreadingHTTPServer(('0.0.0.0', port), handler).serve_forever()

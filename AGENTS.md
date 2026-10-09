@@ -6173,6 +6173,18 @@ The owner's second pass over v77, six notes, all built.
   `swingLength`'s old shape); build-tag mirrors (`Updates/cards-gear-audit/affix-ranges.html` x2,
   `equipment-cards-tuning.html` refreshed with `drop_card_sheet_sim.js --refresh-snapshot`,
   `tools/cloudflare-deploy-steps.md`); `READ-ME-FIRST.md` (a v88.8 section above v88.7); this log.
+* **Testing it (follow-up, owner: "i cant test at the preview as i dont have gm tools"):** **new**
+  `tools/gm_setup.html` on the preview route **`/gmsetup`** - type any password and it writes the
+  game's own `gmHash` of it into that browser's `pg_gm_local` (the v61 local GM door), so logging in
+  as `GM` works without devtools. It bakes in no password and no hash: it lifts `hashPw()` and
+  `GM_ROUNDS` out of the served `index.html` the way `tools/make_gm_hash.js` does, and it fails
+  loudly and writes nothing if it cannot read the game. `tools/` is in `.assetsignore`, so the page
+  can never reach a deployed site. **New** `tools/tests/gm_setup_sim.js` (5) boots the page in jsdom
+  behind the real `index.html`, checks the stored value against the game's real `gmOk()`, and pins
+  "no secret in the page". Route registered in `tools/preview_server.py`; row added to
+  `TOOLS-START-HERE.md`. Verified on this build in jsdom: `gmOk('test1234')` true / wrong password
+  false, login as `GM` sets `S.gm`, the GM tab reaches the dock, and the tab's own actions run
+  (`gml` Lv 1 -> 11 +40 points, `gmnm` Lv 150 with all ten maps at stage 10).
 * **Art:** none. No sheets added, removed or rebuilt; the APNG files and their delays are untouched -
   only WHEN each frame is shown changed.
 * **Tests:** all **42** `*_sim.js` suites exit 0 (1,307 counted assertions), plus `field_loop_smoke.js`
