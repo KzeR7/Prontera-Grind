@@ -102,7 +102,7 @@ Open the `*.pages.dev` address Cloudflare gives the project, and walk this list:
 | Check | Expected |
 |---|---|
 | The login card | says **“☁ Cloud accounts are on — register or sign in…”** |
-| Build tag at the bottom of the card | `2026-10-09 grind-v90 Flee/ATK/ASPD/CRIT nerfed on N and N+, refine costs 2x Zeny and rarity-scaled ore, Legendary pets cost 2x, new Black Market (Base Lv 100): buy ore and reforge affixes` |
+| Build tag at the bottom of the card | `2026-10-09 grind-v90.1 Nightmare Stages 14-15 back to the weapon walk on every map (N+ halving kept), Flee/ATK/ASPD/CRIT nerfed on N and N+, refine costs 2x Zeny and rarity-scaled ore, Legendary pets cost 2x, new Black Market (Base Lv 100): buy ore and reforge affixes` |
 | Register your own name | a dialog with a **recovery code** — copy it somewhere safe, it is shown once |
 | Play for a minute | the header badge goes `☁ …` → `☁ ✓` |
 | The same address in a second browser | sign in with the same name and password → **the same character loads** |

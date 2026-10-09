@@ -6101,3 +6101,16 @@ The owner's second pass over v77, six notes, all built.
   5. **Flee, ATK, ASPD and Crit % in sections 4/5 are the only changes to the affix nerf.** Max HP and Crit DMG are unchanged, and so are the N+ drop rates.
   6. The affix-range chart still covers sections 0-3 only, so it does not show the new N and N+ numbers. Those are documented in this entry and in `nmMulOf`.
   7. Verified in the jsdom and panel-render harnesses, not in a real browser (there is no browser in the sandbox).
+
+### 2026-10-09 — `2026-10-09 grind-v90.1 Nightmare Stages 14-15 back to the weapon walk on every map (N+ halving kept), Flee/ATK/ASPD/CRIT nerfed on N and N+, refine costs 2x Zeny and rarity-scaled ore, Legendary pets cost 2x, new Black Market (Base Lv 100): buy ore and reforge affixes`
+* **What changed for the player:**
+  * **Nightmare Stages 14 and 15 drop the way they did before v89, on every map.** The owner's answer to "for fairness, let's just remain the drop on stage 4 & 5" was **all maps, Nightmare Stage 14-15**. The v89 split that gave every mob the whole N+ weapon shelf is reverted. Each mob now carries **one weapon** from the shelf, and the shelf advances two weapons per stage, the same as Stages 1-13. The N+ **halving stays**: the weapon roll is still half the Nightmare table (Abyss 0.175% a kill, Prontera 0.25%), and the Stage 15 MVP pool is still half. The panel's gear line now reads "3 independent rolls" for those stages and lists each mob's weapon with its own share.
+  * Everything else in the v90 entry above is unchanged.
+* **Files touched:** `index.html` (`BUILD` grind-v90.1; `fieldOf()` gives the N+ rows the `WP[(2*(l-1)+j)%nw]` weapon walk again, with the `gch[0]` halved rate; the v89 comment is kept and marked as reverted); the build-tag mirrors `Updates/cards-gear-audit/affix-ranges.html` (x2), `Updates/cards-gear-audit/equipment-cards-tuning.html`, `tools/cloudflare-deploy-steps.md`; tests `tools/tests/gear_sim.js` (the v89 "every class on both stages" test is replaced by a v90 walk test that keeps the halving assertions), `tools/tests/ui_sim.js` (the v89 per-family panel test is replaced by a walk panel test: 0.42% total, 3 rolls, each weapon at most once per stage, Prontera N+ weapon 0.25%); `READ-ME-FIRST.md` (the v90 section marks request 1 as done); this log.
+* **Art:** none.
+* **Tests:** all **41** `*_sim.js` suites in `tools/tests/` exit 0 on this build, including `field_loop_smoke` and `save_owner_boot_smoke`. The drop-sheet snapshot (`equipment-cards-tuning.html`) still matches the live tables, so it did not need a refresh.
+* **Branches / PR:** `arena/4ce84185-prontera-grind`. No pull request was opened.
+* **Known limits / follow-ups:**
+  1. **The N+ rows on Stages 14-15 have one weapon per mob again,** so a class that only wants its weapon from a stage 15 boss still has to wait for the MVP pool. This is what the owner asked for. The MVP pool is still half its old size.
+  2. The Black Market prices from v90 are unchanged and are still a first guess (`BM_ORE`, `BM_REFORGE`, `BM_LV`).
+  3. Verified in the jsdom and panel-render harnesses, not in a real browser (there is no browser in the sandbox).

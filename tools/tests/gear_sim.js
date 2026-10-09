@@ -402,27 +402,29 @@ t('every field allocates a weapon first, and never lists an item twice (v79)', (
   }
 });
 
-t('N+ (stages 14-15, v89): every class weapon family drops from normal mobs on BOTH stages, equally', () => {
-  // v89 (owner): on Nightmare Stage 4 some classes' weapons were only on the Stage 5 MVP. Now every mob
-  // on stages 14 and 15 lists every weapon family on its map's N+ shelf, each at the same share, so no
-  // class needs the boss for its weapon. The stage's weapon chance is the old walk's total, halved.
+t('N+ (stages 14-15, v90): the weapon walk is back on every map, and the N+ halving stays', () => {
+  // v90 (owner: \"for fairness, let's just remain the drop on stage 4 & 5\"). v89 had every mob on stages 14-15
+  // list the whole N+ shelf; that split is reverted, so those stages walk the shelf exactly as stages 1-13 do:
+  // each mob carries ONE weapon, the weapon list advances two per stage, and the two mobs differ. The
+  // N+ halving (NMPLUS_DROP) is kept: the weapon chance is half the Nightmare table, and the MVP pool is half.
   const isW = T => !['armor', 'head', 'off', 'leg', 'acc'].includes(T.k);
   for (let m = 0; m < G.MAPS.length; m++) for (const l of [14, 15]) {
     const F = G.fieldOf(m, l), where = G.MAPS[m].n + ' N+ stage ' + l;
-    const shelf = G.gearPool(m, l).filter(isW).map(x => x.n).sort();
+    const weapons = G.gearPool(m, l).filter(isW);
     assert.strictEqual(F.sec, 5, where + ' must be section 5');
-    const wantEach = (m >= 5 ? G.FIELD_GEAR_MID_NM[0] : G.FIELD_GEAR_NM[0]) * G.NMPLUS_DROP / shelf.length;
-    const names = F.mobs.map(mob => mob.drops.filter(([T]) => isW(T)).map(([T]) => T.n).sort());
-    assert.deepStrictEqual(names[0], shelf, where + ': mob 0 must list the whole weapon shelf');
-    assert.deepStrictEqual(names[1], shelf, where + ': mob 1 must list the whole weapon shelf');
-    for (const mob of F.mobs) {
-      mob.drops.filter(([T]) => isW(T)).forEach(([T, ch]) => assert.ok(Math.abs(ch - wantEach) < 1e-3, where + ' ' + T.n + ' share ' + ch + ' != ' + wantEach));
+    const wantWeapon = (m >= 5 ? G.FIELD_GEAR_MID_NM[0] : G.FIELD_GEAR_NM[0]) * G.NMPLUS_DROP;
+    F.mobs.forEach((mob, j) => {
+      const weaponRolls = mob.drops.filter(([T]) => isW(T));
+      assert.strictEqual(weaponRolls.length, 1, where + ': one weapon roll per mob, not the whole shelf');
+      assert.strictEqual(weaponRolls[0][0].n, weapons[(2 * (l - 1) + j) % weapons.length].n, where + ' mob ' + j + ': the walk picks the weapon');
+      assert.ok(Math.abs(weaponRolls[0][1] - wantWeapon) < 1e-3, where + ': weapon rate ' + weaponRolls[0][1] + ' != ' + wantWeapon);
       const defensive = mob.drops.filter(([T]) => !isW(T));
       assert.strictEqual(defensive.length, 2, where + ': two armour/accessory rolls');
       assert.ok(defensive.every(([T]) => ['armor', 'head', 'off', 'leg', 'acc'].includes(T.k)), where + ': defensive rolls must be armour or accessories');
-    }
+    });
+    if (weapons.length > 1) assert.notStrictEqual(F.mobs[0].drops[0][0].n, F.mobs[1].drops[0][0].n, where + ': both mobs carry the same weapon');
   }
-  // the weapon chance per kill is the walk's total (one weapon chance per mob), not more and not less
+  // the weapon chance per kill is one walk roll at the halved rate, not more and not less
   const total = G.fieldOf(0, 14).mobs[0].drops.filter(([T]) => isW(T)).reduce((a, [, c]) => a + c, 0);
   assert.ok(Math.abs(total - G.FIELD_GEAR_NM[0] * G.NMPLUS_DROP) < 1e-3, 'Prontera N+ weapon chance is half the Nightmare table, got ' + total);
   // the MVP pool is halved as well (v89): 300 x .5 = 150 spread over the whole pool

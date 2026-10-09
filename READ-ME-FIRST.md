@@ -84,7 +84,7 @@ is the live one; with no argument the tool prints how to set a new one). Since v
 `GM` / `test1234`; `localStorage.removeItem('pg_gm_local')` removes it. Normal accounts are made
 in-game and stored in the browser (`pg_acc4`; saves under `pg_save3_<user>`).
 
-## BUILD v90 — Affix nerf on Flee/ATK/ASPD/CRIT, refine and Legendary pet costs up, Black Market for endgame Zeny (grind-v90)
+## BUILD v90 — Affix nerf on Flee/ATK/ASPD/CRIT, refine and Legendary pet costs up, Black Market for endgame Zeny (grind-v90, v90.1)
 
 Four owner requests in one build. Every number is a named constant or a single formula, so a later retune is one edit.
 
@@ -103,9 +103,11 @@ Four owner requests in one build. Every number is a named constant or a single f
     Armor and other non-weapon pieces never roll Crit DMG here, the same rule as drops.
 * **Why:** past Base Lv 100 the grind earns about **178,000z an hour** at power 99 (800 kills an hour), more on Nightmare, and
   the old sinks cost a few thousand to 20,000z. The Black Market turns that Zeny into ore and reforges.
-* **Open:** the owner's "for fairness, remain the drop on stage 4 & 5" request is **not** done. It needs confirming first,
-  because it could mean the Nightmare Abyss Stage 4/5 N+ weapon split or the Prontera Stage 4/5 drop. The Black Market
-  prices are a first guess (see the v90 entry in `AGENTS.md`). Reforges roll at quality 1, since gear does not store its quality.
+* **Fairness, stages 14-15 (grind-v90.1):** the owner's "for fairness, let's just remain the drop on stage 4 & 5" meant
+  **Nightmare Stages 14-15 on every map**. The v89 N+ weapon split is reverted: those stages walk the weapon shelf one
+  weapon per mob again (`fieldOf()`), and the N+ halving (`NMPLUS_DROP`) stays.
+* **Open:** the Black Market prices are a first guess (see the v90 entries in `AGENTS.md`). Reforges roll at quality 1,
+  since gear does not store its quality.
 
 ## BUILD v89 — Nightmare balance: Stage 5 harder, N+ drops halved and shared, N/N+ flat affixes lowered, pets -37% (grind-v89)
 

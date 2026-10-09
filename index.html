@@ -657,7 +657,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // script block, which is a SyntaxError - the game did not run on main at all. One line wins, and
 // it names both sides of this merge: the v38 balance patch (the weapon cut, the affix/card
 // give-back) and main's weapon-hold rendering work.
-const BUILD='2026-10-09 grind-v90 Flee/ATK/ASPD/CRIT nerfed on N and N+, refine costs 2x Zeny and rarity-scaled ore, Legendary pets cost 2x, new Black Market (Base Lv 100): buy ore and reforge affixes';   // shown on the login card - confirms which file you loaded
+const BUILD='2026-10-09 grind-v90.1 Nightmare Stages 14-15 back to the weapon walk on every map (N+ halving kept), Flee/ATK/ASPD/CRIT nerfed on N and N+, refine costs 2x Zeny and rarity-scaled ore, Legendary pets cost 2x, new Black Market (Base Lv 100): buy ore and reforge affixes';   // shown on the login card - confirms which file you loaded
 $('buildTag').textContent='build '+BUILD;
 
 // ---------- class tree: Novice -> 6 first jobs -> 6 second jobs -> 6 third jobs ----------
@@ -1650,13 +1650,12 @@ function fieldOf(m,l){const mp=MAPS[m],sec=secField(m,l),T=gearPool(m,l),n=T.len
   // pieces further along the shelf, so a map's whole list is farmable across its stages and the
   // panel says which stage carries which.
   const SLOTK=['armor','head','off','leg','acc'],WP=T.filter(x=>!SLOTK.includes(x.k)),DF=T.filter(x=>SLOTK.includes(x.k)),nw=WP.length,nd=DF.length;
-  // v89 (owner: "some classes drop N+ on stage 4 from normal mobs, others only from the stage 5 boss"):
-  // on the N+ rows (section 5) the weapon walk is replaced. Every mob on Stages 4 and 5 lists EVERY
-  // weapon family on its map's N+ shelf, each at an equal share of the stage's weapon chance, so every
-  // class reaches its own weapon from normal mobs on both stages and the MVP is never the only route.
-  // The stage total is the same as the walk's (one weapon chance per mob), just split evenly.
+  // v89 split the N+ rows (section 5, Nightmare Stages 14-15 on every map) so every mob listed every
+  // weapon family. v90 (owner: "for fairness, let's just remain the drop on stage 4 & 5") puts the walk
+  // back on those stages: each mob carries ONE weapon from the shelf, as stages 1-13 do. The N+ halving
+  // (NMPLUS_DROP, in gch and in the boss pool) stays.
   const mobs=[0,1].map(j=>{const mm=mp.mobs[(l-1+j)%mp.mobs.length],cg=l<=3?0:l<=7?1:2,
-    wr=sec===5?WP.map(w=>[w,gch[0]/nw]):[[WP[(2*(l-1)+j)%nw],gch[0]]];
+    wr=[[WP[(2*(l-1)+j)%nw],gch[0]]];   // v90 (owner): the N+ rows walk the shelf again (see the note above); the halved gch[0] is the N+ rate
     return{...mm,tier:ft,drops:[...wr,[DF[(4*(l-1)+j*2)%nd],gch[1]],[DF[(4*(l-1)+j*2+1)%nd],gch[2]]],card:{n:mm.n+' Card',stat:cardStat(cg,(m*10+l+j)*3+1),g:cg},cardCh:.15,ore:true,oreCh:l>10?.015:l===10?.01:.005}});
   return{m,l,sec,tier:ft,gearSet,mobs,boss:(l===10||l===15)?{...mp.boss,tier:ft,
     // v57: the boss still lists its whole pool - every item stays obtainable - but the pool now
