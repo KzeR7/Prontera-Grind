@@ -102,7 +102,7 @@ Open the `*.pages.dev` address Cloudflare gives the project, and walk this list:
 | Check | Expected |
 |---|---|
 | The login card | says **“☁ Cloud accounts are on — register or sign in…”** |
-| Build tag at the bottom of the card | `2026-10-09 grind-v88.3 a sign-in now shows a Signing in line while it waits, and gives up with a message after 20 seconds instead of sitting silent` |
+| Build tag at the bottom of the card | `2026-10-09 grind-v88.4 a tab playing one account can no longer save over another account on the same browser` |
 | Register your own name | a dialog with a **recovery code** — copy it somewhere safe, it is shown once |
 | Play for a minute | the header badge goes `☁ …` → `☁ ✓` |
 | The same address in a second browser | sign in with the same name and password → **the same character loads** |

@@ -84,6 +84,19 @@ is the live one; with no argument the tool prints how to set a new one). Since v
 `GM` / `test1234`; `localStorage.removeItem('pg_gm_local')` removes it. Normal accounts are made
 in-game and stored in the browser (`pg_acc4`; saves under `pg_save3_<user>`).
 
+## BUILD v88.4 — a save from one account can no longer land on another (grind-v88.4)
+
+A player reported: after playing the GM account, logging into a second account showed the second
+name with the GM character and its gameplay. Reproduced with two accounts and one browser session: a
+save from the first account, sent while the cookie already belonged to the second, was accepted by
+the server and replaced the second account's save.
+
+* **What you will notice:** nothing on a normal login. If a tab is still playing one account while the
+  browser has signed in as another, that tab stops syncing and says so on the card. Nothing from it
+  is uploaded and nothing from the other account is applied to it. The local copy is kept.
+* **To see it:** `node tools/tests/api_sim.js` (the stale-tab and owner cases fail on the previous
+  save.js) and `node tools/tests/cloud_sim.js` (the owner cases fail on the previous index.html).
+
 ## BUILD v88.3 — the login card answers while it waits (grind-v88.3)
 
 A player reported: type the password, click Login, and nothing happens. Checked the real login card

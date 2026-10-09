@@ -5897,3 +5897,41 @@ The owner's second pass over v77, six notes, all built.
 * **Branches / PR:** committed to `arena/f15fe482-prontera-grind`; no PR opened.
 * **Known limits / follow-ups:** the 20-second limit is a judgement call; change `AUTH_TIMEOUT_MS` if the
   real server is slower. The server was not measured on Cloudflare, only locally.
+
+### 2026-10-09 — `2026-10-09 grind-v88.4 a tab playing one account can no longer save over another account on the same browser`
+* **What changed for the player:** a browser holds one login cookie that every tab shares. If one tab was
+  playing the GM account and another tab then signed in as a second account, the first tab could save
+  its character over the second account's save. The second account then showed the GM's character and
+  progress. Now the server refuses a save that does not belong to the account the cookie is signed in
+  as, and the game stops syncing in that tab instead of overwriting anything. The tab says so on the
+  login card. Nothing is uploaded from that tab, and nothing from the other account is applied to it.
+* **Checked, not assumed:** with the dev server, one cookie and two accounts: the GM account saved a
+  character; the second account signed in and saved its own; then a save from the GM tab was sent with
+  the second account's cookie. Before this change the server accepted it (version went 1 to 2) and the
+  second account's save became the GM character. After it, that save is refused with a 409 and the
+  second account's save is unchanged.
+* **Root cause:** `functions/api/save.js` checked only the save version, never which account the save
+  belongs to. The client also never sent the account name, and it did not check the account on sign-in
+  or when it pulled gifts.
+* **Fix:** every save write must name its account (`owner`). A write without one gets a 400 asking the
+  page to reload. A write for another account gets a 409 with `accountMismatch`. Both reads (`GET
+  /api/save` and `GET /api/grants`) return the owner. The client stops sync on a mismatch, and checks
+  the owner before it adopts a save on sign-in, before it applies gifts, and in the refresh check.
+* **Not changed:** a new tab still signs out the cookie session that the other tab uses (the page-load
+  check in `cloudProbe`). Such a tab is now refused by the server until it signs in again, instead of
+  overwriting another account's save.
+* **Files touched:** `functions/api/save.js`, `functions/api/grants.js`, `index.html` (`cloudPush`,
+  `cloudAccountMismatch`, `cloudOwnedBy`, `cloudJoin`, `cloudRefresh`, `cloudPull`,
+  `initSessionFromCloud`; `BUILD` grind-v88.4); `tools/tests/api_sim.js` (the test PUT now sends the
+  owner; two new cases: a stale tab is refused, and an owner is required); `tools/tests/cloud_sim.js`
+  (four new cases); `tools/tests/leaderboard_sim.js` and `tools/tests/dev_server_sim.js` (their PUTs now
+  send the owner); build-tag mirrors (`affix-ranges.html` x2, `equipment-cards-tuning.html`,
+  `tools/cloudflare-deploy-steps.md`); `READ-ME-FIRST.md` (a v88.4 section above v88.3); this log.
+* **Art:** none.
+* **Tests:** all 40 `*_sim.js` suites exit 0 on this build; `field_loop_smoke` 7/7 (jsdom and three
+  available). `api_sim` 36/36 (its two new cases fail on the previous save.js). `cloud_sim` 40/40 (three
+  of its four new cases fail on the previous index.html; the fourth, that a matching owner still gets
+  its gifts, passes on both, so the guard does not block the normal case).
+* **Branches / PR:** committed to `arena/f15fe482-prontera-grind`; no PR opened. Not deployed.
+* **Known limits / follow-ups:** the server side needs the Cloudflare deploy to take effect; nothing
+  here is live until that is done and checked on the real site.

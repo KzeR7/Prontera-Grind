@@ -18,7 +18,7 @@ export const onRequestGet = guard(async ({ request, env }) => {
   const user = await currentUser(request, env.DB);
   if (!user) return fail('Not logged in.', 401);
   const rows = await db.pendingGrants(env.DB, user.id);
-  return json({ grants: rows.results.map(shape) });
+  return json({ grants: rows.results.map(shape), owner: user.username });
 });
 
 export const onRequestPost = guard(async ({ request, env }) => {

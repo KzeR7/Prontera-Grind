@@ -647,7 +647,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // script block, which is a SyntaxError - the game did not run on main at all. One line wins, and
 // it names both sides of this merge: the v38 balance patch (the weapon cut, the affix/card
 // give-back) and main's weapon-hold rendering work.
-const BUILD='2026-10-09 grind-v88.3 a sign-in now shows a Signing in line while it waits, and gives up with a message after 20 seconds instead of sitting silent';   // shown on the login card - confirms which file you loaded
+const BUILD='2026-10-09 grind-v88.4 a tab playing one account can no longer save over another account on the same browser';   // shown on the login card - confirms which file you loaded
 $('buildTag').textContent='build '+BUILD;
 
 // ---------- class tree: Novice -> 6 first jobs -> 6 second jobs -> 6 third jobs ----------
@@ -2148,8 +2148,10 @@ async function cloudPush(push){
   if(CLOUD.pushing)return 'idle';
   CLOUD.pushing=true;cloudBadge('☁ ⇅','Syncing…');
   try{
-    const r=await cloudFetch('/save',{method:'PUT',body:JSON.stringify({version:CLOUD.ver,blob:JSON.stringify(S),savedAt:Date.now(),offlineClaimId:S.offlineClaimId||null})});
-    if(r.status===409){const c=await r.json();cloudBadge('☁ ⚠','Two saves - choose which to keep');cloudConflict(c);return 'conflict'}
+    const r=await cloudFetch('/save',{method:'PUT',body:JSON.stringify({version:CLOUD.ver,owner:CLOUD.user,blob:JSON.stringify(S),savedAt:Date.now(),offlineClaimId:S.offlineClaimId||null})});
+    if(r.status===409){const c=await r.json();
+      if(c.accountMismatch){cloudAccountMismatch(c.owner);return 'idle'}
+      cloudBadge('☁ ⚠','Two saves - choose which to keep');cloudConflict(c);return 'conflict'}
     if(r.status===428){const d=await r.json().catch(()=>({}));if(d.offlineClaim){applyOfflineProgress(Date.now(),d.offlineClaim);CLOUD.dirty=true;setTimeout(()=>cloudPush(true),0);return 'offline-claim'}throw new Error(d.err||'A server-timed offline claim is required.')}
     if(!r.ok)throw new Error('HTTP '+r.status);
     const d=await r.json();CLOUD.ver=d.version;CLOUD.dirty=false;CLOUD.lastPush=Date.now();CLOUD.offline=false;
@@ -2163,6 +2165,18 @@ async function cloudPush(push){
     return 'offline';
   }finally{CLOUD.pushing=false}
 }
+// The session cookie is shared by every tab of the site. If another tab (or a sign-in on this device)
+// has put a different account in it, this tab must stop syncing: it keeps its own character on this
+// device, and nothing from it is uploaded or applied to the other account. The server refuses such
+// writes too (functions/api/save.js); this is the message and the stop.
+function cloudAccountMismatch(other){
+  CLOUD.paused=true;
+  cloudBadge('☁ ⛔','Sync stopped: signed in as '+(other||'another account')+' in another tab');
+  cloudSay('This tab is playing '+CLOUD.user+', but this browser is now signed in as '+(other||'another account')+' in another tab. Nothing from this tab was uploaded, and your local copy is kept. Reload this tab and log in as '+CLOUD.user+' to keep syncing.','r0');
+}
+// Does a save or gift list returned by the server belong to `name`? A server that sends no owner is
+// the older one, and is trusted as before.
+const cloudOwnedBy=(data,name)=>!data||!data.owner||String(data.owner).toLowerCase()===String(name||'').toLowerCase();
 function cloudFlush(){return cloudPush(false)}
 function cloudFlushNow(){return cloudPush(true)}
 
@@ -2205,6 +2219,7 @@ async function cloudJoin(u,localBlob){
   let data=null;
   try{const r=await cloudFetch('/save');if(r.ok)data=await r.json()}
   catch(e){cloudBadge('☁ ✕','Offline - playing from this device');return}
+  if(!cloudOwnedBy(data,u)){cloudAccountMismatch(data.owner);return}
   if(!data||!data.blob){CLOUD.ver=0;CLOUD.dirty=true;if(data&&data.offlineClaim)applyOfflineProgress(Date.now(),data.offlineClaim);await cloudPush(true);return}
   if(data.blob===localBlob){CLOUD.ver=data.version;CLOUD.dirty=false;cloudBadge('☁ ✓','In sync · v'+data.version);
     if(data.offlineClaim){applyOfflineProgress(Date.now(),data.offlineClaim);await cloudPush(true)}return}
@@ -2218,6 +2233,7 @@ async function cloudRefresh(){
   let data=null;
   try{const r=await cloudFetch('/save');if(r.ok)data=await r.json()}
   catch(e){cloudBadge('☁ ✕','Offline - progress is safe on this device');return}
+  if(!cloudOwnedBy(data,CLOUD.user)){cloudAccountMismatch(data.owner);return}
   if(!data||!data.blob)return;
   const local=localStorage.getItem(saveKeyFor(currentUser));
   if(data.blob===local){CLOUD.ver=data.version;CLOUD.dirty=false;
@@ -2234,7 +2250,10 @@ async function cloudRefresh(){
 // overwrite what is being played. Called at login and every few minutes after it.
 async function cloudPull(){
   if(!CLOUD.on||CLOUD.paused)return;
-  try{const g=await (await cloudFetch('/grants')).json();if(g.grants&&g.grants.length)cloudApplyGrants(g.grants)}catch(e){}
+  try{const g=await (await cloudFetch('/grants')).json();
+    // another account's gifts are never applied to this tab's character
+    if(!cloudOwnedBy(g,CLOUD.user)){cloudAccountMismatch(g.owner);return}
+    if(g.grants&&g.grants.length)cloudApplyGrants(g.grants)}catch(e){}
   try{
     const m=await (await cloudFetch('/messages')).json();
     if(m.messages&&m.messages.length){
@@ -2327,6 +2346,7 @@ async function initSessionFromCloud(u,gm,isNew){
   }else{
     let data=null;
     try{const r=await cloudFetch('/save');if(r.ok)data=await r.json()}catch(e){}
+    if(!cloudOwnedBy(data,u))data=null;        // the cookie is someone else's: nothing of theirs is applied
     if(data&&data.blob){                       // a new device: the cloud has the character
       lsPut(saveKeyFor(u),data.blob);
       cloudStart(u,gm);CLOUD.ver=data.version;CLOUD.dirty=false;

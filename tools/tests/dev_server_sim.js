@@ -96,7 +96,7 @@ try {
   });
 
   await t('a save round-trips through the server, and the leaderboard columns come back derived', async () => {
-    const put = await call('friend', 'PUT', '/api/save', { version: 0, blob: save(17), savedAt: Date.now() });
+    const put = await call('friend', 'PUT', '/api/save', { owner: 'friend', version: 0, blob: save(17), savedAt: Date.now() });
     assert.strictEqual(put.status, 200);
     assert.strictEqual(put.data.version, 1);
     const get = await call('friend', 'GET', '/api/save');
@@ -115,7 +115,7 @@ try {
   });
 
   await t('a stale version is refused with 409 and the server copy, never a silent loss', async () => {
-    const r = await call('friend', 'PUT', '/api/save', { version: 0, blob: save(99), savedAt: Date.now() });
+    const r = await call('friend', 'PUT', '/api/save', { owner: 'friend', version: 0, blob: save(99), savedAt: Date.now() });
     assert.strictEqual(r.status, 409);
     assert.strictEqual(JSON.parse(r.data.blob).lv, 17, 'the client needs the server copy to offer a choice');
   });
@@ -125,7 +125,7 @@ try {
     assert.strictEqual(all.status, 200);
     assert.deepStrictEqual([all.data.entries[0].name, all.data.entries[0].level, all.data.entries[0].kills], ['Friend', 17, 17]);
     assert.strictEqual((await call('anon', 'GET', '/api/board?period=daily')).status, 401);
-    const put = await call('friend', 'PUT', '/api/save', { version: 1, blob: save(22), savedAt: Date.now() });
+    const put = await call('friend', 'PUT', '/api/save', { owner: 'friend', version: 1, blob: save(22), savedAt: Date.now() });
     assert.strictEqual(put.status, 200);
     const day = await call('friend', 'GET', '/api/board?period=daily');
     assert.deepStrictEqual([day.data.entries[0].name, day.data.entries[0].kills], ['Friend', 5]);
