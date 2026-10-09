@@ -86,7 +86,7 @@ in-game and stored in the browser (`pg_acc4`; saves under `pg_save3_<user>`).
 
 ## BUILD v90.10 — Nightmare tiers, round 6 (grind-v90.10)
 
-The owner confirmed the tier split and the gates (Nightmare Prontera to Payon at Base Lv 120, Comodo onward at Base Lv 140). Still open: what "jump" means, whether N+ gear follows the tier, and whether Abyss Normal's gear is a reason to farm it (see the AGENTS.md entry).
+The owner confirmed the tier split and the gates (Nightmare Prontera to Payon at Base Lv 120, Comodo onward at Base Lv 140). Owner's decisions: "jump" is a gear check (players need better gear to farm the jump map); all Nightmare stages drop Nightmare gear, N from Nightmare Prontera to Payon and N+ from Nightmare Comodo to Abyss. Not yet measured: whether Abyss Normal gear is actually too weak for Nightmare Prontera Stage 11 (see the AGENTS.md entry).
 
 * **Tiers:** two tiers of five maps. Tier 1 is Nightmare Prontera to Payon (maps 0-4, Base Lv 120, N gear). Tier 2 is Nightmare Comodo to Abyss (maps 5-9, Base Lv 140, N+ gear). Each Nightmare stage is 11-15.
 * **Power:** tier 1 starts at 130 and tier 2 at 160. Abyss Stage 15 is 180. The step from Abyss normal (99) to tier 1 is about 31%. The step from tier 1 to tier 2 is about 7%.
