@@ -102,7 +102,7 @@ Open the `*.pages.dev` address Cloudflare gives the project, and walk this list:
 | Check | Expected |
 |---|---|
 | The login card | says **“☁ Cloud accounts are on — register or sign in…”** |
-| Build tag at the bottom of the card | `2026-10-09 grind-v88.6 every save now records whose it is, and a save belonging to another account is refused on load and on write` |
+| Build tag at the bottom of the card | `2026-10-09 grind-v88.7 damage numbers retuned to the new strip-B pick: 20px/32px digits, a 1.15s life, the fade from 75%, a x1.5 punch` |
 | Register your own name | a dialog with a **recovery code** — copy it somewhere safe, it is shown once |
 | Play for a minute | the header badge goes `☁ …` → `☁ ✓` |
 | The same address in a second browser | sign in with the same name and password → **the same character loads** |

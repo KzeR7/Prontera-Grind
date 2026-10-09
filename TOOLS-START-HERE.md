@@ -34,6 +34,7 @@ that case honestly; the pages may not).
 | What does the hero look like, wearing *this* class, walking and attacking? | `/weapons` → proposal page (animated), or `/picker` for pose/head editing |
 | What does a skill's battlefield effect look like, cast on demand? | `/skillfx` → the skill-effect sprite preview (all active skills, slow-mo, loop, play-all) |
 | What do the damage numbers look like, and how do I change them? | `/damage` → the damage-floats tuner; hand back with **📋 Copy my selection** (see `Updates/damage-floats-proposal/README.md`) |
+| What did the numbers look like *before* this tuning, side by side? | `/tmp/venv/bin/python tools/render_float_volley.py` → `Updates/damage-floats-proposal/volley-before-after-v74.png` (two tunings, from the game's own motion maths — no browser needed) |
 | The critical frame looks wrong / not like the proposal | `/crit` → the two frames side by side, live (see the v71 section of `READ-ME-FIRST.md` for the cause) |
 | Where does a weapon sit in the hand for each attack frame? | `/review` (older, per-frame tiles) |
 | Which map layout does stage N build? | `node tools/preview/dump_plans.js /tmp/plans.json 10` then `/tmp/venv/bin/python tools/preview/render_plans.py /tmp/plans.json /tmp/out` |
