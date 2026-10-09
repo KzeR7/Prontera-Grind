@@ -84,7 +84,7 @@ is the live one; with no argument the tool prints how to set a new one). Since v
 `GM` / `test1234`; `localStorage.removeItem('pg_gm_local')` removes it. Normal accounts are made
 in-game and stored in the browser (`pg_acc4`; saves under `pg_save3_<user>`).
 
-## BUILD v90 — Affix nerf on Flee/ATK/ASPD/CRIT, refine and Legendary pet costs up, Black Market for endgame Zeny (grind-v90, v90.1)
+## BUILD v90 — Affix nerf on Flee/ATK/ASPD/CRIT, refine and Legendary pet costs up, Black Market for endgame Zeny (grind-v90, v90.1, v90.2)
 
 Four owner requests in one build. Every number is a named constant or a single formula, so a later retune is one edit.
 
@@ -93,7 +93,7 @@ Four owner requests in one build. Every number is a named constant or a single f
   44 → **38**, N Flee 39 → **33**, N+ ATK 66 → **55**, N+ ASPD 50 → **41**, N+ Crit 27 → **22**. STR, AGI, DEX, LUK, INT,
   Max HP and Crit DMG keep their v89 numbers.
 * **Refining costs more.** Zeny per step is `400 × (level + 1) × (1 + section × 0.5)` (was 200). Ore per attempt is
-  `refOre()`: **1** for Common and Fine, **2** for Rare and Epic, **3** for Legendary and N, **4** for N+ (was 1 for all).
+  `refOre()` (`REF_ORE`): **1** for Common and Fine, **2** for Rare and Epic, **5** for Legendary, **5** for Legendary and **10** for N and N+ (v90.2; was 1 for all).
 * **Legendary pets cost 2×** (`r === 3` only): mutation roll **20,000z**, skill gacha **16,000z**, upgrade steps doubled
   (`peqCostOf(p, t)`, the pet panel and the upgrade action both read it). Common, Rare and Epic pets are unchanged.
 * **New Black Market tab (key `X`, 🏪), unlocked at Base Lv 100** (`BM_LV`). Two Zeny sinks:
@@ -103,6 +103,10 @@ Four owner requests in one build. Every number is a named constant or a single f
     Armor and other non-weapon pieces never roll Crit DMG here, the same rule as drops.
 * **Why:** past Base Lv 100 the grind earns about **178,000z an hour** at power 99 (800 kills an hour), more on Nightmare, and
   the old sinks cost a few thousand to 20,000z. The Black Market turns that Zeny into ore and reforges.
+* **Markets under the quest panel (grind-v90.2):** the Black Market and the Leaderboard left the dock. They sit under the
+  quest panel behind one open/hide arrow (`qpSide()`, `sideOpen`, `SIDE_TABS`). `X` and `V` still open them.
+* **Skills no longer shift (grind-v90.2):** the selected skill's detail card moved out of the skill grid into a fixed
+  220px slot above the families (`.sk-slot`), so picking a skill never moves the grid. It says "Pick a skill" when empty.
 * **Fairness, stages 14-15 (grind-v90.1):** the owner's "for fairness, let's just remain the drop on stage 4 & 5" meant
   **Nightmare Stages 14-15 on every map**. The v89 N+ weapon split is reverted: those stages walk the weapon shelf one
   weapon per mob again (`fieldOf()`), and the N+ halving (`NMPLUS_DROP`) stays.

@@ -356,9 +356,9 @@ t('the Black Market gives endgame Zeny somewhere to go (v90)', () => {
   // a reforge on an N+ piece (rarity 6, price 7 x 150,000z) takes a few hours of pw99 grinding
   const hours = bmRef * 7 / perHour;
   assert.ok(hours > 2 && hours < 10, 'an N+ reforge takes ' + hours.toFixed(1) + ' h of pw99 grinding');
-  // a full +10 N+ refine from scratch needs about 114 ore in attempts (4 per attempt): a long ore sink
+  // a full +10 N+ refine from scratch needs about 285 ore in attempts (10 per attempt, v90.2): a long ore sink
   let attempts = 0; const refCh = [70,70,70,70,49,42,35,28,21,14];
-  for (let r = 0; r < 10; r++) attempts += 4 / (refCh[r] / 100);
+  for (let r = 0; r < 10; r++) attempts += 10 / (refCh[r] / 100);
   const oreZeny = attempts * bmOre;
   assert.ok(oreZeny > 5000000, 'buying a full N+ +10 ore costs ' + Math.round(oreZeny).toLocaleString() + 'z - too cheap to matter');
   console.log('       Black Market: ore ' + (bmOre / perHour).toFixed(2) + ' h, N+ reforge ' + hours.toFixed(1) + ' h, full N+ +10 ore ' + Math.round(oreZeny / 1e6) + 'M z');

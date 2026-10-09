@@ -6114,3 +6114,18 @@ The owner's second pass over v77, six notes, all built.
   1. **The N+ rows on Stages 14-15 have one weapon per mob again,** so a class that only wants its weapon from a stage 15 boss still has to wait for the MVP pool. This is what the owner asked for. The MVP pool is still half its old size.
   2. The Black Market prices from v90 are unchanged and are still a first guess (`BM_ORE`, `BM_REFORGE`, `BM_LV`).
   3. Verified in the jsdom and panel-render harnesses, not in a real browser (there is no browser in the sandbox).
+
+### 2026-10-09 — `2026-10-09 grind-v90.2 Refine ore: Legendary 5, N and N+ 10 a try; Black Market and Leaderboard moved under the quest panel; skill details no longer shift the skill grid`
+* **What changed for the player:**
+  * **Refining uses more ore on the top rarities.** Each refine attempt now costs **10 ore on N and N+** (was 3 and 4) and **5 ore on Legendary** (was 3). Common and Fine still cost 1, and Rare and Epic still cost 2. The refine panel states the new counts.
+  * **Black Market and Leaderboard moved out of the dock.** Both now sit under the quest panel, behind a new **▾ Markets** arrow. Click it to open the group (**🏪 Black Market** and **🏆 Leaderboard** buttons, with a ▴ arrow to hide it again). The `X` and `V` keys still open them. The arrow and the group hide with the quest panel when a window is open, the same as the quests do.
+  * **Picking a skill no longer shifts the skill grid.** The detail card used to sit inside the grid as a full-width row, so every row below the picked skill moved down. It now sits in a fixed 220px slot above the skill families, which reads "Pick a skill to read what it does" when empty. Long descriptions scroll inside the slot. The grid itself never moves.
+* **Files touched:** `index.html` (`BUILD` grind-v90.2; `REF_ORE` and `refOre()` beside `refCost`, and the refine panel text; `SIDE_TABS` beside `TABS`; `qpSide()` and the `side` arrow in `renderQ()` and its click handler; the dock filter in `renderWin()`; `sideOpen` in the state line; the `#qp .qp-side*` CSS; `V.skills()` slot, with the card removed from the grid; `.sk-slot` / `.sk-slot-empty` CSS); the build-tag mirrors `Updates/cards-gear-audit/affix-ranges.html` (x2), `Updates/cards-gear-audit/equipment-cards-tuning.html`, `tools/cloudflare-deploy-steps.md`; tests `tools/tests/ui_sim.js` (refine ore for N, N+ and Legendary; new markets-group test; new skill no-shift test that compares the grid with and without a pick), `tools/tests/economy_sim.js` (the Black Market ore model now uses 10 ore a try); `READ-ME-FIRST.md` (v90 section); this log.
+* **Art:** none.
+* **Tests:** all **41** `*_sim.js` suites in `tools/tests/` exit 0 on this build, including `field_loop_smoke` and `save_owner_boot_smoke`.
+* **Branches / PR:** `arena/4ce84185-prontera-grind`. No pull request was opened.
+* **Known limits / follow-ups:**
+  1. **The new skill slot is fixed at 220px**, a guess at the tallest detail card. On a narrow phone a long description scrolls inside the slot. Tune `.sk-slot` if it looks cramped.
+  2. **The Markets group is hidden while a window is open,** because it sits in the quest panel. To switch from one window to the Black Market, close the window first (or press its key).
+  3. **Ore at 10 a try is a big sink.** A full N+ +10 refine now needs about 285 N+ ore from scratch, roughly 28.5M z at the Black Market price.
+  4. Verified in the jsdom and panel-render harnesses, not in a real browser (there is no browser in the sandbox).

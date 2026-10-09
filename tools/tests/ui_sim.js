@@ -89,6 +89,8 @@ const code = [
   grab('const BM_LV=', '// ---------- class change ----------'),   // v90: the Black Market helpers (ore, reforge, price)
   pick(/const AL=\{[^}]*\};/, 'affix labels'),
   pick(/const uid=[^\n]*/, 'rnd and ri'),
+  pick(/const TABS=\{[^\n]*\};/, 'dock tab table'),
+  pick(/const SIDE_TABS=\[[^\]]*\];/, 'markets group tabs (v90.2)'),
   pick(/const AFFIX_CDM_SCALE=[^\n]+;/, 'gear-only Crit DMG post-roll scale'),
   pick(/const NM_FLAT=\[[^\]]*\],NM_FLAT_MUL=\[[^\]]*\],NM_MUL=\{[^}]*\};/, 'v90 Nightmare affix multipliers'),
   pick(/const nmMulOf=\(k,section\)=>[^\n]*/, 'nmMulOf'),
@@ -128,7 +130,7 @@ const skpAvail=()=>5,skTree=()=>4,skEarnedMax=()=>9,skLine=()=>['Novice'],skEarn
 this.__u={ V, itemDetail, itemMain, SKILLS, SKILL_ICON, SKILL_TONE, SKILL_PICTO, skillIcon, logs, indexSectionOpen, indexToggleSection, set S(v){S=v}, get S(){return S}, set boardPeriod(v){boardPeriod=v}, set boardCache(v){boardCache=v}, set boardStatus(v){CLOUD.api=!!v.api;CLOUD.on=!!v.on}, set eqPick(v){eqPick=v}, get eqPick(){return eqPick},
            set indexMode(v){indexMode=v}, get indexMode(){return indexMode}, set mapM(v){mapM=v}, set mapL(v){mapL=v}, set selE(v){selE=v}, get selE(){return selE}, set selB(v){selB=v}, get selB(){return selB}, set selS(v){selS=v}, set selP(v){selP=v} };
 const log=(m,c,k)=>{logs.push(m)},ui=()=>{},save=()=>{};   // the Black Market's writes (stubs here)
-this.__bm={buyOre,reforge,reforgeCost,bmOpen,refCost,refOre};
+this.__bm={buyOre,reforge,reforgeCost,bmOpen,refCost,refOre,qpSide,tabs,setSide:v=>{sideOpen=v}};
 `;
 const sb = { console };
 vm.createContext(sb); vm.runInContext(harness, sb);
@@ -961,6 +963,41 @@ t('v74: the item card names the class tier a piece belongs to, and why a locked 
   assert.ok(src.includes('it.wearer?` This was ${it.wearer'), 'the wearer note is attributed');
 });
 
+t('v90.2: the Black Market and Leaderboard sit under the quest panel behind one open/hide arrow', () => {
+  const bm = sb.__bm;
+  bm.setSide(false);
+  let h = bm.qpSide();
+  assert.ok(h.includes('data-q="side"') && h.includes('&#9662; Markets'), 'a closed group shows the open arrow');
+  assert.ok(!h.includes('data-t="market"') && !h.includes('data-t="board"'), 'and hides both tabs');
+  bm.setSide(true);
+  h = bm.qpSide();
+  assert.ok(h.includes('&#9652; Hide markets'), 'an open group shows the hide arrow');
+  assert.ok(h.includes('data-t="market"') && h.includes('data-t="board"'), 'and lists the Black Market and the Leaderboard');
+  bm.tabs.push('market'); h = bm.qpSide();
+  assert.ok(h.includes('qp-side-tab on'), 'an open window is marked on its button');
+  bm.tabs.length = 0; bm.setSide(false);
+  assert.ok(src.includes("const dock=$('dock')")||src.includes("$('dock').innerHTML=Object.entries(TABS).filter(([k])=>(k!=='gm'||S.gm)&&!SIDE_TABS.includes(k))"),
+    'the dock no longer lists the two moved tabs');
+  assert.ok(src.includes("market:['🏪','Black Market','X']") && src.includes("board:['🏆','Leaderboard','V']"),
+    'the X and V hotkeys still open them');
+  assert.ok(src.includes("if(v==='side'){sideOpen=!sideOpen;renderQ();return}"), 'the arrow toggles the group');
+});
+
+t('v90.2: picking a skill does not shift the skill grid', () => {
+  U.S = mkS('Mage'); U.S.sk.fire = 1; U.S.skOff = {}; U.selS = null;
+  const h0 = U.V.skills();
+  assert.ok(h0.includes('sk-slot-empty'), 'with nothing picked the detail slot is still there, empty');
+  U.selS = 'fire';
+  const h1 = U.V.skills();
+  const slotAt = h1.indexOf('<div class="sk-slot">'), firstFamily = h1.indexOf('<div class="sec">');
+  assert.ok(slotAt >= 0 && slotAt < firstFamily, 'the detail card sits in a fixed slot above the skill families');
+  assert.ok(h1.slice(slotAt, firstFamily).includes('sk-detail-card'), 'the card is in that slot');
+  assert.ok(!h1.slice(firstFamily).includes('sk-detail-card'), 'and not inside the grid any more');
+  const strip = h => h.replace(/<div class="sk-slot">[\s\S]*?(?=<div class="sec">)/, '').replace(/ sel"/g, '"');
+  assert.strictEqual(strip(h1), strip(h0), 'the grid renders the same whether or not a skill is picked');
+  U.selS = null;
+});
+
 t('v90 Black Market: locked under Base Lv 100, then sells ore and reforges one affix on a worn piece', () => {
   U.S=mkS('Novice');U.S.lv=99;U.S.zeny=10000000;U.S.ore={ori:0,elu:0};
   U.S.eq.armor={id:501,name:'Test Coat',tier:3,slot:'armor',val:40,sec:5,aff:[{k:'str',v:55},{k:'flee',v:38}],slots:0,cards:[]};
@@ -1007,9 +1044,9 @@ t('v90 refine: rarer pieces eat more ore per attempt and every step costs twice 
   assert.strictEqual(bm.refOre({r:0,tier:1}),1,'Fine takes 1 ore');
   assert.strictEqual(bm.refOre({r:0,tier:2}),2,'Rare takes 2 ore');
   assert.strictEqual(bm.refOre({r:0,tier:3}),2,'Epic takes 2 ore');
-  assert.strictEqual(bm.refOre({r:0,tier:4}),3,'Legendary takes 3 ore');
-  assert.strictEqual(bm.refOre({r:0,tier:0,sec:4}),3,'N takes 3 ore');
-  assert.strictEqual(bm.refOre({r:0,tier:0,sec:5}),4,'N+ takes 4 ore');
+  assert.strictEqual(bm.refOre({r:0,tier:4}),5,'Legendary takes 5 ore (v90.2)');
+  assert.strictEqual(bm.refOre({r:0,tier:0,sec:4}),10,'N takes 10 ore (v90.2)');
+  assert.strictEqual(bm.refOre({r:0,tier:0,sec:5}),10,'N+ takes 10 ore (v90.2)');
   assert.strictEqual(bm.refCost({r:0,sec:0}),400,'the first step costs 400z (was 200)');
   assert.strictEqual(bm.refCost({r:0,sec:3}),1000,'a high-tier first step costs 1000z');
 });
