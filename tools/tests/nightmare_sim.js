@@ -319,7 +319,7 @@ t('v90.6 (crafting): each Nightmare map has one material, dropped by its Stage 1
     assert.strictEqual(N.fieldOf(m, 10).boss.mat, null, 'the Stage 10 boss has no material');
   }
   assert.strictEqual(names.size, 10, 'all ten materials have their own name');
-  assert.strictEqual(N.NM_MAT_CH, 25, 'the material chance is 25% a Stage 15 boss kill');
+  assert.strictEqual(N.NM_MAT_CH, 1, 'the material chance is 1% a Stage 15 boss kill (v90.7)');
 });
 
 const total = pass + fail;

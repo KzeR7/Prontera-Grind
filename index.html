@@ -657,7 +657,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // script block, which is a SyntaxError - the game did not run on main at all. One line wins, and
 // it names both sides of this merge: the v38 balance patch (the weapon cut, the affix/card
 // give-back) and main's weapon-hold rendering work.
-const BUILD='2026-10-09 grind-v90.6 Crafting: each Nightmare Stage 15 boss drops its map's material; ten make a Drop Protection Scroll that stops a failed refine dropping a rank; Abyss keeps its old EXP and Zeny, the lower maps are tuned down to match per HP; katar icon is a boxing glove; class-locked drops say Not equitable on current class';   // shown on the login card - confirms which file you loaded
+const BUILD='2026-10-09 grind-v90.7 Crafting: Nightmare Stage 15 bosses drop a material at 1%; 20 of any mix make a Drop Protection Scroll, which stops a failed refine at +5 or higher dropping a rank; Abyss keeps its old EXP and Zeny, the lower maps are tuned down to match per HP; katar icon is a boxing glove; class-locked drops say Not equitable on current class';   // shown on the login card - confirms which file you loaded
 $('buildTag').textContent='build '+BUILD;
 
 // ---------- class tree: Novice -> 6 first jobs -> 6 second jobs -> 6 third jobs ----------
@@ -1584,7 +1584,9 @@ const NMPLUS_DROP=.5;
 // One of each of the ten makes a Drop Protection Scroll (craftDps). NM_MAT_CH is the percent chance per
 // boss kill. The order matches NMNAME, so NM_MAT[m] belongs to map m.
 const NM_MAT=['Dread Essence','Kraken Scale','Void Core','Sandwraith Dust','Spectral Ectoplasm','Leviathan Fin','Oni Horn','Yokai Mask','Helheim Rune','Glast Fragment'];
-const NM_MAT_CH=25;
+const NM_MAT_CH=1;
+// v90.7 (owner): a Drop Protection Scroll costs 20 Nightmare materials, any mix from any maps.
+const DPS_MATS=20;
 // v73 (owner): high-level bosses resist crits. The number is the share of the crit chance that
 // is removed when you swing at that boss: a capped 60% build crits Comodo, Louyang and Amatsu's
 // bosses 51% of the time, Niflheim's Lord of Death 48% and the Abyss Dark Lord 42%. Maps 1-5
@@ -3364,9 +3366,9 @@ function refine(sl){const it=S.eq[sl];if(!it||(it.r||0)>=10)return;const o=it.sl
 // v90.6 (owner, option 3): a Drop Protection Scroll is crafted from one of each Nightmare material, and
 // each material comes from its own map's Stage 15 boss. refine() spends a scroll instead of dropping a
 // rank, so a failed refine at +5 or higher keeps the rank.
-function craftDps(){if(!S)return;if(nmMatCounts().some(n=>n<1)){log('A Drop Protection Scroll needs one of each of the ten Nightmare materials.','','gear');ui();return}S.nmMat=nmMatCounts().map(n=>n-1);S.dps=safeCount(S.dps)+1;log('Crafted a Drop Protection Scroll.','r3','gear');ui();save()}
+function craftDps(){if(!S)return;const have=nmMatCounts(),total=have.reduce((x,n)=>x+n,0);if(total<DPS_MATS){log(`A Drop Protection Scroll needs ${DPS_MATS} Nightmare materials, any mix. You have ${total}.`,'','gear');ui();return}let left=DPS_MATS;S.nmMat=have.map(n=>{const take=Math.min(n,left);left-=take;return n-take});S.dps=safeCount(S.dps)+1;log('Crafted a Drop Protection Scroll.','r3','gear');ui();save()}
 function nmMatCounts(){return NM_MAT.map((_,i)=>safeCount(S.nmMat&&S.nmMat[i]))}
-function dpsPanel(){const have=nmMatCounts(),short=have.some(n=>n<1);return`<div class="sec" style="margin-top:8px">Drop Protection Scroll</div><small>Scrolls: ${safeCount(S.dps)}. A failed refine at +5 or higher would drop a rank; a scroll is used instead and the rank is kept.</small><div class="row" style="margin-top:4px"><button data-a="craftdps" ${short?'disabled':''}>Craft Drop Protection Scroll (1 of each material)</button></div><small>${NM_MAT.map((n,i)=>n+' '+have[i]).join(' &middot; ')}</small>`}
+function dpsPanel(){const have=nmMatCounts(),total=have.reduce((x,n)=>x+n,0);return`<div class="sec" style="margin-top:8px">Drop Protection Scroll</div><small>Scrolls: ${safeCount(S.dps)}. A failed refine at +5 or higher would drop a rank; a scroll is used instead and the rank is kept. Success is not guaranteed.</small><div class="row" style="margin-top:4px"><button data-a="craftdps" ${total<DPS_MATS?'disabled':''}>Craft Drop Protection Scroll (${DPS_MATS} materials, any mix)</button></div><small>Materials ${total}/${DPS_MATS}: ${NM_MAT.map((n,i)=>n+' '+have[i]).join(' &middot; ')}</small>`}
 
 // ---------- v90: Black Market - the endgame Zeny sinks (Base Lv 100+) ----------
 // Zeny overflows once a character is past Base Lv 100, so the Black Market gives it two places to go:

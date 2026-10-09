@@ -84,6 +84,15 @@ is the live one; with no argument the tool prints how to set a new one). Since v
 `GM` / `test1234`; `localStorage.removeItem('pg_gm_local')` removes it. Normal accounts are made
 in-game and stored in the browser (`pg_acc4`; saves under `pg_save3_<user>`).
 
+## BUILD v90.7 — the scroll costs 20 materials at 1% (grind-v90.7)
+
+* **Materials:** each Nightmare Stage 15 boss drops its map's material at 1% a kill (`NM_MAT_CH`, was 25%).
+* **Drop Protection Scroll:** 20 materials of any mix, from any maps (`DPS_MATS`), make one scroll. Crafting spends exactly 20; extra materials stay in the stacks.
+* **What the scroll does:** it only stops a failed refine at +5 or higher from dropping a rank. A +7 that fails stays +7. It does not guarantee success; the success chances are unchanged.
+* **Balance (open):** at 1% a kill, one scroll is about 2,000 Stage 15 boss kills, and a +10 with protection is about 16 scrolls, roughly 32,000 boss kills. That is the owner's chosen rate and is one constant (`NM_MAT_CH`) to change.
+
+Files: `index.html` (`NM_MAT_CH`, `DPS_MATS`, `craftDps()`, `dpsPanel()`); tests `tools/tests/material_sim.js`, `nightmare_sim.js`; mirrors and this file are bumped to grind-v90.7.
+
 ## BUILD v90.6 — crafting: Nightmare materials make a Drop Protection Scroll (grind-v90.6)
 
 The owner scrapped the Crown and picked option 3 from the Nightmare list: each map's material, used in a craft.

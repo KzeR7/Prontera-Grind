@@ -6184,3 +6184,15 @@ The owner's second pass over v77, six notes, all built.
   1. The material chance and the recipe are untuned (see Balance above).
   2. Boss kill time at Stage 15 was not measured, so the time cost of the materials is estimated from kill counts only.
   3. Verified with the harness and source checks, not in a real browser.
+
+### 2026-10-09 — `2026-10-09 grind-v90.7 Crafting: Nightmare Stage 15 bosses drop a material at 1%; 20 of any mix make a Drop Protection Scroll, which stops a failed refine at +5 or higher dropping a rank
+
+* **What changed for the player:** the owner set the material drop to 1% a Stage 15 boss kill, and a Drop Protection Scroll now costs 20 materials of any mix, from any maps (v90.6 needed one of each of the ten at 25%). The scroll still only stops a failed refine at +5 or higher from dropping a rank. A +7 that fails stays at +7; success is not guaranteed.
+* **Math the owner should see:** at 1%, one scroll is about 2,000 Stage 15 boss kills, and a full +0 to +10 N+ weapon with protection needs about 16 scrolls, roughly 32,000 boss kills. This is the owner's chosen rate, and it is one constant (`NM_MAT_CH`) to change.
+* **Files touched:** `index.html` (`BUILD` grind-v90.7; `NM_MAT_CH` = 1; `DPS_MATS` = 20; `craftDps()` spends 20 from any stacks; `dpsPanel()` shows the total and the button needs 20); tests `tools/tests/material_sim.js` (craft with 20, refuse at 19, leftovers kept, panel count), `tools/tests/nightmare_sim.js` (the chance is 1%); the worksheet snapshot is refreshed by `drop_card_sheet_sim.js --refresh-snapshot`; build-tag mirrors `Updates/cards-gear-audit/affix-ranges.html` (x2), `Updates/cards-gear-audit/equipment-cards-tuning.html`, `tools/cloudflare-deploy-steps.md`; `READ-ME-FIRST.md` (v90.7 section); this log.
+* **Art:** none.
+* **Tests:** all 43 `*_sim.js` and `*_smoke.js` suites in `tools/tests/` must exit 0 on this build.
+* **Branches / PR:** `arena/4ce84185-prontera-grind`. No pull request was opened.
+* **Known limits / follow-ups:**
+  1. The 1% rate makes the scroll very slow to get (see the math above). Not balance-tested against real boss kill times.
+  2. Open from the owner's notes: Zeny overflows (about 150M a day at Base Lv 150); the Abyss N+ weapon is about 11x a Prontera N+ weapon, so the lower Nightmare maps have no gear reason; the difficulty and drops on Nightmare do not yet line up. No change for these in this build.

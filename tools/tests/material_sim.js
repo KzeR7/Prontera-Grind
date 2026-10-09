@@ -17,6 +17,7 @@ const pick = (re, name) => { const m = src.match(re); if (!m) throw new Error('c
 const harness = `
 ${pick(/const NM_MAT=\[[^\]]*\];/, 'NM_MAT')}
 ${pick(/const NM_MAT_CH=[^;]+;/, 'NM_MAT_CH')}
+${pick(/const DPS_MATS=\d+;/, 'DPS_MATS')}
 const safeCount=v=>{const n=Number(v);return Number.isFinite(n)?Math.max(0,Math.min(Number.MAX_SAFE_INTEGER,Math.floor(n))):0};
 const rarIdx=it=>((it&&+it.sec>=5)?6:(it&&+it.sec>=4)?5:Math.max(0,Math.min(4,(it&&it.tier)||0)));
 ${grab('const refCost=', 'const affTxt=')}
@@ -26,7 +27,7 @@ ${grab('function refine(sl){', '// ---------- v90: Black Market')}
 let S=null,LOGS=[],RND=0;
 const log=(m)=>LOGS.push(m), ui=()=>{}, save=()=>{}, addFloat=()=>{}, pl={x:0,z:0};
 Math.random=()=>RND;
-this.__m={refine,craftDps,dpsPanel,refCh,refCost,refOre,NM_MAT,get S(){return S},set S(v){S=v},LOGS,set RND(v){RND=v}};
+this.__m={refine,craftDps,dpsPanel,refCh,refCost,refOre,NM_MAT,DPS_MATS,get S(){return S},set S(v){S=v},LOGS,set RND(v){RND=v}};
 `;
 const sb = { console };
 vm.createContext(sb); vm.runInContext(harness, sb);
@@ -45,29 +46,36 @@ t('the Nightmare materials are ten different names, one per map', () => {
   assert.deepStrictEqual(Array.from(M.NM_MAT), ['Dread Essence','Kraken Scale','Void Core','Sandwraith Dust','Spectral Ectoplasm','Leviathan Fin','Oni Horn','Yokai Mask','Helheim Rune','Glast Fragment']);
 });
 
-// ---- 2. craftDps --------------------------------------------------------------
-t('craftDps needs one of each of the ten materials, and turns them into one scroll', () => {
-  M.S = fresh({ nmMat: [1,1,1,1,1,1,1,1,1,0] });
+// ---- 2. craftDps: 20 materials of any mix --------------------------------------
+t('craftDps needs 20 materials, any mix, and spends exactly 20', () => {
+  M.S = fresh({ nmMat: [5,5,5,5,0,0,0,0,0,0] });   // 20 in total, from four maps
+  M.craftDps();
+  assert.strictEqual(M.S.dps, 1, 'one scroll is made');
+  assert.deepStrictEqual(Array.from(M.S.nmMat), [0,0,0,0,0,0,0,0,0,0], 'all 20 are spent, from whichever maps they came from');
+});
+t('craftDps refuses with 19 and says how many are held', () => {
+  M.S = fresh({ nmMat: [5,5,5,4,0,0,0,0,0,0] });   // 19
   M.LOGS.length = 0;
   M.craftDps();
-  assert.deepStrictEqual(Array.from(M.S.nmMat), [1,1,1,1,1,1,1,1,1,0], 'a missing material leaves the bag as it was');
-  assert.strictEqual(M.S.dps, 0, 'no scroll without the full set');
-  assert.ok(M.LOGS.some(x => x.includes('needs one of each')), 'the player is told what is missing');
-  M.S.nmMat = [1,1,1,1,1,1,1,1,1,1];
+  assert.strictEqual(M.S.dps, 0, 'no scroll for 19');
+  assert.deepStrictEqual(Array.from(M.S.nmMat), [5,5,5,4,0,0,0,0,0,0], 'nothing is spent');
+  assert.ok(M.LOGS.some(x => x.includes('20 Nightmare materials') && x.includes('You have 19')), 'the player is told the count');
+});
+t('craftDps keeps the leftovers when more than 20 are held', () => {
+  M.S = fresh({ nmMat: [9,9,9,0,0,0,0,0,0,0] });   // 27
   M.craftDps();
-  assert.deepStrictEqual(Array.from(M.S.nmMat), [0,0,0,0,0,0,0,0,0,0], 'the full set is spent');
-  assert.strictEqual(M.S.dps, 1, 'one scroll is made');
-  M.craftDps();
-  assert.strictEqual(M.S.dps, 1, 'and it is not made again without a new set');
+  assert.strictEqual(M.S.dps, 1);
+  assert.strictEqual(M.S.nmMat.reduce((x, n) => x + n, 0), 7, 'seven are left over');
 });
 
-t('the refine panel shows the scroll count, and the craft button is off until all ten are held', () => {
-  M.S = fresh({ nmMat: [1,1,1,1,1,1,1,1,1,0], dps: 2 });
+t('the refine panel shows the count, and the craft button is off under 20', () => {
+  M.S = fresh({ nmMat: [5,5,5,4,0,0,0,0,0,0], dps: 2 });
   const short = M.dpsPanel();
-  assert.ok(short.includes('Scrolls: 2'), 'the count is shown');
+  assert.ok(short.includes('Scrolls: 2'), 'the scroll count is shown');
+  assert.ok(short.includes('Materials 19/20'), 'the material count is shown');
   assert.ok(/data-a="craftdps" disabled/.test(short), 'the craft button is off');
-  M.S.nmMat[9] = 1;
-  assert.ok(!/disabled/.test(M.dpsPanel()), 'and it is on once all ten are held');
+  M.S.nmMat[3] = 5;
+  assert.ok(!/disabled/.test(M.dpsPanel()), 'and it is on at 20');
 });
 
 // ---- 3. refine: a scroll keeps the rank ----------------------------------------
