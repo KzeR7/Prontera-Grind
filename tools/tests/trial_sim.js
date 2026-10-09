@@ -2,7 +2,7 @@
 //   node tools/tests/trial_sim.js
 //
 // The rules being tested:
-//   * a run is one 5:00 sitting against a target that never dies and never hits back;
+//   * a run is one 3:00 sitting against a target that never dies and never hits back;
 //   * practice is unlimited and pays nothing, ranked is 2 a day and pays Trial Shards;
 //   * the board metric is the BEST SINGLE RUN - runs are never added together (the owner:
 //     "does not combine the scold accumulated" ... "showing the best dps within 1 session");
@@ -17,7 +17,7 @@ const grab = (a, b) => { const i = src.indexOf(a), j = src.indexOf(b, i); if (i 
 
 let pass = 0, fail = 0;
 const t = (n, f) => { try { f(); console.log('  ok   ' + n); pass++; } catch (e) { console.log('  FAIL ' + n + ' -> ' + e.message); fail++; } };
-console.log('endless echo: the five-minute damage trial\n');
+console.log('endless echo: the three-minute damage trial\n');
 
 const DAY = new Date(Date.now() + 8 * 3600000).toISOString().slice(0, 10);
 // v90.10: the tier helpers the Nightmare gear token reads (secField picks the section by tier)
@@ -28,11 +28,12 @@ const nmNames = grab("const NMNAME=['Dread'", 'const NMNAME2=');
 // ---- one arena, with the DOM and the world stubbed the way a run needs them ----------------
 function arena(opts = {}) {
   const box = { console };
+  if (opts.random !== undefined) { box.Math = Object.create(Math); box.Math.random = () => opts.random; }
   vm.createContext(box);
   vm.runInContext(`
     // ---- the world the trial reaches into ----
     let S=${JSON.stringify({
-      lv: opts.lv || 1, shards: opts.shards || 0, dmg: opts.dmg || 0, kills: opts.kills || 0,
+      lv: opts.lv || 1, shards: opts.shards || 0, refineScrolls: opts.refineScrolls || 0, dmg: opts.dmg || 0, kills: opts.kills || 0,
       ore: { ori: 0, elu: 0 }, cards: [], inv: [], eq: {}, zeny: 0,
       trial: opts.trial || { day: '${DAY}', used: 0, best: 0, runs: 0 },
       cardIndex: { donated: 0, byName: {}, mastery: {}, rewards: {}, rolls: [], bonus: 0, stats: {} },
@@ -46,13 +47,15 @@ function arena(opts = {}) {
     let zenyAdded=0;const earnZeny=z=>{zenyAdded+=z};
     const ORE={ori:'Oridecon',elu:'Elunium'},SECN=['Normal','Nightmare','Nightmare','Nightmare','Nightmare','Abyssal'];
     const SU=k=>({str:'STR',agi:'AGI',dex:'DEX',luk:'LUK',int:'INT',vit:'VIT'}[k]||k);
-    const cardStat=(g,seed)=>['str','agi','dex','luk','int','vit'][seed%6];
-    const cardVal=(g,stat)=>({str:2,agi:2,dex:2,luk:2,int:2,vit:2}[stat]||2)*g;
+    const AFF=['str','agi','dex','luk','int','hp','atk','crit','aspd','flee','cdm'];
+    const cardStat=(g,seed)=>AFF[((seed%AFF.length)+AFF.length)%AFF.length];
+    const cardVal=(g,stat)=>({str:2,agi:2,dex:2,luk:2,int:2,hp:24,atk:2,crit:1,aspd:2,flee:2,cdm:1}[stat]||2)*g;
     const uid=(()=>{let n=500;return()=>++n})();
     const safeCount=v=>{const n=Number(v);return Number.isFinite(n)?Math.max(0,Math.floor(n)):0};
     const MAPS=[{n:'Prontera',mobs:[{n:'Poring'},{n:'Fabre'}]},{n:'Izlude',mobs:[{n:'Drops'}]},{n:'Geffen',mobs:[{n:'Willow'}]},
       {n:'Morroc',mobs:[{n:'Roda'}]},{n:'Payon',mobs:[{n:'Muka'}]},{n:'Comodo',mobs:[{n:'Shell'}]},
       {n:'Louyang',mobs:[{n:'Jiangshi'}]},{n:'Amatsu',mobs:[{n:'Tengu'}]},{n:'Niflheim',mobs:[{n:'Ghoul'}]},{n:'Abyss',mobs:[{n:'Dread'}]}];
+    const MONSTER_INDEX=MAPS.flatMap((mp,map)=>[...mp.mobs.map(m=>({id:map+':'+m.n,map,name:m.n,boss:false})),{id:map+':'+mp.n+' MVP',map,name:mp.n+' MVP',boss:true}]);
     const MAPTIER=[0,0,1,1,2,2,3,3,3,3],MAPGRADE=[1,2,2,3,3,3,3,3,3,4];
     const dropTier=(m,l)=>Math.min(MAPGRADE[Math.max(0,Math.min(9,m|0))],l>=10?4:MAPTIER[Math.max(0,Math.min(9,m|0))]);
     let nmOpenVal=${opts.nmOpen === undefined ? 3 : opts.nmOpen};
@@ -69,7 +72,7 @@ function arena(opts = {}) {
     ${nmNames}
     ${trialBlock}
     this.__a={
-      get S(){return S},set S(v){S=v},get mobs(){return mobs},get mob(){return mob},get pl(){return pl},
+      get S(){return S},set S(v){S=v},get mobs(){return mobs},get mob(){return mob},get pl(){return pl},get MONSTER_INDEX(){return MONSTER_INDEX},get AFF(){return AFF},
       TRIAL,TRIAL_PAY,TRIAL_STORE,TRIAL_CHESTS,TRIAL_GRACE,trialChestNext,trialChestText,trialDay,trialLeftToday,trialClock,trialShardsFor,trialState,
       trialLobby,trialShopHtml,trialResultHtml,trialEnter,trialFinish,trialExit,trialBuy,trialGrantNm,
       get logs(){return logLines},get saves(){return saves},get uiCalls(){return uiCalls},
@@ -83,14 +86,14 @@ function arena(opts = {}) {
   return box.__a;
 }
 
-t('a run is five minutes, and the clock reads like one', () => {
+t('a run is three minutes, and the clock reads like one', () => {
   const A = arena();
-  assert.strictEqual(src.includes('const TRIAL_SECS=300'), true, 'TRIAL_SECS is 300 - five minutes exactly');
+  assert.strictEqual(src.includes('const TRIAL_SECS=180'), true, 'TRIAL_SECS is 180 - three minutes exactly');
   assert.strictEqual(A.TRIAL_SECS, undefined, 'the block itself keeps the constants private (sliced source pin above)');
   const a2 = {}; vm.createContext(a2);
   vm.runInContext(`${trialBlock};this.__c={trialClock,TRIAL_SECS,TRIAL_RANKED_PER_DAY,TRIAL_GRACE,TRIAL_CHESTS,TRIAL_PAY,TRIAL}`, a2);
   const C2 = a2.__c;
-  assert.strictEqual(C2.TRIAL_SECS, 300, '300 seconds');
+  assert.strictEqual(C2.TRIAL_SECS, 180, '180 seconds');
   assert.strictEqual(C2.TRIAL_RANKED_PER_DAY, 2, 'two ranked runs a day');
   assert.strictEqual(typeof C2.TRIAL_BEST_BONUS, 'undefined', 'v77.2: there is no new-best bonus to pay');
   assert.ok(!/TRIAL_BEST_BONUS/.test(src), 'and the build carries no trace of one');
@@ -98,7 +101,7 @@ t('a run is five minutes, and the clock reads like one', () => {
   assert.strictEqual(C2.TRIAL_CHESTS.length, 7, 'seven one-off chests');
   assert.strictEqual(C2.TRIAL_CHESTS.map(r => r[0]).join(','), '250000,500000,1000000,1500000,2250000,3000000,4500000',
     'the chest rungs are the owner\u2019s own marks (1.5M alone, 4.5M with three pets) plus the road between');
-  C2.TRIAL.left = 300; assert.strictEqual(C2.trialClock(), '5:00', 'it opens at 5:00');
+  C2.TRIAL.left = 180; assert.strictEqual(C2.trialClock(), '3:00', 'it opens at 3:00');
   C2.TRIAL.left = 61.2; assert.strictEqual(C2.trialClock(), '1:02', 'and rounds up to the last whole second');
   C2.TRIAL.left = 0; assert.strictEqual(C2.trialClock(), '0:00', 'and stops at 0:00');
 });
@@ -115,14 +118,13 @@ t('ranked is two a day, practice is unlimited, and only ranked pays', () => {
   assert.strictEqual(A.S.shards, 0, 'practice pays no shards');
   assert.strictEqual(A.trialLeftToday(), 2, 'and spends no ranked tries');
   assert.strictEqual(A.trialState().best, 0, 'and never touches the personal best');
-  // two ranked runs, then the door closes for the day. Each run pays its own rung by its own DPS -
-  // v77.2: a new best pays exactly the same number (the owner: "with or without new personal best
-  // pays out a daily number"), so 100,000 DPS is 5 Shards whether or not it beat the record.
-  A.trialEnter('ranked'); A.S.dmg = A.S.dmg + 30000000; A.TRIAL.left = 0; A.trialFinish();
-  assert.strictEqual(A.S.shards, 5, 'a ranked run pays its ladder rung (100,000 DPS -> 5)');
+  // two ranked runs, then the door closes for the day. Each run pays its own total DPS bracket -
+  // a new best does not add a bonus. At 100,000 DPS each completed run pays 3 Echo Shards.
+  A.trialEnter('ranked'); A.S.dmg = A.S.dmg + 18000000; A.TRIAL.left = 0; A.trialFinish();
+  assert.strictEqual(A.S.shards, 3, 'a ranked run pays its ladder bracket (100,000 DPS -> 3)');
   assert.strictEqual(A.trialLeftToday(), 1, 'one try is spent');
-  A.trialEnter('ranked'); A.S.dmg = A.S.dmg + 30000000; A.TRIAL.left = 0; A.trialFinish();
-  assert.strictEqual(A.S.shards, 10, 'and the second run pays its own 5 on top - flat, never doubled');
+  A.trialEnter('ranked'); A.S.dmg = A.S.dmg + 18000000; A.TRIAL.left = 0; A.trialFinish();
+  assert.strictEqual(A.S.shards, 6, 'and the second run pays its own 3 - flat, never stacked');
   assert.strictEqual(A.trialLeftToday(), 0, 'both tries spent');
   const before = A.TRIAL.on;
   A.trialEnter('ranked');
@@ -145,49 +147,56 @@ t('the lobby can always be closed and the character spawns in reach', () => {
 t('the board metric is the best single run, never a sum', () => {
   const A = arena();
   A.S.dmg = 0;
-  A.trialEnter('ranked'); A.S.dmg = 60000000; A.TRIAL.left = 0; A.trialFinish();   // 200,000 DPS
+  A.trialEnter('ranked'); A.S.dmg = 36000000; A.TRIAL.left = 0; A.trialFinish();   // 200,000 DPS
   assert.strictEqual(Math.round(A.trialState().best), 200000, 'the first run sets the best');
   const shards1 = A.S.shards;
-  assert.strictEqual(shards1, 5, '5 for the 100k rung - a new best pays no more than any other run');
+  assert.strictEqual(shards1, 3, '3 for the 100k rung - a new best pays no more than any other run');
   A.S.dmg = 0;
-  A.trialEnter('ranked'); A.S.dmg = 45000000; A.TRIAL.left = 0; A.trialFinish();   // 150,000 DPS
+  A.trialEnter('ranked'); A.S.dmg = 27000000; A.TRIAL.left = 0; A.trialFinish();   // 150,000 DPS
   assert.strictEqual(Math.round(A.trialState().best), 200000, 'a worse second run does not lower the best');
-  assert.strictEqual(A.S.shards - shards1, 5, 'and pays the 100k ladder rung only - nothing is summed');
+  assert.strictEqual(A.S.shards - shards1, 3, 'and pays the completion bracket only - nothing is summed');
   assert.strictEqual(A.trialState().runs, 2, 'both runs are counted as runs, not as one total');
   assert.ok(!/st\.best\s*\+=/.test(trialBlock), 'the code never adds a run onto the best');
 });
 
-t('the ladder pays by DPS in one run, and the top rung is the wish, not the payout', () => {
+t('the ladder pays 1-50 Shards per completed ranked run, by DPS', () => {
   const A = arena();
   A.TRIAL.result = null;
-  assert.strictEqual(A.trialShardsFor(99999), 0, 'under the first rung pays nothing - 5k is no longer a payout');
-  assert.strictEqual(A.trialShardsFor(100000), 5, '100k DPS pays 5');
-  assert.strictEqual(A.trialShardsFor(249999), 5, 'gaps hold the lower rung');
-  assert.strictEqual(A.trialShardsFor(250000), 12, '250k pays 12');
-  assert.strictEqual(A.trialShardsFor(500000), 20, '500k pays 20');
-  assert.strictEqual(A.trialShardsFor(1000000), 36, '1M pays 36');
-  assert.strictEqual(A.trialShardsFor(1500000), 50, '1.5M - the owner\u2019s no-pet decked build - pays 50');
-  assert.strictEqual(A.trialShardsFor(4500000), 115, '4.5M - three pets out - pays 115');
-  assert.strictEqual(A.trialShardsFor(9000000), 115, 'and nothing above the ladder pays more');
-  assert.strictEqual(Array.from(A.TRIAL_PAY, r => r[0]).join(','), '100000,250000,500000,750000,1000000,1500000,2250000,3000000,4500000',
-    'the rungs climb the owner\u2019s own DPS marks');
+  assert.strictEqual(A.trialShardsFor(0), 1, 'a completed ranked run always pays at least 1');
+  assert.strictEqual(A.trialShardsFor(99999), 1, 'under 100k keeps the minimum completion payout');
+  assert.strictEqual(A.trialShardsFor(100000), 3, '100k DPS pays 3');
+  assert.strictEqual(A.trialShardsFor(249999), 3, 'gaps hold the lower total bracket');
+  assert.strictEqual(A.trialShardsFor(250000), 5, '250k pays 5');
+  assert.strictEqual(A.trialShardsFor(500000), 8, '500k pays 8');
+  assert.strictEqual(A.trialShardsFor(750000), 12, '750k pays 12');
+  assert.strictEqual(A.trialShardsFor(1000000), 16, '1M pays 16');
+  assert.strictEqual(A.trialShardsFor(1500000), 22, '1.5M - the no-pet decked build - pays 22');
+  assert.strictEqual(A.trialShardsFor(4500000), 50, '4.5M - three pets out - pays 50');
+  assert.strictEqual(A.trialShardsFor(9000000), 50, 'and nothing above the top bracket pays more');
+  assert.strictEqual(Array.from(A.TRIAL_PAY, r => r[1]).join(','), '1,3,5,8,12,16,22,30,40,50',
+    'all payout brackets stay within the requested 1-50 range');
+  assert.strictEqual(Array.from(A.TRIAL_PAY, r => r[0]).join(','), '0,100000,250000,500000,750000,1000000,1500000,2250000,3000000,4500000',
+    'the DPS rungs are preserved');
 });
 
-t('the store is priced off a day of ranked pay', () => {
+t('the revised exchange prices match the new 1-50 Shard payout scale', () => {
   const A = arena();
   const price = id => A.TRIAL_STORE.find(r => r.id === id).c;
-  // the two ranked runs a day (TRIAL_RANKED_PER_DAY, pinned in the run-length test above)
+  // Two ranked attempts at the top rung make 100 Echo Shards on a best-possible day.
   const top = A.trialShardsFor(4500000), day = top * 2;
-  assert.strictEqual(top, 115, 'a decked three-pet run pays the top rung, 115 Shards');
-  assert.strictEqual(day, 230, 'two of those are one day: 230 Shards');
-  assert.strictEqual(Math.floor(day / price('ori')) * 5, 30,
-    'one day buys exactly 30 Ori (six 5-bundles at 38 = 228)');
-  assert.strictEqual(Math.floor(day / price('elu')) * 5, 30, 'and the same 30 Elunium');
-  assert.strictEqual(price('token'), day * 2, 'the Card Mastery Token is two days of the pay');
-  assert.strictEqual(price('nmgear'), 2000, 'the Nightmare token is the 2,000 the owner asked for');
+  assert.strictEqual(top, 50, 'a three-pet top-rank run pays 50 Echo Shards');
+  assert.strictEqual(day, 100, 'two top-rank attempts make 100 per day');
+  assert.strictEqual(Math.floor(day / price('ori')) * 5, 10, 'one top-rank day buys ten Oridecon');
+  assert.strictEqual(Math.floor(day / price('elu')) * 5, 10, 'and ten Elunium');
+  assert.strictEqual(price('ori'), 45, 'Oridecon x5 is 45');
+  assert.strictEqual(price('elu'), 45, 'Elunium x5 is 45');
+  assert.strictEqual(price('zeny'), 35, '500,000 Zeny is 35');
+  assert.strictEqual(price('token'), 180, 'Card Mastery Token is 180');
+  assert.strictEqual(price('lcard'), 200, 'the random Legendary card voucher is 200');
+  assert.strictEqual(price('nmgear'), 400, 'the Lv 120+ Nightmare Gear Token is 400');
+  assert.strictEqual(price('rscroll'), 400, 'the placeholder Refine Scroll is 400');
   assert.ok(price('token') < price('lcard') && price('lcard') < price('nmgear'),
-    'and the tiering order holds: card < legendary < nightmare');
-  assert.strictEqual(price('nmgear') / day > 8, true, 'so the Nightmare token is the long save');
+    'the token < card voucher < Nightmare gear price order is preserved');
 });
 
 t('a new day clears the two tries, and only the tries', () => {
@@ -200,6 +209,16 @@ t('a new day clears the two tries, and only the tries', () => {
   assert.strictEqual(st.runs, 9, 'and so does the run count');
 });
 
+t('trialState repairs the inert Refine Scroll reserve to a bounded integer', () => {
+  const A = arena({ refineScrolls: '4.8' });
+  A.trialState();
+  assert.strictEqual(A.S.refineScrolls, 4, 'a stored count is floored to a whole scroll');
+  A.S.refineScrolls = -2; A.trialState();
+  assert.strictEqual(A.S.refineScrolls, 0, 'negative reserves repair to zero');
+  A.S.refineScrolls = Infinity; A.trialState();
+  assert.strictEqual(A.S.refineScrolls, 0, 'non-finite reserves repair to zero');
+});
+
 t('the dummy never dies, never swings, and never moves', () => {
   const A = arena();
   A.trialEnter('ranked');
@@ -208,7 +227,13 @@ t('the dummy never dies, never swings, and never moves', () => {
   assert.strictEqual(d.hp, Infinity, 'infinite HP');
   assert.strictEqual(d.at, Infinity, 'and no attack timer at all');
   assert.strictEqual(d.fixed, true, 'it is flagged fixed so the AI never walks it');
-  assert.strictEqual(d.boss, false, 'it is not an MVP');
+  assert.strictEqual(d.boss, false, 'its boss-style art does not enable MVP damage bonuses');
+  assert.strictEqual(d.n, 'Lord of Death Illusion', 'the Endless Echo nameplate reads Lord of Death Illusion');
+  assert.ok(src.includes("n:'Lord of Death Illusion'"), 'the trial target is named in the arena spawn');
+  assert.ok(!src.includes("n:'Trial Dummy'"), 'the old Trial Dummy name is gone');
+  assert.strictEqual(d.spriteId, 1373, 'the dummy uses the existing Lord of Death sprite');
+  assert.strictEqual(d.spawn, 1, 'the boss silhouette is fully visible on the first frame');
+  assert.ok(src.includes("'Lord of Death':1373"), '1373 is already in the official mob-sprite map');
   assert.strictEqual(d.drops.length, 0, 'and it drops nothing - the rewards are the Shards');
   assert.strictEqual(A.mobs.length, 1, 'it is the only thing in the arena');
   assert.ok(src.includes('if(ed>.1&&!stn&&!m.fixed)'), 'the AI skips a fixed mob');
@@ -234,11 +259,11 @@ t('the lobby offers exactly the three doors, ranked first and honest about the t
   const A = arena();
   A.trialLobby();
   const body = A.trialBody;
-  assert.ok(body.includes('Ranked run (2 left today)'), 'ranked is labelled with the tries left');
-  assert.ok(body.includes('Training (unlimited)'), 'training is unlimited');
+  assert.ok(body.includes('Ranked attempt') && body.includes('2/2 ranked attempts remain today'), 'ranked is labelled with the tries left');
+  assert.ok(body.includes('Training · unlimited'), 'training is unlimited');
   assert.ok(body.includes('Shard Store'), 'and the store is its own door');
   assert.ok(body.includes('Personal best'), 'the lobby carries the personal best');
-  assert.ok(body.includes('5:00'), 'and states the run length');
+  assert.ok(body.includes('3:00'), 'and states the run length');
   assert.ok(A.trialOpen, 'the overlay is up');
   A.trialLobby('store');
   const shop = A.trialBody;
@@ -247,42 +272,70 @@ t('the lobby offers exactly the three doors, ranked first and honest about the t
   assert.ok(shop.includes('disabled'), 'affordable at 0 shards: nothing is buyable yet');
 });
 
-t('the Shard Store spends shards and hands over what it says', () => {
-  assert.strictEqual(A0().TRIAL_STORE.map(r => r.c).join(','), '38,38,25,460,900,2000', 'the v77.2 prices: a day of pay a bundle of ore, two days a Card Token, 2k the Nightmare one');
-  const A = arena({ shards: 2500, lv: 150 });
+t('the Shard Store spends shards and grants the random voucher and scroll exactly once', () => {
+  assert.strictEqual(A0().TRIAL_STORE.map(r => r.c).join(','), '45,45,35,180,200,400,400', 'the requested Echo Shard prices including the placeholder scroll');
+  const A = arena({ shards: 2500, lv: 150, random: .999999 });
   A.trialBuy('ori');
-  assert.strictEqual(A.S.shards, 2500 - 38, 'ore costs 38');
+  assert.strictEqual(A.S.shards, 2500 - 45, 'Oridecon x5 costs 45');
   assert.strictEqual(A.S.ore.ori, 5, 'and pays five Oridecon');
   A.trialBuy('elu');
-  assert.strictEqual(A.S.shards, 2500 - 76, 'elunium is 38 too');
+  assert.strictEqual(A.S.shards, 2500 - 90, 'Elunium x5 also costs 45');
   A.trialBuy('zeny');
   assert.strictEqual(A.zenyAdded, 500000, 'the Zeny cache is 500,000z');
   A.trialBuy('token');
-  assert.strictEqual(A.S.cardIndex.bonus, 1, 'the mastery token lands in the Index pool');
+  assert.strictEqual(A.S.cardIndex.bonus, 1, 'the 180-Shard mastery token lands in the Index pool');
   A.trialBuy('lcard');
-  assert.strictEqual(A.S.cards.length, 1, 'the voucher puts a Legendary card in the card bag');
-  assert.strictEqual(A.S.shards, 2500 - 38 - 38 - 25 - 460 - 900, 'each purchase is charged once');
+  assert.strictEqual(A.S.cards.length, 1, 'the 200-Shard voucher adds one Legendary card to the collection');
+  const card = A.S.cards[0];
+  assert.ok(A.MONSTER_INDEX.some(m => m.name + ' Card' === card.n), 'the voucher selects from the monster and boss card roster');
+  assert.strictEqual(card.g, 3, 'the reward is Legendary grade');
+  assert.ok(A.AFF.includes(card.stat), 'its Legendary stat is also rolled from the available stat pool');
+  assert.ok(A.logs.some(l => /random Legendary .* added to your card collection/.test(l)), 'the purchase log says it is random and names the collection');
+  const scrolls = arena({ shards: 800, refineScrolls: 2 });
+  scrolls.trialBuy('rscroll');
+  assert.strictEqual(scrolls.S.refineScrolls, 3, 'one 400-Shard purchase adds one saved placeholder count');
+  assert.strictEqual(scrolls.S.shards, 400, 'the placeholder purchase charges exactly 400 shards');
+  assert.strictEqual(scrolls.saves, 1, 'the new reserve count is saved immediately');
+  assert.ok(scrolls.logs.some(l => /Refine Scroll.*placeholder has no effect yet/.test(l)), 'the purchase log makes its inert status explicit');
+  assert.ok(scrolls.trialShopHtml().includes('no effect or use yet'), 'the store description also states that no use exists yet');
+  scrolls.trialBuy('rscroll');
+  assert.strictEqual(scrolls.S.refineScrolls, 4, 'repeat purchases add only one scroll each');
+  assert.strictEqual(scrolls.S.shards, 0, 'and the second purchase spends its own 400');
+  const first = arena({ shards: 200, random: 0 }); first.trialBuy('lcard');
+  assert.notStrictEqual(first.S.cards[0].n, card.n, 'different random rolls can award different monster cards');
+  assert.notStrictEqual(first.S.cards[0].stat, card.stat, 'and can roll a different Legendary stat');
+  assert.strictEqual(A.S.shards, 2500 - 45 - 45 - 35 - 180 - 200, 'each purchase is charged once');
   const broke = arena({ shards: 5, lv: 150 });
   broke.trialBuy('nmgear');
   assert.strictEqual(broke.S.shards, 5, 'and a broke player is not charged');
   assert.ok(broke.logs.some(l => /Not enough shards/.test(l)), 'the refusal is explained');
-  // v77.1 (owner): "for the nightmare gear token should be very difficult and lock only to be purchase above 120level"
-  const low = arena({ shards: 2000, lv: 119 });
+  broke.trialBuy('rscroll');
+  assert.strictEqual(broke.S.refineScrolls, 0, 'an unaffordable placeholder purchase does not grant a scroll');
+  // The Nightmare Gear Token remains Base Lv 120+ only.
+  const low = arena({ shards: 400, lv: 119 });
   low.trialBuy('nmgear');
-  assert.strictEqual(low.S.shards, 2000, 'a Base Lv 119 player buys no Nightmare token, even with the 2,000');
+  assert.strictEqual(low.S.shards, 400, 'a Base Lv 119 player buys no Nightmare token, even with enough Shards');
   assert.ok(low.logs.some(l => /needs Base Lv 120/.test(l)), 'and is told why');
   assert.ok(!low.trialBody.includes('data-nmmap='), 'the map picker never opens for them');
-  const high = arena({ shards: 2000, lv: 120 });
+  const high = arena({ shards: 400, lv: 120 });
   high.trialBuy('nmgear');
   assert.ok(high.trialBody.includes('data-nmmap='), 'Base Lv 120 opens the map picker');
   assert.ok(high.trialShopHtml().includes('Base Lv 120+'), 'and the store row says the requirement');
 });
 
+t('the Refine Scroll stays inert and the refine action never consumes it', () => {
+  const fn = grab('function refine(sl){', '// ---------- class change ----------');
+  assert.ok(!/refineScrolls|rscroll|Refine Scroll/.test(fn), 'refine() has no scroll mechanic');
+  assert.ok(src.includes('stored scrolls are not consumed by refining.'), 'the Refine panel tells the player it is not consumed');
+});
+
 t('the Nightmare Gear Token hands over a real piece from the map you picked', () => {
-  const A = arena({ shards: 2000, lv: 150, nmOpen: 3, kills: 2 });
+  const A = arena({ shards: 400, lv: 150, nmOpen: 3, kills: 2 });
   A.trialBuy('nmgear');
   assert.strictEqual(A.made.length, 0, 'picking the token only opens the map picker');
   assert.ok(A.trialBody.includes('Nightmare Gear Token'), 'which asks for a map');
+  assert.ok(A.trialBody.includes('class-compatible weapons') && A.trialBody.includes('deterministic from your total kill count'), 'the picker explains the class filter, quality source and deterministic selection');
+  assert.ok(A.trialBody.includes('Nightmare Prontera to Payon') && A.trialBody.includes('Nightmare Comodo to Abyss'), 'the picker follows the v90.10 tier rows, not the old whole-band unlock');
   assert.ok(A.trialBody.includes('data-nmmap="9"'), 'every map is offered, including Abyss');
   A.trialGrantNm(9);
   assert.strictEqual(A.made.length, 1, 'picking a map makes exactly one piece');
@@ -290,13 +343,13 @@ t('the Nightmare Gear Token hands over a real piece from the map you picked', ()
   assert.strictEqual(A.made[0].tier, 4, 'flat Nightmare gear: the top tier on every map (v90.8)');
   assert.strictEqual(A.S.inv.length, 1, 'and it is in the bag, not on the ground');
   assert.ok(/Nightmare .* is in your bag/.test(A.logs[A.logs.length - 1]), 'the log says so');
-  const early = arena({ shards: 2000, lv: 150 });
+  const early = arena({ shards: 400, lv: 150 });
   early.trialGrantNm(0);
   assert.strictEqual(early.made[0].sec, 4, 'v90.10: Prontera is tier 1, so its token gives the N row (section 4)');
   assert.strictEqual(early.made[0].tier, 1, 'the token passes map 0\'s own tier; genGear flattens N gear to the top tier (v90.8)');
   assert.ok(src.includes('genGear(chosen,150,sec,false,dropTier(mapIndex,12))'),
     'the token preserves the selected map’s field quality');
-  const B = arena({ shards: 2000, lv: 150, nmOpen: 5 });
+  const B = arena({ shards: 400, lv: 150, nmOpen: 5 });
   B.trialGrantNm(9);
   assert.strictEqual(B.made[0].sec, 5, 'section 5 once Nightmare 5 is unlocked');
   assert.strictEqual(B.made[0].lv, 150, 'and it rolls at the band\u2019s level, not the player\u2019s');
@@ -315,20 +368,26 @@ t('the store and the lobby are wired to the real click path', () => {
   assert.ok(src.includes('data-trial="lobby"'), 'the map-selection button opens the lobby');
 });
 
-t('the arena is its own scene, built for the trial and painted for an undead theme', () => {
+t('the Echo Court reuses the game\'s Niflheim HD map kit instead of mismatched block scenery', () => {
   const arenaFn = grab('function trialArena(){', 'function trialEnter(mode){');
   assert.ok(arenaFn.includes('while(deco.children.length)deco.remove'), 'it clears the field decor rather than stacking on it');
   assert.ok(arenaFn.includes('townObjs.forEach(o=>o.visible=false)'), 'and hides the town props');
-  assert.ok(arenaFn.includes('PointLight(0x9a5cf0'), 'a purple key light');
-  assert.ok(!/0xffcc66|0x8fd0ff/.test(arenaFn), 'no daylight palette left in it');
+  assert.ok(arenaFn.includes('kitPlan(8,1)') && arenaFn.includes('buildKit(8,plan)'), 'it builds the Niflheim kit plan with the existing HD terrain and sprites');
+  assert.ok(arenaFn.includes("tile:r>.82?'rock_abyss':'ruin_cobble'"), 'its broad arena floor is cropped from the map kit tiles');
+  assert.ok(arenaFn.includes("type:'ruin_pillar'") && arenaFn.includes("type:'standing_stone'"), 'the court framing also uses map-native art');
+  assert.ok(arenaFn.includes('if(!built)buildDeco(8)'), 'the ordinary Niflheim fallback appears while the HD kit loads');
+  assert.ok(!/RingGeometry|CylinderGeometry|BoxGeometry/.test(arenaFn), 'no procedural rune rings or plain block pillars');
+  assert.ok(arenaFn.includes('PointLight(0x9a5cf0'), 'a restrained purple key light');
   assert.ok(src.includes("key=(TRIAL.on?'trial:':'field:')+S.mp+':'+S.lvl+':'+bn"), 'the scene key switches on the run');
-  assert.ok(src.includes("if(TRIAL.on){const col=new THREE.Color(0x2a1040)"), 'and the run paints its own sky and fog');
+  assert.ok(src.includes('new THREE.Color(0x171020)') && src.includes('new THREE.Fog(col,22,64)'), 'the arena uses a deep violet sky and closer, darker fog');
+  assert.ok(src.includes('hemi.intensity=.52;sun.intensity=.48') && src.includes('hemi.intensity=.8;sun.intensity=.9'), 'arena lighting dims and the field lighting restores on exit');
+  assert.ok(src.includes('if(TRIAL.on)trialArena();else buildDeco(S.mp)'), 'late HD asset loads rebuild the Echo Court, not the player\'s current field');
 });
 
 t('a ranked try is only spent after the ten-second grace', () => {
   const A = arena();
   A.trialEnter('ranked');
-  A.S.dmg = 1000000; A.TRIAL.left = 297;                 // three seconds in
+  A.S.dmg = 1000000; A.TRIAL.left = 177;                 // three seconds in
   A.trialExit();
   assert.strictEqual(A.trialLeftToday(), 2, 'leaving inside ten seconds does not spend the try');
   assert.strictEqual(A.trialState().runs, 0, 'and the run is not counted');
@@ -340,7 +399,7 @@ t('a ranked try is only spent after the ten-second grace', () => {
 
   const B = arena();
   B.trialEnter('ranked');
-  B.S.dmg = 6000000; B.TRIAL.left = 240;                 // a minute in
+  B.S.dmg = 6000000; B.TRIAL.left = 120;                 // a minute in
   B.trialExit();
   assert.strictEqual(B.trialLeftToday(), 1, 'leaving after the grace spends exactly one try');
   assert.strictEqual(B.trialState().runs, 1, 'and counts as a run');
@@ -353,40 +412,40 @@ t('a ranked try is only spent after the ten-second grace', () => {
 
   const C = arena();
   C.trialEnter('training');
-  C.TRIAL.left = 200;
+  C.TRIAL.left = 120;
   C.trialExit();
   assert.strictEqual(C.trialState().runs, 0, 'practice is free whenever you leave it');
   assert.ok(!C.TRIAL.result, 'and leaves no result to report');
 
   // the grace is a window, not a pause: exactly ten seconds in is still free, ten-point-one is not
   const D = arena();
-  D.trialEnter('ranked'); D.TRIAL.left = 290; D.trialExit();
+  D.trialEnter('ranked'); D.TRIAL.left = 170; D.trialExit();
   assert.strictEqual(D.trialLeftToday(), 2, 'ten seconds in is still inside the grace');
   const E = arena();
-  E.trialEnter('ranked'); E.TRIAL.left = 289.9; E.trialExit();
+  E.trialEnter('ranked'); E.TRIAL.left = 169.9; E.trialExit();
   assert.strictEqual(E.trialLeftToday(), 1, 'a hair past ten seconds spends the try');
 });
 
 t('the milestone chests are one-off, in order, and paid by DPS', () => {
   const A = arena();
   A.trialEnter('ranked');
-  A.S.dmg = 450000000; A.TRIAL.left = 0;                 // 1.5M DPS: the no-pet decked mark
+  A.S.dmg = 270000000; A.TRIAL.left = 0;                 // 1.5M DPS: the no-pet decked mark
   A.trialFinish();
   assert.strictEqual(Math.round(A.trialState().best), 1500000, 'the run sets the best');
   assert.strictEqual(A.trialState().chest, 4, 'the four rungs at or below 1.5M open at once');
   assert.strictEqual(A.S.ore.ori, 5 + 10 + 20, 'their Oridecon lands in the bag');
   assert.strictEqual(A.S.ore.elu, 5 + 10 + 20, 'and so does the Elunium');
   assert.strictEqual(A.zenyAdded, 50000 + 100000 + 250000, 'and their Zeny');
-  assert.strictEqual(A.S.shards, 50 + 100 + 150, 'the run pays its 50 rung and the chests 250 - no bonus on top');
+  assert.strictEqual(A.S.shards, 22 + 100 + 150, 'the run pays its 22 bracket and the first-clear caches add 250');
   assert.strictEqual(A.TRIAL.result.chests.length, 4, 'the result screen lists them');
-  assert.ok(A.trialBody.includes('Chests opened'), 'and shows them');
-  assert.strictEqual(A.trialChestNext()[0], 2250000, 'the next chest is the 2.25M one');
+  assert.ok(A.trialBody.includes('First-clear caches opened'), 'and shows them');
+  assert.strictEqual(A.trialChestNext()[0], 2250000, 'the next cache is the 2.25M one');
   A.trialLobby();
-  assert.ok(A.trialBody.includes('Next chest at 2,250,000 DPS'), 'the lobby names the next chest');
+  assert.ok(A.trialBody.includes('Next one-time cache') && A.trialBody.includes('2.25M DPS'), 'the lobby names the next cache');
 
   const before = A.S.shards, ori = A.S.ore.ori, chest = A.trialState().chest;
-  A.trialEnter('ranked'); A.S.dmg = A.S.dmg + 450000000; A.TRIAL.left = 0; A.trialFinish();
-  assert.strictEqual(A.S.shards - before, 50, 'a matching second run pays the ladder rung only');
+  A.trialEnter('ranked'); A.S.dmg = A.S.dmg + 270000000; A.TRIAL.left = 0; A.trialFinish();
+  assert.strictEqual(A.S.shards - before, 22, 'a matching second run pays the repeatable bracket only');
   assert.strictEqual(A.S.ore.ori, ori, 'and opens no chest again');
   assert.strictEqual(A.trialState().chest, chest, 'the chest counter stays put');
   assert.strictEqual(A.TRIAL.result.chests.length, 0, 'the result screen lists none');

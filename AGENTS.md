@@ -518,10 +518,11 @@ PYPACK
 node tools/tests/pack_sim.js           # -> "bodies in pack (19): ..."
 node tools/tests/class_change_sim.js   # -> "27 passed, 0 failed"
 node tools/tests/class_skin_sim.js     # -> "39 passed, 0 failed" (live class skins, both genders, mirrors)
-node tools/tests/kit_sim.js            # -> "34 passed, 0 failed" (v2 atlas + KIT_PS, payon recipe, ten identities)
+node tools/tests/kit_sim.js            # -> "36 passed, 0 failed" (v2 atlas + KIT_PS, map recipes, Echo Court)
 node tools/tests/skill_sim.js          # -> "58 passed, 0 failed" (91-skill roster, caps, cooldowns, swing-frame casts)
 node tools/tests/dual_wield_sim.js     # -> "11 passed, 0 failed" (v81: Assassin dagger + dual-wield rules)
-node tools/tests/save_load_sim.js      # -> "23 passed, 0 failed"
+node tools/tests/save_load_sim.js      # -> "26 passed, 0 failed"
+node tools/tests/trial_sim.js          # -> "16 passed, 0 failed" (Endless Echo payout, caches, store and gear token)
 node tools/tests/economy_sim.js        # -> "23 passed, 0 failed"
 node tools/tests/gear_sim.js           # -> "38 passed, 0 failed"
 node tools/tests/picker_sim.js         # -> "19 passed, 0 failed" (the picker, booted under a DOM stub)
@@ -537,7 +538,7 @@ node tools/tests/scene_sim.js          # -> "8 passed, 0 failed" (per-map scener
 node tools/tests/starter_sim.js        # -> "10 passed, 0 failed" (the gentle starter stages, v83 camps + per-camp refill)
 node tools/tests/stat_sim.js           # -> "7 passed, 0 failed"
 node tools/tests/weapon_joint_sim.js   # -> "7 passed, 0 failed"
-node tools/tests/ui_sim.js             # -> "50 passed, 0 failed"
+node tools/tests/ui_sim.js             # -> "52 passed, 0 failed"
 node tools/tests/sprite_viewer_sim.js  # -> "Sprite viewer: 154 PNGs, 7 trees, 19 class jobs; ..."
 node tools/tests/town_smoke.js         # -> "40/40 steps ok" (needs jsdom; skips cleanly without it)
 node tools/tests/field_loop_smoke.js   # -> "6/6 steps ok" (v83: the real field loop - camps, refill, login card, stand-off, printed damage, and the ranged hold that stops kiting)
@@ -6418,3 +6419,12 @@ The owner's second pass over v77, six notes, all built.
 * **Check:** the only lines from main that the merge removes are main's v88.8 build-tag lines, which are replaced on purpose.
 * **Tests:** all 47 suites in `tools/tests/` exit 0 on the merged tree (main added two suites).
 * **Not merged:** the PR is open for review. It has not been merged.
+
+
+### 2026-10-09 — `2026-10-09 grind-v91 Endless Echo: Lord of Death Illusion, dark court, 1-50 Shards & inert Refine Scroll`
+* **What changed for the player:** Endless Echo's stationary target is named **Lord of Death Illusion**. The nameplate, World Map card, lobby and start log use that name. It keeps the existing Lord of Death sprite and `boss:false`, so the name does not change trial damage math. Niflheim's field boss remains Lord of Death.
+* **Also shipped on top of grind-v90.10:** the three-minute clock, darker Niflheim HD Echo Court, tower World Map icon, repeatable 1–50 Echo Shard payout, and the requested store prices (Oridecon x5 45, Elunium x5 45, 500,000 Zeny 35, Card Mastery Token 180, random Legendary Card Voucher 200, Nightmare Gear Token 400 at Base Lv 120+, Refine Scroll 400). First-clear caches are unchanged.
+* **Nightmare Gear Token:** still uses `secField(mapIndex,12)`. Prontera to Payon give section 4; Comodo to Abyss give section 5. The picker says so. A class-compatible weapon is preferred, armour is the fallback, and the item goes straight into the bag. The selector remains deterministic from total kills.
+* **Refine Scroll:** inert saved reserve `S.refineScrolls`, shown on the Refine panel, not read or consumed by `refine()`. It does not replace the Drop Protection Scroll (`S.dps` / `craftDps()`).
+* **Merge:** this branch was fast-forwarded onto current `main` (`grind-v90.10`) before the Echo changes were reapplied, so Nightmare tiers, the Zeny roll, Black Market and Drop Protection Scroll stay. Build tag is grind-v91.
+* **Files touched:** `index.html`; `tools/tests/{trial_sim,ui_sim,kit_sim,save_load_sim,scene_sim}.js`; `Updates/endgame-and-dps-trial-plan.md`; `Updates/map-textures-preview/map_kit_hd_option_b.js`; build-tag mirrors; `READ-ME-FIRST.md`; this log.

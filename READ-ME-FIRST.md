@@ -84,6 +84,17 @@ is the live one; with no argument the tool prints how to set a new one). Since v
 `GM` / `test1234`; `localStorage.removeItem('pg_gm_local')` removes it. Normal accounts are made
 in-game and stored in the browser (`pg_acc4`; saves under `pg_save3_<user>`).
 
+## BUILD v91 — Endless Echo names its target Lord of Death Illusion (grind-v91)
+
+Endless Echo now sits on the shipped Nightmare tiers (grind-v90.10). The three-minute format, dark Niflheim Echo Court, 1–50 repeatable Shard payout and requested store prices are live. The stationary target is named **Lord of Death Illusion**.
+
+* **Boss name:** the nameplate, World Map card, lobby and start log say **Lord of Death Illusion**. It uses the existing Lord of Death sprite, stays `boss:false`, and does not change DPS math. Niflheim's field boss is still Lord of Death.
+* **Court and map:** darker violet/slate Echo Court, wider ruin-cobble circle with an abyss-stone rim, and a tower icon on the World Map tab. The centered full-width Echo card remains.
+* **Payout:** a completed ranked run pays one bracket of **1–50 Echo Shards** (`0→1, 100k→3, 250k→5, 500k→8, 750k→12, 1M→16, 1.5M→22, 2.25M→30, 3M→40, 4.5M→50`). Two top runs pay up to 100 repeatable Shards/day. First-clear caches are unchanged.
+* **Store:** Oridecon x5 45; Elunium x5 45; 500,000 Zeny 35; Card Mastery Token 180; random Legendary Card Voucher 200; Nightmare Gear Token 400 (Base Lv 120+); Refine Scroll 400. The voucher adds one random Grade 3 card from the Monster Index. The Nightmare token follows the v90.10 rows: Prontera to Payon give section 4, Comodo to Abyss give section 5, class-compatible weapon when possible, straight into the bag.
+* **Refine Scroll:** saved inert placeholder (`S.refineScrolls`). It is shown on the Refine panel and is not consumed. It does not replace the Drop Protection Scroll crafted from Nightmare materials.
+* **Left alone:** the three-minute clock, two ranked tries a day, and the first-clear cache thresholds.
+
 ## BUILD v90.10 — Nightmare tiers, round 6 (grind-v90.10)
 
 The owner confirmed the tier split and the gates (Nightmare Prontera to Payon at Base Lv 120, Comodo onward at Base Lv 140). Owner's decisions: "jump" is a gear check (players need better gear to farm the jump map); all Nightmare stages drop Nightmare gear, N from Nightmare Prontera to Payon and N+ from Nightmare Comodo to Abyss. Not yet measured: whether Abyss Normal gear is actually too weak for Nightmare Prontera Stage 11 (see the AGENTS.md entry).

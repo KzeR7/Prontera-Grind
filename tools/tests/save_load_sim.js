@@ -25,7 +25,7 @@ const save = {pets:[
     Swordman:{lv:60,exp:12345,pts:7,hp:999,st:{str:40,agi:20,dex:15,luk:1,int:1,vit:25},eq:{weapon:77,armor:78,head:null,off:79,leg:null,acc1:null,acc2:null}},
     BROKEN:'not an object',
     Mage:{lv:'abc',exp:null,pts:undefined,hp:null,st:{str:null},eq:'nope'}},
-  prog:[1,1,1,1,1], auto:true, adv:true, q:null, ore:{ori:3,elu:0}, gm:false, gmx:100,
+  prog:[1,1,1,1,1], auto:true, adv:true, q:null, ore:{ori:3,elu:0}, refineScrolls:7, gm:false, gmx:100,
   cards:[{id:1,n:'Poring Card',g:3,stat:'hp',v:5},{id:2,n:'Fabre Card',g:2,stat:'str',v:999},{id:3,n:'Junk Card',g:1,stat:'nope',v:null}],
   st:{str:40,agi:20,dex:15,luk:1,int:1,vit:25},
   eq:{weapon:{id:77,slot:'weapon',wt:'sword',name:'Cutlass',val:30,aff:[],slots:1,cards:[],sec:0,r:1},
@@ -70,6 +70,18 @@ t('valid records survive a save/load', () => {
   assert.strictEqual(f.base.Swordman.st.str, 40);
   assert.strictEqual(f.base.Swordman.eq.weapon, 77);
   assert.strictEqual(f.base.Novice.lv, 12);
+});
+t('v90: inert Refine Scroll reserves survive save/load and repair legacy or junk values', () => {
+  assert.strictEqual(f.refineScrolls, 7, 'the saved placeholder count loads intact');
+  assert.strictEqual(JSON.parse(JSON.stringify(f)).refineScrolls, 7, 'the count is plain JSON state for local/cloud saves');
+  const legacy = { ...save }; delete legacy.refineScrolls;
+  sb.__l.setRaw(legacy);
+  assert.strictEqual(load().refineScrolls, 0, 'older saves default to an empty reserve');
+  sb.__l.setRaw({ ...save, refineScrolls: 4.9 });
+  assert.strictEqual(load().refineScrolls, 4, 'fractional counts are floored');
+  sb.__l.setRaw({ ...save, refineScrolls: 'not a number' });
+  assert.strictEqual(load().refineScrolls, 0, 'junk values are repaired to zero');
+  sb.__l.setRaw(save);
 });
 t('legacy Assassin daggers and off-hand weapons are preserved in the bag, not worn',()=>{
   for(const cls of ['Assassin','Assassin Cross']){

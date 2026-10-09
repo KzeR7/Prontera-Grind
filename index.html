@@ -223,35 +223,96 @@ hr{border:0;border-top:1px dashed var(--edge);margin:6px 0}
 .mapband-t{display:flex;flex-wrap:wrap;align-items:center;gap:6px;font-weight:bold;margin:2px 0 4px;min-width:0}
 .mapband-t small{font-weight:normal;opacity:.75;min-width:0;flex:1 1 180px;overflow-wrap:anywhere}
 .mapband-t button.go{margin-left:auto;padding:5px 12px;font-weight:bold;white-space:normal;max-width:100%}
-/* The one non-field destination takes the whole row below the ten regular maps. */
-.map-specials{display:grid;grid-template-columns:minmax(0,1fr);gap:5px;margin:5px 0 2px;min-width:0}
+/* The one non-field destination gets a full-width, centered feature card under the map grid. */
+.map-specials{display:grid;grid-template-columns:minmax(0,1fr);gap:6px;margin:7px 0 4px;min-width:0}
 .map-specials>.mapcard,.map-specials>.dungeoncard{width:100%;min-width:0;min-height:46px;box-sizing:border-box}
-/* Endless Echo keeps the purple Nightmare-era accent, on the only card in the row now that the town is gone. */
-.dungeoncard{display:flex;flex-direction:column;justify-content:center;align-items:flex-start;gap:1px;width:100%;min-width:0;margin:0;padding:4px 6px;border:2px solid #8f4fd6;border-radius:6px;background:linear-gradient(#f6ecff,#e9d5ff);text-align:left;line-height:1.2;cursor:pointer;overflow:hidden}
-.dungeoncard:hover{background:#e9d5ff}
-.dungeoncard b{display:block;max-width:100%;font-size:11px;color:#4a1f6b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.dungeoncard small{display:block;max-width:100%;font-size:9px;font-weight:normal;opacity:.8;overflow-wrap:anywhere}
-#trial{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:#0009;z-index:1150;padding:14px}
+.dungeoncard{position:relative;display:grid;grid-template-columns:42px minmax(0,1fr) 72px;align-items:center;gap:9px;width:100%;min-width:0;min-height:82px;margin:0;padding:9px 12px;border:2px solid var(--edge2);border-left:5px solid #76529a;border-radius:8px;background:linear-gradient(105deg,#fffdf5 0%,#f5ead2 72%,#efe5f3 100%);color:var(--ink);text-align:center;line-height:1.25;cursor:pointer;overflow:hidden;box-shadow:inset 0 1px #fff,0 2px 0 #8a6a2c55}
+.dungeoncard:hover{background:linear-gradient(105deg,#fffef9,#f8ecc9 72%,#efe1f8);filter:brightness(1.015)}
+.dungeoncard .echo-mark{display:grid;place-items:center;width:38px;height:38px;border:2px ridge #9370aa;border-radius:50%;background:radial-gradient(circle at 34% 28%,#fff7d8,#d5c1e3 72%,#8e70a4);color:#57346c;font:700 24px/1 Georgia,serif;text-shadow:0 1px #fff;box-shadow:inset 0 0 0 2px #fff8,0 2px 5px #35254233}
+.echo-copy{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;min-width:0;text-align:center}
+.dungeoncard .echo-copy>b{display:block;max-width:100%;font-size:15px;line-height:1.1;color:#493254;white-space:normal;overflow-wrap:anywhere}
+.dungeoncard .echo-sub{display:block;max-width:100%;font-size:11px;font-weight:700;line-height:1.2;color:#5c4d61;opacity:1;overflow-wrap:anywhere}
+.echo-meta{display:flex;align-items:center;justify-content:center;gap:5px;flex-wrap:wrap;margin-top:2px;max-width:100%}
+.dungeoncard .echo-meta small{display:inline-block;padding:2px 6px;border:1px solid #c9b8cf;border-radius:999px;background:#fffdf8;font-size:10px;font-weight:700;line-height:1.2;color:#514356;opacity:1;overflow-wrap:anywhere}
+.echo-meta b{color:#624183}
+.dungeoncard .echo-open{display:flex;align-items:center;justify-content:center;gap:4px;padding:6px 5px;border:1px solid #a48b59;border-radius:5px;background:linear-gradient(#fff5d8,#e8d39a);color:#493254;font-size:10px;font-weight:900;letter-spacing:.45px;white-space:nowrap}
+.echo-open b{font-size:16px;line-height:.8;color:#72518c}
+#trial{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:radial-gradient(ellipse at 50% 42%,#24182eb8,#100d16e8);z-index:1150;padding:14px}
 #trial.on{display:flex}
-.trial-card{width:min(430px,100%);max-height:calc(100dvh - 40px);overflow:auto;border-color:#8f4fd6;box-shadow:0 0 0 2px #f6ecff,0 6px 0 2px #6a2fa0}
-.trial-hd{display:flex;align-items:baseline;gap:6px;font-size:16px;color:#4a1f6b;margin-bottom:6px}
-.trial-hd small{font-weight:normal;opacity:.7;font-size:11px}
-.trial-card p{margin:0 0 8px}
-.trial-card .trial-row{display:flex;flex-direction:column;gap:6px;margin-top:8px}
-.trial-card button.trial-act{text-align:left;padding:8px 10px;background:linear-gradient(#f6ecff,#e9d5ff);border:2px solid #a874e0}
-.trial-card button.trial-act:hover{background:#e2c9ff}
-.trial-card button.trial-act b{color:#4a1f6b;display:block}
-.trial-card button.trial-act small{opacity:.75}
+.trial-card{width:min(680px,100%);max-height:calc(100dvh - 32px);overflow:auto;padding:0;border:3px solid var(--edge);border-radius:9px;background:linear-gradient(145deg,#fffaf0,#f1e4c8);box-shadow:0 0 0 2px var(--edge2),0 14px 38px #09070cb0;text-align:left}
+.trial-head{display:grid;grid-template-columns:42px minmax(0,1fr) 34px;align-items:center;gap:10px;padding:11px 15px;background:linear-gradient(105deg,#fff9e8,#eadfc8 72%,#e9ddf0);border-bottom:2px solid var(--edge2)}
+.trial-seal{display:grid;place-items:center;width:38px;height:38px;border:2px ridge #8a6a2c;border-radius:50%;background:radial-gradient(circle at 35% 26%,#fff4cb,#e3d0a0 70%,#aa8d5c);color:#624279;font:700 23px/1 Georgia,serif;box-shadow:inset 0 0 0 2px #fff9,0 2px 4px #34291855}
+.trial-brand{display:flex;flex-direction:column;gap:1px;min-width:0;text-align:left}
+.trial-brand b{font-size:18px;line-height:1.12;color:#40304a}
+.trial-brand small{font-size:10px;font-weight:800;letter-spacing:.75px;color:#705b79}
+.trial-close{width:32px;height:32px;padding:0;border-radius:50%;font-size:19px;font-weight:700;background:linear-gradient(#fffdf8,#eadfc8)}
+#trialBody{padding:13px 15px 15px;line-height:1.35}
+.trial-hd{display:flex;align-items:center;gap:8px;font-size:15px;color:#493254;margin:0 0 7px}
+.trial-hd small{margin-left:auto;font-weight:700;opacity:.78;font-size:11px;text-align:right}
+.trial-card p{margin:0 0 8px;font-size:12px;line-height:1.4}
+.trial-intro{display:grid;gap:2px;padding:8px 10px;border:1px solid #d4c39e;border-left:4px solid #76529a;border-radius:6px;background:linear-gradient(100deg,#fffdf6,#f4ead7);text-align:center}
+.trial-intro>b{font-size:14px;color:#493254}
+.trial-intro>span{font-size:11px;color:#5f584b}
+.trial-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(112px,1fr));gap:6px;margin:8px 0}
+.trial-result-banner{display:flex;flex-direction:column;align-items:center;gap:2px;margin-bottom:8px;padding:11px;border:1px solid #c8b185;border-radius:7px;background:radial-gradient(ellipse at 50% 0%,#fff3ca,#f4e8d0 76%);text-align:center}
+.trial-result-banner small{font-size:9px;font-weight:900;letter-spacing:1px;color:#765f36}
+.trial-result-banner b{font-size:24px;line-height:1.1;font-variant-numeric:tabular-nums;color:#493254}
+.trial-result-banner span{font-size:12px;font-weight:800;color:#614279}
+.trial-stat{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;min-width:0;padding:7px 6px;border:1px solid #d2c19e;border-radius:6px;background:#fffdf7;text-align:center}
+.trial-stat small{font-size:9px;line-height:1.2;letter-spacing:.3px;text-transform:uppercase;color:#776847}
+.trial-stat b{font-size:14px;font-variant-numeric:tabular-nums;color:#493254;overflow-wrap:anywhere}
+.trial-next-cache{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin:7px 0;padding:7px 9px;border:1px dashed #b9a477;border-radius:6px;background:#fff8e4;font-size:11px}
+.trial-next-cache>span{font-weight:800;color:#6a5529}
+.trial-next-cache>b{color:#493254}
+.trial-next-cache>small{margin-left:auto;opacity:.78;text-align:right}
+.trial-card .trial-row{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:9px}
+.trial-card button.trial-act{display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:5px;min-width:0;min-height:116px;padding:10px 8px;border:2px solid #b9a477;border-radius:7px;background:linear-gradient(#fffdf7,#f0e3c4);text-align:center;white-space:normal}
+.trial-card button.trial-act:hover{background:linear-gradient(#fffefb,#f4e8cb);border-color:#8a6a2c}
+.trial-card button.trial-act .trial-choice-mark{display:grid;place-items:center;width:30px;height:30px;border-radius:50%;background:#ede3ef;color:#65427e;font-size:18px}
+.trial-choice-copy{display:flex;flex-direction:column;align-items:center;gap:3px;min-width:0}
+.trial-card button.trial-act b{color:#493254;display:block;font-size:12px;line-height:1.2}
+.trial-card button.trial-act small{display:block;font-size:10px;line-height:1.3;opacity:.82;overflow-wrap:anywhere}
+.trial-choice-timer{margin-top:auto;padding:2px 7px;border-radius:999px;background:#eee3c8;color:#5c4b2f;font-size:9px;font-weight:800}
 .trial-card button:disabled{opacity:.5;cursor:not-allowed}
-.trial-foot{display:flex;gap:6px;justify-content:flex-end;margin-top:10px}
+.trial-reward-details{margin-top:9px;border:1px solid #d2c19e;border-radius:6px;background:#fffdf7;overflow:hidden}
+.trial-reward-details summary{display:flex;align-items:baseline;gap:6px;padding:7px 9px;background:linear-gradient(90deg,#fff8e7,#eee2c7);font-size:11px;font-weight:800;cursor:pointer}
+.trial-reward-details summary small{margin-left:auto;font-size:9px;font-weight:600;opacity:.72;text-align:right}
+.trial-ladder{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:4px;padding:7px}
+.trial-rung{display:flex;flex-direction:column;gap:1px;min-width:0;padding:5px 4px;border:1px solid #e1d4b6;border-radius:5px;background:#fffaf0;text-align:center}
+.trial-rung b{font-size:10px;color:#493254;white-space:nowrap}
+.trial-rung small{font-size:9px;color:#6d5b38;white-space:nowrap}
+.trial-note{margin:7px 0 0!important;font-size:10px!important;color:#675e4d}
+.trial-foot{display:flex;gap:6px;justify-content:flex-end;flex-wrap:wrap;margin-top:10px}
 #trial *{pointer-events:auto}
-.trial-stats{display:flex;gap:10px;flex-wrap:wrap;font-size:12px;margin:6px 0 2px}
-.trial-stats b{color:#4a1f6b}
-.trial-shop{border-top:1px solid var(--edge2);margin-top:8px;padding-top:6px}
-.trial-shop .shopline{display:flex;align-items:center;gap:8px;padding:4px 0;border-bottom:1px dashed var(--edge2)}
-.trial-shop .shopline>span{flex:1;min-width:0}
-.trial-shop .shopline small{display:block;opacity:.72}
+.trial-shop{border-top:1px solid #d2c19e;margin-top:8px;padding-top:6px}
+.trial-shop .shopline{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:8px;padding:7px 2px;border-bottom:1px dashed #d2c19e}
+.trial-shop .shopline>span{min-width:0}
+.trial-shop .shopline b{font-size:12px;color:#493254}
+.trial-shop .shopline small{display:block;margin-top:1px;font-size:10px;line-height:1.3;opacity:.78}
+.trial-shop .shopline button{min-width:92px;padding:5px 8px;font-size:10px;font-weight:800;white-space:nowrap}
 .trial-shop .mapgrid{margin-top:6px}
+@media(max-width:560px){
+  .dungeoncard{grid-template-columns:34px minmax(0,1fr) 56px;gap:6px;min-height:76px;padding:7px}
+  .dungeoncard .echo-mark{width:31px;height:31px;font-size:20px}
+  .dungeoncard .echo-copy>b{font-size:13px}
+  .dungeoncard .echo-sub{font-size:10px}
+  .dungeoncard .echo-meta{gap:3px}
+  .dungeoncard .echo-meta small{padding:2px 4px;font-size:9px}
+  .dungeoncard .echo-open{padding:5px 3px;font-size:9px}
+  .trial-card{max-height:calc(100dvh - 18px)}
+  .trial-head{grid-template-columns:36px minmax(0,1fr) 30px;gap:7px;padding:9px 10px}
+  .trial-seal{width:32px;height:32px;font-size:20px}
+  .trial-brand b{font-size:16px}
+  #trialBody{padding:10px}
+  .trial-card .trial-row{grid-template-columns:1fr;gap:6px}
+  .trial-card button.trial-act{min-height:76px;flex-direction:row;justify-content:flex-start;text-align:left;padding:8px 10px}
+  .trial-choice-copy{align-items:flex-start;flex:1}
+  .trial-card button.trial-act .trial-choice-mark{flex:0 0 30px}
+  .trial-choice-timer{margin-top:0;flex:none}
+  .trial-ladder{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .trial-next-cache>small{margin-left:0;text-align:left}
+}
+
 .mapcols{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,280px),1fr));gap:8px;align-items:stretch;margin-top:8px;min-width:0}
 .mapcols .mob-card{margin-bottom:0;min-width:0;overflow-wrap:anywhere}
 .dropline{display:flex;justify-content:space-between;align-items:baseline;gap:8px;padding:1px 0;font-size:12px}
@@ -480,10 +541,12 @@ button.tick.on{background:#ffe08a;border-color:var(--gold);font-weight:bold}
 </div></div>
 </div>
 <div id="modal"><div class="login-card"><p id="mt" style="font-size:14px;opacity:1;margin:0 0 12px"></p><div class="row" style="justify-content:center"><button id="my">Yes</button><button id="mn">Cancel</button></div></div></div>
-<!-- v77: the Endless Echo lobby. The owner's spec: entering the trial asks first - ranked (with the
-     tries you have left today), training, or the Shard Store - and only then puts you in the arena. -->
-<div id="trial"><div class="login-card trial-card">
-  <div class="trial-hd">&#127963; <b>Endless Echo</b> <small>the damage trial</small></div>
+<!-- Endless Echo: a 3-minute damage trial, presented in the same parchment-and-gold UI as the map windows. -->
+<div id="trial"><div class="login-card trial-card" role="dialog" aria-modal="true" aria-labelledby="trialTitle">
+  <div class="trial-head"><span class="trial-seal" aria-hidden="true">&#9672;</span>
+    <div class="trial-brand"><b id="trialTitle">Endless Echo</b><small>THE UNDERWORLD DAMAGE TRIAL · 3:00</small></div>
+    <button class="trial-close" data-trial="close" aria-label="Close Endless Echo">&times;</button>
+  </div>
   <div id="trialBody"></div>
 </div></div><!-- The cloud conflict chooser. Two saves exist (this device and the account) and only the player can
      say which one is real, so it is a three-way question, not a yes/no: keep this device, keep the
@@ -667,7 +730,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // script block, which is a SyntaxError - the game did not run on main at all. One line wins, and
 // it names both sides of this merge: the v38 balance patch (the weapon cut, the affix/card
 // give-back) and main's weapon-hold rendering work.
-const BUILD='2026-10-09 grind-v90.10 Nightmare tiers: Nightmare Prontera to Payon (Base Lv 120, N gear) and Nightmare Comodo to Abyss (Base Lv 140, N+ gear), each five maps; the tier entry is a big step over Abyss normal, and the second tier a small one; Zeny roll covers Niflheim, Abyss and all Nightmare kills at 90% and 0.5x to 1.0x.';
+const BUILD='2026-10-09 grind-v91 Endless Echo: Lord of Death Illusion, dark court, 1-50 Shards & inert Refine Scroll';   // shown on the login card - confirms which file you loaded
 $('buildTag').textContent='build '+BUILD;
 
 // ---------- class tree: Novice -> 6 first jobs -> 6 second jobs -> 6 third jobs ----------
@@ -1305,35 +1368,29 @@ const prOf=m=>Math.min(.6,Math.max(0,((m.lvl|0)-60)*.02))+(m.boss?.1:0);
 // 4 is the stage 11-13 drop, section 5 the stage 14-15 and boss drop. They exist NOWHERE else - the
 // only fields whose section index is 4 or 5 are Nightmare fields (see secField).
 // ========================= Endless Echo: the damage trial (v77) =========================
-// The owner's spec, verbatim: 5-minute run, a target that never dies and never hits back,
-// unlimited practice, ranked attempts capped at 2 a day, and a popup on entry asking for
-// ranked (with the tries left) / training / the Shard Store. The character and the dummy
-// stand still for the whole run - this is a measurement, not a fight.
-const TRIAL_SECS=300,TRIAL_RANKED_PER_DAY=2;
-// v77.2 (owner): "new personal best dont pay at endless. with or without new personal best pays out a
-// daily number" - a run pays its own ladder rung and nothing else. A new best still moves the board
-// and the next-rung prompt; it does not move the Shards.
-// v77.1 (owner): "if leave within 10sec after enter doesnt minus the try count. after it counted as
-// -1" - leaving a ranked run inside this grace window gives the try back; after it, the try is spent
-// whether the five minutes finished or not (and nothing is paid for a run that did not finish).
+// Three-minute damage trial, using the existing Niflheim HD map kit as the Echo Court. Practice
+// stays unlimited; ranked stays capped at two runs a day. The character and target hold still -
+// this is a measurement, not a fight.
+const TRIAL_SECS=180,TRIAL_RANKED_PER_DAY=2;
+// A completed ranked run pays its total DPS bracket, never a personal-best bonus. The best record
+// still updates independently; this keeps the reward predictable and respects the earlier owner call.
+// Leaving a ranked run inside the ten-second grace returns the attempt; after that it is spent, and
+// an unfinished run earns neither the bracket payout nor milestone caches.
 const TRIAL_GRACE=10;
 // The ranked day rolls over on the same clock the boards use (Asia/Singapore), so "2 a day"
 // means the same thing everywhere.
 const trialDay=()=>new Date(Date.now()+8*3600000).toISOString().slice(0,10);
 const trialLeftToday=()=>{const t=S&&S.trial;return t&&t.day===trialDay()?Math.max(0,TRIAL_RANKED_PER_DAY-(t.used|0)):TRIAL_RANKED_PER_DAY};
 const trialClock=()=>{const s=Math.max(0,Math.ceil(TRIAL.left));return Math.floor(s/60)+':'+String(s%60).padStart(2,'0')};
-// One payout ladder, in DPS, so the screen, the board and the milestone chests all speak the
-// same unit (the owner: "the rank board should be showing the best dps within 1 session").
-// v77.1 (owner): "increase the shards pay by dps to higher milestone. starting from 5k is too easy"
-// - and the yardstick he gave for a Base Lv 150 build: ~1.5M DPS alone, ~4.5M with three pets. The
-// ladder is anchored on those two marks, so the rungs that matter are the ones a real endgame build
-// actually reaches, and the floor sits where a band newcomer lands rather than at a number any
-// level 100 field clear beats.
-const TRIAL_PAY=[[100000,5],[250000,12],[500000,20],[750000,28],[1000000,36],[1500000,50],[2250000,68],[3000000,85],[4500000,115]];
-const trialShardsFor=dps=>{let v=0;for(const[at,pay]of TRIAL_PAY)if(dps>=at)v=pay;return v};
+// Repeatable total payout ladder, in DPS. The completion bracket ensures a finished ranked attempt
+// always pays something; higher DPS replaces that amount with the matching bracket (it does not stack).
+const TRIAL_PAY=[[0,1],[100000,3],[250000,5],[500000,8],[750000,12],[1000000,16],[1500000,22],[2250000,30],[3000000,40],[4500000,50]];
+const trialShardsFor=dps=>{let v=TRIAL_PAY[0][1];for(const[at,pay]of TRIAL_PAY)if(dps>=at)v=pay;return v};
 const trialPayNext=()=>{const st=trialState();return TRIAL_PAY.find(([at])=>at>st.best)||null};
 const trialShortDps=n=>n>=1e6?(Math.round(n/1e4)/100)+'M':(n>=1e3?Math.round(n/1e3)+'k':String(Math.round(n)));
-const trialLadderText=()=>'Shard ladder by DPS: '+TRIAL_PAY.map(([at,pay])=>trialShortDps(at)+' -> '+pay).join(' \u00b7 ')+' \u00b7 flat pay - a new personal best pays the same run as any other.';
+const trialPayLabel=at=>at===0?'Completed run':trialShortDps(at)+' DPS';
+const trialLadderHtml=()=>`<div class="trial-ladder" aria-label="Repeatable Echo Shard payouts">${TRIAL_PAY.map(([at,pay])=>`<span class="trial-rung"><b>${trialPayLabel(at)}</b><small>${pay} Echo Shards</small></span>`).join('')}</div>`;
+const trialLadderText=()=>'Repeatable total payout per ranked run: '+TRIAL_PAY.map(([at,pay])=>trialPayLabel(at)+' -> '+pay+' Echo Shards').join(' · ')+' · one bracket, not stacked; a personal best does not add a bonus.';
 // One-off chests (owner: "the store price & chests should be readjust for endless"), claimed in order
 // the first time a ranked run reaches the mark, so one huge run can open several at once. The two
 // named rungs are his own yardsticks: 1.5M is a fully decked Lv 150 character on its own, 4.5M is that
@@ -1354,27 +1411,23 @@ function trialGrantChest(c){
   if(c.z)earnZeny(c.z);
   if(c.ori)S.ore.ori=(S.ore.ori|0)+c.ori;
   if(c.elu)S.ore.elu=(S.ore.elu|0)+c.elu}
-// Prices follow the new ladder (owner: "daily join 2 times should be enough to purchase around 30 ori
-// or elu, card token mastery should be harder to get even harder for legendary then nightmare. for the
-// nightmare gear token should be very difficult and lock only to be purchase above 120level").
-// v77.2 (owner): "the daily payout should be able to buy 30 ori or elu, card mastery maybe need 2
-// days. & nightmare needs around 2k" - one day is the two ranked runs at the top rung, 2 x 115 = 230
-// Shards. 30 Ori is six 5-bundles at 38 = 228, so a good day buys the thirty exactly; the Card
-// Mastery Token is two days (460), the Legendary voucher four (900) and the Nightmare token the far
-// save (2,000 - about nine good days). Ore is the steady buy; the other three are save-ups.
+// Store prices are balanced around a 1-50 Shard ranked payout (100/day at the two-run cap):
+// about two top-rank days for a random Legendary card and four for Nightmare gear.
 const TRIAL_STORE=[
-  {id:'ori',   c:38,  n:'Oridecon x5',              d:'Refine weapons (+1 to +10). One good ranked day buys thirty - six bundles.'},
-  {id:'elu',   c:38,  n:'Elunium x5',               d:'Refine armour, shield, headgear, legs and accessories. The same 38 a bundle.'},
-  {id:'zeny',  c:25,  n:'Zeny Cache (500,000z)',    d:'Straight into the purse - refine bills at Base Lv 150 are not small.'},
-  {id:'token', c:460, n:'Card Mastery Token',       d:'One permanent-stat roll in the Index, no duplicate card needed. About two good ranked days.'},
-  {id:'lcard', c:900, n:'Legendary Card Voucher',   d:'A random Legendary card from the trial chest. Two steps above the Card Token.'},
-  {id:'nmgear',c:2000,n:'Nightmare Gear Token',     d:'Pick a map and take one Nightmare item from its row. The long save - about nine good days.',lv:120},
+  {id:'ori',   c:45,  n:'Oridecon x5',                   d:'Weapon refine material. Five Oridecon for 45 Echo Shards.'},
+  {id:'elu',   c:45,  n:'Elunium x5',                    d:'Armour refine material. Five Elunium for 45 Echo Shards.'},
+  {id:'zeny',  c:35,  n:'Zeny Cache (500,000z)',         d:'A direct 500,000 Zeny cache for refining and gear upgrades.'},
+  {id:'token', c:180, n:'Card Mastery Token',            d:'One permanent-stat roll in the Index; no duplicate card is needed.'},
+  {id:'lcard', c:200, n:'Random Legendary Card Voucher', d:'Adds one random Legendary monster card to your collection, with a random Legendary stat.'},
+  {id:'nmgear',c:400, n:'Nightmare Gear Token',          d:'Choose a map for one class-usable item. Prontera to Payon give section 4; Comodo to Abyss give section 5. The map sets its quality cap.',lv:120},
+  {id:'rscroll',c:400,n:'Refine Scroll',                  d:'Placeholder item for a future refine feature. It has no effect or use yet.'},
 ];
 const trialState=()=>{
   if(!S.trial||typeof S.trial!=='object')S.trial={day:trialDay(),used:0,best:0,runs:0,chest:0};
   if(S.trial.day!==trialDay()){S.trial.day=trialDay();S.trial.used=0}
   const ch=Math.floor(+S.trial.chest);S.trial.chest=Number.isFinite(ch)?Math.max(0,Math.min(TRIAL_CHESTS.length,ch)):0;
   S.shards=Math.max(0,Math.floor(+S.shards||0));
+  S.refineScrolls=safeCount(S.refineScrolls);
   return S.trial};
 const TRIAL={on:false,mode:'training',left:TRIAL_SECS,dmg:0,dmg0:0,dummy:null,shop:false};
 let hudTrial=false,hudTrialClock='';   // the HUD reads these instead of the field name while a run is on
@@ -1386,104 +1439,128 @@ function trialLobby(view){
   const body=document.getElementById('trialBody');if(!body)return el;
   if(view==='store'){body.innerHTML=trialShopHtml();el.classList.add('on');return el}
   if(view==='pickmap'){
-    body.innerHTML=`<div class="trial-hd">&#127963; <b>Nightmare Gear Token</b> <small>${TRIAL_STORE.find(x=>x.id==='nmgear').c} shards</small></div>
-      <p><small>Pick the map whose row you want. ${'Maps Nightmare Prontera to Payon give the <b>Nightmare</b> row (section 4); maps Nightmare Comodo to Abyss give the <b>Abyssal</b> row (section 5).'} One item, for the weapon your class fights with.</small></p>
+    body.innerHTML=`<div class="trial-hd"><b>Nightmare Gear Token</b><small>${TRIAL_STORE.find(x=>x.id==='nmgear').c} Echo Shards</small></div>
+      <p>Choose a map to receive one item straight in your bag. The token selects from your class-compatible weapons when possible (armour is the fallback). Nightmare Prontera to Payon give the <b>Nightmare</b> row (section 4); Nightmare Comodo to Abyss give the <b>Abyssal</b> row (section 5). The map sets the quality cap, and the current selector is deterministic from your total kill count.</p>
       <div class="mapgrid">${MAPS.map((m,i)=>`<button class="mapcard" data-nmmap="${i}"><b>${m.n}</b><small>${NMNAME[i]}</small></button>`).join('')}</div>
-      <div class="trial-foot"><button data-trial="store">Back</button></div>`;
+      <div class="trial-foot"><button data-trial="store">Back to Exchange</button></div>`;
     el.classList.add('on');return el}
   if(view==='result'){body.innerHTML=trialResultHtml();el.classList.add('on');return el}
-  const next=trialChestNext(),nx=trialPayNext();
+  const next=trialChestNext(),nx=trialPayNext(),top=TRIAL_PAY[TRIAL_PAY.length-1][1],floor=TRIAL_PAY[0][1];
   body.innerHTML=`
-    <p>The target never dies and never fights back: <b>5:00</b> of uninterrupted damage, then the number.
-      A ranked try is only spent if you stay longer than <b>${TRIAL_GRACE} seconds</b>.</p>
+    <div class="trial-intro"><b>Three minutes of pure damage</b><span>Lord of Death Illusion never dies or attacks. Your character and the target both stay in place.</span></div>
     <div class="trial-stats">
-      <span>Ranked today <b>${left}/2</b></span><span>Personal best <b>${Math.round(st.best||0).toLocaleString()} DPS</b></span>
-      <span>Shards <b>${S.shards|0}</b></span><span>Runs <b>${st.runs|0}</b></span>
-      <span>Chests <b>${st.chest|0}/${TRIAL_CHESTS.length}</b></span></div>
-    <p><small>${next?`<b>Next chest at ${next[0].toLocaleString()} DPS</b> - ${trialChestText(next[1])}. Chests are one-off and paid the first time a ranked run reaches the mark.`:'Every chest is claimed - the trial owes you nothing more.'}</small></p>
+      <span class="trial-stat"><small>Ranked attempts today</small><b>${left}/2</b></span>
+      <span class="trial-stat"><small>Personal best</small><b>${Math.round(st.best||0).toLocaleString()} DPS</b></span>
+      <span class="trial-stat"><small>Echo Shards</small><b>${S.shards|0}</b></span>
+      <span class="trial-stat"><small>First-clear caches</small><b>${st.chest|0}/${TRIAL_CHESTS.length}</b></span>
+    </div>
+    <div class="trial-next-cache">${next?`<span>Next one-time cache</span><b>${trialShortDps(next[0])} DPS</b><small>${trialChestText(next[1])}</small>`:'<span>All first-clear caches claimed</span><small>Repeatable ranked payouts remain available.</small>'}</div>
     <div class="trial-row">
       <button class="trial-act" data-trial="ranked" ${left?'':'disabled'}>
-        <b>Ranked run ${left?`(${left} left today)`:'(used up)'}</b>
-        <small>Ranks the run and pays Trial Shards by DPS${nx?` - next rung ${nx[0].toLocaleString()} DPS = ${nx[1]}`:' - top rung already reached'}; a full run today is worth ${trialShardsFor(st.best)}.</small></button>
+        <span class="trial-choice-mark" aria-hidden="true">&#9733;</span>
+        <span class="trial-choice-copy"><b>Ranked attempt</b><small>${left?`Earn ${floor}-${top} Echo Shards from the completed-run DPS bracket.`:'Your ranked attempts are used for today.'}</small><small>${left?`${left}/2 ranked attempts remain today.`:'Attempts reset at the daily rollover.'}</small></span>
+        <span class="trial-choice-timer">3:00</span></button>
       <button class="trial-act" data-trial="training">
-        <b>Training (unlimited)</b><small>Same five minutes, nothing saved, nothing spent.</small></button>
+        <span class="trial-choice-mark" aria-hidden="true">&#9655;</span>
+        <span class="trial-choice-copy"><b>Training · unlimited</b><small>3:00 practice. No score, Echo Shards or cache progress.</small></span>
+        <span class="trial-choice-timer">FREE</span></button>
       <button class="trial-act" data-trial="store">
-        <b>Shard Store</b><small>Spend Shards on ore, Zeny, cards and Nightmare gear.</small></button>
+        <span class="trial-choice-mark" aria-hidden="true">&#9672;</span>
+        <span class="trial-choice-copy"><b>Shard Store</b><small>Exchange Echo Shards for refine supplies, Zeny, cards and Nightmare gear.</small></span>
+        <span class="trial-choice-timer">OPEN</span></button>
     </div>
-    <p><small>${trialLadderText()}</small></p>
+    <details class="trial-reward-details" open><summary>Repeatable DPS payout <small>one total bracket per completed ranked run</small></summary>${trialLadderHtml()}</details>
+    <p class="trial-note">Milestone caches are one-time rewards. Ranked payouts repeat; a new personal best updates your record but adds no bonus.</p>
     <div class="trial-foot"><button data-trial="close">Close</button></div>`;
   el.classList.add('on');
   return el}
 function trialShopHtml(){
   const rows=TRIAL_STORE.map(s=>{const lock=s.lv&&safeCount(S.lv)<s.lv;
     return `<div class="shopline"><span><b>${s.n}</b><small>${s.d}${s.lv?` <b>Base Lv ${s.lv}+ only.</b>`:''}</small></span>
-    <button data-buy="${s.id}" ${(!lock&&S.shards>=s.c)?'':'disabled'}>${lock?`Lv ${s.lv}`:(s.c+' shards')}</button></div>`}).join('');
-  return `<div class="trial-hd">&#127963; <b>Shard Store</b> <small>${S.shards|0} shards</small></div>
-    <p><small>Shards come from ranked runs only - practice pays nothing. Leftovers carry over.</small></p>
+    <button data-buy="${s.id}" ${(!lock&&S.shards>=s.c)?'':'disabled'}>${lock?`Lv ${s.lv}`:(s.c+' Shards')}</button></div>`}).join('');
+  return `<div class="trial-hd"><b>Shard Store</b><small>${S.shards|0} Echo Shards</small></div>
+    <p>Shards come from completed ranked runs; training is free and does not pay. Your balance carries over.</p>
     <div class="trial-shop">${rows}</div>
     <div class="trial-foot"><button data-trial="lobby">Back</button><button data-trial="close">Close</button></div>`}
 function trialResultHtml(){
   const r=TRIAL.result||{dmg:0,dps:0,shards:0,best:false,mode:'training'};
   const st=trialState();
-  return `<div class="trial-hd">&#127963; <b>${r.mode==='ranked'?'Ranked run complete':'Training run'}</b></div>
+  return `<div class="trial-result-banner"><small>${r.mode==='ranked'?'RANKED RUN COMPLETE':'TRAINING RUN'}</small>
+      <b>${Math.round(r.dps).toLocaleString()} DPS</b><span>${r.mode==='ranked'?`+${r.shards} Echo Shards`:'Practice · no rewards'}</span></div>
     <div class="trial-stats">
-      <span>Damage <b>${Math.round(r.dmg).toLocaleString()}</b></span>
-      <span>DPS <b>${Math.round(r.dps).toLocaleString()}</b></span>
-      <span>Personal best <b>${Math.round(st.best||0).toLocaleString()}</b></span>
-      <span>Shards <b>${S.shards|0}</b></span></div>
-    ${r.quit?`<p>You left after <b>${r.ran}s</b>: one of today's ranked tries is used and nothing is paid. Leave inside the first ${TRIAL_GRACE} seconds and the try is not spent.</p>`
-      :(r.chests&&r.chests.length?`<p><b>Chest${r.chests.length>1?'s':''} opened:</b> ${r.chests.map(([at,c])=>`<b>${at.toLocaleString()} DPS</b> - ${trialChestText(c)}`).join(' · ')}</p>`:'')}
+      <span class="trial-stat"><small>Total damage</small><b>${Math.round(r.dmg).toLocaleString()}</b></span>
+      <span class="trial-stat"><small>Personal best</small><b>${Math.round(st.best||0).toLocaleString()} DPS</b></span>
+      <span class="trial-stat"><small>Ranked attempts left</small><b>${trialLeftToday()}/2</b></span>
+      <span class="trial-stat"><small>Echo Shards</small><b>${S.shards|0}</b></span></div>
+    ${r.quit?`<p>You left after <b>${r.ran}s</b>: this ranked attempt is used and no payout is given. Leaving within the first ${TRIAL_GRACE} seconds still returns the attempt.</p>`
+      :(r.chests&&r.chests.length?`<p><b>First-clear cache${r.chests.length>1?'s':''} opened:</b> ${r.chests.map(([at,c])=>`<b>${trialShortDps(at)} DPS</b> - ${trialChestText(c)}`).join(' · ')}</p>`:'')}
     <p>${r.quit?'':r.mode==='ranked'
-      ? `Pays <b>${r.shards} Shards</b>${r.best?' \u00b7 new personal best':''}. Ranked runs left today: <b>${trialLeftToday()}/2</b>.`
-      : 'Practice run: nothing saved, nothing spent. Ranked pays Shards and sets your best.'}</p>
+      ? `Repeatable payout: <b>${r.shards} Echo Shards</b>${r.best?' · new personal best':''}. Ranked attempts left today: <b>${trialLeftToday()}/2</b>.`
+      : 'Practice run: no score, Shards or milestone caches are saved. Ranked runs pay the repeatable ladder.'}</p>
     <div class="trial-foot">
       ${trialLeftToday()&&r.mode==='ranked'?`<button data-trial="ranked">Run again</button>`:''}
-      ${r.mode!=='ranked'?`<button data-trial="ranked" ${trialLeftToday()?'':'disabled'}>Ranked run</button>`:''}
+      ${r.mode!=='ranked'?`<button data-trial="ranked" ${trialLeftToday()?'':'disabled'}>Ranked attempt</button>`:''}
       <button data-trial="store">Shard Store</button>
       <button data-trial="close">Leave</button></div>`}
 // ---------------------------------------------------------------- the arena ----
-// Built from plain geometry so it cannot depend on the map kit: a rune circle, obsidian pillars
-// with ember crowns, a bone-strewn ground and a purple key light. It rebuilds whenever the scene
-// key changes, exactly like a field does.
+// The Echo Court reuses Niflheim's painted HD terrain and graveyard billboards, recoloured into a
+// shadowy arena palette. Its concentric ruin/abyss floor and map-native pillars keep it cohesive
+// with the world map rather than introducing a second, block-built art style.
 function trialArena(){
   if(typeof deco==='undefined')return;
   while(deco.children.length)deco.remove(deco.children[0]);
   if(typeof townObjs!=='undefined')townObjs.forEach(o=>o.visible=false);
   if(typeof road!=='undefined')road.visible=false;
   if(typeof KIT!=='undefined'&&KIT.ground)KIT.ground.visible=false;
-  const rune=new THREE.Mesh(new THREE.RingGeometry(3.4,3.9,48),new THREE.MeshBasicMaterial({color:0x9a5cf0,transparent:true,opacity:.55,side:THREE.DoubleSide}));
-  rune.rotation.x=-Math.PI/2;rune.position.set(0,.02,-4);deco.add(rune);
-  const rune2=new THREE.Mesh(new THREE.RingGeometry(6.2,6.5,64),new THREE.MeshBasicMaterial({color:0x6a2fa0,transparent:true,opacity:.35,side:THREE.DoubleSide}));
-  rune2.rotation.x=-Math.PI/2;rune2.position.set(0,.02,-4);deco.add(rune2);
-  for(let i=0;i<10;i++){
-    const a=i/10*Math.PI*2,r=11+((i*37)%5)*.5,x=Math.cos(a)*r,z=-4+Math.sin(a)*r*.85;
-    const p=new THREE.Mesh(new THREE.CylinderGeometry(.55,.85,5.5+((i*13)%4)*.6,6),M(0x241a2e));
-    p.position.set(x,2.6,z);p.rotation.z=((i*7)%5-2)*.02;deco.add(p);
-    const cap=new THREE.Mesh(new THREE.SphereGeometry(.5,10,8),new THREE.MeshBasicMaterial({color:0xb07af0}));
-    cap.position.set(x,5.4,z);deco.add(cap);
+  let built=0;
+  if(typeof KIT!=='undefined'&&KIT.ok&&typeof kitPlan==='function'&&typeof buildKit==='function'){
+    const plan=kitPlan(8,1);                  // the Niflheim graveyard, independent of the player's field stage
+    if(plan){
+      plan.design='echo-court';
+      // A broad oval of HD graveyard tiles: cobble in the fighting circle, abyss stone on the rim.
+      for(let z=-11.2;z<=2.4;z+=.8)for(let x=-11.2;x<=11.2;x+=.8){
+        const r=Math.hypot(x/9.6,(z+4.4)/6.2);
+        if(r<=1.06)plan.cells.push({x,z,tile:r>.82?'rock_abyss':'ruin_cobble'});
+      }
+      // Reuse actual Niflheim-map crops to give the court a readable, broken-pillared perimeter.
+      plan.props.push(
+        {x:-14.2,z:-9.5,type:'ruin_pillar',scale:1.1},
+        {x:14.2,z:-9.5,type:'ruin_pillar',scale:1.1,flip:true},
+        {x:-14.2,z:1.8,type:'ruin_pillar',scale:.95},
+        {x:14.2,z:1.8,type:'ruin_pillar',scale:.95,flip:true},
+        {x:-18,z:-20,type:'standing_stone',scale:1.1},
+        {x:18,z:-20,type:'standing_stone',scale:1.1,flip:true}
+      );
+      built=!!buildKit(8,plan);
+    }
   }
-  for(let i=0;i<14;i++){                                   // bones and broken stone on the floor
-    const a=i/14*Math.PI*2+0.4,r=5.5+((i*29)%7)*.9;
-    const b=new THREE.Mesh(new THREE.BoxGeometry(.35+((i*17)%3)*.15,.22,.9+((i*11)%4)*.2),M(i%3?0xd8cdb4:0x3a2c46));
-    b.position.set(Math.cos(a)*r,.12,-4+Math.sin(a)*r*.8);b.rotation.y=a*1.7;deco.add(b);
-  }
-  const light=new THREE.PointLight(0x9a5cf0,1.35,34);light.position.set(0,6,-4);deco.add(light);
-  const light2=new THREE.PointLight(0xff7a3c,.7,26);light2.position.set(0,1.4,-9);deco.add(light2);
+  // Until the map kit finishes loading, use the same map's regular fallback scenery. kitFetch()
+  // calls this again once the HD atlas is ready, so the trial never gets stuck on the fallback.
+  if(!built)buildDeco(8);
+  // Tint map-native textures and fallback meshes together so the HD kit and its loading fallback
+  // share one dark violet/slate palette. Reapplying a fixed colour is safe when kitFetch rebuilds it.
+  const shade=o=>{if(o.material){const mats=Array.isArray(o.material)?o.material:[o.material];for(const m of mats)if(m.color&&m.color.setHex)m.color.setHex(0x796e84)}for(const c of o.children||[])shade(c)};
+  if(typeof KIT!=='undefined'&&KIT.ground&&KIT.ground.material&&KIT.ground.material.color)KIT.ground.material.color.setHex(0x5c5269);
+  for(const o of deco.children)shade(o);
+  const light=new THREE.PointLight(0x9a5cf0,.9,34);light.position.set(0,5,-5);deco.add(light);
+  const rim=new THREE.PointLight(0x7051ad,.5,48);rim.position.set(0,5,-19);deco.add(rim);
+  const edge=new THREE.PointLight(0xc14986,.42,26);edge.position.set(0,4,3);deco.add(edge);
 }
 // ---------------------------------------------------------------- the run ----
 function trialEnter(mode){
   const st=trialState();
   if(mode==='ranked'&&!trialLeftToday()){log('No ranked runs left today - practice is always open.','r0','trial');ui();return}
   TRIAL.on=true;TRIAL.mode=mode==='ranked'?'ranked':'training';TRIAL.left=TRIAL_SECS;TRIAL.dmg0=S.dmg||0;TRIAL.dmg=0;TRIAL.result=null;TRIAL.shop=false;
-  // the dummy: infinite HP, no attack timer, and flagged fixed so the AI leaves it alone
-  TRIAL.dummy={n:'Trial Dummy',x:0,z:-4,hp:Infinity,max:Infinity,at:Infinity,size:1.15,spriteScale:1.9,shape:'demon',c:0x7c3aed,
-    pack:0,boss:false,fixed:true,stun:0,run:false,hx:0,hz:-4,flash:0,atkAnim:0,drops:[],cardCh:0,mag:false};
+  // Stationary infinite-HP target. The nameplate reads Lord of Death Illusion; the existing Lord of
+  // Death sprite gives it a boss silhouette, while boss:false keeps the damage math neutral.
+  TRIAL.dummy={n:'Lord of Death Illusion',x:0,z:-4,hp:Infinity,max:Infinity,at:Infinity,size:1.15,spriteScale:1.9,shape:'demon',c:0x7c3aed,spriteId:1373,
+    pack:0,boss:false,fixed:true,spawn:1,stun:0,run:false,hx:0,hz:-4,flash:0,atkAnim:0,drops:[],cardCh:0,mag:false};
   mobs=[TRIAL.dummy];mob=TRIAL.dummy;activePack=0;camps=[];engageTgt=null;respawn=0;tb={};
   // 1.4 units from the target: inside a melee reach of 1.2+0.45*1.15, so the character stands still
   // and swings from the first frame instead of walking into range (owner: both stay in place).
   pl.x=0;pl.z=-2.6;pl.wt=0;pl.orb=0;pAtkT=.2;mAtkT=1e9;
   trialShow(trialEl(),false);
-  log(`${mode==='ranked'?'Ranked':'Training'} run started: five minutes, target never dies.`,'r3','trial');
+  log(`${mode==='ranked'?'Ranked':'Training'} run started: three minutes against Lord of Death Illusion.`,'r3','trial');
   hudTrial=true;ui();save()}
 function trialFinish(){
   if(!TRIAL.on)return;
@@ -1529,9 +1606,10 @@ function trialBuy(id){
   else if(id==='zeny'){earnZeny(500000);log('Shard Store: +500,000 Zeny.','r3','trial')}
   else if(id==='token'){S.cardIndex.bonus=safeCount(S.cardIndex.bonus)+1;log('Shard Store: +1 Card Mastery Token (claim it in the Index).','r3','trial')}
   else if(id==='lcard'){
-    const m=9,mp=MAPS[m],n=mp.mobs[(S.kills|0)%mp.mobs.length].n+' Card',stat=cardStat(3,(S.kills|0)%7+1);
+    const m=MONSTER_INDEX[Math.floor(Math.random()*MONSTER_INDEX.length)],n=m.name+' Card',stat=cardStat(3,Math.floor(Math.random()*AFF.length));
     S.cards.push({id:uid(),n,stat,g:3,v:cardVal(3,stat)});
-    log(`Shard Store: ${n} (${SU(stat)} +${cardVal(3,stat)}) added to the bag.`,'r3','trial')}
+    log(`Shard Store: random Legendary ${n} (${SU(stat)} +${cardVal(3,stat)}) added to your card collection.`,'r3','trial')}
+  else if(id==='rscroll'){S.refineScrolls=safeCount(S.refineScrolls+1);log('Shard Store: +1 Refine Scroll added to your reserve. This placeholder has no effect yet.','r3','trial')}
   else if(id==='nmgear'){trialLobby('pickmap');return}
   S.shards=Math.max(0,(S.shards|0)-row.c);save();
   trialLobby('store')}
@@ -1950,7 +2028,7 @@ const uid=()=>Date.now()+Math.random(),rnd=(a,b)=>a+Math.random()*(b-a),ri=(a,b)
 // One roll fills both slots. The second pick is made from the skills the first did not take, so
 // the two can never match and there is no retry loop to spin if the dice are pinned.
 const PET_SKILL_WEIGHTS=[.35,.35,1,1,1,1,1,1,1,1,1,1],rollPetSkills=()=>{const a=pickW(PET_SKILL_WEIGHTS),rest=PET_SKILL_WEIGHTS.map((w,i)=>i).filter(i=>i!==a),b=rest[pickW(rest.map(i=>PET_SKILL_WEIGHTS[i]))];return[PET_SKILLS[a].id,PET_SKILLS[b].id]};
-const fresh=()=>({pets:[],bond:[],cls:'Novice',sex:'m',hair:0,lv:1,exp:0,hp:100,zeny:0,kills:0,indexXp:0,mobKills:{},equippedTitle:null,shards:0,nmMat:[0,0,0,0,0,0,0,0,0,0],dps:0,trial:{day:trialDay(),used:0,best:0,runs:0},cardIndex:emptyCardIndex(),dmg:0,pts:10,jobs:{Novice:{jl:1,jx:0}},sk:{aid:1},skOff:{},dmgShort:true,dmgShow:true,base:{},mp:0,lvl:1,prog:[1,1,1,1,1],kl:0,auto:true,adv:true,feed:true,clickSell:false,bg:true,autoSell:[false,false,false,false,false,false,false],logOff:{},q:null,cards:[],ore:{ori:0,elu:0},offlineAt:0,offlineKph:0,offlineRateAt:0,offlineRateKills:0,offlineKillRemainder:0,gm:false,gmx:100,
+const fresh=()=>({pets:[],bond:[],cls:'Novice',sex:'m',hair:0,lv:1,exp:0,hp:100,zeny:0,kills:0,indexXp:0,mobKills:{},equippedTitle:null,shards:0,refineScrolls:0,nmMat:[0,0,0,0,0,0,0,0,0,0],dps:0,trial:{day:trialDay(),used:0,best:0,runs:0},cardIndex:emptyCardIndex(),dmg:0,pts:10,jobs:{Novice:{jl:1,jx:0}},sk:{aid:1},skOff:{},dmgShort:true,dmgShow:true,base:{},mp:0,lvl:1,prog:[1,1,1,1,1],kl:0,auto:true,adv:true,feed:true,clickSell:false,bg:true,autoSell:[false,false,false,false,false,false,false],logOff:{},q:null,cards:[],ore:{ori:0,elu:0},offlineAt:0,offlineKph:0,offlineRateAt:0,offlineRateKills:0,offlineKillRemainder:0,gm:false,gmx:100,
   st:{str:1,agi:1,dex:1,luk:1,int:1,vit:1},eq:{weapon:{id:1,slot:'weapon',wt:'dagger',tier:0,val:5,name:'Novice Knife',aff:[],slots:1,cards:[],sec:0},armor:null,head:null,off:null,leg:null,acc1:null,acc2:null},inv:[]});
 const saveKey=()=>'pg_save3_'+currentUser;
 // ---------- the save-owner stamp (v88.6) ----------
@@ -1993,6 +2071,7 @@ const s=JSON.parse(raw);if(s&&s.lv){const F=fresh(),f=Object.assign(F,s),hadInde
   // player who has never run the trial - the day field re-rolls on load, which is also what
   // clears yesterday's two attempts.
   f.shards=Math.max(0,Math.floor(num_(f.shards,0)));
+  f.refineScrolls=Math.max(0,Math.floor(num_(f.refineScrolls,0)));
   if(!f.trial||typeof f.trial!=='object'||Array.isArray(f.trial))f.trial={day:trialDay(),used:0,best:0,runs:0};
   f.trial.day=typeof f.trial.day==='string'?f.trial.day.slice(0,10):trialDay();
   f.trial.used=Math.max(0,Math.min(TRIAL_RANKED_PER_DAY,Math.floor(num_(f.trial.used,0))));
@@ -3523,9 +3602,9 @@ function changeClass(n){if(classBlock(n))return;
 
 // ---------- UI ----------
 // v90.2 (owner): the Black Market and the Leaderboard sit under the quest panel behind one open/hide arrow
-// instead of taking dock slots. The keys X and V still open them.
+// instead of taking dock slots. The keys X and V still open them. v91: the World Map tab uses a tower icon.
 const SIDE_TABS=['market','board'];
-const TABS={map:['🗺️','World Map','M'],status:['📊','Character','S'],job:['🌳','Class Tree','J'],skills:['✨','Skills','K'],bag:['🎒','Inventory','B'],log:['📃','Log','L'],pet:['🐾','Pets','P'],index:['📚','Mastery Index','I'],board:['🏆','Leaderboard','V'],market:['🏪','Black Market','X'],set:['⚙️','Settings','O'],gm:['🛠️','GM Tools','G']};
+const TABS={map:['🗼','World Map','M'],status:['📊','Character','S'],job:['🌳','Class Tree','J'],skills:['✨','Skills','K'],bag:['🎒','Inventory','B'],log:['📃','Log','L'],pet:['🐾','Pets','P'],index:['📚','Mastery Index','I'],board:['🏆','Leaderboard','V'],market:['🏪','Black Market','X'],set:['⚙️','Settings','O'],gm:['🛠️','GM Tools','G']};
 const dot=k=>{if(!S)return false;if(k==='status')return S.pts>0;if(k==='skills')return skpAvail()>0;if(k==='quest')return!!(S.q&&S.q.some(q=>q.prog>=q.goal));if(k==='cards')return S.cards.length>0;if(k==='index'){const rank=HUNT_TITLES.findIndex(t=>t.id===S.equippedTitle);return cardMasteryAvailable()>0||HUNT_TITLES.some((t,i)=>i>rank&&titleUnlocked(t))}return false};
 const find=id=>[...S.inv,...items(),...S.cards].find(x=>String(x.id)===String(id));
 // Gear Lv is a display-only field-quality reference: field level +10 per numeric quality step.
@@ -3637,8 +3716,13 @@ const V={
       <div class="mapgrid">${MAPS.map((m,i)=>{const cur=i===mapM,here=i===S.mp;
         return`<button class="mapcard${cur?' on':''}${here?' here':''}" data-a="selm" data-v="${i}" title="${m.n} - ${m.t}">
           <b>${m.n}</b><small>${here?'● ':''}${m.rec}</small></button>`}).join('')}</div>
-      <div class="map-specials"><button class="mapcard dungeoncard" data-trial="lobby" title="Endless Echo - the damage trial">
-          <b>&#127963; Endless Echo</b><small>Damage trial · 5:00</small><small>${trialLeftToday()}/2 ranked runs left today · ${S.shards|0} Shards</small></button></div></div>
+      <div class="map-specials"><button class="mapcard dungeoncard" data-trial="lobby"
+          aria-label="Enter Endless Echo, a three-minute damage trial against Lord of Death Illusion. ${trialLeftToday()} ranked attempts remain today. You have ${S.shards|0} Echo Shards."
+          title="Endless Echo · Lord of Death Illusion · best single-run DPS · ${trialLeftToday()}/2 ranked attempts today">
+          <span class="echo-mark" aria-hidden="true">&#9672;</span>
+          <span class="echo-copy"><b>Endless Echo</b><small class="echo-sub">3-minute damage trial · Lord of Death Illusion</small>
+            <span class="echo-meta"><small>${trialLeftToday()}/2 ranked attempts today</small><small><b>${S.shards|0}</b> Echo Shards</small></span></span>
+          <span class="echo-open" aria-hidden="true">ENTER <b>›</b></span></button></div></div>
     ${fieldBand}
     <div class="mapcols">
       <div class="mob-card"><div class="hd">${mapL>10?'Nightmare ':''}${mp.n} Stage ${mapL>10?mapL-10:mapL}${mapM<5&&mapL<=5?`<br><small>${mapM===0?'Novice start · Base Lv 1–10':'Early class route · Base Lv 10–20'} · gentle packs</small>`:''}</div>
@@ -3733,7 +3817,7 @@ const V={
   cards(){const g={};S.cards.forEach(c=>(g[c.n]=g[c.n]||[]).push(c));const ks=Object.keys(g),sel=g[selC]?g[selC][0]:null;
     return`<div class="grid">${ks.map(n=>`<div class="cell b${GI[g[n][0].g]}${n===selC?' sel':''}" data-a="selc" data-v="${n}" data-tip="${g[n][0].id}">🃏<i class="rf">x${g[n].length}</i></div>`).join('')||'<small>No cards yet. Every monster drops its own card at a low chance.</small>'}</div>
     ${sel?`<div class="mob-card" style="margin-top:8px">${itemDetail(sel)}<div class="row" style="margin-top:6px">${EQK.map(([k,l])=>{const e=S.eq[k];return e&&(e.cards||[]).length<(e.slots||0)&&CFIT[sel.stat]===grp(e)?`<button data-a="sock" data-v="${sel.id}:${k}">&rarr; ${l}</button>`:''}).join('')}<button data-a="sellcard" data-v="${sel.id}">Sell ${sel.v*150}z</button></div></div>`:''}`},
-  refine(){return`<div class="hd">Oridecon: ${S.ore.ori} &middot; Elunium: ${S.ore.elu}</div><small>Weapons use Oridecon; armor, shield, legs, headgear and accessories use Elunium. Regular mobs drop both at 0.5% on Stages 1-9 and 1% on Stage 10; Stage 10 MVPs drop both at 2.5%. Each attempt costs 1 ore on Common and Fine pieces, 2 on Rare and Epic, 5 on Legendary, and 10 on N and N+.</small>`
+  refine(){return`<div class="hd">Oridecon: ${S.ore.ori} &middot; Elunium: ${S.ore.elu} &middot; Refine Scrolls: ${safeCount(S.refineScrolls)}</div><small>Weapons use Oridecon; armor, shield, legs, headgear and accessories use Elunium. Regular mobs drop both at 0.5% on Stages 1-9 and 1% on Stage 10; Stage 10 MVPs drop both at 2.5%. Each attempt costs 1 ore on Common and Fine pieces, 2 on Rare and Epic, 5 on Legendary, and 10 on N and N+. The Refine Scroll is a placeholder with no effect yet, and stored scrolls are not consumed by refining.</small>`
     +dpsPanel()+EQK.map(([k,l])=>{const it=S.eq[k];if(!it)return'';const r=it.r||0,o=it.slot==='weapon'?'ori':'elu',c=refCost(it);
       return`<div class="slot" style="align-items:flex-start;gap:10px;margin-top:6px">${cell(it,false)}<div style="flex:1"><b class="${rarCls(it)}">${iname(it)}</b> <small>${l}</small><br><small>${SLOTS[it.slot].stat} +${ev(it)} &rarr; +${Math.round(it.val*(1+(r+1)*.15))} &middot; ${r>=10?'MAX':'Success '+refCh(it)+'% &middot; '+c.toLocaleString()+'z + '+refOre(it)+' '+ORE[o]}</small><br><button data-a="refine" data-v="${k}" ${r>=10||S.ore[o]<refOre(it)||S.zeny<c?'disabled':''}>Refine</button></div></div>`}).join('')},
   pet(){const P=S.pets,A=P.filter(p=>p.on).length,p=gp(selP);
@@ -4402,7 +4486,7 @@ if(S.hp<=0){log('You were defeated... knocked back to the entrance.','r0','kills
     if(o&&bd<2.4){r.at-=dt;if(r.at<=0){r.at=petInt(p);r.lunge=1;petHit(p,o)}}}
   const px=tx-pl.x,pz=tz-pl.z,pd=Math.hypot(px,pz),spd=moveSpd();
   // v77: in the arena the character stands still on purpose - the dummy and the player both stay
-  // put, so the five minutes measure damage and nothing else.
+  // put, so the three minutes measure damage and nothing else.
   pl.run=pd>.15&&!TRIAL.on;
   if(pd>.05&&!TRIAL.on){const s=Math.min(pd,spd*dt*(pd>3?1.4:1));pl.x+=px/pd*s;pl.z+=pz/pd*s}
   pl.x=cl(pl.x,-BX_,BX_);pl.z=cl(pl.z,Z0,Z1);
@@ -4447,7 +4531,7 @@ const SP=(r=.5)=>new THREE.SphereGeometry(r,16,12),BX=(a,b,c)=>new THREE.BoxGeom
       CN=(r,h)=>new THREE.ConeGeometry(r,h,8),CY=(a,b,h)=>new THREE.CylinderGeometry(a,b,h,8);
 function mk(p,geo,c,x=0,y=0,z=0){const m=new THREE.Mesh(geo,M(c));m.position.set(x,y,z);m.castShadow=true;p.add(m);return m}
 
-scene.add(new THREE.HemisphereLight(0xffffff,0x6a9a55,.8));
+const hemi=new THREE.HemisphereLight(0xffffff,0x6a9a55,.8);scene.add(hemi);
 const sun=new THREE.DirectionalLight(0xfff2cc,.9);sun.position.set(-9,22,9);sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);
 Object.assign(sun.shadow.camera,{left:-38,right:38,top:45,bottom:-45});sun.target.position.set(0,0,-5);scene.add(sun.target);scene.add(sun);
 
@@ -4852,12 +4936,13 @@ function kitFetch(){
   // The kit is an enhancement: no fetch, no atlas, no design - the game keeps its own scenery.
   if(typeof fetch!=='function'||typeof Image!=='function')return;
   try{
+    const rebuildActiveScenery=()=>{if(!S)return;if(TRIAL.on)trialArena();else buildDeco(S.mp)};
     const j=n=>fetch('assets/kit/'+n).then(r=>r&&r.ok?r.json():null).catch(()=>null);
     Promise.all([j('ro-spritesheet.json'),j('ro-map-payon.json'),j('ro-map-morocc.json'),j('ro-tiles-hd.json')]).then(([man,pay,mor,hdMan])=>{
       if(!man||!pay)return; KIT.man=man; KIT.des.payon=pay; if(mor)KIT.des.morocc=mor; if(hdMan)KIT.hdMan=hdMan;
       const img=new Image();
-      img.onload=()=>{KIT.png=img;KIT.ok=1;buildDeco(S.mp);
-        if(hdMan){const hdi=new Image();hdi.onload=()=>{KIT.hdPng=hdi;KIT.tex.clear();buildDeco(S.mp)};hdi.onerror=()=>{};hdi.src='assets/kit/ro-tiles-hd.png'}};
+      img.onload=()=>{KIT.png=img;KIT.ok=1;rebuildActiveScenery();
+        if(hdMan){const hdi=new Image();hdi.onload=()=>{KIT.hdPng=hdi;KIT.tex.clear();rebuildActiveScenery()};hdi.onerror=()=>{};hdi.src='assets/kit/ro-tiles-hd.png'}};
       img.onerror=()=>{};
       img.src='assets/kit/ro-spritesheet.png';}).catch(()=>{});
   }catch(e){}
@@ -5607,8 +5692,8 @@ function kit3DDetails(plan,m,root){
     }
   }
 }
-function buildKit(m){
-  const plan=kitPlan(m,S.lvl);if(!plan)return null;
+function buildKit(m,planOverride){
+  const plan=planOverride||kitPlan(m,S.lvl);if(!plan)return null;
   if(!kitAtlas(plan.src))return null;      // no atlas for this design (yet) -> v13 scenery stands in
   if(!KIT.ground){KIT.ground=new THREE.Mesh(new THREE.PlaneGeometry(KIT_FAR,KIT_FAR),new THREE.MeshLambertMaterial({map:null}));KIT.ground.rotation.x=-Math.PI/2;KIT.ground.position.y=.004;KIT.ground.receiveShadow=true;scene.add(KIT.ground)}
   KIT.ground.visible=true;
@@ -7070,8 +7155,8 @@ function draw(){
   if(key!==lastKey){lastKey=key;
     // v77: the trial is a scene of its own. Entering and leaving changes the key, so the arena is
     // built on the way in and the real field is rebuilt on the way out - exactly like a map move.
-    if(TRIAL.on){const col=new THREE.Color(0x2a1040);scene.background=col;scene.fog=new THREE.Fog(col,26,64);ground.material.color.setHex(0x2f2338);trialArena()}
-    else{const col=new THREE.Color(bn?0x8a6bb0:mp.sky);scene.background=col;scene.fog=new THREE.Fog(col,35,80);ground.material.color.setHex(mp.ground);buildDeco(S.mp);road.material.color.setHex(S.mp===3?0xe9d9a8:0xd8cdb4)}}
+    if(TRIAL.on){const col=new THREE.Color(0x171020);scene.background=col;scene.fog=new THREE.Fog(col,22,64);ground.material.color.setHex(0x392d42);hemi.intensity=.52;sun.intensity=.48;trialArena()}
+    else{const col=new THREE.Color(bn?0x8a6bb0:mp.sky);scene.background=col;scene.fog=new THREE.Fog(col,35,80);ground.material.color.setHex(mp.ground);hemi.intensity=.8;sun.intensity=.9;buildDeco(S.mp);road.material.color.setHex(S.mp===3?0xe9d9a8:0xd8cdb4)}}
   P.position.set(pl.x,0,pl.z);
   const w=S.eq.weapon,wt=heroWeaponType(c.n,c.wt,w&&w.wt),clothN=S.eq.armor?TC[rarIdx(S.eq.armor)]:c.col,hairN=S.eq.head?TC[rarIdx(S.eq.head)]:0xd0492c,metalN=w?TC[rarIdx(w)]:0xc0c0c0;
   ensureHero({cls:c.n,cloth:hx(clothN),clothN,cape:c.cape?hx(c.cape):'',hair:hx(hairN),hairN,hat:c.hat?hx(c.hat):'',wt,metal:hx(metalN),skin:'#ffd2a8',look:lookOf(c.n),tier:c.tier||0,sex:S.sex||'m',hair:S.hair|0,shield:!!(S.eq.off&&S.eq.off.slot==='off')});

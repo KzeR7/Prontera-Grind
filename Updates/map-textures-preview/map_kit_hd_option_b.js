@@ -282,12 +282,13 @@ function kitFetch(){
   // The kit is an enhancement: no fetch, no atlas, no design - the game keeps its own scenery.
   if(typeof fetch!=='function'||typeof Image!=='function')return;
   try{
+    const rebuildActiveScenery=()=>{if(!S)return;if(TRIAL.on)trialArena();else buildDeco(S.mp)};
     const j=n=>fetch('assets/kit/'+n).then(r=>r&&r.ok?r.json():null).catch(()=>null);
     Promise.all([j('ro-spritesheet.json'),j('ro-map-payon.json'),j('ro-map-morocc.json'),j('ro-tiles-hd.json')]).then(([man,pay,mor,hdMan])=>{
       if(!man||!pay)return; KIT.man=man; KIT.des.payon=pay; if(mor)KIT.des.morocc=mor; if(hdMan)KIT.hdMan=hdMan;
       const img=new Image();
-      img.onload=()=>{KIT.png=img;KIT.ok=1;buildDeco(S.mp);
-        if(hdMan){const hdi=new Image();hdi.onload=()=>{KIT.hdPng=hdi;KIT.tex.clear();buildDeco(S.mp)};hdi.onerror=()=>{};hdi.src='assets/kit/ro-tiles-hd.png'}};
+      img.onload=()=>{KIT.png=img;KIT.ok=1;rebuildActiveScenery();
+        if(hdMan){const hdi=new Image();hdi.onload=()=>{KIT.hdPng=hdi;KIT.tex.clear();rebuildActiveScenery()};hdi.onerror=()=>{};hdi.src='assets/kit/ro-tiles-hd.png'}};
       img.onerror=()=>{};
       img.src='assets/kit/ro-spritesheet.png';}).catch(()=>{});
   }catch(e){}
@@ -1037,8 +1038,8 @@ function kit3DDetails(plan,m,root){
     }
   }
 }
-function buildKit(m){
-  const plan=kitPlan(m,S.lvl);if(!plan)return null;
+function buildKit(m,planOverride){
+  const plan=planOverride||kitPlan(m,S.lvl);if(!plan)return null;
   if(!kitAtlas(plan.src))return null;      // no atlas for this design (yet) -> v13 scenery stands in
   if(!KIT.ground){KIT.ground=new THREE.Mesh(new THREE.PlaneGeometry(KIT_FAR,KIT_FAR),new THREE.MeshLambertMaterial({map:null}));KIT.ground.rotation.x=-Math.PI/2;KIT.ground.position.y=.004;KIT.ground.receiveShadow=true;scene.add(KIT.ground)}
   KIT.ground.visible=true;
