@@ -77,6 +77,9 @@ const code = [
   pick(/const cardSlots=[^\n]*/, 'cardSlots'),
   grab('function insertUI(sel){', 'function renderWin('),
   pick(/function refineUI\(it,k\)\{const[^\n]*/, 'refineUI'),
+  pick(/function nmMatCounts\(\)\{[^\n]*/, 'nmMatCounts'),
+  pick(/function dpsPanel\(\)\{[^\n]*/, 'dpsPanel'),
+
   pick(/const RO_ITEM_ICON_CANDIDATES=\{[^;]+;/, 'RO equipment image candidates'),
   grab('const gearIconHash=text=>', 'const gearItemIconId='),
   grab('const gearItemIconId=it=>', 'const itemIconUrl='),

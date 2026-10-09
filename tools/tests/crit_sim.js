@@ -106,8 +106,7 @@ t('high-level bosses cut the crit chance rolled against them', () => {
   // a capped 60% build crits those bosses 51 / 51 / 51 / 48 / 42 percent of the time
   assert.deepStrictEqual(Array.from(C.BOSS_CRIT_RES).slice(5).map(r => +(60 * (1 - r)).toFixed(1)), [51, 51, 51, 48, 42]);
   assert.ok(src.includes("Math.max(0,crit()*(1-(mob.critRes||0)))"), 'the live strike must apply the resistance');
-  assert.ok(src.includes('drops:[...T.map(x=>[x,Math.round(BOSS_POOL_TOTAL[l>10?2:(m>=5?1:0)]*(sec===5?NMPLUS_DROP:1)/n)/100]),'), 'every boss carries its map figure (v89: the N+ pool is halved; v90.3: plus the Crown)');
-  assert.ok(src.includes('critRes:bossCritRes(m,l),'), 'the boss still carries its map crit resistance');
+  assert.ok(src.includes('drops:T.map(x=>[x,Math.round(BOSS_POOL_TOTAL[l>10?2:(m>=5?1:0)]*(sec===5?NMPLUS_DROP:1)/n)/100]),critRes:bossCritRes(m,l),'), 'every boss carries its map figure (v89: the N+ pool is halved)');
   // v76: the Nightmare band has its own, steeper ladder - the endgame walls the owner asked for
   assert.deepStrictEqual(Array.from(C.NM_CRIT_RES), [.35,.35,.36,.36,.38,.38,.4,.4,.42,.45], 'the Nightmare ladder is pinned');
   assert.strictEqual(C.bossCritRes(9, 15), .45, 'Nightmare Abyss Stage 15 cuts crit by 45%');

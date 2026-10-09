@@ -40,7 +40,7 @@ this.__n={ MAPS, GEAR, fieldPower, secField, dropTier, gearPool, fieldOf, bossCr
   NMLV, NMBASE, NMSTEP, NMGAP, NMHP, NMATK, NMEXP, NMZENY, NMBOSSHP, NM_CRIT_RES, BOSS_CRIT_RES, nmExpOf, nmZenyOf,
   FIELD_GEAR, FIELD_GEAR_MID, FIELD_GEAR_NM, FIELD_GEAR_MID_NM, BOSS_POOL_TOTAL, NMPLUS_DROP, NM15_BUFF, nm15Of,
   nmOpen, nmMax, NMNAME, NMNAME2,
-  nmPayOf, NM_SIG_CH,
+  nmPayOf, NM_MAT, NM_MAT_CH,
   set S(v){S=v}, get S(){return S} };
 `;
 const sb = { console };
@@ -217,7 +217,7 @@ t('the field tables read the band: boss pool, ore and crit resistance', () => {
   assert.strictEqual(nmBoss.critRes, .45, 'Nightmare Abyss bosses resist 45% crit');
   assert.strictEqual(normBoss.critRes, .3, 'the normal Abyss boss still resists 30%');
   // v76.2 (owner): the band's drops are a THIRD of the rate they were, MVP pool included
-  assert.strictEqual(nmBoss.drops[0][1], Math.round(300 * N.NMPLUS_DROP / (nmBoss.drops.length - 1)) / 100, 'from BOSS_POOL_TOTAL[2] = 300, halved for N+ (v89): 1.5% total (the v90.3 Crown is not part of the pool)');
+  assert.strictEqual(nmBoss.drops[0][1], Math.round(300 * N.NMPLUS_DROP / nmBoss.drops.length) / 100, 'from BOSS_POOL_TOTAL[2] = 300, halved for N+ (v89): 1.5% total');
   assert.strictEqual(normBoss.drops[0][1], Math.round(420 / normBoss.drops.length) / 100, 'the mid/endgame MVP pool keeps 4.2%');
   // ...and the mob rolls are exactly a third of whichever normal table the map would use
   assert.deepStrictEqual([N.FIELD_GEAR_NM, N.FIELD_GEAR_MID_NM].map(t => t.map(x => +(x * 3).toFixed(2))), [N.FIELD_GEAR, N.FIELD_GEAR_MID],
@@ -307,21 +307,19 @@ t('v90.5: Abyss keeps its old pay; the lower maps are tuned down to match it', (
   console.log('       Stage 15 pay vs Abyss (EXP / Zeny): Prontera ' + N.nmPayOf(0, 15, 1.5).toFixed(3) + ' / ' + N.nmPayOf(0, 15, 2).toFixed(3) + ', Niflheim ' + N.nmPayOf(8, 15, 1.5).toFixed(3) + ' / ' + N.nmPayOf(8, 15, 2).toFixed(3));
 });
 
-t('v90.3 (C): each Nightmare map has one boss-only Crown, on the Stage 15 boss only', () => {
+t('v90.6 (crafting): each Nightmare map has one material, dropped by its Stage 15 boss only', () => {
   const names = new Set();
   for (let m = 0; m < 10; m++) {
-    const F = N.fieldOf(m, 15), sig = F.boss.drops.filter(([it]) => it.sig);
-    assert.strictEqual(sig.length, 1, N.MAPS[m].n + ' carries exactly one Crown');
-    const [it, ch] = sig[0];
-    assert.strictEqual(it.n, N.NMNAME[m] + ' Crown', 'named for its map');
-    assert.strictEqual(it.k, 'head', 'a headgear piece every class can wear');
-    assert.strictEqual(ch, N.NM_SIG_CH, 'Crown chance is NM_SIG_CH percent per boss kill');
-    names.add(it.n);
-    for (const mob of F.mobs) assert.ok(!mob.drops.some(([x]) => x.sig), 'no mob carries the Crown');
-    assert.ok(!N.fieldOf(m, 10).boss.drops.some(([x]) => x.sig), 'the Stage 10 boss has no Crown');
-    assert.ok(!N.fieldOf(m, 11).mobs.some(mob => mob.drops.some(([x]) => x.sig)), 'Stage 11 has no Crown');
+    const F = N.fieldOf(m, 15);
+    assert.ok(F.boss.mat, N.MAPS[m].n + ' Stage 15 boss carries a material');
+    assert.strictEqual(F.boss.mat.m, m, 'the material belongs to its own map');
+    assert.strictEqual(F.boss.mat.n, N.NM_MAT[m], 'named from the materials table');
+    names.add(F.boss.mat.n);
+    for (const mob of F.mobs) assert.strictEqual(mob.mat, undefined, 'no field mob drops a material');
+    assert.strictEqual(N.fieldOf(m, 10).boss.mat, null, 'the Stage 10 boss has no material');
   }
-  assert.strictEqual(names.size, 10, 'all ten Crowns have their own name');
+  assert.strictEqual(names.size, 10, 'all ten materials have their own name');
+  assert.strictEqual(N.NM_MAT_CH, 25, 'the material chance is 25% a Stage 15 boss kill');
 });
 
 const total = pass + fail;

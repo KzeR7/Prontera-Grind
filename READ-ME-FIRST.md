@@ -84,6 +84,18 @@ is the live one; with no argument the tool prints how to set a new one). Since v
 `GM` / `test1234`; `localStorage.removeItem('pg_gm_local')` removes it. Normal accounts are made
 in-game and stored in the browser (`pg_acc4`; saves under `pg_save3_<user>`).
 
+## BUILD v90.6 — crafting: Nightmare materials make a Drop Protection Scroll (grind-v90.6)
+
+The owner scrapped the Crown and picked option 3 from the Nightmare list: each map's material, used in a craft.
+
+* **Materials:** each Nightmare map's Stage 15 boss drops that map's own material (Dread Essence, Kraken Scale, Void Core, Sandwraith Dust, Spectral Ectoplasm, Leviathan Fin, Oni Horn, Yokai Mask, Helheim Rune, Glast Fragment). The chance is `NM_MAT_CH` = 25% per boss kill. Materials go straight to a stack and do not use bag space.
+* **Drop Protection Scroll:** crafted from one of each of the ten materials, on the Refine tab. It is used automatically when a failed refine would drop a rank (a failure at +5 or higher). The scroll is spent and the rank stays. A failure below +5 never uses a scroll, and a success is unchanged.
+* **Crown:** removed. Its code and its constant are gone.
+* **Balance (open):** at 25% per boss kill, one scroll needs about 40 Stage 15 boss kills (about 4 per map). A full +0 to +10 N+ weapon with protection needs about 16 scrolls, so about 640 boss kills. That is a lot. Tune `NM_MAT_CH` and the recipe after a play-test.
+
+Files: `index.html` (`NM_MAT`, `NM_MAT_CH`, the boss `mat`, the live and offline kill rolls, `collect()` pickup, `refine()`, `craftDps()`, `nmMatCounts()`, `dpsPanel()`, the `craftdps` action, the save fields `nmMat` and `dps`); tests: new `tools/tests/material_sim.js` (9 checks: materials, craft, panel, refine with and without a scroll, success chance and cost, and the wiring); `nightmare_sim.js`, `gear_sim.js`, `crit_sim.js`, `ui_sim.js` (the Crown checks are now material checks, and the boss pool test is back to its plain form). Mirrors and this file are bumped to grind-v90.6.
+
+Refine numbers (for reference): success is 70% at +0 to +3, 49% at +4, 42% at +5, 35% at +6, 28% at +7, 21% at +8 and 14% at +9. Each +1 adds 15% of the piece's base value. See the v90.6 log entry.
 ## BUILD v90.5 — Nightmare pay anchored to Abyss (grind-v90.5)
 
 The owner asked not to buff Abyss but to tune the lower maps down, since Zeny already overflows. v90.4 had raised Abyss to about 3.1x EXP and 2.6x Zeny per kill at Stage 15. Now `nmPayOf` is taken relative to Abyss at the same stage, so Abyss keeps its pre-v90.4 pay (1) and every other map is lower. Each map still pays the same per HP as the others. At Stage 15 Prontera pays about 0.32x EXP and 0.39x Zeny per kill. Stages 1-10 are unchanged. Tests: `nightmare_sim.js` (new v90.5 test: Abyss is 1, the rest are below 1).

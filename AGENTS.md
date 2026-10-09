@@ -6168,3 +6168,19 @@ The owner's second pass over v77, six notes, all built.
 * **Known limits / follow-ups:**
   1. The Crown problem above. Options were not yet chosen.
   2. The Nightmare gear value still scales steeply with map (Abyss N+ is about 10x Prontera's), so Abyss stays the best farm for gear even though its pay per HP is no longer higher.
+
+### 2026-10-09 — `2026-10-09 grind-v90.6 Crafting: each Nightmare Stage 15 boss drops its map's material; ten make a Drop Protection Scroll that stops a failed refine dropping a rank
+
+* **What changed for the player:** the Crown is removed. Each Nightmare map's Stage 15 boss drops that map's own crafting material at 25% a kill. One of each of the ten makes a Drop Protection Scroll, crafted on the Refine tab. A failed refine at +5 or higher then keeps the rank instead of dropping it, using one scroll. Below +5, nothing changes.
+* **Refine rules, for reference (from the code, not re-tuned):** success is 70% at +0 to +3, 49% at +4, 42% at +5, 35% at +6, 28% at +7, 21% at +8, 14% at +9. A failure drops one rank only at +5 or higher. Cost per attempt is 400 x (level + 1) x (1 + 0.5 x piece tier) Zeny, and ore is 1 (Common, Fine), 2 (Rare, Epic), 5 (Legendary), 10 (N, N+).
+* **Refine and damage (from the code):** each refine level adds 15% of the piece's base value (`ev()`), and weapon value goes straight into raw ATK. For example, an Abyss N+ sword has a base value of about 3,677 (sampled), so +1 is about +551 raw ATK and +10 is about +5,516. A Prontera N+ sword (base about 331) gives +1 = about +50. Armour and legwear feed DEF; headgear and accessories feed max HP.
+* **Refine cost to +10 (N+ weapon, sampled from the same formula):** about 1,054 attempts, 6.45M Zeny and 10,539 ore without protection; about 28.5 attempts, 202k Zeny and 285 ore with a scroll, which uses about 16 scrolls.
+* **Balance (open):** one scroll needs about 40 Stage 15 boss kills at 25%, so a +10 with protection needs about 640 boss kills. Tune `NM_MAT_CH` and the recipe after a play-test.
+* **Files touched:** `index.html` (`BUILD` grind-v90.6; `NM_MAT`, `NM_MAT_CH` in place of the Crown constant; the boss `mat`; the live and offline kill rolls; `collect()` pickup; `refine()` with the scroll rule; `craftDps()`, `nmMatCounts()`, `dpsPanel()`; the `craftdps` action; the save fields `nmMat` and `dps` normalised on load); the build-tag mirrors `Updates/cards-gear-audit/affix-ranges.html` (x2), `Updates/cards-gear-audit/equipment-cards-tuning.html`, `tools/cloudflare-deploy-steps.md`; tests: new `tools/tests/material_sim.js`, and the Crown checks in `nightmare_sim.js`, `gear_sim.js`, `crit_sim.js`, `ui_sim.js` are changed to match; `READ-ME-FIRST.md` (v90.6 section); this log.
+* **Art:** none.
+* **Tests:** all 43 `*_sim.js` and `*_smoke.js` suites in `tools/tests/` exit 0 on this build.
+* **Branches / PR:** `arena/4ce84185-prontera-grind`. No pull request was opened.
+* **Known limits / follow-ups:**
+  1. The material chance and the recipe are untuned (see Balance above).
+  2. Boss kill time at Stage 15 was not measured, so the time cost of the materials is estimated from kill counts only.
+  3. Verified with the harness and source checks, not in a real browser.

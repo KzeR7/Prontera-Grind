@@ -657,7 +657,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // script block, which is a SyntaxError - the game did not run on main at all. One line wins, and
 // it names both sides of this merge: the v38 balance patch (the weapon cut, the affix/card
 // give-back) and main's weapon-hold rendering work.
-const BUILD='2026-10-09 grind-v90.5 Nightmare pay: Abyss keeps its old EXP and Zeny, the lower maps are tuned down to match per HP; each map Stage 15 boss drops its own Crown; katar icon is a boxing glove; class-locked drops say Not equitable on current class';   // shown on the login card - confirms which file you loaded
+const BUILD='2026-10-09 grind-v90.6 Crafting: each Nightmare Stage 15 boss drops its map's material; ten make a Drop Protection Scroll that stops a failed refine dropping a rank; Abyss keeps its old EXP and Zeny, the lower maps are tuned down to match per HP; katar icon is a boxing glove; class-locked drops say Not equitable on current class';   // shown on the login card - confirms which file you loaded
 $('buildTag').textContent='build '+BUILD;
 
 // ---------- class tree: Novice -> 6 first jobs -> 6 second jobs -> 6 third jobs ----------
@@ -1580,9 +1580,11 @@ const FIELD_GEAR_NM=[.5,.4,.3],FIELD_GEAR_MID_NM=[.35,.28,.21];
 // Stages 4 and 5 - rolls HALF of its table, on normal mobs and in the Stage 5 MVP pool alike. Cards, ore
 // and pets are not touched. Section 4 (N, Stages 1-3 of the band) keeps the v76.2 third.
 const NMPLUS_DROP=.5;
-// v90.3 (owner, option C): each Nightmare map's Stage 15 boss can drop that map's own Crown, a
-// boss-only piece kept out of the field pools. NM_SIG_CH is the percent chance per boss kill.
-const NM_SIG_CH=3;
+// v90.6 (owner, option 3): each Nightmare map's Stage 15 boss drops that map's own crafting material.
+// One of each of the ten makes a Drop Protection Scroll (craftDps). NM_MAT_CH is the percent chance per
+// boss kill. The order matches NMNAME, so NM_MAT[m] belongs to map m.
+const NM_MAT=['Dread Essence','Kraken Scale','Void Core','Sandwraith Dust','Spectral Ectoplasm','Leviathan Fin','Oni Horn','Yokai Mask','Helheim Rune','Glast Fragment'];
+const NM_MAT_CH=25;
 // v73 (owner): high-level bosses resist crits. The number is the share of the crit chance that
 // is removed when you swing at that boss: a capped 60% build crits Comodo, Louyang and Amatsu's
 // bosses 51% of the time, Niflheim's Lord of Death 48% and the Abyss Dark Lord 42%. Maps 1-5
@@ -1672,8 +1674,8 @@ function fieldOf(m,l){const mp=MAPS[m],sec=secField(m,l),T=gearPool(m,l),n=T.len
     // pool is a chase again: about three boss pieces an hour at the tuned kill rate.
     // v73: mid/endgame bosses (map index 5+) pay 30% less, so their pool totals ~4.2%; the
     // first five maps keep the original ~6%. A boss also carries its map's crit resistance.
-    drops:[...T.map(x=>[x,Math.round(BOSS_POOL_TOTAL[l>10?2:(m>=5?1:0)]*(sec===5?NMPLUS_DROP:1)/n)/100]),...(sec===5?[[{k:'head',n:NMNAME[m]+' Crown',sec:5,tier:ft,quality:1,sig:true},NM_SIG_CH]]:[])],critRes:bossCritRes(m,l),
-    card:{n:mp.boss.n+' Card',stat:cardStat(3,m),g:3},cardCh:.1,ore:true,oreCh:.025}:null}}
+    drops:T.map(x=>[x,Math.round(BOSS_POOL_TOTAL[l>10?2:(m>=5?1:0)]*(sec===5?NMPLUS_DROP:1)/n)/100]),critRes:bossCritRes(m,l),
+    card:{n:mp.boss.n+' Card',stat:cardStat(3,m),g:3},cardCh:.1,ore:true,oreCh:.025,mat:sec===5?{m,n:NM_MAT[m]}:null}:null}}
 // One drop line for the map panel: icon + name + the field's fixed rarity + which monster carries
 // it, with the % on the right. v79: a piece the player's own class cannot wear is dimmed and says
 // why on hover - the class gate is part of choosing where to farm, not a surprise that only turns
@@ -1916,7 +1918,7 @@ const uid=()=>Date.now()+Math.random(),rnd=(a,b)=>a+Math.random()*(b-a),ri=(a,b)
 // One roll fills both slots. The second pick is made from the skills the first did not take, so
 // the two can never match and there is no retry loop to spin if the dice are pinned.
 const PET_SKILL_WEIGHTS=[.35,.35,1,1,1,1,1,1,1,1,1,1],rollPetSkills=()=>{const a=pickW(PET_SKILL_WEIGHTS),rest=PET_SKILL_WEIGHTS.map((w,i)=>i).filter(i=>i!==a),b=rest[pickW(rest.map(i=>PET_SKILL_WEIGHTS[i]))];return[PET_SKILLS[a].id,PET_SKILLS[b].id]};
-const fresh=()=>({pets:[],bond:[],cls:'Novice',sex:'m',hair:0,lv:1,exp:0,hp:100,zeny:0,kills:0,indexXp:0,mobKills:{},equippedTitle:null,shards:0,trial:{day:trialDay(),used:0,best:0,runs:0},cardIndex:emptyCardIndex(),dmg:0,pts:10,jobs:{Novice:{jl:1,jx:0}},sk:{aid:1},skOff:{},dmgShort:true,dmgShow:true,base:{},mp:0,lvl:1,prog:[1,1,1,1,1],kl:0,auto:true,adv:true,feed:true,clickSell:false,bg:true,autoSell:[false,false,false,false,false,false,false],logOff:{},q:null,cards:[],ore:{ori:0,elu:0},offlineAt:0,offlineKph:0,offlineRateAt:0,offlineRateKills:0,offlineKillRemainder:0,gm:false,gmx:100,
+const fresh=()=>({pets:[],bond:[],cls:'Novice',sex:'m',hair:0,lv:1,exp:0,hp:100,zeny:0,kills:0,indexXp:0,mobKills:{},equippedTitle:null,shards:0,nmMat:[0,0,0,0,0,0,0,0,0,0],dps:0,trial:{day:trialDay(),used:0,best:0,runs:0},cardIndex:emptyCardIndex(),dmg:0,pts:10,jobs:{Novice:{jl:1,jx:0}},sk:{aid:1},skOff:{},dmgShort:true,dmgShow:true,base:{},mp:0,lvl:1,prog:[1,1,1,1,1],kl:0,auto:true,adv:true,feed:true,clickSell:false,bg:true,autoSell:[false,false,false,false,false,false,false],logOff:{},q:null,cards:[],ore:{ori:0,elu:0},offlineAt:0,offlineKph:0,offlineRateAt:0,offlineRateKills:0,offlineKillRemainder:0,gm:false,gmx:100,
   st:{str:1,agi:1,dex:1,luk:1,int:1,vit:1},eq:{weapon:{id:1,slot:'weapon',wt:'dagger',tier:0,val:5,name:'Novice Knife',aff:[],slots:1,cards:[],sec:0},armor:null,head:null,off:null,leg:null,acc1:null,acc2:null},inv:[]});
 const saveKey=()=>'pg_save3_'+currentUser;
 // ---------- the save-owner stamp (v88.6) ----------
@@ -1954,6 +1956,7 @@ const s=JSON.parse(raw);if(s&&s.lv){const F=fresh(),f=Object.assign(F,s),hadInde
   if(!f.logOff||typeof f.logOff!=='object'||Array.isArray(f.logOff))f.logOff={};
   for(const k of['str','agi','dex','luk','int','vit'])f.st[k]=Math.max(1,Math.min(MAXST,num_(f.st[k],1)));
   f.ore={ori:num_(f.ore&&f.ore.ori,0),elu:num_(f.ore&&f.ore.elu,0)};
+  f.nmMat=Array.from({length:10},(_,i)=>safeCount(f.nmMat&&f.nmMat[i]));f.dps=safeCount(f.dps);
   // v77 (Endless Echo): Trial Shards and the ranked record. A save without them is simply a
   // player who has never run the trial - the day field re-rolls on load, which is also what
   // clears yesterday's two attempts.
@@ -2941,6 +2944,7 @@ function offlineAwardKill(mob,r){
   for(const[T,ch]of mob.drops)if(Math.random()*100<ch)offlineStoreGear(genGear(T,mob.lvl,mob.sec,mob.boss,mob.tier),r);
   if(Math.random()*100<mob.cardCh){const g=mob.card.g;S.cards.push({card:1,id:uid(),n:mob.card.n,g,stat:mob.card.stat,v:cardVal(g,mob.card.stat)});r.cards++;r.drops++}
   if(mob.ore)for(const ore of['ori','elu'])if(Math.random()<mob.oreCh){S.ore[ore]=safeCount(S.ore[ore])+1;r[ore]++;r.drops++}
+  if(mob.mat&&Math.random()*100<NM_MAT_CH){S.nmMat[mob.mat.m]=safeCount(S.nmMat[mob.mat.m])+1;r.drops++}
   if(Math.random()*100<(mob.boss?.5:.03)){
     const rarity=pickW(PW[Math.min(S.mp,9)]),choices=PETS.filter(x=>x.r===rarity);
     if(choices.length){const sp=PETS.indexOf(choices[ri(0,choices.length-1)]);r.drops++;
@@ -3274,6 +3278,7 @@ function kill(o){const keep=mob;if(o)mob=o;if(!mob||!mobs.includes(mob)){mob=kee
   for(const[T,ch]of mob.drops)if(Math.random()*100<ch*(1+petPassive('gear')/100))drops.push(mkDrop(genGear(T,mob.lvl,mob.sec,mob.boss,mob.tier)));
   if(Math.random()*100<mob.cardCh){const g2=mob.card.g;drops.push(mkDrop({card:1,id:uid(),n:mob.card.n,g:g2,stat:mob.card.stat,v:cardVal(g2,mob.card.stat)}))}
   if(mob.ore)for(const o of['ori','elu'])if(Math.random()<mob.oreCh*(1+petPassive('ore')/100))drops.push(mkDrop({ore:o,id:uid(),n:ORE[o]}));
+  if(mob.mat&&Math.random()*100<NM_MAT_CH)drops.push(mkDrop({mat:mob.mat.m,id:uid(),n:mob.mat.n}));
   if(Math.random()*100<(mob.boss?.5:.03)){const r=pickW(PW[Math.min(S.mp,9)]),c=PETS.filter(x=>x.r===r),sp=PETS.indexOf(c[ri(0,c.length-1)]),T=PET_TRAIT[sp];
     const own=S.pets.find(x=>x.sp===sp);
     if(own){const b=petFold(own,{sp,mut:0,eq:[0,0,0],skills:[PET_SKILLS[pickW(PET_SKILL_WEIGHTS)].id]}),n=PETS[sp].n;
@@ -3305,6 +3310,7 @@ function kill(o){const keep=mob;if(o)mob=o;if(!mob||!mobs.includes(mob)){mob=kee
   mob=packMob();respawn=.7;save();ui();
 }
 function collect(it){
+  if(it.mat!=null){S.nmMat[it.mat]=safeCount(S.nmMat[it.mat])+1;log(`Got ${it.n}!`,'r4','gear');addFloat(pl.x,2.8,pl.z,it.n+'!','#6cd3ff',true);ui();return}
   if(it.card){S.cards.push(it);log(`Got card: [${GRADE[it.g]}] ${cardTxt(it)}`,'r'+GI[it.g],'card');addFloat(pl.x,2.8,pl.z,'CARD!','#ffb020',true);ui();return}
   if(it.ore){S.ore[it.ore]++;log(`Got ${it.n}!`,'r4','gear');addFloat(pl.x,2.8,pl.z,it.n+'!','#6cd3ff',true);ui();return}
   // The bag holds BAGMAX items. At capacity the loot is refused and stays where it fell, so a
@@ -3353,7 +3359,14 @@ const qTxt=q=>q.type==='kill'?`Defeat ${q.goal} monsters`:q.type==='loot'?`Colle
 function refine(sl){const it=S.eq[sl];if(!it||(it.r||0)>=10)return;const o=it.slot==='weapon'?'ori':'elu',c=refCost(it),need=refOre(it);
   if(S.ore[o]<need){log(`You need ${need} ${ORE[o]} for this piece. Regular mobs drop both ores at 0.5% on Stages 1-9 and 1% on Stage 10; the Stage 10 MVP drops them at 2.5%.`);return}if(S.zeny<c){log('Not enough Zeny.');return}
   S.ore[o]-=need;S.zeny-=c;if(Math.random()*100<refCh(it)){it.r=(it.r||0)+1;log(`Refine success! ${iname(it)}`,'r3','gear');addFloat(pl.x,3,pl.z,'Refine +'+it.r,'#ffd23f')}
-  else{if(it.r>=5){it.r--;log(`Refine failed... dropped to +${it.r}.`,'r0','gear')}else log('Refine failed.','r0','gear');addFloat(pl.x,3,pl.z,'Failed','#ff6b6b')}ui();save()}
+  else{if(it.r>=5&&S.dps>0){S.dps--;log(`Refine failed, but your Drop Protection Scroll kept +${it.r}.`,'r3','gear');addFloat(pl.x,3,pl.z,'Saved','#6cd3ff')}
+    else if(it.r>=5){it.r--;log(`Refine failed... dropped to +${it.r}.`,'r0','gear')}else log('Refine failed.','r0','gear');addFloat(pl.x,3,pl.z,'Failed','#ff6b6b')}ui();save()}
+// v90.6 (owner, option 3): a Drop Protection Scroll is crafted from one of each Nightmare material, and
+// each material comes from its own map's Stage 15 boss. refine() spends a scroll instead of dropping a
+// rank, so a failed refine at +5 or higher keeps the rank.
+function craftDps(){if(!S)return;if(nmMatCounts().some(n=>n<1)){log('A Drop Protection Scroll needs one of each of the ten Nightmare materials.','','gear');ui();return}S.nmMat=nmMatCounts().map(n=>n-1);S.dps=safeCount(S.dps)+1;log('Crafted a Drop Protection Scroll.','r3','gear');ui();save()}
+function nmMatCounts(){return NM_MAT.map((_,i)=>safeCount(S.nmMat&&S.nmMat[i]))}
+function dpsPanel(){const have=nmMatCounts(),short=have.some(n=>n<1);return`<div class="sec" style="margin-top:8px">Drop Protection Scroll</div><small>Scrolls: ${safeCount(S.dps)}. A failed refine at +5 or higher would drop a rank; a scroll is used instead and the rank is kept.</small><div class="row" style="margin-top:4px"><button data-a="craftdps" ${short?'disabled':''}>Craft Drop Protection Scroll (1 of each material)</button></div><small>${NM_MAT.map((n,i)=>n+' '+have[i]).join(' &middot; ')}</small>`}
 
 // ---------- v90: Black Market - the endgame Zeny sinks (Base Lv 100+) ----------
 // Zeny overflows once a character is past Base Lv 100, so the Black Market gives it two places to go:
@@ -3669,7 +3682,7 @@ const V={
     return`<div class="grid">${ks.map(n=>`<div class="cell b${GI[g[n][0].g]}${n===selC?' sel':''}" data-a="selc" data-v="${n}" data-tip="${g[n][0].id}">🃏<i class="rf">x${g[n].length}</i></div>`).join('')||'<small>No cards yet. Every monster drops its own card at a low chance.</small>'}</div>
     ${sel?`<div class="mob-card" style="margin-top:8px">${itemDetail(sel)}<div class="row" style="margin-top:6px">${EQK.map(([k,l])=>{const e=S.eq[k];return e&&(e.cards||[]).length<(e.slots||0)&&CFIT[sel.stat]===grp(e)?`<button data-a="sock" data-v="${sel.id}:${k}">&rarr; ${l}</button>`:''}).join('')}<button data-a="sellcard" data-v="${sel.id}">Sell ${sel.v*150}z</button></div></div>`:''}`},
   refine(){return`<div class="hd">Oridecon: ${S.ore.ori} &middot; Elunium: ${S.ore.elu}</div><small>Weapons use Oridecon; armor, shield, legs, headgear and accessories use Elunium. Regular mobs drop both at 0.5% on Stages 1-9 and 1% on Stage 10; Stage 10 MVPs drop both at 2.5%. Each attempt costs 1 ore on Common and Fine pieces, 2 on Rare and Epic, 5 on Legendary, and 10 on N and N+.</small>`
-    +EQK.map(([k,l])=>{const it=S.eq[k];if(!it)return'';const r=it.r||0,o=it.slot==='weapon'?'ori':'elu',c=refCost(it);
+    +dpsPanel()+EQK.map(([k,l])=>{const it=S.eq[k];if(!it)return'';const r=it.r||0,o=it.slot==='weapon'?'ori':'elu',c=refCost(it);
       return`<div class="slot" style="align-items:flex-start;gap:10px;margin-top:6px">${cell(it,false)}<div style="flex:1"><b class="${rarCls(it)}">${iname(it)}</b> <small>${l}</small><br><small>${SLOTS[it.slot].stat} +${ev(it)} &rarr; +${Math.round(it.val*(1+(r+1)*.15))} &middot; ${r>=10?'MAX':'Success '+refCh(it)+'% &middot; '+c.toLocaleString()+'z + '+refOre(it)+' '+ORE[o]}</small><br><button data-a="refine" data-v="${k}" ${r>=10||S.ore[o]<refOre(it)||S.zeny<c?'disabled':''}>Refine</button></div></div>`}).join('')},
   pet(){const P=S.pets,A=P.filter(p=>p.on).length,p=gp(selP);
     return`<div class="hd">Pets <small>Fighting ${A}/3 &middot; Collection ${P.length}</small></div><small>Pets drop from monsters, and every species has a signature passive - a duplicate folds into the copy you own and raises that species' Bond. Drop odds per map are on the World Map.</small><div class="grid" style="margin-top:6px">${P.map(q=>{const sp=PETS[q.sp];return`<div class="cell b${RCL[sp.r]}${selP===q.id?' sel':''}" style="font-size:30px" data-a="selp" data-v="${q.id}">${petIcon(sp)}${q.on?'<i class="rf" style="left:2px;right:auto;top:2px;bottom:auto;font-style:normal">ON</i>':''}${q.mut?`<i class="rf">G${q.mut}</i>`:''}${bondRank(q.sp)?`<i class="rf" style="left:2px;right:auto;top:auto;bottom:2px">B${bondRank(q.sp)}</i>`:''}</div>`}).join('')||'<small>No pets yet.</small>'}</div>`+(p?petDetail(p):'<small>Select a pet to manage it.</small>')},
@@ -3991,7 +4004,7 @@ const ACT={
     log(`🃏 ${name}: dedicated ${r.donated} cop${r.donated===1?'y':'ies'} - mastery ${r.level}/${CARD_MASTERY_PER_CARD}${r.left?`, ${r.left} left in the bag`:''}.`,'r3','card');
     addFloat(pl.x,2.6,pl.z,`🃏 ${name} ${r.level}/${CARD_MASTERY_PER_CARD}`,'#ffd23f');ui();save()},
   indexcard:all=>all,
-  refine:k=>refine(k),bmore:o=>buyOre(o),bmref:k=>reforge(k),sub:v=>{const[t,k]=v.split(':');sub[t]=k;if(t==='bag'&&k!=='bag')eqPick=null;renderWin()},selp:v=>{selP=+v;renderWin()},
+  refine:k=>refine(k),craftdps:()=>craftDps(),bmore:o=>buyOre(o),bmref:k=>reforge(k),sub:v=>{const[t,k]=v.split(':');sub[t]=k;if(t==='bag'&&k!=='bag')eqPick=null;renderWin()},selp:v=>{selP=+v;renderWin()},
   pon:id=>{const p=gp(id);if(!p)return;if(p.on)p.on=false;else if(S.pets.filter(x=>x.on).length<3)p.on=true;else log('Only 3 pets can fight at once. Remove one first.','','pet');ui();save()},
   pskill:id=>{const p=gp(id);if(!p)return;const c=petSkillCost(p);if(S.zeny<c){log('Not enough Zeny for a pet skill roll.');ui();return}S.zeny-=c;const[a,b]=rollPetSkills();p.skills=[a,b];
     clearPetCd(p.id);
