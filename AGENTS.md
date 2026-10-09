@@ -6436,3 +6436,21 @@ The owner's second pass over v77, six notes, all built.
 * **Tests:** UI 62/62, class change 27/27, gear 43/43, dual wield 13/13, save/load 27/27, drop/card sheet 13/13. New regression exercises the real class switch, empty slots, both accessory positions, panels, item details, and restoring the previous loadout.
 * **Branches / PR:** working branch `coderabbit/fix-class-switch-inventory-ui/8450d21c`; not published.
 * **Known limits / follow-ups:** Verified with the Node simulation harness; no live browser playtest.
+
+### 2026-10-09 — `grind-v92 moss and brass interface`
+* **What changed for the player:** The login screen, HUD, navigation, inventory, character, class, skills, pets, maps, mastery, shops, leaderboard, logs and dialogs now use charcoal, moss green and brass. Desktop bags are 360px wide so multiple windows can stay open. Combat numbers stay behind open windows.
+* **Bag:** Every existing action remains. Selling rules fold away and stay open while changing them; active click-sell is labelled and opens the controls. All seven rarity controls remain, including N and N+. Nightmare tiles have distinct N/N+ badges, including when choosing an equipment slot. Weapon icons follow the weapon type consistently. Try Bag + Character, then the selling rules, Equipment and Cards tabs.
+* **Login:** New atlas background and brand area; login, registration, remembered ID, backup and restore keep their existing handlers. Phone layouts keep scrollable windows and the tab dock.
+* **Files:** index.html; tools/tests/ui_sim.js; build labels in the two cards/gear audit pages and tools/cloudflare-deploy-steps.md; this log. Background alternatives are proposal artifacts outside the repository.
+* **Art:** Existing sprites retained; CSS interface backgrounds and existing weapon icon mappings only.
+* **Validation:** UI suite 64/64; equipment/card snapshot 13/13. Broader checks and browser verification recorded in the task workspace.
+* **Publishing:** Local task branch only; no push or deployment.
+* **Final checks:** All 45 simulation suites passed. Live shared-browser checks passed for local registration/login, all 12 game panels, 390px mobile layout, two simultaneous windows, N/N+ sale controls, disclosure retention, equip/unequip, class restrictions and cancelling a locked-item sale. Cloud services were checked by simulations; the preview uses local accounts.
+
+### 2026-10-09 — `grind-v93 tab layout redesign`
+* **What changed:** Every tab now has a new arrangement. Bag and Cards separate the grid from item details and actions; Equipment groups slots above its inspector; Skills uses class lists and a selected-skill card; Jobs shows six horizontal progression paths. World Map separates destinations, stages/travel, field information and Endless Echo. Pets uses named companion cards. Stats, Market, Mastery, Ranks, Log, Settings and GM controls have dedicated sections with secondary information folded away.
+* **Windows and navigation:** Compact desktop windows fit alongside other tabs. Use the top-right expand arrow for a wider catalogue/detail layout. The dock has readable labels and direct Market/Rank access. Phones and tablets keep full-height windows in a scrolling stack. Open/closed sections and catalogue scroll positions survive game redraws.
+* **Functions:** Existing controls and handlers are retained, including all N/N+ actions. Expanding keeps the selected skill and equipment chooser open. Bag-full and active click-sell notices stay visible above the inventory. Existing sprite artwork and the login theme are retained.
+* **Files:** index.html; tools/tests/ui_sim.js; new tools/tests/panel_layout_smoke.js; build labels in both cards/gear audit pages and tools/cloudflare-deploy-steps.md; this log.
+* **Checks:** 15 selected simulation/smoke suites passed, including UI 64/64 and the new layout suite 25/25. Browser checked all 15 panel/subtab states in compact/expanded sizes at 1440px, 800px and 390px without horizontal overflow; live actions checked skill upgrade, pet deployment, ore purchase, chooser resize/refine, card socket and map travel. Static preview uses a synthetic local account; live cloud leaderboard data was not exercised.
+* **Publishing:** Changes are local to this task; no push or deployment.
