@@ -151,7 +151,7 @@ const mkS = (cls) => ({
   st: { str: 30, agi: 20, dex: 20, luk: 5, int: 5, vit: 20 }, sk: { aid: 1 }, skOff: {}, jobs: { [cls]: { jl: 30, jx: 0 }, Novice: { jl: 10, jx: 0 } }, base: {},
   eq: { head: null, weapon: sword, armor, off: null, acc1: ring, leg: null, acc2: null },
   inv: [armor, ring, { id: 9, name: 'Broad Sword', tier: 2, slot: 'weapon', wt: 'sword', val: 70, r: 0, sec: 1, cards: [] }], cards: [card], pets: [], ore: { ori: 2, elu: 1 }, prog: [1, 1, 1, 10, 10, 5, 3, 1, 1, 1],
-  q: [], kills_: 0, buff: 0, auto: true, feed: true, clickSell: false, autoSell: [false, false, false, false, false], logOff: {},
+  q: [], kills_: 0, buff: 0, auto: true, feed: true, clickSell: false, autoSell: [false, false, false, false, false], logOff: {}, refineScrolls: 0,
 });
 
 t('the map panel renders every map and field', () => {
@@ -227,6 +227,7 @@ t('the map tab is a compact two-band panel: maps on top, that map\'s fields unde
   U.S = mkS('Knight'); U.mapM = 7; U.mapL = 4;   // Amatsu, a level 60+ map
   const h = U.V.map();
   // the map window is the wide one, so the panel gets the room to be horizontal
+  assert.ok(src.includes("const TABS={map:['🗼','World Map','M']"), 'the World Map tab uses the requested tower icon');
   assert.ok(/class="win wp\$\{k==='map'\?' wide':''\}"/.test(src), 'the map window must carry the wide class');
   // ordering: map cards, then the field band, then the drop tables - so clicking a map shows its
   // fields immediately below it instead of making the player scroll past the tables to find them
@@ -1327,21 +1328,28 @@ t('the damage trial is entered from the map selection, and the lobby offers the 
   // v77 (owner): "the dungeon button should be at the map selection itself not at the stages"
   assert.ok(h.includes('Endless Echo'), 'the map window names the trial');
   assert.ok(h.includes('data-trial="lobby"'), 'and its button opens the lobby');
-  assert.ok(h.includes('/2 ranked runs left today'), 'the card states the ranked tries left');
+  assert.ok(h.includes('three-minute damage trial') && h.includes('best single-run DPS'), 'the card states the 3-minute format and what is measured');
+  assert.ok(h.includes('Lord of Death Illusion'), 'the World Map card names the Endless Echo boss');
+  assert.ok(h.includes('/2 ranked attempts today') && h.includes('Echo Shards'), 'the card states remaining attempts and the Shard balance');
   const iSpecial=h.indexOf('class="map-specials'),iFields=h.indexOf('class="mapband fields'),specials=h.slice(iSpecial,iFields);
   assert.ok(iSpecial>=0&&iFields>iSpecial, 'the destination row sits above the stage list');
   assert.ok(specials.includes('dungeoncard')&&!specials.includes('town-card')&&(specials.match(/class="mapcard/g)||[]).length===1, 'Endless Echo alone takes the whole row');
   assert.ok(src.includes('.map-specials{display:grid;grid-template-columns:minmax(0,1fr);'), 'the row is a single full-width column now that the town is gone');
+  assert.ok(src.includes('align-items:center') && src.includes('text-align:center'), 'the feature card uses centered alignment');
+  assert.ok(src.includes('.echo-copy{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;min-width:0;text-align:center}'), 'the title and explanatory copy are centered within the card');
+  assert.ok(src.includes('.dungeoncard .echo-copy>b{display:block;max-width:100%;font-size:15px;'), 'the Endless Echo title has a readable desktop size');
+  assert.ok(src.includes('.dungeoncard .echo-copy>b{font-size:13px}'), 'the title remains readable on mobile');
   assert.ok(!src.includes('.mapband.dungeon{'), 'the old bottom band is gone');
   // the lobby itself: ranked with the tries left, unlimited training, and the Shard Store. The
   // rendered HTML is exercised by trial_sim.js; here the source is pinned.
   const lobby = grab('function trialLobby(view){', 'function trialShopHtml(){');
-  assert.ok(lobby.includes('Ranked run') && lobby.includes('left today'), 'ranked shows the tries left');
-  assert.ok(lobby.includes('Training (unlimited)'), 'training is unlimited');
+  assert.ok(lobby.includes('Ranked attempt') && lobby.includes('/2 ranked attempts remain today'), 'ranked shows the tries left');
+  assert.ok(lobby.includes('Training · unlimited'), 'training is unlimited');
+  assert.ok(lobby.includes('3:00 practice') && lobby.includes('trial-choice-timer">3:00'), 'ranked and practice both state the three-minute duration');
   assert.ok(lobby.includes('Shard Store'), 'and the store is a door of its own');
   assert.ok(lobby.includes('Personal best'), 'the lobby carries the personal best');
-  assert.ok(grab('function trialEnter(mode){', 'function trialFinish(){').includes('TRIAL_SECS'), 'a run is the full five minutes');
-  assert.ok(src.includes('const TRIAL_SECS=300'), '5:00 exactly');
+  assert.ok(grab('function trialEnter(mode){', 'function trialFinish(){').includes('TRIAL_SECS'), 'a run uses the trial duration constant');
+  assert.ok(src.includes('const TRIAL_SECS=180'), '3:00 exactly');
   assert.ok(src.includes('TRIAL_RANKED_PER_DAY=2'), 'two ranked runs a day');
   const fin = grab('function trialFinish(){', 'function trialExit(){');
   assert.ok(fin.includes('dps>st.best') && !fin.includes('st.best+='), 'the board metric is a single run at its best, never a sum');
@@ -1731,6 +1739,16 @@ t('the detail card opens directly under the clicked slot or bag tile, not at the
   assert.ok(!b.includes('Click an item to see its stats'), 'the old bottom hint card is not repeated under the grid');
   U.selB = null; b = U.V.bag0();
   assert.ok(!b.includes('grid-detail') && b.includes('Click an item to see its stats'), 'with nothing selected the quiet hint is all that shows');
+});
+
+t('the Refine panel displays the inert Refine Scroll reserve without using it', () => {
+  U.S = mkS('Knight'); U.S.refineScrolls = 3;
+  const h = U.V.refine();
+  assert.ok(h.includes('Refine Scrolls: 3'), 'the saved placeholder count is visible in the Refine panel');
+  assert.ok(h.includes('placeholder with no effect yet'), 'the panel explicitly says it has no effect');
+  assert.ok(h.includes('not consumed by refining'), 'the panel confirms refine attempts do not spend it');
+  const fn = grab('function refine(sl){', '// ---------- class change ----------');
+  assert.ok(!/refineScrolls|rscroll|Refine Scroll/.test(fn), 'the existing refine action remains unchanged by the placeholder');
 });
 
 t('refine controls sit with the piece: the ladder is the v51 30%-nerfed one', () => {

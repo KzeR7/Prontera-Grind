@@ -648,6 +648,41 @@ t('the loader asks for files that exist, and a dead atlas falls back instead of 
   assert.ok(K.buildKit(4), 'and builds again once the sheet is back');
 });
 
+t('the Echo Court overlays its crypt floor onto a normal Niflheim kit plan', () => {
+  const arenaFn = grab('function trialArena(){', 'function trialEnter(mode){');
+  assert.ok(arenaFn.includes('kitPlan(8,1)') && arenaFn.includes('buildKit(8,plan)'), 'the court renders a Niflheim plan through the shared map-kit builder');
+  assert.ok(arenaFn.includes("tile:r>.82?'rock_abyss':'ruin_cobble'"), 'the court floor uses a broad cobble circle with an abyss-stone rim');
+  assert.ok(arenaFn.includes("type:'ruin_pillar'") && arenaFn.includes("type:'standing_stone'"), 'its edge props are actual kit sprites');
+  assert.ok(arenaFn.includes('m.color.setHex(0x796e84)') && arenaFn.includes('KIT.ground.material.color.setHex(0x5c5269)'), 'both HD props and terrain get the darker violet/slate palette');
+  assert.ok(!/RingGeometry|CylinderGeometry|BoxGeometry/.test(arenaFn), 'the court adds no mismatched block-built art');
+  const loader = grab('function kitFetch(){', '// v2 is ONE atlas');
+  assert.ok(loader.includes('if(TRIAL.on)trialArena();else buildDeco(S.mp)'), 'late HD tile downloads rebuild whichever scene is active');
+
+  K.setAssets(); K.setStage(1);
+  const original = JSON.stringify(K.kitPlan(8,1));
+  const court = K.kitPlan(8,1);
+  court.design = 'echo-court';
+  for(let z=-11.2;z<=2.4;z+=.8)for(let x=-11.2;x<=11.2;x+=.8){
+    const r=Math.hypot(x/9.6,(z+4.4)/6.2);
+    if(r<=1.06)court.cells.push({x,z,tile:r>.82?'rock_abyss':'ruin_cobble'});
+  }
+  court.props.push(
+    {x:-14.2,z:-9.5,type:'ruin_pillar',scale:1.1},
+    {x:14.2,z:-9.5,type:'ruin_pillar',scale:1.1,flip:true},
+    {x:-14.2,z:1.8,type:'ruin_pillar',scale:.95},
+    {x:14.2,z:1.8,type:'ruin_pillar',scale:.95,flip:true},
+    {x:-18,z:-20,type:'standing_stone',scale:1.1},
+    {x:18,z:-20,type:'standing_stone',scale:1.1,flip:true}
+  );
+  const built=K.buildKit(8,court);
+  assert.ok(built && KIT.ground.visible, 'the normal kit renderer paints the court terrain');
+  assert.strictEqual(KIT.built.design, 'echo-court', 'the live builder receives the court plan rather than replacing it with the field plan');
+  assert.strictEqual(KIT.built.map, 8, 'the scene remains themed to Niflheim');
+  assert.strictEqual(KIT.built.placed, court.props.length, 'all Niflheim and court props become map-kit billboards');
+  assert.ok(court.cells.every(c=>MAN.tiles[c.tile]), 'all court tiles have real atlas crops');
+  assert.strictEqual(JSON.stringify(K.kitPlan(8,1)), original, 'adding the court does not mutate the reusable field recipe');
+});
+
 t('all ten maps have four complete themed scenes and no spawn or boss floor stamps', () => {
   K.setAssets();
   // v77: the Endless Echo arena is a scene of its own, so the key now carries the mode as well.

@@ -18,7 +18,7 @@ const src = fs.readFileSync(__dirname + '/../../index.html', 'utf8');
 const grab = (a, b) => { const i = src.indexOf(a), j = src.indexOf(b, i); if (i < 0 || j < 0) throw new Error('missing ' + a); return src.slice(i, j); };
 
 const code = [
-  grab('const TC=[', 'scene.add(new THREE.HemisphereLight'),          // M(), SP/BX/CN/CY, mk()
+  grab('const TC=[', 'const hemi=new THREE.HemisphereLight'),          // M(), SP/BX/CN/CY, mk()
   grab('// [kind,main colour,trunk colour,extras]', '// ----- Ragnarok-style 8-dir sprites'),
 ].join('\n');
 
