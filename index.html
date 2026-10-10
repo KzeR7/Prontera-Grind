@@ -1038,7 +1038,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // script block, which is a SyntaxError - the game did not run on main at all. One line wins, and
 // it names both sides of this merge: the v38 balance patch (the weapon cut, the affix/card
 // give-back) and main's weapon-hold rendering work.
-const BUILD='2026-10-10 grind-v95.2 soft color interface';   // shown on the login card - confirms which file you loaded
+const BUILD='2026-10-10 grind-v96.1 Echo Court details';   // shown on the login card - confirms which file you loaded
 $('buildTag').textContent='build '+BUILD;
 
 // ---------- class tree: Novice -> 6 first jobs -> 6 second jobs -> 6 third jobs ----------
@@ -1814,6 +1814,27 @@ function trialResultHtml(){
 // The Echo Court reuses Niflheim's painted HD terrain and graveyard billboards, recoloured into a
 // shadowy arena palette. Its concentric ruin/abyss floor and map-native pillars keep it cohesive
 // with the world map rather than introducing a second, block-built art style.
+// Small map-native details sit outside the fighting circle; positions stay fixed on rebuild.
+function trialCourtDetails(){return [
+  {x:-8.6,z:-8.5,type:'lantern_stone',scale:.55},
+  {x:8.8,z:-8.2,type:'lantern_stone',scale:.55,flip:true},
+  {x:-8.3,z:.6,type:'lantern_stone',scale:.45},
+  {x:8.6,z:1.2,type:'lantern_stone',scale:.45,flip:true},
+  {x:-10.5,z:-5.5,type:'tombstone',scale:.65},
+  {x:11.1,z:-6.2,type:'tombstone',scale:.55,flip:true},
+  {x:-12.3,z:-3.8,type:'ruin_column_fallen',scale:.7},
+  {x:12.2,z:-1.8,type:'ruin_stump',scale:.65},
+  {x:-9.5,z:2.9,type:'ruin_curb',scale:.65},
+  {x:10.7,z:3.2,type:'ruin_curb',scale:.75,flip:true},
+  {x:-10.1,z:-10.3,type:'rock_boulder_mossy',scale:.45},
+  {x:10.9,z:-10.8,type:'rock_boulder_mossy',scale:.4,flip:true},
+  {x:-11.4,z:1.5,type:'rock_boulder_mossy',scale:.35},
+  {x:12.5,z:-7.8,type:'ruin_curb',scale:.55},
+  {x:-4.6,z:3.8,type:'ruin_curb',scale:.45},
+  {x:4.8,z:4.5,type:'rock_boulder_mossy',scale:.3},
+  {x:-5.1,z:-10.8,type:'rock_boulder_mossy',scale:.25},
+  {x:5.2,z:-11.2,type:'ruin_stump',scale:.35}
+]}
 function trialArena(){
   if(typeof deco==='undefined')return;
   while(deco.children.length)deco.remove(deco.children[0]);
@@ -1839,6 +1860,7 @@ function trialArena(){
         {x:-18,z:-20,type:'standing_stone',scale:1.1},
         {x:18,z:-20,type:'standing_stone',scale:1.1,flip:true}
       );
+      plan.props.push(...trialCourtDetails());
       built=!!buildKit(8,plan);
     }
   }
@@ -4391,9 +4413,10 @@ function arrangePanel(k,root){
     const destinations=section('01 / Destination','ui-destinations');put(destinations,maps);if(band)put(destinations,fold('About destinations',[...band.childNodes].filter(n=>n!==special),'destinations'));
     const route=section('02 / Stage & travel','ui-route');put(route,fields);
     if(fields){const notes=[...fields.querySelectorAll('.map-stage-note,.mapband-t>small')];put(fields,fold('Stage rules & requirements',notes,'stage-rules'));const go=fields.querySelector('.go');if(go)put(fields,put(make('div','ui-primary-action'),go))}
-    body.replaceChildren(destinations,route);
-    if(drops){const intel=section('03 / Field drops · chance per kill','ui-field-guide');put(intel,drops);put(body,intel)}
+    body.replaceChildren(destinations);
     if(special)put(body,put(section('CHALLENGE / Endless Echo','ui-challenge'),special));
+    put(body,route);
+    if(drops){const intel=section('03 / Field drops · chance per kill','ui-field-guide');put(intel,drops);put(body,intel)}
   }else if(mode==='stats'){
     const slots=direct().filter(e=>e.classList.contains('slot')),attrs=slots.filter(e=>e.querySelector('[data-a="stat"]')),combat=slots.find(e=>!e.querySelector('[data-a="stat"]')),reset=q('[data-a="rstat"]');
     const attributes=section('Allocate attributes','ui-attribute-section');put(attributes,put(make('div','ui-attributes'),attrs));
@@ -4486,6 +4509,21 @@ function renderDock(){
     else if(!hasDot&&badge)badge.remove();
   });
 }
+// Preserve the live journal entries during count-only combat updates.
+function patchJournal(current,next){
+  const sameShape=(a,b)=>a.nodeType===b.nodeType&&a.nodeName===b.nodeName&&a.childNodes.length===b.childNodes.length&&[...a.childNodes].every((n,i)=>sameShape(n,b.childNodes[i]));
+  if(!sameShape(current,next))return false;
+  const patch=(a,b)=>{
+    if(a.nodeType===3){if(a.data!==b.data)a.data=b.data;return}
+    if(a.nodeType===1){
+      const keepOpen=a.matches('details[data-ui-disclosure]');
+      for(const attr of [...a.attributes])if(!(keepOpen&&attr.name==='open')&&!b.hasAttribute(attr.name))a.removeAttribute(attr.name);
+      for(const attr of b.attributes)if(!(keepOpen&&attr.name==='open')&&a.getAttribute(attr.name)!==attr.value)a.setAttribute(attr.name,attr.value);
+    }
+    [...a.childNodes].forEach((n,i)=>patch(n,b.childNodes[i]));
+  };
+  patch(current,next);return true;
+}
 function renderWin(anchor){
   if(!S)return;
   // A kill, a level-up or any panel refresh rebuilds every open window from scratch. A click whose
@@ -4518,7 +4556,11 @@ function renderWin(anchor){
     expand.dataset.uiExpand=k;expand.innerHTML=uiIcon(expandedPanels.has(k)?'compact':'expand');expand.setAttribute('aria-label',(expandedPanels.has(k)?'Compact ':'Maximize ')+name);expand.setAttribute('aria-pressed',String(expandedPanels.has(k)));expand.title='Toggle compact / expanded layout';
     close.dataset.x=k;close.setAttribute('aria-label','Close '+name);
     const body=win.querySelector('.wbody'),source=V[k]();
-    if(body._panelSource!==source){body.innerHTML=source;body._panelSource=source;arrangePanel(k,body);polishIcons(body);body.dataset.panelChanged='1'}
+    if(body._panelSource!==source){
+      const fresh=document.createElement('div');fresh.className=body.className;fresh.innerHTML=source;arrangePanel(k,fresh);polishIcons(fresh);
+      if(k!=='index'||!patchJournal(body,fresh)){body.replaceChildren(...fresh.childNodes);body.className=fresh.className;body.dataset.layout=fresh.dataset.layout}
+      body._panelSource=source;body.dataset.panelChanged='1';
+    }
     else delete body.dataset.panelChanged;
     next.push(win);
   });
@@ -4528,8 +4570,8 @@ function renderWin(anchor){
     if(win===before)before=before.nextElementSibling;
     else host.insertBefore(win,before);
   });
-  host.querySelectorAll('[data-panel-changed="1"]').forEach(b=>{const k=b.closest('[data-win]').dataset.win;b.scrollTop=k==='log'?1e6:(old[k]||0)});
   host.querySelectorAll('details[data-ui-disclosure]').forEach(e=>{if(disclosures.has(e.dataset.uiDisclosure))e.open=disclosures.get(e.dataset.uiDisclosure)});
+  host.querySelectorAll('[data-panel-changed="1"]').forEach(b=>{const k=b.closest('[data-win]').dataset.win;b.scrollTop=k==='log'?1e6:(old[k]||0)});
   host.querySelectorAll('[data-panel-scroll]').forEach(e=>{const key=e.closest('[data-win]').dataset.win+':'+e.dataset.panelScroll;if(e.closest('[data-panel-changed="1"]'))e.scrollTop=e.dataset.panelScroll==='events'?1e6:(nestedScroll.get(key)||0)});
   host.scrollTop=outer;
   // v76.3 (owner: "the map ui hopping around when i click the stages"): the pressed control is
