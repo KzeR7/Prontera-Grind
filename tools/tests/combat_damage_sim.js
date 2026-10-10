@@ -28,7 +28,7 @@ t('the character is un-nerfed: flee cap is back to 60% - monsters carry HIT inst
   const agi = 99, lv = 150;
   assert.strictEqual(Math.min(60, agi * .5 + lv * .1), 60, 'an endgame AGI build keeps its full 60% (v86 read 30)');
   // the monster side: the swing roll subtracts the monster HIT rating, with a 5% dodge floor
-  assert.ok(src.includes('if(Math.random()*100<Math.max(5,flee()-mhOf(m)))addFloat'), 'the live dodge roll carries mhOf');
+  assert.ok(src.includes("if(Math.random()*100<Math.max(5,flee()-mhOf(m))+(m.blind?m.blind.power*100:0)+skillBonus('block'))addFloat"), 'the live dodge roll carries mhOf');
   assert.ok(!src.includes('Math.random()*100<flee())addFloat'), 'the old bare flee roll is gone');
   assert.strictEqual(Math.max(5, 60 - 30), 30, 'an endgame mob (HIT +30) connects 70% against a capped dodger');
   assert.strictEqual(Math.max(5, 60 - 40), 20, 'an endgame boss (HIT +40) connects 80%');

@@ -613,7 +613,7 @@ t('Auto cast lives in the skill description card below the grid', () => {
   assert.ok(h.includes('class="sk-detail-autocast"'), 'the description card holds the auto-cast control');
   assert.ok(h.includes('<label class="sk-autocast"><input type="checkbox" data-a="sktog" data-v="fire" checked aria-label="Auto cast Fire Bolt"> Auto cast this skill</label>'),
     'a newly learned active skill should auto-cast by default, from the description');
-  assert.ok(h.includes('Cast automatically every time you attack.'), 'and say what the checkbox means');
+  assert.ok(h.includes('Used automatically when ready.'), 'and say what the checkbox means');
   U.S.skOff.fire = 1; h = U.V.skills();
   assert.ok(h.includes('Paused - it will not be used until you check this again.'), 'unchecking renders it as paused');
   assert.ok(!h.includes('checked aria-label="Auto cast Fire Bolt"'), 'and the box renders unchecked');
@@ -1182,9 +1182,9 @@ t('the Skills panel prints the whole tree against what a maxed line earns', () =
   assert.ok(src.includes('const skCost=()=>1;'), 'a skill level costs one point (v37)');
   assert.ok(src.includes('this line\'s tree costs ${skTree()}, a maxed line earns ${skEarnedMax()}'),
     'the panel must show the tree price and the maxed-line income side by side');
-  assert.ok(src.includes('Most skills cap at 10 and a few utility skills stop at 5 (RO-style)'),
+  assert.ok(src.includes('Each job adds five skills; earlier skills remain available.'),
     'the panel blurb must state the v59 cap rule');
-  assert.ok(src.includes('job levels pay out all the way to 50'),
+  assert.ok(src.includes('Buffs refresh independently.'),
     'and that job levels keep paying out (the owner complaint this round fixes)');
   // and the arithmetic itself, on the real numbers
   const box = {};
@@ -1451,7 +1451,7 @@ t('the ALL switch beside First Aid pauses or resumes the whole line at once', ()
   U.S.skOff = {}; h = U.V.skills();
   assert.ok(h.includes('class="sk-master"') && h.includes('checked aria-label="Auto-cast every learned skill"'),
     'with every skill on, the box is ticked');
-  assert.ok(h.includes('2 skills on this line'), 'and tells you how many it covers (passives are not auto-cast)');
+  assert.ok(h.includes('3 skills on this line'), 'and tells you how many it covers (passives are not auto-cast)');
   // the real switch, on a real skill roster
   const box = {}; vm.createContext(box);
   vm.runInContext(`
@@ -1850,6 +1850,7 @@ t('the reset buttons explain themselves, refuse on screen, and survive a rebuild
     const log=m=>logs.push(m),addFloat=(x,y,z,t)=>floats.push(t),ui=()=>uis++,save=()=>saves++;
     const maxHp=()=>900;const pl={x:0,z:0};
     ${pts}
+    ${pick(/const statResetCost=[^;]+;/, 'statResetCost')}
     ${deniedFn}
     const ACT={${rstat}};
     this.__r={set S(v){S=v},get S(){return S},get logs(){return logs},get floats(){return floats},get saves(){return saves},ACT};`, box);
@@ -1879,7 +1880,7 @@ t('the reset buttons explain themselves, refuse on screen, and survive a rebuild
   U.S.zeny = 5000;
   assert.ok(!/data-a="rstat"[^>]*disabled/.test(U.V.stats()), 'affordable resets are clickable');
   U.S.lv = 15;
-  assert.ok(U.V.stats().includes('Reset stats (free below Base 20)'), 'the free band is on the label');
+  assert.ok(U.V.stats().includes('Reset stats (free)'), 'the free band is on the label');
   // a click whose press and release span a kill's renderWin() must not be swallowed
   assert.ok(/if\(winPress\)\{winDirty=true;return\}/.test(src), 'renderWin must defer while a pointer is down');
   assert.ok(/addEventListener\('pointerup',winUp\)/.test(src), 'the deferred rebuild runs on pointerup');

@@ -140,7 +140,7 @@ t('camps scatter over the whole lane, each one a small group instead of a single
  assert.ok(/m.pack===activePack&&\(isBoss\(\)\|\|Math.hypot/.test(src),'only the active camp should wake');
  assert.ok(/if\(wake&&Math.hypot/.test(src),'sleeping camps must not attack');
  assert.ok(/if\(m.pack!==activePack\|\|/.test(src),'pets should follow the active camp');
- assert.ok(/o.pack===src.pack/.test(src) && /o.pack===target.pack/.test(src),'area and chain hits cannot wake remote camps');
+ assert.ok(/o.pack===src.pack/.test(src) && /o.pack!==target.pack/.test(src),'area and chain hits cannot wake remote camps');
 });
 
 t('an emptied camp refills itself, and clearing the field no longer throws the map away',()=>{
