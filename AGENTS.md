@@ -6509,3 +6509,27 @@ The owner's second pass over v77, six notes, all built.
 * **Checks:** Required simulation/smoke suites and browser checks are recorded in the task validation record.
 * **Publishing:** Prepared for a PR from coderabbit/sleek-ui-redesign/11b8bef2 to main.
 * **Final checks:** All 49 JavaScript simulation/smoke suites passed; UI 64/64 and panel layout 33/33. Desktop and 390px phone previews verified the selected colors and no horizontal overflow. Static build and all 83 original equipment hashes passed.
+
+### 2026-10-10 — `grind-v95.3 stable Index and Echo placement`
+* **What changed:** Index count updates keep the existing entries and focused buttons in place during combat. Scroll positions are restored after expanded sections, avoiding clamping against a temporarily shorter panel. World Map now places Endless Echo directly below destinations and above stages.
+* **Try it:** Open the Mastery journal, expand a monster list and keep fighting; then open World Map to see the new order.
+* **Files:** index.html, panel layout regression checks, build mirrors and this log. No game artwork changed. Three arena layout concepts are supplied separately for the owner's choice.
+* **Checks:** Panel layout 35/35, UI 64/64 and update watcher 6/6 passed. Browser combat validation remains unperformed.
+* **Publishing:** Local changes only.
+
+### 2026-10-10 — `grind-v96 Echo Cathedral`
+* **What changed:** Applied the selected ruined cathedral direction to Endless Echo: textured stone nave, solid columns, pointed rear arch, side arcades, rose-window tracery, sanctuary steps and warm lamps. The arena has wider framing and distance-aware violet fog, including on phones. Normal field framing returns when you leave.
+* **HD surfaces:** Three locally bundled 2048×2048 Poly Haven CC0 stone textures supply color, surface normals and roughness (about 4.8 MB). Source URLs, license and hashes are in assets/echo-cathedral/manifest.json. Original character and monster sprites are unchanged. Existing map textures provide a loading fallback.
+* **Reliability:** Rebuilding or leaving disposes cathedral geometry, materials and cloned textures while keeping reusable atlas assets intact.
+* **Try it:** World Map → Endless Echo → Training. Drag to rotate or scroll/pinch to inspect the stonework.
+* **Files:** index.html, assets/echo-cathedral/, scene/trial/kit tests and the new echo_cathedral_smoke.js, map-kit backup, build mirrors and this log.
+* **Checks:** Trial 18/18, kit 36/36, UI 64/64, panel layout 35/35, update watcher 6/6, publishing 10/10, scene 8/8 and field loop 9/9. The new Three.js smoke check verifies geometry, PBR maps, fallback and resource disposal. Desktop and 390px phone browser checks confirmed HD loading, no loop errors, repeat builds and return to the normal field. Phone has no horizontal overflow. Bundled texture hashes and map-kit backup verified.
+* **Publishing:** Local preview only; no push or deployment.
+
+### 2026-10-10 — `grind-v96.1 Echo Court details`
+* **Owner direction:** Preferred the original arena. Replaced the cathedral experiment with the original Echo Court, including its HD atlas terrain, violet lighting, fog and camera. Removed the unused cathedral texture bundle and its dedicated test.
+* **Small details:** Added 18 fixed, small placements using existing artwork: stone lanterns, weathered gravestones, fallen masonry, broken curbs, column remnants and mossy rocks. These sit around the court; the combat center remains open. No new sprites or textures.
+* **Retained:** The Index stability fix and Endless Echo's position between destinations and stages.
+* **Try it:** World Map → Endless Echo → Training. Inspect the court edges; phone-sized foreground rubble is visible without changing the original camera.
+* **Checks:** Kit 37/37, trial 18/18, scene 8/8, update watcher 6/6 and publishing 10/10. Existing panel/UI passes remain valid for their unchanged logic. Desktop and 390px phone preview checked: no missing atlas props, no loop errors or horizontal phone overflow, and leaving returns to the regular field. The first added test had a harness return-value error, corrected before the final pass.
+* **Publishing:** Local only; no push or deployment. This entry supersedes the cathedral design described above.

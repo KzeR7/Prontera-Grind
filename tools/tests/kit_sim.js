@@ -683,6 +683,15 @@ t('the Echo Court overlays its crypt floor onto a normal Niflheim kit plan', () 
   assert.strictEqual(JSON.stringify(K.kitPlan(8,1)), original, 'adding the court does not mutate the reusable field recipe');
 });
 
+t('Echo details use existing art and leave the combat center clear',()=>{
+  const details=vm.runInNewContext(grab('function trialCourtDetails(){','function trialArena(){')+';trialCourtDetails');
+  const props=details();
+  assert.ok(props.length>=12);
+  assert.strictEqual(JSON.stringify(props),JSON.stringify(details()),'rebuilds keep the same small details');
+  for(const p of props){assert.ok(MAN.sprites[p.type],p.type+' has real atlas art');assert.ok(Math.abs(p.x)>=4.5,'combat center stays open');assert.ok(p.scale<=.75,'details stay smaller than the main pillars')}
+  assert.ok(grab('function trialArena(){','function trialEnter(mode){').includes('plan.props.push(...trialCourtDetails())'));
+});
+
 t('all ten maps have four complete themed scenes and no spawn or boss floor stamps', () => {
   K.setAssets();
   // v77: the Endless Echo arena is a scene of its own, so the key now carries the mode as well.

@@ -83,6 +83,20 @@ t('map has destination, travel and field-guide sections; travel stays outside fo
   assert.ok(root.querySelector('.ui-field-guide .mapcols'));
   assert.ok(!root.querySelector('.ui-field-guide details'), 'drops are visible without opening tabs');
 });
+t('Echo sits between destinations and stages',()=>{
+  const root=window.document.createElement('div');root.innerHTML=ev('V.map()');ev('arrangePanel')('map',root);
+  assert.deepStrictEqual([...root.querySelector('.ui-content').children].map(e=>e.className),['ui-section ui-destinations','ui-section ui-challenge','ui-section ui-route','ui-section ui-field-guide']);
+});
+t('kill updates retain live journal rows and focused controls',()=>{
+  ev("tabs.splice(0,tabs.length,'index');indexMode='mobs';renderWin()");
+  const body=window.document.querySelector('[data-win="index"] .wbody');
+  const row=body.querySelector('.mastery-mob'),button=body.querySelector('button');button.focus();
+  const text=row.textContent;
+  ev("recordMonsterKill({mapIndex:0,n:'Poring'});renderWin()");
+  assert.strictEqual(body.querySelector('.mastery-mob'),row);
+  assert.notStrictEqual(row.textContent,text);
+  assert.strictEqual(window.document.activeElement,button);
+});
 t('quest collapse and the independent navigation dropdown retain separate state',()=>{
   ev("tabs.length=0;qOpen=true;sideOpen=true;renderQ()");
   const doc=window.document;
