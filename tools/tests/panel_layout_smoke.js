@@ -80,7 +80,53 @@ t('map has destination, travel and field-guide sections; travel stays outside fo
   assert.strictEqual(root.querySelectorAll('.ui-route [data-a="sell_"]').length,15);
   assert.ok(root.querySelector('.ui-primary-action [data-a="go"]'));
   assert.ok(!root.querySelector('[data-a="go"]').closest('details'));
-  assert.ok(root.querySelector('.ui-field-guide details'));
+  assert.ok(root.querySelector('.ui-field-guide .mapcols'));
+  assert.ok(!root.querySelector('.ui-field-guide details'), 'drops are visible without opening tabs');
+});
+t('quest collapse and the independent navigation dropdown retain separate state',()=>{
+  ev("tabs.length=0;qOpen=true;sideOpen=true;renderQ()");
+  const doc=window.document;
+  assert.ok(!doc.querySelector('#qp').contains(doc.querySelector('#sideMenu')));
+  assert.strictEqual(doc.querySelectorAll('#sideMenu [data-t]').length,3);
+  doc.querySelector('#qp [data-q="t"]').click();
+  assert.strictEqual(ev('qOpen'),false);assert.strictEqual(ev('sideOpen'),true);
+  assert.strictEqual(doc.querySelector('#sideLinks').hidden,false);
+  doc.querySelector('#sideMenu [data-q="side"]').click();
+  assert.strictEqual(doc.querySelector('#sideLinks').hidden,true);
+  ev('renderQ()');assert.strictEqual(doc.querySelector('#sideLinks').hidden,true);
+});
+t('map minimize restores the selected field and maximize restores its content',()=>{
+  ev("tabs.splice(0,tabs.length,'map');mapM=3;mapL=4;renderWin()");
+  const doc=window.document,win=doc.querySelector('[data-win="map"]');
+  doc.querySelector('[data-ui-minimize="map"]').click();
+  assert.ok(win.classList.contains('ui-minimized'));
+  ev('renderWin()');assert.ok(win.classList.contains('ui-minimized'));
+  doc.querySelector('[data-ui-minimize="map"]').click();
+  assert.ok(!win.classList.contains('ui-minimized'));assert.strictEqual(ev('mapM'),3);assert.strictEqual(ev('mapL'),4);
+  doc.querySelector('[data-ui-minimize="map"]').click();doc.querySelector('[data-ui-expand="map"]').click();
+  assert.ok(!win.classList.contains('ui-minimized'));
+});
+t('rarity labels distinguish every equipment tier and card grade',()=>{
+  for(let tier=0;tier<7;tier++){
+    const label=ev(`cell({id:'rarity',slot:'armor',tier:${Math.min(4,tier)},sec:${tier>4?tier-1:0},val:1},false)`);
+    const root=window.document.createElement('div');root.innerHTML=label;
+    assert.strictEqual(root.querySelector('.rarity-label').textContent,['Common','Fine','Rare','Epic','Legendary','N','N+'][tier]);
+  }
+});
+t('every field previews the same local equipment sprite the generated bag item receives',()=>{
+  const before=ev('JSON.stringify(S)');
+  for(let m=0;m<10;m++)for(let l=1;l<=15;l++){
+    const entries=ev(`gearPool(${m},${l})`);
+    for(const entry of entries){
+      const template=JSON.stringify(entry),generated=ev(`genGear(${template},${l},${entry.sec},false,${entry.tier})`);
+      const id=ev(`gearItemIconId(${template})`);
+      assert.ok(id>0,`missing sprite for map ${m} stage ${l} ${entry.k}`);
+      assert.ok(ev(`itemIconMarkup(${template})`).includes('loading="eager"'),'map previews must request their sprites immediately');
+      assert.strictEqual(ev(`gearItemIconId(${JSON.stringify(generated)})`),id,'map and bag art disagree for '+entry.n);
+      assert.ok(fs.existsSync(path.join(ROOT,'assets/equipment-icons',id+'.png')));
+    }
+  }
+  assert.strictEqual(ev('JSON.stringify(S)'),before,'sprite selection does not migrate saves');
 });
 t('job paths preserve all 19 classes in six readable progression rows',()=>{
   const root=window.document.createElement('div');root.innerHTML=ev('V.job()');ev('arrangePanel')('job',root);
@@ -185,5 +231,23 @@ t('account reset is separated from appearance and still uses its original handle
   const root=window.document.createElement('div');root.innerHTML=ev('V.set()');ev('arrangePanel')('set',root);
   assert.ok(root.querySelector('.ui-account details [data-a="reset"]'));
   assert.ok(root.querySelector('.ui-account > [data-a="logout"]'));
+});
+t('option A colors stay consistent across dock, window heading and quest shortcuts',()=>{
+  const expected={map:'rgb(142, 214, 174)',status:'rgb(237, 198, 131)',job:'rgb(148, 195, 235)',skills:'rgb(200, 168, 239)',bag:'rgb(239, 177, 139)',pet:'rgb(156, 221, 209)',index:'rgb(230, 210, 152)',market:'rgb(231, 172, 159)',board:'rgb(239, 204, 124)',log:'rgb(157, 199, 228)',set:'rgb(180, 200, 208)',quest:'rgb(230, 210, 152)',crown:'rgb(239, 204, 124)'};
+  for(const [name,color] of Object.entries(expected)){
+    const host=window.document.createElement('div');host.innerHTML=ev('uiIcon')(name);window.document.body.append(host);
+    assert.strictEqual(window.getComputedStyle(host.firstChild).color,color,name+' uses the selected soft color');host.remove();
+  }
+  ev("tabs.splice(0,tabs.length,'map','bag');renderWin();renderDock();renderQ()");
+  for(const name of ['map','bag']){
+    const dock=window.document.querySelector('#dock [data-t="'+name+'"] .ui-icon');
+    const heading=window.document.querySelector('[data-win="'+name+'"] .title .ui-icon');
+    assert.strictEqual(window.getComputedStyle(dock).color,expected[name]);
+    assert.strictEqual(window.getComputedStyle(heading).color,expected[name]);
+  }
+  const quest=window.document.querySelector('#qp .ui-icon[data-ui-icon="quest"]');
+  const index=window.document.querySelector('#sideMenu .ui-icon[data-ui-icon="index"]');
+  assert.strictEqual(window.getComputedStyle(quest).color,expected.quest);
+  assert.strictEqual(window.getComputedStyle(index).color,expected.index);
 });
 console.log(`\n${pass} passed, ${fail} failed`);window.close();process.exit(fail?1:0);

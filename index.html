@@ -707,6 +707,78 @@ a{color:var(--brass)}small{opacity:.85}summary{cursor:pointer}
   button{cursor:pointer}
 }
 
+/* v95: restrained line symbols, readable rarity and an open field atlas. */
+.ui-icon{display:inline-block;width:18px;height:18px;vertical-align:middle;flex-shrink:0;pointer-events:none}
+/* v95.2: option A soft colors follow each symbol across navigation and panels. */
+.ui-icon[data-ui-icon="map"]{color:#8ed6ae}
+.ui-icon[data-ui-icon="status"]{color:#edc683}
+.ui-icon[data-ui-icon="job"]{color:#94c3eb}
+.ui-icon[data-ui-icon="skills"]{color:#c8a8ef}
+.ui-icon[data-ui-icon="bag"]{color:#efb18b}
+.ui-icon[data-ui-icon="pet"]{color:#9cddd1}
+.ui-icon[data-ui-icon="index"]{color:#e6d298}
+.ui-icon[data-ui-icon="market"]{color:#e7ac9f}
+.ui-icon[data-ui-icon="board"]{color:#efcc7c}
+.ui-icon[data-ui-icon="log"]{color:#9dc7e4}
+.ui-icon[data-ui-icon="set"]{color:#b4c8d0}
+.ui-icon[data-ui-icon="quest"]{color:#e6d298}
+.ui-icon[data-ui-icon="gm"]{color:#b4c8d0}
+.ui-icon[data-ui-icon="compass"]{color:#8ed6ae}
+.ui-icon[data-ui-icon="moon"]{color:#c8a8ef}
+.ui-icon[data-ui-icon="sun"]{color:#edc683}
+.ui-icon[data-ui-icon="wing"]{color:#9dc7e4}
+.ui-icon[data-ui-icon="crown"]{color:#efcc7c}
+.ui-icon[data-ui-icon="gem"]{color:#c8a8ef}
+.ui-icon[data-ui-icon="card"]{color:#e6d298}
+.ui-icon[data-ui-icon="shield"]{color:#94c3eb}
+.ui-icon[data-ui-icon="sword"]{color:#efb18b}
+.ui-icon[data-ui-icon="heart"]{color:#e7ac9f}
+.ui-icon[data-ui-icon="coin"]{color:#efcc7c}
+.ui-icon[data-ui-icon="refresh"]{color:#9cddd1}
+.ui-nav-icon .ui-icon{width:22px;height:22px}.ui-window-tools .ui-icon{width:14px;height:14px}.title>span:first-child{display:flex;align-items:center;gap:8px}
+button:focus-visible{outline:2px solid #e7d4a1;outline-offset:3px}
+.skill-line *{fill:none!important;stroke:currentColor!important;stroke-width:1.6!important}.skill-art{filter:none!important}
+#sideRail{position:absolute;right:12px;top:12px;width:228px;display:none;flex-direction:column;gap:10px;pointer-events:auto;z-index:5;max-height:calc(100% - 100px);overflow-y:auto;scrollbar-width:thin}
+#sideRail #qp{position:static;transform:none;width:auto;padding:12px;background:#162721ed;border:1px solid #64756466;border-radius:10px;box-shadow:0 6px 20px #0003}
+#qp .qp-head{color:#f1dfb9;font-size:12px}#qp .qp-head b{display:flex;gap:8px;align-items:center}#qp .qp-actions button{background:none;border:0;padding:3px;color:#b9c7bb}
+.quest-entry{padding-top:10px;font-size:11px}.quest-reward{display:flex;justify-content:space-between;align-items:center;gap:4px}.quest-reward small{color:#bac7b9;font-size:9px}#qp .pbar{height:3px;margin:6px 0;background:#ffffff18}#qp .pbar i{background:#c9b782}
+#sideMenu{background:#162721f2;border:1px solid #64756466;border-radius:10px;overflow:hidden;box-shadow:0 6px 20px #0003}
+#sideMenu button{display:flex;align-items:center;gap:9px;width:100%;border:0;border-radius:0;background:none;color:#e0d4b8;text-align:left;padding:11px 12px;font-size:11px}
+#sideMenu .qp-side-tab{color:#bfcfc4;border-top:1px solid #ffffff0b}#sideMenu .qp-side-tab:hover,#sideMenu .qp-side-tab.on{background:#33493a;color:#fff0ca}#sideMenu small,.side-chevron{margin-left:auto}.side-chevron.open{transform:rotate(180deg)}
+#wins>.wp.ui-minimized{height:auto!important;min-height:0;flex:0 0 260px;align-self:flex-start;width:260px}#wins>.wp.ui-minimized .wbody{display:none}.ui-minimized .title{border-bottom:0}
+.cell.b0{--rarity:#b5c2ce}.cell.b1{--rarity:#68df9b}.cell.b2{--rarity:#6aafff}.cell.b3{--rarity:#c18aff}.cell.b4{--rarity:#ffd26e}.cell.b5{--rarity:#9d8dff}.cell.b6{--rarity:#ff85cf}
+.cell[class*="b"]{background:#111d21!important;border:1px solid var(--rarity,#71867a)!important;border-bottom:3px solid var(--rarity,#71867a)!important;box-shadow:none!important;border-radius:7px;isolation:isolate}
+.cell[class*="b"]:hover{background:#233238!important}.cell.sel{outline:2px solid #fff0c6!important;outline-offset:2px!important}.cell.worse{opacity:1;filter:none}.cell.worse img{opacity:.7}
+.cell .rarity-label{position:absolute;bottom:2px;left:2px;right:2px;color:var(--rarity);font:600 8px/1.3 Arial,sans-serif;text-align:center;letter-spacing:.15px;pointer-events:none;white-space:nowrap}.cell.nm::after{display:none}.cell .ro-item-icon,.cell .ro-icon-svg{margin-bottom:8px;filter:drop-shadow(0 2px 2px #0008)}
+.ui-catalog .cell{min-height:57px}.cell .rf{top:3px;right:4px;background:#101c24;color:#f5eed7}.cell .lockstar{top:3px;left:4px;bottom:auto;color:#f5eed7}.ui-loadout .cell .lockstar{top:3px;bottom:auto}.ui-item-art{background:#111d21}
+.mastery-medal{color:var(--foil-hi,#e7d3a0);background:#172723!important;box-shadow:none!important;border:1px solid #829c8977!important;border-radius:10px!important;transform:none!important}.mastery-medal::before,.mastery-medal::after{display:none!important}.mastery-medal span{transform:none!important}.mastery-medal .ui-icon{width:26px;height:26px}.mastery-medal small{font:600 8px Arial,sans-serif;letter-spacing:1px}.mastery-title{box-shadow:none!important;background:#20332a!important}.mastery-title.locked{filter:none;opacity:.65}
+.hero-title{padding:4px 10px 4px 7px;border:1px solid #d9c68b70;border-radius:5px;background:#101f23e8;color:#eee0b8;font:600 10px/1.3 Arial,sans-serif;letter-spacing:.6px;text-shadow:none;box-shadow:0 3px 8px #0005;max-width:260px;transform:translate(-50%,8px)}
+.hero-title .ht-mark{width:16px;height:16px;border:0;border-radius:0;background:none;margin-right:6px;vertical-align:-4px}.hero-title .ui-icon{width:16px;height:16px}.hero-title::after{display:none}
+#wins>.wp[data-win="map"].ui-expanded{flex:1 1 1180px;width:1180px;max-width:100%}
+.ui-panel[data-layout="map"] .ui-hero{padding:10px 14px}.ui-panel[data-layout="map"] .ui-hero h2{font-size:22px;margin:3px 0}.ui-panel[data-layout="map"] .ui-content{gap:10px;padding:12px}
+.ui-field-guide .mapcols{margin:0;gap:10px}.ui-field-guide .mob-card{background:#172923;border:1px solid #42594c;padding:12px;border-radius:8px}.ui-field-guide .hd{font-size:14px;margin:0 0 8px}.ui-field-guide .sec{font-size:11px;margin:6px 0}.ui-field-guide .sec small{display:block;font-size:10px;line-height:1.5;color:#b9c8bb}.ui-field-guide .dropline{padding:6px 0;font-size:11px;gap:7px;border-bottom:1px solid #ffffff0b;align-items:center}.ui-field-guide .dropline>span:first-child{min-width:0}.ui-field-guide .dwho{display:block;margin-left:29px;color:#9eb4a6;font-size:9px}.ui-field-guide .drr{flex-shrink:0;text-align:right}.ui-field-guide .drr b{color:#f4dfab}.ui-field-guide .dnot{display:block;font-size:8px;max-width:60px;line-height:1.3;color:#d6b7a2}.ui-field-guide .cant,.ui-field-guide .worse{opacity:1;filter:none}.ui-field-guide .dropgrp{margin-top:7px;border-bottom:1px solid #64796755;padding:4px 0;color:#b4c7b9;text-transform:uppercase;letter-spacing:1px;font-size:9px}
+.drop-icon{display:inline-grid;place-items:center;width:24px;height:24px;background:#0f1e20;border:1px solid #536a5b;border-radius:5px;vertical-align:middle;margin-right:4px;color:#d9d2b6}.drop-icon .ro-icon-svg{width:20px;height:20px;margin:0}.ui-field-guide .poollist{display:grid;grid-template-columns:1fr;gap:4px}.ui-field-guide .poolitem{display:flex;align-items:center;gap:4px;background:#20352b;border:0;padding:4px;font-size:10px}.ui-field-guide .poolitem b{margin-left:auto;white-space:nowrap}.ui-field-guide .poolitem small{font-size:8px}
+@container(min-width:950px){
+ .ui-panel[data-layout="map"] .ui-content{display:grid;grid-template-columns:220px minmax(0,1fr);align-items:start}
+ .ui-panel[data-layout="map"] .ui-destinations{grid-column:1;grid-row:1}.ui-panel[data-layout="map"] .ui-route{grid-column:1;grid-row:2;padding:10px}.ui-panel[data-layout="map"] .ui-challenge{grid-column:1;grid-row:3}
+ .ui-panel[data-layout="map"] .ui-field-guide{grid-column:2;grid-row:1/5}.ui-field-guide .mapcols{grid-template-columns:minmax(0,1.45fr) minmax(0,1fr)}
+ .ui-destinations .mapgrid{grid-template-columns:repeat(2,minmax(0,1fr));gap:4px}.ui-destinations .mapcard{min-height:31px;padding:7px}.ui-destinations .mapcard b{font-size:10px}.ui-destinations .mapcard small{font-size:8px}
+ .ui-route .mapband-t{font-size:17px;margin-bottom:8px}.ui-route .map-node{min-height:27px;padding:5px 1px;font-size:8px}.ui-route .lvgrid{gap:3px}.ui-route .row{margin:7px 0;font-size:9px}.ui-route .ui-primary-action{margin-top:7px}.ui-route .ui-primary-action button{padding:7px!important}.ui-field-guide .dropline{padding:4px 0}
+ .ui-challenge .echo-sub,.ui-challenge .echo-meta{display:none}.ui-challenge .dungeoncard{min-height:45px;grid-template-columns:24px 1fr 40px}.ui-challenge .echo-copy>b{font-size:11px}
+}
+@media(max-width:700px){#sideRail{right:8px;top:8px;width:200px}.ui-field-guide .mapcols{grid-template-columns:1fr}.ui-panel[data-layout="map"] .ui-content{padding:10px}#wins>.wp.ui-minimized{flex-basis:auto;width:100%}}
+
+
+@container(min-width:950px){
+ .ui-destinations .mapcard{flex-direction:row;justify-content:space-between;gap:3px;min-height:31px;height:31px}.ui-destinations .mapcard small{margin:0}
+ .ui-field-guide .drop-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 12px}.ui-field-guide .drop-list .dropline{font-size:10px;line-height:1.4;min-height:43px}.ui-field-guide .drr{display:block}.ui-field-guide .dnot{font-size:8px;white-space:normal}.ui-field-guide .drop-list .dwho{font-style:normal;opacity:1;margin-left:0;font-size:9px}.ui-field-guide .poolitem{min-height:29px}
+ .ui-panel[data-layout="map"] .ui-hero{position:relative;padding:10px 14px}.ui-panel[data-layout="map"] .ui-hero p{position:absolute;right:14px;bottom:14px}.ui-panel[data-layout="map"] .ui-hero h2{font-size:20px}
+}
+
+@container(min-width:950px){.ui-field-guide .mapcols{grid-template-columns:minmax(0,1.1fr) minmax(0,1fr)}.ui-field-guide .poollist{grid-template-columns:repeat(2,minmax(0,1fr))}.ui-field-guide .poolitem{display:grid;grid-template-columns:24px minmax(0,1fr) auto;gap:4px;min-height:41px;line-height:1.4;font-size:9px}.ui-field-guide .poolitem .drop-icon{margin:0}.ui-field-guide .poolitem b{font-size:9px;opacity:1}.ui-field-guide .poolitem small{display:block}}
+
+/* Local equipment art uses the same scale in the map and inventory. */
+.drop-icon .ro-item-icon{width:20px;height:20px;object-fit:contain;image-rendering:pixelated;margin:0;filter:none}.drop-icon .ro-icon-fallback{display:grid;place-items:center;width:20px;height:20px}
 </style>
 </head>
 <body>
@@ -723,7 +795,7 @@ a{color:var(--brass)}small{opacity:.85}summary{cursor:pointer}
 <div id="saveTools" style="margin-top:6px;font-size:11px;text-align:center;opacity:.9"><a href="#" id="saveDl" title="Download every character saved in this browser as one file">⬇ Back up saves</a><span style="opacity:.5"> · </span><a href="#" id="saveUp" title="Load a backup file made by this button, on any address">⬆ Restore a backup</a><input type="file" id="saveFile" accept=".json,application/json" style="display:none"></div>
 <div id="buildTag" style="margin-top:6px;font-size:10px;opacity:.55;text-align:center"></div></div></div>
 <div id="wrap"><div class="title"><span id="stageTitle">Prontera Lv 1</span><span id="grindStatus" style="font-size:12px;opacity:.85"></span></div>
-<div id="view"><div id="ov"><div id="mobSpriteLayer" aria-hidden="true"></div><div id="weaponSpriteLayer" aria-hidden="true"></div><div id="prog"></div><div id="tag"><b id="tn"></b><div class="bar"><i id="th" style="background:var(--hp)"></i></div></div><div id="heroTitle" class="hero-title" aria-live="polite"><span id="heroTitleMark" class="ht-mark" aria-hidden="true"></span><span id="heroTitleText"></span></div><div id="hint">Drag to rotate &middot; Scroll or pinch to zoom</div><div id="feedWrap"><div id="feed"></div><div id="feedBar"><div id="feedFilter" role="group" aria-label="Log filter"></div><div id="feedTabs"><button id="feedTab" type="button" aria-expanded="true" aria-controls="feed" title="Minimize or show the on-screen log">📃 Logs ▾</button><button id="feedFil" type="button" aria-expanded="false" aria-controls="feedFilter" aria-label="Filter the on-screen log" title="Filter the log - this row folds away by itself">▽</button></div></div></div><div id="hudBuffs" role="status" aria-live="polite" aria-label="Active pet buffs - hover an icon for what it does"></div><div id="qp"></div><div id="dock"></div>
+<div id="view"><div id="ov"><div id="mobSpriteLayer" aria-hidden="true"></div><div id="weaponSpriteLayer" aria-hidden="true"></div><div id="prog"></div><div id="tag"><b id="tn"></b><div class="bar"><i id="th" style="background:var(--hp)"></i></div></div><div id="heroTitle" class="hero-title" aria-live="polite"><span id="heroTitleMark" class="ht-mark" aria-hidden="true"></span><span id="heroTitleText"></span></div><div id="hint">Drag to rotate &middot; Scroll or pinch to zoom</div><div id="feedWrap"><div id="feed"></div><div id="feedBar"><div id="feedFilter" role="group" aria-label="Log filter"></div><div id="feedTabs"><button id="feedTab" type="button" aria-expanded="true" aria-controls="feed" title="Minimize or show the on-screen log">📃 Logs ▾</button><button id="feedFil" type="button" aria-expanded="false" aria-controls="feedFilter" aria-label="Filter the on-screen log" title="Filter the log - this row folds away by itself">▽</button></div></div></div><div id="hudBuffs" role="status" aria-live="polite" aria-label="Active pet buffs - hover an icon for what it does"></div><div id="sideRail"><div id="qp"></div><nav id="sideMenu" aria-label="Index and market"></nav></div><div id="dock"></div>
 <div id="wins"></div></div></div>
 <div id="hud"><div><b id="cls2"></b> <span id="titleLabel" class="title-hud hud-title-mirror" aria-hidden="true" style="display:none"></span> Base Lv <b id="lv">1</b> / Job Lv <b id="jl">1</b></div>
 <div class="hud-health">HP <div class="bar" role="meter" aria-label="HP" aria-valuemin="0" aria-valuemax="100" id="hpMeter"><i id="hpb"></i></div><small id="hpPct">100%</small></div>
@@ -817,7 +889,49 @@ const STATS=[['str','STR','ATK'],['agi','AGI','ASPD, Flee, Move'],['int','INT','
 // A unique, immediately scannable glyph for every skill. These are interface symbols, not
 // replacement or recoloured character-sprite art.
 // Locally drawn fantasy ability art: no hotlinked image can collapse to the same red placeholder.
-// Each skill has its own themed pictogram; the rim, glass, glow and tiny rune studs are crisp SVG.
+// Skill families share recognizable pictograms in a simple outlined tile.
+// Shared interface symbols: local SVG, with one stroke weight at every size.
+const UI_ICONS={
+ compass:'<circle cx="12" cy="12" r="9"/><path d="m16 8-3 5-5 3 3-5Z"/>',
+ moon:'<path d="M20 15A9 9 0 0 1 9 3a9 9 0 1 0 11 12Z"/>',
+ sun:'<circle cx="12" cy="12" r="4"/><path d="M12 1v3m0 16v3M1 12h3m16 0h3M4 4l2 2m12 12 2 2M4 20l2-2M18 6l2-2"/>',
+ wing:'<path d="M3 20C12 20 21 14 21 3L6 15m1 4L20 8M12 17l7-4"/>',
+ map:'<path d="m3 5 6-2 6 2 6-2v16l-6 2-6-2-6 2Z M9 3v16M15 5v16"/>',
+ status:'<path d="M4 20V10m8 10V4m8 16v-7M2 20h20"/>',
+ job:'<path d="M12 3v8M5 17v-6h14v6"/><rect x="9" y="2" width="6" height="5" rx="1"/><rect x="2" y="17" width="6" height="5" rx="1"/><rect x="16" y="17" width="6" height="5" rx="1"/>',
+ skills:'<path d="m13 2-9 12h7l-1 8 10-13h-7Z"/>',
+ bag:'<rect x="5" y="6" width="14" height="15" rx="3"/><path d="M9 6V4a3 3 0 0 1 6 0v2M5 12h14M9 12v3h6v-3"/>',
+ index:'<path d="M12 5v16M12 5C8 2 5 3 2 4v16c4-1 7-1 10 1 3-2 6-2 10-1V4c-3-1-6-2-10 1Z M5 8h3m-3 4h3m8-4h3m-3 4h3"/>',
+ market:'<path d="M3 9 5 3h14l2 6M3 9a3 3 0 0 0 6 0 3 3 0 0 0 6 0 3 3 0 0 0 6 0M5 12v9h14v-9M9 21v-7h6v7"/>',
+ board:'<path d="M7 3h10v7a5 5 0 0 1-10 0ZM7 5H3v3a4 4 0 0 0 4 4m10-7h4v3a4 4 0 0 1-4 4M12 15v6m-4 0h8"/>',
+ pet:'<ellipse cx="12" cy="16" rx="6" ry="4"/><ellipse cx="4" cy="10" rx="2" ry="3"/><ellipse cx="9" cy="5" rx="2" ry="3"/><ellipse cx="15" cy="5" rx="2" ry="3"/><ellipse cx="20" cy="10" rx="2" ry="3"/>',
+ log:'<path d="M5 3h14v18H5ZM8 7h8m-8 5h8m-8 5h5"/>',
+ quest:'<path d="M8 4H4v18h16V4h-4M8 2h8v5H8ZM8 12l2 2 5-5m-7 9h8"/>',
+ set:'<path d="M4 6h16M4 12h16M4 18h16"/><circle cx="8" cy="6" r="2"/><circle cx="16" cy="12" r="2"/><circle cx="10" cy="18" r="2"/>',
+ gm:'<path d="m14 5 5-3a7 7 0 0 1-8 10L4 21l-3-3 9-8a7 7 0 0 1 4-8Z"/>',
+ crown:'<path d="m3 6 5 4 4-7 4 7 5-4-2 13H5ZM5 15h14"/>',
+ gem:'<path d="m3 8 4-5h10l4 5-9 13ZM3 8h18M7 3l5 18 5-18"/>',
+ card:'<rect x="5" y="2" width="14" height="20" rx="2"/><path d="m12 6 4 5-4 5-4-5ZM9 19h6"/>',
+ shield:'<path d="m12 2 9 4v6c0 5-9 10-9 10S3 17 3 12V6ZM8 12l3 3 5-6"/>',
+ sword:'<path d="m5 19 4-4m-5-2 7 7M8 14 18 3h3v3L11 17M3 21l2-2"/>',
+ heart:'<path d="M12 21S2 14 2 8a5 5 0 0 1 10-2 5 5 0 0 1 10 2c0 6-10 13-10 13Z"/>',
+ coin:'<circle cx="12" cy="12" r="9"/><path d="M15 7H9v4h6v6H9m3-12v14"/>',
+ refresh:'<path d="M20 7V2m0 5h-5M4 17v5m0-5h5M4 9a8 8 0 0 1 14-5l2 3M4 17l2 3a8 8 0 0 0 14-5"/>',
+ expand:'<path d="M8 3H3v5m13-5h5v5M3 16v5h5m13-5v5h-5"/>',
+ compact:'<path d="M3 8h5V3m8 0v5h5M8 21v-5H3m13 5v-5h5"/>',
+ minus:'<path d="M5 12h14"/>',close:'<path d="m6 6 12 12M6 18 18 6"/>',chevron:'<path d="m6 9 6 6 6-6"/>',
+ filter:'<path d="M3 4h18l-7 8v7l-4 2v-9Z"/>'
+};
+const uiIcon=name=>`<svg class="ui-icon" data-ui-icon="${name}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">${UI_ICONS[name]||UI_ICONS.gem}</svg>`;
+const UI_EMOJI={'🗼':'map','📊':'status','🌳':'job','✨':'skills','🎒':'bag','📚':'index','🏪':'market','🏆':'board','🐾':'pet','📃':'log','📜':'quest','⚙️':'set','🛠️':'gm','🃏':'card','🔶':'gem','🔷':'gem','💀':'shield','⚔️':'sword','🗡️':'sword','🛡️':'shield','❤️':'heart','💰':'coin','🔄':'refresh','🏛':'board','👑':'crown','⭐':'gem','🎁':'bag','🔒':'shield','🔓':'shield','💎':'gem','🔥':'skills','⚡':'skills','🎯':'status','📖':'index','🪄':'skills','🧪':'gem','🥼':'shield','🎩':'crown','👖':'shield','💍':'gem','🏹':'sword','🪓':'sword','🔨':'gm','🥊':'sword','⚔':'sword','🏅':'board','🎽':'shield','💚':'heart','💨':'refresh','💪':'shield'};
+function polishIcons(root){
+  if(!root)return;
+  const walker=document.createTreeWalker(root,NodeFilter.SHOW_TEXT),nodes=[];
+  while(walker.nextNode())if(!walker.currentNode.parentElement.closest('svg,script,style,textarea,option,input')&&Object.keys(UI_EMOJI).some(k=>walker.currentNode.data.includes(k)))nodes.push(walker.currentNode);
+  const re=new RegExp(Object.keys(UI_EMOJI).join('|'),'gu');
+  for(const node of nodes){const fragment=document.createDocumentFragment();let start=0;for(const match of node.data.matchAll(re)){fragment.append(document.createTextNode(node.data.slice(start,match.index)));const box=document.createElement('span');box.innerHTML=uiIcon(UI_EMOJI[match[0]]);fragment.append(box.firstChild);start=match.index+match[0].length}fragment.append(document.createTextNode(node.data.slice(start)));node.replaceWith(fragment)}
+}
+const titleIcon=t=>uiIcon(['index','compass','sword','pet','moon','shield','gem','sun','crown','wing'][Math.max(0,INDEX_TITLES.findIndex(x=>x.id===t.id))]);
 const SKILL_ICON={aid:'heart',bash:'fist',endure:'shield',hprec:'heart',provoke:'roar',bowl:'spiral',pierce:'spear',quick:'bolt',spear:'spear',spiral:'spiral',aura:'halo',jointbeat:'bone',fire:'flame',nap:'shadow',coat:'ward',fireball:'fireball',storm:'snow',jup:'bolt',amp:'book',tstorm:'storm',meteor:'meteor',grav:'gravity',mystic:'orb',napalm:'flame',dstr:'arrow',iconc:'eye',owl:'eye',vult:'feather',blitz:'feather',sharp:'target',beast:'paw',falconry:'feather',falcon:'wing',focus:'target',sight:'eye',pharrow:'arrow',dbl:'blades',env:'vial',dodge:'wind',steal:'hand',sonic:'blades',grim:'shadow',katm:'blades',vdust:'poison',mAss:'meteor',soulb:'ghost',sdestroy:'ghost',holy:'cross',heal:'heart',bless:'halo',iagi:'wing',magnus:'cross',sanct:'water',asp:'flame',kyrie:'shield',judex:'bolt',assum:'ward',gloria:'sun',meditatio:'lotus',mammo:'coin',greed:'coin',phys:'muscle',discount:'tag',hammer:'hammer',adren:'bolt',wperf:'gear',wresearch:'gear',cart:'cart',thrust:'spear',skin:'rock',cboost:'wheel',frenzy:'fist',dpois:'vial',ovthrust:'shock',mbrk:'shock',fdiver:'ice',fnova:'snow',ashower:'rain',sandat:'sand',signum:'cross',cartrev:'cart',spearboom:'spear',tblow:'fist',vermilion:'flame',landmine:'mine',wwalk:'wind',vsplash:'poison',akatar:'blades',tundead:'skull',basilica:'temple',meltdown:'anvil'};
 const SKILL_TONE={heart:['#17444c','#2bb9a9','#ecfff1'],fist:['#582b32','#f06d4c','#ffe0a0'],shield:['#294e70','#4eb1e8','#e4f8ff'],roar:['#633229','#ff9651','#fff0b4'],spiral:['#364278','#9385ff','#f1ebff'],spear:['#4c3941','#e1c276','#fff3c7'],bolt:['#3e3865','#b29bff','#f8efff'],halo:['#63501e','#e8bd4d','#fff5c4'],bone:['#52403a','#d9bc8b','#fff3da'],flame:['#71331f','#ff6a2e','#ffe987'],shadow:['#33254f','#9564d8','#f1dfff'],ward:['#1d5560','#42c7c0','#e5ffff'],fireball:['#642f27','#fa7c35','#fff2a5'],snow:['#1d4d72','#59c5ff','#effcff'],book:['#49345f','#bd91ff','#fff0ff'],storm:['#174f70','#52d6ed','#ecffff'],meteor:['#5d2e51','#fa70aa','#fff0df'],gravity:['#302354','#a76dff','#f1dfff'],orb:['#343b72','#8c9cff','#f2f3ff'],arrow:['#4c3d2b','#d6b56d','#fff1c0'],eye:['#244d67','#56d6d1','#edffff'],feather:['#285644','#56c78d','#edffdf'],target:['#64432d','#f2a356','#fff2c6'],paw:['#4a5d2a','#9bca50','#f5ffd9'],wing:['#30506f','#8dd7ff','#f5ffff'],blades:['#5a3045','#f2798c','#fff0d8'],vial:['#2b5947','#7bda7c','#f2ffdc'],ghost:['#49355d','#b38bf3','#fff0ff'],cross:['#67501f','#f2cf68','#fff8d6'],water:['#184f70','#50c8f4','#e9fbff'],sun:['#72501d','#ffc643','#fff8bd'],lotus:['#5a3b73','#d38cda','#fff0ff'],coin:['#684616','#f2b62f','#fff4ad'],muscle:['#633532','#ee8667','#ffe5c3'],tag:['#63502b','#d8af57','#fff2c2'],hammer:['#493b38','#c89e76','#fff0dc'],gear:['#3d5152','#7cc3ba','#effffc'],cart:['#525032','#c3ba54','#fbffbf'],rock:['#454654','#a4a6b4','#f5f5ff'],wheel:['#3c4c60','#65a9dc','#eff9ff'],shock:['#623151','#f36199','#ffedf7'],ice:['#20527d','#74d9ff','#f0fdff'],rain:['#294b75','#76aef4','#f5fbff'],sand:['#654b29','#d5a450','#fff2c6'],mine:['#4f3646','#d07083','#ffe7dc'],temple:['#66502d','#d3b468','#fff3c9'],anvil:['#41454f','#99a4b4','#f4f6ff'],wind:['#244d5c','#55c7b9','#eaffff'],poison:['#3d5128','#a9d946','#f6ffce'],hand:['#584052','#d595bb','#fff0fb'],skull:['#4d444c','#c2b8cb','#fffaff'],rune:['#383264','#8977e7','#f5f1ff']};
 const SKILL_PICTO={
@@ -874,8 +988,8 @@ const SKILL_PICTO={
   skull:`<path d="M24 8a14 14 0 0 0-9 24v5h18v-5a14 14 0 0 0-9-24Z"/><circle cx="19" cy="23" r="3" fill="#fff"/><circle cx="29" cy="23" r="3" fill="#fff"/><path d="M22 31h4m-5-4 3 3 3-3" fill="none" stroke="#fff" stroke-width="1.5"/>`,
   rune:`<path d="m24 8 14 8v16l-14 8-14-8V16l14-8Z"/><path d="M17 30V18l7 8 7-8v12M17 18h14" fill="none" stroke="#fff" stroke-width="2"/>`
 };
-const skillIcon=id=>{const motif=SKILL_ICON[id]||'rune',tone=SKILL_TONE[motif]||SKILL_TONE.rune,key='skgem-'+String(id).replace(/[^a-z0-9_-]/gi,''),art=SKILL_PICTO[motif]||SKILL_PICTO.rune;
-  return`<svg class="skill-art motif-${motif}" data-motif="${motif}" viewBox="0 0 48 48" aria-hidden="true" focusable="false"><defs><radialGradient id="${key}-core" cx="32%" cy="20%" r="88%"><stop stop-color="${tone[2]}"/><stop offset=".28" stop-color="${tone[1]}"/><stop offset="1" stop-color="${tone[0]}"/></radialGradient><linearGradient id="${key}-rim" x1="0" y1="0" x2=".85" y2="1"><stop stop-color="#fff3c9"/><stop offset=".2" stop-color="#c29b5c"/><stop offset=".55" stop-color="#59412d"/><stop offset=".82" stop-color="#e3c27d"/><stop offset="1" stop-color="#634424"/></linearGradient></defs><circle cx="24" cy="24" r="22.4" fill="#100c15" stroke="#07060b" stroke-width="1.2"/><circle cx="24" cy="24" r="20.9" fill="url(#${key}-rim)"/><circle cx="24" cy="24" r="18.5" fill="#251d2c" stroke="#fff0bd" stroke-opacity=".6" stroke-width=".55"/><circle cx="24" cy="24" r="16.8" fill="url(#${key}-core)" stroke="#fff" stroke-opacity=".35" stroke-width=".65"/><path d="M12 18c2-6 7-10 12-10-5 2-8 5-10 11Z" fill="#fff" opacity=".28"/><circle cx="8.1" cy="24" r="1" fill="#fff0bc"/><circle cx="39.9" cy="24" r="1" fill="#fff0bc"/><g color="${tone[2]}" fill="currentColor" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${art}</g><path d="m24 5 1 2-1 2-1-2 1-2Zm0 34 1 2-1 2-1-2 1-2Z" fill="#fff3c6"/></svg>`};
+const skillIcon=id=>{const motif=SKILL_ICON[id]||'rune',tone=SKILL_TONE[motif]||SKILL_TONE.rune,art=SKILL_PICTO[motif]||SKILL_PICTO.rune;
+  return`<svg class="skill-art motif-${motif}" data-motif="${motif}" viewBox="0 0 48 48" aria-hidden="true" focusable="false"><rect x="2" y="2" width="44" height="44" rx="11" fill="#142321" stroke="${tone[1]}" stroke-opacity=".5"/><g class="skill-line" color="${tone[1]}" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${art}</g></svg>`};
 // The CDM affix stays in the roll pool, but v73 (owner: "players only target cri damage on all
 // equipments") changed who can roll it and what it pays: the affix is now a weapon/accessory roll
 // like the cdm CARD, and its gear weight is AB.cdm .7 -> .45. The final GEAR-AFFIX output is still
@@ -924,7 +1038,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // script block, which is a SyntaxError - the game did not run on main at all. One line wins, and
 // it names both sides of this merge: the v38 balance patch (the weapon cut, the affix/card
 // give-back) and main's weapon-hold rendering work.
-const BUILD='2026-10-10 grind-v94.3 panel focus survives redraws';   // shown on the login card - confirms which file you loaded
+const BUILD='2026-10-10 grind-v95.2 soft color interface';   // shown on the login card - confirms which file you loaded
 $('buildTag').textContent='build '+BUILD;
 
 // ---------- class tree: Novice -> 6 first jobs -> 6 second jobs -> 6 third jobs ----------
@@ -1984,7 +2098,7 @@ function fieldOf(m,l){const mp=MAPS[m],sec=secField(m,l),T=gearPool(m,l),n=T.len
 // it, with the % on the right. v79: a piece the player's own class cannot wear is dimmed and says
 // why on hover - the class gate is part of choosing where to farm, not a surprise that only turns
 // up in the bag after the drop.
-const poolIc=T=>gearSlot(T)==='weapon'?(WICON[T.k]||'⚔️'):{armor:'🥼',head:'🎩',off:'🛡️',leg:'👖',acc:'💍'}[T.k];
+const poolIc=T=>`<span class="drop-icon">${itemIconMarkup(T)}</span>`;
 // v80: is this drop strictly weaker than the piece already worn in its slot? Compared on the same
 // Gear Lv reference the item card prints (field level + 10 per quality step), so the panel can say
 // "this field is behind you" without pretending to know the affix roll. An empty slot is never a
@@ -1993,7 +2107,7 @@ const poolIc=T=>gearSlot(T)==='weapon'?(WICON[T.k]||'⚔️'):{armor:'🥼',head
 const dropIsWorse=T=>{const cur=gearSlot(T)==='acc'?(S.eq.acc1||S.eq.acc2):S.eq[gearSlot(T)];
   return !!cur&&gearRefLevel({lvl:mapL,tier:T.tier})<gearRefLevel(cur)};
 const dropTxt=([T,ch],who)=>{const why=whyNot(T),worse=dropIsWorse(T),cls='dropline'+(why?' cant':'')+(worse?' worse':''),tip=[why,worse?`Weaker than the ${SLOTS[gearSlot(T)].label.toLowerCase()} you are wearing`:''].filter(Boolean).join(' · ')
- return`<div class="${cls}"${tip?` title="${tip}"`:''}><span>${poolIc(T)} ${T.n} <small class="${rarCls(T)}">${rarOf(T).n}</small>${who?` <small class="dwho">${who}</small>`:''}</span><span class="drr">${why?'<small class="dnot">(Not equitable on current class)</small>':''}<b>${Math.round(ch*1e4)/1e4}%</b></span></div>`};
+ return`<div class="${cls}"${tip?` title="${tip}"`:''}><span>${poolIc(T)} ${T.n} <small class="${rarCls(T)}">${rarOf(T).n}</small>${who?` <small class="dwho">${who}</small>`:''}</span><span class="drr">${why?'<small class="dnot">Class restricted</small>':''}<b>${Math.round(ch*1e4)/1e4}%</b></span></div>`};
 
 // ---------- stat progression ----------
 // Stats cap at 99 until Base Lv 100, then the elite tier opens up to 120. Raising a stat
@@ -3033,14 +3147,27 @@ const autoAllocateSkills=()=>{if(!S.sk||typeof S.sk!=='object')S.sk={};let bough
 const REF_ZENY_MUL=3,refCost=it=>Math.round(REF_ZENY_MUL*400*((it.r||0)+1)*(1+(it.sec||0)*.5)),REF_ORE=[1,1,2,2,5,10,10],refOre=it=>REF_ORE[rarIdx(it)],refCh=it=>[70,70,70,70,49,42,35,28,21,14][it.r||0];
 const affTxt=a=>`${AL[a.k]} +${a.v}`,cardTxt=c=>`${c.n} (${SU(c.stat)} +${c.v})`,dtier=it=>it.card?GI[it.g]:it.ore?3:((it&&+it.sec>=5)?6:(it&&+it.sec>=4)?5:it.tier);
 const isBoss=()=>S.lvl===10||S.lvl===15,fieldName=()=>S.lvl>10?`Nightmare ${MAPS[S.mp].n} Stage ${S.lvl-10}`:`${MAPS[S.mp].n} Stage ${S.lvl}`;
-// Equipment icons use a stable, recognizable weapon silhouette for each actual weapon type.
-// Other equipment keeps its name-based variants. The existing held-weapon URL helper above remains unchanged for the 3D sprite layer.
-const RO_ITEM_ICON_CANDIDATES={weapon:{dagger:[1201,1202,1204,1205,1210,1212],katar:[1250,1251,1252,1253,1254,1255],staff:[1601,1602,1603,1604,1605,1606],bow:[1701,1702,1703,1704,1705,1706],axe:[1301,1302,1303,1304,1305,1306],sword:[1101,1104,1105,1106,1108,1110,1114],mace:[1501,1502,1503,1504,1505,1510]},armor:[2301,2302,2303,2304,2305,2306,2307,2308,2309,2310,2311,2312,2313],head:[2201,2202,2203,2204,2205,2206,2207,2208,2209,2210,2211,2212,2213,2214,2215,2216],off:[2101,2102,2103,2104,2105,2106,2107,2108],leg:[2401,2402,2403,2404,2405,2406,2407,2408],acc:[2601,2602,2603,2604,2605,2606,2607,2608,2609,2610]};
+// Curated original RO equipment art: progression follows the saved job section,
+// with robe and pendant variants selected by item type. All selected PNGs ship locally.
+const RO_ITEM_ICON_CANDIDATES={
+ sword:[1101,1123,1137,1142,1133,1145],
+ dagger:[1201,1207,1217,1226,1232,1240],
+ katar:[1250,1252,1254,1256,1258,1260],
+ staff:[1601,1607,1610,1618,1620,1630],
+ bow:[1701,1704,1707,1723,1720,1722],
+ axe:[1301,1307,1357,1360,1363,1366],
+ mace:[1501,1504,1513,1527,1540,1530],
+ armor:[2301,2329,2315,2341,2367,2357],
+ robe:[2301,2305,2309,2359,2360,2365],
+ head:[2222,2229,2230,2234,2235,2254],
+ off:[2101,2105,2107,2115,2116,2123],
+ leg:[2401,2403,2405,2412,2410,2423],
+ acc:[2601,2602,2613,2615,2620,2640],
+ pendant:[2603,2608,2629,2630,2649,2644]
+};
 // v77 (owner: "sprites i mean for the bags equipments icons. not on the character itself"): every
-// equipment family draws its own icon now. The official RO item art is still tried first over the
-// network, but when that cannot load - a slow phone, a blocked CDN, a plane - the tile falls back to
-// these flat vector silhouettes drawn in the rarity colour instead of an emoji, so the bag reads the
-// same on every device and a Nightmare piece has art of its own with no network at all.
+// equipment family draws its own icon. Local curated sprites carry progression;
+// these vector silhouettes remain the fallback if a local PNG cannot be loaded.
 const ITEM_ICON_SVG={
  card:'<rect x="4" y="3" width="16" height="18" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M8.6 12.2l2.2 2.2 4.4-4.6" fill="none" stroke="currentColor" stroke-width="2"/>',
  ore:'<path d="M12 2l6 6.2L15.6 22H8.4L6 8.2z"/>',
@@ -3057,16 +3184,20 @@ const ITEM_ICON_SVG={
  leg:'<path d="M7 2h6v9.6l5 4.4V21H7z"/><path d="M7.4 18.4h10.6" stroke="#ffffff66" stroke-width="1"/>',
  acc:'<circle cx="12" cy="14.4" r="6.2" fill="none" stroke="currentColor" stroke-width="2.6"/><path d="M12 2l3.2 4.4H8.8z"/>'
 };
-const ITEM_ICON_KEY=it=>it&&it.card?'card':it&&it.ore?'ore':!it?'acc':it.slot==='weapon'?(ITEM_ICON_SVG[it.wt]?it.wt:'sword'):(ITEM_ICON_SVG[it.slot]?it.slot:'acc');
+const ITEM_ICON_KEY=it=>it&&it.card?'card':it&&it.ore?'ore':!it?'acc':gearSlot(it)==='weapon'?(ITEM_ICON_SVG[gearKind(it)]?gearKind(it):'sword'):(ITEM_ICON_SVG[gearSlot(it)]?gearSlot(it):'acc');
 const itemSvgMarkup=it=>`<svg class="ro-icon-svg" viewBox="0 0 24 24" aria-hidden="true">${ITEM_ICON_SVG[ITEM_ICON_KEY(it)]||ITEM_ICON_SVG.acc}</svg>`;
-const gearIconHash=text=>{let h=2166136261;for(let i=0;i<String(text).length;i++){h^=String(text).charCodeAt(i);h=Math.imul(h,16777619)}return h>>>0};
-const gearItemIconId=it=>{if(it.slot==='weapon')return WEAPON_ITEM_IDS[it.wt]||0;const list=RO_ITEM_ICON_CANDIDATES[it.slot];if(!list||!list.length)return 0;const name=String(it.name||'').replace(/^(Common|Fine|Rare|Epic|Legendary)\s+/,'');return list[gearIconHash(it.slot+':'+name)%list.length]};
-const itemIconUrl=id=>id?`https://static.divine-pride.net/images/items/item/${id}.png`:'';
+const equipmentArtTier=it=>{const sec=Number(it&&it.sec),band=Number.isFinite(sec)?Math.max(0,Math.min(5,Math.floor(sec))):0;
+  const ascended=Number(it&&it.quality)>1||/Oblivion|Void Emperor|World End|Black Star|Nightfall|Cataclysm|Endbringer|Eternal Abyss|Void Sovereign/i.test(String(it&&(it.name||it.n)||''));
+  return band===3&&ascended?4:band};
+const equipmentArtFamily=it=>{if(!it||it.card||it.ore)return'';const slot=gearSlot(it),name=String(it.name||it.n||'');
+  if(slot==='weapon')return gearKind(it);
+  if(slot==='armor'&&/robe|cloak|garb|shirt|vest|coat|clothes|suit/i.test(name))return'robe';
+  if(slot==='acc'&&/pendant|necklace|charm|bead|belt|tear|glass/i.test(name))return'pendant';
+  return slot};
+const gearItemIconId=it=>{const list=RO_ITEM_ICON_CANDIDATES[equipmentArtFamily(it)];return list?list[equipmentArtTier(it)]:0};
+const itemIconUrl=id=>id?`assets/equipment-icons/${id}.png`:'';
 const itemIconMarkup=it=>{const svg=itemSvgMarkup(it),id=gearItemIconId(it);
-  // referrerpolicy matters: the item-art host refuses hotlinked requests that carry a Referer, which
-  // is exactly what a page on another domain sends - that is the difference between real art and a
-  // row of placeholder glyphs on a deployed build.
-  return id?`<img class="ro-item-icon" src="${itemIconUrl(id)}" data-svg="${ITEM_ICON_KEY(it)}" referrerpolicy="no-referrer" alt="" loading="lazy" decoding="async">`
+  return id?`<img class="ro-item-icon" src="${itemIconUrl(id)}" data-svg="${ITEM_ICON_KEY(it)}" alt="" loading="${it.k?'eager':'lazy'}" decoding="async">`
     :`<span class="ro-icon-fallback">${svg}</span>`};
 const icon=it=>itemIconMarkup(it);
 
@@ -3795,11 +3926,12 @@ function changeClass(n){if(classBlock(n))return;
   addFloat(pl.x,3.6,pl.z,n+'!','#fff',true);ui();save()}
 
 // ---------- UI ----------
-// v90.2 (owner): the Black Market and the Leaderboard sit under the quest panel behind one open/hide arrow
+// Index, Black Market and Leaderboard share an independent dropdown below Quests.
 // instead of taking dock slots. The keys X and V still open them. v91: the World Map tab uses a tower icon.
-const SIDE_TABS=['market','board'];
+const SIDE_TABS=['index','market','board'];
 const TABS={map:['🗼','World Map','M'],status:['📊','Character','S'],job:['🌳','Class Tree','J'],skills:['✨','Skills','K'],bag:['🎒','Inventory','B'],log:['📃','Log','L'],pet:['🐾','Pets','P'],index:['📚','Mastery Index','I'],board:['🏆','Leaderboard','V'],market:['🏪','Black Market','X'],set:['⚙️','Settings','O'],gm:['🛠️','GM Tools','G']};
-const expandedPanels=new Set();
+const expandedPanels=new Set(['map']);
+const minimizedPanels=new Set();
 const dot=k=>{if(!S)return false;if(k==='status')return S.pts>0;if(k==='skills')return skpAvail()>0;if(k==='quest')return!!(S.q&&S.q.some(q=>q.prog>=q.goal));if(k==='cards')return S.cards.length>0;if(k==='index'){const rank=HUNT_TITLES.findIndex(t=>t.id===S.equippedTitle);return cardMasteryAvailable()>0||HUNT_TITLES.some((t,i)=>i>rank&&titleUnlocked(t))}return false};
 const find=id=>[...S.inv,...items(),...S.cards].find(x=>String(x.id)===String(id));
 // Gear Lv is a display-only field-quality reference: field level +10 per numeric quality step.
@@ -3811,7 +3943,7 @@ function toggleGearLock(id){const it=find(id);if(!it||it.card||it.ore)return;it.
 // a comparison (nothing worn reads as unbeatable), and the worn piece is never flagged against
 // itself - ev(it)<ev(it) is false by definition.
 const weakerGear=it=>{const worn=it&&it.slot&&(it.slot==='acc'?(S.eq.acc1||S.eq.acc2):S.eq[it.slot]);return worn&&ev(it)<ev(worn)?worn:null};
-const cell=(it,sel,extra='')=>`<div class="cell b${dtier(it)}${it&&+it.sec>=4?' nm':''}${sel?' sel':''}${weakerGear(it)?' worse':''}" data-tip="${it.id}" ${extra}>${icon(it)}${it.locked?`<i class="lockstar" title="Locked gear" aria-label="Locked">&#9733;</i>`:''}${it.r?`<i class="rf">+${it.r}</i>`:''}</div>`;
+const cell=(it,sel,extra='')=>`<div class="cell b${dtier(it)}${it&&+it.sec>=4?' nm':''}${sel?' sel':''}${weakerGear(it)?' worse':''}" data-tip="${it.id}" ${extra}>${icon(it)}<span class="rarity-label">${it.card?GRADE[it.g]:it.ore?'Ore':rarOf(it).n}</span>${it.locked?`<i class="lockstar" title="Locked gear" aria-label="Locked">&#9733;</i>`:''}${it.r?`<i class="rf">+${it.r}</i>`:''}</div>`;
 function itemMain(it){
   const worn=weakerGear(it);
   if(it.card)return`<b class="r${GI[it.g]}">${it.n}</b><div>${GRADE[it.g]} card &middot; <b>${SU(it.stat)} +${it.v}</b></div><div><small>Fits: ${CFL[CFIT[it.stat]]} only</small></div>`;
@@ -3929,7 +4061,7 @@ const V={
           return`<div class="dropline"><span>Gear chance per kill</span><b>${t}%</b></div>
           <small>Weapon <b>${wt}%</b>${fam} &middot; armour &amp; accessory <b>${r4(t-wt)}%</b> - ${d.length} independent rolls, so one kill can pay one piece, none, or several.</small>`})()}
         ${(()=>{const lines=F.mobs.flatMap(m=>m.drops.map(d=>[d,m.n])).filter(([d],i,a)=>a.findIndex(([e])=>e[0].n===d[0].n)===i),isW=([d])=>gearSlot(d[0])==='weapon',
-          grp=(t,ls)=>`<div class="dropgrp"><small>${t}</small></div>`+ls.map(([d,n])=>dropTxt(d,n)).join('');
+          grp=(t,ls)=>`<div class="dropgrp"><small>${t}</small></div><div class="drop-list">`+ls.map(([d,n])=>dropTxt(d,n)).join('')+'</div>';
           return grp('Weapons',lines.filter(isW))+grp('Armour &amp; accessories',lines.filter(l=>!isW(l)))
             +`<div class="dropgrp"><small>Cards &amp; ore</small></div>`
             +F.mobs.map(m=>`<div class="dropline"><span>🃏 ${m.card.n} <small>(${SU(m.card.stat)} +${cardVal(m.card.g,m.card.stat)}, ${GRADE[m.card.g]})</small> <small class="dwho">${m.n}</small></span><b>${m.cardCh}%</b></div>`).join('')
@@ -3937,7 +4069,7 @@ const V={
             +(!F.boss&&gearPool(mapM,mapL).length>lines.length?`<small>This field's monsters carry ${lines.length} of the ${gearPool(mapM,mapL).length} pieces on ${mp.n}'s shelf - the rest drop from the Stage 10 MVP, listed beside this card.</small>`:'')})()}</div>
       <div class="mob-card"><div class="hd">MVP &amp; pets</div>${(mapL===10||mapL===15)?`<small>MVP fights immediately with ${mapM<5?3:5} monsters. Defeat the MVP to reset the fight.</small>`:''}
         ${F.boss?`<div class="mobentry"><b class="r4">${F.boss.n}</b>
-          <div class="poollist">${F.boss.drops.map(([T,ch])=>`<span class="poolitem">${poolIc(T)} ${T.n} <small class="${rarCls(T)}">${rarOf(T).n}</small><b>${ch}%</b></span>`).join('')}</div>
+          <div class="poollist">${F.boss.drops.map(([T,ch])=>`<span class="poolitem">${poolIc(T)}<span class="drop-name">${T.n} <small class="${rarCls(T)}">${rarOf(T).n}</small></span><b>${ch}%</b></span>`).join('')}</div>
           <small>Every MVP drop is <b class="${rarCls({sec:F.sec,tier:F.boss.tier})}">${rarOf({sec:F.sec,tier:F.boss.tier}).n}</b> with random affixes. Each item rolls independently; an MVP can drop zero or several pieces.</small>
           <div class="dropline"><span>🃏 ${F.boss.card.n} <small>(${SU(F.boss.card.stat)} +${cardVal(F.boss.card.g,F.boss.card.stat)}, ${GRADE[F.boss.card.g]})</small></span><b>${F.boss.cardCh}%</b></div>
           <div class="dropline ore"><span>🔶 Oridecon &middot; 🔷 Elunium</span><b>${F.boss.oreCh*100}% each</b></div>
@@ -4109,7 +4241,7 @@ function renderTitleTrack(){
     const pct=done?100:Math.min(100,Math.max(0,xp/t.xp*100));
     const progress=(done?`${t.xp.toLocaleString()} Index XP · earned`: `${xp.toLocaleString()} / ${t.xp.toLocaleString()} Index XP`)+` · +${INDEX_CRIT[i]}% Crit`;
     return `<article class="mastery-title tone-${t.tone}${done?' earned':' locked'}">
-      <div class="mastery-medal" aria-hidden="true"><span>${t.mark}</span><small>${String(i+1).padStart(2,'0')}</small></div>
+      <div class="mastery-medal" aria-hidden="true"><span>${titleIcon(t)}</span><small>${String(i+1).padStart(2,'0')}</small></div>
       <div class="mastery-title-copy"><b>${t.name}</b><small>Rank ${i+1} · ${progress}</small><div class="mastery-track"><i style="width:${pct.toFixed(1)}%"></i></div></div>
       <button data-a="titleequip" data-v="${equipped?'none':t.id}" ${done?'':'disabled'} aria-label="${equipped?'Remove equipped title':done?'Equip '+t.name:'Unlock '+t.name+' at '+t.xp.toLocaleString()+' Index XP'}">${equipped?'Equipped':done?'Equip':'Locked'}</button>
     </article>`;
@@ -4176,10 +4308,11 @@ function renderCardIndex(){
     }).join('')}`;
 }
 
-const qpSide=()=>`<div class="qp-side"><button data-q="side" class="qp-side-toggle" aria-expanded="${sideOpen}" title="${sideOpen?'Hide':'Show'} the Black Market and the Leaderboard">${sideOpen?'&#9652; Hide markets':'&#9662; Markets'}</button>${sideOpen?SIDE_TABS.map(k=>`<button data-t="${k}" class="qp-side-tab${tabs.includes(k)?' on':''}" aria-pressed="${tabs.includes(k)}">${TABS[k][0]} ${TABS[k][1]} <small>${TABS[k][2]}</small></button>`).join(''):''}</div>`;
-function renderQ(){const e=$('qp');if(!S){e.style.display='none';return}e.style.display=tabs.length?'none':'block';
-  e.innerHTML=`<div class="qp-head"><b>📜 Quests</b><div class="qp-actions"><button data-q="index" title="Open the Mob Index and Card Mastery">📚 Index</button><button data-q="t" aria-label="${qOpen?'Collapse':'Expand'} quests">${qOpen?'&minus;':'+'}</button></div></div>`+(qOpen?(S.q||[]).map((q,i)=>`<div style="margin-top:5px"><div>${qTxt(q)}</div><div class="pbar"><i style="width:${Math.min(100,q.prog/q.goal*100)}%"></i></div><div style="display:flex;justify-content:space-between;align-items:center"><small>${q.prog}/${q.goal} &middot; ${(q.z||0).toLocaleString()}z &middot; ${(q.xp||0).toLocaleString()}xp</small>${q.prog>=q.goal?`<button data-q="c${i}">Claim</button>`:''}</div></div>`).join(''):'')+qpSide()}
-$('qp').onclick=e=>{const d=e.target.closest('[data-t]');if(d){openTab(d.dataset.t);return}const b=e.target.closest('[data-q]');if(!b)return;const v=b.dataset.q;if(v==='index'){openTab('index');return}if(v==='side'){sideOpen=!sideOpen;renderQ();return}if(v==='t'){qOpen=!qOpen;renderQ()}else ACT.claim(v.slice(1))};
+const qpSide=()=>`<button data-q="side" class="qp-side-toggle" aria-controls="sideLinks" aria-expanded="${sideOpen}">${uiIcon('index')} Index & market <span class="side-chevron${sideOpen?' open':''}">${uiIcon('chevron')}</span></button><div id="sideLinks" ${sideOpen?'':'hidden'}>${SIDE_TABS.map(k=>`<button data-t="${k}" class="qp-side-tab${tabs.includes(k)?' on':''}" aria-pressed="${tabs.includes(k)}">${uiIcon(k)} ${TABS[k][1]} <small>${TABS[k][2]}</small></button>`).join('')}</div>`;
+function renderQ(){const e=$('qp'),rail=$('sideRail');if(!S){rail.style.display='none';return}rail.style.display=tabs.length?'none':'flex';e.style.display='block';
+  e.innerHTML=`<div class="qp-head"><b>${uiIcon('quest')} Quests</b><div class="qp-actions"><button data-q="t" aria-expanded="${qOpen}" aria-label="${qOpen?'Collapse':'Expand'} quests">${uiIcon(qOpen?'minus':'chevron')}</button></div></div>`+(qOpen?(S.q||[]).map((q,i)=>`<div class="quest-entry"><div>${qTxt(q)}</div><div class="pbar"><i style="width:${Math.min(100,q.prog/q.goal*100)}%"></i></div><div class="quest-reward"><small>${q.prog}/${q.goal} &middot; ${(q.z||0).toLocaleString()}z &middot; ${(q.xp||0).toLocaleString()}xp</small>${q.prog>=q.goal?`<button data-q="c${i}">Claim</button>`:''}</div></div>`).join(''):'');
+  $('sideMenu').innerHTML=qpSide();polishIcons(e)}
+$('sideRail').onclick=e=>{const d=e.target.closest('[data-t]');if(d){openTab(d.dataset.t);return}const b=e.target.closest('[data-q]');if(!b)return;const v=b.dataset.q;if(v==='side'){sideOpen=!sideOpen;renderQ();return}if(v==='t'){qOpen=!qOpen;renderQ()}else ACT.claim(v.slice(1))};
 function refineUI(it,k){const r=it.r||0,o=it.slot==='weapon'?'ori':'elu',c=refCost(it),need=refOre(it);return`<div class="sec">Refine</div><small>${SLOTS[it.slot].stat} +${ev(it)} &rarr; +${Math.round(it.val*(1+(r+1)*.15))} &middot; ${r>=10?'MAX':'Success '+refCh(it)+'% &middot; '+c.toLocaleString()+'z + '+need+' '+ORE[o]+' (you have '+S.ore[o]+')'}</small><div class="row" style="margin-top:4px"><button data-a="refine" data-v="${k}" ${r>=10||S.ore[o]<need||S.zeny<c?'disabled':''}>Refine</button></div>`}
 // v75: one pet per species. petFold() takes a duplicate and folds it into the pet you already
 // own - the better mutation survives, each gear slot keeps its better level, a skill the older
@@ -4259,7 +4392,7 @@ function arrangePanel(k,root){
     const route=section('02 / Stage & travel','ui-route');put(route,fields);
     if(fields){const notes=[...fields.querySelectorAll('.map-stage-note,.mapband-t>small')];put(fields,fold('Stage rules & requirements',notes,'stage-rules'));const go=fields.querySelector('.go');if(go)put(fields,put(make('div','ui-primary-action'),go))}
     body.replaceChildren(destinations,route);
-    if(drops){const intel=section('03 / Field guide','ui-field-guide');[...drops.children].forEach((card,i)=>{const hd=card.querySelector('.hd');put(intel,fold(hd?hd.textContent:'Drop information',card,'drops-'+i,false))});put(body,intel)}
+    if(drops){const intel=section('03 / Field drops · chance per kill','ui-field-guide');put(intel,drops);put(body,intel)}
     if(special)put(body,put(section('CHALLENGE / Endless Echo','ui-challenge'),special));
   }else if(mode==='stats'){
     const slots=direct().filter(e=>e.classList.contains('slot')),attrs=slots.filter(e=>e.querySelector('[data-a="stat"]')),combat=slots.find(e=>!e.querySelector('[data-a="stat"]')),reset=q('[data-a="rstat"]');
@@ -4343,7 +4476,7 @@ function renderDock(){
   // their state. Besides keeping scrollLeft, this also preserves focus and an in-progress tap.
   if(current.length!==keys.length||current.some((b,i)=>b.dataset.t!==keys[i])){
     const left=dock.scrollLeft;
-    dock.innerHTML=keys.map(k=>{const[ic,n,key]=TABS[k];return `<button class="ib" data-t="${k}" title="${n} (${key})" aria-label="${n}" aria-pressed="false"><span class="ui-nav-icon" aria-hidden="true">${ic}</span><span class="ui-nav-label">${DOCK_LABEL[k]}</span><span class="k">${key}</span></button>`}).join('');
+    dock.innerHTML=keys.map(k=>{const[ic,n,key]=TABS[k];return `<button class="ib" data-t="${k}" title="${n} (${key})" aria-label="${n}" aria-pressed="false"><span class="ui-nav-icon" aria-hidden="true">${uiIcon(k)}</span><span class="ui-nav-label">${DOCK_LABEL[k]}</span><span class="k">${key}</span></button>`}).join('');
     dock.scrollLeft=left;
   }
   [...dock.querySelectorAll(':scope > [data-t]')].forEach(b=>{
@@ -4376,14 +4509,16 @@ function renderWin(anchor){
   const next=[];
   tabs.forEach(k=>{
     let win=existing.get(k);
-    if(!win){win=document.createElement('div');win.dataset.win=k;win.innerHTML='<div class="title"><span></span><span class="ui-window-tools"><button data-ui-expand></button><button data-x>&#10005;</button></span></div><div class="body wbody"></div>'}
-    win.className='win wp'+(k==='map'?' wide':'')+(expandedPanels.has(k)?' ui-expanded':'');
+    if(!win){win=document.createElement('div');win.dataset.win=k;win.innerHTML='<div class="title"><span></span><span class="ui-window-tools"><button data-ui-minimize></button><button data-ui-expand></button><button data-x>&#10005;</button></span></div><div class="body wbody"></div>'}
+    win.className='win wp'+(k==='map'?' wide':'')+(expandedPanels.has(k)?' ui-expanded':'')+(minimizedPanels.has(k)?' ui-minimized':'');
     const name=TABS[k][1],expand=win.querySelector('[data-ui-expand]'),close=win.querySelector('[data-x]');
-    win.querySelector('.title > span:first-child').textContent=name;
-    expand.dataset.uiExpand=k;expand.textContent=expandedPanels.has(k)?'↙':'↗';expand.setAttribute('aria-label',(expandedPanels.has(k)?'Compact ':'Expand ')+name);expand.setAttribute('aria-pressed',String(expandedPanels.has(k)));expand.title='Toggle compact / expanded layout';
+    win.querySelector('.title > span:first-child').innerHTML=uiIcon(k)+' '+name;
+    const minimize=win.querySelector('[data-ui-minimize]');minimize.dataset.uiMinimize=k;minimize.innerHTML=uiIcon(minimizedPanels.has(k)?'chevron':'minus');minimize.setAttribute('aria-label',(minimizedPanels.has(k)?'Restore ':'Minimize ')+name);minimize.setAttribute('aria-expanded',String(!minimizedPanels.has(k)));
+    close.innerHTML=uiIcon('close');
+    expand.dataset.uiExpand=k;expand.innerHTML=uiIcon(expandedPanels.has(k)?'compact':'expand');expand.setAttribute('aria-label',(expandedPanels.has(k)?'Compact ':'Maximize ')+name);expand.setAttribute('aria-pressed',String(expandedPanels.has(k)));expand.title='Toggle compact / expanded layout';
     close.dataset.x=k;close.setAttribute('aria-label','Close '+name);
     const body=win.querySelector('.wbody'),source=V[k]();
-    if(body._panelSource!==source){body.innerHTML=source;body._panelSource=source;arrangePanel(k,body);body.dataset.panelChanged='1'}
+    if(body._panelSource!==source){body.innerHTML=source;body._panelSource=source;arrangePanel(k,body);polishIcons(body);body.dataset.panelChanged='1'}
     else delete body.dataset.panelChanged;
     next.push(win);
   });
@@ -4540,7 +4675,7 @@ $('feedFilter').addEventListener('mouseenter',()=>{if(feedFilTimer)clearTimeout(
 $('feedFilter').addEventListener('mouseleave',()=>{if(feedFilShown)feedFilArm()});
 $('feedFilter').addEventListener('focusin',()=>{if(feedFilTimer)clearTimeout(feedFilTimer)});
 $('feedFilter').addEventListener('focusout',()=>{if(feedFilShown)feedFilArm()});
-$('wins').onclick=e=>{const expand=e.target.closest('[data-ui-expand]');if(expand){e.stopPropagation();chooserAtPointerDown=null;chooserPointerInside=false;skillPointerInside=false;skillCardPointerInside=false;const k=expand.dataset.uiExpand;if(expandedPanels.has(k))expandedPanels.delete(k);else expandedPanels.add(k);renderWin();return}const x=e.target.closest('[data-x]');if(x){openTab(x.dataset.x);return}const b=e.target.closest('[data-a]');if(b&&b.dataset.a==='ssel'&&e.target.closest('.sk-autocast'))return;if(b&&!b.disabled&&ACT[b.dataset.a]){if(b.dataset.a==='idxmap'&&e.target.closest('summary'))e.preventDefault();ACT[b.dataset.a](b.dataset.v)}};
+$('wins').onclick=e=>{const minimize=e.target.closest('[data-ui-minimize]');if(minimize){const k=minimize.dataset.uiMinimize;minimizedPanels.has(k)?minimizedPanels.delete(k):minimizedPanels.add(k);renderWin();return}const expand=e.target.closest('[data-ui-expand]');if(expand){e.stopPropagation();chooserAtPointerDown=null;chooserPointerInside=false;skillPointerInside=false;skillCardPointerInside=false;const k=expand.dataset.uiExpand;minimizedPanels.delete(k);if(expandedPanels.has(k))expandedPanels.delete(k);else expandedPanels.add(k);renderWin();return}const x=e.target.closest('[data-x]');if(x){openTab(x.dataset.x);return}const b=e.target.closest('[data-a]');if(b&&b.dataset.a==='ssel'&&e.target.closest('.sk-autocast'))return;if(b&&!b.disabled&&ACT[b.dataset.a]){if(b.dataset.a==='idxmap'&&e.target.closest('summary'))e.preventDefault();ACT[b.dataset.a](b.dataset.v)}};
 // v73: the picker's "inside" is the Bag window AND the Equipment panel that opened it. The
 // Refine button, the card sockets, Unequip and Lock all live in the Equipment panel's detail
 // card, so a click on any of them used to count as "clicked elsewhere" and shut the picker the
@@ -4664,7 +4799,7 @@ function ui(anchor){if(!S)return;bars();feedTab();
   // never has to open anything to see how long is left. The "(MVP map)" tag is gone with the other
   // parentheticals - the MVP FIGHT line on the HUD carries that.
   $('stageTitle').textContent=hudTrial?`Endless Echo · ${trialClock()}`:fieldName();
-  $('grindStatus').textContent=hudTrial?(TRIAL.mode==='ranked'?'🏛 Ranked run':'🏛 Training'):(S.lvl<S.prog[S.mp]?'🔄 Farming':'✨ Frontier');renderWin(anchor)}
+  $('grindStatus').textContent=hudTrial?(TRIAL.mode==='ranked'?'🏛 Ranked run':'🏛 Training'):(S.lvl<S.prog[S.mp]?'🔄 Farming':'✨ Frontier');renderWin(anchor);polishIcons($('hud'));polishIcons($('grindStatus'));polishIcons($('feedTab'));polishIcons($('hudBuffs'))}
 
 // The owner felt the prior slowdown was too aggressive, so this is exactly halfway between
 // the original `6.5 + 0.05*AGI` pace and v66's proposed curve. It is 8.12 at AGI 99
@@ -7524,7 +7659,7 @@ function draw(){
   // one small transparent gold seal from below the hero's feet every frame so it follows
   // movement and camera rotation just like the skill names do. The rank mark rides on the left.
   const equipped=HUNT_TITLES.find(t=>t.id===S.equippedTitle&&titleUnlocked(t));
-  if(heroTitle&&heroTitleText){if(equipped){const [txh,tyh]=scr(pl.x,0.16,pl.z);heroTitle.style.display='block';heroTitle.style.left=txh+'px';heroTitle.style.top=tyh+'px';if(heroTitleMark)heroTitleMark.textContent=equipped.mark||'✦';heroTitleText.textContent=equipped.name;heroTitle.title='Index title · '+(equipped.xp??equipped.kills).toLocaleString()+' Index XP'}else heroTitle.style.display='none'}
+  if(heroTitle&&heroTitleText){if(equipped){const [txh,tyh]=scr(pl.x,0.16,pl.z);heroTitle.style.display='block';heroTitle.style.left=txh+'px';heroTitle.style.top=tyh+'px';if(heroTitleMark&&heroTitleMark.dataset.title!==equipped.id){heroTitleMark.innerHTML=titleIcon(equipped);heroTitleMark.dataset.title=equipped.id;}heroTitleText.textContent=equipped.name;heroTitle.title='Index title · '+(equipped.xp??equipped.kills).toLocaleString()+' Index XP'}else heroTitle.style.display='none'}
   const pids=new Set(S.pets.filter(p=>p.on).map(p=>p.id));petMesh.forEach((v,id)=>{if(!pids.has(id)){disposeCreatureVisual(v);petMesh.delete(id)}});
   S.pets.filter(p=>p.on).forEach(p=>{const sp=PETS[p.sp],r=petR[p.id];if(!sp||!r)return;let v=petMesh.get(p.id);
     const pet={x:r.x,z:r.z,run:r.run,a:p.id,shape:petFallbackShape(sp),c:sp.c,spriteId:sp.spriteId,flash:0,lunge:r.lunge||0};

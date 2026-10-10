@@ -59,6 +59,7 @@ const code = [
   pick(/const weakerGear=[^\n]*/, 'worn gear comparison'),
   pick(/const cell=\(it,sel,extra=''\)=>[^\n]*/, 'cell'),
   pick(/const STATS=\[[\s\S]*?\];/, 'STATS'),
+  grab('const UI_ICONS=', 'const SKILL_ICON='),
   pick(/const SKILL_ICON=\{[^}]*\};/, 'per-skill pictogram map'),
   pick(/const SKILL_TONE=\{[^;]+;/, 'skill icon color themes'),
   pick(/const SKILL_PICTO=\{[\s\S]*?\n\};/, 'local vector skill art'),
@@ -83,10 +84,10 @@ const code = [
 
   pick(/const WEAPON_ITEM_IDS=\{[^;]+;/, 'canonical weapon icons'),
   pick(/const RO_ITEM_ICON_CANDIDATES=\{[^;]+;/, 'RO equipment image candidates'),
-  grab('const gearIconHash=text=>', 'const gearItemIconId='),
+  grab('const equipmentArtTier=', 'const gearItemIconId='),
   grab('const gearItemIconId=it=>', 'const itemIconUrl='),
   pick(/const itemIconUrl=id=>[^;]+;/, 'gear image URL'),
-  grab('const ITEM_ICON_SVG=', 'const gearIconHash='),   // v77: the local silhouettes the fallback draws
+  grab('const ITEM_ICON_SVG=', 'const equipmentArtTier='),   // v77: the local silhouettes the fallback draws
   grab('const itemIconMarkup=it=>', 'const icon=it=>'),  // ...and the markup that picks art or silhouette
   pick(/const icon=it=>[^;]+;/, 'icon'),
   pick(/const items=\(\)=>[^\n]*/, 'items/ev/iname/eqv'),
@@ -467,8 +468,8 @@ t('the Mastery Index tracks monster titles and consumes loose cards for permanen
   assert.ok(h.includes('Card Index available')&&!h.includes('(global max)'),'the loose-card list is renamed and the global-max wording is gone');
   for(const reward of ['hpPct','fleePct','leech','def','mdef','atkPct','matkPct','aspdPct','critPct'])assert.ok(src.includes("id:'"+reward+"'"),reward+' should be an available card mastery reward');
   assert.ok(h.includes('Poring Card')&&h.includes('Mastery 1/5'),'the card album keeps per-card mastery history');
-  assert.ok(src.includes("if(v==='index'){openTab('index');return}"),'the Quest Board Index button opens the panel');
-  assert.ok(src.includes('data-q="index"')&&src.includes("index:['📚','Mastery Index','I']"),'both Quest Board and dock link to the index');
+  assert.ok(src.includes("const SIDE_TABS=['index','market','board']"),'the Quest Board Index button opens the panel');
+  assert.ok(src.includes('id="sideMenu"')&&src.includes("index:['📚','Mastery Index','I']"),'both Quest Board and dock link to the index');
   assert.ok(src.includes('flex-wrap:wrap;justify-content:center')&&src.includes('max-width:calc(100vw - 12px)'),'the expanded dock wraps on narrow screens');
   assert.ok(src.includes('recordMonsterKill(mob)')&&src.includes('data-a="titleequip"'),'kills are recorded and titles can be equipped from the view');
 });
@@ -575,7 +576,7 @@ t('the Skills grid fits all five class skills and selected descriptions dismiss 
 });
 
 t('skill art is local, movement slowdown is moderated, and the unchanged camera centres the hero', () => {
-  assert.ok(src.includes("katar:[1250,1251,1252,1253,1254,1255]"), 'Katar gear has its own recognizable item sprites');
+  assert.ok(src.includes("katar:[1250,1252,1254,1256,1258,1260]"), 'Katar gear has its own recognizable item sprites');
   assert.ok(!src.includes('https://static.divine-pride.net/images/skills/'), 'skill artwork no longer depends on hotlinked images');
   assert.ok(src.includes('class="skill-art motif-${motif}"')&&src.includes('data-motif="${motif}"'), 'each skill uses a locally drawn, themed vector gem');
   assert.ok(src.includes('.skill-art{display:block;width:46px;height:46px'), 'the vector artwork is high-resolution and not a tiny red sprite');
@@ -886,8 +887,8 @@ t('every skill has distinct local vector art and upgraded card metadata', () => 
   assert.strictEqual(Object.keys(U.SKILL_ICON).length, U.SKILLS.length, 'the icon map must cover the whole roster without unused entries');
   assert.ok(new Set(Object.values(U.SKILL_ICON)).size >= 40, 'skill art should use many clearly different pictograms, not one placeholder');
   const art=U.SKILLS.map(s=>U.skillIcon(s.id));
-  assert.ok(art.every(svg=>svg.startsWith('<svg class="skill-art motif-')&&svg.includes('<defs>')&&svg.includes('linearGradient')), 'each skill renders self-contained, shaded vector art');
-  assert.strictEqual(new Set(art.map(svg=>svg.match(/id="(skgem-[^"]+)/)?.[1])).size, U.SKILLS.length, 'SVG definition IDs cannot collide between skills');
+  assert.ok(art.every(svg=>svg.startsWith('<svg class="skill-art motif-')&&svg.includes('class="skill-line"')&&svg.includes('rx="11"')), 'each skill renders self-contained, shaded vector art');
+  assert.ok(art.every(svg=>!svg.includes('id=')&&!svg.includes('url(#')), 'line icons need no shared IDs');
   assert.ok(!src.includes('class="ro-skill-icon"'), 'there are no externally loaded red skill placeholders');
   U.S = mkS('Mage'); U.selS = null;
   const h = U.V.skills();
@@ -1015,11 +1016,11 @@ t('market and leaderboard retain quest shortcuts and gain labeled dock entries',
   const bm = sb.__bm;
   bm.setSide(false);
   let h = bm.qpSide();
-  assert.ok(h.includes('data-q="side"') && h.includes('&#9662; Markets'), 'a closed group shows the open arrow');
-  assert.ok(!h.includes('data-t="market"') && !h.includes('data-t="board"'), 'and hides both tabs');
+  assert.ok(h.includes('data-q="side"') && h.includes('aria-expanded="false"'), 'a closed group shows the open arrow');
+  assert.ok(h.includes('id="sideLinks" hidden'), 'and hides both tabs');
   bm.setSide(true);
   h = bm.qpSide();
-  assert.ok(h.includes('&#9652; Hide markets'), 'an open group shows the hide arrow');
+  assert.ok(h.includes('aria-expanded="true"'), 'an open group shows the hide arrow');
   assert.ok(h.includes('data-t="market"') && h.includes('data-t="board"'), 'and lists the Black Market and the Leaderboard');
   bm.tabs.push('market'); h = bm.qpSide();
   assert.ok(h.includes('qp-side-tab on'), 'an open window is marked on its button');
@@ -1053,7 +1054,7 @@ t('v90.3: a drop the class cannot wear says so beside its rate, with no strike-t
   // the Knight cannot wear the Abyss N+ weapons, so the world map must label them, not slash their rate
   U.S = mkS('Knight'); U.mapM = 9; U.mapL = 14;
   const h = U.V.map();
-  assert.ok(h.includes('<small class="dnot">(Not equitable on current class)</small>'), 'a class-locked drop names the reason beside its rate');
+  assert.ok(h.includes('<small class="dnot">Class restricted</small>'), 'a class-locked drop names the reason beside its rate');
   assert.ok(h.includes('class="dropline cant"'), 'the row is still marked as not equitable');
   assert.ok(!/dropline\.cant b\{text-decoration/.test(src), 'the old strike-through on the rate is gone');
   assert.ok(src.includes(".dropline.cant .dnot{color:#ffb4a8;font-size:11px}"), 'the label has its own style');
@@ -1769,11 +1770,11 @@ t('the Index remembers every map ledger you opened, across re-renders', () => {
 });
 
 t('the equipped title is a small transparent gold seal under the feet, with its rank mark', () => {
-  assert.ok(/id="heroTitleMark"/.test(src) && /heroTitleMark\.textContent=equipped\.mark/.test(src), 'the title glyph rides on the left as the logo');
+  assert.ok(/id="heroTitleMark"/.test(src) && /heroTitleMark\.innerHTML=titleIcon\(equipped\)/.test(src), 'the title glyph rides on the left as the logo');
   assert.ok(/scr\(pl\.x,0\.16,pl\.z\)/.test(src), 'the seal is projected at the feet, not above the head');
-  assert.ok(/\.hero-title\{[^}]*background:transparent/.test(src), 'no fill behind the name');
-  assert.ok(/\.hero-title\{[^}]*border:1px solid #e8c25a/.test(src), 'a thin gold frame instead');
-  assert.ok(/\.hero-title\{[^}]*transform:translate\(-50%,3px\)/.test(src), 'and it hangs below the anchor point');
+  assert.ok(/\.hero-title\{[^}]*background:#101f23e8/.test(src), 'dark backing keeps the title readable on every field');
+  assert.ok(/\.hero-title\{[^}]*border:1px solid #d9c68b70/.test(src), 'a thin gold frame instead');
+  assert.ok(/\.hero-title\{[^}]*transform:translate\(-50%,8px\)/.test(src), 'and it hangs below the anchor point');
   assert.ok(!/\.hero-title\{[^}]*background:linear-gradient/.test(src), 'the old parchment fill is gone');
 });
 
@@ -1916,12 +1917,16 @@ t('compact bag keeps all selling actions and both Nightmare rarity controls', ()
   assert.ok(h.includes('Quick sell ON'), 'the summary identifies the destructive click mode');
 });
 
-t('weapon artwork follows the actual weapon family, regardless of item name or rarity', () => {
+t('equipment artwork follows family and job progression, with local assets for every band', () => {
   U.S = mkS('Lord Knight');
-  const ids = {dagger:1202,katar:1250,staff:1601,bow:1701,axe:1301,sword:1106,mace:1501};
-  for (const [wt,id] of Object.entries(ids)) for (const sec of [1,4,5]) {
-    const h = U.cell({...sword,wt,sec,name:'Unrelated custom name'},false);
-    assert.ok(h.includes(`/item/${id}.png`), `${wt} section ${sec} must show its weapon shape`);
+  const manifest=JSON.parse(fs.readFileSync(__dirname+'/../../assets/equipment-icons/manifest.json','utf8'));
+  for(const [family,ids] of Object.entries(manifest.families)) for(let sec=0;sec<6;sec++){
+    const slot=family==='robe'?'armor':family==='pendant'?'acc':family;
+    const weapon=['sword','dagger','katar','staff','bow','axe','mace'].includes(family);
+    const it={...sword,slot:weapon?'weapon':slot,wt:weapon?family:undefined,sec,name:family==='robe'?'Mage Robe':family==='pendant'?'Moon Pendant':'Unrelated custom name'};
+    const before=JSON.stringify(it),h=U.cell(it,false);
+    assert.ok(h.includes(`assets/equipment-icons/${ids[sec]}.png`),`${family} section ${sec} should use its selected sprite`);
+    assert.strictEqual(JSON.stringify(it),before,'rendering artwork cannot alter a saved item');
   }
 });
 
