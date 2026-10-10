@@ -924,7 +924,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // script block, which is a SyntaxError - the game did not run on main at all. One line wins, and
 // it names both sides of this merge: the v38 balance patch (the weapon cut, the affix/card
 // give-back) and main's weapon-hold rendering work.
-const BUILD='2026-10-10 grind-v94.2 all UI windows stay put';   // shown on the login card - confirms which file you loaded
+const BUILD='2026-10-10 grind-v94.3 panel focus survives redraws';   // shown on the login card - confirms which file you loaded
 $('buildTag').textContent='build '+BUILD;
 
 // ---------- class tree: Novice -> 6 first jobs -> 6 second jobs -> 6 third jobs ----------
@@ -4366,8 +4366,8 @@ function renderWin(anchor){
   // Keep every open window as the same live DOM node across combat redraws. The v93 layout used to
   // erase #wins and recreate Bag, Equipment, Index and every other panel after each kill. Even when
   // scrollTop was restored, that replacement made the complete UI reflow/jump and discarded focus.
-  // Recompose only a panel whose actual renderer output changed, and move the existing wrappers into
-  // tab order atomically. This is shared by every tab rather than special-casing one screen.
+  // Recompose only a panel whose actual renderer output changed. Reconcile wrappers in tab order
+  // without detaching unchanged windows, so their controls keep focus across redraws.
   const existing=new Map([...host.querySelectorAll(':scope > [data-win]')].map(e=>[e.dataset.win,e]));
   const old={};existing.forEach((e,k)=>{const b=e.querySelector('.wbody');if(b)old[k]=b.scrollTop});
   const disclosures=new Map([...host.querySelectorAll('details[data-ui-disclosure]')].map(e=>[e.dataset.uiDisclosure,e.open]));
@@ -4387,7 +4387,12 @@ function renderWin(anchor){
     else delete body.dataset.panelChanged;
     next.push(win);
   });
-  host.replaceChildren(...next);
+  existing.forEach((win,k)=>{if(!tabs.includes(k))win.remove()});
+  let before=host.firstElementChild;
+  next.forEach(win=>{
+    if(win===before)before=before.nextElementSibling;
+    else host.insertBefore(win,before);
+  });
   host.querySelectorAll('[data-panel-changed="1"]').forEach(b=>{const k=b.closest('[data-win]').dataset.win;b.scrollTop=k==='log'?1e6:(old[k]||0)});
   host.querySelectorAll('details[data-ui-disclosure]').forEach(e=>{if(disclosures.has(e.dataset.uiDisclosure))e.open=disclosures.get(e.dataset.uiDisclosure)});
   host.querySelectorAll('[data-panel-scroll]').forEach(e=>{const key=e.closest('[data-win]').dataset.win+':'+e.dataset.panelScroll;if(e.closest('[data-panel-changed="1"]'))e.scrollTop=e.dataset.panelScroll==='events'?1e6:(nestedScroll.get(key)||0)});

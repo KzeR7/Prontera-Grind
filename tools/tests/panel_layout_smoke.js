@@ -124,6 +124,41 @@ t('a kill redraw keeps the dock and every open UI window fixed',()=>{
   }
   assert.strictEqual(wins.get('bag').querySelector('[data-a]'),bagControl,'an unchanged Bag keeps its live controls and focus targets');
 });
+t('redraw keeps focus inside an unchanged panel while another panel refreshes',()=>{
+  ev("tabs.splice(0,tabs.length,'status','bag','index');sub.status='equip';sub.bag='bag';indexMode='mobs';renderWin()");
+  const host=window.document.getElementById('wins'),bag=host.querySelector('[data-win="bag"] .wbody');
+  const control=bag.querySelector('button:not([disabled])'),source=bag._panelSource;
+  const journal=host.querySelector('[data-win="index"] .wbody'),journalSource=journal._panelSource;
+  control.focus();assert.strictEqual(window.document.activeElement,control,'the test control must start focused');
+  const observer=new window.MutationObserver(()=>{});observer.observe(host,{childList:true});
+  ev("recordMonsterKill({mapIndex:0,n:'Poring'});renderWin()");
+  assert.strictEqual(bag._panelSource,source,'Bag content must remain unchanged');
+  assert.notStrictEqual(journal._panelSource,journalSource,'the kill must refresh the journal');
+  assert.strictEqual(window.document.activeElement,control,'redraw must retain focus in the unchanged panel');
+  assert.deepStrictEqual(observer.takeRecords(),[],'unchanged windows must stay connected');observer.disconnect();
+});
+t('window reconciliation changes only added, removed or reordered windows',()=>{
+  ev("tabs.splice(0,tabs.length,'bag','status');renderWin()");
+  const host=window.document.getElementById('wins'),bag=host.children[0],status=host.children[1];
+  const control=bag.querySelector('button:not([disabled])');control.focus();
+  const observer=new window.MutationObserver(()=>{});observer.observe(host,{childList:true});
+  ev('renderWin()');assert.deepStrictEqual(observer.takeRecords(),[],'an unchanged window list needs no DOM changes');
+  ev("tabs.unshift('index');renderWin()");
+  const journal=host.children[0],added=observer.takeRecords();
+  assert.strictEqual(added.length,1);assert.deepStrictEqual([...added[0].addedNodes],[journal]);
+  assert.strictEqual(added[0].removedNodes.length,0);
+  assert.deepStrictEqual([...host.children],[journal,bag,status]);assert.strictEqual(window.document.activeElement,control);
+  ev("tabs.pop();renderWin()");
+  const removed=observer.takeRecords();assert.strictEqual(removed.length,1);
+  assert.deepStrictEqual([...removed[0].removedNodes],[status]);assert.strictEqual(removed[0].addedNodes.length,0);
+  assert.deepStrictEqual([...host.children],[journal,bag]);assert.strictEqual(window.document.activeElement,control);
+  ev("tabs.reverse();renderWin()");assert.deepStrictEqual([...host.children],[bag,journal]);
+  const reordered=observer.takeRecords();
+  assert.ok(reordered.length>0);assert.ok(reordered.every(r=>[...r.addedNodes,...r.removedNodes].every(n=>n===bag)),'only the out-of-order window moves');
+  ev('tabs.splice(0,tabs.length);renderWin()');assert.strictEqual(host.children.length,0);
+  assert.ok(!bag.isConnected&&!journal.isConnected);observer.disconnect();
+  ev("tabs.push('status','bag','index');renderWin()");
+});
 t('expand and compact buttons keep the same live panel and action set',()=>{
   const host=window.document.getElementById('wins');const before=host.querySelectorAll('[data-a]').length;
   host.querySelector('[data-ui-expand]').click();assert.ok(host.querySelector('.ui-expanded'));assert.strictEqual(host.querySelectorAll('[data-a]').length,before);

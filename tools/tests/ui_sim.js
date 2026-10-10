@@ -1889,7 +1889,7 @@ t('the reset buttons explain themselves, refuse on screen, and survive a rebuild
   assert.ok(/const outer=host\.scrollTop;/.test(src), 'the rebuild remembers the real scroller');
   assert.ok(/host\.scrollTop=outer;/.test(src), 'and puts it back');
   assert.ok(src.includes("const existing=new Map([...host.querySelectorAll(':scope > [data-win]')]")
-    && src.includes('host.replaceChildren(...next)')
+    && !src.includes('host.replaceChildren(')
     && src.includes('if(body._panelSource!==source)')
     && src.includes("b.scrollTop=k==='log'?1e6:(old[k]||0)"),
     'every tab retains its live window/body, while changed content and both scrollers update safely');

@@ -6478,3 +6478,10 @@ The owner's second pass over v77, six notes, all built.
 * **Tests:** UI 64/64, panel layout 26/26, update watcher 6/6. The regression opens Equipment, Bag, and Index together, records a Poring kill, redraws, and verifies every window and body is still the original DOM node; unchanged Bag controls are retained too.
 * **Branches / PR:** working branch `arena/742f0bfe-prontera-grind`; updates the open PR #51.
 * **Known limits / follow-ups:** none known.
+
+### 2026-10-10 — `grind-v94.3 panel focus survives redraws`
+* **What changed for the player:** An unchanged open panel now stays connected during a redraw, keeping the focused control selected while another panel updates. Only added, closed or reordered windows change the window list. Open Bag and Mastery together, focus a Bag control and let the monster ledger refresh to see it stay focused.
+* **Files touched:** `index.html`; `tools/tests/panel_layout_smoke.js`; `tools/tests/ui_sim.js`; build-label mirrors in both cards/gear audit pages and `tools/cloudflare-deploy-steps.md`; this log.
+* **Art:** none.
+* **Tests:** Panel layout smoke 28/28, UI 64/64, update watcher 6/6. The two new tests first failed against the old renderer, then passed with reconciliation; they check active focus and window-list changes for additions, removals and reordering.
+* **Publishing:** Local changes only; no push or deployment.
