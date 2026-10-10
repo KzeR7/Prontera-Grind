@@ -6470,3 +6470,11 @@ The owner's second pass over v77, six notes, all built.
 * **Tests:** all 48 JavaScript suites passed after the fix; UI 64/64, update watcher 6/6, and the dependency-enabled panel layout smoke 26/26. The new smoke scrolls the dock, runs the same redraw path a kill uses, and verifies both the scroll offset and actual button nodes stay unchanged.
 * **Branches / PR:** working branch `arena/742f0bfe-prontera-grind`; no merge to `main`.
 * **Known limits / follow-ups:** none known.
+
+### 2026-10-10 — `grind-v94.2 all UI windows stay put`
+* **What changed for the player:** Corrected the v94.1 scope after the owner clarified this affected all UI, not only the bottom navigation. A mob kill no longer destroys and recreates the open Bag, Equipment, Index, or any other window. Every open window and body frame stays as the same live element; panels whose contents did not change also retain their exact controls and focus. Changed counters can still refresh without moving the window, and all saved scroll/fold state remains intact.
+* **Files touched:** `index.html` (stable keyed window rendering and content-change check, build label); `tools/tests/panel_layout_smoke.js` (real monster-ledger update verifies Status/Equipment, Bag, and Index window/body identity); `tools/tests/ui_sim.js` (shared-renderer assertions); build-label mirrors; this log.
+* **Art:** none.
+* **Tests:** UI 64/64, panel layout 26/26, update watcher 6/6. The regression opens Equipment, Bag, and Index together, records a Poring kill, redraws, and verifies every window and body is still the original DOM node; unchanged Bag controls are retained too.
+* **Branches / PR:** working branch `arena/742f0bfe-prontera-grind`; updates the open PR #51.
+* **Known limits / follow-ups:** none known.

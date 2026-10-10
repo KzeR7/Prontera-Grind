@@ -270,7 +270,7 @@ t('the map tab is a compact two-band panel: maps on top, that map\'s fields unde
   const h = U.V.map();
   // the map window is the wide one, so the panel gets the room to be horizontal
   assert.ok(src.includes("const TABS={map:['🗼','World Map','M']"), 'the World Map tab uses the requested tower icon');
-  assert.ok(/class="win wp\$\{k==='map'\?' wide':''\}"/.test(src), 'the map window must carry the wide class');
+  assert.ok(src.includes("win.className='win wp'+(k==='map'?' wide':'')"), 'the map window must carry the wide class');
   // ordering: map cards, then the field band, then the drop tables - so clicking a map shows its
   // fields immediately below it instead of making the player scroll past the tables to find them
   const iCards = h.indexOf('class="mapgrid'), iFields = h.indexOf('class="mapband fields'),
@@ -1888,10 +1888,11 @@ t('the reset buttons explain themselves, refuse on screen, and survive a rebuild
   // scrollIntoView() also moves #wins and the page, which was the rest of the hop.
   assert.ok(/const outer=host\.scrollTop;/.test(src), 'the rebuild remembers the real scroller');
   assert.ok(/host\.scrollTop=outer;/.test(src), 'and puts it back');
-  assert.ok(/const b=e\.querySelector\('\.wbody'\);if\(b\)old\[e\.dataset\.win\]=b\.scrollTop/.test(src)
-    && /const b=e\.querySelector\('\.wbody'\);if\(!b\)return;/.test(src)
-    && /if\(e\.dataset\.win==='log'\)b\.scrollTop=1e6;else b\.scrollTop=old\[e\.dataset\.win\]\|\|0/.test(src),
-    'both scrollers are read and written defensively (a window without a body cannot throw mid-rebuild)');
+  assert.ok(src.includes("const existing=new Map([...host.querySelectorAll(':scope > [data-win]')]")
+    && src.includes('host.replaceChildren(...next)')
+    && src.includes('if(body._panelSource!==source)')
+    && src.includes("b.scrollTop=k==='log'?1e6:(old[k]||0)"),
+    'every tab retains its live window/body, while changed content and both scrollers update safely');
   assert.ok(!src.includes('el.scrollIntoView('), 'nothing calls the browser scrollIntoView() any more');
   assert.ok(/body\.scrollTop\+=er\.top-br\.top/.test(src) && /body\.scrollTop\+=er\.bottom-br\.bottom/.test(src),
     'the pressed control is nudged inside its own window body when it fell outside');

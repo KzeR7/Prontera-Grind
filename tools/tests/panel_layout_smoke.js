@@ -109,12 +109,20 @@ t('redraw preserves open AND closed disclosures, plus independent catalogue scro
   d=window.document.querySelector('[data-ui-disclosure="skills-skill-notes"]');d.open=true;ev('renderWin()');
   assert.ok(window.document.querySelector('[data-ui-disclosure="skills-skill-notes"]').open);
 });
-t('a kill redraw keeps the horizontally scrolled navigation dock fixed',()=>{
+t('a kill redraw keeps the dock and every open UI window fixed',()=>{
+  ev("tabs.splice(0,tabs.length,'status','bag','index');sub.status='equip';sub.bag='bag';indexMode='mobs';renderWin()");
   const dock=window.document.getElementById('dock'),buttons=[...dock.querySelectorAll(':scope > [data-t]')];
-  dock.scrollLeft=173;ev('renderWin()');
+  const wins=new Map([...window.document.querySelectorAll('#wins > [data-win]')].map(e=>[e.dataset.win,e]));
+  const bodies=new Map([...wins].map(([k,e])=>[k,e.querySelector('.wbody')]));
+  const bagControl=wins.get('bag').querySelector('[data-a]');
+  dock.scrollLeft=173;ev("recordMonsterKill({mapIndex:0,n:'Poring'});renderWin()");
   assert.strictEqual(dock.scrollLeft,173,'redraw must not snap the phone dock back to its first tab');
   assert.strictEqual(dock.querySelector(':scope > [data-t]'),buttons[0],'redraw must retain the live dock buttons');
-  assert.strictEqual(dock.querySelectorAll(':scope > [data-t]').length,buttons.length);
+  for(const [k,win] of wins){
+    assert.strictEqual(window.document.querySelector(`[data-win="${k}"]`),win,k+' window must not be recreated after a kill');
+    assert.strictEqual(win.querySelector('.wbody'),bodies.get(k),k+' body frame must stay live after a kill');
+  }
+  assert.strictEqual(wins.get('bag').querySelector('[data-a]'),bagControl,'an unchanged Bag keeps its live controls and focus targets');
 });
 t('expand and compact buttons keep the same live panel and action set',()=>{
   const host=window.document.getElementById('wins');const before=host.querySelectorAll('[data-a]').length;

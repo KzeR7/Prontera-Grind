@@ -924,7 +924,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // script block, which is a SyntaxError - the game did not run on main at all. One line wins, and
 // it names both sides of this merge: the v38 balance patch (the weapon cut, the affix/card
 // give-back) and main's weapon-hold rendering work.
-const BUILD='2026-10-10 grind-v94.1 navigation dock stays put';   // shown on the login card - confirms which file you loaded
+const BUILD='2026-10-10 grind-v94.2 all UI windows stay put';   // shown on the login card - confirms which file you loaded
 $('buildTag').textContent='build '+BUILD;
 
 // ---------- class tree: Novice -> 6 first jobs -> 6 second jobs -> 6 third jobs ----------
@@ -4363,20 +4363,34 @@ function renderWin(anchor){
   if(winPress){winDirty=true;return}
   renderDock();
   renderQ();const host=$('wins');host.style.display=tabs.length?'flex':'none';
-  // v76.3: two scrollers matter. Every window body has its own, and on a phone #wins itself is the
-  // scroller - both are saved by number before the rebuild and put back after it, so a redraw in
-  // place never moves the page. This is the "map ui hopping around" the owner saw when he tapped a
-  // stage: the tap rebuilt every window and the browser re-clamped the scroll.
-  const old={};host.querySelectorAll('[data-win]').forEach(e=>{const b=e.querySelector('.wbody');if(b)old[e.dataset.win]=b.scrollTop});
+  // Keep every open window as the same live DOM node across combat redraws. The v93 layout used to
+  // erase #wins and recreate Bag, Equipment, Index and every other panel after each kill. Even when
+  // scrollTop was restored, that replacement made the complete UI reflow/jump and discarded focus.
+  // Recompose only a panel whose actual renderer output changed, and move the existing wrappers into
+  // tab order atomically. This is shared by every tab rather than special-casing one screen.
+  const existing=new Map([...host.querySelectorAll(':scope > [data-win]')].map(e=>[e.dataset.win,e]));
+  const old={};existing.forEach((e,k)=>{const b=e.querySelector('.wbody');if(b)old[k]=b.scrollTop});
   const disclosures=new Map([...host.querySelectorAll('details[data-ui-disclosure]')].map(e=>[e.dataset.uiDisclosure,e.open]));
   const nestedScroll=new Map([...host.querySelectorAll('[data-panel-scroll]')].map(e=>[e.closest('[data-win]').dataset.win+':'+e.dataset.panelScroll,e.scrollTop]));
-  const outer=host.scrollTop;      // on a phone #wins is the scroller, not the window bodies
-  host.innerHTML=tabs.map(k=>`<div class="win wp${k==='map'?' wide':''}" data-win="${k}"><div class="title"><span>${TABS[k][1]}</span><span class="ui-window-tools"><button data-ui-expand="${k}" aria-label="${expandedPanels.has(k)?'Compact':'Expand'} ${TABS[k][1]}" aria-pressed="${expandedPanels.has(k)}" title="Toggle compact / expanded layout">${expandedPanels.has(k)?'↙':'↗'}</button><button data-x="${k}" aria-label="Close ${TABS[k][1]}">&#10005;</button></span></div><div class="body wbody">${V[k]()}</div></div>`).join('');
-  host.querySelectorAll('[data-win]').forEach(e=>{const b=e.querySelector('.wbody');if(!b)return;
-    e.classList.toggle('ui-expanded',expandedPanels.has(e.dataset.win));arrangePanel(e.dataset.win,b);
-    if(e.dataset.win==='log')b.scrollTop=1e6;else b.scrollTop=old[e.dataset.win]||0});
+  const outer=host.scrollTop;             // on a phone #wins is the scroller, not the window bodies
+  const next=[];
+  tabs.forEach(k=>{
+    let win=existing.get(k);
+    if(!win){win=document.createElement('div');win.dataset.win=k;win.innerHTML='<div class="title"><span></span><span class="ui-window-tools"><button data-ui-expand></button><button data-x>&#10005;</button></span></div><div class="body wbody"></div>'}
+    win.className='win wp'+(k==='map'?' wide':'')+(expandedPanels.has(k)?' ui-expanded':'');
+    const name=TABS[k][1],expand=win.querySelector('[data-ui-expand]'),close=win.querySelector('[data-x]');
+    win.querySelector('.title > span:first-child').textContent=name;
+    expand.dataset.uiExpand=k;expand.textContent=expandedPanels.has(k)?'↙':'↗';expand.setAttribute('aria-label',(expandedPanels.has(k)?'Compact ':'Expand ')+name);expand.setAttribute('aria-pressed',String(expandedPanels.has(k)));expand.title='Toggle compact / expanded layout';
+    close.dataset.x=k;close.setAttribute('aria-label','Close '+name);
+    const body=win.querySelector('.wbody'),source=V[k]();
+    if(body._panelSource!==source){body.innerHTML=source;body._panelSource=source;arrangePanel(k,body);body.dataset.panelChanged='1'}
+    else delete body.dataset.panelChanged;
+    next.push(win);
+  });
+  host.replaceChildren(...next);
+  host.querySelectorAll('[data-panel-changed="1"]').forEach(b=>{const k=b.closest('[data-win]').dataset.win;b.scrollTop=k==='log'?1e6:(old[k]||0)});
   host.querySelectorAll('details[data-ui-disclosure]').forEach(e=>{if(disclosures.has(e.dataset.uiDisclosure))e.open=disclosures.get(e.dataset.uiDisclosure)});
-  host.querySelectorAll('[data-panel-scroll]').forEach(e=>{e.scrollTop=e.dataset.panelScroll==='events'?1e6:(nestedScroll.get(e.closest('[data-win]').dataset.win+':'+e.dataset.panelScroll)||0)});
+  host.querySelectorAll('[data-panel-scroll]').forEach(e=>{const key=e.closest('[data-win]').dataset.win+':'+e.dataset.panelScroll;if(e.closest('[data-panel-changed="1"]'))e.scrollTop=e.dataset.panelScroll==='events'?1e6:(nestedScroll.get(key)||0)});
   host.scrollTop=outer;
   // v76.3 (owner: "the map ui hopping around when i click the stages"): the pressed control is
   // nudged by hand, inside its own window body only. scrollIntoView() walks every scrollable
