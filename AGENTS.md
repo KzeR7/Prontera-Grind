@@ -6462,3 +6462,11 @@ The owner's second pass over v77, six notes, all built.
 * **Tests:** all 49 suites under `tools/tests/` exit 0 (UI 64/64, panel layout 25/25). Browser check (headless Chromium, real `kill()` calls): the Logs tab was at y=743 before a kill and y=707 after it, and it moved again as lines faded. After the fix it stays at the same position on desktop (1440×900) and phone (390×844) through three kills and the 7-second fade. The filter row opens directly above the tab with no movement.
 * **Branches / PR:** working branch `arena/c7c2ee60-prontera-grind`; no merge to `main`.
 * **Known limits / follow-ups:** The bug was in the on-screen log only; the windows, the bottom dock and the in-window tabs were measured and did not move. The log lines themselves still change on every kill, which is expected. The check used headless Chromium with the Three.js CDN file served locally, not a real phone.
+
+### 2026-10-10 — `grind-v94.1 navigation dock stays put`
+* **What changed for the player:** Fixed the remaining tab movement after a monster kill, especially on phones. The bottom navigation dock now keeps the same live buttons and the same horizontal scroll position while combat refreshes the UI, instead of rebuilding every tab and snapping back to World. The v94 Logs-tab fix remains unchanged.
+* **Files touched:** `index.html` (stable `renderDock()`, build label); `tools/tests/panel_layout_smoke.js` and `tools/tests/ui_sim.js` (kill-redraw/navigation regression checks); build-label mirrors in the two cards/gear audit pages and `tools/cloudflare-deploy-steps.md`; this log.
+* **Art:** none.
+* **Tests:** all 48 JavaScript suites passed after the fix; UI 64/64, update watcher 6/6, and the dependency-enabled panel layout smoke 26/26. The new smoke scrolls the dock, runs the same redraw path a kill uses, and verifies both the scroll offset and actual button nodes stay unchanged.
+* **Branches / PR:** working branch `arena/742f0bfe-prontera-grind`; no merge to `main`.
+* **Known limits / follow-ups:** none known.

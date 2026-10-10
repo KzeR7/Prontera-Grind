@@ -924,7 +924,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // script block, which is a SyntaxError - the game did not run on main at all. One line wins, and
 // it names both sides of this merge: the v38 balance patch (the weapon cut, the affix/card
 // give-back) and main's weapon-hold rendering work.
-const BUILD='2026-10-09 grind-v94 log tab stays put';   // shown on the login card - confirms which file you loaded
+const BUILD='2026-10-10 grind-v94.1 navigation dock stays put';   // shown on the login card - confirms which file you loaded
 $('buildTag').textContent='build '+BUILD;
 
 // ---------- class tree: Novice -> 6 first jobs -> 6 second jobs -> 6 third jobs ----------
@@ -4333,6 +4333,26 @@ function arrangePanel(k,root){
   }
 }
 
+const DOCK_TABS=['map','status','job','skills','bag','pet','index','market','board','log','set','gm'];
+const DOCK_LABEL={map:'World',status:'Character',job:'Jobs',skills:'Skills',bag:'Bag',pet:'Pets',index:'Mastery',market:'Market',board:'Ranks',log:'Log',set:'Settings',gm:'GM'};
+function renderDock(){
+  const dock=$('dock'),keys=DOCK_TABS.filter(k=>k!=='gm'||S.gm),current=[...dock.querySelectorAll(':scope > [data-t]')];
+  // Kills call ui() and therefore renderWin(). Replacing the whole dock on every kill reset the
+  // horizontally scrolled phone dock to its first tab, making every navigation tab jump sideways.
+  // Its membership only changes when GM access changes, so retain the live buttons and update just
+  // their state. Besides keeping scrollLeft, this also preserves focus and an in-progress tap.
+  if(current.length!==keys.length||current.some((b,i)=>b.dataset.t!==keys[i])){
+    const left=dock.scrollLeft;
+    dock.innerHTML=keys.map(k=>{const[ic,n,key]=TABS[k];return `<button class="ib" data-t="${k}" title="${n} (${key})" aria-label="${n}" aria-pressed="false"><span class="ui-nav-icon" aria-hidden="true">${ic}</span><span class="ui-nav-label">${DOCK_LABEL[k]}</span><span class="k">${key}</span></button>`}).join('');
+    dock.scrollLeft=left;
+  }
+  [...dock.querySelectorAll(':scope > [data-t]')].forEach(b=>{
+    const k=b.dataset.t,on=tabs.includes(k),hasDot=!!dot(k),badge=b.querySelector('.dot');
+    b.classList.toggle('on',on);b.setAttribute('aria-pressed',String(on));
+    if(hasDot&&!badge)b.insertAdjacentHTML('beforeend','<i class="dot"></i>');
+    else if(!hasDot&&badge)badge.remove();
+  });
+}
 function renderWin(anchor){
   if(!S)return;
   // A kill, a level-up or any panel refresh rebuilds every open window from scratch. A click whose
@@ -4341,7 +4361,7 @@ function renderWin(anchor){
   // others) feel broken. While a pointer is held inside the windows the rebuild is held too, and
   // the deferred one runs the moment the pointer comes up.
   if(winPress){winDirty=true;return}
-  $('dock').innerHTML=['map','status','job','skills','bag','pet','index','market','board','log','set','gm'].filter(k=>k!=='gm'||S.gm).map(k=>[k,TABS[k]]).map(([k,[ic,n,key]])=>`<button class="ib${tabs.includes(k)?' on':''}" data-t="${k}" title="${n} (${key})" aria-label="${n}" aria-pressed="${tabs.includes(k)}"><span class="ui-nav-icon" aria-hidden="true">${ic}</span><span class="ui-nav-label">${({map:'World',status:'Character',job:'Jobs',skills:'Skills',bag:'Bag',pet:'Pets',index:'Mastery',market:'Market',board:'Ranks',log:'Log',set:'Settings',gm:'GM'})[k]}</span><span class="k">${key}</span>${dot(k)?'<i class="dot"></i>':''}</button>`).join('');
+  renderDock();
   renderQ();const host=$('wins');host.style.display=tabs.length?'flex':'none';
   // v76.3: two scrollers matter. Every window body has its own, and on a phone #wins itself is the
   // scroller - both are saved by number before the rebuild and put back after it, so a redraw in

@@ -76,7 +76,7 @@ const code = [
   grab('function itemMain(it){', 'const cardSlots='),
 
   pick(/const cardSlots=[^\n]*/, 'cardSlots'),
-  grab('function insertUI(sel){', 'function renderWin('),
+  grab('function insertUI(sel){', 'const DOCK_TABS='),
   pick(/function refineUI\(it,k\)\{const[^\n]*/, 'refineUI'),
   pick(/function nmMatCounts\(\)\{[^\n]*/, 'nmMatCounts'),
   pick(/function dpsPanel\(\)\{[^\n]*/, 'dpsPanel'),
@@ -1024,9 +1024,11 @@ t('market and leaderboard retain quest shortcuts and gain labeled dock entries',
   bm.tabs.push('market'); h = bm.qpSide();
   assert.ok(h.includes('qp-side-tab on'), 'an open window is marked on its button');
   bm.tabs.length = 0; bm.setSide(false);
-  const dock=grab("$('dock').innerHTML=", '  renderQ();');
+  const dock=grab('const DOCK_TABS=', 'function renderWin(anchor){');
   assert.ok(dock.includes("'market','board'") && dock.includes('ui-nav-label'),
     'market and leaderboard are directly reachable from the labeled dock');
+  assert.ok(dock.includes("dock.scrollLeft=left") && dock.includes("current.some((b,i)=>b.dataset.t!==keys[i])"),
+    'routine redraws retain the live dock and its horizontal position');
   assert.ok(src.includes("market:['🏪','Black Market','X']") && src.includes("board:['🏆','Leaderboard','V']"),
     'the X and V hotkeys still open them');
   assert.ok(src.includes("if(v==='side'){sideOpen=!sideOpen;renderQ();return}"), 'the arrow toggles the group');

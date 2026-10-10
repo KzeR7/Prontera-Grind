@@ -109,6 +109,13 @@ t('redraw preserves open AND closed disclosures, plus independent catalogue scro
   d=window.document.querySelector('[data-ui-disclosure="skills-skill-notes"]');d.open=true;ev('renderWin()');
   assert.ok(window.document.querySelector('[data-ui-disclosure="skills-skill-notes"]').open);
 });
+t('a kill redraw keeps the horizontally scrolled navigation dock fixed',()=>{
+  const dock=window.document.getElementById('dock'),buttons=[...dock.querySelectorAll(':scope > [data-t]')];
+  dock.scrollLeft=173;ev('renderWin()');
+  assert.strictEqual(dock.scrollLeft,173,'redraw must not snap the phone dock back to its first tab');
+  assert.strictEqual(dock.querySelector(':scope > [data-t]'),buttons[0],'redraw must retain the live dock buttons');
+  assert.strictEqual(dock.querySelectorAll(':scope > [data-t]').length,buttons.length);
+});
 t('expand and compact buttons keep the same live panel and action set',()=>{
   const host=window.document.getElementById('wins');const before=host.querySelectorAll('[data-a]').length;
   host.querySelector('[data-ui-expand]').click();assert.ok(host.querySelector('.ui-expanded'));assert.strictEqual(host.querySelectorAll('[data-a]').length,before);
