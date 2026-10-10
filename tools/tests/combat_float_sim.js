@@ -168,12 +168,10 @@ t('v74: the retune is one coherent pick - 20/32px digits, a 1.15s life, the fade
   assert.ok(src.includes('fs=32,'), 'the burst is built from the 32px crit size (so it shrank with the digits)');
 });
 t('direct, AoE, chain and DoT hits retain their skill visual type', () => {
-  assert.ok(src.includes('strike(1,sk.col,!!sk.magic,true)'), 'the skill hit still prints as a skill hit');
-  assert.ok(src.includes('hurt(o,Math.max(1,Math.round(base*m*.8)),sk.col,false,true)'));
-  assert.ok(src.includes('chainHit(target,base*m*(sk.chain.pow||.5),sk.col,Math.min(4,(sk.chain.n||2)+Math.floor(lv(sk.id)/2)),true)'));
-  assert.ok(src.includes('applyDot(target,base*m*(sk.dot.pow||.05),sk.dot.dur||4,sk.dot.col||sk.col,true)'));
-  assert.ok(src.includes('for(let i=1;i<sk.hits;i++){if(!mob||!mobs.includes(mob)||mob.hp<=0)break;strike(1,sk.col,!!sk.magic,true)}'), 'multi-hit skills land in the swing frame');
-  assert.ok(!src.includes('pend.push(')&&!src.includes('castQ.push('), 'the delayed-hit and queued-cast timers are gone: the swing owns its timing');
+  assert.ok(src.includes('hurt(target,damage,sk.col,critical,true)'), 'the skill hit still prints as a skill hit');
+  assert.ok(src.includes('skillHit(o,amount/sk.hits,sk)'), 'all primary/area multi-hits use the skill-damage path');
+  assert.ok(src.includes('applyDot(target,raw*sk.dot/2,2,sk.col,true)'), 'bleed retains skill styling');
+  assert.ok(src.includes('skillHit(o,raw*pulse'), 'delayed fields retain skill styling');
 });
 
 t('one swing prints one number per monster, however many hits it landed (v83 owner request)', () => {
@@ -220,7 +218,7 @@ t('a swing resolves on the attack animation contact frame, not on the key press'
     let mob={x:0,z:0,hp:100,pack:2},mobs=[mob],S={eq:{}},skCd={},skillOn=()=>false,SKILLS=[],
       atkAnim=0,pAtkT=0,pl={x:0,z:0},C=()=>({tier:1,n:'Knight'}),pv=()=>0,st=()=>0,SKFADE=[1],
       dmgGroup=null,log=[];
-    const aspd=()=>.5,heroStandoff=()=>1.5,heroSpr=null,SWING_MIN_T=.3,SWING_MAX_T=.55,
+    const skillBonus=()=>0,aspd=()=>.5,heroStandoff=()=>1.5,heroSpr=null,SWING_MIN_T=.3,SWING_MAX_T=.55,
       cl=(v,a,b)=>Math.max(a,Math.min(b,v)),pushed=[];
     const strike=(...a)=>log.push(['strike',...a]),shot=()=>log.push(['shot']),skillNameFloat=n=>log.push(['name',n]),
       castSkill=(sk,k)=>log.push(['cast',sk.id,k]),flushDamageGroup=()=>{pushed.push(dmgGroup);log.push(['flush'])};
@@ -242,7 +240,7 @@ t('a swing resolves on the attack animation contact frame, not on the key press'
   assert.strictEqual(pressed.atkAnim, 1, 'the attack animation starts on the press');
   assert.strictEqual(pressed.pAtkT, .5, 'the swing runs on the real attack interval');
   const r = S.resolve();
-  assert.strictEqual(JSON.stringify(r.log), JSON.stringify([['strike', 1], ['shot'], ['flush']]),
+  assert.strictEqual(JSON.stringify(r.log), JSON.stringify([['strike', 1, undefined, false], ['shot'], ['flush']]),
     'the swing lands once (strike, shot, one printed number) instead of a hit per frame');
   assert.strictEqual(r.pushed.length, 1, 'the hit group is opened exactly once per swing');
   assert.strictEqual(Object.prototype.toString.call(r.pushed[0]), '[object Map]',

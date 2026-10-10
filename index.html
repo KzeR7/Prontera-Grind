@@ -932,7 +932,7 @@ function polishIcons(root){
   for(const node of nodes){const fragment=document.createDocumentFragment();let start=0;for(const match of node.data.matchAll(re)){fragment.append(document.createTextNode(node.data.slice(start,match.index)));const box=document.createElement('span');box.innerHTML=uiIcon(UI_EMOJI[match[0]]);fragment.append(box.firstChild);start=match.index+match[0].length}fragment.append(document.createTextNode(node.data.slice(start)));node.replaceWith(fragment)}
 }
 const titleIcon=t=>uiIcon(['index','compass','sword','pet','moon','shield','gem','sun','crown','wing'][Math.max(0,INDEX_TITLES.findIndex(x=>x.id===t.id))]);
-const SKILL_ICON={aid:'heart',bash:'fist',endure:'shield',hprec:'heart',provoke:'roar',bowl:'spiral',pierce:'spear',quick:'bolt',spear:'spear',spiral:'spiral',aura:'halo',jointbeat:'bone',fire:'flame',nap:'shadow',coat:'ward',fireball:'fireball',storm:'snow',jup:'bolt',amp:'book',tstorm:'storm',meteor:'meteor',grav:'gravity',mystic:'orb',napalm:'flame',dstr:'arrow',iconc:'eye',owl:'eye',vult:'feather',blitz:'feather',sharp:'target',beast:'paw',falconry:'feather',falcon:'wing',focus:'target',sight:'eye',pharrow:'arrow',dbl:'blades',env:'vial',dodge:'wind',steal:'hand',sonic:'blades',grim:'shadow',katm:'blades',vdust:'poison',mAss:'meteor',soulb:'ghost',sdestroy:'ghost',holy:'cross',heal:'heart',bless:'halo',iagi:'wing',magnus:'cross',sanct:'water',asp:'flame',kyrie:'shield',judex:'bolt',assum:'ward',gloria:'sun',meditatio:'lotus',mammo:'coin',greed:'coin',phys:'muscle',discount:'tag',hammer:'hammer',adren:'bolt',wperf:'gear',wresearch:'gear',cart:'cart',thrust:'spear',skin:'rock',cboost:'wheel',frenzy:'fist',dpois:'vial',ovthrust:'shock',mbrk:'shock',fdiver:'ice',fnova:'snow',ashower:'rain',sandat:'sand',signum:'cross',cartrev:'cart',spearboom:'spear',tblow:'fist',vermilion:'flame',landmine:'mine',wwalk:'wind',vsplash:'poison',akatar:'blades',tundead:'skull',basilica:'temple',meltdown:'anvil'};
+const SKILL_ICON={aid:'heart',bash:'fist',endure:'blades',hprec:'heart',provoke:'roar',bowl:'spiral',pierce:'blades',quick:'bolt',spear:'blades',spiral:'spiral',aura:'halo',jointbeat:'bone',fire:'flame',nap:'shadow',coat:'ward',fireball:'fireball',storm:'snow',jup:'bolt',amp:'book',tstorm:'storm',meteor:'meteor',grav:'gravity',mystic:'orb',napalm:'flame',dstr:'arrow',iconc:'eye',owl:'eye',vult:'feather',blitz:'feather',sharp:'target',beast:'paw',falconry:'feather',falcon:'wing',focus:'target',sight:'eye',pharrow:'mine',dbl:'blades',env:'blades',dodge:'blades',steal:'hand',sonic:'blades',grim:'shadow',katm:'blades',vdust:'blades',mAss:'meteor',soulb:'ghost',sdestroy:'ghost',holy:'cross',heal:'cross',bless:'halo',iagi:'wing',magnus:'cross',sanct:'cross',asp:'flame',kyrie:'cross',judex:'bolt',assum:'cross',gloria:'sun',meditatio:'sun',mammo:'coin',greed:'coin',phys:'muscle',discount:'tag',hammer:'hammer',adren:'bolt',wperf:'hammer',wresearch:'gear',cart:'cart',thrust:'spear',skin:'wheel',cboost:'wheel',frenzy:'fist',dpois:'blades',ovthrust:'shock',mbrk:'shock',fdiver:'ice',fnova:'snow',ashower:'rain',sandat:'blades',signum:'cross',cartrev:'cart',spearboom:'blades',tblow:'fist',vermilion:'flame',landmine:'mine',wwalk:'wind',vsplash:'wind',akatar:'blades',tundead:'skull',basilica:'temple',meltdown:'anvil'};
 const SKILL_TONE={heart:['#17444c','#2bb9a9','#ecfff1'],fist:['#582b32','#f06d4c','#ffe0a0'],shield:['#294e70','#4eb1e8','#e4f8ff'],roar:['#633229','#ff9651','#fff0b4'],spiral:['#364278','#9385ff','#f1ebff'],spear:['#4c3941','#e1c276','#fff3c7'],bolt:['#3e3865','#b29bff','#f8efff'],halo:['#63501e','#e8bd4d','#fff5c4'],bone:['#52403a','#d9bc8b','#fff3da'],flame:['#71331f','#ff6a2e','#ffe987'],shadow:['#33254f','#9564d8','#f1dfff'],ward:['#1d5560','#42c7c0','#e5ffff'],fireball:['#642f27','#fa7c35','#fff2a5'],snow:['#1d4d72','#59c5ff','#effcff'],book:['#49345f','#bd91ff','#fff0ff'],storm:['#174f70','#52d6ed','#ecffff'],meteor:['#5d2e51','#fa70aa','#fff0df'],gravity:['#302354','#a76dff','#f1dfff'],orb:['#343b72','#8c9cff','#f2f3ff'],arrow:['#4c3d2b','#d6b56d','#fff1c0'],eye:['#244d67','#56d6d1','#edffff'],feather:['#285644','#56c78d','#edffdf'],target:['#64432d','#f2a356','#fff2c6'],paw:['#4a5d2a','#9bca50','#f5ffd9'],wing:['#30506f','#8dd7ff','#f5ffff'],blades:['#5a3045','#f2798c','#fff0d8'],vial:['#2b5947','#7bda7c','#f2ffdc'],ghost:['#49355d','#b38bf3','#fff0ff'],cross:['#67501f','#f2cf68','#fff8d6'],water:['#184f70','#50c8f4','#e9fbff'],sun:['#72501d','#ffc643','#fff8bd'],lotus:['#5a3b73','#d38cda','#fff0ff'],coin:['#684616','#f2b62f','#fff4ad'],muscle:['#633532','#ee8667','#ffe5c3'],tag:['#63502b','#d8af57','#fff2c2'],hammer:['#493b38','#c89e76','#fff0dc'],gear:['#3d5152','#7cc3ba','#effffc'],cart:['#525032','#c3ba54','#fbffbf'],rock:['#454654','#a4a6b4','#f5f5ff'],wheel:['#3c4c60','#65a9dc','#eff9ff'],shock:['#623151','#f36199','#ffedf7'],ice:['#20527d','#74d9ff','#f0fdff'],rain:['#294b75','#76aef4','#f5fbff'],sand:['#654b29','#d5a450','#fff2c6'],mine:['#4f3646','#d07083','#ffe7dc'],temple:['#66502d','#d3b468','#fff3c9'],anvil:['#41454f','#99a4b4','#f4f6ff'],wind:['#244d5c','#55c7b9','#eaffff'],poison:['#3d5128','#a9d946','#f6ffce'],hand:['#584052','#d595bb','#fff0fb'],skull:['#4d444c','#c2b8cb','#fffaff'],rune:['#383264','#8977e7','#f5f1ff']};
 const SKILL_PICTO={
   heart:`<path d="M24 36S10.5 27.7 10.5 19.5a6.4 6.4 0 0 1 11.4-4L24 18l2.1-2.5a6.4 6.4 0 0 1 11.4 4C37.5 27.7 24 36 24 36Z"/><path d="M15 23h5l2.2-4.2 3.6 8 2.2-4H33" fill="none" stroke="#fff" stroke-width="1.4"/>`,
@@ -1038,11 +1038,11 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // script block, which is a SyntaxError - the game did not run on main at all. One line wins, and
 // it names both sides of this merge: the v38 balance patch (the weapon cut, the affix/card
 // give-back) and main's weapon-hold rendering work.
-const BUILD='2026-10-10 grind-v96.1 Echo Court details';   // shown on the login card - confirms which file you loaded
+const BUILD='2026-10-10 grind-v97 class skill redesign';   // shown on the login card - confirms which file you loaded
 $('buildTag').textContent='build '+BUILD;
 
 // ---------- class tree: Novice -> 6 first jobs -> 6 second jobs -> 6 third jobs ----------
-// Assassin and Assassin Cross are Katar-only: their one Katar occupies both hands, so neither a shield nor a second weapon can be worn.
+// Assassin and Assassin Cross use katars or daggers. A katar occupies both hands; daggers support an offhand dagger.
 const CD=[['Novice',0,1,1,1,'e8dcc0','',['dagger','sword'],'str',0],
 ['Swordman','Novice',.95,1.2,1.3,'b83b3b','8a2b2b',['sword'],'str',0],['Mage','Novice',1.1,1.3,.8,'3b6fb5','',['staff'],'int',1,'3b4fb5'],
 ['Archer','Novice',.85,1.15,.9,'2e7d32','1b4d1e',['bow'],'dex',1],['Thief','Novice',.8,1.1,.95,'4a7c3a','2e7d32',['dagger'],'agi',0],
@@ -1058,139 +1058,121 @@ CD.forEach(([n,par,aspd,atk,hp,col,cape,wt,main,rng,hat])=>CLASSES[n]={n,par,asp
 for(const c of Object.values(CLASSES)){c.tier=0;for(let p=c.par;p;p=CLASSES[p].par)c.tier++;c.mj=c.tier?50:10;c.rj=[0,10,40,50][c.tier];if(c.par)CLASSES[c.par].kids.push(c.n)}
 const lineOf=n=>{const a=[];for(;n;n=CLASSES[n].par)a.unshift(n);return a},down=n=>[n].concat(...CLASSES[n].kids.map(down));
 // ---------- skills (no SP: cooldown only) ----------
-const act=(id,n,from,cd,mul,hits,col,mx=10)=>({id,n,from,cls:down(from),max:mx,type:'act',magic:['Mage','Wizard','High Wizard','Acolyte','Priest','High Priest'].includes(from),cd,mul,hits,col,d:L=>`Auto: ${hits>1?hits+' hits of ':''}${Math.round(mul(L)*100)}% dmg &middot; CD ${cd}s`});
-const pas=(id,n,from,key,f,txt,mx=10)=>({id,n,from,cls:down(from),max:mx,type:'pas',key,f,d:L=>txt.replace('#',f(L))});
-// Tradeoff: an auto-cast buff with a genuine cost. Declared up here next to act()/pas() so the
-// main SKILLS array can use it, not just the pushed additions.
-const Z=()=>0,tos=(id,n,from,cd,o,col,mx=10)=>({id,n,from,cls:down(from),max:mx,type:'to',cd,col,to:o,
-  d:L=>`Auto when above ${Math.round((o.hp||.6)*100)}% HP: ${o.txt(L)} for ${Math.round((o.dur||Z)(L))}s &middot; CD ${cd}s`});
+// One definition drives execution and descriptions. power is TOTAL damage, split into hits.
+// Original ids and rank caps remain stable; v97 refunds old ranks before using new mechanics.
+const SKILL_VERSION=2,Z=()=>0;
 const SKILLS=[
- {id:'aid',n:'First Aid',from:'Novice',cls:Object.keys(CLASSES),max:5,type:'heal',cd:6,d:L=>`Auto: heals ${10+5*L}% HP when below half.`},
- act('bash','Bash','Swordman',3,L=>1.4+.15*L,1,'#ffb347'),pas('endure','Endure','Swordman','def',L=>1*L,'DEF +#.'),pas('hprec','HP Recovery','Swordman','hpreg',L=>.15*L,'Regen +#% HP/s.'),
-  tos('provoke','Provoke','Swordman',30,{hp:.55,dur:L=>8+L,atk:L=>4+2*L,aspd:Z,def:L=>-(3+L),drain:Z,txt:L=>`ATK +${4+2*L}%, DEF ${-(3+L)}`},'#ff9d9d',5), act('bowl','Bowling Bash','Knight',6,L=>.9+.1*L,2,'#ffe14d'),act('pierce','Pierce','Knight',4,L=>.7+.06*L,3,'#ff9d5c'),tos('quick','Two-Hand Quicken','Knight',31,{hp:.5,dur:L=>8+1*L,aspd:L=>15+3.5*L,def:L=>-(4+1*L),atk:Z,drain:Z,
-   txt:L=>`ASPD +${15+3.5*L}%, DEF ${-(4+1*L)}`},'#ffe14d'),
-  pas('spear','Spear Mastery','Knight','atk',L=>2*L,'ATK +#%.'), act('spiral','Spiral Pierce','Lord Knight',7.5,L=>.8+.075*L,6,'#ff7a5c'),pas('aura','Aura Blade','Lord Knight','atk',L=>2.5*L,'ATK +#%.'),
-  act('jointbeat','Joint Beat','Lord Knight',7,L=>1+.2*L,1,'#ffb347'), act('fire','Fire Bolt','Mage',2,L=>.7+.075*L,3,'#ff8a3d'),act('nap','Napalm Beat','Mage',2,L=>.9+.1*L,1,'#c9a0ff'),tos('coat','Energy Coat','Mage',36,{hp:.4,dur:L=>8+2*L,def:L=>15+8*L,atk:L=>-(6+3*L),aspd:Z,drain:Z,
-   txt:L=>`DEF +${15+8*L}, ATK ${-(6+3*L)}%`},'#8fd0ff',5),
-  act('fireball','Fire Ball','Mage',3.5,L=>.5+.1*L,1,'#ff8a3d'), act('storm','Storm Gust','Wizard',7.5,L=>.4+.05*L,8,'#8fe9ff'),act('jup','Jupitel Thunder','Wizard',4.5,L=>.8+.075*L,4,'#ffee55'),pas('amp','Amplify Magic','Wizard','matk',L=>2.5*L,'MATK +#%.'),
-  act('tstorm','Thunder Storm','Wizard',7,L=>.45+.09*L,4,'#8fe9ff'), act('meteor','Meteor Storm','High Wizard',9,L=>.5+.05*L,10,'#ff5a2a'),act('grav','Gravitational Field','High Wizard',6,L=>.7+.12*L,5,'#b080ff',5),pas('mystic','Mystical Amplification','High Wizard','matk',L=>3*L,'MATK +#%.'),
-  act('napalm','Napalm Vulcan','High Wizard',8,L=>.35+.07*L,4,'#ff8a3d'), act('dstr','Double Strafe','Archer',2,L=>.8+.075*L,2,'#ffd28a'), tos('iconc','Improve Concentration','Archer',26,{hp:.5,dur:L=>8+L,aspd:L=>8+4*L,def:L=>-(3+L),atk:Z,drain:Z,txt:L=>`ASPD +${8+4*L}%, DEF ${-(3+L)}`},'#d8ffb0',5), pas('owl',"Owl's Eye",'Archer','atk',L=>1.5*L,'ATK +#%.'),pas('vult',"Vulture's Eye",'Archer','crit',L=>1*L,'Crit +#%.'),
- act('blitz','Blitz Beat','Hunter',4.5,L=>.7+.06*L,3,'#ffd23f'),act('sharp','Sharp Shooting','Hunter',6,L=>2+.25*L,1,'#ff4d4d'),pas('beast','Beast Bane','Hunter','atk',L=>2*L,'ATK +#%.'),
-  pas('falconry','Falconry Mastery','Hunter','crit',L=>1.5*L,'Crit +#%.'), act('falcon','Falcon Assault','Sniper',7.5,L=>3+.35*L,1,'#ffffff'),act('focus','Focused Arrow','Sniper',5,L=>.9+.075*L,3,'#ff9d3d'),pas('sight','True Sight','Sniper','crit',L=>1.5*L,'Crit +#%.'),
-  act('pharrow','Phantasmic Arrow','Sniper',8,L=>.8+.16*L,3,'#ffd28a',5), pas('dbl','Double Attack','Thief','dbl',L=>10+4*L,'#% chance to strike twice.'),act('env','Envenom','Thief',4,L=>1.2+.15*L,1,'#7dff7d'),pas('dodge','Improve Dodge','Thief','flee',L=>1.5*L,'Flee +#%.'),
-  pas('steal','Steal','Thief','zeny',L=>4*L,'Zeny gain +#%.',5), act('sonic','Sonic Blow','Assassin',6,L=>.5+.05*L,6,'#ff9dff'),act('grim','Grimtooth','Assassin',4,L=>1.1+.25*L,2,'#ff6b6b',5),pas('katm','Katar Mastery','Assassin','atk',L=>2*L,'ATK +#%.'),
-  act('vdust','Venom Dust','Assassin',6,L=>.5+.1*L,1,'#7dff7d'), act('mAss','Meteor Assault','Assassin Cross',7.5,L=>.7+.075*L,4,'#d08cff'),act('soulb','Soul Breaker','Assassin Cross',4.5,L=>1+.1*L,2,'#ff5a8a'),
-  act('sdestroy','Soul Destroyer','Assassin Cross',7,L=>.7+.14*L,2,'#ff5a8a'), act('holy','Holy Light','Acolyte',3,L=>1.5+.15*L,1,'#fff3a0'),pas('heal','Heal','Acolyte','hpreg',L=>.15*L,'Regen +#% HP/s.'),pas('bless','Blessing','Acolyte','atk',L=>1.5*L,'ATK +#%.'),
-  tos('iagi','Increase AGI','Acolyte',26,{hp:.5,dur:L=>8+L,aspd:L=>6+3*L,atk:L=>-(3+2*L),def:Z,drain:Z,txt:L=>`ASPD +${6+3*L}%, ATK ${-(3+2*L)}%`},'#b8f3ff',5), act('magnus','Magnus Exorcismus','Priest',7.5,L=>.55+.05*L,6,'#ffe0ff'),pas('sanct','Sanctuary','Priest','hpreg',L=>.2*L,'Regen +#% HP/s.'),pas('asp','Aspersio','Priest','atk',L=>2*L,'ATK +#%.'),
-  tos('kyrie','Kyrie Eleison','Priest',30,{hp:.5,dur:L=>10+L,def:L=>10+4*L,atk:L=>-(4+2*L),aspd:Z,drain:Z,txt:L=>`DEF +${10+4*L}, ATK ${-(4+2*L)}%`},'#fff3a0',5), act('judex','Judex','High Priest',4.5,L=>.8+.075*L,3,'#ffffff'),pas('assum','Assumptio','High Priest','def',L=>2*L,'DEF +#.'),pas('gloria','Gloria','High Priest','atk',L=>2.5*L,'ATK +#%.'),
-  pas('meditatio','Meditatio','High Priest','matk',L=>3*L,'MATK +#%.'), act('mammo','Mammonite','Merchant',4,L=>1.6+.175*L,1,'#ffd23f'),pas('greed','Overcharge','Merchant','zeny',L=>4*L,'Zeny gain +#%.'),pas('phys','Physical Training','Merchant','hpp',L=>2*L,'Max HP +#%.'),
-  pas('discount','Discount','Merchant','zeny',L=>4*L,'Zeny gain +#%.',5), act('hammer','Hammer Fall','Blacksmith',6,L=>2.4+.25*L,1,'#ff7a1a'),pas('adren','Adrenaline Rush','Blacksmith','aspd',L=>2.5*L,'ASPD +#%.'),pas('wperf','Weapon Perfection','Blacksmith','atk',L=>2*L,'ATK +#%.'),
-  pas('wresearch','Weapon Research','Blacksmith','atk',L=>1.5*L,'ATK +#%.'), act('cart','Cart Termination','Whitesmith',7.5,L=>3+.3*L,1,'#ffa040'),pas('thrust','Power-Thrust','Whitesmith','atk',L=>3*L,'ATK +#%.'),pas('skin','Skin Tempering','Whitesmith','hpp',L=>3*L,'Max HP +#%.'), tos('cboost','Cart Boost','Whitesmith',26,{hp:.5,dur:L=>8+2*L,aspd:L=>10+5*L,def:L=>-(4+2*L),atk:Z,drain:Z,txt:L=>`ASPD +${10+5*L}%, DEF ${-(4+2*L)}`},'#ffa040',5), ];
+ {"id":"aid","n":"First Aid","max":5,"type":"heal","col":"#fff3a0","text":"Automatically heals below half health.","from":"Novice","cd":6},
+ {"id":"bash","n":"Bash","max":10,"type":"act","col":"#ffb347","text":"A focused sword strike.","from":"Swordman","cd":2.0,"hits":1,"power":1.933,"shape":"single"},
+ {"id":"endure","n":"Rising Slash","max":10,"type":"act","col":"#fff3a0","text":"An upward sword arc. Your next direct hit within 3 seconds deals 10% more damage.","from":"Swordman","cd":3.0,"hits":1,"power":2.2,"shape":"cone","follow":0.1,"training":{"def":1}},
+ {"id":"hprec","n":"HP Recovery","max":10,"type":"pas","col":"#fff3a0","text":"Regenerate health while grinding.","from":"Swordman","key":"hpreg","rate":0.15},
+ {"id":"provoke","n":"Provoke","max":5,"type":"act","col":"#ff9d9d","text":"A challenge strike. Your next three direct hits within 3 seconds deal 10% more damage.","from":"Swordman","cd":5.0,"hits":1,"power":2.2,"shape":"single","mark":0.1},
+ {"id":"bowl","n":"Bowling Bash","max":10,"type":"act","col":"#ffe14d","text":"Sweep nearby enemies with a broad sword strike.","from":"Knight","cd":4.0,"hits":1,"power":1.933,"shape":"radial"},
+ {"id":"pierce","n":"Sword Thrust","max":10,"type":"act","col":"#ff9d5c","text":"Three quick sword thrusts against one enemy.","from":"Knight","cd":2.5,"hits":3,"power":2.062,"shape":"single"},
+ {"id":"quick","n":"Two-Hand Quicken","max":10,"type":"buff","col":"#ffe14d","text":"Increase sword attack speed.","from":"Knight","key":"speed","rate":3,"duration":12,"cd":12},
+ {"id":"spear","n":"Sword Training","max":10,"type":"pas","col":"#fff3a0","text":"Increase weapon attack.","from":"Knight","key":"atk","rate":2},
+ {"id":"spiral","n":"Spiral Slash","max":10,"type":"act","col":"#ff7a5c","text":"Five sword cuts against one enemy.","from":"Lord Knight","cd":5.0,"hits":5,"power":4.367,"shape":"single"},
+ {"id":"aura","n":"Aura Blade","max":10,"type":"buff","col":"#fff3a0","text":"Empower weapon attacks with a sustained aura.","from":"Lord Knight","key":"atk","rate":2.5,"duration":12,"cd":12},
+ {"id":"jointbeat","n":"Parrying","max":10,"type":"buff","col":"#ffb347","text":"Chance to block physical hits while continuing to attack.","from":"Lord Knight","key":"block","rate":1,"duration":12,"cd":12},
+ {"id":"fire","n":"Fire Bolt","max":10,"type":"act","col":"#ff8a3d","text":"Three focused fire hits.","from":"Mage","cd":2.0,"hits":3,"power":3.45,"shape":"single"},
+ {"id":"nap","n":"Lightning Bolt","max":10,"type":"act","col":"#c9a0ff","text":"Three focused lightning hits.","from":"Mage","cd":2.5,"hits":3,"power":2.375,"shape":"single"},
+ {"id":"coat","n":"Energy Coat","max":5,"type":"buff","col":"#8fd0ff","text":"Reduce incoming damage.","from":"Mage","key":"guard","rate":1,"duration":12,"cd":12},
+ {"id":"fireball","n":"Fire Ball","max":10,"type":"act","col":"#ff8a3d","text":"A fire blast around the target.","from":"Mage","cd":3.5,"hits":1,"power":1.5,"shape":"splash"},
+ {"id":"storm","n":"Storm Gust","max":10,"type":"act","col":"#8fe9ff","text":"An icy impact and a follow-up pulse, with a brief chance to stun.","from":"Wizard","cd":6.0,"hits":1,"power":6.32,"shape":"splash","stun":0.3,"pulse":0.25,"delay":0.7},
+ {"id":"jup","n":"Jupitel Thunder","max":10,"type":"act","col":"#ffee55","text":"Four focused lightning hits.","from":"Wizard","cd":3.0,"hits":4,"power":3.033,"shape":"single"},
+ {"id":"amp","n":"Meteor Storm","max":10,"type":"act","col":"#fff3a0","text":"Meteors strike the target area twice.","from":"Wizard","cd":7.0,"hits":1,"power":2.2,"shape":"splash","pulse":0.3,"delay":0.45,"training":{"matk":2.5}},
+ {"id":"tstorm","n":"Heaven’s Drive","max":10,"type":"act","col":"#8fe9ff","text":"Earth erupts in a line through the target.","from":"Wizard","cd":4.0,"hits":1,"power":2.486,"shape":"line"},
+ {"id":"meteor","n":"Magic Crasher","max":10,"type":"act","col":"#ff5a2a","text":"A quick projectile powered by magic attack.","from":"High Wizard","cd":2.5,"hits":1,"power":2.778,"shape":"single"},
+ {"id":"grav","n":"Gravity Well","max":5,"type":"act","col":"#b080ff","text":"A gravity impact and follow-up pulse. Pull nearby ordinary enemies together and briefly slow movement.","from":"High Wizard","cd":5.0,"hits":1,"power":4.417,"shape":"splash","pull":1.5,"slow":0.25,"pulse":0.25,"delay":0.5},
+ {"id":"mystic","n":"Mystical Amplification","max":10,"type":"buff","col":"#fff3a0","text":"Increase spell damage.","from":"High Wizard","key":"damage","rate":1,"duration":12,"cd":12,"training":{"matk":3}},
+ {"id":"napalm","n":"Napalm Vulcan","max":10,"type":"act","col":"#ff8a3d","text":"Four spectral hits with nearby splash damage.","from":"High Wizard","cd":3.0,"hits":4,"power":1.519,"shape":"splash"},
+ {"id":"dstr","n":"Double Strafe","max":10,"type":"act","col":"#ffd28a","text":"Two focused arrow hits.","from":"Archer","cd":2.0,"hits":2,"power":2.55,"shape":"single"},
+ {"id":"iconc","n":"Improve Concentration","max":5,"type":"buff","col":"#d8ffb0","text":"Increase attack speed.","from":"Archer","key":"speed","rate":2,"duration":12,"cd":12},
+ {"id":"owl","n":"Owl’s Eye","max":10,"type":"pas","col":"#fff3a0","text":"Increase weapon attack.","from":"Archer","key":"atk","rate":1.5},
+ {"id":"vult","n":"Vulture’s Eye","max":10,"type":"pas","col":"#fff3a0","text":"Increase attack range and critical chance.","from":"Archer","key":"range","rate":0.03,"training":{"crit":1}},
+ {"id":"blitz","n":"Blitz Beat","max":10,"type":"act","col":"#ffd23f","text":"A falcon strike with nearby splash damage.","from":"Hunter","cd":3.0,"hits":1,"power":2.2,"shape":"splash","falcon":true},
+ {"id":"sharp","n":"Marked Shot","max":10,"type":"act","col":"#ff4d4d","text":"A focused arrow marks the target. Your next three direct hits within 3 seconds deal 12% more damage.","from":"Hunter","cd":3.0,"hits":1,"power":2.25,"shape":"single","mark":0.12,"markHits":3},
+ {"id":"beast","n":"Beast Bane","max":10,"type":"pas","col":"#fff3a0","text":"Increase weapon attack against every enemy.","from":"Hunter","key":"atk","rate":2},
+ {"id":"falconry","n":"Steel Crow","max":10,"type":"pas","col":"#fff3a0","text":"Increase Blitz Beat and Falcon Assault damage.","from":"Hunter","key":"falcon","rate":2,"training":{"crit":1.5}},
+ {"id":"falcon","n":"Falcon Assault","max":10,"type":"act","col":"#ffffff","text":"A heavy focused falcon strike.","from":"Sniper","cd":4.0,"hits":1,"power":3.467,"shape":"single","falcon":true},
+ {"id":"focus","n":"Sharp Shooting","max":10,"type":"act","col":"#ff9d3d","text":"An arrow pierces enemies in a line.","from":"Sniper","cd":3.0,"hits":1,"power":2.19,"shape":"line"},
+ {"id":"sight","n":"True Sight","max":10,"type":"buff","col":"#fff3a0","text":"Increase critical chance.","from":"Sniper","key":"critical","rate":1.5,"duration":12,"cd":12,"training":{"crit":1.5}},
+ {"id":"pharrow","n":"Snare Trap","max":5,"type":"act","col":"#ffd28a","text":"Automatically trap the target for 2 seconds. Bosses are rooted for 1.25 seconds, then resist roots for 3 seconds. Rooted enemies can still attack.","from":"Sniper","cd":6.0,"hits":1,"power":2.7,"shape":"single","root":2},
+ {"id":"dbl","n":"Twin Strike","max":10,"type":"pas","col":"#fff3a0","text":"Chance for an extra normal hit with a katar or dagger. DEX further increases the chance.","from":"Thief","key":"dbl","rate":5},
+ {"id":"env","n":"Quick Cut","max":10,"type":"act","col":"#7dff7d","text":"Two quick blade hits with a katar or dagger.","from":"Thief","cd":2.0,"hits":2,"power":1.35,"shape":"single"},
+ {"id":"dodge","n":"Feint Slash","max":10,"type":"act","col":"#fff3a0","text":"A direct slash that briefly reduces the target’s accuracy.","from":"Thief","cd":3.0,"hits":1,"power":2.2,"shape":"single","blind":0.1,"training":{"flee":1.5}},
+ {"id":"steal","n":"Plunder","max":5,"type":"pas","col":"#fff3a0","text":"Gain more Zeny. Direct skill hits deal 1% more damage per rank against targets above 80% health.","from":"Thief","key":"zeny","rate":4},
+ {"id":"sonic","n":"Sonic Blow","max":10,"type":"act","col":"#ff9dff","text":"Eight focused blade hits with a katar or dagger.","from":"Assassin","cd":3.0,"hits":8,"power":3.0,"shape":"single"},
+ {"id":"grim","n":"Grimtooth","max":5,"type":"act","col":"#ff6b6b","text":"A blade wave pierces enemies in a narrow line.","from":"Assassin","cd":3.5,"hits":1,"power":2.931,"shape":"line"},
+ {"id":"katm","n":"Edge Mastery","max":10,"type":"pas","col":"#fff3a0","text":"Increase direct skill damage with katars and daggers.","from":"Assassin","key":"damage","rate":2,"training":{"atk":2}},
+ {"id":"vdust","n":"Cross Slash","max":10,"type":"act","col":"#7dff7d","text":"Two cuts strike a small crossing area.","from":"Assassin","cd":3.0,"hits":2,"power":0.75,"shape":"cross"},
+ {"id":"mAss","n":"Meteor Assault","max":10,"type":"act","col":"#d08cff","text":"An immediate blade burst around you.","from":"Assassin Cross","cd":4.0,"hits":1,"power":2.373,"shape":"radial"},
+ {"id":"soulb","n":"Soul Breaker","max":10,"type":"act","col":"#ff5a8a","text":"A ranged blade-energy strike powered by physical attack.","from":"Assassin Cross","cd":3.0,"hits":1,"power":2.0,"shape":"single","rng":5},
+ {"id":"sdestroy","n":"Deathmark","max":10,"type":"act","col":"#ff5a8a","text":"Strike and mark the target. The mark bursts after three more direct hits or 1.5 seconds.","from":"Assassin Cross","cd":4.0,"hits":1,"power":1.771,"shape":"single","death":0.25},
+ {"id":"holy","n":"Holy Light","max":10,"type":"act","col":"#fff3a0","text":"A focused holy beam that damages every enemy type.","from":"Acolyte","cd":2.0,"hits":1,"power":2.0,"shape":"single"},
+ {"id":"heal","n":"Searing Light","max":10,"type":"act","col":"#fff3a0","text":"A holy impact with nearby splash. Successful hits also heal you when below 60% health.","from":"Acolyte","cd":2.5,"hits":1,"power":2.2,"shape":"splash","heal":0.012,"training":{"hpreg":0.15}},
+ {"id":"bless","n":"Blessing","max":10,"type":"buff","col":"#fff3a0","text":"Increase your direct damage.","from":"Acolyte","key":"damage","rate":1.5,"duration":12,"cd":12,"training":{"atk":1.5}},
+ {"id":"iagi","n":"Zeal","max":5,"type":"buff","col":"#b8f3ff","text":"Increase attack speed. At maximum attack speed, also increase direct skill damage.","from":"Acolyte","key":"speed","rate":3,"duration":12,"cd":12},
+ {"id":"magnus","n":"Holy Nova","max":10,"type":"act","col":"#ffe0ff","text":"A holy burst around the target.","from":"Priest","cd":4.0,"hits":1,"power":3.227,"shape":"splash"},
+ {"id":"sanct","n":"Judgment Pillar","max":10,"type":"act","col":"#fff3a0","text":"A column of holy light hits the target and nearby enemies.","from":"Priest","cd":3.0,"hits":1,"power":2.2,"shape":"splash","training":{"hpreg":0.2}},
+ {"id":"asp","n":"Sacred Weapon","max":10,"type":"buff","col":"#fff3a0","text":"Empower normal mace attacks with holy damage.","from":"Priest","key":"sacred","rate":2,"duration":12,"cd":12,"training":{"atk":2}},
+ {"id":"kyrie","n":"Penance","max":5,"type":"act","col":"#fff3a0","text":"A holy strike marks the target. Your next three holy skill hits within 3 seconds deal extra damage.","from":"Priest","cd":3.5,"hits":1,"power":2.2,"shape":"single","mark":0.1,"markHits":3},
+ {"id":"judex","n":"Divine Barrage","max":10,"type":"act","col":"#ffffff","text":"A rapid sequence of focused holy beams.","from":"High Priest","cd":2.5,"hits":4,"power":1.972,"shape":"single"},
+ {"id":"assum","n":"Consecration","max":10,"type":"act","col":"#fff3a0","text":"Holy ground strikes immediately and pulses once more.","from":"High Priest","cd":4.0,"hits":1,"power":2.2,"shape":"splash","pulse":0.3,"delay":0.5,"training":{"def":2}},
+ {"id":"gloria","n":"Gloria","max":10,"type":"buff","col":"#fff3a0","text":"Increase critical chance.","from":"High Priest","key":"critical","rate":1,"duration":12,"cd":12,"training":{"atk":2.5}},
+ {"id":"meditatio","n":"Holy Echo","max":10,"type":"pas","col":"#fff3a0","text":"Every fourth holy skill cast adds an extra hit, with a 2-second recovery. Echoes cannot trigger more echoes.","from":"High Priest","key":"echo","rate":1,"training":{"matk":3}},
+ {"id":"mammo","n":"Mammonite","max":10,"type":"act","col":"#ffd23f","text":"A heavy focused weapon hit.","from":"Merchant","cd":2.0,"hits":1,"power":1.675,"shape":"single"},
+ {"id":"greed","n":"Overcharge","max":10,"type":"pas","col":"#fff3a0","text":"Increase Zeny earned from enemies.","from":"Merchant","key":"zeny","rate":4},
+ {"id":"phys","n":"Pushcart","max":10,"type":"pas","col":"#fff3a0","text":"Increase maximum health.","from":"Merchant","key":"hpp","rate":2},
+ {"id":"discount","n":"Discount","max":5,"type":"pas","col":"#fff3a0","text":"Increase Zeny earned from enemies.","from":"Merchant","key":"zeny","rate":4},
+ {"id":"hammer","n":"Hammer Fall","max":10,"type":"act","col":"#ff7a1a","text":"Strike nearby enemies with a chance to briefly stun.","from":"Blacksmith","cd":4.0,"hits":1,"power":3.267,"shape":"radial","stun":0.3},
+ {"id":"adren","n":"Adrenaline Rush","max":10,"type":"buff","col":"#fff3a0","text":"Increase attack speed.","from":"Blacksmith","key":"speed","rate":2.5,"duration":12,"cd":12},
+ {"id":"wperf","n":"Armor Crack","max":10,"type":"act","col":"#fff3a0","text":"A heavy strike. Your next three direct hits within 3 seconds deal 10% more damage.","from":"Blacksmith","cd":3.0,"hits":1,"power":2.2,"shape":"single","mark":0.1,"training":{"atk":2}},
+ {"id":"wresearch","n":"Weapon Research","max":10,"type":"pas","col":"#fff3a0","text":"Increase weapon attack.","from":"Blacksmith","key":"atk","rate":1.5},
+ {"id":"cart","n":"Cart Termination","max":10,"type":"act","col":"#ffa040","text":"A heavy focused cart impact.","from":"Whitesmith","cd":3.0,"hits":1,"power":2.4,"shape":"single"},
+ {"id":"thrust","n":"Maximum Power Thrust","max":10,"type":"buff","col":"#fff3a0","text":"Empower physical attacks. Replaces Overthrust while enabled.","from":"Whitesmith","key":"atk","rate":6,"duration":28,"cd":29,"training":{"atk":3},"flat":15},
+ {"id":"skin","n":"Cart Momentum","max":10,"type":"pas","col":"#fff3a0","text":"Damaging casts build up to three stacks that strengthen cart attacks. Stacks fade after 5 seconds without a cast.","from":"Whitesmith","key":"momentum","rate":1,"training":{"hpp":3}},
+ {"id":"cboost","n":"Cart Boost","max":5,"type":"buff","col":"#ffa040","text":"Increase travel speed.","from":"Whitesmith","key":"move","rate":2,"duration":12,"cd":12},
+ {"id":"frenzy","n":"Frenzy","max":5,"type":"buff","col":"#ff4d4d","text":"A short burst of increased damage.","from":"Lord Knight","key":"damage","rate":5,"duration":5,"cd":10},
+ {"id":"dpois","n":"Blade Frenzy","max":5,"type":"buff","col":"#b05cff","text":"A short burst of increased physical attack with katars or daggers.","from":"Assassin Cross","key":"atk","rate":10,"duration":15,"cd":31,"flat":25},
+ {"id":"ovthrust","n":"Overthrust","max":5,"type":"buff","col":"#ff9d3c","text":"A burst of increased physical attack.","from":"Blacksmith","key":"atk","rate":6,"duration":28,"cd":29,"flat":15},
+ {"id":"mbrk","n":"Magnum Break","max":10,"type":"act","col":"#ff7a3d","text":"A fiery sword burst around you.","from":"Swordman","cd":4.0,"hits":1,"power":1.257,"shape":"radial"},
+ {"id":"fdiver","n":"Frost Diver","max":10,"type":"act","col":"#8fe9ff","text":"An icy hit with a chance to briefly stun.","from":"Mage","cd":3.0,"hits":1,"power":1.8,"shape":"single","stun":0.3},
+ {"id":"fnova","n":"Lord of Vermilion","max":5,"type":"act","col":"#8fe9ff","text":"A lightning field strikes and pulses once more.","from":"Wizard","cd":6.0,"hits":1,"power":3.36,"shape":"splash","pulse":0.2,"delay":0.5},
+ {"id":"ashower","n":"Arrow Shower","max":10,"type":"act","col":"#ffd28a","text":"A fan of arrows strikes enemies in front of you.","from":"Archer","cd":3.5,"hits":1,"power":2.013,"shape":"cone"},
+ {"id":"sandat","n":"Fan of Blades","max":10,"type":"act","col":"#e0c78a","text":"A fan of blades strikes enemies in front of you.","from":"Thief","cd":3.5,"hits":1,"power":1.4,"shape":"cone"},
+ {"id":"signum","n":"Radiant Sweep","max":10,"type":"act","col":"#ffe0a0","text":"A fan of holy light strikes enemies in front of you.","from":"Acolyte","cd":3.5,"hits":1,"power":1.213,"shape":"cone"},
+ {"id":"cartrev","n":"Cart Revolution","max":10,"type":"act","col":"#ffa040","text":"A cart sweep strikes nearby enemies.","from":"Merchant","cd":3.5,"hits":1,"power":1.2,"shape":"radial"},
+ {"id":"spearboom","n":"Counter Attack","max":5,"type":"act","col":"#ffe14d","text":"A quick sword strike. Deals 20% more damage if you were hit within the last 2 seconds.","from":"Knight","cd":2.0,"hits":1,"power":1.04,"shape":"single","counter":true},
+ {"id":"tblow","n":"Traumatic Blow","max":10,"type":"act","col":"#ff5a5a","text":"A sword strike followed by a short bleed. Repeated bleeds refresh the effect.","from":"Lord Knight","cd":3.0,"hits":1,"power":1.0,"shape":"single","dot":0.12},
+ {"id":"vermilion","n":"Soul Drain","max":10,"type":"pas","col":"#ff6a8a","text":"Increase magic attack.","from":"High Wizard","key":"matk","rate":1.8},
+ {"id":"landmine","n":"Land Mine","max":5,"type":"act","col":"#c8a060","text":"Automatically place a mine at the target. The initial hit is followed by an explosion.","from":"Hunter","cd":4.0,"hits":1,"power":2.0,"shape":"splash","pulse":0.45,"delay":0.25},
+ {"id":"wwalk","n":"Wind Walk","max":10,"type":"buff","col":"#d8ffb0","text":"Increase travel speed.","from":"Sniper","key":"move","rate":1,"duration":12,"cd":12},
+ {"id":"vsplash","n":"Shadow Dash","max":10,"type":"act","col":"#7dff7d","text":"Dash into melee and slash through enemies in a narrow line. Strike in place when already close.","from":"Assassin","cd":4.0,"hits":1,"power":1.867,"shape":"line","dash":4},
+ {"id":"akatar","n":"Phantom Rush","max":10,"type":"act","col":"#fff3a0","text":"Three focused cuts with a short dash when needed. Strike in place when already close.","from":"Assassin Cross","cd":5.0,"hits":3,"power":2.2,"shape":"single","dash":3,"training":{"atk":2.5}},
+ {"id":"tundead","n":"Exorcism","max":10,"type":"act","col":"#fff3a0","text":"A heavy holy strike. Deals 15% more damage below 30% target health.","from":"Priest","cd":3.0,"hits":1,"power":1.28,"shape":"single","execute":0.15},
+ {"id":"basilica","n":"Final Judgment","max":5,"type":"act","col":"#fff3a0","text":"Strike with a holy seal that detonates after a short delay, damaging nearby enemies.","from":"High Priest","cd":5.0,"hits":1,"power":2.2,"shape":"splash","pulse":0.6,"delay":0.4},
+ {"id":"meltdown","n":"Shatter Strike","max":10,"type":"act","col":"#ffa040","text":"A heavy strike with nearby splash. Deals 12% more damage against a target marked by Armor Crack.","from":"Whitesmith","cd":4.0,"hits":1,"power":1.244,"shape":"splash","shatter":0.12}
+];
+for(const s of SKILLS){
+  s.cls=down(s.from);s.magic=['Mage','Wizard','High Wizard','Acolyte','Priest','High Priest'].includes(s.from);
+  if(s.type==='act'){s.mul=L=>s.power*(.55+.45*Math.min(s.max,L)/s.max);s.aoe=s.shape!=='single';}
+  if(s.type==='pas'||s.type==='buff')s.f=L=>(s.flat||0)+s.rate*(s.id==='thrust'?Math.min(5,L):L);
+  s.d=L=>s.type==='act'?`${Math.round(s.mul(L)*100*(typeof skillTuning==='function'&&typeof S!=='undefined'&&S&&s.cls.includes(S.cls)?skillTuning(false,s,L):1))}% total ${s.magic?'magic':'physical'} power${s.hits>1?' across '+s.hits+' hits':''} · ${s.cd}s cooldown · ${s.shape}. ${s.text}`:
+    s.type==='heal'?`Auto: heals ${10+5*L}% HP below half · ${s.cd}s cooldown.`:
+    `${s.text} ${s.key}: +${s.f(L).toFixed(1)}${['range','echo','momentum'].includes(s.key)?'':'%'}${s.type==='buff'?' · '+(s.id==='dpois'?5+L:['ovthrust','thrust'].includes(s.id)?8+2*Math.min(5,L):s.duration)+'s duration / '+s.cd+'s cooldown':''}`;
+  const describe=s.d;s.d=L=>describe(L)+(s.training?' Training: '+Object.entries(s.training).map(([key,rate])=>'+'+(rate*L).toFixed(1)+' '+key.toUpperCase()+(key==='def'?'':'%')).join(', ')+'.':'');
+}
 
-// ---------- skill effects (2026-10-03) ----------
-// Tagged after the fact, the same way rng/aoe already were. dot.pow is the share of the
-// triggering hit dealt PER SECOND (so .05 over 4s adds 20% of the hit, spread out);
-// chain.pow is the share each bounce deals, once per target; stun.dur is seconds at level 1
-// and grows 8% per level, halved on bosses.
-const FX={
-  // RO-flavoured farming: every first job has an area attack, including Mage and Thief.
-  bash:{},                                                        // single target
-  bowl:{aoe:1},                                                   // Bowling Bash: 5x5 around the user
-  pierce:{},                                                      // single target
-  spiral:{stun:{dur:1}},                                                      // Clashing Spiral Pierce: single target
-  fire:{dot:{pow:.05,dur:4,col:'#ff8a3d'}},                       // Fire Bolt: lingering burn
-  nap:{aoe:1,dot:{pow:.04,dur:3,col:'#c9a0ff'}},
-  storm:{aoe:1,stun:{dur:1}},                                     // Storm Gust: 7x7, chance to freeze
-  jup:{chain:{n:2,pow:.4}},                                                         // Jupitel Thunder: single target, multi-hit
-  meteor:{aoe:1,stun:{dur:.8},dot:{pow:.06,dur:5,col:'#ff5a2a'}}, // Meteor Storm: AoE + stun chance
-  grav:{aoe:1,stun:{dur:.6}},                                     // Gravitational Field pins and damages
-  dstr:{chain:{n:2,pow:.4}},                                                        // Double Strafe: single target, 2 hits
-  blitz:{chain:{n:2,pow:.45}},                                    // Blitz Beat: the falcon hits nearby too
-  sharp:{chain:{n:3,pow:.4}},                                     // Sharp Shooting: pierces a line
-  env:{aoe:1,dot:{pow:.07,dur:6,col:'#7dff7d'},chain:{n:2,pow:.35}},                        // Envenom: poison
-  sonic:{stun:{dur:1.1},chain:{n:2,pow:.4}},                                         // Sonic Blow: up to 30% stun
-  grim:{aoe:1},                                                   // Grimtooth: 3x3 while hidden
-  mAss:{aoe:1},                                                   // Meteor Assault: around the caster
-  holy:{dot:{pow:.04,dur:3,col:'#fff3a0'}},                                                        // Holy Light: single holy hit
-  magnus:{aoe:1,dot:{pow:.05,dur:4,col:'#fff3a0'}},                                                 // Magnus Exorcismus: 7x7
-  judex:{aoe:1,dot:{pow:.05,dur:4,col:'#fff3a0'}},                                                  // Judex: area holy damage
-  hammer:{aoe:1,stun:{dur:1}},                                    // Hammer Fall: 5x5, 30-70% stun
-  cart:{aoe:1},                                                   // Cart Termination
-  mammo:{chain:{n:2,pow:.4}},                                                       // Mammonite: single target
-  mbrk:{aoe:1,dot:{pow:.06,dur:4,col:'#ff7a3d'},stun:{dur:.7}},                 // Magnum Break: 5x5 fire, then 20% fire property
-  fdiver:{stun:{dur:.8}},                                         // Frost Diver: single target, freezes
-  fnova:{aoe:1,stun:{dur:.9}},                                    // Frost Nova: 5x5 water, freezes
-  ashower:{aoe:1,stun:{dur:.7}},                                                // Arrow Shower: area
-  sandat:{stun:{dur:1.2}},                                        // Sand Attack: single target, blinds
-  signum:{aoe:1,stun:{dur:.8}},                                                 // Signum Crucis: wide DEF-reduction
-  cartrev:{aoe:1,stun:{dur:.8}},                                                // Cart Revolution: 9-cell splash
-  spearboom:{chain:{n:2,pow:.45}},                                                   // Spear Boomerang: single target
-  tblow:{dot:{pow:.09,dur:6,col:'#ff5a5a'}},                      // Traumatic Blow: causes bleeding
-  vermilion:{aoe:1,dot:{pow:.05,dur:4,col:'#ff6a8a'}},                                              // Lord of Vermilion: 9x9
-  landmine:{aoe:1,stun:{dur:1}},                                               // Land Mine: ground trap
-  falcon:{chain:{n:2,pow:.45}},                                                       // Falcon Assault: one heavy falcon hit
-  vsplash:{dot:{pow:.08,dur:5,col:'#7dff7d'},chain:{n:2,pow:.4}},                    // Venom Splasher: single target, delayed bomb
-  tundead:{aoe:1,stun:{dur:.8}},                                                // Turn Undead: area obliteration
-  meltdown:{aoe:1,dot:{pow:.07,dur:5,col:'#ffa040'},stun:{dur:.8}},             // Meltdown: damages surrounding enemies
-  // v59 additions
-  fireball:{aoe:1},                                                                // Fire Ball: 3x3 fire
-  tstorm:{aoe:1,stun:{dur:.6}},                                                    // Thunder Storm: 5x5 lightning
-  vdust:{aoe:1,dot:{pow:.06,dur:5,col:'#7dff7d'}},                                 // Venom Dust: poison cloud
-  jointbeat:{stun:{dur:.9}},                                                       // Joint Beat: breaks the target's joints
-  napalm:{dot:{pow:.05,dur:4,col:'#ff8a3d'}},                                      // Napalm Vulcan: multi-hit fire
-  pharrow:{stun:{dur:.8}},                                                         // Phantasmic Arrow: pins the target
-  sdestroy:{chain:{n:2,pow:.4}},                                                   // Soul Destroyer: soul wave
-};
-
-// Tradeoff: an auto-cast buff with a genuine cost. It fires itself when off cooldown and your
-// HP is above to.hp, adds atk/aspd percentages and SUBTRACTS def, and can drain HP per second.
-// Every value scales with skill level, so a low-level tradeoff is a small bet and a maxed one
-// is a big swing. It never fires while another tradeoff is running.
-
-// ---------- new skills: one extra option per job, all real RO skills for that job ----------
-// Five inventions from the first pass have been replaced after checking iRO Wiki:
-//   Throw Stone      - Novice has no offensive skills in RO, and since every class inherits
-//                      Novice, its chain tag leaked an AoE-looking bounce into every tree
-//                      (this is the "thief throw stone is aoe" bug). Removed outright.
-//   Rolling Cutter   - Guillotine Cross, a 3rd job. -> Advanced Katar Mastery (real AXC).
-//   Adoramus         - Archbishop, a 3rd job.      -> Basilica (real High Priest).
-//   Charged Arrow    - not an RO skill.            -> Falcon Assault (real Sniper).
-//   Head Crush       - not an RO skill.            -> Traumatic Blow (real Lord Knight, bleeds).
-// Fire Wall was sitting on Wizard; it is a Mage spell, so Wizard gets Frost Nova instead and
-// Mage keeps Fire Bolt / Napalm Beat / Frost Diver / Energy Coat.
-SKILLS.push(
- tos('frenzy','Frenzy','Lord Knight',26,{hp:.5,dur:L=>6+L,aspd:L=>20+8*L,def:L=>-(10+4*L),atk:Z,drain:Z,
-   txt:L=>`ASPD +${20+8*L}%, DEF ${-(10+4*L)}`},'#ff4d4d',5),
- tos('dpois','Deadly Poison','Assassin Cross',31,{hp:.7,dur:L=>5+L,atk:L=>25+10*L,aspd:Z,def:Z,drain:L=>1+.4*L,
-   txt:L=>`ATK +${25+10*L}% but you lose ${(1+.4*L).toFixed(1)}% max HP per second`},'#b05cff',5),
- tos('ovthrust','Overthrust','Blacksmith',29,{hp:.6,dur:L=>8+2*L,atk:L=>15+6*L,aspd:Z,def:L=>-(5+2*L),drain:Z,
-   txt:L=>`ATK +${15+6*L}%, DEF ${-(5+2*L)}`},'#ff9d3c',5),
- act('mbrk','Magnum Break','Swordman',7,L=>1.1+.11*L,1,'#ff7a3d'),
- act('fdiver','Frost Diver','Mage',5,L=>1+.1*L,2,'#8fe9ff'),
- act('fnova','Frost Nova','Wizard',7.5,L=>.6+.12*L,4,'#8fe9ff',5),
- act('ashower','Arrow Shower','Archer',6,L=>.7+.075*L,3,'#ffd28a'),
- act('sandat','Sand Attack','Thief',4.5,L=>.9+.09*L,1,'#e0c78a'),
- act('signum','Signum Crucis','Acolyte',7.5,L=>.8+.08*L,2,'#ffe0a0'),
- act('cartrev','Cart Revolution','Merchant',7,L=>1.2+.12*L,1,'#ffa040'),
- act('spearboom','Spear Boomerang','Knight',5,L=>1.3+.26*L,1,'#ffe14d',5),
- act('tblow','Traumatic Blow','Lord Knight',6,L=>1+.1*L,1,'#ff5a5a'),
- act('vermilion','Lord of Vermilion','High Wizard',10,L=>.5+.05*L,8,'#ff6a8a'),
- act('landmine','Land Mine','Hunter',6,L=>1.5+.3*L,1,'#c8a060',5),
- tos('wwalk','Wind Walk','Sniper',34,{hp:.5,dur:L=>8+1*L,aspd:L=>12+3*L,def:L=>-(5+1.5*L),atk:Z,drain:Z,
-   txt:L=>`ASPD +${12+3*L}%, DEF ${-(5+1.5*L)}`},'#d8ffb0'),
- act('vsplash','Venom Splasher','Assassin',6,L=>.9+.09*L,2,'#7dff7d'),
- pas('akatar','Advanced Katar Mastery','Assassin Cross','atk',L=>2.5*L,'ATK +#%.'),
- act('tundead','Turn Undead','Priest',7.5,L=>1.1+.11*L,2,'#fff3a0'),
- tos('basilica','Basilica','High Priest',36,{hp:.6,dur:L=>8+2*L,atk:L=>12+5*L,aspd:Z,def:L=>-(6+3*L),drain:Z,
-   txt:L=>`ATK +${12+5*L}%, DEF ${-(6+3*L)}`},'#fff3a0',5),
- act('meltdown','Meltdown','Whitesmith',9,L=>1.4+.14*L,1,'#ffa040'));
-
-// Applied AFTER the push above: tagging before it silently skipped every new skill, because
-// SKILLS.find() returned undefined and the guard swallowed it.
-for(const k in FX){const s=SKILLS.find(x=>x.id===k);if(s)Object.assign(s,FX[k])}
-for(const id of ['nap','env']){const s=SKILLS.find(x=>x.id===id),desc=s.d;s.d=L=>desc(L)+' &middot; AREA: splashes nearby enemies.'}
-
-SKILLS.find(s=>s.id==='soulb').rng=5;SKILLS.find(s=>s.id==='mAss').aoe=1;SKILLS.find(s=>s.id==='sdestroy').rng=5;SKILLS.find(s=>s.id==='soulb').d=L=>`Auto RANGED (up to 5 tiles): 2 hits of ${Math.round((1+.2*L)*100)}% dmg &middot; CD 3s`;SKILLS.find(s=>s.id==='mAss').d=L=>`Auto AREA: 4 hits of ${Math.round((.7+.15*L)*100)}% dmg, hits all nearby &middot; CD 5s`;
+// Idempotent migration: ranks are refunded through the existing earned-minus-spent ledger.
+// Never add a second points purse or alter saved gear/jobs/stat allocations.
+function migrateSkillBuild(f,oldVersion){
+  if(Number(oldVersion)>=SKILL_VERSION)return;
+  const paid=Object.entries(f.sk||{}).reduce((a,[id,L])=>a+(id==='aid'?0:Math.max(0,Number(L)||0)),0);
+  f.sk={aid:Math.max(1,Math.min(5,Number(f.sk&&f.sk.aid)||1))};f.skOff={};
+  f.skillVersion=SKILL_VERSION;f.skillRefund=paid;f.skillRespec={};
+  for(const n of new Set([f.cls,...Object.keys(f.base||{}),...Object.keys(f.jobs||{})]))if(CLASSES[n])f.skillRespec[n]=true;
+}
 
 // One visible battlefield effect for every active skill and temporary buff. These are
 // lightweight Three.js geometry recipes (not replacement character art). Their silhouettes
@@ -1221,6 +1203,11 @@ const SKILL_VFX={
   kyrie:{kind:'shieldAura',at:'caster',life:.7},napalm:{kind:'fireBolt',at:'path',life:.7},pharrow:{kind:'arrowBurst',life:.55},
   sdestroy:{kind:'soulBolt',at:'path',life:.6},cboost:{kind:'windAura',at:'caster',life:.7}, jointbeat:{kind:'impact',life:.5},
 };
+const SKILL_VISUAL_REDESIGN={aura:'holyAura',mystic:'holyAura',sight:'windAura',bless:'holyAura',asp:'holyAura',gloria:'holyAura',adren:'windAura',thrust:'frenzyAura',endure:'multiSlash',provoke:'impact',pierce:'multiSlash',spearboom:'impact',spiral:'multiSlash',
+ nap:'lightning',amp:'meteor',tstorm:'earthTrap',fnova:'lightningStorm',meteor:'psychic',napalm:'psychic',pharrow:'earthTrap',
+ env:'multiSlash',dodge:'multiSlash',sandat:'arrowRain',vdust:'multiSlash',vsplash:'shadow',sdestroy:'soulBolt',dpois:'frenzyAura',akatar:'multiSlash',
+ heal:'holyBolt',signum:'holyNova',sanct:'holyBolt',kyrie:'holyBolt',judex:'holyBolt',assum:'holyNova',basilica:'holyNova',wperf:'impact',meltdown:'impact'};
+for(const [id,kind] of Object.entries(SKILL_VISUAL_REDESIGN))SKILL_VFX[id]={kind,at:SKILLS.find(s=>s.id===id).type==='buff'?'caster':'target',life:.6,redesigned:true};
 function skillFxSpec(id,color){const v=SKILL_VFX[id];return v?{id,kind:v.kind,at:v.at||'target',life:v.life||.65,color:color||'#fff'}:null}
 // ---------- world: 5 maps x 10 levels. Lv1-3 novice gear, 4-7 1st job, 8-9 2nd job, 10 boss = high-tier ----------
 const pm=s=>{const[n,c,sh]=s.split(':');const spriteId=MOB_SPRITES[n]||0,spriteSize=MOB_SIZE_BY_ID[spriteId]||'Medium';return{n,c:parseInt(c,16),shape:sh,spriteId,spriteSize,spriteScale:MOB_SIZE_SCALE[spriteSize]}};
@@ -1885,7 +1872,7 @@ function trialEnter(mode){
   // Death sprite gives it a boss silhouette, while boss:false keeps the damage math neutral.
   TRIAL.dummy={n:'Lord of Death Illusion',x:0,z:-4,hp:Infinity,max:Infinity,at:Infinity,size:1.15,spriteScale:1.9,shape:'demon',c:0x7c3aed,spriteId:1373,
     pack:0,boss:false,fixed:true,spawn:1,stun:0,run:false,hx:0,hz:-4,flash:0,atkAnim:0,drops:[],cardCh:0,mag:false};
-  mobs=[TRIAL.dummy];mob=TRIAL.dummy;activePack=0;camps=[];engageTgt=null;respawn=0;tb={};
+  if(typeof resetSkillRuntime==='function')resetSkillRuntime();mobs=[TRIAL.dummy];mob=TRIAL.dummy;activePack=0;camps=[];engageTgt=null;respawn=0;tb={};
   // 1.4 units from the target: inside a melee reach of 1.2+0.45*1.15, so the character stands still
   // and swings from the first frame instead of walking into range (owner: both stay in place).
   pl.x=0;pl.z=-2.6;pl.wt=0;pl.orb=0;pAtkT=.2;mAtkT=1e9;
@@ -2285,7 +2272,7 @@ const PET_SKILLS=[
   {id:'guardingchirp',n:'Guarding Chirp',kind:'utility',effect:'def',value:5,duration:20,cd:40,desc:'Utility: +5 DEF for 20s, no combat damage',vfx:'coat',color:'#8fe9ff',icon:'🛡️'},
   {id:'tailwag',n:'Tail Wag',kind:'utility',effect:'comfort',cd:28,desc:'Utility: a cosmetic morale emote, no combat damage',vfx:'aid',color:'#fff3a0',icon:'✨'}
 ];
-const petDmg=p=>Math.round(atk()*PETBAL*[.2,.32,.55,1][PETS[p.sp].r]*MUT[p.mut]*(1+p.eq[0]*.10)*(1+petPassive('petdmg')/100)),petInt=p=>Math.max(.4,1.7-PETS[p.sp].r*.15)/(1+p.eq[1]*.07);
+const petDmg=p=>Math.round(atk()*PETBAL*(typeof skillTuning==='function'?skillTuning('companion'):1)*[.2,.32,.55,1][PETS[p.sp].r]*MUT[p.mut]*(1+p.eq[0]*.10)*(1+petPassive('petdmg')/100)),petInt=p=>Math.max(.4,1.7-PETS[p.sp].r*.15)/(1+p.eq[1]*.07);
 // v90 (owner): every Legendary pet (r===3) costs twice as much - a mutation roll, a skill gacha and an upgrade step.
 const peqCost=t=>1200*(t+1)*(t+1),peqCostOf=(p,t)=>peqCost(t)*(PETS[p.sp].r===3?2:1),rollCost=p=>2500*(1+PETS[p.sp].r)*(PETS[p.sp].r===3?2:1),petSkillCost=p=>2000*(1+PETS[p.sp].r)*(PETS[p.sp].r===3?2:1);
 const petSkills=p=>((p.skills)||[]).map(id=>PET_SKILLS.find(s=>s.id===id)).filter(Boolean);
@@ -2358,7 +2345,7 @@ const uid=()=>Date.now()+Math.random(),rnd=(a,b)=>a+Math.random()*(b-a),ri=(a,b)
 // One roll fills both slots. The second pick is made from the skills the first did not take, so
 // the two can never match and there is no retry loop to spin if the dice are pinned.
 const PET_SKILL_WEIGHTS=[.35,.35,1,1,1,1,1,1,1,1,1,1],rollPetSkills=()=>{const a=pickW(PET_SKILL_WEIGHTS),rest=PET_SKILL_WEIGHTS.map((w,i)=>i).filter(i=>i!==a),b=rest[pickW(rest.map(i=>PET_SKILL_WEIGHTS[i]))];return[PET_SKILLS[a].id,PET_SKILLS[b].id]};
-const fresh=()=>({pets:[],bond:[],cls:'Novice',sex:'m',hair:0,lv:1,exp:0,hp:100,zeny:0,kills:0,indexXp:0,mobKills:{},equippedTitle:null,shards:0,refineScrolls:0,nmMat:[0,0,0,0,0,0,0,0,0,0],dps:0,trial:{day:trialDay(),used:0,best:0,runs:0},cardIndex:emptyCardIndex(),dmg:0,pts:10,jobs:{Novice:{jl:1,jx:0}},sk:{aid:1},skOff:{},dmgShort:true,dmgShow:true,base:{},mp:0,lvl:1,prog:[1,1,1,1,1],kl:0,auto:true,adv:true,feed:true,clickSell:false,bg:true,autoSell:[false,false,false,false,false,false,false],logOff:{},q:null,cards:[],ore:{ori:0,elu:0},offlineAt:0,offlineKph:0,offlineRateAt:0,offlineRateKills:0,offlineKillRemainder:0,gm:false,gmx:100,
+const fresh=()=>({skillVersion:SKILL_VERSION,skillRefund:0,skillRespec:{},pets:[],bond:[],cls:'Novice',sex:'m',hair:0,lv:1,exp:0,hp:100,zeny:0,kills:0,indexXp:0,mobKills:{},equippedTitle:null,shards:0,refineScrolls:0,nmMat:[0,0,0,0,0,0,0,0,0,0],dps:0,trial:{day:trialDay(),used:0,best:0,runs:0},cardIndex:emptyCardIndex(),dmg:0,pts:10,jobs:{Novice:{jl:1,jx:0}},sk:{aid:1},skOff:{},dmgShort:true,dmgShow:true,base:{},mp:0,lvl:1,prog:[1,1,1,1,1],kl:0,auto:true,adv:true,feed:true,clickSell:false,bg:true,autoSell:[false,false,false,false,false,false,false],logOff:{},q:null,cards:[],ore:{ori:0,elu:0},offlineAt:0,offlineKph:0,offlineRateAt:0,offlineRateKills:0,offlineKillRemainder:0,gm:false,gmx:100,
   st:{str:1,agi:1,dex:1,luk:1,int:1,vit:1},eq:{weapon:{id:1,slot:'weapon',wt:'dagger',tier:0,val:5,name:'Novice Knife',aff:[],slots:1,cards:[],sec:0},armor:null,head:null,off:null,leg:null,acc1:null,acc2:null},inv:[]});
 const saveKey=()=>'pg_save3_'+currentUser;
 // ---------- the save-owner stamp (v88.6) ----------
@@ -2444,6 +2431,7 @@ const s=JSON.parse(raw);if(s&&s.lv){const F=fresh(),f=Object.assign(F,s),hadInde
        const cut=Math.min(L,over);f.sk[s.id]=L-cut;over-=cut;back+=cut;
        if(f.sk[s.id]<=0)delete f.sk[s.id]}
      f.skRepair=back}}
+  migrateSkillBuild(f,s.skillVersion);
   // per-class builds (Base Lv / stats / points / gear) - repair, drop anything malformed
   if(!f.base||typeof f.base!=='object')f.base={};
   for(const k in f.base){const r=f.base[k];
@@ -3077,11 +3065,12 @@ const skTog=()=>SKILLS.filter(s=>s.type!=='pas'&&lv(s.id)>0&&s.cls.includes(S.cl
 const skAllOn=()=>{const l=skTog();return l.length>0&&l.every(s=>!skOff(s.id))};
 const skSetAll=on=>{if(!S.skOff||typeof S.skOff!=='object')S.skOff={};for(const s of skTog()){on?delete S.skOff[s.id]:S.skOff[s.id]=1}};
 const skillsFullyAllocated=()=>SKILLS.filter(s=>lineOf(S.cls).includes(s.from)).every(s=>lv(s.id)>=s.max);
+const statResetCost=()=>S.skillRespec&&S.skillRespec[S.cls]?0:rcost();
 const skMasterTile=()=>{const on=skAllOn(),n=skTog().length,done=skillsFullyAllocated();
-  return`<div class="sk-tools"><label class="sk-master${on?'':' off'}" title="Switch the auto-cast of every learned skill on or off"><span class="sk-kind">ALL</span><div class="si" aria-hidden="true">&#9199;&#65039;</div><div class="sk-name">Auto-cast all</div><div class="sk-autocast"><input type="checkbox" data-a="skall" ${on?'checked':''} aria-label="Auto-cast every learned skill"> ${on?'ALL ON':'SOMETHING OFF'}</div><small>${n} skill${n===1?'':'s'} on this line</small></label><button class="sk-alloc" data-a="skalloc" ${done||skpAvail()<1?'disabled':''} title="Auto-allocate all available points: max lower-class skills first, then work up the tree">⚡ Auto-allocate all skills<small>${done?'All skills maxed':'Lower classes first'}</small></button></div>`};
+  return`<div class="sk-tools"><label class="sk-master${on?'':' off'}" title="Switch the auto-cast of every learned skill on or off"><span class="sk-kind">ALL</span><div class="si" aria-hidden="true">&#9199;&#65039;</div><div class="sk-name">Auto-cast all</div><div class="sk-autocast"><input type="checkbox" data-a="skall" ${on?'checked':''} aria-label="Auto-cast every learned skill"> ${on?'ALL ON':'SOMETHING OFF'}</div><small>${n} skill${n===1?'':'s'} on this line</small></label><button class="sk-alloc" data-a="skalloc" ${done||skpAvail()<1?'disabled':''} title="Auto-allocate all available points: learn each available skill first, then improve ranks">⚡ Auto-allocate all skills<small>${done?'All skills maxed':'Learn every skill first'}</small></button></div>`};
 const skillDetailCard=sel=>{const SL=lv(sel.id),soff=!!(SL&&sel.type!=='pas'&&skOff(sel.id));
-  return`<div class="mob-card sk-detail-card" data-skill-detail="${sel.id}"><div class="sk-detail-head"><b>${sel.n}</b> <small>${sel.type==='pas'?'Passive':sel.type==='heal'?'Auto-heal':sel.type==='to'?'Tradeoff (auto-cast)':'Active (auto-cast)'}${sel.rng?' &middot; RANGED':''}${sel.aoe?' &middot; AREA':''}${sel.dot?' &middot; DOT':''}${sel.stun?' &middot; STUN':''}${sel.chain?' &middot; CHAIN':''}</small></div><div class="sk-detail-autocast">${SL&&sel.type!=='pas'?`<label class="sk-autocast"><input type="checkbox" data-a="sktog" data-v="${sel.id}" ${soff?'':'checked'} aria-label="Auto cast ${sel.n}"> Auto cast this skill</label><small class="${soff?'r0':''}">${soff?'Paused - it will not be used until you check this again.':'Cast automatically every time you attack.'}</small>`:'<small>Passive or not learned yet - nothing to auto-cast.</small>'}</div><small>${sel.d(Math.max(1,SL))}</small>${SL&&SL<sel.max?`<br><small>Next: ${sel.d(SL+1)}</small>`:''}</div>`};
-const pv=k=>SKILLS.reduce((a,s)=>a+(s.type==='pas'&&s.key===k&&skillOn(s.id)?s.f(lv(s.id)):0),0);
+  return`<div class="mob-card sk-detail-card" data-skill-detail="${sel.id}"><div class="sk-detail-head"><b>${sel.n}</b> <small>${sel.type==='pas'?'Passive':sel.type==='heal'?'Auto-heal':sel.type==='buff'?'Buff (auto-refresh)':'Active (auto-cast)'}${sel.rng?' &middot; RANGED':''}${sel.aoe?' &middot; AREA':''}${sel.dot?' &middot; DOT':''}${sel.stun?' &middot; STUN':''}${sel.chain?' &middot; CHAIN':''}</small></div><div class="sk-detail-autocast">${SL&&sel.type!=='pas'?`<label class="sk-autocast"><input type="checkbox" data-a="sktog" data-v="${sel.id}" ${soff?'':'checked'} aria-label="Auto cast ${sel.n}"> Auto cast this skill</label><small class="${soff?'r0':''}">${soff?'Paused - it will not be used until you check this again.':'Used automatically when ready.'}</small>`:'<small>Passive or not learned yet - nothing to auto-cast.</small>'}</div><small>${sel.d(Math.max(1,SL))}</small>${SL&&SL<sel.max?`<br><small>Next: ${sel.d(SL+1)}</small>`:''}</div>`};
+const pv=k=>SKILLS.reduce((a,s)=>a+(skillOn(s.id)?(s.type==='pas'&&s.key===k?s.f(lv(s.id)):0)+(s.training&&s.training[k]||0)*lv(s.id):0),0)+(typeof skillBonus==='function'?skillBonus(k):0);
 // v81 dual wield (owner): "let set that assasin & assassin cross can wield daggers. 2 hands."
 // A two-handed katar is TWO_HANDED weapons and a left-hand dagger is DUAL of one, so a pair of
 // equal daggers is 1.5 weapons of base value - exactly what a katar is. Both rules live here,
@@ -3157,10 +3146,12 @@ const skEarnedMax=()=>skTree();
 // tier is touched, and skills in a tier follow their data order. If the current job history has
 // not earned enough yet it stops at the first affordable level and can be run again later.
 const autoAllocateSkills=()=>{if(!S.sk||typeof S.sk!=='object')S.sk={};let bought=0;
-  for(const from of skLine())for(const s of SKILLS.filter(x=>x.from===from))while(lv(s.id)<s.max){
-    const nx=lv(s.id)+1;if(skpAvail()<skCost(nx))return bought;S.sk[s.id]=nx;bought++;
-  }
-  return bought;
+  const skills=SKILLS.filter(s=>skLine().includes(s.from)).sort((a,b)=>(a.type==='act'?0:1)-(b.type==='act'?0:1));
+  // Learn attacks before buffs/passives, then give every available skill a first rank.
+  for(let rank=1;rank<=Math.max(...skills.map(s=>s.max));rank++)for(const s of skills){
+    if(rank>s.max||lv(s.id)>=rank)continue;if(skpAvail()<skCost(rank))return bought;
+    S.sk[s.id]=rank;bought++;
+  }return bought;
 };
 // v90 (owner: Zeny overflows after level 100): a refine step costs twice the Zeny it did (200 -> 400 base), and
 // every attempt eats more ore the rarer the piece. v90.2 (owner): Legendary takes 5 ore a try, N and N+ take 10.
@@ -3306,6 +3297,7 @@ function fillCamp(i,c){
   }
 }
 function spawn(){
+  if(typeof resetSkillRuntime==='function')resetSkillRuntime(true);
   const F=fieldOf(S.mp,S.lvl),l=pw(),mb=1+S.mp*.15+Math.max(0,S.mp-4)*.2,nm1=S.lvl>10,nm=nm1?NMHP*nm15Of(S.lvl):1,na=nm1?NMATK*nm15Of(S.lvl):1,ne=nm1?NMEXP*nmPayOf(S.mp,S.lvl,1.5):1,nz=nm1?NMZENY*nmPayOf(S.mp,S.lvl,2):1;
   mobs=[];activePack=0;camps=[];engageTgt=null;
   const bossWave=!!F.boss;
@@ -3471,9 +3463,10 @@ function applyOfflineProgress(now=Date.now(),serverClaim=null){
 }
 // ---------- skill effects: damage over time, stun, chain ----------
 // DoT ticks twice a second for its duration; the number stored is damage PER SECOND.
-function applyDot(o,dps,dur,col,skill=false){if(!o||!(dur>0))return;const dot={dps,t:0,dur,col:col||'#7dff7d'};if(skill)dot.skill=true;(o.dots=o.dots||[]).push(dot)}
+function applyDot(o,dps,dur,col,skill=false){if(!o||!(dur>0))return;const dot={dps,t:0,dur,col:col||'#7dff7d'};if(skill)dot.skill=true;(o.dots=o.dots||[]);if(skill)o.dots=o.dots.filter(d=>!d.skill);o.dots.push(dot)}
 // A stunned mob neither advances nor swings: its attack timer simply stops counting down.
-function applyStun(o,dur){if(!o||!(dur>0))return;
+function applyStun(o,dur){if(!o||!(dur>0)||o.boss&&(o.stunResist||0)>0)return;
+  if(o.boss)o.stunResist=3;
   const d=dur*(o.boss?.5:1);o.stun=Math.min(o.boss?1:2,Math.max(o.stun||0,d))}
 // Chain bounces a share of the hit onto the nearest other mobs - the pack-clearing tool.
 function chainHit(src,dmg,col,n,skill=false){if(!src||!(dmg>0)||mobs.length<2)return;
@@ -3629,7 +3622,7 @@ function log(m,cls,cat){const e={m,cls,cat};logs.push(e);if(logs.length>80)logs.
 const CLASS_BAND=cls=>cls&&cls.rng?(/^(Mage|Wizard|High Wizard)$/.test(cls.n)?4.5:4):0;   // v83.2 owner: bow 4, staff 4.5
 let standC={t:-9,r:0},engageTgt=null,engageWait=0;   // engageTgt: latched into a stand-and-trade fight (v83.1); engageWait: seconds latched while out of reach (v88.4)
 function heroStandoff(m){
-  let r=CLASS_BAND(C());
+  let r=CLASS_BAND(C());if(r&&C().wt.includes('bow'))r+=Math.min(.5,pv('range'));
   for(const s of SKILLS)if(s.type==='act'&&s.rng&&skillOn(s.id)&&(skCd[s.id]||0)<=0)r=Math.max(r,s.rng>1?s.rng:5);
   if(!r)r=1.2+.45*(m&&m.size?m.size:1);
   // hold the last stand-off for 1.5s, so a skill coming off cooldown does not make the hero pace.
@@ -3660,21 +3653,341 @@ const SKSLOTS=t=>1+(t||0),SKFADE=[1,.55,.3,.18];
 const SWING_MIN_T=.14,SWING_MAX_T=.55;     // seconds: the shortest and longest drawn attack animation (v86: .14 so a fast ASPD actually LOOKS fast - .3 was slower than the v86 attack floor)
 // dot.pow is the fraction of the triggering hit dealt PER SECOND, so a .05/4s dot adds 20% of
 // the hit spread over time. chain.pow is the fraction each bounce deals, once per target.
-function castSkill(sk,k){
-  // Hold the target fixed for this cast: an AoE kill can advance activePack while we are
-  // still iterating. The remaining effects must never spill into the next sleeping pack.
-  const target=mob,base=sk.magic?matk():atk(),m=sk.mul(lv(sk.id))*(1+st('int')*.01)*k;
-  playSkillFx(sk.id,target,sk.col);
-  strike(m,sk.col,!!sk.magic,true);shot(sk.col,sk.rng);
-  if(sk.aoe&&target)for(const o of mobs.slice())if(o!==target&&o.pack===target.pack&&Math.hypot(o.x-target.x,o.z-target.z)<4)hurt(o,Math.max(1,Math.round(base*m*.8)),sk.col,false,true);
-  if(sk.chain&&target&&mobs.includes(target))chainHit(target,base*m*(sk.chain.pow||.5),sk.col,Math.min(4,(sk.chain.n||2)+Math.floor(lv(sk.id)/2)),true);
-  if(sk.dot&&target&&target.hp>0)applyDot(target,base*m*(sk.dot.pow||.05),sk.dot.dur||4,sk.dot.col||sk.col,true);
-  if(sk.stun&&target&&target.hp>0)applyStun(target,(sk.stun.dur||.8)*(1+lv(sk.id)*.08));
-  // v83: the extra hits of a multi-hit skill resolve in the same swing frame as the first one. The
-  // damage is identical (one full hit each); what changed is that they are summed into the swing's
-  // single number instead of arriving as five more floats over the next 400ms.
-  if(target&&mobs.includes(target))for(let i=1;i<sk.hits;i++){if(!mob||!mobs.includes(mob)||mob.hp<=0)break;strike(1,sk.col,!!sk.magic,true)}
+// v97 combat skills: transient state is never serialized into a save.
+let skillRuntime;
+function resetSkillRuntime(keepBuffs=false){const buffs=keepBuffs&&skillRuntime&&skillRuntime.owner===(S&&S.cls)?skillRuntime.buffs:{};skillRuntime={owner:S&&S.cls,buffs,events:[],casts:{},echo:0,momentum:0,lastHit:-99,follow:0,dash:0,approach:null};}
+function skillState(){if(!skillRuntime||skillRuntime.owner!==(S&&S.cls))resetSkillRuntime();return skillRuntime;}
+function skillBonus(key){const r=skillState();let sum=0;for(const id in r.buffs){const b=r.buffs[id];if((b.key===key||key==='aspd'&&b.key==='speed')&&skillOn(id))sum+=b.value;}return sum;}
+// Calibration constants are fitted against the frozen pre-redesign real-update fixtures.
+const SKILL_TUNING={
+ "Blacksmith": {
+  "single": [
+   1.04283,
+   0.97008,
+   0.95704
+  ],
+  "area": [
+   1.11111,
+   1.09861,
+   1.10551
+  ],
+  "companion": 1.0
+ },
+ "Lord Knight": {
+  "single": [
+   1.41299,
+   1.1749,
+   0.99357
+  ],
+  "area": [
+   0.34432,
+   0.33072,
+   0.33672
+  ],
+  "companion": 1.02807
+ },
+ "Whitesmith": {
+  "single": [
+   1.17589,
+   1.15333,
+   1.00113470464
+  ],
+  "area": [
+   1.12487,
+   1.01049,
+   1.16432
+  ],
+  "companion": 1
+ },
+ "Swordman": {
+  "single": [
+   0.94814,
+   0.917,
+   0.91656
+  ],
+  "area": [
+   0.24736,
+   0.40313,
+   0.3795
+  ],
+  "companion": 1.04115
+ },
+ "Mage": {
+  "single": [
+   1.20702,
+   1.09324,
+   1.11599
+  ],
+  "area": [
+   2.09739,
+   2.38818,
+   2.34652
+  ],
+  "companion": 0.93639
+ },
+ "Archer": {
+  "single": [
+   1.35368,
+   1.20064,
+   0.97174
+  ],
+  "area": [
+   0.71539,
+   0.78099,
+   0.79143
+  ],
+  "companion": 1.0
+ },
+ "Thief": {
+  "single": [
+   1.348204,
+   1.22337,
+   1.06299
+  ],
+  "area": [
+   1.99837,
+   1.97303,
+   1.75765
+  ],
+  "companion": 1.0
+ },
+ "Acolyte": {
+  "single": [
+   1.00753,
+   0.81661,
+   0.72888
+  ],
+  "area": [
+   0.21027,
+   0.26108,
+   0.25588
+  ],
+  "companion": 0.9623
+ },
+ "Merchant": {
+  "single": [
+   1.53267,
+   1.4308,
+   1.38372
+  ],
+  "area": [
+   1.69247,
+   1.66689,
+   1.54841
+  ],
+  "companion": 1.0
+ },
+ "Knight": {
+  "single": [
+   1.22664,
+   1.09717,
+   1.02331
+  ],
+  "area": [
+   0.5069,
+   0.58534,
+   0.49676
+  ],
+  "companion": 1.0341
+ },
+ "Wizard": {
+  "single": [
+   1.09741,
+   0.88618,
+   0.82343
+  ],
+  "area": [
+   0.37114,
+   0.45133,
+   0.53475
+  ],
+  "companion": 0.93751
+ },
+ "Hunter": {
+  "single": [
+   1.17133,
+   1.01453,
+   0.99932
+  ],
+  "area": [
+   0.46244,
+   0.52555,
+   0.40798
+  ],
+  "companion": 1.0
+ },
+ "Assassin": {
+  "single": [
+   1.25026,
+   1.0178,
+   0.88838
+  ],
+  "area": [
+   0.71512,
+   0.72,
+   0.71767
+  ],
+  "companion": 1.0
+ },
+ "Priest": {
+  "single": [
+   0.85793,
+   0.6414474,
+   0.53524
+  ],
+  "area": [
+   0.16493,
+   0.22488,
+   0.20999
+  ],
+  "companion": 0.92799
+ },
+ "High Wizard": {
+  "single": [
+   1.1239001539603959,
+   0.8409115789999999,
+   0.6607781818181817
+  ],
+  "area": [
+   0.25123,
+   0.34691,
+   0.3921
+  ],
+  "companion": 0.93756
+ },
+ "Sniper": {
+  "single": [
+   1.08033,
+   0.96299,
+   0.7505
+  ],
+  "area": [
+   0.40333,
+   0.36842,
+   0.32467
+  ],
+  "companion": 1.0
+ },
+ "Assassin Cross": {
+  "single": [
+   1.17694,
+   0.9194,
+   0.7649684
+  ],
+  "area": [
+   0.48144,
+   0.55504,
+   0.5488
+  ],
+  "companion": 1.0
+ },
+ "High Priest": {
+  "single": [
+   0.7326530732673268,
+   0.5445910171428572,
+   0.4249090909090909
+  ],
+  "area": [
+   0.22164,
+   0.24669,
+   0.24061
+  ],
+  "companion": 1.02452
+ }
+};
+// Each attack uses its own rank. Learning another skill cannot reduce its power.
+// Interpolate total coefficients and cap earlier ranks below later ranks, so upgrades
+// remain monotonic even where the old engine's damage curve flattened out.
+function skillTuning(area=false,sk,L){const table=SKILL_TUNING[S.cls];if(!table)return 1;
+  if(area==='companion')return table.companion;
+  if(!sk)return 1;
+  const rank=Math.max(1,Math.min(sk.max,L===undefined?lv(sk.id):L));
+  const points=[1,5,10].filter(n=>n<=sk.max),values=points.map((n,i)=>sk.mul(n)*table.single[i]*(area?table.area[i]:1));
+  for(let i=values.length-2;i>=0;i--)values[i]=Math.min(values[i],values[i+1]/(1+.005*(points[i+1]-points[i])));
+  let power=values[values.length-1];
+  for(let i=1;i<points.length;i++)if(rank<=points[i]){power=values[i-1]+(values[i]-values[i-1])*(rank-points[i-1])/(points[i]-points[i-1]);break;}
+  return power/sk.mul(rank);
 }
+function skillRange(sk,target){return sk.rng||sk.dash||CLASS_BAND(C())||1.8+.45*(target&&target.size||1);}
+function skillTargets(sk,target,origin=pl){const shape=sk.shape||'single',center=shape==='radial'?origin:target;
+  const dx=target.x-origin.x,dz=target.z-origin.z,len=Math.hypot(dx,dz)||1,ux=dx/len,uz=dz/len;
+  return mobs.slice().filter(o=>{if(o.hp<=0||o.pack!==target.pack)return false;if(o===target)return true;if(shape==='single')return false;
+    const x=o.x-origin.x,z=o.z-origin.z,along=x*ux+z*uz,side=Math.abs(x*uz-z*ux),dist=Math.hypot(o.x-center.x,o.z-center.z);
+    if(shape==='line')return along>=-.5&&along<=Math.max(4,len+1.5)&&side<=1.4;
+    if(shape==='cone')return Math.hypot(x,z)<=5&&along>=0&&side<=along*1.5+.4;
+    if(shape==='cross')return dist<=3.5&&Math.min(Math.abs((o.x-center.x)-(o.z-center.z)),Math.abs((o.x-center.x)+(o.z-center.z)))<=1.2;
+    return dist<=3.5;});}
+function skillQueue(delay,fn){skillState().events.push({left:delay,owner:S.cls,fn});}
+function skillRoot(target,duration){if(!target||target.hp<=0||target.fixed||target.root>0||target.rootResist>0)return false;
+  target.root=target.boss?Math.min(1.25,duration):duration;return true;}
+function skillDash(sk,target){const r=skillState();if(!sk.dash||r.dash>0||TRIAL.on||!mobs.includes(target)||target.pack!==activePack)return;
+  const dx=target.x-pl.x,dz=target.z-pl.z,dist=Math.hypot(dx,dz),stop=1.4+.4*(target.size||1);
+  if(dist<=stop+.3||dist>sk.dash+.6)return;
+  const travel=dist-stop;pl.x=cl(pl.x+dx/dist*travel,-BX_+.6,BX_-.6);pl.z=cl(pl.z+dz/dist*travel,Z0+.6,Z1-.6);r.dash=.75;engageTgt=target;engageWait=0;
+}
+function skillHit(target,raw,sk,proc=false){if(!target||target.hp<=0||!mobs.includes(target))return 0;
+  const r=skillState();let boost=1;
+  if(!proc){if(target.skillMark&&target.skillMark.owner===S.cls&&target.skillMark.left>0){const mark=target.skillMark;
+      if(!mark.holy||sk.magic){boost+=mark.power;if(--mark.hits<=0)delete target.skillMark;}}
+    if(r.follow>0&&t<r.followUntil){boost+=r.follow;r.follow=0;}
+    if(pv('zeny')&&skillOn('steal')&&target.hp>=target.max*.8)boost+=lv('steal')*.01;}
+  if(Math.random()*100<missCh())return 0;
+  const critical=Math.random()*100<Math.max(0,Math.min(100,crit()+skillBonus('critical'))*(1-(target.critRes||0)));
+  const damage=Math.max(1,Math.round(raw*boost*rnd(Math.min(.95,.7+st('dex')*.004),1.15)*(critical?critD():1)*(target.boss?1+petPassive('boss')/100:1)));
+  hurt(target,damage,sk.col,critical,true);
+  if(!proc&&target.hp>0&&target.deathmark){if(--target.deathmark.hits<=0){const mark=target.deathmark;delete target.deathmark;skillHit(target,mark.raw,mark.sk,true);}}
+  return damage;
+}
+function castSkill(sk,k){
+  const target=mob;if(!target||target.hp<=0||!mobs.includes(target))return;
+  const r=skillState(),L=lv(sk.id);skillDash(sk,target);playSkillFx(sk.id,target,sk.col);
+  const bonus=pv('damage')+(sk.falcon?pv('falcon'):0)+(['cart','cartrev','meltdown'].includes(sk.id)?Math.min(3,r.momentum)*pv('momentum'):0);
+  // Keep the existing effective stat scale in this release while redistributing damage.
+  // Stat costs, caps, pets and boss HP are not silently retuned by the skill redesign.
+  let raw=(sk.magic?matk():atk())*(1+st('int')*.01)*sk.mul(L)*k*(1+bonus/100)*skillTuning(false,sk,L);
+  if(sk.counter&&r.counter>0){raw*=1.2;r.counter=0;}
+  if(skillOn('iagi')&&aspd()<=.131)raw*=1+(r.buffs.iagi?r.buffs.iagi.value:0)/100;
+  if(sk.execute&&target.hp/target.max<.3)raw*=1+sk.execute;
+  if(sk.shatter&&target.skillMark&&target.skillMark.source==='wperf')raw*=1+sk.shatter;
+  const targets=skillTargets(sk,target),pulse=sk.pulse||0,death=sk.death||0;
+  let dealt=0;for(const o of targets){const amount=raw*(o===target?1:.8*skillTuning(true,sk,L)/skillTuning(false,sk,L))*(1-pulse-death-(sk.dot||0));
+    // Split the declared total; extra hits never become unrelated 1x strikes.
+    for(let i=0;i<sk.hits&&o.hp>0;i++)dealt+=skillHit(o,amount/sk.hits,sk);
+    if(o.hp<=0)continue;
+    if(sk.stun)applyStun(o,sk.stun);
+    if(sk.root&&skillRoot(o,sk.root))addFloat(o.x,2,o.z,'SNARED','#ffd28a');
+    if(sk.blind)o.blind={left:2,power:sk.blind};
+    if(sk.slow)o.slow={left:1.5,power:sk.slow};
+    if(sk.pull&&!o.boss&&!o.fixed&&!o.root){const dx=target.x-o.x,dz=target.z-o.z,d=Math.hypot(dx,dz);if(d>.5){const v=Math.min(sk.pull,d-.5);o.x+=dx/d*v;o.z+=dz/d*v;}}
+  }
+  if(pulse){const anchor={x:target.x,z:target.z,pack:target.pack},origin={x:pl.x,z:pl.z};
+    skillQueue(sk.delay||.5,()=>{if(activePack!==anchor.pack)return;for(const o of skillTargets(sk,anchor,origin))skillHit(o,raw*pulse*(o===target?1:.8*skillTuning(true,sk,L)/skillTuning(false,sk,L)),sk,true);playSkillFx(sk.id,anchor,sk.col);});}
+  if(target.hp>0&&mobs.includes(target)){
+    if(sk.mark)target.skillMark={owner:S.cls,source:sk.id,power:sk.mark,hits:sk.markHits||3,left:3,holy:sk.id==='kyrie'};
+    if(death)target.deathmark={raw:raw*death,sk,hits:3,left:1.5,owner:S.cls};
+    if(sk.dot)applyDot(target,raw*sk.dot/2,2,sk.col,true);
+  }
+  if(sk.follow){r.follow=sk.follow;r.followUntil=t+3;}
+  if(sk.heal&&dealt>0&&S.hp<maxHp()*.6){const h=Math.min(maxHp()-S.hp,maxHp()*sk.heal*(.5+L/sk.max));S.hp+=h;addFloat(pl.x,2.6,pl.z,'+'+Math.round(h),'#7dff7d');}
+  if(pv('echo')&&sk.magic&&++r.echo>=4&&(r.echoCd||0)<=0){r.echo=0;r.echoCd=2;skillHit(target,raw*.04*pv('echo'),sk,true);playSkillFx('judex',target,'#fff3a0');}
+  r.momentum=Math.min(3,r.momentum+1);r.lastHit=t;
+}
+function tickCombatSkills(dt){const r=skillState();r.counter=Math.max(0,(r.counter||0)-dt);r.dash=Math.max(0,r.dash-dt);r.echoCd=Math.max(0,(r.echoCd||0)-dt);if(t-r.lastHit>5)r.momentum=0;
+  for(const id in r.buffs){r.buffs[id].left-=dt;if(r.buffs[id].left<=0||!skillOn(id))delete r.buffs[id];}
+  for(const s of SKILLS)if(s.type==='buff'&&skillOn(s.id)&&(skCd[s.id]||0)<=0){
+    if(s.id==='ovthrust'&&skillOn('thrust'))continue;
+    if(s.id==='thrust')delete r.buffs.ovthrust;
+    r.buffs[s.id]={key:s.key,value:s.f(lv(s.id)),left:s.id==='dpois'?5+lv(s.id):['ovthrust','thrust'].includes(s.id)?8+2*Math.min(5,lv(s.id)):s.duration};skCd[s.id]=s.cd;playSkillFx(s.id,null,s.col);skillNameFloat(s.n);}
+  const events=r.events;r.events=[];for(const e of events){e.left-=dt;if(e.owner!==S.cls)continue;if(e.left<=0)e.fn();else r.events.push(e);}
+  for(const o of mobs.slice()){
+    const rooted=(o.root||0)>0;o.root=Math.max(0,(o.root||0)-dt);o.rootResist=Math.max(0,(o.rootResist||0)-dt);
+    if(rooted&&!o.root&&o.boss)o.rootResist=3;
+    if(o.skillMark&&(o.skillMark.owner!==S.cls||(o.skillMark.left-=dt)<=0))delete o.skillMark;
+    for(const key of ['blind','slow'])if(o[key]&&(o[key].left-=dt)<=0)delete o[key];
+    if(o.deathmark){const m=o.deathmark;if(m.owner!==S.cls){delete o.deathmark;continue;}m.left-=dt;if(m.left<=0){delete o.deathmark;skillHit(o,m.raw,m.sk,true);}}
+  }
+}
+
 // v83 (owner): the swing. The attack animation IS the swing, so its damage lands on the animation's
 // contact frame instead of the instant the key was pressed, and the whole swing resolves there: the
 // first cast, the extra casts (tier 2 and 3) and every multi-hit are one impact. That, plus one
@@ -3707,8 +4020,9 @@ function playerAttack(){
   engageWait=0;   // a swing is the proof the fight is live: the walk-in wait starts again (v88.4)
   const interval=aspd(),far=Math.hypot(mob.x-pl.x,mob.z-pl.z)>heroStandoff(mob)+.6;
   pAtkT=interval;atkAnim=1;swingDur=swingLength();
-  const ready=SKILLS.filter(s=>s.type==='act'&&skillOn(s.id)&&(skCd[s.id]||0)<=0&&(!far||s.rng))
-    .sort((a,b)=>b.mul(lv(b.id))*b.hits-a.mul(lv(a.id))*a.hits);
+  const ready=SKILLS.filter(s=>s.type==='act'&&skillOn(s.id)&&(skCd[s.id]||0)<=0&&(!far||s.rng||s.dash))
+    .filter(s=>Math.hypot(mob.x-pl.x,mob.z-pl.z)<=skillRange(s,mob)+.6)
+    .sort((a,b)=>(skillState().casts[a.id]??-99)-(skillState().casts[b.id]??-99));
   const casts=[];for(const sk of ready){if(casts.length>=SKSLOTS(C().tier))break;casts.push(sk)}
   const d=pv('dbl');
   swing={t:swingDur*SWING_CONTACT,target:mob,pack:mob.pack,casts:casts.map((sk,i)=>({sk,k:SKFADE[i]||.3})),
@@ -3724,12 +4038,14 @@ function resolveSwing(s){
   dmgGroup=new Map();
   if(s.casts.length){
     for(const c of s.casts){
+      if(!skillOn(c.sk.id))continue;
       // a kill mid-swing must never send the next cast at the camp next door
       if(!mob||!mobs.includes(mob)||mob.hp<=0||mob.pack!==s.pack)break;
-      skCd[c.sk.id]=c.sk.cd;skillNameFloat(c.sk.n);castSkill(c.sk,c.k)}
+      skCd[c.sk.id]=c.sk.cd;skillState().casts[c.sk.id]=t;skillNameFloat(c.sk.n);castSkill(c.sk,c.k)}
   }else if(!s.far){
-    strike(1);shot();
-    if(s.double){skillNameFloat('Double Attack');if(mob&&mob.hp>0)strike(1)}
+    const boost=1+(skillBonus('weapon')+skillBonus('sacred')+skillBonus('damage'))/100;
+    strike(boost,undefined,skillBonus('sacred')>0);shot();
+    if(s.double){skillNameFloat('Twin Strike');if(mob&&mob.hp>0)strike(1)}
   }
   flushDamageGroup();
 }
@@ -3934,7 +4250,7 @@ function stowUnfit(from){
   return n}
 function changeClass(n){if(classBlock(n))return;
   snapClass();                                 // remember the class we are stepping away from
-  const from=S.cls;S.cls=n;jobOf();
+  const from=S.cls;S.cls=n;jobOf();if(typeof resetSkillRuntime==='function'){swing=null;resetSkillRuntime();for(const id in skCd)delete skCd[id];}
   const rec=n==='Novice'?null:classRec(n);     // a class you left earlier picks up where it stopped
   if(rec){S.lv=rec.lv;S.exp=rec.exp;S.pts=rec.pts;S.st=Object.assign({},rec.st);if(rec.eq)equipRec(rec.eq)}
   else if(n==='Novice')noviceRun();
@@ -4104,7 +4420,7 @@ const V={
     +`<div class="slot" style="flex-wrap:wrap"><span>ATK <b>${atk()}</b></span><span>MATK <b>${matk()}</b></span><span>DEF <b>${def()}</b></span><span>ASPD <b>${Math.min(193,Math.round(144+5/Math.max(.13,aspd())))}</b> <small>${(1/aspd()).toFixed(2)}/s</small></span><span>Crit <b>${crit().toFixed(1)}%</b>${idxC?` <small>(+${idxC}% Index Crit)</small>`:''}</span><span>Crit DMG <b>x${critD().toFixed(2)}</b></span><span>MDEF <b>${mdef()}</b></span><span>Flee <b>${flee().toFixed(0)}%</b></span><span>HP <b>${maxHp()}</b></span><span>Movement speed <b>${moveSpd().toFixed(2)}</b> <small>u/s</small></span></div>
     <small><b>Movement speed</b> comes from AGI alone: ${heroMoveSpeedForAgi(st('agi')).toFixed(2)} units a second at AGI ${st('agi')}. Every point of AGI adds about 0.03 - it never touches damage, so it is a comfort stat.${petPassive('move')?` A fighting Peco Peco's Swift Mount adds ${petPassive('move')}%.`:''}</small>
     <small>Crit is capped at 60% from stats, skills, gear and card mastery; above 45% each further point counts half. <b>Index Crit</b> (+${idxC}% of +40 max, from Hunt Titles) is the only source that passes the cap, and the total stops at 100%.</small>
-    <small>Weapons: ${c.wt.join(', ')}${katarOnly()?' (a two-handed Katar, or a dagger in each hand)':''} &middot; Main stat: ${SU(c.main)}</small><button class="full" data-a="rstat" ${rcost()&&S.zeny<rcost()?'disabled title="You need '+rcost().toLocaleString()+' Zeny to reset stats"':''}>Reset stats (${rcost()?rcost()+'z':'free below Base 20'})</button>`},
+    <small>Weapons: ${c.wt.join(', ')}${katarOnly()?' (a two-handed Katar, or a dagger in each hand)':''} &middot; Main stat: ${SU(c.main)}</small><button class="full" data-a="rstat" ${statResetCost()&&S.zeny<statResetCost()?'disabled title="You need '+rcost().toLocaleString()+' Zeny to reset stats"':''}>Reset stats (${statResetCost()?statResetCost()+'z':'free'})</button>`},
   job(){const lines=[['Swordman','Knight','Lord Knight'],['Mage','Wizard','High Wizard'],['Archer','Hunter','Sniper'],['Thief','Assassin','Assassin Cross'],['Acolyte','Priest','High Priest'],['Merchant','Blacksmith','Whitesmith']];
     const k=selK||S.cls,c=CLASSES[k],blk=classBlock(k),pj=S.jobs[k],rec=classRec(k);
     return`<div class="tree"><div class="trow" style="justify-content:center">${tnode('Novice')}</div><div class="trunk"></div>
@@ -4118,9 +4434,9 @@ const V={
     <small><b>A class you have played before is one click away</b> - its Base Lv, job level, skills, stats and gear are still on it, so there is no Novice reset needed to go back to it. A class you have <i>never</i> played still has to be unlocked from its parent (or from the Novice).</small>
     <button class="full" data-a="job" data-v="Novice" ${S.cls==='Novice'?'disabled':''}>Restart as Novice (Base Lv 25, job levels cleared)</button>`},
   skills(){const line=lineOf(S.cls),av=skpAvail(),sel=SKILLS.find(s=>s.id===selS);
-    return`${S.skRepair?`<div class="row" style="margin-bottom:4px"><small class="r0"><b>Repaired an older save:</b> ${S.skRepair} skill point${S.skRepair>1?'s were':' was'} refunded - the old shop minted points, so this line was carrying levels it had never earned. Nothing else to do.</small></div>`:''}<div class="hd">Skill points: ${av} <small>(${skEarned()} earned on this line, ${Math.max(0,skSpent()-(S.sk.aid?1:0))} spent &middot; this line's tree costs ${skTree()}, a maxed line earns ${skEarnedMax()} - <b>${Math.max(0,skEarnedMax()-skTree())} to spare</b>)</small></div><small>Skill levels cost 1 point each. Most skills cap at 10 and a few utility skills stop at 5 (RO-style), so a maxed line spends 139 of its 156 points - job levels pay out all the way to 50, and a line you promoted out of early may not finish &middot; ${SKSLOTS(C().tier)} skill${SKSLOTS(C().tier)>1?'s cast':''} per swing at this job tier &middot; later casts in the same swing land together at ${SKFADE.slice(1).map(f=>Math.round(f*100)+'%').join(' / ')} of the first one, on the swing's own contact frame &middot; active skills auto-cast when learned; use the Auto cast checkbox on a skill to pause it, or the ALL tile beside First Aid to pause or resume the whole line at once</small>`
+    return`${S.skillRefund?`<div class="row"><small><b>New class skills:</b> ${S.skillRefund} old skill ranks were cleared. Your earned points are available on their original class lines. Use Auto-allocate to learn attacks first, then all other skills. Each played class also has one free stat reset.</small></div>`:''}${S.skRepair?`<div class="row" style="margin-bottom:4px"><small class="r0"><b>Repaired an older save:</b> ${S.skRepair} skill point${S.skRepair>1?'s were':' was'} refunded - the old shop minted points, so this line was carrying levels it had never earned. Nothing else to do.</small></div>`:''}<div class="hd">Skill points: ${av} <small>(${skEarned()} earned on this line, ${Math.max(0,skSpent()-(S.sk.aid?1:0))} spent &middot; this line's tree costs ${skTree()}, a maxed line earns ${skEarnedMax()} - <b>${Math.max(0,skEarnedMax()-skTree())} to spare</b>)</small></div><small>Skill levels cost 1 point each. Each job adds five skills; earlier skills remain available. Attacks cast automatically on their cooldowns, up to ${SKSLOTS(C().tier)} per swing. Later casts deal ${SKFADE.slice(1).map(f=>Math.round(f*100)+'%').join(' / ')} power. Buffs refresh independently. Pause individual skills or use ALL to change the whole line.</small>`
     +`<div class="sk-slot">${sel&&line.includes(sel.from)?skillDetailCard(sel):'<small class="sk-slot-empty">Pick a skill to read what it does and to switch its auto-cast on or off.</small>'}</div>`
-    +line.map(from=>{const ss=SKILLS.filter(s=>s.from===from);return ss.length?`<div class="sec">${from}</div><div class="skg">${ss.map(s=>{const L=lv(s.id),off=!!(L&&s.type!=='pas'&&skOff(s.id)),kind=s.type==='pas'?'PASSIVE':s.type==='to'?'TRADEOFF':s.type==='heal'?'HEAL':'ACTIVE';
+    +line.map(from=>{const ss=SKILLS.filter(s=>s.from===from);return ss.length?`<div class="sec">${from}</div><div class="skg">${ss.map(s=>{const L=lv(s.id),off=!!(L&&s.type!=='pas'&&skOff(s.id)),kind=s.type==='pas'?'PASSIVE':s.type==='buff'?'BUFF':s.type==='heal'?'HEAL':'ACTIVE';
       return`<div class="sk${L?'':' off'}${off?' auto-off':''}${selS===s.id?' sel':''}" style="--sk-accent:${s.col||'#8a6a2c'}" data-a="ssel" data-v="${s.id}">
         <div class="sk-head"><span class="sk-kind">${kind}</span>${off?'<span class="sk-paused">OFF</span>':''}</div>
         <div class="si" aria-hidden="true">${skillIcon(s.id)}</div><div class="sk-name">${s.n}</div>
@@ -4611,7 +4927,7 @@ const ACT={
   stat:k=>{if(S.pts>=cost(k)&&S.st[k]<statCap()){S.pts-=cost(k);S.st[k]++;S.hp=Math.min(S.hp,maxHp());ui();save()}},
   stat5:k=>{for(let i=0;i<5;i++)if(S.pts>=cost(k)&&S.st[k]<statCap()){S.pts-=cost(k);S.st[k]++}S.hp=Math.min(S.hp,maxHp());ui();save()},
   selk:v=>{selK=v;renderWin()},job:n=>{if(n==='Novice'&&S.cls!=='Novice')ask('Restart as Novice? You go back to Base Lv 25, job levels cleared, and your stats are refunded. Classes you leave keep their own Base Lv, stats and gear, so you can switch back to them later.',()=>changeClass(n));else changeClass(n)},
-  rstat:()=>{const c=rcost();if(S.zeny<c)return denied(c,'stats');S.zeny-=c;for(const k in S.st)S.st[k]=1;S.pts=totalPts();S.hp=Math.min(S.hp,maxHp());log('Stats reset.'+(c?' -'+c.toLocaleString()+'z':''));ui();save()},
+  rstat:()=>{const c=statResetCost();if(S.zeny<c)return denied(c,'stats');S.zeny-=c;if(S.skillRespec)delete S.skillRespec[S.cls];for(const k in S.st)S.st[k]=1;S.pts=totalPts();S.hp=Math.min(S.hp,maxHp());log('Stats reset.'+(c?' -'+c.toLocaleString()+'z':''));ui();save()},
   skill:id=>{const s=SKILLS.find(x=>x.id===id);if(!s)return;const nx=lv(id)+1,c=skCost(nx);
     if(nx>s.max||!lineOf(S.cls).includes(s.from))return;
     if(skpAvail()<c)return log('Needs '+c+' skill points (you have '+skpAvail()+').','r0','skill');
@@ -4676,7 +4992,7 @@ const ACT={
   seleq:v=>{selE=v;eqPick=v;sub.bag='bag';if(!tabs.includes('bag')){if(tabs.length>=MAX_TABS)tabs.shift();tabs.push('bag')}renderWin()},
   skall:()=>{const on=!skAllOn(),n=skTog().length;skSetAll(on);
     log(on?`All ${n} auto-cast skill${n===1?'':'s'} switched ON.`:`All ${n} auto-cast skill${n===1?'':'s'} switched OFF - nothing will cast until you switch it back.`,on?'r3':'r0','skill');ui();save()},
-  skalloc:()=>{const n=autoAllocateSkills();if(n)log(`Auto-allocated ${n} skill level${n===1?'':'s'}: lower-class skills first, then up the tree.`,'r3','skill');else log(skillsFullyAllocated()?'All reachable skills are already maxed.':'No affordable skill level yet.','r0','skill');ui();save()},
+  skalloc:()=>{const n=autoAllocateSkills();if(n)log(`Auto-allocated ${n} skill level${n===1?'':'s'}: attacks first, then every skill and higher ranks.`,'r3','skill');else log(skillsFullyAllocated()?'All reachable skills are already maxed.':'No affordable skill level yet.','r0','skill');ui();save()},
   sktog:id=>{if(!S.skOff)S.skOff={};const s=SKILLS.find(x=>x.id===id);if(!s)return;
     if(S.skOff[id])delete S.skOff[id];else S.skOff[id]=1;
     log(s.n+': auto-cast '+(S.skOff[id]?'OFF - you will not use it':'ON')+'.',S.skOff[id]?'r0':'r3','skill');ui('[data-win="skills"] .sk-detail-card');save()},
@@ -4865,30 +5181,12 @@ function update(dt){
   // the swing lands on the animation's contact frame (see playerAttack): the cast(s), the extra hits
   // and the normal strike all resolve here, and they print one number per monster.
   if(swing){swing.t-=dt;if(swing.t<=0){const sw=swing;swing=null;resolveSwing(sw);if(mob&&mob.hp<=0&&mobs.includes(mob))kill()}}
-  // a timed tradeoff buff ticks down, drains HP if it says so, and clears when it expires
-  // tb.t is undefined until the first cast, so every read of it defaults to 0. Without that,
-  // 'tb.t>0' is false and the buff never ticks, and 'tb.t<=0' is false and it never re-casts.
-  if((tb.t||0)>0){tb.t-=dt;if(tb.drain)S.hp=Math.max(1,S.hp-dt*maxHp()*tb.drain/100);
-    if(tb.t<=0){const n=tb.n;tb={};log(n+' wears off.')}}
-  // damage-over-time and stun on every mob still standing
+  tickCombatSkills(dt);
   if(mobs.length)for(const m of mobs.slice()){
-    m.stun=Math.max(0,(m.stun||0)-dt);
+    m.stun=Math.max(0,(m.stun||0)-dt);m.stunResist=Math.max(0,(m.stunResist||0)-dt);
     const ds=m.dots;if(ds&&ds.length)for(let i=ds.length-1;i>=0;i--){const d=ds[i];d.dur-=dt;d.t+=dt;
       if(d.t>=.5){d.t-=.5;if(m.hp>0){const dv=Math.max(1,Math.round(d.dps*.5));S.dmg=(S.dmg||0)+dv;m.hp-=dv;m.flash=1;m.hitAnim=1;dotTick(m,dv,d.col,!!d.skill);if(m.hp<=0){kill(m);continue}}}
       if(d.dur<=0)ds.splice(i,1)}}
-  // tradeoff skills cast themselves the moment they are ready and you are healthy enough
-  // The to.* fields are functions of skill level, so they must be CALLED here: storing them
-  // raw put a function into tb.atk, which made atk() return NaN and every hit deal NaN.
-  // When several tradeoffs are ready the strongest one wins; switch a rival off in the Skills
-  // panel to prefer a different one (a Lord Knight inherits both Two-Hand Quicken and Frenzy).
-  if((tb.t||0)<=0){
-    const gain=s=>(s.to.atk||Z)(lv(s.id))+(s.to.aspd||Z)(lv(s.id));
-    const cand=SKILLS.filter(s=>s.type==='to'&&skillOn(s.id)&&(skCd[s.id]||0)<=0&&S.hp>maxHp()*(s.to.hp||.6))
-      .sort((a,b)=>gain(b)-gain(a));
-    if(cand.length){const s=cand[0],L=lv(s.id);skCd[s.id]=s.cd;
-      tb={atk:(s.to.atk||Z)(L),aspd:(s.to.aspd||Z)(L),def:(s.to.def||Z)(L),drain:(s.to.drain||Z)(L),
-          t:(s.to.dur||Z)(L),n:s.n};
-      log(s.n+'! '+s.d(L),'r4','skill');playSkillFx(s.id,null,s.col);skillNameFloat(s.n)}}
   let tx=0,tz=Z1-1.5,reach=1.4;
   // v83: an empty field is only rebuilt when there are no camps to rebuild it (a fresh map, the boss
   // arena, or the walk back after a defeat). A camp field refills itself below instead - the field the
@@ -4926,19 +5224,19 @@ function update(dt){
       const ms=1.9+.25*m.size,wake=m.pack===activePack&&(isBoss()||Math.hypot(pl.x-m.x,pl.z-m.z)<AGGRO),stn=m.stun>0;
       // An idle monster drifts around its own anchor instead of standing frozen on it - that is most
       // of what makes a stocked field read as alive.
-      if(!wake&&!stn&&!m.fixed&&m.hx!=null){
+      if(!wake&&!stn&&!m.root&&!m.fixed&&m.hx!=null){
         m.wt=(m.wt||0)-dt;
         if(m.wt<=0){m.wt=rnd(2,5);m.wx=cl(m.hx+rnd(-1.6,1.6),-BX_+.6,BX_-.6);m.wz=cl(m.hz+rnd(-1.6,1.6),Z0+.6,Z1-.6)}
         const wx=m.wx==null?m.hx:m.wx,wz=m.wz==null?m.hz:m.wz,dx3=wx-m.x,dz3=wz-m.z,dd=Math.hypot(dx3,dz3);
         m.run=dd>.15;if(dd>.05){const v=Math.min(dd,dt*.7);m.x+=dx3/dd*v;m.z+=dz3/dd*v}
       }else{
         const gx2=wake?pl.x+Math.cos(m.a)*ms:m.hx,gz2=wake?pl.z+Math.sin(m.a)*ms*.6:m.hz;
-        const ex=gx2-m.x,ez=gz2-m.z,ed=Math.hypot(ex,ez);m.run=ed>.12&&!stn;
-        if(ed>.1&&!stn&&!m.fixed){const v=Math.min(ed,dt*(m.boss?1.2:1.6)*(wake?1:.55));m.x+=ex/ed*v;m.z+=ez/ed*v}
+        const ex=gx2-m.x,ez=gz2-m.z,ed=Math.hypot(ex,ez);m.run=ed>.12&&!stn&&!m.root;
+        if(ed>.1&&!stn&&!m.root&&!m.fixed){const v=Math.min(ed,dt*(m.boss?1.2:1.6)*(wake?1:.55)*(1-(m.slow?m.slow.power:0)));m.x+=ex/ed*v;m.z+=ez/ed*v}
       }
       m.x=cl(m.x,-BX_,BX_);m.z=cl(m.z,Z0,Z1);m.ry=Math.atan2(pl.z-m.z,m.x-pl.x);
       if(wake&&Math.hypot(pl.x-m.x,pl.z-m.z)<=ms+.4&&!stn){m.at-=dt;if(m.at<=0){m.at=m.boss?1.2:1.5;
-        if(Math.random()*100<Math.max(5,flee()-mhOf(m)))addFloat(pl.x,2.4,pl.z,'DODGE','#76eaff',false,'evade');
+        if(Math.random()*100<Math.max(5,flee()-mhOf(m))+(m.blind?m.blind.power*100:0)+skillBonus('block'))addFloat(pl.x,2.4,pl.z,'DODGE','#76eaff',false,'evade');
         // Incoming damage: a capped percentage cut, not a flat subtraction. The old line took
         // def*0.6 off every hit with a floor of 1, so a geared character took exactly 1 damage
         // from every monster and every boss in the game. v87 (owner: buff the mobs, not the
@@ -4949,7 +5247,7 @@ function update(dt){
         // the v86 caps did, and tanks stacking DEF past 12k now have a reason to dodge.
         // Pinned by combat_damage_sim.js (this is a game-loop line, not a constant).
         else{const raw=m.mag?mdef():def(),md=raw*(1-prOf(m)),cut=Math.min(.75,md/(md+4000));
-          const d=Math.max(1,Math.round(m.atk*rnd(.8,1.2)*(1-cut)*(1-petPassive('dr')/100)));S.hp-=d;hitAnim=1;m.atkAnim=1;damageFloat(pl.x,heroDamageY(),pl.z,d,false,true);
+          const d=Math.max(1,Math.round(m.atk*rnd(.8,1.2)*(1-cut)*(1-petPassive('dr')/100)*(1-Math.min(.25,skillBonus('guard')/100))));S.hp-=d;skillState().counter=2;hitAnim=1;m.atkAnim=1;damageFloat(pl.x,heroDamageY(),pl.z,d,false,true);
           // Defeat is the ONE thing that puts you back at the spawn point.
 if(S.hp<=0){log('You were defeated... knocked back to the entrance.','r0','kills');S.hp=maxHp();S.kl=0;mobs=[];mob=null;camps=[];engageTgt=null;respawn=1.5;tb={};
           pl.x=0;pl.z=Z1-1.5;pl.wt=0;ui();return}}}}
@@ -4964,7 +5262,9 @@ if(S.hp<=0){log('You were defeated... knocked back to the entrance.','r0','kills
     }
     if(!mob||!mobs.includes(mob)||mob.pack!==activePack)mob=mobs.find(m=>m.boss)||packMob();
     if(mob){reach=heroStandoff(mob);
-      const dist=Math.hypot(mob.x-pl.x,mob.z-pl.z)||.01;
+      let dist=Math.hypot(mob.x-pl.x,mob.z-pl.z)||.01;
+      if(!swing&&pAtkT<=0&&dist>2.3&&SKILLS.some(s=>s.dash&&skillOn(s.id)&&(skCd[s.id]||0)<=0&&dist<=s.dash+.6))playerAttack();
+      if(dist>reach+.6&&SKILLS.some(s=>s.dash&&skillOn(s.id)&&(skCd[s.id]||0)<=0))pAtkT=Math.max(0,pAtkT-dt);
       // v83.1 (owner): HOLD means hold, and the hero has to be latched into the fight to do it. The
       // walk target used to be a ring AROUND the monster, recomputed from its position every frame:
       // as the monster closed in, the hero re-walked out to the ring and retreated for as long as the
@@ -5000,7 +5300,7 @@ if(S.hp<=0){log('You were defeated... knocked back to the entrance.','r0','kills
     const ex=(o?o.x+(i-1)*.8:pl.x-1.2)-r.x,ez=(o?o.z+1.2:pl.z+(i-1)*1.1)-r.z,ed=Math.hypot(ex,ez);r.run=ed>.2;
     if(ed>.05){const v=Math.min(ed,6*dt);r.x+=ex/ed*v;r.z+=ez/ed*v}r.x=cl(r.x,-BX_,BX_);r.z=cl(r.z,Z0-1,Z1+1);r.lunge=Math.max(0,(r.lunge||0)-dt*4);
     if(o&&bd<2.4){r.at-=dt;if(r.at<=0){r.at=petInt(p);r.lunge=1;petHit(p,o)}}}
-  const px=tx-pl.x,pz=tz-pl.z,pd=Math.hypot(px,pz),spd=moveSpd();
+  const px=tx-pl.x,pz=tz-pl.z,pd=Math.hypot(px,pz),spd=moveSpd()*(1+Math.min(25,skillBonus('move'))/100);
   // v77: in the arena the character stands still on purpose - the dummy and the player both stay
   // put, so the three minutes measure damage and nothing else.
   pl.run=pd>.15&&!TRIAL.on;
@@ -7514,7 +7814,7 @@ function skillFxSpriteUv(p,frame,ang){
 
 function makeSkillFxNode(fx){
   fx.group=new THREE.Group();fx.parts=[];
-  const recipe=SKILL_FX_SPR[fx.id]||SKILL_FX_SPR[fx.kind];
+  const recipe=(!(SKILL_VFX[fx.id]&&SKILL_VFX[fx.id].redesigned)&&SKILL_FX_SPR[fx.id])||SKILL_FX_SPR[fx.kind];
   if(recipe&&skillFxCanSprite()){let made=0;for(const L of recipe)if(skillFxSpritePart(fx,L))made++;
     if(made){scene.add(fx.group);return}}
   const c=fx.color||'#fff',soft='#ffffff',gold='#ffe18b',cool='#b8f3ff';

@@ -236,7 +236,7 @@ t('the dummy never dies, never swings, and never moves', () => {
   assert.ok(src.includes("'Lord of Death':1373"), '1373 is already in the official mob-sprite map');
   assert.strictEqual(d.drops.length, 0, 'and it drops nothing - the rewards are the Shards');
   assert.strictEqual(A.mobs.length, 1, 'it is the only thing in the arena');
-  assert.ok(src.includes('if(ed>.1&&!stn&&!m.fixed)'), 'the AI skips a fixed mob');
+  assert.ok(src.includes('if(ed>.1&&!stn&&!m.root&&!m.fixed)'), 'the AI skips a fixed mob');
   assert.ok(src.includes('pl.run=pd>.15&&!TRIAL.on;') && src.includes('if(pd>.05&&!TRIAL.on)'),
     'and the character holds position for the whole run (owner: the dummy and the character stay in place)');
 });

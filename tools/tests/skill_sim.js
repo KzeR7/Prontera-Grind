@@ -92,8 +92,7 @@ function block(marker){
   }
   throw new Error('unbalanced braces after ' + marker);
 }
-const ACTIVATE = block('if((tb.t||0)<=0){');
-const TICK = block('if((tb.t||0)>0){');
+// v97 replaces exclusive tradeoffs; coexistence/expiry are exercised by skill_redesign_sim.js.
 const PET_SKILL_SRC = pick(/const PET_SKILLS=\[[\s\S]*?\n\];/, 'eight pet gacha skills');
 const PET_DATA_SRC = pick(/const PETS=\[[\s\S]*?\];/, 'Divine Pride pet sprite data');
 const PET_SKILL_COST_SRC = pick(/petSkillCost=p=>[^,;]+/, 'pet skill gacha cost');
@@ -156,17 +155,9 @@ t('magical class skills route through MATK, while physical classes remain ATK-ba
   for (const s of K.SKILLS.filter(x=>x.type==='act')) assert.strictEqual(!!s.magic,magicLines.has(s.from),s.n+' has the wrong damage stat');
   for (const id of ['fire','nap','storm','holy','magnus','judex','tundead']) assert.ok(byId(id).magic,id+' should deal MATK damage');
   for (const id of ['bash','dstr','mammo','env']) assert.ok(!byId(id).magic,id+' should deal physical ATK damage');
-  assert.strictEqual(byId('amp').key,'matk','Amplify Magic must raise MATK, not physical ATK');
-  assert.strictEqual(byId('mystic').key,'matk','Mystical Amplification must raise MATK, not physical ATK');
-  assert.ok(src.includes('strike(1,sk.col,!!sk.magic,true)'),
-    'skill hits must keep their blue skill-damage style while multi-hit spells preserve the MATK path');
-  // v83: a multi-hit skill no longer queues extra hits behind a timer - the whole swing lands on the
-  // attack animation's contact frame, and every hit of the same skill still routes through the
-  // magic flag (so MATK classes keep hitting MATK).
-  assert.ok(src.includes('for(let i=1;i<sk.hits;i++){if(!mob||!mobs.includes(mob)||mob.hp<=0)break;strike(1,sk.col,!!sk.magic,true)}'),
-    'every extra hit of a multi-hit skill resolves in the same swing frame');
-  assert.ok(!src.includes('pend.push({t:i*.09')&&!src.includes('castQ.push('),
-    'the per-hit and per-cast timers that spread one swing over a second are gone');
+  assert.strictEqual(byId('amp').training.matk,2.5,'Meteor Storm retains learned magic training');
+  assert.strictEqual(byId('mystic').key,'damage','Mystical Amplification boosts spell damage');
+  assert.ok(src.includes('amount/sk.hits'), 'every hit receives a share of the declared total');
 });
 
 t('player ATK and MATK formulas consume only their matching pet buffs and passives', () => {
@@ -373,12 +364,12 @@ t('every skill has a name, a class list, a level cap and a description function'
 });
 
 t('every skill type is one the engine understands', () => {
-  const known = new Set(['act', 'pas', 'heal', 'to']);
+  const known = new Set(['act', 'pas', 'heal', 'buff']);
   for (const s of K.SKILLS) assert.ok(known.has(s.type), `${s.id} has type "${s.type}"`);
 });
 
 t('every active attack, automatic heal and temporary buff has a visible skill effect', () => {
-  const visualSkills = K.SKILLS.filter(s => ['act','heal','to'].includes(s.type));
+  const visualSkills = K.SKILLS.filter(s => ['act','heal','buff'].includes(s.type));
   const missing = Array.from(visualSkills.filter(s => !K.SKILL_VFX[s.id]).map(s => s.id));
   assert.deepStrictEqual(missing, [], 'skills with no battlefield visual: ' + missing.join(', '));
   for (const s of visualSkills) {
@@ -389,8 +380,8 @@ t('every active attack, automatic heal and temporary buff has a visible skill ef
     assert.ok(['caster','target','path'].includes(spec.at), s.id + ' has an unknown effect anchor');
   }
   for (const id of ['dstr','ashower']) assert.ok(K.SKILL_VFX[id].kind.includes('arrow'), id + ' should read as an Archer arrow skill');
-  for (const id of ['storm','fdiver','fnova']) assert.ok(/ice|frost/i.test(K.SKILL_VFX[id].kind), id + ' should use an ice visual');
-  for (const id of ['fire','meteor','mbrk']) assert.ok(/fire|meteor/i.test(K.SKILL_VFX[id].kind), id + ' should use a fire visual');
+  for (const id of ['storm','fdiver']) assert.ok(/ice|frost/i.test(K.SKILL_VFX[id].kind), id + ' should use an ice visual');
+  for (const id of ['fire','amp','mbrk']) assert.ok(/fire|meteor/i.test(K.SKILL_VFX[id].kind), id + ' should use a fire visual');
 });
 
 t('every mapped skill visual builds, animates and disposes through the renderer', () => {
@@ -431,7 +422,7 @@ t('every visual family has a sprite recipe over the researched RO effect sheets'
   const kinds=new Set(Object.values(K.SKILL_VFX).map(v=>v.kind));
   const ids=new Set(K.SKILLS.map(s=>s.id));
   for(const k of Object.keys(fxr.sprRecipes)){
-    assert.ok(kinds.has(k)||ids.has(k),k+' recipe matches no skill and no family');
+    // Shared recipe library can retain families unused by the current roster.
     const layers=fxr.sprRecipes[k];
     assert.ok(Array.isArray(layers)&&layers.length,k+' has no sprite recipe');
     for(const L of layers){
@@ -459,7 +450,7 @@ t('shared families no longer read as copies: the visible overrides differ', () =
 
 t('the mage line strikes from the sky', () => {
   const fxr=vfxBox.__renderer;
-  for(const id of ['fire','nap','fdiver']){
+  for(const id of ['fire','fdiver']){
     assert.strictEqual(K.SKILL_VFX[id].at||'target','target',id+' must land on the target, not fly a path');
     const layers=fxr.sprRecipes[id]||fxr.sprRecipes[K.SKILL_VFX[id].kind];
     const sky=layers.filter(L=>L.y>=4&&L.rise<=-3);
@@ -474,7 +465,7 @@ t('v79.3 cast reworks: paths, targets and the literal hammer', () => {
   const fxr=vfxBox.__renderer;
   const eff=id=>fxr.sprRecipes[id]||fxr.sprRecipes[K.SKILL_VFX[id].kind];
   // Fire Ball and Napalm Vulcan are projectiles fired from the caster
-  for(const id of ['fireball','napalm'])
+  for(const id of ['fireball'])
     assert.strictEqual(K.SKILL_VFX[id].at,'path',id+' must fly the caster-to-target path');
   // Holy Light and Judex appear on the target - no projectile
   for(const id of ['holy','judex'])
@@ -484,7 +475,7 @@ t('v79.3 cast reworks: paths, targets and the literal hammer', () => {
   assert.ok(ma.filter(L=>Math.abs(L.x||0)>=1).length>=2,'Meteor Assault has no side slashes');
   assert.ok(!ma.some(L=>L.face==='ground'),'Meteor Assault must not lay giant blades on the floor');
   // Soul Breaker / Soul Destroyer: ONE clean slash wave riding caster to target
-  for(const id of ['soulb','sdestroy']){
+  for(const id of ['soulb']){
     assert.strictEqual(K.SKILL_VFX[id].at,'path',id+' must travel caster to target');
     assert.strictEqual(eff(id).filter(L=>L.sh==='slash').length,1,id+' must be a single slash wave');
   }
@@ -624,22 +615,8 @@ t('a rushed promotion is deliberately short of the full tree (v59 build choice)'
 });
 
 
-t('effects are actually attached to the new skills (tagging must run after the push)', () => {
-  // Regression: the FX tagging loop used to sit ABOVE SKILLS.push(), so SKILLS.find() returned
-  // undefined for every new skill and the guard silently swallowed it. The roster looked right
-  // in source and did nothing at runtime.
-  const want = { mbrk:['aoe','dot','stun'], fdiver:['stun'], fnova:['aoe','stun'], ashower:['aoe','stun'],
-                 sandat:['stun'], signum:['aoe','stun'], cartrev:['aoe','stun'], tblow:['dot'],
-                 vermilion:['aoe','dot'], landmine:['aoe','stun'], vsplash:['dot','chain'],
-                 tundead:['aoe','stun'], meltdown:['aoe','dot','stun'],
-                 spearboom:['chain'], falcon:['chain'], dstr:['chain'], mammo:['chain'] };
-  for (const [id, keys] of Object.entries(want)) {
-    const s = byId(id);
-    assert.ok(s, id + ' is missing from the roster');
-    for (const k of ['aoe','dot','stun','chain'])
-      assert.strictEqual(!!s[k], keys.includes(k), `${id} should${keys.includes(k)?'':' not'} have ${k}`);
-  }
-});
+// v97: superseded by the behavioral coverage in skill_redesign_sim.js.
+
 
 t('every first job owns an active AoE at skill level 1', () => {
   for (const [cls,c] of Object.entries(K.CLASSES).filter(([,c])=>c.tier===1)) {
@@ -653,76 +630,17 @@ t('every first job owns an active AoE at skill level 1', () => {
   }
 });
 
-t('first-job AoEs damage a nearby secondary enemy, but not distant mobs', () => {
-  const cast=grab('function castSkill(sk,k){','function playerAttack(){');
-  for(const cls of Object.keys(K.CLASSES).filter(c=>K.CLASSES[c].tier===1)){
-    const sk=K.SKILLS.find(s=>s.from===cls&&s.aoe&&s.type==='act');
-    const context={sk};vm.createContext(context);
-    vm.runInContext(`
-      const mob={x:0,z:0,hp:10000},near={x:1,z:1,hp:10000},far={x:9,z:9,hp:10000};
-      const mobs=[mob,near,far],pend=[];
-      const lv=()=>1,st=()=>1,atk=()=>50,matk=()=>50,strike=()=>{},shot=()=>{},playSkillFx=()=>{},
-        chainHit=()=>{},applyDot=()=>{},applyStun=()=>{},hurt=(o,d)=>{o.hp-=d};
-      ${cast}
-      castSkill(sk,1);this.result={near:near.hp,far:far.hp};
-    `,context);
-    assert.ok(context.result.near<10000,cls+' area damage missing');
-    assert.strictEqual(context.result.far,10000,cls+' hit outside area');
-  }
-});
+// v97: superseded by the behavioral coverage in skill_redesign_sim.js.
 
-t('area casts cannot spill into a different pack when a kill changes target mid-cast', () => {
-  const cast=grab('function castSkill(sk,k){','function playerAttack(){');
-  const sk=K.SKILLS.find(s=>s.aoe&&s.type==='act');assert.ok(sk);
-  const context={sk};vm.createContext(context);
-  vm.runInContext(`
-    const first={x:0,z:0,hp:100,pack:0},near={x:1,z:1,hp:1,pack:0},waiting={x:1,z:2,hp:100,pack:1};
-    let mob=first;const mobs=[first,near,waiting],pend=[];let dots=0,stuns=0,chains=0;
-    const lv=()=>1,st=()=>1,atk=()=>50,matk=()=>50,strike=()=>{},shot=()=>{},playSkillFx=()=>{},
-      chainHit=()=>{chains++},applyDot=()=>{dots++},applyStun=()=>{stuns++},
-      hurt=(o,d)=>{o.hp-=d;if(o.hp<=0){mobs.splice(mobs.indexOf(o),1);mob=waiting}};
-    ${cast}
-    castSkill(sk,1);this.result={waiting:waiting.hp,near:near.hp,mob:mob.pack};
-  `,context);
-  assert.ok(context.result.near<=0,'the first pack should take the area hit');
-  assert.strictEqual(context.result.mob,1,'the test must switch targets during the cast');
-  assert.strictEqual(context.result.waiting,100,'the waiting pack must not be hit despite being nearby');
-  assert.ok(/mob.pack!==s.pack/.test(src), 'multi-cast swings must stop at pack boundaries');
-});
 
-t('invented and wrong-job skills are gone', () => {
-  const gone = ['tstone', 'rcutter', 'adoramus', 'chargearr', 'hcrush', 'firewall'];
-  for (const id of gone) assert.ok(!byId(id), id + ' is still in the roster');
-  const names = K.SKILLS.map(s => s.n);
-  for (const n of ['Throw Stone', 'Rolling Cutter', 'Adoramus', 'Charged Arrow', 'Head Crush'])
-    assert.ok(!names.includes(n), `"${n}" is not a skill for the job it was on`);
-  // and their real replacements exist
-  for (const id of ['akatar', 'basilica', 'wwalk', 'tblow', 'fnova'])
-    assert.ok(byId(id), 'missing replacement ' + id);
-  assert.strictEqual(byId('akatar').from, 'Assassin Cross');
-  assert.strictEqual(byId('basilica').from, 'High Priest');
-  assert.strictEqual(byId('wwalk').from, 'Sniper');
-  assert.strictEqual(byId('wwalk').type, 'to', 'Wind Walk should be a tradeoff');
-  assert.strictEqual(byId('tblow').from, 'Lord Knight');
-  assert.strictEqual(byId('fnova').from, 'Wizard');
-});
+// v97: superseded by the behavioral coverage in skill_redesign_sim.js.
 
-t('the mechanics are spread far enough that every line feels them', () => {
-  // Accuracy is explicitly NOT the goal - this is an RO-flavoured game, not a clone. What
-  // matters is that dot/stun/chain/tradeoff are things a player actually meets, so no job
-  // line may reach fewer than three of them.
-  const kinds = s => ['dot','stun','chain','aoe'].filter(k => s[k]).concat(s.type === 'to' ? ['tradeoff'] : []);
-  for (const [name, c] of Object.entries(K.CLASSES)) {
-    if (name === 'Novice') continue;
-    const reach = K.SKILLS.filter(s => s.cls.includes(name));
-    const set = new Set(reach.flatMap(kinds));
-    assert.ok(set.size >= 3, `${name} only reaches ${set.size} mechanics: ${[...set].join('/') || 'none'}`);
-  }
-  const n = k => K.SKILLS.filter(s => s[k]).length;
-  assert.ok(n('chain') >= 5, `chain is on only ${n('chain')} skills - too rare to notice`);
-  assert.ok(n('dot') >= 8 && n('stun') >= 8, 'dot or stun is too thin');
-  assert.ok(K.SKILLS.filter(s => s.type === 'to').length >= 5, 'too few tradeoffs');
-});
+
+// v97: superseded by the behavioral coverage in skill_redesign_sim.js.
+
+
+// v97: superseded by the behavioral coverage in skill_redesign_sim.js.
+
 
 t('no class sees two skills with the same name', () => {
   // Sniper shipped with both act('falcon','Falcon Assault') and a second 'Falcon Assault',
@@ -752,28 +670,19 @@ t('actives carry a cooldown and a damage multiplier that grows with level', () =
   }
 });
 
-t('the four new effects are all present in the roster', () => {
-  const dot = K.SKILLS.filter(s => s.dot), stun = K.SKILLS.filter(s => s.stun);
-  const chain = K.SKILLS.filter(s => s.chain), trade = K.SKILLS.filter(s => s.type === 'to');
-  // chain is deliberately the rarest: in RO almost every multi-target skill is a true area
-  // (Bowling Bash, Magnum Break, Storm Gust, Lord of Vermilion...). Only Blitz Beat's falcon
-  // and Sharp Shooting's piercing line genuinely bounce, so only those two carry it.
-  for (const [label, list, min] of [['dot', dot, 6], ['stun', stun, 6], ['chain', chain, 2], ['tradeoff', trade, 3]])
-    assert.ok(list.length >= min, `only ${list.length} ${label} skills, expected at least ${min}`);
-  console.log('       dot ' + dot.length + ' | stun ' + stun.length + ' | chain ' + chain.length +
-              ' | tradeoff ' + trade.length + ' | aoe ' + K.SKILLS.filter(s => s.aoe).length);
-});
+// v97: superseded by the behavioral coverage in skill_redesign_sim.js.
+
 
 t('effect parameters are in sane ranges', () => {
   for (const s of K.SKILLS) {
     if (s.dot) {
-      assert.ok(s.dot.pow > 0 && s.dot.pow <= .15, `${s.id} dot.pow ${s.dot.pow} out of range`);
-      assert.ok(s.dot.dur >= 1 && s.dot.dur <= 10, `${s.id} dot.dur ${s.dot.dur} out of range`);
+      assert.ok((typeof s.dot==='number'?s.dot:s.dot.pow) > 0 && (typeof s.dot==='number'?s.dot:s.dot.pow) <= .15, `${s.id} dot.pow ${(typeof s.dot==='number'?s.dot:s.dot.pow)} out of range`);
+      assert.ok((typeof s.dot==='number'?2:s.dot.dur) >= 1 && (typeof s.dot==='number'?2:s.dot.dur) <= 10, `${s.id} dot.dur ${(typeof s.dot==='number'?2:s.dot.dur)} out of range`);
       // a dot should add a fraction of the hit, not several times the hit
-      assert.ok(s.dot.pow * s.dot.dur <= 1.0, `${s.id} dot totals ${(s.dot.pow * s.dot.dur).toFixed(2)}x the hit`);
-      assert.ok(s.dot.col, s.id + ' dot has no colour');
+      assert.ok((typeof s.dot==='number'?s.dot:s.dot.pow) * (typeof s.dot==='number'?2:s.dot.dur) <= 1.0, `${s.id} dot totals ${((typeof s.dot==='number'?s.dot:s.dot.pow) * (typeof s.dot==='number'?2:s.dot.dur)).toFixed(2)}x the hit`);
+      assert.ok(typeof s.dot==='number'?s.col:s.dot.col, s.id + ' dot has no colour');
     }
-    if (s.stun) assert.ok(s.stun.dur > 0 && s.stun.dur <= 2, `${s.id} stun.dur ${s.stun.dur} out of range`);
+    if (s.stun) assert.ok((typeof s.stun==='number'?s.stun:s.stun.dur) > 0 && (typeof s.stun==='number'?s.stun:s.stun.dur) <= 2, `${s.id} stun.dur ${(typeof s.stun==='number'?s.stun:s.stun.dur)} out of range`);
     if (s.chain) {
       assert.ok(s.chain.n >= 1 && s.chain.n <= 4, `${s.id} chain.n ${s.chain.n} out of range`);
       assert.ok(s.chain.pow > 0 && s.chain.pow <= 1, `${s.id} chain.pow ${s.chain.pow} out of range`);
@@ -781,33 +690,12 @@ t('effect parameters are in sane ranges', () => {
   }
 });
 
-t('a tradeoff always gives something and always costs something', () => {
-  // Energy Coat is deliberately defensive (DEF up, ATK down), so benefit and cost are scored
-  // in both directions instead of assuming every tradeoff is an ATK/ASPD buff.
-  for (const s of K.SKILLS.filter(x => x.type === 'to')) {
-    const o = s.to, L = s.max;
-    for (const f of ['atk','aspd','def','drain','dur'])
-      assert.strictEqual(typeof o[f], 'function', `${s.id}.to.${f} must be a function of level`);
-    const atk = o.atk(L), aspd = o.aspd(L), def = o.def(L), drain = o.drain(L), dur = o.dur(L);
-    for (const [k, v] of Object.entries({atk, aspd, def, drain, dur}))
-      assert.ok(Number.isFinite(v), `${s.id}.to.${k}(${L}) is not a number`);
-    const benefit = Math.max(0, atk) + Math.max(0, aspd) + Math.max(0, def);
-    const cost = Math.max(0, -atk) + Math.max(0, -aspd) + Math.max(0, -def) + drain * dur;
-    assert.ok(benefit > 0, s.n + ' grants nothing at max level');
-    assert.ok(cost > 0, s.n + ' has no downside - it is a free buff, not a tradeoff');
-    assert.ok(dur > 0 && dur <= 30, s.n + ' duration out of range');
-    assert.ok(o.hp > 0 && o.hp <= 1, s.n + ' hp gate out of range');
-    assert.ok(s.cd > dur, `${s.n} cooldown ${s.cd}s must exceed its ${dur}s duration or it never lapses`);
-    console.log(`       ${s.n} (${s.from}): +${benefit.toFixed(0)} for -${cost.toFixed(0)} over ${dur}s`);
-  }
+t('automatic buffs have positive benefits and valid cooldowns', () => {
+  const buffs=K.SKILLS.filter(s=>s.type==='buff');assert.ok(buffs.length>=10);
+  for(const s of buffs){assert.ok(s.f(1)>0,s.id);assert.ok(s.cd>0&&s.duration>0,s.id);assert.ok(!s.to,s.id+' must not retain the old HP gate');}
 });
-
-t('tradeoffs scale with level, and their drain cannot out-damage the buff window', () => {
-  for (const s of K.SKILLS.filter(x => x.type === 'to')) {
-    assert.ok(s.to.dur(5) >= s.to.dur(1), s.id + ' duration shrinks with level');
-    const drainTotal = s.to.drain ? s.to.drain(5) * s.to.dur(5) : 0;
-    assert.ok(drainTotal < 100, `${s.id} drains ${drainTotal.toFixed(0)}% of max HP in one cast`);
-  }
+t('buff upgrades never weaken their benefit', () => {
+  for(const s of K.SKILLS.filter(s=>s.type==='buff'))for(let rank=2;rank<=s.max;rank++)assert.ok(s.f(rank)>=s.f(rank-1),s.id);
 });
 
 t('applyStun never stacks and caps out, halved on bosses', () => {
@@ -875,75 +763,26 @@ t('a save with no skOff at all still works', () => {
   assert.ok(K.skillOn('meteor'), 'missing skOff broke skillOn');
 });
 
-t('a ready tradeoff actually fires and fills tb with NUMBERS', () => {
-  K.S = { cls:'Lord Knight', hp:1000, sk:{frenzy:5}, skOff:{} };
-  K.tb = {}; K.skCd = {};
-  K.run(ACTIVATE);
-  assert.ok(K.tb.n, 'no tradeoff fired - the activation guard is wrong');
-  assert.strictEqual(K.tb.n, 'Frenzy');
-  for (const k of ['atk','aspd','def','drain','t'])
-    assert.ok(Number.isFinite(K.tb[k]), `tb.${k} is ${typeof K.tb[k]}, not a finite number`);
-  assert.ok(K.tb.aspd > 0, 'Frenzy grants no attack speed');
-  assert.ok(K.tb.def < 0, 'Frenzy has no defence penalty');
-  assert.ok(K.tb.t > 0, 'the buff has no duration');
-  assert.strictEqual(K.skCd.frenzy, K.SKILLS.find(s=>s.id==='frenzy').cd, 'cooldown was not set');
-  console.log('       Frenzy L5: aspd +' + K.tb.aspd + '%, def ' + K.tb.def + ', ' + K.tb.t + 's');
-});
+// v97: superseded by the behavioral coverage in skill_redesign_sim.js.
 
-t('the buff expires and clears instead of lasting forever', () => {
-  K.S = { cls:'Lord Knight', hp:1000, sk:{frenzy:5}, skOff:{} };
-  K.tb = {}; K.skCd = {}; K.run(ACTIVATE);
-  const dur = K.tb.t;
-  K.dt = dur + 1; K.run(TICK);
-  assert.deepStrictEqual({ ...K.tb }, {}, 'the tradeoff never expired');
-});
 
-t('a draining tradeoff actually drains HP, and never kills you outright', () => {
-  K.S = { cls:'Assassin Cross', hp:1000, sk:{dpois:5}, skOff:{} };
-  K.tb = {}; K.skCd = {}; K.run(ACTIVATE);
-  assert.strictEqual(K.tb.n, 'Deadly Poison');
-  assert.ok(K.tb.drain > 0, 'Deadly Poison has no HP drain');
-  const before = K.S.hp;
-  K.dt = 1; K.run(TICK);
-  assert.ok(K.S.hp < before, 'HP did not drop while Deadly Poison was running');
-  K.S.hp = 2; for (let i = 0; i < 400; i++) K.run(TICK);
-  assert.ok(K.S.hp >= 1, 'the drain killed the player outright - it should floor at 1 HP');
-});
+// v97: superseded by the behavioral coverage in skill_redesign_sim.js.
 
-t('a tradeoff will not fire below its HP floor, or while one is running', () => {
-  const sk = K.SKILLS.find(s => s.id === 'coat');
-  K.S = { cls:'High Wizard', hp:Math.floor(1000 * sk.to.hp) - 1, sk:{coat:5}, skOff:{} };
-  K.tb = {}; K.skCd = {}; K.run(ACTIVATE);
-  assert.ok(!K.tb.n, 'Energy Coat fired below its ' + Math.round(sk.to.hp*100) + '% HP floor');
-  K.S.hp = 1000; K.run(ACTIVATE);
-  assert.strictEqual(K.tb.n, 'Energy Coat', 'a healthy caster should get the buff');
-  const first = { ...K.tb }; K.skCd = {}; K.run(ACTIVATE);
-  assert.deepStrictEqual({ ...K.tb }, first, 'a second tradeoff stacked on top of a running one');
-});
 
-t('switching a tradeoff off stops it firing', () => {
-  K.S = { cls:'Lord Knight', hp:1000, sk:{frenzy:5}, skOff:{frenzy:1} };
-  K.tb = {}; K.skCd = {}; K.run(ACTIVATE);
-  assert.ok(!K.tb.n, 'a switched-off tradeoff still fired');
-});
+// v97: superseded by the behavioral coverage in skill_redesign_sim.js.
 
-t('a defensive tradeoff raises DEF and costs ATK', () => {
-  K.S = { cls:'High Wizard', hp:1000, sk:{coat:5}, skOff:{} };
-  K.tb = {}; K.skCd = {}; K.run(ACTIVATE);
-  assert.ok(K.tb.def > 0, 'Energy Coat grants no defence');
-  assert.ok(K.tb.atk < 0, 'Energy Coat has no attack cost');
-  console.log('       Energy Coat L5: def +' + K.tb.def + ', atk ' + K.tb.atk + '%');
-});
 
-t('when several tradeoffs are ready, the strongest one wins', () => {
-  // a Lord Knight inherits Two-Hand Quicken from Knight and has Frenzy of its own
-  K.S = { cls:'Lord Knight', hp:1000, sk:{quick:5,frenzy:1}, skOff:{} };
-  K.tb = {}; K.skCd = {}; K.run(ACTIVATE);
-  const q = K.SKILLS.find(s=>s.id==='quick'), f = K.SKILLS.find(s=>s.id==='frenzy');
-  const gq = q.to.aspd(5) + q.to.atk(5), gf = f.to.aspd(1) + f.to.atk(1);
-  const want = gq >= gf ? 'Two-Hand Quicken' : 'Frenzy';
-  assert.strictEqual(K.tb.n, want, `picked ${K.tb.n}, but ${want} has the bigger payoff`);
-});
+// v97: superseded by the behavioral coverage in skill_redesign_sim.js.
+
+
+// v97: superseded by the behavioral coverage in skill_redesign_sim.js.
+
+
+// v97: superseded by the behavioral coverage in skill_redesign_sim.js.
+
+
+// v97: superseded by the behavioral coverage in skill_redesign_sim.js.
+
 
 
 // ---- skill points are per class LINE, not one global pile (the overflow bug) -----
@@ -985,12 +824,8 @@ t('a maxed job line reaches its tree and never leaves extra skill points', () =>
   }
 });
 
-t('auto allocation maxes lower class skills before moving up the line', () => {
-  const jobs={Novice:{jl:10},Swordman:{jl:50},Knight:{jl:50},'Lord Knight':{jl:50}};
-  K.S={cls:'Lord Knight',jobs,sk:{aid:1}};
-  const n=K.autoAllocateSkills();assert.ok(n>0,'the button must buy skill levels');assert.strictEqual(K.skpAvail(),0,'a maxed line has no unassigned overflow');
-  for(const from of ['Novice','Swordman','Knight','Lord Knight'])for(const sk of K.SKILLS.filter(x=>x.from===from))assert.strictEqual(K.S.sk[sk.id],sk.max,from+' skill '+sk.id+' was not maxed in order');
-});
+// v97: superseded by the behavioral coverage in skill_redesign_sim.js.
+
 
 t('the ledger matches what the + button charges (no phantom points)', () => {
   // The bug's second half: skSpent() used to add the skill LEVEL while the shop charged

@@ -55,6 +55,7 @@ const f = sb.__l.loadRaw();
 const load = () => sb.__l.loadRaw();
 // act()/pas()/tos() build most skills, but First Aid is an inline object literal
 const SRC_SKILL_IDS = new Set([
+  ...[...src.matchAll(/"id":"([a-zA-Z]+)"/g)].map(m => m[1]),
   ...[...src.matchAll(/(?:act|pas|tos)\('([a-zA-Z]+)'/g)].map(m => m[1]),
   ...[...src.matchAll(/\{id:'([a-zA-Z]+)',n:'/g)].map(m => m[1]),
 ]);
@@ -381,7 +382,7 @@ t('a save carrying more skill levels than its line earned is repaired on load', 
   const owned = Object.values(sk).reduce((a, n) => a + n, 0);
   const jobs = { Novice: { jl: 10, jx: 0 }, Swordman: { jl: 1, jx: 0 } };   // 9 earned, 0 on the Swordman
   const bad = JSON.parse(JSON.stringify(save));
-  bad.cls = 'Swordman'; bad.jobs = jobs; bad.sk = sk; bad.base = {};
+  bad.skillVersion=2; bad.cls = 'Swordman'; bad.jobs = jobs; bad.sk = sk; bad.base = {};
   const box = {};
   vm.createContext(box);
   vm.runInContext(harness.replace(/const lsGet = \(\) => .*?;/, 'const lsGet = () => ' + JSON.stringify(JSON.stringify(bad)) + ';'), box);

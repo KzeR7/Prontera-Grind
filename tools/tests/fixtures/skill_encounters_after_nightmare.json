@@ -1,0 +1,398 @@
+{
+  "sourceHash": "a251cffc5abeea9ab881fd471e99f36bf4c6aa8cd1f4dcdecb3a2bc982cca0e3",
+  "seconds": 180,
+  "rows": [
+    {
+      "cls": "High Wizard",
+      "weapon": "",
+      "pet": false,
+      "kills": 21,
+      "kph": 420,
+      "zeny": 25240,
+      "deaths": 0,
+      "bossStage": 15,
+      "bossWins": 0,
+      "bossAttempts": [
+        {
+          "seed": 789,
+          "seconds": 8.633333333333313,
+          "bossHp": 89341585,
+          "killed": false,
+          "defeated": true
+        },
+        {
+          "seed": 987,
+          "seconds": 8.69999999999998,
+          "bossHp": 89341585,
+          "killed": false,
+          "defeated": true
+        },
+        {
+          "seed": 1234,
+          "seconds": 9.999999999999975,
+          "bossHp": 89341585,
+          "killed": false,
+          "defeated": true
+        },
+        {
+          "seed": 2345,
+          "seconds": 9.699999999999976,
+          "bossHp": 89341585,
+          "killed": false,
+          "defeated": true
+        },
+        {
+          "seed": 3456,
+          "seconds": 9.899999999999975,
+          "bossHp": 89341585,
+          "killed": false,
+          "defeated": true
+        }
+      ],
+      "bossMedian": null
+    },
+    {
+      "cls": "High Wizard",
+      "weapon": "",
+      "pet": true,
+      "kills": 21,
+      "kph": 420,
+      "zeny": 30939,
+      "deaths": 0,
+      "bossStage": 15,
+      "bossWins": 0,
+      "bossAttempts": [
+        {
+          "seed": 789,
+          "seconds": 9.366666666666644,
+          "bossHp": 89341585,
+          "killed": false,
+          "defeated": true
+        },
+        {
+          "seed": 987,
+          "seconds": 8.533333333333314,
+          "bossHp": 89341585,
+          "killed": false,
+          "defeated": true
+        },
+        {
+          "seed": 1234,
+          "seconds": 8.933333333333312,
+          "bossHp": 89341585,
+          "killed": false,
+          "defeated": true
+        },
+        {
+          "seed": 2345,
+          "seconds": 10.766666666666639,
+          "bossHp": 89341585,
+          "killed": false,
+          "defeated": true
+        },
+        {
+          "seed": 3456,
+          "seconds": 8.433333333333314,
+          "bossHp": 89341585,
+          "killed": false,
+          "defeated": true
+        }
+      ],
+      "bossMedian": null
+    },
+    {
+      "cls": "Assassin Cross",
+      "weapon": "katar",
+      "pet": false,
+      "kills": 36,
+      "kph": 720,
+      "zeny": 61395,
+      "deaths": 0,
+      "bossStage": 15,
+      "bossWins": 0,
+      "bossAttempts": [
+        {
+          "seed": 789,
+          "seconds": 9.166666666666645,
+          "bossHp": 89341585,
+          "killed": false,
+          "defeated": true
+        },
+        {
+          "seed": 987,
+          "seconds": 8.633333333333313,
+          "bossHp": 89341585,
+          "killed": false,
+          "defeated": true
+        },
+        {
+          "seed": 1234,
+          "seconds": 8.79999999999998,
+          "bossHp": 89341585,
+          "killed": false,
+          "defeated": true
+        },
+        {
+          "seed": 2345,
+          "seconds": 9.799999999999976,
+          "bossHp": 89341585,
+          "killed": false,
+          "defeated": true
+        },
+        {
+          "seed": 3456,
+          "seconds": 9.499999999999977,
+          "bossHp": 89341585,
+          "killed": false,
+          "defeated": true
+        }
+      ],
+      "bossMedian": null
+    },
+    {
+      "cls": "Assassin Cross",
+      "weapon": "katar",
+      "pet": true,
+      "kills": 35,
+      "kph": 700,
+      "zeny": 67361,
+      "deaths": 0,
+      "bossStage": 15,
+      "bossWins": 0,
+      "bossAttempts": [
+        {
+          "seed": 789,
+          "seconds": 8.366666666666648,
+          "bossHp": 89341585,
+          "killed": false,
+          "defeated": true
+        },
+        {
+          "seed": 987,
+          "seconds": 10.966666666666638,
+          "bossHp": 89341585,
+          "killed": false,
+          "defeated": true
+        },
+        {
+          "seed": 1234,
+          "seconds": 8.39999999999998,
+          "bossHp": 89341585,
+          "killed": false,
+          "defeated": true
+        },
+        {
+          "seed": 2345,
+          "seconds": 7.433333333333317,
+          "bossHp": 89341585,
+          "killed": false,
+          "defeated": true
+        },
+        {
+          "seed": 3456,
+          "seconds": 8.299999999999981,
+          "bossHp": 89341585,
+          "killed": false,
+          "defeated": true
+        }
+      ],
+      "bossMedian": null
+    },
+    {
+      "cls": "Assassin Cross",
+      "weapon": "dagger",
+      "pet": false,
+      "kills": 59,
+      "kph": 1180,
+      "zeny": 91252,
+      "deaths": 0,
+      "bossStage": 15,
+      "bossWins": 0,
+      "bossAttempts": [
+        {
+          "seed": 789,
+          "seconds": 8.966666666666645,
+          "bossHp": 89341585,
+          "killed": false,
+          "defeated": true
+        },
+        {
+          "seed": 987,
+          "seconds": 7.5666666666666496,
+          "bossHp": 89341585,
+          "killed": false,
+          "defeated": true
+        },
+        {
+          "seed": 1234,
+          "seconds": 8.39999999999998,
+          "bossHp": 89341585,
+          "killed": false,
+          "defeated": true
+        },
+        {
+          "seed": 2345,
+          "seconds": 8.766666666666646,
+          "bossHp": 89341585,
+          "killed": false,
+          "defeated": true
+        },
+        {
+          "seed": 3456,
+          "seconds": 8.433333333333314,
+          "bossHp": 89341585,
+          "killed": false,
+          "defeated": true
+        }
+      ],
+      "bossMedian": null
+    },
+    {
+      "cls": "Assassin Cross",
+      "weapon": "dagger",
+      "pet": true,
+      "kills": 61,
+      "kph": 1220,
+      "zeny": 100154,
+      "deaths": 0,
+      "bossStage": 15,
+      "bossWins": 0,
+      "bossAttempts": [
+        {
+          "seed": 789,
+          "seconds": 7.633333333333316,
+          "bossHp": 89341585,
+          "killed": false,
+          "defeated": true
+        },
+        {
+          "seed": 987,
+          "seconds": 7.166666666666651,
+          "bossHp": 89341585,
+          "killed": false,
+          "defeated": true
+        },
+        {
+          "seed": 1234,
+          "seconds": 8.833333333333313,
+          "bossHp": 89341585,
+          "killed": false,
+          "defeated": true
+        },
+        {
+          "seed": 2345,
+          "seconds": 7.533333333333316,
+          "bossHp": 89341585,
+          "killed": false,
+          "defeated": true
+        },
+        {
+          "seed": 3456,
+          "seconds": 8.49999999999998,
+          "bossHp": 89341585,
+          "killed": false,
+          "defeated": true
+        }
+      ],
+      "bossMedian": null
+    },
+    {
+      "cls": "High Priest",
+      "weapon": "",
+      "pet": false,
+      "kills": 8,
+      "kph": 160,
+      "zeny": 11822,
+      "deaths": 0,
+      "bossStage": 15,
+      "bossWins": 0,
+      "bossAttempts": [
+        {
+          "seed": 789,
+          "seconds": 8.79999999999998,
+          "bossHp": 89341585,
+          "killed": false,
+          "defeated": true
+        },
+        {
+          "seed": 987,
+          "seconds": 9.133333333333312,
+          "bossHp": 89341585,
+          "killed": false,
+          "defeated": true
+        },
+        {
+          "seed": 1234,
+          "seconds": 12.566666666666633,
+          "bossHp": 89341585,
+          "killed": false,
+          "defeated": true
+        },
+        {
+          "seed": 2345,
+          "seconds": 9.666666666666643,
+          "bossHp": 89341585,
+          "killed": false,
+          "defeated": true
+        },
+        {
+          "seed": 3456,
+          "seconds": 11.266666666666637,
+          "bossHp": 89341585,
+          "killed": false,
+          "defeated": true
+        }
+      ],
+      "bossMedian": null
+    },
+    {
+      "cls": "High Priest",
+      "weapon": "",
+      "pet": true,
+      "kills": 8,
+      "kph": 160,
+      "zeny": 12790,
+      "deaths": 0,
+      "bossStage": 15,
+      "bossWins": 0,
+      "bossAttempts": [
+        {
+          "seed": 789,
+          "seconds": 9.499999999999977,
+          "bossHp": 89341585,
+          "killed": false,
+          "defeated": true
+        },
+        {
+          "seed": 987,
+          "seconds": 12.5333333333333,
+          "bossHp": 89341585,
+          "killed": false,
+          "defeated": true
+        },
+        {
+          "seed": 1234,
+          "seconds": 9.73333333333331,
+          "bossHp": 89341585,
+          "killed": false,
+          "defeated": true
+        },
+        {
+          "seed": 2345,
+          "seconds": 13.033333333333298,
+          "bossHp": 89341585,
+          "killed": false,
+          "defeated": true
+        },
+        {
+          "seed": 3456,
+          "seconds": 12.3333333333333,
+          "bossHp": 89341585,
+          "killed": false,
+          "defeated": true
+        }
+      ],
+      "bossMedian": null
+    }
+  ]
+}
