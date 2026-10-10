@@ -6462,3 +6462,26 @@ The owner's second pass over v77, six notes, all built.
 * **Tests:** all 49 suites under `tools/tests/` exit 0 (UI 64/64, panel layout 25/25). Browser check (headless Chromium, real `kill()` calls): the Logs tab was at y=743 before a kill and y=707 after it, and it moved again as lines faded. After the fix it stays at the same position on desktop (1440×900) and phone (390×844) through three kills and the 7-second fade. The filter row opens directly above the tab with no movement.
 * **Branches / PR:** working branch `arena/c7c2ee60-prontera-grind`; no merge to `main`.
 * **Known limits / follow-ups:** The bug was in the on-screen log only; the windows, the bottom dock and the in-window tabs were measured and did not move. The log lines themselves still change on every kill, which is expected. The check used headless Chromium with the Three.js CDN file served locally, not a real phone.
+
+### 2026-10-10 — `grind-v94.1 navigation dock stays put`
+* **What changed for the player:** Fixed the remaining tab movement after a monster kill, especially on phones. The bottom navigation dock now keeps the same live buttons and the same horizontal scroll position while combat refreshes the UI, instead of rebuilding every tab and snapping back to World. The v94 Logs-tab fix remains unchanged.
+* **Files touched:** `index.html` (stable `renderDock()`, build label); `tools/tests/panel_layout_smoke.js` and `tools/tests/ui_sim.js` (kill-redraw/navigation regression checks); build-label mirrors in the two cards/gear audit pages and `tools/cloudflare-deploy-steps.md`; this log.
+* **Art:** none.
+* **Tests:** all 48 JavaScript suites passed after the fix; UI 64/64, update watcher 6/6, and the dependency-enabled panel layout smoke 26/26. The new smoke scrolls the dock, runs the same redraw path a kill uses, and verifies both the scroll offset and actual button nodes stay unchanged.
+* **Branches / PR:** working branch `arena/742f0bfe-prontera-grind`; no merge to `main`.
+* **Known limits / follow-ups:** none known.
+
+### 2026-10-10 — `grind-v94.2 all UI windows stay put`
+* **What changed for the player:** Corrected the v94.1 scope after the owner clarified this affected all UI, not only the bottom navigation. A mob kill no longer destroys and recreates the open Bag, Equipment, Index, or any other window. Every open window and body frame stays as the same live element; panels whose contents did not change also retain their exact controls and focus. Changed counters can still refresh without moving the window, and all saved scroll/fold state remains intact.
+* **Files touched:** `index.html` (stable keyed window rendering and content-change check, build label); `tools/tests/panel_layout_smoke.js` (real monster-ledger update verifies Status/Equipment, Bag, and Index window/body identity); `tools/tests/ui_sim.js` (shared-renderer assertions); build-label mirrors; this log.
+* **Art:** none.
+* **Tests:** UI 64/64, panel layout 26/26, update watcher 6/6. The regression opens Equipment, Bag, and Index together, records a Poring kill, redraws, and verifies every window and body is still the original DOM node; unchanged Bag controls are retained too.
+* **Branches / PR:** working branch `arena/742f0bfe-prontera-grind`; updates the open PR #51.
+* **Known limits / follow-ups:** none known.
+
+### 2026-10-10 — `grind-v94.3 panel focus survives redraws`
+* **What changed for the player:** An unchanged open panel now stays connected during a redraw, keeping the focused control selected while another panel updates. Only added, closed or reordered windows change the window list. Open Bag and Mastery together, focus a Bag control and let the monster ledger refresh to see it stay focused.
+* **Files touched:** `index.html`; `tools/tests/panel_layout_smoke.js`; `tools/tests/ui_sim.js`; build-label mirrors in both cards/gear audit pages and `tools/cloudflare-deploy-steps.md`; this log.
+* **Art:** none.
+* **Tests:** Panel layout smoke 28/28, UI 64/64, update watcher 6/6. The two new tests first failed against the old renderer, then passed with reconciliation; they check active focus and window-list changes for additions, removals and reordering.
+* **Publishing:** Local changes only; no push or deployment.
