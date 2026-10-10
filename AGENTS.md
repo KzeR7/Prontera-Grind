@@ -6485,3 +6485,27 @@ The owner's second pass over v77, six notes, all built.
 * **Art:** none.
 * **Tests:** Panel layout smoke 28/28, UI 64/64, update watcher 6/6. The two new tests first failed against the old renderer, then passed with reconciliation; they check active focus and window-list changes for additions, removals and reordering.
 * **Publishing:** Local changes only; no push or deployment.
+
+### 2026-10-10 — `grind-v95 sleek interface and field atlas`
+* **What changed:** Navigation, window controls, quests and panel symbols now use consistent local line icons. Skills have simpler outlined tiles; all ten Index ranks have distinct badges, also used in the readable dark title plate below your character.
+* **Quests and shortcuts:** Index, Black Market and Leaderboard share their own dropdown below the quest frame. Collapsing Quests and opening the dropdown are independent.
+* **Map:** World Map opens wide. Field equipment, cards, ores and MVP pools are visible together, with equipment silhouettes, grouped rows, source monsters, class restrictions and drop percentages. Minimize restores the selected field; maximize/compact controls remain available. All 150 map/stage drop guides fit at 1440×900. Small screens keep a readable scrolling layout with no collapsed drop lists.
+* **Bag:** Dark neutral item tiles have stronger rarity borders and written Common/Fine/Rare/Epic/Legendary/N/N+ labels. Existing equipment artwork, item actions and game balance are retained.
+* **Files:** index.html; UI and panel layout tests; build-label mirrors in the two cards/gear audit pages and deployment guide; this log.
+* **Checks:** All 48 JavaScript simulation/smoke suites passed with the optional DOM dependencies installed. Final UI 64/64, panel layout 31/31 and update watcher 6/6 passed. Shared browser verified desktop map coverage, minimize/restore, the independent menu, skill icons, rarity labels/item art, equipped title and 390px layouts without horizontal overflow.
+* **Publishing:** Local task changes; no push or deployment.
+
+### 2026-10-10 — `grind-v95.1 curated Ragnarok equipment`
+* **What changed:** Weapons, armor, robes, headgear, shields, boots, rings and pendants use 83 selected original Ragnarok item sprites across six progression bands. Starter equipment looks simple; later equipment uses more decorated artwork. Map drops, Bag and Equipment use the same selections, including existing saved items.
+* **Artwork:** Original PNG pixels preserved and bundled locally, with source URLs and hashes in assets/equipment-icons/manifest.json. Character sprites are unchanged. Colored interface proposals are available separately; a style choice is pending.
+* **Files:** index.html; assets/equipment-icons/; equipment-art and panel layout tests; build-label mirrors; this log.
+* **Checks:** UI 64/64, panel layout 32/32, gear 43 groups, publish 10/10; all 83 asset hashes and static build passed. Shared browser checked sprite decoding, all 150 desktop field guides, phone overflow and the three colored icon proposals.
+* **Publishing:** Local changes only; no push or deployment.
+
+### 2026-10-10 — `grind-v95.2 soft color interface`
+* **What changed:** Applied the selected option A soft colors to navigation, window headings, quests, Index badges and the title below your character. Each symbol keeps its color wherever it appears; window controls retain their readable neutral color.
+* **Included:** The sleek interface, independent Index/Market dropdown, expanded field drop guide, clearer Bag rarity labels and 83 curated Ragnarok equipment sprites from the preceding entries.
+* **Files:** index.html; panel layout smoke check; build-label mirrors; this log.
+* **Checks:** Required simulation/smoke suites and browser checks are recorded in the task validation record.
+* **Publishing:** Prepared for a PR from coderabbit/sleek-ui-redesign/11b8bef2 to main.
+* **Final checks:** All 49 JavaScript simulation/smoke suites passed; UI 64/64 and panel layout 33/33. Desktop and 390px phone previews verified the selected colors and no horizontal overflow. Static build and all 83 original equipment hashes passed.

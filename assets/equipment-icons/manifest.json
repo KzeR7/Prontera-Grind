@@ -1,0 +1,625 @@
+{
+  "description": "Original Ragnarok item artwork selected for six equipment progression bands. Pixels preserved; no redraw or recoloring.",
+  "bands": [
+    "Starter",
+    "1st job",
+    "2nd job",
+    "High tier",
+    "Nightmare",
+    "Abyssal Nightmare"
+  ],
+  "families": {
+    "sword": [
+      1101,
+      1123,
+      1137,
+      1142,
+      1133,
+      1145
+    ],
+    "dagger": [
+      1201,
+      1207,
+      1217,
+      1226,
+      1232,
+      1240
+    ],
+    "katar": [
+      1250,
+      1252,
+      1254,
+      1256,
+      1258,
+      1260
+    ],
+    "staff": [
+      1601,
+      1607,
+      1610,
+      1618,
+      1620,
+      1630
+    ],
+    "bow": [
+      1701,
+      1704,
+      1707,
+      1723,
+      1720,
+      1722
+    ],
+    "axe": [
+      1301,
+      1307,
+      1357,
+      1360,
+      1363,
+      1366
+    ],
+    "mace": [
+      1501,
+      1504,
+      1513,
+      1527,
+      1540,
+      1530
+    ],
+    "armor": [
+      2301,
+      2329,
+      2315,
+      2341,
+      2367,
+      2357
+    ],
+    "robe": [
+      2301,
+      2305,
+      2309,
+      2359,
+      2360,
+      2365
+    ],
+    "head": [
+      2222,
+      2229,
+      2230,
+      2234,
+      2235,
+      2254
+    ],
+    "off": [
+      2101,
+      2105,
+      2107,
+      2115,
+      2116,
+      2123
+    ],
+    "leg": [
+      2401,
+      2403,
+      2405,
+      2412,
+      2410,
+      2423
+    ],
+    "acc": [
+      2601,
+      2602,
+      2613,
+      2615,
+      2620,
+      2640
+    ],
+    "pendant": [
+      2603,
+      2608,
+      2629,
+      2630,
+      2649,
+      2644
+    ]
+  },
+  "assets": [
+    {
+      "id": 1101,
+      "file": "1101.png",
+      "source": "https://static.divine-pride.net/images/items/item/1101.png",
+      "sha256": "4f5fddde6877c7c9fcd35f230aa2745c66aa2d63e5506b378ea6f5b6ab5b5ee4"
+    },
+    {
+      "id": 1123,
+      "file": "1123.png",
+      "source": "https://static.divine-pride.net/images/items/item/1123.png",
+      "sha256": "46b36dacafda892508ab4607ac01caf0a96c6872429e39aaba18cf3dd9303ddd"
+    },
+    {
+      "id": 1133,
+      "file": "1133.png",
+      "source": "https://static.divine-pride.net/images/items/item/1133.png",
+      "sha256": "d1cec8c1248466e90b16dcea3fac640753b6d1063d93cf8aaed00d0efc1c8e6c"
+    },
+    {
+      "id": 1137,
+      "file": "1137.png",
+      "source": "https://static.divine-pride.net/images/items/item/1137.png",
+      "sha256": "105261c111255bdadef18cfd2295909b33b3ed3cff26c702a87fc977350019c6"
+    },
+    {
+      "id": 1142,
+      "file": "1142.png",
+      "source": "https://static.divine-pride.net/images/items/item/1142.png",
+      "sha256": "ce18f6577e7790e4d95100e0bf5cd368f0acff8a05aed2317fa722f8c25072b1"
+    },
+    {
+      "id": 1145,
+      "file": "1145.png",
+      "source": "https://static.divine-pride.net/images/items/item/1145.png",
+      "sha256": "624f102ed3a62dab261207091587e91506767cc3bc422797cd26b55c2c3b595d"
+    },
+    {
+      "id": 1201,
+      "file": "1201.png",
+      "source": "https://static.divine-pride.net/images/items/item/1201.png",
+      "sha256": "30ded31e71158e0498eacc4d2d7d16ef69be535eed6e5cc28f5271ba1ea38f0a"
+    },
+    {
+      "id": 1207,
+      "file": "1207.png",
+      "source": "https://static.divine-pride.net/images/items/item/1207.png",
+      "sha256": "a94966f35db25abf751a7042bd506d5bd77d58000bc96c77eb724b3c198a8925"
+    },
+    {
+      "id": 1217,
+      "file": "1217.png",
+      "source": "https://static.divine-pride.net/images/items/item/1217.png",
+      "sha256": "19d62e7271243de283cb0d427f3143092a683156731394593b9f02ddff081987"
+    },
+    {
+      "id": 1226,
+      "file": "1226.png",
+      "source": "https://static.divine-pride.net/images/items/item/1226.png",
+      "sha256": "11732be8f19f9d208b59b07a34c8a3bac450ba74c4fda0d45f782b602850cd57"
+    },
+    {
+      "id": 1232,
+      "file": "1232.png",
+      "source": "https://static.divine-pride.net/images/items/item/1232.png",
+      "sha256": "b9618db9a6a9047919639a1baeed1057f316b33ef38032921f5696a842f22802"
+    },
+    {
+      "id": 1240,
+      "file": "1240.png",
+      "source": "https://static.divine-pride.net/images/items/item/1240.png",
+      "sha256": "79e592579cfc00cd2f304112f27b4f2bf8b0e24391a61c98a737fa3a29eb5b90"
+    },
+    {
+      "id": 1250,
+      "file": "1250.png",
+      "source": "https://static.divine-pride.net/images/items/item/1250.png",
+      "sha256": "15c3de1ca99790d7812307134c995a5540fbbbd5fee630d2bb732cc2809989d0"
+    },
+    {
+      "id": 1252,
+      "file": "1252.png",
+      "source": "https://static.divine-pride.net/images/items/item/1252.png",
+      "sha256": "110187578985c153d7f4aa4719f6baeff164c34719e68bfde00a51a079c0975b"
+    },
+    {
+      "id": 1254,
+      "file": "1254.png",
+      "source": "https://static.divine-pride.net/images/items/item/1254.png",
+      "sha256": "4f962ad039ce364df63bac8cb2ed24f0bb1c8f21b648592f46c50c0794f8f820"
+    },
+    {
+      "id": 1256,
+      "file": "1256.png",
+      "source": "https://static.divine-pride.net/images/items/item/1256.png",
+      "sha256": "baa6416a4c813533556d478f70a220cfe107bf4b5cf6e0d19dd3f437cab52a04"
+    },
+    {
+      "id": 1258,
+      "file": "1258.png",
+      "source": "https://static.divine-pride.net/images/items/item/1258.png",
+      "sha256": "f3b002fcfbc23b1cde789924145b4b2a3a483e68f09f07a49848a7fd7a39c692"
+    },
+    {
+      "id": 1260,
+      "file": "1260.png",
+      "source": "https://static.divine-pride.net/images/items/item/1260.png",
+      "sha256": "63f82ddc62c49563d525dd26feea438eecd04c4352678d7f1f8aa7525b566348"
+    },
+    {
+      "id": 1301,
+      "file": "1301.png",
+      "source": "https://static.divine-pride.net/images/items/item/1301.png",
+      "sha256": "e8dca4a8836de2795d6d02be8391e3e43b0801d642d4016ca4c29f50a6731b9a"
+    },
+    {
+      "id": 1307,
+      "file": "1307.png",
+      "source": "https://static.divine-pride.net/images/items/item/1307.png",
+      "sha256": "b82b71bc27c8ad59ccc4d16f49fa4c9c1d578f24ed31f8e6b9c5146866541f4b"
+    },
+    {
+      "id": 1357,
+      "file": "1357.png",
+      "source": "https://static.divine-pride.net/images/items/item/1357.png",
+      "sha256": "aadccbffc05337075066ecb9109d2d7283c0fd294d4b58bc61fbcf9f0c37b1e5"
+    },
+    {
+      "id": 1360,
+      "file": "1360.png",
+      "source": "https://static.divine-pride.net/images/items/item/1360.png",
+      "sha256": "b1bd17cbbcad06bcd2e2bcf6b297e01e775d4ec9fe29b53cf8164bdcd9e55c4f"
+    },
+    {
+      "id": 1363,
+      "file": "1363.png",
+      "source": "https://static.divine-pride.net/images/items/item/1363.png",
+      "sha256": "d1f0c2cf3f8ed75d495aff087fc1d8390fd787229acc7a087c909687a885fba4"
+    },
+    {
+      "id": 1366,
+      "file": "1366.png",
+      "source": "https://static.divine-pride.net/images/items/item/1366.png",
+      "sha256": "e2437eeeb6b7f4442a8980fe736ab915ae06a77faf931579ebf4eba282b71c1b"
+    },
+    {
+      "id": 1501,
+      "file": "1501.png",
+      "source": "https://static.divine-pride.net/images/items/item/1501.png",
+      "sha256": "bc26daeb9c18f9673c145841f4d3683a39a187cb7cd10a0cab884b94953b39b9"
+    },
+    {
+      "id": 1504,
+      "file": "1504.png",
+      "source": "https://static.divine-pride.net/images/items/item/1504.png",
+      "sha256": "ec99a32697462b09f3c15eeb0d5aef7a9c6cae8bf21d24932829b72916f845de"
+    },
+    {
+      "id": 1513,
+      "file": "1513.png",
+      "source": "https://static.divine-pride.net/images/items/item/1513.png",
+      "sha256": "2f6efff3626b5379391e4789fe1661b288c8f4be51824987542e746dbdecb132"
+    },
+    {
+      "id": 1527,
+      "file": "1527.png",
+      "source": "https://static.divine-pride.net/images/items/item/1527.png",
+      "sha256": "3ed7783ae0ae5f40c68b36c13936db7e8ff3722b71e5f9fb9f3ce21a6d960edf"
+    },
+    {
+      "id": 1530,
+      "file": "1530.png",
+      "source": "https://static.divine-pride.net/images/items/item/1530.png",
+      "sha256": "a7a837535749bef9f6e1fee648b8d4457e1d03991cc87958e7e260c083150a9f"
+    },
+    {
+      "id": 1540,
+      "file": "1540.png",
+      "source": "https://static.divine-pride.net/images/items/item/1540.png",
+      "sha256": "77c42b543f8c86a8a574899e39e45b21a99ad9fdeafc4f7dea1fb8bbe64b735b"
+    },
+    {
+      "id": 1601,
+      "file": "1601.png",
+      "source": "https://static.divine-pride.net/images/items/item/1601.png",
+      "sha256": "b3abd1a46d6028f641b732fc8297c0e1a7e42c8602bc4601697fc2bec18d583e"
+    },
+    {
+      "id": 1607,
+      "file": "1607.png",
+      "source": "https://static.divine-pride.net/images/items/item/1607.png",
+      "sha256": "b0100bab58b14ad2beb13bd2762a17b1ef49e5fe37f0102cdf1c251e5e276beb"
+    },
+    {
+      "id": 1610,
+      "file": "1610.png",
+      "source": "https://static.divine-pride.net/images/items/item/1610.png",
+      "sha256": "10a639c11003618c262d4792011bebae69d84cdccf4b668940bc6b1a5cdd55ca"
+    },
+    {
+      "id": 1618,
+      "file": "1618.png",
+      "source": "https://static.divine-pride.net/images/items/item/1618.png",
+      "sha256": "1b12e2cdc0f0a37eb7cde0dd65b6c26cb651efae3d7132f564f3d8aef25131eb"
+    },
+    {
+      "id": 1620,
+      "file": "1620.png",
+      "source": "https://static.divine-pride.net/images/items/item/1620.png",
+      "sha256": "cff34d94e743883f39926323abb93d26023bc136e8271a6b178e1cea878dc29b"
+    },
+    {
+      "id": 1630,
+      "file": "1630.png",
+      "source": "https://static.divine-pride.net/images/items/item/1630.png",
+      "sha256": "63b290a13aa81498f03268b6b0588d57a184b44f33e9a478c3d488a313e82d3b"
+    },
+    {
+      "id": 1701,
+      "file": "1701.png",
+      "source": "https://static.divine-pride.net/images/items/item/1701.png",
+      "sha256": "4b7472abafddb6e3a4f30de6aba92609fdf3995460e90363982a34e703ab914d"
+    },
+    {
+      "id": 1704,
+      "file": "1704.png",
+      "source": "https://static.divine-pride.net/images/items/item/1704.png",
+      "sha256": "135d152fc015ad4eeb6f3085bbd993e10973b9218e24f71a1e0b93df65488bbb"
+    },
+    {
+      "id": 1707,
+      "file": "1707.png",
+      "source": "https://static.divine-pride.net/images/items/item/1707.png",
+      "sha256": "b71ef6fa8ee57d78fd7a4d8bccae1adb30efe413a4405430472802ff4aa2f9a3"
+    },
+    {
+      "id": 1720,
+      "file": "1720.png",
+      "source": "https://static.divine-pride.net/images/items/item/1720.png",
+      "sha256": "6581ef5f79ca2561ae476a15ab61c23522e42c6fe438a36978f5310692ef9470"
+    },
+    {
+      "id": 1722,
+      "file": "1722.png",
+      "source": "https://static.divine-pride.net/images/items/item/1722.png",
+      "sha256": "58d216340a3b005491aff493b39fc44945fd4b6cc0cc04eea2aff885ec3e8466"
+    },
+    {
+      "id": 1723,
+      "file": "1723.png",
+      "source": "https://static.divine-pride.net/images/items/item/1723.png",
+      "sha256": "25db0b3dbdfd3376f27f7bf1566b389c9f07056f6185ce4ef8a22fed9b65d1c7"
+    },
+    {
+      "id": 2101,
+      "file": "2101.png",
+      "source": "https://static.divine-pride.net/images/items/item/2101.png",
+      "sha256": "4204c8c799453a70c5ebf20b3b3bcd5b03abad58bedc435b3cb8b5797eb5b498"
+    },
+    {
+      "id": 2105,
+      "file": "2105.png",
+      "source": "https://static.divine-pride.net/images/items/item/2105.png",
+      "sha256": "87f15d67ed76d9d0b76575e3be604f1c7cfd546790974971c727f3cff0767e33"
+    },
+    {
+      "id": 2107,
+      "file": "2107.png",
+      "source": "https://static.divine-pride.net/images/items/item/2107.png",
+      "sha256": "6242fe1a2281785ae197ccdd263f578578cedb424554342f37652d29c4c096dd"
+    },
+    {
+      "id": 2115,
+      "file": "2115.png",
+      "source": "https://static.divine-pride.net/images/items/item/2115.png",
+      "sha256": "20d68d6e43f01a7736765c492589173a9ed86e6f0b0f71893721a4bce1f0965a"
+    },
+    {
+      "id": 2116,
+      "file": "2116.png",
+      "source": "https://static.divine-pride.net/images/items/item/2116.png",
+      "sha256": "d8b33dc238fb5987af928033cc7d721c52a5dd478700cc1e97febdccde368d78"
+    },
+    {
+      "id": 2123,
+      "file": "2123.png",
+      "source": "https://static.divine-pride.net/images/items/item/2123.png",
+      "sha256": "3bc109f59007fde937da9da9c5ce4adb677133bdc3008c2b82afd2c1aaa5fb33"
+    },
+    {
+      "id": 2222,
+      "file": "2222.png",
+      "source": "https://static.divine-pride.net/images/items/item/2222.png",
+      "sha256": "d4ea59390bff88171f53350afd5e58a75602ecfb389bcd978682f59f2bc6309b"
+    },
+    {
+      "id": 2229,
+      "file": "2229.png",
+      "source": "https://static.divine-pride.net/images/items/item/2229.png",
+      "sha256": "42a27ec68475ccd8852b9e9580427d14142e875c758775eb5161bba15444214c"
+    },
+    {
+      "id": 2230,
+      "file": "2230.png",
+      "source": "https://static.divine-pride.net/images/items/item/2230.png",
+      "sha256": "e7ac01223147509007aa878d169012455a513fbaf6b3034d9d72cb97e7ae6a8f"
+    },
+    {
+      "id": 2234,
+      "file": "2234.png",
+      "source": "https://static.divine-pride.net/images/items/item/2234.png",
+      "sha256": "842b46377dcefdd9b2899b7dd37f7a15711a90a66f5e01da772c77aef43cae16"
+    },
+    {
+      "id": 2235,
+      "file": "2235.png",
+      "source": "https://static.divine-pride.net/images/items/item/2235.png",
+      "sha256": "4c26359f7ba0249db62f1bd3b538a272f2691687a4cf47e10d9917fee5a695b3"
+    },
+    {
+      "id": 2254,
+      "file": "2254.png",
+      "source": "https://static.divine-pride.net/images/items/item/2254.png",
+      "sha256": "edc29ff9828dcbb47eba0fd638f3cd31fcc2b91368823d69fda414ab56f9ea4d"
+    },
+    {
+      "id": 2301,
+      "file": "2301.png",
+      "source": "https://static.divine-pride.net/images/items/item/2301.png",
+      "sha256": "f4f3410b338b15f7eb61a4e1e6aab1010165e07ad3ac07f4d1509a5ddcfd7439"
+    },
+    {
+      "id": 2305,
+      "file": "2305.png",
+      "source": "https://static.divine-pride.net/images/items/item/2305.png",
+      "sha256": "1a2c6978d2945c657894c3a9e0553d26b2bad8708c0d4625105fb9e3edbe0ba2"
+    },
+    {
+      "id": 2309,
+      "file": "2309.png",
+      "source": "https://static.divine-pride.net/images/items/item/2309.png",
+      "sha256": "68a323f3b232b7d86b1af336b35c0bffbfb865ee1afbbbcc9d5ba5760ae3cf06"
+    },
+    {
+      "id": 2315,
+      "file": "2315.png",
+      "source": "https://static.divine-pride.net/images/items/item/2315.png",
+      "sha256": "7102a38b001f82b4b3471b9ee61f16fe0a0b4d41354814d37cc0f8127e5358d8"
+    },
+    {
+      "id": 2329,
+      "file": "2329.png",
+      "source": "https://static.divine-pride.net/images/items/item/2329.png",
+      "sha256": "40e372585fe883f11b309c34a693ecbfbc6df642d341fe6402c12745c6aa2339"
+    },
+    {
+      "id": 2341,
+      "file": "2341.png",
+      "source": "https://static.divine-pride.net/images/items/item/2341.png",
+      "sha256": "af4f6c69820d3cd38845cb1e363803da450c189d9fe70a4ec9632f2bbab167cb"
+    },
+    {
+      "id": 2357,
+      "file": "2357.png",
+      "source": "https://static.divine-pride.net/images/items/item/2357.png",
+      "sha256": "3b652d3887ead15b5c07e6f818dcd504372c996d7dcbfe1ee12b29c26c935fee"
+    },
+    {
+      "id": 2359,
+      "file": "2359.png",
+      "source": "https://static.divine-pride.net/images/items/item/2359.png",
+      "sha256": "719fbb2361c95ab9a296404c7de438fc7c98f4fd86e3676e1eac63a97db2d35c"
+    },
+    {
+      "id": 2360,
+      "file": "2360.png",
+      "source": "https://static.divine-pride.net/images/items/item/2360.png",
+      "sha256": "b72ce927b9858eb5e9f2468496405271fb293dfed780a1c14f821bce18874141"
+    },
+    {
+      "id": 2365,
+      "file": "2365.png",
+      "source": "https://static.divine-pride.net/images/items/item/2365.png",
+      "sha256": "7c6d21761b23c8fd5105e8fbdd4b3597d122e546d173cb892a49f0a13a2de6f3"
+    },
+    {
+      "id": 2367,
+      "file": "2367.png",
+      "source": "https://static.divine-pride.net/images/items/item/2367.png",
+      "sha256": "b5dee353fe04d54a303c8411d879b2ce3c1d8c54998824d1cbd41f6022fac98a"
+    },
+    {
+      "id": 2401,
+      "file": "2401.png",
+      "source": "https://static.divine-pride.net/images/items/item/2401.png",
+      "sha256": "034e01a2e1db39edb2e72f1e2660ff7273755f739921b6ac6f51adb8865ede75"
+    },
+    {
+      "id": 2403,
+      "file": "2403.png",
+      "source": "https://static.divine-pride.net/images/items/item/2403.png",
+      "sha256": "f50d4ad4302c6ce0e9bae6c9898354e16bbeb6cd24bb8ea094ff629408f4f55e"
+    },
+    {
+      "id": 2405,
+      "file": "2405.png",
+      "source": "https://static.divine-pride.net/images/items/item/2405.png",
+      "sha256": "294530ec84005d8826a54ec72743396028cf217303a7268b74170487fb10cbbc"
+    },
+    {
+      "id": 2410,
+      "file": "2410.png",
+      "source": "https://static.divine-pride.net/images/items/item/2410.png",
+      "sha256": "4d227a01ec12831ca21e9fc05fee2ad098bc46317a13f45c47a8b48fea2d2672"
+    },
+    {
+      "id": 2412,
+      "file": "2412.png",
+      "source": "https://static.divine-pride.net/images/items/item/2412.png",
+      "sha256": "a39e4f493e2737a381459a4c34f6ce3b2f95fb3e2fe31a6656ee3a0906f64aca"
+    },
+    {
+      "id": 2423,
+      "file": "2423.png",
+      "source": "https://static.divine-pride.net/images/items/item/2423.png",
+      "sha256": "cad94fabc61e8e5e7af02ff571a6390c93fd9a28c00a16a2ebbf923e19e62ffa"
+    },
+    {
+      "id": 2601,
+      "file": "2601.png",
+      "source": "https://static.divine-pride.net/images/items/item/2601.png",
+      "sha256": "09c6ea0fb938f265f805992c931634f457e917b85641e4f6cc8bf569ad865b32"
+    },
+    {
+      "id": 2602,
+      "file": "2602.png",
+      "source": "https://static.divine-pride.net/images/items/item/2602.png",
+      "sha256": "f4bbe2f1b37c578f7f02fd42b882ee7ccfb64f6bbaf8b526da529a62b11424b0"
+    },
+    {
+      "id": 2603,
+      "file": "2603.png",
+      "source": "https://static.divine-pride.net/images/items/item/2603.png",
+      "sha256": "6f83c76c46dfdb07b9f15ad4609b83dca8b6799a88cc9c7f3be65b5aa2a73d7c"
+    },
+    {
+      "id": 2608,
+      "file": "2608.png",
+      "source": "https://static.divine-pride.net/images/items/item/2608.png",
+      "sha256": "684b0e6df3186a095b8e962d3767991b581da69ef90fe72cc68909154c7df823"
+    },
+    {
+      "id": 2613,
+      "file": "2613.png",
+      "source": "https://static.divine-pride.net/images/items/item/2613.png",
+      "sha256": "7fbbe9c38de7530242e76905770adaedc7a3399b063f90773a476cc9f6df1dc7"
+    },
+    {
+      "id": 2615,
+      "file": "2615.png",
+      "source": "https://static.divine-pride.net/images/items/item/2615.png",
+      "sha256": "bb91c3c70ad2639f2d0ec4304bf3c9ec8154e59cbb482261c9665dac7a3156e1"
+    },
+    {
+      "id": 2620,
+      "file": "2620.png",
+      "source": "https://static.divine-pride.net/images/items/item/2620.png",
+      "sha256": "d1a89d4f986e02c4d178f0bcb121b1f93b1aeecec537a46c93733a5d78748b7f"
+    },
+    {
+      "id": 2629,
+      "file": "2629.png",
+      "source": "https://static.divine-pride.net/images/items/item/2629.png",
+      "sha256": "07601b0bb71242174035e94d84bac90c9d7c091d85a8eb2bacab99c0c466fcb1"
+    },
+    {
+      "id": 2630,
+      "file": "2630.png",
+      "source": "https://static.divine-pride.net/images/items/item/2630.png",
+      "sha256": "5d0f11e5fadb1957c085039673b7485f0ee201a42d640a86d553bfd6bc0add42"
+    },
+    {
+      "id": 2640,
+      "file": "2640.png",
+      "source": "https://static.divine-pride.net/images/items/item/2640.png",
+      "sha256": "60a7be06412df7939c60501f9ae5e72bf4ef788e6f951c9c606a472b379e2cea"
+    },
+    {
+      "id": 2644,
+      "file": "2644.png",
+      "source": "https://static.divine-pride.net/images/items/item/2644.png",
+      "sha256": "a81e456e41451555bf21c2bed22b380ee6cff021320ba56f40be622ee5440b69"
+    },
+    {
+      "id": 2649,
+      "file": "2649.png",
+      "source": "https://static.divine-pride.net/images/items/item/2649.png",
+      "sha256": "b48486770f41b5e3f2180c9c31afed42afbf6d60fef073fe0a5cbcd081806591"
+    }
+  ]
+}
