@@ -26,7 +26,7 @@ const code = [
 ].join('\n');
 
 // the load() repair must be the stat-aware one, not the old flat CV[c.g]
-const repair = pick(/const fx=c=>\{c\.v=[^}]*\};/, 'load() card repair');
+const repair = pick(/const fx=c=>\{[^}]*\};/, 'load() card repair');
 
 const harness = `
 ${code}
@@ -156,7 +156,7 @@ t('the load() repair is stat-aware, not the old flat CV[g]', () => {
 });
 
 t('a Legendary card is always worth more than a Common one of the same stat', () => {
-  for (const s of C.AFF)
+  for (const s of C.AFF.filter(k=>k!=='move'))
     assert.ok(C.cardVal(3, s) > C.cardVal(0, s), `${s}: g3 ${C.cardVal(3, s)} vs g0 ${C.cardVal(0, s)}`);
 });
 

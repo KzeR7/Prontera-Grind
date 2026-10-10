@@ -35,6 +35,12 @@ t('no panel emits an action that ACT does not define', () => {
 
 // ---- the renderers ----------------------------------------------------------
 const code = [
+  require('./helpers/progression')(src,'cards'),
+  pick(/const esc=[^\n]*/, 'esc'),
+  pick(/const INT_CLASSES=[^\n]*/, 'INT_CLASSES'),
+  pick(/const equipmentMove=[^\n]*/, 'equipmentMove'),
+  require('./helpers/progression')(src,'affixes'),
+
   grab('const CD=[', 'const pm=s=>'),                       // classes + skills
   pick(/const C=\(\)=>[^;]+;/, 'C()'),
   pick(/const st=k=>[^\n]*canUse=it=>[^;]+;/, 'canUse'),
@@ -43,7 +49,8 @@ const code = [
   pick(/const atk=\(\)=>[^\n]*/, 'atk'),
   pick(/const matk=\(\)=>[^\n]*/, 'matk'),
   pick(/const aspd=\(\)=>[^\n]*/, 'aspd'),
-  grab('const pm=s=>', 'const pw=()=>'),          // maps + their REC bands
+  grab('const pm=s=>', 'const pw=()=>'),
+  grab('const CARD_CATALOG=', 'function repairEquippedCards('),          // maps + their REC bands
   petData,                                             // pet roster, Divine Pride icons and gacha skills
   pick(/const secOf=[^;]+;/, 'secOf'),
   pick(/const AM=\[[^\]]*\],GRADE=\[[^\]]*\],GI=\[[^\]]*\],CV=\[[^\]]*\];/, 'rarity tables'),
@@ -134,6 +141,7 @@ const lsGet=()=>null,mem={};   // no browser storage in here
 const $=id=>({style:{},set innerHTML(v){globalThis['h_'+id]=v},get innerHTML(){return globalThis['h_'+id]||''},textContent:'',onclick:null});
 const dr=()=>1;
 ${code}
+buildGuide=()=>'<section class="build-guide">Build guide (integration tested in progression_sim)</section>';
 const skpAvail=()=>5,skTree=()=>4,skEarnedMax=()=>9,skLine=()=>['Novice'],skEarned=()=>9,skSpent=()=>0,pv=()=>0,bon=()=>0,qTxt=q=>'quest';
 this.__u={ V, itemDetail, itemMain, changeClass, cell, SKILLS, SKILL_ICON, SKILL_TONE, SKILL_PICTO, skillIcon, logs, indexSectionOpen, indexToggleSection, set S(v){S=v}, get S(){return S}, set boardPeriod(v){boardPeriod=v}, set boardCache(v){boardCache=v}, set boardStatus(v){CLOUD.api=!!v.api;CLOUD.on=!!v.on}, set eqPick(v){eqPick=v}, get eqPick(){return eqPick},
            set indexMode(v){indexMode=v}, get indexMode(){return indexMode}, set mapM(v){mapM=v}, set mapL(v){mapL=v}, set selE(v){selE=v}, get selE(){return selE}, set selB(v){selB=v}, get selB(){return selB}, set selS(v){selS=v}, set selP(v){selP=v} };
@@ -170,7 +178,7 @@ t('class switches leave bag, equipment and item details usable with empty slots'
   assert.strictEqual(U.S.inv.length,4);
   for(const it of gear){
     assert.ok(!U.cell(it,false).includes(' worse'), 'empty slots do not make gear weaker');
-    assert.ok(!U.itemDetail(it).includes('Weaker than'), 'empty slots have no worn comparison');
+    assert.ok(!U.itemDetail(it).includes('Lower base value than'), 'empty slots have no worn comparison');
     U.selB=it.id;
     assert.ok(!/undefined|NaN/.test(U.V.bag()));
   }
@@ -190,11 +198,11 @@ t('weaker comparisons require an occupied matching slot, including accessories',
   for(const it of [sword,armor,ring]){
     const weaker={...it,id:80,val:1,r:0};
     assert.ok(U.cell(weaker,false).includes(' worse'));
-    assert.ok(U.itemDetail(weaker).includes('Weaker than'));
+    assert.ok(U.itemDetail(weaker).includes('Lower base value than'));
     assert.ok(!U.cell(it,false).includes(' worse'));
   }
   U.S.eq.acc2=U.S.eq.acc1; U.S.eq.acc1=null;
-  assert.ok(U.itemDetail({...ring,val:1}).includes('Weaker than'),'second accessory is compared when first is empty');
+  assert.ok(U.itemDetail({...ring,val:1}).includes('Lower base value than'),'second accessory is compared when first is empty');
 });
 
 t('the map panel renders every map and field', () => {
@@ -448,7 +456,7 @@ t('the Mastery Index tracks monster titles and consumes loose cards for permanen
   assert.ok(h.includes('data-a="indexcard"')&&h.includes('Dedicate one'),'a loose card can advance an individual card');
   assert.ok(h.includes('data-a="cardroll"')&&h.includes('Token gacha'),'mastery ranks spend tokens on the gacha');
   assert.ok(h.includes('data-a="cardreset"'),'the gacha reset is offered once a Legendary card is loose');
-  assert.ok(h.includes('STR</b> 0/25')&&h.includes('HP Leech</b> 0/3')&&h.includes('ATK %</b> 0/5'),'current values and caps stay visible beside every reward');
+  assert.ok(h.includes('STR</b> 0/25')&&h.includes('HP Leech rank</b> 0/3')&&h.includes('ATK %</b> 0/5'),'current values and caps stay visible beside every reward');
   // v57: the picker lists every loose Legendary so the player chooses what to sacrifice, the
   // bag list gets rarity sub-tabs, and a stack can be dedicated in one tap.
   U.S.cards=[{id:11,n:'Poring Card',g:3,stat:'str',v:4},{id:12,n:'Fabre Card',g:3,stat:'agi',v:3},{id:13,n:'Poring Card',g:0,stat:'dex',v:1}];
@@ -501,9 +509,9 @@ t('clicking a slot highlights the fit in the REAL bag tab - no extra pop-out', (
 t('v88: the Auto-equip switch lives on the Bag tab, not in Settings (owner: "move it, arrange it tidy")', () => {
   U.S = mkS('Swordman'); U.selB = null; U.eqPick = null;
   const bag = U.V.bag0();
-  assert.ok(bag.includes('Auto-equip better gear'), 'the Bag tab names the switch');
+  assert.ok(bag.includes('Auto-equip higher base value'), 'the Bag tab names the switch');
   assert.ok(/data-a="auto"/.test(bag), 'and it is wired to the same action');
-  assert.ok(bag.indexOf('Auto-equip better gear') < bag.indexOf('Selling tools'), 'it sits tidily above the selling tools, under the ore chips');
+  assert.ok(bag.indexOf('Auto-equip higher base value') < bag.indexOf('Selling tools'), 'it sits tidily above the selling tools, under the ore chips');
   const set = U.V.set();
   assert.ok(!/data-a="auto"/.test(set), 'Settings no longer carries the gear switch');
   assert.ok(!/data-a="adv"/.test(set), 'nor the advance switch');
@@ -712,6 +720,7 @@ t('damage floats stay screen-projected, restrained, and distinct by type', () =>
   assert.strictEqual(F.floats[5].txt,'1896','critical digits come back too');
   const strikeBox={};vm.createContext(strikeBox);
   vm.runInContext(`
+    const fieldDamage=()=>1,applyLeech=()=>0,cardMasteryStat=()=>0;
     let mob={x:1,z:3,hp:10000,size:1},shake=0,hit=null,S={dmg:0};
     const missCh=()=>0,crit=()=>100,atk=()=>100,matk=()=>200,st=()=>0,critD=()=>2,
       rnd=(a,b)=>a,addFloat=()=>{},damageFloat=(...args)=>{hit=args},
@@ -1076,9 +1085,9 @@ t('v90 Black Market: locked under Base Lv 100, then sells ore and reforges one a
   U.S.lv=100;
   h=U.V.market();
   assert.ok(h.includes('data-a="bmore" data-v="ori"')&&h.includes('data-a="bmore" data-v="elu"'),'Oridecon and Elunium are both for sale from Base Lv 100');
-  assert.ok(h.includes('100,000z each'),'ore is priced at 100,000z');
-  assert.ok(h.includes('data-a="bmref" data-v="armor"'),'a worn piece with affixes can be reforged');
-  assert.ok(h.includes('Reroll one affix: 1,050,000z'),'an N+ piece costs rarity 6 + 1 times 150,000z to reforge');
+  assert.ok(h.includes('100,000z'),'ore is priced at 100,000z');
+  assert.ok(h.includes('data-a="bmref" data-v="armor:all"'),'a worn piece with affixes can be reforged');
+  assert.ok(h.includes('Full · 1,050,000z'),'an N+ piece costs rarity 6 + 1 times 150,000z to reforge');
   assert.ok(!h.includes('data-a="bmref" data-v="weapon"'),'an empty slot is not offered a reforge');
   // v90.8: the ten Nightmare materials are sold here, one Buy 1 button each
   assert.ok(h.includes('Nightmare materials') && h.includes('3,000,000z each'),'the Nightmare materials are listed and priced at 3,000,000z');
@@ -1098,19 +1107,19 @@ t('v90 Black Market: locked under Base Lv 100, then sells ore and reforges one a
   U.S.zeny=10000000;
   vm.runInContext('Math.random=()=>.5',sb);
   const before=U.S.eq.armor.aff.map(a=>a.k);
-  bm.reforge('armor');
+  bm.reforge('armor',true);vm.runInContext('resolveReforge(true)',sb);
   const after=U.S.eq.armor.aff;
   assert.strictEqual(after.length,2,'a reforge keeps the number of affixes');
   assert.strictEqual(U.S.zeny,10000000-1050000,'a reforge charges the rarity price');
-  assert.strictEqual(after.filter(a=>before.includes(a.k)).length,1,'exactly one affix is replaced');
+  assert.strictEqual(after.length,before.length,'full reforge replaces the complete affix set without adding slots');
   assert.ok(after.every(a=>a.v>=1),'every rolled value is at least 1');
-  U.S.zeny=100;bm.reforge('armor');
+  U.S.zeny=100;bm.reforge('armor',true);vm.runInContext('resolveReforge(true)',sb);
   assert.strictEqual(U.S.zeny,100,'an unaffordable reforge charges nothing');
-  U.S.zeny=10000000;U.S.eq.armor.aff=[];bm.reforge('armor');
+  U.S.zeny=10000000;U.S.eq.armor.aff=[];bm.reforge('armor',true);vm.runInContext('resolveReforge(true)',sb);
   assert.strictEqual(U.S.zeny,10000000,'a piece with no affix cannot be reforged');
   U.S.eq.armor.aff=[{k:'str',v:55}];
   vm.runInContext('Math.random=()=>.99',sb);
-  bm.reforge('armor');
+  bm.reforge('armor',true);vm.runInContext('resolveReforge(true)',sb);
   assert.ok(U.S.eq.armor.aff[0].k!=='cdm','armor never rolls Crit DMG in a reforge');
   vm.runInContext('Math.random=Math.random',sb);
 });

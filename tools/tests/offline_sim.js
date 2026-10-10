@@ -14,6 +14,7 @@ const config = from('const BAGMAX=1000;', 'const MAPTIER=');
 // v88.6: save() is inside the span below and checks the save-owner stamp, so the stamp helpers come along.
 const stamp = from('// ---------- the save-owner stamp (v88.6) ----------', 'const num_= (v,d)');
 const helpers = from('function offlineRateSample(now=Date.now()){', '// ---------- accounts (stored in this browser; real cross-device accounts need a server) ----------');
+const newCardCode=require('./helpers/progression')(src,'newCard');
 const simulation = from('function offlineMobForCurrentField(){', '// ---------- skill effects: damage over time, stun, chain ----------');
 
 function harness() {
@@ -48,7 +49,7 @@ function harness() {
     const cardVal = () => 1, uid = () => ++state.nextId;
     const pickW = () => 0, PW = [[100]], PETS = [], PET_SKILL_WEIGHTS = [], PET_SKILLS = [], EGG = 1;
   `;
-  const code = config + '\n' + stamp + '\n' + helpers + '\n' + simulation + `
+  const code = config + '\n' + stamp + '\n' + helpers + '\n' + newCardCode + '\n' + simulation + `
     globalThis.api = {
       offlinePlan, offlineRateSample, applyOfflineProgress, offlineAwardKill,
       mapSelection(){return[mapM,mapL]},

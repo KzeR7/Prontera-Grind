@@ -779,6 +779,7 @@ button:focus-visible{outline:2px solid #e7d4a1;outline-offset:3px}
 
 /* Local equipment art uses the same scale in the map and inventory. */
 .drop-icon .ro-item-icon{width:20px;height:20px;object-fit:contain;image-rendering:pixelated;margin:0;filter:none}.drop-icon .ro-icon-fallback{display:grid;place-items:center;width:20px;height:20px}
+.guide-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(240px,100%),1fr));gap:8px}.build-guide{max-width:100%;overflow-wrap:anywhere}.build-guide .mob-card small{display:block}.build-guide button[aria-pressed="true"]{border-color:#e9c474;background:#3b3541}
 </style>
 </head>
 <body>
@@ -885,7 +886,7 @@ const heroWeaponType=(cls,allowed,equipped)=>{const choices=allowed||[],preferre
 // Each description lists what the stat actually does in the formulas (see atk/matk/aspd/flee/
 // crit/def/moveSpd): STR only pays ATK when it is the class's main stat, AGI also walks, INT carries
 // magic and skill damage, DEX and LUK share crit, and nothing on the character bends the drop tables.
-const STATS=[['str','STR','ATK'],['agi','AGI','ASPD, Flee, Move'],['int','INT','MATK, MDEF, Skills'],['dex','DEX','Hit, Crit, ATK'],['vit','VIT','DEF, MDEF, HP'],['luk','LUK','Crit, ATK']];
+const STATS=[['str','STR','ATK'],['agi','AGI','ASPD, Flee, Move'],['int','INT','MATK, MDEF, caster skills'],['dex','DEX','Hit, Crit DMG, ranged ATK'],['vit','VIT','DEF, MDEF, HP'],['luk','LUK','Crit, ATK']];
 // A unique, immediately scannable glyph for every skill. These are interface symbols, not
 // replacement or recoloured character-sprite art.
 // Locally drawn fantasy ability art: no hotlinked image can collapse to the same red placeholder.
@@ -998,7 +999,7 @@ const skillIcon=id=>{const motif=SKILL_ICON[id]||'rune',tone=SKILL_TONE[motif]||
 // their own ladder (3/7/10/13) rather than the AB weight, so the socketed card path is untouched.
 // AB.crit is part of the v73 crit-rate retune (.45 -> .32, see crit()): the crit affix and crit
 // cards pay less per point. The range chart mirrors both. Pinned by gear_sim/card_sim/crit_sim.
-const AFF=['str','agi','dex','luk','int','hp','atk','crit','aspd','flee','cdm'],AB={str:1,agi:1,dex:1,luk:1,int:1,hp:12,atk:.8,crit:.32,aspd:.6,flee:.8,cdm:.45};
+const AFF=['str','agi','dex','luk','int','vit','hp','atk','matk','crit','aspd','flee','cdm','move'],AB={str:1,agi:1,dex:1,luk:1,int:1,vit:1,hp:12,atk:.8,matk:.08,crit:.32,aspd:.6,flee:.8,cdm:.45,move:.08};
 const AFFIX_CDM_SCALE=.7,scaleCritDamageAffix=v=>Math.max(1,Math.round(v*AFFIX_CDM_SCALE));
 // v89 (owner: "n+ affix are giving 60+ flee % and 60+ str is too much"): the Nightmare rows (section 4 = N,
 // section 5 = N+) roll their FLAT stats (STR, AGI, DEX, LUK, INT) and Flee at a lower section multiplier.
@@ -1012,10 +1013,11 @@ const NM_FLAT=['str','agi','dex','luk','int'],NM_FLAT_MUL=[3.5,4],NM_MUL={flee:[
 const nmMulOf=(k,section)=>{const i=Math.min(1,section-4);return NM_FLAT.includes(k)?NM_FLAT_MUL[i]:NM_MUL[k]?NM_MUL[k][i]:1+section};
 // v90.9 (owner): Abyss (map 9) affixes are slightly below Nightmare Prontera's (map 0). Map 0 is x1, map 9 is x0.95,
 // and the maps between ramp linearly. Only affixes move with the map; the item's base value is flat.
-const NM_ABYSS_AFF=.95;
+const NM_ABYSS_AFF=1;
 const nmAffMapOf=mp=>Number.isFinite(mp)?1-(1-NM_ABYSS_AFF)*Math.min(9,Math.max(0,mp))/9:1;
+// MATK affixes have a smaller percentage weight because INT already multiplies caster skills.
 const affixValue=(k,section,tier,roll,mp)=>{const mul=section>=4?nmMulOf(k,section)*nmAffMapOf(mp):1+section;const raw=Math.max(1,Math.round(mul*AM[tier]*AB[k]*roll));return k==='cdm'?scaleCritDamageAffix(raw):raw};
-const AL={str:'STR',agi:'AGI',dex:'DEX',luk:'LUK',int:'INT',hp:'Max HP',atk:'ATK %',crit:'Crit %',aspd:'ASPD %',flee:'Flee %',cdm:'Crit DMG %',vit:'VIT'};
+const AL={str:'STR',agi:'AGI',dex:'DEX',luk:'LUK',int:'INT',hp:'Max HP',atk:'ATK %',crit:'Crit %',aspd:'ASPD %',flee:'Flee %',cdm:'Crit DMG %',vit:'VIT',matk:'MATK %',move:'Movement %'};
 // The field is a vertical avenue: the player starts at the near end (high Z, bottom of the
 // screen) and mobs hold the far end (low Z, top of the screen), so you run up to engage.
 // AGGRO is how close you must get before a pack leaves its spawn to meet you; bosses ignore it.
@@ -1038,20 +1040,20 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // script block, which is a SyntaxError - the game did not run on main at all. One line wins, and
 // it names both sides of this merge: the v38 balance patch (the weapon cut, the affix/card
 // give-back) and main's weapon-hold rendering work.
-const BUILD='2026-10-10 grind-v97 class skill redesign';   // shown on the login card - confirms which file you loaded
+const BUILD='2026-10-10 grind-v98 builds cards and farming guide';   // shown on the login card - confirms which file you loaded
 $('buildTag').textContent='build '+BUILD;
 
 // ---------- class tree: Novice -> 6 first jobs -> 6 second jobs -> 6 third jobs ----------
 // Assassin and Assassin Cross use katars or daggers. A katar occupies both hands; daggers support an offhand dagger.
 const CD=[['Novice',0,1,1,1,'e8dcc0','',['dagger','sword'],'str',0],
 ['Swordman','Novice',.95,1.2,1.3,'b83b3b','8a2b2b',['sword'],'str',0],['Mage','Novice',1.1,1.3,.8,'3b6fb5','',['staff'],'int',1,'3b4fb5'],
-['Archer','Novice',.85,1.15,.9,'2e7d32','1b4d1e',['bow'],'dex',1],['Thief','Novice',.8,1.1,.95,'4a7c3a','2e7d32',['dagger'],'agi',0],
+['Archer','Novice',.85,1.15,.9,'2e7d32','1b4d1e',['bow'],'dex',1],['Thief','Novice',.8,1.1,.95,'4a7c3a','2e7d32',['dagger'],'str',0],
 ['Acolyte','Novice',1,1.05,1.05,'e0c870','a08830',['mace'],'int',0],['Merchant','Novice',.9,1.2,1.2,'d08030','905010',['axe','mace'],'str',0],
 ['Knight','Swordman',.85,1.5,1.5,'801010','500000',['sword'],'str',0],['Wizard','Mage',1,1.8,.85,'153075','',['staff'],'int',1,'1f2f70'],
-['Hunter','Archer',.7,1.4,.95,'105015','003005',['bow'],'dex',1],['Assassin','Thief',.62,1.45,1,'2c2c3c','1b1b28',['katar','dagger'],'agi',0],
+['Hunter','Archer',.7,1.4,.95,'105015','003005',['bow'],'dex',1],['Assassin','Thief',.62,1.45,1,'2c2c3c','1b1b28',['katar','dagger'],'str',0],
 ['Priest','Acolyte',.9,1.3,1.1,'b09020','705000',['mace'],'int',0],['Blacksmith','Merchant',.8,1.6,1.4,'a05000','602000',['axe','mace'],'str',0],
 ['Lord Knight','Knight',.72,1.95,1.8,'600808','300000',['sword'],'str',0],['High Wizard','Wizard',.9,2.4,1,'0a1a55','',['staff'],'int',1,'0a1040'],
-['Sniper','Hunter',.55,1.85,1.05,'0a3a0a','002000',['bow'],'dex',1],['Assassin Cross','Assassin',.5,1.9,1.15,'1a1a28','0a0a14',['katar','dagger'],'agi',0],
+['Sniper','Hunter',.55,1.85,1.05,'0a3a0a','002000',['bow'],'dex',1],['Assassin Cross','Assassin',.5,1.9,1.15,'1a1a28','0a0a14',['katar','dagger'],'str',0],
 ['High Priest','Priest',.8,1.7,1.25,'c8a820','604000',['mace'],'int',0],['Whitesmith','Blacksmith',.7,2,1.6,'c06000','502000',['axe','mace'],'str',0]];
 const CLASSES={};
 CD.forEach(([n,par,aspd,atk,hp,col,cape,wt,main,rng,hat])=>CLASSES[n]={n,par,aspd,atk,hp,col:parseInt(col,16),cape:cape?parseInt(cape,16):0,wt,main,rng,hat:hat?parseInt(hat,16):0,kids:[]});
@@ -1158,7 +1160,7 @@ for(const s of SKILLS){
   s.cls=down(s.from);s.magic=['Mage','Wizard','High Wizard','Acolyte','Priest','High Priest'].includes(s.from);
   if(s.type==='act'){s.mul=L=>s.power*(.55+.45*Math.min(s.max,L)/s.max);s.aoe=s.shape!=='single';}
   if(s.type==='pas'||s.type==='buff')s.f=L=>(s.flat||0)+s.rate*(s.id==='thrust'?Math.min(5,L):L);
-  s.d=L=>s.type==='act'?`${Math.round(s.mul(L)*100*(typeof skillTuning==='function'&&typeof S!=='undefined'&&S&&s.cls.includes(S.cls)?skillTuning(false,s,L):1))}% total ${s.magic?'magic':'physical'} power${s.hits>1?' across '+s.hits+' hits':''} · ${s.cd}s cooldown · ${s.shape}. ${s.text}`:
+  s.d=L=>s.type==='act'?`${Math.round(s.mul(L)*100*(typeof skillTuning==='function'&&typeof S!=='undefined'&&S&&s.cls.includes(S.cls)?skillTuning(false,s,L)*skillStatScale(s,L):1))}% total ${s.magic?'magic':'physical'} power${s.hits>1?' across '+s.hits+' hits':''} · ${s.cd}s cooldown · ${s.shape}. ${s.text}`:
     s.type==='heal'?`Auto: heals ${10+5*L}% HP below half · ${s.cd}s cooldown.`:
     `${s.text} ${s.key}: +${s.f(L).toFixed(1)}${['range','echo','momentum'].includes(s.key)?'':'%'}${s.type==='buff'?' · '+(s.id==='dpois'?5+L:['ovthrust','thrust'].includes(s.id)?8+2*Math.min(5,L):s.duration)+'s duration / '+s.cd+'s cooldown':''}`;
   const describe=s.d;s.d=L=>describe(L)+(s.training?' Training: '+Object.entries(s.training).map(([key,rate])=>'+'+(rate*L).toFixed(1)+' '+key.toUpperCase()+(key==='def'?'':'%')).join(', ')+'.':'');
@@ -1419,7 +1421,7 @@ const CARD_REWARD_OPTIONS=[
   {id:'dex',name:'DEX',desc:'+1 DEX'}, {id:'int',name:'INT',desc:'+1 INT'},
   {id:'vit',name:'VIT',desc:'+1 VIT'}, {id:'luk',name:'LUK',desc:'+1 LUK'},
   {id:'hpPct',name:'Max HP %',desc:'+1% Max HP'}, {id:'fleePct',name:'Flee %',desc:'+1 Flee percentage point'},
-  {id:'leech',name:'HP Leech',desc:'+1% damage returned as HP'}, {id:'def',name:'DEF',desc:'+1 DEF'},
+  {id:'leech',name:'HP Leech rank',desc:'+0.5% actual basic-attack damage as HP per rank (1.5% at 3 ranks); shared 2% Max HP/second ceiling with pets'}, {id:'def',name:'DEF',desc:'+1 DEF'},
   {id:'mdef',name:'MDEF',desc:'+1 MDEF'}, {id:'atkPct',name:'ATK %',desc:'+1% ATK'},
   {id:'matkPct',name:'MATK %',desc:'+1% MATK'}, {id:'aspdPct',name:'ASPD %',desc:'+1% ASPD'},
   {id:'critPct',name:'Crit %',desc:'+1 Crit percentage point'}
@@ -1515,7 +1517,7 @@ function cardMasteryReset(cardId){
 function donateCardToMastery(id){
   if(!S||!Array.isArray(S.cards))return null;
   const i=S.cards.findIndex(c=>c&&String(c.id)===String(id));if(i<0)return null;
-  const c=S.cards[i],name=String(c.n||'Unknown Card').slice(0,100);
+  const c=S.cards[i],name=cardFamily(c).slice(0,100);
   if(!CARD_NAMES.has(name))return null;
   const level=cardMasteryLevel(name);
   if(level>=CARD_MASTERY_PER_CARD)return null;
@@ -1713,7 +1715,7 @@ const TRIAL_STORE=[
   {id:'elu',   c:45,  n:'Elunium x5',                    d:'Armour refine material. Five Elunium for 45 Echo Shards.'},
   {id:'zeny',  c:35,  n:'Zeny Cache (500,000z)',         d:'A direct 500,000 Zeny cache for refining and gear upgrades.'},
   {id:'token', c:180, n:'Card Mastery Token',            d:'One permanent-stat roll in the Index; no duplicate card is needed.'},
-  {id:'lcard', c:200, n:'Random Legendary Card Voucher', d:'Adds one random Legendary monster card to your collection, with a random Legendary stat.'},
+  {id:'lcard', c:200, n:'Random Boss Card Voucher', d:'Adds a normal boss card from Prontera through Amatsu. Niflheim/Abyss Crit DMG boss cards must be farmed.'},
   {id:'nmgear',c:400, n:'Nightmare Gear Token',          d:'Choose a map for one class-usable item. Prontera to Payon give section 4; Comodo to Abyss give section 5. The map sets its quality cap.',lv:120},
   {id:'rscroll',c:400,n:'Refine Scroll',                  d:'Placeholder item for a future refine feature. It has no effect or use yet.'},
 ];
@@ -1923,9 +1925,9 @@ function trialBuy(id){
   else if(id==='zeny'){earnZeny(500000);log('Shard Store: +500,000 Zeny.','r3','trial')}
   else if(id==='token'){S.cardIndex.bonus=safeCount(S.cardIndex.bonus)+1;log('Shard Store: +1 Card Mastery Token (claim it in the Index).','r3','trial')}
   else if(id==='lcard'){
-    const m=MONSTER_INDEX[Math.floor(Math.random()*MONSTER_INDEX.length)],n=m.name+' Card',stat=cardStat(3,Math.floor(Math.random()*AFF.length));
-    S.cards.push({id:uid(),n,stat,g:3,v:cardVal(3,stat)});
-    log(`Shard Store: random Legendary ${n} (${SU(stat)} +${cardVal(3,stat)}) added to your card collection.`,'r3','trial')}
+    const pool=CARD_CATALOG.filter(c=>c.bossCard&&!c.nightmare&&c.map<8),card=newCard(pool[Math.floor(Math.random()*pool.length)]);
+    S.cards.push(card);
+    log(`Shard Store: random Legendary ${card.n} (${card.effects.map(cardEffectText).join(', ')}) added to your card collection.`,'r3','trial')}
   else if(id==='rscroll'){S.refineScrolls=safeCount(S.refineScrolls+1);log('Shard Store: +1 Refine Scroll added to your reserve. This placeholder has no effect yet.','r3','trial')}
   else if(id==='nmgear'){trialLobby('pickmap');return}
   S.shards=Math.max(0,(S.shards|0)-row.c);save();
@@ -1966,6 +1968,89 @@ const secOf=l=>l<=3?0:l<=7?1:l<=9?2:3,secOf0=l=>l<=3?0:l<=7?1:l<=9?2:3;
 // affix. Cards already in a save are revalued by this table in load()'s repair, like every card.
 const cardVal=(g,st)=>st==='cdm'?([3,7,10,13][g]||1):Math.max(1,Math.round((CV[g]||1)*(AB[st]||1)));
 const cardStat=(g,seed)=>{const p=g>=2?AFF:K5;return p[((seed%p.length)+p.length)%p.length]};
+// ---------- v98 cards: stable species identity, independent values and explicit fit ----------
+const PROGRESSION_VERSION=1;
+const esc=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const CARD_STATS_BY_MAP=[
+ ['luk','hp','agi','dex','move','int','str','vit','hpPct','move'],
+ ['matk','hpPct','def','agi','vit','crit','aspd','int','def','dex'],
+ ['atk','vit','str','hp','matk','move','int','mdef','matk','crit'],
+ ['crit','def','field','vit','str','def','hpPct','agi','atk','str'],
+ ['vit','field','int','aspd','hpPct','agi','dex','def','atk','dex'],
+ ['atk','matk','def','aspd','crit','hpPct'],
+ ['hpPct','move','str','def','str','atk'],
+ ['atk','def','move','dex','matk','mdef'],
+ ['field','matk','atk','hpPct','mdef','cdm'],
+ ['cdm','hpPct','matk','crit','def','atk']
+];
+const CARD_BOSS_STATS=['hpPct','atk','matk','crit','atk','field','atk','matk','cdm','cdm'];
+const CARD_FITS={str:['weapon','acc'],dex:['weapon','acc'],int:['weapon','head','acc'],luk:['acc'],agi:['armor','leg','acc'],vit:['armor','off','head'],hp:['head','armor'],hpPct:['armor','head','off'],atk:['weapon'],matk:['weapon','head'],crit:['weapon','acc'],cdm:['weapon','acc'],aspd:['armor','leg'],flee:['armor','off','leg'],move:['leg','acc'],def:['armor','off','leg'],mdef:['head','armor','off'],field:['weapon','acc']};
+const cardFamily=c=>String(c.family||c.n||'').replace(/^Nightmare /,'');
+const cardEffects=c=>Array.isArray(c.effects)?c.effects:[{k:c.stat,v:c.v}];
+function cardDefinition(m,j,nm=false){
+ const mp=MAPS[m],boss=j===mp.mobs.length,monster=boss?mp.boss:mp.mobs[j];if(!monster)return null;
+ const family=monster.n+' Card',stat=boss?CARD_BOSS_STATS[m]:CARD_STATS_BY_MAP[m][j],band=m<1?0:m<5?1:m<8?2:3;
+ const values={str:[3,6,12,18],agi:[3,6,12,18],dex:[3,6,12,18],int:[3,6,12,18],vit:[3,6,12,18],luk:[3,6,12,18],hp:[50,100,180,260],hpPct:[4,6,7,8],atk:[4,6,10,16],matk:[2,3,4,6],crit:[1,2,3,5],aspd:[3,5,8,10],flee:[2,3,4,5],move:[3,3,4,5],def:[4,8,18,30],mdef:[4,8,18,30],field:[6,8,10,12],cdm:[0,0,0,20]};
+ let v=values[stat][band];if(boss)v=Math.round(v*1.25);if(nm)v=Math.round(v*1.25);
+ if(boss&&m===8)v=nm?50:35;if(boss&&m===9)v=nm?75:50;
+ if(stat==='move')v=Math.min(5,v);
+ const effects=[{k:stat,v}],fit=stat==='cdm'?(m===8?['acc']:['weapon']):CARD_FITS[stat];
+ if(monster.n==='Willow')effects.push({k:'matk',v:4});
+ if(monster.n==='Mantis')effects.push({k:'atk',v:6});
+ return{card:1,cardVersion:PROGRESSION_VERSION,cardKey:m+':'+j+':'+Number(nm),family,n:(nm?'Nightmare ':'')+family,stat,v,effects,fit:fit.slice(),g:boss?3:Math.min(2,band),bossCard:boss,map:m,nightmare:nm};
+}
+const CARD_CATALOG=MAPS.flatMap((mp,m)=>[false,true].flatMap(nm=>Array.from({length:mp.mobs.length+1},(_,j)=>cardDefinition(m,j,nm))));
+const newCard=d=>({...d,card:1,id:uid(),v:d.v??cardVal(d.g,d.stat),...(d.effects?{effects:d.effects.map(x=>({...x}))}:{}),...(d.fit?{fit:d.fit.slice()}:{})});
+const cardFits=(c,it)=>(c.fit||CARD_FITS[c.stat]||[]).includes(it.slot==='off'&&it.wt==='dagger'?'weapon':it.slot);
+const cardEffectText=e=>e.k==='cdm'?`Crit DMG +${(e.v/100).toFixed(2)}×`:`${({hpPct:'Max HP',matk:'Magic Power',field:'Ordinary monster damage',move:'Movement',def:'DEF',mdef:'MDEF'})[e.k]||AL[e.k]||SU(e.k)} +${e.v}${['hpPct','matk','field','move'].includes(e.k)?'%':''}`;
+function socketWhy(c,it,eq=S.eq){
+ if(!cardFits(c,it))return 'This card does not fit this equipment.';
+ const own=it.cards||[],all=Object.values(eq).filter(Boolean).flatMap(x=>x.cards||[]);
+ if(all.some(x=>cardFamily(x)===cardFamily(c)))return 'Only one card from this monster family can be equipped.';
+ if(c.bossCard&&all.filter(x=>x.bossCard).length>=2)return 'At most two boss cards can be equipped.';
+ if(c.bossCard&&own.some(x=>x.bossCard))return 'Only one boss card fits each item.';
+ if(cardEffects(c).some(x=>x.k==='cdm')&&own.some(x=>cardEffects(x).some(e=>e.k==='cdm')))return 'Only one Crit DMG card fits each item.';
+ return '';
+}
+function repairEquippedCards(f){
+ const seen=new Set(),accepted={};let count=0;f.cards=f.cards||[];
+ for(const [slot,it] of Object.entries(f.eq||{})){if(!it||seen.has(it))continue;seen.add(it);const cards=it.cards||[];it.cards=[];accepted[slot]=it;
+  for(const c of cards){if(it.cards.length>=(it.slots||0)||socketWhy(c,it,accepted)){f.cards.push(c);count++;}else it.cards.push(c);}}
+ return count;
+}
+function repairProgression(f,oldVersion){
+ if((Number(oldVersion)||0)<PROGRESSION_VERSION){
+  f.skillRespec=f.skillRespec||{};for(const cls of new Set([f.cls,...Object.keys(f.base||{})]))f.skillRespec[cls]=true;
+  const points=lv=>{let n=10;for(let i=2;i<=lv;i++)n+=4+Math.floor(i/5);return n};
+  const spent=st=>Object.values(st).reduce((sum,v)=>{for(let n=1;n<v;n++)sum+=n<100?1+Math.floor((n-1)/10):10+n-100;return sum},0);
+  f.pts=Math.max(0,points(f.lv)-spent(f.st));for(const b of Object.values(f.base||{}))b.pts=Math.max(0,points(b.lv)-spent(b.st));
+  f.freeCardRemoval=true;
+ }
+ const fix=c=>{if(c.cardVersion===PROGRESSION_VERSION){const d=CARD_CATALOG.find(x=>x.cardKey===c.cardKey);if(d)Object.assign(c,d);}else{c.legacy=true;c.family=cardFamily(c);c.bossCard=MAPS.some(m=>m.boss.n+' Card'===c.family);}};
+ for(const c of f.cards||[])fix(c);for(const it of [...Object.values(f.eq||{}),...(f.inv||[])])if(it)for(const c of it.cards||[])fix(c);
+ if(f.reforgePending&&!validReforgeOffer(f))delete f.reforgePending;
+ repairEquippedCards(f);f.progressionVersion=PROGRESSION_VERSION;return f;
+}
+function convertCard(id){const c=S.cards.find(x=>String(x.id)===String(id));if(!c||!c.legacy)return;
+ const d=CARD_CATALOG.find(x=>!x.nightmare&&x.family===cardFamily(c));if(!d)return;
+ ask(`Convert ${c.n}: ${cardEffects(c).map(cardEffectText).join(', ')} → ${d.effects.map(cardEffectText).join(', ')}? This preserves the card and its Mastery family.`,()=>{Object.assign(c,newCard(d),{id:c.id});delete c.legacy;save();ui()});}
+// A rolling second of actual healing: all attacks and pets share this budget. No banked healing.
+let leechWindow=[],leechOwner=null,leechTime=-1;
+function applyLeech(dealt,rate){
+ if(!S||!(dealt>0)||!(rate>0))return 0;
+ if(leechOwner!==S||t<leechTime){leechWindow=[];leechOwner=S;}leechTime=t;
+ leechWindow=leechWindow.filter(x=>t-x.at<1);
+ const cap=maxHp()*.02,used=leechWindow.reduce((n,x)=>n+x.hp,0),h=Math.max(0,Math.min(dealt*rate/100,cap-used,maxHp()-S.hp));
+ if(h>0){S.hp+=h;leechWindow.push({at:t,hp:h});addFloat(pl.x,2.9,pl.z,'+'+numTxt(h),'#ff6b8a');}return h;
+}
+// Physical skill training replaces universal INT scaling; no physical skill reads INT here.
+const INT_CLASSES=['Mage','Wizard','High Wizard','Acolyte','Priest','High Priest'];
+const PHYSICAL_TRAINING={"Novice": [1.01, 1.01, 1.01], "Swordman": [1.01, 1.01, 1.01], "Archer": [1.13, 1.22, 1.3], "Thief": [1.27294, 1.41074, 1.64825], "Merchant": [1.01, 1.01, 1.01], "Knight": [1.01, 1.01, 1.01], "Hunter": [1.33, 1.45, 1.6], "Assassin": [1.66207, 2.04084, 2.26048], "Blacksmith": [1.01, 1.01, 1.01], "Lord Knight": [1.05, 1.05, 1.05], "Sniper": [1.45, 1.55, 1.6], "Assassin Cross": [2.46, 2.53, 2.32], "Whitesmith": [1.01, 1.01, 1.01]};
+function physicalTraining(sk,L){const a=PHYSICAL_TRAINING[S.cls]||[1,1,1],r=Math.max(1,Math.min(10,L));return r<=5?a[0]+(a[1]-a[0])*(r-1)/4:a[1]+(a[2]-a[1])*(r-5)/5;}
+const skillStatScale=(sk,L)=>INT_CLASSES.includes(S.cls)?1+st('int')*.01:1;
+const equipmentMove=()=>Math.min(20,Math.max(0,bon('move')));
+const fieldDamage=target=>target&&!target.boss?1+bon('field')/100:1;
+
 // A pool entry's k is its weapon type for weapons ('sword', 'bow', ...) and its slot for
 // everything else, so the UI asks gearSlot() which panel group an entry belongs to. A generated
 // item spells the same thing out on `slot` + `wt`, so both shapes go through the same readers and
@@ -2092,9 +2177,9 @@ function fieldOf(m,l){const mp=MAPS[m],sec=secField(m,l),T=gearPool(m,l),n=T.len
   // weapon family. v90 (owner: "for fairness, let's just remain the drop on stage 4 & 5") puts the walk
   // back on those stages: each mob carries ONE weapon from the shelf, as stages 1-13 do. The N+ halving
   // (NMPLUS_DROP, in gch and in the boss pool) stays.
-  const mobs=[0,1].map(j=>{const mm=mp.mobs[(l-1+j)%mp.mobs.length],cg=l<=3?0:l<=7?1:2,
+  const mobs=[0,1].map(j=>{const mm=mp.mobs[(l>10?2*(l-11)+j:l-1+j)%mp.mobs.length],cg=l<=3?0:l<=7?1:2,
     wr=[[WP[(2*(l-1)+j)%nw],gch[0]]];   // v90 (owner): the N+ rows walk the shelf again (see the note above); the halved gch[0] is the N+ rate
-    return{...mm,tier:ft,drops:[...wr,[DF[(4*(l-1)+j*2)%nd],gch[1]],[DF[(4*(l-1)+j*2+1)%nd],gch[2]]],card:{n:mm.n+' Card',stat:cardStat(cg,(m*10+l+j)*3+1),g:cg},cardCh:.15,ore:true,oreCh:l>10?.015:l===10?.01:.005}});
+    return{...mm,tier:ft,drops:[...wr,[DF[(4*(l-1)+j*2)%nd],gch[1]],[DF[(4*(l-1)+j*2+1)%nd],gch[2]]],card:cardDefinition(m,mp.mobs.findIndex(x=>x.n===mm.n),l>10),cardCh:.15,ore:true,oreCh:l>10?.015:l===10?.01:.005}});
   return{m,l,sec,tier:ft,gearSet,mobs,boss:(l===10||l===15)?{...mp.boss,tier:ft,
     // v57: the boss still lists its whole pool - every item stays obtainable - but the pool now
     // totals ~6% per boss instead of one 1% roll per entry (13 entries used to mean 13%). The
@@ -2102,7 +2187,7 @@ function fieldOf(m,l){const mp=MAPS[m],sec=secField(m,l),T=gearPool(m,l),n=T.len
     // v73: mid/endgame bosses (map index 5+) pay 30% less, so their pool totals ~4.2%; the
     // first five maps keep the original ~6%. A boss also carries its map's crit resistance.
     drops:T.map(x=>[x,Math.round(BOSS_POOL_TOTAL[l>10?2:(m>=5?1:0)]*(sec===5?NMPLUS_DROP:1)/n)/100]),critRes:bossCritRes(m,l),
-    card:{n:mp.boss.n+' Card',stat:cardStat(3,m),g:3},cardCh:.1,ore:true,oreCh:.025,mat:l>13?{m,n:NM_MAT[m]}:null}:null}}
+    card:cardDefinition(m,mp.mobs.length,l>10),cardCh:.1,ore:true,oreCh:.025,mat:l>13?{m,n:NM_MAT[m]}:null}:null}}
 // One drop line for the map panel: icon + name + the field's fixed rarity + which monster carries
 // it, with the % on the right. v79: a piece the player's own class cannot wear is dimmed and says
 // why on hover - the class gate is part of choosing where to farm, not a surprise that only turns
@@ -2261,7 +2346,7 @@ const PETGAP=7,PETBAL=1.2;
 const PET_SKILLS=[
   {id:'warcry',n:'War Cry',kind:'buff',stat:'atk',power:15,duration:30,cd:60,desc:'Player ATK +15% for 30s, 60s cooldown. Never stacks with another pet, and cannot run next to MATK',vfx:'frenzy',color:'#ffd050',icon:'⚔️'},
   {id:'arcane',n:'Arcane Blessing',kind:'buff',stat:'matk',power:15,duration:30,cd:60,desc:'Player MATK +15% for 30s, 60s cooldown. Never stacks with another pet, and cannot run next to ATK',vfx:'magnus',color:'#a58bff',icon:'✦'},
-  {id:'siphon',n:'Blood Siphon',kind:'buff',stat:'leech',power:3,duration:30,cd:60,desc:'For 30s, 3% of this pet damage heals you, 60s cooldown. Never stacks with another pet',vfx:'soulb',color:'#ff6b8a',icon:'🩸'},
+  {id:'siphon',n:'Blood Siphon',kind:'buff',stat:'leech',power:.5,duration:30,cd:60,desc:'For 30s, 0.5% of actual pet damage heals you; shared 2% Max HP/second ceiling. 60s cooldown; never stacks',vfx:'soulb',color:'#ff6b8a',icon:'🩸'},
   {id:'vital',n:'Vital Aura',kind:'buff',stat:'hp',power:15,duration:30,cd:60,desc:'Player Max HP +15% for 30s, 60s cooldown. Never stacks with another pet',vfx:'magnus',color:'#7dff9d',icon:'💗'},
   {id:'flameburst',n:'Flame Burst',kind:'aoe',power:1.45,radius:4,cd:14,desc:'AoE: 1.45× pet damage to enemies within 4 units',vfx:'meteor',color:'#ff8142',icon:'🔥'},
   {id:'thunderclap',n:'Thunderclap',kind:'aoe',power:1.25,radius:4,cd:12,desc:'AoE: 1.25× pet damage to enemies within 4 units',vfx:'jup',color:'#8fe9ff',icon:'⚡'},
@@ -2291,11 +2376,7 @@ function petBuffWhy(skill){
   return '';
 }
 // Blood Siphon: while it runs, a share of every point this pet deals comes back to you.
-function petLeech(dealt){
-  if(!dealt||!(petBuff.leech>0))return;
-  const h=Math.max(1,Math.round(dealt*petBuff.leech/100));
-  S.hp=Math.min(maxHp(),S.hp+h);addFloat(pl.x,2.9,pl.z,'+'+numTxt(h),'#ff6b8a');
-}
+function petLeech(dealt){return applyLeech(dealt,petBuff.leech||0)}
 function petHit(p,target){
   if((petSkillCd[p.id]||0)<=0){
     const ready=petSkills(p).filter(s=>(petSkillCd[p.id+'|'+s.id]||0)<=0);
@@ -2323,7 +2404,7 @@ function petHit(p,target){
       }else{
         const hitList=use.kind==='aoe'?mobs.slice().filter(o=>Math.hypot(o.x-target.x,o.z-target.z)<=use.radius):[target];
         let dealt=0;
-        for(const o of hitList)if(o&&o.hp>0){const d=Math.max(1,Math.round(petDmg(p)*use.power*(o.boss?1+petPassive('boss')/100:1)));hurt(o,d,use.color);dealt+=d}
+        for(const o of hitList)if(o&&o.hp>0){const d=Math.max(1,Math.round(petDmg(p)*use.power*(o.boss?1+petPassive('boss')/100:1)));dealt+=Math.min(o.hp,d);hurt(o,d,use.color)}
         petLeech(dealt);
         addFloat(target.x,2.4,target.z,use.n,use.color,true);playSkillFx(use.vfx,target,use.color);
       }
@@ -2332,8 +2413,8 @@ function petHit(p,target){
   }
   let d=petDmg(p)*rnd(.9,1.1);const c=Math.random()*100<p.eq[2]*5;if(c)d*=2;
   const hit=Math.max(1,Math.round(d*(target&&target.boss?1+petPassive('boss')/100:1)));
-  hurt(target,hit,MC[p.mut]?'#'+MC[p.mut].toString(16).padStart(6,'0'):'#ff9dff',c);
-  petLeech(hit);
+  const drained=Math.min(target.hp,hit);hurt(target,hit,MC[p.mut]?'#'+MC[p.mut].toString(16).padStart(6,'0'):'#ff9dff',c);
+  petLeech(drained);
   return false;
 }
 const rollingSet=new Set(),autoSet=new Set(),PW=[[90,9,1,0],[80,17,3,0],[70,24,5.5,.5],[60,30,9,1],[50,35,13,2],[40,38,18,4],[30,40,24,6],[22,40,30,8],[12,38,38,12],[5,30,45,20]],busy=p=>p.roll||rollingSet.has(p.id)||S.zeny<rollCost(p);
@@ -2345,7 +2426,7 @@ const uid=()=>Date.now()+Math.random(),rnd=(a,b)=>a+Math.random()*(b-a),ri=(a,b)
 // One roll fills both slots. The second pick is made from the skills the first did not take, so
 // the two can never match and there is no retry loop to spin if the dice are pinned.
 const PET_SKILL_WEIGHTS=[.35,.35,1,1,1,1,1,1,1,1,1,1],rollPetSkills=()=>{const a=pickW(PET_SKILL_WEIGHTS),rest=PET_SKILL_WEIGHTS.map((w,i)=>i).filter(i=>i!==a),b=rest[pickW(rest.map(i=>PET_SKILL_WEIGHTS[i]))];return[PET_SKILLS[a].id,PET_SKILLS[b].id]};
-const fresh=()=>({skillVersion:SKILL_VERSION,skillRefund:0,skillRespec:{},pets:[],bond:[],cls:'Novice',sex:'m',hair:0,lv:1,exp:0,hp:100,zeny:0,kills:0,indexXp:0,mobKills:{},equippedTitle:null,shards:0,refineScrolls:0,nmMat:[0,0,0,0,0,0,0,0,0,0],dps:0,trial:{day:trialDay(),used:0,best:0,runs:0},cardIndex:emptyCardIndex(),dmg:0,pts:10,jobs:{Novice:{jl:1,jx:0}},sk:{aid:1},skOff:{},dmgShort:true,dmgShow:true,base:{},mp:0,lvl:1,prog:[1,1,1,1,1],kl:0,auto:true,adv:true,feed:true,clickSell:false,bg:true,autoSell:[false,false,false,false,false,false,false],logOff:{},q:null,cards:[],ore:{ori:0,elu:0},offlineAt:0,offlineKph:0,offlineRateAt:0,offlineRateKills:0,offlineKillRemainder:0,gm:false,gmx:100,
+const fresh=()=>({progressionVersion:PROGRESSION_VERSION,skillVersion:SKILL_VERSION,skillRefund:0,skillRespec:{},pets:[],bond:[],cls:'Novice',sex:'m',hair:0,lv:1,exp:0,hp:100,zeny:0,kills:0,indexXp:0,mobKills:{},equippedTitle:null,shards:0,refineScrolls:0,nmMat:[0,0,0,0,0,0,0,0,0,0],dps:0,trial:{day:trialDay(),used:0,best:0,runs:0},cardIndex:emptyCardIndex(),dmg:0,pts:10,jobs:{Novice:{jl:1,jx:0}},sk:{aid:1},skOff:{},dmgShort:true,dmgShow:true,base:{},mp:0,lvl:1,prog:[1,1,1,1,1],kl:0,auto:true,adv:true,feed:true,clickSell:false,bg:true,autoSell:[false,false,false,false,false,false,false],logOff:{},q:null,cards:[],ore:{ori:0,elu:0},offlineAt:0,offlineKph:0,offlineRateAt:0,offlineRateKills:0,offlineKillRemainder:0,gm:false,gmx:100,
   st:{str:1,agi:1,dex:1,luk:1,int:1,vit:1},eq:{weapon:{id:1,slot:'weapon',wt:'dagger',tier:0,val:5,name:'Novice Knife',aff:[],slots:1,cards:[],sec:0},armor:null,head:null,off:null,leg:null,acc1:null,acc2:null},inv:[]});
 const saveKey=()=>'pg_save3_'+currentUser;
 // ---------- the save-owner stamp (v88.6) ----------
@@ -2457,7 +2538,7 @@ const s=JSON.parse(raw);if(s&&s.lv){const F=fresh(),f=Object.assign(F,s),hadInde
    const offLegal=f.eq.off&&((f.eq.off.slot==='off'&&shield)||(f.eq.off.wt==='dagger'&&dualWield(f.cls)&&!(f.eq.weapon&&f.eq.weapon.wt==='katar')));
    if(f.eq.off&&!offLegal){stow(f.eq.off);f.eq.off=null}
    const w=f.eq.weapon;if(w&&w.wt&&c&&!c.wt.includes(w.wt)){stow(w);f.eq.weapon=null}}
-  const fx=c=>{c.v=cardVal(c.g,c.stat)};(f.cards||[]).forEach(fx);(f.pets||[]).forEach((p,i)=>{if(p.on===undefined)p.on=i<3;if(!Array.isArray(p.eq))p.eq=[0,0,0];p.eq=[0,1,2].map(k=>Math.max(0,Math.min(PT.length,Math.floor(num_(p.eq[k],0)))));
+  const fx=c=>{if(!c.cardVersion)c.v=cardVal(c.g,c.stat)};(f.cards||[]).forEach(fx);(f.pets||[]).forEach((p,i)=>{if(p.on===undefined)p.on=i<3;if(!Array.isArray(p.eq))p.eq=[0,0,0];p.eq=[0,1,2].map(k=>Math.max(0,Math.min(PT.length,Math.floor(num_(p.eq[k],0)))));
   // v35 gave every pet TWO skill slots. An old save's single skill becomes slot 1 and the next
   // gacha fills both; nothing is thrown away and nothing is handed out for free.
   if(!Array.isArray(p.skills))p.skills=PET_SKILLS.some(s=>s.id===p.skill)?[p.skill]:[];
@@ -2470,7 +2551,7 @@ const s=JSON.parse(raw);if(s&&s.lv){const F=fresh(),f=Object.assign(F,s),hadInde
     const n=Object.assign({},newQuest(type),q);
     n.type=type;n.goal=Math.max(1,Math.floor(+n.goal||1));n.prog=Math.max(0,Math.floor(+n.prog||0));
     n.z=Math.max(0,Math.floor(+n.z||0));n.xp=Math.max(0,Math.floor(+n.xp||0));return n});
-  repairMastery(f);return f}}catch(e){}return fresh()}
+  repairMastery(f);repairProgression(f,s.progressionVersion);return f}}catch(e){}return fresh()}
 function offlineRateSample(now=Date.now()){
   if(!S)return;const kills=safeCount(S.kills),at=Number(S.offlineRateAt)||0,base=safeCount(S.offlineRateKills);
   if(!at||now<at||kills<base){S.offlineRateAt=now;S.offlineRateKills=kills;return}
@@ -3078,7 +3159,7 @@ const pv=k=>SKILLS.reduce((a,s)=>a+(skillOn(s.id)?(s.type==='pas'&&s.key===k?s.f
 // atk(): it reads the left hand as eqv('off'), which is only non-zero for a dagger. A shield
 // still reads as its own DEF, which is why def() keeps its slot==='off' guard.
 const items=()=>Object.values(S.eq).filter(Boolean),ev=it=>Math.round(it.val*(1+(it.r||0)*.15)),iname=it=>(it.r?'+'+it.r+' ':'')+it.name,DUAL=.5,TWO_HANDED=1.5,eqv=k=>{const it=S.eq[k];return it?k==='off'&&it.wt==='dagger'?ev(it)*DUAL:ev(it)*(it.wt==='katar'?TWO_HANDED:1):0};
-const bon=k=>{let v=MASTER_STATS.includes(k)?cardMasteryStat(k):0;for(const it of items()){const f=it===S.eq.off&&it.wt==='dagger'?DUAL:1;for(const a of it.aff||[])if(a.k===k)v+=a.v*f;for(const c of it.cards||[])if(c.stat===k)v+=c.v*f}return v};
+const bon=k=>{let v=MASTER_STATS.includes(k)?cardMasteryStat(k):0;for(const it of items()){const f=it===S.eq.off&&it.wt==='dagger'?DUAL:1;for(const a of it.aff||[])if(a.k===k)v+=a.v*f;for(const c of it.cards||[])for(const e of cardEffects(c))if(e.k===k)v+=e.v*f}return v};
 // v74 (owner: "second class or 3rd class equipment cannot be worn by 1st class"): a piece belongs
 // to a class TIER, not just a slot. The tier ladder is the class tree's own (`c.tier`: Novice 0,
 // first jobs 1, second 2, third 3) and the gate is `gearTierOf(it) <= max(1, classTierOf(cls))`.
@@ -3090,7 +3171,7 @@ const bon=k=>{let v=MASTER_STATS.includes(k)?cardMasteryStat(k):0;for(const it o
 // canUse is the single gate every equip path already goes through (bag highlight, chooser,
 // auto-equip, item tooltip).
 const st=k=>S.st[k]+bon(k),gearTierOf=it=>Math.max(0,Math.min(3,((it&&it.sec)|0)||0)),classTierOf=(cls=S.cls)=>Math.max(0,Math.min(3,(CLASSES[cls]&&CLASSES[cls].tier)||0)),gearTierOK=(it,cls=S.cls)=>gearTierOf(it)<=Math.max(1,classTierOf(cls)),gearUserOf=it=>['any class','Novice and 1st-job classes','2nd-job classes and up','transcendent classes only'][gearTierOf(it)],canUse=it=>gearTierOK(it)&&(it.slot==='off'?canShield():(it.slot!=='weapon'||!it.wt||C().wt.includes(it.wt)));
-const maxHp=()=>Math.round((80+S.lv*20+eqv('head')*4+(eqv('acc1')+eqv('acc2'))*3+st('vit')*8+bon('hp'))*C().hp*(1+(pv('hpp')+(typeof cardMasteryStat==='function'?cardMasteryStat('hpPct'):0))/100)*(1+(petBuff.hp||0)/100)*(1+petPassive('hp')/100));
+const maxHp=()=>Math.round((80+S.lv*20+eqv('head')*4+(eqv('acc1')+eqv('acc2'))*3+st('vit')*8+bon('hp'))*C().hp*(1+(pv('hpp')+bon('hpPct')+(typeof cardMasteryStat==='function'?cardMasteryStat('hpPct'):0))/100)*(1+(petBuff.hp||0)/100)*(1+petPassive('hp')/100));
 const atk=()=>Math.round((4+S.lv*2+eqv('weapon')+(S.eq.off&&S.eq.off.wt==='dagger'?eqv('off'):0)+st(C().main)*1.5+(st('dex')+st('luk'))*.25)*C().atk*(1+(pv('atk')+bon('atk')+(typeof cardMasteryStat==='function'?cardMasteryStat('atkPct'):0)+(tb.atk||0)+(petBuff.atk||0))/100)*(1+collDmg()/100));
 const matk=()=>Math.round((4+S.lv*2+eqv('weapon')*.8+st('int')*1.5+st('dex')*.25)*C().atk*(1+(pv('matk')+bon('matk')+(typeof cardMasteryStat==='function'?cardMasteryStat('matkPct'):0)+(tb.matk||0)+(petBuff.matk||0))/100)*(1+collDmg()/100));
 // Attack interval in seconds (the sheet prints the RO-style ASPD number beside it). v86 (owner:
@@ -3113,11 +3194,11 @@ const crit=()=>{const v=2+st('luk')*.25+pv('crit')+bon('crit')+(typeof cardMaste
 // the curve used to be a private constant inside update(). It is one named function now, shown on
 // the stat sheet as the world units per second the hero actually travels (the run multiplier
 // applies past 3 units, which is why the sheet also prints the sprint figure). Pinned by ui_sim.
-const heroMoveSpeedForAgi=agi=>5.3+Math.max(1,Number(agi)||1)*.025+Math.sqrt(Math.max(1,Number(agi)||1))*.035,moveSpd=()=>heroMoveSpeedForAgi(st('agi'))*(1+petPassive('move')/100),MOVE_RUN=1.4;
+const heroMoveSpeedForAgi=agi=>5.3+Math.max(1,Number(agi)||1)*.025+Math.sqrt(Math.max(1,Number(agi)||1))*.035,moveSpd=()=>heroMoveSpeedForAgi(st('agi'))*(1+(petPassive('move')+equipmentMove())/100),MOVE_RUN=1.4;
 // v73 crit damage (owner: "cri damage is too overpowered"): the base multiplier drops 2.0 -> 1.9,
 // and the cdm route that fed it is slot-limited and lighter (see AB/genGear). LUK and DEX still
 // add a little on top, so a crit build stays the burst build - it just cannot stack seven slots.
-const def=()=>Math.floor(S.lv*.5+st('vit')*.5+eqv('armor')+eqv('leg')+(S.eq.off&&S.eq.off.slot==='off'?eqv('off'):0)+pv('def')+(typeof cardMasteryStat==='function'?cardMasteryStat('def'):0)+(tb.def||0)+(petBuff.def||0)),mdef=()=>Math.floor(S.lv*.3+st('int')*.5+st('vit')*.4+eqv('head')*.3+pv('def')*.5+(typeof cardMasteryStat==='function'?cardMasteryStat('mdef'):0)),critD=()=>1.9+st('luk')*.01+st('dex')*.005+bon('cdm')/100,needAt=L=>roundReq(L<=50?Math.floor(NA1*Math.pow(L,NE1)):L<=70?Math.floor(N50*Math.pow(L/50,NE2)):L<=99?Math.floor(N70*Math.pow(L/70,NE2B)):Math.floor(N100*Math.pow(L/100,NE3))),need=()=>needAt(S.lv),cost=k=>{const v=S.st[k];return v<ELITELV?1+Math.floor((v-1)/10):10+(v-ELITELV)};
+const def=()=>Math.floor(S.lv*.5+st('vit')*.5+eqv('armor')+eqv('leg')+(S.eq.off&&S.eq.off.slot==='off'?eqv('off'):0)+pv('def')+bon('def')+(typeof cardMasteryStat==='function'?cardMasteryStat('def'):0)+(tb.def||0)+(petBuff.def||0)),mdef=()=>Math.floor(S.lv*.3+st('int')*.5+st('vit')*.4+eqv('head')*.3+pv('def')*.5+bon('mdef')+(typeof cardMasteryStat==='function'?cardMasteryStat('mdef'):0)),critD=()=>1.9+st('luk')*.008+st('dex')*.005+bon('cdm')/100,needAt=L=>roundReq(L<=50?Math.floor(NA1*Math.pow(L,NE1)):L<=70?Math.floor(N50*Math.pow(L/50,NE2)):L<=99?Math.floor(N70*Math.pow(L/70,NE2B)):Math.floor(N100*Math.pow(L/100,NE3))),need=()=>needAt(S.lv),cost=k=>{const v=S.st[k];return v<ELITELV?1+Math.floor((v-1)/10):10+(v-ELITELV)};
 const totalPts=()=>{let p=10;for(let l=2;l<=S.lv;l++)p+=4+Math.floor(l/5);return p},rcost=()=>S.lv<20?0:S.lv*50;
 // Skill points belong to the class LINE you are standing in, exactly like RO: the Novice level
 // you grinded, your first job and your second job all pool together, and only the skills your
@@ -3158,7 +3239,7 @@ const autoAllocateSkills=()=>{if(!S.sk||typeof S.sk!=='object')S.sk={};let bough
 // REF_ORE is indexed by rarIdx (Common, Fine, Rare, Epic, Legendary, N, N+); refOre() is the ore one attempt takes.
 // v90.8 (owner: Zeny sink): refine Zeny is x3 (REF_ZENY_MUL).
 const REF_ZENY_MUL=3,refCost=it=>Math.round(REF_ZENY_MUL*400*((it.r||0)+1)*(1+(it.sec||0)*.5)),REF_ORE=[1,1,2,2,5,10,10],refOre=it=>REF_ORE[rarIdx(it)],refCh=it=>[70,70,70,70,49,42,35,28,21,14][it.r||0];
-const affTxt=a=>`${AL[a.k]} +${a.v}`,cardTxt=c=>`${c.n} (${SU(c.stat)} +${c.v})`,dtier=it=>it.card?GI[it.g]:it.ore?3:((it&&+it.sec>=5)?6:(it&&+it.sec>=4)?5:it.tier);
+const affTxt=a=>`${AL[a.k]} +${a.v}`,cardTxt=c=>`${c.n}${c.legacy?' [legacy]':''} (${cardEffects(c).map(cardEffectText).join(', ')})`,dtier=it=>it.card?GI[it.g]:it.ore?3:((it&&+it.sec>=5)?6:(it&&+it.sec>=4)?5:it.tier);
 const isBoss=()=>S.lvl===10||S.lvl===15,fieldName=()=>S.lvl>10?`Nightmare ${MAPS[S.mp].n} Stage ${S.lvl-10}`:`${MAPS[S.mp].n} Stage ${S.lvl}`;
 // Curated original RO equipment art: progression follows the saved job section,
 // with robe and pendant variants selected by item type. All selected PNGs ship locally.
@@ -3318,6 +3399,8 @@ function spawn(){
   }
   activePack=nearestPack();mob=bossWave?mobs[0]:packMob();pAtkT=.3;
 }
+const affixPool=it=>it.slot==='weapon'?(it.wt==='staff'?['int','dex','matk','crit','cdm','hp']:['str','agi','dex','luk','atk','crit','aspd','cdm']):it.slot==='acc'?['str','agi','dex','int','vit','luk','atk','matk','crit','cdm','move']:it.slot==='leg'?['agi','vit','hp','flee','aspd','move']:it.slot==='head'?['int','vit','hp','matk']:['vit','hp','flee','str','agi'];
+const rollAffix=(k,it)=>({k,v:k==='move'?Math.min(it.slot==='acc'?5:8,Math.max(1,Math.round(affixValue(k,it.sec,it.tier,rnd(.8,1.25),it.mp)))):Math.max(1,Math.round(affixValue(k,it.sec,it.tier,rnd(.8,1.25),it.mp)*(it.quality||1)))});
 function genGear(T,l,sec,boss,tier){
   const slot=['armor','head','off','leg','acc'].includes(T.k)?T.k:'weapon';
   // The numeric field-quality input (see dropTier) feeds the existing stat/value rolls. The item
@@ -3335,11 +3418,11 @@ function genGear(T,l,sec,boss,tier){
   // cannot exist any more. This follows the spirit of the cdm CARD's fit rule (CFIT['cdm'] puts
   // those cards on weapons), widened to accessories because both are the offensive slots. Every
   // other affix still rolls anywhere; gear that already carries a legacy cdm roll keeps it.
-  const n=[1,1+ri(0,1),2,2+ri(0,1),3][t],pool=(slot==='weapon'||slot==='acc'?AFF:AFF.filter(k=>k!=='cdm')).slice(),aff=[];
-  for(let i=0;i<n;i++){const k=pool.splice(ri(0,pool.length-1),1)[0];aff.push({k,v:Math.max(1,Math.round(affixValue(k,sec,t,rnd(.8,1.25),(S&&S.mp|0)||0)*quality))})}
+  const n=[1,1,2,3,3][t],profile={slot,wt:T.k,sec,tier:t,mp:(S&&S.mp|0)||0,quality},pool=affixPool(profile).slice(),aff=[];
+  for(let i=0;i<n;i++){const k=pool.splice(ri(0,pool.length-1),1)[0];aff.push(rollAffix(k,profile))}
   // Katars and bows always have four card sockets; every other weapon keeps the existing 1-3 roll.
   const slots=slot==='weapon'&&(T.k==='katar'||T.k==='bow')?4:slot==='weapon'?Math.min(3,1+ri(0,1)+(t>=3?1:0)):Math.min(1,ri(0,1)+(t>=3?1:0));
-  return{id:uid(),slot,wt:slot==='weapon'?T.k:undefined,tier:t,val,name:(sec>=5?'N+ ':sec>=4?'N ':t?RAR[t].n+' ':'')+T.n,aff,slots,cards:[],sec,lvl:l,...(sec>=4?{mp:(S&&S.mp|0)||0}:{})};
+  return{id:uid(),slot,wt:slot==='weapon'?T.k:undefined,tier:t,val,name:(sec>=5?'N+ ':sec>=4?'N ':t?RAR[t].n+' ':'')+T.n,aff,slots,cards:[],sec,lvl:l,quality,mp:(S&&S.mp|0)||0};
 }
 // Away time is earned from the same map/stage and drop tables as online play. The browser records
 // a rolling real-time kill rate, credits at most four hours, and simulates half that many kills.
@@ -3395,7 +3478,7 @@ function offlineAwardKill(mob,r){
   const z=Math.round(mob.zeny*(1+pv('zeny')/100)*nmZenyRoll(mob))*gx(),xp=Math.round(mob.exp*expRate());earnZeny(z);r.zeny+=z;earnExp(xp);r.exp+=xp;
   addJob(Math.round(Math.round(mob.exp*.7)*expRate()));checkLevel();
   for(const[T,ch]of mob.drops)if(Math.random()*100<ch)offlineStoreGear(genGear(T,mob.lvl,mob.sec,mob.boss,mob.tier),r);
-  if(Math.random()*100<mob.cardCh){const g=mob.card.g;S.cards.push({card:1,id:uid(),n:mob.card.n,g,stat:mob.card.stat,v:cardVal(g,mob.card.stat)});r.cards++;r.drops++}
+  if(Math.random()*100<mob.cardCh){const g=mob.card.g;S.cards.push(newCard(mob.card));r.cards++;r.drops++}
   if(mob.ore)for(const ore of['ori','elu'])if(Math.random()<mob.oreCh){S.ore[ore]=safeCount(S.ore[ore])+1;r[ore]++;r.drops++}
   if(mob.mat&&Math.random()*100<NM_MAT_CH){S.nmMat[mob.mat.m]=safeCount(S.nmMat[mob.mat.m])+1;r.drops++}
   if(Math.random()*100<(mob.boss?.5:.03)){
@@ -3638,8 +3721,8 @@ function strike(mult,col,magic=false,skill=false){
   if(!mob)return;if(Math.random()*100<missCh()){addFloat(mob.x,1.8,mob.z,'MISS','#dfe5ed',false,'miss');return}
   // v73: the crit roll answers to the target - a boss carries its map's crit resistance
   // (BOSS_CRIT_RES) and every other monster resists nothing.
-  const c=Math.random()*100<Math.max(0,crit()*(1-(mob.critRes||0))),base=magic?matk():atk(),d=Math.max(1,Math.round(base*mult*rnd(Math.min(.95,.7+st('dex')*.004),1.15)*(c?critD():1)*(mob.boss?1+petPassive('boss')/100:1)));
-  S.dmg=(S.dmg||0)+d;mob.hp-=d;mob.flash=1;mob.hitAnim=1;shake=c?6:2;const leech=typeof cardMasteryStat==='function'?cardMasteryStat('leech'):0;if(leech>0&&typeof maxHp==='function'){const h=Math.max(1,Math.round(d*leech/100));S.hp=Math.min(maxHp(),S.hp+h);addFloat(pl.x,2.7,pl.z,'+'+h,'#ff6b8a')}showDamage(mob,mob.x,mobDamageY(mob,c),mob.z,d,c,skill);
+  const c=Math.random()*100<Math.max(0,crit()*(1-(mob.critRes||0))),base=magic?matk():atk(),d=Math.max(1,Math.round(base*mult*rnd(Math.min(.95,.7+st('dex')*.004),1.15)*(c?critD():1)*(mob.boss?1+petPassive('boss')/100:1)*fieldDamage(mob)));
+  S.dmg=(S.dmg||0)+d;mob.hp-=d;mob.flash=1;mob.hitAnim=1;shake=c?6:2;applyLeech(Math.min(d,Math.max(0,mob.hp+d)),cardMasteryStat('leech')*.5);showDamage(mob,mob.x,mobDamageY(mob,c),mob.z,d,c,skill);
 }
 // Higher job tiers get more casts per swing: Novice 1, first job 2, second job 3, transcendent
 // 4 (tier is 0/1/2/3 - Assassin Cross and Lord Knight are tier 3, not 2). Every cast after the
@@ -3688,17 +3771,17 @@ const SKILL_TUNING={
  },
  "Whitesmith": {
   "single": [
-   1.17589,
-   1.15333,
-   1.00113470464
+    1.17589,
+    1.15333,
+    1.00113470464
   ],
   "area": [
-   1.12487,
-   1.01049,
-   1.16432
+    1.2936005,
+    1.1620635,
+    1.397184
   ],
   "companion": 1
- },
+},
  "Swordman": {
   "single": [
    0.94814,
@@ -3883,9 +3966,9 @@ const SKILL_TUNING={
  },
  "High Priest": {
   "single": [
-   0.7326530732673268,
-   0.5445910171428572,
-   0.4249090909090909
+   0.710673481069307,
+   0.5282532866285715,
+   0.4121618181818182
   ],
   "area": [
    0.22164,
@@ -3902,7 +3985,7 @@ function skillTuning(area=false,sk,L){const table=SKILL_TUNING[S.cls];if(!table)
   if(area==='companion')return table.companion;
   if(!sk)return 1;
   const rank=Math.max(1,Math.min(sk.max,L===undefined?lv(sk.id):L));
-  const points=[1,5,10].filter(n=>n<=sk.max),values=points.map((n,i)=>sk.mul(n)*table.single[i]*(area?table.area[i]:1));
+  const points=[1,5,10].filter(n=>n<=sk.max),values=points.map((n,i)=>sk.mul(n)*table.single[i]*(INT_CLASSES.includes(S.cls)?1:physicalTraining(sk,n))*(area?table.area[i]:1));
   for(let i=values.length-2;i>=0;i--)values[i]=Math.min(values[i],values[i+1]/(1+.005*(points[i+1]-points[i])));
   let power=values[values.length-1];
   for(let i=1;i<points.length;i++)if(rank<=points[i]){power=values[i-1]+(values[i]-values[i-1])*(rank-points[i-1])/(points[i]-points[i-1]);break;}
@@ -3933,7 +4016,7 @@ function skillHit(target,raw,sk,proc=false){if(!target||target.hp<=0||!mobs.incl
     if(pv('zeny')&&skillOn('steal')&&target.hp>=target.max*.8)boost+=lv('steal')*.01;}
   if(Math.random()*100<missCh())return 0;
   const critical=Math.random()*100<Math.max(0,Math.min(100,crit()+skillBonus('critical'))*(1-(target.critRes||0)));
-  const damage=Math.max(1,Math.round(raw*boost*rnd(Math.min(.95,.7+st('dex')*.004),1.15)*(critical?critD():1)*(target.boss?1+petPassive('boss')/100:1)));
+  const damage=Math.max(1,Math.round(raw*boost*rnd(Math.min(.95,.7+st('dex')*.004),1.15)*(critical?critD():1)*(target.boss?1+petPassive('boss')/100:1)*fieldDamage(target)));
   hurt(target,damage,sk.col,critical,true);
   if(!proc&&target.hp>0&&target.deathmark){if(--target.deathmark.hits<=0){const mark=target.deathmark;delete target.deathmark;skillHit(target,mark.raw,mark.sk,true);}}
   return damage;
@@ -3942,9 +4025,9 @@ function castSkill(sk,k){
   const target=mob;if(!target||target.hp<=0||!mobs.includes(target))return;
   const r=skillState(),L=lv(sk.id);skillDash(sk,target);playSkillFx(sk.id,target,sk.col);
   const bonus=pv('damage')+(sk.falcon?pv('falcon'):0)+(['cart','cartrev','meltdown'].includes(sk.id)?Math.min(3,r.momentum)*pv('momentum'):0);
-  // Keep the existing effective stat scale in this release while redistributing damage.
-  // Stat costs, caps, pets and boss HP are not silently retuned by the skill redesign.
-  let raw=(sk.magic?matk():atk())*(1+st('int')*.01)*sk.mul(L)*k*(1+bonus/100)*skillTuning(false,sk,L);
+  // INT multiplies caster skills. Physical training is folded into rank coefficients
+  // before interpolation so increasing an attack rank never lowers its damage.
+  let raw=(sk.magic?matk():atk())*skillStatScale(sk,L)*sk.mul(L)*k*(1+bonus/100)*skillTuning(false,sk,L);
   if(sk.counter&&r.counter>0){raw*=1.2;r.counter=0;}
   if(skillOn('iagi')&&aspd()<=.131)raw*=1+(r.buffs.iagi?r.buffs.iagi.value:0)/100;
   if(sk.execute&&target.hp/target.max<.3)raw*=1+sk.execute;
@@ -4052,7 +4135,7 @@ function resolveSwing(s){
 function addJob(x){const j=jobOf(),c=C();if(j.jl>=c.mj)return;j.jx+=x;
   while(j.jl<c.mj&&j.jx>=jneed(j.jl)){j.jx-=jneed(j.jl);const before=skEarned();j.jl++;const gained=skEarned()-before;log(`JOB LEVEL UP! ${S.cls} Job Lv ${j.jl}${gained?` (+${gained} skill point${gained===1?'':'s'})`:' (skill budget already full)'}`,'r3','lvl');addFloat(pl.x,3.2,pl.z,'JOB UP!','#8fe9ff',true)}
   if(j.jl>=c.mj)j.jx=0}
-function checkLevel(){while(S.lv<150&&S.exp>=need()){S.exp-=need();S.lv++;const p=3+Math.floor(S.lv/5);S.pts+=p;S.hp=maxHp();
+function checkLevel(){while(S.lv<150&&S.exp>=need()){S.exp-=need();S.lv++;const p=4+Math.floor(S.lv/5);S.pts+=p;S.hp=maxHp();
   log(`LEVEL UP! Lv ${S.lv}. +${p} stat points`,'r4','lvl');addFloat(pl.x,3.6,pl.z,'LEVEL UP!','#fff',true)}
   qRefresh()}
 const qProg=type=>S.q&&S.q.forEach(q=>{if(q.type===type)q.prog=Math.min(q.goal,q.prog+1)});
@@ -4070,7 +4153,7 @@ function kill(o){const keep=mob;if(o)mob=o;if(!mob||!mobs.includes(mob)){mob=kee
   // bend the tables (it still raises ATK through the crit/DEX side of the stat sheet, which is
   // what it is for).
   for(const[T,ch]of mob.drops)if(Math.random()*100<ch*(1+petPassive('gear')/100))drops.push(mkDrop(genGear(T,mob.lvl,mob.sec,mob.boss,mob.tier)));
-  if(Math.random()*100<mob.cardCh){const g2=mob.card.g;drops.push(mkDrop({card:1,id:uid(),n:mob.card.n,g:g2,stat:mob.card.stat,v:cardVal(g2,mob.card.stat)}))}
+  if(Math.random()*100<mob.cardCh){const g2=mob.card.g;drops.push(mkDrop(newCard(mob.card)))}
   if(mob.ore)for(const o of['ori','elu'])if(Math.random()<mob.oreCh*(1+petPassive('ore')/100))drops.push(mkDrop({ore:o,id:uid(),n:ORE[o]}));
   if(mob.mat&&Math.random()*100<NM_MAT_CH)drops.push(mkDrop({mat:mob.mat.m,id:uid(),n:mob.mat.n}));
   if(Math.random()*100<(mob.boss?.5:.03)){const r=pickW(PW[Math.min(S.mp,9)]),c=PETS.filter(x=>x.r===r),sp=PETS.indexOf(c[ri(0,c.length-1)]),T=PET_TRAIT[sp];
@@ -4129,6 +4212,7 @@ const sellVal=it=>Math.max(1,Math.round(50*(1+.9*(it.sec||0))*(1+1.4*(it.tier||0
 // and clickSellOn() is the tap-to-sell mode; both read the save, so both survive a reload.
 const autoSellOn=t=>!!(S&&S.autoSell&&S.autoSell[Math.max(0,Math.min(RARALL.length-1,Math.floor(+t||0)))]),clickSellOn=()=>!!(S&&S.clickSell);
 function sell(id){const i=S.inv.findIndex(x=>String(x.id)===String(id));if(i<0)return false;const it=S.inv[i];
+  if(S.reforgePending&&String(S.reforgePending.id)===String(it.id)){log('Resolve the paid reforge offer before selling this item.','','gear');return false}
   if(it.locked){ask(`${iname(it)} is locked. Unlock it before selling? It will stay in your bag until you sell again.`,()=>{it.locked=false;log(`${iname(it)} unlocked. Click Sell again to continue.`,'r3','gear');ui();save()});return false}
   S.inv.splice(i,1);earnZeny(sellVal(it));(it.cards||[]).forEach(c=>S.cards.push(c));if(selB==it.id)selB=null;ui();save();return true}
 // Quest goal AND reward are solved from the level you are standing at, by the one function the
@@ -4171,16 +4255,61 @@ const bmOpen=()=>(S.lv|0)>=BM_LV;
 const reforgeCost=it=>BM_REFORGE*(rarIdx(it)+1);
 function buyOre(o){if(!bmOpen()||!ORE[o])return;if(S.zeny<BM_ORE){log('Not enough Zeny for the Black Market.','','zeny');ui();return}
   S.zeny-=BM_ORE;S.ore[o]=(S.ore[o]|0)+1;log(`Black Market: bought 1 ${ORE[o]} for ${BM_ORE.toLocaleString()}z.`,'r3','zeny');ui();save()}
-// A reforge takes one worn piece, drops one of its affixes at random and rolls a new affix it does not
-// already have, using the same roll as a drop (affixValue at the piece's own section and tier).
-function reforge(sl){const it=S.eq[sl];if(!bmOpen()||!it)return;const aff=it.aff||[];
-  if(!aff.length){log('That piece has no affix to reroll.','','zeny');ui();return}
-  const c=reforgeCost(it);if(S.zeny<c){log('Not enough Zeny to reforge.','','zeny');ui();return}
-  const pool=it.slot==='weapon'||it.slot==='acc'?AFF:AFF.filter(k=>k!=='cdm'),taken=new Set(aff.map(a=>a.k)),fresh=pool.filter(k=>!taken.has(k));
-  if(!fresh.length){log('Every affix this piece can take is already on it.','','zeny');ui();return}
-  const i=ri(0,aff.length-1),k=fresh[ri(0,fresh.length-1)],old=aff[i];
-  S.zeny-=c;aff[i]={k,v:Math.max(1,Math.round(affixValue(k,it.sec||0,it.tier||0,rnd(.8,1.25),it.mp)))};
-  log(`Reforged ${iname(it)}: ${AL[old.k]} ${old.v} became ${AL[k]} ${aff[i].v}.`,'r3','zeny');ui();save()}
+// ---------- selected-affix reforge; paid offers survive save/reload ----------
+let reforgeSelection={};
+function reforgeQuote(it,n){const all=(it.aff||[]).length,full=n===all,fee=full?1:n===2?3:6;
+ return{zeny:reforgeCost(it)*fee,ore:full?0:(rarIdx(it)+1)*(n===2?2:4),mat:it.sec>=4&&!full?(n===2?2:4):0,oreKey:it.slot==='weapon'?'ori':'elu',map:Math.max(0,Math.min(9,it.mp|0))};}
+function reforge(sl,all=false){
+ if(!bmOpen()||S.reforgePending)return;const it=S.eq[sl];if(!it)return;
+ const chosen=all?(it.aff||[]).map((_,i)=>i):(reforgeSelection[it.id]||[]).filter((x,i,a)=>Number.isInteger(x)&&x>=0&&x<it.aff.length&&a.indexOf(x)===i);
+ if(!chosen.length||chosen.length>3)return;
+ S.nmMat=nmMatCounts();const q=reforgeQuote(it,chosen.length);if(S.zeny<q.zeny||(S.ore[q.oreKey]||0)<q.ore||(S.nmMat[q.map]||0)<q.mat){log('Not enough Zeny or materials for this reforge.','','zeny');return;}
+ const aff=it.aff.map(a=>({...a})),used=new Set(aff.filter((_,i)=>!chosen.includes(i)).map(a=>a.k)),pool=affixPool(it).filter(k=>!used.has(k));
+ if(pool.length<chosen.length)return;
+ for(const i of chosen){const k=pool.splice(ri(0,pool.length-1),1)[0];aff[i]=rollAffix(k,it);}
+ S.zeny-=q.zeny;S.ore[q.oreKey]-=q.ore;S.nmMat[q.map]-=q.mat;
+ S.reforgePending={id:it.id,before:JSON.stringify(it.aff),after:aff};save();ui();
+}
+function validReforgeOffer(f){const p=f.reforgePending;if(!p||typeof p.before!=='string'||!Array.isArray(p.after))return null;
+ const it=[...Object.values(f.eq||{}),...(f.inv||[])].find(x=>x&&x.id===p.id);if(!it)return null;
+ try{const old=JSON.parse(p.before);if(!Array.isArray(old)||old.length<1||old.length>3||p.after.length!==old.length)return null;
+  if(!p.after.every((a,i)=>a&&AFF.includes(a.k)&&Number.isFinite(a.v)&&a.v>0&&(JSON.stringify(a)===JSON.stringify(old[i])||affixPool(it).includes(a.k))))return null;
+  if(new Set(p.after.map(a=>a.k)).size!==p.after.length)return null;
+  return p;
+ }catch{return null;}}
+function resolveReforge(accept){const p=validReforgeOffer(S);if(!p){delete S.reforgePending;save();ui();return;}if(!p)return;const it=[...items(),...S.inv].find(x=>x.id===p.id);
+ if(accept&&it&&JSON.stringify(it.aff)===p.before){it.aff=p.after;log('Accepted the new affixes.','','gear');}
+ else log('Kept the existing affixes. The reforge cost was spent.','','gear');
+ delete S.reforgePending;save();ui();}
+function reforgePanel(){const pending=validReforgeOffer(S);
+ const offer=pending?`<div class="mob-card reforge-offer"><b>Paid reforge offer</b><p>Old: ${JSON.parse(pending.before).map(affTxt).join(' · ')}</p><p>New: ${pending.after.map(affTxt).join(' · ')}</p><button data-a="refaccept" data-v="yes">Accept new</button> <button data-a="refaccept" data-v="no">Keep old</button><small>Payment has already been spent. This offer survives a reload.</small></div>`:'';
+ return offer+EQK.filter(([k])=>S.eq[k]&&(S.eq[k].aff||[]).length).map(([slot,label])=>{const it=S.eq[slot],selected=reforgeSelection[it.id]||[],q=reforgeQuote(it,selected.length||it.aff.length),full=reforgeQuote(it,it.aff.length);
+ return`<div class="slot" style="display:block"><b>${label} · ${esc(iname(it))}</b><div class="row">${it.aff.map((a,i)=>`<button data-a="refpick" data-v="${slot}:${i}" aria-pressed="${selected.includes(i)}" class="${selected.includes(i)?'on':''}">${selected.includes(i)?'✓ ':''}${affTxt(a)}</button>`).join('')}</div><small>Choose the affixes to replace; other affixes are protected. Full rerolls every affix.</small><div class="row"><button data-a="bmref" data-v="${slot}:all" ${pending?'disabled':''}>Full · ${full.zeny.toLocaleString()}z</button><button data-a="bmref" data-v="${slot}:selected" ${pending||!selected.length?'disabled':''}>${selected.length===1?'Single':selected.length===2?'Double':'Selected'} · ${q.zeny.toLocaleString()}z + ${q.ore} ${ORE[q.oreKey]}${q.mat?' + '+q.mat+' '+NM_MAT[q.map]:''}</button></div></div>`;
+ }).join('');
+}
+// One live source index feeds both the journal and market guide. No copied drop descriptions.
+let guideMode='farm',guideTier='current',guideSourceCache;
+function guideSources(){if(guideSourceCache)return guideSourceCache;const gear=[],cards=new Map();
+ for(let m=0;m<MAPS.length;m++)for(let l=1;l<=15;l++){const f=fieldOf(m,l);
+  for(const mob of [...f.mobs,...(f.boss?[f.boss]:[])]){
+   for(const [item,ch]of mob.drops)gear.push({m,l,item,ch,monster:mob.n,boss:mob===f.boss});
+   const key=mob.card.cardKey;if(!cards.has(key))cards.set(key,[]);cards.get(key).push({m,l,ch:mob.cardCh,monster:mob.n,boss:mob===f.boss});}}
+ return guideSourceCache={gear,cards};
+}
+function guideReachable(m,l){return l>10?nmMapOpen(m):l<=((S.prog||[])[m]||0);}
+function guideLink(source){const {m,l,ch,monster}=source;return`<button data-a="guidemap" data-v="${m}:${l}">${MAPS[m].n} · ${l>10?'NM '+(l-10):'Stage '+l}</button> <small>${esc(monster)} · ${ch}% per kill${guideReachable(m,l)?'':' · locked'}</small>`;}
+function guideScore(c){const magic=INT_CLASSES.includes(S.cls),wanted=guideMode==='survive'?['hpPct','vit','def','mdef']:guideMode==='farm'?['move','field',magic?'matk':'atk',C().main,'aspd']:['cdm',magic?'matk':'atk',C().main,'crit'];
+ return cardEffects(c).reduce((n,e)=>n+(wanted.includes(e.k)?(wanted.length-wanted.indexOf(e.k))*10+e.v/10:0),0);}
+function buildGuide(market=false){const sources=guideSources(),phase=guideTier,eligible=(m,l)=>phase==='current'?guideReachable(m,l):phase==='normal'?l<=10:l>10;
+ const allCards=[...S.cards,...items().flatMap(x=>x.cards||[])],worn=new Set(items().flatMap(x=>(x.cards||[]).map(c=>c.cardKey)));
+ const candidates=CARD_CATALOG.filter(c=>guideScore(c)>0&&(sources.cards.get(c.cardKey)||[]).some(x=>eligible(x.m,x.l))).sort((a,b)=>guideScore(b)-guideScore(a));
+ const cardRows=candidates.slice(0,12).map(c=>{const loc=(sources.cards.get(c.cardKey)||[]).filter(x=>eligible(x.m,x.l));const owned=allCards.filter(x=>x.cardKey===c.cardKey).length;
+ return`<article class="mob-card"><b>${esc(c.n)}</b> <small>${worn.has(c.cardKey)?'Equipped':owned?'Owned ×'+owned:'Missing'}${c.bossCard?' · Boss card':''}</small><p>${c.effects.map(cardEffectText).join(' · ')} · Fits ${c.fit.join(', ')}</p>${guideLink(loc[0])}<small>Also stages: ${[...new Set(loc.map(x=>x.l>10?'NM '+(x.l-10):x.l))].join(', ')}</small></article>`;}).join('');
+ const weapons=sources.gear.filter(x=>eligible(x.m,x.l)&&C().wt.includes(x.item.k)&&gearTierOK(x.item)).sort((a,b)=>b.item.sec-a.item.sec||b.item.tier-a.item.tier||b.m-a.m||b.l-a.l);
+ const unique=weapons.filter((x,i,a)=>a.findIndex(y=>y.item.n===x.item.n)===i).slice(0,4);
+ const primary=INT_CLASSES.includes(S.cls)?'INT':C().main.toUpperCase();
+ return`<section class="build-guide"><div class="hd">${market?'Upgrade planner':'Build & farming guide'} · ${esc(S.cls)}</div><p>Main stat: <b>${primary}</b>. ${INT_CLASSES.includes(S.cls)?'INT powers your attacks and skill multiplier.':'Physical skills gain damage from learned ranks; INT does not multiply them.'} Use AGI for speed, DEX for accuracy, LUK for criticals and VIT for survival. Three stats can reach 120 at Base 150.</p><div class="row">${['farm','boss','survive'].map(x=>`<button data-a="guidemode" data-v="${x}" aria-pressed="${guideMode===x}">${{farm:'Farming',boss:'Boss damage',survive:'Survival'}[x]}</button>`).join('')}</div><div class="row">${['current','normal','nightmare'].map(x=>`<button data-a="guidetier" data-v="${x}" aria-pressed="${phase===x}">${{current:'Accessible now',normal:'Normal targets',nightmare:'Nightmare targets'}[x]}</button>`).join('')}</div><p>Weapon choices: ${C().wt.join(', ')}${dualWield()?' · two daggers or a two-handed katar':''}. These are farming targets, not guaranteed DPS upgrades; compare cards and affixes.</p><div class="guide-grid">${unique.map(x=>`<article class="mob-card"><b>${esc(x.item.n)}</b><small>${SECN[x.item.sec]} · ${gearUserOf(x.item)}</small>${guideLink(x)}</article>`).join('')||'<p>Unlock more fields to see weapon targets.</p>'}</div><div class="sec">Cards for ${guideMode==='survive'?'survival':guideMode==='boss'?'boss damage':'farming'}</div><small>One card per monster family, two boss cards per build, one boss and one Crit DMG card per item. Normal and Nightmare variants share a family.</small><div class="guide-grid">${cardRows||'<p>No matching accessible sources. Browse normal targets to plan ahead.</p>'}</div>${market?`<div class="sec">Your next upgrades</div>${EQK.filter(([k])=>S.eq[k]).map(([k,n])=>{const it=S.eq[k],empty=Math.max(0,(it.slots||0)-(it.cards||[]).length);return`<p><b>${n}</b>: ${empty?empty+' empty socket(s): choose a compatible card above. ':'Sockets filled. '}${(it.r||0)<10?'Refine costs '+refCost(it).toLocaleString()+'z and '+refOre(it)+' '+ORE[it.slot==='weapon'?'ori':'elu']+'.':'Refinement complete.'} ${(it.aff||[]).length?'Use Single Reforge to protect your two best affixes on a three-affix item.':''}</p>`}).join('')}<small>Cards and weapons are farmed from the listed monsters. This market sells refinement supplies, not these equipment drops.</small>`:''}<details><summary>Caps, criticals and healing</summary><p>Ordinary crit caps at 60%; Index adds up to 40%. Boss resistance still reduces the final chance. Crit DMG applies to damaging skills. Each LUK adds 0.008× Crit DMG; each DEX adds 0.005×. ASPD cannot go below 0.13 seconds per attack. DEX 60 removes ordinary miss chance.</p><p>Equipment/card movement: ${equipmentMove()}% / 20%; movement pet bonuses are added separately.</p><p>HP Leech: ${cardMasteryStat('leech')*.5}% of actual basic-attack damage. Pet siphon: 0.5% of actual pet damage while active. Combined healing cannot exceed 2% Max HP per second. Overkill never heals; skill healing and regeneration are separate.</p></details></section>`;
+}
 
 // ---------- class change ----------
 // Changing job is a restart: a class's own levels are not kept, so loading it up again
@@ -4284,7 +4413,7 @@ const weakerGear=it=>{const worn=it&&it.slot&&(it.slot==='acc'?(S.eq.acc1||S.eq.
 const cell=(it,sel,extra='')=>`<div class="cell b${dtier(it)}${it&&+it.sec>=4?' nm':''}${sel?' sel':''}${weakerGear(it)?' worse':''}" data-tip="${it.id}" ${extra}>${icon(it)}<span class="rarity-label">${it.card?GRADE[it.g]:it.ore?'Ore':rarOf(it).n}</span>${it.locked?`<i class="lockstar" title="Locked gear" aria-label="Locked">&#9733;</i>`:''}${it.r?`<i class="rf">+${it.r}</i>`:''}</div>`;
 function itemMain(it){
   const worn=weakerGear(it);
-  if(it.card)return`<b class="r${GI[it.g]}">${it.n}</b><div>${GRADE[it.g]} card &middot; <b>${SU(it.stat)} +${it.v}</b></div><div><small>Fits: ${CFL[CFIT[it.stat]]} only</small></div>`;
+  if(it.card)return`<b class="r${GI[it.g]}">${esc(it.n)}</b><div>${cardEffects(it).map(cardEffectText).join(' · ')}</div><small>Fits: ${(it.fit||CARD_FITS[it.stat]||[]).join(', ')}. One per monster family; two boss cards per build, one per item; one Crit DMG card per item.</small>${it.legacy?`<p>Legacy roll preserved. Convert free to the current normal card after removing it.</p><button data-a="convertcard" data-v="${it.id}">Preview conversion</button>`:''}`;
   // v74: the class tier of a piece is part of its description, and a piece that came off a class
   // remembers who was wearing it so the lock is never a mystery: "it is locked BECAUSE Knight had
   // it on, and it goes back on the moment you switch to Knight again".
@@ -4295,9 +4424,9 @@ function itemMain(it){
   <div><small>Worn by: <b>${gearUserOf(it)}</b></small></div>
   <div><small>Gear Lv ${gearRefLevel(it)} &middot; reference only: gear is gated by class tier, never by Base Lv</small></div>${it.locked?`<div><small class="r3">&#9733; Locked &middot; protected from auto-sell</small></div>`:''}
   ${canUse(it)?'':`<div><small class="r0">${whyNot(it)}${it.wearer?` This was ${it.wearer}'s gear - it goes straight back on when you switch to ${it.wearer} again.`:''}</small></div>`}
-  <div><b>${SLOTS[it.slot].stat} +${ev(it)}</b>${it.r?` <small>(base ${it.val})</small>`:''}</div>${worn?`<div><small class="r0">Weaker than the ${SLOTS[it.slot].label.toLowerCase()} you are wearing (${SLOTS[it.slot].stat} +${ev(worn)}) - sell it, or keep it for a set you are still building.</small></div>`:''}${(it.aff||[]).length?`<div class="sec">Affixes <small>(${it.aff.length} random)</small></div>`:''}${(it.aff||[]).map(a=>`<div class="r1">&#9670; ${affTxt(a)}</div>`).join('')}`}
+  <div><b>${it.wt==='staff'?'Weapon MATK contribution':SLOTS[it.slot].stat} +${it.wt==='staff'?Math.round(ev(it)*.8):ev(it)}</b>${it.r?` <small>(base ${it.val})</small>`:''}</div>${worn?`<div><small class="r0">Lower base value than the ${SLOTS[it.slot].label.toLowerCase()} you are wearing (${SLOTS[it.slot].stat} +${ev(worn)}) — compare affixes and cards before replacing it.</small></div>`:''}${(it.aff||[]).length?`<div class="sec">Affixes <small>(${it.aff.length} random)</small></div>`:''}${(it.aff||[]).map(a=>`<div class="r1">&#9670; ${affTxt(a)}</div>`).join('')}`}
 function itemDetail(it){if(it.card)return itemMain(it);const cs=it.cards||[];return itemMain(it)+Array.from({length:it.slots||0},(_,i)=>`<div><small>${cs[i]?'&#9670; '+cardTxt(cs[i]):'&#9671; empty card slot'}</small></div>`).join('')}
-const cardSlots=(it,k)=>Array.from({length:it.slots||0},(_,i)=>{const c=(it.cards||[])[i];return c?`<div><small class="r${GI[c.g]}">&#9670; ${cardTxt(c)}</small> <button data-a="unsock" data-v="${k}:${i}">Remove ${200*(c.g+1)}z</button></div>`:'<div><small>&#9671; empty slot</small></div>'}).join('');
+const cardSlots=(it,k)=>Array.from({length:it.slots||0},(_,i)=>{const c=(it.cards||[])[i];return c?`<div><small class="r${GI[c.g]}">&#9670; ${cardTxt(c)}</small> <button data-a="unsock" data-v="${k}:${i}">Remove ${S.freeCardRemoval?0:200*(c.g+1)}z</button></div>`:'<div><small>&#9671; empty slot</small></div>'}).join('');
 const tnode=n=>{const c=CLASSES[n],pj=S.jobs[n],cur=n===S.cls,blk=classBlock(n);return`<div class="tn ${cur?'cur':blk?(pj?'played':'lock'):'ok'}${selK===n?' pick':''}" data-a="selk" data-v="${n}"><b>${n}</b><small>${pj?`Job ${pj.jl}/${c.mj}`:'Lv '+c.rj+' req'}</small></div>`};
 // ---------- GM test controls for the v48 mastery and skill systems ----------
 // These mutate only the current GM save and use the same production helpers as ordinary play,
@@ -4402,14 +4531,14 @@ const V={
           grp=(t,ls)=>`<div class="dropgrp"><small>${t}</small></div><div class="drop-list">`+ls.map(([d,n])=>dropTxt(d,n)).join('')+'</div>';
           return grp('Weapons',lines.filter(isW))+grp('Armour &amp; accessories',lines.filter(l=>!isW(l)))
             +`<div class="dropgrp"><small>Cards &amp; ore</small></div>`
-            +F.mobs.map(m=>`<div class="dropline"><span>🃏 ${m.card.n} <small>(${SU(m.card.stat)} +${cardVal(m.card.g,m.card.stat)}, ${GRADE[m.card.g]})</small> <small class="dwho">${m.n}</small></span><b>${m.cardCh}%</b></div>`).join('')
+            +F.mobs.map(m=>`<div class="dropline"><span>🃏 ${m.card.n} <small>(${cardEffects(m.card).map(cardEffectText).join(', ')}, ${GRADE[m.card.g]})</small> <small class="dwho">${m.n}</small></span><b>${m.cardCh}%</b></div>`).join('')
             +(F.mobs[0].ore?`<div class="dropline ore"><span>🔶 Oridecon &middot; 🔷 Elunium</span><b>${F.mobs[0].oreCh*100}% each</b></div>`:'')
             +(!F.boss&&gearPool(mapM,mapL).length>lines.length?`<small>This field's monsters carry ${lines.length} of the ${gearPool(mapM,mapL).length} pieces on ${mp.n}'s shelf - the rest drop from the Stage 10 MVP, listed beside this card.</small>`:'')})()}</div>
       <div class="mob-card"><div class="hd">MVP &amp; pets</div>${(mapL===10||mapL===15)?`<small>MVP fights immediately with ${mapM<5?3:5} monsters. Defeat the MVP to reset the fight.</small>`:''}
         ${F.boss?`<div class="mobentry"><b class="r4">${F.boss.n}</b>
           <div class="poollist">${F.boss.drops.map(([T,ch])=>`<span class="poolitem">${poolIc(T)}<span class="drop-name">${T.n} <small class="${rarCls(T)}">${rarOf(T).n}</small></span><b>${ch}%</b></span>`).join('')}</div>
           <small>Every MVP drop is <b class="${rarCls({sec:F.sec,tier:F.boss.tier})}">${rarOf({sec:F.sec,tier:F.boss.tier}).n}</b> with random affixes. Each item rolls independently; an MVP can drop zero or several pieces.</small>
-          <div class="dropline"><span>🃏 ${F.boss.card.n} <small>(${SU(F.boss.card.stat)} +${cardVal(F.boss.card.g,F.boss.card.stat)}, ${GRADE[F.boss.card.g]})</small></span><b>${F.boss.cardCh}%</b></div>
+          <div class="dropline"><span>🃏 ${F.boss.card.n} <small>(${cardEffects(F.boss.card).map(cardEffectText).join(', ')}, ${GRADE[F.boss.card.g]})</small></span><b>${F.boss.cardCh}%</b></div>
           <div class="dropline ore"><span>🔶 Oridecon &middot; 🔷 Elunium</span><b>${F.boss.oreCh*100}% each</b></div>
         </div>`:`<small>MVP appears at ${mapL>10?'NM 5 (stage 15)':'Stage 10'}.</small>`}
         <div class="sec">🐾 Pet drops</div><small>0.03% per kill, 0.5% from MVPs. Odds on ${mp.n}: ${PW[Math.min(mapM,9)].map((w,i)=>RN[i]+' '+w+'%').join(' &middot; ')}</small></div></div>`},
@@ -4447,7 +4576,7 @@ const V={
     const detail=sel?`<div class="mob-card grid-detail">${itemDetail(sel)}<div class="row" style="margin-top:6px"><button data-a="equip" data-v="${sel.id}" ${canUse(sel)?'':'disabled'}>Equip</button><button data-a="sell" data-v="${sel.id}">Sell ${sellVal(sel)}z</button><button class="tick${sel.locked?' on':''}" data-a="lockgear" data-v="${sel.id}" aria-pressed="${!!sel.locked}" title="Locked gear stays pinned and protected from auto-sell">${sel.locked?'&#9733; Unlock':'☆ Lock'}</button><button class="tick${autoSellOn(rarIdx(sel))?' on':''}" data-a="autosell" data-v="${rarIdx(sel)}" title="Auto-sell every ${rarOf(sel).n} item on drop">Auto-sell ${rarOf(sel).n}</button></div></div>`:'';
     return (eqPick?equipChooser(eqPick):'')
     +`<div class="bag-top"><div class="row"><span class="chip">Oridecon <b>${S.ore.ori}</b></span><span class="chip">Elunium <b>${S.ore.elu}</b></span></div><span class="bag-count">${S.inv.length}/${BAGMAX} items</span></div>
-    <label class="bag-auto" title="Better drops equip automatically, including an Assassin's second dagger."><input type="checkbox" data-a="auto" ${S.auto!==false?'checked':''}> Auto-equip better gear</label>
+    <label class="bag-auto" title="Higher base-value drops equip automatically. Cards and affixes are not compared, including for a second dagger."><input type="checkbox" data-a="auto" ${S.auto!==false?'checked':''}> Auto-equip higher base value</label>
     <details class="bag-tools" data-ui-disclosure="bag-selling" ${clickSellOn()?'open':''}><summary>Selling &amp; automation${clickSellOn()?' · Quick sell ON':''}</summary><div class="mob-card sellbox"><div class="hd">Selling tools</div>
       <div class="row"><small>Auto-sell on drop:</small>${RARALL.map((r,i)=>`<button class="tick${autoSellOn(i)?' on':''}" data-a="autosell" data-v="${i}" aria-pressed="${autoSellOn(i)}" title="Sell every ${r.n} item the moment it drops">${r.n}</button>`).join('')}</div>
       <div class="row" style="margin-top:4px"><button data-a="sellnow" ${S.inv.some(i=>!i.locked&&autoSellOn(rarIdx(i)))?'':'disabled'}>Sell matching now</button><button class="tick${clickSellOn()?' on':''}" data-a="clicksell" aria-pressed="${clickSellOn()}">Click-sell: ${clickSellOn()?'ON':'OFF'}</button></div>
@@ -4481,7 +4610,7 @@ const V={
     +`<small>Weapons: ${c.wt.join(', ')} &middot; ${canShield()?'Shield allowed':'No shield'}${katarOnly()?' &middot; <b>Two-handed Katar, or a dagger in each hand</b>':''}</small>`},
   cards(){const g={};S.cards.forEach(c=>(g[c.n]=g[c.n]||[]).push(c));const ks=Object.keys(g),sel=g[selC]?g[selC][0]:null;
     return`<div class="grid">${ks.map(n=>`<div class="cell b${GI[g[n][0].g]}${n===selC?' sel':''}" data-a="selc" data-v="${n}" data-tip="${g[n][0].id}">🃏<i class="rf">x${g[n].length}</i></div>`).join('')||'<small>No cards yet. Every monster drops its own card at a low chance.</small>'}</div>
-    ${sel?`<div class="mob-card" style="margin-top:8px">${itemDetail(sel)}<div class="row" style="margin-top:6px">${EQK.map(([k,l])=>{const e=S.eq[k];return e&&(e.cards||[]).length<(e.slots||0)&&CFIT[sel.stat]===grp(e)?`<button data-a="sock" data-v="${sel.id}:${k}">&rarr; ${l}</button>`:''}).join('')}<button data-a="sellcard" data-v="${sel.id}">Sell ${sel.v*150}z</button></div></div>`:''}`},
+    ${sel?`<div class="mob-card" style="margin-top:8px">${itemDetail(sel)}<div class="row" style="margin-top:6px">${EQK.map(([k,l])=>{const e=S.eq[k];return e&&(e.cards||[]).length<(e.slots||0)&&cardFits(sel,e)?`<button data-a="sock" data-v="${sel.id}:${k}">&rarr; ${l}</button>`:''}).join('')}<button data-a="sellcard" data-v="${sel.id}">Sell ${sel.v*150}z</button></div></div>`:''}`},
   refine(){return`<div class="hd">Oridecon: ${S.ore.ori} &middot; Elunium: ${S.ore.elu} &middot; Refine Scrolls: ${safeCount(S.refineScrolls)}</div><small>Weapons use Oridecon; armor, shield, legs, headgear and accessories use Elunium. Regular mobs drop both at 0.5% on Stages 1-9 and 1% on Stage 10; Stage 10 MVPs drop both at 2.5%. Each attempt costs 1 ore on Common and Fine pieces, 2 on Rare and Epic, 5 on Legendary, and 10 on N and N+. The Refine Scroll is a placeholder with no effect yet, and stored scrolls are not consumed by refining.</small>`
     +dpsPanel()+EQK.map(([k,l])=>{const it=S.eq[k];if(!it)return'';const r=it.r||0,o=it.slot==='weapon'?'ori':'elu',c=refCost(it);
       return`<div class="slot" style="align-items:flex-start;gap:10px;margin-top:6px">${cell(it,false)}<div style="flex:1"><b class="${rarCls(it)}">${iname(it)}</b> <small>${l}</small><br><small>${SLOTS[it.slot].stat} +${ev(it)} &rarr; +${Math.round(it.val*(1+(r+1)*.15))} &middot; ${r>=10?'MAX':'Success '+refCh(it)+'% &middot; '+c.toLocaleString()+'z + '+refOre(it)+' '+ORE[o]}</small><br><button data-a="refine" data-v="${k}" ${r>=10||S.ore[o]<refOre(it)||S.zeny<c?'disabled':''}>Refine</button></div></div>`}).join('')},
@@ -4520,15 +4649,13 @@ const V={
     <div class="hd" style="margin-top:10px">Test pets</div><div class="row">${RN.map((n,i)=>`<button data-a="gmp" data-v="${i}">+ ${n} pet</button>`).join('')}</div><div class="row" style="margin-top:6px"><button data-a="gmbond" data-v="1">+1 duplicate on the selected pet (Bond)</button><button data-a="gmbond" data-v="5">+5 duplicates</button></div><div class="row" style="margin-top:6px"><button data-a="gmm" data-v="4">All pets G4</button><button data-a="gmm" data-v="6">All pets G6</button><button data-a="gmpet" data-v="g6dps">Max G6 DPS pet</button><button data-a="gmpet" data-v="g6buff">Max G6 + buff slot</button><button data-a="gmpet" data-v="g6utility">Max G6 utility slots</button><button data-a="gmpet" data-v="clear">Clear pets</button></div>`}};
 // v90: the Black Market panel. Locked until Base Lv 100; ore is bought one at a time and a reforge is
 // offered for every worn piece that has an affix.
-V.market=()=>{if(!bmOpen())return`<div class="hd">Black Market</div><small>The Black Market opens at Base Lv ${BM_LV}. It takes the Zeny the grind pays out past that point, so nothing here is worth buying before then.</small>`;
-  const ores=['ori','elu'].map(o=>`<div class="slot" style="align-items:center;gap:10px;margin-top:6px"><div style="flex:1"><b>${ORE[o]}</b> <small>you have ${S.ore[o]|0}</small><br><small>Refine ore. ${BM_ORE.toLocaleString()}z each.</small></div><button data-a="bmore" data-v="${o}" ${S.zeny<BM_ORE?'disabled':''}>Buy 1</button></div>`).join('');
-  const rf=EQK.map(([k,l])=>{const it=S.eq[k];if(!it||!(it.aff&&it.aff.length))return'';const c=reforgeCost(it);
-    return`<div class="slot" style="align-items:flex-start;gap:10px;margin-top:6px">${cell(it,false)}<div style="flex:1"><b class="${rarCls(it)}">${iname(it)}</b> <small>${l}</small><br><small>${it.aff.map(a=>AL[a.k]+' +'+a.v).join(' &middot; ')}</small><br><small>Reroll one affix: ${c.toLocaleString()}z</small><br><button data-a="bmref" data-v="${k}" ${S.zeny<c?'disabled':''}>Reforge</button></div></div>`}).join('');
-  const matRows=NM_MAT.map((n,i)=>`<div class="slot" style="align-items:center;gap:10px;margin-top:6px"><div style="flex:1"><b>${n}</b> <small>you have ${safeCount(S.nmMat&&S.nmMat[i])}</small><br><small>Nightmare material. ${BM_MAT_PRICE.toLocaleString()}z each.</small></div><button data-a="bmmat" data-v="${i}" ${S.zeny<BM_MAT_PRICE?'disabled':''}>Buy 1</button></div>`).join('');
-  return`<div class="hd">Black Market <small>Zeny ${S.zeny.toLocaleString()}</small></div><small>Zeny sinks for Base Lv ${BM_LV}+. Ore is sold here, and a reforge rerolls one affix on a worn piece; the rarity of the piece sets the price.</small>`+ores+'<div class="sec" style="margin-top:8px">Nightmare materials</div>'+matRows+'<div class="sec" style="margin-top:8px">Reforge</div>'+(rf||'<small>Wear a piece with affixes to reforge it.</small>')};
-V.index=()=>`<div class="mastery-head"><div class="mastery-emblem">✦</div><div><b>Midgard Mastery Index</b><small>Individual monsters, Index XP and per-card rewards</small></div><span class="mastery-counter">${indexExperience().toLocaleString()} Index XP</span></div><div class="mastery-tabs"><button data-a="indexview" data-v="mobs" class="${indexMode==='mobs'?'on':''}" aria-pressed="${indexMode==='mobs'}">⚔ Mob Index</button><button data-a="indexview" data-v="cards" class="${indexMode==='cards'?'on':''}" aria-pressed="${indexMode==='cards'}">🃏 Card Mastery</button></div>${indexMode==='mobs'?renderMobIndex():renderCardIndex()}`;
+V.market=()=>{const guide=buildGuide(true);if(!bmOpen())return guide+`<p>Black Market opens at Base Lv ${BM_LV}.</p>`;
+const ores=Object.entries(ORE).map(([o,n])=>`<div class="slot"><b>${n}</b><button data-a="bmore" data-v="${o}" ${S.zeny<BM_ORE?'disabled':''}>Buy 1 · ${BM_ORE.toLocaleString()}z</button></div>`).join('');
+const mats=NM_MAT.map((n,i)=>`<div class="slot"><b>${n}</b><button data-a="bmmat" data-v="${i}" ${S.zeny<BM_MAT_PRICE?'disabled':''}>Buy 1 · ${BM_MAT_PRICE.toLocaleString()}z</button></div>`).join('');
+return guide+`<div class="hd">Black Market · ${S.zeny.toLocaleString()}z</div>`+ores+'<div class="sec">Nightmare materials</div><small>3,000,000z each</small>'+mats+'<div class="sec">Reforge</div>'+reforgePanel()};
+V.index=()=>`<div class="mastery-head"><div class="mastery-emblem">✦</div><div><b>Midgard Mastery Index</b><small>Individual monsters, Index XP and per-card rewards</small></div><span class="mastery-counter">${indexExperience().toLocaleString()} Index XP</span></div><div class="mastery-tabs"><button data-a="indexview" data-v="mobs" class="${indexMode==='mobs'?'on':''}" aria-pressed="${indexMode==='mobs'}">⚔ Mob Index</button><button data-a="indexview" data-v="cards" class="${indexMode==='cards'?'on':''}" aria-pressed="${indexMode==='cards'}">🃏 Card Mastery</button><button data-a="indexview" data-v="guide" aria-pressed="${indexMode==='guide'}">Build &amp; farming guide</button></div>${indexMode==='guide'?buildGuide():indexMode==='mobs'?renderMobIndex():renderCardIndex()}`;
 const EQK=[['head','Head','🎩'],['weapon','R.Hand','⚔️'],['armor','Body','🥼'],['off','L.Hand','🛡️'],['acc1','Acc 1','💍'],['leg','Legs','👖'],['acc2','Acc 2','💍']];
-const CFIT={str:'weapon',dex:'weapon',atk:'weapon',crit:'weapon',cdm:'weapon',agi:'armor',aspd:'armor',flee:'armor',vit:'armor',int:'head',hp:'head',luk:'acc'},CFL={weapon:'Weapons',armor:'Armor, Shield & Legwear',head:'Headgear',acc:'Accessories'};
+const CFIT={matk:'weapon',move:'acc',hpPct:'armor',def:'armor',mdef:'head',field:'weapon',str:'weapon',dex:'weapon',atk:'weapon',crit:'weapon',cdm:'weapon',agi:'armor',aspd:'armor',flee:'armor',vit:'armor',int:'head',hp:'head',luk:'acc'},CFL={weapon:'Weapons',armor:'Armor, Shield & Legwear',head:'Headgear',acc:'Accessories'};
 const grp=it=>it.slot==='weapon'?'weapon':it.slot==='head'?'head':it.slot==='acc'?'acc':'armor';
 function canShield(){return /^(Novice|Swordman|Knight|Lord Knight|Acolyte|Priest|High Priest|Merchant|Blacksmith|Whitesmith)$/.test(S.cls)}
 function katarOnly(cls=S.cls){return cls==='Assassin'||cls==='Assassin Cross'}
@@ -4621,7 +4748,7 @@ function cardGachaPanel(){
   return `<div class="mastery-section-title">🎲 Token gacha <small>1 token = one random permanent stat</small></div>
     <div class="mastery-progress-card card-gacha"><div><b>${available} token${available===1?'':'s'} ready</b> <small>· ${cardMasteryEarned()} earned · ${rolled} rolled${legendary?' · 1 Legendary card in your bag':''}</small></div>
     <div class="row"><button data-a="cardroll" ${available&&open.length?'':'disabled'}>🎲 Gacha · 1 token</button><button data-a="cardrollall" ${available&&open.length?'':'disabled'}>🎲 Roll all · ${available}</button><button data-a="cardreset" ${rolled&&legendary?'':'disabled'}>♻ Reset</button>
-    ${legendary?`<select class="card-pick" data-a="cardpick" aria-label="Legendary card the reset will sacrifice">${cardMasteryLegendaryCards().map(c=>`<option value="${c.id}" ${String(cardPick)===String(c.id)?'selected':''}>♻ ${c.n} · ${SU(c.stat)} +${c.v}</option>`).join('')}</select>`:`<span class="card-pick off">♻ needs a Legendary card</span>`}</div>
+    ${legendary?`<select class="card-pick" data-a="cardpick" aria-label="Legendary card the reset will sacrifice">${cardMasteryLegendaryCards().map(c=>`<option value="${c.id}" ${String(cardPick)===String(c.id)?'selected':''}>♻ ${c.n} · ${cardEffects(c).map(cardEffectText).join(', ')}</option>`).join('')}</select>`:`<span class="card-pick off">♻ needs a Legendary card</span>`}</div>
     <small>${open.length?`Rolled so far: ${summary||'none yet'}.`:'Every stat is at its cap - no roll is possible. A reset refunds every spent token and lets you roll again.'}</small>
     ${cardRollRecent()}
     <div class="card-reward-legend">${CARD_REWARD_OPTIONS.map(o=>`<span><b>${o.name}</b> ${cardMasteryStat(o.id)}/${CARD_REWARD_CAPS[o.id]} · ${o.desc}${cardMasteryStat(o.id)>=CARD_REWARD_CAPS[o.id]?' · full':''}</span>`).join('')}</div></div>`;
@@ -4639,7 +4766,7 @@ function renderCardIndex(){
     ${cardGachaPanel()}
     <div class="mastery-section-title">📥 Card Index available <small>${(S.cards||[]).length} in your card bag</small></div>
     <div class="row card-tabs">${[4,3,2,1,0].map(g=>`<button data-a="cardtab" data-v="${g}" class="${tab===g?'on':''}" ${inventory.some(x=>x.card.g===g)?'':'disabled'} aria-pressed="${tab===g}">${GRADE[g]} <small>${inventory.filter(x=>x.card.g===g).reduce((n,x)=>n+x.cards.length,0)}</small></button>`).join('')}<button data-a="cardtab" data-v="all" class="${tab==='all'?'on':''}" aria-pressed="${tab==='all'}">All <small>${(S.cards||[]).length}</small></button></div>
-    <div class="mastery-card-list">${inventory.filter(x=>tab==='all'||x.card.g===tab).map(({card:c,cards})=>{const level=cardMasteryLevel(c.n),full=level>=CARD_MASTERY_PER_CARD,room=CARD_MASTERY_PER_CARD-level,take=Math.min(cards.length,room);return `<div class="mastery-card-row"><span class="r${GI[c.g]}">🃏 <b>${c.n}</b><small>${GRADE[c.g]} · ${SU(c.stat)} +${c.v} · x${cards.length} · Mastery ${level}/${CARD_MASTERY_PER_CARD}</small></span><button data-a="indexcard" data-v="${cards[0].id}" ${full?'disabled':''} aria-label="Dedicate one ${c.n} to card mastery">${full?'MAXED':'Dedicate one'}</button>${full?'':`<button data-a="indexall" data-v="${c.n}" aria-label="Dedicate ${take} ${c.n} at once">Insert all · ${take}</button>`}</div>`}).join('')||`<div class="mastery-empty">${(S.cards||[]).length?'No loose cards in this rarity - pick another tab.':'No loose cards yet. Card drops go here after pickup; socketed cards are not eligible.'}</div>`}</div>
+    <div class="mastery-card-list">${inventory.filter(x=>tab==='all'||x.card.g===tab).map(({card:c,cards})=>{const level=cardMasteryLevel(cardFamily(c)),full=level>=CARD_MASTERY_PER_CARD,room=CARD_MASTERY_PER_CARD-level,take=Math.min(cards.length,room);return `<div class="mastery-card-row"><span class="r${GI[c.g]}">🃏 <b>${c.n}</b><small>${GRADE[c.g]} · ${cardEffects(c).map(cardEffectText).join(', ')} · x${cards.length} · Mastery ${level}/${CARD_MASTERY_PER_CARD}</small></span><button data-a="indexcard" data-v="${cards[0].id}" ${full?'disabled':''} aria-label="Dedicate one ${c.n} to card mastery">${full?'MAXED':'Dedicate one'}</button>${full?'':`<button data-a="indexall" data-v="${c.n}" aria-label="Dedicate ${take} ${c.n} at once">Insert all · ${take}</button>`}</div>`}).join('')||`<div class="mastery-empty">${(S.cards||[]).length?'No loose cards in this rarity - pick another tab.':'No loose cards yet. Card drops go here after pickup; socketed cards are not eligible.'}</div>`}</div>
     <div class="mastery-section-title">🗂 Card Mastery Album <small>Every mastered rank stays recorded</small></div>
     ${MAPS.map((mp,map)=>{const entries=MONSTER_INDEX.filter(m=>m.map===map),seen=entries.filter(m=>cardMasteryLevel(m.name+' Card')>0).length;
       return `<details class="mastery-map" data-a="idxmap" data-v="cards:${map}" ${indexSectionOpen('cards',map)?'open':''}><summary><b>${mp.n}</b><small>${seen}/${entries.length} cards started</small></summary><div class="mastery-roster">${entries.map(m=>{const name=m.name+' Card',level=cardMasteryLevel(name),n=safeCount(byName[name]);return `<div class="mastery-mob${level?' found':''}"><span class="mastery-mob-icon">${m.boss?'👑':'🃏'}</span><span><b>${name}${m.boss?' · BOSS':''}</b><small>Mastery ${level}/${CARD_MASTERY_PER_CARD} · ${level} token${level===1?'':'s'} earned · ${n?n+' dedicated cop'+(n===1?'y':'ies'):'Not started'}</small></span><b class="mastery-count">${level}/${CARD_MASTERY_PER_CARD}</b></div>`}).join('')}</div></details>`;
@@ -4697,8 +4824,8 @@ function petDetail(p){const sp=PETS[p.sp],g=p.mut,sk=p.sk||[1,2,3],SL=petSkills(
   +(p.roll?`<div class="slot"><span>Rolled <b>Grade ${p.roll}</b> (x${MUT[p.roll]})</span><span><button data-a="pkeep" data-v="${p.id}">Keep new</button> <button data-a="pdisc" data-v="${p.id}">Keep old</button></span></div>`:'')
   +`<small>Odds: G1 50% &middot; G2 30% &middot; G3 16.5% &middot; G4 2.5% &middot; G5 0.8% &middot; G6 0.2%</small></div>`}
 function ask(msg,yes,labels={}){$('mt').textContent=msg;$('my').textContent=labels.yes||'Yes';$('mn').textContent=labels.no||'Cancel';$('modal').style.display='flex';$('my').onclick=()=>{$('modal').style.display='none';yes()};$('mn').onclick=()=>{$('modal').style.display='none'}}
-function insertUI(sel){if(!(sel.slots>0))return'<small>No card slots on this item.</small>';if((sel.cards||[]).length>=sel.slots)return'';const fit=S.cards.filter(c=>CFIT[c.stat]===grp(sel));
-  return'<div class="sec">Insert card</div>'+([...new Map(fit.map(c=>[c.n,c])).values()].map(c=>`<div class="slot"><span class="r${GI[c.g]}">🃏 ${c.n} <small>${SU(c.stat)} +${c.v} &middot; x${fit.filter(x=>x.n===c.n).length}</small></span><button data-a="sock" data-v="${c.id}:${selE}">Insert</button></div>`).join('')||'<small>No compatible cards in your bag.</small>')}
+function insertUI(sel){if(!(sel.slots>0))return'<small>No card slots on this item.</small>';if((sel.cards||[]).length>=sel.slots)return'';const fit=S.cards.filter(c=>cardFits(c,sel));
+  return'<div class="sec">Insert card</div>'+([...new Map(fit.map(c=>[c.n,c])).values()].map(c=>`<div class="slot"><span class="r${GI[c.g]}">🃏 ${c.n} <small>${cardEffects(c).map(cardEffectText).join(', ')} &middot; x${fit.filter(x=>x.n===c.n).length}</small></span><button data-a="sock" data-v="${c.id}:${selE}">Insert</button></div>`).join('')||'<small>No compatible cards in your bag.</small>')}
 // v76.2: `anchor` is a selector for the control the player just pressed (a stage node, a map card).
 // A rebuild replaces every window, so on its own it can leave the tapped control off-screen - that is
 // the "hopping" the owner saw on a phone. The scroll of the real scroller is restored by number, and
@@ -4780,9 +4907,9 @@ function arrangePanel(k,root){
     body.replaceChildren(split(catalog,panel),fold('Pet drops & bonding',notes,'pet-notes'));
   }else if(k==='market'){
     if(!bmOpen())return;
-    const ore=all('.slot').filter(e=>e.querySelector('[data-a="bmore"]')),materials=all('.slot').filter(e=>e.querySelector('[data-a="bmmat"]')),reforge=all('.slot').filter(e=>e.querySelector('[data-a="bmref"]'));
-    const notes=direct().filter(e=>!ore.includes(e)&&!materials.includes(e)&&!reforge.includes(e));
-    body.replaceChildren(put(section('Refining supplies','ui-store-grid'),ore),fold('Nightmare materials · '+materials.length,put(make('div','ui-store-grid'),materials),'materials'),put(section('Reforge worn equipment','ui-reforge'),reforge.length?reforge:make('p','ui-empty','Wear equipment with affixes to reforge it.')),fold('Market information',notes,'market-notes'));
+    const guide=q('.build-guide'),offer=q('.reforge-offer');const ore=all('.slot').filter(e=>e.querySelector('[data-a="bmore"]')),materials=all('.slot').filter(e=>e.querySelector('[data-a="bmmat"]')),reforge=all('.slot').filter(e=>e.querySelector('[data-a="bmref"]'));
+    const notes=direct().filter(e=>!ore.includes(e)&&!materials.includes(e)&&!reforge.includes(e)&&e!==guide&&e!==offer);
+    body.replaceChildren(...[offer,guide&&fold('Build & farming guide · Upgrade planner',guide,'guide')].filter(Boolean),put(section('Refining supplies','ui-store-grid'),ore),fold('Nightmare materials · '+materials.length,put(make('div','ui-store-grid'),materials),'materials'),put(section('Reforge worn equipment','ui-reforge'),reforge.length?reforge:make('p','ui-empty','Wear equipment with affixes to reforge it.')),fold('Market information',notes,'market-notes'));
   }else if(k==='index'){
     const head=q('.mastery-head'),tabs=q('.mastery-tabs');if(head)head.classList.add('ui-journal-summary');if(tabs)root.insertBefore(tabs,body);
     // Group each named collection section, keeping its controls and catalogue together.
@@ -4950,14 +5077,14 @@ const ACT={
   eqclose:()=>{eqPick=null;renderWin()},
   eqopen:k=>{eqPick=null;sub.bag='bag';if(!tabs.includes('bag')){if(tabs.length>=MAX_TABS)tabs.shift();tabs.push('bag')}selB=S.eq[k]?S.eq[k].id:null;renderWin()},
   selc:v=>{selC=v;renderWin()},
-  sock:v=>{const[id,k]=v.split(':'),i=S.cards.findIndex(c=>String(c.id)===id),e=S.eq[k];if(i<0||!e||(e.cards||[]).length>=(e.slots||0))return;if(CFIT[S.cards[i].stat]!==grp(e)){log('That card cannot be fitted into this type of equipment.');return}e.cards=e.cards||[];e.cards.push(S.cards.splice(i,1)[0]);S.hp=Math.min(S.hp,maxHp());ui();save()},
-  unsock:v=>{const[k,i]=v.split(':'),e=S.eq[k];if(!e)return;const c=e.cards[+i],p=200*(c.g+1);if(S.zeny<p)return log('Not enough Zeny to remove the card.');S.zeny-=p;e.cards.splice(+i,1);S.cards.push(c);S.hp=Math.min(S.hp,maxHp());ui();save()},
+  sock:v=>{const[id,k]=v.split(':'),i=S.cards.findIndex(c=>String(c.id)===id),e=S.eq[k];if(i<0||!e||(e.cards||[]).length>=(e.slots||0))return;if(!cardFits(S.cards[i],e)){log('That card cannot be fitted into this type of equipment.');return}const why=socketWhy(S.cards[i],e);if(why){log(why,'','card');return}e.cards=e.cards||[];e.cards.push(S.cards.splice(i,1)[0]);S.hp=Math.min(S.hp,maxHp());ui();save()},
+  unsock:v=>{const[k,i]=v.split(':'),e=S.eq[k];if(!e)return;const c=e.cards[+i],p=S.freeCardRemoval?0:200*(c.g+1);if(S.zeny<p)return log('Not enough Zeny to remove the card.');S.zeny-=p;e.cards.splice(+i,1);S.cards.push(c);S.hp=Math.min(S.hp,maxHp());ui();save()},
   sellcard:id=>{const i=S.cards.findIndex(c=>String(c.id)===id);if(i<0)return;const c=S.cards.splice(i,1)[0];earnZeny(c.v*150);ui();save()},
-  indexview:v=>{if(v==='mobs'||v==='cards'){indexMode=v;renderWin()}},
+  indexview:v=>{if(v==='mobs'||v==='cards'||v==='guide'){indexMode=v;renderWin()}},
   idxmap:v=>{const[tab,raw]=String(v).split(':'),map=+raw;if(tab==='mobs'||tab==='cards'){indexToggleSection(tab,map);renderWin()}},
   titleequip:id=>{if(id==='none'){if(!S.equippedTitle)return;S.equippedTitle=null;log('Hunt title unequipped.','','quest');ui();save();return}
     const title=HUNT_TITLES.find(t=>t.id===id&&titleUnlocked(t));if(!title)return;S.equippedTitle=title.id;log(`Title equipped: ${title.name}.`,'r4','quest');ui();save()},
-  indexcard:id=>{const c=S.cards.find(x=>String(x.id)===String(id));if(!c)return;const before=cardMasteryLevel(c.n);
+  indexcard:id=>{const c=S.cards.find(x=>String(x.id)===String(id));if(!c)return;const before=cardMasteryLevel(cardFamily(c));
     ask(`Dedicate one ${GRADE[c.g]} ${c.n}? This consumes the loose card and advances this card from mastery ${before}/${CARD_MASTERY_PER_CARD} to ${before+1}/${CARD_MASTERY_PER_CARD}. Choose one permanent reward for the new rank afterward.`,()=>{
       const used=donateCardToMastery(id);if(!used)return;log(`${used.n} reached Card Mastery ${cardMasteryLevel(used.n)}/${CARD_MASTERY_PER_CARD}. Choose its permanent reward in the Index.`,'r3','card');ui();save()})},
   cardroll:()=>{const r=cardMasteryGacha();if(!r)return;const opt=CARD_REWARD_OPTIONS.find(x=>x.id===r);S.hp=Math.min(S.hp,maxHp());log(`🎲 Card gacha: ${opt?opt.name:r} +1 (now ${cardMasteryStat(r)}).`,'r3','card');addFloat(pl.x,2.6,pl.z,'🎲 '+(opt?opt.name:r)+' +1','#ffd23f');ui();save()},
@@ -4973,7 +5100,7 @@ const ACT={
     log(`🃏 ${name}: dedicated ${r.donated} cop${r.donated===1?'y':'ies'} - mastery ${r.level}/${CARD_MASTERY_PER_CARD}${r.left?`, ${r.left} left in the bag`:''}.`,'r3','card');
     addFloat(pl.x,2.6,pl.z,`🃏 ${name} ${r.level}/${CARD_MASTERY_PER_CARD}`,'#ffd23f');ui();save()},
   indexcard:all=>all,
-  refine:k=>refine(k),craftdps:()=>craftDps(),bmmat:o=>buyMat(+o),bmore:o=>buyOre(o),bmref:k=>reforge(k),sub:v=>{const[t,k]=v.split(':');sub[t]=k;if(t==='bag'&&k!=='bag')eqPick=null;renderWin()},selp:v=>{selP=+v;renderWin()},
+  refine:k=>refine(k),craftdps:()=>craftDps(),bmmat:o=>buyMat(+o),bmore:o=>buyOre(o),bmref:v=>{const[k,mode]=v.split(':');reforge(k,mode==='all')},refpick:v=>{const[k,i]=v.split(':'),it=S.eq[k];if(!it)return;const a=reforgeSelection[it.id]||(reforgeSelection[it.id]=[]),n=+i,j=a.indexOf(n);j<0?a.push(n):a.splice(j,1);renderWin()},refaccept:v=>resolveReforge(v==='yes'),convertcard:id=>convertCard(id),guidemode:v=>{if(['farm','boss','survive'].includes(v))guideMode=v;renderWin()},guidetier:v=>{if(['current','normal','nightmare'].includes(v))guideTier=v;renderWin()},guidemap:v=>{const[m,l]=v.split(':').map(Number);if(!tabs.includes('map'))openTab('map');mapM=m;mapL=l;renderWin()},sub:v=>{const[t,k]=v.split(':');sub[t]=k;if(t==='bag'&&k!=='bag')eqPick=null;renderWin()},selp:v=>{selP=+v;renderWin()},
   pon:id=>{const p=gp(id);if(!p)return;if(p.on)p.on=false;else if(S.pets.filter(x=>x.on).length<3)p.on=true;else log('Only 3 pets can fight at once. Remove one first.','','pet');ui();save()},
   pskill:id=>{const p=gp(id);if(!p)return;const c=petSkillCost(p);if(S.zeny<c){log('Not enough Zeny for a pet skill roll.');ui();return}S.zeny-=c;const[a,b]=rollPetSkills();p.skills=[a,b];
     clearPetCd(p.id);
@@ -5152,7 +5279,7 @@ function bars(){if(!S)return;
     track.setAttribute('aria-valuetext',label+' '+lv+': '+text+(pct>=100?' (MAX)':' to next level'));
   }
 }
-function ui(anchor){if(!S)return;bars();feedTab();
+function ui(anchor){if(!S)return;const returned=repairEquippedCards(S);if(returned)log(`${returned} incompatible or duplicate card(s) returned to your loose cards.`,'','card');bars();feedTab();
   // v77: during an Endless Echo run the title is the clock and the status is the mode, so the player
   // never has to open anything to see how long is left. The "(MVP map)" tag is gone with the other
   // parentheticals - the MVP FIGHT line on the HUD carries that.

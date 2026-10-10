@@ -118,6 +118,7 @@ t('high-level bosses cut the crit chance rolled against them', () => {
   const strikeBox = {};
   vm.createContext(strikeBox);
   vm.runInContext(`
+    const fieldDamage=()=>1,applyLeech=()=>0,cardMasteryStat=()=>0;
     let mob={x:1,z:3,hp:1e9,size:1,critRes:.3},shake=0,hit=null,S={dmg:0};
     const missCh=()=>0,crit=()=>50,atk=()=>100,matk=()=>200,st=()=>0,critD=()=>2,
       rnd=(a,b)=>a,addFloat=()=>{},damageFloat=(...a)=>{hit=a},
