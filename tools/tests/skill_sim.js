@@ -109,7 +109,7 @@ if (!pickWMatch) throw new Error('cannot extract weighted gacha picker');
 const PICKW_CODE = pickWMatch[0].slice(0, -',gp='.length) + ';';
 const PET_HIT_SRC = grab('const petSkills=p=>', 'const rollingSet=new Set');
 const PET_GACHA_ACTION = block('pskill:id=>');
-const STRIKE_SRC = grab('function strike(mult,col,magic=false,skill=false){', '// Higher job tiers');
+const STRIKE_SRC = 'const fieldDamage=()=>1,applyLeech=()=>0,cardMasteryStat=()=>0;\n' + grab('function strike(mult,col,magic=false,skill=false){', '// Higher job tiers');
 function makePetHarness(){
   const box={};vm.createContext(box);
   vm.runInContext(`
@@ -117,7 +117,8 @@ function makePetHarness(){
     ${PET_SKILL_SRC}
     const MUT=[1,2,4,6,8,18,38],MC=[0];
     let petBuff={atk:0,matk:0,hp:0,leech:0,def:0,atkT:0,matkT:0,hpT:0,leechT:0,defT:0},petBuffSrc={},petSkillCd={},petNote={},mobs=[];
-    let S={hp:500};
+    let t=0,S={hp:500};
+    ${require('./helpers/progression')(src,'leech')}
     const petDmg=()=>100,pl={x:0,z:0},rnd=(a,b)=>(a+b)/2,numTxt=String,maxHp=()=>1000;
     const logs=[],log=(...x)=>logs.push(x),earnZeny=()=>{},addFloat=()=>{},playSkillFx=()=>{},hurt=(o,d)=>{o.hp-=d};
     ${PICKW_CODE}
@@ -315,7 +316,7 @@ t('pet skills execute their buff, AoE and single-target effects in combat', () =
   assert.strictEqual(P.buff.matk,15,'with the ATK buff gone, MATK is free to run');
   // the two other buffs: 3% of the pet's damage as healing, and +15% max HP for the player
   P.buff=P.zeroBuff();P.cooldowns={};P.petHit(pet('siphon'),a);
-  assert.strictEqual(P.buff.leech,3,'Blood Siphon leeches 3%');
+  assert.strictEqual(P.buff.leech,.5,'Blood Siphon leeches 0.5%');
   assert.strictEqual(P.cooldowns['1|siphon'],60,'on a 60s cooldown');
   P.buff=P.zeroBuff();P.cooldowns={};P.petHit(pet('vital'),a);
   assert.strictEqual(P.buff.hp,15,'Vital Aura adds 15% max HP');

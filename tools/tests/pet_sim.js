@@ -23,6 +23,10 @@ const grab = (a, b) => { const i = src.indexOf(a), j = src.indexOf(b, i); if (i 
 const pick = (re, name) => { const m = src.match(re); if (!m) throw new Error('cannot find ' + name); return m[0]; };
 
 const code = [
+  require('./helpers/progression')(src,'effects'),
+  require('./helpers/progression')(src,'affixes'),
+  require('./helpers/progression')(src,'leech'),
+
   pick(/const SU=k=>[^\n]*HPK=\d+,HPE=[\d.]+/, 'HPK/HPE'),
   grab('const CD=[', 'const pm=s=>'),                    // CLASSES
   pick(/const C=\(\)=>[^;]+;/, 'C()'),
@@ -58,7 +62,7 @@ ${code}
 let __seed=1;const __r=()=>((__seed=(__seed*1103515245+12345)>>>0)/4294967296);
 const rnd=(a,b)=>a+__r()*(b-a),ri=(a,b)=>Math.floor(rnd(a,b+1)),uid=()=>1;
 const pickW=w=>{let r=Math.random()*w.reduce((x,y)=>x+y,0);for(let i=0;i<w.length;i++){r-=w[i];if(r<0)return i}return w.length-1};
-let S=null,tb={},petBuff={atk:0,matk:0,hp:0,leech:0,atkT:0,matkT:0,hpT:0,leechT:0},petBuffSrc={},petSkillCd={},petNote={},mobs=[],pl={x:1.5,z:1.5};
+let t=0,S=null,tb={},petBuff={atk:0,matk:0,hp:0,leech:0,atkT:0,matkT:0,hpT:0,leechT:0},petBuffSrc={},petSkillCd={},petNote={},mobs=[],pl={x:1.5,z:1.5};
 const numTxt=String,addFloat=()=>{},playSkillFx=()=>{},log=()=>{},earnZeny=()=>{},collDmg=()=>0;
 let dealt=0;const hurt=(o,d)=>{dealt+=d;o.hp=1e12};
 // The REAL countdown the game runs every frame, lifted so the stepped simulation ticks exactly
@@ -108,7 +112,7 @@ t('the gacha has twelve skills: 4 buffs, 2 AoE, 2 single-target and 4 utility', 
   // every player buff is 30s on a 60s cooldown, and one gacha per pet
   const buffs = P.PET_SKILLS.filter(s => s.kind === 'buff');
   assert.deepStrictEqual([...buffs.map(s => s.stat)], ['atk', 'matk', 'leech', 'hp'], 'ATK, MATK, leech, max HP');
-  assert.deepStrictEqual([...buffs.map(s => s.power)], [15, 15, 3, 15], '+15% ATK, +15% MATK, 3% leech, +15% max HP');
+  assert.deepStrictEqual([...buffs.map(s => s.power)], [15, 15, .5, 15], '+15% ATK, +15% MATK, 3% leech, +15% max HP');
   buffs.forEach(s => {
     assert.strictEqual(s.duration, 30, s.n + ' must last 30s');
     assert.strictEqual(s.cd, 60, s.n + ' must sit on a 60s cooldown');
@@ -194,7 +198,7 @@ t('the buff rules are enforced and readable: no stacking, ATK or MATK but not bo
   assert.strictEqual(P.petBuffWhy(byId('arcane')), 'the MATK buff is already up');
   assert.strictEqual(P.petBuffWhy(byId('warcry')), 'MATK cannot run next to ATK');
   P.resetPetState();
-  P.petBuff.hp = 15; P.petBuff.hpT = 30; P.petBuff.leech = 3; P.petBuff.leechT = 30;
+  P.petBuff.hp = 15; P.petBuff.hpT = 30; P.petBuff.leech = .5; P.petBuff.leechT = 30;
   assert.strictEqual(P.petBuffWhy(byId('vital')), 'the Max HP buff is already up');
   assert.strictEqual(P.petBuffWhy(byId('siphon')), 'the life-leech buff is already up');
   P.resetPetState();
@@ -279,14 +283,14 @@ t('petDmg is the real formula: atk x PETBAL x rarity x mutation x Claw', () => {
   assert.ok(Math.abs(P.petInt(angeling) - 1.25 / 1.35) < 1e-9, 'Collar 5 = 35% faster attacks');
 });
 
-t('Blood Siphon heals you for 3% of what the pet deals; Vital Aura moves the HP cap', () => {
+t('Blood Siphon heals you for 0.5% of what the pet deals; Vital Aura moves the HP cap', () => {
   P.S = endgame('Lord Knight');
   P.resetPetState();
   const base = P.maxHp();
-  P.petBuff.leech = 3;
+  P.petBuff.leech = .5;
   P.S.hp = 100;
   P.petLeech(1000);
-  assert.strictEqual(P.S.hp, 130, '3% of a 1000-damage hit is 30 HP');
+  assert.strictEqual(P.S.hp, 105, '0.5% of a 1000-damage hit is 5 HP');
   P.S.hp = 100; P.petLeech(0);
   assert.strictEqual(P.S.hp, 100, 'a swing that dealt nothing heals nothing');
   P.resetPetState();
@@ -398,7 +402,7 @@ t('every signature passive is wired into the real game (v75)', () => {
     boss: /mob\.boss\?1\+petPassive\('boss'\)\/100:1/,
     hp: /maxHp=\(\)=>[^;]*\(1\+petPassive\('hp'\)\/100\)/,
     dr: /\(1-cut\)\*\(1-petPassive\('dr'\)\/100\)/,
-    move: /moveSpd=\(\)=>heroMoveSpeedForAgi\(st\('agi'\)\)\*\(1\+petPassive\('move'\)\/100\)/,
+    move: /moveSpd=\(\)=>heroMoveSpeedForAgi\(st\('agi'\)\)\*\(1\+\(petPassive\('move'\)\+equipmentMove\(\)\)\/100\)/,
   };
   for(const k of Object.keys(sites)) assert.ok(sites[k].test(src), k + ' is never read by index.html');
   assert.ok(/spd=moveSpd\(\)/.test(src), 'the walk must call moveSpd(), or Swift Mount would only exist on the sheet');

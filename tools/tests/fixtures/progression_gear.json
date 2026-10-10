@@ -1,0 +1,3646 @@
+{
+  "baselineRevision": "d164bd0527cfe335f9c183d0e576800716b7dd26",
+  "baselineHash": "a251cffc5abeea9ab881fd471e99f36bf4c6aa8cd1f4dcdecb3a2bc982cca0e3",
+  "sourceHash": "46dc8c146225a75076b1a70dfc42740288f362cd2b50d1623ca8f0018f3a28a0",
+  "combatHash": "e8082efffd5256186dee17fb818aec463fc0f84338d8d035fbcbf73af6496dcf",
+  "toolHash": "98fa6a212996bed7ec50535e9a473ec799cbe4f89f0d742aed6517c63a725ae5",
+  "seconds": 120,
+  "seed": 789,
+  "kind": "gear",
+  "before": [
+    {
+      "cls": "Lord Knight",
+      "profile": 0,
+      "weapon": "",
+      "count": 1,
+      "petMean": 2601,
+      "autoDps": 30476.416666666668,
+      "dps": 129636.88333333333,
+      "opening": 117944.1,
+      "pet": 2601,
+      "atk": 5270,
+      "matk": 2984,
+      "interval": 0.14506666666666662,
+      "stats": {
+        "str": 118,
+        "agi": 118,
+        "dex": 60,
+        "luk": 1,
+        "int": 117,
+        "vit": 1
+      },
+      "build": {
+        "stats": {
+          "str": 118,
+          "agi": 118,
+          "dex": 60,
+          "luk": 1,
+          "int": 117,
+          "vit": 1
+        },
+        "atk": 4361,
+        "matk": 2984,
+        "crit": 20.25,
+        "critD": 2.7299999999999995,
+        "hp": 91789,
+        "cards": [
+          "Benchmark 1001 Card"
+        ]
+      }
+    },
+    {
+      "cls": "Lord Knight",
+      "profile": 0,
+      "weapon": "",
+      "count": 3,
+      "petMean": 2601,
+      "autoDps": 30893.825,
+      "dps": 144643.45,
+      "opening": 132606.7,
+      "pet": 2601,
+      "atk": 5270,
+      "matk": 2984,
+      "interval": 0.14506666666666662,
+      "stats": {
+        "str": 118,
+        "agi": 118,
+        "dex": 60,
+        "luk": 1,
+        "int": 117,
+        "vit": 1
+      },
+      "build": {
+        "stats": {
+          "str": 118,
+          "agi": 118,
+          "dex": 60,
+          "luk": 1,
+          "int": 117,
+          "vit": 1
+        },
+        "atk": 4361,
+        "matk": 2984,
+        "crit": 20.25,
+        "critD": 2.7299999999999995,
+        "hp": 91789,
+        "cards": [
+          "Benchmark 1001 Card"
+        ]
+      }
+    },
+    {
+      "cls": "Lord Knight",
+      "profile": 1,
+      "weapon": "",
+      "count": 1,
+      "petMean": 5616,
+      "autoDps": 98119.58333333333,
+      "dps": 428462.1666666667,
+      "opening": 376050.3,
+      "pet": 5616,
+      "atk": 11381,
+      "matk": 6240,
+      "interval": 0.13988571428571425,
+      "stats": {
+        "str": 118,
+        "agi": 118,
+        "dex": 60,
+        "luk": 1,
+        "int": 117,
+        "vit": 1
+      },
+      "build": {
+        "stats": {
+          "str": 118,
+          "agi": 118,
+          "dex": 60,
+          "luk": 1,
+          "int": 117,
+          "vit": 1
+        },
+        "atk": 9419,
+        "matk": 6240,
+        "crit": 39.25,
+        "critD": 3.3699999999999997,
+        "hp": 202169,
+        "cards": [
+          "Benchmark 1001 Card",
+          "Benchmark 1002 Card"
+        ]
+      }
+    },
+    {
+      "cls": "Lord Knight",
+      "profile": 1,
+      "weapon": "",
+      "count": 3,
+      "petMean": 5616,
+      "autoDps": 97129.975,
+      "dps": 462947.31666666665,
+      "opening": 453819.5,
+      "pet": 5616,
+      "atk": 11381,
+      "matk": 6240,
+      "interval": 0.13988571428571425,
+      "stats": {
+        "str": 118,
+        "agi": 118,
+        "dex": 60,
+        "luk": 1,
+        "int": 117,
+        "vit": 1
+      },
+      "build": {
+        "stats": {
+          "str": 118,
+          "agi": 118,
+          "dex": 60,
+          "luk": 1,
+          "int": 117,
+          "vit": 1
+        },
+        "atk": 9419,
+        "matk": 6240,
+        "crit": 39.25,
+        "critD": 3.3699999999999997,
+        "hp": 202169,
+        "cards": [
+          "Benchmark 1001 Card",
+          "Benchmark 1002 Card"
+        ]
+      }
+    },
+    {
+      "cls": "Lord Knight",
+      "profile": 2,
+      "weapon": "",
+      "count": 1,
+      "petMean": 14430,
+      "autoDps": 763633.6333333333,
+      "dps": 2968093.6666666665,
+      "opening": 2884273.2,
+      "pet": 14430,
+      "atk": 29241,
+      "matk": 16029,
+      "interval": 0.13,
+      "stats": {
+        "str": 118,
+        "agi": 118,
+        "dex": 60,
+        "luk": 1,
+        "int": 117,
+        "vit": 1
+      },
+      "build": {
+        "stats": {
+          "str": 118,
+          "agi": 118,
+          "dex": 60,
+          "luk": 1,
+          "int": 117,
+          "vit": 1
+        },
+        "atk": 24234,
+        "matk": 16029,
+        "crit": 87.25,
+        "critD": 4.755,
+        "hp": 558050,
+        "cards": [
+          "Benchmark 1001 Card",
+          "Benchmark 1002 Card",
+          "Benchmark 1003 Card",
+          "Benchmark 1004 Card",
+          "Benchmark 1005 Card",
+          "Benchmark 1006 Card",
+          "Benchmark 1007 Card",
+          "Benchmark 1008 Card",
+          "Benchmark 1009 Card"
+        ]
+      }
+    },
+    {
+      "cls": "Lord Knight",
+      "profile": 2,
+      "weapon": "",
+      "count": 3,
+      "petMean": 14430,
+      "autoDps": 767520.8833333333,
+      "dps": 3313743.15,
+      "opening": 3362528.4,
+      "pet": 14430,
+      "atk": 29241,
+      "matk": 16029,
+      "interval": 0.13,
+      "stats": {
+        "str": 118,
+        "agi": 118,
+        "dex": 60,
+        "luk": 1,
+        "int": 117,
+        "vit": 1
+      },
+      "build": {
+        "stats": {
+          "str": 118,
+          "agi": 118,
+          "dex": 60,
+          "luk": 1,
+          "int": 117,
+          "vit": 1
+        },
+        "atk": 24234,
+        "matk": 16029,
+        "crit": 87.25,
+        "critD": 4.755,
+        "hp": 558050,
+        "cards": [
+          "Benchmark 1001 Card",
+          "Benchmark 1002 Card",
+          "Benchmark 1003 Card",
+          "Benchmark 1004 Card",
+          "Benchmark 1005 Card",
+          "Benchmark 1006 Card",
+          "Benchmark 1007 Card",
+          "Benchmark 1008 Card",
+          "Benchmark 1009 Card"
+        ]
+      }
+    },
+    {
+      "cls": "High Wizard",
+      "profile": 0,
+      "weapon": "",
+      "count": 1,
+      "petMean": 2025,
+      "autoDps": 28517.783333333333,
+      "dps": 259340.19166666668,
+      "opening": 271541,
+      "pet": 2025,
+      "atk": 4500,
+      "matk": 6586,
+      "interval": 0.2331428571428571,
+      "stats": {
+        "str": 1,
+        "agi": 118,
+        "dex": 60,
+        "luk": 117,
+        "int": 118,
+        "vit": 1
+      },
+      "build": {
+        "stats": {
+          "str": 1,
+          "agi": 118,
+          "dex": 60,
+          "luk": 117,
+          "int": 118,
+          "vit": 1
+        },
+        "atk": 4500,
+        "matk": 6586,
+        "crit": 49.25,
+        "critD": 3.8899999999999997,
+        "hp": 50854,
+        "cards": [
+          "Benchmark 1001 Card"
+        ]
+      }
+    },
+    {
+      "cls": "High Wizard",
+      "profile": 0,
+      "weapon": "",
+      "count": 3,
+      "petMean": 2025,
+      "autoDps": 27682.525,
+      "dps": 353813.525,
+      "opening": 331529.2,
+      "pet": 2025,
+      "atk": 4500,
+      "matk": 6586,
+      "interval": 0.2331428571428571,
+      "stats": {
+        "str": 1,
+        "agi": 118,
+        "dex": 60,
+        "luk": 117,
+        "int": 118,
+        "vit": 1
+      },
+      "build": {
+        "stats": {
+          "str": 1,
+          "agi": 118,
+          "dex": 60,
+          "luk": 117,
+          "int": 118,
+          "vit": 1
+        },
+        "atk": 4500,
+        "matk": 6586,
+        "crit": 49.25,
+        "critD": 3.8899999999999997,
+        "hp": 50854,
+        "cards": [
+          "Benchmark 1001 Card"
+        ]
+      }
+    },
+    {
+      "cls": "High Wizard",
+      "profile": 1,
+      "weapon": "",
+      "count": 1,
+      "petMean": 4340,
+      "autoDps": 85760.88333333333,
+      "dps": 940455.9166666666,
+      "opening": 862348.4,
+      "pet": 4340,
+      "atk": 9643,
+      "matk": 13745,
+      "interval": 0.2225454545454545,
+      "stats": {
+        "str": 1,
+        "agi": 118,
+        "dex": 60,
+        "luk": 117,
+        "int": 118,
+        "vit": 1
+      },
+      "build": {
+        "stats": {
+          "str": 1,
+          "agi": 118,
+          "dex": 60,
+          "luk": 117,
+          "int": 118,
+          "vit": 1
+        },
+        "atk": 9643,
+        "matk": 13745,
+        "crit": 65.625,
+        "critD": 4.529999999999999,
+        "hp": 112036,
+        "cards": [
+          "Benchmark 1001 Card",
+          "Benchmark 1002 Card"
+        ]
+      }
+    },
+    {
+      "cls": "High Wizard",
+      "profile": 1,
+      "weapon": "",
+      "count": 3,
+      "petMean": 4340,
+      "autoDps": 89231.675,
+      "dps": 1206366.575,
+      "opening": 1127583.2,
+      "pet": 4340,
+      "atk": 9643,
+      "matk": 13745,
+      "interval": 0.2225454545454545,
+      "stats": {
+        "str": 1,
+        "agi": 118,
+        "dex": 60,
+        "luk": 117,
+        "int": 118,
+        "vit": 1
+      },
+      "build": {
+        "stats": {
+          "str": 1,
+          "agi": 118,
+          "dex": 60,
+          "luk": 117,
+          "int": 118,
+          "vit": 1
+        },
+        "atk": 9643,
+        "matk": 13745,
+        "crit": 65.625,
+        "critD": 4.529999999999999,
+        "hp": 112036,
+        "cards": [
+          "Benchmark 1001 Card",
+          "Benchmark 1002 Card"
+        ]
+      }
+    },
+    {
+      "cls": "High Wizard",
+      "profile": 2,
+      "weapon": "",
+      "count": 1,
+      "petMean": 11197,
+      "autoDps": 452491.0833333333,
+      "dps": 5973669.375,
+      "opening": 5952247.9,
+      "pet": 11197,
+      "atk": 24880,
+      "matk": 34753,
+      "interval": 0.18,
+      "stats": {
+        "str": 1,
+        "agi": 118,
+        "dex": 60,
+        "luk": 117,
+        "int": 118,
+        "vit": 1
+      },
+      "build": {
+        "stats": {
+          "str": 1,
+          "agi": 118,
+          "dex": 60,
+          "luk": 117,
+          "int": 118,
+          "vit": 1
+        },
+        "atk": 24880,
+        "matk": 34753,
+        "crit": 100,
+        "critD": 5.914999999999999,
+        "hp": 309548,
+        "cards": [
+          "Benchmark 1001 Card",
+          "Benchmark 1002 Card",
+          "Benchmark 1003 Card",
+          "Benchmark 1004 Card",
+          "Benchmark 1005 Card",
+          "Benchmark 1006 Card",
+          "Benchmark 1007 Card",
+          "Benchmark 1008 Card"
+        ]
+      }
+    },
+    {
+      "cls": "High Wizard",
+      "profile": 2,
+      "weapon": "",
+      "count": 3,
+      "petMean": 11197,
+      "autoDps": 451174.74166666664,
+      "dps": 7683124.075,
+      "opening": 7546691.5,
+      "pet": 11197,
+      "atk": 24880,
+      "matk": 34753,
+      "interval": 0.18,
+      "stats": {
+        "str": 1,
+        "agi": 118,
+        "dex": 60,
+        "luk": 117,
+        "int": 118,
+        "vit": 1
+      },
+      "build": {
+        "stats": {
+          "str": 1,
+          "agi": 118,
+          "dex": 60,
+          "luk": 117,
+          "int": 118,
+          "vit": 1
+        },
+        "atk": 24880,
+        "matk": 34753,
+        "crit": 100,
+        "critD": 5.914999999999999,
+        "hp": 309548,
+        "cards": [
+          "Benchmark 1001 Card",
+          "Benchmark 1002 Card",
+          "Benchmark 1003 Card",
+          "Benchmark 1004 Card",
+          "Benchmark 1005 Card",
+          "Benchmark 1006 Card",
+          "Benchmark 1007 Card",
+          "Benchmark 1008 Card"
+        ]
+      }
+    },
+    {
+      "cls": "Sniper",
+      "profile": 0,
+      "weapon": "",
+      "count": 1,
+      "petMean": 2223,
+      "autoDps": 68790.525,
+      "dps": 191666.3,
+      "opening": 199404.4,
+      "pet": 2223,
+      "atk": 4632,
+      "matk": 2884,
+      "interval": 0.13008695652173913,
+      "stats": {
+        "str": 1,
+        "agi": 120,
+        "dex": 120,
+        "luk": 1,
+        "int": 120,
+        "vit": 1
+      },
+      "build": {
+        "stats": {
+          "str": 1,
+          "agi": 120,
+          "dex": 120,
+          "luk": 1,
+          "int": 120,
+          "vit": 1
+        },
+        "atk": 4632,
+        "matk": 2884,
+        "crit": 57.125,
+        "critD": 3.28,
+        "hp": 47131,
+        "cards": [
+          "Benchmark 1001 Card",
+          "Benchmark 1002 Card"
+        ]
+      }
+    },
+    {
+      "cls": "Sniper",
+      "profile": 0,
+      "weapon": "",
+      "count": 3,
+      "petMean": 2223,
+      "autoDps": 66536.05,
+      "dps": 222882.075,
+      "opening": 208310.4,
+      "pet": 2223,
+      "atk": 4632,
+      "matk": 2884,
+      "interval": 0.13008695652173913,
+      "stats": {
+        "str": 1,
+        "agi": 120,
+        "dex": 120,
+        "luk": 1,
+        "int": 120,
+        "vit": 1
+      },
+      "build": {
+        "stats": {
+          "str": 1,
+          "agi": 120,
+          "dex": 120,
+          "luk": 1,
+          "int": 120,
+          "vit": 1
+        },
+        "atk": 4632,
+        "matk": 2884,
+        "crit": 57.125,
+        "critD": 3.28,
+        "hp": 47131,
+        "cards": [
+          "Benchmark 1001 Card",
+          "Benchmark 1002 Card"
+        ]
+      }
+    },
+    {
+      "cls": "Sniper",
+      "profile": 1,
+      "weapon": "",
+      "count": 1,
+      "petMean": 4782,
+      "autoDps": 201042.09166666667,
+      "dps": 607407.2583333333,
+      "opening": 631367.2,
+      "pet": 4782,
+      "atk": 9962,
+      "matk": 5990,
+      "interval": 0.13,
+      "stats": {
+        "str": 1,
+        "agi": 120,
+        "dex": 120,
+        "luk": 1,
+        "int": 120,
+        "vit": 1
+      },
+      "build": {
+        "stats": {
+          "str": 1,
+          "agi": 120,
+          "dex": 120,
+          "luk": 1,
+          "int": 120,
+          "vit": 1
+        },
+        "atk": 9962,
+        "matk": 5990,
+        "crit": 71.125,
+        "critD": 4.16,
+        "hp": 128481,
+        "cards": [
+          "Benchmark 1001 Card",
+          "Benchmark 1002 Card",
+          "Benchmark 1003 Card"
+        ]
+      }
+    },
+    {
+      "cls": "Sniper",
+      "profile": 1,
+      "weapon": "",
+      "count": 3,
+      "petMean": 4782,
+      "autoDps": 201648.38333333333,
+      "dps": 689910.8416666667,
+      "opening": 737056.7,
+      "pet": 4782,
+      "atk": 9962,
+      "matk": 5990,
+      "interval": 0.13,
+      "stats": {
+        "str": 1,
+        "agi": 120,
+        "dex": 120,
+        "luk": 1,
+        "int": 120,
+        "vit": 1
+      },
+      "build": {
+        "stats": {
+          "str": 1,
+          "agi": 120,
+          "dex": 120,
+          "luk": 1,
+          "int": 120,
+          "vit": 1
+        },
+        "atk": 9962,
+        "matk": 5990,
+        "crit": 71.125,
+        "critD": 4.16,
+        "hp": 128481,
+        "cards": [
+          "Benchmark 1001 Card",
+          "Benchmark 1002 Card",
+          "Benchmark 1003 Card"
+        ]
+      }
+    },
+    {
+      "cls": "Sniper",
+      "profile": 2,
+      "weapon": "",
+      "count": 1,
+      "petMean": 12316,
+      "autoDps": 900671.95,
+      "dps": 2841594.8916666666,
+      "opening": 3034437.9,
+      "pet": 12316,
+      "atk": 25659,
+      "matk": 15301,
+      "interval": 0.13,
+      "stats": {
+        "str": 1,
+        "agi": 120,
+        "dex": 120,
+        "luk": 1,
+        "int": 120,
+        "vit": 1
+      },
+      "build": {
+        "stats": {
+          "str": 1,
+          "agi": 120,
+          "dex": 120,
+          "luk": 1,
+          "int": 120,
+          "vit": 1
+        },
+        "atk": 25659,
+        "matk": 15301,
+        "crit": 100,
+        "critD": 5.785,
+        "hp": 355579,
+        "cards": [
+          "Benchmark 1001 Card",
+          "Benchmark 1002 Card",
+          "Benchmark 1003 Card",
+          "Benchmark 1004 Card",
+          "Benchmark 1005 Card",
+          "Benchmark 1006 Card",
+          "Benchmark 1007 Card",
+          "Benchmark 1008 Card",
+          "Benchmark 1009 Card"
+        ]
+      }
+    },
+    {
+      "cls": "Sniper",
+      "profile": 2,
+      "weapon": "",
+      "count": 3,
+      "petMean": 12316,
+      "autoDps": 903543.0333333333,
+      "dps": 3310491.425,
+      "opening": 3559366.6,
+      "pet": 12316,
+      "atk": 25659,
+      "matk": 15301,
+      "interval": 0.13,
+      "stats": {
+        "str": 1,
+        "agi": 120,
+        "dex": 120,
+        "luk": 1,
+        "int": 120,
+        "vit": 1
+      },
+      "build": {
+        "stats": {
+          "str": 1,
+          "agi": 120,
+          "dex": 120,
+          "luk": 1,
+          "int": 120,
+          "vit": 1
+        },
+        "atk": 25659,
+        "matk": 15301,
+        "crit": 100,
+        "critD": 5.785,
+        "hp": 355579,
+        "cards": [
+          "Benchmark 1001 Card",
+          "Benchmark 1002 Card",
+          "Benchmark 1003 Card",
+          "Benchmark 1004 Card",
+          "Benchmark 1005 Card",
+          "Benchmark 1006 Card",
+          "Benchmark 1007 Card",
+          "Benchmark 1008 Card",
+          "Benchmark 1009 Card"
+        ]
+      }
+    },
+    {
+      "cls": "Assassin Cross",
+      "profile": 0,
+      "weapon": "katar",
+      "count": 1,
+      "petMean": 3916,
+      "autoDps": 193568.20833333334,
+      "dps": 426864.3333333333,
+      "opening": 523202.4,
+      "pet": 3340,
+      "atk": 6958,
+      "matk": 3872,
+      "interval": 0.13,
+      "stats": {
+        "str": 1,
+        "agi": 118,
+        "dex": 60,
+        "luk": 117,
+        "int": 118,
+        "vit": 1
+      },
+      "build": {
+        "stats": {
+          "str": 1,
+          "agi": 118,
+          "dex": 60,
+          "luk": 117,
+          "int": 118,
+          "vit": 1
+        },
+        "atk": 6958,
+        "matk": 3872,
+        "crit": 49.25,
+        "critD": 3.9599999999999995,
+        "hp": 51620,
+        "cards": [
+          "Benchmark 1001 Card",
+          "Benchmark 1002 Card"
+        ]
+      }
+    },
+    {
+      "cls": "Assassin Cross",
+      "profile": 0,
+      "weapon": "katar",
+      "count": 3,
+      "petMean": 3916,
+      "autoDps": 188007.39166666666,
+      "dps": 531067.6416666667,
+      "opening": 639109.5,
+      "pet": 3340,
+      "atk": 6958,
+      "matk": 3872,
+      "interval": 0.13,
+      "stats": {
+        "str": 1,
+        "agi": 118,
+        "dex": 60,
+        "luk": 117,
+        "int": 118,
+        "vit": 1
+      },
+      "build": {
+        "stats": {
+          "str": 1,
+          "agi": 118,
+          "dex": 60,
+          "luk": 117,
+          "int": 118,
+          "vit": 1
+        },
+        "atk": 6958,
+        "matk": 3872,
+        "crit": 49.25,
+        "critD": 3.9599999999999995,
+        "hp": 51620,
+        "cards": [
+          "Benchmark 1001 Card",
+          "Benchmark 1002 Card"
+        ]
+      }
+    },
+    {
+      "cls": "Assassin Cross",
+      "profile": 1,
+      "weapon": "katar",
+      "count": 1,
+      "petMean": 8867,
+      "autoDps": 611517,
+      "dps": 1378465.5833333333,
+      "opening": 1693767.8,
+      "pet": 7563,
+      "atk": 15757,
+      "matk": 8613,
+      "interval": 0.13,
+      "stats": {
+        "str": 1,
+        "agi": 118,
+        "dex": 60,
+        "luk": 117,
+        "int": 118,
+        "vit": 1
+      },
+      "build": {
+        "stats": {
+          "str": 1,
+          "agi": 118,
+          "dex": 60,
+          "luk": 117,
+          "int": 118,
+          "vit": 1
+        },
+        "atk": 15757,
+        "matk": 8613,
+        "crit": 65.625,
+        "critD": 4.66,
+        "hp": 140717,
+        "cards": [
+          "Benchmark 1001 Card",
+          "Benchmark 1002 Card",
+          "Benchmark 1003 Card"
+        ]
+      }
+    },
+    {
+      "cls": "Assassin Cross",
+      "profile": 1,
+      "weapon": "katar",
+      "count": 3,
+      "petMean": 8867,
+      "autoDps": 597684.475,
+      "dps": 1741624.3,
+      "opening": 2253247.8,
+      "pet": 7563,
+      "atk": 15757,
+      "matk": 8613,
+      "interval": 0.13,
+      "stats": {
+        "str": 1,
+        "agi": 118,
+        "dex": 60,
+        "luk": 117,
+        "int": 118,
+        "vit": 1
+      },
+      "build": {
+        "stats": {
+          "str": 1,
+          "agi": 118,
+          "dex": 60,
+          "luk": 117,
+          "int": 118,
+          "vit": 1
+        },
+        "atk": 15757,
+        "matk": 8613,
+        "crit": 65.625,
+        "critD": 4.66,
+        "hp": 140717,
+        "cards": [
+          "Benchmark 1001 Card",
+          "Benchmark 1002 Card",
+          "Benchmark 1003 Card"
+        ]
+      }
+    },
+    {
+      "cls": "Assassin Cross",
+      "profile": 2,
+      "weapon": "katar",
+      "count": 1,
+      "petMean": 23383.666666666668,
+      "autoDps": 3013269.925,
+      "dps": 7536080.158333333,
+      "opening": 9894083.4,
+      "pet": 19965,
+      "atk": 41594,
+      "matk": 22828,
+      "interval": 0.13,
+      "stats": {
+        "str": 1,
+        "agi": 118,
+        "dex": 60,
+        "luk": 117,
+        "int": 118,
+        "vit": 1
+      },
+      "build": {
+        "stats": {
+          "str": 1,
+          "agi": 118,
+          "dex": 60,
+          "luk": 117,
+          "int": 118,
+          "vit": 1
+        },
+        "atk": 41594,
+        "matk": 22828,
+        "crit": 100,
+        "critD": 6.044999999999999,
+        "hp": 389444,
+        "cards": [
+          "Benchmark 1001 Card",
+          "Benchmark 1002 Card",
+          "Benchmark 1003 Card",
+          "Benchmark 1004 Card",
+          "Benchmark 1005 Card",
+          "Benchmark 1006 Card",
+          "Benchmark 1007 Card",
+          "Benchmark 1008 Card",
+          "Benchmark 1009 Card"
+        ]
+      }
+    },
+    {
+      "cls": "Assassin Cross",
+      "profile": 2,
+      "weapon": "katar",
+      "count": 3,
+      "petMean": 23383.666666666668,
+      "autoDps": 2984807.091666667,
+      "dps": 9518854.616666667,
+      "opening": 12733681.4,
+      "pet": 19965,
+      "atk": 41594,
+      "matk": 22828,
+      "interval": 0.13,
+      "stats": {
+        "str": 1,
+        "agi": 118,
+        "dex": 60,
+        "luk": 117,
+        "int": 118,
+        "vit": 1
+      },
+      "build": {
+        "stats": {
+          "str": 1,
+          "agi": 118,
+          "dex": 60,
+          "luk": 117,
+          "int": 118,
+          "vit": 1
+        },
+        "atk": 41594,
+        "matk": 22828,
+        "crit": 100,
+        "critD": 6.044999999999999,
+        "hp": 389444,
+        "cards": [
+          "Benchmark 1001 Card",
+          "Benchmark 1002 Card",
+          "Benchmark 1003 Card",
+          "Benchmark 1004 Card",
+          "Benchmark 1005 Card",
+          "Benchmark 1006 Card",
+          "Benchmark 1007 Card",
+          "Benchmark 1008 Card",
+          "Benchmark 1009 Card"
+        ]
+      }
+    },
+    {
+      "cls": "Assassin Cross",
+      "profile": 0,
+      "weapon": "dagger",
+      "count": 1,
+      "petMean": 3833.6666666666665,
+      "autoDps": 190077.06666666668,
+      "dps": 425180.2,
+      "opening": 515037.7,
+      "pet": 3270,
+      "atk": 6812,
+      "matk": 2910,
+      "interval": 0.13,
+      "stats": {
+        "str": 1,
+        "agi": 118,
+        "dex": 60,
+        "luk": 117,
+        "int": 118,
+        "vit": 1
+      },
+      "build": {
+        "stats": {
+          "str": 1,
+          "agi": 118,
+          "dex": 60,
+          "luk": 117,
+          "int": 118,
+          "vit": 1
+        },
+        "atk": 6812,
+        "matk": 2910,
+        "crit": 50.75,
+        "critD": 3.9599999999999995,
+        "hp": 58482,
+        "cards": [
+          "Benchmark 1001 Card",
+          "Benchmark 1002 Card"
+        ]
+      }
+    },
+    {
+      "cls": "Assassin Cross",
+      "profile": 0,
+      "weapon": "dagger",
+      "count": 3,
+      "petMean": 3833.6666666666665,
+      "autoDps": 196216.10833333334,
+      "dps": 520804.275,
+      "opening": 733299.3,
+      "pet": 3270,
+      "atk": 6812,
+      "matk": 2910,
+      "interval": 0.13,
+      "stats": {
+        "str": 1,
+        "agi": 118,
+        "dex": 60,
+        "luk": 117,
+        "int": 118,
+        "vit": 1
+      },
+      "build": {
+        "stats": {
+          "str": 1,
+          "agi": 118,
+          "dex": 60,
+          "luk": 117,
+          "int": 118,
+          "vit": 1
+        },
+        "atk": 6812,
+        "matk": 2910,
+        "crit": 50.75,
+        "critD": 3.9599999999999995,
+        "hp": 58482,
+        "cards": [
+          "Benchmark 1001 Card",
+          "Benchmark 1002 Card"
+        ]
+      }
+    },
+    {
+      "cls": "Assassin Cross",
+      "profile": 1,
+      "weapon": "dagger",
+      "count": 1,
+      "petMean": 8955,
+      "autoDps": 625437.7916666666,
+      "dps": 1408480.2083333333,
+      "opening": 1782769.1,
+      "pet": 7638,
+      "atk": 15913,
+      "matk": 6082,
+      "interval": 0.13,
+      "stats": {
+        "str": 1,
+        "agi": 118,
+        "dex": 60,
+        "luk": 117,
+        "int": 118,
+        "vit": 1
+      },
+      "build": {
+        "stats": {
+          "str": 1,
+          "agi": 118,
+          "dex": 60,
+          "luk": 117,
+          "int": 118,
+          "vit": 1
+        },
+        "atk": 15913,
+        "matk": 6082,
+        "crit": 67.375,
+        "critD": 4.7299999999999995,
+        "hp": 128841,
+        "cards": [
+          "Benchmark 1001 Card",
+          "Benchmark 1002 Card",
+          "Benchmark 1003 Card",
+          "Benchmark 1004 Card"
+        ]
+      }
+    },
+    {
+      "cls": "Assassin Cross",
+      "profile": 1,
+      "weapon": "dagger",
+      "count": 3,
+      "petMean": 8955,
+      "autoDps": 648540.7916666666,
+      "dps": 1795115.5,
+      "opening": 2511501.6,
+      "pet": 7638,
+      "atk": 15913,
+      "matk": 6082,
+      "interval": 0.13,
+      "stats": {
+        "str": 1,
+        "agi": 118,
+        "dex": 60,
+        "luk": 117,
+        "int": 118,
+        "vit": 1
+      },
+      "build": {
+        "stats": {
+          "str": 1,
+          "agi": 118,
+          "dex": 60,
+          "luk": 117,
+          "int": 118,
+          "vit": 1
+        },
+        "atk": 15913,
+        "matk": 6082,
+        "crit": 67.375,
+        "critD": 4.7299999999999995,
+        "hp": 128841,
+        "cards": [
+          "Benchmark 1001 Card",
+          "Benchmark 1002 Card",
+          "Benchmark 1003 Card",
+          "Benchmark 1004 Card"
+        ]
+      }
+    },
+    {
+      "cls": "Assassin Cross",
+      "profile": 2,
+      "weapon": "dagger",
+      "count": 1,
+      "petMean": 23600.333333333332,
+      "autoDps": 3105741.25,
+      "dps": 7796904.2,
+      "opening": 10455865.2,
+      "pet": 20150,
+      "atk": 41979,
+      "matk": 15621,
+      "interval": 0.13,
+      "stats": {
+        "str": 1,
+        "agi": 118,
+        "dex": 60,
+        "luk": 117,
+        "int": 118,
+        "vit": 1
+      },
+      "build": {
+        "stats": {
+          "str": 1,
+          "agi": 118,
+          "dex": 60,
+          "luk": 117,
+          "int": 118,
+          "vit": 1
+        },
+        "atk": 41979,
+        "matk": 15621,
+        "crit": 100,
+        "critD": 6.219999999999999,
+        "hp": 355980,
+        "cards": [
+          "Benchmark 1001 Card",
+          "Benchmark 1002 Card",
+          "Benchmark 1003 Card",
+          "Benchmark 1004 Card",
+          "Benchmark 1005 Card",
+          "Benchmark 1006 Card",
+          "Benchmark 1007 Card",
+          "Benchmark 1008 Card",
+          "Benchmark 1009 Card",
+          "Benchmark 1010 Card",
+          "Benchmark 1011 Card"
+        ]
+      }
+    },
+    {
+      "cls": "Assassin Cross",
+      "profile": 2,
+      "weapon": "dagger",
+      "count": 3,
+      "petMean": 23600.333333333332,
+      "autoDps": 3088875.5,
+      "dps": 9861042.191666666,
+      "opening": 13268099.1,
+      "pet": 20150,
+      "atk": 41979,
+      "matk": 15621,
+      "interval": 0.13,
+      "stats": {
+        "str": 1,
+        "agi": 118,
+        "dex": 60,
+        "luk": 117,
+        "int": 118,
+        "vit": 1
+      },
+      "build": {
+        "stats": {
+          "str": 1,
+          "agi": 118,
+          "dex": 60,
+          "luk": 117,
+          "int": 118,
+          "vit": 1
+        },
+        "atk": 41979,
+        "matk": 15621,
+        "crit": 100,
+        "critD": 6.219999999999999,
+        "hp": 355980,
+        "cards": [
+          "Benchmark 1001 Card",
+          "Benchmark 1002 Card",
+          "Benchmark 1003 Card",
+          "Benchmark 1004 Card",
+          "Benchmark 1005 Card",
+          "Benchmark 1006 Card",
+          "Benchmark 1007 Card",
+          "Benchmark 1008 Card",
+          "Benchmark 1009 Card",
+          "Benchmark 1010 Card",
+          "Benchmark 1011 Card"
+        ]
+      }
+    },
+    {
+      "cls": "High Priest",
+      "profile": 0,
+      "weapon": "",
+      "count": 1,
+      "petMean": 2508,
+      "autoDps": 31606.475,
+      "dps": 115698.66666666667,
+      "opening": 104564.6,
+      "pet": 2508,
+      "atk": 5099,
+      "matk": 3505,
+      "interval": 0.18133333333333332,
+      "stats": {
+        "str": 1,
+        "agi": 118,
+        "dex": 60,
+        "luk": 117,
+        "int": 118,
+        "vit": 1
+      },
+      "build": {
+        "stats": {
+          "str": 1,
+          "agi": 118,
+          "dex": 60,
+          "luk": 117,
+          "int": 118,
+          "vit": 1
+        },
+        "atk": 5099,
+        "matk": 3505,
+        "crit": 49.25,
+        "critD": 3.8899999999999997,
+        "hp": 63743,
+        "cards": [
+          "Benchmark 1001 Card"
+        ]
+      }
+    },
+    {
+      "cls": "High Priest",
+      "profile": 0,
+      "weapon": "",
+      "count": 3,
+      "petMean": 2508,
+      "autoDps": 33559.625,
+      "dps": 132398.60833333334,
+      "opening": 129423.2,
+      "pet": 2508,
+      "atk": 5099,
+      "matk": 3505,
+      "interval": 0.18133333333333332,
+      "stats": {
+        "str": 1,
+        "agi": 118,
+        "dex": 60,
+        "luk": 117,
+        "int": 118,
+        "vit": 1
+      },
+      "build": {
+        "stats": {
+          "str": 1,
+          "agi": 118,
+          "dex": 60,
+          "luk": 117,
+          "int": 118,
+          "vit": 1
+        },
+        "atk": 5099,
+        "matk": 3505,
+        "crit": 49.25,
+        "critD": 3.8899999999999997,
+        "hp": 63743,
+        "cards": [
+          "Benchmark 1001 Card"
+        ]
+      }
+    },
+    {
+      "cls": "High Priest",
+      "profile": 1,
+      "weapon": "",
+      "count": 1,
+      "petMean": 5375,
+      "autoDps": 97578.59166666666,
+      "dps": 367929.25,
+      "opening": 340059.5,
+      "pet": 5375,
+      "atk": 10929,
+      "matk": 7316,
+      "interval": 0.17407999999999998,
+      "stats": {
+        "str": 1,
+        "agi": 118,
+        "dex": 60,
+        "luk": 117,
+        "int": 118,
+        "vit": 1
+      },
+      "build": {
+        "stats": {
+          "str": 1,
+          "agi": 118,
+          "dex": 60,
+          "luk": 117,
+          "int": 118,
+          "vit": 1
+        },
+        "atk": 10929,
+        "matk": 7316,
+        "crit": 65.625,
+        "critD": 4.529999999999999,
+        "hp": 140395,
+        "cards": [
+          "Benchmark 1001 Card",
+          "Benchmark 1002 Card"
+        ]
+      }
+    },
+    {
+      "cls": "High Priest",
+      "profile": 1,
+      "weapon": "",
+      "count": 3,
+      "petMean": 5375,
+      "autoDps": 91306.10833333334,
+      "dps": 435954.1666666667,
+      "opening": 405275.5,
+      "pet": 5375,
+      "atk": 10929,
+      "matk": 7316,
+      "interval": 0.17407999999999998,
+      "stats": {
+        "str": 1,
+        "agi": 118,
+        "dex": 60,
+        "luk": 117,
+        "int": 118,
+        "vit": 1
+      },
+      "build": {
+        "stats": {
+          "str": 1,
+          "agi": 118,
+          "dex": 60,
+          "luk": 117,
+          "int": 118,
+          "vit": 1
+        },
+        "atk": 10929,
+        "matk": 7316,
+        "crit": 65.625,
+        "critD": 4.529999999999999,
+        "hp": 140395,
+        "cards": [
+          "Benchmark 1001 Card",
+          "Benchmark 1002 Card"
+        ]
+      }
+    },
+    {
+      "cls": "High Priest",
+      "profile": 2,
+      "weapon": "",
+      "count": 1,
+      "petMean": 13815,
+      "autoDps": 569010.9333333333,
+      "dps": 2085450.05,
+      "opening": 2180655.2,
+      "pet": 13815,
+      "atk": 28092,
+      "matk": 18533,
+      "interval": 0.1351552795031056,
+      "stats": {
+        "str": 1,
+        "agi": 118,
+        "dex": 60,
+        "luk": 117,
+        "int": 118,
+        "vit": 1
+      },
+      "build": {
+        "stats": {
+          "str": 1,
+          "agi": 118,
+          "dex": 60,
+          "luk": 117,
+          "int": 118,
+          "vit": 1
+        },
+        "atk": 28092,
+        "matk": 18533,
+        "crit": 100,
+        "critD": 5.914999999999999,
+        "hp": 387535,
+        "cards": [
+          "Benchmark 1001 Card",
+          "Benchmark 1002 Card",
+          "Benchmark 1003 Card",
+          "Benchmark 1004 Card",
+          "Benchmark 1005 Card",
+          "Benchmark 1006 Card",
+          "Benchmark 1007 Card",
+          "Benchmark 1008 Card",
+          "Benchmark 1009 Card"
+        ]
+      }
+    },
+    {
+      "cls": "High Priest",
+      "profile": 2,
+      "weapon": "",
+      "count": 3,
+      "petMean": 13815,
+      "autoDps": 567921.075,
+      "dps": 2386749.7666666666,
+      "opening": 2473062,
+      "pet": 13815,
+      "atk": 28092,
+      "matk": 18533,
+      "interval": 0.1351552795031056,
+      "stats": {
+        "str": 1,
+        "agi": 118,
+        "dex": 60,
+        "luk": 117,
+        "int": 118,
+        "vit": 1
+      },
+      "build": {
+        "stats": {
+          "str": 1,
+          "agi": 118,
+          "dex": 60,
+          "luk": 117,
+          "int": 118,
+          "vit": 1
+        },
+        "atk": 28092,
+        "matk": 18533,
+        "crit": 100,
+        "critD": 5.914999999999999,
+        "hp": 387535,
+        "cards": [
+          "Benchmark 1001 Card",
+          "Benchmark 1002 Card",
+          "Benchmark 1003 Card",
+          "Benchmark 1004 Card",
+          "Benchmark 1005 Card",
+          "Benchmark 1006 Card",
+          "Benchmark 1007 Card",
+          "Benchmark 1008 Card",
+          "Benchmark 1009 Card"
+        ]
+      }
+    },
+    {
+      "cls": "Whitesmith",
+      "profile": 0,
+      "weapon": "",
+      "count": 1,
+      "petMean": 3435,
+      "autoDps": 45375.775,
+      "dps": 131325.95833333334,
+      "opening": 145513.1,
+      "pet": 2952,
+      "atk": 6150,
+      "matk": 3060,
+      "interval": 0.14646153846153842,
+      "stats": {
+        "str": 118,
+        "agi": 118,
+        "dex": 60,
+        "luk": 1,
+        "int": 117,
+        "vit": 1
+      },
+      "build": {
+        "stats": {
+          "str": 118,
+          "agi": 118,
+          "dex": 60,
+          "luk": 1,
+          "int": 117,
+          "vit": 1
+        },
+        "atk": 6150,
+        "matk": 3060,
+        "crit": 20.25,
+        "critD": 2.7299999999999995,
+        "hp": 122386,
+        "cards": [
+          "Benchmark 1001 Card"
+        ]
+      }
+    },
+    {
+      "cls": "Whitesmith",
+      "profile": 0,
+      "weapon": "",
+      "count": 3,
+      "petMean": 3435,
+      "autoDps": 46630.691666666666,
+      "dps": 204352.74166666667,
+      "opening": 237166.7,
+      "pet": 2952,
+      "atk": 6150,
+      "matk": 3060,
+      "interval": 0.14646153846153842,
+      "stats": {
+        "str": 118,
+        "agi": 118,
+        "dex": 60,
+        "luk": 1,
+        "int": 117,
+        "vit": 1
+      },
+      "build": {
+        "stats": {
+          "str": 118,
+          "agi": 118,
+          "dex": 60,
+          "luk": 1,
+          "int": 117,
+          "vit": 1
+        },
+        "atk": 6150,
+        "matk": 3060,
+        "crit": 20.25,
+        "critD": 2.7299999999999995,
+        "hp": 122386,
+        "cards": [
+          "Benchmark 1001 Card"
+        ]
+      }
+    },
+    {
+      "cls": "Whitesmith",
+      "profile": 1,
+      "weapon": "",
+      "count": 1,
+      "petMean": 7418.8,
+      "autoDps": 147260.025,
+      "dps": 421529.125,
+      "opening": 454742.5,
+      "pet": 6376,
+      "atk": 13283,
+      "matk": 6400,
+      "interval": 0.141037037037037,
+      "stats": {
+        "str": 118,
+        "agi": 118,
+        "dex": 60,
+        "luk": 1,
+        "int": 117,
+        "vit": 1
+      },
+      "build": {
+        "stats": {
+          "str": 118,
+          "agi": 118,
+          "dex": 60,
+          "luk": 1,
+          "int": 117,
+          "vit": 1
+        },
+        "atk": 13283,
+        "matk": 6400,
+        "crit": 39.25,
+        "critD": 3.3699999999999997,
+        "hp": 269558,
+        "cards": [
+          "Benchmark 1001 Card",
+          "Benchmark 1002 Card"
+        ]
+      }
+    },
+    {
+      "cls": "Whitesmith",
+      "profile": 1,
+      "weapon": "",
+      "count": 3,
+      "petMean": 7418.8,
+      "autoDps": 146822.20833333334,
+      "dps": 671926.6916666667,
+      "opening": 601103,
+      "pet": 6376,
+      "atk": 13283,
+      "matk": 6400,
+      "interval": 0.141037037037037,
+      "stats": {
+        "str": 118,
+        "agi": 118,
+        "dex": 60,
+        "luk": 1,
+        "int": 117,
+        "vit": 1
+      },
+      "build": {
+        "stats": {
+          "str": 118,
+          "agi": 118,
+          "dex": 60,
+          "luk": 1,
+          "int": 117,
+          "vit": 1
+        },
+        "atk": 13283,
+        "matk": 6400,
+        "crit": 39.25,
+        "critD": 3.3699999999999997,
+        "hp": 269558,
+        "cards": [
+          "Benchmark 1001 Card",
+          "Benchmark 1002 Card"
+        ]
+      }
+    },
+    {
+      "cls": "Whitesmith",
+      "profile": 2,
+      "weapon": "",
+      "count": 1,
+      "petMean": 19030.2,
+      "autoDps": 1116904.4666666666,
+      "dps": 2902010.808333333,
+      "opening": 3422200.6,
+      "pet": 16368,
+      "atk": 34100,
+      "matk": 16440,
+      "interval": 0.13,
+      "stats": {
+        "str": 118,
+        "agi": 118,
+        "dex": 60,
+        "luk": 1,
+        "int": 117,
+        "vit": 1
+      },
+      "build": {
+        "stats": {
+          "str": 118,
+          "agi": 118,
+          "dex": 60,
+          "luk": 1,
+          "int": 117,
+          "vit": 1
+        },
+        "atk": 34100,
+        "matk": 16440,
+        "crit": 87.25,
+        "critD": 4.755,
+        "hp": 744067,
+        "cards": [
+          "Benchmark 1001 Card",
+          "Benchmark 1002 Card",
+          "Benchmark 1003 Card",
+          "Benchmark 1004 Card",
+          "Benchmark 1005 Card",
+          "Benchmark 1006 Card",
+          "Benchmark 1007 Card",
+          "Benchmark 1008 Card",
+          "Benchmark 1009 Card"
+        ]
+      }
+    },
+    {
+      "cls": "Whitesmith",
+      "profile": 2,
+      "weapon": "",
+      "count": 3,
+      "petMean": 19030.2,
+      "autoDps": 1104990.6666666667,
+      "dps": 4551566.6,
+      "opening": 5386577.1,
+      "pet": 16368,
+      "atk": 34100,
+      "matk": 16440,
+      "interval": 0.13,
+      "stats": {
+        "str": 118,
+        "agi": 118,
+        "dex": 60,
+        "luk": 1,
+        "int": 117,
+        "vit": 1
+      },
+      "build": {
+        "stats": {
+          "str": 118,
+          "agi": 118,
+          "dex": 60,
+          "luk": 1,
+          "int": 117,
+          "vit": 1
+        },
+        "atk": 34100,
+        "matk": 16440,
+        "crit": 87.25,
+        "critD": 4.755,
+        "hp": 744067,
+        "cards": [
+          "Benchmark 1001 Card",
+          "Benchmark 1002 Card",
+          "Benchmark 1003 Card",
+          "Benchmark 1004 Card",
+          "Benchmark 1005 Card",
+          "Benchmark 1006 Card",
+          "Benchmark 1007 Card",
+          "Benchmark 1008 Card",
+          "Benchmark 1009 Card"
+        ]
+      }
+    }
+  ],
+  "after": [
+    {
+      "cls": "Lord Knight",
+      "profile": 0,
+      "weapon": "",
+      "count": 1,
+      "petMean": 2878,
+      "autoDps": 56181.15833333333,
+      "dps": 133374.38333333333,
+      "opening": 136152.9,
+      "pet": 2878,
+      "atk": 5832,
+      "matk": 2694,
+      "interval": 0.14506666666666662,
+      "stats": {
+        "str": 118,
+        "agi": 118,
+        "dex": 60,
+        "luk": 117,
+        "int": 1,
+        "vit": 1
+      },
+      "build": {
+        "stats": {
+          "str": 118,
+          "agi": 118,
+          "dex": 60,
+          "luk": 117,
+          "int": 1,
+          "vit": 1
+        },
+        "atk": 4909,
+        "matk": 2694,
+        "crit": 49.25,
+        "critD": 3.538,
+        "hp": 88970,
+        "cards": [
+          "Dragon Lord Card"
+        ]
+      }
+    },
+    {
+      "cls": "Lord Knight",
+      "profile": 0,
+      "weapon": "",
+      "count": 3,
+      "petMean": 2878,
+      "autoDps": 54249.316666666666,
+      "dps": 147049.95833333334,
+      "opening": 153270.2,
+      "pet": 2878,
+      "atk": 5832,
+      "matk": 2694,
+      "interval": 0.14506666666666662,
+      "stats": {
+        "str": 118,
+        "agi": 118,
+        "dex": 60,
+        "luk": 117,
+        "int": 1,
+        "vit": 1
+      },
+      "build": {
+        "stats": {
+          "str": 118,
+          "agi": 118,
+          "dex": 60,
+          "luk": 117,
+          "int": 1,
+          "vit": 1
+        },
+        "atk": 4909,
+        "matk": 2694,
+        "crit": 49.25,
+        "critD": 3.538,
+        "hp": 88970,
+        "cards": [
+          "Dragon Lord Card"
+        ]
+      }
+    },
+    {
+      "cls": "Lord Knight",
+      "profile": 1,
+      "weapon": "",
+      "count": 1,
+      "petMean": 6281,
+      "autoDps": 184581.98333333334,
+      "dps": 446661.51666666666,
+      "opening": 405419.5,
+      "pet": 6281,
+      "atk": 12729,
+      "matk": 6074,
+      "interval": 0.13988571428571425,
+      "stats": {
+        "str": 118,
+        "agi": 118,
+        "dex": 60,
+        "luk": 117,
+        "int": 1,
+        "vit": 1
+      },
+      "build": {
+        "stats": {
+          "str": 118,
+          "agi": 118,
+          "dex": 60,
+          "luk": 117,
+          "int": 1,
+          "vit": 1
+        },
+        "atk": 10752,
+        "matk": 6074,
+        "crit": 65.625,
+        "critD": 4.4399999999999995,
+        "hp": 224501,
+        "cards": [
+          "Dark Lord Card",
+          "Death Knight Card"
+        ]
+      }
+    },
+    {
+      "cls": "Lord Knight",
+      "profile": 1,
+      "weapon": "",
+      "count": 3,
+      "petMean": 6281,
+      "autoDps": 181945.61666666667,
+      "dps": 488986.86666666664,
+      "opening": 468882.3,
+      "pet": 6281,
+      "atk": 12729,
+      "matk": 6074,
+      "interval": 0.13988571428571425,
+      "stats": {
+        "str": 118,
+        "agi": 118,
+        "dex": 60,
+        "luk": 117,
+        "int": 1,
+        "vit": 1
+      },
+      "build": {
+        "stats": {
+          "str": 118,
+          "agi": 118,
+          "dex": 60,
+          "luk": 117,
+          "int": 1,
+          "vit": 1
+        },
+        "atk": 10752,
+        "matk": 6074,
+        "crit": 65.625,
+        "critD": 4.4399999999999995,
+        "hp": 224501,
+        "cards": [
+          "Dark Lord Card",
+          "Death Knight Card"
+        ]
+      }
+    },
+    {
+      "cls": "Lord Knight",
+      "profile": 2,
+      "weapon": "",
+      "count": 1,
+      "petMean": 18421,
+      "autoDps": 1399163.1583333334,
+      "dps": 2834857.216666667,
+      "opening": 2749950.3,
+      "pet": 18421,
+      "atk": 37330,
+      "matk": 16435,
+      "interval": 0.13,
+      "stats": {
+        "str": 118,
+        "agi": 118,
+        "dex": 60,
+        "luk": 117,
+        "int": 1,
+        "vit": 1
+      },
+      "build": {
+        "stats": {
+          "str": 118,
+          "agi": 118,
+          "dex": 60,
+          "luk": 117,
+          "int": 1,
+          "vit": 1
+        },
+        "atk": 32312,
+        "matk": 16435,
+        "crit": 97.75,
+        "critD": 6.261,
+        "hp": 683064,
+        "cards": [
+          "Nightmare Dark Lord Card",
+          "Nightmare Death Knight Card",
+          "Nightmare Hell Worm Card",
+          "Nightmare Giant Eel Card",
+          "Nightmare Marse Card",
+          "Nightmare Thief Bug Card",
+          "Nightmare Lord of Death Card",
+          "Nightmare Soul Eater Card",
+          "Nightmare Bone Worm Card"
+        ]
+      }
+    },
+    {
+      "cls": "Lord Knight",
+      "profile": 2,
+      "weapon": "",
+      "count": 3,
+      "petMean": 18421,
+      "autoDps": 1401839.15,
+      "dps": 3049044.1333333333,
+      "opening": 3022374.4,
+      "pet": 18421,
+      "atk": 37330,
+      "matk": 16435,
+      "interval": 0.13,
+      "stats": {
+        "str": 118,
+        "agi": 118,
+        "dex": 60,
+        "luk": 117,
+        "int": 1,
+        "vit": 1
+      },
+      "build": {
+        "stats": {
+          "str": 118,
+          "agi": 118,
+          "dex": 60,
+          "luk": 117,
+          "int": 1,
+          "vit": 1
+        },
+        "atk": 32312,
+        "matk": 16435,
+        "crit": 97.75,
+        "critD": 6.261,
+        "hp": 683064,
+        "cards": [
+          "Nightmare Dark Lord Card",
+          "Nightmare Death Knight Card",
+          "Nightmare Hell Worm Card",
+          "Nightmare Giant Eel Card",
+          "Nightmare Marse Card",
+          "Nightmare Thief Bug Card",
+          "Nightmare Lord of Death Card",
+          "Nightmare Soul Eater Card",
+          "Nightmare Bone Worm Card"
+        ]
+      }
+    },
+    {
+      "cls": "High Wizard",
+      "profile": 0,
+      "weapon": "",
+      "count": 1,
+      "petMean": 2025,
+      "autoDps": 24710.583333333332,
+      "dps": 260279.55,
+      "opening": 289038.1,
+      "pet": 2025,
+      "atk": 4500,
+      "matk": 6852,
+      "interval": 0.2331428571428571,
+      "stats": {
+        "str": 1,
+        "agi": 118,
+        "dex": 60,
+        "luk": 117,
+        "int": 118,
+        "vit": 1
+      },
+      "build": {
+        "stats": {
+          "str": 1,
+          "agi": 118,
+          "dex": 60,
+          "luk": 117,
+          "int": 118,
+          "vit": 1
+        },
+        "atk": 4500,
+        "matk": 6852,
+        "crit": 49.25,
+        "critD": 3.538,
+        "hp": 49288,
+        "cards": [
+          "Shiranui Card"
+        ]
+      }
+    },
+    {
+      "cls": "High Wizard",
+      "profile": 0,
+      "weapon": "",
+      "count": 3,
+      "petMean": 2025,
+      "autoDps": 25803.583333333332,
+      "dps": 345180.05,
+      "opening": 316205.4,
+      "pet": 2025,
+      "atk": 4500,
+      "matk": 6852,
+      "interval": 0.2331428571428571,
+      "stats": {
+        "str": 1,
+        "agi": 118,
+        "dex": 60,
+        "luk": 117,
+        "int": 118,
+        "vit": 1
+      },
+      "build": {
+        "stats": {
+          "str": 1,
+          "agi": 118,
+          "dex": 60,
+          "luk": 117,
+          "int": 118,
+          "vit": 1
+        },
+        "atk": 4500,
+        "matk": 6852,
+        "crit": 49.25,
+        "critD": 3.538,
+        "hp": 49288,
+        "cards": [
+          "Shiranui Card"
+        ]
+      }
+    },
+    {
+      "cls": "High Wizard",
+      "profile": 1,
+      "weapon": "",
+      "count": 1,
+      "petMean": 4340,
+      "autoDps": 81421.83333333333,
+      "dps": 995032.3666666667,
+      "opening": 823469.9,
+      "pet": 4340,
+      "atk": 9643,
+      "matk": 14460,
+      "interval": 0.2225454545454545,
+      "stats": {
+        "str": 1,
+        "agi": 118,
+        "dex": 60,
+        "luk": 117,
+        "int": 118,
+        "vit": 1
+      },
+      "build": {
+        "stats": {
+          "str": 1,
+          "agi": 118,
+          "dex": 60,
+          "luk": 117,
+          "int": 118,
+          "vit": 1
+        },
+        "atk": 9643,
+        "matk": 14460,
+        "crit": 65.625,
+        "critD": 4.4399999999999995,
+        "hp": 124443,
+        "cards": [
+          "Dark Lord Card",
+          "Banshee Card"
+        ]
+      }
+    },
+    {
+      "cls": "High Wizard",
+      "profile": 1,
+      "weapon": "",
+      "count": 3,
+      "petMean": 4340,
+      "autoDps": 81590.99166666667,
+      "dps": 1257858.6916666667,
+      "opening": 1263276.7,
+      "pet": 4340,
+      "atk": 9643,
+      "matk": 14460,
+      "interval": 0.2225454545454545,
+      "stats": {
+        "str": 1,
+        "agi": 118,
+        "dex": 60,
+        "luk": 117,
+        "int": 118,
+        "vit": 1
+      },
+      "build": {
+        "stats": {
+          "str": 1,
+          "agi": 118,
+          "dex": 60,
+          "luk": 117,
+          "int": 118,
+          "vit": 1
+        },
+        "atk": 9643,
+        "matk": 14460,
+        "crit": 65.625,
+        "critD": 4.4399999999999995,
+        "hp": 124443,
+        "cards": [
+          "Dark Lord Card",
+          "Banshee Card"
+        ]
+      }
+    },
+    {
+      "cls": "High Wizard",
+      "profile": 2,
+      "weapon": "",
+      "count": 1,
+      "petMean": 11175,
+      "autoDps": 467169.9666666667,
+      "dps": 6696783.116666666,
+      "opening": 6692453.4,
+      "pet": 11175,
+      "atk": 24831,
+      "matk": 38891,
+      "interval": 0.18545454545454543,
+      "stats": {
+        "str": 1,
+        "agi": 118,
+        "dex": 60,
+        "luk": 117,
+        "int": 118,
+        "vit": 1
+      },
+      "build": {
+        "stats": {
+          "str": 1,
+          "agi": 118,
+          "dex": 60,
+          "luk": 117,
+          "int": 118,
+          "vit": 1
+        },
+        "atk": 24831,
+        "matk": 38891,
+        "crit": 97.75,
+        "critD": 6.261,
+        "hp": 344502,
+        "cards": [
+          "Nightmare Dark Lord Card",
+          "Nightmare Banshee Card",
+          "Nightmare Chaos Imp Card",
+          "Nightmare Giant Eel Card",
+          "Nightmare Marse Card",
+          "Nightmare Thief Bug Card",
+          "Nightmare Lord of Death Card",
+          "Nightmare Soul Eater Card"
+        ]
+      }
+    },
+    {
+      "cls": "High Wizard",
+      "profile": 2,
+      "weapon": "",
+      "count": 3,
+      "petMean": 11175,
+      "autoDps": 459994.1666666667,
+      "dps": 8669131.683333334,
+      "opening": 8685088.2,
+      "pet": 11175,
+      "atk": 24831,
+      "matk": 38891,
+      "interval": 0.18545454545454543,
+      "stats": {
+        "str": 1,
+        "agi": 118,
+        "dex": 60,
+        "luk": 117,
+        "int": 118,
+        "vit": 1
+      },
+      "build": {
+        "stats": {
+          "str": 1,
+          "agi": 118,
+          "dex": 60,
+          "luk": 117,
+          "int": 118,
+          "vit": 1
+        },
+        "atk": 24831,
+        "matk": 38891,
+        "crit": 97.75,
+        "critD": 6.261,
+        "hp": 344502,
+        "cards": [
+          "Nightmare Dark Lord Card",
+          "Nightmare Banshee Card",
+          "Nightmare Chaos Imp Card",
+          "Nightmare Giant Eel Card",
+          "Nightmare Marse Card",
+          "Nightmare Thief Bug Card",
+          "Nightmare Lord of Death Card",
+          "Nightmare Soul Eater Card"
+        ]
+      }
+    },
+    {
+      "cls": "Sniper",
+      "profile": 0,
+      "weapon": "",
+      "count": 1,
+      "petMean": 2644,
+      "autoDps": 103293.325,
+      "dps": 240243.94166666668,
+      "opening": 252407.1,
+      "pet": 2644,
+      "atk": 5509,
+      "matk": 2601,
+      "interval": 0.13008695652173913,
+      "stats": {
+        "str": 1,
+        "agi": 120,
+        "dex": 120,
+        "luk": 120,
+        "int": 1,
+        "vit": 1
+      },
+      "build": {
+        "stats": {
+          "str": 1,
+          "agi": 120,
+          "dex": 120,
+          "luk": 120,
+          "int": 1,
+          "vit": 1
+        },
+        "atk": 5509,
+        "matk": 2601,
+        "crit": 69,
+        "critD": 4.042,
+        "hp": 48737,
+        "cards": [
+          "Dragon Lord Card",
+          "Merman Card"
+        ]
+      }
+    },
+    {
+      "cls": "Sniper",
+      "profile": 0,
+      "weapon": "",
+      "count": 3,
+      "petMean": 2644,
+      "autoDps": 102963.29166666667,
+      "dps": 273254.9666666667,
+      "opening": 286152.2,
+      "pet": 2644,
+      "atk": 5509,
+      "matk": 2601,
+      "interval": 0.13008695652173913,
+      "stats": {
+        "str": 1,
+        "agi": 120,
+        "dex": 120,
+        "luk": 120,
+        "int": 1,
+        "vit": 1
+      },
+      "build": {
+        "stats": {
+          "str": 1,
+          "agi": 120,
+          "dex": 120,
+          "luk": 120,
+          "int": 1,
+          "vit": 1
+        },
+        "atk": 5509,
+        "matk": 2601,
+        "crit": 69,
+        "critD": 4.042,
+        "hp": 48737,
+        "cards": [
+          "Dragon Lord Card",
+          "Merman Card"
+        ]
+      }
+    },
+    {
+      "cls": "Sniper",
+      "profile": 1,
+      "weapon": "",
+      "count": 1,
+      "petMean": 5960,
+      "autoDps": 322618.39166666666,
+      "dps": 736653.325,
+      "opening": 740789.1,
+      "pet": 5960,
+      "atk": 12416,
+      "matk": 5826,
+      "interval": 0.13,
+      "stats": {
+        "str": 1,
+        "agi": 120,
+        "dex": 120,
+        "luk": 120,
+        "int": 1,
+        "vit": 1
+      },
+      "build": {
+        "stats": {
+          "str": 1,
+          "agi": 120,
+          "dex": 120,
+          "luk": 120,
+          "int": 1,
+          "vit": 1
+        },
+        "atk": 12416,
+        "matk": 5826,
+        "crit": 78,
+        "critD": 5.124,
+        "hp": 122724,
+        "cards": [
+          "Dark Lord Card",
+          "Death Knight Card",
+          "Hell Worm Card"
+        ]
+      }
+    },
+    {
+      "cls": "Sniper",
+      "profile": 1,
+      "weapon": "",
+      "count": 3,
+      "petMean": 5960,
+      "autoDps": 317132.50833333336,
+      "dps": 831159.3416666667,
+      "opening": 871205.3,
+      "pet": 5960,
+      "atk": 12416,
+      "matk": 5826,
+      "interval": 0.13,
+      "stats": {
+        "str": 1,
+        "agi": 120,
+        "dex": 120,
+        "luk": 120,
+        "int": 1,
+        "vit": 1
+      },
+      "build": {
+        "stats": {
+          "str": 1,
+          "agi": 120,
+          "dex": 120,
+          "luk": 120,
+          "int": 1,
+          "vit": 1
+        },
+        "atk": 12416,
+        "matk": 5826,
+        "crit": 78,
+        "critD": 5.124,
+        "hp": 122724,
+        "cards": [
+          "Dark Lord Card",
+          "Death Knight Card",
+          "Hell Worm Card"
+        ]
+      }
+    },
+    {
+      "cls": "Sniper",
+      "profile": 2,
+      "weapon": "",
+      "count": 1,
+      "petMean": 17153,
+      "autoDps": 1557957.675,
+      "dps": 3330180.35,
+      "opening": 3526544.8,
+      "pet": 17153,
+      "atk": 35735,
+      "matk": 15681,
+      "interval": 0.13,
+      "stats": {
+        "str": 1,
+        "agi": 120,
+        "dex": 120,
+        "luk": 120,
+        "int": 1,
+        "vit": 1
+      },
+      "build": {
+        "stats": {
+          "str": 1,
+          "agi": 120,
+          "dex": 120,
+          "luk": 120,
+          "int": 1,
+          "vit": 1
+        },
+        "atk": 35735,
+        "matk": 15681,
+        "crit": 100,
+        "critD": 7.1850000000000005,
+        "hp": 339381,
+        "cards": [
+          "Nightmare Dark Lord Card",
+          "Nightmare Death Knight Card",
+          "Nightmare Hell Worm Card",
+          "Nightmare Merman Card",
+          "Nightmare Giant Eel Card",
+          "Nightmare Marse Card",
+          "Nightmare Thief Bug Card",
+          "Nightmare Lord of Death Card",
+          "Nightmare Soul Eater Card"
+        ]
+      }
+    },
+    {
+      "cls": "Sniper",
+      "profile": 2,
+      "weapon": "",
+      "count": 3,
+      "petMean": 17153,
+      "autoDps": 1559818.0083333333,
+      "dps": 3774105.8916666666,
+      "opening": 4003566.5,
+      "pet": 17153,
+      "atk": 35735,
+      "matk": 15681,
+      "interval": 0.13,
+      "stats": {
+        "str": 1,
+        "agi": 120,
+        "dex": 120,
+        "luk": 120,
+        "int": 1,
+        "vit": 1
+      },
+      "build": {
+        "stats": {
+          "str": 1,
+          "agi": 120,
+          "dex": 120,
+          "luk": 120,
+          "int": 1,
+          "vit": 1
+        },
+        "atk": 35735,
+        "matk": 15681,
+        "crit": 100,
+        "critD": 7.1850000000000005,
+        "hp": 339381,
+        "cards": [
+          "Nightmare Dark Lord Card",
+          "Nightmare Death Knight Card",
+          "Nightmare Hell Worm Card",
+          "Nightmare Merman Card",
+          "Nightmare Giant Eel Card",
+          "Nightmare Marse Card",
+          "Nightmare Thief Bug Card",
+          "Nightmare Lord of Death Card",
+          "Nightmare Soul Eater Card"
+        ]
+      }
+    },
+    {
+      "cls": "Assassin Cross",
+      "profile": 0,
+      "weapon": "katar",
+      "count": 1,
+      "petMean": 4413.666666666667,
+      "autoDps": 198079.33333333334,
+      "dps": 443568.13333333336,
+      "opening": 556322,
+      "pet": 3842,
+      "atk": 8004,
+      "matk": 3606,
+      "interval": 0.13,
+      "stats": {
+        "str": 118,
+        "agi": 118,
+        "dex": 60,
+        "luk": 117,
+        "int": 1,
+        "vit": 1
+      },
+      "build": {
+        "stats": {
+          "str": 118,
+          "agi": 118,
+          "dex": 60,
+          "luk": 117,
+          "int": 1,
+          "vit": 1
+        },
+        "atk": 8004,
+        "matk": 3606,
+        "crit": 49.25,
+        "critD": 3.538,
+        "hp": 53378,
+        "cards": [
+          "Dragon Lord Card",
+          "Merman Card"
+        ]
+      }
+    },
+    {
+      "cls": "Assassin Cross",
+      "profile": 0,
+      "weapon": "katar",
+      "count": 3,
+      "petMean": 4413.666666666667,
+      "autoDps": 204313.38333333333,
+      "dps": 561776.075,
+      "opening": 658934.9,
+      "pet": 3842,
+      "atk": 8004,
+      "matk": 3606,
+      "interval": 0.13,
+      "stats": {
+        "str": 118,
+        "agi": 118,
+        "dex": 60,
+        "luk": 117,
+        "int": 1,
+        "vit": 1
+      },
+      "build": {
+        "stats": {
+          "str": 118,
+          "agi": 118,
+          "dex": 60,
+          "luk": 117,
+          "int": 1,
+          "vit": 1
+        },
+        "atk": 8004,
+        "matk": 3606,
+        "crit": 49.25,
+        "critD": 3.538,
+        "hp": 53378,
+        "cards": [
+          "Dragon Lord Card",
+          "Merman Card"
+        ]
+      }
+    },
+    {
+      "cls": "Assassin Cross",
+      "profile": 1,
+      "weapon": "katar",
+      "count": 1,
+      "petMean": 10469.666666666666,
+      "autoDps": 692079.6,
+      "dps": 1536779.8583333334,
+      "opening": 1824172.3,
+      "pet": 9174,
+      "atk": 19112,
+      "matk": 8525,
+      "interval": 0.13,
+      "stats": {
+        "str": 118,
+        "agi": 118,
+        "dex": 60,
+        "luk": 117,
+        "int": 1,
+        "vit": 1
+      },
+      "build": {
+        "stats": {
+          "str": 118,
+          "agi": 118,
+          "dex": 60,
+          "luk": 117,
+          "int": 1,
+          "vit": 1
+        },
+        "atk": 19112,
+        "matk": 8525,
+        "crit": 65.625,
+        "critD": 4.4399999999999995,
+        "hp": 134412,
+        "cards": [
+          "Dark Lord Card",
+          "Death Knight Card",
+          "Hell Worm Card"
+        ]
+      }
+    },
+    {
+      "cls": "Assassin Cross",
+      "profile": 1,
+      "weapon": "katar",
+      "count": 3,
+      "petMean": 10469.666666666666,
+      "autoDps": 687941.9916666667,
+      "dps": 1961087.5166666666,
+      "opening": 2128694.9,
+      "pet": 9174,
+      "atk": 19112,
+      "matk": 8525,
+      "interval": 0.13,
+      "stats": {
+        "str": 118,
+        "agi": 118,
+        "dex": 60,
+        "luk": 117,
+        "int": 1,
+        "vit": 1
+      },
+      "build": {
+        "stats": {
+          "str": 118,
+          "agi": 118,
+          "dex": 60,
+          "luk": 117,
+          "int": 1,
+          "vit": 1
+        },
+        "atk": 19112,
+        "matk": 8525,
+        "crit": 65.625,
+        "critD": 4.4399999999999995,
+        "hp": 134412,
+        "cards": [
+          "Dark Lord Card",
+          "Death Knight Card",
+          "Hell Worm Card"
+        ]
+      }
+    },
+    {
+      "cls": "Assassin Cross",
+      "profile": 2,
+      "weapon": "katar",
+      "count": 1,
+      "petMean": 30491,
+      "autoDps": 3991222.7083333335,
+      "dps": 8728945.391666668,
+      "opening": 10842250.2,
+      "pet": 27088,
+      "atk": 56433,
+      "matk": 23576,
+      "interval": 0.13,
+      "stats": {
+        "str": 118,
+        "agi": 118,
+        "dex": 60,
+        "luk": 117,
+        "int": 1,
+        "vit": 1
+      },
+      "build": {
+        "stats": {
+          "str": 118,
+          "agi": 118,
+          "dex": 60,
+          "luk": 117,
+          "int": 1,
+          "vit": 1
+        },
+        "atk": 56433,
+        "matk": 23576,
+        "crit": 97.75,
+        "critD": 6.261,
+        "hp": 371703,
+        "cards": [
+          "Nightmare Dark Lord Card",
+          "Nightmare Death Knight Card",
+          "Nightmare Hell Worm Card",
+          "Nightmare Merman Card",
+          "Nightmare Giant Eel Card",
+          "Nightmare Marse Card",
+          "Nightmare Thief Bug Card",
+          "Nightmare Lord of Death Card",
+          "Nightmare Soul Eater Card"
+        ]
+      }
+    },
+    {
+      "cls": "Assassin Cross",
+      "profile": 2,
+      "weapon": "katar",
+      "count": 3,
+      "petMean": 30491,
+      "autoDps": 3971666.7,
+      "dps": 10872172.275,
+      "opening": 13670329.3,
+      "pet": 27088,
+      "atk": 56433,
+      "matk": 23576,
+      "interval": 0.13,
+      "stats": {
+        "str": 118,
+        "agi": 118,
+        "dex": 60,
+        "luk": 117,
+        "int": 1,
+        "vit": 1
+      },
+      "build": {
+        "stats": {
+          "str": 118,
+          "agi": 118,
+          "dex": 60,
+          "luk": 117,
+          "int": 1,
+          "vit": 1
+        },
+        "atk": 56433,
+        "matk": 23576,
+        "crit": 97.75,
+        "critD": 6.261,
+        "hp": 371703,
+        "cards": [
+          "Nightmare Dark Lord Card",
+          "Nightmare Death Knight Card",
+          "Nightmare Hell Worm Card",
+          "Nightmare Merman Card",
+          "Nightmare Giant Eel Card",
+          "Nightmare Marse Card",
+          "Nightmare Thief Bug Card",
+          "Nightmare Lord of Death Card",
+          "Nightmare Soul Eater Card"
+        ]
+      }
+    },
+    {
+      "cls": "Assassin Cross",
+      "profile": 0,
+      "weapon": "dagger",
+      "count": 1,
+      "petMean": 4192.666666666667,
+      "autoDps": 192128.41666666666,
+      "dps": 431730.7833333333,
+      "opening": 558031.7,
+      "pet": 3620,
+      "atk": 7541,
+      "matk": 2625,
+      "interval": 0.13,
+      "stats": {
+        "str": 118,
+        "agi": 118,
+        "dex": 60,
+        "luk": 117,
+        "int": 1,
+        "vit": 1
+      },
+      "build": {
+        "stats": {
+          "str": 118,
+          "agi": 118,
+          "dex": 60,
+          "luk": 117,
+          "int": 1,
+          "vit": 1
+        },
+        "atk": 7541,
+        "matk": 2625,
+        "crit": 50.75,
+        "critD": 3.573,
+        "hp": 56681,
+        "cards": [
+          "Dragon Lord Card"
+        ]
+      }
+    },
+    {
+      "cls": "Assassin Cross",
+      "profile": 0,
+      "weapon": "dagger",
+      "count": 3,
+      "petMean": 4192.666666666667,
+      "autoDps": 191511.51666666666,
+      "dps": 542869.725,
+      "opening": 740679.7,
+      "pet": 3620,
+      "atk": 7541,
+      "matk": 2625,
+      "interval": 0.13,
+      "stats": {
+        "str": 118,
+        "agi": 118,
+        "dex": 60,
+        "luk": 117,
+        "int": 1,
+        "vit": 1
+      },
+      "build": {
+        "stats": {
+          "str": 118,
+          "agi": 118,
+          "dex": 60,
+          "luk": 117,
+          "int": 1,
+          "vit": 1
+        },
+        "atk": 7541,
+        "matk": 2625,
+        "crit": 50.75,
+        "critD": 3.573,
+        "hp": 56681,
+        "cards": [
+          "Dragon Lord Card"
+        ]
+      }
+    },
+    {
+      "cls": "Assassin Cross",
+      "profile": 1,
+      "weapon": "dagger",
+      "count": 1,
+      "petMean": 9653.333333333334,
+      "autoDps": 661958.7333333333,
+      "dps": 1456842.9916666667,
+      "opening": 1771514.7,
+      "pet": 8356,
+      "atk": 17408,
+      "matk": 5918,
+      "interval": 0.13,
+      "stats": {
+        "str": 118,
+        "agi": 118,
+        "dex": 60,
+        "luk": 117,
+        "int": 1,
+        "vit": 1
+      },
+      "build": {
+        "stats": {
+          "str": 118,
+          "agi": 118,
+          "dex": 60,
+          "luk": 117,
+          "int": 1,
+          "vit": 1
+        },
+        "atk": 17408,
+        "matk": 5918,
+        "crit": 67.375,
+        "critD": 4.51,
+        "hp": 143109,
+        "cards": [
+          "Dark Lord Card",
+          "Death Knight Card"
+        ]
+      }
+    },
+    {
+      "cls": "Assassin Cross",
+      "profile": 1,
+      "weapon": "dagger",
+      "count": 3,
+      "petMean": 9653.333333333334,
+      "autoDps": 642940.0666666667,
+      "dps": 1836056.525,
+      "opening": 2321508.8,
+      "pet": 8356,
+      "atk": 17408,
+      "matk": 5918,
+      "interval": 0.13,
+      "stats": {
+        "str": 118,
+        "agi": 118,
+        "dex": 60,
+        "luk": 117,
+        "int": 1,
+        "vit": 1
+      },
+      "build": {
+        "stats": {
+          "str": 118,
+          "agi": 118,
+          "dex": 60,
+          "luk": 117,
+          "int": 1,
+          "vit": 1
+        },
+        "atk": 17408,
+        "matk": 5918,
+        "crit": 67.375,
+        "critD": 4.51,
+        "hp": 143109,
+        "cards": [
+          "Dark Lord Card",
+          "Death Knight Card"
+        ]
+      }
+    },
+    {
+      "cls": "Assassin Cross",
+      "profile": 2,
+      "weapon": "dagger",
+      "count": 1,
+      "petMean": 28724.333333333332,
+      "autoDps": 3896986.283333333,
+      "dps": 8517653.083333334,
+      "opening": 10576181.7,
+      "pet": 25321,
+      "atk": 52752,
+      "matk": 16013,
+      "interval": 0.13,
+      "stats": {
+        "str": 118,
+        "agi": 118,
+        "dex": 60,
+        "luk": 117,
+        "int": 1,
+        "vit": 1
+      },
+      "build": {
+        "stats": {
+          "str": 118,
+          "agi": 118,
+          "dex": 60,
+          "luk": 117,
+          "int": 1,
+          "vit": 1
+        },
+        "atk": 52752,
+        "matk": 16013,
+        "crit": 100,
+        "critD": 6.371,
+        "hp": 396177,
+        "cards": [
+          "Nightmare Dark Lord Card",
+          "Nightmare Death Knight Card",
+          "Nightmare Hell Worm Card",
+          "Nightmare Giant Eel Card",
+          "Nightmare Marse Card",
+          "Nightmare Thief Bug Card",
+          "Nightmare Lord of Death Card",
+          "Nightmare Soul Eater Card"
+        ]
+      }
+    },
+    {
+      "cls": "Assassin Cross",
+      "profile": 2,
+      "weapon": "dagger",
+      "count": 3,
+      "petMean": 28724.333333333332,
+      "autoDps": 3861186.058333333,
+      "dps": 10567047.475,
+      "opening": 13419185.7,
+      "pet": 25321,
+      "atk": 52752,
+      "matk": 16013,
+      "interval": 0.13,
+      "stats": {
+        "str": 118,
+        "agi": 118,
+        "dex": 60,
+        "luk": 117,
+        "int": 1,
+        "vit": 1
+      },
+      "build": {
+        "stats": {
+          "str": 118,
+          "agi": 118,
+          "dex": 60,
+          "luk": 117,
+          "int": 1,
+          "vit": 1
+        },
+        "atk": 52752,
+        "matk": 16013,
+        "crit": 100,
+        "critD": 6.371,
+        "hp": 396177,
+        "cards": [
+          "Nightmare Dark Lord Card",
+          "Nightmare Death Knight Card",
+          "Nightmare Hell Worm Card",
+          "Nightmare Giant Eel Card",
+          "Nightmare Marse Card",
+          "Nightmare Thief Bug Card",
+          "Nightmare Lord of Death Card",
+          "Nightmare Soul Eater Card"
+        ]
+      }
+    },
+    {
+      "cls": "High Priest",
+      "profile": 0,
+      "weapon": "",
+      "count": 1,
+      "petMean": 2508,
+      "autoDps": 31906.583333333332,
+      "dps": 106658.86666666667,
+      "opening": 124354,
+      "pet": 2508,
+      "atk": 5099,
+      "matk": 3694,
+      "interval": 0.18133333333333332,
+      "stats": {
+        "str": 1,
+        "agi": 118,
+        "dex": 60,
+        "luk": 117,
+        "int": 118,
+        "vit": 1
+      },
+      "build": {
+        "stats": {
+          "str": 1,
+          "agi": 118,
+          "dex": 60,
+          "luk": 117,
+          "int": 118,
+          "vit": 1
+        },
+        "atk": 5099,
+        "matk": 3694,
+        "crit": 49.25,
+        "critD": 3.538,
+        "hp": 61785,
+        "cards": [
+          "Shiranui Card"
+        ]
+      }
+    },
+    {
+      "cls": "High Priest",
+      "profile": 0,
+      "weapon": "",
+      "count": 3,
+      "petMean": 2508,
+      "autoDps": 29532.825,
+      "dps": 120810.7,
+      "opening": 131886.7,
+      "pet": 2508,
+      "atk": 5099,
+      "matk": 3694,
+      "interval": 0.18133333333333332,
+      "stats": {
+        "str": 1,
+        "agi": 118,
+        "dex": 60,
+        "luk": 117,
+        "int": 118,
+        "vit": 1
+      },
+      "build": {
+        "stats": {
+          "str": 1,
+          "agi": 118,
+          "dex": 60,
+          "luk": 117,
+          "int": 118,
+          "vit": 1
+        },
+        "atk": 5099,
+        "matk": 3694,
+        "crit": 49.25,
+        "critD": 3.538,
+        "hp": 61785,
+        "cards": [
+          "Shiranui Card"
+        ]
+      }
+    },
+    {
+      "cls": "High Priest",
+      "profile": 1,
+      "weapon": "",
+      "count": 1,
+      "petMean": 5375,
+      "autoDps": 102058.7,
+      "dps": 381525.6666666667,
+      "opening": 334264.9,
+      "pet": 5375,
+      "atk": 10929,
+      "matk": 7822,
+      "interval": 0.17407999999999998,
+      "stats": {
+        "str": 1,
+        "agi": 118,
+        "dex": 60,
+        "luk": 117,
+        "int": 118,
+        "vit": 1
+      },
+      "build": {
+        "stats": {
+          "str": 1,
+          "agi": 118,
+          "dex": 60,
+          "luk": 117,
+          "int": 118,
+          "vit": 1
+        },
+        "atk": 10929,
+        "matk": 7822,
+        "crit": 65.625,
+        "critD": 4.4399999999999995,
+        "hp": 155904,
+        "cards": [
+          "Dark Lord Card",
+          "Banshee Card"
+        ]
+      }
+    },
+    {
+      "cls": "High Priest",
+      "profile": 1,
+      "weapon": "",
+      "count": 3,
+      "petMean": 5375,
+      "autoDps": 100797.16666666667,
+      "dps": 440238.9083333333,
+      "opening": 447796.6,
+      "pet": 5375,
+      "atk": 10929,
+      "matk": 7822,
+      "interval": 0.17407999999999998,
+      "stats": {
+        "str": 1,
+        "agi": 118,
+        "dex": 60,
+        "luk": 117,
+        "int": 118,
+        "vit": 1
+      },
+      "build": {
+        "stats": {
+          "str": 1,
+          "agi": 118,
+          "dex": 60,
+          "luk": 117,
+          "int": 118,
+          "vit": 1
+        },
+        "atk": 10929,
+        "matk": 7822,
+        "crit": 65.625,
+        "critD": 4.4399999999999995,
+        "hp": 155904,
+        "cards": [
+          "Dark Lord Card",
+          "Banshee Card"
+        ]
+      }
+    },
+    {
+      "cls": "High Priest",
+      "profile": 2,
+      "weapon": "",
+      "count": 1,
+      "petMean": 13788,
+      "autoDps": 687762.5583333333,
+      "dps": 2458787.275,
+      "opening": 2486351.6,
+      "pet": 13788,
+      "atk": 28037,
+      "matk": 21473,
+      "interval": 0.14802721088435375,
+      "stats": {
+        "str": 1,
+        "agi": 118,
+        "dex": 60,
+        "luk": 117,
+        "int": 118,
+        "vit": 1
+      },
+      "build": {
+        "stats": {
+          "str": 1,
+          "agi": 118,
+          "dex": 60,
+          "luk": 117,
+          "int": 118,
+          "vit": 1
+        },
+        "atk": 28037,
+        "matk": 21473,
+        "crit": 97.75,
+        "critD": 6.261,
+        "hp": 474350,
+        "cards": [
+          "Nightmare Dark Lord Card",
+          "Nightmare Banshee Card",
+          "Nightmare Chaos Imp Card",
+          "Nightmare Giant Eel Card",
+          "Nightmare Marse Card",
+          "Nightmare Thief Bug Card",
+          "Nightmare Lord of Death Card",
+          "Nightmare Soul Eater Card",
+          "Nightmare Bone Worm Card"
+        ]
+      }
+    },
+    {
+      "cls": "High Priest",
+      "profile": 2,
+      "weapon": "",
+      "count": 3,
+      "petMean": 13788,
+      "autoDps": 692998.2166666667,
+      "dps": 2826738.475,
+      "opening": 2881831.1,
+      "pet": 13788,
+      "atk": 28037,
+      "matk": 21473,
+      "interval": 0.14802721088435375,
+      "stats": {
+        "str": 1,
+        "agi": 118,
+        "dex": 60,
+        "luk": 117,
+        "int": 118,
+        "vit": 1
+      },
+      "build": {
+        "stats": {
+          "str": 1,
+          "agi": 118,
+          "dex": 60,
+          "luk": 117,
+          "int": 118,
+          "vit": 1
+        },
+        "atk": 28037,
+        "matk": 21473,
+        "crit": 97.75,
+        "critD": 6.261,
+        "hp": 474350,
+        "cards": [
+          "Nightmare Dark Lord Card",
+          "Nightmare Banshee Card",
+          "Nightmare Chaos Imp Card",
+          "Nightmare Giant Eel Card",
+          "Nightmare Marse Card",
+          "Nightmare Thief Bug Card",
+          "Nightmare Lord of Death Card",
+          "Nightmare Soul Eater Card",
+          "Nightmare Bone Worm Card"
+        ]
+      }
+    },
+    {
+      "cls": "Whitesmith",
+      "profile": 0,
+      "weapon": "",
+      "count": 1,
+      "petMean": 3725.8,
+      "autoDps": 82159.81666666667,
+      "dps": 146353.23333333334,
+      "opening": 165825.1,
+      "pet": 3235,
+      "atk": 6739,
+      "matk": 2763,
+      "interval": 0.14646153846153842,
+      "stats": {
+        "str": 118,
+        "agi": 118,
+        "dex": 60,
+        "luk": 117,
+        "int": 1,
+        "vit": 1
+      },
+      "build": {
+        "stats": {
+          "str": 118,
+          "agi": 118,
+          "dex": 60,
+          "luk": 117,
+          "int": 1,
+          "vit": 1
+        },
+        "atk": 6739,
+        "matk": 2763,
+        "crit": 49.25,
+        "critD": 3.538,
+        "hp": 118627,
+        "cards": [
+          "Dragon Lord Card"
+        ]
+      }
+    },
+    {
+      "cls": "Whitesmith",
+      "profile": 0,
+      "weapon": "",
+      "count": 3,
+      "petMean": 3725.8,
+      "autoDps": 81291.775,
+      "dps": 215840.90833333333,
+      "opening": 255816.7,
+      "pet": 3235,
+      "atk": 6739,
+      "matk": 2763,
+      "interval": 0.14646153846153842,
+      "stats": {
+        "str": 118,
+        "agi": 118,
+        "dex": 60,
+        "luk": 117,
+        "int": 1,
+        "vit": 1
+      },
+      "build": {
+        "stats": {
+          "str": 118,
+          "agi": 118,
+          "dex": 60,
+          "luk": 117,
+          "int": 1,
+          "vit": 1
+        },
+        "atk": 6739,
+        "matk": 2763,
+        "crit": 49.25,
+        "critD": 3.538,
+        "hp": 118627,
+        "cards": [
+          "Dragon Lord Card"
+        ]
+      }
+    },
+    {
+      "cls": "Whitesmith",
+      "profile": 1,
+      "weapon": "",
+      "count": 1,
+      "petMean": 8095.6,
+      "autoDps": 273077.25833333336,
+      "dps": 486322.0333333333,
+      "opening": 487874,
+      "pet": 7045,
+      "atk": 14677,
+      "matk": 6230,
+      "interval": 0.141037037037037,
+      "stats": {
+        "str": 118,
+        "agi": 118,
+        "dex": 60,
+        "luk": 117,
+        "int": 1,
+        "vit": 1
+      },
+      "build": {
+        "stats": {
+          "str": 118,
+          "agi": 118,
+          "dex": 60,
+          "luk": 117,
+          "int": 1,
+          "vit": 1
+        },
+        "atk": 14677,
+        "matk": 6230,
+        "crit": 65.625,
+        "critD": 4.4399999999999995,
+        "hp": 299335,
+        "cards": [
+          "Dark Lord Card",
+          "Death Knight Card"
+        ]
+      }
+    },
+    {
+      "cls": "Whitesmith",
+      "profile": 1,
+      "weapon": "",
+      "count": 3,
+      "petMean": 8095.6,
+      "autoDps": 266466.175,
+      "dps": 701162.7666666667,
+      "opening": 716549.7,
+      "pet": 7045,
+      "atk": 14677,
+      "matk": 6230,
+      "interval": 0.141037037037037,
+      "stats": {
+        "str": 118,
+        "agi": 118,
+        "dex": 60,
+        "luk": 117,
+        "int": 1,
+        "vit": 1
+      },
+      "build": {
+        "stats": {
+          "str": 118,
+          "agi": 118,
+          "dex": 60,
+          "luk": 117,
+          "int": 1,
+          "vit": 1
+        },
+        "atk": 14677,
+        "matk": 6230,
+        "crit": 65.625,
+        "critD": 4.4399999999999995,
+        "hp": 299335,
+        "cards": [
+          "Dark Lord Card",
+          "Death Knight Card"
+        ]
+      }
+    },
+    {
+      "cls": "Whitesmith",
+      "profile": 2,
+      "weapon": "",
+      "count": 1,
+      "petMean": 23021.6,
+      "autoDps": 1926398.5083333333,
+      "dps": 2993012.3833333333,
+      "opening": 3306470.3,
+      "pet": 20354,
+      "atk": 42404,
+      "matk": 16856,
+      "interval": 0.13,
+      "stats": {
+        "str": 118,
+        "agi": 118,
+        "dex": 60,
+        "luk": 117,
+        "int": 1,
+        "vit": 1
+      },
+      "build": {
+        "stats": {
+          "str": 118,
+          "agi": 118,
+          "dex": 60,
+          "luk": 117,
+          "int": 1,
+          "vit": 1
+        },
+        "atk": 42404,
+        "matk": 16856,
+        "crit": 97.75,
+        "critD": 6.261,
+        "hp": 883154,
+        "cards": [
+          "Nightmare Dark Lord Card",
+          "Nightmare Death Knight Card",
+          "Nightmare Hell Worm Card",
+          "Nightmare Giant Eel Card",
+          "Nightmare Marse Card",
+          "Nightmare Thief Bug Card",
+          "Nightmare Lord of Death Card",
+          "Nightmare Soul Eater Card",
+          "Nightmare Bone Worm Card"
+        ]
+      }
+    },
+    {
+      "cls": "Whitesmith",
+      "profile": 2,
+      "weapon": "",
+      "count": 3,
+      "petMean": 23021.6,
+      "autoDps": 1922258.7083333333,
+      "dps": 4142329.566666667,
+      "opening": 4409053.6,
+      "pet": 20354,
+      "atk": 42404,
+      "matk": 16856,
+      "interval": 0.13,
+      "stats": {
+        "str": 118,
+        "agi": 118,
+        "dex": 60,
+        "luk": 117,
+        "int": 1,
+        "vit": 1
+      },
+      "build": {
+        "stats": {
+          "str": 118,
+          "agi": 118,
+          "dex": 60,
+          "luk": 117,
+          "int": 1,
+          "vit": 1
+        },
+        "atk": 42404,
+        "matk": 16856,
+        "crit": 97.75,
+        "critD": 6.261,
+        "hp": 883154,
+        "cards": [
+          "Nightmare Dark Lord Card",
+          "Nightmare Death Knight Card",
+          "Nightmare Hell Worm Card",
+          "Nightmare Giant Eel Card",
+          "Nightmare Marse Card",
+          "Nightmare Thief Bug Card",
+          "Nightmare Lord of Death Card",
+          "Nightmare Soul Eater Card",
+          "Nightmare Bone Worm Card"
+        ]
+      }
+    }
+  ]
+}

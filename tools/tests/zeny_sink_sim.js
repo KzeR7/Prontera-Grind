@@ -156,7 +156,7 @@ t('the action table dispatches bmmat to buyMat', () => {
 
 t('the Black Market panel lists the ten materials with a Buy 1 button', () => {
   assert.ok(src.includes('data-a="bmmat"'), 'the material button carries the bmmat action');
-  assert.ok(src.includes("Nightmare materials</div>'+matRows"), 'the rows sit under a Nightmare materials heading');
+  assert.ok(src.includes("Nightmare materials</div><small>3,000,000z each</small>'+mats"), 'the rows sit under a Nightmare materials heading');
   assert.ok(/disabled.*BM_MAT_PRICE|BM_MAT_PRICE.*disabled/.test(src), 'the button is disabled when the price is out of reach');
 });
 

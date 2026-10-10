@@ -26,6 +26,8 @@ const grab = (a, b) => { const i = src.indexOf(a), j = src.indexOf(b, i); if (i 
 const pick = (re, name) => { const m = src.match(re); if (!m) throw new Error('cannot find ' + name + ' in index.html'); return m[0]; };
 
 const code = [
+  require('./helpers/progression')(src,'effects'),
+
   'let S=null;',
   grab('const CD=[', 'const pm=s=>'),                        // the class roster: CLASSES and wt
   pick(/const C=\(\)=>[^;]+;/, 'C()'),
@@ -245,7 +247,7 @@ t('MATK reads the main hand only, so the left-hand dagger never feeds it', () =>
 //   (b) auto-equip only ever compared the main hand, so "auto-equip better gear" never understood
 //       the pair (and could leave a katar and a dagger worn together, which the game forbids).
 t('v88a: the save-load repair keeps an Assassin\'s off-hand dagger on', () => {
-  const repair = grab('// Assassin jobs use one two-handed Katar', 'const fx=c=>{c.v=cardVal(c.g,c.stat)};');
+  const repair = grab('// Assassin jobs use one two-handed Katar', 'const fx=c=>{');
   const run = (cls, eq) => {
     const box = { CLASSES: H.CLASSES, dualWield: H.dualWield, f: { cls, eq: Object.assign(empty(), eq), inv: [] } };
     vm.createContext(box);

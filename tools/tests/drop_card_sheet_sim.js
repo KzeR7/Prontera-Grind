@@ -14,6 +14,7 @@ const pickValue=(re,name)=>{const m=src.match(re);if(!m)throw Error('cannot find
 function liveData(){
   const mapDecl=grab('const MAPS=[','MAPS.forEach(mp=>{mp.mobs=mp.mobs.map(pm);mp.boss=pm(mp.boss)});');
   const code=[
+ require('./helpers/progression')(src,'cards'),
     grab('const G=(w,a,h,o,l,ac,ac2)=>','const MAPS=['),
     mapDecl,
     `MAPS.forEach(mp=>{mp.mobs=mp.mobs.map(x=>({n:x.split(':')[0]}));mp.boss={n:mp.boss.split(':')[0]};});`,
@@ -86,7 +87,7 @@ function liveData(){
         if(!found)throw Error(`cannot map ${mp.n} stage ${level} drop ${d.k}:${d.n}`);
         return found.id;
       };
-      const card=c=>({name:c.n,grade:c.g,stat:c.stat,value:X.cardVal(c.g,c.stat)});
+      const card=c=>({name:c.n,grade:c.g,stat:c.stat,value:c.v});
       stages.push({
         stage:level,power:X.fieldPower(mi,level),section:sec,gearSet:F.gearSet,tier:F.tier,rarity:X.RAR[F.tier].n,
         mobs:Array.from(F.mobs,m=>({name:m.n,drops:Array.from(m.drops,([item,rate])=>({itemId:itemId(item),rate})),card:card(m.card),cardRate:m.cardCh,ore:!!m.ore,oreRate:m.oreCh||0})),
@@ -210,7 +211,7 @@ t('rarity, card grades, and Stage-10 boss pools are complete',()=>{
   for(let mi=0;mi<sheet.maps.length;mi++){
     const m=sheet.maps[mi];
     for(const s of m.stages){
-      const cardGrade=s.stage<=3?0:s.stage<=7?1:2;
+      const cardGrade=Math.min(2,mi<1?0:mi<5?1:mi<8?2:3);
       for(const mob of s.mobs){assert.strictEqual(mob.drops.length,3);assert.strictEqual(mob.card.grade,cardGrade);assert.strictEqual(mob.card.name,mob.name+' Card')}
       if(s.stage===10){assert.ok(s.boss);const stagePool=m.sections[s.section].items.filter(x=>(x.gearSet||'base')===s.gearSet);assert.strictEqual(s.boss.drops.length,stagePool.length);
         // v57: the pool still lists every item, but the whole pool now totals ~6% per boss kill

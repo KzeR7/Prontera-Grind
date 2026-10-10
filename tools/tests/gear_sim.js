@@ -29,6 +29,10 @@ const gearDropEnd = src.indexOf("  if(Math.random()*100<(mob.boss?.5:.03)){", ge
 if (killStart < 0 || gearDropStart < 0 || gearDropEnd < gearDropStart) throw new Error('cannot find the live kill() drop loops');
 const gearDropLoop = src.slice(gearDropStart, gearDropEnd);
 const code = [
+  require('./helpers/progression')(src,'cards'),
+  require('./helpers/progression')(src,'affixes'),
+  require('./helpers/progression')(src,'newCard'),
+
   'const bon=()=>0;',
   grab('const CD=[', 'const pm=s=>'),                       // class roster: CLASSES, lineOf
   pick(/const C=\(\)=>[^;]+;/, 'C()'),
@@ -753,42 +757,9 @@ t('Nightmare equipment is its own N rarity, separate from Legendary and map qual
   assert.strictEqual(G.FIELD_GEAR_MID_NM.map(x => +(x * 3).toFixed(2)).join(','), '1.05,0.84,0.63');
 });
 
-t('v90.9 Abyss affixes sit 5% under Nightmare Prontera; the maps between ramp linearly', () => {
-  // Only affixes move with the map. The base value is flat (v90.8), so Prontera and Abyss N+ gear
-  // differ only in their affix rolls. Map 0 is x1, map 9 (Abyss) is x0.95.
-  assert.strictEqual(G.NM_ABYSS_AFF, 0.95, 'the Abyss affix factor is 0.95');
-  assert.strictEqual(G.nmAffMapOf(0), 1, 'Nightmare Prontera (map 0) is x1');
-  assert.strictEqual(G.nmAffMapOf(9), 0.95, 'Abyss (map 9) is x0.95');
-  assert.ok(Math.abs(G.nmAffMapOf(4) - (1 - 0.05 * 4 / 9)) < 1e-9, 'map 4 sits on the linear ramp');
-  assert.strictEqual(G.nmAffMapOf(undefined), 1, 'with no map given the factor is x1 (old callers unchanged)');
-  for (const k of ['str', 'hp', 'atk', 'flee', 'crit']) {
-    const atMap0 = G.affixValue(k, 5, 4, 1.25, 0), atMap9 = G.affixValue(k, 5, 4, 1.25, 9);
-    assert.strictEqual(atMap9, Math.round(G.nmMulOf(k, 5) * 0.95 * G.AM[4] * G.AB[k] * 1.25), k + ' on Abyss is the 0.95 roll');
-    assert.ok(atMap9 < atMap0, k + ' on Abyss is below Prontera at the same roll: ' + atMap9 + ' < ' + atMap0);
-  }
-  // Same seeded random stream for both maps, so each drop makes the same picks and only the affix factor differs.
-  const seedRandom = seed => vm.runInContext('__seedA=' + seed + ';Math.random=function(){__seedA=(__seedA+0x6D2B79F5)|0;let t=Math.imul(__seedA^(__seedA>>>15),1|__seedA);t=(t+Math.imul(t^(t>>>7),61|t))^t;return((t^(t>>>14))>>>0)/4294967296};', sb);
-  const sumAff = mp => {
-    seedRandom(12345);
-    G.S = { st: { luk: 0 }, eq: {}, mp };
-    let sum = 0;
-    for (let i = 0; i < 400; i++) {
-      const it = G.genGear({ k: 'sword', n: 'Absolute Dark Lord Sword' }, 150, 5, false, 4);
-      for (const a of it.aff) sum += a.v;
-    }
-    return sum;
-  };
-  const origRandom = vm.runInContext('Math.random', sb);
-  let ratio;
-  try { ratio = sumAff(9) / sumAff(0); }
-  finally { vm.runInContext('Math.random=__origRandom', Object.assign(sb, { __origRandom: origRandom })); }
-  assert.ok(Math.abs(ratio - 0.95) < 0.01, 'the N+ affix total on Abyss is 0.95 of Prontera on the same rolls: ' + ratio.toFixed(4));
-  G.S = { st: { luk: 0 }, eq: {}, mp: 9 };
-  const ab = G.genGear({ k: 'sword', n: 'Absolute Dark Lord Sword' }, 150, 5, false, 4);
-  assert.strictEqual(ab.mp, 9, 'an N+ piece records the map it dropped on, for reforge');
-  G.S = { st: { luk: 0 }, eq: {}, mp: 9 };
-  const hi3 = G.genGear({ k: 'sword', n: 'Dark Lord Sword' }, 150, 3, true, 4);
-  assert.strictEqual(hi3.mp, undefined, 'a non-Nightmare piece records no map');
+t('Nightmare maps share affix strength at the same tier and roll',()=>{
+ for(const k of G.AFF)for(let m=0;m<10;m++)assert.strictEqual(G.affixValue(k,5,4,1,m),G.affixValue(k,5,4,1,0));
+ assert.strictEqual(G.NM_ABYSS_AFF,1);
 });
 
 t('v90.8 flat Nightmare power: the same N+ gear is worth the same on the lowest and the Abyss map', () => {
@@ -821,8 +792,8 @@ t('the cdm affix only rolls on weapons and accessories, like the cdm card always
     assert.ok(seen>0,kind+' must still be able to roll cdm');
   }
   // the cdm CARD follows the same slot rule through CFIT
-  assert.ok(src.includes("const CFIT={str:'weapon',dex:'weapon',atk:'weapon',crit:'weapon',cdm:'weapon'"),'the card fit table must keep cdm on weapons/accessories');
-  assert.ok(src.includes("(slot==='weapon'||slot==='acc'?AFF:AFF.filter(k=>k!=='cdm'))"),'the live affix pool must be slot-filtered');
+  assert.ok(src.includes("cdm:['weapon','acc']"),'the card fit table must keep cdm on weapons/accessories');
+  assert.ok(src.includes('pool=affixPool(profile).slice()'),'the live affix pool must be slot-filtered');
 });
 
 t('N and N+ Flee, ATK, ASPD and Crit % take the v90 nerf; STR, Max HP and Crit DMG do not move', () => {
@@ -861,13 +832,13 @@ t('gear Crit DMG alone is scaled to 70% after the existing rounded affix roll',(
     }
   }
   assert.ok(src.includes("k==='cdm'?scaleCritDamageAffix(raw):raw"),'the post-roll multiplier must apply only to gear Crit DMG');
-  assert.ok(src.includes('const n=[1,1+ri(0,1),2,2+ri(0,1),3][t]'),'live affix counts changed without updating the chart notes');
+  assert.ok(src.includes('const n=[1,1,2,3,3][t]'),'live affix counts changed without updating the chart notes');
 });
 
 t('the affix range chart matches the live generator for every stat, rarity and gear section',()=>{
   const chart=fs.readFileSync(__dirname+'/../../Updates/cards-gear-audit/affix-ranges.html','utf8');
   assert.ok(chart.includes('Crit DMG only:')&&chart.includes('round(raw × 0.70)'),'chart must explain the separate gear CDM post-roll');
-  assert.ok(chart.includes('Card Crit DMG values are unchanged'),'chart must distinguish gear from cards');
+  assert.ok(chart.includes('Card values use the separate named catalogue'),'chart must distinguish gear from cards');
   assert.ok(chart.includes(src.match(/const BUILD='([^']+)'/)[1]),'chart build label must match the game');
   const tables=[...chart.matchAll(/<table data-rarity="([^"]+)">([\s\S]*?)<\/table>/g)];
   assert.strictEqual(tables.length,G.RAR.length,'one table per rarity');

@@ -14,7 +14,7 @@ const arena = grab('const SU=k=>', ',K5=[') + ';';
 const stamp = grab('// ---------- the save-owner stamp (v88.6) ----------', 'const num_= (v,d)');
 const code = [arena, grab('const CD=[', 'const fresh=()=>'), grab('const fresh=()=>', 'const saveKey='), stamp, 'function loadRaw(){' + body + '}'].join('\n');
 
-const save = {pets:[
+const save = {progressionVersion:1,pets:[
     {id:1,sp:0,on:true,eq:[1,2,3],skills:['warcry','spiritbolt']},
     {id:2,sp:1,on:undefined,eq:null,skills:['removed-skill','vital']},
     {id:3,sp:3,on:false,eq:[99,-1,'not-a-number'],skill:'arcane'}
