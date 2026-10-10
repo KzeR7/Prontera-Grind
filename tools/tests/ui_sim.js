@@ -111,6 +111,8 @@ const code = [
   pick(/const nmAffMapOf=[^\n]*/, 'nmAffMapOf'),
   pick(/const affixValue=\(k,section,tier,roll[^)]*\)=>\{[^}]+\};/, 'affixValue'),
   pick(/const affTxt=a=>[^;]+;/, 'affTxt/cardTxt/dtier'),
+  grab('// ---------- auto-sell rules:', '// ---------- end auto-sell rules ----------'),
+  grab('let autoSellDraft=', 'const V={'),
   grab('const V={', 'const ACT={'),                            // the panels themselves
   // v39: the Log window's filter table and its two readers, the on-screen log's fold helper, the
   // master auto-cast switch, and the Bag's two sell-tool readers.
@@ -476,7 +478,7 @@ t('the Mastery Index tracks monster titles and consumes loose cards for permanen
   assert.ok(h.includes('Card Index available')&&!h.includes('(global max)'),'the loose-card list is renamed and the global-max wording is gone');
   for(const reward of ['hpPct','fleePct','leech','def','mdef','atkPct','matkPct','aspdPct','critPct'])assert.ok(src.includes("id:'"+reward+"'"),reward+' should be an available card mastery reward');
   assert.ok(h.includes('Poring Card')&&h.includes('Mastery 1/5'),'the card album keeps per-card mastery history');
-  assert.ok(src.includes("const SIDE_TABS=['index','market','board']"),'the Quest Board Index button opens the panel');
+  assert.ok(src.includes("const SIDE_TABS=['index','market','board','guide']"),'the Quest Board Index button opens the panel');
   assert.ok(src.includes('id="sideMenu"')&&src.includes("index:['📚','Mastery Index','I']"),'both Quest Board and dock link to the index');
   assert.ok(src.includes('flex-wrap:wrap;justify-content:center')&&src.includes('max-width:calc(100vw - 12px)'),'the expanded dock wraps on narrow screens');
   assert.ok(src.includes('recordMonsterKill(mob)')&&src.includes('data-a="titleequip"'),'kills are recorded and titles can be equipped from the view');
@@ -1021,7 +1023,7 @@ t('v74: the item card names the class tier a piece belongs to, and why a locked 
   assert.ok(src.includes('it.wearer?` This was ${it.wearer'), 'the wearer note is attributed');
 });
 
-t('market and leaderboard retain quest shortcuts and gain labeled dock entries', () => {
+t('Adventurer Hub owns mastery, rankings and guide shortcuts', () => {
   const bm = sb.__bm;
   bm.setSide(false);
   let h = bm.qpSide();
@@ -1035,8 +1037,9 @@ t('market and leaderboard retain quest shortcuts and gain labeled dock entries',
   assert.ok(h.includes('qp-side-tab on'), 'an open window is marked on its button');
   bm.tabs.length = 0; bm.setSide(false);
   const dock=grab('const DOCK_TABS=', 'function renderWin(anchor){');
-  assert.ok(dock.includes("'market','board'") && dock.includes('ui-nav-label'),
-    'market and leaderboard are directly reachable from the labeled dock');
+  assert.ok(dock.includes("'pet','market','log'") && dock.includes('ui-nav-label'),
+    'Market remains in the dock while Mastery and Ranks use the hub');
+  assert.ok(h.includes('Adventurer Hub') && h.includes('data-t="guide"'), 'guide has its own hub entry');
   assert.ok(dock.includes("dock.scrollLeft=left") && dock.includes("current.some((b,i)=>b.dataset.t!==keys[i])"),
     'routine redraws retain the live dock and its horizontal position');
   assert.ok(src.includes("market:['🏪','Black Market','X']") && src.includes("board:['🏆','Leaderboard','V']"),
@@ -1164,11 +1167,11 @@ t('pet details show Ragnarok sprites, named upgrade levels, and gacha skill odds
   const h3=U.V.pet();
   assert.ok(h3.includes('Signature passive &middot; <b>Greedy Gel</b>'),'the pet card must name its species passive');
   assert.ok(h3.includes('+6% Zeny from kills'),'and state the number at its current Bond (Bond 1 = 6%)');
-  assert.ok(h3.includes('<b>Bond 1/5</b>')&&h3.includes('1 more Poring folded in reaches Bond 2'),'and show the ladder progress');
+  assert.ok(h3.includes('aria-label="Bond 1 of 5 stars"')&&h3.includes('1 more Poring folded in reaches 2 stars'),'and show the ladder progress');
   assert.ok(h3.includes('folded into it automatically'),'the fold rule must be explained where a duplicate lands');
   const h4=(U.S.pets=[{id:43,sp:7,mut:0,eq:[0,0,0],skills:[],sk:[1,2,3],on:true}],U.selP=43,U.V.pet());
   assert.ok(h4.includes('Divine Grace')&&h4.includes('+5% Max HP and 5% less damage taken'),'Divine Grace reads as one bonus with its number');
-  assert.ok(h4.includes('Bond 0/5'),'a pet with no duplicates starts at Bond 0');
+  assert.ok(h4.includes('aria-label="Bond 0 of 5 stars"'),'a pet with no duplicates starts at Bond 0');
   // the Character sheet lists the fighting pets' bonuses, and the movement line owns up to the mount
   U.S.pets=[{id:43,sp:7,mut:0,eq:[0,0,0],skills:[],sk:[1,2,3],on:true},
             {id:44,sp:4,mut:0,eq:[0,0,0],skills:[],sk:[1,2,3],on:true}];       // Angeling + Peco Peco
@@ -1249,6 +1252,7 @@ t('the bag shows its 1000-item limit and refuses loot once it is full', () => {
     ${pick(/const BAGMAX=\d+;/, 'BAGMAX')}
     ${pick(/const autoSellOn=[^\n]*/, 'auto-sell / click-sell readers')}
     ${pick(/const sellVal=it=>[^;]+;/, 'sellVal')}
+    ${grab('// ---------- auto-sell rules:', '// ---------- end auto-sell rules ----------')}
     ${grab('function collect(it){', 'function equip(id,quiet){')}
     this.__c={collect,sellVal,S,BAGMAX,get msg(){return msg},clear(){msg=''}};
   `, box);
@@ -1521,10 +1525,10 @@ t('Nightmare gear detail and auto-sell use the separate N category, not Legendar
   assert.ok(h.includes('N Weapon (katar)')&&h.includes('Nightmare gear'), 'the selected section-4 item is labeled N');
   assert.ok(h.includes('Worn by: <b>transcendent classes only</b>')&&h.includes('your Assassin cannot wear it'),
     'the detail card makes the second-job class restriction explicit');
-  let detail=h.match(/<button class="tick([^"]*)" data-a="autosell" data-v="5" title="Auto-sell every N item on drop">Auto-sell N<\/button>/);
+  let detail=h.match(/<button class="tick([^"]*)" data-a="autosell" data-v="5" title="Toggle N drops that match your saved filters">Auto-sell N<\/button>/);
   assert.ok(detail&&!detail[1].includes(' on'), 'a Legendary auto-sell tick does not activate N gear');
   U.S.autoSell[4]=false;U.S.autoSell[5]=true;h=U.V.bag0();
-  detail=h.match(/<button class="tick([^"]*)" data-a="autosell" data-v="5" title="Auto-sell every N item on drop">Auto-sell N<\/button>/);
+  detail=h.match(/<button class="tick([^"]*)" data-a="autosell" data-v="5" title="Toggle N drops that match your saved filters">Auto-sell N<\/button>/);
   assert.ok(detail&&detail[1].includes(' on'), 'the detail button toggles the dedicated N auto-sell slot');
 });
 
@@ -1573,9 +1577,9 @@ t('locked gear requires deliberate confirmation for manual sale and is skipped b
   assert.strictEqual(C.sell(91),true,'a second deliberate Sell action can now complete');
   assert.strictEqual(C.S.inv.length,0,'the unlocked item is sold only after that second action');
   assert.strictEqual(C.earned,C.sellVal(item),'the confirmed manual sale pays the ordinary sell value');
-  assert.ok(src.includes('S.inv.filter(i=>!i.locked&&autoSellOn(rarIdx(i)))'),'bulk sell omits locked gear');
-  assert.ok(src.includes('S.inv.some(i=>!i.locked&&autoSellOn(rarIdx(i)))'),'the bulk-sell button is disabled when only locked matches remain');
-  assert.ok(src.includes('if(!it.locked&&autoSellOn(rarIdx(it)))'),'drop auto-sell never consumes a locked item');
+  assert.ok(src.includes('S.inv.filter(autoSellMatches)'),'bulk sell omits locked gear');
+  assert.ok(src.includes('S.inv.some(autoSellMatches)'),'the bulk-sell button is disabled when only locked matches remain');
+  assert.ok(src.includes('if(autoSellMatches(it))'),'drop auto-sell never consumes a locked item');
 });
 
 t('the lock toggle changes saved item state in either direction',()=>{
@@ -1827,13 +1831,16 @@ t('refine controls sit with the piece: the ladder is the v51 30%-nerfed one', ()
 
 t('worn equipment can never be auto-sold or bulk-sold', () => {
   const sellValFn = pick(/const sellVal=it=>[^;]+;/, 'sellVal');
-  const sellnowFn = grab('sellnow:()=>{', 'clicksell:');
+  const sellnowFn = grab('sellnow:()=>previewAutoSell()', '  sellrulesapply:');
   const box = {}; vm.createContext(box);
   vm.runInContext(`let S=null,selB=null,z=0,sold=0;const earnZeny=v=>{z+=v},log=()=>{},ui=()=>{},save=()=>{sold++};
     const RAR=[{n:'Common'},{n:'Fine'},{n:'Rare'},{n:'Epic'},{n:'Legendary'}],RAR5={n:'N'},RAR6={n:'N+'},RARALL=RAR.concat([RAR5,RAR6]);
     const rarIdx=it=>((it&&+it.sec>=5)?6:(it&&+it.sec>=4)?5:Math.max(0,Math.min(RAR.length-1,(it&&it.tier)||0)));
     const autoSellOn=t=>!!(S.autoSell&&S.autoSell[Math.max(0,Math.min(RARALL.length-1,Math.floor(+t||0)))]);
     ${sellValFn}
+    const iname=it=>it.name;
+    ${grab('// ---------- auto-sell rules:', '// ---------- end auto-sell rules ----------')}
+    ${grab('let autoSellDraft=', 'const V={')}
     const ACT={${sellnowFn}};
     this.__bulk={set S(v){S=v},get S(){return S},get z(){return z},get saved(){return sold},ACT};`, box);
   const C = box.__bulk;
@@ -1842,11 +1849,13 @@ t('worn equipment can never be auto-sold or bulk-sold', () => {
   C.S = { inv: [bag], cards: [], eq: { weapon: worn, armor: null, head: null, off: null, acc1: null, acc2: null, leg: null },
           autoSell: [false, false, false, false, true], zeny: 0 };
   C.ACT.sellnow();
+  assert.strictEqual(C.S.inv.length, 1, 'preview does not sell');
+  C.ACT.sellconfirm();
   assert.strictEqual(C.S.inv.length, 0, 'the matching bag copy is the one that sells');
   assert.strictEqual(C.S.eq.weapon, worn, 'the worn weapon is untouched: equipment is not in the bag list');
   assert.ok(C.z > 0, 'the sale still paid out');
-  assert.ok(src.includes('S.inv.filter(i=>!i.locked&&autoSellOn(rarIdx(i)))'), 'bulk sell only ever reads S.inv');
-  assert.ok(src.includes('if(!it.locked&&autoSellOn(rarIdx(it))){const v=sellVal(it)'), 'drop auto-sell only ever reads S.inv');
+  assert.ok(src.includes('S.inv.filter(autoSellMatches)'), 'bulk sell only ever reads S.inv');
+  assert.ok(src.includes('if(autoSellMatches(it)){const v=sellVal(it)'), 'drop auto-sell only ever reads S.inv');
   assert.ok(src.includes('const i=S.inv.findIndex(x=>String(x.id)===String(id))'), 'manual Sell searches the bag, never S.eq');
 });
 
@@ -1901,7 +1910,7 @@ t('the reset buttons explain themselves, refuse on screen, and survive a rebuild
   assert.ok(/host\.scrollTop=outer;/.test(src), 'and puts it back');
   assert.ok(src.includes("const existing=new Map([...host.querySelectorAll(':scope > [data-win]')]")
     && !src.includes('host.replaceChildren(')
-    && src.includes('if(body._panelSource!==source)')
+    && src.includes('if(body._panelSource!==source&&!body.querySelector(')
     && src.includes("b.scrollTop=k==='log'?1e6:(old[k]||0)"),
     'every tab retains its live window/body, while changed content and both scrollers update safely');
   assert.ok(!src.includes('el.scrollIntoView('), 'nothing calls the browser scrollIntoView() any more');

@@ -155,9 +155,15 @@ t('the load() repair is stat-aware, not the old flat CV[g]', () => {
   assert.ok(Number.isFinite(junk.v) && junk.v >= 1, 'a card with no stat crashed the repair');
 });
 
-t('a Legendary card is always worth more than a Common one of the same stat', () => {
-  for (const s of C.AFF.filter(k=>k!=='move'))
-    assert.ok(C.cardVal(3, s) > C.cardVal(0, s), `${s}: g3 ${C.cardVal(3, s)} vs g0 ${C.cardVal(0, s)}`);
+t('legacy grade values never decrease; original card stats retain their upgrade', () => {
+  for (const s of C.AFF) {
+    for (let g=1;g<4;g++)
+      assert.ok(C.cardVal(g,s)>=C.cardVal(g-1,s), `${s}: value fell at grade ${g}`);
+    // v98 added small gear weights for MATK and movement. Legacy integer cardVal
+    // rounds both ends to 1; named cards use cardDefinition, tested in progression_sim.
+    if (!['matk','move'].includes(s))
+      assert.ok(C.cardVal(3,s)>C.cardVal(0,s), `${s}: original grade upgrade lost`);
+  }
 });
 
 console.log(`\n${pass} passed, ${fail} failed`);

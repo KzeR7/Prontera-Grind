@@ -1,0 +1,230 @@
+[
+  {
+    "family": "Peco Peco",
+    "title": "Flock Fighter",
+    "normal": "Attack speed +4% while your current target is an ordinary monster.",
+    "nightmare": "Attack speed +5% while your current target is an ordinary monster."
+  },
+  {
+    "family": "Bat Familiar",
+    "title": "Night School",
+    "normal": "Job EXP from kills +5%.",
+    "nightmare": "Job EXP from kills +6.25%."
+  },
+  {
+    "family": "Whisper",
+    "title": "Fade",
+    "normal": "After dodging, take 8% less damage from the next hit within 3 seconds.",
+    "nightmare": "After dodging, take 10% less damage from the next hit within 3 seconds."
+  },
+  {
+    "family": "Evil Druid",
+    "title": "Grave Pact",
+    "normal": "Magic damage +6%; healing received −8%.",
+    "nightmare": "Magic damage +7.5%; healing received −8%."
+  },
+  {
+    "family": "Mummy",
+    "title": "Ancient Grip",
+    "normal": "Normal-attack damage against rooted enemies +6%.",
+    "nightmare": "Normal-attack damage against rooted enemies +7.5%."
+  },
+  {
+    "family": "Bigfoot",
+    "title": "Heavy Steps",
+    "normal": "Max HP +4%; movement speed −2%.",
+    "nightmare": "Max HP +5%; movement speed −2%."
+  },
+  {
+    "family": "Ambernite",
+    "title": "Magic Shell",
+    "normal": "MDEF +8.",
+    "nightmare": "MDEF +10."
+  },
+  {
+    "family": "Sand Man",
+    "title": "Dust Cloak",
+    "normal": "Take 4% less physical damage while above 70% HP.",
+    "nightmare": "Take 5% less physical damage while above 70% HP."
+  },
+  {
+    "family": "Horn",
+    "title": "Hard Carapace",
+    "normal": "DEF +6% while stationary and engaged with a target.",
+    "nightmare": "DEF +7.5% while stationary and engaged with a target."
+  },
+  {
+    "family": "Ancient Worm",
+    "title": "Burrow Guard",
+    "normal": "After travelling 5 units, gain a shield worth 2% Max HP for 5 seconds. Cooldown: 15 seconds.",
+    "nightmare": "After travelling 5 units, gain a shield worth 2.5% Max HP for 5 seconds. Cooldown: 15 seconds."
+  },
+  {
+    "family": "Isis",
+    "title": "Dancer's Grace",
+    "normal": "After casting a damaging skill, gain 4 Flee points for 2 seconds. Cooldown: 6 seconds.",
+    "nightmare": "After casting a damaging skill, gain 5 Flee points for 2 seconds. Cooldown: 6 seconds."
+  },
+  {
+    "family": "Zenorc",
+    "title": "Scrap Dealer",
+    "normal": "Zeny from manually sold equipment +6%.",
+    "nightmare": "Zeny from manually sold equipment +7.5%."
+  },
+  {
+    "family": "Zombie",
+    "title": "Unyielding Flesh",
+    "normal": "Take 3% less damage from ordinary monsters.",
+    "nightmare": "Take 3.75% less damage from ordinary monsters."
+  },
+  {
+    "family": "Cactus",
+    "title": "Water Reserve",
+    "normal": "Healing from your own skills +5%.",
+    "nightmare": "Healing from your own skills +6.25%."
+  },
+  {
+    "family": "Spore",
+    "title": "Forager",
+    "normal": "Base EXP from normal-monster kills +5%.",
+    "nightmare": "Base EXP from normal-monster kills +6.25%."
+  },
+  {
+    "family": "Marionette",
+    "title": "Threaded Strikes",
+    "normal": "First normal hit after switching targets deals 8% more damage. Cooldown: 3 seconds.",
+    "nightmare": "First normal hit after switching targets deals 10% more damage. Cooldown: 3 seconds."
+  },
+  {
+    "family": "Scorpion",
+    "title": "Sting",
+    "normal": "Normal hits have a 10% chance to poison the target for 12% ATK total over 3 seconds. Cooldown: 3 seconds; refreshes, never stacks.",
+    "nightmare": "Normal hits have a 10% chance to poison the target for 15% ATK total over 3 seconds. Cooldown: 3 seconds; refreshes, never stacks."
+  },
+  {
+    "family": "Hornet",
+    "title": "Piercing Sting",
+    "normal": "Critical normal attacks ignore 5% of target DEF.",
+    "nightmare": "Critical normal attacks ignore 6.25% of target DEF."
+  },
+  {
+    "family": "Dark Priest",
+    "title": "Profane Study",
+    "normal": "Damaging magic skills deal 4% more damage while above 80% HP.",
+    "nightmare": "Damaging magic skills deal 5% more damage while above 80% HP."
+  },
+  {
+    "family": "Elder Willow",
+    "title": "Branching Magic",
+    "normal": "Area-of-effect magic skills deal 4% more damage to each target hit.",
+    "nightmare": "Area-of-effect magic skills deal 5% more damage to each target hit."
+  },
+  {
+    "family": "Skel Archer",
+    "title": "Long Shot",
+    "normal": "Normal attacks from at least 4 units away deal 4% more damage.",
+    "nightmare": "Normal attacks from at least 4 units away deal 5% more damage."
+  },
+  {
+    "family": "Orc Archer",
+    "title": "Covering Fire",
+    "normal": "Critical normal attacks from at least 4 units away deal 5% more final damage.",
+    "nightmare": "Critical normal attacks from at least 4 units away deal 6.25% more final damage."
+  },
+  {
+    "family": "Eddga",
+    "title": "Battle Roar",
+    "normal": "After defeating an MVP, gain 6% attack speed for 10 seconds. Refreshes; does not stack.",
+    "nightmare": "After defeating an MVP, gain 7.5% attack speed for 10 seconds. Refreshes; does not stack."
+  },
+  {
+    "family": "Anubis",
+    "title": "Funeral Rite",
+    "normal": "Defeating an MVP restores 8% Max HP.",
+    "nightmare": "Defeating an MVP restores 10% Max HP."
+  },
+  {
+    "family": "Orc Warrior",
+    "title": "Front Line",
+    "normal": "Physical skill damage +5% while at least two enemies are within 3 units.",
+    "nightmare": "Physical skill damage +6.25% while at least two enemies are within 3 units."
+  },
+  {
+    "family": "Pasana",
+    "title": "Desert Resolve",
+    "normal": "Damage +4% while below 50% HP.",
+    "nightmare": "Damage +5% while below 50% HP."
+  },
+  {
+    "family": "Minorous",
+    "title": "Heavy Blow",
+    "normal": "Single-target physical skills deal 4% more damage.",
+    "nightmare": "Single-target physical skills deal 5% more damage."
+  },
+  {
+    "family": "Wolf",
+    "title": "Pursuit",
+    "normal": "After killing your current target, gain 6% movement speed for 4 seconds. Refreshes; does not stack.",
+    "nightmare": "After killing your current target, gain 7.5% movement speed for 4 seconds. Refreshes; does not stack."
+  },
+  {
+    "family": "Dragon Pup",
+    "title": "Companion Lesson",
+    "normal": "Pet damage against normal monsters +4%.",
+    "nightmare": "Pet damage against normal monsters +5%."
+  },
+  {
+    "family": "Oni",
+    "title": "Oni Strength",
+    "normal": "Physical damage +5%; take 3% more damage.",
+    "nightmare": "Physical damage +6.25%; take 3% more damage."
+  },
+  {
+    "family": "Yuki Onna",
+    "title": "Cold Focus",
+    "normal": "Single-target magic skills ignore 6% of target MDEF.",
+    "nightmare": "Single-target magic skills ignore 7.5% of target MDEF."
+  },
+  {
+    "family": "Stone Golem",
+    "title": "Fortress",
+    "normal": "Take 5% less damage while below 30% HP.",
+    "nightmare": "Take 6.25% less damage while below 30% HP."
+  },
+  {
+    "family": "Kappa",
+    "title": "River Shield",
+    "normal": "Take 5% less damage from MVP normal attacks.",
+    "nightmare": "Take 6.25% less damage from MVP normal attacks."
+  },
+  {
+    "family": "Jiangshi",
+    "title": "Life Siphon",
+    "normal": "A single-target physical skill hit restores 0.5% Max HP. Cooldown: 4 seconds; subject to the shared leech cap.",
+    "nightmare": "A single-target physical skill hit restores 0.625% Max HP. Cooldown: 4 seconds; subject to the shared leech cap."
+  },
+  {
+    "family": "Kitsune",
+    "title": "Foxfire",
+    "normal": "Every fifth damaging magic skill burns its primary target for 15% MATK total over 3 seconds. Refreshes; does not stack.",
+    "nightmare": "Every fifth damaging magic skill burns its primary target for 18.75% MATK total over 3 seconds. Refreshes; does not stack."
+  },
+  {
+    "family": "Chaos Imp",
+    "title": "Wild Magic",
+    "normal": "Every sixth damaging magic skill deals 15% extra damage.",
+    "nightmare": "Every sixth damaging magic skill deals 18.75% extra damage."
+  },
+  {
+    "family": "Hell Worm",
+    "title": "Deep Scavenger",
+    "normal": "Nightmare material drop chance +5% relative to its base rate.",
+    "nightmare": "Nightmare material drop chance +6.25% relative to its base rate."
+  },
+  {
+    "family": "Lava Slime",
+    "title": "Molten Skin",
+    "normal": "When hit, burn the attacker for 10% ATK total over 3 seconds. Cooldown: 5 seconds; cannot trigger other card effects.",
+    "nightmare": "When hit, burn the attacker for 12.5% ATK total over 3 seconds. Cooldown: 5 seconds; cannot trigger other card effects."
+  }
+]

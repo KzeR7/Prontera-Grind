@@ -61,7 +61,7 @@ S.eq.weapon={...S.inv[0],id:9003};S.cards=[{id:8001,n:'Poring Card',stat:'str',v
 S.pets=[{id:7001,sp:0,mut:2,eq:[0,0,0],skills:[],on:true}];S.gm=true;
 selB=9001;selE='weapon';selC='Poring Card';selP=7001;selK='Lord Knight';selS='aid';
 `);
-const cases=[['map',''],['status',"sub.status='stats'"],['status',"sub.status='equip'"],['job',''],['skills',''],['bag',"sub.bag='bag'"],['bag',"sub.bag='cards'"],['pet',''],['index',"indexMode='mobs'"],['index',"indexMode='cards'"],['board',''],['market',''],['log',''],['set',''],['gm','']];
+const cases=[['map',''],['status',"sub.status='stats'"],['status',"sub.status='equip'"],['job',''],['skills',''],['bag',"sub.bag='bag'"],['bag',"sub.bag='cards'"],['pet',''],['index',"indexMode='mobs'"],['index',"indexMode='cards'"],['board',''],['market',''],['guide',''],['log',''],['set',''],['gm','']];
 for(const [key,prepare] of cases)t(key+' '+prepare+': all original controls, state and action values survive composition',()=>{
   if(prepare)ev(prepare);
   const root=window.document.createElement('div');root.innerHTML=ev(`V.${key}()`);
@@ -101,7 +101,7 @@ t('quest collapse and the independent navigation dropdown retain separate state'
   ev("tabs.length=0;qOpen=true;sideOpen=true;renderQ()");
   const doc=window.document;
   assert.ok(!doc.querySelector('#qp').contains(doc.querySelector('#sideMenu')));
-  assert.strictEqual(doc.querySelectorAll('#sideMenu [data-t]').length,3);
+  assert.strictEqual(doc.querySelectorAll('#sideMenu [data-t]').length,4);
   doc.querySelector('#qp [data-q="t"]').click();
   assert.strictEqual(ev('qOpen'),false);assert.strictEqual(ev('sideOpen'),true);
   assert.strictEqual(doc.querySelector('#sideLinks').hidden,false);
@@ -263,5 +263,66 @@ t('option A colors stay consistent across dock, window heading and quest shortcu
   const index=window.document.querySelector('#sideMenu .ui-icon[data-ui-icon="index"]');
   assert.strictEqual(window.getComputedStyle(quest).color,expected.quest);
   assert.strictEqual(window.getComputedStyle(index).color,expected.index);
+});
+t('attributes precede combat stats and hub keeps removed dock destinations accessible',()=>{
+  ev("tabs.splice(0,tabs.length,'status');sub.status='stats';renderWin();renderQ()");
+  const root=window.document.querySelector('[data-win="status"] .ui-content');
+  assert.ok(root.children[0].classList.contains('ui-attribute-section'));
+  assert.ok(root.children[1].classList.contains('ui-metrics'));
+  for(const key of ['index','board']){
+    assert.ok(!window.document.querySelector('#dock [data-t="'+key+'"]'));
+    assert.ok(window.document.querySelector('#sideLinks [data-t="'+key+'"]'));
+  }
+  const guide=window.document.querySelector('#sideLinks [data-t="guide"]');
+  assert.ok(guide.querySelector('[data-ui-icon="guide"]'));
+  guide.click();
+  assert.ok(window.document.querySelector('[data-win="guide"]'));
+  const source=window.document.querySelector('[data-win="guide"] [data-a="guidemap"]');
+  const [map,stage]=source.dataset.v.split(':').map(Number);source.click();
+  assert.ok(window.document.querySelector('[data-win="map"]'));
+  assert.strictEqual(ev('mapM'),map);assert.strictEqual(ev('mapL'),stage);
+});
+t('dedicated guide uses current cards, filters and upgrade planner from the fork',()=>{
+  ev("tabs.splice(0,tabs.length,'guide');guideMode='farm';guideTier='current';renderWin()");
+  const doc=window.document;
+  assert.ok(doc.querySelector('[data-win="guide"] .build-guide'));
+  doc.querySelector('[data-win="guide"] [data-a="guidemode"][data-v="survive"]').click();
+  doc.querySelector('[data-win="guide"] [data-a="guidetier"][data-v="nightmare"]').click();
+  assert.strictEqual(ev('guideMode'),'survive');assert.strictEqual(ev('guideTier'),'nightmare');
+  assert.ok(doc.querySelector('[data-win="guide"]').textContent.includes('Nightmare'));
+  for(const panel of ['market','index']){
+    ev(`tabs.splice(0,tabs.length,'${panel}');indexMode='mobs';renderWin()`);
+    const button=doc.querySelector('[data-win="'+panel+'"] [data-t="guide"]');
+    assert.ok(button);button.click();assert.ok(doc.querySelector('[data-win="guide"]'));
+  }
+});
+t('bonding stars describe every current rank and its real passive bonus',()=>{
+  for(const count of [0,1,3,6,10,15]){
+    ev(`S.bond[0]=${count};tabs.splice(0,tabs.length,'pet');selP=7001;renderWin()`);
+    const rank=ev('bondRank(0)'),root=window.document.querySelector('[data-win="pet"]');
+    const stars=root.querySelector('.pet-bond-badge .bond-stars');
+    assert.strictEqual((stars.textContent.match(/★/g)||[]).length,rank);
+    assert.ok(stars.getAttribute('aria-label').includes('Bond '+rank+' of 5'));
+    assert.ok(root.textContent.includes(count+' duplicates merged'));
+    assert.ok(root.textContent.includes('Bonding information'));
+    assert.ok(root.textContent.includes('★★★★★ = 15 merged duplicates · 10% passive'));
+  }
+});
+t('auto-sell filter editor saves drafts, keeps text during redraws and previews before selling',()=>{
+  ev("S=fresh();S.auto=false;S.eq={};S.autoSell=Array(7).fill(true);S.inv=[{id:9901,name:'Test Sword',tier:2,sec:1,slot:'weapon',wt:'sword',val:30,cards:[],aff:[{k:'crit',v:3}]}];tabs.splice(0,tabs.length,'bag');sub.bag='bag';autoSellDraft=null;autoSellPreview=null;renderWin()");
+  const doc=window.document,change=el=>el.dispatchEvent(new window.Event('change',{bubbles:true}));
+  doc.querySelector('[data-a="sellpreset"][data-v="caster"]').click();
+  assert.strictEqual(ev('S.autoSellRules'),undefined,'draft is not active');
+  const crit=doc.querySelector('[data-sell-affix="crit"]');crit.checked=true;change(crit);
+  const min=doc.querySelector('[data-sell-min="crit"]');assert.strictEqual(min.disabled,false);min.value='4';change(min);
+  const names=doc.querySelector('[data-sell-field="names"]');names.focus();names.value='Test Sword';
+  ev('S.zeny++;renderWin()');assert.strictEqual(doc.querySelector('[data-sell-field="names"]'),names);assert.strictEqual(names.value,'Test Sword');
+  change(names);names.blur();doc.querySelector('[data-a="sellrulesapply"]').click();
+  assert.strictEqual(ev('S.autoSellRules.affixes.find(a=>a.k==="crit").min'),4);
+  assert.strictEqual(ev('S.autoSellRules.names[0]'),'Test Sword');
+  doc.querySelector('[data-a="sellnow"]').click();assert.strictEqual(ev('S.inv.length'),1);
+  assert.ok(doc.querySelector('.sell-preview').textContent.includes('Test Sword'));
+  ev('S.inv[0].locked=true');doc.querySelector('[data-a="sellconfirm"]').click();
+  assert.strictEqual(ev('S.inv.length'),1,'newly locked gear survives confirmation');
 });
 console.log(`\n${pass} passed, ${fail} failed`);window.close();process.exit(fail?1:0);
