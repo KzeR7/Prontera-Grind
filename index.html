@@ -522,7 +522,7 @@ a{color:var(--brass)}small{opacity:.85}summary{cursor:pointer}
 .grid-detail [data-a="equip"],.mapband-t button.go,.login-btn,#my{background:#c8ae79;border-color:#c8ae79;color:#1a271d;font-weight:bold}
 .grid-detail [data-a="sell"]{background:transparent;border-color:#826554;color:#efb29c}
 .bag-top{display:flex;align-items:center;justify-content:space-between;gap:6px;margin-bottom:8px}.bag-count{font-size:10px;color:#c1cebc}
-.bag-auto{font-size:11px;display:flex;align-items:center;gap:5px;padding:8px 0}
+.autosell-editor{margin-top:10px}.autosell-editor fieldset{min-width:0;border:1px solid #49604f;border-radius:6px;margin:10px 0;padding:9px}.autosell-editor legend{font-size:11px;color:#dfc995}.sell-help{font-size:10px;line-height:1.5}.sell-options{display:flex;flex-wrap:wrap;gap:8px 12px}.sell-options label{font-size:11px}.sell-label{display:grid;gap:5px;margin-top:10px}.autosell-editor textarea,.autosell-editor select{max-width:100%;box-sizing:border-box;background:#172923;color:#e3deca;border:1px solid #56705b;border-radius:4px;padding:5px}.autosell-editor input[type=number]{width:64px;max-width:100%;background:#172923;color:#e3deca;border:1px solid #56705b;border-radius:4px;padding:4px}.sell-affixes{display:grid;grid-template-columns:repeat(auto-fit,minmax(165px,1fr));gap:6px;margin-top:8px}.sell-affixes label>span{white-space:nowrap}.sell-affixes label{display:flex;align-items:center;justify-content:space-between;gap:4px;font-size:10px}.sell-preview{border:1px solid #8a8059;background:#21372b;border-radius:6px;margin-top:10px;padding:10px}.sell-preview-list{max-height:180px;overflow:auto}.sell-preview-list>div{display:flex;justify-content:space-between;gap:12px;padding:5px 0;font-size:11px}.sell-preview-list span{overflow-wrap:anywhere;min-width:0}.sell-preview-list b{white-space:nowrap}.bag-auto{font-size:11px;display:flex;align-items:center;gap:5px;padding:8px 0}
 .bag-tools{margin:4px 0 10px;border:1px solid var(--edge);border-radius:5px;background:#22362a}
 .bag-tools>summary{padding:7px 9px;color:#dfc58f;font-size:11px}.bag-tools .sellbox{border:0;margin:0;background:transparent;padding:0 9px 9px}
 .bag-key{display:flex;gap:7px;flex-wrap:wrap;margin:7px 0;font-size:9px}.bag-key span{border-bottom:2px solid currentColor;padding-bottom:2px}
@@ -638,7 +638,7 @@ a{color:var(--brass)}small{opacity:.85}summary{cursor:pointer}
 .ui-skill-catalog .sk .si{grid-column:1;grid-row:1/3;width:36px;height:36px;border:0}.ui-skill-catalog .skill-art{width:34px;height:34px}.ui-skill-catalog .sk-head{grid-column:2;grid-row:2;justify-content:start;gap:5px}.ui-skill-catalog .sk-kind{font-size:7px;background:none;padding:0;color:#9db58f}.ui-skill-catalog .sk-name{grid-column:2;grid-row:1;font-size:11px;min-height:0;text-align:left}.ui-skill-catalog .sk-level{grid-column:3;grid-row:1;font-size:8px;align-self:end;text-align:center}.ui-skill-catalog .sk>button{grid-column:3;grid-row:2;padding:3px 4px;min-height:23px;margin-top:3px;font-size:9px}.ui-skill-catalog .sk.off{opacity:.7;filter:none}.ui-skill-catalog .sk:hover{transform:none}
 .ui-panel[data-layout="skills"] .ui-catalog{max-height:390px}.ui-automation .sk-tools{display:flex;gap:7px;grid-column:auto}.ui-automation .sk-master,.ui-automation .sk-alloc{min-height:72px;flex:1;padding:8px;gap:3px;font-size:10px;max-width:100%}.ui-automation .sk-master .si{display:none}.ui-automation .sk-master small,.ui-automation .sk-alloc small{font-size:8px}.ui-automation .sk-master .sk-name{min-height:0}
 .ui-loadout.doll{display:block;max-width:none;padding:0;margin:0;background:none;border:0}.ui-loadout-slots{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px}.ui-loadout-slots .cell{min-height:68px;aspect-ratio:auto;padding:15px 0 8px}.ui-loadout-slots>.cell:not([data-a]){display:none}.ui-loadout .doll-detail{margin:0;padding:0;border:0}.ui-loadout .rf{max-width:90%;white-space:nowrap;font-size:8px!important}.ui-loadout .cell .lockstar{top:auto;bottom:2px}.ui-loadout .cell.nm::after{top:auto;bottom:2px}
-.ui-pet-catalog .grid{grid-template-columns:repeat(3,minmax(0,1fr))}.ui-pet-catalog .cell{aspect-ratio:auto;min-height:82px;flex-direction:column;gap:5px;padding:12px 4px}.ui-pet-name{font-size:9px;line-height:1.2;text-align:center;color:#d4dfc7}.ui-inspector .mob-card>small{display:block;margin:5px 0}.ui-inspector .ui-fold{margin-top:7px}.ui-inspector .slot{flex-wrap:wrap}
+.ui-pet-catalog .grid{grid-template-columns:repeat(3,minmax(0,1fr))}.ui-pet-catalog .cell{aspect-ratio:auto;min-height:82px;flex-direction:column;gap:5px;padding:12px 4px}.bond-stars{color:#f0cd78;font-size:11px;letter-spacing:1px;white-space:nowrap}.pet-bond-badge{display:block;line-height:1}.ui-pet-name{font-size:9px;line-height:1.2;text-align:center;color:#d4dfc7}.ui-inspector .mob-card>small{display:block;margin:5px 0}.ui-inspector .ui-fold{margin-top:7px}.ui-inspector .slot{flex-wrap:wrap}
 .ui-store-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}.ui-store-grid>.ui-section-label{grid-column:1/-1;margin:0}.ui-store-grid .slot{display:flex;flex-direction:column;align-items:stretch!important;margin:0!important;padding:11px;gap:9px!important}.ui-store-grid .slot small{font-size:9px}.ui-store-grid .slot>div{width:100%;min-width:0}.ui-store-grid .slot button{width:100%;background:#41573a;color:#f1d9a2}.ui-reforge .slot{padding:10px}.ui-reforge .cell{width:46px;flex:none;min-height:46px;max-height:46px}
 .ui-journal-summary.mastery-head{padding:10px;margin:0;border:0;background:none}.ui-journal-summary .mastery-emblem{display:none}.ui-journal-summary>div:nth-child(2) b{font-size:13px}.ui-journal-summary .mastery-counter{font-size:10px}.ui-panel[data-layout="index"] .mastery-summary{padding:10px}.ui-panel[data-layout="index"] .mastery-summary>span{font-size:12px;margin-top:7px}.ui-panel[data-layout="index"] .mastery-title-list{max-height:340px;overflow:auto;scrollbar-width:thin}.ui-panel[data-layout="index"] .ui-fold-body>.mastery-section-title{display:none}
 .ui-board-toolbar{display:flex;flex-direction:column;gap:8px}.ui-board-toolbar .board-head{justify-content:space-between}.ui-standings .ui-catalog{max-height:450px}.ui-standings .board-row{padding:12px 7px;grid-template-columns:22px minmax(0,1fr) auto auto;border:0;border-bottom:1px solid #344d38;gap:6px}.ui-standings .board-row:nth-child(2){background:#3e4b31;border-radius:5px}.ui-standings .board-state{padding:25px 14px;line-height:1.8}
@@ -716,7 +716,7 @@ a{color:var(--brass)}small{opacity:.85}summary{cursor:pointer}
 .ui-icon[data-ui-icon="skills"]{color:#c8a8ef}
 .ui-icon[data-ui-icon="bag"]{color:#efb18b}
 .ui-icon[data-ui-icon="pet"]{color:#9cddd1}
-.ui-icon[data-ui-icon="index"]{color:#e6d298}
+.ui-icon[data-ui-icon="guide"],.ui-icon[data-ui-icon="index"]{color:#e6d298}
 .ui-icon[data-ui-icon="market"]{color:#e7ac9f}
 .ui-icon[data-ui-icon="board"]{color:#efcc7c}
 .ui-icon[data-ui-icon="log"]{color:#9dc7e4}
@@ -903,6 +903,7 @@ const UI_ICONS={
  skills:'<path d="m13 2-9 12h7l-1 8 10-13h-7Z"/>',
  bag:'<rect x="5" y="6" width="14" height="15" rx="3"/><path d="M9 6V4a3 3 0 0 1 6 0v2M5 12h14M9 12v3h6v-3"/>',
  index:'<path d="M12 5v16M12 5C8 2 5 3 2 4v16c4-1 7-1 10 1 3-2 6-2 10-1V4c-3-1-6-2-10 1Z M5 8h3m-3 4h3m8-4h3m-3 4h3"/>',
+ guide:'<path d="M12 5v16M12 5C8 2 5 3 2 4v16c4-1 7-1 10 1 3-2 6-2 10-1V4c-3-1-6-2-10 1ZM5 8h3m-3 4h3m8-3 3 3-3 3"/>',
  market:'<path d="M3 9 5 3h14l2 6M3 9a3 3 0 0 0 6 0 3 3 0 0 0 6 0 3 3 0 0 0 6 0M5 12v9h14v-9M9 21v-7h6v7"/>',
  board:'<path d="M7 3h10v7a5 5 0 0 1-10 0ZM7 5H3v3a4 4 0 0 0 4 4m10-7h4v3a4 4 0 0 1-4 4M12 15v6m-4 0h8"/>',
  pet:'<ellipse cx="12" cy="16" rx="6" ry="4"/><ellipse cx="4" cy="10" rx="2" ry="3"/><ellipse cx="9" cy="5" rx="2" ry="3"/><ellipse cx="15" cy="5" rx="2" ry="3"/><ellipse cx="20" cy="10" rx="2" ry="3"/>',
@@ -1040,7 +1041,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // script block, which is a SyntaxError - the game did not run on main at all. One line wins, and
 // it names both sides of this merge: the v38 balance patch (the weapon cut, the affix/card
 // give-back) and main's weapon-hold rendering work.
-const BUILD='2026-10-10 grind-v98 builds cards and farming guide';   // shown on the login card - confirms which file you loaded
+const BUILD='2026-10-10 grind-v100 smart auto-sell';   // shown on the login card - confirms which file you loaded
 $('buildTag').textContent='build '+BUILD;
 
 // ---------- class tree: Novice -> 6 first jobs -> 6 second jobs -> 6 third jobs ----------
@@ -2318,6 +2319,7 @@ const PET_TRAIT=[
 const bondCnt=sp=>Math.max(0,Math.min(999,Number((S&&S.bond&&S.bond[sp])||0)));
 // Bond 0..5: 0 at none, 1 after the first folded duplicate, 5 after fifteen of them.
 const bondRank=sp=>{const c=bondCnt(sp);let r=0;while(r<5&&c>=PETBOND[r])r++;return r};
+const bondStars=sp=>`<span class="bond-stars" role="img" aria-label="Bond ${bondRank(sp)} of 5 stars" title="${bondCnt(sp)} duplicates merged · Bond ${bondRank(sp)} of 5">${'★'.repeat(bondRank(sp))}${'☆'.repeat(5-bondRank(sp))}</span>`;
 const bondNext=sp=>{const c=bondCnt(sp);for(const t of PETBOND)if(c<t)return t;return null};
 const traitVal=sp=>5+Math.min(5,bondRank(sp));          // 5% -> 10%, the whole ladder in five steps
 // What the fighting pets add to a stat. Distinct species only: a save that somehow holds two
@@ -2426,6 +2428,48 @@ const uid=()=>Date.now()+Math.random(),rnd=(a,b)=>a+Math.random()*(b-a),ri=(a,b)
 // One roll fills both slots. The second pick is made from the skills the first did not take, so
 // the two can never match and there is no retry loop to spin if the dice are pinned.
 const PET_SKILL_WEIGHTS=[.35,.35,1,1,1,1,1,1,1,1,1,1],rollPetSkills=()=>{const a=pickW(PET_SKILL_WEIGHTS),rest=PET_SKILL_WEIGHTS.map((w,i)=>i).filter(i=>i!==a),b=rest[pickW(rest.map(i=>PET_SKILL_WEIGHTS[i]))];return[PET_SKILLS[a].id,PET_SKILLS[b].id]};
+// ---------- auto-sell rules: shared by live drops, offline drops and bag previews ----------
+const AUTOSELL_SLOTS=['weapon','armor','head','off','leg','acc'],AUTOSELL_WEAPONS=['sword','dagger','katar','bow','staff','mace','axe'];
+const AUTOSELL_AFFIXES=['str','agi','dex','luk','int','vit','hp','atk','matk','crit','aspd','flee','cdm','move'];
+const defaultAutoSellRules=()=>({version:1,slots:[],weapons:[],names:[],affixes:[],mode:'any',refined:true,socketed:true,minEmpty:0});
+function cleanAutoSellRules(raw){
+  if(raw===undefined)return defaultAutoSellRules();
+  if(!raw||typeof raw!=='object'||Array.isArray(raw)||raw.version!==1)return null;
+  const out=defaultAutoSellRules();
+  for(const [key,allowed] of [['slots',AUTOSELL_SLOTS],['weapons',AUTOSELL_WEAPONS]]){
+    if(!Array.isArray(raw[key])||raw[key].some(x=>!allowed.includes(x)))return null;
+    out[key]=[...new Set(raw[key])];
+  }
+  if(!Array.isArray(raw.names)||raw.names.length>100||raw.names.some(x=>typeof x!=='string'||!x.trim()||x.length>150))return null;
+  out.names=[...new Set(raw.names.map(x=>x.trim()))];
+  if(!Array.isArray(raw.affixes)||raw.affixes.length>AUTOSELL_AFFIXES.length||raw.affixes.some(a=>!a||!AUTOSELL_AFFIXES.includes(a.k)||typeof a.min!=='number'||!Number.isFinite(a.min)||a.min<0||a.min>100000))return null;
+  if(new Set(raw.affixes.map(a=>a.k)).size!==raw.affixes.length)return null;
+  out.affixes=raw.affixes.map(a=>({k:a.k,min:a.min}));
+  if(!['any','all'].includes(raw.mode)||typeof raw.refined!=='boolean'||typeof raw.socketed!=='boolean'||!Number.isInteger(raw.minEmpty)||raw.minEmpty<0||raw.minEmpty>10)return null;
+  return {...out,mode:raw.mode,refined:raw.refined,socketed:raw.socketed,minEmpty:raw.minEmpty};
+}
+function autoSellReason(it,state=S){
+  if(!it||it.card||it.ore)return 'Not equipment';
+  if(it.locked)return 'Locked';
+  if(Object.values(state.eq||{}).some(x=>x&&(x===it||String(x.id)===String(it.id))))return 'Equipped';
+  if(state.reforgePending&&String(state.reforgePending.id)===String(it.id))return 'Paid reforge offer';
+  if(Object.values(state.base||{}).some(b=>b&&Object.values(b.eq||{}).some(id=>id!=null&&String(id)===String(it.id))))return 'Saved class loadout';
+  const rules=cleanAutoSellRules(state.autoSellRules);
+  if(!rules)return 'Invalid filters — auto-sell paused';
+  if(!state.autoSell||state.autoSell[rarIdx(it)]!==true)return 'Rarity not selected';
+  if(rules.slots.length&&!rules.slots.includes(it.slot))return 'Equipment slot';
+  if(rules.weapons.length&&!rules.weapons.includes(it.wt))return 'Weapon family';
+  if(rules.names.length&&!rules.names.includes(it.name))return 'Equipment name';
+  if(rules.refined&&(it.r||0)>0)return 'Refined';
+  if(rules.socketed&&(it.cards||[]).length)return 'Socketed';
+  if(rules.minEmpty>0&&Math.max(0,(it.slots||0)-(it.cards||[]).length)>=rules.minEmpty)return 'Empty sockets';
+  if(rules.affixes.length){const matches=rules.affixes.map(a=>(it.aff||[]).some(x=>x.k===a.k&&Number(x.v)>=a.min));
+    if(rules.mode==='all'?matches.every(Boolean):matches.some(Boolean))return 'Keep affixes';}
+  return '';
+}
+const autoSellMatches=it=>!autoSellReason(it);
+// ---------- end auto-sell rules ----------
+
 const fresh=()=>({progressionVersion:PROGRESSION_VERSION,skillVersion:SKILL_VERSION,skillRefund:0,skillRespec:{},pets:[],bond:[],cls:'Novice',sex:'m',hair:0,lv:1,exp:0,hp:100,zeny:0,kills:0,indexXp:0,mobKills:{},equippedTitle:null,shards:0,refineScrolls:0,nmMat:[0,0,0,0,0,0,0,0,0,0],dps:0,trial:{day:trialDay(),used:0,best:0,runs:0},cardIndex:emptyCardIndex(),dmg:0,pts:10,jobs:{Novice:{jl:1,jx:0}},sk:{aid:1},skOff:{},dmgShort:true,dmgShow:true,base:{},mp:0,lvl:1,prog:[1,1,1,1,1],kl:0,auto:true,adv:true,feed:true,clickSell:false,bg:true,autoSell:[false,false,false,false,false,false,false],logOff:{},q:null,cards:[],ore:{ori:0,elu:0},offlineAt:0,offlineKph:0,offlineRateAt:0,offlineRateKills:0,offlineKillRemainder:0,gm:false,gmx:100,
   st:{str:1,agi:1,dex:1,luk:1,int:1,vit:1},eq:{weapon:{id:1,slot:'weapon',wt:'dagger',tier:0,val:5,name:'Novice Knife',aff:[],slots:1,cards:[],sec:0},armor:null,head:null,off:null,leg:null,acc1:null,acc2:null},inv:[]});
 const saveKey=()=>'pg_save3_'+currentUser;
@@ -2461,6 +2505,7 @@ const s=JSON.parse(raw);if(s&&s.lv){const F=fresh(),f=Object.assign(F,s),hadInde
   // v77: six bands now - the N rarity is its own auto-sell tick, so Nightmare gear can be sold on the
   // drop without touching ordinary Legendaries. A save with five entries just gains a false sixth.
   if(!Array.isArray(f.autoSell))f.autoSell=[false,false,false,false,false,false,false];else f.autoSell=[0,1,2,3,4,5,6].map(i=>f.autoSell[i]===true||f.autoSell[i]===1);
+  const sellRules=cleanAutoSellRules(f.autoSellRules);f.autoSellRules=sellRules||defaultAutoSellRules();if(!sellRules)f.autoSell=f.autoSell.map(()=>false);
   if(!f.logOff||typeof f.logOff!=='object'||Array.isArray(f.logOff))f.logOff={};
   for(const k of['str','agi','dex','luk','int','vit'])f.st[k]=Math.max(1,Math.min(MAXST,num_(f.st[k],1)));
   f.ore={ori:num_(f.ore&&f.ore.ori,0),elu:num_(f.ore&&f.ore.elu,0)};
@@ -3468,7 +3513,7 @@ function autoEquip(it){
 }
 function offlineStoreGear(it,r){
   r.items++;r.drops++;
-  if(!it.locked&&autoSellOn(rarIdx(it))){const value=sellVal(it);earnZeny(value);r.zeny+=value;r.autoSold++;qProg('loot');(it.cards||[]).forEach(c=>S.cards.push(c));return}
+  if(autoSellMatches(it)){const value=sellVal(it);earnZeny(value);r.zeny+=value;r.autoSold++;qProg('loot');(it.cards||[]).forEach(c=>S.cards.push(c));return}
   if(S.inv.length>=BAGMAX){r.overflow++;return}
   S.inv.push(it);r.storedItems++;qProg('loot');
   if(S.auto!==false&&canUse(it))autoEquip(it)
@@ -4195,7 +4240,7 @@ function collect(it){
   // v39: auto-sell runs BEFORE the bag cap and before auto-equip for unlocked drops, so a ticked
   // band can never be swallowed by a full bag or worn by accident. Locked gear bypasses the
   // filter, stays protected, and still counts for loot quests - the item was looted.
-  if(!it.locked&&autoSellOn(rarIdx(it))){const v=sellVal(it);earnZeny(v);qProg('loot');(it.cards||[]).forEach(c=>S.cards.push(c));
+  if(autoSellMatches(it)){const v=sellVal(it);earnZeny(v);qProg('loot');(it.cards||[]).forEach(c=>S.cards.push(c));
     log(`Auto-sold [${rarOf(it).n}] ${it.name} (+${v.toLocaleString()}z)`,rarCls(it),'gear,zeny');ui();save();return}
   if(S.inv.length>=BAGMAX){log(`Bag full (${BAGMAX} items): sold nothing, left ${it.name} on the ground.`,'r0','gear');addFloat(pl.x,3,pl.z,'BAG FULL','#ff6b6b',true);ui();return}
   S.inv.push(it);qProg('loot');log(`Picked up [${rarOf(it).n}] ${it.name}`,rarCls(it),'gear');
@@ -4395,8 +4440,8 @@ function changeClass(n){if(classBlock(n))return;
 // ---------- UI ----------
 // Index, Black Market and Leaderboard share an independent dropdown below Quests.
 // instead of taking dock slots. The keys X and V still open them. v91: the World Map tab uses a tower icon.
-const SIDE_TABS=['index','market','board'];
-const TABS={map:['🗼','World Map','M'],status:['📊','Character','S'],job:['🌳','Class Tree','J'],skills:['✨','Skills','K'],bag:['🎒','Inventory','B'],log:['📃','Log','L'],pet:['🐾','Pets','P'],index:['📚','Mastery Index','I'],board:['🏆','Leaderboard','V'],market:['🏪','Black Market','X'],set:['⚙️','Settings','O'],gm:['🛠️','GM Tools','G']};
+const SIDE_TABS=['index','market','board','guide'];
+const TABS={map:['🗼','World Map','M'],status:['📊','Character','S'],job:['🌳','Class Tree','J'],skills:['✨','Skills','K'],bag:['🎒','Inventory','B'],log:['📃','Log','L'],pet:['🐾','Pets','P'],index:['📚','Mastery Index','I'],board:['🏆','Leaderboard','V'],market:['🏪','Black Market','X'],guide:['📖','Build & Farming Guide','H'],set:['⚙️','Settings','O'],gm:['🛠️','GM Tools','G']};
 const expandedPanels=new Set(['map']);
 const minimizedPanels=new Set();
 const dot=k=>{if(!S)return false;if(k==='status')return S.pts>0;if(k==='skills')return skpAvail()>0;if(k==='quest')return!!(S.q&&S.q.some(q=>q.prog>=q.goal));if(k==='cards')return S.cards.length>0;if(k==='index'){const rank=HUNT_TITLES.findIndex(t=>t.id===S.equippedTitle);return cardMasteryAvailable()>0||HUNT_TITLES.some((t,i)=>i>rank&&titleUnlocked(t))}return false};
@@ -4490,6 +4535,40 @@ function gmPetTest(mode){
   }
   ui();save();
 }
+let autoSellDraft=null,autoSellPreview=null;
+function sellDraft(){if(!autoSellDraft||autoSellDraft.owner!==S)autoSellDraft={owner:S,rules:cleanAutoSellRules(S.autoSellRules)||defaultAutoSellRules()};return autoSellDraft.rules;}
+function autoSellEditor(){const r=sellDraft(),on=(list,k)=>list.includes(k)?'checked':'',preview=autoSellPreview&&autoSellPreview.owner===S?autoSellPreview:null;
+  return `<details class="autosell-editor" data-ui-disclosure="bag-sell-filters"><summary>Equipment &amp; keep filters</summary><p class="sell-help">Match every selected category. Within a category, match any selection. Empty equipment filters mean all equipment. Save filters to apply them to drops, offline loot and previews.</p>
+  <div class="row"><small>Presets (edit before saving):</small><button data-a="sellpreset" data-v="physical">Physical</button><button data-a="sellpreset" data-v="caster">Caster</button><button data-a="sellpreset" data-v="collector">Collector</button></div>
+  <fieldset><legend>Sell these equipment slots</legend><div class="sell-options">${AUTOSELL_SLOTS.map(k=>`<label><input type="checkbox" data-sell-field="slots" value="${k}" ${on(r.slots,k)}> ${SLOTS[k].label}</label>`).join('')}</div></fieldset>
+  <fieldset><legend>Weapon families (optional)</legend><div class="sell-options">${AUTOSELL_WEAPONS.map(k=>`<label><input type="checkbox" data-sell-field="weapons" value="${k}" ${on(r.weapons,k)}> ${k}</label>`).join('')}</div><small>Choosing a family keeps all non-weapons.</small></fieldset>
+  <label class="sell-label">Exact equipment names (optional, one per line)<textarea data-sell-field="names" rows="2" placeholder="Leave blank for all names">${esc(r.names.join('\n'))}</textarea></label>
+  <fieldset><legend>Keep useful affixes</legend><label>Keep when <select data-sell-field="mode"><option value="any" ${r.mode==='any'?'selected':''}>any chosen affix matches</option><option value="all" ${r.mode==='all'?'selected':''}>all chosen affixes match</option></select></label><small>Minimums use the value printed on the equipment affix. 0 keeps any roll of that affix.</small>
+  <div class="sell-affixes">${AUTOSELL_AFFIXES.map(k=>{const a=r.affixes.find(x=>x.k===k);return `<label><span><input type="checkbox" data-sell-affix="${k}" ${a?'checked':''}> ${AL[k]||k}</span><input type="number" data-sell-min="${k}" aria-label="Minimum ${AL[k]||k} to keep" min="0" max="100000" step="0.1" value="${a?a.min:0}" ${a?'':'disabled'}></label>`}).join('')}</div></fieldset>
+  <fieldset><legend>Keep valuable gear</legend><div class="sell-options"><label><input type="checkbox" data-sell-field="refined" ${r.refined?'checked':''}> Refined gear</label><label><input type="checkbox" data-sell-field="socketed" ${r.socketed?'checked':''}> Socketed gear</label></div><label>Keep at least <input type="number" data-sell-field="minEmpty" aria-label="Minimum empty sockets to keep" min="0" max="10" step="1" value="${r.minEmpty}"> empty sockets (0 = off)</label></fieldset>
+  <p class="sell-help">Auto-sell always keeps locked gear, equipped gear, saved class loadouts and items with a paid reforge offer. Auto-sell runs before auto-equip; matching new drops sell immediately.</p>
+  <div class="row"><button data-a="sellrulesapply">Save filters</button><button data-a="sellrulescancel">Discard edits</button></div></details>
+  ${preview?`<section class="sell-preview"><b>Sale preview · saved rules</b><p>${preview.ids.length} item${preview.ids.length===1?'':'s'} · ${preview.zeny.toLocaleString()}z</p><small>${esc(preview.kept)}</small><details data-ui-disclosure="bag-sell-preview"><summary>Review matching items</summary><div class="sell-preview-list">${preview.rows.map(x=>`<div><span>${esc(x.name)}</span><b>${x.value.toLocaleString()}z</b></div>`).join('')||'<p>No matches.</p>'}</div></details><small>Only these items can sell. Each is checked again against your current rules and protections when you confirm.</small><div class="row"><button data-a="sellconfirm" ${preview.ids.length?'':'disabled'}>Confirm sale</button><button data-a="sellcancel">Cancel</button></div></section>`:''}`;
+}
+function previewAutoSell(){const list=S.inv.filter(autoSellMatches),reasons={};for(const it of S.inv){const why=autoSellReason(it);if(why)reasons[why]=(reasons[why]||0)+1;}
+  autoSellPreview={owner:S,ids:list.map(it=>it.id),rows:list.map(it=>({name:iname(it),value:sellVal(it)})),zeny:list.reduce((z,it)=>z+sellVal(it),0),kept:Object.entries(reasons).map(([k,n])=>`${n} kept: ${k}`).join(' · ')};ui();
+}
+function confirmAutoSell(){const p=autoSellPreview;autoSellPreview=null;if(!p||p.owner!==S)return;
+  let n=0,z=0;for(const id of p.ids){const i=S.inv.findIndex(it=>String(it.id)===String(id));if(i<0)continue;const it=S.inv[i];if(!autoSellMatches(it))continue;
+    S.inv.splice(i,1);z+=sellVal(it);n++;(it.cards||[]).forEach(c=>S.cards.push(c));}
+  earnZeny(z);if(selB&&!S.inv.some(it=>String(it.id)===String(selB)))selB=null;log(`Sold ${n} matching item${n===1?'':'s'} (+${z.toLocaleString()}z).`,'r3','gear,zeny');ui();save();
+}
+function editSellFilter(el){const r=sellDraft(),key=el.dataset.sellField;
+  if(key==='slots'||key==='weapons'){r[key]=r[key].filter(x=>x!==el.value);if(el.checked)r[key].push(el.value);}
+  else if(key==='names')r.names=el.value.split('\n').map(x=>x.trim()).filter(Boolean);
+  else if(key==='mode')r.mode=el.value;
+  else if(key==='refined'||key==='socketed')r[key]=el.checked;
+  else if(key==='minEmpty')r.minEmpty=Number(el.value);
+  else if(el.dataset.sellAffix){const k=el.dataset.sellAffix;r.affixes=r.affixes.filter(a=>a.k!==k);if(el.checked)r.affixes.push({k,min:0});}
+  else if(el.dataset.sellMin){const a=r.affixes.find(a=>a.k===el.dataset.sellMin);if(a)a.min=Number(el.value);}
+  if(el.type==='checkbox'||el.tagName==='SELECT')renderWin();
+}
+
 const V={
   map(){const F=fieldOf(mapM,mapL),mp=MAPS[mapM],pr=S.prog[mapM],nmo=nmMapOpen(mapM),cap=Math.max(pr,nmMaxFor(mapM));
     // The map tab is a compact 450px, two-band panel: pick a map on the top band, walk its fields on the
@@ -4573,14 +4652,14 @@ const V={
         <button data-a="skill" data-v="${s.id}" aria-label="Increase ${s.n}" title="${L<s.max?'level '+(L+1)+' costs '+skCost(L+1)+' points':'max level'}" ${av>=skCost(L+1)&&L<s.max?'':'disabled'}>${L<s.max?'+'+skCost(L+1):'MAX'}</button></div>`}).join('')}${from==='Novice'?skMasterTile():''}</div>`:''}).join('')
     +`<button class="full" data-a="rskill" ${rcost()&&S.zeny<rcost()?'disabled title="You need '+rcost().toLocaleString()+' Zeny to reset skills"':''}>Reset skills (${rcost()?rcost()+'z':'free below Base 20'})</button>`},
   bag0(){const sel=selB&&S.inv.find(x=>String(x.id)===String(selB));const n=Math.max(30,Math.ceil(S.inv.length/6)*6);const inv=S.inv.map((it,i)=>({it,i})).sort((a,b)=>{const af=!!eqPick&&slotAccepts(eqPick,a.it),bf=!!eqPick&&slotAccepts(eqPick,b.it);return Number(bf)-Number(af)||Number(!!b.it.locked)-Number(!!a.it.locked)||a.i-b.i}).map(x=>x.it);
-    const detail=sel?`<div class="mob-card grid-detail">${itemDetail(sel)}<div class="row" style="margin-top:6px"><button data-a="equip" data-v="${sel.id}" ${canUse(sel)?'':'disabled'}>Equip</button><button data-a="sell" data-v="${sel.id}">Sell ${sellVal(sel)}z</button><button class="tick${sel.locked?' on':''}" data-a="lockgear" data-v="${sel.id}" aria-pressed="${!!sel.locked}" title="Locked gear stays pinned and protected from auto-sell">${sel.locked?'&#9733; Unlock':'☆ Lock'}</button><button class="tick${autoSellOn(rarIdx(sel))?' on':''}" data-a="autosell" data-v="${rarIdx(sel)}" title="Auto-sell every ${rarOf(sel).n} item on drop">Auto-sell ${rarOf(sel).n}</button></div></div>`:'';
+    const detail=sel?`<div class="mob-card grid-detail">${itemDetail(sel)}<div class="row" style="margin-top:6px"><button data-a="equip" data-v="${sel.id}" ${canUse(sel)?'':'disabled'}>Equip</button><button data-a="sell" data-v="${sel.id}">Sell ${sellVal(sel)}z</button><button class="tick${sel.locked?' on':''}" data-a="lockgear" data-v="${sel.id}" aria-pressed="${!!sel.locked}" title="Locked gear stays pinned and protected from auto-sell">${sel.locked?'&#9733; Unlock':'☆ Lock'}</button><button class="tick${autoSellOn(rarIdx(sel))?' on':''}" data-a="autosell" data-v="${rarIdx(sel)}" title="Toggle ${rarOf(sel).n} drops that match your saved filters">Auto-sell ${rarOf(sel).n}</button></div></div>`:'';
     return (eqPick?equipChooser(eqPick):'')
     +`<div class="bag-top"><div class="row"><span class="chip">Oridecon <b>${S.ore.ori}</b></span><span class="chip">Elunium <b>${S.ore.elu}</b></span></div><span class="bag-count">${S.inv.length}/${BAGMAX} items</span></div>
     <label class="bag-auto" title="Higher base-value drops equip automatically. Cards and affixes are not compared, including for a second dagger."><input type="checkbox" data-a="auto" ${S.auto!==false?'checked':''}> Auto-equip higher base value</label>
     <details class="bag-tools" data-ui-disclosure="bag-selling" ${clickSellOn()?'open':''}><summary>Selling &amp; automation${clickSellOn()?' · Quick sell ON':''}</summary><div class="mob-card sellbox"><div class="hd">Selling tools</div>
-      <div class="row"><small>Auto-sell on drop:</small>${RARALL.map((r,i)=>`<button class="tick${autoSellOn(i)?' on':''}" data-a="autosell" data-v="${i}" aria-pressed="${autoSellOn(i)}" title="Sell every ${r.n} item the moment it drops">${r.n}</button>`).join('')}</div>
-      <div class="row" style="margin-top:4px"><button data-a="sellnow" ${S.inv.some(i=>!i.locked&&autoSellOn(rarIdx(i)))?'':'disabled'}>Sell matching now</button><button class="tick${clickSellOn()?' on':''}" data-a="clicksell" aria-pressed="${clickSellOn()}">Click-sell: ${clickSellOn()?'ON':'OFF'}</button></div>
-      <small>${clickSellOn()?'<b class="r0">Click-sell is ON</b> - the next unlocked bag item you click is sold instantly.':'Ticked rarities are sold the moment they drop, so they never enter the bag. Click-sell turns a single click in the grid into an instant sale.'}</small><small>&#9733; Locked gear stays at the top and is skipped by auto/bulk sell. Manual Sell asks you to confirm unlocking it.</small></div></details>
+      <div class="row"><small>Auto-sell on drop:</small>${RARALL.map((r,i)=>`<button class="tick${autoSellOn(i)?' on':''}" data-a="autosell" data-v="${i}" aria-pressed="${autoSellOn(i)}" title="Sell ${r.n} drops that match your saved filters">${r.n}</button>`).join('')}</div>
+      <div class="row" style="margin-top:4px"><button data-a="sellnow" ${S.inv.some(autoSellMatches)?'':'disabled'}>Preview matching sale</button><button class="tick${clickSellOn()?' on':''}" data-a="clicksell" aria-pressed="${clickSellOn()}">Click-sell: ${clickSellOn()?'ON':'OFF'}</button></div>
+      <small>${clickSellOn()?'<b class="r0">Click-sell is ON</b> - the next unlocked bag item you click is sold instantly.':'Ticked rarities sell on drop only when saved filters match. Keep rules take priority. Click-sell turns a single click in the grid into an instant sale.'}</small><small>&#9733; Locked gear stays at the top and is skipped by auto/bulk sell. Manual Sell asks you to confirm unlocking it.</small>${autoSellEditor()}</div></details>
     ${S.inv.length>=BAGMAX?'<div class="row"><small class="r4">BAG FULL</small></div>':''}
     <div class="bag-key" aria-label="Equipment rarities">${RARALL.map((r,i)=>`<span class="r${i}">${r.n}</span>`).join('')}</div>
     <div class="grid${clickSellOn()?' sellmode':''}">${Array.from({length:n},(_,i)=>{const it=inv[i];if(!it)return'<div class="cell empty"></div>';
@@ -4615,7 +4694,7 @@ const V={
     +dpsPanel()+EQK.map(([k,l])=>{const it=S.eq[k];if(!it)return'';const r=it.r||0,o=it.slot==='weapon'?'ori':'elu',c=refCost(it);
       return`<div class="slot" style="align-items:flex-start;gap:10px;margin-top:6px">${cell(it,false)}<div style="flex:1"><b class="${rarCls(it)}">${iname(it)}</b> <small>${l}</small><br><small>${SLOTS[it.slot].stat} +${ev(it)} &rarr; +${Math.round(it.val*(1+(r+1)*.15))} &middot; ${r>=10?'MAX':'Success '+refCh(it)+'% &middot; '+c.toLocaleString()+'z + '+refOre(it)+' '+ORE[o]}</small><br><button data-a="refine" data-v="${k}" ${r>=10||S.ore[o]<refOre(it)||S.zeny<c?'disabled':''}>Refine</button></div></div>`}).join('')},
   pet(){const P=S.pets,A=P.filter(p=>p.on).length,p=gp(selP);
-    return`<div class="hd">Pets <small>Fighting ${A}/3 &middot; Collection ${P.length}</small></div><small>Pets drop from monsters, and every species has a signature passive - a duplicate folds into the copy you own and raises that species' Bond. Drop odds per map are on the World Map.</small><div class="grid" style="margin-top:6px">${P.map(q=>{const sp=PETS[q.sp];return`<div class="cell b${RCL[sp.r]}${selP===q.id?' sel':''}" style="font-size:30px" data-a="selp" data-v="${q.id}">${petIcon(sp)}${q.on?'<i class="rf" style="left:2px;right:auto;top:2px;bottom:auto;font-style:normal">ON</i>':''}${q.mut?`<i class="rf">G${q.mut}</i>`:''}${bondRank(q.sp)?`<i class="rf" style="left:2px;right:auto;top:auto;bottom:2px">B${bondRank(q.sp)}</i>`:''}</div>`}).join('')||'<small>No pets yet.</small>'}</div>`+(p?petDetail(p):'<small>Select a pet to manage it.</small>')},
+    return`<div class="hd">Pets <small>Fighting ${A}/3 &middot; Collection ${P.length}</small></div><small>Pets drop from monsters, and every species has a signature passive - a duplicate folds into the copy you own and raises that species' Bond. Drop odds per map are on the World Map.</small><div class="grid" style="margin-top:6px">${P.map(q=>{const sp=PETS[q.sp];return`<div class="cell b${RCL[sp.r]}${selP===q.id?' sel':''}" style="font-size:30px" data-a="selp" data-v="${q.id}">${petIcon(sp)}${q.on?'<i class="rf" style="left:2px;right:auto;top:2px;bottom:auto;font-style:normal">ON</i>':''}${q.mut?`<i class="rf">G${q.mut}</i>`:''}<span class="pet-bond-badge">${bondStars(q.sp)}</span></div>`}).join('')||'<small>No pets yet.</small>'}</div>`+(p?petDetail(p):'<small>Select a pet to manage it.</small>')},
   board(){const labels={daily:'Daily',weekly:'Weekly',all:'All-time'},data=boardCache[boardPeriod],esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
     const periods=['daily','weekly','all'],entries=data&&Array.isArray(data.entries)?data.entries:[];
     const rows=entries.map((r,i)=>`<div class="board-row"><span class="board-rank">${i+1}</span><b title="${esc(r.name)}">${esc(r.name)}</b><span class="board-level">Lv ${Math.max(1,Number(r.level)||1)}</span><strong class="board-kills">${Math.max(0,Number(r.kills)||0).toLocaleString()} kills</strong></div>`).join('');
@@ -4649,11 +4728,12 @@ const V={
     <div class="hd" style="margin-top:10px">Test pets</div><div class="row">${RN.map((n,i)=>`<button data-a="gmp" data-v="${i}">+ ${n} pet</button>`).join('')}</div><div class="row" style="margin-top:6px"><button data-a="gmbond" data-v="1">+1 duplicate on the selected pet (Bond)</button><button data-a="gmbond" data-v="5">+5 duplicates</button></div><div class="row" style="margin-top:6px"><button data-a="gmm" data-v="4">All pets G4</button><button data-a="gmm" data-v="6">All pets G6</button><button data-a="gmpet" data-v="g6dps">Max G6 DPS pet</button><button data-a="gmpet" data-v="g6buff">Max G6 + buff slot</button><button data-a="gmpet" data-v="g6utility">Max G6 utility slots</button><button data-a="gmpet" data-v="clear">Clear pets</button></div>`}};
 // v90: the Black Market panel. Locked until Base Lv 100; ore is bought one at a time and a reforge is
 // offered for every worn piece that has an affix.
-V.market=()=>{const guide=buildGuide(true);if(!bmOpen())return guide+`<p>Black Market opens at Base Lv ${BM_LV}.</p>`;
+V.guide=()=>buildGuide(true);
+V.market=()=>{const guide=`<div class="build-guide"><button data-t="guide">${uiIcon('guide')} Build &amp; farming guide · Upgrade planner</button></div>`;if(!bmOpen())return guide+`<p>Black Market opens at Base Lv ${BM_LV}.</p>`;
 const ores=Object.entries(ORE).map(([o,n])=>`<div class="slot"><b>${n}</b><button data-a="bmore" data-v="${o}" ${S.zeny<BM_ORE?'disabled':''}>Buy 1 · ${BM_ORE.toLocaleString()}z</button></div>`).join('');
 const mats=NM_MAT.map((n,i)=>`<div class="slot"><b>${n}</b><button data-a="bmmat" data-v="${i}" ${S.zeny<BM_MAT_PRICE?'disabled':''}>Buy 1 · ${BM_MAT_PRICE.toLocaleString()}z</button></div>`).join('');
 return guide+`<div class="hd">Black Market · ${S.zeny.toLocaleString()}z</div>`+ores+'<div class="sec">Nightmare materials</div><small>3,000,000z each</small>'+mats+'<div class="sec">Reforge</div>'+reforgePanel()};
-V.index=()=>`<div class="mastery-head"><div class="mastery-emblem">✦</div><div><b>Midgard Mastery Index</b><small>Individual monsters, Index XP and per-card rewards</small></div><span class="mastery-counter">${indexExperience().toLocaleString()} Index XP</span></div><div class="mastery-tabs"><button data-a="indexview" data-v="mobs" class="${indexMode==='mobs'?'on':''}" aria-pressed="${indexMode==='mobs'}">⚔ Mob Index</button><button data-a="indexview" data-v="cards" class="${indexMode==='cards'?'on':''}" aria-pressed="${indexMode==='cards'}">🃏 Card Mastery</button><button data-a="indexview" data-v="guide" aria-pressed="${indexMode==='guide'}">Build &amp; farming guide</button></div>${indexMode==='guide'?buildGuide():indexMode==='mobs'?renderMobIndex():renderCardIndex()}`;
+V.index=()=>`<div class="mastery-head"><div class="mastery-emblem">✦</div><div><b>Midgard Mastery Index</b><small>Individual monsters, Index XP and per-card rewards</small></div><span class="mastery-counter">${indexExperience().toLocaleString()} Index XP</span></div><div class="mastery-tabs"><button data-a="indexview" data-v="mobs" class="${indexMode==='mobs'?'on':''}" aria-pressed="${indexMode==='mobs'}">⚔ Mob Index</button><button data-a="indexview" data-v="cards" class="${indexMode==='cards'?'on':''}" aria-pressed="${indexMode==='cards'}">🃏 Card Mastery</button><button data-t="guide">${uiIcon('guide')} Build &amp; farming guide</button></div>${indexMode==='mobs'?renderMobIndex():renderCardIndex()}`;
 const EQK=[['head','Head','🎩'],['weapon','R.Hand','⚔️'],['armor','Body','🥼'],['off','L.Hand','🛡️'],['acc1','Acc 1','💍'],['leg','Legs','👖'],['acc2','Acc 2','💍']];
 const CFIT={matk:'weapon',move:'acc',hpPct:'armor',def:'armor',mdef:'head',field:'weapon',str:'weapon',dex:'weapon',atk:'weapon',crit:'weapon',cdm:'weapon',agi:'armor',aspd:'armor',flee:'armor',vit:'armor',int:'head',hp:'head',luk:'acc'},CFL={weapon:'Weapons',armor:'Armor, Shield & Legwear',head:'Headgear',acc:'Accessories'};
 const grp=it=>it.slot==='weapon'?'weapon':it.slot==='head'?'head':it.slot==='acc'?'acc':'armor';
@@ -4773,7 +4853,7 @@ function renderCardIndex(){
     }).join('')}`;
 }
 
-const qpSide=()=>`<button data-q="side" class="qp-side-toggle" aria-controls="sideLinks" aria-expanded="${sideOpen}">${uiIcon('index')} Index & market <span class="side-chevron${sideOpen?' open':''}">${uiIcon('chevron')}</span></button><div id="sideLinks" ${sideOpen?'':'hidden'}>${SIDE_TABS.map(k=>`<button data-t="${k}" class="qp-side-tab${tabs.includes(k)?' on':''}" aria-pressed="${tabs.includes(k)}">${uiIcon(k)} ${TABS[k][1]} <small>${TABS[k][2]}</small></button>`).join('')}</div>`;
+const qpSide=()=>`<button data-q="side" class="qp-side-toggle" aria-controls="sideLinks" aria-expanded="${sideOpen}">${uiIcon('index')} Adventurer Hub <span class="side-chevron${sideOpen?' open':''}">${uiIcon('chevron')}</span></button><div id="sideLinks" ${sideOpen?'':'hidden'}>${SIDE_TABS.map(k=>`<button data-t="${k}" class="qp-side-tab${tabs.includes(k)?' on':''}" aria-pressed="${tabs.includes(k)}">${uiIcon(k)} ${TABS[k][1]} <small>${TABS[k][2]}</small></button>`).join('')}</div>`;
 function renderQ(){const e=$('qp'),rail=$('sideRail');if(!S){rail.style.display='none';return}rail.style.display=tabs.length?'none':'flex';e.style.display='block';
   e.innerHTML=`<div class="qp-head"><b>${uiIcon('quest')} Quests</b><div class="qp-actions"><button data-q="t" aria-expanded="${qOpen}" aria-label="${qOpen?'Collapse':'Expand'} quests">${uiIcon(qOpen?'minus':'chevron')}</button></div></div>`+(qOpen?(S.q||[]).map((q,i)=>`<div class="quest-entry"><div>${qTxt(q)}</div><div class="pbar"><i style="width:${Math.min(100,q.prog/q.goal*100)}%"></i></div><div class="quest-reward"><small>${q.prog}/${q.goal} &middot; ${(q.z||0).toLocaleString()}z &middot; ${(q.xp||0).toLocaleString()}xp</small>${q.prog>=q.goal?`<button data-q="c${i}">Claim</button>`:''}</div></div>`).join(''):'');
   $('sideMenu').innerHTML=qpSide();polishIcons(e)}
@@ -4811,7 +4891,8 @@ function foldDupPets(){
 function petDetail(p){const sp=PETS[p.sp],g=p.mut,sk=p.sk||[1,2,3],SL=petSkills(p);
   return`<div class="mob-card" style="margin-top:8px"><div class="hd r${RCL[sp.r]}">${petIcon(sp,true)} ${sp.n} <small>${RN[sp.r]}</small></div><small>Mutation: <b>${g?'Grade '+g+' (x'+MUT[g]+' dmg)':'none (x1)'}</b> &middot; ${petDmg(p).toLocaleString()} dmg every ${petInt(p).toFixed(2)}s</small>`
   +p.eq.map((t,i)=>`<div class="slot"><span><b>${PEQ[i].n} &middot; Level ${t}/${PT.length}</b> <small>(${t?PT[t-1]:'Untrained'})</small><br><small>${PEQ[i].d(t)}</small>${t<PT.length?`<br><small class="r0">${Math.round(PTG[t]*100)}% upgrade success &middot; ${t+2<=PT.length?Math.round(GREAT*100)+'% double upgrade chance on success':'double upgrade unavailable at this level'}</small>`:''}</span><button data-a="peq" data-v="${p.id}:${i}" ${t>=PT.length||S.zeny<peqCostOf(p,t)?'disabled':''}>${t>=PT.length?'MAX':'🎲 '+peqCostOf(p,t).toLocaleString()+'z'}</button></div>`).join('')
-  +`<div class="sec">Signature passive &middot; <b>${PET_TRAIT[p.sp].n}</b></div><small>${PET_TRAIT[p.sp].d(traitVal(p.sp))} while this pet is one of the fighting three. <b>Bond ${bondRank(p.sp)}/5</b>${bondNext(p.sp)?` &middot; ${bondNext(p.sp)-bondCnt(p.sp)} more ${sp.n} folded in reaches Bond ${Math.min(5,bondRank(p.sp)+1)}`:' &middot; maxed'}.<br>A duplicate of a pet you already own is folded into it automatically - the better mutation and gear are kept, a missing skill is merged in, and +1 Bond makes this passive stronger. One pet per species, so nothing is ever wasted.</small>`
+  +`<div class="sec">Signature passive &middot; <b>${PET_TRAIT[p.sp].n}</b></div><small>${PET_TRAIT[p.sp].d(traitVal(p.sp))} while this pet is one of the fighting three. ${bondStars(p.sp)} <b>${bondCnt(p.sp)} duplicates merged</b>${bondNext(p.sp)?` &middot; ${bondNext(p.sp)-bondCnt(p.sp)} more ${sp.n} folded in reaches ${Math.min(5,bondRank(p.sp)+1)} stars`:' &middot; maxed'}.<br>A duplicate of a pet you already own is folded into it automatically - the better mutation and gear are kept, a missing skill is merged in, and the duplicate count increases by one. One pet per species. Each earned star adds 1 percentage point to this signature passive: 5% before bonding, up to 10% at five stars.</small>`
+  +`<div class="sec">Bonding information</div><small>Filled stars show the Bond rank, not the total number of merges. ${PETBOND.map((n,i)=>`${'★'.repeat(i+1)} = ${n} merged duplicate${n===1?'':'s'} · ${6+i}% passive`).join('<br>')}<br>The first copy is your pet; only extra copies count as merges. Bonuses apply while the pet is deployed. Mutation grade (G) and training are separate from bonding.</small>`
   +`<div class="sec">Pet skills &middot; 2 slots</div>`
   +[0,1].map(i=>{const q=SL[i];return q?`<small><b>${q.icon} ${q.n}</b> &middot; ${q.kind==='buff'?'Player buff':q.kind==='aoe'?'AoE attack':q.kind==='single'?'Single-target attack':'Low-impact utility'} &middot; ${q.desc}</small>`:`<small>Slot ${i+1}: <b class="r0">empty</b> - one gacha fills the remaining slot.</small>`}).join('<br>')
   +`<div class="row" style="margin-top:4px"><button data-a="pskill" data-v="${p.id}" ${S.zeny<petSkillCost(p)?'disabled':''}>🎲 ${SL.length>=2?'Reroll both skills':SL.length===1?'Gacha the second skill':'Gacha both skills'} (${petSkillCost(p).toLocaleString()}z)</button></div>`
@@ -4848,7 +4929,7 @@ function arrangePanel(k,root){
   const direct=()=>[...body.children];
   const tabs=q('.atabs');if(tabs)root.prepend(tabs);
   const mode=k==='status'?sub.status:k==='bag'?sub.bag:k;
-  const labels={map:['EXPLORE','World atlas','Choose a destination, then a stage.'],stats:['CHARACTER',S.cls,'Base '+S.lv+' · Job '+jobOf().jl+' · '+S.pts+' stat points'],equip:['CHARACTER','Your loadout','Select a slot to compare, refine or socket.'],job:['PROGRESSION','Class paths','Browse a path. Inspect a class. Make your next move.'],skills:['COMBAT','Skill library',skpAvail()+' points available · '+S.cls],bag:['INVENTORY','Field kit',S.inv.length+' / '+BAGMAX+' items'+(S.inv.length>=BAGMAX?' · BAG FULL':'')+(clickSellOn()?' · CLICK-SELL ACTIVE':'')],cards:['INVENTORY','Card collection',(S.cards||[]).length+' loose cards · select one to socket or sell'],pet:['COMPANIONS','Your party',S.pets.filter(p=>p.on).length+' / 3 in battle · '+S.pets.length+' collected'],market:['TRADE','Black Market',S.zeny.toLocaleString()+' Zeny available'],index:['COLLECTION','Mastery journal','Track discoveries and permanent rewards.'],board:['COMMUNITY','Leaderboard','Your place among the adventurers.'],log:['SESSION','Activity feed','Filter your feed without interrupting the grind.'],set:['PREFERENCES','Make it yours','Appearance, combat display and account controls.'],gm:['ADMINISTRATION','Game tools','Test controls grouped by system.']};
+  const labels={map:['EXPLORE','World atlas','Choose a destination, then a stage.'],stats:['CHARACTER',S.cls,'Base '+S.lv+' · Job '+jobOf().jl+' · '+S.pts+' stat points'],equip:['CHARACTER','Your loadout','Select a slot to compare, refine or socket.'],job:['PROGRESSION','Class paths','Browse a path. Inspect a class. Make your next move.'],skills:['COMBAT','Skill library',skpAvail()+' points available · '+S.cls],bag:['INVENTORY','Field kit',S.inv.length+' / '+BAGMAX+' items'+(S.inv.length>=BAGMAX?' · BAG FULL':'')+(clickSellOn()?' · CLICK-SELL ACTIVE':'')],cards:['INVENTORY','Card collection',(S.cards||[]).length+' loose cards · select one to socket or sell'],pet:['COMPANIONS','Your party',S.pets.filter(p=>p.on).length+' / 3 in battle · '+S.pets.length+' collected'],guide:['HANDBOOK','Build & Farming Guide','Plan your build. Find your next farming target.'],market:['TRADE','Black Market',S.zeny.toLocaleString()+' Zeny available'],index:['COLLECTION','Mastery journal','Track discoveries and permanent rewards.'],board:['COMMUNITY','Leaderboard','Your place among the adventurers.'],log:['SESSION','Activity feed','Filter your feed without interrupting the grind.'],set:['PREFERENCES','Make it yours','Appearance, combat display and account controls.'],gm:['ADMINISTRATION','Game tools','Test controls grouped by system.']};
   const info=labels[mode]||labels[k];
   if(info){const h=make('header','ui-hero');put(h,make('span','ui-eyebrow',info[0]),make('h2','',info[1]),make('p','',info[2]));root.insertBefore(h,body)}
   if(k==='map'){
@@ -4864,7 +4945,7 @@ function arrangePanel(k,root){
     const slots=direct().filter(e=>e.classList.contains('slot')),attrs=slots.filter(e=>e.querySelector('[data-a="stat"]')),combat=slots.find(e=>!e.querySelector('[data-a="stat"]')),reset=q('[data-a="rstat"]');
     const attributes=section('Allocate attributes','ui-attribute-section');put(attributes,put(make('div','ui-attributes'),attrs));
     const metrics=section('Combat overview','ui-metrics');if(combat)put(metrics,[...combat.children]);
-    const notes=direct().filter(e=>e!==combat&&!attrs.includes(e)&&e!==reset);body.replaceChildren(metrics,attributes,fold('Build notes & progression',notes,'build-notes'),fold('Reset attributes',reset,'respec'));
+    const notes=direct().filter(e=>e!==combat&&!attrs.includes(e)&&e!==reset);body.replaceChildren(attributes,metrics,fold('Build notes & progression',notes,'build-notes'),fold('Reset attributes',reset,'respec'));
   }else if(k==='job'){
     const tree=q('.tree'),preview=q('.hair-preview-card'),detail=q('.mob-card'),legend=q('.legend'),restart=q('[data-a="job"][data-v="Novice"].full');
     const paths=section('Six paths. Your next class.','ui-job-paths');
@@ -4909,7 +4990,7 @@ function arrangePanel(k,root){
     if(!bmOpen())return;
     const guide=q('.build-guide'),offer=q('.reforge-offer');const ore=all('.slot').filter(e=>e.querySelector('[data-a="bmore"]')),materials=all('.slot').filter(e=>e.querySelector('[data-a="bmmat"]')),reforge=all('.slot').filter(e=>e.querySelector('[data-a="bmref"]'));
     const notes=direct().filter(e=>!ore.includes(e)&&!materials.includes(e)&&!reforge.includes(e)&&e!==guide&&e!==offer);
-    body.replaceChildren(...[offer,guide&&fold('Build & farming guide · Upgrade planner',guide,'guide')].filter(Boolean),put(section('Refining supplies','ui-store-grid'),ore),fold('Nightmare materials · '+materials.length,put(make('div','ui-store-grid'),materials),'materials'),put(section('Reforge worn equipment','ui-reforge'),reforge.length?reforge:make('p','ui-empty','Wear equipment with affixes to reforge it.')),fold('Market information',notes,'market-notes'));
+    body.replaceChildren(...[offer,guide].filter(Boolean),put(section('Refining supplies','ui-store-grid'),ore),fold('Nightmare materials · '+materials.length,put(make('div','ui-store-grid'),materials),'materials'),put(section('Reforge worn equipment','ui-reforge'),reforge.length?reforge:make('p','ui-empty','Wear equipment with affixes to reforge it.')),fold('Market information',notes,'market-notes'));
   }else if(k==='index'){
     const head=q('.mastery-head'),tabs=q('.mastery-tabs');if(head)head.classList.add('ui-journal-summary');if(tabs)root.insertBefore(tabs,body);
     // Group each named collection section, keeping its controls and catalogue together.
@@ -4932,7 +5013,7 @@ function arrangePanel(k,root){
   }
 }
 
-const DOCK_TABS=['map','status','job','skills','bag','pet','index','market','board','log','set','gm'];
+const DOCK_TABS=['map','status','job','skills','bag','pet','market','log','set','gm'];
 const DOCK_LABEL={map:'World',status:'Character',job:'Jobs',skills:'Skills',bag:'Bag',pet:'Pets',index:'Mastery',market:'Market',board:'Ranks',log:'Log',set:'Settings',gm:'GM'};
 function renderDock(){
   const dock=$('dock'),keys=DOCK_TABS.filter(k=>k!=='gm'||S.gm),current=[...dock.querySelectorAll(':scope > [data-t]')];
@@ -4999,7 +5080,7 @@ function renderWin(anchor){
     expand.dataset.uiExpand=k;expand.innerHTML=uiIcon(expandedPanels.has(k)?'compact':'expand');expand.setAttribute('aria-label',(expandedPanels.has(k)?'Compact ':'Maximize ')+name);expand.setAttribute('aria-pressed',String(expandedPanels.has(k)));expand.title='Toggle compact / expanded layout';
     close.dataset.x=k;close.setAttribute('aria-label','Close '+name);
     const body=win.querySelector('.wbody'),source=V[k]();
-    if(body._panelSource!==source){
+    if(body._panelSource!==source&&!body.querySelector('.autosell-editor input[type=number]:focus,.autosell-editor textarea:focus')){
       const fresh=document.createElement('div');fresh.className=body.className;fresh.innerHTML=source;arrangePanel(k,fresh);polishIcons(fresh);
       if(k!=='index'||!patchJournal(body,fresh)){body.replaceChildren(...fresh.childNodes);body.className=fresh.className;body.dataset.layout=fresh.dataset.layout}
       body._panelSource=source;body.dataset.panelChanged='1';
@@ -5063,12 +5144,12 @@ const ACT={
   rskill:()=>{const c=rcost();if(S.zeny<c)return denied(c,'skills');S.zeny-=c;S.sk={aid:1};S.skOff={};S.skRepair=0;log('Skills reset'+(c?' -'+c.toLocaleString()+'z':'')+'; every skill auto-casts again.','','skill');ui();save()},
   selb:v=>{selB=v;renderWin()},equip:id=>equip(+id),sell:id=>sell(id),
   autosell:v=>{const t=Math.max(0,Math.min(RARALL.length-1,+v||0));if(!Array.isArray(S.autoSell))S.autoSell=[false,false,false,false,false,false,false];S.autoSell[t]=!S.autoSell[t];
-    log(`${RARALL[t].n} items will ${S.autoSell[t]?'be sold automatically the moment they drop':'stay in the bag'}.`,S.autoSell[t]?'r3':'','gear');ui();save()},
+    log(`${RARALL[t].n} items will ${S.autoSell[t]?'be sold on drop when saved filters match':'stay in the bag'}.`,S.autoSell[t]?'r3':'','gear');ui();save()},
   lockgear:id=>toggleGearLock(id),
-  sellnow:()=>{const list=S.inv.filter(i=>!i.locked&&autoSellOn(rarIdx(i))).slice();if(!list.length)return log('No unlocked bag item matches the rarities you ticked. Locked gear stays safe.','r0','gear');
-    let z=0;for(const i of list){z+=sellVal(i);(i.cards||[]).forEach(c=>S.cards.push(c));const k=S.inv.indexOf(i);if(k>=0)S.inv.splice(k,1)}
-    earnZeny(z);if(selB&&!S.inv.some(x=>String(x.id)===String(selB)))selB=null;
-    log(`Sold ${list.length} matching item${list.length>1?'s':''} (+${z.toLocaleString()}z).`,'r3','gear,zeny');ui();save()},
+  sellnow:()=>previewAutoSell(),sellconfirm:()=>confirmAutoSell(),sellcancel:()=>{autoSellPreview=null;ui()},
+  sellrulesapply:()=>{const rules=cleanAutoSellRules(sellDraft());if(!rules)return log('Check filter values: use valid numbers, up to 100 equipment names and 0–10 empty sockets.','r0','gear');S.autoSellRules=rules;autoSellDraft=null;autoSellPreview=null;save();ui();log('Auto-sell filters saved.','r3','gear')},
+  sellrulescancel:()=>{autoSellDraft=null;renderWin()},
+  sellpreset:v=>{const r=defaultAutoSellRules();if(v==='physical')r.affixes=[{k:'str',min:0},{k:'dex',min:0},{k:'crit',min:0},{k:'cdm',min:0}];else if(v==='caster')r.affixes=[{k:'int',min:0},{k:'matk',min:0}];else if(v==='collector')r.minEmpty=2;else return;autoSellDraft={owner:S,rules:r};renderWin()},
   clicksell:()=>{S.clickSell=!clickSellOn();log(S.clickSell?'Click-sell ON: an unlocked bag item sells on click; locked gear asks to unlock first.':'Click-sell OFF: a click in the bag inspects the item again.',S.clickSell?'r0':'r3','gear');ui();save()},
   quicksell:id=>{const it=S.inv.find(x=>String(x.id)===String(id));if(!it)return;const v=sellVal(it);if(!sell(id))return;log(`Sold ${iname(it)} for ${v.toLocaleString()}z.`,'r3','gear,zeny')},
   // Clicking a green bag tile wears it; the highlight mode stays on so several pieces can be
@@ -5080,7 +5161,7 @@ const ACT={
   sock:v=>{const[id,k]=v.split(':'),i=S.cards.findIndex(c=>String(c.id)===id),e=S.eq[k];if(i<0||!e||(e.cards||[]).length>=(e.slots||0))return;if(!cardFits(S.cards[i],e)){log('That card cannot be fitted into this type of equipment.');return}const why=socketWhy(S.cards[i],e);if(why){log(why,'','card');return}e.cards=e.cards||[];e.cards.push(S.cards.splice(i,1)[0]);S.hp=Math.min(S.hp,maxHp());ui();save()},
   unsock:v=>{const[k,i]=v.split(':'),e=S.eq[k];if(!e)return;const c=e.cards[+i],p=S.freeCardRemoval?0:200*(c.g+1);if(S.zeny<p)return log('Not enough Zeny to remove the card.');S.zeny-=p;e.cards.splice(+i,1);S.cards.push(c);S.hp=Math.min(S.hp,maxHp());ui();save()},
   sellcard:id=>{const i=S.cards.findIndex(c=>String(c.id)===id);if(i<0)return;const c=S.cards.splice(i,1)[0];earnZeny(c.v*150);ui();save()},
-  indexview:v=>{if(v==='mobs'||v==='cards'||v==='guide'){indexMode=v;renderWin()}},
+  indexview:v=>{if(v==='guide'){if(!tabs.includes('guide'))openTab('guide');return}if(v==='mobs'||v==='cards'){indexMode=v;renderWin()}},
   idxmap:v=>{const[tab,raw]=String(v).split(':'),map=+raw;if(tab==='mobs'||tab==='cards'){indexToggleSection(tab,map);renderWin()}},
   titleequip:id=>{if(id==='none'){if(!S.equippedTitle)return;S.equippedTitle=null;log('Hunt title unequipped.','','quest');ui();save();return}
     const title=HUNT_TITLES.find(t=>t.id===id&&titleUnlocked(t));if(!title)return;S.equippedTitle=title.id;log(`Title equipped: ${title.name}.`,'r4','quest');ui();save()},
@@ -5160,7 +5241,8 @@ $('feedFilter').addEventListener('mouseenter',()=>{if(feedFilTimer)clearTimeout(
 $('feedFilter').addEventListener('mouseleave',()=>{if(feedFilShown)feedFilArm()});
 $('feedFilter').addEventListener('focusin',()=>{if(feedFilTimer)clearTimeout(feedFilTimer)});
 $('feedFilter').addEventListener('focusout',()=>{if(feedFilShown)feedFilArm()});
-$('wins').onclick=e=>{const minimize=e.target.closest('[data-ui-minimize]');if(minimize){const k=minimize.dataset.uiMinimize;minimizedPanels.has(k)?minimizedPanels.delete(k):minimizedPanels.add(k);renderWin();return}const expand=e.target.closest('[data-ui-expand]');if(expand){e.stopPropagation();chooserAtPointerDown=null;chooserPointerInside=false;skillPointerInside=false;skillCardPointerInside=false;const k=expand.dataset.uiExpand;minimizedPanels.delete(k);if(expandedPanels.has(k))expandedPanels.delete(k);else expandedPanels.add(k);renderWin();return}const x=e.target.closest('[data-x]');if(x){openTab(x.dataset.x);return}const b=e.target.closest('[data-a]');if(b&&b.dataset.a==='ssel'&&e.target.closest('.sk-autocast'))return;if(b&&!b.disabled&&ACT[b.dataset.a]){if(b.dataset.a==='idxmap'&&e.target.closest('summary'))e.preventDefault();ACT[b.dataset.a](b.dataset.v)}};
+$('wins').addEventListener('change',e=>{if(e.target.matches('[data-sell-field],[data-sell-affix],[data-sell-min]'))editSellFilter(e.target)});
+$('wins').onclick=e=>{const nav=e.target.closest('[data-t]');if(nav&&TABS[nav.dataset.t]){if(!tabs.includes(nav.dataset.t))openTab(nav.dataset.t);return}const minimize=e.target.closest('[data-ui-minimize]');if(minimize){const k=minimize.dataset.uiMinimize;minimizedPanels.has(k)?minimizedPanels.delete(k):minimizedPanels.add(k);renderWin();return}const expand=e.target.closest('[data-ui-expand]');if(expand){e.stopPropagation();chooserAtPointerDown=null;chooserPointerInside=false;skillPointerInside=false;skillCardPointerInside=false;const k=expand.dataset.uiExpand;minimizedPanels.delete(k);if(expandedPanels.has(k))expandedPanels.delete(k);else expandedPanels.add(k);renderWin();return}const x=e.target.closest('[data-x]');if(x){openTab(x.dataset.x);return}const b=e.target.closest('[data-a]');if(b&&b.dataset.a==='ssel'&&e.target.closest('.sk-autocast'))return;if(b&&!b.disabled&&ACT[b.dataset.a]){if(b.dataset.a==='idxmap'&&e.target.closest('summary'))e.preventDefault();ACT[b.dataset.a](b.dataset.v)}};
 // v73: the picker's "inside" is the Bag window AND the Equipment panel that opened it. The
 // Refine button, the card sockets, Unequip and Lock all live in the Equipment panel's detail
 // card, so a click on any of them used to count as "clicked elsewhere" and shut the picker the

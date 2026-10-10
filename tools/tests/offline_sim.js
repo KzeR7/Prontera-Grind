@@ -49,7 +49,7 @@ function harness() {
     const cardVal = () => 1, uid = () => ++state.nextId;
     const pickW = () => 0, PW = [[100]], PETS = [], PET_SKILL_WEIGHTS = [], PET_SKILLS = [], EGG = 1;
   `;
-  const code = config + '\n' + stamp + '\n' + helpers + '\n' + newCardCode + '\n' + simulation + `
+  const code = from('// ---------- auto-sell rules:', '// ---------- end auto-sell rules ----------') + '\n' + config + '\n' + stamp + '\n' + helpers + '\n' + newCardCode + '\n' + simulation + `
     globalThis.api = {
       offlinePlan, offlineRateSample, applyOfflineProgress, offlineAwardKill,
       mapSelection(){return[mapM,mapL]},
