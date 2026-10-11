@@ -328,7 +328,7 @@ t('the Shard Store spends shards and grants the random voucher and scroll exactl
 t('the Refine Scroll has explicit opt-in protection', () => {
   const fn = grab('function refine(sl){', '// ---------- class change ----------');
   assert.ok(fn.includes('S.useRefineScroll')&&fn.includes('S.refineScrolls--'), 'refine checks the option and spends a protecting scroll');
-  assert.ok(src.includes('consumed on every selected attempt'), 'the panel explains consumption');
+  assert.ok(src.includes('one scroll is consumed on every attempt while On, including success'), 'the panel explains opt-in consumption, including successful attempts');
 });
 
 t('the Nightmare Gear Token hands over a real piece from the map you picked', () => {

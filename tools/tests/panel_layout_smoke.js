@@ -69,7 +69,7 @@ for(const [key,prepare] of cases)t(key+' '+prepare+': all original controls, sta
   const signatures=old.map(e=>[e.getAttribute('data-a'),e.getAttribute('data-v'),e.disabled,e.checked]);
   const state=ev('JSON.stringify(S)');
   ev('arrangePanel')(key,root);
-  assert.strictEqual(root.querySelectorAll('[data-a],[data-trial],input,select,canvas').length,old.length);
+  assert.ok(root.querySelectorAll('[data-a],[data-trial],input,select,canvas').length>=old.length,'all original controls plus optional navigation');
   old.forEach((e,i)=>{assert.ok(root.contains(e),'lost '+e.outerHTML.slice(0,120));assert.deepStrictEqual([e.getAttribute('data-a'),e.getAttribute('data-v'),e.disabled,e.checked],signatures[i])});
   assert.strictEqual(ev('JSON.stringify(S)'),state,'composition cannot mutate the save');
   assert.ok(root.querySelector('.ui-hero')&&root.querySelector('.ui-content'));
@@ -83,9 +83,11 @@ t('map has destination, travel and field-guide sections; travel stays outside fo
   assert.ok(root.querySelector('.ui-field-guide .mapcols'));
   assert.ok(!root.querySelector('.ui-field-guide details'), 'drops are visible without opening tabs');
 });
-t('Echo sits between destinations and stages',()=>{
+t('Echo sits below travel inside the atlas center column',()=>{
   const root=window.document.createElement('div');root.innerHTML=ev('V.map()');ev('arrangePanel')('map',root);
-  assert.deepStrictEqual([...root.querySelector('.ui-content').children].map(e=>e.className),['ui-section ui-destinations','ui-section ui-challenge','ui-section ui-route','ui-section ui-field-guide']);
+  assert.deepStrictEqual([...root.querySelector('.ui-content').children].map(e=>e.className),['ui-section ui-destinations','ui-section ui-route','ui-section ui-field-guide']);
+  assert.ok(root.querySelector('.ui-route .ui-challenge [data-trial=lobby]'));
+  assert.ok(root.querySelector('.ui-route #eclipseAtlas'));
 });
 t('kill updates retain live journal rows and focused controls',()=>{
   ev("tabs.splice(0,tabs.length,'index');indexMode='mobs';renderWin()");
@@ -101,7 +103,7 @@ t('quest collapse and the independent navigation dropdown retain separate state'
   ev("tabs.length=0;qOpen=true;sideOpen=true;renderQ()");
   const doc=window.document;
   assert.ok(!doc.querySelector('#qp').contains(doc.querySelector('#sideMenu')));
-  assert.strictEqual(doc.querySelectorAll('#sideMenu [data-t]').length,4);
+  assert.strictEqual(doc.querySelectorAll('#sideMenu [data-t]').length,ev('S.gm?5:4'));
   doc.querySelector('#qp [data-q="t"]').click();
   assert.strictEqual(ev('qOpen'),false);assert.strictEqual(ev('sideOpen'),true);
   assert.strictEqual(doc.querySelector('#sideLinks').hidden,false);
@@ -264,13 +266,13 @@ t('option A colors stay consistent across dock, window heading and quest shortcu
   assert.strictEqual(window.getComputedStyle(quest).color,expected.quest);
   assert.strictEqual(window.getComputedStyle(index).color,expected.index);
 });
-t('attributes precede combat stats and hub keeps removed dock destinations accessible',()=>{
+t('attributes precede combat stats and supporting destinations remain accessible in dock and hub',()=>{
   ev("tabs.splice(0,tabs.length,'status');sub.status='stats';renderWin();renderQ()");
   const root=window.document.querySelector('[data-win="status"] .ui-content');
   assert.ok(root.children[0].classList.contains('ui-attribute-section'));
   assert.ok(root.children[1].classList.contains('ui-metrics'));
   for(const key of ['index','board']){
-    assert.ok(!window.document.querySelector('#dock [data-t="'+key+'"]'));
+    assert.ok(window.document.querySelector('#dock .eclipse-more'));assert.ok(window.document.querySelector('#sideMenu [data-t="'+key+'"]'));assert.equal(window.document.querySelector('#dock [data-t="'+key+'"]'),null);
     assert.ok(window.document.querySelector('#sideLinks [data-t="'+key+'"]'));
   }
   const guide=window.document.querySelector('#sideLinks [data-t="guide"]');

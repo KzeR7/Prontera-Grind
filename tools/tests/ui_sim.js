@@ -480,7 +480,7 @@ t('the Mastery Index tracks monster titles and consumes loose cards for permanen
   assert.ok(h.includes('Card Index available')&&!h.includes('(global max)'),'the loose-card list is renamed and the global-max wording is gone');
   for(const reward of ['hpPct','fleePct','leech','def','mdef','atkPct','matkPct','aspdPct','critPct'])assert.ok(src.includes("id:'"+reward+"'"),reward+' should be an available card mastery reward');
   assert.ok(h.includes('Poring Card')&&h.includes('Mastery 1/5'),'the card album keeps per-card mastery history');
-  assert.ok(src.includes("const SIDE_TABS=['index','market','board','guide']"),'the Quest Board Index button opens the panel');
+  assert.ok(src.includes("const SIDE_TABS=['index','market','board','guide','gm']"),'the Quest Board Index button opens the panel');
   assert.ok(src.includes('id="sideMenu"')&&src.includes("index:['📚','Mastery Index','I']"),'both Quest Board and dock link to the index');
   assert.ok(src.includes('flex-wrap:wrap;justify-content:center')&&src.includes('max-width:calc(100vw - 12px)'),'the expanded dock wraps on narrow screens');
   assert.ok(src.includes('recordMonsterKill(mob)')&&src.includes('data-a="titleequip"'),'kills are recorded and titles can be equipped from the view');
@@ -506,7 +506,7 @@ t('clicking a slot highlights the fit in the REAL bag tab - no extra pop-out', (
   U.eqPick = 'off';
   assert.ok(/shield/i.test(U.V.bag0()), 'the off-hand banner must explain what fits there');
   // and the actual slot click opens that window
-  assert.ok(src.includes("seleq:v=>{selE=v;eqPick=v;sub.bag='bag';if(!tabs.includes('bag'))"), 'clicking a doll slot opens the Bag tab');
+  assert.ok(src.includes("seleq:v=>{selE=v;eclipseInspectBag=false;eqPick=v;sub.bag='bag';if(!tabs.includes('equip')&&!tabs.includes('bag'))"), 'slot selection opens Bag when the combined workbench is closed');
   assert.ok(src.includes("if(k==='status')sub.status='stats';if(k==='bag')sub.bag='bag';"), 'reopening a window resets its sub-tab');
 });
 
@@ -572,8 +572,8 @@ t('Refine, card sockets, Unequip and Lock are inside the picker and never dismis
   assert.ok(src.includes("if(chooserAtPointerDown&&!chooserPointerInside)closeEquipmentChooser(true)"),
     'only a click outside both windows dismisses the picker');
   // the controls that used to close it all live in that window's detail card
-  assert.ok(src.includes('const detail=`<div class="doll-detail">${sel?itemMain(sel)+refineUI(sel,selE)+cardSlots(sel,selE)+insertUI(sel)+`<div class="row" style="margin-top:6px"><button data-a="unequip"'),
-    'Refine, the card sockets and Unequip sit in the Equipment window');
+  assert.ok(src.includes('itemMain(sel)+refineUI(sel,selE)') && src.includes('cardSlots(sel,selE)+insertUI(sel)') && src.includes('class="eclipse-native-sockets"') && src.includes('data-a="unequip"'),
+    'Refine, native socket controls and Unequip remain inside the Equipment renderer');
   assert.ok(src.includes('data-a="refine" data-v="${k}"')&&src.includes('data-a="lockgear"'),
     'the Refine and Lock buttons are part of that same card');
   // the ✕ on the picker banner and the dock tabs still close it (openTab clears eqPick)
@@ -649,7 +649,7 @@ t('HP flips at 30%; one split bar fills Base from left and Job from right with c
   assert.ok(src.includes('#hpb.critical{background:linear-gradient('),'low HP must use a red treatment');
   const box={};vm.createContext(box);
   vm.runInContext(`
-    const nodes={};const $=id=>nodes[id]||(nodes[id]={style:{},textContent:'',title:'',attrs:{},
+    const nodes={};const $=id=>nodes[id]||(nodes[id]={children:[],style:{},textContent:'',title:'',attrs:{},
       classList:{flags:{},toggle(k,v){this.flags[k]=v}},setAttribute(k,v){this.attrs[k]=v}});
     let S={lv:20,exp:90,hp:31,kills:0,zeny:0},hudRate=null,zenyEarned=0,expEarned=0,currentUser='A';
     const HUNT_TITLES=[{id:'field-scout',name:'Field Scout',kills:500}],titleUnlocked=t=>S.kills>=t.kills;
@@ -658,7 +658,7 @@ t('HP flips at 30%; one split bar fills Base from left and Job from right with c
     ${grab('const PET_SKILLS=[', 'const petDmg=')}
     const performance={now:()=>1000},job={jl:10,jx:45},jobOf=()=>job,C=()=>({mj:50}),maxHp=()=>100,
       jneed=()=>100,need=()=>200;
-    const applyDisplay=()=>{};
+    const applyDisplay=()=>{},safeCount=n=>Math.max(0,Number(n)||0),eclipseSetMarkup=(node,html)=>{node.innerHTML=html};
     ${grab('const HUD_RATE_WINDOW=60000,HUD_IDLE_RESET=30000,HUD_RATE_REFRESH=1000;','function ui(anchor){')}
     bars();this.__h={nodes,S,job,bars};
   `,box);
@@ -797,7 +797,7 @@ t('Zeny and kill rates refresh every second using a rolling minute and reset aft
   assert.ok(src.includes('.hud-zeny:hover .hud-flyout'),'Zeny tooltip must open on hover without browser title delays');
   assert.ok(src.includes("$('zenyRate').textContent=`Zeny earned:"),'tooltip must display a live rate');
   assert.ok(src.includes('Kills/min <b id="kills"'),'kills rate must replace lifetime count');
-  assert.ok(src.includes('<div>DPS <b id="dps"'),'a DPS readout must sit beside the kill rate');
+  assert.ok(src.includes('<div class="eclipse-dps-meter">DPS <b id="dps"'),'a DPS readout must sit beside the kill rate');
   assert.ok(src.includes("dpsEl.title=`Damage per second"),'the DPS readout needs a live tooltip');
   assert.ok(src.includes('S.dmg=(S.dmg||0)+d'),'strike() and hurt() must bank every point of damage');
   const box={};vm.createContext(box);
@@ -1040,9 +1040,9 @@ t('Adventurer Hub owns mastery, rankings and guide shortcuts', () => {
   assert.ok(h.includes('qp-side-tab on'), 'an open window is marked on its button');
   bm.tabs.length = 0; bm.setSide(false);
   const dock=grab('const DOCK_TABS=', 'function renderWin(anchor){');
-  assert.ok(dock.includes("'pet','market','log'") && dock.includes('ui-nav-label'),
-    'Market remains in the dock while Mastery and Ranks use the hub');
-  assert.ok(h.includes('Adventurer Hub') && h.includes('data-t="guide"'), 'guide has its own hub entry');
+  assert.ok(dock.includes("'market'")&&dock.includes('More destinations') && dock.includes('ui-nav-label'),
+    'Market and the More menu remain accessible from the dock');
+  assert.ok(h.includes('More destinations') && h.includes('data-t="guide"'), 'guide has its own hub entry');
   assert.ok(dock.includes("dock.scrollLeft=left") && dock.includes("current.some((b,i)=>b.dataset.t!==keys[i])"),
     'routine redraws retain the live dock and its horizontal position');
   assert.ok(src.includes("market:['🏪','Black Market','X']") && src.includes("board:['🏆','Leaderboard','V']"),
@@ -1092,9 +1092,9 @@ t('v90 Black Market: locked under Base Lv 100, then sells ore and reforges one a
   h=U.V.market();
   assert.ok(h.includes('data-a="bmore" data-v="ori"')&&h.includes('data-a="bmore" data-v="elu"'),'Oridecon and Elunium are both for sale from Base Lv 100');
   assert.ok(h.includes('100,000z'),'ore is priced at 100,000z');
-  assert.ok(h.includes('data-a="bmref" data-v="armor:all"'),'a worn piece with affixes can be reforged');
-  assert.ok(h.includes('Full · 1,050,000z'),'an N+ piece costs rarity 6 + 1 times 150,000z to reforge');
-  assert.ok(!h.includes('data-a="bmref" data-v="weapon"'),'an empty slot is not offered a reforge');
+  assert.ok(U.V.reforge().includes('data-a="bmref" data-v="armor:all"'),'a worn piece with affixes can be reforged');
+  assert.ok(U.V.reforge().includes('Full · 1,050,000z'),'an N+ piece costs rarity 6 + 1 times 150,000z to reforge');
+  assert.ok(!U.V.reforge().includes('data-a="bmref" data-v="weapon"'),'an empty slot is not offered a reforge');
   // v90.8: the ten Nightmare materials are sold here, one Buy 1 button each
   assert.ok(h.includes('Nightmare materials') && h.includes('3,000,000z each'),'the Nightmare materials are listed and priced at 3,000,000z');
   assert.strictEqual(h.split('data-a="bmmat"').length-1,5,'five material rows, one button each');
@@ -1404,7 +1404,7 @@ t('the damage trial is entered from the map selection, and the lobby offers the 
   assert.ok(!src.includes('.mapband.dungeon{'), 'the old bottom band is gone');
   // the lobby itself: ranked with the tries left, unlimited training, and the Shard Store. The
   // rendered HTML is exercised by trial_sim.js; here the source is pinned.
-  const lobby = grab('function trialLobby(view){', 'function trialShopHtml(){');
+  const lobby = grab('function trialLobby(view){', 'function trialShopHtml(inline=false){');
   assert.ok(lobby.includes('Ranked attempt') && lobby.includes('/2 ranked attempts remain today'), 'ranked shows the tries left');
   assert.ok(lobby.includes('Training · unlimited'), 'training is unlimited');
   assert.ok(lobby.includes('3:00 practice') && lobby.includes('trial-choice-timer">3:00'), 'ranked and practice both state the three-minute duration');
@@ -1432,7 +1432,7 @@ t('pet buffs are icon tiles above the status bar, and the description waits for 
   // the real bars(), with two buffs running and two not
   const box = {}; vm.createContext(box);
   vm.runInContext(`
-    const nodes={};const $=id=>nodes[id]||(nodes[id]={style:{},textContent:'',title:'',attrs:{},
+    const nodes={};const $=id=>nodes[id]||(nodes[id]={children:[],style:{},textContent:'',title:'',attrs:{},
       classList:{flags:{},toggle(k,v){this.flags[k]=v}},setAttribute(k,v){this.attrs[k]=v}});
     let S={lv:20,exp:90,hp:80,kills:0,zeny:0},hudRate=null,zenyEarned=0,expEarned=0,currentUser='A';
     const HUNT_TITLES=[{id:'field-scout',name:'Field Scout',kills:500}],titleUnlocked=t=>S.kills>=t.kills;
@@ -1440,7 +1440,7 @@ t('pet buffs are icon tiles above the status bar, and the description waits for 
     const performance={now:()=>1000},job={jl:10,jx:45},jobOf=()=>job,C=()=>({mj:50}),maxHp=()=>100,
       jneed=()=>100,need=()=>200;
     ${grab('const PET_SKILLS=[', 'const petDmg=')}
-    const applyDisplay=()=>{};
+    const applyDisplay=()=>{},safeCount=n=>Math.max(0,Number(n)||0),eclipseSetMarkup=(node,html)=>{node.innerHTML=html};
     ${grab('const HUD_RATE_WINDOW=60000,HUD_IDLE_RESET=30000,HUD_RATE_REFRESH=1000;', 'function ui(anchor){')}
     bars();this.__b={nodes};
   `, box);
@@ -1816,7 +1816,7 @@ t('the Refine panel displays the protection reserve and option', () => {
   const h = U.V.refine();
   assert.ok(h.includes('Refine Scrolls: 3'), 'the saved placeholder count is visible in the Refine panel');
   assert.ok(h.includes('refprotect'), 'the panel offers a protection toggle');
-  assert.ok(h.includes('consumed on every selected attempt'), 'the panel explains consumption on every selected attempt');
+  assert.ok(h.includes('consumed on every attempt while On'), 'the panel explains consumption on every selected attempt');
   const fn = grab('function refine(sl){', '// ---------- class change ----------');
   assert.ok(fn.includes('S.useRefineScroll')&&fn.includes('S.refineScrolls--'), 'the refine action checks and consumes protection');
 });
@@ -1914,7 +1914,7 @@ t('the reset buttons explain themselves, refuse on screen, and survive a rebuild
   assert.ok(/host\.scrollTop=outer;/.test(src), 'and puts it back');
   assert.ok(src.includes("const existing=new Map([...host.querySelectorAll(':scope > [data-win]')]")
     && !src.includes('host.replaceChildren(')
-    && src.includes('if(body._panelSource!==source&&!body.querySelector(')
+    && src.includes('if((body._panelSource!==source||body._panelViewKey!==viewKey)&&!body.querySelector(')
     && src.includes("b.scrollTop=k==='log'?1e6:(old[k]||0)"),
     'every tab retains its live window/body, while changed content and both scrollers update safely');
   assert.ok(!src.includes('el.scrollIntoView('), 'nothing calls the browser scrollIntoView() any more');

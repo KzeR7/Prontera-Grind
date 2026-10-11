@@ -6637,3 +6637,72 @@ The owner's second pass over v77, six notes, all built.
 * **Cards:** Owner clarified that all star tiers should give 3–8% actual DPS in representative builds. Effect boosts are now ★ +9%, ★★ +12%, ★★★ +15%. This replaces v103.1's 1/3/5% effects. Merge costs stay 1/3/5 extra identical unstarred copies; existing stars automatically use the revised values. GM inspection matches combat.
 * **Try it:** Bag → Cards → select a card → Merge; previews show the new effects. DPS depends on the full equipped card setup and build.
 * **Checks:** New card-star balance suite measures 36 cases across six completed classes, all three star tiers and one/three targets. Each case stays within 3–8% DPS and increases with the next star. Selected feature, save, UI, GM, publishing and balance checks are recorded in the workspace validation record. No push or deployment.
+
+### 2026-10-11 — `grind-v104 Eclipse`
+* **What changed:** Eclipse is now the live interface: edge character and quest panels, a combined equipment/inventory/inspector workbench, and a matching account login. Moonstone is the default; Aurora and Ember are selectable in login and Settings. Original sprite art and gold/blue critical effects remain intact.
+* **Controls:** Equipment has Loadout / Refine / Reforge. Maps contains Endless Echo; Market separates Supplies and Echo store. The central auto-combat bar can collapse without pausing play. Existing account, cloud, backup, admin and game controls remain available.
+* **Drops:** New loot is awarded immediately while an open inventory keeps its order, selected item, focus and scroll. Use the new-drop button to reveal arrivals, or reopen the inventory. Auto-equip and automatic sales still run normally.
+* **Try it:** Sign in, press E, select gear and keep the bag open while farming. Try Refine / Reforge, Maps, Market and Settings; use the minus button above combat progress.
+* **Checks:** 59 regression suites and 8 new integration assertions groups; balance measurements regenerated with identical scenario results. Desktop and phone UI inspected with a temporary renderer stub. Shared-browser WebGL is unavailable, so live 3D combat visual verification remains blocked. Detailed results are in the workspace validation record. Local implementation only; no push or deployment.
+
+### 2026-10-11 — `grind-v104.1 Eclipse alignment`
+* **What changed:** Corrected the live UI against the approved Eclipse design: a single compact window heading, adjoining loadout/inventory/inspector columns, full-width rarity tiles, cropped character portrait and Job progress, compact tabs, stage markers and a map shortcut above quests. Refine and Reforge now use equipment selection, a work area and a separate settings/quote column. Login restores the field scenery, password visibility toggle and phone layout.
+* **Controls:** Original item, card, refinement, reforge and automation controls are retained. New workshop selection refreshes immediately even when the underlying list has not changed. Drop collection still preserves inventory focus, order and scroll.
+* **Try it:** E → Loadout / Refine / Reforge; select different worn pieces in either workshop. Inspect and insert cards, reveal new drops, switch palettes and resize to a phone. Login → Show / Hide password.
+* **Checks:** Twelve affected regression suites pass; nine Eclipse integration groups, 50 desktop and 44 phone browser checks pass. Geometry checked against the approved 240px loadout and 280px inspector columns. Original balance results remain identical after regenerating fingerprints. Login and phone screenshots inspected; 3D visual verification remains blocked by shared-browser WebGL. Layout screenshots use a temporary renderer stub and static scenery; the production combat renderer is unchanged. No push or deployment.
+
+### 2026-10-11 — Eclipse continuation recovery
+* **Recovered:** Restored PR #59's v104.1 Eclipse implementation into this checkout, retaining the uploaded proposal ZIP. This is the unfinished prior integration, not a completed visual redesign.
+* **Try it:** Open the local preview; Moonstone, Aurora and Ember palettes and Equipment / Refine / Reforge are available.
+* **Checks:** Eclipse behavior, general UI, panel composition and publishing suites passed. Login loads in the shared browser; WebGL context creation remains unavailable. Latest approved prototype archive and the reported bug details are still needed for the continuation comparison. No push or deployment.
+
+### 2026-10-11 — `grind-v105 Eclipse completion`
+* **Interface:** Matched the supplied V2 Eclipse workbench proportions, compact phone loadout beside its inspector, inventory rows, named card collection, workshop previews, quest journal, More menu, activity feed and progress footer. Shards, EXP totals, companion icons and the terrain minimap read actual game state. Moonstone, Aurora and Ember remain available. Login retains registration, cloud and backup controls.
+* **Review fixes:** Returned equipment appears immediately; only new field drops await reveal. Market navigation stays visible, its Echo purchases stay inside Market and cannot close a ranked run. Paid Reforge decisions take priority even after changing equipment; the quote includes missing materials. Protection controls appear once, Nightmare stages use five markers, password visibility has a stable accessible name, duplicate inventory IDs resolve consistently, and keyed UI updates reuse indexed nodes.
+* **Try it:** E for Equipment, R for Refine; select Reforge beside it. X → Echo store. More opens Mastery, Rankings, Guide and authorized GM tools. Quest journal → View all objectives. On a phone, loadout and inspection share the top row; inventory follows below.
+* **Checks:** All 59 repository suites passed, including 18 Eclipse regression groups. Build and whitespace checks passed; regenerated balance scenario results were unchanged. Browser checked 13 views at desktop and phone widths, all palettes at 1920px, confirmation, minimization, paid offers and real More-menu clicks. Fixed browser-found layering, visibility and tooltip overflow issues before the final pass.
+* **Limits:** Shared-browser WebGL remains unavailable; screenshots use a temporary renderer stub and synthetic saves. The ZIP has no login or Reforge reference, and its demo Pause action has no counterpart in this always-grinding game. Speed and companion controls retain their real behavior. No sprite or combat-effect artwork changes, push or deployment.
+
+### 2026-10-11 — `grind-v106 Eclipse reference`
+* **Appearance:** Restored the V2 desktop reference's gold accents, gold action gradients and slate window gradients in the default palette. Jobs now opens on your class lineage with a button for all six paths. World atlas has destinations, a terrain preview, stage controls and real drop intelligence in three columns. Supplies uses four large product cards. Pets opens on companion cards, with Change pets and Upgrades & skills tabs.
+* **Refinement:** Success glows and expands a gold ring; failure shakes with a red glow. Both show the actual final rank, including kept ranks from protection. Reduced-motion preferences disable the animation. Costs, odds, protection and saving follow the existing transaction.
+* **Try it:** J → Browse class lineages; M → choose a map and stage; X → Supplies; P → Train & manage; E → Refine. Training totals on pet cards come from their equipment upgrades, not an invented pet level.
+* **Checks:** Navigation, real purchases, pet deployment and every refine outcome covered by Eclipse tests; source control preservation checked by panel tests. Desktop/phone browser and regression results are recorded in workspace validation context. Layout captures use a synthetic save and temporary renderer stub because shared-browser WebGL is unavailable. No push or deployment.
+
+### 2026-10-11 — `grind-v107 Eclipse polish`
+* **Layouts:** Rarity filters now use equipment colors. Class crests have distinct family symbols and promotion details; Jobs is more compact and the browser aligns all six paths in rows. Smaller party cards and compact shop controls avoid unnecessary scrolling. Oridecon and Elunium share a row, with owned counts for supplies and shards. Endless Echo explains the three-minute trial and shard rewards.
+* **Protection:** Refine Scroll protection is On/Off. Only failures at current +5 and above can lower rank. With protection On below +5, confirmation explains that the scroll is unnecessary and asks before spending. Cancel spends nothing; confirmation rechecks equipment and resources. Existing saved threshold values no longer restrict the On setting.
+* **Main screen:** Quests starts collapsed, with gold headings/descriptions when expanded. The portrait is zoomed out; Auto Combat has an explicit Hide/Show button. Zeny/min joins the bottom metrics, DPS has a gold frame, and large displayed rates shorten to K/M/B with full amounts on hover or keyboard focus. Calculations keep their original precision.
+* **Try it:** E → rarity filters or Refine; J → Browse class lineages; P → party; X → Supplies; M → Endless Echo description. Expand Quests or hide Auto Combat on the main field.
+* **Checks:** Behavior, transaction, layout and browser results recorded in workspace validation context. The browser lacks WebGL; main-screen layout captures use a labeled static scenery backdrop in the temporary harness. Production rendering is unchanged. No push or deployment.
+
+### 2026-10-11 — `grind-v108 Eclipse HUD`
+* **Appearance:** Confirmation overlays use neutral charcoal. Quests use ivory objectives, muted supporting text and gold headings/rewards. An ornamental royal gold frame surrounds the whole rate-meter group between Base and Job progress.
+* **Class path:** The current collection damage bonus and its permanent +1% per transcendent class at Base Lv 100 rule are visible in both class views.
+* **Phone:** Removed the HUD portrait, compacted player and auto-combat cards on the left, and placed quests at the top right. Hide/Show and quest actions remain available.
+* **Checks:** Targeted UI and class regression tests, build and browser checks recorded in workspace validation context. Live combat rendering remains limited by shared-browser WebGL. No push or deployment.
+
+### 2026-10-11 — `grind-v109 Eclipse footer`
+* **Appearance:** Replaced the ornamental meter frame with a fine gold line running across the full footer. Rates remain centered between Base and Job progress.
+* **Try it:** View the bottom of the main screen on desktop or phone.
+* **Checks:** Build, whitespace and desktop/phone browser layout checks recorded in workspace validation context. No push or deployment.
+
+### 2026-10-11 — `grind-v110 Eclipse divider`
+* **Appearance:** Made the footer separator visible against its dark background: a brighter metallic gold line with a small diamond at the center.
+* **Try it:** Look above the rates between Base and Job progress on desktop or phone.
+* **Checks:** Build, whitespace and desktop/phone browser checks recorded in workspace validation context. No push or deployment.
+
+### 2026-10-11 — `grind-v111 Eclipse surfaces`
+* **Appearance:** Applied the V2 reference surface gradient to player HUD, Auto Combat, quests, map shortcut, More menu and navigation dock. These panels now share the slate gradient previously used in windows.
+* **Try it:** View the main screen on desktop or phone; expand Quests.
+* **Checks:** Build, whitespace and browser palette/desktop/phone checks recorded in workspace validation context. No push or deployment.
+
+### 2026-10-11 — `grind-v112 Eclipse stability`
+* **Fixes:** New-drop status keeps its space so inventory items stay still. Refinement shows owned ore on its own line; Supplies separates owned quantities from descriptions and refreshes them as drops arrive.
+* **Try it:** Keep Loadout or Supplies open while farming; scroll or type in inventory search. New drops remain hidden until you reveal them.
+* **Checks:** Full regression and desktop/phone layout-stability audit recorded in workspace validation context. Shared-browser live combat graphics remain unavailable; UI tested with a synthetic fixture. No push or deployment.
+
+### 2026-10-11 — v112 font stability follow-up
+* **Appearance:** Font loading keeps text positions stable when a font arrives after a tab opens.
+* **Try it:** Open Character and Refine while assets are loading.
+* **Checks:** Font and repeated-update browser checks recorded in workspace validation context.
