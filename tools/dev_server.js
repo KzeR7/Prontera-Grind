@@ -34,7 +34,9 @@ export function makeD1(sqlite) {
     all: async () => ({ results: stmt.all(...args) }),
     run: async () => ({ success: true, meta: stmt.run(...args) }),
   });
-  return { prepare: sql => wrap(sqlite.prepare(sql)) };
+  return { prepare: sql => wrap(sqlite.prepare(sql)),batch:async statements=>{
+    sqlite.exec('BEGIN IMMEDIATE');try{const out=[];for(const q of statements)out.push(await q.run());sqlite.exec('COMMIT');return out}catch(e){sqlite.exec('ROLLBACK');throw e}
+  } };
 }
 
 export function freshDb(file) {
@@ -44,8 +46,12 @@ export function freshDb(file) {
   if (file) fs.mkdirSync(path.dirname(path.resolve(file)), { recursive: true });
   const sqlite = new DatabaseSync(file || ':memory:');
   const migrations = path.join(root, 'migrations');
+  sqlite.exec('CREATE TABLE IF NOT EXISTS dev_migrations(name TEXT PRIMARY KEY)');
   for (const name of fs.readdirSync(migrations).filter(n => /^\d+_.*\.sql$/.test(n)).sort()) {
-    sqlite.exec(fs.readFileSync(path.join(migrations, name), 'utf8'));
+    if(sqlite.prepare('SELECT name FROM dev_migrations WHERE name=?').get(name))continue;
+    sqlite.exec('BEGIN');
+    try{sqlite.exec(fs.readFileSync(path.join(migrations,name),'utf8'));sqlite.prepare('INSERT INTO dev_migrations(name) VALUES(?)').run(name);sqlite.exec('COMMIT');}
+    catch(e){sqlite.exec('ROLLBACK');throw e;}
   }
   return sqlite;
 }
@@ -67,6 +73,8 @@ export const ROUTES = {
   'POST /api/messages': ['onRequestPost', 'api/messages.js'],
   'GET /api/grants': ['onRequestGet', 'api/grants.js'],
   'POST /api/grants': ['onRequestPost', 'api/grants.js'],
+  'GET /api/gm/catalog': ['onRequestGet', 'api/gm/catalog.js'],
+  'POST /api/gm/gifts': ['onRequestPost', 'api/gm/gifts.js'],
   'GET /api/gm/players': ['onRequestGet', 'api/gm/players.js'],
   'GET /api/gm/player': ['onRequestGet', 'api/gm/player.js'],
   'POST /api/gm/player': ['onRequestPost', 'api/gm/player.js'],

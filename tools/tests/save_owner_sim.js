@@ -30,6 +30,7 @@ function sandbox() {
     const cloudTouch = () => { touched.n++ };
     const log = (m, cls) => logs.push({ m, cls });
     const offlineRateSample = () => {};
+    const gmStatSnapshot = () => ({});
     ${helpers}
     ${saveCode}
     globalThis.api = {

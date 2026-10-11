@@ -98,6 +98,7 @@ function harness(opts = {}) {
     iname: it => it.name,
     totalPts: () => 100,
     ELITELV: 100,
+    gmStatSnapshot: () => ({ at: Date.now(), combat: {} }),
     MAPS: [1, 2, 3], save: () => { state.saves++; }, safeCount: v => Math.max(0, Math.floor(Number(v) || 0)),
     applyOfflineProgress: (now, claim) => { state.offlineCalls++;state.offlineClaims.push(claim||null);if(claim&&sandbox.S)sandbox.S.offlineClaimId=claim.id; },
     initSession: () => { state.localSession = true; },
@@ -276,7 +277,7 @@ await T('GM gifts: zeny, levels and an item are applied, then claimed exactly on
   h.sandbox.CLOUD.on = true; h.sandbox.currentUser = 'X';
   const S = h.sandbox.S;
   S.lv = 10; S.zeny = 1000; S.inv = []; S.st = { str: 9, agi: 1, dex: 1, luk: 1, int: 1, vit: 1 };
-  h.sandbox.cloudApplyGrants([
+  await h.sandbox.cloudApplyGrants([
     { id: 1, kind: 'zeny', payload: { amount: 500000 }, from: 'KzeR' },
     { id: 2, kind: 'level', payload: { amount: 3 } },
     { id: 3, kind: 'item', payload: { item: { id: 42, name: 'GM Blade', slot: 'weapon', val: 40 } } },
@@ -296,7 +297,7 @@ await T('a broken gift is skipped without taking the rest of the batch down', as
   const h = harness({ routes: { '/grants': { status: 200, body: {} } } });
   h.sandbox.CLOUD.on = true; h.sandbox.currentUser = 'X';
   const S = h.sandbox.S; S.zeny = 10; S.inv = [];
-  h.sandbox.cloudApplyGrants([{ id: 9, kind: 'item', payload: { item: null } }, { id: 10, kind: 'zeny', payload: { amount: 5 } }]);
+  await h.sandbox.cloudApplyGrants([{ id: 9, kind: 'item', payload: { item: null } }, { id: 10, kind: 'zeny', payload: { amount: 5 } }]);
   assert.strictEqual(S.zeny, 15, 'the good grant still lands');
   assert.ok(h.state.logs.some(l => /does not understand/i.test(l.m)), 'the skipped gift is reported, not swallowed');
   const claim = h.calls.find(c => c.url === '/api/grants' && c.init.method === 'POST');
@@ -520,7 +521,7 @@ await T('a file that is not a backup is refused, and nothing is written', async 
   assert.strictEqual(h.state.asks.length, 0, 'a file that is not a backup never gets as far as a question');
 });
 
-await T('the poll fetches announcements and gifts, and never the save itself', async () => {
+await T('the poll fetches announcements and gifts, and saves receipts without reading over live play', async () => {
   const h = loginHarness({ routes: {
     '/grants': { status: 200, body: { grants: [{ id: 5, kind: 'zeny', payload: { amount: 1000 } }] } },
     '/messages': { status: 200, body: { messages: [{ id: 1, body: 'Server restart at 22:00', kind: 'notice' }] } },
@@ -529,8 +530,8 @@ await T('the poll fetches announcements and gifts, and never the save itself', a
   h.sandbox.CLOUD.on = true; h.sandbox.CLOUD.api = true; h.sandbox.currentUser = 'X';
   await h.sandbox.cloudPull();
   assert.ok(h.state.logs.some(l => /Server restart/.test(l.m)), 'the announcement reaches the log');
-  assert.strictEqual(h.calls.filter(c => c.url === '/api/save').length, 0,
-    'a poll must not touch the save: that is what keeps it from ever overwriting play');
+  assert.strictEqual(h.calls.filter(c => c.url === '/api/save' && c.init.method !== 'PUT').length, 0,
+    'a poll must never read a save over live play; applying a gift may upload its receipt');
 });
 
 // ------------------------------------------------- the v82 usage diet ----

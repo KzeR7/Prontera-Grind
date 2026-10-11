@@ -27,6 +27,7 @@ function harness() {
   const setup = `
     let S = null, currentUser = 'Test', zenyEarned = 0, expEarned = 0;
     const CLOUD = { on: false };
+    const gmStatSnapshot = () => ({});
     const MAPS = Array.from({length:10},(_,i)=>({n:'Map '+i})); let mapM=0,mapL=1;
     const cl = (v,a,b) => Math.max(a,Math.min(b,v));
     const safeCount = v => {const n=Number(v);return Number.isFinite(n)?Math.max(0,Math.min(Number.MAX_SAFE_INTEGER,Math.floor(n))):0};
