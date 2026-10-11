@@ -24,6 +24,8 @@ ${grab('const REF_ZENY_MUL=3,refCost=', 'const affTxt=')}
 const ORE={ori:'Oridecon',elu:'Elunium'};
 const iname=it=>(it.r?'+'+it.r+' ':'')+it.name;
 ${grab('function refine(sl){', '// ---------- v90: Black Market')}
+// Presentation is exercised with a real DOM in eclipse_ui_sim.js.
+eclipseRefineFeedback=()=>{};
 let S=null,LOGS=[],RND=0;
 const questEvent=()=>{};
 const log=(m)=>LOGS.push(m), ui=()=>{}, save=()=>{}, addFloat=()=>{}, pl={x:0,z:0};

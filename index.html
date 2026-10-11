@@ -788,31 +788,39 @@ body.clean-screen #wrap>.title,body.clean-screen #ov>*:not(#mobSpriteLayer):not(
 body.clean-screen #screenBtn{visibility:visible!important}body.clean-screen #hud{background:transparent;border:0;pointer-events:none}body.clean-screen #screenBtn{pointer-events:auto}
 #qp{max-height:55vh;overflow:auto}.quest-tabs{display:flex;gap:5px;margin:6px 0}.quest-tabs button{flex:1}.ore-quantity{width:100%;box-sizing:border-box}
 </style>
+<link rel="preload" href="assets/ui/fonts/font-0.ttf" as="font" type="font/ttf" crossorigin>
+<link rel="preload" href="assets/ui/fonts/font-1.ttf" as="font" type="font/ttf" crossorigin>
+<link rel="preload" href="assets/ui/fonts/font-2.ttf" as="font" type="font/ttf" crossorigin>
+<link rel="preload" href="assets/ui/fonts/font-3.ttf" as="font" type="font/ttf" crossorigin>
+<link rel="preload" href="assets/ui/fonts/font-4.ttf" as="font" type="font/ttf" crossorigin>
+<link rel="preload" href="assets/ui/fonts/font-5.ttf" as="font" type="font/ttf" crossorigin>
+<link rel="preload" href="assets/ui/fonts/font-6.ttf" as="font" type="font/ttf" crossorigin>
+<link rel="preload" href="assets/ui/fonts/font-7.ttf" as="font" type="font/ttf" crossorigin>
+<link rel="stylesheet" href="assets/ui/eclipse.css">
+<script>try{const p=localStorage.getItem("pg_ui_palette");document.documentElement.dataset.palette=["moonstone","aurora","ember"].includes(p)?p:"moonstone"}catch{document.documentElement.dataset.palette="moonstone"}</script>
 </head>
 <body>
-<div id="loginOverlay"><section class="login-brand" aria-label="Prontera Grind"><div class="login-eyebrow">Your next adventure awaits</div><h1>Prontera<br>Grind<span style="color:var(--gold)">.</span></h1><p>Build your character. Find your next upgrade. Leave your mark on the world.</p><div class="login-footnote">EXPLORE · GROW · CONQUER</div></section><div class="login-card"><h2>Prontera Grind</h2><p class="login-intro">Welcome, adventurer.</p>
-<div class="atabs"><button type="button" id="tabLogin" class="on">Login</button><button type="button" id="tabReg">Register</button></div>
+<div id="loginOverlay"><div class="eclipse-login-world" aria-hidden="true"></div><header class="eclipse-login-header"><a href="./" class="eclipse-brand"><span>PG</span><b>PRONTERA GRIND<small>THE ECLIPSE INTERFACE</small></b></a><div class="eclipse-palettes" role="group" aria-label="Interface palette"><button type="button" data-palette="moonstone">Moonstone</button><button type="button" data-palette="aurora">Aurora</button><button type="button" data-palette="ember">Ember</button></div></header><main class="eclipse-login-layout"><section class="login-brand"><div class="login-eyebrow">A WORLD WORTH RETURNING TO</div><h1>Your next <br>chapter <em>awaits.</em></h1><p>One more encounter. One perfect drop.<br>Build your legend in the world of Midgard.</p><div class="eclipse-login-art"><img src="assets/ui/eclipse-knight.png" alt="Lord Knight ready for adventure"><span>01 / PRONTERA<small>THE JOURNEY BEGINS HERE</small></span><div><img src="assets/equipment-icons/1142.png" alt=""><span>YOUR NEXT UPGRADE<small>Somewhere out there.</small></span></div></div><div class="login-footnote">EXPLORE · GROW · CONQUER</div></section><div class="login-card"><div class="eclipse-access">ADVENTURER ACCESS <span>◇</span></div><h2>Welcome back.</h2><p class="login-intro">Your adventure is right where you left it.</p><div class="atabs"><button type="button" id="tabLogin" class="on">Login</button><button type="button" id="tabReg">Register</button></div>
 <form id="loginForm" autocomplete="on">
 <div class="form-group"><label for="username">Account Name</label><input type="text" id="username" required autocomplete="username"></div>
-<label class="remember-user" for="rememberUser"><input type="checkbox" id="rememberUser"> Remember user ID on this device</label>
-<div class="form-group"><label for="password">Password</label><input type="password" id="password" required autocomplete="current-password"></div>
+<div class="form-group"><label for="password">Password</label><div class="eclipse-password"><input type="password" id="password" required autocomplete="current-password"><button type="button" id="eclipseShowPassword" aria-pressed="false" aria-label="Password visibility">Show</button></div></div>
 <div class="form-group" id="regRow" style="display:none"><label for="password2">Confirm Password</label><input type="password" id="password2" autocomplete="new-password"></div>
+<label class="remember-user" for="rememberUser"><input type="checkbox" id="rememberUser"> Remember user ID on this device</label>
 <button type="submit" id="authBtn" class="login-btn">Login</button><div id="loginErr" class="login-err"></div></form>
 <small id="loginHint">Local accounts log in each time; an active cloud session may resume automatically.</small>
 <div id="loginCloud" style="margin-top:8px;font-size:11px;opacity:.75;text-align:center"></div>
 <div id="saveTools" style="margin-top:6px;font-size:11px;text-align:center;opacity:.9"><a href="#" id="saveDl" title="Download every character saved in this browser as one file">⬇ Back up saves</a><span style="opacity:.5"> · </span><a href="#" id="saveUp" title="Load a backup file made by this button, on any address">⬆ Restore a backup</a><input type="file" id="saveFile" accept=".json,application/json" style="display:none"></div>
-<div id="buildTag" style="margin-top:6px;font-size:10px;opacity:.55;text-align:center"></div></div></div>
-<div id="wrap"><div class="title"><span id="stageTitle">Prontera Lv 1</span><span id="grindStatus" style="font-size:12px;opacity:.85"></span></div>
-<div id="view"><div id="ov"><div id="mobSpriteLayer" aria-hidden="true"></div><div id="weaponSpriteLayer" aria-hidden="true"></div><div id="prog"></div><div id="tag"><b id="tn"></b><div class="bar"><i id="th" style="background:var(--hp)"></i></div></div><div id="heroTitle" class="hero-title" aria-live="polite"><span id="heroTitleMark" class="ht-mark" aria-hidden="true"></span><span id="heroTitleText"></span></div><div id="hint">Drag to rotate &middot; Scroll or pinch to zoom</div><div id="feedWrap"><div id="feed"></div><div id="feedBar"><div id="feedFilter" role="group" aria-label="Log filter"></div><div id="feedTabs"><button id="feedTab" type="button" aria-expanded="true" aria-controls="feed" title="Minimize or show the on-screen log">📃 Logs ▾</button><button id="feedFil" type="button" aria-expanded="false" aria-controls="feedFilter" aria-label="Filter the on-screen log" title="Filter the log - this row folds away by itself">▽</button></div></div></div><div id="hudBuffs" role="status" aria-live="polite" aria-label="Active pet buffs - hover an icon for what it does"></div><div id="sideRail"><div id="qp"></div><nav id="sideMenu" aria-label="Index and market"></nav></div><div id="dock"></div>
-<div id="wins"></div></div></div>
-<div id="hud"><div><b id="cls2"></b> <span id="titleLabel" class="title-hud hud-title-mirror" aria-hidden="true" style="display:none"></span> Base Lv <b id="lv">1</b> / Job Lv <b id="jl">1</b></div>
-<div class="hud-health">HP <div class="bar" role="meter" aria-label="HP" aria-valuemin="0" aria-valuemax="100" id="hpMeter"><i id="hpb"></i></div><small id="hpPct">100%</small></div>
+<div id="buildTag"></div></div></main><footer class="eclipse-login-footer"><span>PRONTERA GRIND / ECLIPSE</span><span>YOUR ADVENTURE. YOUR PACE.</span></footer></div>
+<div id="wrap"><div id="eclipseHeader"><span class="eclipse-wordmark">Prontera <small>GRIND</small></span><div class="title"><span id="stageTitle">Prontera Lv 1</span><span id="grindStatus" style="font-size:12px;opacity:.85"></span></div>
 <div class="hud-zeny" id="zenyHover" tabindex="0" aria-describedby="zenyRate">&#9679; <b id="zeny">0</b> Zeny<span class="hud-flyout" id="zenyRate" role="tooltip">Zeny earned: 0/min</span></div>
-<div>Kills/min <b id="kills" title="Recent kills per minute (last 60 seconds, refreshed each second)">0.0</b></div><div>EXP/min <b id="expmin" title="EXP earned per minute (last 60 seconds, refreshed each second)">0</b></div><div>DPS <b id="dps" title="Damage per second you dealt (last 60 seconds, refreshed each second)">0</b></div><div style="margin-left:auto;display:flex;align-items:center;gap:8px"><span id="cloudBadge" title="Cloud save status" style="font-size:11px;opacity:.9"></span><button id="screenBtn" type="button" aria-expanded="false" aria-controls="screenOptions" title="Screen display options">☷ Display</button><span id="userBadge" style="font-weight:bold;font-size:12px;background:#e9d39a;padding:3px 8px;border-radius:4px;border:1px solid var(--edge2)"></span><button id="gmBtn" onclick="location.href='gm.html'" style="display:none" title="Server-side tooling for looking after players">🛠 GM console</button><button id="logoutBtn" onclick="logout()" style="display:none">Logout</button><button id="spd">Speed x1</button></div></div>
+<span class="eclipse-shards" title="Echo Shards">◇ <b id="eclipseShards">0</b><small>Shards</small></span><div style="margin-left:auto;display:flex;align-items:center;gap:8px"><span id="cloudBadge" title="Cloud save status" style="font-size:11px;opacity:.9"></span><button id="screenBtn" type="button" aria-expanded="false" aria-controls="screenOptions" title="Screen display options">☷ Display</button><span id="userBadge" style="font-weight:bold;font-size:12px;background:#e9d39a;padding:3px 8px;border-radius:4px;border:1px solid var(--edge2)"></span><button id="gmBtn" onclick="location.href='gm.html'" style="display:none" title="Server-side tooling for looking after players">🛠 GM console</button><button id="logoutBtn" onclick="logout()" style="display:none">Logout</button></div></div><div id="view"><div id="ov"><div id="mobSpriteLayer" aria-hidden="true"></div><div id="weaponSpriteLayer" aria-hidden="true"></div><section id="eclipseCombat"><div><span class="eclipse-live">AUTO COMBAT</span><span id="eclipseStageLabel"></span><button id="eclipseMinimize" aria-expanded="true" aria-controls="eclipseCombatDetails" aria-label="Minimize auto combat bar">− Hide</button></div><div id="eclipseCombatDetails"><div id="eclipseStagePips" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div><div id="prog"></div><button id="eclipseAdvance" aria-pressed="true">Auto-advance <span>●</span></button></div></section><div id="tag"><b id="tn"></b><div class="bar"><i id="th" style="background:var(--hp)"></i></div></div><div id="heroTitle" class="hero-title" aria-live="polite"><span id="heroTitleMark" class="ht-mark" aria-hidden="true"></span><span id="heroTitleText"></span></div><div id="hint">Drag to rotate &middot; Scroll or pinch to zoom</div><div id="feedWrap"><div id="feed"></div><div id="feedBar"><div id="feedFilter" role="group" aria-label="Log filter"></div><div id="feedTabs"><button id="feedTab" type="button" aria-expanded="true" aria-controls="feed" title="Minimize or show the on-screen log">📃 Logs ▾</button><button id="feedFil" type="button" aria-expanded="false" aria-controls="feedFilter" aria-label="Filter the on-screen log" title="Filter the log - this row folds away by itself">▽</button></div></div></div><div id="hudBuffs" role="status" aria-live="polite" aria-label="Active pet buffs - hover an icon for what it does"></div><div id="sideRail"><button id="eclipseMapCard" data-t="map" aria-label="Open current map"><div class="eclipse-map-art"><canvas id="eclipseMinimap" width="448" height="192" aria-label="Live terrain map and player position"></canvas></div><span><b id="eclipseMapName">World atlas</b><small id="eclipseMapStage"></small></span><span>⛶</span></button><div id="qp"></div><nav id="sideMenu" aria-label="Index and market"></nav></div><div id="dock"></div>
+<div id="eclipseCompanions"><div id="eclipsePetStrip"></div><button data-t="pet">Companions ↗</button><button id="spd">Speed x1</button></div><div id="wins"></div></div></div>
+<div id="hud"><div class="eclipse-portrait-frame"><canvas id="eclipsePortrait" width="126" height="134" aria-label="Your character"></canvas></div><div class="eclipse-vitals"><div><b id="eclipsePlayerName"></b><span id="cls2"></span></div><span id="titleLabel" class="title-hud hud-title-mirror" aria-hidden="true" style="display:none"></span><div class="eclipse-levels">BASE <b id="lv">1</b> <span>JOB <b id="jl">1</b></span></div><div class="hud-health">HP <div class="bar" role="meter" aria-label="HP" aria-valuemin="0" aria-valuemax="100" id="hpMeter"><i id="hpb"></i></div><small id="hpPct">100%</small></div><div class="eclipse-job-line"><span>JOB</span><div><i id="eclipseJobFill"></i></div><b id="eclipseJobLevel">1</b></div>
+</div></div>
 <div id="screenOptions" hidden></div>
-<div id="xp-dock" aria-label="Level progress"><div id="xp-track">
-  <div class="xp-side" id="baseTrack" tabindex="0" role="progressbar" aria-label="Base Level" aria-valuemin="0" aria-valuemax="100"><div class="xp-fill" id="xpb"></div><span class="xp-label" id="baseLabel">Base Lv 1</span><span class="xp-pct" id="basePct">0%</span></div>
-  <div class="xp-side" id="jobTrack" tabindex="0" role="progressbar" aria-label="Job Level" aria-valuemin="0" aria-valuemax="100"><div class="xp-fill" id="jb"></div><span class="xp-pct" id="jobPct">0%</span><span class="xp-label job" id="jobLabel">Job Lv 1</span></div>
+<div id="xp-dock" aria-label="Level progress"><div id="eclipseMetrics"><div>Kills/min <b id="kills" title="Recent kills per minute (last 60 seconds, refreshed each second)">0.0</b></div><div>EXP/min <b id="expmin" title="EXP earned per minute (last 60 seconds, refreshed each second)">0</b></div><div>Zeny/min <b id="zenymin" tabindex="0" title="Zeny earned per minute">0</b></div><div class="eclipse-dps-meter">DPS <b id="dps" tabindex="0" title="Damage per second you dealt (last 60 seconds, refreshed each second)">0</b></div></div><div id="xp-track">
+  <div class="xp-side" id="baseTrack" tabindex="0" role="progressbar" aria-label="Base Level" aria-valuemin="0" aria-valuemax="100"><div class="xp-fill" id="xpb"></div><span class="eclipse-xp-value" id="eclipseBaseValue"></span><span class="xp-label" id="baseLabel">Base Lv 1</span><span class="xp-pct" id="basePct">0%</span></div>
+  <div class="xp-side" id="jobTrack" tabindex="0" role="progressbar" aria-label="Job Level" aria-valuemin="0" aria-valuemax="100"><div class="xp-fill" id="jb"></div><span class="xp-pct" id="jobPct">0%</span><span class="eclipse-xp-value" id="eclipseJobValue"></span><span class="xp-label job" id="jobLabel">Job Lv 1</span></div>
 </div></div>
 </div>
 <div id="modal"><div class="login-card"><p id="mt" style="font-size:14px;opacity:1;margin:0 0 12px"></p><div class="row" style="justify-content:center"><button id="my">Yes</button><button id="mn">Cancel</button></div></div></div>
@@ -861,6 +869,15 @@ body.clean-screen #screenBtn{visibility:visible!important}body.clean-screen #hud
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
 const $=id=>document.getElementById(id);
+// Eclipse presentation preferences are device-local; game saves and combat colors are untouched.
+function eclipsePaletteControls(){return '<div class="eclipse-palettes" role="group" aria-label="Interface palette">'+['moonstone','aurora','ember'].map(p=>'<button type="button" data-palette="'+p+'" aria-pressed="'+(document.documentElement.dataset.palette===p)+'">'+p[0].toUpperCase()+p.slice(1)+'</button>').join('')+'</div>'}
+function eclipseSetPalette(value){const p=['moonstone','aurora','ember'].includes(value)?value:'moonstone';document.documentElement.dataset.palette=p;try{localStorage.setItem('pg_ui_palette',p)}catch{}document.querySelectorAll('button[data-palette]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.palette===p)))}
+document.addEventListener('click',event=>{const b=event.target.closest('button[data-palette]');if(b)eclipseSetPalette(b.dataset.palette)});
+eclipseSetPalette(document.documentElement.dataset.palette);
+$('eclipseMinimize').onclick=()=>{const minimized=$('eclipseCombat').classList.toggle('minimized'),b=$('eclipseMinimize');b.textContent=minimized?'+ Show':'− Hide';b.setAttribute('aria-expanded',String(!minimized));b.setAttribute('aria-label',(minimized?'Expand':'Minimize')+' auto combat bar')};
+$('eclipseShowPassword').onclick=()=>{const input=$('password'),show=input.type==='password';input.type=show?'text':'password';$('eclipseShowPassword').textContent=show?'Hide':'Show';$('eclipseShowPassword').setAttribute('aria-pressed',String(show))};
+$('eclipseAdvance').onclick=()=>{if(S)ACT.adv()};
+
 const RAR=[{n:'Common',m:1,w:60},{n:'Fine',m:1.35,w:25},{n:'Rare',m:1.9,w:10},{n:'Epic',m:2.8,w:4},{n:'Legendary',m:4.5,w:1}];
 // v76.2 (owner): Nightmare equipment has its own N rarity category, separate from Legendary.
 // Sections 4/5 select N for names, cards, field/drop labels, colors and the sixth auto-sell bucket;
@@ -1051,7 +1068,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // script block, which is a SyntaxError - the game did not run on main at all. One line wins, and
 // it names both sides of this merge: the v38 balance patch (the weapon cut, the affix/card
 // give-back) and main's weapon-hold rendering work.
-const BUILD='2026-10-11 grind-v103.2 measured card stars';   // shown on the login card - confirms which file you loaded
+const BUILD='2026-10-11 grind-v112 Eclipse stability';   // shown on the login card - confirms which file you loaded
 $('buildTag').textContent='build '+BUILD;
 
 // ---------- class tree: Novice -> 6 first jobs -> 6 second jobs -> 6 third jobs ----------
@@ -1782,14 +1799,14 @@ function trialLobby(view){
     <div class="trial-foot"><button data-trial="close">Close</button></div>`;
   el.classList.add('on');
   return el}
-function trialShopHtml(){
+function trialShopHtml(inline=false){
   const rows=TRIAL_STORE.map(s=>{const lock=s.lv&&safeCount(S.lv)<s.lv;
     return `<div class="shopline"><span><b>${s.n}</b><small>${s.d}${s.lv?` <b>Base Lv ${s.lv}+ only.</b>`:''}</small></span>
     <button data-buy="${s.id}" ${(!lock&&S.shards>=s.c)?'':'disabled'}>${lock?`Lv ${s.lv}`:(s.c+' Shards')}</button></div>`}).join('');
   return `<div class="trial-hd"><b>Shard Store</b><small>${S.shards|0} Echo Shards</small></div>
     <p>Shards come from completed ranked runs; training is free and does not pay. Your balance carries over.</p>
     <div class="trial-shop">${rows}</div>
-    <div class="trial-foot"><button data-trial="lobby">Back</button><button data-trial="close">Close</button></div>`}
+    ${inline?'':'<div class="trial-foot"><button data-trial="lobby">Back</button><button data-trial="close">Close</button></div>'}`}
 function trialResultHtml(){
   const r=TRIAL.result||{dmg:0,dps:0,shards:0,best:false,mode:'training'};
   const st=trialState();
@@ -1927,7 +1944,7 @@ function trialExit(){                                  // used by Close and by t
   ui();save()}
 function trialShow(node,on){if(node)node.classList.toggle('on',!!on);return node}
 // ---------------------------------------------------------------- the store ----
-function trialBuy(id){
+function trialBuy(id,inline=false){
   const row=TRIAL_STORE.find(s=>s.id===id);if(!row)return;
   if(row.lv&&safeCount(S.lv)<row.lv)return log(`The ${row.n} needs Base Lv ${row.lv} - come back when you are there.`,'r0','trial');
   if((S.shards|0)<row.c)return log('Not enough shards yet.','r0','trial');
@@ -1940,9 +1957,9 @@ function trialBuy(id){
     S.cards.push(card);
     log(`Shard Store: random Legendary ${card.n} (${card.effects.map(cardEffectText).join(', ')}) added to your card collection.`,'r3','trial')}
   else if(id==='rscroll'){S.refineScrolls=safeCount(S.refineScrolls+1);log('Shard Store: +1 Refine Scroll added to your reserve. Enable it in Refine to prevent a rank drop on failure.','r3','trial')}
-  else if(id==='nmgear'){trialLobby('pickmap');return}
+  else if(id==='nmgear'){if(inline){eclipseEchoPick=true;renderWin()}else trialLobby('pickmap');return}
   S.shards=Math.max(0,(S.shards|0)-row.c);save();
-  trialLobby('store')}
+  if(inline)ui();else trialLobby('store')}
 // One Nightmare item, picked by map: section 5 where the band is fully open, section 4 otherwise,
 // and always a slot the character's class can actually wear.
 function trialGrantNm(mapIndex){
@@ -4387,7 +4404,7 @@ function claimContract(id){const b=questBook(),rows=questRows(),q=rows.find(x=>x
  if(id.startsWith('d:'))b.daily[Number(id.split(':')[2])].claimed=true;else b.claimed[q.type]=safeCount(b.claimed[q.type])+1;
  earnExp(q.xp);earnZeny(q.z);checkLevel();save();ui();
 }
-function contractPanel(){const b=questBook(),rows=questRows();return `<div class="quest-tabs"><button data-q="daily" aria-pressed="${questView==='daily'}">Daily</button><button data-q="all" aria-pressed="${questView==='all'}">All-time</button></div><small>${questView==='daily'?'Resets 00:00 UTC · '+b.day:'Permanent chapters · each awards 2% of a level plus at least 500z, fixed when offered. Progress starts with this update'}</small>`+rows.map(q=>`<div class="quest-entry"><b>${q.label}</b><div>${({kill:'Defeat monsters',boss:'Defeat MVPs',loot:'Collect equipment drops',ore:'Collect ore drops (purchases do not count)',card:'Collect monster card drops',hunt:'Defeat different monster species',maps:'Defeat monsters on different maps',refine:'Attempt refinement',socket:'Socket cards',reforge:'Roll paid reforges',nightmare:'Defeat Nightmare monsters',echo:'Complete ranked Endless Echo runs'})[q.type]}</div><div class="pbar"><i style="width:${100*q.prog/q.goal}%"></i></div><small>${q.prog}/${q.goal} · ${q.xp.toLocaleString()} EXP · ${q.z.toLocaleString()}z</small>${q.claimed?'<small>Claimed</small>':`<button data-q="contract:${q.id}" ${q.prog<q.goal?'disabled':''}>Claim</button>`}</div>`).join('');}
+function contractPanel(limit=Infinity){const b=questBook(),rows=questRows().slice(0,limit);return `<div class="quest-tabs"><button data-q="daily" aria-pressed="${questView==='daily'}">Daily</button><button data-q="all" aria-pressed="${questView==='all'}">All-time</button></div><small>${questView==='daily'?'Resets 00:00 UTC · '+b.day:'Permanent chapters · each awards 2% of a level plus at least 500z, fixed when offered. Progress starts with this update'}</small>`+rows.map(q=>`<div class="quest-entry"><b>${q.label}</b><div>${({kill:'Defeat monsters',boss:'Defeat MVPs',loot:'Collect equipment drops',ore:'Collect ore drops (purchases do not count)',card:'Collect monster card drops',hunt:'Defeat different monster species',maps:'Defeat monsters on different maps',refine:'Attempt refinement',socket:'Socket cards',reforge:'Roll paid reforges',nightmare:'Defeat Nightmare monsters',echo:'Complete ranked Endless Echo runs'})[q.type]}</div><div class="pbar"><i style="width:${100*q.prog/q.goal}%"></i></div><small>${q.prog}/${q.goal} · ${q.xp.toLocaleString()} EXP · ${q.z.toLocaleString()}z</small>${q.claimed?'<small>Claimed</small>':`<button data-q="contract:${q.id}" ${q.prog<q.goal?'disabled':''}>Claim</button>`}</div>`).join('');}
 
 function qScale(q){const L=S?S.lv:1;
   const g=q.type==='kill'?12+L*2:q.type==='loot'?3+Math.floor(L/3):1+Math.floor(L/10);
@@ -4402,17 +4419,36 @@ function qScale(q){const L=S?S.lv:1;
 function newQuest(type){return qScale({type,goal:1,prog:0})}
 function qRefresh(){if(S)questBook();}
 const qTxt=q=>q.type==='kill'?`Defeat ${q.goal} monsters`:q.type==='loot'?`Collect ${q.goal} equipment drops`:`Defeat ${q.goal} MVP${q.goal>1?'s':''}`;
-const refineScrollFrom=()=>[5,6,7,8,9].includes(Number(S.refineScrollFrom))?Number(S.refineScrollFrom):5;
-function refineProtectionUI(){return `<div class="sec">Refine Scroll protection · ${safeCount(S.refineScrolls)} owned</div><div class="row">${[0,5,6,7,8,9].map(n=>`<button data-a="refprotect" data-v="${n}" class="${(n?S.useRefineScroll&&refineScrollFrom()===n:!S.useRefineScroll)?'on':''}" aria-pressed="${n?!!S.useRefineScroll&&refineScrollFrom()===n:!S.useRefineScroll}">${n?'From +'+n:'Off'}</button>`).join('')}</div><small>Uses one scroll on every attempt at or above the selected current rank, including success. Prevents rank loss; success chance is unchanged. No scroll available: protected attempts are blocked.</small>`;}
+// Older saves may retain refineScrollFrom; protection now has a single On/Off setting.
+const refineScrollFrom=()=>0;
+function refineProtectionUI(){return `<div class="sec">Refine Scroll protection · ${safeCount(S.refineScrolls)} owned</div><div class="row">${[0,1].map(n=>`<button data-a="refprotect" data-v="${n}" class="${!!S.useRefineScroll===!!n?'on':''}" aria-pressed="${!!S.useRefineScroll===!!n}">${n?'On':'Off'}</button>`).join('')}</div><small>Only failures at current +5 or above can drop a rank. When On, one scroll is used per attempt, including success, and prevents rank loss. Below +5, we ask before spending a scroll because your rank is already safe. Success chance is unchanged. No scroll available: protected attempts are blocked.</small>`;}
 function refine(sl){const it=S.eq[sl];if(!it||(it.r||0)>=10)return;const o=it.slot==='weapon'?'ori':'elu',c=refCost(it),need=refOre(it);
   if(S.ore[o]<need){log(`You need ${need} ${ORE[o]} for this piece. Regular mobs drop both ores at 0.5% on Stages 1-9 and 1% on Stage 10; the Stage 10 MVP drops them at 2.5%.`);return}if(S.zeny<c){log('Not enough Zeny.');return}
-  const protectedAttempt=S.useRefineScroll&&(it.r||0)>=refineScrollFrom();
+  const previousRank=it.r||0;let succeeded=false;const protectedAttempt=!!S.useRefineScroll;
   if(protectedAttempt&&!safeCount(S.refineScrolls)){log('Refine Scroll protection is enabled, but you have no scrolls. Buy one or turn protection off.');return;}
+  if(protectedAttempt&&previousRank<5&&arguments[1]!==it){
+    const owner=S;let pending=true;
+    ask('This equipment is below +5, so failure cannot drop its rank. Use one Refine Scroll anyway? This attempt also costs '+c.toLocaleString()+'z and '+need+' '+ORE[o]+'.',()=>{
+      if(!pending)return;pending=false;
+      if(S!==owner||S.eq[sl]!==it||(it.r||0)!==previousRank||!S.useRefineScroll)return;
+      refine(sl,it);
+    },{yes:'Use scroll & refine',no:'Cancel'});return;
+  }
   if(protectedAttempt)S.refineScrolls--;
-  S.ore[o]-=need;S.zeny-=c;questEvent('refine');if(Math.random()*100<refCh(it)){it.r=(it.r||0)+1;log(`Refine success! ${iname(it)}`,'r3','gear');addFloat(pl.x,3,pl.z,'Refine +'+it.r,'#ffd23f')}
+  S.ore[o]-=need;S.zeny-=c;questEvent('refine');if(Math.random()*100<refCh(it)){succeeded=true;it.r=(it.r||0)+1;log(`Refine success! ${iname(it)}`,'r3','gear');addFloat(pl.x,3,pl.z,'Refine +'+it.r,'#ffd23f')}
   else{if(protectedAttempt){log(`Refine failed, but your Refine Scroll kept +${it.r}.`,'r3','gear')}
     else if(it.r>=5&&S.dps>0){S.dps--;log(`Refine failed, but your Drop Protection Scroll kept +${it.r}.`,'r3','gear');addFloat(pl.x,3,pl.z,'Saved','#6cd3ff')}
-    else if(it.r>=5){it.r--;log(`Refine failed... dropped to +${it.r}.`,'r0','gear')}else log('Refine failed.','r0','gear');addFloat(pl.x,3,pl.z,'Failed','#ff6b6b')}ui();save()}
+    else if(it.r>=5){it.r--;log(`Refine failed... dropped to +${it.r}.`,'r0','gear')}else log('Refine failed.','r0','gear');addFloat(pl.x,3,pl.z,'Failed','#ff6b6b')}ui();save();if(typeof eclipseRefineFeedback==='function')eclipseRefineFeedback(it,previousRank,succeeded)}
+// Outcome presentation follows the committed transaction; it never rolls or spends resources.
+let eclipseRefineTimer;
+function eclipseRefineFeedback(it,previousRank,succeeded){
+  let result=$('eclipseRefineResult');if(!result){result=document.createElement('div');result.id='eclipseRefineResult';result.setAttribute('role','status');result.setAttribute('aria-live','polite');$('ov').append(result)}
+  clearTimeout(eclipseRefineTimer);result.hidden=false;result.className='';
+  const kept=!succeeded&&(it.r||0)===previousRank;
+  result.innerHTML='<div class="eclipse-result-art" aria-hidden="true">'+icon(it)+'</div><div><small>REFINEMENT '+(succeeded?'SUCCESS':'FAILED')+'</small><b>'+esc(iname(it))+'</b><span>'+(succeeded?'+'+previousRank+' → +'+it.r:kept?'Rank kept at +'+it.r:'Rank reduced: +'+previousRank+' → +'+it.r)+'</span></div>';
+  void result.offsetWidth;result.className=succeeded?'refine-success':'refine-failure';
+  eclipseRefineTimer=setTimeout(()=>{result.hidden=true},3600);
+}
 // Crafted Drop Protection Scrolls cost 20 Nightmare materials of any mix.
 // They remain an automatic failure-only fallback, separate from selected Refine Scrolls.
 function craftDps(){if(!S)return;const have=nmMatCounts(),total=have.reduce((x,n)=>x+n,0);if(total<DPS_MATS){log(`A Drop Protection Scroll needs ${DPS_MATS} Nightmare materials, any mix. You have ${total}.`,'','gear');ui();return}let left=DPS_MATS;S.nmMat=have.map(n=>{const take=Math.min(n,left);left-=take;return n-take});S.dps=safeCount(S.dps)+1;log('Crafted a Drop Protection Scroll.','r3','gear');ui();save()}
@@ -4587,7 +4623,7 @@ function changeClass(n){if(classBlock(n))return;
 // ---------- UI ----------
 // Index, Black Market and Leaderboard share an independent dropdown below Quests.
 // instead of taking dock slots. The keys X and V still open them. v91: the World Map tab uses a tower icon.
-const SIDE_TABS=['index','market','board','guide'];
+const SIDE_TABS=['index','market','board','guide','gm'];
 const TABS={map:['🗼','World Map','M'],status:['📊','Character','S'],job:['🌳','Class Tree','J'],skills:['✨','Skills','K'],equip:['🛡️','Equipment','E'],bag:['🎒','Inventory','B'],log:['📃','Log','L'],pet:['🐾','Pets','P'],index:['📚','Mastery Index','I'],board:['🏆','Leaderboard','V'],market:['🏪','Black Market','X'],guide:['📖','Build & Farming Guide','H'],set:['⚙️','Settings','O'],gm:['🛠️','GM Tools','G']};
 const expandedPanels=new Set(['map']);
 const minimizedPanels=new Set();
@@ -4716,6 +4752,23 @@ function editSellFilter(el){const r=sellDraft(),key=el.dataset.sellField;
   if(el.type==='checkbox'||el.tagName==='SELECT')renderWin();
 }
 
+function eclipseItemSummary(it,worn){return `<div class="eclipse-item-heading"><div class="eclipse-item-icon b${dtier(it)}">${icon(it)}</div><div><small class="${rarCls(it)}">${rarOf(it).n} · ${esc(it.wt||SLOTS[it.slot].label)}</small><h3>${esc(iname(it))}</h3><p>${esc(SECN[it.sec||0])}</p>${worn?'<span class="eclipse-equipped-tag">✓ EQUIPPED</span>':''}</div></div><div class="eclipse-item-power"><span>${it.wt==='staff'?'WEAPON MATK':SLOTS[it.slot].stat}</span><div><strong>${it.wt==='staff'?Math.round(ev(it)*.8):ev(it)}</strong><small>Includes +${it.r||0} refinement</small></div></div><div class="eclipse-item-affixes">${(it.aff||[]).map(a=>'<div><span>◇</span>'+esc(affTxt(a))+'</div>').join('')||'<small>No additional affixes</small>'}</div>`}
+let eclipseQuestAll=false;
+let eclipseInventoryState=null,eclipseInspectBag=false,eclipseSearch='',eclipseRarity=-1,eclipseEchoPick=false;
+function eclipseVisibleInventory(){
+  const open=tabs.includes('equip')||tabs.includes('bag');
+  if(!open){eclipseInventoryState=null;return S.inv}
+  if(!eclipseInventoryState||eclipseInventoryState.owner!==S)eclipseInventoryState={owner:S,ids:S.inv.map(it=>String(it.id))};
+  const byId=new Map();for(const it of S.inv){const id=String(it.id);if(!byId.has(id))byId.set(id,it)}
+  // Equipment returns are immediately visible; only new field drops wait for reveal.
+  for(const id of eclipseInventoryState.worn||[])if(byId.has(id)&&!eclipseInventoryState.ids.includes(id))eclipseInventoryState.ids.push(id);
+  eclipseInventoryState.worn=Object.values(S.eq).filter(Boolean).map(it=>String(it.id));
+  eclipseInventoryState.ids=[...new Set(eclipseInventoryState.ids)].filter(id=>byId.has(id));
+  return eclipseInventoryState.ids.map(id=>byId.get(id)).filter(it=>(eclipseRarity<0||rarIdx(it)===eclipseRarity)&&iname(it).toLowerCase().includes(eclipseSearch.toLowerCase()));
+}
+function eclipseInventoryTools(){const known=new Set(eclipseInventoryState?.owner===S?eclipseInventoryState.ids:S.inv.map(it=>String(it.id))),n=S.inv.filter(it=>!known.has(String(it.id))).length;
+ return `<div class="eclipse-inventory-tools"><label>Find equipment<input data-eclipse-search aria-label="Find equipment" value="${esc(eclipseSearch)}" placeholder="Search your bag…"></label><div class="eclipse-filters"><button data-a="filtergear" data-v="-1" aria-pressed="${eclipseRarity<0}">All</button>${RARALL.map((r,i)=>`<button data-a="filtergear" data-v="${i}" class="eclipse-rarity-filter r${i}" aria-pressed="${eclipseRarity===i}">${r.n}</button>`).join('')}</div><div class="eclipse-new-drops"><span>Inventory stays in place</span><button data-a="newdrops" ${n?'':'disabled'}>${n?'Show new drops ('+n+')':'Up to date'}</button></div></div>`;
+}
 const V={
   map(){const F=fieldOf(mapM,mapL),mp=MAPS[mapM],pr=S.prog[mapM],nmo=nmMapOpen(mapM),cap=Math.max(pr,nmMaxFor(mapM));
     // The map tab is a compact 450px, two-band panel: pick a map on the top band, walk its fields on the
@@ -4742,7 +4795,7 @@ const V={
           aria-label="Enter Endless Echo, a three-minute damage trial against Lord of Death Illusion. ${trialLeftToday()} ranked attempts remain today. You have ${S.shards|0} Echo Shards."
           title="Endless Echo · Lord of Death Illusion · best single-run DPS · ${trialLeftToday()}/2 ranked attempts today">
           <span class="echo-mark" aria-hidden="true">&#9672;</span>
-          <span class="echo-copy"><b>Endless Echo</b><small class="echo-sub">3-minute damage trial · Lord of Death Illusion</small>
+          <span class="echo-copy"><b>Endless Echo</b><small class="echo-sub">Deal as much damage as you can to the Lord of Death Illusion in 3 minutes. Ranked runs earn Echo Shards for the Echo store.</small>
             <span class="echo-meta"><small>${trialLeftToday()}/2 ranked attempts today</small><small><b>${S.shards|0}</b> Echo Shards</small></span></span>
           <span class="echo-open" aria-hidden="true">ENTER <b>›</b></span></button></div></div>
     ${fieldBand}
@@ -4798,7 +4851,7 @@ const V={
         <div class="sk-level"><b>Lv ${L}</b> / ${s.max}</div>
         <button data-a="skill" data-v="${s.id}" aria-label="Increase ${s.n}" title="${L<s.max?'level '+(L+1)+' costs '+skCost(L+1)+' points':'max level'}" ${av>=skCost(L+1)&&L<s.max?'':'disabled'}>${L<s.max?'+'+skCost(L+1):'MAX'}</button></div>`}).join('')}${from==='Novice'?skMasterTile():''}</div>`:''}).join('')
     +`<button class="full" data-a="rskill" ${rcost()&&S.zeny<rcost()?'disabled title="You need '+rcost().toLocaleString()+' Zeny to reset skills"':''}>Reset skills (${rcost()?rcost()+'z':'free below Base 20'})</button>`},
-  bag0(){const sel=selB&&S.inv.find(x=>String(x.id)===String(selB));const n=Math.max(30,Math.ceil(S.inv.length/6)*6);const inv=S.inv.map((it,i)=>({it,i})).sort((a,b)=>{const af=!!eqPick&&slotAccepts(eqPick,a.it),bf=!!eqPick&&slotAccepts(eqPick,b.it);return Number(bf)-Number(af)||Number(!!b.it.locked)-Number(!!a.it.locked)||a.i-b.i}).map(x=>x.it);
+  bag0(){const sel=selB&&S.inv.find(x=>String(x.id)===String(selB));const visible=typeof eclipseVisibleInventory==='function'?eclipseVisibleInventory():S.inv;const n=Math.max(30,Math.ceil(visible.length/6)*6);const inv=visible.map((it,i)=>({it,i})).sort((a,b)=>{const af=!!eqPick&&slotAccepts(eqPick,a.it),bf=!!eqPick&&slotAccepts(eqPick,b.it);return Number(bf)-Number(af)||Number(!!b.it.locked)-Number(!!a.it.locked)||a.i-b.i}).map(x=>x.it);
     const detail=sel?`<div class="mob-card grid-detail">${itemDetail(sel)}<div class="row" style="margin-top:6px"><button data-a="equip" data-v="${sel.id}" ${canUse(sel)?'':'disabled'}>Equip</button><button data-a="sell" data-v="${sel.id}">Sell ${sellVal(sel)}z</button><button class="tick${sel.locked?' on':''}" data-a="lockgear" data-v="${sel.id}" aria-pressed="${!!sel.locked}" title="Locked gear stays pinned and protected from auto-sell">${sel.locked?'&#9733; Unlock':'☆ Lock'}</button><button class="tick${autoSellOn(rarIdx(sel))?' on':''}" data-a="autosell" data-v="${rarIdx(sel)}" title="Toggle ${rarOf(sel).n} drops that match your saved filters">Auto-sell ${rarOf(sel).n}</button></div></div>`:'';
     return (eqPick?equipChooser(eqPick):'')
     +`<div class="bag-top"><div class="row"><span class="chip">Oridecon <b>${S.ore.ori}</b></span><span class="chip">Elunium <b>${S.ore.elu}</b></span></div><span class="bag-count">${S.inv.length}/${BAGMAX} items</span></div>
@@ -4809,7 +4862,7 @@ const V={
       <small>${clickSellOn()?'<b class="r0">Click-sell is ON</b> - the next unlocked bag item you click is sold instantly.':'Ticked rarities sell on drop only when saved filters match. Keep rules take priority. Click-sell turns a single click in the grid into an instant sale.'}</small><small>&#9733; Locked gear stays at the top and is skipped by auto/bulk sell. Manual Sell asks you to confirm unlocking it.</small>${autoSellEditor()}</div></details>
     ${S.inv.length>=BAGMAX?'<div class="row"><small class="r4">BAG FULL</small></div>':''}
     <div class="bag-key" aria-label="Equipment rarities">${RARALL.map((r,i)=>`<span class="r${i}">${r.n}</span>`).join('')}</div>
-    <div class="grid${clickSellOn()?' sellmode':''}">${Array.from({length:n},(_,i)=>{const it=inv[i];if(!it)return'<div class="cell empty"></div>';
+    ${typeof eclipseInventoryTools==='function'?eclipseInventoryTools():''}<div class="grid${clickSellOn()?' sellmode':''}">${Array.from({length:n},(_,i)=>{const it=inv[i];if(!it)return'<div class="cell empty"></div>';
       const on=!!(sel&&sel.id===it.id),fits=!!eqPick&&slotAccepts(eqPick,it);
       // While a slot is being chosen, every item that fits it is ringed in green and equips on
       // a click. Everything else behaves exactly like the normal bag, so viewing, selling, the
@@ -4829,15 +4882,15 @@ const V={
     // v51: the detail card is inserted into the doll right below the row that owns the clicked
     // slot (head / hands+body / legs+accessories), so Refine, card slots and Unequip sit beside
     // the piece they act on instead of at the bottom of the window.
-    const detail=`<div class="doll-detail">${sel?itemMain(sel)+refineUI(sel,selE)+cardSlots(sel,selE)+insertUI(sel)+`<div class="row" style="margin-top:6px"><button data-a="unequip" data-v="${selE}">Unequip</button><button class="tick${sel.locked?' on':''}" data-a="lockgear" data-v="${sel.id}" aria-pressed="${!!sel.locked}">${sel.locked?'&#9733; Unlock':'☆ Lock'}</button></div>`:'<small>Click any slot above to choose what to wear there (the Bag opens with the items that fit already highlighted). Select one to inspect it, refine it or remove cards.</small>'}</div>`;
+    const detail=`<div class="doll-detail">${sel?itemMain(sel)+refineUI(sel,selE)+'<div class="eclipse-native-sockets">'+cardSlots(sel,selE)+insertUI(sel)+'</div>'+`<div class="row" style="margin-top:6px"><button data-a="unequip" data-v="${selE}">Unequip</button><button class="tick${sel.locked?' on':''}" data-a="lockgear" data-v="${sel.id}" aria-pressed="${!!sel.locked}">${sel.locked?'&#9733; Unlock':'☆ Lock'}</button></div>`:'<small>Click any slot above to choose what to wear there (the Bag opens with the items that fit already highlighted). Select one to inspect it, refine it or remove cards.</small>'}</div>`;
     const rows=[['','head',''],['weapon','armor','off'],['acc1','leg','acc2']];
     const rowAt=rows.findIndex(r=>r.includes(selE));
     return`<div class="doll">${rows.map((r,i)=>r.map(slotCell).join('')+(i===rowAt?detail:'')).join('')}</div>`
-    +`<small>Weapons: ${c.wt.join(', ')} &middot; ${canShield()?'Shield allowed':'No shield'}${katarOnly()?' &middot; <b>Two-handed Katar, or a dagger in each hand</b>':''}</small>`},
+    +`<small>Weapons: ${c.wt.join(', ')} &middot; ${canShield()?'Shield allowed':'No shield'}${katarOnly()?' &middot; <b>Two-handed Katar, or a dagger in each hand</b>':''}</small><div class="eclipse-doll-preview"><canvas id="eclipseDoll" width="126" height="134" aria-label="Equipped character"></canvas></div><div class="eclipse-loadout-inventory">${V.bag0()}</div>`},
   cards(){const g={};S.cards.forEach(c=>{const k=cardGroup(c);(g[k]=g[k]||[]).push(c)});const ks=Object.keys(g),sel=g[selC]?g[selC][0]:null;
     return`<p>Merge identical cards: ★ +9%, ★★ +12%, ★★★ +15% effects. Each step consumes 1 / 3 / 5 extra unstarred copies (10 cards total for ★★★). Normal and Nightmare merge separately. Starred cards are protected from Mastery donations and resets.</p><div class="grid">${ks.map(n=>`<div class="cell b${GI[g[n][0].g]}${n===selC?' sel':''}" data-a="selc" data-v="${esc(n)}" data-tip="${g[n][0].id}">🃏<small>${"★".repeat(cardStars(g[n][0]))}</small><i class="rf">x${g[n].length}</i></div>`).join('')||'<small>No cards yet. Every monster drops its own card at a low chance.</small>'}</div>
     ${sel?`<div class="mob-card" style="margin-top:8px">${itemDetail(sel)}<div class="row" style="margin-top:6px">${EQK.map(([k,l])=>{const e=S.eq[k];return e&&(e.cards||[]).length<(e.slots||0)&&cardFits(sel,e)?`<button data-a="sock" data-v="${sel.id}:${k}">&rarr; ${l}</button>`:''}).join('')}${!sel.legacy&&sel.cardKey&&cardStars(sel)<3?`<button data-a="mergecard" data-v="${sel.id}">Merge to ${cardStars(sel)+1}★ · ${CARD_MERGE_COST[cardStars(sel)]} extra copies</button>`:""}<button data-a="sellcard" data-v="${sel.id}">Sell ${sel.v*150}z</button></div></div>`:''}`},
-  refine(){return`<div class="hd">Oridecon: ${S.ore.ori} &middot; Elunium: ${S.ore.elu} &middot; Refine Scrolls: ${safeCount(S.refineScrolls)}</div><small>Weapons use Oridecon; armor, shield, legs, headgear and accessories use Elunium. Regular mobs drop both at 0.5% on Stages 1-9 and 1% on Stage 10; Stage 10 MVPs drop both at 2.5%. Each attempt costs 1 ore on Common and Fine pieces, 2 on Rare and Epic, 5 on Legendary, and 10 on N and N+. Enable Refine Scroll protection below: one scroll is consumed on every selected attempt from current +5 or higher, including success, and keeps your rank on failure. Success chance is unchanged. Crafted Drop Protection Scrolls remain an automatic fallback.</small>`
+  refine(){return`<div class="hd">Oridecon: ${S.ore.ori} &middot; Elunium: ${S.ore.elu} &middot; Refine Scrolls: ${safeCount(S.refineScrolls)}</div><small>Weapons use Oridecon; armor, shield, legs, headgear and accessories use Elunium. Regular mobs drop both at 0.5% on Stages 1-9 and 1% on Stage 10; Stage 10 MVPs drop both at 2.5%. Each attempt costs 1 ore on Common and Fine pieces, 2 on Rare and Epic, 5 on Legendary, and 10 on N and N+. Enable Refine Scroll protection below: one scroll is consumed on every attempt while On, including success, and keeps your rank on failure. Only current +5 or above can lose a rank. Below +5 asks for confirmation before spending a scroll. Success chance is unchanged. Crafted Drop Protection Scrolls remain an automatic fallback.</small>`
     +`${refineProtectionUI()}`+dpsPanel()+EQK.map(([k,l])=>{const it=S.eq[k];if(!it)return'';const r=it.r||0,o=it.slot==='weapon'?'ori':'elu',c=refCost(it);
       return`<div class="slot" style="align-items:flex-start;gap:10px;margin-top:6px">${cell(it,false)}<div style="flex:1"><b class="${rarCls(it)}">${iname(it)}</b> <small>${l}</small><br><small>${SLOTS[it.slot].stat} +${ev(it)} &rarr; +${Math.round(it.val*(1+(r+1)*.15))} &middot; ${r>=10?'MAX':'Success '+refCh(it)+'% &middot; '+c.toLocaleString()+'z + '+refOre(it)+' '+ORE[o]}</small><br><button data-a="refine" data-v="${k}" ${r>=10||S.ore[o]<refOre(it)||S.zeny<c?'disabled':''}>Refine</button></div></div>`}).join('')},
   pet(){const P=S.pets,A=P.filter(p=>p.on).length,p=gp(selP);
@@ -4864,7 +4917,7 @@ const V={
     <div class="row"><button data-a="dmgshow" data-v="on" class="${S.dmgShow!==false?'on':''}" aria-pressed="${S.dmgShow!==false}">Show: On</button><button data-a="dmgshow" data-v="off" class="${S.dmgShow===false?'on':''}" aria-pressed="${S.dmgShow===false}">Show: Off</button></div>
     <div class="row" style="margin-top:4px"><button data-a="dmgfmt" data-v="short" class="${S.dmgShort!==false?'on':''}" aria-pressed="${S.dmgShort!==false}">Short &middot; 100K / 1M</button><button data-a="dmgfmt" data-v="full" class="${S.dmgShort===false?'on':''}" aria-pressed="${S.dmgShort===false}">Full &middot; 100,000</button></div>
     <small>On or off, and how the numbers read. Saved with your account.</small>
-    <div class="hd" style="margin-top:10px">Gameplay</div><label title="Always on - the game cannot be paused by hiding the tab any more"><span class="lockmark">&#10003;</span> Keeps grinding while this tab is in the background</label>
+    <div class="hd">Interface palette</div>${typeof eclipsePaletteControls==='function'?eclipsePaletteControls():''}<div class="hd" style="margin-top:10px">Gameplay</div><label title="Always on - the game cannot be paused by hiding the tab any more"><span class="lockmark">&#10003;</span> Keeps grinding while this tab is in the background</label>
     <small>Background grinding keeps playing while the tab is hidden - a hidden tab is never "away". The welcome-back reward only starts after <b>three minutes</b> without a save, so an ordinary background session never opens it. Auto-equip lives on the <b>Bag</b> tab and Auto-advance on the <b>World Map</b> tab, next to what they control.</small>
     <p><small>Drag to rotate, scroll or pinch to zoom. Hotkeys: M S J K B E C Q R L P I V O, Esc to close.</small></p><button class="full" data-a="reset">Erase this account's save &amp; restart</button><button class="full" data-a="logout">Logout</button>`},
   gm(){return`<div class="hd">Player management</div><p><a href="/gm.html" target="_blank" rel="noopener">Open GM console · players, equipment &amp; server gifts</a></p><small>Cloud GM sign-in required. Auras: Base 50 / 99 / 150. Weapon glow: +4 / +7 / +10.</small><div class="row"><button data-a="gmaura" data-v="50">Test Lv50 aura</button><button data-a="gmaura" data-v="99">Test Lv99 aura</button><button data-a="gmaura" data-v="150">Test Lv150 aura</button><button data-a="gmglow" data-v="4">Weapon +4</button><button data-a="gmglow" data-v="7">Weapon +7</button><button data-a="gmglow" data-v="10">Weapon +10</button></div><div class="hd">GM multiplier (EXP, Job EXP, Zeny, quests)</div><div class="row">${[1,10,100,1000].map(x=>`<button data-a="gmx" data-v="${x}" ${S.gmx===x?'style="background:#ffe08a"':''}>x${x}</button>`).join('')}</div>
@@ -4876,10 +4929,11 @@ const V={
 // v90: the Black Market panel. Locked until Base Lv 100; ore is bought one at a time and a reforge is
 // offered for every worn piece that has an affix.
 V.guide=()=>buildGuide(true);
-V.market=()=>{const guide=`<div class="build-guide"><button data-t="guide">${uiIcon('guide')} Build &amp; farming guide · Upgrade planner</button></div>`;if(!bmOpen())return guide+`<p>Black Market opens at Base Lv ${BM_LV}.</p>`;
+function eclipseEchoPicker(){return `<div class="trial-hd"><b>Nightmare Gear Token</b><small>${TRIAL_STORE.find(x=>x.id==='nmgear').c} Echo Shards</small></div><p>Choose the source map for your class-compatible equipment.</p><div class="mapgrid">${MAPS.map((m,i)=>`<button class="mapcard" data-nmmap="${i}"><b>${m.n}</b><small>${NMNAME[i]}</small></button>`).join('')}</div><button data-a="echostore">Back to Echo store</button>`}
+V.market=()=>{const navigation=`<div class="atabs"><button data-a="sub" data-v="market:supplies" class="${sub.market==='supplies'?'on':''}">Supplies</button><button data-a="sub" data-v="market:echo" class="${sub.market==='echo'?'on':''}">Echo store</button></div>`;if(sub.market==='echo')return navigation+(eclipseEchoPick?eclipseEchoPicker():trialShopHtml(true));const guide=navigation+`<div class="build-guide"><button data-t="guide">${uiIcon('guide')} Build &amp; farming guide · Upgrade planner</button></div>`;if(!bmOpen())return guide+`<p>Black Market opens at Base Lv ${BM_LV}.</p>`;
 const ores=Object.entries(ORE).map(([o,n])=>`<div class="slot"><b>${n}</b><label>Quantity<input class="ore-quantity" id="oreQty-${o}" type="number" min="1" max="1000000" step="1" value="${esc(marketQty[o])}" aria-label="${n} quantity"></label><small>${BM_ORE.toLocaleString()}z each · <output id="oreTotal-${o}">${Number.isSafeInteger(Number(marketQty[o]))&&Number(marketQty[o])>0?(Number(marketQty[o])*BM_ORE).toLocaleString()+'z total':'Enter a whole quantity'}</output></small><button data-a="bmore" data-v="${o}" ${S.zeny<BM_ORE?'disabled':''}>Buy quantity</button></div>`).join('');
 const mats=NM_MAT.map((n,i)=>`<div class="slot"><b>${n}</b><button data-a="bmmat" data-v="${i}" ${S.zeny<BM_MAT_PRICE?'disabled':''}>Buy 1 · ${BM_MAT_PRICE.toLocaleString()}z</button></div>`).join('');
-return guide+`<div class="hd">Black Market · ${S.zeny.toLocaleString()}z</div>`+ores+`<div class="slot"><b>Refine Scroll</b><small>Enable in Equipment → Refine from current +5 or higher. One scroll per selected attempt, including success; prevents rank loss on failure.</small><button data-a="buyscroll" ${S.zeny<BM_SCROLL?'disabled':''}>Buy 1 · 80,000,000z</button></div>`+'<div class="sec">Nightmare materials</div><small>3,000,000z each</small>'+mats+'<div class="sec">Reforge</div>'+reforgePanel()};
+return guide+`<div class="hd">Black Market · ${S.zeny.toLocaleString()}z</div>`+ores+`<div class="slot"><b>Refine Scroll</b><small>Enable On in Equipment → Refine. One scroll per attempt, including success; prevents rank loss on failure. Only +5 and above can lose a rank; below +5 asks for confirmation.</small><button data-a="buyscroll" ${S.zeny<BM_SCROLL?'disabled':''}>Buy 1 · 80,000,000z</button></div>`+'<div class="sec">Nightmare materials</div><small>3,000,000z each</small>'+mats+'<button data-a="openreforge" class="full">Equipment workshop → Reforge</button>'};
 V.index=()=>`<div class="mastery-head"><div class="mastery-emblem">✦</div><div><b>Midgard Mastery Index</b><small>Individual monsters, Index XP and per-card rewards</small></div><span class="mastery-counter">${indexExperience().toLocaleString()} Index XP</span></div><div class="mastery-tabs"><button data-a="indexview" data-v="mobs" class="${indexMode==='mobs'?'on':''}" aria-pressed="${indexMode==='mobs'}">⚔ Mob Index</button><button data-a="indexview" data-v="cards" class="${indexMode==='cards'?'on':''}" aria-pressed="${indexMode==='cards'}">🃏 Card Mastery</button><button data-t="guide">${uiIcon('guide')} Build &amp; farming guide</button></div>${indexMode==='mobs'?renderMobIndex():renderCardIndex()}`;
 const EQK=[['head','Head','🎩'],['weapon','R.Hand','⚔️'],['armor','Body','🥼'],['off','L.Hand','🛡️'],['acc1','Acc 1','💍'],['leg','Legs','👖'],['acc2','Acc 2','💍']];
 const CFIT={matk:'weapon',move:'acc',hpPct:'armor',def:'armor',mdef:'head',field:'weapon',str:'weapon',dex:'weapon',atk:'weapon',crit:'weapon',cdm:'weapon',agi:'armor',aspd:'armor',flee:'armor',vit:'armor',int:'head',hp:'head',luk:'acc'},CFL={weapon:'Weapons',armor:'Armor, Shield & Legwear',head:'Headgear',acc:'Accessories'};
@@ -4890,7 +4944,7 @@ function katarOnly(cls=S.cls){return cls==='Assassin'||cls==='Assassin Cross'}
 // one blade, and the katar is not theirs either. dualWield() is what opens the left-hand slot.
 function dualWield(cls=S.cls){const c=CLASSES[cls]||CLASSES.Novice;return c.wt.includes('dagger')&&c.wt.includes('katar')}
 function ekey(it){if(it.slot==='acc')return S.eq.acc1&&!S.eq.acc2?'acc2':'acc1';return it.slot}
-const tabs=[];let selP=null,selS=null,selE='weapon',qOpen=true,sideOpen=false,eqPick=null,indexMode='mobs';const sub={status:'stats',bag:'bag',equip:'equip0'};
+const tabs=[];let selP=null,selS=null,selE='weapon',qOpen=false,sideOpen=false,eqPick=null,indexMode='mobs';const sub={status:'stats',bag:'bag',equip:'equip0',market:'supplies',pet:'party'};let eclipseJobsBrowse=false;
 // The Index window is rebuilt on every game update, so a native <details> would slam shut the
 // moment a kill or level-up re-renders it. Remember each map's open/closed choice per tab and
 // feed it back into the markup, so reading another map's ledger stays readable.
@@ -4923,8 +4977,9 @@ function equipIn(k,id){const it=S.inv.find(x=>String(x.id)===String(id));
   if(!it)return;if(!slotAccepts(k,it)){log('Your class cannot use that there.');return}
   const old=S.eq[k];S.eq[k]=it;S.inv.splice(S.inv.indexOf(it),1);if(old)S.inv.push(old);
   S.hp=Math.min(S.hp,maxHp());log('Equipped '+iname(it)+' ('+EQK.find(x=>x[0]===k)[1].toLowerCase()+').','','gear');ui();save()}
-const SUBS={equip:[['equip0','Loadout'],['refine','Refine (R)']],status:[['stats','Stats']],bag:[['bag','Bag'],['cards','Cards']]};
+const SUBS={equip:[['equip0','Loadout'],['refine','Refine (R)'],['reforge','Reforge']],status:[['stats','Stats']],bag:[['bag','Bag'],['cards','Cards']]};
 const subBar=t=>`<div class="atabs">${SUBS[t].map(([k,n])=>`<button data-a="sub" data-v="${t}:${k}" class="${sub[t]===k?'on':''}">${n}</button>`).join('')}</div>`;
+V.reforge=()=>bmOpen()?reforgePanel():`<p>Reforge opens with the Black Market at Base Lv ${BM_LV}.</p>`;
 V.equip=()=>subBar('equip')+V[sub.equip]();
 V.status=()=>subBar('status')+V[sub.status]();V.bag=()=>subBar('bag')+V[sub.bag==='bag'?'bag0':sub.bag]();
 function renderTitleTrack(){
@@ -5001,7 +5056,7 @@ function renderCardIndex(){
     }).join('')}`;
 }
 
-const qpSide=()=>`<button data-q="side" class="qp-side-toggle" aria-controls="sideLinks" aria-expanded="${sideOpen}">${uiIcon('index')} Adventurer Hub <span class="side-chevron${sideOpen?' open':''}">${uiIcon('chevron')}</span></button><div id="sideLinks" ${sideOpen?'':'hidden'}>${SIDE_TABS.map(k=>`<button data-t="${k}" class="qp-side-tab${tabs.includes(k)?' on':''}" aria-pressed="${tabs.includes(k)}">${uiIcon(k)} ${TABS[k][1]} <small>${TABS[k][2]}</small></button>`).join('')}</div>`;
+const qpSide=()=>`<button data-q="side" class="qp-side-toggle" aria-controls="sideLinks" aria-expanded="${sideOpen}">${uiIcon('index')} More destinations <span class="side-chevron${sideOpen?' open':''}">${uiIcon('chevron')}</span></button><div id="sideLinks" ${sideOpen?'':'hidden'}>${SIDE_TABS.filter(k=>k!=='gm'||S.gm).map(k=>`<button data-t="${k}" class="qp-side-tab${tabs.includes(k)?' on':''}" aria-pressed="${tabs.includes(k)}">${uiIcon(k)} ${TABS[k][1]} <small>${TABS[k][2]}</small></button>`).join('')}</div>`;
 function applyDisplay(){
  document.body.classList.toggle('clean-screen',!!S.hideUI);
  document.body.classList.toggle('hide-damage',S.dmgShow===false||!!S.hideUI);
@@ -5014,11 +5069,12 @@ function screenOptions(){const panel=$('screenOptions');panel.hidden=!panel.hidd
 document.addEventListener('input',e=>{if(e.target.id?.startsWith('oreQty-')){const o=e.target.id.slice(7),n=Number(e.target.value),out=$('oreTotal-'+o);marketQty[o]=e.target.value;if(out)out.textContent=Number.isSafeInteger(n)&&n>0?(n*BM_ORE).toLocaleString()+'z total':'Enter a whole quantity';}});
 $('screenBtn').onclick=()=>{if(S)screenOptions()};
 $('screenOptions').onchange=e=>{const key=e.target.dataset.display;if(!['dmgShow','auraShow','feedShow','labelsShow','hideUI'].includes(key))return;S[key]=e.target.checked;applyDisplay();save()};
-function renderQ(){const e=$('qp'),rail=$('sideRail');if(!S){rail.style.display='none';return}rail.style.display=tabs.length?'none':'flex';e.style.display='block';
-  e.innerHTML=`<div class="qp-head"><b>${uiIcon('quest')} Quests</b><div class="qp-actions"><button data-q="t" aria-expanded="${qOpen}" aria-label="${qOpen?'Collapse':'Expand'} quests">${uiIcon(qOpen?'minus':'chevron')}</button></div></div>`+(qOpen?contractPanel()+(S.q||[]).map((q,i)=>q.prog<q.goal?'':`<div class="quest-entry"><div>${qTxt(q)}</div><div class="pbar"><i style="width:${Math.min(100,q.prog/q.goal*100)}%"></i></div><div class="quest-reward"><small>${q.prog}/${q.goal} &middot; ${(q.z||0).toLocaleString()}z &middot; ${(q.xp||0).toLocaleString()}xp</small>${q.prog>=q.goal?`<button data-q="c${i}">Claim</button>`:''}</div></div>`).join(''):'');
-  $('sideMenu').innerHTML=qpSide();polishIcons(e)}
-$('sideRail').onclick=e=>{const d=e.target.closest('[data-t]');if(d){openTab(d.dataset.t);return}const b=e.target.closest('[data-q]');if(!b)return;const v=b.dataset.q;if(v==='daily'||v==='all'){questView=v;renderQ();return}if(v.startsWith('contract:')){claimContract(v.slice(9));return}if(v==='side'){sideOpen=!sideOpen;renderQ();return}if(v==='t'){qOpen=!qOpen;renderQ()}else ACT.claim(v.slice(1))};
-function refineUI(it,k){const r=it.r||0,o=it.slot==='weapon'?'ori':'elu',c=refCost(it),need=refOre(it);return`<div class="sec">Refine</div>${refineProtectionUI()}<small>${SLOTS[it.slot].stat} +${ev(it)} &rarr; +${Math.round(it.val*(1+(r+1)*.15))} &middot; ${r>=10?'MAX':'Success '+refCh(it)+'% &middot; '+c.toLocaleString()+'z + '+need+' '+ORE[o]+' (you have '+S.ore[o]+')'}</small><div class="row" style="margin-top:4px"><button data-a="refine" data-v="${k}" ${r>=10||S.ore[o]<need||S.zeny<c?'disabled':''}>Refine</button></div>`}
+function renderQ(){const e=$('qp'),rail=$('sideRail');if(!S){rail.style.display='none';return}rail.style.display='flex';rail.classList.toggle('with-panels',!!tabs.length);e.style.display='block';
+  $('eclipseMapCard').classList.toggle('other-map',S.mp!==0);$('eclipseMapName').textContent=MAPS[S.mp].n;$('eclipseMapStage').textContent=fieldName()+' · World atlas';
+  const questHTML=`<div class="qp-head"><b>${uiIcon('quest')} Quests</b><div class="qp-actions"><button data-q="t" aria-expanded="${qOpen}" aria-label="${qOpen?'Collapse':'Expand'} quests">${uiIcon(qOpen?'minus':'chevron')}</button></div></div>`+(qOpen?contractPanel(eclipseQuestAll?Infinity:3)+(S.q||[]).map((q,i)=>q.prog<q.goal?'':`<div class="quest-entry"><div>${qTxt(q)}</div><div class="pbar"><i style="width:${Math.min(100,q.prog/q.goal*100)}%"></i></div><div class="quest-reward"><small>${q.prog}/${q.goal} &middot; ${(q.z||0).toLocaleString()}z &middot; ${(q.xp||0).toLocaleString()}xp</small>${q.prog>=q.goal?`<button data-q="c${i}">Claim</button>`:''}</div></div>`).join(''):'');
+  eclipseSetMarkup(e,questHTML+(qOpen?'<button class="eclipse-quest-all" data-q="viewall">'+(eclipseQuestAll?'Show compact journal':'View all objectives')+' →</button>':''));e.classList.toggle('expanded-journal',eclipseQuestAll);$('sideMenu').classList.toggle('eclipse-more-open',sideOpen);eclipseSetMarkup($('sideMenu'),qpSide());polishIcons(e)}
+$('sideRail').onclick=e=>{const d=e.target.closest('[data-t]');if(d){sideOpen=false;openTab(d.dataset.t);return}const b=e.target.closest('[data-q]');if(!b)return;const v=b.dataset.q;if(v==='viewall'){eclipseQuestAll=!eclipseQuestAll;renderQ();return}if(v==='daily'||v==='all'){questView=v;renderQ();return}if(v.startsWith('contract:')){claimContract(v.slice(9));return}if(v==='side'){sideOpen=!sideOpen;renderQ();return}if(v==='t'){qOpen=!qOpen;renderQ()}else ACT.claim(v.slice(1))};
+function refineUI(it,k){const r=it.r||0,o=it.slot==='weapon'?'ori':'elu',c=refCost(it),need=refOre(it);return`<div class="sec">Refine</div>${refineProtectionUI()}<small class="refine-item-summary"><span>${SLOTS[it.slot].stat} +${ev(it)} &rarr; +${Math.round(it.val*(1+(r+1)*.15))}</span><span>${r>=10?'MAX':'Success '+refCh(it)+'% &middot; '+c.toLocaleString()+'z + '+need+' '+ORE[o]}</span><span class="refine-owned" title="${safeCount(S.ore[o]).toLocaleString()} ${ORE[o]} owned">${safeCount(S.ore[o]).toLocaleString()} ${ORE[o]} owned</span></small><div class="row" style="margin-top:4px"><button data-a="refine" data-v="${k}" ${r>=10||S.ore[o]<need||S.zeny<c?'disabled':''}>Refine</button></div>`}
 // v75: one pet per species. petFold() takes a duplicate and folds it into the pet you already
 // own - the better mutation survives, each gear slot keeps its better level, a skill the older
 // pet was missing moves into its free slot, and the species gains +1 Bond. It returns what
@@ -5075,6 +5131,19 @@ function insertUI(sel){if(!(sel.slots>0))return'<small>No card slots on this ite
 // Presentation composition: move the existing controls into task-specific layouts. Nodes are
 // moved, never recreated, so action values, disabled states, confirmation paths and tooltips
 // remain owned by the original renderers. No game/save state is changed here.
+function eclipseClassEmblem(name){
+  const c=CLASSES[name],family=lineOf(name)[1]||'Novice',tier=c.tier||0;
+  const art={
+    Novice:'<path d="m16 10 4 6 7-3-2 7 7 3-7 3 2 7-7-3-4 6-1-9-7-4 7-3Z"/>',
+    Swordman:'<path d="m12 13 8-4 8 4v10c0 6-8 11-8 11s-8-5-8-11Z"/><path d="m11 31 18-19 2-5-5 2-18 19m2-5 7 7"/>',
+    Mage:'<path d="m10 33 17-22m-7 1 3-5 4 3 5-1-1 5 3 4-6 1-2 5-3-5-5-2 2-5Z"/><path d="m9 12 2-4m-6 5 4 1m20 14 4-2"/>',
+    Archer:'<path d="M12 7c19 1 19 25 0 26l6-13Z"/><path d="M6 20h28m-5-5 5 5-5 5m-18-2-4-4"/>',
+    Thief:'<path d="m8 9 10 7-4 4-6-11Zm24 0-10 7 4 4 6-11ZM14 20l13 13m-8-14L6 32m1-6 7 7m12-7 7 7"/>',
+    Acolyte:'<path d="M17 8h6v9h9v6h-9v10h-6V23H8v-6h9Z"/><path d="m10 9-3-3m23 3 3-3M7 30l3-3m20 0 3 3"/>',
+    Merchant:'<path d="m10 10 13-3 9 10-9 9-13-16Zm10 14L9 35m-3-4 6 6M23 9l6 7"/><circle cx="12" cy="16" r="4"/>'
+  };
+  return '<span class="eclipse-class-emblem tier-'+tier+'"><svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path class="crest-frame" d="M24 2 43 12v20L24 46 5 32V12Z"/><g transform="translate(4 3)">'+art[family]+'</g>'+(tier>=2?'<path d="m12 36 12 7 12-7"/>':'')+(tier>=3?'<path d="m17 7 2 3 5-5 5 5 2-3"/>':'')+'</svg></span>';
+}
 function arrangePanel(k,root){
   const make=(tag,cls,text)=>{const e=document.createElement(tag);if(cls)e.className=cls;if(text)e.textContent=text;return e};
   const put=(parent,...nodes)=>{nodes.flat().filter(Boolean).forEach(n=>parent.append(n));return parent};
@@ -5089,18 +5158,25 @@ function arrangePanel(k,root){
   const direct=()=>[...body.children];
   const tabs=q('.atabs');if(tabs)root.prepend(tabs);
   const mode=k==='status'?sub.status:k==='bag'?sub.bag:k==='equip'?(sub.equip==='equip0'?'equip':sub.equip):k;
-  const labels={refine:['EQUIPMENT','Refinement workshop','Choose when to protect your equipment.'],map:['EXPLORE','World atlas','Choose a destination, then a stage.'],stats:['CHARACTER',S.cls,'Base '+S.lv+' · Job '+jobOf().jl+' · '+S.pts+' stat points'],equip:['CHARACTER','Your loadout','Select a slot to compare, refine or socket.'],job:['PROGRESSION','Class paths','Browse a path. Inspect a class. Make your next move.'],skills:['COMBAT','Skill library',skpAvail()+' points available · '+S.cls],bag:['INVENTORY','Field kit',S.inv.length+' / '+BAGMAX+' items'+(S.inv.length>=BAGMAX?' · BAG FULL':'')+(clickSellOn()?' · CLICK-SELL ACTIVE':'')],cards:['INVENTORY','Card collection',(S.cards||[]).length+' loose cards · select one to socket or sell'],pet:['COMPANIONS','Your party',S.pets.filter(p=>p.on).length+' / 3 in battle · '+S.pets.length+' collected'],guide:['HANDBOOK','Build & Farming Guide','Plan your build. Find your next farming target.'],market:['TRADE','Black Market',S.zeny.toLocaleString()+' Zeny available'],index:['COLLECTION','Mastery journal','Track discoveries and permanent rewards.'],board:['COMMUNITY','Leaderboard','Your place among the adventurers.'],log:['SESSION','Activity feed','Filter your feed without interrupting the grind.'],set:['PREFERENCES','Make it yours','Appearance, combat display and account controls.'],gm:['ADMINISTRATION','Game tools','Test controls grouped by system.']};
+  const labels={reforge:['EQUIPMENT','Reforge affixes','Select affixes, review the cost, then keep or accept your offer.'],refine:['EQUIPMENT','Refinement workshop','Choose when to protect your equipment.'],map:['EXPLORE','World atlas','Choose a destination, then a stage.'],stats:['CHARACTER',S.cls,'Base '+S.lv+' · Job '+jobOf().jl+' · '+S.pts+' stat points'],equip:['CHARACTER','Your loadout','Select a slot to compare, refine or socket.'],job:['PROGRESSION','Class paths','Browse a path. Inspect a class. Make your next move.'],skills:['COMBAT','Skill library',skpAvail()+' points available · '+S.cls],bag:['INVENTORY','Field kit',S.inv.length+' / '+BAGMAX+' items'+(S.inv.length>=BAGMAX?' · BAG FULL':'')+(clickSellOn()?' · CLICK-SELL ACTIVE':'')],cards:['INVENTORY','Card collection',(S.cards||[]).length+' loose cards · select one to socket or sell'],pet:['COMPANIONS','Your party',S.pets.filter(p=>p.on).length+' / 3 in battle · '+S.pets.length+' collected'],guide:['HANDBOOK','Build & Farming Guide','Plan your build. Find your next farming target.'],market:['TRADE','Black Market',S.zeny.toLocaleString()+' Zeny available'],index:['COLLECTION','Mastery journal','Track discoveries and permanent rewards.'],board:['COMMUNITY','Leaderboard','Your place among the adventurers.'],log:['SESSION','Activity feed','Filter your feed without interrupting the grind.'],set:['PREFERENCES','Make it yours','Appearance, combat display and account controls.'],gm:['ADMINISTRATION','Game tools','Test controls grouped by system.']};
   const info=labels[mode]||labels[k];
   if(info){const h=make('header','ui-hero');put(h,make('span','ui-eyebrow',info[0]),make('h2','',info[1]),make('p','',info[2]));root.insertBefore(h,body)}
   if(k==='map'){
     const band=q('.mapband:not(.fields)'),maps=q('.mapgrid'),fields=q('.fields'),special=q('.map-specials'),drops=q('.mapcols');
     const destinations=section('01 / Destination','ui-destinations');put(destinations,maps);if(band)put(destinations,fold('About destinations',[...band.childNodes].filter(n=>n!==special),'destinations'));
-    const route=section('02 / Stage & travel','ui-route');put(route,fields);
-    if(fields){const notes=[...fields.querySelectorAll('.map-stage-note,.mapband-t>small')];put(fields,fold('Stage rules & requirements',notes,'stage-rules'));const go=fields.querySelector('.go');if(go)put(fields,put(make('div','ui-primary-action'),go))}
-    body.replaceChildren(destinations);
-    if(special)put(body,put(section('CHALLENGE / Endless Echo','ui-challenge'),special));
-    put(body,route);
-    if(drops){const intel=section('03 / Field drops · chance per kill','ui-field-guide');put(intel,drops);put(body,intel)}
+    maps?.querySelectorAll('.mapcard').forEach((card,i)=>card.prepend(make('span','eclipse-map-number',String(i+1).padStart(2,'0'))));
+    const route=section('02 / Choose your stage','ui-route'),hero=make('div','eclipse-atlas-hero');
+    hero.innerHTML='<canvas id="eclipseAtlas" width="750" height="350" aria-label="Terrain preview for '+esc(MAPS[mapM].n)+'"></canvas><div><span class="ui-eyebrow">RUNE-MIDGARD / '+String(mapM+1).padStart(2,'0')+'</span><h2>'+esc(MAPS[mapM].n)+'</h2><p>'+esc(MAPS[mapM].t)+' · Recommended '+esc(MAPS[mapM].rec)+'</p></div>';
+    route.prepend(hero);put(route,fields);
+    if(fields){const notes=[...fields.querySelectorAll('.map-stage-note,.mapband-t>small')],nodes=[...fields.querySelectorAll('.map-node')],grid=fields.querySelector('.lvgrid');
+      if(grid){const normal=make('div','eclipse-stages'),nightmare=make('div','eclipse-stages eclipse-nightmare');nodes.forEach((node,i)=>{node.querySelector('b').textContent=i<10?(i===9?'♛':String(i+1).padStart(2,'0')):'NM '+(i-9);node.setAttribute('aria-label',node.title);node.setAttribute('aria-pressed',String(mapL===i+1));put(i<10?normal:nightmare,node)});grid.replaceChildren(normal,nightmare)}
+      const go=fields.querySelector('.go');if(go){go.textContent=S.mp===mapM&&S.lvl===mapL?'You are here · '+MAPS[mapM].n:'Travel to '+MAPS[mapM].n+' · '+(mapL>10?'NM '+(mapL-10):'Stage '+String(mapL).padStart(2,'0'))+' →';put(fields,put(make('div','ui-primary-action'),go))}
+      put(fields,fold('Stage rules & requirements',notes,'stage-rules'));
+    }
+    if(special)put(route,put(section('CHALLENGE / Endless Echo','ui-challenge'),special));
+    const intel=section('03 / Field intelligence','ui-field-guide');
+    if(drops){const field=fieldOf(mapM,mapL),mob=field.boss||field.mobs[0],encounter=make('div','eclipse-field-encounter');encounter.innerHTML='<img src="'+esc(mobSpriteUrl(mob.spriteId))+'" alt=""><div><b>'+esc(mob.n)+'</b><small>'+(field.boss?'MVP + escorts':'Normal field · independent loot rolls')+'</small></div>';drops.querySelector('.hd')?.after(encounter)}
+    put(intel,drops);body.replaceChildren(destinations,route,intel);
   }else if(mode==='stats'){
     const slots=direct().filter(e=>e.classList.contains('slot')),attrs=slots.filter(e=>e.querySelector('[data-a="stat"]')),combat=slots.find(e=>!e.querySelector('[data-a="stat"]')),reset=q('[data-a="rstat"]');
     const attributes=section('Allocate attributes','ui-attribute-section');put(attributes,put(make('div','ui-attributes'),attrs));
@@ -5109,11 +5185,18 @@ function arrangePanel(k,root){
   }else if(k==='job'){
     const tree=q('.tree'),preview=q('.hair-preview-card'),detail=q('.mob-card'),legend=q('.legend'),restart=q('[data-a="job"][data-v="Novice"].full');
     const paths=section('Six paths. Your next class.','ui-job-paths');
-    if(tree){const rows=[...tree.querySelectorAll('.trow')],start=rows.shift();if(start)put(paths,put(make('div','ui-job-start'),start));for(let i=0;i<6;i++){const row=make('div','ui-job-path');rows.forEach(r=>{const node=r.querySelectorAll('.tn')[0];if(node)row.append(node)});put(paths,row)}}
-    if(legend)put(paths,legend);
+    if(tree){const rows=[...tree.querySelectorAll('.trow')],start=rows.shift();if(start)put(paths,put(make('div','ui-job-start'),start));for(let i=0;i<6;i++){const row=make('div','ui-job-path');rows.forEach(r=>{const node=r.querySelectorAll('.tn')[0];if(node){node.setAttribute('role','button');node.setAttribute('tabindex','0');row.append(node)}});put(paths,row)}}
+    paths.querySelectorAll('[data-a=selk]').forEach(node=>{const emblem=make('span','eclipse-class-tile-icon');emblem.innerHTML=eclipseClassEmblem(node.dataset.v);node.prepend(emblem);node.setAttribute('role','button');node.setAttribute('tabindex','0')});if(legend)put(paths,legend);
     const picked=inspector('Selected class',[preview,detail]);
     const notes=direct().filter(e=>e!==tree&&e!==preview&&e!==detail&&e!==legend&&e!==restart);
-    body.replaceChildren(split(paths,picked),fold('Class switching & collection',notes,'class-notes'),fold('Restart as Novice',restart,'restart'));
+    const overview=make('div','eclipse-class-overview'),lineage=make('div','eclipse-class-lineage');
+    const line=lineOf(S.cls);for(const [i,name] of line.entries()){const node=make('button','eclipse-class-node'+(name===S.cls?' current':''));node.dataset.a='selk';node.dataset.v=name;node.innerHTML=eclipseClassEmblem(name)+'<h3>'+esc(name)+'</h3><small>'+(name===S.cls?'CURRENT CLASS':S.jobs[name]?'Job Lv '+S.jobs[name].jl:'Not played')+'</small>';put(lineage,node)}
+    const intro=make('div','eclipse-class-info');intro.innerHTML='<b>Build your own path.</b><p>Played classes keep their own Base Level, Job Level, skills, stats and worn gear. New classes begin at Job Level 1. Browse a lineage to review its requirements.</p><button class="eclipse-primary" data-a="jobview" data-v="browse">Browse class lineages →</button>';
+    const bonus=make('div','eclipse-class-bonus');bonus.innerHTML='<b>Current collection bonus <strong>+'+collDmg()+'% damage</strong></b><p>'+playedClasses()+' / '+t3Total()+' transcendent classes at Base Lv 100+. Each earns a permanent +1% damage for every class you play, up to +'+t3Total()+'%. Switching classes keeps the earned bonus.</p>';
+    put(overview,lineage,bonus,intro);overview.hidden=eclipseJobsBrowse;
+    const browser=make('div','eclipse-class-browser');browser.hidden=!eclipseJobsBrowse;
+    const back=make('button','eclipse-text-button','← Your class lineage');back.dataset.a='jobview';back.dataset.v='overview';
+    put(picked,fold('Class switching & collection',notes,'class-notes'),fold('Restart as Novice',restart,'restart'));put(browser,back,bonus.cloneNode(true),split(paths,picked));body.replaceChildren(overview,browser);
   }else if(k==='skills'){
     const slot=q('.sk-slot'),tools=q('.sk-tools'),reset=q('[data-a="rskill"]'),grids=all('.skg'),intro=direct().filter(e=>!e.matches('.sk-slot,.skg,.sec')&&e!==reset);
     const catalog=section('Skills by class','ui-skill-catalog');
@@ -5128,29 +5211,74 @@ function arrangePanel(k,root){
   }else if(mode==='bag'||mode==='cards'){
     const grid=q('.grid'),detail=q('.grid-detail')||(mode==='cards'?q('.mob-card'):null),top=q('.bag-top'),auto=q('.bag-auto'),tools=q('.bag-tools'),key=q('.bag-key'),chooser=q('.chooser');
     if(detail)detail.remove();
-    const catalog=section(mode==='cards'?'Loose cards':'Equipment','ui-inventory');put(catalog,key,scroll('inventory',grid,'ui-item-scroll'));
+    if(mode==='cards'&&grid){grid.classList.add('eclipse-card-grid');for(const tile of grid.querySelectorAll('[data-a=selc]')){const card=S.cards.find(c=>String(c.id)===tile.dataset.tip);if(!card)continue;const count=tile.querySelector('.rf')?.textContent||'';tile.innerHTML='<span class="eclipse-card-glyph">'+uiIcon('cards')+'</span><b>'+esc(card.n)+'</b><small>'+esc(cardEffects(card).map(cardEffectText).join(' · '))+'</small><span class="eclipse-card-meta">'+esc(GRADE[card.g])+' · '+count+'</span>';tile.setAttribute('role','button');tile.setAttribute('tabindex','0');tile.setAttribute('aria-label','Inspect '+card.n)}}
+    const search=q('.eclipse-inventory-tools');const catalog=section(mode==='cards'?'Loose cards':'Equipment','ui-inventory');put(catalog,search,key,scroll('inventory',grid,'ui-item-scroll'));
     if(top)put(catalog,top);
     const selected=inspector(mode==='cards'?'Card details':'Item details',detail||make('p','ui-empty',mode==='cards'?'Select a card to see its bonus and available equipment slots.':'Select equipment to compare its stats, equip it, lock it or sell it.'));
     if(detail&&mode==='bag'){const item=S.inv.find(it=>String(it.id)===String(selB));if(item){const art=make('div','ui-item-art');art.innerHTML=icon(item);detail.prepend(art)}}
-    const leftovers=direct().filter(e=>![grid,detail,top,auto,tools,key,chooser].includes(e));
+    const leftovers=direct().filter(e=>![grid,detail,top,auto,tools,key,chooser,search].includes(e));
     body.replaceChildren();put(body,chooser,split(catalog,selected));
     if(auto||tools)put(body,put(section('Bag management','ui-management'),auto,tools));
     if(leftovers.length)put(body,fold('Inventory information',leftovers,'inventory-notes'));
   }else if(mode==='equip'){
-    const doll=q('.doll');if(doll){const detail=doll.querySelector('.doll-detail'),cells=[...doll.querySelectorAll(':scope > .cell')];const slots=put(make('div','ui-loadout-slots'),cells);const catalog=put(section('Equipped slots'),slots);const inspect=inspector('Equipment details',detail||make('p','ui-empty','Choose an equipment slot to inspect or replace it.'));doll.replaceChildren(split(catalog,inspect));doll.classList.add('ui-loadout')}
-    const notes=direct().filter(e=>e!==doll);body.replaceChildren();put(body,doll,fold('Weapon compatibility',notes,'equipment-notes'));
+    const doll=q('.doll'),source=q('.eclipse-loadout-inventory'),preview=q('.eclipse-doll-preview');
+    if(doll){const detail=doll.querySelector('.doll-detail'),cells=[...doll.querySelectorAll(':scope > .cell')];
+      const slots=put(make('div','ui-loadout-slots'),cells,preview);const catalog=put(section('Equipped loadout','eclipse-equipped'),slots);
+      const bagDetail=source?.querySelector('.grid-detail'),grid=source?.querySelector('.grid'),tools=source?.querySelector('.eclipse-inventory-tools'),top=source?.querySelector('.bag-top');
+      if(grid)grid.querySelectorAll('[data-tip]').forEach(tile=>{const it=S.inv.find(x=>String(x.id)===tile.dataset.tip);if(it){tile.title=iname(it);const sockets=make('span','eclipse-tile-sockets',Array.from({length:it.slots||0},(_,i)=>i<(it.cards||[]).length?'◆':'◇').join(' '));tile.append(sockets)}});
+      const inventory=put(section('Field inventory','eclipse-bag'),tools,scroll('equipment-bag',grid,'ui-item-scroll'),top);
+      const dressDetail=(node,it,worn)=>{if(!node||!it)return;const nativeSockets=node.querySelector('.eclipse-native-sockets'),controls=[...node.childNodes].filter(n=>n!==nativeSockets);if(nativeSockets)nativeSockets.remove();node.replaceChildren();const summary=make('div','eclipse-item-summary');summary.innerHTML=eclipseItemSummary(it,worn);put(node,summary);if(worn){const socket=make('div','eclipse-sockets');socket.innerHTML='<div class="ui-section-title">CARD SOCKETS <span>'+((it.cards||[]).length)+' / '+(it.slots||0)+'</span></div>';if(nativeSockets){const insertHead=[...nativeSockets.children].find(n=>n.classList.contains('sec'));if(insertHead){const insertNodes=[];let n=insertHead.nextSibling;while(n){const next=n.nextSibling;insertNodes.push(n);n=next}insertHead.remove();put(nativeSockets,fold('Insert compatible card',insertNodes,'insert-card'))}put(socket,...nativeSockets.childNodes)}put(node,socket);const go=make('button','eclipse-primary','Refine equipment ↗');go.dataset.eclipseRefine='';put(node,go)}const actions=make('div','eclipse-item-actions');const native=make('div');put(native,controls);for(const button of [...native.querySelectorAll('[data-a=unequip],[data-a=lockgear],[data-a=equip],[data-a=sell]')])put(actions,button);put(node,actions,fold('Full equipment details',[...native.childNodes],worn?'worn-actions':'bag-actions'))};
+      dressDetail(detail,S.eq[selE],true);dressDetail(bagDetail,S.inv.find(it=>String(it.id)===String(selB)),false);
+      const caption=make('div','eclipse-doll-caption');caption.innerHTML='<b>'+esc(S.cls)+'</b><small>'+esc(C().wt.join(' · '))+' lineage</small>';put(catalog,caption);
+      const facts=make('div','eclipse-loadout-facts');facts.innerHTML=[['ATK',Math.round(atk())],['DEF',Math.round(def())],['CRIT',crit().toFixed(1)+'%'],['ATK/S',(1/aspd()).toFixed(2)],['HP',Math.round(maxHp())],['FLEE',flee().toFixed(1)+'%']].map(([k,v])=>'<div><span>'+k+'</span><b>'+v.toLocaleString()+'</b></div>').join('');put(catalog,facts);
+      const inspect=inspector('Item inspector',[detail,bagDetail]);if(detail)detail.hidden=!!(eclipseInspectBag&&bagDetail);if(bagDetail)bagDetail.hidden=!eclipseInspectBag;
+      if(source)put(inventory,fold('Selling, automation & equipment choices',[...source.childNodes],'loadout-management'));
+      const notes=direct().filter(e=>![doll,source,preview].includes(e));
+      doll.replaceChildren(catalog,inventory,inspect);doll.classList.add('ui-loadout','eclipse-equipment');
+      put(inspect,fold('Weapon compatibility',notes,'equipment-notes'));body.replaceChildren(doll);
+    }
+  }else if(mode==='refine'||mode==='reforge'){
+    const action=mode==='refine'?'refine':'bmref',rows=all('.slot').filter(el=>el.querySelector('[data-a="'+action+'"]'));
+    if(rows.length){
+      const pending=mode==='reforge'?validReforgeOffer(S):null,offer=q('.reforge-offer');if(offer)offer.remove();
+      const key=row=>row.querySelector('[data-a="'+action+'"]').dataset.v.split(':')[0],chosen=(pending&&rows.find(row=>S.eq[key(row)]?.id===pending.id))||rows.find(row=>key(row)===selE)||rows[0];
+      const menu=section('Worn equipment','eclipse-workshop-menu');rows.forEach(row=>{const slot=key(row),it=S.eq[slot],button=make('button',row===chosen?'on':'');button.dataset.a='workslot';button.dataset.v=slot;button.setAttribute('aria-pressed',String(row===chosen));button.innerHTML=icon(it)+'<span><b>'+esc(iname(it))+'</b><small>'+esc(EQK.find(x=>x[0]===slot)[1])+' · +'+(it.r||0)+'</small></span>';put(menu,button)});
+      const it=S.eq[key(chosen)],stage=section(mode==='refine'?'Refinement workshop':'Affix workbench','eclipse-workshop-stage'),hero=make('div','eclipse-workshop-hero');hero.innerHTML='<div>'+icon(it)+'</div><small>'+rarOf(it).n+' · '+esc(it.wt||it.slot)+'</small><h2>'+esc(iname(it))+'</h2><p>'+SLOTS[it.slot].stat+' +'+ev(it)+'</p>';put(stage,hero);stage.classList.toggle('eclipse-reforge-stage',mode==='reforge');
+      const aside=section(mode==='refine'?'Protection & supplies':'Reforge quote','eclipse-workshop-aside');
+      const protection=make('div','eclipse-protection'),protectionRow=q('[data-a=refprotect]')?.parentElement;
+      if(protectionRow){const heading=protectionRow.previousElementSibling,hint=protectionRow.nextElementSibling;put(protection,heading,protectionRow,hint)}
+      const notes=direct().filter(e=>!rows.includes(e));
+      if(mode==='reforge'){
+        const buttons=[...chosen.querySelectorAll('[data-a="bmref"]')];const quote=make('div','eclipse-quote-summary');const picked=reforgeSelection[it.id]||[],cost=reforgeQuote(it,picked.length||it.aff.length);const oreMissing=Math.max(0,cost.ore-safeCount(S.ore[cost.oreKey])),matMissing=Math.max(0,cost.mat-safeCount(nmMatCounts()[cost.map])),extra=oreMissing*BM_ORE+matMissing*BM_MAT_PRICE;quote.innerHTML='<h2>'+(picked.length?'Selected affixes':'Full reroll')+'</h2><div><span>Reforge fee</span><b>'+cost.zeny.toLocaleString()+'z</b></div><div><span>'+ORE[cost.oreKey]+'</span><b>'+cost.ore+' / '+safeCount(S.ore[cost.oreKey])+' owned</b></div>'+(cost.mat?'<div><span>'+esc(NM_MAT[cost.map])+'</span><b>'+cost.mat+' / '+safeCount(nmMatCounts()[cost.map])+' owned</b></div>':'')+'<div><span>Missing materials</span><b>'+extra.toLocaleString()+'z</b></div><div><span>Total</span><b>'+(cost.zeny+extra).toLocaleString()+'z</b></div>';put(aside,quote);put(aside,make('p','','Select individual affixes or reroll all. Review the result before accepting.'));buttons.forEach(b=>put(aside,b));
+        put(stage,chosen);put(aside,offer,fold('Rules & materials',notes,'workshop-notes'));
+      }else{
+        const button=chosen.querySelector('[data-a=refine]'),preview=make('div','eclipse-refine-preview'),rank=it.r||0,ore=it.slot==='weapon'?'ori':'elu';preview.innerHTML='<div class="eclipse-rank-preview"><b>+'+rank+'</b><span>→</span><b>+'+Math.min(10,rank+1)+'</b></div><div><span>'+SLOTS[it.slot].stat+'</span><b>'+ev(it)+' → '+(rank>=10?ev(it):Math.round(it.val*(1+(rank+1)*.15)))+'</b></div><div><span>Success chance</span><b>'+(rank>=10?'Maximum refinement':refCh(it)+'%')+'</b></div><div><span>Required Zeny</span><b>'+refCost(it).toLocaleString()+'z</b></div><div><span>'+ORE[ore]+'</span><b>'+refOre(it)+' / '+safeCount(S.ore[ore])+' owned</b></div>';chosen.replaceChildren(preview,button);put(stage,chosen);put(aside,protection,fold('Resources, rates & damage',notes,'workshop-notes'));
+      }
+      body.replaceChildren(put(make('div','eclipse-workshop'),menu,stage,aside));
+    }
   }else if(k==='pet'){
-    const grid=q('.grid'),detail=q('.mob-card'),notes=direct().filter(e=>e!==grid&&e!==detail);
-    if(grid){[...grid.querySelectorAll('.cell')].forEach(tile=>{const p=S.pets.find(p=>String(p.id)===tile.dataset.v);if(p)tile.append(make('span','ui-pet-name',PETS[p.sp].n))})}
-    const catalog=put(section('Companions','ui-pet-catalog'),scroll('pets',grid));
-    const panel=inspector('Companion details',detail||make('p','ui-empty','Select a companion to train it, manage skills or send it into battle.'));
-    if(detail){const headings=[...detail.querySelectorAll(':scope > .sec')];headings.forEach((h,i)=>{const nodes=[];let next=h.nextSibling;while(next&&!(next.nodeType===1&&next.classList.contains('sec'))){const current=next;next=next.nextSibling;nodes.push(current)}const d=fold(h.textContent,nodes,'pet-detail-'+i,true);h.replaceWith(d)})}
-    body.replaceChildren(split(catalog,panel),fold('Pet drops & bonding',notes,'pet-notes'));
+    const grid=q('.grid'),detail=q('.mob-card'),notes=direct().filter(e=>e!==grid&&e!==detail),active=S.pets.filter(p=>p.on),mode=sub.pet||'party';
+    const navigation=make('div','atabs eclipse-pet-tabs');navigation.innerHTML=[['party','Active party · '+active.length+' / 3'],['collection','Change pets · '+S.pets.length],['manage','Upgrades & skills']].map(([key,label])=>'<button data-a="sub" data-v="pet:'+key+'" class="'+(mode===key?'on':'')+'" '+(key==='manage'&&!gp(selP)?'disabled':'')+'>'+label+'</button>').join('');root.insertBefore(navigation,body);
+    const catalog=make('div','eclipse-companion-grid');catalog.dataset.petView=mode;
+    for(const p of S.pets){const sp=PETS[p.sp],tile=grid?.querySelector('[data-v="'+p.id+'"]'),card=make('article','eclipse-companion-card');card.hidden=mode==='party'&&!p.on;
+      const total=p.eq.reduce((a,b)=>a+b,0);card.innerHTML='<div class="ui-eyebrow">COMPANION / '+(p.on?'ACTIVE':'RESTING')+'</div><div class="eclipse-companion-portrait">'+petIcon(sp,true)+'</div><h3>'+esc(sp.n)+'</h3><p>'+esc(RN[sp.r])+' · collected from monster drops</p><div class="eclipse-companion-stat training"><span>Equipment training</span><b>'+total+' / '+(PT.length*p.eq.length)+'</b></div><div class="eclipse-training-track"><i style="width:'+100*total/(PT.length*p.eq.length)+'%"></i></div><div class="eclipse-companion-stat bond"><span>Bond</span><b class="pet-bond-badge">'+bondStars(p.sp)+'</b></div><div class="eclipse-companion-stat party"><span>Party slot</span><b>'+(p.on?(active.indexOf(p)+1)+' / 3':'Resting')+'</b></div>';
+      if(tile){tile.className='eclipse-primary';tile.removeAttribute('style');tile.innerHTML='Train & manage →';tile.setAttribute('role','button');tile.setAttribute('tabindex','0');tile.setAttribute('aria-label','Train and manage '+sp.n);put(card,tile)}
+      put(card,make('p','eclipse-fine-print','Training is a gamble. Review cost and odds before spending.'));put(catalog,card);
+    }
+    if(mode==='party')for(let i=active.length;i<3;i++){const empty=make('article','eclipse-companion-card eclipse-empty-companion');empty.innerHTML=uiIcon('pet')+'<h3>Open party slot</h3><p>Select a collected companion to join your party.</p><button data-a="sub" data-v="pet:collection">Choose a pet →</button>';put(catalog,empty)}
+    if(!S.pets.length&&mode==='collection')put(catalog,make('p','ui-empty','No companions collected yet. Pets drop from monsters; the World atlas lists the odds.'));
+    catalog.hidden=mode==='manage';
+    const panel=inspector('Companion upgrades',detail||make('p','ui-empty','Choose a pet from your party or collection.'));panel.hidden=mode!=='manage';
+    if(detail){const headings=[...detail.querySelectorAll(':scope > .sec')];headings.forEach((h,i)=>{const nodes=[];let next=h.nextSibling;while(next&&!(next.nodeType===1&&next.classList.contains('sec'))){const current=next;next=next.nextSibling;nodes.push(current)}const d=fold(h.textContent,nodes,'pet-detail-'+i,i!==1);h.replaceWith(d)})}
+    put(panel,fold('Pet drops & bonding',notes,'pet-notes'));body.replaceChildren(catalog,panel);
   }else if(k==='market'){
-    if(!bmOpen())return;
-    const guide=q('.build-guide'),offer=q(':scope > .reforge-offer');const ore=all('.slot').filter(e=>e.querySelector('[data-a="bmore"],[data-a="buyscroll"]')),materials=all('.slot').filter(e=>e.querySelector('[data-a="bmmat"]')),reforge=all('.slot').filter(e=>e.querySelector('[data-a="bmref"]'));
-    const notes=direct().filter(e=>!ore.includes(e)&&!materials.includes(e)&&!reforge.includes(e)&&e!==guide&&e!==offer);
-    body.replaceChildren(...[offer,guide].filter(Boolean),put(section('Refining supplies','ui-store-grid'),ore),fold('Nightmare materials · '+materials.length,put(make('div','ui-store-grid'),materials),'materials'),put(section('Reforge worn equipment','ui-reforge'),reforge.length?reforge:make('p','ui-empty','Wear equipment with affixes to reforge it.')),fold('Market information',notes,'market-notes'));
+    if(!bmOpen()||sub.market==='echo')return;
+    const workshop=q('[data-a=openreforge]'),guide=q('.build-guide'),ore=all('.slot').filter(e=>e.querySelector('[data-a="bmore"]')),scrollCard=q('[data-a=buyscroll]')?.closest('.slot'),materials=all('.slot').filter(e=>e.querySelector('[data-a="bmmat"]'));
+    const products=make('div','eclipse-market-grid');
+    const product=(node,kind,desc,owned)=>{if(!node)return;node.classList.add('eclipse-product');const copy=put(make('div','eclipse-product-copy'),[...node.childNodes]),art=make('div','eclipse-product-icon');art.innerHTML=uiIcon(kind);const name=copy.querySelector('b');if(name&&desc){const description=make('p','',desc),count=make('small','eclipse-owned-count','Owned: '+safeCount(owned).toLocaleString());name.after(description,count)};put(node,art,copy);put(products,node)};
+    ore.forEach((node,i)=>product(node,'gem',(i?'Armor':'Weapon')+' refinement material.',S.ore[i?'elu':'ori']));product(scrollCard,'coin','Prevent rank loss on a protected attempt.',S.refineScrolls);
+    const echo=make('div','slot');echo.innerHTML='<b>Echo store</b><button data-a="sub" data-v="market:echo">Browse offers →</button>';product(echo,'moon','Spend Echo Shards earned in Endless Echo.',S.shards);
+    body.replaceChildren(products,put(make('div','eclipse-market-tools'),fold('Nightmare materials · '+materials.length,put(make('div','ui-store-grid'),materials),'materials'),workshop,guide));
   }else if(k==='index'){
     const head=q('.mastery-head'),tabs=q('.mastery-tabs');if(head)head.classList.add('ui-journal-summary');if(tabs)root.insertBefore(tabs,body);
     // Group each named collection section, keeping its controls and catalogue together.
@@ -5173,8 +5301,8 @@ function arrangePanel(k,root){
   }
 }
 
-const DOCK_TABS=['map','status','equip','job','skills','bag','pet','market','log','set','gm'];
-const DOCK_LABEL={map:'World',status:'Character',equip:'Equipment',refine:'Refine',job:'Jobs',skills:'Skills',bag:'Bag',pet:'Pets',index:'Mastery',market:'Market',board:'Ranks',log:'Log',set:'Settings',gm:'GM'};
+const DOCK_TABS=['map','status','equip','job','skills','bag','pet','market','log','set'];
+const DOCK_LABEL={map:'Maps',guide:'Guide',status:'Character',equip:'Equipment',refine:'Refine',job:'Jobs',skills:'Skills',bag:'Bag',pet:'Pets',index:'Mastery',market:'Market',board:'Ranks',log:'Log',set:'Settings',gm:'GM'};
 function renderDock(){
   const dock=$('dock'),keys=DOCK_TABS.filter(k=>k!=='gm'||S.gm),current=[...dock.querySelectorAll(':scope > [data-t]')];
   // Kills call ui() and therefore renderWin(). Replacing the whole dock on every kill reset the
@@ -5184,8 +5312,9 @@ function renderDock(){
   if(current.length!==keys.length||current.some((b,i)=>b.dataset.t!==keys[i])){
     const left=dock.scrollLeft;
     dock.innerHTML=keys.map(k=>{const[ic,n,key]=TABS[k];return `<button class="ib" data-t="${k}" title="${n} (${key})" aria-label="${n}" aria-pressed="false"><span class="ui-nav-icon" aria-hidden="true">${uiIcon(k)}</span><span class="ui-nav-label">${DOCK_LABEL[k]}</span><span class="k">${key}</span></button>`}).join('');
-    dock.scrollLeft=left;
+    dock.insertAdjacentHTML('beforeend','<button class="ib eclipse-more" aria-label="More destinations" aria-expanded="false"><span class="ui-nav-icon">'+uiIcon('chevron')+'</span><span class="ui-nav-label">More</span></button>');dock.querySelector('.eclipse-more').onclick=()=>{sideOpen=!sideOpen;renderQ();renderDock()};dock.scrollLeft=left;
   }
+  dock.querySelector('.eclipse-more')?.setAttribute('aria-expanded',String(sideOpen));
   [...dock.querySelectorAll(':scope > [data-t]')].forEach(b=>{
     const k=b.dataset.t,on=tabs.includes(k),hasDot=!!dot(k),badge=b.querySelector('.dot');
     b.classList.toggle('on',on);b.setAttribute('aria-pressed',String(on));
@@ -5208,6 +5337,64 @@ function patchJournal(current,next){
   };
   patch(current,next);return true;
 }
+// Reconcile the live tree: background kills update data, never replace the whole workbench.
+function eclipseNodeKey(n){if(n.nodeType!==1)return '';return n.id?'id:'+n.id:n.hasAttribute('data-ui-disclosure')?'disclosure:'+n.dataset.uiDisclosure:n.hasAttribute('data-a')?'action:'+n.dataset.a+':'+(n.dataset.v||''):n.hasAttribute('data-tip')?'item:'+n.dataset.tip:n.hasAttribute('data-q')?'quest:'+n.dataset.q:n.hasAttribute('data-panel-scroll')?'scroll:'+n.dataset.panelScroll:''}
+function eclipsePatch(current,next){
+  const active=document.activeElement;
+  const patch=(a,b)=>{
+    if(a.nodeType===3||a.nodeType===8){if(a.data!==b.data)a.data=b.data;return}
+    if(a.nodeType!==1)return;
+    const editing=a===active&&a.matches('input,textarea,select'),details=a.matches('details[data-ui-disclosure]');
+    for(const attr of [...a.attributes])if(!(details&&attr.name==='open')&&!(editing&&['value','checked','selected'].includes(attr.name))&&!b.hasAttribute(attr.name))a.removeAttribute(attr.name);
+    for(const attr of b.attributes)if(!(details&&attr.name==='open')&&!(editing&&['value','checked','selected'].includes(attr.name))&&a.getAttribute(attr.name)!==attr.value)a.setAttribute(attr.name,attr.value);
+    if(a.tagName==='CANVAS'||editing)return;
+    children(a,b);
+    if(a.matches('input,textarea,select')){if(a.value!==b.value)a.value=b.value;if(a.tagName==='INPUT')a.checked=b.checked}
+  };
+  const compatible=(a,b)=>a.nodeType===b.nodeType&&a.nodeName===b.nodeName&&eclipseNodeKey(a)===eclipseNodeKey(b)&&(!a.classList||!b.classList||a.classList[0]===b.classList[0]);
+  const children=(a,b)=>{
+    let cursor=a.firstChild;const keyed=new Map();
+    for(const node of a.childNodes){const key=eclipseNodeKey(node);if(key){if(!keyed.has(key))keyed.set(key,[]);keyed.get(key).push(node)}}
+    const used=new Set();
+    for(const want of [...b.childNodes]){
+      let keep=cursor&&compatible(cursor,want)?cursor:null;
+      if(!keep){const key=eclipseNodeKey(want);if(key)keep=(keyed.get(key)||[]).find(n=>!used.has(n)&&compatible(n,want))||null}
+      if(keep){used.add(keep);if(keep!==cursor)a.insertBefore(keep,cursor);patch(keep,want);cursor=keep.nextSibling}
+      else a.insertBefore(want.cloneNode(true),cursor);
+    }
+    while(cursor){const after=cursor.nextSibling;cursor.remove();cursor=after}
+  };
+  children(current,next);return true;
+}
+function eclipseDrawMinimap(){
+  const canvas=$('eclipseMinimap');if(!canvas||!S||document.body.classList.contains('clean-screen'))return;
+  const g=canvas.getContext('2d'),w=canvas.width,h=canvas.height;if(!g)return;
+  const terrain=KIT.ground?.material.map?.image;g.clearRect(0,0,w,h);
+  if(!terrain){g.fillStyle='#182b29';g.fillRect(0,0,w,h);g.fillStyle='#a6b8cb';g.font='18px sans-serif';g.fillText('Terrain loading',16,h/2);return}
+  const span=KIT_FAR,scale=w/span,visible=h/scale,center=(Z0+Z1)/2;
+  g.drawImage(terrain,0,(center-visible/2+span/2)/span*terrain.height,terrain.width,visible/span*terrain.height,0,0,w,h);
+  const marker=(x,z,color,r)=>{const px=(x+span/2)*scale,py=(z-center+visible/2)*scale;if(py<0||py>h)return;g.beginPath();g.arc(px,py,r,0,Math.PI*2);g.fillStyle=color;g.fill()};
+  for(const mob of mobs)if(mob.hp>0)marker(mob.x,mob.z,'#eaa18e',3);
+  marker(pl.x,pl.z,'#fff0b3',5);g.fillStyle='#ecf3fc';g.font='14px sans-serif';g.fillText('N',w-22,20);
+}
+// Atlas thumbnails use the selected field's real terrain plan and original cropped art.
+function eclipseDrawAtlas(){
+  const canvas=$('eclipseAtlas');if(!canvas||!KIT.ok)return;
+  const key=mapM+':'+mapL;if(canvas._atlasKey===key)return;
+  const plan=kitPlan(mapM,mapL),g=canvas.getContext('2d');if(!plan||!g)return;
+  const w=canvas.width,h=canvas.height,span=76,scale=w/span,center=(Z0+Z1)/2;
+  const point=(x,z)=>[(x+span/2)*scale,(z-center)*scale+h/2];
+  g.clearRect(0,0,w,h);g.imageSmoothingEnabled=true;
+  const base=kitCrop(plan.src,'tile',plan.base)||kitCrop(plan.src,'tile',plan.base2),step=KIT_S*scale;
+  if(base)for(let x=0;x<w;x+=step)for(let y=0;y<h;y+=step)g.drawImage(base.image,x,y,step+1,step+1);
+  for(const c of plan.cells){const tex=kitCrop(plan.src,'tile',c.tile);if(tex){const[x,y]=point(c.x,c.z);g.drawImage(tex.image,x,y,step+1,step+1)}}
+  const water=kitCrop(plan.src,'tile',plan.waterFrames?.[0]||'water_frame_0');
+  if(water)for(const r of plan.water){const[x,y]=point(r.x-r.w/2,r.z-r.h/2);g.drawImage(water.image,x,y,r.w*scale,r.h*scale)}
+  if(plan.deck){const d=plan.deck,tex=kitCrop(plan.src,'tile',plan.deckTile||'bridge_planks');if(tex){const[x,y]=point(d.x,d.z);g.save();g.translate(x,y);g.rotate(d.a||0);g.drawImage(tex.image,-d.w*scale/2,-d.l*scale/2,d.w*scale,d.l*scale);g.restore()}}
+  for(const p of [...plan.props].sort((a,b)=>a.z-b.z)){if(p.missing)continue;const tex=kitCrop(p.src||plan.src,'sprite',p.type,p.flip);if(!tex)continue;const[x,y]=point(p.x,p.z),height=65*(p.scale||1),width=height*tex.image.width/tex.image.height;g.drawImage(tex.image,x-width/2,y-height,width,height)}
+  canvas._atlasKey=key;
+}
+function eclipseSetMarkup(root,html){if(root._eclipseHTML===html)return;const next=document.createElement('div');next.innerHTML=html;eclipsePatch(root,next);root._eclipseHTML=html}
 function renderWin(anchor){
   if(!S)return;
   // A kill, a level-up or any panel refresh rebuilds every open window from scratch. A click whose
@@ -5216,6 +5403,7 @@ function renderWin(anchor){
   // others) feel broken. While a pointer is held inside the windows the rebuild is held too, and
   // the deferred one runs the moment the pointer comes up.
   if(winPress){winDirty=true;return}
+  if(!tabs.includes('bag')&&!tabs.includes('equip'))eclipseInventoryState=null;
   renderDock();
   renderQ();const host=$('wins');host.style.display=tabs.length?'flex':'none';
   // Keep every open window as the same live DOM node across combat redraws. The v93 layout used to
@@ -5231,21 +5419,24 @@ function renderWin(anchor){
   const next=[];
   tabs.forEach(k=>{
     let win=existing.get(k);
-    if(!win){win=document.createElement('div');win.dataset.win=k;win.innerHTML='<div class="title"><span></span><span class="ui-window-tools"><button data-ui-minimize></button><button data-ui-expand></button><button data-x>&#10005;</button></span></div><div class="body wbody"></div>'}
+    if(!win){win=document.createElement('div');win.dataset.win=k;win.innerHTML='<div class="title"><span></span><span class="ui-window-tools"><small class="eclipse-farming">● Farming continues</small><button data-ui-minimize></button><button data-ui-expand></button><button data-x>&#10005;</button></span></div><div class="body wbody"></div><footer class="eclipse-window-footer"><span class="eclipse-save-status"></span><span>Select an item to inspect or manage it.</span><kbd>ESC</kbd></footer>'}
     win.className='win wp'+(k==='map'?' wide':'')+(expandedPanels.has(k)?' ui-expanded':'')+(minimizedPanels.has(k)?' ui-minimized':'');
     const name=TABS[k][1],expand=win.querySelector('[data-ui-expand]'),close=win.querySelector('[data-x]');
-    win.querySelector('.title > span:first-child').innerHTML=uiIcon(k)+' '+name;
     const minimize=win.querySelector('[data-ui-minimize]');minimize.dataset.uiMinimize=k;minimize.innerHTML=uiIcon(minimizedPanels.has(k)?'chevron':'minus');minimize.setAttribute('aria-label',(minimizedPanels.has(k)?'Restore ':'Minimize ')+name);minimize.setAttribute('aria-expanded',String(!minimizedPanels.has(k)));
     close.innerHTML=uiIcon('close');
     expand.dataset.uiExpand=k;expand.innerHTML=uiIcon(expandedPanels.has(k)?'compact':'expand');expand.setAttribute('aria-label',(expandedPanels.has(k)?'Compact ':'Maximize ')+name);expand.setAttribute('aria-pressed',String(expandedPanels.has(k)));expand.title='Toggle compact / expanded layout';
     close.dataset.x=k;close.setAttribute('aria-label','Close '+name);
-    const body=win.querySelector('.wbody'),source=V[k]();
-    if(body._panelSource!==source&&!body.querySelector('.autosell-editor input[type=number]:focus,.autosell-editor textarea:focus,.ore-quantity:focus')){
+    const body=win.querySelector('.wbody'),source=V[k](),viewKey=k==='equip'&&['refine','reforge'].includes(sub.equip)?selE:k==='job'?String(eclipseJobsBrowse):k==='pet'?sub.pet:k==='market'&&sub.market!=='echo'?[S.ore.ori,S.ore.elu,S.refineScrolls,S.shards].join(':'):'';
+    if((body._panelSource!==source||body._panelViewKey!==viewKey)&&!body.querySelector('.autosell-editor input[type=number]:focus,.autosell-editor textarea:focus,.ore-quantity:focus')){
       const fresh=document.createElement('div');fresh.className=body.className;fresh.innerHTML=source;arrangePanel(k,fresh);polishIcons(fresh);
-      if(k!=='index'||!patchJournal(body,fresh)){body.replaceChildren(...fresh.childNodes);body.className=fresh.className;body.dataset.layout=fresh.dataset.layout}
-      body._panelSource=source;body.dataset.panelChanged='1';
+      eclipsePatch(body,fresh);body.className=fresh.className;body.dataset.layout=fresh.dataset.layout
+      body._panelSource=source;body._panelViewKey=viewKey;body.dataset.panelChanged='1';
     }
     else delete body.dataset.panelChanged;
+    const hero=body.querySelector('.ui-hero'),title=win.querySelector('.title > span:first-child');
+    const titleHTML=uiIcon(k)+'<span class="eclipse-window-heading"><small>'+esc(hero?.querySelector('.ui-eyebrow')?.textContent||name)+' / '+esc(name)+'</small><b>'+esc(hero?.querySelector('h2')?.textContent||name)+'</b></span>';
+    if(title.innerHTML!==titleHTML)title.innerHTML=titleHTML;
+    const status=win.querySelector('.eclipse-save-status');if(status)status.textContent=CLOUD.on?(CLOUD.paused?'Cloud sync paused':CLOUD.dirty?'Cloud sync pending':'Cloud connected'):'Local save';
     next.push(win);
   });
   existing.forEach((win,k)=>{if(!tabs.includes(k))win.remove()});
@@ -5266,7 +5457,7 @@ function renderWin(anchor){
     if(body){const er=el.getBoundingClientRect(),br=body.getBoundingClientRect();
       if(er.top<br.top)body.scrollTop+=er.top-br.top;
       else if(er.bottom>br.bottom)body.scrollTop+=er.bottom-br.bottom}}
-  if(tabs.includes('set'))drawAppearancePreview();if(tabs.includes('job'))drawClassPreview()}
+  eclipseDrawMinimap();if(typeof eclipseDrawAtlas==='function')eclipseDrawAtlas();drawSkinPreview('eclipsePortrait',null,S.cls,S.sex);if(tabs.includes('equip'))drawSkinPreview('eclipseDoll',null,S.cls,S.sex);if(tabs.includes('set'))drawAppearancePreview();if(tabs.includes('job'))drawClassPreview()}
 let winPress=false,winDirty=false;
 const winUp=()=>{winPress=false;if(winDirty){winDirty=false;renderWin()}};
 // Guarded so the headless UI harness (which pulls this slice into a bare vm) still loads.
@@ -5274,7 +5465,7 @@ if(typeof addEventListener==='function'){addEventListener('pointerup',winUp);add
 if($('wins')&&$('wins').addEventListener)$('wins').addEventListener('pointerdown',()=>{winPress=true});
 const MAX_TABS=3;const openTab=k=>{if(k==='gm'&&!S.gm)return;const i=tabs.indexOf(k);if(k==='skills'&&i>=0)selS=null;if(k!=='status')eqPick=null;if(i>=0)tabs.splice(i,1);else{if(tabs.length>=MAX_TABS)tabs.shift();tabs.push(k);
   // Reopening a window starts at its first sub-tab: Status shows Stats, Inventory shows Bag.
-  if(k==='status')sub.status='stats';if(k==='bag')sub.bag='bag';if(k==='equip')sub.equip='equip0';
+  if(k==='pet')sub.pet='party';if(k==='job')eclipseJobsBrowse=false;if(k==='status')sub.status='stats';if(k==='bag')sub.bag='bag';if(k==='equip')sub.equip='equip0';
   if(k==='map'){mapM=S.mp;mapL=S.lvl}}renderWin();if(k==='board'&&tabs.includes('board'))boardRefresh(boardPeriod)};
 const gotoField=(m,l)=>{
   // v77: travelling cancels a run. Leaving the arena is the same door as pressing Leave - a ranked
@@ -5282,6 +5473,11 @@ const gotoField=(m,l)=>{
   if(typeof TRIAL!=='undefined'&&TRIAL.on)trialExit();
   S.mp=m;S.lvl=l;S.kl=0;mobs=[];mob=null;camps=[];respawn=.3;qRefresh();ui();save()};
 const ACT={
+  workslot:v=>{if(EQK.some(([k])=>k===v)){selE=v;renderWin()}},
+  echostore:()=>{eclipseEchoPick=false;renderWin()},
+  newdrops:()=>{eclipseInventoryState={owner:S,ids:S.inv.map(it=>String(it.id))};renderWin()},
+  filtergear:v=>{const n=Number(v);if(Number.isInteger(n)&&n>=-1&&n<RARALL.length){eclipseRarity=n;renderWin()}},
+  openreforge:()=>{if(!tabs.includes('equip'))openTab('equip');sub.equip='reforge';renderWin()},
   boardperiod:v=>{if(!['daily','weekly','all'].includes(v))return;boardPeriod=v;boardError='';renderWin();boardRefresh(v)},
   boardrefresh:()=>boardRefresh(boardPeriod),
   selm:v=>{mapM=+v;mapL=Math.min(mapL,Math.max(1,Math.max(S.prog[mapM],nmMaxFor(mapM))));renderWin('[data-win="map"] .mapcard.on')},
@@ -5294,7 +5490,7 @@ const ACT={
     log(`${PETS[p.sp].n} is Bond ${bondRank(p.sp)}/5 - ${PET_TRAIT[p.sp].n} ${PET_TRAIT[p.sp].d(traitVal(p.sp))}.`,'r3','pet');ui();save()}, sell_:v=>{mapL=+v;renderWin('[data-win="map"] .map-node.picked')},go:()=>{if(mapL<=Math.max(S.prog[mapM],nmMaxFor(mapM))){gotoField(mapM,mapL);log(`Traveled to ${fieldName()}.`)}},
   stat:k=>{if(S.pts>=cost(k)&&S.st[k]<statCap()){S.pts-=cost(k);S.st[k]++;S.hp=Math.min(S.hp,maxHp());ui();save()}},
   stat5:k=>{for(let i=0;i<5;i++)if(S.pts>=cost(k)&&S.st[k]<statCap()){S.pts-=cost(k);S.st[k]++}S.hp=Math.min(S.hp,maxHp());ui();save()},
-  selk:v=>{selK=v;renderWin()},job:n=>{if(n==='Novice'&&S.cls!=='Novice')ask('Restart as Novice? You go back to Base Lv 25, job levels cleared, and your stats are refunded. Classes you leave keep their own Base Lv, stats and gear, so you can switch back to them later.',()=>changeClass(n));else changeClass(n)},
+  jobview:v=>{eclipseJobsBrowse=v==='browse';renderWin()},selk:v=>{selK=v;eclipseJobsBrowse=true;renderWin('[data-win=job] .ui-inspector')},job:n=>{if(n==='Novice'&&S.cls!=='Novice')ask('Restart as Novice? You go back to Base Lv 25, job levels cleared, and your stats are refunded. Classes you leave keep their own Base Lv, stats and gear, so you can switch back to them later.',()=>changeClass(n));else changeClass(n)},
   rstat:()=>{const c=statResetCost();if(S.zeny<c)return denied(c,'stats');S.zeny-=c;if(S.skillRespec)delete S.skillRespec[S.cls];for(const k in S.st)S.st[k]=1;S.pts=totalPts();S.hp=Math.min(S.hp,maxHp());log('Stats reset.'+(c?' -'+c.toLocaleString()+'z':''));ui();save()},
   skill:id=>{const s=SKILLS.find(x=>x.id===id);if(!s)return;const nx=lv(id)+1,c=skCost(nx);
     if(nx>s.max||!lineOf(S.cls).includes(s.from))return;
@@ -5302,7 +5498,7 @@ const ACT={
     // v88: the press is anchored to its own tile, so levelling a skill never moves the grid (see ssel).
     S.sk[id]=nx;S.skRepair=0;ui('[data-win="skills"] .sk.sel');save()},
   rskill:()=>{const c=rcost();if(S.zeny<c)return denied(c,'skills');S.zeny-=c;S.sk={aid:1};S.skOff={};S.skRepair=0;log('Skills reset'+(c?' -'+c.toLocaleString()+'z':'')+'; every skill auto-casts again.','','skill');ui();save()},
-  selb:v=>{selB=v;renderWin()},equip:id=>equip(+id),sell:id=>sell(id),
+  selb:v=>{selB=v;eclipseInspectBag=true;renderWin()},equip:id=>equip(+id),sell:id=>sell(id),
   autosell:v=>{const t=Math.max(0,Math.min(RARALL.length-1,+v||0));if(!Array.isArray(S.autoSell))S.autoSell=[false,false,false,false,false,false,false];S.autoSell[t]=!S.autoSell[t];
     log(`${RARALL[t].n} items will ${S.autoSell[t]?'be sold on drop when saved filters match':'stay in the bag'}.`,S.autoSell[t]?'r3':'','gear');ui();save()},
   lockgear:id=>toggleGearLock(id),
@@ -5315,7 +5511,7 @@ const ACT={
   quicksell:id=>{const it=S.inv.find(x=>String(x.id)===String(id));if(!it)return;const v=sellVal(it);if(!sell(id))return;log(`Sold ${iname(it)} for ${v.toLocaleString()}z.`,'r3','gear,zeny')},
   // Clicking a green bag tile wears it; the highlight mode stays on so several pieces can be
   // compared, and closing it is the ✕ on the banner (eqclose).
-  eqpick:v=>{const[id,k]=v.split(':');equipIn(k,id)},
+  eqpick:v=>{const[id,k]=v.split(':');eclipseInspectBag=false;equipIn(k,id)},
   eqclose:()=>{eqPick=null;renderWin()},
   eqopen:k=>{eqPick=null;sub.bag='bag';if(!tabs.includes('bag')){if(tabs.length>=MAX_TABS)tabs.shift();tabs.push('bag')}selB=S.eq[k]?S.eq[k].id:null;renderWin()},
   selc:v=>{selC=v;renderWin()},
@@ -5342,7 +5538,7 @@ const ACT={
     log(`🃏 ${name}: dedicated ${r.donated} cop${r.donated===1?'y':'ies'} - mastery ${r.level}/${CARD_MASTERY_PER_CARD}${r.left?`, ${r.left} left in the bag`:''}.`,'r3','card');
     addFloat(pl.x,2.6,pl.z,`🃏 ${name} ${r.level}/${CARD_MASTERY_PER_CARD}`,'#ffd23f');ui();save()},
   indexcard:all=>all,
-  refprotect:v=>{const n=Number(v);if(![0,5,6,7,8,9].includes(n))return;S.useRefineScroll=n>0;if(n)S.refineScrollFrom=n;ui();save()},buyscroll:()=>buyRefineScroll(),refine:k=>refine(k),craftdps:()=>craftDps(),bmmat:o=>buyMat(+o),bmore:o=>buyOre(o,$('oreQty-'+o)?.value??1),bmref:v=>{const[k,mode]=v.split(':');reforge(k,mode==='all')},refpick:v=>{const[k,i]=v.split(':'),it=S.eq[k];if(!it)return;const a=reforgeSelection[it.id]||(reforgeSelection[it.id]=[]),n=+i,j=a.indexOf(n);j<0?a.push(n):a.splice(j,1);renderWin()},refaccept:v=>resolveReforge(v==='yes'),mergecard:id=>mergeCard(id),convertcard:id=>convertCard(id),guidemode:v=>{if(['farm','boss','survive'].includes(v))guideMode=v;renderWin()},guidetier:v=>{if(['current','normal','nightmare'].includes(v))guideTier=v;renderWin()},guidemap:v=>{const[m,l]=v.split(':').map(Number);if(!tabs.includes('map'))openTab('map');mapM=m;mapL=l;renderWin()},sub:v=>{const[t,k]=v.split(':');sub[t]=k;if(t==='bag'&&k!=='bag')eqPick=null;renderWin()},selp:v=>{selP=+v;renderWin()},
+  refprotect:v=>{const n=Number(v);if(![0,1].includes(n))return;S.useRefineScroll=n===1;ui();save()},buyscroll:()=>buyRefineScroll(),refine:k=>refine(k),craftdps:()=>craftDps(),bmmat:o=>buyMat(+o),bmore:o=>buyOre(o,$('oreQty-'+o)?.value??1),bmref:v=>{const[k,mode]=v.split(':');reforge(k,mode==='all')},refpick:v=>{const[k,i]=v.split(':'),it=S.eq[k];if(!it)return;const a=reforgeSelection[it.id]||(reforgeSelection[it.id]=[]),n=+i,j=a.indexOf(n);j<0?a.push(n):a.splice(j,1);renderWin()},refaccept:v=>resolveReforge(v==='yes'),mergecard:id=>mergeCard(id),convertcard:id=>convertCard(id),guidemode:v=>{if(['farm','boss','survive'].includes(v))guideMode=v;renderWin()},guidetier:v=>{if(['current','normal','nightmare'].includes(v))guideTier=v;renderWin()},guidemap:v=>{const[m,l]=v.split(':').map(Number);if(!tabs.includes('map'))openTab('map');mapM=m;mapL=l;renderWin()},sub:v=>{const[t,k]=v.split(':');sub[t]=k;if(t==='bag'&&k!=='bag')eqPick=null;renderWin()},selp:v=>{selP=+v;sub.pet='manage';renderWin()},
   pon:id=>{const p=gp(id);if(!p)return;if(p.on)p.on=false;else if(S.pets.filter(x=>x.on).length<3)p.on=true;else log('Only 3 pets can fight at once. Remove one first.','','pet');ui();save()},
   pskill:id=>{const p=gp(id);if(!p)return;const c=petSkillCost(p);if(S.zeny<c){log('Not enough Zeny for a pet skill roll.');ui();return}S.zeny-=c;const[a,b]=rollPetSkills();p.skills=[a,b];
     clearPetCd(p.id);
@@ -5358,7 +5554,7 @@ const ACT={
   ssel:v=>{selS=v;renderWin('[data-win="skills"] .sk.sel')},
   // Clicking an equipment slot highlights the fitting items in the REAL Bag window (it is opened
   // if it is not already up) instead of popping a second list over the paper doll.
-  seleq:v=>{selE=v;eqPick=v;sub.bag='bag';if(!tabs.includes('bag')){if(tabs.length>=MAX_TABS)tabs.shift();tabs.push('bag')}renderWin()},
+  seleq:v=>{selE=v;eclipseInspectBag=false;eqPick=v;sub.bag='bag';if(!tabs.includes('equip')&&!tabs.includes('bag')){if(tabs.length>=MAX_TABS)tabs.shift();tabs.push('bag')}renderWin()},
   skall:()=>{const on=!skAllOn(),n=skTog().length;skSetAll(on);
     log(on?`All ${n} auto-cast skill${n===1?'':'s'} switched ON.`:`All ${n} auto-cast skill${n===1?'':'s'} switched OFF - nothing will cast until you switch it back.`,on?'r3':'r0','skill');ui();save()},
   skalloc:()=>{const n=autoAllocateSkills();if(n)log(`Auto-allocated ${n} skill level${n===1?'':'s'}: attacks first, then every skill and higher ranks.`,'r3','skill');else log(skillsFullyAllocated()?'All reachable skills are already maxed.':'No affordable skill level yet.','r0','skill');ui();save()},
@@ -5402,6 +5598,9 @@ $('feedFilter').addEventListener('mouseenter',()=>{if(feedFilTimer)clearTimeout(
 $('feedFilter').addEventListener('mouseleave',()=>{if(feedFilShown)feedFilArm()});
 $('feedFilter').addEventListener('focusin',()=>{if(feedFilTimer)clearTimeout(feedFilTimer)});
 $('feedFilter').addEventListener('focusout',()=>{if(feedFilShown)feedFilArm()});
+$('wins').addEventListener('click',e=>{if(e.target.closest('[data-eclipse-refine]'))ACT.sub('equip:refine')});
+$('wins').addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&e.target.matches('[role=button][data-a]')){e.preventDefault();e.target.click()}});
+$('wins').addEventListener('input',e=>{if(e.target.hasAttribute('data-eclipse-search')){eclipseSearch=e.target.value;renderWin()}});
 $('wins').addEventListener('change',e=>{if(e.target.matches('[data-sell-field],[data-sell-affix],[data-sell-min]'))editSellFilter(e.target)});
 $('wins').onclick=e=>{const nav=e.target.closest('[data-t]');if(nav&&TABS[nav.dataset.t]){if(!tabs.includes(nav.dataset.t))openTab(nav.dataset.t);return}const minimize=e.target.closest('[data-ui-minimize]');if(minimize){const k=minimize.dataset.uiMinimize;minimizedPanels.has(k)?minimizedPanels.delete(k):minimizedPanels.add(k);renderWin();return}const expand=e.target.closest('[data-ui-expand]');if(expand){e.stopPropagation();chooserAtPointerDown=null;chooserPointerInside=false;skillPointerInside=false;skillCardPointerInside=false;const k=expand.dataset.uiExpand;minimizedPanels.delete(k);if(expandedPanels.has(k))expandedPanels.delete(k);else expandedPanels.add(k);renderWin();return}const x=e.target.closest('[data-x]');if(x){openTab(x.dataset.x);return}const b=e.target.closest('[data-a]');if(b&&b.dataset.a==='ssel'&&e.target.closest('.sk-autocast'))return;if(b&&!b.disabled&&ACT[b.dataset.a]){if(b.dataset.a==='idxmap'&&e.target.closest('summary'))e.preventDefault();ACT[b.dataset.a](b.dataset.v)}};
 // v73: the picker's "inside" is the Bag window AND the Equipment panel that opened it. The
@@ -5428,12 +5627,12 @@ document.addEventListener('click',e=>{
       else if(v==='lobby')trialLobby();
       else if(v==='ranked'||v==='training'){if(!TRIAL.on)trialEnter(v)}
     }
-    else if(tb.dataset.buy)trialBuy(tb.dataset.buy);
+    else if(tb.dataset.buy)trialBuy(tb.dataset.buy,!!tb.closest('[data-win=market]'));
     else if(tb.dataset.nmmap!==undefined){const mi=Math.max(0,Math.min(MAPS.length-1,+tb.dataset.nmmap||0));
       const nmrow=TRIAL_STORE.find(x=>x.id==='nmgear');
       if(nmrow.lv&&safeCount(S.lv)<nmrow.lv){e.stopPropagation();e.preventDefault();return}
       if((S.shards|0)<nmrow.c){e.stopPropagation();e.preventDefault();return}
-      trialGrantNm(mi);S.shards=Math.max(0,(S.shards|0)-TRIAL_STORE.find(x=>x.id==='nmgear').c);save();log('Token spent - enjoy the piece.','r3','trial');trialLobby('store')}
+      trialGrantNm(mi);S.shards=Math.max(0,(S.shards|0)-TRIAL_STORE.find(x=>x.id==='nmgear').c);save();log('Token spent - enjoy the piece.','r3','trial');if(tb.closest('[data-win=market]')){eclipseEchoPick=false;ui()}else trialLobby('store')}
     e.stopPropagation();e.preventDefault();return}
   // Another tab's click handler may already clear eqPick before this document listener runs.
   // The pointer-down snapshot still tells us a chooser was open, so close its Bag as well.
@@ -5461,6 +5660,8 @@ document.addEventListener('mousemove',e=>{tip.style.left=Math.min(innerWidth-240
 // 60-second rates once a second; on a long browser stall, discard stale history rather
 // than treating 10 minutes of paused frames as one second of furious combat.
 const HUD_RATE_WINDOW=60000,HUD_IDLE_RESET=30000,HUD_RATE_REFRESH=1000;
+const eclipseMetricFormatter=new Intl.NumberFormat('en',{notation:'compact',maximumFractionDigits:1});
+const eclipseMetricNumber=n=>{const value=Math.max(0,Math.round(Number(n)||0));return value>=100000?eclipseMetricFormatter.format(value):value.toLocaleString()};
 // v74: EXP rides the same rolling minute as kills and Zeny, so the HUD can show EXP/min beside
 // the kill rate. expGained is the session's gross EXP (earnExp), not S.exp, which level-ups lower.
 function stepHudRate(rate,user,kills,earned,now,damage,exp){
@@ -5493,14 +5694,23 @@ const levelPct=(value,required,maxed=false)=>maxed?100:Math.min(100,Math.max(0,(
 function bars(){if(!S)return;applyDisplay();
   const rates=stepHudRate(hudRate,currentUser,S.kills,zenyEarned,performance.now(),S.dmg,expEarned);hudRate=rates.state;
   const j=jobOf(),c=C(),hp=levelPct(S.hp,maxHp()),jp=levelPct(j.jx,jneed(j.jl),j.jl>=c.mj),bp=levelPct(S.exp,need(),S.lv>=150);
+  if($('eclipseStageLabel'))$('eclipseStageLabel').textContent=(S.lvl>10?'Nightmare ':'Stage ')+(S.lvl>10?S.lvl-10:S.lvl)+' / '+(S.lvl>10?5:10);
+  if($('eclipseShards'))$('eclipseShards').textContent=safeCount(S.shards).toLocaleString();
+  if($('eclipseBaseValue'))$('eclipseBaseValue').textContent=S.exp.toLocaleString()+' / '+need().toLocaleString();
+  if($('eclipseJobValue'))$('eclipseJobValue').textContent=j.jx.toLocaleString()+' / '+jneed(j.jl).toLocaleString();
+  if($('eclipsePetStrip'))eclipseSetMarkup($('eclipsePetStrip'),(S.pets||[]).filter(p=>p.on).map(p=>'<button data-t="pet" title="'+esc(PETS[p.sp].n)+'">'+petIcon(PETS[p.sp],true)+'<small>+'+(p.mut||0)+'</small></button>').join(''));
+  if($('eclipseJobFill')){$('eclipseJobFill').style.width=jp+'%';$('eclipseJobLevel').textContent=j.jl}
+  if($('eclipseStagePips')){const host=$('eclipseStagePips'),count=S.lvl>10?5:10,stage=S.lvl>10?S.lvl-10:S.lvl;if(host.children.length!==count)host.innerHTML='<i></i>'.repeat(count);[...host.children].forEach((el,i)=>{el.className=i<stage-1?'done':i===stage-1?'now':''});host.setAttribute('aria-label',(S.lvl>10?'Nightmare ':'')+'Stage '+stage+' of '+count)}
+  if($('eclipsePlayerName'))$('eclipsePlayerName').textContent=currentUser||'Adventurer';if($('eclipseAdvance'))$('eclipseAdvance').setAttribute('aria-pressed',String(S.adv!==false));
   $('lv').textContent=S.lv;$('cls2').textContent=S.cls;$('jl').textContent=j.jl;$('zeny').textContent=(+S.zeny||0).toLocaleString();
   const title=HUNT_TITLES.find(t=>t.id===S.equippedTitle&&titleUnlocked(t)),titleLabel=$('titleLabel');if(titleLabel){titleLabel.textContent=title?'✦ '+title.name:'';titleLabel.style.display=title?'inline-block':'none';titleLabel.title=title?'Index title · '+(title.xp??title.kills).toLocaleString()+' Index XP':''}
   $('kills').textContent=rates.kills.toFixed(1);
   $('kills').title=`Kills/min (last 60s, refreshed every second): ${rates.kills.toFixed(1)} · ${rates.seconds.toFixed(2)} kills/sec`;
-  const expEl=$('expmin');if(expEl){expEl.textContent=Math.round(rates.exp).toLocaleString();
+  const expEl=$('expmin');if(expEl){expEl.textContent=eclipseMetricNumber(rates.exp);
     expEl.title=`EXP per minute (last 60s, refreshed every second): ${Math.round(rates.exp).toLocaleString()} EXP/min`}
-  const dpsEl=$('dps');if(dpsEl){dpsEl.textContent=Math.round(rates.dps).toLocaleString();
-    dpsEl.title=`Damage per second (last 60s, refreshed every second): ${Math.round(rates.dps).toLocaleString()} damage/sec`}
+  const dpsEl=$('dps');if(dpsEl){dpsEl.textContent=eclipseMetricNumber(rates.dps);
+    dpsEl.title=`Damage per second (last 60s, refreshed every second): ${Math.round(rates.dps).toLocaleString()} damage/sec`;dpsEl.setAttribute('data-full',Math.round(rates.dps).toLocaleString()+' damage/sec');dpsEl.setAttribute('aria-label',dpsEl.title)}
+  const zenyMeter=$('zenymin');if(zenyMeter){zenyMeter.textContent=eclipseMetricNumber(rates.zeny);zenyMeter.title='Zeny per minute: '+Math.round(rates.zeny).toLocaleString();zenyMeter.setAttribute('data-full',Math.round(rates.zeny).toLocaleString()+' Zeny/min');zenyMeter.setAttribute('aria-label',zenyMeter.title)}
   $('zenyRate').textContent=`Zeny earned: ${Math.round(rates.zeny).toLocaleString()}/min (last 60s)`;
   // Pet buffs: one icon tile per running buff, parked above the status bar on the far right. The
   // tile shows the skill's own icon and the seconds left; the description is the hover/focus
@@ -8532,7 +8742,7 @@ function draw(){
   for(const p of S.pets.filter(p=>p.on)){const v=petMesh.get(p.id),r=petR[p.id],sp=PETS[p.sp];
     if(v&&r&&sp)syncMobImage(v,{x:r.x,z:r.z,run:r.run,a:p.id,shape:petFallbackShape(sp),flash:0,lunge:r.lunge||0},PET_VISUAL_SCALE)}
   syncSkillFx();syncWeaponSprites(pFace,c);syncLevelAura();
-  if(tabs.includes('set'))drawAppearancePreview();
+  eclipseDrawMinimap();if(typeof eclipseDrawAtlas==='function')eclipseDrawAtlas();drawSkinPreview('eclipsePortrait',null,S.cls,S.sex);if(tabs.includes('equip'))drawSkinPreview('eclipseDoll',null,S.cls,S.sex);if(tabs.includes('set'))drawAppearancePreview();
   if(tabs.includes('job'))drawClassPreview();
   R.render(scene,cam);
   floats.forEach(f=>{if(!f.el){const e=document.createElement('div');e.className='fl'+(f.big?' big':'')+(f.kind&&f.kind!=='text'?' '+f.kind:'');
