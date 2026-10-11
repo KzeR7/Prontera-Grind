@@ -815,7 +815,7 @@ body.clean-screen #screenBtn{visibility:visible!important}body.clean-screen #hud
 <div class="hud-zeny" id="zenyHover" tabindex="0" aria-describedby="zenyRate">&#9679; <b id="zeny">0</b> Zeny<span class="hud-flyout" id="zenyRate" role="tooltip">Zeny earned: 0/min</span></div>
 <span class="eclipse-shards" title="Echo Shards">◇ <b id="eclipseShards">0</b><small>Shards</small></span><div style="margin-left:auto;display:flex;align-items:center;gap:8px"><span id="cloudBadge" title="Cloud save status" style="font-size:11px;opacity:.9"></span><button id="screenBtn" type="button" aria-expanded="false" aria-controls="screenOptions" title="Screen display options">☷ Display</button><span id="userBadge" style="font-weight:bold;font-size:12px;background:#e9d39a;padding:3px 8px;border-radius:4px;border:1px solid var(--edge2)"></span><button id="gmBtn" onclick="location.href='gm.html'" style="display:none" title="Server-side tooling for looking after players">🛠 GM console</button><button id="logoutBtn" onclick="logout()" style="display:none">Logout</button></div></div><div id="view"><div id="ov"><div id="mobSpriteLayer" aria-hidden="true"></div><div id="weaponSpriteLayer" aria-hidden="true"></div><section id="eclipseCombat"><div><span class="eclipse-live">AUTO COMBAT</span><span id="eclipseStageLabel"></span><button id="eclipseMinimize" aria-expanded="true" aria-controls="eclipseCombatDetails" aria-label="Minimize auto combat bar">− Hide</button></div><div id="eclipseCombatDetails"><div id="eclipseStagePips" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div><div id="prog"></div><button id="eclipseAdvance" aria-pressed="true">Auto-advance <span>●</span></button></div></section><div id="tag"><b id="tn"></b><div class="bar"><i id="th" style="background:var(--hp)"></i></div></div><div id="heroTitle" class="hero-title" aria-live="polite"><span id="heroTitleMark" class="ht-mark" aria-hidden="true"></span><span id="heroTitleText"></span></div><div id="hint">Drag to rotate &middot; Scroll or pinch to zoom</div><div id="feedWrap"><div id="feed"></div><div id="feedBar"><div id="feedFilter" role="group" aria-label="Log filter"></div><div id="feedTabs"><button id="feedTab" type="button" aria-expanded="true" aria-controls="feed" title="Minimize or show the on-screen log">📃 Logs ▾</button><button id="feedFil" type="button" aria-expanded="false" aria-controls="feedFilter" aria-label="Filter the on-screen log" title="Filter the log - this row folds away by itself">▽</button></div></div></div><div id="hudBuffs" role="status" aria-live="polite" aria-label="Active pet buffs - hover an icon for what it does"></div><div id="sideRail"><button id="eclipseMapCard" data-t="map" aria-label="Open current map"><div class="eclipse-map-art"><canvas id="eclipseMinimap" width="448" height="192" aria-label="Live terrain map and player position"></canvas></div><span><b id="eclipseMapName">World atlas</b><small id="eclipseMapStage"></small></span><span>⛶</span></button><div id="qp"></div><nav id="sideMenu" aria-label="Index and market"></nav></div><div id="dock"></div>
 <div id="eclipseCompanions"><div id="eclipsePetStrip"></div><button data-t="pet">Companions ↗</button><button id="spd">Speed x1</button></div><div id="wins"></div></div></div>
-<div id="hud"><div class="eclipse-portrait-frame"><canvas id="eclipsePortrait" width="126" height="134" aria-label="Your character"></canvas></div><div class="eclipse-vitals"><div><b id="eclipsePlayerName"></b><span id="cls2"></span></div><span id="titleLabel" class="title-hud hud-title-mirror" aria-hidden="true" style="display:none"></span><div class="eclipse-levels">BASE <b id="lv">1</b> <span>JOB <b id="jl">1</b></span></div><div class="hud-health">HP <div class="bar" role="meter" aria-label="HP" aria-valuemin="0" aria-valuemax="100" id="hpMeter"><i id="hpb"></i></div><small id="hpPct">100%</small></div><div class="eclipse-job-line"><span>JOB</span><div><i id="eclipseJobFill"></i></div><b id="eclipseJobLevel">1</b></div>
+<div id="hud"><div class="eclipse-portrait-frame"><canvas id="eclipsePortrait" width="126" height="134" aria-label="Your character"></canvas></div><div class="eclipse-vitals"><div><b id="eclipsePlayerName"></b><span id="cls2"></span></div><span id="titleLabel" class="title-hud hud-title-mirror" aria-hidden="true" style="display:none"></span><div class="eclipse-levels">BASE <b id="lv">1</b> <span>JOB <b id="jl">1</b></span></div><div class="hud-health"><span>HP</span> <div class="bar" role="meter" aria-label="HP" aria-valuemin="0" aria-valuemax="100" id="hpMeter"><i id="hpb"></i></div><small id="hpPct">100%</small></div><div class="eclipse-job-line"><span>JOB</span><div><i id="eclipseJobFill"></i></div><b id="eclipseJobLevel">1</b></div>
 </div></div>
 <div id="screenOptions" hidden></div>
 <div id="xp-dock" aria-label="Level progress"><div id="eclipseMetrics"><div>Kills/min <b id="kills" title="Recent kills per minute (last 60 seconds, refreshed each second)">0.0</b></div><div>EXP/min <b id="expmin" title="EXP earned per minute (last 60 seconds, refreshed each second)">0</b></div><div>Zeny/min <b id="zenymin" tabindex="0" title="Zeny earned per minute">0</b></div><div class="eclipse-dps-meter">DPS <b id="dps" tabindex="0" title="Damage per second you dealt (last 60 seconds, refreshed each second)">0</b></div></div><div id="xp-track">
@@ -928,6 +928,7 @@ const UI_ICONS={
  skills:'<path d="m13 2-9 12h7l-1 8 10-13h-7Z"/>',
  equip:'<path d="m8 3-5 3 3 5 2-1v11h8V10l2 1 3-5-5-3-4 3Z"/>',
  refine:'<path d="m4 20 9-9m-4-6 4-3 8 8-3 4Z"/>',
+ cards:'<rect x="7" y="3" width="14" height="18" rx="2"/><path d="M4 6H3v15a2 2 0 0 0 2 2h11M14 8l3 4-3 4-3-4Z"/>',
  bag:'<rect x="5" y="6" width="14" height="15" rx="3"/><path d="M9 6V4a3 3 0 0 1 6 0v2M5 12h14M9 12v3h6v-3"/>',
  index:'<path d="M12 5v16M12 5C8 2 5 3 2 4v16c4-1 7-1 10 1 3-2 6-2 10-1V4c-3-1-6-2-10 1Z M5 8h3m-3 4h3m8-4h3m-3 4h3"/>',
  guide:'<path d="M12 5v16M12 5C8 2 5 3 2 4v16c4-1 7-1 10 1 3-2 6-2 10-1V4c-3-1-6-2-10 1ZM5 8h3m-3 4h3m8-3 3 3-3 3"/>',
@@ -1068,7 +1069,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // script block, which is a SyntaxError - the game did not run on main at all. One line wins, and
 // it names both sides of this merge: the v38 balance patch (the weapon cut, the affix/card
 // give-back) and main's weapon-hold rendering work.
-const BUILD='2026-10-11 grind-v112 Eclipse stability';   // shown on the login card - confirms which file you loaded
+const BUILD='2026-10-11 grind-v113 Eclipse usability';   // shown on the login card - confirms which file you loaded
 $('buildTag').textContent='build '+BUILD;
 
 // ---------- class tree: Novice -> 6 first jobs -> 6 second jobs -> 6 third jobs ----------
@@ -4440,14 +4441,13 @@ function refine(sl){const it=S.eq[sl];if(!it||(it.r||0)>=10)return;const o=it.sl
     else if(it.r>=5&&S.dps>0){S.dps--;log(`Refine failed, but your Drop Protection Scroll kept +${it.r}.`,'r3','gear');addFloat(pl.x,3,pl.z,'Saved','#6cd3ff')}
     else if(it.r>=5){it.r--;log(`Refine failed... dropped to +${it.r}.`,'r0','gear')}else log('Refine failed.','r0','gear');addFloat(pl.x,3,pl.z,'Failed','#ff6b6b')}ui();save();if(typeof eclipseRefineFeedback==='function')eclipseRefineFeedback(it,previousRank,succeeded)}
 // Outcome presentation follows the committed transaction; it never rolls or spends resources.
-let eclipseRefineTimer;
+let eclipseRefineTimer,eclipseRefineOutcome=null;
 function eclipseRefineFeedback(it,previousRank,succeeded){
-  let result=$('eclipseRefineResult');if(!result){result=document.createElement('div');result.id='eclipseRefineResult';result.setAttribute('role','status');result.setAttribute('aria-live','polite');$('ov').append(result)}
-  clearTimeout(eclipseRefineTimer);result.hidden=false;result.className='';
-  const kept=!succeeded&&(it.r||0)===previousRank;
-  result.innerHTML='<div class="eclipse-result-art" aria-hidden="true">'+icon(it)+'</div><div><small>REFINEMENT '+(succeeded?'SUCCESS':'FAILED')+'</small><b>'+esc(iname(it))+'</b><span>'+(succeeded?'+'+previousRank+' → +'+it.r:kept?'Rank kept at +'+it.r:'Rank reduced: +'+previousRank+' → +'+it.r)+'</span></div>';
-  void result.offsetWidth;result.className=succeeded?'refine-success':'refine-failure';
-  eclipseRefineTimer=setTimeout(()=>{result.hidden=true},3600);
+  clearTimeout(eclipseRefineTimer);
+  eclipseRefineOutcome={owner:S,id:it.id,previousRank,rank:it.r||0,succeeded};
+  renderWin();
+  const result=$('eclipseRefineResult');if(result){result.classList.remove('refine-success','refine-failure');void result.offsetWidth;result.classList.add(succeeded?'refine-success':'refine-failure')}
+  eclipseRefineTimer=setTimeout(()=>{eclipseRefineOutcome=null;renderWin()},3600);
 }
 // Crafted Drop Protection Scrolls cost 20 Nightmare materials of any mix.
 // They remain an automatic failure-only fallback, separate from selected Refine Scrolls.
@@ -4851,8 +4851,8 @@ const V={
         <div class="sk-level"><b>Lv ${L}</b> / ${s.max}</div>
         <button data-a="skill" data-v="${s.id}" aria-label="Increase ${s.n}" title="${L<s.max?'level '+(L+1)+' costs '+skCost(L+1)+' points':'max level'}" ${av>=skCost(L+1)&&L<s.max?'':'disabled'}>${L<s.max?'+'+skCost(L+1):'MAX'}</button></div>`}).join('')}${from==='Novice'?skMasterTile():''}</div>`:''}).join('')
     +`<button class="full" data-a="rskill" ${rcost()&&S.zeny<rcost()?'disabled title="You need '+rcost().toLocaleString()+' Zeny to reset skills"':''}>Reset skills (${rcost()?rcost()+'z':'free below Base 20'})</button>`},
-  bag0(){const sel=selB&&S.inv.find(x=>String(x.id)===String(selB));const visible=typeof eclipseVisibleInventory==='function'?eclipseVisibleInventory():S.inv;const n=Math.max(30,Math.ceil(visible.length/6)*6);const inv=visible.map((it,i)=>({it,i})).sort((a,b)=>{const af=!!eqPick&&slotAccepts(eqPick,a.it),bf=!!eqPick&&slotAccepts(eqPick,b.it);return Number(bf)-Number(af)||Number(!!b.it.locked)-Number(!!a.it.locked)||a.i-b.i}).map(x=>x.it);
-    const detail=sel?`<div class="mob-card grid-detail">${itemDetail(sel)}<div class="row" style="margin-top:6px"><button data-a="equip" data-v="${sel.id}" ${canUse(sel)?'':'disabled'}>Equip</button><button data-a="sell" data-v="${sel.id}">Sell ${sellVal(sel)}z</button><button class="tick${sel.locked?' on':''}" data-a="lockgear" data-v="${sel.id}" aria-pressed="${!!sel.locked}" title="Locked gear stays pinned and protected from auto-sell">${sel.locked?'&#9733; Unlock':'☆ Lock'}</button><button class="tick${autoSellOn(rarIdx(sel))?' on':''}" data-a="autosell" data-v="${rarIdx(sel)}" title="Toggle ${rarOf(sel).n} drops that match your saved filters">Auto-sell ${rarOf(sel).n}</button></div></div>`:'';
+  bag0(){const sel=selB&&S.inv.find(x=>String(x.id)===String(selB));const visible=typeof eclipseVisibleInventory==='function'?eclipseVisibleInventory():S.inv;const n=Math.max(30,Math.ceil(visible.length/6)*6);const inv=visible.map((it,i)=>({it,i})).sort((a,b)=>{const af=!!eqPick&&slotAccepts(eqPick,a.it),bf=!!eqPick&&slotAccepts(eqPick,b.it);return rarIdx(b.it)-rarIdx(a.it)||Object.keys(SLOTS).indexOf(a.it.slot)-Object.keys(SLOTS).indexOf(b.it.slot)||Number(bf)-Number(af)||Number(!!b.it.locked)-Number(!!a.it.locked)||a.i-b.i}).map(x=>x.it);
+    const detail=sel?`<div class="mob-card grid-detail">${itemDetail(sel)}<div class="row" style="margin-top:6px"><button data-a="equip" data-v="${sel.id}" ${canUse(sel)?'':'disabled'}>Equip</button><button data-a="sell" data-v="${sel.id}">Sell ${sellVal(sel)}z</button><button class="tick${sel.locked?' on':''}" data-a="lockgear" data-v="${sel.id}" aria-pressed="${!!sel.locked}" title="Locked gear stays protected from auto-sell">${sel.locked?'&#9733; Unlock':'☆ Lock'}</button><button class="tick${autoSellOn(rarIdx(sel))?' on':''}" data-a="autosell" data-v="${rarIdx(sel)}" title="Toggle ${rarOf(sel).n} drops that match your saved filters">Auto-sell ${rarOf(sel).n}</button></div></div>`:'';
     return (eqPick?equipChooser(eqPick):'')
     +`<div class="bag-top"><div class="row"><span class="chip">Oridecon <b>${S.ore.ori}</b></span><span class="chip">Elunium <b>${S.ore.elu}</b></span></div><span class="bag-count">${S.inv.length}/${BAGMAX} items</span></div>
     <label class="bag-auto" title="Higher base-value drops equip automatically. Cards and affixes are not compared, including for a second dagger."><input type="checkbox" data-a="auto" ${S.auto!==false?'checked':''}> Auto-equip higher base value</label>
@@ -4930,7 +4930,7 @@ const V={
 // offered for every worn piece that has an affix.
 V.guide=()=>buildGuide(true);
 function eclipseEchoPicker(){return `<div class="trial-hd"><b>Nightmare Gear Token</b><small>${TRIAL_STORE.find(x=>x.id==='nmgear').c} Echo Shards</small></div><p>Choose the source map for your class-compatible equipment.</p><div class="mapgrid">${MAPS.map((m,i)=>`<button class="mapcard" data-nmmap="${i}"><b>${m.n}</b><small>${NMNAME[i]}</small></button>`).join('')}</div><button data-a="echostore">Back to Echo store</button>`}
-V.market=()=>{const navigation=`<div class="atabs"><button data-a="sub" data-v="market:supplies" class="${sub.market==='supplies'?'on':''}">Supplies</button><button data-a="sub" data-v="market:echo" class="${sub.market==='echo'?'on':''}">Echo store</button></div>`;if(sub.market==='echo')return navigation+(eclipseEchoPick?eclipseEchoPicker():trialShopHtml(true));const guide=navigation+`<div class="build-guide"><button data-t="guide">${uiIcon('guide')} Build &amp; farming guide · Upgrade planner</button></div>`;if(!bmOpen())return guide+`<p>Black Market opens at Base Lv ${BM_LV}.</p>`;
+V.market=()=>{const navigation=`<div class="atabs"><button data-a="sub" data-v="market:supplies" class="${sub.market==='supplies'?'on':''}">Supplies</button><button data-a="sub" data-v="market:echo" class="${sub.market==='echo'?'on':''}">Echo store</button></div>`;if(sub.market==='echo')return navigation+(eclipseEchoPick?eclipseEchoPicker():trialShopHtml(true));const guide=navigation;if(!bmOpen())return guide+`<p>Black Market opens at Base Lv ${BM_LV}.</p>`;
 const ores=Object.entries(ORE).map(([o,n])=>`<div class="slot"><b>${n}</b><label>Quantity<input class="ore-quantity" id="oreQty-${o}" type="number" min="1" max="1000000" step="1" value="${esc(marketQty[o])}" aria-label="${n} quantity"></label><small>${BM_ORE.toLocaleString()}z each · <output id="oreTotal-${o}">${Number.isSafeInteger(Number(marketQty[o]))&&Number(marketQty[o])>0?(Number(marketQty[o])*BM_ORE).toLocaleString()+'z total':'Enter a whole quantity'}</output></small><button data-a="bmore" data-v="${o}" ${S.zeny<BM_ORE?'disabled':''}>Buy quantity</button></div>`).join('');
 const mats=NM_MAT.map((n,i)=>`<div class="slot"><b>${n}</b><button data-a="bmmat" data-v="${i}" ${S.zeny<BM_MAT_PRICE?'disabled':''}>Buy 1 · ${BM_MAT_PRICE.toLocaleString()}z</button></div>`).join('');
 return guide+`<div class="hd">Black Market · ${S.zeny.toLocaleString()}z</div>`+ores+`<div class="slot"><b>Refine Scroll</b><small>Enable On in Equipment → Refine. One scroll per attempt, including success; prevents rank loss on failure. Only +5 and above can lose a rank; below +5 asks for confirmation.</small><button data-a="buyscroll" ${S.zeny<BM_SCROLL?'disabled':''}>Buy 1 · 80,000,000z</button></div>`+'<div class="sec">Nightmare materials</div><small>3,000,000z each</small>'+mats+'<button data-a="openreforge" class="full">Equipment workshop → Reforge</button>'};
@@ -5072,7 +5072,7 @@ $('screenOptions').onchange=e=>{const key=e.target.dataset.display;if(!['dmgShow
 function renderQ(){const e=$('qp'),rail=$('sideRail');if(!S){rail.style.display='none';return}rail.style.display='flex';rail.classList.toggle('with-panels',!!tabs.length);e.style.display='block';
   $('eclipseMapCard').classList.toggle('other-map',S.mp!==0);$('eclipseMapName').textContent=MAPS[S.mp].n;$('eclipseMapStage').textContent=fieldName()+' · World atlas';
   const questHTML=`<div class="qp-head"><b>${uiIcon('quest')} Quests</b><div class="qp-actions"><button data-q="t" aria-expanded="${qOpen}" aria-label="${qOpen?'Collapse':'Expand'} quests">${uiIcon(qOpen?'minus':'chevron')}</button></div></div>`+(qOpen?contractPanel(eclipseQuestAll?Infinity:3)+(S.q||[]).map((q,i)=>q.prog<q.goal?'':`<div class="quest-entry"><div>${qTxt(q)}</div><div class="pbar"><i style="width:${Math.min(100,q.prog/q.goal*100)}%"></i></div><div class="quest-reward"><small>${q.prog}/${q.goal} &middot; ${(q.z||0).toLocaleString()}z &middot; ${(q.xp||0).toLocaleString()}xp</small>${q.prog>=q.goal?`<button data-q="c${i}">Claim</button>`:''}</div></div>`).join(''):'');
-  eclipseSetMarkup(e,questHTML+(qOpen?'<button class="eclipse-quest-all" data-q="viewall">'+(eclipseQuestAll?'Show compact journal':'View all objectives')+' →</button>':''));e.classList.toggle('expanded-journal',eclipseQuestAll);$('sideMenu').classList.toggle('eclipse-more-open',sideOpen);eclipseSetMarkup($('sideMenu'),qpSide());polishIcons(e)}
+  eclipseSetMarkup(e,questHTML+(qOpen?'<button class="eclipse-quest-all" data-q="viewall">'+(eclipseQuestAll?'Show compact journal':'View all objectives')+' →</button>':''));e.classList.toggle('expanded-journal',eclipseQuestAll);$('sideMenu').classList.toggle('eclipse-more-open',sideOpen);eclipseSetMarkup($('sideMenu'),qpSide());eclipsePositionMore();polishIcons(e)}
 $('sideRail').onclick=e=>{const d=e.target.closest('[data-t]');if(d){sideOpen=false;openTab(d.dataset.t);return}const b=e.target.closest('[data-q]');if(!b)return;const v=b.dataset.q;if(v==='viewall'){eclipseQuestAll=!eclipseQuestAll;renderQ();return}if(v==='daily'||v==='all'){questView=v;renderQ();return}if(v.startsWith('contract:')){claimContract(v.slice(9));return}if(v==='side'){sideOpen=!sideOpen;renderQ();return}if(v==='t'){qOpen=!qOpen;renderQ()}else ACT.claim(v.slice(1))};
 function refineUI(it,k){const r=it.r||0,o=it.slot==='weapon'?'ori':'elu',c=refCost(it),need=refOre(it);return`<div class="sec">Refine</div>${refineProtectionUI()}<small class="refine-item-summary"><span>${SLOTS[it.slot].stat} +${ev(it)} &rarr; +${Math.round(it.val*(1+(r+1)*.15))}</span><span>${r>=10?'MAX':'Success '+refCh(it)+'% &middot; '+c.toLocaleString()+'z + '+need+' '+ORE[o]}</span><span class="refine-owned" title="${safeCount(S.ore[o]).toLocaleString()} ${ORE[o]} owned">${safeCount(S.ore[o]).toLocaleString()} ${ORE[o]} owned</span></small><div class="row" style="margin-top:4px"><button data-a="refine" data-v="${k}" ${r>=10||S.ore[o]<need||S.zeny<c?'disabled':''}>Refine</button></div>`}
 // v75: one pet per species. petFold() takes a duplicate and folds it into the pet you already
@@ -5176,7 +5176,7 @@ function arrangePanel(k,root){
     if(special)put(route,put(section('CHALLENGE / Endless Echo','ui-challenge'),special));
     const intel=section('03 / Field intelligence','ui-field-guide');
     if(drops){const field=fieldOf(mapM,mapL),mob=field.boss||field.mobs[0],encounter=make('div','eclipse-field-encounter');encounter.innerHTML='<img src="'+esc(mobSpriteUrl(mob.spriteId))+'" alt=""><div><b>'+esc(mob.n)+'</b><small>'+(field.boss?'MVP + escorts':'Normal field · independent loot rolls')+'</small></div>';drops.querySelector('.hd')?.after(encounter)}
-    put(intel,drops);body.replaceChildren(destinations,route,intel);
+    intel.dataset.panelScroll='field-intelligence';put(intel,drops);body.replaceChildren(destinations,route,intel);
   }else if(mode==='stats'){
     const slots=direct().filter(e=>e.classList.contains('slot')),attrs=slots.filter(e=>e.querySelector('[data-a="stat"]')),combat=slots.find(e=>!e.querySelector('[data-a="stat"]')),reset=q('[data-a="rstat"]');
     const attributes=section('Allocate attributes','ui-attribute-section');put(attributes,put(make('div','ui-attributes'),attrs));
@@ -5200,14 +5200,20 @@ function arrangePanel(k,root){
   }else if(k==='skills'){
     const slot=q('.sk-slot'),tools=q('.sk-tools'),reset=q('[data-a="rskill"]'),grids=all('.skg'),intro=direct().filter(e=>!e.matches('.sk-slot,.skg,.sec')&&e!==reset);
     const catalog=section('Skills by class','ui-skill-catalog');
-    grids.forEach((g,i)=>{const label=g.previousElementSibling?.textContent||'Skills';const d=fold(label,g,'skill-line-'+i,true);put(catalog,d)});
+    const skillGrid=make('div','skg');
+    grids.forEach(g=>{const label=g.previousElementSibling?.textContent||'Skills';for(const tile of [...g.querySelectorAll('.sk[data-a=ssel]')]){tile.querySelector('.sk-head')?.append(make('small','eclipse-skill-class',label));put(skillGrid,tile)}});put(catalog,skillGrid);
     if(tools)tools.remove();
     const chosen=slot?.querySelector('.sk-detail-card');
-    const detail=inspector('Skill details',chosen||make('p','ui-empty','Select a skill to inspect its effects and auto-cast settings.'));
+    for(const tile of catalog.querySelectorAll('.sk[data-a=ssel]')){
+      const skill=SKILLS.find(s=>s.id===tile.dataset.v);if(!skill)continue;
+      const content=make('div','eclipse-skill-description');
+      if(chosen?.dataset.skillDetail===skill.id)put(content,chosen);else content.innerHTML=skillDetailCard(skill);
+      put(tile,content);
+    }
     const footer=put(section('Automation','ui-automation'),tools);
     // The allocation tile can be a sibling of the master tile in older saves/builds.
     const masters=all('.sk-master,.sk-alloc');masters.forEach(e=>{if(!footer.contains(e))footer.append(e)});
-    body.replaceChildren(split(scroll('skills',catalog),detail),footer,fold('Skill points & combat rules',intro,'skill-notes'),fold('Reset skills',reset,'respec'));
+    body.replaceChildren(footer,scroll('skills',catalog),fold('Skill points & combat rules',intro,'skill-notes'),fold('Reset skills',reset,'respec'));
   }else if(mode==='bag'||mode==='cards'){
     const grid=q('.grid'),detail=q('.grid-detail')||(mode==='cards'?q('.mob-card'):null),top=q('.bag-top'),auto=q('.bag-auto'),tools=q('.bag-tools'),key=q('.bag-key'),chooser=q('.chooser');
     if(detail)detail.remove();
@@ -5244,6 +5250,13 @@ function arrangePanel(k,root){
       const key=row=>row.querySelector('[data-a="'+action+'"]').dataset.v.split(':')[0],chosen=(pending&&rows.find(row=>S.eq[key(row)]?.id===pending.id))||rows.find(row=>key(row)===selE)||rows[0];
       const menu=section('Worn equipment','eclipse-workshop-menu');rows.forEach(row=>{const slot=key(row),it=S.eq[slot],button=make('button',row===chosen?'on':'');button.dataset.a='workslot';button.dataset.v=slot;button.setAttribute('aria-pressed',String(row===chosen));button.innerHTML=icon(it)+'<span><b>'+esc(iname(it))+'</b><small>'+esc(EQK.find(x=>x[0]===slot)[1])+' · +'+(it.r||0)+'</small></span>';put(menu,button)});
       const it=S.eq[key(chosen)],stage=section(mode==='refine'?'Refinement workshop':'Affix workbench','eclipse-workshop-stage'),hero=make('div','eclipse-workshop-hero');hero.innerHTML='<div>'+icon(it)+'</div><small>'+rarOf(it).n+' · '+esc(it.wt||it.slot)+'</small><h2>'+esc(iname(it))+'</h2><p>'+SLOTS[it.slot].stat+' +'+ev(it)+'</p>';put(stage,hero);stage.classList.toggle('eclipse-reforge-stage',mode==='reforge');
+      if(mode==='refine'){
+        const outcome=eclipseRefineOutcome,active=outcome&&outcome.owner===S&&outcome.id===it.id;
+        hero.id='eclipseRefineResult';hero.setAttribute('role','status');hero.setAttribute('aria-live','polite');hero.firstElementChild.classList.add('eclipse-result-art');
+        const status=make('p','eclipse-refine-status');
+        if(active){const {previousRank,rank,succeeded}=outcome;hero.classList.add(succeeded?'refine-success':'refine-failure');status.textContent=(succeeded?'Success: +'+previousRank+' → +'+rank:rank===previousRank?'Failed · Rank kept at +'+rank:'Failed · Rank reduced: +'+previousRank+' → +'+rank)}
+        put(hero,status);
+      }
       const aside=section(mode==='refine'?'Protection & supplies':'Reforge quote','eclipse-workshop-aside');
       const protection=make('div','eclipse-protection'),protectionRow=q('[data-a=refprotect]')?.parentElement;
       if(protectionRow){const heading=protectionRow.previousElementSibling,hint=protectionRow.nextElementSibling;put(protection,heading,protectionRow,hint)}
@@ -5263,7 +5276,11 @@ function arrangePanel(k,root){
     for(const p of S.pets){const sp=PETS[p.sp],tile=grid?.querySelector('[data-v="'+p.id+'"]'),card=make('article','eclipse-companion-card');card.hidden=mode==='party'&&!p.on;
       const total=p.eq.reduce((a,b)=>a+b,0);card.innerHTML='<div class="ui-eyebrow">COMPANION / '+(p.on?'ACTIVE':'RESTING')+'</div><div class="eclipse-companion-portrait">'+petIcon(sp,true)+'</div><h3>'+esc(sp.n)+'</h3><p>'+esc(RN[sp.r])+' · collected from monster drops</p><div class="eclipse-companion-stat training"><span>Equipment training</span><b>'+total+' / '+(PT.length*p.eq.length)+'</b></div><div class="eclipse-training-track"><i style="width:'+100*total/(PT.length*p.eq.length)+'%"></i></div><div class="eclipse-companion-stat bond"><span>Bond</span><b class="pet-bond-badge">'+bondStars(p.sp)+'</b></div><div class="eclipse-companion-stat party"><span>Party slot</span><b>'+(p.on?(active.indexOf(p)+1)+' / 3':'Resting')+'</b></div>';
       if(tile){tile.className='eclipse-primary';tile.removeAttribute('style');tile.innerHTML='Train & manage →';tile.setAttribute('role','button');tile.setAttribute('tabindex','0');tile.setAttribute('aria-label','Train and manage '+sp.n);put(card,tile)}
-      put(card,make('p','eclipse-fine-print','Training is a gamble. Review cost and odds before spending.'));put(catalog,card);
+      const deployment=make('div','eclipse-pet-deployment');
+      if(!p.on&&active.length>=3){deployment.innerHTML='<label>Replace <select data-pet-replace="'+p.id+'" aria-label="Companion to replace with '+esc(sp.n)+'">'+active.map(a=>'<option value="'+a.id+'">'+esc(PETS[a.sp].n)+'</option>').join('')+'</select></label><button data-a="pswap" data-v="'+p.id+'">Send to battle</button>'}
+      else deployment.innerHTML='<button data-a="pon" data-v="'+p.id+'">'+(p.on?'Remove from battle':'Send to battle')+'</button>';
+      put(card,deployment);
+      put(card,make('p','eclipse-fine-print' ,'Training is a gamble. Review cost and odds before spending.'));put(catalog,card);
     }
     if(mode==='party')for(let i=active.length;i<3;i++){const empty=make('article','eclipse-companion-card eclipse-empty-companion');empty.innerHTML=uiIcon('pet')+'<h3>Open party slot</h3><p>Select a collected companion to join your party.</p><button data-a="sub" data-v="pet:collection">Choose a pet →</button>';put(catalog,empty)}
     if(!S.pets.length&&mode==='collection')put(catalog,make('p','ui-empty','No companions collected yet. Pets drop from monsters; the World atlas lists the odds.'));
@@ -5303,6 +5320,12 @@ function arrangePanel(k,root){
 
 const DOCK_TABS=['map','status','equip','job','skills','bag','pet','market','log','set'];
 const DOCK_LABEL={map:'Maps',guide:'Guide',status:'Character',equip:'Equipment',refine:'Refine',job:'Jobs',skills:'Skills',bag:'Bag',pet:'Pets',index:'Mastery',market:'Market',board:'Ranks',log:'Log',set:'Settings',gm:'GM'};
+function eclipsePositionMore(){
+  const menu=$('sideMenu'),button=$('dock').querySelector('.eclipse-more');if(!sideOpen||!button)return;
+  const rect=button.getBoundingClientRect(),width=menu.offsetWidth||225;
+  menu.style.left=Math.max(8,Math.min(window.innerWidth-width-8,rect.right-width))+'px';
+  menu.style.right='auto';menu.style.bottom=(window.innerHeight-rect.top+8)+'px';
+}
 function renderDock(){
   const dock=$('dock'),keys=DOCK_TABS.filter(k=>k!=='gm'||S.gm),current=[...dock.querySelectorAll(':scope > [data-t]')];
   // Kills call ui() and therefore renderWin(). Replacing the whole dock on every kill reset the
@@ -5314,7 +5337,7 @@ function renderDock(){
     dock.innerHTML=keys.map(k=>{const[ic,n,key]=TABS[k];return `<button class="ib" data-t="${k}" title="${n} (${key})" aria-label="${n}" aria-pressed="false"><span class="ui-nav-icon" aria-hidden="true">${uiIcon(k)}</span><span class="ui-nav-label">${DOCK_LABEL[k]}</span><span class="k">${key}</span></button>`}).join('');
     dock.insertAdjacentHTML('beforeend','<button class="ib eclipse-more" aria-label="More destinations" aria-expanded="false"><span class="ui-nav-icon">'+uiIcon('chevron')+'</span><span class="ui-nav-label">More</span></button>');dock.querySelector('.eclipse-more').onclick=()=>{sideOpen=!sideOpen;renderQ();renderDock()};dock.scrollLeft=left;
   }
-  dock.querySelector('.eclipse-more')?.setAttribute('aria-expanded',String(sideOpen));
+  dock.querySelector('.eclipse-more')?.setAttribute('aria-expanded',String(sideOpen));eclipsePositionMore();
   [...dock.querySelectorAll(':scope > [data-t]')].forEach(b=>{
     const k=b.dataset.t,on=tabs.includes(k),hasDot=!!dot(k),badge=b.querySelector('.dot');
     b.classList.toggle('on',on);b.setAttribute('aria-pressed',String(on));
@@ -5426,7 +5449,7 @@ function renderWin(anchor){
     close.innerHTML=uiIcon('close');
     expand.dataset.uiExpand=k;expand.innerHTML=uiIcon(expandedPanels.has(k)?'compact':'expand');expand.setAttribute('aria-label',(expandedPanels.has(k)?'Compact ':'Maximize ')+name);expand.setAttribute('aria-pressed',String(expandedPanels.has(k)));expand.title='Toggle compact / expanded layout';
     close.dataset.x=k;close.setAttribute('aria-label','Close '+name);
-    const body=win.querySelector('.wbody'),source=V[k](),viewKey=k==='equip'&&['refine','reforge'].includes(sub.equip)?selE:k==='job'?String(eclipseJobsBrowse):k==='pet'?sub.pet:k==='market'&&sub.market!=='echo'?[S.ore.ori,S.ore.elu,S.refineScrolls,S.shards].join(':'):'';
+    const body=win.querySelector('.wbody'),source=V[k](),viewKey=k==='equip'&&['refine','reforge'].includes(sub.equip)?selE+':'+JSON.stringify(eclipseRefineOutcome&&eclipseRefineOutcome.owner===S?{id:eclipseRefineOutcome.id,rank:eclipseRefineOutcome.rank,from:eclipseRefineOutcome.previousRank,success:eclipseRefineOutcome.succeeded}:null):k==='job'?String(eclipseJobsBrowse):k==='pet'?sub.pet:k==='market'&&sub.market!=='echo'?[S.ore.ori,S.ore.elu,S.refineScrolls,S.shards].join(':'):'';
     if((body._panelSource!==source||body._panelViewKey!==viewKey)&&!body.querySelector('.autosell-editor input[type=number]:focus,.autosell-editor textarea:focus,.ore-quantity:focus')){
       const fresh=document.createElement('div');fresh.className=body.className;fresh.innerHTML=source;arrangePanel(k,fresh);polishIcons(fresh);
       eclipsePatch(body,fresh);body.className=fresh.className;body.dataset.layout=fresh.dataset.layout
@@ -5434,7 +5457,7 @@ function renderWin(anchor){
     }
     else delete body.dataset.panelChanged;
     const hero=body.querySelector('.ui-hero'),title=win.querySelector('.title > span:first-child');
-    const titleHTML=uiIcon(k)+'<span class="eclipse-window-heading"><small>'+esc(hero?.querySelector('.ui-eyebrow')?.textContent||name)+' / '+esc(name)+'</small><b>'+esc(hero?.querySelector('h2')?.textContent||name)+'</b></span>';
+    const titleHTML=uiIcon(k==='bag'&&sub.bag==='cards'?'cards':k)+'<span class="eclipse-window-heading"><small>'+esc(hero?.querySelector('.ui-eyebrow')?.textContent||name)+' / '+esc(name)+'</small><b>'+esc(hero?.querySelector('h2')?.textContent||name)+'</b></span>';
     if(title.innerHTML!==titleHTML)title.innerHTML=titleHTML;
     const status=win.querySelector('.eclipse-save-status');if(status)status.textContent=CLOUD.on?(CLOUD.paused?'Cloud sync paused':CLOUD.dirty?'Cloud sync pending':'Cloud connected'):'Local save';
     next.push(win);
@@ -5539,6 +5562,7 @@ const ACT={
     addFloat(pl.x,2.6,pl.z,`🃏 ${name} ${r.level}/${CARD_MASTERY_PER_CARD}`,'#ffd23f');ui();save()},
   indexcard:all=>all,
   refprotect:v=>{const n=Number(v);if(![0,1].includes(n))return;S.useRefineScroll=n===1;ui();save()},buyscroll:()=>buyRefineScroll(),refine:k=>refine(k),craftdps:()=>craftDps(),bmmat:o=>buyMat(+o),bmore:o=>buyOre(o,$('oreQty-'+o)?.value??1),bmref:v=>{const[k,mode]=v.split(':');reforge(k,mode==='all')},refpick:v=>{const[k,i]=v.split(':'),it=S.eq[k];if(!it)return;const a=reforgeSelection[it.id]||(reforgeSelection[it.id]=[]),n=+i,j=a.indexOf(n);j<0?a.push(n):a.splice(j,1);renderWin()},refaccept:v=>resolveReforge(v==='yes'),mergecard:id=>mergeCard(id),convertcard:id=>convertCard(id),guidemode:v=>{if(['farm','boss','survive'].includes(v))guideMode=v;renderWin()},guidetier:v=>{if(['current','normal','nightmare'].includes(v))guideTier=v;renderWin()},guidemap:v=>{const[m,l]=v.split(':').map(Number);if(!tabs.includes('map'))openTab('map');mapM=m;mapL=l;renderWin()},sub:v=>{const[t,k]=v.split(':');sub[t]=k;if(t==='bag'&&k!=='bag')eqPick=null;renderWin()},selp:v=>{selP=+v;sub.pet='manage';renderWin()},
+  pswap:id=>{const pet=gp(id),select=$('wins').querySelector('[data-pet-replace="'+id+'"]'),previous=gp(select?.value);if(!pet||pet.on||!previous?.on)return;previous.on=false;pet.on=true;ui();save()},
   pon:id=>{const p=gp(id);if(!p)return;if(p.on)p.on=false;else if(S.pets.filter(x=>x.on).length<3)p.on=true;else log('Only 3 pets can fight at once. Remove one first.','','pet');ui();save()},
   pskill:id=>{const p=gp(id);if(!p)return;const c=petSkillCost(p);if(S.zeny<c){log('Not enough Zeny for a pet skill roll.');ui();return}S.zeny-=c;const[a,b]=rollPetSkills();p.skills=[a,b];
     clearPetCd(p.id);
@@ -5588,6 +5612,11 @@ const ACT={
   reset:()=>{ask('Erase this account save and start over?',()=>{const gm=S.gm;hudRate=null;zenyEarned=0;expEarned=0;S=fresh();S.gm=gm;S.q=['kill','loot','boss'].map(newQuest);floats.forEach(f=>f.el&&f.el.remove());floats=[];drops=[];mobs=[];mob=null;respawn=.3;logs=[];log('New adventure started.');ui();save()})},
   gmx:v=>{S.gmx=+v;ui();save()},gmz:()=>{S.zeny+=1e6;ui();save()},gmo:()=>{S.ore.ori+=20;S.ore.elu+=20;ui();save()},gml:()=>{S.lv=Math.min(150,S.lv+10);S.pts+=30;S.hp=maxHp();ui();save()},
   gmj:()=>{const j=jobOf();j.jl=C().mj;j.jx=0;ui();save()},gmu:()=>{S.prog=MAPS.map(()=>10);ui();save()},gmindex:v=>gmIndexTest(v),gmcard:v=>gmCardTest(v),gmskill:v=>gmSkillTest(v),gmpet:v=>gmPetTest(v),gmp:v=>{if(S.pets.length>=40)S.pets.shift();const c=PETS.filter(x=>x.r===+v);S.pets.push({id:ri(1e6,9e6),sp:PETS.indexOf(c[ri(0,c.length-1)]),mut:0,eq:[0,0,0],skills:[],on:S.pets.filter(x=>x.on).length<3});ui();save()},gmm:v=>{S.pets.forEach(p=>p.mut=+v);ui();save()},gmc:()=>{S.pets=[];ui();save()}};
+$('eclipseCompanions').onclick=e=>{const b=e.target.closest('[data-t]');if(b)openTab(b.dataset.t)};
+$('dock').addEventListener('scroll',eclipsePositionMore);
+window.addEventListener('resize',eclipsePositionMore);
+$('ov').append($('sideMenu'));
+$('sideMenu').onclick=$('sideRail').onclick;
 $('dock').onclick=e=>{const b=e.target.closest('[data-t]');if(b)openTab(b.dataset.t)};
 $('feedTab').onclick=()=>ACT.feed();
 $('feedFil').onclick=()=>feedFilToggle();

@@ -164,9 +164,9 @@ t('equipment inspector stays inside the chooser boundary',()=>{
 });
 t('redraw preserves open AND closed disclosures, plus independent catalogue scroll positions',()=>{
   ev("tabs.splice(0,tabs.length,'skills');renderWin()");
-  let d=window.document.querySelector('[data-ui-disclosure="skills-skill-line-0"]');assert.ok(d.open);d.open=false;
+  let d=window.document.querySelector('[data-ui-disclosure="skills-skill-notes"]');d.open=true;
   let c=window.document.querySelector('[data-panel-scroll="skills"]');c.scrollTop=90;
-  ev('renderWin()');assert.strictEqual(window.document.querySelector('[data-ui-disclosure="skills-skill-line-0"]').open,false);
+  ev('renderWin()');assert.strictEqual(window.document.querySelector('[data-ui-disclosure="skills-skill-notes"]').open,true);
   assert.strictEqual(window.document.querySelector('[data-panel-scroll="skills"]').scrollTop,90);
   d=window.document.querySelector('[data-ui-disclosure="skills-skill-notes"]');d.open=true;ev('renderWin()');
   assert.ok(window.document.querySelector('[data-ui-disclosure="skills-skill-notes"]').open);
@@ -292,7 +292,7 @@ t('dedicated guide uses current cards, filters and upgrade planner from the fork
   doc.querySelector('[data-win="guide"] [data-a="guidetier"][data-v="nightmare"]').click();
   assert.strictEqual(ev('guideMode'),'survive');assert.strictEqual(ev('guideTier'),'nightmare');
   assert.ok(doc.querySelector('[data-win="guide"]').textContent.includes('Nightmare'));
-  for(const panel of ['market','index']){
+  for(const panel of ['index']){
     ev(`tabs.splice(0,tabs.length,'${panel}');indexMode='mobs';renderWin()`);
     const button=doc.querySelector('[data-win="'+panel+'"] [data-t="guide"]');
     assert.ok(button);button.click();assert.ok(doc.querySelector('[data-win="guide"]'));

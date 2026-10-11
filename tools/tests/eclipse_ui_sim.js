@@ -127,7 +127,7 @@ test('pet cards preserve training, skills and deployment controls',()=>{
  const before=ev('JSON.stringify(S)');doc.querySelector('[data-v="pet:collection"]').click();assert.equal(doc.querySelectorAll('.eclipse-companion-card:not([hidden])').length,2);
  doc.querySelector('[data-a=selp][data-v="91002"]').dispatchEvent(new g.window.KeyboardEvent('keydown',{key:'Enter',bubbles:true}));assert.equal(ev('sub.pet'),'manage');assert.equal(ev('selP'),91002);assert.equal(ev('JSON.stringify(S)'),before);
  for(const a of ['peq','pskill','pon','prel','proll','pauto','psk'])assert.ok(doc.querySelector('.ui-inspector [data-a='+a+']'),a);
- doc.querySelector('[data-a=pon]').click();assert.equal(ev('gp(91002).on'),true);doc.querySelector('[data-v="pet:party"]').click();assert.match(doc.querySelector('.eclipse-pet-tabs').textContent,/2 \/ 3/);
+ doc.querySelector('.ui-inspector [data-a=pon]').click();assert.equal(ev('gp(91002).on'),true);doc.querySelector('[data-v="pet:party"]').click();assert.match(doc.querySelector('.eclipse-pet-tabs').textContent,/2 \/ 3/);
 });
 test('supplies cards buy entered quantities and expose the inline Echo store',()=>{
  ev(`tabs.push('market');renderWin()`);assert.equal(doc.querySelectorAll('.eclipse-product').length,4);
@@ -152,6 +152,35 @@ test('refine feedback follows success, safe failure, protection and rank loss',(
  ev(`clearTimeout(eclipseRefineTimer);$('eclipseRefineResult').hidden=true;S.zeny=0;refine('weapon');Math.random=window.refineRandom`);assert.equal(doc.getElementById('eclipseRefineResult').hidden,true);
 });
 
+test('screen companion shortcuts open pets and party cards deploy, swap and remove',()=>{
+ ev(`S.pets=[0,1,2,3].map((sp,i)=>({id:92000+i,sp,mut:0,eq:[0,0,0],skills:[],on:i<3}));window.eclipseRealBars()`);
+ doc.querySelector('#eclipseCompanions > [data-t=pet]').click();assert.ok(doc.querySelector('[data-win=pet]'));
+ doc.querySelector('[data-v="pet:collection"]').click();
+ const select=doc.querySelector('[data-pet-replace="92003"]');select.value='92001';
+ doc.querySelector('[data-a=pswap][data-v="92003"]').click();assert.equal(ev('gp(92003).on'),true);assert.equal(ev('gp(92001).on'),false);assert.equal(ev('S.pets.filter(p=>p.on).length'),3);
+ ev('ACT.pswap(99999)');assert.equal(ev('S.pets.filter(p=>p.on).length'),3);
+ doc.querySelector('.eclipse-pet-deployment [data-a=pon][data-v="92003"]').click();assert.equal(ev('gp(92003).on'),false);
+ doc.querySelector('.eclipse-pet-deployment [data-a=pon][data-v="92001"]').click();assert.equal(ev('gp(92001).on'),true);
+ ev('tabs.length=0;renderWin();window.eclipseRealBars()');doc.querySelector('#eclipsePetStrip button').click();assert.ok(doc.querySelector('[data-win=pet]'));
+});
+test('gear groups by descending rarity then slot without mutating inventory',()=>{
+ ev(`S.inv=[{...S.eq.weapon,id:93001,sec:5,slot:'armor'},{...S.eq.weapon,id:93002,sec:0},{...S.eq.weapon,id:93003,sec:5},{...S.eq.weapon,id:93004,sec:4,locked:true}];tabs.push('equip');renderWin()`);
+ assert.deepEqual([...doc.querySelectorAll('.eclipse-bag .grid [data-tip]')].map(n=>n.dataset.tip),['93003','93001','93004','93002']);
+ assert.equal(ev('S.inv.map(it=>it.id).join()'),'93001,93002,93003,93004');
+});
+test('skills expose descriptions and working auto-cast inside each tile',()=>{
+ ev(`tabs.push('skills');renderWin()`);
+ const tile=doc.querySelector('.sk[data-v=aid]');assert.ok(tile.querySelector('[data-skill-detail=aid]'));assert.equal(doc.querySelector('[data-win=skills] .ui-inspector'),null);
+ tile.querySelector('[data-a=sktog]').click();assert.equal(ev('skOff("aid")'),true);
+ doc.querySelector('.sk[data-v=aid] [data-a=sktog]').click();assert.equal(ev('skOff("aid")'),false);
+});
+test('refinement animates the shown equipment, cards have card icons and market has no guide',()=>{
+ ev(`tabs.push('equip');sub.equip='refine';renderWin();eclipseRefineFeedback(S.eq.weapon,0,true)`);
+ const result=doc.getElementById('eclipseRefineResult');assert.ok(result.closest('.eclipse-workshop-stage'));assert.equal(result.querySelectorAll('.eclipse-result-art').length,1);
+ ev(`tabs.splice(0,tabs.length,'bag');sub.bag='cards';S.cards=[newCard(CARD_CATALOG[0])];renderWin()`);assert.ok(doc.querySelector('.eclipse-card-grid [data-ui-icon=cards]'));
+ ev(`tabs.splice(0,tabs.length,'market');renderWin()`);assert.equal(doc.querySelector('[data-win=market] [data-t=guide]'),null);
+});
+
 test('journal starts collapsed and remains independently expandable',()=>{
  assert.equal(g.window.eclipseInitialQuestOpen,false);ev('qOpen=false;renderQ()');assert.equal(doc.querySelector('#qp .quest-entry'),null);doc.querySelector('[data-q=t]').click();assert.ok(doc.querySelector('#qp .quest-entry'));assert.equal(ev('qOpen'),true);
 });
@@ -174,7 +203,7 @@ test('class emblems are distinct and supplies put both ores before the scroll',(
  ev("tabs.push('market');renderWin()");assert.deepEqual([...doc.querySelectorAll('.eclipse-product-copy>b')].map(e=>e.textContent),['Oridecon','Elunium','Refine Scroll','Echo store']);assert.match(doc.querySelector('.eclipse-product').textContent,/Owned: 1,000/);
 });
 test('a confirmed below-five failure consumes one scroll and keeps the rank',()=>{
- ev(`S.eq.weapon.r=2;S.useRefineScroll=true;S.refineScrolls=2;refine('weapon');window.oldRefRandom=Math.random;Math.random=()=>.999`);doc.getElementById('my').click();ev('Math.random=window.oldRefRandom');assert.equal(ev('S.eq.weapon.r'),2);assert.equal(ev('S.refineScrolls'),1);assert.match(doc.getElementById('eclipseRefineResult').textContent,/Rank kept at \+2/);
+ ev(`tabs.push('equip');sub.equip='refine';renderWin();S.eq.weapon.r=2;S.useRefineScroll=true;S.refineScrolls=2;refine('weapon');window.oldRefRandom=Math.random;Math.random=()=>.999`);doc.getElementById('my').click();ev('Math.random=window.oldRefRandom');assert.equal(ev('S.eq.weapon.r'),2);assert.equal(ev('S.refineScrolls'),1);assert.match(doc.getElementById('eclipseRefineResult').textContent,/Rank kept at \+2/);
 });
 test('class path shows the current collection bonus in both views',()=>{
  ev("S.cls='Lord Knight';S.lv=100;S.base={'High Wizard':{lv:100}};eclipseJobsBrowse=false;tabs.push('job');renderWin()");

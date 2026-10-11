@@ -6706,3 +6706,10 @@ The owner's second pass over v77, six notes, all built.
 * **Appearance:** Font loading keeps text positions stable when a font arrives after a tab opens.
 * **Try it:** Open Character and Refine while assets are loading.
 * **Checks:** Font and repeated-update browser checks recorded in workspace validation context.
+
+### 2026-10-11 — `grind-v113 Eclipse usability`
+* **Layout:** Centered game windows, aligned HP and Job bars, placed transparent activity text above its bottom Logs controls, and separated bottom buff icons from companions. More now opens above its button.
+* **Controls:** Screen companion shortcuts work. Pet cards offer Send to battle, Remove from battle and a choice of which active pet to replace. Equipment groups by rarity, then equipment type. Refinement animates the displayed equipment with its actual result.
+* **Panels:** Field Intelligence scrolls independently. Skills share a compact grid with descriptions and auto-cast controls; card tiles are smaller and use card icons. Removed the guide shortcut from Market; Guide remains under More.
+* **Try it:** M → scroll Field Intelligence; E → Refine; K → toggle auto-cast; C → cards; P → Change pets. Use the screen Companions and More buttons.
+* **Checks:** Real-handler integration and panel-control smoke checks pass. Full regression, build, desktop/phone geometry and review results are recorded in workspace validation context. Browser visuals use a temporary renderer stub because shared-browser WebGL is unavailable. No push or deployment.
