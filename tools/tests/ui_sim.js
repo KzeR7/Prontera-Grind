@@ -85,6 +85,7 @@ const code = [
 
   pick(/const cardSlots=[^\n]*/, 'cardSlots'),
   grab('function insertUI(sel){', 'const DOCK_TABS='),
+  grab('const refineScrollFrom=', 'function refine(sl){'),
   pick(/function refineUI\(it,k\)\{const[^\n]*/, 'refineUI'),
   pick(/function nmMatCounts\(\)\{[^\n]*/, 'nmMatCounts'),
   pick(/function dpsPanel\(\)\{[^\n]*/, 'dpsPanel'),
@@ -136,6 +137,7 @@ const skCost=x=>x,skOff=id=>!!(S&&S.skOff&&S.skOff[id]);
 let petBuff={atk:0,matk:0,hp:0,leech:0,atkT:0,matkT:0,hpT:0,leechT:0},petBuffSrc={},petSkillCd={},petNote={};
 const rollingSet=new Set(),autoSet=new Set(),busy=()=>false;
 let S=null,mapM=0,mapL=1,selB=null,selC=null;   // remaining panel state comes in with the V grab
+const document={addEventListener(){}};
 const mobs=[],drops=[],logs=[];
 let boardPeriod='daily',boardCache={},boardLoading=false,boardError='';
 const CLOUD={api:false,on:false};
@@ -148,7 +150,7 @@ const skpAvail=()=>5,skTree=()=>4,skEarnedMax=()=>9,skLine=()=>['Novice'],skEarn
 this.__u={ V, itemDetail, itemMain, changeClass, cell, SKILLS, SKILL_ICON, SKILL_TONE, SKILL_PICTO, skillIcon, logs, indexSectionOpen, indexToggleSection, set S(v){S=v}, get S(){return S}, set boardPeriod(v){boardPeriod=v}, set boardCache(v){boardCache=v}, set boardStatus(v){CLOUD.api=!!v.api;CLOUD.on=!!v.on}, set eqPick(v){eqPick=v}, get eqPick(){return eqPick},
            set indexMode(v){indexMode=v}, get indexMode(){return indexMode}, set mapM(v){mapM=v}, set mapL(v){mapL=v}, set selE(v){selE=v}, get selE(){return selE}, set selB(v){selB=v}, get selB(){return selB}, set selS(v){selS=v}, set selP(v){selP=v} };
 const addFloat=()=>{},pl={x:0,z:0};
-const log=(m,c,k)=>{logs.push(m)},ui=()=>{},save=()=>{};   // the Black Market's writes (stubs here)
+const questEvent=()=>{};const log=(m,c,k)=>{logs.push(m)},ui=()=>{},save=()=>{};   // the Black Market's writes (stubs here)
 this.__bm={buyOre,reforge,reforgeCost,bmOpen,refCost,refOre,qpSide,tabs,setSide:v=>{sideOpen=v}};
 `;
 const sb = { console };
@@ -656,6 +658,7 @@ t('HP flips at 30%; one split bar fills Base from left and Job from right with c
     ${grab('const PET_SKILLS=[', 'const petDmg=')}
     const performance={now:()=>1000},job={jl:10,jx:45},jobOf=()=>job,C=()=>({mj:50}),maxHp=()=>100,
       jneed=()=>100,need=()=>200;
+    const applyDisplay=()=>{};
     ${grab('const HUD_RATE_WINDOW=60000,HUD_IDLE_RESET=30000,HUD_RATE_REFRESH=1000;','function ui(anchor){')}
     bars();this.__h={nodes,S,job,bars};
   `,box);
@@ -1094,8 +1097,8 @@ t('v90 Black Market: locked under Base Lv 100, then sells ore and reforges one a
   assert.ok(!h.includes('data-a="bmref" data-v="weapon"'),'an empty slot is not offered a reforge');
   // v90.8: the ten Nightmare materials are sold here, one Buy 1 button each
   assert.ok(h.includes('Nightmare materials') && h.includes('3,000,000z each'),'the Nightmare materials are listed and priced at 3,000,000z');
-  assert.strictEqual(h.split('data-a="bmmat"').length-1,10,'ten material rows, one button each');
-  assert.ok(h.includes('data-a="bmmat" data-v="9"'),'the last material (Glast Fragment) has its own button');
+  assert.strictEqual(h.split('data-a="bmmat"').length-1,5,'five material rows, one button each');
+  assert.ok(h.includes('data-a="bmmat" data-v="4"'),'the last material (Helheim Rune) has its own button');
   U.S.zeny=2999999; h=U.V.market();
   assert.ok(/data-a="bmmat" data-v="0" disabled/.test(h),'a material button is disabled when the player cannot pay 3,000,000z');
   U.S.zeny=10000000; h=U.V.market();
@@ -1247,7 +1250,7 @@ t('the bag shows its 1000-item limit and refuses loot once it is full', () => {
     const GRADE=['Common','Uncommon','Rare','Legendary'],GI=[0,1,2,4],ORE={ori:'Oridecon',elu:'Elunium'},
       RAR=[{n:'Common'},{n:'Fine'},{n:'Rare'},{n:'Epic'},{n:'Legendary'}];
     const RAR5={n:'N'},RAR6={n:'N+'},RARALL=RAR.concat([RAR5,RAR6]),rarIdx=it=>((it&&+it.sec>=5)?6:(it&&+it.sec>=4)?5:Math.max(0,Math.min(RAR.length-1,(it&&it.tier)||0))),rarOf=it=>(rarIdx(it)===6?RAR6:rarIdx(it)===5?RAR5:RAR[rarIdx(it)]),rarCls=it=>'r'+rarIdx(it);
-    const cardTxt=c=>c.n,addFloat=()=>{},ui=()=>{},log=m=>{msg=m},qProg=()=>{},canUse=()=>false,equip=()=>{};
+    const cardTxt=c=>c.n,addFloat=()=>{},ui=()=>{},log=m=>{msg=m},qProg=()=>{},questEvent=()=>{},recordFarmIncome=()=>{},canUse=()=>false,equip=()=>{};
     const earnZeny=a=>{S.zeny+=a},save=()=>{};
     ${pick(/const BAGMAX=\d+;/, 'BAGMAX')}
     ${pick(/const autoSellOn=[^\n]*/, 'auto-sell / click-sell readers')}
@@ -1437,6 +1440,7 @@ t('pet buffs are icon tiles above the status bar, and the description waits for 
     const performance={now:()=>1000},job={jl:10,jx:45},jobOf=()=>job,C=()=>({mj:50}),maxHp=()=>100,
       jneed=()=>100,need=()=>200;
     ${grab('const PET_SKILLS=[', 'const petDmg=')}
+    const applyDisplay=()=>{};
     ${grab('const HUD_RATE_WINDOW=60000,HUD_IDLE_RESET=30000,HUD_RATE_REFRESH=1000;', 'function ui(anchor){')}
     bars();this.__b={nodes};
   `, box);
@@ -1807,14 +1811,14 @@ t('the detail card opens directly under the clicked slot or bag tile, not at the
   assert.ok(!b.includes('grid-detail') && b.includes('Click an item to see its stats'), 'with nothing selected the quiet hint is all that shows');
 });
 
-t('the Refine panel displays the inert Refine Scroll reserve without using it', () => {
+t('the Refine panel displays the protection reserve and option', () => {
   U.S = mkS('Knight'); U.S.refineScrolls = 3;
   const h = U.V.refine();
   assert.ok(h.includes('Refine Scrolls: 3'), 'the saved placeholder count is visible in the Refine panel');
-  assert.ok(h.includes('placeholder with no effect yet'), 'the panel explicitly says it has no effect');
-  assert.ok(h.includes('not consumed by refining'), 'the panel confirms refine attempts do not spend it');
+  assert.ok(h.includes('refprotect'), 'the panel offers a protection toggle');
+  assert.ok(h.includes('consumed on every selected attempt'), 'the panel explains consumption on every selected attempt');
   const fn = grab('function refine(sl){', '// ---------- class change ----------');
-  assert.ok(!/refineScrolls|rscroll|Refine Scroll/.test(fn), 'the existing refine action remains unchanged by the placeholder');
+  assert.ok(fn.includes('S.useRefineScroll')&&fn.includes('S.refineScrolls--'), 'the refine action checks and consumes protection');
 });
 
 t('refine controls sit with the piece: the ladder is the v51 30%-nerfed one', () => {

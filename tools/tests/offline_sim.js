@@ -13,9 +13,9 @@ const from = (a, b) => {
 const config = from('const BAGMAX=1000;', 'const MAPTIER=');
 // v88.6: save() is inside the span below and checks the save-owner stamp, so the stamp helpers come along.
 const stamp = from('// ---------- the save-owner stamp (v88.6) ----------', 'const num_= (v,d)');
-const helpers = from('function offlineRateSample(now=Date.now()){', '// ---------- accounts (stored in this browser; real cross-device accounts need a server) ----------');
+const helpers = from('let farmSession=null;', '// ---------- accounts (stored in this browser; real cross-device accounts need a server) ----------');
 const newCardCode=require('./helpers/progression')(src,'newCard');
-const simulation = from('function offlineMobForCurrentField(){', '// ---------- skill effects: damage over time, stun, chain ----------');
+const simulation = from('function offlineMobForCurrentField(m=S.mp,stage=S.lvl){', '// ---------- skill effects: damage over time, stun, chain ----------');
 
 function harness() {
   const state = { saves: 0, writes: [], nextId: 0 };
@@ -26,7 +26,7 @@ function harness() {
   const stableMath = Object.create(Math); stableMath.random = () => .5;
   const setup = `
     let S = null, currentUser = 'Test', zenyEarned = 0, expEarned = 0;
-    const CLOUD = { on: false };
+    const CLOUD = { on: false };const CLASSES={Novice:{}};
     const gmStatSnapshot = () => ({});
     const MAPS = Array.from({length:10},(_,i)=>({n:'Map '+i})); let mapM=0,mapL=1;
     const cl = (v,a,b) => Math.max(a,Math.min(b,v));
@@ -41,6 +41,7 @@ function harness() {
     const pv = () => 0, gx = () => 1, expRate = () => 1;
     const earnZeny = n => {S.zeny += n;zenyEarned += n};
     const earnExp = n => {S.exp += n;expEarned += n};
+    const questEvent=()=>{};
     const recordMonsterKill = () => {}, qProg = () => {}, addJob = () => {}, checkLevel = () => {};
     const genGear = (T,l,sec,boss,tier) => ({id:++state.nextId,slot:'weapon',wt:'sword',tier:0,val:1,name:T.n,aff:[],cards:[],sec,lvl:l});
     const RAR = [{n:'Common'},{n:'Fine'},{n:'Rare'},{n:'Epic'},{n:'Legendary'}], RAR5 = {n:'N'}, RARALL = RAR.concat([RAR5]);
@@ -55,7 +56,7 @@ function harness() {
       offlinePlan, offlineRateSample, applyOfflineProgress, offlineAwardKill,
       mapSelection(){return[mapM,mapL]},
       OFFLINE_POPUP_MIN_MS, OFFLINE_SIM_COVER_MS, OFFLINE_CAP_MS,
-      setState(v){S=v}, getState(){return S}, setNow(v){clock.now=v}, setCloud(v){CLOUD.on=!!v},
+      setState(v){S=v;farmSession=null;if(!Object.hasOwn(S,'offlineIncome'))S.offlineIncome={version:1,key:farmKey(),at:S.offlineAt,xp:60,zeny:60,job:42,kph:30000};}, getState(){return S}, setNow(v){clock.now=v}, setCloud(v){CLOUD.on=!!v},
       setPageBoot(v){PAGE_BOOT_AT=v}, getPageBoot(){return PAGE_BOOT_AT}, elements, $, state
     };
   `;
@@ -244,7 +245,8 @@ t('a real absence is still paid in full (page born after the window)', () => {
   h.setPageBoot(1);
   const r2 = h.applyOfflineProgress(now, long);
   assert.strictEqual(r2.covered, false, 'a window longer than the sim catch-up budget is a real absence');
-  assert.strictEqual(r2.kills, 20);
+  assert.strictEqual(r2.kills, 20, 'a later claim uses the previous measured minute until a fresh sample replaces it');
+  assert.strictEqual(S.offlineIncome.xp, 60, 'offline rewards do not change the saved online rate');
   h.setCloud(false);
 });
 

@@ -116,7 +116,7 @@ t('the roll covers every kill from Niflheim on and every Nightmare stage; bosses
 
 t('the Black Market sells one Nightmare material for 3,000,000 Zeny', () => {
   assert.strictEqual(M.BM_MAT_PRICE, 3000000);
-  assert.strictEqual(M.NM_MAT.length, 10, 'ten materials, one per Nightmare map');
+  assert.strictEqual(M.NM_MAT.length, 5, 'five materials, one per Nightmare map pair');
 });
 
 t('buyMat takes the price and adds one of that material', () => {

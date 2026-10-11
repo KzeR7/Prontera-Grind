@@ -13,6 +13,14 @@ let pass = 0, fail = 0;
 const t = (n, fn) => { try { fn(); console.log('  ok   ' + n); pass++; } catch (e) { console.log('  FAIL ' + n + ' -> ' + e.message); fail++; } };
 console.log('gm.html: a client of the authorised API, holding no authority of its own\n');
 
+t('inspection shows the same merged card stars and effects as combat', () => {
+  const body=src.slice(src.indexOf('function gearDescription('),src.indexOf('function renderCharacter('));
+  const describe=new Function('CATALOG','esc','nfmt',body+';return gearDescription;')({affixes:{cdm:'Crit DMG'},slotStats:{weapon:'ATK'},sections:['Starter'],rarities:['Common']},String,String);
+  const card={card:1,n:'Merged Card',stars:3,effects:[{k:'cdm',v:75}],fit:['weapon']};
+  assert.match(describe(card),/★★★/);assert.match(describe(card),/86.25/);
+  assert.match(describe({name:'Sword',slot:'weapon',sec:0,tier:0,val:5,cards:[card]}),/Merged Card ★★★ · Crit DMG \+86.25/);
+});
+
 t('every request it makes is under /api', () => {
   const urls = [...src.matchAll(/api\(\s*'([^']+)'/g)].map(m => m[1]);
   assert.ok(urls.length >= 4, 'expected the console to call several endpoints');

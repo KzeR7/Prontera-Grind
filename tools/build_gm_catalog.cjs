@@ -17,7 +17,7 @@ try {
     }
    }
    for(const c of CARD_CATALOG){const item=newCard(c);delete item.id;entries.push({id:'card:'+c.cardKey,label:item.n,type:'card',item});}
-   for(const [resource,label] of [['ori','Oridecon'],['elu','Elunium'],['shards','Echo Shards'],['dps','Drop Protection Scroll'],['refineScrolls','Refine Scroll (placeholder)'],...NM_MAT.map((n,i)=>['nm'+i,n])])entries.push({id:resource,resource,label,type:'resource'});
+   for(const [resource,label] of [['ori','Oridecon'],['elu','Elunium'],['shards','Echo Shards'],['dps','Drop Protection Scroll'],['refineScrolls','Refine Scroll'],...NM_MAT.map((n,i)=>['nmat'+i,n])])entries.push({id:resource,resource,label,type:'resource'});
    return {entries,affixes:AL,skills:Object.fromEntries(SKILLS.map(x=>[x.id,x.n])),sections:SECN,rarities:RAR.map(x=>x.n),slotStats:Object.fromEntries(Object.entries(SLOTS).map(([k,v])=>[k,v.stat])),slots:EQK.map(([id,label])=>({id,label})),classes:Object.fromEntries(Object.entries(CLASSES).map(([k,c])=>[k,{tier:c.tier,wt:c.wt}]))};
   }finally{Math.random=oldRandom}
  })())`);
