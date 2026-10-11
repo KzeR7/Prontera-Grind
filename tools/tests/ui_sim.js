@@ -506,7 +506,7 @@ t('clicking a slot highlights the fit in the REAL bag tab - no extra pop-out', (
   U.eqPick = 'off';
   assert.ok(/shield/i.test(U.V.bag0()), 'the off-hand banner must explain what fits there');
   // and the actual slot click opens that window
-  assert.ok(src.includes("seleq:v=>{selE=v;eqPick=v;sub.bag='bag';if(!tabs.includes('bag'))"), 'clicking a doll slot opens the Bag tab');
+  assert.ok(src.includes("seleq:v=>{selE=v;eclipseInspectBag=false;eqPick=v;sub.bag='bag';if(!tabs.includes('equip')&&!tabs.includes('bag'))"), 'slot selection opens Bag when the combined workbench is closed');
   assert.ok(src.includes("if(k==='status')sub.status='stats';if(k==='bag')sub.bag='bag';"), 'reopening a window resets its sub-tab');
 });
 
@@ -572,8 +572,8 @@ t('Refine, card sockets, Unequip and Lock are inside the picker and never dismis
   assert.ok(src.includes("if(chooserAtPointerDown&&!chooserPointerInside)closeEquipmentChooser(true)"),
     'only a click outside both windows dismisses the picker');
   // the controls that used to close it all live in that window's detail card
-  assert.ok(src.includes('const detail=`<div class="doll-detail">${sel?itemMain(sel)+refineUI(sel,selE)+cardSlots(sel,selE)+insertUI(sel)+`<div class="row" style="margin-top:6px"><button data-a="unequip"'),
-    'Refine, the card sockets and Unequip sit in the Equipment window');
+  assert.ok(src.includes('itemMain(sel)+refineUI(sel,selE)') && src.includes('cardSlots(sel,selE)+insertUI(sel)') && src.includes('class="eclipse-native-sockets"') && src.includes('data-a="unequip"'),
+    'Refine, native socket controls and Unequip remain inside the Equipment renderer');
   assert.ok(src.includes('data-a="refine" data-v="${k}"')&&src.includes('data-a="lockgear"'),
     'the Refine and Lock buttons are part of that same card');
   // the ✕ on the picker banner and the dock tabs still close it (openTab clears eqPick)
@@ -649,7 +649,7 @@ t('HP flips at 30%; one split bar fills Base from left and Job from right with c
   assert.ok(src.includes('#hpb.critical{background:linear-gradient('),'low HP must use a red treatment');
   const box={};vm.createContext(box);
   vm.runInContext(`
-    const nodes={};const $=id=>nodes[id]||(nodes[id]={style:{},textContent:'',title:'',attrs:{},
+    const nodes={};const $=id=>nodes[id]||(nodes[id]={children:[],style:{},textContent:'',title:'',attrs:{},
       classList:{flags:{},toggle(k,v){this.flags[k]=v}},setAttribute(k,v){this.attrs[k]=v}});
     let S={lv:20,exp:90,hp:31,kills:0,zeny:0},hudRate=null,zenyEarned=0,expEarned=0,currentUser='A';
     const HUNT_TITLES=[{id:'field-scout',name:'Field Scout',kills:500}],titleUnlocked=t=>S.kills>=t.kills;
@@ -1040,8 +1040,8 @@ t('Adventurer Hub owns mastery, rankings and guide shortcuts', () => {
   assert.ok(h.includes('qp-side-tab on'), 'an open window is marked on its button');
   bm.tabs.length = 0; bm.setSide(false);
   const dock=grab('const DOCK_TABS=', 'function renderWin(anchor){');
-  assert.ok(dock.includes("'pet','market','log'") && dock.includes('ui-nav-label'),
-    'Market remains in the dock while Mastery and Ranks use the hub');
+  assert.ok(['market','index','board','guide'].every(k=>dock.includes("'"+k+"'")) && dock.includes('ui-nav-label'),
+    'Market and hub destinations remain accessible from the dock');
   assert.ok(h.includes('Adventurer Hub') && h.includes('data-t="guide"'), 'guide has its own hub entry');
   assert.ok(dock.includes("dock.scrollLeft=left") && dock.includes("current.some((b,i)=>b.dataset.t!==keys[i])"),
     'routine redraws retain the live dock and its horizontal position');
@@ -1092,9 +1092,9 @@ t('v90 Black Market: locked under Base Lv 100, then sells ore and reforges one a
   h=U.V.market();
   assert.ok(h.includes('data-a="bmore" data-v="ori"')&&h.includes('data-a="bmore" data-v="elu"'),'Oridecon and Elunium are both for sale from Base Lv 100');
   assert.ok(h.includes('100,000z'),'ore is priced at 100,000z');
-  assert.ok(h.includes('data-a="bmref" data-v="armor:all"'),'a worn piece with affixes can be reforged');
-  assert.ok(h.includes('Full · 1,050,000z'),'an N+ piece costs rarity 6 + 1 times 150,000z to reforge');
-  assert.ok(!h.includes('data-a="bmref" data-v="weapon"'),'an empty slot is not offered a reforge');
+  assert.ok(U.V.reforge().includes('data-a="bmref" data-v="armor:all"'),'a worn piece with affixes can be reforged');
+  assert.ok(U.V.reforge().includes('Full · 1,050,000z'),'an N+ piece costs rarity 6 + 1 times 150,000z to reforge');
+  assert.ok(!U.V.reforge().includes('data-a="bmref" data-v="weapon"'),'an empty slot is not offered a reforge');
   // v90.8: the ten Nightmare materials are sold here, one Buy 1 button each
   assert.ok(h.includes('Nightmare materials') && h.includes('3,000,000z each'),'the Nightmare materials are listed and priced at 3,000,000z');
   assert.strictEqual(h.split('data-a="bmmat"').length-1,5,'five material rows, one button each');
@@ -1432,7 +1432,7 @@ t('pet buffs are icon tiles above the status bar, and the description waits for 
   // the real bars(), with two buffs running and two not
   const box = {}; vm.createContext(box);
   vm.runInContext(`
-    const nodes={};const $=id=>nodes[id]||(nodes[id]={style:{},textContent:'',title:'',attrs:{},
+    const nodes={};const $=id=>nodes[id]||(nodes[id]={children:[],style:{},textContent:'',title:'',attrs:{},
       classList:{flags:{},toggle(k,v){this.flags[k]=v}},setAttribute(k,v){this.attrs[k]=v}});
     let S={lv:20,exp:90,hp:80,kills:0,zeny:0},hudRate=null,zenyEarned=0,expEarned=0,currentUser='A';
     const HUNT_TITLES=[{id:'field-scout',name:'Field Scout',kills:500}],titleUnlocked=t=>S.kills>=t.kills;
@@ -1914,7 +1914,7 @@ t('the reset buttons explain themselves, refuse on screen, and survive a rebuild
   assert.ok(/host\.scrollTop=outer;/.test(src), 'and puts it back');
   assert.ok(src.includes("const existing=new Map([...host.querySelectorAll(':scope > [data-win]')]")
     && !src.includes('host.replaceChildren(')
-    && src.includes('if(body._panelSource!==source&&!body.querySelector(')
+    && src.includes('if((body._panelSource!==source||body._panelViewKey!==viewKey)&&!body.querySelector(')
     && src.includes("b.scrollTop=k==='log'?1e6:(old[k]||0)"),
     'every tab retains its live window/body, while changed content and both scrollers update safely');
   assert.ok(!src.includes('el.scrollIntoView('), 'nothing calls the browser scrollIntoView() any more');

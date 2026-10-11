@@ -264,13 +264,13 @@ t('option A colors stay consistent across dock, window heading and quest shortcu
   assert.strictEqual(window.getComputedStyle(quest).color,expected.quest);
   assert.strictEqual(window.getComputedStyle(index).color,expected.index);
 });
-t('attributes precede combat stats and hub keeps removed dock destinations accessible',()=>{
+t('attributes precede combat stats and supporting destinations remain accessible in dock and hub',()=>{
   ev("tabs.splice(0,tabs.length,'status');sub.status='stats';renderWin();renderQ()");
   const root=window.document.querySelector('[data-win="status"] .ui-content');
   assert.ok(root.children[0].classList.contains('ui-attribute-section'));
   assert.ok(root.children[1].classList.contains('ui-metrics'));
   for(const key of ['index','board']){
-    assert.ok(!window.document.querySelector('#dock [data-t="'+key+'"]'));
+    assert.ok(window.document.querySelector('#dock [data-t="'+key+'"]'));
     assert.ok(window.document.querySelector('#sideLinks [data-t="'+key+'"]'));
   }
   const guide=window.document.querySelector('#sideLinks [data-t="guide"]');
