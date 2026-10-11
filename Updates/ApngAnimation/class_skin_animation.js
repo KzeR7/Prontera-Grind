@@ -299,6 +299,26 @@ function skinWeaponPlacement(p,clsRec,view,fi){
   }
   return B;
 }
+// Cosmetic milestones; no stat bonuses and no changes to the source art.
+const LEVEL_AURAS=[{at:50,color:'#79dcff'},{at:99,color:'#b897ff'},{at:150,color:'#ffd779'}];
+const REFINE_GLOWS=[{at:4,color:'#8cddff',blur:5},{at:7,color:'#bb94ff',blur:9},{at:10,color:'#ffe19a',blur:14}];
+const milestone=(rows,value)=>rows.filter(x=>value>=x.at).at(-1)||null;
+let levelAura=null;
+function syncLevelAura(){
+  const a=milestone(LEVEL_AURAS,S.lv);
+  if(!a){if(levelAura)levelAura.visible=false;return}
+  if(!levelAura){
+    levelAura=new THREE.Group();
+    for(const radius of [.58,.75]){
+      const ring=new THREE.Mesh(new THREE.RingGeometry(radius,radius+.035,64),new THREE.MeshBasicMaterial({transparent:true,opacity:.65,depthWrite:false,side:THREE.DoubleSide,blending:THREE.AdditiveBlending}));
+      ring.rotation.x=-Math.PI/2;levelAura.add(ring);
+    }
+    scene.add(levelAura);
+  }
+  levelAura.visible=!!heroSpr&&heroSpr.visible;levelAura.position.set(pl.x,.045,pl.z);
+  levelAura.scale.setScalar(1+Math.sin(t*2)*.06);
+  for(const ring of levelAura.children){ring.material.color.set(a.color);ring.material.opacity=.5+Math.sin(t*2)*.15;}
+}
 function drawSkinWeapon(ctx,p,route,fi){
   const clsRec=SKIN_WEAPON_DEFAULTS[p.cls];if(!clsRec)return false;
   const viewRec=clsRec.views&&clsRec.views[p.sex==='f'?'f':'m']&&clsRec.views[p.sex==='f'?'f':'m'][route.view];
@@ -312,6 +332,8 @@ function drawSkinWeapon(ctx,p,route,fi){
   const w=im.naturalWidth*scale,h=im.naturalHeight*scale;
   ctx.save();ctx.imageSmoothingEnabled=false;ctx.translate(P.hx+(P.dx||0),P.hy+(P.dy||0));
   ctx.rotate(angle*Math.PI/180);ctx.scale(P.fx===-1?-1:1,P.fy===-1?-1:1);
+  const glow=milestone(REFINE_GLOWS,S?.eq?.weapon?.r||0);
+  if(glow){ctx.shadowColor=glow.color;ctx.shadowBlur=glow.blur;}
   ctx.drawImage(im,-gx*w,-gy*h,w,h);ctx.restore();
   return true;
 }

@@ -28,7 +28,7 @@ button{background:#2e2418;color:var(--ink);border:1px solid var(--edge2);border-
 button:hover{background:#3a2d1d}
 button.primary{background:var(--gold);color:#221a12;font-weight:700}
 button.danger{border-color:var(--bad);color:#ffb3b5}
-input,select,textarea{background:#160f0a;color:var(--ink);border:1px solid var(--edge2);border-radius:4px;padding:5px 7px;font:12px inherit}
+input,select,textarea{max-width:100%;background:#160f0a;color:var(--ink);border:1px solid var(--edge2);border-radius:4px;padding:5px 7px;font:12px inherit}
 textarea{width:100%;min-height:60px;resize:vertical}
 main{display:grid;grid-template-columns:minmax(260px,340px) 1fr;gap:12px;padding:12px;align-items:start}
 @media(max-width:820px){main{grid-template-columns:1fr}}
@@ -39,7 +39,7 @@ th,td{text-align:left;padding:4px 6px;border-bottom:1px solid #33291c}
 th{color:var(--dim);font-weight:600}
 tr.sel{background:#33260f}
 tr:hover{background:#2a2014;cursor:pointer}
-.row{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:6px}
+.row>label{min-width:0;max-width:100%}.row{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:6px}
 .tabs{display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap}
 .tabs button.on{background:var(--gold);color:#221a12}
 .small{font-size:11px;color:var(--dim)}
@@ -48,7 +48,7 @@ tr:hover{background:#2a2014;cursor:pointer}
 #toast{position:fixed;bottom:14px;left:50%;transform:translateX(-50%);background:#2e2418;border:1px solid var(--edge2);
   border-radius:6px;padding:8px 14px;font-size:13px;display:none;z-index:9}
 .hide{display:none!important}
-.grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.equipment-list{display:grid;gap:8px}.equipment-list article{border:1px solid var(--edge);padding:10px;border-radius:6px;overflow-wrap:anywhere}fieldset{min-width:0}#detail{min-width:0}details{margin:8px 0}.grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .stat{background:#1d160e;border:1px solid var(--edge);border-radius:6px;padding:6px 8px}
 .stat b{display:block;font-size:15px;color:var(--gold)}
 .col{display:flex;flex-direction:column;gap:12px;min-width:0}
@@ -95,7 +95,7 @@ tr:hover{background:#2a2014;cursor:pointer}
 <script>
 'use strict';
 const $ = id => document.getElementById(id);
-let PLAYERS = [], SEL = null, TAB = 'account';
+let PLAYERS = [], SEL = null, TAB = 'character', CATALOG=null, playerRequest=0, giftRequest=null;
 const say = (m, bad) => { const t = $('toast'); t.textContent = m; t.style.color = bad ? '#ff9d9f' : '#7ddc8a'; t.style.display = 'block'; clearTimeout(say._t); say._t = setTimeout(() => t.style.display = 'none', 4000); };
 const api = async (path, opt) => {
   const r = await fetch('/api' + path, Object.assign({ credentials: 'same-origin', headers: { 'Content-Type': 'application/json' } }, opt || {}));
@@ -163,7 +163,7 @@ function renderPlayers() {
 $('search').oninput = renderPlayers;
 $('players').onclick = e => {
   const tr = e.target.closest('tr[data-id]');
-  if (tr) openPlayer(+tr.dataset.id);
+  if (tr) openPlayer(+tr.dataset.id).catch(e=>say(e.message,1));
 };
 // Refresh reloads the usage card too: it is the screen the owner checks when they want to know what
 // the game is costing, and a stale number there would be worse than the one extra request.
@@ -171,7 +171,9 @@ $('refresh').onclick = () => Promise.all([loadUsage(), SEL ? openPlayer(SEL.acco
 $('logout').onclick = async () => { try { await api('/sessions', { method: 'DELETE', body: '{}' }); } catch (e) {} location.href = '/'; };
 
 async function openPlayer(id) {
+  const seq=++playerRequest;
   const d = await api('/gm/player?id=' + id);
+  if(seq!==playerRequest)return;
   SEL = d;
   renderPlayers();
   renderDetail();
@@ -198,7 +200,7 @@ function renderDetail() {
       <div class="stat"><b>${s ? nfmt(s.kills) : '—'}</b><span class="small">lifetime kills</span></div>
     </div>
     <div class="tabs">
-      ${['account', 'send', 'announce', 'history', 'log'].map(t => `<button data-tab="${t}" class="${TAB === t ? 'on' : ''}">${({ account: 'Account', send: 'Send items & Zeny', announce: 'Announce', history: 'Backups', log: "This player's log" })[t]}</button>`).join('')}
+      ${['character', 'equipment', 'account', 'send', 'announce', 'history', 'log'].map(t => `<button data-tab="${t}" class="${TAB === t ? 'on' : ''}">${({ character:'Full stats',equipment:'Equipment & affixes',account: 'Account', send: 'Send items & Zeny', announce: 'Announce', history: 'Backups', log: "This player's log" })[t]}</button>`).join('')}
     </div>
     <div id="tabbody"></div>`;
   renderTab();
@@ -206,7 +208,9 @@ function renderDetail() {
 
 function renderTab() {
   const d = SEL, a = d.account, s = d.save, body = $('tabbody');
-  if (TAB === 'account') {
+  if(TAB==='character'){renderCharacter(body,s);
+  }else if(TAB==='equipment'){renderEquipment(body,s);
+  }else if (TAB === 'account') {
     body.innerHTML = `
       <div class="row"><button data-act="note">Add a note to the log</button></div>
       ${a.gm >= 2 ? `<p class="small">This account is the owner. GM level and password changes are owner-only.</p>` : ''}
@@ -225,23 +229,22 @@ function renderTab() {
         </select><button data-act="set-gm">Apply</button></div>
       </fieldset>`;
   } else if (TAB === 'send') {
-    body.innerHTML = `
-      <p class="small">Queued on the server and applied by the player's own game the next time they log in or sync — they do not need to be online, and nothing is lost if they are away for a week.</p>
-      <div class="row"><select id="kind">
-        <option value="zeny">Zeny</option><option value="level">Base levels</option><option value="item">Item (JSON)</option><option value="message">Message</option>
-      </select></div>
-      <div id="kindbody"></div>
-      <div class="row"><input id="note" placeholder="why (goes in the audit log)" style="flex:1"></div>
-      <button class="primary" data-act="grant">Send</button>`;
-    const paint = () => {
-      const k = $('kind').value;
-      $('kindbody').innerHTML =
-        k === 'zeny' ? `<div class="row"><input id="amount" type="number" value="100000" style="width:140px"><span class="small">negative removes Zeny</span></div>` :
-        k === 'level' ? `<div class="row"><input id="amount" type="number" value="10" style="width:100px"><span class="small">-150 to 150 · clamped to the game's Lv150 cap</span></div>` :
-        k === 'item' ? `<textarea id="itemjson" placeholder='{"slot":"weapon","wt":"sword","name":"GM Blade","val":40,"aff":[],"cards":[],"slots":1}'>{"slot":"weapon","wt":"sword","name":"GM Blade","val":40,"aff":[],"cards":[],"slots":1}</textarea><span class="small">The game's own item shape. An id is added automatically if you leave it out.</span>` :
-        `<textarea id="text" placeholder="What should the game log say?"></textarea>`;
+    body.innerHTML = `<p class="small">Choose a gift and quantity. Offline players receive gifts when they return. A full bag leaves equipment gifts waiting.</p>
+      <div class="row"><label>Recipients <select id="audience"><option value="player">${esc(a.u)}</option><option value="all">Whole server · all non-suspended accounts, including GMs</option></select></label></div>
+      <div class="row"><label>Gift type <select id="kind"><option value="gift">Equipment, cards &amp; materials</option><option value="zeny">Zeny</option><option value="level">Base levels (one player)</option><option value="message">Message (one player)</option></select></label></div>
+      <div id="kindbody"></div><div class="row"><label>Note <input id="note" placeholder="Reason for the gift"></label></div><button class="primary" data-act="grant">Review &amp; send gift</button>`;
+    const paint=()=>{
+      giftRequest=null;
+      const k=$('kind').value;
+      $('kindbody').innerHTML=k==='gift'?`<div class="row"><label>Search <input id="giftsearch" type="search" placeholder="Name, map, weapon type…"></label><label>Category <select id="giftcategory"><option value="">All</option><option value="gear">Equipment</option><option value="card">Cards</option><option value="resource">Materials &amp; currency</option></select></label></div><label>Item <select id="giftitem" style="width:100%"></select></label><p id="giftdetail" class="small"></p><label>Quantity <input id="amount" type="number" min="1" max="1000000" step="1" value="1"></label>`:
+      k==='message'?'<label>Message <textarea id="text"></textarea></label>':`<label>Amount <input id="amount" type="number" step="1" value="${k==='zeny'?100000:1}"></label>`;
+      if(k==='gift'){
+        const detail=()=>{const entry=CATALOG.entries.find(x=>x.id===$('giftitem').value);$('giftdetail').innerHTML=entry?.item?gearDescription(entry.item):esc(entry?.label||'No matches');$('amount').max=entry?.resource?1000000:100;};
+        const filter=()=>{const q=$('giftsearch').value.toLowerCase(),c=$('giftcategory').value;const rows=CATALOG.entries.filter(x=>(!c||x.type===c)&&x.label.toLowerCase().includes(q));$('giftitem').innerHTML=rows.map(x=>`<option value="${esc(x.id)}">${esc(x.label)}</option>`).join('');detail();};
+        $('giftsearch').oninput=filter;$('giftcategory').onchange=filter;$('giftitem').onchange=detail;filter();
+      }
     };
-    $('kind').onchange = paint; paint();
+    $('kind').onchange=paint;paint();
   } else if (TAB === 'announce') {
     body.innerHTML = `
       <p class="small">A banner in every player's log. “Everyone” is stored once and read by all; “just this player” is private.</p>
@@ -269,6 +272,37 @@ function renderTab() {
          </tbody></table>`
       : `<p class="small">Nothing logged for this player yet.</p>`;
   }
+}
+
+function statRows(o){return Object.entries(o||{}).map(([k,v])=>`<div class="stat">${esc(CATALOG.affixes[k]||CATALOG.skills[k]||k)}<b>${typeof v==='number'?nfmt(Math.round(v*100)/100):esc(v)}</b></div>`).join('')}
+function gearDescription(it){
+ if(!it)return '<span class="small">Empty</span>';
+ const aff=(it.aff||[]).map(a=>esc(CATALOG.affixes[a.k]||a.k)+' +'+esc(a.v)).join(' · ');
+ const effects=c=>(c.effects||[{k:c.stat,v:c.v}]).filter(e=>e.k).map(e=>esc(CATALOG.affixes[e.k]||e.k)+' +'+esc(e.v)).join(', ');
+ if(it.card)return `<b>${esc(it.n||it.name)}</b> · ${effects(it)} · fits ${esc((it.fit||[]).join(', '))}`;
+ return `<b>+${esc(it.r||0)} ${esc(it.name)}</b> · ${esc(it.wt||it.slot)}<br>Base ${esc(CATALOG.slotStats[it.slot]||'value')} ${nfmt(it.val)} → refined ${nfmt(Math.round(it.val*(1+(it.r||0)*.15)))} · ${esc(it.slots||0)} sockets · ${esc(CATALOG.sections[it.sec??0])} · ${esc(it.sec>=5?'N+':it.sec>=4?'N':CATALOG.rarities[it.tier??0])}<br>${aff||'No affixes'}${(it.cards||[]).map(c=>'<br>Card: '+esc(c.n||c.name)+' · '+effects(c)).join('')}`;
+}
+function renderCharacter(body,s){
+ const c=s?.character;if(!c){body.innerHTML='<p>No cloud save yet.</p>';return;}
+ const snap=c.stats;
+ body.innerHTML=`<p class="small">Latest cloud save: ${when(s.updatedAt)}. Combat values are reported by the game and include buffs active at the snapshot time.</p><h2>Base stats</h2><div class="grid2">${statRows(c.st)}</div><h2 style="margin-top:12px">Total stats with equipment</h2>${snap?`<div class="grid2">${statRows(snap.total)}</div><h2 style="margin-top:12px">Combat · ${when(snap.at)}</h2><div class="grid2">${statRows(snap.combat)}</div>`:'<p>Combat snapshot not available yet. The player must save using the current game build.</p>'}<h2 style="margin-top:12px">Progression &amp; resources</h2><div class="grid2">${statRows({'Current HP':c.hp,'Base EXP':c.exp,'Unspent stat points':c.pts,'Echo Shards':c.shards,...c.ore})}</div><h2 style="margin-top:12px">Job levels</h2><div class="grid2">${statRows(Object.fromEntries(Object.entries(c.jobs||{}).map(([k,v])=>[k,v.jl])))}</div><details><summary>Learned skill ranks</summary><div class="grid2">${statRows(c.skills)}</div></details><h2>Equipped items</h2><div class="equipment-list">${CATALOG.slots.map(x=>`<article>${esc(x.label)}<br>${gearDescription(c.equipment[x.id])}</article>`).join('')}</div>`;
+}
+function equipmentSlots(it,c){
+ const cls=CATALOG.classes[c.cls];if(!cls||Math.min(3,it.sec||0)>Math.max(1,cls.tier))return [];
+ if(it.slot==='weapon'&&!cls.wt.includes(it.wt))return [];
+ const shield=/^(Novice|Swordman|Knight|Lord Knight|Acolyte|Priest|High Priest|Merchant|Blacksmith|Whitesmith)$/.test(c.cls);
+ return CATALOG.slots.filter(x=>x.id==='off'?(c.equipment.weapon?.wt!=='katar'&&(it.slot==='off'&&shield||it.wt==='dagger'&&cls.wt.includes('katar'))):x.id==='acc1'||x.id==='acc2'?it.slot==='acc':it.slot===x.id);
+}
+function renderEquipment(body,s){
+ const c=s?.character;if(!c){body.innerHTML='<p>No cloud save yet.</p>';return;}
+ const gear=[...Object.entries(c.equipment).filter(([,it])=>it).map(([slot,it])=>({it,where:'Equipped · '+slot})),...c.inventory.filter(it=>!it.card&&!it.ore).map(it=>({it,where:'Bag'}))];
+ body.innerHTML=`<p class="small">Changes are queued for the next login or sync. Class and slot rules are checked again when applied. The previous equipped item returns to the bag.</p><label>Equipment <select id="edititem" style="width:100%">${gear.map((x,i)=>`<option value="${i}">${esc(x.where+' · +'+(x.it.r||0)+' '+x.it.name)}</option>`).join('')}</select></label><div id="editbody"></div>`;
+ const paint=()=>{
+  const x=gear[+$('edititem').value];if(!x){$('editbody').innerHTML='<p>No equipment owned.</p>';return;}
+  const it=x.it,slots=equipmentSlots(it,c),pool=CATALOG.entries.find(x=>x.type==='gear'&&x.item.slot===it.slot&&x.item.wt===it.wt)?.affixes||[];
+  $('editbody').innerHTML=`<p>${gearDescription(it)}</p><fieldset><legend>Affixes &amp; refinement</legend><label>Refine <input id="editrefine" type="number" min="0" max="10" step="1" value="${esc(it.r||0)}"></label>${[0,1,2].map(i=>`<div class="row"><label>Affix ${i+1} <select id="affkey${i}"><option value="">None</option>${pool.map(k=>`<option value="${k}" ${it.aff?.[i]?.k===k?'selected':''}>${esc(CATALOG.affixes[k]||CATALOG.skills[k]||k)}</option>`).join('')}</select></label><label>Value <input id="affval${i}" type="number" min="1" max="10000" step="0.1" value="${esc(it.aff?.[i]?.v||1)}"></label></div>`).join('')}<button data-act="equipment" data-mode="affixes" data-item="${esc(it.id)}">Review &amp; apply affixes</button></fieldset>${x.where==='Bag'&&slots.length?`<fieldset><legend>Equip this item</legend><label>Slot <select id="editslot">${slots.map(s=>`<option value="${s.id}">${esc(s.label)}</option>`).join('')}</select></label><button data-act="equipment" data-mode="equip" data-item="${esc(it.id)}">Review &amp; equip</button></fieldset>`:''}`;
+ };
+ $('edititem').onchange=paint;paint();
 }
 
 $('detail').addEventListener('click', async e => {
@@ -302,13 +336,22 @@ $('detail').addEventListener('click', async e => {
       await api('/gm/player', { method: 'POST', body: JSON.stringify({ id, action: 'set-gm', level }) });
       say('GM level set to ' + level + '.');
     } else if (act === 'grant') {
-      const kind = $('kind').value;
-      let payload = {};
-      if (kind === 'zeny' || kind === 'level') payload = { amount: +($('amount').value || 0) };
-      else if (kind === 'item') { try { payload = { item: JSON.parse($('itemjson').value) }; } catch (err) { return say('That item is not valid JSON.', 1); } }
-      else payload = { text: $('text').value };
-      const r = await api('/gm/player', { method: 'POST', body: JSON.stringify({ id, action: 'grant', kind, payload, note: $('note').value }) });
-      say(r.note || 'Sent.');
+      const kind=$('kind').value,all=$('audience').value==='all',amount=+$('amount')?.value,note=$('note').value;
+      if(all&&!['gift','zeny'].includes(kind))return say('Whole-server gifts support items, materials and positive Zeny.',1);
+      const entry=kind==='gift'?CATALOG.entries.find(x=>x.id===$('giftitem').value):null;
+      if(kind==='gift'&&!entry)return say('Select an item.',1);
+      if(kind!=='message'&&(!Number.isInteger(amount)||amount===0||kind==='gift'&&(amount<1||amount>(entry.resource?1000000:100))))return say('Enter a valid whole-number quantity.',1);
+      const label=entry?.label||kind;
+      if(!confirm('Send '+(kind==='message'?'message':amount+' × '+label)+' to '+(all?'ALL non-suspended accounts (including offline players and GMs)':SEL.account.u)+'?'))return;
+      const body={id,action:kind==='gift'?'gift':'grant',kind,catalogId:entry?.id,amount,note,payload:kind==='message'?{text:$('text').value}:{amount}};
+      if(all){const signature=JSON.stringify(body);if(!giftRequest||giftRequest.signature!==signature)giftRequest={signature,id:crypto.randomUUID()};body.requestId=giftRequest.id;}
+      btn.disabled=true;
+      try{const r=await api(all?'/gm/gifts':'/gm/player',{method:'POST',body:JSON.stringify(body)});giftRequest=null;say(r.note||'Sent.');}finally{btn.disabled=false;}
+    } else if(act==='equipment'){
+      const mode=btn.dataset.mode,aff=[0,1,2].map(i=>({k:$('affkey'+i).value,v:+$('affval'+i).value})).filter(x=>x.k);
+      if(!confirm('Queue this equipment change for '+SEL.account.u+'? It applies when their game syncs.'))return;
+      btn.disabled=true;
+      try{const r=await api('/gm/player',{method:'POST',body:JSON.stringify({id,action:'equipment',mode,itemId:btn.dataset.item,slot:$('editslot')?.value,aff,refine:+$('editrefine').value})});say(r.note);}finally{btn.disabled=false;}
     } else if (act === 'announce') {
       const body = $('abody').value, toAll = $('atoall').checked, kind = $('akind').value;
       if (!body.trim()) return say('Write something first.', 1);
@@ -329,6 +372,7 @@ $('detail').addEventListener('click', async e => {
   try {
     const me = await api('/me');
     if (!me.gm) { document.body.innerHTML = '<main><section class="card"><h2>Not a GM</h2><p>Sign in with the owner account in the game first, then come back. <a href="/" style="color:var(--gold)">Back to the game</a></p></section></main>'; return; }
+    CATALOG=await api('/gm/catalog');
     await loadUsage();          // both cards in parallel: the usage call is the slow one (Cloudflare API)
     await loadPlayers();
   } catch (e) {

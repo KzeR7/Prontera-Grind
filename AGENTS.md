@@ -6583,3 +6583,11 @@ The owner's second pass over v77, six notes, all built.
 * **Retained power:** Verified that all four Crit DMG families, plus existing ATK, magic-power, Crit, ASPD and ordinary-monster damage specialists, remain unchanged in the proposal.
 * **Try it:** Open Updates/cards-gear-audit/card-effect-comparison.html and search the revised names, or select Kept effects. These remain suggestions; no live card effects or game UI changed.
 * **Checks:** Regenerated all 90 families / 180 definitions; comparison catalog/value/filter suite passed. Generator syntax and whitespace checks passed. No push or deployment.
+
+### 2026-10-10 — `grind-v101 auras and GM gifts`
+* **What changed:** Character auras unlock at Base 50, 99 and 150. Held weapon art glows at refine +4, +7 and +10. GM Tools adds milestone buttons and a direct console link. Sprite source artwork stays intact.
+* **GM console:** Inspect saved base/total/combat stats, equipped items, sockets and card effects. Select a bag weapon to equip, or edit an owned piece's affixes and refinement. Search actual equipment, cards and materials and choose quantities without typing item code. Whole-server gifts reach all current non-suspended accounts, including GMs and offline players.
+* **Delivery:** Gift receipts prevent repeat application; new gifts are collected only after cloud persistence. Full bags and invalid equipment changes keep gifts waiting. Mass delivery is transactional, audited and protected against repeated submission. Apply migration 0004 before publishing the new server functions.
+* **Try it:** GM → aura/refinement test buttons; GM console → select a player → Full stats / Equipment & affixes / Send items & Zeny. Select Whole server for mass gifts and confirm the item and quantity. Refresh after the player syncs to see the new equipment.
+* **Checks:** New API/game tests cover permissions, gift quantities, suspended/offline recipients, retry handling, rollback, durable delivery, equipment rules, card preservation and cosmetic thresholds. Desktop and phone browser checks cover inspection, search, mass delivery and affix editing. Regression suite and current fixture results are recorded in the task validation record.
+* **Publishing:** Workspace implementation and local preview; not deployed. Combat snapshots require the player to save on the new build.

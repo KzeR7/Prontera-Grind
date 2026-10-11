@@ -209,3 +209,13 @@ phase 2. The owner gets a working "control the game" panel in the same week the 
 | One GM or two roles? | Two roles is free to define now (see §6.3). |
 | Does a GM see players' passwords? | **No — never.** The panel can *reset* a password (and the player uses their recovery code), but the server stores only hashes. Worth stating out loud because every RO private server gets it wrong. |
 | Should GM accounts appear on the leaderboard? | Recommendation: no — GM multiplier makes their numbers meaningless. Hide `gm:true` from the board. |
+
+## Shipped in v101 — selection controls and whole-server gifts
+
+* Full stats shows the latest cloud save, base stats, total stats and combat values reported by the game (including buffs at that time). Older saves need one save with v101 before combat values appear. Equipment includes refinement, affixes, sockets and card effects.
+* Equipment & affixes selects existing equipped/bag items. Equip a compatible bag weapon or change up to three allowed affixes and refinement (0–10). Changes queue, recheck current ownership/class/bag space, preserve socketed cards, and wait while a paid reforge is unresolved. Failed changes stay pending in Backups.
+* Send items & Zeny offers 562 catalog selections from actual game tables, name/category filtering, and quantities. Equipment/cards allow 1–100; materials 1–1,000,000. Equipment uses a fixed midpoint roll. Gift an item first, let it arrive, refresh the player, then equip it from their bag.
+* Whole-server gifts include all non-suspended accounts present when submitted, including GMs and offline accounts. New accounts created afterward are excluded. Submission uses an idempotency key and a transaction; repeat requests return the existing recipient count. A confirmation shows the selected gift and quantity.
+* New gifts and equipment changes are acknowledged only once their receipt is in a cloud save. Full bags retain waiting equipment gifts. The game remains client authoritative; snapshots are inspection data, not anti-cheat evidence.
+* Before deploying Functions, apply `migrations/0004_gm_gift_batches.sql` through the normal D1 migration process. Locally `tools/dev_server.js` applies migrations once and keeps a ledger when `--db` is used.
+* Regenerate the catalog after drop-table changes: `node tools/build_gm_catalog.cjs`; verify with `--check` (requires the documented jsdom and Three.js test dependencies).

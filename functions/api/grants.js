@@ -26,6 +26,10 @@ export const onRequestPost = guard(async ({ request, env }) => {
   if (!user) return fail('Not logged in.', 401);
   const { ids } = await readJson(request, 4096);
   const list = Array.isArray(ids) ? ids.map(Number).filter(Number.isInteger).slice(0, 100) : [];
-  await db.claimGrants(env.DB, user.id, list);
-  return json({ ok: true, claimed: list.length });
+  const pending=await db.pendingGrants(env.DB,user.id);
+  const stored=await db.saveByUser(env.DB,user.id);
+  const receipts=stored?JSON.parse(stored.blob).gmReceipts||[]:[];
+  const durable=list.filter(id=>{const g=pending.results.find(g=>g.id===id);return g&&!['gift','equipment'].includes(g.kind)||receipts.includes(id)});
+  await db.claimGrants(env.DB, user.id, durable);
+  return json({ ok: true, claimed: durable.length });
 });

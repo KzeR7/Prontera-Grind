@@ -20,6 +20,7 @@
 import { currentUser, isGm, hashPassword } from '../../_lib/auth.js';
 import { json, guard, readJson, fail } from '../../_lib/http.js';
 import { checkGrant, checkAnnouncement, GRANT_KINDS, checkSaveBlob, publicFields, savedElsewhere } from '../../_lib/validate.js';
+import { inspectSave, giftPayload, equipmentPayload } from '../../_lib/gm-tools.js';
 import * as db from '../../_lib/db.js';
 
 async function loadAccount(D, id) {
@@ -36,6 +37,7 @@ async function loadAccount(D, id) {
     save: save ? {
       version: save.version, bytes: bytes?.n ?? 0, savedAt: save.saved_at, updatedAt: save.updated_at,
       lastSeen: save.last_seen, rateKph: save.rate_kph, kills: save.kills_total,
+      character: inspectSave(save.blob),
       pub: { lv: save.level, cls: save.cls, zeny: save.zeny, playtime: save.playtime },
       history: history.results.map(h => ({ version: h.version, savedAt: h.saved_at })),
     } : null,
@@ -108,6 +110,16 @@ export const onRequestPost = guard(async ({ request, env }) => {
       await db.deleteUserSessions(D, id);
       await audit('gm-logout', 'all sessions revoked');
       return json({ ok: true });
+    }
+    case 'gift':
+    case 'equipment': {
+      const payload=action==='gift'?giftPayload(body):equipmentPayload(body,(await db.saveByUser(D,id))?.blob);
+      const kind=action==='gift'?'gift':'equipment';
+      await D.batch([
+        D.prepare('INSERT INTO grants(user_id,kind,payload,note,created_by,created_at) VALUES(?,?,?,?,?,?)').bind(id,kind,JSON.stringify(payload),String(body.note||'').slice(0,200),user.username,Date.now()),
+        D.prepare('INSERT INTO events(at,actor,user_id,kind,detail) VALUES(?,?,?,?,?)').bind(Date.now(),user.username,id,'gm-'+kind,JSON.stringify(payload).slice(0,1500)),
+      ]);
+      return json({ok:true,note:'Queued — applies on their next login or sync. Check Backups for delivery status.'});
     }
     case 'grant': {
       const kind = String(body.kind || '');

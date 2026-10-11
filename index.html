@@ -1041,7 +1041,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // script block, which is a SyntaxError - the game did not run on main at all. One line wins, and
 // it names both sides of this merge: the v38 balance patch (the weapon cut, the affix/card
 // give-back) and main's weapon-hold rendering work.
-const BUILD='2026-10-10 grind-v100 smart auto-sell';   // shown on the login card - confirms which file you loaded
+const BUILD='2026-10-10 grind-v101 auras and GM gifts';   // shown on the login card - confirms which file you loaded
 $('buildTag').textContent='build '+BUILD;
 
 // ---------- class tree: Novice -> 6 first jobs -> 6 second jobs -> 6 third jobs ----------
@@ -2609,7 +2609,7 @@ let saveElsewhereSaid=null;   // the last refusal said aloud, so a refused slot 
 function saveElsewhere(other){if(saveElsewhereSaid===other)return;saveElsewhereSaid=other;log('This browser\'s save for '+currentUser+' belongs to '+other+', so nothing was written over it. '+(CLOUD.on?'Your progress still syncs to your account.':'Progress from now on is not kept in this browser.')+' Restore this browser\'s copy from a backup to save here again.','r0')}
 function save(){if(!currentUser||!S)return;const now=Date.now();
   if(S.owner&&!sameAccount(S.owner,currentUser)){saveElsewhere(S.owner);return}   // never write a save stamped for someone else
-  offlineRateSample(now);S.offlineAt=now;S.owner=currentUser;
+  offlineRateSample(now);S.offlineAt=now;S.owner=currentUser;S.gmStats=gmStatSnapshot();
   const other=saveRefusal(lsGet(saveKey()),currentUser);
   if(other)saveElsewhere(other);else lsPut(saveKey(),JSON.stringify(S));
   cloudTouch()}
@@ -2774,6 +2774,7 @@ async function cloudPush(push){
   // v88.6: a save that belongs to another account is never uploaded; this tab stops syncing instead.
   if(S.owner&&!sameAccount(S.owner,currentUser)){cloudSaveRefused();return 'idle'}
   S.owner=currentUser;                 // the stamp: the save names the account it is uploaded for
+  S.gmStats=gmStatSnapshot();
   CLOUD.pushing=true;cloudBadge('☁ ⇅','Syncing…');
   try{
     const r=await cloudFetch('/save',{method:'PUT',body:JSON.stringify({version:CLOUD.ver,owner:CLOUD.user,blob:JSON.stringify(S),savedAt:Date.now(),offlineClaimId:S.offlineClaimId||null})});
@@ -2928,21 +2929,57 @@ function cloudPollTick(){
 
 // GM gifts: the client owns the save format and its repair rules, so it applies them here and then
 // claims them on the server - so they land exactly once, even across devices.
+function gmApplyGift(p){
+  const amount=p.amount;
+  if(!Number.isInteger(amount)||amount<1||amount>1000000)throw Error('Invalid gift quantity');
+  if(p.resource){
+    if(['ori','elu'].includes(p.resource))S.ore[p.resource]+=amount;
+    else if(['shards','dps','refineScrolls'].includes(p.resource))S[p.resource]=safeCount(S[p.resource])+amount;
+    else if(/^nm[0-9]$/.test(p.resource))S.nmMat[+p.resource.slice(2)]+=amount;
+    else throw Error('Unknown resource');
+  }else if(p.item){
+    if(amount>100)throw Error('Too many items');
+    if(!p.item.card&&S.inv.length+amount>BAGMAX)throw Error('Bag full; gift will wait for space');
+    const dest=p.item.card?S.cards:S.inv;
+    for(let i=0;i<amount;i++)dest.push({...JSON.parse(JSON.stringify(p.item)),id:uid()});
+  }else throw Error('Unknown gift');
+}
+function gmApplyGear(p){
+  const it=[...items(),...S.inv].find(x=>String(x.id)===String(p.itemId));
+  if(!it)throw Error('Equipment is no longer owned; ask the GM to resend');
+  if(p.mode==='equip'){
+    if(!S.inv.includes(it)||!slotAccepts(p.slot,it))throw Error('Equipment no longer fits this slot');
+    if(p.slot==='off'&&S.eq.weapon?.wt==='katar')throw Error('A katar occupies both hands');
+    if(p.slot==='weapon'&&it.wt==='katar'&&S.eq.off&&S.inv.length>=BAGMAX)throw Error('Make bag space for the off-hand item first');
+    if(p.slot==='weapon'&&it.wt==='katar'&&S.eq.off){S.inv.push(S.eq.off);S.eq.off=null;}
+    equipIn(p.slot,it.id);
+  }else if(p.mode==='affixes'){
+    if(!Array.isArray(p.aff)||p.aff.length>3||p.aff.some(a=>!affixPool(it).includes(a.k)||!Number.isFinite(a.v)||a.v<1||a.v>10000)||new Set(p.aff.map(a=>a.k)).size!==p.aff.length)throw Error('Invalid affixes');
+    if(!Number.isInteger(p.refine)||p.refine<0||p.refine>10)throw Error('Invalid refinement');
+    if(S.reforgePending&&String(S.reforgePending.id)===String(it.id))throw Error('Resolve the paid reforge offer before applying this edit');
+    it.aff=p.aff.map(a=>({...a}));it.r=p.refine;
+    S.hp=Math.min(S.hp,maxHp());
+  }else throw Error('Unknown equipment change');
+}
 function cloudApplyGrants(list){
   const ids=[];
   for(const g of list){
     try{
       const p=g.payload||{};
-      if(g.kind==='zeny'&&Number.isFinite(p.amount)){S.zeny=Math.max(0,S.zeny+Math.floor(p.amount));log('🎁 GM'+(g.from?' '+g.from:'')+' sent you '+Math.abs(Math.floor(p.amount)).toLocaleString()+' Zeny.','r1','cloud')}
+      if(!Array.isArray(S.gmReceipts))S.gmReceipts=[];
+      if(S.gmReceipts.includes(g.id)){ids.push(g.id);continue}
+      if(g.kind==='gift'){gmApplyGift(p);log('🎁 GM gift received.','r1','cloud')}
+      else if(g.kind==='equipment'){gmApplyGear(p);log('GM equipment change applied.','r1','cloud')}
+      else if(g.kind==='zeny'&&Number.isFinite(p.amount)){S.zeny=Math.max(0,S.zeny+Math.floor(p.amount));log('🎁 GM'+(g.from?' '+g.from:'')+' sent you '+Math.abs(Math.floor(p.amount)).toLocaleString()+' Zeny.','r1','cloud')}
       else if(g.kind==='level'&&Number.isFinite(p.amount)){const n=Math.floor(p.amount);S.lv=Math.max(1,Math.min(150,S.lv+n));S.pts=Math.max(0,totalPts()-ptsSpent());log('🎁 GM sent you '+Math.abs(n)+' base level'+(Math.abs(n)===1?'':'s')+'.','r1','cloud')}
       else if(g.kind==='item'&&p.item){const it=Object.assign({},p.item);if(it.id==null)it.id=Date.now()+Math.random();S.inv.push(it);log('🎁 GM sent you '+iname(it)+'. Check your bag.','r1','cloud')}
       else if(g.kind==='message'&&p.text)log('📣 GM: '+p.text,'r1','cloud');
       else {log('A GM gift arrived that this build does not understand ('+g.kind+'). It is left unclaimed so the GM can resend it.','r0','cloud');continue}
-      if(g.id!=null)ids.push(g.id);
+      if(g.id!=null){ids.push(g.id);S.gmReceipts.push(g.id);}
     }catch(e){log('A GM gift could not be applied: '+e.message,'r0','cloud')}
   }
   if(ids.length){try{save()}catch(e){}
-    cloudFetch('/grants',{method:'POST',body:JSON.stringify({ids})}).catch(()=>{});}
+    return cloudPush(true).then(result=>{if(result==='ok')return cloudFetch('/grants',{method:'POST',body:JSON.stringify({ids})})}).catch(()=>{});}
 }
 // Points already spent on stats, using the game's own cost ladder, so a GM level grant leaves the
 // player with exactly the points that level is worth.
@@ -3215,6 +3252,7 @@ const bon=k=>{let v=MASTER_STATS.includes(k)?cardMasteryStat(k):0;for(const it o
 // This lives on the same line as st()/canUse() so the tests that slice it keep working;
 // canUse is the single gate every equip path already goes through (bag highlight, chooser,
 // auto-equip, item tooltip).
+function gmStatSnapshot(){return {at:Date.now(),base:{...S.st},total:Object.fromEntries(STATS.map(([k])=>[k,st(k)])),combat:{ATK:atk(),MATK:matk(),DEF:def(),MDEF:mdef(),'Max HP':maxHp(),'Attack interval (s)':aspd(),'Critical %':crit(),'Critical damage multiplier':critD(),'Flee %':flee(),'Miss %':missCh(),'Movement (u/s)':moveSpd()}}}
 const st=k=>S.st[k]+bon(k),gearTierOf=it=>Math.max(0,Math.min(3,((it&&it.sec)|0)||0)),classTierOf=(cls=S.cls)=>Math.max(0,Math.min(3,(CLASSES[cls]&&CLASSES[cls].tier)||0)),gearTierOK=(it,cls=S.cls)=>gearTierOf(it)<=Math.max(1,classTierOf(cls)),gearUserOf=it=>['any class','Novice and 1st-job classes','2nd-job classes and up','transcendent classes only'][gearTierOf(it)],canUse=it=>gearTierOK(it)&&(it.slot==='off'?canShield():(it.slot!=='weapon'||!it.wt||C().wt.includes(it.wt)));
 const maxHp=()=>Math.round((80+S.lv*20+eqv('head')*4+(eqv('acc1')+eqv('acc2'))*3+st('vit')*8+bon('hp'))*C().hp*(1+(pv('hpp')+bon('hpPct')+(typeof cardMasteryStat==='function'?cardMasteryStat('hpPct'):0))/100)*(1+(petBuff.hp||0)/100)*(1+petPassive('hp')/100));
 const atk=()=>Math.round((4+S.lv*2+eqv('weapon')+(S.eq.off&&S.eq.off.wt==='dagger'?eqv('off'):0)+st(C().main)*1.5+(st('dex')+st('luk'))*.25)*C().atk*(1+(pv('atk')+bon('atk')+(typeof cardMasteryStat==='function'?cardMasteryStat('atkPct'):0)+(tb.atk||0)+(petBuff.atk||0))/100)*(1+collDmg()/100));
@@ -4720,7 +4758,7 @@ const V={
     <div class="hd" style="margin-top:10px">Gameplay</div><label title="Always on - the game cannot be paused by hiding the tab any more"><span class="lockmark">&#10003;</span> Keeps grinding while this tab is in the background</label>
     <small>Background grinding keeps playing while the tab is hidden - a hidden tab is never "away". The welcome-back reward only starts after <b>three minutes</b> without a save, so an ordinary background session never opens it. Auto-equip lives on the <b>Bag</b> tab and Auto-advance on the <b>World Map</b> tab, next to what they control.</small>
     <p><small>Drag to rotate, scroll or pinch to zoom. Hotkeys: M S J K B E C Q R L P I V O, Esc to close.</small></p><button class="full" data-a="reset">Erase this account's save &amp; restart</button><button class="full" data-a="logout">Logout</button>`},
-  gm(){return`<div class="hd">GM multiplier (EXP, Job EXP, Zeny, quests)</div><div class="row">${[1,10,100,1000].map(x=>`<button data-a="gmx" data-v="${x}" ${S.gmx===x?'style="background:#ffe08a"':''}>x${x}</button>`).join('')}</div>
+  gm(){return`<div class="hd">Player management</div><p><a href="/gm.html" target="_blank" rel="noopener">Open GM console · players, equipment &amp; server gifts</a></p><small>Cloud GM sign-in required. Auras: Base 50 / 99 / 150. Weapon glow: +4 / +7 / +10.</small><div class="row"><button data-a="gmaura" data-v="50">Test Lv50 aura</button><button data-a="gmaura" data-v="99">Test Lv99 aura</button><button data-a="gmaura" data-v="150">Test Lv150 aura</button><button data-a="gmglow" data-v="4">Weapon +4</button><button data-a="gmglow" data-v="7">Weapon +7</button><button data-a="gmglow" data-v="10">Weapon +10</button></div><div class="hd">GM multiplier (EXP, Job EXP, Zeny, quests)</div><div class="row">${[1,10,100,1000].map(x=>`<button data-a="gmx" data-v="${x}" ${S.gmx===x?'style="background:#ffe08a"':''}>x${x}</button>`).join('')}</div>
     <div class="row" style="margin-top:8px"><button data-a="gmz">+1,000,000 Zeny</button><button data-a="gmo">+20 Oridecon &amp; Elunium</button><button data-a="gml">+10 Base Levels</button><button data-a="gmnm">Unlock Nightmare (Base Lv 150)</button><button data-a="gmj">Max Job Lv (current class)</button><button data-a="gmu">Unlock all map levels</button></div>
     <div class="hd" style="margin-top:10px">Index mastery test controls</div><small>These use the real per-species ledger and the 10 / 250 / 5,000 / 50,000 kill ladder. Clear before trying another scenario.</small><div class="row"><button data-a="gmindex" data-v="one">+1 Poring kill</button><button data-a="gmindex" data-v="all1">1 kill every species</button><button data-a="gmindex" data-v="all100">100 kills every species</button><button data-a="gmindex" data-v="all1000">1,000 kills every species</button><button data-a="gmindex" data-v="all5000">5,000 kills every species</button><button data-a="gmindex" data-v="all50000">50,000 kills every species</button><button data-a="gmindex" data-v="xp10000">Set 10,000 XP title test</button><button data-a="gmindex" data-v="xp1000000">Set the final title</button><button data-a="gmindex" data-v="clear">Clear Index</button></div>
     <div class="hd" style="margin-top:10px">Card mastery test controls</div><small>Loose cards can be dedicated through the Card Mastery tab; every mastery rank is one gacha token. Roll every token fills the stat caps the slow way (one random roll at a time). Socketed cards stay untouched.</small><div class="row"><button data-a="gmcard" data-v="poring1">+1 Poring Card</button><button data-a="gmcard" data-v="poring5">+5 Poring Cards</button><button data-a="gmcard" data-v="poringMax">Max Poring 5/5</button><button data-a="gmcard" data-v="allMax">Max all cards 5/5</button><button data-a="gmcard" data-v="rollAll">Roll every token</button><button data-a="gmcard" data-v="clear">Reset card mastery</button></div>
@@ -5149,6 +5187,7 @@ const ACT={
   sellnow:()=>previewAutoSell(),sellconfirm:()=>confirmAutoSell(),sellcancel:()=>{autoSellPreview=null;ui()},
   sellrulesapply:()=>{const rules=cleanAutoSellRules(sellDraft());if(!rules)return log('Check filter values: use valid numbers, up to 100 equipment names and 0–10 empty sockets.','r0','gear');S.autoSellRules=rules;autoSellDraft=null;autoSellPreview=null;save();ui();log('Auto-sell filters saved.','r3','gear')},
   sellrulescancel:()=>{autoSellDraft=null;renderWin()},
+  gmaura:v=>{if(!S.gm)return;S.lv=+v;S.pts=Math.max(0,totalPts()-ptsSpent());ui();save()},gmglow:v=>{if(!S.gm||!S.eq.weapon)return;S.eq.weapon.r=+v;ui();save()},
   sellpreset:v=>{const r=defaultAutoSellRules();if(v==='physical')r.affixes=[{k:'str',min:0},{k:'dex',min:0},{k:'crit',min:0},{k:'cdm',min:0}];else if(v==='caster')r.affixes=[{k:'int',min:0},{k:'matk',min:0}];else if(v==='collector')r.minEmpty=2;else return;autoSellDraft={owner:S,rules:r};renderWin()},
   clicksell:()=>{S.clickSell=!clickSellOn();log(S.clickSell?'Click-sell ON: an unlocked bag item sells on click; locked gear asks to unlock first.':'Click-sell OFF: a click in the bag inspects the item again.',S.clickSell?'r0':'r3','gear');ui();save()},
   quicksell:id=>{const it=S.inv.find(x=>String(x.id)===String(id));if(!it)return;const v=sellVal(it);if(!sell(id))return;log(`Sold ${iname(it)} for ${v.toLocaleString()}z.`,'r3','gear,zeny')},
@@ -7184,6 +7223,26 @@ function skinWeaponPlacement(p,clsRec,view,fi){
   }
   return B;
 }
+// Cosmetic milestones; no stat bonuses and no changes to the source art.
+const LEVEL_AURAS=[{at:50,color:'#79dcff'},{at:99,color:'#b897ff'},{at:150,color:'#ffd779'}];
+const REFINE_GLOWS=[{at:4,color:'#8cddff',blur:5},{at:7,color:'#bb94ff',blur:9},{at:10,color:'#ffe19a',blur:14}];
+const milestone=(rows,value)=>rows.filter(x=>value>=x.at).at(-1)||null;
+let levelAura=null;
+function syncLevelAura(){
+  const a=milestone(LEVEL_AURAS,S.lv);
+  if(!a){if(levelAura)levelAura.visible=false;return}
+  if(!levelAura){
+    levelAura=new THREE.Group();
+    for(const radius of [.58,.75]){
+      const ring=new THREE.Mesh(new THREE.RingGeometry(radius,radius+.035,64),new THREE.MeshBasicMaterial({transparent:true,opacity:.65,depthWrite:false,side:THREE.DoubleSide,blending:THREE.AdditiveBlending}));
+      ring.rotation.x=-Math.PI/2;levelAura.add(ring);
+    }
+    scene.add(levelAura);
+  }
+  levelAura.visible=!!heroSpr&&heroSpr.visible;levelAura.position.set(pl.x,.045,pl.z);
+  levelAura.scale.setScalar(1+Math.sin(t*2)*.06);
+  for(const ring of levelAura.children){ring.material.color.set(a.color);ring.material.opacity=.5+Math.sin(t*2)*.15;}
+}
 function drawSkinWeapon(ctx,p,route,fi){
   const clsRec=SKIN_WEAPON_DEFAULTS[p.cls];if(!clsRec)return false;
   const viewRec=clsRec.views&&clsRec.views[p.sex==='f'?'f':'m']&&clsRec.views[p.sex==='f'?'f':'m'][route.view];
@@ -7197,6 +7256,8 @@ function drawSkinWeapon(ctx,p,route,fi){
   const w=im.naturalWidth*scale,h=im.naturalHeight*scale;
   ctx.save();ctx.imageSmoothingEnabled=false;ctx.translate(P.hx+(P.dx||0),P.hy+(P.dy||0));
   ctx.rotate(angle*Math.PI/180);ctx.scale(P.fx===-1?-1:1,P.fy===-1?-1:1);
+  const glow=milestone(REFINE_GLOWS,S?.eq?.weapon?.r||0);
+  if(glow){ctx.shadowColor=glow.color;ctx.shadowBlur=glow.blur;}
   ctx.drawImage(im,-gx*w,-gy*h,w,h);ctx.restore();
   return true;
 }
@@ -8237,7 +8298,7 @@ function draw(){
   for(const m of mobs){const v=mobMesh.get(m);if(v)syncMobImage(v,m,mobVisualScale(m))}
   for(const p of S.pets.filter(p=>p.on)){const v=petMesh.get(p.id),r=petR[p.id],sp=PETS[p.sp];
     if(v&&r&&sp)syncMobImage(v,{x:r.x,z:r.z,run:r.run,a:p.id,shape:petFallbackShape(sp),flash:0,lunge:r.lunge||0},PET_VISUAL_SCALE)}
-  syncSkillFx();syncWeaponSprites(pFace,c);
+  syncSkillFx();syncWeaponSprites(pFace,c);syncLevelAura();
   if(tabs.includes('set'))drawAppearancePreview();
   if(tabs.includes('job'))drawClassPreview();
   R.render(scene,cam);
