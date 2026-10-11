@@ -547,15 +547,15 @@ t('Assassin equipment UI describes the two-handed Katar and the dual-wielded dag
   U.eqPick=null;
 });
 
-t('the equipment chooser temporarily promotes fitting gear and restores normal bag order when closed', () => {
+t('the equipment chooser preserves rarity/type grouping when closed', () => {
   U.S=mkS('Swordman');U.selB=null;U.eqPick='weapon';
   const sorted=U.V.bag0();
   assert.ok(sorted.indexOf('data-a="eqpick" data-v="9:weapon"')<sorted.indexOf('data-a="selb" data-v="2"'),
     'the compatible weapon should lead the bag while the weapon slot is being filled');
   U.eqPick=null;
   const restored=U.V.bag0();
-  assert.ok(restored.indexOf('data-a="selb" data-v="2"')<restored.indexOf('data-a="selb" data-v="9"'),
-    'normal inventory order returns when the chooser closes');
+  assert.ok(restored.indexOf('data-a="selb" data-v="9"')<restored.indexOf('data-a="selb" data-v="2"'),
+    'weapons remain grouped ahead of armor when the chooser closes');
   assert.ok(src.includes("document.addEventListener('pointerdown'")&&src.includes('if(chooserAtPointerDown&&!chooserPointerInside)closeEquipmentChooser(true)'),
     'outside clicks use the chooser state captured at pointer-down even if another handler cleared it');
   assert.ok(!src.includes('bagPointerInside'), 'the old bag-only "inside" test must be gone');
@@ -1536,18 +1536,18 @@ t('Nightmare gear detail and auto-sell use the separate N category, not Legendar
   assert.ok(detail&&detail[1].includes(' on'), 'the detail button toggles the dedicated N auto-sell slot');
 });
 
-t('the Bag keeps insertion order, pins locked gear, and labels rarity-based equipment levels',()=>{
+t('the Bag groups by rarity, protects locked gear, and labels equipment levels',()=>{
   U.S=mkS('Knight');U.selB=null;U.eqPick=null;U.S.clickSell=false;U.S.autoSell=[false,false,false,false,false];
   const gear=(id,name,tier,lvl)=>({id,name,tier,slot:'weapon',wt:'sword',val:30,sec:1,lvl,cards:[],aff:[]});
   const a=gear(41,'Common Blade',0,40),b=gear(42,'Legendary Blade',4,40),c=gear(43,'Rare Blade',2,40),d=gear(44,'Fine Blade',1,41);
   U.S.inv=[a,b,c];
   const order=html=>[...html.matchAll(/data-a="selb" data-v="([^"]+)"/g)].map(m=>m[1]);
   let h=U.V.bag0();
-  assert.deepStrictEqual(order(h),['41','42','43'],'the current insertion order is not sorted by rarity/value');
+  assert.deepStrictEqual(order(h),['42','43','41'],'higher rarities appear first');
   U.S.inv.push(d);h=U.V.bag0();
-  assert.deepStrictEqual(order(h),['41','42','43','44'],'a new drop appends without moving existing items');
+  assert.deepStrictEqual(order(h),['42','43','44','41'],'revealed inventory groups the new rarity');
   c.locked=true;h=U.V.bag0();
-  assert.deepStrictEqual(order(h),['43','41','42','44'],'locked gear is pinned first while unlocked gear keeps its order');
+  assert.deepStrictEqual(order(h),['42','43','44','41'],'locking preserves rarity/type grouping');
   assert.ok(h.includes('class="lockstar"')&&h.includes('title="Locked gear"'),'a locked tile carries a visible star badge');
   U.S.autoSell[2]=true;U.selB=43;U.S.lv=1;h=U.V.bag0();
   const purge=h.slice(h.indexOf('data-a="sellnow"'),h.indexOf('data-a="sellnow"')+48);
