@@ -278,9 +278,10 @@ function statRows(o){return Object.entries(o||{}).map(([k,v])=>`<div class="stat
 function gearDescription(it){
  if(!it)return '<span class="small">Empty</span>';
  const aff=(it.aff||[]).map(a=>esc(CATALOG.affixes[a.k]||a.k)+' +'+esc(a.v)).join(' · ');
- const effects=c=>(c.effects||[{k:c.stat,v:c.v}]).filter(e=>e.k).map(e=>esc(CATALOG.affixes[e.k]||e.k)+' +'+esc(e.v)).join(', ');
- if(it.card)return `<b>${esc(it.n||it.name)}</b> · ${effects(it)} · fits ${esc((it.fit||[]).join(', '))}`;
- return `<b>+${esc(it.r||0)} ${esc(it.name)}</b> · ${esc(it.wt||it.slot)}<br>Base ${esc(CATALOG.slotStats[it.slot]||'value')} ${nfmt(it.val)} → refined ${nfmt(Math.round(it.val*(1+(it.r||0)*.15)))} · ${esc(it.slots||0)} sockets · ${esc(CATALOG.sections[it.sec??0])} · ${esc(it.sec>=5?'N+':it.sec>=4?'N':CATALOG.rarities[it.tier??0])}<br>${aff||'No affixes'}${(it.cards||[]).map(c=>'<br>Card: '+esc(c.n||c.name)+' · '+effects(c)).join('')}`;
+ const stars=c=>Math.max(0,Math.min(3,Math.floor(Number(c.stars)||0))),cardLabel=c=>esc(c.n||c.name)+(stars(c)?' '+ '★'.repeat(stars(c)):'');
+ const effects=c=>(c.effects||[{k:c.stat,v:c.v}]).filter(e=>e.k).map(e=>esc(CATALOG.affixes[e.k]||e.k)+' +'+esc(Math.round(e.v*(1+[0,.09,.12,.15][stars(c)])*100)/100)).join(', ');
+ if(it.card)return `<b>${cardLabel(it)}</b> · ${effects(it)} · fits ${esc((it.fit||[]).join(', '))}`;
+ return `<b>+${esc(it.r||0)} ${esc(it.name)}</b> · ${esc(it.wt||it.slot)}<br>Base ${esc(CATALOG.slotStats[it.slot]||'value')} ${nfmt(it.val)} → refined ${nfmt(Math.round(it.val*(1+(it.r||0)*.15)))} · ${esc(it.slots||0)} sockets · ${esc(CATALOG.sections[it.sec??0])} · ${esc(it.sec>=5?'N+':it.sec>=4?'N':CATALOG.rarities[it.tier??0])}<br>${aff||'No affixes'}${(it.cards||[]).map(c=>'<br>Card: '+cardLabel(c)+' · '+effects(c)).join('')}`;
 }
 function renderCharacter(body,s){
  const c=s?.character;if(!c){body.innerHTML='<p>No cloud save yet.</p>';return;}

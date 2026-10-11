@@ -15,7 +15,7 @@ ${grab('const maxHp=()=>','const totalPts=')}
 ${grab('const KIT_MAP={','const KIT_TILE=')}
 ${grab('const STAGE_SCENES=[','function kitRect(d,gx0,gx1,gy){')}
 ${grab('let mobs=[],mob=null','function genGear(')}
-const gx=()=>1,fieldName=()=>'Prontera',addJob=()=>{},checkLevel=()=>{},qProg=()=>{},addFloat=()=>{},log=m=>logs.push(String(m)),save=()=>{},ui=()=>{},numTxt=n=>String(Math.round(n));
+const gx=()=>1,fieldName=()=>'Prontera',addJob=()=>{},checkLevel=()=>{},qProg=()=>{},recordFarmIncome=()=>{},questEvent=()=>{},addFloat=()=>{},log=m=>logs.push(String(m)),save=()=>{},ui=()=>{},numTxt=n=>String(Math.round(n));
 const mkDrop=()=>null,genGear=()=>null;
 ${grab('function earnZeny(amount){','function collect(it){')}
 this.H={fresh,CLASSES,spawn,kill,atk,aspd,maxHp,def,mdef,starterStage,fieldPower,HPK,HPE,MAPS,AGGRO,

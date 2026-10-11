@@ -780,6 +780,13 @@ button:focus-visible{outline:2px solid #e7d4a1;outline-offset:3px}
 /* Local equipment art uses the same scale in the map and inventory. */
 .drop-icon .ro-item-icon{width:20px;height:20px;object-fit:contain;image-rendering:pixelated;margin:0;filter:none}.drop-icon .ro-icon-fallback{display:grid;place-items:center;width:20px;height:20px}
 .guide-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(240px,100%),1fr));gap:8px}.build-guide{max-width:100%;overflow-wrap:anywhere}.build-guide .mob-card small{display:block}.build-guide button[aria-pressed="true"]{border-color:#e9c474;background:#3b3541}
+#screenOptions{position:fixed;right:12px;bottom:75px;z-index:120;background:#192e29;border:1px solid #a18b5e;border-radius:8px;padding:14px;max-width:calc(100vw - 48px);box-shadow:0 8px 30px #0008}
+#screenOptions label{display:block;padding:7px;color:#e6dbbd}#screenOptions input{margin-right:8px}
+body.hide-damage .fl.damage,body.hide-damage .fl.critical,body.hide-damage .fl.skill-damage,body.hide-damage .fl.skill-critical,body.hide-damage .fl.dot,body.hide-damage .fl.incoming{display:none!important}
+body.hide-feed #feedWrap,body.hide-labels #heroTitle,body.hide-labels #tag{display:none!important}
+body.clean-screen #wrap>.title,body.clean-screen #ov>*:not(#mobSpriteLayer):not(#weaponSpriteLayer),body.clean-screen #xp-dock,body.clean-screen #hud>*,body.clean-screen #hud>div:last-child>*:not(#screenBtn){visibility:hidden!important}
+body.clean-screen #screenBtn{visibility:visible!important}body.clean-screen #hud{background:transparent;border:0;pointer-events:none}body.clean-screen #screenBtn{pointer-events:auto}
+#qp{max-height:55vh;overflow:auto}.quest-tabs{display:flex;gap:5px;margin:6px 0}.quest-tabs button{flex:1}.ore-quantity{width:100%;box-sizing:border-box}
 </style>
 </head>
 <body>
@@ -801,7 +808,8 @@ button:focus-visible{outline:2px solid #e7d4a1;outline-offset:3px}
 <div id="hud"><div><b id="cls2"></b> <span id="titleLabel" class="title-hud hud-title-mirror" aria-hidden="true" style="display:none"></span> Base Lv <b id="lv">1</b> / Job Lv <b id="jl">1</b></div>
 <div class="hud-health">HP <div class="bar" role="meter" aria-label="HP" aria-valuemin="0" aria-valuemax="100" id="hpMeter"><i id="hpb"></i></div><small id="hpPct">100%</small></div>
 <div class="hud-zeny" id="zenyHover" tabindex="0" aria-describedby="zenyRate">&#9679; <b id="zeny">0</b> Zeny<span class="hud-flyout" id="zenyRate" role="tooltip">Zeny earned: 0/min</span></div>
-<div>Kills/min <b id="kills" title="Recent kills per minute (last 60 seconds, refreshed each second)">0.0</b></div><div>EXP/min <b id="expmin" title="EXP earned per minute (last 60 seconds, refreshed each second)">0</b></div><div>DPS <b id="dps" title="Damage per second you dealt (last 60 seconds, refreshed each second)">0</b></div><div style="margin-left:auto;display:flex;align-items:center;gap:8px"><span id="cloudBadge" title="Cloud save status" style="font-size:11px;opacity:.9"></span><span id="userBadge" style="font-weight:bold;font-size:12px;background:#e9d39a;padding:3px 8px;border-radius:4px;border:1px solid var(--edge2)"></span><button id="gmBtn" onclick="location.href='gm.html'" style="display:none" title="Server-side tooling for looking after players">🛠 GM console</button><button id="logoutBtn" onclick="logout()" style="display:none">Logout</button><button id="spd">Speed x1</button></div></div>
+<div>Kills/min <b id="kills" title="Recent kills per minute (last 60 seconds, refreshed each second)">0.0</b></div><div>EXP/min <b id="expmin" title="EXP earned per minute (last 60 seconds, refreshed each second)">0</b></div><div>DPS <b id="dps" title="Damage per second you dealt (last 60 seconds, refreshed each second)">0</b></div><div style="margin-left:auto;display:flex;align-items:center;gap:8px"><span id="cloudBadge" title="Cloud save status" style="font-size:11px;opacity:.9"></span><button id="screenBtn" type="button" aria-expanded="false" aria-controls="screenOptions" title="Screen display options">☷ Display</button><span id="userBadge" style="font-weight:bold;font-size:12px;background:#e9d39a;padding:3px 8px;border-radius:4px;border:1px solid var(--edge2)"></span><button id="gmBtn" onclick="location.href='gm.html'" style="display:none" title="Server-side tooling for looking after players">🛠 GM console</button><button id="logoutBtn" onclick="logout()" style="display:none">Logout</button><button id="spd">Speed x1</button></div></div>
+<div id="screenOptions" hidden></div>
 <div id="xp-dock" aria-label="Level progress"><div id="xp-track">
   <div class="xp-side" id="baseTrack" tabindex="0" role="progressbar" aria-label="Base Level" aria-valuemin="0" aria-valuemax="100"><div class="xp-fill" id="xpb"></div><span class="xp-label" id="baseLabel">Base Lv 1</span><span class="xp-pct" id="basePct">0%</span></div>
   <div class="xp-side" id="jobTrack" tabindex="0" role="progressbar" aria-label="Job Level" aria-valuemin="0" aria-valuemax="100"><div class="xp-fill" id="jb"></div><span class="xp-pct" id="jobPct">0%</span><span class="xp-label job" id="jobLabel">Job Lv 1</span></div>
@@ -901,6 +909,8 @@ const UI_ICONS={
  status:'<path d="M4 20V10m8 10V4m8 16v-7M2 20h20"/>',
  job:'<path d="M12 3v8M5 17v-6h14v6"/><rect x="9" y="2" width="6" height="5" rx="1"/><rect x="2" y="17" width="6" height="5" rx="1"/><rect x="16" y="17" width="6" height="5" rx="1"/>',
  skills:'<path d="m13 2-9 12h7l-1 8 10-13h-7Z"/>',
+ equip:'<path d="m8 3-5 3 3 5 2-1v11h8V10l2 1 3-5-5-3-4 3Z"/>',
+ refine:'<path d="m4 20 9-9m-4-6 4-3 8 8-3 4Z"/>',
  bag:'<rect x="5" y="6" width="14" height="15" rx="3"/><path d="M9 6V4a3 3 0 0 1 6 0v2M5 12h14M9 12v3h6v-3"/>',
  index:'<path d="M12 5v16M12 5C8 2 5 3 2 4v16c4-1 7-1 10 1 3-2 6-2 10-1V4c-3-1-6-2-10 1Z M5 8h3m-3 4h3m8-4h3m-3 4h3"/>',
  guide:'<path d="M12 5v16M12 5C8 2 5 3 2 4v16c4-1 7-1 10 1 3-2 6-2 10-1V4c-3-1-6-2-10 1ZM5 8h3m-3 4h3m8-3 3 3-3 3"/>',
@@ -1041,7 +1051,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // script block, which is a SyntaxError - the game did not run on main at all. One line wins, and
 // it names both sides of this merge: the v38 balance patch (the weapon cut, the affix/card
 // give-back) and main's weapon-hold rendering work.
-const BUILD='2026-10-11 grind-v101.3 continuous aura rotation';   // shown on the login card - confirms which file you loaded
+const BUILD='2026-10-11 grind-v103.2 measured card stars';   // shown on the login card - confirms which file you loaded
 $('buildTag').textContent='build '+BUILD;
 
 // ---------- class tree: Novice -> 6 first jobs -> 6 second jobs -> 6 third jobs ----------
@@ -1053,9 +1063,9 @@ const CD=[['Novice',0,1,1,1,'e8dcc0','',['dagger','sword'],'str',0],
 ['Knight','Swordman',.85,1.5,1.5,'801010','500000',['sword'],'str',0],['Wizard','Mage',1,1.8,.85,'153075','',['staff'],'int',1,'1f2f70'],
 ['Hunter','Archer',.7,1.4,.95,'105015','003005',['bow'],'dex',1],['Assassin','Thief',.62,1.45,1,'2c2c3c','1b1b28',['katar','dagger'],'str',0],
 ['Priest','Acolyte',.9,1.3,1.1,'b09020','705000',['mace'],'int',0],['Blacksmith','Merchant',.8,1.6,1.4,'a05000','602000',['axe','mace'],'str',0],
-['Lord Knight','Knight',.72,1.95,1.8,'600808','300000',['sword'],'str',0],['High Wizard','Wizard',.9,2.4,1,'0a1a55','',['staff'],'int',1,'0a1040'],
+['Lord Knight','Knight',.72,1.99,1.8,'600808','300000',['sword'],'str',0],['High Wizard','Wizard',.9,2.4,1,'0a1a55','',['staff'],'int',1,'0a1040'],
 ['Sniper','Hunter',.55,1.85,1.05,'0a3a0a','002000',['bow'],'dex',1],['Assassin Cross','Assassin',.5,1.9,1.15,'1a1a28','0a0a14',['katar','dagger'],'str',0],
-['High Priest','Priest',.8,1.7,1.25,'c8a820','604000',['mace'],'int',0],['Whitesmith','Blacksmith',.7,2,1.6,'c06000','502000',['axe','mace'],'str',0]];
+['High Priest','Priest',.8,1.6813,1.25,'c8a820','604000',['mace'],'int',0],['Whitesmith','Blacksmith',.7,2.01,1.6,'c06000','502000',['axe','mace'],'str',0]];
 const CLASSES={};
 CD.forEach(([n,par,aspd,atk,hp,col,cape,wt,main,rng,hat])=>CLASSES[n]={n,par,aspd,atk,hp,col:parseInt(col,16),cape:cape?parseInt(cape,16):0,wt,main,rng,hat:hat?parseInt(hat,16):0,kids:[]});
 for(const c of Object.values(CLASSES)){c.tier=0;for(let p=c.par;p;p=CLASSES[p].par)c.tier++;c.mj=c.tier?50:10;c.rj=[0,10,40,50][c.tier];if(c.par)CLASSES[c.par].kids.push(c.n)}
@@ -1475,12 +1485,12 @@ const cardMasteryStat=k=>{
 // A capped stat is skipped by the roll, so every token still finds a home; the button is disabled
 // only when the whole pool is full.
 const cardMasteryOpenOptions=()=>CARD_REWARD_OPTIONS.filter(o=>cardMasteryStat(o.id)<CARD_REWARD_CAPS[o.id]);
-const cardMasteryLegendaryCard=()=>Array.isArray(S&&S.cards)?S.cards.findIndex(c=>c&&+c.g===3):-1;
+const cardMasteryLegendaryCard=()=>Array.isArray(S&&S.cards)?S.cards.findIndex(c=>c&&!c.stars&&+c.g===3):-1;
 // v57: the reset spends a Legendary card the player picks, so list every loose one.
-const cardMasteryLegendaryCards=()=>Array.isArray(S&&S.cards)?S.cards.map((c,i)=>c&&+c.g===3?{i,id:c.id,n:c.n,stat:c.stat,v:c.v}:null).filter(Boolean):[];
+const cardMasteryLegendaryCards=()=>Array.isArray(S&&S.cards)?S.cards.map((c,i)=>c&&!c.stars&&+c.g===3?{i,id:c.id,n:c.n,stat:c.stat,v:c.v}:null).filter(Boolean):[];
 let cardGrade=-1; // -1 = auto (rarest loose card), 0-3 = that rarity, 'all' = everything
 let cardPick=null; // the Legendary card the reset dropdown has selected (falls back to the first)
-const cardMasteryCardByName=name=>Array.isArray(S&&S.cards)?S.cards.filter(c=>c&&c.n===name):[];
+const cardMasteryCardByName=name=>Array.isArray(S&&S.cards)?S.cards.filter(c=>c&&!c.stars&&c.n===name):[];
 // Dedicate as many copies of one card as its ranks still take (7 Poring cards fill 5/5 and leave 2
 // loose), so a stack never needs one confirmation per copy.
 function donateAllToMastery(name){
@@ -1518,7 +1528,7 @@ function cardMasteryReset(cardId){
 function donateCardToMastery(id){
   if(!S||!Array.isArray(S.cards))return null;
   const i=S.cards.findIndex(c=>c&&String(c.id)===String(id));if(i<0)return null;
-  const c=S.cards[i],name=cardFamily(c).slice(0,100);
+  const c=S.cards[i],name=cardFamily(c).slice(0,100);if(c.stars)return null;
   if(!CARD_NAMES.has(name))return null;
   const level=cardMasteryLevel(name);
   if(level>=CARD_MASTERY_PER_CARD)return null;
@@ -1718,7 +1728,7 @@ const TRIAL_STORE=[
   {id:'token', c:180, n:'Card Mastery Token',            d:'One permanent-stat roll in the Index; no duplicate card is needed.'},
   {id:'lcard', c:200, n:'Random Boss Card Voucher', d:'Adds a normal boss card from Prontera through Amatsu. Niflheim/Abyss Crit DMG boss cards must be farmed.'},
   {id:'nmgear',c:400, n:'Nightmare Gear Token',          d:'Choose a map for one class-usable item. Prontera to Payon give section 4; Comodo to Abyss give section 5. The map sets its quality cap.',lv:120},
-  {id:'rscroll',c:400,n:'Refine Scroll',                  d:'Placeholder item for a future refine feature. It has no effect or use yet.'},
+  {id:'rscroll',c:400,n:'Refine Scroll',                  d:'Enable in Refine: prevents a rank drop on failure at +5 or higher. Consumed on each selected attempt, including success.'},
 ];
 const trialState=()=>{
   if(!S.trial||typeof S.trial!=='object')S.trial={day:trialDay(),used:0,best:0,runs:0,chest:0};
@@ -1889,7 +1899,7 @@ function trialFinish(){
   if(TRIAL.mode==='ranked'){
     shards=trialShardsFor(dps);
     if(dps>st.best){best=true;st.best=dps}   // v77.2: the record moves, the payout does not
-    st.used=(st.used|0)+1;st.runs=(st.runs|0)+1;
+    st.used=(st.used|0)+1;st.runs=(st.runs|0)+1;questEvent('echo');
     // one-off chests, lowest rung first, so a single big run opens everything it has passed
     while((st.chest|0)<TRIAL_CHESTS.length&&dps>=TRIAL_CHESTS[st.chest|0][0]){
       const row=TRIAL_CHESTS[st.chest|0];chests.push(row);st.chest=(st.chest|0)+1;trialGrantChest(row[1])}
@@ -1909,7 +1919,7 @@ function trialExit(){                                  // used by Close and by t
   // grace costs one of the day's two - and an abandoned run never pays or sets the board.
   if(ranked&&ran>TRIAL_GRACE){
     const st=trialState(),dmg=Math.max(0,(S.dmg||0)-TRIAL.dmg0);
-    st.used=(st.used|0)+1;st.runs=(st.runs|0)+1;
+    st.used=(st.used|0)+1;st.runs=(st.runs|0)+1;questEvent('echo');
     TRIAL.result={dmg,dps:dmg/TRIAL_SECS,shards:0,best:false,mode:'ranked',quit:true,ran:Math.round(ran),chests:[]};
     log(`Ranked run abandoned after ${Math.round(ran)}s - one of today's tries is used and nothing is paid.`,'r0','trial');
     trialLobby('result');                                // say so on screen, not only in the log
@@ -1929,7 +1939,7 @@ function trialBuy(id){
     const pool=CARD_CATALOG.filter(c=>c.bossCard&&!c.nightmare&&c.map<8),card=newCard(pool[Math.floor(Math.random()*pool.length)]);
     S.cards.push(card);
     log(`Shard Store: random Legendary ${card.n} (${card.effects.map(cardEffectText).join(', ')}) added to your card collection.`,'r3','trial')}
-  else if(id==='rscroll'){S.refineScrolls=safeCount(S.refineScrolls+1);log('Shard Store: +1 Refine Scroll added to your reserve. This placeholder has no effect yet.','r3','trial')}
+  else if(id==='rscroll'){S.refineScrolls=safeCount(S.refineScrolls+1);log('Shard Store: +1 Refine Scroll added to your reserve. Enable it in Refine to prevent a rank drop on failure.','r3','trial')}
   else if(id==='nmgear'){trialLobby('pickmap');return}
   S.shards=Math.max(0,(S.shards|0)-row.c);save();
   trialLobby('store')}
@@ -1987,7 +1997,10 @@ const CARD_STATS_BY_MAP=[
 const CARD_BOSS_STATS=['hpPct','atk','matk','crit','atk','field','atk','matk','cdm','cdm'];
 const CARD_FITS={str:['weapon','acc'],dex:['weapon','acc'],int:['weapon','head','acc'],luk:['acc'],agi:['armor','leg','acc'],vit:['armor','off','head'],hp:['head','armor'],hpPct:['armor','head','off'],atk:['weapon'],matk:['weapon','head'],crit:['weapon','acc'],cdm:['weapon','acc'],aspd:['armor','leg'],flee:['armor','off','leg'],move:['leg','acc'],def:['armor','off','leg'],mdef:['head','armor','off'],field:['weapon','acc']};
 const cardFamily=c=>String(c.family||c.n||'').replace(/^Nightmare /,'');
-const cardEffects=c=>Array.isArray(c.effects)?c.effects:[{k:c.stat,v:c.v}];
+const cardStars=c=>Math.max(0,Math.min(3,Math.floor(Number(c.stars)||0)));
+const cardEffects=c=>(Array.isArray(c.effects)?c.effects:[{k:c.stat,v:c.v}]).map(e=>({...e,v:Math.round(e.v*(1+[0,.09,.12,.15][cardStars(c)])*100)/100}));
+const cardGroup=c=>(c.cardKey||c.n)+'|'+cardStars(c)+(c.legacy?'|legacy:'+c.id:'');
+const cardName=c=>c.n+(cardStars(c)?' '+ '★'.repeat(cardStars(c)):'');
 function cardDefinition(m,j,nm=false){
  const mp=MAPS[m],boss=j===mp.mobs.length,monster=boss?mp.boss:mp.mobs[j];if(!monster)return null;
  const family=monster.n+' Card',stat=boss?CARD_BOSS_STATS[m]:CARD_STATS_BY_MAP[m][j],band=m<1?0:m<5?1:m<8?2:3;
@@ -2006,12 +2019,23 @@ const cardFits=(c,it)=>(c.fit||CARD_FITS[c.stat]||[]).includes(it.slot==='off'&&
 const cardEffectText=e=>e.k==='cdm'?`Crit DMG +${(e.v/100).toFixed(2)}×`:`${({hpPct:'Max HP',matk:'Magic Power',field:'Ordinary monster damage',move:'Movement',def:'DEF',mdef:'MDEF'})[e.k]||AL[e.k]||SU(e.k)} +${e.v}${['hpPct','matk','field','move'].includes(e.k)?'%':''}`;
 function socketWhy(c,it,eq=S.eq){
  if(!cardFits(c,it))return 'This card does not fit this equipment.';
- const own=it.cards||[],all=Object.values(eq).filter(Boolean).flatMap(x=>x.cards||[]);
- if(all.some(x=>cardFamily(x)===cardFamily(c)))return 'Only one card from this monster family can be equipped.';
- if(c.bossCard&&all.filter(x=>x.bossCard).length>=2)return 'At most two boss cards can be equipped.';
- if(c.bossCard&&own.some(x=>x.bossCard))return 'Only one boss card fits each item.';
- if(cardEffects(c).some(x=>x.k==='cdm')&&own.some(x=>cardEffects(x).some(e=>e.k==='cdm')))return 'Only one Crit DMG card fits each item.';
+ const own=it.cards||[];
+ if(own.some(x=>cardFamily(x)===cardFamily(c)))return 'Only one card from this monster family fits each item. Other equipment may use the same family.';
+ if(c.bossCard&&own.filter(x=>x.bossCard).length>=2)return 'At most two boss cards fit each item.';
+ if(cardEffects(c).some(x=>x.k==='cdm')&&own.filter(x=>cardEffects(x).some(e=>e.k==='cdm')).length>=2)return 'At most two Crit DMG cards fit each item.';
  return '';
+}
+const CARD_MERGE_COST=[1,3,5];
+function mergeCard(id){
+ const c=S.cards.find(x=>String(x.id)===String(id));if(!c||c.legacy||!c.cardKey||cardStars(c)>=3)return;
+ const stars=cardStars(c),cost=CARD_MERGE_COST[stars],donors=S.cards.filter(x=>x!==c&&!x.legacy&&x.cardKey===c.cardKey&&!cardStars(x)).slice(0,cost);
+ if(donors.length<cost){log(`Need ${cost} extra identical unstarred cards. Normal and Nightmare copies merge separately.`);return;}
+ const owner=S,ids=donors.map(x=>x.id),next={...c,stars:stars+1};let used=false;
+ ask(`Merge ${cardName(c)} to ${stars+1} star(s)? Consume ${cost} extra unstarred ${c.n}: ${cardEffects(c).map(cardEffectText).join(', ')} → ${cardEffects(next).map(cardEffectText).join(', ')}.`,()=>{
+  if(used||S!==owner||!S.cards.includes(c)||cardStars(c)!==stars)return;used=true;
+  if(!donors.every(x=>S.cards.includes(x)&&!x.legacy&&x.cardKey===c.cardKey&&!cardStars(x)))return;
+  S.cards=S.cards.filter(x=>!ids.includes(x.id));c.stars=stars+1;selC=cardGroup(c);save();ui();
+ });
 }
 function repairEquippedCards(f){
  const seen=new Set(),accepted={};let count=0;f.cards=f.cards||[];
@@ -2083,9 +2107,11 @@ const FIELD_GEAR_NM=[.5,.4,.3],FIELD_GEAR_MID_NM=[.35,.28,.21];
 // and pets are not touched. Section 4 (N, Stages 1-3 of the band) keeps the v76.2 third.
 const NMPLUS_DROP=.5;
 // v90.6 (owner, option 3): each Nightmare map's Stage 15 boss drops that map's own crafting material.
-// One of each of the ten makes a Drop Protection Scroll (craftDps). NM_MAT_CH is the percent chance per
-// boss kill. The order matches NMNAME, so NM_MAT[m] belongs to map m.
-const NM_MAT=['Dread Essence','Kraken Scale','Void Core','Sandwraith Dust','Spectral Ectoplasm','Leviathan Fin','Oni Horn','Yokai Mask','Helheim Rune','Glast Fragment'];
+// Five materials, one per adjacent pair of maps. Any 20 craft a Drop Protection Scroll.
+// Old ten-type saves are summed pairwise once; nmMatIndex maps drops and reforge costs.
+const NM_MAT=['Dread Essence','Void Core','Spectral Ectoplasm','Oni Horn','Helheim Rune'];
+const nmMatIndex=m=>Math.floor(Math.max(0,Math.min(9,m|0))/2);
+function repairMaterials(f,version){const old=Array.isArray(f.nmMat)?f.nmMat:[];f.nmMat=NM_MAT.map((_,i)=>version===2?safeCount(old[i]):safeCount(old[i*2])+safeCount(old[i*2+1]));f.nmMatVersion=2;}
 const NM_MAT_CH=1;
 // v90.7 (owner): a Drop Protection Scroll costs 20 Nightmare materials, any mix from any maps.
 const DPS_MATS=20;
@@ -2188,7 +2214,7 @@ function fieldOf(m,l){const mp=MAPS[m],sec=secField(m,l),T=gearPool(m,l),n=T.len
     // v73: mid/endgame bosses (map index 5+) pay 30% less, so their pool totals ~4.2%; the
     // first five maps keep the original ~6%. A boss also carries its map's crit resistance.
     drops:T.map(x=>[x,Math.round(BOSS_POOL_TOTAL[l>10?2:(m>=5?1:0)]*(sec===5?NMPLUS_DROP:1)/n)/100]),critRes:bossCritRes(m,l),
-    card:cardDefinition(m,mp.mobs.length,l>10),cardCh:.1,ore:true,oreCh:.025,mat:l>13?{m,n:NM_MAT[m]}:null}:null}}
+    card:cardDefinition(m,mp.mobs.length,l>10),cardCh:.1,ore:true,oreCh:.025,mat:l>13?{m:nmMatIndex(m),n:NM_MAT[nmMatIndex(m)]}:null}:null}}
 // One drop line for the map panel: icon + name + the field's fixed rarity + which monster carries
 // it, with the % on the right. v79: a piece the player's own class cannot wear is dimmed and says
 // why on hover - the class gate is part of choosing where to farm, not a surprise that only turns
@@ -2470,7 +2496,7 @@ function autoSellReason(it,state=S){
 const autoSellMatches=it=>!autoSellReason(it);
 // ---------- end auto-sell rules ----------
 
-const fresh=()=>({progressionVersion:PROGRESSION_VERSION,skillVersion:SKILL_VERSION,skillRefund:0,skillRespec:{},pets:[],bond:[],cls:'Novice',sex:'m',hair:0,lv:1,exp:0,hp:100,zeny:0,kills:0,indexXp:0,mobKills:{},equippedTitle:null,shards:0,refineScrolls:0,nmMat:[0,0,0,0,0,0,0,0,0,0],dps:0,trial:{day:trialDay(),used:0,best:0,runs:0},cardIndex:emptyCardIndex(),dmg:0,pts:10,jobs:{Novice:{jl:1,jx:0}},sk:{aid:1},skOff:{},dmgShort:true,dmgShow:true,base:{},mp:0,lvl:1,prog:[1,1,1,1,1],kl:0,auto:true,adv:true,feed:true,clickSell:false,bg:true,autoSell:[false,false,false,false,false,false,false],logOff:{},q:null,cards:[],ore:{ori:0,elu:0},offlineAt:0,offlineKph:0,offlineRateAt:0,offlineRateKills:0,offlineKillRemainder:0,gm:false,gmx:100,
+const fresh=()=>({progressionVersion:PROGRESSION_VERSION,skillVersion:SKILL_VERSION,skillRefund:0,skillRespec:{},pets:[],bond:[],cls:'Novice',sex:'m',hair:0,lv:1,exp:0,hp:100,zeny:0,kills:0,indexXp:0,mobKills:{},equippedTitle:null,shards:0,refineScrolls:0,nmMatVersion:2,nmMat:[0,0,0,0,0],dps:0,trial:{day:trialDay(),used:0,best:0,runs:0},cardIndex:emptyCardIndex(),dmg:0,pts:10,jobs:{Novice:{jl:1,jx:0}},sk:{aid:1},skOff:{},dmgShort:true,dmgShow:true,base:{},mp:0,lvl:1,prog:[1,1,1,1,1],kl:0,auto:true,adv:true,feed:true,clickSell:false,bg:true,autoSell:[false,false,false,false,false,false,false],logOff:{},q:null,cards:[],ore:{ori:0,elu:0},offlineAt:0,offlineKph:0,offlineRateAt:0,offlineRateKills:0,offlineKillRemainder:0,gm:false,gmx:100,
   st:{str:1,agi:1,dex:1,luk:1,int:1,vit:1},eq:{weapon:{id:1,slot:'weapon',wt:'dagger',tier:0,val:5,name:'Novice Knife',aff:[],slots:1,cards:[],sec:0},armor:null,head:null,off:null,leg:null,acc1:null,acc2:null},inv:[]});
 const saveKey=()=>'pg_save3_'+currentUser;
 // ---------- the save-owner stamp (v88.6) ----------
@@ -2509,7 +2535,7 @@ const s=JSON.parse(raw);if(s&&s.lv){const F=fresh(),f=Object.assign(F,s),hadInde
   if(!f.logOff||typeof f.logOff!=='object'||Array.isArray(f.logOff))f.logOff={};
   for(const k of['str','agi','dex','luk','int','vit'])f.st[k]=Math.max(1,Math.min(MAXST,num_(f.st[k],1)));
   f.ore={ori:num_(f.ore&&f.ore.ori,0),elu:num_(f.ore&&f.ore.elu,0)};
-  f.nmMat=Array.from({length:10},(_,i)=>safeCount(f.nmMat&&f.nmMat[i]));f.dps=safeCount(f.dps);
+  repairMaterials(f,s.nmMatVersion);f.dps=safeCount(f.dps);
   // v77 (Endless Echo): Trial Shards and the ranked record. A save without them is simply a
   // player who has never run the trial - the day field re-rolls on load, which is also what
   // clears yesterday's two attempts.
@@ -2597,7 +2623,20 @@ const s=JSON.parse(raw);if(s&&s.lv){const F=fresh(),f=Object.assign(F,s),hadInde
     n.type=type;n.goal=Math.max(1,Math.floor(+n.goal||1));n.prog=Math.max(0,Math.floor(+n.prog||0));
     n.z=Math.max(0,Math.floor(+n.z||0));n.xp=Math.max(0,Math.floor(+n.xp||0));return n});
   repairMastery(f);repairProgression(f,s.progressionVersion);return f}}catch(e){}return fresh()}
+let farmSession=null;
+const farmKey=()=>[S.cls,S.mp,S.lvl].join(':');
+function farmSample(now=Date.now()){
+ if(!farmSession||farmSession.owner!==S||farmSession.key!==farmKey()||now<farmSession.start){farmSession={owner:S,key:farmKey(),start:now,events:[]};}
+ const f=farmSession;f.events=f.events.filter(e=>e.at>now-60000);
+ const elapsed=Math.min(60000,now-f.start);if(elapsed<60000)return;
+ const sum=f.events.reduce((a,e)=>({xp:a.xp+e.xp,zeny:a.zeny+e.zeny,job:a.job+e.job,kills:a.kills+e.kills}),{xp:0,zeny:0,job:0,kills:0});
+ S.offlineIncome={key:f.key,at:now,version:1,xp:sum.xp*60000/elapsed,zeny:sum.zeny*60000/elapsed,job:sum.job*60000/elapsed,kph:Math.min(OFFLINE_RATE_CAP,sum.kills*3600000/elapsed)};
+}
+function recordFarmIncome(xp,zeny,job,kills=1,now=Date.now()){
+ farmSample(now);farmSession.events.push({at:now,xp,zeny,job,kills});farmSample(now);
+}
 function offlineRateSample(now=Date.now()){
+  farmSample(now);
   if(!S)return;const kills=safeCount(S.kills),at=Number(S.offlineRateAt)||0,base=safeCount(S.offlineRateKills);
   if(!at||now<at||kills<base){S.offlineRateAt=now;S.offlineRateKills=kills;return}
   const elapsed=now-at;if(elapsed<OFFLINE_RATE_SAMPLE_MS)return;
@@ -2696,7 +2735,7 @@ function initSession(gm,newAccount=false){
   const elsewhere=saveRefusal(lsGet(saveKey()),currentUser);
   if(elsewhere){const who=currentUser;currentUser=null;showErr(saveBlockedText(who,elsewhere,false));return}
   try{
-    hudRate=null;zenyEarned=0;expEarned=0;S=load();S.gm=gm;if(S.q)qRefresh();if(!S.q)S.q=['kill','loot','boss'].map(newQuest);if(S.mp>=MAPS.length||S.lvl>10){S.mp=0;S.lvl=1}
+    hudRate=null;zenyEarned=0;expEarned=0;S=load();S.gm=gm;if(S.q)qRefresh();if(!S.q)S.q=['kill','loot','boss'].map(newQuest);if(S.mp>=MAPS.length||S.lvl>15){S.mp=0;S.lvl=1}
     // v74: a save made before the class-tier gate can be wearing gear its class may not use (a
     // Novice in High-tier armour). The sweep runs here too, so the rule holds from the first
     // frame of a session, not only from the next class change. `from=null` means no wearer label:
@@ -2935,7 +2974,8 @@ function gmApplyGift(p){
   if(p.resource){
     if(['ori','elu'].includes(p.resource))S.ore[p.resource]+=amount;
     else if(['shards','dps','refineScrolls'].includes(p.resource))S[p.resource]=safeCount(S[p.resource])+amount;
-    else if(/^nm[0-9]$/.test(p.resource))S.nmMat[+p.resource.slice(2)]+=amount;
+    else if(/^nmat[0-4]$/.test(p.resource))S.nmMat[+p.resource.slice(4)]+=amount;
+    else if(/^nm[0-9]$/.test(p.resource))S.nmMat[nmMatIndex(+p.resource.slice(2))]+=amount;
     else throw Error('Unknown resource');
   }else if(p.item){
     if(amount>100)throw Error('Too many items');
@@ -3322,7 +3362,7 @@ const autoAllocateSkills=()=>{if(!S.sk||typeof S.sk!=='object')S.sk={};let bough
 // REF_ORE is indexed by rarIdx (Common, Fine, Rare, Epic, Legendary, N, N+); refOre() is the ore one attempt takes.
 // v90.8 (owner: Zeny sink): refine Zeny is x3 (REF_ZENY_MUL).
 const REF_ZENY_MUL=3,refCost=it=>Math.round(REF_ZENY_MUL*400*((it.r||0)+1)*(1+(it.sec||0)*.5)),REF_ORE=[1,1,2,2,5,10,10],refOre=it=>REF_ORE[rarIdx(it)],refCh=it=>[70,70,70,70,49,42,35,28,21,14][it.r||0];
-const affTxt=a=>`${AL[a.k]} +${a.v}`,cardTxt=c=>`${c.n}${c.legacy?' [legacy]':''} (${cardEffects(c).map(cardEffectText).join(', ')})`,dtier=it=>it.card?GI[it.g]:it.ore?3:((it&&+it.sec>=5)?6:(it&&+it.sec>=4)?5:it.tier);
+const affTxt=a=>`${AL[a.k]} +${a.v}`,cardTxt=c=>`${cardName(c)}${c.legacy?' [legacy]':''} (${cardEffects(c).map(cardEffectText).join(', ')})`,dtier=it=>it.card?GI[it.g]:it.ore?3:((it&&+it.sec>=5)?6:(it&&+it.sec>=4)?5:it.tier);
 const isBoss=()=>S.lvl===10||S.lvl===15,fieldName=()=>S.lvl>10?`Nightmare ${MAPS[S.mp].n} Stage ${S.lvl-10}`:`${MAPS[S.mp].n} Stage ${S.lvl}`;
 // Curated original RO equipment art: progression follows the saved job section,
 // with robe and pendant variants selected by item type. All selected PNGs ship locally.
@@ -3484,33 +3524,33 @@ function spawn(){
 }
 const affixPool=it=>it.slot==='weapon'?(it.wt==='staff'?['int','dex','matk','crit','cdm','hp']:['str','agi','dex','luk','atk','crit','aspd','cdm']):it.slot==='acc'?['str','agi','dex','int','vit','luk','atk','matk','crit','cdm','move']:it.slot==='leg'?['agi','vit','hp','flee','aspd','move']:it.slot==='head'?['int','vit','hp','matk']:['vit','hp','flee','str','agi'];
 const rollAffix=(k,it)=>({k,v:k==='move'?Math.min(it.slot==='acc'?5:8,Math.max(1,Math.round(affixValue(k,it.sec,it.tier,rnd(.8,1.25),it.mp)))):Math.max(1,Math.round(affixValue(k,it.sec,it.tier,rnd(.8,1.25),it.mp)*(it.quality||1)))});
-function genGear(T,l,sec,boss,tier){
+function genGear(T,l,sec,boss,tier,sourceMap=S?.mp??0,sourceStage=S?.lvl??1){
   const slot=['armor','head','off','leg','acc'].includes(T.k)?T.k:'weapon';
   // The numeric field-quality input (see dropTier) feeds the existing stat/value rolls. The item
   // rarity identity is resolved separately: normal equipment follows its map band, while sections
   // 4/5 are N. Nightmare items are not forced into the Legendary numeric band.
   // v90.8 (owner: flatten N+ power): Nightmare gear (sections 4-5) has one power on every map - tier 4
   // and the top map value - so the lower maps' N and N+ pieces are as strong as Abyss's.
-  const t=sec>=4?4:(Number.isFinite(tier)?tier:dropTier(S.mp,S.lvl)),quality=Number.isFinite(+T.quality)?Math.max(1,+T.quality):1;
+  const t=sec>=4?4:(Number.isFinite(tier)?tier:dropTier(sourceMap,sourceStage)),quality=Number.isFinite(+T.quality)?Math.max(1,+T.quality):1;
   // v38 balance: the weapon's flat value is divided by 3 (6 -> 2). Weapons are the single
   // biggest power source a character owns, and dividing the base divides it at every level.
   // Armor/head/shield/legwear/accessory keep their value: headgear (maxHp x4) and accessory
   // (maxHp x3) are the HP slots and armour/legs/shield carry DEF, which is the anti-death stat.
-  const val=Math.max(1,Math.round({weapon:2,armor:4,head:10,off:3,leg:3,acc:5}[slot]*[1,2.2,4,7,10.5,15][sec]*(1+l*.15)*RAR[t].m*quality*(sec>=4?MAPVAL[MAPVAL.length-1]:MAPVAL[Math.max(0,Math.min(MAPVAL.length-1,(S&&S.mp|0)||0))])*rnd(.9,1.12)));
+  const val=Math.max(1,Math.round({weapon:2,armor:4,head:10,off:3,leg:3,acc:5}[slot]*[1,2.2,4,7,10.5,15][sec]*(1+l*.15)*RAR[t].m*quality*(sec>=4?MAPVAL[MAPVAL.length-1]:MAPVAL[Math.max(0,Math.min(MAPVAL.length-1,(sourceMap|0)))])*rnd(.9,1.12)));
   // v73 (owner): the cdm affix is a weapon/accessory roll, so "crit damage on all seven slots"
   // cannot exist any more. This follows the spirit of the cdm CARD's fit rule (CFIT['cdm'] puts
   // those cards on weapons), widened to accessories because both are the offensive slots. Every
   // other affix still rolls anywhere; gear that already carries a legacy cdm roll keeps it.
-  const n=[1,1,2,3,3][t],profile={slot,wt:T.k,sec,tier:t,mp:(S&&S.mp|0)||0,quality},pool=affixPool(profile).slice(),aff=[];
+  const n=[1,1,2,3,3][t],profile={slot,wt:T.k,sec,tier:t,mp:(sourceMap|0),quality},pool=affixPool(profile).slice(),aff=[];
   for(let i=0;i<n;i++){const k=pool.splice(ri(0,pool.length-1),1)[0];aff.push(rollAffix(k,profile))}
   // Katars and bows always have four card sockets; every other weapon keeps the existing 1-3 roll.
   const slots=slot==='weapon'&&(T.k==='katar'||T.k==='bow')?4:slot==='weapon'?Math.min(3,1+ri(0,1)+(t>=3?1:0)):Math.min(1,ri(0,1)+(t>=3?1:0));
-  return{id:uid(),slot,wt:slot==='weapon'?T.k:undefined,tier:t,val,name:(sec>=5?'N+ ':sec>=4?'N ':t?RAR[t].n+' ':'')+T.n,aff,slots,cards:[],sec,lvl:l,quality,mp:(S&&S.mp|0)||0};
+  return{id:uid(),slot,wt:slot==='weapon'?T.k:undefined,tier:t,val,name:(sec>=5?'N+ ':sec>=4?'N ':t?RAR[t].n+' ':'')+T.n,aff,slots,cards:[],sec,lvl:l,quality,mp:(sourceMap|0)};
 }
 // Away time is earned from the same map/stage and drop tables as online play. The browser records
 // a rolling real-time kill rate, credits at most four hours, and simulates half that many kills.
-function offlineMobForCurrentField(){
-  const m=S.mp,stage=S.lvl,F=fieldOf(m,stage),l=fieldPower(m,stage),mb=1+m*.15+Math.max(0,m-4)*.2,nm1=stage>10,ne=nm1?nmExpOf(stage)*nmPayOf(m,stage,1.5):1,nz=nm1?nmZenyOf(stage)*nmPayOf(m,stage,2):1;
+function offlineMobForCurrentField(m=S.mp,stage=S.lvl){
+  const F=fieldOf(m,stage),l=fieldPower(m,stage),mb=1+m*.15+Math.max(0,m-4)*.2,nm1=stage>10,ne=nm1?nmExpOf(stage)*nmPayOf(m,stage,1.5):1,nz=nm1?nmZenyOf(stage)*nmPayOf(m,stage,2):1;
   const regular=entry=>({...entry,mapIndex:m,boss:false,lvl:l,sec:F.sec,
     exp:Math.max(1,Math.floor(EXPK*Math.pow(l,1.5)/50*ne)),
     zeny:Math.max(ZMIN,Math.floor(ri(ZK[0],ZK[1])*l*l/1000*nz))});
@@ -3551,28 +3591,28 @@ function autoEquip(it){
 }
 function offlineStoreGear(it,r){
   r.items++;r.drops++;
-  if(autoSellMatches(it)){const value=sellVal(it);earnZeny(value);r.zeny+=value;r.autoSold++;qProg('loot');(it.cards||[]).forEach(c=>S.cards.push(c));return}
+  if(autoSellMatches(it)){const value=r.measured?0:sellVal(it);earnZeny(value);r.zeny+=value;r.autoSold++;qProg('loot');(it.cards||[]).forEach(c=>S.cards.push(c));return}
   if(S.inv.length>=BAGMAX){r.overflow++;return}
   S.inv.push(it);r.storedItems++;qProg('loot');
   if(S.auto!==false&&canUse(it))autoEquip(it)
 }
 function offlineAwardKill(mob,r){
-  if(!mob)return;r.kills++;S.kills=safeCount(S.kills)+1;recordMonsterKill(mob);S.kl=safeCount(S.kl)+1;qProg('kill');if(mob.boss)qProg('boss');
-  const z=Math.round(mob.zeny*(1+pv('zeny')/100)*nmZenyRoll(mob))*gx(),xp=Math.round(mob.exp*expRate());earnZeny(z);r.zeny+=z;earnExp(xp);r.exp+=xp;
-  addJob(Math.round(Math.round(mob.exp*.7)*expRate()));checkLevel();
-  for(const[T,ch]of mob.drops)if(Math.random()*100<ch)offlineStoreGear(genGear(T,mob.lvl,mob.sec,mob.boss,mob.tier),r);
-  if(Math.random()*100<mob.cardCh){const g=mob.card.g;S.cards.push(newCard(mob.card));r.cards++;r.drops++}
-  if(mob.ore)for(const ore of['ori','elu'])if(Math.random()<mob.oreCh){S.ore[ore]=safeCount(S.ore[ore])+1;r[ore]++;r.drops++}
+  if(!mob)return;r.kills++;S.kills=safeCount(S.kills)+1;recordMonsterKill(mob);if(!r.measured)S.kl=safeCount(S.kl)+1;qProg('kill');if(mob.boss)qProg('boss');
+  const z=r.measured?0:Math.round(mob.zeny*(1+pv('zeny')/100)*nmZenyRoll(mob))*gx(),xp=r.measured?0:Math.round(mob.exp*expRate());earnZeny(z);r.zeny+=z;earnExp(xp);r.exp+=xp;
+  if(!r.measured){addJob(Math.round(Math.round(mob.exp*.7)*expRate()));checkLevel();}
+  for(const[T,ch]of mob.drops)if(Math.random()*100<ch)offlineStoreGear(genGear(T,mob.lvl,mob.sec,mob.boss,mob.tier,mob.mapIndex),r);
+  if(Math.random()*100<mob.cardCh){const g=mob.card.g;S.cards.push(newCard(mob.card));questEvent('card');r.cards++;r.drops++}
+  if(mob.ore)for(const ore of['ori','elu'])if(Math.random()<mob.oreCh){S.ore[ore]=safeCount(S.ore[ore])+1;questEvent('ore');r[ore]++;r.drops++}
   if(mob.mat&&Math.random()*100<NM_MAT_CH){S.nmMat[mob.mat.m]=safeCount(S.nmMat[mob.mat.m])+1;r.drops++}
   if(Math.random()*100<(mob.boss?.5:.03)){
-    const rarity=pickW(PW[Math.min(S.mp,9)]),choices=PETS.filter(x=>x.r===rarity);
+    const rarity=pickW(PW[Math.min(mob.mapIndex??S.mp,9)]),choices=PETS.filter(x=>x.r===rarity);
     if(choices.length){const sp=PETS.indexOf(choices[ri(0,choices.length-1)]);r.drops++;
       const own=S.pets.find(x=>x.sp===sp);
       if(own){petFold(own,{sp,mut:0,eq:[0,0,0],skills:[PET_SKILLS[pickW(PET_SKILL_WEIGHTS)].id]});r.petFolds++}
       else if(S.pets.length<40){const gifted=pickW(PET_SKILL_WEIGHTS);S.pets.push({id:ri(1e6,9e6),sp,mut:0,eq:[0,0,0],skills:[PET_SKILLS[gifted].id],on:S.pets.filter(x=>x.on).length<3});r.pets++}
-      else{const refund=Math.floor(EGG*(.3+rarity*.4));earnZeny(refund);r.zeny+=refund;r.petRefunds++}}
+      else{const refund=r.measured?0:Math.floor(EGG*(.3+rarity*.4));earnZeny(refund);r.zeny+=refund;r.petRefunds++}}
   }
-  if(mob.boss||(S.lvl<10&&S.kl>=MPS)){
+  if(!r.measured&&(mob.boss||(S.lvl<10&&S.kl>=MPS))){
     S.kl=0;
     if(mob.boss&&S.lvl===10&&S.adv&&S.mp<MAPS.length-1){S.mp++;S.lvl=1;mapM=S.mp;mapL=1;r.stages++}
     // v88 (owner: "auto-advance sometimes does nothing"): with Auto-advance on, a player sitting
@@ -3596,7 +3636,7 @@ function showOfflineReward(r){
   const detail=[];if(r.storedItems)detail.push(`${r.storedItems} stored`);if(r.autoSold)detail.push(`${r.autoSold} auto-sold`);if(r.overflow)detail.push(`${r.overflow} not stored (bag full)`);
   if(r.ori||r.elu)detail.push(`Oridecon +${r.ori} · Elunium +${r.elu}`);if(r.pets)detail.push(`Pets +${r.pets}`);if(r.petFolds)detail.push(`${r.petFolds} duplicate pet${r.petFolds===1?'':'s'} folded into Bond`);if(r.petRefunds)detail.push(`${r.petRefunds} full-collection pet refund${r.petRefunds===1?'':'s'}`);if(r.stages)detail.push(`${r.stages} stage${r.stages===1?'':'s'} advanced`);
   const note=[];note.push(r.awayMs>OFFLINE_CAP_MS?'Away rewards are capped at four hours.':'Rewards use the time credited above.');
-  note.push(r.rateKph>0?`Estimated at 50% of your recent online pace (${Math.round(r.rateKph).toLocaleString()} kills/hour).`:'No recent kill-rate sample was available, so no simulated kills were credited.');
+  note.push(`50% of measured farming income: ${Math.round(r.xpMin||0).toLocaleString()} EXP/min · ${Math.round(r.zenyMin||0).toLocaleString()}z/min. No map or stage advance while offline. Quest rewards and gifts are excluded. After an update or class/map/stage change, farm a fresh minute to replace your saved rate. Until then, the previous measured minute is used, including its original field for drops. No previous sample means no offline income.${r.incomeSource?" Sample: "+r.incomeSource+".":""}`);
   const details=$('offlineDetails');if(details)details.textContent=detail.length?detail.join(' · '):'No items, cards, ores or pets dropped this time.';
   const explanation=$('offlineExplanation');if(explanation)explanation.textContent=note.join(' ');
   const modal=$('offlineModal');if(modal)modal.style.display='flex';const button=$('offlineContinue');if(button){button.onclick=()=>{modal.style.display='none'};button.focus()}
@@ -3623,7 +3663,19 @@ function applyOfflineProgress(now=Date.now(),serverClaim=null){
   const awayStart=now-Math.max(0,Number(plan.awayMs)||0);
   const covered=!!plan.show&&Number.isFinite(awayStart)&&awayStart>=PAGE_BOOT_AT&&plan.awayMs<=OFFLINE_SIM_COVER_MS;
   const r={...plan,show:!!plan.show&&!covered,covered,kills:0,drops:0,exp:0,zeny:0,items:0,storedItems:0,autoSold:0,overflow:0,cards:0,ori:0,elu:0,pets:0,petRefunds:0,petFolds:0,stages:0};
-  if(plan.show&&!covered){for(let i=0;i<plan.kills;i++)offlineAwardKill(offlineMobForCurrentField(),r);S.offlineKillRemainder=plan.remainder}
+  if(plan.show&&!covered){
+    const income=S.offlineIncome,source=String(income?.key||'').split(':'),sourceMap=Number(source[1]),sourceStage=Number(source[2]);
+    const valid=income&&income.version===1&&source.length===3&&Object.hasOwn(CLASSES,source[0])&&Number.isInteger(sourceMap)&&sourceMap>=0&&sourceMap<MAPS.length&&Number.isInteger(sourceStage)&&sourceStage>=1&&sourceStage<=15&&Number.isFinite(income.at)&&income.at<=Number(S.offlineAt)&&['xp','zeny','job','kph'].every(k=>Number.isFinite(income[k])&&income[k]>=0);
+    r.incomeSource=valid?MAPS[sourceMap].n+' Stage '+sourceStage:'';
+    r.measured=true;r.xpMin=valid?income.xp:0;r.zenyMin=valid?income.zeny:0;
+    const minutes=plan.creditedMs/60000*OFFLINE_REWARD_MULT;
+    const kills=valid?Math.min(plan.kills,Math.floor(Math.min(income.kph,OFFLINE_RATE_CAP)*minutes/60)):0;
+    for(let i=0;i<kills;i++)offlineAwardKill(offlineMobForCurrentField(sourceMap,sourceStage),r);
+    r.exp=valid?safeCount(income.xp*minutes):0;r.zeny=valid?safeCount(income.zeny*minutes):0;
+    earnExp(r.exp);earnZeny(r.zeny);if(valid)addJob(safeCount(income.job*minutes));checkLevel();
+    S.offlineKillRemainder=plan.remainder;
+  }
+  farmSession=null;
   S.offlineAt=now;S.offlineRateAt=now;S.offlineRateKills=safeCount(S.kills);save();zenyEarned=0;expEarned=0;
   if(plan.show&&!covered)showOfflineReward(r);return r;
 }
@@ -4221,7 +4273,7 @@ function addJob(x){const j=jobOf(),c=C();if(j.jl>=c.mj)return;j.jx+=x;
 function checkLevel(){while(S.lv<150&&S.exp>=need()){S.exp-=need();S.lv++;const p=4+Math.floor(S.lv/5);S.pts+=p;S.hp=maxHp();
   log(`LEVEL UP! Lv ${S.lv}. +${p} stat points`,'r4','lvl');addFloat(pl.x,3.6,pl.z,'LEVEL UP!','#fff',true)}
   qRefresh()}
-const qProg=type=>S.q&&S.q.forEach(q=>{if(q.type===type)q.prog=Math.min(q.goal,q.prog+1)});
+const qProg=type=>{questEvent(type)};
 // A balance difference is not income: a purchase in the same frame can hide earned Zeny.
 // Count each credit directly for the live hover rate, without persisting session history.
 function earnZeny(amount){const n=Math.max(0,Number(amount)||0);S.zeny+=n;zenyEarned+=n}
@@ -4230,7 +4282,7 @@ function earnZeny(amount){const n=Math.max(0,Number(amount)||0);S.zeny+=n;zenyEa
 function earnExp(amount){const n=Math.max(0,Number(amount)||0);S.exp+=n;expEarned+=n}
 function kill(o){const keep=mob;if(o)mob=o;if(!mob||!mobs.includes(mob)){mob=keep;return}
   const g=gx();S.kills++;recordMonsterKill(mob);S.kl++;qProg('kill');if(mob.boss)qProg('boss');
-  const z=Math.round(mob.zeny*(1+pv('zeny')/100)*(1+petPassive('zeny')/100)*nmZenyRoll(mob))*g,xp=Math.round(mob.exp*expRate()*(1+petPassive('exp')/100));earnZeny(z);earnExp(xp);addJob(Math.round(Math.round(mob.exp*.7)*expRate()*(1+petPassive('exp')/100)));
+  const z=Math.round(mob.zeny*(1+pv('zeny')/100)*(1+petPassive('zeny')/100)*nmZenyRoll(mob))*g,xp=Math.round(mob.exp*expRate()*(1+petPassive('exp')/100));earnZeny(z);earnExp(xp);addJob(Math.round(Math.round(mob.exp*.7)*expRate()*(1+petPassive('exp')/100)));recordFarmIncome(xp,z,Math.round(Math.round(mob.exp*.7)*expRate()*(1+petPassive('exp')/100)));questEvent('hunt',1,mob.n);questEvent('maps',1,S.mp);if(S.lvl>10)questEvent('nightmare');
   addFloat(mob.x,2.4,mob.z,'+'+numTxt(z)+'z','#ffd23f');log(`${mob.n} defeated! +${xp.toLocaleString()} EXP, +${z.toLocaleString()} Zeny`,'','kills,zeny');
   // Drop odds are the field's own numbers: nothing on the character scales them, so LUK cannot
   // bend the tables (it still raises ATK through the crit/DEX side of the stat sheet, which is
@@ -4271,14 +4323,14 @@ function kill(o){const keep=mob;if(o)mob=o;if(!mob||!mobs.includes(mob)){mob=kee
 }
 function collect(it){
   if(it.mat!=null){S.nmMat[it.mat]=safeCount(S.nmMat[it.mat])+1;log(`Got ${it.n}!`,'r4','gear');addFloat(pl.x,2.8,pl.z,it.n+'!','#6cd3ff',true);ui();return}
-  if(it.card){S.cards.push(it);log(`Got card: [${GRADE[it.g]}] ${cardTxt(it)}`,'r'+GI[it.g],'card');addFloat(pl.x,2.8,pl.z,'CARD!','#ffb020',true);ui();return}
-  if(it.ore){S.ore[it.ore]++;log(`Got ${it.n}!`,'r4','gear');addFloat(pl.x,2.8,pl.z,it.n+'!','#6cd3ff',true);ui();return}
+  if(it.card){S.cards.push(it);questEvent('card');log(`Got card: [${GRADE[it.g]}] ${cardTxt(it)}`,'r'+GI[it.g],'card');addFloat(pl.x,2.8,pl.z,'CARD!','#ffb020',true);ui();return}
+  if(it.ore){S.ore[it.ore]++;questEvent('ore');log(`Got ${it.n}!`,'r4','gear');addFloat(pl.x,2.8,pl.z,it.n+'!','#6cd3ff',true);ui();return}
   // The bag holds BAGMAX items. At capacity the loot is refused and stays where it fell, so a
   // long farm can never grow the save past the cap.
   // v39: auto-sell runs BEFORE the bag cap and before auto-equip for unlocked drops, so a ticked
   // band can never be swallowed by a full bag or worn by accident. Locked gear bypasses the
   // filter, stays protected, and still counts for loot quests - the item was looted.
-  if(autoSellMatches(it)){const v=sellVal(it);earnZeny(v);qProg('loot');(it.cards||[]).forEach(c=>S.cards.push(c));
+  if(autoSellMatches(it)){const v=sellVal(it);earnZeny(v);recordFarmIncome(0,v,0,0);qProg('loot');(it.cards||[]).forEach(c=>S.cards.push(c));
     log(`Auto-sold [${rarOf(it).n}] ${it.name} (+${v.toLocaleString()}z)`,rarCls(it),'gear,zeny');ui();save();return}
   if(S.inv.length>=BAGMAX){log(`Bag full (${BAGMAX} items): sold nothing, left ${it.name} on the ground.`,'r0','gear');addFloat(pl.x,3,pl.z,'BAG FULL','#ff6b6b',true);ui();return}
   S.inv.push(it);qProg('loot');log(`Picked up [${rarOf(it).n}] ${it.name}`,rarCls(it),'gear');
@@ -4304,6 +4356,39 @@ function sell(id){const i=S.inv.findIndex(x=>String(x.id)===String(id));if(i<0)r
 // could be handed in at Lv 90 for a Lv 1 pittance, and a save repaired at a different level could
 // show one number and pay another. Every level-up and every map move re-solves the open quests
 // (qRefresh), keeping the progress you have already made.
+// Daily contracts and permanent quest chains. Events begin at this update; old completed bounties remain claimable once.
+const QUEST_CHAINS=[
+ ['kill','Field patrol',[100,1000,10000,100000]],['boss','MVP hunter',[1,10,100,1000]],
+ ['loot','Equipment collector',[10,100,1000,10000]],['ore','Ore prospector',[2,20,200,2000]],['card','Card collector',[1,10,50,200]],['hunt','Monster researcher',[5,15,40,90]],
+ ['maps','World explorer',[2,5,10]],['refine','Blacksmith apprentice',[1,10,50,200]],
+ ['socket','Card artisan',[1,5,20,100]],['reforge','Affix specialist',[1,10,50,200]],
+ ['nightmare','Nightmare expedition',[50,500,5000,50000]],['echo','Echo challenger',[1,5,25,100]]
+];
+let questView='daily';
+const questDay=now=>new Date(now).toISOString().slice(0,10);
+function questBook(now=Date.now()){
+ let b=S.questBook;if(!b||b.version!==1)b=S.questBook={version:1,day:'',totals:{},unique:{},claimed:{},daily:[],level:Math.max(1,S.lv),zen:Math.max(1,zenAt(pw()))};
+ const day=questDay(now);
+ if(day>b.day){
+  const rotation=Math.floor(now/86400000)%3,types=rotation===0?[['kill',200],['loot',12],['hunt',4],['boss',2]]:rotation===1?[['kill',300],['loot',8],['maps',2],['hunt',5]]:[['kill',150],['ore',2],['hunt',6],['boss',3]];
+  b.day=day;b.daily=types.map(([type,goal])=>({type,goal,prog:0,seen:[],claimed:false,xp:Math.max(1,Math.floor(needAt(S.lv)*.01)),z:Math.max(100,Math.floor(zenAt(pw())*goal*2))}));
+ }
+ return b;
+}
+function questEvent(type,n=1,key=null){if(!S)return;const b=questBook();
+ if(['hunt','maps'].includes(type)){const list=b.unique[type]||(b.unique[type]=[]);if(key===null)return;if(!list.includes(key))list.push(key);b.totals[type]=list.length;}
+ else b.totals[type]=safeCount(b.totals[type])+n;
+ for(const q of b.daily)if(q.type===type&&!q.claimed){if(key!==null){if(!q.seen.includes(key)){q.seen.push(key);q.prog=Math.min(q.goal,q.prog+1)}}else q.prog=Math.min(q.goal,q.prog+n);}
+}
+function questRows(){const b=questBook();if(questView==='daily')return b.daily.map((q,i)=>({...q,id:'d:'+b.day+':'+i,label:QUEST_CHAINS.find(x=>x[0]===q.type)[1]}));
+ return QUEST_CHAINS.map(([type,label,goals])=>{const tier=safeCount(b.claimed[type]),done=tier>=goals.length,goal=goals[Math.min(tier,goals.length-1)];b.rewards=b.rewards||{};const rewardKey=type+':'+tier;if(!b.rewards[rewardKey])b.rewards[rewardKey]={xp:Math.max(1,Math.floor(needAt(S.lv)*.02)),z:Math.max(500,Math.floor(zenAt(pw())*Math.min(goal,1000)*3))};const reward=b.rewards[rewardKey];return {id:'a:'+type+':'+tier,type,label:label+' · '+(done?'Complete':'Chapter '+(tier+1)),goal,prog:Math.min(goal,safeCount(b.totals[type])),claimed:done,xp:reward.xp,z:reward.z};});
+}
+function claimContract(id){const b=questBook(),rows=questRows(),q=rows.find(x=>x.id===id);if(!q||q.claimed||q.prog<q.goal)return;
+ if(id.startsWith('d:'))b.daily[Number(id.split(':')[2])].claimed=true;else b.claimed[q.type]=safeCount(b.claimed[q.type])+1;
+ earnExp(q.xp);earnZeny(q.z);checkLevel();save();ui();
+}
+function contractPanel(){const b=questBook(),rows=questRows();return `<div class="quest-tabs"><button data-q="daily" aria-pressed="${questView==='daily'}">Daily</button><button data-q="all" aria-pressed="${questView==='all'}">All-time</button></div><small>${questView==='daily'?'Resets 00:00 UTC · '+b.day:'Permanent chapters · each awards 2% of a level plus at least 500z, fixed when offered. Progress starts with this update'}</small>`+rows.map(q=>`<div class="quest-entry"><b>${q.label}</b><div>${({kill:'Defeat monsters',boss:'Defeat MVPs',loot:'Collect equipment drops',ore:'Collect ore drops (purchases do not count)',card:'Collect monster card drops',hunt:'Defeat different monster species',maps:'Defeat monsters on different maps',refine:'Attempt refinement',socket:'Socket cards',reforge:'Roll paid reforges',nightmare:'Defeat Nightmare monsters',echo:'Complete ranked Endless Echo runs'})[q.type]}</div><div class="pbar"><i style="width:${100*q.prog/q.goal}%"></i></div><small>${q.prog}/${q.goal} · ${q.xp.toLocaleString()} EXP · ${q.z.toLocaleString()}z</small>${q.claimed?'<small>Claimed</small>':`<button data-q="contract:${q.id}" ${q.prog<q.goal?'disabled':''}>Claim</button>`}</div>`).join('');}
+
 function qScale(q){const L=S?S.lv:1;
   const g=q.type==='kill'?12+L*2:q.type==='loot'?3+Math.floor(L/3):1+Math.floor(L/10);
   q.goal=Math.max(1,g);if(q.prog>q.goal)q.prog=q.goal;
@@ -4315,16 +4400,21 @@ function qScale(q){const L=S?S.lv:1;
   q.xp=Math.max(1,Math.floor((L>99?needAt(L)/2:needAt(L))*QXP[q.type]*(S?expRate():1)));
   q.at=L;return q}
 function newQuest(type){return qScale({type,goal:1,prog:0})}
-function qRefresh(){if(!S||!Array.isArray(S.q))return;(S.q||[]).forEach(q=>{if(q&&q.type)qScale(q)})}
+function qRefresh(){if(S)questBook();}
 const qTxt=q=>q.type==='kill'?`Defeat ${q.goal} monsters`:q.type==='loot'?`Collect ${q.goal} equipment drops`:`Defeat ${q.goal} MVP${q.goal>1?'s':''}`;
+const refineScrollFrom=()=>[5,6,7,8,9].includes(Number(S.refineScrollFrom))?Number(S.refineScrollFrom):5;
+function refineProtectionUI(){return `<div class="sec">Refine Scroll protection · ${safeCount(S.refineScrolls)} owned</div><div class="row">${[0,5,6,7,8,9].map(n=>`<button data-a="refprotect" data-v="${n}" class="${(n?S.useRefineScroll&&refineScrollFrom()===n:!S.useRefineScroll)?'on':''}" aria-pressed="${n?!!S.useRefineScroll&&refineScrollFrom()===n:!S.useRefineScroll}">${n?'From +'+n:'Off'}</button>`).join('')}</div><small>Uses one scroll on every attempt at or above the selected current rank, including success. Prevents rank loss; success chance is unchanged. No scroll available: protected attempts are blocked.</small>`;}
 function refine(sl){const it=S.eq[sl];if(!it||(it.r||0)>=10)return;const o=it.slot==='weapon'?'ori':'elu',c=refCost(it),need=refOre(it);
   if(S.ore[o]<need){log(`You need ${need} ${ORE[o]} for this piece. Regular mobs drop both ores at 0.5% on Stages 1-9 and 1% on Stage 10; the Stage 10 MVP drops them at 2.5%.`);return}if(S.zeny<c){log('Not enough Zeny.');return}
-  S.ore[o]-=need;S.zeny-=c;if(Math.random()*100<refCh(it)){it.r=(it.r||0)+1;log(`Refine success! ${iname(it)}`,'r3','gear');addFloat(pl.x,3,pl.z,'Refine +'+it.r,'#ffd23f')}
-  else{if(it.r>=5&&S.dps>0){S.dps--;log(`Refine failed, but your Drop Protection Scroll kept +${it.r}.`,'r3','gear');addFloat(pl.x,3,pl.z,'Saved','#6cd3ff')}
+  const protectedAttempt=S.useRefineScroll&&(it.r||0)>=refineScrollFrom();
+  if(protectedAttempt&&!safeCount(S.refineScrolls)){log('Refine Scroll protection is enabled, but you have no scrolls. Buy one or turn protection off.');return;}
+  if(protectedAttempt)S.refineScrolls--;
+  S.ore[o]-=need;S.zeny-=c;questEvent('refine');if(Math.random()*100<refCh(it)){it.r=(it.r||0)+1;log(`Refine success! ${iname(it)}`,'r3','gear');addFloat(pl.x,3,pl.z,'Refine +'+it.r,'#ffd23f')}
+  else{if(protectedAttempt){log(`Refine failed, but your Refine Scroll kept +${it.r}.`,'r3','gear')}
+    else if(it.r>=5&&S.dps>0){S.dps--;log(`Refine failed, but your Drop Protection Scroll kept +${it.r}.`,'r3','gear');addFloat(pl.x,3,pl.z,'Saved','#6cd3ff')}
     else if(it.r>=5){it.r--;log(`Refine failed... dropped to +${it.r}.`,'r0','gear')}else log('Refine failed.','r0','gear');addFloat(pl.x,3,pl.z,'Failed','#ff6b6b')}ui();save()}
-// v90.6 (owner, option 3): a Drop Protection Scroll is crafted from one of each Nightmare material, and
-// each material comes from its own map's Stage 15 boss. refine() spends a scroll instead of dropping a
-// rank, so a failed refine at +5 or higher keeps the rank.
+// Crafted Drop Protection Scrolls cost 20 Nightmare materials of any mix.
+// They remain an automatic failure-only fallback, separate from selected Refine Scrolls.
 function craftDps(){if(!S)return;const have=nmMatCounts(),total=have.reduce((x,n)=>x+n,0);if(total<DPS_MATS){log(`A Drop Protection Scroll needs ${DPS_MATS} Nightmare materials, any mix. You have ${total}.`,'','gear');ui();return}let left=DPS_MATS;S.nmMat=have.map(n=>{const take=Math.min(n,left);left-=take;return n-take});S.dps=safeCount(S.dps)+1;log('Crafted a Drop Protection Scroll.','r3','gear');ui();save()}
 function nmMatCounts(){return NM_MAT.map((_,i)=>safeCount(S.nmMat&&S.nmMat[i]))}
 function dpsPanel(){const have=nmMatCounts(),total=have.reduce((x,n)=>x+n,0);return`<div class="sec" style="margin-top:8px">Drop Protection Scroll</div><small>Scrolls: ${safeCount(S.dps)}. A failed refine at +5 or higher would drop a rank; a scroll is used instead and the rank is kept. Success is not guaranteed.</small><div class="row" style="margin-top:4px"><button data-a="craftdps" ${total<DPS_MATS?'disabled':''}>Craft Drop Protection Scroll (${DPS_MATS} materials, any mix)</button></div><small>Materials ${total}/${DPS_MATS}: ${NM_MAT.map((n,i)=>n+' '+have[i]).join(' &middot; ')}</small>`}
@@ -4336,21 +4426,33 @@ function dpsPanel(){const have=nmMatCounts(),total=have.reduce((x,n)=>x+n,0);ret
 const BM_LV=100,BM_ORE=100000,BM_REFORGE=150000;
 const bmOpen=()=>(S.lv|0)>=BM_LV;
 const reforgeCost=it=>BM_REFORGE*(rarIdx(it)+1);
-function buyOre(o){if(!bmOpen()||!ORE[o])return;if(S.zeny<BM_ORE){log('Not enough Zeny for the Black Market.','','zeny');ui();return}
-  S.zeny-=BM_ORE;S.ore[o]=(S.ore[o]|0)+1;log(`Black Market: bought 1 ${ORE[o]} for ${BM_ORE.toLocaleString()}z.`,'r3','zeny');ui();save()}
+const BM_SCROLL=80000000;
+const marketQty={ori:'1',elu:'1'};
+function buyRefineScroll(){if(!bmOpen()||S.zeny<BM_SCROLL)return;S.zeny-=BM_SCROLL;S.refineScrolls=safeCount(S.refineScrolls)+1;ui();save()}
+function buyOre(o,quantity=1){const n=Number(quantity);if(!bmOpen()||!ORE[o]||!Number.isSafeInteger(n)||n<1||n>1000000)return;
+ const cost=BM_ORE*n;if(S.zeny<cost||!Number.isSafeInteger(safeCount(S.ore[o])+n)){log('Not enough Zeny for that quantity.','','zeny');return}
+ S.zeny-=cost;S.ore[o]=safeCount(S.ore[o])+n;log(`Black Market: bought ${n} ${ORE[o]} for ${cost.toLocaleString()}z.`,'r3','zeny');ui();save()}
+
 // ---------- selected-affix reforge; paid offers survive save/reload ----------
 let reforgeSelection={};
 function reforgeQuote(it,n){const all=(it.aff||[]).length,full=n===all,fee=full?1:n===2?3:6;
- return{zeny:reforgeCost(it)*fee,ore:full?0:(rarIdx(it)+1)*(n===2?2:4),mat:it.sec>=4&&!full?(n===2?2:4):0,oreKey:it.slot==='weapon'?'ori':'elu',map:Math.max(0,Math.min(9,it.mp|0))};}
-function reforge(sl,all=false){
+ return{zeny:reforgeCost(it)*fee,ore:full?0:(rarIdx(it)+1)*(n===2?2:4),mat:it.sec>=4&&!full?(n===2?2:4):0,oreKey:it.slot==='weapon'?'ori':'elu',map:nmMatIndex(it.mp)};}
+function affixRangeText(a,it){if(!it)return affTxt(a);const value=f=>a.k==='move'?Math.min(it.slot==='acc'?5:8,Math.max(1,Math.round(affixValue(a.k,it.sec,it.tier,f,it.mp)))):Math.max(1,Math.round(affixValue(a.k,it.sec,it.tier,f,it.mp)*(it.quality||1)));
+ return `${affTxt(a)} [${value(.8)}~${value(1.25)}]`;}
+function reforge(sl,all=false,confirmed=null){
  if(!bmOpen()||S.reforgePending)return;const it=S.eq[sl];if(!it)return;
  const chosen=all?(it.aff||[]).map((_,i)=>i):(reforgeSelection[it.id]||[]).filter((x,i,a)=>Number.isInteger(x)&&x>=0&&x<it.aff.length&&a.indexOf(x)===i);
  if(!chosen.length||chosen.length>3)return;
- S.nmMat=nmMatCounts();const q=reforgeQuote(it,chosen.length);if(S.zeny<q.zeny||(S.ore[q.oreKey]||0)<q.ore||(S.nmMat[q.map]||0)<q.mat){log('Not enough Zeny or materials for this reforge.','','zeny');return;}
+ S.nmMat=nmMatCounts();const q=reforgeQuote(it,chosen.length),oreMissing=Math.max(0,q.ore-safeCount(S.ore[q.oreKey])),matMissing=Math.max(0,q.mat-S.nmMat[q.map]),extra=oreMissing*BM_ORE+matMissing*BM_MAT_PRICE;
+ const signature=JSON.stringify([it.id,it.aff,chosen,q,oreMissing,matMissing]);
+ if(confirmed&&confirmed!==signature){log('Equipment, selection or materials changed. Please review a new quote.','','gear');return;}
+ if(S.zeny<q.zeny+extra){log(`Need ${(q.zeny+extra).toLocaleString()}z including missing materials.`,'','zeny');return;}
+ if(extra&&!confirmed){ask(`Buy missing ${oreMissing} ${ORE[q.oreKey]} and ${matMissing} ${NM_MAT[q.map]} for ${extra.toLocaleString()}z, then reforge for ${q.zeny.toLocaleString()}z? Total ${(q.zeny+extra).toLocaleString()}z.`,()=>reforge(sl,all,signature));return;}
+
  const aff=it.aff.map(a=>({...a})),used=new Set(aff.filter((_,i)=>!chosen.includes(i)).map(a=>a.k)),pool=affixPool(it).filter(k=>!used.has(k));
  if(pool.length<chosen.length)return;
  for(const i of chosen){const k=pool.splice(ri(0,pool.length-1),1)[0];aff[i]=rollAffix(k,it);}
- S.zeny-=q.zeny;S.ore[q.oreKey]-=q.ore;S.nmMat[q.map]-=q.mat;
+ S.zeny-=q.zeny+extra;S.ore[q.oreKey]=safeCount(S.ore[q.oreKey])+oreMissing-q.ore;S.nmMat[q.map]+=matMissing-q.mat;questEvent('reforge');
  S.reforgePending={id:it.id,before:JSON.stringify(it.aff),after:aff};save();ui();
 }
 function validReforgeOffer(f){const p=f.reforgePending;if(!p||typeof p.before!=='string'||!Array.isArray(p.after))return null;
@@ -4365,9 +4467,9 @@ function resolveReforge(accept){const p=validReforgeOffer(S);if(!p){delete S.ref
  else log('Kept the existing affixes. The reforge cost was spent.','','gear');
  delete S.reforgePending;save();ui();}
 function reforgePanel(){const pending=validReforgeOffer(S);
- const offer=pending?`<div class="mob-card reforge-offer"><b>Paid reforge offer</b><p>Old: ${JSON.parse(pending.before).map(affTxt).join(' · ')}</p><p>New: ${pending.after.map(affTxt).join(' · ')}</p><button data-a="refaccept" data-v="yes">Accept new</button> <button data-a="refaccept" data-v="no">Keep old</button><small>Payment has already been spent. This offer survives a reload.</small></div>`:'';
- return offer+EQK.filter(([k])=>S.eq[k]&&(S.eq[k].aff||[]).length).map(([slot,label])=>{const it=S.eq[slot],selected=reforgeSelection[it.id]||[],q=reforgeQuote(it,selected.length||it.aff.length),full=reforgeQuote(it,it.aff.length);
- return`<div class="slot" style="display:block"><b>${label} · ${esc(iname(it))}</b><div class="row">${it.aff.map((a,i)=>`<button data-a="refpick" data-v="${slot}:${i}" aria-pressed="${selected.includes(i)}" class="${selected.includes(i)?'on':''}">${selected.includes(i)?'✓ ':''}${affTxt(a)}</button>`).join('')}</div><small>Choose the affixes to replace; other affixes are protected. Full rerolls every affix.</small><div class="row"><button data-a="bmref" data-v="${slot}:all" ${pending?'disabled':''}>Full · ${full.zeny.toLocaleString()}z</button><button data-a="bmref" data-v="${slot}:selected" ${pending||!selected.length?'disabled':''}>${selected.length===1?'Single':selected.length===2?'Double':'Selected'} · ${q.zeny.toLocaleString()}z + ${q.ore} ${ORE[q.oreKey]}${q.mat?' + '+q.mat+' '+NM_MAT[q.map]:''}</button></div></div>`;
+ const offer=pending?`<div class="mob-card reforge-offer"><b>Paid reforge offer</b><p>Old: ${JSON.parse(pending.before).map(a=>affixRangeText(a,find(pending.id))).join(' · ')}</p><p>New: ${pending.after.map(a=>affixRangeText(a,find(pending.id))).join(' · ')}</p><button data-a="refaccept" data-v="yes">Accept new</button> <button data-a="refaccept" data-v="no">Keep old</button><small>Payment has already been spent. This offer survives a reload.</small></div>`:'';
+ return (pending&&!items().some(it=>it.id===pending.id)?offer:'')+EQK.filter(([k])=>S.eq[k]&&(S.eq[k].aff||[]).length).map(([slot,label])=>{const it=S.eq[slot],selected=reforgeSelection[it.id]||[],q=reforgeQuote(it,selected.length||it.aff.length),full=reforgeQuote(it,it.aff.length);
+ return`<div class="slot" style="display:block"><b>${label} · ${esc(iname(it))}</b><div class="row">${it.aff.map((a,i)=>`<button data-a="refpick" data-v="${slot}:${i}" aria-pressed="${selected.includes(i)}" class="${selected.includes(i)?'on':''}">${selected.includes(i)?'✓ ':''}${affixRangeText(a,it)}</button>`).join('')}</div><small>Choose the affixes to replace; other affixes are protected. Full rerolls every affix.</small><div class="row"><button data-a="bmref" data-v="${slot}:all" ${pending?'disabled':''}>Full · ${full.zeny.toLocaleString()}z</button><button data-a="bmref" data-v="${slot}:selected" ${pending||!selected.length?'disabled':''}>${selected.length===1?'Single':selected.length===2?'Double':'Selected'} · ${q.zeny.toLocaleString()}z + ${q.ore} ${ORE[q.oreKey]}${q.mat?' + '+q.mat+' '+NM_MAT[q.map]:''}</button></div>${pending&&pending.id===it.id?offer:''}</div>`;
  }).join('');
 }
 // One live source index feeds both the journal and market guide. No copied drop descriptions.
@@ -4383,6 +4485,13 @@ function guideReachable(m,l){return l>10?nmMapOpen(m):l<=((S.prog||[])[m]||0);}
 function guideLink(source){const {m,l,ch,monster}=source;return`<button data-a="guidemap" data-v="${m}:${l}">${MAPS[m].n} · ${l>10?'NM '+(l-10):'Stage '+l}</button> <small>${esc(monster)} · ${ch}% per kill${guideReachable(m,l)?'':' · locked'}</small>`;}
 function guideScore(c){const magic=INT_CLASSES.includes(S.cls),wanted=guideMode==='survive'?['hpPct','vit','def','mdef']:guideMode==='farm'?['move','field',magic?'matk':'atk',C().main,'aspd']:['cdm',magic?'matk':'atk',C().main,'crit'];
  return cardEffects(c).reduce((n,e)=>n+(wanted.includes(e.k)?(wanted.length-wanted.indexOf(e.k))*10+e.v/10:0),0);}
+function levelingGuide(){const sources=guideSources();return `<details open><summary>Level &amp; stage roadmap · ${esc(S.cls)}</summary><p>Start at Stages 1–3, move to 4–9 when kills stay quick, and farm Stage 10 only when its MVP is reliable. Compare a full minute of EXP/min and Zeny/min; a lower field can pay better. Turn Auto-advance off to camp a target.</p><div class="guide-grid">${MAPS.map((mp,m)=>{
+ const [low,high]=m===0?[1,10]:m<5?[10,60]:m<8?[60,80]:[80,99];
+ const weapon=sources.gear.find(x=>x.m===m&&x.l<=10&&C().wt.includes(x.item.k));
+ const armor=sources.gear.find(x=>x.m===m&&x.l<=10&&['armor','head','leg'].includes(x.item.k));
+ const cards=CARD_CATALOG.filter(c=>c.map===m&&!c.nightmare).sort((a,b)=>guideScore(b)-guideScore(a)).slice(0,2);
+ return `<article class="mob-card"><b>Lv ${low}–${Math.max(low,high)} · ${mp.n}</b><p>${m>0&&m<5?'Lv 10–20: Stages 1–5 · Lv 20–50: Stages 6–9 · Lv 50–60: farm Stage 10 while preparing your second job.':'Stages 1–9: steady farming · Stage 10: MVP / rare drops'}</p>${[weapon,armor].filter(Boolean).map(x=>`<p>${esc(x.item.n)} ${guideLink(x)}</p>`).join('')}${cards.map(c=>{const source=sources.cards.get(c.cardKey)?.find(x=>x.l<=10);return source?`<p>${esc(c.n)} · ${c.effects.map(cardEffectText).join(', ')} ${guideLink(source)}</p>`:''}).join('')}</article>`;
+ }).join('')}</div><p>Lv 100–119: farm Normal Stage 10 and improve your build. Lv ${NMLV[0]}–139: Nightmare Prontera–Payon offers N gear. Lv ${NMLV[1]}–150: Nightmare Comodo–Abyss offers N+ gear. Target NM 4–5 for equipment and NM 5 MVPs for map materials. Compare measured income against Normal Stage 10 and stay where you survive consistently.</p><p>Five Nightmare materials (old pairs combine without loss): ${NM_MAT.map((n,i)=>n+' — '+MAPS[i*2].n+' / '+MAPS[i*2+1].n).join('; ')}. ${DPS_MATS} of any mix craft one Drop Protection Scroll in Refine. Selected-affix reforges on N / N+ equipment use its map-pair material (2 for Double, 4 for Single); full reforges use Zeny only. Black Market materials cost ${BM_MAT_PRICE.toLocaleString()}z each.</p></details>`;}
 function buildGuide(market=false){const sources=guideSources(),phase=guideTier,eligible=(m,l)=>phase==='current'?guideReachable(m,l):phase==='normal'?l<=10:l>10;
  const allCards=[...S.cards,...items().flatMap(x=>x.cards||[])],worn=new Set(items().flatMap(x=>(x.cards||[]).map(c=>c.cardKey)));
  const candidates=CARD_CATALOG.filter(c=>guideScore(c)>0&&(sources.cards.get(c.cardKey)||[]).some(x=>eligible(x.m,x.l))).sort((a,b)=>guideScore(b)-guideScore(a));
@@ -4391,7 +4500,7 @@ function buildGuide(market=false){const sources=guideSources(),phase=guideTier,e
  const weapons=sources.gear.filter(x=>eligible(x.m,x.l)&&C().wt.includes(x.item.k)&&gearTierOK(x.item)).sort((a,b)=>b.item.sec-a.item.sec||b.item.tier-a.item.tier||b.m-a.m||b.l-a.l);
  const unique=weapons.filter((x,i,a)=>a.findIndex(y=>y.item.n===x.item.n)===i).slice(0,4);
  const primary=INT_CLASSES.includes(S.cls)?'INT':C().main.toUpperCase();
- return`<section class="build-guide"><div class="hd">${market?'Upgrade planner':'Build & farming guide'} · ${esc(S.cls)}</div><p>Main stat: <b>${primary}</b>. ${INT_CLASSES.includes(S.cls)?'INT powers your attacks and skill multiplier.':'Physical skills gain damage from learned ranks; INT does not multiply them.'} Use AGI for speed, DEX for accuracy, LUK for criticals and VIT for survival. Three stats can reach 120 at Base 150.</p><div class="row">${['farm','boss','survive'].map(x=>`<button data-a="guidemode" data-v="${x}" aria-pressed="${guideMode===x}">${{farm:'Farming',boss:'Boss damage',survive:'Survival'}[x]}</button>`).join('')}</div><div class="row">${['current','normal','nightmare'].map(x=>`<button data-a="guidetier" data-v="${x}" aria-pressed="${phase===x}">${{current:'Accessible now',normal:'Normal targets',nightmare:'Nightmare targets'}[x]}</button>`).join('')}</div><p>Weapon choices: ${C().wt.join(', ')}${dualWield()?' · two daggers or a two-handed katar':''}. These are farming targets, not guaranteed DPS upgrades; compare cards and affixes.</p><div class="guide-grid">${unique.map(x=>`<article class="mob-card"><b>${esc(x.item.n)}</b><small>${SECN[x.item.sec]} · ${gearUserOf(x.item)}</small>${guideLink(x)}</article>`).join('')||'<p>Unlock more fields to see weapon targets.</p>'}</div><div class="sec">Cards for ${guideMode==='survive'?'survival':guideMode==='boss'?'boss damage':'farming'}</div><small>One card per monster family, two boss cards per build, one boss and one Crit DMG card per item. Normal and Nightmare variants share a family.</small><div class="guide-grid">${cardRows||'<p>No matching accessible sources. Browse normal targets to plan ahead.</p>'}</div>${market?`<div class="sec">Your next upgrades</div>${EQK.filter(([k])=>S.eq[k]).map(([k,n])=>{const it=S.eq[k],empty=Math.max(0,(it.slots||0)-(it.cards||[]).length);return`<p><b>${n}</b>: ${empty?empty+' empty socket(s): choose a compatible card above. ':'Sockets filled. '}${(it.r||0)<10?'Refine costs '+refCost(it).toLocaleString()+'z and '+refOre(it)+' '+ORE[it.slot==='weapon'?'ori':'elu']+'.':'Refinement complete.'} ${(it.aff||[]).length?'Use Single Reforge to protect your two best affixes on a three-affix item.':''}</p>`}).join('')}<small>Cards and weapons are farmed from the listed monsters. This market sells refinement supplies, not these equipment drops.</small>`:''}<details><summary>Caps, criticals and healing</summary><p>Ordinary crit caps at 60%; Index adds up to 40%. Boss resistance still reduces the final chance. Crit DMG applies to damaging skills. Each LUK adds 0.008× Crit DMG; each DEX adds 0.005×. ASPD cannot go below 0.13 seconds per attack. DEX 60 removes ordinary miss chance.</p><p>Equipment/card movement: ${equipmentMove()}% / 20%; movement pet bonuses are added separately.</p><p>HP Leech: ${cardMasteryStat('leech')*.5}% of actual basic-attack damage. Pet siphon: 0.5% of actual pet damage while active. Combined healing cannot exceed 2% Max HP per second. Overkill never heals; skill healing and regeneration are separate.</p></details></section>`;
+ return`<section class="build-guide">${levelingGuide()}<div class="hd">${market?'Upgrade planner':'Build & farming guide'} · ${esc(S.cls)}</div><p>Main stat: <b>${primary}</b>. ${INT_CLASSES.includes(S.cls)?'INT powers your attacks and skill multiplier.':'Physical skills gain damage from learned ranks; INT does not multiply them.'} Use AGI for speed, DEX for accuracy, LUK for criticals and VIT for survival. Three stats can reach 120 at Base 150.</p><div class="row">${['farm','boss','survive'].map(x=>`<button data-a="guidemode" data-v="${x}" aria-pressed="${guideMode===x}">${{farm:'Farming',boss:'Boss damage',survive:'Survival'}[x]}</button>`).join('')}</div><div class="row">${['current','normal','nightmare'].map(x=>`<button data-a="guidetier" data-v="${x}" aria-pressed="${phase===x}">${{current:'Accessible now',normal:'Normal targets',nightmare:'Nightmare targets'}[x]}</button>`).join('')}</div><p>Weapon choices: ${C().wt.join(', ')}${dualWield()?' · two daggers or a two-handed katar':''}. These are farming targets, not guaranteed DPS upgrades; compare cards and affixes.</p><div class="guide-grid">${unique.map(x=>`<article class="mob-card"><b>${esc(x.item.n)}</b><small>${SECN[x.item.sec]} · ${gearUserOf(x.item)}</small>${guideLink(x)}</article>`).join('')||'<p>Unlock more fields to see weapon targets.</p>'}</div><div class="sec">Cards for ${guideMode==='survive'?'survival':guideMode==='boss'?'boss damage':'farming'}</div><small>One card per monster family per item, up to two boss cards and two Crit DMG cards per item, with no build-wide boss limit. Normal and Nightmare variants share a family.</small><div class="guide-grid">${cardRows||'<p>No matching accessible sources. Browse normal targets to plan ahead.</p>'}</div>${market?`<div class="sec">Your next upgrades</div>${EQK.filter(([k])=>S.eq[k]).map(([k,n])=>{const it=S.eq[k],empty=Math.max(0,(it.slots||0)-(it.cards||[]).length);return`<p><b>${n}</b>: ${empty?empty+' empty socket(s): choose a compatible card above. ':'Sockets filled. '}${(it.r||0)<10?'Refine costs '+refCost(it).toLocaleString()+'z and '+refOre(it)+' '+ORE[it.slot==='weapon'?'ori':'elu']+'.':'Refinement complete.'} ${(it.aff||[]).length?'Use Single Reforge to protect your two best affixes on a three-affix item.':''}</p>`}).join('')}<small>Cards and weapons are farmed from the listed monsters. This market sells refinement supplies, not these equipment drops.</small>`:''}<details><summary>Caps, criticals and healing</summary><p>Ordinary crit caps at 60%; Index adds up to 40%. Boss resistance still reduces the final chance. Crit DMG applies to damaging skills. Each LUK adds 0.008× Crit DMG; each DEX adds 0.005×. ASPD cannot go below 0.13 seconds per attack. DEX 60 removes ordinary miss chance.</p><p>Equipment/card movement: ${equipmentMove()}% / 20%; movement pet bonuses are added separately.</p><p>HP Leech: ${cardMasteryStat('leech')*.5}% of actual basic-attack damage. Pet siphon: 0.5% of actual pet damage while active. Combined healing cannot exceed 2% Max HP per second. Overkill never heals; skill healing and regeneration are separate.</p></details></section>`;
 }
 
 // ---------- class change ----------
@@ -4479,7 +4588,7 @@ function changeClass(n){if(classBlock(n))return;
 // Index, Black Market and Leaderboard share an independent dropdown below Quests.
 // instead of taking dock slots. The keys X and V still open them. v91: the World Map tab uses a tower icon.
 const SIDE_TABS=['index','market','board','guide'];
-const TABS={map:['🗼','World Map','M'],status:['📊','Character','S'],job:['🌳','Class Tree','J'],skills:['✨','Skills','K'],bag:['🎒','Inventory','B'],log:['📃','Log','L'],pet:['🐾','Pets','P'],index:['📚','Mastery Index','I'],board:['🏆','Leaderboard','V'],market:['🏪','Black Market','X'],guide:['📖','Build & Farming Guide','H'],set:['⚙️','Settings','O'],gm:['🛠️','GM Tools','G']};
+const TABS={map:['🗼','World Map','M'],status:['📊','Character','S'],job:['🌳','Class Tree','J'],skills:['✨','Skills','K'],equip:['🛡️','Equipment','E'],bag:['🎒','Inventory','B'],log:['📃','Log','L'],pet:['🐾','Pets','P'],index:['📚','Mastery Index','I'],board:['🏆','Leaderboard','V'],market:['🏪','Black Market','X'],guide:['📖','Build & Farming Guide','H'],set:['⚙️','Settings','O'],gm:['🛠️','GM Tools','G']};
 const expandedPanels=new Set(['map']);
 const minimizedPanels=new Set();
 const dot=k=>{if(!S)return false;if(k==='status')return S.pts>0;if(k==='skills')return skpAvail()>0;if(k==='quest')return!!(S.q&&S.q.some(q=>q.prog>=q.goal));if(k==='cards')return S.cards.length>0;if(k==='index'){const rank=HUNT_TITLES.findIndex(t=>t.id===S.equippedTitle);return cardMasteryAvailable()>0||HUNT_TITLES.some((t,i)=>i>rank&&titleUnlocked(t))}return false};
@@ -4496,7 +4605,7 @@ const weakerGear=it=>{const worn=it&&it.slot&&(it.slot==='acc'?(S.eq.acc1||S.eq.
 const cell=(it,sel,extra='')=>`<div class="cell b${dtier(it)}${it&&+it.sec>=4?' nm':''}${sel?' sel':''}${weakerGear(it)?' worse':''}" data-tip="${it.id}" ${extra}>${icon(it)}<span class="rarity-label">${it.card?GRADE[it.g]:it.ore?'Ore':rarOf(it).n}</span>${it.locked?`<i class="lockstar" title="Locked gear" aria-label="Locked">&#9733;</i>`:''}${it.r?`<i class="rf">+${it.r}</i>`:''}</div>`;
 function itemMain(it){
   const worn=weakerGear(it);
-  if(it.card)return`<b class="r${GI[it.g]}">${esc(it.n)}</b><div>${cardEffects(it).map(cardEffectText).join(' · ')}</div><small>Fits: ${(it.fit||CARD_FITS[it.stat]||[]).join(', ')}. One per monster family; two boss cards per build, one per item; one Crit DMG card per item.</small>${it.legacy?`<p>Legacy roll preserved. Convert free to the current normal card after removing it.</p><button data-a="convertcard" data-v="${it.id}">Preview conversion</button>`:''}`;
+  if(it.card)return`<b class="r${GI[it.g]}">${esc(cardName(it))}</b><div>${cardEffects(it).map(cardEffectText).join(' · ')}</div><small>Fits: ${(it.fit||CARD_FITS[it.stat]||[]).join(', ')}. One per monster family per item; up to two boss cards and two Crit DMG cards per item; no build-wide boss limit.</small>${it.legacy?`<p>Legacy roll preserved. Convert free to the current normal card after removing it.</p><button data-a="convertcard" data-v="${it.id}">Preview conversion</button>`:''}`;
   // v74: the class tier of a piece is part of its description, and a piece that came off a class
   // remembers who was wearing it so the lock is never a mystery: "it is locked BECAUSE Knight had
   // it on, and it goes back on the moment you switch to Knight again".
@@ -4714,7 +4823,7 @@ const V={
       // the bottom of a full bag.
       return tile+(on?detail:'')}).join('')}</div>
     ${sel?'':'<div class="mob-card" style="margin-top:8px"><small>Click an item to see its stats. Hover for a quick tooltip.</small></div>'}`},
-  equip(){const c=C(),sel=S.eq[selE];
+  equip0(){const c=C(),sel=S.eq[selE];
     const slotCell=k=>{const code=EQK.find(x=>x[0]===k);if(!code||(k==='off'&&!canShield()&&!dualWield()))return'<div class="cell empty"></div>';const[l,ic]=[code[1],code[2]],e=S.eq[k];
       return `<div class="cell b${e?dtier(e):0}${e&&+e.sec>=4?' nm':''}${selE===k?' sel':''}" data-a="seleq" data-v="${k}" ${e?`data-tip="${e.id}"`:''}>${e?icon(e)+(e.locked?'<i class="lockstar" title="Locked gear" aria-label="Locked">&#9733;</i>':'')+(e.r?`<i class="rf">+${e.r}</i>`:''):`<span style="opacity:.3">${ic}</span>`}<i class="rf" style="left:2px;right:auto;top:2px;bottom:auto;color:#fff;background:#3b2a1add;font-size:9px;font-style:normal">${k==='weapon'&&katarOnly()?'2H Katar':l}</i></div>`};
     // v51: the detail card is inserted into the doll right below the row that owns the clicked
@@ -4725,11 +4834,11 @@ const V={
     const rowAt=rows.findIndex(r=>r.includes(selE));
     return`<div class="doll">${rows.map((r,i)=>r.map(slotCell).join('')+(i===rowAt?detail:'')).join('')}</div>`
     +`<small>Weapons: ${c.wt.join(', ')} &middot; ${canShield()?'Shield allowed':'No shield'}${katarOnly()?' &middot; <b>Two-handed Katar, or a dagger in each hand</b>':''}</small>`},
-  cards(){const g={};S.cards.forEach(c=>(g[c.n]=g[c.n]||[]).push(c));const ks=Object.keys(g),sel=g[selC]?g[selC][0]:null;
-    return`<div class="grid">${ks.map(n=>`<div class="cell b${GI[g[n][0].g]}${n===selC?' sel':''}" data-a="selc" data-v="${n}" data-tip="${g[n][0].id}">🃏<i class="rf">x${g[n].length}</i></div>`).join('')||'<small>No cards yet. Every monster drops its own card at a low chance.</small>'}</div>
-    ${sel?`<div class="mob-card" style="margin-top:8px">${itemDetail(sel)}<div class="row" style="margin-top:6px">${EQK.map(([k,l])=>{const e=S.eq[k];return e&&(e.cards||[]).length<(e.slots||0)&&cardFits(sel,e)?`<button data-a="sock" data-v="${sel.id}:${k}">&rarr; ${l}</button>`:''}).join('')}<button data-a="sellcard" data-v="${sel.id}">Sell ${sel.v*150}z</button></div></div>`:''}`},
-  refine(){return`<div class="hd">Oridecon: ${S.ore.ori} &middot; Elunium: ${S.ore.elu} &middot; Refine Scrolls: ${safeCount(S.refineScrolls)}</div><small>Weapons use Oridecon; armor, shield, legs, headgear and accessories use Elunium. Regular mobs drop both at 0.5% on Stages 1-9 and 1% on Stage 10; Stage 10 MVPs drop both at 2.5%. Each attempt costs 1 ore on Common and Fine pieces, 2 on Rare and Epic, 5 on Legendary, and 10 on N and N+. The Refine Scroll is a placeholder with no effect yet, and stored scrolls are not consumed by refining.</small>`
-    +dpsPanel()+EQK.map(([k,l])=>{const it=S.eq[k];if(!it)return'';const r=it.r||0,o=it.slot==='weapon'?'ori':'elu',c=refCost(it);
+  cards(){const g={};S.cards.forEach(c=>{const k=cardGroup(c);(g[k]=g[k]||[]).push(c)});const ks=Object.keys(g),sel=g[selC]?g[selC][0]:null;
+    return`<p>Merge identical cards: ★ +9%, ★★ +12%, ★★★ +15% effects. Each step consumes 1 / 3 / 5 extra unstarred copies (10 cards total for ★★★). Normal and Nightmare merge separately. Starred cards are protected from Mastery donations and resets.</p><div class="grid">${ks.map(n=>`<div class="cell b${GI[g[n][0].g]}${n===selC?' sel':''}" data-a="selc" data-v="${esc(n)}" data-tip="${g[n][0].id}">🃏<small>${"★".repeat(cardStars(g[n][0]))}</small><i class="rf">x${g[n].length}</i></div>`).join('')||'<small>No cards yet. Every monster drops its own card at a low chance.</small>'}</div>
+    ${sel?`<div class="mob-card" style="margin-top:8px">${itemDetail(sel)}<div class="row" style="margin-top:6px">${EQK.map(([k,l])=>{const e=S.eq[k];return e&&(e.cards||[]).length<(e.slots||0)&&cardFits(sel,e)?`<button data-a="sock" data-v="${sel.id}:${k}">&rarr; ${l}</button>`:''}).join('')}${!sel.legacy&&sel.cardKey&&cardStars(sel)<3?`<button data-a="mergecard" data-v="${sel.id}">Merge to ${cardStars(sel)+1}★ · ${CARD_MERGE_COST[cardStars(sel)]} extra copies</button>`:""}<button data-a="sellcard" data-v="${sel.id}">Sell ${sel.v*150}z</button></div></div>`:''}`},
+  refine(){return`<div class="hd">Oridecon: ${S.ore.ori} &middot; Elunium: ${S.ore.elu} &middot; Refine Scrolls: ${safeCount(S.refineScrolls)}</div><small>Weapons use Oridecon; armor, shield, legs, headgear and accessories use Elunium. Regular mobs drop both at 0.5% on Stages 1-9 and 1% on Stage 10; Stage 10 MVPs drop both at 2.5%. Each attempt costs 1 ore on Common and Fine pieces, 2 on Rare and Epic, 5 on Legendary, and 10 on N and N+. Enable Refine Scroll protection below: one scroll is consumed on every selected attempt from current +5 or higher, including success, and keeps your rank on failure. Success chance is unchanged. Crafted Drop Protection Scrolls remain an automatic fallback.</small>`
+    +`${refineProtectionUI()}`+dpsPanel()+EQK.map(([k,l])=>{const it=S.eq[k];if(!it)return'';const r=it.r||0,o=it.slot==='weapon'?'ori':'elu',c=refCost(it);
       return`<div class="slot" style="align-items:flex-start;gap:10px;margin-top:6px">${cell(it,false)}<div style="flex:1"><b class="${rarCls(it)}">${iname(it)}</b> <small>${l}</small><br><small>${SLOTS[it.slot].stat} +${ev(it)} &rarr; +${Math.round(it.val*(1+(r+1)*.15))} &middot; ${r>=10?'MAX':'Success '+refCh(it)+'% &middot; '+c.toLocaleString()+'z + '+refOre(it)+' '+ORE[o]}</small><br><button data-a="refine" data-v="${k}" ${r>=10||S.ore[o]<refOre(it)||S.zeny<c?'disabled':''}>Refine</button></div></div>`}).join('')},
   pet(){const P=S.pets,A=P.filter(p=>p.on).length,p=gp(selP);
     return`<div class="hd">Pets <small>Fighting ${A}/3 &middot; Collection ${P.length}</small></div><small>Pets drop from monsters, and every species has a signature passive - a duplicate folds into the copy you own and raises that species' Bond. Drop odds per map are on the World Map.</small><div class="grid" style="margin-top:6px">${P.map(q=>{const sp=PETS[q.sp];return`<div class="cell b${RCL[sp.r]}${selP===q.id?' sel':''}" style="font-size:30px" data-a="selp" data-v="${q.id}">${petIcon(sp)}${q.on?'<i class="rf" style="left:2px;right:auto;top:2px;bottom:auto;font-style:normal">ON</i>':''}${q.mut?`<i class="rf">G${q.mut}</i>`:''}<span class="pet-bond-badge">${bondStars(q.sp)}</span></div>`}).join('')||'<small>No pets yet.</small>'}</div>`+(p?petDetail(p):'<small>Select a pet to manage it.</small>')},
@@ -4768,9 +4877,9 @@ const V={
 // offered for every worn piece that has an affix.
 V.guide=()=>buildGuide(true);
 V.market=()=>{const guide=`<div class="build-guide"><button data-t="guide">${uiIcon('guide')} Build &amp; farming guide · Upgrade planner</button></div>`;if(!bmOpen())return guide+`<p>Black Market opens at Base Lv ${BM_LV}.</p>`;
-const ores=Object.entries(ORE).map(([o,n])=>`<div class="slot"><b>${n}</b><button data-a="bmore" data-v="${o}" ${S.zeny<BM_ORE?'disabled':''}>Buy 1 · ${BM_ORE.toLocaleString()}z</button></div>`).join('');
+const ores=Object.entries(ORE).map(([o,n])=>`<div class="slot"><b>${n}</b><label>Quantity<input class="ore-quantity" id="oreQty-${o}" type="number" min="1" max="1000000" step="1" value="${esc(marketQty[o])}" aria-label="${n} quantity"></label><small>${BM_ORE.toLocaleString()}z each · <output id="oreTotal-${o}">${Number.isSafeInteger(Number(marketQty[o]))&&Number(marketQty[o])>0?(Number(marketQty[o])*BM_ORE).toLocaleString()+'z total':'Enter a whole quantity'}</output></small><button data-a="bmore" data-v="${o}" ${S.zeny<BM_ORE?'disabled':''}>Buy quantity</button></div>`).join('');
 const mats=NM_MAT.map((n,i)=>`<div class="slot"><b>${n}</b><button data-a="bmmat" data-v="${i}" ${S.zeny<BM_MAT_PRICE?'disabled':''}>Buy 1 · ${BM_MAT_PRICE.toLocaleString()}z</button></div>`).join('');
-return guide+`<div class="hd">Black Market · ${S.zeny.toLocaleString()}z</div>`+ores+'<div class="sec">Nightmare materials</div><small>3,000,000z each</small>'+mats+'<div class="sec">Reforge</div>'+reforgePanel()};
+return guide+`<div class="hd">Black Market · ${S.zeny.toLocaleString()}z</div>`+ores+`<div class="slot"><b>Refine Scroll</b><small>Enable in Equipment → Refine from current +5 or higher. One scroll per selected attempt, including success; prevents rank loss on failure.</small><button data-a="buyscroll" ${S.zeny<BM_SCROLL?'disabled':''}>Buy 1 · 80,000,000z</button></div>`+'<div class="sec">Nightmare materials</div><small>3,000,000z each</small>'+mats+'<div class="sec">Reforge</div>'+reforgePanel()};
 V.index=()=>`<div class="mastery-head"><div class="mastery-emblem">✦</div><div><b>Midgard Mastery Index</b><small>Individual monsters, Index XP and per-card rewards</small></div><span class="mastery-counter">${indexExperience().toLocaleString()} Index XP</span></div><div class="mastery-tabs"><button data-a="indexview" data-v="mobs" class="${indexMode==='mobs'?'on':''}" aria-pressed="${indexMode==='mobs'}">⚔ Mob Index</button><button data-a="indexview" data-v="cards" class="${indexMode==='cards'?'on':''}" aria-pressed="${indexMode==='cards'}">🃏 Card Mastery</button><button data-t="guide">${uiIcon('guide')} Build &amp; farming guide</button></div>${indexMode==='mobs'?renderMobIndex():renderCardIndex()}`;
 const EQK=[['head','Head','🎩'],['weapon','R.Hand','⚔️'],['armor','Body','🥼'],['off','L.Hand','🛡️'],['acc1','Acc 1','💍'],['leg','Legs','👖'],['acc2','Acc 2','💍']];
 const CFIT={matk:'weapon',move:'acc',hpPct:'armor',def:'armor',mdef:'head',field:'weapon',str:'weapon',dex:'weapon',atk:'weapon',crit:'weapon',cdm:'weapon',agi:'armor',aspd:'armor',flee:'armor',vit:'armor',int:'head',hp:'head',luk:'acc'},CFL={weapon:'Weapons',armor:'Armor, Shield & Legwear',head:'Headgear',acc:'Accessories'};
@@ -4781,7 +4890,7 @@ function katarOnly(cls=S.cls){return cls==='Assassin'||cls==='Assassin Cross'}
 // one blade, and the katar is not theirs either. dualWield() is what opens the left-hand slot.
 function dualWield(cls=S.cls){const c=CLASSES[cls]||CLASSES.Novice;return c.wt.includes('dagger')&&c.wt.includes('katar')}
 function ekey(it){if(it.slot==='acc')return S.eq.acc1&&!S.eq.acc2?'acc2':'acc1';return it.slot}
-const tabs=[];let selP=null,selS=null,selE='weapon',qOpen=true,sideOpen=false,eqPick=null,indexMode='mobs';const sub={status:'stats',bag:'bag'};
+const tabs=[];let selP=null,selS=null,selE='weapon',qOpen=true,sideOpen=false,eqPick=null,indexMode='mobs';const sub={status:'stats',bag:'bag',equip:'equip0'};
 // The Index window is rebuilt on every game update, so a native <details> would slam shut the
 // moment a kill or level-up re-renders it. Remember each map's open/closed choice per tab and
 // feed it back into the markup, so reading another map's ledger stays readable.
@@ -4814,8 +4923,9 @@ function equipIn(k,id){const it=S.inv.find(x=>String(x.id)===String(id));
   if(!it)return;if(!slotAccepts(k,it)){log('Your class cannot use that there.');return}
   const old=S.eq[k];S.eq[k]=it;S.inv.splice(S.inv.indexOf(it),1);if(old)S.inv.push(old);
   S.hp=Math.min(S.hp,maxHp());log('Equipped '+iname(it)+' ('+EQK.find(x=>x[0]===k)[1].toLowerCase()+').','','gear');ui();save()}
-const SUBS={status:[['stats','Stats'],['equip','Equipment']],bag:[['bag','Bag'],['cards','Cards']]};
+const SUBS={equip:[['equip0','Loadout'],['refine','Refine (R)']],status:[['stats','Stats']],bag:[['bag','Bag'],['cards','Cards']]};
 const subBar=t=>`<div class="atabs">${SUBS[t].map(([k,n])=>`<button data-a="sub" data-v="${t}:${k}" class="${sub[t]===k?'on':''}">${n}</button>`).join('')}</div>`;
+V.equip=()=>subBar('equip')+V[sub.equip]();
 V.status=()=>subBar('status')+V[sub.status]();V.bag=()=>subBar('bag')+V[sub.bag==='bag'?'bag0':sub.bag]();
 function renderTitleTrack(){
   const xp=indexExperience();
@@ -4873,13 +4983,13 @@ function cardGachaPanel(){
 }
 function renderCardIndex(){
   const ci=S.cardIndex||emptyCardIndex(),byName=ci.byName||{},donated=safeCount(ci.donated),total=cardMasteryTotal(),available=cardMasteryAvailable(),rolled=cardMasteryRolled(),album=[...CARD_NAMES],max=album.length*CARD_MASTERY_PER_CARD,registered=album.filter(name=>cardMasteryLevel(name)>0).length,bar=max?Math.min(100,total/max*100):0;
-  const groups=new Map();for(const c of S.cards||[]){const key=`${c.n}|${c.g}|${c.stat}`;if(!groups.has(key))groups.set(key,{card:c,cards:[]});groups.get(key).cards.push(c)}
+  const groups=new Map();for(const c of (S.cards||[]).filter(c=>!c.stars)){const key=`${c.n}|${c.g}|${c.stat}`;if(!groups.has(key))groups.set(key,{card:c,cards:[]});groups.get(key).cards.push(c)}
   const inventory=[...groups.values()].sort((a,b)=>b.card.g-a.card.g||a.card.n.localeCompare(b.card.n));
   // v57: the un-tabbed list was too long - default to the rarest loose rarity, keep All one tap away.
   const rarest=inventory.length?Math.max(...inventory.map(x=>x.card.g)):-1;
   const tab=cardGrade==='all'?'all':inventory.some(x=>x.card.g===cardGrade)?cardGrade:rarest;
   return `<div class="mastery-summary"><b>🃏 Per-Card Mastery</b><span>${registered}/${album.length} cards discovered · ${total}/${max} mastery ranks · ${donated.toLocaleString()} copies dedicated</span>
-    <small>Each card has ${CARD_MASTERY_PER_CARD} ranks, and every rank you master gives <b>1 token</b>. Spend a token on the gacha for one random permanent stat. A reset costs 1 Legendary card, clears every rolled stat and refunds all spent tokens. Socketed cards stay in equipment and cannot be dedicated.</small></div>
+    <small>Each card has ${CARD_MASTERY_PER_CARD} ranks, and every rank you master gives <b>1 token</b>. Spend a token on the gacha for one random permanent stat. A reset costs 1 Legendary card, clears every rolled stat and refunds all spent tokens. Socketed and starred cards cannot be dedicated or spent on resets.</small></div>
     <div class="mastery-progress-card"><div><b>${total}/${max}</b> card mastery ranks <small>· ${available} token${available===1?'':'s'} ready · ${rolled} rolled</small></div><div class="mastery-track"><i style="width:${bar.toFixed(1)}%"></i></div></div>
     ${cardGachaPanel()}
     <div class="mastery-section-title">📥 Card Index available <small>${(S.cards||[]).length} in your card bag</small></div>
@@ -4892,11 +5002,23 @@ function renderCardIndex(){
 }
 
 const qpSide=()=>`<button data-q="side" class="qp-side-toggle" aria-controls="sideLinks" aria-expanded="${sideOpen}">${uiIcon('index')} Adventurer Hub <span class="side-chevron${sideOpen?' open':''}">${uiIcon('chevron')}</span></button><div id="sideLinks" ${sideOpen?'':'hidden'}>${SIDE_TABS.map(k=>`<button data-t="${k}" class="qp-side-tab${tabs.includes(k)?' on':''}" aria-pressed="${tabs.includes(k)}">${uiIcon(k)} ${TABS[k][1]} <small>${TABS[k][2]}</small></button>`).join('')}</div>`;
+function applyDisplay(){
+ document.body.classList.toggle('clean-screen',!!S.hideUI);
+ document.body.classList.toggle('hide-damage',S.dmgShow===false||!!S.hideUI);
+ document.body.classList.toggle('hide-feed',S.feedShow===false);
+ document.body.classList.toggle('hide-labels',S.labelsShow===false);
+}
+function screenOptions(){const panel=$('screenOptions');panel.hidden=!panel.hidden;$('screenBtn').setAttribute('aria-expanded',String(!panel.hidden));
+ panel.innerHTML=[['dmgShow','Damage numbers'],['auraShow','Character aura'],['feedShow','Activity log'],['labelsShow','Character / monster labels'],['hideUI','Hide all screen UI (Display stays available)']].map(([key,label])=>`<label><input type="checkbox" data-display="${key}" ${key==='hideUI'?S[key]?'checked':'':S[key]!==false?'checked':''}>${label}</label>`).join('');
+}
+document.addEventListener('input',e=>{if(e.target.id?.startsWith('oreQty-')){const o=e.target.id.slice(7),n=Number(e.target.value),out=$('oreTotal-'+o);marketQty[o]=e.target.value;if(out)out.textContent=Number.isSafeInteger(n)&&n>0?(n*BM_ORE).toLocaleString()+'z total':'Enter a whole quantity';}});
+$('screenBtn').onclick=()=>{if(S)screenOptions()};
+$('screenOptions').onchange=e=>{const key=e.target.dataset.display;if(!['dmgShow','auraShow','feedShow','labelsShow','hideUI'].includes(key))return;S[key]=e.target.checked;applyDisplay();save()};
 function renderQ(){const e=$('qp'),rail=$('sideRail');if(!S){rail.style.display='none';return}rail.style.display=tabs.length?'none':'flex';e.style.display='block';
-  e.innerHTML=`<div class="qp-head"><b>${uiIcon('quest')} Quests</b><div class="qp-actions"><button data-q="t" aria-expanded="${qOpen}" aria-label="${qOpen?'Collapse':'Expand'} quests">${uiIcon(qOpen?'minus':'chevron')}</button></div></div>`+(qOpen?(S.q||[]).map((q,i)=>`<div class="quest-entry"><div>${qTxt(q)}</div><div class="pbar"><i style="width:${Math.min(100,q.prog/q.goal*100)}%"></i></div><div class="quest-reward"><small>${q.prog}/${q.goal} &middot; ${(q.z||0).toLocaleString()}z &middot; ${(q.xp||0).toLocaleString()}xp</small>${q.prog>=q.goal?`<button data-q="c${i}">Claim</button>`:''}</div></div>`).join(''):'');
+  e.innerHTML=`<div class="qp-head"><b>${uiIcon('quest')} Quests</b><div class="qp-actions"><button data-q="t" aria-expanded="${qOpen}" aria-label="${qOpen?'Collapse':'Expand'} quests">${uiIcon(qOpen?'minus':'chevron')}</button></div></div>`+(qOpen?contractPanel()+(S.q||[]).map((q,i)=>q.prog<q.goal?'':`<div class="quest-entry"><div>${qTxt(q)}</div><div class="pbar"><i style="width:${Math.min(100,q.prog/q.goal*100)}%"></i></div><div class="quest-reward"><small>${q.prog}/${q.goal} &middot; ${(q.z||0).toLocaleString()}z &middot; ${(q.xp||0).toLocaleString()}xp</small>${q.prog>=q.goal?`<button data-q="c${i}">Claim</button>`:''}</div></div>`).join(''):'');
   $('sideMenu').innerHTML=qpSide();polishIcons(e)}
-$('sideRail').onclick=e=>{const d=e.target.closest('[data-t]');if(d){openTab(d.dataset.t);return}const b=e.target.closest('[data-q]');if(!b)return;const v=b.dataset.q;if(v==='side'){sideOpen=!sideOpen;renderQ();return}if(v==='t'){qOpen=!qOpen;renderQ()}else ACT.claim(v.slice(1))};
-function refineUI(it,k){const r=it.r||0,o=it.slot==='weapon'?'ori':'elu',c=refCost(it),need=refOre(it);return`<div class="sec">Refine</div><small>${SLOTS[it.slot].stat} +${ev(it)} &rarr; +${Math.round(it.val*(1+(r+1)*.15))} &middot; ${r>=10?'MAX':'Success '+refCh(it)+'% &middot; '+c.toLocaleString()+'z + '+need+' '+ORE[o]+' (you have '+S.ore[o]+')'}</small><div class="row" style="margin-top:4px"><button data-a="refine" data-v="${k}" ${r>=10||S.ore[o]<need||S.zeny<c?'disabled':''}>Refine</button></div>`}
+$('sideRail').onclick=e=>{const d=e.target.closest('[data-t]');if(d){openTab(d.dataset.t);return}const b=e.target.closest('[data-q]');if(!b)return;const v=b.dataset.q;if(v==='daily'||v==='all'){questView=v;renderQ();return}if(v.startsWith('contract:')){claimContract(v.slice(9));return}if(v==='side'){sideOpen=!sideOpen;renderQ();return}if(v==='t'){qOpen=!qOpen;renderQ()}else ACT.claim(v.slice(1))};
+function refineUI(it,k){const r=it.r||0,o=it.slot==='weapon'?'ori':'elu',c=refCost(it),need=refOre(it);return`<div class="sec">Refine</div>${refineProtectionUI()}<small>${SLOTS[it.slot].stat} +${ev(it)} &rarr; +${Math.round(it.val*(1+(r+1)*.15))} &middot; ${r>=10?'MAX':'Success '+refCh(it)+'% &middot; '+c.toLocaleString()+'z + '+need+' '+ORE[o]+' (you have '+S.ore[o]+')'}</small><div class="row" style="margin-top:4px"><button data-a="refine" data-v="${k}" ${r>=10||S.ore[o]<need||S.zeny<c?'disabled':''}>Refine</button></div>`}
 // v75: one pet per species. petFold() takes a duplicate and folds it into the pet you already
 // own - the better mutation survives, each gear slot keeps its better level, a skill the older
 // pet was missing moves into its free slot, and the species gains +1 Bond. It returns what
@@ -4944,7 +5066,7 @@ function petDetail(p){const sp=PETS[p.sp],g=p.mut,sk=p.sk||[1,2,3],SL=petSkills(
   +`<small>Odds: G1 50% &middot; G2 30% &middot; G3 16.5% &middot; G4 2.5% &middot; G5 0.8% &middot; G6 0.2%</small></div>`}
 function ask(msg,yes,labels={}){$('mt').textContent=msg;$('my').textContent=labels.yes||'Yes';$('mn').textContent=labels.no||'Cancel';$('modal').style.display='flex';$('my').onclick=()=>{$('modal').style.display='none';yes()};$('mn').onclick=()=>{$('modal').style.display='none'}}
 function insertUI(sel){if(!(sel.slots>0))return'<small>No card slots on this item.</small>';if((sel.cards||[]).length>=sel.slots)return'';const fit=S.cards.filter(c=>cardFits(c,sel));
-  return'<div class="sec">Insert card</div>'+([...new Map(fit.map(c=>[c.n,c])).values()].map(c=>`<div class="slot"><span class="r${GI[c.g]}">🃏 ${c.n} <small>${cardEffects(c).map(cardEffectText).join(', ')} &middot; x${fit.filter(x=>x.n===c.n).length}</small></span><button data-a="sock" data-v="${c.id}:${selE}">Insert</button></div>`).join('')||'<small>No compatible cards in your bag.</small>')}
+  return'<div class="sec">Insert card</div>'+([...new Map(fit.map(c=>[cardGroup(c),c])).values()].map(c=>`<div class="slot"><span class="r${GI[c.g]}">🃏 ${esc(cardName(c))} <small>${cardEffects(c).map(cardEffectText).join(', ')} &middot; x${fit.filter(x=>cardGroup(x)===cardGroup(c)).length}</small></span><button data-a="sock" data-v="${c.id}:${selE}">Insert</button></div>`).join('')||'<small>No compatible cards in your bag.</small>')}
 // v76.2: `anchor` is a selector for the control the player just pressed (a stage node, a map card).
 // A rebuild replaces every window, so on its own it can leave the tapped control off-screen - that is
 // the "hopping" the owner saw on a phone. The scroll of the real scroller is restored by number, and
@@ -4966,8 +5088,8 @@ function arrangePanel(k,root){
   const q=s=>body.querySelector(s),all=s=>[...body.querySelectorAll(s)];
   const direct=()=>[...body.children];
   const tabs=q('.atabs');if(tabs)root.prepend(tabs);
-  const mode=k==='status'?sub.status:k==='bag'?sub.bag:k;
-  const labels={map:['EXPLORE','World atlas','Choose a destination, then a stage.'],stats:['CHARACTER',S.cls,'Base '+S.lv+' · Job '+jobOf().jl+' · '+S.pts+' stat points'],equip:['CHARACTER','Your loadout','Select a slot to compare, refine or socket.'],job:['PROGRESSION','Class paths','Browse a path. Inspect a class. Make your next move.'],skills:['COMBAT','Skill library',skpAvail()+' points available · '+S.cls],bag:['INVENTORY','Field kit',S.inv.length+' / '+BAGMAX+' items'+(S.inv.length>=BAGMAX?' · BAG FULL':'')+(clickSellOn()?' · CLICK-SELL ACTIVE':'')],cards:['INVENTORY','Card collection',(S.cards||[]).length+' loose cards · select one to socket or sell'],pet:['COMPANIONS','Your party',S.pets.filter(p=>p.on).length+' / 3 in battle · '+S.pets.length+' collected'],guide:['HANDBOOK','Build & Farming Guide','Plan your build. Find your next farming target.'],market:['TRADE','Black Market',S.zeny.toLocaleString()+' Zeny available'],index:['COLLECTION','Mastery journal','Track discoveries and permanent rewards.'],board:['COMMUNITY','Leaderboard','Your place among the adventurers.'],log:['SESSION','Activity feed','Filter your feed without interrupting the grind.'],set:['PREFERENCES','Make it yours','Appearance, combat display and account controls.'],gm:['ADMINISTRATION','Game tools','Test controls grouped by system.']};
+  const mode=k==='status'?sub.status:k==='bag'?sub.bag:k==='equip'?(sub.equip==='equip0'?'equip':sub.equip):k;
+  const labels={refine:['EQUIPMENT','Refinement workshop','Choose when to protect your equipment.'],map:['EXPLORE','World atlas','Choose a destination, then a stage.'],stats:['CHARACTER',S.cls,'Base '+S.lv+' · Job '+jobOf().jl+' · '+S.pts+' stat points'],equip:['CHARACTER','Your loadout','Select a slot to compare, refine or socket.'],job:['PROGRESSION','Class paths','Browse a path. Inspect a class. Make your next move.'],skills:['COMBAT','Skill library',skpAvail()+' points available · '+S.cls],bag:['INVENTORY','Field kit',S.inv.length+' / '+BAGMAX+' items'+(S.inv.length>=BAGMAX?' · BAG FULL':'')+(clickSellOn()?' · CLICK-SELL ACTIVE':'')],cards:['INVENTORY','Card collection',(S.cards||[]).length+' loose cards · select one to socket or sell'],pet:['COMPANIONS','Your party',S.pets.filter(p=>p.on).length+' / 3 in battle · '+S.pets.length+' collected'],guide:['HANDBOOK','Build & Farming Guide','Plan your build. Find your next farming target.'],market:['TRADE','Black Market',S.zeny.toLocaleString()+' Zeny available'],index:['COLLECTION','Mastery journal','Track discoveries and permanent rewards.'],board:['COMMUNITY','Leaderboard','Your place among the adventurers.'],log:['SESSION','Activity feed','Filter your feed without interrupting the grind.'],set:['PREFERENCES','Make it yours','Appearance, combat display and account controls.'],gm:['ADMINISTRATION','Game tools','Test controls grouped by system.']};
   const info=labels[mode]||labels[k];
   if(info){const h=make('header','ui-hero');put(h,make('span','ui-eyebrow',info[0]),make('h2','',info[1]),make('p','',info[2]));root.insertBefore(h,body)}
   if(k==='map'){
@@ -5026,7 +5148,7 @@ function arrangePanel(k,root){
     body.replaceChildren(split(catalog,panel),fold('Pet drops & bonding',notes,'pet-notes'));
   }else if(k==='market'){
     if(!bmOpen())return;
-    const guide=q('.build-guide'),offer=q('.reforge-offer');const ore=all('.slot').filter(e=>e.querySelector('[data-a="bmore"]')),materials=all('.slot').filter(e=>e.querySelector('[data-a="bmmat"]')),reforge=all('.slot').filter(e=>e.querySelector('[data-a="bmref"]'));
+    const guide=q('.build-guide'),offer=q(':scope > .reforge-offer');const ore=all('.slot').filter(e=>e.querySelector('[data-a="bmore"],[data-a="buyscroll"]')),materials=all('.slot').filter(e=>e.querySelector('[data-a="bmmat"]')),reforge=all('.slot').filter(e=>e.querySelector('[data-a="bmref"]'));
     const notes=direct().filter(e=>!ore.includes(e)&&!materials.includes(e)&&!reforge.includes(e)&&e!==guide&&e!==offer);
     body.replaceChildren(...[offer,guide].filter(Boolean),put(section('Refining supplies','ui-store-grid'),ore),fold('Nightmare materials · '+materials.length,put(make('div','ui-store-grid'),materials),'materials'),put(section('Reforge worn equipment','ui-reforge'),reforge.length?reforge:make('p','ui-empty','Wear equipment with affixes to reforge it.')),fold('Market information',notes,'market-notes'));
   }else if(k==='index'){
@@ -5051,8 +5173,8 @@ function arrangePanel(k,root){
   }
 }
 
-const DOCK_TABS=['map','status','job','skills','bag','pet','market','log','set','gm'];
-const DOCK_LABEL={map:'World',status:'Character',job:'Jobs',skills:'Skills',bag:'Bag',pet:'Pets',index:'Mastery',market:'Market',board:'Ranks',log:'Log',set:'Settings',gm:'GM'};
+const DOCK_TABS=['map','status','equip','job','skills','bag','pet','market','log','set','gm'];
+const DOCK_LABEL={map:'World',status:'Character',equip:'Equipment',refine:'Refine',job:'Jobs',skills:'Skills',bag:'Bag',pet:'Pets',index:'Mastery',market:'Market',board:'Ranks',log:'Log',set:'Settings',gm:'GM'};
 function renderDock(){
   const dock=$('dock'),keys=DOCK_TABS.filter(k=>k!=='gm'||S.gm),current=[...dock.querySelectorAll(':scope > [data-t]')];
   // Kills call ui() and therefore renderWin(). Replacing the whole dock on every kill reset the
@@ -5118,7 +5240,7 @@ function renderWin(anchor){
     expand.dataset.uiExpand=k;expand.innerHTML=uiIcon(expandedPanels.has(k)?'compact':'expand');expand.setAttribute('aria-label',(expandedPanels.has(k)?'Compact ':'Maximize ')+name);expand.setAttribute('aria-pressed',String(expandedPanels.has(k)));expand.title='Toggle compact / expanded layout';
     close.dataset.x=k;close.setAttribute('aria-label','Close '+name);
     const body=win.querySelector('.wbody'),source=V[k]();
-    if(body._panelSource!==source&&!body.querySelector('.autosell-editor input[type=number]:focus,.autosell-editor textarea:focus')){
+    if(body._panelSource!==source&&!body.querySelector('.autosell-editor input[type=number]:focus,.autosell-editor textarea:focus,.ore-quantity:focus')){
       const fresh=document.createElement('div');fresh.className=body.className;fresh.innerHTML=source;arrangePanel(k,fresh);polishIcons(fresh);
       if(k!=='index'||!patchJournal(body,fresh)){body.replaceChildren(...fresh.childNodes);body.className=fresh.className;body.dataset.layout=fresh.dataset.layout}
       body._panelSource=source;body.dataset.panelChanged='1';
@@ -5152,7 +5274,7 @@ if(typeof addEventListener==='function'){addEventListener('pointerup',winUp);add
 if($('wins')&&$('wins').addEventListener)$('wins').addEventListener('pointerdown',()=>{winPress=true});
 const MAX_TABS=3;const openTab=k=>{if(k==='gm'&&!S.gm)return;const i=tabs.indexOf(k);if(k==='skills'&&i>=0)selS=null;if(k!=='status')eqPick=null;if(i>=0)tabs.splice(i,1);else{if(tabs.length>=MAX_TABS)tabs.shift();tabs.push(k);
   // Reopening a window starts at its first sub-tab: Status shows Stats, Inventory shows Bag.
-  if(k==='status')sub.status='stats';if(k==='bag')sub.bag='bag';
+  if(k==='status')sub.status='stats';if(k==='bag')sub.bag='bag';if(k==='equip')sub.equip='equip0';
   if(k==='map'){mapM=S.mp;mapL=S.lvl}}renderWin();if(k==='board'&&tabs.includes('board'))boardRefresh(boardPeriod)};
 const gotoField=(m,l)=>{
   // v77: travelling cancels a run. Leaving the arena is the same door as pressing Leave - a ranked
@@ -5197,7 +5319,7 @@ const ACT={
   eqclose:()=>{eqPick=null;renderWin()},
   eqopen:k=>{eqPick=null;sub.bag='bag';if(!tabs.includes('bag')){if(tabs.length>=MAX_TABS)tabs.shift();tabs.push('bag')}selB=S.eq[k]?S.eq[k].id:null;renderWin()},
   selc:v=>{selC=v;renderWin()},
-  sock:v=>{const[id,k]=v.split(':'),i=S.cards.findIndex(c=>String(c.id)===id),e=S.eq[k];if(i<0||!e||(e.cards||[]).length>=(e.slots||0))return;if(!cardFits(S.cards[i],e)){log('That card cannot be fitted into this type of equipment.');return}const why=socketWhy(S.cards[i],e);if(why){log(why,'','card');return}e.cards=e.cards||[];e.cards.push(S.cards.splice(i,1)[0]);S.hp=Math.min(S.hp,maxHp());ui();save()},
+  sock:v=>{const[id,k]=v.split(':'),i=S.cards.findIndex(c=>String(c.id)===id),e=S.eq[k];if(i<0||!e||(e.cards||[]).length>=(e.slots||0))return;if(!cardFits(S.cards[i],e)){log('That card cannot be fitted into this type of equipment.');return}const why=socketWhy(S.cards[i],e);if(why){log(why,'','card');return}e.cards=e.cards||[];e.cards.push(S.cards.splice(i,1)[0]);questEvent('socket');S.hp=Math.min(S.hp,maxHp());ui();save()},
   unsock:v=>{const[k,i]=v.split(':'),e=S.eq[k];if(!e)return;const c=e.cards[+i],p=S.freeCardRemoval?0:200*(c.g+1);if(S.zeny<p)return log('Not enough Zeny to remove the card.');S.zeny-=p;e.cards.splice(+i,1);S.cards.push(c);S.hp=Math.min(S.hp,maxHp());ui();save()},
   sellcard:id=>{const i=S.cards.findIndex(c=>String(c.id)===id);if(i<0)return;const c=S.cards.splice(i,1)[0];earnZeny(c.v*150);ui();save()},
   indexview:v=>{if(v==='guide'){if(!tabs.includes('guide'))openTab('guide');return}if(v==='mobs'||v==='cards'){indexMode=v;renderWin()}},
@@ -5220,7 +5342,7 @@ const ACT={
     log(`🃏 ${name}: dedicated ${r.donated} cop${r.donated===1?'y':'ies'} - mastery ${r.level}/${CARD_MASTERY_PER_CARD}${r.left?`, ${r.left} left in the bag`:''}.`,'r3','card');
     addFloat(pl.x,2.6,pl.z,`🃏 ${name} ${r.level}/${CARD_MASTERY_PER_CARD}`,'#ffd23f');ui();save()},
   indexcard:all=>all,
-  refine:k=>refine(k),craftdps:()=>craftDps(),bmmat:o=>buyMat(+o),bmore:o=>buyOre(o),bmref:v=>{const[k,mode]=v.split(':');reforge(k,mode==='all')},refpick:v=>{const[k,i]=v.split(':'),it=S.eq[k];if(!it)return;const a=reforgeSelection[it.id]||(reforgeSelection[it.id]=[]),n=+i,j=a.indexOf(n);j<0?a.push(n):a.splice(j,1);renderWin()},refaccept:v=>resolveReforge(v==='yes'),convertcard:id=>convertCard(id),guidemode:v=>{if(['farm','boss','survive'].includes(v))guideMode=v;renderWin()},guidetier:v=>{if(['current','normal','nightmare'].includes(v))guideTier=v;renderWin()},guidemap:v=>{const[m,l]=v.split(':').map(Number);if(!tabs.includes('map'))openTab('map');mapM=m;mapL=l;renderWin()},sub:v=>{const[t,k]=v.split(':');sub[t]=k;if(t==='bag'&&k!=='bag')eqPick=null;renderWin()},selp:v=>{selP=+v;renderWin()},
+  refprotect:v=>{const n=Number(v);if(![0,5,6,7,8,9].includes(n))return;S.useRefineScroll=n>0;if(n)S.refineScrollFrom=n;ui();save()},buyscroll:()=>buyRefineScroll(),refine:k=>refine(k),craftdps:()=>craftDps(),bmmat:o=>buyMat(+o),bmore:o=>buyOre(o,$('oreQty-'+o)?.value??1),bmref:v=>{const[k,mode]=v.split(':');reforge(k,mode==='all')},refpick:v=>{const[k,i]=v.split(':'),it=S.eq[k];if(!it)return;const a=reforgeSelection[it.id]||(reforgeSelection[it.id]=[]),n=+i,j=a.indexOf(n);j<0?a.push(n):a.splice(j,1);renderWin()},refaccept:v=>resolveReforge(v==='yes'),mergecard:id=>mergeCard(id),convertcard:id=>convertCard(id),guidemode:v=>{if(['farm','boss','survive'].includes(v))guideMode=v;renderWin()},guidetier:v=>{if(['current','normal','nightmare'].includes(v))guideTier=v;renderWin()},guidemap:v=>{const[m,l]=v.split(':').map(Number);if(!tabs.includes('map'))openTab('map');mapM=m;mapL=l;renderWin()},sub:v=>{const[t,k]=v.split(':');sub[t]=k;if(t==='bag'&&k!=='bag')eqPick=null;renderWin()},selp:v=>{selP=+v;renderWin()},
   pon:id=>{const p=gp(id);if(!p)return;if(p.on)p.on=false;else if(S.pets.filter(x=>x.on).length<3)p.on=true;else log('Only 3 pets can fight at once. Remove one first.','','pet');ui();save()},
   pskill:id=>{const p=gp(id);if(!p)return;const c=petSkillCost(p);if(S.zeny<c){log('Not enough Zeny for a pet skill roll.');ui();return}S.zeny-=c;const[a,b]=rollPetSkills();p.skills=[a,b];
     clearPetCd(p.id);
@@ -5255,7 +5377,7 @@ const ACT={
   proll:id=>{const p=gp(id);if(!p||p.roll||rollingSet.has(p.id))return;rollOnce(p,false,g=>{p.roll=g;log(`Mutation roll: Grade ${g} (x${MUT[g]})`,g>=4?'r4':'r0','pet');ui();save()})},pauto:id=>{const p=gp(id);if(!p)return;if(autoSet.has(p.id)){autoSet.delete(p.id);ui();return}if(p.roll||rollingSet.has(p.id))return;if((p.sk||[1,2,3]).length>=6){log('Un-skip at least one grade to auto-roll.');return}autoSet.add(p.id);autoRoll(p)},
   pkeep:id=>{const p=gp(id);if(p){p.mut=p.roll;p.roll=0;ui();save()}},pdisc:id=>{const p=gp(id);if(p){p.roll=0;ui();save()}},
   prel:id=>{const p=gp(id);if(!p)return;const z=Math.floor(EGG*.3);ask(`Release ${PETS[p.sp].n}? You get ${z}z back.`,()=>{S.pets=S.pets.filter(x=>x!==p);autoSet.delete(p.id);clearPetCd(p.id);earnZeny(z);ui();save()})},
-  claim:i=>{const q=S.q[+i];if(q&&q.prog>=q.goal){qScale(q);earnZeny(q.z||0);earnExp(q.xp||0);log(`Quest complete! +${(q.z||0).toLocaleString()}z, +${(q.xp||0).toLocaleString()} EXP`,'r3','quest');S.q[+i]=newQuest(q.type);checkLevel();ui();save()}},
+  claim:i=>{const q=S.q[+i];if(q&&q.prog>=q.goal){earnZeny(q.z||0);earnExp(q.xp||0);log(`Quest complete! +${(q.z||0).toLocaleString()}z, +${(q.xp||0).toLocaleString()} EXP`,'r3','quest');S.q.splice(+i,1);checkLevel();ui();save()}},
   auto:()=>{S.auto=S.auto===false;ui()},adv:()=>{S.adv=S.adv===false;ui()},
 
   feed:()=>{S.feed=!feedOn();feedTab();ui();save()},
@@ -5322,7 +5444,7 @@ document.addEventListener('click',e=>{
   if(selS&&!skillInside){selS=null;if(tabs.includes('skills'))renderWin()}
 });
 addEventListener('keydown',e=>{if(!S||e.ctrlKey||e.metaKey||e.altKey||/INPUT|TEXTAREA/.test(e.target.tagName))return;const k=e.key.toUpperCase();
-  if(k==='ESCAPE'){if(feedFilShown){feedFilHide();return}tabs.pop();renderWin();return}if(k==='Q'){qOpen=!qOpen;renderQ();return}const X={E:['status','equip'],C:['bag','cards'],R:['status','equip']}[k];if(X){const same=tabs.includes(X[0])&&sub[X[0]]===X[1];sub[X[0]]=X[1];if(same)openTab(X[0]);else{if(!tabs.includes(X[0])){if(tabs.length>=MAX_TABS)tabs.shift();tabs.push(X[0])}renderWin()}return}const f=Object.entries(TABS).find(([,v])=>v[2]===k);if(f)openTab(f[0])});
+  if(k==='ESCAPE'){if(feedFilShown){feedFilHide();return}tabs.pop();renderWin();return}if(k==='Q'){qOpen=!qOpen;renderQ();return}const X={R:['equip','refine'],C:['bag','cards']}[k];if(X){const same=tabs.includes(X[0])&&sub[X[0]]===X[1];sub[X[0]]=X[1];if(same)openTab(X[0]);else{if(!tabs.includes(X[0])){if(tabs.length>=MAX_TABS)tabs.shift();tabs.push(X[0])}renderWin()}return}const f=Object.entries(TABS).find(([,v])=>v[2]===k);if(f)openTab(f[0])});
 
 $('spd').onclick=()=>{speed=speed===1?2:speed===2?4:1;$('spd').textContent='Speed x'+speed};
 const tip=$('tooltip');
@@ -5368,7 +5490,7 @@ function stepHudRate(rate,user,kills,earned,now,damage,exp){
   return{state:rate,kills:rate.killsPerMin,seconds:rate.killsPerMin/60,zeny:rate.zenyPerMin,dps:rate.dps,exp:rate.expPerMin};
 }
 const levelPct=(value,required,maxed=false)=>maxed?100:Math.min(100,Math.max(0,(+value||0)/Math.max(1,+required||1)*100));
-function bars(){if(!S)return;
+function bars(){if(!S)return;applyDisplay();
   const rates=stepHudRate(hudRate,currentUser,S.kills,zenyEarned,performance.now(),S.dmg,expEarned);hudRate=rates.state;
   const j=jobOf(),c=C(),hp=levelPct(S.hp,maxHp()),jp=levelPct(j.jx,jneed(j.jl),j.jl>=c.mj),bp=levelPct(S.exp,need(),S.lv>=150);
   $('lv').textContent=S.lv;$('cls2').textContent=S.cls;$('jl').textContent=j.jl;$('zeny').textContent=(+S.zeny||0).toLocaleString();
@@ -7288,7 +7410,7 @@ function buildLevelAura(a){
   group.children[0].add(motes);group.userData.motes=motes;group.userData.floor=floor;group.userData.veil=veil;return group;
 }
 function syncLevelAura(){
-  const a=milestone(LEVEL_AURAS,S.lv);
+  const a=S.auraShow===false||S.hideUI?null:milestone(LEVEL_AURAS,S.lv);
   if(!a){if(levelAura)levelAura.visible=false;return}
   if(!levelAura||levelAura.userData.tier!==a.at){
     if(levelAura){
@@ -8530,9 +8652,4 @@ function updateWatch(){
 setInterval(updateWatch,60000);
 </script>
 </body>
-</html>
->
-</html>
-html>
->
 </html>

@@ -64,6 +64,7 @@ const gx = () => S.gm ? (S.gmx || 100) : 1;
 // v75: the pet-cost slice above already brings the real trait table and petPassive() with it, so
 // the passives below answer to S.pets and S.bond like the game does. A pet on the field with no
 // bond pays the base 5%. The reward test asserts both sides of it.
+const questBook=()=>{};
 const pw = () => PW;
 this.__e = { expRate, qRefresh, newQuest, needAt, EXPK, BOSEK, ZK, BZK, QXP, QZ, zenAt, ZMIN, pwOf, epkOf, qrOf, JOFF,
              set S(v){S=v}, get S(){return S}, set PW(v){PW=v}, get PW(){return PW} };
@@ -197,7 +198,7 @@ t('the real kill reward block boosts Base/Job EXP but leaves player Zeny unchang
       const gx=()=>S.gm?S.gmx:1;
       ${src.match(/const EXP_BOOST_LV=\d+,EXP_BOOST_X=\d+,EXP_RATE=\d+;/)[0]}
       ${src.match(/const expRate=[^;]+;/)[0]}
-      const mob={n:'Test Mob',mapIndex:0,exp:100,zeny:10,boss:false},pv=()=>0,qProg=()=>{};
+      const mob={n:'Test Mob',mapIndex:0,exp:100,zeny:10,boss:false},pv=()=>0,qProg=()=>{},recordFarmIncome=()=>{},questEvent=()=>{};
       const petPassive=()=>0;   // no pet is fighting in this world: the reward maths is the subject
       let jobXP=0,pend=[],zenyEarned=0,expEarned=0,recorded=0;
       const addJob=x=>jobXP+=x,recordMonsterKill=()=>recorded++;
@@ -223,7 +224,7 @@ t('the real kill reward block boosts Base/Job EXP but leaves player Zeny unchang
       const gx=()=>S.gm?S.gmx:1;
       ${src.match(/const EXP_BOOST_LV=\d+,EXP_BOOST_X=\d+,EXP_RATE=\d+;/)[0]}
       ${src.match(/const expRate=[^;]+;/)[0]}
-      const mob={n:'Test Mob',mapIndex:0,exp:100,zeny:10,boss:false},pv=()=>0,qProg=()=>{};
+      const mob={n:'Test Mob',mapIndex:0,exp:100,zeny:10,boss:false},pv=()=>0,qProg=()=>{},recordFarmIncome=()=>{},questEvent=()=>{};
       const petPassive=()=>5;   // one fighting pet, Bond 0: the base 5% of its species passive
       let jobXP=0,pend=[],zenyEarned=0,expEarned=0,recorded=0;
       const addJob=x=>jobXP+=x,recordMonsterKill=()=>recorded++;
@@ -242,13 +243,12 @@ t('the real kill reward block boosts Base/Job EXP but leaves player Zeny unchang
   }
 });
 
-t('saved quests refresh to the new EXP rate without losing progress', () => {
-  E.S={lv:99,gm:false,q:[{type:'kill',goal:210,prog:12,xp:1,at:99}]};
+t('legacy quest rewards stay frozen across level changes', () => {
+  E.S={lv:99,gm:false,q:[{type:'kill',goal:210,prog:12,xp:123,at:99}]};
   E.qRefresh(); assert.strictEqual(E.S.q[0].prog,12);
-  assert.strictEqual(E.S.q[0].xp,Math.floor(E.needAt(99)*E.QXP.kill*7));
+  assert.strictEqual(E.S.q[0].xp,123);
   E.S.lv=100; E.qRefresh();
-  // v85: above Base 99 quest EXP pays the pre-v84 curve (needAt/2 there)
-  assert.strictEqual(E.S.q[0].xp,Math.floor(E.needAt(100)/2*E.QXP.kill*(7/3)));
+  assert.strictEqual(E.S.q[0].xp,123);
 });
 
 t('quests pay a fraction of need(Lv), not a flat number', () => {

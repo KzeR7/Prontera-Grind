@@ -364,7 +364,7 @@ function buildLevelAura(a){
   group.children[0].add(motes);group.userData.motes=motes;group.userData.floor=floor;group.userData.veil=veil;return group;
 }
 function syncLevelAura(){
-  const a=milestone(LEVEL_AURAS,S.lv);
+  const a=S.auraShow===false||S.hideUI?null:milestone(LEVEL_AURAS,S.lv);
   if(!a){if(levelAura)levelAura.visible=false;return}
   if(!levelAura||levelAura.userData.tier!==a.at){
     if(levelAura){

@@ -25,6 +25,7 @@ const ORE={ori:'Oridecon',elu:'Elunium'};
 const iname=it=>(it.r?'+'+it.r+' ':'')+it.name;
 ${grab('function refine(sl){', '// ---------- v90: Black Market')}
 let S=null,LOGS=[],RND=0;
+const questEvent=()=>{};
 const log=(m)=>LOGS.push(m), ui=()=>{}, save=()=>{}, addFloat=()=>{}, pl={x:0,z:0};
 Math.random=()=>RND;
 this.__m={refine,craftDps,dpsPanel,refCh,refCost,refOre,NM_MAT,DPS_MATS,get S(){return S},set S(v){S=v},LOGS,set RND(v){RND=v}};
@@ -38,38 +39,38 @@ const t = (n, f) => { try { f(); console.log('  ok   ' + n); pass++; } catch (e)
 console.log('material: Drop Protection Scroll, crafting and refine\n');
 
 const piece = (r, extra) => ({ name: 'Dread Sword', r, sec: 5, tier: 4, val: 100, slot: 'weapon', wt: 'sword', ...extra });
-const fresh = (over) => ({ eq: { weapon: piece(5) }, ore: { ori: 999, elu: 999 }, zeny: 1e12, nmMat: [0,0,0,0,0,0,0,0,0,0], dps: 0, ...over });
+const fresh = (over) => ({ eq: { weapon: piece(5) }, ore: { ori: 999, elu: 999 }, zeny: 1e12, nmMat: [0,0,0,0,0], dps: 0, ...over });
 const FAIL = 0.999, WIN = 0;
 
 // ---- 1. the materials come from the Stage 15 boss only -----------------------
-t('the Nightmare materials are ten different names, one per map', () => {
-  assert.deepStrictEqual(Array.from(M.NM_MAT), ['Dread Essence','Kraken Scale','Void Core','Sandwraith Dust','Spectral Ectoplasm','Leviathan Fin','Oni Horn','Yokai Mask','Helheim Rune','Glast Fragment']);
+t('the Nightmare materials are five different names, one per map pair', () => {
+  assert.deepStrictEqual(Array.from(M.NM_MAT), ['Dread Essence','Void Core','Spectral Ectoplasm','Oni Horn','Helheim Rune']);
 });
 
 // ---- 2. craftDps: 20 materials of any mix --------------------------------------
 t('craftDps needs 20 materials, any mix, and spends exactly 20', () => {
-  M.S = fresh({ nmMat: [5,5,5,5,0,0,0,0,0,0] });   // 20 in total, from four maps
+  M.S = fresh({ nmMat: [5,5,5,5,0] });   // 20 in total, from four maps
   M.craftDps();
   assert.strictEqual(M.S.dps, 1, 'one scroll is made');
-  assert.deepStrictEqual(Array.from(M.S.nmMat), [0,0,0,0,0,0,0,0,0,0], 'all 20 are spent, from whichever maps they came from');
+  assert.deepStrictEqual(Array.from(M.S.nmMat), [0,0,0,0,0], 'all 20 are spent, from whichever maps they came from');
 });
 t('craftDps refuses with 19 and says how many are held', () => {
-  M.S = fresh({ nmMat: [5,5,5,4,0,0,0,0,0,0] });   // 19
+  M.S = fresh({ nmMat: [5,5,5,4,0] });   // 19
   M.LOGS.length = 0;
   M.craftDps();
   assert.strictEqual(M.S.dps, 0, 'no scroll for 19');
-  assert.deepStrictEqual(Array.from(M.S.nmMat), [5,5,5,4,0,0,0,0,0,0], 'nothing is spent');
+  assert.deepStrictEqual(Array.from(M.S.nmMat), [5,5,5,4,0], 'nothing is spent');
   assert.ok(M.LOGS.some(x => x.includes('20 Nightmare materials') && x.includes('You have 19')), 'the player is told the count');
 });
 t('craftDps keeps the leftovers when more than 20 are held', () => {
-  M.S = fresh({ nmMat: [9,9,9,0,0,0,0,0,0,0] });   // 27
+  M.S = fresh({ nmMat: [9,9,9,0,0] });   // 27
   M.craftDps();
   assert.strictEqual(M.S.dps, 1);
   assert.strictEqual(M.S.nmMat.reduce((x, n) => x + n, 0), 7, 'seven are left over');
 });
 
 t('the refine panel shows the count, and the craft button is off under 20', () => {
-  M.S = fresh({ nmMat: [5,5,5,4,0,0,0,0,0,0], dps: 2 });
+  M.S = fresh({ nmMat: [5,5,5,4,0], dps: 2 });
   const short = M.dpsPanel();
   assert.ok(short.includes('Scrolls: 2'), 'the scroll count is shown');
   assert.ok(short.includes('Materials 19/20'), 'the material count is shown');
@@ -126,7 +127,7 @@ t('the live and offline kills roll the material, and pickup puts it in the stack
   assert.ok(src.includes("if(mob.mat&&Math.random()*100<NM_MAT_CH){S.nmMat[mob.mat.m]=safeCount(S.nmMat[mob.mat.m])+1;r.drops++}"), 'the offline kill rolls the material');
   assert.ok(src.includes("if(it.mat!=null){S.nmMat[it.mat]=safeCount(S.nmMat[it.mat])+1;"), 'pickup adds the material to the stack');
   assert.ok(src.includes("refine:k=>refine(k),craftdps:()=>craftDps(),"), 'the craft button is wired to the action table');
-  assert.ok(src.includes("f.nmMat=Array.from({length:10},(_,i)=>safeCount(f.nmMat&&f.nmMat[i]));f.dps=safeCount(f.dps);"), 'an old save loads with zero materials and scrolls');
+  assert.ok(src.includes("repairMaterials(f,s.nmMatVersion);f.dps=safeCount(f.dps);"), 'an old save loads with zero materials and scrolls');
 });
 
 const total = pass + fail;

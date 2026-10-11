@@ -41,7 +41,7 @@ function arena(opts = {}) {
     let mobs=[],mob=null,activePack=0,respawn=0,pend=[],castQ=[],tb={},pAtkT=0,mAtkT=0;
     const pl={x:0,z:0,run:false,orb:0},pl2=pl;
     const spawnCalls=[];
-    const logLines=[];const log=(m,cls,cat)=>logLines.push(m);
+    const questEvent=()=>{};const logLines=[];const log=(m,cls,cat)=>logLines.push(m);
     let uiCalls=0;const ui=()=>uiCalls++;
     let saves=0;const save=()=>saves++;
     let zenyAdded=0;const earnZeny=z=>{zenyAdded+=z};
@@ -298,8 +298,8 @@ t('the Shard Store spends shards and grants the random voucher and scroll exactl
   assert.strictEqual(scrolls.S.refineScrolls, 3, 'one 400-Shard purchase adds one saved placeholder count');
   assert.strictEqual(scrolls.S.shards, 400, 'the placeholder purchase charges exactly 400 shards');
   assert.strictEqual(scrolls.saves, 1, 'the new reserve count is saved immediately');
-  assert.ok(scrolls.logs.some(l => /Refine Scroll.*placeholder has no effect yet/.test(l)), 'the purchase log makes its inert status explicit');
-  assert.ok(scrolls.trialShopHtml().includes('no effect or use yet'), 'the store description also states that no use exists yet');
+  assert.ok(scrolls.logs.some(l => /Refine Scroll.*prevent a rank drop/.test(l)), 'the purchase log explains protection');
+  assert.ok(scrolls.trialShopHtml().includes('prevents a rank drop'), 'the store describes rank protection');
   scrolls.trialBuy('rscroll');
   assert.strictEqual(scrolls.S.refineScrolls, 4, 'repeat purchases add only one scroll each');
   assert.strictEqual(scrolls.S.shards, 0, 'and the second purchase spends its own 400');
@@ -325,10 +325,10 @@ t('the Shard Store spends shards and grants the random voucher and scroll exactl
   assert.ok(high.trialShopHtml().includes('Base Lv 120+'), 'and the store row says the requirement');
 });
 
-t('the Refine Scroll stays inert and the refine action never consumes it', () => {
+t('the Refine Scroll has explicit opt-in protection', () => {
   const fn = grab('function refine(sl){', '// ---------- class change ----------');
-  assert.ok(!/refineScrolls|rscroll|Refine Scroll/.test(fn), 'refine() has no scroll mechanic');
-  assert.ok(src.includes('stored scrolls are not consumed by refining.'), 'the Refine panel tells the player it is not consumed');
+  assert.ok(fn.includes('S.useRefineScroll')&&fn.includes('S.refineScrolls--'), 'refine checks the option and spends a protecting scroll');
+  assert.ok(src.includes('consumed on every selected attempt'), 'the panel explains consumption');
 });
 
 t('the Nightmare Gear Token hands over a real piece from the map you picked', () => {

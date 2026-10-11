@@ -49,7 +49,7 @@ const code = [
   // power does not depend on monster sprites)
   'const pm=s=>{const[n,c,sh]=String(s).split(":");return{n,c:parseInt(c,16)||0,shape:sh,spriteId:0,spriteSize:"Medium",spriteScale:1}};',
   grab('const G=(w,a,h,o,l,ac,ac2)=>', 'const pw=()=>'),
-  grab('function genGear(T,l,sec,boss,tier){', '// ---------- skill effects'),
+  grab('function genGear(T,l,sec,boss,tier,sourceMap=S?.mp??0,sourceStage=S?.lvl??1){', '// ---------- skill effects'),
   grab('const PETS=[', 'const rollingSet=new Set'),      // roster, traits, bond ladder, PEQ, the 12 skills, petDmg/petHit
   grab('function petFold(own,inc){', 'function petDetail(p){'),   // v75 folding
   pick(/const PET_SKILL_WEIGHTS=\[[^\n]*/, 'rollPetSkills'),
