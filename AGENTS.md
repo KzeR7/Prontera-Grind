@@ -6591,3 +6591,23 @@ The owner's second pass over v77, six notes, all built.
 * **Try it:** GM → aura/refinement test buttons; GM console → select a player → Full stats / Equipment & affixes / Send items & Zeny. Select Whole server for mass gifts and confirm the item and quantity. Refresh after the player syncs to see the new equipment.
 * **Checks:** New API/game tests cover permissions, gift quantities, suspended/offline recipients, retry handling, rollback, durable delivery, equipment rules, card preservation and cosmetic thresholds. Desktop and phone browser checks cover inspection, search, mass delivery and affix editing. Regression suite and current fixture results are recorded in the task validation record.
 * **Publishing:** Workspace implementation and local preview; not deployed. Combat snapshots require the player to save on the new build.
+
+### 2026-10-11 — `grind-v101.1 patterned auras`
+* **What changed:** Level 50 gets a blue compass pattern, Level 99 a violet six-point sigil, and Level 150 a gold sunburst. Inner and outer layers slowly counter-rotate and gently pulse. Each tier has its own geometry.
+* **Weapon glow:** Replaced the rounded blur with a narrow silhouette edge that follows the weapon's corners at +4/+7/+10. The original weapon art and frame placements are preserved.
+* **Try it:** GM → level and weapon-refine test buttons. Watch the feet while standing or moving; the weapon edge appears in views where the held weapon is shown.
+* **Checks:** Added real-renderer tests for distinct tier patterns, geometry cleanup/reuse, opposite rotation, cached weapon masks and sharp edge offsets. Desktop and 390px phone previews inspected. Existing animation, weapon-placement, scene, field-loop, GM behavior, build-label and publishing checks run; detailed results are in the task validation record.
+* **Publishing:** Local implementation and preview only; no deployment or new migration.
+
+### 2026-10-11 — `grind-v101.2 luminous auras`
+* **What changed:** Level patterns now shine with bright cores, soft surrounding light, a rising glow and drifting particles. Compass, arcane sigil and sunburst designs remain distinct.
+* **Weapons:** Independent emerald +4, rose +7 and crimson red +10 colors, with a pulsing four-point star attached to the weapon tip. Sharp silhouette edges and original sprite artwork are preserved.
+* **Try it:** Use GM level/refine buttons to compare tiers; the tip star follows the held weapon's pose.
+* **Checks:** Effect lifecycle, tip detection and canvas-state tests, rendering/weapon integration and desktop/phone previews; exact results recorded in the workspace validation record.
+* **Publishing:** Local implementation and preview only; no deployment or migration.
+
+### 2026-10-11 — `grind-v101.3 continuous aura rotation`
+* **What changed:** Auras automatically rotate forever while visible, including when combat is paused. Inner and outer patterns turn in opposite directions at a clearer pace.
+* **Try it:** Reach Base Level 50, 99 or 150, or use the GM level buttons; watch the aura while standing still.
+* **Checks:** Added frozen-time and full-turn continuity checks; rendering and build checks are recorded in the workspace validation record.
+* **Publishing:** Local implementation; no deployment.
