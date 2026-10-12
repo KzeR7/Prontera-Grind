@@ -41,3 +41,6 @@ _recon_v27e.png
 AGENTS.md
 READ-ME-FIRST.md
 .gitignore
+
+# Preserved first fitting; the live character system uses v2.
+assets/wardrobe/v1/

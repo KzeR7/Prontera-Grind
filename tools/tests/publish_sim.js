@@ -26,7 +26,7 @@ const skinDir = (skinData.match(/"dir":"([^"]+)"/) || [])[1];
 const skinFile = (skinData.match(/"files":\{"S":"([^"]+)"/) || [])[1];
 
 const forbidden = ['_login.html', '_shot.html', 'logic2.js', 'tools', 'Sprite', 'image-search',
-  'AGENTS.md', 'READ-ME-FIRST.md', 'Updates/lord-knight-bundles', '_recon_v27b.png', '_recon_v27c.png', '_recon_v27d.png', '_recon_v27e.png'];
+  'AGENTS.md', 'READ-ME-FIRST.md', 'Updates/lord-knight-bundles', 'assets/wardrobe/v1', '_recon_v27b.png', '_recon_v27c.png', '_recon_v27d.png', '_recon_v27e.png'];
 
 t('the build script runs and finishes cleanly', () => {
   assert.ok(built, 'tools/build_site.sh exited non-zero: ' + (buildErr && (buildErr.stderr || '').toString().slice(0, 300)));
@@ -96,7 +96,10 @@ t('the published tree is small enough to stay honest', () => {
   const bytes = walk(out);
   const mb = bytes / 1048576;
   assert.ok(mb > 8, 'the published tree is only ' + mb.toFixed(1) + ' MB - is the sprite pack still shipping?');
-  assert.ok(mb < 30, 'the published tree grew to ' + mb.toFixed(1) + ' MB; the game needs ~16. Something dev-side leaked in.');
+  assert.ok(mb < 30, 'the published tree grew to ' + mb.toFixed(1) + ' MB; the shared native class pack and fallback game must fit in 30 MiB.');
+  const wardrobe=path.join(out,'assets/wardrobe/v2');assert.ok(walk(wardrobe)<8*1048576,'nine native classes must share hair/costume assets');
+  const catalog=JSON.parse(fs.readFileSync(path.join(wardrobe,'catalog.json'),'utf8'));
+  for(const r of Object.values(catalog.assets))for(const key of ['meta','image'])assert.ok(fs.existsSync(path.join(wardrobe,r[key])),'native catalog asset is published');
 });
 
 t('.assetsignore covers the same dev material (the Cloudflare safety net)', () => {

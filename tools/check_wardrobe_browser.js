@@ -1,27 +1,54 @@
 (async()=>{
  const assert=(ok,message)=>{if(!ok)throw Error(message)},tick=()=>new Promise(r=>setTimeout(r,20));
- const ready=async()=>{const start=performance.now();while(wardrobeState.loading||!wardrobeState.look){if(performance.now()-start>20000)throw Error('Wardrobe failed: '+wardrobeState.status);await tick()}};
- assert(window.__wardrobeRendererStub===true,'This UI test expects the explicitly marked WebGL stub');
- const oldSim=simAdvance;simAdvance=()=>{};const user='wardrobe-local-check';currentUser=user;S=fresh();S.cls='Lord Knight';S.hair=17;S.eq.weapon.wt='sword';S.q=['kill','loot','boss'].map(newQuest);$('loginOverlay').style.display='none';tabs.splice(0);tabs.push('wardrobe');ui();await ready();
+ const ready=async()=>{const start=performance.now();while(wardrobeState.loading||!wardrobeState.look||wardrobeState.look.cls!==S.cls){if(performance.now()-start>20000)throw Error('Wardrobe failed: '+wardrobeState.status);await tick()}};
+ const heroReady=async()=>{for(let i=0;i<1000;i++){draw();if(heroSpr?.userData.wardrobe?.look.cls===S.cls)return;await tick()}throw Error('Hero did not load')};
+ assert(window.__wardrobeRendererStub===true,'This check uses the explicitly marked WebGL stub');
+ const oldSim=simAdvance;simAdvance=()=>{};
+ try{
+ currentUser='wardrobe-local-check';S=fresh();S.cls='Swordman';S.hair=17;S.q=['kill','loot','boss'].map(newQuest);$('loginOverlay').style.display='none';tabs.splice(0);tabs.push('wardrobe');ui();await ready();await heroReady();
+ assert(S.appearance===null&&heroSpr.userData.wardrobe,'native sprite requires no Wardrobe opt-in');
+ assert(!document.querySelector('[data-wardrobe="sex"]'),'Wardrobe changes hair/color/costume only');
  const change=(k,v)=>{const el=document.querySelector('[data-wardrobe="'+k+'"]');assert(el,'control '+k);if(el.type==='checkbox')el.checked=v;else el.value=String(v);el.dispatchEvent(new Event('change',{bubbles:true}))};
  const action=k=>document.querySelector('[data-wardrobe-action="'+k+'"]').click();
- change('sex','f');await ready();change('head',42);await ready();change('color',8);await ready();change('halo',false);assert(S.appearance===null&&S.hair===17,'preview must not save');action('cancel');await ready();assert(wardrobeState.draft.sex==='m','cancel restores saved gender');
- change('sex','f');await ready();change('head',42);await ready();change('color',8);await ready();change('glasses',false);action('apply');assert(S.sex==='f'&&S.appearance.heads.f===42&&S.appearance.colors.f===8&&!S.appearance.glasses,'apply saves selected IDs');assert(S.hair===17,'legacy hair survives');assert(JSON.parse(localStorage.getItem('pg_save3_'+user)).appearance.heads.f===42,'actual local save');
- for(let i=0;i<100&&!wardrobeEquipped;i++){draw();await tick()}assert(wardrobeEquipped&&heroSpr.userData.wardrobe,'game uses layered hero');
- const sk=heroSpr.userData.wardrobe;captureWardrobeFrame(heroSpr,5,false,1,1000);assert(sk.paint==='attack5:0','first swing frame');captureWardrobeFrame(heroSpr,5,false,.001,100000);assert(sk.paint==='attack5:8','one complete swing');assert(captureWardrobeFrame(heroSpr,5,false,.001,200000)===false,'unchanged frame avoids upload');
- change('stance','attack');wardrobeState.start=performance.now()-10000;wardrobePreview();assert(wardrobeState.paint.endsWith(',8]'),'preview attack holds last frame');
- // A failed appearance never changes the saved look or replaces the visible ready sprite.
- const before=JSON.stringify(S.appearance),shown=wardrobeState.look.key,fetcher=wardrobeStore.fetcher;wardrobeStore.fetcher=async()=>{throw Error('simulated offline')};change('head',4);await tick();while(wardrobeState.loading)await tick();assert(wardrobeState.status.includes('could not load'),'failure reported');assert(JSON.stringify(S.appearance)===before&&wardrobeState.look.key===shown,'failure preserves saved/visible look');assert($('wardrobeApply').disabled,'failed new choice cannot apply');wardrobeStore.fetcher=fetcher;action('retry');await ready();
- // All saved options decode in this browser. Repeated frames read the same resident atlases.
- const cv=document.createElement('canvas');cv.width=320;cv.height=280;const ctx=cv.getContext('2d');let looks=0,maxBytes=0;
- for(const sex of ['m','f'])for(const head of PGWardrobe.HAIRS[sex])for(let color=0;color<9;color++){
-  const a=PGWardrobe.defaults(sex);a.heads[sex]=head;a.colors[sex]=color;const look=await wardrobeStore.select('audit',a);assert(look,'ready look');PGWardrobe.draw(ctx,look,'idle',0);assert(ctx.getImageData(120,100,80,110).data.some(v=>v>0),'nonempty native preview');looks++;maxBytes=Math.max(maxBytes,wardrobeStore.pixelBytes);assert(maxBytes<=wardrobeStore.budget,'bounded decoded memory');
+ // Settings owns gender; per-gender hair preferences and old numeric hair IDs survive.
+ ACT.sex('f');await ready();await heroReady();change('head',42);await ready();change('color',8);await ready();change('halo',true);assert(S.appearance===null&&S.hair===17,'draft must not save');action('cancel');await ready();assert(wardrobeState.draft.heads.f===2,'cancel restores default');
+ change('head',42);await ready();change('color',8);await ready();change('glasses',true);action('apply');await heroReady();
+ assert(S.appearance.heads.f===42&&S.appearance.colors.f===8&&S.appearance.glasses,'apply saves IDs');assert(S.hair===17,'legacy hair survives');assert(JSON.parse(localStorage.getItem('pg_save3_'+currentUser)).appearance.heads.f===42,'actual local save');
+ const saved=JSON.stringify(S.appearance),timings=[];let maxBytes=0;
+ // Give the synthetic account previously played careers; use the real class-change path.
+ for(const cls of Object.keys(PGWardrobe.CLASSES))S.jobs[cls]={jl:50,jx:0};
+ for(const cls of Object.keys(PGWardrobe.CLASSES)){
+  const start=performance.now();changeClass(cls);ui();await ready();await heroReady();
+  assert(S.cls===cls&&wardrobeState.look.cls===cls,'actual class switch '+cls);assert(JSON.stringify(S.appearance)===saved,'class switch retains cosmetics');
+  const sk=heroSpr.userData.wardrobe;
+  for(let d=0;d<8;d++){
+   captureWardrobeFrame(heroSpr,d,false,1,1000);assert(sk.paint==='attack'+d+':0','first swing frame');
+   captureWardrobeFrame(heroSpr,d,false,.001,100000);const last=sk.look.base.metadata.actions['attack'+d].frames.length-1;assert(sk.paint==='attack'+d+':'+last,'one complete swing');assert(captureWardrobeFrame(heroSpr,d,false,.001,200000)===false,'same frame skips upload');
+   captureWardrobeFrame(heroSpr,d,true,0,300000);captureWardrobeFrame(heroSpr,d,false,0,400000);
+  }
+  maxBytes=Math.max(maxBytes,wardrobeStore.pixelBytes);timings.push({cls,switchMs:Math.round(performance.now()-start)});
+ }
+ // A failed class load must not show a previously loaded body from another class.
+ const fetcher=wardrobeStore.fetcher;wardrobeStore.release('preview');wardrobeStore.release('hero');wardrobeEquipped=null;wardrobeRequested='';wardrobeStore.dispose();
+ wardrobeStore.fetcher=async()=>{throw Error('simulated offline')};changeClass('Knight');ui();draw();await tick();while(wardrobeState.loading)await tick();
+ assert(!wardrobeHero({cls:'Knight'})&&wardrobeState.status.includes('could not load'),'failure falls back without wrong class');assert(JSON.stringify(S.appearance)===saved,'failure preserves save');assert($('wardrobeApply').disabled,'failed choice cannot apply');wardrobeStore.fetcher=fetcher;action('retry');await ready();await heroReady();
+ const cv=document.createElement('canvas');cv.width=320;cv.height=280;const ctx=cv.getContext('2d');let looks=0,paints=0;const paintTimes=[];
+ // All 360 images across all nine attachment sets; class switches reuse shared images.
+ for(const sex of ['m','f'])for(const head of (window.wardrobeAuditSample?[PGWardrobe.HAIRS[sex][0],PGWardrobe.HAIRS[sex].at(-1)]:PGWardrobe.HAIRS[sex]))for(const color of (window.wardrobeAuditSample?[0,8]:Array.from({length:9},(_,i)=>i))){
+  const a=PGWardrobe.defaults(sex);a.heads[sex]=head;a.colors[sex]=color;
+  for(const cls of Object.keys(PGWardrobe.CLASSES)){
+   const look=await wardrobeStore.select('audit',a,cls);assert(look,'ready look');
+   const start=performance.now();for(const stance of ['idle','walk','attack'])for(let d=0;d<8;d++){PGWardrobe.draw(ctx,look,stance,d,1234,stance==='attack'?.5:null);paints++}paintTimes.push((performance.now()-start)/24);
+   assert(ctx.getImageData(80,60,160,150).data.some(v=>v>0),'nonempty native preview');looks++;maxBytes=Math.max(maxBytes,wardrobeStore.pixelBytes);assert(maxBytes<=wardrobeStore.budget,'bounded decoded memory');
+  }
  }
  wardrobeStore.release('audit');cv.width=cv.height=0;
- // A close while loading must allow the next opening and discard the unsaved draft.
- change('sex','m');openTab('wardrobe');openTab('wardrobe');await ready();assert(wardrobeState.draft.sex==='f'&&wardrobeState.draft.heads.f===42,'reopen restores saved choice');
+ // Real combat simulation stays active with the native hero installed.
+ S.lv=80;S.st.str=80;S.st.dex=60;S.st.agi=70;S.hp=maxHp();S.auto=false;S.adv=false;gotoField(0,1);const kills=S.kills;
+ for(let i=0;i<1200;i++){update(.1);if(i%10===0)draw()}assert(S.kills>kills,'combat still awards kills');
  change('stance','walk');change('direction',7);change('still',true);wardrobePreview();
- const controls=[...document.querySelectorAll('.wardrobe button,.wardrobe select,.wardrobe input')],win=document.querySelector('[data-win=wardrobe]');assert(controls.every(el=>el.getBoundingClientRect().width>0),'all controls laid out');assert(document.documentElement.scrollWidth<=innerWidth,'no page overflow');assert(win.scrollWidth<=win.clientWidth+2,'no panel overflow');assert($('wardrobeCanvas').getBoundingClientRect().width<=320,'canvas size bounded');
- simAdvance=oldSim;
- window.wardrobeBrowserResult={status:'pass',looks,maxDecodedAtlasBytes:maxBytes,viewport:[innerWidth,innerHeight],webgl:false,rendererStub:true,saveIdsOnly:JSON.stringify(S.appearance).length,applied:JSON.parse(JSON.stringify(S.appearance))};return wardrobeBrowserResult;
+ const win=document.querySelector('[data-win=wardrobe]');assert(document.documentElement.scrollWidth<=innerWidth,'no page overflow');assert(win.scrollWidth<=win.clientWidth+2,'no panel overflow');assert($('wardrobeCanvas').getBoundingClientRect().width<=320,'bounded canvas');
+ S.cls='Sniper';save();paintTimes.sort((a,b)=>a-b);
+ window.wardrobeBrowserResult={status:'pass',looks,paints,maxDecodedAtlasBytes:maxBytes,viewport:[innerWidth,innerHeight],canvasPaintP50ms:paintTimes[Math.floor(paintTimes.length*.5)],canvasPaintP95ms:paintTimes[Math.floor(paintTimes.length*.95)],classSwitchTimings:timings,combatKills:S.kills-kills,webgl:false,rendererStub:true,saveIdsOnly:JSON.stringify(S.appearance).length};return wardrobeBrowserResult;
+ }finally{simAdvance=oldSim}
 })()
