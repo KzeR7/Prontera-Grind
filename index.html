@@ -859,6 +859,8 @@ body.clean-screen #screenBtn{visibility:visible!important}body.clean-screen #hud
   </div>
 </div>
 <div id="tooltip"></div>
+<link rel="stylesheet" href="assets/wardrobe.css?v=1">
+<script src="assets/wardrobe.js?v=1"></script>
 <script src="assets/sprite_pack_data.js?v=2"></script>
 <script src="assets/class_skins_data.js?v=2"></script>
 <script src="assets/weapon_joints_data.js?v=2"></script>
@@ -919,6 +921,7 @@ const STATS=[['str','STR','ATK'],['agi','AGI','ASPD, Flee, Move'],['int','INT','
 // Skill families share recognizable pictograms in a simple outlined tile.
 // Shared interface symbols: local SVG, with one stroke weight at every size.
 const UI_ICONS={
+ wardrobe:'<path d="M9 5a3 3 0 0 1 6 0c0 2-3 2-3 4l9 7v3H3v-3l9-7"/>',
  compass:'<circle cx="12" cy="12" r="9"/><path d="m16 8-3 5-5 3 3-5Z"/>',
  moon:'<path d="M20 15A9 9 0 0 1 9 3a9 9 0 1 0 11 12Z"/>',
  sun:'<circle cx="12" cy="12" r="4"/><path d="M12 1v3m0 16v3M1 12h3m16 0h3M4 4l2 2m12 12 2 2M4 20l2-2M18 6l2-2"/>',
@@ -1090,7 +1093,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // give-back) and main's weapon-hold rendering work.
 let simCatchingUp=false;
 const simVisualsOff=()=>document.hidden||simCatchingUp;
-const BUILD='2026-10-12 grind-v117 Eclipse integration';   // shown on the login card - confirms which file you loaded
+const BUILD='2026-10-12 grind-v118 Wardrobe fitting';   // shown on the login card - confirms which file you loaded
 $('buildTag').textContent='build '+BUILD;
 
 // ---------- class tree: Novice -> 6 first jobs -> 6 second jobs -> 6 third jobs ----------
@@ -2537,7 +2540,7 @@ function autoSellReason(it,state=S){
 const autoSellMatches=it=>!autoSellReason(it);
 // ---------- end auto-sell rules ----------
 
-const fresh=()=>({progressionVersion:PROGRESSION_VERSION,skillVersion:SKILL_VERSION,skillRefund:0,skillRespec:{},pets:[],bond:[],cls:'Novice',sex:'m',hair:0,lv:1,exp:0,hp:100,zeny:0,kills:0,indexXp:0,mobKills:{},equippedTitle:null,shards:0,refineScrolls:0,nmMatVersion:2,nmMat:[0,0,0,0,0],dps:0,trial:{day:trialDay(),used:0,best:0,runs:0},cardIndex:emptyCardIndex(),dmg:0,pts:10,jobs:{Novice:{jl:1,jx:0}},sk:{aid:1},skOff:{},dmgShort:true,dmgShow:true,cameraShake:true,base:{},mp:0,lvl:1,prog:[1,1,1,1,1],kl:0,auto:true,adv:true,feed:true,clickSell:false,bg:true,autoSell:[false,false,false,false,false,false,false],logOff:{},q:null,cards:[],ore:{ori:0,elu:0},offlineAt:0,offlineKph:0,offlineRateAt:0,offlineRateKills:0,offlineKillRemainder:0,gm:false,gmx:100,
+const fresh=()=>({progressionVersion:PROGRESSION_VERSION,skillVersion:SKILL_VERSION,skillRefund:0,skillRespec:{},pets:[],bond:[],cls:'Novice',sex:'m',hair:0,appearance:null,lv:1,exp:0,hp:100,zeny:0,kills:0,indexXp:0,mobKills:{},equippedTitle:null,shards:0,refineScrolls:0,nmMatVersion:2,nmMat:[0,0,0,0,0],dps:0,trial:{day:trialDay(),used:0,best:0,runs:0},cardIndex:emptyCardIndex(),dmg:0,pts:10,jobs:{Novice:{jl:1,jx:0}},sk:{aid:1},skOff:{},dmgShort:true,dmgShow:true,cameraShake:true,base:{},mp:0,lvl:1,prog:[1,1,1,1,1],kl:0,auto:true,adv:true,feed:true,clickSell:false,bg:true,autoSell:[false,false,false,false,false,false,false],logOff:{},q:null,cards:[],ore:{ori:0,elu:0},offlineAt:0,offlineKph:0,offlineRateAt:0,offlineRateKills:0,offlineKillRemainder:0,gm:false,gmx:100,
   st:{str:1,agi:1,dex:1,luk:1,int:1,vit:1},eq:{weapon:{id:1,slot:'weapon',wt:'dagger',tier:0,val:5,name:'Novice Knife',aff:[],slots:1,cards:[],sec:0},armor:null,head:null,off:null,leg:null,acc1:null,acc2:null},inv:[]});
 const saveKey=()=>'pg_save3_'+currentUser;
 // ---------- the save-owner stamp (v88.6) ----------
@@ -2562,6 +2565,7 @@ const s=JSON.parse(raw);if(s&&s.lv){const F=fresh(),f=Object.assign(F,s),hadInde
   for(const k of['lv','exp','hp','zeny','kills','indexXp','dmg','pts','mp','lvl','kl','gmx'])f[k]=num_(f[k],F[k]);if(!hadIndexXp)delete f.indexXp;
   if(f.dmgShort!==true&&f.dmgShort!==false)f.dmgShort=true;   // damage digits: short unless deliberately switched
   if(f.cameraShake!==true&&f.cameraShake!==false)f.cameraShake=true;
+  if(typeof PGWardrobe!=='undefined'){f.appearance=PGWardrobe.normalize(f.appearance);if(f.appearance)f.sex=f.appearance.sex;}
   if(f.dmgShow!==true&&f.dmgShow!==false)f.dmgShow=true;      // and the floats are shown unless switched off
   // v39 tools, all four defaulting to the quiet behaviour: the on-screen log starts unfolded,
   // a bag click inspects rather than sells, nothing is auto-sold and no log filter is hidden.
@@ -4660,7 +4664,7 @@ function changeClass(n){if(classBlock(n))return;
 // Index, Black Market and Leaderboard share an independent dropdown below Quests.
 // instead of taking dock slots. The keys X and V still open them. v91: the World Map tab uses a tower icon.
 const SIDE_TABS=['index','market','board','guide','gm'];
-const TABS={map:['🗼','World Map','M'],status:['📊','Character','S'],job:['🌳','Class Tree','J'],skills:['✨','Skills','K'],equip:['🛡️','Equipment','E'],bag:['🎒','Inventory','B'],log:['📃','Log','L'],pet:['🐾','Pets','P'],index:['📚','Mastery Index','I'],board:['🏆','Leaderboard','V'],market:['🏪','Black Market','X'],guide:['📖','Build & Farming Guide','H'],set:['⚙️','Settings','O'],gm:['🛠️','GM Tools','G']};
+const TABS={map:['🗼','World Map','M'],wardrobe:['♧','Wardrobe','W'],status:['📊','Character','S'],job:['🌳','Class Tree','J'],skills:['✨','Skills','K'],equip:['🛡️','Equipment','E'],bag:['🎒','Inventory','B'],log:['📃','Log','L'],pet:['🐾','Pets','P'],index:['📚','Mastery Index','I'],board:['🏆','Leaderboard','V'],market:['🏪','Black Market','X'],guide:['📖','Build & Farming Guide','H'],set:['⚙️','Settings','O'],gm:['🛠️','GM Tools','G']};
 const expandedPanels=new Set(['map']);
 const minimizedPanels=new Set();
 const dot=k=>{if(!S)return false;if(k==='status')return S.pts>0;if(k==='skills')return skpAvail()>0;if(k==='quest')return!!(S.q&&S.q.some(q=>q.prog>=q.goal));if(k==='cards')return S.cards.length>0;if(k==='index'){const rank=HUNT_TITLES.findIndex(t=>t.id===S.equippedTitle);return cardMasteryAvailable()>0||HUNT_TITLES.some((t,i)=>i>rank&&titleUnlocked(t))}return false};
@@ -4947,9 +4951,9 @@ const V={
     <small>${shown.length} of ${logs.length} events shown &middot; tick what you want to read &middot; the on-screen log follows the same ticks</small>
     ${shown.map(l=>`<div class="${l.cls||''}">${l.m}</div>`).join('')||'<i>No events to show.</i>'}`},
   set(){const sex=S.sex==='f'?'Female':'Male';return`<div class="hd">Character</div>
-    <div class="row"><button data-a="sex" data-v="m" aria-label="Choose male sprite" style="${S.sex==='f'?'':'background:#ffe08a'}">\u2642 Male</button><button data-a="sex" data-v="f" aria-label="Choose female sprite" style="${S.sex==='f'?'background:#ffe08a':''}">\u2640 Female</button><button data-a="costume" disabled title="Costumes arrive in a future patch">\ud83c\udfbd Costume <small>soon</small></button></div>
-  <div class="hair-preview-card"><div class="hair-preview-stage"><canvas id="hairPreview" width="126" height="134" role="img" aria-label="Live ${sex.toLowerCase()} ${S.cls} class skin preview"></canvas><span class="hair-preview-loading" id="hairPreviewLoading">Loading sprite\u2026</span></div><div class="hair-preview-info"><span class="eyebrow">LIVE PREVIEW</span><b>${S.cls}</b><span>${sex} &middot; animating</span></div></div>
-  <small>The class art is the finished animation, hair included. Costumes - outfits that restyle a class without touching its stats - are planned for a future patch.</small>
+    <button data-t="wardrobe" class="full">Open Wardrobe</button>
+  <div class="hair-preview-card"><div class="hair-preview-stage"><canvas id="hairPreview" width="126" height="134" role="img" aria-label="Live ${sex.toLowerCase()} ${S.cls} class skin preview"></canvas><span class="hair-preview-loading" id="hairPreviewLoading">Loading sprite…</span></div><div class="hair-preview-info"><span class="eyebrow">LIVE PREVIEW</span><b>${S.cls}</b><span>${sex}</span></div></div>
+  <small>Wardrobe has gender, hairstyles, colors and accessories for the Lord Knight fitting. Other classes keep their own art.</small>
   ${skinBroken?`<small class="r0"><b>Some animations could not be read</b> - the game decodes each file's frames itself and one or more would not open (the log says which). Opening the game through a local server (python3 -m http.server) instead of a file:// page is what the decoder needs.</small>`:''}
     <div class="hd" style="margin-top:10px">Damage numbers</div>
     <div class="row"><button data-a="dmgshow" data-v="on" class="${S.dmgShow!==false?'on':''}" aria-pressed="${S.dmgShow!==false}">Show: On</button><button data-a="dmgshow" data-v="off" class="${S.dmgShow===false?'on':''}" aria-pressed="${S.dmgShow===false}">Show: Off</button></div>
@@ -5365,8 +5369,8 @@ function arrangePanel(k,root){
   }
 }
 
-const DOCK_TABS=['map','status','equip','job','skills','bag','pet','market','log','set'];
-const DOCK_LABEL={map:'Maps',guide:'Guide',status:'Character',equip:'Equipment',refine:'Refine',job:'Jobs',skills:'Skills',bag:'Bag',pet:'Pets',index:'Mastery',market:'Market',board:'Ranks',log:'Log',set:'Settings',gm:'GM'};
+const DOCK_TABS=['map','status','wardrobe','equip','job','skills','bag','pet','market','log','set'];
+const DOCK_LABEL={wardrobe:'Wardrobe',map:'Maps',guide:'Guide',status:'Character',equip:'Equipment',refine:'Refine',job:'Jobs',skills:'Skills',bag:'Bag',pet:'Pets',index:'Mastery',market:'Market',board:'Ranks',log:'Log',set:'Settings',gm:'GM'};
 function eclipsePositionMore(){
   const menu=$('sideMenu'),button=$('dock').querySelector('.eclipse-more');if(!sideOpen||!button)return;
   const rect=$('dock').getBoundingClientRect(),width=menu.offsetWidth||225;
@@ -5528,7 +5532,7 @@ function renderWin(anchor){
     if(body){const er=el.getBoundingClientRect(),br=body.getBoundingClientRect();
       if(er.top<br.top)body.scrollTop+=er.top-br.top;
       else if(er.bottom>br.bottom)body.scrollTop+=er.bottom-br.bottom}}
-  eclipseDrawMinimap();if(typeof eclipseDrawAtlas==='function')eclipseDrawAtlas();drawSkinPreview('eclipsePortrait',null,S.cls,S.sex);if(tabs.includes('equip'))drawSkinPreview('eclipseDoll',null,S.cls,S.sex);if(tabs.includes('set'))drawAppearancePreview();if(tabs.includes('job'))drawClassPreview()}
+  eclipseDrawMinimap();if(typeof eclipseDrawAtlas==='function')eclipseDrawAtlas();drawSkinPreview('eclipsePortrait',null,S.cls,S.sex);if(tabs.includes('equip'))drawSkinPreview('eclipseDoll',null,S.cls,S.sex);if(tabs.includes('set'))drawAppearancePreview();if(tabs.includes('job'))drawClassPreview();if(typeof wardrobeSync==='function')wardrobeSync()}
 let winPress=false,winDirty=false;
 const winUp=()=>{winPress=false;if(winDirty){winDirty=false;renderWin()}};
 // Guarded so the headless UI harness (which pulls this slice into a bare vm) still loads.
@@ -5654,7 +5658,7 @@ const ACT={
   dmgfmt:v=>{S.dmgShort=v!=='full';log('Damage numbers: '+(S.dmgShort?'short (100K / 1M)':'full (100,000)'));ui();save()},
   dmgshow:v=>{S.dmgShow=v!=='off';log('Damage numbers '+(S.dmgShow?'shown':'hidden')+'.');ui();save()},logout:()=>logout(),
   hair:v=>{S.hair=(((S.hair|0)+(+v||1))%19+19)%19;heroKey='';ui();save()},
-  sex:v=>{S.sex=v==='f'?'f':v==='m'?'m':(S.sex==='f'?'m':'f');heroKey='';log(`Appearance: ${S.sex==='f'?'female':'male'}.`);ui();save()},
+  sex:v=>{S.sex=v==='f'?'f':v==='m'?'m':(S.sex==='f'?'m':'f');if(S.appearance)S.appearance.sex=S.sex;heroKey='';log(`Appearance: ${S.sex==='f'?'female':'male'}.`);ui();save()},
   costume:()=>{log('Costumes arrive in a future patch - they will restyle a class without changing its stats.','','misc');ui()},
   hair:v=>{S.hair=(((S.hair|0)+(+v||1))%19+19)%19;heroKey='';ui();save()},
   reset:()=>{ask('Erase this account save and start over?',()=>{const gm=S.gm;hudRate=null;zenyEarned=0;expEarned=0;S=fresh();S.gm=gm;S.q=['kill','loot','boss'].map(newQuest);floats.forEach(f=>f.el&&f.el.remove());floats=[];drops=[];mobs=[];mob=null;respawn=.3;logs=[];log('New adventure started.');ui();save()})},
@@ -5719,7 +5723,7 @@ document.addEventListener('click',e=>{
   skillPointerInside=false;skillCardPointerInside=false;
   if(selS&&!skillInside){selS=null;if(tabs.includes('skills'))renderWin()}
 });
-addEventListener('keydown',e=>{if(!S||e.ctrlKey||e.metaKey||e.altKey||/INPUT|TEXTAREA/.test(e.target.tagName))return;const k=e.key.toUpperCase();
+addEventListener('keydown',e=>{if(!S||e.ctrlKey||e.metaKey||e.altKey||/INPUT|TEXTAREA|SELECT/.test(e.target.tagName))return;const k=e.key.toUpperCase();
   if(k==='ESCAPE'){if(feedFilShown){feedFilHide();return}tabs.pop();renderWin();return}if(k==='Q'){qOpen=!qOpen;renderQ();return}const X={R:['equip','refine'],C:['bag','cards']}[k];if(X){const same=tabs.includes(X[0])&&sub[X[0]]===X[1];sub[X[0]]=X[1];if(same)openTab(X[0]);else{if(!tabs.includes(X[0])){if(tabs.length>=MAX_TABS)tabs.shift();tabs.push(X[0])}renderWin()}return}const f=Object.entries(TABS).find(([,v])=>v[2]===k);if(f)openTab(f[0])});
 
 $('spd').onclick=()=>{speed=speed===1?2:speed===2?4:1;$('spd').textContent='Speed x'+speed};
@@ -7828,6 +7832,7 @@ function packTex(opt){
 // animation frame from the live decoder, so the panel shows the actual animation and not a still.
 function drawSkinPreview(id,labelId,cls,sex){
   const cv=$(id);if(!cv)return;const ctx=cv.getContext('2d'),label=labelId?$(labelId):null;
+  if(typeof wardrobePortrait==='function'&&wardrobePortrait(cv,cls)){if(label)label.style.display='none';return}
   const p=skinPack(cls,sex),f=p?skinFrameOf(p,'S'):null;
   if(!f){if(label)label.style.display='block';ctx.clearRect(0,0,cv.width,cv.height);return}
   const ax=p.anchor[0],ay=p.anchor[1],bw=126,bh=134;      // the old preview framing, so panels did not move
@@ -7842,11 +7847,12 @@ function mkPackHero(opt){
   s.center.set(PK.pivotX/PK.cellW,(PK.cellH-PK.pivotY)/PK.cellH);s.scale.set(PK.cellW*PACK_K,PK.cellH*PACK_K,1);s.userData.pack=1;s.userData.body=packBodyFor(opt.cls,opt.tier)||'thief';return s}
 function setPackCell(spr,dir,run,atk,clock){
   const p=heroPoseFrame(run,atk,clock,true),t=spr.material.map;t.repeat.set(1/8,1/24);t.offset.set(p.frame/8,1-(p.kind*8+dir+1)/24)}
-function ensureHero(opt){const k=JSON.stringify(opt);if(heroKey===k&&heroSpr)return;heroKey=k;heroDirty=false;
-  if(heroSpr){P.remove(heroSpr);heroSpr=null}if(heroHeadSpr){P.remove(heroHeadSpr);heroHeadSpr=null}
+function ensureHero(opt){const native=typeof wardrobeHero==='function'?wardrobeHero(opt):null;const k=JSON.stringify([opt,native&&native.selection]);if(heroKey===k&&heroSpr)return;heroKey=k;heroDirty=false;
+  if(heroSpr){P.remove(heroSpr);if(heroSpr.userData.wardrobe){heroSpr.userData.wardrobe.tex.dispose();heroSpr.material.dispose();heroSpr.userData.wardrobe.cv.width=heroSpr.userData.wardrobe.cv.height=0}heroSpr=null}if(heroHeadSpr){P.remove(heroHeadSpr);heroHeadSpr=null}
   // v52: the class's own animated APNGs are what the hero wears now.  Every supplied view of that
   // class and gender has to be decoded first; until then (or if a file is missing) the animated
   // pack body keeps the game playable, so the character is never half-switched or left blank.
+  if(native){heroSpr=mkWardrobeHero(native);P.add(heroSpr);return}
   const sp=skinPack(opt.cls,opt.sex);
   if(skinLoaded(sp)){heroSpr=mkSkinHero(sp);P.add(heroSpr);return}
   const pb=packReady?packBodyFor(opt.cls,opt.tier):null;
@@ -8769,7 +8775,8 @@ function draw(){
   ensureHero({cls:c.n,cloth:hx(clothN),clothN,cape:c.cape?hx(c.cape):'',hair:hx(hairN),hairN,hat:c.hat?hx(c.hat):'',wt,metal:hx(metalN),skin:'#ffd2a8',look:lookOf(c.n),tier:c.tier||0,sex:S.sex||'m',hair:S.hair|0,shield:!!(S.eq.off&&S.eq.off.slot==='off')});
   const pFace=mob?Math.atan2(mob.z-pl.z,mob.x-pl.x):pl.run?-pl.ry: -az+Math.PI;
   if(heroSpr){const hd=viewDir(pFace),sk=heroSpr.userData.skin;
-    if(sk){const route=skinRoute(sk.p,hd,atkAnim);route.weaponType=wt;
+    if(heroSpr.userData.wardrobe)captureWardrobeFrame(heroSpr,hd,pl.run,atkAnim);
+    else if(sk){const route=skinRoute(sk.p,hd,atkAnim);route.weaponType=wt;
       // Paint the APNG frame and its matching saved weapon placement onto the GPU texture.
       // The class skin's own delay table drives both through this same render path.
       captureSkinFrame(heroSpr,route)}
@@ -8822,6 +8829,7 @@ function draw(){
   syncSkillFx();syncWeaponSprites(pFace,c);syncLevelAura();
   eclipseDrawMinimap();if(typeof eclipseDrawAtlas==='function')eclipseDrawAtlas();drawSkinPreview('eclipsePortrait',null,S.cls,S.sex);if(tabs.includes('equip'))drawSkinPreview('eclipseDoll',null,S.cls,S.sex);if(tabs.includes('set'))drawAppearancePreview();
   if(tabs.includes('job'))drawClassPreview();
+  if(typeof wardrobePreview==='function')wardrobePreview();
   R.render(scene,cam);
   floats.forEach(f=>{if(!f.el){const e=document.createElement('div');e.className='fl'+(f.big?' big':'')+(f.kind&&f.kind!=='text'?' '+f.kind:'');
     if(f.kind==='critical'||f.kind==='skill-critical'){
@@ -8953,5 +8961,6 @@ function updateWatch(){
 }
 setInterval(updateWatch,60000);
 </script>
+<script src="assets/wardrobe-ui.js?v=1"></script>
 </body>
 </html>

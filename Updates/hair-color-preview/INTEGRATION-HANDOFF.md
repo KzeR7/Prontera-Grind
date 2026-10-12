@@ -278,3 +278,15 @@ Download format:
 - `INTEGRATION-HANDOFF.md`, `PERFORMANCE-AND-HOSTING.md`, `asset-costs.json`, `browser-benchmark.json`: next-agent plan and measured evidence.
 
 The single `.pgap` bundle under `measurements/` is a tested byte-preserving packaging proof for one Lord Knight look. No live code reads it yet. The full 6,840-bundle catalog is a proposed file-count design, not an already generated production asset collection.
+
+## 12. Local Lord Knight bundle prototype (follow-up)
+
+A separate workshop now lives at `/Updates/lord-knight-bundles/`. Its generator packages all 360 frozen Lord Knight gender/hair/palette appearances, with nine local native animations per appearance (three stances × S/SE/NE). It reuses this studio's unchanged PNGs where available and obtains missing front/rear permutations through the native renderer.
+
+Read `Updates/lord-knight-bundles/README.md` for generation, strict bundle parsing, source provenance, one-view memory retention, attack timing and remaining coverage limits. Its manifest and bundles are separate from this studio's audit. `tools/check_appearance_bundle_browser.js` audits the new loader. The old game's code and all earlier studio files/assets remain the reference baseline; no game integration or deployment is authorized.
+
+## Authorized follow-up: first in-game Wardrobe fitting
+
+The owner subsequently authorized game integration for a first Lord Knight fitting. `grind-v118` adds Wardrobe (W), reusable native layers, gender/style/color/accessory selectors, preview/apply/cancel, legacy-safe versioned appearance IDs and native combat-clock rendering. This supersedes this document's earlier blanket prototype-only status for that fitting. Other class integrations and deployment remain outside this change.
+
+See `tools/native-wardrobe/README.md` for exact source versions, measured static/memory budgets, rebuild commands and verification. Native recovered palettes and female style27 have differences from the earlier LATAM art; the original studio and bundles are preserved. Do not claim exact LATAM parity, real WebGL/phone validation, a merge or deployment.

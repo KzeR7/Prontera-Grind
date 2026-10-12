@@ -95,3 +95,17 @@ A bundle should be fetched once per equipped look, not once per rendered frame. 
 A continually active client with one scheduled save per minute produces up to1,440 scheduled save requests/day; this is an illustration, not a player capacity estimate. Login, polling, boards, retries, multiple tabs and other Workers add requests. A save can touch more than one D1 row or index; do not assume one save equals exactly one billed row written. Existing code throttles hidden tabs to reduce activity. Use the GM metered usage card or Cloudflare dashboard to see actual totals, and keep headroom.
 
 Changing a numeric hairstyle/palette field inside an existing save does not itself require another request or image storage in D1. Adding static art therefore need not raise backend compute cost. Retaining$0 still depends on the documented quotas, a package build that fits the static limits, and future traffic.
+
+## Follow-up: completed local Lord Knight prototype pack
+
+`Updates/lord-knight-bundles/` now contains 360 appearance bundles with all 3,240 Lord Knight animations for the frozen two-gender/style/palette catalog, three stances and S/SE/NE views. Their combined size is **68,674,485 bytes (65.49 MiB)**; the largest bundle is **200,030 bytes (195.34 KiB)**. These are measured completed files, separate from the full-roster projection above. 1,104 animations reuse preserved studio bytes and 2,136 fill missing views through the native renderer cache. All 21,600 frames passed the builder's independent decode, timing, bounds and hash checks.
+
+The new workshop fetches one local bundle per appearance, retains one decoded view, releases replaced canvases and paints only when its displayed frame/view changes. At most old and candidate strips overlap during an atomic switch. Its 32 MiB decoded-pixel budget and UI counters exclude transient decoder arrays and browser/GPU overhead. It is a standalone canvas prototype; no full-game GPU or real-phone FPS claim is made. Detailed browser verification lives in the workshop's `VERIFICATION.md`.
+
+The existing publishing build remains byte-identical (314 paths); the prototype is excluded. No backend, billing, R2, route or deployment change was made. Using this pack in the game still requires explicit owner approval and the integration gates documented above.
+
+## Authorized follow-up: shared native layers
+
+The first in-game Lord Knight Wardrobe now uses shared body/accessory atlases and separate hair/color atlases: **618 static files / 4,398,094 bytes**, including all eight directions and independent halo/glasses/wings. The measured full publish tree has **935 files / 26,703,393 bytes**, largest 5,819,715 bytes; the build now enforces free-plan file-count/per-file limits. The earlier 68,674,485-byte precomposed prototype remains excluded.
+
+The native atlas cache has a 16 MiB decoded-pixel cap; exhaustive real-browser selection of all 360 looks peaked at 4,034,560 cached pixel bytes. These figures exclude transient decoder/canvas/GPU memory. Appearance state is approximately 110 bytes inside the existing save; no new per-preview API writes, D1 image storage or server-side rendering. Native game textures update when pose/frame changes. GPU/real-phone performance remains unverified because the shared browser lacks WebGL. `tools/native-wardrobe/README.md` records source-version differences and remaining release checks.
