@@ -38,6 +38,7 @@ const code = [
   pick(/const matk=\(\)=>[^\n]*/, 'matk()'),
   pick(/const def=\(\)=>[^,]+,mdef=/, 'def()').replace(/,mdef=$/, ''),
   grab('function canShield(){', 'function ekey(it)'),        // canShield / katarOnly / dualWield
+  grab('function transferEquipmentCards(', 'const CARD_MERGE_COST='),
   grab('function slotAccepts(k,it){', 'function equipChooser(k){'),
   'const pv=()=>0,tb={},petBuff={},collDmg=()=>0,MASTER_STATS=[];',
 ].join('\n');
@@ -249,7 +250,7 @@ t('MATK reads the main hand only, so the left-hand dagger never feeds it', () =>
 t('v88a: the save-load repair keeps an Assassin\'s off-hand dagger on', () => {
   const repair = grab('// Assassin jobs use one two-handed Katar', 'const fx=c=>{');
   const run = (cls, eq) => {
-    const box = { CLASSES: H.CLASSES, dualWield: H.dualWield, f: { cls, eq: Object.assign(empty(), eq), inv: [] } };
+    const box = { canUse:it=>H.CLASSES[box.S.cls].wt.includes(it.wt), CLASSES: H.CLASSES, dualWield: H.dualWield, f: { cls, eq: Object.assign(empty(), eq), inv: [] } };
     vm.createContext(box);
     vm.runInContext(repair + '\nthis.__f=f;', box);
     return box.__f;
@@ -280,9 +281,9 @@ t('v88b: auto-equip is dual-wield aware - a dagger takes the better hand, a kata
   // dualWield() reads S from its own scope, so the box runs the REAL function source against the
   // box's own S - not the outer harness's copy, which would answer for the wrong class.
   const dw = pick(/function dualWield\(cls=S\.cls\)\{[^}]*\}/, 'dualWield');
-  const box = { CLASSES: H.CLASSES, ev: H.ev, ekey: it => it.slot, DUAL: .5, TWO_HANDED: 1.5, maxHp: () => 100 };
+  const box = { canUse:it=>H.CLASSES[box.S.cls].wt.includes(it.wt), CLASSES: H.CLASSES, ev: H.ev, ekey: it => it.slot, DUAL: .5, TWO_HANDED: 1.5, maxHp: () => 100 };
   vm.createContext(box);
-  vm.runInContext(dw + '\n' + fn + '\nthis.__ae=autoEquip;', box);
+  vm.runInContext(dw + '\n' + grab('function transferEquipmentCards(', 'const CARD_MERGE_COST=') + '\n' + fn + '\nthis.__ae=autoEquip;', box);
   const ae = box.__ae;
   const run = (cls, eq, extraInv, drop) => {
     const it = Object.assign(dagger({ id: 99 }), drop);

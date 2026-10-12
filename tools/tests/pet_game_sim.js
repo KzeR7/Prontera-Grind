@@ -9,10 +9,15 @@ try{
   ev(`window.__id=PETS[${sp}].spriteId;window.__v=buildMob({pet:true,spriteId:__id,shape:petFallbackShape(PETS[${sp}]),c:PETS[${sp}].c});t=1;window.__r={run:false};`);
   for(const stance of ['idle','walk','attack'])for(let d=0;d<8;d++){
    ev(`__r.run=${stance==='walk'};__r.attackStarted=${stance==='attack'?'t':'null'};drawNativePet(__v,__id,__r,${d})`);
-   assert.equal(ev('__v.nativePet.last'),ev(`petAssetKey(__id,${JSON.stringify(stance)},${d})+':'+${d}+':'+PGPetSprites.frameIndex(__petAssets[petAssetKey(__id,${JSON.stringify(stance)},${d})].metadata.actions[${JSON.stringify(stance+d)}],1000,${stance==='attack'?'0':'null'})`));
-   ev('syncMobImage(__v,{run:true,lunge:1},PET_VISUAL_SCALE)');assert.equal(ev('__v.spr.position.y'),0);assert.equal(ev('__v.spr.center.y'),.25);assert.equal(ev('__v.spr.material.rotation'),0);
+   assert.equal(ev('__v.nativePet.last'),ev(`petAssetKey(__id,${JSON.stringify(stance)},${d})+':'+${d}+':'+PGPetSprites.frameIndex(__petAssets[petAssetKey(__id,${JSON.stringify(stance)},${d})].metadata.actions[${JSON.stringify(stance+d)}],1000*PET_ANIMATION_RATE,${stance==='attack'?'0':'null'})`));
+   ev('syncMobImage(__v,{run:true,lunge:1},PET_VISUAL_SCALE)');assert.equal(ev('__v.spr.position.y'),0);assert.equal(ev('__v.spr.center.y'),ev('1-PET_LAYOUT[__id][0]/256'));assert.equal(ev('__v.spr.material.rotation'),0);
   }
   ev('window.__paint=__v.nativePet.last;window.__ready=petSpriteStore.ready;petSpriteStore.ready=()=>null;drawNativePet(__v,__id,__r,0);petSpriteStore.ready=__ready');assert.equal(ev('__v.nativePet.last'),ev('__paint'),'keep previous frame while loading');
+  // Every opaque pose stays above ground and below the hero's drawn height.
+  for(const [key,asset] of Object.entries(g.window.__petAssets).filter(([key])=>key.startsWith(ev('String(__id)')+'-'))){
+   const layout=ev('PET_LAYOUT[__id]'),px=ev('2.65*PET_VISUAL_SCALE')/layout[1];
+   for(const pose of asset.metadata.poses){assert.ok((layout[0]-pose[5]-pose[3])*px>=-1e-9,key+' below ground');assert.ok(pose[3]*px<ev('SKIN_H'),key+' taller than hero');}
+  }
   ev('disposeCreatureVisual(__v)');assert.equal(ev('__v.nativePet.cv.width'),0);
  }
  ev(`S.pets=Array.from({length:20},(_,sp)=>({id:sp+100,sp,mut:0,eq:[0,0,0],skills:['vital'],on:sp<3}));tabs.splice(0,tabs.length,'pet');ACT.selp('119');`);

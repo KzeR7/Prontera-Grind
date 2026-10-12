@@ -473,7 +473,7 @@ t('the Mastery Index tracks monster titles and consumes loose cards for permanen
   assert.ok(!h.includes('<option value="13"'),'a Common card is not offered as a sacrifice');
   assert.ok((h.match(/<option /g)||[]).length===2,'one option per loose Legendary, no more');
   assert.ok(h.includes('data-a="cardtab"')&&h.includes('Legendary <small>2</small>'),'rarity sub-tabs count the loose cards');
-  assert.ok(h.includes('data-a="indexall"')&&h.includes('Insert all'),'a stack can be dedicated in one tap');
+  assert.ok(h.includes('data-a="indexall"')&&h.includes('→ Index'),'a stack can be dedicated in one tap');
   assert.ok(h.includes('Latest rolls'),'and the newest rolls are shown, not just the totals');
   assert.ok((h.match(/class="roll-chip(?!s)/g)||[]).length===3,'at most three rolls are listed');
   assert.ok(h.indexOf('AGI</b>')<h.indexOf('STR</b>'),'newest roll first');
@@ -1843,7 +1843,7 @@ t('the reset buttons explain themselves, refuse on screen, and survive a rebuild
   assert.ok(src.includes("const existing=new Map([...host.querySelectorAll(':scope > [data-win]')]")
     && !src.includes('host.replaceChildren(')
     && src.includes('if((body._panelSource!==source||body._panelViewKey!==viewKey)&&!body.querySelector(')
-    && src.includes("b.scrollTop=k==='log'?1e6:(old[k]||0)"),
+    && src.includes("b.scrollTop=old[k]||0"),
     'every tab retains its live window/body, while changed content and both scrollers update safely');
   assert.ok(!src.includes('el.scrollIntoView('), 'nothing calls the browser scrollIntoView() any more');
   assert.ok(/body\.scrollTop\+=er\.top-br\.top/.test(src) && /body\.scrollTop\+=er\.bottom-br\.bottom/.test(src),

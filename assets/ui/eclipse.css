@@ -1519,3 +1519,26 @@ body.clean-screen #sideMenu{display:none}
 .eclipse-inventory-pages button{padding:7px 9px;font-size:10px;white-space:nowrap}
 .eclipse-inventory-pages>span{text-align:center;font-size:11px;min-width:0;color:var(--ink)}
 .eclipse-inventory-pages small{display:block;font-size:9px;color:var(--e-muted);margin-top:3px}
+
+/* v131: compact collections and palette-consistent activity history. */
+#wins .ui-panel[data-layout=log] .ui-content{gap:10px}
+#wins .ui-panel[data-layout=log] .ui-section,#wins .logfbar,#wins .log-preview-controls{background:var(--panel);color:var(--ink);border-color:var(--e-line)}
+#wins .ui-log-summary,#wins .logfbar .logf{color:var(--e-muted)}
+#wins .ui-panel .logfbar{grid-template-columns:repeat(auto-fit,minmax(105px,1fr));gap:4px 8px;position:static}
+#wins .logf{padding:3px 0;font-size:10px}
+#wins .ui-events{background:var(--e-bg);border:1px solid var(--e-line);border-radius:5px;overflow-y:auto;overflow-anchor:none;overscroll-behavior:contain;scrollbar-gutter:stable;min-height:120px}
+#wins .ui-events>div{padding:5px 8px;border-color:var(--e-line);font-size:11px;line-height:1.4;flex-shrink:0;overflow-wrap:anywhere}
+#wins .eclipse-card-grid{grid-template-columns:repeat(auto-fill,minmax(145px,1fr));grid-auto-rows:auto;gap:7px}
+#wins .eclipse-card-grid>.cell{height:auto;min-height:94px;padding:10px;gap:5px}
+#wins .eclipse-card-grid .eclipse-card-glyph{height:23px;margin:0}
+#wins .eclipse-card-grid b{font-size:11px}
+#wins .card-location{display:block;color:var(--gold);font-size:10px;line-height:1.35;white-space:normal;overflow-wrap:anywhere}
+#wins .eclipse-bag .grid{gap:5px;grid-auto-rows:44px}
+#wins .eclipse-bag .grid>.cell{height:44px;padding:4px}
+#wins .eclipse-companion-grid[data-pet-view=collection]{grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:7px;padding:0}
+#wins .eclipse-companion-grid[data-pet-view=collection]>.eclipse-companion-card{padding:10px;gap:3px 8px}
+
+:root{--surface:var(--e-raised);--muted:var(--e-muted);--brass:var(--gold);--focus:var(--gold)}
+#wins .eclipse-card-grid .card-location{grid-column:1/-1;margin:2px 0 0;font-size:10px}
+
+#wins .ui-inventory .ui-item-scroll{height:auto;min-height:0;max-height:360px;flex:0 1 auto}

@@ -786,7 +786,7 @@ body.clean-screen #screenBtn{visibility:visible!important}body.clean-screen #hud
 <link rel="preload" href="assets/ui/fonts/font-5.ttf" as="font" type="font/ttf" crossorigin>
 <link rel="preload" href="assets/ui/fonts/font-6.ttf" as="font" type="font/ttf" crossorigin>
 <link rel="preload" href="assets/ui/fonts/font-7.ttf" as="font" type="font/ttf" crossorigin>
-<link rel="stylesheet" href="assets/ui/eclipse.css">
+<link rel="stylesheet" href="assets/ui/eclipse.css?v=131">
 <script>try{const p=localStorage.getItem("pg_ui_palette");document.documentElement.dataset.palette=["moonstone","aurora","ember"].includes(p)?p:"moonstone"}catch{document.documentElement.dataset.palette="moonstone"}</script>
 </head>
 <body>
@@ -1082,7 +1082,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // give-back) and main's weapon-hold rendering work.
 let simCatchingUp=false;
 const simVisualsOff=()=>document.hidden||simCatchingUp;
-const BUILD='2026-10-12 grind-v130 Skill art and native pets';   // shown on the login card - confirms which file you loaded
+const BUILD='2026-10-12 grind-v131 Companions and card quality of life';   // shown on the login card - confirms which file you loaded
 $('buildTag').textContent='build '+BUILD;
 
 // ---------- class tree: Novice -> 6 first jobs -> 6 second jobs -> 6 third jobs ----------
@@ -1524,10 +1524,10 @@ let cardPick=null; // the Legendary card the reset dropdown has selected (falls 
 const cardMasteryCardByName=name=>Array.isArray(S&&S.cards)?S.cards.filter(c=>c&&!c.stars&&c.n===name):[];
 // Dedicate as many copies of one card as its ranks still take (7 Poring cards fill 5/5 and leave 2
 // loose), so a stack never needs one confirmation per copy.
-function donateAllToMastery(name){
+function donateAllToMastery(name,limit=Infinity){
   if(!S||!Array.isArray(S.cards))return {donated:0,left:0,level:0};
   let donated=0;
-  while(cardMasteryLevel(name)<CARD_MASTERY_PER_CARD){
+  while(donated<limit&&cardMasteryLevel(name)<CARD_MASTERY_PER_CARD){
     const next=cardMasteryCardByName(name)[0];
     if(!next)break;
     if(!donateCardToMastery(next.id))break;
@@ -2057,16 +2057,28 @@ function socketWhy(c,it,eq=S.eq){
  if(cardEffects(c).some(x=>x.k==='cdm')&&own.filter(x=>cardEffects(x).some(e=>e.k==='cdm')).length>=2)return 'At most two Crit DMG cards fit each item.';
  return '';
 }
+function ownedCardEntries(){
+ const entries=S.cards.map(card=>({card,key:cardGroup(card),location:'Loose card'}));
+ for(const [slot,it] of [...Object.entries(S.eq),...S.inv.map(it=>['bag',it])])if(it)for(const card of it.cards||[])
+  entries.push({card,key:'socket:'+card.id,location:(slot==='bag'?'Stored in bag':(EQK.find(x=>x[0]===slot)?.[1]||slot))+' · '+iname(it)});
+ return entries;
+}
+function transferEquipmentCards(old,it,slot){
+ if(!old||old===it||old.slot!==it.slot||!canUse(it))return;
+ it.cards=it.cards||[];const remaining=[];
+ for(const c of old.cards||[]){if(it.cards.length<(it.slots||0)&&!socketWhy(c,it))it.cards.push(c);else remaining.push(c)}
+ old.cards=remaining;
+}
 const CARD_MERGE_COST=[1,3,5];
 function mergeCard(id){
- const c=S.cards.find(x=>String(x.id)===String(id));if(!c||c.legacy||!c.cardKey||cardStars(c)>=3)return;
+ const c=ownedCardEntries().find(x=>String(x.card.id)===String(id))?.card;if(!c||c.legacy||!c.cardKey||cardStars(c)>=3)return;
  const stars=cardStars(c),cost=CARD_MERGE_COST[stars],donors=S.cards.filter(x=>x!==c&&!x.legacy&&x.cardKey===c.cardKey&&!cardStars(x)).slice(0,cost);
  if(donors.length<cost){log(`Need ${cost} extra identical unstarred cards. Normal and Nightmare copies merge separately.`);return;}
  const owner=S,ids=donors.map(x=>x.id),next={...c,stars:stars+1};let used=false;
  ask(`Merge ${cardName(c)} to ${stars+1} star(s)? Consume ${cost} extra unstarred ${c.n}: ${cardEffects(c).map(cardEffectText).join(', ')} → ${cardEffects(next).map(cardEffectText).join(', ')}.`,()=>{
-  if(used||S!==owner||!S.cards.includes(c)||cardStars(c)!==stars)return;used=true;
+  if(used||S!==owner||!ownedCardEntries().some(x=>x.card===c)||cardStars(c)!==stars)return;used=true;
   if(!donors.every(x=>S.cards.includes(x)&&!x.legacy&&x.cardKey===c.cardKey&&!cardStars(x)))return;
-  S.cards=S.cards.filter(x=>!ids.includes(x.id));c.stars=stars+1;selC=cardGroup(c);save();ui();
+  S.cards=S.cards.filter(x=>!ids.includes(x.id));c.stars=stars+1;selC=ownedCardEntries().find(x=>x.card===c).key;save();ui();
  });
 }
 function repairEquippedCards(f){
@@ -2337,7 +2349,7 @@ const JOFF=[0,9,49,98];
 // ---------- state ----------
 // expEarned (v74) is a session counter like zenyEarned: it counts what this login actually
 // earned, so the HUD's EXP/min readout is income, never a level-up's subtraction of it.
-let currentUser=null,S=null,speed=1,zenyEarned=0,expEarned=0,floats=[],drops=[],t=0,shake=0,atkAnim=0,hitAnim=0,shots=[],skillFx=[],barT=0,hudRate=null,logs=[],tab=null,selB=null,selC=null,selK=null,mapM=0,mapL=1;
+let currentUser=null,S=null,speed=1,zenyEarned=0,expEarned=0,floats=[],drops=[],t=0,shake=0,atkAnim=0,hitAnim=0,shots=[],skillFx=[],barT=0,hudRate=null,logs=[],logSequence=0,tab=null,selB=null,selC=null,selK=null,mapM=0,mapL=1;
 // wt/wx/wz are the roam target: with no mobs on the field the character wanders instead of
 // trudging back to the spawn point. Only a defeat sends you home (see the death handler).
 const pl={x:0,z:Z1-1.5,ry:0,orb:0,run:0,wt:0,wx:0,wz:Z1-1.5},skCd={},petR={};
@@ -3633,7 +3645,7 @@ function autoEquip(it){
     const total=(main?ev(main):0)+(off?ev(off)*DUAL:0);
     const asMain=ev(it)+(off?ev(off)*DUAL:0),asOff=(main?ev(main):0)+ev(it)*DUAL;
     if(asMain>total||asOff>total){
-      const slot=asMain>=asOff?'weapon':'off',old=S.eq[slot];
+      const slot=asMain>=asOff?'weapon':'off',old=S.eq[slot];transferEquipmentCards(old,it,slot);
       S.inv.splice(S.inv.indexOf(it),1);if(old)S.inv.push(old);S.eq[slot]=it;S.hp=Math.min(S.hp,maxHp());return true
     }
     return false
@@ -3643,13 +3655,13 @@ function autoEquip(it){
     const total=(main?ev(main)*(main.wt==='katar'?TWO_HANDED:1):0)+(off?ev(off)*DUAL:0);
     if(ev(it)*TWO_HANDED>total){
       S.inv.splice(S.inv.indexOf(it),1);
-      if(main)S.inv.push(main);if(off)S.inv.push(off);
+      transferEquipmentCards(main,it,'weapon');if(main)S.inv.push(main);if(off)S.inv.push(off);
       S.eq.weapon=it;S.eq.off=null;S.hp=Math.min(S.hp,maxHp());return true
     }
     return false
   }
   const k=ekey(it),cur=S.eq[k];
-  if(!cur||ev(it)>ev(cur)){S.inv.splice(S.inv.indexOf(it),1);if(cur)S.inv.push(cur);S.eq[k]=it;S.hp=Math.min(S.hp,maxHp());return true}
+  if(!cur||ev(it)>ev(cur)){transferEquipmentCards(cur,it,k);S.inv.splice(S.inv.indexOf(it),1);if(cur)S.inv.push(cur);S.eq[k]=it;S.hp=Math.min(S.hp,maxHp());return true}
   return false
 }
 function offlineStoreGear(it,r){
@@ -3883,7 +3895,7 @@ function feedEntry(entry,visual){
   if(Number.isFinite(zeny)){const amount=document.createElement('span');amount.className='feed-zeny';amount.innerHTML=uiIcon('coin');amount.append(document.createTextNode(' +'+Math.round(zeny).toLocaleString()+' Zeny'));copy.append(amount);}
   d.append(copy);return d;
 }
-function log(m,cls,cat,visual){const e={m,cls,cat};logs.push(e);if(logs.length>80)logs.shift();if(simVisualsOff())return;
+function log(m,cls,cat,visual){const e={m,cls,cat,id:++logSequence};logs.push(e);if(logs.length>80)logs.shift();if(simVisualsOff())return;
   const d=feedEntry(e,visual);e.d=d;feedLive.push(e);if(feedLive.length>8)feedLive.shift();
   feedDraw();setTimeout(()=>{d.remove();const i=feedLive.indexOf(e);if(i>=0)feedLive.splice(i,1)},7000);
   if(tabs.includes('log'))renderWin()}
@@ -4395,7 +4407,7 @@ function collect(it){
   if(S.auto!==false&&canUse(it))autoEquip(it);ui();
 }
 function equip(id,quiet){const i=S.inv.findIndex(x=>x.id===id);if(i<0)return;const it=S.inv[i];if(!canUse(it)){log(`Your class cannot use ${it.name}.`);return}
-  S.inv.splice(i,1);const k=ekey(it),old=S.eq[k];if(old)S.inv.push(old);S.eq[k]=it;S.hp=Math.min(S.hp,maxHp());if(!quiet)log('Equipped '+iname(it),'','gear');selB=null;ui();save()}
+  S.inv.splice(i,1);const k=ekey(it),old=S.eq[k];transferEquipmentCards(old,it,k);if(old)S.inv.push(old);S.eq[k]=it;S.hp=Math.min(S.hp,maxHp());if(!quiet)log('Equipped '+iname(it),'','gear');selB=null;ui();save()}
 // Selling is pocket money, deliberately: it scales with numeric field quality, the gear section
 // and level, but stays far below the Zeny a field actually pays - a Common starter piece sells
 // for ~50z and the best normal Abyss gear for under 2,000z, so dumping a full bag never funds an
@@ -4669,7 +4681,7 @@ const TABS={map:['🗼','World Map','M'],wardrobe:['♧','Wardrobe','W'],status:
 const expandedPanels=new Set();
 let collectionGrade=-1;
 const dot=k=>{if(!S)return false;if(k==='status')return S.pts>0;if(k==='skills')return skpAvail()>0;if(k==='quest')return!!(S.q&&S.q.some(q=>q.prog>=q.goal));if(k==='cards')return S.cards.length>0;if(k==='index'){const rank=HUNT_TITLES.findIndex(t=>t.id===S.equippedTitle);return cardMasteryAvailable()>0||HUNT_TITLES.some((t,i)=>i>rank&&titleUnlocked(t))}return false};
-const find=id=>[...S.inv,...items(),...S.cards].find(x=>String(x.id)===String(id));
+const find=id=>[...S.inv,...items(),...ownedCardEntries().map(x=>x.card)].find(x=>String(x.id)===String(id));
 // Gear Lv is a display-only field-quality reference: field level +10 per numeric quality step.
 // It is not the item's rarity label (Nightmare equipment is N), and never gates use by Base Lv.
 const gearRefLevel=it=>Math.max(1,Math.min(150,Math.floor(+it.lvl||1)+10*Math.max(0,Math.min(4,Math.floor(+it.tier||0)))));
@@ -4682,7 +4694,7 @@ const weakerGear=it=>{const worn=it&&it.slot&&(it.slot==='acc'?(S.eq.acc1||S.eq.
 const cell=(it,sel,extra='')=>`<div class="cell b${dtier(it)}${it&&+it.sec>=4?' nm':''}${sel?' sel':''}${weakerGear(it)?' worse':''}" data-tip="${it.id}" ${extra}>${icon(it)}<span class="rarity-label">${it.card?GRADE[it.g]:it.ore?'Ore':rarOf(it).n}</span>${it.locked?`<i class="lockstar" title="Locked gear" aria-label="Locked">&#9733;</i>`:''}${it.r?`<i class="rf">+${it.r}</i>`:''}</div>`;
 function itemMain(it){
   const worn=weakerGear(it);
-  if(it.card)return`<b class="r${GI[it.g]}">${esc(cardName(it))}</b><div>${cardEffects(it).map(cardEffectText).join(' · ')}</div><small>Fits: ${(it.fit||CARD_FITS[it.stat]||[]).join(', ')}. One per monster family per item; up to two boss cards and two Crit DMG cards per item; no build-wide boss limit.</small>${it.legacy?`<p>Legacy roll preserved. Convert free to the current normal card after removing it.</p><button data-a="convertcard" data-v="${it.id}">Preview conversion</button>`:''}`;
+  if(it.card)return`<b class="r${GI[it.g]}">${esc(cardName(it))}</b><div>${cardEffects(it).map(cardEffectText).join(' · ')}</div><small>Fits: ${(it.fit||CARD_FITS[it.stat]||[]).join(', ')}. One per monster family per item; up to two boss cards and two Crit DMG cards per item; no build-wide boss limit.</small>${it.legacy?`<p>Legacy roll preserved. Update its effects free to the current normal card after removing it. This keeps the card; dedicating to the Index consumes it.</p><button data-a="convertcard" data-v="${it.id}">Update legacy card</button>`:''}`;
   // v74: the class tier of a piece is part of its description, and a piece that came off a class
   // remembers who was wearing it so the lock is never a mystery: "it is locked BECAUSE Knight had
   // it on, and it goes back on the moment you switch to Knight again".
@@ -4937,9 +4949,9 @@ const V={
     const rowAt=rows.findIndex(r=>r.includes(selE));
     return`<div class="doll">${rows.map((r,i)=>r.map(slotCell).join('')+(i===rowAt?detail:'')).join('')}</div>`
     +`<small>Weapons: ${c.wt.join(', ')} &middot; ${canShield()?'Shield allowed':'No shield'}${katarOnly()?' &middot; <b>Two-handed Katar, or a dagger in each hand</b>':''}</small><div class="eclipse-doll-preview"><canvas id="eclipseDoll" width="126" height="134" aria-label="Equipped character"></canvas></div><div class="eclipse-loadout-inventory">${V.bag0()}</div>`},
-  cards(){const g={};S.cards.forEach(c=>{const k=cardGroup(c);(g[k]=g[k]||[]).push(c)});const ks=Object.keys(g).filter(k=>collectionGrade<0||g[k][0].g===collectionGrade).sort((a,b)=>cardStars(g[b][0])-cardStars(g[a][0])||g[b][0].g-g[a][0].g||g[a][0].n.localeCompare(g[b][0].n)||a.localeCompare(b)),sel=ks.includes(selC)?g[selC][0]:null;
-    return`<p>Merge identical cards: ★ +9%, ★★ +12%, ★★★ +15% effects. Each step consumes 1 / 3 / 5 extra unstarred copies (10 cards total for ★★★). Normal and Nightmare merge separately. Starred cards are protected from Mastery donations and resets.</p><div class="eclipse-card-filters" role="group" aria-label="Card grade">${[[-1,"All grades"],...GRADE.map((n,i)=>[i,n])].map(([v,n])=>`<button data-a="cardgrade" data-v="${v}" aria-pressed="${collectionGrade===v}">${n}</button>`).join('')}</div><div class="grid">${ks.map(n=>`<div class="cell b${GI[g[n][0].g]}${n===selC?' sel':''}" data-a="selc" data-v="${esc(n)}" data-tip="${g[n][0].id}">🃏<small>${"★".repeat(cardStars(g[n][0]))}</small><i class="rf">x${g[n].length}</i></div>`).join('')||(S.cards.length?'<small>No cards in this grade.</small>':'<small>No cards yet. Every monster drops its own card at a low chance.</small>')}</div>
-    ${sel?`<div class="mob-card" style="margin-top:8px">${itemDetail(sel)}<div class="row" style="margin-top:6px">${EQK.map(([k,l])=>{const e=S.eq[k];return e&&(e.cards||[]).length<(e.slots||0)&&cardFits(sel,e)?`<button data-a="sock" data-v="${sel.id}:${k}">&rarr; ${l}</button>`:''}).join('')}${!sel.legacy&&sel.cardKey&&cardStars(sel)<3?`<button data-a="mergecard" data-v="${sel.id}">Merge to ${cardStars(sel)+1}★ · ${CARD_MERGE_COST[cardStars(sel)]} extra copies</button>`:""}<button data-a="sellcard" data-v="${sel.id}">Sell ${sel.v*150}z</button></div></div>`:''}`},
+  cards(){const entries=ownedCardEntries(),g={};entries.forEach(({card:c,key:k})=>{(g[k]=g[k]||[]).push(c)});const ks=Object.keys(g).filter(k=>collectionGrade<0||g[k][0].g===collectionGrade).sort((a,b)=>cardStars(g[b][0])-cardStars(g[a][0])||g[b][0].g-g[a][0].g||g[a][0].n.localeCompare(g[b][0].n)||a.localeCompare(b)),sel=ks.includes(selC)?g[selC][0]:null,loose=sel&&S.cards.includes(sel);
+    return`<p>Equipped cards stay here and can be merged using loose copies. Compatible cards transfer when replacing gear; cards that cannot fit stay on the old item. Merge identical cards: ★ +9%, ★★ +12%, ★★★ +15% effects. Each step consumes 1 / 3 / 5 extra unstarred copies (10 cards total for ★★★). Normal and Nightmare merge separately. Starred cards are protected from Mastery donations and resets.</p><div class="eclipse-card-filters" role="group" aria-label="Card grade">${[[-1,"All grades"],...GRADE.map((n,i)=>[i,n])].map(([v,n])=>`<button data-a="cardgrade" data-v="${v}" aria-pressed="${collectionGrade===v}">${n}</button>`).join('')}</div><div class="grid">${ks.map(n=>`<div class="cell b${GI[g[n][0].g]}${n===selC?' sel':''}" data-a="selc" data-v="${esc(n)}" data-tip="${g[n][0].id}">🃏<small>${"★".repeat(cardStars(g[n][0]))}</small><i class="rf">x${g[n].length}</i></div>`).join('')||(entries.length?'<small>No cards in this grade.</small>':'<small>No cards yet. Every monster drops its own card at a low chance.</small>')}</div>
+    ${sel?`<div class="mob-card" style="margin-top:8px">${itemDetail(sel)}<p class="card-location">${esc(entries.find(x=>x.card===sel).location)}</p><div class="row" style="margin-top:6px">${EQK.map(([k,l])=>{const e=S.eq[k];return loose&&e&&(e.cards||[]).length<(e.slots||0)&&!socketWhy(sel,e)?`<button data-a="sock" data-v="${sel.id}:${k}">&rarr; ${l}</button>`:''}).join('')}${!sel.legacy&&sel.cardKey&&cardStars(sel)<3?`<button data-a="mergecard" data-v="${sel.id}">Merge to ${cardStars(sel)+1}★ · ${CARD_MERGE_COST[cardStars(sel)]} extra copies</button>`:""}${loose?`<button data-a="sellcard" data-v="${sel.id}">Sell ${sel.v*150}z</button>`:''}</div></div>`:''}`},
   refine(){return`<div class="hd">Oridecon: ${S.ore.ori} &middot; Elunium: ${S.ore.elu} &middot; Refine Protection Scrolls: ${safeCount(S.refineScrolls)}</div><small>Weapons use Oridecon; armor, shield, legs, headgear and accessories use Elunium. Regular mobs drop both at 0.5% on Stages 1-9 and 1% on Stage 10; Stage 10 MVPs drop both at 2.5%. Each attempt costs 1 ore on Common and Fine pieces, 2 on Rare and Epic, 5 on Legendary, and 10 on N and N+. Enable Refine Protection Scroll below: one scroll is consumed on every attempt while On, including success, and keeps your rank on failure. Only current +5 or above can lose a rank. Below +5 asks for confirmation before spending a scroll. Success chance is unchanged. Crafted and purchased scrolls share this reserve.</small>`
     +`${refineProtectionUI()}`+dpsPanel()+EQK.map(([k,l])=>{const it=S.eq[k];if(!it)return'';const r=it.r||0,o=it.slot==='weapon'?'ori':'elu',c=refCost(it);
       return`<div class="slot" style="align-items:flex-start;gap:10px;margin-top:6px">${cell(it,false)}<div style="flex:1"><b class="${rarCls(it)}">${iname(it)}</b> <small>${l}</small><br><small>${SLOTS[it.slot].stat} +${ev(it)} &rarr; +${Math.round(it.val*(1+(r+1)*.15))} &middot; ${r>=10?'MAX':'Success '+refCh(it)+'% &middot; '+c.toLocaleString()+'z + '+refOre(it)+' '+ORE[o]}</small><br><button data-a="refine" data-v="${k}" ${r>=10||S.ore[o]<refOre(it)||S.zeny<c?'disabled':''}>Refine</button></div></div>`}).join('')},
@@ -4957,7 +4969,7 @@ const V={
     const shown=logShown();
     return`<div class="log-preview-controls"><button data-a="feed" aria-pressed="${feedOn()}">${feedOn()?"Hide":"Show"} on-screen log</button><small>Choose event types below for the on-screen preview and activity history.</small></div><div class="logfbar">${cats}<span class="sp"><button data-a="logfall" data-v="on">All</button><button data-a="logfall" data-v="off">None</button></span></div>
     <small>${shown.length} of ${logs.length} events shown &middot; tick what you want to read &middot; the on-screen log follows the same ticks</small>
-    ${shown.map(l=>`<div class="${l.cls||''}">${l.m}</div>`).join('')||'<i>No events to show.</i>'}`},
+    ${shown.map(l=>`<div data-log-id="${l.id}" class="${l.cls||''}">${l.m}</div>`).join('')||'<i>No events to show.</i>'}`},
   set(){const sex=S.sex==='f'?'Female':'Male';return`<div class="hd">Character</div>
     <div class="row"><button data-a="sex" data-v="m" class="${S.sex==='m'?'on':''}">Male</button><button data-a="sex" data-v="f" class="${S.sex==='f'?'on':''}">Female</button></div>
     <button data-t="wardrobe" class="full">Open Wardrobe</button>
@@ -5026,7 +5038,7 @@ function equipChooser(k){
   ${fit.length?`<small style="display:block;margin-top:4px">Compared to what you wear: ${deltas}${fit.length>6?` &middot; +${fit.length-6} more`:''}</small>`:'<small style="display:block;margin-top:4px">Nothing in your bag fits this slot.</small>'}</div>`}
 function equipIn(k,id){const it=S.inv.find(x=>String(x.id)===String(id));
   if(!it)return;if(!slotAccepts(k,it)){log('Your class cannot use that there.');return}
-  const old=S.eq[k];S.eq[k]=it;S.inv.splice(S.inv.indexOf(it),1);if(old)S.inv.push(old);
+  const old=S.eq[k];transferEquipmentCards(old,it,k);S.eq[k]=it;S.inv.splice(S.inv.indexOf(it),1);if(old)S.inv.push(old);
   S.hp=Math.min(S.hp,maxHp());log('Equipped '+iname(it)+' ('+EQK.find(x=>x[0]===k)[1].toLowerCase()+').','','gear');ui();save()}
 const SUBS={equip:[['equip0','Loadout'],['refine','Refine (R)'],['reforge','Reforge']],status:[['stats','Stats']],bag:[['bag','Items'],['cards','Cards']]};
 const subBar=t=>`<div class="atabs">${SUBS[t].map(([k,n])=>`<button data-a="sub" data-v="${t}:${k}" class="${sub[t]===k?'on':''}">${n}</button>`).join('')}</div>`;
@@ -5101,12 +5113,12 @@ function renderCardIndex(){
   const rarest=inventory.length?Math.max(...inventory.map(x=>x.card.g)):-1;
   const tab=cardGrade==='all'?'all':inventory.some(x=>x.card.g===cardGrade)?cardGrade:rarest;
   return `<div class="mastery-summary"><b>🃏 Per-Card Mastery</b><span>${registered}/${album.length} cards discovered · ${total}/${max} mastery ranks · ${donated.toLocaleString()} copies dedicated</span>
-    <small>Each card has ${CARD_MASTERY_PER_CARD} ranks, and every rank you master gives <b>1 token</b>. Spend a token on the gacha for one random permanent stat. A reset costs 1 Legendary card, clears every rolled stat and refunds all spent tokens. Socketed and starred cards cannot be dedicated or spent on resets.</small></div>
+    <small>Each card has ${CARD_MASTERY_PER_CARD} ranks, and every rank you master gives <b>1 token</b>. Spend a token on the gacha for one random permanent stat. A reset costs 1 Legendary card, clears every rolled stat and refunds all spent tokens. Dedicating permanently removes the card from your bag and adds one rank to its Card Index entry, awarding one Mastery token. You cannot equip or merge that consumed copy. Socketed and starred cards cannot be dedicated or spent on resets.</small></div>
     <div class="mastery-progress-card"><div><b>${total}/${max}</b> card mastery ranks <small>· ${available} token${available===1?'':'s'} ready · ${rolled} rolled</small></div><div class="mastery-track"><i style="width:${bar.toFixed(1)}%"></i></div></div>
     ${cardGachaPanel()}
     <div class="mastery-section-title">📥 Card Index available <small>${(S.cards||[]).length} in your card bag</small></div>
     <div class="row card-tabs">${[4,3,2,1,0].map(g=>`<button data-a="cardtab" data-v="${g}" class="${tab===g?'on':''}" ${inventory.some(x=>x.card.g===g)?'':'disabled'} aria-pressed="${tab===g}">${GRADE[g]} <small>${inventory.filter(x=>x.card.g===g).reduce((n,x)=>n+x.cards.length,0)}</small></button>`).join('')}<button data-a="cardtab" data-v="all" class="${tab==='all'?'on':''}" aria-pressed="${tab==='all'}">All <small>${(S.cards||[]).length}</small></button></div>
-    <div class="mastery-card-list">${inventory.filter(x=>tab==='all'||x.card.g===tab).map(({card:c,cards})=>{const level=cardMasteryLevel(cardFamily(c)),full=level>=CARD_MASTERY_PER_CARD,room=CARD_MASTERY_PER_CARD-level,take=Math.min(cards.length,room);return `<div class="mastery-card-row"><span class="r${GI[c.g]}">🃏 <b>${c.n}</b><small>${GRADE[c.g]} · ${cardEffects(c).map(cardEffectText).join(', ')} · x${cards.length} · Mastery ${level}/${CARD_MASTERY_PER_CARD}</small></span><button data-a="indexcard" data-v="${cards[0].id}" ${full?'disabled':''} aria-label="Dedicate one ${c.n} to card mastery">${full?'MAXED':'Dedicate one'}</button>${full?'':`<button data-a="indexall" data-v="${c.n}" aria-label="Dedicate ${take} ${c.n} at once">Insert all · ${take}</button>`}</div>`}).join('')||`<div class="mastery-empty">${(S.cards||[]).length?'No loose cards in this rarity - pick another tab.':'No loose cards yet. Card drops go here after pickup; socketed cards are not eligible.'}</div>`}</div>
+    <div class="mastery-card-list">${inventory.filter(x=>tab==='all'||x.card.g===tab).map(({card:c,cards})=>{const level=cardMasteryLevel(cardFamily(c)),full=level>=CARD_MASTERY_PER_CARD,room=CARD_MASTERY_PER_CARD-level,take=Math.min(cards.length,room);return `<div class="mastery-card-row"><span class="r${GI[c.g]}">🃏 <b>${c.n}</b><small>${GRADE[c.g]} · ${cardEffects(c).map(cardEffectText).join(', ')} · x${cards.length} · Mastery ${level}/${CARD_MASTERY_PER_CARD}</small></span><button data-a="indexcard" data-v="${cards[0].id}" ${full?'disabled':''} aria-label="Dedicate one ${c.n} to card mastery">${full?'MAXED':'Consume 1 → Index'}</button>${full?'':`<button data-a="indexall" data-v="${c.n}" aria-label="Dedicate ${take} ${c.n} at once">Consume ${take} → Index</button>`}</div>`}).join('')||`<div class="mastery-empty">${(S.cards||[]).length?'No loose cards in this rarity - pick another tab.':'No loose cards yet. Card drops go here after pickup; socketed cards are not eligible.'}</div>`}</div>
     <div class="mastery-section-title">🗂 Card Mastery Album <small>Every mastered rank stays recorded</small></div>
     ${MAPS.map((mp,map)=>{const entries=MONSTER_INDEX.filter(m=>m.map===map),seen=entries.filter(m=>cardMasteryLevel(m.name+' Card')>0).length;
       return `<details class="mastery-map" data-a="idxmap" data-v="cards:${map}" ${indexSectionOpen('cards',map)?'open':''}><summary><b>${mp.n}</b><small>${seen}/${entries.length} cards started</small></summary><div class="mastery-roster">${entries.map(m=>{const name=m.name+' Card',level=cardMasteryLevel(name),n=safeCount(byName[name]);return `<div class="mastery-mob${level?' found':''}"><span class="mastery-mob-icon">${m.boss?'👑':'🃏'}</span><span><b>${name}${m.boss?' · BOSS':''}</b><small>Mastery ${level}/${CARD_MASTERY_PER_CARD} · ${level} token${level===1?'':'s'} earned · ${n?n+' dedicated cop'+(n===1?'y':'ies'):'Not started'}</small></span><b class="mastery-count">${level}/${CARD_MASTERY_PER_CARD}</b></div>`}).join('')}</div></details>`;
@@ -5281,8 +5293,8 @@ function arrangePanel(k,root){
     const grid=q('.grid'),detail=q('.grid-detail')||(mode==='cards'?q('.mob-card'):null),top=q('.bag-top'),pager=q('.eclipse-inventory-pages'),auto=q('.bag-auto'),tools=q('.bag-tools'),key=q('.bag-key'),chooser=q('.chooser');
     if(detail)detail.remove();
     const cardFilters=q('.eclipse-card-filters');
-    if(mode==='cards'&&grid){grid.classList.add('eclipse-card-grid');for(const tile of grid.querySelectorAll('[data-a=selc]')){const card=S.cards.find(c=>String(c.id)===tile.dataset.tip);if(!card)continue;const count=tile.querySelector('.rf')?.textContent||'';tile.innerHTML='<span class="eclipse-card-glyph">'+uiIcon('cards')+'</span><b>'+esc(cardName(card))+'</b><small>'+esc(cardEffects(card).map(cardEffectText).join(' · '))+'</small><span class="eclipse-card-meta">'+esc(GRADE[card.g])+' · '+count+'</span>';tile.setAttribute('role','button');tile.setAttribute('tabindex','0');tile.setAttribute('aria-label','Inspect '+cardName(card))}}
-    const search=q('.eclipse-inventory-tools');const catalog=section(mode==='cards'?'Loose cards':'Equipment','ui-inventory');put(catalog,top,cardFilters,search,key,pager,scroll('inventory',grid,'ui-item-scroll'));
+    if(mode==='cards'&&grid){grid.classList.add('eclipse-card-grid');const cardEntries=new Map(ownedCardEntries().map(x=>[String(x.card.id),x]));for(const tile of grid.querySelectorAll('[data-a=selc]')){const entry=cardEntries.get(tile.dataset.tip),card=entry?.card;if(!card)continue;const count=tile.querySelector('.rf')?.textContent||'';tile.innerHTML='<span class="eclipse-card-glyph">'+uiIcon('cards')+'</span><b>'+esc(cardName(card))+'</b><small>'+esc(cardEffects(card).map(cardEffectText).join(' · '))+'</small><span class="eclipse-card-meta">'+esc(GRADE[card.g])+' · '+count+'</span><span class="card-location">'+esc(entry.location)+'</span>';tile.setAttribute('role','button');tile.setAttribute('tabindex','0');tile.setAttribute('aria-label','Inspect '+cardName(card))}}
+    const search=q('.eclipse-inventory-tools');const catalog=section(mode==='cards'?'Card collection':'Equipment','ui-inventory');put(catalog,top,cardFilters,search,key,pager,scroll('inventory',grid,'ui-item-scroll'));
     const selected=inspector(mode==='cards'?'Card details':'Item details',detail||make('p','ui-empty',mode==='cards'?'Select a card to see its bonus and available equipment slots.':'Select equipment to compare its stats, equip it, lock it or sell it.'));
     if(detail&&mode==='bag'){const item=S.inv.find(it=>String(it.id)===String(selB));if(item){const art=make('div','ui-item-art');art.innerHTML=icon(item);detail.prepend(art)}}
     const leftovers=direct().filter(e=>![grid,detail,top,pager,auto,tools,key,chooser,search,cardFilters].includes(e));
@@ -5515,7 +5527,9 @@ function renderWin(anchor){
   const existing=new Map([...host.querySelectorAll(':scope > [data-win]')].map(e=>[e.dataset.win,e]));
   const old={};existing.forEach((e,k)=>{const b=e.querySelector('.wbody');if(b)old[k]=b.scrollTop});
   const disclosures=new Map([...host.querySelectorAll('details[data-ui-disclosure]')].map(e=>[e.dataset.uiDisclosure,e.open]));
-  const nestedScroll=new Map([...host.querySelectorAll('[data-panel-scroll]')].map(e=>[e.closest('[data-win]').dataset.win+':'+e.dataset.panelScroll,e.scrollTop]));
+  const nestedScroll=new Map([...host.querySelectorAll('[data-panel-scroll]')].map(e=>{
+    const row=e.dataset.panelScroll==='events'?[...e.children].find(n=>n.getBoundingClientRect().bottom>e.getBoundingClientRect().top):null;
+    return[e.closest('[data-win]').dataset.win+':'+e.dataset.panelScroll,{top:e.scrollTop,bottom:e.scrollHeight-e.clientHeight-e.scrollTop<=8,id:row?.dataset.logId,offset:row?row.getBoundingClientRect().top-e.getBoundingClientRect().top:0}];}));
   const outer=host.scrollTop;             // on a phone #wins is the scroller, not the window bodies
   const next=[];
   tabs.forEach(k=>{
@@ -5548,8 +5562,8 @@ function renderWin(anchor){
     else host.insertBefore(win,before);
   });
   host.querySelectorAll('details[data-ui-disclosure]').forEach(e=>{if(disclosures.has(e.dataset.uiDisclosure))e.open=disclosures.get(e.dataset.uiDisclosure)});
-  host.querySelectorAll('[data-panel-changed="1"]').forEach(b=>{const k=b.closest('[data-win]').dataset.win;b.scrollTop=k==='log'?1e6:(old[k]||0)});
-  host.querySelectorAll('[data-panel-scroll]').forEach(e=>{const key=e.closest('[data-win]').dataset.win+':'+e.dataset.panelScroll;if(e.closest('[data-panel-changed="1"]'))e.scrollTop=e.dataset.panelScroll==='events'?1e6:(nestedScroll.get(key)||0)});
+  host.querySelectorAll('[data-panel-changed="1"]').forEach(b=>{const k=b.closest('[data-win]').dataset.win;b.scrollTop=old[k]||0});
+  host.querySelectorAll('[data-panel-scroll]').forEach(e=>{const key=e.closest('[data-win]').dataset.win+':'+e.dataset.panelScroll;if(e.closest('[data-panel-changed="1"]')){const saved=nestedScroll.get(key),events=e.dataset.panelScroll==='events';e.scrollTop=events&&(!saved||saved.bottom)?e.scrollHeight:(saved?.top||0);if(events&&saved&&!saved.bottom&&saved.id){const row=[...e.children].find(n=>n.dataset.logId===saved.id);if(row)e.scrollTop+=row.getBoundingClientRect().top-e.getBoundingClientRect().top-saved.offset}}});
   host.scrollTop=outer;
   // v76.3 (owner: "the map ui hopping around when i click the stages"): the pressed control is
   // nudged by hand, inside its own window body only. scrollIntoView() walks every scrollable
@@ -5626,9 +5640,9 @@ const ACT={
   idxmap:v=>{const[tab,raw]=String(v).split(':'),map=+raw;if(tab==='mobs'||tab==='cards'){indexToggleSection(tab,map);renderWin()}},
   titleequip:id=>{if(id==='none'){if(!S.equippedTitle)return;S.equippedTitle=null;log('Hunt title unequipped.','','quest');ui();save();return}
     const title=HUNT_TITLES.find(t=>t.id===id&&titleUnlocked(t));if(!title)return;S.equippedTitle=title.id;log(`Title equipped: ${title.name}.`,'r4','quest');ui();save()},
-  indexcard:id=>{const c=S.cards.find(x=>String(x.id)===String(id));if(!c)return;const before=cardMasteryLevel(cardFamily(c));
-    ask(`Dedicate one ${GRADE[c.g]} ${c.n}? This consumes the loose card and advances this card from mastery ${before}/${CARD_MASTERY_PER_CARD} to ${before+1}/${CARD_MASTERY_PER_CARD}. Choose one permanent reward for the new rank afterward.`,()=>{
-      const used=donateCardToMastery(id);if(!used)return;log(`${used.n} reached Card Mastery ${cardMasteryLevel(used.n)}/${CARD_MASTERY_PER_CARD}. Choose its permanent reward in the Index.`,'r3','card');ui();save()})},
+  indexcard:id=>{const c=S.cards.find(x=>String(x.id)===String(id));if(!c)return;const owner=S,before=cardMasteryLevel(cardFamily(c));
+    ask(`Dedicate one ${GRADE[c.g]} ${c.n}? This consumes the loose card and advances this card from mastery ${before}/${CARD_MASTERY_PER_CARD} to ${before+1}/${CARD_MASTERY_PER_CARD}. The card is permanently gone and cannot be equipped or merged. You receive 1 Mastery token to roll a permanent stat in the Index.`,()=>{
+      if(S!==owner)return;const used=donateCardToMastery(id);if(!used)return;log(`${used.n} reached Card Mastery ${cardMasteryLevel(used.n)}/${CARD_MASTERY_PER_CARD}. Spend the earned Mastery token in the Index.`,'r3','card');ui();save()})},
   cardroll:()=>{const r=cardMasteryGacha();if(!r)return;const opt=CARD_REWARD_OPTIONS.find(x=>x.id===r);S.hp=Math.min(S.hp,maxHp());log(`🎲 Card gacha: ${opt?opt.name:r} +1 (now ${cardMasteryStat(r)}).`,'r3','card');addFloat(pl.x,2.6,pl.z,'🎲 '+(opt?opt.name:r)+' +1','#ffd23f');ui();save()},
   cardrollall:()=>{let n=0,last=null;while((last=cardMasteryGacha()))n++;if(!n)return;S.hp=Math.min(S.hp,maxHp());log(`🎲 Card gacha: rolled ${n} token${n===1?'':'s'} - ${cardRollSummary()}.`,'r3','card');ui();save()},
   cardreset:v=>{const rolled=cardMasteryRolled();if(!rolled)return log('Nothing has been rolled yet.','r0','card');
@@ -5638,10 +5652,9 @@ const ACT={
     ask(`Reset the card gacha and sacrifice ${pick.n} (${SU(pick.stat)} +${pick.v})? It clears ${rolled} rolled stat${rolled===1?'':'s'} and refunds all ${rolled} token${rolled===1?'':'s'}.`,()=>{const n=cardMasteryReset(pick.id);if(n==null)return;S.hp=Math.min(S.hp,maxHp());log(`♻ Card gacha reset: sacrificed ${pick.n}, cleared ${n} stat${n===1?'':'s'}, ${n} token${n===1?'':'s'} refunded.`,'r4','card');ui();save()})},
   cardtab:v=>{cardGrade=v==='all'?'all':+v;renderWin()},
   cardpick:v=>{cardPick=v},
-  indexall:name=>{const r=donateAllToMastery(String(name));if(!r.donated)return;S.hp=Math.min(S.hp,maxHp());
+  indexall:name=>{const owner=S,count=Math.min(cardMasteryCardByName(String(name)).length,CARD_MASTERY_PER_CARD-cardMasteryLevel(String(name)));if(count<1)return;ask(`Permanently consume ${count} ${name} for the Card Index? These copies will be gone and cannot be equipped or merged. Each adds one Mastery rank and one token.`,()=>{if(S!==owner)return;const r=donateAllToMastery(String(name),count);if(!r.donated)return;S.hp=Math.min(S.hp,maxHp());
     log(`🃏 ${name}: dedicated ${r.donated} cop${r.donated===1?'y':'ies'} - mastery ${r.level}/${CARD_MASTERY_PER_CARD}${r.left?`, ${r.left} left in the bag`:''}.`,'r3','card');
-    addFloat(pl.x,2.6,pl.z,`🃏 ${name} ${r.level}/${CARD_MASTERY_PER_CARD}`,'#ffd23f');ui();save()},
-  indexcard:all=>all,
+    addFloat(pl.x,2.6,pl.z,`🃏 ${name} ${r.level}/${CARD_MASTERY_PER_CARD}`,'#ffd23f');ui();save()})},
   refprotect:v=>{const n=Number(v);if(![0,1].includes(n))return;S.useRefineScroll=n===1;ui();save()},buyscroll:()=>buyRefineScroll(),refine:k=>refine(k),craftdps:()=>craftDps(),bmmat:o=>buyMat(+o),bmore:o=>buyOre(o,$('oreQty-'+o)?.value??1),bmref:v=>{const[k,mode]=v.split(':');reforge(k,mode==='all')},refpick:v=>{const[k,i]=v.split(':'),it=S.eq[k];if(!it)return;const a=reforgeSelection[it.id]||(reforgeSelection[it.id]=[]),n=+i,j=a.indexOf(n);j<0?a.push(n):a.splice(j,1);renderWin()},refaccept:v=>resolveReforge(v==='yes'),mergecard:id=>mergeCard(id),convertcard:id=>convertCard(id),guidemode:v=>{if(['farm','boss','survive'].includes(v))guideMode=v;renderWin()},guidetier:v=>{if(['current','normal','nightmare'].includes(v))guideTier=v;renderWin()},guidemap:v=>{const[m,l]=v.split(':').map(Number);if(!tabs.includes('map'))openTab('map');mapM=m;mapL=l;renderWin()},sub:v=>{const[t,k]=v.split(':');sub[t]=k;if(t==='bag'&&k!=='bag')eqPick=null;renderWin()},selp:v=>{selP=+v;petPreviewStance='idle';sub.pet='manage';renderWin()},
   petmotion:v=>{if(['idle','walk','attack'].includes(v)){petPreviewStance=v;renderWin()}},
   petretry:()=>{const p=gp(selP);if(p&&petSpriteStore){const id=PETS[p.sp].spriteId;petSpriteStore.retry(petAssetKey(id,petPreviewStance,0)).catch(()=>{})}},
@@ -7877,14 +7890,15 @@ function mkPackHero(opt){
   s.center.set(PK.pivotX/PK.cellW,(PK.cellH-PK.pivotY)/PK.cellH);s.scale.set(PK.cellW*PACK_K,PK.cellH*PACK_K,1);s.userData.pack=1;s.userData.body=packBodyFor(opt.cls,opt.tier)||'thief';return s}
 function setPackCell(spr,dir,run,atk,clock){
   const p=heroPoseFrame(run,atk,clock,true),t=spr.material.map;t.repeat.set(1/8,1/24);t.offset.set(p.frame/8,1-(p.kind*8+dir+1)/24)}
-function ensureHero(opt){const native=typeof wardrobeHero==='function'?wardrobeHero(opt):null;const k=JSON.stringify([opt,native&&native.selection]);if(heroKey===k&&heroSpr)return;heroKey=k;heroDirty=false;
+function ensureHero(opt){const native=typeof wardrobeHero==='function'?wardrobeHero(opt):null;const k=JSON.stringify([opt,native&&native.selection,typeof wardrobeFailure==='string'?wardrobeFailure:'']);if(heroKey===k&&heroSpr)return;heroKey=k;heroDirty=false;
   if(heroSpr){P.remove(heroSpr);if(heroSpr.userData.wardrobe){heroSpr.userData.wardrobe.tex.dispose();heroSpr.material.dispose();heroSpr.userData.wardrobe.cv.width=heroSpr.userData.wardrobe.cv.height=0}heroSpr=null}if(heroHeadSpr){P.remove(heroHeadSpr);heroHeadSpr=null}
   // v52: the class's own animated APNGs are what the hero wears now.  Every supplied view of that
   // class and gender has to be decoded first; until then (or if a file is missing) the animated
   // pack body keeps the game playable, so the character is never half-switched or left blank.
   if(native){heroSpr=mkWardrobeHero(native);P.add(heroSpr);return}
   const waiting=typeof wardrobePending==='function'?wardrobePending(opt.cls):typeof PGWardrobe!=='undefined'&&Object.hasOwn(PGWardrobe.CLASSES,opt.cls)&&document.readyState==='loading';
-  const sp=waiting?null:skinPack(opt.cls,opt.sex);
+  if(waiting)return; // Do not flash obsolete art while the saved native appearance loads.
+  const sp=skinPack(opt.cls,opt.sex);
   if(skinLoaded(sp)){heroSpr=mkSkinHero(sp);P.add(heroSpr);return}
   if(!waiting)requestPackAssets();
   const pb=!waiting&&packReady?packBodyFor(opt.cls,opt.tier):null;
@@ -7962,8 +7976,11 @@ function drawSlashFX(x,z,wt){
     slashM=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(cv),transparent:true,depthWrite:false}));slashM.center.set(.5,.25);scene.add(slashM)}
   slashM.visible=HERO_SWING_ARC&&atkAnim>.12&&wt!=='bow'&&wt!=='staff';if(!slashM.visible)return;
   slashM.position.set(x,1.15,z);slashM.material.opacity=Math.min(1,atkAnim*1.6)*.9;slashM.scale.set(1.6+atkAnim*1.2,1.6+atkAnim*1.2,1)}
-// Native pets retain their ACT timing and foot pivot; every species stays small.
+// Native frames retain relative timing; playback is calmer and measured bounds clear the ground.
 const PET_VISUAL_SCALE=.42;
+const PET_ANIMATION_RATE=.55;
+// [lowest opaque pixel, largest animation extent], measured across every native pose.
+const PET_LAYOUT={"1002":[200,74],"1007":[206,53],"1013":[211,126],"1014":[210,95],"1019":[214,137],"1031":[200,74],"1056":[204,70],"1057":[203,67],"1063":[203,54],"1096":[200,113],"1101":[203,77],"1106":[211,126],"1109":[204,141],"1113":[200,74],"1115":[209,230],"1120":[192,122],"1155":[204,117],"1170":[196,132],"1180":[206,84],"1582":[200,81]};
 const petFallbackShape=sp=>sp.n==='Lunatic'?'bunny':sp.n.includes('Wolf')?'cat':sp.n.includes('Peco')?'bug':sp.n.includes('Dragon')||sp.n.includes('Baphomet')?'demon':'blob';
 // Only active states and the open preview are pinned. Previous native frames stay visible
 // while a different direction/state loads; all art and metadata are local packed files.
@@ -7977,9 +7994,9 @@ function requestPetAsset(id,stance,direction){
  return asset;
 }
 function petAnimationState(id,r,direction){
- const duration=(petSpriteStore?.catalog?.species[id]?.attackDurations[direction]||0)/1000;
+ const duration=(petSpriteStore?.catalog?.species[id]?.attackDurations[direction]||0)/1000/PET_ANIMATION_RATE;
  const elapsed=r.attackStarted==null?Infinity:Math.max(0,t-r.attackStarted);
- return elapsed<duration?{stance:'attack',ms:elapsed*1000,progress:elapsed/duration}:{stance:r.run?'walk':'idle',ms:t*1000,progress:null};
+ return elapsed<duration?{stance:'attack',ms:elapsed*1000*PET_ANIMATION_RATE,progress:elapsed/duration}:{stance:r.run?'walk':'idle',ms:t*1000*PET_ANIMATION_RATE,progress:null};
 }
 function drawNativePet(v,id,r,direction){
  const state=petAnimationState(id,r,direction),asset=requestPetAsset(id,state.stance,direction);
@@ -7994,7 +8011,7 @@ function drawNativePet(v,id,r,direction){
  const n=v.nativePet,view=asset.metadata.actions[state.stance+direction],frame=PGPetSprites.frameIndex(view,state.ms,state.progress);
  const key=petAssetKey(id,state.stance,direction)+':'+direction+':'+frame;
  if(key!==n.last){PGPetSprites.draw(n.ctx,asset,state.stance,direction,state.ms,state.progress);n.tex.needsUpdate=true;n.last=key}
- const size=256*3.05/asset.figureHeight;v.spr.scale.set(size,size,1);v.spr.position.set(0,0,0);v.spr.material.rotation=0;
+ const [ground,extent]=PET_LAYOUT[id],size=256*2.65/extent;v.spr.center.set(.5,1-ground/256);v.spr.scale.set(size,size,1);v.spr.position.set(0,0,0);v.spr.material.rotation=0;
 }
 function drawPetPreviews(){
  if(!petSpriteStore)return;
@@ -8004,7 +8021,7 @@ function drawPetPreviews(){
  if(cv){const id=+cv.dataset.petPreview,asset=requestPetAsset(id,petPreviewStance,0),status=cv.parentNode.querySelector('[data-pet-preview-status]'),retry=cv.parentNode.querySelector('[data-a="petretry"]');
   const key=petAssetKey(id,petPreviewStance,0);pins.push(key);
   const error=petSpriteStore.catalogError||petSpriteStore.failed.get(key);
-  if(asset){PGPetSprites.draw(cv.getContext('2d'),asset,petPreviewStance,0,t*1000);status.textContent='Native '+petPreviewStance+' animation';cv.style.backgroundImage='none'}
+  if(asset){PGPetSprites.draw(cv.getContext('2d'),asset,petPreviewStance,0,t*1000*PET_ANIMATION_RATE);status.textContent='Native '+petPreviewStance+' animation';cv.style.backgroundImage='none'}
   else{cv.style.backgroundImage='url(assets/pets/v1/thumb-'+id+'.png)';status.textContent=error?'Animation unavailable. Retry to load.':'Loading animation…'}
   retry.hidden=!error;
  }
