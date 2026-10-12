@@ -848,7 +848,7 @@ body.clean-screen #screenBtn{visibility:visible!important}body.clean-screen #hud
 </div>
 <div id="tooltip"></div>
 <link rel="stylesheet" href="assets/wardrobe.css?v=1">
-<script src="assets/wardrobe.js?v=1"></script>
+<script src="assets/wardrobe.js?v=2"></script>
 <script src="assets/sprite_pack_data.js?v=2"></script>
 <script src="assets/class_skins_data.js?v=2"></script>
 <script src="assets/weapon_joints_data.js?v=2"></script>
@@ -1081,7 +1081,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // give-back) and main's weapon-hold rendering work.
 let simCatchingUp=false;
 const simVisualsOff=()=>document.hidden||simCatchingUp;
-const BUILD='2026-10-12 grind-v122 Wardrobe and inventory integration';   // shown on the login card - confirms which file you loaded
+const BUILD='2026-10-12 grind-v123 Acolyte and Merchant wardrobe';   // shown on the login card - confirms which file you loaded
 $('buildTag').textContent='build '+BUILD;
 
 // ---------- class tree: Novice -> 6 first jobs -> 6 second jobs -> 6 third jobs ----------
@@ -5352,7 +5352,7 @@ function arrangePanel(k,root){
   }
 }
 
-const DOCK_TABS=['map','status','wardrobe','equip','job','skills','bag','pet','market','log','set'];
+const DOCK_TABS=['map','status','equip','job','skills','bag','pet','market','log','wardrobe','set'];
 const DOCK_LABEL={wardrobe:'Wardrobe',map:'Maps',guide:'Guide',status:'Character',equip:'Equipment',refine:'Refine',job:'Jobs',skills:'Skills',bag:'Bag',pet:'Pets',index:'Mastery',market:'Market',board:'Ranks',log:'Log',set:'Settings',gm:'GM'};
 function eclipsePositionMore(){
   const menu=$('sideMenu'),button=$('dock').querySelector('.eclipse-more');if(!sideOpen||!button)return;
@@ -8955,6 +8955,6 @@ function updateWatch(){
 }
 setInterval(updateWatch,60000);
 </script>
-<script src="assets/wardrobe-ui.js?v=1"></script>
+<script src="assets/wardrobe-ui.js?v=2"></script>
 </body>
 </html>

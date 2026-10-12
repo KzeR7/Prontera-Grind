@@ -1,13 +1,13 @@
 const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path');
 const {createGame}=require('./helpers/game');const repo=path.resolve(__dirname,'../..');let html=fs.readFileSync(path.join(repo,'index.html'),'utf8');
-for(const f of ['assets/wardrobe.js','assets/wardrobe-ui.js'])html=html.replace(new RegExp('<script src="'+f.replaceAll('.','\\.')+'\\?v=1"></script>'),()=>'<script>'+fs.readFileSync(path.join(repo,f),'utf8')+'</script>');
+for(const f of ['assets/wardrobe.js','assets/wardrobe-ui.js'])html=html.replace(new RegExp('<script src="'+f.replaceAll('.','\\.')+'\\?v=2"></script>'),()=>'<script>'+fs.readFileSync(path.join(repo,f),'utf8')+'</script>');
 const g=createGame(html),ev=g.ev;
 (async()=>{
  ev(`window.matchMedia=()=>({matches:false});window.__saveCount=0;save=()=>{__saveCount++};S.hair=17;S.sex='f';S.cls='Lord Knight';tabs.push('wardrobe');renderWin();`);
  // Loader itself is checked against actual files separately; this test controls readiness/failure.
- g.window.__catalog=JSON.parse(fs.readFileSync(path.join(repo,'assets/wardrobe/v1/catalog.json'),'utf8'));
- g.window.__metadata={};for(const [id,r] of Object.entries(g.window.__catalog.assets))g.window.__metadata[id]=JSON.parse(fs.readFileSync(path.join(repo,'assets/wardrobe/v1',r.meta),'utf8'));
- ev(`wardrobeStore.select=async(client,a)=>({key:PGWardrobe.key(a),selection:PGWardrobe.normalize(a),ids:['base-'+a.sex,'hair-'+PGWardrobe.key(a)],base:{metadata:__metadata['base-'+a.sex],image:{}},hair:{metadata:__metadata['hair-'+PGWardrobe.key(a)],image:{}}});wardrobeLoad();`);await new Promise(r=>setImmediate(r));
+ g.window.__catalog=JSON.parse(fs.readFileSync(path.join(repo,'assets/wardrobe/v2/catalog.json'),'utf8'));
+ g.window.__metadata={};for(const [id,r] of Object.entries(g.window.__catalog.assets))g.window.__metadata[id]=JSON.parse(fs.readFileSync(path.join(repo,'assets/wardrobe/v2',r.meta),'utf8'));
+ ev(`wardrobeStore.select=async(client,a,cls='Lord Knight')=>({cls,key:PGWardrobe.key(a,cls),selection:PGWardrobe.normalize(a),ids:['base-'+a.sex,'hair-'+PGWardrobe.key(a)],base:{metadata:__metadata[PGWardrobe.CLASSES[cls]+'base-'+a.sex],image:{}},hair:{metadata:__metadata[PGWardrobe.CLASSES[cls]+'hair-'+PGWardrobe.key(a)],image:{}}});wardrobeLoad();`);await new Promise(r=>setImmediate(r));
  assert.equal(ev('S.appearance'),null);assert.equal(ev('S.hair'),17);assert.equal(ev('__saveCount'),0);
  ev(`wardrobeChange('head',42);wardrobeChange('color',8);wardrobeChange('halo',false);`);await new Promise(r=>setImmediate(r));assert.equal(ev('S.appearance'),null);assert.equal(ev('__saveCount'),0);
  ev(`wardrobeAction('cancel')`);await new Promise(r=>setImmediate(r));assert.equal(ev('wardrobeState.draft.heads.f'),2);assert.equal(ev('S.hair'),17);
@@ -19,6 +19,17 @@ const g=createGame(html),ev=g.ev;
  ev(`wardrobeHero({cls:'Lord Knight'})`);await new Promise(r=>setImmediate(r));assert.equal(ev('wardrobeEquipped.key'),'f-42-8');assert.equal(ev(`wardrobeHero({cls:'Novice'})`),null);assert.equal(ev('S.appearance.heads.f'),42);
  ev(`wardrobeHero({cls:'Lord Knight'})`);await new Promise(r=>setImmediate(r));ev(`window.__sprite=mkWardrobeHero(wardrobeEquipped)`);
  assert.equal(ev(`captureWardrobeFrame(__sprite,7,false,1,1000)`),true);assert.equal(ev(`captureWardrobeFrame(__sprite,7,false,1,1050)`),false);ev(`captureWardrobeFrame(__sprite,7,false,.001,999999)`);assert.equal(ev('__sprite.userData.wardrobe.paint'),'attack7:8');assert.equal(ev(`captureWardrobeFrame(__sprite,7,true,0,1000000)`),true);
+ // Every new tree class uses its own native body/clock and preserves the cosmetic save.
+ const applied=ev('JSON.stringify(S.appearance)');
+ for(const cls of ['Acolyte','Priest','High Priest','Merchant','Blacksmith','Whitesmith']){
+  ev(`S.cls=${JSON.stringify(cls)};wardrobeChange('class',S.cls)`);await new Promise(r=>setImmediate(r));
+  assert.equal(ev('wardrobeState.look.cls'),cls);assert.equal(ev('JSON.stringify(S.appearance)'),applied);
+  assert.equal(ev('wardrobeHero({cls:S.cls})'),null,'old class is not shown while loading');await new Promise(r=>setImmediate(r));
+  assert.equal(ev('wardrobeHero({cls:S.cls}).cls'),cls);
+  ev('window.__sprite=mkWardrobeHero(wardrobeEquipped)');
+  for(let d=0;d<8;d++) assert.equal(ev(`captureWardrobeFrame(__sprite,${d},false,1,1000)`),true);
+ }
+ assert.deepEqual(Array.from(ev('DOCK_TABS.slice(-2)')),['wardrobe','set']);
  // Closing a pending preview must permit reopening/retry and must discard unsaved drafts.
  ev(`wardrobeState.loading=true;tabs.splice(0);wardrobeSync();tabs.push('wardrobe');renderWin()`);await new Promise(r=>setImmediate(r));assert.equal(ev('wardrobeState.loading'),false);assert.equal(ev('wardrobeState.draft.heads.f'),42);
  // Merged main keyboard handling: selectors keep typing keys, Escape discards drafts and W reopens.

@@ -1,10 +1,11 @@
 /* Native Wardrobe v1. Static, bounded atlas loading; no provider/API calls. */
 (function(root,factory){const api=factory();if(typeof module==='object'&&module.exports)module.exports=api;else root.PGWardrobe=api})(typeof globalThis==='object'?globalThis:this,function(){
 'use strict';
+const CLASSES={'Lord Knight':'','Acolyte':'acolyte-','Priest':'priest-','High Priest':'high-priest-','Merchant':'merchant-','Blacksmith':'blacksmith-','Whitesmith':'whitesmith-'};
 const HAIRS={m:[2,5,7,8,10,12,17,19,20,22,24,26,27,28,30,32,35,39,40,42],f:[2,4,5,12,13,14,15,17,18,19,21,24,27,30,34,35,37,39,41,42]};
 const defaults=sex=>({version:1,sex:sex==='f'?'f':'m',heads:{m:2,f:2},colors:{m:0,f:0},halo:true,glasses:true,wings:true});
 function normalize(v){if(!v||typeof v!=='object'||v.version!==1)return null;const a=defaults(v.sex);for(const s of ['m','f']){const h=v.heads&&v.heads[s],c=v.colors&&v.colors[s];a.heads[s]=HAIRS[s].includes(h)?h:2;a.colors[s]=Number.isInteger(c)&&c>=0&&c<=8?c:0}for(const k of ['halo','glasses','wings'])a[k]=v[k]===true;return a}
-function key(v){const a=normalize(v);return a?a.sex+'-'+a.heads[a.sex]+'-'+a.colors[a.sex]:''}
+function key(v,cls='Lord Knight'){const a=normalize(v);return a&&Object.hasOwn(CLASSES,cls)?CLASSES[cls]+a.sex+'-'+a.heads[a.sex]+'-'+a.colors[a.sex]:''}
 function frameIndex(view,ms,progress){const n=view.frames.length;return progress==null?Math.floor(Math.max(0,ms)/view.delay)%n:Math.min(n-1,Math.floor(Math.max(0,Math.min(1,progress))*n))}
 function validateMeta(m,rec){
  if(!m||m.version!==1||m.width!==rec.width||m.height!==rec.height||!m.actions)throw Error('Invalid atlas metadata');
@@ -18,13 +19,13 @@ function validateMeta(m,rec){
 }
 const digest=async b=>Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',b)),x=>x.toString(16).padStart(2,'0')).join('');
 class Store{
- constructor({base='assets/wardrobe/v1/',fetcher=(...a)=>fetch(...a),decode=b=>createImageBitmap(new Blob([b],{type:'image/png'})),budget=16*1024*1024}={}){this.base=base;this.fetcher=fetcher;this.decode=decode;this.budget=budget;this.cache=new Map();this.clients=new Map();this.queue=Promise.resolve();this.serial=0;this.catalog=null}
+ constructor({base='assets/wardrobe/v2/',fetcher=(...a)=>fetch(...a),decode=b=>createImageBitmap(new Blob([b],{type:'image/png'})),budget=16*1024*1024}={}){this.base=base;this.fetcher=fetcher;this.decode=decode;this.budget=budget;this.cache=new Map();this.clients=new Map();this.queue=Promise.resolve();this.serial=0;this.catalog=null}
  async bytes(path,limit,sha){const abort=new AbortController(),timer=setTimeout(()=>abort.abort(),15000);try{
   const r=await this.fetcher(this.base+path,{signal:abort.signal});if(!r.ok)throw Error('Sprite download failed ('+r.status+')');if(+(r.headers.get('content-length')||0)>limit)throw Error('Oversized sprite');
   let b;if(r.body&&r.body.getReader){const reader=r.body.getReader(),parts=[];let n=0;try{for(;;){const {done,value}=await reader.read();if(done)break;n+=value.length;if(n>limit)throw Error('Oversized sprite');parts.push(value)}}catch(e){await reader.cancel().catch(()=>{});throw e}b=new Uint8Array(n);let at=0;for(const p of parts){b.set(p,at);at+=p.length}}else{b=new Uint8Array(await r.arrayBuffer());if(b.length>limit)throw Error('Oversized sprite')}
   if(sha&&(b.length!==limit||await digest(b)!==sha))throw Error('Sprite checksum mismatch');return b;
  }finally{clearTimeout(timer)}}
- async init(){if(this.catalog)return this.catalog;const c=JSON.parse(new TextDecoder().decode(await this.bytes('catalog.json',512*1024)));if(c.version!==1||!c.assets)throw Error('Invalid wardrobe catalog');
+ async init(){if(this.catalog)return this.catalog;const c=JSON.parse(new TextDecoder().decode(await this.bytes('catalog.json',2*1024*1024)));if(c.version!==1||!c.assets)throw Error('Invalid wardrobe catalog');
   for(const r of Object.values(c.assets)){if(!/^poses-[a-f0-9]{20}\.json$/.test(r.meta)||!/^atlas-[a-f0-9]{20}\.png$/.test(r.image)||![r.metaSha256,r.imageSha256].every(s=>/^[a-f0-9]{64}$/.test(s))||![r.width,r.height,r.metaBytes,r.imageBytes].every(Number.isInteger)||r.width<1||r.width>4096||r.height<1||r.height>4096||r.width*r.height*4>4*1024*1024||r.metaBytes<1||r.metaBytes>256*1024||r.imageBytes<1||r.imageBytes>1024*1024)throw Error('Invalid atlas catalog')}
   this.catalog=c;return c;
  }
@@ -37,15 +38,15 @@ class Store{
   const image=await this.decode(bytes);if(image.width!==rec.width||image.height!==rec.height){image.close();throw Error('Invalid decoded dimensions')}
   const r={image,metadata,bytes:rec.width*rec.height*4};this.cache.set(id,r);return r;
  }
- select(client,value){const selection=normalize(value);if(!selection)return Promise.reject(Error('Invalid appearance'));const k=key(selection),old=this.clients.get(client);
+ select(client,value,cls='Lord Knight'){const selection=normalize(value);if(!selection||!Object.hasOwn(CLASSES,cls))return Promise.reject(Error('Invalid appearance'));const k=key(selection,cls),old=this.clients.get(client);
   if(old&&old.key===k&&old.promise)return old.promise.then(r=>r&&({...r,selection}));
   if(old&&old.ready&&old.ready.key===k){old.ready.selection=selection;return Promise.resolve(old.ready)}
   const request={key:k,seq:++this.serial,ready:old&&old.ready};this.clients.set(client,request);
-  const run=async()=>{if(this.clients.get(client)!==request)return null;const ids=['base-'+selection.sex,'hair-'+k];try{
+  const run=async()=>{if(this.clients.get(client)!==request)return null;const ids=[CLASSES[cls]+'base-'+selection.sex,CLASSES[cls]+'hair-'+key(selection)];try{
    const base=await this.asset(ids[0],ids);if(this.clients.get(client)!==request)return null;
    const hair=await this.asset(ids[1],ids);if(this.clients.get(client)!==request)return null;
    for(const name of Object.keys(base.metadata.actions)){const a=base.metadata.actions[name],b=hair.metadata.actions[name];if(a.frames.length!==b.frames.length||a.delay!==b.delay)throw Error('Mismatched animation layers')}
-   request.ready={key:k,selection,ids,base,hair};return request.ready;
+   request.ready={key:k,cls,selection,ids,base,hair};return request.ready;
   }finally{if(this.clients.get(client)===request)request.promise=null;this.trim()}};
   request.promise=this.queue.catch(()=>{}).then(run);this.queue=request.promise;return request.promise;
  }
@@ -58,5 +59,5 @@ function draw(ctx,look,stance,direction,ms=0,progress=null){const name=stance+di
  const layers=[...b.frames[i].map(p=>[p,look.base.image]),...h.frames[i].map(p=>[p,look.hair.image])].sort((a,b)=>a[0][6]-b[0][6]);
  for(const [p,img] of layers){if(['halo','glasses','wings'].includes(p[7])&&!a[p[7]])continue;ctx.drawImage(img,p[0],p[1],p[2],p[3],p[4],p[5],p[2],p[3])}return i;
 }
-return {HAIRS,defaults,normalize,key,frameIndex,validateMeta,Store,draw};
+return {CLASSES,HAIRS,defaults,normalize,key,frameIndex,validateMeta,Store,draw};
 });

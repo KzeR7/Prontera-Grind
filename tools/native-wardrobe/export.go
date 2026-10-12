@@ -56,7 +56,12 @@ func (e *Engine) ExportWardrobe(req Request, folder string, headOnly bool, proof
 			parts["shadow"]++
 		}
 	}
-	for k, n := range map[string]int{"body": 1, "head": 1, "weapon": 2, "accessory": 2, "garment": 1, "shadow": 1} {
+	weaponParts := 2
+	// These native mace sets have no separate slash sprite.
+	if req.Job == 8 || req.Job == 10 || req.Job == 4009 || req.Job == 4011 {
+		weaponParts = 1
+	}
+	for k, n := range map[string]int{"body": 1, "head": 1, "weapon": weaponParts, "accessory": 2, "garment": 1, "shadow": 1} {
 		if parts[k] != n {
 			return WardrobeAction{}, fmt.Errorf("missing native %s: got %d, want %d", k, parts[k], n)
 		}

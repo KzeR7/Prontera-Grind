@@ -6829,3 +6829,10 @@ The owner's second pass over v77, six notes, all built.
 * **Combined:** The Lord Knight Wardrobe now includes the latest inventory paging, bag capacity display, panel controls and Escape behavior from main. All cosmetic studios and local sprite packs are retained.
 * **Try it:** W → choose a look → Apply; E → Next/Previous; press Escape to close panels. The first native fitting still equips on Lord Knight.
 * **Checks:** Full regression and merge validation are tracked in workspace context. Real WebGL gameplay and phone performance still need device testing. This update prepares the working branch for a PR.
+
+### 2026-10-12 — `grind-v123 Acolyte and Merchant wardrobe`
+* **Wardrobe:** Added Acolyte → Priest → High Priest and Merchant → Blacksmith → Whitesmith to the native fitting alongside Lord Knight. Choose a class to preview its own outfit, hair attachments and animation. Saved gender, hair, color and accessories follow the active supported class; previewing a class does not change jobs or equipment stats.
+* **Placement:** Wardrobe now sits immediately left of Settings in the dock; W still opens it.
+* **Art:** Recovered native bodies, mace layers and class-specific attachments; all eight directions and idle/walk/attack are retained. The versioned static packs load on demand and share identical files. Native integer blending and browser/Pillow rounding differ by at most 2/255 at translucent mace effects.
+* **Try it:** W → Class → Acolyte, Priest, High Priest, Merchant, Blacksmith or Whitesmith → choose hair/accessories → Apply look. Change to another supported job to carry the cosmetics over.
+* **Checks:** All 2,520 appearances pass loader/hash/bounds/cache checks; game regressions cover previews, saved cosmetics, class transitions and dock order. Native accessory-mask proofs and browser desktop/phone checks cover the added classes. Browser checks use a marked renderer stub because shared Chromium lacks WebGL; real battlefield/GPU behavior still needs a capable device. No push or deployment.

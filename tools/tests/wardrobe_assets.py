@@ -2,7 +2,7 @@
 """Validate static atlases, all saved appearance references, and source provenance."""
 import hashlib,io,json,pathlib,struct,sys
 from PIL import Image,ImageChops
-repo=pathlib.Path(__file__).resolve().parents[2];root=repo/'assets/wardrobe/v1';c=json.loads((root/'catalog.json').read_text());old=json.loads((repo/'Updates/lord-knight-bundles/manifest.json').read_text());cache={}
+repo=pathlib.Path(__file__).resolve().parents[2];root=repo/'assets/wardrobe/v2';c=json.loads((root/'catalog.json').read_text());old=json.loads((repo/'Updates/lord-knight-bundles/manifest.json').read_text());cache={}
 def asset(key):
  r=c['assets'][key]
  if key in cache:return cache[key]

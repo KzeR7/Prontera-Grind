@@ -96,7 +96,13 @@ t('the published tree is small enough to stay honest', () => {
   const bytes = walk(out);
   const mb = bytes / 1048576;
   assert.ok(mb > 8, 'the published tree is only ' + mb.toFixed(1) + ' MB - is the sprite pack still shipping?');
-  assert.ok(mb < 30, 'the published tree grew to ' + mb.toFixed(1) + ' MB; the game needs ~16. Something dev-side leaked in.');
+  // Keep the core budget strict; the seven native wardrobe packs are lazy loaded.
+  const wardrobe = walk(path.join(out, 'assets/wardrobe'));
+  assert.ok(wardrobe < 20 * 1048576, 'wardrobe exceeds its 20 MiB static asset budget');
+  assert.ok(bytes - wardrobe < 24 * 1048576, 'non-wardrobe publish files exceed 24 MiB');
+  const catalog = JSON.parse(fs.readFileSync(path.join(out, 'assets/wardrobe/v2/catalog.json')));
+  for (const r of Object.values(catalog.assets)) for (const f of [r.meta, r.image])
+    assert.ok(fs.existsSync(path.join(out, 'assets/wardrobe/v2', f)), 'missing wardrobe asset '+f);
 });
 
 t('.assetsignore covers the same dev material (the Cloudflare safety net)', () => {

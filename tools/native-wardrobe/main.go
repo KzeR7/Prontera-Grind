@@ -23,7 +23,22 @@ func main() {
 		panic("usage: wardrobe-export source-root catalog.json output [proof]")
 	}
 	root, cat, out := os.Args[1], os.Args[2], os.Args[3]
-	proof := len(os.Args) > 4
+	proof := os.Getenv("WARDROBE_PROOF") == "1" || (len(os.Args) > 4 && os.Args[4] == "proof")
+	job, weapon, attack := uint32(4008), uint32(2), 80
+	if len(os.Args) > 4 && os.Args[4] != "proof" {
+		n, err := strconv.Atoi(os.Args[4])
+		must(err)
+		job = uint32(n)
+		switch job {
+		case 4, 5, 8, 4009:
+			weapon = 8
+		case 10, 4011:
+			weapon = 8
+			attack = 88
+		default:
+			panic("unsupported wardrobe class")
+		}
+	}
 	var catalog struct{ Hairs map[string][]uint32 }
 	b, err := os.ReadFile(cat)
 	must(err)
@@ -44,7 +59,7 @@ func main() {
 				if proof && pal > 0 {
 					break
 				}
-				req := engine.Request{Job: 4008, Gender: g, Head: head, HeadPalette: pal, BodyPalette: -1, Headgear: []uint32{69, 3}, Garment: 1, Weapon: 2, Frame: -1, HeadDir: rotype.Straight, EnableShadow: true, Canvas: "320x280+160+200"}
+				req := engine.Request{Job: job, Gender: g, Head: head, HeadPalette: pal, BodyPalette: -1, Headgear: []uint32{69, 3}, Garment: 1, Weapon: weapon, Frame: -1, HeadDir: rotype.Straight, EnableShadow: true, Canvas: "320x280+160+200"}
 				hair := map[string]engine.WardrobeAction{}
 				base := map[string]engine.WardrobeAction{}
 				for _, stance := range []string{"idle", "walk", "attack"} {
@@ -53,7 +68,7 @@ func main() {
 						offset = 8
 					}
 					if stance == "attack" {
-						offset = 80
+						offset = attack
 					}
 					for d := 0; d < 8; d++ {
 						key := stance + strconv.Itoa(d)
