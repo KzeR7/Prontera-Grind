@@ -1,0 +1,31 @@
+{
+  "provider": "https://assets.latam-tools.com.br/image",
+  "actionReference": "https://github.com/MrAntares/roBrowserLegacy/blob/master/src/DB/Jobs/WeaponAction.js",
+  "typeReference": "https://github.com/MrAntares/roBrowserLegacy/blob/master/src/DB/Items/WeaponType.js",
+  "hairReference": "https://assets.latam-tools.com.br/raw/hair.json",
+  "canvas": "320x280+160+200",
+  "directions": {"S":0,"SE":7,"NE":5},
+  "hairs": [{"id":40,"name":"Style 40 — current male look"},{"id":1,"name":"Style 1"},{"id":23,"name":"Style 23"}],
+  "weapons": {"dagger":1,"sword":2,"axe":6,"mace":8,"staff":10,"bow":11,"katar":16},
+  "classes": [
+    {"name":"Novice","job":0,"weapons":["dagger","sword"],"actions":{"m":{"dagger":80,"sword":88},"f":{"dagger":88,"sword":80}}},
+    {"name":"Swordman","job":1,"weapons":["sword"],"action":80},
+    {"name":"Mage","job":2,"weapons":["staff"],"action":80},
+    {"name":"Archer","job":3,"weapons":["bow"],"action":80},
+    {"name":"Thief","job":6,"weapons":["dagger"],"action":80},
+    {"name":"Acolyte","job":4,"weapons":["mace"],"action":80},
+    {"name":"Merchant","job":5,"weapons":["axe","mace"],"action":80},
+    {"name":"Knight","job":7,"weapons":["sword"],"action":80},
+    {"name":"Wizard","job":9,"weapons":["staff"],"actions":{"m":{"staff":80},"f":{"staff":88}}},
+    {"name":"Hunter","job":11,"weapons":["bow"],"action":88},
+    {"name":"Assassin","job":12,"weapons":["katar","dagger"],"actions":{"m":{"katar":88,"dagger":80},"f":{"katar":88,"dagger":80}}},
+    {"name":"Priest","job":8,"weapons":["mace"],"action":80},
+    {"name":"Blacksmith","job":10,"weapons":["axe","mace"],"action":88},
+    {"name":"Lord Knight","job":4008,"weapons":["sword"],"action":80},
+    {"name":"High Wizard","job":4010,"weapons":["staff"],"actions":{"m":{"staff":80},"f":{"staff":88}}},
+    {"name":"Sniper","job":4012,"weapons":["bow"],"action":88},
+    {"name":"Assassin Cross","job":4013,"weapons":["katar","dagger"],"actions":{"m":{"katar":88,"dagger":80},"f":{"katar":88,"dagger":80}}},
+    {"name":"High Priest","job":4009,"weapons":["mace"],"action":80},
+    {"name":"Whitesmith","job":4011,"weapons":["axe","mace"],"action":88}
+  ]
+}

@@ -1,0 +1,101 @@
+{
+  "schemaVersion": 1,
+  "productionBaseline": {
+    "files": 314,
+    "bytes": 22284944,
+    "largestFileBytes": 5819715
+  },
+  "byStance": {
+    "idle": {
+      "auditedAnimations": 512,
+      "auditedFrames": 1556,
+      "auditedAnimationBytes": 5486455,
+      "visibleWeaponSamples": 0,
+      "classRouteSamples": 150,
+      "estimatedFullAnimationBytes": 255589380,
+      "estimatedFullDecodedRGBABytes": 30320640000
+    },
+    "walk": {
+      "auditedAnimations": 512,
+      "auditedFrames": 4096,
+      "auditedAnimationBytes": 12010035,
+      "visibleWeaponSamples": 0,
+      "classRouteSamples": 150,
+      "estimatedFullAnimationBytes": 585894780,
+      "estimatedFullDecodedRGBABytes": 77414400000
+    },
+    "attack": {
+      "auditedAnimations": 512,
+      "auditedFrames": 4548,
+      "auditedAnimationBytes": 13495641,
+      "visibleWeaponSamples": 512,
+      "classRouteSamples": 150,
+      "estimatedFullAnimationBytes": 659003940,
+      "estimatedFullDecodedRGBABytes": 83220480000
+    }
+  },
+  "naiveFullCollection": {
+    "animationFiles": 81000,
+    "withSeparateStills": 162000,
+    "estimatedAnimationBytes": 1500488100,
+    "estimatedDecodedRGBABytes": 190955520000,
+    "method": "Each of 150 class/gender/weapon/direction samples per stance weighted by 180 hair/palette choices; estimate, not full download. No content deduplication."
+  },
+  "plannedStaticPackaging": {
+    "lookBundles": 6840,
+    "thumbnailFiles": 360,
+    "manifestFilesBudget": 1,
+    "projectedTotalFiles": 7515,
+    "pagesFreeFileLimit": 20000,
+    "note": "One binary PNG bundle per class/gender/style/palette holding all selected stances/directions/weapons. Count estimate only; full collection not packed."
+  },
+  "referenceLook": {
+    "animations": 9,
+    "frames": 60,
+    "nativeAnimationBytes": 188663,
+    "bundleBytes": 190743,
+    "bundleOverheadBytes": 2080,
+    "decodedRGBABytes": 21504000,
+    "bundleRoundTrip": "pass",
+    "proofFile": "Updates/hair-color-preview/measurements/lord-knight-m-head2-palette0.pgap",
+    "sha256": "e195575c34fb3a53a7dfb9ccce79820e8498ea92c88a4b460c3956b5cc9df507"
+  },
+  "currentLordKnightMale": {
+    "files": [
+      {
+        "file": "Updates/Sprite/Swordman/lordknight male attack SE.png",
+        "bytes": 27760,
+        "width": 200,
+        "height": 200,
+        "frames": 5,
+        "decodedRGBABytes": 800000
+      },
+      {
+        "file": "Updates/Sprite/Swordman/lordknight male walking NE.png",
+        "bytes": 34717,
+        "width": 200,
+        "height": 200,
+        "frames": 8,
+        "decodedRGBABytes": 1280000
+      },
+      {
+        "file": "Updates/Sprite/Swordman/lordknight male walking S.png",
+        "bytes": 50680,
+        "width": 200,
+        "height": 200,
+        "frames": 8,
+        "decodedRGBABytes": 1280000
+      },
+      {
+        "file": "Updates/Sprite/Swordman/lordknight male walking SE.png",
+        "bytes": 47432,
+        "width": 200,
+        "height": 200,
+        "frames": 8,
+        "decodedRGBABytes": 1280000
+      }
+    ],
+    "decodedRGBABytes": 4640000
+  },
+  "canvasPixelsRatio": 2.24
+}

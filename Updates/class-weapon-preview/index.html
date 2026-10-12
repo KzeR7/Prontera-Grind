@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Prontera Grind · Class, weapon & hair fitting</title>
+<link rel="stylesheet" href="preview.css"><script src="manifest.js" defer></script><script src="preview.js" defer></script>
+</head>
+<body>
+<header><a href="../cosmetics-preview/">PRONTERA <span>GRIND</span></a><span class="eyebrow">APPEARANCE LAB / 02</span></header>
+<main>
+<section class="intro"><div><p class="eyebrow">NATIVE WEAPON FITTING</p><h1>Every class. Both looks.</h1><p>Compare weapon motion and hairstyles on the classes you already play.</p></div><div class="coverage"><b id="coverage">Loading audit…</b><small>Locally saved sprites · no manual hand offsets</small></div></section>
+<div class="workspace">
+<aside class="controls" aria-label="Appearance choices"><p class="eyebrow">BUILD YOUR TEST</p><h2>Choose a character</h2>
+<label for="classSelect">Class</label><select id="classSelect"></select>
+<label for="weaponSelect">Weapon family</label><select id="weaponSelect"></select>
+<label for="hairSelect">Hairstyle</label><select id="hairSelect"></select>
+<p class="hint">Each style uses the original male and female hair artwork. Native colors are retained.</p>
+<div class="divider"></div><p class="eyebrow">ATTACK DIRECTION</p>
+<div class="directions" role="group" aria-label="Attack direction"><button data-direction="S" aria-pressed="false">Front</button><button data-direction="SE" aria-pressed="true">Side</button><button data-direction="NE" aria-pressed="false">Rear</button></div>
+<div class="switches"><button id="motion" aria-pressed="true">Animation on</button><button id="mirror" aria-pressed="false">Mirror view</button></div>
+<div class="note"><b>Cosmetics stay on during the test.</b><p>Angel Halo, Classic Glasses and Archangel Wings are fitted to each class's own outfit.</p></div>
+<div class="note"><b>Native weapons, original motion.</b><p>This test uses Ragnarok's authored weapon sprites and attack actions. Your custom weapon icons and live saves are unchanged.</p></div>
+</aside>
+<section class="comparison" aria-label="Male and female comparison">
+<div class="comparison-top"><div><p class="eyebrow">SIDE BY SIDE</p><h2 id="selectionTitle">Lord Knight</h2></div><span id="selectionMeta" class="badge">Sword · Style 40</span></div>
+<div class="characters">
+<article class="character"><div class="character-label"><h3>Male</h3><span id="maleFrames"></span></div><div class="stage"><img id="male" width="320" height="280" alt="Male character loading" hidden></div><p id="maleStatus" role="status">Loading…</p></article>
+<article class="character"><div class="character-label"><h3>Female</h3><span id="femaleFrames"></span></div><div class="stage"><img id="female" width="320" height="280" alt="Female character loading" hidden></div><p id="femaleStatus" role="status">Loading…</p></article>
+</div>
+<div class="comparison-bottom"><span>Weapons and cosmetics share the character's native animation.</span><button id="retry">Reload look</button></div>
+</section>
+</div>
+<section class="roster"><div class="section-title"><div><p class="eyebrow">YOUR COMPLETE CLASS ROSTER</p><h2>Pick any of the 19 classes</h2></div><span id="routeCount"></span></div><div id="classes" class="class-grid" aria-label="Class shortcuts"></div></section>
+<section class="details"><div><h2>What was checked</h2><p>Every allowed weapon family, both genders, three hairstyles and three native attack directions. Each animation is compared with the exact same action without a weapon; frame timing and canvas bounds are checked too.</p><p id="auditSummary"></p></div><div><h2>About this fitting</h2><p>Mirror view is a reflection, not an additional authored direction. Still mode shows the first frame. Native slash effects are part of the source weapon animation.</p><p>The complete body costume remains in the earlier <a href="../cosmetics-preview/">four-slot fitting room</a>. This test covers the current class outfits.</p><p><a href="README.md">Scope & sources</a> · <a href="audit.json">Detailed audit</a> · <a href="https://github.com/adsonpleal/ragassets">Sprite provider</a></p></div></section>
+</main><footer>PRONTERA GRIND / APPEARANCE STUDY <span>Classic Ragnarok Online artwork · Gravity</span></footer>
+</body>
+</html>

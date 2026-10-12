@@ -6747,3 +6747,30 @@ The owner's second pass over v77, six notes, all built.
 * **Bag:** The new Items view now shows one Refine Protection Scroll reserve. Existing crafted scrolls still merge without losing quantities.
 * **Try it:** B → Items; E → Refine; watch the illustrated activity while farming.
 * **Checks:** Conflict resolution, full regression and publishing checks are tracked in workspace validation context.
+
+### 2026-10-12 — Celestial Vanguard cosmetic fitting preview
+* **Preview:** Added one halo, one pair of glasses, white archangel wings and a full armor costume. Toggle the four pieces independently and inspect front, side, back and unarmed attack animations, with mirror and still-frame controls.
+* **Art:** Uses locally saved Ragnarok Online renders with their original attachment data. The original-look option matches all 29 frames of the existing male Lord Knight exactly. The armor uses the Rune Knight alternate outfit; the first fitting is limited to the male Lord Knight. RO3 was researched as a reference; these are classic RO assets.
+* **Try it:** Run `python3 tools/preview_server.py 8000`, then open `/Updates/cosmetics-preview/`. This is a fitting preview; live gameplay and saves are unchanged, so the BUILD tag stays as it is. Costume weapons need fitting before live use.
+* **Checks:** Asset integrity and controller regressions, all 64 animated combinations/views in the shared browser, desktop/phone layout, reduced-motion mode and the standalone export checked. Detailed validation and review results are in workspace context. No push or deployment.
+
+### 2026-10-12 — All-class weapon and hairstyle fitting
+* **Preview:** Added a side-by-side male/female weapon test for all 19 current classes. Choose every weapon family your class allows, three hairstyles, and front/side/rear attack views. Mirror and still-frame controls are included.
+* **Attachment:** Uses Ragnarok's native weapon-specific actions with halo, glasses and wings attached. Novice gender differences, female Wizard staff attacks, katar/dagger choices and merchant-line axe/mace attacks use their matching action data. No manual hand offsets were added.
+* **Try it:** Run `python3 tools/preview_server.py 8000`, then open `/Updates/class-weapon-preview/`. Hairstyle IDs 40, 1 and 23 can be switched for both genders. The earlier four-slot preview is still available.
+* **Checks:** 50 class/gender/weapon routes, 450 animated looks and 3,870 frames checked for source coverage, visible weapon pixels, timing and clipping. Browser selection, hairstyle differences, mobile/tablet bounds, reduced motion and standalone export checked; detailed results are in workspace context.
+* **Scope:** Visual prototype only, using native RO weapon art and current class outfits. Existing custom weapon art, live gameplay and saves are unchanged; BUILD remains unchanged. No push or deployment.
+
+### 2026-10-12 — Twenty-style hair and native color studio
+* **Preview:** Added 20 randomly selected hairstyles for male and 20 for female characters, with independent color choices, all 19 classes and their weapon families. The selection is saved so it stays the same between visits.
+* **Colors:** Offers native palette IDs 0–8. Some source colors repeat: the checked styles have eight or nine distinct appearances. Original source palettes are used, with no painted replacements.
+* **Try it:** Run `python3 tools/preview_server.py 8000`, then open `/Updates/hair-color-preview/`. Lord Knight / Sword / Side has every style and color saved locally; other combinations may load from the sprite provider.
+* **Checks:** All 508 sample looks and 4,512 frames passed asset checks; all 27,000 selection routes passed automated mapping checks. The browser passed all 360 saved hair/color choices after a loading race was fixed. Full visual coverage of 27,000 looks is not claimed.
+* **Handoff:** `Updates/hair-color-preview/INTEGRATION-HANDOFF.md` records IDs, random selection method, source links, rebuild commands, save migration, rendering/weapon-clock integration and release gates for the next agent. This is a prototype; live gameplay and BUILD are unchanged. No push or deployment.
+
+### 2026-10-12 — Idle/walking studio and free-hosting assessment
+* **Preview:** Added Idle and Walking alongside Attack for all 19 classes, both genders and the selected hair/colors. Front, side and rear views use native actions. Weapons are naturally stowed in the checked idle/walking art; no manual hand overlays were added.
+* **Checks:** 1,536 saved looks and 10,200 frames passed; all 81,000 selection routes and 1,080 local browser stance/hair/color choices passed. Four idle sources have different equipped/unarmed frame counts; their native timing is preserved and documented.
+* **Performance:** Measured the existing decoder on old/new art and verified a lossless nine-animation bundle. The hosting report recommends static bundles, loading only the active look, a memory budget and fewer texture uploads. Full-game GPU/phone FPS remains unverified because shared-browser WebGL is unavailable.
+* **Free hosting:** Cloudflare's documented Pages/Functions/D1 free limits are linked in `Updates/hair-color-preview/PERFORMANCE-AND-HOSTING.md`. The proposed 7,515-file packaged site fits the 20,000-file Pages limit; actual account usage was not available, and no paid service was added.
+* **Try it:** `python3 tools/preview_server.py 8000` → `/Updates/hair-color-preview/` → Stance. The compact download embeds starter looks; other choices may need internet. Source and art are separate downloads. Updated handoff explains the remaining live integration work; game BUILD is unchanged. No push or deployment.

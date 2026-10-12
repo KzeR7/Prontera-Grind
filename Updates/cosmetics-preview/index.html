@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Prontera Grind · Celestial Wardrobe</title>
+<link rel="stylesheet" href="wardrobe.css">
+<script src="art/manifest.js" defer></script><script src="wardrobe.js" defer></script>
+</head>
+<body>
+<header><a class="brand" href="#">PRONTERA <span>GRIND</span></a><span class="tag">COSMETIC FITTING ROOM</span></header>
+<main>
+<section class="intro"><div><p class="eyebrow">COLLECTION 01</p><h1>Celestial Vanguard</h1><p>A halo, a little character, and a pair of wings. Make the look yours.</p></div><span class="sample">First fitting · Male Lord Knight</span></section>
+<div class="layout">
+<section class="preview" aria-label="Character preview">
+<div class="preview-top"><span id="lookName">Complete collection</span><span class="pill" id="pieceCount">4 / 4 pieces</span></div>
+<div class="stage" id="stage"><div class="rune" aria-hidden="true"></div><img id="hero" width="200" height="200" alt="Lord Knight wearing the Celestial Vanguard collection"><span class="stage-note">ACTUAL RAGNAROK SPRITES</span></div>
+<div class="preview-status"><span id="status" role="status">Loading the fitting room…</span><button id="retry" hidden>Retry</button></div>
+<div class="view-controls" aria-label="Character direction"><button data-view="S" aria-pressed="false">Front</button><button data-view="SE" aria-pressed="true">Side</button><button data-view="NE" aria-pressed="false">Back</button><button data-view="attack" aria-pressed="false">Attack</button></div>
+<div class="motion-controls"><button id="mirror" aria-pressed="false">Mirror view</button><button id="motion" aria-pressed="true">Animation on</button><span>Pixel art · original colors</span></div>
+</section>
+<aside class="wardrobe" aria-label="Cosmetic slots"><p class="eyebrow">YOUR WARDROBE</p><h2>One piece for every slot</h2><p class="muted">Toggle each piece to compare. All combinations have their own fitted animation.</p>
+<div class="slots">
+<button class="slot" data-bit="1" aria-pressed="true"><span class="number">01</span><span><small>HEADGEAR</small><b>Angel Halo</b><em>A classic floating gold ring</em></span><span class="check" aria-hidden="true">✓</span></button>
+<button class="slot" data-bit="2" aria-pressed="true"><span class="number">02</span><span><small>FACE ACCESSORY</small><b>Classic Glasses</b><em>A subtle detail at game scale</em></span><span class="check" aria-hidden="true">✓</span></button>
+<button class="slot" data-bit="4" aria-pressed="true"><span class="number">03</span><span><small>WINGS / BACK</small><b>Archangel Wings</b><em>White feathers, fitted by direction</em></span><span class="check" aria-hidden="true">✓</span></button>
+<button class="slot" data-bit="8" aria-pressed="true"><span class="number">04</span><span><small>FULL COSTUME</small><b>Vanguard Armor</b><em>Rune Knight alternate outfit</em></span><span class="check" aria-hidden="true">✓</span></button>
+</div>
+<div class="actions"><button id="all">Wear full set</button><button id="none">Original look</button></div>
+<div class="note"><b>A visual fitting, ready for your feedback.</b><p>This preview does not change your save, class, equipment or stats. Costumes show their own attack poses without a weapon overlay.</p></div>
+</aside></div>
+<section class="details"><div><p class="eyebrow">HOW IT FITS</p><h2>Attached through the whole motion</h2><p>Headgear follows the head. Glasses follow the face. Wings use direction-aware layers. The costume replaces the complete animated body.</p></div><div><p class="eyebrow">REFERENCE & ART</p><p>Classic Ragnarok Online sprites rendered by <a href="https://github.com/adsonpleal/ragassets">ragassets</a>. <a href="https://ro3.roglobal.com/">Ragnarok Online 3</a> is a reference; this set contains no RO3 sprites. Artwork: Gravity.</p><p><a href="README.md">Fitting notes & source IDs</a> · <a href="art/sources.json">Exact asset sources</a></p></div></section>
+</main><footer>PRONTERA GRIND / WARDROBE STUDY 01 <span>16 combinations · 4 motion views</span></footer>
+</body></html>
