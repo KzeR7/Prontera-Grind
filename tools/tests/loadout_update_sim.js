@@ -28,7 +28,7 @@ test('bulk preview excludes later drops and rechecks selected rarity',()=>{
 });
 test('Bag previews actual item counts and retains card and Loadout navigation',()=>{
  ev(`S.ore.ori=42;S.refineScrolls=7;S.nmMat[0]=13;tabs.splice(0,tabs.length,'bag');sub.bag='bag';renderWin()`);
- assert.equal(doc.querySelectorAll('.bag-item-list article').length,10);assert.match(doc.querySelector('.bag-items').textContent,/Oridecon42/);assert.equal(doc.querySelector('.grid'),null);
+ assert.equal(doc.querySelectorAll('.bag-item-list article').length,9);assert.match(doc.querySelector('.bag-items').textContent,/Refine Protection Scroll7/);assert.doesNotMatch(doc.querySelector('.bag-items').textContent,/Drop Protection Scroll/);assert.match(doc.querySelector('.bag-items').textContent,/Oridecon42/);assert.equal(doc.querySelector('.grid'),null);
  doc.querySelector('[data-v="bag:cards"]').click();assert.ok(doc.querySelector('.eclipse-card-grid'));
  ev(`sub.bag='bag';renderWin()`);doc.querySelector('.bag-items [data-t=equip]').click();assert.ok(doc.querySelector('.eclipse-bag'));
 });

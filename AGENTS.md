@@ -6714,6 +6714,12 @@ The owner's second pass over v77, six notes, all built.
 * **Try it:** M → scroll Field Intelligence; E → Refine; K → toggle auto-cast; C → cards; P → Change pets. Use the screen Companions and More buttons.
 * **Checks:** Real-handler integration and panel-control smoke checks pass. Full regression, build, desktop/phone geometry and review results are recorded in workspace validation context. Browser visuals use a temporary renderer stub because shared-browser WebGL is unavailable. No push or deployment.
 
+### 2026-10-12 — `grind-v114 Eclipse readability`
+* **Appearance:** Added a translucent dark tint behind on-screen activity, drops and Zeny messages, plus a tinted Zeny balance. Main screen panels and open windows now have thicker, brighter outlines.
+* **Scrolls:** Refine Scroll is now Refine Protection Scroll. Old Drop Protection Scrolls merge into the same reserve without losing quantities. Crafted and purchased scrolls both follow Refine's On/Off setting, spending one per selected attempt, including success.
+* **Try it:** Watch the activity text while farming. Open Equipment → Refine for the shared reserve and crafting; Market shows the renamed scroll.
+* **Checks:** Scroll migration, crafting, refinement and real-handler UI checks pass. Desktop/phone UI verified with a temporary renderer stub and field image; shared-browser WebGL combat rendering remains unavailable. Regression and build results are tracked in workspace validation context. No push or deployment.
+
 ### 2026-10-12 — `grind-v114 Inventory & smooth return`
 * **Loadout:** Auto-sell and bulk selling are at the top of Field Inventory. Bulk sales have a separate rarity selection, a preview and confirmation. Affix rules can keep matching gear and sell the rest, or sell only matches. Locked, equipped, saved-class and paid-reforge gear remain protected; confirmation checks protections again.
 * **Inventory:** Clicking a worn slot moves compatible equipment first. Equipment then groups by slot, weapon family and name, with rarity ordering within the same name. Bag now previews ores, scrolls, Echo Shards and Nightmare materials, and keeps its Cards tab.
@@ -6735,3 +6741,9 @@ The owner's second pass over v77, six notes, all built.
 * **Position:** Buff tiles line up with the bottom of the central dock on desktop. On narrower screens they sit just above the dock so navigation stays usable.
 * **Try it:** Activate a pet's War Cry, Arcane Blessing, Blood Siphon or Vital Aura; look at the lower-right buff tiles or focus one for its description.
 * **Checks:** Real-HUD artwork, timer and expiry checks plus desktop/phone geometry recorded in workspace validation context. Preview screenshots use synthetic state and a renderer stub because shared-browser WebGL is unavailable. No push or deployment.
+
+### 2026-10-12 — `grind-v117 Eclipse integration`
+* **Fix:** Combined the readability and scroll update with the newer inventory, activity artwork, display and field-buff changes. Illustrated loot and Zeny activity keep their translucent tint; screen panels keep their thicker outlines.
+* **Bag:** The new Items view now shows one Refine Protection Scroll reserve. Existing crafted scrolls still merge without losing quantities.
+* **Try it:** B → Items; E → Refine; watch the illustrated activity while farming.
+* **Checks:** Conflict resolution, full regression and publishing checks are tracked in workspace validation context.
