@@ -153,7 +153,7 @@ const addFloat=()=>{},pl={x:0,z:0};
 const questEvent=()=>{};const log=(m,c,k)=>{logs.push(m)},ui=()=>{},save=()=>{};   // the Black Market's writes (stubs here)
 this.__bm={buyOre,reforge,reforgeCost,bmOpen,refCost,refOre,qpSide,tabs,setSide:v=>{sideOpen=v}};
 `;
-const sb = { console };
+const sb = { console, PGSkillIcons:require('../../assets/skill-icons.js') };
 vm.createContext(Object.assign(sb,{simVisualsOff:()=>false})); vm.runInContext(harness, sb);
 const U = sb.__u;
 
@@ -591,7 +591,7 @@ t('the Skills grid fits all five class skills and selected descriptions dismiss 
 t('skill art is local, movement slowdown is moderated, and the unchanged camera centres the hero', () => {
   assert.ok(src.includes("katar:[1250,1252,1254,1256,1258,1260]"), 'Katar gear has its own recognizable item sprites');
   assert.ok(!src.includes('https://static.divine-pride.net/images/skills/'), 'skill artwork no longer depends on hotlinked images');
-  assert.ok(src.includes('class="skill-art motif-${motif}"')&&src.includes('data-motif="${motif}"'), 'each skill uses a locally drawn, themed vector gem');
+  assert.ok(src.includes('class="skill-art family-${art.family}"')&&src.includes('data-skill="${id}"'), 'each skill uses the supplied local art registry');
   assert.ok(src.includes('.skill-art{display:block;width:46px;height:46px'), 'the vector artwork is high-resolution and not a tiny red sprite');
   const moveMatch=src.match(/const heroMoveSpeedForAgi=agi=>[^;]+;/);assert.ok(moveMatch,'AGI movement curve is missing');
   const move=new Function(moveMatch[0]+';return heroMoveSpeedForAgi')();
@@ -895,19 +895,19 @@ t('the DPS meter shares the rolling minute and resets with the save', () => {
   m=s('p',0,0,0,80000);assert.strictEqual(m.dps,0,'a fresh save (damage counter reset) starts at zero');
 });
 
-t('every skill has distinct local vector art and upgraded card metadata', () => {
+t('every skill has supplied local art and upgraded card metadata', () => {
   const missing = [...U.SKILLS].filter(s => !U.SKILL_ICON[s.id] || !U.SKILL_TONE[U.SKILL_ICON[s.id]] || !U.SKILL_PICTO[U.SKILL_ICON[s.id]]).map(s => s.id);
   assert.deepStrictEqual(missing, [], 'skills without a complete local art mapping: ' + missing.join(', '));
   assert.strictEqual(Object.keys(U.SKILL_ICON).length, U.SKILLS.length, 'the icon map must cover the whole roster without unused entries');
   assert.ok(new Set(Object.values(U.SKILL_ICON)).size >= 40, 'skill art should use many clearly different pictograms, not one placeholder');
   const art=U.SKILLS.map(s=>U.skillIcon(s.id));
-  assert.ok(art.every(svg=>svg.startsWith('<svg class="skill-art motif-')&&svg.includes('data-emblem=')&&svg.includes('rx="9"')), 'each skill renders self-contained, shaded vector art');
-  assert.ok(art.every(svg=>!svg.includes('id=')&&!svg.includes('url(#')), 'line icons need no shared IDs');
+  assert.ok(art.every(img=>img.startsWith('<img class="skill-art family-')&&img.includes('src="assets/skill-icons/')&&img.includes('data-skill=')), 'all 91 skills render local supplied PNGs');
+  assert.ok(art.every(img=>!img.includes('https://')), 'skill art needs no remote download');
   assert.ok(!src.includes('class="ro-skill-icon"'), 'there are no externally loaded red skill placeholders');
   U.S = mkS('Mage'); U.selS = null;
   const h = U.V.skills();
   assert.ok(h.includes('class="sk-head"') && h.includes('class="sk-kind"'), 'cards show the skill category');
-  assert.ok(h.includes('class="si" aria-hidden="true"') && h.includes('class="skill-art motif-flame"'), 'cards show a colored fantasy icon and clear level');
+  assert.ok(h.includes('class="si" aria-hidden="true"') && h.includes('class="skill-art family-magic"'), 'cards show a colored fantasy icon and clear level');
   assert.ok(h.includes('class="sk-name"') && h.includes('aria-label="Increase Fire Bolt"'), 'skill labels and upgrade buttons are accessible');
   assert.ok(/\.skg\{[^}]*repeat\(5,minmax\(0,1fr\)\)/.test(src) && src.includes('.sk .si{width:48px;height:48px'), 'the five-skill grid uses large, polished vector tiles');
 });
@@ -1147,7 +1147,7 @@ t('v90 refine: rarer pieces eat more ore per attempt and every step costs twice 
 t('pet details show Ragnarok sprites, named upgrade levels, and gacha skill odds', () => {
   U.S=mkS('Novice');U.S.pets=[{id:41,sp:0,mut:0,eq:[1,2,0],skills:['warcry','spiritbolt'],sk:[1,2,3],on:false}];U.selP=41;
   const h=U.V.pet();
-  assert.ok(h.includes('src="https://static.divine-pride.net/images/mobs/png/1002.png"'),'the pet portrait must use its Divine Pride monster sprite');
+  assert.ok(h.includes('src="assets/pets/v1/thumb-1002.png"'),'the pet portrait must use its original local native sprite');
   assert.ok(h.includes('Claw &middot; Level 1/5')&&h.includes('Collar &middot; Level 2/5')&&h.includes('Charm &middot; Level 0/5'),'each upgrade must name the slot and current level');
   assert.ok(h.includes('25% upgrade success')&&h.includes('15% upgrade success')&&h.includes('40% upgrade success'),'each upgrade must show its success chance');
   assert.ok(h.includes('5% double upgrade chance on success'),'the great-success chance must be explicit');

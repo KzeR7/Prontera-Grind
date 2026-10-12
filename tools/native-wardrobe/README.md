@@ -1,11 +1,84 @@
-# Forty-piece Wardrobe (v5)
+# Forty-one-piece Wardrobe (v5)
 
-V5 offers ten Head, ten Face, ten Mouth and ten Wings pieces, plus None for each.
+V5 offers ten Head, ten Face, ten Mouth and eleven Wings pieces, plus None for each.
 It renders the current class automatically. The previous Rune Knight, Warlock and
 Guillotine Cross costumes are reserved for future class updates and removed from
 live choices. Old saves wearing them return to the current class body while keeping
 hair and accessories. Full-body costume replacements remain under research; the
 user declined the event outfits and cloak-only previews.
+
+## Evil Scythe (v129)
+
+W → Wings → Evil Scythe → Apply look. This is Costume: Evil Scythe, item
+[20597](https://www.divine-pride.net/database/item/20597), garment view 79,
+stable saved key `evilScythe`. All 19 classes, both genders, eight directions and
+idle/walk/attack use the current class body; gear and progression are preserved.
+No new full-body costume is approved.
+
+The official-data archive's files named `c_evil_scythe` contain different artwork.
+**Do not use them.** `evil-scythe-source-manifest.json` pins the public Divine Pride
+DressupTree/DressupFrame responses containing the actual pixels and decoded animation
+metadata. Original ACT binaries were not recovered. `prepare_evil_scythe.py` emits
+explicitly derived ACT/SPR development adapters for the pinned native renderer;
+these are not original binaries. Source PNG pixels, layer position, mirror, scale,
+angle, attachment points and action delays are retained. Non-rendering binary fields
+not exposed by the preview (sound events, fit ranges, etc.) are not claimed as
+original metadata. The native renderer's garment ordering and unparented placement
+are used without invented art or offsets. The endpoint uses RO sex IDs (1 male,
+0 female), verified against explicit `female=false/true` item previews; its web UI's
+reversed labels must not decide source gender.
+
+The game serves only local packed files. It never calls Divine Pride. Four new
+hashed files and a catalog entry extend v5; all 573 older packed files and existing
+asset records are unchanged. The collection is 11,551,999 bytes; selecting Evil
+Scythe first downloads 96,350 male / 130,933 female bytes before HTTP compression.
+The decoded cache stays 16 MiB and the serialized metadata cache 1 MiB. Publishing
+allows 11.25 MiB for the collection (the extra piece crossed the old 11 MiB ceiling).
+
+### Rebuild Evil Scythe
+
+Use Python 3.9+ with Pillow 11.3.0 and Go 1.24.2. Recover the normal pinned inputs
+with `fetch_sources.py` first. Check out ragassets
+`4de4fa747431979d35c747d7edd549a872efd9e1` as described below. Copy `export.go`
+to `gateway/internal/render/engine/wardrobe_export.go`, `accessory_export.go`
+to `gateway/cmd/wardrobe-accessories/main.go` and `accessory_proof.go` to
+`gateway/cmd/wardrobe-accessory-proof/main.go`, then build those two Go commands.
+Keep all development inputs and exports outside the game checkout.
+
+```sh
+python3 tools/native-wardrobe/fetch_sources.py /tmp/evil-native
+python3 tools/native-wardrobe/prepare_evil_scythe.py /tmp/evil-native --cache /tmp/evil-preview
+python3 - <<'PYDEFS'
+import json
+from pathlib import Path
+items=json.loads(Path('tools/native-wardrobe/accessories.json').read_text())
+Path('/tmp/evil-defs.json').write_text(json.dumps({'backwear':[i for i in items['backwear'] if i['key']=='evilScythe']}))
+PYDEFS
+for job in 0 2 9 4010 1 7 4008 6 12 4013 3 11 4012 4 8 4009 5 10 4011; do
+  wardrobe-accessories /tmp/evil-native /tmp/evil-defs.json /tmp/evil-pieces/$job $job || exit
+  wardrobe-accessory-proof /tmp/evil-native /tmp/evil-defs.json /tmp/evil-proofs/$job $job || exit
+done
+```
+
+To append this item, recover the v128 pack from the manifest's `baselineCommit`
+into `/tmp/evil-baseline` (`git archive <baseline-commit> assets/wardrobe/v5 | tar -x -C /tmp/evil-baseline`).
+Use an empty output directory; the append command refuses an existing item.
+The first source argument is unused when appending:
+
+```sh
+python3 tools/build_wardrobe_collection.py /tmp/unused /tmp/evil-pieces tools/native-wardrobe/accessories.json /tmp/evil-pack --append /tmp/evil-baseline/assets/wardrobe/v5 --piece evilScythe
+python3 tools/tests/evil_scythe_assets.py /tmp/evil-pieces /tmp/evil-proofs /tmp/evil-preview /tmp/evil-native
+node tools/tests/wardrobe_sim.js
+NODE_PATH=<jsdom-three-prefix>/node_modules node tools/tests/wardrobe_game_sim.js
+node tools/tests/publish_sim.js
+node tools/measure_wardrobe_data.js
+```
+
+The focused native audit verifies 5,990 exact layer frames and 745 independent native
+compositions (maximum translucent compositing rounding difference 3/255), original
+source pixels and all previous packed file hashes. Desktop/390px browser tests use
+the explicitly marked renderer stub; real WebGL and physical devices remain unverified.
+Temporary `/tmp/evil-*` files are rebuild/test inputs and are unnecessary to play.
 
 ## Sources and build
 

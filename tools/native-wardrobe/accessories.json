@@ -205,6 +205,11 @@
       "key": "mysteryWings",
       "label": "Mystery wings",
       "view": 156
+    },
+    {
+      "key": "evilScythe",
+      "label": "Evil Scythe",
+      "view": 79
     }
   ]
 }

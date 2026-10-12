@@ -1,0 +1,287 @@
+{
+  "schemaVersion": 1,
+  "rendererCommit": "4de4fa747431979d35c747d7edd549a872efd9e1",
+  "source": "Original RO ACT/SPR resource files from grf.robrowser.com; no painted or substituted frames.",
+  "files": [
+    {
+      "spriteId": 1002,
+      "path": "data/sprite/몬스터/poring.act",
+      "url": "https://grf.robrowser.com/data/sprite/%C2%B8%C3%B3%C2%BD%C2%BA%C3%85%C3%8D/poring.act",
+      "bytes": 146172,
+      "sha256": "ed8c6c2fd100547e60dba40702fbed3224a15ec0d316dbefe9bf2f57ba2c72dc"
+    },
+    {
+      "spriteId": 1002,
+      "path": "data/sprite/몬스터/poring.spr",
+      "url": "https://grf.robrowser.com/data/sprite/%C2%B8%C3%B3%C2%BD%C2%BA%C3%85%C3%8D/poring.spr",
+      "bytes": 42859,
+      "sha256": "35a16a207df6be2ee8ad0a391b752fd62d4983ccd5a129c6540e41414ed7d983"
+    },
+    {
+      "spriteId": 1063,
+      "path": "data/sprite/몬스터/lunatic.act",
+      "url": "https://grf.robrowser.com/data/sprite/%C2%B8%C3%B3%C2%BD%C2%BA%C3%85%C3%8D/lunatic.act",
+      "bytes": 129468,
+      "sha256": "da7506d7febb5f577c02fef33fa0abf4a11489e8620f4c8b6cc72f3ef31e5f44"
+    },
+    {
+      "spriteId": 1063,
+      "path": "data/sprite/몬스터/lunatic.spr",
+      "url": "https://grf.robrowser.com/data/sprite/%C2%B8%C3%B3%C2%BD%C2%BA%C3%85%C3%8D/lunatic.spr",
+      "bytes": 36287,
+      "sha256": "d2dc51285f39d62592fae95049805b4c337bdf6d53915cf9d47e6c5e710abc16"
+    },
+    {
+      "spriteId": 1013,
+      "path": "data/sprite/몬스터/wolf.act",
+      "url": "https://grf.robrowser.com/data/sprite/%C2%B8%C3%B3%C2%BD%C2%BA%C3%85%C3%8D/wolf.act",
+      "bytes": 36564,
+      "sha256": "19972bb850ae4a132ef52774e2c2486d8ac4babeb750507bd7ec548915727bbd"
+    },
+    {
+      "spriteId": 1013,
+      "path": "data/sprite/몬스터/wolf.spr",
+      "url": "https://grf.robrowser.com/data/sprite/%C2%B8%C3%B3%C2%BD%C2%BA%C3%85%C3%8D/wolf.spr",
+      "bytes": 104662,
+      "sha256": "7f9a0f9ce8563cdead942f04ffe3904806376f9a1c917d3aa98c6737d8545399"
+    },
+    {
+      "spriteId": 1106,
+      "path": "data/sprite/몬스터/desert_wolf.act",
+      "url": "https://grf.robrowser.com/data/sprite/%C2%B8%C3%B3%C2%BD%C2%BA%C3%85%C3%8D/desert_wolf.act",
+      "bytes": 33364,
+      "sha256": "52df6e0d0ca4d5720fbc18d7497dd2854fdf4f564043714f7431070bb192eecf"
+    },
+    {
+      "spriteId": 1106,
+      "path": "data/sprite/몬스터/desert_wolf.spr",
+      "url": "https://grf.robrowser.com/data/sprite/%C2%B8%C3%B3%C2%BD%C2%BA%C3%85%C3%8D/desert_wolf.spr",
+      "bytes": 104662,
+      "sha256": "322ddb6afc73d2bb6d9694b9640dd7ff40e4dd59da85c8053e3145fad79e748d"
+    },
+    {
+      "spriteId": 1019,
+      "path": "data/sprite/몬스터/pecopeco.act",
+      "url": "https://grf.robrowser.com/data/sprite/%C2%B8%C3%B3%C2%BD%C2%BA%C3%85%C3%8D/pecopeco.act",
+      "bytes": 123060,
+      "sha256": "a48ff1d64851442d5004d8bf9cad3f2b8c42d73d05ada3401de1608467535ec3"
+    },
+    {
+      "spriteId": 1019,
+      "path": "data/sprite/몬스터/pecopeco.spr",
+      "url": "https://grf.robrowser.com/data/sprite/%C2%B8%C3%B3%C2%BD%C2%BA%C3%85%C3%8D/pecopeco.spr",
+      "bytes": 187911,
+      "sha256": "6f528ee0b87d34816b1f82119741d0df2eb0e4df0f7e6fb505c0c84e717ca130"
+    },
+    {
+      "spriteId": 1155,
+      "path": "data/sprite/몬스터/petit.act",
+      "url": "https://grf.robrowser.com/data/sprite/%C2%B8%C3%B3%C2%BD%C2%BA%C3%85%C3%8D/petit.act",
+      "bytes": 105060,
+      "sha256": "074f91abdde49efad9fb1a88708f3cf52755e49da7ebfbf493773f01a03b36c8"
+    },
+    {
+      "spriteId": 1155,
+      "path": "data/sprite/몬스터/petit.spr",
+      "url": "https://grf.robrowser.com/data/sprite/%C2%B8%C3%B3%C2%BD%C2%BA%C3%85%C3%8D/petit.spr",
+      "bytes": 68797,
+      "sha256": "e028a66f7576c3494036d25203cd862bf05a6cb1c3a9a9ea3b88f20c2f05b85b"
+    },
+    {
+      "spriteId": 1101,
+      "path": "data/sprite/몬스터/baphomet_.act",
+      "url": "https://grf.robrowser.com/data/sprite/%C2%B8%C3%B3%C2%BD%C2%BA%C3%85%C3%8D/baphomet_.act",
+      "bytes": 120060,
+      "sha256": "37d2b4a027b481ce6345c06316149b3f1d7c5368683bdd5d45e66dbf57e7a33e"
+    },
+    {
+      "spriteId": 1101,
+      "path": "data/sprite/몬스터/baphomet_.spr",
+      "url": "https://grf.robrowser.com/data/sprite/%C2%B8%C3%B3%C2%BD%C2%BA%C3%85%C3%8D/baphomet_.spr",
+      "bytes": 40603,
+      "sha256": "bd4487118f3526107539a49de77b807e17e2346a9f7dc3b3495b3ee416487ee5"
+    },
+    {
+      "spriteId": 1096,
+      "path": "data/sprite/몬스터/angeling.act",
+      "url": "https://grf.robrowser.com/data/sprite/%C2%B8%C3%B3%C2%BD%C2%BA%C3%85%C3%8D/angeling.act",
+      "bytes": 187316,
+      "sha256": "125fb7058b6d3b52e88f83a0a993fee45017c0b491e100034d46d674087bc08b"
+    },
+    {
+      "spriteId": 1096,
+      "path": "data/sprite/몬스터/angeling.spr",
+      "url": "https://grf.robrowser.com/data/sprite/%C2%B8%C3%B3%C2%BD%C2%BA%C3%85%C3%8D/angeling.spr",
+      "bytes": 41740,
+      "sha256": "211d965497366fdc12a7bcaf48c5f4d9b6ae9b5d04660d7e50fa3d07710eb174"
+    },
+    {
+      "spriteId": 1113,
+      "path": "data/sprite/몬스터/drops.act",
+      "url": "https://grf.robrowser.com/data/sprite/%C2%B8%C3%B3%C2%BD%C2%BA%C3%85%C3%8D/drops.act",
+      "bytes": 146172,
+      "sha256": "c1ab437f85e7aa4b2d838fa07d449806ead71f361883120e3547e219261788bc"
+    },
+    {
+      "spriteId": 1113,
+      "path": "data/sprite/몬스터/drops.spr",
+      "url": "https://grf.robrowser.com/data/sprite/%C2%B8%C3%B3%C2%BD%C2%BA%C3%85%C3%8D/drops.spr",
+      "bytes": 42859,
+      "sha256": "7fb675d9590f1db589134f435d91110d11a5506ea5801e5930bcdaa5627ca40f"
+    },
+    {
+      "spriteId": 1031,
+      "path": "data/sprite/몬스터/poporing.act",
+      "url": "https://grf.robrowser.com/data/sprite/%C2%B8%C3%B3%C2%BD%C2%BA%C3%85%C3%8D/poporing.act",
+      "bytes": 146172,
+      "sha256": "412578f4cf49b33bf93ca9c8607df695493e457910e6ca53e22ba9437aa16e4b"
+    },
+    {
+      "spriteId": 1031,
+      "path": "data/sprite/몬스터/poporing.spr",
+      "url": "https://grf.robrowser.com/data/sprite/%C2%B8%C3%B3%C2%BD%C2%BA%C3%85%C3%8D/poporing.spr",
+      "bytes": 42859,
+      "sha256": "52c027e1a7d72c1f41ca5c516f60a17b672ea4d111405d1c30a1749bb259ffe8"
+    },
+    {
+      "spriteId": 1007,
+      "path": "data/sprite/몬스터/fabre.act",
+      "url": "https://grf.robrowser.com/data/sprite/%C2%B8%C3%B3%C2%BD%C2%BA%C3%85%C3%8D/fabre.act",
+      "bytes": 33148,
+      "sha256": "3e7ec5faac8be1e8476cd160da385214a01bf43028f8ea41c9d6028d2827831c"
+    },
+    {
+      "spriteId": 1007,
+      "path": "data/sprite/몬스터/fabre.spr",
+      "url": "https://grf.robrowser.com/data/sprite/%C2%B8%C3%B3%C2%BD%C2%BA%C3%85%C3%8D/fabre.spr",
+      "bytes": 24596,
+      "sha256": "7ea95b473fc320a5763c801d09204188ce52882f1ed2ea744c340ef9a46df33b"
+    },
+    {
+      "spriteId": 1056,
+      "path": "data/sprite/몬스터/smokie.act",
+      "url": "https://grf.robrowser.com/data/sprite/%C2%B8%C3%B3%C2%BD%C2%BA%C3%85%C3%8D/smokie.act",
+      "bytes": 208956,
+      "sha256": "838b0684e6589aba0cbc4d66b1a1a55c186055aa1c6a57725ff7e44c2e586784"
+    },
+    {
+      "spriteId": 1056,
+      "path": "data/sprite/몬스터/smokie.spr",
+      "url": "https://grf.robrowser.com/data/sprite/%C2%B8%C3%B3%C2%BD%C2%BA%C3%85%C3%8D/smokie.spr",
+      "bytes": 71200,
+      "sha256": "1ccb3272d92f1dd57a1f53ac92cb85cd59b406ad0fb46bf92b5c5bf869cbf1bc"
+    },
+    {
+      "spriteId": 1057,
+      "path": "data/sprite/몬스터/yoyo.act",
+      "url": "https://grf.robrowser.com/data/sprite/%C2%B8%C3%B3%C2%BD%C2%BA%C3%85%C3%8D/yoyo.act",
+      "bytes": 111052,
+      "sha256": "61b168d8d8adabe09097a6bb709a748b04a762cae70afce9907bb7839679d4ff"
+    },
+    {
+      "spriteId": 1057,
+      "path": "data/sprite/몬스터/yoyo.spr",
+      "url": "https://grf.robrowser.com/data/sprite/%C2%B8%C3%B3%C2%BD%C2%BA%C3%85%C3%8D/yoyo.spr",
+      "bytes": 47820,
+      "sha256": "9d9b94762e5526677ec95bd813cda1e798f1bbca32e362e034c29eee41dcaea6"
+    },
+    {
+      "spriteId": 1014,
+      "path": "data/sprite/몬스터/spore.act",
+      "url": "https://grf.robrowser.com/data/sprite/%C2%B8%C3%B3%C2%BD%C2%BA%C3%85%C3%8D/spore.act",
+      "bytes": 133868,
+      "sha256": "61e847079d69229267d75348836bd5f23ab3afb945a9c9b901115f317b9e5db7"
+    },
+    {
+      "spriteId": 1014,
+      "path": "data/sprite/몬스터/spore.spr",
+      "url": "https://grf.robrowser.com/data/sprite/%C2%B8%C3%B3%C2%BD%C2%BA%C3%85%C3%8D/spore.spr",
+      "bytes": 123759,
+      "sha256": "8fc8c23d011f2b6f43062d3945d204ecc7eb385f4bcb746ed01addb6f66de1bf"
+    },
+    {
+      "spriteId": 1170,
+      "path": "data/sprite/몬스터/sohee.act",
+      "url": "https://grf.robrowser.com/data/sprite/%C2%B8%C3%B3%C2%BD%C2%BA%C3%85%C3%8D/sohee.act",
+      "bytes": 129836,
+      "sha256": "a4d0fc266f470399772db88ee78305733f03640095395a7fe90eaf2ac49e5e4d"
+    },
+    {
+      "spriteId": 1170,
+      "path": "data/sprite/몬스터/sohee.spr",
+      "url": "https://grf.robrowser.com/data/sprite/%C2%B8%C3%B3%C2%BD%C2%BA%C3%85%C3%8D/sohee.spr",
+      "bytes": 281994,
+      "sha256": "21f126b7715aa5a373134444b04c7b6f7694ae5df9f7e3b3ad0951d133e757ee"
+    },
+    {
+      "spriteId": 1109,
+      "path": "data/sprite/몬스터/deviruchi.act",
+      "url": "https://grf.robrowser.com/data/sprite/%C2%B8%C3%B3%C2%BD%C2%BA%C3%85%C3%8D/deviruchi.act",
+      "bytes": 137972,
+      "sha256": "d7288f78bf6bc0ffc00dd0831da3bacf6cd721b59597e9059ed9c8c64a1cfdd0"
+    },
+    {
+      "spriteId": 1109,
+      "path": "data/sprite/몬스터/deviruchi.spr",
+      "url": "https://grf.robrowser.com/data/sprite/%C2%B8%C3%B3%C2%BD%C2%BA%C3%85%C3%8D/deviruchi.spr",
+      "bytes": 50696,
+      "sha256": "772414a2b1cb0db680e3a3c77be3a936d5dea6b7bc9ff2aba5f2f6cc751a2c9d"
+    },
+    {
+      "spriteId": 1180,
+      "path": "data/sprite/몬스터/nine_tail.act",
+      "url": "https://grf.robrowser.com/data/sprite/%C2%B8%C3%B3%C2%BD%C2%BA%C3%85%C3%8D/nine_tail.act",
+      "bytes": 42524,
+      "sha256": "8c3a5b2d3d1bd2e0499c953bf0f5a00f5d4d46bc04de0e511bdfade884312834"
+    },
+    {
+      "spriteId": 1180,
+      "path": "data/sprite/몬스터/nine_tail.spr",
+      "url": "https://grf.robrowser.com/data/sprite/%C2%B8%C3%B3%C2%BD%C2%BA%C3%85%C3%8D/nine_tail.spr",
+      "bytes": 29017,
+      "sha256": "43ef3b664dde8497f1e960fc5f5162bd0b697d447ffa3b2a3a81ac52a19c90e8"
+    },
+    {
+      "spriteId": 1582,
+      "path": "data/sprite/몬스터/deviling.act",
+      "url": "https://grf.robrowser.com/data/sprite/%C2%B8%C3%B3%C2%BD%C2%BA%C3%85%C3%8D/deviling.act",
+      "bytes": 82708,
+      "sha256": "416ea1793c960070a5d87f27f7cc045b6d896246904ff97f1493c1259c222ae3"
+    },
+    {
+      "spriteId": 1582,
+      "path": "data/sprite/몬스터/deviling.spr",
+      "url": "https://grf.robrowser.com/data/sprite/%C2%B8%C3%B3%C2%BD%C2%BA%C3%85%C3%8D/deviling.spr",
+      "bytes": 40685,
+      "sha256": "13483e30fc700cffb773d0b0c8eff30a09cb0b4987bc4adbd10b7232d4079cc1"
+    },
+    {
+      "spriteId": 1120,
+      "path": "data/sprite/몬스터/ghostring.act",
+      "url": "https://grf.robrowser.com/data/sprite/%C2%B8%C3%B3%C2%BD%C2%BA%C3%85%C3%8D/ghostring.act",
+      "bytes": 57164,
+      "sha256": "62200b45ef6822fa953e2d015f75f5c0594c318ae08c3d766858b1b6280dddbc"
+    },
+    {
+      "spriteId": 1120,
+      "path": "data/sprite/몬스터/ghostring.spr",
+      "url": "https://grf.robrowser.com/data/sprite/%C2%B8%C3%B3%C2%BD%C2%BA%C3%85%C3%8D/ghostring.spr",
+      "bytes": 24248,
+      "sha256": "b1c3d784fef72d01e4b1a0f565373725df4e5d70be727f59da4735944fd65c1b"
+    },
+    {
+      "spriteId": 1115,
+      "path": "data/sprite/몬스터/eddga.act",
+      "url": "https://grf.robrowser.com/data/sprite/%C2%B8%C3%B3%C2%BD%C2%BA%C3%85%C3%8D/eddga.act",
+      "bytes": 78764,
+      "sha256": "70f1a7b427060804aa17a384fe6387f00647ef70565dfaf09abd7842b0c1588c"
+    },
+    {
+      "spriteId": 1115,
+      "path": "data/sprite/몬스터/eddga.spr",
+      "url": "https://grf.robrowser.com/data/sprite/%C2%B8%C3%B3%C2%BD%C2%BA%C3%85%C3%8D/eddga.spr",
+      "bytes": 234352,
+      "sha256": "c3fb7b114dbdfdb64470d6818fed5d79d33c46469f4b42596a06036fd5de714d"
+    }
+  ]
+}

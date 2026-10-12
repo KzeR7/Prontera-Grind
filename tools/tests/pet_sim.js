@@ -4,7 +4,7 @@
 //   node tools/tests/pet_sim.js
 //
 // The rules being checked:
-//   * the roster is 8 pets across 4 rarities (two each), and the gacha has twelve skills - 4
+//   * the roster is 20 pets across 4 rarities (five each), and the gacha has twelve skills - 4
 //     temporary player buffs, 4 attacks (2 AoE, 2 single-target), and 4 low-impact utilities;
 //   * every pet has TWO skill slots and one roll fills both, never repeating a skill;
 //   * a pet can use one skill per PETGAP (7s) on top of that skill's own cooldown, every player
@@ -75,7 +75,7 @@ this.__p={ PETS,PET_SKILLS,RN,RCL,MUT,GW,PT,PTG,GREAT,PEQ,EGG,PETGAP,PETBAL,petD
   rollPetSkills,petSkills,petBuffWhy,petLeech,petHit,tickPet,maxHp,
   MAPS,genGear,atk,matk,aspd,crit,critD,C,CLASSES,HPK,HPE,SKILLS,SKSLOTS,SKFADE,lineOf,st,pv,
   petBuff,petBuffSrc,PET_SKILL_WEIGHTS,setMobs:m=>{mobs=m},setDealt:v=>{dealt=v},getDealt:()=>dealt,
-  PETBOND,PET_TRAIT,bondCnt,bondRank,bondNext,traitVal,petPassive,petBonusList,petFold,foldDupPets,
+  PETBOND,PET_TRAIT,PET_RECOMMENDED,bondCnt,bondRank,bondNext,traitVal,petPassive,petBonusList,petFold,foldDupPets,
   setRandom:v=>{Math.random=()=>v},
   resetPetState:()=>{for(const k in petSkillCd)delete petSkillCd[k];for(const k in petNote)delete petNote[k];
     for(const s of['atk','matk','hp','leech']){petBuff[s]=0;petBuff[s+'T']=0;petBuffSrc[s]=''}},
@@ -90,12 +90,17 @@ let pass = 0, fail = 0;
 const t = (n, f) => { try { f(); console.log('  ok   ' + n); pass++; } catch (e) { console.log('  FAIL ' + n + ' -> ' + e.message); fail++; } };
 console.log('pet: roster, ladders, the twelve skills, buff rules and the safer maxed-pet measurement\n');
 
+t('original saved species IDs remain intact and every recommendation uses two valid skills',()=>{
+ assert.deepStrictEqual(Array.from(P.PETS.slice(0,8),p=>p.spriteId),[1002,1063,1013,1106,1019,1155,1101,1096]);
+ assert.strictEqual(P.PET_RECOMMENDED.length,P.PETS.length);
+ for(const pair of P.PET_RECOMMENDED){assert.strictEqual(new Set(pair).size,2);assert.ok(pair.every(id=>P.PET_SKILLS.some(s=>s.id===id)))}
+});
 // ---------------------------------------------------------------- the data
-t('the roster is 8 pets, two at each of the four rarities', () => {
-  assert.strictEqual(P.PETS.length, 8);
+t('the roster is 20 pets, five at each of the four rarities', () => {
+  assert.strictEqual(P.PETS.length, 20);
   assert.deepStrictEqual([...new Set(P.PETS.map(p => p.r))], [0, 1, 2, 3]);
-  [0, 1, 2, 3].forEach(r => assert.strictEqual(P.PETS.filter(p => p.r === r).length, 2, 'rarity ' + r + ' must hold two pets'));
-  assert.strictEqual(new Set(P.PETS.map(p => p.spriteId)).size, 8, 'every pet has its own Divine Pride id');
+  [0, 1, 2, 3].forEach(r => assert.strictEqual(P.PETS.filter(p => p.r === r).length, 5, 'rarity ' + r + ' must hold five pets'));
+  assert.strictEqual(new Set(P.PETS.map(p => p.spriteId)).size, 20, 'every pet has its own Divine Pride id');
 });
 
 t('the gacha has twelve skills: 4 buffs, 2 AoE, 2 single-target and 4 utility', () => {
@@ -306,7 +311,7 @@ t('Blood Siphon heals you for 0.5% of what the pet deals; Vital Aura moves the H
 
 t('every species has ONE signature passive, 5% at Bond 0 and 10% at Bond 5 (v75)', () => {
   // The owner's instruction: passives yes, "tune it down hard. i dont want any buff go above 10%".
-  assert.strictEqual(P.PET_TRAIT.length, 8, 'one trait per species');
+  assert.strictEqual(P.PET_TRAIT.length, 20, 'one trait per species');
   assert.ok(P.PET_TRAIT.every(t => t.n && typeof t.d === 'function' && t.k.length >= 1), 'every trait is named, described and keyed');
   const keys = P.PET_TRAIT.flatMap(t => t.k);
   assert.deepStrictEqual([...new Set(keys)].sort(),
@@ -327,8 +332,8 @@ t('every species has ONE signature passive, 5% at Bond 0 and 10% at Bond 5 (v75)
   P.S.bond = [999]; assert.strictEqual(P.traitVal(0), 10, 'and it can never pass it');
   P.S.bond = [0];
   assert.strictEqual(P.traitVal(1), 5, 'the ladder is per species');
-  P.S.bond = Array(8).fill(999);
-  for(let sp = 0; sp < 8; sp++) assert.strictEqual(P.traitVal(sp), 10, P.PETS[sp].n + ' stops at 10%');
+  P.S.bond = Array(P.PETS.length).fill(999);
+  for(let sp = 0; sp < P.PETS.length; sp++) assert.strictEqual(P.traitVal(sp), 10, P.PETS[sp].n + ' stops at 10%');
 });
 
 t('petPassive adds the FIGHTING pets, one copy per species, and nothing else', () => {

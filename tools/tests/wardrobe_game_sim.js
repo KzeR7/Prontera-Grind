@@ -38,16 +38,17 @@ const g=createGame(html),ev=g.ev;
  for(const field of ['class','sex','stance','direction','still'])assert.equal(g.window.document.querySelector('[data-wardrobe="'+field+'"]'),null,'no '+field+' selector');
  assert.equal(g.window.document.querySelector('[data-wardrobe-action="play"]'),null);
  ev(`wardrobeAction('apply')`);assert.equal(ev('S.cls'),currentJob);assert.equal(ev('JSON.stringify(S.eq)'),gear);
- // Every section has ten real choices plus None; reserved class outfits are retired.
+ // Head/Face/Mouth have ten choices and Wings eleven, plus None; reserved class outfits are retired.
  const hairOptions=[...g.window.document.querySelector('[data-wardrobe="head"]').options];assert.deepEqual(hairOptions.map(o=>o.textContent),Array.from({length:20},(_,i)=>'Style '+(i+1)));assert.equal(hairOptions.at(-1).value,'42');
- for(const field of ['headwear','facewear','mouthwear','backwear'])assert.equal(g.window.document.querySelector('[data-wardrobe="'+field+'"]').options.length,11);
+ for(const field of ['headwear','facewear','mouthwear','backwear'])assert.equal(g.window.document.querySelector('[data-wardrobe="'+field+'"]').options.length,field==='backwear'?12:11);
  assert.equal(g.window.document.querySelector('[data-wardrobe="outfit"]'),null);
  const fixture=ev('JSON.stringify(S.appearance)'),beforeSlots=ev('__saveCount');
+ const progressState='JSON.stringify({lv:S.lv,exp:S.exp,jobs:S.jobs,base:S.base,st:S.st,pts:S.pts,sk:S.sk,bag:S.bag})',progression=ev(progressState);
  ev(`S.appearance.outfit='vanguard'`);assert.equal(ev('wardrobeAppearance().outfit'),'none','retired body returns to actual class');
- ev(`wardrobeChange('headwear','foxEars');wardrobeChange('facewear','heartPatch');wardrobeChange('mouthwear','poringLetter');wardrobeChange('backwear','leticiaWings');wardrobeAction('apply')`);
+ ev(`wardrobeChange('headwear','foxEars');wardrobeChange('facewear','heartPatch');wardrobeChange('mouthwear','poringLetter');wardrobeChange('backwear','evilScythe');wardrobeAction('apply')`);
  assert.equal(ev('__saveCount'),beforeSlots,'pending pieces cannot apply');await new Promise(r=>setImmediate(r));ev(`wardrobeAction('apply')`);
- assert.equal(ev('S.appearance.backwear'),'leticiaWings');assert.equal(ev('S.appearance.outfit'),'none');assert.equal(ev('S.cls'),currentJob);assert.equal(ev('JSON.stringify(S.eq)'),gear);
- g.window.localStorage.setItem('pg_save3_skill-test',ev('JSON.stringify(S)'));assert.equal(ev('load().appearance.mouthwear'),'poringLetter');
+ assert.equal(ev('S.appearance.backwear'),'evilScythe');assert.equal(ev('S.appearance.outfit'),'none');assert.equal(ev('S.cls'),currentJob);assert.equal(ev('JSON.stringify(S.eq)'),gear);
+ g.window.localStorage.setItem('pg_save3_skill-test',ev('JSON.stringify(S)'));assert.equal(ev('load().appearance.mouthwear'),'poringLetter');assert.equal(ev('load().appearance.backwear'),'evilScythe');assert.equal(ev(progressState),progression,'cosmetics preserve progression');
  g.window.__fixture=fixture;ev(`S.appearance=JSON.parse(__fixture);wardrobeAction('cancel');__saveCount--`);await new Promise(r=>setImmediate(r));
  // Closing a pending preview must permit reopening/retry and must discard unsaved drafts.
  ev(`wardrobeState.loading=true;tabs.splice(0);wardrobeSync();tabs.push('wardrobe');renderWin()`);await new Promise(r=>setImmediate(r));assert.equal(ev('wardrobeState.loading'),false);assert.equal(ev('wardrobeState.draft.heads.f'),42);

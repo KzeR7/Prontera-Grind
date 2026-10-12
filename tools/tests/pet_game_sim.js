@@ -1,0 +1,23 @@
+// Native pet integration: actual packed metadata, Three sprite ownership and UI actions.
+const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path');
+const {createGame}=require('./helpers/game');const g=createGame(),ev=g.ev,root=path.resolve(__dirname,'../../assets/pets/v1');
+g.window.__petCatalog=JSON.parse(fs.readFileSync(path.join(root,'catalog.json')));g.window.__petAssets={};
+for(const [key,r]of Object.entries(g.window.__petCatalog.assets))g.window.__petAssets[key]={metadata:JSON.parse(fs.readFileSync(path.join(root,r.meta))),image:{},figureHeight:r.figureHeight,bytes:r.width*r.height*4};
+try{
+ ev(`petSpriteStore.catalog=__petCatalog;petSpriteStore.ready=id=>__petAssets[id]||null;petSpriteStore.request=id=>Promise.resolve(__petAssets[id]);requestMobTexture=()=>null;S.auto=false;`);
+ for(let sp=0;sp<20;sp++){
+  ev(`window.__id=PETS[${sp}].spriteId;window.__v=buildMob({pet:true,spriteId:__id,shape:petFallbackShape(PETS[${sp}]),c:PETS[${sp}].c});t=1;window.__r={run:false};`);
+  for(const stance of ['idle','walk','attack'])for(let d=0;d<8;d++){
+   ev(`__r.run=${stance==='walk'};__r.attackStarted=${stance==='attack'?'t':'null'};drawNativePet(__v,__id,__r,${d})`);
+   assert.equal(ev('__v.nativePet.last'),ev(`petAssetKey(__id,${JSON.stringify(stance)},${d})+':'+${d}+':'+PGPetSprites.frameIndex(__petAssets[petAssetKey(__id,${JSON.stringify(stance)},${d})].metadata.actions[${JSON.stringify(stance+d)}],1000,${stance==='attack'?'0':'null'})`));
+   ev('syncMobImage(__v,{run:true,lunge:1},PET_VISUAL_SCALE)');assert.equal(ev('__v.spr.position.y'),0);assert.equal(ev('__v.spr.center.y'),.25);assert.equal(ev('__v.spr.material.rotation'),0);
+  }
+  ev('window.__paint=__v.nativePet.last;window.__ready=petSpriteStore.ready;petSpriteStore.ready=()=>null;drawNativePet(__v,__id,__r,0);petSpriteStore.ready=__ready');assert.equal(ev('__v.nativePet.last'),ev('__paint'),'keep previous frame while loading');
+  ev('disposeCreatureVisual(__v)');assert.equal(ev('__v.nativePet.cv.width'),0);
+ }
+ ev(`S.pets=Array.from({length:20},(_,sp)=>({id:sp+100,sp,mut:0,eq:[0,0,0],skills:['vital'],on:sp<3}));tabs.splice(0,tabs.length,'pet');ACT.selp('119');`);
+ assert.match(g.window.document.querySelector('[data-pet-preview]').getAttribute('aria-label'),/Eddga idle/);
+ for(const stance of ['idle','walk','attack']){ev(`ACT.petmotion(${JSON.stringify(stance)});drawPetPreviews()`);assert.equal(ev('petPreviewStance'),stance);assert.match(g.window.document.querySelector('[data-pet-preview-status]').textContent,new RegExp('Native '+stance));}
+ assert.match(g.window.document.querySelector('#wins').textContent,/War Cry \+ Flame Burst/);
+ console.log('PASS: all 20 pets x 3 states x 8 directions, directional repaint, foot pivot, native transform bypass, pending-frame retention/disposal and actual preview actions/recommendations');
+}finally{g.close()}

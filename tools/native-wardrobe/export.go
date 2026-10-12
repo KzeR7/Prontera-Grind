@@ -105,7 +105,7 @@ func (e *Engine) ExportWardrobe(req Request, folder string, headOnly bool, proof
 			case sprite.TypeWeapon:
 				slot = "weapon"
 			case sprite.TypeGarment:
-				slot = map[uint32]string{1: "wings", 11: "mechanicWings", 15: "blueCupidWings", 18: "angelFeathers", 20: "twilightWings", 42: "ribbonWings", 203: "leticiaWings", 88: "sandalphonWings", 95: "fairyEden", 156: "mysteryWings"}[req.Garment]
+				slot = map[uint32]string{1: "wings", 11: "mechanicWings", 15: "blueCupidWings", 18: "angelFeathers", 20: "twilightWings", 42: "ribbonWings", 203: "leticiaWings", 88: "sandalphonWings", 95: "fairyEden", 156: "mysteryWings", 79: "evilScythe"}[req.Garment]
 			case sprite.TypeShadow:
 				slot = "shadow"
 			case sprite.TypeAccessory:

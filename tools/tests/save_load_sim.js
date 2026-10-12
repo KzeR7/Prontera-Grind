@@ -53,6 +53,10 @@ const sb = { console };
 vm.createContext(sb); vm.runInContext(harness, sb);
 const f = sb.__l.loadRaw();
 const load = () => sb.__l.loadRaw();
+// Every appended species survives the same production normalization as old saves.
+const allPetSave=JSON.parse(JSON.stringify(save));allPetSave.pets=Array.from({length:20},(_,sp)=>({id:100+sp,sp,mut:0,eq:[0,0,0],skills:['vital'],on:sp<3}));allPetSave.bond=Array(20).fill(15);
+sb.__l.setRaw(allPetSave);const allPets=load();assert.deepStrictEqual(Array.from(allPets.pets,p=>p.sp),Array.from({length:20},(_,i)=>i));assert.strictEqual(allPets.bond[19],15);sb.__l.setRaw(save);
+
 // act()/pas()/tos() build most skills, but First Aid is an inline object literal
 const SRC_SKILL_IDS = new Set([
   ...[...src.matchAll(/"id":"([a-zA-Z]+)"/g)].map(m => m[1]),

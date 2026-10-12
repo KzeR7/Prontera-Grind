@@ -16,7 +16,7 @@ const W=require('../../assets/wardrobe.js');const root=path.resolve(__dirname,'.
  for(const cls of Object.keys(W.CLASSES))for(const sex of ['m','f'])for(const head of W.HAIRS[sex])for(let color=0;color<9;color++){const a=W.defaults(sex);a.heads[sex]=head;a.colors[sex]=color;const ready=await store.select('preview',a,cls);assert.equal(ready.key,W.CLASSES[cls]+'|'+W.selectionKey(a));assert(store.pixelBytes<=store.budget);assert(store.metadataBytes<=store.metadataBudget);assert.equal(store.clients.get('hero').ready.key,second.key)}
  // Every piece loads across all classes/genders without downloading unrelated pieces.
  const legacy=W.normalize({version:1,halo:true,glasses:true,wings:true,outfit:'vanguard'});assert.equal(legacy.headwear,'halo');assert.equal(legacy.facewear,'glasses');assert.equal(legacy.backwear,'wings');assert.equal(legacy.outfit,'none');
- assert.equal(Object.keys(W.OUTFITS).length,0);assert(Object.values(W.ACCESSORIES).every(s=>Object.keys(s.items).length===11));
+ assert.equal(Object.keys(W.OUTFITS).length,0);assert.equal(Object.keys(W.ACCESSORIES.backwear.items).length,12);assert(['headwear','facewear','mouthwear'].every(k=>Object.keys(W.ACCESSORIES[k].items).length===11));
  for(const sex of ['m','f'])for(const cls of Object.keys(W.CLASSES))for(const [field,slot] of Object.entries(W.ACCESSORIES))for(const value of Object.keys(slot.items)){
   const a={...W.defaults(sex),[field]:value},selected=await store.select('preview',a,cls);assert.equal(selected.pieces.length,value==='none'?0:1);assert(store.pixelBytes<=store.budget);
   for(const stance of ['idle','walk','attack'])for(let d=0;d<8;d++){draws.length=0;W.draw(ctx,selected,stance,d);assert(draws.length>=2)}
@@ -46,5 +46,5 @@ const W=require('../../assets/wardrobe.js');const root=path.resolve(__dirname,'.
  await store.select('preview',largest('f'),'High Wizard');
  await store.select('portrait',largest('m'),'Assassin Cross');
  assert.equal(store.clients.get('hero').ready.pieces.length,4);assert.equal(store.clients.get('preview').ready.pieces.length,4);assert.equal(store.clients.get('portrait').ready.pieces.length,4);assert(store.pixelBytes<=store.budget);
- store.dispose();assert.equal(store.metadataBytes,0);assert.equal(store.metadataCache.size,0);assert.equal(live,0);console.log('PASS: 6,840 hair/color appearances and all 40 pieces across 19 classes/both genders; native metadata, save normalization, bounded loader, coalescing, retry, component toggles, swing clamp, cleanup. Peak atlas count:',maxLive);
+ store.dispose();assert.equal(store.metadataBytes,0);assert.equal(store.metadataCache.size,0);assert.equal(live,0);console.log('PASS: 6,840 hair/color appearances and all 41 pieces across 19 classes/both genders; native metadata, save normalization, bounded loader, coalescing, retry, component toggles, swing clamp, cleanup. Peak atlas count:',maxLive);
 })().catch(e=>{console.error(e);process.exitCode=1});

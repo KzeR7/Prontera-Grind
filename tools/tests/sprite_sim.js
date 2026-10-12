@@ -77,18 +77,18 @@ t('monster IDs include the intentional RO-name aliases and point at the PNG endp
   assert.ok(src.includes('One-facing RO monster PNGs'), 'the one-direction art choice is documented');
 });
 
-t('every pet portrait is a real Divine Pride monster PNG, not an emoji placeholder', () => {
-  const expected={Poring:1002,Lunatic:1063,Wolf:1013,'Desert Wolf':1106,'Peco Peco':1019,'Dragon Whelp':1155,'Baphomet Jr.':1101,Angeling:1096};
-  assert.strictEqual(PETS.length,8,'pet roster changed');
+t('every pet portrait uses a local crop of its original native sprite', () => {
+  const expected={Poring:1002,Lunatic:1063,Wolf:1013,'Desert Wolf':1106,'Peco Peco':1019,'Dragon Whelp':1155,'Baphomet Jr.':1101,Angeling:1096,Drops:1113,Poporing:1031,Fabre:1007,Smokie:1056,Yoyo:1057,Spore:1014,Sohee:1170,Deviruchi:1109,'Nine Tail':1180,Deviling:1582,Ghostring:1120,Eddga:1115};
+  assert.strictEqual(PETS.length,20,'pet roster changed');
   for(const p of PETS){
     assert.strictEqual(p.spriteId,expected[p.n],p.n+' lost its verified monster ID');
     const html=petIcon(p);
-    assert.ok(html.includes(`src="${mobSpriteUrl(p.spriteId)}"`)&&html.includes(`alt="${p.n}"`),p.n+' does not render an accessible official sprite');
+    assert.ok(html.includes(`src="assets/pets/v1/thumb-${p.spriteId}.png"`)&&html.includes(`alt="${p.n}"`),p.n+' does not render an accessible official sprite');
   }
 });
 
-t('all pets use the same official mob sprite loader and remain uniformly small', () => {
-  const petDraw=grab('const PET_VISUAL_SCALE=.42;', 'function disposeCreatureVisual(v){');
+t('all pets use native animation with local fallback and remain uniformly small', () => {
+  const petDraw=grab('const PET_VISUAL_SCALE=.42;', '// Only active states and the open preview');
   const box={};vm.createContext(box);
   vm.runInContext(petDraw+'\nthis.__pet={PET_VISUAL_SCALE,petFallbackShape};',box);
   const P=box.__pet;
@@ -106,6 +106,8 @@ t('all pets use the same official mob sprite loader and remain uniformly small',
     'unequipping a pet must remove its DOM image as well as its 3D group');
   assert.ok(draw.includes('v.spr.material.color.set(0xffffff)'),
     'mutation should not recolour official pixel art');
+  assert.ok(draw.includes('drawNativePet(v,sp.spriteId,r,viewDir(pf))'),'native timing and direction are used');
+  assert.ok(src.includes("if(v.nativePet){"),'native frames bypass still-image squash transforms');
   // Actually build the pet using the same function as a monster, verifying its URL is
   // requested and the DOM fallback exists for every species if WebGL texture loading fails.
   const ctx={requested:[],images:[],groups:[],THREE:{Group:class{add(){} }},getSheet:()=>({}),
@@ -115,10 +117,10 @@ t('all pets use the same official mob sprite loader and remain uniformly small',
   vm.createContext(ctx);
   vm.runInContext(grab('function buildMob(m){','let slashM=null;')+'\nthis.build=buildMob;',ctx);
   for(const sp of PETS){
-    const v=ctx.build({shape:P.petFallbackShape(sp),c:sp.c,spriteId:sp.spriteId});
-    assert.strictEqual(v.spriteId,sp.spriteId);assert.strictEqual(v.image.src,mobSpriteUrl(sp.spriteId));
+    const v=ctx.build({shape:P.petFallbackShape(sp),c:sp.c,spriteId:sp.spriteId,pet:true});
+    assert.strictEqual(v.spriteId,sp.spriteId);assert.strictEqual(v.image.src,'assets/pets/v1/thumb-'+sp.spriteId+'.png');
   }
-  assert.strictEqual(ctx.images.length,8);assert.strictEqual(ctx.requested.length,8);
+  assert.strictEqual(ctx.images.length,20);assert.strictEqual(ctx.requested.length,20);
 });
 
 t('all 85 unique Divine Pride mob IDs match their database size class and player-relative scale', () => {

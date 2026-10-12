@@ -1,0 +1,881 @@
+{
+  "schemaVersion": 1,
+  "itemId": 20597,
+  "garmentView": 79,
+  "key": "evilScythe",
+  "itemUrl": "https://www.divine-pride.net/database/item/20597",
+  "rendererCommit": "4de4fa747431979d35c747d7edd549a872efd9e1",
+  "provenance": "Original PNG pixels and decoded animation metadata from public Divine Pride preview endpoints. Original ACT/SPR binaries were not recovered; prepare_evil_scythe.py emits explicitly derived renderer adapters. Do not use the official_data.grf files named c_evil_scythe: those contain different artwork.",
+  "frameCounts": {
+    "m": 9,
+    "f": 9
+  },
+  "files": [
+    {
+      "path": "tree-0-m.json",
+      "url": "https://www.divine-pride.net/Tools/DressupTree?job=0&sex=1&headStyle=2&headPalette=0&bodyPalette=0&garmentItemId=20597",
+      "bytes": 234850,
+      "sha256": "af0397289cd99f5243a94e03f980777a464b116b3cc6d1d7f6d1175dfd719ce3",
+      "job": 0,
+      "sex": "m",
+      "kind": "tree",
+      "nativeBase": "data/sprite/로브/c_evil_scythe/남/초보자_남"
+    },
+    {
+      "path": "tree-0-f.json",
+      "url": "https://www.divine-pride.net/Tools/DressupTree?job=0&sex=0&headStyle=2&headPalette=0&bodyPalette=0&garmentItemId=20597",
+      "bytes": 234714,
+      "sha256": "cd7cb9b547282af9b2823583d09fc19622e9b643a64979e35a183896d3bb14cc",
+      "job": 0,
+      "sex": "f",
+      "kind": "tree",
+      "nativeBase": "data/sprite/로브/c_evil_scythe/여/초보자_여"
+    },
+    {
+      "path": "tree-2-m.json",
+      "url": "https://www.divine-pride.net/Tools/DressupTree?job=2&sex=1&headStyle=2&headPalette=0&bodyPalette=0&garmentItemId=20597",
+      "bytes": 234678,
+      "sha256": "4976dbacef6905a14e4204e37bea897ebb3be72a581db6490c255f8f0a021780",
+      "job": 2,
+      "sex": "m",
+      "kind": "tree",
+      "nativeBase": "data/sprite/로브/c_evil_scythe/남/마법사_남"
+    },
+    {
+      "path": "tree-2-f.json",
+      "url": "https://www.divine-pride.net/Tools/DressupTree?job=2&sex=0&headStyle=2&headPalette=0&bodyPalette=0&garmentItemId=20597",
+      "bytes": 234871,
+      "sha256": "221d3c1a6da566328eb59e01f60e3c98b806199e320bbf2e0d8a2669934c7c97",
+      "job": 2,
+      "sex": "f",
+      "kind": "tree",
+      "nativeBase": "data/sprite/로브/c_evil_scythe/여/마법사_여"
+    },
+    {
+      "path": "tree-9-m.json",
+      "url": "https://www.divine-pride.net/Tools/DressupTree?job=9&sex=1&headStyle=2&headPalette=0&bodyPalette=0&garmentItemId=20597",
+      "bytes": 234654,
+      "sha256": "75e32ce7df7269ff5b319afa8d94055ee21e7d9e226a869b0395c64c28988eab",
+      "job": 9,
+      "sex": "m",
+      "kind": "tree",
+      "nativeBase": "data/sprite/로브/c_evil_scythe/남/위저드_남"
+    },
+    {
+      "path": "tree-9-f.json",
+      "url": "https://www.divine-pride.net/Tools/DressupTree?job=9&sex=0&headStyle=2&headPalette=0&bodyPalette=0&garmentItemId=20597",
+      "bytes": 233711,
+      "sha256": "b1e71bab0eaefdb9f595ebd90096c5b466392288dc61ef76fa5f111772cd0d16",
+      "job": 9,
+      "sex": "f",
+      "kind": "tree",
+      "nativeBase": "data/sprite/로브/c_evil_scythe/여/위저드_여"
+    },
+    {
+      "path": "tree-4010-m.json",
+      "url": "https://www.divine-pride.net/Tools/DressupTree?job=4010&sex=1&headStyle=2&headPalette=0&bodyPalette=0&garmentItemId=20597",
+      "bytes": 234768,
+      "sha256": "d0f97fbe49e2f5177110bc90e6c0feee24f31f51571680d21718a549a692740d",
+      "job": 4010,
+      "sex": "m",
+      "kind": "tree",
+      "nativeBase": "data/sprite/로브/c_evil_scythe/남/하이위저드_남"
+    },
+    {
+      "path": "tree-4010-f.json",
+      "url": "https://www.divine-pride.net/Tools/DressupTree?job=4010&sex=0&headStyle=2&headPalette=0&bodyPalette=0&garmentItemId=20597",
+      "bytes": 235008,
+      "sha256": "b326d4dc14f4d7ca4ea08e77004f995c6099925ff95dd17f3e0f4cdf7922d6f7",
+      "job": 4010,
+      "sex": "f",
+      "kind": "tree",
+      "nativeBase": "data/sprite/로브/c_evil_scythe/여/하이위저드_여"
+    },
+    {
+      "path": "tree-1-m.json",
+      "url": "https://www.divine-pride.net/Tools/DressupTree?job=1&sex=1&headStyle=2&headPalette=0&bodyPalette=0&garmentItemId=20597",
+      "bytes": 234789,
+      "sha256": "64d9e6a426e0ada03da04854e335292949f4d0eeba6f71d5fd3929d0cada54c4",
+      "job": 1,
+      "sex": "m",
+      "kind": "tree",
+      "nativeBase": "data/sprite/로브/c_evil_scythe/남/검사_남"
+    },
+    {
+      "path": "tree-1-f.json",
+      "url": "https://www.divine-pride.net/Tools/DressupTree?job=1&sex=0&headStyle=2&headPalette=0&bodyPalette=0&garmentItemId=20597",
+      "bytes": 234686,
+      "sha256": "79b6bb6f3e2a43bdf5c5816026a07ed3ff6ea5786c977cf47fb5a6170eb971c8",
+      "job": 1,
+      "sex": "f",
+      "kind": "tree",
+      "nativeBase": "data/sprite/로브/c_evil_scythe/여/검사_여"
+    },
+    {
+      "path": "tree-7-m.json",
+      "url": "https://www.divine-pride.net/Tools/DressupTree?job=7&sex=1&headStyle=2&headPalette=0&bodyPalette=0&garmentItemId=20597",
+      "bytes": 234771,
+      "sha256": "85f7174d2a86942e073bb1a9de14c30fdd353cfee3f5ccab6c8dd62c31221d0e",
+      "job": 7,
+      "sex": "m",
+      "kind": "tree",
+      "nativeBase": "data/sprite/로브/c_evil_scythe/남/기사_남"
+    },
+    {
+      "path": "tree-7-f.json",
+      "url": "https://www.divine-pride.net/Tools/DressupTree?job=7&sex=0&headStyle=2&headPalette=0&bodyPalette=0&garmentItemId=20597",
+      "bytes": 234747,
+      "sha256": "4bd2f4eb6c2dee7099380239f67ce50879e95b6888cc479d845c31e3021b40e4",
+      "job": 7,
+      "sex": "f",
+      "kind": "tree",
+      "nativeBase": "data/sprite/로브/c_evil_scythe/여/기사_여"
+    },
+    {
+      "path": "tree-4008-m.json",
+      "url": "https://www.divine-pride.net/Tools/DressupTree?job=4008&sex=1&headStyle=2&headPalette=0&bodyPalette=0&garmentItemId=20597",
+      "bytes": 234894,
+      "sha256": "1ea408bf5f3720ca21b4e26b3ccc351fe29d5109ee774fd6071ce3c98c959cdd",
+      "job": 4008,
+      "sex": "m",
+      "kind": "tree",
+      "nativeBase": "data/sprite/로브/c_evil_scythe/남/로드나이트_남"
+    },
+    {
+      "path": "tree-4008-f.json",
+      "url": "https://www.divine-pride.net/Tools/DressupTree?job=4008&sex=0&headStyle=2&headPalette=0&bodyPalette=0&garmentItemId=20597",
+      "bytes": 234805,
+      "sha256": "d9fa36dd08943997346368cffb8fec85df2832b37f2901d77853261b3b0bc362",
+      "job": 4008,
+      "sex": "f",
+      "kind": "tree",
+      "nativeBase": "data/sprite/로브/c_evil_scythe/여/로드나이트_여"
+    },
+    {
+      "path": "tree-6-m.json",
+      "url": "https://www.divine-pride.net/Tools/DressupTree?job=6&sex=1&headStyle=2&headPalette=0&bodyPalette=0&garmentItemId=20597",
+      "bytes": 234955,
+      "sha256": "1b70e43ef20a57b6ed61cca096c218296adcc7b6583974e57ed7b75c44aafffc",
+      "job": 6,
+      "sex": "m",
+      "kind": "tree",
+      "nativeBase": "data/sprite/로브/c_evil_scythe/남/도둑_남"
+    },
+    {
+      "path": "tree-6-f.json",
+      "url": "https://www.divine-pride.net/Tools/DressupTree?job=6&sex=0&headStyle=2&headPalette=0&bodyPalette=0&garmentItemId=20597",
+      "bytes": 234887,
+      "sha256": "620816b2c35e58ce9fa9e68aee04b45c1f048087c58c6674d024052fe8f71a51",
+      "job": 6,
+      "sex": "f",
+      "kind": "tree",
+      "nativeBase": "data/sprite/로브/c_evil_scythe/여/도둑_여"
+    },
+    {
+      "path": "tree-12-m.json",
+      "url": "https://www.divine-pride.net/Tools/DressupTree?job=12&sex=1&headStyle=2&headPalette=0&bodyPalette=0&garmentItemId=20597",
+      "bytes": 234721,
+      "sha256": "c959ca88633cb85edc9a0528253f80ccf20394bfededd6a82ccb53a5258f7e4c",
+      "job": 12,
+      "sex": "m",
+      "kind": "tree",
+      "nativeBase": "data/sprite/로브/c_evil_scythe/남/어세신_남"
+    },
+    {
+      "path": "tree-12-f.json",
+      "url": "https://www.divine-pride.net/Tools/DressupTree?job=12&sex=0&headStyle=2&headPalette=0&bodyPalette=0&garmentItemId=20597",
+      "bytes": 235113,
+      "sha256": "6dc09b74dc6db56d513302f3e6d380e39da5d35457d4eed65d715e3f752f0a39",
+      "job": 12,
+      "sex": "f",
+      "kind": "tree",
+      "nativeBase": "data/sprite/로브/c_evil_scythe/여/어세신_여"
+    },
+    {
+      "path": "tree-4013-m.json",
+      "url": "https://www.divine-pride.net/Tools/DressupTree?job=4013&sex=1&headStyle=2&headPalette=0&bodyPalette=0&garmentItemId=20597",
+      "bytes": 233634,
+      "sha256": "60429237bec77955224d2fb4459d81e094548ea9ee79c376369e6101d23cddd9",
+      "job": 4013,
+      "sex": "m",
+      "kind": "tree",
+      "nativeBase": "data/sprite/로브/c_evil_scythe/남/어쌔신크로스_남"
+    },
+    {
+      "path": "tree-4013-f.json",
+      "url": "https://www.divine-pride.net/Tools/DressupTree?job=4013&sex=0&headStyle=2&headPalette=0&bodyPalette=0&garmentItemId=20597",
+      "bytes": 234027,
+      "sha256": "e5b0d1ccb7e00fcb96845f062f8e47d026894e6ec6456feb3df1db78cf05ef31",
+      "job": 4013,
+      "sex": "f",
+      "kind": "tree",
+      "nativeBase": "data/sprite/로브/c_evil_scythe/여/어쌔신크로스_여"
+    },
+    {
+      "path": "tree-3-m.json",
+      "url": "https://www.divine-pride.net/Tools/DressupTree?job=3&sex=1&headStyle=2&headPalette=0&bodyPalette=0&garmentItemId=20597",
+      "bytes": 234719,
+      "sha256": "675503871624a3c37821b60bb412b27ba6013361098b6afeda32263d8801dd6c",
+      "job": 3,
+      "sex": "m",
+      "kind": "tree",
+      "nativeBase": "data/sprite/로브/c_evil_scythe/남/궁수_남"
+    },
+    {
+      "path": "tree-3-f.json",
+      "url": "https://www.divine-pride.net/Tools/DressupTree?job=3&sex=0&headStyle=2&headPalette=0&bodyPalette=0&garmentItemId=20597",
+      "bytes": 234806,
+      "sha256": "da6209995bf432869c1b32e03764cd718e10bb821a00dedef9c1de4264a481eb",
+      "job": 3,
+      "sex": "f",
+      "kind": "tree",
+      "nativeBase": "data/sprite/로브/c_evil_scythe/여/궁수_여"
+    },
+    {
+      "path": "tree-11-m.json",
+      "url": "https://www.divine-pride.net/Tools/DressupTree?job=11&sex=1&headStyle=2&headPalette=0&bodyPalette=0&garmentItemId=20597",
+      "bytes": 234855,
+      "sha256": "1c3ece9159da6c9abe10e43ad9c8f9e38dd80b4d322a53b515717709d19e8be3",
+      "job": 11,
+      "sex": "m",
+      "kind": "tree",
+      "nativeBase": "data/sprite/로브/c_evil_scythe/남/헌터_남"
+    },
+    {
+      "path": "tree-11-f.json",
+      "url": "https://www.divine-pride.net/Tools/DressupTree?job=11&sex=0&headStyle=2&headPalette=0&bodyPalette=0&garmentItemId=20597",
+      "bytes": 234970,
+      "sha256": "bd886c31dce34e18f9b24ab5654cf3dff574f3a0c41e39816bd729edf335eb88",
+      "job": 11,
+      "sex": "f",
+      "kind": "tree",
+      "nativeBase": "data/sprite/로브/c_evil_scythe/여/헌터_여"
+    },
+    {
+      "path": "tree-4012-m.json",
+      "url": "https://www.divine-pride.net/Tools/DressupTree?job=4012&sex=1&headStyle=2&headPalette=0&bodyPalette=0&garmentItemId=20597",
+      "bytes": 234838,
+      "sha256": "27f05a1ddce1deb2fc02d6d81b9eb4f02cb76144227fcc509b4fe5afc4c98283",
+      "job": 4012,
+      "sex": "m",
+      "kind": "tree",
+      "nativeBase": "data/sprite/로브/c_evil_scythe/남/스나이퍼_남"
+    },
+    {
+      "path": "tree-4012-f.json",
+      "url": "https://www.divine-pride.net/Tools/DressupTree?job=4012&sex=0&headStyle=2&headPalette=0&bodyPalette=0&garmentItemId=20597",
+      "bytes": 234939,
+      "sha256": "d3550de20fc9eea32d16c152018494ea7cfcd4eb6644d6b77840413a2ec0f07b",
+      "job": 4012,
+      "sex": "f",
+      "kind": "tree",
+      "nativeBase": "data/sprite/로브/c_evil_scythe/여/스나이퍼_여"
+    },
+    {
+      "path": "tree-4-m.json",
+      "url": "https://www.divine-pride.net/Tools/DressupTree?job=4&sex=1&headStyle=2&headPalette=0&bodyPalette=0&garmentItemId=20597",
+      "bytes": 234790,
+      "sha256": "8b634d2ec5fd565e90eea251eb5cc9db2b6e5c6dce452b79245f5e91197785f4",
+      "job": 4,
+      "sex": "m",
+      "kind": "tree",
+      "nativeBase": "data/sprite/로브/c_evil_scythe/남/성직자_남"
+    },
+    {
+      "path": "tree-4-f.json",
+      "url": "https://www.divine-pride.net/Tools/DressupTree?job=4&sex=0&headStyle=2&headPalette=0&bodyPalette=0&garmentItemId=20597",
+      "bytes": 234631,
+      "sha256": "663ef758772b4a8994c0c5a2dc63cd62d791203c861b8b9d25467371b63041fe",
+      "job": 4,
+      "sex": "f",
+      "kind": "tree",
+      "nativeBase": "data/sprite/로브/c_evil_scythe/여/성직자_여"
+    },
+    {
+      "path": "tree-8-m.json",
+      "url": "https://www.divine-pride.net/Tools/DressupTree?job=8&sex=1&headStyle=2&headPalette=0&bodyPalette=0&garmentItemId=20597",
+      "bytes": 234883,
+      "sha256": "32b6c23126cbbb10cd5b40d706019e4379abb31db95727dffa9a46acbfeb16d2",
+      "job": 8,
+      "sex": "m",
+      "kind": "tree",
+      "nativeBase": "data/sprite/로브/c_evil_scythe/남/프리스트_남"
+    },
+    {
+      "path": "tree-8-f.json",
+      "url": "https://www.divine-pride.net/Tools/DressupTree?job=8&sex=0&headStyle=2&headPalette=0&bodyPalette=0&garmentItemId=20597",
+      "bytes": 234693,
+      "sha256": "6e529b95c00a5e1b3dda3df3110f41991b7caad93a8f5846b668df9bba2294cf",
+      "job": 8,
+      "sex": "f",
+      "kind": "tree",
+      "nativeBase": "data/sprite/로브/c_evil_scythe/여/프리스트_여"
+    },
+    {
+      "path": "tree-4009-m.json",
+      "url": "https://www.divine-pride.net/Tools/DressupTree?job=4009&sex=1&headStyle=2&headPalette=0&bodyPalette=0&garmentItemId=20597",
+      "bytes": 234576,
+      "sha256": "4838aa2a866a9251805b7bd1ab1fc6879a7638060ce0317dc492fc73155f70aa",
+      "job": 4009,
+      "sex": "m",
+      "kind": "tree",
+      "nativeBase": "data/sprite/로브/c_evil_scythe/남/하이프리_남"
+    },
+    {
+      "path": "tree-4009-f.json",
+      "url": "https://www.divine-pride.net/Tools/DressupTree?job=4009&sex=0&headStyle=2&headPalette=0&bodyPalette=0&garmentItemId=20597",
+      "bytes": 234848,
+      "sha256": "0467b8612b09f01ec6a709dd762d898ad79b1f8debbfb46919554a7c74d66aba",
+      "job": 4009,
+      "sex": "f",
+      "kind": "tree",
+      "nativeBase": "data/sprite/로브/c_evil_scythe/여/하이프리_여"
+    },
+    {
+      "path": "tree-5-m.json",
+      "url": "https://www.divine-pride.net/Tools/DressupTree?job=5&sex=1&headStyle=2&headPalette=0&bodyPalette=0&garmentItemId=20597",
+      "bytes": 235051,
+      "sha256": "f8da49c9e48a8318fe31c7f3276461da13125224b109b59faf81c1d68b6b371f",
+      "job": 5,
+      "sex": "m",
+      "kind": "tree",
+      "nativeBase": "data/sprite/로브/c_evil_scythe/남/상인_남"
+    },
+    {
+      "path": "tree-5-f.json",
+      "url": "https://www.divine-pride.net/Tools/DressupTree?job=5&sex=0&headStyle=2&headPalette=0&bodyPalette=0&garmentItemId=20597",
+      "bytes": 234768,
+      "sha256": "61f55605ee08ce91c3d22ab585e1300b63d884ffd377d4989f4d96eaa26470d9",
+      "job": 5,
+      "sex": "f",
+      "kind": "tree",
+      "nativeBase": "data/sprite/로브/c_evil_scythe/여/상인_여"
+    },
+    {
+      "path": "tree-10-m.json",
+      "url": "https://www.divine-pride.net/Tools/DressupTree?job=10&sex=1&headStyle=2&headPalette=0&bodyPalette=0&garmentItemId=20597",
+      "bytes": 235035,
+      "sha256": "96c925dfe9b18243dabf73b19bc07c7a7fd39a2ae948b21006b9563d6d9991f4",
+      "job": 10,
+      "sex": "m",
+      "kind": "tree",
+      "nativeBase": "data/sprite/로브/c_evil_scythe/남/제철공_남"
+    },
+    {
+      "path": "tree-10-f.json",
+      "url": "https://www.divine-pride.net/Tools/DressupTree?job=10&sex=0&headStyle=2&headPalette=0&bodyPalette=0&garmentItemId=20597",
+      "bytes": 234984,
+      "sha256": "df945247dd26af254aaf4648fb23484e248b686863bdb6f96a0677c9bef08498",
+      "job": 10,
+      "sex": "f",
+      "kind": "tree",
+      "nativeBase": "data/sprite/로브/c_evil_scythe/여/제철공_여"
+    },
+    {
+      "path": "tree-4011-m.json",
+      "url": "https://www.divine-pride.net/Tools/DressupTree?job=4011&sex=1&headStyle=2&headPalette=0&bodyPalette=0&garmentItemId=20597",
+      "bytes": 235057,
+      "sha256": "04606c5f10ae82de7149777d8e73e6e0ea92840582cb699448a5499e16799039",
+      "job": 4011,
+      "sex": "m",
+      "kind": "tree",
+      "nativeBase": "data/sprite/로브/c_evil_scythe/남/화이트스미스_남"
+    },
+    {
+      "path": "tree-4011-f.json",
+      "url": "https://www.divine-pride.net/Tools/DressupTree?job=4011&sex=0&headStyle=2&headPalette=0&bodyPalette=0&garmentItemId=20597",
+      "bytes": 235122,
+      "sha256": "bb2ad755feb02834d45107fbbfd2bd0a4bbf75e271fec7fae0e90c32bcfbf60b",
+      "job": 4011,
+      "sex": "f",
+      "kind": "tree",
+      "nativeBase": "data/sprite/로브/c_evil_scythe/여/화이트스미스_여"
+    },
+    {
+      "path": "frame-m-0.png",
+      "url": "https://www.divine-pride.net/Tools/DressupFrame?job=0&sex=1&headStyle=2&headPalette=0&bodyPalette=0&garmentItemId=20597&layer=robe&frameIndex=0",
+      "bytes": 1331,
+      "sha256": "14e5ad051607b399fbc79585da621c966b8fb08280ff8342816dc57a9a9947da",
+      "sex": "m",
+      "index": 0,
+      "kind": "frame"
+    },
+    {
+      "path": "frame-m-1.png",
+      "url": "https://www.divine-pride.net/Tools/DressupFrame?job=0&sex=1&headStyle=2&headPalette=0&bodyPalette=0&garmentItemId=20597&layer=robe&frameIndex=1",
+      "bytes": 1307,
+      "sha256": "7d891b33553237051e1ad00369b682813fe85500356cc6a487d516235263f904",
+      "sex": "m",
+      "index": 1,
+      "kind": "frame"
+    },
+    {
+      "path": "frame-m-2.png",
+      "url": "https://www.divine-pride.net/Tools/DressupFrame?job=0&sex=1&headStyle=2&headPalette=0&bodyPalette=0&garmentItemId=20597&layer=robe&frameIndex=2",
+      "bytes": 881,
+      "sha256": "aad3511e51bfe5fb299a72b5cfa57194adaa12009e1ffcb2d83cbed870b269ce",
+      "sex": "m",
+      "index": 2,
+      "kind": "frame"
+    },
+    {
+      "path": "frame-m-3.png",
+      "url": "https://www.divine-pride.net/Tools/DressupFrame?job=0&sex=1&headStyle=2&headPalette=0&bodyPalette=0&garmentItemId=20597&layer=robe&frameIndex=3",
+      "bytes": 1281,
+      "sha256": "2ada57c344c46120275133af3235d8ea6c07cd5ae7f1b58566b1c5281dc1e6f2",
+      "sex": "m",
+      "index": 3,
+      "kind": "frame"
+    },
+    {
+      "path": "frame-m-4.png",
+      "url": "https://www.divine-pride.net/Tools/DressupFrame?job=0&sex=1&headStyle=2&headPalette=0&bodyPalette=0&garmentItemId=20597&layer=robe&frameIndex=4",
+      "bytes": 1280,
+      "sha256": "a600e4d7c463d5af207d50114097b23a1c575135fbe33507d65b1c0b1ac328b9",
+      "sex": "m",
+      "index": 4,
+      "kind": "frame"
+    },
+    {
+      "path": "frame-m-5.png",
+      "url": "https://www.divine-pride.net/Tools/DressupFrame?job=0&sex=1&headStyle=2&headPalette=0&bodyPalette=0&garmentItemId=20597&layer=robe&frameIndex=5",
+      "bytes": 1047,
+      "sha256": "dfa63e28d983da2ec6503dce229e53af9cefc65bc7a7cccf331b41bfc5e82fc9",
+      "sex": "m",
+      "index": 5,
+      "kind": "frame"
+    },
+    {
+      "path": "frame-m-6.png",
+      "url": "https://www.divine-pride.net/Tools/DressupFrame?job=0&sex=1&headStyle=2&headPalette=0&bodyPalette=0&garmentItemId=20597&layer=robe&frameIndex=6",
+      "bytes": 987,
+      "sha256": "77e96aefc5d56de3195f532d4ad6ebb4b8fd4a1639609d543667d7e1d1bee5a7",
+      "sex": "m",
+      "index": 6,
+      "kind": "frame"
+    },
+    {
+      "path": "frame-m-7.png",
+      "url": "https://www.divine-pride.net/Tools/DressupFrame?job=0&sex=1&headStyle=2&headPalette=0&bodyPalette=0&garmentItemId=20597&layer=robe&frameIndex=7",
+      "bytes": 1019,
+      "sha256": "e02a19cff2f31d1fc5613c27b3a6613b34479adb51618bb3637e80b0def9c7da",
+      "sex": "m",
+      "index": 7,
+      "kind": "frame"
+    },
+    {
+      "path": "frame-m-8.png",
+      "url": "https://www.divine-pride.net/Tools/DressupFrame?job=0&sex=1&headStyle=2&headPalette=0&bodyPalette=0&garmentItemId=20597&layer=robe&frameIndex=8",
+      "bytes": 928,
+      "sha256": "87ad98cf36f04d27a816c807e349f19b55bd1a292d9d43f28584cb6764bde2b5",
+      "sex": "m",
+      "index": 8,
+      "kind": "frame"
+    },
+    {
+      "path": "frame-f-0.png",
+      "url": "https://www.divine-pride.net/Tools/DressupFrame?job=0&sex=0&headStyle=2&headPalette=0&bodyPalette=0&garmentItemId=20597&layer=robe&frameIndex=0",
+      "bytes": 1331,
+      "sha256": "14e5ad051607b399fbc79585da621c966b8fb08280ff8342816dc57a9a9947da",
+      "sex": "f",
+      "index": 0,
+      "kind": "frame"
+    },
+    {
+      "path": "frame-f-1.png",
+      "url": "https://www.divine-pride.net/Tools/DressupFrame?job=0&sex=0&headStyle=2&headPalette=0&bodyPalette=0&garmentItemId=20597&layer=robe&frameIndex=1",
+      "bytes": 1307,
+      "sha256": "7d891b33553237051e1ad00369b682813fe85500356cc6a487d516235263f904",
+      "sex": "f",
+      "index": 1,
+      "kind": "frame"
+    },
+    {
+      "path": "frame-f-2.png",
+      "url": "https://www.divine-pride.net/Tools/DressupFrame?job=0&sex=0&headStyle=2&headPalette=0&bodyPalette=0&garmentItemId=20597&layer=robe&frameIndex=2",
+      "bytes": 881,
+      "sha256": "aad3511e51bfe5fb299a72b5cfa57194adaa12009e1ffcb2d83cbed870b269ce",
+      "sex": "f",
+      "index": 2,
+      "kind": "frame"
+    },
+    {
+      "path": "frame-f-3.png",
+      "url": "https://www.divine-pride.net/Tools/DressupFrame?job=0&sex=0&headStyle=2&headPalette=0&bodyPalette=0&garmentItemId=20597&layer=robe&frameIndex=3",
+      "bytes": 1281,
+      "sha256": "2ada57c344c46120275133af3235d8ea6c07cd5ae7f1b58566b1c5281dc1e6f2",
+      "sex": "f",
+      "index": 3,
+      "kind": "frame"
+    },
+    {
+      "path": "frame-f-4.png",
+      "url": "https://www.divine-pride.net/Tools/DressupFrame?job=0&sex=0&headStyle=2&headPalette=0&bodyPalette=0&garmentItemId=20597&layer=robe&frameIndex=4",
+      "bytes": 1280,
+      "sha256": "a600e4d7c463d5af207d50114097b23a1c575135fbe33507d65b1c0b1ac328b9",
+      "sex": "f",
+      "index": 4,
+      "kind": "frame"
+    },
+    {
+      "path": "frame-f-5.png",
+      "url": "https://www.divine-pride.net/Tools/DressupFrame?job=0&sex=0&headStyle=2&headPalette=0&bodyPalette=0&garmentItemId=20597&layer=robe&frameIndex=5",
+      "bytes": 1047,
+      "sha256": "dfa63e28d983da2ec6503dce229e53af9cefc65bc7a7cccf331b41bfc5e82fc9",
+      "sex": "f",
+      "index": 5,
+      "kind": "frame"
+    },
+    {
+      "path": "frame-f-6.png",
+      "url": "https://www.divine-pride.net/Tools/DressupFrame?job=0&sex=0&headStyle=2&headPalette=0&bodyPalette=0&garmentItemId=20597&layer=robe&frameIndex=6",
+      "bytes": 987,
+      "sha256": "77e96aefc5d56de3195f532d4ad6ebb4b8fd4a1639609d543667d7e1d1bee5a7",
+      "sex": "f",
+      "index": 6,
+      "kind": "frame"
+    },
+    {
+      "path": "frame-f-7.png",
+      "url": "https://www.divine-pride.net/Tools/DressupFrame?job=0&sex=0&headStyle=2&headPalette=0&bodyPalette=0&garmentItemId=20597&layer=robe&frameIndex=7",
+      "bytes": 1019,
+      "sha256": "e02a19cff2f31d1fc5613c27b3a6613b34479adb51618bb3637e80b0def9c7da",
+      "sex": "f",
+      "index": 7,
+      "kind": "frame"
+    },
+    {
+      "path": "frame-f-8.png",
+      "url": "https://www.divine-pride.net/Tools/DressupFrame?job=0&sex=0&headStyle=2&headPalette=0&bodyPalette=0&garmentItemId=20597&layer=robe&frameIndex=8",
+      "bytes": 928,
+      "sha256": "87ad98cf36f04d27a816c807e349f19b55bd1a292d9d43f28584cb6764bde2b5",
+      "sex": "f",
+      "index": 8,
+      "kind": "frame"
+    },
+    {
+      "kind": "genderReference",
+      "sex": "m",
+      "path": "gender-reference-m.json",
+      "url": "https://www.divine-pride.net/Item/CharacterTree?itemSubTypeId=522&female=false&equipLocation=8192&robeSprite=C_Evil_Scythe",
+      "bytes": 234872,
+      "sha256": "49fb4040b9d14ffe0899673002cb7e52b470aadedb2ff80d8c8deacbee2c18ac"
+    },
+    {
+      "kind": "genderReference",
+      "sex": "f",
+      "path": "gender-reference-f.json",
+      "url": "https://www.divine-pride.net/Item/CharacterTree?itemSubTypeId=522&female=true&equipLocation=8192&robeSprite=C_Evil_Scythe",
+      "bytes": 234822,
+      "sha256": "72e4aa5d355ed3f9c43ca4de84dac5e8315f0f3d4466fc7a20f37f0877ff2e8d"
+    }
+  ],
+  "genderMapping": "Dressup endpoints use native RO sex IDs: 1 = male, 0 = female. Verified against Item/CharacterTree female=false/true; ignore the reversed client-side dressup button labels.",
+  "derivedFiles": {
+    "data/sprite/로브/c_evil_scythe/남/초보자_남.act": {
+      "bytes": 48276,
+      "sha256": "4fef96e528ccd3f0480cdc0ede882d752c2dda5d83053551b2cf493080677d90"
+    },
+    "data/sprite/로브/c_evil_scythe/남/초보자_남.spr": {
+      "bytes": 144228,
+      "sha256": "1c768e391e0f83c7368b0eb8149b2da889a9268142a15d075b32c0cfa8605336"
+    },
+    "data/sprite/로브/c_evil_scythe/여/초보자_여.act": {
+      "bytes": 48276,
+      "sha256": "f821834e26de23798ae21c3ea833258fcddd8bf79f0ddddfd108bcb9a3a3bd49"
+    },
+    "data/sprite/로브/c_evil_scythe/여/초보자_여.spr": {
+      "bytes": 144228,
+      "sha256": "1c768e391e0f83c7368b0eb8149b2da889a9268142a15d075b32c0cfa8605336"
+    },
+    "data/sprite/로브/c_evil_scythe/남/마법사_남.act": {
+      "bytes": 48276,
+      "sha256": "21474b416c53b6d09771cee880a094ee44b95df849746b775f8d41f583c7e72c"
+    },
+    "data/sprite/로브/c_evil_scythe/남/마법사_남.spr": {
+      "bytes": 144228,
+      "sha256": "1c768e391e0f83c7368b0eb8149b2da889a9268142a15d075b32c0cfa8605336"
+    },
+    "data/sprite/로브/c_evil_scythe/여/마법사_여.act": {
+      "bytes": 48276,
+      "sha256": "f08e397363f0c5f2b4adce03d07d78ce3849e56b231a800dfb2bd028c175292f"
+    },
+    "data/sprite/로브/c_evil_scythe/여/마법사_여.spr": {
+      "bytes": 144228,
+      "sha256": "1c768e391e0f83c7368b0eb8149b2da889a9268142a15d075b32c0cfa8605336"
+    },
+    "data/sprite/로브/c_evil_scythe/남/위저드_남.act": {
+      "bytes": 48276,
+      "sha256": "6dcabeda1da8ea6ddf9c083e24a3f21746d357f969b2ee2a0e2a099f5f497345"
+    },
+    "data/sprite/로브/c_evil_scythe/남/위저드_남.spr": {
+      "bytes": 144228,
+      "sha256": "1c768e391e0f83c7368b0eb8149b2da889a9268142a15d075b32c0cfa8605336"
+    },
+    "data/sprite/로브/c_evil_scythe/여/위저드_여.act": {
+      "bytes": 47444,
+      "sha256": "b3f0fa86282fae8b7e6a00749b49117d8267c843b5d969b66a918052d4d58691"
+    },
+    "data/sprite/로브/c_evil_scythe/여/위저드_여.spr": {
+      "bytes": 144228,
+      "sha256": "1c768e391e0f83c7368b0eb8149b2da889a9268142a15d075b32c0cfa8605336"
+    },
+    "data/sprite/로브/c_evil_scythe/남/하이위저드_남.act": {
+      "bytes": 48276,
+      "sha256": "0cc49a013f2e748b7cd06caec97e649722bc110b6f715fea22b46dd62ae52931"
+    },
+    "data/sprite/로브/c_evil_scythe/남/하이위저드_남.spr": {
+      "bytes": 144228,
+      "sha256": "1c768e391e0f83c7368b0eb8149b2da889a9268142a15d075b32c0cfa8605336"
+    },
+    "data/sprite/로브/c_evil_scythe/여/하이위저드_여.act": {
+      "bytes": 48276,
+      "sha256": "098f9405744c74625b075d10c588c768bc6c281da27499df8ca9e9a5412dab29"
+    },
+    "data/sprite/로브/c_evil_scythe/여/하이위저드_여.spr": {
+      "bytes": 144228,
+      "sha256": "1c768e391e0f83c7368b0eb8149b2da889a9268142a15d075b32c0cfa8605336"
+    },
+    "data/sprite/로브/c_evil_scythe/남/검사_남.act": {
+      "bytes": 48276,
+      "sha256": "ba43c535a858e32233bef1845cdd367f58c8b7df3296435fb37659128e271bec"
+    },
+    "data/sprite/로브/c_evil_scythe/남/검사_남.spr": {
+      "bytes": 144228,
+      "sha256": "1c768e391e0f83c7368b0eb8149b2da889a9268142a15d075b32c0cfa8605336"
+    },
+    "data/sprite/로브/c_evil_scythe/여/검사_여.act": {
+      "bytes": 48276,
+      "sha256": "4e95ccc71eba8bbeba9a6ff7f4fa6d3f70a333b3021c86f85adc6aebf273a13a"
+    },
+    "data/sprite/로브/c_evil_scythe/여/검사_여.spr": {
+      "bytes": 144228,
+      "sha256": "1c768e391e0f83c7368b0eb8149b2da889a9268142a15d075b32c0cfa8605336"
+    },
+    "data/sprite/로브/c_evil_scythe/남/기사_남.act": {
+      "bytes": 48276,
+      "sha256": "bca76b07e371f219696555db2baaa3e4e3a68b7d644d7eaef758ae26e75de0c3"
+    },
+    "data/sprite/로브/c_evil_scythe/남/기사_남.spr": {
+      "bytes": 144228,
+      "sha256": "1c768e391e0f83c7368b0eb8149b2da889a9268142a15d075b32c0cfa8605336"
+    },
+    "data/sprite/로브/c_evil_scythe/여/기사_여.act": {
+      "bytes": 48276,
+      "sha256": "386dabf9bc6a286fa1275531b85c0459b2eae5977a5b1d4ae9fdfa987403f49d"
+    },
+    "data/sprite/로브/c_evil_scythe/여/기사_여.spr": {
+      "bytes": 144228,
+      "sha256": "1c768e391e0f83c7368b0eb8149b2da889a9268142a15d075b32c0cfa8605336"
+    },
+    "data/sprite/로브/c_evil_scythe/남/로드나이트_남.act": {
+      "bytes": 48276,
+      "sha256": "e584941059d9916249a8eddd04e6812b8f0866c3fc0db471c0525bff0b66c8d8"
+    },
+    "data/sprite/로브/c_evil_scythe/남/로드나이트_남.spr": {
+      "bytes": 144228,
+      "sha256": "1c768e391e0f83c7368b0eb8149b2da889a9268142a15d075b32c0cfa8605336"
+    },
+    "data/sprite/로브/c_evil_scythe/여/로드나이트_여.act": {
+      "bytes": 48276,
+      "sha256": "f808f28b822bb1ba2be880000e6af935c393cf629ae5af444079e68c819e1ff8"
+    },
+    "data/sprite/로브/c_evil_scythe/여/로드나이트_여.spr": {
+      "bytes": 144228,
+      "sha256": "1c768e391e0f83c7368b0eb8149b2da889a9268142a15d075b32c0cfa8605336"
+    },
+    "data/sprite/로브/c_evil_scythe/남/도둑_남.act": {
+      "bytes": 48276,
+      "sha256": "992f884424cc7129991d0a2c7f5372f83833b4552ebc500525ac9c4c01eea8db"
+    },
+    "data/sprite/로브/c_evil_scythe/남/도둑_남.spr": {
+      "bytes": 144228,
+      "sha256": "1c768e391e0f83c7368b0eb8149b2da889a9268142a15d075b32c0cfa8605336"
+    },
+    "data/sprite/로브/c_evil_scythe/여/도둑_여.act": {
+      "bytes": 48276,
+      "sha256": "36e15b567236c56e0dc3299b1ce5fb9843385f72f91337c63eb4a30d2b30a975"
+    },
+    "data/sprite/로브/c_evil_scythe/여/도둑_여.spr": {
+      "bytes": 144228,
+      "sha256": "1c768e391e0f83c7368b0eb8149b2da889a9268142a15d075b32c0cfa8605336"
+    },
+    "data/sprite/로브/c_evil_scythe/남/어세신_남.act": {
+      "bytes": 48276,
+      "sha256": "c7bd5a4648272119123b269652a203a9bfb19da2456d68212d75879e878f3062"
+    },
+    "data/sprite/로브/c_evil_scythe/남/어세신_남.spr": {
+      "bytes": 144228,
+      "sha256": "1c768e391e0f83c7368b0eb8149b2da889a9268142a15d075b32c0cfa8605336"
+    },
+    "data/sprite/로브/c_evil_scythe/여/어세신_여.act": {
+      "bytes": 48276,
+      "sha256": "ce7aa84083b4b7d2dea1d303ed0fe1ab42e6dd430f643a62da4bf904ef95c427"
+    },
+    "data/sprite/로브/c_evil_scythe/여/어세신_여.spr": {
+      "bytes": 144228,
+      "sha256": "1c768e391e0f83c7368b0eb8149b2da889a9268142a15d075b32c0cfa8605336"
+    },
+    "data/sprite/로브/c_evil_scythe/남/어쌔신크로스_남.act": {
+      "bytes": 47444,
+      "sha256": "c41254646eaf5523aa520c14a9413061dc7c15aa5aafad43ab863ea860e4982e"
+    },
+    "data/sprite/로브/c_evil_scythe/남/어쌔신크로스_남.spr": {
+      "bytes": 144228,
+      "sha256": "1c768e391e0f83c7368b0eb8149b2da889a9268142a15d075b32c0cfa8605336"
+    },
+    "data/sprite/로브/c_evil_scythe/여/어쌔신크로스_여.act": {
+      "bytes": 47444,
+      "sha256": "c1042385e0a530870c1b21b8d5725ed27284f1084ef2920ddfba16e593645862"
+    },
+    "data/sprite/로브/c_evil_scythe/여/어쌔신크로스_여.spr": {
+      "bytes": 144228,
+      "sha256": "1c768e391e0f83c7368b0eb8149b2da889a9268142a15d075b32c0cfa8605336"
+    },
+    "data/sprite/로브/c_evil_scythe/남/궁수_남.act": {
+      "bytes": 48276,
+      "sha256": "d2bc8777d9a018fe02cbe9ba6c5bd2e549194b31bbf63b13e94fc7c8c2514b6d"
+    },
+    "data/sprite/로브/c_evil_scythe/남/궁수_남.spr": {
+      "bytes": 144228,
+      "sha256": "1c768e391e0f83c7368b0eb8149b2da889a9268142a15d075b32c0cfa8605336"
+    },
+    "data/sprite/로브/c_evil_scythe/여/궁수_여.act": {
+      "bytes": 48276,
+      "sha256": "9b17f69265ebb6d9b30d9c9729d6b1f9c20c23485350ae77946440e2180231ec"
+    },
+    "data/sprite/로브/c_evil_scythe/여/궁수_여.spr": {
+      "bytes": 144228,
+      "sha256": "1c768e391e0f83c7368b0eb8149b2da889a9268142a15d075b32c0cfa8605336"
+    },
+    "data/sprite/로브/c_evil_scythe/남/헌터_남.act": {
+      "bytes": 48276,
+      "sha256": "15e4c40b0046c5432916d31da0acf033269f10d60f2f9669eb58f124ded6450a"
+    },
+    "data/sprite/로브/c_evil_scythe/남/헌터_남.spr": {
+      "bytes": 144228,
+      "sha256": "1c768e391e0f83c7368b0eb8149b2da889a9268142a15d075b32c0cfa8605336"
+    },
+    "data/sprite/로브/c_evil_scythe/여/헌터_여.act": {
+      "bytes": 48276,
+      "sha256": "7ec5b7942aa157c525df0379bb4c65821bb7771fc7ba87f26d55eb0e8e239f28"
+    },
+    "data/sprite/로브/c_evil_scythe/여/헌터_여.spr": {
+      "bytes": 144228,
+      "sha256": "1c768e391e0f83c7368b0eb8149b2da889a9268142a15d075b32c0cfa8605336"
+    },
+    "data/sprite/로브/c_evil_scythe/남/스나이퍼_남.act": {
+      "bytes": 48276,
+      "sha256": "7c220ebfa970429acc9e78f30028270577cfb19421511ea7a1f2ed7e583cdbd4"
+    },
+    "data/sprite/로브/c_evil_scythe/남/스나이퍼_남.spr": {
+      "bytes": 144228,
+      "sha256": "1c768e391e0f83c7368b0eb8149b2da889a9268142a15d075b32c0cfa8605336"
+    },
+    "data/sprite/로브/c_evil_scythe/여/스나이퍼_여.act": {
+      "bytes": 48276,
+      "sha256": "7e2584b78a8b83184109deea1008a61b7748a456aac8cef45864d1a2241508b5"
+    },
+    "data/sprite/로브/c_evil_scythe/여/스나이퍼_여.spr": {
+      "bytes": 144228,
+      "sha256": "1c768e391e0f83c7368b0eb8149b2da889a9268142a15d075b32c0cfa8605336"
+    },
+    "data/sprite/로브/c_evil_scythe/남/성직자_남.act": {
+      "bytes": 48276,
+      "sha256": "3c6ec42813b22b9a682e70d37e52e70f509c375a045a334cc4ff7565d6882bb5"
+    },
+    "data/sprite/로브/c_evil_scythe/남/성직자_남.spr": {
+      "bytes": 144228,
+      "sha256": "1c768e391e0f83c7368b0eb8149b2da889a9268142a15d075b32c0cfa8605336"
+    },
+    "data/sprite/로브/c_evil_scythe/여/성직자_여.act": {
+      "bytes": 48276,
+      "sha256": "bffb3428b1ed913622c40fa58783baf167fb3721c1a7e4c0754bb9c580e6fa38"
+    },
+    "data/sprite/로브/c_evil_scythe/여/성직자_여.spr": {
+      "bytes": 144228,
+      "sha256": "1c768e391e0f83c7368b0eb8149b2da889a9268142a15d075b32c0cfa8605336"
+    },
+    "data/sprite/로브/c_evil_scythe/남/프리스트_남.act": {
+      "bytes": 48276,
+      "sha256": "eb3c381c05f1d2c1eca44dff78e6ca174fa39ba27a26ef8ec0cfdb60811ca12e"
+    },
+    "data/sprite/로브/c_evil_scythe/남/프리스트_남.spr": {
+      "bytes": 144228,
+      "sha256": "1c768e391e0f83c7368b0eb8149b2da889a9268142a15d075b32c0cfa8605336"
+    },
+    "data/sprite/로브/c_evil_scythe/여/프리스트_여.act": {
+      "bytes": 48276,
+      "sha256": "74d2381430647962220a2fe8e72c901a808ff21c0b2bd558f6da8fbd2955a126"
+    },
+    "data/sprite/로브/c_evil_scythe/여/프리스트_여.spr": {
+      "bytes": 144228,
+      "sha256": "1c768e391e0f83c7368b0eb8149b2da889a9268142a15d075b32c0cfa8605336"
+    },
+    "data/sprite/로브/c_evil_scythe/남/하이프리_남.act": {
+      "bytes": 48276,
+      "sha256": "70c8e413c871bfccc86a13f2320ba2319a8de9a2bc8bb65ca99e5fbc769be129"
+    },
+    "data/sprite/로브/c_evil_scythe/남/하이프리_남.spr": {
+      "bytes": 144228,
+      "sha256": "1c768e391e0f83c7368b0eb8149b2da889a9268142a15d075b32c0cfa8605336"
+    },
+    "data/sprite/로브/c_evil_scythe/여/하이프리_여.act": {
+      "bytes": 48276,
+      "sha256": "872d18db9921fa358ae7e585770430561257545d19ae5bd8476883b8af37f3af"
+    },
+    "data/sprite/로브/c_evil_scythe/여/하이프리_여.spr": {
+      "bytes": 144228,
+      "sha256": "1c768e391e0f83c7368b0eb8149b2da889a9268142a15d075b32c0cfa8605336"
+    },
+    "data/sprite/로브/c_evil_scythe/남/상인_남.act": {
+      "bytes": 48276,
+      "sha256": "1306ad4e1464570be9c452f10d75d92ec09ea3b90265815118e9c0cd37503c8b"
+    },
+    "data/sprite/로브/c_evil_scythe/남/상인_남.spr": {
+      "bytes": 144228,
+      "sha256": "1c768e391e0f83c7368b0eb8149b2da889a9268142a15d075b32c0cfa8605336"
+    },
+    "data/sprite/로브/c_evil_scythe/여/상인_여.act": {
+      "bytes": 48276,
+      "sha256": "d42c359fa4e74e59c652e5ba3f1ed88812ea9874c2b92b21118acf494d9f7a16"
+    },
+    "data/sprite/로브/c_evil_scythe/여/상인_여.spr": {
+      "bytes": 144228,
+      "sha256": "1c768e391e0f83c7368b0eb8149b2da889a9268142a15d075b32c0cfa8605336"
+    },
+    "data/sprite/로브/c_evil_scythe/남/제철공_남.act": {
+      "bytes": 48276,
+      "sha256": "6b84eb9c1e9accd476ec2e1da4d700c6dcb8c5bb6d953ef777394295e0ba6c7c"
+    },
+    "data/sprite/로브/c_evil_scythe/남/제철공_남.spr": {
+      "bytes": 144228,
+      "sha256": "1c768e391e0f83c7368b0eb8149b2da889a9268142a15d075b32c0cfa8605336"
+    },
+    "data/sprite/로브/c_evil_scythe/여/제철공_여.act": {
+      "bytes": 48276,
+      "sha256": "fa578258c6bfc138f0d9807ad721d82cc7e64d8e8f02d6544762802ae3a8edb0"
+    },
+    "data/sprite/로브/c_evil_scythe/여/제철공_여.spr": {
+      "bytes": 144228,
+      "sha256": "1c768e391e0f83c7368b0eb8149b2da889a9268142a15d075b32c0cfa8605336"
+    },
+    "data/sprite/로브/c_evil_scythe/남/화이트스미스_남.act": {
+      "bytes": 48276,
+      "sha256": "10a05e73ddfbf3624a743e0f0d925d9dd89f3ffac34c806cf661e41ebb6eaf5d"
+    },
+    "data/sprite/로브/c_evil_scythe/남/화이트스미스_남.spr": {
+      "bytes": 144228,
+      "sha256": "1c768e391e0f83c7368b0eb8149b2da889a9268142a15d075b32c0cfa8605336"
+    },
+    "data/sprite/로브/c_evil_scythe/여/화이트스미스_여.act": {
+      "bytes": 48276,
+      "sha256": "d75addd5d3b54ba4409994ffbe5e5a8f10f486f1e11eda16b7f1afebacca875c"
+    },
+    "data/sprite/로브/c_evil_scythe/여/화이트스미스_여.spr": {
+      "bytes": 144228,
+      "sha256": "1c768e391e0f83c7368b0eb8149b2da889a9268142a15d075b32c0cfa8605336"
+    }
+  },
+  "baselineCommit": "d4f41591e47922fa57937230bb9c695bf62d2228"
+}
