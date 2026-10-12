@@ -1,0 +1,1387 @@
+{
+  "version": 1,
+  "sources": [
+    {
+      "file": "sheet-1.png",
+      "sha256": "4849a7826669a40738e357ba4b8f824ceaba7bb3f695967bc91f1192c5c03674",
+      "bytes": 3006873
+    },
+    {
+      "file": "sheet-2.png",
+      "sha256": "8ad627dd621ce8e990f805fbccef9614f94d4490c17b5d5f79b77e61907b49eb",
+      "bytes": 3533767
+    },
+    {
+      "file": "sheet-3.png",
+      "sha256": "702d4d8d8aa34678650319bc193be900e4da203311b2667c3ad54aed10c60554",
+      "bytes": 1206823
+    }
+  ],
+  "items": {
+    "aid": {
+      "name": "First Aid",
+      "className": "Novice",
+      "family": "support",
+      "subject": "healing cross",
+      "sheet": 3,
+      "row": 5,
+      "column": 0,
+      "box": [
+        9,
+        804,
+        71,
+        866
+      ]
+    },
+    "bash": {
+      "name": "Bash",
+      "className": "Swordman",
+      "family": "sword",
+      "subject": "impacting sword",
+      "sheet": 1,
+      "row": 2,
+      "column": 3,
+      "box": [
+        353,
+        704,
+        440,
+        791
+      ]
+    },
+    "endure": {
+      "name": "Rising Slash",
+      "className": "Swordman",
+      "family": "sword",
+      "subject": "rising blade arc",
+      "sheet": 1,
+      "row": 3,
+      "column": 5,
+      "box": [
+        571,
+        813,
+        658,
+        900
+      ]
+    },
+    "hprec": {
+      "name": "HP Recovery",
+      "className": "Swordman",
+      "family": "sword",
+      "subject": "restoring hand",
+      "sheet": 3,
+      "row": 3,
+      "column": 6,
+      "box": [
+        444,
+        656,
+        506,
+        718
+      ]
+    },
+    "provoke": {
+      "name": "Provoke",
+      "className": "Swordman",
+      "family": "sword",
+      "subject": "challenging roar",
+      "sheet": 1,
+      "row": 4,
+      "column": 3,
+      "box": [
+        353,
+        922,
+        440,
+        1009
+      ]
+    },
+    "bowl": {
+      "name": "Bowling Bash",
+      "className": "Knight",
+      "family": "sword",
+      "subject": "sweeping golden impact",
+      "sheet": 2,
+      "row": 3,
+      "column": 1,
+      "box": [
+        272,
+        598,
+        433,
+        759
+      ]
+    },
+    "pierce": {
+      "name": "Sword Thrust",
+      "className": "Knight",
+      "family": "sword",
+      "subject": "pointed sword",
+      "sheet": 2,
+      "row": 2,
+      "column": 0,
+      "box": [
+        84,
+        411,
+        245,
+        572
+      ]
+    },
+    "quick": {
+      "name": "Two-Hand Quicken",
+      "className": "Knight",
+      "family": "sword",
+      "subject": "rapid blade strokes",
+      "sheet": 1,
+      "row": 3,
+      "column": 6,
+      "box": [
+        680,
+        813,
+        767,
+        900
+      ]
+    },
+    "spear": {
+      "name": "Sword Training",
+      "className": "Knight",
+      "family": "sword",
+      "subject": "inscribed sword",
+      "sheet": 1,
+      "row": 5,
+      "column": 0,
+      "box": [
+        26,
+        1031,
+        113,
+        1118
+      ]
+    },
+    "spiral": {
+      "name": "Spiral Slash",
+      "className": "Lord Knight",
+      "family": "sword",
+      "subject": "swirling sword energy",
+      "sheet": 1,
+      "row": 7,
+      "column": 5,
+      "box": [
+        571,
+        1249,
+        658,
+        1336
+      ]
+    },
+    "aura": {
+      "name": "Aura Blade",
+      "className": "Lord Knight",
+      "family": "sword",
+      "subject": "energized sword",
+      "sheet": 2,
+      "row": 9,
+      "column": 2,
+      "box": [
+        459,
+        1724,
+        620,
+        1885
+      ]
+    },
+    "jointbeat": {
+      "name": "Parrying",
+      "className": "Lord Knight",
+      "family": "sword",
+      "subject": "shield parry",
+      "sheet": 2,
+      "row": 9,
+      "column": 1,
+      "box": [
+        272,
+        1724,
+        433,
+        1885
+      ]
+    },
+    "fire": {
+      "name": "Fire Bolt",
+      "className": "Mage",
+      "family": "magic",
+      "subject": "fire projectiles",
+      "sheet": 3,
+      "row": 1,
+      "column": 3,
+      "box": [
+        226,
+        507,
+        288,
+        569
+      ]
+    },
+    "nap": {
+      "name": "Lightning Bolt",
+      "className": "Mage",
+      "family": "magic",
+      "subject": "lightning bolt",
+      "sheet": 3,
+      "row": 6,
+      "column": 1,
+      "box": [
+        82,
+        878,
+        144,
+        940
+      ]
+    },
+    "coat": {
+      "name": "Energy Coat",
+      "className": "Mage",
+      "family": "magic",
+      "subject": "energy armor",
+      "sheet": 3,
+      "row": 7,
+      "column": 3,
+      "box": [
+        226,
+        952,
+        288,
+        1014
+      ]
+    },
+    "fireball": {
+      "name": "Fire Ball",
+      "className": "Mage",
+      "family": "magic",
+      "subject": "fireball",
+      "sheet": 3,
+      "row": 1,
+      "column": 4,
+      "box": [
+        299,
+        507,
+        361,
+        569
+      ]
+    },
+    "storm": {
+      "name": "Storm Gust",
+      "className": "Wizard",
+      "family": "magic",
+      "subject": "icy storm",
+      "sheet": 2,
+      "row": 5,
+      "column": 3,
+      "box": [
+        646,
+        974,
+        807,
+        1135
+      ]
+    },
+    "jup": {
+      "name": "Jupitel Thunder",
+      "className": "Wizard",
+      "family": "magic",
+      "subject": "lightning surge",
+      "sheet": 2,
+      "row": 5,
+      "column": 4,
+      "box": [
+        834,
+        974,
+        995,
+        1135
+      ]
+    },
+    "amp": {
+      "name": "Meteor Storm",
+      "className": "Wizard",
+      "family": "magic",
+      "subject": "falling meteor",
+      "sheet": 1,
+      "row": 4,
+      "column": 2,
+      "box": [
+        244,
+        922,
+        331,
+        1009
+      ]
+    },
+    "tstorm": {
+      "name": "Heaven\u2019s Drive",
+      "className": "Wizard",
+      "family": "magic",
+      "subject": "earth spikes",
+      "sheet": 3,
+      "row": 4,
+      "column": 0,
+      "box": [
+        9,
+        730,
+        71,
+        792
+      ]
+    },
+    "meteor": {
+      "name": "Magic Crasher",
+      "className": "High Wizard",
+      "family": "magic",
+      "subject": "magic projectile",
+      "sheet": 1,
+      "row": 8,
+      "column": 2,
+      "box": [
+        244,
+        1358,
+        331,
+        1445
+      ]
+    },
+    "grav": {
+      "name": "Gravity Well",
+      "className": "High Wizard",
+      "family": "magic",
+      "subject": "gravity well",
+      "sheet": 3,
+      "row": 8,
+      "column": 3,
+      "box": [
+        226,
+        1027,
+        288,
+        1089
+      ]
+    },
+    "mystic": {
+      "name": "Mystical Amplification",
+      "className": "High Wizard",
+      "family": "magic",
+      "subject": "enchanted staff",
+      "sheet": 2,
+      "row": 6,
+      "column": 3,
+      "box": [
+        646,
+        1161,
+        807,
+        1322
+      ]
+    },
+    "napalm": {
+      "name": "Napalm Vulcan",
+      "className": "High Wizard",
+      "family": "magic",
+      "subject": "spectral wave",
+      "sheet": 3,
+      "row": 8,
+      "column": 7,
+      "box": [
+        516,
+        1027,
+        578,
+        1089
+      ]
+    },
+    "dstr": {
+      "name": "Double Strafe",
+      "className": "Archer",
+      "family": "archer",
+      "subject": "two arrows",
+      "sheet": 3,
+      "row": 3,
+      "column": 2,
+      "box": [
+        154,
+        656,
+        216,
+        718
+      ]
+    },
+    "iconc": {
+      "name": "Improve Concentration",
+      "className": "Archer",
+      "family": "archer",
+      "subject": "archery target",
+      "sheet": 3,
+      "row": 2,
+      "column": 2,
+      "box": [
+        154,
+        581,
+        216,
+        643
+      ]
+    },
+    "owl": {
+      "name": "Owl\u2019s Eye",
+      "className": "Archer",
+      "family": "archer",
+      "subject": "watchful eye",
+      "sheet": 3,
+      "row": 2,
+      "column": 5,
+      "box": [
+        372,
+        581,
+        434,
+        643
+      ]
+    },
+    "vult": {
+      "name": "Vulture\u2019s Eye",
+      "className": "Archer",
+      "family": "archer",
+      "subject": "magnified eye",
+      "sheet": 3,
+      "row": 3,
+      "column": 7,
+      "box": [
+        516,
+        656,
+        578,
+        718
+      ]
+    },
+    "blitz": {
+      "name": "Blitz Beat",
+      "className": "Hunter",
+      "family": "archer",
+      "subject": "diving falcon strike",
+      "sheet": 3,
+      "row": 2,
+      "column": 6,
+      "box": [
+        444,
+        581,
+        506,
+        643
+      ]
+    },
+    "sharp": {
+      "name": "Marked Shot",
+      "className": "Hunter",
+      "family": "archer",
+      "subject": "piercing marked arrow",
+      "sheet": 1,
+      "row": 5,
+      "column": 1,
+      "box": [
+        135,
+        1031,
+        222,
+        1118
+      ]
+    },
+    "beast": {
+      "name": "Beast Bane",
+      "className": "Hunter",
+      "family": "archer",
+      "subject": "beast fang",
+      "sheet": 1,
+      "row": 5,
+      "column": 2,
+      "box": [
+        244,
+        1031,
+        331,
+        1118
+      ]
+    },
+    "falconry": {
+      "name": "Steel Crow",
+      "className": "Hunter",
+      "family": "archer",
+      "subject": "steel feathers",
+      "sheet": 1,
+      "row": 6,
+      "column": 7,
+      "box": [
+        789,
+        1140,
+        876,
+        1227
+      ]
+    },
+    "falcon": {
+      "name": "Falcon Assault",
+      "className": "Sniper",
+      "family": "archer",
+      "subject": "diving bird",
+      "sheet": 1,
+      "row": 7,
+      "column": 0,
+      "box": [
+        26,
+        1249,
+        113,
+        1336
+      ]
+    },
+    "focus": {
+      "name": "Sharp Shooting",
+      "className": "Sniper",
+      "family": "archer",
+      "subject": "arrows piercing a line",
+      "sheet": 1,
+      "row": 4,
+      "column": 1,
+      "box": [
+        135,
+        922,
+        222,
+        1009
+      ]
+    },
+    "sight": {
+      "name": "True Sight",
+      "className": "Sniper",
+      "family": "archer",
+      "subject": "keen sight",
+      "sheet": 2,
+      "row": 4,
+      "column": 4,
+      "box": [
+        834,
+        786,
+        995,
+        947
+      ]
+    },
+    "pharrow": {
+      "name": "Snare Trap",
+      "className": "Sniper",
+      "family": "archer",
+      "subject": "restraining chain",
+      "sheet": 2,
+      "row": 0,
+      "column": 0,
+      "box": [
+        84,
+        36,
+        245,
+        197
+      ]
+    },
+    "dbl": {
+      "name": "Twin Strike",
+      "className": "Thief",
+      "family": "shadow",
+      "subject": "twin dark daggers",
+      "sheet": 1,
+      "row": 1,
+      "column": 2,
+      "box": [
+        244,
+        595,
+        331,
+        682
+      ]
+    },
+    "env": {
+      "name": "Quick Cut",
+      "className": "Thief",
+      "family": "shadow",
+      "subject": "quick curved blade",
+      "sheet": 1,
+      "row": 1,
+      "column": 1,
+      "box": [
+        135,
+        595,
+        222,
+        682
+      ]
+    },
+    "dodge": {
+      "name": "Feint Slash",
+      "className": "Thief",
+      "family": "shadow",
+      "subject": "evasive blade arc",
+      "sheet": 1,
+      "row": 1,
+      "column": 3,
+      "box": [
+        353,
+        595,
+        440,
+        682
+      ]
+    },
+    "steal": {
+      "name": "Plunder",
+      "className": "Thief",
+      "family": "shadow",
+      "subject": "plundered Zeny",
+      "sheet": 3,
+      "row": 2,
+      "column": 4,
+      "box": [
+        299,
+        581,
+        361,
+        643
+      ]
+    },
+    "sonic": {
+      "name": "Sonic Blow",
+      "className": "Assassin",
+      "family": "shadow",
+      "subject": "flurry of dark blades",
+      "sheet": 1,
+      "row": 0,
+      "column": 2,
+      "box": [
+        244,
+        486,
+        331,
+        573
+      ]
+    },
+    "grim": {
+      "name": "Grimtooth",
+      "className": "Assassin",
+      "family": "shadow",
+      "subject": "piercing blade wave",
+      "sheet": 1,
+      "row": 0,
+      "column": 3,
+      "box": [
+        353,
+        486,
+        440,
+        573
+      ]
+    },
+    "katm": {
+      "name": "Edge Mastery",
+      "className": "Assassin",
+      "family": "shadow",
+      "subject": "enchanted dagger edge",
+      "sheet": 1,
+      "row": 1,
+      "column": 0,
+      "box": [
+        26,
+        595,
+        113,
+        682
+      ]
+    },
+    "vdust": {
+      "name": "Cross Slash",
+      "className": "Assassin",
+      "family": "shadow",
+      "subject": "crossing purple blades",
+      "sheet": 1,
+      "row": 1,
+      "column": 2,
+      "box": [
+        244,
+        595,
+        331,
+        682
+      ]
+    },
+    "mAss": {
+      "name": "Meteor Assault",
+      "className": "Assassin Cross",
+      "family": "shadow",
+      "subject": "purple radial burst",
+      "sheet": 1,
+      "row": 0,
+      "column": 1,
+      "box": [
+        135,
+        486,
+        222,
+        573
+      ]
+    },
+    "soulb": {
+      "name": "Soul Breaker",
+      "className": "Assassin Cross",
+      "family": "shadow",
+      "subject": "spectral energy strike",
+      "sheet": 1,
+      "row": 0,
+      "column": 5,
+      "box": [
+        571,
+        486,
+        658,
+        573
+      ]
+    },
+    "sdestroy": {
+      "name": "Deathmark",
+      "className": "Assassin Cross",
+      "family": "shadow",
+      "subject": "deathmark skull",
+      "sheet": 2,
+      "row": 3,
+      "column": 3,
+      "box": [
+        646,
+        598,
+        807,
+        759
+      ]
+    },
+    "holy": {
+      "name": "Holy Light",
+      "className": "Acolyte",
+      "family": "holy",
+      "subject": "focused holy ray",
+      "sheet": 3,
+      "row": 0,
+      "column": 4,
+      "box": [
+        299,
+        433,
+        361,
+        495
+      ]
+    },
+    "heal": {
+      "name": "Searing Light",
+      "className": "Acolyte",
+      "family": "holy",
+      "subject": "restoring holy light",
+      "sheet": 3,
+      "row": 3,
+      "column": 6,
+      "box": [
+        444,
+        656,
+        506,
+        718
+      ]
+    },
+    "bless": {
+      "name": "Blessing",
+      "className": "Acolyte",
+      "family": "holy",
+      "subject": "blessed aura",
+      "sheet": 2,
+      "row": 1,
+      "column": 2,
+      "box": [
+        459,
+        224,
+        620,
+        385
+      ]
+    },
+    "iagi": {
+      "name": "Zeal",
+      "className": "Acolyte",
+      "family": "holy",
+      "subject": "swift inspired silhouette",
+      "sheet": 3,
+      "row": 2,
+      "column": 1,
+      "box": [
+        82,
+        581,
+        144,
+        643
+      ]
+    },
+    "magnus": {
+      "name": "Holy Nova",
+      "className": "Priest",
+      "family": "holy",
+      "subject": "radial holy light",
+      "sheet": 1,
+      "row": 4,
+      "column": 4,
+      "box": [
+        462,
+        922,
+        549,
+        1009
+      ]
+    },
+    "sanct": {
+      "name": "Judgment Pillar",
+      "className": "Priest",
+      "family": "holy",
+      "subject": "pillar of light",
+      "sheet": 3,
+      "row": 1,
+      "column": 1,
+      "box": [
+        82,
+        507,
+        144,
+        569
+      ]
+    },
+    "asp": {
+      "name": "Sacred Weapon",
+      "className": "Priest",
+      "family": "holy",
+      "subject": "empowered weapon",
+      "sheet": 1,
+      "row": 5,
+      "column": 0,
+      "box": [
+        26,
+        1031,
+        113,
+        1118
+      ]
+    },
+    "kyrie": {
+      "name": "Penance",
+      "className": "Priest",
+      "family": "holy",
+      "subject": "holy judgment strike",
+      "sheet": 3,
+      "row": 3,
+      "column": 1,
+      "box": [
+        82,
+        656,
+        144,
+        718
+      ]
+    },
+    "judex": {
+      "name": "Divine Barrage",
+      "className": "High Priest",
+      "family": "holy",
+      "subject": "barrage of rays",
+      "sheet": 3,
+      "row": 1,
+      "column": 5,
+      "box": [
+        372,
+        507,
+        434,
+        569
+      ]
+    },
+    "assum": {
+      "name": "Consecration",
+      "className": "High Priest",
+      "family": "holy",
+      "subject": "consecrated ground",
+      "sheet": 2,
+      "row": 8,
+      "column": 3,
+      "box": [
+        646,
+        1536,
+        807,
+        1697
+      ]
+    },
+    "gloria": {
+      "name": "Gloria",
+      "className": "High Priest",
+      "family": "holy",
+      "subject": "radiant aura",
+      "sheet": 3,
+      "row": 3,
+      "column": 5,
+      "box": [
+        372,
+        656,
+        434,
+        718
+      ]
+    },
+    "meditatio": {
+      "name": "Holy Echo",
+      "className": "High Priest",
+      "family": "holy",
+      "subject": "holy chalice echo",
+      "sheet": 3,
+      "row": 8,
+      "column": 5,
+      "box": [
+        372,
+        1027,
+        434,
+        1089
+      ]
+    },
+    "mammo": {
+      "name": "Mammonite",
+      "className": "Merchant",
+      "family": "forge",
+      "subject": "heavy axe impact",
+      "sheet": 2,
+      "row": 2,
+      "column": 4,
+      "box": [
+        834,
+        411,
+        995,
+        572
+      ]
+    },
+    "greed": {
+      "name": "Overcharge",
+      "className": "Merchant",
+      "family": "forge",
+      "subject": "Zeny purse",
+      "sheet": 3,
+      "row": 2,
+      "column": 4,
+      "box": [
+        299,
+        581,
+        361,
+        643
+      ]
+    },
+    "phys": {
+      "name": "Pushcart",
+      "className": "Merchant",
+      "family": "forge",
+      "subject": "enduring body",
+      "sheet": 3,
+      "row": 3,
+      "column": 5,
+      "box": [
+        372,
+        656,
+        434,
+        718
+      ]
+    },
+    "discount": {
+      "name": "Discount",
+      "className": "Merchant",
+      "family": "forge",
+      "subject": "trade scroll",
+      "sheet": 1,
+      "row": 4,
+      "column": 0,
+      "box": [
+        26,
+        922,
+        113,
+        1009
+      ]
+    },
+    "hammer": {
+      "name": "Hammer Fall",
+      "className": "Blacksmith",
+      "family": "forge",
+      "subject": "falling hammer",
+      "sheet": 1,
+      "row": 4,
+      "column": 7,
+      "box": [
+        789,
+        922,
+        876,
+        1009
+      ]
+    },
+    "adren": {
+      "name": "Adrenaline Rush",
+      "className": "Blacksmith",
+      "family": "forge",
+      "subject": "faster weapon swings",
+      "sheet": 2,
+      "row": 1,
+      "column": 3,
+      "box": [
+        646,
+        224,
+        807,
+        385
+      ]
+    },
+    "wperf": {
+      "name": "Armor Crack",
+      "className": "Blacksmith",
+      "family": "forge",
+      "subject": "armor-breaking hammer",
+      "sheet": 1,
+      "row": 9,
+      "column": 9,
+      "box": [
+        1007,
+        1467,
+        1094,
+        1554
+      ]
+    },
+    "wresearch": {
+      "name": "Weapon Research",
+      "className": "Blacksmith",
+      "family": "forge",
+      "subject": "weapon research scroll",
+      "sheet": 2,
+      "row": 2,
+      "column": 2,
+      "box": [
+        459,
+        411,
+        620,
+        572
+      ]
+    },
+    "cart": {
+      "name": "Cart Termination",
+      "className": "Whitesmith",
+      "family": "forge",
+      "subject": "heavy collision",
+      "sheet": 2,
+      "row": 1,
+      "column": 4,
+      "box": [
+        834,
+        224,
+        995,
+        385
+      ]
+    },
+    "thrust": {
+      "name": "Maximum Power Thrust",
+      "className": "Whitesmith",
+      "family": "forge",
+      "subject": "empowered axe",
+      "sheet": 1,
+      "row": 3,
+      "column": 8,
+      "box": [
+        898,
+        813,
+        985,
+        900
+      ]
+    },
+    "skin": {
+      "name": "Cart Momentum",
+      "className": "Whitesmith",
+      "family": "forge",
+      "subject": "building momentum",
+      "sheet": 3,
+      "row": 1,
+      "column": 6,
+      "box": [
+        444,
+        507,
+        506,
+        569
+      ]
+    },
+    "cboost": {
+      "name": "Cart Boost",
+      "className": "Whitesmith",
+      "family": "forge",
+      "subject": "speed boot",
+      "sheet": 2,
+      "row": 0,
+      "column": 1,
+      "box": [
+        272,
+        36,
+        433,
+        197
+      ]
+    },
+    "frenzy": {
+      "name": "Frenzy",
+      "className": "Lord Knight",
+      "family": "sword",
+      "subject": "battle rage",
+      "sheet": 2,
+      "row": 1,
+      "column": 3,
+      "box": [
+        646,
+        224,
+        807,
+        385
+      ]
+    },
+    "dpois": {
+      "name": "Blade Frenzy",
+      "className": "Assassin Cross",
+      "family": "shadow",
+      "subject": "shadow frenzy",
+      "sheet": 3,
+      "row": 8,
+      "column": 4,
+      "box": [
+        299,
+        1027,
+        361,
+        1089
+      ]
+    },
+    "ovthrust": {
+      "name": "Overthrust",
+      "className": "Blacksmith",
+      "family": "forge",
+      "subject": "forge power",
+      "sheet": 1,
+      "row": 9,
+      "column": 6,
+      "box": [
+        680,
+        1467,
+        767,
+        1554
+      ]
+    },
+    "mbrk": {
+      "name": "Magnum Break",
+      "className": "Swordman",
+      "family": "sword",
+      "subject": "fiery radial impact",
+      "sheet": 1,
+      "row": 3,
+      "column": 3,
+      "box": [
+        353,
+        813,
+        440,
+        900
+      ]
+    },
+    "fdiver": {
+      "name": "Frost Diver",
+      "className": "Mage",
+      "family": "magic",
+      "subject": "ice crystal",
+      "sheet": 3,
+      "row": 6,
+      "column": 3,
+      "box": [
+        226,
+        878,
+        288,
+        940
+      ]
+    },
+    "fnova": {
+      "name": "Lord of Vermilion",
+      "className": "Wizard",
+      "family": "magic",
+      "subject": "lightning field",
+      "sheet": 1,
+      "row": 7,
+      "column": 8,
+      "box": [
+        898,
+        1249,
+        985,
+        1336
+      ]
+    },
+    "ashower": {
+      "name": "Arrow Shower",
+      "className": "Archer",
+      "family": "archer",
+      "subject": "fan of arrows",
+      "sheet": 3,
+      "row": 2,
+      "column": 7,
+      "box": [
+        516,
+        581,
+        578,
+        643
+      ]
+    },
+    "sandat": {
+      "name": "Fan of Blades",
+      "className": "Thief",
+      "family": "shadow",
+      "subject": "fan of dark blades",
+      "sheet": 1,
+      "row": 0,
+      "column": 2,
+      "box": [
+        244,
+        486,
+        331,
+        573
+      ]
+    },
+    "signum": {
+      "name": "Radiant Sweep",
+      "className": "Acolyte",
+      "family": "holy",
+      "subject": "fan of holy rays",
+      "sheet": 1,
+      "row": 4,
+      "column": 4,
+      "box": [
+        462,
+        922,
+        549,
+        1009
+      ]
+    },
+    "cartrev": {
+      "name": "Cart Revolution",
+      "className": "Merchant",
+      "family": "forge",
+      "subject": "revolving impact",
+      "sheet": 3,
+      "row": 1,
+      "column": 6,
+      "box": [
+        444,
+        507,
+        506,
+        569
+      ]
+    },
+    "spearboom": {
+      "name": "Counter Attack",
+      "className": "Knight",
+      "family": "sword",
+      "subject": "crossing blades",
+      "sheet": 1,
+      "row": 7,
+      "column": 1,
+      "box": [
+        135,
+        1249,
+        222,
+        1336
+      ]
+    },
+    "tblow": {
+      "name": "Traumatic Blow",
+      "className": "Lord Knight",
+      "family": "sword",
+      "subject": "bleeding slash",
+      "sheet": 1,
+      "row": 2,
+      "column": 6,
+      "box": [
+        680,
+        704,
+        767,
+        791
+      ]
+    },
+    "vermilion": {
+      "name": "Soul Drain",
+      "className": "High Wizard",
+      "family": "magic",
+      "subject": "spectral drain",
+      "sheet": 2,
+      "row": 6,
+      "column": 4,
+      "box": [
+        834,
+        1161,
+        995,
+        1322
+      ]
+    },
+    "landmine": {
+      "name": "Land Mine",
+      "className": "Hunter",
+      "family": "archer",
+      "subject": "exploding ground",
+      "sheet": 3,
+      "row": 0,
+      "column": 3,
+      "box": [
+        226,
+        433,
+        288,
+        495
+      ]
+    },
+    "wwalk": {
+      "name": "Wind Walk",
+      "className": "Sniper",
+      "family": "archer",
+      "subject": "winged movement",
+      "sheet": 3,
+      "row": 1,
+      "column": 7,
+      "box": [
+        516,
+        507,
+        578,
+        569
+      ]
+    },
+    "vsplash": {
+      "name": "Shadow Dash",
+      "className": "Assassin",
+      "family": "shadow",
+      "subject": "rushing shadow",
+      "sheet": 1,
+      "row": 1,
+      "column": 4,
+      "box": [
+        462,
+        595,
+        549,
+        682
+      ]
+    },
+    "akatar": {
+      "name": "Phantom Rush",
+      "className": "Assassin Cross",
+      "family": "shadow",
+      "subject": "phantom claws",
+      "sheet": 2,
+      "row": 3,
+      "column": 2,
+      "box": [
+        459,
+        598,
+        620,
+        759
+      ]
+    },
+    "tundead": {
+      "name": "Exorcism",
+      "className": "Priest",
+      "family": "holy",
+      "subject": "exorcising holy seal",
+      "sheet": 3,
+      "row": 3,
+      "column": 1,
+      "box": [
+        82,
+        656,
+        144,
+        718
+      ]
+    },
+    "basilica": {
+      "name": "Final Judgment",
+      "className": "High Priest",
+      "family": "holy",
+      "subject": "golden judgment sigil",
+      "sheet": 2,
+      "row": 2,
+      "column": 2,
+      "box": [
+        459,
+        411,
+        620,
+        572
+      ]
+    },
+    "meltdown": {
+      "name": "Shatter Strike",
+      "className": "Whitesmith",
+      "family": "forge",
+      "subject": "shattering impact",
+      "sheet": 3,
+      "row": 0,
+      "column": 3,
+      "box": [
+        226,
+        433,
+        288,
+        495
+      ]
+    }
+  }
+}

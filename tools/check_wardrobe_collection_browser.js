@@ -14,7 +14,7 @@
   assert([...document.querySelector('[data-wardrobe="color"]').options].every((o,i)=>o.textContent==='Color '+(i+1)),'consecutive colors');
   assert(!document.querySelector('[data-wardrobe="outfit"]'),'no progression-class costumes');
   for(const [field,items] of Object.entries(PGWardrobe.ACCESSORIES)){
-   assert(document.querySelector('[data-wardrobe="'+field+'"]').options.length===11,'ten pieces plus None');
+   assert(document.querySelector('[data-wardrobe="'+field+'"]').options.length===Object.keys(items.items).length,'all pieces plus None');
    for(const item of Object.keys(items.items).filter(k=>k!=='none')){
     change(field,item);assert($('wardrobeApply').disabled,'pending selection disabled');await ready();
     const cv=document.createElement('canvas');cv.width=320;cv.height=280;
@@ -23,7 +23,7 @@
    }
    change(field,'none');await ready();
   }
-  change('headwear','catEars');change('facewear','sunglasses');change('mouthwear','flower');change('backwear','wings');await ready();action('apply');
+  change('headwear','catEars');change('facewear','sunglasses');change('mouthwear','flower');change('backwear','evilScythe');await ready();action('apply');
   assert(wardrobeState.look.pieces.length===4,'four simultaneous pieces');
   assert(S.appearance.mouthwear==='flower','applied independent slots');
   assert(JSON.parse(localStorage.getItem('pg_save3_'+currentUser)).appearance.mouthwear==='flower','actual saved selection');
@@ -32,6 +32,6 @@
  const saved=JSON.stringify(S.appearance);change('mouthwear','leaf');action('cancel');await ready();assert(JSON.stringify(wardrobeState.draft)===saved,'cancel restores all slots');
  for(const field of Object.keys(PGWardrobe.ACCESSORIES))change(field,'none');await ready();action('apply');assert(wardrobeState.look.pieces.length===0,'None clears every slot');
  for(const el of document.querySelectorAll('.wardrobe select,.wardrobe button,.wardrobe canvas')){if(el.hidden)continue;const b=el.getBoundingClientRect();assert(b.left>=0&&b.right<=innerWidth+1,'control fits viewport: '+el.outerHTML.slice(0,70))}
- assert(peak<=wardrobeStore.budget,'bounded cache');return {status:'pass',viewport:[innerWidth,innerHeight],accessories:40,genders:2,views:paints,peakDecodedBytes:peak,renderer:'marked WebGL stub'};
+ assert(peak<=wardrobeStore.budget,'bounded cache');return {status:'pass',viewport:[innerWidth,innerHeight],accessories:41,genders:2,views:paints,peakDecodedBytes:peak,renderer:'marked WebGL stub'};
  }finally{simAdvance=advance}
 })()

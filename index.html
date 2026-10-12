@@ -338,7 +338,8 @@ hr{border:0;border-top:1px dashed var(--edge);margin:6px 0}
 @media(max-width:560px){.ib{width:32px;height:32px;font-size:16px}#dock{gap:3px;padding:4px 6px;max-width:calc(100vw - 12px);flex-wrap:wrap;justify-content:center}.grid{grid-template-columns:repeat(5,1fr)}.skg{grid-template-columns:repeat(3,minmax(0,1fr))}.sk-master{grid-column:3}.hair-preview-card{gap:8px;padding:6px}.hair-preview-stage{flex-basis:128px;width:128px;height:138px}.hair-preview-stage canvas{width:128px;height:138px}}
 .atabs{display:flex;gap:4px;margin-bottom:14px;align-items:stretch}.atabs button{flex:1 1 0;min-width:0;height:34px;min-height:34px;padding:6px 8px;font-weight:bold;font-size:13px;line-height:20px;box-sizing:border-box}.atabs button.on{background:#ffe08a;border-color:var(--gold);height:34px;min-height:34px}
 #qp{position:absolute;right:12px;top:50%;transform:translateY(-50%);width:210px;background:rgba(30,20,10,.5);border:1px solid #ffffff44;border-radius:8px;padding:6px 8px;color:#fff;font:12px "Trebuchet MS",sans-serif;pointer-events:auto;z-index:5;line-height:1.3;display:none}#qp .pbar{margin:3px 0}
-.skg{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px}.sk{position:relative;min-width:0;min-height:146px;border:1px solid var(--sk-accent,#8a6a2c);border-radius:10px;background:linear-gradient(160deg,#fffdf7,#f4e7c8);text-align:center;padding:7px 5px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:4px;line-height:1.1;box-shadow:0 2px 5px #4b35151a,inset 0 1px 0 #fff}.sk:hover{transform:translateY(-1px);box-shadow:0 4px 9px #4b35152b}.sk.off{filter:grayscale(.45);opacity:.68}.sk.sel{outline:3px solid #2f6fd6;outline-offset:1px}.sk-head{width:100%;display:flex;justify-content:space-between;align-items:center;gap:2px}.sk-kind{font:700 8px/1.2 "Trebuchet MS",sans-serif;letter-spacing:.35px;padding:2px 4px;border-radius:7px;background:#3b2a1a12;color:#604723;white-space:nowrap}.sk-paused{font:700 8px/1.2 "Trebuchet MS",sans-serif;padding:2px 4px;border-radius:7px;background:#e5484d;color:#fff}.sk .si{width:48px;height:48px;display:grid;place-items:center;border:0;border-radius:13px;background:transparent;line-height:1;box-shadow:none;overflow:visible}.skill-art{display:block;width:46px;height:46px;overflow:visible;filter:drop-shadow(0 2px 2px #17101c99)}.ro-item-icon{display:block;width:30px;height:30px;object-fit:contain;image-rendering:pixelated;pointer-events:none;filter:drop-shadow(0 1px 1px #1b100c55)}.ro-icon-fallback{display:inline-block;line-height:1;color:#5b4a35}
+.skg{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px}.sk{position:relative;min-width:0;min-height:146px;border:1px solid var(--sk-accent,#8a6a2c);border-radius:10px;background:linear-gradient(160deg,#fffdf7,#f4e7c8);text-align:center;padding:7px 5px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:4px;line-height:1.1;box-shadow:0 2px 5px #4b35151a,inset 0 1px 0 #fff}.sk:hover{transform:translateY(-1px);box-shadow:0 4px 9px #4b35152b}.sk.off{filter:grayscale(.45);opacity:.68}.sk.sel{outline:3px solid #2f6fd6;outline-offset:1px}.sk-head{width:100%;display:flex;justify-content:space-between;align-items:center;gap:2px}.sk-kind{font:700 8px/1.2 "Trebuchet MS",sans-serif;letter-spacing:.35px;padding:2px 4px;border-radius:7px;background:#3b2a1a12;color:#604723;white-space:nowrap}.sk-paused{font:700 8px/1.2 "Trebuchet MS",sans-serif;padding:2px 4px;border-radius:7px;background:#e5484d;color:#fff}.sk .si{width:48px;height:48px;display:grid;place-items:center;border:0;border-radius:13px;background:transparent;line-height:1;box-shadow:none;overflow:visible}.pet-animation-preview{display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin:12px 0}#view .pet-animation-preview canvas{width:128px!important;height:128px!important;flex:0 0 128px;image-rendering:pixelated;background:center/contain no-repeat}.pet-animation-preview small{display:block;margin:6px 0}
+.skill-art{display:block;width:46px;height:46px;object-fit:cover;border-radius:7px;overflow:hidden;filter:drop-shadow(0 2px 2px #17101c99)}.ro-item-icon{display:block;width:30px;height:30px;object-fit:contain;image-rendering:pixelated;pointer-events:none;filter:drop-shadow(0 1px 1px #1b100c55)}.ro-icon-fallback{display:inline-block;line-height:1;color:#5b4a35}
 .ro-icon-fallback .ro-icon-svg,.ro-icon-svg{display:block;width:30px;height:30px;fill:currentColor}
 .cell.b0 .ro-icon-fallback{color:#7b7166}.cell.b1 .ro-icon-fallback{color:#2f7d32}
 .cell.b2 .ro-icon-fallback{color:#2b6cb0}.cell.b3 .ro-icon-fallback{color:#b45309}
@@ -725,7 +726,7 @@ a{color:var(--brass)}small{opacity:.85}summary{cursor:pointer}
 .ui-icon[data-ui-icon="refresh"]{color:#9cddd1}
 .ui-nav-icon .ui-icon{width:22px;height:22px}.ui-window-tools .ui-icon{width:14px;height:14px}.title>span:first-child{display:flex;align-items:center;gap:8px}
 button:focus-visible{outline:2px solid #e7d4a1;outline-offset:3px}
-.skill-art{filter:drop-shadow(0 1px 2px #0008)}
+.skill-art{filter:drop-shadow(0 1px 2px #0008)}.skill-art.family-shadow{box-shadow:0 0 0 1px #7650a5;background:#180e29}.skill-art.family-sword{box-shadow:0 0 0 1px #b98b49}.skill-art.family-holy{box-shadow:0 0 0 1px #d9c481}
 #sideRail{position:absolute;right:12px;top:12px;width:228px;display:none;flex-direction:column;gap:10px;pointer-events:auto;z-index:5;max-height:calc(100% - 100px);overflow-y:auto;scrollbar-width:thin}
 #sideRail #qp{position:static;transform:none;width:auto;padding:12px;background:#162721ed;border:1px solid #64756466;border-radius:10px;box-shadow:0 6px 20px #0003}
 #qp .qp-head{color:#f1dfb9;font-size:12px}#qp .qp-head b{display:flex;gap:8px;align-items:center}#qp .qp-actions button{background:none;border:0;padding:3px;color:#b9c7bb}
@@ -848,7 +849,9 @@ body.clean-screen #screenBtn{visibility:visible!important}body.clean-screen #hud
 </div>
 <div id="tooltip"></div>
 <link rel="stylesheet" href="assets/wardrobe.css?v=128">
-<script src="assets/wardrobe.js?v=128"></script>
+<script src="assets/wardrobe.js?v=129"></script>
+<script src="assets/skill-icons.js?v=130"></script>
+<script src="assets/pets.js?v=130"></script>
 <script src="assets/class_skins_data.js?v=2"></script>
 <script src="assets/weapon_joints_data.js?v=2"></script>
 <script src="assets/weapons_data.js?v=2"></script>
@@ -902,10 +905,8 @@ const heroWeaponType=(cls,allowed,equipped)=>{const choices=allowed||[],preferre
 // crit/def/moveSpd): STR only pays ATK when it is the class's main stat, AGI also walks, INT carries
 // magic and skill damage, DEX and LUK share crit, and nothing on the character bends the drop tables.
 const STATS=[['str','STR','ATK'],['agi','AGI','ASPD, Flee, Move'],['int','INT','MATK, MDEF, caster skills'],['dex','DEX','Hit, Crit DMG, ranged ATK'],['vit','VIT','DEF, MDEF, HP'],['luk','LUK','Crit, ATK']];
-// A unique, immediately scannable glyph for every skill. These are interface symbols, not
-// replacement or recoloured character-sprite art.
-// Locally drawn fantasy ability art: no hotlinked image can collapse to the same red placeholder.
-// Skill families share recognizable pictograms in a simple outlined tile.
+// Skill cards use exact local crops of the supplied sheets. Legacy motifs remain
+// available for field buff symbols and interface compatibility.
 // Shared interface symbols: local SVG, with one stroke weight at every size.
 const UI_ICONS={
  wardrobe:'<path d="M9 5a3 3 0 0 1 6 0c0 2-3 2-3 4l9 7v3H3v-3l9-7"/>',
@@ -1024,8 +1025,9 @@ const SKILL_PICTO={
 };
 // Motifs describe the action; secondary emblems distinguish skills within the same family.
 const SKILL_EMBLEM={aid:'cross',hprec:'heart',bash:'shock',frenzy:'flame',tblow:'blades',endure:'shield',pierce:'target',spear:'book',spearboom:'shield',dbl:'arrow',env:'bolt',dodge:'wind',sonic:'shock',katm:'book',vdust:'shock',dpois:'skull',sandat:'sand',akatar:'gear',bowl:'blades',spiral:'spear',quick:'blades',jup:'storm',judex:'cross',adren:'hammer',aura:'spear',bless:'cross',fire:'flame',napalm:'ghost',asp:'cross',vermilion:'storm',storm:'wind',fnova:'ice',owl:'book',iconc:'arrow',sight:'sun',vult:'arrow',blitz:'bolt',falconry:'paw',sharp:'arrow',focus:'eye',grim:'blades',soulb:'blades',sdestroy:'skull',holy:'bolt',heal:'heart',magnus:'sun',sanct:'lotus',kyrie:'shield',assum:'wing',signum:'skull',gloria:'halo',meditatio:'book',mammo:'hammer',greed:'hand',hammer:'shock',wperf:'gear',cart:'coin',cartrev:'shock',skin:'shield',cboost:'cart',ovthrust:'hammer',mbrk:'book',pharrow:'arrow',landmine:'rock',mAss:'blades',meteor:'flame',iagi:'wind',falcon:'target',wwalk:'feather',vsplash:'poison'};
-const skillIcon=id=>{const motif=SKILL_ICON[id]||'rune',tone=SKILL_TONE[motif]||SKILL_TONE.rune,art=SKILL_PICTO[motif]||SKILL_PICTO.rune,emblem=SKILL_EMBLEM[id],accent=SKILL_TONE[emblem]||tone;
-  return`<svg class="skill-art motif-${motif}" data-motif="${motif}" data-emblem="${emblem||''}" viewBox="0 0 48 48" aria-hidden="true" focusable="false"><rect x="1" y="1" width="46" height="46" rx="9" fill="#101724" stroke="${tone[1]}"/><path d="M3 10Q3 3 10 3H38Q45 3 45 10V29L3 42Z" fill="${tone[0]}"/><path d="m6 14 8-8h20l8 8v20l-8 8H14l-8-8Z" fill="none" stroke="${tone[1]}" opacity=".28"/><g color="${tone[1]}" fill="currentColor" stroke="${tone[2]}" stroke-width=".8" stroke-linecap="round" stroke-linejoin="round" transform="${emblem?'translate(-1 -2) scale(.92)':'translate(0 0)'}">${art}</g>${emblem?`<circle cx="36" cy="36" r="10" fill="${accent[0]}" stroke="${accent[1]}"/><g color="${accent[1]}" fill="currentColor" stroke="${accent[2]}" stroke-width="1.2" stroke-linejoin="round" transform="translate(25 25) scale(.46)">${SKILL_PICTO[emblem]}</g>`:''}<path d="M7 3h12M3 7v9" fill="none" stroke="${tone[2]}" opacity=".7"/></svg>`};
+const skillIcon=id=>{const art=typeof PGSkillIcons!=='undefined'&&PGSkillIcons[id];
+  if(!art)return '<span class="skill-art skill-icon-missing" aria-hidden="true">✦</span>';
+  return `<img class="skill-art family-${art.family}" data-skill="${id}" data-family="${art.family}" src="assets/skill-icons/${art.file}" alt="" width="46" height="46" loading="lazy" decoding="async">`};
 // Field buffs use the same filled artwork as skills, in each buff's own color.
 const petBuffIcon=s=>{const motif={warcry:'blades',arcane:'orb',siphon:'water',vital:'heart'}[s.id]||'rune';
   return `<svg class="buff-art" data-buff="${s.id}" viewBox="0 0 48 48" aria-hidden="true" focusable="false"><rect x="1" y="1" width="46" height="46" rx="9" fill="#101724" stroke="${s.color}"/><path d="M3 10Q3 3 10 3H38Q45 3 45 10V29L3 42Z" fill="${s.color}" opacity=".2"/><g color="${s.color}" fill="currentColor" stroke="${s.color}" stroke-width=".8" stroke-linecap="round" stroke-linejoin="round">${SKILL_PICTO[motif]}</g><path d="M7 3h12M3 7v9" fill="none" stroke="#fff" opacity=".55"/></svg>`};
@@ -1080,7 +1082,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // give-back) and main's weapon-hold rendering work.
 let simCatchingUp=false;
 const simVisualsOff=()=>document.hidden||simCatchingUp;
-const BUILD='2026-10-12 grind-v128 Accessory collection';   // shown on the login card - confirms which file you loaded
+const BUILD='2026-10-12 grind-v130 Skill art and native pets';   // shown on the login card - confirms which file you loaded
 $('buildTag').textContent='build '+BUILD;
 
 // ---------- class tree: Novice -> 6 first jobs -> 6 second jobs -> 6 third jobs ----------
@@ -2345,8 +2347,13 @@ let tb={},petBuff={atk:0,matk:0,hp:0,leech:0,def:0,atkT:0,matkT:0,hpT:0,leechT:0
 const PETS=[{n:'Poring',spriteId:1002,r:0,c:0xff9db8},{n:'Lunatic',spriteId:1063,r:0,c:0xf4f4f4},
   {n:'Wolf',spriteId:1013,r:1,c:0x8a8a95},{n:'Desert Wolf',spriteId:1106,r:1,c:0xe0a050},
   {n:'Peco Peco',spriteId:1019,r:2,c:0xf0d060},{n:'Dragon Whelp',spriteId:1155,r:2,c:0x4aa070},
-  {n:'Baphomet Jr.',spriteId:1101,r:3,c:0x6a3fa0},{n:'Angeling',spriteId:1096,r:3,c:0xffffff}];
-const petIcon=(sp,small=false)=>`<img class="pet-icon${small?' small':''}" src="${mobSpriteUrl(sp.spriteId)}" alt="${sp.n}" loading="lazy" decoding="async">`;
+  {n:'Baphomet Jr.',spriteId:1101,r:3,c:0x6a3fa0},{n:'Angeling',spriteId:1096,r:3,c:0xffffff},
+  // Append only: the original eight numeric species IDs are stored in existing saves.
+  {n:'Drops',spriteId:1113,r:0,c:0xffc06a},{n:'Poporing',spriteId:1031,r:0,c:0x90d477},{n:'Fabre',spriteId:1007,r:0,c:0x8ac366},
+  {n:'Smokie',spriteId:1056,r:1,c:0x9a8677},{n:'Yoyo',spriteId:1057,r:1,c:0xc39b68},{n:'Spore',spriteId:1014,r:1,c:0xe2a17f},
+  {n:'Sohee',spriteId:1170,r:2,c:0xb0c7e3},{n:'Deviruchi',spriteId:1109,r:2,c:0x8567ab},{n:'Nine Tail',spriteId:1180,r:2,c:0xe7ad65},
+  {n:'Deviling',spriteId:1582,r:3,c:0x8360b2},{n:'Ghostring',spriteId:1120,r:3,c:0xccdae3},{n:'Eddga',spriteId:1115,r:3,c:0xcc974f}];
+const petIcon=(sp,small=false)=>`<img class="pet-icon${small?' small':''}" src="assets/pets/v1/thumb-${sp.spriteId}.png" alt="${sp.n}" loading="lazy" decoding="async">`;
 const RN=['Common','Rare','Epic','Legendary'],RCL=[0,2,3,4],MUT=[1,2,4,6,8,18,38],MC=[0,0x6cd36c,0x4aa3ff,0xb05cff,0xffb020,0xff4d4d,0xffffff];
 // Pets are found, never hatched: they only ever come from monster drops (0.3% per kill,
 // 5% from a boss). EGG survives as the price anchor for release refunds and for the Zeny
@@ -2371,7 +2378,28 @@ const PET_TRAIT=[
   {n:'Swift Mount',   k:['move'],    d:v=>`+${v}% movement speed`},
   {n:'Hoarded Flame', k:['gear'],    d:v=>`+${v}% equipment drop chance`},
   {n:'Executioner',   k:['boss'],    d:v=>`+${v}% damage to MVPs, yours and your pets'`},
-  {n:'Divine Grace',  k:['hp','dr'], d:v=>`+${v}% Max HP and ${v}% less damage taken`}];
+  {n:'Divine Grace',  k:['hp','dr'], d:v=>`+${v}% Max HP and ${v}% less damage taken`},
+  {n:'Golden Jelly', k:['zeny'], d:v=>`+${v}% Zeny from kills`},
+  {n:'Resilient Gel', k:['hp'], d:v=>`+${v}% Max HP`},
+  {n:'Silken Guard', k:['dr'], d:v=>`${v}% less damage taken`},
+  {n:'Sneaky Finder', k:['gear'], d:v=>`+${v}% equipment drop chance`},
+  {n:'Curious Forager', k:['ore'], d:v=>`+${v}% Oridecon and Elunium drop chance`},
+  {n:'Forest Wisdom', k:['exp'], d:v=>`+${v}% EXP and Job EXP from kills`},
+  {n:'Spirit Tutor', k:['exp'], d:v=>`+${v}% EXP and Job EXP from kills`},
+  {n:'Impish Ambush', k:['boss'], d:v=>`+${v}% damage to MVPs, yours and your pets'`},
+  {n:'Fox Fortune', k:['gear'], d:v=>`+${v}% equipment drop chance`},
+  {n:'Dark Rally', k:['petdmg'], d:v=>`+${v}% damage for every fighting pet`},
+  {n:'Spectral Veil', k:['dr'], d:v=>`${v}% less damage taken`},
+  {n:'Tiger Challenge', k:['boss'], d:v=>`+${v}% damage to MVPs, yours and your pets'`}];
+// Suggestions use existing random skill rolls; they do not grant skills or change odds.
+const PET_RECOMMENDED=[
+ ['treasuresniff','warmnuzzle'],['vital','tailwag'],['warcry','piercingfang'],['treasuresniff','piercingfang'],
+ ['guardingchirp','tailwag'],['flameburst','warcry'],['piercingfang','siphon'],['vital','warmnuzzle'],
+ ['treasuresniff','tailwag'],['vital','warmnuzzle'],['guardingchirp','warmnuzzle'],
+ ['treasuresniff','tailwag'],['treasuresniff','piercingfang'],['vital','guardingchirp'],
+ ['arcane','spiritbolt'],['piercingfang','siphon'],['flameburst','warcry'],
+ ['arcane','spiritbolt'],['vital','spiritbolt'],['warcry','flameburst']];
+let petPreviewStance='idle';
 const bondCnt=sp=>Math.max(0,Math.min(999,Number((S&&S.bond&&S.bond[sp])||0)));
 // Bond 0..5: 0 at none, 1 after the first folded duplicate, 5 after fifteen of them.
 const bondRank=sp=>{const c=bondCnt(sp);let r=0;while(r<5&&c>=PETBOND[r])r++;return r};
@@ -5136,10 +5164,11 @@ function foldDupPets(){
 }
 function petDetail(p){const sp=PETS[p.sp],g=p.mut,sk=p.sk||[1,2,3],SL=petSkills(p);
   return`<div class="mob-card" style="margin-top:8px"><div class="hd r${RCL[sp.r]}">${petIcon(sp,true)} ${sp.n} <small>${RN[sp.r]}</small></div><small>Mutation: <b>${g?'Grade '+g+' (x'+MUT[g]+' dmg)':'none (x1)'}</b> &middot; ${petDmg(p).toLocaleString()} dmg every ${petInt(p).toFixed(2)}s</small>`
+  +`<div class="pet-animation-preview"><canvas width="256" height="256" data-pet-preview="${sp.spriteId}" aria-label="${sp.n} ${petPreviewStance} animation"></canvas><div><div class="row">${['idle','walk','attack'].map(a=>`<button data-a="petmotion" data-v="${a}" class="${petPreviewStance===a?'on':''}">${a[0].toUpperCase()+a.slice(1)}</button>`).join('')}</div><small data-pet-preview-status>Loading animation…</small><button data-a="petretry" hidden>Retry animation</button></div></div>`
   +p.eq.map((t,i)=>`<div class="slot"><span><b>${PEQ[i].n} &middot; Level ${t}/${PT.length}</b> <small>(${t?PT[t-1]:'Untrained'})</small><br><small>${PEQ[i].d(t)}</small>${t<PT.length?`<br><small class="r0">${Math.round(PTG[t]*100)}% upgrade success &middot; ${t+2<=PT.length?Math.round(GREAT*100)+'% double upgrade chance on success':'double upgrade unavailable at this level'}</small>`:''}</span><button data-a="peq" data-v="${p.id}:${i}" ${t>=PT.length||S.zeny<peqCostOf(p,t)?'disabled':''}>${t>=PT.length?'MAX':'🎲 '+peqCostOf(p,t).toLocaleString()+'z'}</button></div>`).join('')
   +`<div class="sec">Signature passive &middot; <b>${PET_TRAIT[p.sp].n}</b></div><small>${PET_TRAIT[p.sp].d(traitVal(p.sp))} while this pet is one of the fighting three. ${bondStars(p.sp)} <b>${bondCnt(p.sp)} duplicates merged</b>${bondNext(p.sp)?` &middot; ${bondNext(p.sp)-bondCnt(p.sp)} more ${sp.n} folded in reaches ${Math.min(5,bondRank(p.sp)+1)} stars`:' &middot; maxed'}.<br>A duplicate of a pet you already own is folded into it automatically - the better mutation and gear are kept, a missing skill is merged in, and the duplicate count increases by one. One pet per species. Each earned star adds 1 percentage point to this signature passive: 5% before bonding, up to 10% at five stars.</small>`
   +`<div class="sec">Bonding information</div><small>Filled stars show the Bond rank, not the total number of merges. ${PETBOND.map((n,i)=>`${'★'.repeat(i+1)} = ${n} merged duplicate${n===1?'':'s'} · ${6+i}% passive`).join('<br>')}<br>The first copy is your pet; only extra copies count as merges. Bonuses apply while the pet is deployed. Mutation grade (G) and training are separate from bonding.</small>`
-  +`<div class="sec">Pet skills &middot; 2 slots</div>`
+  +`<div class="sec">Pet skills &middot; 2 slots</div><small>Suggested pairing: <b>${PET_RECOMMENDED[p.sp].map(id=>PET_SKILLS.find(s=>s.id===id).n).join(' + ')}</b>. Skill drops and rolls are random.</small>`
   +[0,1].map(i=>{const q=SL[i];return q?`<small><b>${q.icon} ${q.n}</b> &middot; ${q.kind==='buff'?'Player buff':q.kind==='aoe'?'AoE attack':q.kind==='single'?'Single-target attack':'Low-impact utility'} &middot; ${q.desc}</small>`:`<small>Slot ${i+1}: <b class="r0">empty</b> - one gacha fills the remaining slot.</small>`}).join('<br>')
   +`<div class="row" style="margin-top:4px"><button data-a="pskill" data-v="${p.id}" ${S.zeny<petSkillCost(p)?'disabled':''}>🎲 ${SL.length>=2?'Reroll both skills':SL.length===1?'Gacha the second skill':'Gacha both skills'} (${petSkillCost(p).toLocaleString()}z)</button></div>`
   +`<small>Twelve skills: 4 player buffs, 2 AoE attacks, 2 single-target attacks and 4 low-impact utility rolls. Gacha weights: War Cry and Arcane Blessing 0.35× each; every other skill 1×. Every pet arrives from a drop with one random skill already slotted, so the collection means something from the first minute; one gacha fills the rest and never repeats a skill. A pet uses one skill every ${PETGAP}s.</small>`
@@ -5613,7 +5642,9 @@ const ACT={
     log(`🃏 ${name}: dedicated ${r.donated} cop${r.donated===1?'y':'ies'} - mastery ${r.level}/${CARD_MASTERY_PER_CARD}${r.left?`, ${r.left} left in the bag`:''}.`,'r3','card');
     addFloat(pl.x,2.6,pl.z,`🃏 ${name} ${r.level}/${CARD_MASTERY_PER_CARD}`,'#ffd23f');ui();save()},
   indexcard:all=>all,
-  refprotect:v=>{const n=Number(v);if(![0,1].includes(n))return;S.useRefineScroll=n===1;ui();save()},buyscroll:()=>buyRefineScroll(),refine:k=>refine(k),craftdps:()=>craftDps(),bmmat:o=>buyMat(+o),bmore:o=>buyOre(o,$('oreQty-'+o)?.value??1),bmref:v=>{const[k,mode]=v.split(':');reforge(k,mode==='all')},refpick:v=>{const[k,i]=v.split(':'),it=S.eq[k];if(!it)return;const a=reforgeSelection[it.id]||(reforgeSelection[it.id]=[]),n=+i,j=a.indexOf(n);j<0?a.push(n):a.splice(j,1);renderWin()},refaccept:v=>resolveReforge(v==='yes'),mergecard:id=>mergeCard(id),convertcard:id=>convertCard(id),guidemode:v=>{if(['farm','boss','survive'].includes(v))guideMode=v;renderWin()},guidetier:v=>{if(['current','normal','nightmare'].includes(v))guideTier=v;renderWin()},guidemap:v=>{const[m,l]=v.split(':').map(Number);if(!tabs.includes('map'))openTab('map');mapM=m;mapL=l;renderWin()},sub:v=>{const[t,k]=v.split(':');sub[t]=k;if(t==='bag'&&k!=='bag')eqPick=null;renderWin()},selp:v=>{selP=+v;sub.pet='manage';renderWin()},
+  refprotect:v=>{const n=Number(v);if(![0,1].includes(n))return;S.useRefineScroll=n===1;ui();save()},buyscroll:()=>buyRefineScroll(),refine:k=>refine(k),craftdps:()=>craftDps(),bmmat:o=>buyMat(+o),bmore:o=>buyOre(o,$('oreQty-'+o)?.value??1),bmref:v=>{const[k,mode]=v.split(':');reforge(k,mode==='all')},refpick:v=>{const[k,i]=v.split(':'),it=S.eq[k];if(!it)return;const a=reforgeSelection[it.id]||(reforgeSelection[it.id]=[]),n=+i,j=a.indexOf(n);j<0?a.push(n):a.splice(j,1);renderWin()},refaccept:v=>resolveReforge(v==='yes'),mergecard:id=>mergeCard(id),convertcard:id=>convertCard(id),guidemode:v=>{if(['farm','boss','survive'].includes(v))guideMode=v;renderWin()},guidetier:v=>{if(['current','normal','nightmare'].includes(v))guideTier=v;renderWin()},guidemap:v=>{const[m,l]=v.split(':').map(Number);if(!tabs.includes('map'))openTab('map');mapM=m;mapL=l;renderWin()},sub:v=>{const[t,k]=v.split(':');sub[t]=k;if(t==='bag'&&k!=='bag')eqPick=null;renderWin()},selp:v=>{selP=+v;petPreviewStance='idle';sub.pet='manage';renderWin()},
+  petmotion:v=>{if(['idle','walk','attack'].includes(v)){petPreviewStance=v;renderWin()}},
+  petretry:()=>{const p=gp(selP);if(p&&petSpriteStore){const id=PETS[p.sp].spriteId;petSpriteStore.retry(petAssetKey(id,petPreviewStance,0)).catch(()=>{})}},
   pswap:id=>{const pet=gp(id),select=$('wins').querySelector('[data-pet-replace="'+id+'"]'),previous=gp(select?.value);if(!pet||pet.on||!previous?.on)return;previous.on=false;pet.on=true;ui();save()},
   pon:id=>{const p=gp(id);if(!p)return;if(p.on)p.on=false;else if(S.pets.filter(x=>x.on).length<3)p.on=true;else log('Only 3 pets can fight at once. Remove one first.','','pet');ui();save()},
   pskill:id=>{const p=gp(id);if(!p)return;const c=petSkillCost(p);if(S.zeny<c){log('Not enough Zeny for a pet skill roll.');ui();return}S.zeny-=c;const[a,b]=rollPetSkills();p.skills=[a,b];
@@ -5960,8 +5991,8 @@ if(S.hp<=0){log('You were defeated... knocked back to the entrance.','r0','kills
   const AP=S.pets.filter(p=>p.on);for(const p of AP){const r=petR[p.id]||(petR[p.id]={x:pl.x-1,z:pl.z+1,at:rnd(0,1)}),i=AP.indexOf(p);let o=null,bd=1e9;
     for(const m of mobs){if(m.pack!==activePack)continue;const d=Math.hypot(m.x-r.x,m.z-r.z);if(d<bd){bd=d;o=m}}
     const ex=(o?o.x+(i-1)*.8:pl.x-1.2)-r.x,ez=(o?o.z+1.2:pl.z+(i-1)*1.1)-r.z,ed=Math.hypot(ex,ez);r.run=ed>.2;
-    if(ed>.05){const v=Math.min(ed,6*dt);r.x+=ex/ed*v;r.z+=ez/ed*v}r.x=cl(r.x,-BX_,BX_);r.z=cl(r.z,Z0-1,Z1+1);r.lunge=Math.max(0,(r.lunge||0)-dt*4);
-    if(o&&bd<2.4){r.at-=dt;if(r.at<=0){r.at=petInt(p);r.lunge=1;petHit(p,o)}}}
+    if(ed>.05){const v=Math.min(ed,6*dt);r.face=Math.atan2(ez,ex);r.x+=ex/ed*v;r.z+=ez/ed*v}r.x=cl(r.x,-BX_,BX_);r.z=cl(r.z,Z0-1,Z1+1);r.lunge=Math.max(0,(r.lunge||0)-dt*4);
+    if(o&&bd<2.4){r.at-=dt;if(r.at<=0){r.at=petInt(p);r.lunge=1;r.face=Math.atan2(o.z-r.z,o.x-r.x);r.attackStarted=t;petHit(p,o)}}}
   const px=tx-pl.x,pz=tz-pl.z,pd=Math.hypot(px,pz),spd=moveSpd()*(1+Math.min(25,skillBonus('move'))/100);
   // v77: in the arena the character stands still on purpose - the dummy and the player both stay
   // put, so the three minutes measure damage and nothing else.
@@ -7863,8 +7894,8 @@ function ensureHero(opt){const native=typeof wardrobeHero==='function'?wardrobeH
   heroSpr=mkBillboard(tex,1.95,2.92);P.add(heroSpr)}
 const mobTextureLoader=new THREE.TextureLoader(),mobTextureCache=new Map();
 mobTextureLoader.setCrossOrigin('anonymous');
-function requestMobTexture(id){if(!id)return null;if(mobTextureCache.has(id))return mobTextureCache.get(id);
-  const url=mobSpriteUrl(id),rec={state:'loading',texture:null};if(!url)return null;mobTextureCache.set(id,rec);
+function requestMobTexture(id,overrideUrl){if(!id)return null;const key=overrideUrl||id;if(mobTextureCache.has(key))return mobTextureCache.get(key);
+  const url=overrideUrl||mobSpriteUrl(id),rec={state:'loading',texture:null};if(!url)return null;mobTextureCache.set(key,rec);
   const tex=mobTextureLoader.load(url,loaded=>{loaded.magFilter=loaded.minFilter=THREE.NearestFilter;loaded.generateMipmaps=false;loaded.needsUpdate=true;rec.texture=loaded;rec.state='ready'},undefined,()=>{rec.state='failed'});
   tex.magFilter=tex.minFilter=THREE.NearestFilter;tex.generateMipmaps=false;rec.texture=tex;return rec}
 function useMobTexture(v,texture){if(!texture||v.official)return;
@@ -7897,7 +7928,7 @@ function mobMotion(m,clock){
   o.lunge=out*(m.boss?.62:.45)-hitS*.2+own*.45;
   o.dir=Math.atan2(pl.z-m.z,pl.x-m.x);
   return o}
-function syncMobImage(v,m,s){const im=v.image,motion=mobMotion(m,t);
+function syncMobImage(v,m,s){if(v.nativePet){if(v.image)v.image.style.display='none';v.spr.visible=true;return}const im=v.image,motion=mobMotion(m,t);
   if(v.official){if(im)im.style.display='none';v.spr.visible=true;
     const lx=motion.lunge?Math.cos(motion.dir)*motion.lunge:0,lz=motion.lunge?Math.sin(motion.dir)*motion.lunge:0;
     v.spr.position.set(lx,motion.hop,lz);
@@ -7916,9 +7947,9 @@ function buildMob(m){
   const tex=getSheet('m:'+m.shape+':'+m.c,(ctx,x,y,d,kind,fr)=>drawCritter(ctx,x,y,d,kind,fr,m.shape,m.c));
   const spr=mkBillboard(tex,2.05,3.05);G.add(spr);mkShadow(G,.42);scene.add(G);
   const v={G,spr,pending:null,monster:m,spriteId:m.spriteId||0,official:false,image:null,imageFailed:false};
-  const url=mobSpriteUrl(v.spriteId);
+  const url=m.pet?'assets/pets/v1/thumb-'+v.spriteId+'.png':mobSpriteUrl(v.spriteId);
   if(url){const im=document.createElement('img');im.className='mob-sprite-img';im.alt='';im.draggable=false;im.decoding='async';im.style.display='none';
-    im.onerror=()=>{v.imageFailed=true;im.style.display='none'};im.src=url;mobSpriteLayer.appendChild(im);v.image=im;requestMobTexture(v.spriteId)}
+    im.onerror=()=>{v.imageFailed=true;im.style.display='none'};im.src=url;mobSpriteLayer.appendChild(im);v.image=im;requestMobTexture(v.spriteId,m.pet?url:undefined)}
   return v}
 let slashM=null;
 // The uploaded attack animation is the whole swing.  The old melee cue - a white arc stroked in
@@ -7931,11 +7962,55 @@ function drawSlashFX(x,z,wt){
     slashM=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(cv),transparent:true,depthWrite:false}));slashM.center.set(.5,.25);scene.add(slashM)}
   slashM.visible=HERO_SWING_ARC&&atkAnim>.12&&wt!=='bow'&&wt!=='staff';if(!slashM.visible)return;
   slashM.position.set(x,1.15,z);slashM.material.opacity=Math.min(1,atkAnim*1.6)*.9;slashM.scale.set(1.6+atkAnim*1.2,1.6+atkAnim*1.2,1)}
-// Pets use the same official Divine Pride renderer as field mobs, but every species
-// stays well below the hero regardless of the monster's size or mutation grade.
+// Native pets retain their ACT timing and foot pivot; every species stays small.
 const PET_VISUAL_SCALE=.42;
 const petFallbackShape=sp=>sp.n==='Lunatic'?'bunny':sp.n.includes('Wolf')?'cat':sp.n.includes('Peco')?'bug':sp.n.includes('Dragon')||sp.n.includes('Baphomet')?'demon':'blob';
-function disposeCreatureVisual(v){scene.remove(v.G);if(v.image)v.image.remove();if(v.official&&v.spr.material.map)v.spr.material.map.dispose();v.spr.material.dispose()}
+// Only active states and the open preview are pinned. Previous native frames stay visible
+// while a different direction/state loads; all art and metadata are local packed files.
+const petSpriteStore=typeof PGPetSprites==='object'?new PGPetSprites.Store():null;
+const petAssetKey=(id,stance,direction)=>id+'-'+stance+(petSpriteStore?.catalog?.assets[id+'-'+stance+'-'+direction]?'-'+direction:'');
+function requestPetAsset(id,stance,direction){
+ if(!petSpriteStore)return null;
+ if(!petSpriteStore.catalog){petSpriteStore.init().catch(()=>{});return null}
+ const key=petAssetKey(id,stance,direction),asset=petSpriteStore.ready(key);
+ if(!asset)petSpriteStore.request(key).catch(()=>{});
+ return asset;
+}
+function petAnimationState(id,r,direction){
+ const duration=(petSpriteStore?.catalog?.species[id]?.attackDurations[direction]||0)/1000;
+ const elapsed=r.attackStarted==null?Infinity:Math.max(0,t-r.attackStarted);
+ return elapsed<duration?{stance:'attack',ms:elapsed*1000,progress:elapsed/duration}:{stance:r.run?'walk':'idle',ms:t*1000,progress:null};
+}
+function drawNativePet(v,id,r,direction){
+ const state=petAnimationState(id,r,direction),asset=requestPetAsset(id,state.stance,direction);
+ if(!asset)return;
+ if(!v.nativePet){
+  const cv=document.createElement('canvas');cv.width=cv.height=256;
+  const tex=new THREE.CanvasTexture(cv);tex.magFilter=tex.minFilter=THREE.NearestFilter;tex.generateMipmaps=false;
+  if(v.official)v.spr.material.map.dispose();
+  v.nativePet={cv,ctx:cv.getContext('2d'),tex,last:''};v.spr.material.map=tex;v.spr.material.needsUpdate=true;v.spr.center.set(.5,.25);
+  v.official=true;if(v.image)v.image.style.display='none';
+ }
+ const n=v.nativePet,view=asset.metadata.actions[state.stance+direction],frame=PGPetSprites.frameIndex(view,state.ms,state.progress);
+ const key=petAssetKey(id,state.stance,direction)+':'+direction+':'+frame;
+ if(key!==n.last){PGPetSprites.draw(n.ctx,asset,state.stance,direction,state.ms,state.progress);n.tex.needsUpdate=true;n.last=key}
+ const size=256*3.05/asset.figureHeight;v.spr.scale.set(size,size,1);v.spr.position.set(0,0,0);v.spr.material.rotation=0;
+}
+function drawPetPreviews(){
+ if(!petSpriteStore)return;
+ const pins=[];
+ for(const p of S?.pets||[]){const r=petR[p.id];if(!p.on||!r)continue;const id=PETS[p.sp].spriteId,d=viewDir(r.face||0),state=petAnimationState(id,r,d);pins.push(petAssetKey(id,state.stance,d))}
+ const cv=document.querySelector('[data-pet-preview]');
+ if(cv){const id=+cv.dataset.petPreview,asset=requestPetAsset(id,petPreviewStance,0),status=cv.parentNode.querySelector('[data-pet-preview-status]'),retry=cv.parentNode.querySelector('[data-a="petretry"]');
+  const key=petAssetKey(id,petPreviewStance,0);pins.push(key);
+  const error=petSpriteStore.catalogError||petSpriteStore.failed.get(key);
+  if(asset){PGPetSprites.draw(cv.getContext('2d'),asset,petPreviewStance,0,t*1000);status.textContent='Native '+petPreviewStance+' animation';cv.style.backgroundImage='none'}
+  else{cv.style.backgroundImage='url(assets/pets/v1/thumb-'+id+'.png)';status.textContent=error?'Animation unavailable. Retry to load.':'Loading animation…'}
+  retry.hidden=!error;
+ }
+ petSpriteStore.pin(pins);
+}
+function disposeCreatureVisual(v){scene.remove(v.G);if(v.image)v.image.remove();if(v.official&&v.spr.material.map)v.spr.material.map.dispose();v.spr.material.dispose();if(v.nativePet)v.nativePet.cv.width=v.nativePet.cv.height=0}
 const mobMesh=new Map(),petMesh=new Map();let curMob=null,mobG=null,mobMats=[],lastBoss=null,dmesh=new Map(),tmp=new THREE.Vector3(),lastProg='';
 function scr(x,y,z){tmp.set(x,y,z).project(cam);return[(tmp.x+1)/2*R.domElement.clientWidth,(1-tmp.y)/2*R.domElement.clientHeight]}
 // Facing-away views (NW 3, N 4, NE 5): the item icon is front-view art and reads wrong there.
@@ -8803,11 +8878,11 @@ function draw(){
   if(heroTitle&&heroTitleText){if(equipped){const [txh,tyh]=scr(pl.x,0.16,pl.z);heroTitle.style.display='block';heroTitle.style.left=txh+'px';heroTitle.style.top=tyh+'px';if(heroTitleMark&&heroTitleMark.dataset.title!==equipped.id){heroTitleMark.innerHTML=titleIcon(equipped);heroTitleMark.dataset.title=equipped.id;}heroTitleText.textContent=equipped.name;heroTitle.title='Index title · '+(equipped.xp??equipped.kills).toLocaleString()+' Index XP'}else heroTitle.style.display='none'}
   const pids=new Set(S.pets.filter(p=>p.on).map(p=>p.id));petMesh.forEach((v,id)=>{if(!pids.has(id)){disposeCreatureVisual(v);petMesh.delete(id)}});
   S.pets.filter(p=>p.on).forEach(p=>{const sp=PETS[p.sp],r=petR[p.id];if(!sp||!r)return;let v=petMesh.get(p.id);
-    const pet={x:r.x,z:r.z,run:r.run,a:p.id,shape:petFallbackShape(sp),c:sp.c,spriteId:sp.spriteId,flash:0,lunge:r.lunge||0};
+    const pet={x:r.x,z:r.z,run:r.run,a:p.id,shape:petFallbackShape(sp),c:sp.c,spriteId:sp.spriteId,pet:true,flash:0,lunge:r.lunge||0};
     if(!v){v=buildMob(pet);petMesh.set(p.id,v)}
-    const rec=mobTextureCache.get(sp.spriteId);if(rec&&rec.state==='ready')useMobTexture(v,rec.texture);
+    const rec=mobTextureCache.get('assets/pets/v1/thumb-'+sp.spriteId+'.png');if(rec&&rec.state==='ready')useMobTexture(v,rec.texture);
     v.G.position.set(r.x,0,r.z);v.G.scale.setScalar(PET_VISUAL_SCALE);
-    const pf=mob?Math.atan2(mob.z-r.z,mob.x-r.x):pFace;
+    const pf=Number.isFinite(r.face)?r.face:pFace;drawNativePet(v,sp.spriteId,r,viewDir(pf));
     if(!v.official)setCell(v.spr,viewDir(pf),animRow(r.run,r.lunge||0,t,12));
     v.spr.material.color.set(0xffffff); // keep the original RO art even when mutated
   });
@@ -8831,6 +8906,7 @@ function draw(){
   eclipseDrawMinimap();if(typeof eclipseDrawAtlas==='function')eclipseDrawAtlas();drawSkinPreview('eclipsePortrait',null,S.cls,S.sex);if(tabs.includes('equip'))drawSkinPreview('eclipseDoll',null,S.cls,S.sex);if(tabs.includes('set'))drawAppearancePreview();
   if(tabs.includes('job'))drawClassPreview();
   if(typeof wardrobePreview==='function')wardrobePreview();
+  drawPetPreviews();
   R.render(scene,cam);
   floats.forEach(f=>{if(!f.el){const e=document.createElement('div');e.className='fl'+(f.big?' big':'')+(f.kind&&f.kind!=='text'?' '+f.kind:'');
     if(f.kind==='critical'||f.kind==='skill-critical'){

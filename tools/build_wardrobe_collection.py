@@ -1,15 +1,27 @@
 #!/usr/bin/env python3
 """Build a shared 19-class wardrobe with individually loaded accessories."""
-import argparse, hashlib, json
+import argparse, hashlib, json, shutil
 from pathlib import Path
 from PIL import Image
 from wardrobe_png import encode_png
 from build_wardrobe_classes import CLASSES
 
-def build(source,pieces,definitions,output):
+def build(source,pieces,definitions,output,append_to=None,piece=None):
     output.mkdir(parents=True,exist_ok=True)
     if any(output.iterdir()):raise ValueError('Use an empty output directory')
     defs=json.loads(definitions.read_text());groups={};images={};heights={}
+    if piece:
+        defs={slot:[item for item in items if item['key']==piece]for slot,items in defs.items()}
+        if sum(map(len,defs.values()))!=1:raise ValueError('Unknown or ambiguous accessory')
+    if append_to:
+        manifest=json.loads((append_to/'catalog.json').read_text())
+        assert manifest['classes']==CLASSES and not manifest['outfits']
+        for path in append_to.iterdir():shutil.copyfile(path,output/path.name)
+        for slot,items in defs.items():
+            for item in items:
+                if any(existing['key']==item['key'] for existing in manifest['accessories'][slot]):
+                    raise ValueError('Accessory already exists: '+item['key'])
+                manifest['accessories'][slot].append(item)
     def add(folder,path,group,slots,job):
         actions=json.loads(path.read_text());target=groups.setdefault(group,{})
         for name,view in actions.items():
@@ -20,16 +32,19 @@ def build(source,pieces,definitions,output):
     for job in CLASSES.values():
         folder=source/str(job)
         for sex in ['m','f']:
-            base=json.loads((folder/f'base-{sex}.json').read_text())['idle0']['frames'][0]
-            hair=json.loads((folder/f'hair-{sex}-2-0.json').read_text())['idle0']['frames'][0]
-            figure=[p for p in base+hair if p['slot'] in {'body','hair'}]
-            heights[f'base-{job}-{sex}']=max(p['y']+Image.open(folder/'images'/(p['image']+'.png')).height for p in figure)-min(p['y']for p in figure)
-            add(folder,folder/f'base-{sex}.json',f'base-{job}-{sex}',{'body','weapon','shadow'},job)
+            if not append_to:
+                base=json.loads((folder/f'base-{sex}.json').read_text())['idle0']['frames'][0]
+                hair=json.loads((folder/f'hair-{sex}-2-0.json').read_text())['idle0']['frames'][0]
+                figure=[p for p in base+hair if p['slot'] in {'body','hair'}]
+                heights[f'base-{job}-{sex}']=max(p['y']+Image.open(folder/'images'/(p['image']+'.png')).height for p in figure)-min(p['y']for p in figure)
+                add(folder,folder/f'base-{sex}.json',f'base-{job}-{sex}',{'body','weapon','shadow'},job)
             for items in defs.values():
                 for item in items:
                     f=pieces/str(job);key=item['key'];add(f,f/f'{key}-{sex}.json',f'piece-{key}-{sex}',{key},job)
-        for path in sorted(folder.glob('hair-*.json')):add(folder,path,path.stem,{'hair'},job)
-    manifest=dict(version=2,width=320,height=280,anchor=[160,200],classes=CLASSES,outfits={},accessories=defs,assets={})
+        if not append_to:
+            for path in sorted(folder.glob('hair-*.json')):add(folder,path,path.stem,{'hair'},job)
+    if not append_to:
+        manifest=dict(version=2,width=320,height=280,anchor=[160,200],classes=CLASSES,outfits={},accessories=defs,assets={})
     for name, actions in sorted(groups.items()):
         # Native action order is stable across palettes; content-hash order is not.
         # Stable placement lets all palette variants reuse the same attachment file.
@@ -88,11 +103,15 @@ def build(source,pieces,definitions,output):
         digest=hashlib.sha256(meta).hexdigest(); filename='poses-'+digest[:20]+'.json'; (output/filename).write_bytes(meta)
         manifest['assets'][name]=dict(meta=filename,metaSha256=digest,metaBytes=len(meta),image=image,imageSha256=sha,imageBytes=len(png),width=width,height=height)
     for key,height in heights.items():manifest['assets'][key]['figureHeight']=height
-    assert len(manifest['assets'])==360+2*len(CLASSES)+2*sum(len(x)for x in defs.values())
+    assert len(manifest['assets'])==360+2*len(CLASSES)+2*sum(len(x)for x in manifest['accessories'].values())
     (output/'catalog.json').write_text(json.dumps(manifest,separators=(',',':'))+'\n')
     files=list(output.iterdir());print(json.dumps(dict(files=len(files),bytes=sum(p.stat().st_size for p in files),maxAtlasBytes=max(r['width']*r['height']*4 for r in manifest['assets'].values()))))
 
 if __name__=='__main__':
     p=argparse.ArgumentParser(description=__doc__)
     for name in ['source','pieces','definitions','output']:p.add_argument(name,type=Path)
-    a=p.parse_args();build(a.source,a.pieces,a.definitions,a.output)
+    p.add_argument('--append',type=Path,help='Preserve an existing pack byte for byte and append new pieces')
+    p.add_argument('--piece',help='Build only this accessory key (with --append)')
+    a=p.parse_args()
+    if a.piece and not a.append:p.error('--piece requires --append')
+    build(a.source,a.pieces,a.definitions,a.output,a.append,a.piece)

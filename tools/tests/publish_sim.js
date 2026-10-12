@@ -99,9 +99,17 @@ t('the published tree is small enough to stay honest', () => {
   const mb = bytes / 1048576;
   assert.ok(mb > 8, 'the published tree is only ' + mb.toFixed(1) + ' MB - is the sprite pack still shipping?');
   assert.ok(mb < 36, 'the published tree grew to ' + mb.toFixed(1) + ' MB; the shared native class pack and fallback game must fit in 36 MiB.');
-  const wardrobe=path.join(out,'assets/wardrobe/v5');assert.ok(walk(wardrobe)<11*1048576,'nineteen classes and forty accessories must share sprites');
+  const wardrobe=path.join(out,'assets/wardrobe/v5');assert.ok(walk(wardrobe)<11.25*1048576,'nineteen classes and forty-one accessories must share sprites');
   const catalog=JSON.parse(fs.readFileSync(path.join(wardrobe,'catalog.json'),'utf8'));
   for(const r of Object.values(catalog.assets))for(const key of ['meta','image'])assert.ok(fs.existsSync(path.join(wardrobe,r[key])),'native catalog asset is published');
+});
+
+t('all supplied skill crops and native pet states ship within their bounded packs',()=>{
+ const iconRoot=path.join(out,'assets/skill-icons'),petRoot=path.join(out,'assets/pets/v1');
+ const icons=require('../../assets/skill-icons.js');assert.equal(Object.keys(icons).length,91);for(const r of Object.values(icons))assert.ok(fs.existsSync(path.join(iconRoot,r.file)));
+ const pets=JSON.parse(fs.readFileSync(path.join(petRoot,'catalog.json')));assert.equal(Object.keys(pets.species).length,20);
+ for(const r of Object.values(pets.assets))for(const key of ['image','meta','thumbnail'])assert.ok(fs.existsSync(path.join(petRoot,r[key])));
+ const size=d=>fs.readdirSync(d).reduce((n,f)=>n+fs.statSync(path.join(d,f)).size,0);assert.ok(size(iconRoot)<2*1048576);assert.ok(size(petRoot)<2*1048576);
 });
 
 t('.assetsignore covers the same dev material (the Cloudflare safety net)', () => {
