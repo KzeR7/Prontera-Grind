@@ -6910,3 +6910,7 @@ The owner's second pass over v77, six notes, all built.
 * **Map proposals:** Three visual directions use existing terrain/scenery crops across all ten maps. Generate with `python tools/preview/map_directions.py <output-folder>` (Pillow required). These are proposals; live map layouts await the owner's choice.
 * **Try it:** Replace carded gear; Bag → Cards → select a socketed card and merge; Index → dedicate a loose card; Log → scroll up while events arrive; reload and inspect pets.
 * **Checks:** Regression, card ownership, all 480 pet state/direction views, scroll anchoring, native startup and desktop/390px browser checks are recorded in workspace validation context. Browser checks use a marked WebGL stub because this Chromium cannot create a GPU context; final battlefield appearance needs a capable browser. No deployment.
+
+### 2026-10-12 — Map proposals withdrawn
+* Removed the rejected map studies, gallery, generator and preview service at the owner’s request. This supersedes the proposal and pending-choice note in v131. The gameplay fixes remain; no live maps were changed.
+* Checks: proposal files removed, gameplay file hashes unchanged, and whitespace validation recorded in workspace context. No in-game change or BUILD bump.
