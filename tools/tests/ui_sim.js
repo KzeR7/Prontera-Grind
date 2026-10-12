@@ -136,7 +136,7 @@ let skinBroken=false,skinNote='';   // the Appearance panel's class-skin state (
 const skCost=x=>x,skOff=id=>!!(S&&S.skOff&&S.skOff[id]);
 let petBuff={atk:0,matk:0,hp:0,leech:0,atkT:0,matkT:0,hpT:0,leechT:0},petBuffSrc={},petSkillCd={},petNote={};
 const rollingSet=new Set(),autoSet=new Set(),busy=()=>false;
-let S=null,mapM=0,mapL=1,selB=null,selC=null;   // remaining panel state comes in with the V grab
+let S=null,mapM=0,mapL=1,selB=null,selC=null,collectionGrade=-1;   // remaining panel state comes in with the V grab
 const document={addEventListener(){}};
 const mobs=[],drops=[],logs=[];
 let boardPeriod='daily',boardCache={},boardLoading=false,boardError='';
@@ -353,7 +353,8 @@ t('the phone layout is sized from the real viewport, not a guessed one', () => {
     'resize() must publish the measured dock height as --docktop, so no overlay guesses');
   assert.ok(src.includes("if(window.visualViewport)visualViewport.addEventListener('resize',resize)"),
     'the visual viewport must be watched too - iOS does not always fire window resize when the URL bar moves');
-  assert.ok(/function resize\(\)\{[\s\S]*?const dh=dk\.offsetHeight/.test(src), 'the measurement lives in resize()');
+  assert.ok(/function resize\(\)\{[\s\S]*?eclipseMeasureDock\(\)/.test(src), 'resize refreshes the shared dock measurement');
+  assert.ok(/function renderDock\(\)\{[\s\S]*?eclipseMeasureDock\(\)/.test(src), 'populating the dock refreshes its measurement before a window opens');
   // the phone block is last, so it wins on source order against the desktop rules above it
   const phone = src.lastIndexOf('@media(max-width:700px)');
   assert.ok(phone > src.lastIndexOf('@media(max-width:900px)') && phone > src.lastIndexOf('@media(max-width:560px)'),
@@ -658,7 +659,7 @@ t('HP flips at 30%; one split bar fills Base from left and Job from right with c
     ${grab('const PET_SKILLS=[', 'const petDmg=')}
     const performance={now:()=>1000},job={jl:10,jx:45},jobOf=()=>job,C=()=>({mj:50}),maxHp=()=>100,
       jneed=()=>100,need=()=>200;
-    const applyDisplay=()=>{},safeCount=n=>Math.max(0,Number(n)||0),eclipseSetMarkup=(node,html)=>{node.innerHTML=html};
+    const esc=s=>String(s),applyDisplay=()=>{},safeCount=n=>Math.max(0,Number(n)||0),eclipseSetMarkup=(node,html)=>{node.innerHTML=html};
     ${grab('const HUD_RATE_WINDOW=60000,HUD_IDLE_RESET=30000,HUD_RATE_REFRESH=1000;','function ui(anchor){')}
     bars();this.__h={nodes,S,job,bars};
   `,box);
@@ -673,7 +674,7 @@ t('HP flips at 30%; one split bar fills Base from left and Job from right with c
   assert.strictEqual(d.jobTrack.attrs['aria-valuenow'],'45.0');
   h.S.hp=30;h.bars();assert.strictEqual(d.hpb.classList.flags.critical,true,'30% HP must turn red');
   h.job.jl=50;h.S.lv=150;h.bars();assert.strictEqual(d.jb.style.width,'100%');assert.strictEqual(d.xpb.style.width,'100%');
-  assert.ok(d.dps&&d.dps.title.includes('Damage per second'),'bars() writes the DPS readout every second');
+  assert.ok(d.dps&&d.dps.attrs['aria-label'].includes('Damage per second'),'bars() writes the DPS readout every second');
   assert.strictEqual(d.dps.textContent,'0','no damage banked means no DPS');
   h.S.kills=500;h.S.equippedTitle='field-scout';h.bars();
   assert.strictEqual(d.titleLabel.textContent,'✦ Field Scout','the chosen title appears beside the class in the HUD');
@@ -793,12 +794,11 @@ t('the short-form option (100K / 1M) goes well with the floats: labels size the 
 });
 
 t('Zeny and kill rates refresh every second using a rolling minute and reset after stalls', () => {
-  assert.ok(src.includes('class="hud-zeny" id="zenyHover" tabindex="0"'),'hover area must include amount and label');
-  assert.ok(src.includes('.hud-zeny:hover .hud-flyout'),'Zeny tooltip must open on hover without browser title delays');
-  assert.ok(src.includes("$('zenyRate').textContent=`Zeny earned:"),'tooltip must display a live rate');
+  assert.ok(!src.includes('id="zenyRate"'),'the redundant Zeny flyout is removed');
+  assert.ok(!src.includes('.xp-side:hover'),'the level bars have no tinted hover box');
   assert.ok(src.includes('Kills/min <b id="kills"'),'kills rate must replace lifetime count');
   assert.ok(src.includes('<div class="eclipse-dps-meter">DPS <b id="dps"'),'a DPS readout must sit beside the kill rate');
-  assert.ok(src.includes("dpsEl.title=`Damage per second"),'the DPS readout needs a live tooltip');
+  assert.ok(src.includes("dpsEl.setAttribute('aria-label','Damage per second: '"),'the exact DPS stays accessible without a hover tooltip');
   assert.ok(src.includes('S.dmg=(S.dmg||0)+d'),'strike() and hurt() must bank every point of damage');
   const box={};vm.createContext(Object.assign(box,{simVisualsOff:()=>false}));
   vm.runInContext(`
@@ -1441,7 +1441,7 @@ t('pet buffs are icon tiles above the status bar, and the description waits for 
       jneed=()=>100,need=()=>200;
     ${grab('const SKILL_PICTO=', '// The CDM affix stays in the roll pool')}
     ${grab('const PET_SKILLS=[', 'const petDmg=')}
-    const applyDisplay=()=>{},safeCount=n=>Math.max(0,Number(n)||0),eclipseSetMarkup=(node,html)=>{node.innerHTML=html};
+    const esc=s=>String(s),applyDisplay=()=>{},safeCount=n=>Math.max(0,Number(n)||0),eclipseSetMarkup=(node,html)=>{node.innerHTML=html};
     ${grab('const HUD_RATE_WINDOW=60000,HUD_IDLE_RESET=30000,HUD_RATE_REFRESH=1000;', 'function ui(anchor){')}
     bars();this.__b={nodes};
   `, box);
@@ -1687,85 +1687,12 @@ t('the Log window filters by category, and the on-screen feed folds away', () =>
   assert.strictEqual(F.pass({ cat: undefined }), true, 'an untagged line counts as Other and shows unless Other is hidden');
 });
 
-t('the funnel on the Logs tab opens the same tick row and folds itself away', () => {
-  // markup: the lines come first, then one bar holding the row and the tab. The tab is the bottom
-  // of the stack, so a new log line grows the stack UPWARD and never moves the Logs tab (the tab
-  // used to sit above the lines, so every kill pushed it up the screen).
-  assert.ok(src.includes('id="feedFil"') && src.includes('id="feedFilter"'), 'the funnel and its row exist');
-  assert.ok(src.indexOf('id="feed"') < src.indexOf('id="feedBar"') && src.indexOf('id="feedBar"') < src.indexOf('id="feedTab"'),
-    'the log lines come before the tab bar in the markup, so the tab stays pinned as lines arrive');
-  assert.ok(src.indexOf('id="feedFilter"') > src.indexOf('id="feedBar"') && src.indexOf('id="feedFilter"') < src.indexOf('id="feedTab"'),
-    'the row sits inside the bar, before the tab');
-  assert.ok(/#feedFilter\{position:absolute;left:0;bottom:calc\(100% \+ 4px\)/.test(src),
-    'the open row floats above the tab bar, so opening it moves neither the lines nor the tab');
-  assert.ok(/#feedBar\{position:relative;/.test(src), 'the bar is the positioning box for the row');
-  assert.ok(src.includes('aria-controls="feedFilter"') && src.includes('aria-expanded="false"'),
-    'the funnel is a real disclosure control');
-  // it really is the same row: built from the same category table as the Log window's
-  const panel = src.slice(src.indexOf('function renderFeedFilter(){'), src.indexOf('const feedFilShow='));
-  assert.ok(panel.includes('p.innerHTML=LOGCATS.map('), 'the row must be built from the one category table');
-  assert.ok(panel.includes('data-a="logf" data-v="${k}"') && panel.includes('data-a="logfall" data-v="on"')
-    && panel.includes('data-a="logfall" data-v="off"'), 'with the same ticks and the same All/None shortcuts');
-  U.S = mkS('Knight'); U.S.logOff = {};
-  const win = U.V.log();
-  const ACTIONS = ['zeny', 'gear', 'kills', 'card', 'pet', 'lvl', 'skill', 'quest', 'misc'].map(c => `data-a="logf" data-v="${c}"`);
-  ACTIONS.forEach(a => assert.ok(win.includes(a), 'the Log window prints ' + a));
-  // it folds away by itself, holds while you interact, and Escape closes it
-  assert.ok(src.includes('const FEED_FIL_MS=7000;'), 'the row has a life span');
-  assert.ok(src.includes('feedFilTimer=setTimeout(feedFilHide,FEED_FIL_MS)'), 'opening arms the fold');
-  assert.ok(src.includes("$('feedFilter').addEventListener('mouseenter',()=>{if(feedFilTimer)clearTimeout(feedFilTimer)})"),
-    'hovering the row holds it open');
-  assert.ok(src.includes("$('feedFilter').addEventListener('mouseleave',()=>{if(feedFilShown)feedFilArm()})"),
-    'and leaving restarts the countdown');
-  assert.ok(src.includes("$('feedFilter').addEventListener('focusin'") && src.includes("$('feedFilter').addEventListener('focusout'"),
-    'keyboard focus holds it open too');
-  assert.ok(src.includes("if(k==='ESCAPE'){if(feedFilShown){feedFilHide();return}tabs.pop();renderWin();return}"),
-    'Escape closes the row before it closes a window');
-  assert.ok(src.includes("$('feedFilter').onclick=e=>{feedFilArm();const b=e.target.closest('[data-a]');if(b&&!b.disabled&&ACT[b.dataset.a])ACT[b.dataset.a](b.dataset.v)}"),
-    'the row delegates to the same actions as the window');
-  assert.ok(src.includes('if(feedFilShown)renderFeedFilter();feedDraw();ui();save()'),
-    'flipping a tick from either row re-renders both');
-  assert.ok(src.includes('if(!on&&feedFilShown)feedFilHide()}'), 'folding the log hides the row with it');
-  // and the whole thing, run for real against a stub DOM
-  const box = {}; vm.createContext(Object.assign(box,{simVisualsOff:()=>false}));
-  vm.runInContext(`
-    let S={logOff:{gear:1}};
-    const mk=()=>{const o={style:{},attrs:{},cls:{},innerHTML:''};
-      o.classList={toggle(k,v){o.cls[k]=v},add(k){o.cls[k]=true},remove(k){o.cls[k]=false}};
-      o.setAttribute=(k,v)=>{o.attrs[k]=v};o.addEventListener=()=>{};return o};
-    const nodes={feedFilter:mk(),feedFil:mk()};
-    const $=id=>nodes[id];
-    let timers=[];const clearTimeout=()=>{timers=[]};const setTimeout=(f,ms)=>{timers.push({f,ms});return 1};
-    ${grab('const LOGCATS=', 'function log(m,cls,cat,visual){')}
-    this.__p={toggle:feedFilToggle,show:feedFilShow,hide:feedFilHide,arm:feedFilArm,
-      shown:()=>feedFilShown,fil:nodes.feedFil,panel:nodes.feedFilter,timers:()=>timers,
-      set off(v){S.logOff=v}};
-  `, box);
-  const P = box.__p;
-  assert.notStrictEqual(P.panel.style.display, 'flex', 'the row starts folded away (the CSS keeps it hidden until inline style overrides it)');
-  assert.strictEqual(P.shown(), false, 'and says so');
-  P.toggle();
-  assert.strictEqual(P.panel.style.display, 'flex', 'the funnel opens the row');
-  assert.strictEqual(P.shown(), true, 'and it stays open until the timer fires');
-  assert.strictEqual(P.fil.attrs['aria-expanded'], 'true', 'the funnel reports it is open');
-  assert.strictEqual(P.fil.cls.on, true, 'and lights up while it is');
-  assert.strictEqual(P.timers().length, 1, 'exactly one fold is armed');
-  assert.strictEqual(P.timers()[0].ms, 7000, 'after seven seconds');
-  assert.ok(P.panel.innerHTML.includes('data-v="gear"'), 'the row carries the ticks: ' + P.panel.innerHTML.slice(0, 80));
-  assert.ok(P.panel.innerHTML.includes('All') && P.panel.innerHTML.includes('None'), 'and the two shortcuts');
-  ACTIONS.forEach(a => assert.ok(P.panel.innerHTML.includes(a), 'the funnel row prints the same tick: ' + a));
-  assert.strictEqual((P.panel.innerHTML.match(/data-a="logf"/g) || []).length,
-    (win.match(/data-a="logf"/g) || []).length, 'the row and the window offer exactly the same number of ticks');
-  // the ticks mirror the saved filter: gear is hidden in this fixture, everything else shows
-  const gear = P.panel.innerHTML.slice(P.panel.innerHTML.indexOf('data-v="gear"'), P.panel.innerHTML.indexOf('data-v="gear"') + 90);
-  assert.ok(!gear.includes('checked'), 'a hidden category renders unticked');
-  assert.ok(/data-v="card"[^>]*checked/.test(P.panel.innerHTML), 'and a shown one renders ticked');
-  P.timers()[0].f();                       // the self-fold, fired by hand
-  assert.strictEqual(P.panel.style.display, 'none', 'after the timeout the row folds itself away');
-  assert.strictEqual(P.shown(), false, 'and stops reporting as open');
-  assert.strictEqual(P.fil.attrs['aria-expanded'], 'false', 'the funnel goes quiet again');
-  P.toggle(); P.hide();
-  assert.strictEqual(P.panel.style.display, 'none', 'and the funnel itself closes it too');
+t('preview types are controlled from Activity instead of a floating funnel',()=>{
+ assert.ok(!src.includes('id="feedFil"')&&!src.includes('id="feedFilter"'));
+ U.S=mkS('Knight');U.S.logOff={};const win=U.V.log();
+ assert.ok(win.includes('data-a="feed"'),'Activity toggles the on-screen preview');
+ for(const cat of ['zeny','gear','kills','card','pet','lvl','skill','quest','misc'])assert.ok(win.includes(`data-a="logf" data-v="${cat}"`));
+ assert.ok(win.includes('data-a="logfall"'),'All/None filters remain');
 });
 
 t('the Index remembers every map ledger you opened, across re-renders', () => {

@@ -60,16 +60,19 @@ that case honestly; the pages may not).
 
 * `tools/weapon_review*.html` — the v35 review pass. Still valid, but the proposal page is the
   current one.
-* `tools/preview_weapon.png` — a contact sheet from that same pass.
+* The old `tools/preview_weapon.png` contact sheet was removed during the 2026-10-12 cleanup;
+  use `/weapons` for the current art or `/review` for the retained review workbook.
 * `tools/weapon-plan.md`, `tools/HANDOVER-weapon-review.md` — the notes that led here; read them
   for the *why*, not for the current state.
-* `tools/preview_layered.py`, `tools/shot_harness.js`, `_shot.html`, `_login.html` — one-off
-  harnesses from earlier rounds.
+* The one-off `tools/preview_layered.py`, `tools/shot_harness.js`, `tools/decode_shot.py`,
+  `_shot.html` and `_login.html` were removed during the 2026-10-12 cleanup. Use the game,
+  `/gmsetup`, and the smoke suites for current previews and login checks.
 * **`UPDATE-BOOTSTRAP.py` does not exist and must not come back** (see `READ-ME-FIRST.md`).
 
 ## The suites
 
-`node tools/tests/*_sim.js` — all of them, before every push. Two need a file prepared first:
+`for t in tools/tests/*_sim.js; do node "$t" || exit 1; done` — all of them, before every push.
+Two need a file prepared first:
 
 ```sh
 python3 - <<'PY'
@@ -78,9 +81,11 @@ open('/tmp/pack_block.js','w').write(h[h.index('const PACK_BODY='):h.index('func
 PY
 ```
 
-**Two suites live outside that loop:** `node tools/tests/field_loop_smoke.js` boots the real
+**The smoke suites live outside that loop:** `node tools/tests/field_loop_smoke.js` boots the real
 `index.html` in jsdom with the real Three.js r128 and drives the farming loop end to end (camps,
 refills, the swing, the floats). `node tools/tests/save_owner_boot_smoke.js` boots the same page and
-logs in through its own login form, to check the save-owner stamp on the real login card. Both need
-`npm i --no-save jsdom three@0.128.0`; without them each prints a skip line and exits 0, which is why
-neither is named `*_sim.js`.
+logs in through its own login form, to check the save-owner stamp on the real login card.
+`tools/tests/panel_layout_smoke.js` checks the real panel DOM and redraws. All three need
+`npm install --no-save --package-lock=false jsdom three@0.128.0`; without the dependencies they
+print a skip line and exit 0. Run all three with
+`for t in tools/tests/*_smoke.js; do node "$t" || exit 1; done`.

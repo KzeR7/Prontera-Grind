@@ -60,7 +60,8 @@ Give them these two, in this order, and say which is which:
 2. **The offline single file** — one self-contained page (no server, no external requests at all;
    verified). Right-click → Save link as → open the saved file:
    `https://raw.githubusercontent.com/KzeR7/Prontera-Grind/arena/01a1054b-prontera-grind/tools/weapon_review_standalone.html`
-3. The contact sheet `tools/preview_weapon.png` is in the repo if they only want a look.
+3. Use `/weapons` for current art or `/review` for the retained review workbook. The old
+   `tools/preview_weapon.png` contact sheet was removed on 2026-10-12; it remains in Git history.
 
 Ask what they actually see if it fails again (blank / cannot be reached / 404 / spinner) — each
 points at a different cause.
