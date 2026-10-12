@@ -19,6 +19,22 @@ const g=createGame(html),ev=g.ev;
  ev(`wardrobeHero({cls:'Lord Knight'})`);await new Promise(r=>setImmediate(r));assert.equal(ev('wardrobeEquipped.key'),'4008|f-42-8');assert.equal(ev(`wardrobeHero({cls:'Novice'})`),null);assert.equal(ev('S.appearance.heads.f'),42);
  ev(`wardrobeHero({cls:'Lord Knight'})`);await new Promise(r=>setImmediate(r));ev(`window.__sprite=mkWardrobeHero(wardrobeEquipped)`);
  assert.equal(ev(`captureWardrobeFrame(__sprite,7,false,1,1000)`),true);assert.equal(ev(`captureWardrobeFrame(__sprite,7,false,1,1050)`),false);ev(`captureWardrobeFrame(__sprite,7,false,.001,999999)`);assert.equal(ev('__sprite.userData.wardrobe.paint'),'attack7:8');assert.equal(ev(`captureWardrobeFrame(__sprite,7,true,0,1000000)`),true);
+ // Every new tree class uses its own native body/clock and preserves the cosmetic save.
+ const applied=ev('JSON.stringify(S.appearance)');
+ for(const cls of ['Acolyte','Priest','High Priest','Merchant','Blacksmith','Whitesmith']){
+  ev(`S.cls=${JSON.stringify(cls)};renderWin()`);await new Promise(r=>setImmediate(r));
+  assert.equal(ev('wardrobeState.look.cls'),cls);assert.equal(ev('JSON.stringify(S.appearance)'),applied);
+  assert.equal(ev('wardrobeHero({cls:S.cls})'),null,'old class is not shown while loading');await new Promise(r=>setImmediate(r));
+  assert.equal(ev('wardrobeHero({cls:S.cls}).cls'),cls);
+  ev('window.__sprite=mkWardrobeHero(wardrobeEquipped)');
+  for(let d=0;d<8;d++) assert.equal(ev(`captureWardrobeFrame(__sprite,${d},false,1,1000)`),true);
+ }
+ assert.deepEqual(Array.from(ev('DOCK_TABS.slice(-2)')),['wardrobe','set']);
+ // Browsing another class changes only the preview, including when applying cosmetics.
+ const currentJob=ev('S.cls'),gear=ev('JSON.stringify(S.eq)');
+ ev(`wardrobeChange('class','Acolyte')`);await new Promise(r=>setImmediate(r));
+ assert.equal(ev('wardrobeState.look.cls'),'Acolyte');assert.equal(ev('S.cls'),currentJob);
+ ev(`wardrobeAction('apply')`);assert.equal(ev('S.cls'),currentJob);assert.equal(ev('JSON.stringify(S.eq)'),gear);
  // Closing a pending preview must permit reopening/retry and must discard unsaved drafts.
  ev(`wardrobeState.loading=true;tabs.splice(0);wardrobeSync();tabs.push('wardrobe');renderWin()`);await new Promise(r=>setImmediate(r));assert.equal(ev('wardrobeState.loading'),false);assert.equal(ev('wardrobeState.draft.heads.f'),42);
  // Merged main keyboard handling: selectors keep typing keys, Escape discards drafts and W reopens.
@@ -32,7 +48,7 @@ const g=createGame(html),ev=g.ev;
  assert.equal(ev('S.appearance.halo'),true);assert.equal(ev('__saveCount'),savesBeforeEscape);
  g.window.document.body.dispatchEvent(new g.window.KeyboardEvent('keydown',{key:'w',bubbles:true}));
  await new Promise(r=>setImmediate(r));assert.equal(ev('wardrobeState.draft.halo'),true);assert(ev('!!wardrobeState.look'));
- ev(`wardrobeAction('original')`);assert.equal(ev('S.appearance'),null);assert.equal(ev('S.hair'),17);assert.equal(ev('__saveCount'),2);
+ ev(`wardrobeAction('original')`);assert.equal(ev('S.appearance'),null);assert.equal(ev('S.hair'),17);assert.equal(ev('__saveCount'),3);
  ev(`S=fresh();S.cls='Swordman';S.hair=12;wardrobeOwner()`);assert.equal(ev('wardrobeEquipped'),null);assert.equal(ev('wardrobeState.draft'),null);ev(`renderWin()`);await new Promise(r=>setImmediate(r));assert(ev('!!wardrobeState.look'),'same canvas loads again after owner reset');
  // No opt-in is needed, and changing class cannot display the old class during loading.
  assert.equal(ev('S.appearance'),null);ev("wardrobeHero({cls:S.cls})");await new Promise(r=>setImmediate(r));assert.equal(ev('wardrobeEquipped.cls'),'Swordman');

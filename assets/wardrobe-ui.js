@@ -1,17 +1,17 @@
 /* Shared character customization and game adapter. Appearance never changes combat equipment/stats. */
 const wardrobeStore=new PGWardrobe.Store();
-const wardrobeState={owner:null,cls:'',sex:'',draft:null,look:null,status:'',loading:false,seq:0,stance:'idle',direction:0,still:false,start:0,paint:'',canvas:null};
+const wardrobeState={owner:null,cls:'',activeCls:'',sex:'',draft:null,look:null,status:'',loading:false,seq:0,stance:'idle',direction:0,still:false,start:0,paint:'',canvas:null};
 let wardrobeEquipped=null,wardrobeRequested='',wardrobeFailure='';
 let wardrobeClassLook=null,wardrobeClassRequest='';
 function wardrobeOwner(){if(wardrobeState.owner===S)return;wardrobeStore.release('preview');wardrobeStore.release('hero');wardrobeStore.release('portrait');wardrobeClassLook=null;wardrobeClassRequest='';wardrobeState.owner=S;wardrobeState.canvas=null;wardrobeState.paint='';wardrobeState.draft=null;wardrobeState.look=null;wardrobeState.loading=false;wardrobeState.seq++;wardrobeEquipped=null;wardrobeRequested='';wardrobeFailure=''}
 function wardrobeAppearance(){return PGWardrobe.normalize(S.appearance)||PGWardrobe.defaults(S.sex)}
 function wardrobeSupported(cls){return Object.hasOwn(PGWardrobe.CLASSES,cls)}
-function wardrobePanel(){wardrobeOwner();if(wardrobeState.cls!==S.cls||wardrobeState.sex!==S.sex){wardrobeState.cls=S.cls;wardrobeState.sex=S.sex;wardrobeState.seq++;wardrobeStore.release('preview');wardrobeState.look=null;wardrobeState.loading=false;wardrobeState.draft=null;wardrobeState.canvas=null}
- if(!wardrobeSupported(S.cls))return '<div class="hd">Wardrobe</div><p>Hair and costume customization is available for the Swordsman, Thief and Archer class trees. Your saved choices will follow you when you return to a supported class.</p>'; if(!wardrobeState.draft){wardrobeState.draft=wardrobeAppearance();wardrobeState.status='';wardrobeState.look=null}
- const a=wardrobeState.draft,sex=a.sex,option=(v,label,current)=>`<option value="${v}"${v===current?' selected':''}>${label}</option>`;
- return `<div class="wardrobe"><div class="hd">${S.cls==='Swordman'?'Swordsman':S.cls} Wardrobe</div><small>Choose your hairstyle, hair color and costume accessories. Your look follows you across supported classes.</small>
- <div class="wardrobe-fitting"><div class="wardrobe-stage"><canvas id="wardrobeCanvas" width="320" height="280" role="img" aria-label="Animated ${S.cls} wardrobe preview"></canvas></div><div class="wardrobe-controls">
- <div class="wardrobe-fields">
+function wardrobePanel(){wardrobeOwner();if(wardrobeState.activeCls!==S.cls||wardrobeState.sex!==S.sex){wardrobeState.activeCls=S.cls;wardrobeState.cls=wardrobeSupported(S.cls)?S.cls:'Lord Knight';wardrobeState.sex=S.sex;wardrobeState.seq++;wardrobeStore.release('preview');wardrobeState.look=null;wardrobeState.loading=false;wardrobeState.draft=null;wardrobeState.canvas=null}
+ if(!wardrobeState.draft){wardrobeState.draft=wardrobeAppearance();wardrobeState.status='';wardrobeState.look=null}
+ const a=wardrobeState.draft,sex=a.sex,cls=wardrobeState.cls,option=(v,label,current)=>`<option value="${v}"${v===current?' selected':''}>${label}</option>`;
+ return `<div class="wardrobe"><div class="hd">${cls==='Swordman'?'Swordsman':cls} Wardrobe</div><small>Preview a class and choose your hairstyle, hair color and costume accessories. Previewing does not change your job. Your look follows you across supported classes.</small>
+ <div class="wardrobe-fitting"><div class="wardrobe-stage"><canvas id="wardrobeCanvas" width="320" height="280" role="img" aria-label="Animated ${cls} wardrobe preview"></canvas></div><div class="wardrobe-controls">
+ <div class="wardrobe-fields"><label>Class<select data-wardrobe="class">${Object.keys(PGWardrobe.CLASSES).map(c=>option(c,c==='Swordman'?'Swordsman':c,cls)).join('')}</select></label>
  <label>Hairstyle<select data-wardrobe="head">${PGWardrobe.HAIRS[sex].map(h=>option(h,'Style '+h,a.heads[sex])).join('')}</select></label>
  <label>Hair color<select data-wardrobe="color">${Array.from({length:9},(_,i)=>option(i,'Color '+(i+1),a.colors[sex])).join('')}</select></label></div>
  <fieldset class="wardrobe-accessories"><legend>Costume accessories</legend>${['halo','glasses','wings'].map(k=>`<label><input type="checkbox" data-wardrobe="${k}"${a[k]?' checked':''}> ${k==='halo'?'Angel halo':k==='glasses'?'Glasses':'Archangel wings'}</label>`).join('')}</fieldset>
@@ -22,16 +22,16 @@ function wardrobePanel(){wardrobeOwner();if(wardrobeState.cls!==S.cls||wardrobeS
  <button class="full" data-wardrobe-action="original">Reset hair and costume</button><small>Cosmetics are free. Some hair colors repeat. Change character gender in Settings.</small></div></div></div>`;
 }
 V.wardrobe=wardrobePanel;
-function wardrobeStatus(){const el=$('wardrobeStatus');if(el)el.textContent=wardrobeState.loading?'Loading appearance…':wardrobeState.status||'Ready to try on. Apply saves your choice.';const button=$('wardrobeApply');if(button)button.disabled=wardrobeState.loading||!wardrobeState.look||(wardrobeState.look.cls!==S.cls||PGWardrobe.key(wardrobeState.look.selection)!==PGWardrobe.key(wardrobeState.draft))}
-function wardrobeLoad(){const a=PGWardrobe.normalize(wardrobeState.draft);if(!a)return;const owner=S,cls=S.cls,seq=++wardrobeState.seq;wardrobeState.loading=true;wardrobeStatus();
- wardrobeStore.select('preview',a,cls).then(look=>{if(!look||seq!==wardrobeState.seq||S!==owner||S.cls!==cls||!tabs.includes('wardrobe'))return;wardrobeState.look=look;wardrobeState.loading=false;wardrobeState.paint='';wardrobeState.start=performance.now();wardrobeState.status='';wardrobeStatus();wardrobePreview()}).catch(()=>{if(seq!==wardrobeState.seq||S!==owner||S.cls!==cls)return;wardrobeState.loading=false;wardrobeState.status='This appearance could not load. Your saved look is unchanged. Try again.';wardrobeStatus()})}
-function wardrobeSync(){wardrobeOwner();if(!tabs.includes('job')){wardrobeStore.release('portrait');wardrobeClassLook=null;wardrobeClassRequest=''}if(!tabs.includes('wardrobe')||!wardrobeSupported(S.cls)){if(wardrobeState.draft){wardrobeState.seq++;wardrobeStore.release('preview');wardrobeState.draft=null;wardrobeState.look=null;wardrobeState.loading=false;wardrobeState.canvas=null}return}
+function wardrobeStatus(){const el=$('wardrobeStatus');if(el)el.textContent=wardrobeState.loading?'Loading appearance…':wardrobeState.status||'Ready to try on. Apply saves your choice.';const button=$('wardrobeApply');if(button)button.disabled=wardrobeState.loading||!wardrobeState.look||(wardrobeState.look.cls!==wardrobeState.cls||PGWardrobe.key(wardrobeState.look.selection)!==PGWardrobe.key(wardrobeState.draft))}
+function wardrobeLoad(){const a=PGWardrobe.normalize(wardrobeState.draft);if(!a)return;const owner=S,cls=wardrobeState.cls,activeCls=S.cls,seq=++wardrobeState.seq;wardrobeState.loading=true;wardrobeStatus();
+ wardrobeStore.select('preview',a,cls).then(look=>{if(!look||seq!==wardrobeState.seq||S!==owner||S.cls!==activeCls||wardrobeState.cls!==cls||!tabs.includes('wardrobe'))return;wardrobeState.look=look;wardrobeState.loading=false;wardrobeState.paint='';wardrobeState.start=performance.now();wardrobeState.status='';wardrobeStatus();wardrobePreview()}).catch(()=>{if(seq!==wardrobeState.seq||S!==owner||S.cls!==activeCls||wardrobeState.cls!==cls)return;wardrobeState.loading=false;wardrobeState.status='This appearance could not load. Your saved look is unchanged. Try again.';wardrobeStatus()})}
+function wardrobeSync(){wardrobeOwner();if(!tabs.includes('job')){wardrobeStore.release('portrait');wardrobeClassLook=null;wardrobeClassRequest=''}if(!tabs.includes('wardrobe')){if(wardrobeState.draft){wardrobeState.seq++;wardrobeStore.release('preview');wardrobeState.draft=null;wardrobeState.look=null;wardrobeState.loading=false;wardrobeState.canvas=null}return}
  const cv=$('wardrobeCanvas');if(cv!==wardrobeState.canvas){wardrobeState.canvas=cv;wardrobeState.paint='';if(!wardrobeState.look&&!wardrobeState.loading)wardrobeLoad()}wardrobeStatus();wardrobePreview()}
 function wardrobePreview(){const st=wardrobeState,cv=$('wardrobeCanvas');if(!cv||!st.look||!st.draft)return;const still=st.still||matchMedia('(prefers-reduced-motion: reduce)').matches,ms=still?0:performance.now()-st.start;
  const view=st.look.base.metadata.actions[st.stance+st.direction],progress=st.stance==='attack'?Math.min(1,ms/(view.frames.length*view.delay)):null,i=PGWardrobe.frameIndex(view,ms,progress),paint=JSON.stringify([st.look.key,st.draft.halo,st.draft.glasses,st.draft.wings,st.stance,st.direction,i]);
  if(st.paint===paint&&st.canvas===cv)return;st.canvas=cv;st.paint=paint;PGWardrobe.draw(cv.getContext('2d'),{...st.look,selection:st.draft},st.stance,st.direction,ms,progress)}
 function wardrobeChange(field,value){const st=wardrobeState;if(!st.draft)return;let asset=false;
- if(field==='sex'){st.draft.sex=value==='f'?'f':'m';asset=true}else if(field==='head'){st.draft.heads[st.draft.sex]=+value;asset=true}else if(field==='color'){st.draft.colors[st.draft.sex]=+value;asset=true}
+ if(field==='class'){if(!wardrobeSupported(value))return;st.cls=value;asset=true}else if(field==='sex'){st.draft.sex=value==='f'?'f':'m';asset=true}else if(field==='head'){st.draft.heads[st.draft.sex]=+value;asset=true}else if(field==='color'){st.draft.colors[st.draft.sex]=+value;asset=true}
  else if(['halo','glasses','wings'].includes(field))st.draft[field]=!!value;
  else if(field==='stance')st.stance=['idle','walk','attack'].includes(value)?value:'idle';else if(field==='direction')st.direction=Math.max(0,Math.min(7,+value||0));else if(field==='still')st.still=!!value;
  st.draft=PGWardrobe.normalize(st.draft);st.start=performance.now();st.paint='';st.status='';if(asset)wardrobeLoad();renderWin();wardrobeSync();
@@ -41,7 +41,7 @@ function wardrobeAction(action){const st=wardrobeState;if(!st.draft)return;
  if(action==='cancel'){st.draft=wardrobeAppearance();wardrobeLoad();renderWin();return}
  if(action==='original'){S.appearance=null;wardrobeEquipped=null;wardrobeRequested='';wardrobeFailure='';wardrobeStore.release('hero');heroKey='';st.draft=wardrobeAppearance();st.status='Default hair and costume restored.';wardrobeLoad();save();ui();return}
  if(action==='apply'){
-  if(st.loading||!st.look||st.look.cls!==S.cls||PGWardrobe.key(st.look.selection)!==PGWardrobe.key(st.draft))return;
+  if(st.loading||!st.look||st.look.cls!==st.cls||PGWardrobe.key(st.look.selection)!==PGWardrobe.key(st.draft))return;
   S.appearance=PGWardrobe.normalize(st.draft);S.sex=S.appearance.sex;wardrobeRequested='';wardrobeFailure='';heroKey='';st.status='Look applied.';save();ui();
  }
 }

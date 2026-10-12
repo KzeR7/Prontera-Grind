@@ -8,7 +8,8 @@ from pathlib import Path
 from PIL import Image
 
 CLASSES = {'Swordman':1,'Knight':7,'Lord Knight':4008,'Thief':6,'Assassin':12,
-           'Assassin Cross':4013,'Archer':3,'Hunter':11,'Sniper':4012}
+           'Assassin Cross':4013,'Archer':3,'Hunter':11,'Sniper':4012,'Acolyte':4,'Priest':8,'High Priest':4009,
+           'Merchant':5,'Blacksmith':10,'Whitesmith':4011}
 
 def add_figure_heights(manifest, source):
     # Measure the native rest pose without costumes or weapon effects. Keep the same
@@ -84,7 +85,7 @@ def build(source, output):
         digest=hashlib.sha256(meta).hexdigest(); filename='poses-'+digest[:20]+'.json'; (output/filename).write_bytes(meta)
         manifest['assets'][name]=dict(meta=filename,metaSha256=digest,metaBytes=len(meta),image=image,imageSha256=sha,imageBytes=len(png),width=512,height=height)
     add_figure_heights(manifest, source)
-    assert len(manifest['assets'])==380, len(manifest['assets'])
+    assert len(manifest['assets'])==360+2+2*len(CLASSES), len(manifest['assets'])
     (output/'catalog.json').write_text(json.dumps(manifest,separators=(',',':'))+'\n')
     files=list(output.iterdir())
     print(json.dumps(dict(files=len(files),bytes=sum(p.stat().st_size for p in files),images=len(list(output.glob('*.png'))),maxAtlasBytes=max(r['width']*r['height']*4 for r in manifest['assets'].values()))))
