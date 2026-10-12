@@ -65,7 +65,7 @@ this.__bg={SIM_STEP,SIM_CATCHUP,SIM_BG_MS,logs,
   show:()=>{hidden=false;(docHandlers.visibilitychange||[]).forEach(f=>f());drain()},
   frame:()=>{frames++;if(!frameCb)throw new Error('the loop stopped asking for frames');const f=frameCb;frameCb=null;f(nowMs);drain()},
   wake:()=>{ticks++;for(const f of timers)f();drain()},
-  advanceAt:at=>{simAdvance(at);drain()},rawWake:()=>{for(const f of timers)f()},pending:()=>simPending,drain, timerMs:()=>timers.length};
+  advanceAt:at=>{simAdvance(at);drain()},rawWake:()=>{for(const f of timers)f()},rawShow:()=>{hidden=false;(docHandlers.visibilitychange||[]).forEach(f=>f())},rawFrame:()=>loop(nowMs),pending:()=>simPending,drain, timerMs:()=>timers.length};
 `;
 const sb = { console };
 vm.createContext(sb); vm.runInContext(harness, sb);
@@ -79,7 +79,7 @@ console.log('background: the game keeps grinding when the tab is hidden\n');
 t('the clock keeps one entry point and one dt ceiling', () => {
   assert.strictEqual(bg.timerMs(), 1, 'exactly one background interval is registered');
   assert.ok(bg.SIM_STEP === 0.1 && bg.SIM_BG_MS === 1000, 'the step and the wake cadence are the documented ones');
-  assert.ok(src.includes('function loop(now){try{simAdvance(now);if(!document.hidden)draw()}'), 'the frame loop still drives the same clock and draws');
+  assert.ok(src.includes('function loop(now){try{simAdvance(now);if(!document.hidden&&simPending===0)draw()}'), 'the frame loop still drives the same clock and draws');
   assert.ok(src.includes('for(let i=0;i<speed;i++){update(dt);if(!simVisualsOff())kitTick(dt)}'), 'every slice still honours the speed setting');
   assert.ok(src.includes('setInterval(save,5000)'), 'the five-second autosave is untouched');
   assert.ok(src.includes("document.addEventListener('visibilitychange'"), 'the hide/show wiring is in the game');
@@ -213,6 +213,18 @@ t('long catch-up yields, retains debt, then credits it exactly once',()=>{
   assert.ok(bg.pending()>50,'unprocessed time stays queued');
   bg.drain();near(bg.stat().simWall-a.simWall,60,.00001,'all queued seconds credited');
   const b=bg.stat();bg.drain();near(bg.stat().simWall,b.simWall,1e-9,'no duplicate credit');bg.show();
+});
+
+t('returning with a backlog never renders accelerated intermediate combat',()=>{
+  bg.hide();const a=bg.stat();bg.pass(60000);bg.rawShow();
+  assert.ok(bg.pending()>50,'the first return batch yields without dropping progress');
+  for(let i=0;i<4;i++){bg.pass(16);bg.rawFrame();}
+  assert.ok(bg.pending()>0,'there is still work for later tasks');
+  assert.equal(bg.stat().draws,a.draws,'the last displayed frame stays still during catch-up');
+  bg.drain();near(bg.stat().simWall-a.simWall,60.064,.00001,'all away time was credited once');
+  const settled=bg.stat();bg.pass(16);bg.rawFrame();
+  assert.equal(bg.stat().draws,settled.draws+1,'drawing resumes after settlement');
+  near(bg.stat().simWall-settled.simWall,.016,1e-9,'resumed combat runs at normal speed');
 });
 
 t('a stale animation timestamp cannot rewind a timer-advanced clock',()=>{

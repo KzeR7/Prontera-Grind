@@ -78,7 +78,7 @@ small{color:var(--e-muted)}
 #wins>.wp{pointer-events:auto;flex:1 0 340px;min-width:0;width:auto;max-width:none;max-height:100%;border-radius:10px;border:1px solid var(--edge);box-shadow:0 20px 60px #0006;background:linear-gradient(120deg,var(--e-raised),var(--e-glass));display:flex;flex-direction:column;container-type:inline-size}
 #wins>.wp:only-child{flex:1 1 100%}
 #wins>.wp.ui-expanded{flex:1 0 100%;width:100%}
-#wins>.wp.ui-minimized{flex:0 0 230px;align-self:start}
+
 #wins>.wp>.title{height:45px;flex:none;background:var(--e-bg);border:0;border-bottom:1px solid var(--edge);padding:10px 16px;font:500 11px var(--e-font);color:var(--ink)}
 #wins>.wp>.title>span:first-child{display:flex;gap:10px;align-items:center}
 #wins .title .ui-icon{color:var(--gold);width:19px;height:19px}
@@ -309,7 +309,7 @@ body.clean-screen #screenBtn{visibility:visible}
 #wins>.wp{flex:1 0 100%;max-height:100%;min-height:0;border-radius:10px 10px 0 0;width:100%}
 #wins>.wp:only-child{flex:1 1 100%}
 #wins>.wp.ui-expanded{flex:1 0 100%}
-#wins>.wp.ui-minimized{flex:0 0 auto;width:100%;min-height:45px}
+
 #wins>.wp>.title{height:39px;padding:8px 12px;font-size:10px}
 .ui-panel>.ui-hero{padding:13px 15px}
 .ui-hero h2{font-size:18px}
@@ -790,7 +790,7 @@ body.clean-screen #screenBtn{visibility:visible}
 #feedWrap{left:22px;bottom:100px;max-width:280px}
 #feed{font:10px/1.6 var(--e-font);text-shadow:none}
 #feed>div{padding:7px 10px;border-left:2px solid var(--e-line-bright);margin:4px 0;background:var(--e-glass);border-radius:3px}
-#feedTab,#feedFil{font-size:8px;border-color:var(--e-line);background:var(--e-glass)}
+#feedTab{font-size:8px;border-color:var(--e-line);background:var(--e-glass)}
 
 #eclipseCompanions{position:absolute;right:22px;bottom:95px;display:flex;align-items:center;gap:7px;pointer-events:auto}
 #eclipseCompanions button{font-size:8px;padding:9px;background:var(--e-glass);border-color:var(--e-line-bright)}
@@ -1160,8 +1160,8 @@ body.clean-screen #eclipseCompanions{display:none}
 #wins .eclipse-filters .eclipse-rarity-filter[aria-pressed=true]{border-color:var(--filter-color);background:color-mix(in srgb,var(--filter-color) 20%,transparent);box-shadow:inset 0 -2px var(--filter-color)}
 
 /* Compact windows grow only as far as their content and available viewport require. */
-#wins>.wp:only-child:not(.ui-expanded):not(.ui-minimized){align-self:flex-start;flex-grow:0;width:100%;height:auto;max-height:100%}
-#wins>.wp[data-win=job]:only-child:not(.ui-expanded){max-width:920px;flex-basis:920px}
+
+
 #wins>.wp:only-child:not(.ui-expanded)>.wbody{flex:0 1 auto;scrollbar-gutter:auto}
 #wins .ui-content{padding:16px;gap:12px}
 .eclipse-class-lineage{min-height:0;padding:16px 12px;gap:24px}
@@ -1197,7 +1197,7 @@ body.clean-screen #eclipseCompanions{display:none}
 #wins .ui-job-path{gap:5px;padding:5px}#wins .ui-job-path .tn{display:flex;flex-direction:column;align-items:center;text-align:center;gap:4px;padding:7px 4px}#wins .ui-job-path .tn b{font-size:9px}
 .eclipse-companion-grid{gap:10px}.eclipse-companion-card{display:grid;grid-template-columns:65px 1fr;gap:5px 12px;padding:14px;text-align:left}.eclipse-companion-card>.ui-eyebrow{grid-column:1/-1}.eclipse-companion-portrait{grid-column:1;grid-row:2/5;height:70px;margin:0}#wins .eclipse-companion-portrait .pet-icon{width:62px;height:62px}.eclipse-companion-card h3{grid-column:2;margin:4px 0 0}.eclipse-companion-card>p{grid-column:2;margin:0;font-size:8px}.eclipse-companion-stat{grid-column:1/-1;margin:3px 0;font-size:9px}.eclipse-training-track{grid-column:1/-1}.eclipse-companion-card .eclipse-primary{grid-column:1/-1;margin-top:4px}.eclipse-companion-card .eclipse-fine-print{display:none}.eclipse-empty-companion{display:flex;min-height:100px}
 }
-@media(max-width:740px){#wins>.wp[data-win=job]:only-child:not(.ui-expanded){flex-basis:auto}.eclipse-portrait-frame{width:48px}#eclipsePortrait{left:-31px;top:-18px;width:110px;height:117px}}
+@media(max-width:740px){.eclipse-portrait-frame{width:48px}#eclipsePortrait{left:-31px;top:-18px;width:110px;height:117px}}
 #wins .eclipse-class-browser>.ui-split{gap:12px;grid-template-columns:minmax(0,1fr) 260px}
 #wins .ui-job-path:before{display:none}#wins .ui-job-paths{gap:6px}#wins .ui-job-path{padding:3px;gap:5px}
 #wins .ui-job-path .tn{min-height:42px;padding:5px;justify-content:start;filter:none}#wins .ui-job-path .tn small{margin:0}
@@ -1205,8 +1205,6 @@ body.clean-screen #eclipseCompanions{display:none}
 #wins .ui-job-paths>.ui-section-label{padding:0;margin:0;font-size:8px}#wins .ui-job-paths .legend{gap:4px;margin:0}#wins .ui-job-paths .legend .tn{padding:3px 6px;min-height:0}
 #wins .eclipse-class-browser .hair-preview-stage{flex:0 0 70px;width:70px;height:88px;background:radial-gradient(ellipse,var(--e-soft),var(--e-bg))}#wins .eclipse-class-browser .hair-preview-stage canvas{width:80px;height:85px}
 #wins .eclipse-class-browser .ui-inspector>.ui-section-label{padding:0;margin-bottom:8px}#wins .eclipse-class-browser .ui-inspector .ui-fold{padding:7px;margin-top:7px}
-#eclipseMetrics b[data-full]{position:relative;cursor:help}
-#eclipseMetrics b[data-full]:is(:hover,:focus-visible):after{content:attr(data-full);position:absolute;bottom:calc(100% + 12px);left:50%;transform:translateX(-50%);padding:9px 12px;border:1px solid var(--gold);border-radius:5px;background:var(--panel);color:var(--ink);font-size:11px;box-shadow:0 5px 15px #0007;z-index:100}
 @container(max-width:560px){#wins .eclipse-class-browser>.ui-split{display:flex;flex-direction:column}#wins .ui-job-path .tn{min-height:68px}#wins .ui-job-paths{gap:7px}}
 .eclipse-market-tools{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;align-items:start}
 #wins .eclipse-market-tools .ui-fold{padding:10px;margin:0}#wins .eclipse-market-tools>.full{margin:0;padding:10px;font-size:10px}
@@ -1228,7 +1226,6 @@ body.clean-screen #eclipseCompanions{display:none}
 #eclipseMetrics{display:flex;top:4px;left:12px;right:12px;justify-content:flex-end;gap:14px}
 #eclipseMetrics>div:not(:has(#dps,#zenymin)){display:none}
 #eclipseMetrics>div{display:flex;align-items:center;gap:8px;font-size:7px;min-width:0}#eclipseMetrics b{font-size:9px;margin:0}#eclipseMetrics .eclipse-dps-meter{padding:3px 7px}
-#eclipseMetrics b[data-full]:is(:hover,:focus-visible):after{left:auto;right:0;transform:none}
 }
 @container(max-width:560px){
 .eclipse-market-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.eclipse-market-grid>.eclipse-product:nth-child(n+3){grid-column:1/-1}
@@ -1281,7 +1278,6 @@ body.clean-screen #eclipseCompanions{display:none}
 #eclipseMetrics>div{display:block;text-align:center;font-size:7px;letter-spacing:0}#eclipseMetrics b{font-size:10px;margin-top:2px}
 #eclipseMetrics>div+div{padding-left:8px}#eclipseMetrics>div:has(#zenymin){border:0;padding-left:0}#eclipseMetrics .eclipse-dps-meter{padding:0 0 0 8px}
 #eclipseMetrics:after{width:68px;height:16px;top:-10px}
-#eclipseMetrics b[data-full]:is(:hover,:focus-visible):after{font-size:9px;white-space:nowrap;right:-35px}
 }
 
 /* v109: a continuous footer accent with unframed rate readouts. */
@@ -1319,7 +1315,7 @@ body.clean-screen #eclipseCompanions{display:none}
 body.clean-screen #sideMenu{display:none}
 #wins .ui-field-guide{max-height:360px;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin;scrollbar-gutter:stable}
 @media(min-width:1101px){
-  #wins>.wp[data-win=map]:only-child:not(.ui-minimized){height:100%}
+  #wins>.wp[data-win=map]:only-child{height:100%}
   #wins .wbody[data-layout=map]{display:flex;flex-direction:column;overflow:hidden;flex:1 1 auto}
   #wins .ui-panel[data-layout=map] .ui-content{min-height:0;flex:1;align-items:stretch;overflow:hidden}
   #wins .ui-panel[data-layout=map] .ui-content>.ui-section{min-height:0;max-height:none;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin}
@@ -1410,5 +1406,116 @@ body.clean-screen #sideMenu{display:none}
 /* v114: readable activity text and stronger screen panel outlines. */
 :root{--e-line:#ffffff24;--e-line-bright:#ffffff52;--e-screen-edge:color-mix(in srgb,var(--gold) 58%,var(--e-raised))}
 #hud,#eclipseCombat,#sideRail #qp,#sideMenu,#eclipseMapCard,#dock,#wins>.wp{border:2px solid var(--e-screen-edge)}
-#feed>div,#feed>.feed-entry{background:color-mix(in srgb,var(--e-bg) 78%,transparent);border:1px solid var(--e-line-bright);border-radius:5px;padding:5px 8px;text-shadow:0 1px 2px #000;font-size:11px}
+/* The panel stays visible between messages; only its text rows expire. */
+#feedWrap{width:280px}
+#feed{height:220px;display:flex;flex-direction:column;justify-content:flex-end;overflow:hidden;padding:6px 8px;background:color-mix(in srgb,var(--e-bg) 35%,transparent);border:1px solid #ffffff18;border-radius:5px}
+#feed>div,#feed>.feed-entry{flex:none;background:transparent;border:0;border-radius:0;padding:3px 0;margin:2px 0;text-shadow:0 1px 2px #000;font-size:11px}
+@media(max-width:740px){#feed{height:170px}#feed>div,#feed>.feed-entry{font-size:9px}}
 #eclipseHeader .hud-zeny{background:color-mix(in srgb,var(--e-raised) 78%,transparent);border:1px solid var(--e-screen-edge);border-radius:5px;padding:4px 8px}
+
+/* v119: aligned workspaces, with one focused panel and the dock's slate gradient. */
+#wins{flex-direction:row;flex-wrap:nowrap;align-items:stretch;gap:12px;top:22px;bottom:calc(var(--docktop,76px) + 12px);height:auto;overflow:hidden;z-index:47}
+#wins:has(>.ui-expanded){height:auto}
+#wins>.wp,#wins>.wp:only-child:not(.ui-expanded){flex:1 1 0;width:0;min-width:0;max-width:none;height:100%;max-height:100%;align-self:stretch;overflow:hidden}
+#wins>.wp[hidden]{display:none!important}
+#wins.has-focus{width:calc(100% - 32px);max-width:none}
+#wins>.wp.ui-expanded{flex:1 1 100%;width:100%}
+#wins>.wp>.title{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:10px;height:76px;min-height:76px;padding:10px 14px;overflow:hidden}
+#wins>.wp>.title>span:first-child{min-width:0;gap:10px;overflow:hidden}
+#wins>.wp>.title>span:first-child>.ui-icon{flex:none;width:32px;height:32px;padding:6px}
+.eclipse-window-heading{min-width:0;overflow:hidden}
+.eclipse-window-heading b,.eclipse-window-heading small{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.eclipse-window-heading b{font-size:20px;line-height:1.3}
+.ui-window-tools{display:flex;align-items:center;flex:none;gap:6px;margin:0}
+.ui-window-tools button{flex:0 0 30px;width:30px;height:30px;padding:5px;opacity:1}
+#wins .ui-window-tools .ui-icon{width:18px;height:18px;display:block}
+#wins>.wp>.wbody,#wins>.wp:only-child:not(.ui-expanded)>.wbody{flex:1 1 auto;min-height:0}
+#wins>.wp,#wins>.wp>.title,#wins .wbody,#wins .ui-panel>.atabs,#wins .eclipse-window-footer{background:linear-gradient(120deg,var(--e-surface-start),var(--e-surface-end) 82%)}
+#wins .eclipse-window-footer{flex:none;min-width:0;gap:8px}
+.eclipse-window-footer>span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.eclipse-window-footer kbd{flex:none}
+@container(max-width:600px){.eclipse-farming{display:none}.eclipse-window-heading b{font-size:17px}}
+@media(max-width:900px){
+ #wins{flex-direction:column;justify-content:flex-start;overflow-y:auto;scroll-snap-type:y proximity;width:calc(100% - 16px)}
+ #wins>.wp,#wins>.wp:only-child:not(.ui-expanded){flex:0 0 100%;width:100%;height:100%;scroll-snap-align:start}
+ #wins.has-focus{width:calc(100% - 16px);overflow:hidden}
+}
+#wins .eclipse-primary:hover,#wins .eclipse-primary:focus-visible{background:linear-gradient(110deg,var(--e-action-start),var(--e-action-end));color:#17232e;filter:brightness(1.1);border-color:var(--gold)}
+.eclipse-card-filters{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
+.eclipse-card-filters button{background:var(--e-soft);color:var(--ink);padding:7px 10px}
+.eclipse-card-filters button[aria-pressed=true]{color:var(--gold);border-color:var(--gold)}
+.log-preview-controls{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:12px}
+.log-preview-controls small{color:var(--e-muted)}
+/* Refine keeps its primary action in the window; equipment and supplies scroll independently. */
+#wins .wbody[data-view=refine]{display:flex;flex-direction:column;overflow:hidden}
+#wins .wbody[data-view=refine]>.atabs{flex:none;position:static}
+#wins .wbody[data-view=refine]>.ui-content{flex:1;min-height:0;overflow:hidden}
+#wins .wbody[data-view=refine] .eclipse-workshop{height:100%;min-height:0;grid-template-rows:minmax(0,1fr)}
+#wins .eclipse-workshop>.ui-section{min-height:0;padding:14px}
+.eclipse-workshop-menu select{display:none;width:100%;max-width:100%;color:var(--ink);background:var(--e-bg);padding:8px}
+#wins .wbody[data-view=refine] .eclipse-workshop-menu,#wins .wbody[data-view=refine] .eclipse-workshop-aside{overflow:auto}
+#wins .wbody[data-view=refine] .eclipse-workshop-stage{display:flex;flex-direction:column;overflow:hidden}
+#wins .wbody[data-view=refine] .eclipse-workshop-stage>.slot{min-height:0;flex:1;overflow:auto;margin:0}
+#wins .wbody[data-view=refine] .eclipse-workshop-hero{flex:none;padding:0}
+#wins .wbody[data-view=refine] .eclipse-workshop-hero>div{width:46px;height:46px;margin-bottom:4px}
+#wins .wbody[data-view=refine] .eclipse-workshop-hero img{width:38px;height:38px}
+#wins .wbody[data-view=refine] .eclipse-workshop-hero h2{font-size:15px;margin:4px 0}
+#wins .wbody[data-view=refine] .eclipse-workshop-hero p{margin:3px 0}
+#wins .wbody[data-view=refine] .ui-section-label{margin-bottom:8px;padding-bottom:3px}
+#wins .wbody[data-view=refine] .eclipse-refine-status:empty{display:none}
+#wins .wbody[data-view=refine] .eclipse-rank-preview{padding:3px 0;font-size:22px}
+#wins .wbody[data-view=refine] .eclipse-refine-preview>div:not(.eclipse-rank-preview){padding:3px 0}
+.eclipse-workshop-action{flex:none;padding-top:6px}
+#wins .eclipse-workshop-action [data-a=refine]{margin:0;padding:10px;width:100%}
+.eclipse-workshop:has(.reforge-offer){grid-template-columns:190px minmax(0,1fr)}
+.reforge-comparison{margin:16px 0;display:grid;gap:10px}
+.reforge-comparison-row{display:grid;grid-template-columns:minmax(0,1fr) 20px minmax(0,1fr);align-items:center;gap:8px;padding:10px;background:var(--e-soft);border-radius:5px;overflow-wrap:anywhere}
+.reforge-comparison-row strong{color:var(--gold)}
+.reforge-comparison-labels{padding:0 10px;background:none;color:var(--e-muted);font-size:10px}
+.reforge-decision{display:flex;flex-wrap:wrap;gap:10px;margin:12px 0}
+.reforge-decision button{flex:1;padding:10px}
+.reforge-decision [data-v=yes]{background:var(--gold);color:var(--e-bg)}
+#wins .eclipse-reforge-stage .reforge-offer{margin:0;border:0;background:none;padding:0}
+@container(max-width:900px){
+ #wins .wbody[data-view=refine] .eclipse-workshop{grid-template-columns:130px minmax(0,1fr);grid-template-rows:minmax(0,1fr) 100px}
+ #wins .wbody[data-view=refine] .eclipse-workshop-stage{grid-column:2;grid-row:1}
+ #wins .wbody[data-view=refine] .eclipse-workshop-aside{grid-column:2;grid-row:2}
+}
+@container(max-width:600px){
+ #wins .eclipse-workshop,#wins .eclipse-workshop:has(.reforge-offer){grid-template-columns:minmax(0,1fr);min-height:0}
+ #wins .eclipse-workshop-menu{grid-column:1;grid-row:auto;border:0;padding:8px 12px}
+ #wins .eclipse-workshop-menu>.ui-section-label,#wins .eclipse-workshop-menu>button{display:none}
+ .eclipse-workshop-menu select{display:block}
+ #wins .wbody[data-view=refine] .eclipse-workshop{grid-template-columns:minmax(0,1fr);grid-template-rows:auto minmax(0,1fr) 78px}
+ #wins .wbody[data-view=refine] .eclipse-workshop-stage{grid-column:1;grid-row:2}
+ #wins .wbody[data-view=refine] .eclipse-workshop-aside{grid-column:1;grid-row:3}
+ #wins .eclipse-workshop-aside{grid-column:1}
+ #wins .wbody[data-view=refine] .eclipse-workshop-stage{padding:8px 12px}
+ #wins .wbody[data-view=refine] .eclipse-workshop-hero>div{display:none}
+ #wins .wbody[data-view=refine] .eclipse-workshop-hero small{display:none}
+ .reforge-comparison-row{font-size:10px;padding:8px 4px;gap:4px}
+}
+
+/* v120: readable job status in the overview and full class browser. */
+.eclipse-job-actions{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px}
+#wins .eclipse-job-actions .legend{display:flex;flex-wrap:wrap;gap:6px;margin:0}
+#wins .eclipse-job-actions .legend .tn{padding:5px 9px;font-size:10px;opacity:1;filter:none}
+#wins .eclipse-job-actions>[data-a=job]{width:auto;margin:0;padding:9px 12px;font-size:10px}
+#wins .eclipse-job-actions .tn.cur,#wins [data-class-status=cur]{--job-status-color:var(--gold)}
+#wins .eclipse-job-actions .tn.played,#wins [data-class-status=played]{--job-status-color:#a8cfff}
+#wins .eclipse-job-actions .tn.ok,#wins [data-class-status=ok]{--job-status-color:#9de0bb}
+#wins .eclipse-job-actions .tn.lock,#wins [data-class-status=lock]{--job-status-color:var(--e-muted)}
+#wins .eclipse-job-actions .tn,#wins [data-class-status]{border-color:var(--job-status-color);background:color-mix(in srgb,var(--job-status-color) 10%,var(--panel));box-shadow:none}
+#wins .eclipse-job-actions .tn,#wins .eclipse-job-status{color:var(--job-status-color);opacity:1;font-weight:600}
+#wins .eclipse-class-node small{display:block;margin-top:4px}
+#wins [data-class-status].pick{outline:2px solid var(--gold);outline-offset:2px}
+@container(max-width:560px){#wins .eclipse-job-actions>[data-a=job]{width:100%}}
+
+/* v121: bounded equipment pages and capacity above the inventory controls. */
+#wins .eclipse-window-heading .eclipse-bag-capacity{font-size:11px;color:var(--ink);letter-spacing:0}
+#wins .eclipse-bag>.bag-top,.ui-inventory>.bag-top{margin:0 0 12px;padding:0 0 10px;border-top:0;border-bottom:1px solid var(--e-line);font-size:11px}
+#wins .bag-top .bag-count{font-size:11px;color:var(--ink);white-space:nowrap}
+.eclipse-inventory-pages{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:10px 0;flex:none}
+.eclipse-inventory-pages button{padding:7px 9px;font-size:10px;white-space:nowrap}
+.eclipse-inventory-pages>span{text-align:center;font-size:11px;min-width:0;color:var(--ink)}
+.eclipse-inventory-pages small{display:block;font-size:9px;color:var(--e-muted);margin-top:3px}

@@ -44,6 +44,21 @@ test('field buffs keep distinct colored artwork, countdowns, descriptions and ex
  }
  ev('petBuff={};petBuffSrc={};ui()');assert.equal(doc.querySelectorAll('#hudBuffs .pbx').length,0);assert.equal(doc.getElementById('hudBuffs').style.display,'none');
 });
+test('buff countdown updates retain the hovered and focused tile, even when another buff expires',()=>{
+ ev("bars=window.realBars;petBuff={atk:15,atkT:15,hp:15,hpT:20};petBuffSrc={atk:'Poring',hp:'Drops'};ui()");
+ const tile=doc.getElementById('pet-buff-vital'),tooltip=tile.querySelector('[role=tooltip]');tile.focus();
+ for(let i=0;i<12;i++)ev('petBuff.hpT-=.1;bars()');
+ assert.equal(doc.getElementById('pet-buff-vital'),tile);assert.equal(tile.querySelector('[role=tooltip]'),tooltip);assert.equal(doc.activeElement,tile);
+ assert.equal(tile.querySelector('.s').textContent,'19');assert.match(tooltip.textContent,/19s left/);
+ ev('petBuff.atk=0;bars()');assert.equal(doc.getElementById('pet-buff-vital'),tile);assert.equal(doc.activeElement,tile);
+ assert.equal(doc.querySelectorAll('#hudBuffs .pbx').length,1);
+ ev('petBuff.hp=0;bars()');assert.equal(tile.isConnected,false);
+});
+test('Zeny and DPS update without native or custom hover tips and keep accessible exact values',()=>{
+ ev('bars=window.realBars;bars()');
+ for(const id of ['zenymin','dps']){const node=doc.getElementById(id);assert.equal(node.hasAttribute('title'),false);assert.equal(node.hasAttribute('data-full'),false);assert.match(node.getAttribute('aria-label'),/: 0$/);}
+ assert.equal(doc.getElementById('zenyRate'),null);assert.equal(doc.getElementById('zenyHover').hasAttribute('aria-describedby'),false);
+});
 test('More follows the dock edge and viewport limits',()=>{
  const dock=doc.getElementById('dock'),menu=doc.getElementById('sideMenu');
  dock.getBoundingClientRect=()=>({left:100,right:800,top:700,bottom:766});Object.defineProperty(menu,'offsetWidth',{value:225,configurable:true});
