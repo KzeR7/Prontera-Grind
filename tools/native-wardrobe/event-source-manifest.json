@@ -1,0 +1,102 @@
+{
+  "schemaVersion": 1,
+  "rendererCommit": "4de4fa747431979d35c747d7edd549a872efd9e1",
+  "files": [
+    {
+      "path": "data/sprite/인간족/몸통/남/결혼_남.act",
+      "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C2%B8%C3%B6%C3%85%C3%AB/%C2%B3%C2%B2/%C2%B0%C3%A1%C3%88%C2%A5_%C2%B3%C2%B2.act",
+      "bytes": 48276,
+      "sha256": "bb93ecbdfff184b6082e9956781e65525551ff6c15d471a91e9ff71a229e98b3"
+    },
+    {
+      "path": "data/sprite/인간족/몸통/남/결혼_남.spr",
+      "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C2%B8%C3%B6%C3%85%C3%AB/%C2%B3%C2%B2/%C2%B0%C3%A1%C3%88%C2%A5_%C2%B3%C2%B2.spr",
+      "bytes": 109182,
+      "sha256": "d74d5d1767709cfb3a9ef57bb25d99bc2af29ad5ec70c09e377507876462d004"
+    },
+    {
+      "path": "data/sprite/인간족/몸통/남/산타_남.act",
+      "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C2%B8%C3%B6%C3%85%C3%AB/%C2%B3%C2%B2/%C2%BB%C3%AA%C3%85%C2%B8_%C2%B3%C2%B2.act",
+      "bytes": 48276,
+      "sha256": "a4f3f74ef01aa6333fdb4ce36159d478c2c7f94a7714410148bac0d73ce1e0ec"
+    },
+    {
+      "path": "data/sprite/인간족/몸통/남/산타_남.spr",
+      "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C2%B8%C3%B6%C3%85%C3%AB/%C2%B3%C2%B2/%C2%BB%C3%AA%C3%85%C2%B8_%C2%B3%C2%B2.spr",
+      "bytes": 141574,
+      "sha256": "f544f01e5af85bf1de2a0cb547bfeecd4c8e3eb42dc5cdaa80c06adf9163f0e9"
+    },
+    {
+      "path": "data/sprite/인간족/몸통/남/여름_남.act",
+      "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C2%B8%C3%B6%C3%85%C3%AB/%C2%B3%C2%B2/%C2%BF%C2%A9%C2%B8%C2%A7_%C2%B3%C2%B2.act",
+      "bytes": 48276,
+      "sha256": "33b58c32d0f1f6c8189b40d7f0cdf663cc3a455ea1fa2da41f9d20127cf9eb39"
+    },
+    {
+      "path": "data/sprite/인간족/몸통/남/여름_남.spr",
+      "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C2%B8%C3%B6%C3%85%C3%AB/%C2%B3%C2%B2/%C2%BF%C2%A9%C2%B8%C2%A7_%C2%B3%C2%B2.spr",
+      "bytes": 91267,
+      "sha256": "ba9269f64e6f98e590d1db94eb4b27900a96a586fe91bcb73350f8d45124399d"
+    },
+    {
+      "path": "data/sprite/인간족/몸통/남/한복_남.act",
+      "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C2%B8%C3%B6%C3%85%C3%AB/%C2%B3%C2%B2/%C3%87%C3%91%C2%BA%C2%B9_%C2%B3%C2%B2.act",
+      "bytes": 48276,
+      "sha256": "aba7d2bf71d39f9be35f85575887a8d033823f0fe5721f1790b5cdaa2e75e01c"
+    },
+    {
+      "path": "data/sprite/인간족/몸통/남/한복_남.spr",
+      "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C2%B8%C3%B6%C3%85%C3%AB/%C2%B3%C2%B2/%C3%87%C3%91%C2%BA%C2%B9_%C2%B3%C2%B2.spr",
+      "bytes": 123612,
+      "sha256": "14a417092ee357eeeb485736a1f49b22aa8e74cab5fb9edb862ec16a0095549d"
+    },
+    {
+      "path": "data/sprite/인간족/몸통/여/결혼_여.act",
+      "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C2%B8%C3%B6%C3%85%C3%AB/%C2%BF%C2%A9/%C2%B0%C3%A1%C3%88%C2%A5_%C2%BF%C2%A9.act",
+      "bytes": 48276,
+      "sha256": "4004bbb5426d5e9cee33fcfd881a3cbcd2b3fe7d7e75fd1b208ec669c76fe89d"
+    },
+    {
+      "path": "data/sprite/인간족/몸통/여/결혼_여.spr",
+      "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C2%B8%C3%B6%C3%85%C3%AB/%C2%BF%C2%A9/%C2%B0%C3%A1%C3%88%C2%A5_%C2%BF%C2%A9.spr",
+      "bytes": 180474,
+      "sha256": "3b3fd91911ab020657b61ce9aa160f9f2c1cfa88165ea65d861db5f3c4e88993"
+    },
+    {
+      "path": "data/sprite/인간족/몸통/여/산타_여.act",
+      "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C2%B8%C3%B6%C3%85%C3%AB/%C2%BF%C2%A9/%C2%BB%C3%AA%C3%85%C2%B8_%C2%BF%C2%A9.act",
+      "bytes": 48276,
+      "sha256": "0226e563fd9442a27b0a592fc5b17d88b5a932b49b806c7787c0f24c06bab9ab"
+    },
+    {
+      "path": "data/sprite/인간족/몸통/여/산타_여.spr",
+      "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C2%B8%C3%B6%C3%85%C3%AB/%C2%BF%C2%A9/%C2%BB%C3%AA%C3%85%C2%B8_%C2%BF%C2%A9.spr",
+      "bytes": 110111,
+      "sha256": "d589ddae637c6b39eb59238a4f4d071b008bccd13337e93aaafb141259285b5a"
+    },
+    {
+      "path": "data/sprite/인간족/몸통/여/여름_여.act",
+      "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C2%B8%C3%B6%C3%85%C3%AB/%C2%BF%C2%A9/%C2%BF%C2%A9%C2%B8%C2%A7_%C2%BF%C2%A9.act",
+      "bytes": 48276,
+      "sha256": "38db7192739d0baa45aa526de2f6a8fa0703189e8c091b02936d16ea67c38494"
+    },
+    {
+      "path": "data/sprite/인간족/몸통/여/여름_여.spr",
+      "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C2%B8%C3%B6%C3%85%C3%AB/%C2%BF%C2%A9/%C2%BF%C2%A9%C2%B8%C2%A7_%C2%BF%C2%A9.spr",
+      "bytes": 84768,
+      "sha256": "b6b1cafd0c87b1fbfce2d796b1c80fec2d76df4772ca3f3eeeeb9378a06d0483"
+    },
+    {
+      "path": "data/sprite/인간족/몸통/여/한복_여.act",
+      "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C2%B8%C3%B6%C3%85%C3%AB/%C2%BF%C2%A9/%C3%87%C3%91%C2%BA%C2%B9_%C2%BF%C2%A9.act",
+      "bytes": 48276,
+      "sha256": "c5ed618a542a6f2ef966b07118b8f1e573e81061b5012151d1eaf34830ce42da"
+    },
+    {
+      "path": "data/sprite/인간족/몸통/여/한복_여.spr",
+      "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C2%B8%C3%B6%C3%85%C3%AB/%C2%BF%C2%A9/%C3%87%C3%91%C2%BA%C2%B9_%C2%BF%C2%A9.spr",
+      "bytes": 148621,
+      "sha256": "978486a0fc07c0e2dfc5a240c887c83dbb75fb1ba0d22342b375cbe702139862"
+    }
+  ]
+}

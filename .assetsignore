@@ -42,5 +42,10 @@ AGENTS.md
 READ-ME-FIRST.md
 .gitignore
 
-# Preserved first fitting; the live character system uses v2.
+# Preserved first fitting; the live character system uses v5.
 assets/wardrobe/v1/
+
+# Previous native catalog; superseded by v4.
+/assets/wardrobe/v3/
+
+/assets/wardrobe/v4/

@@ -27,7 +27,7 @@ func main() {
 	job := uint32(4008)
 	weapon, attack := uint32(2), 80
 	jobArg := 4
-	if len(os.Args) > 4 && (os.Args[4] == "proof" || os.Args[4] == "full") {
+	if len(os.Args) > 4 && (os.Args[4] == "proof" || os.Args[4] == "full" || os.Args[4] == "accessories") {
 		jobArg = 5
 	}
 	if len(os.Args) > jobArg {
@@ -36,6 +36,10 @@ func main() {
 		job = uint32(n)
 	}
 	switch job {
+	case 0:
+		weapon = 1
+	case 2, 9, 4010, 4055:
+		weapon = 10
 	case 4, 5, 8, 4009:
 		weapon = 8
 	case 10, 4011:
@@ -43,7 +47,7 @@ func main() {
 		attack = 88
 	case 6:
 		weapon = 1
-	case 12, 4013:
+	case 12, 4013, 4059:
 		weapon = 16
 		attack = 88
 	case 3:
@@ -63,16 +67,23 @@ func main() {
 		if sex == "f" {
 			g = rotype.Female
 		}
+		sexAttack := attack
+		if sex == "f" && (job == 0 || job == 9 || job == 4010 || job == 4055) {
+			sexAttack = 88
+		}
 		styles := catalog.Hairs[sex]
-		if proof {
+		if proof || (len(os.Args) > 4 && os.Args[4] == "accessories") {
 			styles = []uint32{2}
 		}
 		for _, head := range styles {
 			for pal := 0; pal < 9; pal++ {
-				if proof && pal > 0 {
+				if (proof || (len(os.Args) > 4 && os.Args[4] == "accessories")) && pal > 0 {
 					break
 				}
 				req := engine.Request{Job: job, Gender: g, Head: head, HeadPalette: pal, BodyPalette: -1, Headgear: []uint32{69, 3}, Garment: 1, Weapon: weapon, Frame: -1, HeadDir: rotype.Straight, EnableShadow: true, Canvas: "320x280+160+200"}
+				if job == 4054 {
+					req.Outfit = 1
+				}
 				hair := map[string]engine.WardrobeAction{}
 				base := map[string]engine.WardrobeAction{}
 				for _, stance := range []string{"idle", "walk", "attack"} {
@@ -81,7 +92,7 @@ func main() {
 						offset = 8
 					}
 					if stance == "attack" {
-						offset = attack
+						offset = sexAttack
 					}
 					for d := 0; d < 8; d++ {
 						key := stance + strconv.Itoa(d)
@@ -95,6 +106,27 @@ func main() {
 							}
 							base[key], err = e.ExportWardrobe(req, out, false, p)
 							must(err)
+							// Export alternative pieces with the renderer's own attachments and order.
+							// Their pixels are bundled once; only one piece per slot is drawn at runtime.
+							for _, id := range []uint32{2, 17, 12, 8, 56, 57} {
+								variant := req
+								variant.Headgear = []uint32{id}
+								variant.Garment = 0
+								extra, err := e.ExportWardrobe(variant, out, false, "")
+								must(err)
+								current := base[key]
+								if len(extra.Frames) != len(current.Frames) || extra.Delay != current.Delay {
+									panic("accessory changed native timeline")
+								}
+								for i, frame := range extra.Frames {
+									for _, layer := range frame {
+										if layer.Slot != "body" && layer.Slot != "weapon" && layer.Slot != "shadow" {
+											current.Frames[i] = append(current.Frames[i], layer)
+										}
+									}
+								}
+								base[key] = current
+							}
 							if proof {
 								for mask := 0; mask < 8; mask++ {
 									variant := req

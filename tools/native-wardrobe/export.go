@@ -57,10 +57,20 @@ func (e *Engine) ExportWardrobe(req Request, folder string, headOnly bool, proof
 		}
 	}
 	weapons := 2
-	if req.Weapon == 11 || req.Job == 8 || req.Job == 10 || req.Job == 4009 || req.Job == 4011 {
+	if req.Weapon == 10 || req.Weapon == 11 || req.Job == 8 || req.Job == 10 || req.Job == 4009 || req.Job == 4011 {
 		weapons = 1
-	} // Bows and these mace sets have no separate slash component.
-	for k, n := range map[string]int{"body": 1, "head": 1, "weapon": weapons, "accessory": 2, "garment": 1, "shadow": 1} {
+	} // Staves, bows and these mace sets have no separate slash component.
+	accessories := 0
+	for _, id := range req.Headgear {
+		if id > 0 {
+			accessories++
+		}
+	}
+	garments := 0
+	if req.Garment > 0 {
+		garments = 1
+	}
+	for k, n := range map[string]int{"body": 1, "head": 1, "weapon": weapons, "accessory": accessories, "garment": garments, "shadow": 1} {
 		if parts[k] != n {
 			return WardrobeAction{}, fmt.Errorf("missing native %s: got %d, want %d", k, parts[k], n)
 		}
@@ -95,15 +105,11 @@ func (e *Engine) ExportWardrobe(req Request, folder string, headOnly bool, proof
 			case sprite.TypeWeapon:
 				slot = "weapon"
 			case sprite.TypeGarment:
-				slot = "wings"
+				slot = map[uint32]string{1: "wings", 11: "mechanicWings", 15: "blueCupidWings", 18: "angelFeathers", 20: "twilightWings", 42: "ribbonWings", 203: "leticiaWings", 88: "sandalphonWings", 95: "fairyEden", 156: "mysteryWings"}[req.Garment]
 			case sprite.TypeShadow:
 				slot = "shadow"
 			case sprite.TypeAccessory:
-				if s.AccessoryID == 69 {
-					slot = "halo"
-				} else if s.AccessoryID == 3 {
-					slot = "glasses"
-				}
+				slot = map[uint32]string{69: "halo", 2: "catEars", 17: "ribbon", 328: "freyaCrown", 338: "umbrellaHat", 475: "classicHat", 559: "redBeret", 642: "blackRibbon", 1012: "aquaBunny", 1070: "foxEars", 3: "glasses", 12: "sunglasses", 8: "mask", 289: "elvenGlasses", 405: "elfEars", 498: "darkElfEars", 710: "phantomMask", 772: "bandagedEye", 779: "heartPatch", 822: "hexGlasses", 56: "flower", 57: "leaf", 814: "orange", 818: "hankie", 861: "strawberry", 884: "chocoStick", 889: "pokerCard", 931: "redPencil", 1025: "frozenRose", 604: "poringLetter"}[s.AccessoryID]
 			}
 			if slot == "" {
 				return result, fmt.Errorf("unexpected part")

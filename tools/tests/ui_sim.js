@@ -931,7 +931,7 @@ t('Settings links to Wardrobe and keeps the current character preview', () => {
     'the game loop redraws whichever preview is open, so it animates');
   assert.ok(src.includes('ctx.drawImage(f.img,f.sx+ax-bw/2,ay-bh+6,bw,bh,0,0,cv.width,cv.height);'),
     'the preview draws the whole current animation frame around the art anchor');
-  assert.ok(src.includes("const p=skinPack(cls,sex),f=p?skinFrameOf(p,'S'):null;"),
+  assert.ok(src.includes("const p=waiting?null:skinPack(cls,sex),f=p?skinFrameOf(p,'S'):null;"),
     'reading the frame the file\'s own delays say is due');
   assert.ok(src.includes('captureSkinFrame(heroSpr,route)'), 'and the in-game hero paints the due frame each render');
   assert.ok(src.includes('skinDecodePng') && src.includes("new DecompressionStream('deflate')"),

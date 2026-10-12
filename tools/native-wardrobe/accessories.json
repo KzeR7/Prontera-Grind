@@ -1,0 +1,210 @@
+{
+  "headwear": [
+    {
+      "key": "halo",
+      "label": "Angel halo",
+      "view": 69
+    },
+    {
+      "key": "catEars",
+      "label": "Cat ears",
+      "view": 2
+    },
+    {
+      "key": "ribbon",
+      "label": "Ribbon",
+      "view": 17
+    },
+    {
+      "key": "freyaCrown",
+      "label": "Freya crown",
+      "view": 328
+    },
+    {
+      "key": "umbrellaHat",
+      "label": "Umbrella hat",
+      "view": 338
+    },
+    {
+      "key": "classicHat",
+      "label": "Classic hat",
+      "view": 475
+    },
+    {
+      "key": "redBeret",
+      "label": "Red beret",
+      "view": 559
+    },
+    {
+      "key": "blackRibbon",
+      "label": "Black tail ribbon",
+      "view": 642
+    },
+    {
+      "key": "aquaBunny",
+      "label": "Aqua bunny ears",
+      "view": 1012
+    },
+    {
+      "key": "foxEars",
+      "label": "Fox ears and bells",
+      "view": 1070
+    }
+  ],
+  "facewear": [
+    {
+      "key": "glasses",
+      "label": "Glasses",
+      "view": 3
+    },
+    {
+      "key": "sunglasses",
+      "label": "Sunglasses",
+      "view": 12
+    },
+    {
+      "key": "mask",
+      "label": "Mask",
+      "view": 8
+    },
+    {
+      "key": "elvenGlasses",
+      "label": "Elven sunglasses",
+      "view": 289
+    },
+    {
+      "key": "elfEars",
+      "label": "Elf ears",
+      "view": 405
+    },
+    {
+      "key": "darkElfEars",
+      "label": "Dark elf ears",
+      "view": 498
+    },
+    {
+      "key": "phantomMask",
+      "label": "Phantom mask",
+      "view": 710
+    },
+    {
+      "key": "bandagedEye",
+      "label": "Bandaged eyepatch",
+      "view": 772
+    },
+    {
+      "key": "heartPatch",
+      "label": "Heart eyepatch",
+      "view": 779
+    },
+    {
+      "key": "hexGlasses",
+      "label": "Hexagon glasses",
+      "view": 822
+    }
+  ],
+  "mouthwear": [
+    {
+      "key": "flower",
+      "label": "Flower",
+      "view": 56
+    },
+    {
+      "key": "leaf",
+      "label": "Leaf",
+      "view": 57
+    },
+    {
+      "key": "orange",
+      "label": "Orange slice",
+      "view": 814
+    },
+    {
+      "key": "hankie",
+      "label": "Handkerchief",
+      "view": 818
+    },
+    {
+      "key": "strawberry",
+      "label": "Strawberry",
+      "view": 861
+    },
+    {
+      "key": "chocoStick",
+      "label": "Chocolate stick",
+      "view": 884
+    },
+    {
+      "key": "pokerCard",
+      "label": "Poker card",
+      "view": 889
+    },
+    {
+      "key": "redPencil",
+      "label": "Red pencil",
+      "view": 931
+    },
+    {
+      "key": "frozenRose",
+      "label": "Frozen rose",
+      "view": 1025
+    },
+    {
+      "key": "poringLetter",
+      "label": "Poring letter",
+      "view": 604
+    }
+  ],
+  "backwear": [
+    {
+      "key": "wings",
+      "label": "Archangel wings",
+      "view": 1
+    },
+    {
+      "key": "mechanicWings",
+      "label": "Mechanical wings",
+      "view": 11
+    },
+    {
+      "key": "blueCupidWings",
+      "label": "Blue Cupid wings",
+      "view": 15
+    },
+    {
+      "key": "angelFeathers",
+      "label": "Angel feathers",
+      "view": 18
+    },
+    {
+      "key": "twilightWings",
+      "label": "Light and darkness wings",
+      "view": 20
+    },
+    {
+      "key": "ribbonWings",
+      "label": "Ribboned angel wings",
+      "view": 42
+    },
+    {
+      "key": "leticiaWings",
+      "label": "Leticia wings",
+      "view": 203
+    },
+    {
+      "key": "sandalphonWings",
+      "label": "Sandalphon wings",
+      "view": 88
+    },
+    {
+      "key": "fairyEden",
+      "label": "Fairy of Eden",
+      "view": 95
+    },
+    {
+      "key": "mysteryWings",
+      "label": "Mystery wings",
+      "view": 156
+    }
+  ]
+}
