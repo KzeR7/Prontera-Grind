@@ -22,7 +22,7 @@ test('legacy scrolls merge once and craft into the same visible reserve',()=>{
  assert.match(text,/Refine Protection Scroll/);assert.doesNotMatch(text,/Drop Protection Scroll|automatic fallback/);
  assert.match(doc.querySelector('[data-a=craftdps]').textContent,/Craft Refine Protection Scroll/);
  ev(`tabs.splice(0,tabs.length,'bag');sub.bag='bag';renderWin()`);
- assert.doesNotMatch(doc.querySelector('[data-win=bag]').textContent,/Drop Protection Scroll/);
+ const bagText=doc.querySelector('[data-win=bag]').textContent;assert.match(bagText,/Refine Protection Scroll/);assert.doesNotMatch(bagText,/Drop Protection Scroll/);
 });
 test('live collections are awarded immediately and saved before reveal without rebuilding inventory',()=>{
  ev(`S.inv=Array.from({length:24},(_,i)=>({...S.eq.weapon,id:9000+i,locked:false,cards:[],aff:[]}));tabs.push('equip');renderWin()`);
@@ -38,14 +38,14 @@ test('live collections are awarded immediately and saved before reveal without r
  const stateBefore=ev('JSON.stringify(S)');body.querySelector('[data-a=newdrops]').click();assert.equal(ev('JSON.stringify(S)'),stateBefore,'reveal cannot award or change saved loot');assert.equal(grid.querySelectorAll('[data-tip]').length,44);assert.equal(grid.querySelector('[data-tip="9000"]'),first);
 });
 test('search focus, caret and filter survive currency and quest updates',()=>{
- ev(`S.inv=Array.from({length:12},(_,i)=>({...S.eq.weapon,id:9000+i,cards:[],aff:[]}));tabs.push('bag');renderWin()`);
+ ev(`S.inv=Array.from({length:12},(_,i)=>({...S.eq.weapon,id:9000+i,cards:[],aff:[]}));tabs.push('equip');renderWin()`);
  const search=doc.querySelector('[data-eclipse-search]');search.focus();search.value='s';search.dispatchEvent(new g.window.Event('input',{bubbles:true}));search.setSelectionRange(1,1);
  const quest=doc.querySelector('#qp .quest-tabs button');
  ev('S.zeny+=1234;questEvent("kill",4);ui()');
  assert.equal(doc.querySelector('[data-eclipse-search]'),search);assert.equal(doc.activeElement,search);assert.equal(search.selectionStart,1);assert.equal(search.value,'s');assert.equal(doc.querySelector('#qp .quest-tabs button'),quest);
 });
 test('closing inventory resets view; auto-equip and auto-sale retain authoritative results',()=>{
- ev(`tabs.push('bag');renderWin();collect({...S.eq.weapon,id:20001,val:200,cards:[],aff:[]});tabs.length=0;renderWin();tabs.push('bag');renderWin()`);
+ ev(`tabs.push('equip');renderWin();collect({...S.eq.weapon,id:20001,val:200,cards:[],aff:[]});tabs.length=0;renderWin();tabs.push('equip');renderWin()`);
  assert.ok(doc.querySelector('[data-tip="20001"]'));
  ev(`S.auto=true;collect({...S.eq.weapon,id:20002,val:99999,cards:[],aff:[]})`);assert.equal(ev('S.eq.weapon.id'),20002);
  ev(`S.auto=false;S.autoSell=Array(7).fill(true);S.autoSellRules=defaultAutoSellRules();const dropped={...S.eq.weapon,id:20003,val:1,locked:false,r:0,cards:[],aff:[]};window.beforeSale=S.zeny;collect(dropped)`);
@@ -89,7 +89,7 @@ test('PR review: returned equipment is visible immediately while new drops wait'
  ev(`collect({...S.inv[0],id:41002});renderWin()`);assert.equal(doc.querySelector('[data-tip="41002"]'),null);
 });
 test('PR review: duplicate restored IDs use the same first item as sale handlers',()=>{
- ev(`S.inv=[{...S.eq.weapon,id:42001,name:'First item'},{...S.eq.weapon,id:42001,name:'Second item'}];tabs.push('bag');renderWin()`);
+ ev(`S.inv=[{...S.eq.weapon,id:42001,name:'First item'},{...S.eq.weapon,id:42001,name:'Second item'}];tabs.push('equip');renderWin()`);
  assert.equal(ev('eclipseVisibleInventory().length'),1);assert.equal(ev('eclipseVisibleInventory()[0]===S.inv[0]'),true);
 });
 test('PR review: market navigation is visible and cannot exit a ranked run',()=>{
@@ -175,9 +175,9 @@ test('screen companion shortcuts open pets and party cards deploy, swap and remo
  doc.querySelector('.eclipse-pet-deployment [data-a=pon][data-v="92001"]').click();assert.equal(ev('gp(92001).on'),true);
  ev('tabs.length=0;renderWin();window.eclipseRealBars()');doc.querySelector('#eclipsePetStrip button').click();assert.ok(doc.querySelector('[data-win=pet]'));
 });
-test('gear groups by descending rarity then slot without mutating inventory',()=>{
+test('gear groups by type then rarity within the same name without mutating inventory',()=>{
  ev(`S.inv=[{...S.eq.weapon,id:93001,sec:5,slot:'armor'},{...S.eq.weapon,id:93002,sec:0},{...S.eq.weapon,id:93003,sec:5},{...S.eq.weapon,id:93004,sec:4,locked:true}];tabs.push('equip');renderWin()`);
- assert.deepEqual([...doc.querySelectorAll('.eclipse-bag .grid [data-tip]')].map(n=>n.dataset.tip),['93003','93001','93004','93002']);
+ assert.deepEqual([...doc.querySelectorAll('.eclipse-bag .grid [data-tip]')].map(n=>n.dataset.tip),['93003','93004','93002','93001']);
  assert.equal(ev('S.inv.map(it=>it.id).join()'),'93001,93002,93003,93004');
 });
 test('skills expose descriptions and working auto-cast inside each tile',()=>{

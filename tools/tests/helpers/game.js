@@ -21,6 +21,7 @@ function createGame(html=fs.readFileSync(path.join(ROOT,"index.html"),"utf8")){
 const dom = new JSDOM(html, {
   runScripts: 'dangerously', url: 'http://localhost/', pretendToBeVisual: false,
   beforeParse(window) {
+    Object.defineProperty(window.document, 'hidden', { value: false, configurable: true });
     Object.defineProperty(window.HTMLCanvasElement.prototype, 'getContext', { value: function () { return makeCtx(); } });
     Object.defineProperty(window.HTMLCanvasElement.prototype, 'toDataURL', { value: () => 'data:image/png;base64,' });
     Object.defineProperty(window.HTMLCanvasElement.prototype, 'clientWidth', { get() { return 1200; } });

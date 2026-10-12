@@ -737,7 +737,7 @@ a{color:var(--brass)}small{opacity:.85}summary{cursor:pointer}
 .ui-icon[data-ui-icon="refresh"]{color:#9cddd1}
 .ui-nav-icon .ui-icon{width:22px;height:22px}.ui-window-tools .ui-icon{width:14px;height:14px}.title>span:first-child{display:flex;align-items:center;gap:8px}
 button:focus-visible{outline:2px solid #e7d4a1;outline-offset:3px}
-.skill-line *{fill:none!important;stroke:currentColor!important;stroke-width:1.6!important}.skill-art{filter:none!important}
+.skill-art{filter:drop-shadow(0 1px 2px #0008)}
 #sideRail{position:absolute;right:12px;top:12px;width:228px;display:none;flex-direction:column;gap:10px;pointer-events:auto;z-index:5;max-height:calc(100% - 100px);overflow-y:auto;scrollbar-width:thin}
 #sideRail #qp{position:static;transform:none;width:auto;padding:12px;background:#162721ed;border:1px solid #64756466;border-radius:10px;box-shadow:0 6px 20px #0003}
 #qp .qp-head{color:#f1dfb9;font-size:12px}#qp .qp-head b{display:flex;gap:8px;align-items:center}#qp .qp-actions button{background:none;border:0;padding:3px;color:#b9c7bb}
@@ -787,6 +787,7 @@ body.hide-feed #feedWrap,body.hide-labels #heroTitle,body.hide-labels #tag{displ
 body.clean-screen #wrap>.title,body.clean-screen #ov>*:not(#mobSpriteLayer):not(#weaponSpriteLayer),body.clean-screen #xp-dock,body.clean-screen #hud>*,body.clean-screen #hud>div:last-child>*:not(#screenBtn){visibility:hidden!important}
 body.clean-screen #screenBtn{visibility:visible!important}body.clean-screen #hud{background:transparent;border:0;pointer-events:none}body.clean-screen #screenBtn{pointer-events:auto}
 #qp{max-height:55vh;overflow:auto}.quest-tabs{display:flex;gap:5px;margin:6px 0}.quest-tabs button{flex:1}.ore-quantity{width:100%;box-sizing:border-box}
+.bag-item-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:8px}.bag-item-list article{display:grid;grid-template-columns:1fr auto;gap:6px}.bag-item-list small{grid-column:1/-1}.eclipse-bag>.bag-tools{flex-shrink:0}.eclipse-bag>.chooser{font-size:11px}
 </style>
 <link rel="preload" href="assets/ui/fonts/font-0.ttf" as="font" type="font/ttf" crossorigin>
 <link rel="preload" href="assets/ui/fonts/font-1.ttf" as="font" type="font/ttf" crossorigin>
@@ -962,9 +963,22 @@ function polishIcons(root){
   for(const node of nodes){const fragment=document.createDocumentFragment();let start=0;for(const match of node.data.matchAll(re)){fragment.append(document.createTextNode(node.data.slice(start,match.index)));const box=document.createElement('span');box.innerHTML=uiIcon(UI_EMOJI[match[0]]);fragment.append(box.firstChild);start=match.index+match[0].length}fragment.append(document.createTextNode(node.data.slice(start)));node.replaceWith(fragment)}
 }
 const titleIcon=t=>uiIcon(['index','compass','sword','pet','moon','shield','gem','sun','crown','wing'][Math.max(0,INDEX_TITLES.findIndex(x=>x.id===t.id))]);
-const SKILL_ICON={aid:'heart',bash:'fist',endure:'blades',hprec:'heart',provoke:'roar',bowl:'spiral',pierce:'blades',quick:'bolt',spear:'blades',spiral:'spiral',aura:'halo',jointbeat:'bone',fire:'flame',nap:'shadow',coat:'ward',fireball:'fireball',storm:'snow',jup:'bolt',amp:'book',tstorm:'storm',meteor:'meteor',grav:'gravity',mystic:'orb',napalm:'flame',dstr:'arrow',iconc:'eye',owl:'eye',vult:'feather',blitz:'feather',sharp:'target',beast:'paw',falconry:'feather',falcon:'wing',focus:'target',sight:'eye',pharrow:'mine',dbl:'blades',env:'blades',dodge:'blades',steal:'hand',sonic:'blades',grim:'shadow',katm:'blades',vdust:'blades',mAss:'meteor',soulb:'ghost',sdestroy:'ghost',holy:'cross',heal:'cross',bless:'halo',iagi:'wing',magnus:'cross',sanct:'cross',asp:'flame',kyrie:'cross',judex:'bolt',assum:'cross',gloria:'sun',meditatio:'sun',mammo:'coin',greed:'coin',phys:'muscle',discount:'tag',hammer:'hammer',adren:'bolt',wperf:'hammer',wresearch:'gear',cart:'cart',thrust:'spear',skin:'wheel',cboost:'wheel',frenzy:'fist',dpois:'blades',ovthrust:'shock',mbrk:'shock',fdiver:'ice',fnova:'snow',ashower:'rain',sandat:'blades',signum:'cross',cartrev:'cart',spearboom:'blades',tblow:'fist',vermilion:'flame',landmine:'mine',wwalk:'wind',vsplash:'wind',akatar:'blades',tundead:'skull',basilica:'temple',meltdown:'anvil'};
-const SKILL_TONE={heart:['#17444c','#2bb9a9','#ecfff1'],fist:['#582b32','#f06d4c','#ffe0a0'],shield:['#294e70','#4eb1e8','#e4f8ff'],roar:['#633229','#ff9651','#fff0b4'],spiral:['#364278','#9385ff','#f1ebff'],spear:['#4c3941','#e1c276','#fff3c7'],bolt:['#3e3865','#b29bff','#f8efff'],halo:['#63501e','#e8bd4d','#fff5c4'],bone:['#52403a','#d9bc8b','#fff3da'],flame:['#71331f','#ff6a2e','#ffe987'],shadow:['#33254f','#9564d8','#f1dfff'],ward:['#1d5560','#42c7c0','#e5ffff'],fireball:['#642f27','#fa7c35','#fff2a5'],snow:['#1d4d72','#59c5ff','#effcff'],book:['#49345f','#bd91ff','#fff0ff'],storm:['#174f70','#52d6ed','#ecffff'],meteor:['#5d2e51','#fa70aa','#fff0df'],gravity:['#302354','#a76dff','#f1dfff'],orb:['#343b72','#8c9cff','#f2f3ff'],arrow:['#4c3d2b','#d6b56d','#fff1c0'],eye:['#244d67','#56d6d1','#edffff'],feather:['#285644','#56c78d','#edffdf'],target:['#64432d','#f2a356','#fff2c6'],paw:['#4a5d2a','#9bca50','#f5ffd9'],wing:['#30506f','#8dd7ff','#f5ffff'],blades:['#5a3045','#f2798c','#fff0d8'],vial:['#2b5947','#7bda7c','#f2ffdc'],ghost:['#49355d','#b38bf3','#fff0ff'],cross:['#67501f','#f2cf68','#fff8d6'],water:['#184f70','#50c8f4','#e9fbff'],sun:['#72501d','#ffc643','#fff8bd'],lotus:['#5a3b73','#d38cda','#fff0ff'],coin:['#684616','#f2b62f','#fff4ad'],muscle:['#633532','#ee8667','#ffe5c3'],tag:['#63502b','#d8af57','#fff2c2'],hammer:['#493b38','#c89e76','#fff0dc'],gear:['#3d5152','#7cc3ba','#effffc'],cart:['#525032','#c3ba54','#fbffbf'],rock:['#454654','#a4a6b4','#f5f5ff'],wheel:['#3c4c60','#65a9dc','#eff9ff'],shock:['#623151','#f36199','#ffedf7'],ice:['#20527d','#74d9ff','#f0fdff'],rain:['#294b75','#76aef4','#f5fbff'],sand:['#654b29','#d5a450','#fff2c6'],mine:['#4f3646','#d07083','#ffe7dc'],temple:['#66502d','#d3b468','#fff3c9'],anvil:['#41454f','#99a4b4','#f4f6ff'],wind:['#244d5c','#55c7b9','#eaffff'],poison:['#3d5128','#a9d946','#f6ffce'],hand:['#584052','#d595bb','#fff0fb'],skull:['#4d444c','#c2b8cb','#fffaff'],rune:['#383264','#8977e7','#f5f1ff']};
+const SKILL_ICON={aid:'heart',bash:'fist',endure:'rise',hprec:'heart',provoke:'roar',bowl:'spiral',pierce:'thrustblade',quick:'bolt',spear:'swordbook',spiral:'spiral',aura:'halo',jointbeat:'parry',fire:'flame',nap:'bolt',coat:'ward',fireball:'fireball',storm:'snow',jup:'bolt',amp:'meteor',tstorm:'rock',meteor:'meteor',grav:'gravity',mystic:'orb',napalm:'flame',dstr:'arrow',iconc:'eye',owl:'eye',vult:'feather',blitz:'feather',sharp:'target',beast:'paw',falconry:'feather',falcon:'wing',focus:'target',sight:'eye',pharrow:'mine',dbl:'twincut',env:'quickcut',dodge:'feint',steal:'hand',sonic:'flurry',grim:'shadow',katm:'edge',vdust:'crosscut',mAss:'meteor',soulb:'ghost',sdestroy:'ghost',holy:'cross',heal:'cross',bless:'halo',iagi:'wing',magnus:'cross',sanct:'cross',asp:'flame',kyrie:'cross',judex:'bolt',assum:'cross',gloria:'sun',meditatio:'sun',mammo:'coin',greed:'coin',phys:'muscle',discount:'tag',hammer:'hammer',adren:'bolt',wperf:'hammer',wresearch:'gear',cart:'cart',thrust:'spear',skin:'wheel',cboost:'wheel',frenzy:'fist',dpois:'blades',ovthrust:'shock',mbrk:'shock',fdiver:'ice',fnova:'snow',ashower:'rain',sandat:'bladefan',signum:'cross',cartrev:'cart',spearboom:'blades',tblow:'fist',vermilion:'ghost',landmine:'mine',wwalk:'wind',vsplash:'wind',akatar:'rush',tundead:'skull',basilica:'temple',meltdown:'anvil'};
+const SKILL_TONE={rise:['#4b412b','#eac16c','#fff3cf'],thrustblade:['#4b412b','#eac16c','#fff3cf'],swordbook:['#4b412b','#eac16c','#fff3cf'],parry:['#4b412b','#eac16c','#fff3cf'],twincut:['#503346','#ef8b9f','#fff0da'],quickcut:['#503346','#ef8b9f','#fff0da'],feint:['#332b57','#b196fa','#f2e8ff'],bladefan:['#503346','#ef8b9f','#fff0da'],flurry:['#503346','#ef8b9f','#fff0da'],edge:['#503346','#ef8b9f','#fff0da'],crosscut:['#503346','#ef8b9f','#fff0da'],rush:['#332b57','#b196fa','#f2e8ff'],heart:['#17444c','#2bb9a9','#ecfff1'],fist:['#582b32','#f06d4c','#ffe0a0'],shield:['#294e70','#4eb1e8','#e4f8ff'],roar:['#633229','#ff9651','#fff0b4'],spiral:['#364278','#9385ff','#f1ebff'],spear:['#4c3941','#e1c276','#fff3c7'],bolt:['#3e3865','#b29bff','#f8efff'],halo:['#63501e','#e8bd4d','#fff5c4'],bone:['#52403a','#d9bc8b','#fff3da'],flame:['#71331f','#ff6a2e','#ffe987'],shadow:['#33254f','#9564d8','#f1dfff'],ward:['#1d5560','#42c7c0','#e5ffff'],fireball:['#642f27','#fa7c35','#fff2a5'],snow:['#1d4d72','#59c5ff','#effcff'],book:['#49345f','#bd91ff','#fff0ff'],storm:['#174f70','#52d6ed','#ecffff'],meteor:['#5d2e51','#fa70aa','#fff0df'],gravity:['#302354','#a76dff','#f1dfff'],orb:['#343b72','#8c9cff','#f2f3ff'],arrow:['#4c3d2b','#d6b56d','#fff1c0'],eye:['#244d67','#56d6d1','#edffff'],feather:['#285644','#56c78d','#edffdf'],target:['#64432d','#f2a356','#fff2c6'],paw:['#4a5d2a','#9bca50','#f5ffd9'],wing:['#30506f','#8dd7ff','#f5ffff'],blades:['#5a3045','#f2798c','#fff0d8'],vial:['#2b5947','#7bda7c','#f2ffdc'],ghost:['#49355d','#b38bf3','#fff0ff'],cross:['#67501f','#f2cf68','#fff8d6'],water:['#184f70','#50c8f4','#e9fbff'],sun:['#72501d','#ffc643','#fff8bd'],lotus:['#5a3b73','#d38cda','#fff0ff'],coin:['#684616','#f2b62f','#fff4ad'],muscle:['#633532','#ee8667','#ffe5c3'],tag:['#63502b','#d8af57','#fff2c2'],hammer:['#493b38','#c89e76','#fff0dc'],gear:['#3d5152','#7cc3ba','#effffc'],cart:['#525032','#c3ba54','#fbffbf'],rock:['#454654','#a4a6b4','#f5f5ff'],wheel:['#3c4c60','#65a9dc','#eff9ff'],shock:['#623151','#f36199','#ffedf7'],ice:['#20527d','#74d9ff','#f0fdff'],rain:['#294b75','#76aef4','#f5fbff'],sand:['#654b29','#d5a450','#fff2c6'],mine:['#4f3646','#d07083','#ffe7dc'],temple:['#66502d','#d3b468','#fff3c9'],anvil:['#41454f','#99a4b4','#f4f6ff'],wind:['#244d5c','#55c7b9','#eaffff'],poison:['#3d5128','#a9d946','#f6ffce'],hand:['#584052','#d595bb','#fff0fb'],skull:['#4d444c','#c2b8cb','#fffaff'],rune:['#383264','#8977e7','#f5f1ff']};
 const SKILL_PICTO={
+  rise:`<path d="M10 35Q30 34 34 8L40 16Q33 38 10 35Z"/><path d="m13 29 12-19 2 14-10 8Z" fill="#fff0c0"/>`,
+  thrustblade:`<path d="m8 35 23-23 10-4-4 10-23 23Z"/><path d="m10 20 9-9M7 27l8-8m16 16 7-7" fill="none" stroke-width="2.5"/>`,
+  swordbook:`<path d="M8 17q8-3 16 2 8-5 16-2v21q-8-3-16 2-8-5-16-2Z"/><path d="M24 6 29 14l-3 1v15h-4V15l-3-1Z" fill="#fff3c7" stroke="#866326"/>`,
+  parry:`<path d="M10 13 23 8l13 5v10q-1 9-13 16-12-7-13-16Z"/><path d="m14 33 20-23 5-3-1 7-21 23Z" fill="#fff"/><path d="m29 27 10 3m-5-8 7-3" fill="none" stroke-width="2"/>`,
+  twincut:`<path d="m9 31 10-20 3-4 1 10-9 18Zm17 0 10-20 3-4 1 10-9 18Z"/><path d="m8 32 8 4m9-4 8 4m-23 1-2 5m19-5-2 5" fill="none" stroke-width="3"/>`,
+  quickcut:`<path d="M8 33 33 9l7-2-2 8-24 22Z"/><path d="M7 15h13M5 22h8m9 16h15" fill="none" stroke-width="3"/>`,
+  feint:`<path d="M34 9A15 15 0 1 0 38 33 17 17 0 0 1 34 9Z"/><path d="m11 32 22-19 6-2-2 7-21 18Z" fill="#d8eeff"/><path d="m9 13 4 4m-7 5h6" fill="none" stroke-width="2"/>`,
+  bladefan:`<path d="m22 37-4-21 6-9 6 9-4 21ZM17 36 7 21l1-9 9 6 4 17Zm10-1 4-17 9-6 1 9-10 15Z"/><path d="M16 39h16" fill="none" stroke-width="3"/>`,
+  flurry:`<path d="m8 32 8-19 7-5-2 10-9 18Zm11 3 8-19 7-5-2 10-9 18Zm11 3 8-19 6-5-2 10-8 18Z"/><path d="m9 9 3 2m14-5 2 3" fill="none" stroke-width="2"/>`,
+  edge:`<path d="M23 8h8l-5 24-8 7 1-12Z"/><path d="m24 8-2 21-4 10" fill="none" stroke="#fff" stroke-width="2"/><path d="m35 16 2-5 2 5 5 2-5 2-2 5-2-5-5-2Z" fill="#fff4ac"/>`,
+  crosscut:`<path d="m9 10 9 3 22 23-4 4L13 18Zm30 0-9 3L8 36l4 4 23-22Z"/><path d="m24 17 2 5 5 2-5 2-2 5-2-5-5-2 5-2Z" fill="#fff"/>`,
+  rush:`<path d="M24 9q12 0 12 13v12l-5-3-6 6-6-4-5 2V22q0-10 10-13Z"/><path d="M7 17h11M4 24h12M7 31h9" fill="none" stroke-width="2.5"/><path d="m22 24 13-9 6-1-3 6-13 9Z" fill="#fff"/>`,
+
   heart:`<path d="M24 36S10.5 27.7 10.5 19.5a6.4 6.4 0 0 1 11.4-4L24 18l2.1-2.5a6.4 6.4 0 0 1 11.4 4C37.5 27.7 24 36 24 36Z"/><path d="M15 23h5l2.2-4.2 3.6 8 2.2-4H33" fill="none" stroke="#fff" stroke-width="1.4"/>`,
   fist:`<path d="M12 25v-6a3 3 0 0 1 5.5-1.6 3.1 3.1 0 0 1 5.3-1.6 3.1 3.1 0 0 1 5.4.1 3.1 3.1 0 0 1 5.8 1.5v8.2c0 5.1-3.9 8.4-9 8.4h-2.8c-3.8 0-5.4-2-7.1-4.6L12 25Z"/><path d="M17.5 17v7m5.3-8v8m5.4-7v7" fill="none" stroke="#fff" stroke-width="1.3"/>`,
   shield:`<path d="M24 8 36 12v9.4c0 7-4.6 12.2-12 17-7.4-4.8-12-10-12-17V12l12-4Z"/><path d="m17 24 4.4 4.4L31.5 18" fill="none" stroke="#fff" stroke-width="2.2"/>`,
@@ -1018,8 +1032,13 @@ const SKILL_PICTO={
   skull:`<path d="M24 8a14 14 0 0 0-9 24v5h18v-5a14 14 0 0 0-9-24Z"/><circle cx="19" cy="23" r="3" fill="#fff"/><circle cx="29" cy="23" r="3" fill="#fff"/><path d="M22 31h4m-5-4 3 3 3-3" fill="none" stroke="#fff" stroke-width="1.5"/>`,
   rune:`<path d="m24 8 14 8v16l-14 8-14-8V16l14-8Z"/><path d="M17 30V18l7 8 7-8v12M17 18h14" fill="none" stroke="#fff" stroke-width="2"/>`
 };
-const skillIcon=id=>{const motif=SKILL_ICON[id]||'rune',tone=SKILL_TONE[motif]||SKILL_TONE.rune,art=SKILL_PICTO[motif]||SKILL_PICTO.rune;
-  return`<svg class="skill-art motif-${motif}" data-motif="${motif}" viewBox="0 0 48 48" aria-hidden="true" focusable="false"><rect x="2" y="2" width="44" height="44" rx="11" fill="#142321" stroke="${tone[1]}" stroke-opacity=".5"/><g class="skill-line" color="${tone[1]}" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${art}</g></svg>`};
+// Motifs describe the action; secondary emblems distinguish skills within the same family.
+const SKILL_EMBLEM={aid:'cross',hprec:'heart',bash:'shock',frenzy:'flame',tblow:'blades',endure:'shield',pierce:'target',spear:'book',spearboom:'shield',dbl:'arrow',env:'bolt',dodge:'wind',sonic:'shock',katm:'book',vdust:'shock',dpois:'skull',sandat:'sand',akatar:'gear',bowl:'blades',spiral:'spear',quick:'blades',jup:'storm',judex:'cross',adren:'hammer',aura:'spear',bless:'cross',fire:'flame',napalm:'ghost',asp:'cross',vermilion:'storm',storm:'wind',fnova:'ice',owl:'book',iconc:'arrow',sight:'sun',vult:'arrow',blitz:'bolt',falconry:'paw',sharp:'arrow',focus:'eye',grim:'blades',soulb:'blades',sdestroy:'skull',holy:'bolt',heal:'heart',magnus:'sun',sanct:'lotus',kyrie:'shield',assum:'wing',signum:'skull',gloria:'halo',meditatio:'book',mammo:'hammer',greed:'hand',hammer:'shock',wperf:'gear',cart:'coin',cartrev:'shock',skin:'shield',cboost:'cart',ovthrust:'hammer',mbrk:'book',pharrow:'arrow',landmine:'rock',mAss:'blades',meteor:'flame',iagi:'wind',falcon:'target',wwalk:'feather',vsplash:'poison'};
+const skillIcon=id=>{const motif=SKILL_ICON[id]||'rune',tone=SKILL_TONE[motif]||SKILL_TONE.rune,art=SKILL_PICTO[motif]||SKILL_PICTO.rune,emblem=SKILL_EMBLEM[id],accent=SKILL_TONE[emblem]||tone;
+  return`<svg class="skill-art motif-${motif}" data-motif="${motif}" data-emblem="${emblem||''}" viewBox="0 0 48 48" aria-hidden="true" focusable="false"><rect x="1" y="1" width="46" height="46" rx="9" fill="#101724" stroke="${tone[1]}"/><path d="M3 10Q3 3 10 3H38Q45 3 45 10V29L3 42Z" fill="${tone[0]}"/><path d="m6 14 8-8h20l8 8v20l-8 8H14l-8-8Z" fill="none" stroke="${tone[1]}" opacity=".28"/><g color="${tone[1]}" fill="currentColor" stroke="${tone[2]}" stroke-width=".8" stroke-linecap="round" stroke-linejoin="round" transform="${emblem?'translate(-1 -2) scale(.92)':'translate(0 0)'}">${art}</g>${emblem?`<circle cx="36" cy="36" r="10" fill="${accent[0]}" stroke="${accent[1]}"/><g color="${accent[1]}" fill="currentColor" stroke="${accent[2]}" stroke-width="1.2" stroke-linejoin="round" transform="translate(25 25) scale(.46)">${SKILL_PICTO[emblem]}</g>`:''}<path d="M7 3h12M3 7v9" fill="none" stroke="${tone[2]}" opacity=".7"/></svg>`};
+// Field buffs use the same filled artwork as skills, in each buff's own color.
+const petBuffIcon=s=>{const motif={warcry:'blades',arcane:'orb',siphon:'water',vital:'heart'}[s.id]||'rune';
+  return `<svg class="buff-art" data-buff="${s.id}" viewBox="0 0 48 48" aria-hidden="true" focusable="false"><rect x="1" y="1" width="46" height="46" rx="9" fill="#101724" stroke="${s.color}"/><path d="M3 10Q3 3 10 3H38Q45 3 45 10V29L3 42Z" fill="${s.color}" opacity=".2"/><g color="${s.color}" fill="currentColor" stroke="${s.color}" stroke-width=".8" stroke-linecap="round" stroke-linejoin="round">${SKILL_PICTO[motif]}</g><path d="M7 3h12M3 7v9" fill="none" stroke="#fff" opacity=".55"/></svg>`};
 // The CDM affix stays in the roll pool, but v73 (owner: "players only target cri damage on all
 // equipments") changed who can roll it and what it pays: the affix is now a weapon/accessory roll
 // like the cdm CARD, and its gear weight is AB.cdm .7 -> .45. The final GEAR-AFFIX output is still
@@ -1069,7 +1088,9 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // script block, which is a SyntaxError - the game did not run on main at all. One line wins, and
 // it names both sides of this merge: the v38 balance patch (the weapon cut, the affix/card
 // give-back) and main's weapon-hold rendering work.
-const BUILD='2026-10-12 grind-v114 Eclipse readability';   // shown on the login card - confirms which file you loaded
+let simCatchingUp=false;
+const simVisualsOff=()=>document.hidden||simCatchingUp;
+const BUILD='2026-10-12 grind-v117 Eclipse integration';   // shown on the login card - confirms which file you loaded
 $('buildTag').textContent='build '+BUILD;
 
 // ---------- class tree: Novice -> 6 first jobs -> 6 second jobs -> 6 third jobs ----------
@@ -2475,7 +2496,7 @@ const PET_SKILL_WEIGHTS=[.35,.35,1,1,1,1,1,1,1,1,1,1],rollPetSkills=()=>{const a
 // ---------- auto-sell rules: shared by live drops, offline drops and bag previews ----------
 const AUTOSELL_SLOTS=['weapon','armor','head','off','leg','acc'],AUTOSELL_WEAPONS=['sword','dagger','katar','bow','staff','mace','axe'];
 const AUTOSELL_AFFIXES=['str','agi','dex','luk','int','vit','hp','atk','matk','crit','aspd','flee','cdm','move'];
-const defaultAutoSellRules=()=>({version:1,slots:[],weapons:[],names:[],affixes:[],mode:'any',refined:true,socketed:true,minEmpty:0});
+const defaultAutoSellRules=()=>({version:1,slots:[],weapons:[],names:[],affixes:[],mode:'any',affixAction:'keep',refined:true,socketed:true,minEmpty:0});
 function cleanAutoSellRules(raw){
   if(raw===undefined)return defaultAutoSellRules();
   if(!raw||typeof raw!=='object'||Array.isArray(raw)||raw.version!==1)return null;
@@ -2490,7 +2511,8 @@ function cleanAutoSellRules(raw){
   if(new Set(raw.affixes.map(a=>a.k)).size!==raw.affixes.length)return null;
   out.affixes=raw.affixes.map(a=>({k:a.k,min:a.min}));
   if(!['any','all'].includes(raw.mode)||typeof raw.refined!=='boolean'||typeof raw.socketed!=='boolean'||!Number.isInteger(raw.minEmpty)||raw.minEmpty<0||raw.minEmpty>10)return null;
-  return {...out,mode:raw.mode,refined:raw.refined,socketed:raw.socketed,minEmpty:raw.minEmpty};
+  if(raw.affixAction!==undefined&&!['keep','sell'].includes(raw.affixAction))return null;
+  return {...out,affixAction:raw.affixAction||'keep',mode:raw.mode,refined:raw.refined,socketed:raw.socketed,minEmpty:raw.minEmpty};
 }
 function autoSellReason(it,state=S){
   if(!it||it.card||it.ore)return 'Not equipment';
@@ -2508,13 +2530,14 @@ function autoSellReason(it,state=S){
   if(rules.socketed&&(it.cards||[]).length)return 'Socketed';
   if(rules.minEmpty>0&&Math.max(0,(it.slots||0)-(it.cards||[]).length)>=rules.minEmpty)return 'Empty sockets';
   if(rules.affixes.length){const matches=rules.affixes.map(a=>(it.aff||[]).some(x=>x.k===a.k&&Number(x.v)>=a.min));
-    if(rules.mode==='all'?matches.every(Boolean):matches.some(Boolean))return 'Keep affixes';}
+    const match=rules.mode==='all'?matches.every(Boolean):matches.some(Boolean);
+    if(rules.affixAction==='sell'?!match:match)return rules.affixAction==='sell'?'Affixes not selected':'Keep affixes';}
   return '';
 }
 const autoSellMatches=it=>!autoSellReason(it);
 // ---------- end auto-sell rules ----------
 
-const fresh=()=>({progressionVersion:PROGRESSION_VERSION,skillVersion:SKILL_VERSION,skillRefund:0,skillRespec:{},pets:[],bond:[],cls:'Novice',sex:'m',hair:0,lv:1,exp:0,hp:100,zeny:0,kills:0,indexXp:0,mobKills:{},equippedTitle:null,shards:0,refineScrolls:0,nmMatVersion:2,nmMat:[0,0,0,0,0],dps:0,trial:{day:trialDay(),used:0,best:0,runs:0},cardIndex:emptyCardIndex(),dmg:0,pts:10,jobs:{Novice:{jl:1,jx:0}},sk:{aid:1},skOff:{},dmgShort:true,dmgShow:true,base:{},mp:0,lvl:1,prog:[1,1,1,1,1],kl:0,auto:true,adv:true,feed:true,clickSell:false,bg:true,autoSell:[false,false,false,false,false,false,false],logOff:{},q:null,cards:[],ore:{ori:0,elu:0},offlineAt:0,offlineKph:0,offlineRateAt:0,offlineRateKills:0,offlineKillRemainder:0,gm:false,gmx:100,
+const fresh=()=>({progressionVersion:PROGRESSION_VERSION,skillVersion:SKILL_VERSION,skillRefund:0,skillRespec:{},pets:[],bond:[],cls:'Novice',sex:'m',hair:0,lv:1,exp:0,hp:100,zeny:0,kills:0,indexXp:0,mobKills:{},equippedTitle:null,shards:0,refineScrolls:0,nmMatVersion:2,nmMat:[0,0,0,0,0],dps:0,trial:{day:trialDay(),used:0,best:0,runs:0},cardIndex:emptyCardIndex(),dmg:0,pts:10,jobs:{Novice:{jl:1,jx:0}},sk:{aid:1},skOff:{},dmgShort:true,dmgShow:true,cameraShake:true,base:{},mp:0,lvl:1,prog:[1,1,1,1,1],kl:0,auto:true,adv:true,feed:true,clickSell:false,bg:true,autoSell:[false,false,false,false,false,false,false],logOff:{},q:null,cards:[],ore:{ori:0,elu:0},offlineAt:0,offlineKph:0,offlineRateAt:0,offlineRateKills:0,offlineKillRemainder:0,gm:false,gmx:100,
   st:{str:1,agi:1,dex:1,luk:1,int:1,vit:1},eq:{weapon:{id:1,slot:'weapon',wt:'dagger',tier:0,val:5,name:'Novice Knife',aff:[],slots:1,cards:[],sec:0},armor:null,head:null,off:null,leg:null,acc1:null,acc2:null},inv:[]});
 const saveKey=()=>'pg_save3_'+currentUser;
 // ---------- the save-owner stamp (v88.6) ----------
@@ -2538,6 +2561,7 @@ const s=JSON.parse(raw);if(s&&s.lv){const F=fresh(),f=Object.assign(F,s),hadInde
 // repair top-level numbers corrupted by older/test saves (null -> crash on .toLocaleString())
   for(const k of['lv','exp','hp','zeny','kills','indexXp','dmg','pts','mp','lvl','kl','gmx'])f[k]=num_(f[k],F[k]);if(!hadIndexXp)delete f.indexXp;
   if(f.dmgShort!==true&&f.dmgShort!==false)f.dmgShort=true;   // damage digits: short unless deliberately switched
+  if(f.cameraShake!==true&&f.cameraShake!==false)f.cameraShake=true;
   if(f.dmgShow!==true&&f.dmgShow!==false)f.dmgShow=true;      // and the floats are shown unless switched off
   // v39 tools, all four defaulting to the quiet behaviour: the on-screen log starts unfolded,
   // a bag click inspects rather than sells, nothing is auto-sold and no log filter is hidden.
@@ -3725,7 +3749,7 @@ const mkDrop=it=>({it,wx:mob.x+rnd(-.7,.7),wz:mob.z+rnd(-.7,.7),y:0,vy:-220,t:0}
 // The 70px climb and the 14px spread are the owner's pick again and stay exactly as they were.
 const DMG_LIFE=1/.8696,DMG_RISE=70,DMG_FADE=.75,DMG_RATE=.8696,DMG_SPREAD=14;
 const isDamageFloat=k=>k==='damage'||k==='skill-damage'||k==='critical'||k==='skill-critical'||k==='dot';
-const addFloat=(x,y,z,txt,col,big,kind='text')=>floats.push({x,y,z,txt,col,life:1,big,kind,sw:0,st:0,rate:isDamageFloat(kind)?DMG_RATE:0,sp:isDamageFloat(kind)?rnd(-DMG_SPREAD,DMG_SPREAD):0});
+const addFloat=(x,y,z,txt,col,big,kind='text')=>!simVisualsOff()&&floats.push({x,y,z,txt,col,life:1,big,kind,sw:0,st:0,rate:isDamageFloat(kind)?DMG_RATE:0,sp:isDamageFloat(kind)?rnd(-DMG_SPREAD,DMG_SPREAD):0});
 // Floating combat numbers are shortened by default, and only from 100,000 up (the owner's rule):
 // 100,000 reads "100K", 1,000,000 reads "1M", and anything below 100K - 99,999 included - stays
 // in full digits. The Settings panel switches every damage float to full digits everywhere.
@@ -3748,7 +3772,7 @@ const damageFloat=(x,y,z,amount,critical=false,incoming=false,skill=false)=>{if(
 // Only the display changes: every hit still rolls its own crit and its own damage.
 let dmgGroup=null;
 function showDamage(subject,x,y,z,amount,crit,skill){
-  if(S&&S.dmgShow===false)return;
+  if(simVisualsOff()||(S&&S.dmgShow===false))return;
   if(dmgGroup&&subject){const g=dmgGroup.get(subject)||{sum:0,n:0,crit:false,skill:false,x,y,z};
     g.sum+=amount;g.n++;if(crit)g.crit=true;if(skill)g.skill=true;g.x=x;g.y=Math.max(g.y||0,y);g.z=z;
     dmgGroup.set(subject,g);return}
@@ -3762,7 +3786,7 @@ function flushDamageGroup(){
 // It now keeps ONE number per monster: the second tick tops the value up and re-punches the float,
 // so a burn reads as one climbing number that fades when the burn stops.
 function dotTick(o,d,col,skill){
-  if(S&&S.dmgShow===false)return;
+  if(simVisualsOff()||(S&&S.dmgShow===false))return;
   const live=o._dotF&&o._dotF.life>0;
   if(live){const f=o._dotF;f.val=(f.val||0)+d;f.txt=numTxt(f.val);f.life=1;f.dirty=1;f.x=o.x;f.z=o.z;return}
   const f={x:o.x,y:mobDamageY(o),z:o.z,txt:numTxt(d),val:d,col:col||'#7dff6b',life:1,big:false,kind:'dot',sw:rnd(-6,6),st:0,rate:DMG_RATE,sp:rnd(-DMG_SPREAD,DMG_SPREAD)};
@@ -3794,7 +3818,7 @@ function heroDamageY(){
 // The skill banner rides ABOVE the head (v68): 3.15 put the plate on the hero's forehead,
 // so the base now sits at 3.65 - the height the LEVEL UP! float already reads as clearly
 // above the head - and extra casts still stagger upward by slot.
-const skillNameFloat=(name,slot=0)=>floats.push({x:pl.x,y:3.65+slot*.38,z:pl.z,txt:name,life:1.15,kind:'skill',anchor:'hero'});
+const skillNameFloat=(name,slot=0)=>!simVisualsOff()&&floats.push({x:pl.x,y:3.65+slot*.38,z:pl.z,txt:name,life:1.15,kind:'skill',anchor:'hero'});
 // ---------- the log ----------
 // v39: one table names everything the Log window can filter on. A line's category is the third
 // argument of log(); a line with no third argument is 'misc'. A line can carry more than one
@@ -3821,7 +3845,7 @@ function feedTab(){const b=$('feedTab'),w=$('feedWrap');if(!b||!w)return;const o
 // only mark it leaves on screen is the small dot on its tab while something is hidden.
 let feedLive=[];
 const feedPass=l=>logCats(l).some(logOn);
-function feedDraw(){const f=$('feed');if(!f)return;const keep=feedLive.filter(feedPass).slice(-4);
+function feedDraw(){if(simVisualsOff())return;const f=$('feed');if(!f)return;const keep=feedLive.filter(feedPass).slice(-4);
   f.innerHTML='';for(const l of keep)f.appendChild(l.d)}
 // v41: the funnel on the Logs tab. It opens the SAME tick row the Log window uses, immediately
 // above the tab, and folds itself away after a few seconds of no interaction - hovering, focusing
@@ -3844,8 +3868,20 @@ const feedFilToggle=()=>{if(feedFilShown)feedFilHide();else feedFilShow()};
 // running, so the same message also floats over the character. Both reset buttons use it.
 function denied(cost,what){log(`Not enough Zeny: ${cost.toLocaleString()}z needed to reset ${what} (you have ${Math.floor(S.zeny).toLocaleString()}z).`,'r0','misc');
   addFloat(pl.x,2.9,pl.z,'Need '+cost.toLocaleString()+'z','#ff6b6b',true);ui()}
-function log(m,cls,cat){const e={m,cls,cat};logs.push(e);if(logs.length>80)logs.shift();
-  const d=document.createElement('div');d.textContent=m;e.d=d;feedLive.push(e);if(feedLive.length>8)feedLive.shift();
+function feedEntry(entry,visual){
+  const d=document.createElement('div');d.className='feed-entry';
+  const item=visual&&visual.item,zeny=visual&&visual.zeny;
+  const art=item?icon(item):(Number.isFinite(zeny)||logCats(entry).includes('zeny')?uiIcon('coin'):'');
+  if(!art){d.textContent=entry.m;return d;}
+  const artEl=document.createElement('span');artEl.className='feed-art';artEl.setAttribute('aria-hidden','true');artEl.innerHTML=art;d.append(artEl);
+  const copy=document.createElement('span');copy.className='feed-copy';
+  if(visual&&visual.label){const label=document.createElement('small');label.className='feed-label';label.textContent=visual.label;copy.append(label);}
+  const title=document.createElement('span');title.className='feed-title '+(entry.cls||'');title.textContent=item?iname(item):visual&&visual.title||entry.m;copy.append(title);
+  if(Number.isFinite(zeny)){const amount=document.createElement('span');amount.className='feed-zeny';amount.innerHTML=uiIcon('coin');amount.append(document.createTextNode(' +'+Math.round(zeny).toLocaleString()+' Zeny'));copy.append(amount);}
+  d.append(copy);return d;
+}
+function log(m,cls,cat,visual){const e={m,cls,cat};logs.push(e);if(logs.length>80)logs.shift();if(simVisualsOff())return;
+  const d=feedEntry(e,visual);e.d=d;feedLive.push(e);if(feedLive.length>8)feedLive.shift();
   feedDraw();setTimeout(()=>{d.remove();const i=feedLive.indexOf(e);if(i>=0)feedLive.splice(i,1)},7000);
   if(tabs.includes('log'))renderWin()}
 
@@ -4302,7 +4338,7 @@ function earnExp(amount){const n=Math.max(0,Number(amount)||0);S.exp+=n;expEarne
 function kill(o){const keep=mob;if(o)mob=o;if(!mob||!mobs.includes(mob)){mob=keep;return}
   const g=gx();S.kills++;recordMonsterKill(mob);S.kl++;qProg('kill');if(mob.boss)qProg('boss');
   const z=Math.round(mob.zeny*(1+pv('zeny')/100)*(1+petPassive('zeny')/100)*nmZenyRoll(mob))*g,xp=Math.round(mob.exp*expRate()*(1+petPassive('exp')/100));earnZeny(z);earnExp(xp);addJob(Math.round(Math.round(mob.exp*.7)*expRate()*(1+petPassive('exp')/100)));recordFarmIncome(xp,z,Math.round(Math.round(mob.exp*.7)*expRate()*(1+petPassive('exp')/100)));questEvent('hunt',1,mob.n);questEvent('maps',1,S.mp);if(S.lvl>10)questEvent('nightmare');
-  addFloat(mob.x,2.4,mob.z,'+'+numTxt(z)+'z','#ffd23f');log(`${mob.n} defeated! +${xp.toLocaleString()} EXP, +${z.toLocaleString()} Zeny`,'','kills,zeny');
+  addFloat(mob.x,2.4,mob.z,'+'+numTxt(z)+'z','#ffd23f');log(`${mob.n} defeated! +${xp.toLocaleString()} EXP, +${z.toLocaleString()} Zeny`,'','kills,zeny',{title:mob.n+' defeated',label:'+'+xp.toLocaleString()+' EXP',zeny:z});
   // Drop odds are the field's own numbers: nothing on the character scales them, so LUK cannot
   // bend the tables (it still raises ATK through the crit/DEX side of the stat sheet, which is
   // what it is for).
@@ -4350,9 +4386,9 @@ function collect(it){
   // band can never be swallowed by a full bag or worn by accident. Locked gear bypasses the
   // filter, stays protected, and still counts for loot quests - the item was looted.
   if(autoSellMatches(it)){const v=sellVal(it);earnZeny(v);recordFarmIncome(0,v,0,0);qProg('loot');(it.cards||[]).forEach(c=>S.cards.push(c));
-    log(`Auto-sold [${rarOf(it).n}] ${it.name} (+${v.toLocaleString()}z)`,rarCls(it),'gear,zeny');ui();save();return}
+    log(`Auto-sold [${rarOf(it).n}] ${it.name} (+${v.toLocaleString()}z)`,rarCls(it),'gear,zeny',{item:it,label:'Auto-sold',zeny:v});ui();save();return}
   if(S.inv.length>=BAGMAX){log(`Bag full (${BAGMAX} items): sold nothing, left ${it.name} on the ground.`,'r0','gear');addFloat(pl.x,3,pl.z,'BAG FULL','#ff6b6b',true);ui();return}
-  S.inv.push(it);qProg('loot');log(`Picked up [${rarOf(it).n}] ${it.name}`,rarCls(it),'gear');
+  S.inv.push(it);qProg('loot');log(`Picked up [${rarOf(it).n}] ${it.name}`,rarCls(it),'gear',{item:it,label:'Loot acquired'});
   if(S.auto!==false&&canUse(it))autoEquip(it);ui();
 }
 function equip(id,quiet){const i=S.inv.findIndex(x=>x.id===id);if(i<0)return;const it=S.inv[i];if(!canUse(it)){log(`Your class cannot use ${it.name}.`);return}
@@ -4718,33 +4754,34 @@ function gmPetTest(mode){
   }
   ui();save();
 }
-let autoSellDraft=null,autoSellPreview=null;
+let autoSellDraft=null,autoSellPreview=null,bulkSellSelection=null;
+function bulkSellState(){if(!bulkSellSelection||bulkSellSelection.owner!==S)bulkSellSelection={owner:S,rarities:RARALL.map(()=>true)};return {...S,autoSell:bulkSellSelection.rarities};}
 function sellDraft(){if(!autoSellDraft||autoSellDraft.owner!==S)autoSellDraft={owner:S,rules:cleanAutoSellRules(S.autoSellRules)||defaultAutoSellRules()};return autoSellDraft.rules;}
 function autoSellEditor(){const r=sellDraft(),on=(list,k)=>list.includes(k)?'checked':'',preview=autoSellPreview&&autoSellPreview.owner===S?autoSellPreview:null;
-  return `<details class="autosell-editor" data-ui-disclosure="bag-sell-filters"><summary>Equipment &amp; keep filters</summary><p class="sell-help">Match every selected category. Within a category, match any selection. Empty equipment filters mean all equipment. Save filters to apply them to drops, offline loot and previews.</p>
+  return `<details class="autosell-editor" data-ui-disclosure="bag-sell-filters"><summary>Equipment &amp; affix filters</summary><p class="sell-help">Match every selected category. Within a category, match any selection. Empty equipment filters mean all equipment. Save filters to apply them to drops, offline loot and previews.</p>
   <div class="row"><small>Presets (edit before saving):</small><button data-a="sellpreset" data-v="physical">Physical</button><button data-a="sellpreset" data-v="caster">Caster</button><button data-a="sellpreset" data-v="collector">Collector</button></div>
   <fieldset><legend>Sell these equipment slots</legend><div class="sell-options">${AUTOSELL_SLOTS.map(k=>`<label><input type="checkbox" data-sell-field="slots" value="${k}" ${on(r.slots,k)}> ${SLOTS[k].label}</label>`).join('')}</div></fieldset>
   <fieldset><legend>Weapon families (optional)</legend><div class="sell-options">${AUTOSELL_WEAPONS.map(k=>`<label><input type="checkbox" data-sell-field="weapons" value="${k}" ${on(r.weapons,k)}> ${k}</label>`).join('')}</div><small>Choosing a family keeps all non-weapons.</small></fieldset>
   <label class="sell-label">Exact equipment names (optional, one per line)<textarea data-sell-field="names" rows="2" placeholder="Leave blank for all names">${esc(r.names.join('\n'))}</textarea></label>
-  <fieldset><legend>Keep useful affixes</legend><label>Keep when <select data-sell-field="mode"><option value="any" ${r.mode==='any'?'selected':''}>any chosen affix matches</option><option value="all" ${r.mode==='all'?'selected':''}>all chosen affixes match</option></select></label><small>Minimums use the value printed on the equipment affix. 0 keeps any roll of that affix.</small>
-  <div class="sell-affixes">${AUTOSELL_AFFIXES.map(k=>{const a=r.affixes.find(x=>x.k===k);return `<label><span><input type="checkbox" data-sell-affix="${k}" ${a?'checked':''}> ${AL[k]||k}</span><input type="number" data-sell-min="${k}" aria-label="Minimum ${AL[k]||k} to keep" min="0" max="100000" step="0.1" value="${a?a.min:0}" ${a?'':'disabled'}></label>`}).join('')}</div></fieldset>
+  <fieldset><legend>Affix rules</legend><label>Action <select data-sell-field="affixAction"><option value="keep" ${r.affixAction==='keep'?'selected':''}>Keep matches, sell the rest</option><option value="sell" ${r.affixAction==='sell'?'selected':''}>Sell matching affixes</option></select></label><label>Match <select data-sell-field="mode"><option value="any" ${r.mode==='any'?'selected':''}>any chosen affix matches</option><option value="all" ${r.mode==='all'?'selected':''}>all chosen affixes match</option></select></label><small>Minimums use the value printed on the equipment affix. 0 matches any roll of that affix. No affixes selected means no affix restriction.</small>
+  <div class="sell-affixes">${AUTOSELL_AFFIXES.map(k=>{const a=r.affixes.find(x=>x.k===k);return `<label><span><input type="checkbox" data-sell-affix="${k}" ${a?'checked':''}> ${AL[k]||k}</span><input type="number" data-sell-min="${k}" aria-label="Minimum ${AL[k]||k} to match" min="0" max="100000" step="0.1" value="${a?a.min:0}" ${a?'':'disabled'}></label>`}).join('')}</div></fieldset>
   <fieldset><legend>Keep valuable gear</legend><div class="sell-options"><label><input type="checkbox" data-sell-field="refined" ${r.refined?'checked':''}> Refined gear</label><label><input type="checkbox" data-sell-field="socketed" ${r.socketed?'checked':''}> Socketed gear</label></div><label>Keep at least <input type="number" data-sell-field="minEmpty" aria-label="Minimum empty sockets to keep" min="0" max="10" step="1" value="${r.minEmpty}"> empty sockets (0 = off)</label></fieldset>
   <p class="sell-help">Auto-sell always keeps locked gear, equipped gear, saved class loadouts and items with a paid reforge offer. Auto-sell runs before auto-equip; matching new drops sell immediately.</p>
   <div class="row"><button data-a="sellrulesapply">Save filters</button><button data-a="sellrulescancel">Discard edits</button></div></details>
-  ${preview?`<section class="sell-preview"><b>Sale preview · saved rules</b><p>${preview.ids.length} item${preview.ids.length===1?'':'s'} · ${preview.zeny.toLocaleString()}z</p><small>${esc(preview.kept)}</small><details data-ui-disclosure="bag-sell-preview"><summary>Review matching items</summary><div class="sell-preview-list">${preview.rows.map(x=>`<div><span>${esc(x.name)}</span><b>${x.value.toLocaleString()}z</b></div>`).join('')||'<p>No matches.</p>'}</div></details><small>Only these items can sell. Each is checked again against your current rules and protections when you confirm.</small><div class="row"><button data-a="sellconfirm" ${preview.ids.length?'':'disabled'}>Confirm sale</button><button data-a="sellcancel">Cancel</button></div></section>`:''}`;
+  ${preview?`<section class="sell-preview"><b>Sale preview · ${preview.bulk?'bulk selection':'auto-sell selection'} · saved rules</b><p>${preview.ids.length} item${preview.ids.length===1?'':'s'} · ${preview.zeny.toLocaleString()}z</p><small>${esc(preview.kept)}</small><details data-ui-disclosure="bag-sell-preview"><summary>Review matching items</summary><div class="sell-preview-list">${preview.rows.map(x=>`<div><span>${esc(x.name)}</span><b>${x.value.toLocaleString()}z</b></div>`).join('')||'<p>No matches.</p>'}</div></details><small>Only these items can sell. Each is checked again against your current rules and protections when you confirm.</small><div class="row"><button data-a="sellconfirm" ${preview.ids.length?'':'disabled'}>Confirm sale</button><button data-a="sellcancel">Cancel</button></div></section>`:''}`;
 }
-function previewAutoSell(){const list=S.inv.filter(autoSellMatches),reasons={};for(const it of S.inv){const why=autoSellReason(it);if(why)reasons[why]=(reasons[why]||0)+1;}
-  autoSellPreview={owner:S,ids:list.map(it=>it.id),rows:list.map(it=>({name:iname(it),value:sellVal(it)})),zeny:list.reduce((z,it)=>z+sellVal(it),0),kept:Object.entries(reasons).map(([k,n])=>`${n} kept: ${k}`).join(' · ')};ui();
+function previewAutoSell(bulk=false){const state=bulk?bulkSellState():S,list=S.inv.filter(it=>!autoSellReason(it,state)),reasons={};for(const it of S.inv){const why=autoSellReason(it,state);if(why)reasons[why]=(reasons[why]||0)+1;}
+  autoSellPreview={owner:S,bulk,ids:list.map(it=>it.id),rows:list.map(it=>({name:iname(it),value:sellVal(it)})),zeny:list.reduce((z,it)=>z+sellVal(it),0),kept:Object.entries(reasons).map(([k,n])=>`${n} kept: ${k}`).join(' · ')};ui();
 }
 function confirmAutoSell(){const p=autoSellPreview;autoSellPreview=null;if(!p||p.owner!==S)return;
-  let n=0,z=0;for(const id of p.ids){const i=S.inv.findIndex(it=>String(it.id)===String(id));if(i<0)continue;const it=S.inv[i];if(!autoSellMatches(it))continue;
+  let n=0,z=0;for(const id of p.ids){const i=S.inv.findIndex(it=>String(it.id)===String(id));if(i<0)continue;const it=S.inv[i];if(autoSellReason(it,p.bulk?bulkSellState():S))continue;
     S.inv.splice(i,1);z+=sellVal(it);n++;(it.cards||[]).forEach(c=>S.cards.push(c));}
   earnZeny(z);if(selB&&!S.inv.some(it=>String(it.id)===String(selB)))selB=null;log(`Sold ${n} matching item${n===1?'':'s'} (+${z.toLocaleString()}z).`,'r3','gear,zeny');ui();save();
 }
 function editSellFilter(el){const r=sellDraft(),key=el.dataset.sellField;
   if(key==='slots'||key==='weapons'){r[key]=r[key].filter(x=>x!==el.value);if(el.checked)r[key].push(el.value);}
   else if(key==='names')r.names=el.value.split('\n').map(x=>x.trim()).filter(Boolean);
-  else if(key==='mode')r.mode=el.value;
+  else if(key==='mode'||key==='affixAction')r[key]=el.value;
   else if(key==='refined'||key==='socketed')r[key]=el.checked;
   else if(key==='minEmpty')r.minEmpty=Number(el.value);
   else if(el.dataset.sellAffix){const k=el.dataset.sellAffix;r.affixes=r.affixes.filter(a=>a.k!==k);if(el.checked)r.affixes.push({k,min:0});}
@@ -4851,15 +4888,16 @@ const V={
         <div class="sk-level"><b>Lv ${L}</b> / ${s.max}</div>
         <button data-a="skill" data-v="${s.id}" aria-label="Increase ${s.n}" title="${L<s.max?'level '+(L+1)+' costs '+skCost(L+1)+' points':'max level'}" ${av>=skCost(L+1)&&L<s.max?'':'disabled'}>${L<s.max?'+'+skCost(L+1):'MAX'}</button></div>`}).join('')}${from==='Novice'?skMasterTile():''}</div>`:''}).join('')
     +`<button class="full" data-a="rskill" ${rcost()&&S.zeny<rcost()?'disabled title="You need '+rcost().toLocaleString()+' Zeny to reset skills"':''}>Reset skills (${rcost()?rcost()+'z':'free below Base 20'})</button>`},
-  bag0(){const sel=selB&&S.inv.find(x=>String(x.id)===String(selB));const visible=typeof eclipseVisibleInventory==='function'?eclipseVisibleInventory():S.inv;const n=Math.max(30,Math.ceil(visible.length/6)*6);const inv=visible.map((it,i)=>({it,i})).sort((a,b)=>{const af=!!eqPick&&slotAccepts(eqPick,a.it),bf=!!eqPick&&slotAccepts(eqPick,b.it);return rarIdx(b.it)-rarIdx(a.it)||Object.keys(SLOTS).indexOf(a.it.slot)-Object.keys(SLOTS).indexOf(b.it.slot)||Number(bf)-Number(af)||Number(!!b.it.locked)-Number(!!a.it.locked)||a.i-b.i}).map(x=>x.it);
+  bag0(){const sel=selB&&S.inv.find(x=>String(x.id)===String(selB));const visible=typeof eclipseVisibleInventory==='function'?eclipseVisibleInventory():S.inv;const n=Math.max(30,Math.ceil(visible.length/6)*6);const inv=visible.map((it,i)=>({it,i})).sort((a,b)=>{const af=!!eqPick&&slotAccepts(eqPick,a.it),bf=!!eqPick&&slotAccepts(eqPick,b.it);return Number(bf)-Number(af)||Object.keys(SLOTS).indexOf(a.it.slot)-Object.keys(SLOTS).indexOf(b.it.slot)||(a.it.wt||'').localeCompare(b.it.wt||'')||a.it.name.localeCompare(b.it.name)||rarIdx(b.it)-rarIdx(a.it)||Number(!!b.it.locked)-Number(!!a.it.locked)||a.i-b.i}).map(x=>x.it);
     const detail=sel?`<div class="mob-card grid-detail">${itemDetail(sel)}<div class="row" style="margin-top:6px"><button data-a="equip" data-v="${sel.id}" ${canUse(sel)?'':'disabled'}>Equip</button><button data-a="sell" data-v="${sel.id}">Sell ${sellVal(sel)}z</button><button class="tick${sel.locked?' on':''}" data-a="lockgear" data-v="${sel.id}" aria-pressed="${!!sel.locked}" title="Locked gear stays protected from auto-sell">${sel.locked?'&#9733; Unlock':'☆ Lock'}</button><button class="tick${autoSellOn(rarIdx(sel))?' on':''}" data-a="autosell" data-v="${rarIdx(sel)}" title="Toggle ${rarOf(sel).n} drops that match your saved filters">Auto-sell ${rarOf(sel).n}</button></div></div>`:'';
     return (eqPick?equipChooser(eqPick):'')
     +`<div class="bag-top"><div class="row"><span class="chip">Oridecon <b>${S.ore.ori}</b></span><span class="chip">Elunium <b>${S.ore.elu}</b></span></div><span class="bag-count">${S.inv.length}/${BAGMAX} items</span></div>
     <label class="bag-auto" title="Higher base-value drops equip automatically. Cards and affixes are not compared, including for a second dagger."><input type="checkbox" data-a="auto" ${S.auto!==false?'checked':''}> Auto-equip higher base value</label>
-    <details class="bag-tools" data-ui-disclosure="bag-selling" ${clickSellOn()?'open':''}><summary>Selling &amp; automation${clickSellOn()?' · Quick sell ON':''}</summary><div class="mob-card sellbox"><div class="hd">Selling tools</div>
+    <details class="bag-tools" data-ui-disclosure="bag-selling" ${clickSellOn()?'open':''}><summary>Auto-sell &amp; bulk sell${clickSellOn()?' · Quick sell ON':''}</summary><div class="mob-card sellbox"><div class="hd">Selling tools</div>
       <div class="row"><small>Auto-sell on drop:</small>${RARALL.map((r,i)=>`<button class="tick${autoSellOn(i)?' on':''}" data-a="autosell" data-v="${i}" aria-pressed="${autoSellOn(i)}" title="Sell ${r.n} drops that match your saved filters">${r.n}</button>`).join('')}</div>
-      <div class="row" style="margin-top:4px"><button data-a="sellnow" ${S.inv.some(autoSellMatches)?'':'disabled'}>Preview matching sale</button><button class="tick${clickSellOn()?' on':''}" data-a="clicksell" aria-pressed="${clickSellOn()}">Click-sell: ${clickSellOn()?'ON':'OFF'}</button></div>
-      <small>${clickSellOn()?'<b class="r0">Click-sell is ON</b> - the next unlocked bag item you click is sold instantly.':'Ticked rarities sell on drop only when saved filters match. Keep rules take priority. Click-sell turns a single click in the grid into an instant sale.'}</small><small>&#9733; Locked gear stays at the top and is skipped by auto/bulk sell. Manual Sell asks you to confirm unlocking it.</small>${autoSellEditor()}</div></details>
+      <div class="row" style="margin-top:4px"><button data-a="sellnow" ${S.inv.some(autoSellMatches)?'':'disabled'}>Preview auto-sell matches</button><button class="tick${clickSellOn()?' on':''}" data-a="clicksell" aria-pressed="${clickSellOn()}">Click-sell: ${clickSellOn()?'ON':'OFF'}</button></div>
+      <div class="row"><small>Bulk sell rarities:</small>${RARALL.map((r,i)=>`<button class="tick${bulkSellState().autoSell[i]?' on':''}" data-a="bulkrar" data-v="${i}" aria-pressed="${bulkSellState().autoSell[i]}">${r.n}</button>`).join('')}<button data-a="bulksellnow">Preview bulk sale</button></div><small>Bulk selling uses saved filters and the rarities above. It does not enable auto-sell on drop.</small>
+      <small>${clickSellOn()?'<b class="r0">Click-sell is ON</b> - the next unlocked bag item you click is sold instantly.':'Ticked rarities sell on drop only when saved filters match. Keep rules take priority. Click-sell turns a single click in the grid into an instant sale.'}</small><small>&#9733; Locked gear is skipped by auto/bulk sell. Manual Sell asks you to confirm unlocking it.</small>${autoSellEditor()}</div></details>
     ${S.inv.length>=BAGMAX?'<div class="row"><small class="r4">BAG FULL</small></div>':''}
     <div class="bag-key" aria-label="Equipment rarities">${RARALL.map((r,i)=>`<span class="r${i}">${r.n}</span>`).join('')}</div>
     ${typeof eclipseInventoryTools==='function'?eclipseInventoryTools():''}<div class="grid${clickSellOn()?' sellmode':''}">${Array.from({length:n},(_,i)=>{const it=inv[i];if(!it)return'<div class="cell empty"></div>';
@@ -4882,7 +4920,7 @@ const V={
     // v51: the detail card is inserted into the doll right below the row that owns the clicked
     // slot (head / hands+body / legs+accessories), so Refine, card slots and Unequip sit beside
     // the piece they act on instead of at the bottom of the window.
-    const detail=`<div class="doll-detail">${sel?itemMain(sel)+refineUI(sel,selE)+'<div class="eclipse-native-sockets">'+cardSlots(sel,selE)+insertUI(sel)+'</div>'+`<div class="row" style="margin-top:6px"><button data-a="unequip" data-v="${selE}">Unequip</button><button class="tick${sel.locked?' on':''}" data-a="lockgear" data-v="${sel.id}" aria-pressed="${!!sel.locked}">${sel.locked?'&#9733; Unlock':'☆ Lock'}</button></div>`:'<small>Click any slot above to choose what to wear there (the Bag opens with the items that fit already highlighted). Select one to inspect it, refine it or remove cards.</small>'}</div>`;
+    const detail=`<div class="doll-detail">${sel?itemMain(sel)+refineUI(sel,selE)+'<div class="eclipse-native-sockets">'+cardSlots(sel,selE)+insertUI(sel)+'</div>'+`<div class="row" style="margin-top:6px"><button data-a="unequip" data-v="${selE}">Unequip</button><button class="tick${sel.locked?' on':''}" data-a="lockgear" data-v="${sel.id}" aria-pressed="${!!sel.locked}">${sel.locked?'&#9733; Unlock':'☆ Lock'}</button></div>`:'<small>Click any slot above to choose what to wear there (compatible inventory items move to the top). Select one to inspect it, refine it or remove cards.</small>'}</div>`;
     const rows=[['','head',''],['weapon','armor','off'],['acc1','leg','acc2']];
     const rowAt=rows.findIndex(r=>r.includes(selE));
     return`<div class="doll">${rows.map((r,i)=>r.map(slotCell).join('')+(i===rowAt?detail:'')).join('')}</div>`
@@ -4952,7 +4990,7 @@ const indexOpenSections={mobs:{},cards:{}};
 const indexSectionOpen=(tab,map)=>{const st=indexOpenSections[tab]||(indexOpenSections[tab]={});return Object.prototype.hasOwnProperty.call(st,map)?st[map]:map===S.mp};
 const indexToggleSection=(tab,map)=>{const st=indexOpenSections[tab]||(indexOpenSections[tab]={});st[map]=!indexSectionOpen(tab,map);return st[map]};
 // ---------- equipping from a slot ----------
-// Clicking a slot in the Equipment panel opens the bag right there, already filtered to what
+// Clicking a slot in the Equipment panel prioritizes the inventory equipment that
 // that slot will take for THIS class: weapon type and class restrictions, shields only for the
 // classes that may hold one and accessories in either accessory slot. The left hand takes a
 // shield for the shield classes and a second dagger for the two Assassin jobs - a katar still
@@ -4964,8 +5002,8 @@ function slotAccepts(k,it){if(!it||it.card||it.ore||!S.inv.includes(it))return f
   // dagger - and only a dagger - for the two Assassin jobs.
   if(k==='off')return it.slot==='off'?canShield():(it.wt==='dagger'&&dualWield());
   return it.slot===k}
-// Choosing a slot does not open a second window: it switches to the real Bag tab and highlights
-// the items that fit that slot (see V.bag0, which rings them green and wires the click to equip).
+// Choosing a slot keeps the Loadout open and moves compatible equipment to the top.
+// V.bag0 rings those items green and wires their click to equip.
 // This banner is the header of that mode - what is being chosen, what is worn now, and how out.
 function equipChooser(k){
   const cur=S.eq[k],fit=S.inv.filter(it=>slotAccepts(k,it)),raw=EQK.find(x=>x[0]===k)||[,k,SLOTS.weapon.ic],nm=k==='weapon'&&katarOnly()?['weapon','two-handed Katar','🔪']:k==='off'&&dualWield()&&!canShield()?['off','dagger','🗡️']:raw;   // v81: the Assassin's left hand takes a blade, not a shield
@@ -4977,11 +5015,17 @@ function equipIn(k,id){const it=S.inv.find(x=>String(x.id)===String(id));
   if(!it)return;if(!slotAccepts(k,it)){log('Your class cannot use that there.');return}
   const old=S.eq[k];S.eq[k]=it;S.inv.splice(S.inv.indexOf(it),1);if(old)S.inv.push(old);
   S.hp=Math.min(S.hp,maxHp());log('Equipped '+iname(it)+' ('+EQK.find(x=>x[0]===k)[1].toLowerCase()+').','','gear');ui();save()}
-const SUBS={equip:[['equip0','Loadout'],['refine','Refine (R)'],['reforge','Reforge']],status:[['stats','Stats']],bag:[['bag','Bag'],['cards','Cards']]};
+const SUBS={equip:[['equip0','Loadout'],['refine','Refine (R)'],['reforge','Reforge']],status:[['stats','Stats']],bag:[['bag','Items'],['cards','Cards']]};
 const subBar=t=>`<div class="atabs">${SUBS[t].map(([k,n])=>`<button data-a="sub" data-v="${t}:${k}" class="${sub[t]===k?'on':''}">${n}</button>`).join('')}</div>`;
 V.reforge=()=>bmOpen()?reforgePanel():`<p>Reforge opens with the Black Market at Base Lv ${BM_LV}.</p>`;
 V.equip=()=>subBar('equip')+V[sub.equip]();
-V.status=()=>subBar('status')+V[sub.status]();V.bag=()=>subBar('bag')+V[sub.bag==='bag'?'bag0':sub.bag]();
+V.status=()=>subBar('status')+V[sub.status]();
+V.bagItems=()=>`<section class="bag-items"><div class="hd">Items &amp; materials</div><p>Equipment is managed in Loadout. Your crafting supplies and consumables are stored here.</p><div class="bag-item-list">${[
+  ['Oridecon',S.ore.ori,'Refines weapons'],['Elunium',S.ore.elu,'Refines armor'],
+  ['Refine Protection Scroll',S.refineScrolls,'Enable protection in Refine'],
+  ['Echo Shards',S.shards,'Spend in the Echo store'],...NM_MAT.map((n,i)=>[n,S.nmMat[i],'Nightmare crafting material'])
+].map(([n,count,help])=>`<article class="mob-card"><b>${n}</b><strong>${safeCount(count).toLocaleString()}</strong><small>${help}</small></article>`).join('')}</div><div class="row"><button data-t="equip">Open Loadout</button><button data-a="sub" data-v="bag:cards">Loose cards · ${S.cards.length}</button><button data-t="market">Get supplies</button></div></section>`;
+V.bag=()=>subBar('bag')+V[sub.bag==='bag'?'bagItems':sub.bag]();
 function renderTitleTrack(){
   const xp=indexExperience();
   return INDEX_TITLES.map((t,i)=>{
@@ -5058,17 +5102,18 @@ function renderCardIndex(){
 
 const qpSide=()=>`<button data-q="side" class="qp-side-toggle" aria-controls="sideLinks" aria-expanded="${sideOpen}">${uiIcon('index')} More destinations <span class="side-chevron${sideOpen?' open':''}">${uiIcon('chevron')}</span></button><div id="sideLinks" ${sideOpen?'':'hidden'}>${SIDE_TABS.filter(k=>k!=='gm'||S.gm).map(k=>`<button data-t="${k}" class="qp-side-tab${tabs.includes(k)?' on':''}" aria-pressed="${tabs.includes(k)}">${uiIcon(k)} ${TABS[k][1]} <small>${TABS[k][2]}</small></button>`).join('')}</div>`;
 function applyDisplay(){
+ if(S.cameraShake===false)shake=0;
  document.body.classList.toggle('clean-screen',!!S.hideUI);
  document.body.classList.toggle('hide-damage',S.dmgShow===false||!!S.hideUI);
  document.body.classList.toggle('hide-feed',S.feedShow===false);
  document.body.classList.toggle('hide-labels',S.labelsShow===false);
 }
 function screenOptions(){const panel=$('screenOptions');panel.hidden=!panel.hidden;$('screenBtn').setAttribute('aria-expanded',String(!panel.hidden));
- panel.innerHTML=[['dmgShow','Damage numbers'],['auraShow','Character aura'],['feedShow','Activity log'],['labelsShow','Character / monster labels'],['hideUI','Hide all screen UI (Display stays available)']].map(([key,label])=>`<label><input type="checkbox" data-display="${key}" ${key==='hideUI'?S[key]?'checked':'':S[key]!==false?'checked':''}>${label}</label>`).join('');
+ panel.innerHTML=[['cameraShake','Camera shake'],['dmgShow','Damage numbers'],['auraShow','Character aura'],['feedShow','Activity log'],['labelsShow','Character / monster labels'],['hideUI','Hide all screen UI (Display stays available)']].map(([key,label])=>`<label><input type="checkbox" data-display="${key}" ${key==='hideUI'?S[key]?'checked':'':S[key]!==false?'checked':''}>${label}</label>`).join('');
 }
 document.addEventListener('input',e=>{if(e.target.id?.startsWith('oreQty-')){const o=e.target.id.slice(7),n=Number(e.target.value),out=$('oreTotal-'+o);marketQty[o]=e.target.value;if(out)out.textContent=Number.isSafeInteger(n)&&n>0?(n*BM_ORE).toLocaleString()+'z total':'Enter a whole quantity';}});
 $('screenBtn').onclick=()=>{if(S)screenOptions()};
-$('screenOptions').onchange=e=>{const key=e.target.dataset.display;if(!['dmgShow','auraShow','feedShow','labelsShow','hideUI'].includes(key))return;S[key]=e.target.checked;applyDisplay();save()};
+$('screenOptions').onchange=e=>{const key=e.target.dataset.display;if(!['cameraShake','dmgShow','auraShow','feedShow','labelsShow','hideUI'].includes(key))return;S[key]=e.target.checked;applyDisplay();save()};
 function renderQ(){const e=$('qp'),rail=$('sideRail');if(!S){rail.style.display='none';return}rail.style.display='flex';rail.classList.toggle('with-panels',!!tabs.length);e.style.display='block';
   $('eclipseMapCard').classList.toggle('other-map',S.mp!==0);$('eclipseMapName').textContent=MAPS[S.mp].n;$('eclipseMapStage').textContent=fieldName()+' · World atlas';
   const questHTML=`<div class="qp-head"><b>${uiIcon('quest')} Quests</b><div class="qp-actions"><button data-q="t" aria-expanded="${qOpen}" aria-label="${qOpen?'Collapse':'Expand'} quests">${uiIcon(qOpen?'minus':'chevron')}</button></div></div>`+(qOpen?contractPanel(eclipseQuestAll?Infinity:3)+(S.q||[]).map((q,i)=>q.prog<q.goal?'':`<div class="quest-entry"><div>${qTxt(q)}</div><div class="pbar"><i style="width:${Math.min(100,q.prog/q.goal*100)}%"></i></div><div class="quest-reward"><small>${q.prog}/${q.goal} &middot; ${(q.z||0).toLocaleString()}z &middot; ${(q.xp||0).toLocaleString()}xp</small>${q.prog>=q.goal?`<button data-q="c${i}">Claim</button>`:''}</div></div>`).join(''):'');
@@ -5214,6 +5259,8 @@ function arrangePanel(k,root){
     // The allocation tile can be a sibling of the master tile in older saves/builds.
     const masters=all('.sk-master,.sk-alloc');masters.forEach(e=>{if(!footer.contains(e))footer.append(e)});
     body.replaceChildren(footer,scroll('skills',catalog),fold('Skill points & combat rules',intro,'skill-notes'),fold('Reset skills',reset,'respec'));
+  }else if(mode==='bag'&&q('.bag-items')){
+    body.classList.add('ui-materials');
   }else if(mode==='bag'||mode==='cards'){
     const grid=q('.grid'),detail=q('.grid-detail')||(mode==='cards'?q('.mob-card'):null),top=q('.bag-top'),auto=q('.bag-auto'),tools=q('.bag-tools'),key=q('.bag-key'),chooser=q('.chooser');
     if(detail)detail.remove();
@@ -5238,7 +5285,7 @@ function arrangePanel(k,root){
       const caption=make('div','eclipse-doll-caption');caption.innerHTML='<b>'+esc(S.cls)+'</b><small>'+esc(C().wt.join(' · '))+' lineage</small>';put(catalog,caption);
       const facts=make('div','eclipse-loadout-facts');facts.innerHTML=[['ATK',Math.round(atk())],['DEF',Math.round(def())],['CRIT',crit().toFixed(1)+'%'],['ATK/S',(1/aspd()).toFixed(2)],['HP',Math.round(maxHp())],['FLEE',flee().toFixed(1)+'%']].map(([k,v])=>'<div><span>'+k+'</span><b>'+v.toLocaleString()+'</b></div>').join('');put(catalog,facts);
       const inspect=inspector('Item inspector',[detail,bagDetail]);if(detail)detail.hidden=!!(eclipseInspectBag&&bagDetail);if(bagDetail)bagDetail.hidden=!eclipseInspectBag;
-      if(source)put(inventory,fold('Selling, automation & equipment choices',[...source.childNodes],'loadout-management'));
+      if(source){for(const node of [source.querySelector('.chooser'),source.querySelector('.bag-tools'),source.querySelector('.bag-auto'),source.querySelector(':scope > .row')])if(node)inventory.insertBefore(node,tools||inventory.firstChild);}
       const notes=direct().filter(e=>![doll,source,preview].includes(e));
       doll.replaceChildren(catalog,inventory,inspect);doll.classList.add('ui-loadout','eclipse-equipment');
       put(inspect,fold('Weapon compatibility',notes,'equipment-notes'));body.replaceChildren(doll);
@@ -5322,7 +5369,7 @@ const DOCK_TABS=['map','status','equip','job','skills','bag','pet','market','log
 const DOCK_LABEL={map:'Maps',guide:'Guide',status:'Character',equip:'Equipment',refine:'Refine',job:'Jobs',skills:'Skills',bag:'Bag',pet:'Pets',index:'Mastery',market:'Market',board:'Ranks',log:'Log',set:'Settings',gm:'GM'};
 function eclipsePositionMore(){
   const menu=$('sideMenu'),button=$('dock').querySelector('.eclipse-more');if(!sideOpen||!button)return;
-  const rect=button.getBoundingClientRect(),width=menu.offsetWidth||225;
+  const rect=$('dock').getBoundingClientRect(),width=menu.offsetWidth||225;
   menu.style.left=Math.max(8,Math.min(window.innerWidth-width-8,rect.right-width))+'px';
   menu.style.right='auto';menu.style.bottom=(window.innerHeight-rect.top+8)+'px';
 }
@@ -5419,6 +5466,7 @@ function eclipseDrawAtlas(){
 }
 function eclipseSetMarkup(root,html){if(root._eclipseHTML===html)return;const next=document.createElement('div');next.innerHTML=html;eclipsePatch(root,next);root._eclipseHTML=html}
 function renderWin(anchor){
+  if(simVisualsOff())return;
   if(!S)return;
   // A kill, a level-up or any panel refresh rebuilds every open window from scratch. A click whose
   // press and release span one of those rebuilds used to be swallowed - the button the pointer went
@@ -5525,7 +5573,7 @@ const ACT={
   autosell:v=>{const t=Math.max(0,Math.min(RARALL.length-1,+v||0));if(!Array.isArray(S.autoSell))S.autoSell=[false,false,false,false,false,false,false];S.autoSell[t]=!S.autoSell[t];
     log(`${RARALL[t].n} items will ${S.autoSell[t]?'be sold on drop when saved filters match':'stay in the bag'}.`,S.autoSell[t]?'r3':'','gear');ui();save()},
   lockgear:id=>toggleGearLock(id),
-  sellnow:()=>previewAutoSell(),sellconfirm:()=>confirmAutoSell(),sellcancel:()=>{autoSellPreview=null;ui()},
+  sellnow:()=>previewAutoSell(),bulksellnow:()=>previewAutoSell(true),bulkrar:v=>{bulkSellState();const i=Number(v);if(!Number.isInteger(i)||i<0||i>=RARALL.length)return;bulkSellSelection.rarities[i]=!bulkSellSelection.rarities[i];autoSellPreview=null;renderWin()},sellconfirm:()=>confirmAutoSell(),sellcancel:()=>{autoSellPreview=null;ui()},
   sellrulesapply:()=>{const rules=cleanAutoSellRules(sellDraft());if(!rules)return log('Check filter values: use valid numbers, up to 100 equipment names and 0–10 empty sockets.','r0','gear');S.autoSellRules=rules;autoSellDraft=null;autoSellPreview=null;save();ui();log('Auto-sell filters saved.','r3','gear')},
   sellrulescancel:()=>{autoSellDraft=null;renderWin()},
   gmaura:v=>{if(!S.gm)return;S.lv=+v;S.pts=Math.max(0,totalPts()-ptsSpent());ui();save()},gmglow:v=>{if(!S.gm||!S.eq.weapon)return;S.eq.weapon.r=+v;ui();save()},
@@ -5578,7 +5626,7 @@ const ACT={
   ssel:v=>{selS=v;renderWin('[data-win="skills"] .sk.sel')},
   // Clicking an equipment slot highlights the fitting items in the REAL Bag window (it is opened
   // if it is not already up) instead of popping a second list over the paper doll.
-  seleq:v=>{selE=v;eclipseInspectBag=false;eqPick=v;sub.bag='bag';if(!tabs.includes('equip')&&!tabs.includes('bag')){if(tabs.length>=MAX_TABS)tabs.shift();tabs.push('bag')}renderWin()},
+  seleq:v=>{selE=v;eclipseInspectBag=false;eqPick=v;sub.bag='bag';if(!tabs.includes('equip')){if(tabs.length>=MAX_TABS)tabs.shift();tabs.push('equip')}sub.equip='equip0';renderWin()},
   skall:()=>{const on=!skAllOn(),n=skTog().length;skSetAll(on);
     log(on?`All ${n} auto-cast skill${n===1?'':'s'} switched ON.`:`All ${n} auto-cast skill${n===1?'':'s'} switched OFF - nothing will cast until you switch it back.`,on?'r3':'r0','skill');ui();save()},
   skalloc:()=>{const n=autoAllocateSkills();if(n)log(`Auto-allocated ${n} skill level${n===1?'':'s'}: attacks first, then every skill and higher ranks.`,'r3','skill');else log(skillsFullyAllocated()?'All reachable skills are already maxed.':'No affordable skill level yet.','r0','skill');ui();save()},
@@ -5642,7 +5690,7 @@ $('wins').onclick=e=>{const nav=e.target.closest('[data-t]');if(nav&&TABS[nav.da
 // Refine, the sockets, Unequip, Lock or another slot therefore keeps the chooser open.
 let chooserAtPointerDown=null,chooserPointerInside=false,skillPointerInside=false,skillCardPointerInside=false;
 document.addEventListener('pointerdown',e=>{const target=e.target&&e.target.closest?e.target:null;chooserAtPointerDown=eqPick;chooserPointerInside=!!(target&&(target.closest('[data-win="bag"]')||target.closest('.doll')));skillPointerInside=!!(target&&target.closest('.sk[data-v]'));skillCardPointerInside=!!(target&&target.closest('.sk-detail-card'));},true);
-function closeEquipmentChooser(force=false){if(!eqPick&&!force)return;eqPick=null;selE=null;selB=null;const i=tabs.indexOf('bag');if(i>=0)tabs.splice(i,1);const tipEl=$('tooltip');if(tipEl)tipEl.style.display='none';renderWin()}
+function closeEquipmentChooser(force=false){if(!eqPick&&!force)return;eqPick=null;selE=null;selB=null;const tipEl=$('tooltip');if(tipEl)tipEl.style.display='none';renderWin()}
 document.addEventListener('click',e=>{
   const target=e.target&&e.target.closest?e.target:null;
   // v77: the Endless Echo lobby. Its buttons are looked after here and the event stops, so nothing
@@ -5720,7 +5768,7 @@ function stepHudRate(rate,user,kills,earned,now,damage,exp){
   return{state:rate,kills:rate.killsPerMin,seconds:rate.killsPerMin/60,zeny:rate.zenyPerMin,dps:rate.dps,exp:rate.expPerMin};
 }
 const levelPct=(value,required,maxed=false)=>maxed?100:Math.min(100,Math.max(0,(+value||0)/Math.max(1,+required||1)*100));
-function bars(){if(!S)return;applyDisplay();
+function bars(){if(!S||simVisualsOff())return;applyDisplay();
   const rates=stepHudRate(hudRate,currentUser,S.kills,zenyEarned,performance.now(),S.dmg,expEarned);hudRate=rates.state;
   const j=jobOf(),c=C(),hp=levelPct(S.hp,maxHp()),jp=levelPct(j.jx,jneed(j.jl),j.jl>=c.mj),bp=levelPct(S.exp,need(),S.lv>=150);
   if($('eclipseStageLabel'))$('eclipseStageLabel').textContent=(S.lvl>10?'Nightmare ':'Stage ')+(S.lvl>10?S.lvl-10:S.lvl)+' / '+(S.lvl>10?5:10);
@@ -5746,7 +5794,7 @@ function bars(){if(!S)return;applyDisplay();
   // flyout, so the bar carries no text of its own. Order follows PET_SKILLS, so the icons never
   // shuffle around between casts.
   const pbf=PET_SKILLS.filter(s=>s.kind==='buff'&&petBuff[s.stat]>0).map(s=>{const t=Math.ceil(petBuff[s.stat+'T']);
-    return`<span class="pbx" tabindex="0" role="status" aria-label="${s.n}: ${s.desc}">${s.icon}<i class="s">${t}</i><span class="pbx-fly" role="tooltip"><b>${s.n}</b> <i>${petBuffSrc[s.stat]||'pet'}</i><br>${s.desc}<br>${t}s left</span></span>`}).join('');
+    return`<span class="pbx" tabindex="0" role="status" aria-label="${s.n}: ${s.desc}">${petBuffIcon(s)}<i class="s">${t}</i><span class="pbx-fly" role="tooltip"><b>${s.n}</b> <i>${petBuffSrc[s.stat]||'pet'}</i><br>${s.desc}<br>${t}s left</span></span>`}).join('');
   const hb=$('hudBuffs');if(hb){hb.style.display=pbf?'flex':'none';hb.innerHTML=pbf}
   $('hpb').style.width=hp+'%';$('hpb').classList.toggle('critical',hp<=30);
   $('hpPct').textContent=Math.round(hp)+'%';$('hpMeter').setAttribute('aria-valuenow',Math.round(hp));
@@ -5761,7 +5809,7 @@ function bars(){if(!S)return;applyDisplay();
     track.setAttribute('aria-valuetext',label+' '+lv+': '+text+(pct>=100?' (MAX)':' to next level'));
   }
 }
-function ui(anchor){if(!S)return;const returned=repairEquippedCards(S);if(returned)log(`${returned} incompatible or duplicate card(s) returned to your loose cards.`,'','card');bars();feedTab();
+function ui(anchor){if(!S)return;const returned=repairEquippedCards(S);if(returned)log(`${returned} incompatible or duplicate card(s) returned to your loose cards.`,'','card');if(simVisualsOff())return;bars();feedTab();
   // v77: during an Endless Echo run the title is the clock and the status is the mode, so the player
   // never has to open anything to see how long is left. The "(MVP map)" tag is gone with the other
   // parentheticals - the MVP FIGHT line on the HUD carries that.
@@ -8654,6 +8702,7 @@ function makeSkillFxNode(fx){
   scene.add(fx.group);
 }
 function playSkillFx(id,target,color){
+  if(simVisualsOff())return;
   const r=skillFxSpec(id,color);if(!r)return;
   const fx={...r,x0:pl.x,z0:pl.z,x1:target&&Number.isFinite(target.x)?target.x:pl.x,
     z1:target&&Number.isFinite(target.z)?target.z:pl.z,age:0,group:null,parts:[]};
@@ -8764,7 +8813,7 @@ function draw(){
   shots.forEach(s=>{if(!s.m){s.m=mk(scene,s.arrow?BX(.5,.04,.04):SP(.14),s.col);s.m.material.emissive.set(s.col);s.m.castShadow=false;s.m.rotation.y=-Math.atan2(s.z1-s.z0,s.x1-s.x0)}
     const k=Math.min(1,s.t);s.m.position.set(s.x0+(s.x1-s.x0)*k,1.4,s.z0+(s.z1-s.z0)*k)});
   ct.x+=(pl.x*.6-ct.x)*.05;ct.z+=(pl.z-CAMERA_LEAD_Z-ct.z)*.05;
-  const dd=(cam.aspect<1.5?26:18)/zoom,sk=shake*.03;
+  const dd=(cam.aspect<1.5?26:18)/zoom,sk=S.cameraShake===false?0:shake*.03;
   cam.position.set(ct.x+Math.sin(az)*Math.cos(el)*dd+rnd(-sk,sk),Math.sin(el)*dd+.5,ct.z+Math.cos(az)*Math.cos(el)*dd+rnd(-sk,sk));
   cam.lookAt(ct);cam.updateMatrixWorld(true);
   for(const m of mobs){const v=mobMesh.get(m);if(v)syncMobImage(v,m,mobVisualScale(m))}
@@ -8829,25 +8878,36 @@ const SIM_CATCHUP=600;// seconds: most time one wake may replay. A throttled tim
                       // the tab doing it). The welcome-back line says when this cap was hit.
 const SIM_BG_MS=1000; // ms between hidden-tab wake-ups (a hidden tab clamps timers to ~1s, so
                       // this is the cadence the browser actually gives a background page)
-let simAt=performance.now();
-function simSteps(dt){for(let i=0;i<speed;i++){update(dt);kitTick(dt)}}
+// Keep combat debt, but yield between short batches so inputs and rendering can run.
+const SIM_BATCH_STEPS=50,SIM_BUDGET_MS=8;
+let simAt=performance.now(),simPending=0,simOwner=null,simTimer=null,simNeedsUI=false;
+function simSteps(dt){for(let i=0;i<speed;i++){update(dt);if(!simVisualsOff())kitTick(dt)}}
 function simAdvance(now=performance.now()){
-  const elapsed=Math.min(SIM_CATCHUP,Math.max(0,(now-simAt)/1000));simAt=now;
-  let left=elapsed;
-  while(left>SIM_STEP){simSteps(SIM_STEP);left-=SIM_STEP}
-  if(left>1e-6)simSteps(left)}   // the remainder is its own step, so a 16ms frame stays ONE step
-function loop(now){try{simAdvance(now);draw()}catch(e){if(!loop.e){loop.e=1;console.error(e);log('Error: '+e.message,'r0')}}requestAnimationFrame(loop)}
+  if(simOwner!==S){simOwner=S;simPending=0;simNeedsUI=false;}
+  const elapsed=Math.min(SIM_CATCHUP,Math.max(0,(now-simAt)/1000));simAt=Math.max(simAt,now);
+  simPending=Math.min(SIM_CATCHUP,simPending+elapsed);
+  const started=performance.now();let steps=0;
+  simCatchingUp=simPending>.25;simNeedsUI=simNeedsUI||simCatchingUp||document.hidden;
+  try{while(simPending>1e-6&&steps<SIM_BATCH_STEPS){
+    const dt=Math.min(SIM_STEP,simPending);simPending=Math.max(0,simPending-dt);simSteps(dt);steps++;
+    if(performance.now()-started>=SIM_BUDGET_MS)break;
+  }}finally{simCatchingUp=false;}
+  if(simPending>1e-6){
+    if(simTimer===null)simTimer=setTimeout(()=>{simTimer=null;try{simAdvance()}catch(e){console.error(e)}},0);
+  }else{
+    simPending=0;
+    if(simTimer!==null){clearTimeout(simTimer);simTimer=null;}
+    if(!document.hidden&&simNeedsUI){simNeedsUI=false;ui();feedDraw();}
+    if(awayReturnAt&&!document.hidden)finishAway();
+  }
+}
+function loop(now){try{simAdvance(now);if(!document.hidden)draw()}catch(e){if(!loop.e){loop.e=1;console.error(e);log('Error: '+e.message,'r0')}}requestAnimationFrame(loop)}
 
 // ---------- grinding while the tab is hidden ----------
-// The ticker is what keeps that clock moving while the tab is in the background. When the player
-// comes back the log says what the time away was worth: the wall-clock time, the kills and Zeny
-// the sim actually earned, and a level-up if one landed. "Pause in the background" is the one
-// setting that turns this off - then hidden time is dropped instead of simulated, so the character
-// picks up exactly where they were left.
-// v57: background grinding is permanent - the owner asked for the tick to go away. Hiding the
-// tab always keeps the sim running; no save field can pause it.
+// Background grinding is permanent. Timers and frames share the same pending-time queue.
+// On return, report rewards only after the outstanding batches finish.
 const bgOn=()=>true;
-let awayAt=0,awayKills=0,awayZeny=0,awayLv=0;
+let awayAt=0,awayReturnAt=0,awayKills=0,awayZeny=0,awayLv=0;
 function awayTxt(sec){sec=Math.max(0,Math.round(sec));const h=Math.floor(sec/3600),m=Math.floor(sec%3600/60),s=sec%60;
   if(h)return h+'h'+(m?' '+m+'m':'');      // "3h", "1h 12m"
   if(m)return m+'m'+(s?' '+s+'s':'');      // "10m", "3m 12s"
@@ -8857,18 +8917,21 @@ function bgTick(){
   if(!bgOn()){simAt=performance.now();return}
   try{simAdvance()}catch(e){if(!bgTick.e){bgTick.e=1;console.error(e);log('Error: '+e.message,'r0')}}}
 function bgHide(){                      // the tab went to the background: note the moment, then save
-  awayAt=performance.now();awayKills=S?S.kills:0;awayZeny=zenyEarned;awayLv=S?S.lv:0;
+  awayReturnAt=0;awayAt=performance.now();awayKills=S?S.kills:0;awayZeny=zenyEarned;awayLv=S?S.lv:0;
   simAdvance(awayAt);save()}
-function bgShow(){                      // and it is back: replay what the timer missed, and report
+function bgShow(){
   if(!awayAt)return;
-  const now=performance.now(),away=(now-awayAt)/1000;awayAt=0;
-  if(bgOn())simAdvance(now);else simAt=now;
-  if(S&&bgOn()&&away>=2){
+  awayReturnAt=performance.now();simAdvance(awayReturnAt);
+}
+function finishAway(){
+  const away=(awayReturnAt-awayAt)/1000;awayAt=0;awayReturnAt=0;
+  if(S&&away>=2){
     const counted=Math.min(away,SIM_CATCHUP),kills=S.kills-awayKills,zeny=Math.round(zenyEarned-awayZeny);
     log('Away '+awayTxt(away)+(counted<away-1?' ('+awayTxt(counted)+' of grinding)':'')
       +(kills>0?' · +'+kills.toLocaleString()+' kills':'')+(zeny>0?' · +'+zeny.toLocaleString()+' Zeny':'')
       +(S.lv>awayLv?' · Base Lv '+awayLv+' → '+S.lv:''),'r3','misc,zeny')}
-  save()}
+  save();ui();
+}
 document.addEventListener('visibilitychange',()=>{if(document.hidden)bgHide();else bgShow()});
 setInterval(bgTick,SIM_BG_MS);
 resize();respawn=.3;requestAnimationFrame(loop);setInterval(save,5000);kitFetch();

@@ -31,6 +31,7 @@ const errors = [];
 const dom = new JSDOM(html, {
   runScripts: 'dangerously', url: 'http://localhost/', pretendToBeVisual: false,
   beforeParse(window) {
+    Object.defineProperty(window.document, 'hidden', { value: false, configurable: true });
     Object.defineProperty(window.HTMLCanvasElement.prototype, 'getContext', { value: function () { return makeCtx(); } });
     Object.defineProperty(window.HTMLCanvasElement.prototype, 'toDataURL', { value: () => 'data:image/png;base64,' });
     Object.defineProperty(window.HTMLCanvasElement.prototype, 'clientWidth', { get() { return 1200; } });
@@ -151,11 +152,11 @@ t('job paths preserve all 19 classes in six readable progression rows',()=>{
   assert.ok(root.querySelector('.ui-inspector #classPreview'));
 });
 t('bag details are outside the item grid, including all Nightmare sale actions',()=>{
-  ev("sub.bag='bag'");const root=window.document.createElement('div');root.innerHTML=ev('V.bag()');ev('arrangePanel')('bag',root);
+  ev("sub.bag='bag'");const root=window.document.createElement('div');root.innerHTML=ev('V.equip()');ev('arrangePanel')('equip',root);
   assert.ok(!root.querySelector('.grid .grid-detail'));
   assert.ok(root.querySelector('.ui-inspector [data-a="equip"]'));
-  assert.ok(root.querySelector('.ui-management [data-a="autosell"][data-v="5"]'));
-  assert.ok(root.querySelector('.ui-management [data-a="autosell"][data-v="6"]'));
+  assert.ok(root.querySelector('.eclipse-bag > .bag-tools [data-a="autosell"][data-v="5"]'));
+  assert.ok(root.querySelector('.eclipse-bag > .bag-tools [data-a="autosell"][data-v="6"]'));
 });
 t('equipment inspector stays inside the chooser boundary',()=>{
   ev("sub.status='equip'");const root=window.document.createElement('div');root.innerHTML=ev('V.status()');ev('arrangePanel')('status',root);
@@ -239,8 +240,8 @@ t('locked Market explains its level gate without offering purchases',()=>{
 });
 t('full bag and active click-sell are visible above the catalogue',()=>{
   ev("sub.bag='bag';S.clickSell=true;window.savedInv=S.inv;S.inv=Array.from({length:BAGMAX},()=>window.savedInv[0])");
-  const root=window.document.createElement('div');root.innerHTML=ev('V.bag()');ev('arrangePanel')('bag',root);
-  assert.ok(root.querySelector('.ui-hero').textContent.includes('BAG FULL'));assert.ok(root.querySelector('.ui-hero').textContent.includes('CLICK-SELL ACTIVE'));
+  const root=window.document.createElement('div');root.innerHTML=ev('V.equip()');ev('arrangePanel')('equip',root);
+  assert.ok(root.querySelector('.eclipse-bag').textContent.includes('BAG FULL'));assert.ok(root.querySelector('.eclipse-bag > .bag-tools').textContent.includes('Click-sell is ON'));
   ev('S.inv=window.savedInv;S.clickSell=false');
 });
 t('account reset is separated from appearance and still uses its original handler',()=>{
@@ -311,7 +312,7 @@ t('bonding stars describe every current rank and its real passive bonus',()=>{
   }
 });
 t('auto-sell filter editor saves drafts, keeps text during redraws and previews before selling',()=>{
-  ev("S=fresh();S.auto=false;S.eq={};S.autoSell=Array(7).fill(true);S.inv=[{id:9901,name:'Test Sword',tier:2,sec:1,slot:'weapon',wt:'sword',val:30,cards:[],aff:[{k:'crit',v:3}]}];tabs.splice(0,tabs.length,'bag');sub.bag='bag';autoSellDraft=null;autoSellPreview=null;renderWin()");
+  ev("S=fresh();S.auto=false;S.eq={};S.autoSell=Array(7).fill(true);S.inv=[{id:9901,name:'Test Sword',tier:2,sec:1,slot:'weapon',wt:'sword',val:30,cards:[],aff:[{k:'crit',v:3}]}];tabs.splice(0,tabs.length,'equip');sub.equip='equip0';autoSellDraft=null;autoSellPreview=null;renderWin()");
   const doc=window.document,change=el=>el.dispatchEvent(new window.Event('change',{bubbles:true}));
   doc.querySelector('[data-a="sellpreset"][data-v="caster"]').click();
   assert.strictEqual(ev('S.autoSellRules'),undefined,'draft is not active');
