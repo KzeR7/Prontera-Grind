@@ -56,7 +56,11 @@ func (e *Engine) ExportWardrobe(req Request, folder string, headOnly bool, proof
 			parts["shadow"]++
 		}
 	}
-	for k, n := range map[string]int{"body": 1, "head": 1, "weapon": 2, "accessory": 2, "garment": 1, "shadow": 1} {
+	weapons := 2
+	if req.Weapon == 11 {
+		weapons = 1
+	} // Bows have no sword-slash component.
+	for k, n := range map[string]int{"body": 1, "head": 1, "weapon": weapons, "accessory": 2, "garment": 1, "shadow": 1} {
 		if parts[k] != n {
 			return WardrobeAction{}, fmt.Errorf("missing native %s: got %d, want %d", k, parts[k], n)
 		}

@@ -1,3 +1,74 @@
+# Native character trees and Wardrobe (v2)
+
+The live native renderer now covers three full trees:
+
+- Swordsman (`Swordman` in existing saves) → Knight → Lord Knight
+- Thief → Assassin → Assassin Cross
+- Archer → Hunter → Sniper
+
+These class sprites load by default, including for old saves with `appearance:null`.
+Wardrobe changes hairstyle, native hair color and the existing halo/glasses/wings costume
+accessories. Gender is in Settings. Reset hair and costume restores the native default;
+it does not opt back into the old renderer. Other trees retain their existing art.
+Saved male/female hair choices and costume flags are shared between supported classes;
+legacy numeric hair IDs, class progress, equipment and combat stats are preserved.
+
+Equipped-weapon matching remains deferred. Each class has its fixed native family:
+sword for the Swordsman tree, dagger for Thief, katar for Assassin/Assassin Cross,
+and bow for the Archer tree. Native weapon-specific attack actions are 80, or 88 for
+Assassin/Assassin Cross/Hunter/Sniper. Bows have no sword-slash source component.
+This does not add costume outfits beyond the existing three accessory switches.
+
+## Sharing and bounds
+
+`assets/wardrobe/v2/` contains **404 files / 7,041,794 bytes** for 3,240 looks.
+There are 18 body/weapon records, 360 shared hair/color records and two shared costume
+records. Each hair or costume atlas holds pixels once for all nine classes; class attachment
+and timing records reference those pixels. Repeated frames share pose records. The v1
+reference pack is retained in Git but excluded from the publish tree.
+
+The loader retains its 16 MiB decoded atlas budget; a class change reuses resident hair
+and costume images and requests only its body/weapon image and metadata. Only small
+appearance IDs are saved. Unchanged animation frames skip texture uploads. Stale requests
+cannot overwrite a later class, including a return to an already cached class. Failed
+class loads use the existing class renderer, and Wardrobe Retry retries both preview and hero.
+
+## Rebuild the nine classes
+
+Use Python 3.9+ with Pillow 11.3.0 and Go 1.24.2. Native source files stay outside the
+published game. The two source manifests pin 576 inputs and public URLs; recovery validates
+both existing files and new downloads. No client palettes or sprite pixels are invented.
+
+1. `python3 tools/native-wardrobe/fetch_sources.py <native-root>`
+2. Obtain ragassets commit `4de4fa747431979d35c747d7edd549a872efd9e1` from
+   `https://github.com/adsonpleal/ragassets`. Copy `export.go` and `main.go` into the
+   locations described in the historical v1 section below, then build its `wardrobe-export`.
+3. For each job in `1 7 4008 6 12 4013 3 11 4012`, run:
+   `wardrobe-export <native-root> <repo>/Updates/hair-color-preview/catalog.json <exports>/<job> full <job>`.
+   Use `proof` instead of `full`, with a separate `<proofs>/<job>` destination, for the
+   independently rendered costume-mask fixtures.
+4. `python3 tools/build_wardrobe_classes.py <exports> <empty-output>`.
+   Review the output before replacing `assets/wardrobe/v2/`. A subsequent published asset
+   revision should use a new versioned path.
+5. `python3 tools/tests/wardrobe_classes_assets.py <proofs>` checks all 3,240 look timelines,
+   hashes, bounds and body/weapon presence. It also compares **22,768 frames** against the
+   complete native renderer across both genders, eight directions, three stances and all
+   eight costume masks: **zero channel difference** in this build.
+
+`wardrobe_sim.js` tests actual assets, shared downloads, memory bounds, retries and class
+request races. `wardrobe_game_sim.js` tests default sprites, legacy/current saves, class
+changes, preview/apply/cancel, reset and combat clocks. `check_wardrobe_browser.js` runs
+real controls, saves, class switching, 3,240 looks and combat simulation on the shared
+browser. Its temporary renderer stub means these measurements cover CPU/canvas behavior;
+real WebGL/GPU and physical phone performance still require device verification.
+
+---
+
+## Historical first fitting (v1)
+
+The following documents the preserved first implementation. Its Lord-Knight-only scope
+and opt-in behavior are superseded by v2 above; its source provenance remains applicable.
+
 # Lord Knight layered Wardrobe (v1)
 
 The owner authorized a first in-game Wardrobe fitting. Open **Wardrobe (W)** or Settings → Open Wardrobe. Select male/female, one of the frozen 20 styles per gender, nine native color entries, halo/glasses/wings, and preview idle/walk/attack in eight authored directions. Apply saves the choice; Cancel and closing discard drafts. “Use original class appearance” restores the existing rendering route.

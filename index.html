@@ -848,7 +848,7 @@ body.clean-screen #screenBtn{visibility:visible!important}body.clean-screen #hud
 </div>
 <div id="tooltip"></div>
 <link rel="stylesheet" href="assets/wardrobe.css?v=1">
-<script src="assets/wardrobe.js?v=1"></script>
+<script src="assets/wardrobe.js?v=2"></script>
 <script src="assets/sprite_pack_data.js?v=2"></script>
 <script src="assets/class_skins_data.js?v=2"></script>
 <script src="assets/weapon_joints_data.js?v=2"></script>
@@ -1081,7 +1081,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // give-back) and main's weapon-hold rendering work.
 let simCatchingUp=false;
 const simVisualsOff=()=>document.hidden||simCatchingUp;
-const BUILD='2026-10-12 grind-v122 Wardrobe and inventory integration';   // shown on the login card - confirms which file you loaded
+const BUILD='2026-10-12 grind-v123 Native class trees';   // shown on the login card - confirms which file you loaded
 $('buildTag').textContent='build '+BUILD;
 
 // ---------- class tree: Novice -> 6 first jobs -> 6 second jobs -> 6 third jobs ----------
@@ -4932,9 +4932,10 @@ const V={
     <small>${shown.length} of ${logs.length} events shown &middot; tick what you want to read &middot; the on-screen log follows the same ticks</small>
     ${shown.map(l=>`<div class="${l.cls||''}">${l.m}</div>`).join('')||'<i>No events to show.</i>'}`},
   set(){const sex=S.sex==='f'?'Female':'Male';return`<div class="hd">Character</div>
+    <div class="row"><button data-a="sex" data-v="m" class="${S.sex==='m'?'on':''}">Male</button><button data-a="sex" data-v="f" class="${S.sex==='f'?'on':''}">Female</button></div>
     <button data-t="wardrobe" class="full">Open Wardrobe</button>
   <div class="hair-preview-card"><div class="hair-preview-stage"><canvas id="hairPreview" width="126" height="134" role="img" aria-label="Live ${sex.toLowerCase()} ${S.cls} class skin preview"></canvas><span class="hair-preview-loading" id="hairPreviewLoading">Loading sprite…</span></div><div class="hair-preview-info"><span class="eyebrow">LIVE PREVIEW</span><b>${S.cls}</b><span>${sex}</span></div></div>
-  <small>Wardrobe has gender, hairstyles, colors and accessories for the Lord Knight fitting. Other classes keep their own art.</small>
+  <small>Wardrobe changes hairstyles, hair colors and costume accessories for the Swordsman, Thief and Archer class trees.</small>
   ${skinBroken?`<small class="r0"><b>Some animations could not be read</b> - the game decodes each file's frames itself and one or more would not open (the log says which). Opening the game through a local server (python3 -m http.server) instead of a file:// page is what the decoder needs.</small>`:''}
     <div class="hd" style="margin-top:10px">Damage numbers</div>
     <div class="row"><button data-a="dmgshow" data-v="on" class="${S.dmgShow!==false?'on':''}" aria-pressed="${S.dmgShow!==false}">Show: On</button><button data-a="dmgshow" data-v="off" class="${S.dmgShow===false?'on':''}" aria-pressed="${S.dmgShow===false}">Show: Off</button></div>
@@ -8955,6 +8956,6 @@ function updateWatch(){
 }
 setInterval(updateWatch,60000);
 </script>
-<script src="assets/wardrobe-ui.js?v=1"></script>
+<script src="assets/wardrobe-ui.js?v=2"></script>
 </body>
 </html>

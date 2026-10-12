@@ -919,7 +919,8 @@ t('Settings links to Wardrobe and keeps the current character preview', () => {
   assert.ok(h.includes('Live female Assassin Cross class skin preview'), 'the preview describes the current class and gender');
   assert.ok(h.includes('LIVE PREVIEW') && h.includes('Female'), 'preview identifies the saved gender');
   assert.ok(h.includes('data-t="wardrobe"') && h.includes('Open Wardrobe'), 'the new fitting is accessible from Settings');
-  assert.ok(h.includes('Other classes keep their own art.'), 'Lord Knight scope is explicit');
+  assert.ok(h.includes('Swordsman, Thief and Archer class trees'), 'native tree scope is explicit');
+  assert.ok(h.includes('data-a="sex"'), 'gender selection lives in Settings');
   assert.ok(!h.includes('data-a="hair"'), 'the retired hairstyle arrows are gone');
   for (const gone of ['no idle animation', 'only High Priest has its own straight-up N', 'the supplied SE swing, mirrored',
                       'the held-weapon art is switched off', 'style 8 of 19'])
