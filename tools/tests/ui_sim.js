@@ -70,7 +70,7 @@ const code = [
   pick(/const SKILL_ICON=\{[^}]*\};/, 'per-skill pictogram map'),
   pick(/const SKILL_TONE=\{[^;]+;/, 'skill icon color themes'),
   pick(/const SKILL_PICTO=\{[\s\S]*?\n\};/, 'local vector skill art'),
-  grab('const skillIcon=id=>', '// The CDM affix stays'),
+  grab('const SKILL_EMBLEM=', '// The CDM affix stays'),
   pick(/const SKSLOTS=t=>[^;]+;/, 'SKSLOTS/SKFADE'),
   pick(/const tnode=n=>[^\n]*/, 'tnode'),
   pick(/const crit=\(\)=>[^\n]*/, 'crit/flee/missCh'),
@@ -154,7 +154,7 @@ const questEvent=()=>{};const log=(m,c,k)=>{logs.push(m)},ui=()=>{},save=()=>{};
 this.__bm={buyOre,reforge,reforgeCost,bmOpen,refCost,refOre,qpSide,tabs,setSide:v=>{sideOpen=v}};
 `;
 const sb = { console };
-vm.createContext(sb); vm.runInContext(harness, sb);
+vm.createContext(Object.assign(sb,{simVisualsOff:()=>false})); vm.runInContext(harness, sb);
 const U = sb.__u;
 
 const sword = { id: 1, name: 'Claymore', tier: 2, slot: 'weapon', wt: 'sword', val: 90, r: 3, sec: 1, cards: [] };
@@ -162,7 +162,7 @@ const armor = { id: 2, name: 'Chain Mail', tier: 2, slot: 'armor', val: 50, r: 0
 const ring = { id: 3, name: 'Silver Ring', tier: 2, slot: 'acc', val: 20, r: 0, sec: 1, cards: [] };
 const card = { id: 4, n: 'Poring Card', stat: 'str', g: 1, v: 3, card: true };
 const mkS = (cls) => ({
-  cls, sex: 'm', hair: 0, lv: 60, exp: 0, hp: 900, zeny: 5000, pts: 3, kills: 10, mobKills: {}, equippedTitle: null,
+  nmMat:[0,0,0,0,0],refineScrolls:0,shards:0,dps:0,cls, sex: 'm', hair: 0, lv: 60, exp: 0, hp: 900, zeny: 5000, pts: 3, kills: 10, mobKills: {}, equippedTitle: null,
   cardIndex: { donated: 0, byName: {}, stats: { str: 0, agi: 0, dex: 0, int: 0, vit: 0, luk: 0 } }, mp: 0, lvl: 5, kl: 3, gmx: 100, gm: false,
   st: { str: 30, agi: 20, dex: 20, luk: 5, int: 5, vit: 20 }, sk: { aid: 1 }, skOff: {}, jobs: { [cls]: { jl: 30, jx: 0 }, Novice: { jl: 10, jx: 0 } }, base: {},
   eq: { head: null, weapon: sword, armor, off: null, acc1: ring, leg: null, acc2: null },
@@ -384,7 +384,7 @@ t('the 3D view pinch-zooms on touch and still wheel-zooms on a mouse', () => {
   // The pointer block is the camera's alone again (the town's tap-to-walk went with the town), so the
   // harness needs no stand-ins: the clamp it measures is the field's own 0.6 floor.
   const box = { R: { domElement: domEl }, Math, console };
-  vm.createContext(box);
+  vm.createContext(Object.assign(box,{simVisualsOff:()=>false}));
   vm.runInContext('let az=0,el=.8,zoom=1;\n' + code + '\n;this.__cam=()=>({az,el,zoom})', box);
   const cam = () => box.__cam();
   const fire = (n, e) => (handlers[n] || []).forEach(f => f(e));
@@ -506,7 +506,7 @@ t('clicking a slot highlights the fit in the REAL bag tab - no extra pop-out', (
   U.eqPick = 'off';
   assert.ok(/shield/i.test(U.V.bag0()), 'the off-hand banner must explain what fits there');
   // and the actual slot click opens that window
-  assert.ok(src.includes("seleq:v=>{selE=v;eclipseInspectBag=false;eqPick=v;sub.bag='bag';if(!tabs.includes('equip')&&!tabs.includes('bag'))"), 'slot selection opens Bag when the combined workbench is closed');
+  assert.ok(src.includes("seleq:v=>{selE=v;eclipseInspectBag=false;eqPick=v;sub.bag='bag';if(!tabs.includes('equip'))"), 'slot selection opens Loadout when the workbench is closed');
   assert.ok(src.includes("if(k==='status')sub.status='stats';if(k==='bag')sub.bag='bag';"), 'reopening a window resets its sub-tab');
 });
 
@@ -561,7 +561,7 @@ t('the equipment chooser preserves rarity/type grouping when closed', () => {
   assert.ok(!src.includes('bagPointerInside'), 'the old bag-only "inside" test must be gone');
   assert.ok(src.includes('function closeEquipmentChooser(force=false){if(!eqPick&&!force)return;eqPick=null;selE=null;selB=null;'),
     'closing also clears the equipment selection and its detail card');
-  assert.ok(src.includes("tabs.splice(i,1);const tipEl=$('tooltip')"), 'closing removes the Bag and hides its tooltip');
+  assert.ok(!src.includes("tabs.splice(i,1);const tipEl=$('tooltip')"), 'closing the equipment chooser preserves the independent Items tab');
 });
 
 t('Refine, card sockets, Unequip and Lock are inside the picker and never dismiss it', () => {
@@ -647,7 +647,7 @@ t('HP flips at 30%; one split bar fills Base from left and Job from right with c
   assert.ok(src.includes('#jb{left:auto;right:0;'),'Job fill must originate at the right edge');
   assert.ok(src.includes('.xp-pct{left:50%;transform:translateX(-50%)}'),'each percentage is centred within its half');
   assert.ok(src.includes('#hpb.critical{background:linear-gradient('),'low HP must use a red treatment');
-  const box={};vm.createContext(box);
+  const box={};vm.createContext(Object.assign(box,{simVisualsOff:()=>false}));
   vm.runInContext(`
     const nodes={};const $=id=>nodes[id]||(nodes[id]={children:[],style:{},textContent:'',title:'',attrs:{},
       classList:{flags:{},toggle(k,v){this.flags[k]=v}},setAttribute(k,v){this.attrs[k]=v}});
@@ -693,10 +693,10 @@ t('damage floats stay screen-projected, restrained, and distinct by type', () =>
     'the shared Base/Job bar must be slimmer than before');
   assert.ok(src.includes('skillNameFloat(c.sk.n)')&&src.includes("skillNameFloat('First Aid')")&&src.includes('skillNameFloat(s.n)'),
     'active, healing and buff skills must show a name above the caster');
-  const box={};vm.createContext(box);
+  const box={};vm.createContext(Object.assign(box,{simVisualsOff:()=>false}));
   vm.runInContext(`
     let S={dmgShort:true,dmgShow:true},floats=[],pl={x:2,z:4},rnd=(a,b)=>(a+b)/2;
-    ${grab('const DMG_LIFE=1/.8696,DMG_RISE=70,DMG_FADE=.75,DMG_RATE=.8696,DMG_SPREAD=14;', 'function log(m,cls,cat){')}
+    ${grab('const DMG_LIFE=1/.8696,DMG_RISE=70,DMG_FADE=.75,DMG_RATE=.8696,DMG_SPREAD=14;', 'function log(m,cls,cat,visual){')}
     this.__f={floats,pl,damageFloat,skillNameFloat,shortNum,numTxt,get S(){return S},set full(v){S.dmgShort=!v},
       get dmgShow(){return S.dmgShow!==false},set dmgShow(v){S.dmgShow=v==='on'||v===true}};
   `,box);
@@ -723,7 +723,7 @@ t('damage floats stay screen-projected, restrained, and distinct by type', () =>
   F.damageFloat(1,2,3,1000000,false);F.damageFloat(1,2,3,1896,true);
   assert.strictEqual(F.floats[4].txt,'1000000','the Settings switch shows every digit');
   assert.strictEqual(F.floats[5].txt,'1896','critical digits come back too');
-  const strikeBox={};vm.createContext(strikeBox);
+  const strikeBox={};vm.createContext(Object.assign(strikeBox,{simVisualsOff:()=>false}));
   vm.runInContext(`
     const fieldDamage=()=>1,applyLeech=()=>0,cardMasteryStat=()=>0;
     let mob={x:1,z:3,hp:10000,size:1},shake=0,hit=null,S={dmg:0};
@@ -740,7 +740,7 @@ t('damage floats stay screen-projected, restrained, and distinct by type', () =>
   assert.strictEqual(F.floats[3].anchor,'hero');assert.strictEqual(F.floats[3].y,4.03); // 3.65 base + .38 per slot (v68: banner above the head)
   const draw=grab('  floats.forEach(f=>{if(!f.el)', '  const pt=');
   const scene={floats:F.floats,pl:F.pl,create:()=>({style:{}}),draw};
-  vm.createContext(scene);
+  vm.createContext(Object.assign(scene,{simVisualsOff:()=>false}));
   vm.runInContext(`const document={createElement:()=>({style:{}})},ov={appendChild:()=>{}},scr=(x,y,z)=>[x*10,z*10],
     DMG_LIFE=1/.8696,DMG_RISE=70,DMG_FADE=.75,DMG_RATE=.8696,DMG_SPREAD=14;${draw}`,scene);
   assert.strictEqual(F.floats[3].el.style.left,'20px');
@@ -757,10 +757,10 @@ t('damage floats stay screen-projected, restrained, and distinct by type', () =>
 });
 
 t('the short-form option (100K / 1M) goes well with the floats: labels size the burst, the fill carries the suffix', () => {
-  const box={};vm.createContext(box);
+  const box={};vm.createContext(Object.assign(box,{simVisualsOff:()=>false}));
   vm.runInContext(`
     let S={dmgShort:true,dmgShow:true},floats=[],pl={x:2,z:4},rnd=(a,b)=>(a+b)/2;
-    ${grab('const DMG_LIFE=1/.8696,DMG_RISE=70,DMG_FADE=.75,DMG_RATE=.8696,DMG_SPREAD=14;', 'function log(m,cls,cat){')}
+    ${grab('const DMG_LIFE=1/.8696,DMG_RISE=70,DMG_FADE=.75,DMG_RATE=.8696,DMG_SPREAD=14;', 'function log(m,cls,cat,visual){')}
     this.__f={floats,damageFloat,shortNum,numTxt,get S(){return S},set full(v){S.dmgShort=!v}};
   `,box);
   const F=box.__f;
@@ -775,7 +775,7 @@ t('the short-form option (100K / 1M) goes well with the floats: labels size the 
   assert.strictEqual(F.floats[0].kind,'critical','and keeps its critical treatment');
   const draw=grab('  floats.forEach(f=>{if(!f.el)', '  const pt=');
   const scene={floats:F.floats,pl:F.pl,create:()=>({style:{}}),draw};
-  vm.createContext(scene);
+  vm.createContext(Object.assign(scene,{simVisualsOff:()=>false}));
   vm.runInContext(`const document={createElement:()=>({style:{}})},ov={appendChild:()=>{}},scr=(x,y,z)=>[x*10,z*10],
     DMG_LIFE=1/.8696,DMG_RISE=70,DMG_FADE=.75,DMG_RATE=.8696,DMG_SPREAD=14;${draw}`,scene);
   const html=i=>F.floats[i].el.innerHTML;
@@ -800,7 +800,7 @@ t('Zeny and kill rates refresh every second using a rolling minute and reset aft
   assert.ok(src.includes('<div class="eclipse-dps-meter">DPS <b id="dps"'),'a DPS readout must sit beside the kill rate');
   assert.ok(src.includes("dpsEl.title=`Damage per second"),'the DPS readout needs a live tooltip');
   assert.ok(src.includes('S.dmg=(S.dmg||0)+d'),'strike() and hurt() must bank every point of damage');
-  const box={};vm.createContext(box);
+  const box={};vm.createContext(Object.assign(box,{simVisualsOff:()=>false}));
   vm.runInContext(`
     let S={zeny:200},zenyEarned=0,expEarned=0;
     ${grab('function earnZeny(amount){','function kill(o){')}
@@ -851,7 +851,7 @@ t('v74: the HUD shows EXP/min beside the kill rate, on the same rolling minute',
   assert.ok(src.includes('earnZeny(z);earnExp(xp);addJob('), 'the kill reward pays through earnExp');
   assert.ok(src.includes('earnZeny(z);r.zeny+=z;earnExp(xp);r.exp+=xp;'), 'offline kills count too');
   assert.ok(src.includes('earnZeny(q.z||0);earnExp(q.xp||0);'), 'quest EXP counts as income');
-  const box={};vm.createContext(box);
+  const box={};vm.createContext(Object.assign(box,{simVisualsOff:()=>false}));
   vm.runInContext(`
     let S={zeny:0,exp:0},zenyEarned=0,expEarned=0;
     ${grab('function earnZeny(amount){','function kill(o){')}
@@ -874,7 +874,7 @@ t('v74: the HUD shows EXP/min beside the kill rate, on the same rolling minute',
 });
 
 t('the DPS meter shares the rolling minute and resets with the save', () => {
-  const box={};vm.createContext(box);
+  const box={};vm.createContext(Object.assign(box,{simVisualsOff:()=>false}));
   vm.runInContext(`
     let S={zeny:0},zenyEarned=0,expEarned=0;
     ${grab('function earnZeny(amount){','function kill(o){')}
@@ -901,7 +901,7 @@ t('every skill has distinct local vector art and upgraded card metadata', () => 
   assert.strictEqual(Object.keys(U.SKILL_ICON).length, U.SKILLS.length, 'the icon map must cover the whole roster without unused entries');
   assert.ok(new Set(Object.values(U.SKILL_ICON)).size >= 40, 'skill art should use many clearly different pictograms, not one placeholder');
   const art=U.SKILLS.map(s=>U.skillIcon(s.id));
-  assert.ok(art.every(svg=>svg.startsWith('<svg class="skill-art motif-')&&svg.includes('class="skill-line"')&&svg.includes('rx="11"')), 'each skill renders self-contained, shaded vector art');
+  assert.ok(art.every(svg=>svg.startsWith('<svg class="skill-art motif-')&&svg.includes('data-emblem=')&&svg.includes('rx="9"')), 'each skill renders self-contained, shaded vector art');
   assert.ok(art.every(svg=>!svg.includes('id=')&&!svg.includes('url(#')), 'line icons need no shared IDs');
   assert.ok(!src.includes('class="ro-skill-icon"'), 'there are no externally loaded red skill placeholders');
   U.S = mkS('Mage'); U.selS = null;
@@ -1203,7 +1203,7 @@ t('the Skills panel prints the whole tree against what a maxed line earns', () =
     'and that job levels keep paying out (the owner complaint this round fixes)');
   // and the arithmetic itself, on the real numbers
   const box = {};
-  vm.createContext(box);
+  vm.createContext(Object.assign(box,{simVisualsOff:()=>false}));
   vm.runInContext(`
     let S = {cls:'Lord Knight', jobs:{Novice:{jl:10,jx:0},Swordman:{jl:50,jx:0},Knight:{jl:40,jx:0},'Lord Knight':{jl:50,jx:0}}, sk:{aid:1}, skOff:{}};
     ${grab('const CD=[', 'const pm=s=>')}
@@ -1244,7 +1244,7 @@ t('the bag shows its 1000-item limit and refuses loot once it is full', () => {
   h = U.V.bag0();
   assert.ok(h.includes('1000/1000 items') && h.includes('BAG FULL'), 'a full bag says so');
   // execute the real pickup path
-  const box = {}; vm.createContext(box);
+  const box = {}; vm.createContext(Object.assign(box,{simVisualsOff:()=>false}));
   vm.runInContext(`
     let S={inv:[],cards:[],ore:{ori:0,elu:0},auto:false,zeny:0,autoSell:[false,false,false,false,false],clickSell:false},pl={x:1,z:2},msg='';
     const GRADE=['Common','Uncommon','Rare','Legendary'],GI=[0,1,2,4],ORE={ori:'Oridecon',elu:'Elunium'},
@@ -1306,7 +1306,7 @@ t('Settings carries BOTH damage-number toggles (show/hide and short/full) and re
   assert.ok(!h.includes('data-a="dmgfmt" data-v="short" class="on"') && !h.includes('data-a="dmgshow" data-v="on" class="on"'));
   assert.ok(src.includes('if(f.dmgShort!==true&&f.dmgShort!==false)f.dmgShort=true;'), 'the save repair defaults old saves to short');
   assert.ok(src.includes('if(f.dmgShow!==true&&f.dmgShow!==false)f.dmgShow=true;'), 'and old saves to showing them');
-  assert.ok(src.includes('dmgShort:true,dmgShow:true,base:{}'), 'a fresh save starts short and visible');
+  assert.ok(src.includes('dmgShort:true,dmgShow:true,cameraShake:true,base:{}'), 'a fresh save starts short and visible');
   // the two switches really do reach the float code
   assert.ok(src.includes("const numTxt=n=>fullNum()?String(Math.round(n)):shortNum(n);"), 'one formatter serves every number');
   assert.ok(src.includes("damageFloat=(x,y,z,amount,critical=false,incoming=false,skill=false)=>{if(S&&S.dmgShow===false)return;"), 'hiding skips the float entirely');
@@ -1430,7 +1430,7 @@ t('pet buffs are icon tiles above the status bar, and the description waits for 
   assert.ok(src.includes('.pbx-fly{') && src.includes('.pbx:hover .pbx-fly,.pbx:focus .pbx-fly{opacity:1;visibility:visible}'),
     'the tile is an icon, and the description is hidden until it is hovered or focused');
   // the real bars(), with two buffs running and two not
-  const box = {}; vm.createContext(box);
+  const box = {}; vm.createContext(Object.assign(box,{simVisualsOff:()=>false}));
   vm.runInContext(`
     const nodes={};const $=id=>nodes[id]||(nodes[id]={children:[],style:{},textContent:'',title:'',attrs:{},
       classList:{flags:{},toggle(k,v){this.flags[k]=v}},setAttribute(k,v){this.attrs[k]=v}});
@@ -1439,6 +1439,7 @@ t('pet buffs are icon tiles above the status bar, and the description waits for 
     let petBuff={atk:20,matk:0,hp:20,leech:0,atkT:12.4,matkT:0,hpT:3.2,leechT:0},petBuffSrc={atk:'Poring',hp:'Drops'};
     const performance={now:()=>1000},job={jl:10,jx:45},jobOf=()=>job,C=()=>({mj:50}),maxHp=()=>100,
       jneed=()=>100,need=()=>200;
+    ${grab('const SKILL_PICTO=', '// The CDM affix stays in the roll pool')}
     ${grab('const PET_SKILLS=[', 'const petDmg=')}
     const applyDisplay=()=>{},safeCount=n=>Math.max(0,Number(n)||0),eclipseSetMarkup=(node,html)=>{node.innerHTML=html};
     ${grab('const HUD_RATE_WINDOW=60000,HUD_IDLE_RESET=30000,HUD_RATE_REFRESH=1000;', 'function ui(anchor){')}
@@ -1470,7 +1471,7 @@ t('the ALL switch beside First Aid pauses or resumes the whole line at once', ()
     'with every skill on, the box is ticked');
   assert.ok(h.includes('3 skills on this line'), 'and tells you how many it covers (passives are not auto-cast)');
   // the real switch, on a real skill roster
-  const box = {}; vm.createContext(box);
+  const box = {}; vm.createContext(Object.assign(box,{simVisualsOff:()=>false}));
   vm.runInContext(`
     let S={cls:'Knight',sk:{aid:1,bash:2},skOff:{}};
     ${grab('const CD=[', 'const pm=s=>')}
@@ -1543,11 +1544,11 @@ t('the Bag groups by rarity, protects locked gear, and labels equipment levels',
   U.S.inv=[a,b,c];
   const order=html=>[...html.matchAll(/data-a="selb" data-v="([^"]+)"/g)].map(m=>m[1]);
   let h=U.V.bag0();
-  assert.deepStrictEqual(order(h),['42','43','41'],'higher rarities appear first');
+  assert.deepStrictEqual(order(h),['41','42','43'],'equipment names stay together');
   U.S.inv.push(d);h=U.V.bag0();
-  assert.deepStrictEqual(order(h),['42','43','44','41'],'revealed inventory groups the new rarity');
+  assert.deepStrictEqual(order(h),['41','44','42','43'],'revealed inventory groups the new name');
   c.locked=true;h=U.V.bag0();
-  assert.deepStrictEqual(order(h),['42','43','44','41'],'locking preserves rarity/type grouping');
+  assert.deepStrictEqual(order(h),['41','44','42','43'],'locking preserves type/name grouping');
   assert.ok(h.includes('class="lockstar"')&&h.includes('title="Locked gear"'),'a locked tile carries a visible star badge');
   U.S.autoSell[2]=true;U.selB=43;U.S.lv=1;h=U.V.bag0();
   const purge=h.slice(h.indexOf('data-a="sellnow"'),h.indexOf('data-a="sellnow"')+48);
@@ -1564,7 +1565,7 @@ t('the Bag groups by rarity, protects locked gear, and labels equipment levels',
 t('locked gear requires deliberate confirmation for manual sale and is skipped by automated sales',()=>{
   const sellFn=grab('function sell(id){','// Quest goal AND reward');
   const sellValFn=pick(/const sellVal=it=>[^;]+;/,'sellVal');
-  const box={};vm.createContext(box);
+  const box={};vm.createContext(Object.assign(box,{simVisualsOff:()=>false}));
   vm.runInContext(`let S={inv:[],cards:[]},selB=null,modal='',confirmSale=null,earned=0;
     const iname=it=>it.name,earnZeny=v=>{earned+=v},log=()=>{},ui=()=>{},save=()=>{},ask=(m,y)=>{modal=m;confirmSale=y};
     ${sellValFn}
@@ -1581,14 +1582,14 @@ t('locked gear requires deliberate confirmation for manual sale and is skipped b
   assert.strictEqual(C.sell(91),true,'a second deliberate Sell action can now complete');
   assert.strictEqual(C.S.inv.length,0,'the unlocked item is sold only after that second action');
   assert.strictEqual(C.earned,C.sellVal(item),'the confirmed manual sale pays the ordinary sell value');
-  assert.ok(src.includes('S.inv.filter(autoSellMatches)'),'bulk sell omits locked gear');
+  assert.ok(src.includes('S.inv.filter(it=>!autoSellReason(it,state))'),'bulk sell omits locked gear');
   assert.ok(src.includes('S.inv.some(autoSellMatches)'),'the bulk-sell button is disabled when only locked matches remain');
   assert.ok(src.includes('if(autoSellMatches(it))'),'drop auto-sell never consumes a locked item');
 });
 
 t('the lock toggle changes saved item state in either direction',()=>{
   const lockFn=grab('function toggleGearLock(id){','const cell=');
-  const box={};vm.createContext(box);
+  const box={};vm.createContext(Object.assign(box,{simVisualsOff:()=>false}));
   vm.runInContext(`let target={id:7,name:'Test Blade',locked:false},calls=0;const find=id=>String(id)==='7'?target:null,iname=it=>it.name,log=()=>{},ui=()=>{},save=()=>{calls++};
     ${lockFn}
     this.__lock={target,get calls(){return calls},toggleGearLock};`,box);
@@ -1622,8 +1623,8 @@ t('the Log window filters by category, and the on-screen feed folds away', () =>
   U.S.logOff = { kills: 1, zeny: 1, gear: 1, card: 1, misc: 1 };
   assert.ok(U.V.log().includes('0 of 4 events shown'), 'hiding everything says so');
   // the tags really are on the real call sites
-  assert.ok(src.includes("log(`Picked up [${rarOf(it).n}] ${it.name}`,rarCls(it),'gear')"), 'pickups are tagged, and a Nightmare drop is tagged N');
-  assert.ok(src.includes(",'kills,zeny');"), 'a kill is tagged as kills AND zeny');
+  assert.ok(src.includes("log(`Picked up [${rarOf(it).n}] ${it.name}`,rarCls(it),'gear',{item:it,label:'Loot acquired'})"), 'pickups are tagged, and a Nightmare drop is tagged N');
+  assert.ok(src.includes(",'kills,zeny',{title:mob.n+' defeated'"), 'a kill is tagged as kills AND zeny');
   assert.ok(src.includes("log(`Got card: [${GRADE[it.g]}] ${cardTxt(it)}`,'r'+GI[it.g],'card')"), 'cards are tagged');
   // the on-screen log's own tab
   assert.ok(src.includes('id="feedTab"') && src.includes('id="feedWrap"'), 'the on-screen log gets a tab');
@@ -1639,7 +1640,7 @@ t('the Log window filters by category, and the on-screen feed folds away', () =>
   assert.ok(src.includes("b.classList.toggle('filt',hid>0);"), 'and the dot is driven by the real filter state');
   assert.ok(src.includes('feedTab();') && src.includes("$('stageTitle').textContent=hudTrial?"), 'every redraw keeps the tab label honest');
   assert.ok(src.includes("feed:()=>{S.feed=!feedOn();feedTab();ui();save()}"), 'toggling it saves');
-  const box = {}; vm.createContext(box);
+  const box = {}; vm.createContext(Object.assign(box,{simVisualsOff:()=>false}));
   vm.runInContext(`
     let S={feed:true,logOff:{}};
     const $=()=>({style:{},classList:{toggle(){}},setAttribute(){},textContent:'',title:''});
@@ -1653,7 +1654,7 @@ t('the Log window filters by category, and the on-screen feed folds away', () =>
   let thrown = null; try { box.__f.feedTab(); } catch (e) { thrown = e.message; }   // LOGCATS is in scope in the real file
   assert.strictEqual(thrown, null, 'feedTab must survive a DOM without the elements: ' + thrown);
   // and the real feedDraw hides and restores lines as the ticks change
-  const fbox = {}; vm.createContext(fbox);
+  const fbox = {}; vm.createContext(Object.assign(fbox,{simVisualsOff:()=>false}));
   vm.runInContext(`
     let S={logOff:{}};
     const mk=id=>({id,children:[],appendChild(n){this.children.push(n)},set innerHTML(v){this.children=[]},get innerHTML(){return this.children.map(c=>c.textContent).join('|')}});
@@ -1726,7 +1727,7 @@ t('the funnel on the Logs tab opens the same tick row and folds itself away', ()
     'flipping a tick from either row re-renders both');
   assert.ok(src.includes('if(!on&&feedFilShown)feedFilHide()}'), 'folding the log hides the row with it');
   // and the whole thing, run for real against a stub DOM
-  const box = {}; vm.createContext(box);
+  const box = {}; vm.createContext(Object.assign(box,{simVisualsOff:()=>false}));
   vm.runInContext(`
     let S={logOff:{gear:1}};
     const mk=()=>{const o={style:{},attrs:{},cls:{},innerHTML:''};
@@ -1735,7 +1736,7 @@ t('the funnel on the Logs tab opens the same tick row and folds itself away', ()
     const nodes={feedFilter:mk(),feedFil:mk()};
     const $=id=>nodes[id];
     let timers=[];const clearTimeout=()=>{timers=[]};const setTimeout=(f,ms)=>{timers.push({f,ms});return 1};
-    ${grab('const LOGCATS=', 'function log(m,cls,cat){')}
+    ${grab('const LOGCATS=', 'function log(m,cls,cat,visual){')}
     this.__p={toggle:feedFilToggle,show:feedFilShow,hide:feedFilHide,arm:feedFilArm,
       shown:()=>feedFilShown,fil:nodes.feedFil,panel:nodes.feedFilter,timers:()=>timers,
       set off(v){S.logOff=v}};
@@ -1836,7 +1837,7 @@ t('refine controls sit with the piece: the ladder is the v51 30%-nerfed one', ()
 t('worn equipment can never be auto-sold or bulk-sold', () => {
   const sellValFn = pick(/const sellVal=it=>[^;]+;/, 'sellVal');
   const sellnowFn = grab('sellnow:()=>previewAutoSell()', '  sellrulesapply:');
-  const box = {}; vm.createContext(box);
+  const box = {}; vm.createContext(Object.assign(box,{simVisualsOff:()=>false}));
   vm.runInContext(`let S=null,selB=null,z=0,sold=0;const earnZeny=v=>{z+=v},log=()=>{},ui=()=>{},save=()=>{sold++};
     const RAR=[{n:'Common'},{n:'Fine'},{n:'Rare'},{n:'Epic'},{n:'Legendary'}],RAR5={n:'N'},RAR6={n:'N+'},RARALL=RAR.concat([RAR5,RAR6]);
     const rarIdx=it=>((it&&+it.sec>=5)?6:(it&&+it.sec>=4)?5:Math.max(0,Math.min(RAR.length-1,(it&&it.tier)||0)));
@@ -1858,7 +1859,7 @@ t('worn equipment can never be auto-sold or bulk-sold', () => {
   assert.strictEqual(C.S.inv.length, 0, 'the matching bag copy is the one that sells');
   assert.strictEqual(C.S.eq.weapon, worn, 'the worn weapon is untouched: equipment is not in the bag list');
   assert.ok(C.z > 0, 'the sale still paid out');
-  assert.ok(src.includes('S.inv.filter(autoSellMatches)'), 'bulk sell only ever reads S.inv');
+  assert.ok(src.includes('S.inv.filter(it=>!autoSellReason(it,state))'), 'bulk sell only ever reads S.inv');
   assert.ok(src.includes('if(autoSellMatches(it)){const v=sellVal(it)'), 'drop auto-sell only ever reads S.inv');
   assert.ok(src.includes('const i=S.inv.findIndex(x=>String(x.id)===String(id))'), 'manual Sell searches the bag, never S.eq');
 });
@@ -1867,7 +1868,7 @@ t('the reset buttons explain themselves, refuse on screen, and survive a rebuild
   const pts = pick(/const totalPts=\(\)=>[^\n]*/, 'totalPts/rcost');
   const deniedFn = grab('function denied(cost,what){', 'function log(');
   const rstat = src.match(/rstat:\(\)=>\{[\s\S]*?save\(\)\}/)[0];
-  const box = {}; vm.createContext(box);
+  const box = {}; vm.createContext(Object.assign(box,{simVisualsOff:()=>false}));
   vm.runInContext(`let S=null;const logs=[],floats=[];let saves=0,uis=0;
     const log=m=>logs.push(m),addFloat=(x,y,z,t)=>floats.push(t),ui=()=>uis++,save=()=>saves++;
     const maxHp=()=>900;const pl={x:0,z:0};

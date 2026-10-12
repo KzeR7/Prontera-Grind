@@ -69,7 +69,7 @@ const fakeThree={RingGeometry:FakeGeometry,TorusGeometry:FakeGeometry,Icosahedro
   BoxGeometry:FakeGeometry,CircleGeometry:FakeGeometry,PlaneGeometry:FakePlaneGeometry,MeshBasicMaterial:FakeMaterial,LineBasicMaterial:FakeMaterial,
   CanvasTexture:FakeCanvasTexture,LinearFilter:1006,NormalBlending:1,
   Mesh:FakeMesh,Line:FakeLine,Group:FakeObject,BufferGeometry:FakeBufferGeometry,Vector3:FakeVec3,DoubleSide:2,AdditiveBlending:3};
-const vfxBox={THREE:fakeThree,removed:[],scene:{add(){},remove(o){vfxBox.removed.push(o)}},cam:{quaternion:{}},pl:{x:0,z:0},cl:(v,a,b)=>Math.max(a,Math.min(b,v)),
+const vfxBox={simVisualsOff:()=>false,THREE:fakeThree,removed:[],scene:{add(){},remove(o){vfxBox.removed.push(o)}},cam:{quaternion:{}},pl:{x:0,z:0},cl:(v,a,b)=>Math.max(a,Math.min(b,v)),
   document:{createElement:t=>t==='canvas'?fakeCanvas():{}},
   skillFx:[],SKILL_VFX:JSON.parse(JSON.stringify(K.SKILL_VFX))};
 vm.createContext(vfxBox);

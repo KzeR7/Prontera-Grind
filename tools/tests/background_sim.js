@@ -38,6 +38,12 @@ const docHandlers={};
 const performance={now:()=>nowMs};
 const document={get hidden(){return hidden},
   addEventListener:(k,f)=>{(docHandlers[k]=docHandlers[k]||[]).push(f)}};
+let simCatchingUp=false;const simVisualsOff=()=>hidden||simCatchingUp;
+function ui(){} function feedDraw(){}
+const jobs=new Map();let jobId=0;
+const setTimeout=f=>{jobs.set(++jobId,f);return jobId};
+const clearTimeout=id=>jobs.delete(id);
+function drain(){let guard=10000;while(jobs.size&&guard--){const [id,f]=jobs.entries().next().value;jobs.delete(id);f()}if(!guard)throw new Error('catch-up did not finish')}
 const timers=[];
 const setInterval=f=>{timers.push(f);return timers.length};
 const requestAnimationFrame=f=>{frameCb=f};
@@ -55,11 +61,11 @@ this.__bg={SIM_STEP,SIM_CATCHUP,SIM_BG_MS,logs,
   stat:()=>({simWall,gameTime,steps,frames,draws,saves,maxDt,ticks}),
   wall:()=>nowMs,clock:()=>simAt,zeny:()=>zenyEarned,
   pass:ms=>{nowMs+=ms},
-  hide:()=>{hidden=true;(docHandlers.visibilitychange||[]).forEach(f=>f())},
-  show:()=>{hidden=false;(docHandlers.visibilitychange||[]).forEach(f=>f())},
-  frame:()=>{frames++;if(!frameCb)throw new Error('the loop stopped asking for frames');const f=frameCb;frameCb=null;f(nowMs)},
-  wake:()=>{ticks++;for(const f of timers)f()},
-  timerMs:()=>timers.length};
+  hide:()=>{hidden=true;(docHandlers.visibilitychange||[]).forEach(f=>f());drain()},
+  show:()=>{hidden=false;(docHandlers.visibilitychange||[]).forEach(f=>f());drain()},
+  frame:()=>{frames++;if(!frameCb)throw new Error('the loop stopped asking for frames');const f=frameCb;frameCb=null;f(nowMs);drain()},
+  wake:()=>{ticks++;for(const f of timers)f();drain()},
+  advanceAt:at=>{simAdvance(at);drain()},rawWake:()=>{for(const f of timers)f()},pending:()=>simPending,drain, timerMs:()=>timers.length};
 `;
 const sb = { console };
 vm.createContext(sb); vm.runInContext(harness, sb);
@@ -73,8 +79,8 @@ console.log('background: the game keeps grinding when the tab is hidden\n');
 t('the clock keeps one entry point and one dt ceiling', () => {
   assert.strictEqual(bg.timerMs(), 1, 'exactly one background interval is registered');
   assert.ok(bg.SIM_STEP === 0.1 && bg.SIM_BG_MS === 1000, 'the step and the wake cadence are the documented ones');
-  assert.ok(src.includes('function loop(now){try{simAdvance(now);draw()}'), 'the frame loop still drives the same clock and draws');
-  assert.ok(src.includes('for(let i=0;i<speed;i++){update(dt);kitTick(dt)}'), 'every slice still honours the speed setting');
+  assert.ok(src.includes('function loop(now){try{simAdvance(now);if(!document.hidden)draw()}'), 'the frame loop still drives the same clock and draws');
+  assert.ok(src.includes('for(let i=0;i<speed;i++){update(dt);if(!simVisualsOff())kitTick(dt)}'), 'every slice still honours the speed setting');
   assert.ok(src.includes('setInterval(save,5000)'), 'the five-second autosave is untouched');
   assert.ok(src.includes("document.addEventListener('visibilitychange'"), 'the hide/show wiring is in the game');
   assert.ok(src.includes('setInterval(bgTick,SIM_BG_MS)'), 'the hidden-tab ticker is in the game');
@@ -199,6 +205,20 @@ t('background grinding has no switch left in the UI or in ACT', () => {
   assert.ok(!/bg:\(\)=>\{S\.bg=/.test(src), 'and no ACT action can flip it');
   assert.ok(src.includes('const bgOn=()=>true;'), 'bgOn() is permanently true');
   assert.ok(src.includes('Keeps grinding while this tab is in the background'), 'the tidied line stays as a statement of fact');
+});
+
+t('long catch-up yields, retains debt, then credits it exactly once',()=>{
+  bg.hide();const a=bg.stat();bg.pass(60000);bg.rawWake();
+  assert.ok(bg.stat().steps-a.steps<=50,'at most 50 slices per task');
+  assert.ok(bg.pending()>50,'unprocessed time stays queued');
+  bg.drain();near(bg.stat().simWall-a.simWall,60,.00001,'all queued seconds credited');
+  const b=bg.stat();bg.drain();near(bg.stat().simWall,b.simWall,1e-9,'no duplicate credit');bg.show();
+});
+
+t('a stale animation timestamp cannot rewind a timer-advanced clock',()=>{
+  bg.pass(16);bg.advanceAt(bg.wall());const a=bg.stat(),at=bg.clock();
+  bg.advanceAt(bg.wall()-8);assert.equal(bg.clock(),at);bg.pass(8);bg.frame();
+  near(bg.stat().simWall-a.simWall,.008,1e-9,'only new time is credited');
 });
 
 console.log(`\n${pass} passed, ${fail} failed`);
