@@ -81,6 +81,7 @@ const g=createGame(html),ev=g.ev;
  // Legacy art is requested once only when the fallback is actually used.
  ev(`delete window.SPRITE_PACK;packAssetRequested=false;window.__pendingAdapter=wardrobePending;wardrobePending=undefined;window.__legacySkinKeys=Object.keys(skinDocs).length;heroKey=''`);
  Object.defineProperty(g.window.document,'readyState',{value:'loading',configurable:true});ev(`ensureHero({cls:'Novice',sex:'m',tier:0})`);
+ assert.equal(ev('heroSpr'),null,'no obsolete sprite during native startup');
  assert.equal(ev('packAssetRequested'),false,'native startup does not fetch fallback while adapter is loading');assert.equal(ev('Object.keys(skinDocs).length'),ev('__legacySkinKeys'),'native startup avoids APNG fallback downloads');
  ev(`wardrobePending=__pendingAdapter;requestPackAssets();requestPackAssets()`);
  const fallbackScripts=[...g.window.document.querySelectorAll('script[src]')].filter(el=>el.src.includes('sprite_pack_data.js'));assert.equal(fallbackScripts.length,1);
