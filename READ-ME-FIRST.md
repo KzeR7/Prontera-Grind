@@ -1467,9 +1467,8 @@ PY
 python3 tools/make_sprite_viewer.py --check
 python3 tools/make_class_skins.py --check
 python3 tools/make_weapon_pack.py --check      # the weapon art under assets/weapons/
-python3 tools/make_town_pack.py --check        # the town's HD art under assets/town/ (needs pillow)
 for t in tools/tests/*_sim.js; do node "$t" || exit 1; done
-node tools/tests/town_smoke.js                 # optional: needs `npm i --no-save jsdom three@0.128.0`
+for t in tools/tests/*_smoke.js; do node "$t" || exit 1; done # needs jsdom and three@0.128.0
 ```
 
 Run the suite before every push. `pack_sim.js` reads the extracted `/tmp/pack_block.js`; the

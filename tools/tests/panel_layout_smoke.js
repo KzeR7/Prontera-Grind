@@ -112,16 +112,12 @@ t('quest collapse and the independent navigation dropdown retain separate state'
   assert.strictEqual(doc.querySelector('#sideLinks').hidden,true);
   ev('renderQ()');assert.strictEqual(doc.querySelector('#sideLinks').hidden,true);
 });
-t('map minimize restores the selected field and maximize restores its content',()=>{
-  ev("tabs.splice(0,tabs.length,'map');mapM=3;mapL=4;renderWin()");
-  const doc=window.document,win=doc.querySelector('[data-win="map"]');
-  doc.querySelector('[data-ui-minimize="map"]').click();
-  assert.ok(win.classList.contains('ui-minimized'));
-  ev('renderWin()');assert.ok(win.classList.contains('ui-minimized'));
-  doc.querySelector('[data-ui-minimize="map"]').click();
-  assert.ok(!win.classList.contains('ui-minimized'));assert.strictEqual(ev('mapM'),3);assert.strictEqual(ev('mapL'),4);
-  doc.querySelector('[data-ui-minimize="map"]').click();doc.querySelector('[data-ui-expand="map"]').click();
-  assert.ok(!win.classList.contains('ui-minimized'));
+t('map focus restores other windows without changing the selected field',()=>{
+ ev("tabs.splice(0,tabs.length,'map','bag');mapM=3;mapL=4;expandedPanels.clear();renderWin()");
+ const doc=window.document,win=doc.querySelector('[data-win=map]'),bag=doc.querySelector('[data-win=bag]');
+ assert.equal(doc.querySelector('[data-ui-minimize]'),null);doc.querySelector('[data-ui-expand=map]').click();
+ assert.ok(win.classList.contains('ui-expanded'));assert.equal(bag.hidden,true);ev('renderWin()');assert.equal(bag.hidden,true);
+ doc.querySelector('[data-ui-expand=map]').click();assert.equal(bag.hidden,false);assert.equal(ev('mapM'),3);assert.equal(ev('mapL'),4);
 });
 t('rarity labels distinguish every equipment tier and card grade',()=>{
   for(let tier=0;tier<7;tier++){

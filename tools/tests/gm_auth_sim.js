@@ -74,11 +74,9 @@ t('a wrong password is rejected (the maths, not the UI)', () => {
   assert.notStrictEqual(game('gm12345'), stored);
 });
 
-t('the legacy dev pages and the screenshot harness carry no GM password either', () => {
+t('the retired login copies and screenshot harness stay removed', () => {
   for (const f of ['_login.html', '_shot.html', 'tools/shot_harness.js']) {
-    const body = fs.readFileSync(path.join(root, f), 'utf8');
-    assert.ok(!body.includes('gm1234'), f + ' still contains the retired password');
-    assert.ok(!/GM_PASS\s*=\s*['"`][^'"`]+['"`]/.test(body), f + ' still assigns a plaintext GM password');
+    assert.ok(!fs.existsSync(path.join(root, f)), f + ' is retired; use index.html and tools/gm_setup.html');
   }
 });
 

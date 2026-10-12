@@ -129,4 +129,4 @@ you would owe nothing.
 | `tools/weapon_review.html` | the page the owner reviews (loads `weapon_review_data.js`) |
 | `tools/weapon_review_standalone.html` | the same page with the data inlined, for a file:// open |
 | `tools/tests/weapon_review_sim.js` | 13 checks: every class/view/frame, no weapon on bare views, drag never inverted, export exact |
-| `tools/preview_weapon.png` | contact sheet of the automatic pass, all 19 classes |
+| Old contact sheet | `tools/preview_weapon.png` was removed on 2026-10-12; use `/weapons` or `/review`. The old sheet remains in Git history. |

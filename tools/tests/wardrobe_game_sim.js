@@ -21,7 +21,18 @@ const g=createGame(html),ev=g.ev;
  assert.equal(ev(`captureWardrobeFrame(__sprite,7,false,1,1000)`),true);assert.equal(ev(`captureWardrobeFrame(__sprite,7,false,1,1050)`),false);ev(`captureWardrobeFrame(__sprite,7,false,.001,999999)`);assert.equal(ev('__sprite.userData.wardrobe.paint'),'attack7:8');assert.equal(ev(`captureWardrobeFrame(__sprite,7,true,0,1000000)`),true);
  // Closing a pending preview must permit reopening/retry and must discard unsaved drafts.
  ev(`wardrobeState.loading=true;tabs.splice(0);wardrobeSync();tabs.push('wardrobe');renderWin()`);await new Promise(r=>setImmediate(r));assert.equal(ev('wardrobeState.loading'),false);assert.equal(ev('wardrobeState.draft.heads.f'),42);
+ // Merged main keyboard handling: selectors keep typing keys, Escape discards drafts and W reopens.
+ const savesBeforeEscape=ev('__saveCount');
+ ev(`wardrobeChange('halo',false);tabs.push('bag');expandedPanels.add('wardrobe');renderWin()`);
+ const select=g.window.document.querySelector('[data-wardrobe="head"]');select.focus();
+ select.dispatchEvent(new g.window.KeyboardEvent('keydown',{key:'w',bubbles:true}));
+ assert.equal(ev("tabs.includes('wardrobe')"),true,'typing into a selector does not toggle Wardrobe');
+ select.dispatchEvent(new g.window.KeyboardEvent('keydown',{key:'Escape',bubbles:true,cancelable:true}));
+ assert.equal(ev('tabs.length'),0);assert.equal(ev('expandedPanels.size'),0);assert.equal(ev('wardrobeState.draft'),null);
+ assert.equal(ev('S.appearance.halo'),true);assert.equal(ev('__saveCount'),savesBeforeEscape);
+ g.window.document.body.dispatchEvent(new g.window.KeyboardEvent('keydown',{key:'w',bubbles:true}));
+ await new Promise(r=>setImmediate(r));assert.equal(ev('wardrobeState.draft.halo'),true);assert(ev('!!wardrobeState.look'));
  ev(`wardrobeAction('original')`);assert.equal(ev('S.appearance'),null);assert.equal(ev('S.hair'),17);assert.equal(ev('__saveCount'),2);
  ev(`S=fresh();S.hair=12;wardrobeOwner()`);assert.equal(ev('wardrobeEquipped'),null);assert.equal(ev('wardrobeState.draft'),null);ev(`renderWin()`);await new Promise(r=>setImmediate(r));assert(ev('!!wardrobeState.look'),'same canvas loads again after owner reset');
- console.log('PASS: Wardrobe preview/apply/cancel, male/female memory, legacy saves, actual save/load, class fallback, native attack clock/upload dedupe, close/reopen and owner reset.');
+ console.log('PASS: Wardrobe preview/apply/cancel, male/female memory, legacy saves, actual save/load, class fallback, native attack clock/upload dedupe, close/reopen, owner reset and merged Escape/W navigation.');
 })().catch(e=>{console.error(e);process.exitCode=1}).finally(()=>g.close());

@@ -17,11 +17,14 @@ the next person opens the page on the owner's own numbers instead of on guesses.
 | File | What it is | Hand-edit? |
 |---|---|---|
 | `tools/attack_selection.json` | **The backup.** The v5 payload exactly as the owner delivered it. The current one is the **second** delivery (2026-10-04, later the same day): 19 classes × 5 drawn views × 6 frames = 570 pose cells, 570 head entries, 912 head entries counting the mirrored views. | Yes — this is the source of truth for the selection. |
-| `tools/attack_selection_prev.json` | **The first delivery**, kept for reference (18 classes; the head numbers were tuned while the mirrored-column bug was still live, so it is *not* a good base). | Read-only history. |
 | `tools/sprite_picker_defaults.js` | **Generated** from that JSON by `tools/make_sprite_picker.py`. The picker loads it and starts from it. | **No** — rebuild it (below). |
 | `tools/sprite_picker.html` | The picker. `applyDefaults()` / `resetAll()` load the standard; "↺ Back to the standard" puts the page back to it. | Yes, it is the app. |
 | `tools/sprite_picker_standalone.html` | The same app with the sheets, the pose index and the standard inlined. | No — rebuild it. |
 | `tools/tests/picker_sim.js` | Proves the standard comes back number for number, and that the export round-trips it. | Yes. |
+
+The superseded first delivery (`tools/attack_selection_prev.json`, 18 classes with the
+old mirrored-column bug) was removed during the 2026-10-12 cleanup. It remains in Git
+history; use `tools/attack_selection.json` for current work.
 
 Rebuild everything that is generated:
 

@@ -5,8 +5,58 @@ const root=path.resolve(__dirname,'../..');
 let html=fs.readFileSync(path.join(root,'index.html'),'utf8');
 html=html.replace('</body>','<script>window.eclipseRealUI=ui;window.eclipseRealSave=save;window.eclipseRealBars=bars;window.eclipseInitialQuestOpen=qOpen;</script></body>');
 const g=createGame(html),doc=g.window.document,ev=g.ev;let passed=0;
-const test=(name,fn)=>{ev(`S=fresh();S.auto=false;S.lv=150;S.zeny=1e9;S.ore.ori=1000;S.ore.elu=1000;currentUser='eclipse-test';tabs.length=0;sub.equip='equip0';sub.bag='bag';sub.market='supplies';eclipseInventoryState=null;eclipseSearch='';eclipseRarity=-1;eclipseInspectBag=false;qOpen=true;eqPick=null;selE='weapon';selB=null;ui=window.eclipseRealUI;save=window.eclipseRealSave;`);fn();console.log('ok '+name);passed++};
+const test=(name,fn)=>{ev(`S=fresh();S.auto=false;S.lv=150;S.zeny=1e9;S.ore.ori=1000;S.ore.elu=1000;currentUser='eclipse-test';tabs.length=0;expandedPanels.clear();collectionGrade=-1;sideOpen=false;$('screenOptions').hidden=true;$('modal').style.display='none';sub.equip='equip0';sub.bag='bag';sub.market='supplies';eclipseInventoryState=null;eclipseSearch='';eclipseRarity=-1;eclipseInspectBag=false;qOpen=true;eqPick=null;selE='weapon';selB=null;ui=window.eclipseRealUI;save=window.eclipseRealSave;`);fn();console.log('ok '+name);passed++};
 try{
+test('focus expands one retained workspace and restore reveals the other open tabs',()=>{
+ ev("tabs.push('equip','job','market');renderWin()");const panels=[...doc.querySelectorAll('#wins>[data-win]')];
+ assert.equal(doc.querySelector('[data-ui-minimize]'),null);
+ doc.querySelector('[data-ui-expand=job]').click();assert.equal(panels[1].hidden,false);assert.equal(panels[0].hidden,true);assert.equal(panels[2].hidden,true);
+ ev('S.zeny++;ui()');assert.deepEqual([...doc.querySelectorAll('#wins>[data-win]')],panels);
+ doc.querySelector('[data-ui-expand=job]').click();assert.ok(panels.every(p=>!p.hidden));
+ doc.querySelector('[data-ui-expand=job]').click();doc.querySelector('#dock [data-t=equip]').click();assert.equal(panels[0].hidden,false);assert.equal(panels[1].hidden,true);
+ doc.querySelector('[data-x=equip]').click();assert.ok([...doc.querySelectorAll('#wins>[data-win]')].every(p=>!p.hidden));assert.equal(ev('tabs.length'),2);
+});
+test('Refine and Cards shortcuts reveal their destination from another focused panel',()=>{
+ ev("tabs.push('equip','job','bag');sub.bag='cards';expandedPanels.add('job');renderWin()");
+ doc.body.dispatchEvent(new g.window.KeyboardEvent('keydown',{key:'c',bubbles:true}));assert.equal(doc.querySelector('[data-win=bag]').hidden,false);assert.equal(ev('tabs.length'),3);
+ doc.body.dispatchEvent(new g.window.KeyboardEvent('keydown',{key:'r',bubbles:true}));assert.equal(doc.querySelector('[data-win=equip]').hidden,false);assert.equal(ev('sub.equip'),'refine');
+ assert.ok(doc.querySelector('[data-a=refine]').closest('.eclipse-workshop-action'));assert.equal(doc.querySelector('[data-a=refine]').closest('.slot'),null);
+ ev("S.eq.armor={...S.eq.weapon,id:7000,slot:'armor',wt:null};renderWin()");const picker=doc.querySelector('[data-workslot]');picker.value='armor';picker.dispatchEvent(new g.window.Event('change',{bubbles:true}));assert.equal(doc.querySelector('[data-a=refine]').dataset.v,'armor');
+});
+test('window refresh measures the populated dock before reserving its screen space',()=>{
+ const dock=doc.getElementById('dock');Object.defineProperty(dock,'offsetHeight',{configurable:true,value:90});dock.style.bottom='15px';
+ ev("tabs.push('equip');renderWin()");assert.equal(doc.documentElement.style.getPropertyValue('--docktop'),'111px');
+ delete dock.offsetHeight;dock.style.bottom='';
+});
+test('cards stack equivalent legacy rolls, keep different effects separate and sort stars first',()=>{
+ ev(`S.cards=[{card:1,id:7001,n:'Chaos Imp Card',stat:'aspd',v:6,g:2,legacy:true},{card:1,id:7002,n:'Chaos Imp Card',stat:'aspd',v:6,g:2,legacy:true},{card:1,id:7003,n:'Chaos Imp Card',stat:'aspd',v:7,g:2,legacy:true},{...newCard(cardDefinition(0,0)),id:7004,stars:2}];tabs.push('bag');sub.bag='cards';renderWin()`);
+ const before=ev('JSON.stringify(S.cards)');let tiles=[...doc.querySelectorAll('.eclipse-card-grid [data-a=selc]')];
+ assert.equal(tiles.length,3);assert.match(tiles[0].querySelector('b').textContent,/★★/);assert.match(tiles.find(t=>t.dataset.tip==='7001').textContent,/x2/);
+ assert.notEqual(tiles.find(t=>t.dataset.tip==='7001').dataset.v,tiles.find(t=>t.dataset.tip==='7003').dataset.v);
+ doc.querySelector('[data-a=cardgrade][data-v="2"]').click();tiles=[...doc.querySelectorAll('.eclipse-card-grid [data-a=selc]')];assert.equal(tiles.length,2);assert.ok(tiles.every(t=>t.textContent.includes('Rare')));assert.equal(ev('JSON.stringify(S.cards)'),before);
+ tiles.find(t=>t.dataset.tip==='7001').click();doc.querySelector('[data-a=sellcard]').click();assert.equal(ev('S.cards.length'),3);assert.ok(ev('S.cards.some(c=>c.id===7002)&&S.cards.some(c=>c.id===7003)'));
+});
+test('paid reforge comparisons and keep/replace buttons stay in the main workbench',()=>{
+ ev("S.eq.weapon.aff=[{k:'str',v:10},{k:'agi',v:10}];tabs.push('equip');sub.equip='reforge';renderWin();reforge('weapon',true)");
+ let offer=doc.querySelector('.reforge-offer');assert.ok(offer.closest('.eclipse-workshop-stage'));assert.equal(offer.closest('.eclipse-workshop-aside'),null);assert.equal(offer.querySelectorAll('.reforge-comparison-row').length,3);
+ const paid=ev('S.zeny'),old=ev('JSON.stringify(S.eq.weapon.aff)'),proposed=ev('JSON.stringify(S.reforgePending.after)');
+ offer.querySelector('[data-v=yes]').click();assert.equal(ev('JSON.stringify(S.eq.weapon.aff)'),proposed);assert.equal(ev('S.zeny'),paid);assert.equal(ev('S.reforgePending'),undefined);
+ ev("reforge('weapon',true)");const current=ev('JSON.stringify(S.eq.weapon.aff)');doc.querySelector('.reforge-offer [data-v=no]').click();assert.equal(ev('JSON.stringify(S.eq.weapon.aff)'),current);assert.equal(ev('S.reforgePending'),undefined);
+});
+test('Activity owns preview filters and the floating feed has no options popup',()=>{
+ ev("tabs.push('log');renderWin()");assert.equal(doc.getElementById('feedFil'),null);assert.equal(doc.getElementById('feedFilter'),null);
+ const panel=doc.querySelector('[data-win=log]');assert.ok(panel.querySelector('[data-a=feed]'));assert.equal(panel.querySelector('[data-a=logf]').closest('details'),null);
+ panel.querySelector('[data-a=logf][data-v=gear]').click();assert.equal(ev('S.logOff.gear'),1);
+ panel.querySelector('[data-a=feed]').click();assert.equal(ev('S.feed'),false);assert.ok(doc.getElementById('feedWrap').classList.contains('hid'));
+});
+test('Escape closes all open windows first, then asks before logout and cancels safely',()=>{
+ const escape=target=>target.dispatchEvent(new g.window.KeyboardEvent('keydown',{key:'Escape',bubbles:true}));
+ ev("tabs.push('equip','bag');renderWin();window.logoutCalls=0;logout=()=>{window.logoutCalls++}");
+ const input=doc.querySelector('[data-eclipse-search]');input.focus();escape(input);assert.equal(ev('tabs.length'),0);assert.notEqual(doc.getElementById('modal').style.display,'flex');
+ escape(doc.body);assert.equal(doc.getElementById('modal').style.display,'flex');assert.equal(g.window.logoutCalls,0);assert.match(doc.getElementById('mt').textContent,/Log out/);
+ escape(doc.body);assert.equal(doc.getElementById('modal').style.display,'none');assert.equal(g.window.logoutCalls,0);
+ escape(doc.body);doc.getElementById('my').click();assert.equal(g.window.logoutCalls,1);
+});
 test('three palettes default to Moonstone and never enter the game save',()=>{
  const before=ev('JSON.stringify(S)');ev("eclipseSetPalette('retired')");assert.equal(doc.documentElement.dataset.palette,'moonstone');
  for(const p of ['moonstone','aurora','ember']){ev(`eclipseSetPalette('${p}')`);assert.equal(doc.documentElement.dataset.palette,p);assert.equal(g.window.localStorage.getItem('pg_ui_palette'),p)}
@@ -36,6 +86,28 @@ test('live collections are awarded immediately and saved before reveal without r
  assert.deepEqual([...grid.querySelectorAll('[data-tip]')].map(el=>el.dataset.tip),ids);assert.equal(doc.activeElement,search);assert.equal(body.scrollTop,75);assert.equal(grid.parentElement.scrollTop,60);
  assert.match(body.querySelector('[data-a=newdrops]').textContent,/20/);
  const stateBefore=ev('JSON.stringify(S)');body.querySelector('[data-a=newdrops]').click();assert.equal(ev('JSON.stringify(S)'),stateBefore,'reveal cannot award or change saved loot');assert.equal(grid.querySelectorAll('[data-tip]').length,44);assert.equal(grid.querySelector('[data-tip="9000"]'),first);
+});
+test('a full bag mounts one equipment page and every item remains reachable',()=>{
+ ev("S.inv=Array.from({length:1000},(_,i)=>({...S.eq.weapon,id:51000+i,name:'Knife '+String(i).padStart(4,'0'),locked:false,cards:[],aff:[]}));tabs.push('equip');renderWin()");
+ const before=ev('JSON.stringify(S)'),seen=new Set();const capacity=doc.querySelector('[data-win=equip] .eclipse-bag-capacity');assert.match(capacity.textContent,/1000 \/ 1000.*FULL/);
+ for(let page=0;page<17;page++){
+  if(page)doc.querySelector('[data-a=gearpage][aria-label="Next equipment page"]').click();
+  const tiles=[...doc.querySelectorAll('.eclipse-bag .grid [data-tip]')];assert.equal(tiles.length,page===16?40:60);
+  assert.ok(doc.querySelectorAll('.eclipse-bag .grid .cell').length<=60);
+  for(const tile of tiles){assert.ok(!seen.has(tile.dataset.tip));seen.add(tile.dataset.tip)}
+ }
+ assert.equal(seen.size,1000);assert.equal(doc.querySelector('[data-a=gearpage][aria-label="Next equipment page"]').disabled,true);assert.equal(ev('JSON.stringify(S)'),before);
+ ev('ACT.gearpage(999)');assert.match(doc.querySelector('.eclipse-inventory-pages').textContent,/Page 17 \/ 17/);
+ ev('S.inv=S.inv.slice(0,60);renderWin()');assert.equal(doc.querySelector('.eclipse-inventory-pages'),null);assert.equal(doc.querySelectorAll('.eclipse-bag .grid [data-tip]').length,60);assert.match(doc.querySelector('[data-win=equip] .eclipse-bag-capacity').textContent,/60 \/ 1000/);
+});
+test('paged search and filters cover the whole bag and later-page sales target the displayed item',()=>{
+ ev("S.inv=Array.from({length:125},(_,i)=>({...S.eq.weapon,id:52000+i,name:'Knife '+String(i).padStart(4,'0'),locked:false,cards:[],aff:[]}));S.inv[124].name='Needle';S.inv[124].tier=2;tabs.push('equip');renderWin()");
+ doc.querySelector('[data-a=gearpage][aria-label="Next equipment page"]').click();doc.querySelector('.eclipse-bag [data-tip="52060"]').click();doc.querySelector('[data-a=sell][data-v="52060"]').click();assert.equal(ev('S.inv.length'),124);assert.equal(ev('S.inv.some(it=>it.id===52060)'),false);
+ const input=doc.querySelector('[data-eclipse-search]');input.value='Needle';input.dispatchEvent(new g.window.Event('input',{bubbles:true}));assert.equal(doc.querySelector('.eclipse-bag .grid [data-tip]').dataset.tip,'52124');assert.equal(doc.querySelector('.eclipse-inventory-pages'),null);
+ input.value='';input.dispatchEvent(new g.window.Event('input',{bubbles:true}));assert.match(doc.querySelector('.eclipse-inventory-pages').textContent,/Page 1 \/ 3/);
+ doc.querySelector('[data-a=filtergear][data-v="2"]').click();assert.equal(doc.querySelectorAll('.eclipse-bag .grid [data-tip]').length,1);assert.equal(doc.querySelector('.eclipse-bag .grid [data-tip]').dataset.tip,'52124');assert.match(doc.querySelector('.bag-count').textContent,/124\/1000/);
+ ev("ACT.filtergear('-1');ACT.gearpage(1);ACT.seleq('weapon')");assert.match(doc.querySelector('.eclipse-inventory-pages').textContent,/Page 1 \/ 3/);assert.ok(doc.querySelector('.eclipse-bag [data-a=eqpick]'));
+ ev("eqPick=null;tabs.push('bag');renderWin()");for(const node of doc.querySelectorAll('.eclipse-bag-capacity'))assert.match(node.textContent,/124 \/ 1000/);
 });
 test('search focus, caret and filter survive currency and quest updates',()=>{
  ev(`S.inv=Array.from({length:12},(_,i)=>({...S.eq.weapon,id:9000+i,cards:[],aff:[]}));tabs.push('equip');renderWin()`);
@@ -123,7 +195,7 @@ test('Eclipse shell uses real currencies, experience, pets and compact journal n
 });
 test('card collection tiles expose names and retain keyboard selection',()=>{
  ev(`S.cards=CARD_CATALOG.slice(0,2).map(c=>newCard(c));tabs.push('bag');sub.bag='cards';renderWin()`);
- const tile=doc.querySelector('.eclipse-card-grid [data-a=selc]');assert.match(tile.textContent,/Poring/);tile.dispatchEvent(new g.window.KeyboardEvent('keydown',{key:'Enter',bubbles:true}));assert.ok(doc.querySelector('[data-win=bag] .ui-inspector').textContent.includes('Poring'));
+ const tile=[...doc.querySelectorAll('.eclipse-card-grid [data-a=selc]')].find(t=>t.textContent.includes('Poring'));assert.ok(tile);tile.dispatchEvent(new g.window.KeyboardEvent('keydown',{key:'Enter',bubbles:true}));assert.ok(doc.querySelector('[data-win=bag] .ui-inspector').textContent.includes('Poring'));
 });
 test('class overview opens all lineages and keeps selection separate from switching',()=>{
  ev(`S.cls='Lord Knight';eclipseJobsBrowse=false;tabs.push('job');renderWin()`);
@@ -132,6 +204,21 @@ test('class overview opens all lineages and keeps selection separate from switch
  assert.equal(doc.querySelectorAll('.eclipse-class-browser [data-a=selk]').length,19);
  doc.querySelector('.eclipse-class-browser [data-a=selk][data-v=Wizard]').click();assert.equal(ev('selK'),'Wizard');assert.equal(ev('JSON.stringify(S)'),before);
  assert.ok(doc.querySelector('[data-a=job][data-v=Wizard]').disabled);doc.querySelector('[data-a=jobview][data-v=overview]').click();assert.equal(doc.querySelector('.eclipse-class-overview').hidden,false);
+});
+test('Jobs labels current, played, available and locked from real class history',()=>{
+ ev("S.cls='Mage';S.jobs={Novice:{jl:10,jx:0},Mage:{jl:40,jx:0},Archer:{jl:5,jx:0},Merchant:{jl:1,jx:0}};S.base={Swordman:{lv:40}};selK=null;eclipseJobsBrowse=false;tabs.push('job');renderWin()");
+ const panel=doc.querySelector('[data-win=job]'),status=n=>panel.querySelector('.eclipse-class-browser [data-a=selk][data-v="'+n+'"]');
+ for(const [n,state,label] of [['Mage','cur','Current'],['Swordman','played','Played'],['Archer','played','Played'],['Wizard','ok','Available'],['Merchant','lock','Locked']]){const tile=status(n);assert.equal(tile.dataset.classStatus,state);assert.match(tile.querySelector('.eclipse-job-status').textContent,new RegExp(label))}
+ assert.match(panel.querySelector('.eclipse-class-overview [data-v=Mage]').textContent,/Current/);
+ panel.querySelector('[data-a=jobview][data-v=browse]').click();status('Wizard').click();panel.querySelector('[data-a=job][data-v=Wizard]').click();
+ assert.equal(ev('S.cls'),'Wizard');assert.equal(status('Wizard').dataset.classStatus,'cur');assert.equal(status('Mage').dataset.classStatus,'played');
+});
+test('Novice restart remains visible on the main Jobs tab and keeps confirmation',()=>{
+ ev("S.cls='Mage';S.jobs.Mage={jl:40,jx:0};eclipseJobsBrowse=false;tabs.push('job');renderWin()");
+ const button=doc.querySelector('.eclipse-job-actions [data-a=job][data-v=Novice]');assert.ok(button);assert.equal(button.closest('.eclipse-class-browser,.eclipse-class-overview,details,.ui-inspector'),null);assert.equal(button.disabled,false);
+ button.click();assert.equal(doc.getElementById('modal').style.display,'flex');assert.equal(ev('S.cls'),'Mage');doc.getElementById('mn').click();assert.equal(ev('S.cls'),'Mage');
+ doc.querySelector('[data-a=jobview][data-v=browse]').click();assert.equal(doc.querySelector('.eclipse-job-actions [data-a=job][data-v=Novice]'),button);assert.equal(doc.querySelectorAll('[data-a=job][data-v=Novice].full').length,1);
+ button.click();doc.getElementById('my').click();assert.equal(ev('S.cls'),'Novice');assert.equal(ev('S.lv'),25);assert.equal(doc.querySelector('.eclipse-job-actions [data-a=job][data-v=Novice]').disabled,true);
 });
 test('pet cards preserve training, skills and deployment controls',()=>{
  ev(`S.pets=[{id:91001,sp:0,mut:0,eq:[0,1,2],skills:[],on:true},{id:91002,sp:1,mut:0,eq:[0,0,0],skills:[],on:false}];selP=null;sub.pet='party';tabs.push('pet');renderWin()`);
