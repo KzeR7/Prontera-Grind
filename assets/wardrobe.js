@@ -2,7 +2,7 @@
 (function(root,factory){const api=factory();if(typeof module==='object'&&module.exports)module.exports=api;else root.PGWardrobe=api})(typeof globalThis==='object'?globalThis:this,function(){
 'use strict';
 const HAIRS={m:[2,5,7,8,10,12,17,19,20,22,24,26,27,28,30,32,35,39,40,42],f:[2,4,5,12,13,14,15,17,18,19,21,24,27,30,34,35,37,39,41,42]};
-const CLASSES={Swordman:1,Knight:7,'Lord Knight':4008,Thief:6,Assassin:12,'Assassin Cross':4013,Archer:3,Hunter:11,Sniper:4012};
+const CLASSES={Swordman:1,Knight:7,'Lord Knight':4008,Thief:6,Assassin:12,'Assassin Cross':4013,Archer:3,Hunter:11,Sniper:4012,Acolyte:4,Priest:8,'High Priest':4009,Merchant:5,Blacksmith:10,Whitesmith:4011};
 const defaults=sex=>({version:1,sex:sex==='f'?'f':'m',heads:{m:2,f:2},colors:{m:0,f:0},halo:false,glasses:false,wings:false});
 function normalize(v){if(!v||typeof v!=='object'||v.version!==1)return null;const a=defaults(v.sex);for(const s of ['m','f']){const h=v.heads&&v.heads[s],c=v.colors&&v.colors[s];a.heads[s]=HAIRS[s].includes(h)?h:2;a.colors[s]=Number.isInteger(c)&&c>=0&&c<=8?c:0}for(const k of ['halo','glasses','wings'])a[k]=v[k]===true;return a}
 function key(v){const a=normalize(v);return a?a.sex+'-'+a.heads[a.sex]+'-'+a.colors[a.sex]:''}
@@ -12,7 +12,7 @@ function validateMeta(m,rec){
  const slots=['body','hair','weapon','halo','glasses','wings','shadow'];
  if(!Array.isArray(m.poses)||m.poses.length>20000)throw Error('Invalid poses');
  const prefixes=new Set(Object.keys(m.actions).map(k=>k.includes(':')?k.split(':')[0]+':':''));
- if(!prefixes.size||prefixes.size>9||[...prefixes].some(p=>p&&!Object.values(CLASSES).includes(Number(p.slice(0,-1)))))throw Error('Invalid class routes');
+ if(!prefixes.size||prefixes.size>Object.keys(CLASSES).length||[...prefixes].some(p=>p&&!Object.values(CLASSES).includes(Number(p.slice(0,-1)))))throw Error('Invalid class routes');
  for(const prefix of prefixes)for(const stance of ['idle','walk','attack'])for(let d=0;d<8;d++){
   const v=m.actions[prefix+stance+d];if(!v||!Number.isFinite(v.delay)||v.delay<=0||v.delay>60000||!Array.isArray(v.frames)||v.frames.length<1||v.frames.length>32)throw Error('Invalid action');
   v.frames=v.frames.map(i=>{if(!Number.isInteger(i)||!m.poses[i])throw Error('Invalid pose reference');return m.poses[i]});

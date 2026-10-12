@@ -96,8 +96,8 @@ t('the published tree is small enough to stay honest', () => {
   const bytes = walk(out);
   const mb = bytes / 1048576;
   assert.ok(mb > 8, 'the published tree is only ' + mb.toFixed(1) + ' MB - is the sprite pack still shipping?');
-  assert.ok(mb < 30, 'the published tree grew to ' + mb.toFixed(1) + ' MB; the shared native class pack and fallback game must fit in 30 MiB.');
-  const wardrobe=path.join(out,'assets/wardrobe/v2');assert.ok(walk(wardrobe)<8*1048576,'nine native classes must share hair/costume assets');
+  assert.ok(mb < 36, 'the published tree grew to ' + mb.toFixed(1) + ' MB; the shared native class pack and fallback game must fit in 36 MiB.');
+  const wardrobe=path.join(out,'assets/wardrobe/v2');assert.ok(walk(wardrobe)<14*1048576,'fifteen native classes must share hair/costume assets');
   const catalog=JSON.parse(fs.readFileSync(path.join(wardrobe,'catalog.json'),'utf8'));
   for(const r of Object.values(catalog.assets))for(const key of ['meta','image'])assert.ok(fs.existsSync(path.join(wardrobe,r[key])),'native catalog asset is published');
 });

@@ -23,15 +23,24 @@ func main() {
 		panic("usage: wardrobe-export source-root catalog.json output [full|proof] [job]")
 	}
 	root, cat, out := os.Args[1], os.Args[2], os.Args[3]
-	proof := len(os.Args) > 4 && os.Args[4] == "proof"
+	proof := os.Getenv("WARDROBE_PROOF") == "1" || (len(os.Args) > 4 && os.Args[4] == "proof")
 	job := uint32(4008)
 	weapon, attack := uint32(2), 80
-	if len(os.Args) > 5 {
-		n, err := strconv.Atoi(os.Args[5])
+	jobArg := 4
+	if len(os.Args) > 4 && (os.Args[4] == "proof" || os.Args[4] == "full") {
+		jobArg = 5
+	}
+	if len(os.Args) > jobArg {
+		n, err := strconv.Atoi(os.Args[jobArg])
 		must(err)
 		job = uint32(n)
 	}
 	switch job {
+	case 4, 5, 8, 4009:
+		weapon = 8
+	case 10, 4011:
+		weapon = 8
+		attack = 88
 	case 6:
 		weapon = 1
 	case 12, 4013:
