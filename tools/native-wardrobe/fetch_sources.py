@@ -34,7 +34,7 @@ if __name__=='__main__':
     parser=argparse.ArgumentParser(description=__doc__)
     parser.add_argument('output',type=Path)
     args=parser.parse_args()
-    records={r['path']:r for name in ['source-manifest.json','class-source-manifest.json']
+    records={r['path']:r for name in ['source-manifest.json','class-source-manifest.json','tree-source-manifest.json','remaining-source-manifest.json','expansion-source-manifest.json']
              for r in json.loads((HERE/name).read_text())['files']}
     with ThreadPoolExecutor(max_workers=2) as pool:
         list(pool.map(lambda r:recover(r,args.output),records.values()))

@@ -2,19 +2,22 @@
 """Pack native class exports, sharing hair/costume pixels across the entire roster."""
 import argparse
 import hashlib
-import io
 import json
 from pathlib import Path
 from PIL import Image
+from wardrobe_png import encode_png
 
-CLASSES = {'Swordman':1,'Knight':7,'Lord Knight':4008,'Thief':6,'Assassin':12,
+CLASSES = {'Novice':0,'Mage':2,'Wizard':9,'High Wizard':4010,'Swordman':1,'Knight':7,'Lord Knight':4008,'Thief':6,'Assassin':12,
            'Assassin Cross':4013,'Archer':3,'Hunter':11,'Sniper':4012,'Acolyte':4,'Priest':8,'High Priest':4009,
            'Merchant':5,'Blacksmith':10,'Whitesmith':4011}
+
+OUTFITS = {'Vanguard armour':4054, 'Arcane robes':4055, 'Shadow leathers':4059}
+RENDER_CLASSES = {**CLASSES, **OUTFITS}
 
 def add_figure_heights(manifest, source):
     # Measure the native rest pose without costumes or weapon effects. Keep the same
     # world height as the previous renderer rather than scaling from unrelated APNG art.
-    for job in CLASSES.values():
+    for job in RENDER_CLASSES.values():
         for sex in ['m','f']:
             folder=source/str(job)
             body=json.loads((folder/f'base-{sex}.json').read_text())['idle0']['frames'][0]
@@ -29,7 +32,7 @@ def build(source, output):
     if any(output.iterdir()):
         raise ValueError('Use an empty output directory to avoid orphaned assets')
     groups, images = {}, {}
-    for job in CLASSES.values():
+    for job in RENDER_CLASSES.values():
         folder = source / str(job)
         for path in sorted(folder.glob('*.json')):
             name = path.stem
@@ -37,7 +40,7 @@ def build(source, output):
             if name.startswith('base-'):
                 sex = name.split('-')[1]
                 parts = [('base-'+str(job)+'-'+sex, {'body','weapon'}),
-                         ('costume-'+sex, {'halo','glasses','wings','shadow'})]
+                         ('costume-'+sex, {'halo','glasses','wings','shadow','catEars','ribbon','sunglasses','mask','flower','leaf'})]
             else:
                 parts = [(name, {'hair'})]
             for group, slots in parts:
@@ -48,7 +51,7 @@ def build(source, output):
                     for frame in frames:
                         for p in frame:
                             images.setdefault(p['image'], folder/'images'/(p['image']+'.png'))
-    manifest = dict(version=2, width=320, height=280, anchor=[160,200], classes=CLASSES, assets={})
+    manifest = dict(version=2, width=320, height=280, anchor=[160,200], classes=CLASSES, outfits=OUTFITS, assets={})
     for name, actions in sorted(groups.items()):
         # Native action order is stable across palettes; content-hash order is not.
         # Stable placement lets all palette variants reuse the same attachment file.
@@ -67,8 +70,7 @@ def build(source, output):
         atlas=Image.new('RGBA',(512,height))
         for i,im in pixels.items():
             atlas.paste(im,positions[i][:2])
-        stream=io.BytesIO(); atlas.save(stream,format='PNG',optimize=True)
-        png=stream.getvalue(); sha=hashlib.sha256(png).hexdigest(); image='atlas-'+sha[:20]+'.png'
+        png=encode_png(atlas); sha=hashlib.sha256(png).hexdigest(); image='atlas-'+sha[:20]+'.png'
         (output/image).write_bytes(png)
         # Frame references retain native timing while removing repeated attachment records.
         poses=[]; seen={}
@@ -81,11 +83,25 @@ def build(source, output):
                     seen[identity]=len(poses); poses.append(pose)
                 frames.append(seen[identity])
             view['frames']=frames
-        meta=json.dumps(dict(version=2,width=512,height=height,poses=poses,actions=actions),separators=(',',':')).encode()
+        metadata=dict(version=2,width=512,height=height,poses=poses,actions=actions)
+        if name.startswith('costume-'):
+            # Repeated attachment layers dominate larger accessory collections.
+            # Reference each exact layer once without changing pixels or ordering.
+            layers=[]; layer_ids={}; compact=[]
+            for pose in poses:
+                refs=[]
+                for layer in pose:
+                    identity=tuple(layer)
+                    if identity not in layer_ids:
+                        layer_ids[identity]=len(layers); layers.append(layer)
+                    refs.append(layer_ids[identity])
+                compact.append(refs)
+            metadata.update(poses=compact,layers=layers)
+        meta=json.dumps(metadata,separators=(',',':')).encode()
         digest=hashlib.sha256(meta).hexdigest(); filename='poses-'+digest[:20]+'.json'; (output/filename).write_bytes(meta)
         manifest['assets'][name]=dict(meta=filename,metaSha256=digest,metaBytes=len(meta),image=image,imageSha256=sha,imageBytes=len(png),width=512,height=height)
     add_figure_heights(manifest, source)
-    assert len(manifest['assets'])==360+2+2*len(CLASSES), len(manifest['assets'])
+    assert len(manifest['assets'])==360+2+2*len(RENDER_CLASSES), len(manifest['assets'])
     (output/'catalog.json').write_text(json.dumps(manifest,separators=(',',':'))+'\n')
     files=list(output.iterdir())
     print(json.dumps(dict(files=len(files),bytes=sum(p.stat().st_size for p in files),images=len(list(output.glob('*.png'))),maxAtlasBytes=max(r['width']*r['height']*4 for r in manifest['assets'].values()))))

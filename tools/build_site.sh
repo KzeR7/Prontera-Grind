@@ -35,7 +35,7 @@ require _routes.json
 require assets/sprite_pack_data.js
 require assets/class_skins_data.js
 require assets/weapon_joints_data.js
-require assets/wardrobe/v2/catalog.json
+require assets/wardrobe/v5/catalog.json
 require assets/kit/ro-spritesheet.png
 require assets/kit/ro-spritesheet.json
 require Updates/Sprite
@@ -44,8 +44,8 @@ cp "$ROOT/index.html" "$OUT/index.html"
 cp "$ROOT/gm.html" "$OUT/gm.html"
 cp "$ROOT/_routes.json" "$OUT/_routes.json"
 cp -r "$ROOT/assets" "$OUT/assets"
-# The preserved first fitting is a development reference; v2 is the live shared class pack.
-rm -rf "$OUT/assets/wardrobe/v1"
+# The preserved first fitting is a development reference; v5 is the live shared class/outfit pack.
+rm -rf "$OUT/assets/wardrobe/v1" "$OUT/assets/wardrobe/v3" "$OUT/assets/wardrobe/v4"
 mkdir -p "$OUT/Updates"
 cp -r "$ROOT/Updates/Sprite" "$OUT/Updates/Sprite"
 

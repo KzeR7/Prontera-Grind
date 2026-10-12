@@ -892,7 +892,7 @@ const settle = async (X, limit = 2000) => {
   // ---------- previews ----------
   await t('both previews play the real class animation, not a still', async () => {
     assert.ok(src.includes('function drawSkinPreview(id,labelId,cls,sex){'), 'one preview renderer');
-    assert.ok(src.includes("const p=skinPack(cls,sex),f=p?skinFrameOf(p,'S'):null;"),
+    assert.ok(src.includes("const p=waiting?null:skinPack(cls,sex),f=p?skinFrameOf(p,'S'):null;"),
       'the preview reads the same pack and the same S animation the hero wears');
     assert.ok(src.includes('ctx.drawImage(f.img,f.sx+ax-bw/2,ay-bh+6,bw,bh,0,0,cv.width,cv.height);'),
       'and draws the frame that is due, framed around the art\'s own anchor');

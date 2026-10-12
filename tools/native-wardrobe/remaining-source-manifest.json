@@ -1,0 +1,330 @@
+{
+  "schemaVersion": 1,
+  "rendererCommit": "4de4fa747431979d35c747d7edd549a872efd9e1",
+  "files": [
+    {
+      "path": "data/imf/마법사_남.imf",
+      "url": "https://grf.robrowser.com/data/imf/%C2%B8%C2%B6%C2%B9%C3%BD%C2%BB%C3%A7_%C2%B3%C2%B2.imf",
+      "bytes": 11796,
+      "sha256": "b0626d373d82cc9272c4267acd7a5dd118e846c56f87842c5657a1cf453c8026"
+    },
+    {
+      "path": "data/imf/마법사_여.imf",
+      "url": "https://grf.robrowser.com/data/imf/%C2%B8%C2%B6%C2%B9%C3%BD%C2%BB%C3%A7_%C2%BF%C2%A9.imf",
+      "bytes": 11796,
+      "sha256": "2ae2565ca7cf4e506ea5ab37f85066bf375fb42518a38cec566a940c8fa9262e"
+    },
+    {
+      "path": "data/imf/위저드_남.imf",
+      "url": "https://grf.robrowser.com/data/imf/%C3%80%C2%A7%C3%80%C3%BA%C2%B5%C3%A5_%C2%B3%C2%B2.imf",
+      "bytes": 11796,
+      "sha256": "fa5dc5471f95e62a0d8225d26089106b6858f762c2c03425cb78f7bbebdf742d"
+    },
+    {
+      "path": "data/imf/위저드_여.imf",
+      "url": "https://grf.robrowser.com/data/imf/%C3%80%C2%A7%C3%80%C3%BA%C2%B5%C3%A5_%C2%BF%C2%A9.imf",
+      "bytes": 11700,
+      "sha256": "66181b38ad8f95b9102446451f99827bc7eb352e3e71d599c42751300632d984"
+    },
+    {
+      "path": "data/imf/초보자_남.imf",
+      "url": "https://grf.robrowser.com/data/imf/%C3%83%C3%8A%C2%BA%C2%B8%C3%80%C3%9A_%C2%B3%C2%B2.imf",
+      "bytes": 11796,
+      "sha256": "4287ce09d20bfba5faab980fec7b29a28d618291cf083be7eaf322dec2f8d06b"
+    },
+    {
+      "path": "data/imf/초보자_여.imf",
+      "url": "https://grf.robrowser.com/data/imf/%C3%83%C3%8A%C2%BA%C2%B8%C3%80%C3%9A_%C2%BF%C2%A9.imf",
+      "bytes": 11796,
+      "sha256": "34b7e7aec8ae0344545efdc345261bc5b7a9668f039e67bb277ec7c5d8636744"
+    },
+    {
+      "path": "data/sprite/로브/천사날개/남/마법사_남.act",
+      "url": "https://grf.robrowser.com/data/sprite/%C2%B7%C3%8E%C2%BA%C3%AA/%C3%83%C2%B5%C2%BB%C3%A7%C2%B3%C2%AF%C2%B0%C2%B3/%C2%B3%C2%B2/%C2%B8%C2%B6%C2%B9%C3%BD%C2%BB%C3%A7_%C2%B3%C2%B2.act",
+      "bytes": 48396,
+      "sha256": "e379402486df54a5d43f5e74fbfd780c219ac7c9791fd885eaf518c72dc246a2"
+    },
+    {
+      "path": "data/sprite/로브/천사날개/남/마법사_남.spr",
+      "url": "https://grf.robrowser.com/data/sprite/%C2%B7%C3%8E%C2%BA%C3%AA/%C3%83%C2%B5%C2%BB%C3%A7%C2%B3%C2%AF%C2%B0%C2%B3/%C2%B3%C2%B2/%C2%B8%C2%B6%C2%B9%C3%BD%C2%BB%C3%A7_%C2%B3%C2%B2.spr",
+      "bytes": 13155,
+      "sha256": "ee1cafe6bdde5b2477f47aa9d10d4e33284abbafd4a7d91c0670f8a5470a7466"
+    },
+    {
+      "path": "data/sprite/로브/천사날개/남/위저드_남.act",
+      "url": "https://grf.robrowser.com/data/sprite/%C2%B7%C3%8E%C2%BA%C3%AA/%C3%83%C2%B5%C2%BB%C3%A7%C2%B3%C2%AF%C2%B0%C2%B3/%C2%B3%C2%B2/%C3%80%C2%A7%C3%80%C3%BA%C2%B5%C3%A5_%C2%B3%C2%B2.act",
+      "bytes": 44748,
+      "sha256": "5cb0fb178c1a3740742f57cb06d2af2c7706d4dcb0f57e0d70556ae5712d9157"
+    },
+    {
+      "path": "data/sprite/로브/천사날개/남/위저드_남.spr",
+      "url": "https://grf.robrowser.com/data/sprite/%C2%B7%C3%8E%C2%BA%C3%AA/%C3%83%C2%B5%C2%BB%C3%A7%C2%B3%C2%AF%C2%B0%C2%B3/%C2%B3%C2%B2/%C3%80%C2%A7%C3%80%C3%BA%C2%B5%C3%A5_%C2%B3%C2%B2.spr",
+      "bytes": 13153,
+      "sha256": "e16da58be1d6f73f7eee964d649e76afd4150cf51d5ce8e4e588c05c085138fb"
+    },
+    {
+      "path": "data/sprite/로브/천사날개/남/초보자_남.act",
+      "url": "https://grf.robrowser.com/data/sprite/%C2%B7%C3%8E%C2%BA%C3%AA/%C3%83%C2%B5%C2%BB%C3%A7%C2%B3%C2%AF%C2%B0%C2%B3/%C2%B3%C2%B2/%C3%83%C3%8A%C2%BA%C2%B8%C3%80%C3%9A_%C2%B3%C2%B2.act",
+      "bytes": 48396,
+      "sha256": "f28f6c23835b01ae821f3664de3d5ea9c05a4214b09fb24240504850464d2acf"
+    },
+    {
+      "path": "data/sprite/로브/천사날개/남/초보자_남.spr",
+      "url": "https://grf.robrowser.com/data/sprite/%C2%B7%C3%8E%C2%BA%C3%AA/%C3%83%C2%B5%C2%BB%C3%A7%C2%B3%C2%AF%C2%B0%C2%B3/%C2%B3%C2%B2/%C3%83%C3%8A%C2%BA%C2%B8%C3%80%C3%9A_%C2%B3%C2%B2.spr",
+      "bytes": 13153,
+      "sha256": "8177072e0f1f97cbd4cbbaf4db02f22a6d21b5f2a3485313ecd2da9dc875721c"
+    },
+    {
+      "path": "data/sprite/로브/천사날개/남/하이위저드_남.act",
+      "url": "https://grf.robrowser.com/data/sprite/%C2%B7%C3%8E%C2%BA%C3%AA/%C3%83%C2%B5%C2%BB%C3%A7%C2%B3%C2%AF%C2%B0%C2%B3/%C2%B3%C2%B2/%C3%87%C3%8F%C3%80%C3%8C%C3%80%C2%A7%C3%80%C3%BA%C2%B5%C3%A5_%C2%B3%C2%B2.act",
+      "bytes": 44628,
+      "sha256": "db2bf9c3dca910345accbd78df914511d071bec4daf11eedcbeb07059bc36f7a"
+    },
+    {
+      "path": "data/sprite/로브/천사날개/남/하이위저드_남.spr",
+      "url": "https://grf.robrowser.com/data/sprite/%C2%B7%C3%8E%C2%BA%C3%AA/%C3%83%C2%B5%C2%BB%C3%A7%C2%B3%C2%AF%C2%B0%C2%B3/%C2%B3%C2%B2/%C3%87%C3%8F%C3%80%C3%8C%C3%80%C2%A7%C3%80%C3%BA%C2%B5%C3%A5_%C2%B3%C2%B2.spr",
+      "bytes": 13155,
+      "sha256": "ee1cafe6bdde5b2477f47aa9d10d4e33284abbafd4a7d91c0670f8a5470a7466"
+    },
+    {
+      "path": "data/sprite/로브/천사날개/여/마법사_여.act",
+      "url": "https://grf.robrowser.com/data/sprite/%C2%B7%C3%8E%C2%BA%C3%AA/%C3%83%C2%B5%C2%BB%C3%A7%C2%B3%C2%AF%C2%B0%C2%B3/%C2%BF%C2%A9/%C2%B8%C2%B6%C2%B9%C3%BD%C2%BB%C3%A7_%C2%BF%C2%A9.act",
+      "bytes": 44748,
+      "sha256": "78c5753db7085425a16cbc7d699a7d66e77cd8ec421390a67e3c609682b5d1c1"
+    },
+    {
+      "path": "data/sprite/로브/천사날개/여/마법사_여.spr",
+      "url": "https://grf.robrowser.com/data/sprite/%C2%B7%C3%8E%C2%BA%C3%AA/%C3%83%C2%B5%C2%BB%C3%A7%C2%B3%C2%AF%C2%B0%C2%B3/%C2%BF%C2%A9/%C2%B8%C2%B6%C2%B9%C3%BD%C2%BB%C3%A7_%C2%BF%C2%A9.spr",
+      "bytes": 13153,
+      "sha256": "e16da58be1d6f73f7eee964d649e76afd4150cf51d5ce8e4e588c05c085138fb"
+    },
+    {
+      "path": "data/sprite/로브/천사날개/여/위저드_여.act",
+      "url": "https://grf.robrowser.com/data/sprite/%C2%B7%C3%8E%C2%BA%C3%AA/%C3%83%C2%B5%C2%BB%C3%A7%C2%B3%C2%AF%C2%B0%C2%B3/%C2%BF%C2%A9/%C3%80%C2%A7%C3%80%C3%BA%C2%B5%C3%A5_%C2%BF%C2%A9.act",
+      "bytes": 47564,
+      "sha256": "c57c19bdd86e35184fd8a183c8927c98726fd81b760e43c59dd23b1e874d38ce"
+    },
+    {
+      "path": "data/sprite/로브/천사날개/여/위저드_여.spr",
+      "url": "https://grf.robrowser.com/data/sprite/%C2%B7%C3%8E%C2%BA%C3%AA/%C3%83%C2%B5%C2%BB%C3%A7%C2%B3%C2%AF%C2%B0%C2%B3/%C2%BF%C2%A9/%C3%80%C2%A7%C3%80%C3%BA%C2%B5%C3%A5_%C2%BF%C2%A9.spr",
+      "bytes": 13153,
+      "sha256": "8177072e0f1f97cbd4cbbaf4db02f22a6d21b5f2a3485313ecd2da9dc875721c"
+    },
+    {
+      "path": "data/sprite/로브/천사날개/여/초보자_여.act",
+      "url": "https://grf.robrowser.com/data/sprite/%C2%B7%C3%8E%C2%BA%C3%AA/%C3%83%C2%B5%C2%BB%C3%A7%C2%B3%C2%AF%C2%B0%C2%B3/%C2%BF%C2%A9/%C3%83%C3%8A%C2%BA%C2%B8%C3%80%C3%9A_%C2%BF%C2%A9.act",
+      "bytes": 48276,
+      "sha256": "f2af960bacfe4b2039cb7f7c3937a5c26cc49824bebf4c812d1b94e20a3fb532"
+    },
+    {
+      "path": "data/sprite/로브/천사날개/여/초보자_여.spr",
+      "url": "https://grf.robrowser.com/data/sprite/%C2%B7%C3%8E%C2%BA%C3%AA/%C3%83%C2%B5%C2%BB%C3%A7%C2%B3%C2%AF%C2%B0%C2%B3/%C2%BF%C2%A9/%C3%83%C3%8A%C2%BA%C2%B8%C3%80%C3%9A_%C2%BF%C2%A9.spr",
+      "bytes": 13153,
+      "sha256": "8177072e0f1f97cbd4cbbaf4db02f22a6d21b5f2a3485313ecd2da9dc875721c"
+    },
+    {
+      "path": "data/sprite/로브/천사날개/여/하이위저드_여.act",
+      "url": "https://grf.robrowser.com/data/sprite/%C2%B7%C3%8E%C2%BA%C3%AA/%C3%83%C2%B5%C2%BB%C3%A7%C2%B3%C2%AF%C2%B0%C2%B3/%C2%BF%C2%A9/%C3%87%C3%8F%C3%80%C3%8C%C3%80%C2%A7%C3%80%C3%BA%C2%B5%C3%A5_%C2%BF%C2%A9.act",
+      "bytes": 48276,
+      "sha256": "929edf1d5d8351381c12ca4c5c1c97b5d1f51eb8398800296a666c99f8814b6d"
+    },
+    {
+      "path": "data/sprite/로브/천사날개/여/하이위저드_여.spr",
+      "url": "https://grf.robrowser.com/data/sprite/%C2%B7%C3%8E%C2%BA%C3%AA/%C3%83%C2%B5%C2%BB%C3%A7%C2%B3%C2%AF%C2%B0%C2%B3/%C2%BF%C2%A9/%C3%87%C3%8F%C3%80%C3%8C%C3%80%C2%A7%C3%80%C3%BA%C2%B5%C3%A5_%C2%BF%C2%A9.spr",
+      "bytes": 13153,
+      "sha256": "8177072e0f1f97cbd4cbbaf4db02f22a6d21b5f2a3485313ecd2da9dc875721c"
+    },
+    {
+      "path": "data/sprite/인간족/마법사/마법사_남_롯드.act",
+      "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C2%B8%C2%B6%C2%B9%C3%BD%C2%BB%C3%A7/%C2%B8%C2%B6%C2%B9%C3%BD%C2%BB%C3%A7_%C2%B3%C2%B2_%C2%B7%C3%94%C2%B5%C3%A5.act",
+      "bytes": 34132,
+      "sha256": "3a8712b43133532c6bf9f859499d75f76b21745c7f9224279d464724acb70f0f"
+    },
+    {
+      "path": "data/sprite/인간족/마법사/마법사_남_롯드.spr",
+      "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C2%B8%C2%B6%C2%B9%C3%BD%C2%BB%C3%A7/%C2%B8%C2%B6%C2%B9%C3%BD%C2%BB%C3%A7_%C2%B3%C2%B2_%C2%B7%C3%94%C2%B5%C3%A5.spr",
+      "bytes": 3754,
+      "sha256": "a8ea83be4bd72be8ed0639cd6fa90f9fb3f939e6d2dd789bbf046d22d73135be"
+    },
+    {
+      "path": "data/sprite/인간족/마법사/마법사_여_롯드.act",
+      "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C2%B8%C2%B6%C2%B9%C3%BD%C2%BB%C3%A7/%C2%B8%C2%B6%C2%B9%C3%BD%C2%BB%C3%A7_%C2%BF%C2%A9_%C2%B7%C3%94%C2%B5%C3%A5.act",
+      "bytes": 34132,
+      "sha256": "78d002741123ceaf5307142aaa78d1cf0e469136b2117bf8cac17e11556645f4"
+    },
+    {
+      "path": "data/sprite/인간족/마법사/마법사_여_롯드.spr",
+      "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C2%B8%C2%B6%C2%B9%C3%BD%C2%BB%C3%A7/%C2%B8%C2%B6%C2%B9%C3%BD%C2%BB%C3%A7_%C2%BF%C2%A9_%C2%B7%C3%94%C2%B5%C3%A5.spr",
+      "bytes": 4035,
+      "sha256": "99f2f82989add20628f2f25827c669c64857a3d849c7078649df7b8589c772a5"
+    },
+    {
+      "path": "data/sprite/인간족/몸통/남/마법사_남.act",
+      "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C2%B8%C3%B6%C3%85%C3%AB/%C2%B3%C2%B2/%C2%B8%C2%B6%C2%B9%C3%BD%C2%BB%C3%A7_%C2%B3%C2%B2.act",
+      "bytes": 44748,
+      "sha256": "3f02e80f0ec678624a4bc9b3674894320756504c3f742fad0e589398a4fb1150"
+    },
+    {
+      "path": "data/sprite/인간족/몸통/남/마법사_남.spr",
+      "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C2%B8%C3%B6%C3%85%C3%AB/%C2%B3%C2%B2/%C2%B8%C2%B6%C2%B9%C3%BD%C2%BB%C3%A7_%C2%B3%C2%B2.spr",
+      "bytes": 235054,
+      "sha256": "642a75b6552eaf49eb6625f444a47b07cc6ab09fb797f460fb9db1912db016e7"
+    },
+    {
+      "path": "data/sprite/인간족/몸통/남/위저드_남.act",
+      "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C2%B8%C3%B6%C3%85%C3%AB/%C2%B3%C2%B2/%C3%80%C2%A7%C3%80%C3%BA%C2%B5%C3%A5_%C2%B3%C2%B2.act",
+      "bytes": 44748,
+      "sha256": "3b70782822efe8fb89ac01850d3198e87a895b84763148737ec6ea29a11da49b"
+    },
+    {
+      "path": "data/sprite/인간족/몸통/남/위저드_남.spr",
+      "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C2%B8%C3%B6%C3%85%C3%AB/%C2%B3%C2%B2/%C3%80%C2%A7%C3%80%C3%BA%C2%B5%C3%A5_%C2%B3%C2%B2.spr",
+      "bytes": 241329,
+      "sha256": "c146e7e81adbe0b957802e5dbd86604eaaabefd989bc4a29216033648eb540ef"
+    },
+    {
+      "path": "data/sprite/인간족/몸통/남/초보자_남.act",
+      "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C2%B8%C3%B6%C3%85%C3%AB/%C2%B3%C2%B2/%C3%83%C3%8A%C2%BA%C2%B8%C3%80%C3%9A_%C2%B3%C2%B2.act",
+      "bytes": 44748,
+      "sha256": "a82086ba005506a16ee0740ebd1d33c43de8cc4ee1a622ea933ff9e0502c1c77"
+    },
+    {
+      "path": "data/sprite/인간족/몸통/남/초보자_남.spr",
+      "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C2%B8%C3%B6%C3%85%C3%AB/%C2%B3%C2%B2/%C3%83%C3%8A%C2%BA%C2%B8%C3%80%C3%9A_%C2%B3%C2%B2.spr",
+      "bytes": 183563,
+      "sha256": "7f4efe357b0f80e71ba2dcdb93d1c110988b1b8f382e1dbfc722e3a2cf85a533"
+    },
+    {
+      "path": "data/sprite/인간족/몸통/남/하이위저드_남.act",
+      "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C2%B8%C3%B6%C3%85%C3%AB/%C2%B3%C2%B2/%C3%87%C3%8F%C3%80%C3%8C%C3%80%C2%A7%C3%80%C3%BA%C2%B5%C3%A5_%C2%B3%C2%B2.act",
+      "bytes": 49940,
+      "sha256": "ba910c6273b4bb98c7617b363728d8cc33565822ca88fc54a61d3b7064baffe2"
+    },
+    {
+      "path": "data/sprite/인간족/몸통/남/하이위저드_남.spr",
+      "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C2%B8%C3%B6%C3%85%C3%AB/%C2%B3%C2%B2/%C3%87%C3%8F%C3%80%C3%8C%C3%80%C2%A7%C3%80%C3%BA%C2%B5%C3%A5_%C2%B3%C2%B2.spr",
+      "bytes": 268928,
+      "sha256": "1a0735160467bab9c21b820909a170151ac14707de78a34a647abda5aec00864"
+    },
+    {
+      "path": "data/sprite/인간족/몸통/여/마법사_여.act",
+      "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C2%B8%C3%B6%C3%85%C3%AB/%C2%BF%C2%A9/%C2%B8%C2%B6%C2%B9%C3%BD%C2%BB%C3%A7_%C2%BF%C2%A9.act",
+      "bytes": 44748,
+      "sha256": "f01078be5eb35d67714271d244021904e57c2a11281a8923df6dd4aa6633d1ec"
+    },
+    {
+      "path": "data/sprite/인간족/몸통/여/마법사_여.spr",
+      "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C2%B8%C3%B6%C3%85%C3%AB/%C2%BF%C2%A9/%C2%B8%C2%B6%C2%B9%C3%BD%C2%BB%C3%A7_%C2%BF%C2%A9.spr",
+      "bytes": 179234,
+      "sha256": "fe7b14b60ef5500e143341217d3f65302cc762b45029ba7208ad7dec80b5099d"
+    },
+    {
+      "path": "data/sprite/인간족/몸통/여/위저드_여.act",
+      "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C2%B8%C3%B6%C3%85%C3%AB/%C2%BF%C2%A9/%C3%80%C2%A7%C3%80%C3%BA%C2%B5%C3%A5_%C2%BF%C2%A9.act",
+      "bytes": 43980,
+      "sha256": "3179a65bfe3dda6074c342b2b2046f294daedae0b18a5203022ce7e14d6b1c18"
+    },
+    {
+      "path": "data/sprite/인간족/몸통/여/위저드_여.spr",
+      "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C2%B8%C3%B6%C3%85%C3%AB/%C2%BF%C2%A9/%C3%80%C2%A7%C3%80%C3%BA%C2%B5%C3%A5_%C2%BF%C2%A9.spr",
+      "bytes": 246446,
+      "sha256": "fb73db771d916b2324959735bd983156d421db69ea6b5f714fceb0c1e486776c"
+    },
+    {
+      "path": "data/sprite/인간족/몸통/여/초보자_여.act",
+      "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C2%B8%C3%B6%C3%85%C3%AB/%C2%BF%C2%A9/%C3%83%C3%8A%C2%BA%C2%B8%C3%80%C3%9A_%C2%BF%C2%A9.act",
+      "bytes": 48276,
+      "sha256": "090d06edefb3ceb2cb8e6968eec768b4d1afb08da36c5278af317d83e6d59517"
+    },
+    {
+      "path": "data/sprite/인간족/몸통/여/초보자_여.spr",
+      "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C2%B8%C3%B6%C3%85%C3%AB/%C2%BF%C2%A9/%C3%83%C3%8A%C2%BA%C2%B8%C3%80%C3%9A_%C2%BF%C2%A9.spr",
+      "bytes": 153094,
+      "sha256": "20d96810b2e8ba393a188526d97d7a573da40f83d4ac7bd28656a313e5a1ed93"
+    },
+    {
+      "path": "data/sprite/인간족/몸통/여/하이위저드_여.act",
+      "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C2%B8%C3%B6%C3%85%C3%AB/%C2%BF%C2%A9/%C3%87%C3%8F%C3%80%C3%8C%C3%80%C2%A7%C3%80%C3%BA%C2%B5%C3%A5_%C2%BF%C2%A9.act",
+      "bytes": 48276,
+      "sha256": "1adb94d5021565a4dd18357898e663e6c4b1fd1c6bc4d795553af60814d17b0b"
+    },
+    {
+      "path": "data/sprite/인간족/몸통/여/하이위저드_여.spr",
+      "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C2%B8%C3%B6%C3%85%C3%AB/%C2%BF%C2%A9/%C3%87%C3%8F%C3%80%C3%8C%C3%80%C2%A7%C3%80%C3%BA%C2%B5%C3%A5_%C2%BF%C2%A9.spr",
+      "bytes": 215885,
+      "sha256": "39d3a09c07555c34b7c7e3afd266777d916d15a3783b5fbd9b3f0e4ff32000af"
+    },
+    {
+      "path": "data/sprite/인간족/위저드/위저드_남_롯드.act",
+      "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C3%80%C2%A7%C3%80%C3%BA%C2%B5%C3%A5/%C3%80%C2%A7%C3%80%C3%BA%C2%B5%C3%A5_%C2%B3%C2%B2_%C2%B7%C3%94%C2%B5%C3%A5.act",
+      "bytes": 37332,
+      "sha256": "55c3dd6cea03eca4dbe5d95d0686c66501066d802b914d1f93828558c73464c8"
+    },
+    {
+      "path": "data/sprite/인간족/위저드/위저드_남_롯드.spr",
+      "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C3%80%C2%A7%C3%80%C3%BA%C2%B5%C3%A5/%C3%80%C2%A7%C3%80%C3%BA%C2%B5%C3%A5_%C2%B3%C2%B2_%C2%B7%C3%94%C2%B5%C3%A5.spr",
+      "bytes": 4125,
+      "sha256": "b73b38ad7c1c54d2479554d870bcf7209dc5a61638d8f23bfd72038551604365"
+    },
+    {
+      "path": "data/sprite/인간족/위저드/위저드_여_롯드.act",
+      "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C3%80%C2%A7%C3%80%C3%BA%C2%B5%C3%A5/%C3%80%C2%A7%C3%80%C3%BA%C2%B5%C3%A5_%C2%BF%C2%A9_%C2%B7%C3%94%C2%B5%C3%A5.act",
+      "bytes": 37556,
+      "sha256": "e4f079769b62f5234b6e17d0c59348840c84b7d6674f326fc522c94a800848ff"
+    },
+    {
+      "path": "data/sprite/인간족/위저드/위저드_여_롯드.spr",
+      "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C3%80%C2%A7%C3%80%C3%BA%C2%B5%C3%A5/%C3%80%C2%A7%C3%80%C3%BA%C2%B5%C3%A5_%C2%BF%C2%A9_%C2%B7%C3%94%C2%B5%C3%A5.spr",
+      "bytes": 3329,
+      "sha256": "1ade436b47df0deaea4a2126643f35bc31da20f1145424d7445e0cdf22789d47"
+    },
+    {
+      "path": "data/sprite/인간족/초보자/초보자_남_단검.act",
+      "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C3%83%C3%8A%C2%BA%C2%B8%C3%80%C3%9A/%C3%83%C3%8A%C2%BA%C2%B8%C3%80%C3%9A_%C2%B3%C2%B2_%C2%B4%C3%9C%C2%B0%C3%8B.act",
+      "bytes": 32852,
+      "sha256": "bc0e8f29d9b57f73399ba4e473059336e75dc248943a3a84283f2a7ea48ab1f5"
+    },
+    {
+      "path": "data/sprite/인간족/초보자/초보자_남_단검.spr",
+      "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C3%83%C3%8A%C2%BA%C2%B8%C3%80%C3%9A/%C3%83%C3%8A%C2%BA%C2%B8%C3%80%C3%9A_%C2%B3%C2%B2_%C2%B4%C3%9C%C2%B0%C3%8B.spr",
+      "bytes": 2067,
+      "sha256": "a371d891e2880083517ee855efdcfcd7b6915e6f88cc87ad2bad2d8ef15d1310"
+    },
+    {
+      "path": "data/sprite/인간족/초보자/초보자_남_단검_검광.act",
+      "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C3%83%C3%8A%C2%BA%C2%B8%C3%80%C3%9A/%C3%83%C3%8A%C2%BA%C2%B8%C3%80%C3%9A_%C2%B3%C2%B2_%C2%B4%C3%9C%C2%B0%C3%8B_%C2%B0%C3%8B%C2%B1%C2%A4.act",
+      "bytes": 29236,
+      "sha256": "d5a32dd58d6c9970836cca58ca0b45a5726b3fa8166c467e655ec7ee2b86c6c0"
+    },
+    {
+      "path": "data/sprite/인간족/초보자/초보자_남_단검_검광.spr",
+      "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C3%83%C3%8A%C2%BA%C2%B8%C3%80%C3%9A/%C3%83%C3%8A%C2%BA%C2%B8%C3%80%C3%9A_%C2%B3%C2%B2_%C2%B4%C3%9C%C2%B0%C3%8B_%C2%B0%C3%8B%C2%B1%C2%A4.spr",
+      "bytes": 2366,
+      "sha256": "0bf6b2e2f32d538900fcf5e1ce66c89ea8320474feb4c8877023d9765d608ce5"
+    },
+    {
+      "path": "data/sprite/인간족/초보자/초보자_여_단검.act",
+      "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C3%83%C3%8A%C2%BA%C2%B8%C3%80%C3%9A/%C3%83%C3%8A%C2%BA%C2%B8%C3%80%C3%9A_%C2%BF%C2%A9_%C2%B4%C3%9C%C2%B0%C3%8B.act",
+      "bytes": 30292,
+      "sha256": "cb161ab45f5795a98f3cf7339472b7ff41a2f27678838784979af3073cfdfebf"
+    },
+    {
+      "path": "data/sprite/인간족/초보자/초보자_여_단검.spr",
+      "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C3%83%C3%8A%C2%BA%C2%B8%C3%80%C3%9A/%C3%83%C3%8A%C2%BA%C2%B8%C3%80%C3%9A_%C2%BF%C2%A9_%C2%B4%C3%9C%C2%B0%C3%8B.spr",
+      "bytes": 2312,
+      "sha256": "b345ed24553f399fc1b64886ddd6eb3c06f21edca41e04980afe50c0427ec3de"
+    },
+    {
+      "path": "data/sprite/인간족/초보자/초보자_여_단검_검광.act",
+      "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C3%83%C3%8A%C2%BA%C2%B8%C3%80%C3%9A/%C3%83%C3%8A%C2%BA%C2%B8%C3%80%C3%9A_%C2%BF%C2%A9_%C2%B4%C3%9C%C2%B0%C3%8B_%C2%B0%C3%8B%C2%B1%C2%A4.act",
+      "bytes": 26932,
+      "sha256": "71d6f7c94c3fb2aea8617715c5f6649dfaa647bad2fae78e80a395682f44fa55"
+    },
+    {
+      "path": "data/sprite/인간족/초보자/초보자_여_단검_검광.spr",
+      "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C3%83%C3%8A%C2%BA%C2%B8%C3%80%C3%9A/%C3%83%C3%8A%C2%BA%C2%B8%C3%80%C3%9A_%C2%BF%C2%A9_%C2%B4%C3%9C%C2%B0%C3%8B_%C2%B0%C3%8B%C2%B1%C2%A4.spr",
+      "bytes": 2366,
+      "sha256": "0bf6b2e2f32d538900fcf5e1ce66c89ea8320474feb4c8877023d9765d608ce5"
+    }
+  ]
+}

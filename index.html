@@ -847,9 +847,8 @@ body.clean-screen #screenBtn{visibility:visible!important}body.clean-screen #hud
   </div>
 </div>
 <div id="tooltip"></div>
-<link rel="stylesheet" href="assets/wardrobe.css?v=1">
-<script src="assets/wardrobe.js?v=2"></script>
-<script src="assets/sprite_pack_data.js?v=2"></script>
+<link rel="stylesheet" href="assets/wardrobe.css?v=128">
+<script src="assets/wardrobe.js?v=128"></script>
 <script src="assets/class_skins_data.js?v=2"></script>
 <script src="assets/weapon_joints_data.js?v=2"></script>
 <script src="assets/weapons_data.js?v=2"></script>
@@ -1081,7 +1080,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // give-back) and main's weapon-hold rendering work.
 let simCatchingUp=false;
 const simVisualsOff=()=>document.hidden||simCatchingUp;
-const BUILD='2026-10-12 grind-v124 Unified native wardrobe';   // shown on the login card - confirms which file you loaded
+const BUILD='2026-10-12 grind-v128 Accessory collection';   // shown on the login card - confirms which file you loaded
 $('buildTag').textContent='build '+BUILD;
 
 // ---------- class tree: Novice -> 6 first jobs -> 6 second jobs -> 6 third jobs ----------
@@ -7337,9 +7336,14 @@ function packBodyFor(cls,tier){const PK=window.SPRITE_PACK;if(!PK)return null;
   const b=PACK_BODY[cls];if(b&&PK.bodies[b])return b;
   const f=tier>=3?'assassin_cross':tier>=2?'assassin':'thief';return PK.bodies[f]?f:null}
 const packImg={},packCache=new Map(),PACK_K=.03;let packReady=false;
-(function(){const PK=window.SPRITE_PACK;if(!PK)return;let n=0,tot=0;
+let packLoading=false,packAssetRequested=false;
+function loadPackImages(){const PK=window.SPRITE_PACK;if(!PK||packLoading)return;packLoading=true;let n=0,tot=0;
   const ld=(k,u)=>{tot++;const i=new Image();i.onload=()=>{if(++n===tot){packReady=true;heroKey='';drawAppearancePreview();drawClassPreview()}};i.src=u;packImg[k]=i};
-  for(const c in PK.bodies)ld('b:'+c,PK.bodies[c].atlas);for(const h in PK.heads)ld('h:'+h,PK.heads[h])})();
+  for(const c in PK.bodies)ld('b:'+c,PK.bodies[c].atlas);for(const h in PK.heads)ld('h:'+h,PK.heads[h])}
+function requestPackAssets(){if(window.SPRITE_PACK){loadPackImages();return}if(packAssetRequested)return;packAssetRequested=true;
+  const script=document.createElement('script');script.src='assets/sprite_pack_data.js?v=2';script.onload=()=>{loadPackImages();heroKey=''};script.onerror=()=>script.remove();document.head.appendChild(script)}
+// Preloaded tools can still use the pack; the live game downloads it only on fallback.
+if(window.SPRITE_PACK)loadPackImages();
 
 // ----- Class skins (assets/class_skins_data.js, built by tools/make_class_skins.py) -----
 // The owner's class art is one complete 200x200 ANIMATED PNG per supplied view: walking S,
@@ -7827,7 +7831,8 @@ function packTex(opt){
 function drawSkinPreview(id,labelId,cls,sex){
   const cv=$(id);if(!cv)return;const ctx=cv.getContext('2d'),label=labelId?$(labelId):null;
   if(typeof wardrobePortrait==='function'&&wardrobePortrait(cv,cls)){if(label)label.style.display='none';return}
-  const p=skinPack(cls,sex),f=p?skinFrameOf(p,'S'):null;
+  const waiting=typeof wardrobePending==='function'?wardrobePending(cls):typeof PGWardrobe!=='undefined'&&Object.hasOwn(PGWardrobe.CLASSES,cls)&&document.readyState==='loading';
+  const p=waiting?null:skinPack(cls,sex),f=p?skinFrameOf(p,'S'):null;
   if(!f){if(label)label.style.display='block';ctx.clearRect(0,0,cv.width,cv.height);return}
   const ax=p.anchor[0],ay=p.anchor[1],bw=126,bh=134;      // the old preview framing, so panels did not move
   ctx.clearRect(0,0,cv.width,cv.height);ctx.imageSmoothingEnabled=false;
@@ -7847,9 +7852,11 @@ function ensureHero(opt){const native=typeof wardrobeHero==='function'?wardrobeH
   // class and gender has to be decoded first; until then (or if a file is missing) the animated
   // pack body keeps the game playable, so the character is never half-switched or left blank.
   if(native){heroSpr=mkWardrobeHero(native);P.add(heroSpr);return}
-  const sp=skinPack(opt.cls,opt.sex);
+  const waiting=typeof wardrobePending==='function'?wardrobePending(opt.cls):typeof PGWardrobe!=='undefined'&&Object.hasOwn(PGWardrobe.CLASSES,opt.cls)&&document.readyState==='loading';
+  const sp=waiting?null:skinPack(opt.cls,opt.sex);
   if(skinLoaded(sp)){heroSpr=mkSkinHero(sp);P.add(heroSpr);return}
-  const pb=packReady?packBodyFor(opt.cls,opt.tier):null;
+  if(!waiting)requestPackAssets();
+  const pb=!waiting&&packReady?packBodyFor(opt.cls,opt.tier):null;
   if(pb&&packImg['b:'+pb]){heroSpr=mkPackHero(opt);P.add(heroSpr);return}
   // last resort while both art sets are still loading: the drawn hero keeps the game playable
   const tex=getSheet('h:'+k,(ctx,x,y,d,kind,fr)=>drawHero(ctx,x,y,d,kind,fr,opt));
@@ -8956,6 +8963,6 @@ function updateWatch(){
 }
 setInterval(updateWatch,60000);
 </script>
-<script src="assets/wardrobe-ui.js?v=2"></script>
+<script src="assets/wardrobe-ui.js?v=128"></script>
 </body>
 </html>

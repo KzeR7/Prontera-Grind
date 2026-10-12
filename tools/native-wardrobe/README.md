@@ -1,3 +1,215 @@
+# Forty-piece Wardrobe (v5)
+
+V5 offers ten Head, ten Face, ten Mouth and ten Wings pieces, plus None for each.
+It renders the current class automatically. The previous Rune Knight, Warlock and
+Guillotine Cross costumes are reserved for future class updates and removed from
+live choices. Old saves wearing them return to the current class body while keeping
+hair and accessories. Full-body costume replacements remain under research; the
+user declined the event outfits and cloak-only previews.
+
+## Sources and build
+
+`accessories.json` records the original view ID, stable save key and display name.
+Pinned existing native files come from the earlier source manifests; new resources
+come from the RO Translation Project's public official_data.grf supplement.
+`accessory-source-manifest.json` pins decompressed file hashes, lengths and archive
+ranges. `fetch_accessory_sources.py <native-root>` verifies cached files and restores
+missing ones with ranged downloads. A changed upstream archive fails verification.
+Art stays original; there is no painting, palette editing or manual attachment offset.
+
+Build `accessory_export.go` as a separate gateway/cmd/wardrobe-accessories command
+in the pinned renderer, with `export.go` installed as its engine extension. For every
+one of the 19 class job IDs:
+
+```sh
+wardrobe-accessories <native-root> accessories.json <piece-exports>/<job> <job>
+python3 tools/build_wardrobe_collection.py <existing-full-exports> <piece-exports> tools/native-wardrobe/accessories.json <empty-output>
+```
+
+The body atlas includes its native shadow. Hair stays shared across classes and
+palettes. Each selected accessory loads its own shared atlas and attachment file;
+unselected accessories are never fetched. First-use pieces download on demand,
+resident pieces and None reuse cached assets. Decoded images remain bounded to
+16 MiB, serialized attachment metadata to 1 MiB. Data is versioned at v5; v3/v4 are
+excluded from publishing. Dynamic selections participate in request identity, so
+pending or failed accessories cannot be applied and stale selections cannot win.
+
+## Checks
+
+Build `accessory_proof.go` separately as gateway/cmd/wardrobe-accessory-proof. It
+renders each piece independently of the layer exporter, sampling front idle,
+side walking and rear attack for every class/gender and every frame in those views.
+
+```sh
+wardrobe-accessory-proof <native-root> accessories.json <proofs>/<job> <job>
+python3 tools/tests/wardrobe_accessories_assets.py <existing-full-exports> <piece-exports> <proofs>
+node tools/tests/wardrobe_sim.js
+NODE_PATH=<jsdom-three-prefix>/node_modules node tools/tests/wardrobe_game_sim.js
+node tools/measure_wardrobe_data.js
+```
+
+The asset audit also compares every packed layer pixel, coordinate, depth and
+animation frame against its native export across all eight directions and three
+stances. UI tests use the explicitly marked renderer stub; real WebGL/physical
+phone validation remains outstanding. Source findings and unsuccessful costume
+candidates are documented in the task's research report.
+
+## Previous collection (historical)
+
+# Wardrobe collection (v4)
+
+The live wardrobe uses the player's current class and offers numbered hairstyles
+1–20, colors 1–9, four accessory slots (Head, Face, Mouth, Wings), and three
+full costumes: Vanguard armour (Rune Knight alternate outfit), Arcane robes
+(Warlock), and Shadow leathers (Guillotine Cross). Costumes replace appearance
+including its fixed native weapon animation; class, gear and combat stats do not
+change. All 19 playable classes and both genders are supported. Choosing Current
+class outfit restores the class body while retaining hair and accessories.
+
+Old version-1 appearances with halo/glasses/wings booleans migrate into named
+slots. Those booleans remain mirrored for compatibility. Invalid choices fall back
+to a known selection. Hair IDs remain native internally; only labels changed.
+
+## Rebuild v4
+
+Use the pinned renderer and toolchain documented below. Recover all five source
+manifests with `python3 tools/native-wardrobe/fetch_sources.py <native-root>`.
+Copy `main.go` to gateway/cmd/wardrobe-export/main.go and `export.go` to
+ gateway/internal/render/engine/wardrobe_export.go. Build the exporter there.
+For each job in `0 2 9 4010 1 7 4008 6 12 4013 3 11 4012 4 8 4009 5 10 4011 4054 4055 4059`:
+
+```sh
+wardrobe-export <native-root> <repo>/Updates/hair-color-preview/catalog.json <exports>/<job> full <job>
+python3 tools/build_wardrobe_classes.py <exports> <empty-output>
+```
+
+`accessories` mode exports style 2/color 0 and base/accessory layers only; use it
+only to augment an already complete export tree. The v4 build combines preserved
+v3 hair exports with refreshed base/accessory exports and three complete costume
+exports. The native bodies and every original hair palette remain unchanged.
+
+Images use lossless PNG palettes; identical files are shared. Accessory metadata
+has an optional `layers` table: poses reference exact layer records by index.
+The loader validates and expands this before drawing. This eliminates repeated
+attachment records without quantization, offsets or timing changes. The metadata
+schema/catalog remain version 2; the new URL prevents old loaders seeing new data.
+No cosmetic switch contacts an external provider. Decoded atlases remain bounded
+to 16 MiB; the serialized metadata LRU remains 1 MiB.
+
+## Verify v4
+
+Copy `collection_proof.go` to a separate gateway/cmd/wardrobe-collection-proof/main.go,
+then build and run it as `wardrobe-collection-proof <native-root> <proof-output>`.
+It uses the renderer's complete composition independently of the layer exporter,
+covering six selections in all directions/actions, both genders and all 22 bodies.
+
+```sh
+python3 tools/tests/wardrobe_classes_assets.py <proof-output> --collection
+node tools/tests/wardrobe_sim.js
+NODE_PATH=<jsdom-and-three-prefix>/node_modules node tools/tests/wardrobe_game_sim.js
+node tools/measure_wardrobe_data.js
+```
+
+Real GPU/physical-device validation remains separate from native pixel proofs and
+browser control checks performed with the marked renderer stub.
+
+## Previous v3 implementation and measurements (historical)
+
+# Complete native class wardrobe (v3)
+
+The live catalog now covers all 19 classes, including **Novice** and
+**Mage → Wizard → High Wizard**, alongside the five previously supported trees.
+Open W to customize the current class; applying cosmetics does not change jobs or
+gear. Wardrobe has hair/color selectors and accessory cards, with a fixed idle preview.
+Class, facing and preview-action selectors are removed. Full outfit replacements are deferred. New characters and old saves use native sprites by default. Gender remains in
+Settings; hair, color and halo/glasses/wings choices follow the character across classes.
+
+Novice uses a dagger (male attack action 80, female 88). Mage uses a staff (80 for
+both genders); Wizard and High Wizard use staff action 80 for male and 88 for female.
+Staves have one native weapon component with no separate slash. Missing High Wizard
+IMF files use the pinned renderer's own ordering fallback. No artwork is invented.
+Equipped-weapon matching, additional costume outfits and unlock pricing remain deferred.
+
+## Rebuild and verify the current pack
+
+The asset URL is `assets/wardrobe/v3/`; the compact metadata format remains version 2
+and saved appearance format remains version 1. Earlier v1 reference assets are retained
+and excluded from publishing. The prior v2 catalog is available in Git history.
+
+Use Python with Pillow 11.3.0 and Go 1.24.2, and the pinned ragassets commit below.
+`fetch_sources.py <native-root>` now verifies the union of all four manifests (711 files),
+including the Merchant/Acolyte inputs and `remaining-source-manifest.json`.
+Copy `main.go` and `export.go` into the pinned renderer as described below and build
+`wardrobe-export`. For every job in
+`0 2 9 4010 1 7 4008 6 12 4013 3 11 4012 4 8 4009 5 10 4011`, run:
+
+```sh
+wardrobe-export <native-root> <repo>/Updates/hair-color-preview/catalog.json <exports>/<job> full <job>
+python3 tools/build_wardrobe_classes.py <exports> <empty-output>
+```
+
+Review the packed output before replacing v3. Export `proof <job>` to a separate
+`<proofs>/<job>` for native comparisons. The current validation command is:
+
+```sh
+python3 tools/tests/wardrobe_classes_assets.py <proofs> --proof-jobs 0 2 9 4010
+node tools/tests/wardrobe_sim.js
+node tools/tests/wardrobe_game_sim.js
+```
+
+The asset audit checks all 6,840 appearances; `--proof-jobs` explicitly limits native
+pixel comparisons to those jobs. Omit it only when fixtures for all 19 jobs are present.
+Existing 15-class exports for this update were recovered losslessly from the committed
+v2 atlases, then repacked with the four new native exports. Their pixel bytes, positions,
+layer order, figure heights and animation timing are compared against the original v2.
+The lossless compact pack contains 444 files / 6,523,388 bytes (363 PNGs, 80 pose files and one catalog).
+The largest decoded atlas is 2,193,408 bytes. The fixed 16 MiB decoded-atlas cache
+and 7 MiB pack budget apply. Hashed attachment metadata has a separate LRU cache
+bounded to 1 MiB of serialized input bytes (JavaScript object overhead is separate).
+
+Verification: all 6,840 appearances pass structural/loader audits; 10,048 native
+frames for the four added jobs match with zero channel difference. All 861,588
+existing layer frames retain exact pixels, positions, ordering and timing. Fourteen
+affected JavaScript suites pass. Desktop (1440×1000) and phone (390×844) UI runs
+each cover 912 views; observed peak decoded atlas cache is 4,427,776 bytes.
+
+## Data reduction and current UI
+
+`wardrobe_png.py` maps every original RGBA tuple to an exact PNG palette entry,
+including translucent colors and RGB under transparent pixels; it does not quantize
+or repaint. `build_wardrobe_classes.py` uses it for future builds. For an existing pack:
+
+```sh
+python3 tools/optimize_wardrobe_pngs.py <original-pack> <empty-output>
+python3 tools/tests/wardrobe_lossless_assets.py <original-pack> <optimized-pack>
+node tools/measure_wardrobe_data.js <report.json>
+```
+
+All 363 decoded atlases match byte for byte. Compared with the first v3 pack,
+this saves 5,426,409 bytes (45.4%). Normal native startup defers the legacy
+`assets/sprite_pack_data.js` (5,819,715 bytes) and its class APNGs. They remain
+published and load if the native renderer fails. While the Wardrobe adapter is
+still parsing, native classes wait rather than requesting legacy art.
+
+Raw selected-look responses measure 492,835–546,117 bytes, including the catalog;
+HTTP compression, headers, browser/GPU allocations and unrelated game assets are
+excluded. Opening Wardrobe or toggling accessories adds zero sprite requests when
+the active look is resident. The measured color change uses one 2,268-byte PNG;
+shared attachment metadata is reused. Appearance saves contain only 111 bytes of IDs.
+
+The fitting preview zooms the original canvas using all accessory bounds so toggles
+keep a stable, unclipped frame. This does not change battlefield art or scale. Gender
+remains in Settings. Apply/Cancel/Reset operate on the current class, and old controls
+cannot redirect the preview to another job.
+
+Next release steps: verify real WebGL rendering and desktop/phone performance, then
+publish the reviewed update. Equipped-weapon matching is the next cosmetic feature.
+Shared-browser checks use the clearly marked renderer stub when WebGL is unavailable.
+
+---
+
+## Historical v2 implementation notes
+
 # Native character trees and Wardrobe (v2)
 
 The live native renderer now covers three full trees:
@@ -144,3 +356,15 @@ All classes use the compact version 2 catalog: per-class body/weapon atlases, sh
 Rebuild with the pinned native renderer and the union of `source-manifest.json`, `class-source-manifest.json` and `tree-source-manifest.json`. Export each job into `<exports>/<job-id>` by appending the job ID to the exporter command (the older `full <job-id>` form also works). Run `python3 tools/build_wardrobe_classes.py <exports> <empty-output>`, then replace `assets/wardrobe/v2` with that output. Do not merge version 1 catalogs into this format. The loader regression exercises all 5,400 class/appearance combinations.
 
 For independent native proof, export each job with `proof <job-id>` into `<proofs>/<job-id>`, then run `python3 tools/tests/wardrobe_classes_assets.py <proofs>`. The legacy `wardrobe_assets.py` and `wardrobe_layers.py` still audit preserved v1 art. The merged catalog was repacked by losslessly cropping the two branches' committed atlases; pixel bytes, layer positions, layer order and frame clocks are checked against those inputs separately from native-engine proof.
+
+## V5 measured delivery
+
+The complete 574-file collection is 11,324,007 bytes (10.80 MiB), bounded by an
+11 MiB publishing check. Expanding from nine to forty independently selectable
+pieces increases the complete offline collection while lowering the default
+appearance's download: Novice male is 284,321 bytes; all cold base looks range
+277,426–332,248 bytes before HTTP compression. Individual accessories cost
+35,387–272,993 bytes on first use. Resident selections and None add zero bytes.
+The largest decoded atlas is 4,137,984 bytes, below the unchanged 4 MiB limit.
+The packer tries deterministic shelf layouts at several widths to avoid wasted
+space without changing any native pixels, placement or animation timing.

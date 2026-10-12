@@ -26,7 +26,7 @@ const skinDir = (skinData.match(/"dir":"([^"]+)"/) || [])[1];
 const skinFile = (skinData.match(/"files":\{"S":"([^"]+)"/) || [])[1];
 
 const forbidden = ['_login.html', '_shot.html', 'logic2.js', 'tools', 'Sprite', 'image-search',
-  'AGENTS.md', 'READ-ME-FIRST.md', 'Updates/lord-knight-bundles', 'assets/wardrobe/v1', '_recon_v27b.png', '_recon_v27c.png', '_recon_v27d.png', '_recon_v27e.png'];
+  'AGENTS.md', 'READ-ME-FIRST.md', 'Updates/lord-knight-bundles', 'assets/wardrobe/v1', 'assets/wardrobe/v3', 'assets/wardrobe/v4', '_recon_v27b.png', '_recon_v27c.png', '_recon_v27d.png', '_recon_v27e.png'];
 
 t('the build script runs and finishes cleanly', () => {
   assert.ok(built, 'tools/build_site.sh exited non-zero: ' + (buildErr && (buildErr.stderr || '').toString().slice(0, 300)));
@@ -44,9 +44,11 @@ t('every asset path index.html names statically ships with it', () => {
   // kit is fetched at runtime and the mob fallbacks go through a template string, so they are covered
   // by the directory copies and the group check above.
   const bare = staticRefs.map(r => r.replace(/[?#].*$/, ''));   // the game cache-busts with ?v=2
-  for (const must of ['assets/sprite_pack_data.js', 'assets/class_skins_data.js', 'assets/weapon_joints_data.js']) {
+  for (const must of ['assets/class_skins_data.js', 'assets/weapon_joints_data.js']) {
     assert.ok(bare.includes(must), 'index.html no longer references ' + must + ' - update this test if that is deliberate');
   }
+  assert.ok(!bare.includes('assets/sprite_pack_data.js'),'legacy sprite pack must not download on normal startup');
+  assert.ok(src.includes("script.src='assets/sprite_pack_data.js?v=2'"),'fallback pack remains available on demand');
   const missing = bare.filter(r => !fs.existsSync(path.join(out, r)));
   assert.deepStrictEqual(missing, [], 'referenced but not published: ' + missing.join(', '));
 });
@@ -97,7 +99,7 @@ t('the published tree is small enough to stay honest', () => {
   const mb = bytes / 1048576;
   assert.ok(mb > 8, 'the published tree is only ' + mb.toFixed(1) + ' MB - is the sprite pack still shipping?');
   assert.ok(mb < 36, 'the published tree grew to ' + mb.toFixed(1) + ' MB; the shared native class pack and fallback game must fit in 36 MiB.');
-  const wardrobe=path.join(out,'assets/wardrobe/v2');assert.ok(walk(wardrobe)<14*1048576,'fifteen native classes must share hair/costume assets');
+  const wardrobe=path.join(out,'assets/wardrobe/v5');assert.ok(walk(wardrobe)<11*1048576,'nineteen classes and forty accessories must share sprites');
   const catalog=JSON.parse(fs.readFileSync(path.join(wardrobe,'catalog.json'),'utf8'));
   for(const r of Object.values(catalog.assets))for(const key of ['meta','image'])assert.ok(fs.existsSync(path.join(wardrobe,r[key])),'native catalog asset is published');
 });
