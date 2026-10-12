@@ -1,0 +1,2052 @@
+{
+  "cachedLooks": 1536,
+  "decodedFrames": 10200,
+  "samplePlanLooks": 1524,
+  "selectableLooks": 81000,
+  "exhaustiveRenderAudit": false,
+  "byStance": {
+    "idle": {
+      "looks": 512,
+      "frames": 1556,
+      "weaponVisible": 0
+    },
+    "walk": {
+      "looks": 512,
+      "frames": 4096,
+      "weaponVisible": 0
+    },
+    "attack": {
+      "looks": 512,
+      "frames": 4548,
+      "weaponVisible": 512
+    }
+  },
+  "nativeTimelineDifferences": [
+    "1-m-sword-5-2-SE-idle",
+    "1-m-sword-5-3-NE-idle",
+    "3-m-bow-8-4-SE-idle",
+    "3-m-bow-8-5-NE-idle"
+  ],
+  "paletteEquivalence": [
+    {
+      "sex": "m",
+      "hair": 2,
+      "distinctRenders": 8,
+      "equivalentPaletteGroups": [
+        [
+          0,
+          8
+        ],
+        [
+          1
+        ],
+        [
+          2
+        ],
+        [
+          3
+        ],
+        [
+          4
+        ],
+        [
+          5
+        ],
+        [
+          6
+        ],
+        [
+          7
+        ]
+      ]
+    },
+    {
+      "sex": "m",
+      "hair": 5,
+      "distinctRenders": 8,
+      "equivalentPaletteGroups": [
+        [
+          0,
+          8
+        ],
+        [
+          1
+        ],
+        [
+          2
+        ],
+        [
+          3
+        ],
+        [
+          4
+        ],
+        [
+          5
+        ],
+        [
+          6
+        ],
+        [
+          7
+        ]
+      ]
+    },
+    {
+      "sex": "m",
+      "hair": 7,
+      "distinctRenders": 8,
+      "equivalentPaletteGroups": [
+        [
+          0,
+          8
+        ],
+        [
+          1
+        ],
+        [
+          2
+        ],
+        [
+          3
+        ],
+        [
+          4
+        ],
+        [
+          5
+        ],
+        [
+          6
+        ],
+        [
+          7
+        ]
+      ]
+    },
+    {
+      "sex": "m",
+      "hair": 8,
+      "distinctRenders": 8,
+      "equivalentPaletteGroups": [
+        [
+          0,
+          8
+        ],
+        [
+          1
+        ],
+        [
+          2
+        ],
+        [
+          3
+        ],
+        [
+          4
+        ],
+        [
+          5
+        ],
+        [
+          6
+        ],
+        [
+          7
+        ]
+      ]
+    },
+    {
+      "sex": "m",
+      "hair": 10,
+      "distinctRenders": 8,
+      "equivalentPaletteGroups": [
+        [
+          0,
+          8
+        ],
+        [
+          1
+        ],
+        [
+          2
+        ],
+        [
+          3
+        ],
+        [
+          4
+        ],
+        [
+          5
+        ],
+        [
+          6
+        ],
+        [
+          7
+        ]
+      ]
+    },
+    {
+      "sex": "m",
+      "hair": 12,
+      "distinctRenders": 8,
+      "equivalentPaletteGroups": [
+        [
+          0,
+          8
+        ],
+        [
+          1
+        ],
+        [
+          2
+        ],
+        [
+          3
+        ],
+        [
+          4
+        ],
+        [
+          5
+        ],
+        [
+          6
+        ],
+        [
+          7
+        ]
+      ]
+    },
+    {
+      "sex": "m",
+      "hair": 17,
+      "distinctRenders": 8,
+      "equivalentPaletteGroups": [
+        [
+          0,
+          8
+        ],
+        [
+          1
+        ],
+        [
+          2
+        ],
+        [
+          3
+        ],
+        [
+          4
+        ],
+        [
+          5
+        ],
+        [
+          6
+        ],
+        [
+          7
+        ]
+      ]
+    },
+    {
+      "sex": "m",
+      "hair": 19,
+      "distinctRenders": 9,
+      "equivalentPaletteGroups": [
+        [
+          0
+        ],
+        [
+          1
+        ],
+        [
+          2
+        ],
+        [
+          3
+        ],
+        [
+          4
+        ],
+        [
+          5
+        ],
+        [
+          6
+        ],
+        [
+          7
+        ],
+        [
+          8
+        ]
+      ]
+    },
+    {
+      "sex": "m",
+      "hair": 20,
+      "distinctRenders": 8,
+      "equivalentPaletteGroups": [
+        [
+          0,
+          8
+        ],
+        [
+          1
+        ],
+        [
+          2
+        ],
+        [
+          3
+        ],
+        [
+          4
+        ],
+        [
+          5
+        ],
+        [
+          6
+        ],
+        [
+          7
+        ]
+      ]
+    },
+    {
+      "sex": "m",
+      "hair": 22,
+      "distinctRenders": 8,
+      "equivalentPaletteGroups": [
+        [
+          0,
+          8
+        ],
+        [
+          1
+        ],
+        [
+          2
+        ],
+        [
+          3
+        ],
+        [
+          4
+        ],
+        [
+          5
+        ],
+        [
+          6
+        ],
+        [
+          7
+        ]
+      ]
+    },
+    {
+      "sex": "m",
+      "hair": 24,
+      "distinctRenders": 8,
+      "equivalentPaletteGroups": [
+        [
+          0,
+          8
+        ],
+        [
+          1
+        ],
+        [
+          2
+        ],
+        [
+          3
+        ],
+        [
+          4
+        ],
+        [
+          5
+        ],
+        [
+          6
+        ],
+        [
+          7
+        ]
+      ]
+    },
+    {
+      "sex": "m",
+      "hair": 26,
+      "distinctRenders": 8,
+      "equivalentPaletteGroups": [
+        [
+          0,
+          8
+        ],
+        [
+          1
+        ],
+        [
+          2
+        ],
+        [
+          3
+        ],
+        [
+          4
+        ],
+        [
+          5
+        ],
+        [
+          6
+        ],
+        [
+          7
+        ]
+      ]
+    },
+    {
+      "sex": "m",
+      "hair": 27,
+      "distinctRenders": 8,
+      "equivalentPaletteGroups": [
+        [
+          0,
+          8
+        ],
+        [
+          1
+        ],
+        [
+          2
+        ],
+        [
+          3
+        ],
+        [
+          4
+        ],
+        [
+          5
+        ],
+        [
+          6
+        ],
+        [
+          7
+        ]
+      ]
+    },
+    {
+      "sex": "m",
+      "hair": 28,
+      "distinctRenders": 9,
+      "equivalentPaletteGroups": [
+        [
+          0
+        ],
+        [
+          1
+        ],
+        [
+          2
+        ],
+        [
+          3
+        ],
+        [
+          4
+        ],
+        [
+          5
+        ],
+        [
+          6
+        ],
+        [
+          7
+        ],
+        [
+          8
+        ]
+      ]
+    },
+    {
+      "sex": "m",
+      "hair": 30,
+      "distinctRenders": 8,
+      "equivalentPaletteGroups": [
+        [
+          0,
+          6
+        ],
+        [
+          1
+        ],
+        [
+          2
+        ],
+        [
+          3
+        ],
+        [
+          4
+        ],
+        [
+          5
+        ],
+        [
+          7
+        ],
+        [
+          8
+        ]
+      ]
+    },
+    {
+      "sex": "m",
+      "hair": 32,
+      "distinctRenders": 8,
+      "equivalentPaletteGroups": [
+        [
+          0,
+          8
+        ],
+        [
+          1
+        ],
+        [
+          2
+        ],
+        [
+          3
+        ],
+        [
+          4
+        ],
+        [
+          5
+        ],
+        [
+          6
+        ],
+        [
+          7
+        ]
+      ]
+    },
+    {
+      "sex": "m",
+      "hair": 35,
+      "distinctRenders": 8,
+      "equivalentPaletteGroups": [
+        [
+          0,
+          4
+        ],
+        [
+          1
+        ],
+        [
+          2
+        ],
+        [
+          3
+        ],
+        [
+          5
+        ],
+        [
+          6
+        ],
+        [
+          7
+        ],
+        [
+          8
+        ]
+      ]
+    },
+    {
+      "sex": "m",
+      "hair": 39,
+      "distinctRenders": 8,
+      "equivalentPaletteGroups": [
+        [
+          0,
+          1
+        ],
+        [
+          2
+        ],
+        [
+          3
+        ],
+        [
+          4
+        ],
+        [
+          5
+        ],
+        [
+          6
+        ],
+        [
+          7
+        ],
+        [
+          8
+        ]
+      ]
+    },
+    {
+      "sex": "m",
+      "hair": 40,
+      "distinctRenders": 8,
+      "equivalentPaletteGroups": [
+        [
+          0,
+          5
+        ],
+        [
+          1
+        ],
+        [
+          2
+        ],
+        [
+          3
+        ],
+        [
+          4
+        ],
+        [
+          6
+        ],
+        [
+          7
+        ],
+        [
+          8
+        ]
+      ]
+    },
+    {
+      "sex": "m",
+      "hair": 42,
+      "distinctRenders": 9,
+      "equivalentPaletteGroups": [
+        [
+          0
+        ],
+        [
+          1
+        ],
+        [
+          2
+        ],
+        [
+          3
+        ],
+        [
+          4
+        ],
+        [
+          5
+        ],
+        [
+          6
+        ],
+        [
+          7
+        ],
+        [
+          8
+        ]
+      ]
+    },
+    {
+      "sex": "f",
+      "hair": 2,
+      "distinctRenders": 8,
+      "equivalentPaletteGroups": [
+        [
+          0,
+          8
+        ],
+        [
+          1
+        ],
+        [
+          2
+        ],
+        [
+          3
+        ],
+        [
+          4
+        ],
+        [
+          5
+        ],
+        [
+          6
+        ],
+        [
+          7
+        ]
+      ]
+    },
+    {
+      "sex": "f",
+      "hair": 4,
+      "distinctRenders": 8,
+      "equivalentPaletteGroups": [
+        [
+          0,
+          8
+        ],
+        [
+          1
+        ],
+        [
+          2
+        ],
+        [
+          3
+        ],
+        [
+          4
+        ],
+        [
+          5
+        ],
+        [
+          6
+        ],
+        [
+          7
+        ]
+      ]
+    },
+    {
+      "sex": "f",
+      "hair": 5,
+      "distinctRenders": 8,
+      "equivalentPaletteGroups": [
+        [
+          0,
+          8
+        ],
+        [
+          1
+        ],
+        [
+          2
+        ],
+        [
+          3
+        ],
+        [
+          4
+        ],
+        [
+          5
+        ],
+        [
+          6
+        ],
+        [
+          7
+        ]
+      ]
+    },
+    {
+      "sex": "f",
+      "hair": 12,
+      "distinctRenders": 8,
+      "equivalentPaletteGroups": [
+        [
+          0,
+          8
+        ],
+        [
+          1
+        ],
+        [
+          2
+        ],
+        [
+          3
+        ],
+        [
+          4
+        ],
+        [
+          5
+        ],
+        [
+          6
+        ],
+        [
+          7
+        ]
+      ]
+    },
+    {
+      "sex": "f",
+      "hair": 13,
+      "distinctRenders": 8,
+      "equivalentPaletteGroups": [
+        [
+          0,
+          8
+        ],
+        [
+          1
+        ],
+        [
+          2
+        ],
+        [
+          3
+        ],
+        [
+          4
+        ],
+        [
+          5
+        ],
+        [
+          6
+        ],
+        [
+          7
+        ]
+      ]
+    },
+    {
+      "sex": "f",
+      "hair": 14,
+      "distinctRenders": 8,
+      "equivalentPaletteGroups": [
+        [
+          0,
+          8
+        ],
+        [
+          1
+        ],
+        [
+          2
+        ],
+        [
+          3
+        ],
+        [
+          4
+        ],
+        [
+          5
+        ],
+        [
+          6
+        ],
+        [
+          7
+        ]
+      ]
+    },
+    {
+      "sex": "f",
+      "hair": 15,
+      "distinctRenders": 9,
+      "equivalentPaletteGroups": [
+        [
+          0
+        ],
+        [
+          1
+        ],
+        [
+          2
+        ],
+        [
+          3
+        ],
+        [
+          4
+        ],
+        [
+          5
+        ],
+        [
+          6
+        ],
+        [
+          7
+        ],
+        [
+          8
+        ]
+      ]
+    },
+    {
+      "sex": "f",
+      "hair": 17,
+      "distinctRenders": 8,
+      "equivalentPaletteGroups": [
+        [
+          0,
+          8
+        ],
+        [
+          1
+        ],
+        [
+          2
+        ],
+        [
+          3
+        ],
+        [
+          4
+        ],
+        [
+          5
+        ],
+        [
+          6
+        ],
+        [
+          7
+        ]
+      ]
+    },
+    {
+      "sex": "f",
+      "hair": 18,
+      "distinctRenders": 8,
+      "equivalentPaletteGroups": [
+        [
+          0,
+          8
+        ],
+        [
+          1
+        ],
+        [
+          2
+        ],
+        [
+          3
+        ],
+        [
+          4
+        ],
+        [
+          5
+        ],
+        [
+          6
+        ],
+        [
+          7
+        ]
+      ]
+    },
+    {
+      "sex": "f",
+      "hair": 19,
+      "distinctRenders": 8,
+      "equivalentPaletteGroups": [
+        [
+          0,
+          8
+        ],
+        [
+          1
+        ],
+        [
+          2
+        ],
+        [
+          3
+        ],
+        [
+          4
+        ],
+        [
+          5
+        ],
+        [
+          6
+        ],
+        [
+          7
+        ]
+      ]
+    },
+    {
+      "sex": "f",
+      "hair": 21,
+      "distinctRenders": 8,
+      "equivalentPaletteGroups": [
+        [
+          0,
+          8
+        ],
+        [
+          1
+        ],
+        [
+          2
+        ],
+        [
+          3
+        ],
+        [
+          4
+        ],
+        [
+          5
+        ],
+        [
+          6
+        ],
+        [
+          7
+        ]
+      ]
+    },
+    {
+      "sex": "f",
+      "hair": 24,
+      "distinctRenders": 8,
+      "equivalentPaletteGroups": [
+        [
+          0,
+          8
+        ],
+        [
+          1
+        ],
+        [
+          2
+        ],
+        [
+          3
+        ],
+        [
+          4
+        ],
+        [
+          5
+        ],
+        [
+          6
+        ],
+        [
+          7
+        ]
+      ]
+    },
+    {
+      "sex": "f",
+      "hair": 27,
+      "distinctRenders": 8,
+      "equivalentPaletteGroups": [
+        [
+          0,
+          8
+        ],
+        [
+          1
+        ],
+        [
+          2
+        ],
+        [
+          3
+        ],
+        [
+          4
+        ],
+        [
+          5
+        ],
+        [
+          6
+        ],
+        [
+          7
+        ]
+      ]
+    },
+    {
+      "sex": "f",
+      "hair": 30,
+      "distinctRenders": 8,
+      "equivalentPaletteGroups": [
+        [
+          0,
+          6
+        ],
+        [
+          1
+        ],
+        [
+          2
+        ],
+        [
+          3
+        ],
+        [
+          4
+        ],
+        [
+          5
+        ],
+        [
+          7
+        ],
+        [
+          8
+        ]
+      ]
+    },
+    {
+      "sex": "f",
+      "hair": 34,
+      "distinctRenders": 9,
+      "equivalentPaletteGroups": [
+        [
+          0
+        ],
+        [
+          1
+        ],
+        [
+          2
+        ],
+        [
+          3
+        ],
+        [
+          4
+        ],
+        [
+          5
+        ],
+        [
+          6
+        ],
+        [
+          7
+        ],
+        [
+          8
+        ]
+      ]
+    },
+    {
+      "sex": "f",
+      "hair": 35,
+      "distinctRenders": 9,
+      "equivalentPaletteGroups": [
+        [
+          0
+        ],
+        [
+          1
+        ],
+        [
+          2
+        ],
+        [
+          3
+        ],
+        [
+          4
+        ],
+        [
+          5
+        ],
+        [
+          6
+        ],
+        [
+          7
+        ],
+        [
+          8
+        ]
+      ]
+    },
+    {
+      "sex": "f",
+      "hair": 37,
+      "distinctRenders": 9,
+      "equivalentPaletteGroups": [
+        [
+          0
+        ],
+        [
+          1
+        ],
+        [
+          2
+        ],
+        [
+          3
+        ],
+        [
+          4
+        ],
+        [
+          5
+        ],
+        [
+          6
+        ],
+        [
+          7
+        ],
+        [
+          8
+        ]
+      ]
+    },
+    {
+      "sex": "f",
+      "hair": 39,
+      "distinctRenders": 9,
+      "equivalentPaletteGroups": [
+        [
+          0
+        ],
+        [
+          1
+        ],
+        [
+          2
+        ],
+        [
+          3
+        ],
+        [
+          4
+        ],
+        [
+          5
+        ],
+        [
+          6
+        ],
+        [
+          7
+        ],
+        [
+          8
+        ]
+      ]
+    },
+    {
+      "sex": "f",
+      "hair": 41,
+      "distinctRenders": 8,
+      "equivalentPaletteGroups": [
+        [
+          0,
+          6
+        ],
+        [
+          1
+        ],
+        [
+          2
+        ],
+        [
+          3
+        ],
+        [
+          4
+        ],
+        [
+          5
+        ],
+        [
+          7
+        ],
+        [
+          8
+        ]
+      ]
+    },
+    {
+      "sex": "f",
+      "hair": 42,
+      "distinctRenders": 9,
+      "equivalentPaletteGroups": [
+        [
+          0
+        ],
+        [
+          1
+        ],
+        [
+          2
+        ],
+        [
+          3
+        ],
+        [
+          4
+        ],
+        [
+          5
+        ],
+        [
+          6
+        ],
+        [
+          7
+        ],
+        [
+          8
+        ]
+      ]
+    }
+  ],
+  "stancePaletteEquivalence": [
+    {
+      "stance": "idle",
+      "sex": "m",
+      "hair": 2,
+      "distinctRenders": 8
+    },
+    {
+      "stance": "idle",
+      "sex": "m",
+      "hair": 5,
+      "distinctRenders": 8
+    },
+    {
+      "stance": "idle",
+      "sex": "m",
+      "hair": 7,
+      "distinctRenders": 8
+    },
+    {
+      "stance": "idle",
+      "sex": "m",
+      "hair": 8,
+      "distinctRenders": 8
+    },
+    {
+      "stance": "idle",
+      "sex": "m",
+      "hair": 10,
+      "distinctRenders": 8
+    },
+    {
+      "stance": "idle",
+      "sex": "m",
+      "hair": 12,
+      "distinctRenders": 8
+    },
+    {
+      "stance": "idle",
+      "sex": "m",
+      "hair": 17,
+      "distinctRenders": 8
+    },
+    {
+      "stance": "idle",
+      "sex": "m",
+      "hair": 19,
+      "distinctRenders": 9
+    },
+    {
+      "stance": "idle",
+      "sex": "m",
+      "hair": 20,
+      "distinctRenders": 8
+    },
+    {
+      "stance": "idle",
+      "sex": "m",
+      "hair": 22,
+      "distinctRenders": 8
+    },
+    {
+      "stance": "idle",
+      "sex": "m",
+      "hair": 24,
+      "distinctRenders": 8
+    },
+    {
+      "stance": "idle",
+      "sex": "m",
+      "hair": 26,
+      "distinctRenders": 8
+    },
+    {
+      "stance": "idle",
+      "sex": "m",
+      "hair": 27,
+      "distinctRenders": 8
+    },
+    {
+      "stance": "idle",
+      "sex": "m",
+      "hair": 28,
+      "distinctRenders": 9
+    },
+    {
+      "stance": "idle",
+      "sex": "m",
+      "hair": 30,
+      "distinctRenders": 8
+    },
+    {
+      "stance": "idle",
+      "sex": "m",
+      "hair": 32,
+      "distinctRenders": 8
+    },
+    {
+      "stance": "idle",
+      "sex": "m",
+      "hair": 35,
+      "distinctRenders": 8
+    },
+    {
+      "stance": "idle",
+      "sex": "m",
+      "hair": 39,
+      "distinctRenders": 8
+    },
+    {
+      "stance": "idle",
+      "sex": "m",
+      "hair": 40,
+      "distinctRenders": 8
+    },
+    {
+      "stance": "idle",
+      "sex": "m",
+      "hair": 42,
+      "distinctRenders": 9
+    },
+    {
+      "stance": "idle",
+      "sex": "f",
+      "hair": 2,
+      "distinctRenders": 8
+    },
+    {
+      "stance": "idle",
+      "sex": "f",
+      "hair": 4,
+      "distinctRenders": 8
+    },
+    {
+      "stance": "idle",
+      "sex": "f",
+      "hair": 5,
+      "distinctRenders": 8
+    },
+    {
+      "stance": "idle",
+      "sex": "f",
+      "hair": 12,
+      "distinctRenders": 8
+    },
+    {
+      "stance": "idle",
+      "sex": "f",
+      "hair": 13,
+      "distinctRenders": 8
+    },
+    {
+      "stance": "idle",
+      "sex": "f",
+      "hair": 14,
+      "distinctRenders": 8
+    },
+    {
+      "stance": "idle",
+      "sex": "f",
+      "hair": 15,
+      "distinctRenders": 9
+    },
+    {
+      "stance": "idle",
+      "sex": "f",
+      "hair": 17,
+      "distinctRenders": 8
+    },
+    {
+      "stance": "idle",
+      "sex": "f",
+      "hair": 18,
+      "distinctRenders": 8
+    },
+    {
+      "stance": "idle",
+      "sex": "f",
+      "hair": 19,
+      "distinctRenders": 8
+    },
+    {
+      "stance": "idle",
+      "sex": "f",
+      "hair": 21,
+      "distinctRenders": 8
+    },
+    {
+      "stance": "idle",
+      "sex": "f",
+      "hair": 24,
+      "distinctRenders": 8
+    },
+    {
+      "stance": "idle",
+      "sex": "f",
+      "hair": 27,
+      "distinctRenders": 8
+    },
+    {
+      "stance": "idle",
+      "sex": "f",
+      "hair": 30,
+      "distinctRenders": 8
+    },
+    {
+      "stance": "idle",
+      "sex": "f",
+      "hair": 34,
+      "distinctRenders": 9
+    },
+    {
+      "stance": "idle",
+      "sex": "f",
+      "hair": 35,
+      "distinctRenders": 9
+    },
+    {
+      "stance": "idle",
+      "sex": "f",
+      "hair": 37,
+      "distinctRenders": 9
+    },
+    {
+      "stance": "idle",
+      "sex": "f",
+      "hair": 39,
+      "distinctRenders": 9
+    },
+    {
+      "stance": "idle",
+      "sex": "f",
+      "hair": 41,
+      "distinctRenders": 8
+    },
+    {
+      "stance": "idle",
+      "sex": "f",
+      "hair": 42,
+      "distinctRenders": 9
+    },
+    {
+      "stance": "walk",
+      "sex": "m",
+      "hair": 2,
+      "distinctRenders": 8
+    },
+    {
+      "stance": "walk",
+      "sex": "m",
+      "hair": 5,
+      "distinctRenders": 8
+    },
+    {
+      "stance": "walk",
+      "sex": "m",
+      "hair": 7,
+      "distinctRenders": 8
+    },
+    {
+      "stance": "walk",
+      "sex": "m",
+      "hair": 8,
+      "distinctRenders": 8
+    },
+    {
+      "stance": "walk",
+      "sex": "m",
+      "hair": 10,
+      "distinctRenders": 8
+    },
+    {
+      "stance": "walk",
+      "sex": "m",
+      "hair": 12,
+      "distinctRenders": 8
+    },
+    {
+      "stance": "walk",
+      "sex": "m",
+      "hair": 17,
+      "distinctRenders": 8
+    },
+    {
+      "stance": "walk",
+      "sex": "m",
+      "hair": 19,
+      "distinctRenders": 9
+    },
+    {
+      "stance": "walk",
+      "sex": "m",
+      "hair": 20,
+      "distinctRenders": 8
+    },
+    {
+      "stance": "walk",
+      "sex": "m",
+      "hair": 22,
+      "distinctRenders": 8
+    },
+    {
+      "stance": "walk",
+      "sex": "m",
+      "hair": 24,
+      "distinctRenders": 8
+    },
+    {
+      "stance": "walk",
+      "sex": "m",
+      "hair": 26,
+      "distinctRenders": 8
+    },
+    {
+      "stance": "walk",
+      "sex": "m",
+      "hair": 27,
+      "distinctRenders": 8
+    },
+    {
+      "stance": "walk",
+      "sex": "m",
+      "hair": 28,
+      "distinctRenders": 9
+    },
+    {
+      "stance": "walk",
+      "sex": "m",
+      "hair": 30,
+      "distinctRenders": 8
+    },
+    {
+      "stance": "walk",
+      "sex": "m",
+      "hair": 32,
+      "distinctRenders": 8
+    },
+    {
+      "stance": "walk",
+      "sex": "m",
+      "hair": 35,
+      "distinctRenders": 8
+    },
+    {
+      "stance": "walk",
+      "sex": "m",
+      "hair": 39,
+      "distinctRenders": 8
+    },
+    {
+      "stance": "walk",
+      "sex": "m",
+      "hair": 40,
+      "distinctRenders": 8
+    },
+    {
+      "stance": "walk",
+      "sex": "m",
+      "hair": 42,
+      "distinctRenders": 9
+    },
+    {
+      "stance": "walk",
+      "sex": "f",
+      "hair": 2,
+      "distinctRenders": 8
+    },
+    {
+      "stance": "walk",
+      "sex": "f",
+      "hair": 4,
+      "distinctRenders": 8
+    },
+    {
+      "stance": "walk",
+      "sex": "f",
+      "hair": 5,
+      "distinctRenders": 8
+    },
+    {
+      "stance": "walk",
+      "sex": "f",
+      "hair": 12,
+      "distinctRenders": 8
+    },
+    {
+      "stance": "walk",
+      "sex": "f",
+      "hair": 13,
+      "distinctRenders": 8
+    },
+    {
+      "stance": "walk",
+      "sex": "f",
+      "hair": 14,
+      "distinctRenders": 8
+    },
+    {
+      "stance": "walk",
+      "sex": "f",
+      "hair": 15,
+      "distinctRenders": 9
+    },
+    {
+      "stance": "walk",
+      "sex": "f",
+      "hair": 17,
+      "distinctRenders": 8
+    },
+    {
+      "stance": "walk",
+      "sex": "f",
+      "hair": 18,
+      "distinctRenders": 8
+    },
+    {
+      "stance": "walk",
+      "sex": "f",
+      "hair": 19,
+      "distinctRenders": 8
+    },
+    {
+      "stance": "walk",
+      "sex": "f",
+      "hair": 21,
+      "distinctRenders": 8
+    },
+    {
+      "stance": "walk",
+      "sex": "f",
+      "hair": 24,
+      "distinctRenders": 8
+    },
+    {
+      "stance": "walk",
+      "sex": "f",
+      "hair": 27,
+      "distinctRenders": 8
+    },
+    {
+      "stance": "walk",
+      "sex": "f",
+      "hair": 30,
+      "distinctRenders": 8
+    },
+    {
+      "stance": "walk",
+      "sex": "f",
+      "hair": 34,
+      "distinctRenders": 9
+    },
+    {
+      "stance": "walk",
+      "sex": "f",
+      "hair": 35,
+      "distinctRenders": 9
+    },
+    {
+      "stance": "walk",
+      "sex": "f",
+      "hair": 37,
+      "distinctRenders": 9
+    },
+    {
+      "stance": "walk",
+      "sex": "f",
+      "hair": 39,
+      "distinctRenders": 9
+    },
+    {
+      "stance": "walk",
+      "sex": "f",
+      "hair": 41,
+      "distinctRenders": 8
+    },
+    {
+      "stance": "walk",
+      "sex": "f",
+      "hair": 42,
+      "distinctRenders": 9
+    },
+    {
+      "stance": "attack",
+      "sex": "m",
+      "hair": 2,
+      "distinctRenders": 8
+    },
+    {
+      "stance": "attack",
+      "sex": "m",
+      "hair": 5,
+      "distinctRenders": 8
+    },
+    {
+      "stance": "attack",
+      "sex": "m",
+      "hair": 7,
+      "distinctRenders": 8
+    },
+    {
+      "stance": "attack",
+      "sex": "m",
+      "hair": 8,
+      "distinctRenders": 8
+    },
+    {
+      "stance": "attack",
+      "sex": "m",
+      "hair": 10,
+      "distinctRenders": 8
+    },
+    {
+      "stance": "attack",
+      "sex": "m",
+      "hair": 12,
+      "distinctRenders": 8
+    },
+    {
+      "stance": "attack",
+      "sex": "m",
+      "hair": 17,
+      "distinctRenders": 8
+    },
+    {
+      "stance": "attack",
+      "sex": "m",
+      "hair": 19,
+      "distinctRenders": 9
+    },
+    {
+      "stance": "attack",
+      "sex": "m",
+      "hair": 20,
+      "distinctRenders": 8
+    },
+    {
+      "stance": "attack",
+      "sex": "m",
+      "hair": 22,
+      "distinctRenders": 8
+    },
+    {
+      "stance": "attack",
+      "sex": "m",
+      "hair": 24,
+      "distinctRenders": 8
+    },
+    {
+      "stance": "attack",
+      "sex": "m",
+      "hair": 26,
+      "distinctRenders": 8
+    },
+    {
+      "stance": "attack",
+      "sex": "m",
+      "hair": 27,
+      "distinctRenders": 8
+    },
+    {
+      "stance": "attack",
+      "sex": "m",
+      "hair": 28,
+      "distinctRenders": 9
+    },
+    {
+      "stance": "attack",
+      "sex": "m",
+      "hair": 30,
+      "distinctRenders": 8
+    },
+    {
+      "stance": "attack",
+      "sex": "m",
+      "hair": 32,
+      "distinctRenders": 8
+    },
+    {
+      "stance": "attack",
+      "sex": "m",
+      "hair": 35,
+      "distinctRenders": 8
+    },
+    {
+      "stance": "attack",
+      "sex": "m",
+      "hair": 39,
+      "distinctRenders": 8
+    },
+    {
+      "stance": "attack",
+      "sex": "m",
+      "hair": 40,
+      "distinctRenders": 8
+    },
+    {
+      "stance": "attack",
+      "sex": "m",
+      "hair": 42,
+      "distinctRenders": 9
+    },
+    {
+      "stance": "attack",
+      "sex": "f",
+      "hair": 2,
+      "distinctRenders": 8
+    },
+    {
+      "stance": "attack",
+      "sex": "f",
+      "hair": 4,
+      "distinctRenders": 8
+    },
+    {
+      "stance": "attack",
+      "sex": "f",
+      "hair": 5,
+      "distinctRenders": 8
+    },
+    {
+      "stance": "attack",
+      "sex": "f",
+      "hair": 12,
+      "distinctRenders": 8
+    },
+    {
+      "stance": "attack",
+      "sex": "f",
+      "hair": 13,
+      "distinctRenders": 8
+    },
+    {
+      "stance": "attack",
+      "sex": "f",
+      "hair": 14,
+      "distinctRenders": 8
+    },
+    {
+      "stance": "attack",
+      "sex": "f",
+      "hair": 15,
+      "distinctRenders": 9
+    },
+    {
+      "stance": "attack",
+      "sex": "f",
+      "hair": 17,
+      "distinctRenders": 8
+    },
+    {
+      "stance": "attack",
+      "sex": "f",
+      "hair": 18,
+      "distinctRenders": 8
+    },
+    {
+      "stance": "attack",
+      "sex": "f",
+      "hair": 19,
+      "distinctRenders": 8
+    },
+    {
+      "stance": "attack",
+      "sex": "f",
+      "hair": 21,
+      "distinctRenders": 8
+    },
+    {
+      "stance": "attack",
+      "sex": "f",
+      "hair": 24,
+      "distinctRenders": 8
+    },
+    {
+      "stance": "attack",
+      "sex": "f",
+      "hair": 27,
+      "distinctRenders": 8
+    },
+    {
+      "stance": "attack",
+      "sex": "f",
+      "hair": 30,
+      "distinctRenders": 8
+    },
+    {
+      "stance": "attack",
+      "sex": "f",
+      "hair": 34,
+      "distinctRenders": 9
+    },
+    {
+      "stance": "attack",
+      "sex": "f",
+      "hair": 35,
+      "distinctRenders": 9
+    },
+    {
+      "stance": "attack",
+      "sex": "f",
+      "hair": 37,
+      "distinctRenders": 9
+    },
+    {
+      "stance": "attack",
+      "sex": "f",
+      "hair": 39,
+      "distinctRenders": 9
+    },
+    {
+      "stance": "attack",
+      "sex": "f",
+      "hair": 41,
+      "distinctRenders": 8
+    },
+    {
+      "stance": "attack",
+      "sex": "f",
+      "hair": 42,
+      "distinctRenders": 9
+    }
+  ]
+}

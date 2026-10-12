@@ -6748,6 +6748,46 @@ The owner's second pass over v77, six notes, all built.
 * **Try it:** B → Items; E → Refine; watch the illustrated activity while farming.
 * **Checks:** Conflict resolution, full regression and publishing checks are tracked in workspace validation context.
 
+### 2026-10-12 — Celestial Vanguard cosmetic fitting preview
+* **Preview:** Added one halo, one pair of glasses, white archangel wings and a full armor costume. Toggle the four pieces independently and inspect front, side, back and unarmed attack animations, with mirror and still-frame controls.
+* **Art:** Uses locally saved Ragnarok Online renders with their original attachment data. The original-look option matches all 29 frames of the existing male Lord Knight exactly. The armor uses the Rune Knight alternate outfit; the first fitting is limited to the male Lord Knight. RO3 was researched as a reference; these are classic RO assets.
+* **Try it:** Run `python3 tools/preview_server.py 8000`, then open `/Updates/cosmetics-preview/`. This is a fitting preview; live gameplay and saves are unchanged, so the BUILD tag stays as it is. Costume weapons need fitting before live use.
+* **Checks:** Asset integrity and controller regressions, all 64 animated combinations/views in the shared browser, desktop/phone layout, reduced-motion mode and the standalone export checked. Detailed validation and review results are in workspace context. No push or deployment.
+
+### 2026-10-12 — All-class weapon and hairstyle fitting
+* **Preview:** Added a side-by-side male/female weapon test for all 19 current classes. Choose every weapon family your class allows, three hairstyles, and front/side/rear attack views. Mirror and still-frame controls are included.
+* **Attachment:** Uses Ragnarok's native weapon-specific actions with halo, glasses and wings attached. Novice gender differences, female Wizard staff attacks, katar/dagger choices and merchant-line axe/mace attacks use their matching action data. No manual hand offsets were added.
+* **Try it:** Run `python3 tools/preview_server.py 8000`, then open `/Updates/class-weapon-preview/`. Hairstyle IDs 40, 1 and 23 can be switched for both genders. The earlier four-slot preview is still available.
+* **Checks:** 50 class/gender/weapon routes, 450 animated looks and 3,870 frames checked for source coverage, visible weapon pixels, timing and clipping. Browser selection, hairstyle differences, mobile/tablet bounds, reduced motion and standalone export checked; detailed results are in workspace context.
+* **Scope:** Visual prototype only, using native RO weapon art and current class outfits. Existing custom weapon art, live gameplay and saves are unchanged; BUILD remains unchanged. No push or deployment.
+
+### 2026-10-12 — Twenty-style hair and native color studio
+* **Preview:** Added 20 randomly selected hairstyles for male and 20 for female characters, with independent color choices, all 19 classes and their weapon families. The selection is saved so it stays the same between visits.
+* **Colors:** Offers native palette IDs 0–8. Some source colors repeat: the checked styles have eight or nine distinct appearances. Original source palettes are used, with no painted replacements.
+* **Try it:** Run `python3 tools/preview_server.py 8000`, then open `/Updates/hair-color-preview/`. Lord Knight / Sword / Side has every style and color saved locally; other combinations may load from the sprite provider.
+* **Checks:** All 508 sample looks and 4,512 frames passed asset checks; all 27,000 selection routes passed automated mapping checks. The browser passed all 360 saved hair/color choices after a loading race was fixed. Full visual coverage of 27,000 looks is not claimed.
+* **Handoff:** `Updates/hair-color-preview/INTEGRATION-HANDOFF.md` records IDs, random selection method, source links, rebuild commands, save migration, rendering/weapon-clock integration and release gates for the next agent. This is a prototype; live gameplay and BUILD are unchanged. No push or deployment.
+
+### 2026-10-12 — Idle/walking studio and free-hosting assessment
+* **Preview:** Added Idle and Walking alongside Attack for all 19 classes, both genders and the selected hair/colors. Front, side and rear views use native actions. Weapons are naturally stowed in the checked idle/walking art; no manual hand overlays were added.
+* **Checks:** 1,536 saved looks and 10,200 frames passed; all 81,000 selection routes and 1,080 local browser stance/hair/color choices passed. Four idle sources have different equipped/unarmed frame counts; their native timing is preserved and documented.
+* **Performance:** Measured the existing decoder on old/new art and verified a lossless nine-animation bundle. The hosting report recommends static bundles, loading only the active look, a memory budget and fewer texture uploads. Full-game GPU/phone FPS remains unverified because shared-browser WebGL is unavailable.
+* **Free hosting:** Cloudflare's documented Pages/Functions/D1 free limits are linked in `Updates/hair-color-preview/PERFORMANCE-AND-HOSTING.md`. The proposed 7,515-file packaged site fits the 20,000-file Pages limit; actual account usage was not available, and no paid service was added.
+* **Try it:** `python3 tools/preview_server.py 8000` → `/Updates/hair-color-preview/` → Stance. The compact download embeds starter looks; other choices may need internet. Source and art are separate downloads. Updated handoff explains the remaining live integration work; game BUILD is unchanged. No push or deployment.
+
+### 2026-10-12 — Local Lord Knight sprite bundles (prototype)
+* **Preview:** Added a local Lord Knight workshop with both genders, the frozen 20 hairstyles each, nine native palettes and idle/walk/attack in three authored directions. Each appearance loads from one saved bundle. Mirror and still mode remain explicit; attack plays one whole swing and holds its final frame.
+* **Loading:** Retains one appearance and one decoded view, reuses the bundle when changing direction, and keeps the previous character visible if loading fails. Superseded requests and old canvases are released.
+* **Try it:** `python3 tools/preview_server.py 8000` → `/Updates/lord-knight-bundles/`. Use Character, Hairstyle, Native color, Animation and Play one attack.
+* **Scope:** Isolated prototype. Native source pixels, existing studios, game BUILD, saves and publishing configuration are preserved. Eight authored directions, other-class bundles, accessory selection and real-phone gameplay performance remain future work. No push, merge or deployment.
+* **Checks:** Bundle/frame validation, loader cancellation/timing/memory tests, real-browser desktop/phone checks and publishing isolation are recorded in workspace validation context and the workshop's verification notes.
+
+### 2026-10-12 — `grind-v118 Wardrobe fitting`
+* **Wardrobe:** Added a W tab and a Settings shortcut. Try male/female, 20 hairstyles each, nine colors and independent halo, glasses and wing switches. Preview idle, walking and one attack in eight directions; Apply saves, Cancel discards, and Original restores the old appearance.
+* **In game:** The first fitting equips on Lord Knight. Other classes retain their own outfits. Old saves and legacy hair numbers are preserved. The native sword follows the existing combat swing; unchanged frames avoid extra texture uploads.
+* **Storage:** Shared static body/accessory layers and separate hair atlases use 4.4 MB. Only small appearance IDs enter the existing save. The build checks Cloudflare's file limits; no new API or image storage service was added.
+* **Art and checks:** Recovered client palettes and female style27 differ from the earlier studio; the actual look is previewed before Apply. All 360 choices loaded in the browser; 2,560 frames across all accessory switches match the native renderer exactly. Desktop/mobile, save, failure/retry and affected regression checks are recorded in workspace context. Shared-browser WebGL is unavailable, so full 3D/phone performance still needs testing. No push, merge or deployment.
+
 ### 2026-10-12 — Repository cleanup (game stays grind-v117)
 * **Removed:** 13 obsolete files (9,450,056 bytes): the old `_login.html` and `_shot.html` game copies, `logic2.js`, four `_recon_v27*.png` screenshots, the temporary screenshot harness and decoder, the broken layered-thief preview, the superseded first attack-selection backup, the old weapon contact sheet and the blank `UI redesign/1` placeholder. Deleted files remain recoverable from Git history.
 * **Kept:** Live and fallback sprites, source sheets, current pose selections, generators, review workbooks, API code, migrations, test fixtures and the synchronized APNG/map backups. Original UI design archives and map reference material are retained. Some assets have identical bytes but distinct class/direction paths used by manifests; they must stay.
@@ -6784,3 +6824,8 @@ The owner's second pass over v77, six notes, all built.
 * **Try it:** E or B → check the capacity → use Next/Previous; search for an item from a later page, then clear the search. Sell an item and watch the count update.
 * **Checks:** Ten affected regression/smoke suites passed; unrelated prior checks reused. All 1,000 items remain reachable exactly once, with later-page selling and whole-bag filters covered. Progression measurements are unchanged. Desktop and phone UI checks use synthetic inventory and a renderer stub because shared-browser WebGL is unavailable. Final browser, syntax and whitespace results are recorded in workspace validation context. No push or deployment.
 * **Scope clarification:** Equipment paging is in Loadout. Bag's Items tab continues to show materials and consumables; its fixed header shows the equipment bag capacity. Browser checks passed at 1440×1000 and 390×844, including real pager clicks, whole-bag search, a later-page sale and capacity visibility while scrolling.
+
+### 2026-10-12 — `grind-v122 Wardrobe and inventory integration`
+* **Combined:** The Lord Knight Wardrobe now includes the latest inventory paging, bag capacity display, panel controls and Escape behavior from main. All cosmetic studios and local sprite packs are retained.
+* **Try it:** W → choose a look → Apply; E → Next/Previous; press Escape to close panels. The first native fitting still equips on Lord Knight.
+* **Checks:** Full regression and merge validation are tracked in workspace context. Real WebGL gameplay and phone performance still need device testing. This update prepares the working branch for a PR.

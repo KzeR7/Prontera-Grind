@@ -1,0 +1,328 @@
+{
+  "provider": "https://github.com/adsonpleal/ragassets",
+  "art": "Ragnarok Online / Gravity",
+  "reference": "https://ro3.roglobal.com/",
+  "note": "Classic RO rendered art. No RO3 sprites are included. Costume is the Rune Knight alternate outfit used as an appearance only.",
+  "files": [
+    {
+      "file": "0-S.png",
+      "url": "https://assets.latam-tools.com.br/image?job=4008&outfit=0&head=40&headPalette=0&gender=male&action=8&headgear=0%2C0&garment=0&enableShadow=true&canvas=200x200%2B100%2B150",
+      "sha256": "9dda8713739bfad86e13a6088bb9f170f3ebdd6ef8c82d6e7faa7b0aebb26807"
+    },
+    {
+      "file": "0-SE.png",
+      "url": "https://assets.latam-tools.com.br/image?job=4008&outfit=0&head=40&headPalette=0&gender=male&action=15&headgear=0%2C0&garment=0&enableShadow=true&canvas=200x200%2B100%2B150",
+      "sha256": "8fe47aedb7f415864592007ec940259f24d58bd14a9a6d1608969657583d6cfb"
+    },
+    {
+      "file": "0-NE.png",
+      "url": "https://assets.latam-tools.com.br/image?job=4008&outfit=0&head=40&headPalette=0&gender=male&action=13&headgear=0%2C0&garment=0&enableShadow=true&canvas=200x200%2B100%2B150",
+      "sha256": "5695b03b0e95aeabd7d9763fa12e2c75ae5063dd47b45b4146e3a37f07d46b09"
+    },
+    {
+      "file": "0-attack.png",
+      "url": "https://assets.latam-tools.com.br/image?job=4008&outfit=0&head=40&headPalette=0&gender=male&action=47&headgear=0%2C0&garment=0&enableShadow=true&canvas=200x200%2B100%2B150",
+      "sha256": "c7106c544bbfa6a3770e9a474dc32636c4e49ef3fe99adc1e38fa30f08d62aa2"
+    },
+    {
+      "file": "1-S.png",
+      "url": "https://assets.latam-tools.com.br/image?job=4008&outfit=0&head=40&headPalette=0&gender=male&action=8&headgear=69%2C0&garment=0&enableShadow=true&canvas=200x200%2B100%2B150",
+      "sha256": "01ffa92802ba280de9ff93ad7daa64a14c3edbe44b3a9d9ff132c148d52981d7"
+    },
+    {
+      "file": "1-SE.png",
+      "url": "https://assets.latam-tools.com.br/image?job=4008&outfit=0&head=40&headPalette=0&gender=male&action=15&headgear=69%2C0&garment=0&enableShadow=true&canvas=200x200%2B100%2B150",
+      "sha256": "b70f96266ed859d6f276455cc9d5652325bf31d57a0d202600b53a4a49dd67cc"
+    },
+    {
+      "file": "1-NE.png",
+      "url": "https://assets.latam-tools.com.br/image?job=4008&outfit=0&head=40&headPalette=0&gender=male&action=13&headgear=69%2C0&garment=0&enableShadow=true&canvas=200x200%2B100%2B150",
+      "sha256": "c5fbe5bc1fa7541c4d4d5fad9f4bc947c7655201a275f109970527c52e8c93be"
+    },
+    {
+      "file": "1-attack.png",
+      "url": "https://assets.latam-tools.com.br/image?job=4008&outfit=0&head=40&headPalette=0&gender=male&action=47&headgear=69%2C0&garment=0&enableShadow=true&canvas=200x200%2B100%2B150",
+      "sha256": "4b2d46c6ed3f2e673ed35fb24d0d3c5c68348abebbb040fc24e1db9626a9cfc3"
+    },
+    {
+      "file": "2-S.png",
+      "url": "https://assets.latam-tools.com.br/image?job=4008&outfit=0&head=40&headPalette=0&gender=male&action=8&headgear=0%2C3&garment=0&enableShadow=true&canvas=200x200%2B100%2B150",
+      "sha256": "4e84e5dd2bcdfef52980cf2935da212a9c5beb3d3566cfa470a8e527a2ded458"
+    },
+    {
+      "file": "2-SE.png",
+      "url": "https://assets.latam-tools.com.br/image?job=4008&outfit=0&head=40&headPalette=0&gender=male&action=15&headgear=0%2C3&garment=0&enableShadow=true&canvas=200x200%2B100%2B150",
+      "sha256": "589063dc35f9f89b2f232b5eda9fcb8b4c93d7213eb980db3617653c41989f05"
+    },
+    {
+      "file": "2-NE.png",
+      "url": "https://assets.latam-tools.com.br/image?job=4008&outfit=0&head=40&headPalette=0&gender=male&action=13&headgear=0%2C3&garment=0&enableShadow=true&canvas=200x200%2B100%2B150",
+      "sha256": "5695b03b0e95aeabd7d9763fa12e2c75ae5063dd47b45b4146e3a37f07d46b09"
+    },
+    {
+      "file": "2-attack.png",
+      "url": "https://assets.latam-tools.com.br/image?job=4008&outfit=0&head=40&headPalette=0&gender=male&action=47&headgear=0%2C3&garment=0&enableShadow=true&canvas=200x200%2B100%2B150",
+      "sha256": "4982bb281b0326bac8d61fd34941eec0348ba57cf58e064b6df272a2cdf84a8a"
+    },
+    {
+      "file": "3-S.png",
+      "url": "https://assets.latam-tools.com.br/image?job=4008&outfit=0&head=40&headPalette=0&gender=male&action=8&headgear=69%2C3&garment=0&enableShadow=true&canvas=200x200%2B100%2B150",
+      "sha256": "cbd8b6554a0023f5f33d2b8185f340c221df7b3df875c3061752ac29192be62f"
+    },
+    {
+      "file": "3-SE.png",
+      "url": "https://assets.latam-tools.com.br/image?job=4008&outfit=0&head=40&headPalette=0&gender=male&action=15&headgear=69%2C3&garment=0&enableShadow=true&canvas=200x200%2B100%2B150",
+      "sha256": "5090c29b7c383514858441a0dcec139f829d6abe7bc3aff0fb3fce989244f5cb"
+    },
+    {
+      "file": "3-NE.png",
+      "url": "https://assets.latam-tools.com.br/image?job=4008&outfit=0&head=40&headPalette=0&gender=male&action=13&headgear=69%2C3&garment=0&enableShadow=true&canvas=200x200%2B100%2B150",
+      "sha256": "c5fbe5bc1fa7541c4d4d5fad9f4bc947c7655201a275f109970527c52e8c93be"
+    },
+    {
+      "file": "3-attack.png",
+      "url": "https://assets.latam-tools.com.br/image?job=4008&outfit=0&head=40&headPalette=0&gender=male&action=47&headgear=69%2C3&garment=0&enableShadow=true&canvas=200x200%2B100%2B150",
+      "sha256": "d854866fbc77da6cdc84c2f2f564ffc9346f852fef1ddb61967ff661789e5cf3"
+    },
+    {
+      "file": "4-S.png",
+      "url": "https://assets.latam-tools.com.br/image?job=4008&outfit=0&head=40&headPalette=0&gender=male&action=8&headgear=0%2C0&garment=1&enableShadow=true&canvas=200x200%2B100%2B150",
+      "sha256": "b524c06f3a802cc18b43276c5f87e884fbcbc352e3e922af7e1e8bcf879bc76d"
+    },
+    {
+      "file": "4-SE.png",
+      "url": "https://assets.latam-tools.com.br/image?job=4008&outfit=0&head=40&headPalette=0&gender=male&action=15&headgear=0%2C0&garment=1&enableShadow=true&canvas=200x200%2B100%2B150",
+      "sha256": "e35db8e14a1f0cd05f81961638cdcbdfd6f24a65efdaaa2fed373dceb71a3702"
+    },
+    {
+      "file": "4-NE.png",
+      "url": "https://assets.latam-tools.com.br/image?job=4008&outfit=0&head=40&headPalette=0&gender=male&action=13&headgear=0%2C0&garment=1&enableShadow=true&canvas=200x200%2B100%2B150",
+      "sha256": "9d096827eb79d9f3ccff73715e1c558d78dd9f95368e652b8a96b3a880df2f26"
+    },
+    {
+      "file": "4-attack.png",
+      "url": "https://assets.latam-tools.com.br/image?job=4008&outfit=0&head=40&headPalette=0&gender=male&action=47&headgear=0%2C0&garment=1&enableShadow=true&canvas=200x200%2B100%2B150",
+      "sha256": "98862549425d59cdc73f0df4998c72a6b315e49c924c316e1e2ee1e9712fc6ea"
+    },
+    {
+      "file": "5-S.png",
+      "url": "https://assets.latam-tools.com.br/image?job=4008&outfit=0&head=40&headPalette=0&gender=male&action=8&headgear=69%2C0&garment=1&enableShadow=true&canvas=200x200%2B100%2B150",
+      "sha256": "f2596bdfed7883161c124f74cfadb041ab027112b50b97981fb40d081493ab62"
+    },
+    {
+      "file": "5-SE.png",
+      "url": "https://assets.latam-tools.com.br/image?job=4008&outfit=0&head=40&headPalette=0&gender=male&action=15&headgear=69%2C0&garment=1&enableShadow=true&canvas=200x200%2B100%2B150",
+      "sha256": "bedffb53734b18c85d08b437c490065d3937bd3e8c0c32be4829ed1da5ceeecc"
+    },
+    {
+      "file": "5-NE.png",
+      "url": "https://assets.latam-tools.com.br/image?job=4008&outfit=0&head=40&headPalette=0&gender=male&action=13&headgear=69%2C0&garment=1&enableShadow=true&canvas=200x200%2B100%2B150",
+      "sha256": "5b33abf29c6334353f1c831abc106c39d34c6252243a088feec43a0f2512b998"
+    },
+    {
+      "file": "5-attack.png",
+      "url": "https://assets.latam-tools.com.br/image?job=4008&outfit=0&head=40&headPalette=0&gender=male&action=47&headgear=69%2C0&garment=1&enableShadow=true&canvas=200x200%2B100%2B150",
+      "sha256": "618a9350bde5a07f9228354a5e2eb08c8e3aa79851946557d82115d6b3b8be64"
+    },
+    {
+      "file": "6-S.png",
+      "url": "https://assets.latam-tools.com.br/image?job=4008&outfit=0&head=40&headPalette=0&gender=male&action=8&headgear=0%2C3&garment=1&enableShadow=true&canvas=200x200%2B100%2B150",
+      "sha256": "58313c0df5cd4c53b4c1becba7034eaf7b74d176476c9a9d117a273b08f460c2"
+    },
+    {
+      "file": "6-SE.png",
+      "url": "https://assets.latam-tools.com.br/image?job=4008&outfit=0&head=40&headPalette=0&gender=male&action=15&headgear=0%2C3&garment=1&enableShadow=true&canvas=200x200%2B100%2B150",
+      "sha256": "956d9660ab3ff6b3f86ea882d561d2744b5a038f2b08193c4738fb37df121e29"
+    },
+    {
+      "file": "6-NE.png",
+      "url": "https://assets.latam-tools.com.br/image?job=4008&outfit=0&head=40&headPalette=0&gender=male&action=13&headgear=0%2C3&garment=1&enableShadow=true&canvas=200x200%2B100%2B150",
+      "sha256": "9d096827eb79d9f3ccff73715e1c558d78dd9f95368e652b8a96b3a880df2f26"
+    },
+    {
+      "file": "6-attack.png",
+      "url": "https://assets.latam-tools.com.br/image?job=4008&outfit=0&head=40&headPalette=0&gender=male&action=47&headgear=0%2C3&garment=1&enableShadow=true&canvas=200x200%2B100%2B150",
+      "sha256": "7a46ff5dc840d947abe408a9b3cf025165cdb44f7c9cde475ebcbc75b7083708"
+    },
+    {
+      "file": "7-S.png",
+      "url": "https://assets.latam-tools.com.br/image?job=4008&outfit=0&head=40&headPalette=0&gender=male&action=8&headgear=69%2C3&garment=1&enableShadow=true&canvas=200x200%2B100%2B150",
+      "sha256": "eae2f4797b08f963d05b052fb14f455f77e456ccb18c165d86b3b86998cf0356"
+    },
+    {
+      "file": "7-SE.png",
+      "url": "https://assets.latam-tools.com.br/image?job=4008&outfit=0&head=40&headPalette=0&gender=male&action=15&headgear=69%2C3&garment=1&enableShadow=true&canvas=200x200%2B100%2B150",
+      "sha256": "73af57135121089d78e61fe5a4615743c9c87ad93aef05ff28047d7ef33c381f"
+    },
+    {
+      "file": "7-NE.png",
+      "url": "https://assets.latam-tools.com.br/image?job=4008&outfit=0&head=40&headPalette=0&gender=male&action=13&headgear=69%2C3&garment=1&enableShadow=true&canvas=200x200%2B100%2B150",
+      "sha256": "5b33abf29c6334353f1c831abc106c39d34c6252243a088feec43a0f2512b998"
+    },
+    {
+      "file": "7-attack.png",
+      "url": "https://assets.latam-tools.com.br/image?job=4008&outfit=0&head=40&headPalette=0&gender=male&action=47&headgear=69%2C3&garment=1&enableShadow=true&canvas=200x200%2B100%2B150",
+      "sha256": "1dd748fe74c2118057b5d893f67cc41c8f410279fcfb8d4868c1cc605bed6258"
+    },
+    {
+      "file": "8-S.png",
+      "url": "https://assets.latam-tools.com.br/image?job=4054&outfit=1&head=40&headPalette=0&gender=male&action=8&headgear=0%2C0&garment=0&enableShadow=true&canvas=200x200%2B100%2B146",
+      "sha256": "04c01cdbff595541fe356506c68ab5baca9416321afb794cb67c6a2a17c30498"
+    },
+    {
+      "file": "8-SE.png",
+      "url": "https://assets.latam-tools.com.br/image?job=4054&outfit=1&head=40&headPalette=0&gender=male&action=15&headgear=0%2C0&garment=0&enableShadow=true&canvas=200x200%2B100%2B146",
+      "sha256": "5a965f300301d422d1928be24bae4018473eaba649314fe366a8d952f6854e8d"
+    },
+    {
+      "file": "8-NE.png",
+      "url": "https://assets.latam-tools.com.br/image?job=4054&outfit=1&head=40&headPalette=0&gender=male&action=13&headgear=0%2C0&garment=0&enableShadow=true&canvas=200x200%2B100%2B146",
+      "sha256": "42552447bacde650430c104575c7ce33d3955119537d76d13debc846edc6cd34"
+    },
+    {
+      "file": "8-attack.png",
+      "url": "https://assets.latam-tools.com.br/image?job=4054&outfit=1&head=40&headPalette=0&gender=male&action=47&headgear=0%2C0&garment=0&enableShadow=true&canvas=200x200%2B100%2B146",
+      "sha256": "b56239b931753387c93a9cd9d78e0992018c80ed63e2bd9155338c9208dd6570"
+    },
+    {
+      "file": "9-S.png",
+      "url": "https://assets.latam-tools.com.br/image?job=4054&outfit=1&head=40&headPalette=0&gender=male&action=8&headgear=69%2C0&garment=0&enableShadow=true&canvas=200x200%2B100%2B146",
+      "sha256": "3cd433e6d0d4ed22b4bf32183c9d97563d696f7f4a540f048b584cf2337eb751"
+    },
+    {
+      "file": "9-SE.png",
+      "url": "https://assets.latam-tools.com.br/image?job=4054&outfit=1&head=40&headPalette=0&gender=male&action=15&headgear=69%2C0&garment=0&enableShadow=true&canvas=200x200%2B100%2B146",
+      "sha256": "e3a870cbb1975447e2f64294435d9cd075b3a69a31f30f961aa6ef0fafe4b40e"
+    },
+    {
+      "file": "9-NE.png",
+      "url": "https://assets.latam-tools.com.br/image?job=4054&outfit=1&head=40&headPalette=0&gender=male&action=13&headgear=69%2C0&garment=0&enableShadow=true&canvas=200x200%2B100%2B146",
+      "sha256": "7b00ee75bbbce7fa0412d50fb0703684cd1da9e5b4ba6272f87c3daf0b8d096a"
+    },
+    {
+      "file": "9-attack.png",
+      "url": "https://assets.latam-tools.com.br/image?job=4054&outfit=1&head=40&headPalette=0&gender=male&action=47&headgear=69%2C0&garment=0&enableShadow=true&canvas=200x200%2B100%2B146",
+      "sha256": "21464779f5213e0d8e168158f6ce510939fdf23e7936c669c8219e22e2a7dfa8"
+    },
+    {
+      "file": "10-S.png",
+      "url": "https://assets.latam-tools.com.br/image?job=4054&outfit=1&head=40&headPalette=0&gender=male&action=8&headgear=0%2C3&garment=0&enableShadow=true&canvas=200x200%2B100%2B146",
+      "sha256": "9bd2ac2b603a3ac2b19f268595b59bd2320264fc54a8b6d57ba04fd9d7de5ab6"
+    },
+    {
+      "file": "10-SE.png",
+      "url": "https://assets.latam-tools.com.br/image?job=4054&outfit=1&head=40&headPalette=0&gender=male&action=15&headgear=0%2C3&garment=0&enableShadow=true&canvas=200x200%2B100%2B146",
+      "sha256": "e0796477c3d34e7988b9e4ed372335260ecab60af0f1981529134dca544ba3b8"
+    },
+    {
+      "file": "10-NE.png",
+      "url": "https://assets.latam-tools.com.br/image?job=4054&outfit=1&head=40&headPalette=0&gender=male&action=13&headgear=0%2C3&garment=0&enableShadow=true&canvas=200x200%2B100%2B146",
+      "sha256": "42552447bacde650430c104575c7ce33d3955119537d76d13debc846edc6cd34"
+    },
+    {
+      "file": "10-attack.png",
+      "url": "https://assets.latam-tools.com.br/image?job=4054&outfit=1&head=40&headPalette=0&gender=male&action=47&headgear=0%2C3&garment=0&enableShadow=true&canvas=200x200%2B100%2B146",
+      "sha256": "d5b5db04691e5b01e8cc51395ae6fcb70764f36989a4aac0472fb1ac3fcd7030"
+    },
+    {
+      "file": "11-S.png",
+      "url": "https://assets.latam-tools.com.br/image?job=4054&outfit=1&head=40&headPalette=0&gender=male&action=8&headgear=69%2C3&garment=0&enableShadow=true&canvas=200x200%2B100%2B146",
+      "sha256": "3826c3da7ad8a08421c209fd6dd1ddaecc5cbb8e1f9662c38ad364f308ccf603"
+    },
+    {
+      "file": "11-SE.png",
+      "url": "https://assets.latam-tools.com.br/image?job=4054&outfit=1&head=40&headPalette=0&gender=male&action=15&headgear=69%2C3&garment=0&enableShadow=true&canvas=200x200%2B100%2B146",
+      "sha256": "1a4fa19eade7e57a05f2cf1de4e544563a1657443d39b826d38bc04f22b6ee1f"
+    },
+    {
+      "file": "11-NE.png",
+      "url": "https://assets.latam-tools.com.br/image?job=4054&outfit=1&head=40&headPalette=0&gender=male&action=13&headgear=69%2C3&garment=0&enableShadow=true&canvas=200x200%2B100%2B146",
+      "sha256": "7b00ee75bbbce7fa0412d50fb0703684cd1da9e5b4ba6272f87c3daf0b8d096a"
+    },
+    {
+      "file": "11-attack.png",
+      "url": "https://assets.latam-tools.com.br/image?job=4054&outfit=1&head=40&headPalette=0&gender=male&action=47&headgear=69%2C3&garment=0&enableShadow=true&canvas=200x200%2B100%2B146",
+      "sha256": "2d0f9e447e6623626b88e807f4c7211ac00ab4883f43b620f57668d4a4923b40"
+    },
+    {
+      "file": "12-S.png",
+      "url": "https://assets.latam-tools.com.br/image?job=4054&outfit=1&head=40&headPalette=0&gender=male&action=8&headgear=0%2C0&garment=1&enableShadow=true&canvas=200x200%2B100%2B146",
+      "sha256": "48d83c2bfa12a3c19a8f3b26663f6841671750b7af0d75cf4091701296740ff3"
+    },
+    {
+      "file": "12-SE.png",
+      "url": "https://assets.latam-tools.com.br/image?job=4054&outfit=1&head=40&headPalette=0&gender=male&action=15&headgear=0%2C0&garment=1&enableShadow=true&canvas=200x200%2B100%2B146",
+      "sha256": "73481923177badae18af9a695c8f928d1517e23f0014d3ee8281dcece9829462"
+    },
+    {
+      "file": "12-NE.png",
+      "url": "https://assets.latam-tools.com.br/image?job=4054&outfit=1&head=40&headPalette=0&gender=male&action=13&headgear=0%2C0&garment=1&enableShadow=true&canvas=200x200%2B100%2B146",
+      "sha256": "dc647d4a460d4f860cd94f376a2a604911b811f0434797125ca9612c6558e4f9"
+    },
+    {
+      "file": "12-attack.png",
+      "url": "https://assets.latam-tools.com.br/image?job=4054&outfit=1&head=40&headPalette=0&gender=male&action=47&headgear=0%2C0&garment=1&enableShadow=true&canvas=200x200%2B100%2B146",
+      "sha256": "dd11a26443f9b076602b9952c8b440833be53357db0e11a54d0336ba65bc86ee"
+    },
+    {
+      "file": "13-S.png",
+      "url": "https://assets.latam-tools.com.br/image?job=4054&outfit=1&head=40&headPalette=0&gender=male&action=8&headgear=69%2C0&garment=1&enableShadow=true&canvas=200x200%2B100%2B146",
+      "sha256": "22e85b5bfeb39ff9acaeb433b1de0ff8d5fa072a8389d5194119ce9cdf77f820"
+    },
+    {
+      "file": "13-SE.png",
+      "url": "https://assets.latam-tools.com.br/image?job=4054&outfit=1&head=40&headPalette=0&gender=male&action=15&headgear=69%2C0&garment=1&enableShadow=true&canvas=200x200%2B100%2B146",
+      "sha256": "78d50d94daf6357b99d813a9e5bb2c97a9cfb8740deeed7c167dab2b6e77c06e"
+    },
+    {
+      "file": "13-NE.png",
+      "url": "https://assets.latam-tools.com.br/image?job=4054&outfit=1&head=40&headPalette=0&gender=male&action=13&headgear=69%2C0&garment=1&enableShadow=true&canvas=200x200%2B100%2B146",
+      "sha256": "348475d6b39cf0d7db78a2655fc200b1c72ea830f3bc369769ef7adc1251c6f7"
+    },
+    {
+      "file": "13-attack.png",
+      "url": "https://assets.latam-tools.com.br/image?job=4054&outfit=1&head=40&headPalette=0&gender=male&action=47&headgear=69%2C0&garment=1&enableShadow=true&canvas=200x200%2B100%2B146",
+      "sha256": "8a8e644c301410a834c865adc91a007bb1ee6406f06dccb073235b4bfcb0a2f1"
+    },
+    {
+      "file": "14-S.png",
+      "url": "https://assets.latam-tools.com.br/image?job=4054&outfit=1&head=40&headPalette=0&gender=male&action=8&headgear=0%2C3&garment=1&enableShadow=true&canvas=200x200%2B100%2B146",
+      "sha256": "19910f5541f541fcc2b6b705b1b8c9a45bf0af92075ded6c8a58431cbf143fb7"
+    },
+    {
+      "file": "14-SE.png",
+      "url": "https://assets.latam-tools.com.br/image?job=4054&outfit=1&head=40&headPalette=0&gender=male&action=15&headgear=0%2C3&garment=1&enableShadow=true&canvas=200x200%2B100%2B146",
+      "sha256": "2a1c1b93609345821bcccb56684aa65914bf97aee9d8a2e8b4ad9d4e82216930"
+    },
+    {
+      "file": "14-NE.png",
+      "url": "https://assets.latam-tools.com.br/image?job=4054&outfit=1&head=40&headPalette=0&gender=male&action=13&headgear=0%2C3&garment=1&enableShadow=true&canvas=200x200%2B100%2B146",
+      "sha256": "dc647d4a460d4f860cd94f376a2a604911b811f0434797125ca9612c6558e4f9"
+    },
+    {
+      "file": "14-attack.png",
+      "url": "https://assets.latam-tools.com.br/image?job=4054&outfit=1&head=40&headPalette=0&gender=male&action=47&headgear=0%2C3&garment=1&enableShadow=true&canvas=200x200%2B100%2B146",
+      "sha256": "dfab1022410f1c1acc5d441b1c3d9bbaf31d6f8fd613efd8a13e770c1a74f08f"
+    },
+    {
+      "file": "15-S.png",
+      "url": "https://assets.latam-tools.com.br/image?job=4054&outfit=1&head=40&headPalette=0&gender=male&action=8&headgear=69%2C3&garment=1&enableShadow=true&canvas=200x200%2B100%2B146",
+      "sha256": "9fe0729954d584d4f2e349ece851fe67e65bc6d2541e00162aceb82f60e7b294"
+    },
+    {
+      "file": "15-SE.png",
+      "url": "https://assets.latam-tools.com.br/image?job=4054&outfit=1&head=40&headPalette=0&gender=male&action=15&headgear=69%2C3&garment=1&enableShadow=true&canvas=200x200%2B100%2B146",
+      "sha256": "166462338d5e191839adca2bdc135f87072d83e73e197aa2cec90edb95a9879d"
+    },
+    {
+      "file": "15-NE.png",
+      "url": "https://assets.latam-tools.com.br/image?job=4054&outfit=1&head=40&headPalette=0&gender=male&action=13&headgear=69%2C3&garment=1&enableShadow=true&canvas=200x200%2B100%2B146",
+      "sha256": "348475d6b39cf0d7db78a2655fc200b1c72ea830f3bc369769ef7adc1251c6f7"
+    },
+    {
+      "file": "15-attack.png",
+      "url": "https://assets.latam-tools.com.br/image?job=4054&outfit=1&head=40&headPalette=0&gender=male&action=47&headgear=69%2C3&garment=1&enableShadow=true&canvas=200x200%2B100%2B146",
+      "sha256": "116b9e6ef2e9a2d80c475090b353a560fd593bcfe1548dd2966fd1fc5e2b5fd7"
+    }
+  ]
+}

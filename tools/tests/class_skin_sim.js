@@ -929,9 +929,8 @@ const settle = async (X, limit = 2000) => {
   });
 
   await t('the hairstyle and the held weapon are honestly reported', () => {
-    assert.ok(src.includes('hair included'), 'the hair is stated as part of the art');
-    assert.ok(src.includes('Costumes - outfits that restyle a class without touching its stats - are planned for a future patch.'),
-      'and the Costume slot is honestly promised for a future patch');
+    assert.ok(src.includes('Open Wardrobe'), 'appearance controls lead to the Wardrobe fitting');
+    assert.ok(src.includes('Other classes keep their own art.'), 'the first Lord Knight fitting scope is explicit');
     assert.ok(!src.includes('data-a="hair"'), 'no live hair action is offered while the art is fixed');
     assert.ok(src.includes("hair:v=>{S.hair=(((S.hair|0)+(+v||1))%19+19)%19;heroKey='';ui();save()}"),
       'the save field and its handler stay for saves and for the pack fallback');

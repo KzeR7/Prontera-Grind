@@ -1,0 +1,4143 @@
+{
+  "schemaVersion": 1,
+  "source": "https://grf.robrowser.com/",
+  "catalogSha256": "9d3754132ee186f948638d67672334a3ca9a0fc5389a62a12993f509f89d6abe",
+  "files": [
+    {
+      "path": "data/imf/기사_남.imf",
+      "url": "https://grf.robrowser.com/data/imf/%C2%B1%C3%A2%C2%BB%C3%A7_%C2%B3%C2%B2.imf",
+      "bytes": 11796,
+      "sha256": "de221e85dacc8067339c49acbc2e8d9493b0fc7c036f3337ae71349b5f4986e8",
+      "header": "ae47813f"
+    },
+    {
+      "path": "data/imf/기사_여.imf",
+      "url": "https://grf.robrowser.com/data/imf/%C2%B1%C3%A2%C2%BB%C3%A7_%C2%BF%C2%A9.imf",
+      "bytes": 11796,
+      "sha256": "519b13a609a8eef42e3afe8426475c4890c8b1e221b0995b806fcc8b1524fb8b",
+      "header": "ae47813f"
+    },
+    {
+      "path": "data/palette/머리/머리10_남_0.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE10_%C2%B3%C2%B2_0.pal",
+      "bytes": 1024,
+      "sha256": "08ee83aa865e3310ac14f0893e861d849255f6daa86084b3e677d06a9ac9feca",
+      "header": "c8f8d300"
+    },
+    {
+      "path": "data/palette/머리/머리10_남_1.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE10_%C2%B3%C2%B2_1.pal",
+      "bytes": 1024,
+      "sha256": "f1b0adc56a4da3c0cbd0244b08afa96c458cebd4b7c9f34e935d69353f84f2e1",
+      "header": "c8f8d300"
+    },
+    {
+      "path": "data/palette/머리/머리10_남_2.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE10_%C2%B3%C2%B2_2.pal",
+      "bytes": 1024,
+      "sha256": "b1bb1e93b6cdf7ad0af79063623f55d6f21c2395511a278787dfe5cfb3bc8893",
+      "header": "c8f8d300"
+    },
+    {
+      "path": "data/palette/머리/머리10_남_3.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE10_%C2%B3%C2%B2_3.pal",
+      "bytes": 1024,
+      "sha256": "800954c62508378391b9cf07d7246b281c4258bdb7fc57f21cf2d0f7ea8d75ef",
+      "header": "c8f8d300"
+    },
+    {
+      "path": "data/palette/머리/머리10_남_4.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE10_%C2%B3%C2%B2_4.pal",
+      "bytes": 1024,
+      "sha256": "7d2115d00f6d3f7e0613b8addcf22c3a63dcc052be9f37a5cb62e37db58fd971",
+      "header": "c8f8d300"
+    },
+    {
+      "path": "data/palette/머리/머리10_남_5.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE10_%C2%B3%C2%B2_5.pal",
+      "bytes": 1024,
+      "sha256": "76bc9e0f0d3d248c5aad67646830213bfc939ea2770a110b2eb808dc21a9c7cd",
+      "header": "c8f8d300"
+    },
+    {
+      "path": "data/palette/머리/머리10_남_6.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE10_%C2%B3%C2%B2_6.pal",
+      "bytes": 1024,
+      "sha256": "2a8f0a3fb5272e66f19c77d11a3c3021bbf63c0f28cdbd0aff13c16d11567d49",
+      "header": "c8f8d300"
+    },
+    {
+      "path": "data/palette/머리/머리10_남_7.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE10_%C2%B3%C2%B2_7.pal",
+      "bytes": 1024,
+      "sha256": "7916fe67d5af60b4a67dd5176d8fd7da7eefa3dff64af5bf5535ae5e558507ca",
+      "header": "c8f8d300"
+    },
+    {
+      "path": "data/palette/머리/머리10_남_8.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE10_%C2%B3%C2%B2_8.pal",
+      "bytes": 1024,
+      "sha256": "08ee83aa865e3310ac14f0893e861d849255f6daa86084b3e677d06a9ac9feca",
+      "header": "c8f8d300"
+    },
+    {
+      "path": "data/palette/머리/머리12_남_0.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE12_%C2%B3%C2%B2_0.pal",
+      "bytes": 1024,
+      "sha256": "100397085669ded9671481532c3196585fb14451018da08fc26c55a86e2a02f7",
+      "header": "c8f8d300"
+    },
+    {
+      "path": "data/palette/머리/머리12_남_1.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE12_%C2%B3%C2%B2_1.pal",
+      "bytes": 1024,
+      "sha256": "4fbf89398f30ed8e0ed447332ee7c57b37b149edd9a108b22aad3170e65c5c26",
+      "header": "c8f8d300"
+    },
+    {
+      "path": "data/palette/머리/머리12_남_2.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE12_%C2%B3%C2%B2_2.pal",
+      "bytes": 1024,
+      "sha256": "e3f594b505dc9a2934a15853f1fe1e5e2d655898baedf6db9c610327c558d436",
+      "header": "c8f8d300"
+    },
+    {
+      "path": "data/palette/머리/머리12_남_3.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE12_%C2%B3%C2%B2_3.pal",
+      "bytes": 1024,
+      "sha256": "ae1fbd3bafe9685993c792142bfb8ea889c174e394863ea1da34d39c99dd06f2",
+      "header": "c8f8d300"
+    },
+    {
+      "path": "data/palette/머리/머리12_남_4.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE12_%C2%B3%C2%B2_4.pal",
+      "bytes": 1024,
+      "sha256": "2293b5158bda1ef6848782fc6ca8b58a021e8037df2bbfbcad4b2d69594bf074",
+      "header": "c8f8d300"
+    },
+    {
+      "path": "data/palette/머리/머리12_남_5.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE12_%C2%B3%C2%B2_5.pal",
+      "bytes": 1024,
+      "sha256": "322a005a33cb22dee39b1a9fc0db5f8adc842f9e0f311a99bae05c9fd09eaa66",
+      "header": "c8f8d300"
+    },
+    {
+      "path": "data/palette/머리/머리12_남_6.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE12_%C2%B3%C2%B2_6.pal",
+      "bytes": 1024,
+      "sha256": "d4a5b7313e0a006b8c67927e2b2b0c220edb56e439539f02e87c82150521767a",
+      "header": "c8f8d300"
+    },
+    {
+      "path": "data/palette/머리/머리12_남_7.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE12_%C2%B3%C2%B2_7.pal",
+      "bytes": 1024,
+      "sha256": "7d2115d00f6d3f7e0613b8addcf22c3a63dcc052be9f37a5cb62e37db58fd971",
+      "header": "c8f8d300"
+    },
+    {
+      "path": "data/palette/머리/머리12_남_8.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE12_%C2%B3%C2%B2_8.pal",
+      "bytes": 1024,
+      "sha256": "100397085669ded9671481532c3196585fb14451018da08fc26c55a86e2a02f7",
+      "header": "c8f8d300"
+    },
+    {
+      "path": "data/palette/머리/머리12_여_0.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE12_%C2%BF%C2%A9_0.pal",
+      "bytes": 1024,
+      "sha256": "c4b52883736ec5fcf5c782df259d7aee715a038ff08f4c905f76bff7e186e468",
+      "header": "c8f8d300"
+    },
+    {
+      "path": "data/palette/머리/머리12_여_1.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE12_%C2%BF%C2%A9_1.pal",
+      "bytes": 1024,
+      "sha256": "7d2115d00f6d3f7e0613b8addcf22c3a63dcc052be9f37a5cb62e37db58fd971",
+      "header": "c8f8d300"
+    },
+    {
+      "path": "data/palette/머리/머리12_여_2.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE12_%C2%BF%C2%A9_2.pal",
+      "bytes": 1024,
+      "sha256": "9384670325a05cd4d5a46ba37d83a25da393945134aaa7359ccc7d3669b928ee",
+      "header": "c8f8d300"
+    },
+    {
+      "path": "data/palette/머리/머리12_여_3.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE12_%C2%BF%C2%A9_3.pal",
+      "bytes": 1024,
+      "sha256": "1e62dbaa93cf2f403d323520cecd2cabab24106c09690917eb0c21af733aceaf",
+      "header": "c8f8d300"
+    },
+    {
+      "path": "data/palette/머리/머리12_여_4.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE12_%C2%BF%C2%A9_4.pal",
+      "bytes": 1024,
+      "sha256": "4414895fbed6370674de750c33a5e9c73a7e559da085a23ae9d637395083a8a5",
+      "header": "c8f8d300"
+    },
+    {
+      "path": "data/palette/머리/머리12_여_5.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE12_%C2%BF%C2%A9_5.pal",
+      "bytes": 1024,
+      "sha256": "4e9d31f11ee3733c2dd16ad458fe459fff0174c30ca020a765e2c594b202c39e",
+      "header": "c8f8d300"
+    },
+    {
+      "path": "data/palette/머리/머리12_여_6.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE12_%C2%BF%C2%A9_6.pal",
+      "bytes": 1024,
+      "sha256": "e35f857949e4ce73b378b36a61e3ba1a552f62edd3ee1d4be225be4aa2cca660",
+      "header": "c8f8d300"
+    },
+    {
+      "path": "data/palette/머리/머리12_여_7.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE12_%C2%BF%C2%A9_7.pal",
+      "bytes": 1024,
+      "sha256": "28d01143aa0454cc50699fe9a5eca2e172c79da766f126f5228c821ecc35a086",
+      "header": "c8f8d300"
+    },
+    {
+      "path": "data/palette/머리/머리12_여_8.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE12_%C2%BF%C2%A9_8.pal",
+      "bytes": 1024,
+      "sha256": "c4b52883736ec5fcf5c782df259d7aee715a038ff08f4c905f76bff7e186e468",
+      "header": "c8f8d300"
+    },
+    {
+      "path": "data/palette/머리/머리13_여_0.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE13_%C2%BF%C2%A9_0.pal",
+      "bytes": 1024,
+      "sha256": "d243f0dc48a9b21cf9e1c0562fd9a7ba7ddf852acc80aab8288e5144be873b82",
+      "header": "b6bdac00"
+    },
+    {
+      "path": "data/palette/머리/머리13_여_1.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE13_%C2%BF%C2%A9_1.pal",
+      "bytes": 1024,
+      "sha256": "44b6a2373bb926b5fcd3ddb640118c3caefba3b03f115eb1e2f68e149030154e",
+      "header": "b6bdac00"
+    },
+    {
+      "path": "data/palette/머리/머리13_여_2.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE13_%C2%BF%C2%A9_2.pal",
+      "bytes": 1024,
+      "sha256": "56c3223109542ad2508f757389132c5d090323df0dd5f6196d97bfe1fa2547fd",
+      "header": "b6bdac00"
+    },
+    {
+      "path": "data/palette/머리/머리13_여_3.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE13_%C2%BF%C2%A9_3.pal",
+      "bytes": 1024,
+      "sha256": "c02c345bbb47b9613a712a5f46e5ffd486130b048fbd5b42bd0bafa43b91c29a",
+      "header": "b6bdac00"
+    },
+    {
+      "path": "data/palette/머리/머리13_여_4.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE13_%C2%BF%C2%A9_4.pal",
+      "bytes": 1024,
+      "sha256": "6d37ad2ab495d7dfe6af0153e2fb1be4592fb4f03618f0b5525d2ef5a9d49e00",
+      "header": "b6bdac00"
+    },
+    {
+      "path": "data/palette/머리/머리13_여_5.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE13_%C2%BF%C2%A9_5.pal",
+      "bytes": 1024,
+      "sha256": "4a738112bdf45a20eb3b97e71898ac364d81e215bc56653ed5bf149c420933f8",
+      "header": "b6bdac00"
+    },
+    {
+      "path": "data/palette/머리/머리13_여_6.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE13_%C2%BF%C2%A9_6.pal",
+      "bytes": 1024,
+      "sha256": "2c90de316234a5ce6f92d2a0fb4076f3579f082c2a548d2dc4e27276c51ac041",
+      "header": "b6bdac00"
+    },
+    {
+      "path": "data/palette/머리/머리13_여_7.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE13_%C2%BF%C2%A9_7.pal",
+      "bytes": 1024,
+      "sha256": "6ae845c60b89882217d62441b034a7ed7e309e077c2ae38008647492b8c78eff",
+      "header": "b6bdac00"
+    },
+    {
+      "path": "data/palette/머리/머리13_여_8.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE13_%C2%BF%C2%A9_8.pal",
+      "bytes": 1024,
+      "sha256": "d243f0dc48a9b21cf9e1c0562fd9a7ba7ddf852acc80aab8288e5144be873b82",
+      "header": "b6bdac00"
+    },
+    {
+      "path": "data/palette/머리/머리14_여_0.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE14_%C2%BF%C2%A9_0.pal",
+      "bytes": 1024,
+      "sha256": "8a40df2686f5f8db3244a0e8d6f59742a92473a4a87b96db12c03b6e7bfdbbb4",
+      "header": "c8f8d300"
+    },
+    {
+      "path": "data/palette/머리/머리14_여_1.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE14_%C2%BF%C2%A9_1.pal",
+      "bytes": 1024,
+      "sha256": "92e8af527f0e22836d5d6902a7b2bd85013011d01d330cd59da674584ee5fe98",
+      "header": "c8f8d300"
+    },
+    {
+      "path": "data/palette/머리/머리14_여_2.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE14_%C2%BF%C2%A9_2.pal",
+      "bytes": 1024,
+      "sha256": "24d34ce0cc230cd366ed376333a0f0e33c2877351e7507683b473795879ed962",
+      "header": "c8f8d300"
+    },
+    {
+      "path": "data/palette/머리/머리14_여_3.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE14_%C2%BF%C2%A9_3.pal",
+      "bytes": 1024,
+      "sha256": "9a8e52f2e50f6481c2a59583da6853f99f665c6b269f3f07daa7060ca64b4913",
+      "header": "c8f8d300"
+    },
+    {
+      "path": "data/palette/머리/머리14_여_4.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE14_%C2%BF%C2%A9_4.pal",
+      "bytes": 1024,
+      "sha256": "b0d26a9f6f85dbc4482e7e19258642e2864d9c35883a7879d80b340dfcfda300",
+      "header": "c8f8d300"
+    },
+    {
+      "path": "data/palette/머리/머리14_여_5.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE14_%C2%BF%C2%A9_5.pal",
+      "bytes": 1024,
+      "sha256": "ae552bcb2119a7a5a2cad53083373ad426bb4dd147620964443b5d30c5dd2dbc",
+      "header": "c8f8d300"
+    },
+    {
+      "path": "data/palette/머리/머리14_여_6.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE14_%C2%BF%C2%A9_6.pal",
+      "bytes": 1024,
+      "sha256": "9efae11f251fc68e35851e2666a910e938790224942d421f7788849d6850a6bc",
+      "header": "c8f8d300"
+    },
+    {
+      "path": "data/palette/머리/머리14_여_7.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE14_%C2%BF%C2%A9_7.pal",
+      "bytes": 1024,
+      "sha256": "eca3a9db69e038bbd30daa8be38346dce587ae18b2d153c254e6b23f43935fe2",
+      "header": "c8f8d300"
+    },
+    {
+      "path": "data/palette/머리/머리14_여_8.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE14_%C2%BF%C2%A9_8.pal",
+      "bytes": 1024,
+      "sha256": "8a40df2686f5f8db3244a0e8d6f59742a92473a4a87b96db12c03b6e7bfdbbb4",
+      "header": "c8f8d300"
+    },
+    {
+      "path": "data/palette/머리/머리15_여_0.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE15_%C2%BF%C2%A9_0.pal",
+      "bytes": 1024,
+      "sha256": "3cfa67d17d93052117794b28d9f12004e77c435d55c8070b5a1f59f9a45afa37",
+      "header": "b6bdac00"
+    },
+    {
+      "path": "data/palette/머리/머리15_여_1.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE15_%C2%BF%C2%A9_1.pal",
+      "bytes": 1024,
+      "sha256": "7907d2624f603e8f887daf75fa2ecb5e6cdc9a53568b1d60253efc8538db1b30",
+      "header": "b6bdac00"
+    },
+    {
+      "path": "data/palette/머리/머리15_여_2.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE15_%C2%BF%C2%A9_2.pal",
+      "bytes": 1024,
+      "sha256": "e1d0dd68c0a5d6cd33fac41ea20164e096f790b81c792d4b5006d001a9b04a3e",
+      "header": "b6bdac00"
+    },
+    {
+      "path": "data/palette/머리/머리15_여_3.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE15_%C2%BF%C2%A9_3.pal",
+      "bytes": 1024,
+      "sha256": "c3f3e4ca87bb08fb337fc723796f6be20a809dc6170c02f4f45c524fb8aee157",
+      "header": "b6bdac00"
+    },
+    {
+      "path": "data/palette/머리/머리15_여_4.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE15_%C2%BF%C2%A9_4.pal",
+      "bytes": 1024,
+      "sha256": "f2061561e278c65cfd8b4693942114e5cd63d62d2d34802db265a3ff5a438d22",
+      "header": "b6bdac00"
+    },
+    {
+      "path": "data/palette/머리/머리15_여_5.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE15_%C2%BF%C2%A9_5.pal",
+      "bytes": 1024,
+      "sha256": "b1753479c00f0e9eb490403180edc413be4e29a280b2a1ea42b8480caf9bd634",
+      "header": "b6bdac00"
+    },
+    {
+      "path": "data/palette/머리/머리15_여_6.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE15_%C2%BF%C2%A9_6.pal",
+      "bytes": 1024,
+      "sha256": "5624bcbd7e36bd60438a4319006ec18052f17a137d23683f6a62ad921ae0f868",
+      "header": "b6bdac00"
+    },
+    {
+      "path": "data/palette/머리/머리15_여_7.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE15_%C2%BF%C2%A9_7.pal",
+      "bytes": 1024,
+      "sha256": "44b6a2373bb926b5fcd3ddb640118c3caefba3b03f115eb1e2f68e149030154e",
+      "header": "b6bdac00"
+    },
+    {
+      "path": "data/palette/머리/머리15_여_8.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE15_%C2%BF%C2%A9_8.pal",
+      "bytes": 1024,
+      "sha256": "34930679aed4226917e950f0e6531f1f819a6aa3bd7752ee6c72ebcd83c8ef30",
+      "header": "b6bdac00"
+    },
+    {
+      "path": "data/palette/머리/머리17_남_0.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE17_%C2%B3%C2%B2_0.pal",
+      "bytes": 1024,
+      "sha256": "f52ff0e0983f92f8570c066683d471fbe244ac75ce3c026c84972102bff5aadb",
+      "header": "c8f8d300"
+    },
+    {
+      "path": "data/palette/머리/머리17_남_1.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE17_%C2%B3%C2%B2_1.pal",
+      "bytes": 1024,
+      "sha256": "92e8af527f0e22836d5d6902a7b2bd85013011d01d330cd59da674584ee5fe98",
+      "header": "c8f8d300"
+    },
+    {
+      "path": "data/palette/머리/머리17_남_2.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE17_%C2%B3%C2%B2_2.pal",
+      "bytes": 1024,
+      "sha256": "4f13b631719e1b8e01166148790b6c50a97edf1659705e6f022da7fa4a1f8236",
+      "header": "c8f8d300"
+    },
+    {
+      "path": "data/palette/머리/머리17_남_3.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE17_%C2%B3%C2%B2_3.pal",
+      "bytes": 1024,
+      "sha256": "96cb4309240d5a011b523083f4a0f9a693dcb4e380502152fdd77a863d62faa4",
+      "header": "c8f8d300"
+    },
+    {
+      "path": "data/palette/머리/머리17_남_4.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE17_%C2%B3%C2%B2_4.pal",
+      "bytes": 1024,
+      "sha256": "ab29e6e38b1ed3cf916ef980be531df123ecf66dadfd19971840b65b2aa91c95",
+      "header": "c8f8d300"
+    },
+    {
+      "path": "data/palette/머리/머리17_남_5.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE17_%C2%B3%C2%B2_5.pal",
+      "bytes": 1024,
+      "sha256": "a530f8c9fa0b58ae505740bec225d4f8e90c6b2918e934394e7c372fd7977a5f",
+      "header": "c8f8d300"
+    },
+    {
+      "path": "data/palette/머리/머리17_남_6.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE17_%C2%B3%C2%B2_6.pal",
+      "bytes": 1024,
+      "sha256": "108b4ea11532b3ae1d686793c9320877e7f6144147c23047bd80ce14c87629d6",
+      "header": "c8f8d300"
+    },
+    {
+      "path": "data/palette/머리/머리17_남_7.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE17_%C2%B3%C2%B2_7.pal",
+      "bytes": 1024,
+      "sha256": "d2f6c59c27749eff26a9bd571f95ab47f0013b14a404a5d74713d48926ff4688",
+      "header": "c8f8d300"
+    },
+    {
+      "path": "data/palette/머리/머리17_남_8.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE17_%C2%B3%C2%B2_8.pal",
+      "bytes": 1024,
+      "sha256": "f52ff0e0983f92f8570c066683d471fbe244ac75ce3c026c84972102bff5aadb",
+      "header": "c8f8d300"
+    },
+    {
+      "path": "data/palette/머리/머리17_여_0.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE17_%C2%BF%C2%A9_0.pal",
+      "bytes": 1024,
+      "sha256": "92855516b6fe5d76e9ee57cb2fa3716579af66d55b59637f2aaf91f824d897cd",
+      "header": "c8f8d300"
+    },
+    {
+      "path": "data/palette/머리/머리17_여_1.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE17_%C2%BF%C2%A9_1.pal",
+      "bytes": 1024,
+      "sha256": "ce770b68b5f26182822be1fb67ed0e76d0606a4c54cb7397ab4a94d9972a21fa",
+      "header": "c8f8d300"
+    },
+    {
+      "path": "data/palette/머리/머리17_여_2.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE17_%C2%BF%C2%A9_2.pal",
+      "bytes": 1024,
+      "sha256": "f62ea0e9ba51a3e1f1d0628899020c56bd3e86b2cf7bc21e0c053e22f5d2a273",
+      "header": "c8f8d300"
+    },
+    {
+      "path": "data/palette/머리/머리17_여_3.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE17_%C2%BF%C2%A9_3.pal",
+      "bytes": 1024,
+      "sha256": "4294e660b25825bb2700aab13ce8df82529277a08217f19afc290caaf7f10bb1",
+      "header": "c8f8d300"
+    },
+    {
+      "path": "data/palette/머리/머리17_여_4.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE17_%C2%BF%C2%A9_4.pal",
+      "bytes": 1024,
+      "sha256": "2952da3e1b4a7c3663b7934f716453a62e755839c1ec2394951ef62e9c8f1a58",
+      "header": "c8f8d300"
+    },
+    {
+      "path": "data/palette/머리/머리17_여_5.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE17_%C2%BF%C2%A9_5.pal",
+      "bytes": 1024,
+      "sha256": "92e8af527f0e22836d5d6902a7b2bd85013011d01d330cd59da674584ee5fe98",
+      "header": "c8f8d300"
+    },
+    {
+      "path": "data/palette/머리/머리17_여_6.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE17_%C2%BF%C2%A9_6.pal",
+      "bytes": 1024,
+      "sha256": "9a88c33e2b363b47e9b5564f71aed0b25c99d8c6d63f46bec7f3ca97c9070d53",
+      "header": "c8f8d300"
+    },
+    {
+      "path": "data/palette/머리/머리17_여_7.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE17_%C2%BF%C2%A9_7.pal",
+      "bytes": 1024,
+      "sha256": "c2e568ad3227747aad3b2f4fa44c4c45c0d8cac26fb075c174f1ac269ce32fd5",
+      "header": "c8f8d300"
+    },
+    {
+      "path": "data/palette/머리/머리17_여_8.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE17_%C2%BF%C2%A9_8.pal",
+      "bytes": 1024,
+      "sha256": "92855516b6fe5d76e9ee57cb2fa3716579af66d55b59637f2aaf91f824d897cd",
+      "header": "c8f8d300"
+    },
+    {
+      "path": "data/palette/머리/머리18_여_0.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE18_%C2%BF%C2%A9_0.pal",
+      "bytes": 1024,
+      "sha256": "90ebf378b53ac960d842f398861ce18a29b1fe16ac5d631ec722460feab35f08",
+      "header": "b6bdac00"
+    },
+    {
+      "path": "data/palette/머리/머리18_여_1.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE18_%C2%BF%C2%A9_1.pal",
+      "bytes": 1024,
+      "sha256": "44b6a2373bb926b5fcd3ddb640118c3caefba3b03f115eb1e2f68e149030154e",
+      "header": "b6bdac00"
+    },
+    {
+      "path": "data/palette/머리/머리18_여_2.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE18_%C2%BF%C2%A9_2.pal",
+      "bytes": 1024,
+      "sha256": "0ef34443f7a94de83f6b7ca39e8cbe839cdb5ffaa320ab9d42598259e9ccd7ba",
+      "header": "b6bdac00"
+    },
+    {
+      "path": "data/palette/머리/머리18_여_3.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE18_%C2%BF%C2%A9_3.pal",
+      "bytes": 1024,
+      "sha256": "575eba13f2faf608272db0bf7abda6a78cb10db4f189243d9379c705f82ab063",
+      "header": "b6bdac00"
+    },
+    {
+      "path": "data/palette/머리/머리18_여_4.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE18_%C2%BF%C2%A9_4.pal",
+      "bytes": 1024,
+      "sha256": "a83d777218f897d144bdb9186e90f408ede593bacc3bc58ec2ebfb3fe373f85e",
+      "header": "b6bdac00"
+    },
+    {
+      "path": "data/palette/머리/머리18_여_5.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE18_%C2%BF%C2%A9_5.pal",
+      "bytes": 1024,
+      "sha256": "7f759a947f718877a75bcbebd4bd21d52ad79b75e47dac45cc9e61a0d9b1bb18",
+      "header": "b6bdac00"
+    },
+    {
+      "path": "data/palette/머리/머리18_여_6.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE18_%C2%BF%C2%A9_6.pal",
+      "bytes": 1024,
+      "sha256": "0371208c792e3aee067e7f2cef7ddd7f7f3ab94e56fac2c095afc4bdde88cd1a",
+      "header": "b6bdac00"
+    },
+    {
+      "path": "data/palette/머리/머리18_여_7.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE18_%C2%BF%C2%A9_7.pal",
+      "bytes": 1024,
+      "sha256": "4a7a23106ad1b7b4101731fb3d4f9ae4180b82bd91bb4627b3bbdaa6bcd7cd09",
+      "header": "b6bdac00"
+    },
+    {
+      "path": "data/palette/머리/머리18_여_8.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE18_%C2%BF%C2%A9_8.pal",
+      "bytes": 1024,
+      "sha256": "90ebf378b53ac960d842f398861ce18a29b1fe16ac5d631ec722460feab35f08",
+      "header": "b6bdac00"
+    },
+    {
+      "path": "data/palette/머리/머리19_남_0.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE19_%C2%B3%C2%B2_0.pal",
+      "bytes": 1024,
+      "sha256": "a7f20af2273179fad136f29a7479e20b3476d846e9f1f60b8566df8cf8b97ccf",
+      "header": "b6bdac00"
+    },
+    {
+      "path": "data/palette/머리/머리19_남_1.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE19_%C2%B3%C2%B2_1.pal",
+      "bytes": 1024,
+      "sha256": "6a981e7fe39693832ca1cb2ecc75ed68c3c8f197f700850841f6e3c9c605ebeb",
+      "header": "b6bdac00"
+    },
+    {
+      "path": "data/palette/머리/머리19_남_2.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE19_%C2%B3%C2%B2_2.pal",
+      "bytes": 1024,
+      "sha256": "93887c7adecc36a3e1a88b1cb9cc2a0eface185329f0bba51da5a61c41647485",
+      "header": "b6bdac00"
+    },
+    {
+      "path": "data/palette/머리/머리19_남_3.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE19_%C2%B3%C2%B2_3.pal",
+      "bytes": 1024,
+      "sha256": "79e9042c8e0c70c5f8184489610947b1d3941eee035873082233411a3e5a9088",
+      "header": "b6bdac00"
+    },
+    {
+      "path": "data/palette/머리/머리19_남_4.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE19_%C2%B3%C2%B2_4.pal",
+      "bytes": 1024,
+      "sha256": "565d59de95ae236c486aa31e1fd9b844c5e02a667f24ad76c1484f56d382211e",
+      "header": "b6bdac00"
+    },
+    {
+      "path": "data/palette/머리/머리19_남_5.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE19_%C2%B3%C2%B2_5.pal",
+      "bytes": 1024,
+      "sha256": "7ff01d310c8055e3844f4673e6380fd6571c3d527dddf301805f2ad0fa08fcf1",
+      "header": "b6bdac00"
+    },
+    {
+      "path": "data/palette/머리/머리19_남_6.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE19_%C2%B3%C2%B2_6.pal",
+      "bytes": 1024,
+      "sha256": "44b6a2373bb926b5fcd3ddb640118c3caefba3b03f115eb1e2f68e149030154e",
+      "header": "b6bdac00"
+    },
+    {
+      "path": "data/palette/머리/머리19_남_7.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE19_%C2%B3%C2%B2_7.pal",
+      "bytes": 1024,
+      "sha256": "3011e81ab4456b9f99ec3cd1fcf871b592630455e5826a73f0ca23dc28b2e6fd",
+      "header": "b6bdac00"
+    },
+    {
+      "path": "data/palette/머리/머리19_남_8.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE19_%C2%B3%C2%B2_8.pal",
+      "bytes": 1024,
+      "sha256": "2521d37687ec5d24a6b4fe96fa99fb56317a686835efb53ade3cd0675a051532",
+      "header": "b6bdac00"
+    },
+    {
+      "path": "data/palette/머리/머리19_여_0.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE19_%C2%BF%C2%A9_0.pal",
+      "bytes": 1024,
+      "sha256": "450b2113e279b83cd56fdb596fc847da6972446fbe990fa4844e821c642d91b6",
+      "header": "b6beac00"
+    },
+    {
+      "path": "data/palette/머리/머리19_여_1.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE19_%C2%BF%C2%A9_1.pal",
+      "bytes": 1024,
+      "sha256": "06e9722736d4c2e07937cb49062f7bba1a71e4a2193c9c1db3f278efd489c9de",
+      "header": "b6beac00"
+    },
+    {
+      "path": "data/palette/머리/머리19_여_2.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE19_%C2%BF%C2%A9_2.pal",
+      "bytes": 1024,
+      "sha256": "7a56cc713d0dd4a36262aa7466df77aca4ee80dd46fe0d0e2ed10143305739ed",
+      "header": "b6beac00"
+    },
+    {
+      "path": "data/palette/머리/머리19_여_3.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE19_%C2%BF%C2%A9_3.pal",
+      "bytes": 1024,
+      "sha256": "597822d4181fcb06ff9770f8b9cebab3975e0a2f436446984db8f912d820d720",
+      "header": "b6beac00"
+    },
+    {
+      "path": "data/palette/머리/머리19_여_4.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE19_%C2%BF%C2%A9_4.pal",
+      "bytes": 1024,
+      "sha256": "33d6e4e2388fe1e1bbbe54735de8e8a0159699e3e368fd3f5783cd48f9dcece6",
+      "header": "b6beac00"
+    },
+    {
+      "path": "data/palette/머리/머리19_여_5.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE19_%C2%BF%C2%A9_5.pal",
+      "bytes": 1024,
+      "sha256": "93c2e746313dd464cb36d5d73c632b5e2e97be109cb77dd3a0b6cc3d7144e639",
+      "header": "b6beac00"
+    },
+    {
+      "path": "data/palette/머리/머리19_여_6.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE19_%C2%BF%C2%A9_6.pal",
+      "bytes": 1024,
+      "sha256": "e4612f36c017a0b08dc9216dae35bf31985e8ae278359e687611292c0c0d01e3",
+      "header": "b6beac00"
+    },
+    {
+      "path": "data/palette/머리/머리19_여_7.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE19_%C2%BF%C2%A9_7.pal",
+      "bytes": 1024,
+      "sha256": "9e039fe7b3cb48bb473c384eab08279741d207ac670aa5b7ec3c8a8345cbdcc8",
+      "header": "b6beac00"
+    },
+    {
+      "path": "data/palette/머리/머리19_여_8.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE19_%C2%BF%C2%A9_8.pal",
+      "bytes": 1024,
+      "sha256": "450b2113e279b83cd56fdb596fc847da6972446fbe990fa4844e821c642d91b6",
+      "header": "b6beac00"
+    },
+    {
+      "path": "data/palette/머리/머리20_남_0.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE20_%C2%B3%C2%B2_0.pal",
+      "bytes": 1024,
+      "sha256": "5bb0d26e536820efb6d83818b38908e9abd6b422d9b6a23bed6493f37d3793c8",
+      "header": "c8f8d300"
+    },
+    {
+      "path": "data/palette/머리/머리20_남_1.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE20_%C2%B3%C2%B2_1.pal",
+      "bytes": 1024,
+      "sha256": "79bbde8eb668e91001134c33da1f14f74237ce2d6d4694aa21ce71a38804ed5d",
+      "header": "c8f8d300"
+    },
+    {
+      "path": "data/palette/머리/머리20_남_2.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE20_%C2%B3%C2%B2_2.pal",
+      "bytes": 1024,
+      "sha256": "d7b88d238f021cbb3b5fd5b3b02118f178e1c65bda4146ed2c4042f121fc5aae",
+      "header": "c8f8d300"
+    },
+    {
+      "path": "data/palette/머리/머리20_남_3.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE20_%C2%B3%C2%B2_3.pal",
+      "bytes": 1024,
+      "sha256": "aea8bfdbfcc768b60c5b868771b7ed01882615d06174ddafbf8629ac27296c2a",
+      "header": "c8f8d300"
+    },
+    {
+      "path": "data/palette/머리/머리20_남_4.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE20_%C2%B3%C2%B2_4.pal",
+      "bytes": 1024,
+      "sha256": "35f84f371e5735f130b258462769f354c5ad6555489c712d0e08048a00e06947",
+      "header": "c8f8d300"
+    },
+    {
+      "path": "data/palette/머리/머리20_남_5.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE20_%C2%B3%C2%B2_5.pal",
+      "bytes": 1024,
+      "sha256": "04500724158c46027e5e5f3bd917aa545fc7346c84c64b7bec4fabf1075583e6",
+      "header": "c8f8d300"
+    },
+    {
+      "path": "data/palette/머리/머리20_남_6.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE20_%C2%B3%C2%B2_6.pal",
+      "bytes": 1024,
+      "sha256": "a472c0e968cb0b65f4e926f8765419ca53a1a36e2edf6f9998889694d8c25573",
+      "header": "c8f8d300"
+    },
+    {
+      "path": "data/palette/머리/머리20_남_7.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE20_%C2%B3%C2%B2_7.pal",
+      "bytes": 1024,
+      "sha256": "3c40f24dc99cbf44cb0b907544c4a455d9d32fa495cd5fcffa8eeb43cac48773",
+      "header": "c8f8d300"
+    },
+    {
+      "path": "data/palette/머리/머리20_남_8.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE20_%C2%B3%C2%B2_8.pal",
+      "bytes": 1024,
+      "sha256": "5bb0d26e536820efb6d83818b38908e9abd6b422d9b6a23bed6493f37d3793c8",
+      "header": "c8f8d300"
+    },
+    {
+      "path": "data/palette/머리/머리21_여_0.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE21_%C2%BF%C2%A9_0.pal",
+      "bytes": 1024,
+      "sha256": "d243f0dc48a9b21cf9e1c0562fd9a7ba7ddf852acc80aab8288e5144be873b82",
+      "header": "b6bdac00"
+    },
+    {
+      "path": "data/palette/머리/머리21_여_1.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE21_%C2%BF%C2%A9_1.pal",
+      "bytes": 1024,
+      "sha256": "44b6a2373bb926b5fcd3ddb640118c3caefba3b03f115eb1e2f68e149030154e",
+      "header": "b6bdac00"
+    },
+    {
+      "path": "data/palette/머리/머리21_여_2.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE21_%C2%BF%C2%A9_2.pal",
+      "bytes": 1024,
+      "sha256": "56c3223109542ad2508f757389132c5d090323df0dd5f6196d97bfe1fa2547fd",
+      "header": "b6bdac00"
+    },
+    {
+      "path": "data/palette/머리/머리21_여_3.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE21_%C2%BF%C2%A9_3.pal",
+      "bytes": 1024,
+      "sha256": "c02c345bbb47b9613a712a5f46e5ffd486130b048fbd5b42bd0bafa43b91c29a",
+      "header": "b6bdac00"
+    },
+    {
+      "path": "data/palette/머리/머리21_여_4.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE21_%C2%BF%C2%A9_4.pal",
+      "bytes": 1024,
+      "sha256": "6d37ad2ab495d7dfe6af0153e2fb1be4592fb4f03618f0b5525d2ef5a9d49e00",
+      "header": "b6bdac00"
+    },
+    {
+      "path": "data/palette/머리/머리21_여_5.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE21_%C2%BF%C2%A9_5.pal",
+      "bytes": 1024,
+      "sha256": "4a738112bdf45a20eb3b97e71898ac364d81e215bc56653ed5bf149c420933f8",
+      "header": "b6bdac00"
+    },
+    {
+      "path": "data/palette/머리/머리21_여_6.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE21_%C2%BF%C2%A9_6.pal",
+      "bytes": 1024,
+      "sha256": "2c90de316234a5ce6f92d2a0fb4076f3579f082c2a548d2dc4e27276c51ac041",
+      "header": "b6bdac00"
+    },
+    {
+      "path": "data/palette/머리/머리21_여_7.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE21_%C2%BF%C2%A9_7.pal",
+      "bytes": 1024,
+      "sha256": "6ae845c60b89882217d62441b034a7ed7e309e077c2ae38008647492b8c78eff",
+      "header": "b6bdac00"
+    },
+    {
+      "path": "data/palette/머리/머리21_여_8.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE21_%C2%BF%C2%A9_8.pal",
+      "bytes": 1024,
+      "sha256": "d243f0dc48a9b21cf9e1c0562fd9a7ba7ddf852acc80aab8288e5144be873b82",
+      "header": "b6bdac00"
+    },
+    {
+      "path": "data/palette/머리/머리22_남_0.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE22_%C2%B3%C2%B2_0.pal",
+      "bytes": 1024,
+      "sha256": "08ee83aa865e3310ac14f0893e861d849255f6daa86084b3e677d06a9ac9feca",
+      "header": "c8f8d300"
+    },
+    {
+      "path": "data/palette/머리/머리22_남_1.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE22_%C2%B3%C2%B2_1.pal",
+      "bytes": 1024,
+      "sha256": "f1b0adc56a4da3c0cbd0244b08afa96c458cebd4b7c9f34e935d69353f84f2e1",
+      "header": "c8f8d300"
+    },
+    {
+      "path": "data/palette/머리/머리22_남_2.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE22_%C2%B3%C2%B2_2.pal",
+      "bytes": 1024,
+      "sha256": "b1bb1e93b6cdf7ad0af79063623f55d6f21c2395511a278787dfe5cfb3bc8893",
+      "header": "c8f8d300"
+    },
+    {
+      "path": "data/palette/머리/머리22_남_3.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE22_%C2%B3%C2%B2_3.pal",
+      "bytes": 1024,
+      "sha256": "800954c62508378391b9cf07d7246b281c4258bdb7fc57f21cf2d0f7ea8d75ef",
+      "header": "c8f8d300"
+    },
+    {
+      "path": "data/palette/머리/머리22_남_4.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE22_%C2%B3%C2%B2_4.pal",
+      "bytes": 1024,
+      "sha256": "7d2115d00f6d3f7e0613b8addcf22c3a63dcc052be9f37a5cb62e37db58fd971",
+      "header": "c8f8d300"
+    },
+    {
+      "path": "data/palette/머리/머리22_남_5.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE22_%C2%B3%C2%B2_5.pal",
+      "bytes": 1024,
+      "sha256": "76bc9e0f0d3d248c5aad67646830213bfc939ea2770a110b2eb808dc21a9c7cd",
+      "header": "c8f8d300"
+    },
+    {
+      "path": "data/palette/머리/머리22_남_6.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE22_%C2%B3%C2%B2_6.pal",
+      "bytes": 1024,
+      "sha256": "2a8f0a3fb5272e66f19c77d11a3c3021bbf63c0f28cdbd0aff13c16d11567d49",
+      "header": "c8f8d300"
+    },
+    {
+      "path": "data/palette/머리/머리22_남_7.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE22_%C2%B3%C2%B2_7.pal",
+      "bytes": 1024,
+      "sha256": "7916fe67d5af60b4a67dd5176d8fd7da7eefa3dff64af5bf5535ae5e558507ca",
+      "header": "c8f8d300"
+    },
+    {
+      "path": "data/palette/머리/머리22_남_8.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE22_%C2%B3%C2%B2_8.pal",
+      "bytes": 1024,
+      "sha256": "08ee83aa865e3310ac14f0893e861d849255f6daa86084b3e677d06a9ac9feca",
+      "header": "c8f8d300"
+    },
+    {
+      "path": "data/palette/머리/머리24_남_0.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE24_%C2%B3%C2%B2_0.pal",
+      "bytes": 1024,
+      "sha256": "399a9441ed1fbdce99c42bb94f0bd6f0902104dc1ef8fe61e40e633732d8b29b",
+      "header": "c8f8d300"
+    },
+    {
+      "path": "data/palette/머리/머리24_남_1.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE24_%C2%B3%C2%B2_1.pal",
+      "bytes": 1024,
+      "sha256": "56457dcc3a4e47fee4f28c33697638489a9f179036b5c93e85e81e17e4669221",
+      "header": "c8f8d300"
+    },
+    {
+      "path": "data/palette/머리/머리24_남_2.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE24_%C2%B3%C2%B2_2.pal",
+      "bytes": 1024,
+      "sha256": "310ebb2563f2cf494ccced94a2b6889b3a250170f70de1f7d2fed039d9291954",
+      "header": "c8f8d300"
+    },
+    {
+      "path": "data/palette/머리/머리24_남_3.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE24_%C2%B3%C2%B2_3.pal",
+      "bytes": 1024,
+      "sha256": "d6f2667c3512a13879b5dece084b63ded982b3335096935647be96cbf047ec22",
+      "header": "c8f8d300"
+    },
+    {
+      "path": "data/palette/머리/머리24_남_4.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE24_%C2%B3%C2%B2_4.pal",
+      "bytes": 1024,
+      "sha256": "e1b31136eec02078f67de8b927ea8ed864e48db553fb56ec9ec4d8c5878f64b6",
+      "header": "c8f8d300"
+    },
+    {
+      "path": "data/palette/머리/머리24_남_5.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE24_%C2%B3%C2%B2_5.pal",
+      "bytes": 1024,
+      "sha256": "7d2115d00f6d3f7e0613b8addcf22c3a63dcc052be9f37a5cb62e37db58fd971",
+      "header": "c8f8d300"
+    },
+    {
+      "path": "data/palette/머리/머리24_남_6.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE24_%C2%B3%C2%B2_6.pal",
+      "bytes": 1024,
+      "sha256": "01c2bf5973cfb1f909149c4ec08112cb91ac7d5752c0b43ca15e89c8f9c2f6c5",
+      "header": "c8f8d300"
+    },
+    {
+      "path": "data/palette/머리/머리24_남_7.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE24_%C2%B3%C2%B2_7.pal",
+      "bytes": 1024,
+      "sha256": "559b7cc47557a1cc4cb2cf939b5509ab3531f6345b6775f9520b5e4372aa0cfa",
+      "header": "c8f8d300"
+    },
+    {
+      "path": "data/palette/머리/머리24_남_8.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE24_%C2%B3%C2%B2_8.pal",
+      "bytes": 1024,
+      "sha256": "399a9441ed1fbdce99c42bb94f0bd6f0902104dc1ef8fe61e40e633732d8b29b",
+      "header": "c8f8d300"
+    },
+    {
+      "path": "data/palette/머리/머리24_여_0.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE24_%C2%BF%C2%A9_0.pal",
+      "bytes": 1024,
+      "sha256": "d243f0dc48a9b21cf9e1c0562fd9a7ba7ddf852acc80aab8288e5144be873b82",
+      "header": "b6bdac00"
+    },
+    {
+      "path": "data/palette/머리/머리24_여_1.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE24_%C2%BF%C2%A9_1.pal",
+      "bytes": 1024,
+      "sha256": "44b6a2373bb926b5fcd3ddb640118c3caefba3b03f115eb1e2f68e149030154e",
+      "header": "b6bdac00"
+    },
+    {
+      "path": "data/palette/머리/머리24_여_2.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE24_%C2%BF%C2%A9_2.pal",
+      "bytes": 1024,
+      "sha256": "56c3223109542ad2508f757389132c5d090323df0dd5f6196d97bfe1fa2547fd",
+      "header": "b6bdac00"
+    },
+    {
+      "path": "data/palette/머리/머리24_여_3.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE24_%C2%BF%C2%A9_3.pal",
+      "bytes": 1024,
+      "sha256": "c02c345bbb47b9613a712a5f46e5ffd486130b048fbd5b42bd0bafa43b91c29a",
+      "header": "b6bdac00"
+    },
+    {
+      "path": "data/palette/머리/머리24_여_4.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE24_%C2%BF%C2%A9_4.pal",
+      "bytes": 1024,
+      "sha256": "6d37ad2ab495d7dfe6af0153e2fb1be4592fb4f03618f0b5525d2ef5a9d49e00",
+      "header": "b6bdac00"
+    },
+    {
+      "path": "data/palette/머리/머리24_여_5.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE24_%C2%BF%C2%A9_5.pal",
+      "bytes": 1024,
+      "sha256": "4a738112bdf45a20eb3b97e71898ac364d81e215bc56653ed5bf149c420933f8",
+      "header": "b6bdac00"
+    },
+    {
+      "path": "data/palette/머리/머리24_여_6.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE24_%C2%BF%C2%A9_6.pal",
+      "bytes": 1024,
+      "sha256": "2c90de316234a5ce6f92d2a0fb4076f3579f082c2a548d2dc4e27276c51ac041",
+      "header": "b6bdac00"
+    },
+    {
+      "path": "data/palette/머리/머리24_여_7.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE24_%C2%BF%C2%A9_7.pal",
+      "bytes": 1024,
+      "sha256": "6ae845c60b89882217d62441b034a7ed7e309e077c2ae38008647492b8c78eff",
+      "header": "b6bdac00"
+    },
+    {
+      "path": "data/palette/머리/머리24_여_8.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE24_%C2%BF%C2%A9_8.pal",
+      "bytes": 1024,
+      "sha256": "d243f0dc48a9b21cf9e1c0562fd9a7ba7ddf852acc80aab8288e5144be873b82",
+      "header": "b6bdac00"
+    },
+    {
+      "path": "data/palette/머리/머리26_남_0.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE26_%C2%B3%C2%B2_0.pal",
+      "bytes": 1024,
+      "sha256": "399a9441ed1fbdce99c42bb94f0bd6f0902104dc1ef8fe61e40e633732d8b29b",
+      "header": "c8f8d300"
+    },
+    {
+      "path": "data/palette/머리/머리26_남_1.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE26_%C2%B3%C2%B2_1.pal",
+      "bytes": 1024,
+      "sha256": "56457dcc3a4e47fee4f28c33697638489a9f179036b5c93e85e81e17e4669221",
+      "header": "c8f8d300"
+    },
+    {
+      "path": "data/palette/머리/머리26_남_2.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE26_%C2%B3%C2%B2_2.pal",
+      "bytes": 1024,
+      "sha256": "310ebb2563f2cf494ccced94a2b6889b3a250170f70de1f7d2fed039d9291954",
+      "header": "c8f8d300"
+    },
+    {
+      "path": "data/palette/머리/머리26_남_3.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE26_%C2%B3%C2%B2_3.pal",
+      "bytes": 1024,
+      "sha256": "d6f2667c3512a13879b5dece084b63ded982b3335096935647be96cbf047ec22",
+      "header": "c8f8d300"
+    },
+    {
+      "path": "data/palette/머리/머리26_남_4.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE26_%C2%B3%C2%B2_4.pal",
+      "bytes": 1024,
+      "sha256": "e1b31136eec02078f67de8b927ea8ed864e48db553fb56ec9ec4d8c5878f64b6",
+      "header": "c8f8d300"
+    },
+    {
+      "path": "data/palette/머리/머리26_남_5.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE26_%C2%B3%C2%B2_5.pal",
+      "bytes": 1024,
+      "sha256": "7d2115d00f6d3f7e0613b8addcf22c3a63dcc052be9f37a5cb62e37db58fd971",
+      "header": "c8f8d300"
+    },
+    {
+      "path": "data/palette/머리/머리26_남_6.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE26_%C2%B3%C2%B2_6.pal",
+      "bytes": 1024,
+      "sha256": "01c2bf5973cfb1f909149c4ec08112cb91ac7d5752c0b43ca15e89c8f9c2f6c5",
+      "header": "c8f8d300"
+    },
+    {
+      "path": "data/palette/머리/머리26_남_7.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE26_%C2%B3%C2%B2_7.pal",
+      "bytes": 1024,
+      "sha256": "559b7cc47557a1cc4cb2cf939b5509ab3531f6345b6775f9520b5e4372aa0cfa",
+      "header": "c8f8d300"
+    },
+    {
+      "path": "data/palette/머리/머리26_남_8.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE26_%C2%B3%C2%B2_8.pal",
+      "bytes": 1024,
+      "sha256": "399a9441ed1fbdce99c42bb94f0bd6f0902104dc1ef8fe61e40e633732d8b29b",
+      "header": "c8f8d300"
+    },
+    {
+      "path": "data/palette/머리/머리27_남_0.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE27_%C2%B3%C2%B2_0.pal",
+      "bytes": 1024,
+      "sha256": "08ee83aa865e3310ac14f0893e861d849255f6daa86084b3e677d06a9ac9feca",
+      "header": "c8f8d300"
+    },
+    {
+      "path": "data/palette/머리/머리27_남_1.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE27_%C2%B3%C2%B2_1.pal",
+      "bytes": 1024,
+      "sha256": "f1b0adc56a4da3c0cbd0244b08afa96c458cebd4b7c9f34e935d69353f84f2e1",
+      "header": "c8f8d300"
+    },
+    {
+      "path": "data/palette/머리/머리27_남_2.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE27_%C2%B3%C2%B2_2.pal",
+      "bytes": 1024,
+      "sha256": "b1bb1e93b6cdf7ad0af79063623f55d6f21c2395511a278787dfe5cfb3bc8893",
+      "header": "c8f8d300"
+    },
+    {
+      "path": "data/palette/머리/머리27_남_3.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE27_%C2%B3%C2%B2_3.pal",
+      "bytes": 1024,
+      "sha256": "800954c62508378391b9cf07d7246b281c4258bdb7fc57f21cf2d0f7ea8d75ef",
+      "header": "c8f8d300"
+    },
+    {
+      "path": "data/palette/머리/머리27_남_4.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE27_%C2%B3%C2%B2_4.pal",
+      "bytes": 1024,
+      "sha256": "7d2115d00f6d3f7e0613b8addcf22c3a63dcc052be9f37a5cb62e37db58fd971",
+      "header": "c8f8d300"
+    },
+    {
+      "path": "data/palette/머리/머리27_남_5.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE27_%C2%B3%C2%B2_5.pal",
+      "bytes": 1024,
+      "sha256": "76bc9e0f0d3d248c5aad67646830213bfc939ea2770a110b2eb808dc21a9c7cd",
+      "header": "c8f8d300"
+    },
+    {
+      "path": "data/palette/머리/머리27_남_6.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE27_%C2%B3%C2%B2_6.pal",
+      "bytes": 1024,
+      "sha256": "2a8f0a3fb5272e66f19c77d11a3c3021bbf63c0f28cdbd0aff13c16d11567d49",
+      "header": "c8f8d300"
+    },
+    {
+      "path": "data/palette/머리/머리27_남_7.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE27_%C2%B3%C2%B2_7.pal",
+      "bytes": 1024,
+      "sha256": "7916fe67d5af60b4a67dd5176d8fd7da7eefa3dff64af5bf5535ae5e558507ca",
+      "header": "c8f8d300"
+    },
+    {
+      "path": "data/palette/머리/머리27_남_8.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE27_%C2%B3%C2%B2_8.pal",
+      "bytes": 1024,
+      "sha256": "08ee83aa865e3310ac14f0893e861d849255f6daa86084b3e677d06a9ac9feca",
+      "header": "c8f8d300"
+    },
+    {
+      "path": "data/palette/머리/머리27_여_0.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE27_%C2%BF%C2%A9_0.pal",
+      "bytes": 1024,
+      "sha256": "d243f0dc48a9b21cf9e1c0562fd9a7ba7ddf852acc80aab8288e5144be873b82",
+      "header": "b6bdac00"
+    },
+    {
+      "path": "data/palette/머리/머리27_여_1.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE27_%C2%BF%C2%A9_1.pal",
+      "bytes": 1024,
+      "sha256": "44b6a2373bb926b5fcd3ddb640118c3caefba3b03f115eb1e2f68e149030154e",
+      "header": "b6bdac00"
+    },
+    {
+      "path": "data/palette/머리/머리27_여_2.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE27_%C2%BF%C2%A9_2.pal",
+      "bytes": 1024,
+      "sha256": "56c3223109542ad2508f757389132c5d090323df0dd5f6196d97bfe1fa2547fd",
+      "header": "b6bdac00"
+    },
+    {
+      "path": "data/palette/머리/머리27_여_3.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE27_%C2%BF%C2%A9_3.pal",
+      "bytes": 1024,
+      "sha256": "c02c345bbb47b9613a712a5f46e5ffd486130b048fbd5b42bd0bafa43b91c29a",
+      "header": "b6bdac00"
+    },
+    {
+      "path": "data/palette/머리/머리27_여_4.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE27_%C2%BF%C2%A9_4.pal",
+      "bytes": 1024,
+      "sha256": "6d37ad2ab495d7dfe6af0153e2fb1be4592fb4f03618f0b5525d2ef5a9d49e00",
+      "header": "b6bdac00"
+    },
+    {
+      "path": "data/palette/머리/머리27_여_5.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE27_%C2%BF%C2%A9_5.pal",
+      "bytes": 1024,
+      "sha256": "4a738112bdf45a20eb3b97e71898ac364d81e215bc56653ed5bf149c420933f8",
+      "header": "b6bdac00"
+    },
+    {
+      "path": "data/palette/머리/머리27_여_6.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE27_%C2%BF%C2%A9_6.pal",
+      "bytes": 1024,
+      "sha256": "2c90de316234a5ce6f92d2a0fb4076f3579f082c2a548d2dc4e27276c51ac041",
+      "header": "b6bdac00"
+    },
+    {
+      "path": "data/palette/머리/머리27_여_7.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE27_%C2%BF%C2%A9_7.pal",
+      "bytes": 1024,
+      "sha256": "6ae845c60b89882217d62441b034a7ed7e309e077c2ae38008647492b8c78eff",
+      "header": "b6bdac00"
+    },
+    {
+      "path": "data/palette/머리/머리27_여_8.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE27_%C2%BF%C2%A9_8.pal",
+      "bytes": 1024,
+      "sha256": "d243f0dc48a9b21cf9e1c0562fd9a7ba7ddf852acc80aab8288e5144be873b82",
+      "header": "b6bdac00"
+    },
+    {
+      "path": "data/palette/머리/머리28_남_0.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE28_%C2%B3%C2%B2_0.pal",
+      "bytes": 1024,
+      "sha256": "08ee83aa865e3310ac14f0893e861d849255f6daa86084b3e677d06a9ac9feca",
+      "header": "c8f8d300"
+    },
+    {
+      "path": "data/palette/머리/머리28_남_1.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE28_%C2%B3%C2%B2_1.pal",
+      "bytes": 1024,
+      "sha256": "c6004ff11974b59cc985b293797d306a3aa7e37550b7cfd4b48a99338190bf53",
+      "header": "d4edd100"
+    },
+    {
+      "path": "data/palette/머리/머리28_남_2.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE28_%C2%B3%C2%B2_2.pal",
+      "bytes": 1024,
+      "sha256": "6bb42fe3a06c98b0f6ea69fb0017888a8bc36a2a200fffa20dd4f25cae3d23ef",
+      "header": "d4edd100"
+    },
+    {
+      "path": "data/palette/머리/머리28_남_3.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE28_%C2%B3%C2%B2_3.pal",
+      "bytes": 1024,
+      "sha256": "004425e3d659a85e9f4ffc32f4779af2f1d0eac6426c4543156957c4dd601c4b",
+      "header": "d4edd100"
+    },
+    {
+      "path": "data/palette/머리/머리28_남_4.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE28_%C2%B3%C2%B2_4.pal",
+      "bytes": 1024,
+      "sha256": "683e5feccea1185044a0f333e1e733ddcf2fbce6434713e2538816292319579e",
+      "header": "d4edd100"
+    },
+    {
+      "path": "data/palette/머리/머리28_남_5.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE28_%C2%B3%C2%B2_5.pal",
+      "bytes": 1024,
+      "sha256": "e08a0f1bdf5e8ede9abd271c89d473004374dcf6d5bdd5a08a0458b347a25b7e",
+      "header": "d4edd100"
+    },
+    {
+      "path": "data/palette/머리/머리28_남_6.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE28_%C2%B3%C2%B2_6.pal",
+      "bytes": 1024,
+      "sha256": "d243f0dc48a9b21cf9e1c0562fd9a7ba7ddf852acc80aab8288e5144be873b82",
+      "header": "b6bdac00"
+    },
+    {
+      "path": "data/palette/머리/머리28_남_7.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE28_%C2%B3%C2%B2_7.pal",
+      "bytes": 1024,
+      "sha256": "1d73aecee7b6a67ca50b8a20789d0bfb7286dd2a8e32f491cd52bdc6b03df857",
+      "header": "d4edd100"
+    },
+    {
+      "path": "data/palette/머리/머리28_남_8.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE28_%C2%B3%C2%B2_8.pal",
+      "bytes": 1024,
+      "sha256": "2c7e6b901c1f197a88bda873ca18b623f3639dd1c6a56d0ca95eb79588d8ef9d",
+      "header": "d4edd100"
+    },
+    {
+      "path": "data/palette/머리/머리2_남_0.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE2_%C2%B3%C2%B2_0.pal",
+      "bytes": 1024,
+      "sha256": "5bb0d26e536820efb6d83818b38908e9abd6b422d9b6a23bed6493f37d3793c8",
+      "header": "c8f8d300"
+    },
+    {
+      "path": "data/palette/머리/머리2_남_1.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE2_%C2%B3%C2%B2_1.pal",
+      "bytes": 1024,
+      "sha256": "79bbde8eb668e91001134c33da1f14f74237ce2d6d4694aa21ce71a38804ed5d",
+      "header": "c8f8d300"
+    },
+    {
+      "path": "data/palette/머리/머리2_남_2.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE2_%C2%B3%C2%B2_2.pal",
+      "bytes": 1024,
+      "sha256": "d7b88d238f021cbb3b5fd5b3b02118f178e1c65bda4146ed2c4042f121fc5aae",
+      "header": "c8f8d300"
+    },
+    {
+      "path": "data/palette/머리/머리2_남_3.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE2_%C2%B3%C2%B2_3.pal",
+      "bytes": 1024,
+      "sha256": "aea8bfdbfcc768b60c5b868771b7ed01882615d06174ddafbf8629ac27296c2a",
+      "header": "c8f8d300"
+    },
+    {
+      "path": "data/palette/머리/머리2_남_4.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE2_%C2%B3%C2%B2_4.pal",
+      "bytes": 1024,
+      "sha256": "35f84f371e5735f130b258462769f354c5ad6555489c712d0e08048a00e06947",
+      "header": "c8f8d300"
+    },
+    {
+      "path": "data/palette/머리/머리2_남_5.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE2_%C2%B3%C2%B2_5.pal",
+      "bytes": 1024,
+      "sha256": "04500724158c46027e5e5f3bd917aa545fc7346c84c64b7bec4fabf1075583e6",
+      "header": "c8f8d300"
+    },
+    {
+      "path": "data/palette/머리/머리2_남_6.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE2_%C2%B3%C2%B2_6.pal",
+      "bytes": 1024,
+      "sha256": "a472c0e968cb0b65f4e926f8765419ca53a1a36e2edf6f9998889694d8c25573",
+      "header": "c8f8d300"
+    },
+    {
+      "path": "data/palette/머리/머리2_남_7.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE2_%C2%B3%C2%B2_7.pal",
+      "bytes": 1024,
+      "sha256": "3c40f24dc99cbf44cb0b907544c4a455d9d32fa495cd5fcffa8eeb43cac48773",
+      "header": "c8f8d300"
+    },
+    {
+      "path": "data/palette/머리/머리2_남_8.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE2_%C2%B3%C2%B2_8.pal",
+      "bytes": 1024,
+      "sha256": "5bb0d26e536820efb6d83818b38908e9abd6b422d9b6a23bed6493f37d3793c8",
+      "header": "c8f8d300"
+    },
+    {
+      "path": "data/palette/머리/머리2_여_0.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE2_%C2%BF%C2%A9_0.pal",
+      "bytes": 1024,
+      "sha256": "00f7400751551f43e3cd655055cef0542eab2f7a1a0da50ccc5dc0bfa79b61a8",
+      "header": "c8f8d300"
+    },
+    {
+      "path": "data/palette/머리/머리2_여_1.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE2_%C2%BF%C2%A9_1.pal",
+      "bytes": 1024,
+      "sha256": "21e5b114843619ae34347e6de8c236536ef8edf1d5a96d38b603cc184c7a5b47",
+      "header": "c8f8d300"
+    },
+    {
+      "path": "data/palette/머리/머리2_여_2.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE2_%C2%BF%C2%A9_2.pal",
+      "bytes": 1024,
+      "sha256": "615b68c75ff7b30c6930a456f8a14c1857471c7473e175832d58d9aba16d2ee4",
+      "header": "c8f8d300"
+    },
+    {
+      "path": "data/palette/머리/머리2_여_3.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE2_%C2%BF%C2%A9_3.pal",
+      "bytes": 1024,
+      "sha256": "62b3fdb11d2faac60a1b4561bf2cf8401db2f94201542f63b0acab59e92e78d8",
+      "header": "c8f8d300"
+    },
+    {
+      "path": "data/palette/머리/머리2_여_4.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE2_%C2%BF%C2%A9_4.pal",
+      "bytes": 1024,
+      "sha256": "2ba38f6dc73fa70ba49aea028597aaf81036742543853170f6fd9696846bf9b2",
+      "header": "c8f8d300"
+    },
+    {
+      "path": "data/palette/머리/머리2_여_5.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE2_%C2%BF%C2%A9_5.pal",
+      "bytes": 1024,
+      "sha256": "5190568f088d60251a0c1d833017fc96bb8e64598127ee2ae89a8af554f07f5f",
+      "header": "c8f8d300"
+    },
+    {
+      "path": "data/palette/머리/머리2_여_6.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE2_%C2%BF%C2%A9_6.pal",
+      "bytes": 1024,
+      "sha256": "d6b3c6505c43303e9dee338dc9f07e76ab019c642883f79745ac1e05df397493",
+      "header": "c8f8d300"
+    },
+    {
+      "path": "data/palette/머리/머리2_여_7.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE2_%C2%BF%C2%A9_7.pal",
+      "bytes": 1024,
+      "sha256": "6947f189f5df45b040f11e7cd489c647daef4ba3752f24805241c6a07560a72a",
+      "header": "c8f8d300"
+    },
+    {
+      "path": "data/palette/머리/머리2_여_8.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE2_%C2%BF%C2%A9_8.pal",
+      "bytes": 1024,
+      "sha256": "00f7400751551f43e3cd655055cef0542eab2f7a1a0da50ccc5dc0bfa79b61a8",
+      "header": "c8f8d300"
+    },
+    {
+      "path": "data/palette/머리/머리30_남_0.pal",
+      "url": "https://classicweb.niktoutro.com/chaosclient/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE30_%C2%B3%C2%B2_0.pal",
+      "bytes": 1024,
+      "sha256": "430bff30f0f00b78c5cf59d8a763e3fd922f8b82c300cfdc08b75259778172ec",
+      "header": "7f7f7f00",
+      "previousAttempts": [
+        {
+          "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE30_%C2%B3%C2%B2_0.pal",
+          "error": "HTTP Error 404: Not Found"
+        }
+      ]
+    },
+    {
+      "path": "data/palette/머리/머리30_남_1.pal",
+      "url": "https://classicweb.niktoutro.com/chaosclient/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE30_%C2%B3%C2%B2_1.pal",
+      "bytes": 1024,
+      "sha256": "430bff30f0f00b78c5cf59d8a763e3fd922f8b82c300cfdc08b75259778172ec",
+      "header": "7f7f7f00",
+      "previousAttempts": [
+        {
+          "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE30_%C2%B3%C2%B2_1.pal",
+          "error": "HTTP Error 404: Not Found"
+        }
+      ]
+    },
+    {
+      "path": "data/palette/머리/머리30_남_2.pal",
+      "url": "https://classicweb.niktoutro.com/chaosclient/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE30_%C2%B3%C2%B2_2.pal",
+      "bytes": 1024,
+      "sha256": "09f33509b150eddf66dab1485ab898ab157648c88d0ea363024e567d7c3f42fb",
+      "header": "7f7f7f00",
+      "previousAttempts": [
+        {
+          "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE30_%C2%B3%C2%B2_2.pal",
+          "error": "HTTP Error 404: Not Found"
+        }
+      ]
+    },
+    {
+      "path": "data/palette/머리/머리30_남_3.pal",
+      "url": "https://classicweb.niktoutro.com/chaosclient/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE30_%C2%B3%C2%B2_3.pal",
+      "bytes": 1024,
+      "sha256": "a8fc0d1ff0bfad590374caf55b273f7eeed6e367eac01a3013d61dc3f05a2946",
+      "header": "7f7f7f00",
+      "previousAttempts": [
+        {
+          "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE30_%C2%B3%C2%B2_3.pal",
+          "error": "HTTP Error 404: Not Found"
+        }
+      ]
+    },
+    {
+      "path": "data/palette/머리/머리30_남_4.pal",
+      "url": "https://classicweb.niktoutro.com/chaosclient/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE30_%C2%B3%C2%B2_4.pal",
+      "bytes": 1024,
+      "sha256": "8fb70af3dd06925985193b2b1e38f714135b420b8b3e267224eb20fed8285d68",
+      "header": "7f7f7f00",
+      "previousAttempts": [
+        {
+          "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE30_%C2%B3%C2%B2_4.pal",
+          "error": "HTTP Error 404: Not Found"
+        }
+      ]
+    },
+    {
+      "path": "data/palette/머리/머리30_남_5.pal",
+      "url": "https://classicweb.niktoutro.com/chaosclient/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE30_%C2%B3%C2%B2_5.pal",
+      "bytes": 1024,
+      "sha256": "acf37d085479bead2df5ef8795586a0d988dfda37d0739a0f10a3d2c56775f8f",
+      "header": "7f7f7f00",
+      "previousAttempts": [
+        {
+          "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE30_%C2%B3%C2%B2_5.pal",
+          "error": "HTTP Error 404: Not Found"
+        }
+      ]
+    },
+    {
+      "path": "data/palette/머리/머리30_남_6.pal",
+      "url": "https://classicweb.niktoutro.com/chaosclient/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE30_%C2%B3%C2%B2_6.pal",
+      "bytes": 1024,
+      "sha256": "f17fe82d5a4bc6f9d94456c260efa8269a20a6ed0af052144f3273d25f71bea7",
+      "header": "7f7f7f00",
+      "previousAttempts": [
+        {
+          "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE30_%C2%B3%C2%B2_6.pal",
+          "error": "HTTP Error 404: Not Found"
+        }
+      ]
+    },
+    {
+      "path": "data/palette/머리/머리30_남_7.pal",
+      "url": "https://classicweb.niktoutro.com/chaosclient/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE30_%C2%B3%C2%B2_7.pal",
+      "bytes": 1024,
+      "sha256": "de8a00617c7d0095fb2f724e471789eb015f972a920377473b95996785ba8c7c",
+      "header": "7f7f7f00",
+      "previousAttempts": [
+        {
+          "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE30_%C2%B3%C2%B2_7.pal",
+          "error": "HTTP Error 404: Not Found"
+        }
+      ]
+    },
+    {
+      "path": "data/palette/머리/머리30_남_8.pal",
+      "url": "https://classicweb.niktoutro.com/chaosclient/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE30_%C2%B3%C2%B2_8.pal",
+      "bytes": 1024,
+      "sha256": "f1a150efa1c5b74f59f4212fb20cec89fe706d53621c63bf0bf3af9fb8f292c1",
+      "header": "7f7f7f00",
+      "previousAttempts": [
+        {
+          "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE30_%C2%B3%C2%B2_8.pal",
+          "error": "HTTP Error 404: Not Found"
+        }
+      ]
+    },
+    {
+      "path": "data/palette/머리/머리30_여_0.pal",
+      "url": "https://classicweb.niktoutro.com/chaosclient/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE30_%C2%BF%C2%A9_0.pal",
+      "bytes": 1024,
+      "sha256": "430bff30f0f00b78c5cf59d8a763e3fd922f8b82c300cfdc08b75259778172ec",
+      "header": "7f7f7f00",
+      "previousAttempts": [
+        {
+          "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE30_%C2%BF%C2%A9_0.pal",
+          "error": "HTTP Error 404: Not Found"
+        }
+      ]
+    },
+    {
+      "path": "data/palette/머리/머리30_여_1.pal",
+      "url": "https://classicweb.niktoutro.com/chaosclient/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE30_%C2%BF%C2%A9_1.pal",
+      "bytes": 1024,
+      "sha256": "430bff30f0f00b78c5cf59d8a763e3fd922f8b82c300cfdc08b75259778172ec",
+      "header": "7f7f7f00",
+      "previousAttempts": [
+        {
+          "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE30_%C2%BF%C2%A9_1.pal",
+          "error": "HTTP Error 404: Not Found"
+        }
+      ]
+    },
+    {
+      "path": "data/palette/머리/머리30_여_2.pal",
+      "url": "https://classicweb.niktoutro.com/chaosclient/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE30_%C2%BF%C2%A9_2.pal",
+      "bytes": 1024,
+      "sha256": "09f33509b150eddf66dab1485ab898ab157648c88d0ea363024e567d7c3f42fb",
+      "header": "7f7f7f00",
+      "previousAttempts": [
+        {
+          "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE30_%C2%BF%C2%A9_2.pal",
+          "error": "HTTP Error 404: Not Found"
+        }
+      ]
+    },
+    {
+      "path": "data/palette/머리/머리30_여_3.pal",
+      "url": "https://classicweb.niktoutro.com/chaosclient/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE30_%C2%BF%C2%A9_3.pal",
+      "bytes": 1024,
+      "sha256": "a8fc0d1ff0bfad590374caf55b273f7eeed6e367eac01a3013d61dc3f05a2946",
+      "header": "7f7f7f00",
+      "previousAttempts": [
+        {
+          "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE30_%C2%BF%C2%A9_3.pal",
+          "error": "HTTP Error 404: Not Found"
+        }
+      ]
+    },
+    {
+      "path": "data/palette/머리/머리30_여_4.pal",
+      "url": "https://classicweb.niktoutro.com/chaosclient/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE30_%C2%BF%C2%A9_4.pal",
+      "bytes": 1024,
+      "sha256": "8fb70af3dd06925985193b2b1e38f714135b420b8b3e267224eb20fed8285d68",
+      "header": "7f7f7f00",
+      "previousAttempts": [
+        {
+          "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE30_%C2%BF%C2%A9_4.pal",
+          "error": "HTTP Error 404: Not Found"
+        }
+      ]
+    },
+    {
+      "path": "data/palette/머리/머리30_여_5.pal",
+      "url": "https://classicweb.niktoutro.com/chaosclient/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE30_%C2%BF%C2%A9_5.pal",
+      "bytes": 1024,
+      "sha256": "acf37d085479bead2df5ef8795586a0d988dfda37d0739a0f10a3d2c56775f8f",
+      "header": "7f7f7f00",
+      "previousAttempts": [
+        {
+          "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE30_%C2%BF%C2%A9_5.pal",
+          "error": "HTTP Error 404: Not Found"
+        }
+      ]
+    },
+    {
+      "path": "data/palette/머리/머리30_여_6.pal",
+      "url": "https://classicweb.niktoutro.com/chaosclient/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE30_%C2%BF%C2%A9_6.pal",
+      "bytes": 1024,
+      "sha256": "f17fe82d5a4bc6f9d94456c260efa8269a20a6ed0af052144f3273d25f71bea7",
+      "header": "7f7f7f00",
+      "previousAttempts": [
+        {
+          "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE30_%C2%BF%C2%A9_6.pal",
+          "error": "HTTP Error 404: Not Found"
+        }
+      ]
+    },
+    {
+      "path": "data/palette/머리/머리30_여_7.pal",
+      "url": "https://classicweb.niktoutro.com/chaosclient/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE30_%C2%BF%C2%A9_7.pal",
+      "bytes": 1024,
+      "sha256": "de8a00617c7d0095fb2f724e471789eb015f972a920377473b95996785ba8c7c",
+      "header": "7f7f7f00",
+      "previousAttempts": [
+        {
+          "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE30_%C2%BF%C2%A9_7.pal",
+          "error": "HTTP Error 404: Not Found"
+        }
+      ]
+    },
+    {
+      "path": "data/palette/머리/머리30_여_8.pal",
+      "url": "https://classicweb.niktoutro.com/chaosclient/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE30_%C2%BF%C2%A9_8.pal",
+      "bytes": 1024,
+      "sha256": "f1a150efa1c5b74f59f4212fb20cec89fe706d53621c63bf0bf3af9fb8f292c1",
+      "header": "7f7f7f00",
+      "previousAttempts": [
+        {
+          "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE30_%C2%BF%C2%A9_8.pal",
+          "error": "HTTP Error 404: Not Found"
+        }
+      ]
+    },
+    {
+      "path": "data/palette/머리/머리32_남_0.pal",
+      "url": "https://classicweb.niktoutro.com/chaosclient/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE32_%C2%B3%C2%B2_0.pal",
+      "bytes": 1024,
+      "sha256": "430bff30f0f00b78c5cf59d8a763e3fd922f8b82c300cfdc08b75259778172ec",
+      "header": "7f7f7f00",
+      "previousAttempts": [
+        {
+          "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE32_%C2%B3%C2%B2_0.pal",
+          "error": "HTTP Error 404: Not Found"
+        }
+      ]
+    },
+    {
+      "path": "data/palette/머리/머리32_남_1.pal",
+      "url": "https://classicweb.niktoutro.com/chaosclient/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE32_%C2%B3%C2%B2_1.pal",
+      "bytes": 1024,
+      "sha256": "430bff30f0f00b78c5cf59d8a763e3fd922f8b82c300cfdc08b75259778172ec",
+      "header": "7f7f7f00",
+      "previousAttempts": [
+        {
+          "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE32_%C2%B3%C2%B2_1.pal",
+          "error": "HTTP Error 404: Not Found"
+        }
+      ]
+    },
+    {
+      "path": "data/palette/머리/머리32_남_2.pal",
+      "url": "https://classicweb.niktoutro.com/chaosclient/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE32_%C2%B3%C2%B2_2.pal",
+      "bytes": 1024,
+      "sha256": "09f33509b150eddf66dab1485ab898ab157648c88d0ea363024e567d7c3f42fb",
+      "header": "7f7f7f00",
+      "previousAttempts": [
+        {
+          "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE32_%C2%B3%C2%B2_2.pal",
+          "error": "HTTP Error 404: Not Found"
+        }
+      ]
+    },
+    {
+      "path": "data/palette/머리/머리32_남_3.pal",
+      "url": "https://classicweb.niktoutro.com/chaosclient/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE32_%C2%B3%C2%B2_3.pal",
+      "bytes": 1024,
+      "sha256": "a8fc0d1ff0bfad590374caf55b273f7eeed6e367eac01a3013d61dc3f05a2946",
+      "header": "7f7f7f00",
+      "previousAttempts": [
+        {
+          "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE32_%C2%B3%C2%B2_3.pal",
+          "error": "HTTP Error 404: Not Found"
+        }
+      ]
+    },
+    {
+      "path": "data/palette/머리/머리32_남_4.pal",
+      "url": "https://classicweb.niktoutro.com/chaosclient/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE32_%C2%B3%C2%B2_4.pal",
+      "bytes": 1024,
+      "sha256": "8fb70af3dd06925985193b2b1e38f714135b420b8b3e267224eb20fed8285d68",
+      "header": "7f7f7f00",
+      "previousAttempts": [
+        {
+          "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE32_%C2%B3%C2%B2_4.pal",
+          "error": "HTTP Error 404: Not Found"
+        }
+      ]
+    },
+    {
+      "path": "data/palette/머리/머리32_남_5.pal",
+      "url": "https://classicweb.niktoutro.com/chaosclient/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE32_%C2%B3%C2%B2_5.pal",
+      "bytes": 1024,
+      "sha256": "acf37d085479bead2df5ef8795586a0d988dfda37d0739a0f10a3d2c56775f8f",
+      "header": "7f7f7f00",
+      "previousAttempts": [
+        {
+          "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE32_%C2%B3%C2%B2_5.pal",
+          "error": "HTTP Error 404: Not Found"
+        }
+      ]
+    },
+    {
+      "path": "data/palette/머리/머리32_남_6.pal",
+      "url": "https://classicweb.niktoutro.com/chaosclient/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE32_%C2%B3%C2%B2_6.pal",
+      "bytes": 1024,
+      "sha256": "f17fe82d5a4bc6f9d94456c260efa8269a20a6ed0af052144f3273d25f71bea7",
+      "header": "7f7f7f00",
+      "previousAttempts": [
+        {
+          "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE32_%C2%B3%C2%B2_6.pal",
+          "error": "HTTP Error 404: Not Found"
+        }
+      ]
+    },
+    {
+      "path": "data/palette/머리/머리32_남_7.pal",
+      "url": "https://classicweb.niktoutro.com/chaosclient/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE32_%C2%B3%C2%B2_7.pal",
+      "bytes": 1024,
+      "sha256": "de8a00617c7d0095fb2f724e471789eb015f972a920377473b95996785ba8c7c",
+      "header": "7f7f7f00",
+      "previousAttempts": [
+        {
+          "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE32_%C2%B3%C2%B2_7.pal",
+          "error": "HTTP Error 404: Not Found"
+        }
+      ]
+    },
+    {
+      "path": "data/palette/머리/머리32_남_8.pal",
+      "url": "https://classicweb.niktoutro.com/chaosclient/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE32_%C2%B3%C2%B2_8.pal",
+      "bytes": 1024,
+      "sha256": "f1a150efa1c5b74f59f4212fb20cec89fe706d53621c63bf0bf3af9fb8f292c1",
+      "header": "7f7f7f00",
+      "previousAttempts": [
+        {
+          "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE32_%C2%B3%C2%B2_8.pal",
+          "error": "HTTP Error 404: Not Found"
+        }
+      ]
+    },
+    {
+      "path": "data/palette/머리/머리34_여_0.pal",
+      "url": "https://classicweb.niktoutro.com/chaosclient/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE34_%C2%BF%C2%A9_0.pal",
+      "bytes": 1024,
+      "sha256": "430bff30f0f00b78c5cf59d8a763e3fd922f8b82c300cfdc08b75259778172ec",
+      "header": "7f7f7f00",
+      "previousAttempts": [
+        {
+          "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE34_%C2%BF%C2%A9_0.pal",
+          "error": "HTTP Error 404: Not Found"
+        }
+      ]
+    },
+    {
+      "path": "data/palette/머리/머리34_여_1.pal",
+      "url": "https://classicweb.niktoutro.com/chaosclient/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE34_%C2%BF%C2%A9_1.pal",
+      "bytes": 1024,
+      "sha256": "430bff30f0f00b78c5cf59d8a763e3fd922f8b82c300cfdc08b75259778172ec",
+      "header": "7f7f7f00",
+      "previousAttempts": [
+        {
+          "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE34_%C2%BF%C2%A9_1.pal",
+          "error": "HTTP Error 404: Not Found"
+        }
+      ]
+    },
+    {
+      "path": "data/palette/머리/머리34_여_2.pal",
+      "url": "https://classicweb.niktoutro.com/chaosclient/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE34_%C2%BF%C2%A9_2.pal",
+      "bytes": 1024,
+      "sha256": "09f33509b150eddf66dab1485ab898ab157648c88d0ea363024e567d7c3f42fb",
+      "header": "7f7f7f00",
+      "previousAttempts": [
+        {
+          "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE34_%C2%BF%C2%A9_2.pal",
+          "error": "HTTP Error 404: Not Found"
+        }
+      ]
+    },
+    {
+      "path": "data/palette/머리/머리34_여_3.pal",
+      "url": "https://classicweb.niktoutro.com/chaosclient/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE34_%C2%BF%C2%A9_3.pal",
+      "bytes": 1024,
+      "sha256": "a8fc0d1ff0bfad590374caf55b273f7eeed6e367eac01a3013d61dc3f05a2946",
+      "header": "7f7f7f00",
+      "previousAttempts": [
+        {
+          "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE34_%C2%BF%C2%A9_3.pal",
+          "error": "HTTP Error 404: Not Found"
+        }
+      ]
+    },
+    {
+      "path": "data/palette/머리/머리34_여_4.pal",
+      "url": "https://classicweb.niktoutro.com/chaosclient/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE34_%C2%BF%C2%A9_4.pal",
+      "bytes": 1024,
+      "sha256": "8fb70af3dd06925985193b2b1e38f714135b420b8b3e267224eb20fed8285d68",
+      "header": "7f7f7f00",
+      "previousAttempts": [
+        {
+          "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE34_%C2%BF%C2%A9_4.pal",
+          "error": "HTTP Error 404: Not Found"
+        }
+      ]
+    },
+    {
+      "path": "data/palette/머리/머리34_여_5.pal",
+      "url": "https://classicweb.niktoutro.com/chaosclient/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE34_%C2%BF%C2%A9_5.pal",
+      "bytes": 1024,
+      "sha256": "acf37d085479bead2df5ef8795586a0d988dfda37d0739a0f10a3d2c56775f8f",
+      "header": "7f7f7f00",
+      "previousAttempts": [
+        {
+          "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE34_%C2%BF%C2%A9_5.pal",
+          "error": "HTTP Error 404: Not Found"
+        }
+      ]
+    },
+    {
+      "path": "data/palette/머리/머리34_여_6.pal",
+      "url": "https://classicweb.niktoutro.com/chaosclient/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE34_%C2%BF%C2%A9_6.pal",
+      "bytes": 1024,
+      "sha256": "f17fe82d5a4bc6f9d94456c260efa8269a20a6ed0af052144f3273d25f71bea7",
+      "header": "7f7f7f00",
+      "previousAttempts": [
+        {
+          "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE34_%C2%BF%C2%A9_6.pal",
+          "error": "HTTP Error 404: Not Found"
+        }
+      ]
+    },
+    {
+      "path": "data/palette/머리/머리34_여_7.pal",
+      "url": "https://classicweb.niktoutro.com/chaosclient/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE34_%C2%BF%C2%A9_7.pal",
+      "bytes": 1024,
+      "sha256": "de8a00617c7d0095fb2f724e471789eb015f972a920377473b95996785ba8c7c",
+      "header": "7f7f7f00",
+      "previousAttempts": [
+        {
+          "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE34_%C2%BF%C2%A9_7.pal",
+          "error": "HTTP Error 404: Not Found"
+        }
+      ]
+    },
+    {
+      "path": "data/palette/머리/머리34_여_8.pal",
+      "url": "https://classicweb.niktoutro.com/chaosclient/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE34_%C2%BF%C2%A9_8.pal",
+      "bytes": 1024,
+      "sha256": "f1a150efa1c5b74f59f4212fb20cec89fe706d53621c63bf0bf3af9fb8f292c1",
+      "header": "7f7f7f00",
+      "previousAttempts": [
+        {
+          "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE34_%C2%BF%C2%A9_8.pal",
+          "error": "HTTP Error 404: Not Found"
+        }
+      ]
+    },
+    {
+      "path": "data/palette/머리/머리35_남_0.pal",
+      "url": "https://classicweb.niktoutro.com/chaosclient/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE35_%C2%B3%C2%B2_0.pal",
+      "bytes": 1024,
+      "sha256": "430bff30f0f00b78c5cf59d8a763e3fd922f8b82c300cfdc08b75259778172ec",
+      "header": "7f7f7f00",
+      "previousAttempts": [
+        {
+          "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE35_%C2%B3%C2%B2_0.pal",
+          "error": "HTTP Error 404: Not Found"
+        }
+      ]
+    },
+    {
+      "path": "data/palette/머리/머리35_남_1.pal",
+      "url": "https://classicweb.niktoutro.com/chaosclient/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE35_%C2%B3%C2%B2_1.pal",
+      "bytes": 1024,
+      "sha256": "430bff30f0f00b78c5cf59d8a763e3fd922f8b82c300cfdc08b75259778172ec",
+      "header": "7f7f7f00",
+      "previousAttempts": [
+        {
+          "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE35_%C2%B3%C2%B2_1.pal",
+          "error": "HTTP Error 404: Not Found"
+        }
+      ]
+    },
+    {
+      "path": "data/palette/머리/머리35_남_2.pal",
+      "url": "https://classicweb.niktoutro.com/chaosclient/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE35_%C2%B3%C2%B2_2.pal",
+      "bytes": 1024,
+      "sha256": "09f33509b150eddf66dab1485ab898ab157648c88d0ea363024e567d7c3f42fb",
+      "header": "7f7f7f00",
+      "previousAttempts": [
+        {
+          "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE35_%C2%B3%C2%B2_2.pal",
+          "error": "HTTP Error 404: Not Found"
+        }
+      ]
+    },
+    {
+      "path": "data/palette/머리/머리35_남_3.pal",
+      "url": "https://classicweb.niktoutro.com/chaosclient/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE35_%C2%B3%C2%B2_3.pal",
+      "bytes": 1024,
+      "sha256": "a8fc0d1ff0bfad590374caf55b273f7eeed6e367eac01a3013d61dc3f05a2946",
+      "header": "7f7f7f00",
+      "previousAttempts": [
+        {
+          "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE35_%C2%B3%C2%B2_3.pal",
+          "error": "HTTP Error 404: Not Found"
+        }
+      ]
+    },
+    {
+      "path": "data/palette/머리/머리35_남_4.pal",
+      "url": "https://classicweb.niktoutro.com/chaosclient/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE35_%C2%B3%C2%B2_4.pal",
+      "bytes": 1024,
+      "sha256": "8fb70af3dd06925985193b2b1e38f714135b420b8b3e267224eb20fed8285d68",
+      "header": "7f7f7f00",
+      "previousAttempts": [
+        {
+          "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE35_%C2%B3%C2%B2_4.pal",
+          "error": "HTTP Error 404: Not Found"
+        }
+      ]
+    },
+    {
+      "path": "data/palette/머리/머리35_남_5.pal",
+      "url": "https://classicweb.niktoutro.com/chaosclient/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE35_%C2%B3%C2%B2_5.pal",
+      "bytes": 1024,
+      "sha256": "acf37d085479bead2df5ef8795586a0d988dfda37d0739a0f10a3d2c56775f8f",
+      "header": "7f7f7f00",
+      "previousAttempts": [
+        {
+          "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE35_%C2%B3%C2%B2_5.pal",
+          "error": "HTTP Error 404: Not Found"
+        }
+      ]
+    },
+    {
+      "path": "data/palette/머리/머리35_남_6.pal",
+      "url": "https://classicweb.niktoutro.com/chaosclient/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE35_%C2%B3%C2%B2_6.pal",
+      "bytes": 1024,
+      "sha256": "f17fe82d5a4bc6f9d94456c260efa8269a20a6ed0af052144f3273d25f71bea7",
+      "header": "7f7f7f00",
+      "previousAttempts": [
+        {
+          "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE35_%C2%B3%C2%B2_6.pal",
+          "error": "HTTP Error 404: Not Found"
+        }
+      ]
+    },
+    {
+      "path": "data/palette/머리/머리35_남_7.pal",
+      "url": "https://classicweb.niktoutro.com/chaosclient/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE35_%C2%B3%C2%B2_7.pal",
+      "bytes": 1024,
+      "sha256": "de8a00617c7d0095fb2f724e471789eb015f972a920377473b95996785ba8c7c",
+      "header": "7f7f7f00",
+      "previousAttempts": [
+        {
+          "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE35_%C2%B3%C2%B2_7.pal",
+          "error": "HTTP Error 404: Not Found"
+        }
+      ]
+    },
+    {
+      "path": "data/palette/머리/머리35_남_8.pal",
+      "url": "https://classicweb.niktoutro.com/chaosclient/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE35_%C2%B3%C2%B2_8.pal",
+      "bytes": 1024,
+      "sha256": "f1a150efa1c5b74f59f4212fb20cec89fe706d53621c63bf0bf3af9fb8f292c1",
+      "header": "7f7f7f00",
+      "previousAttempts": [
+        {
+          "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE35_%C2%B3%C2%B2_8.pal",
+          "error": "HTTP Error 404: Not Found"
+        }
+      ]
+    },
+    {
+      "path": "data/palette/머리/머리35_여_0.pal",
+      "url": "https://classicweb.niktoutro.com/chaosclient/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE35_%C2%BF%C2%A9_0.pal",
+      "bytes": 1024,
+      "sha256": "430bff30f0f00b78c5cf59d8a763e3fd922f8b82c300cfdc08b75259778172ec",
+      "header": "7f7f7f00",
+      "previousAttempts": [
+        {
+          "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE35_%C2%BF%C2%A9_0.pal",
+          "error": "HTTP Error 404: Not Found"
+        }
+      ]
+    },
+    {
+      "path": "data/palette/머리/머리35_여_1.pal",
+      "url": "https://classicweb.niktoutro.com/chaosclient/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE35_%C2%BF%C2%A9_1.pal",
+      "bytes": 1024,
+      "sha256": "430bff30f0f00b78c5cf59d8a763e3fd922f8b82c300cfdc08b75259778172ec",
+      "header": "7f7f7f00",
+      "previousAttempts": [
+        {
+          "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE35_%C2%BF%C2%A9_1.pal",
+          "error": "HTTP Error 404: Not Found"
+        }
+      ]
+    },
+    {
+      "path": "data/palette/머리/머리35_여_2.pal",
+      "url": "https://classicweb.niktoutro.com/chaosclient/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE35_%C2%BF%C2%A9_2.pal",
+      "bytes": 1024,
+      "sha256": "09f33509b150eddf66dab1485ab898ab157648c88d0ea363024e567d7c3f42fb",
+      "header": "7f7f7f00",
+      "previousAttempts": [
+        {
+          "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE35_%C2%BF%C2%A9_2.pal",
+          "error": "HTTP Error 404: Not Found"
+        }
+      ]
+    },
+    {
+      "path": "data/palette/머리/머리35_여_3.pal",
+      "url": "https://classicweb.niktoutro.com/chaosclient/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE35_%C2%BF%C2%A9_3.pal",
+      "bytes": 1024,
+      "sha256": "a8fc0d1ff0bfad590374caf55b273f7eeed6e367eac01a3013d61dc3f05a2946",
+      "header": "7f7f7f00",
+      "previousAttempts": [
+        {
+          "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE35_%C2%BF%C2%A9_3.pal",
+          "error": "HTTP Error 404: Not Found"
+        }
+      ]
+    },
+    {
+      "path": "data/palette/머리/머리35_여_4.pal",
+      "url": "https://classicweb.niktoutro.com/chaosclient/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE35_%C2%BF%C2%A9_4.pal",
+      "bytes": 1024,
+      "sha256": "8fb70af3dd06925985193b2b1e38f714135b420b8b3e267224eb20fed8285d68",
+      "header": "7f7f7f00",
+      "previousAttempts": [
+        {
+          "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE35_%C2%BF%C2%A9_4.pal",
+          "error": "HTTP Error 404: Not Found"
+        }
+      ]
+    },
+    {
+      "path": "data/palette/머리/머리35_여_5.pal",
+      "url": "https://classicweb.niktoutro.com/chaosclient/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE35_%C2%BF%C2%A9_5.pal",
+      "bytes": 1024,
+      "sha256": "acf37d085479bead2df5ef8795586a0d988dfda37d0739a0f10a3d2c56775f8f",
+      "header": "7f7f7f00",
+      "previousAttempts": [
+        {
+          "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE35_%C2%BF%C2%A9_5.pal",
+          "error": "HTTP Error 404: Not Found"
+        }
+      ]
+    },
+    {
+      "path": "data/palette/머리/머리35_여_6.pal",
+      "url": "https://classicweb.niktoutro.com/chaosclient/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE35_%C2%BF%C2%A9_6.pal",
+      "bytes": 1024,
+      "sha256": "f17fe82d5a4bc6f9d94456c260efa8269a20a6ed0af052144f3273d25f71bea7",
+      "header": "7f7f7f00",
+      "previousAttempts": [
+        {
+          "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE35_%C2%BF%C2%A9_6.pal",
+          "error": "HTTP Error 404: Not Found"
+        }
+      ]
+    },
+    {
+      "path": "data/palette/머리/머리35_여_7.pal",
+      "url": "https://classicweb.niktoutro.com/chaosclient/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE35_%C2%BF%C2%A9_7.pal",
+      "bytes": 1024,
+      "sha256": "de8a00617c7d0095fb2f724e471789eb015f972a920377473b95996785ba8c7c",
+      "header": "7f7f7f00",
+      "previousAttempts": [
+        {
+          "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE35_%C2%BF%C2%A9_7.pal",
+          "error": "HTTP Error 404: Not Found"
+        }
+      ]
+    },
+    {
+      "path": "data/palette/머리/머리35_여_8.pal",
+      "url": "https://classicweb.niktoutro.com/chaosclient/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE35_%C2%BF%C2%A9_8.pal",
+      "bytes": 1024,
+      "sha256": "f1a150efa1c5b74f59f4212fb20cec89fe706d53621c63bf0bf3af9fb8f292c1",
+      "header": "7f7f7f00",
+      "previousAttempts": [
+        {
+          "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE35_%C2%BF%C2%A9_8.pal",
+          "error": "HTTP Error 404: Not Found"
+        }
+      ]
+    },
+    {
+      "path": "data/palette/머리/머리37_여_0.pal",
+      "url": "https://classicweb.niktoutro.com/chaosclient/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE37_%C2%BF%C2%A9_0.pal",
+      "bytes": 1024,
+      "sha256": "430bff30f0f00b78c5cf59d8a763e3fd922f8b82c300cfdc08b75259778172ec",
+      "header": "7f7f7f00",
+      "previousAttempts": [
+        {
+          "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE37_%C2%BF%C2%A9_0.pal",
+          "error": "HTTP Error 404: Not Found"
+        }
+      ]
+    },
+    {
+      "path": "data/palette/머리/머리37_여_1.pal",
+      "url": "https://classicweb.niktoutro.com/chaosclient/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE37_%C2%BF%C2%A9_1.pal",
+      "bytes": 1024,
+      "sha256": "430bff30f0f00b78c5cf59d8a763e3fd922f8b82c300cfdc08b75259778172ec",
+      "header": "7f7f7f00",
+      "previousAttempts": [
+        {
+          "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE37_%C2%BF%C2%A9_1.pal",
+          "error": "HTTP Error 404: Not Found"
+        }
+      ]
+    },
+    {
+      "path": "data/palette/머리/머리37_여_2.pal",
+      "url": "https://classicweb.niktoutro.com/chaosclient/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE37_%C2%BF%C2%A9_2.pal",
+      "bytes": 1024,
+      "sha256": "09f33509b150eddf66dab1485ab898ab157648c88d0ea363024e567d7c3f42fb",
+      "header": "7f7f7f00",
+      "previousAttempts": [
+        {
+          "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE37_%C2%BF%C2%A9_2.pal",
+          "error": "HTTP Error 404: Not Found"
+        }
+      ]
+    },
+    {
+      "path": "data/palette/머리/머리37_여_3.pal",
+      "url": "https://classicweb.niktoutro.com/chaosclient/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE37_%C2%BF%C2%A9_3.pal",
+      "bytes": 1024,
+      "sha256": "a8fc0d1ff0bfad590374caf55b273f7eeed6e367eac01a3013d61dc3f05a2946",
+      "header": "7f7f7f00",
+      "previousAttempts": [
+        {
+          "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE37_%C2%BF%C2%A9_3.pal",
+          "error": "HTTP Error 404: Not Found"
+        }
+      ]
+    },
+    {
+      "path": "data/palette/머리/머리37_여_4.pal",
+      "url": "https://classicweb.niktoutro.com/chaosclient/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE37_%C2%BF%C2%A9_4.pal",
+      "bytes": 1024,
+      "sha256": "8fb70af3dd06925985193b2b1e38f714135b420b8b3e267224eb20fed8285d68",
+      "header": "7f7f7f00",
+      "previousAttempts": [
+        {
+          "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE37_%C2%BF%C2%A9_4.pal",
+          "error": "HTTP Error 404: Not Found"
+        }
+      ]
+    },
+    {
+      "path": "data/palette/머리/머리37_여_5.pal",
+      "url": "https://classicweb.niktoutro.com/chaosclient/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE37_%C2%BF%C2%A9_5.pal",
+      "bytes": 1024,
+      "sha256": "acf37d085479bead2df5ef8795586a0d988dfda37d0739a0f10a3d2c56775f8f",
+      "header": "7f7f7f00",
+      "previousAttempts": [
+        {
+          "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE37_%C2%BF%C2%A9_5.pal",
+          "error": "HTTP Error 404: Not Found"
+        }
+      ]
+    },
+    {
+      "path": "data/palette/머리/머리37_여_6.pal",
+      "url": "https://classicweb.niktoutro.com/chaosclient/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE37_%C2%BF%C2%A9_6.pal",
+      "bytes": 1024,
+      "sha256": "f17fe82d5a4bc6f9d94456c260efa8269a20a6ed0af052144f3273d25f71bea7",
+      "header": "7f7f7f00",
+      "previousAttempts": [
+        {
+          "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE37_%C2%BF%C2%A9_6.pal",
+          "error": "HTTP Error 404: Not Found"
+        }
+      ]
+    },
+    {
+      "path": "data/palette/머리/머리37_여_7.pal",
+      "url": "https://classicweb.niktoutro.com/chaosclient/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE37_%C2%BF%C2%A9_7.pal",
+      "bytes": 1024,
+      "sha256": "de8a00617c7d0095fb2f724e471789eb015f972a920377473b95996785ba8c7c",
+      "header": "7f7f7f00",
+      "previousAttempts": [
+        {
+          "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE37_%C2%BF%C2%A9_7.pal",
+          "error": "HTTP Error 404: Not Found"
+        }
+      ]
+    },
+    {
+      "path": "data/palette/머리/머리37_여_8.pal",
+      "url": "https://classicweb.niktoutro.com/chaosclient/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE37_%C2%BF%C2%A9_8.pal",
+      "bytes": 1024,
+      "sha256": "f1a150efa1c5b74f59f4212fb20cec89fe706d53621c63bf0bf3af9fb8f292c1",
+      "header": "7f7f7f00",
+      "previousAttempts": [
+        {
+          "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE37_%C2%BF%C2%A9_8.pal",
+          "error": "HTTP Error 404: Not Found"
+        }
+      ]
+    },
+    {
+      "path": "data/palette/머리/머리39_남_0.pal",
+      "url": "https://classicweb.niktoutro.com/chaosclient/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE39_%C2%B3%C2%B2_0.pal",
+      "bytes": 1024,
+      "sha256": "430bff30f0f00b78c5cf59d8a763e3fd922f8b82c300cfdc08b75259778172ec",
+      "header": "7f7f7f00",
+      "previousAttempts": [
+        {
+          "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE39_%C2%B3%C2%B2_0.pal",
+          "error": "HTTP Error 404: Not Found"
+        }
+      ]
+    },
+    {
+      "path": "data/palette/머리/머리39_남_1.pal",
+      "url": "https://classicweb.niktoutro.com/chaosclient/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE39_%C2%B3%C2%B2_1.pal",
+      "bytes": 1024,
+      "sha256": "430bff30f0f00b78c5cf59d8a763e3fd922f8b82c300cfdc08b75259778172ec",
+      "header": "7f7f7f00",
+      "previousAttempts": [
+        {
+          "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE39_%C2%B3%C2%B2_1.pal",
+          "error": "HTTP Error 404: Not Found"
+        }
+      ]
+    },
+    {
+      "path": "data/palette/머리/머리39_남_2.pal",
+      "url": "https://classicweb.niktoutro.com/chaosclient/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE39_%C2%B3%C2%B2_2.pal",
+      "bytes": 1024,
+      "sha256": "09f33509b150eddf66dab1485ab898ab157648c88d0ea363024e567d7c3f42fb",
+      "header": "7f7f7f00",
+      "previousAttempts": [
+        {
+          "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE39_%C2%B3%C2%B2_2.pal",
+          "error": "HTTP Error 404: Not Found"
+        }
+      ]
+    },
+    {
+      "path": "data/palette/머리/머리39_남_3.pal",
+      "url": "https://classicweb.niktoutro.com/chaosclient/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE39_%C2%B3%C2%B2_3.pal",
+      "bytes": 1024,
+      "sha256": "a8fc0d1ff0bfad590374caf55b273f7eeed6e367eac01a3013d61dc3f05a2946",
+      "header": "7f7f7f00",
+      "previousAttempts": [
+        {
+          "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE39_%C2%B3%C2%B2_3.pal",
+          "error": "HTTP Error 404: Not Found"
+        }
+      ]
+    },
+    {
+      "path": "data/palette/머리/머리39_남_4.pal",
+      "url": "https://classicweb.niktoutro.com/chaosclient/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE39_%C2%B3%C2%B2_4.pal",
+      "bytes": 1024,
+      "sha256": "8fb70af3dd06925985193b2b1e38f714135b420b8b3e267224eb20fed8285d68",
+      "header": "7f7f7f00",
+      "previousAttempts": [
+        {
+          "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE39_%C2%B3%C2%B2_4.pal",
+          "error": "HTTP Error 404: Not Found"
+        }
+      ]
+    },
+    {
+      "path": "data/palette/머리/머리39_남_5.pal",
+      "url": "https://classicweb.niktoutro.com/chaosclient/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE39_%C2%B3%C2%B2_5.pal",
+      "bytes": 1024,
+      "sha256": "acf37d085479bead2df5ef8795586a0d988dfda37d0739a0f10a3d2c56775f8f",
+      "header": "7f7f7f00",
+      "previousAttempts": [
+        {
+          "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE39_%C2%B3%C2%B2_5.pal",
+          "error": "HTTP Error 404: Not Found"
+        }
+      ]
+    },
+    {
+      "path": "data/palette/머리/머리39_남_6.pal",
+      "url": "https://classicweb.niktoutro.com/chaosclient/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE39_%C2%B3%C2%B2_6.pal",
+      "bytes": 1024,
+      "sha256": "f17fe82d5a4bc6f9d94456c260efa8269a20a6ed0af052144f3273d25f71bea7",
+      "header": "7f7f7f00",
+      "previousAttempts": [
+        {
+          "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE39_%C2%B3%C2%B2_6.pal",
+          "error": "HTTP Error 404: Not Found"
+        }
+      ]
+    },
+    {
+      "path": "data/palette/머리/머리39_남_7.pal",
+      "url": "https://classicweb.niktoutro.com/chaosclient/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE39_%C2%B3%C2%B2_7.pal",
+      "bytes": 1024,
+      "sha256": "de8a00617c7d0095fb2f724e471789eb015f972a920377473b95996785ba8c7c",
+      "header": "7f7f7f00",
+      "previousAttempts": [
+        {
+          "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE39_%C2%B3%C2%B2_7.pal",
+          "error": "HTTP Error 404: Not Found"
+        }
+      ]
+    },
+    {
+      "path": "data/palette/머리/머리39_남_8.pal",
+      "url": "https://classicweb.niktoutro.com/chaosclient/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE39_%C2%B3%C2%B2_8.pal",
+      "bytes": 1024,
+      "sha256": "f1a150efa1c5b74f59f4212fb20cec89fe706d53621c63bf0bf3af9fb8f292c1",
+      "header": "7f7f7f00",
+      "previousAttempts": [
+        {
+          "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE39_%C2%B3%C2%B2_8.pal",
+          "error": "HTTP Error 404: Not Found"
+        }
+      ]
+    },
+    {
+      "path": "data/palette/머리/머리39_여_0.pal",
+      "url": "https://classicweb.niktoutro.com/chaosclient/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE39_%C2%BF%C2%A9_0.pal",
+      "bytes": 1024,
+      "sha256": "430bff30f0f00b78c5cf59d8a763e3fd922f8b82c300cfdc08b75259778172ec",
+      "header": "7f7f7f00",
+      "previousAttempts": [
+        {
+          "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE39_%C2%BF%C2%A9_0.pal",
+          "error": "HTTP Error 404: Not Found"
+        }
+      ]
+    },
+    {
+      "path": "data/palette/머리/머리39_여_1.pal",
+      "url": "https://classicweb.niktoutro.com/chaosclient/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE39_%C2%BF%C2%A9_1.pal",
+      "bytes": 1024,
+      "sha256": "430bff30f0f00b78c5cf59d8a763e3fd922f8b82c300cfdc08b75259778172ec",
+      "header": "7f7f7f00",
+      "previousAttempts": [
+        {
+          "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE39_%C2%BF%C2%A9_1.pal",
+          "error": "HTTP Error 404: Not Found"
+        }
+      ]
+    },
+    {
+      "path": "data/palette/머리/머리39_여_2.pal",
+      "url": "https://classicweb.niktoutro.com/chaosclient/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE39_%C2%BF%C2%A9_2.pal",
+      "bytes": 1024,
+      "sha256": "09f33509b150eddf66dab1485ab898ab157648c88d0ea363024e567d7c3f42fb",
+      "header": "7f7f7f00",
+      "previousAttempts": [
+        {
+          "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE39_%C2%BF%C2%A9_2.pal",
+          "error": "HTTP Error 404: Not Found"
+        }
+      ]
+    },
+    {
+      "path": "data/palette/머리/머리39_여_3.pal",
+      "url": "https://classicweb.niktoutro.com/chaosclient/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE39_%C2%BF%C2%A9_3.pal",
+      "bytes": 1024,
+      "sha256": "a8fc0d1ff0bfad590374caf55b273f7eeed6e367eac01a3013d61dc3f05a2946",
+      "header": "7f7f7f00",
+      "previousAttempts": [
+        {
+          "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE39_%C2%BF%C2%A9_3.pal",
+          "error": "HTTP Error 404: Not Found"
+        }
+      ]
+    },
+    {
+      "path": "data/palette/머리/머리39_여_4.pal",
+      "url": "https://classicweb.niktoutro.com/chaosclient/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE39_%C2%BF%C2%A9_4.pal",
+      "bytes": 1024,
+      "sha256": "8fb70af3dd06925985193b2b1e38f714135b420b8b3e267224eb20fed8285d68",
+      "header": "7f7f7f00",
+      "previousAttempts": [
+        {
+          "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE39_%C2%BF%C2%A9_4.pal",
+          "error": "HTTP Error 404: Not Found"
+        }
+      ]
+    },
+    {
+      "path": "data/palette/머리/머리39_여_5.pal",
+      "url": "https://classicweb.niktoutro.com/chaosclient/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE39_%C2%BF%C2%A9_5.pal",
+      "bytes": 1024,
+      "sha256": "acf37d085479bead2df5ef8795586a0d988dfda37d0739a0f10a3d2c56775f8f",
+      "header": "7f7f7f00",
+      "previousAttempts": [
+        {
+          "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE39_%C2%BF%C2%A9_5.pal",
+          "error": "HTTP Error 404: Not Found"
+        }
+      ]
+    },
+    {
+      "path": "data/palette/머리/머리39_여_6.pal",
+      "url": "https://classicweb.niktoutro.com/chaosclient/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE39_%C2%BF%C2%A9_6.pal",
+      "bytes": 1024,
+      "sha256": "f17fe82d5a4bc6f9d94456c260efa8269a20a6ed0af052144f3273d25f71bea7",
+      "header": "7f7f7f00",
+      "previousAttempts": [
+        {
+          "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE39_%C2%BF%C2%A9_6.pal",
+          "error": "HTTP Error 404: Not Found"
+        }
+      ]
+    },
+    {
+      "path": "data/palette/머리/머리39_여_7.pal",
+      "url": "https://classicweb.niktoutro.com/chaosclient/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE39_%C2%BF%C2%A9_7.pal",
+      "bytes": 1024,
+      "sha256": "de8a00617c7d0095fb2f724e471789eb015f972a920377473b95996785ba8c7c",
+      "header": "7f7f7f00",
+      "previousAttempts": [
+        {
+          "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE39_%C2%BF%C2%A9_7.pal",
+          "error": "HTTP Error 404: Not Found"
+        }
+      ]
+    },
+    {
+      "path": "data/palette/머리/머리39_여_8.pal",
+      "url": "https://classicweb.niktoutro.com/chaosclient/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE39_%C2%BF%C2%A9_8.pal",
+      "bytes": 1024,
+      "sha256": "f1a150efa1c5b74f59f4212fb20cec89fe706d53621c63bf0bf3af9fb8f292c1",
+      "header": "7f7f7f00",
+      "previousAttempts": [
+        {
+          "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE39_%C2%BF%C2%A9_8.pal",
+          "error": "HTTP Error 404: Not Found"
+        }
+      ]
+    },
+    {
+      "path": "data/palette/머리/머리40_남_0.pal",
+      "url": "https://classicweb.niktoutro.com/chaosclient/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE40_%C2%B3%C2%B2_0.pal",
+      "bytes": 1024,
+      "sha256": "430bff30f0f00b78c5cf59d8a763e3fd922f8b82c300cfdc08b75259778172ec",
+      "header": "7f7f7f00",
+      "previousAttempts": [
+        {
+          "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE40_%C2%B3%C2%B2_0.pal",
+          "error": "HTTP Error 404: Not Found"
+        }
+      ]
+    },
+    {
+      "path": "data/palette/머리/머리40_남_1.pal",
+      "url": "https://classicweb.niktoutro.com/chaosclient/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE40_%C2%B3%C2%B2_1.pal",
+      "bytes": 1024,
+      "sha256": "430bff30f0f00b78c5cf59d8a763e3fd922f8b82c300cfdc08b75259778172ec",
+      "header": "7f7f7f00",
+      "previousAttempts": [
+        {
+          "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE40_%C2%B3%C2%B2_1.pal",
+          "error": "HTTP Error 404: Not Found"
+        }
+      ]
+    },
+    {
+      "path": "data/palette/머리/머리40_남_2.pal",
+      "url": "https://classicweb.niktoutro.com/chaosclient/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE40_%C2%B3%C2%B2_2.pal",
+      "bytes": 1024,
+      "sha256": "09f33509b150eddf66dab1485ab898ab157648c88d0ea363024e567d7c3f42fb",
+      "header": "7f7f7f00",
+      "previousAttempts": [
+        {
+          "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE40_%C2%B3%C2%B2_2.pal",
+          "error": "HTTP Error 404: Not Found"
+        }
+      ]
+    },
+    {
+      "path": "data/palette/머리/머리40_남_3.pal",
+      "url": "https://classicweb.niktoutro.com/chaosclient/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE40_%C2%B3%C2%B2_3.pal",
+      "bytes": 1024,
+      "sha256": "a8fc0d1ff0bfad590374caf55b273f7eeed6e367eac01a3013d61dc3f05a2946",
+      "header": "7f7f7f00",
+      "previousAttempts": [
+        {
+          "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE40_%C2%B3%C2%B2_3.pal",
+          "error": "HTTP Error 404: Not Found"
+        }
+      ]
+    },
+    {
+      "path": "data/palette/머리/머리40_남_4.pal",
+      "url": "https://classicweb.niktoutro.com/chaosclient/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE40_%C2%B3%C2%B2_4.pal",
+      "bytes": 1024,
+      "sha256": "8fb70af3dd06925985193b2b1e38f714135b420b8b3e267224eb20fed8285d68",
+      "header": "7f7f7f00",
+      "previousAttempts": [
+        {
+          "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE40_%C2%B3%C2%B2_4.pal",
+          "error": "HTTP Error 404: Not Found"
+        }
+      ]
+    },
+    {
+      "path": "data/palette/머리/머리40_남_5.pal",
+      "url": "https://classicweb.niktoutro.com/chaosclient/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE40_%C2%B3%C2%B2_5.pal",
+      "bytes": 1024,
+      "sha256": "acf37d085479bead2df5ef8795586a0d988dfda37d0739a0f10a3d2c56775f8f",
+      "header": "7f7f7f00",
+      "previousAttempts": [
+        {
+          "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE40_%C2%B3%C2%B2_5.pal",
+          "error": "HTTP Error 404: Not Found"
+        }
+      ]
+    },
+    {
+      "path": "data/palette/머리/머리40_남_6.pal",
+      "url": "https://classicweb.niktoutro.com/chaosclient/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE40_%C2%B3%C2%B2_6.pal",
+      "bytes": 1024,
+      "sha256": "f17fe82d5a4bc6f9d94456c260efa8269a20a6ed0af052144f3273d25f71bea7",
+      "header": "7f7f7f00",
+      "previousAttempts": [
+        {
+          "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE40_%C2%B3%C2%B2_6.pal",
+          "error": "HTTP Error 404: Not Found"
+        }
+      ]
+    },
+    {
+      "path": "data/palette/머리/머리40_남_7.pal",
+      "url": "https://classicweb.niktoutro.com/chaosclient/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE40_%C2%B3%C2%B2_7.pal",
+      "bytes": 1024,
+      "sha256": "de8a00617c7d0095fb2f724e471789eb015f972a920377473b95996785ba8c7c",
+      "header": "7f7f7f00",
+      "previousAttempts": [
+        {
+          "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE40_%C2%B3%C2%B2_7.pal",
+          "error": "HTTP Error 404: Not Found"
+        }
+      ]
+    },
+    {
+      "path": "data/palette/머리/머리40_남_8.pal",
+      "url": "https://classicweb.niktoutro.com/chaosclient/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE40_%C2%B3%C2%B2_8.pal",
+      "bytes": 1024,
+      "sha256": "f1a150efa1c5b74f59f4212fb20cec89fe706d53621c63bf0bf3af9fb8f292c1",
+      "header": "7f7f7f00",
+      "previousAttempts": [
+        {
+          "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE40_%C2%B3%C2%B2_8.pal",
+          "error": "HTTP Error 404: Not Found"
+        }
+      ]
+    },
+    {
+      "path": "data/palette/머리/머리41_여_0.pal",
+      "url": "https://classicweb.niktoutro.com/chaosclient/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE41_%C2%BF%C2%A9_0.pal",
+      "bytes": 1024,
+      "sha256": "430bff30f0f00b78c5cf59d8a763e3fd922f8b82c300cfdc08b75259778172ec",
+      "header": "7f7f7f00",
+      "previousAttempts": [
+        {
+          "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE41_%C2%BF%C2%A9_0.pal",
+          "error": "HTTP Error 404: Not Found"
+        }
+      ]
+    },
+    {
+      "path": "data/palette/머리/머리41_여_1.pal",
+      "url": "https://classicweb.niktoutro.com/chaosclient/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE41_%C2%BF%C2%A9_1.pal",
+      "bytes": 1024,
+      "sha256": "430bff30f0f00b78c5cf59d8a763e3fd922f8b82c300cfdc08b75259778172ec",
+      "header": "7f7f7f00",
+      "previousAttempts": [
+        {
+          "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE41_%C2%BF%C2%A9_1.pal",
+          "error": "HTTP Error 404: Not Found"
+        }
+      ]
+    },
+    {
+      "path": "data/palette/머리/머리41_여_2.pal",
+      "url": "https://classicweb.niktoutro.com/chaosclient/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE41_%C2%BF%C2%A9_2.pal",
+      "bytes": 1024,
+      "sha256": "09f33509b150eddf66dab1485ab898ab157648c88d0ea363024e567d7c3f42fb",
+      "header": "7f7f7f00",
+      "previousAttempts": [
+        {
+          "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE41_%C2%BF%C2%A9_2.pal",
+          "error": "HTTP Error 404: Not Found"
+        }
+      ]
+    },
+    {
+      "path": "data/palette/머리/머리41_여_3.pal",
+      "url": "https://classicweb.niktoutro.com/chaosclient/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE41_%C2%BF%C2%A9_3.pal",
+      "bytes": 1024,
+      "sha256": "a8fc0d1ff0bfad590374caf55b273f7eeed6e367eac01a3013d61dc3f05a2946",
+      "header": "7f7f7f00",
+      "previousAttempts": [
+        {
+          "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE41_%C2%BF%C2%A9_3.pal",
+          "error": "HTTP Error 404: Not Found"
+        }
+      ]
+    },
+    {
+      "path": "data/palette/머리/머리41_여_4.pal",
+      "url": "https://classicweb.niktoutro.com/chaosclient/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE41_%C2%BF%C2%A9_4.pal",
+      "bytes": 1024,
+      "sha256": "8fb70af3dd06925985193b2b1e38f714135b420b8b3e267224eb20fed8285d68",
+      "header": "7f7f7f00",
+      "previousAttempts": [
+        {
+          "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE41_%C2%BF%C2%A9_4.pal",
+          "error": "HTTP Error 404: Not Found"
+        }
+      ]
+    },
+    {
+      "path": "data/palette/머리/머리41_여_5.pal",
+      "url": "https://classicweb.niktoutro.com/chaosclient/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE41_%C2%BF%C2%A9_5.pal",
+      "bytes": 1024,
+      "sha256": "acf37d085479bead2df5ef8795586a0d988dfda37d0739a0f10a3d2c56775f8f",
+      "header": "7f7f7f00",
+      "previousAttempts": [
+        {
+          "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE41_%C2%BF%C2%A9_5.pal",
+          "error": "HTTP Error 404: Not Found"
+        }
+      ]
+    },
+    {
+      "path": "data/palette/머리/머리41_여_6.pal",
+      "url": "https://classicweb.niktoutro.com/chaosclient/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE41_%C2%BF%C2%A9_6.pal",
+      "bytes": 1024,
+      "sha256": "f17fe82d5a4bc6f9d94456c260efa8269a20a6ed0af052144f3273d25f71bea7",
+      "header": "7f7f7f00",
+      "previousAttempts": [
+        {
+          "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE41_%C2%BF%C2%A9_6.pal",
+          "error": "HTTP Error 404: Not Found"
+        }
+      ]
+    },
+    {
+      "path": "data/palette/머리/머리41_여_7.pal",
+      "url": "https://classicweb.niktoutro.com/chaosclient/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE41_%C2%BF%C2%A9_7.pal",
+      "bytes": 1024,
+      "sha256": "de8a00617c7d0095fb2f724e471789eb015f972a920377473b95996785ba8c7c",
+      "header": "7f7f7f00",
+      "previousAttempts": [
+        {
+          "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE41_%C2%BF%C2%A9_7.pal",
+          "error": "HTTP Error 404: Not Found"
+        }
+      ]
+    },
+    {
+      "path": "data/palette/머리/머리41_여_8.pal",
+      "url": "https://classicweb.niktoutro.com/chaosclient/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE41_%C2%BF%C2%A9_8.pal",
+      "bytes": 1024,
+      "sha256": "f1a150efa1c5b74f59f4212fb20cec89fe706d53621c63bf0bf3af9fb8f292c1",
+      "header": "7f7f7f00",
+      "previousAttempts": [
+        {
+          "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE41_%C2%BF%C2%A9_8.pal",
+          "error": "HTTP Error 404: Not Found"
+        }
+      ]
+    },
+    {
+      "path": "data/palette/머리/머리42_남_0.pal",
+      "url": "https://classicweb.niktoutro.com/chaosclient/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE42_%C2%B3%C2%B2_0.pal",
+      "bytes": 1024,
+      "sha256": "430bff30f0f00b78c5cf59d8a763e3fd922f8b82c300cfdc08b75259778172ec",
+      "header": "7f7f7f00",
+      "previousAttempts": [
+        {
+          "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE42_%C2%B3%C2%B2_0.pal",
+          "error": "HTTP Error 404: Not Found"
+        }
+      ]
+    },
+    {
+      "path": "data/palette/머리/머리42_남_1.pal",
+      "url": "https://classicweb.niktoutro.com/chaosclient/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE42_%C2%B3%C2%B2_1.pal",
+      "bytes": 1024,
+      "sha256": "430bff30f0f00b78c5cf59d8a763e3fd922f8b82c300cfdc08b75259778172ec",
+      "header": "7f7f7f00",
+      "previousAttempts": [
+        {
+          "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE42_%C2%B3%C2%B2_1.pal",
+          "error": "HTTP Error 404: Not Found"
+        }
+      ]
+    },
+    {
+      "path": "data/palette/머리/머리42_남_2.pal",
+      "url": "https://classicweb.niktoutro.com/chaosclient/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE42_%C2%B3%C2%B2_2.pal",
+      "bytes": 1024,
+      "sha256": "09f33509b150eddf66dab1485ab898ab157648c88d0ea363024e567d7c3f42fb",
+      "header": "7f7f7f00",
+      "previousAttempts": [
+        {
+          "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE42_%C2%B3%C2%B2_2.pal",
+          "error": "HTTP Error 404: Not Found"
+        }
+      ]
+    },
+    {
+      "path": "data/palette/머리/머리42_남_3.pal",
+      "url": "https://classicweb.niktoutro.com/chaosclient/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE42_%C2%B3%C2%B2_3.pal",
+      "bytes": 1024,
+      "sha256": "a8fc0d1ff0bfad590374caf55b273f7eeed6e367eac01a3013d61dc3f05a2946",
+      "header": "7f7f7f00",
+      "previousAttempts": [
+        {
+          "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE42_%C2%B3%C2%B2_3.pal",
+          "error": "HTTP Error 404: Not Found"
+        }
+      ]
+    },
+    {
+      "path": "data/palette/머리/머리42_남_4.pal",
+      "url": "https://classicweb.niktoutro.com/chaosclient/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE42_%C2%B3%C2%B2_4.pal",
+      "bytes": 1024,
+      "sha256": "8fb70af3dd06925985193b2b1e38f714135b420b8b3e267224eb20fed8285d68",
+      "header": "7f7f7f00",
+      "previousAttempts": [
+        {
+          "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE42_%C2%B3%C2%B2_4.pal",
+          "error": "HTTP Error 404: Not Found"
+        }
+      ]
+    },
+    {
+      "path": "data/palette/머리/머리42_남_5.pal",
+      "url": "https://classicweb.niktoutro.com/chaosclient/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE42_%C2%B3%C2%B2_5.pal",
+      "bytes": 1024,
+      "sha256": "acf37d085479bead2df5ef8795586a0d988dfda37d0739a0f10a3d2c56775f8f",
+      "header": "7f7f7f00",
+      "previousAttempts": [
+        {
+          "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE42_%C2%B3%C2%B2_5.pal",
+          "error": "HTTP Error 404: Not Found"
+        }
+      ]
+    },
+    {
+      "path": "data/palette/머리/머리42_남_6.pal",
+      "url": "https://classicweb.niktoutro.com/chaosclient/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE42_%C2%B3%C2%B2_6.pal",
+      "bytes": 1024,
+      "sha256": "f17fe82d5a4bc6f9d94456c260efa8269a20a6ed0af052144f3273d25f71bea7",
+      "header": "7f7f7f00",
+      "previousAttempts": [
+        {
+          "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE42_%C2%B3%C2%B2_6.pal",
+          "error": "HTTP Error 404: Not Found"
+        }
+      ]
+    },
+    {
+      "path": "data/palette/머리/머리42_남_7.pal",
+      "url": "https://classicweb.niktoutro.com/chaosclient/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE42_%C2%B3%C2%B2_7.pal",
+      "bytes": 1024,
+      "sha256": "de8a00617c7d0095fb2f724e471789eb015f972a920377473b95996785ba8c7c",
+      "header": "7f7f7f00",
+      "previousAttempts": [
+        {
+          "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE42_%C2%B3%C2%B2_7.pal",
+          "error": "HTTP Error 404: Not Found"
+        }
+      ]
+    },
+    {
+      "path": "data/palette/머리/머리42_남_8.pal",
+      "url": "https://classicweb.niktoutro.com/chaosclient/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE42_%C2%B3%C2%B2_8.pal",
+      "bytes": 1024,
+      "sha256": "f1a150efa1c5b74f59f4212fb20cec89fe706d53621c63bf0bf3af9fb8f292c1",
+      "header": "7f7f7f00",
+      "previousAttempts": [
+        {
+          "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE42_%C2%B3%C2%B2_8.pal",
+          "error": "HTTP Error 404: Not Found"
+        }
+      ]
+    },
+    {
+      "path": "data/palette/머리/머리42_여_0.pal",
+      "url": "https://classicweb.niktoutro.com/chaosclient/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE42_%C2%BF%C2%A9_0.pal",
+      "bytes": 1024,
+      "sha256": "430bff30f0f00b78c5cf59d8a763e3fd922f8b82c300cfdc08b75259778172ec",
+      "header": "7f7f7f00",
+      "previousAttempts": [
+        {
+          "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE42_%C2%BF%C2%A9_0.pal",
+          "error": "HTTP Error 404: Not Found"
+        }
+      ]
+    },
+    {
+      "path": "data/palette/머리/머리42_여_1.pal",
+      "url": "https://classicweb.niktoutro.com/chaosclient/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE42_%C2%BF%C2%A9_1.pal",
+      "bytes": 1024,
+      "sha256": "430bff30f0f00b78c5cf59d8a763e3fd922f8b82c300cfdc08b75259778172ec",
+      "header": "7f7f7f00",
+      "previousAttempts": [
+        {
+          "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE42_%C2%BF%C2%A9_1.pal",
+          "error": "HTTP Error 404: Not Found"
+        }
+      ]
+    },
+    {
+      "path": "data/palette/머리/머리42_여_2.pal",
+      "url": "https://classicweb.niktoutro.com/chaosclient/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE42_%C2%BF%C2%A9_2.pal",
+      "bytes": 1024,
+      "sha256": "09f33509b150eddf66dab1485ab898ab157648c88d0ea363024e567d7c3f42fb",
+      "header": "7f7f7f00",
+      "previousAttempts": [
+        {
+          "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE42_%C2%BF%C2%A9_2.pal",
+          "error": "HTTP Error 404: Not Found"
+        }
+      ]
+    },
+    {
+      "path": "data/palette/머리/머리42_여_3.pal",
+      "url": "https://classicweb.niktoutro.com/chaosclient/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE42_%C2%BF%C2%A9_3.pal",
+      "bytes": 1024,
+      "sha256": "a8fc0d1ff0bfad590374caf55b273f7eeed6e367eac01a3013d61dc3f05a2946",
+      "header": "7f7f7f00",
+      "previousAttempts": [
+        {
+          "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE42_%C2%BF%C2%A9_3.pal",
+          "error": "HTTP Error 404: Not Found"
+        }
+      ]
+    },
+    {
+      "path": "data/palette/머리/머리42_여_4.pal",
+      "url": "https://classicweb.niktoutro.com/chaosclient/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE42_%C2%BF%C2%A9_4.pal",
+      "bytes": 1024,
+      "sha256": "8fb70af3dd06925985193b2b1e38f714135b420b8b3e267224eb20fed8285d68",
+      "header": "7f7f7f00",
+      "previousAttempts": [
+        {
+          "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE42_%C2%BF%C2%A9_4.pal",
+          "error": "HTTP Error 404: Not Found"
+        }
+      ]
+    },
+    {
+      "path": "data/palette/머리/머리42_여_5.pal",
+      "url": "https://classicweb.niktoutro.com/chaosclient/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE42_%C2%BF%C2%A9_5.pal",
+      "bytes": 1024,
+      "sha256": "acf37d085479bead2df5ef8795586a0d988dfda37d0739a0f10a3d2c56775f8f",
+      "header": "7f7f7f00",
+      "previousAttempts": [
+        {
+          "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE42_%C2%BF%C2%A9_5.pal",
+          "error": "HTTP Error 404: Not Found"
+        }
+      ]
+    },
+    {
+      "path": "data/palette/머리/머리42_여_6.pal",
+      "url": "https://classicweb.niktoutro.com/chaosclient/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE42_%C2%BF%C2%A9_6.pal",
+      "bytes": 1024,
+      "sha256": "f17fe82d5a4bc6f9d94456c260efa8269a20a6ed0af052144f3273d25f71bea7",
+      "header": "7f7f7f00",
+      "previousAttempts": [
+        {
+          "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE42_%C2%BF%C2%A9_6.pal",
+          "error": "HTTP Error 404: Not Found"
+        }
+      ]
+    },
+    {
+      "path": "data/palette/머리/머리42_여_7.pal",
+      "url": "https://classicweb.niktoutro.com/chaosclient/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE42_%C2%BF%C2%A9_7.pal",
+      "bytes": 1024,
+      "sha256": "de8a00617c7d0095fb2f724e471789eb015f972a920377473b95996785ba8c7c",
+      "header": "7f7f7f00",
+      "previousAttempts": [
+        {
+          "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE42_%C2%BF%C2%A9_7.pal",
+          "error": "HTTP Error 404: Not Found"
+        }
+      ]
+    },
+    {
+      "path": "data/palette/머리/머리42_여_8.pal",
+      "url": "https://classicweb.niktoutro.com/chaosclient/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE42_%C2%BF%C2%A9_8.pal",
+      "bytes": 1024,
+      "sha256": "f1a150efa1c5b74f59f4212fb20cec89fe706d53621c63bf0bf3af9fb8f292c1",
+      "header": "7f7f7f00",
+      "previousAttempts": [
+        {
+          "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE42_%C2%BF%C2%A9_8.pal",
+          "error": "HTTP Error 404: Not Found"
+        }
+      ]
+    },
+    {
+      "path": "data/palette/머리/머리4_여_0.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE4_%C2%BF%C2%A9_0.pal",
+      "bytes": 1024,
+      "sha256": "ea0bc91186bb288a81104f4f62a525b8af557193802f584a95b6c96598bc4a33",
+      "header": "c8f8d300"
+    },
+    {
+      "path": "data/palette/머리/머리4_여_1.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE4_%C2%BF%C2%A9_1.pal",
+      "bytes": 1024,
+      "sha256": "3dd99d4376cc41a8b90c4a9d00ad3750ec7244ca5963df7a9a148cbf48c6b19d",
+      "header": "c8f8d300"
+    },
+    {
+      "path": "data/palette/머리/머리4_여_2.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE4_%C2%BF%C2%A9_2.pal",
+      "bytes": 1024,
+      "sha256": "56420b61ec027f089b741a58ff952f8a535cf833291c82989ed1ca3312a0aa71",
+      "header": "c8f8d300"
+    },
+    {
+      "path": "data/palette/머리/머리4_여_3.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE4_%C2%BF%C2%A9_3.pal",
+      "bytes": 1024,
+      "sha256": "c7f2c236b22f5e19d6e141facb0f0a3df52eb438141a07cdc8561e9fa9e1d6aa",
+      "header": "c8f8d300"
+    },
+    {
+      "path": "data/palette/머리/머리4_여_4.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE4_%C2%BF%C2%A9_4.pal",
+      "bytes": 1024,
+      "sha256": "d9c679559efb680600116856baa4a046afe59ac3cc7906ba8eff8cc2bb41124f",
+      "header": "c8f8d300"
+    },
+    {
+      "path": "data/palette/머리/머리4_여_5.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE4_%C2%BF%C2%A9_5.pal",
+      "bytes": 1024,
+      "sha256": "5bb0d26e536820efb6d83818b38908e9abd6b422d9b6a23bed6493f37d3793c8",
+      "header": "c8f8d300"
+    },
+    {
+      "path": "data/palette/머리/머리4_여_6.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE4_%C2%BF%C2%A9_6.pal",
+      "bytes": 1024,
+      "sha256": "7d53f8ea1c966a23bb7fc2532d0712dcd8437b5e06231c6a536386c1938ae3d1",
+      "header": "c8f8d300"
+    },
+    {
+      "path": "data/palette/머리/머리4_여_7.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE4_%C2%BF%C2%A9_7.pal",
+      "bytes": 1024,
+      "sha256": "4beec0ee815f6b37736009256b00855875d17a08814a8542ad29613367f309ed",
+      "header": "c8f8d300"
+    },
+    {
+      "path": "data/palette/머리/머리4_여_8.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE4_%C2%BF%C2%A9_8.pal",
+      "bytes": 1024,
+      "sha256": "ea0bc91186bb288a81104f4f62a525b8af557193802f584a95b6c96598bc4a33",
+      "header": "c8f8d300"
+    },
+    {
+      "path": "data/palette/머리/머리5_남_0.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE5_%C2%B3%C2%B2_0.pal",
+      "bytes": 1024,
+      "sha256": "12ca1fb10daff0936d949a51d77ba25c9b8beb94adbb52fd79c51df5478de0da",
+      "header": "c8f8d300"
+    },
+    {
+      "path": "data/palette/머리/머리5_남_1.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE5_%C2%B3%C2%B2_1.pal",
+      "bytes": 1024,
+      "sha256": "5bb0d26e536820efb6d83818b38908e9abd6b422d9b6a23bed6493f37d3793c8",
+      "header": "c8f8d300"
+    },
+    {
+      "path": "data/palette/머리/머리5_남_2.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE5_%C2%B3%C2%B2_2.pal",
+      "bytes": 1024,
+      "sha256": "145b2c077479e04c84f7e81080deb1740199e755f0cc1b3d4aaff322be7bcf49",
+      "header": "c8f8d300"
+    },
+    {
+      "path": "data/palette/머리/머리5_남_3.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE5_%C2%B3%C2%B2_3.pal",
+      "bytes": 1024,
+      "sha256": "d48541ac1972c2f19890f7dd5eab3d4da0aed9314c6d24ba490e6ae0eb1925c1",
+      "header": "c8f8d300"
+    },
+    {
+      "path": "data/palette/머리/머리5_남_4.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE5_%C2%B3%C2%B2_4.pal",
+      "bytes": 1024,
+      "sha256": "7aecbf92229e9bf1c20964c52669e5d0654b97d75e58e1082854e3a1347b6c55",
+      "header": "c8f8d300"
+    },
+    {
+      "path": "data/palette/머리/머리5_남_5.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE5_%C2%B3%C2%B2_5.pal",
+      "bytes": 1024,
+      "sha256": "17d035703569f971be32096b1eb759a5f668c287e8c2120fe2a213b5a47092ab",
+      "header": "c8f8d300"
+    },
+    {
+      "path": "data/palette/머리/머리5_남_6.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE5_%C2%B3%C2%B2_6.pal",
+      "bytes": 1024,
+      "sha256": "951e385a385454cc8d58c6797864f1e15c39e3f171a963fd037db4e7da526313",
+      "header": "c8f8d300"
+    },
+    {
+      "path": "data/palette/머리/머리5_남_7.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE5_%C2%B3%C2%B2_7.pal",
+      "bytes": 1024,
+      "sha256": "348178ff43441ee86497c149fc8d6a5b905c1a17739b9be2274814ae4856231c",
+      "header": "c8f8d300"
+    },
+    {
+      "path": "data/palette/머리/머리5_남_8.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE5_%C2%B3%C2%B2_8.pal",
+      "bytes": 1024,
+      "sha256": "12ca1fb10daff0936d949a51d77ba25c9b8beb94adbb52fd79c51df5478de0da",
+      "header": "c8f8d300"
+    },
+    {
+      "path": "data/palette/머리/머리5_여_0.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE5_%C2%BF%C2%A9_0.pal",
+      "bytes": 1024,
+      "sha256": "0cd57c671f25d81f324edf83303a93f283a917f7bb513ac20fbff8dd685ff41e",
+      "header": "c8f8d300"
+    },
+    {
+      "path": "data/palette/머리/머리5_여_1.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE5_%C2%BF%C2%A9_1.pal",
+      "bytes": 1024,
+      "sha256": "7d1ce75e5d9af04774f6e370c5e363cbf0edd13c1d7c327f9d35a86491f87d42",
+      "header": "c8f8d300"
+    },
+    {
+      "path": "data/palette/머리/머리5_여_2.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE5_%C2%BF%C2%A9_2.pal",
+      "bytes": 1024,
+      "sha256": "695c471006298fcebc712542a632212ca1bd4a735da6c704c63ad701df325ade",
+      "header": "c8f8d300"
+    },
+    {
+      "path": "data/palette/머리/머리5_여_3.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE5_%C2%BF%C2%A9_3.pal",
+      "bytes": 1024,
+      "sha256": "0b0cbc6ce0cda6fdfd500ce0f36d96401913a7ef4eaceaa11e238ffe2d82a419",
+      "header": "c8f8d300"
+    },
+    {
+      "path": "data/palette/머리/머리5_여_4.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE5_%C2%BF%C2%A9_4.pal",
+      "bytes": 1024,
+      "sha256": "72e0577018c0d7728c04e0c1f6f5da5e5d7e2161b79517ec8807127ec34e1e5b",
+      "header": "c8f8d300"
+    },
+    {
+      "path": "data/palette/머리/머리5_여_5.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE5_%C2%BF%C2%A9_5.pal",
+      "bytes": 1024,
+      "sha256": "b54f3465549c6f9e0f8e0af48256d28e33589d13ccfcbbeab3a082eff9e85375",
+      "header": "c8f8d300"
+    },
+    {
+      "path": "data/palette/머리/머리5_여_6.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE5_%C2%BF%C2%A9_6.pal",
+      "bytes": 1024,
+      "sha256": "90ad752f59fd1d9ca9cb1f8ec459f73da7d52683462c0e90cf2da677e843373b",
+      "header": "c8f8d300"
+    },
+    {
+      "path": "data/palette/머리/머리5_여_7.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE5_%C2%BF%C2%A9_7.pal",
+      "bytes": 1024,
+      "sha256": "5bb0d26e536820efb6d83818b38908e9abd6b422d9b6a23bed6493f37d3793c8",
+      "header": "c8f8d300"
+    },
+    {
+      "path": "data/palette/머리/머리5_여_8.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE5_%C2%BF%C2%A9_8.pal",
+      "bytes": 1024,
+      "sha256": "0cd57c671f25d81f324edf83303a93f283a917f7bb513ac20fbff8dd685ff41e",
+      "header": "c8f8d300"
+    },
+    {
+      "path": "data/palette/머리/머리7_남_0.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE7_%C2%B3%C2%B2_0.pal",
+      "bytes": 1024,
+      "sha256": "3fda5a79f13560a27c1116b022190a6266cf430cc185427b618c717b7a6c3d19",
+      "header": "c8f8d300"
+    },
+    {
+      "path": "data/palette/머리/머리7_남_1.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE7_%C2%B3%C2%B2_1.pal",
+      "bytes": 1024,
+      "sha256": "c63a3ef72eeef08cbb29ece4a8e226f1ad5a4f48ea0e3241b011c3116cf0c3d0",
+      "header": "c8f8d300"
+    },
+    {
+      "path": "data/palette/머리/머리7_남_2.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE7_%C2%B3%C2%B2_2.pal",
+      "bytes": 1024,
+      "sha256": "a4b30c31ca68eccadc76a66d870fd007038f8971365f8fc3d4058c531e708674",
+      "header": "c8f8d300"
+    },
+    {
+      "path": "data/palette/머리/머리7_남_3.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE7_%C2%B3%C2%B2_3.pal",
+      "bytes": 1024,
+      "sha256": "aeb15b10de01165b968900dcc99218eed5b120f34213d83313d31de22f511ca2",
+      "header": "c8f8d300"
+    },
+    {
+      "path": "data/palette/머리/머리7_남_4.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE7_%C2%B3%C2%B2_4.pal",
+      "bytes": 1024,
+      "sha256": "98875f744479791439b9a5944573600f9268e0c9640fe3d9f2f1049a1f40cbb4",
+      "header": "c8f8d300"
+    },
+    {
+      "path": "data/palette/머리/머리7_남_5.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE7_%C2%B3%C2%B2_5.pal",
+      "bytes": 1024,
+      "sha256": "aa71c09a3205a6b6fcf31b54cdfaa3f6579078d2add142b5e08a21e12d676b12",
+      "header": "c8f8d300"
+    },
+    {
+      "path": "data/palette/머리/머리7_남_6.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE7_%C2%B3%C2%B2_6.pal",
+      "bytes": 1024,
+      "sha256": "d13608717db50e709e99fe8f1a160c5d267e75b391f4e590eadd72e959247319",
+      "header": "c8f8d300"
+    },
+    {
+      "path": "data/palette/머리/머리7_남_7.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE7_%C2%B3%C2%B2_7.pal",
+      "bytes": 1024,
+      "sha256": "5bb0d26e536820efb6d83818b38908e9abd6b422d9b6a23bed6493f37d3793c8",
+      "header": "c8f8d300"
+    },
+    {
+      "path": "data/palette/머리/머리7_남_8.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE7_%C2%B3%C2%B2_8.pal",
+      "bytes": 1024,
+      "sha256": "3fda5a79f13560a27c1116b022190a6266cf430cc185427b618c717b7a6c3d19",
+      "header": "c8f8d300"
+    },
+    {
+      "path": "data/palette/머리/머리8_남_0.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE8_%C2%B3%C2%B2_0.pal",
+      "bytes": 1024,
+      "sha256": "d43d11902d5f2df97678cc0dc441404023af07dab53d9b3446a062af2b4bcfaa",
+      "header": "c8f8d300"
+    },
+    {
+      "path": "data/palette/머리/머리8_남_1.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE8_%C2%B3%C2%B2_1.pal",
+      "bytes": 1024,
+      "sha256": "a2934e8f173648fbb59b5480dbbc1608b2c770cd873d31fdcde6be2a17027dbf",
+      "header": "c8f8d300"
+    },
+    {
+      "path": "data/palette/머리/머리8_남_2.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE8_%C2%B3%C2%B2_2.pal",
+      "bytes": 1024,
+      "sha256": "5de441b34d16a390a2b55b1f2fe0458656fd2014e845e7c76368fbe72599cc79",
+      "header": "c8f8d300"
+    },
+    {
+      "path": "data/palette/머리/머리8_남_3.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE8_%C2%B3%C2%B2_3.pal",
+      "bytes": 1024,
+      "sha256": "f8c8196ec7360ad5ee436de3177022944f2510ea80e0937f6ae449e858b31d9c",
+      "header": "c8f8d300"
+    },
+    {
+      "path": "data/palette/머리/머리8_남_4.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE8_%C2%B3%C2%B2_4.pal",
+      "bytes": 1024,
+      "sha256": "6472d68b7ee27a3038f8b497cc998a6dff23b78ba5e5f7ad5f09c4bf5399b878",
+      "header": "c8f8d300"
+    },
+    {
+      "path": "data/palette/머리/머리8_남_5.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE8_%C2%B3%C2%B2_5.pal",
+      "bytes": 1024,
+      "sha256": "d12facdc37073d34dad5667ac1e9c66d2dc618fe40faa6223f853e40b54f885b",
+      "header": "c8f8d300"
+    },
+    {
+      "path": "data/palette/머리/머리8_남_6.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE8_%C2%B3%C2%B2_6.pal",
+      "bytes": 1024,
+      "sha256": "7d2115d00f6d3f7e0613b8addcf22c3a63dcc052be9f37a5cb62e37db58fd971",
+      "header": "c8f8d300"
+    },
+    {
+      "path": "data/palette/머리/머리8_남_7.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE8_%C2%B3%C2%B2_7.pal",
+      "bytes": 1024,
+      "sha256": "bc284df7864cfa58ad52f2e02b1d8f3dd4a85a73691a902b9ffe677310322d44",
+      "header": "c8f8d300"
+    },
+    {
+      "path": "data/palette/머리/머리8_남_8.pal",
+      "url": "https://grf.robrowser.com/data/palette/%C2%B8%C3%93%C2%B8%C2%AE/%C2%B8%C3%93%C2%B8%C2%AE8_%C2%B3%C2%B2_8.pal",
+      "bytes": 1024,
+      "sha256": "d43d11902d5f2df97678cc0dc441404023af07dab53d9b3446a062af2b4bcfaa",
+      "header": "c8f8d300"
+    },
+    {
+      "path": "data/sprite/shadow.spr",
+      "url": "https://grf.robrowser.com/data/sprite/shadow.spr",
+      "bytes": 1537,
+      "sha256": "0dbb900969eda93bc64989fff90094513759b00eb75f5325dcbe1f8854c76acf",
+      "header": "53500102"
+    },
+    {
+      "path": "data/sprite/로브/천사날개/남/로드나이트_남.act",
+      "url": "https://grf.robrowser.com/data/sprite/%C2%B7%C3%8E%C2%BA%C3%AA/%C3%83%C2%B5%C2%BB%C3%A7%C2%B3%C2%AF%C2%B0%C2%B3/%C2%B3%C2%B2/%C2%B7%C3%8E%C2%B5%C3%A5%C2%B3%C2%AA%C3%80%C3%8C%C3%86%C2%AE_%C2%B3%C2%B2.act",
+      "bytes": 48276,
+      "sha256": "eb9b75f11920007349d93fe94908a76af52ca00bdde45c87896b7e68fd74c48b",
+      "header": "41430502"
+    },
+    {
+      "path": "data/sprite/로브/천사날개/남/로드나이트_남.spr",
+      "url": "https://grf.robrowser.com/data/sprite/%C2%B7%C3%8E%C2%BA%C3%AA/%C3%83%C2%B5%C2%BB%C3%A7%C2%B3%C2%AF%C2%B0%C2%B3/%C2%B3%C2%B2/%C2%B7%C3%8E%C2%B5%C3%A5%C2%B3%C2%AA%C3%80%C3%8C%C3%86%C2%AE_%C2%B3%C2%B2.spr",
+      "bytes": 13155,
+      "sha256": "ee1cafe6bdde5b2477f47aa9d10d4e33284abbafd4a7d91c0670f8a5470a7466",
+      "header": "53500102"
+    },
+    {
+      "path": "data/sprite/로브/천사날개/여/로드나이트_여.act",
+      "url": "https://grf.robrowser.com/data/sprite/%C2%B7%C3%8E%C2%BA%C3%AA/%C3%83%C2%B5%C2%BB%C3%A7%C2%B3%C2%AF%C2%B0%C2%B3/%C2%BF%C2%A9/%C2%B7%C3%8E%C2%B5%C3%A5%C2%B3%C2%AA%C3%80%C3%8C%C3%86%C2%AE_%C2%BF%C2%A9.act",
+      "bytes": 48020,
+      "sha256": "1612f3836eddd7f8c1403fa72cbd33d5021e0b5d8588e39f90484ec4b343baf4",
+      "header": "41430502"
+    },
+    {
+      "path": "data/sprite/로브/천사날개/여/로드나이트_여.spr",
+      "url": "https://grf.robrowser.com/data/sprite/%C2%B7%C3%8E%C2%BA%C3%AA/%C3%83%C2%B5%C2%BB%C3%A7%C2%B3%C2%AF%C2%B0%C2%B3/%C2%BF%C2%A9/%C2%B7%C3%8E%C2%B5%C3%A5%C2%B3%C2%AA%C3%80%C3%8C%C3%86%C2%AE_%C2%BF%C2%A9.spr",
+      "bytes": 13153,
+      "sha256": "e16da58be1d6f73f7eee964d649e76afd4150cf51d5ce8e4e588c05c085138fb",
+      "header": "53500102"
+    },
+    {
+      "path": "data/sprite/악세사리/남/남_글래스.act",
+      "url": "https://grf.robrowser.com/data/sprite/%C2%BE%C3%87%C2%BC%C2%BC%C2%BB%C3%A7%C2%B8%C2%AE/%C2%B3%C2%B2/%C2%B3%C2%B2_%C2%B1%C3%9B%C2%B7%C2%A1%C2%BD%C2%BA.act",
+      "bytes": 44628,
+      "sha256": "5d5c3356830c08fba1f81b1a54063b5309c2bdb2c787e5164ba3eb0e8dc6b301",
+      "header": "41430402"
+    },
+    {
+      "path": "data/sprite/악세사리/남/남_글래스.spr",
+      "url": "https://grf.robrowser.com/data/sprite/%C2%BE%C3%87%C2%BC%C2%BC%C2%BB%C3%A7%C2%B8%C2%AE/%C2%B3%C2%B2/%C2%B3%C2%B2_%C2%B1%C3%9B%C2%B7%C2%A1%C2%BD%C2%BA.spr",
+      "bytes": 1478,
+      "sha256": "b8e463b5b74a81dbb54c629cd5c02bf4bf5494a6c065237ce285b4e454e92c8e",
+      "header": "53500102"
+    },
+    {
+      "path": "data/sprite/악세사리/남/남_영혼고리.act",
+      "url": "https://grf.robrowser.com/data/sprite/%C2%BE%C3%87%C2%BC%C2%BC%C2%BB%C3%A7%C2%B8%C2%AE/%C2%B3%C2%B2/%C2%B3%C2%B2_%C2%BF%C2%B5%C3%88%C2%A5%C2%B0%C3%AD%C2%B8%C2%AE.act",
+      "bytes": 44628,
+      "sha256": "c51a4cfba1873919f7bc26ee40cbc4c2ff9dc940fef7a891a59357942c0a0991",
+      "header": "41430402"
+    },
+    {
+      "path": "data/sprite/악세사리/남/남_영혼고리.spr",
+      "url": "https://grf.robrowser.com/data/sprite/%C2%BE%C3%87%C2%BC%C2%BC%C2%BB%C3%A7%C2%B8%C2%AE/%C2%B3%C2%B2/%C2%B3%C2%B2_%C2%BF%C2%B5%C3%88%C2%A5%C2%B0%C3%AD%C2%B8%C2%AE.spr",
+      "bytes": 2199,
+      "sha256": "eb5aadcbbc90a5a52437e12caa5bf833bba41aa04751e20d8b974d6c136b5bd4",
+      "header": "53500102"
+    },
+    {
+      "path": "data/sprite/악세사리/여/여_글래스.act",
+      "url": "https://grf.robrowser.com/data/sprite/%C2%BE%C3%87%C2%BC%C2%BC%C2%BB%C3%A7%C2%B8%C2%AE/%C2%BF%C2%A9/%C2%BF%C2%A9_%C2%B1%C3%9B%C2%B7%C2%A1%C2%BD%C2%BA.act",
+      "bytes": 44628,
+      "sha256": "61459758fda81dd6db63811f842bcd9f51058e930cc3a9f8babab7698167190b",
+      "header": "41430402"
+    },
+    {
+      "path": "data/sprite/악세사리/여/여_글래스.spr",
+      "url": "https://grf.robrowser.com/data/sprite/%C2%BE%C3%87%C2%BC%C2%BC%C2%BB%C3%A7%C2%B8%C2%AE/%C2%BF%C2%A9/%C2%BF%C2%A9_%C2%B1%C3%9B%C2%B7%C2%A1%C2%BD%C2%BA.spr",
+      "bytes": 1361,
+      "sha256": "8553b73ee509c9c49b17e4df73e5818cfa51a17d9bd12e899fe4f8e169ebd8c1",
+      "header": "53500102"
+    },
+    {
+      "path": "data/sprite/악세사리/여/여_영혼고리.act",
+      "url": "https://grf.robrowser.com/data/sprite/%C2%BE%C3%87%C2%BC%C2%BC%C2%BB%C3%A7%C2%B8%C2%AE/%C2%BF%C2%A9/%C2%BF%C2%A9_%C2%BF%C2%B5%C3%88%C2%A5%C2%B0%C3%AD%C2%B8%C2%AE.act",
+      "bytes": 44628,
+      "sha256": "435ce4cc0b842d04ac4a016c447552deaac0e0736291cd49f44ba7216d3978c1",
+      "header": "41430402"
+    },
+    {
+      "path": "data/sprite/악세사리/여/여_영혼고리.spr",
+      "url": "https://grf.robrowser.com/data/sprite/%C2%BE%C3%87%C2%BC%C2%BC%C2%BB%C3%A7%C2%B8%C2%AE/%C2%BF%C2%A9/%C2%BF%C2%A9_%C2%BF%C2%B5%C3%88%C2%A5%C2%B0%C3%AD%C2%B8%C2%AE.spr",
+      "bytes": 2199,
+      "sha256": "eb5aadcbbc90a5a52437e12caa5bf833bba41aa04751e20d8b974d6c136b5bd4",
+      "header": "53500102"
+    },
+    {
+      "path": "data/sprite/인간족/기사/기사_남_검.act",
+      "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C2%B1%C3%A2%C2%BB%C3%A7%5C%C2%B1%C3%A2%C2%BB%C3%A7_%C2%B3%C2%B2_%C2%B0%C3%8B.act",
+      "bytes": 37476,
+      "sha256": "10e3306923d228e1ff87dfbe2029e684eef4d6011ba347c7fd3a6cfda2fdd53d",
+      "header": "41430402"
+    },
+    {
+      "path": "data/sprite/인간족/기사/기사_남_검.spr",
+      "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C2%B1%C3%A2%C2%BB%C3%A7%5C%C2%B1%C3%A2%C2%BB%C3%A7_%C2%B3%C2%B2_%C2%B0%C3%8B.spr",
+      "bytes": 3239,
+      "sha256": "dd350813fea474afa6b78e3661839e6b50fcd92c4e0df0a6e921d45b820238a3",
+      "header": "53500102"
+    },
+    {
+      "path": "data/sprite/인간족/기사/기사_여_검.act",
+      "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C2%B1%C3%A2%C2%BB%C3%A7%5C%C2%B1%C3%A2%C2%BB%C3%A7_%C2%BF%C2%A9_%C2%B0%C3%8B.act",
+      "bytes": 37332,
+      "sha256": "8445d22aefc181d2f35a3e08d3028c1b78b972b7a5811de51cd1bf4fba6df0d8",
+      "header": "41430402"
+    },
+    {
+      "path": "data/sprite/인간족/기사/기사_여_검.spr",
+      "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C2%B1%C3%A2%C2%BB%C3%A7%5C%C2%B1%C3%A2%C2%BB%C3%A7_%C2%BF%C2%A9_%C2%B0%C3%8B.spr",
+      "bytes": 3938,
+      "sha256": "4f0ce4c9314367beb195621069503c79194a12a6f596744132b5abc47087e477",
+      "header": "53500102"
+    },
+    {
+      "path": "data/sprite/인간족/머리통/남/10_남.act",
+      "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C2%B8%C3%93%C2%B8%C2%AE%C3%85%C3%AB/%C2%B3%C2%B2/10_%C2%B3%C2%B2.act",
+      "bytes": 61044,
+      "sha256": "fc6a60d8833b760c667876e966e6ad630bb3775eab4d85b78cf83808057f0b53",
+      "header": "41430402"
+    },
+    {
+      "path": "data/sprite/인간족/머리통/남/10_남.spr",
+      "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C2%B8%C3%93%C2%B8%C2%AE%C3%85%C3%AB/%C2%B3%C2%B2/10_%C2%B3%C2%B2.spr",
+      "bytes": 8588,
+      "sha256": "fa000f13ff5f7882f2d5963c25db59342f18b29558d72af720e4554a93465a3c",
+      "header": "53500102"
+    },
+    {
+      "path": "data/sprite/인간족/머리통/남/12_남.act",
+      "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C2%B8%C3%93%C2%B8%C2%AE%C3%85%C3%AB/%C2%B3%C2%B2/12_%C2%B3%C2%B2.act",
+      "bytes": 61044,
+      "sha256": "badb57d97b4d39f7d39485e500c666fa9c07b144fad7b0d7b0d282d7eec0d66e",
+      "header": "41430402"
+    },
+    {
+      "path": "data/sprite/인간족/머리통/남/12_남.spr",
+      "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C2%B8%C3%93%C2%B8%C2%AE%C3%85%C3%AB/%C2%B3%C2%B2/12_%C2%B3%C2%B2.spr",
+      "bytes": 8289,
+      "sha256": "4d46e2896bd92290289e77c792ca50239d5dafac2c54f027b27789e6ff34b0e5",
+      "header": "53500102"
+    },
+    {
+      "path": "data/sprite/인간족/머리통/남/17_남.act",
+      "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C2%B8%C3%93%C2%B8%C2%AE%C3%85%C3%AB/%C2%B3%C2%B2/17_%C2%B3%C2%B2.act",
+      "bytes": 61044,
+      "sha256": "0544682bb997e19746fb7ec899939b02c5c4dcf1bf0df83af1f074370d94d9af",
+      "header": "41430402"
+    },
+    {
+      "path": "data/sprite/인간족/머리통/남/17_남.spr",
+      "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C2%B8%C3%93%C2%B8%C2%AE%C3%85%C3%AB/%C2%B3%C2%B2/17_%C2%B3%C2%B2.spr",
+      "bytes": 7899,
+      "sha256": "8351627de28e6d6cd5e6fdb447d115faa263f4a5fb60955c0ac79ed54c163d97",
+      "header": "53500102"
+    },
+    {
+      "path": "data/sprite/인간족/머리통/남/19_남.act",
+      "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C2%B8%C3%93%C2%B8%C2%AE%C3%85%C3%AB/%C2%B3%C2%B2/19_%C2%B3%C2%B2.act",
+      "bytes": 61044,
+      "sha256": "73f31dfc3b27065d56ce68160d1e821b6be773a8dcb37bfe4f576e553827a0b7",
+      "header": "41430402"
+    },
+    {
+      "path": "data/sprite/인간족/머리통/남/19_남.spr",
+      "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C2%B8%C3%93%C2%B8%C2%AE%C3%85%C3%AB/%C2%B3%C2%B2/19_%C2%B3%C2%B2.spr",
+      "bytes": 7590,
+      "sha256": "cc9ccd34ee17ff0490c9185e4367a3d15fc3198d727989c9afac045be5e874ea",
+      "header": "53500102"
+    },
+    {
+      "path": "data/sprite/인간족/머리통/남/20_남.act",
+      "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C2%B8%C3%93%C2%B8%C2%AE%C3%85%C3%AB/%C2%B3%C2%B2/20_%C2%B3%C2%B2.act",
+      "bytes": 68340,
+      "sha256": "6cbabc049c4d36757c466167be72c53634e0ff12b61d091fdd34a7e1d9472a83",
+      "header": "41430502"
+    },
+    {
+      "path": "data/sprite/인간족/머리통/남/20_남.spr",
+      "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C2%B8%C3%93%C2%B8%C2%AE%C3%85%C3%AB/%C2%B3%C2%B2/20_%C2%B3%C2%B2.spr",
+      "bytes": 9334,
+      "sha256": "736985e27d4526b3140516a497cabaafd828eb0e66f1b2d25d08ee748543ad3d",
+      "header": "53500102"
+    },
+    {
+      "path": "data/sprite/인간족/머리통/남/22_남.act",
+      "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C2%B8%C3%93%C2%B8%C2%AE%C3%85%C3%AB/%C2%B3%C2%B2/22_%C2%B3%C2%B2.act",
+      "bytes": 68340,
+      "sha256": "06c8d86e99b4ec29ac52a30bef350eb757f1dfd9378eef804b4af90657bda854",
+      "header": "41430502"
+    },
+    {
+      "path": "data/sprite/인간족/머리통/남/22_남.spr",
+      "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C2%B8%C3%93%C2%B8%C2%AE%C3%85%C3%AB/%C2%B3%C2%B2/22_%C2%B3%C2%B2.spr",
+      "bytes": 8524,
+      "sha256": "179976dfd3d7b2668dd159b1075e6844000373ae32c8ccc350ae5d21e278dee8",
+      "header": "53500102"
+    },
+    {
+      "path": "data/sprite/인간족/머리통/남/24_남.act",
+      "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C2%B8%C3%93%C2%B8%C2%AE%C3%85%C3%AB/%C2%B3%C2%B2/24_%C2%B3%C2%B2.act",
+      "bytes": 68340,
+      "sha256": "bb56bb7c7577874abbd7612a9d186757fb90b6eb74a28857e415fd5bd6b9266e",
+      "header": "41430502"
+    },
+    {
+      "path": "data/sprite/인간족/머리통/남/24_남.spr",
+      "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C2%B8%C3%93%C2%B8%C2%AE%C3%85%C3%AB/%C2%B3%C2%B2/24_%C2%B3%C2%B2.spr",
+      "bytes": 8609,
+      "sha256": "bfea7f769b65f83bde8808f3e6ef8a58c3398bc0f77544792eb69a4aeb47fcdc",
+      "header": "53500102"
+    },
+    {
+      "path": "data/sprite/인간족/머리통/남/26_남.act",
+      "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C2%B8%C3%93%C2%B8%C2%AE%C3%85%C3%AB/%C2%B3%C2%B2/26_%C2%B3%C2%B2.act",
+      "bytes": 68340,
+      "sha256": "80523b0229b711175baca49ff2f506c082ab9569112821f9cffa3221b4edf075",
+      "header": "41430502"
+    },
+    {
+      "path": "data/sprite/인간족/머리통/남/26_남.spr",
+      "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C2%B8%C3%93%C2%B8%C2%AE%C3%85%C3%AB/%C2%B3%C2%B2/26_%C2%B3%C2%B2.spr",
+      "bytes": 8171,
+      "sha256": "4eaa47046ba7ffb0c1b821e2dbceb3853a1f60a4d51126573ef817b03f2494d7",
+      "header": "53500102"
+    },
+    {
+      "path": "data/sprite/인간족/머리통/남/27_남.act",
+      "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C2%B8%C3%93%C2%B8%C2%AE%C3%85%C3%AB/%C2%B3%C2%B2/27_%C2%B3%C2%B2.act",
+      "bytes": 68340,
+      "sha256": "37a4e57b4d1bca31a12de4bf59d49e09f1470b4173eeada3a01dee3d2a924ee2",
+      "header": "41430502"
+    },
+    {
+      "path": "data/sprite/인간족/머리통/남/27_남.spr",
+      "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C2%B8%C3%93%C2%B8%C2%AE%C3%85%C3%AB/%C2%B3%C2%B2/27_%C2%B3%C2%B2.spr",
+      "bytes": 8792,
+      "sha256": "d8e442f1cd79ab6acb7b77c2d0d7ddbf95f1b5f0c8aac84749ad9cda94b34b07",
+      "header": "53500102"
+    },
+    {
+      "path": "data/sprite/인간족/머리통/남/28_남.act",
+      "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C2%B8%C3%93%C2%B8%C2%AE%C3%85%C3%AB/%C2%B3%C2%B2/28_%C2%B3%C2%B2.act",
+      "bytes": 68340,
+      "sha256": "2d777e77560fa87a8c70a65a67c61bc3e4223b4db1c38de3ce2172145f252c25",
+      "header": "41430502"
+    },
+    {
+      "path": "data/sprite/인간족/머리통/남/28_남.spr",
+      "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C2%B8%C3%93%C2%B8%C2%AE%C3%85%C3%AB/%C2%B3%C2%B2/28_%C2%B3%C2%B2.spr",
+      "bytes": 9346,
+      "sha256": "2f702f04efc57a8fac8671016af950e7eb66f494bded2c4ddb943198d27a40f5",
+      "header": "53500102"
+    },
+    {
+      "path": "data/sprite/인간족/머리통/남/2_남.act",
+      "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C2%B8%C3%93%C2%B8%C2%AE%C3%85%C3%AB/%C2%B3%C2%B2/2_%C2%B3%C2%B2.act",
+      "bytes": 61044,
+      "sha256": "904afd5ddac10b756362f2e86c6cb9a80f71d53d7006a306b625ba102d38cdcb",
+      "header": "41430402"
+    },
+    {
+      "path": "data/sprite/인간족/머리통/남/2_남.spr",
+      "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C2%B8%C3%93%C2%B8%C2%AE%C3%85%C3%AB/%C2%B3%C2%B2/2_%C2%B3%C2%B2.spr",
+      "bytes": 8505,
+      "sha256": "02d968e6b889f565b68c66dbec7f6290da8982cdb44a12febe47ef8361e3a18d",
+      "header": "53500102"
+    },
+    {
+      "path": "data/sprite/인간족/머리통/남/30_남.act",
+      "url": "https://classicweb.niktoutro.com/chaosclient/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C2%B8%C3%93%C2%B8%C2%AE%C3%85%C3%AB/%C2%B3%C2%B2/30_%C2%B3%C2%B2.act",
+      "bytes": 68340,
+      "sha256": "8aaca0024f13451a4db1b2e814422ef6a9270311382e4f5a7a808dc8484bad12",
+      "header": "41430502",
+      "previousAttempts": [
+        {
+          "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C2%B8%C3%93%C2%B8%C2%AE%C3%85%C3%AB/%C2%B3%C2%B2/30_%C2%B3%C2%B2.act",
+          "error": "HTTP Error 404: Not Found"
+        }
+      ]
+    },
+    {
+      "path": "data/sprite/인간족/머리통/남/30_남.spr",
+      "url": "https://classicweb.niktoutro.com/chaosclient/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C2%B8%C3%93%C2%B8%C2%AE%C3%85%C3%AB/%C2%B3%C2%B2/30_%C2%B3%C2%B2.spr",
+      "bytes": 8469,
+      "sha256": "0d5db4d8eacb9b2ae7853ba76389cab9695b8e02ed7e1078be38d0576a69261b",
+      "header": "53500102",
+      "previousAttempts": [
+        {
+          "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C2%B8%C3%93%C2%B8%C2%AE%C3%85%C3%AB/%C2%B3%C2%B2/30_%C2%B3%C2%B2.spr",
+          "error": "HTTP Error 404: Not Found"
+        }
+      ]
+    },
+    {
+      "path": "data/sprite/인간족/머리통/남/32_남.act",
+      "url": "https://classicweb.niktoutro.com/chaosclient/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C2%B8%C3%93%C2%B8%C2%AE%C3%85%C3%AB/%C2%B3%C2%B2/32_%C2%B3%C2%B2.act",
+      "bytes": 68340,
+      "sha256": "ac1ee9f4db8acae95ca7cf42d02a9fe470a7e60a2fc339a7577870ca44c55280",
+      "header": "41430502",
+      "previousAttempts": [
+        {
+          "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C2%B8%C3%93%C2%B8%C2%AE%C3%85%C3%AB/%C2%B3%C2%B2/32_%C2%B3%C2%B2.act",
+          "error": "HTTP Error 404: Not Found"
+        }
+      ]
+    },
+    {
+      "path": "data/sprite/인간족/머리통/남/32_남.spr",
+      "url": "https://classicweb.niktoutro.com/chaosclient/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C2%B8%C3%93%C2%B8%C2%AE%C3%85%C3%AB/%C2%B3%C2%B2/32_%C2%B3%C2%B2.spr",
+      "bytes": 7678,
+      "sha256": "e207c56557f16461cbb77cea4ae8280789022ddfdcc31547d33ef460dc555437",
+      "header": "53500102",
+      "previousAttempts": [
+        {
+          "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C2%B8%C3%93%C2%B8%C2%AE%C3%85%C3%AB/%C2%B3%C2%B2/32_%C2%B3%C2%B2.spr",
+          "error": "HTTP Error 404: Not Found"
+        }
+      ]
+    },
+    {
+      "path": "data/sprite/인간족/머리통/남/35_남.act",
+      "url": "https://classicweb.niktoutro.com/chaosclient/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C2%B8%C3%93%C2%B8%C2%AE%C3%85%C3%AB/%C2%B3%C2%B2/35_%C2%B3%C2%B2.act",
+      "bytes": 68340,
+      "sha256": "9270bf8d066ba81b9e1e65ca728351e7e050945c0b443578d4c1fc79f5c350bc",
+      "header": "41430502",
+      "previousAttempts": [
+        {
+          "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C2%B8%C3%93%C2%B8%C2%AE%C3%85%C3%AB/%C2%B3%C2%B2/35_%C2%B3%C2%B2.act",
+          "error": "HTTP Error 404: Not Found"
+        }
+      ]
+    },
+    {
+      "path": "data/sprite/인간족/머리통/남/35_남.spr",
+      "url": "https://classicweb.niktoutro.com/chaosclient/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C2%B8%C3%93%C2%B8%C2%AE%C3%85%C3%AB/%C2%B3%C2%B2/35_%C2%B3%C2%B2.spr",
+      "bytes": 8814,
+      "sha256": "5d8f3bf476d4bc5464610daf272a896b68d6e3629768204555c9c076e19048a5",
+      "header": "53500102",
+      "previousAttempts": [
+        {
+          "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C2%B8%C3%93%C2%B8%C2%AE%C3%85%C3%AB/%C2%B3%C2%B2/35_%C2%B3%C2%B2.spr",
+          "error": "HTTP Error 404: Not Found"
+        }
+      ]
+    },
+    {
+      "path": "data/sprite/인간족/머리통/남/39_남.act",
+      "url": "https://classicweb.niktoutro.com/chaosclient/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C2%B8%C3%93%C2%B8%C2%AE%C3%85%C3%AB/%C2%B3%C2%B2/39_%C2%B3%C2%B2.act",
+      "bytes": 68340,
+      "sha256": "c7c8f789dd97bb9e93c3f17609f580a3c5c28b1c296d972bf8c63516584828b5",
+      "header": "41430502",
+      "previousAttempts": [
+        {
+          "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C2%B8%C3%93%C2%B8%C2%AE%C3%85%C3%AB/%C2%B3%C2%B2/39_%C2%B3%C2%B2.act",
+          "error": "HTTP Error 404: Not Found"
+        }
+      ]
+    },
+    {
+      "path": "data/sprite/인간족/머리통/남/39_남.spr",
+      "url": "https://classicweb.niktoutro.com/chaosclient/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C2%B8%C3%93%C2%B8%C2%AE%C3%85%C3%AB/%C2%B3%C2%B2/39_%C2%B3%C2%B2.spr",
+      "bytes": 8766,
+      "sha256": "ff3a865c9e7177372740a6b595da8e4733bf215d5d520ab4414ae33865a651e5",
+      "header": "53500102",
+      "previousAttempts": [
+        {
+          "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C2%B8%C3%93%C2%B8%C2%AE%C3%85%C3%AB/%C2%B3%C2%B2/39_%C2%B3%C2%B2.spr",
+          "error": "HTTP Error 404: Not Found"
+        }
+      ]
+    },
+    {
+      "path": "data/sprite/인간족/머리통/남/40_남.act",
+      "url": "https://classicweb.niktoutro.com/chaosclient/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C2%B8%C3%93%C2%B8%C2%AE%C3%85%C3%AB/%C2%B3%C2%B2/40_%C2%B3%C2%B2.act",
+      "bytes": 68340,
+      "sha256": "95ed9b50dc1f489eeae71f8fddf65fa58f365de522b4bfbb2e25f1ae9d71ec14",
+      "header": "41430502",
+      "previousAttempts": [
+        {
+          "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C2%B8%C3%93%C2%B8%C2%AE%C3%85%C3%AB/%C2%B3%C2%B2/40_%C2%B3%C2%B2.act",
+          "error": "HTTP Error 404: Not Found"
+        }
+      ]
+    },
+    {
+      "path": "data/sprite/인간족/머리통/남/40_남.spr",
+      "url": "https://classicweb.niktoutro.com/chaosclient/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C2%B8%C3%93%C2%B8%C2%AE%C3%85%C3%AB/%C2%B3%C2%B2/40_%C2%B3%C2%B2.spr",
+      "bytes": 8780,
+      "sha256": "11190c3becfdf8295188a5cc37bd5173dcc706bbc5de36eb5fc0a8338d959011",
+      "header": "53500102",
+      "previousAttempts": [
+        {
+          "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C2%B8%C3%93%C2%B8%C2%AE%C3%85%C3%AB/%C2%B3%C2%B2/40_%C2%B3%C2%B2.spr",
+          "error": "HTTP Error 404: Not Found"
+        }
+      ]
+    },
+    {
+      "path": "data/sprite/인간족/머리통/남/42_남.act",
+      "url": "https://classicweb.niktoutro.com/chaosclient/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C2%B8%C3%93%C2%B8%C2%AE%C3%85%C3%AB/%C2%B3%C2%B2/42_%C2%B3%C2%B2.act",
+      "bytes": 68340,
+      "sha256": "042e37ba730e4e3c18bca2ebc1ad288cf3594163928a63744bcf90ab9709d20d",
+      "header": "41430502",
+      "previousAttempts": [
+        {
+          "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C2%B8%C3%93%C2%B8%C2%AE%C3%85%C3%AB/%C2%B3%C2%B2/42_%C2%B3%C2%B2.act",
+          "error": "HTTP Error 404: Not Found"
+        }
+      ]
+    },
+    {
+      "path": "data/sprite/인간족/머리통/남/42_남.spr",
+      "url": "https://classicweb.niktoutro.com/chaosclient/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C2%B8%C3%93%C2%B8%C2%AE%C3%85%C3%AB/%C2%B3%C2%B2/42_%C2%B3%C2%B2.spr",
+      "bytes": 8874,
+      "sha256": "c64440ae8af27b0af27fe31947927249e68742cc1b658c8533439ae0e7f09db6",
+      "header": "53500102",
+      "previousAttempts": [
+        {
+          "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C2%B8%C3%93%C2%B8%C2%AE%C3%85%C3%AB/%C2%B3%C2%B2/42_%C2%B3%C2%B2.spr",
+          "error": "HTTP Error 404: Not Found"
+        }
+      ]
+    },
+    {
+      "path": "data/sprite/인간족/머리통/남/5_남.act",
+      "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C2%B8%C3%93%C2%B8%C2%AE%C3%85%C3%AB/%C2%B3%C2%B2/5_%C2%B3%C2%B2.act",
+      "bytes": 61044,
+      "sha256": "268618182bea6ce2ce3b25b83b76afd5a4b742503a52eb39768058fcfaf1489c",
+      "header": "41430402"
+    },
+    {
+      "path": "data/sprite/인간족/머리통/남/5_남.spr",
+      "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C2%B8%C3%93%C2%B8%C2%AE%C3%85%C3%AB/%C2%B3%C2%B2/5_%C2%B3%C2%B2.spr",
+      "bytes": 8103,
+      "sha256": "19a7f90c9b4dee35eef70f17d15f9ff1051156ed52db4aa4271cb8d9ceafd2ce",
+      "header": "53500102"
+    },
+    {
+      "path": "data/sprite/인간족/머리통/남/7_남.act",
+      "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C2%B8%C3%93%C2%B8%C2%AE%C3%85%C3%AB/%C2%B3%C2%B2/7_%C2%B3%C2%B2.act",
+      "bytes": 61044,
+      "sha256": "249c63729fb2310a66e7dd63329488bfab8ac473bcf01e8b7de1fde7fdcc35f4",
+      "header": "41430402"
+    },
+    {
+      "path": "data/sprite/인간족/머리통/남/7_남.spr",
+      "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C2%B8%C3%93%C2%B8%C2%AE%C3%85%C3%AB/%C2%B3%C2%B2/7_%C2%B3%C2%B2.spr",
+      "bytes": 8351,
+      "sha256": "4f2710ff3bba783095aa294de54de366884391f769f947c58d9fdf48509a91c8",
+      "header": "53500102"
+    },
+    {
+      "path": "data/sprite/인간족/머리통/남/8_남.act",
+      "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C2%B8%C3%93%C2%B8%C2%AE%C3%85%C3%AB/%C2%B3%C2%B2/8_%C2%B3%C2%B2.act",
+      "bytes": 61044,
+      "sha256": "2e768e198c3ea8180d22da037fcd9ac0fceb5c33c7690b92a94af70d81d9c567",
+      "header": "41430402"
+    },
+    {
+      "path": "data/sprite/인간족/머리통/남/8_남.spr",
+      "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C2%B8%C3%93%C2%B8%C2%AE%C3%85%C3%AB/%C2%B3%C2%B2/8_%C2%B3%C2%B2.spr",
+      "bytes": 8406,
+      "sha256": "baa75a5491f3ee6af068a1f70f0031d501be180a445dee5dffde14089f40dfa3",
+      "header": "53500102"
+    },
+    {
+      "path": "data/sprite/인간족/머리통/여/12_여.act",
+      "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C2%B8%C3%93%C2%B8%C2%AE%C3%85%C3%AB/%C2%BF%C2%A9/12_%C2%BF%C2%A9.act",
+      "bytes": 61044,
+      "sha256": "bc4385c391efca3f22f3ae83e8f9b7cc0f478e35bad53d377e89000839a05ce3",
+      "header": "41430402"
+    },
+    {
+      "path": "data/sprite/인간족/머리통/여/12_여.spr",
+      "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C2%B8%C3%93%C2%B8%C2%AE%C3%85%C3%AB/%C2%BF%C2%A9/12_%C2%BF%C2%A9.spr",
+      "bytes": 10668,
+      "sha256": "d4c1f244d92a6e1052b2604d718cbcf072483c288226102f7e45f23fea1eed53",
+      "header": "53500102"
+    },
+    {
+      "path": "data/sprite/인간족/머리통/여/13_여.act",
+      "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C2%B8%C3%93%C2%B8%C2%AE%C3%85%C3%AB/%C2%BF%C2%A9/13_%C2%BF%C2%A9.act",
+      "bytes": 61044,
+      "sha256": "84279714a17327e4876d845bc9ff09a0a5e8a87e447064516cb3d980c9a78a0b",
+      "header": "41430402"
+    },
+    {
+      "path": "data/sprite/인간족/머리통/여/13_여.spr",
+      "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C2%B8%C3%93%C2%B8%C2%AE%C3%85%C3%AB/%C2%BF%C2%A9/13_%C2%BF%C2%A9.spr",
+      "bytes": 9041,
+      "sha256": "f75317dd0309d514187309613c0c970056f873f18ae326d56e8745eec7c2411e",
+      "header": "53500102"
+    },
+    {
+      "path": "data/sprite/인간족/머리통/여/14_여.act",
+      "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C2%B8%C3%93%C2%B8%C2%AE%C3%85%C3%AB/%C2%BF%C2%A9/14_%C2%BF%C2%A9.act",
+      "bytes": 61044,
+      "sha256": "f4109c8a9b3faa68cb8657080136176164c49c3dfa98995bea90a513885f2118",
+      "header": "41430402"
+    },
+    {
+      "path": "data/sprite/인간족/머리통/여/14_여.spr",
+      "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C2%B8%C3%93%C2%B8%C2%AE%C3%85%C3%AB/%C2%BF%C2%A9/14_%C2%BF%C2%A9.spr",
+      "bytes": 10360,
+      "sha256": "ee24476bf5931bc65c4b11666002757e6da45c8f8245f51f5b29023cd3805bee",
+      "header": "53500102"
+    },
+    {
+      "path": "data/sprite/인간족/머리통/여/15_여.act",
+      "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C2%B8%C3%93%C2%B8%C2%AE%C3%85%C3%AB/%C2%BF%C2%A9/15_%C2%BF%C2%A9.act",
+      "bytes": 61044,
+      "sha256": "2247c349ff076420c1741244f619a234bf538730d3caffc491378171ec0432b0",
+      "header": "41430402"
+    },
+    {
+      "path": "data/sprite/인간족/머리통/여/15_여.spr",
+      "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C2%B8%C3%93%C2%B8%C2%AE%C3%85%C3%AB/%C2%BF%C2%A9/15_%C2%BF%C2%A9.spr",
+      "bytes": 9306,
+      "sha256": "c2c89c44acc60d1a4475ab3914d0f76678cd3404ffc745af3aa69578062f6951",
+      "header": "53500102"
+    },
+    {
+      "path": "data/sprite/인간족/머리통/여/17_여.act",
+      "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C2%B8%C3%93%C2%B8%C2%AE%C3%85%C3%AB/%C2%BF%C2%A9/17_%C2%BF%C2%A9.act",
+      "bytes": 61044,
+      "sha256": "010b1a0cb6a1832c7a4a4da97f722a2973106cca0f4e095a3b7025ed5eef274d",
+      "header": "41430402"
+    },
+    {
+      "path": "data/sprite/인간족/머리통/여/17_여.spr",
+      "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C2%B8%C3%93%C2%B8%C2%AE%C3%85%C3%AB/%C2%BF%C2%A9/17_%C2%BF%C2%A9.spr",
+      "bytes": 9318,
+      "sha256": "dca4df573e610c62ca918c260b2b9248ac5af42b67d9ccd11d815ac6b79a2cb8",
+      "header": "53500102"
+    },
+    {
+      "path": "data/sprite/인간족/머리통/여/18_여.act",
+      "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C2%B8%C3%93%C2%B8%C2%AE%C3%85%C3%AB/%C2%BF%C2%A9/18_%C2%BF%C2%A9.act",
+      "bytes": 61044,
+      "sha256": "dbdfab03d6db61cc1155e86d4dc682fd3dd10bb5d06a3d8aeea533c704cf3d0c",
+      "header": "41430402"
+    },
+    {
+      "path": "data/sprite/인간족/머리통/여/18_여.spr",
+      "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C2%B8%C3%93%C2%B8%C2%AE%C3%85%C3%AB/%C2%BF%C2%A9/18_%C2%BF%C2%A9.spr",
+      "bytes": 11225,
+      "sha256": "aa470a3920ee899e736e4e4fa85ec62341cdb3bf853fad2b290e3d0fed436bdb",
+      "header": "53500102"
+    },
+    {
+      "path": "data/sprite/인간족/머리통/여/19_여.act",
+      "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C2%B8%C3%93%C2%B8%C2%AE%C3%85%C3%AB/%C2%BF%C2%A9/19_%C2%BF%C2%A9.act",
+      "bytes": 61044,
+      "sha256": "88ee937be0537ccc946ebb6e9aea12554850a3434634fc5c1c25968cbcfbf04c",
+      "header": "41430402"
+    },
+    {
+      "path": "data/sprite/인간족/머리통/여/19_여.spr",
+      "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C2%B8%C3%93%C2%B8%C2%AE%C3%85%C3%AB/%C2%BF%C2%A9/19_%C2%BF%C2%A9.spr",
+      "bytes": 9345,
+      "sha256": "9dd8e12a0541e2350c14300e762e4552a7a5132776deda0c9e5e5960fc004c9d",
+      "header": "53500102"
+    },
+    {
+      "path": "data/sprite/인간족/머리통/여/21_여.act",
+      "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C2%B8%C3%93%C2%B8%C2%AE%C3%85%C3%AB/%C2%BF%C2%A9/21_%C2%BF%C2%A9.act",
+      "bytes": 68340,
+      "sha256": "de9058989fc658bf14e833a705c603336c589096122d618bc2c62b10dc8785e9",
+      "header": "41430502"
+    },
+    {
+      "path": "data/sprite/인간족/머리통/여/21_여.spr",
+      "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C2%B8%C3%93%C2%B8%C2%AE%C3%85%C3%AB/%C2%BF%C2%A9/21_%C2%BF%C2%A9.spr",
+      "bytes": 10914,
+      "sha256": "76de4505cebd2aa1d1b55dfb5743b941bd31db64ea61845ddbc44e53e7ce07c6",
+      "header": "53500102"
+    },
+    {
+      "path": "data/sprite/인간족/머리통/여/24_여.act",
+      "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C2%B8%C3%93%C2%B8%C2%AE%C3%85%C3%AB/%C2%BF%C2%A9/24_%C2%BF%C2%A9.act",
+      "bytes": 68340,
+      "sha256": "0a4c723bc9cdff7423698ef79a56977052f1e61bee79edbbacf29548fcee59c0",
+      "header": "41430502"
+    },
+    {
+      "path": "data/sprite/인간족/머리통/여/24_여.spr",
+      "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C2%B8%C3%93%C2%B8%C2%AE%C3%85%C3%AB/%C2%BF%C2%A9/24_%C2%BF%C2%A9.spr",
+      "bytes": 10491,
+      "sha256": "856a83f5feb45e6829b77a7a0a24d9b2b8d3de4b85c85e5731f1fedf94e9e73f",
+      "header": "53500102"
+    },
+    {
+      "path": "data/sprite/인간족/머리통/여/27_여.act",
+      "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C2%B8%C3%93%C2%B8%C2%AE%C3%85%C3%AB/%C2%BF%C2%A9/27_%C2%BF%C2%A9.act",
+      "bytes": 68340,
+      "sha256": "108f34ebd2e57a26514863b1f3c74db34dfa5e3fcf4309cafb1c946e2d253372",
+      "header": "41430502"
+    },
+    {
+      "path": "data/sprite/인간족/머리통/여/27_여.spr",
+      "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C2%B8%C3%93%C2%B8%C2%AE%C3%85%C3%AB/%C2%BF%C2%A9/27_%C2%BF%C2%A9.spr",
+      "bytes": 10519,
+      "sha256": "9b87f1a2176dbab808302ec794fe21836873536c47db63d4409ec2845e202abd",
+      "header": "53500102"
+    },
+    {
+      "path": "data/sprite/인간족/머리통/여/2_여.act",
+      "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C2%B8%C3%93%C2%B8%C2%AE%C3%85%C3%AB/%C2%BF%C2%A9/2_%C2%BF%C2%A9.act",
+      "bytes": 61044,
+      "sha256": "0c352f65bc9a0ba40afbfdfd5eb3093ad560194108e468c98a907ba916ba146b",
+      "header": "41430402"
+    },
+    {
+      "path": "data/sprite/인간족/머리통/여/2_여.spr",
+      "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C2%B8%C3%93%C2%B8%C2%AE%C3%85%C3%AB/%C2%BF%C2%A9/2_%C2%BF%C2%A9.spr",
+      "bytes": 9777,
+      "sha256": "724113660894be3145e251e07f72a5d6da161d581a02d1c6debd98ea82950cb2",
+      "header": "53500102"
+    },
+    {
+      "path": "data/sprite/인간족/머리통/여/30_여.act",
+      "url": "https://classicweb.niktoutro.com/chaosclient/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C2%B8%C3%93%C2%B8%C2%AE%C3%85%C3%AB/%C2%BF%C2%A9/30_%C2%BF%C2%A9.act",
+      "bytes": 68340,
+      "sha256": "4156edc1dde99c53196c7cac6946d5bca1206f1e40f9ba52a8c42397fda0ae09",
+      "header": "41430502",
+      "previousAttempts": [
+        {
+          "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C2%B8%C3%93%C2%B8%C2%AE%C3%85%C3%AB/%C2%BF%C2%A9/30_%C2%BF%C2%A9.act",
+          "error": "HTTP Error 404: Not Found"
+        }
+      ]
+    },
+    {
+      "path": "data/sprite/인간족/머리통/여/30_여.spr",
+      "url": "https://classicweb.niktoutro.com/chaosclient/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C2%B8%C3%93%C2%B8%C2%AE%C3%85%C3%AB/%C2%BF%C2%A9/30_%C2%BF%C2%A9.spr",
+      "bytes": 12133,
+      "sha256": "123b7865deb9f2905084c7eb26d51830e5aa9034a1bb9793e6009b3605f5c331",
+      "header": "53500102",
+      "previousAttempts": [
+        {
+          "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C2%B8%C3%93%C2%B8%C2%AE%C3%85%C3%AB/%C2%BF%C2%A9/30_%C2%BF%C2%A9.spr",
+          "error": "HTTP Error 404: Not Found"
+        }
+      ]
+    },
+    {
+      "path": "data/sprite/인간족/머리통/여/34_여.act",
+      "url": "https://classicweb.niktoutro.com/chaosclient/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C2%B8%C3%93%C2%B8%C2%AE%C3%85%C3%AB/%C2%BF%C2%A9/34_%C2%BF%C2%A9.act",
+      "bytes": 68340,
+      "sha256": "ebfb243c2a3fb383c7ec04f087b5276d021681b34649664f4aec7118109b1f4d",
+      "header": "41430502",
+      "previousAttempts": [
+        {
+          "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C2%B8%C3%93%C2%B8%C2%AE%C3%85%C3%AB/%C2%BF%C2%A9/34_%C2%BF%C2%A9.act",
+          "error": "HTTP Error 404: Not Found"
+        }
+      ]
+    },
+    {
+      "path": "data/sprite/인간족/머리통/여/34_여.spr",
+      "url": "https://classicweb.niktoutro.com/chaosclient/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C2%B8%C3%93%C2%B8%C2%AE%C3%85%C3%AB/%C2%BF%C2%A9/34_%C2%BF%C2%A9.spr",
+      "bytes": 9803,
+      "sha256": "1a7a275b3d19e36b2fe3f0e0b3c254b8792bf119daf2a101ef67c6dfc7052001",
+      "header": "53500102",
+      "previousAttempts": [
+        {
+          "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C2%B8%C3%93%C2%B8%C2%AE%C3%85%C3%AB/%C2%BF%C2%A9/34_%C2%BF%C2%A9.spr",
+          "error": "HTTP Error 404: Not Found"
+        }
+      ]
+    },
+    {
+      "path": "data/sprite/인간족/머리통/여/35_여.act",
+      "url": "https://classicweb.niktoutro.com/chaosclient/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C2%B8%C3%93%C2%B8%C2%AE%C3%85%C3%AB/%C2%BF%C2%A9/35_%C2%BF%C2%A9.act",
+      "bytes": 68340,
+      "sha256": "0e370629fffdfb9ff7616658b93aae502bf5d09927a1b5ec7363c839dabc1ed7",
+      "header": "41430502",
+      "previousAttempts": [
+        {
+          "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C2%B8%C3%93%C2%B8%C2%AE%C3%85%C3%AB/%C2%BF%C2%A9/35_%C2%BF%C2%A9.act",
+          "error": "HTTP Error 404: Not Found"
+        }
+      ]
+    },
+    {
+      "path": "data/sprite/인간족/머리통/여/35_여.spr",
+      "url": "https://classicweb.niktoutro.com/chaosclient/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C2%B8%C3%93%C2%B8%C2%AE%C3%85%C3%AB/%C2%BF%C2%A9/35_%C2%BF%C2%A9.spr",
+      "bytes": 9895,
+      "sha256": "7f6d2022ded0ea8bb47a237e1565b57781e75511f1ece8f5ff5a9cab29ec4909",
+      "header": "53500102",
+      "previousAttempts": [
+        {
+          "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C2%B8%C3%93%C2%B8%C2%AE%C3%85%C3%AB/%C2%BF%C2%A9/35_%C2%BF%C2%A9.spr",
+          "error": "HTTP Error 404: Not Found"
+        }
+      ]
+    },
+    {
+      "path": "data/sprite/인간족/머리통/여/37_여.act",
+      "url": "https://classicweb.niktoutro.com/chaosclient/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C2%B8%C3%93%C2%B8%C2%AE%C3%85%C3%AB/%C2%BF%C2%A9/37_%C2%BF%C2%A9.act",
+      "bytes": 68340,
+      "sha256": "2064873926a416a1ee9218c2660d7337c8f702875ad8ff73f2671c52f0182ed5",
+      "header": "41430502",
+      "previousAttempts": [
+        {
+          "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C2%B8%C3%93%C2%B8%C2%AE%C3%85%C3%AB/%C2%BF%C2%A9/37_%C2%BF%C2%A9.act",
+          "error": "HTTP Error 404: Not Found"
+        }
+      ]
+    },
+    {
+      "path": "data/sprite/인간족/머리통/여/37_여.spr",
+      "url": "https://classicweb.niktoutro.com/chaosclient/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C2%B8%C3%93%C2%B8%C2%AE%C3%85%C3%AB/%C2%BF%C2%A9/37_%C2%BF%C2%A9.spr",
+      "bytes": 10748,
+      "sha256": "45b0e6f7bc7d72dbcb4ca79387f20c32a36dc90db31bdfbdd55ff7cc6ebf525c",
+      "header": "53500102",
+      "previousAttempts": [
+        {
+          "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C2%B8%C3%93%C2%B8%C2%AE%C3%85%C3%AB/%C2%BF%C2%A9/37_%C2%BF%C2%A9.spr",
+          "error": "HTTP Error 404: Not Found"
+        }
+      ]
+    },
+    {
+      "path": "data/sprite/인간족/머리통/여/39_여.act",
+      "url": "https://classicweb.niktoutro.com/chaosclient/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C2%B8%C3%93%C2%B8%C2%AE%C3%85%C3%AB/%C2%BF%C2%A9/39_%C2%BF%C2%A9.act",
+      "bytes": 68340,
+      "sha256": "7279aa661900f0cc0b410777072c3ced67f61a58fe97baf3368a09a6f0f62f1b",
+      "header": "41430502",
+      "previousAttempts": [
+        {
+          "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C2%B8%C3%93%C2%B8%C2%AE%C3%85%C3%AB/%C2%BF%C2%A9/39_%C2%BF%C2%A9.act",
+          "error": "HTTP Error 404: Not Found"
+        }
+      ]
+    },
+    {
+      "path": "data/sprite/인간족/머리통/여/39_여.spr",
+      "url": "https://classicweb.niktoutro.com/chaosclient/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C2%B8%C3%93%C2%B8%C2%AE%C3%85%C3%AB/%C2%BF%C2%A9/39_%C2%BF%C2%A9.spr",
+      "bytes": 8660,
+      "sha256": "fe1142794391dc0e26ac38afc6b225af468054f801fcb671145037ad9dadb1d8",
+      "header": "53500102",
+      "previousAttempts": [
+        {
+          "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C2%B8%C3%93%C2%B8%C2%AE%C3%85%C3%AB/%C2%BF%C2%A9/39_%C2%BF%C2%A9.spr",
+          "error": "HTTP Error 404: Not Found"
+        }
+      ]
+    },
+    {
+      "path": "data/sprite/인간족/머리통/여/41_여.act",
+      "url": "https://classicweb.niktoutro.com/chaosclient/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C2%B8%C3%93%C2%B8%C2%AE%C3%85%C3%AB/%C2%BF%C2%A9/41_%C2%BF%C2%A9.act",
+      "bytes": 68340,
+      "sha256": "9a458858d1332f2b0467b2181eddbbfd7ee53f1bad0c662faa61ec5d9f9577b3",
+      "header": "41430502",
+      "previousAttempts": [
+        {
+          "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C2%B8%C3%93%C2%B8%C2%AE%C3%85%C3%AB/%C2%BF%C2%A9/41_%C2%BF%C2%A9.act",
+          "error": "HTTP Error 404: Not Found"
+        }
+      ]
+    },
+    {
+      "path": "data/sprite/인간족/머리통/여/41_여.spr",
+      "url": "https://classicweb.niktoutro.com/chaosclient/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C2%B8%C3%93%C2%B8%C2%AE%C3%85%C3%AB/%C2%BF%C2%A9/41_%C2%BF%C2%A9.spr",
+      "bytes": 10869,
+      "sha256": "e92a76e50487c7a741192468fe32cdd738416c43441724869f859d9bf02181b6",
+      "header": "53500102",
+      "previousAttempts": [
+        {
+          "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C2%B8%C3%93%C2%B8%C2%AE%C3%85%C3%AB/%C2%BF%C2%A9/41_%C2%BF%C2%A9.spr",
+          "error": "HTTP Error 404: Not Found"
+        }
+      ]
+    },
+    {
+      "path": "data/sprite/인간족/머리통/여/42_여.act",
+      "url": "https://classicweb.niktoutro.com/chaosclient/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C2%B8%C3%93%C2%B8%C2%AE%C3%85%C3%AB/%C2%BF%C2%A9/42_%C2%BF%C2%A9.act",
+      "bytes": 68340,
+      "sha256": "56b179fe5a40b7cdfd86990603475cf603989725754eaaa339d525059611cffe",
+      "header": "41430502",
+      "previousAttempts": [
+        {
+          "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C2%B8%C3%93%C2%B8%C2%AE%C3%85%C3%AB/%C2%BF%C2%A9/42_%C2%BF%C2%A9.act",
+          "error": "HTTP Error 404: Not Found"
+        }
+      ]
+    },
+    {
+      "path": "data/sprite/인간족/머리통/여/42_여.spr",
+      "url": "https://classicweb.niktoutro.com/chaosclient/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C2%B8%C3%93%C2%B8%C2%AE%C3%85%C3%AB/%C2%BF%C2%A9/42_%C2%BF%C2%A9.spr",
+      "bytes": 9766,
+      "sha256": "ba44958f53e441ae2f214016192bdb35330b022f2cee8b33b0f6d32f89652657",
+      "header": "53500102",
+      "previousAttempts": [
+        {
+          "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C2%B8%C3%93%C2%B8%C2%AE%C3%85%C3%AB/%C2%BF%C2%A9/42_%C2%BF%C2%A9.spr",
+          "error": "HTTP Error 404: Not Found"
+        }
+      ]
+    },
+    {
+      "path": "data/sprite/인간족/머리통/여/4_여.act",
+      "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C2%B8%C3%93%C2%B8%C2%AE%C3%85%C3%AB/%C2%BF%C2%A9/4_%C2%BF%C2%A9.act",
+      "bytes": 61044,
+      "sha256": "7d49f2cfa360b41d07d6ebe5f04aa1bab9141d208e5103a5e44c7ced7ec647a4",
+      "header": "41430402"
+    },
+    {
+      "path": "data/sprite/인간족/머리통/여/4_여.spr",
+      "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C2%B8%C3%93%C2%B8%C2%AE%C3%85%C3%AB/%C2%BF%C2%A9/4_%C2%BF%C2%A9.spr",
+      "bytes": 10987,
+      "sha256": "d3b8f0db48d77257b9a9c3dd96219e23442b92e5790f7c5b81d4cf0aafe0f6d9",
+      "header": "53500102"
+    },
+    {
+      "path": "data/sprite/인간족/머리통/여/5_여.act",
+      "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C2%B8%C3%93%C2%B8%C2%AE%C3%85%C3%AB/%C2%BF%C2%A9/5_%C2%BF%C2%A9.act",
+      "bytes": 61044,
+      "sha256": "9e9206bf92aaad8137f04f5c084bb0f763a489934321122f3b777ff012dd3370",
+      "header": "41430402"
+    },
+    {
+      "path": "data/sprite/인간족/머리통/여/5_여.spr",
+      "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C2%B8%C3%93%C2%B8%C2%AE%C3%85%C3%AB/%C2%BF%C2%A9/5_%C2%BF%C2%A9.spr",
+      "bytes": 10067,
+      "sha256": "2bae384f20f23b54a2c9697e2b8f98d4d01d1162a3ceff7b2c12834b376b3f34",
+      "header": "53500102"
+    },
+    {
+      "path": "data/sprite/인간족/몸통/남/로드나이트_남.act",
+      "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C2%B8%C3%B6%C3%85%C3%AB/%C2%B3%C2%B2/%C2%B7%C3%8E%C2%B5%C3%A5%C2%B3%C2%AA%C3%80%C3%8C%C3%86%C2%AE_%C2%B3%C2%B2.act",
+      "bytes": 48276,
+      "sha256": "7f51b2b91ef59ae7f6c6d93902c7322242d078426fa45f49746951e0e0d7405e",
+      "header": "41430502"
+    },
+    {
+      "path": "data/sprite/인간족/몸통/남/로드나이트_남.spr",
+      "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C2%B8%C3%B6%C3%85%C3%AB/%C2%B3%C2%B2/%C2%B7%C3%8E%C2%B5%C3%A5%C2%B3%C2%AA%C3%80%C3%8C%C3%86%C2%AE_%C2%B3%C2%B2.spr",
+      "bytes": 276993,
+      "sha256": "7a0ffca0d5fb697b1852cbc403df1c01c7cf38665fe4c0d016b38bd842698b4e",
+      "header": "53500102"
+    },
+    {
+      "path": "data/sprite/인간족/몸통/여/로드나이트_여.act",
+      "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C2%B8%C3%B6%C3%85%C3%AB/%C2%BF%C2%A9/%C2%B7%C3%8E%C2%B5%C3%A5%C2%B3%C2%AA%C3%80%C3%8C%C3%86%C2%AE_%C2%BF%C2%A9.act",
+      "bytes": 48020,
+      "sha256": "a0714ab51e9ca5f7e84a7b3a32ad1eed5e27f1b14c9f6890e2ae89e03a6a1781",
+      "header": "41430502"
+    },
+    {
+      "path": "data/sprite/인간족/몸통/여/로드나이트_여.spr",
+      "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C2%B8%C3%B6%C3%85%C3%AB/%C2%BF%C2%A9/%C2%B7%C3%8E%C2%B5%C3%A5%C2%B3%C2%AA%C3%80%C3%8C%C3%86%C2%AE_%C2%BF%C2%A9.spr",
+      "bytes": 202928,
+      "sha256": "67d41c00201213cf8ddbadc4be135befe0b9dd225589b11c9a64a82214f5f9a7",
+      "header": "53500102"
+    },
+    {
+      "path": "data/sprite/shadow.act",
+      "url": "https://grf.robrowser.com/data/sprite/shadow.act",
+      "bytes": 96,
+      "sha256": "87ec393360e9aba9b1b07ed416e305586675c8feec055446923b322826ce1062"
+    },
+    {
+      "path": "data/sprite/인간족/기사/기사_남_검_검광.spr",
+      "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C2%B1%C3%A2%C2%BB%C3%A7/%C2%B1%C3%A2%C2%BB%C3%A7_%C2%B3%C2%B2_%C2%B0%C3%8B_%C2%B0%C3%8B%C2%B1%C2%A4.spr",
+      "bytes": 32290,
+      "sha256": "efa6a010d370eb08836df745c07adfa917d75d13d0d02623db78de0b8bee76c7"
+    },
+    {
+      "path": "data/sprite/인간족/기사/기사_남_검_검광.act",
+      "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C2%B1%C3%A2%C2%BB%C3%A7/%C2%B1%C3%A2%C2%BB%C3%A7_%C2%B3%C2%B2_%C2%B0%C3%8B_%C2%B0%C3%8B%C2%B1%C2%A4.act",
+      "bytes": 37716,
+      "sha256": "7d2599da1056363a50f48c27669dc186a09da3afe11d3c97837cac5e44b88f80"
+    },
+    {
+      "path": "data/sprite/인간족/기사/기사_여_검_검광.spr",
+      "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C2%B1%C3%A2%C2%BB%C3%A7/%C2%B1%C3%A2%C2%BB%C3%A7_%C2%BF%C2%A9_%C2%B0%C3%8B_%C2%B0%C3%8B%C2%B1%C2%A4.spr",
+      "bytes": 6717,
+      "sha256": "1bc79bb045d6e7b180f697db5a0a6a4f03d894eee171699b29aa394a71560097"
+    },
+    {
+      "path": "data/sprite/인간족/기사/기사_여_검_검광.act",
+      "url": "https://grf.robrowser.com/data/sprite/%C3%80%C3%8E%C2%B0%C2%A3%C3%81%C2%B7/%C2%B1%C3%A2%C2%BB%C3%A7/%C2%B1%C3%A2%C2%BB%C3%A7_%C2%BF%C2%A9_%C2%B0%C3%8B_%C2%B0%C3%8B%C2%B1%C2%A4.act",
+      "bytes": 37332,
+      "sha256": "ed144b333726a0b5d5dcf7c4616784b89a306b4babb7af321cfc935e73cbe5a5"
+    }
+  ],
+  "sources": [
+    "https://grf.robrowser.com/",
+    "https://classicweb.niktoutro.com/chaosclient/"
+  ],
+  "retrieved": "2026-10-12",
+  "sourceDocumentation": "https://github.com/MrAntares/roBrowserLegacy/blob/master/applications/browser-examples/demo.html",
+  "note": "Sources for layered fitting, 468 files. Client palette/version differences from older LATAM APNGs are documented in README. Alternate female27 and inferred palette experiments are not used."
+}

@@ -912,15 +912,14 @@ t('every skill has distinct local vector art and upgraded card metadata', () => 
   assert.ok(/\.skg\{[^}]*repeat\(5,minmax\(0,1fr\)\)/.test(src) && src.includes('.sk .si{width:48px;height:48px'), 'the five-skill grid uses large, polished vector tiles');
 });
 
-t('Settings shows a clean character card: preview, costume note, no wall of text', () => {
+t('Settings links to Wardrobe and keeps the current character preview', () => {
   U.S = mkS('Assassin Cross'); U.S.sex = 'f'; U.S.hair = 7;
   const h = U.V.set();
   assert.ok(h.includes('id="hairPreview"') && h.includes('id="hairPreviewLoading"'), 'a canvas preview has a loading fallback');
   assert.ok(h.includes('Live female Assassin Cross class skin preview'), 'the preview describes the current class and gender');
-  assert.ok(h.includes('LIVE PREVIEW') && h.includes('Female &middot; animating'), 'labelled plainly as the live animation');
-  assert.ok(h.includes('Costumes - outfits that restyle a class without touching its stats - are planned for a future patch.'),
-    'the hairstyle slot is honestly described as a future costume feature');
-  assert.ok(/data-a="costume" disabled/.test(h), 'and the costume button is visibly not live yet');
+  assert.ok(h.includes('LIVE PREVIEW') && h.includes('Female'), 'preview identifies the saved gender');
+  assert.ok(h.includes('data-t="wardrobe"') && h.includes('Open Wardrobe'), 'the new fitting is accessible from Settings');
+  assert.ok(h.includes('Other classes keep their own art.'), 'Lord Knight scope is explicit');
   assert.ok(!h.includes('data-a="hair"'), 'the retired hairstyle arrows are gone');
   for (const gone of ['no idle animation', 'only High Priest has its own straight-up N', 'the supplied SE swing, mirrored',
                       'the held-weapon art is switched off', 'style 8 of 19'])

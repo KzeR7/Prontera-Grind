@@ -1,0 +1,80 @@
+{
+  "canvasDrawCallMs": {
+    "batches": 20,
+    "drawsPerBatch": 100,
+    "median": 0.0019999999995343387,
+    "p95": 0.0030000000004656614
+  },
+  "decoderSha256": "c8c0d99a5d0819b563c85af36659d94bf031f6a3883368c5c82e34400c9c02b7",
+  "hardwareConcurrency": 4,
+  "limitations": "Microbenchmark on cloud Chromium. Decode times exclude network; canvas draw submission excludes GPU completion and full-game workload. Not a phone FPS or production latency test.",
+  "measurements": [
+    {
+      "decodeMsMax": 18.899999999906868,
+      "decodeMsMedian": 15.600000000093132,
+      "decodedRGBABytes": 1280000,
+      "frames": 8,
+      "height": 200,
+      "name": "current walk",
+      "runs": 5,
+      "transferBytes": 47432,
+      "url": "/Updates/Sprite/Swordman/lordknight male walking SE.png",
+      "warmups": 1,
+      "width": 200
+    },
+    {
+      "decodeMsMax": 9.800000000046566,
+      "decodeMsMedian": 8.800000000046566,
+      "decodedRGBABytes": 800000,
+      "frames": 5,
+      "height": 200,
+      "name": "current attack",
+      "runs": 5,
+      "transferBytes": 27760,
+      "url": "/Updates/Sprite/Swordman/lordknight male attack SE.png",
+      "warmups": 1,
+      "width": 200
+    },
+    {
+      "decodeMsMax": 8.699999999953434,
+      "decodeMsMedian": 6.5,
+      "decodedRGBABytes": 1075200,
+      "frames": 3,
+      "height": 280,
+      "name": "new idle",
+      "runs": 5,
+      "transferBytes": 11657,
+      "url": "art/4008-m-sword-2-0-SE-idle.png",
+      "warmups": 1,
+      "width": 320
+    },
+    {
+      "decodeMsMax": 8.599999999860302,
+      "decodeMsMedian": 8.199999999953434,
+      "decodedRGBABytes": 2867200,
+      "frames": 8,
+      "height": 280,
+      "name": "new walk",
+      "runs": 5,
+      "transferBytes": 24992,
+      "url": "art/4008-m-sword-2-0-SE-walk.png",
+      "warmups": 1,
+      "width": 320
+    },
+    {
+      "decodeMsMax": 12.199999999953434,
+      "decodeMsMedian": 11.400000000139698,
+      "decodedRGBABytes": 3225600,
+      "frames": 9,
+      "height": 280,
+      "name": "new attack",
+      "runs": 5,
+      "transferBytes": 26961,
+      "url": "art/4008-m-sword-2-0-SE.png",
+      "warmups": 1,
+      "width": 320
+    }
+  ],
+  "userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36",
+  "webglAvailable": false
+}

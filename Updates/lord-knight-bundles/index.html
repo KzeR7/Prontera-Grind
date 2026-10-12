@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' blob:; connect-src 'self'; object-src 'none'; base-uri 'none'">
+<title>Lord Knight · Sprite workshop</title>
+<link rel="stylesheet" href="preview.css">
+<script src="pack.js" defer></script><script src="decoder.js" defer></script><script src="preview.js" defer></script>
+</head>
+<body>
+<main>
+<header><div><p class="eyebrow">PRONTERA GRIND / SPRITE WORKSHOP</p><h1>Lord Knight</h1><p class="intro">Native motion. Your chosen look.</p></div><span class="badge">LOCAL PROTOTYPE</span></header>
+<div class="workshop">
+<section class="stage-panel" aria-label="Character preview">
+<div class="stage-heading"><span id="appearance">Loading catalog…</span><span>SWORD · HALO · GLASSES · WINGS</span></div>
+<div class="stage"><canvas id="character" width="320" height="280" aria-label="Lord Knight sprite animation"></canvas></div>
+<div class="stage-footer"><span id="view-label">South-east · authored view</span><span id="frame-label">—</span></div>
+<div id="status" role="status" aria-live="polite">Loading local sprite catalog…</div>
+<button id="retry" hidden>Retry loading</button>
+</section>
+<aside aria-label="Appearance and animation controls">
+<section><h2>01 <span>Appearance</span></h2>
+<label for="sex">Character</label><select id="sex"><option value="m">Male</option><option value="f">Female</option></select>
+<label for="hair">Hairstyle</label><select id="hair"></select>
+<label for="palette">Native color</label><select id="palette"></select><p class="hint">Original palette IDs 0–8. Some colors share the same appearance.</p>
+</section>
+<section><h2>02 <span>Motion &amp; view</span></h2>
+<label for="stance">Animation</label><select id="stance"><option value="idle">Idle</option><option value="walk">Walking</option><option value="attack">Attack</option></select>
+<label for="direction">Authored direction</label><select id="direction"><option value="S">South · front</option><option value="SE" selected>South-east · side</option><option value="NE">North-east · rear</option></select>
+<div class="toggles"><label><input type="checkbox" id="mirror"> Mirror view</label><label><input type="checkbox" id="still"> Still frame</label></div>
+<div id="attack-controls" hidden><label for="swing">One swing: <output id="swing-label">900 ms</output></label><input id="swing" type="range" min="300" max="1800" step="100" value="900"><button id="replay">Play one attack</button></div>
+<p class="hint">Idle and walking can stow the sword. Attack plays one complete swing and holds its final frame.</p>
+</section>
+</aside>
+</div>
+<section class="details"><div><h2>Local sprite pack</h2><p id="coverage">Reading coverage…</p><p id="memory">No appearance loaded.</p></div><div><h2>Direction coverage</h2><p>Three authored views: S, SE and NE. Mirroring is an explicit preview option. Eight authored directions are still unfinished.</p></div></section>
+<footer>Prototype only · Classic Ragnarok Online / Gravity art via ragassets · <a href="../hair-color-preview/">Original hair studio</a> · <a href="README.md">Build notes</a></footer>
+</main>
+</body></html>

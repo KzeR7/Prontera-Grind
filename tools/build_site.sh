@@ -55,6 +55,12 @@ for forbidden in _login.html _shot.html logic2.js; do
 done
 [ -d "$OUT/tools" ] && { echo "BUILD BROKEN: tools/ leaked into the publish directory" >&2; exit 1; }
 
+# Cloudflare Pages Free: keep the generated tree below 20,000 files and 25 MiB/file.
+FILE_COUNT=$(find "$OUT" -type f | wc -l)
+[ "$FILE_COUNT" -lt 20000 ] || { echo "BUILD BROKEN: Pages free file-count limit exceeded" >&2; exit 1; }
+OVERSIZED=$(find "$OUT" -type f -size +26214400c -print -quit)
+[ -z "$OVERSIZED" ] || { echo "BUILD BROKEN: asset exceeds Pages 25 MiB limit: $OVERSIZED" >&2; exit 1; }
+
 echo "wrote $OUT"
 echo "  $(du -sh "$OUT" | cut -f1) total, $(find "$OUT" -type f | wc -l) files"
 echo "  html:    $(du -sh "$OUT/index.html" | cut -f1)

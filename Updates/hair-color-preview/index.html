@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Prontera Grind · Hair & color studio</title>
+<link rel="stylesheet" href="preview.css">
+<script src="catalog.js" defer></script><script src="manifest.js" defer></script><script src="model.js" defer></script><script src="preview.js" defer></script>
+</head>
+<body>
+<header><a href="#">PRONTERA <span>GRIND</span></a><span class="eyebrow">APPEARANCE LAB / 03</span></header>
+<main>
+<section class="intro"><div><p class="eyebrow">YOUR NEXT LOOK</p><h1>A style of your own.</h1><p>20 selected hairstyles for each gender. Native hair colors. Idle, walking and attack.</p></div><div class="coverage"><b>19 classes · both genders</b><small>Classic Ragnarok Online artwork</small></div></section>
+<div class="workspace">
+<aside class="controls" aria-label="Appearance choices">
+<p class="eyebrow">BUILD YOUR LOOK</p><h2>Choose a character</h2>
+<label for="classSelect">Class</label><select id="classSelect"></select>
+<label for="stanceSelect">Stance</label><select id="stanceSelect"></select>
+<label for="weaponSelect">Weapon family</label><select id="weaponSelect"></select>
+<fieldset><legend>Male appearance</legend><label for="maleHair">Hairstyle</label><select id="maleHair"></select><label for="malePalette">Hair color</label><select id="malePalette"></select><div id="maleSwatches" class="swatches" role="group" aria-label="Male hair colors"></div></fieldset>
+<fieldset><legend>Female appearance</legend><label for="femaleHair">Hairstyle</label><select id="femaleHair"></select><label for="femalePalette">Hair color</label><select id="femalePalette"></select><div id="femaleSwatches" class="swatches" role="group" aria-label="Female hair colors"></div></fieldset>
+<p class="hint">Palette numbers are the source color IDs. Some native palettes look identical. Swatches are approximate; the character shows the actual artwork.</p>
+<div class="divider"></div><p class="eyebrow">FACING DIRECTION</p>
+<div class="directions" role="group" aria-label="Facing direction"><button data-direction="S" aria-pressed="false">Front</button><button data-direction="SE" aria-pressed="true">Side</button><button data-direction="NE" aria-pressed="false">Rear</button></div>
+<div class="switches"><button id="motion" aria-pressed="true">Animation on</button><button id="mirror" aria-pressed="false">Mirror view</button></div>
+<div class="note"><b>A saved reference in every stance.</b><p>Show saved samples resets to Lord Knight / Sword / Side, style 2 and palette 0. The compact download includes this look in idle, walking and attack; other choices may need internet.</p><button id="sampleLook">Show saved samples</button></div>
+</aside>
+<section class="comparison" aria-label="Male and female appearance comparison">
+<div class="comparison-top"><div><p class="eyebrow">SIDE BY SIDE</p><h2 id="selectionTitle">Lord Knight</h2></div><span id="selectionMeta" class="badge"></span></div>
+<div class="characters">
+<article class="character"><div class="character-label"><h3>Male</h3><span id="maleChoice"></span></div><div class="stage"><img id="male" width="320" height="280" alt="Male character loading" hidden></div><p id="maleStatus" role="status">Loading…</p><a id="maleSource" target="_blank" rel="noopener">Open original render</a></article>
+<article class="character"><div class="character-label"><h3>Female</h3><span id="femaleChoice"></span></div><div class="stage"><img id="female" width="320" height="280" alt="Female character loading" hidden></div><p id="femaleStatus" role="status">Loading…</p><a id="femaleSource" target="_blank" rel="noopener">Open original render</a></article>
+</div>
+<div class="comparison-bottom"><span>Halo, glasses and wings follow the native animation. Each class wears its own outfit.</span><button id="retry">Reload look</button></div>
+</section>
+</div>
+<section class="roster"><div class="section-title"><div><p class="eyebrow">THE SELECTED COLLECTION</p><h2>Find a hairstyle</h2></div><span>Saved Lord Knight samples · palette 0</span></div>
+<h3>Male · 20 styles</h3><div id="maleGallery" class="hair-grid"></div>
+<h3>Female · 20 styles</h3><div id="femaleGallery" class="hair-grid"></div></section>
+<section class="details"><div><h2>Preview coverage</h2><p id="auditSummary"></p><p>The remaining combinations use the source renderer when selected. A loaded image confirms availability; it does not mean that combination has passed our offline weapon and clipping audit.</p><p>Idle, walking and attack each offer front, side and rear views. Native idle/walk can stow the weapon. Mirror view is a reflection; eight authored directions and live save integration remain future work.</p></div>
+<div><h2>For the next update</h2><p>Native weapon actions attach the weapon without manual per-frame hand offsets. Custom weapon icons still need matching authored animation data.</p><p><a id="performanceLink" href="PERFORMANCE-AND-HOSTING.md">Performance & free hosting report</a> · <a id="handoffLink" href="INTEGRATION-HANDOFF.md">Detailed integration handoff</a> · <a id="auditLink" href="audit.json">Asset audit</a> · <a href="https://assets.latam-tools.com.br/raw/hair.json">Hair reference</a> · <a href="https://github.com/adsonpleal/ragassets">Renderer documentation</a></p><p>Visual prototype only. Your live character and equipment are unchanged.</p></div></section>
+</main><footer>PRONTERA GRIND / HAIR & COLOR STUDY <span>Classic Ragnarok Online artwork · Gravity</span></footer>
+</body>
+</html>
