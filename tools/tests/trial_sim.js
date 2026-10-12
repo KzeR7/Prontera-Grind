@@ -196,7 +196,7 @@ t('the revised exchange prices match the new 1-50 Shard payout scale', () => {
   assert.strictEqual(price('token'), 180, 'Card Mastery Token is 180');
   assert.strictEqual(price('lcard'), 200, 'the random Legendary card voucher is 200');
   assert.strictEqual(price('nmgear'), 400, 'the Lv 120+ Nightmare Gear Token is 400');
-  assert.strictEqual(price('rscroll'), 400, 'the placeholder Refine Scroll is 400');
+  assert.strictEqual(price('rscroll'), 400, 'the placeholder Refine Protection Scroll is 400');
   assert.ok(price('token') < price('lcard') && price('lcard') < price('nmgear'),
     'the token < card voucher < Nightmare gear price order is preserved');
 });
@@ -211,7 +211,7 @@ t('a new day clears the two tries, and only the tries', () => {
   assert.strictEqual(st.runs, 9, 'and so does the run count');
 });
 
-t('trialState repairs the inert Refine Scroll reserve to a bounded integer', () => {
+t('trialState repairs the inert Refine Protection Scroll reserve to a bounded integer', () => {
   const A = arena({ refineScrolls: '4.8' });
   A.trialState();
   assert.strictEqual(A.S.refineScrolls, 4, 'a stored count is floored to a whole scroll');
@@ -298,7 +298,7 @@ t('the Shard Store spends shards and grants the random voucher and scroll exactl
   assert.strictEqual(scrolls.S.refineScrolls, 3, 'one 400-Shard purchase adds one saved placeholder count');
   assert.strictEqual(scrolls.S.shards, 400, 'the placeholder purchase charges exactly 400 shards');
   assert.strictEqual(scrolls.saves, 1, 'the new reserve count is saved immediately');
-  assert.ok(scrolls.logs.some(l => /Refine Scroll.*prevent a rank drop/.test(l)), 'the purchase log explains protection');
+  assert.ok(scrolls.logs.some(l => /Refine Protection Scroll.*prevent a rank drop/.test(l)), 'the purchase log explains protection');
   assert.ok(scrolls.trialShopHtml().includes('prevents a rank drop'), 'the store describes rank protection');
   scrolls.trialBuy('rscroll');
   assert.strictEqual(scrolls.S.refineScrolls, 4, 'repeat purchases add only one scroll each');
@@ -325,7 +325,7 @@ t('the Shard Store spends shards and grants the random voucher and scroll exactl
   assert.ok(high.trialShopHtml().includes('Base Lv 120+'), 'and the store row says the requirement');
 });
 
-t('the Refine Scroll has explicit opt-in protection', () => {
+t('the Refine Protection Scroll has explicit opt-in protection', () => {
   const fn = grab('function refine(sl){', '// ---------- class change ----------');
   assert.ok(fn.includes('S.useRefineScroll')&&fn.includes('S.refineScrolls--'), 'refine checks the option and spends a protecting scroll');
   assert.ok(src.includes('one scroll is consumed on every attempt while On, including success'), 'the panel explains opt-in consumption, including successful attempts');

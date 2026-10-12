@@ -1365,3 +1365,9 @@ body.clean-screen #sideMenu{display:none}
 
 #wins .ui-skill-catalog .sk.off{opacity:1}
 @media(max-width:740px){#wins .ui-automation .sk-master small,#wins .ui-automation .sk-alloc small{display:none}#wins .ui-automation .sk-master,#wins .ui-automation .sk-alloc{gap:5px;padding:8px 5px}#wins .ui-automation .sk-alloc{font-size:9px}}
+
+/* v114: readable activity text and stronger screen panel outlines. */
+:root{--e-line:#ffffff24;--e-line-bright:#ffffff52;--e-screen-edge:color-mix(in srgb,var(--gold) 58%,var(--e-raised))}
+#hud,#eclipseCombat,#sideRail #qp,#sideMenu,#eclipseMapCard,#dock,#wins>.wp{border:2px solid var(--e-screen-edge)}
+#feed>div{background:color-mix(in srgb,var(--e-bg) 78%,transparent);border:1px solid var(--e-line-bright);border-radius:5px;padding:5px 8px;text-shadow:0 1px 2px #000;font-size:11px}
+#eclipseHeader .hud-zeny{background:color-mix(in srgb,var(--e-raised) 78%,transparent);border:1px solid var(--e-screen-edge);border-radius:5px;padding:4px 8px}

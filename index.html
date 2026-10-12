@@ -1069,7 +1069,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // script block, which is a SyntaxError - the game did not run on main at all. One line wins, and
 // it names both sides of this merge: the v38 balance patch (the weapon cut, the affix/card
 // give-back) and main's weapon-hold rendering work.
-const BUILD='2026-10-11 grind-v113 Eclipse usability';   // shown on the login card - confirms which file you loaded
+const BUILD='2026-10-12 grind-v114 Eclipse readability';   // shown on the login card - confirms which file you loaded
 $('buildTag').textContent='build '+BUILD;
 
 // ---------- class tree: Novice -> 6 first jobs -> 6 second jobs -> 6 third jobs ----------
@@ -1746,7 +1746,7 @@ const TRIAL_STORE=[
   {id:'token', c:180, n:'Card Mastery Token',            d:'One permanent-stat roll in the Index; no duplicate card is needed.'},
   {id:'lcard', c:200, n:'Random Boss Card Voucher', d:'Adds a normal boss card from Prontera through Amatsu. Niflheim/Abyss Crit DMG boss cards must be farmed.'},
   {id:'nmgear',c:400, n:'Nightmare Gear Token',          d:'Choose a map for one class-usable item. Prontera to Payon give section 4; Comodo to Abyss give section 5. The map sets its quality cap.',lv:120},
-  {id:'rscroll',c:400,n:'Refine Scroll',                  d:'Enable in Refine: prevents a rank drop on failure at +5 or higher. Consumed on each selected attempt, including success.'},
+  {id:'rscroll',c:400,n:'Refine Protection Scroll',                  d:'Enable in Refine: prevents a rank drop on failure at +5 or higher. Consumed on each selected attempt, including success.'},
 ];
 const trialState=()=>{
   if(!S.trial||typeof S.trial!=='object')S.trial={day:trialDay(),used:0,best:0,runs:0,chest:0};
@@ -1957,7 +1957,7 @@ function trialBuy(id,inline=false){
     const pool=CARD_CATALOG.filter(c=>c.bossCard&&!c.nightmare&&c.map<8),card=newCard(pool[Math.floor(Math.random()*pool.length)]);
     S.cards.push(card);
     log(`Shard Store: random Legendary ${card.n} (${card.effects.map(cardEffectText).join(', ')}) added to your card collection.`,'r3','trial')}
-  else if(id==='rscroll'){S.refineScrolls=safeCount(S.refineScrolls+1);log('Shard Store: +1 Refine Scroll added to your reserve. Enable it in Refine to prevent a rank drop on failure.','r3','trial')}
+  else if(id==='rscroll'){S.refineScrolls=safeCount(S.refineScrolls+1);log('Shard Store: +1 Refine Protection Scroll added to your reserve. Enable it in Refine to prevent a rank drop on failure.','r3','trial')}
   else if(id==='nmgear'){if(inline){eclipseEchoPick=true;renderWin()}else trialLobby('pickmap');return}
   S.shards=Math.max(0,(S.shards|0)-row.c);save();
   if(inline)ui();else trialLobby('store')}
@@ -2125,13 +2125,13 @@ const FIELD_GEAR_NM=[.5,.4,.3],FIELD_GEAR_MID_NM=[.35,.28,.21];
 // and pets are not touched. Section 4 (N, Stages 1-3 of the band) keeps the v76.2 third.
 const NMPLUS_DROP=.5;
 // v90.6 (owner, option 3): each Nightmare map's Stage 15 boss drops that map's own crafting material.
-// Five materials, one per adjacent pair of maps. Any 20 craft a Drop Protection Scroll.
+// Five materials, one per adjacent pair of maps. Any 20 craft a Refine Protection Scroll.
 // Old ten-type saves are summed pairwise once; nmMatIndex maps drops and reforge costs.
 const NM_MAT=['Dread Essence','Void Core','Spectral Ectoplasm','Oni Horn','Helheim Rune'];
 const nmMatIndex=m=>Math.floor(Math.max(0,Math.min(9,m|0))/2);
 function repairMaterials(f,version){const old=Array.isArray(f.nmMat)?f.nmMat:[];f.nmMat=NM_MAT.map((_,i)=>version===2?safeCount(old[i]):safeCount(old[i*2])+safeCount(old[i*2+1]));f.nmMatVersion=2;}
 const NM_MAT_CH=1;
-// v90.7 (owner): a Drop Protection Scroll costs 20 Nightmare materials, any mix from any maps.
+// v90.7 (owner): a Refine Protection Scroll costs 20 Nightmare materials, any mix from any maps.
 const DPS_MATS=20;
 // v90.9 (owner): a regular Nightmare mob pays Zeny on NM_ZENY_CH (90%) of its kills, and the payout is a random
 // NM_ZENY_LO to NM_ZENY_HI (0.5x to 1.0x) of the old value: mean 0.675 of before. Bosses always pay.
@@ -2558,7 +2558,8 @@ const s=JSON.parse(raw);if(s&&s.lv){const F=fresh(),f=Object.assign(F,s),hadInde
   // player who has never run the trial - the day field re-rolls on load, which is also what
   // clears yesterday's two attempts.
   f.shards=Math.max(0,Math.floor(num_(f.shards,0)));
-  f.refineScrolls=Math.max(0,Math.floor(num_(f.refineScrolls,0)));
+  // Merge legacy crafted scrolls once; clear their old reserve before the next save.
+  f.refineScrolls=safeCount(safeCount(f.refineScrolls)+safeCount(f.dps));f.dps=0;
   if(!f.trial||typeof f.trial!=='object'||Array.isArray(f.trial))f.trial={day:trialDay(),used:0,best:0,runs:0};
   f.trial.day=typeof f.trial.day==='string'?f.trial.day.slice(0,10):trialDay();
   f.trial.used=Math.max(0,Math.min(TRIAL_RANKED_PER_DAY,Math.floor(num_(f.trial.used,0))));
@@ -4422,14 +4423,14 @@ function qRefresh(){if(S)questBook();}
 const qTxt=q=>q.type==='kill'?`Defeat ${q.goal} monsters`:q.type==='loot'?`Collect ${q.goal} equipment drops`:`Defeat ${q.goal} MVP${q.goal>1?'s':''}`;
 // Older saves may retain refineScrollFrom; protection now has a single On/Off setting.
 const refineScrollFrom=()=>0;
-function refineProtectionUI(){return `<div class="sec">Refine Scroll protection · ${safeCount(S.refineScrolls)} owned</div><div class="row">${[0,1].map(n=>`<button data-a="refprotect" data-v="${n}" class="${!!S.useRefineScroll===!!n?'on':''}" aria-pressed="${!!S.useRefineScroll===!!n}">${n?'On':'Off'}</button>`).join('')}</div><small>Only failures at current +5 or above can drop a rank. When On, one scroll is used per attempt, including success, and prevents rank loss. Below +5, we ask before spending a scroll because your rank is already safe. Success chance is unchanged. No scroll available: protected attempts are blocked.</small>`;}
+function refineProtectionUI(){return `<div class="sec">Refine Protection Scroll · ${safeCount(S.refineScrolls)} owned</div><div class="row">${[0,1].map(n=>`<button data-a="refprotect" data-v="${n}" class="${!!S.useRefineScroll===!!n?'on':''}" aria-pressed="${!!S.useRefineScroll===!!n}">${n?'On':'Off'}</button>`).join('')}</div><small>Only failures at current +5 or above can drop a rank. When On, one scroll is used per attempt, including success, and prevents rank loss. Below +5, we ask before spending a scroll because your rank is already safe. Success chance is unchanged. No scroll available: protected attempts are blocked.</small>`;}
 function refine(sl){const it=S.eq[sl];if(!it||(it.r||0)>=10)return;const o=it.slot==='weapon'?'ori':'elu',c=refCost(it),need=refOre(it);
   if(S.ore[o]<need){log(`You need ${need} ${ORE[o]} for this piece. Regular mobs drop both ores at 0.5% on Stages 1-9 and 1% on Stage 10; the Stage 10 MVP drops them at 2.5%.`);return}if(S.zeny<c){log('Not enough Zeny.');return}
   const previousRank=it.r||0;let succeeded=false;const protectedAttempt=!!S.useRefineScroll;
-  if(protectedAttempt&&!safeCount(S.refineScrolls)){log('Refine Scroll protection is enabled, but you have no scrolls. Buy one or turn protection off.');return;}
+  if(protectedAttempt&&!safeCount(S.refineScrolls)){log('Refine Protection Scroll is enabled, but you have no scrolls. Buy one or turn protection off.');return;}
   if(protectedAttempt&&previousRank<5&&arguments[1]!==it){
     const owner=S;let pending=true;
-    ask('This equipment is below +5, so failure cannot drop its rank. Use one Refine Scroll anyway? This attempt also costs '+c.toLocaleString()+'z and '+need+' '+ORE[o]+'.',()=>{
+    ask('This equipment is below +5, so failure cannot drop its rank. Use one Refine Protection Scroll anyway? This attempt also costs '+c.toLocaleString()+'z and '+need+' '+ORE[o]+'.',()=>{
       if(!pending)return;pending=false;
       if(S!==owner||S.eq[sl]!==it||(it.r||0)!==previousRank||!S.useRefineScroll)return;
       refine(sl,it);
@@ -4437,8 +4438,7 @@ function refine(sl){const it=S.eq[sl];if(!it||(it.r||0)>=10)return;const o=it.sl
   }
   if(protectedAttempt)S.refineScrolls--;
   S.ore[o]-=need;S.zeny-=c;questEvent('refine');if(Math.random()*100<refCh(it)){succeeded=true;it.r=(it.r||0)+1;log(`Refine success! ${iname(it)}`,'r3','gear');addFloat(pl.x,3,pl.z,'Refine +'+it.r,'#ffd23f')}
-  else{if(protectedAttempt){log(`Refine failed, but your Refine Scroll kept +${it.r}.`,'r3','gear')}
-    else if(it.r>=5&&S.dps>0){S.dps--;log(`Refine failed, but your Drop Protection Scroll kept +${it.r}.`,'r3','gear');addFloat(pl.x,3,pl.z,'Saved','#6cd3ff')}
+  else{if(protectedAttempt){log(`Refine failed, but your Refine Protection Scroll kept +${it.r}.`,'r3','gear')}
     else if(it.r>=5){it.r--;log(`Refine failed... dropped to +${it.r}.`,'r0','gear')}else log('Refine failed.','r0','gear');addFloat(pl.x,3,pl.z,'Failed','#ff6b6b')}ui();save();if(typeof eclipseRefineFeedback==='function')eclipseRefineFeedback(it,previousRank,succeeded)}
 // Outcome presentation follows the committed transaction; it never rolls or spends resources.
 let eclipseRefineTimer,eclipseRefineOutcome=null;
@@ -4449,11 +4449,11 @@ function eclipseRefineFeedback(it,previousRank,succeeded){
   const result=$('eclipseRefineResult');if(result){result.classList.remove('refine-success','refine-failure');void result.offsetWidth;result.classList.add(succeeded?'refine-success':'refine-failure')}
   eclipseRefineTimer=setTimeout(()=>{eclipseRefineOutcome=null;renderWin()},3600);
 }
-// Crafted Drop Protection Scrolls cost 20 Nightmare materials of any mix.
-// They remain an automatic failure-only fallback, separate from selected Refine Scrolls.
-function craftDps(){if(!S)return;const have=nmMatCounts(),total=have.reduce((x,n)=>x+n,0);if(total<DPS_MATS){log(`A Drop Protection Scroll needs ${DPS_MATS} Nightmare materials, any mix. You have ${total}.`,'','gear');ui();return}let left=DPS_MATS;S.nmMat=have.map(n=>{const take=Math.min(n,left);left-=take;return n-take});S.dps=safeCount(S.dps)+1;log('Crafted a Drop Protection Scroll.','r3','gear');ui();save()}
+// Crafted Refine Protection Scrolls cost 20 Nightmare materials of any mix.
+// Crafted and purchased scrolls share the reserve and the Refine On/Off control.
+function craftDps(){if(!S)return;const have=nmMatCounts(),total=have.reduce((x,n)=>x+n,0);if(total<DPS_MATS){log(`A Refine Protection Scroll needs ${DPS_MATS} Nightmare materials, any mix. You have ${total}.`,'','gear');ui();return}let left=DPS_MATS;S.nmMat=have.map(n=>{const take=Math.min(n,left);left-=take;return n-take});S.refineScrolls=safeCount(S.refineScrolls)+1;log('Crafted a Refine Protection Scroll.','r3','gear');ui();save()}
 function nmMatCounts(){return NM_MAT.map((_,i)=>safeCount(S.nmMat&&S.nmMat[i]))}
-function dpsPanel(){const have=nmMatCounts(),total=have.reduce((x,n)=>x+n,0);return`<div class="sec" style="margin-top:8px">Drop Protection Scroll</div><small>Scrolls: ${safeCount(S.dps)}. A failed refine at +5 or higher would drop a rank; a scroll is used instead and the rank is kept. Success is not guaranteed.</small><div class="row" style="margin-top:4px"><button data-a="craftdps" ${total<DPS_MATS?'disabled':''}>Craft Drop Protection Scroll (${DPS_MATS} materials, any mix)</button></div><small>Materials ${total}/${DPS_MATS}: ${NM_MAT.map((n,i)=>n+' '+have[i]).join(' &middot; ')}</small>`}
+function dpsPanel(){const have=nmMatCounts(),total=have.reduce((x,n)=>x+n,0);return`<div class="sec" style="margin-top:8px">Craft protection scrolls</div><small>Scrolls: ${safeCount(S.refineScrolls)}. Crafted scrolls join the same reserve as purchased scrolls. Enable On in Refine to use one per attempt, including success.</small><div class="row" style="margin-top:4px"><button data-a="craftdps" ${total<DPS_MATS?'disabled':''}>Craft Refine Protection Scroll (${DPS_MATS} materials, any mix)</button></div><small>Materials ${total}/${DPS_MATS}: ${NM_MAT.map((n,i)=>n+' '+have[i]).join(' &middot; ')}</small>`}
 
 // ---------- v90: Black Market - the endgame Zeny sinks (Base Lv 100+) ----------
 // Zeny overflows once a character is past Base Lv 100, so the Black Market gives it two places to go:
@@ -4527,7 +4527,7 @@ function levelingGuide(){const sources=guideSources();return `<details open><sum
  const armor=sources.gear.find(x=>x.m===m&&x.l<=10&&['armor','head','leg'].includes(x.item.k));
  const cards=CARD_CATALOG.filter(c=>c.map===m&&!c.nightmare).sort((a,b)=>guideScore(b)-guideScore(a)).slice(0,2);
  return `<article class="mob-card"><b>Lv ${low}–${Math.max(low,high)} · ${mp.n}</b><p>${m>0&&m<5?'Lv 10–20: Stages 1–5 · Lv 20–50: Stages 6–9 · Lv 50–60: farm Stage 10 while preparing your second job.':'Stages 1–9: steady farming · Stage 10: MVP / rare drops'}</p>${[weapon,armor].filter(Boolean).map(x=>`<p>${esc(x.item.n)} ${guideLink(x)}</p>`).join('')}${cards.map(c=>{const source=sources.cards.get(c.cardKey)?.find(x=>x.l<=10);return source?`<p>${esc(c.n)} · ${c.effects.map(cardEffectText).join(', ')} ${guideLink(source)}</p>`:''}).join('')}</article>`;
- }).join('')}</div><p>Lv 100–119: farm Normal Stage 10 and improve your build. Lv ${NMLV[0]}–139: Nightmare Prontera–Payon offers N gear. Lv ${NMLV[1]}–150: Nightmare Comodo–Abyss offers N+ gear. Target NM 4–5 for equipment and NM 5 MVPs for map materials. Compare measured income against Normal Stage 10 and stay where you survive consistently.</p><p>Five Nightmare materials (old pairs combine without loss): ${NM_MAT.map((n,i)=>n+' — '+MAPS[i*2].n+' / '+MAPS[i*2+1].n).join('; ')}. ${DPS_MATS} of any mix craft one Drop Protection Scroll in Refine. Selected-affix reforges on N / N+ equipment use its map-pair material (2 for Double, 4 for Single); full reforges use Zeny only. Black Market materials cost ${BM_MAT_PRICE.toLocaleString()}z each.</p></details>`;}
+ }).join('')}</div><p>Lv 100–119: farm Normal Stage 10 and improve your build. Lv ${NMLV[0]}–139: Nightmare Prontera–Payon offers N gear. Lv ${NMLV[1]}–150: Nightmare Comodo–Abyss offers N+ gear. Target NM 4–5 for equipment and NM 5 MVPs for map materials. Compare measured income against Normal Stage 10 and stay where you survive consistently.</p><p>Five Nightmare materials (old pairs combine without loss): ${NM_MAT.map((n,i)=>n+' — '+MAPS[i*2].n+' / '+MAPS[i*2+1].n).join('; ')}. ${DPS_MATS} of any mix craft one Refine Protection Scroll in Refine. Selected-affix reforges on N / N+ equipment use its map-pair material (2 for Double, 4 for Single); full reforges use Zeny only. Black Market materials cost ${BM_MAT_PRICE.toLocaleString()}z each.</p></details>`;}
 function buildGuide(market=false){const sources=guideSources(),phase=guideTier,eligible=(m,l)=>phase==='current'?guideReachable(m,l):phase==='normal'?l<=10:l>10;
  const allCards=[...S.cards,...items().flatMap(x=>x.cards||[])],worn=new Set(items().flatMap(x=>(x.cards||[]).map(c=>c.cardKey)));
  const candidates=CARD_CATALOG.filter(c=>guideScore(c)>0&&(sources.cards.get(c.cardKey)||[]).some(x=>eligible(x.m,x.l))).sort((a,b)=>guideScore(b)-guideScore(a));
@@ -4890,7 +4890,7 @@ const V={
   cards(){const g={};S.cards.forEach(c=>{const k=cardGroup(c);(g[k]=g[k]||[]).push(c)});const ks=Object.keys(g),sel=g[selC]?g[selC][0]:null;
     return`<p>Merge identical cards: ★ +9%, ★★ +12%, ★★★ +15% effects. Each step consumes 1 / 3 / 5 extra unstarred copies (10 cards total for ★★★). Normal and Nightmare merge separately. Starred cards are protected from Mastery donations and resets.</p><div class="grid">${ks.map(n=>`<div class="cell b${GI[g[n][0].g]}${n===selC?' sel':''}" data-a="selc" data-v="${esc(n)}" data-tip="${g[n][0].id}">🃏<small>${"★".repeat(cardStars(g[n][0]))}</small><i class="rf">x${g[n].length}</i></div>`).join('')||'<small>No cards yet. Every monster drops its own card at a low chance.</small>'}</div>
     ${sel?`<div class="mob-card" style="margin-top:8px">${itemDetail(sel)}<div class="row" style="margin-top:6px">${EQK.map(([k,l])=>{const e=S.eq[k];return e&&(e.cards||[]).length<(e.slots||0)&&cardFits(sel,e)?`<button data-a="sock" data-v="${sel.id}:${k}">&rarr; ${l}</button>`:''}).join('')}${!sel.legacy&&sel.cardKey&&cardStars(sel)<3?`<button data-a="mergecard" data-v="${sel.id}">Merge to ${cardStars(sel)+1}★ · ${CARD_MERGE_COST[cardStars(sel)]} extra copies</button>`:""}<button data-a="sellcard" data-v="${sel.id}">Sell ${sel.v*150}z</button></div></div>`:''}`},
-  refine(){return`<div class="hd">Oridecon: ${S.ore.ori} &middot; Elunium: ${S.ore.elu} &middot; Refine Scrolls: ${safeCount(S.refineScrolls)}</div><small>Weapons use Oridecon; armor, shield, legs, headgear and accessories use Elunium. Regular mobs drop both at 0.5% on Stages 1-9 and 1% on Stage 10; Stage 10 MVPs drop both at 2.5%. Each attempt costs 1 ore on Common and Fine pieces, 2 on Rare and Epic, 5 on Legendary, and 10 on N and N+. Enable Refine Scroll protection below: one scroll is consumed on every attempt while On, including success, and keeps your rank on failure. Only current +5 or above can lose a rank. Below +5 asks for confirmation before spending a scroll. Success chance is unchanged. Crafted Drop Protection Scrolls remain an automatic fallback.</small>`
+  refine(){return`<div class="hd">Oridecon: ${S.ore.ori} &middot; Elunium: ${S.ore.elu} &middot; Refine Protection Scrolls: ${safeCount(S.refineScrolls)}</div><small>Weapons use Oridecon; armor, shield, legs, headgear and accessories use Elunium. Regular mobs drop both at 0.5% on Stages 1-9 and 1% on Stage 10; Stage 10 MVPs drop both at 2.5%. Each attempt costs 1 ore on Common and Fine pieces, 2 on Rare and Epic, 5 on Legendary, and 10 on N and N+. Enable Refine Protection Scroll below: one scroll is consumed on every attempt while On, including success, and keeps your rank on failure. Only current +5 or above can lose a rank. Below +5 asks for confirmation before spending a scroll. Success chance is unchanged. Crafted and purchased scrolls share this reserve.</small>`
     +`${refineProtectionUI()}`+dpsPanel()+EQK.map(([k,l])=>{const it=S.eq[k];if(!it)return'';const r=it.r||0,o=it.slot==='weapon'?'ori':'elu',c=refCost(it);
       return`<div class="slot" style="align-items:flex-start;gap:10px;margin-top:6px">${cell(it,false)}<div style="flex:1"><b class="${rarCls(it)}">${iname(it)}</b> <small>${l}</small><br><small>${SLOTS[it.slot].stat} +${ev(it)} &rarr; +${Math.round(it.val*(1+(r+1)*.15))} &middot; ${r>=10?'MAX':'Success '+refCh(it)+'% &middot; '+c.toLocaleString()+'z + '+refOre(it)+' '+ORE[o]}</small><br><button data-a="refine" data-v="${k}" ${r>=10||S.ore[o]<refOre(it)||S.zeny<c?'disabled':''}>Refine</button></div></div>`}).join('')},
   pet(){const P=S.pets,A=P.filter(p=>p.on).length,p=gp(selP);
@@ -4933,7 +4933,7 @@ function eclipseEchoPicker(){return `<div class="trial-hd"><b>Nightmare Gear Tok
 V.market=()=>{const navigation=`<div class="atabs"><button data-a="sub" data-v="market:supplies" class="${sub.market==='supplies'?'on':''}">Supplies</button><button data-a="sub" data-v="market:echo" class="${sub.market==='echo'?'on':''}">Echo store</button></div>`;if(sub.market==='echo')return navigation+(eclipseEchoPick?eclipseEchoPicker():trialShopHtml(true));const guide=navigation;if(!bmOpen())return guide+`<p>Black Market opens at Base Lv ${BM_LV}.</p>`;
 const ores=Object.entries(ORE).map(([o,n])=>`<div class="slot"><b>${n}</b><label>Quantity<input class="ore-quantity" id="oreQty-${o}" type="number" min="1" max="1000000" step="1" value="${esc(marketQty[o])}" aria-label="${n} quantity"></label><small>${BM_ORE.toLocaleString()}z each · <output id="oreTotal-${o}">${Number.isSafeInteger(Number(marketQty[o]))&&Number(marketQty[o])>0?(Number(marketQty[o])*BM_ORE).toLocaleString()+'z total':'Enter a whole quantity'}</output></small><button data-a="bmore" data-v="${o}" ${S.zeny<BM_ORE?'disabled':''}>Buy quantity</button></div>`).join('');
 const mats=NM_MAT.map((n,i)=>`<div class="slot"><b>${n}</b><button data-a="bmmat" data-v="${i}" ${S.zeny<BM_MAT_PRICE?'disabled':''}>Buy 1 · ${BM_MAT_PRICE.toLocaleString()}z</button></div>`).join('');
-return guide+`<div class="hd">Black Market · ${S.zeny.toLocaleString()}z</div>`+ores+`<div class="slot"><b>Refine Scroll</b><small>Enable On in Equipment → Refine. One scroll per attempt, including success; prevents rank loss on failure. Only +5 and above can lose a rank; below +5 asks for confirmation.</small><button data-a="buyscroll" ${S.zeny<BM_SCROLL?'disabled':''}>Buy 1 · 80,000,000z</button></div>`+'<div class="sec">Nightmare materials</div><small>3,000,000z each</small>'+mats+'<button data-a="openreforge" class="full">Equipment workshop → Reforge</button>'};
+return guide+`<div class="hd">Black Market · ${S.zeny.toLocaleString()}z</div>`+ores+`<div class="slot"><b>Refine Protection Scroll</b><small>Enable On in Equipment → Refine. One scroll per attempt, including success; prevents rank loss on failure. Only +5 and above can lose a rank; below +5 asks for confirmation.</small><button data-a="buyscroll" ${S.zeny<BM_SCROLL?'disabled':''}>Buy 1 · 80,000,000z</button></div>`+'<div class="sec">Nightmare materials</div><small>3,000,000z each</small>'+mats+'<button data-a="openreforge" class="full">Equipment workshop → Reforge</button>'};
 V.index=()=>`<div class="mastery-head"><div class="mastery-emblem">✦</div><div><b>Midgard Mastery Index</b><small>Individual monsters, Index XP and per-card rewards</small></div><span class="mastery-counter">${indexExperience().toLocaleString()} Index XP</span></div><div class="mastery-tabs"><button data-a="indexview" data-v="mobs" class="${indexMode==='mobs'?'on':''}" aria-pressed="${indexMode==='mobs'}">⚔ Mob Index</button><button data-a="indexview" data-v="cards" class="${indexMode==='cards'?'on':''}" aria-pressed="${indexMode==='cards'}">🃏 Card Mastery</button><button data-t="guide">${uiIcon('guide')} Build &amp; farming guide</button></div>${indexMode==='mobs'?renderMobIndex():renderCardIndex()}`;
 const EQK=[['head','Head','🎩'],['weapon','R.Hand','⚔️'],['armor','Body','🥼'],['off','L.Hand','🛡️'],['acc1','Acc 1','💍'],['leg','Legs','👖'],['acc2','Acc 2','💍']];
 const CFIT={matk:'weapon',move:'acc',hpPct:'armor',def:'armor',mdef:'head',field:'weapon',str:'weapon',dex:'weapon',atk:'weapon',crit:'weapon',cdm:'weapon',agi:'armor',aspd:'armor',flee:'armor',vit:'armor',int:'head',hp:'head',luk:'acc'},CFL={weapon:'Weapons',armor:'Armor, Shield & Legwear',head:'Headgear',acc:'Accessories'};

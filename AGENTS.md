@@ -6713,3 +6713,9 @@ The owner's second pass over v77, six notes, all built.
 * **Panels:** Field Intelligence scrolls independently. Skills share a compact grid with descriptions and auto-cast controls; card tiles are smaller and use card icons. Removed the guide shortcut from Market; Guide remains under More.
 * **Try it:** M → scroll Field Intelligence; E → Refine; K → toggle auto-cast; C → cards; P → Change pets. Use the screen Companions and More buttons.
 * **Checks:** Real-handler integration and panel-control smoke checks pass. Full regression, build, desktop/phone geometry and review results are recorded in workspace validation context. Browser visuals use a temporary renderer stub because shared-browser WebGL is unavailable. No push or deployment.
+
+### 2026-10-12 — `grind-v114 Eclipse readability`
+* **Appearance:** Added a translucent dark tint behind on-screen activity, drops and Zeny messages, plus a tinted Zeny balance. Main screen panels and open windows now have thicker, brighter outlines.
+* **Scrolls:** Refine Scroll is now Refine Protection Scroll. Old Drop Protection Scrolls merge into the same reserve without losing quantities. Crafted and purchased scrolls both follow Refine's On/Off setting, spending one per selected attempt, including success.
+* **Try it:** Watch the activity text while farming. Open Equipment → Refine for the shared reserve and crafting; Market shows the renamed scroll.
+* **Checks:** Scroll migration, crafting, refinement and real-handler UI checks pass. Desktop/phone UI verified with a temporary renderer stub and field image; shared-browser WebGL combat rendering remains unavailable. Regression and build results are tracked in workspace validation context. No push or deployment.

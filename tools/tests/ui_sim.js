@@ -1814,7 +1814,7 @@ t('the detail card opens directly under the clicked slot or bag tile, not at the
 t('the Refine panel displays the protection reserve and option', () => {
   U.S = mkS('Knight'); U.S.refineScrolls = 3;
   const h = U.V.refine();
-  assert.ok(h.includes('Refine Scrolls: 3'), 'the saved placeholder count is visible in the Refine panel');
+  assert.ok(h.includes('Refine Protection Scrolls: 3'), 'the saved placeholder count is visible in the Refine panel');
   assert.ok(h.includes('refprotect'), 'the panel offers a protection toggle');
   assert.ok(h.includes('consumed on every attempt while On'), 'the panel explains consumption on every selected attempt');
   const fn = grab('function refine(sl){', '// ---------- class change ----------');

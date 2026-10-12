@@ -12,6 +12,18 @@ test('three palettes default to Moonstone and never enter the game save',()=>{
  for(const p of ['moonstone','aurora','ember']){ev(`eclipseSetPalette('${p}')`);assert.equal(doc.documentElement.dataset.palette,p);assert.equal(g.window.localStorage.getItem('pg_ui_palette'),p)}
  assert.equal(ev('JSON.stringify(S)'),before);
 });
+test('legacy scrolls merge once and craft into the same visible reserve',()=>{
+ ev(`S.refineScrolls=3;S.dps=4;save();S=load()`);
+ assert.equal(ev('S.refineScrolls'),7);assert.equal(ev('S.dps'),0);
+ ev(`save();S=load()`);assert.equal(ev('S.refineScrolls'),7);
+ ev(`S.nmMat=[4,4,4,4,4];craftDps();tabs.push('equip');sub.equip='refine';renderWin()`);
+ assert.equal(ev('S.refineScrolls'),8);assert.equal(ev('S.nmMat.reduce((a,b)=>a+b,0)'),0);
+ const text=doc.querySelector('[data-win=equip]').textContent;
+ assert.match(text,/Refine Protection Scroll/);assert.doesNotMatch(text,/Drop Protection Scroll|automatic fallback/);
+ assert.match(doc.querySelector('[data-a=craftdps]').textContent,/Craft Refine Protection Scroll/);
+ ev(`tabs.splice(0,tabs.length,'bag');sub.bag='bag';renderWin()`);
+ assert.doesNotMatch(doc.querySelector('[data-win=bag]').textContent,/Drop Protection Scroll/);
+});
 test('live collections are awarded immediately and saved before reveal without rebuilding inventory',()=>{
  ev(`S.inv=Array.from({length:24},(_,i)=>({...S.eq.weapon,id:9000+i,locked:false,cards:[],aff:[]}));tabs.push('equip');renderWin()`);
  const body=doc.querySelector('[data-win=equip] .wbody'),grid=body.querySelector('.grid'),first=grid.querySelector('[data-tip="9000"]'),search=body.querySelector('[data-eclipse-search]');
@@ -147,7 +159,7 @@ test('refine feedback follows success, safe failure, protection and rank loss',(
  assert.equal(ev('S.eq.weapon.r'),6);assert.equal(ev('S.ore.ori'),ore-need);assert.equal(ev('S.zeny'),zeny-cost);assert.equal(ev('window.refineRolls'),1);assert.ok(doc.getElementById('eclipseRefineResult').classList.contains('refine-success'));assert.match(doc.getElementById('eclipseRefineResult').textContent,/\+5 → \+6/);
  ev(`Math.random=()=>.999;refine('weapon')`);assert.equal(ev('S.eq.weapon.r'),5);assert.ok(doc.getElementById('eclipseRefineResult').classList.contains('refine-failure'));assert.match(doc.getElementById('eclipseRefineResult').textContent,/Rank reduced/);
  ev(`S.useRefineScroll=true;S.refineScrollFrom=5;S.refineScrolls=1;S.dps=1;refine('weapon')`);assert.equal(ev('S.eq.weapon.r'),5);assert.equal(ev('S.refineScrolls'),0);assert.equal(ev('S.dps'),1);assert.match(doc.getElementById('eclipseRefineResult').textContent,/Rank kept at \+5/);
- ev(`S.useRefineScroll=false;refine('weapon')`);assert.equal(ev('S.dps'),0);assert.equal(ev('S.eq.weapon.r'),5);
+ ev(`S.useRefineScroll=false;S.refineScrolls=1;refine('weapon')`);assert.equal(ev('S.refineScrolls'),1);assert.equal(ev('S.eq.weapon.r'),4);
  ev(`S.eq.weapon.r=3;refine('weapon')`);assert.match(doc.getElementById('eclipseRefineResult').textContent,/Rank kept at \+3/);
  ev(`clearTimeout(eclipseRefineTimer);$('eclipseRefineResult').hidden=true;S.zeny=0;refine('weapon');Math.random=window.refineRandom`);assert.equal(doc.getElementById('eclipseRefineResult').hidden,true);
 });
@@ -200,7 +212,7 @@ test('large HUD numbers are compact while the exact rates remain accessible',()=
 });
 test('class emblems are distinct and supplies put both ores before the scroll',()=>{
  assert.notEqual(ev("eclipseClassEmblem('Swordman')"),ev("eclipseClassEmblem('Mage')"));assert.notEqual(ev("eclipseClassEmblem('Swordman')"),ev("eclipseClassEmblem('Lord Knight')"));
- ev("tabs.push('market');renderWin()");assert.deepEqual([...doc.querySelectorAll('.eclipse-product-copy>b')].map(e=>e.textContent),['Oridecon','Elunium','Refine Scroll','Echo store']);assert.match(doc.querySelector('.eclipse-product').textContent,/Owned: 1,000/);
+ ev("tabs.push('market');renderWin()");assert.deepEqual([...doc.querySelectorAll('.eclipse-product-copy>b')].map(e=>e.textContent),['Oridecon','Elunium','Refine Protection Scroll','Echo store']);assert.match(doc.querySelector('.eclipse-product').textContent,/Owned: 1,000/);
 });
 test('a confirmed below-five failure consumes one scroll and keeps the rank',()=>{
  ev(`tabs.push('equip');sub.equip='refine';renderWin();S.eq.weapon.r=2;S.useRefineScroll=true;S.refineScrolls=2;refine('weapon');window.oldRefRandom=Math.random;Math.random=()=>.999`);doc.getElementById('my').click();ev('Math.random=window.oldRefRandom');assert.equal(ev('S.eq.weapon.r'),2);assert.equal(ev('S.refineScrolls'),1);assert.match(doc.getElementById('eclipseRefineResult').textContent,/Rank kept at \+2/);

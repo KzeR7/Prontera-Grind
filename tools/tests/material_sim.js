@@ -1,12 +1,12 @@
-// Drop Protection Scroll (v90.6; recipe set to 20 materials of any mix in v90.7): the crafting materials, the scroll craft, and the refine rule that a
+// Refine Protection Scroll (v90.6; recipe set to 20 materials of any mix in v90.7): the crafting materials, the scroll craft, and the refine rule that a
 // scroll keeps the rank on a failed refine at +5 or higher.   node tools/tests/material_sim.js
 //
 // The rules being checked:
 //   * each Nightmare map's Stage 15 boss drops that map's own material; mobs and the Stage 10 boss do not;
 //   * craftDps() spends DPS_MATS (20) materials of any mix from the stacks and makes one scroll (v90.7);
 //   * a failed refine at +5 or higher drops a rank, unless a scroll is in the bag, in which case the scroll
-//     is spent and the rank stays; a failure below +5 never uses a scroll;
-//   * the refine rule itself (success chance, rank drop) is unchanged for every other attempt.
+//     is spent and the rank stays when protection is On; On spends a scroll on success too;
+//   * turning protection Off leaves the reserve untouched and allows the usual rank loss.
 const fs = require('fs'), vm = require('vm'), assert = require('assert');
 const src = fs.readFileSync(__dirname + '/../../index.html', 'utf8');
 const grab = (a, b) => { const i = src.indexOf(a), j = src.indexOf(b, i); if (i < 0 || j < 0) throw new Error('missing ' + a); return src.slice(i, j); };
@@ -38,10 +38,10 @@ const M = sb.__m;
 
 let pass = 0, fail = 0;
 const t = (n, f) => { try { f(); console.log('  ok   ' + n); pass++; } catch (e) { console.log('  FAIL ' + n + ' -> ' + e.message); fail++; } };
-console.log('material: Drop Protection Scroll, crafting and refine\n');
+console.log('material: Refine Protection Scroll, crafting and refine\n');
 
 const piece = (r, extra) => ({ name: 'Dread Sword', r, sec: 5, tier: 4, val: 100, slot: 'weapon', wt: 'sword', ...extra });
-const fresh = (over) => ({ eq: { weapon: piece(5) }, ore: { ori: 999, elu: 999 }, zeny: 1e12, nmMat: [0,0,0,0,0], dps: 0, ...over });
+const fresh = (over) => ({ eq: { weapon: piece(5) }, ore: { ori: 999, elu: 999 }, zeny: 1e12, nmMat: [0,0,0,0,0], refineScrolls: 0, useRefineScroll: true, ...over });
 const FAIL = 0.999, WIN = 0;
 
 // ---- 1. the materials come from the Stage 15 boss only -----------------------
@@ -53,26 +53,26 @@ t('the Nightmare materials are five different names, one per map pair', () => {
 t('craftDps needs 20 materials, any mix, and spends exactly 20', () => {
   M.S = fresh({ nmMat: [5,5,5,5,0] });   // 20 in total, from four maps
   M.craftDps();
-  assert.strictEqual(M.S.dps, 1, 'one scroll is made');
+  assert.strictEqual(M.S.refineScrolls, 1, 'one scroll is made');
   assert.deepStrictEqual(Array.from(M.S.nmMat), [0,0,0,0,0], 'all 20 are spent, from whichever maps they came from');
 });
 t('craftDps refuses with 19 and says how many are held', () => {
   M.S = fresh({ nmMat: [5,5,5,4,0] });   // 19
   M.LOGS.length = 0;
   M.craftDps();
-  assert.strictEqual(M.S.dps, 0, 'no scroll for 19');
+  assert.strictEqual(M.S.refineScrolls, 0, 'no scroll for 19');
   assert.deepStrictEqual(Array.from(M.S.nmMat), [5,5,5,4,0], 'nothing is spent');
   assert.ok(M.LOGS.some(x => x.includes('20 Nightmare materials') && x.includes('You have 19')), 'the player is told the count');
 });
 t('craftDps keeps the leftovers when more than 20 are held', () => {
   M.S = fresh({ nmMat: [9,9,9,0,0] });   // 27
   M.craftDps();
-  assert.strictEqual(M.S.dps, 1);
+  assert.strictEqual(M.S.refineScrolls, 1);
   assert.strictEqual(M.S.nmMat.reduce((x, n) => x + n, 0), 7, 'seven are left over');
 });
 
 t('the refine panel shows the count, and the craft button is off under 20', () => {
-  M.S = fresh({ nmMat: [5,5,5,4,0], dps: 2 });
+  M.S = fresh({ nmMat: [5,5,5,4,0], refineScrolls: 2 });
   const short = M.dpsPanel();
   assert.ok(short.includes('Scrolls: 2'), 'the scroll count is shown');
   assert.ok(short.includes('Materials 19/20'), 'the material count is shown');
@@ -83,7 +83,7 @@ t('the refine panel shows the count, and the craft button is off under 20', () =
 
 // ---- 3. refine: a scroll keeps the rank ----------------------------------------
 t('a failed refine at +5 drops the rank with no scroll (unchanged)', () => {
-  M.S = fresh({ dps: 0 });
+  M.S = fresh({ refineScrolls: 0, useRefineScroll: false });
   M.RND = FAIL; M.LOGS.length = 0;
   M.refine('weapon');
   assert.strictEqual(M.S.eq.weapon.r, 4, 'the rank drops to +4');
@@ -91,28 +91,28 @@ t('a failed refine at +5 drops the rank with no scroll (unchanged)', () => {
 });
 
 t('a failed refine at +5 with a scroll keeps the rank and spends the scroll', () => {
-  M.S = fresh({ dps: 1 });
+  M.S = fresh({ refineScrolls: 1 });
   M.RND = FAIL; M.LOGS.length = 0;
   M.refine('weapon');
   assert.strictEqual(M.S.eq.weapon.r, 5, 'the rank stays at +5');
-  assert.strictEqual(M.S.dps, 0, 'the scroll is spent');
+  assert.strictEqual(M.S.refineScrolls, 0, 'the scroll is spent');
   assert.ok(M.LOGS.some(x => x.includes('kept +5')));
 });
 
-t('a failed refine below +5 never uses a scroll', () => {
-  M.S = fresh({ dps: 3, eq: { weapon: piece(4) } });
+t('an unprotected failure below +5 never uses a scroll', () => {
+  M.S = fresh({ refineScrolls: 3, useRefineScroll: false, eq: { weapon: piece(4) } });
   M.RND = FAIL; M.LOGS.length = 0;
   M.refine('weapon');
   assert.strictEqual(M.S.eq.weapon.r, 4, 'nothing drops below +4 anyway');
-  assert.strictEqual(M.S.dps, 3, 'and no scroll is spent');
+  assert.strictEqual(M.S.refineScrolls, 3, 'and no scroll is spent');
 });
 
-t('a successful refine is unchanged and keeps the scroll', () => {
-  M.S = fresh({ dps: 1 });
+t('a successful protected refine spends one scroll', () => {
+  M.S = fresh({ refineScrolls: 1 });
   M.RND = WIN;
   M.refine('weapon');
   assert.strictEqual(M.S.eq.weapon.r, 6, 'the rank goes up');
-  assert.strictEqual(M.S.dps, 1, 'the scroll is kept');
+  assert.strictEqual(M.S.refineScrolls, 0, 'the selected scroll is spent');
 });
 
 t('the success chance is the same as before v90.6, and the attempt cost is x3 since v90.8', () => {

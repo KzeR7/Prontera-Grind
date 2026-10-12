@@ -72,7 +72,7 @@ t('valid records survive a save/load', () => {
   assert.strictEqual(f.base.Swordman.eq.weapon, 77);
   assert.strictEqual(f.base.Novice.lv, 12);
 });
-t('v90: inert Refine Scroll reserves survive save/load and repair legacy or junk values', () => {
+t('v90: inert Refine Protection Scroll reserves survive save/load and repair legacy or junk values', () => {
   assert.strictEqual(f.refineScrolls, 7, 'the saved placeholder count loads intact');
   assert.strictEqual(JSON.parse(JSON.stringify(f)).refineScrolls, 7, 'the count is plain JSON state for local/cloud saves');
   const legacy = { ...save }; delete legacy.refineScrolls;
