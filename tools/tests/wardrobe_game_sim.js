@@ -20,6 +20,13 @@ const g=createGame(html),ev=g.ev;
  ev(`wardrobeHero({cls:'Lord Knight'})`);await new Promise(r=>setImmediate(r));assert.equal(ev('wardrobeEquipped.key'),'4008|f-42-8');assert.equal(ev(`wardrobeHero({cls:'Unknown class'})`),null);assert.equal(ev('S.appearance.heads.f'),42);
  ev(`wardrobeHero({cls:'Lord Knight'})`);await new Promise(r=>setImmediate(r));ev(`window.__sprite=mkWardrobeHero(wardrobeEquipped)`);
  assert.equal(ev(`captureWardrobeFrame(__sprite,7,false,1,1000)`),true);assert.equal(ev(`captureWardrobeFrame(__sprite,7,false,1,1050)`),false);ev(`captureWardrobeFrame(__sprite,7,false,.001,999999)`);assert.equal(ev('__sprite.userData.wardrobe.paint'),'attack7:8');assert.equal(ev(`captureWardrobeFrame(__sprite,7,true,0,1000000)`),true);
+ // Refine changes repaint an unchanged native pose and the live renderer targets weapon layers only.
+ ev(`window.__effects=[];window.__glow=drawNativeWeaponGlow;drawNativeWeaponGlow=(ctx,img,p,phase,glow,trail,progress)=>__effects.push([p[7],phase,glow.at,progress]);S.eq.weapon.r=10;captureWardrobeFrame(__sprite,7,false,.5,1000033)`);
+ assert.ok(ev('__effects.length')>0);assert.equal(ev('__effects.every(e=>e[0]==="weapon"&&e[2]===10&&e[3]===.5)'),true);
+ assert.equal(ev('__effects.filter(e=>e[1]==="before").length'),ev('__effects.filter(e=>e[1]==="after").length'));
+ assert.equal(ev('captureWardrobeFrame(__sprite,7,false,.5,1000066)'),true,'glint/trail repaint while native pose is unchanged');
+ ev('S.eq.weapon.r=0;__effects=[]');assert.equal(ev('captureWardrobeFrame(__sprite,7,false,.5,1000066)'),true,'removing refinement clears cached glow');assert.equal(ev('__effects.length'),0);
+ ev('drawNativeWeaponGlow=__glow');
  // Every new tree class uses its own native body/clock and preserves the cosmetic save.
  const applied=ev('JSON.stringify(S.appearance)');
  for(const cls of ['Novice','Mage','Wizard','High Wizard','Acolyte','Priest','High Priest','Merchant','Blacksmith','Whitesmith']){

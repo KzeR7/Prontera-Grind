@@ -849,7 +849,7 @@ body.clean-screen #screenBtn{visibility:visible!important}body.clean-screen #hud
 </div>
 <div id="tooltip"></div>
 <link rel="stylesheet" href="assets/wardrobe.css?v=128">
-<script src="assets/wardrobe.js?v=133"></script>
+<script src="assets/wardrobe.js?v=134"></script>
 <script src="assets/skill-icons.js?v=130"></script>
 <script src="assets/pets.js?v=130"></script>
 <script src="assets/class_skins_data.js?v=2"></script>
@@ -1082,7 +1082,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // give-back) and main's weapon-hold rendering work.
 let simCatchingUp=false;
 const simVisualsOff=()=>document.hidden||simCatchingUp;
-const BUILD='2026-10-13 grind-v133 Seven more wardrobe pieces';   // shown on the login card - confirms which file you loaded
+const BUILD='2026-10-13 grind-v134 Calmer pets and refined weapon trails';   // shown on the login card - confirms which file you loaded
 $('buildTag').textContent='build '+BUILD;
 
 // ---------- class tree: Novice -> 6 first jobs -> 6 second jobs -> 6 third jobs ----------
@@ -6004,7 +6004,7 @@ if(S.hp<=0){log('You were defeated... knocked back to the entrance.','r0','kills
   const AP=S.pets.filter(p=>p.on);for(const p of AP){const r=petR[p.id]||(petR[p.id]={x:pl.x-1,z:pl.z+1,at:rnd(0,1)}),i=AP.indexOf(p);let o=null,bd=1e9;
     for(const m of mobs){if(m.pack!==activePack)continue;const d=Math.hypot(m.x-r.x,m.z-r.z);if(d<bd){bd=d;o=m}}
     const ex=(o?o.x+(i-1)*.8:pl.x-1.2)-r.x,ez=(o?o.z+1.2:pl.z+(i-1)*1.1)-r.z,ed=Math.hypot(ex,ez);r.run=ed>.2;
-    if(ed>.05){const v=Math.min(ed,6*dt);r.face=Math.atan2(ez,ex);r.x+=ex/ed*v;r.z+=ez/ed*v}r.x=cl(r.x,-BX_,BX_);r.z=cl(r.z,Z0-1,Z1+1);r.lunge=Math.max(0,(r.lunge||0)-dt*4);
+    if(ed>.05){const v=Math.min(ed,PET_MOVE_SPEED*dt);r.face=Math.atan2(ez,ex);r.x+=ex/ed*v;r.z+=ez/ed*v}r.x=cl(r.x,-BX_,BX_);r.z=cl(r.z,Z0-1,Z1+1);r.lunge=Math.max(0,(r.lunge||0)-dt*4);
     if(o&&bd<2.4){r.at-=dt;if(r.at<=0){r.at=petInt(p);r.lunge=1;r.face=Math.atan2(o.z-r.z,o.x-r.x);r.attackStarted=t;petHit(p,o)}}}
   const px=tx-pl.x,pz=tz-pl.z,pd=Math.hypot(px,pz),spd=moveSpd()*(1+Math.min(25,skillBonus('move'))/100);
   // v77: in the arena the character stands still on purpose - the dummy and the player both stay
@@ -7773,7 +7773,7 @@ const weaponGlowMasks=new WeakMap();
 function weaponGlowMask(im,color){
   let masks=weaponGlowMasks.get(im);if(!masks){masks=new Map();weaponGlowMasks.set(im,masks)}
   if(masks.has(color))return masks.get(color);
-  const cv=document.createElement('canvas');cv.width=im.naturalWidth;cv.height=im.naturalHeight;
+  const cv=document.createElement('canvas');cv.width=im.naturalWidth||im.width;cv.height=im.naturalHeight||im.height;
   const g=cv.getContext('2d');g.drawImage(im,0,0);g.globalCompositeOperation='source-in';g.fillStyle=color;g.fillRect(0,0,cv.width,cv.height);
   masks.set(color,cv);return cv;
 }
@@ -7796,7 +7796,7 @@ function weaponTipFromPixels(data,w,h,gx,gy){
 function weaponTip(im,gx,gy){
   let tips=weaponTipCache.get(im);if(!tips){tips=new Map();weaponTipCache.set(im,tips)}const key=gx+':'+gy;
   if(!tips.has(key)){
-    const cv=document.createElement('canvas');cv.width=im.naturalWidth;cv.height=im.naturalHeight;const g=cv.getContext('2d');g.drawImage(im,0,0);
+    const cv=document.createElement('canvas');cv.width=im.naturalWidth||im.width;cv.height=im.naturalHeight||im.height;const g=cv.getContext('2d');g.drawImage(im,0,0);
     tips.set(key,weaponTipFromPixels(g.getImageData(0,0,cv.width,cv.height).data,cv.width,cv.height,gx,gy));
   }
   return tips.get(key);
@@ -7806,6 +7806,35 @@ function drawWeaponGlint(ctx,glow,x,y,now){
   ctx.save();ctx.translate(x,y);ctx.globalCompositeOperation='lighter';ctx.fillStyle=glow.color;ctx.shadowColor=glow.color;ctx.shadowBlur=glow.at===10?7:4;
   const star=r=>{ctx.beginPath();for(let i=0;i<8;i++){const a=i*Math.PI/4,rr=i%2?r*.18:r;const px=Math.sin(a)*rr,py=Math.cos(a)*rr;i?ctx.lineTo(px,py):ctx.moveTo(px,py);}ctx.closePath();ctx.fill();};
   star(radius);ctx.shadowBlur=0;ctx.fillStyle='#fff5ed';star(radius*.62);ctx.restore();
+}
+// Crop only the native weapon layer; body, hair and accessories keep their original pixels.
+const nativeWeaponCrops=new WeakMap();
+function nativeWeaponCrop(image,p){
+  let frames=nativeWeaponCrops.get(image);if(!frames){frames=new Map();nativeWeaponCrops.set(image,frames)}
+  const key=p.slice(0,4).join(':');if(frames.has(key))return frames.get(key);
+  const cv=document.createElement('canvas');cv.width=p[2];cv.height=p[3];
+  cv.getContext('2d').drawImage(image,p[0],p[1],p[2],p[3],0,0,p[2],p[3]);
+  const tip=weaponTip(cv,.5,.9),crop={cv,tip};
+  if(frames.size>=32){const oldest=frames.keys().next().value;frames.get(oldest).cv.width=0;frames.delete(oldest)}
+  frames.set(key,crop);return crop;
+}
+function drawNativeWeaponGlow(ctx,image,p,phase,glow,trail,progress,now){
+  const {cv,tip}=nativeWeaponCrop(image,p),x=p[4]+tip[0]*p[2],y=p[5]+tip[1]*p[3];
+  if(phase==='after'){drawWeaponGlint(ctx,glow,x,y,now);return}
+  drawWeaponEdge(ctx,cv,glow,p[4],p[5],p[2],p[3]);
+  if(progress===null){trail.points=[];trail.progress=null;return}
+  if(trail.progress==null||progress<trail.progress)trail.points=[];
+  trail.progress=progress;
+  trail.points=trail.points.filter(point=>now-point.ms<120);
+  trail.points.push({x,y,ms:now});if(trail.points.length>6)trail.points.shift();
+  if(trail.points.length<2)return;
+  ctx.save();ctx.globalCompositeOperation='lighter';ctx.lineCap='round';ctx.lineJoin='round';
+  ctx.strokeStyle=glow.color;ctx.shadowColor=glow.color;ctx.shadowBlur=5;ctx.lineWidth=glow.edge*2;
+  for(let i=1;i<trail.points.length;i++){
+    const a=trail.points[i-1],b=trail.points[i];ctx.globalAlpha=glow.alpha*(1-(now-a.ms)/120);
+    ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke();
+  }
+  ctx.restore();
 }
 function drawSkinWeapon(ctx,p,route,fi){
   const clsRec=SKIN_WEAPON_DEFAULTS[p.cls];if(!clsRec)return false;
@@ -7978,7 +8007,8 @@ function drawSlashFX(x,z,wt){
   slashM.position.set(x,1.15,z);slashM.material.opacity=Math.min(1,atkAnim*1.6)*.9;slashM.scale.set(1.6+atkAnim*1.2,1.6+atkAnim*1.2,1)}
 // Native frames retain relative timing; playback is calmer and measured bounds clear the ground.
 const PET_VISUAL_SCALE=.42;
-const PET_ANIMATION_RATE=.55;
+const PET_MOVE_SPEED=3;
+const PET_ANIMATION_RATE=.3;
 // [lowest opaque pixel, largest animation extent], measured across every native pose.
 const PET_LAYOUT={"1002":[200,74],"1007":[206,53],"1013":[211,126],"1014":[210,95],"1019":[214,137],"1031":[200,74],"1056":[204,70],"1057":[203,67],"1063":[203,54],"1096":[200,113],"1101":[203,77],"1106":[211,126],"1109":[204,141],"1113":[200,74],"1115":[209,230],"1120":[192,122],"1155":[204,117],"1170":[196,132],"1180":[206,84],"1582":[200,81]};
 const petFallbackShape=sp=>sp.n==='Lunatic'?'bunny':sp.n.includes('Wolf')?'cat':sp.n.includes('Peco')?'bug':sp.n.includes('Dragon')||sp.n.includes('Baphomet')?'demon':'blob';
@@ -9056,6 +9086,6 @@ function updateWatch(){
 }
 setInterval(updateWatch,60000);
 </script>
-<script src="assets/wardrobe-ui.js?v=132"></script>
+<script src="assets/wardrobe-ui.js?v=134"></script>
 </body>
 </html>

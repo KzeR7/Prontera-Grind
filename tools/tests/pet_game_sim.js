@@ -24,5 +24,13 @@ try{
  assert.match(g.window.document.querySelector('[data-pet-preview]').getAttribute('aria-label'),/Eddga idle/);
  for(const stance of ['idle','walk','attack']){ev(`ACT.petmotion(${JSON.stringify(stance)});drawPetPreviews()`);assert.equal(ev('petPreviewStance'),stance);assert.match(g.window.document.querySelector('[data-pet-preview-status]').textContent,new RegExp('Native '+stance));}
  assert.match(g.window.document.querySelector('#wins').textContent,/War Cry \+ Flame Burst/);
+ // The real update loop caps travel independently of attack cadence, at all frame sizes.
+ ev(`S.pets=[{id:100,sp:0,mut:0,eq:[0,0,0],skills:[],on:true}];mobs=[];mob=null;pl.x=0;pl.z=0;S.auto=false`);
+ for(const dt of [1/60,.1,.25]){
+  ev(`petR[100]={x:-10,z:0,at:1};window.beforeInterval=petInt(S.pets[0]);update(${dt})`);
+  assert.ok(Math.abs(ev('Math.hypot(petR[100].x+10,petR[100].z)')-3*dt)<1e-8,'pet travel is 3 units/s');
+  assert.equal(ev('petInt(S.pets[0])'),ev('beforeInterval'),'movement tuning leaves attack rate intact');
+ }
+ ev('t=10;window.state=petAnimationState(1002,{run:true},0)');assert.equal(ev('state.ms'),3000,'native walk playback is 30%');
  console.log('PASS: all 20 pets x 3 states x 8 directions, directional repaint, foot pivot, native transform bypass, pending-frame retention/disposal and actual preview actions/recommendations');
 }finally{g.close()}

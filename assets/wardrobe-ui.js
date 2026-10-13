@@ -62,8 +62,11 @@ function mkWardrobeHero(look){const cv=document.createElement('canvas');cv.width
  const spr=new THREE.Sprite(new THREE.SpriteMaterial({map:tex,transparent:true,alphaTest:.12}));const px=SKIN_H/look.base.figureHeight;
  spr.scale.set(320*px,280*px,1);spr.center.set(.5,1-200/280);spr.userData.wardrobe={look,cv,tex,paint:'',route:'',start:0};return spr}
 function captureWardrobeFrame(spr,dir,run,attack,now=performance.now()){const sk=spr.userData.wardrobe,stance=attack>0?'attack':run?'walk':'idle';// Game-facing indices already follow RO S,SW,W,NW,N,NE,E,SE.
- const route=stance+dir;if(route!==sk.route){sk.route=route;sk.start=now}const v=sk.look.base.metadata.actions[route],progress=attack>0?Math.max(0,Math.min(1,1-attack)):null,ms=now-sk.start,i=PGWardrobe.animationKey(sk.look,stance,dir,ms,progress,now),paint=route+':'+i;
- if(sk.paint===paint)return false;PGWardrobe.draw(sk.cv.getContext('2d'),sk.look,stance,dir,ms,progress,now);sk.paint=paint;sk.tex.needsUpdate=true;return true}
+ const route=stance+dir;if(route!==sk.route){sk.route=route;sk.start=now}const v=sk.look.base.metadata.actions[route],progress=attack>0?Math.max(0,Math.min(1,1-attack)):null,ms=now-sk.start,i=PGWardrobe.animationKey(sk.look,stance,dir,ms,progress,now),glow=milestone(REFINE_GLOWS,S?.eq?.weapon?.r||0),paint=route+':'+i+(glow?':refine'+glow.at+':'+Math.floor(now/33):'');
+ if(sk.paint===paint)return false;
+ if(sk.trailRoute!==route||sk.trailTier!==glow?.at){sk.refineTrails=[];sk.trailRoute=route;sk.trailTier=glow?.at}
+ let weaponIndex=0;const effect=glow?(ctx,image,p,phase)=>{const trail=sk.refineTrails[weaponIndex]||(sk.refineTrails[weaponIndex]={points:[],progress:null});drawNativeWeaponGlow(ctx,image,p,phase,glow,trail,progress,now);if(phase==='after')weaponIndex++}:null;
+ PGWardrobe.draw(sk.cv.getContext('2d'),sk.look,stance,dir,ms,progress,now,effect);sk.paint=paint;sk.tex.needsUpdate=true;return true}
 function wardrobePortrait(cv,cls){
  if(!wardrobeSupported(cls)){cv._wardrobePaint='';return false}
  let look=wardrobeEquipped&&wardrobeEquipped.cls===cls?wardrobeEquipped:null;
