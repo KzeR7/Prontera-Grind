@@ -37,6 +37,11 @@ for(const id of ev('PGAfterglowAnimations.catalog.map(f=>f.id)')){
   ev('tickSkillFx(.02);syncSkillFx()');assert.equal(box.skillFx.length,0,id+' did not expire');
 }
 assert.equal(layers.length,1,'per-cast canvas leak');
+// Magic area scale matches gameplay reach; the caster seal fades before the spell ends.
+ev('playSkillFx("storm",{x:5,z:-2})');assert.equal(box.skillFx[0].magic,true);assert.equal(box.skillFx[0].areaScale,1.5);
+transforms=[];ev('syncSkillFx()');assert.equal(transforms.length,3,'clear, caster seal, then spell');
+assert(Math.abs(transforms[2][0]-(3.05*60/120)*1.5)<1e-8,'area spell scale');
+box.skillFx[0].age=1;transforms=[];ev('syncSkillFx()');assert.equal(transforms.length,2,'caster seal expires');ev('tickSkillFx(4)');
 // Phantom Assault converges on the target; its study is not a caster buff layout.
 ev('playSkillFx("akatar",{x:5,z:-2})');transforms=[];ev('syncSkillFx()');
 const assaultTransform=transforms[1],assaultTarget=box.scr(5,0,-2);
@@ -56,6 +61,6 @@ ev('syncSkillFx();tickSkillFx(4);syncSkillFx()');assert.equal(box.skillFx.length
 const narrow=canvas();box.narrow=narrow;ev('PGSkillAfterglow.create(narrow).draw([],390,700,scr,3)');
 assert.equal(narrow.width,780);assert.equal(narrow.height,1400);
 box.simVisualsOff=()=>true;ev('playSkillFx("fire",target)');assert.equal(box.skillFx.length,0);
-assert(src.includes('assets/afterglow-animations.js?v=136')&&src.includes('assets/skill-afterglow.js?v=136'));
+assert(src.includes('assets/afterglow-animations.js?v=136')&&src.includes('assets/skill-afterglow.js?v=138'));
 assert(src.includes(':not(#skillAfterglowLayer)'),'clean-screen hides effects');
 console.log('Afterglow: 75 skills, drawing/state, projection/reversal/vertical paths, expiry, cap, resize, hidden catch-up passed (Canvas operations; no GPU).');

@@ -16,6 +16,7 @@ const helpers = [
   pick(/const SKSLOTS=[^;]+;/, 'SKSLOTS'),
   pick(/const skCost=[^;]+;/, 'skCost()'),
   pick(/const skOff=[^;]+;/, 'skOff()'),
+  grab('function rotationSkills()', 'function rotationBar()'),
 ].join('\n');
 
 const harness = `
@@ -23,7 +24,7 @@ ${roster}
 ${helpers}
 ${ledger}
 // skOff and skillOn share one line in index.html, so the pick above already brought both in.
-let S = null, tb = {}, skCd = {}, dt = 0;
+let S = {sk:{},cls:"Novice"}, tb = {}, skCd = {}, dt = 0;
 const lv = id => (S.sk && S.sk[id]) || 0;
 const maxHp = () => 1000, earnZeny = () => {}, log = () => {}, addFloat = () => {}, skillNameFloat = () => {}, playSkillFx = () => {}, pl = {x:0,z:0};
 this.__k = { SKILLS, CLASSES, SKSLOTS, SKFADE, SKILL_VFX, skillFxSpec, skCost, applyDot, applyStun, skillOn, skOff, down, skLine, skEarned, skSpent, skpAvail, autoAllocateSkills, skTree, skEarnedMax,
@@ -69,7 +70,7 @@ const fakeThree={RingGeometry:FakeGeometry,TorusGeometry:FakeGeometry,Icosahedro
   BoxGeometry:FakeGeometry,CircleGeometry:FakeGeometry,PlaneGeometry:FakePlaneGeometry,MeshBasicMaterial:FakeMaterial,LineBasicMaterial:FakeMaterial,
   CanvasTexture:FakeCanvasTexture,LinearFilter:1006,NormalBlending:1,
   Mesh:FakeMesh,Line:FakeLine,Group:FakeObject,BufferGeometry:FakeBufferGeometry,Vector3:FakeVec3,DoubleSide:2,AdditiveBlending:3};
-const vfxBox={simVisualsOff:()=>false,THREE:fakeThree,removed:[],scene:{add(){},remove(o){vfxBox.removed.push(o)}},cam:{quaternion:{}},pl:{x:0,z:0},cl:(v,a,b)=>Math.max(a,Math.min(b,v)),
+const vfxBox={SKILLS:K.SKILLS,simVisualsOff:()=>false,THREE:fakeThree,removed:[],scene:{add(){},remove(o){vfxBox.removed.push(o)}},cam:{quaternion:{}},pl:{x:0,z:0},cl:(v,a,b)=>Math.max(a,Math.min(b,v)),
   document:{createElement:t=>t==='canvas'?fakeCanvas():{}},
   skillFx:[],SKILL_VFX:JSON.parse(JSON.stringify(K.SKILL_VFX))};
 vm.createContext(vfxBox);
@@ -407,7 +408,7 @@ t('every mapped skill visual builds, animates and disposes through the renderer'
 t('the live combat loop starts and renders skill visuals from casts, buffs and First Aid', () => {
   assert.ok(src.includes('playSkillFx(sk.id,target,sk.col)'), 'offensive skills do not trigger their visual');
   assert.ok(src.includes("playSkillFx('aid',null,'#7dff7d')"), 'First Aid does not show a heal pulse');
-  assert.ok(src.includes('playSkillFx(s.id,null,s.col)'), 'temporary auto-buffs do not show their cast cue');
+  assert.ok(src.includes('playSkillFx(sk.id,null,sk.col)'), 'temporary auto-buffs do not show their cast cue');
   assert.ok(src.includes('tickSkillFx(dt);') && src.includes('syncSkillFx();'), 'skill effects are advanced and drawn in the game loop');
   assert.ok(src.includes('function disposeSkillFx(fx)'), 'finished effects release their scene objects');
 });

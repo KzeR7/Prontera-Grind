@@ -21,6 +21,6 @@ assert.equal(ev('castLog.length'),3);assert.equal(ev('skillState().batchUntil'),
 ev('t=12.99;playerAttack()');assert.equal(ev('swing.casts.length'),0);
 ev('t=13;playerAttack()');assert.ok(ev('swing.casts.every(c=>!castLog.includes(c.sk.id))'),'remaining ready skills take the next batch');
 ev('resetSkillRuntime();t=20;Object.keys(skCd).forEach(k=>delete skCd[k]);tickCombatSkills(.01)');assert.ok(ev('Object.keys(skillState().buffs).length')<=3);
-assert.equal(ev('skillState().batchUntil'),21.5);
-ev('playerAttack()');assert.equal(ev('swing.casts.length'),0);
+assert.equal(ev('Object.keys(skillState().buffs).length'),0);
+ev('playerAttack()');assert.equal(ev('swing.casts.length'),3);
 g.close();console.log('Haven safe selection and shared skill batch cadence passed');
