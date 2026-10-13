@@ -6336,3 +6336,9 @@ The owner's second pass over v77, six notes, all built.
 * **Try it:** Open W → Wings or Face, select a piece, then Apply look. Cancel restores the saved appearance.
 * **Checks:** Source and adapter fingerprints, 38,278 exact layers, 5,215 independent compositions, all 6,840 appearances and 52 accessories, actual save/load for all seven choices in both genders, and 11 publishing checks pass. Desktop and 390px browser controls, artwork, apply/cancel/save and 2,496 views per viewport pass using real Canvas with a marked WebGL stub. Real GPU and physical-device checks remain unavailable.
 * **Delivery:** Local changes and preview prepared; no push or deployment.
+
+### 2026-10-13 — `grind-v134 Calmer pets and refined weapon trails`
+* **Changed:** Halved pet travel speed from 6 to 3 units/second and reduced native animation playback from 55% to 30%. Restored green (+4), pink (+7) and crimson (+10) refine glow on native weapon layers, with a short fading tip trail during swings. Effects use each native weapon frame; sprite pixels, combat attack intervals and refine stats are preserved.
+* **Try it:** Deploy pets and watch them move between monsters. Equip a weapon refined to +4 or higher and watch attacks; +7 and +10 change the effect color. Native idle/walk art keeps its naturally stowed weapons.
+* **Checks:** Nine affected simulation/smoke suites pass, including pet movement/playback, native weapon callbacks, refine repaint/removal, bounded crop cache, trail expiry/reset, swing timing, field combat and publishing. Browser Canvas rendered 912 class/gender/stance/direction cases and desktop/390px refine samples. Full scene/GPU verification is blocked because shared Chromium cannot create a WebGL context.
+* **Delivery:** Local changes and built preview prepared; no push or deployment.

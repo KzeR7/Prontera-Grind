@@ -538,3 +538,13 @@ appearance's download: Novice male is 284,321 bytes; all cold base looks range
 The largest decoded atlas is 4,137,984 bytes, below the unchanged 4 MiB limit.
 The packer tries deterministic shelf layouts at several widths to avoid wasted
 space without changing any native pixels, placement or animation timing.
+
+## Refine effects (v134)
+
+The live hero supplies an optional `weaponEffect(ctx, image, layer, phase)` callback
+as the last argument to `PGWardrobe.draw`. It runs before and after each native
+`weapon` layer, preserving native layer order and source pixels. The game crops
+those layers for refine edging/glints and a 120ms swing-tip trail, bounded to 32
+cached crops per source image. Refined heroes repaint at up to 30 FPS for glints
+and fading trails even when the native pose is unchanged. Native idle/walk art
+keeps its stowed weapons; the effect appears wherever the source draws a weapon.

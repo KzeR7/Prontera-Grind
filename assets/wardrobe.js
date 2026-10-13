@@ -74,10 +74,10 @@ class Store{
  get pixelBytes(){return [...this.cache.values()].reduce((n,r)=>n+r.bytes,0)}
 }
 function animationKey(look,stance,direction,ms=0,progress=null,effectMs=ms){const name=stance+direction;return [frameIndex(look.base.metadata.actions[name],ms,progress),...look.pieces.filter(p=>p.metadata.clock).map(p=>frameIndex(p.metadata.actions[name],p.metadata.clock==='independent'?effectMs:ms,p.metadata.clock==='independent'?null:progress))].join(':')}
-function draw(ctx,look,stance,direction,ms=0,progress=null,effectMs=ms){const name=stance+direction,b=look.base.metadata.actions[name],h=look.hair.metadata.actions[name];if(!b||!h)return -1;const i=frameIndex(b,ms,progress),a=look.selection;
+function draw(ctx,look,stance,direction,ms=0,progress=null,effectMs=ms,weaponEffect=null){const name=stance+direction,b=look.base.metadata.actions[name],h=look.hair.metadata.actions[name];if(!b||!h)return -1;const i=frameIndex(b,ms,progress),a=look.selection;
  ctx.clearRect(0,0,320,280);ctx.imageSmoothingEnabled=false;
  const layers=[...b.frames[i].map(p=>[p,look.base.image]),...h.frames[i].map(p=>[p,look.hair.image]),...look.pieces.flatMap(piece=>piece.metadata.actions[name].frames[piece.metadata.clock?frameIndex(piece.metadata.actions[name],piece.metadata.clock==='independent'?effectMs:ms,piece.metadata.clock==='independent'?null:progress):i].map(p=>[p,piece.image]))].sort((a,b)=>a[0][6]-b[0][6]);
- for(const [p,img] of layers){if(!['body','hair','weapon','shadow'].includes(p[7])&&!Object.keys(ACCESSORIES).some(k=>a[k]===p[7]))continue;ctx.drawImage(img,p[0],p[1],p[2],p[3],p[4],p[5],p[2],p[3])}return i;
+ for(const [p,img] of layers){if(!['body','hair','weapon','shadow'].includes(p[7])&&!Object.keys(ACCESSORIES).some(k=>a[k]===p[7]))continue;if(p[7]==='weapon'&&weaponEffect)weaponEffect(ctx,img,p,'before');ctx.drawImage(img,p[0],p[1],p[2],p[3],p[4],p[5],p[2],p[3]);if(p[7]==='weapon'&&weaponEffect)weaponEffect(ctx,img,p,'after')}return i;
 }
 return {CLASSES,HAIRS,OUTFITS,ACCESSORIES,defaults,normalize,key,selectionKey,frameIndex,animationKey,validateMeta,Store,draw};
 });

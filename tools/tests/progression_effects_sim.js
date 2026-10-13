@@ -69,5 +69,13 @@ try{
   const result=JSON.parse(game.ev(`JSON.stringify((()=>{const positions=[],fills=[],ctx={saved:0,restored:0,save(){this.saved++},restore(){this.restored++},translate(x,y){positions.push([x,y])},beginPath(){},closePath(){},moveTo(){},lineTo(){},fill(){fills.push(this.fillStyle)}};drawWeaponGlint(ctx,REFINE_GLOWS[2],14,21,1000);return {positions,fills,saved:ctx.saved,restored:ctx.restored}})())`));
   assert.deepEqual(result.positions,[[14,21]]);assert.deepEqual(result.fills,['#ff3049','#fff5ed']);assert.equal(result.saved,1);assert.equal(result.restored,1);
  });
+ test('native weapon crop cache is bounded and trails expire/reset at swing and stance boundaries',()=>{
+  game.ev(`window.nativeImage={};window.layer=[0,0,8,8,20,30,0,'weapon'];window.trail={points:[],progress:null};window.strokes=0;window.ctx={globalAlpha:1,save(){},restore(){},drawImage(){},translate(){},beginPath(){},closePath(){},moveTo(){},lineTo(){},fill(){},stroke(){strokes++}};drawNativeWeaponGlow(ctx,nativeImage,layer,'before',REFINE_GLOWS[2],trail,.2,1000);layer[4]+=10;drawNativeWeaponGlow(ctx,nativeImage,layer,'before',REFINE_GLOWS[2],trail,.4,1033)`);
+  assert.equal(game.ev('strokes'),1);assert.equal(game.ev('trail.points.length'),2);
+  game.ev("drawNativeWeaponGlow(ctx,nativeImage,layer,'before',REFINE_GLOWS[2],trail,.6,1200)");assert.equal(game.ev('trail.points.length'),1,'old trail expires');
+  game.ev("drawNativeWeaponGlow(ctx,nativeImage,layer,'before',REFINE_GLOWS[2],trail,0,1233)");assert.equal(game.ev('trail.points.length'),1,'new swing clears old trail');
+  game.ev("drawNativeWeaponGlow(ctx,nativeImage,layer,'before',REFINE_GLOWS[2],trail,null,1266)");assert.equal(game.ev('trail.points.length'),0,'idle clears trail');
+  game.ev('for(let i=0;i<40;i++)nativeWeaponCrop(nativeImage,[i,0,8,8,0,0])');assert.equal(game.ev('nativeWeaponCrops.get(nativeImage).size'),32);
+ });
  console.log(`${passed} passed`);
 }finally{game.close()}
