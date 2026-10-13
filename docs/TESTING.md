@@ -72,6 +72,13 @@ inspect those boundaries and include the real dependencies. `pack_sim.js` now re
 its own block directly from the page; a separate `/tmp/pack_block.js` extraction is
 not required. `PACK_BLOCK` and `PACK_DATA` are optional explicit overrides.
 
+For skill FX changes, run `python3 tools/build_afterglow.py --check` and
+`node tools/tests/afterglow_sim.js` alongside the affected combat checks. The latter
+exercises all 75 generated animations, the real cast lifecycle, projection at
+reversed/vertical camera angles, canvas state, resize, expiry and dense-cast limits.
+Its Canvas context records operations; it does not validate raster appearance or GPU
+performance. Use the actual browser for pixels and desktop/narrow layout checks.
+
 ## Before pushing
 
 The existing push gate requires all JavaScript simulations, all smoke suites and
