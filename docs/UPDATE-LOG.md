@@ -6324,3 +6324,15 @@ The owner's second pass over v77, six notes, all built.
 * **Try it:** Read AGENTS.md for current instructions and this file for the complete history, including main's latest entries.
 * **Checks:** A simulated merge against main at 946733a is clean. All 30 handbook links, 43 code landmarks, historical preservation, documentation exclusion and whitespace checks pass. Publishing passes 11 checks and the fallback pack simulation passes. Game code is unchanged relative to that main revision.
 * **Delivery:** Local branch and documentation updated; no push, PR or deployment.
+
+### 2026-10-13 — `grind-v132 Four new wardrobe pieces`
+* **Changed:** Added AFK Text Balloon, Dragon Helm and Gold Dragonhelm under Head, and Black Thunder under Wings. Pinned original head sprites and official Black Thunder effect resources; preserved the existing collection. The AFK balloon keeps its longer idle animation, and Black Thunder loops independently at 60 FPS. All pieces work with the current class and both genders without changing equipment or progression.
+* **Try it:** Open W → Head or Wings, select a new piece, then Apply look. Cancel restores the saved appearance; Reset removes accessories.
+* **Checks:** Native source hashes, all 19,460 added head layers, 2,425 independent native compositions, 180 lossless packed effect-frame comparisons, all 6,840 hair/color selections and 45 pieces across classes/genders, save/load and animated repaint regressions, and 11 publishing checks pass. Browser desktop/390px controls and artwork use a marked WebGL stub; real GPU/physical-device checks remain unavailable. Desktop and 390px browser controls/artwork pass; detailed results are recorded in task validation context.
+* **Delivery:** Local changes and preview prepared; no push or deployment.
+
+### 2026-10-13 — `grind-v133 Seven more wardrobe pieces`
+* **Changed:** Added Bear Bag, Shuriken, Poison Spider, Mainspring Screw and Sorcerer Cape under Wings, plus Gozarian Mask and Demon Mask under Face. All labels are English. Original sources or pinned preview pixels/metadata retain native placement and animation for all 19 classes and both genders; the previous collection is preserved. The three preview-based garments use explicitly derived development adapters because their original ACT files were unavailable.
+* **Try it:** Open W → Wings or Face, select a piece, then Apply look. Cancel restores the saved appearance.
+* **Checks:** Source and adapter fingerprints, 38,278 exact layers, 5,215 independent compositions, all 6,840 appearances and 52 accessories, actual save/load for all seven choices in both genders, and 11 publishing checks pass. Desktop and 390px browser controls, artwork, apply/cancel/save and 2,496 views per viewport pass using real Canvas with a marked WebGL stub. Real GPU and physical-device checks remain unavailable.
+* **Delivery:** Local changes and preview prepared; no push or deployment.

@@ -3,14 +3,18 @@
 import argparse, concurrent.futures, hashlib, html, json, re, threading, zlib
 from pathlib import Path
 from urllib.request import Request, urlopen
+from fetch_sources import recover as recover_direct
 HERE=Path(__file__).resolve().parent
 
 
-def recover(root):
-    manifest=json.loads((HERE/'accessory-source-manifest.json').read_text())
+def recover(root, manifest_path=HERE/'accessory-source-manifest.json'):
+    manifest=json.loads(manifest_path.read_text())
     archive=manifest['archive'];download=None;lock=threading.Lock()
     def get(record):
         nonlocal download
+        if 'url' in record:
+            recover_direct(record,root)
+            return
         path=root/record['path']
         def valid(data):return len(data)==record['bytes'] and hashlib.sha256(data).hexdigest()==record['sha256']
         if path.is_file() and valid(path.read_bytes()):return
@@ -31,4 +35,6 @@ def recover(root):
     print('Verified',len(manifest['files']),'pinned accessory inputs')
 
 if __name__=='__main__':
-    p=argparse.ArgumentParser(description=__doc__);p.add_argument('root',type=Path);a=p.parse_args();recover(a.root)
+    p=argparse.ArgumentParser(description=__doc__);p.add_argument('root',type=Path)
+    p.add_argument('--manifest',type=Path,default=HERE/'accessory-source-manifest.json')
+    a=p.parse_args();recover(a.root,a.manifest)

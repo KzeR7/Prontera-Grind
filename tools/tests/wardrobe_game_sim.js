@@ -8,7 +8,7 @@ const g=createGame(html),ev=g.ev;
  // Loader itself is checked against actual files separately; this test controls readiness/failure.
  g.window.__catalog=JSON.parse(fs.readFileSync(path.join(repo,'assets/wardrobe/v5/catalog.json'),'utf8'));
  g.window.__metadata={};for(const [id,r] of Object.entries(g.window.__catalog.assets))g.window.__metadata[id]=require('../../assets/wardrobe.js').validateMeta(JSON.parse(fs.readFileSync(path.join(repo,'assets/wardrobe/v5',r.meta),'utf8')),r);
- ev(`wardrobeStore.select=async(client,a,cls='Lord Knight')=>{const job=PGWardrobe.CLASSES[cls],route=id=>({metadata:{actions:Object.fromEntries(Object.entries(__metadata[id].actions).filter(([k])=>k.startsWith(job+':')).map(([k,v])=>[k.split(':')[1],v]))},image:{}});return {key:job+'|'+PGWardrobe.key(a),cls,selection:PGWardrobe.normalize(a),ids:[],base:{metadata:__metadata['base-'+job+'-'+a.sex],figureHeight:__catalog.assets['base-'+job+'-'+a.sex].figureHeight,image:{}},hair:route('hair-'+PGWardrobe.key(a)),pieces:Object.keys(PGWardrobe.ACCESSORIES).map(k=>a[k]).filter(k=>k&&k!=='none').map(k=>route('piece-'+k+'-'+a.sex))}};wardrobeLoad();`);await new Promise(r=>setImmediate(r));
+ ev(`wardrobeStore.select=async(client,a,cls='Lord Knight')=>{const job=PGWardrobe.CLASSES[cls],route=id=>({metadata:{clock:__metadata[id].clock,actions:Object.fromEntries(Object.entries(__metadata[id].actions).filter(([k])=>k.startsWith(job+':')).map(([k,v])=>[k.split(':')[1],v]))},image:{}});return {key:job+'|'+PGWardrobe.key(a),cls,selection:PGWardrobe.normalize(a),ids:[],base:{metadata:__metadata['base-'+job+'-'+a.sex],figureHeight:__catalog.assets['base-'+job+'-'+a.sex].figureHeight,image:{}},hair:route('hair-'+PGWardrobe.key(a)),pieces:Object.keys(PGWardrobe.ACCESSORIES).map(k=>a[k]).filter(k=>k&&k!=='none').map(k=>route('piece-'+k+'-'+a.sex))}};wardrobeLoad();`);await new Promise(r=>setImmediate(r));
  assert.equal(ev('S.appearance'),null);assert.equal(ev('S.hair'),17);assert.equal(ev('__saveCount'),0);
  ev(`wardrobeChange('head',42);wardrobeChange('color',8);wardrobeChange('halo',false);`);await new Promise(r=>setImmediate(r));assert.equal(ev('S.appearance'),null);assert.equal(ev('__saveCount'),0);
  ev(`wardrobeAction('cancel')`);await new Promise(r=>setImmediate(r));assert.equal(ev('wardrobeState.draft.heads.f'),2);assert.equal(ev('S.hair'),17);
@@ -38,9 +38,9 @@ const g=createGame(html),ev=g.ev;
  for(const field of ['class','sex','stance','direction','still'])assert.equal(g.window.document.querySelector('[data-wardrobe="'+field+'"]'),null,'no '+field+' selector');
  assert.equal(g.window.document.querySelector('[data-wardrobe-action="play"]'),null);
  ev(`wardrobeAction('apply')`);assert.equal(ev('S.cls'),currentJob);assert.equal(ev('JSON.stringify(S.eq)'),gear);
- // Head/Face/Mouth have ten choices and Wings eleven, plus None; reserved class outfits are retired.
+ // Head has thirteen choices, Face twelve, Mouth ten and Wings seventeen, plus None.
  const hairOptions=[...g.window.document.querySelector('[data-wardrobe="head"]').options];assert.deepEqual(hairOptions.map(o=>o.textContent),Array.from({length:20},(_,i)=>'Style '+(i+1)));assert.equal(hairOptions.at(-1).value,'42');
- for(const field of ['headwear','facewear','mouthwear','backwear'])assert.equal(g.window.document.querySelector('[data-wardrobe="'+field+'"]').options.length,field==='backwear'?12:11);
+ for(const field of ['headwear','facewear','mouthwear','backwear'])assert.equal(g.window.document.querySelector('[data-wardrobe="'+field+'"]').options.length,field==='headwear'?14:field==='backwear'?18:field==='facewear'?13:11);
  assert.equal(g.window.document.querySelector('[data-wardrobe="outfit"]'),null);
  const fixture=ev('JSON.stringify(S.appearance)'),beforeSlots=ev('__saveCount');
  const progressState='JSON.stringify({lv:S.lv,exp:S.exp,jobs:S.jobs,base:S.base,st:S.st,pts:S.pts,sk:S.sk,bag:S.bag})',progression=ev(progressState);
@@ -78,6 +78,39 @@ const g=createGame(html),ev=g.ev;
   const save=ev('JSON.stringify(S)');g.window.localStorage.setItem('pg_save3_skill-test',save);assert.equal(ev('load().cls'),cls);assert.equal(ev('load().appearance'),null);
  }
  ev(`tabs.push('job');window.__portrait=document.createElement('canvas');__portrait.width=126;__portrait.height=134;wardrobePortrait(__portrait,'Archer')`);await new Promise(r=>setImmediate(r));assert.equal(ev('wardrobeClassLook.cls'),'Archer');assert.equal(ev(`wardrobePortrait(__portrait,'Archer')`),true);
+ // Each requested head survives apply/save/load; the independently looping
+ // effect invalidates preview, battlefield and portrait repaint caches.
+ ev(`S.cls='Novice';S.sex='m';tabs.splice(0);tabs.push('wardrobe');wardrobeOwner();renderWin()`);
+ await new Promise(r=>setImmediate(r));
+ for(const headwear of ['afkBalloon','dragonHelm','goldDragonHelm']){
+  g.window.__requestedHead=headwear;
+  ev(`wardrobeChange('headwear',__requestedHead);wardrobeChange('backwear','blackThunder')`);
+  await new Promise(r=>setImmediate(r));ev(`wardrobeAction('apply')`);
+  g.window.localStorage.setItem('pg_save3_skill-test',ev('JSON.stringify(S)'));
+  assert.equal(ev('load().appearance.headwear'),headwear);assert.equal(ev('load().appearance.backwear'),'blackThunder');
+ }
+ ev(`window.__effectLook=wardrobeState.look;window.__effectHero=mkWardrobeHero(__effectLook);window.__beforeBody=captureWardrobeFrame(__effectHero,0,false,.5,1000);window.__afterEffect=captureWardrobeFrame(__effectHero,0,false,.5,1100)`);
+ assert.equal(ev('__afterEffect'),true,'effect uploads a new frame during a fixed attack pose');
+ ev(`wardrobeEquipped=__effectLook;wardrobePortrait(__portrait,'Novice');window.__portraitFrame=__portrait._wardrobePaint;window.__realNow=performance.now;performance.now=()=>100000;wardrobePortrait(__portrait,'Novice')`);
+ assert.notEqual(ev('__portrait._wardrobePaint'),ev('__portraitFrame'),'portrait repaints animated accessories');
+ ev(`performance.now=__realNow;wardrobeAction('original')`);
+ // All seven added choices survive the actual save/load path for both genders.
+ const sevenChoices={backwear:['bearBag','shuriken','poisonSpider','mainspringScrew','sorcererCape'],facewear:['gozarianMask','demonMask']};
+ const beforeSeven=ev(progressState),gearBeforeSeven=ev('JSON.stringify(S.eq)');
+ for(const sex of ['m','f']){
+  g.window.__sevenSex=sex;ev(`ACT.sex(__sevenSex);renderWin()`);await new Promise(r=>setImmediate(r));
+  for(const [slot,choices] of Object.entries(sevenChoices))for(const choice of choices){
+   g.window.__sevenSlot=slot;g.window.__sevenChoice=choice;
+   ev(`wardrobeChange(__sevenSlot,__sevenChoice)`);await new Promise(r=>setImmediate(r));
+   ev(`wardrobeAction('apply')`);
+   g.window.localStorage.setItem('pg_save3_skill-test',ev('JSON.stringify(S)'));
+   assert.equal(ev('load().appearance[__sevenSlot]'),choice);
+   assert.equal(ev('load().sex'),sex);
+   assert.equal(ev(progressState),beforeSeven,'new pieces preserve progression');
+   assert.equal(ev('JSON.stringify(S.eq)'),gearBeforeSeven,'new pieces preserve equipment');
+  }
+ }
+ ev(`wardrobeAction('original')`);
  // Legacy art is requested once only when the fallback is actually used.
  ev(`delete window.SPRITE_PACK;packAssetRequested=false;window.__pendingAdapter=wardrobePending;wardrobePending=undefined;window.__legacySkinKeys=Object.keys(skinDocs).length;heroKey=''`);
  Object.defineProperty(g.window.document,'readyState',{value:'loading',configurable:true});ev(`ensureHero({cls:'Novice',sex:'m',tier:0})`);

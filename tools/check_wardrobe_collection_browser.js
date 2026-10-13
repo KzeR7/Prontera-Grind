@@ -2,6 +2,7 @@
  const assert=(ok,message)=>{if(!ok)throw Error(message)},tick=()=>new Promise(r=>setTimeout(r,20));
  const ready=async()=>{const start=performance.now();while(wardrobeState.loading||!wardrobeState.look||PGWardrobe.selectionKey(wardrobeState.look.selection)!==PGWardrobe.selectionKey(wardrobeState.draft)){if(performance.now()-start>20000)throw Error(wardrobeState.status||'Wardrobe timeout');await tick()}};
  assert(window.__wardrobeRendererStub,'Browser UI check requires the marked renderer stub');
+ assert(Object.values(PGWardrobe.ACCESSORIES).reduce((n,s)=>n+Object.keys(s.items).length-1,0)===52,'built preview includes all 52 accessories');
  const advance=simAdvance;simAdvance=()=>{};
  try{
  currentUser='wardrobe-collection-local';S=fresh();S.cls='Novice';S.q=['kill','loot','boss'].map(newQuest);$('loginOverlay').style.display='none';tabs.splice(0);tabs.push('wardrobe');ui();await ready();
@@ -17,6 +18,9 @@
    assert(document.querySelector('[data-wardrobe="'+field+'"]').options.length===Object.keys(items.items).length,'all pieces plus None');
    for(const item of Object.keys(items.items).filter(k=>k!=='none')){
     change(field,item);assert($('wardrobeApply').disabled,'pending selection disabled');await ready();
+    assert(!wardrobeState.status.includes('could not load'),'fitting preview renders '+item);
+    wardrobePreview();const fitting=$('wardrobeCanvas').getContext('2d').getImageData(0,0,320,280).data;
+    assert(fitting.some((v,i)=>i%4===3&&v>0),'nonempty fitting artwork for '+item);
     const cv=document.createElement('canvas');cv.width=320;cv.height=280;
     for(const stance of ['idle','walk','attack'])for(let d=0;d<8;d++){PGWardrobe.draw(cv.getContext('2d'),wardrobeState.look,stance,d,9999);paints++}
     peak=Math.max(peak,wardrobeStore.pixelBytes);
@@ -30,8 +34,9 @@
   assert(S.cls==='Novice'&&JSON.stringify(S.eq)===gear,'cosmetics retain job and gear');
  }
  const saved=JSON.stringify(S.appearance);change('mouthwear','leaf');action('cancel');await ready();assert(JSON.stringify(wardrobeState.draft)===saved,'cancel restores all slots');
+ change('backwear','blackThunder');await ready();wardrobePreview();const still=$('wardrobeCanvas').toDataURL();wardrobeState.start-=100;wardrobePreview();assert($('wardrobeCanvas').toDataURL()!==still,'fitting repaints the independent effect');
  for(const field of Object.keys(PGWardrobe.ACCESSORIES))change(field,'none');await ready();action('apply');assert(wardrobeState.look.pieces.length===0,'None clears every slot');
  for(const el of document.querySelectorAll('.wardrobe select,.wardrobe button,.wardrobe canvas')){if(el.hidden)continue;const b=el.getBoundingClientRect();assert(b.left>=0&&b.right<=innerWidth+1,'control fits viewport: '+el.outerHTML.slice(0,70))}
- assert(peak<=wardrobeStore.budget,'bounded cache');return {status:'pass',viewport:[innerWidth,innerHeight],accessories:41,genders:2,views:paints,peakDecodedBytes:peak,renderer:'marked WebGL stub'};
+ assert(peak<=wardrobeStore.budget,'bounded cache');return {status:'pass',viewport:[innerWidth,innerHeight],accessories:52,genders:2,views:paints,peakDecodedBytes:peak,renderer:'marked WebGL stub'};
  }finally{simAdvance=advance}
 })()

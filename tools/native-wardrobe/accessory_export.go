@@ -13,8 +13,9 @@ import (
 )
 
 type Item struct {
-	Key  string
-	View uint32
+	Key   string
+	View  uint32
+	Clock string
 }
 
 func must(err error) {
@@ -68,6 +69,9 @@ func main() {
 		}
 		for _, slot := range []string{"headwear", "facewear", "mouthwear", "backwear"} {
 			for _, item := range defs[slot] {
+				if item.Clock == "independent" {
+					continue
+				} // STR effects have a separate exporter.
 				req := engine.Request{Job: job, Gender: g, Head: 2, HeadPalette: 0, BodyPalette: -1, Weapon: weapon, Frame: -1, HeadDir: rotype.Straight, EnableShadow: true, Canvas: "320x280+160+200"}
 				if slot == "backwear" {
 					req.Garment = item.View

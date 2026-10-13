@@ -19,8 +19,7 @@ def audit(pieces, proofs, source, native):
     baseline = json.loads(subprocess.check_output(
         ['git', 'show', manifest['baselineCommit'] + ':assets/wardrobe/v5/catalog.json'], cwd=REPO))
     assert catalog['classes'] == baseline['classes'] and not catalog['outfits']
-    assert {k: len(v) for k, v in catalog['accessories'].items()} == dict(
-        headwear=10, facewear=10, mouthwear=10, backwear=11)
+    assert catalog['accessories'] == json.loads((REPO / 'tools/native-wardrobe/accessories.json').read_text())
     previous = {record[field] for record in baseline['assets'].values()
                 for field in ['image', 'meta']}
     for key, record in baseline['assets'].items():
@@ -29,7 +28,8 @@ def audit(pieces, proofs, source, native):
             data = (root / record[field]).read_bytes()
             assert hashlib.sha256(data).hexdigest() == record[field + 'Sha256']
             assert len(data) == record[field + 'Bytes']
-    assert len(set(p.name for p in root.iterdir()) - previous - {'catalog.json'}) == 4
+    assert len({catalog['assets'][f'piece-evilScythe-{sex}'][field]
+                for sex in ['m', 'f'] for field in ['image', 'meta']} - previous) == 4
 
     for record in manifest['files']:
         data = (source / record['path']).read_bytes()

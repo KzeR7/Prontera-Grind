@@ -105,11 +105,11 @@ func (e *Engine) ExportWardrobe(req Request, folder string, headOnly bool, proof
 			case sprite.TypeWeapon:
 				slot = "weapon"
 			case sprite.TypeGarment:
-				slot = map[uint32]string{1: "wings", 11: "mechanicWings", 15: "blueCupidWings", 18: "angelFeathers", 20: "twilightWings", 42: "ribbonWings", 203: "leticiaWings", 88: "sandalphonWings", 95: "fairyEden", 156: "mysteryWings", 79: "evilScythe"}[req.Garment]
+				slot = map[uint32]string{1: "wings", 11: "mechanicWings", 15: "blueCupidWings", 18: "angelFeathers", 20: "twilightWings", 42: "ribbonWings", 203: "leticiaWings", 88: "sandalphonWings", 95: "fairyEden", 156: "mysteryWings", 79: "evilScythe", 81: "bearBag", 190: "shuriken", 101: "poisonSpider", 93: "mainspringScrew", 280: "sorcererCape"}[req.Garment]
 			case sprite.TypeShadow:
 				slot = "shadow"
 			case sprite.TypeAccessory:
-				slot = map[uint32]string{69: "halo", 2: "catEars", 17: "ribbon", 328: "freyaCrown", 338: "umbrellaHat", 475: "classicHat", 559: "redBeret", 642: "blackRibbon", 1012: "aquaBunny", 1070: "foxEars", 3: "glasses", 12: "sunglasses", 8: "mask", 289: "elvenGlasses", 405: "elfEars", 498: "darkElfEars", 710: "phantomMask", 772: "bandagedEye", 779: "heartPatch", 822: "hexGlasses", 56: "flower", 57: "leaf", 814: "orange", 818: "hankie", 861: "strawberry", 884: "chocoStick", 889: "pokerCard", 931: "redPencil", 1025: "frozenRose", 604: "poringLetter"}[s.AccessoryID]
+				slot = map[uint32]string{472: "gozarianMask", 714: "demonMask", 471: "afkBalloon", 464: "dragonHelm", 452: "goldDragonHelm", 69: "halo", 2: "catEars", 17: "ribbon", 328: "freyaCrown", 338: "umbrellaHat", 475: "classicHat", 559: "redBeret", 642: "blackRibbon", 1012: "aquaBunny", 1070: "foxEars", 3: "glasses", 12: "sunglasses", 8: "mask", 289: "elvenGlasses", 405: "elfEars", 498: "darkElfEars", 710: "phantomMask", 772: "bandagedEye", 779: "heartPatch", 822: "hexGlasses", 56: "flower", 57: "leaf", 814: "orange", 818: "hankie", 861: "strawberry", 884: "chocoStick", 889: "pokerCard", 931: "redPencil", 1025: "frozenRose", 604: "poringLetter"}[s.AccessoryID]
 			}
 			if slot == "" {
 				return result, fmt.Errorf("unexpected part")

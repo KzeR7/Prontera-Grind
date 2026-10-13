@@ -1,11 +1,108 @@
-# Forty-one-piece Wardrobe (v5)
+# Fifty-two-piece Wardrobe (v5)
 
-V5 offers ten Head, ten Face, ten Mouth and eleven Wings pieces, plus None for each.
+V5 offers thirteen Head, twelve Face, ten Mouth and seventeen Wings pieces, plus None for each.
 It renders the current class automatically. The previous Rune Knight, Warlock and
 Guillotine Cross costumes are reserved for future class updates and removed from
 live choices. Old saves wearing them return to the current class body while keeping
 hair and accessories. Full-body costume replacements remain under research; the
 user declined the event outfits and cloak-only previews.
+
+## Seven additional pieces (v133)
+
+| Category | English label | Item ID | View ID | Saved key |
+| --- | --- | --- | --- | --- |
+| Wings | Bear Bag | 20596 | 81 | `bearBag` |
+| Wings | Shuriken | 480360 | 190 | `shuriken` |
+| Wings | Poison Spider | 20613 | 101 | `poisonSpider` |
+| Wings | Mainspring Screw | 20989 | 93 | `mainspringScrew` |
+| Wings | Sorcerer Cape | 20630 | 280 | `sorcererCape` |
+| Face | Gozarian Mask | 5475 | 472 | `gozarianMask` |
+| Face | Demon Mask | 18540 | 714 | `demonMask` |
+
+`seven-items-source-manifest.json` pins 124 original ACT/SPR records for Bear Bag,
+Sorcerer Cape and the two masks. For Shuriken, Poison Spider and Mainspring Screw,
+it pins 174 Divine Pride preview responses and 228 derived ACT/SPR adapter hashes.
+Their original ACTs were unavailable. As with Evil Scythe, the adapters retain the
+exact PNG pixels and exposed layer, attachment and animation fields; they are
+explicitly derived development inputs, not recovered original binaries.
+Gender references are checked against explicit item previews. Runtime serves only
+local packed assets. The manifest also preserves all 488 previous asset records.
+
+Recover and verify inputs using Python/Pillow and the pinned Go renderer below:
+
+```sh
+python3 tools/native-wardrobe/fetch_sources.py /tmp/seven-native
+python3 tools/native-wardrobe/fetch_accessory_sources.py /tmp/seven-native --manifest tools/native-wardrobe/seven-items-source-manifest.json
+python3 tools/native-wardrobe/prepare_garment_previews.py /tmp/seven-native --cache /tmp/seven-preview
+```
+
+Install the current `export.go`, `accessory_export.go` and `accessory_proof.go` into
+ragassets at the pinned commit and build both commands as described below. Create
+`/tmp/seven-defs.json` from the manifest's `items` object, then export every job:
+
+```sh
+for job in 0 2 9 4010 1 7 4008 6 12 4013 3 11 4012 4 8 4009 5 10 4011; do
+  wardrobe-accessories /tmp/seven-native /tmp/seven-defs.json /tmp/seven-pieces/$job $job || exit
+  wardrobe-accessory-proof /tmp/seven-native /tmp/seven-defs.json /tmp/seven-proofs/$job $job || exit
+done
+```
+
+Use the preceding v132 pack as the append baseline; it is not represented by the
+starting commit until the earlier additions are committed. Append each of the seven
+saved keys with `build_wardrobe_collection.py --append <previous-pack> --piece <key>`
+using a fresh output directory each time, and copy the last pack to `assets/wardrobe/v5/`.
+All seven retain body-synchronized native action timing, both genders, all 19 classes,
+eight directions and idle/walk/attack.
+
+```sh
+python3 tools/tests/seven_wardrobe_assets.py /tmp/seven-native /tmp/seven-pieces /tmp/seven-proofs /tmp/seven-preview
+node tools/tests/wardrobe_sim.js
+node tools/tests/wardrobe_game_sim.js
+node tools/tests/publish_sim.js
+node tools/measure_wardrobe_data.js
+```
+
+The focused audit verifies 38,278 exact layers, 5,215 independently rendered
+compositions (maximum rounding difference 3/255), source/adapter fingerprints and
+unchanged previous packed resources. The 616-file pack totals 13,970,152 bytes
+(13.32 MiB); publishing budgets are 13.5 MiB for wardrobe and 38.5 MiB for the site.
+The largest decoded atlas remains 4,137,984 bytes. Cache limits remain 16 MiB for
+images and 1 MiB for serialized metadata. The cold default Novice male look uses
+293,068 bytes in five requests; opening the wardrobe with it resident adds zero.
+GPU and physical-device checks remain separate from native proofs and Canvas tests.
+
+## Four requested pieces (v132)
+
+Head now also offers **AFK Text Balloon** ([20052](https://www.divine-pride.net/database/item/20052), view 471, `afkBalloon`), **Dragon Helm** ([19667](https://www.divine-pride.net/database/item/19667), view 464, `dragonHelm`), and **Gold Dragonhelm** ([5451](https://www.divine-pride.net/database/item/5451), view 452, `goldDragonHelm`). Wings adds **Black Thunder** ([400149](https://www.divine-pride.net/database/item/400149), `blackThunder`) as requested. Its official item slot is Middle; wardrobe categorization does not change equipment or its native effect placement.
+
+`requested-items-source-manifest.json` pins the original ACT/SPR sources for the heads and official supplement STR/TGA sources for Black Thunder. Recover these with:
+
+```sh
+python3 tools/native-wardrobe/fetch_sources.py /tmp/requested-native
+python3 tools/native-wardrobe/fetch_accessory_sources.py /tmp/requested-native --manifest tools/native-wardrobe/requested-items-source-manifest.json
+```
+
+Use the existing pinned Go renderer/export/proof procedures, with the updated `export.go`, `accessory_export.go` and `accessory_proof.go`. Create a definitions JSON containing only the three requested head items; run both Go commands for every class job. Independent STR effects are deliberately skipped by those ACT/SPR commands. Generate Black Thunder separately:
+
+```sh
+python3 tools/native-wardrobe/build_black_thunder.py /tmp/requested-native /tmp/requested-pieces assets/wardrobe/v5/catalog.json
+```
+
+The STR renderer supports this pinned resource's rectangular source-alpha quads, original textures, per-frame delta keys, texture animation, rotation, opacity and native effect origin. Pillow bilinear texture rasterization is baked once at its native 60 FPS into a 90-frame loop; runtime only loads local packed PNG/JSON. This is an STR effect export, not recovered ACT/SPR animation. Its pixel comparisons prove lossless packing of that export; they do not claim identical output to the original client's GPU sampler. Native head composition proofs are independent Go renderer outputs.
+
+Recover `baselineCommit` from the new manifest into a scratch directory. Append each item in order with `build_wardrobe_collection.py --append <previous-pack> --piece <key>`, always using an empty next output folder. Keys are `afkBalloon`, `dragonHelm`, `goldDragonHelm`, `blackThunder`. Copy only the final pack into `assets/wardrobe/v5/`.
+
+Metadata `clock: "component"` lets the AFK balloon retain its eight-frame native idle while the body has three frames; stance/attack timing still follows the character. `clock: "independent"` keeps Black Thunder looping regardless of stance/attack progress. Hero, portrait and fitting redraw identities include these component frames. Reduced-motion fitting remains static. The fitting bounds include all idle frames to avoid animation-driven zoom changes or clipping.
+
+```sh
+python3 tools/tests/requested_wardrobe_assets.py /tmp/requested-native /tmp/requested-pieces /tmp/requested-proofs
+node tools/tests/wardrobe_sim.js
+node tools/tests/wardrobe_game_sim.js
+node tools/tests/publish_sim.js
+node tools/measure_wardrobe_data.js
+```
+
+At v132, the collection contained 45 pieces across 19 classes/both genders, with no combat changes. All 480 previous asset records and packed resource hashes are preserved. The v132 pack was about 12.18 MiB; its publishing budgets were 12.25 MiB for wardrobe and 37.25 MiB for the complete static site. Decoded images remain capped at 16 MiB and serialized metadata at 1 MiB. First selecting Black Thunder downloads about 806 KiB before HTTP compression; both genders share its packed image/metadata files. Real GPU/physical-device verification remains separate from canvas/browser controls and native proofs.
 
 ## Evil Scythe (v129)
 
@@ -430,7 +527,7 @@ Rebuild with the pinned native renderer and the union of `source-manifest.json`,
 
 For independent native proof, export each job with `proof <job-id>` into `<proofs>/<job-id>`, then run `python3 tools/tests/wardrobe_classes_assets.py <proofs>`. The legacy `wardrobe_assets.py` and `wardrobe_layers.py` still audit preserved v1 art. The merged catalog was repacked by losslessly cropping the two branches' committed atlases; pixel bytes, layer positions, layer order and frame clocks are checked against those inputs separately from native-engine proof.
 
-## V5 measured delivery
+## Initial V5 measured delivery (historical)
 
 The complete 574-file collection is 11,324,007 bytes (10.80 MiB), bounded by an
 11 MiB publishing check. Expanding from nine to forty independently selectable
