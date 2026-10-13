@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "sourceRevision": "dc2b53f2e32aacc5297325a9e1cd71cb1e9a012d",
+  "sourceBuild": "2026-10-13 grind-v135 Pet timing and mobile equipment",
+  "created": "2026-10-13",
+  "blocks": [
+    {
+      "file": "skill-vfx.js",
+      "start": "const SKILL_VFX={",
+      "end": "// ---------- world:",
+      "sha256": "b17f33c75ff193c9153ee19dc30a2f234eeccffd9ac0a258562f63fa7f6c5b38"
+    },
+    {
+      "file": "renderer.js",
+      "start": "const SKILL_FX_GEOMETRY=",
+      "end": "let drag=null;const dom=R.domElement;",
+      "sha256": "7a52de0ca8d320ff22cabe4f6acebbafee370adb3aa584f340e0cbd7212e0fa9"
+    }
+  ]
+}

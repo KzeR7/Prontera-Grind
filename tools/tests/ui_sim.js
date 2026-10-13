@@ -497,7 +497,7 @@ t('clicking a slot highlights the fit in the REAL bag tab - no extra pop-out', (
   U.eqPick = 'weapon';
   const bag = U.V.bag0();
   assert.ok(bag.includes('class="mob-card chooser"'), 'the Bag window carries the choosing banner');
-  assert.ok(bag.includes('Choosing a r.hand') || bag.includes('Choosing a'), 'which names the slot');
+  assert.ok(bag.includes('Change r.hand'), 'which names the slot');
   assert.ok(bag.includes('aria-label="Broad Sword - fits this slot, click to equip"'), 'names the item it will wear');
   assert.ok(bag.includes('cell b2 fit') && bag.includes('data-a="eqpick" data-v="9:weapon"'), 'the sword that fits is ringed and clickable');
   assert.ok(!bag.includes('data-v="9:weapon" data-tip'), 'and is not also a plain select tile');
@@ -507,7 +507,8 @@ t('clicking a slot highlights the fit in the REAL bag tab - no extra pop-out', (
   U.eqPick = 'off';
   assert.ok(/shield/i.test(U.V.bag0()), 'the off-hand banner must explain what fits there');
   // and the actual slot click opens that window
-  assert.ok(src.includes("seleq:v=>{selE=v;eclipseInspectBag=false;eqPick=v;sub.bag='bag';if(!tabs.includes('equip'))"), 'slot selection opens Loadout when the workbench is closed');
+  const slotAction = src.slice(src.indexOf('seleq:v=>'), src.indexOf('skall:()=>', src.indexOf('seleq:v=>')));
+  assert.ok(slotAction.includes('eqPick=v') && slotAction.includes("if(!tabs.includes('equip'))") && slotAction.includes("tabs.push('equip')"), 'slot selection opens Loadout when the workbench is closed');
   assert.ok(src.includes("if(k==='status')sub.status='stats';if(k==='bag')sub.bag='bag';"), 'reopening a window resets its sub-tab');
 });
 
@@ -544,7 +545,7 @@ t('Assassin equipment UI describes the two-handed Katar and the dual-wielded dag
   U.eqPick=null;
   U.S=mkS('Assassin');U.S.eq.weapon={id:88,name:'Katar',tier:3,slot:'weapon',wt:'katar',val:80,slots:4,cards:[]};U.selE='weapon';
   U.eqPick='weapon';const bag=U.V.bag0();
-  assert.ok(bag.includes('Choosing a two-handed katar')&&bag.includes('occupies both hands'), 'the chooser should explain the two-handed restriction');
+  assert.ok(bag.includes('Change two-handed katar')&&bag.includes('occupies both hands'), 'the chooser should explain the two-handed restriction');
   U.eqPick=null;
 });
 
@@ -568,7 +569,7 @@ t('the equipment chooser preserves rarity/type grouping when closed', () => {
 t('Refine, card sockets, Unequip and Lock are inside the picker and never dismiss it', () => {
   // v73 owner report: clicking Refine (which lives in the Equipment window's detail card, the
   // window the picker was opened from) used to count as "clicked elsewhere" and close it.
-  assert.ok(src.includes("chooserPointerInside=!!(target&&(target.closest('[data-win=\"bag\"]')||target.closest('.doll')))"),
+  assert.ok(src.includes("chooserPointerInside=!!(target&&(target.closest('[data-win=\"bag\"]')||target.closest('[data-win=\"equip\"]')||target.closest('.doll')))"),
     'the pointer-down snapshot must treat the Equipment panel (its paper doll, which holds the Refine button) as inside the picker');
   assert.ok(src.includes("if(chooserAtPointerDown&&!chooserPointerInside)closeEquipmentChooser(true)"),
     'only a click outside both windows dismisses the picker');

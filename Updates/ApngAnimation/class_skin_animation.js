@@ -301,7 +301,7 @@ function skinWeaponPlacement(p,clsRec,view,fi){
 }
 // Cosmetic milestones; no stat bonuses and no changes to the source art.
 const LEVEL_AURAS=[{at:50,color:'#79dcff',pattern:'compass'},{at:99,color:'#b897ff',pattern:'arcane'},{at:150,color:'#ffd779',pattern:'sunburst'}];
-const REFINE_GLOWS=[{at:4,color:'#71ffae',edge:.65,alpha:.6},{at:7,color:'#ff7cbe',edge:1,alpha:.75},{at:10,color:'#ff3049',edge:1.4,alpha:.95}];
+const REFINE_GLOWS=[{at:7,color:'#71ffae',edge:.65,alpha:.6},{at:9,color:'#ff7cbe',edge:1,alpha:.75},{at:10,color:'#ff3049',edge:1.4,alpha:.95}];
 const milestone=(rows,value)=>rows.filter(x=>value>=x.at).at(-1)||null;
 let levelAura=null;
 // Ribbon geometry keeps the sigil strokes crisp on both WebGL and mobile renderers.
@@ -394,7 +394,7 @@ const weaponGlowMasks=new WeakMap();
 function weaponGlowMask(im,color){
   let masks=weaponGlowMasks.get(im);if(!masks){masks=new Map();weaponGlowMasks.set(im,masks)}
   if(masks.has(color))return masks.get(color);
-  const cv=document.createElement('canvas');cv.width=im.naturalWidth;cv.height=im.naturalHeight;
+  const cv=document.createElement('canvas');cv.width=im.naturalWidth||im.width;cv.height=im.naturalHeight||im.height;
   const g=cv.getContext('2d');g.drawImage(im,0,0);g.globalCompositeOperation='source-in';g.fillStyle=color;g.fillRect(0,0,cv.width,cv.height);
   masks.set(color,cv);return cv;
 }
@@ -417,7 +417,7 @@ function weaponTipFromPixels(data,w,h,gx,gy){
 function weaponTip(im,gx,gy){
   let tips=weaponTipCache.get(im);if(!tips){tips=new Map();weaponTipCache.set(im,tips)}const key=gx+':'+gy;
   if(!tips.has(key)){
-    const cv=document.createElement('canvas');cv.width=im.naturalWidth;cv.height=im.naturalHeight;const g=cv.getContext('2d');g.drawImage(im,0,0);
+    const cv=document.createElement('canvas');cv.width=im.naturalWidth||im.width;cv.height=im.naturalHeight||im.height;const g=cv.getContext('2d');g.drawImage(im,0,0);
     tips.set(key,weaponTipFromPixels(g.getImageData(0,0,cv.width,cv.height).data,cv.width,cv.height,gx,gy));
   }
   return tips.get(key);
@@ -427,6 +427,35 @@ function drawWeaponGlint(ctx,glow,x,y,now){
   ctx.save();ctx.translate(x,y);ctx.globalCompositeOperation='lighter';ctx.fillStyle=glow.color;ctx.shadowColor=glow.color;ctx.shadowBlur=glow.at===10?7:4;
   const star=r=>{ctx.beginPath();for(let i=0;i<8;i++){const a=i*Math.PI/4,rr=i%2?r*.18:r;const px=Math.sin(a)*rr,py=Math.cos(a)*rr;i?ctx.lineTo(px,py):ctx.moveTo(px,py);}ctx.closePath();ctx.fill();};
   star(radius);ctx.shadowBlur=0;ctx.fillStyle='#fff5ed';star(radius*.62);ctx.restore();
+}
+// Crop only the native weapon layer; body, hair and accessories keep their original pixels.
+const nativeWeaponCrops=new WeakMap();
+function nativeWeaponCrop(image,p){
+  let frames=nativeWeaponCrops.get(image);if(!frames){frames=new Map();nativeWeaponCrops.set(image,frames)}
+  const key=p.slice(0,4).join(':');if(frames.has(key))return frames.get(key);
+  const cv=document.createElement('canvas');cv.width=p[2];cv.height=p[3];
+  cv.getContext('2d').drawImage(image,p[0],p[1],p[2],p[3],0,0,p[2],p[3]);
+  const tip=weaponTip(cv,.5,.9),crop={cv,tip};
+  if(frames.size>=32){const oldest=frames.keys().next().value;frames.get(oldest).cv.width=0;frames.delete(oldest)}
+  frames.set(key,crop);return crop;
+}
+function drawNativeWeaponGlow(ctx,image,p,phase,glow,trail,progress,now){
+  const {cv,tip}=nativeWeaponCrop(image,p),x=p[4]+tip[0]*p[2],y=p[5]+tip[1]*p[3];
+  if(phase==='after'){drawWeaponGlint(ctx,glow,x,y,now);return}
+  drawWeaponEdge(ctx,cv,glow,p[4],p[5],p[2],p[3]);
+  if(progress===null){trail.points=[];trail.progress=null;return}
+  if(trail.progress==null||progress<trail.progress)trail.points=[];
+  trail.progress=progress;
+  trail.points=trail.points.filter(point=>now-point.ms<120);
+  trail.points.push({x,y,ms:now});if(trail.points.length>6)trail.points.shift();
+  if(trail.points.length<2)return;
+  ctx.save();ctx.globalCompositeOperation='lighter';ctx.lineCap='round';ctx.lineJoin='round';
+  ctx.strokeStyle=glow.color;ctx.shadowColor=glow.color;ctx.shadowBlur=5;ctx.lineWidth=glow.edge*2;
+  for(let i=1;i<trail.points.length;i++){
+    const a=trail.points[i-1],b=trail.points[i];ctx.globalAlpha=glow.alpha*(1-(now-a.ms)/120);
+    ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke();
+  }
+  ctx.restore();
 }
 function drawSkinWeapon(ctx,p,route,fi){
   const clsRec=SKIN_WEAPON_DEFAULTS[p.cls];if(!clsRec)return false;

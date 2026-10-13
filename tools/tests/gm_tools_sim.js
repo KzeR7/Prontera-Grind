@@ -89,7 +89,7 @@ try{
   });
   await test('milestone boundaries and aura geometry update without accumulation',async()=>{
    for(const [lv,at] of [[49,null],[50,50],[98,50],[99,99],[149,99],[150,150]])assert.equal(game.ev(`milestone(LEVEL_AURAS,${lv})?.at??null`),at);
-   for(const [r,at] of [[3,null],[4,4],[6,4],[7,7],[9,7],[10,10]])assert.equal(game.ev(`milestone(REFINE_GLOWS,${r})?.at??null`),at);
+   for(const [r,at] of [[4,null],[6,null],[7,7],[8,7],[9,9],[10,10]])assert.equal(game.ev(`milestone(REFINE_GLOWS,${r})?.at??null`),at);
    game.ev(`S.lv=150;syncLevelAura();syncLevelAura()`);assert.equal(game.ev('levelAura.children.length'),2);game.ev('S.lv=1;syncLevelAura()');assert.equal(game.ev('levelAura.visible'),false);
   });
  }finally{game.close()}
