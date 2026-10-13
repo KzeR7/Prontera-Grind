@@ -773,7 +773,7 @@ button:focus-visible{outline:2px solid #e7d4a1;outline-offset:3px}
 #screenOptions label{display:block;padding:7px;color:#e6dbbd}#screenOptions input{margin-right:8px}
 body.hide-damage .fl.damage,body.hide-damage .fl.critical,body.hide-damage .fl.skill-damage,body.hide-damage .fl.skill-critical,body.hide-damage .fl.dot,body.hide-damage .fl.incoming{display:none!important}
 body.hide-feed #feedWrap,body.hide-labels #heroTitle,body.hide-labels #tag{display:none!important}
-body.clean-screen #wrap>.title,body.clean-screen #ov>*:not(#mobSpriteLayer):not(#weaponSpriteLayer),body.clean-screen #xp-dock,body.clean-screen #hud>*,body.clean-screen #hud>div:last-child>*:not(#screenBtn){visibility:hidden!important}
+body.clean-screen #wrap>.title,body.clean-screen #ov>*:not(#mobSpriteLayer):not(#weaponSpriteLayer):not(#skillAfterglowLayer),body.clean-screen #xp-dock,body.clean-screen #hud>*,body.clean-screen #hud>div:last-child>*:not(#screenBtn){visibility:hidden!important}
 body.clean-screen #screenBtn{visibility:visible!important}body.clean-screen #hud{background:transparent;border:0;pointer-events:none}body.clean-screen #screenBtn{pointer-events:auto}
 #qp{max-height:55vh;overflow:auto}.quest-tabs{display:flex;gap:5px;margin:6px 0}.quest-tabs button{flex:1}.ore-quantity{width:100%;box-sizing:border-box}
 .bag-item-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:8px}.bag-item-list article{display:grid;grid-template-columns:1fr auto;gap:6px}.bag-item-list small{grid-column:1/-1}.eclipse-bag>.bag-tools{flex-shrink:0}.eclipse-bag>.chooser{font-size:11px}
@@ -851,6 +851,8 @@ body.clean-screen #screenBtn{visibility:visible!important}body.clean-screen #hud
 <link rel="stylesheet" href="assets/wardrobe.css?v=128">
 <script src="assets/wardrobe.js?v=134"></script>
 <script src="assets/skill-icons.js?v=130"></script>
+<script src="assets/afterglow-animations.js?v=136"></script>
+<script src="assets/skill-afterglow.js?v=136"></script>
 <script src="assets/pets.js?v=130"></script>
 <script src="assets/class_skins_data.js?v=2"></script>
 <script src="assets/weapon_joints_data.js?v=2"></script>
@@ -1082,7 +1084,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // give-back) and main's weapon-hold rendering work.
 let simCatchingUp=false;
 const simVisualsOff=()=>document.hidden||simCatchingUp;
-const BUILD='2026-10-13 grind-v135 Pet timing and mobile equipment';   // shown on the login card - confirms which file you loaded
+const BUILD='2026-10-13 grind-v136 Afterglow skill FX';   // shown on the login card - confirms which file you loaded
 $('buildTag').textContent='build '+BUILD;
 
 // ---------- class tree: Novice -> 6 first jobs -> 6 second jobs -> 6 third jobs ----------
@@ -8835,18 +8837,32 @@ function makeSkillFxNode(fx){
   }
   scene.add(fx.group);
 }
+let skillAfterglow=null;
+function getSkillAfterglow(){
+  if(skillAfterglow)return skillAfterglow;
+  if(typeof PGSkillAfterglow==='undefined')return null;
+  const canvas=document.createElement('canvas');canvas.id='skillAfterglowLayer';
+  canvas.setAttribute('aria-hidden','true');
+  canvas.style.cssText='position:absolute;inset:0;pointer-events:none';
+  const renderer=PGSkillAfterglow.create(canvas);if(!renderer)return null;
+  $('weaponSpriteLayer').after(canvas);skillAfterglow=renderer;return renderer;
+}
 function playSkillFx(id,target,color){
   if(simVisualsOff())return;
   const r=skillFxSpec(id,color);if(!r)return;
   const fx={...r,x0:pl.x,z0:pl.z,x1:target&&Number.isFinite(target.x)?target.x:pl.x,
     z1:target&&Number.isFinite(target.z)?target.z:pl.z,age:0,group:null,parts:[]};
+  if(typeof PGSkillAfterglow!=='undefined'&&PGSkillAfterglow.has(id)&&getSkillAfterglow()){
+    fx.afterglow=true;fx.life=PGSkillAfterglow.life;
+  }
   if(skillFx.length>=28){const old=skillFx.shift();disposeSkillFx(old)}skillFx.push(fx);
 }
 function disposeSkillFx(fx){if(!fx||!fx.group)return;scene.remove(fx.group);fx.group.traverse(o=>{
   if(o.material)o.material.dispose();if(o.userData&&o.userData.skillFxOwnGeometry&&o.geometry)o.geometry.dispose()});fx.group=null}
 function tickSkillFx(dt){for(let i=skillFx.length-1;i>=0;i--){const fx=skillFx[i];fx.age+=dt;if(fx.age>=fx.life){disposeSkillFx(fx);skillFx.splice(i,1)}}}
 function syncSkillFx(){
-  for(const fx of skillFx){if(!fx.group)makeSkillFxNode(fx);const q=cl(fx.age/fx.life,0,1),ease=1-Math.pow(1-q,2);
+  if(skillAfterglow)skillAfterglow.draw(skillFx,R.domElement.clientWidth,R.domElement.clientHeight,scr,devicePixelRatio||1);
+  for(const fx of skillFx){if(fx.afterglow)continue;if(!fx.group)makeSkillFxNode(fx);const q=cl(fx.age/fx.life,0,1),ease=1-Math.pow(1-q,2);
     if(fx.at==='path')fx.group.position.set(fx.x0+(fx.x1-fx.x0)*ease,.95+Math.sin(q*Math.PI)*.34,fx.z0+(fx.z1-fx.z0)*ease);
     else{const x=fx.at==='caster'?fx.x0:fx.x1,z=fx.at==='caster'?fx.z0:fx.z1;fx.group.position.set(x,0,z)}
     for(const p of fx.parts){const m=p.mesh;
