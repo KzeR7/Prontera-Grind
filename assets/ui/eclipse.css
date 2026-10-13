@@ -1558,3 +1558,31 @@ body.clean-screen #sideMenu{display:none}
 }
 
 #wins .eclipse-equipment .ui-loadout-slots>.cell.sel{outline:2px solid #8deacb!important;outline-offset:2px!important}
+
+/* Horizon Haven: safe, compact equipment inspection and readable collection tiers. */
+#wins .eclipse-bag .grid>.cell.fit{border:1px solid #8deacb!important;outline:0!important;box-shadow:none;background:var(--panel)!important}
+#wins .eclipse-bag .grid>.cell.fit::after{display:none}
+#wins .eclipse-equipment .ui-loadout-slots>.cell.sel{outline:1px solid #8deacb!important;outline-offset:1px!important}
+#wins .eclipse-equipment .chooser{padding:6px 9px;margin-bottom:8px;border-color:var(--e-line)}
+#wins .eclipse-equipment .chooser .hd{font-size:11px;margin:0}
+#wins .eclipse-equipment .chooser .x{min-width:28px;min-height:28px}
+#wins [data-class-status=played]{border-color:#8cbfff!important;background:#263b53!important;color:#deedff}
+#wins .sellbox{display:grid;gap:12px;padding:12px;background:var(--panel);border:1px solid var(--e-line)}
+#wins .sellbox h4{margin:0;font-size:12px;color:var(--ink)}
+#wins .sellbox .row{gap:6px;flex-wrap:wrap}
+#wins .sell-help{margin:0;color:var(--e-muted);font-size:11px;line-height:1.5}
+#wins .eclipse-card-grid [data-grade="0"]{--card-color:#d2d8df}
+#wins .eclipse-card-grid [data-grade="1"]{--card-color:#8de3ab}
+#wins .eclipse-card-grid [data-grade="2"]{--card-color:#91bfff}
+#wins .eclipse-card-grid [data-grade="3"]{--card-color:#ffd075}
+#wins .eclipse-card-grid>.cell{border:1px solid color-mix(in srgb,var(--card-color) 60%,var(--e-line));border-top:3px solid var(--card-color);background:linear-gradient(140deg,color-mix(in srgb,var(--card-color) 9%,var(--panel)),var(--panel))}
+#wins .eclipse-card-grid b{color:var(--card-color);font-size:12px;line-height:1.4;font-weight:650}
+#wins .eclipse-card-grid .eclipse-card-glyph{color:var(--card-color);border:1px solid currentColor;border-radius:5px;padding:4px;width:28px;height:34px;background:var(--panel);display:grid;place-items:center}
+#wins .eclipse-card-grid .eclipse-card-meta{color:var(--card-color);font-weight:600}
+#feed>div,#feed>.feed-entry{background:rgba(16,23,30,.9);border:1px solid #64728455;border-left:2px solid #d7b77a;border-radius:5px;padding:7px 9px;margin:4px 0;text-shadow:none;font-size:12px}
+#feed .feed-label,#feed .feed-zeny{font-size:11px;color:#ead7ab}
+#feed .feed-title{font-weight:600;color:#f4f6f8}
+@container(max-width:700px){
+ #wins .eclipse-equipment:has(.inspecting-bag)>.ui-inspector{grid-column:1/-1;grid-row:3;border-top:1px solid var(--e-line);padding:14px}
+ #wins .eclipse-equipment .chooser>small{display:block!important;font-size:10px}
+}

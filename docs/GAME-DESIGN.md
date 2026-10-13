@@ -31,7 +31,7 @@ There are 19 classes: Novice plus six three-step lines:
 | Merchant | Blacksmith | Whitesmith |
 
 Base level, Job level, stat points and skill ranks are different kinds of progress.
-Skills use cooldowns, not an SP resource. Read each skill's current definition:
+Skills use cooldowns, not an SP resource. New casts occur in batches of up to three, with a 1.5-second simulation-time gap shared by attacks and buffs; basic attacks continue between batches. Read each skill's current definition:
 historical IDs can remain unchanged after a skill is renamed or redesigned.
 
 Previously played classes can be revisited directly and restore their saved
@@ -51,6 +51,7 @@ progression/economy tests define current behavior.
 Gear eligibility depends on class, weapon family and progression tier. Switching
 classes stows incompatible equipment safely and can restore the same item IDs on
 return. Inventory, class snapshots, equipment locks and autosell must agree.
+Selecting bag equipment always inspects it, including on saves with the retired click-sell flag. Manual sales ask for confirmation; bulk sales preview their contents. Drop auto-sell settings do not sell existing inventory.
 Cards, refining, ores and Nightmare materials interact with gear and the economy.
 Check the corresponding tests before changing eligibility, rolls, prices or rewards.
 
@@ -66,7 +67,7 @@ appended so old saves keep the correct species. Recommendations do not guarantee
 random skill rolls. Only deployed pets contribute their applicable bonuses.
 
 Wardrobe shows the active class. Hair, colors and accessories are saved cosmetics;
-gender is selected in Settings. Applying, cancelling or resetting a look must not
+gender can be previewed and applied in Wardrobe or selected in Settings. Applying, cancelling or resetting a look must not
 change class, equipment, stats or progress. Current male/female native bodies are
 distinct art. Full-body replacements using future progression classes were removed;
 do not restore them as a presumed missing feature.

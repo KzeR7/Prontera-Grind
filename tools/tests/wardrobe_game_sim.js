@@ -42,13 +42,21 @@ const g=createGame(html),ev=g.ev;
  const currentJob=ev('S.cls'),gear=ev('JSON.stringify(S.eq)');
  ev(`wardrobeChange('class','Acolyte')`);await new Promise(r=>setImmediate(r));
  assert.equal(ev('wardrobeState.look.cls'),currentJob);assert.equal(ev('S.cls'),currentJob);
- for(const field of ['class','sex','stance','direction','still'])assert.equal(g.window.document.querySelector('[data-wardrobe="'+field+'"]'),null,'no '+field+' selector');
+ for(const field of ['class','stance','direction','still'])assert.equal(g.window.document.querySelector('[data-wardrobe="'+field+'"]'),null,'no '+field+' selector');
  assert.equal(g.window.document.querySelector('[data-wardrobe-action="play"]'),null);
  ev(`wardrobeAction('apply')`);assert.equal(ev('S.cls'),currentJob);assert.equal(ev('JSON.stringify(S.eq)'),gear);
  // Head has thirteen choices, Face twelve, Mouth ten and Wings seventeen, plus None.
  const hairOptions=[...g.window.document.querySelector('[data-wardrobe="head"]').options];assert.deepEqual(hairOptions.map(o=>o.textContent),Array.from({length:20},(_,i)=>'Style '+(i+1)));assert.equal(hairOptions.at(-1).value,'42');
  for(const field of ['headwear','facewear','mouthwear','backwear'])assert.equal(g.window.document.querySelector('[data-wardrobe="'+field+'"]').options.length,field==='headwear'?14:field==='backwear'?18:field==='facewear'?13:11);
  assert.equal(g.window.document.querySelector('[data-wardrobe="outfit"]'),null);
+ // Gender previews preserve progress and only apply after assets are ready.
+ const originalSex=ev('S.sex');
+ ev(`wardrobeChange('sex',S.sex==='m'?'f':'m')`);await new Promise(r=>setImmediate(r));
+ assert.equal(ev('S.sex'),originalSex,'preview does not change saved sex');
+ ev(`wardrobeAction('cancel')`);await new Promise(r=>setImmediate(r));assert.equal(ev('wardrobeState.draft.sex'),originalSex);
+ ev(`wardrobeChange('sex',S.sex==='m'?'f':'m')`);await new Promise(r=>setImmediate(r));ev(`wardrobeAction('apply')`);
+ assert.notEqual(ev('S.sex'),originalSex);assert.equal(ev('S.appearance.sex'),ev('S.sex'));assert.equal(ev('JSON.stringify(S.eq)'),gear);assert.equal(ev('S.cls'),currentJob);
+ ev(`wardrobeChange('sex',${JSON.stringify(originalSex)})`);await new Promise(r=>setImmediate(r));ev(`wardrobeAction('apply')`);
  const fixture=ev('JSON.stringify(S.appearance)'),beforeSlots=ev('__saveCount');
  const progressState='JSON.stringify({lv:S.lv,exp:S.exp,jobs:S.jobs,base:S.base,st:S.st,pts:S.pts,sk:S.sk,bag:S.bag})',progression=ev(progressState);
  ev(`S.appearance.outfit='vanguard'`);assert.equal(ev('wardrobeAppearance().outfit'),'none','retired body returns to actual class');
@@ -70,7 +78,7 @@ const g=createGame(html),ev=g.ev;
  assert.equal(ev('S.appearance.halo'),true);assert.equal(ev('__saveCount'),savesBeforeEscape);
  g.window.document.body.dispatchEvent(new g.window.KeyboardEvent('keydown',{key:'w',bubbles:true}));
  await new Promise(r=>setImmediate(r));assert.equal(ev('wardrobeState.draft.halo'),true);assert(ev('!!wardrobeState.look'));
- ev(`wardrobeAction('original')`);assert.equal(ev('S.appearance'),null);assert.equal(ev('S.hair'),17);assert.equal(ev('__saveCount'),5);
+ ev(`wardrobeAction('original')`);assert.equal(ev('S.appearance'),null);assert.equal(ev('S.hair'),17);assert.equal(ev('__saveCount'),7);
  ev(`S=fresh();S.cls='Swordman';S.hair=12;wardrobeOwner()`);assert.equal(ev('wardrobeEquipped'),null);assert.equal(ev('wardrobeState.draft'),null);ev(`renderWin()`);await new Promise(r=>setImmediate(r));assert(ev('!!wardrobeState.look'),'same canvas loads again after owner reset');
  // No opt-in is needed, and changing class cannot display the old class during loading.
  assert.equal(ev('S.appearance'),null);ev("wardrobeHero({cls:S.cls})");await new Promise(r=>setImmediate(r));assert.equal(ev('wardrobeEquipped.cls'),'Swordman');

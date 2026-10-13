@@ -1,0 +1,26 @@
+const assert=require('node:assert/strict');
+const {createGame}=require('./helpers/game');
+const g=createGame(),ev=g.ev;
+ev(`S=fresh();S.auto=false;S.clickSell=true;S.inv=[{id:991,name:'Test Sword',slot:'weapon',wt:'sword',tier:0,sec:1,lvl:1,val:10,aff:[],cards:[],slots:0}];`);
+assert.equal(ev(`V.bag0().includes('data-a="quicksell"')`),false);
+ev(`ACT.quicksell('991')`);
+assert.equal(ev('S.inv.length'),1);assert.equal(ev('selB'),'991');
+ev(`S.autoSell=Array(7).fill(true);ACT.autosell('0')`);assert.equal(ev('S.inv.length'),1);
+ev('ACT.sellpause()');assert.equal(ev('S.autoSell.some(Boolean)'),false);
+ev(`S=fresh();S.autoSell=Array(7).fill(true);S.clickSell=true;S.auto=false;window.oldGear=S.eq.weapon;S.inv=[{...S.eq.weapon,id:992,r:3}];eqPick='weapon';ACT.selb('992');`);
+assert.equal(ev('S.eq.weapon.id'),ev('oldGear.id'));
+ev(`ACT.equip('992')`);assert.equal(ev('S.eq.weapon.id'),992);assert.equal(ev('S.inv.filter(x=>x.id===oldGear.id).length'),1);
+assert.equal(ev('S.inv.some(x=>x.id===992)'),false);
+// Actual swing selection: cap three, reserve basic swings during gap, then rotate ready skills.
+ev(`S=fresh();S.cls='Assassin Cross';S.jobs={Novice:{jl:10},Thief:{jl:50},Assassin:{jl:50},'Assassin Cross':{jl:50}};S.sk=Object.fromEntries(SKILLS.filter(s=>lineOf(S.cls).includes(s.from)).map(s=>[s.id,s.max]));resetSkillRuntime();Object.keys(skCd).forEach(k=>delete skCd[k]);t=10;mob={x:pl.x,z:pl.z,hp:1e9,pack:1};mobs.splice(0,mobs.length,mob);playerAttack();`);
+assert.equal(ev('swing.casts.length'),3);
+ev('skillState().batchUntil=11.5;t=11.49;playerAttack()');assert.equal(ev('swing.casts.length'),0);
+ev('t=11.5;playerAttack()');assert.equal(ev('swing.casts.length'),3);
+ev(`window.actualCast=castSkill;window.castLog=[];castSkill=(sk)=>castLog.push(sk.id);resolveSwing(swing);castSkill=actualCast;`);
+assert.equal(ev('castLog.length'),3);assert.equal(ev('skillState().batchUntil'),13);
+ev('t=12.99;playerAttack()');assert.equal(ev('swing.casts.length'),0);
+ev('t=13;playerAttack()');assert.ok(ev('swing.casts.every(c=>!castLog.includes(c.sk.id))'),'remaining ready skills take the next batch');
+ev('resetSkillRuntime();t=20;Object.keys(skCd).forEach(k=>delete skCd[k]);tickCombatSkills(.01)');assert.ok(ev('Object.keys(skillState().buffs).length')<=3);
+assert.equal(ev('skillState().batchUntil'),21.5);
+ev('playerAttack()');assert.equal(ev('swing.casts.length'),0);
+g.close();console.log('Haven safe selection and shared skill batch cadence passed');
