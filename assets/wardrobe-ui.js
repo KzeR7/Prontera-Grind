@@ -27,12 +27,12 @@ function wardrobeLoad(){const a=PGWardrobe.normalize(wardrobeState.draft);if(!a)
 function wardrobeSync(){wardrobeOwner();if(!tabs.includes('job')){wardrobeStore.release('portrait');wardrobeClassLook=null;wardrobeClassRequest=''}if(!tabs.includes('wardrobe')){if(wardrobeState.draft){wardrobeState.seq++;wardrobeStore.release('preview');wardrobeState.draft=null;wardrobeState.look=null;wardrobeState.loading=false;wardrobeState.canvas=null}return}
  const cv=$('wardrobeCanvas');if(cv!==wardrobeState.canvas){wardrobeState.canvas=cv;wardrobeState.paint='';if(!wardrobeState.look&&!wardrobeState.loading)wardrobeLoad()}wardrobeStatus();wardrobePreview()}
 function wardrobePreview(){const st=wardrobeState,cv=$('wardrobeCanvas');if(!cv||!st.look||!st.draft||st.look.cls!==S.cls)return;const ms=matchMedia('(prefers-reduced-motion: reduce)').matches?0:performance.now()-st.start;
- const view=st.look.base.metadata.actions.idle0,i=PGWardrobe.frameIndex(view,ms,null),paint=JSON.stringify([st.look.key,st.draft,i]);
+ const view=st.look.base.metadata.actions.idle0,i=PGWardrobe.animationKey(st.look,'idle',0,ms),paint=JSON.stringify([st.look.key,st.draft,i]);
  if(st.paint===paint&&st.canvas===cv)return;st.canvas=cv;st.paint=paint;
  const source=wardrobePreview.source||(wardrobePreview.source=document.createElement('canvas'));source.width=320;source.height=280;
  PGWardrobe.draw(source.getContext('2d'),{...st.look,selection:st.draft},'idle',0,ms,null);
  // Frame around the loaded appearance; attachment coordinates remain native.
- const layers=[...view.frames[i],...st.look.hair.metadata.actions.idle0.frames[i],...st.look.pieces.flatMap(p=>p.metadata.actions.idle0.frames[i])];
+ const layers=[...view.frames.flat(),...st.look.hair.metadata.actions.idle0.frames.flat(),...st.look.pieces.flatMap(p=>p.metadata.actions.idle0.frames.flat())];
  const x=Math.min(...layers.map(p=>p[4])),y=Math.min(...layers.map(p=>p[5])),w=Math.max(...layers.map(p=>p[4]+p[2]))-x,h=Math.max(...layers.map(p=>p[5]+p[3]))-y,scale=Math.min(250/w,195/h),ctx=cv.getContext('2d');
  ctx.clearRect(0,0,320,280);ctx.imageSmoothingEnabled=false;ctx.drawImage(source,x,y,w,h,(320-w*scale)/2,60+(195-h*scale)/2,w*scale,h*scale)}
 function wardrobeChange(field,value){const st=wardrobeState;if(!st.draft)return;let asset=false;
@@ -62,8 +62,8 @@ function mkWardrobeHero(look){const cv=document.createElement('canvas');cv.width
  const spr=new THREE.Sprite(new THREE.SpriteMaterial({map:tex,transparent:true,alphaTest:.12}));const px=SKIN_H/look.base.figureHeight;
  spr.scale.set(320*px,280*px,1);spr.center.set(.5,1-200/280);spr.userData.wardrobe={look,cv,tex,paint:'',route:'',start:0};return spr}
 function captureWardrobeFrame(spr,dir,run,attack,now=performance.now()){const sk=spr.userData.wardrobe,stance=attack>0?'attack':run?'walk':'idle';// Game-facing indices already follow RO S,SW,W,NW,N,NE,E,SE.
- const route=stance+dir;if(route!==sk.route){sk.route=route;sk.start=now}const v=sk.look.base.metadata.actions[route],progress=attack>0?Math.max(0,Math.min(1,1-attack)):null,ms=now-sk.start,i=PGWardrobe.frameIndex(v,ms,progress),paint=route+':'+i;
- if(sk.paint===paint)return false;PGWardrobe.draw(sk.cv.getContext('2d'),sk.look,stance,dir,ms,progress);sk.paint=paint;sk.tex.needsUpdate=true;return true}
+ const route=stance+dir;if(route!==sk.route){sk.route=route;sk.start=now}const v=sk.look.base.metadata.actions[route],progress=attack>0?Math.max(0,Math.min(1,1-attack)):null,ms=now-sk.start,i=PGWardrobe.animationKey(sk.look,stance,dir,ms,progress,now),paint=route+':'+i;
+ if(sk.paint===paint)return false;PGWardrobe.draw(sk.cv.getContext('2d'),sk.look,stance,dir,ms,progress,now);sk.paint=paint;sk.tex.needsUpdate=true;return true}
 function wardrobePortrait(cv,cls){
  if(!wardrobeSupported(cls)){cv._wardrobePaint='';return false}
  let look=wardrobeEquipped&&wardrobeEquipped.cls===cls?wardrobeEquipped:null;
@@ -73,5 +73,5 @@ function wardrobePortrait(cv,cls){
   look=wardrobeClassLook&&wardrobeClassLook.cls===cls?wardrobeClassLook:null;
  }
  if(!look){cv._wardrobePaint='';return false}
- const view=look.base.metadata.actions.idle0,ms=performance.now(),i=PGWardrobe.frameIndex(view,ms,null),key=JSON.stringify([look.key,look.selection,i,cv.width,cv.height]);if(cv._wardrobePaint===key)return true;
+ const view=look.base.metadata.actions.idle0,ms=performance.now(),i=PGWardrobe.animationKey(look,'idle',0,ms),key=JSON.stringify([look.key,look.selection,i,cv.width,cv.height]);if(cv._wardrobePaint===key)return true;
  const temp=wardrobePortrait.canvas||(wardrobePortrait.canvas=document.createElement('canvas'));if(temp.width!==320||temp.height!==280){temp.width=320;temp.height=280}PGWardrobe.draw(temp.getContext('2d'),look,'idle',0,ms);const ctx=cv.getContext('2d');ctx.clearRect(0,0,cv.width,cv.height);ctx.imageSmoothingEnabled=false;ctx.drawImage(temp,97,72,126,134,0,0,cv.width,cv.height);cv._wardrobePaint=key;return true}

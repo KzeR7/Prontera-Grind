@@ -14,8 +14,9 @@ import (
 )
 
 type Item struct {
-	Key  string
-	View uint32
+	Key   string
+	View  uint32
+	Clock string
 }
 
 func must(e error) {
@@ -67,6 +68,9 @@ func main() {
 		}
 		for slot, items := range defs {
 			for _, item := range items {
+				if item.Clock == "independent" {
+					continue
+				} // STR proofs are separate from ACT/SPR compositions.
 				for name, action := range map[string]uint{"idle0": 0, "walk2": 10, "attack4": uint(off + 4)} {
 					req := engine.Request{Job: job, Gender: gender, Head: 2, HeadPalette: 0, BodyPalette: -1, Weapon: weapon, Action: action, Frame: -1, EnableShadow: true, Canvas: "320x280+160+200"}
 					if slot == "backwear" {

@@ -49,6 +49,25 @@
       "key": "foxEars",
       "label": "Fox ears and bells",
       "view": 1070
+    },
+    {
+      "key": "afkBalloon",
+      "label": "AFK Text Balloon",
+      "view": 471,
+      "itemId": 20052,
+      "clock": "component"
+    },
+    {
+      "key": "dragonHelm",
+      "label": "Dragon Helm",
+      "view": 464,
+      "itemId": 19667
+    },
+    {
+      "key": "goldDragonHelm",
+      "label": "Gold Dragonhelm",
+      "view": 452,
+      "itemId": 5451
     }
   ],
   "facewear": [
@@ -101,6 +120,18 @@
       "key": "hexGlasses",
       "label": "Hexagon glasses",
       "view": 822
+    },
+    {
+      "key": "gozarianMask",
+      "label": "Gozarian Mask",
+      "view": 472,
+      "itemId": 5475
+    },
+    {
+      "key": "demonMask",
+      "label": "Demon Mask",
+      "view": 714,
+      "itemId": 18540
     }
   ],
   "mouthwear": [
@@ -210,6 +241,42 @@
       "key": "evilScythe",
       "label": "Evil Scythe",
       "view": 79
+    },
+    {
+      "key": "blackThunder",
+      "label": "Black Thunder",
+      "itemId": 400149,
+      "clock": "independent"
+    },
+    {
+      "key": "bearBag",
+      "label": "Bear Bag",
+      "view": 81,
+      "itemId": 20596
+    },
+    {
+      "key": "shuriken",
+      "label": "Shuriken",
+      "view": 190,
+      "itemId": 480360
+    },
+    {
+      "key": "poisonSpider",
+      "label": "Poison Spider",
+      "view": 101,
+      "itemId": 20613
+    },
+    {
+      "key": "mainspringScrew",
+      "label": "Mainspring Screw",
+      "view": 93,
+      "itemId": 20989
+    },
+    {
+      "key": "sorcererCape",
+      "label": "Sorcerer Cape",
+      "view": 280,
+      "itemId": 20630
     }
   ]
 }

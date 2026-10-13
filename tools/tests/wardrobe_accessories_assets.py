@@ -29,7 +29,7 @@ def asset(key):
     actions={k:dict(delay=v['delay'],frames=[poses[i]for i in v['frames']])for k,v in m['actions'].items()}
     cache[key]=(original,actions,im);return cache[key]
 
-assert len(cat['classes'])==19 and not cat['outfits'];assert all(len(v)==(11 if k=='backwear'else 10) for k,v in cat['accessories'].items())
+assert len(cat['classes'])==19 and not cat['outfits'];assert cat['accessories']==json.loads((Path(__file__).resolve().parents[2]/'tools/native-wardrobe/accessories.json').read_text())
 for key in cat['assets']:
     original,actions,im=asset(key)
     if key.startswith('base-'):
@@ -53,10 +53,11 @@ for cls,job in cat['classes'].items():
                 _,piece,pi=asset(f'piece-{item["key"]}-{sex}')
                 for name,b in base.items():
                     route=str(job)+':'+name;h=hair[route];c=piece[route]
-                    assert len(b['frames'])==len(h['frames'])==len(c['frames']) and b['delay']==h['delay']==c['delay']
-                    if name not in ['idle0','walk2','attack4']:continue
-                    for i,frame in enumerate(b['frames']):
-                        result=Image.new('RGBA',(320,280));layers=[(p,bi)for p in frame]+[(p,hi)for p in h['frames'][i]]+[(p,pi)for p in c['frames'][i]]
+                    assert len(b['frames'])==len(h['frames']) and b['delay']==h['delay'];assert item.get('clock')=='independent' or (b['delay']==c['delay'] and (item.get('clock')=='component' or len(b['frames'])==len(c['frames'])))
+                    if item.get('clock')=='independent' or name not in ['idle0','walk2','attack4']:continue
+                    for i in range(len(c['frames'])):
+                        frame=b['frames'][i%len(b['frames'])]
+                        result=Image.new('RGBA',(320,280));layers=[(p,bi)for p in frame]+[(p,hi)for p in h['frames'][i%len(h['frames'])]]+[(p,pi)for p in c['frames'][i]]
                         for q,atlas in sorted(layers,key=lambda x:x[0][6]):
                             sx,sy,w,height,x,y,_,_=q;result.alpha_composite(atlas.crop((sx,sy,sx+w,sy+height)),(x,y))
                         expected=Image.open(a.proof/str(job)/sex/item['key']/name/f'{i}.png').convert('RGBA');delta=max(e[1]for e in ImageChops.difference(result,expected).getextrema());assert delta<=(3 if item['key']=='evilScythe'else 2),(cls,sex,item['key'],name,i,delta);maximum=max(maximum,delta);proof_count+=1

@@ -1,0 +1,287 @@
+{
+  "schemaVersion": 1,
+  "baselineCommit": "f36aa980cfb339210fdffd633b9cf2acdda58a00",
+  "rendererCommit": "4de4fa747431979d35c747d7edd549a872efd9e1",
+  "archive": {
+    "page": "https://www.mediafire.com/file/o0mfywht1rpqhkc/official_data.grf/file",
+    "bytes": 782906013,
+    "reference": "https://llchrisll.github.io/ROTPDocs/misc/custom_officials/"
+  },
+  "provenance": "Original ACT/SPR head sprites and Black Thunder STR/TGA effect resources; no artwork substitutions. Black Thunder is presented under Wings at the owner request.",
+  "items": [
+    {
+      "key": "afkBalloon",
+      "label": "AFK Text Balloon",
+      "view": 471,
+      "itemId": 20052
+    },
+    {
+      "key": "dragonHelm",
+      "label": "Dragon Helm",
+      "view": 464,
+      "itemId": 19667
+    },
+    {
+      "key": "goldDragonHelm",
+      "label": "Gold Dragonhelm",
+      "view": 452,
+      "itemId": 5451
+    },
+    {
+      "key": "blackThunder",
+      "label": "Black Thunder",
+      "itemId": 400149,
+      "effect": "data/texture/effect/efst_black_thunder/ros2023_f.str"
+    }
+  ],
+  "files": [
+    {
+      "path": "data/sprite/악세사리/남/남_드래군헬름.act",
+      "url": "https://grf.robrowser.com/data/sprite/%C2%BE%C3%87%C2%BC%C2%BC%C2%BB%C3%A7%C2%B8%C2%AE/%C2%B3%C2%B2/%C2%B3%C2%B2_%C2%B5%C3%A5%C2%B7%C2%A1%C2%B1%C2%BA%C3%87%C3%AF%C2%B8%C2%A7.act",
+      "bytes": 48276,
+      "sha256": "0e548fedf9c0cb9f9c34a150d69af1fb1f18ab8c48a14d1912d27ce696a37fe3"
+    },
+    {
+      "path": "data/sprite/악세사리/남/남_드래군헬름.spr",
+      "url": "https://grf.robrowser.com/data/sprite/%C2%BE%C3%87%C2%BC%C2%BC%C2%BB%C3%A7%C2%B8%C2%AE/%C2%B3%C2%B2/%C2%B3%C2%B2_%C2%B5%C3%A5%C2%B7%C2%A1%C2%B1%C2%BA%C3%87%C3%AF%C2%B8%C2%A7.spr",
+      "bytes": 9208,
+      "sha256": "3dd1a94462dee35c8fe06063167a2b5c34c6953d94936666407f238e371de6d8"
+    },
+    {
+      "path": "data/sprite/악세사리/여/여_드래군헬름.act",
+      "url": "https://grf.robrowser.com/data/sprite/%C2%BE%C3%87%C2%BC%C2%BC%C2%BB%C3%A7%C2%B8%C2%AE/%C2%BF%C2%A9/%C2%BF%C2%A9_%C2%B5%C3%A5%C2%B7%C2%A1%C2%B1%C2%BA%C3%87%C3%AF%C2%B8%C2%A7.act",
+      "bytes": 48276,
+      "sha256": "e1d845e18d8dc359d3e0de13012e1c0efe6c40db62e9d7ff7a8dcb020febca56"
+    },
+    {
+      "path": "data/sprite/악세사리/여/여_드래군헬름.spr",
+      "url": "https://grf.robrowser.com/data/sprite/%C2%BE%C3%87%C2%BC%C2%BC%C2%BB%C3%A7%C2%B8%C2%AE/%C2%BF%C2%A9/%C2%BF%C2%A9_%C2%B5%C3%A5%C2%B7%C2%A1%C2%B1%C2%BA%C3%87%C3%AF%C2%B8%C2%A7.spr",
+      "bytes": 9208,
+      "sha256": "3dd1a94462dee35c8fe06063167a2b5c34c6953d94936666407f238e371de6d8"
+    },
+    {
+      "path": "data/sprite/악세사리/남/남_용투구_금.act",
+      "url": "https://grf.robrowser.com/data/sprite/%C2%BE%C3%87%C2%BC%C2%BC%C2%BB%C3%A7%C2%B8%C2%AE/%C2%B3%C2%B2/%C2%B3%C2%B2_%C2%BF%C3%AB%C3%85%C3%B5%C2%B1%C2%B8_%C2%B1%C3%9D.act",
+      "bytes": 48276,
+      "sha256": "701b89459ba29557fafaa36f7a3da2ef844eee942b9beee55295083d244079c5"
+    },
+    {
+      "path": "data/sprite/악세사리/남/남_용투구_금.spr",
+      "url": "https://grf.robrowser.com/data/sprite/%C2%BE%C3%87%C2%BC%C2%BC%C2%BB%C3%A7%C2%B8%C2%AE/%C2%B3%C2%B2/%C2%B3%C2%B2_%C2%BF%C3%AB%C3%85%C3%B5%C2%B1%C2%B8_%C2%B1%C3%9D.spr",
+      "bytes": 11364,
+      "sha256": "10efe2dcec9cb59ab832e82593e02578dd5fbee9e76b92e77a30436b6d1ded67"
+    },
+    {
+      "path": "data/sprite/악세사리/여/여_용투구_금.act",
+      "url": "https://grf.robrowser.com/data/sprite/%C2%BE%C3%87%C2%BC%C2%BC%C2%BB%C3%A7%C2%B8%C2%AE/%C2%BF%C2%A9/%C2%BF%C2%A9_%C2%BF%C3%AB%C3%85%C3%B5%C2%B1%C2%B8_%C2%B1%C3%9D.act",
+      "bytes": 48276,
+      "sha256": "2775d0908e2ece9e7bfa9f9107269428241585203300d677360b66e4ff6ebd43"
+    },
+    {
+      "path": "data/sprite/악세사리/여/여_용투구_금.spr",
+      "url": "https://grf.robrowser.com/data/sprite/%C2%BE%C3%87%C2%BC%C2%BC%C2%BB%C3%A7%C2%B8%C2%AE/%C2%BF%C2%A9/%C2%BF%C2%A9_%C2%BF%C3%AB%C3%85%C3%B5%C2%B1%C2%B8_%C2%B1%C3%9D.spr",
+      "bytes": 12532,
+      "sha256": "32fcfa06dc06cc3288784f74c1cc9716c2aa3256c4c157945061a11c8330f0aa"
+    },
+    {
+      "path": "data/sprite/악세사리/여/여_알림간판.act",
+      "archiveOffset": 652616190,
+      "compressedBytes": 7843,
+      "bytes": 89044,
+      "flag": 1,
+      "sha256": "28cc18ff297999261ed69ab035a435f3cda0c8bcfbfe982cfc1e3354b6ba5fe6"
+    },
+    {
+      "path": "data/sprite/악세사리/여/여_알림간판.spr",
+      "archiveOffset": 147094446,
+      "compressedBytes": 1679,
+      "bytes": 6844,
+      "flag": 1,
+      "sha256": "6d028f74a66e14a7e3b88bc609ced66a04fc60b98769a2f76c92842e7d9a66cb"
+    },
+    {
+      "path": "data/sprite/악세사리/남/남_알림간판.act",
+      "archiveOffset": 331397198,
+      "compressedBytes": 7316,
+      "bytes": 89044,
+      "flag": 1,
+      "sha256": "147e663789e91792b39e7671eca4bdc5d8514b73a870804849111e443095d52d"
+    },
+    {
+      "path": "data/sprite/악세사리/남/남_알림간판.spr",
+      "archiveOffset": 147094446,
+      "compressedBytes": 1679,
+      "bytes": 6844,
+      "flag": 1,
+      "sha256": "6d028f74a66e14a7e3b88bc609ced66a04fc60b98769a2f76c92842e7d9a66cb"
+    },
+    {
+      "path": "data/texture/effect/efst_black_thunder/blga1.tga",
+      "archiveOffset": 245682150,
+      "compressedBytes": 44465,
+      "bytes": 640044,
+      "flag": 1,
+      "sha256": "c9e9dc66e2148e326ef44c748ca21025eaf336e95c506b647d89cdff53f1871f"
+    },
+    {
+      "path": "data/texture/effect/efst_black_thunder/blga2.tga",
+      "archiveOffset": 162191958,
+      "compressedBytes": 54096,
+      "bytes": 640044,
+      "flag": 1,
+      "sha256": "b7355f07aec58bdd33ad983e430d8a31c0482d2ef437308c3ce092dd8a227c11"
+    },
+    {
+      "path": "data/texture/effect/efst_black_thunder/blga3.tga",
+      "archiveOffset": 8090534,
+      "compressedBytes": 71997,
+      "bytes": 640044,
+      "flag": 1,
+      "sha256": "09d9c874d0923bf0d8b40e1777729b7ae180fc520f57ba83df9b536ca8d0e2ba"
+    },
+    {
+      "path": "data/texture/effect/efst_black_thunder/blga4.tga",
+      "archiveOffset": 510043974,
+      "compressedBytes": 68762,
+      "bytes": 640044,
+      "flag": 1,
+      "sha256": "a245d4ff24bd3799029885bf5883dd5861a70ed7d81a6709cb09474529b10a39"
+    },
+    {
+      "path": "data/texture/effect/efst_black_thunder/blga5.tga",
+      "archiveOffset": 108329542,
+      "compressedBytes": 40269,
+      "bytes": 640044,
+      "flag": 1,
+      "sha256": "d8eef42c3365595edce303b9f46546ffdd79793eac06f67fadc91e82d368e2e4"
+    },
+    {
+      "path": "data/texture/effect/efst_black_thunder/blga6.tga",
+      "archiveOffset": 50412422,
+      "compressedBytes": 36164,
+      "bytes": 640044,
+      "flag": 1,
+      "sha256": "52087bdd7010dbd4afb9e39cc31cadc3e437d7305e38661bcfd99d8fd739875d"
+    },
+    {
+      "path": "data/texture/effect/efst_black_thunder/p5.tga",
+      "archiveOffset": 620197814,
+      "compressedBytes": 11458,
+      "bytes": 640044,
+      "flag": 1,
+      "sha256": "7e16ca16c4f78234d39c8a9bd5743dccda2cfadabdb4a5f64bd4773afb5a9fb8"
+    },
+    {
+      "path": "data/texture/effect/efst_black_thunder/p6.tga",
+      "archiveOffset": 75667358,
+      "compressedBytes": 11535,
+      "bytes": 640044,
+      "flag": 1,
+      "sha256": "efeeaab26b43084baad9e17e682357643053a97feb484c2d8066bd96dbc62c01"
+    },
+    {
+      "path": "data/texture/effect/efst_black_thunder/p7.tga",
+      "archiveOffset": 21181318,
+      "compressedBytes": 7319,
+      "bytes": 640044,
+      "flag": 1,
+      "sha256": "2b12d10b49f08cf78e90a852165d5072b64ed49773306ffc41842033ba7e688a"
+    },
+    {
+      "path": "data/texture/effect/efst_black_thunder/pg1.tga",
+      "archiveOffset": 526593366,
+      "compressedBytes": 2663,
+      "bytes": 640044,
+      "flag": 1,
+      "sha256": "3be2ad0c6089ea170a73104515b01a5687438ff53d34865435ac2476ca8287bd"
+    },
+    {
+      "path": "data/texture/effect/efst_black_thunder/pg2.tga",
+      "archiveOffset": 747332334,
+      "compressedBytes": 6682,
+      "bytes": 640044,
+      "flag": 1,
+      "sha256": "85381d5249a8a5538537479ae260112547b23dc46ccec2247ab5001f0fee863f"
+    },
+    {
+      "path": "data/texture/effect/efst_black_thunder/pg3.tga",
+      "archiveOffset": 564165606,
+      "compressedBytes": 8102,
+      "bytes": 640044,
+      "flag": 1,
+      "sha256": "326614f3b1de6198dd3a9a8c57cb195d33ec648ae843efa7f9194e8aeaf2a18c"
+    },
+    {
+      "path": "data/texture/effect/efst_black_thunder/pg4.tga",
+      "archiveOffset": 382123798,
+      "compressedBytes": 10554,
+      "bytes": 640044,
+      "flag": 1,
+      "sha256": "afa3a109c8cd8c5fe8ad3e93c95f9c3ed3fc9c84d64285124be69d13b47d1d91"
+    },
+    {
+      "path": "data/texture/effect/efst_black_thunder/poline1.tga",
+      "archiveOffset": 689646950,
+      "compressedBytes": 5659,
+      "bytes": 640044,
+      "flag": 1,
+      "sha256": "50ce0c308090cb8771b74fd4b45d254f6691aa7f65392a3e932e07b50e5ade51"
+    },
+    {
+      "path": "data/texture/effect/efst_black_thunder/poline1_2.tga",
+      "archiveOffset": 192632374,
+      "compressedBytes": 11307,
+      "bytes": 640044,
+      "flag": 1,
+      "sha256": "1e0501f734330d95d107485230a8d488960e2fd5b946705b1ea99bda04044b3e"
+    },
+    {
+      "path": "data/texture/effect/efst_black_thunder/poline2.tga",
+      "archiveOffset": 265634366,
+      "compressedBytes": 8735,
+      "bytes": 640044,
+      "flag": 1,
+      "sha256": "1f4da39a6cebe975ecca3c98db5b72599d4a6d98e6db15b3cb0d4469d594e598"
+    },
+    {
+      "path": "data/texture/effect/efst_black_thunder/poline3.tga",
+      "archiveOffset": 244738102,
+      "compressedBytes": 14301,
+      "bytes": 640044,
+      "flag": 1,
+      "sha256": "7290642b821717551a841df74d159de29ec19d9d6a32551ed765611ce378be56"
+    },
+    {
+      "path": "data/texture/effect/efst_black_thunder/poline4.tga",
+      "archiveOffset": 154881734,
+      "compressedBytes": 15674,
+      "bytes": 640044,
+      "flag": 1,
+      "sha256": "758d45ed05f5f7f72d7c892a82039bcd1f407af757b490496f1a72035296c691"
+    },
+    {
+      "path": "data/texture/effect/efst_black_thunder/poline5.tga",
+      "archiveOffset": 738463934,
+      "compressedBytes": 15001,
+      "bytes": 640044,
+      "flag": 1,
+      "sha256": "9f709efd2652eaa71d2a7203de89e59ac95764b2441f82b57d9e3b78cbd013ee"
+    },
+    {
+      "path": "data/texture/effect/efst_black_thunder/poline6.tga",
+      "archiveOffset": 236178406,
+      "compressedBytes": 25474,
+      "bytes": 640044,
+      "flag": 1,
+      "sha256": "8fc03713a6eb91d084e3d7795bea261cc07562b9b3dbd77eae78fadadcabe47b"
+    },
+    {
+      "path": "data/texture/effect/efst_black_thunder/ros2023_f.str",
+      "archiveOffset": 90026174,
+      "compressedBytes": 510,
+      "bytes": 7548,
+      "flag": 1,
+      "sha256": "0efd3a326721ddd23c1af264d6d647739d71b58e5284db4d70a392cf1abc7f13"
+    }
+  ]
+}

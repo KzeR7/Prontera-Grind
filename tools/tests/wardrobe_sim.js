@@ -16,13 +16,25 @@ const W=require('../../assets/wardrobe.js');const root=path.resolve(__dirname,'.
  for(const cls of Object.keys(W.CLASSES))for(const sex of ['m','f'])for(const head of W.HAIRS[sex])for(let color=0;color<9;color++){const a=W.defaults(sex);a.heads[sex]=head;a.colors[sex]=color;const ready=await store.select('preview',a,cls);assert.equal(ready.key,W.CLASSES[cls]+'|'+W.selectionKey(a));assert(store.pixelBytes<=store.budget);assert(store.metadataBytes<=store.metadataBudget);assert.equal(store.clients.get('hero').ready.key,second.key)}
  // Every piece loads across all classes/genders without downloading unrelated pieces.
  const legacy=W.normalize({version:1,halo:true,glasses:true,wings:true,outfit:'vanguard'});assert.equal(legacy.headwear,'halo');assert.equal(legacy.facewear,'glasses');assert.equal(legacy.backwear,'wings');assert.equal(legacy.outfit,'none');
- assert.equal(Object.keys(W.OUTFITS).length,0);assert.equal(Object.keys(W.ACCESSORIES.backwear.items).length,12);assert(['headwear','facewear','mouthwear'].every(k=>Object.keys(W.ACCESSORIES[k].items).length===11));
+ assert.equal(Object.keys(W.OUTFITS).length,0);assert.equal(Object.keys(W.ACCESSORIES.backwear.items).length,18);assert.equal(Object.keys(W.ACCESSORIES.headwear.items).length,14);assert.equal(Object.keys(W.ACCESSORIES.facewear.items).length,13);assert.equal(Object.keys(W.ACCESSORIES.mouthwear.items).length,11);
  for(const sex of ['m','f'])for(const cls of Object.keys(W.CLASSES))for(const [field,slot] of Object.entries(W.ACCESSORIES))for(const value of Object.keys(slot.items)){
   const a={...W.defaults(sex),[field]:value},selected=await store.select('preview',a,cls);assert.equal(selected.pieces.length,value==='none'?0:1);assert(store.pixelBytes<=store.budget);
   for(const stance of ['idle','walk','attack'])for(let d=0;d<8;d++){draws.length=0;W.draw(ctx,selected,stance,d);assert(draws.length>=2)}
  }
  const complete={...W.defaults('m'),headwear:'foxEars',facewear:'heartPatch',mouthwear:'poringLetter',backwear:'leticiaWings'};await store.select('preview',complete,'Novice');before=fetches;await store.select('preview',complete,'Novice');assert.equal(fetches,before);
  const empty=await store.select('preview',W.defaults('m'),'Novice');assert.equal(empty.pieces.length,0,'None removes every piece');
+ // The AFK balloon's eight-frame idle is longer than the three-frame body.
+ const balloon=await store.select('preview',{...W.defaults('m'),headwear:'afkBalloon'},'Novice');
+ assert.equal(balloon.pieces[0].metadata.actions.idle0.frames.length,8);
+ draws.length=0;W.draw(ctx,balloon,'idle',0,400);
+ const bp=balloon.pieces[0].metadata.actions.idle0.frames[4][0];
+ assert.deepEqual(draws.at(-1).slice(1),[...bp.slice(0,6),bp[2],bp[3]],'balloon retains its fourth native idle frame');
+ const thunder=await store.select('preview',{...W.defaults('m'),backwear:'blackThunder'},'Novice');
+ assert.equal(thunder.pieces[0].metadata.actions.idle0.frames.length,90);
+ assert.notEqual(W.animationKey(thunder,'attack',0,0,.5,0),W.animationKey(thunder,'attack',0,0,.5,100),'effect advances while the attack pose stays fixed');
+ draws.length=0;W.draw(ctx,thunder,'attack',0,0,.5,100);
+ const tp=thunder.pieces[0].metadata.actions.attack0.frames[6][0];
+ assert.deepEqual(draws.at(-1).slice(1),[...tp.slice(0,6),tp[2],tp[3]],'60 FPS effect uses its own clock, not attack progress');
  let release;block=new Promise(r=>release=r);const a1=W.defaults('f');a1.heads.f=2;const a2=W.defaults('m');a2.heads.m=5;const p1=store.select('preview',a1),p2=store.select('preview',a2);release();block=null;assert.equal(await p1,null);assert.equal((await p2).key,'4008|'+W.selectionKey(a2));
  fail=true;const missing=W.defaults('f');missing.heads.f=4;await assert.rejects(store.select('preview',missing),/offline/);assert.equal(store.clients.get('preview').ready.key,'4008|'+W.selectionKey(a2));fail=false;assert.equal((await store.select('preview',missing)).key,'4008|'+W.selectionKey(missing));
  const small=new W.Store({budget:1,fetcher:store.fetcher,decode:store.decode});await assert.rejects(small.select('hero',W.defaults('m')),/memory/);small.dispose();
@@ -46,5 +58,5 @@ const W=require('../../assets/wardrobe.js');const root=path.resolve(__dirname,'.
  await store.select('preview',largest('f'),'High Wizard');
  await store.select('portrait',largest('m'),'Assassin Cross');
  assert.equal(store.clients.get('hero').ready.pieces.length,4);assert.equal(store.clients.get('preview').ready.pieces.length,4);assert.equal(store.clients.get('portrait').ready.pieces.length,4);assert(store.pixelBytes<=store.budget);
- store.dispose();assert.equal(store.metadataBytes,0);assert.equal(store.metadataCache.size,0);assert.equal(live,0);console.log('PASS: 6,840 hair/color appearances and all 41 pieces across 19 classes/both genders; native metadata, save normalization, bounded loader, coalescing, retry, component toggles, swing clamp, cleanup. Peak atlas count:',maxLive);
+ store.dispose();assert.equal(store.metadataBytes,0);assert.equal(store.metadataCache.size,0);assert.equal(live,0);console.log('PASS: 6,840 hair/color appearances and all 52 pieces across 19 classes/both genders; native metadata, save normalization, bounded loader, coalescing, retry, component toggles, swing clamp, cleanup. Peak atlas count:',maxLive);
 })().catch(e=>{console.error(e);process.exitCode=1});

@@ -86,6 +86,9 @@ def build(source,pieces,definitions,output,append_to=None,piece=None):
                 frames.append(seen[identity])
             view['frames']=frames
         metadata=dict(version=2,width=width,height=height,poses=poses,actions=actions)
+        item=next((item for items in defs.values() for item in items if name in [f'piece-{item["key"]}-m',f'piece-{item["key"]}-f']),None)
+        if item and item.get('clock') in ['component','independent']:
+            metadata['clock']=item['clock']
         if name.startswith('piece-'):
             # Repeated attachment layers dominate larger accessory collections.
             # Reference each exact layer once without changing pixels or ordering.
