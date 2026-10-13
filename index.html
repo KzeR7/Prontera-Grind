@@ -1082,7 +1082,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // give-back) and main's weapon-hold rendering work.
 let simCatchingUp=false;
 const simVisualsOff=()=>document.hidden||simCatchingUp;
-const BUILD='2026-10-13 grind-v134 Calmer pets and refined weapon trails';   // shown on the login card - confirms which file you loaded
+const BUILD='2026-10-13 grind-v135 Pet timing and mobile equipment';   // shown on the login card - confirms which file you loaded
 $('buildTag').textContent='build '+BUILD;
 
 // ---------- class tree: Novice -> 6 first jobs -> 6 second jobs -> 6 third jobs ----------
@@ -4983,7 +4983,7 @@ const V={
     <div class="hd">Interface palette</div>${typeof eclipsePaletteControls==='function'?eclipsePaletteControls():''}<div class="hd" style="margin-top:10px">Gameplay</div><label title="Always on - the game cannot be paused by hiding the tab any more"><span class="lockmark">&#10003;</span> Keeps grinding while this tab is in the background</label>
     <small>Background grinding keeps playing while the tab is hidden - a hidden tab is never "away". The welcome-back reward only starts after <b>three minutes</b> without a save, so an ordinary background session never opens it. Auto-equip lives on the <b>Bag</b> tab and Auto-advance on the <b>World Map</b> tab, next to what they control.</small>
     <p><small>Drag to rotate, scroll or pinch to zoom. Hotkeys: M S J K B E C Q R L P I V O, Esc to close.</small></p><button class="full" data-a="reset">Erase this account's save &amp; restart</button><button class="full" data-a="logout">Logout</button>`},
-  gm(){return`<div class="hd">Player management</div><p><a href="/gm.html" target="_blank" rel="noopener">Open GM console · players, equipment &amp; server gifts</a></p><small>Cloud GM sign-in required. Auras: Base 50 / 99 / 150. Weapon glow: +4 / +7 / +10.</small><div class="row"><button data-a="gmaura" data-v="50">Test Lv50 aura</button><button data-a="gmaura" data-v="99">Test Lv99 aura</button><button data-a="gmaura" data-v="150">Test Lv150 aura</button><button data-a="gmglow" data-v="4">Weapon +4</button><button data-a="gmglow" data-v="7">Weapon +7</button><button data-a="gmglow" data-v="10">Weapon +10</button></div><div class="hd">GM multiplier (EXP, Job EXP, Zeny, quests)</div><div class="row">${[1,10,100,1000].map(x=>`<button data-a="gmx" data-v="${x}" ${S.gmx===x?'style="background:#ffe08a"':''}>x${x}</button>`).join('')}</div>
+  gm(){return`<div class="hd">Player management</div><p><a href="/gm.html" target="_blank" rel="noopener">Open GM console · players, equipment &amp; server gifts</a></p><small>Cloud GM sign-in required. Auras: Base 50 / 99 / 150. Weapon glow: +7 / +9 / +10.</small><div class="row"><button data-a="gmaura" data-v="50">Test Lv50 aura</button><button data-a="gmaura" data-v="99">Test Lv99 aura</button><button data-a="gmaura" data-v="150">Test Lv150 aura</button><button data-a="gmglow" data-v="7">Weapon +7</button><button data-a="gmglow" data-v="9">Weapon +9</button><button data-a="gmglow" data-v="10">Weapon +10</button></div><div class="hd">GM multiplier (EXP, Job EXP, Zeny, quests)</div><div class="row">${[1,10,100,1000].map(x=>`<button data-a="gmx" data-v="${x}" ${S.gmx===x?'style="background:#ffe08a"':''}>x${x}</button>`).join('')}</div>
     <div class="row" style="margin-top:8px"><button data-a="gmz">+1,000,000 Zeny</button><button data-a="gmo">+20 Oridecon &amp; Elunium</button><button data-a="gml">+10 Base Levels</button><button data-a="gmnm">Unlock Nightmare (Base Lv 150)</button><button data-a="gmj">Max Job Lv (current class)</button><button data-a="gmu">Unlock all map levels</button></div>
     <div class="hd" style="margin-top:10px">Index mastery test controls</div><small>These use the real per-species ledger and the 10 / 250 / 5,000 / 50,000 kill ladder. Clear before trying another scenario.</small><div class="row"><button data-a="gmindex" data-v="one">+1 Poring kill</button><button data-a="gmindex" data-v="all1">1 kill every species</button><button data-a="gmindex" data-v="all100">100 kills every species</button><button data-a="gmindex" data-v="all1000">1,000 kills every species</button><button data-a="gmindex" data-v="all5000">5,000 kills every species</button><button data-a="gmindex" data-v="all50000">50,000 kills every species</button><button data-a="gmindex" data-v="xp10000">Set 10,000 XP title test</button><button data-a="gmindex" data-v="xp1000000">Set the final title</button><button data-a="gmindex" data-v="clear">Clear Index</button></div>
     <div class="hd" style="margin-top:10px">Card mastery test controls</div><small>Loose cards can be dedicated through the Card Mastery tab; every mastery rank is one gacha token. Roll every token fills the stat caps the slow way (one random roll at a time). Socketed cards stay untouched.</small><div class="row"><button data-a="gmcard" data-v="poring1">+1 Poring Card</button><button data-a="gmcard" data-v="poring5">+5 Poring Cards</button><button data-a="gmcard" data-v="poringMax">Max Poring 5/5</button><button data-a="gmcard" data-v="allMax">Max all cards 5/5</button><button data-a="gmcard" data-v="rollAll">Roll every token</button><button data-a="gmcard" data-v="clear">Reset card mastery</button></div>
@@ -5033,8 +5033,8 @@ function slotAccepts(k,it){if(!it||it.card||it.ore||!S.inv.includes(it))return f
 function equipChooser(k){
   const cur=S.eq[k],fit=S.inv.filter(it=>slotAccepts(k,it)),raw=EQK.find(x=>x[0]===k)||[,k,SLOTS.weapon.ic],nm=k==='weapon'&&katarOnly()?['weapon','two-handed Katar','🔪']:k==='off'&&dualWield()&&!canShield()?['off','dagger','🗡️']:raw;   // v81: the Assassin's left hand takes a blade, not a shield
   const deltas=fit.slice(0,6).map(it=>{const d=ev(it)-ev(cur||{val:0});return`<b class="${rarCls(it)}">${iname(it)}</b> <b class="${d>0?'r1':'r0'}">(${d>0?'+':''}${d})</b>`}).join(' &middot; ');
-  return`<div class="mob-card chooser"><div class="hd">${nm[2]} Choosing a ${nm[1].toLowerCase()} <small>&middot; ${fit.length} highlighted item${fit.length===1?'':'s'} fit${fit.length?' below':''}</small><button class="x" data-a="eqclose">&#10005;</button></div>
-  <small>${cur?`Now worn: <b class="${rarCls(cur)}">${iname(cur)}</b> (${SLOTS[cur.slot].stat} +${ev(cur)})`:'Nothing worn in this slot.'} &middot; your class may use ${C().wt.join(', ')}${k==='off'?(canShield()?' + shields':dualWield()?' + a second dagger':' · no off-hand weapon'):''}${k==='weapon'&&katarOnly()?'; the Katar occupies both hands, so no shield or second weapon can be worn':''} &middot; click a green item to wear it; everything else in the bag can still be inspected or sold.</small>
+  return`<div class="mob-card chooser"><div class="hd">${nm[2]} Change ${nm[1].toLowerCase()} <small>&middot; ${fit.length} highlighted item${fit.length===1?'':'s'} fit${fit.length?' below':''}</small><button class="x" data-a="eqclose" aria-label="Cancel equipment change">&#10005;</button></div>
+  <small>${cur?`Now worn: <b class="${rarCls(cur)}">${iname(cur)}</b> (${SLOTS[cur.slot].stat} +${ev(cur)})`:'Nothing worn in this slot.'} &middot; your class may use ${C().wt.join(', ')}${k==='off'?(canShield()?' + shields':dualWield()?' + a second dagger':' · no off-hand weapon'):''}${k==='weapon'&&katarOnly()?'; the Katar occupies both hands, so no shield or second weapon can be worn':''} &middot; tap a highlighted item below to equip it; everything else in the bag can still be inspected or sold.</small>
   ${fit.length?`<small style="display:block;margin-top:4px">Compared to what you wear: ${deltas}${fit.length>6?` &middot; +${fit.length-6} more`:''}</small>`:'<small style="display:block;margin-top:4px">Nothing in your bag fits this slot.</small>'}</div>`}
 function equipIn(k,id){const it=S.inv.find(x=>String(x.id)===String(id));
   if(!it)return;if(!slotAccepts(k,it)){log('Your class cannot use that there.');return}
@@ -5674,7 +5674,7 @@ const ACT={
   ssel:v=>{selS=v;renderWin('[data-win="skills"] .sk.sel')},
   // Clicking an equipment slot highlights the fitting items in the REAL Bag window (it is opened
   // if it is not already up) instead of popping a second list over the paper doll.
-  seleq:v=>{selE=v;eclipseInspectBag=false;eqPick=v;sub.bag='bag';if(!tabs.includes('equip')){if(tabs.length>=MAX_TABS)tabs.shift();tabs.push('equip')}sub.equip='equip0';renderWin()},
+  seleq:v=>{selE=v;selB=null;eclipseInspectBag=false;eqPick=v;eclipseSearch='';eclipseRarity=-1;sub.bag='bag';if(!tabs.includes('equip')){if(tabs.length>=MAX_TABS)tabs.shift();tabs.push('equip')}sub.equip='equip0';renderWin();const choices=document.querySelector('[data-win="equip"] .chooser'),body=choices?.closest('.wbody');if(body&&body.getBoundingClientRect().width<=700&&choices.scrollIntoView)choices.scrollIntoView({block:'start'})},
   skall:()=>{const on=!skAllOn(),n=skTog().length;skSetAll(on);
     log(on?`All ${n} auto-cast skill${n===1?'':'s'} switched ON.`:`All ${n} auto-cast skill${n===1?'':'s'} switched OFF - nothing will cast until you switch it back.`,on?'r3':'r0','skill');ui();save()},
   skalloc:()=>{const n=autoAllocateSkills();if(n)log(`Auto-allocated ${n} skill level${n===1?'':'s'}: attacks first, then every skill and higher ranks.`,'r3','skill');else log(skillsFullyAllocated()?'All reachable skills are already maxed.':'No affordable skill level yet.','r0','skill');ui();save()},
@@ -5729,7 +5729,7 @@ $('wins').onclick=e=>{const nav=e.target.closest('[data-t]');if(nav&&TABS[nav.da
 // paper doll itself (.doll), which holds both the slot cells and the detail card. A click on
 // Refine, the sockets, Unequip, Lock or another slot therefore keeps the chooser open.
 let chooserAtPointerDown=null,chooserPointerInside=false,skillPointerInside=false,skillCardPointerInside=false;
-document.addEventListener('pointerdown',e=>{const target=e.target&&e.target.closest?e.target:null;chooserAtPointerDown=eqPick;chooserPointerInside=!!(target&&(target.closest('[data-win="bag"]')||target.closest('.doll')));skillPointerInside=!!(target&&target.closest('.sk[data-v]'));skillCardPointerInside=!!(target&&target.closest('.sk-detail-card'));},true);
+document.addEventListener('pointerdown',e=>{const target=e.target&&e.target.closest?e.target:null;chooserAtPointerDown=eqPick;chooserPointerInside=!!(target&&(target.closest('[data-win="bag"]')||target.closest('[data-win="equip"]')||target.closest('.doll')));skillPointerInside=!!(target&&target.closest('.sk[data-v]'));skillCardPointerInside=!!(target&&target.closest('.sk-detail-card'));},true);
 function closeEquipmentChooser(force=false){if(!eqPick&&!force)return;eqPick=null;selE=null;selB=null;const tipEl=$('tooltip');if(tipEl)tipEl.style.display='none';renderWin()}
 document.addEventListener('click',e=>{
   const target=e.target&&e.target.closest?e.target:null;
@@ -5776,7 +5776,8 @@ document.addEventListener('error',e=>{const img=e.target;if(!img||img.tagName!==
   if(part)fallback.innerHTML=`<svg class="ro-icon-svg" viewBox="0 0 24 24" aria-hidden="true">${part}</svg>`;
   else fallback.textContent=img.dataset.fallback||'✦';
   if(img.parentNode)img.parentNode.replaceChild(fallback,img)},true);
-document.addEventListener('mouseover',e=>{const c=S&&e.target.closest&&e.target.closest('[data-tip]');if(!c){tip.style.display='none';return}const it=find(c.dataset.tip);if(!it){tip.style.display='none';return}
+document.addEventListener('pointerdown',e=>{if(e.pointerType==='touch')tip.style.display='none'},true);
+document.addEventListener('mouseover',e=>{if(window.matchMedia&& !window.matchMedia('(hover: hover) and (pointer: fine)').matches){tip.style.display='none';return}const c=S&&e.target.closest&&e.target.closest('[data-tip]');if(!c){tip.style.display='none';return}const it=find(c.dataset.tip);if(!it){tip.style.display='none';return}
   tip.innerHTML=itemDetail(it);tip.style.display='block'});
 document.addEventListener('mousemove',e=>{tip.style.left=Math.min(innerWidth-240,e.clientX+14)+'px';tip.style.top=Math.min(innerHeight-200,e.clientY+14)+'px'});
 // Record positive kills and Zeny credits against real elapsed time. Display both rolling
@@ -6004,8 +6005,8 @@ if(S.hp<=0){log('You were defeated... knocked back to the entrance.','r0','kills
   const AP=S.pets.filter(p=>p.on);for(const p of AP){const r=petR[p.id]||(petR[p.id]={x:pl.x-1,z:pl.z+1,at:rnd(0,1)}),i=AP.indexOf(p);let o=null,bd=1e9;
     for(const m of mobs){if(m.pack!==activePack)continue;const d=Math.hypot(m.x-r.x,m.z-r.z);if(d<bd){bd=d;o=m}}
     const ex=(o?o.x+(i-1)*.8:pl.x-1.2)-r.x,ez=(o?o.z+1.2:pl.z+(i-1)*1.1)-r.z,ed=Math.hypot(ex,ez);r.run=ed>.2;
-    if(ed>.05){const v=Math.min(ed,PET_MOVE_SPEED*dt);r.face=Math.atan2(ez,ex);r.x+=ex/ed*v;r.z+=ez/ed*v}r.x=cl(r.x,-BX_,BX_);r.z=cl(r.z,Z0-1,Z1+1);r.lunge=Math.max(0,(r.lunge||0)-dt*4);
-    if(o&&bd<2.4){r.at-=dt;if(r.at<=0){r.at=petInt(p);r.lunge=1;r.face=Math.atan2(o.z-r.z,o.x-r.x);r.attackStarted=t;petHit(p,o)}}}
+    if(ed>.05){const v=Math.min(ed,petMoveSpeed(ed)*dt);r.face=Math.atan2(ez,ex);r.x+=ex/ed*v;r.z+=ez/ed*v}r.x=cl(r.x,-BX_,BX_);r.z=cl(r.z,Z0-1,Z1+1);r.lunge=Math.max(0,(r.lunge||0)-dt*4);
+    if(o&&bd<2.4){r.at-=dt;if(r.at<=0){r.at=petInt(p);r.lunge=1;r.face=Math.atan2(o.z-r.z,o.x-r.x);if(petAnimationState(PETS[p.sp].spriteId,r,viewDir(r.face||0)).stance!=='attack')r.attackStarted=skinNow();petHit(p,o)}}}
   const px=tx-pl.x,pz=tz-pl.z,pd=Math.hypot(px,pz),spd=moveSpd()*(1+Math.min(25,skillBonus('move'))/100);
   // v77: in the arena the character stands still on purpose - the dummy and the player both stay
   // put, so the three minutes measure damage and nothing else.
@@ -7680,7 +7681,7 @@ function skinWeaponPlacement(p,clsRec,view,fi){
 }
 // Cosmetic milestones; no stat bonuses and no changes to the source art.
 const LEVEL_AURAS=[{at:50,color:'#79dcff',pattern:'compass'},{at:99,color:'#b897ff',pattern:'arcane'},{at:150,color:'#ffd779',pattern:'sunburst'}];
-const REFINE_GLOWS=[{at:4,color:'#71ffae',edge:.65,alpha:.6},{at:7,color:'#ff7cbe',edge:1,alpha:.75},{at:10,color:'#ff3049',edge:1.4,alpha:.95}];
+const REFINE_GLOWS=[{at:7,color:'#71ffae',edge:.65,alpha:.6},{at:9,color:'#ff7cbe',edge:1,alpha:.75},{at:10,color:'#ff3049',edge:1.4,alpha:.95}];
 const milestone=(rows,value)=>rows.filter(x=>value>=x.at).at(-1)||null;
 let levelAura=null;
 // Ribbon geometry keeps the sigil strokes crisp on both WebGL and mobile renderers.
@@ -8007,8 +8008,11 @@ function drawSlashFX(x,z,wt){
   slashM.position.set(x,1.15,z);slashM.material.opacity=Math.min(1,atkAnim*1.6)*.9;slashM.scale.set(1.6+atkAnim*1.2,1.6+atkAnim*1.2,1)}
 // Native frames retain relative timing; playback is calmer and measured bounds clear the ground.
 const PET_VISUAL_SCALE=.42;
-const PET_MOVE_SPEED=3;
-const PET_ANIMATION_RATE=.3;
+// Follow the hero's AGI, gear, pet and skill movement bonuses, with the same long-distance run boost.
+const petMoveSpeed=distance=>moveSpd()*(1+Math.min(25,skillBonus('move'))/100)*.95*(distance>3?MOVE_RUN:1);
+// Visual time is real milliseconds, independent of x1/x2/x4 simulation speed.
+const PET_ANIMATION_RATE=.2;
+const petFrameTime=(view,ms)=>ms*Math.min(1,view.delay/(120*PET_ANIMATION_RATE));
 // [lowest opaque pixel, largest animation extent], measured across every native pose.
 const PET_LAYOUT={"1002":[200,74],"1007":[206,53],"1013":[211,126],"1014":[210,95],"1019":[214,137],"1031":[200,74],"1056":[204,70],"1057":[203,67],"1063":[203,54],"1096":[200,113],"1101":[203,77],"1106":[211,126],"1109":[204,141],"1113":[200,74],"1115":[209,230],"1120":[192,122],"1155":[204,117],"1170":[196,132],"1180":[206,84],"1582":[200,81]};
 const petFallbackShape=sp=>sp.n==='Lunatic'?'bunny':sp.n.includes('Wolf')?'cat':sp.n.includes('Peco')?'bug':sp.n.includes('Dragon')||sp.n.includes('Baphomet')?'demon':'blob';
@@ -8024,9 +8028,10 @@ function requestPetAsset(id,stance,direction){
  return asset;
 }
 function petAnimationState(id,r,direction){
- const duration=(petSpriteStore?.catalog?.species[id]?.attackDurations[direction]||0)/1000/PET_ANIMATION_RATE;
- const elapsed=r.attackStarted==null?Infinity:Math.max(0,t-r.attackStarted);
- return elapsed<duration?{stance:'attack',ms:elapsed*1000*PET_ANIMATION_RATE,progress:elapsed/duration}:{stance:r.run?'walk':'idle',ms:t*1000*PET_ANIMATION_RATE,progress:null};
+ const attack=petSpriteStore?.ready(petAssetKey(id,'attack',direction))?.metadata.actions['attack'+direction];
+ const duration=Math.max(.8,(attack?.frames.length||0)*.12,(petSpriteStore?.catalog?.species[id]?.attackDurations[direction]||0)/1000/PET_ANIMATION_RATE);
+ const elapsed=r.attackStarted==null?Infinity:Math.max(0,skinNow()-r.attackStarted)/1000;
+ return elapsed<duration?{stance:'attack',ms:elapsed*1000*PET_ANIMATION_RATE,progress:elapsed/duration}:{stance:r.run?'walk':'idle',ms:skinNow()*PET_ANIMATION_RATE,progress:null};
 }
 function drawNativePet(v,id,r,direction){
  const state=petAnimationState(id,r,direction),asset=requestPetAsset(id,state.stance,direction);
@@ -8038,9 +8043,9 @@ function drawNativePet(v,id,r,direction){
   v.nativePet={cv,ctx:cv.getContext('2d'),tex,last:''};v.spr.material.map=tex;v.spr.material.needsUpdate=true;v.spr.center.set(.5,.25);
   v.official=true;if(v.image)v.image.style.display='none';
  }
- const n=v.nativePet,view=asset.metadata.actions[state.stance+direction],frame=PGPetSprites.frameIndex(view,state.ms,state.progress);
+ const n=v.nativePet,view=asset.metadata.actions[state.stance+direction],frame=PGPetSprites.frameIndex(view,petFrameTime(view,state.ms),state.progress);
  const key=petAssetKey(id,state.stance,direction)+':'+direction+':'+frame;
- if(key!==n.last){PGPetSprites.draw(n.ctx,asset,state.stance,direction,state.ms,state.progress);n.tex.needsUpdate=true;n.last=key}
+ if(key!==n.last){PGPetSprites.draw(n.ctx,asset,state.stance,direction,petFrameTime(view,state.ms),state.progress);n.tex.needsUpdate=true;n.last=key}
  const [ground,extent]=PET_LAYOUT[id],size=256*2.65/extent;v.spr.center.set(.5,1-ground/256);v.spr.scale.set(size,size,1);v.spr.position.set(0,0,0);v.spr.material.rotation=0;
 }
 function drawPetPreviews(){
@@ -8051,7 +8056,7 @@ function drawPetPreviews(){
  if(cv){const id=+cv.dataset.petPreview,asset=requestPetAsset(id,petPreviewStance,0),status=cv.parentNode.querySelector('[data-pet-preview-status]'),retry=cv.parentNode.querySelector('[data-a="petretry"]');
   const key=petAssetKey(id,petPreviewStance,0);pins.push(key);
   const error=petSpriteStore.catalogError||petSpriteStore.failed.get(key);
-  if(asset){PGPetSprites.draw(cv.getContext('2d'),asset,petPreviewStance,0,t*1000*PET_ANIMATION_RATE);status.textContent='Native '+petPreviewStance+' animation';cv.style.backgroundImage='none'}
+  if(asset){PGPetSprites.draw(cv.getContext('2d'),asset,petPreviewStance,0,petFrameTime(asset.metadata.actions[petPreviewStance+0],skinNow()*PET_ANIMATION_RATE));status.textContent='Native '+petPreviewStance+' animation';cv.style.backgroundImage='none'}
   else{cv.style.backgroundImage='url(assets/pets/v1/thumb-'+id+'.png)';status.textContent=error?'Animation unavailable. Retry to load.':'Loading animation…'}
   retry.hidden=!error;
  }

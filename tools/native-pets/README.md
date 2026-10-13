@@ -33,3 +33,7 @@ Native attack frames follow actual attack events without changing attack cadence
 | Legendary | Eddga | Tiger Challenge: +5–10% damage to MVPs | War Cry + Flame Burst |
 
 Try: Pets → select a collected pet → Upgrades & skills → Idle / Walk / Attack. The panel also shows recommended skill pairs. Pets still come from drops.
+
+## Runtime playback tuning (v135)
+
+Original atlas pixels, frame ordering and stored delays stay unchanged. The game uses real time for pet animation, independent of the x1/x2/x4 combat clock. Playback runs at 20% native timing with at least 120ms per displayed idle/walk frame; attack poses last at least 0.8s and 120ms per frame. Repeated combat hits do not restart an unfinished pose. The preview uses the same frame timing floor. Pet travel follows 95% of the hero movement formula (including bonuses and the long-distance run boost); damage and attack cooldowns are unchanged.

@@ -1,0 +1,30 @@
+const SKILL_VFX={
+  aid:{kind:'heal',at:'caster',life:.72},bash:{kind:'impact',life:.46},bowl:{kind:'shockwave',life:.72},
+  pierce:{kind:'thrust',life:.42},spiral:{kind:'spiral',life:.72},fire:{kind:'fireBolt',at:'target',life:.8},
+  nap:{kind:'psychic',life:.75},storm:{kind:'iceStorm',life:.95},jup:{kind:'lightning',life:.55},
+  meteor:{kind:'meteor',life:1},grav:{kind:'gravity',life:.88},dstr:{kind:'arrowBurst',life:.48},
+  blitz:{kind:'falcon',life:.62},sharp:{kind:'arrowLine',life:.55},falcon:{kind:'falcon',life:.62},
+  focus:{kind:'arrowBurst',life:.52},env:{kind:'poison',life:.72},sonic:{kind:'multiSlash',life:.52},
+  grim:{kind:'shadow',life:.62},mAss:{kind:'radial',life:.7},soulb:{kind:'soulBolt',at:'path',life:.64},
+  holy:{kind:'holyBolt',at:'target',life:.7},magnus:{kind:'holyField',life:.95},judex:{kind:'holyBolt',at:'target',life:.8},
+  mammo:{kind:'goldStrike',life:.48},hammer:{kind:'hammerFall',life:.85},cart:{kind:'cartCrash',life:.62},
+  quick:{kind:'windAura',at:'caster',life:.78},coat:{kind:'shieldAura',at:'caster',life:.82},
+  frenzy:{kind:'frenzyAura',at:'caster',life:.8},dpois:{kind:'venomAura',at:'caster',life:.78},
+  ovthrust:{kind:'frenzyAura',at:'caster',life:.78},wwalk:{kind:'windAura',at:'caster',life:.78},
+  basilica:{kind:'holyAura',at:'caster',life:.88},mbrk:{kind:'fireNova',life:.72},
+  fdiver:{kind:'iceHit',life:.66},fnova:{kind:'iceNova',life:.82},ashower:{kind:'arrowRain',life:.74},
+  sandat:{kind:'sand',life:.6},signum:{kind:'holyField',life:.78},cartrev:{kind:'cartCrash',life:.62},
+  spearboom:{kind:'spearThrow',at:'path',life:.58},tblow:{kind:'bleed',life:.66},
+  vermilion:{kind:'lightningStorm',life:.95},landmine:{kind:'earthTrap',life:.66},
+  vsplash:{kind:'poisonBomb',life:.76},tundead:{kind:'holyNova',life:.8},meltdown:{kind:'fireNova',life:.72},
+  provoke:{kind:'frenzyAura',at:'caster',life:.7},fireball:{kind:'fireNova',at:'path',life:.62},iconc:{kind:'windAura',at:'caster',life:.7},
+  iagi:{kind:'windAura',at:'caster',life:.7},tstorm:{kind:'lightningStorm',life:.95},vdust:{kind:'poison',life:.8},
+  kyrie:{kind:'shieldAura',at:'caster',life:.7},napalm:{kind:'fireBolt',at:'path',life:.7},pharrow:{kind:'arrowBurst',life:.55},
+  sdestroy:{kind:'soulBolt',at:'path',life:.6},cboost:{kind:'windAura',at:'caster',life:.7}, jointbeat:{kind:'impact',life:.5},
+};
+const SKILL_VISUAL_REDESIGN={aura:'holyAura',mystic:'holyAura',sight:'windAura',bless:'holyAura',asp:'holyAura',gloria:'holyAura',adren:'windAura',thrust:'frenzyAura',endure:'multiSlash',provoke:'impact',pierce:'multiSlash',spearboom:'impact',spiral:'multiSlash',
+ nap:'lightning',amp:'meteor',tstorm:'earthTrap',fnova:'lightningStorm',meteor:'psychic',napalm:'psychic',pharrow:'earthTrap',
+ env:'multiSlash',dodge:'multiSlash',sandat:'arrowRain',vdust:'multiSlash',vsplash:'shadow',sdestroy:'soulBolt',dpois:'frenzyAura',akatar:'multiSlash',
+ heal:'holyBolt',signum:'holyNova',sanct:'holyBolt',kyrie:'holyBolt',judex:'holyBolt',assum:'holyNova',basilica:'holyNova',wperf:'impact',meltdown:'impact'};
+for(const [id,kind] of Object.entries(SKILL_VISUAL_REDESIGN))SKILL_VFX[id]={kind,at:SKILLS.find(s=>s.id===id).type==='buff'?'caster':'target',life:.6,redesigned:true};
+function skillFxSpec(id,color){const v=SKILL_VFX[id];return v?{id,kind:v.kind,at:v.at||'target',life:v.life||.65,color:color||'#fff'}:null}

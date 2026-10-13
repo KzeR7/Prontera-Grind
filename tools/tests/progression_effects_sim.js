@@ -57,6 +57,10 @@ try{
   assert.equal(result.calls.length,4);assert.equal(result.alpha,.8);assert.equal(result.blur,0);
   for(const [x,y,w,h] of result.calls){assert.ok(Math.abs(x-10)<=1.400001&&Math.abs(y-20)<=1.400001);assert.equal(w,30);assert.equal(h,60);}
  });
+ test('weapon glow starts at +7, changes at +9 and +10',()=>{
+  assert.equal(game.ev('milestone(REFINE_GLOWS,6)'),null);
+  for(const [rank,tier] of [[7,7],[8,7],[9,9],[10,10]])assert.equal(game.ev(`milestone(REFINE_GLOWS,${rank}).at`),tier);
+ });
  test('weapon palette is independent of aura colors and +10 is crimson',()=>{
   assert.equal(game.ev('REFINE_GLOWS.every(w=>!LEVEL_AURAS.some(a=>a.color===w.color))'),true);
   assert.equal(game.ev('milestone(REFINE_GLOWS,10).color'),'#ff3049');

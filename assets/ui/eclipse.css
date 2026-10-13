@@ -1542,3 +1542,19 @@ body.clean-screen #sideMenu{display:none}
 #wins .eclipse-card-grid .card-location{grid-column:1/-1;margin:2px 0 0;font-size:10px}
 
 #wins .ui-inventory .ui-item-scroll{height:auto;min-height:0;max-height:360px;flex:0 1 auto}
+
+/* v135: keep replacement selection visible, with one scroll surface on phones. */
+#wins .eclipse-bag .grid>.cell.fit{border:2px solid #8deacb!important;background:linear-gradient(135deg,#184738,var(--panel))!important;outline:2px solid #8deacb!important;outline-offset:0;box-shadow:inset 0 0 12px #8deacb22}
+#wins .eclipse-bag .grid>.cell.fit::after{display:block;content:'✓';top:2px;right:2px;background:#8deacb;color:#10251d;padding:2px 4px;font-size:11px}
+#wins .eclipse-equipment .chooser{position:static;scroll-margin-top:48px;flex:none;border:1px solid #8deacb;padding:10px;overflow-wrap:anywhere}
+#wins .eclipse-equipment .chooser .hd{flex-wrap:wrap}
+#wins .eclipse-equipment .chooser .x{min-width:36px;min-height:36px}
+@media(hover:none),(pointer:coarse){#tooltip{display:none!important}}
+@container(max-width:700px){
+ #wins .eclipse-bag .ui-item-scroll{height:auto;max-height:none;overflow:visible;flex:none}
+ #wins .eclipse-equipment>.eclipse-equipped{overflow:visible}
+ #wins .eclipse-equipment .chooser>small{display:none!important}
+ #wins .eclipse-equipment .chooser{margin:0 0 12px}
+}
+
+#wins .eclipse-equipment .ui-loadout-slots>.cell.sel{outline:2px solid #8deacb!important;outline-offset:2px!important}
