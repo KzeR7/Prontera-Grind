@@ -498,9 +498,7 @@ t('clicking a slot highlights the fit in the REAL bag tab - no extra pop-out', (
   const bag = U.V.bag0();
   assert.ok(bag.includes('class="mob-card chooser"'), 'the Bag window carries the choosing banner');
   assert.ok(bag.includes('Change r.hand'), 'which names the slot');
-  assert.ok(bag.includes('aria-label="Broad Sword - fits this slot, click to equip"'), 'names the item it will wear');
-  assert.ok(bag.includes('cell b2 fit') && bag.includes('data-a="eqpick" data-v="9:weapon"'), 'the sword that fits is ringed and clickable');
-  assert.ok(!bag.includes('data-v="9:weapon" data-tip'), 'and is not also a plain select tile');
+  assert.ok(bag.includes('cell fit b2') && bag.includes('data-a="selb" data-v="9"'), 'compatible equipment is inspected before equipping');
   // the worn sword and the ring stay ordinary bag tiles (viewable, sellable)
   assert.ok(bag.includes('data-a="selb" data-v="2"') && bag.includes('data-a="selb" data-v="3"'), 'everything else stays a normal bag item');
   assert.ok(!/nofit/.test(bag), 'nothing in the bag is greyed out or disabled');
@@ -517,7 +515,7 @@ t('v88: the Auto-equip switch lives on the Bag tab, not in Settings (owner: "mov
   const bag = U.V.bag0();
   assert.ok(bag.includes('Auto-equip higher base value'), 'the Bag tab names the switch');
   assert.ok(/data-a="auto"/.test(bag), 'and it is wired to the same action');
-  assert.ok(bag.indexOf('Auto-equip higher base value') < bag.indexOf('Selling tools'), 'it sits tidily above the selling tools, under the ore chips');
+  assert.ok(bag.indexOf('Auto-equip higher base value') < bag.indexOf('Automatically sell new drops'), 'it sits tidily above the selling tools, under the ore chips');
   const set = U.V.set();
   assert.ok(!/data-a="auto"/.test(set), 'Settings no longer carries the gear switch');
   assert.ok(!/data-a="adv"/.test(set), 'nor the advance switch');
@@ -1200,7 +1198,7 @@ t('the Skills panel prints the whole tree against what a maxed line earns', () =
     'the panel must show the tree price and the maxed-line income side by side');
   assert.ok(src.includes('Each job adds five skills; earlier skills remain available.'),
     'the panel blurb must state the v59 cap rule');
-  assert.ok(src.includes('Buffs refresh independently.'),
+  assert.ok(src.includes('Buff refreshes share the batch delay.'),
     'and that job levels keep paying out (the owner complaint this round fixes)');
   // and the arithmetic itself, on the real numbers
   const box = {};
@@ -1496,10 +1494,10 @@ t('the ALL switch beside First Aid pauses or resumes the whole line at once', ()
 t('the Bag sells by rarity, on the drop or on a click', () => {
   U.S = mkS('Knight'); U.selB = null;
   let h = U.V.bag0();
-  assert.ok(h.includes('Selling tools'), 'the bag carries the selling tools');
+  assert.ok(h.includes('Automatically sell new drops'), 'the bag carries the selling tools');
   const RAR_NAMES = ['Common', 'Fine', 'Rare', 'Epic', 'Legendary', 'N', 'N+'];
   RAR_NAMES.forEach((n, i) => assert.ok(h.includes(`data-a="autosell" data-v="${i}"`), 'a tick for ' + n));
-  assert.ok(h.includes('data-a="clicksell"') && h.includes('Click-sell: OFF'), 'click-sell starts OFF');
+  assert.ok(!h.includes('data-a="clicksell"'), 'instant sale mode is retired');
   assert.ok(h.includes('data-a="sellnow" ') || h.includes('data-a="sellnow"'), 'and the matching purge is offered');
   const purgeOff = h.slice(h.indexOf('data-a="sellnow"'), h.indexOf('data-a="sellnow"') + 40);
   assert.ok(purgeOff.includes('disabled'), 'with nothing ticked, "Sell matching now" is disabled');
@@ -1508,15 +1506,8 @@ t('the Bag sells by rarity, on the drop or on a click', () => {
   assert.ok(h.includes('class="tick on" data-a="autosell" data-v="2"'), 'a ticked rarity is highlighted');
   assert.ok(!h.slice(h.indexOf('data-a="sellnow"'), h.indexOf('data-a="sellnow"') + 40).includes('disabled'),
     'and the purge button wakes up when a ticked item is in the bag');
-  // click-sell turns every plain tile into an instant sale, and says so before you press it
   U.S.clickSell = true; h = U.V.bag0();
-  assert.ok(h.includes('class="grid sellmode"'), 'the grid is flagged in sell mode');
-  assert.ok(h.includes('Click-sell: ON') && h.includes('sold instantly'), 'and warns what a click will do');
-  assert.ok(h.includes('data-a="quicksell" data-v="2"') && !h.includes('data-a="selb" data-v="2"'),
-    'plain tiles sell instead of selecting');
-  assert.ok(h.includes('data-tip="2"'), 'the hover tooltip still says what the item is');
-  assert.ok(src.includes('quicksell:id=>{const it=S.inv.find(x=>String(x.id)===String(id));if(!it)return;const v=sellVal(it);if(!sell(id))return;'),
-    'and the action only reports a sale when sell() actually completed');
+  assert.ok(h.includes('data-a="selb" data-v="2"') && !h.includes('data-a="quicksell"'), 'legacy click-sell saves select safely');
   // an inspect click still works when the mode is off
   U.S.clickSell = false; h = U.V.bag0();
   assert.ok(h.includes('data-a="selb" data-v="2"') && !h.includes('data-a="quicksell"'), 'OFF restores inspecting');
@@ -1531,10 +1522,10 @@ t('Nightmare gear detail and auto-sell use the separate N category, not Legendar
   assert.ok(h.includes('N Weapon (katar)')&&h.includes('Nightmare gear'), 'the selected section-4 item is labeled N');
   assert.ok(h.includes('Worn by: <b>transcendent classes only</b>')&&h.includes('your Assassin cannot wear it'),
     'the detail card makes the second-job class restriction explicit');
-  let detail=h.match(/<button class="tick([^"]*)" data-a="autosell" data-v="5" title="Toggle N drops that match your saved filters">Auto-sell N<\/button>/);
+  let detail=h.match(/<button class="tick([^"]*)" data-a="autosell" data-v="5" aria-pressed="(?:true|false)" title="Sell N drops that match your saved filters">N<\/button>/);
   assert.ok(detail&&!detail[1].includes(' on'), 'a Legendary auto-sell tick does not activate N gear');
   U.S.autoSell[4]=false;U.S.autoSell[5]=true;h=U.V.bag0();
-  detail=h.match(/<button class="tick([^"]*)" data-a="autosell" data-v="5" title="Toggle N drops that match your saved filters">Auto-sell N<\/button>/);
+  detail=h.match(/<button class="tick([^"]*)" data-a="autosell" data-v="5" aria-pressed="(?:true|false)" title="Sell N drops that match your saved filters">N<\/button>/);
   assert.ok(detail&&detail[1].includes(' on'), 'the detail button toggles the dedicated N auto-sell slot');
 });
 
@@ -1862,11 +1853,11 @@ t('compact bag keeps all selling actions and both Nightmare rarity controls', ()
   assert.ok(/<details[^>]*data-ui-disclosure="bag-selling"/.test(h));
   assert.ok(!/<details[^>]*\bopen\b/.test(h), 'selling starts collapsed');
   for (let tier=0;tier<7;tier++) assert.ok(h.includes(`data-a="autosell" data-v="${tier}"`));
-  for (const action of ['auto','sellnow','clicksell']) assert.ok(h.includes(`data-a="${action}"`));
+  for (const action of ['auto','sellnow','sellpause','bulksellnow']) assert.ok(h.includes(`data-a="${action}"`));
   assert.ok(h.includes('class="r5">N</span>') && h.includes('class="r6">N+</span>'));
   U.S.clickSell = true; h = U.V.bag0();
-  assert.ok(/<details[^>]*\bopen\b/.test(h), 'quick sell must never start hidden');
-  assert.ok(h.includes('Quick sell ON'), 'the summary identifies the destructive click mode');
+  assert.ok(!h.includes('data-a="quicksell"'), 'legacy quick sell is harmless');
+  assert.ok(h.includes('Selecting equipment never sells it.'), 'explains safe selection');
 });
 
 t('equipment artwork follows family and job progression, with local assets for every band', () => {

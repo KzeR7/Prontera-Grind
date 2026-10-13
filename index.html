@@ -3,7 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
-<title>Prontera Grind</title>
+<title>Horizon Haven</title>
+<meta name="description" content="Horizon Haven is an idle fantasy adventure. Explore new lands, collect rare equipment, master class paths, and grow your heroes at your own pace.">
 <style>
 :root{--ink:#3b2a1a;--panel:#fff8e6;--edge:#c9a35b;--edge2:#8a6a2c;--hp:#e5484d;--exp:#4aa3df;--gold:#e8a800}
 *{box-sizing:border-box}
@@ -790,7 +791,7 @@ body.clean-screen #screenBtn{visibility:visible!important}body.clean-screen #hud
 <script>try{const p=localStorage.getItem("pg_ui_palette");document.documentElement.dataset.palette=["moonstone","aurora","ember"].includes(p)?p:"moonstone"}catch{document.documentElement.dataset.palette="moonstone"}</script>
 </head>
 <body>
-<div id="loginOverlay"><div class="eclipse-login-world" aria-hidden="true"></div><header class="eclipse-login-header"><a href="./" class="eclipse-brand"><span>PG</span><b>PRONTERA GRIND<small>THE ECLIPSE INTERFACE</small></b></a><div class="eclipse-palettes" role="group" aria-label="Interface palette"><button type="button" data-palette="moonstone">Moonstone</button><button type="button" data-palette="aurora">Aurora</button><button type="button" data-palette="ember">Ember</button></div></header><main class="eclipse-login-layout"><section class="login-brand"><div class="login-eyebrow">A WORLD WORTH RETURNING TO</div><h1>Your next <br>chapter <em>awaits.</em></h1><p>One more encounter. One perfect drop.<br>Build your legend in the world of Midgard.</p><div class="eclipse-login-art"><img src="assets/ui/eclipse-knight.png" alt="Lord Knight ready for adventure"><span>01 / PRONTERA<small>THE JOURNEY BEGINS HERE</small></span><div><img src="assets/equipment-icons/1142.png" alt=""><span>YOUR NEXT UPGRADE<small>Somewhere out there.</small></span></div></div><div class="login-footnote">EXPLORE · GROW · CONQUER</div></section><div class="login-card"><div class="eclipse-access">ADVENTURER ACCESS <span>◇</span></div><h2>Welcome back.</h2><p class="login-intro">Your adventure is right where you left it.</p><div class="atabs"><button type="button" id="tabLogin" class="on">Login</button><button type="button" id="tabReg">Register</button></div>
+<div id="loginOverlay"><div class="eclipse-login-world" aria-hidden="true"></div><header class="eclipse-login-header"><a href="./" class="eclipse-brand"><span>HH</span><b>HORIZON HAVEN<small>YOUR IDLE ADVENTURE</small></b></a><div class="eclipse-palettes" role="group" aria-label="Interface palette"><button type="button" data-palette="moonstone">Moonstone</button><button type="button" data-palette="aurora">Aurora</button><button type="button" data-palette="ember">Ember</button></div></header><main class="eclipse-login-layout"><section class="login-brand"><div class="login-eyebrow">A WORLD WORTH RETURNING TO</div><h1>Your next <br>chapter <em>awaits.</em></h1><p>Explore a world beyond the horizon.<br>Collect rare gear, master every class, and build your haven.</p><div class="eclipse-login-art"><img src="assets/ui/eclipse-knight.png" alt="Lord Knight ready for adventure"><span>01 / PRONTERA<small>THE JOURNEY BEGINS HERE</small></span><div><img src="assets/equipment-icons/1142.png" alt=""><span>YOUR NEXT UPGRADE<small>Somewhere out there.</small></span></div></div><div class="login-footnote">EXPLORE · GROW · CONQUER</div></section><div class="login-card"><div class="eclipse-access">ADVENTURER ACCESS <span>◇</span></div><h2>Welcome back.</h2><p class="login-intro">Your adventure is right where you left it.</p><div class="atabs"><button type="button" id="tabLogin" class="on">Login</button><button type="button" id="tabReg">Register</button></div>
 <form id="loginForm" autocomplete="on">
 <div class="form-group"><label for="username">Account Name</label><input type="text" id="username" required autocomplete="username"></div>
 <div class="form-group"><label for="password">Password</label><div class="eclipse-password"><input type="password" id="password" required autocomplete="current-password"><button type="button" id="eclipseShowPassword" aria-pressed="false" aria-label="Password visibility">Show</button></div></div>
@@ -800,8 +801,8 @@ body.clean-screen #screenBtn{visibility:visible!important}body.clean-screen #hud
 <small id="loginHint">Local accounts log in each time; an active cloud session may resume automatically.</small>
 <div id="loginCloud" style="margin-top:8px;font-size:11px;opacity:.75;text-align:center"></div>
 <div id="saveTools" style="margin-top:6px;font-size:11px;text-align:center;opacity:.9"><a href="#" id="saveDl" title="Download every character saved in this browser as one file">⬇ Back up saves</a><span style="opacity:.5"> · </span><a href="#" id="saveUp" title="Load a backup file made by this button, on any address">⬆ Restore a backup</a><input type="file" id="saveFile" accept=".json,application/json" style="display:none"></div>
-<div id="buildTag"></div></div></main><footer class="eclipse-login-footer"><span>PRONTERA GRIND / ECLIPSE</span><span>YOUR ADVENTURE. YOUR PACE.</span></footer></div>
-<div id="wrap"><div id="eclipseHeader"><span class="eclipse-wordmark">Prontera <small>GRIND</small></span><div class="title"><span id="stageTitle">Prontera Lv 1</span><span id="grindStatus" style="font-size:12px;opacity:.85"></span></div>
+<div id="buildTag"></div></div></main><footer class="eclipse-login-footer"><span>HORIZON HAVEN / ECLIPSE</span><span>YOUR ADVENTURE. YOUR PACE.</span></footer></div>
+<div id="wrap"><div id="eclipseHeader"><span class="eclipse-wordmark">Horizon <small>HAVEN</small></span><div class="title"><span id="stageTitle">Prontera Lv 1</span><span id="grindStatus" style="font-size:12px;opacity:.85"></span></div>
 <div class="hud-zeny" id="zenyHover">&#9679; <b id="zeny">0</b> Zeny</div>
 <span class="eclipse-shards" title="Echo Shards">◇ <b id="eclipseShards">0</b><small>Shards</small></span><div style="margin-left:auto;display:flex;align-items:center;gap:8px"><span id="cloudBadge" title="Cloud save status" style="font-size:11px;opacity:.9"></span><button id="screenBtn" type="button" aria-expanded="false" aria-controls="screenOptions" title="Screen display options">☷ Display</button><span id="userBadge" style="font-weight:bold;font-size:12px;background:#e9d39a;padding:3px 8px;border-radius:4px;border:1px solid var(--edge2)"></span><button id="gmBtn" onclick="location.href='gm.html'" style="display:none" title="Server-side tooling for looking after players">🛠 GM console</button><button id="logoutBtn" onclick="logout()" style="display:none">Logout</button></div></div><div id="view"><div id="ov"><div id="mobSpriteLayer" aria-hidden="true"></div><div id="weaponSpriteLayer" aria-hidden="true"></div><section id="eclipseCombat"><div><span class="eclipse-live">AUTO COMBAT</span><span id="eclipseStageLabel"></span><button id="eclipseMinimize" aria-expanded="true" aria-controls="eclipseCombatDetails" aria-label="Minimize auto combat bar">− Hide</button></div><div id="eclipseCombatDetails"><div id="eclipseStagePips" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div><div id="prog"></div><button id="eclipseAdvance" aria-pressed="true">Auto-advance <span>●</span></button></div></section><div id="tag"><b id="tn"></b><div class="bar"><i id="th" style="background:var(--hp)"></i></div></div><div id="heroTitle" class="hero-title" aria-live="polite"><span id="heroTitleMark" class="ht-mark" aria-hidden="true"></span><span id="heroTitleText"></span></div><div id="hint">Drag to rotate &middot; Scroll or pinch to zoom</div><div id="feedWrap"><div id="feed"></div><div id="feedBar"><div id="feedTabs"><button id="feedTab" type="button" aria-expanded="true" aria-controls="feed" title="Minimize or show the on-screen log">📃 Logs ▾</button></div></div></div><div id="hudBuffs" role="status" aria-live="polite" aria-label="Active pet buffs - hover an icon for what it does"></div><div id="sideRail"><button id="eclipseMapCard" data-t="map" aria-label="Open current map"><div class="eclipse-map-art"><canvas id="eclipseMinimap" width="448" height="192" aria-label="Live terrain map and player position"></canvas></div><span><b id="eclipseMapName">World atlas</b><small id="eclipseMapStage"></small></span><span>⛶</span></button><div id="qp"></div><nav id="sideMenu" aria-label="Index and market"></nav></div><div id="dock"></div>
 <div id="eclipseCompanions"><div id="eclipsePetStrip"></div><button data-t="pet">Companions ↗</button><button id="spd">Speed x1</button></div><div id="wins"></div></div></div>
@@ -1084,7 +1085,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // give-back) and main's weapon-hold rendering work.
 let simCatchingUp=false;
 const simVisualsOff=()=>document.hidden||simCatchingUp;
-const BUILD='2026-10-13 grind-v136 Afterglow skill FX';   // shown on the login card - confirms which file you loaded
+const BUILD='2026-10-13 haven-v137 Inventory & combat';   // shown on the login card - confirms which file you loaded
 $('buildTag').textContent='build '+BUILD;
 
 // ---------- class tree: Novice -> 6 first jobs -> 6 second jobs -> 6 third jobs ----------
@@ -3265,7 +3266,7 @@ function restoreBackup(file){
     let d=null;
     try{d=JSON.parse(r.result)}catch(e){}
     if(!d||d.kind!=='save-backup'||!d.keys||typeof d.keys!=='object')
-      return showErr('That is not a Prontera Grind save backup.');
+      return showErr('That is not a Horizon Haven save backup.');
     // A backup file can come from anyone, so it may only ever write game saves - never any other key
     // in localStorage. (The browser-local GM marker lives in localStorage too: a file that could
     // write arbitrary keys would be a way to grant yourself the GM tools.)
@@ -4264,10 +4265,11 @@ function castSkill(sk,k){
 }
 function tickCombatSkills(dt){const r=skillState();r.counter=Math.max(0,(r.counter||0)-dt);r.dash=Math.max(0,r.dash-dt);r.echoCd=Math.max(0,(r.echoCd||0)-dt);if(t-r.lastHit>5)r.momentum=0;
   for(const id in r.buffs){r.buffs[id].left-=dt;if(r.buffs[id].left<=0||!skillOn(id))delete r.buffs[id];}
-  for(const s of SKILLS)if(s.type==='buff'&&skillOn(s.id)&&(skCd[s.id]||0)<=0){
+  let buffCasts=0;const batchReady=t>=(r.batchUntil||0);
+  for(const s of SKILLS)if(batchReady&&buffCasts<3&&s.type==='buff'&&skillOn(s.id)&&(skCd[s.id]||0)<=0){
     if(s.id==='ovthrust'&&skillOn('thrust'))continue;
     if(s.id==='thrust')delete r.buffs.ovthrust;
-    r.buffs[s.id]={key:s.key,value:s.f(lv(s.id)),left:s.id==='dpois'?5+lv(s.id):['ovthrust','thrust'].includes(s.id)?8+2*Math.min(5,lv(s.id)):s.duration};skCd[s.id]=s.cd;playSkillFx(s.id,null,s.col);skillNameFloat(s.n);}
+    buffCasts++;r.batchUntil=t+1.5;r.buffs[s.id]={key:s.key,value:s.f(lv(s.id)),left:s.id==='dpois'?5+lv(s.id):['ovthrust','thrust'].includes(s.id)?8+2*Math.min(5,lv(s.id)):s.duration};skCd[s.id]=s.cd;playSkillFx(s.id,null,s.col);skillNameFloat(s.n);}
   const events=r.events;r.events=[];for(const e of events){e.left-=dt;if(e.owner!==S.cls)continue;if(e.left<=0)e.fn();else r.events.push(e);}
   for(const o of mobs.slice()){
     const rooted=(o.root||0)>0;o.root=Math.max(0,(o.root||0)-dt);o.rootResist=Math.max(0,(o.rootResist||0)-dt);
@@ -4310,10 +4312,10 @@ function playerAttack(){
   engageWait=0;   // a swing is the proof the fight is live: the walk-in wait starts again (v88.4)
   const interval=aspd(),far=Math.hypot(mob.x-pl.x,mob.z-pl.z)>heroStandoff(mob)+.6;
   pAtkT=interval;atkAnim=1;swingDur=swingLength();
-  const ready=SKILLS.filter(s=>s.type==='act'&&skillOn(s.id)&&(skCd[s.id]||0)<=0&&(!far||s.rng||s.dash))
+  const ready=SKILLS.filter(s=>t>=(skillState().batchUntil||0)&&s.type==='act'&&skillOn(s.id)&&(skCd[s.id]||0)<=0&&(!far||s.rng||s.dash))
     .filter(s=>Math.hypot(mob.x-pl.x,mob.z-pl.z)<=skillRange(s,mob)+.6)
     .sort((a,b)=>(skillState().casts[a.id]??-99)-(skillState().casts[b.id]??-99));
-  const casts=[];for(const sk of ready){if(casts.length>=SKSLOTS(C().tier))break;casts.push(sk)}
+  const casts=[];for(const sk of ready){if(casts.length>=Math.min(3,SKSLOTS(C().tier)))break;casts.push(sk)}
   const d=pv('dbl');
   swing={t:swingDur*SWING_CONTACT,target:mob,pack:mob.pack,casts:casts.map((sk,i)=>({sk,k:SKFADE[i]||.3})),
     far,double:d&&Math.random()<d/100+st('dex')*.003};
@@ -4326,12 +4328,13 @@ function resolveSwing(s){
   if(!tgt||!mobs.includes(tgt)||tgt.hp<=0)return;
   mob=tgt;
   dmgGroup=new Map();
+  if(t<(skillState().batchUntil||0))s.casts=[];
   if(s.casts.length){
     for(const c of s.casts){
       if(!skillOn(c.sk.id))continue;
       // a kill mid-swing must never send the next cast at the camp next door
       if(!mob||!mobs.includes(mob)||mob.hp<=0||mob.pack!==s.pack)break;
-      skCd[c.sk.id]=c.sk.cd;skillState().casts[c.sk.id]=t;skillNameFloat(c.sk.n);castSkill(c.sk,c.k)}
+      skillState().batchUntil=t+1.5;skCd[c.sk.id]=c.sk.cd;skillState().casts[c.sk.id]=t;skillNameFloat(c.sk.n);castSkill(c.sk,c.k)}
   }else if(!s.far){
     const boost=1+(skillBonus('weapon')+skillBonus('sacred')+skillBonus('damage'))/100;
     strike(boost,undefined,skillBonus('sacred')>0);shot();
@@ -4415,9 +4418,8 @@ function equip(id,quiet){const i=S.inv.findIndex(x=>x.id===id);if(i<0)return;con
 // for ~50z and the best normal Abyss gear for under 2,000z, so dumping a full bag never funds an
 // upgrade. N gear has its own auto-sell category, separate from normal rarity labels.
 const sellVal=it=>Math.max(1,Math.round(50*(1+.9*(it.sec||0))*(1+1.4*(it.tier||0))*(1+.005*(it.lvl||0))));
-// v39 bag sell tools. autoSellOn(index) reads the matching RARALL bucket (including N at index 5),
-// and clickSellOn() is the tap-to-sell mode; both read the save, so both survive a reload.
-const autoSellOn=t=>!!(S&&S.autoSell&&S.autoSell[Math.max(0,Math.min(RARALL.length-1,Math.floor(+t||0)))]),clickSellOn=()=>!!(S&&S.clickSell);
+// Legacy click-sell flags are ignored: equipment selection is always non-destructive.
+const autoSellOn=t=>!!(S&&S.autoSell&&S.autoSell[Math.max(0,Math.min(RARALL.length-1,Math.floor(+t||0)))]),clickSellOn=()=>false;
 function sell(id){const i=S.inv.findIndex(x=>String(x.id)===String(id));if(i<0)return false;const it=S.inv[i];
   if(S.reforgePending&&String(S.reforgePending.id)===String(it.id)){log('Resolve the paid reforge offer before selling this item.','','gear');return false}
   if(it.locked){ask(`${iname(it)} is locked. Unlock it before selling? It will stay in your bag until you sell again.`,()=>{it.locked=false;log(`${iname(it)} unlocked. Click Sell again to continue.`,'r3','gear');ui();save()});return false}
@@ -4899,7 +4901,7 @@ const V={
     <small><b>A class you have played before is one click away</b> - its Base Lv, job level, skills, stats and gear are still on it, so there is no Novice reset needed to go back to it. A class you have <i>never</i> played still has to be unlocked from its parent (or from the Novice).</small>
     <button class="full" data-a="job" data-v="Novice" ${S.cls==='Novice'?'disabled':''}>Restart as Novice (Base Lv 25, job levels cleared)</button>`},
   skills(){const line=lineOf(S.cls),av=skpAvail(),sel=SKILLS.find(s=>s.id===selS);
-    return`${S.skillRefund?`<div class="row"><small><b>New class skills:</b> ${S.skillRefund} old skill ranks were cleared. Your earned points are available on their original class lines. Use Auto-allocate to learn attacks first, then all other skills. Each played class also has one free stat reset.</small></div>`:''}${S.skRepair?`<div class="row" style="margin-bottom:4px"><small class="r0"><b>Repaired an older save:</b> ${S.skRepair} skill point${S.skRepair>1?'s were':' was'} refunded - the old shop minted points, so this line was carrying levels it had never earned. Nothing else to do.</small></div>`:''}<div class="hd">Skill points: ${av} <small>(${skEarned()} earned on this line, ${Math.max(0,skSpent()-(S.sk.aid?1:0))} spent &middot; this line's tree costs ${skTree()}, a maxed line earns ${skEarnedMax()} - <b>${Math.max(0,skEarnedMax()-skTree())} to spare</b>)</small></div><small>Skill levels cost 1 point each. Each job adds five skills; earlier skills remain available. Attacks cast automatically on their cooldowns, up to ${SKSLOTS(C().tier)} per swing. Later casts deal ${SKFADE.slice(1).map(f=>Math.round(f*100)+'%').join(' / ')} power. Buffs refresh independently. Pause individual skills or use ALL to change the whole line.</small>`
+    return`${S.skillRefund?`<div class="row"><small><b>New class skills:</b> ${S.skillRefund} old skill ranks were cleared. Your earned points are available on their original class lines. Use Auto-allocate to learn attacks first, then all other skills. Each played class also has one free stat reset.</small></div>`:''}${S.skRepair?`<div class="row" style="margin-bottom:4px"><small class="r0"><b>Repaired an older save:</b> ${S.skRepair} skill point${S.skRepair>1?'s were':' was'} refunded - the old shop minted points, so this line was carrying levels it had never earned. Nothing else to do.</small></div>`:''}<div class="hd">Skill points: ${av} <small>(${skEarned()} earned on this line, ${Math.max(0,skSpent()-(S.sk.aid?1:0))} spent &middot; this line's tree costs ${skTree()}, a maxed line earns ${skEarnedMax()} - <b>${Math.max(0,skEarnedMax()-skTree())} to spare</b>)</small></div><small>Skill levels cost 1 point each. Each job adds five skills; earlier skills remain available. Attacks cast automatically on their cooldowns, up to ${Math.min(3,SKSLOTS(C().tier))} per batch with a 1.5-second gap. Basic attacks continue between batches. Later casts deal ${SKFADE.slice(1).map(f=>Math.round(f*100)+'%').join(' / ')} power. Buff refreshes share the batch delay. Pause individual skills or use ALL to change the whole line.</small>`
     +`<div class="sk-slot">${sel&&line.includes(sel.from)?skillDetailCard(sel):'<small class="sk-slot-empty">Pick a skill to read what it does and to switch its auto-cast on or off.</small>'}</div>`
     +line.map(from=>{const ss=SKILLS.filter(s=>s.from===from);return ss.length?`<div class="sec">${from}</div><div class="skg">${ss.map(s=>{const L=lv(s.id),off=!!(L&&s.type!=='pas'&&skOff(s.id)),kind=s.type==='pas'?'PASSIVE':s.type==='buff'?'BUFF':s.type==='heal'?'HEAL':'ACTIVE';
       return`<div class="sk${L?'':' off'}${off?' auto-off':''}${selS===s.id?' sel':''}" style="--sk-accent:${s.col||'#8a6a2c'}" data-a="ssel" data-v="${s.id}">
@@ -4915,26 +4917,21 @@ const V={
     const pages=Math.max(1,Math.ceil(inv.length/ECLIPSE_GEAR_PAGE_SIZE)),page=Math.min(Math.max(0,Math.floor(Number(state?.page)||0)),pages-1);if(state)state.page=page;
     const start=page*ECLIPSE_GEAR_PAGE_SIZE,shown=inv.slice(start,start+ECLIPSE_GEAR_PAGE_SIZE),n=Math.max(30,Math.ceil(shown.length/6)*6);
     const pager=pages>1?`<nav class="eclipse-inventory-pages" aria-label="Equipment pages"><button data-a="gearpage" data-v="${page-1}" ${page===0?'disabled':''} aria-label="Previous equipment page">← Previous</button><span>Page ${page+1} / ${pages}<small>${start+1}–${start+shown.length} of ${inv.length} matching items</small></span><button data-a="gearpage" data-v="${page+1}" ${page===pages-1?'disabled':''} aria-label="Next equipment page">Next →</button></nav>`:'';
-    const detail=sel?`<div class="mob-card grid-detail">${itemDetail(sel)}<div class="row" style="margin-top:6px"><button data-a="equip" data-v="${sel.id}" ${canUse(sel)?'':'disabled'}>Equip</button><button data-a="sell" data-v="${sel.id}">Sell ${sellVal(sel)}z</button><button class="tick${sel.locked?' on':''}" data-a="lockgear" data-v="${sel.id}" aria-pressed="${!!sel.locked}" title="Locked gear stays protected from auto-sell">${sel.locked?'&#9733; Unlock':'☆ Lock'}</button><button class="tick${autoSellOn(rarIdx(sel))?' on':''}" data-a="autosell" data-v="${rarIdx(sel)}" title="Toggle ${rarOf(sel).n} drops that match your saved filters">Auto-sell ${rarOf(sel).n}</button></div></div>`:'';
+    const detail=sel?`<div class="mob-card grid-detail">${itemDetail(sel)}<div class="row" style="margin-top:6px"><button data-a="equip" data-v="${sel.id}" ${canUse(sel)?'':'disabled'}>Equip</button><button data-a="sell" data-v="${sel.id}">Sell ${sellVal(sel)}z</button><button class="tick${sel.locked?' on':''}" data-a="lockgear" data-v="${sel.id}" aria-pressed="${!!sel.locked}" title="Locked gear stays protected from auto-sell">${sel.locked?'&#9733; Unlock':'☆ Lock'}</button></div></div>`:'';
     return (eqPick?equipChooser(eqPick):'')
     +`<div class="bag-top"><div class="row"><span class="chip">Oridecon <b>${S.ore.ori}</b></span><span class="chip">Elunium <b>${S.ore.elu}</b></span></div><span class="bag-count">${S.inv.length}/${BAGMAX} items</span></div>
     <label class="bag-auto" title="Higher base-value drops equip automatically. Cards and affixes are not compared, including for a second dagger."><input type="checkbox" data-a="auto" ${S.auto!==false?'checked':''}> Auto-equip higher base value</label>
-    <details class="bag-tools" data-ui-disclosure="bag-selling" ${clickSellOn()?'open':''}><summary>Auto-sell &amp; bulk sell${clickSellOn()?' · Quick sell ON':''}</summary><div class="mob-card sellbox"><div class="hd">Selling tools</div>
+    <details class="bag-tools" data-ui-disclosure="bag-selling" ><summary>Auto-sell &amp; bulk sell${S.autoSell.some(Boolean)?' · Drop rules active':' · Drop rules off'}</summary><div class="mob-card sellbox"><h4>Automatically sell new drops</h4>
       <div class="row"><small>Auto-sell on drop:</small>${RARALL.map((r,i)=>`<button class="tick${autoSellOn(i)?' on':''}" data-a="autosell" data-v="${i}" aria-pressed="${autoSellOn(i)}" title="Sell ${r.n} drops that match your saved filters">${r.n}</button>`).join('')}</div>
-      <div class="row" style="margin-top:4px"><button data-a="sellnow" ${S.inv.some(autoSellMatches)?'':'disabled'}>Preview auto-sell matches</button><button class="tick${clickSellOn()?' on':''}" data-a="clicksell" aria-pressed="${clickSellOn()}">Click-sell: ${clickSellOn()?'ON':'OFF'}</button></div>
+      <p class="sell-help">Only new drops matching these rarities and your saved filters are sold. Selecting equipment never sells it.</p><button data-a="sellpause">Turn off all drop sales</button><button data-a="sellnow" ${S.inv.some(autoSellMatches)?'':'disabled'}>Preview bag items matching drop rules</button><h4>Sell items already in your bag</h4>
       <div class="row"><small>Bulk sell rarities:</small>${RARALL.map((r,i)=>`<button class="tick${bulkSellState().autoSell[i]?' on':''}" data-a="bulkrar" data-v="${i}" aria-pressed="${bulkSellState().autoSell[i]}">${r.n}</button>`).join('')}<button data-a="bulksellnow">Preview bulk sale</button></div><small>Bulk selling uses saved filters and the rarities above. It does not enable auto-sell on drop.</small>
-      <small>${clickSellOn()?'<b class="r0">Click-sell is ON</b> - the next unlocked bag item you click is sold instantly.':'Ticked rarities sell on drop only when saved filters match. Keep rules take priority. Click-sell turns a single click in the grid into an instant sale.'}</small><small>&#9733; Locked gear is skipped by auto/bulk sell. Manual Sell asks you to confirm unlocking it.</small>${autoSellEditor()}</div></details>
+      <p class="sell-help">Preview the exact items and Zeny before confirming. Equipped, locked and saved class gear are protected.</p>${autoSellEditor()}</div></details>
     ${S.inv.length>=BAGMAX?'<div class="row"><small class="r4">BAG FULL</small></div>':''}
     <div class="bag-key" aria-label="Equipment rarities">${RARALL.map((r,i)=>`<span class="r${i}">${r.n}</span>`).join('')}</div>
     ${typeof eclipseInventoryTools==='function'?eclipseInventoryTools():''}<div class="grid${clickSellOn()?' sellmode':''}">${Array.from({length:n},(_,i)=>{const it=shown[i];if(!it)return'<div class="cell empty"></div>';
       const on=!!(sel&&sel.id===it.id),fits=!!eqPick&&slotAccepts(eqPick,it);
-      // While a slot is being chosen, every item that fits it is ringed in green and equips on
-      // a click. Everything else behaves exactly like the normal bag, so viewing, selling, the
-      // detail card and the tooltips all keep working.
-      // v39: with click-sell ON, a plain tile sells on the click instead of selecting the item;
-      // the hover tooltip stays, so what you are about to sell is still readable first.
-      const tile=fits?`<div class="cell b${dtier(it)}${it&&+it.sec>=4?' nm':''}${on?' sel':''} fit" data-tip="${it.id}" aria-label="${iname(it)} - fits this slot, click to equip" data-a="eqpick" data-v="${it.id}:${eqPick}">${icon(it)}${it.locked?`<i class="lockstar" title="Locked gear" aria-label="Locked">&#9733;</i>`:''}${it.r?`<i class="rf">+${it.r}</i>`:''}</div>`
-        :cell(it,on,clickSellOn()?`data-a="quicksell" data-v="${it.id}" aria-label="${iname(it)} - click to sell it now"`:`data-a="selb" data-v="${it.id}"`);
+      // Compatible gear stays highlighted; all taps inspect before an explicit action.
+      const tile=cell(it,on,`data-a="selb" data-v="${it.id}"`).replace('class="cell ',`class="cell ${fits?'fit ':''}`);
       // v51: the selected item's card drops into the grid directly under its own row, so the
       // Equip / Sell / Lock buttons are always next to the item you clicked - no scrolling to
       // the bottom of a full bag.
@@ -5034,10 +5031,8 @@ function slotAccepts(k,it){if(!it||it.card||it.ore||!S.inv.includes(it))return f
 // This banner is the header of that mode - what is being chosen, what is worn now, and how out.
 function equipChooser(k){
   const cur=S.eq[k],fit=S.inv.filter(it=>slotAccepts(k,it)),raw=EQK.find(x=>x[0]===k)||[,k,SLOTS.weapon.ic],nm=k==='weapon'&&katarOnly()?['weapon','two-handed Katar','🔪']:k==='off'&&dualWield()&&!canShield()?['off','dagger','🗡️']:raw;   // v81: the Assassin's left hand takes a blade, not a shield
-  const deltas=fit.slice(0,6).map(it=>{const d=ev(it)-ev(cur||{val:0});return`<b class="${rarCls(it)}">${iname(it)}</b> <b class="${d>0?'r1':'r0'}">(${d>0?'+':''}${d})</b>`}).join(' &middot; ');
-  return`<div class="mob-card chooser"><div class="hd">${nm[2]} Change ${nm[1].toLowerCase()} <small>&middot; ${fit.length} highlighted item${fit.length===1?'':'s'} fit${fit.length?' below':''}</small><button class="x" data-a="eqclose" aria-label="Cancel equipment change">&#10005;</button></div>
-  <small>${cur?`Now worn: <b class="${rarCls(cur)}">${iname(cur)}</b> (${SLOTS[cur.slot].stat} +${ev(cur)})`:'Nothing worn in this slot.'} &middot; your class may use ${C().wt.join(', ')}${k==='off'?(canShield()?' + shields':dualWield()?' + a second dagger':' · no off-hand weapon'):''}${k==='weapon'&&katarOnly()?'; the Katar occupies both hands, so no shield or second weapon can be worn':''} &middot; tap a highlighted item below to equip it; everything else in the bag can still be inspected or sold.</small>
-  ${fit.length?`<small style="display:block;margin-top:4px">Compared to what you wear: ${deltas}${fit.length>6?` &middot; +${fit.length-6} more`:''}</small>`:'<small style="display:block;margin-top:4px">Nothing in your bag fits this slot.</small>'}</div>`}
+  return `<div class="mob-card chooser"><div class="hd">Change ${nm[1].toLowerCase()} <small>· ${fit.length} compatible items</small><button class="x" data-a="eqclose" aria-label="Cancel equipment change">✕</button></div><small>Select an item to compare, then press Equip.${k==='off'?(canShield()?' + shields':dualWield()?' + a second dagger':''):''}${k==='weapon'&&katarOnly()?' The Katar occupies both hands.':''}</small></div>`}
+
 function equipIn(k,id){const it=S.inv.find(x=>String(x.id)===String(id));
   if(!it)return;if(!slotAccepts(k,it)){log('Your class cannot use that there.');return}
   const old=S.eq[k];transferEquipmentCards(old,it,k);S.eq[k]=it;S.inv.splice(S.inv.indexOf(it),1);if(old)S.inv.push(old);
@@ -5264,11 +5259,11 @@ function arrangePanel(k,root){
     const picked=inspector('Selected class',[preview,detail]);
     const notes=direct().filter(e=>e!==tree&&e!==preview&&e!==detail&&e!==legend&&e!==restart);
     const overview=make('div','eclipse-class-overview'),lineage=make('div','eclipse-class-lineage');
-    const line=lineOf(S.cls);for(const name of line){const status=classStatus(name),node=make('button','eclipse-class-node '+status+(status==='cur'?' current':''));node.dataset.a='selk';node.dataset.v=name;node.dataset.classStatus=status;node.innerHTML=eclipseClassEmblem(name)+'<h3>'+esc(name)+'</h3><small class="eclipse-job-status">'+{cur:'Current',played:'Played',ok:'Available',lock:'Locked'}[status]+'</small>'+(S.jobs[name]?'<small>Job Lv '+S.jobs[name].jl+'</small>':'');put(lineage,node)}
+    const family=lineOf(S.cls)[1],line=family?['Novice',...down(family)]:['Novice'];for(const name of line){const status=classStatus(name),node=make('button','eclipse-class-node '+status+(status==='cur'?' current':''));node.dataset.a='selk';node.dataset.v=name;node.dataset.classStatus=status;node.innerHTML=eclipseClassEmblem(name)+'<h3>'+esc(name)+'</h3><small class="eclipse-job-status">'+{cur:'Current',played:'Played',ok:'Available',lock:'Locked'}[status]+'</small>'+(S.jobs[name]?'<small>Job Lv '+S.jobs[name].jl+'</small>':'');put(lineage,node)}
     const intro=make('div','eclipse-class-info');intro.innerHTML='<b>Build your own path.</b><p>Played classes keep their own Base Level, Job Level, skills, stats and worn gear. New classes begin at Job Level 1. Browse a lineage to review its requirements.</p><button class="eclipse-primary" data-a="jobview" data-v="browse">Browse class lineages →</button>';
     const bonus=make('div','eclipse-class-bonus');bonus.innerHTML='<b>Current collection bonus <strong>+'+collDmg()+'% damage</strong></b><p>'+playedClasses()+' / '+t3Total()+' transcendent classes at Base Lv 100+. Each earns a permanent +1% damage for every class you play, up to +'+t3Total()+'%. Switching classes keeps the earned bonus.</p>';
-    put(overview,lineage,bonus,intro);overview.hidden=eclipseJobsBrowse;
-    const browser=make('div','eclipse-class-browser');browser.hidden=!eclipseJobsBrowse;
+    put(overview,lineage,bonus,intro);overview.hidden=eclipseJobsBrowse||!family;
+    const browser=make('div','eclipse-class-browser');browser.hidden=!eclipseJobsBrowse&&!!family;
     const back=make('button','eclipse-text-button','← Your class lineage');back.dataset.a='jobview';back.dataset.v='overview';
     const actions=make('div','eclipse-job-actions');if(legend)put(actions,legend);if(restart)put(actions,restart);
     put(picked,fold('Class switching & collection',notes,'class-notes'));put(browser,back,bonus.cloneNode(true),split(paths,picked));body.replaceChildren(actions,overview,browser);
@@ -5295,7 +5290,7 @@ function arrangePanel(k,root){
     const grid=q('.grid'),detail=q('.grid-detail')||(mode==='cards'?q('.mob-card'):null),top=q('.bag-top'),pager=q('.eclipse-inventory-pages'),auto=q('.bag-auto'),tools=q('.bag-tools'),key=q('.bag-key'),chooser=q('.chooser');
     if(detail)detail.remove();
     const cardFilters=q('.eclipse-card-filters');
-    if(mode==='cards'&&grid){grid.classList.add('eclipse-card-grid');const cardEntries=new Map(ownedCardEntries().map(x=>[String(x.card.id),x]));for(const tile of grid.querySelectorAll('[data-a=selc]')){const entry=cardEntries.get(tile.dataset.tip),card=entry?.card;if(!card)continue;const count=tile.querySelector('.rf')?.textContent||'';tile.innerHTML='<span class="eclipse-card-glyph">'+uiIcon('cards')+'</span><b>'+esc(cardName(card))+'</b><small>'+esc(cardEffects(card).map(cardEffectText).join(' · '))+'</small><span class="eclipse-card-meta">'+esc(GRADE[card.g])+' · '+count+'</span><span class="card-location">'+esc(entry.location)+'</span>';tile.setAttribute('role','button');tile.setAttribute('tabindex','0');tile.setAttribute('aria-label','Inspect '+cardName(card))}}
+    if(mode==='cards'&&grid){grid.classList.add('eclipse-card-grid');const cardEntries=new Map(ownedCardEntries().map(x=>[String(x.card.id),x]));for(const tile of grid.querySelectorAll('[data-a=selc]')){const entry=cardEntries.get(tile.dataset.tip),card=entry?.card;if(!card)continue;tile.dataset.grade=card.g;const count=tile.querySelector('.rf')?.textContent||'';tile.innerHTML='<span class="eclipse-card-glyph">'+uiIcon('cards')+'</span><b>'+esc(cardName(card))+'</b><small>'+esc(cardEffects(card).map(cardEffectText).join(' · '))+'</small><span class="eclipse-card-meta">'+esc(GRADE[card.g])+' · '+count+'</span><span class="card-location">'+esc(entry.location)+'</span>';tile.setAttribute('role','button');tile.setAttribute('tabindex','0');tile.setAttribute('aria-label','Inspect '+cardName(card))}}
     const search=q('.eclipse-inventory-tools');const catalog=section(mode==='cards'?'Card collection':'Equipment','ui-inventory');put(catalog,top,cardFilters,search,key,pager,scroll('inventory',grid,'ui-item-scroll'));
     const selected=inspector(mode==='cards'?'Card details':'Item details',detail||make('p','ui-empty',mode==='cards'?'Select a card to see its bonus and available equipment slots.':'Select equipment to compare its stats, equip it, lock it or sell it.'));
     if(detail&&mode==='bag'){const item=S.inv.find(it=>String(it.id)===String(selB));if(item){const art=make('div','ui-item-art');art.innerHTML=icon(item);detail.prepend(art)}}
@@ -5315,6 +5310,7 @@ function arrangePanel(k,root){
       const caption=make('div','eclipse-doll-caption');caption.innerHTML='<b>'+esc(S.cls)+'</b><small>'+esc(C().wt.join(' · '))+' lineage</small>';put(catalog,caption);
       const facts=make('div','eclipse-loadout-facts');facts.innerHTML=[['ATK',Math.round(atk())],['DEF',Math.round(def())],['CRIT',crit().toFixed(1)+'%'],['ATK/S',(1/aspd()).toFixed(2)],['HP',Math.round(maxHp())],['FLEE',flee().toFixed(1)+'%']].map(([k,v])=>'<div><span>'+k+'</span><b>'+v.toLocaleString()+'</b></div>').join('');put(catalog,facts);
       const inspect=inspector('Item inspector',[detail,bagDetail]);if(detail)detail.hidden=!!(eclipseInspectBag&&bagDetail);if(bagDetail)bagDetail.hidden=!eclipseInspectBag;
+      if(eclipseInspectBag&&bagDetail){inspect.classList.add('inspecting-bag');}
       if(source){for(const node of [source.querySelector('.chooser'),source.querySelector('.bag-tools'),source.querySelector('.bag-auto'),source.querySelector(':scope > .row')])if(node)inventory.insertBefore(node,tools||inventory.firstChild);}
       const notes=direct().filter(e=>![doll,source,preview].includes(e));
       doll.replaceChildren(catalog,inventory,inspect);doll.classList.add('ui-loadout','eclipse-equipment');
@@ -5389,6 +5385,7 @@ function arrangePanel(k,root){
     const reset=nodes.find(n=>n.matches('[data-a="reset"]')),logout=nodes.find(n=>n.matches('[data-a="logout"]'));
     if(reset)reset.remove();if(logout)logout.remove();
     if(k==='set'){
+      const full=make('button','','Toggle fullscreen (F12)');full.dataset.a='fullscreen';groups[0]?.append(full);
       groups.forEach((g,i)=>{const help=[...g.children].filter(e=>e.matches('small,p'));if(help.length)g.append(fold('Details',help,'settings-notes-'+i))});
       body.replaceChildren(...groups,put(section('Account','ui-account'),logout,fold('Reset save',reset,'reset-save')));
     }else body.replaceChildren(...groups.map((g,i)=>fold(g.querySelector('h3').textContent,g,'gm-'+i,i===0)));
@@ -5618,19 +5615,20 @@ const ACT={
     // v88: the press is anchored to its own tile, so levelling a skill never moves the grid (see ssel).
     S.sk[id]=nx;S.skRepair=0;ui('[data-win="skills"] .sk.sel');save()},
   rskill:()=>{const c=rcost();if(S.zeny<c)return denied(c,'skills');S.zeny-=c;S.sk={aid:1};S.skOff={};S.skRepair=0;log('Skills reset'+(c?' -'+c.toLocaleString()+'z':'')+'; every skill auto-casts again.','','skill');ui();save()},
-  selb:v=>{selB=v;eclipseInspectBag=true;renderWin()},equip:id=>equip(+id),sell:id=>sell(id),
+  selb:v=>{selB=v;eclipseInspectBag=true;renderWin();if(innerWidth<=740)requestAnimationFrame(()=>document.querySelector('.inspecting-bag')?.scrollIntoView({block:'nearest',behavior:'smooth'}))},equip:id=>{if(eqPick)equipIn(eqPick,id);else equip(+id)},sell:id=>{const it=S.inv.find(x=>String(x.id)===String(id));if(it)ask('Sell '+iname(it)+' for '+sellVal(it)+' Zeny?',()=>sell(id))},
   autosell:v=>{const t=Math.max(0,Math.min(RARALL.length-1,+v||0));if(!Array.isArray(S.autoSell))S.autoSell=[false,false,false,false,false,false,false];S.autoSell[t]=!S.autoSell[t];
     log(`${RARALL[t].n} items will ${S.autoSell[t]?'be sold on drop when saved filters match':'stay in the bag'}.`,S.autoSell[t]?'r3':'','gear');ui();save()},
+  fullscreen:()=>toggleFullscreen(),
+  sellpause:()=>{S.autoSell=RARALL.map(()=>false);autoSellPreview=null;save();ui()},
   lockgear:id=>toggleGearLock(id),
   sellnow:()=>previewAutoSell(),bulksellnow:()=>previewAutoSell(true),bulkrar:v=>{bulkSellState();const i=Number(v);if(!Number.isInteger(i)||i<0||i>=RARALL.length)return;bulkSellSelection.rarities[i]=!bulkSellSelection.rarities[i];autoSellPreview=null;renderWin()},sellconfirm:()=>confirmAutoSell(),sellcancel:()=>{autoSellPreview=null;ui()},
   sellrulesapply:()=>{const rules=cleanAutoSellRules(sellDraft());if(!rules)return log('Check filter values: use valid numbers, up to 100 equipment names and 0–10 empty sockets.','r0','gear');S.autoSellRules=rules;autoSellDraft=null;autoSellPreview=null;save();ui();log('Auto-sell filters saved.','r3','gear')},
   sellrulescancel:()=>{autoSellDraft=null;renderWin()},
   gmaura:v=>{if(!S.gm)return;S.lv=+v;S.pts=Math.max(0,totalPts()-ptsSpent());ui();save()},gmglow:v=>{if(!S.gm||!S.eq.weapon)return;S.eq.weapon.r=+v;ui();save()},
   sellpreset:v=>{const r=defaultAutoSellRules();if(v==='physical')r.affixes=[{k:'str',min:0},{k:'dex',min:0},{k:'crit',min:0},{k:'cdm',min:0}];else if(v==='caster')r.affixes=[{k:'int',min:0},{k:'matk',min:0}];else if(v==='collector')r.minEmpty=2;else return;autoSellDraft={owner:S,rules:r};renderWin()},
-  clicksell:()=>{S.clickSell=!clickSellOn();log(S.clickSell?'Click-sell ON: an unlocked bag item sells on click; locked gear asks to unlock first.':'Click-sell OFF: a click in the bag inspects the item again.',S.clickSell?'r0':'r3','gear');ui();save()},
-  quicksell:id=>{const it=S.inv.find(x=>String(x.id)===String(id));if(!it)return;const v=sellVal(it);if(!sell(id))return;log(`Sold ${iname(it)} for ${v.toLocaleString()}z.`,'r3','gear,zeny')},
-  // Clicking a green bag tile wears it; the highlight mode stays on so several pieces can be
-  // compared, and closing it is the ✕ on the banner (eqclose).
+  clicksell:()=>{S.clickSell=false;ui();save()},
+  quicksell:id=>{selB=id;eclipseInspectBag=true;renderWin()},
+  // Retained action for older callers; current tiles always inspect first.
   eqpick:v=>{const[id,k]=v.split(':');eclipseInspectBag=false;equipIn(k,id)},
   eqclose:()=>{eqPick=null;renderWin()},
   eqopen:k=>{eqPick=null;sub.bag='bag';if(!tabs.includes('bag')){if(tabs.length>=MAX_TABS)tabs.shift();tabs.push('bag')}selB=S.eq[k]?S.eq[k].id:null;renderWin()},
@@ -5765,11 +5763,13 @@ function escapeUI(){
   if($('modal').style.display==='flex'){$('mn').click();return}
   if(tabs.length){tabs.length=0;expandedPanels.clear();eqPick=null;selS=null;sideOpen=false;renderWin();return}
   if(sideOpen||!$('screenOptions').hidden){sideOpen=false;$('screenOptions').hidden=true;$('screenBtn').setAttribute('aria-expanded','false');renderQ();return}
-  ask('Log out of Prontera Grind? Your progress will be saved.',()=>logout(),{yes:'Log out',no:'Stay'});
+  ask('Log out of Horizon Haven? Your progress will be saved.',()=>logout(),{yes:'Log out',no:'Stay'});
 }
 addEventListener('keydown',e=>{if(!S||e.ctrlKey||e.metaKey||e.altKey)return;const k=e.key.toUpperCase();
+  if(k==='F12'){e.preventDefault();if(e.repeat)return;toggleFullscreen();return}
   if(k==='ESCAPE'){e.preventDefault();escapeUI();return}if(/INPUT|TEXTAREA|SELECT/.test(e.target.tagName))return;if(k==='Q'){qOpen=!qOpen;renderQ();return}const X={R:['equip','refine'],C:['bag','cards']}[k];if(X){const same=tabs.includes(X[0])&&sub[X[0]]===X[1]&&(!expandedPanels.size||expandedPanels.has(X[0]));sub[X[0]]=X[1];if(same)openTab(X[0]);else{if(expandedPanels.size){expandedPanels.clear();expandedPanels.add(X[0])}if(!tabs.includes(X[0])){if(tabs.length>=MAX_TABS)tabs.shift();tabs.push(X[0])}renderWin()}return}const f=Object.entries(TABS).find(([,v])=>v[2]===k);if(f)openTab(f[0])});
 
+async function toggleFullscreen(){try{if(document.fullscreenElement)await document.exitFullscreen();else await document.documentElement.requestFullscreen()}catch{log('Fullscreen is unavailable in this browser. Try the browser fullscreen control.')}}
 $('spd').onclick=()=>{speed=speed===1?2:speed===2?4:1;$('spd').textContent='Speed x'+speed};
 const tip=$('tooltip');
 document.addEventListener('error',e=>{const img=e.target;if(!img||img.tagName!=='IMG'||!img.classList||!img.classList.contains('ro-item-icon'))return;const fallback=document.createElement('span');fallback.className='ro-icon-fallback';

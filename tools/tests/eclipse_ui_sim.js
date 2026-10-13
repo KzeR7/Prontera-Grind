@@ -102,11 +102,11 @@ test('a full bag mounts one equipment page and every item remains reachable',()=
 });
 test('paged search and filters cover the whole bag and later-page sales target the displayed item',()=>{
  ev("S.inv=Array.from({length:125},(_,i)=>({...S.eq.weapon,id:52000+i,name:'Knife '+String(i).padStart(4,'0'),locked:false,cards:[],aff:[]}));S.inv[124].name='Needle';S.inv[124].tier=2;tabs.push('equip');renderWin()");
- doc.querySelector('[data-a=gearpage][aria-label="Next equipment page"]').click();doc.querySelector('.eclipse-bag [data-tip="52060"]').click();doc.querySelector('[data-a=sell][data-v="52060"]').click();assert.equal(ev('S.inv.length'),124);assert.equal(ev('S.inv.some(it=>it.id===52060)'),false);
+ doc.querySelector('[data-a=gearpage][aria-label="Next equipment page"]').click();doc.querySelector('.eclipse-bag [data-tip="52060"]').click();doc.querySelector('[data-a=sell][data-v="52060"]').click();doc.querySelector('#my').click();assert.equal(ev('S.inv.length'),124);assert.equal(ev('S.inv.some(it=>it.id===52060)'),false);
  const input=doc.querySelector('[data-eclipse-search]');input.value='Needle';input.dispatchEvent(new g.window.Event('input',{bubbles:true}));assert.equal(doc.querySelector('.eclipse-bag .grid [data-tip]').dataset.tip,'52124');assert.equal(doc.querySelector('.eclipse-inventory-pages'),null);
  input.value='';input.dispatchEvent(new g.window.Event('input',{bubbles:true}));assert.match(doc.querySelector('.eclipse-inventory-pages').textContent,/Page 1 \/ 3/);
  doc.querySelector('[data-a=filtergear][data-v="2"]').click();assert.equal(doc.querySelectorAll('.eclipse-bag .grid [data-tip]').length,1);assert.equal(doc.querySelector('.eclipse-bag .grid [data-tip]').dataset.tip,'52124');assert.match(doc.querySelector('.bag-count').textContent,/124\/1000/);
- ev("ACT.filtergear('-1');ACT.gearpage(1);ACT.seleq('weapon')");assert.match(doc.querySelector('.eclipse-inventory-pages').textContent,/Page 1 \/ 3/);assert.ok(doc.querySelector('.eclipse-bag [data-a=eqpick]'));
+ ev("ACT.filtergear('-1');ACT.gearpage(1);ACT.seleq('weapon')");assert.match(doc.querySelector('.eclipse-inventory-pages').textContent,/Page 1 \/ 3/);assert.ok(doc.querySelector('.eclipse-bag .fit[data-a=selb]'));
  ev("eqPick=null;tabs.push('bag');renderWin()");for(const node of doc.querySelectorAll('.eclipse-bag-capacity'))assert.match(node.textContent,/124 \/ 1000/);
 });
 test('search focus, caret and filter survive currency and quest updates',()=>{
@@ -134,7 +134,7 @@ test('workshop routes preserve Reforge offers and do not duplicate the store in 
 });
 test('slot selection stays inside the combined equipment workbench and retains native actions',()=>{
  ev(`S.inv=[{...S.eq.weapon,id:21001,val:999,cards:[],aff:[]}];tabs.push('equip');renderWin();ACT.seleq('weapon')`);
- assert.equal(ev('tabs.join()'),'equip');assert.ok(doc.querySelector('[data-a=eqpick]'));doc.querySelector('[data-a=eqpick]').click();assert.equal(ev('S.eq.weapon.id'),21001);assert.ok(doc.querySelector('#eclipseDoll'));
+ assert.equal(ev('tabs.join()'),'equip');assert.ok(doc.querySelector('.fit[data-a=selb]'));doc.querySelector('.fit[data-a=selb]').click();assert.notEqual(ev('S.eq.weapon.id'),21001);doc.querySelector('[data-a=equip][data-v="21001"]').click();assert.equal(ev('S.eq.weapon.id'),21001);assert.ok(doc.querySelector('#eclipseDoll'));
 });
 test('Moonstone login retains account registration, remember-ID and backup/restore controls',()=>{
  for(const id of ['tabLogin','tabReg','username','password','password2','rememberUser','saveDl','saveUp','saveFile','loginCloud','authBtn'])assert.ok(doc.getElementById(id),id);

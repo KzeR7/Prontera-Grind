@@ -237,7 +237,7 @@ t('locked Market explains its level gate without offering purchases',()=>{
 t('full bag and active click-sell are visible above the catalogue',()=>{
   ev("sub.bag='bag';S.clickSell=true;window.savedInv=S.inv;S.inv=Array.from({length:BAGMAX},()=>window.savedInv[0])");
   const root=window.document.createElement('div');root.innerHTML=ev('V.equip()');ev('arrangePanel')('equip',root);
-  assert.ok(root.querySelector('.eclipse-bag').textContent.includes('BAG FULL'));assert.ok(root.querySelector('.eclipse-bag > .bag-tools').textContent.includes('Click-sell is ON'));
+  assert.ok(root.querySelector('.eclipse-bag').textContent.includes('BAG FULL'));assert.ok(root.querySelector('.eclipse-bag > .bag-tools').textContent.includes('Selecting equipment never sells it.'));
   ev('S.inv=window.savedInv;S.clickSell=false');
 });
 t('account reset is separated from appearance and still uses its original handler',()=>{

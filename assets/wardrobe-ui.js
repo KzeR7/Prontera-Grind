@@ -13,15 +13,16 @@ function wardrobePanel(){wardrobeOwner();if(wardrobeState.cls!==S.cls||wardrobeS
  const name=cls==='Swordman'?'Swordsman':cls;
  return `<div class="wardrobe"><div class="wardrobe-intro"><div class="hd">Your look</div><small>Make it yours. Your hair and accessories follow you when you change jobs.</small></div>
  <div class="wardrobe-fitting"><div class="wardrobe-stage"><span class="wardrobe-class">${name}</span><canvas id="wardrobeCanvas" width="320" height="280" role="img" aria-label="${name} appearance preview"></canvas></div><div class="wardrobe-controls">
+ <section class="wardrobe-section"><h3>Character</h3><label>Gender<select data-wardrobe="sex">${option("m","Male",sex)}${option("f","Female",sex)}</select></label></section>
  <section class="wardrobe-section"><h3>Hair</h3><div class="wardrobe-fields">
  <label>Hairstyle<select data-wardrobe="head">${PGWardrobe.HAIRS[sex].map((h,i)=>option(h,'Style '+(i+1),a.heads[sex])).join('')}</select></label>
  <label>Color<select data-wardrobe="color">${Array.from({length:9},(_,i)=>option(i,'Color '+(i+1),a.colors[sex])).join('')}</select></label></div></section>
  <section class="wardrobe-section"><h3>Accessories</h3><div class="wardrobe-fields">${Object.entries(PGWardrobe.ACCESSORIES).map(([field,slot])=>`<label>${slot.label}<select data-wardrobe="${field}">${Object.entries(slot.items).map(([id,label])=>option(id,label,a[field])).join('')}</select></label>`).join('')}</div></section>
- <small class="wardrobe-note">Some hair colors repeat. Change gender in Settings.</small></div></div>
+ <small class="wardrobe-note">Preview male or female appearance, then apply your look.</small></div></div>
  <div class="wardrobe-footer"><p id="wardrobeStatus" class="wardrobe-status" role="status" aria-live="polite"></p><div class="wardrobe-actions"><button data-wardrobe-action="apply" id="wardrobeApply" class="wardrobe-apply">Apply look</button><button data-wardrobe-action="cancel">Cancel changes</button><button data-wardrobe-action="retry" id="wardrobeRetry" hidden>Try again</button></div><button data-wardrobe-action="original" class="wardrobe-reset">Reset look</button></div></div>`;
 }
 V.wardrobe=wardrobePanel;
-function wardrobeStatus(){const el=$('wardrobeStatus');if(el)el.textContent=wardrobeState.loading?'Loading appearance…':wardrobeState.status||'Preview your changes, then apply your look.';const retry=$('wardrobeRetry');if(retry)retry.hidden=!wardrobeState.status.includes('could not load');const button=$('wardrobeApply');if(button)button.disabled=wardrobeState.loading||!wardrobeState.look||(wardrobeState.look.cls!==S.cls||wardrobeState.draft.sex!==S.sex||(PGWardrobe.selectionKey(wardrobeState.look.selection)!==PGWardrobe.selectionKey(wardrobeState.draft)||wardrobeState.look.selection.outfit!==wardrobeState.draft.outfit))}
+function wardrobeStatus(){const el=$('wardrobeStatus');if(el)el.textContent=wardrobeState.loading?'Loading appearance…':wardrobeState.status||'Preview your changes, then apply your look.';const retry=$('wardrobeRetry');if(retry)retry.hidden=!wardrobeState.status.includes('could not load');const button=$('wardrobeApply');if(button)button.disabled=wardrobeState.loading||!wardrobeState.look||(wardrobeState.look.cls!==S.cls||(PGWardrobe.selectionKey(wardrobeState.look.selection)!==PGWardrobe.selectionKey(wardrobeState.draft)||wardrobeState.look.selection.outfit!==wardrobeState.draft.outfit))}
 function wardrobeLoad(){const a=PGWardrobe.normalize(wardrobeState.draft);if(!a)return;const owner=S,cls=wardrobeState.cls,activeCls=S.cls,seq=++wardrobeState.seq;wardrobeState.loading=true;wardrobeStatus();
  wardrobeStore.select('preview',a,cls).then(look=>{if(!look||seq!==wardrobeState.seq||S!==owner||S.cls!==activeCls||wardrobeState.cls!==cls||!tabs.includes('wardrobe'))return;wardrobeState.look=look;wardrobeState.loading=false;wardrobeState.paint='';wardrobeState.start=performance.now();wardrobeState.status='';wardrobeStatus();wardrobePreview()}).catch(()=>{if(seq!==wardrobeState.seq||S!==owner||S.cls!==activeCls||wardrobeState.cls!==cls)return;wardrobeState.loading=false;wardrobeState.status='This appearance could not load. Your saved look is unchanged. Try again.';wardrobeStatus()})}
 function wardrobeSync(){wardrobeOwner();if(!tabs.includes('job')){wardrobeStore.release('portrait');wardrobeClassLook=null;wardrobeClassRequest=''}if(!tabs.includes('wardrobe')){if(wardrobeState.draft){wardrobeState.seq++;wardrobeStore.release('preview');wardrobeState.draft=null;wardrobeState.look=null;wardrobeState.loading=false;wardrobeState.canvas=null}return}
@@ -36,7 +37,7 @@ function wardrobePreview(){const st=wardrobeState,cv=$('wardrobeCanvas');if(!cv|
  const x=Math.min(...layers.map(p=>p[4])),y=Math.min(...layers.map(p=>p[5])),w=Math.max(...layers.map(p=>p[4]+p[2]))-x,h=Math.max(...layers.map(p=>p[5]+p[3]))-y,scale=Math.min(250/w,195/h),ctx=cv.getContext('2d');
  ctx.clearRect(0,0,320,280);ctx.imageSmoothingEnabled=false;ctx.drawImage(source,x,y,w,h,(320-w*scale)/2,60+(195-h*scale)/2,w*scale,h*scale)}
 function wardrobeChange(field,value){const st=wardrobeState;if(!st.draft)return;let asset=false;
- if(field==='head'){st.draft.heads[st.draft.sex]=+value;asset=true}else if(field==='color'){st.draft.colors[st.draft.sex]=+value;asset=true}
+ if(field==='sex'&&['m','f'].includes(value)){st.draft.sex=value;asset=true}else if(field==='head'){st.draft.heads[st.draft.sex]=+value;asset=true}else if(field==='color'){st.draft.colors[st.draft.sex]=+value;asset=true}
  else if(['halo','glasses','wings'].includes(field)){const slot={halo:'headwear',glasses:'facewear',wings:'backwear'}[field];st.draft[slot]=value?field:'none';asset=true}
  else if(Object.hasOwn(PGWardrobe.ACCESSORIES,field)){st.draft[field]=value;asset=true}
  else if(field==='outfit'){st.draft.outfit=value;asset=true}else return;
@@ -47,8 +48,8 @@ function wardrobeAction(action){const st=wardrobeState;if(!st.draft)return;
  if(action==='cancel'){st.draft=wardrobeAppearance();wardrobeLoad();renderWin();return}
  if(action==='original'){S.appearance=null;wardrobeEquipped=null;wardrobeRequested='';wardrobeFailure='';wardrobeStore.release('hero');heroKey='';st.draft=wardrobeAppearance();st.status='Default hair and costume restored.';wardrobeLoad();save();ui();return}
  if(action==='apply'){
-  if(st.loading||!st.look||st.look.cls!==S.cls||st.draft.sex!==S.sex||(PGWardrobe.selectionKey(st.look.selection)!==PGWardrobe.selectionKey(st.draft)||st.look.selection.outfit!==st.draft.outfit))return;
-  S.appearance=PGWardrobe.normalize(st.draft);wardrobeRequested='';wardrobeFailure='';heroKey='';st.status='Look applied.';save();ui();
+  if(st.loading||!st.look||st.look.cls!==S.cls||(PGWardrobe.selectionKey(st.look.selection)!==PGWardrobe.selectionKey(st.draft)||st.look.selection.outfit!==st.draft.outfit))return;
+  S.sex=st.draft.sex;st.sex=S.sex;S.appearance=PGWardrobe.normalize(st.draft);wardrobeRequested='';wardrobeFailure='';heroKey='';st.status='Look applied.';save();ui();
  }
 }
 $('wins').addEventListener('change',e=>{const el=e.target;if(el.dataset.wardrobe)wardrobeChange(el.dataset.wardrobe,el.type==='checkbox'?el.checked:el.value)});
