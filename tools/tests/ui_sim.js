@@ -120,6 +120,8 @@ const code = [
   pick(/const LOGCATS=\[[\s\S]*?\];/, 'log category table'),
   grab('const logCats=', 'const feedOn='),
   grab('const feedOn=', 'function log('),
+  grab('function rotationSkills()', '// v39: the master'),
+  pick(/const skOff=[^;]+;/, 'skill on reader'),
   grab('const skTog=', 'const pv=k=>'),
   pick(/const autoSellOn=[^\n]*/, 'auto-sell / click-sell readers'),
 ].join('\n');
@@ -133,7 +135,7 @@ const PW=[[90,9,1,0],[80,17,3,0],[70,24,5.5,.5],[60,30,9,1],[50,35,13,2],[40,38,
 const MAXST=99,ELITELV=100,Z0=-14;
 const statCap=()=>99,selK=null,gp=id=>S&&S.pets.find(x=>String(x.id)===String(id)),tb={};
 let skinBroken=false,skinNote='';   // the Appearance panel's class-skin state (loaded with the game in the real page)
-const skCost=x=>x,skOff=id=>!!(S&&S.skOff&&S.skOff[id]);
+const skCost=x=>x;
 let petBuff={atk:0,matk:0,hp:0,leech:0,atkT:0,matkT:0,hpT:0,leechT:0},petBuffSrc={},petSkillCd={},petNote={};
 const rollingSet=new Set(),autoSet=new Set(),busy=()=>false;
 let S=null,mapM=0,mapL=1,selB=null,selC=null,collectionGrade=-1;   // remaining panel state comes in with the V grab
@@ -691,7 +693,7 @@ t('damage floats stay screen-projected, restrained, and distinct by type', () =>
     'MISS and DODGE are plain text labels with no badge frame');
   assert.ok(src.includes('#xp-track{display:flex;width:100%;height:14px')&&src.includes('#xp-dock{flex:none;width:100%;padding:3px 10px 4px'),
     'the shared Base/Job bar must be slimmer than before');
-  assert.ok(src.includes('skillNameFloat(c.sk.n)')&&src.includes("skillNameFloat('First Aid')")&&src.includes('skillNameFloat(s.n)'),
+  assert.ok(src.includes('skillNameFloat(c.sk.n)')&&src.includes("skillNameFloat('First Aid')"),
     'active, healing and buff skills must show a name above the caster');
   const box={};vm.createContext(Object.assign(box,{simVisualsOff:()=>false}));
   vm.runInContext(`
@@ -1198,7 +1200,7 @@ t('the Skills panel prints the whole tree against what a maxed line earns', () =
     'the panel must show the tree price and the maxed-line income side by side');
   assert.ok(src.includes('Each job adds five skills; earlier skills remain available.'),
     'the panel blurb must state the v59 cap rule');
-  assert.ok(src.includes('Buff refreshes share the batch delay.'),
+  assert.ok(src.includes('Buffs and attacks share the same rotation.'),
     'and that job levels keep paying out (the owner complaint this round fixes)');
   // and the arithmetic itself, on the real numbers
   const box = {};

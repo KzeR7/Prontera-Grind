@@ -25,7 +25,13 @@ const PGSkillAfterglow=(()=>{
           const x=caster.has(fx.id)?fx.x0:fx.x1,z=caster.has(fx.id)?fx.z0:fx.z1;
           const top=project(x,3.05,z);
           // Match the study's 120px target to the game's 3.05-unit creature billboard.
-          const scale=Math.max(.01,Math.hypot(top[0]-at[0],top[1]-at[1])/120);
+          const scale=Math.max(.01,Math.hypot(top[0]-at[0],top[1]-at[1])/120)*(fx.areaScale||1);
+          // A projected ground seal at the caster; no sprite art is modified.
+          if(fx.magic&&fx.age<.9){
+            g.save();g.setTransform(ratio,0,0,ratio,0,0);g.globalAlpha=Math.max(0,1-fx.age/.9);g.strokeStyle='#d9b9ff';g.lineWidth=1.5;
+            for(const radius of [1.1,1.4]){g.beginPath();for(let i=0;i<=48;i++){const angle=i*Math.PI/24,point=project(fx.x0+Math.cos(angle)*radius,0.04,fx.z0+Math.sin(angle)*radius);if(i)g.lineTo(...point);else g.moveTo(...point);}g.closePath();g.stroke();}
+            g.restore();
+          }
           const traveling=path.has(fx.id)&&Math.hypot(b[0]-a[0],b[1]-a[1])>1;
           const anchor=caster.has(fx.id)?252:785;
           let sx=scale,sy=0,yx=0,yy=scale,tx=at[0]-anchor*scale,ty=at[1]-500*scale;

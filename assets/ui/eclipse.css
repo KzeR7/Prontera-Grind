@@ -48,12 +48,12 @@ small{color:var(--e-muted)}
 
 #eclipseCombat{position:absolute;top:20px;left:50%;transform:translateX(-50%);width:250px;z-index:42;line-height:1.5;background:var(--e-glass);border:1px solid var(--edge);border-radius:8px;padding:11px 14px;pointer-events:auto;font-size:10px}
 #eclipseCombat>div:first-child{display:flex;align-items:center;justify-content:space-between}
-.eclipse-live{color:#9dd6bc;letter-spacing:1.5px;font-size:8px}
+.eclipse-live{color:var(--gold);letter-spacing:1.5px;font-size:8px}
 .eclipse-live:before{content:'●';font-size:6px;margin-right:7px}
 #eclipseMinimize{padding:0;width:24px;height:24px;font-size:17px;line-height:1;color:var(--gold)}
 #eclipseCombat #prog{position:static;transform:none;left:auto;right:auto;top:auto;color:var(--ink);font-size:10px;text-align:left;text-shadow:none;padding:8px 0;background:none;min-height:31px;white-space:nowrap}
 #eclipseAdvance{display:block;width:100%;font-size:8px;text-align:left;background:none;border:0;padding:0;color:var(--e-muted)}
-#eclipseAdvance span{float:right;color:#8cd5b5}
+#eclipseAdvance span{float:right;color:var(--gold)}
 #eclipseAdvance[aria-pressed=false] span{color:#596779}
 #eclipseCombat.minimized{width:190px;padding-block:8px}
 #eclipseCombat.minimized #eclipseCombatDetails{display:none}
@@ -739,10 +739,10 @@ body.clean-screen #screenBtn{visibility:visible}
 #wins>.wp{background:linear-gradient(140deg,var(--e-raised),var(--e-glass));border-color:var(--e-line-bright)}
 
 #wins>.wp>.title{background:transparent}
-.eclipse-farming{font-size:8px;white-space:nowrap;color:#8cb9a6;margin-right:10px}
+.eclipse-farming{font-size:8px;white-space:nowrap;color:var(--gold);margin-right:10px}
 
 .eclipse-window-footer{display:flex;align-items:center;justify-content:space-between;gap:10px;height:29px;flex:none;border-top:1px solid var(--e-line);padding:0 18px;font-size:7px;color:var(--e-muted)}
-.eclipse-save-status:before{content:'●';font-size:5px;color:#8cd5b5;margin-right:7px}
+.eclipse-save-status:before{content:'●';font-size:5px;color:var(--gold);margin-right:7px}
 .eclipse-window-footer kbd{border:1px solid var(--e-line);padding:1px 3px;font-size:6px}
 
 #wins .eclipse-equipment>.ui-section{background:transparent}
@@ -1544,9 +1544,9 @@ body.clean-screen #sideMenu{display:none}
 #wins .ui-inventory .ui-item-scroll{height:auto;min-height:0;max-height:360px;flex:0 1 auto}
 
 /* v135: keep replacement selection visible, with one scroll surface on phones. */
-#wins .eclipse-bag .grid>.cell.fit{border:2px solid #8deacb!important;background:linear-gradient(135deg,#184738,var(--panel))!important;outline:2px solid #8deacb!important;outline-offset:0;box-shadow:inset 0 0 12px #8deacb22}
-#wins .eclipse-bag .grid>.cell.fit::after{display:block;content:'✓';top:2px;right:2px;background:#8deacb;color:#10251d;padding:2px 4px;font-size:11px}
-#wins .eclipse-equipment .chooser{position:static;scroll-margin-top:48px;flex:none;border:1px solid #8deacb;padding:10px;overflow-wrap:anywhere}
+#wins .eclipse-bag .grid>.cell.fit{border:2px solid var(--gold)!important;background:linear-gradient(135deg,var(--e-raised),var(--panel))!important;outline:2px solid var(--gold)!important;outline-offset:0;box-shadow:inset 0 0 12px var(--e-soft)}
+#wins .eclipse-bag .grid>.cell.fit::after{display:block;content:'✓';top:2px;right:2px;background:var(--gold);color:#10251d;padding:2px 4px;font-size:11px}
+#wins .eclipse-equipment .chooser{position:static;scroll-margin-top:48px;flex:none;border:1px solid var(--gold);padding:10px;overflow-wrap:anywhere}
 #wins .eclipse-equipment .chooser .hd{flex-wrap:wrap}
 #wins .eclipse-equipment .chooser .x{min-width:36px;min-height:36px}
 @media(hover:none),(pointer:coarse){#tooltip{display:none!important}}
@@ -1557,12 +1557,12 @@ body.clean-screen #sideMenu{display:none}
  #wins .eclipse-equipment .chooser{margin:0 0 12px}
 }
 
-#wins .eclipse-equipment .ui-loadout-slots>.cell.sel{outline:2px solid #8deacb!important;outline-offset:2px!important}
+#wins .eclipse-equipment .ui-loadout-slots>.cell.sel{outline:2px solid var(--gold)!important;outline-offset:2px!important}
 
 /* Horizon Haven: safe, compact equipment inspection and readable collection tiers. */
-#wins .eclipse-bag .grid>.cell.fit{border:1px solid #8deacb!important;outline:0!important;box-shadow:none;background:var(--panel)!important}
+#wins .eclipse-bag .grid>.cell.fit{border:1px solid var(--gold)!important;outline:0!important;box-shadow:none;background:var(--panel)!important}
 #wins .eclipse-bag .grid>.cell.fit::after{display:none}
-#wins .eclipse-equipment .ui-loadout-slots>.cell.sel{outline:1px solid #8deacb!important;outline-offset:1px!important}
+#wins .eclipse-equipment .ui-loadout-slots>.cell.sel{outline:1px solid var(--gold)!important;outline-offset:1px!important}
 #wins .eclipse-equipment .chooser{padding:6px 9px;margin-bottom:8px;border-color:var(--e-line)}
 #wins .eclipse-equipment .chooser .hd{font-size:11px;margin:0}
 #wins .eclipse-equipment .chooser .x{min-width:28px;min-height:28px}
@@ -1586,3 +1586,50 @@ body.clean-screen #sideMenu{display:none}
  #wins .eclipse-equipment:has(.inspecting-bag)>.ui-inspector{grid-column:1/-1;grid-row:3;border-top:1px solid var(--e-line);padding:14px}
  #wins .eclipse-equipment .chooser>small{display:block!important;font-size:10px}
 }
+
+/* Shared palette surfaces, including nested logs and browser controls. */
+html *{scrollbar-color:var(--edge2) var(--e-bg)}
+#wins .wbody,#wins .ui-catalog{scrollbar-color:var(--edge2) var(--e-bg)}
+input[type=checkbox],input[type=radio]{accent-color:var(--gold)}
+.skill-rotation{padding:12px;border:1px solid var(--edge2);border-radius:8px;margin:12px 0}
+.skill-rotation>small{display:block;margin:6px 0}
+.skill-priority{display:flex;flex-wrap:wrap;gap:6px}
+.skill-priority>div{padding:6px;background:var(--e-raised);border:1px solid var(--edge);border-radius:5px}
+.skill-priority button{padding:4px 8px;margin-left:5px}
+.refine-reserve{flex:none;padding:8px 0;color:var(--gold);font-weight:600}
+#wins .eclipse-companion-card{--pet-rarity:#c7cbd1;border-color:var(--pet-rarity);border-top-width:3px}
+#wins .eclipse-companion-card[data-rarity="1"]{--pet-rarity:#9ecaff}
+#wins .eclipse-companion-card[data-rarity="2"]{--pet-rarity:#dcb6ff}
+#wins .eclipse-companion-card[data-rarity="3"]{--pet-rarity:#ffe197}
+#wins .eclipse-companion-card .pet-rarity{color:var(--pet-rarity)}
+#wins .eclipse-companion-grid[data-pet-view=collection]>.eclipse-companion-card{display:grid;grid-template-rows:20px 100px 44px 48px 24px 6px 24px 24px 40px 100px 42px;align-content:start;align-items:center}
+#wins .eclipse-companion-grid[data-pet-view=collection] .eclipse-pet-deployment{align-self:stretch;display:flex;flex-direction:column;justify-content:flex-end;gap:8px}
+#wins .eclipse-companion-grid[data-pet-view=collection] h3{margin:0}
+
+:root{--surface:var(--panel);--surface2:var(--e-raised);--muted:var(--e-muted);--brass:var(--gold);--focus:var(--gold)}
+#wins .skill-rotation{grid-column:1/-1}
+#wins .eclipse-companion-grid[data-pet-view=collection]>.eclipse-companion-card{grid-template-columns:minmax(0,1fr)}
+#wins .eclipse-companion-grid[data-pet-view=collection]>.eclipse-companion-card>*{grid-column:1;grid-row:auto;margin:0}
+#wins .eclipse-companion-grid[data-pet-view=collection] .eclipse-companion-portrait{height:100px}
+#wins .eclipse-companion-grid[data-pet-view=collection] .eclipse-fine-print{display:block}
+#wins .eclipse-companion-card[hidden]{display:none}
+#wins .sk-slot-empty,#wins .sk-detail-autocast,#wins .sell-preview,#wins .bag-tools,#wins .hair-preview-card,#wins .cell .rf,#wins .offline-stat{background:var(--e-raised);color:var(--ink);border-color:var(--edge2)}
+#wins .autosell-editor :is(textarea,select,input),#wins .sk-kind{background:var(--e-bg);color:var(--ink);border-color:var(--edge2)}
+#wins .arw,#wins .dropgrp,#wins .bag-count,#wins .sk-level,#wins .sk-autocast{color:var(--e-muted)}
+#wins :is(.atabs,.gt,.mastery-tabs,.board-periods) button.on,#wins button.tick.on{background:var(--e-soft);color:var(--gold);border-color:var(--gold)}
+#tooltip,.pbx-fly,.hud-flyout{background:var(--e-glass);border-color:var(--edge2);color:var(--ink)}
+
+/* Remaining journal, atlas and inventory surfaces formerly used moss colors. */
+#wins :is(.mastery-tabs,.mastery-medal,.mastery-medal small,.eclipse-atlas-hero){background:var(--e-raised);border-color:var(--edge2);color:var(--ink)}
+#wins .mastery-title{background:var(--panel);border-color:var(--edge);border-left-color:var(--foil)}
+#wins :is(.mastery-track,.pbar){background:var(--e-bg);border-color:var(--edge2)}
+#wins .mastery-track i{background:var(--gold)}
+#wins .autosell-editor fieldset,#wins .drop-icon{border-color:var(--edge2)}
+#wins .eclipse-item-power small,#wins .dwho{color:var(--e-muted)}
+#wins .echo-open,#wins .map-specials small{background:var(--e-soft);color:var(--gold)}
+.eclipse-atlas-hero:after{background:linear-gradient(0deg,var(--e-glass),transparent 90%)}
+.eclipse-atlas-hero p{color:var(--e-muted)}
+.skill-priority{flex-wrap:nowrap;overflow-x:auto;padding-bottom:5px}
+.skill-priority>div{flex:0 0 150px;display:grid;grid-template-columns:1fr 1fr;gap:5px;min-width:0}
+.skill-priority>div>span{grid-column:1/-1;min-height:30px;font-size:11px}
+.skill-priority button{margin:0}

@@ -31,7 +31,7 @@ There are 19 classes: Novice plus six three-step lines:
 | Merchant | Blacksmith | Whitesmith |
 
 Base level, Job level, stat points and skill ranks are different kinds of progress.
-Skills use cooldowns, not an SP resource. New casts occur in batches of up to three, with a 1.5-second simulation-time gap shared by attacks and buffs; basic attacks continue between batches. Read each skill's current definition:
+Skills use cooldowns, not an SP resource. New casts occur in batches of up to three, with a 1.5-second simulation-time gap shared by attacks and buffs; basic attacks continue between batches. Attacks and buffs use one priority rotation. Their cooldown is 1.5 seconds per group of three enabled skills (11 skills: 6 seconds); First Aid remains a separate emergency heal. Players reorder the rotation in Skills. Mage and Acolyte lines attack with magic at six tiles; their area skills have increased reach and damage, especially Mage. Read each skill's current definition:
 historical IDs can remain unchanged after a skill is renamed or redesigned.
 
 Previously played classes can be revisited directly and restore their saved
