@@ -1,5 +1,9 @@
 # Tools — start here
 
+> **Agents: start with [AGENTS.md](AGENTS.md).** The shared handbook describes the
+> current architecture and commands. This file retains older handovers and tool
+> details; historical build notes are not the current specification.
+
 There are a lot of dev pages in `tools/`, several with similar names. This is the map:
 **what to open, what it answers, and which ones are history.** Nothing here ships to a player.
 
