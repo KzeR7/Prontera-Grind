@@ -1,5 +1,9 @@
 # Prontera Grind — read me first
 
+> **Agents: start with [AGENTS.md](AGENTS.md).** The shared handbook describes the
+> current architecture and commands. This file retains older handovers and tool
+> details; historical build notes are not the current specification.
+
 A browser Ragnarok-Online-flavoured idle/grind game. **One file is the game**: `index.html`
 (HTML, CSS and JavaScript inline, Three.js from a CDN, no build step). Cloudflare Pages serves
 `dist/` (see *Put the saves on the server* below for the API half), so a push to `main` is the
