@@ -196,7 +196,7 @@ try {
   await t('the static site is served alongside the API, and dev material is not', async () => {
     const page = await fetch(base + '/');
     assert.strictEqual(page.status, 200);
-    assert.ok((await page.text()).includes('Prontera Grind'), 'the game itself must be served at /');
+    assert.match(await page.text(), /<title>Horizon Haven<\/title>/, 'the game itself must be served at /');
     assert.ok((await fetch(base + '/gm.html')).status === 200, 'the GM console must be served');
     assert.strictEqual((await fetch(base + '/tools/dev_server.js')).status, 404, 'dev files must not be reachable');
     assert.ok(fs.existsSync(path.join(site, 'index.html')), 'the fixture must be built before the server starts');

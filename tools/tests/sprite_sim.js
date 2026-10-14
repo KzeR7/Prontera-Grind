@@ -280,11 +280,30 @@ t('official sprites are loaded over the procedural art with safe fallbacks', () 
   assert.ok(src.includes('const WEAPON_HIDDEN_DIRS=[3,4,5];'),
             'the away-view list is still remembered (a front-view item icon reads wrong there)');
   assert.ok(src.includes("n.el.style.display='grid'"), 'the weapon node code is still in place, just not reached');
-  assert.ok(src.includes("if(!mob||heroWeaponType(C().n,C().wt,S.eq.weapon&&S.eq.weapon.wt)!=='bow')return"), 'only the Archer weapon family emits the basic arrow projectile');
   assert.ok(src.includes("slashM.visible=HERO_SWING_ARC&&atkAnim>.12&&wt!=='bow'&&wt!=='staff'")
             && src.includes('const HERO_SWING_ARC=false;'),
             'bow and staff attacks never showed a generic melee slash, and since v52 the melee arc itself waits behind HERO_SWING_ARC so it cannot double the uploaded attack animation');
   assert.ok(src.includes('n.fallback.textContent=WICON[wt]'), 'the existing weapon glyph remains the icon fallback');
+});
+
+t('basic projectiles use arrows for bows and bolts for the magic class lines', () => {
+  const box = {heroWeaponType, shots: [], pl: {x:2,z:3}, mob: {x:4,z:5}, S: {eq:{}}, C:()=>box.cls};
+  vm.createContext(box);
+  const intClasses = src.match(/const INT_CLASSES=\[[^;]+;/)?.[0];
+  assert.ok(intClasses, 'the magic class list comes from the game');
+  vm.runInContext(intClasses + '\n' + grab('function shot(col){', 'function hurt(') + '\nthis.emit=shot;', box);
+  for (const n of ['Archer','Hunter','Sniper','Mage','Wizard','High Wizard','Acolyte','Priest','High Priest','Swordman','Thief']) {
+    box.cls={n,wt:CD.find(row=>row[0]===n)[7]};box.S.cls=n;box.shots.length=0;
+    box.emit();
+    const bow=['Archer','Hunter','Sniper'].includes(n),magic=!bow&&n!=='Swordman'&&n!=='Thief';
+    assert.strictEqual(box.shots.length, bow||magic?1:0, n+' ranged projectile eligibility');
+    if (bow||magic) {
+      assert.strictEqual(box.shots[0].arrow,bow,n+' projectile shape');
+      assert.strictEqual(box.shots[0].col,magic?'#d9b9ff':'#fff',n+' projectile color');
+      assert.deepStrictEqual([box.shots[0].x0,box.shots[0].z0,box.shots[0].x1,box.shots[0].z1],[2,3,4,5]);
+    }
+  }
+  box.mob=null;box.shots.length=0;box.emit();assert.strictEqual(box.shots.length,0,'no projectile without a target');
 });
 
 console.log(`\n${pass} passed, ${fail} failed`);

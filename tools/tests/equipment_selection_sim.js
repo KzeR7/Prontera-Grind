@@ -1,14 +1,21 @@
 // Real selection and DOM event paths: replacing equipment stays open inside the panel.
 const assert=require('node:assert/strict'),{createGame}=require('./helpers/game');
 const g=createGame(),ev=g.ev,doc=g.window.document;
+const tap=el=>{el.dispatchEvent(new g.window.MouseEvent('pointerdown',{bubbles:true}));el.dispatchEvent(new g.window.MouseEvent('pointerup',{bubbles:true}));el.click()};
 try{
  ev(`S.auto=false;S.inv=[{...S.eq.weapon,id:9876,name:'Replacement dagger'}];tabs.splice(0,tabs.length,'equip');eclipseSearch='hidden';eclipseRarity=4;ACT.seleq('weapon')`);
  assert.equal(ev('eclipseSearch'),'');assert.equal(ev('eclipseRarity'),-1);
- assert.ok(doc.querySelector('.cell.fit[data-v="9876:weapon"]'));
+ assert.ok(doc.querySelector('.cell.fit[data-a="selb"][data-v="9876"]'));
  const filters=doc.querySelector('[data-a=filtergear][data-v="-1"]');
- filters.dispatchEvent(new g.window.MouseEvent('pointerdown',{bubbles:true}));filters.click();
+ tap(filters);
  assert.equal(ev('eqPick'),'weapon','inventory controls retain selected equipment slot');
- const fit=doc.querySelector('.cell.fit');fit.dispatchEvent(new g.window.MouseEvent('pointerdown',{bubbles:true}));fit.click();
+ const oldWeapon=ev('S.eq.weapon.id');
+ const fit=doc.querySelector('.cell.fit');tap(fit);
+ assert.equal(ev('S.eq.weapon.id'),oldWeapon,'selecting a compatible item only inspects it');
+ assert.equal(ev('eqPick'),'weapon','inspection retains selected equipment slot');
+ const replace=doc.querySelector('[data-a="equip"][data-v="9876"]');
+ assert.ok(replace,'the inspector provides the explicit equipment action');
+ tap(replace);
  assert.equal(ev('S.eq.weapon.id'),9876);assert.equal(ev('S.inv.length'),1,'old equipment returns to bag');
  assert.equal(ev('eqPick'),'weapon','replacement click does not immediately clear mode');
  ev('renderWin()');doc.querySelector('[data-a=eqclose]').click();assert.equal(ev('eqPick'),null);
