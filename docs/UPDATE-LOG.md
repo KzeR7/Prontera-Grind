@@ -6384,3 +6384,9 @@ The owner's second pass over v77, six notes, all built.
 * **Try it:** Check the Character movement explanation and the matching build labels in the reference sheets.
 * **Checks:** Focused movement, UI, pet and crit checks passed. The broader gate exposed unrelated baseline failures; validation details accompany the PR preparation. Browser movement appearance remains unverified.
 * **Delivery:** Local changes only; PR creation requires Full access for this task.
+
+### 2026-10-13 — `Endgame progression roadmap`
+* **Changed:** Added docs/ROADMAP.md establishing the comprehensive endgame progression roadmap for post-Base Lv 150 content. Incorporates 3rd Job Advancement (unlocked at Base Lv 150 & Job Lv 50) with 3 signature skills per class, post-150 Ascension Stats, Maps 11 & 12 (Thanatos Tower & Thor Volcano) with an Item A/B dual drop loop, the dedicated Boss Map arena with targeted summoning and Roulette Boss mutators, Weapon Ascension to Mythic rarity, and 50-Floor Endless Tower gauntlet.
+* **Try it:** Read docs/ROADMAP.md for system architecture, item economies, and phased implementation plans.
+* **Checks:** Documentation-only update; static publishing passes 11/11 checks via publish_sim.js.
+* **Delivery:** Committed to session branch, pushed to origin, and opened Pull Request for owner review.
