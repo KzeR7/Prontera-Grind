@@ -46,6 +46,10 @@ Base progression ends at 150. Do not copy earlier grant curves or pacing estimat
 from historical notes: `totalPts()`, `statCap()`, `needAt()`, `jneed()` and the
 progression/economy tests define current behavior.
 
+Movement from AGI, pets, skills and running shares a 10.045 units/second cap.
+Equipment and card movement is applied afterward and can exceed that cap; those
+bonuses retain their combined +20% limit.
+
 ## Equipment, cards and currency
 
 Gear eligibility depends on class, weapon family and progression tier. Switching

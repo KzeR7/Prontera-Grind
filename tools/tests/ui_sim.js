@@ -44,7 +44,7 @@ const code = [
   grab('const CD=[', 'const pm=s=>'),                       // classes + skills
   pick(/const C=\(\)=>[^;]+;/, 'C()'),
   pick(/const st=k=>[^\n]*canUse=it=>[^;]+;/, 'canUse'),
-  pick(/const heroMoveSpeedForAgi=[^\n]*MOVE_RUN=[\d.]+;/, 'movement speed curve'),
+  pick(/const heroMoveSpeedForAgi=[^\n]+;/, 'movement speed curve'),
   pick(/const maxHp=\(\)=>[^\n]*/, 'maxHp'),
   pick(/const atk=\(\)=>[^\n]*/, 'atk'),
   pick(/const matk=\(\)=>[^\n]*/, 'matk'),
@@ -973,8 +973,8 @@ t('v88: the Character sheet names movement speed once, with no sprint figure (ow
   const h = U.V.stats();
   assert.ok(/Movement speed <b>[\d.]+<\/b> <small>u\/s/.test(h), 'a Movement speed readout must sit with ATK/ASPD/Crit (got ' +
     (h.match(/Movement speed <b>[^<]*/) || ['none'])[0] + ')');
-  assert.ok(h.includes('Movement speed</b> comes from AGI alone'), 'the sheet must name the only source');
-  assert.ok(/at AGI \d+\./.test(h), 'it must print the AGI it is reading');
+  assert.ok(h.includes('10.045 u/s cap')&&h.includes('Equipment and cards add'), 'the sheet explains the cap and equipment bypass');
+  assert.ok(/from AGI \d+\./.test(h), 'it must print the AGI it is reading');
   assert.ok(!/sprinting/.test(h), 'the sprint figure is gone - one speed, one number (owner)');
   assert.ok(!/RO-style/.test(h), 'and the RO-style tag is gone from the ASPD readout (owner)');
   // the number is the game's own curve, applied to the real st('agi')
@@ -987,7 +987,7 @@ t('v88: the Character sheet names movement speed once, with no sprint figure (ow
   // the curve is declared once, in the derived-stat block, and update() uses that copy
   assert.ok(src.includes('const heroMoveSpeedForAgi=agi=>5.3+'), 'the curve must stay a single named function');
   assert.strictEqual((src.match(/const heroMoveSpeedForAgi=/g) || []).length, 1, 'no duplicate curve');
-  assert.ok(src.includes("Math.min(pd,spd*dt*(pd>3?1.4:1))"), 'the run multiplier itself still applies past 3 units in the world');
+  assert.ok(src.includes("spd=moveSpd(pd>3)")&&src.includes("Math.min(pd,spd*dt)"), 'running uses the capped speed without a second multiplier');
   assert.ok(src.includes('MOVE_RUN=1.4'), 'and the sheet reads the same multiplier');
 });
 
