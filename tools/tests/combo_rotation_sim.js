@@ -1,10 +1,12 @@
 // Execute the shipped combo engine and editor, including save/account boundaries.
 const assert=require('node:assert/strict');
 const {createGame}=require('./helpers/game');
+const {configure}=require('../skill_balance');
 const g=createGame(),ev=g.ev;let passed=0;
+ev('window.originalCast=castSkill');
 function test(name,fn){fn();passed++;console.log('  ok '+name)}
 function setup(cls='Lord Knight'){
- ev(`S=fresh();S.cls=${JSON.stringify(cls)};for(const n of lineOf(S.cls))S.jobs[n]={jl:CLASSES[n].mj,jx:0};S.sk=Object.fromEntries(SKILLS.filter(s=>s.cls.includes(S.cls)).map(s=>[s.id,s.max]));S.skOff={};resetSkillRuntime();for(const k in skCd)delete skCd[k];t=0;pAtkT=0;swing=null;pl.x=0;pl.z=0;mob={x:0,z:0,hp:1e12,max:1e12,pack:0,size:1};mobs=[mob];activePack=0;window.castLog=[];window.originalCast=castSkill;castSkill=(s,k)=>castLog.push([s.id,k]);`);
+ ev(`S=fresh();S.cls=${JSON.stringify(cls)};for(const n of lineOf(S.cls))S.jobs[n]={jl:CLASSES[n].mj,jx:0};S.sk=Object.fromEntries(SKILLS.filter(s=>s.cls.includes(S.cls)).map(s=>[s.id,s.max]));S.skOff={};resetSkillRuntime();for(const k in skCd)delete skCd[k];t=0;pAtkT=0;swing=null;pl.x=0;pl.z=0;mob={x:0,z:0,hp:1e12,max:1e12,pack:0,size:1};mobs=[mob];activePack=0;window.castLog=[];castSkill=(s,k)=>castLog.push([s.id,k]);`);
 }
 function cast(time){ev(`t=${time};playerAttack();if(swing.casts.length)resolveSwing(swing);swing=null;`)}
 try{
@@ -43,6 +45,35 @@ try{
  test('basic attacks remain available throughout recovery',()=>{
   setup();ev(`comboConfig().slots=['bash',null,null,null,null,null]`);cast(0);
   ev(`window.basicCount=0;window.savedStrike=strike;strike=()=>basicCount++;t=1;playerAttack();resolveSwing(swing);strike=savedStrike`);assert.equal(ev('basicCount'),1);
+ });
+ test('Assassin Cross closes for melee combos and lands basics during recovery on both weapons',()=>{
+  ev('castSkill=originalCast');
+  for(const weapon of ['katar','dagger']){
+   configure(g,'Assassin Cross',2,weapon);
+   ev(`TRIAL.on=false;S.auto=false;S.adv=false;S.pets=[];
+    mobs=[{x:0,z:0,hx:0,hz:0,pack:0,size:1,hp:1e12,max:1e12,atk:0,at:1e9,spawn:1,fixed:true}];mob=mobs[0];activePack=0;camps=[];pl.x=0;pl.z=5;
+    window.fieldCasts=[];window.fieldBasics=[];window.savedCast=castSkill;window.savedStrike=strike;
+    castSkill=(s,k)=>{const before=S.dmg,result=savedCast(s,k);fieldCasts.push({id:s.id,t,duration:swingDur,interval:aspd(),damage:S.dmg-before});return result};
+    strike=(...a)=>{fieldBasics.push({t,recovery:skillState().recoverUntil});return savedStrike(...a)};
+    for(let i=0;i<1200;i++){update(1/60);floats.length=0;shots.length=0;}`);
+   const casts=JSON.parse(ev('JSON.stringify(fieldCasts)'));
+   assert.deepEqual(casts.slice(0,6).map(s=>s.id),Array.from(ev('rotationSkills().map(s=>s.id)')),weapon+' full combo');
+   assert.ok(ev('fieldBasics.some(s=>s.t<s.recovery)'),weapon+' basics in recovery');
+   assert.ok(ev('Math.hypot(pl.x-mob.x,pl.z-mob.z)<2.4'),weapon+' in melee range');
+   assert.ok(casts.every(s=>s.duration<s.interval),weapon+' skill animation follows fast ASPD');
+   assert.ok(casts.some(s=>s.damage>0),weapon+' real skill damage');
+   assert.ok(casts[6].t-casts[5].t>=3,weapon+' recovery retained');
+   ev('castSkill=savedCast;strike=savedStrike');
+  }
+ });
+ test('Sniper uses selected skills at the passive-extended edge of normal attack range',()=>{
+  configure(g,'Sniper',2,'bow');
+  ev(`TRIAL.on=false;S.auto=false;S.adv=false;S.pets=[];
+   mobs=[{x:0,z:0,hx:0,hz:0,pack:0,size:1,hp:1e12,max:1e12,atk:0,at:1e9,spawn:1,fixed:true}];mob=mobs[0];activePack=0;camps=[];pl.x=0;pl.z=heroStandoff(mob)+.5;
+   window.fieldCasts=[];window.savedCast=castSkill;castSkill=(s,k)=>{fieldCasts.push(s.id);return savedCast(s,k)};
+   for(let i=0;i<600;i++){update(1/60);floats.length=0;shots.length=0;}`);
+  assert.deepEqual(Array.from(ev('fieldCasts.slice(0,6)')),Array.from(ev('rotationSkills().map(s=>s.id)')));
+  ev('castSkill=savedCast');
  });
  test('buff refresh is independent, respects cooldown and does not waste offensive slots',()=>{
   setup('Whitesmith');ev('tickCombatSkills(.01)');assert.ok(ev('!!skillState().buffs.adren&&!!skillState().buffs.thrust&&!skillState().buffs.ovthrust'));

@@ -141,9 +141,9 @@ t('v88: the drawn swing follows the real attack rate (owner: "the atk animation 
     'the drawn length starts from the attack file, capped by SWING_MAX_T and by the attack rate');
   assert.ok(/cl\(room,Math\.min\(SWING_MIN_T,room\),SWING_MAX_T\)/.test(m[0]),
     'the drawn length is clamped between SWING_MIN_T and SWING_MAX_T - and the floor yields to the rate');
-  // Basic attacks keep ASPD; combo casts pass their own 0.5-second interval to the same animation helper.
+  // Cast spacing stays 0.5 seconds; the drawn swing keeps up with a faster build.
   const pa = src.match(/function playerAttack\(\)\{[\s\S]*?\n\}/);
-  assert.ok(pa && /pAtkT=interval;atkAnim=1;swingDur=swingLength\(interval\)/.test(pa[0]), 'the swing timer and the animation share one duration');
+  assert.ok(pa && /pAtkT=interval;atkAnim=1;swingDur=swingLength\(Math.min\(interval,aspd\(\)\)\)/.test(pa[0]), 'the animation fits within both the attack interval and cast spacing');
 });
 
 console.log(`\ncombat damage: ${pass} passed, ${fail} failed`);

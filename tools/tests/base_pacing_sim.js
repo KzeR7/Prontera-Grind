@@ -14,6 +14,12 @@ try{
   ev('S.exp=need()+123;checkLevel()');assert.equal(ev('S.lv'),101);assert.equal(ev('S.exp'),123);assert.equal(ev('S.pts-before'),24);
   ev('checkLevel()');assert.equal(ev('S.pts-before'),24);
  });
+ test('the full late Base EXP budget applies the 50% increase once, with existing rounding',()=>{
+  assert.deepEqual(JSON.parse(ev(`JSON.stringify((()=>{
+   let early=0,reference=0,late=0;for(let level=1;level<150;level++){
+    if(level<100)early+=baseNeedAt(level);else{reference+=needAt(level);late+=baseNeedAt(level);}
+   }return {early,reference,late};})())`)),{early:5197759,reference:38180500,late:57279000});
+ });
  test('the cap preserves earned levels and uses the increased final requirement',()=>{
   ev('S.lv=149;S.exp=3543000+500;checkLevel()');assert.equal(ev('S.lv'),150);assert.equal(ev('S.exp'),500);
   ev('S.exp=1e9;checkLevel()');assert.equal(ev('S.lv'),150);

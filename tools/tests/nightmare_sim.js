@@ -163,15 +163,15 @@ t('the difficulty knobs are the shipped ones and the live code reads them', () =
   assert.deepStrictEqual([N.NMHP, N.NMATK, N.NMEXP, N.NMZENY, N.NMBOSSHP], [48, 2, 4, 4, 48], 'the band constants are pinned (v77.1: 48x HP, 2x ATK, 4x EXP/Zeny)');
   // spawn() is a game-loop function, so its wiring is checked at the source and the numbers are
   // worked out from the same formulas below.
-  assert.ok(src.includes('nm1=S.lvl>10,nm=nm1?NMHP*nm15Of(S.lvl):1,na=nm1?NMATK*nm15Of(S.lvl):1,ne=nm1?nmExpOf(S.lvl)*nmPayOf(S.mp,S.lvl,1.5):1,nz=nm1?nmZenyOf(S.lvl)*nmPayOf(S.mp,S.lvl,2):1'), 'minionDef reads the knobs once (v85: stage ramp; v89: x1.3 on Stage 15; v90.3: map pay)');
-  // v85: the Stage 15 MVP pays the band EXP/Zeny too (the v76 line had neither - a 66M-HP MVP
-  // paid less EXP than two of its own map's mobs), and the offline simulator mirrors the ramps.
-  assert.ok(src.includes('na=nm1?NMATK*nm15Of(S.lvl):1,ne=nm1?NMEXP*nmPayOf(S.mp,S.lvl,1.5):1,nz=nm1?NMZENY*nmPayOf(S.mp,S.lvl,2):1;'), 'spawn() reads the MVP knobs once (v89: ATK x1.3 on Stage 15; v90.3: map pay)');
-  assert.ok(src.includes('exp:Math.max(1,Math.floor(BOSEK*Math.pow(l,1.5)/50*ne)),zeny:Math.max(ZMIN,Math.floor(ri(BZK[0],BZK[1])*l*l/1000*nz))'), 'MVP EXP/Zeny x NMEXP/NMZENY');
-  assert.ok(src.includes('nm1=stage>10,ne=nm1?nmExpOf(stage)*nmPayOf(m,stage,1.5):1,nz=nm1?nmZenyOf(stage)*nmPayOf(m,stage,2):1'), 'the offline simulator mirrors the band pay (v90.3: map pay)');
+  assert.ok(src.includes('nm1=S.lvl>10,nm=nm1?NMHP*nm15Of(S.lvl):1,na=nm1?NMATK*nm15Of(S.lvl):1,nz=nm1?nmZenyOf(S.lvl)*nmPayOf(S.mp,S.lvl,2):1'), 'minionDef reads the knobs once (v85: stage ramp; v89: x1.3 on Stage 15; v90.3: map pay)');
+  // MVP EXP is shared with the offline helper; Zeny retains the original boss multiplier.
+  // mvp_exp_sim exercises real rewards and conserved NM5 budgets across every map.
+  assert.ok(src.includes('na=nm1?NMATK*nm15Of(S.lvl):1,nz=nm1?NMZENY*nmPayOf(S.mp,S.lvl,2):1;'), 'spawn() reads the MVP knobs once (v89: ATK x1.3 on Stage 15; v90.3: map pay)');
+  assert.ok(src.includes('exp:fieldExpReward(S.mp,S.lvl,true),zeny:Math.max(ZMIN,Math.floor(ri(BZK[0],BZK[1])*l*l/1000*nz))'), 'MVP uses shared EXP and original Zeny');
+  assert.ok(src.includes('nm1=stage>10,nz=nm1?nmZenyOf(stage)*nmPayOf(m,stage,2):1,bnz=nm1?NMZENY*nmPayOf(m,stage,2):1'), 'the offline simulator mirrors the band pay (v90.3: map pay)');
   assert.ok(src.includes('hp=early?Math.min(starterHp(S.lvl),Math.floor(HPK*mb*Math.pow(l,HPE))):Math.floor(HPK*mb*Math.pow(l,HPE)*nm)'), 'mob HP x NMHP');
   assert.ok(src.includes('atk:early?starterAtk(S.lvl):Math.floor((5+l*4.6)*mb*na*eaOf(l))'), 'mob ATK x NMATK (and the v86 endgame bump)');
-  assert.ok(src.includes('exp:Math.max(1,Math.floor(EXPK*Math.pow(l,1.5)/50*ne))'), 'mob EXP x NMEXP');
+  assert.ok(src.includes('exp:fieldExpReward(S.mp,S.lvl)'), 'mob uses shared EXP reward');
   assert.ok(src.includes('Math.floor(500*mb*Math.pow(l,HPE)*(nm1?NMBOSSHP*nm15Of(S.lvl):1))'), 'boss HP x NMBOSSHP (v89: x1.3 on Stage 15)');
   assert.ok(src.includes('atk:Math.floor((8+l*6.5)*mb*na*eaOf(l))'), 'boss ATK shares the band multiplier and the v86 endgame bump');
   // A worked example using the live field powers (99 and 175). Keep spawn()'s flooring order too:
@@ -196,7 +196,7 @@ t('the difficulty knobs are the shipped ones and the live code reads them', () =
   assert.ok(N.NMEXP > 3 && N.NMZENY > 3, 'and the band pays for the time its wall costs');
 });
 
-t('the pay ramps by stage (v85): EXP 16/24/32/40/48, Zeny 4/5/6/7/8', () => {
+t('the nominal pay ramps before NM5 wave redistribution: EXP 16/24/32/40/48, Zeny 4/5/6/7/8', () => {
   // The owner doubled the Base 100+ requirements in v84, then asked for the band's mob pay to
   // be retuned against the new curve: EXP ramps so kill counts per level stay in a ~25-240 band
   // across 100-150 (flat x4 gave 50-480), Zeny ramps only "a little higher" (their words).
@@ -278,7 +278,7 @@ t('a save cannot be left standing in a locked Nightmare stage', () => {
   assert.ok(src.includes('mapL=Math.min(mapL,Math.max(1,Math.max(S.prog[mapM],nmMaxFor(mapM))))'), 'and the stage picker cannot be clamped below the band');
 });
 
-t('v90.3 (B): reward per HP is the same on every Nightmare map at each stage', () => {
+t('v90.3 (B): nominal reward per HP is equal before NM5 wave redistribution', () => {
   // Mob HP is mb*power^HPE and time per kill goes with HP, so EXP and Zeny per HP should be the
   // same on every map at each stage. Prints the table, then checks each map against Prontera.
   const lines = [];

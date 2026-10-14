@@ -34,7 +34,9 @@ Base level, Job level, stat points and skill ranks are different kinds of progre
 Skills use class-specific six-slot combos, with no SP resource. Players choose
 learned offensive skills from the current class's inherited line and reorder them
 with arrows or slot selectors. Each attack casts once in order at full power, with
-0.5-second cast spacing aligned to attack animation contact. After completion,
+0.5-second cast spacing aligned to attack animation contact. Skill swings animate
+at the faster of the build's attack interval and that cast spacing. Each cast
+replaces a normal swing during the burst. After completion,
 offensive skills recover for 3 simulation seconds; basic attacks and pets continue.
 Basic attacks, pet power and healing amounts retain
 their existing formulas. Cooldowns belong to individual skills. Unavailable, paused or out-of-range attacks
@@ -46,7 +48,9 @@ Each class keeps its own saved combo, including a separate pause switch. Old sav
 use their earlier offensive priority to initialize slots; missing priorities use a
 starter combo with inherited openers and attacks from newer jobs. Field transitions
 preserve combo/recovery timing, while class and account changes clear transient
-combat state. Mage and Acolyte lines attack with magic at six tiles; their area skills
+combat state. Melee classes close to normal attack range even when a ranged skill
+is learned. Bow range passives extend both normal attacks and skills.
+Mage and Acolyte lines attack with magic at six tiles; their area skills
 have increased reach and damage, especially Mage. Read each skill's current definition:
 historical IDs can remain unchanged after a skill is renamed or redesigned.
 
@@ -67,6 +71,17 @@ contract rewards; `baseNeedAt()` supplies the player Base EXP bar. Existing
 levels and earned EXP are preserved. Offline EXP still uses measured EXP/min,
 50% efficiency and a four-hour cap per claim. The target of roughly five days
 is a balance goal, not a guaranteed duration for every class, build or login schedule.
+
+Nightmare Stage 5 (internal stage 15) redistributes its existing raw EXP budget
+across the MVP and its three/five escorts: the MVP pays at least 25% more than
+one escort, with integer remainder assigned to the MVP. Normal stages and
+Nightmare stages 1-4 retain their rewards. The total for killing every member
+is unchanged before per-kill Base/Job rounding; killing the MVP first still
+clears surviving escorts, so actual income can vary with kill order. Online
+and offline monster definitions share EXP rewards and boss Zeny multipliers.
+Offline payouts use the saved measured income, rather than adding those monster
+rewards again; after changing fields/builds, a fresh farming minute replaces
+the prior sample. No sample means no offline income.
 
 Movement from AGI, pets, skills and running shares a 10.045 units/second cap.
 Equipment and card movement is applied afterward and can exceed that cap; those
