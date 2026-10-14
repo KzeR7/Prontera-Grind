@@ -6372,3 +6372,15 @@ The owner's second pass over v77, six notes, all built.
 * **Try it:** Choose Ember or Moonstone, inspect Wardrobe/Pets/Refine, reorder learned skills, and repeat a reforge offer.
 * **Checks:** Rotation regressions, combat timing, save ownership, wardrobe/pets, afterglow, UI, panel/field smoke, static publishing and generated-effect checks passed. The historical balance fixture was already stale at the starting revision. Shared browser can inspect panels but cannot initialize WebGL for battlefield verification.
 * **Delivery:** Local changes only.
+
+### 2026-10-13 — `haven-v139 Movement cap`
+* **Changed:** Movement from AGI, pets, skills and running now caps at 10.045 units/second (30% below 14.35). Equipment and card movement applies after the cap, retaining its combined +20% limit. Pets follow the same travel calculation. Character and build-guide text explains the cap.
+* **Try it:** Open Character with a high-AGI build, then equip movement cards or affixes; those bonuses can raise movement above 10.045. Running alone cannot exceed it.
+* **Checks:** 31 progression checks, 64 UI checks, 19 pet checks, pet runtime integration and 5 crit checks passed. Attack-speed equipment audited; tuning awaits clarification of the intended AGI requirement. Browser movement appearance has not been verified.
+* **Delivery:** Local changes only.
+
+### 2026-10-14 — `haven-v139 Movement cap` PR preparation
+* **Changed:** Synchronized the affix chart, equipment worksheet and deployment instructions with the movement-only build label. AGI allocation, its movement curve, attack speed and crit formulas are unchanged.
+* **Try it:** Check the Character movement explanation and the matching build labels in the reference sheets.
+* **Checks:** Focused movement, UI, pet and crit checks passed. The broader gate exposed unrelated baseline failures; validation details accompany the PR preparation. Browser movement appearance remains unverified.
+* **Delivery:** Local changes only; PR creation requires Full access for this task.

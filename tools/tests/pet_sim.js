@@ -407,10 +407,10 @@ t('every signature passive is wired into the real game (v75)', () => {
     boss: /mob\.boss\?1\+petPassive\('boss'\)\/100:1/,
     hp: /maxHp=\(\)=>[^;]*\(1\+petPassive\('hp'\)\/100\)/,
     dr: /\(1-cut\)\*\(1-petPassive\('dr'\)\/100\)/,
-    move: /moveSpd=\(\)=>heroMoveSpeedForAgi\(st\('agi'\)\)\*\(1\+\(petPassive\('move'\)\+equipmentMove\(\)\)\/100\)/,
+    move: /moveSpd=\(running=false\)=>Math.min\(MOVE_CAP,[^\n]*petPassive\('move'\)/,
   };
   for(const k of Object.keys(sites)) assert.ok(sites[k].test(src), k + ' is never read by index.html');
-  assert.ok(/spd=moveSpd\(\)/.test(src), 'the walk must call moveSpd(), or Swift Mount would only exist on the sheet');
+  assert.ok(/spd=moveSpd\(pd>3\)/.test(src), 'the walk must call moveSpd(), or Swift Mount would only exist on the sheet');
   assert.strictEqual((src.match(/petPassive\('dr'\)/g) || []).length, 1, 'Divine Grace is read once, on the hit you take');
   // Executioner is read on all three damaging paths - your swing, your pet's skill and your
   // pet's auto-attack - and nowhere else
