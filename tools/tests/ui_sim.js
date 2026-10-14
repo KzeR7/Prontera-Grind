@@ -120,7 +120,7 @@ const code = [
   pick(/const LOGCATS=\[[\s\S]*?\];/, 'log category table'),
   grab('const logCats=', 'const feedOn='),
   grab('const feedOn=', 'function log('),
-  grab('function rotationSkills()', '// v39: the master'),
+  grab('function comboRole(', '// v39: the master'),
   pick(/const skOff=[^;]+;/, 'skill on reader'),
   grab('const skTog=', 'const pv=k=>'),
   pick(/const autoSellOn=[^\n]*/, 'auto-sell / click-sell readers'),
@@ -128,6 +128,7 @@ const code = [
 
 const harness = `
 // stubs the pulled-in code needs at load time and when a panel renders
+const t=0,skillState=()=>({cursor:0});
 const SLOTS={weapon:{label:'Weapon',stat:'ATK',ic:'sw'},armor:{label:'Armor',stat:'DEF',ic:'ar'},head:{label:'Headgear',stat:'HP',ic:'hd'},off:{label:'Shield',stat:'DEF',ic:'sh'},leg:{label:'Legwear',stat:'DEF',ic:'lg'},acc:{label:'Accessory',stat:'HP',ic:'ac'}};
 const RAR=[{n:'Common',m:1,w:60},{n:'Fine',m:1.35,w:25},{n:'Rare',m:1.9,w:10},{n:'Epic',m:2.8,w:4},{n:'Legendary',m:4.5,w:1}];
 const RAR5={n:'N'},RAR6={n:'N+'},RARALL=RAR.concat([RAR5,RAR6]),rarIdx=it=>((it&&+it.sec>=5)?6:(it&&+it.sec>=4)?5:Math.max(0,Math.min(RAR.length-1,(it&&it.tier)||0))),rarOf=it=>(rarIdx(it)===6?RAR6:rarIdx(it)===5?RAR5:RAR[rarIdx(it)]),rarCls=it=>'r'+rarIdx(it);
@@ -732,7 +733,7 @@ t('damage floats stay screen-projected, restrained, and distinct by type', () =>
     const missCh=()=>0,crit=()=>100,atk=()=>100,matk=()=>200,st=()=>0,critD=()=>2,
       rnd=(a,b)=>a,addFloat=()=>{},damageFloat=(...args)=>{hit=args},
       showDamage=(o,x,y,z,a,c,sk)=>damageFloat(x,y,z,a,c,false,sk),mobDamageY=()=>1.9;
-    ${grab('function strike(mult,col,magic=false,skill=false){','// Higher job tiers get more casts per swing:')}
+    ${grab('function strike(mult,col,magic=false,skill=false){','// Legacy coefficient helpers retained')}
     strike(1,'#fff');this.__hit={mob,hit,shake};
   `,strikeBox);
   assert.ok(strikeBox.__hit.hit[4]&&strikeBox.__hit.hit[3]>100&&strikeBox.__hit.shake===6,
@@ -1198,9 +1199,9 @@ t('the Skills panel prints the whole tree against what a maxed line earns', () =
   assert.ok(src.includes('const skCost=()=>1;'), 'a skill level costs one point (v37)');
   assert.ok(src.includes('this line\'s tree costs ${skTree()}, a maxed line earns ${skEarnedMax()}'),
     'the panel must show the tree price and the maxed-line income side by side');
-  assert.ok(src.includes('Each job adds five skills; earlier skills remain available.'),
+  assert.ok(src.includes('Your current class inherits earlier skills in its own line.'),
     'the panel blurb must state the v59 cap rule');
-  assert.ok(src.includes('Buffs and attacks share the same rotation.'),
+  assert.ok(src.includes('Buffs refresh independently; passives remain active.'),
     'and that job levels keep paying out (the owner complaint this round fixes)');
   // and the arithmetic itself, on the real numbers
   const box = {};

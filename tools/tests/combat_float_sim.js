@@ -211,40 +211,29 @@ t('a damage-over-time burn climbs ONE number instead of sprinkling new ones', ()
 });
 
 t('a swing resolves on the attack animation contact frame, not on the key press', () => {
-  const box2 = {};
-  vm.createContext(box2);
-  const code = src.slice(src.indexOf('const SWING_CONTACT='), src.indexOf('function addJob('));
-  vm.runInContext(`
-    let mob={x:0,z:0,hp:100,pack:2},mobs=[mob],S={eq:{}},skCd={},skillOn=()=>false,SKILLS=[],
-      atkAnim=0,pAtkT=0,pl={x:0,z:0},C=()=>({tier:1,n:'Knight'}),pv=()=>0,st=()=>0,SKFADE=[1],
-      dmgGroup=null,log=[];
-    const skillBonus=()=>0,aspd=()=>.5,heroStandoff=()=>1.5,heroSpr=null,SWING_MIN_T=.3,SWING_MAX_T=.55,
-      cl=(v,a,b)=>Math.max(a,Math.min(b,v)),pushed=[];
-    const strike=(...a)=>log.push(['strike',...a]),shot=()=>log.push(['shot']),skillNameFloat=n=>log.push(['name',n]),
-      castSkill=(sk,k)=>log.push(['cast',sk.id,k]),flushDamageGroup=()=>{pushed.push(dmgGroup);log.push(['flush'])};
-    ${code}
-    this.__swing={
-      press:()=>{playerAttack();return {t:swing.t,atkAnim,pAtkT,dur:swingDur,n:log.length,before:swing.casts.length}},
-      hitNewest:()=>{mobs.push({x:1,z:1,hp:100,pack:2});swing.target=mobs[0];mobs[0].hp=0;
-        return mobs[mobs.length-1]},
-      resolve:()=>{resolveSwing(swing);return {log:log.slice(),pushed:pushed.slice(),dmgGroup}}};
-  `, box2);
-  const S = box2.__swing, pressed = S.press();
-  assert.strictEqual(pressed.n, 0, 'pressing attack prints nothing: the swing is scheduled, not resolved');
-  // v88.8: the drawn swing takes SWING_FIT (.9) of the attack interval, so it always ends before the
-  // next attack starts - a swing as long as the interval never released, and the attack animation
-  // never restarted (the owner's "10 numbers, 3 slashes"). The contact frame is 45% of THAT length.
-  assert.ok(Math.abs(pressed.dur - .5 * .9) < 1e-9, 'the drawn swing fits inside the attack interval (' + pressed.dur + ')');
-  assert.ok(pressed.dur < .5, 'and is strictly shorter than the .5s attack interval it belongs to');
-  assert.ok(Math.abs(pressed.t - .5 * .9 * .45) < 1e-9, 'the hit is scheduled at 45% of the drawn attack animation');
-  assert.strictEqual(pressed.atkAnim, 1, 'the attack animation starts on the press');
-  assert.strictEqual(pressed.pAtkT, .5, 'the swing runs on the real attack interval');
-  const r = S.resolve();
-  assert.strictEqual(JSON.stringify(r.log), JSON.stringify([['strike', 1, undefined, false], ['shot'], ['flush']]),
-    'the swing lands once (strike, shot, one printed number) instead of a hit per frame');
-  assert.strictEqual(r.pushed.length, 1, 'the hit group is opened exactly once per swing');
-  assert.strictEqual(Object.prototype.toString.call(r.pushed[0]), '[object Map]',
-    'and flushDamageGroup receives that group, which is what prints one number per monster');
+  const {createGame}=require('./helpers/game');
+  const g=createGame(),ev=g.ev;
+  try{
+    ev(`S=fresh();S.cls='Knight';S.st.agi=120;S.st.dex=120;Math.random=()=>.5;S.eq.weapon.wt='sword';S.eq.weapon.aff=[{k:'aspd',v:99}];S.auto=false;S.skillCombos.Knight={enabled:true,slots:Array(6).fill(null)};
+      resetSkillRuntime();t=0;pl.x=0;pl.z=0;mob={x:0,z:1,hp:1e9,max:1e9,pack:2,size:1};mobs=[mob];
+      window.contacts=[];window.flushes=[];window.liveStrike=strike;window.liveFlush=flushDamageGroup;
+      strike=(...args)=>{contacts.push(args);liveStrike(...args)};
+      flushDamageGroup=()=>{flushes.push(dmgGroup instanceof Map);liveFlush()};
+      playerAttack();`);
+    const interval=ev('aspd()'),duration=ev('swingDur');
+    assert.equal(ev('S.dmg'),0,'press schedules damage instead of resolving it');
+    assert.equal(ev('contacts.length'),0);
+    assert.ok(Math.abs(duration-interval*.9)<1e-9,'drawn swing fits the actual attack interval');
+    assert.ok(duration<interval);
+    assert.ok(Math.abs(ev('swing.t')-duration*.45)<1e-9,'contact lands at 45% of the drawn swing');
+    assert.equal(ev('atkAnim'),1);assert.equal(ev('pAtkT'),interval);
+    ev(`mobs.push({...mob,x:1,hp:1e9});swing.target.hp=0;resolveSwing(swing)`);
+    assert.equal(ev('contacts.length'),1,'one basic hit at contact');
+    assert.equal(ev('flushes.length'),1,'one printed damage group per swing');
+    assert.equal(ev('flushes[0]'),true);
+    assert.ok(ev('mobs[1].hp<1e9'),'contact retargets a living monster in the same camp');
+    assert.equal(ev('dmgGroup'),null,'the printed group is released');
+  }finally{g.close()}
 });
 
 console.log(`\n${pass} passed, ${fail} failed`);

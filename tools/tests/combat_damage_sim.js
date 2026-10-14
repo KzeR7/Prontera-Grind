@@ -133,7 +133,7 @@ t('v88: the drawn swing follows the real attack rate (owner: "the atk animation 
   // The old swingLength() floored its interval at .2s (Math.max(.2,aspd())), so anyone faster than
   // 5 hits/s attacked on the real timer but DREW a slower swing - the two visibly drifted. The
   // interval must be the real aspd(); the clamp still floors the DRAWN length at SWING_MIN_T.
-  const m = src.match(/function swingLength\(\)\{[\s\S]*?\n\}/);
+  const m = src.match(/function swingLength\(interval=aspd\(\)\)\{[\s\S]*?\n\}/);
   assert.ok(m, 'swingLength() is where the drawn animation length comes from');
   assert.ok(!/Math\.max\(\.2,aspd\(\)\)/.test(m[0]), 'no .2s floor on the animation interval any more');
   assert.ok(/interval=aspd\(\)/.test(m[0]), 'the animation interval IS the attack rate');
@@ -141,9 +141,9 @@ t('v88: the drawn swing follows the real attack rate (owner: "the atk animation 
     'the drawn length starts from the attack file, capped by SWING_MAX_T and by the attack rate');
   assert.ok(/cl\(room,Math\.min\(SWING_MIN_T,room\),SWING_MAX_T\)/.test(m[0]),
     'the drawn length is clamped between SWING_MIN_T and SWING_MAX_T - and the floor yields to the rate');
-  // ...and the rate itself is untouched: playerAttack still waits the real aspd() between swings
+  // Basic attacks keep ASPD; combo casts pass their own 0.5-second interval to the same animation helper.
   const pa = src.match(/function playerAttack\(\)\{[\s\S]*?\n\}/);
-  assert.ok(pa && /pAtkT=interval;atkAnim=1;swingDur=swingLength\(\)/.test(pa[0]), 'the swing timer and the animation share one duration');
+  assert.ok(pa && /pAtkT=interval;atkAnim=1;swingDur=swingLength\(interval\)/.test(pa[0]), 'the swing timer and the animation share one duration');
 });
 
 console.log(`\ncombat damage: ${pass} passed, ${fail} failed`);

@@ -9,8 +9,8 @@ editing. Many tests execute extracted pieces of the real page.
 | Task | Implementation / search anchors | Useful checks |
 | --- | --- | --- |
 | Classes, promotion, saved builds | `index.html`: `CD`, `CLASSES`, `classBlock`, `changeClass`, `snapClass`, `noviceRun` | `class_change_sim.js`, `loadout_update_sim.js`, `save_load_sim.js` |
-| Stats, Base/Job EXP and pacing | `index.html`: `statCap`, `totalPts`, `needAt`, `jneed`, `expRate`, `economy tuning`; `tools/tune_pacing.js` | `stat_sim.js`, `economy_sim.js`, `progression_sim.js` |
-| Combat and skill execution | `index.html`: `SKILLS`, `heroStandoff`, `strike`, `tickCombatSkills`, `simAdvance`, `loop` | `skill_sim.js`, `skill_balance_sim.js`, `combat_damage_sim.js`, `attack_sync_sim.js`, `field_loop_smoke.js` |
+| Stats, Base/Job EXP and pacing | `index.html`: `statCap`, `totalPts`, `baseNeedAt`, `needAt`, `jneed`, `expRate`, `economy tuning`; `tools/tune_pacing.js` | `base_pacing_sim.js`, `stat_sim.js`, `economy_sim.js`, `progression_sim.js` |
+| Combat and skill execution | `index.html`: `SKILLS`, `comboConfig`, `nextComboSkill`, `resolveSwing`, `tickCombatSkills`, `simAdvance`, `loop` | `combo_rotation_sim.js`, `skill_sim.js`, `skill_redesign_sim.js`, `combat_damage_sim.js`, `attack_sync_sim.js`, `field_loop_smoke.js` |
 | Gear, class eligibility, cards, autosell | `index.html`: `genGear`, `canUse`, `stowUnfit`, `equipRec`, `CARD_FITS` | `gear_sim.js`, `dual_wield_sim.js`, `card_sim.js`, `autosell_sim.js` |
 | Map stages, scenery, Nightmare | `index.html`: `MAPS`, `fieldPlan`, `buildDeco`, `KIT_MAP` | `starter_sim.js`, `scene_sim.js`, `kit_sim.js`, `nightmare_sim.js` |
 | Endless Echo | `index.html`: `TRIAL`, `TRIAL_PAY`, `TRIAL_STORE` | `trial_sim.js` |

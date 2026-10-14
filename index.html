@@ -787,7 +787,7 @@ body.clean-screen #screenBtn{visibility:visible!important}body.clean-screen #hud
 <link rel="preload" href="assets/ui/fonts/font-5.ttf" as="font" type="font/ttf" crossorigin>
 <link rel="preload" href="assets/ui/fonts/font-6.ttf" as="font" type="font/ttf" crossorigin>
 <link rel="preload" href="assets/ui/fonts/font-7.ttf" as="font" type="font/ttf" crossorigin>
-<link rel="stylesheet" href="assets/ui/eclipse.css?v=138">
+<link rel="stylesheet" href="assets/ui/eclipse.css?v=143">
 <script>try{const p=localStorage.getItem("pg_ui_palette");document.documentElement.dataset.palette=["moonstone","aurora","ember"].includes(p)?p:"moonstone"}catch{document.documentElement.dataset.palette="moonstone"}</script>
 </head>
 <body>
@@ -848,6 +848,7 @@ body.clean-screen #screenBtn{visibility:visible!important}body.clean-screen #hud
     <div class="row" style="justify-content:center;margin-top:10px"><button id="offlineContinue" class="login-btn">Continue grinding</button></div>
   </div>
 </div>
+<div id="comboFieldStatus" data-combo-status aria-label="Combat combo status"></div>
 <div id="tooltip"></div>
 <link rel="stylesheet" href="assets/wardrobe.css?v=138">
 <script src="assets/wardrobe.js?v=134"></script>
@@ -1085,7 +1086,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // give-back) and main's weapon-hold rendering work.
 let simCatchingUp=false;
 const simVisualsOff=()=>document.hidden||simCatchingUp;
-const BUILD='2026-10-13 haven-v139 Movement cap';   // shown on the login card - confirms which file you loaded
+const BUILD='2026-10-14 haven-v143 Skill combos and EXP pacing';   // shown on the login card - confirms which file you loaded
 $('buildTag').textContent='build '+BUILD;
 
 // ---------- class tree: Novice -> 6 first jobs -> 6 second jobs -> 6 third jobs ----------
@@ -1104,7 +1105,7 @@ const CLASSES={};
 CD.forEach(([n,par,aspd,atk,hp,col,cape,wt,main,rng,hat])=>CLASSES[n]={n,par,aspd,atk,hp,col:parseInt(col,16),cape:cape?parseInt(cape,16):0,wt,main,rng,hat:hat?parseInt(hat,16):0,kids:[]});
 for(const c of Object.values(CLASSES)){c.tier=0;for(let p=c.par;p;p=CLASSES[p].par)c.tier++;c.mj=c.tier?50:10;c.rj=[0,10,40,50][c.tier];if(c.par)CLASSES[c.par].kids.push(c.n)}
 const lineOf=n=>{const a=[];for(;n;n=CLASSES[n].par)a.unshift(n);return a},down=n=>[n].concat(...CLASSES[n].kids.map(down));
-// ---------- skills (no SP: cooldown only) ----------
+// ---------- skills (six-slot combos; no SP resource) ----------
 // One definition drives execution and descriptions. power is TOTAL damage, split into hits.
 // Original ids and rank caps remain stable; v97 refunds old ranks before using new mechanics.
 const SKILL_VERSION=2,Z=()=>0;
@@ -1206,10 +1207,16 @@ for(const s of SKILLS){
   if(s.magic&&s.type==='act'){s.rng=6;s.areaScale=['Mage','Wizard','High Wizard'].includes(s.from)?1.5:1.25;if(s.shape!=='single')s.power*=s.areaScale;}
   if(s.type==='act'){s.mul=L=>s.power*(.55+.45*Math.min(s.max,L)/s.max);s.aoe=s.shape!=='single';}
   if(s.type==='pas'||s.type==='buff')s.f=L=>(s.flat||0)+s.rate*(s.id==='thrust'?Math.min(5,L):L);
-  s.d=L=>s.type==='act'?`${Math.round(s.mul(L)*100*(typeof skillTuning==='function'&&typeof S!=='undefined'&&S&&s.cls.includes(S.cls)?skillTuning(false,s,L)*skillStatScale(s,L):1))}% total ${s.magic?'magic':'physical'} power${s.hits>1?' across '+s.hits+' hits':''} · ${rotationCooldown()}s rotation cooldown · ${s.shape}${s.rng?' · '+s.rng+' tiles range':''}${s.aoe&&s.areaScale?' · '+s.areaScale+'× area reach':''}. ${s.text}`:
+  s.d=L=>s.type==='act'?`${Math.round(s.mul(L)*100*(typeof skillTuning==='function'&&typeof S!=='undefined'&&S&&s.cls.includes(S.cls)?skillTuning(false,s,L)*skillStatScale(s,L):1))}% total ${s.magic?'magic':'physical'} power${s.hits>1?' across '+s.hits+' hits':''} · ${s.cd}s cooldown · ${s.shape}${s.rng?' · '+s.rng+' tiles range':''}${s.aoe&&s.areaScale?' · '+s.areaScale+'× area reach':''}. ${s.text}`:
     s.type==='heal'?`Auto: heals ${10+5*L}% HP below half · ${s.cd}s cooldown.`:
     `${s.text} ${s.key}: +${s.f(L).toFixed(1)}${['range','echo','momentum'].includes(s.key)?'':'%'}${s.type==='buff'?' · '+(s.id==='dpois'?5+L:['ovthrust','thrust'].includes(s.id)?8+2*Math.min(5,L):s.duration)+'s duration / '+rotationCooldown()+'s rotation cooldown':''}`;
   const describe=s.d;s.d=L=>describe(L)+(s.training?' Training: '+Object.entries(s.training).map(([key,rate])=>'+'+(rate*L).toFixed(1)+' '+key.toUpperCase()+(key==='def'?'':'%')).join(', ')+'.':'');
+}
+
+function cleanSkillCombos(value){const out={};if(!value||typeof value!=='object'||Array.isArray(value))return out;
+  for(const cls of Object.keys(CLASSES)){const c=value[cls];if(!c||typeof c!=='object'||Array.isArray(c)||!Array.isArray(c.slots))continue;
+    const seen=new Set();out[cls]={enabled:c.enabled!==false,slots:Array.from({length:6},(_,i)=>{const id=c.slots[i],sk=SKILLS.find(s=>s.id===id&&s.type==='act'&&s.cls.includes(cls));if(!sk||seen.has(id))return null;seen.add(id);return id;})};}
+  return out;
 }
 
 // Idempotent migration: ranks are refunded through the existing earned-minus-spent ledger.
@@ -2342,6 +2349,9 @@ const expRate=()=>S.gm?gx():(S.lv<=EXP_BOOST_LV?EXP_RATE*EXP_BOOST_X:(S.lv<100?E
 const NA1=18.705917193,NE1=1.28684215,N50=Math.floor(NA1*Math.pow(50,NE1)),NE2=11.33248639,N70=Math.floor(N50*Math.pow(1.4,NE2)),NE2B=0.72933977,N100=86520,NE3=8.2928141;
 // Round to three significant figures (a step of 1, 10, 100 or 1000 by magnitude) and keep the
 // value at least 1, so a requirement is always a readable number and never zero.
+// Base leveling gains a separate late-game requirement multiplier. The shared
+// needAt curve still supplies Job requirements and contract rewards.
+const BASE_EXP_LATE_LV=100,BASE_EXP_LATE_X=1.5;
 const roundReq=n=>{const a=Math.abs(n),m=a<100?1:a<1e4?10:a<1e5?100:1e3;return Math.max(1,Math.round(n/m)*m)};
 // Job levels run alongside base levels. JOFF[t] is the base level a job level of tier t
 // keeps pace with: Novice job j ~ base j, 1st job j ~ base j+9, 2nd job j ~ base j+49,
@@ -2572,7 +2582,7 @@ function autoSellReason(it,state=S){
 const autoSellMatches=it=>!autoSellReason(it);
 // ---------- end auto-sell rules ----------
 
-const fresh=()=>({progressionVersion:PROGRESSION_VERSION,skillVersion:SKILL_VERSION,skillRefund:0,skillRespec:{},pets:[],bond:[],cls:'Novice',sex:'m',hair:0,appearance:null,lv:1,exp:0,hp:100,zeny:0,kills:0,indexXp:0,mobKills:{},equippedTitle:null,shards:0,refineScrolls:0,nmMatVersion:2,nmMat:[0,0,0,0,0],dps:0,trial:{day:trialDay(),used:0,best:0,runs:0},cardIndex:emptyCardIndex(),dmg:0,pts:10,jobs:{Novice:{jl:1,jx:0}},sk:{aid:1},skOff:{},skillPriority:[],dmgShort:true,dmgShow:true,cameraShake:true,base:{},mp:0,lvl:1,prog:[1,1,1,1,1],kl:0,auto:true,adv:true,feed:true,clickSell:false,bg:true,autoSell:[false,false,false,false,false,false,false],logOff:{},q:null,cards:[],ore:{ori:0,elu:0},offlineAt:0,offlineKph:0,offlineRateAt:0,offlineRateKills:0,offlineKillRemainder:0,gm:false,gmx:100,
+const fresh=()=>({progressionVersion:PROGRESSION_VERSION,skillVersion:SKILL_VERSION,skillRefund:0,skillRespec:{},pets:[],bond:[],cls:'Novice',sex:'m',hair:0,appearance:null,lv:1,exp:0,hp:100,zeny:0,kills:0,indexXp:0,mobKills:{},equippedTitle:null,shards:0,refineScrolls:0,nmMatVersion:2,nmMat:[0,0,0,0,0],dps:0,trial:{day:trialDay(),used:0,best:0,runs:0},cardIndex:emptyCardIndex(),dmg:0,pts:10,jobs:{Novice:{jl:1,jx:0}},sk:{aid:1},skOff:{},skillPriority:[],skillCombos:{},dmgShort:true,dmgShow:true,cameraShake:true,base:{},mp:0,lvl:1,prog:[1,1,1,1,1],kl:0,auto:true,adv:true,feed:true,clickSell:false,bg:true,autoSell:[false,false,false,false,false,false,false],logOff:{},q:null,cards:[],ore:{ori:0,elu:0},offlineAt:0,offlineKph:0,offlineRateAt:0,offlineRateKills:0,offlineKillRemainder:0,gm:false,gmx:100,
   st:{str:1,agi:1,dex:1,luk:1,int:1,vit:1},eq:{weapon:{id:1,slot:'weapon',wt:'dagger',tier:0,val:5,name:'Novice Knife',aff:[],slots:1,cards:[],sec:0},armor:null,head:null,off:null,leg:null,acc1:null,acc2:null},inv:[]});
 const saveKey=()=>'pg_save3_'+currentUser;
 // ---------- the save-owner stamp (v88.6) ----------
@@ -2637,6 +2647,7 @@ const s=JSON.parse(raw);if(s&&s.lv){const F=fresh(),f=Object.assign(F,s),hadInde
   if(!f.jobs[f.cls])f.jobs[f.cls]={jl:1,jx:0};
   if(!f.sk||typeof f.sk!=='object'||Array.isArray(f.sk))f.sk=Object.assign({},F.sk);
   f.skillPriority=Array.isArray(f.skillPriority)?[...new Set(f.skillPriority.filter(id=>SKILLS.some(s=>s.id===id)))]:[];
+  f.skillCombos=cleanSkillCombos(f.skillCombos);
   if(!f.skOff||typeof f.skOff!=='object'||Array.isArray(f.skOff))f.skOff={};
   // skills removed or renamed since the save was written must not strand the points spent on
   // them: dropping the entry refunds the points, which is kinder than an invisible dead cost.
@@ -3340,10 +3351,28 @@ const jneed=j=>{const t=C().tier||0,L=j+JOFF[t],n=(t>0&&j<=EARLY_JOB_LV?needAt(L
 // A skill is usable when it has levels, the current class inherits it, and the player has
 // not switched its auto-cast off in the Skills panel.
 const skOff=id=>!!(S.skOff&&S.skOff[id]),skillOn=id=>lv(id)>0&&SKILLS.find(s=>s.id===id).cls.includes(S.cls)&&!skOff(id);
-// Saved priority breaks ties; oldest casts go first so no learned skill starves.
-function rotationSkills(){const order=Array.isArray(S.skillPriority)?S.skillPriority:[];return SKILLS.filter(s=>['act','buff'].includes(s.type)&&skillOn(s.id)&&!(s.id==='ovthrust'&&skillOn('thrust'))).sort((a,b)=>{const rank=id=>{const i=order.indexOf(id);return i<0?999:i};return rank(a.id)-rank(b.id)});}
-function rotationCooldown(){return Math.max(1.5,Math.ceil(rotationSkills().length/3)*1.5);}
-function rotationBar(){const skills=rotationSkills();return `<section class="skill-rotation"><b>Skill rotation · ${rotationCooldown()}s cooldown</b><small>Up to 3 skills every 1.5s. Move skills left or right to set priority. First Aid remains an emergency heal.</small><div class="skill-priority">${skills.map((s,i)=>`<div><span>${i+1}. ${esc(s.n)}</span><button data-a="skmove" data-v="${s.id}:-1" aria-label="Move ${esc(s.n)} earlier" ${i?'':'disabled'}>←</button><button data-a="skmove" data-v="${s.id}:1" aria-label="Move ${esc(s.n)} later" ${i<skills.length-1?'':'disabled'}>→</button></div>`).join('')||'<small>Learn and enable skills to build your rotation.</small>'}</div></section>`;}
+// Saved combos belong to a class, and only accept attacks inherited by that class.
+function comboRole(sk){return sk.mark||sk.follow||sk.blind?'Opener':sk.execute||sk.death||sk.power>=3?'Finisher':sk.pulse||sk.root||sk.pull||sk.dot?'Setup':'Attack';}
+function suggestedCombo(){const attacks=SKILLS.filter(s=>s.type==='act'&&lv(s.id)>0&&s.cls.includes(S.cls));
+  const opener=attacks.find(s=>s.mark||s.follow||s.blind),picked=opener?[opener]:[];
+  // Keep an inherited opener, then mix the newest attacks with the previous job's tools.
+  for(const from of lineOf(S.cls).slice().reverse())for(const sk of attacks.filter(s=>s.from===from).slice(0,2))if(!picked.includes(sk))picked.push(sk);
+  for(const sk of attacks)if(!picked.includes(sk))picked.push(sk);
+  return picked.slice(0,6).sort((a,b)=>(comboRole(a)==='Finisher')-(comboRole(b)==='Finisher')).map(s=>s.id);
+}
+function comboConfig(){if(!S.skillCombos||typeof S.skillCombos!=='object'||Array.isArray(S.skillCombos))S.skillCombos={};
+  if(!Object.prototype.hasOwnProperty.call(S.skillCombos,S.cls)){const legacy=(S.skillPriority||[]).filter(id=>SKILLS.some(s=>s.id===id&&s.type==='act'&&skillOn(id)));
+    const slots=legacy.length?legacy.concat(suggestedCombo().filter(id=>!legacy.includes(id))).slice(0,6):suggestedCombo();
+    S.skillCombos[S.cls]={enabled:true,slots:Array.from({length:6},(_,i)=>slots[i]||null)};}
+  return S.skillCombos[S.cls];
+}
+function rotationSkills(){return comboConfig().slots.map(id=>SKILLS.find(s=>s.id===id)).filter(s=>s&&s.type==='act'&&skillOn(s.id));}
+function rotationCooldown(){return 3;}
+function comboStatus(){const c=comboConfig(),r=skillState();if(!c.enabled)return 'Combo paused';if(t<(r.recoverUntil||0))return 'Recovering · '+Math.max(0,r.recoverUntil-t).toFixed(1)+'s';
+  if(!rotationSkills().length)return 'Choose an attack to begin';return r.comboSlots?'Combo · '+Math.min(r.cursor+1,r.comboSlots.length)+' / '+r.comboSlots.length:'Ready for next combo';}
+function rotationBar(){const c=comboConfig(),available=SKILLS.filter(s=>s.type==='act'&&lv(s.id)>0&&s.cls.includes(S.cls));
+  return `<section class="skill-rotation"><div class="combo-heading"><div><span class="combo-eyebrow">YOUR COMBAT PLAN · ${esc(S.cls)}</span><h3>Build your combo</h3></div><button data-a="combopause" aria-pressed="${!c.enabled}">${c.enabled?'Pause combo':'Resume combo'}</button></div><p class="combo-help">Choose up to six attacks. They fire left to right, once each, then recover for 3 seconds. Buffs and First Aid run separately.</p><div class="combo-live"><span class="combo-pulse"></span><b data-combo-status>${comboStatus()}</b><small>0.5s cast spacing · basic attacks during recovery</small></div><div class="combo-slots">${c.slots.map((id,i)=>{const sk=available.find(s=>s.id===id);return `<article class="combo-slot${sk?' filled':''}" data-combo-index="${i}"><div class="combo-slot-top"><b>${String(i+1).padStart(2,'0')}</b><span>${sk?comboRole(sk):'Empty slot'}</span></div><div class="combo-icon">${sk?skillIcon(sk.id):'<span>＋</span>'}</div><label><span class="sr-only">Combo slot ${i+1}</span><select data-combo-slot="${i}" aria-label="Combo slot ${i+1}"><option value="">Choose attack</option>${available.map(a=>`<option value="${a.id}" ${a.id===id?'selected':''}>${esc(a.n)}${skOff(a.id)?' (paused)':''}</option>`).join('')}</select></label><small>${sk?esc(sk.from)+' · '+sk.cd+'s cooldown':'Learn attacks in your class line'}</small><div class="combo-slot-actions"><button data-a="combomove" data-v="${i}:-1" aria-label="Move slot ${i+1} left" ${i?'':'disabled'}>←</button><button data-a="combomove" data-v="${i}:1" aria-label="Move slot ${i+1} right" ${i<5?'':'disabled'}>→</button><button data-a="comboassign" data-v="${i}:" aria-label="Clear slot ${i+1}" ${id?'':'disabled'}>×</button></div></article>`}).join('')}</div><div class="combo-bottom"><button data-a="combofill">Auto-fill combo</button><small>Edits apply to the next combo. Skills on cooldown or out of range are skipped.</small><span class="combo-recovery">↻ 3s recovery</span></div></section>`;
+}
 // v39: the master auto-cast switch. It covers every learned skill of the current line that
 // auto-casts (everything except passives), reads ON only while ALL of them are ON, and clears
 // itself the moment a single skill is switched off - which is the 'untick by itself' the owner
@@ -3356,7 +3385,7 @@ const statResetCost=()=>S.skillRespec&&S.skillRespec[S.cls]?0:rcost();
 const skMasterTile=()=>{const on=skAllOn(),n=skTog().length,done=skillsFullyAllocated();
   return`<div class="sk-tools"><label class="sk-master${on?'':' off'}" title="Switch the auto-cast of every learned skill on or off"><span class="sk-kind">ALL</span><div class="si" aria-hidden="true">&#9199;&#65039;</div><div class="sk-name">Auto-cast all</div><div class="sk-autocast"><input type="checkbox" data-a="skall" ${on?'checked':''} aria-label="Auto-cast every learned skill"> ${on?'ALL ON':'SOMETHING OFF'}</div><small>${n} skill${n===1?'':'s'} on this line</small></label><button class="sk-alloc" data-a="skalloc" ${done||skpAvail()<1?'disabled':''} title="Auto-allocate all available points: learn each available skill first, then improve ranks">⚡ Auto-allocate all skills<small>${done?'All skills maxed':'Learn every skill first'}</small></button></div>`};
 const skillDetailCard=sel=>{const SL=lv(sel.id),soff=!!(SL&&sel.type!=='pas'&&skOff(sel.id));
-  return`<div class="mob-card sk-detail-card" data-skill-detail="${sel.id}"><div class="sk-detail-head"><b>${sel.n}</b> <small>${sel.type==='pas'?'Passive':sel.type==='heal'?'Auto-heal':sel.type==='buff'?'Buff (auto-refresh)':'Active (auto-cast)'}${sel.rng?' &middot; RANGED':''}${sel.aoe?' &middot; AREA':''}${sel.dot?' &middot; DOT':''}${sel.stun?' &middot; STUN':''}${sel.chain?' &middot; CHAIN':''}</small></div><div class="sk-detail-autocast">${SL&&sel.type!=='pas'?`<label class="sk-autocast"><input type="checkbox" data-a="sktog" data-v="${sel.id}" ${soff?'':'checked'} aria-label="Auto cast ${sel.n}"> Auto cast this skill</label><small class="${soff?'r0':''}">${soff?'Paused - it will not be used until you check this again.':'Used automatically when ready.'}</small>`:'<small>Passive or not learned yet - nothing to auto-cast.</small>'}</div><small>${sel.d(Math.max(1,SL))}</small>${SL&&SL<sel.max?`<br><small>Next: ${sel.d(SL+1)}</small>`:''}</div>`};
+  return`<div class="mob-card sk-detail-card" data-skill-detail="${sel.id}"><div class="sk-detail-head"><b>${sel.n}</b> <small>${sel.type==='pas'?'Passive':sel.type==='heal'?'Auto-heal':sel.type==='buff'?'Buff (auto-refresh)':comboRole(sel)}${sel.rng?' &middot; RANGED':''}${sel.aoe?' &middot; AREA':''}${sel.dot?' &middot; DOT':''}${sel.stun?' &middot; STUN':''}${sel.chain?' &middot; CHAIN':''}</small></div><div class="sk-detail-autocast">${SL&&sel.type!=='pas'?`<label class="sk-autocast"><input type="checkbox" data-a="sktog" data-v="${sel.id}" ${soff?'':'checked'} aria-label="Auto cast ${sel.n}"> Auto cast this skill</label><small class="${soff?'r0':''}">${soff?'Paused - it will not be used until you check this again.':'Used automatically when ready.'}</small>`:'<small>Passive or not learned yet - nothing to auto-cast.</small>'}</div>${sel.type==='act'?`<p class="combo-membership">${comboConfig().slots.includes(sel.id)?'In your combo · casts once per cycle.':'Choose this attack in a combo slot to use it.'}</p>`:''}<small>${sel.d(Math.max(1,SL))}</small>${SL&&SL<sel.max?`<br><small>Next: ${sel.d(SL+1)}</small>`:''}</div>`};
 const pv=k=>SKILLS.reduce((a,s)=>a+(skillOn(s.id)?(s.type==='pas'&&s.key===k?s.f(lv(s.id)):0)+(s.training&&s.training[k]||0)*lv(s.id):0),0)+(typeof skillBonus==='function'?skillBonus(k):0);
 // v81 dual wield (owner): "let set that assasin & assassin cross can wield daggers. 2 hands."
 // A two-handed katar is TWO_HANDED weapons and a left-hand dagger is DUAL of one, so a pair of
@@ -3404,7 +3433,7 @@ const heroMoveSpeedForAgi=agi=>5.3+Math.max(1,Number(agi)||1)*.025+Math.sqrt(Mat
 // v73 crit damage (owner: "cri damage is too overpowered"): the base multiplier drops 2.0 -> 1.9,
 // and the cdm route that fed it is slot-limited and lighter (see AB/genGear). LUK and DEX still
 // add a little on top, so a crit build stays the burst build - it just cannot stack seven slots.
-const def=()=>Math.floor(S.lv*.5+st('vit')*.5+eqv('armor')+eqv('leg')+(S.eq.off&&S.eq.off.slot==='off'?eqv('off'):0)+pv('def')+bon('def')+(typeof cardMasteryStat==='function'?cardMasteryStat('def'):0)+(tb.def||0)+(petBuff.def||0)),mdef=()=>Math.floor(S.lv*.3+st('int')*.5+st('vit')*.4+eqv('head')*.3+pv('def')*.5+bon('mdef')+(typeof cardMasteryStat==='function'?cardMasteryStat('mdef'):0)),critD=()=>1.9+st('luk')*.008+st('dex')*.005+bon('cdm')/100,needAt=L=>roundReq(L<=50?Math.floor(NA1*Math.pow(L,NE1)):L<=70?Math.floor(N50*Math.pow(L/50,NE2)):L<=99?Math.floor(N70*Math.pow(L/70,NE2B)):Math.floor(N100*Math.pow(L/100,NE3))),need=()=>needAt(S.lv),cost=k=>{const v=S.st[k];return v<ELITELV?1+Math.floor((v-1)/10):10+(v-ELITELV)};
+const def=()=>Math.floor(S.lv*.5+st('vit')*.5+eqv('armor')+eqv('leg')+(S.eq.off&&S.eq.off.slot==='off'?eqv('off'):0)+pv('def')+bon('def')+(typeof cardMasteryStat==='function'?cardMasteryStat('def'):0)+(tb.def||0)+(petBuff.def||0)),mdef=()=>Math.floor(S.lv*.3+st('int')*.5+st('vit')*.4+eqv('head')*.3+pv('def')*.5+bon('mdef')+(typeof cardMasteryStat==='function'?cardMasteryStat('mdef'):0)),critD=()=>1.9+st('luk')*.008+st('dex')*.005+bon('cdm')/100,needAt=L=>roundReq(L<=50?Math.floor(NA1*Math.pow(L,NE1)):L<=70?Math.floor(N50*Math.pow(L/50,NE2)):L<=99?Math.floor(N70*Math.pow(L/70,NE2B)):Math.floor(N100*Math.pow(L/100,NE3))),baseNeedAt=L=>L>=BASE_EXP_LATE_LV?roundReq(needAt(L)*BASE_EXP_LATE_X):needAt(L),need=()=>baseNeedAt(S.lv),cost=k=>{const v=S.st[k];return v<ELITELV?1+Math.floor((v-1)/10):10+(v-ELITELV)};
 const totalPts=()=>{let p=10;for(let l=2;l<=S.lv;l++)p+=4+Math.floor(l/5);return p},rcost=()=>S.lv<20?0:S.lv*50;
 // Skill points belong to the class LINE you are standing in, exactly like RO: the Novice level
 // you grinded, your first job and your second job all pool together, and only the skills your
@@ -3932,256 +3961,261 @@ function strike(mult,col,magic=false,skill=false){
   const c=Math.random()*100<Math.max(0,crit()*(1-(mob.critRes||0))),base=magic?matk():atk(),d=Math.max(1,Math.round(base*mult*rnd(Math.min(.95,.7+st('dex')*.004),1.15)*(c?critD():1)*(mob.boss?1+petPassive('boss')/100:1)*fieldDamage(mob)));
   S.dmg=(S.dmg||0)+d;mob.hp-=d;mob.flash=1;mob.hitAnim=1;shake=c?6:2;applyLeech(Math.min(d,Math.max(0,mob.hp+d)),cardMasteryStat('leech')*.5);showDamage(mob,mob.x,mobDamageY(mob,c),mob.z,d,c,skill);
 }
-// Higher job tiers get more casts per swing: Novice 1, first job 2, second job 3, transcendent
-// 4 (tier is 0/1/2/3 - Assassin Cross and Lord Knight are tier 3, not 2). Every cast after the
-// first lands softer (SKFADE), so the extra spam reads as pressure rather than as a flat
-// doubling of single-target damage.
+// Legacy coefficient helpers retained for damage simulations; combo casts use full power.
 const SKSLOTS=t=>1+(t||0),SKFADE=[1,.55,.3,.18];
-// v83 (owner): the swing owns its timing now. The old SKGCD (0.5s) staggered the extra casts of a
-// swing over 1.5s - three casts meant three hits in three different poses. They now land on the same
-// contact frame as the animation they belong to, because the animation, not a timer, is what the
-// player reads; SKGCD had no other use, so the constant is gone.
 const SWING_MIN_T=.14,SWING_MAX_T=.55;     // seconds: the shortest and longest drawn attack animation (v86: .14 so a fast ASPD actually LOOKS fast - .3 was slower than the v86 attack floor)
 // dot.pow is the fraction of the triggering hit dealt PER SECOND, so a .05/4s dot adds 20% of
 // the hit spread over time. chain.pow is the fraction each bounce deals, once per target.
 // v97 combat skills: transient state is never serialized into a save.
 let skillRuntime;
-function resetSkillRuntime(keepBuffs=false){const buffs=keepBuffs&&skillRuntime&&skillRuntime.owner===(S&&S.cls)?skillRuntime.buffs:{};skillRuntime={owner:S&&S.cls,buffs,events:[],casts:{},echo:0,momentum:0,lastHit:-99,follow:0,dash:0,approach:null};}
-function skillState(){if(!skillRuntime||skillRuntime.owner!==(S&&S.cls))resetSkillRuntime();return skillRuntime;}
+function resetSkillRuntime(keepBuffs=false){const previous=keepBuffs&&skillRuntime&&skillRuntime.owner===(S&&S.cls)&&skillRuntime.save===S?skillRuntime:null;
+  skillRuntime={owner:S&&S.cls,save:S,buffs:previous?previous.buffs:{},events:[],casts:{},echo:0,momentum:0,lastHit:-99,follow:0,dash:0,approach:null,
+    comboSlots:previous?previous.comboSlots:null,cursor:previous?previous.cursor:0,nextCastAt:previous?previous.nextCastAt:0,recoverUntil:previous?previous.recoverUntil:0};}
+function skillState(){if(!skillRuntime||skillRuntime.owner!==(S&&S.cls)||skillRuntime.save!==S)resetSkillRuntime();return skillRuntime;}
+function finishCombo(r){r.comboSlots=null;r.cursor=0;r.recoverUntil=t+3;}
+function nextComboSkill(target){const r=skillState(),c=comboConfig();if(!c.enabled||t<r.recoverUntil||t+swingLength(.5)*SWING_CONTACT<r.nextCastAt)return null;
+  if(!r.comboSlots){r.comboSlots=rotationSkills().map(s=>s.id);r.cursor=0;if(!r.comboSlots.length){r.comboSlots=null;return null;}}
+  while(r.cursor<r.comboSlots.length){const id=r.comboSlots[r.cursor],sk=SKILLS.find(s=>s.id===id);
+    if(sk&&skillOn(id)&&(skCd[id]||0)<=0&&Math.hypot(target.x-pl.x,target.z-pl.z)<=skillRange(sk,target)+.6)return sk;
+    r.cursor++;}
+  finishCombo(r);return null;
+}
 function skillBonus(key){const r=skillState();let sum=0;for(const id in r.buffs){const b=r.buffs[id];if((b.key===key||key==='aspd'&&b.key==='speed')&&skillOn(id))sum+=b.value;}return sum;}
-// Calibration constants are fitted against the frozen pre-redesign real-update fixtures.
+// Combo damage is fitted against v139 (f5363734), with 60-second real-loop samples
+// at ranks 1/5/10 and one/three targets. Cadence changes without erasing class damage.
+// Rank interpolation below still enforces increasing damage as skills level up.
 const SKILL_TUNING={
  "Blacksmith": {
   "single": [
-   1.04283,
-   0.97008,
-   0.95704
+   1.467273,
+   1.458126,
+   1.324528
   ],
   "area": [
-   1.11111,
-   1.09861,
-   1.10551
+   0.299012,
+   0.438435,
+   0.657741
   ],
   "companion": 1.0
  },
  "Lord Knight": {
   "single": [
-   1.41299,
-   1.1749,
-   0.99357
+   1.389649,
+   1.379024,
+   1.428464
   ],
   "area": [
-   0.34432,
-   0.33072,
-   0.33672
+   0.170092,
+   0.246498,
+   0.27935
   ],
   "companion": 1.02807
  },
  "Whitesmith": {
   "single": [
-    1.17589,
-    1.15333,
-    1.00113470464
+   1.549399,
+   1.537057,
+   1.590357
   ],
   "area": [
-    1.2936005,
-    1.1620635,
-    1.397184
+   0.483979,
+   0.574642,
+   0.498161
   ],
   "companion": 1
-},
+ },
  "Swordman": {
   "single": [
-   0.94814,
-   0.917,
-   0.91656
+   0.877223,
+   0.842829,
+   0.812418
   ],
   "area": [
-   0.24736,
-   0.40313,
-   0.3795
+   0.127978,
+   0.287269,
+   0.302827
   ],
   "companion": 1.04115
  },
  "Mage": {
   "single": [
-   1.20702,
-   1.09324,
-   1.11599
+   1.099763,
+   0.975819,
+   1.037839
   ],
   "area": [
-   2.09739,
-   2.38818,
-   2.34652
+   2.661607,
+   3.195419,
+   2.810866
   ],
   "companion": 0.93639
  },
  "Archer": {
   "single": [
-   1.35368,
-   1.20064,
-   0.97174
+   1.857986,
+   1.885962,
+   1.151735
   ],
   "area": [
-   0.71539,
-   0.78099,
-   0.79143
+   0.335815,
+   0.208689,
+   0.202216
   ],
   "companion": 1.0
  },
  "Thief": {
   "single": [
-   1.348204,
-   1.22337,
-   1.06299
+   1.996711,
+   2.201654,
+   1.626501
   ],
   "area": [
-   1.99837,
-   1.97303,
-   1.75765
+   0.841581,
+   0.652925,
+   0.475211
   ],
   "companion": 1.0
  },
  "Acolyte": {
   "single": [
-   1.00753,
-   0.81661,
-   0.72888
+   0.758125,
+   0.677104,
+   0.654422
   ],
   "area": [
-   0.21027,
-   0.26108,
-   0.25588
+   0.138582,
+   0.305564,
+   0.278654
   ],
   "companion": 0.9623
  },
  "Merchant": {
   "single": [
-   1.53267,
-   1.4308,
-   1.38372
+   2.182486,
+   2.313341,
+   2.482764
   ],
   "area": [
-   1.69247,
-   1.66689,
-   1.54841
+   1.308589,
+   1.05444,
+   0.841081
   ],
   "companion": 1.0
  },
  "Knight": {
   "single": [
-   1.22664,
-   1.09717,
-   1.02331
+   1.382078,
+   1.225574,
+   1.291072
   ],
   "area": [
-   0.5069,
-   0.58534,
-   0.49676
+   0.413357,
+   0.390106,
+   0.31473
   ],
   "companion": 1.0341
  },
  "Wizard": {
   "single": [
-   1.09741,
-   0.88618,
-   0.82343
+   1.208956,
+   1.005341,
+   0.865009
   ],
   "area": [
-   0.37114,
-   0.45133,
-   0.53475
+   0.618667,
+   0.644502,
+   0.956169
   ],
   "companion": 0.93751
  },
  "Hunter": {
   "single": [
-   1.17133,
-   1.01453,
-   0.99932
+   1.338015,
+   1.058872,
+   1.063525
   ],
   "area": [
-   0.46244,
-   0.52555,
-   0.40798
+   0.171487,
+   0.321818,
+   0.463452
   ],
   "companion": 1.0
  },
  "Assassin": {
   "single": [
-   1.25026,
-   1.0178,
-   0.88838
+   1.710036,
+   1.011305,
+   1.15651
   ],
   "area": [
-   0.71512,
-   0.72,
-   0.71767
+   0.709934,
+   1.074868,
+   0.84922
   ],
   "companion": 1.0
  },
  "Priest": {
   "single": [
-   0.85793,
-   0.6414474,
-   0.53524
+   0.55552,
+   0.416955,
+   0.41988
   ],
   "area": [
-   0.16493,
-   0.22488,
-   0.20999
+   0.063438,
+   0.093564,
+   0.059192
   ],
   "companion": 0.92799
  },
  "High Wizard": {
   "single": [
-   1.1239001539603959,
-   0.8409115789999999,
-   0.6607781818181817
+   0.753713,
+   0.807494,
+   0.691689
   ],
   "area": [
-   0.25123,
-   0.34691,
-   0.3921
+   0.551387,
+   0.531509,
+   0.528374
   ],
   "companion": 0.93756
  },
  "Sniper": {
   "single": [
-   1.08033,
-   0.96299,
-   0.7505
+   1.192734,
+   0.92915,
+   0.929585
   ],
   "area": [
-   0.40333,
-   0.36842,
-   0.32467
+   0.226747,
+   0.377102,
+   0.058651
   ],
   "companion": 1.0
  },
  "Assassin Cross": {
   "single": [
-   1.17694,
-   0.9194,
-   0.7649684
+   1.727431,
+   1.617212,
+   1.61719
   ],
   "area": [
-   0.48144,
-   0.55504,
-   0.5488
+   0.485102,
+   0.498705,
+   0.441062
   ],
   "companion": 1.0
  },
  "High Priest": {
   "single": [
-   0.710673481069307,
-   0.5282532866285715,
-   0.4121618181818182
+   0.612176,
+   0.491112,
+   0.396115
   ],
   "area": [
-   0.22164,
-   0.24669,
-   0.24061
+   0.153162,
+   0.302289,
+   0.553647
   ],
   "companion": 1.02452
  }
@@ -4265,6 +4299,11 @@ function castSkill(sk,k){
 }
 function tickCombatSkills(dt){const r=skillState();r.counter=Math.max(0,(r.counter||0)-dt);r.dash=Math.max(0,r.dash-dt);r.echoCd=Math.max(0,(r.echoCd||0)-dt);if(t-r.lastHit>5)r.momentum=0;
   for(const id in r.buffs){r.buffs[id].left-=dt;if(r.buffs[id].left<=0||!skillOn(id))delete r.buffs[id];}
+  if(mobs.some(o=>o.hp>0))for(const sk of SKILLS){if(sk.type!=='buff'||!skillOn(sk.id)||(sk.id==='ovthrust'&&skillOn('thrust'))||(skCd[sk.id]||0)>0||(r.buffs[sk.id]&&r.buffs[sk.id].left>.5))continue;
+    if(sk.id==='thrust')delete r.buffs.ovthrust;
+    const duration=sk.id==='dpois'?5+lv(sk.id):['ovthrust','thrust'].includes(sk.id)?8+2*Math.min(5,lv(sk.id)):sk.duration;
+    r.buffs[sk.id]={key:sk.key,value:sk.f(lv(sk.id)),left:duration};skCd[sk.id]=sk.cd;playSkillFx(sk.id,null,sk.col);
+  }
   const events=r.events;r.events=[];for(const e of events){e.left-=dt;if(e.owner!==S.cls)continue;if(e.left<=0)e.fn();else r.events.push(e);}
   for(const o of mobs.slice()){
     const rooted=(o.root||0)>0;o.root=Math.max(0,(o.root||0)-dt);o.rootResist=Math.max(0,(o.rootResist||0)-dt);
@@ -4290,7 +4329,7 @@ const SWING_CONTACT=.45;                   // where in the animation the hit lan
 // release, so the two counts can no longer come apart.
 const SWING_FIT=.9;
 let swingDur=.42,swing=null;
-function swingLength(){                    // the drawn attack animation, never longer than the attack rate
+function swingLength(interval=aspd()){                    // the drawn attack animation, never longer than the attack rate
   const sk=heroSpr&&heroSpr.userData&&heroSpr.userData.skin;
   // v88 (owner: "the atk animation does not match the atk speed"): the interval is the REAL attack
   // rate - the old Math.max(.2,…) floor drew a .2s swing for anyone faster than 5 hits/s, so a fast
@@ -4298,21 +4337,18 @@ function swingLength(){                    // the drawn attack animation, never 
   // below still floors the DRAWN length at SWING_MIN_T (.14s), which is the v86 intent - unless the
   // attack rate itself is faster than that floor, in which case fitting inside the interval wins
   // (a swing that overlaps the next one is the drift this whole function exists to prevent).
-  const file=sk&&sk.p&&sk.p.total?(sk.p.total.attack||0):0,interval=aspd();
+  const file=sk&&sk.p&&sk.p.total?(sk.p.total.attack||0):0;
   const room=Math.min(file||interval,SWING_MAX_T,interval*SWING_FIT);
   return cl(room,Math.min(SWING_MIN_T,room),SWING_MAX_T);
 }
 function playerAttack(){
   if(!mob)return;
   engageWait=0;   // a swing is the proof the fight is live: the walk-in wait starts again (v88.4)
-  const interval=aspd(),far=Math.hypot(mob.x-pl.x,mob.z-pl.z)>heroStandoff(mob)+.6;
-  pAtkT=interval;atkAnim=1;swingDur=swingLength();
-  const ready=rotationSkills().filter(s=>t>=(skillState().batchUntil||0)&&(skCd[s.id]||0)<=0&&(!far||s.type==='buff'||s.rng||s.dash))
-    .filter(s=>s.type==='buff'||Math.hypot(mob.x-pl.x,mob.z-pl.z)<=skillRange(s,mob)+.6)
-    .sort((a,b)=>(skillState().casts[a.id]??-99)-(skillState().casts[b.id]??-99));
-  const casts=[];for(const sk of ready){if(casts.length>=3)break;casts.push(sk)}
+  const far=Math.hypot(mob.x-pl.x,mob.z-pl.z)>heroStandoff(mob)+.6,sk=nextComboSkill(mob);
+  const interval=sk?.5:aspd();pAtkT=interval;atkAnim=1;swingDur=swingLength(interval);
+  const casts=sk?[sk]:[];
   const d=pv('dbl');
-  swing={t:swingDur*SWING_CONTACT,target:mob,pack:mob.pack,casts:casts.map((sk,i)=>({sk,k:SKFADE[i]||.3})),
+  swing={t:swingDur*SWING_CONTACT,target:mob,pack:mob.pack,casts:casts.map(sk=>({sk,k:1})),
     far,double:d&&Math.random()<d/100+st('dex')*.003};
 }
 function resolveSwing(s){
@@ -4323,14 +4359,14 @@ function resolveSwing(s){
   if(!tgt||!mobs.includes(tgt)||tgt.hp<=0)return;
   mob=tgt;
   dmgGroup=new Map();
-  if(t<(skillState().batchUntil||0))s.casts=[];
+  const r=skillState();
+  if(!comboConfig().enabled||t<r.recoverUntil||t<r.nextCastAt)s.casts=[];
   if(s.casts.length){
-    for(const c of s.casts){
-      if(!skillOn(c.sk.id))continue;
-      // a kill mid-swing must never send the next cast at the camp next door
-      if(!mob||!mobs.includes(mob)||mob.hp<=0||mob.pack!==s.pack)break;
-      skillState().batchUntil=t+1.5;skCd[c.sk.id]=rotationCooldown();skillState().casts[c.sk.id]=t;skillNameFloat(c.sk.n);
-      if(c.sk.type==='buff'){const sk=c.sk,r=skillState();if(sk.id==='thrust')delete r.buffs.ovthrust;r.buffs[sk.id]={key:sk.key,value:sk.f(lv(sk.id)),left:sk.id==='dpois'?5+lv(sk.id):['ovthrust','thrust'].includes(sk.id)?8+2*Math.min(5,lv(sk.id)):sk.duration};playSkillFx(sk.id,null,sk.col);}else castSkill(c.sk,c.k)}
+    const c=s.casts[0];
+    if(skillOn(c.sk.id)&&r.comboSlots&&r.comboSlots[r.cursor]===c.sk.id&&mob.pack===s.pack&&Math.hypot(mob.x-pl.x,mob.z-pl.z)<=skillRange(c.sk,mob)+.6){
+      skCd[c.sk.id]=c.sk.cd;r.casts[c.sk.id]=t;r.nextCastAt=t+.5;r.cursor++;skillNameFloat(c.sk.n);castSkill(c.sk,1);
+      if(r.cursor>=r.comboSlots.length)finishCombo(r);
+    }
   }else if(!s.far){
     const boost=1+(skillBonus('weapon')+skillBonus('sacred')+skillBonus('damage'))/100;
     strike(boost,undefined,INT_CLASSES.includes(S.cls)||skillBonus('sacred')>0);shot();
@@ -4899,7 +4935,7 @@ const V={
     <small><b>A class you have played before is one click away</b> - its Base Lv, job level, skills, stats and gear are still on it, so there is no Novice reset needed to go back to it. A class you have <i>never</i> played still has to be unlocked from its parent (or from the Novice).</small>
     <button class="full" data-a="job" data-v="Novice" ${S.cls==='Novice'?'disabled':''}>Restart as Novice (Base Lv 25, job levels cleared)</button>`},
   skills(){const line=lineOf(S.cls),av=skpAvail(),sel=SKILLS.find(s=>s.id===selS);
-    return`${S.skillRefund?`<div class="row"><small><b>New class skills:</b> ${S.skillRefund} old skill ranks were cleared. Your earned points are available on their original class lines. Use Auto-allocate to learn attacks first, then all other skills. Each played class also has one free stat reset.</small></div>`:''}${S.skRepair?`<div class="row" style="margin-bottom:4px"><small class="r0"><b>Repaired an older save:</b> ${S.skRepair} skill point${S.skRepair>1?'s were':' was'} refunded - the old shop minted points, so this line was carrying levels it had never earned. Nothing else to do.</small></div>`:''}<div class="hd">Skill points: ${av} <small>(${skEarned()} earned on this line, ${Math.max(0,skSpent()-(S.sk.aid?1:0))} spent &middot; this line's tree costs ${skTree()}, a maxed line earns ${skEarnedMax()} - <b>${Math.max(0,skEarnedMax()-skTree())} to spare</b>)</small></div><small>Skill levels cost 1 point each. Each job adds five skills; earlier skills remain available. Attacks cast automatically on their cooldowns, up to 3 per batch with a 1.5-second gap. Basic attacks continue between batches. Later casts deal ${SKFADE.slice(1).map(f=>Math.round(f*100)+'%').join(' / ')} power. Buffs and attacks share the same rotation. Cooldown grows with the number of enabled skills. Pause individual skills or use ALL to change the whole line.</small>`
+    return`${S.skillRefund?`<div class="row"><small><b>New class skills:</b> ${S.skillRefund} old skill ranks were cleared. Your earned points are available on their original class lines. Use Auto-allocate to learn attacks first, then all other skills. Each played class also has one free stat reset.</small></div>`:''}${S.skRepair?`<div class="row" style="margin-bottom:4px"><small class="r0"><b>Repaired an older save:</b> ${S.skRepair} skill point${S.skRepair>1?'s were':' was'} refunded - the old shop minted points, so this line was carrying levels it had never earned. Nothing else to do.</small></div>`:''}<div class="hd">Skill points: ${av} <small>(${skEarned()} earned on this line, ${Math.max(0,skSpent()-(S.sk.aid?1:0))} spent &middot; this line's tree costs ${skTree()}, a maxed line earns ${skEarnedMax()} - <b>${Math.max(0,skEarnedMax()-skTree())} to spare</b>)</small></div><small>Skill points: spend one point per rank. Your current class inherits earlier skills in its own line. Select up to six attacks for an ordered combo. Buffs refresh independently; passives remain active. Basic attacks continue during the 3-second recovery.</small>`
     +rotationBar()+`<div class="sk-slot">${sel&&line.includes(sel.from)?skillDetailCard(sel):'<small class="sk-slot-empty">Pick a skill to read what it does and to switch its auto-cast on or off.</small>'}</div>`
     +line.map(from=>{const ss=SKILLS.filter(s=>s.from===from);return ss.length?`<div class="sec">${from}</div><div class="skg">${ss.map(s=>{const L=lv(s.id),off=!!(L&&s.type!=='pas'&&skOff(s.id)),kind=s.type==='pas'?'PASSIVE':s.type==='buff'?'BUFF':s.type==='heal'?'HEAL':'ACTIVE';
       return`<div class="sk${L?'':' off'}${off?' auto-off':''}${selS===s.id?' sel':''}" style="--sk-accent:${s.col||'#8a6a2c'}" data-a="ssel" data-v="${s.id}">
@@ -5267,7 +5303,7 @@ function arrangePanel(k,root){
     put(picked,fold('Class switching & collection',notes,'class-notes'));put(browser,back,bonus.cloneNode(true),split(paths,picked));body.replaceChildren(actions,overview,browser);
   }else if(k==='skills'){
     const slot=q('.sk-slot'),tools=q('.sk-tools'),reset=q('[data-a="rskill"]'),grids=all('.skg'),intro=direct().filter(e=>!e.matches('.sk-slot,.skg,.sec,.skill-rotation')&&e!==reset);
-    const catalog=section('Skills by class','ui-skill-catalog');
+    const catalog=section('Your class skill library','ui-skill-catalog');
     const skillGrid=make('div','skg');
     grids.forEach(g=>{const label=g.previousElementSibling?.textContent||'Skills';for(const tile of [...g.querySelectorAll('.sk[data-a=ssel]')]){tile.querySelector('.sk-head')?.append(make('small','eclipse-skill-class',label));put(skillGrid,tile)}});put(catalog,skillGrid);
     if(tools)tools.remove();
@@ -5281,7 +5317,7 @@ function arrangePanel(k,root){
     const footer=put(section('Automation','ui-automation'),tools);
     // The allocation tile can be a sibling of the master tile in older saves/builds.
     const masters=all('.sk-master,.sk-alloc');masters.forEach(e=>{if(!footer.contains(e))footer.append(e)});
-    body.replaceChildren(footer,q('.skill-rotation'),scroll('skills',catalog),fold('Skill points & combat rules',intro,'skill-notes'),fold('Reset skills',reset,'respec'));
+    body.replaceChildren(q('.skill-rotation'),footer,scroll('skills',catalog),fold('Skill points & combat rules',intro,'skill-notes'),fold('Reset skills',reset,'respec'));
   }else if(mode==='bag'&&q('.bag-items')){
     body.classList.add('ui-materials');
   }else if(mode==='bag'||mode==='cards'){
@@ -5607,7 +5643,7 @@ const ACT={
   stat5:k=>{for(let i=0;i<5;i++)if(S.pts>=cost(k)&&S.st[k]<statCap()){S.pts-=cost(k);S.st[k]++}S.hp=Math.min(S.hp,maxHp());ui();save()},
   jobview:v=>{eclipseJobsBrowse=v==='browse';renderWin()},selk:v=>{selK=v;eclipseJobsBrowse=true;renderWin('[data-win=job] .ui-inspector')},job:n=>{if(n==='Novice'&&S.cls!=='Novice')ask('Restart as Novice? You go back to Base Lv 25, job levels cleared, and your stats are refunded. Classes you leave keep their own Base Lv, stats and gear, so you can switch back to them later.',()=>changeClass(n));else changeClass(n)},
   rstat:()=>{const c=statResetCost();if(S.zeny<c)return denied(c,'stats');S.zeny-=c;if(S.skillRespec)delete S.skillRespec[S.cls];for(const k in S.st)S.st[k]=1;S.pts=totalPts();S.hp=Math.min(S.hp,maxHp());log('Stats reset.'+(c?' -'+c.toLocaleString()+'z':''));ui();save()},
-  skill:id=>{const s=SKILLS.find(x=>x.id===id);if(!s)return;const nx=lv(id)+1,c=skCost(nx);
+  skill:id=>{const s=SKILLS.find(x=>x.id===id);if(!s||!s.cls.includes(S.cls))return;const nx=lv(id)+1,c=skCost(nx);
     if(nx>s.max||!lineOf(S.cls).includes(s.from))return;
     if(skpAvail()<c)return log('Needs '+c+' skill points (you have '+skpAvail()+').','r0','skill');
     // v88: the press is anchored to its own tile, so levelling a skill never moves the grid (see ssel).
@@ -5676,8 +5712,15 @@ const ACT={
   skall:()=>{const on=!skAllOn(),n=skTog().length;skSetAll(on);
     log(on?`All ${n} auto-cast skill${n===1?'':'s'} switched ON.`:`All ${n} auto-cast skill${n===1?'':'s'} switched OFF - nothing will cast until you switch it back.`,on?'r3':'r0','skill');ui();save()},
   skalloc:()=>{const n=autoAllocateSkills();if(n)log(`Auto-allocated ${n} skill level${n===1?'':'s'}: attacks first, then every skill and higher ranks.`,'r3','skill');else log(skillsFullyAllocated()?'All reachable skills are already maxed.':'No affordable skill level yet.','r0','skill');ui();save()},
-  skmove:v=>{const[id,step]=v.split(':'),list=rotationSkills().map(s=>s.id),i=list.indexOf(id),j=i+Number(step);if(i<0||![-1,1].includes(Number(step))||j<0||j>=list.length)return;[list[i],list[j]]=[list[j],list[i]];S.skillPriority=list.concat((S.skillPriority||[]).filter(id=>!list.includes(id)));renderWin();save()},
-  sktog:id=>{if(!S.skOff)S.skOff={};const s=SKILLS.find(x=>x.id===id);if(!s)return;
+  combopause:()=>{const c=comboConfig();c.enabled=!c.enabled;renderWin();save()},
+  combofill:()=>{const c=comboConfig(),ids=suggestedCombo();c.slots=Array.from({length:6},(_,i)=>ids[i]||null);renderWin();save()},
+  comboassign:v=>{const[index,id]=v.split(':'),i=Number(index);if(!Number.isInteger(i)||i<0||i>5)return;
+    if(id&&!SKILLS.some(s=>s.id===id&&s.type==='act'&&lv(id)>0&&s.cls.includes(S.cls)))return;
+    const c=comboConfig(),other=c.slots.indexOf(id);if(id&&other!==-1&&other!==i)c.slots[other]=c.slots[i];c.slots[i]=id||null;renderWin();save()},
+  combomove:v=>{const[index,step]=v.split(':'),i=Number(index),d=Number(step),j=i+d;if(!Number.isInteger(i)||![-1,1].includes(d)||i<0||i>5||j<0||j>5)return;
+    const c=comboConfig();[c.slots[i],c.slots[j]]=[c.slots[j],c.slots[i]];renderWin();save()},
+  skmove:v=>{const[id,step]=v.split(':'),i=comboConfig().slots.indexOf(id);if(i>=0)ACT.combomove(i+':'+step)},
+  sktog:id=>{if(!S.skOff)S.skOff={};const s=SKILLS.find(x=>x.id===id);if(!s||!s.cls.includes(S.cls)||lv(id)<=0)return;
     if(S.skOff[id])delete S.skOff[id];else S.skOff[id]=1;
     log(s.n+': auto-cast '+(S.skOff[id]?'OFF - you will not use it':'ON')+'.',S.skOff[id]?'r0':'r3','skill');ui('[data-win="skills"] .sk-detail-card');save()},
   unequip:k=>{const it=S.eq[k];if(!it)return;S.inv.push(it);S.eq[k]=null;S.hp=Math.min(S.hp,maxHp());ui();save()},
@@ -5769,6 +5812,7 @@ addEventListener('keydown',e=>{if(!S||e.ctrlKey||e.metaKey||e.altKey)return;cons
   if(k==='ESCAPE'){e.preventDefault();escapeUI();return}if(/INPUT|TEXTAREA|SELECT/.test(e.target.tagName))return;if(k==='Q'){qOpen=!qOpen;renderQ();return}const X={R:['equip','refine'],C:['bag','cards']}[k];if(X){const same=tabs.includes(X[0])&&sub[X[0]]===X[1]&&(!expandedPanels.size||expandedPanels.has(X[0]));sub[X[0]]=X[1];if(same)openTab(X[0]);else{if(expandedPanels.size){expandedPanels.clear();expandedPanels.add(X[0])}if(!tabs.includes(X[0])){if(tabs.length>=MAX_TABS)tabs.shift();tabs.push(X[0])}renderWin()}return}const f=Object.entries(TABS).find(([,v])=>v[2]===k);if(f)openTab(f[0])});
 
 async function toggleFullscreen(){try{if(document.fullscreenElement)await document.exitFullscreen();else await document.documentElement.requestFullscreen()}catch{log('Fullscreen is unavailable in this browser. Try the browser fullscreen control.')}}
+document.addEventListener('change',e=>{const el=e.target;if(S&&el.matches('select[data-combo-slot]'))ACT.comboassign(el.dataset.comboSlot+':'+el.value)});
 $('spd').onclick=()=>{speed=speed===1?2:speed===2?4:1;$('spd').textContent='Speed x'+speed};
 const tip=$('tooltip');
 document.addEventListener('error',e=>{const img=e.target;if(!img||img.tagName!=='IMG'||!img.classList||!img.classList.contains('ro-item-icon'))return;const fallback=document.createElement('span');fallback.className='ro-icon-fallback';
@@ -6016,7 +6060,7 @@ if(S.hp<=0){log('You were defeated... knocked back to the entrance.','r0','kills
   pl.x=cl(pl.x,-BX_,BX_);pl.z=cl(pl.z,Z0,Z1);
   if(mob)pl.ry=-Math.atan2(mob.z-pl.z,mob.x-pl.x);else if(pl.run)pl.ry=-Math.atan2(pz,px);
   if(S.hp<maxHp()&&Math.floor(t*2)!==Math.floor((t-dt)*2))S.hp=Math.min(maxHp(),S.hp+Math.ceil(maxHp()*.008));
-  barT-=dt;if(barT<=0){barT=.15;bars()}
+  barT-=dt;if(barT<=0){barT=.15;for(const el of document.querySelectorAll('[data-combo-status]'))el.textContent=comboStatus();bars()}
   floats.forEach(f=>{f.life-=dt*(f.rate||1.1);if(f.kind!=='skill')f.y+=dt*(f.rate?0:(['incoming','miss','evade'].includes(f.kind)?.3:.8))});floats=floats.filter(f=>{if(f.life>0)return true;if(f.el)f.el.remove();return false});
   drops.forEach(d=>{d.t+=dt;d.vy+=700*dt;d.y+=d.vy*dt;if(d.y>0){d.y=0;d.vy=-d.vy*.4;if(Math.abs(d.vy)<40)d.vy=0}});
   for(let i=drops.length-1;i>=0;i--)if(drops[i].t>.9){collect(drops[i].it);drops.splice(i,1)}

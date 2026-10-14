@@ -7,6 +7,8 @@ the implementation/tests together. Read the linked sources for exact details.
 | Decision | Reason / implementation evidence |
 | --- | --- |
 | Return directly to previously played classes | The owner wanted saved builds available without repeating a Novice reset. `classBlock()` and `changeClass()` restore the class snapshot. Gear is matched by identity, not cloned. |
+| Base EXP requirements increase from 100 | The owner approved the tested 50% increase to Base requirements from Lv100. Job requirements, contract rewards and the measured offline EXP/min rule keep their existing formulas. See `baseNeedAt`, `needAt` and `base_pacing_sim.js`. |
+| Ordered six-slot combos with recovery | Attacks cast once in player-selected order from the active class line, then recover for 3 seconds. Buffs and emergency healing are independent. Earlier jobs remain useful through inherited marks and follow-up effects. No Heat/SP meter. |
 | Keep old IDs and save ownership | Renamed skills, appended pets, cosmetics and cloud sync must not reinterpret old progress or mix accounts. See migration, save-owner and cloud tests. |
 | Pets come from drops, not hatching | Collection is part of farming. Training/Bond/skill rolls do not replace acquisition. See `PETS` and pet tests. |
 | Preserve original sprite art | Supplied crops and pinned native sources define the artwork. Preserve pixels, native placement, layers and action timing; do not fill gaps with invented art. See native pipeline READMEs. |

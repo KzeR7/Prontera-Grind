@@ -84,7 +84,7 @@ function makeEnv(aspdValue, fileTotal, atkValue) {
 }
 
 t('the shipped swing code is the code under test (nothing is mirrored here)', () => {
-  assert.ok(src.includes('function swingLength(){'), 'swingLength() is in the page');
+  assert.ok(src.includes('function swingLength(interval=aspd()){'), 'swingLength() is in the page');
   assert.ok(src.includes('function skinSwingMs(p){'), 'skinSwingMs() is in the page');
   assert.ok(src.includes("const ms=route.view==='attack'?skinSwingMs(p):nowMs-sk.t0;"),
     'captureSkinFrame clocks the attack view off the swing and every other view off the wall');
@@ -171,7 +171,7 @@ t('a pack with no decoded attack file cannot divide by zero or index past its ow
 
 t('the swing timer and the animation still share one duration, and the numbers still land on the swing', () => {
   const pa = grab('function playerAttack(){', 'function resolveSwing(s){');
-  assert.ok(/pAtkT=interval;atkAnim=1;swingDur=swingLength\(\)/.test(pa),
+  assert.ok(/pAtkT=interval;atkAnim=1;swingDur=swingLength\(interval\)/.test(pa),
     'the attack timer and the drawn swing are set together in playerAttack()');
   assert.ok(/swing=\{t:swingDur\*SWING_CONTACT/.test(pa), 'the hit lands on the animation\'s own contact frame');
   assert.ok(src.includes('atkAnim=Math.max(0,atkAnim-dt/Math.max(.05,swingDur))'),
