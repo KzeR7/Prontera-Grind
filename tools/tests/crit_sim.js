@@ -123,7 +123,7 @@ t('high-level bosses cut the crit chance rolled against them', () => {
     const missCh=()=>0,crit=()=>50,atk=()=>100,matk=()=>200,st=()=>0,critD=()=>2,
       rnd=(a,b)=>a,addFloat=()=>{},damageFloat=(...a)=>{hit=a},
       showDamage=(o,x,y,z,a,c,sk)=>damageFloat(x,y,z,a,c,false,sk),mobDamageY=()=>1.9;
-    ${grab('function strike(mult,col,magic=false,skill=false){', '// Higher job tiers get more casts per swing:')}
+    ${grab('function strike(mult,col,magic=false,skill=false){', '// Legacy coefficient helpers retained')}
     Math.random=()=>.4;
     strike(1,'#fff');
     this.__res=shake;

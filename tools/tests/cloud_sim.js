@@ -513,7 +513,7 @@ await T('a file that is not a backup is refused, and nothing is written', async 
   for (const bad of ['not json at all', JSON.stringify({ hello: 'world' }), JSON.stringify({ kind: 'save-backup' })]) {
     h.sandbox.restoreBackup({ text: bad });
     assert.strictEqual(h.store.get('pg_save3_X'), '{"lv":70}');
-    assert.match(h.state.err, /not a Prontera Grind save backup/i, 'a file that is not a backup: ' + bad.slice(0, 20));
+    assert.match(h.state.err, /not a Horizon Haven save backup/i, 'a file that is not a backup: ' + bad.slice(0, 20));
   }
   // A well-formed backup with no game keys in it is its own answer, not a crash.
   h.sandbox.restoreBackup({ text: JSON.stringify({ kind: 'save-backup', keys: { 'pg_gm_local': 'x' } }) });

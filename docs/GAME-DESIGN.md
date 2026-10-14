@@ -31,7 +31,23 @@ There are 19 classes: Novice plus six three-step lines:
 | Merchant | Blacksmith | Whitesmith |
 
 Base level, Job level, stat points and skill ranks are different kinds of progress.
-Skills use cooldowns, not an SP resource. New casts occur in batches of up to three, with a 1.5-second simulation-time gap shared by attacks and buffs; basic attacks continue between batches. Attacks and buffs use one priority rotation. Their cooldown is 1.5 seconds per group of three enabled skills (11 skills: 6 seconds); First Aid remains a separate emergency heal. Players reorder the rotation in Skills. Mage and Acolyte lines attack with magic at six tiles; their area skills have increased reach and damage, especially Mage. Read each skill's current definition:
+Skills use class-specific six-slot combos, with no SP resource. Players choose
+learned offensive skills from the current class's inherited line and reorder them
+with arrows or slot selectors. Each attack casts once in order at full power, with
+0.5-second cast spacing aligned to attack animation contact. After completion,
+offensive skills recover for 3 simulation seconds; basic attacks and pets continue.
+Basic attacks, pet power and healing amounts retain
+their existing formulas. Cooldowns belong to individual skills. Unavailable, paused or out-of-range attacks
+are skipped for that combo. Changes to slot selection/order apply to the next
+combo, while pause and individual auto-cast switches take effect immediately.
+Buffs refresh near expiry on their own cooldowns without consuming offensive slots;
+First Aid remains a separate emergency heal. Passives do not occupy slots.
+Each class keeps its own saved combo, including a separate pause switch. Old saves
+use their earlier offensive priority to initialize slots; missing priorities use a
+starter combo with inherited openers and attacks from newer jobs. Field transitions
+preserve combo/recovery timing, while class and account changes clear transient
+combat state. Mage and Acolyte lines attack with magic at six tiles; their area skills
+have increased reach and damage, especially Mage. Read each skill's current definition:
 historical IDs can remain unchanged after a skill is renamed or redesigned.
 
 Previously played classes can be revisited directly and restore their saved
@@ -44,7 +60,13 @@ tests for the exact transitions; never treat all class changes as one reset.
 Current stat allocation caps at 99 before Base level 100, and at 120 from 100.
 Base progression ends at 150. Do not copy earlier grant curves or pacing estimates
 from historical notes: `totalPts()`, `statCap()`, `needAt()`, `jneed()` and the
-progression/economy tests define current behavior.
+progression/economy tests define current behavior. Base EXP requirements from
+Lv100 onward are 50% higher than the shared reference curve, with existing
+rounding. `needAt()` retains that reference curve for Job requirements and
+contract rewards; `baseNeedAt()` supplies the player Base EXP bar. Existing
+levels and earned EXP are preserved. Offline EXP still uses measured EXP/min,
+50% efficiency and a four-hour cap per claim. The target of roughly five days
+is a balance goal, not a guaranteed duration for every class, build or login schedule.
 
 Movement from AGI, pets, skills and running shares a 10.045 units/second cap.
 Equipment and card movement is applied afterward and can exceed that cap; those

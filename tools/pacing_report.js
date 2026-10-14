@@ -1,3 +1,6 @@
+// Historical shared-curve reference model (needAt): Base leveling now uses
+// baseNeedAt with a separate late-game multiplier. These fixed-kill-rate timings
+// do not model that multiplier, earned builds, Nightmare combat or offline claims.
 // tools/pacing_report.js — what the current EXP/Zeny curves mean in gameplay time.
 //   node tools/pacing_report.js            # the full report (milestones, early levels, jobs)
 //   node tools/pacing_report.js --levels 1-30   # level-by-level table for a level range

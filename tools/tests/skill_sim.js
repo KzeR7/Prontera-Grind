@@ -110,7 +110,7 @@ if (!pickWMatch) throw new Error('cannot extract weighted gacha picker');
 const PICKW_CODE = pickWMatch[0].slice(0, -',gp='.length) + ';';
 const PET_HIT_SRC = grab('const petSkills=p=>', 'const rollingSet=new Set');
 const PET_GACHA_ACTION = block('pskill:id=>');
-const STRIKE_SRC = 'const fieldDamage=()=>1,applyLeech=()=>0,cardMasteryStat=()=>0;\n' + grab('function strike(mult,col,magic=false,skill=false){', '// Higher job tiers');
+const STRIKE_SRC = 'const fieldDamage=()=>1,applyLeech=()=>0,cardMasteryStat=()=>0;\n' + grab('function strike(mult,col,magic=false,skill=false){', '// Legacy coefficient helpers retained');
 function makePetHarness(){
   const box={};vm.createContext(box);
   vm.runInContext(`

@@ -1,3 +1,6 @@
+// Historical shared-curve reference model (needAt): Base leveling now uses
+// baseNeedAt with a separate late-game multiplier. These fixed-kill-rate timings
+// do not model that multiplier, earned builds, Nightmare combat or offline claims.
 // tools/tune_pacing.js — solve and verify the live Base-EXP curve.
 //   node tools/tune_pacing.js            # solve design B from its targets, print the constants
 //   node tools/tune_pacing.js --verify   # check index.html's shipped constants + timings
