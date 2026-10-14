@@ -193,7 +193,7 @@ const T = async (name, fn) => { try { await fn(); check.push(['ok', name]); } ca
   });
 
   // ---------------------------------------------------------------- 5. the range
-  t('the stand-off follows the class band: bow 4, staff 4.5, melee 1.2 + 0.45*size', () => {
+  t('the stand-off follows the class band: bow 4, magic 6, melee 1.2 + 0.45*size', () => {
   // Controlled setup on purpose: ONE motionless monster in the middle of the lane, made the active
   // camp's own target, so the only thing that moves is the hero. That turns the distance the hero
   // settles at into a direct read of its stand-off, instead of a race between the hero walking out
@@ -219,18 +219,18 @@ const T = async (name, fn) => { try { await fn(); check.push(['ok', name]); } ca
   assert.ok(archer.stand < 4.5, 'and not the five it used to want: ' + archer.stand);
   settlesAt(archer, 'the archer');
   const mage = hold('Mage');
-  assert.ok(mage.stand >= 4.5, 'a staff class wants four and a half tiles: ' + mage.stand);
+  assert.equal(mage.stand, 6, 'a magic class holds six tiles');
   settlesAt(mage, 'the staff class');
   // a melee class still walks all the way in - the fix must not turn everyone into an archer
   const melee = hold('Novice');
   assert.ok(melee.dist < 2.2, 'a melee class still closes in: ' + melee.dist.toFixed(2));
   assert.ok(melee.dist > .5, 'and does not stand inside the monster: ' + melee.dist.toFixed(2));
-  // and a class that has learned a ranged skill keeps THAT skill's range, whatever its band says.
-  // Soul Breaker belongs to the Assassin Cross line (a melee class), which is the case that matters.
+  // Soul Breaker retains its range while Assassin Cross closes for basics and melee skills.
   const assassin = ev(`S.cls='Assassin Cross';S.sk=Object.assign({},S.sk,{soulb:1});S.mp=0;S.lvl=3;spawn();
     {const m=mobs[0];mobs=[m];mob=m;camps=[];activePack=m.pack;m.hp=m.max=1e9;m.x=0;m.z=0;m.fixed=true;m.a=0;m.at=1e9;pl.x=9;pl.z=0;}
-    heroStandoff(mob)`);
-  assert.ok(assassin >= 5, 'a learned ranged skill keeps its five tiles even on a melee class: ' + assassin);
+    standC={t:-9,r:0};heroStandoff(mob)`);
+  assert.equal(assassin, ev('1.2+.45*mob.size'), 'Assassin Cross holds its melee band');
+  assert.equal(ev('skillRange(SKILLS.find(s=>s.id==="soulb"),mob)'), 5, 'Soul Breaker still reaches five tiles');
 });
 
   t('a ranged hero holds its ground: the monster closes in and hits back (no kiting)', () => {

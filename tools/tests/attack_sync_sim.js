@@ -171,7 +171,7 @@ t('a pack with no decoded attack file cannot divide by zero or index past its ow
 
 t('the swing timer and the animation still share one duration, and the numbers still land on the swing', () => {
   const pa = grab('function playerAttack(){', 'function resolveSwing(s){');
-  assert.ok(/pAtkT=interval;atkAnim=1;swingDur=swingLength\(interval\)/.test(pa),
+  assert.ok(/pAtkT=interval;atkAnim=1;swingDur=swingLength\(Math.min\(interval,aspd\(\)\)\)/.test(pa),
     'the attack timer and the drawn swing are set together in playerAttack()');
   assert.ok(/swing=\{t:swingDur\*SWING_CONTACT/.test(pa), 'the hit lands on the animation\'s own contact frame');
   assert.ok(src.includes('atkAnim=Math.max(0,atkAnim-dt/Math.max(.05,swingDur))'),

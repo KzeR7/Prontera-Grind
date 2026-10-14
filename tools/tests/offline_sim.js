@@ -15,6 +15,7 @@ const config = from('const BAGMAX=1000;', 'const MAPTIER=');
 const stamp = from('// ---------- the save-owner stamp (v88.6) ----------', 'const num_= (v,d)');
 const helpers = from('let farmSession=null;', '// ---------- accounts (stored in this browser; real cross-device accounts need a server) ----------');
 const newCardCode=require('./helpers/progression')(src,'newCard');
+const reward = from('function fieldExpReward(', '// One field monster, before it is placed.');
 const simulation = from('function offlineMobForCurrentField(m=S.mp,stage=S.lvl){', '// ---------- skill effects: damage over time, stun, chain ----------');
 
 function harness() {
@@ -36,7 +37,7 @@ function harness() {
     const lsGet = () => null, log = () => {};   // save() reads the slot's stamp and logs a refusal (v88.6)
     const cloudTouch = () => {};
     const fieldOf = () => ({sec:0,boss:null,mobs:[{n:'Poring',drops:[[ {k:'sword',n:'Training Sword'},100 ]],card:{n:'Poring Card',g:0,stat:'str'},cardCh:100,ore:true,oreCh:1}]});
-    const rnd = (a,b)=>a+Math.random()*(b-a), fieldPower = () => 1, EXPK = 50, ZMIN = 1, ZK = [1000,1000], MPS = 100;
+    const rnd = (a,b)=>a+Math.random()*(b-a), fieldPower = () => 1, EXPK = 50, BOSEK = 46, ZMIN = 1, ZK = [1000,1000], MPS = 100;
     const ri = (a,b) => Math.floor(a + Math.random()*(b-a+1));
     const pv = () => 0, gx = () => 1, expRate = () => 1;
     const earnZeny = n => {S.zeny += n;zenyEarned += n};
@@ -51,7 +52,7 @@ function harness() {
     const cardVal = () => 1, uid = () => ++state.nextId;
     const pickW = () => 0, PW = [[100]], PETS = [], PET_SKILL_WEIGHTS = [], PET_SKILLS = [], EGG = 1;
   `;
-  const code = from('// ---------- auto-sell rules:', '// ---------- end auto-sell rules ----------') + '\n' + config + '\n' + stamp + '\n' + helpers + '\n' + newCardCode + '\n' + simulation + `
+  const code = from('// ---------- auto-sell rules:', '// ---------- end auto-sell rules ----------') + '\n' + config + '\n' + stamp + '\n' + helpers + '\n' + newCardCode + '\n' + reward + '\n' + simulation + `
     globalThis.api = {
       offlinePlan, offlineRateSample, applyOfflineProgress, offlineAwardKill,
       mapSelection(){return[mapM,mapL]},

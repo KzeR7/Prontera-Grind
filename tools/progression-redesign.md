@@ -75,7 +75,40 @@ The optional `--reuse-baseline` flag retains previously measured baseline rows; 
 
 These are deterministic samples, not guarantees for every build, pet loadout, random affix combination or long-term farming rate. Companion scaling is measured but not held to the old v97 ±5% target. See the committed `progression_*.json` fixtures for exact builds, inputs and results.
 
-## Final measured results
+## Current combo measurements — v144
+
+The six-slot combo engine retains 0.5-second cast spacing and 3-second recovery.
+Skill swings now fit the build's attack speed, melee classes close even with a
+ranged attack learned, and bow range passives extend skill reach. Per-class rank
+coefficients were retuned using the real update loop; companion coefficients and
+the existing benchmark limits are unchanged.
+
+Completed gear comparisons against the fixed `d164bd0527cfe335f9c183d0e576800716b7dd26`
+reference, using the commands above:
+
+| Completed build | Single target | Three targets |
+|---|---:|---:|
+| Lord Knight | -4.94% | -4.95% |
+| High Wizard | +3.47% | +11.91% |
+| Sniper | +6.03% | -4.68% |
+| Assassin Cross (katar) | +8.65% | +8.56% |
+| Assassin Cross (dagger) | +0.15% | -2.12% |
+| High Priest | +16.67% | +17.20% |
+| Whitesmith | -5.00% | -5.00% |
+
+All 42 gear samples stay above the -10% floor (range -9.28% to +19.94%).
+The 63 growth samples range from -5.89% to +26.64%; their upper bound is not
+limited by the completed-gear allowance. All 21 sampled boss attempts win, with
+no farming deaths. Moving kill throughput remains -59.4% to +2.3% relative to the
+historical reference; passing the damage gate does not establish farming parity
+or five-day leveling. The committed fixtures are the reproducible measurements.
+
+The v143 EXP change remains in place: Base requirements below 100 are unchanged;
+levels 100–149 total 57,279,000 EXP versus 38,180,500 before that patch, including
+existing rounding. Job EXP, contract rewards and offline payout formulas retain
+their earlier values. Wall-clock leveling also depends on farming and login habits.
+
+## Historical v98 measured results
 
 | Completed build | Single target | Three targets |
 |---|---:|---:|
