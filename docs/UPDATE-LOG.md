@@ -6384,3 +6384,15 @@ The owner's second pass over v77, six notes, all built.
 * **Try it:** Check the Character movement explanation and the matching build labels in the reference sheets.
 * **Checks:** Focused movement, UI, pet and crit checks passed. The broader gate exposed unrelated baseline failures; validation details accompany the PR preparation. Browser movement appearance remains unverified.
 * **Delivery:** Local changes only; PR creation requires Full access for this task.
+
+### 2026-10-13 — `Endgame progression roadmap`
+* **Changed:** Added docs/ROADMAP.md establishing the comprehensive endgame progression roadmap for post-Base Lv 150 content. Incorporates 3rd Job Advancement (unlocked at Base Lv 150 & Job Lv 50) with 3 signature skills per class, post-150 Ascension Stats, Maps 11 & 12 (Thanatos Tower & Thor Volcano) with an Item A/B dual drop loop, the dedicated Boss Map arena with targeted summoning and Roulette Boss mutators, Weapon Ascension to Mythic rarity, and 50-Floor Endless Tower gauntlet.
+* **Try it:** Read docs/ROADMAP.md for system architecture, item economies, and phased implementation plans.
+* **Checks:** Documentation-only update; static publishing passes 11/11 checks via publish_sim.js.
+* **Delivery:** Committed to session branch, pushed to origin, and opened Pull Request for owner review.
+
+### 2026-10-14 — `Endgame roadmap PR #79 conflict resolution`
+* **Changed:** Carried PR #79's roadmap and original update-log entry onto current main while retaining all intervening entries. Cleaned one trailing space in the roadmap diagram; game behavior is unchanged.
+* **Try it:** Read docs/ROADMAP.md and review the docs-only diff in replacement PR #81.
+* **Checks:** Static publishing passed 11/11; sprite viewer, class skins and weapon pack generated-asset checks passed. Roadmap links, update-log uniqueness, conflict markers and diff whitespace checks passed. Full Node 24 JavaScript gate: 68/75 suites passed; seven failures in unchanged cloud, combat-float, dev-server, equipment-selection, skill-balance, skill-redesign and sprite tests already present on main. No suites skipped.
+* **Delivery:** Pushed the resolved docs on `arena/7f2b96a5-prontera-grind` and opened [replacement PR #81](https://github.com/KzeR7/Prontera-Grind/pull/81). PR #79 remains open and unchanged; no merge or deployment.
