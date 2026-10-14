@@ -6390,3 +6390,9 @@ The owner's second pass over v77, six notes, all built.
 * **Try it:** Read docs/ROADMAP.md for system architecture, item economies, and phased implementation plans.
 * **Checks:** Documentation-only update; static publishing passes 11/11 checks via publish_sim.js.
 * **Delivery:** Committed to session branch, pushed to origin, and opened Pull Request for owner review.
+
+### 2026-10-14 — `Endgame roadmap PR #79 conflict resolution`
+* **Changed:** Carried PR #79's roadmap and original update-log entry onto current main while retaining all intervening entries. Cleaned one trailing space in the roadmap diagram; game behavior is unchanged.
+* **Try it:** Read docs/ROADMAP.md and review the docs-only diff in replacement PR #81.
+* **Checks:** Static publishing passed 11/11; sprite viewer, class skins and weapon pack generated-asset checks passed. Roadmap links, update-log uniqueness, conflict markers and diff whitespace checks passed. Full Node 24 JavaScript gate: 68/75 suites passed; seven failures in unchanged cloud, combat-float, dev-server, equipment-selection, skill-balance, skill-redesign and sprite tests already present on main. No suites skipped.
+* **Delivery:** Pushed the resolved docs on `arena/7f2b96a5-prontera-grind` and opened [replacement PR #81](https://github.com/KzeR7/Prontera-Grind/pull/81). PR #79 remains open and unchanged; no merge or deployment.
