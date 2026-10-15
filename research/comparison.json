@@ -1,0 +1,2299 @@
+{
+  "proposal": {
+    "finalLosses": [
+      {
+        "cls": "Knight",
+        "scenario": "Comodo ordinary",
+        "seed": 2026,
+        "currentSeconds": 55.36666666666667,
+        "candidateDeath": true,
+        "candidateTimeout": false
+      },
+      {
+        "cls": "Wizard",
+        "scenario": "Second job class-map boss",
+        "seed": 987,
+        "currentSeconds": 27.433333333333334,
+        "candidateDeath": true,
+        "candidateTimeout": false
+      },
+      {
+        "cls": "Wizard",
+        "scenario": "Comodo ordinary",
+        "seed": 123,
+        "currentSeconds": 35.333333333333336,
+        "candidateDeath": true,
+        "candidateTimeout": false
+      },
+      {
+        "cls": "Hunter",
+        "scenario": "Amatsu ordinary",
+        "seed": 123,
+        "currentSeconds": 10.533333333333333,
+        "candidateDeath": true,
+        "candidateTimeout": false
+      },
+      {
+        "cls": "Priest",
+        "scenario": "Amatsu ordinary",
+        "seed": 2026,
+        "currentSeconds": 34.93333333333333,
+        "candidateDeath": true,
+        "candidateTimeout": false
+      }
+    ],
+    "builds": 180,
+    "groups": {
+      "Novice": {
+        "pairs": 3,
+        "currentKills": 30,
+        "candidateKills": 30,
+        "currentDeaths": 0,
+        "candidateDeaths": 0,
+        "currentBossWins": 0,
+        "candidateBossWins": 0,
+        "bossAttempts": 0,
+        "newBossLosses": 0,
+        "bossRecoveries": 0,
+        "currentExtendedBossWins": 0,
+        "candidateExtendedBossWins": 0,
+        "farmingChangePct": 0
+      },
+      "First job ordinary": {
+        "pairs": 18,
+        "currentKills": 98,
+        "candidateKills": 85,
+        "currentDeaths": 26,
+        "candidateDeaths": 36,
+        "currentBossWins": 0,
+        "candidateBossWins": 0,
+        "bossAttempts": 0,
+        "newBossLosses": 0,
+        "bossRecoveries": 0,
+        "currentExtendedBossWins": 0,
+        "candidateExtendedBossWins": 0,
+        "farmingChangePct": -13.265306122448983
+      },
+      "Second job class-map boss": {
+        "pairs": 18,
+        "currentKills": 468,
+        "candidateKills": 434,
+        "currentDeaths": 0,
+        "candidateDeaths": 0,
+        "currentBossWins": 10,
+        "candidateBossWins": 10,
+        "bossAttempts": 18,
+        "newBossLosses": 1,
+        "bossRecoveries": 1,
+        "currentExtendedBossWins": 10,
+        "candidateExtendedBossWins": 10,
+        "farmingChangePct": -7.264957264957261
+      },
+      "Comodo ordinary": {
+        "pairs": 18,
+        "currentKills": 411,
+        "candidateKills": 360,
+        "currentDeaths": 0,
+        "candidateDeaths": 0,
+        "currentBossWins": 9,
+        "candidateBossWins": 8,
+        "bossAttempts": 18,
+        "newBossLosses": 2,
+        "bossRecoveries": 1,
+        "currentExtendedBossWins": 9,
+        "candidateExtendedBossWins": 8,
+        "farmingChangePct": -12.408759124087588
+      },
+      "Amatsu ordinary": {
+        "pairs": 18,
+        "currentKills": 697,
+        "candidateKills": 527,
+        "currentDeaths": 0,
+        "candidateDeaths": 0,
+        "currentBossWins": 13,
+        "candidateBossWins": 12,
+        "bossAttempts": 18,
+        "newBossLosses": 2,
+        "bossRecoveries": 1,
+        "currentExtendedBossWins": 13,
+        "candidateExtendedBossWins": 12,
+        "farmingChangePct": -24.390243902439025
+      },
+      "Niflheim promotion": {
+        "pairs": 21,
+        "currentKills": 1266,
+        "candidateKills": 1086,
+        "currentDeaths": 0,
+        "candidateDeaths": 0,
+        "currentBossWins": 20,
+        "candidateBossWins": 20,
+        "bossAttempts": 21,
+        "newBossLosses": 0,
+        "bossRecoveries": 0,
+        "currentExtendedBossWins": 20,
+        "candidateExtendedBossWins": 20,
+        "farmingChangePct": -14.218009478672988
+      },
+      "Abyss entry": {
+        "pairs": 21,
+        "currentKills": 1808,
+        "candidateKills": 1556,
+        "currentDeaths": 0,
+        "candidateDeaths": 0,
+        "currentBossWins": 21,
+        "candidateBossWins": 21,
+        "bossAttempts": 21,
+        "newBossLosses": 0,
+        "bossRecoveries": 0,
+        "currentExtendedBossWins": 21,
+        "candidateExtendedBossWins": 21,
+        "farmingChangePct": -13.938053097345138
+      },
+      "Abyss ordinary endgame": {
+        "pairs": 21,
+        "currentKills": 2269,
+        "candidateKills": 2113,
+        "currentDeaths": 0,
+        "candidateDeaths": 0,
+        "currentBossWins": 21,
+        "candidateBossWins": 21,
+        "bossAttempts": 21,
+        "newBossLosses": 0,
+        "bossRecoveries": 0,
+        "currentExtendedBossWins": 21,
+        "candidateExtendedBossWins": 21,
+        "farmingChangePct": -6.875275451740858
+      },
+      "Nightmare entry with normal gear": {
+        "pairs": 21,
+        "currentKills": 324,
+        "candidateKills": 280,
+        "currentDeaths": 0,
+        "candidateDeaths": 0,
+        "currentBossWins": 15,
+        "candidateBossWins": 13,
+        "bossAttempts": 21,
+        "newBossLosses": 2,
+        "bossRecoveries": 0,
+        "currentExtendedBossWins": 21,
+        "candidateExtendedBossWins": 21,
+        "farmingChangePct": -13.580246913580252
+      },
+      "Nightmare+ entry with N gear": {
+        "pairs": 21,
+        "currentKills": 378,
+        "candidateKills": 340,
+        "currentDeaths": 0,
+        "candidateDeaths": 0,
+        "currentBossWins": 17,
+        "candidateBossWins": 13,
+        "bossAttempts": 21,
+        "newBossLosses": 4,
+        "bossRecoveries": 0,
+        "currentExtendedBossWins": 21,
+        "candidateExtendedBossWins": 21,
+        "farmingChangePct": -10.052910052910057
+      }
+    },
+    "classes": {
+      "Novice": {
+        "pairs": 3,
+        "currentKills": 30,
+        "candidateKills": 30,
+        "currentDeaths": 0,
+        "candidateDeaths": 0,
+        "currentBossWins": 0,
+        "candidateBossWins": 0,
+        "bossAttempts": 0,
+        "newBossLosses": 0,
+        "bossRecoveries": 0,
+        "currentExtendedBossWins": 0,
+        "candidateExtendedBossWins": 0
+      },
+      "Swordman": {
+        "pairs": 3,
+        "currentKills": 12,
+        "candidateKills": 9,
+        "currentDeaths": 3,
+        "candidateDeaths": 6,
+        "currentBossWins": 0,
+        "candidateBossWins": 0,
+        "bossAttempts": 0,
+        "newBossLosses": 0,
+        "bossRecoveries": 0,
+        "currentExtendedBossWins": 0,
+        "candidateExtendedBossWins": 0
+      },
+      "Knight": {
+        "pairs": 9,
+        "currentKills": 190,
+        "candidateKills": 154,
+        "currentDeaths": 0,
+        "candidateDeaths": 0,
+        "currentBossWins": 5,
+        "candidateBossWins": 4,
+        "bossAttempts": 9,
+        "newBossLosses": 1,
+        "bossRecoveries": 0,
+        "currentExtendedBossWins": 5,
+        "candidateExtendedBossWins": 4
+      },
+      "Lord Knight": {
+        "pairs": 15,
+        "currentKills": 695,
+        "candidateKills": 584,
+        "currentDeaths": 0,
+        "candidateDeaths": 0,
+        "currentBossWins": 13,
+        "candidateBossWins": 11,
+        "bossAttempts": 15,
+        "newBossLosses": 2,
+        "bossRecoveries": 0,
+        "currentExtendedBossWins": 15,
+        "candidateExtendedBossWins": 15
+      },
+      "Mage": {
+        "pairs": 3,
+        "currentKills": 18,
+        "candidateKills": 18,
+        "currentDeaths": 4,
+        "candidateDeaths": 4,
+        "currentBossWins": 0,
+        "candidateBossWins": 0,
+        "bossAttempts": 0,
+        "newBossLosses": 0,
+        "bossRecoveries": 0,
+        "currentExtendedBossWins": 0,
+        "candidateExtendedBossWins": 0
+      },
+      "Wizard": {
+        "pairs": 9,
+        "currentKills": 251,
+        "candidateKills": 229,
+        "currentDeaths": 0,
+        "candidateDeaths": 0,
+        "currentBossWins": 8,
+        "candidateBossWins": 6,
+        "bossAttempts": 9,
+        "newBossLosses": 2,
+        "bossRecoveries": 0,
+        "currentExtendedBossWins": 8,
+        "candidateExtendedBossWins": 6
+      },
+      "High Wizard": {
+        "pairs": 15,
+        "currentKills": 715,
+        "candidateKills": 626,
+        "currentDeaths": 0,
+        "candidateDeaths": 0,
+        "currentBossWins": 14,
+        "candidateBossWins": 14,
+        "bossAttempts": 15,
+        "newBossLosses": 0,
+        "bossRecoveries": 0,
+        "currentExtendedBossWins": 15,
+        "candidateExtendedBossWins": 15
+      },
+      "Archer": {
+        "pairs": 3,
+        "currentKills": 31,
+        "candidateKills": 24,
+        "currentDeaths": 1,
+        "candidateDeaths": 3,
+        "currentBossWins": 0,
+        "candidateBossWins": 0,
+        "bossAttempts": 0,
+        "newBossLosses": 0,
+        "bossRecoveries": 0,
+        "currentExtendedBossWins": 0,
+        "candidateExtendedBossWins": 0
+      },
+      "Hunter": {
+        "pairs": 9,
+        "currentKills": 364,
+        "candidateKills": 297,
+        "currentDeaths": 0,
+        "candidateDeaths": 0,
+        "currentBossWins": 3,
+        "candidateBossWins": 2,
+        "bossAttempts": 9,
+        "newBossLosses": 1,
+        "bossRecoveries": 0,
+        "currentExtendedBossWins": 3,
+        "candidateExtendedBossWins": 2
+      },
+      "Sniper": {
+        "pairs": 15,
+        "currentKills": 899,
+        "candidateKills": 800,
+        "currentDeaths": 0,
+        "candidateDeaths": 0,
+        "currentBossWins": 14,
+        "candidateBossWins": 13,
+        "bossAttempts": 15,
+        "newBossLosses": 1,
+        "bossRecoveries": 0,
+        "currentExtendedBossWins": 15,
+        "candidateExtendedBossWins": 15
+      },
+      "Thief": {
+        "pairs": 3,
+        "currentKills": 16,
+        "candidateKills": 13,
+        "currentDeaths": 6,
+        "candidateDeaths": 11,
+        "currentBossWins": 0,
+        "candidateBossWins": 0,
+        "bossAttempts": 0,
+        "newBossLosses": 0,
+        "bossRecoveries": 0,
+        "currentExtendedBossWins": 0,
+        "candidateExtendedBossWins": 0
+      },
+      "Assassin": {
+        "pairs": 9,
+        "currentKills": 383,
+        "candidateKills": 324,
+        "currentDeaths": 0,
+        "candidateDeaths": 0,
+        "currentBossWins": 6,
+        "candidateBossWins": 9,
+        "bossAttempts": 9,
+        "newBossLosses": 0,
+        "bossRecoveries": 3,
+        "currentExtendedBossWins": 6,
+        "candidateExtendedBossWins": 9
+      },
+      "Assassin Cross": {
+        "pairs": 30,
+        "currentKills": 2481,
+        "candidateKills": 2297,
+        "currentDeaths": 0,
+        "candidateDeaths": 0,
+        "currentBossWins": 30,
+        "candidateBossWins": 30,
+        "bossAttempts": 30,
+        "newBossLosses": 0,
+        "bossRecoveries": 0,
+        "currentExtendedBossWins": 30,
+        "candidateExtendedBossWins": 30
+      },
+      "Acolyte": {
+        "pairs": 3,
+        "currentKills": 8,
+        "candidateKills": 9,
+        "currentDeaths": 6,
+        "candidateDeaths": 6,
+        "currentBossWins": 0,
+        "candidateBossWins": 0,
+        "bossAttempts": 0,
+        "newBossLosses": 0,
+        "bossRecoveries": 0,
+        "currentExtendedBossWins": 0,
+        "candidateExtendedBossWins": 0
+      },
+      "Priest": {
+        "pairs": 9,
+        "currentKills": 128,
+        "candidateKills": 98,
+        "currentDeaths": 0,
+        "candidateDeaths": 0,
+        "currentBossWins": 1,
+        "candidateBossWins": 0,
+        "bossAttempts": 9,
+        "newBossLosses": 1,
+        "bossRecoveries": 0,
+        "currentExtendedBossWins": 1,
+        "candidateExtendedBossWins": 0
+      },
+      "High Priest": {
+        "pairs": 15,
+        "currentKills": 484,
+        "candidateKills": 403,
+        "currentDeaths": 0,
+        "candidateDeaths": 0,
+        "currentBossWins": 8,
+        "candidateBossWins": 8,
+        "bossAttempts": 15,
+        "newBossLosses": 0,
+        "bossRecoveries": 0,
+        "currentExtendedBossWins": 14,
+        "candidateExtendedBossWins": 14
+      },
+      "Merchant": {
+        "pairs": 3,
+        "currentKills": 13,
+        "candidateKills": 12,
+        "currentDeaths": 6,
+        "candidateDeaths": 6,
+        "currentBossWins": 0,
+        "candidateBossWins": 0,
+        "bossAttempts": 0,
+        "newBossLosses": 0,
+        "bossRecoveries": 0,
+        "currentExtendedBossWins": 0,
+        "candidateExtendedBossWins": 0
+      },
+      "Blacksmith": {
+        "pairs": 9,
+        "currentKills": 260,
+        "candidateKills": 219,
+        "currentDeaths": 0,
+        "candidateDeaths": 0,
+        "currentBossWins": 9,
+        "candidateBossWins": 9,
+        "bossAttempts": 9,
+        "newBossLosses": 0,
+        "bossRecoveries": 0,
+        "currentExtendedBossWins": 9,
+        "candidateExtendedBossWins": 9
+      },
+      "Whitesmith": {
+        "pairs": 15,
+        "currentKills": 771,
+        "candidateKills": 665,
+        "currentDeaths": 0,
+        "candidateDeaths": 0,
+        "currentBossWins": 15,
+        "candidateBossWins": 12,
+        "bossAttempts": 15,
+        "newBossLosses": 3,
+        "bossRecoveries": 0,
+        "currentExtendedBossWins": 15,
+        "candidateExtendedBossWins": 15
+      }
+    },
+    "losses": [
+      {
+        "cls": "Knight",
+        "scenario": "Comodo ordinary",
+        "weapon": "",
+        "seed": 2026,
+        "currentBossSeconds": 55.36666666666667,
+        "candidateDeath": true,
+        "candidateTimeout": false,
+        "agi": 60,
+        "bonusAgi": 14,
+        "gearAspd": 7
+      },
+      {
+        "cls": "Lord Knight",
+        "scenario": "Nightmare+ entry with N gear",
+        "weapon": "",
+        "seed": 123,
+        "currentBossSeconds": 116.76666666666667,
+        "candidateDeath": false,
+        "candidateTimeout": true,
+        "agi": 100,
+        "bonusAgi": 123,
+        "gearAspd": 34
+      },
+      {
+        "cls": "Lord Knight",
+        "scenario": "Nightmare+ entry with N gear",
+        "weapon": "",
+        "seed": 2026,
+        "currentBossSeconds": 112.36666666666666,
+        "candidateDeath": false,
+        "candidateTimeout": true,
+        "agi": 100,
+        "bonusAgi": 84,
+        "gearAspd": 33
+      },
+      {
+        "cls": "Wizard",
+        "scenario": "Second job class-map boss",
+        "weapon": "",
+        "seed": 987,
+        "currentBossSeconds": 27.433333333333334,
+        "candidateDeath": true,
+        "candidateTimeout": false,
+        "agi": 50,
+        "bonusAgi": 16,
+        "gearAspd": 0
+      },
+      {
+        "cls": "Wizard",
+        "scenario": "Comodo ordinary",
+        "weapon": "",
+        "seed": 123,
+        "currentBossSeconds": 35.333333333333336,
+        "candidateDeath": true,
+        "candidateTimeout": false,
+        "agi": 60,
+        "bonusAgi": 35,
+        "gearAspd": 0
+      },
+      {
+        "cls": "Hunter",
+        "scenario": "Amatsu ordinary",
+        "weapon": "",
+        "seed": 123,
+        "currentBossSeconds": 10.533333333333333,
+        "candidateDeath": true,
+        "candidateTimeout": false,
+        "agi": 75,
+        "bonusAgi": 76,
+        "gearAspd": 23
+      },
+      {
+        "cls": "Sniper",
+        "scenario": "Nightmare+ entry with N gear",
+        "weapon": "",
+        "seed": 2026,
+        "currentBossSeconds": 106,
+        "candidateDeath": false,
+        "candidateTimeout": true,
+        "agi": 100,
+        "bonusAgi": 71,
+        "gearAspd": 24
+      },
+      {
+        "cls": "Priest",
+        "scenario": "Amatsu ordinary",
+        "weapon": "",
+        "seed": 2026,
+        "currentBossSeconds": 34.93333333333333,
+        "candidateDeath": true,
+        "candidateTimeout": false,
+        "agi": 72,
+        "bonusAgi": 68,
+        "gearAspd": 15
+      },
+      {
+        "cls": "Whitesmith",
+        "scenario": "Nightmare entry with normal gear",
+        "weapon": "",
+        "seed": 123,
+        "currentBossSeconds": 111.03333333333333,
+        "candidateDeath": false,
+        "candidateTimeout": true,
+        "agi": 100,
+        "bonusAgi": 153,
+        "gearAspd": 25
+      },
+      {
+        "cls": "Whitesmith",
+        "scenario": "Nightmare entry with normal gear",
+        "weapon": "",
+        "seed": 2026,
+        "currentBossSeconds": 99.13333333333334,
+        "candidateDeath": false,
+        "candidateTimeout": true,
+        "agi": 100,
+        "bonusAgi": 73,
+        "gearAspd": 24
+      },
+      {
+        "cls": "Whitesmith",
+        "scenario": "Nightmare+ entry with N gear",
+        "weapon": "",
+        "seed": 123,
+        "currentBossSeconds": 111.63333333333334,
+        "candidateDeath": false,
+        "candidateTimeout": true,
+        "agi": 100,
+        "bonusAgi": 123,
+        "gearAspd": 34
+      }
+    ],
+    "farmRegressions": [
+      {
+        "cls": "Swordman",
+        "scenario": "First job ordinary",
+        "seed": 123,
+        "currentDeaths": 1,
+        "candidateDeaths": 3,
+        "currentKills": 5,
+        "candidateKills": 2
+      },
+      {
+        "cls": "Swordman",
+        "scenario": "First job ordinary",
+        "seed": 987,
+        "currentDeaths": 1,
+        "candidateDeaths": 2,
+        "currentKills": 3,
+        "candidateKills": 3
+      },
+      {
+        "cls": "Mage",
+        "scenario": "First job ordinary",
+        "seed": 987,
+        "currentDeaths": 1,
+        "candidateDeaths": 2,
+        "currentKills": 5,
+        "candidateKills": 5
+      },
+      {
+        "cls": "Archer",
+        "scenario": "First job ordinary",
+        "seed": 123,
+        "currentDeaths": 1,
+        "candidateDeaths": 2,
+        "currentKills": 11,
+        "candidateKills": 8
+      },
+      {
+        "cls": "Archer",
+        "scenario": "First job ordinary",
+        "seed": 987,
+        "currentDeaths": 0,
+        "candidateDeaths": 1,
+        "currentKills": 11,
+        "candidateKills": 8
+      },
+      {
+        "cls": "Thief",
+        "scenario": "First job ordinary",
+        "seed": 123,
+        "currentDeaths": 0,
+        "candidateDeaths": 3,
+        "currentKills": 7,
+        "candidateKills": 6
+      },
+      {
+        "cls": "Thief",
+        "scenario": "First job ordinary",
+        "seed": 987,
+        "currentDeaths": 2,
+        "candidateDeaths": 4,
+        "currentKills": 6,
+        "candidateKills": 4
+      },
+      {
+        "cls": "Acolyte",
+        "scenario": "First job ordinary",
+        "seed": 987,
+        "currentDeaths": 3,
+        "candidateDeaths": 4,
+        "currentKills": 1,
+        "candidateKills": 1
+      },
+      {
+        "cls": "Acolyte",
+        "scenario": "First job ordinary",
+        "seed": 2026,
+        "currentDeaths": 0,
+        "candidateDeaths": 1,
+        "currentKills": 5,
+        "candidateKills": 4
+      }
+    ],
+    "alreadyLost": [
+      {
+        "cls": "Knight",
+        "scenario": "Second job class-map boss",
+        "seed": 123,
+        "candidateWon": false
+      },
+      {
+        "cls": "Knight",
+        "scenario": "Second job class-map boss",
+        "seed": 987,
+        "candidateWon": false
+      },
+      {
+        "cls": "Knight",
+        "scenario": "Second job class-map boss",
+        "seed": 2026,
+        "candidateWon": false
+      },
+      {
+        "cls": "Knight",
+        "scenario": "Comodo ordinary",
+        "seed": 123,
+        "candidateWon": false
+      },
+      {
+        "cls": "Lord Knight",
+        "scenario": "Nightmare entry with normal gear",
+        "seed": 123,
+        "candidateWon": false
+      },
+      {
+        "cls": "Lord Knight",
+        "scenario": "Nightmare entry with normal gear",
+        "seed": 2026,
+        "candidateWon": false
+      },
+      {
+        "cls": "Wizard",
+        "scenario": "Comodo ordinary",
+        "seed": 2026,
+        "candidateWon": false
+      },
+      {
+        "cls": "High Wizard",
+        "scenario": "Nightmare+ entry with N gear",
+        "seed": 987,
+        "candidateWon": false
+      },
+      {
+        "cls": "Hunter",
+        "scenario": "Second job class-map boss",
+        "seed": 987,
+        "candidateWon": false
+      },
+      {
+        "cls": "Hunter",
+        "scenario": "Comodo ordinary",
+        "seed": 123,
+        "candidateWon": false
+      },
+      {
+        "cls": "Hunter",
+        "scenario": "Comodo ordinary",
+        "seed": 987,
+        "candidateWon": false
+      },
+      {
+        "cls": "Hunter",
+        "scenario": "Comodo ordinary",
+        "seed": 2026,
+        "candidateWon": false
+      },
+      {
+        "cls": "Hunter",
+        "scenario": "Amatsu ordinary",
+        "seed": 987,
+        "candidateWon": false
+      },
+      {
+        "cls": "Hunter",
+        "scenario": "Amatsu ordinary",
+        "seed": 2026,
+        "candidateWon": false
+      },
+      {
+        "cls": "Sniper",
+        "scenario": "Nightmare entry with normal gear",
+        "seed": 2026,
+        "candidateWon": false
+      },
+      {
+        "cls": "Assassin",
+        "scenario": "Second job class-map boss",
+        "seed": 987,
+        "candidateWon": true
+      },
+      {
+        "cls": "Assassin",
+        "scenario": "Comodo ordinary",
+        "seed": 123,
+        "candidateWon": true
+      },
+      {
+        "cls": "Assassin",
+        "scenario": "Amatsu ordinary",
+        "seed": 987,
+        "candidateWon": true
+      },
+      {
+        "cls": "Priest",
+        "scenario": "Second job class-map boss",
+        "seed": 123,
+        "candidateWon": false
+      },
+      {
+        "cls": "Priest",
+        "scenario": "Second job class-map boss",
+        "seed": 987,
+        "candidateWon": false
+      },
+      {
+        "cls": "Priest",
+        "scenario": "Second job class-map boss",
+        "seed": 2026,
+        "candidateWon": false
+      },
+      {
+        "cls": "Priest",
+        "scenario": "Comodo ordinary",
+        "seed": 123,
+        "candidateWon": false
+      },
+      {
+        "cls": "Priest",
+        "scenario": "Comodo ordinary",
+        "seed": 987,
+        "candidateWon": false
+      },
+      {
+        "cls": "Priest",
+        "scenario": "Comodo ordinary",
+        "seed": 2026,
+        "candidateWon": false
+      },
+      {
+        "cls": "Priest",
+        "scenario": "Amatsu ordinary",
+        "seed": 123,
+        "candidateWon": false
+      },
+      {
+        "cls": "Priest",
+        "scenario": "Amatsu ordinary",
+        "seed": 987,
+        "candidateWon": false
+      },
+      {
+        "cls": "High Priest",
+        "scenario": "Niflheim promotion",
+        "seed": 123,
+        "candidateWon": false
+      },
+      {
+        "cls": "High Priest",
+        "scenario": "Nightmare entry with normal gear",
+        "seed": 123,
+        "candidateWon": false
+      },
+      {
+        "cls": "High Priest",
+        "scenario": "Nightmare entry with normal gear",
+        "seed": 987,
+        "candidateWon": false
+      },
+      {
+        "cls": "High Priest",
+        "scenario": "Nightmare entry with normal gear",
+        "seed": 2026,
+        "candidateWon": false
+      },
+      {
+        "cls": "High Priest",
+        "scenario": "Nightmare+ entry with N gear",
+        "seed": 123,
+        "candidateWon": false
+      },
+      {
+        "cls": "High Priest",
+        "scenario": "Nightmare+ entry with N gear",
+        "seed": 987,
+        "candidateWon": false
+      },
+      {
+        "cls": "High Priest",
+        "scenario": "Nightmare+ entry with N gear",
+        "seed": 2026,
+        "candidateWon": false
+      }
+    ]
+  },
+  "gentler": {
+    "finalLosses": [
+      {
+        "cls": "Hunter",
+        "scenario": "Amatsu ordinary",
+        "seed": 123,
+        "currentSeconds": 10.533333333333333,
+        "candidateDeath": true,
+        "candidateTimeout": false
+      },
+      {
+        "cls": "Priest",
+        "scenario": "Amatsu ordinary",
+        "seed": 2026,
+        "currentSeconds": 34.93333333333333,
+        "candidateDeath": true,
+        "candidateTimeout": false
+      }
+    ],
+    "builds": 180,
+    "groups": {
+      "Novice": {
+        "pairs": 3,
+        "currentKills": 30,
+        "candidateKills": 30,
+        "currentDeaths": 0,
+        "candidateDeaths": 0,
+        "currentBossWins": 0,
+        "candidateBossWins": 0,
+        "bossAttempts": 0,
+        "newBossLosses": 0,
+        "bossRecoveries": 0,
+        "currentExtendedBossWins": 0,
+        "candidateExtendedBossWins": 0,
+        "farmingChangePct": 0
+      },
+      "First job ordinary": {
+        "pairs": 18,
+        "currentKills": 98,
+        "candidateKills": 98,
+        "currentDeaths": 26,
+        "candidateDeaths": 26,
+        "currentBossWins": 0,
+        "candidateBossWins": 0,
+        "bossAttempts": 0,
+        "newBossLosses": 0,
+        "bossRecoveries": 0,
+        "currentExtendedBossWins": 0,
+        "candidateExtendedBossWins": 0,
+        "farmingChangePct": 0
+      },
+      "Second job class-map boss": {
+        "pairs": 18,
+        "currentKills": 468,
+        "candidateKills": 463,
+        "currentDeaths": 0,
+        "candidateDeaths": 0,
+        "currentBossWins": 10,
+        "candidateBossWins": 10,
+        "bossAttempts": 18,
+        "newBossLosses": 0,
+        "bossRecoveries": 0,
+        "currentExtendedBossWins": 10,
+        "candidateExtendedBossWins": 10,
+        "farmingChangePct": -1.0683760683760646
+      },
+      "Comodo ordinary": {
+        "pairs": 18,
+        "currentKills": 411,
+        "candidateKills": 399,
+        "currentDeaths": 0,
+        "candidateDeaths": 0,
+        "currentBossWins": 9,
+        "candidateBossWins": 9,
+        "bossAttempts": 18,
+        "newBossLosses": 0,
+        "bossRecoveries": 0,
+        "currentExtendedBossWins": 9,
+        "candidateExtendedBossWins": 9,
+        "farmingChangePct": -2.9197080291970767
+      },
+      "Amatsu ordinary": {
+        "pairs": 18,
+        "currentKills": 697,
+        "candidateKills": 599,
+        "currentDeaths": 0,
+        "candidateDeaths": 0,
+        "currentBossWins": 13,
+        "candidateBossWins": 12,
+        "bossAttempts": 18,
+        "newBossLosses": 2,
+        "bossRecoveries": 1,
+        "currentExtendedBossWins": 13,
+        "candidateExtendedBossWins": 12,
+        "farmingChangePct": -14.060258249641322
+      },
+      "Niflheim promotion": {
+        "pairs": 21,
+        "currentKills": 1266,
+        "candidateKills": 1232,
+        "currentDeaths": 0,
+        "candidateDeaths": 0,
+        "currentBossWins": 20,
+        "candidateBossWins": 21,
+        "bossAttempts": 21,
+        "newBossLosses": 0,
+        "bossRecoveries": 1,
+        "currentExtendedBossWins": 20,
+        "candidateExtendedBossWins": 21,
+        "farmingChangePct": -2.6856240126382325
+      },
+      "Abyss entry": {
+        "pairs": 21,
+        "currentKills": 1808,
+        "candidateKills": 1744,
+        "currentDeaths": 0,
+        "candidateDeaths": 0,
+        "currentBossWins": 21,
+        "candidateBossWins": 21,
+        "bossAttempts": 21,
+        "newBossLosses": 0,
+        "bossRecoveries": 0,
+        "currentExtendedBossWins": 21,
+        "candidateExtendedBossWins": 21,
+        "farmingChangePct": -3.539823008849563
+      },
+      "Abyss ordinary endgame": {
+        "pairs": 21,
+        "currentKills": 2269,
+        "candidateKills": 2177,
+        "currentDeaths": 0,
+        "candidateDeaths": 0,
+        "currentBossWins": 21,
+        "candidateBossWins": 21,
+        "bossAttempts": 21,
+        "newBossLosses": 0,
+        "bossRecoveries": 0,
+        "currentExtendedBossWins": 21,
+        "candidateExtendedBossWins": 21,
+        "farmingChangePct": -4.054649625385631
+      },
+      "Nightmare entry with normal gear": {
+        "pairs": 21,
+        "currentKills": 324,
+        "candidateKills": 310,
+        "currentDeaths": 0,
+        "candidateDeaths": 0,
+        "currentBossWins": 15,
+        "candidateBossWins": 13,
+        "bossAttempts": 21,
+        "newBossLosses": 2,
+        "bossRecoveries": 0,
+        "currentExtendedBossWins": 21,
+        "candidateExtendedBossWins": 21,
+        "farmingChangePct": -4.320987654320985
+      },
+      "Nightmare+ entry with N gear": {
+        "pairs": 21,
+        "currentKills": 378,
+        "candidateKills": 368,
+        "currentDeaths": 0,
+        "candidateDeaths": 0,
+        "currentBossWins": 17,
+        "candidateBossWins": 14,
+        "bossAttempts": 21,
+        "newBossLosses": 3,
+        "bossRecoveries": 0,
+        "currentExtendedBossWins": 21,
+        "candidateExtendedBossWins": 21,
+        "farmingChangePct": -2.645502645502651
+      }
+    },
+    "classes": {
+      "Novice": {
+        "pairs": 3,
+        "currentKills": 30,
+        "candidateKills": 30,
+        "currentDeaths": 0,
+        "candidateDeaths": 0,
+        "currentBossWins": 0,
+        "candidateBossWins": 0,
+        "bossAttempts": 0,
+        "newBossLosses": 0,
+        "bossRecoveries": 0,
+        "currentExtendedBossWins": 0,
+        "candidateExtendedBossWins": 0
+      },
+      "Swordman": {
+        "pairs": 3,
+        "currentKills": 12,
+        "candidateKills": 12,
+        "currentDeaths": 3,
+        "candidateDeaths": 3,
+        "currentBossWins": 0,
+        "candidateBossWins": 0,
+        "bossAttempts": 0,
+        "newBossLosses": 0,
+        "bossRecoveries": 0,
+        "currentExtendedBossWins": 0,
+        "candidateExtendedBossWins": 0
+      },
+      "Knight": {
+        "pairs": 9,
+        "currentKills": 190,
+        "candidateKills": 171,
+        "currentDeaths": 0,
+        "candidateDeaths": 0,
+        "currentBossWins": 5,
+        "candidateBossWins": 5,
+        "bossAttempts": 9,
+        "newBossLosses": 0,
+        "bossRecoveries": 0,
+        "currentExtendedBossWins": 5,
+        "candidateExtendedBossWins": 5
+      },
+      "Lord Knight": {
+        "pairs": 15,
+        "currentKills": 695,
+        "candidateKills": 618,
+        "currentDeaths": 0,
+        "candidateDeaths": 0,
+        "currentBossWins": 13,
+        "candidateBossWins": 11,
+        "bossAttempts": 15,
+        "newBossLosses": 2,
+        "bossRecoveries": 0,
+        "currentExtendedBossWins": 15,
+        "candidateExtendedBossWins": 15
+      },
+      "Mage": {
+        "pairs": 3,
+        "currentKills": 18,
+        "candidateKills": 18,
+        "currentDeaths": 4,
+        "candidateDeaths": 4,
+        "currentBossWins": 0,
+        "candidateBossWins": 0,
+        "bossAttempts": 0,
+        "newBossLosses": 0,
+        "bossRecoveries": 0,
+        "currentExtendedBossWins": 0,
+        "candidateExtendedBossWins": 0
+      },
+      "Wizard": {
+        "pairs": 9,
+        "currentKills": 251,
+        "candidateKills": 246,
+        "currentDeaths": 0,
+        "candidateDeaths": 0,
+        "currentBossWins": 8,
+        "candidateBossWins": 8,
+        "bossAttempts": 9,
+        "newBossLosses": 0,
+        "bossRecoveries": 0,
+        "currentExtendedBossWins": 8,
+        "candidateExtendedBossWins": 8
+      },
+      "High Wizard": {
+        "pairs": 15,
+        "currentKills": 715,
+        "candidateKills": 707,
+        "currentDeaths": 0,
+        "candidateDeaths": 0,
+        "currentBossWins": 14,
+        "candidateBossWins": 14,
+        "bossAttempts": 15,
+        "newBossLosses": 0,
+        "bossRecoveries": 0,
+        "currentExtendedBossWins": 15,
+        "candidateExtendedBossWins": 15
+      },
+      "Archer": {
+        "pairs": 3,
+        "currentKills": 31,
+        "candidateKills": 31,
+        "currentDeaths": 1,
+        "candidateDeaths": 1,
+        "currentBossWins": 0,
+        "candidateBossWins": 0,
+        "bossAttempts": 0,
+        "newBossLosses": 0,
+        "bossRecoveries": 0,
+        "currentExtendedBossWins": 0,
+        "candidateExtendedBossWins": 0
+      },
+      "Hunter": {
+        "pairs": 9,
+        "currentKills": 364,
+        "candidateKills": 332,
+        "currentDeaths": 0,
+        "candidateDeaths": 0,
+        "currentBossWins": 3,
+        "candidateBossWins": 2,
+        "bossAttempts": 9,
+        "newBossLosses": 1,
+        "bossRecoveries": 0,
+        "currentExtendedBossWins": 3,
+        "candidateExtendedBossWins": 2
+      },
+      "Sniper": {
+        "pairs": 15,
+        "currentKills": 899,
+        "candidateKills": 901,
+        "currentDeaths": 0,
+        "candidateDeaths": 0,
+        "currentBossWins": 14,
+        "candidateBossWins": 14,
+        "bossAttempts": 15,
+        "newBossLosses": 0,
+        "bossRecoveries": 0,
+        "currentExtendedBossWins": 15,
+        "candidateExtendedBossWins": 15
+      },
+      "Thief": {
+        "pairs": 3,
+        "currentKills": 16,
+        "candidateKills": 16,
+        "currentDeaths": 6,
+        "candidateDeaths": 6,
+        "currentBossWins": 0,
+        "candidateBossWins": 0,
+        "bossAttempts": 0,
+        "newBossLosses": 0,
+        "bossRecoveries": 0,
+        "currentExtendedBossWins": 0,
+        "candidateExtendedBossWins": 0
+      },
+      "Assassin": {
+        "pairs": 9,
+        "currentKills": 383,
+        "candidateKills": 360,
+        "currentDeaths": 0,
+        "candidateDeaths": 0,
+        "currentBossWins": 6,
+        "candidateBossWins": 7,
+        "bossAttempts": 9,
+        "newBossLosses": 0,
+        "bossRecoveries": 1,
+        "currentExtendedBossWins": 6,
+        "candidateExtendedBossWins": 7
+      },
+      "Assassin Cross": {
+        "pairs": 30,
+        "currentKills": 2481,
+        "candidateKills": 2455,
+        "currentDeaths": 0,
+        "candidateDeaths": 0,
+        "currentBossWins": 30,
+        "candidateBossWins": 30,
+        "bossAttempts": 30,
+        "newBossLosses": 0,
+        "bossRecoveries": 0,
+        "currentExtendedBossWins": 30,
+        "candidateExtendedBossWins": 30
+      },
+      "Acolyte": {
+        "pairs": 3,
+        "currentKills": 8,
+        "candidateKills": 8,
+        "currentDeaths": 6,
+        "candidateDeaths": 6,
+        "currentBossWins": 0,
+        "candidateBossWins": 0,
+        "bossAttempts": 0,
+        "newBossLosses": 0,
+        "bossRecoveries": 0,
+        "currentExtendedBossWins": 0,
+        "candidateExtendedBossWins": 0
+      },
+      "Priest": {
+        "pairs": 9,
+        "currentKills": 128,
+        "candidateKills": 110,
+        "currentDeaths": 0,
+        "candidateDeaths": 0,
+        "currentBossWins": 1,
+        "candidateBossWins": 0,
+        "bossAttempts": 9,
+        "newBossLosses": 1,
+        "bossRecoveries": 0,
+        "currentExtendedBossWins": 1,
+        "candidateExtendedBossWins": 0
+      },
+      "High Priest": {
+        "pairs": 15,
+        "currentKills": 484,
+        "candidateKills": 441,
+        "currentDeaths": 0,
+        "candidateDeaths": 0,
+        "currentBossWins": 8,
+        "candidateBossWins": 9,
+        "bossAttempts": 15,
+        "newBossLosses": 0,
+        "bossRecoveries": 1,
+        "currentExtendedBossWins": 14,
+        "candidateExtendedBossWins": 15
+      },
+      "Merchant": {
+        "pairs": 3,
+        "currentKills": 13,
+        "candidateKills": 13,
+        "currentDeaths": 6,
+        "candidateDeaths": 6,
+        "currentBossWins": 0,
+        "candidateBossWins": 0,
+        "bossAttempts": 0,
+        "newBossLosses": 0,
+        "bossRecoveries": 0,
+        "currentExtendedBossWins": 0,
+        "candidateExtendedBossWins": 0
+      },
+      "Blacksmith": {
+        "pairs": 9,
+        "currentKills": 260,
+        "candidateKills": 242,
+        "currentDeaths": 0,
+        "candidateDeaths": 0,
+        "currentBossWins": 9,
+        "candidateBossWins": 9,
+        "bossAttempts": 9,
+        "newBossLosses": 0,
+        "bossRecoveries": 0,
+        "currentExtendedBossWins": 9,
+        "candidateExtendedBossWins": 9
+      },
+      "Whitesmith": {
+        "pairs": 15,
+        "currentKills": 771,
+        "candidateKills": 709,
+        "currentDeaths": 0,
+        "candidateDeaths": 0,
+        "currentBossWins": 15,
+        "candidateBossWins": 12,
+        "bossAttempts": 15,
+        "newBossLosses": 3,
+        "bossRecoveries": 0,
+        "currentExtendedBossWins": 15,
+        "candidateExtendedBossWins": 15
+      }
+    },
+    "losses": [
+      {
+        "cls": "Lord Knight",
+        "scenario": "Nightmare entry with normal gear",
+        "weapon": "",
+        "seed": 987,
+        "currentBossSeconds": 95.06666666666666,
+        "candidateDeath": false,
+        "candidateTimeout": true,
+        "agi": 100,
+        "bonusAgi": 110,
+        "gearAspd": 25
+      },
+      {
+        "cls": "Lord Knight",
+        "scenario": "Nightmare+ entry with N gear",
+        "weapon": "",
+        "seed": 2026,
+        "currentBossSeconds": 112.36666666666666,
+        "candidateDeath": false,
+        "candidateTimeout": true,
+        "agi": 100,
+        "bonusAgi": 84,
+        "gearAspd": 33
+      },
+      {
+        "cls": "Hunter",
+        "scenario": "Amatsu ordinary",
+        "weapon": "",
+        "seed": 123,
+        "currentBossSeconds": 10.533333333333333,
+        "candidateDeath": true,
+        "candidateTimeout": false,
+        "agi": 75,
+        "bonusAgi": 76,
+        "gearAspd": 23
+      },
+      {
+        "cls": "Priest",
+        "scenario": "Amatsu ordinary",
+        "weapon": "",
+        "seed": 2026,
+        "currentBossSeconds": 34.93333333333333,
+        "candidateDeath": true,
+        "candidateTimeout": false,
+        "agi": 72,
+        "bonusAgi": 68,
+        "gearAspd": 15
+      },
+      {
+        "cls": "Whitesmith",
+        "scenario": "Nightmare entry with normal gear",
+        "weapon": "",
+        "seed": 123,
+        "currentBossSeconds": 111.03333333333333,
+        "candidateDeath": false,
+        "candidateTimeout": true,
+        "agi": 100,
+        "bonusAgi": 153,
+        "gearAspd": 25
+      },
+      {
+        "cls": "Whitesmith",
+        "scenario": "Nightmare+ entry with N gear",
+        "weapon": "",
+        "seed": 123,
+        "currentBossSeconds": 111.63333333333334,
+        "candidateDeath": false,
+        "candidateTimeout": true,
+        "agi": 100,
+        "bonusAgi": 123,
+        "gearAspd": 34
+      },
+      {
+        "cls": "Whitesmith",
+        "scenario": "Nightmare+ entry with N gear",
+        "weapon": "",
+        "seed": 2026,
+        "currentBossSeconds": 97.5,
+        "candidateDeath": false,
+        "candidateTimeout": true,
+        "agi": 100,
+        "bonusAgi": 84,
+        "gearAspd": 33
+      }
+    ],
+    "farmRegressions": [],
+    "alreadyLost": [
+      {
+        "cls": "Knight",
+        "scenario": "Second job class-map boss",
+        "seed": 123,
+        "candidateWon": false
+      },
+      {
+        "cls": "Knight",
+        "scenario": "Second job class-map boss",
+        "seed": 987,
+        "candidateWon": false
+      },
+      {
+        "cls": "Knight",
+        "scenario": "Second job class-map boss",
+        "seed": 2026,
+        "candidateWon": false
+      },
+      {
+        "cls": "Knight",
+        "scenario": "Comodo ordinary",
+        "seed": 123,
+        "candidateWon": false
+      },
+      {
+        "cls": "Lord Knight",
+        "scenario": "Nightmare entry with normal gear",
+        "seed": 123,
+        "candidateWon": false
+      },
+      {
+        "cls": "Lord Knight",
+        "scenario": "Nightmare entry with normal gear",
+        "seed": 2026,
+        "candidateWon": false
+      },
+      {
+        "cls": "Wizard",
+        "scenario": "Comodo ordinary",
+        "seed": 2026,
+        "candidateWon": false
+      },
+      {
+        "cls": "High Wizard",
+        "scenario": "Nightmare+ entry with N gear",
+        "seed": 987,
+        "candidateWon": false
+      },
+      {
+        "cls": "Hunter",
+        "scenario": "Second job class-map boss",
+        "seed": 987,
+        "candidateWon": false
+      },
+      {
+        "cls": "Hunter",
+        "scenario": "Comodo ordinary",
+        "seed": 123,
+        "candidateWon": false
+      },
+      {
+        "cls": "Hunter",
+        "scenario": "Comodo ordinary",
+        "seed": 987,
+        "candidateWon": false
+      },
+      {
+        "cls": "Hunter",
+        "scenario": "Comodo ordinary",
+        "seed": 2026,
+        "candidateWon": false
+      },
+      {
+        "cls": "Hunter",
+        "scenario": "Amatsu ordinary",
+        "seed": 987,
+        "candidateWon": false
+      },
+      {
+        "cls": "Hunter",
+        "scenario": "Amatsu ordinary",
+        "seed": 2026,
+        "candidateWon": false
+      },
+      {
+        "cls": "Sniper",
+        "scenario": "Nightmare entry with normal gear",
+        "seed": 2026,
+        "candidateWon": false
+      },
+      {
+        "cls": "Assassin",
+        "scenario": "Second job class-map boss",
+        "seed": 987,
+        "candidateWon": false
+      },
+      {
+        "cls": "Assassin",
+        "scenario": "Comodo ordinary",
+        "seed": 123,
+        "candidateWon": false
+      },
+      {
+        "cls": "Assassin",
+        "scenario": "Amatsu ordinary",
+        "seed": 987,
+        "candidateWon": true
+      },
+      {
+        "cls": "Priest",
+        "scenario": "Second job class-map boss",
+        "seed": 123,
+        "candidateWon": false
+      },
+      {
+        "cls": "Priest",
+        "scenario": "Second job class-map boss",
+        "seed": 987,
+        "candidateWon": false
+      },
+      {
+        "cls": "Priest",
+        "scenario": "Second job class-map boss",
+        "seed": 2026,
+        "candidateWon": false
+      },
+      {
+        "cls": "Priest",
+        "scenario": "Comodo ordinary",
+        "seed": 123,
+        "candidateWon": false
+      },
+      {
+        "cls": "Priest",
+        "scenario": "Comodo ordinary",
+        "seed": 987,
+        "candidateWon": false
+      },
+      {
+        "cls": "Priest",
+        "scenario": "Comodo ordinary",
+        "seed": 2026,
+        "candidateWon": false
+      },
+      {
+        "cls": "Priest",
+        "scenario": "Amatsu ordinary",
+        "seed": 123,
+        "candidateWon": false
+      },
+      {
+        "cls": "Priest",
+        "scenario": "Amatsu ordinary",
+        "seed": 987,
+        "candidateWon": false
+      },
+      {
+        "cls": "High Priest",
+        "scenario": "Niflheim promotion",
+        "seed": 123,
+        "candidateWon": true
+      },
+      {
+        "cls": "High Priest",
+        "scenario": "Nightmare entry with normal gear",
+        "seed": 123,
+        "candidateWon": false
+      },
+      {
+        "cls": "High Priest",
+        "scenario": "Nightmare entry with normal gear",
+        "seed": 987,
+        "candidateWon": false
+      },
+      {
+        "cls": "High Priest",
+        "scenario": "Nightmare entry with normal gear",
+        "seed": 2026,
+        "candidateWon": false
+      },
+      {
+        "cls": "High Priest",
+        "scenario": "Nightmare+ entry with N gear",
+        "seed": 123,
+        "candidateWon": false
+      },
+      {
+        "cls": "High Priest",
+        "scenario": "Nightmare+ entry with N gear",
+        "seed": 987,
+        "candidateWon": false
+      },
+      {
+        "cls": "High Priest",
+        "scenario": "Nightmare+ entry with N gear",
+        "seed": 2026,
+        "candidateWon": false
+      }
+    ]
+  },
+  "revised": {
+    "finalLosses": [],
+    "builds": 180,
+    "groups": {
+      "Novice": {
+        "pairs": 3,
+        "currentKills": 30,
+        "candidateKills": 30,
+        "currentDeaths": 0,
+        "candidateDeaths": 0,
+        "currentBossWins": 0,
+        "candidateBossWins": 0,
+        "bossAttempts": 0,
+        "newBossLosses": 0,
+        "bossRecoveries": 0,
+        "currentExtendedBossWins": 0,
+        "candidateExtendedBossWins": 0,
+        "farmingChangePct": 0
+      },
+      "First job ordinary": {
+        "pairs": 18,
+        "currentKills": 98,
+        "candidateKills": 98,
+        "currentDeaths": 26,
+        "candidateDeaths": 26,
+        "currentBossWins": 0,
+        "candidateBossWins": 0,
+        "bossAttempts": 0,
+        "newBossLosses": 0,
+        "bossRecoveries": 0,
+        "currentExtendedBossWins": 0,
+        "candidateExtendedBossWins": 0,
+        "farmingChangePct": 0
+      },
+      "Second job class-map boss": {
+        "pairs": 18,
+        "currentKills": 468,
+        "candidateKills": 468,
+        "currentDeaths": 0,
+        "candidateDeaths": 0,
+        "currentBossWins": 10,
+        "candidateBossWins": 10,
+        "bossAttempts": 18,
+        "newBossLosses": 0,
+        "bossRecoveries": 0,
+        "currentExtendedBossWins": 10,
+        "candidateExtendedBossWins": 10,
+        "farmingChangePct": 0
+      },
+      "Comodo ordinary": {
+        "pairs": 18,
+        "currentKills": 411,
+        "candidateKills": 411,
+        "currentDeaths": 0,
+        "candidateDeaths": 0,
+        "currentBossWins": 9,
+        "candidateBossWins": 9,
+        "bossAttempts": 18,
+        "newBossLosses": 0,
+        "bossRecoveries": 0,
+        "currentExtendedBossWins": 9,
+        "candidateExtendedBossWins": 9,
+        "farmingChangePct": 0
+      },
+      "Amatsu ordinary": {
+        "pairs": 18,
+        "currentKills": 697,
+        "candidateKills": 697,
+        "currentDeaths": 0,
+        "candidateDeaths": 0,
+        "currentBossWins": 13,
+        "candidateBossWins": 13,
+        "bossAttempts": 18,
+        "newBossLosses": 0,
+        "bossRecoveries": 0,
+        "currentExtendedBossWins": 13,
+        "candidateExtendedBossWins": 13,
+        "farmingChangePct": 0
+      },
+      "Niflheim promotion": {
+        "pairs": 21,
+        "currentKills": 1266,
+        "candidateKills": 1247,
+        "currentDeaths": 0,
+        "candidateDeaths": 0,
+        "currentBossWins": 20,
+        "candidateBossWins": 21,
+        "bossAttempts": 21,
+        "newBossLosses": 0,
+        "bossRecoveries": 1,
+        "currentExtendedBossWins": 20,
+        "candidateExtendedBossWins": 21,
+        "farmingChangePct": -1.500789889415477
+      },
+      "Abyss entry": {
+        "pairs": 21,
+        "currentKills": 1808,
+        "candidateKills": 1744,
+        "currentDeaths": 0,
+        "candidateDeaths": 0,
+        "currentBossWins": 21,
+        "candidateBossWins": 21,
+        "bossAttempts": 21,
+        "newBossLosses": 0,
+        "bossRecoveries": 0,
+        "currentExtendedBossWins": 21,
+        "candidateExtendedBossWins": 21,
+        "farmingChangePct": -3.539823008849563
+      },
+      "Abyss ordinary endgame": {
+        "pairs": 21,
+        "currentKills": 2269,
+        "candidateKills": 2177,
+        "currentDeaths": 0,
+        "candidateDeaths": 0,
+        "currentBossWins": 21,
+        "candidateBossWins": 21,
+        "bossAttempts": 21,
+        "newBossLosses": 0,
+        "bossRecoveries": 0,
+        "currentExtendedBossWins": 21,
+        "candidateExtendedBossWins": 21,
+        "farmingChangePct": -4.054649625385631
+      },
+      "Nightmare entry with normal gear": {
+        "pairs": 21,
+        "currentKills": 324,
+        "candidateKills": 310,
+        "currentDeaths": 0,
+        "candidateDeaths": 0,
+        "currentBossWins": 15,
+        "candidateBossWins": 13,
+        "bossAttempts": 21,
+        "newBossLosses": 2,
+        "bossRecoveries": 0,
+        "currentExtendedBossWins": 21,
+        "candidateExtendedBossWins": 21,
+        "farmingChangePct": -4.320987654320985
+      },
+      "Nightmare+ entry with N gear": {
+        "pairs": 21,
+        "currentKills": 378,
+        "candidateKills": 368,
+        "currentDeaths": 0,
+        "candidateDeaths": 0,
+        "currentBossWins": 17,
+        "candidateBossWins": 14,
+        "bossAttempts": 21,
+        "newBossLosses": 3,
+        "bossRecoveries": 0,
+        "currentExtendedBossWins": 21,
+        "candidateExtendedBossWins": 21,
+        "farmingChangePct": -2.645502645502651
+      }
+    },
+    "classes": {
+      "Novice": {
+        "pairs": 3,
+        "currentKills": 30,
+        "candidateKills": 30,
+        "currentDeaths": 0,
+        "candidateDeaths": 0,
+        "currentBossWins": 0,
+        "candidateBossWins": 0,
+        "bossAttempts": 0,
+        "newBossLosses": 0,
+        "bossRecoveries": 0,
+        "currentExtendedBossWins": 0,
+        "candidateExtendedBossWins": 0
+      },
+      "Swordman": {
+        "pairs": 3,
+        "currentKills": 12,
+        "candidateKills": 12,
+        "currentDeaths": 3,
+        "candidateDeaths": 3,
+        "currentBossWins": 0,
+        "candidateBossWins": 0,
+        "bossAttempts": 0,
+        "newBossLosses": 0,
+        "bossRecoveries": 0,
+        "currentExtendedBossWins": 0,
+        "candidateExtendedBossWins": 0
+      },
+      "Knight": {
+        "pairs": 9,
+        "currentKills": 190,
+        "candidateKills": 190,
+        "currentDeaths": 0,
+        "candidateDeaths": 0,
+        "currentBossWins": 5,
+        "candidateBossWins": 5,
+        "bossAttempts": 9,
+        "newBossLosses": 0,
+        "bossRecoveries": 0,
+        "currentExtendedBossWins": 5,
+        "candidateExtendedBossWins": 5
+      },
+      "Lord Knight": {
+        "pairs": 15,
+        "currentKills": 695,
+        "candidateKills": 622,
+        "currentDeaths": 0,
+        "candidateDeaths": 0,
+        "currentBossWins": 13,
+        "candidateBossWins": 11,
+        "bossAttempts": 15,
+        "newBossLosses": 2,
+        "bossRecoveries": 0,
+        "currentExtendedBossWins": 15,
+        "candidateExtendedBossWins": 15
+      },
+      "Mage": {
+        "pairs": 3,
+        "currentKills": 18,
+        "candidateKills": 18,
+        "currentDeaths": 4,
+        "candidateDeaths": 4,
+        "currentBossWins": 0,
+        "candidateBossWins": 0,
+        "bossAttempts": 0,
+        "newBossLosses": 0,
+        "bossRecoveries": 0,
+        "currentExtendedBossWins": 0,
+        "candidateExtendedBossWins": 0
+      },
+      "Wizard": {
+        "pairs": 9,
+        "currentKills": 251,
+        "candidateKills": 251,
+        "currentDeaths": 0,
+        "candidateDeaths": 0,
+        "currentBossWins": 8,
+        "candidateBossWins": 8,
+        "bossAttempts": 9,
+        "newBossLosses": 0,
+        "bossRecoveries": 0,
+        "currentExtendedBossWins": 8,
+        "candidateExtendedBossWins": 8
+      },
+      "High Wizard": {
+        "pairs": 15,
+        "currentKills": 715,
+        "candidateKills": 705,
+        "currentDeaths": 0,
+        "candidateDeaths": 0,
+        "currentBossWins": 14,
+        "candidateBossWins": 14,
+        "bossAttempts": 15,
+        "newBossLosses": 0,
+        "bossRecoveries": 0,
+        "currentExtendedBossWins": 15,
+        "candidateExtendedBossWins": 15
+      },
+      "Archer": {
+        "pairs": 3,
+        "currentKills": 31,
+        "candidateKills": 31,
+        "currentDeaths": 1,
+        "candidateDeaths": 1,
+        "currentBossWins": 0,
+        "candidateBossWins": 0,
+        "bossAttempts": 0,
+        "newBossLosses": 0,
+        "bossRecoveries": 0,
+        "currentExtendedBossWins": 0,
+        "candidateExtendedBossWins": 0
+      },
+      "Hunter": {
+        "pairs": 9,
+        "currentKills": 364,
+        "candidateKills": 364,
+        "currentDeaths": 0,
+        "candidateDeaths": 0,
+        "currentBossWins": 3,
+        "candidateBossWins": 3,
+        "bossAttempts": 9,
+        "newBossLosses": 0,
+        "bossRecoveries": 0,
+        "currentExtendedBossWins": 3,
+        "candidateExtendedBossWins": 3
+      },
+      "Sniper": {
+        "pairs": 15,
+        "currentKills": 899,
+        "candidateKills": 901,
+        "currentDeaths": 0,
+        "candidateDeaths": 0,
+        "currentBossWins": 14,
+        "candidateBossWins": 14,
+        "bossAttempts": 15,
+        "newBossLosses": 0,
+        "bossRecoveries": 0,
+        "currentExtendedBossWins": 15,
+        "candidateExtendedBossWins": 15
+      },
+      "Thief": {
+        "pairs": 3,
+        "currentKills": 16,
+        "candidateKills": 16,
+        "currentDeaths": 6,
+        "candidateDeaths": 6,
+        "currentBossWins": 0,
+        "candidateBossWins": 0,
+        "bossAttempts": 0,
+        "newBossLosses": 0,
+        "bossRecoveries": 0,
+        "currentExtendedBossWins": 0,
+        "candidateExtendedBossWins": 0
+      },
+      "Assassin": {
+        "pairs": 9,
+        "currentKills": 383,
+        "candidateKills": 383,
+        "currentDeaths": 0,
+        "candidateDeaths": 0,
+        "currentBossWins": 6,
+        "candidateBossWins": 6,
+        "bossAttempts": 9,
+        "newBossLosses": 0,
+        "bossRecoveries": 0,
+        "currentExtendedBossWins": 6,
+        "candidateExtendedBossWins": 6
+      },
+      "Assassin Cross": {
+        "pairs": 30,
+        "currentKills": 2481,
+        "candidateKills": 2461,
+        "currentDeaths": 0,
+        "candidateDeaths": 0,
+        "currentBossWins": 30,
+        "candidateBossWins": 30,
+        "bossAttempts": 30,
+        "newBossLosses": 0,
+        "bossRecoveries": 0,
+        "currentExtendedBossWins": 30,
+        "candidateExtendedBossWins": 30
+      },
+      "Acolyte": {
+        "pairs": 3,
+        "currentKills": 8,
+        "candidateKills": 8,
+        "currentDeaths": 6,
+        "candidateDeaths": 6,
+        "currentBossWins": 0,
+        "candidateBossWins": 0,
+        "bossAttempts": 0,
+        "newBossLosses": 0,
+        "bossRecoveries": 0,
+        "currentExtendedBossWins": 0,
+        "candidateExtendedBossWins": 0
+      },
+      "Priest": {
+        "pairs": 9,
+        "currentKills": 128,
+        "candidateKills": 128,
+        "currentDeaths": 0,
+        "candidateDeaths": 0,
+        "currentBossWins": 1,
+        "candidateBossWins": 1,
+        "bossAttempts": 9,
+        "newBossLosses": 0,
+        "bossRecoveries": 0,
+        "currentExtendedBossWins": 1,
+        "candidateExtendedBossWins": 1
+      },
+      "High Priest": {
+        "pairs": 15,
+        "currentKills": 484,
+        "candidateKills": 441,
+        "currentDeaths": 0,
+        "candidateDeaths": 0,
+        "currentBossWins": 8,
+        "candidateBossWins": 9,
+        "bossAttempts": 15,
+        "newBossLosses": 0,
+        "bossRecoveries": 1,
+        "currentExtendedBossWins": 14,
+        "candidateExtendedBossWins": 15
+      },
+      "Merchant": {
+        "pairs": 3,
+        "currentKills": 13,
+        "candidateKills": 13,
+        "currentDeaths": 6,
+        "candidateDeaths": 6,
+        "currentBossWins": 0,
+        "candidateBossWins": 0,
+        "bossAttempts": 0,
+        "newBossLosses": 0,
+        "bossRecoveries": 0,
+        "currentExtendedBossWins": 0,
+        "candidateExtendedBossWins": 0
+      },
+      "Blacksmith": {
+        "pairs": 9,
+        "currentKills": 260,
+        "candidateKills": 260,
+        "currentDeaths": 0,
+        "candidateDeaths": 0,
+        "currentBossWins": 9,
+        "candidateBossWins": 9,
+        "bossAttempts": 9,
+        "newBossLosses": 0,
+        "bossRecoveries": 0,
+        "currentExtendedBossWins": 9,
+        "candidateExtendedBossWins": 9
+      },
+      "Whitesmith": {
+        "pairs": 15,
+        "currentKills": 771,
+        "candidateKills": 716,
+        "currentDeaths": 0,
+        "candidateDeaths": 0,
+        "currentBossWins": 15,
+        "candidateBossWins": 12,
+        "bossAttempts": 15,
+        "newBossLosses": 3,
+        "bossRecoveries": 0,
+        "currentExtendedBossWins": 15,
+        "candidateExtendedBossWins": 15
+      }
+    },
+    "losses": [
+      {
+        "cls": "Lord Knight",
+        "scenario": "Nightmare entry with normal gear",
+        "weapon": "",
+        "seed": 987,
+        "currentBossSeconds": 95.06666666666666,
+        "candidateDeath": false,
+        "candidateTimeout": true,
+        "agi": 100,
+        "bonusAgi": 110,
+        "gearAspd": 25
+      },
+      {
+        "cls": "Lord Knight",
+        "scenario": "Nightmare+ entry with N gear",
+        "weapon": "",
+        "seed": 2026,
+        "currentBossSeconds": 112.36666666666666,
+        "candidateDeath": false,
+        "candidateTimeout": true,
+        "agi": 100,
+        "bonusAgi": 84,
+        "gearAspd": 33
+      },
+      {
+        "cls": "Whitesmith",
+        "scenario": "Nightmare entry with normal gear",
+        "weapon": "",
+        "seed": 123,
+        "currentBossSeconds": 111.03333333333333,
+        "candidateDeath": false,
+        "candidateTimeout": true,
+        "agi": 100,
+        "bonusAgi": 153,
+        "gearAspd": 25
+      },
+      {
+        "cls": "Whitesmith",
+        "scenario": "Nightmare+ entry with N gear",
+        "weapon": "",
+        "seed": 123,
+        "currentBossSeconds": 111.63333333333334,
+        "candidateDeath": false,
+        "candidateTimeout": true,
+        "agi": 100,
+        "bonusAgi": 123,
+        "gearAspd": 34
+      },
+      {
+        "cls": "Whitesmith",
+        "scenario": "Nightmare+ entry with N gear",
+        "weapon": "",
+        "seed": 2026,
+        "currentBossSeconds": 97.5,
+        "candidateDeath": false,
+        "candidateTimeout": true,
+        "agi": 100,
+        "bonusAgi": 84,
+        "gearAspd": 33
+      }
+    ],
+    "farmRegressions": [],
+    "alreadyLost": [
+      {
+        "cls": "Knight",
+        "scenario": "Second job class-map boss",
+        "seed": 123,
+        "candidateWon": false
+      },
+      {
+        "cls": "Knight",
+        "scenario": "Second job class-map boss",
+        "seed": 987,
+        "candidateWon": false
+      },
+      {
+        "cls": "Knight",
+        "scenario": "Second job class-map boss",
+        "seed": 2026,
+        "candidateWon": false
+      },
+      {
+        "cls": "Knight",
+        "scenario": "Comodo ordinary",
+        "seed": 123,
+        "candidateWon": false
+      },
+      {
+        "cls": "Lord Knight",
+        "scenario": "Nightmare entry with normal gear",
+        "seed": 123,
+        "candidateWon": false
+      },
+      {
+        "cls": "Lord Knight",
+        "scenario": "Nightmare entry with normal gear",
+        "seed": 2026,
+        "candidateWon": false
+      },
+      {
+        "cls": "Wizard",
+        "scenario": "Comodo ordinary",
+        "seed": 2026,
+        "candidateWon": false
+      },
+      {
+        "cls": "High Wizard",
+        "scenario": "Nightmare+ entry with N gear",
+        "seed": 987,
+        "candidateWon": false
+      },
+      {
+        "cls": "Hunter",
+        "scenario": "Second job class-map boss",
+        "seed": 987,
+        "candidateWon": false
+      },
+      {
+        "cls": "Hunter",
+        "scenario": "Comodo ordinary",
+        "seed": 123,
+        "candidateWon": false
+      },
+      {
+        "cls": "Hunter",
+        "scenario": "Comodo ordinary",
+        "seed": 987,
+        "candidateWon": false
+      },
+      {
+        "cls": "Hunter",
+        "scenario": "Comodo ordinary",
+        "seed": 2026,
+        "candidateWon": false
+      },
+      {
+        "cls": "Hunter",
+        "scenario": "Amatsu ordinary",
+        "seed": 987,
+        "candidateWon": false
+      },
+      {
+        "cls": "Hunter",
+        "scenario": "Amatsu ordinary",
+        "seed": 2026,
+        "candidateWon": false
+      },
+      {
+        "cls": "Sniper",
+        "scenario": "Nightmare entry with normal gear",
+        "seed": 2026,
+        "candidateWon": false
+      },
+      {
+        "cls": "Assassin",
+        "scenario": "Second job class-map boss",
+        "seed": 987,
+        "candidateWon": false
+      },
+      {
+        "cls": "Assassin",
+        "scenario": "Comodo ordinary",
+        "seed": 123,
+        "candidateWon": false
+      },
+      {
+        "cls": "Assassin",
+        "scenario": "Amatsu ordinary",
+        "seed": 987,
+        "candidateWon": false
+      },
+      {
+        "cls": "Priest",
+        "scenario": "Second job class-map boss",
+        "seed": 123,
+        "candidateWon": false
+      },
+      {
+        "cls": "Priest",
+        "scenario": "Second job class-map boss",
+        "seed": 987,
+        "candidateWon": false
+      },
+      {
+        "cls": "Priest",
+        "scenario": "Second job class-map boss",
+        "seed": 2026,
+        "candidateWon": false
+      },
+      {
+        "cls": "Priest",
+        "scenario": "Comodo ordinary",
+        "seed": 123,
+        "candidateWon": false
+      },
+      {
+        "cls": "Priest",
+        "scenario": "Comodo ordinary",
+        "seed": 987,
+        "candidateWon": false
+      },
+      {
+        "cls": "Priest",
+        "scenario": "Comodo ordinary",
+        "seed": 2026,
+        "candidateWon": false
+      },
+      {
+        "cls": "Priest",
+        "scenario": "Amatsu ordinary",
+        "seed": 123,
+        "candidateWon": false
+      },
+      {
+        "cls": "Priest",
+        "scenario": "Amatsu ordinary",
+        "seed": 987,
+        "candidateWon": false
+      },
+      {
+        "cls": "High Priest",
+        "scenario": "Niflheim promotion",
+        "seed": 123,
+        "candidateWon": true
+      },
+      {
+        "cls": "High Priest",
+        "scenario": "Nightmare entry with normal gear",
+        "seed": 123,
+        "candidateWon": false
+      },
+      {
+        "cls": "High Priest",
+        "scenario": "Nightmare entry with normal gear",
+        "seed": 987,
+        "candidateWon": false
+      },
+      {
+        "cls": "High Priest",
+        "scenario": "Nightmare entry with normal gear",
+        "seed": 2026,
+        "candidateWon": false
+      },
+      {
+        "cls": "High Priest",
+        "scenario": "Nightmare+ entry with N gear",
+        "seed": 123,
+        "candidateWon": false
+      },
+      {
+        "cls": "High Priest",
+        "scenario": "Nightmare+ entry with N gear",
+        "seed": 987,
+        "candidateWon": false
+      },
+      {
+        "cls": "High Priest",
+        "scenario": "Nightmare+ entry with N gear",
+        "seed": 2026,
+        "candidateWon": false
+      }
+    ]
+  }
+}
