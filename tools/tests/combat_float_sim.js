@@ -110,7 +110,8 @@ t('damage numbers START above the head - the whole crit frame clears it - and fl
   assert.ok(src.includes("showDamage(mob,mob.x,mobDamageY(mob,c),mob.z,d,c,skill)"), 'strike numbers spawn above the head, crit-aware');
   assert.ok(src.includes('function heroDamageY(){'), 'incoming damage gets its own above-the-hero-head spawn');
   assert.ok(src.includes('return 2.92+Math.min(2,half/Math.max(1e-6,Math.abs(b[1]-t[1])));'), 'the hero\'s head line is the top of the 1.95x2.92 billboard');
-  assert.ok(src.includes('damageFloat(pl.x,heroDamageY(),pl.z,d,false,true);'), 'incoming damage lifts off the hero\'s chest (was a fixed 2.4, on the body)');
+  // Milestone 4: the floater shows the damage after a 4th-job ward (absorbSoak) so it matches the HP lost.
+  assert.ok(src.includes('damageFloat(pl.x,heroDamageY(),pl.z,dAbs,false,true);'), 'incoming damage lifts off the hero\'s chest (was a fixed 2.4, on the body)');
   assert.ok(!src.includes('damageFloat(pl.x,2.4,pl.z,d,false,true)'), 'no incoming damage spawns on the hero\'s body any more');
   // runtime, against the stubbed projection (50 screen px per world unit): the clearance is exact
   const D = box.__d;

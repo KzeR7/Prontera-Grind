@@ -41,7 +41,9 @@ if (!/const EXP_BOOST_LV=50,EXP_BOOST_X=3,EXP_RATE=7;/.test(src))
   throw new Error('the v56 EXP band/rate changed - update this test deliberately');
 if (!/const ZMIN=5;/.test(src))
   throw new Error('the low-level Zeny floor changed - update this test deliberately');
-if (!/const JOFF=\[0,9,49,98\];/.test(src))
+// Milestone 4 added the 4th-job pacing entry (index.html); this economy model stops at tier 3, so the
+// earlier four offsets are what it measures. Update this pin deliberately when a pacing offset changes.
+if (!/const JOFF=\[0,9,49,98,100\];/.test(src))
   throw new Error('JOFF job/base lockstep offsets changed - update this test deliberately');
 if (!/const QXP=\{kill:1\/140,loot:1\/175,boss:1\/84\}/.test(src))
   throw new Error('QXP quest fractions changed - update this test deliberately');

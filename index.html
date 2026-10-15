@@ -1112,9 +1112,18 @@ const CD=[['Novice',0,1,1,1,'e8dcc0','',['dagger','sword'],'str',0],
 ['Lord Knight','Knight',.72,1.99,1.8,'600808','300000',['sword'],'str',0],['High Wizard','Wizard',.9,2.4,1,'0a1a55','',['staff'],'int',1,'0a1040'],
 ['Sniper','Hunter',.55,1.85,1.05,'0a3a0a','002000',['bow'],'dex',1],['Assassin Cross','Assassin',.5,1.9,1.15,'1a1a28','0a0a14',['katar','dagger'],'str',0],
 ['High Priest','Priest',.8,1.6813,1.25,'c8a820','604000',['mace'],'int',0],['Whitesmith','Blacksmith',.7,2.01,1.6,'c06000','502000',['axe','mace'],'str',0]];
+// Milestone 4 (4th jobs, tier 4). Dark-launched: these rows join the roster only when FOURTH_JOBS_LIVE is true,
+// so the live game keeps its 19 classes until skills, native bodies and the balance pass are ready.
+const FOURTH_JOBS_LIVE=false;
+const CD4=[
+['Rune Knight','Lord Knight',.7,2.1,1.95,'9e1f12','4a0c08',['sword'],'str',0,'5a0e08'],['Warlock','High Wizard',.86,2.6,1.05,'5b1fa8','250a45',['staff'],'int',1,'3a0f70'],['Ranger','Sniper',.52,2,1.1,'2f7d46','0c3f22',['bow'],'dex',1,'0c4a28'],['Guillotine Cross','Assassin Cross',.48,2.05,1.2,'4a4a62','15151f',['katar','dagger'],'str',0,'2a2a3a'],['Arch Bishop','High Priest',.78,1.8,1.35,'f2d978','8a6a10',['mace'],'int',0,'c9a22c'],['Mechanic','Whitesmith',.68,2.15,1.75,'e07b20','6b3206',['axe','mace'],'str',0,'9a4a10']];
+if(FOURTH_JOBS_LIVE)CD.push(...CD4);
 const CLASSES={};
 CD.forEach(([n,par,aspd,atk,hp,col,cape,wt,main,rng,hat])=>CLASSES[n]={n,par,aspd,atk,hp,col:parseInt(col,16),cape:cape?parseInt(cape,16):0,wt,main,rng,hat:hat?parseInt(hat,16):0,kids:[]});
-for(const c of Object.values(CLASSES)){c.tier=0;for(let p=c.par;p;p=CLASSES[p].par)c.tier++;c.mj=c.tier?50:10;c.rj=[0,10,40,50][c.tier];if(c.par)CLASSES[c.par].kids.push(c.n)}
+for(const c of Object.values(CLASSES)){c.tier=0;for(let p=c.par;p;p=CLASSES[p].par)c.tier++;c.mj=c.tier?50:10;c.rj=[0,10,40,50,50][c.tier];if(c.par)CLASSES[c.par].kids.push(c.n)}
+// Milestone 4 (4th jobs, tier 4): also need Base Lv 150 before their first unlock. Already-played
+// 4th jobs are handled by playedClass() in classBlock(), exactly like the earlier tiers.
+const ADV4_BASE_LV=150;
 const lineOf=n=>{const a=[];for(;n;n=CLASSES[n].par)a.unshift(n);return a},down=n=>[n].concat(...CLASSES[n].kids.map(down));
 // ---------- skills (six-slot combos; no SP resource) ----------
 // One definition drives execution and descriptions. power is TOTAL damage, split into hits.
@@ -1213,8 +1222,41 @@ const SKILLS=[
  {"id":"basilica","n":"Final Judgment","max":5,"type":"act","col":"#fff3a0","text":"Strike with a holy seal that detonates after a short delay, damaging nearby enemies.","from":"High Priest","cd":5.0,"hits":1,"power":2.2,"shape":"splash","pulse":0.6,"delay":0.4},
  {"id":"meltdown","n":"Shatter Strike","max":10,"type":"act","col":"#ffa040","text":"A heavy strike with nearby splash. Deals 12% more damage against a target marked by Armor Crack.","from":"Whitesmith","cd":4.0,"hits":1,"power":1.244,"shape":"splash","shatter":0.12}
 ];
+// Milestone 4 (4th jobs): three signature skills per class, dark-launched with the classes. They are
+// joined to SKILLS only while FOURTH_JOBS_LIVE is true, so the live skill list, fixtures and combat
+// numbers stay exactly as they are. Mechanic fields (read by castSkill and its helpers below):
+//   gain {key,max}        a direct hit adds one self stack (12 s); stacks are spent by `spend`
+//   spend {key,per}       cast consumes every self stack for +per damage each
+//   tgtStack {key,max,life}  a hit on the primary target adds a target stack for `life` seconds
+//   tgtSpend {key,per,stun}  cast consumes the target's stacks for +per each (stun if any were spent)
+//   bounce {n,share}      after landing, the n nearest other enemies in the pack take share of the hit
+//   roulette {chance,effect,value}  each direct hit rolls chance % for a stun (value s) or an extra strike (value x damage)
+//   dash                  gap-closer (existing field)
+//   absorb {pct,life}     raises a ward absorbing pct of max HP in incoming damage for life seconds
+//   stun                  flat stun on every target (existing field)
+const SKILLS4=[
+ {"id":"rk_charge","n":"Rune Charge","max":10,"type":"act","col":"#ffd36e","text":"Dash to an enemy and strike three times. Each hit adds a Rune stack (up to 5, lasting 12 seconds).","from":"Rune Knight","cd":4.0,"hits":3,"power":2.3,"shape":"single","dash":4,"gain":{"key":"rune","max":5}},
+ {"id":"rk_burst","n":"Rune Burst","max":10,"type":"act","col":"#ff9d3d","text":"Spend every Rune stack for +25% damage each, in a radial burst around you.","from":"Rune Knight","cd":6.0,"hits":1,"power":2.6,"shape":"radial","spend":{"key":"rune","per":0.25}},
+ {"id":"rk_ward","n":"Rune Ward","max":10,"type":"act","col":"#fff3a0","text":"Strike, then raise a ward that absorbs up to 25% of your max HP in damage for 8 seconds.","from":"Rune Knight","cd":10.0,"hits":1,"power":1.2,"shape":"single","absorb":{"pct":0.25,"life":8}},
+ {"id":"wl_chain","n":"Chain Lightning","max":10,"type":"act","col":"#c9a0ff","text":"A lightning strike that bounces to three nearby enemies for half damage.","from":"Warlock","cd":3.0,"hits":1,"power":2.6,"shape":"single","bounce":{"n":3,"share":0.5}},
+ {"id":"wl_seal","n":"Soul Seal","max":10,"type":"act","col":"#8a5cff","text":"Brand the target with a soul seal. Each cast adds one seal stack (up to 5, lasting 8 seconds).","from":"Warlock","cd":4.0,"hits":1,"power":1.6,"shape":"single","tgtStack":{"key":"seal","max":5,"life":8}},
+ {"id":"wl_det","n":"Seal Detonation","max":10,"type":"act","col":"#ff5a8a","text":"Detonate the target's seals for +20% damage each, with splash to nearby enemies. Spending any seals also stuns the target for 0.8 seconds.","from":"Warlock","cd":6.0,"hits":1,"power":2.4,"shape":"splash","tgtSpend":{"key":"seal","per":0.2,"stun":0.8}},
+ {"id":"rg_hunt","n":"Hunting Pounce","max":10,"type":"act","col":"#7dff7d","text":"Leap at a distant enemy and shoot twice. Each hit adds a Quarry stack (up to 4, lasting 12 seconds).","from":"Ranger","cd":4.0,"hits":2,"power":2.2,"shape":"single","dash":6,"gain":{"key":"quarry","max":4}},
+ {"id":"rg_warg","n":"Warg Strike","max":10,"type":"act","col":"#b5ff6e","text":"Two warg-bolstered shots. Each hit has a 25% chance to stun for 1.5 seconds. Spends Quarry stacks for +15% damage each.","from":"Ranger","cd":3.5,"hits":2,"power":2.0,"shape":"single","spend":{"key":"quarry","per":0.15},"roulette":{"chance":25,"effect":"stun","value":1.5}},
+ {"id":"rg_storm","n":"Storm Arrows","max":10,"type":"act","col":"#8fe9ff","text":"An arrow volley on the target area that bounces to four more enemies for 40% damage.","from":"Ranger","cd":5.0,"hits":1,"power":2.4,"shape":"splash","bounce":{"n":4,"share":0.4}},
+ {"id":"gc_cross","n":"Cross Impact","max":10,"type":"act","col":"#c0c0ff","text":"Two crossing katar or dagger cuts. Spends the target's Bleed stacks for +12% each. Each cut has a 30% chance to add an extra cut for 60% of a cut's damage.","from":"Guillotine Cross","cd":3.5,"hits":2,"power":2.6,"shape":"cross","tgtSpend":{"key":"bleed","per":0.12},"roulette":{"chance":30,"effect":"strike","value":0.6}},
+ {"id":"gc_slip","n":"Shadow Slip","max":10,"type":"act","col":"#8080a8","text":"Slip in behind the target and cut three times. Each cut adds a Bleed stack to the target (up to 5, lasting 6 seconds).","from":"Guillotine Cross","cd":4.5,"hits":3,"power":2.0,"shape":"single","dash":5,"tgtStack":{"key":"bleed","max":5,"life":6}},
+ {"id":"gc_veil","n":"Venom Veil","max":10,"type":"act","col":"#7dff9d","text":"A quick cut, then a veil that absorbs up to 20% of your max HP in damage for 6 seconds.","from":"Guillotine Cross","cd":10.0,"hits":1,"power":1.1,"shape":"single","absorb":{"pct":0.2,"life":6}},
+ {"id":"ab_chain","n":"Holy Chain","max":10,"type":"act","col":"#fff3a0","text":"A holy strike that chains to two nearby enemies for half of one hit.","from":"Arch Bishop","cd":3.5,"hits":2,"power":1.8,"shape":"single","bounce":{"n":2,"share":0.5}},
+ {"id":"ab_judge","n":"Judgment Seal","max":10,"type":"act","col":"#ffe14d","text":"A seal of judgment that stuns the target for 1 second. Bosses resist repeat stuns.","from":"Arch Bishop","cd":6.0,"hits":1,"power":2.6,"shape":"single","stun":1.0},
+ {"id":"ab_ward","n":"Sanctuary Ward","max":10,"type":"act","col":"#fff8d0","text":"A holy ward that absorbs up to 30% of your max HP in damage for 8 seconds.","from":"Arch Bishop","cd":12.0,"hits":1,"power":1.0,"shape":"single","absorb":{"pct":0.3,"life":8}},
+ {"id":"mc_gat","n":"Gatling Fever","max":10,"type":"act","col":"#ffb347","text":"Six rapid cannon hits. Each hit adds a Heat stack (up to 5, lasting 12 seconds).","from":"Mechanic","cd":3.0,"hits":6,"power":2.8,"shape":"single","gain":{"key":"heat","max":5}},
+ {"id":"mc_over","n":"Overheat Cannon","max":10,"type":"act","col":"#ff5a2a","text":"Fire every Heat stack for +20% damage each, with splash to nearby enemies.","from":"Mechanic","cd":6.0,"hits":1,"power":2.6,"shape":"splash","spend":{"key":"heat","per":0.2}},
+ {"id":"mc_rocket","n":"Rocket Jump","max":10,"type":"act","col":"#ffd28a","text":"Rocket-leap at a distant enemy and shock nearby enemies, stunning them for 0.6 seconds.","from":"Mechanic","cd":5.0,"hits":1,"power":2.0,"shape":"splash","dash":6,"stun":0.6}
+];
+if(FOURTH_JOBS_LIVE)SKILLS.push(...SKILLS4);
 for(const s of SKILLS){
-  s.cls=down(s.from);s.magic=['Mage','Wizard','High Wizard','Acolyte','Priest','High Priest'].includes(s.from);
+  s.cls=down(s.from);s.magic=['Mage','Wizard','High Wizard','Warlock','Acolyte','Priest','High Priest','Arch Bishop'].includes(s.from);
   if(s.magic&&s.type==='act'){s.rng=6;s.areaScale=['Mage','Wizard','High Wizard'].includes(s.from)?1.5:1.25;if(s.shape!=='single')s.power*=s.areaScale;}
   if(s.type==='act'){s.mul=L=>s.power*(.55+.45*Math.min(s.max,L)/s.max);s.aoe=s.shape!=='single';}
   if(s.type==='pas'||s.type==='buff')s.f=L=>(s.flat||0)+s.rate*(s.id==='thrust'?Math.min(5,L):L);
@@ -1274,6 +1316,16 @@ const SKILL_VISUAL_REDESIGN={aura:'holyAura',mystic:'holyAura',sight:'windAura',
  env:'multiSlash',dodge:'multiSlash',sandat:'arrowRain',vdust:'multiSlash',vsplash:'shadow',sdestroy:'soulBolt',dpois:'frenzyAura',akatar:'multiSlash',
  heal:'holyBolt',signum:'holyNova',sanct:'holyBolt',kyrie:'holyBolt',judex:'holyBolt',assum:'holyNova',basilica:'holyNova',wperf:'impact',meltdown:'impact'};
 for(const [id,kind] of Object.entries(SKILL_VISUAL_REDESIGN))SKILL_VFX[id]={kind,at:SKILLS.find(s=>s.id===id).type==='buff'?'caster':'target',life:.6,redesigned:true};
+// Milestone 4 (dark-launched): the 18 4th-job skills reuse native icon art and existing effect kinds.
+// No new sprites are painted; their own art is an open item for the owner (see Updates/fourth-jobs/).
+if(FOURTH_JOBS_LIVE){
+  const ART4={rk_charge:'bash',rk_burst:'bowl',rk_ward:'jointbeat',wl_chain:'nap',wl_seal:'sdestroy',wl_det:'storm',rg_hunt:'falcon',rg_warg:'beast',rg_storm:'ashower',gc_cross:'vdust',gc_slip:'dodge',gc_veil:'vsplash',ab_chain:'holy',ab_judge:'basilica',ab_ward:'sanct',mc_gat:'hammer',mc_over:'fireball',mc_rocket:'cart'};
+  const FX4={rk_charge:'multiSlash',rk_burst:'impact',rk_ward:'holyAura',wl_chain:'soulBolt',wl_seal:'shadow',wl_det:'impact',rg_hunt:'arrowRain',rg_warg:'multiSlash',rg_storm:'arrowRain',gc_cross:'multiSlash',gc_slip:'shadow',gc_veil:'shadow',ab_chain:'holyAura',ab_judge:'impact',ab_ward:'holyAura',mc_gat:'impact',mc_over:'impact',mc_rocket:'impact'};
+  for(const sk of SKILLS4){
+    if(typeof PGSkillIcons!=='undefined'&&!PGSkillIcons[sk.id]&&PGSkillIcons[ART4[sk.id]])PGSkillIcons[sk.id]=PGSkillIcons[ART4[sk.id]];
+    if(!SKILL_VFX[sk.id])SKILL_VFX[sk.id]={kind:FX4[sk.id],at:sk.absorb?'caster':'target',life:.6,redesigned:true};
+  }
+}
 function skillFxSpec(id,color){const v=SKILL_VFX[id];return v?{id,kind:v.kind,at:v.at||'target',life:v.life||.65,color:color||'#fff'}:null}
 // ---------- world: 5 maps x 10 levels. Lv1-3 novice gear, 4-7 1st job, 8-9 2nd job, 10 boss = high-tier ----------
 const pm=s=>{const[n,c,sh]=s.split(':');const spriteId=MOB_SPRITES[n]||0,spriteSize=MOB_SIZE_BY_ID[spriteId]||'Medium';return{n,c:parseInt(c,16),shape:sh,spriteId,spriteSize,spriteScale:MOB_SIZE_SCALE[spriteSize]}};
@@ -2149,7 +2201,7 @@ function applyLeech(dealt,rate){
  if(h>0){S.hp+=h;leechWindow.push({at:t,hp:h});addFloat(pl.x,2.9,pl.z,'+'+numTxt(h),'#ff6b8a');}return h;
 }
 // Physical skill training replaces universal INT scaling; no physical skill reads INT here.
-const INT_CLASSES=['Mage','Wizard','High Wizard','Acolyte','Priest','High Priest'];
+const INT_CLASSES=['Mage','Wizard','High Wizard','Acolyte','Priest','High Priest','Warlock','Arch Bishop'];
 const PHYSICAL_TRAINING={"Novice": [1.01, 1.01, 1.01], "Swordman": [1.01, 1.01, 1.01], "Archer": [1.13, 1.22, 1.3], "Thief": [1.27294, 1.41074, 1.64825], "Merchant": [1.01, 1.01, 1.01], "Knight": [1.01, 1.01, 1.01], "Hunter": [1.33, 1.45, 1.6], "Assassin": [1.66207, 2.04084, 2.26048], "Blacksmith": [1.01, 1.01, 1.01], "Lord Knight": [1.05, 1.05, 1.05], "Sniper": [1.45, 1.55, 1.6], "Assassin Cross": [2.46, 2.53, 2.32], "Whitesmith": [1.01, 1.01, 1.01]};
 function physicalTraining(sk,L){const a=PHYSICAL_TRAINING[S.cls]||[1,1,1],r=Math.max(1,Math.min(10,L));return r<=5?a[0]+(a[1]-a[0])*(r-1)/4:a[1]+(a[2]-a[1])*(r-5)/5;}
 const skillStatScale=(sk,L)=>INT_CLASSES.includes(S.cls)?1+st('int')*.01:1;
@@ -2386,10 +2438,10 @@ const BASE_EXP_LATE_LV=100,BASE_EXP_LATE_X=1.5;
 const roundReq=n=>{const a=Math.abs(n),m=a<100?1:a<1e4?10:a<1e5?100:1e3;return Math.max(1,Math.round(n/m)*m)};
 // Job levels run alongside base levels. JOFF[t] is the base level a job level of tier t
 // keeps pace with: Novice job j ~ base j, 1st job j ~ base j+9, 2nd job j ~ base j+49,
-// transcendent j ~ base j+98. The first job change remains at Base 10 (~7 min); Job Lv 1-40
+// transcendent j ~ base j+98, 4th job j ~ base j+100 (Job Lv 1 at Base 101, Job Lv 50 at Base 150). The first job change remains at Base 10 (~7 min); Job Lv 1-40
 // on the first-job line takes about the same 30-minute Base 10-50 interval. The second-job
 // gate stays around Base 48-49 (~36 min total); Base 50-99 remains the slower ~5-hour tier.
-const JOFF=[0,9,49,98];
+const JOFF=[0,9,49,98,100];
 
 // ---------- state ----------
 // expEarned (v74) is a session counter like zenyEarned: it counts what this login actually
@@ -3871,6 +3923,30 @@ function applyStun(o,dur){if(!o||!(dur>0)||o.boss&&(o.stunResist||0)>0)return;
 function chainHit(src,dmg,col,n,skill=false){if(!src||!(dmg>0)||mobs.length<2)return;
   const near=mobs.filter(o=>o!==src&&o.hp>0&&o.pack===src.pack).sort((a,b)=>Math.hypot(a.x-src.x,a.z-src.z)-Math.hypot(b.x-src.x,b.z-src.z)).slice(0,n||2);
   for(const o of near){shots.push({x0:src.x,z0:src.z,x1:o.x,z1:o.z,t:0,col:col||'#fff'});hurt(o,Math.max(1,Math.round(dmg)),col,false,skill)}}
+// Milestone 4 mechanics (dark-launched with SKILLS4). Each helper does nothing for a skill that lacks its field,
+// so the live skills never reach these lines' effects. Stacks expire against the game clock `t`.
+const SELF_STACK_LIFE=12;
+function addSelfStack(key,max){const r=skillState();r.stacks=r.stacks||{};const e=r.stacks[key],n=e&&e.until>t?e.n:0;r.stacks[key]={n:Math.min(max,n+1),until:t+SELF_STACK_LIFE}}
+function takeSelfStacks(key){const r=skillState(),e=r.stacks&&r.stacks[key];if(!e)return 0;delete r.stacks[key];return e.until>t?e.n:0}
+function addTargetStack(o,a){o.stk=o.stk||{};const e=o.stk[a.key],n=e&&e.until>t?e.n:0;o.stk[a.key]={n:Math.min(a.max,n+1),until:t+a.life}}
+function takeTargetStacks(o,key){const e=o&&o.stk&&o.stk[key];if(!e)return 0;delete o.stk[key];return e.until>t?e.n:0}
+// Runs after each landed hit: self stacks, target stacks (primary target only) and the roulette roll.
+function strikeMilestone(o,sk,raw,primary){
+  if(!sk.gain&&!sk.tgtStack&&!sk.roulette)return;
+  if(sk.gain)addSelfStack(sk.gain.key,sk.gain.max);
+  if(sk.tgtStack&&primary)addTargetStack(o,sk.tgtStack);
+  if(sk.roulette&&Math.random()*100<sk.roulette.chance){
+    if(sk.roulette.effect==='stun')applyStun(o,sk.roulette.value);
+    else if(sk.roulette.effect==='strike'&&o.hp>0)skillHit(o,raw*sk.roulette.value/sk.hits,sk,true);}
+}
+// Bounce: the n nearest other living enemies in the same pack take `share` of one hit (a proc: no mark or deathmark re-trigger).
+function bounceStrike(from,sk,raw){const b=sk.bounce;
+  const near=mobs.filter(o=>o!==from&&o.hp>0&&o.pack===from.pack).sort((a,c)=>Math.hypot(a.x-from.x,a.z-from.z)-Math.hypot(c.x-from.x,c.z-from.z)).slice(0,b.n);
+  for(const o of near){shots.push({x0:from.x,z0:from.z,x1:o.x,z1:o.z,t:0,col:sk.col||'#fff'});skillHit(o,raw*b.share/sk.hits,sk,true)}
+}
+// Absorb: a new ward replaces any ward still up. It soaks incoming player damage until spent or it expires.
+function startAbsorb(a){const r=skillState();r.absorb={amount:maxHp()*a.pct,until:t+a.life}}
+function absorbSoak(d){const a=skillState().absorb;if(!a||!(a.until>t)||!(a.amount>0))return d;const soak=Math.min(d,a.amount);a.amount-=soak;return d-soak}
 const mkDrop=it=>({it,wx:mob.x+rnd(-.7,.7),wz:mob.z+rnd(-.7,.7),y:0,vy:-220,t:0});
 // v83.3 (owner): the number motion is v82's again - the owner had already tuned it and only wants to
 // READJUST size and height, not have them changed for them. DMG_RATE .95 gave ~1.05s of life, the
@@ -4344,17 +4420,22 @@ function castSkill(sk,k){
   if(skillOn('iagi')&&aspd()<=.131)raw*=1+(r.buffs.iagi?r.buffs.iagi.value:0)/100;
   if(sk.execute&&target.hp/target.max<.3)raw*=1+sk.execute;
   if(sk.shatter&&target.skillMark&&target.skillMark.source==='wperf')raw*=1+sk.shatter;
+  if(sk.spend)raw*=1+sk.spend.per*takeSelfStacks(sk.spend.key);
+  let tgtSpent=0;if(sk.tgtSpend){tgtSpent=takeTargetStacks(target,sk.tgtSpend.key);raw*=1+sk.tgtSpend.per*tgtSpent;}
+  if(sk.absorb)startAbsorb(sk.absorb);
   const targets=skillTargets(sk,target),pulse=sk.pulse||0,death=sk.death||0;
   let dealt=0;for(const o of targets){const amount=raw*(o===target?1:.8*skillTuning(true,sk,L)/skillTuning(false,sk,L))*(1-pulse-death-(sk.dot||0));
     // Split the declared total; extra hits never become unrelated 1x strikes.
-    for(let i=0;i<sk.hits&&o.hp>0;i++)dealt+=skillHit(o,amount/sk.hits,sk);
+    for(let i=0;i<sk.hits&&o.hp>0;i++){const got=skillHit(o,amount/sk.hits,sk);dealt+=got;if(got>0)strikeMilestone(o,sk,raw,o===target)}
     if(o.hp<=0)continue;
     if(sk.stun)applyStun(o,sk.stun);
+    if(o===target&&tgtSpent>0&&sk.tgtSpend.stun)applyStun(o,sk.tgtSpend.stun);
     if(sk.root&&skillRoot(o,sk.root))addFloat(o.x,2,o.z,'SNARED','#ffd28a');
     if(sk.blind)o.blind={left:2,power:sk.blind};
     if(sk.slow)o.slow={left:1.5,power:sk.slow};
     if(sk.pull&&!o.boss&&!o.fixed&&!o.root){const dx=target.x-o.x,dz=target.z-o.z,d=Math.hypot(dx,dz);if(d>.5){const v=Math.min(sk.pull,d-.5);o.x+=dx/d*v;o.z+=dz/d*v;}}
   }
+  if(sk.bounce&&dealt>0)bounceStrike(target,sk,raw);
   if(pulse){const anchor={x:target.x,z:target.z,pack:target.pack},origin={x:pl.x,z:pl.z};
     skillQueue(sk.delay||.5,()=>{if(activePack!==anchor.pack)return;for(const o of skillTargets(sk,anchor,origin))skillHit(o,raw*pulse*(o===target?1:.8*skillTuning(true,sk,L)/skillTuning(false,sk,L)),sk,true);playSkillFx(sk.id,anchor,sk.col);});}
   if(target.hp>0&&mobs.includes(target)){
@@ -4758,6 +4839,7 @@ function classBlock(n){
   if(n===S.cls)return'Current class';if(n==='Novice')return'';
   if(playedClass(n))return'';
   for(let x=n;CLASSES[x].par;x=CLASSES[x].par){const p=CLASSES[x].par,pj=S.jobs[p];if(!pj||pj.jl<CLASSES[x].rj)return`Needs ${p} Job Lv ${CLASSES[x].rj}`}
+  if(CLASSES[n].tier>=4&&S.lv<ADV4_BASE_LV)return`Needs Base Lv ${ADV4_BASE_LV}`;
   if(S.cls!=='Novice'&&S.cls!==CLASSES[n].par)return'Reset to Novice first';return''}
 // Played classes remain distinct from newly available promotions in the Jobs view.
 function classStatus(n){return n===S.cls?'cur':n!=='Novice'&&playedClass(n)?'played':classBlock(n)?'lock':'ok'}
@@ -5004,10 +5086,10 @@ const V={
     <small><b>Movement speed</b> starts at ${heroMoveSpeedForAgi(st('agi')).toFixed(2)} u/s from AGI ${st('agi')}. Pets, skills and running share a ${MOVE_CAP} u/s cap. Equipment and cards add ${equipmentMove()}% afterward (up to 20%), allowing movement above the cap.${petPassive('move')?` A fighting Peco Peco's Swift Mount adds ${petPassive('move')}% before the cap.`:''}</small>
     <small>Crit is capped at 60% from stats, skills, gear and card mastery; above 45% each further point counts half. <b>Index Crit</b> (+${idxC}% of +40 max, from Hunt Titles) is the only source that passes the cap, and the total stops at 100%.</small>
     <small>Weapons: ${c.wt.join(', ')}${katarOnly()?' (a two-handed Katar, or a dagger in each hand)':''} &middot; Main stat: ${SU(c.main)}</small><button class="full" data-a="rstat" ${statResetCost()&&S.zeny<statResetCost()?'disabled title="You need '+rcost().toLocaleString()+' Zeny to reset stats"':''}>Reset stats (${statResetCost()?statResetCost()+'z':'free'})</button>`},
-  job(){const lines=[['Swordman','Knight','Lord Knight'],['Mage','Wizard','High Wizard'],['Archer','Hunter','Sniper'],['Thief','Assassin','Assassin Cross'],['Acolyte','Priest','High Priest'],['Merchant','Blacksmith','Whitesmith']];
+  job(){const lines=[['Swordman','Knight','Lord Knight','Rune Knight'],['Mage','Wizard','High Wizard','Warlock'],['Archer','Hunter','Sniper','Ranger'],['Thief','Assassin','Assassin Cross','Guillotine Cross'],['Acolyte','Priest','High Priest','Arch Bishop'],['Merchant','Blacksmith','Whitesmith','Mechanic']];
     const k=selK||S.cls,c=CLASSES[k],blk=classBlock(k),pj=S.jobs[k],rec=classRec(k);
     return`<div class="tree"><div class="trow" style="justify-content:center">${tnode('Novice')}</div><div class="trunk"></div>
-    ${[0,1,2].map(i=>`<div class="trow">${lines.map(l=>tnode(l[i])).join('')}</div>${i<2?'<div class="trunk"></div>':''}`).join('')}</div>
+    ${[0,1,2,3].filter(i=>lines.some(l=>CLASSES[l[i]])).map((i,j,a)=>`<div class="trow">${lines.map(l=>tnode(l[i])).join('')}</div>${j<a.length-1?'<div class="trunk"></div>':''}`).join('')}</div>
     <div class="legend"><span class="tn cur">Current</span><span class="tn ok">Available</span><span class="tn played">Played</span><span class="tn lock">Locked</span></div>
     <div class="hd" style="margin-top:4px">🏆 Class collection: ${playedClasses()}/${t3Total()} transcendent at Base Lv 100+ &middot; <b>+${collDmg()}% damage</b> <small>(+1% each, permanent - play them all!)</small></div>
     <div class="mob-card"><div class="hd">${k}</div><small>${c.par?'Before: <b>'+c.par+'</b>':'Starting class'}${c.kids.length?' &middot; Next: <b>'+c.kids.join(', ')+'</b>':''}</small><br>
@@ -5117,7 +5199,7 @@ const EQK=[['head','Head','🎩'],['weapon','R.Hand','⚔️'],['armor','Body','
 const CFIT={matk:'weapon',move:'acc',hpPct:'armor',def:'armor',mdef:'head',field:'weapon',str:'weapon',dex:'weapon',atk:'weapon',crit:'weapon',cdm:'weapon',agi:'armor',aspd:'armor',flee:'armor',vit:'armor',int:'head',hp:'head',luk:'acc'},CFL={weapon:'Weapons',armor:'Armor, Shield & Legwear',head:'Headgear',acc:'Accessories'};
 const grp=it=>it.slot==='weapon'?'weapon':it.slot==='head'?'head':it.slot==='acc'?'acc':'armor';
 function canShield(){return /^(Novice|Swordman|Knight|Lord Knight|Acolyte|Priest|High Priest|Merchant|Blacksmith|Whitesmith)$/.test(S.cls)}
-function katarOnly(cls=S.cls){return cls==='Assassin'||cls==='Assassin Cross'}
+function katarOnly(cls=S.cls){return cls==='Assassin'||cls==='Assassin Cross'||cls==='Guillotine Cross'}
 // v81 dual wield (owner): the two Assassin jobs hold a dagger in each hand. A Thief does not -
 // one blade, and the katar is not theirs either. dualWield() is what opens the left-hand slot.
 function dualWield(cls=S.cls){const c=CLASSES[cls]||CLASSES.Novice;return c.wt.includes('dagger')&&c.wt.includes('katar')}
@@ -6098,7 +6180,7 @@ function update(dt){
         // the v86 caps did, and tanks stacking DEF past 12k now have a reason to dodge.
         // Pinned by combat_damage_sim.js (this is a game-loop line, not a constant).
         else{const raw=m.mag?mdef():def(),md=raw*(1-prOf(m)),cut=Math.min(.75,md/(md+4000));
-          const d=Math.max(1,Math.round(m.atk*rnd(.8,1.2)*(1-cut)*(1-petPassive('dr')/100)*(1-Math.min(.25,skillBonus('guard')/100))));S.hp-=d;skillState().counter=2;hitAnim=1;m.atkAnim=1;damageFloat(pl.x,heroDamageY(),pl.z,d,false,true);
+          const d=Math.max(1,Math.round(m.atk*rnd(.8,1.2)*(1-cut)*(1-petPassive('dr')/100)*(1-Math.min(.25,skillBonus('guard')/100))));const dAbs=absorbSoak(d);S.hp-=dAbs;skillState().counter=2;hitAnim=1;m.atkAnim=1;damageFloat(pl.x,heroDamageY(),pl.z,dAbs,false,true);
           // Defeat is the ONE thing that puts you back at the spawn point.
 if(S.hp<=0){log('You were defeated... knocked back to the entrance.','r0','kills');S.hp=maxHp();S.kl=0;mobs=[];mob=null;camps=[];engageTgt=null;respawn=1.5;tb={};
           pl.x=0;pl.z=Z1-1.5;pl.wt=0;ui();return}}}}
@@ -7531,7 +7613,9 @@ const PACK_BODY={Novice:'novice',
   Archer:'archer',Hunter:'archer',Sniper:'archer',
   Thief:'thief',Assassin:'assassin','Assassin Cross':'assassin_cross',
   Acolyte:'aco',Priest:'aco','High Priest':'aco',
-  Merchant:'blacksmith',Blacksmith:'blacksmith',Whitesmith:'blacksmith'};
+  Merchant:'blacksmith',Blacksmith:'blacksmith',Whitesmith:'blacksmith',
+  // 4th jobs (Milestone 4): until their own native bodies exist, each keeps its transcendent parent's body.
+  'Rune Knight':'lord_knight',Warlock:'high_wizard',Ranger:'sniper','Guillotine Cross':'assassin_cross','Arch Bishop':'high_priest',Mechanic:'whitesmith'};
 // A class uses its own art as soon as the pack has a body named after it
 // (knight, lord_knight, wizard...): drop the sheet in Sprite/, run the tool, done.
 // Until then it keeps its first-job line's art, so every class always has a sprite.

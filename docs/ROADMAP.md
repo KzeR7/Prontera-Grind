@@ -429,6 +429,27 @@ When ready to implement, execute in these sequential milestones:
   - Add the 6 3rd Job classes to `CLASSES`.
   - Implement 3 signature skills per class (18 total) into `SKILLS` and generate Afterglow V6 effects.
   - Character Ascension aura visual.
+  - **Status (2026-10-15 - built and parked, not unlocked):** the six 4th-job classes (`CD4`) and their
+    18 signature skills (`SKILLS4`, three per class) are built in `index.html` behind
+    **`FOURTH_JOBS_LIVE` = `false`**, so the live game still has 19 classes, 91 skills and an unchanged
+    build label. With the flag on: the classes sit under their Transcendent parents (tier 4), unlock at
+    Base Lv 150 and parent Job Lv 50 (`classBlock()`, `ADV4_BASE_LV`), use `JOFF[4]=100` pacing, get a
+    fourth Class Tree row, and wear their parent's packed body. The skills use the mechanics stacks,
+    bounces, stuns, gap-closers (dash), absorb and roulette (per-hit chance procs), built in
+    `castSkill` and helpers beside `chainHit`. Guillotine Cross follows the katar-or-dagger rule
+    (a dagger works the same as a katar for katar skills). Stat multipliers (`aspd`, `atk`, `hp`) and
+    skill numbers are provisional, to be tuned with the new mobs and bosses.
+    The reference package (spec, skill table, mechanic definitions, Ascension note, unlock steps and
+    go-live checklist) is parked in `Updates/fourth-jobs/README.md`. The owner has not yet instructed
+    the unlock. **Ascension (owner clarification):** Lv 150 and above is not a Base Level increase. It is
+    a separate Ascension level with its own stats; Job Level continues as normal, and a later Ascension
+    skill tab will raise skill boost. This is a design note only and is not built.
+    Checks: `tools/tests/fourth_job_sim.js` (20) and `tools/tests/fourth_job_skills_sim.js` (25), both
+    flag on, plus live-page unchanged checks; `dual_wield_sim.js` for the Guillotine Cross rule.
+  - **Before flipping the flag:** the roster-wide suites will flag what is missing: native 3rd-job bodies
+    and wardrobe entries (Phase B), the skill icons and FX (currently reused native art), Afterglow V6
+    effects, the Ascension aura and the Crucible rite panel, and the build-label mirrors. See the
+    go-live checklist in `Updates/fourth-jobs/README.md`.
 
 * **Milestone 5 — Post-Lv 150 Ascension Stats Box**
   - Implement the Ascension Attributes UI panel in Character tab.
