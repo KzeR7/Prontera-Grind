@@ -6,8 +6,15 @@ what is verified, what is still open, and how to pick it up.
 ## Snapshot (2026-10-15)
 
 - **Branch:** `arena/20c27edf-prontera-grind` (session-fixed; do not switch branches).
-- **Last commit:** `840758c` — "4th jobs: 18 signature skills and mechanics, parked". Local only.
-  Not pushed, no PR, no merge, no deploy.
+- **Last commit:** `9f4e79d` — "Merge main into 4th-job branch; resolve PR #91 conflicts". Pushed to
+  `origin/arena/20c27edf-prontera-grind`. Earlier work: `840758c` (4th-job slice 2), `7469606` (handoff notes).
+- **PR:** #91 (base `main`), open, `MERGEABLE`, not merged. Only the Cloudflare Pages preview was pending when checked.
+  Nothing has been merged into `main`, and nothing has been deployed.
+- **Test gate on the merged tree:** the full JS suite is 86 of 90 passing. The 4 failures also fail on
+  `main` with the same messages (not caused by this branch, not fixed here): `drop_card_sheet_sim`
+  (embedded snapshot), `gear_sim` and `update_watch_sim` (`Updates/cards-gear-audit/affix-ranges.html`
+  names an older build than `BUILD`), `starter_sim` (Stage 10 auto-advance with Nightmare). Fixing them
+  belongs to `main`'s owners. The 4th-job checks all pass.
 - **Live game:** unchanged. `FOURTH_JOBS_LIVE = false` in `index.html`; 19 classes, 91 skills,
   `BUILD = '2026-10-15 haven-v157 Ascension access and endgame balance'` (this is `main`'s label; this branch does not change it).
 - **Merged `main` (v157).** `main` shipped an Ascension at Lv 150 (Astral Citadel and Thor Volcano maps, stages, ascension gear). The Ascension note in this folder is a design note only, so it must be reconciled with `main`'s system before the Ascension track is built.
@@ -71,7 +78,7 @@ Status key: **[ ]** not started · **[~]** partly done · **[x]** done. Owner = 
 
 ```sh
 cd /home/user/Prontera-Grind
-git status && git log --oneline -3          # expect 840758c on top, clean tree
+git status && git log --oneline -3          # expect 9f4e79d on top, clean tree
 npm install --no-save --package-lock=false jsdom three@0.128.0   # only if node_modules is missing
 node tools/tests/fourth_job_sim.js          # 20/20 (flag on copy, live-page checks)
 node tools/tests/fourth_job_skills_sim.js   # 25/25

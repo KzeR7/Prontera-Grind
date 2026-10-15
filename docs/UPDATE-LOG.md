@@ -6645,3 +6645,9 @@ The owner's second pass over v77, six notes, all built.
 * **Try it:** Nothing new to play. Read `Updates/fourth-jobs/HANDOFF.md`.
 * **Checks:** `fourth_job_sim.js` 20/20, `fourth_job_skills_sim.js` 25/25, `dual_wield_sim.js`, `economy_sim.js`, `combat_float_sim.js` pass on the merged tree. Full JS gate: 86 of 90 suites pass. The 4 failures also fail on `main` itself, and their messages are identical: `drop_card_sheet_sim` (embedded snapshot), `gear_sim` and `update_watch_sim` (`Updates/cards-gear-audit/affix-ranges.html` still names an older build), and `starter_sim` (Stage 10 auto-advance). They are not caused by this branch and are not fixed here. The Python generated-asset checks pass.
 * **Delivery:** Local merge commit on `arena/20c27edf-prontera-grind`, pushed to that branch only. No merge into `main`, no deployment. The 4th-job classes are still locked.
+
+### 2026-10-15 — `4th-job handoff snapshot updated after the merge`
+* **Changed:** The 4th-job handoff snapshot now names merge commit `9f4e79d`, PR #91 status, and the full-suite result (86 of 90; 4 failures are also on `main`). Docs only.
+* **Try it:** Nothing new to play. Read `Updates/fourth-jobs/HANDOFF.md`.
+* **Checks:** Docs only; no code or fixture change. The 4th-job checks were run before this commit.
+* **Delivery:** Local commit on `arena/20c27edf-prontera-grind`, pushed to that branch only. No merge into `main`, no deployment. The 4th-job classes are still locked.
