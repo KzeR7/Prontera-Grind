@@ -49,6 +49,7 @@ t('every asset path index.html names statically ships with it', () => {
   }
   assert.ok(!bare.includes('assets/sprite_pack_data.js'),'legacy sprite pack must not download on normal startup');
   assert.ok(src.includes("script.src='assets/sprite_pack_data.js?v=2'"),'fallback pack remains available on demand');
+  for(const file of ['assets/atlas/astral-citadel.png','assets/atlas/thor-volcano.svg'])assert.ok(fs.existsSync(path.join(out,file)),'Ascension illustration ships: '+file);
   const missing = bare.filter(r => !fs.existsSync(path.join(out, r)));
   assert.deepStrictEqual(missing, [], 'referenced but not published: ' + missing.join(', '));
 });
@@ -98,7 +99,7 @@ t('the published tree is small enough to stay honest', () => {
   const bytes = walk(out);
   const mb = bytes / 1048576;
   assert.ok(mb > 8, 'the published tree is only ' + mb.toFixed(1) + ' MB - is the sprite pack still shipping?');
-  assert.ok(mb < 43, 'the published tree grew to ' + mb.toFixed(1) + ' MB; the native packs, fallback game and selected lossless exploration runtime must fit in 43 MiB.');
+  assert.ok(mb < 54, 'the published tree grew to ' + mb.toFixed(1) + ' MB; the native packs, fallback game and selected lossless scenery and native Ascension mobs must fit in 54 MiB.');
   const wardrobe=path.join(out,'assets/wardrobe/v5');assert.ok(walk(wardrobe)<13.5*1048576,'nineteen classes and fifty-two accessories must share sprites');
   const catalog=JSON.parse(fs.readFileSync(path.join(wardrobe,'catalog.json'),'utf8'));
   for(const r of Object.values(catalog.assets))for(const key of ['meta','image'])assert.ok(fs.existsSync(path.join(wardrobe,r[key])),'native catalog asset is published');

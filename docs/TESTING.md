@@ -127,15 +127,37 @@ Record exact commands, results and material missing coverage in the task handoff
 Historical pass counts and old workspace-only records are not evidence for a new
 checkout or a combined branch.
 
-## World Atlas endgame scenery exploration
+## Ascension maps
 
-Build the selected runtime with `bash tools/build_site.sh`; serve `dist/` through
-`node tools/dev_server.js` (or `--gm-all` for a disposable owner-enabled preview).
-In the game choose Maps → Season 2 Maps. Farming progression/rewards are
-separate; these entries are scenery inspection, not normal map IDs 11/12.
-`node tools/tests/publish_sim.js` verifies lazy selection, byte-identical native
-contracts, licenses and size bounds; `panel_layout_smoke.js` checks action/state
-isolation and disposal. Actual desktop/phone/native character checks are in
-`tools/check_game_maps_browser.js`; see its header for the command and required
-Chromium packages. `--publish` refreshes dev-only captures/source checksums under
-`docs/map-concepts/game-ui-review/`. Never publish that capture directory.
+Build with `bash tools/build_site.sh` and run `node tools/dev_server.js --gm-all`
+for a disposable preview. Maps → Ascension Map uses normal travel, combat and
+loot. The World Atlas holds the original ten maps. Both destination grids have a
+frame and grid background. The previous scenery popup is no longer used.
+
+Run `node tools/tests/panel_layout_smoke.js`,
+`node tools/tests/ascension_scene_sim.js`,
+`node tools/tests/ascension_progression_sim.js`,
+`node tools/tests/astral_scenery_sim.js` and
+`python tools/tests/native_mob_assets.py` (Pillow 11.3.0).
+The native source recovery and exact frame/timing audit are documented in
+[Native mobs](../tools/native-mobs/README.md). Verify actual browser rendering on
+both palettes, field groups and bosses, travel back, reload and a phone viewport.
+DOM checks with a renderer stub do not prove WebGL pixels or physical phone speed.
+The prior `tools/check_game_maps_browser.js` verifies the retired popup behavior;
+it is historical and is not an acceptance check for playable Ascension maps.
+
+The live Astral renderer is `assets/astral-scenery.js`; historical ten-stage scenery
+studies/captures retain their original source. The five-stage loader maps Thor to
+its original four scenery groups. Regenerate the live Astral atlas PNG with:
+
+```sh
+node tools/maps/render_astral_preview.js | python tools/maps/render_astral_preview.py
+```
+
+The Python command needs Pillow and numpy. It rasterizes the actual geometry with
+its space/stone sources, vertex colors and per-slab UVs; it does not certify WebGL
+rendering. Pass stage `1`, `3`, `4` or `5` to the JavaScript exporter and an output
+PNG path to Python for a close view of each area. `astral_scenery_sim.js` checks
+deterministic geometry, varied paving/island surfaces, actual prop bounds against
+the combat corridor, pillar supports, finite vertices, mesh budgets, and resource
+disposal both with textures and with missing images.

@@ -1,0 +1,20 @@
+{
+  "repository": "rathena/rathena",
+  "commit": "d4b8e7b8f16061cc2496d377ac8f777ce72a4f39",
+  "path": "db/re/mob_db.yml",
+  "sha256": "fe79480381a98953a0281edafd775486926b5e186feec0a99816a95433907136",
+  "sizes": {
+    "1366": "Large",
+    "1700": "Medium",
+    "1702": "Medium",
+    "1705": "Large",
+    "1706": "Medium",
+    "1707": "Small",
+    "1708": "Large",
+    "1831": "Large",
+    "1832": "Large",
+    "1833": "Large",
+    "1836": "Small",
+    "1837": "Small"
+  }
+}

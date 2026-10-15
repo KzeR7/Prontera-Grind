@@ -780,11 +780,11 @@ body.clean-screen #screenBtn{visibility:visible!important}body.clean-screen #hud
 .bag-item-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:8px}.bag-item-list article{display:grid;grid-template-columns:1fr auto;gap:6px}.bag-item-list small{grid-column:1/-1}.eclipse-bag>.bag-tools{flex-shrink:0}.eclipse-bag>.chooser{font-size:11px}
 
 
-/* Season 2 is the right-hand atlas tab, not part of the farming destination list. */
-#wins .ui-panel>.map-season-tabs{gap:8px;padding:0 14px;flex-wrap:nowrap}#wins .map-season-tabs button{flex:0 1 auto;min-width:0;padding:12px 16px;font-size:12px;white-space:nowrap}#wins .ui-panel[data-layout="map"][data-view="season2"] .ui-content{display:block}#wins .ui-season-two{width:100%;min-width:0}#wins .ui-season-two .endgame-expeditions{margin:0;padding:0;border:0}#wins .ui-season-two .endgame-intro h3{font-size:26px}#wins .ui-season-two .endgame-card{min-height:180px}#wins .ui-season-two .endgame-card b{font-size:25px}@media(max-width:600px){#wins .map-season-tabs button{flex:1;padding:12px 8px;font-size:11px}#wins .ui-season-two .endgame-card{min-height:140px}}
-
-/* Endgame exploration is isolated from stable farming-map/save IDs. */
-.endgame-expeditions{container-type:inline-size;min-width:0;margin:12px 0 4px;padding-top:14px;border-top:1px solid var(--edge2,#ffffff20)}.endgame-intro>span{font-size:8px;letter-spacing:.15em;color:#b2a0d0}.endgame-intro h3{font:500 18px Georgia,serif;margin:5px 0}.endgame-intro p,.endgame-disclaimer{font-size:10px;line-height:1.6;opacity:.8}.endgame-cards{display:grid;grid-template-columns:1fr;gap:8px;margin:10px 0}.endgame-card{display:flex;gap:12px;align-items:center;text-align:left;padding:16px 12px;border:1px solid #9a80b750;border-radius:7px;color:#f2eafa;background:radial-gradient(ellipse at 0 0,#61507a70,transparent 80%),#211c32;min-width:0;cursor:pointer}.endgame-card.thor{background:radial-gradient(ellipse at 0 100%,#b65b2570,transparent 85%),#32221e;border-color:#aa693e70}.endgame-mark{font-size:34px;min-width:35px;color:#d2b5f0}.thor .endgame-mark{color:#ffb572}.endgame-card small{display:block;font-size:8px;letter-spacing:.08em;opacity:.7}.endgame-card b{display:block;font:500 20px Georgia,serif;margin:5px 0}.endgame-card em{display:block;font-size:10px;font-style:normal;line-height:1.6;opacity:.8}.endgame-card>span:last-child{min-width:0;overflow-wrap:anywhere}.endgame-card strong{display:block;font-size:10px;color:#dfc6f4;margin-top:12px}.thor strong{color:#ffd0a0}.endgame-card:hover{border-color:#dec6ed}.endgame-card:focus-visible{outline:2px solid #d4b6f2;outline-offset:3px}.endgame-dialog{padding:0;border:1px solid #736380;border-radius:10px;background:#100e18;color:#f4edf8;width:96vw;max-width:1600px;height:94vh;height:94dvh;max-height:100dvh;overflow:hidden;box-sizing:border-box}.endgame-dialog[open]{display:flex;flex-direction:column}.endgame-dialog::backdrop{background:#080710da}.endgame-dialog>header{padding:12px 18px;display:flex;align-items:center;justify-content:space-between;gap:14px;background:#1c1725;flex-shrink:0}.endgame-dialog h2{font:400 21px Georgia,serif;margin:3px 0}.endgame-dialog header small{font-size:8px;letter-spacing:.14em;color:#c8afdd}.endgame-dialog header p{font:10px/1.5 system-ui;margin:0;color:#c5b9d2}.endgame-dialog-actions{display:flex;gap:6px}.endgame-dialog button{font:11px system-ui;padding:10px;border:1px solid #736380;border-radius:5px;background:#2b2238;color:#f4edf8;cursor:pointer}.endgame-frame-host{flex:1;min-height:0}.endgame-frame-host iframe{display:block;width:100%;height:100%;border:0;background:#100e18}@container(min-width:520px){.endgame-cards{grid-template-columns:1fr 1fr}}@container(max-width:239px){.endgame-card{display:block;padding:12px 8px}.endgame-mark{float:right;font-size:21px;min-width:20px;margin-left:5px}.endgame-card b{font-size:17px;line-height:1.2}.endgame-card em{display:none}.endgame-card small{font-size:7px;line-height:1.5}.endgame-card strong{font-size:9px;margin-top:8px}}@media(max-width:600px){.endgame-dialog{width:100vw;height:100dvh;max-width:100vw;margin:0;border:0;border-radius:0}.endgame-dialog>header{padding:10px;gap:7px;align-items:flex-start}.endgame-dialog h2{font-size:17px}.endgame-dialog header p{max-width:210px}.endgame-dialog-actions{flex-direction:column}.endgame-dialog button{font-size:10px;padding:9px}}
+#wins .ui-panel>.atabs.map-season-tabs{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr));border:1px solid var(--ui-line,#605642);padding:5px;gap:5px;border-radius:8px;background:#14151b}
+#wins .ui-panel>.atabs.map-season-tabs button{height:auto;min-height:44px;min-width:0;padding:6px;white-space:normal;font-size:11px;line-height:1.3}.map-season-tabs .map-coming-soon{display:block;margin-top:3px;font-size:8px;letter-spacing:.08em;text-transform:uppercase}.map-season-tabs button:disabled{cursor:not-allowed;opacity:.55}
+.eclipse-atlas-hero .ascension-preview{display:block;width:100%;height:100%;object-fit:cover;object-position:center 20%}
+.ui-panel[data-layout="map"] .ui-destinations .mapgrid{border:1px solid #71634d;padding:8px;border-radius:8px;background-image:linear-gradient(#a58e6520 1px,transparent 1px),linear-gradient(90deg,#a58e6520 1px,transparent 1px);background-size:24px 24px}
+.ui-panel[data-layout="map"] .ui-destinations .mapcard{border:1px solid #71634d;background:#202128e8}
 </style>
 <link rel="preload" href="assets/ui/fonts/font-0.ttf" as="font" type="font/ttf" crossorigin>
 <link rel="preload" href="assets/ui/fonts/font-1.ttf" as="font" type="font/ttf" crossorigin>
@@ -859,7 +859,8 @@ body.clean-screen #screenBtn{visibility:visible!important}body.clean-screen #hud
 <div id="tooltip"></div>
 <link rel="stylesheet" href="assets/wardrobe.css?v=138">
 <script src="assets/wardrobe.js?v=134"></script>
-<script src="assets/map-exploration.js?v=146"></script>
+<script src="assets/ascension.js?v=156"></script>
+<script src="assets/native-mob-heights.js?v=153"></script>
 <script src="assets/skill-icons.js?v=130"></script>
 <script src="assets/skill-materials.js?v=147"></script>
 <script src="assets/afterglow-animations.js?v=151"></script>
@@ -1094,8 +1095,8 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // it names both sides of this merge: the v38 balance patch (the weapon cut, the affix/card
 // give-back) and main's weapon-hold rendering work.
 let simCatchingUp=false;
-const simVisualsOff=()=>document.hidden||simCatchingUp||!!window.PGMapExploration?.isOpen();
-const BUILD='2026-10-15 haven-v152 Season 2 Maps and chosen skill effects';   // shown on the login card - confirms which file you loaded
+const simVisualsOff=()=>document.hidden||simCatchingUp;
+const BUILD='2026-10-15 haven-v156 Astral masonry and fractured ruins';   // shown on the login card - confirms which file you loaded
 $('buildTag').textContent='build '+BUILD;
 
 // ---------- class tree: Novice -> 6 first jobs -> 6 second jobs -> 6 third jobs ----------
@@ -1278,6 +1279,8 @@ const pm=s=>{const[n,c,sh]=s.split(':');const spriteId=MOB_SPRITES[n]||0,spriteS
 // One-facing RO monster PNGs are hosted by the Divine Pride monster database. Most names
 // match directly; game-only themed names use the closest named RO monster (not recoloured).
 const MOB_SPRITES={
+  'Retribution Angel':1702,'Despair Phantom':1705,'Tower Watcher':1700,'Death Whisperer':1706,'Agony Demon':1707,'Memory of Thanatos':1708,
+  'Magma Slag':1836,'Fire Imp':1837,'Kasa':1833,'Salamander':1831,'Obsidian Golem':1366,'Ifrit':1832,
   'Poring':1002,'Fabre':1007,'Lunatic':1063,'Drops':1113,'Chonchon':1011,'Willow':1010,
   'Rocker':1052,'Poporing':1031,'Savage Bebe':1167, // Divine Pride spells this "Savage Babe"
   'Peco Peco':1019,'Mastering':1090,
@@ -1320,7 +1323,7 @@ const MOB_SPRITES={
 // factors are .62/.92/1.28; the render path below applies a regular-only multiplier so
 // even a medium Poring looks shorter than the player. Boss scale remains unchanged.
 // The size labels come from https://www.divine-pride.net/database/monster/{ID}.
-const MOB_SIZE_BY_ID={
+const MOB_SIZE_BY_ID={1700:'Medium',1702:'Medium',1705:'Large',1706:'Medium',1707:'Small',1708:'Large',1831:'Large',1832:'Large',1836:'Small',1837:'Small',
   1001:'Small',1004:'Small',1005:'Small',1007:'Small',1008:'Small',1011:'Small',1051:'Small',1063:'Small',1070:'Small',1073:'Small',
   1141:'Small',1142:'Small',1143:'Small',1144:'Small',1167:'Small',1179:'Small',1837:'Small',1866:'Small',1869:'Small',2023:'Small',
   1002:'Medium',1010:'Medium',1013:'Medium',1014:'Medium',1015:'Medium',1016:'Medium',1023:'Medium',1030:'Medium',1031:'Medium',1033:'Medium',
@@ -1337,7 +1340,8 @@ const MOB_SIZE_SCALE={Small:.62,Medium:.92,Large:1.28};
 // hero. Bosses keep the exact v29 height. This changes visual art only, not hitboxes.
 const MOB_REGULAR_VISUAL=.7;
 const mobVisualScale=m=>Math.max(.05,(m.spriteScale||.92)*(m.boss?1.18:MOB_REGULAR_VISUAL)*(m.spawn||0));
-const mobSpriteUrl=id=>Number.isInteger(+id)&&+id>0?`https://static.divine-pride.net/images/mobs/png/${+id}.png`:'';
+const ASCENSION_MOB_IDS=new Set([1702,1705,1700,1706,1707,1708,1836,1837,1833,1831,1366,1832]);
+const mobSpriteUrl=id=>ASCENSION_MOB_IDS.has(+id)?`assets/mobs/v1/${+id}-0.png`:Number.isInteger(+id)&&+id>0?`https://static.divine-pride.net/images/mobs/png/${+id}.png`:'';
 // ---------- equipment database ----------
 // Four sections per map (starter / 1st-job / 2nd-job / high tier), each a themed set:
 // 1-7 weapon types, body, headgear, optional shield, legwear and two accessories. Every
@@ -1407,6 +1411,7 @@ const GEAR=[
 const ABYSS_ASCENDED=G(['sword:Oblivion Edge','katar:Void Emperor Claw','staff:World End Staff','dagger:Black Star Dagger','bow:Nightfall Recurve','axe:Cataclysm Axe','mace:Endbringer Maul'],
   'Eternal Abyss Mail','Void Sovereign Crown','World End Guard','Nightfall Greaves','Void Emperor Ring','Oblivion Pendant');
 const ABYSS_ASCENDED_QUALITY=1.25;
+const ascensionGear=prefix=>GEAR[9].map((row,sec)=>{const source=sec===3?ABYSS_ASCENDED:row;return Object.fromEntries(Object.entries(source).map(([key,value])=>[key,key==='w'?Object.fromEntries(Object.entries(value).map(([wt,name])=>[wt,prefix+' '+name])):value?prefix+' '+value:value]));});
 const MAPS=[
 {n:'Prontera',t:'Novice start · easy Lv 1-10',ground:0x7cc46a,sky:0x8ecff5,boss:'Mastering:7ae86a:blob',
  mobs:['Poring:ff9ec4:blob','Fabre:b8e05a:worm','Lunatic:fff4f4:bunny','Drops:ffb84a:blob','Chonchon:7ab8f0:bug','Willow:7ac04a:tree','Rocker:c86a3a:bug','Poporing:9ae84a:blob','Savage Bebe:c09a5a:cat','Peco Peco:ffd850:bug'],
@@ -1427,7 +1432,9 @@ const MAPS=[
 {n:'Louyang',t:'Bamboo valley · 2nd-job gear on all stages (Lv 60-80)',ground:0x7aa85a,sky:0xc8e0a0,boss:'Dragon Lord:c04a2a:demon',mobs:['Jiangshi:8aa08a:demon','Bamboo Fox:e0a050:cat','Wild Boar:7a5a3a:cat','Stone Golem:9a9a8a:tree','Mantis:6ac04a:bug','Dragon Pup:e05a3a:worm'],gear:GEAR[6]},
 {n:'Amatsu',t:'Sakura shrine · 2nd-job gear on all stages (Lv 60-80)',ground:0xd88aa8,sky:0xf0c0d8,boss:'Shiranui:d03a5a:demon',mobs:['Oni:c03a3a:demon','Kappa:4aa07a:blob','Kitsune:ffd09a:cat','Tengu:a04a4a:bug','Yuki Onna:d0e8ff:bunny','Spirit Lantern:ffe08a:blob'],gear:GEAR[7]},
 {n:'Niflheim',t:'Frozen underworld · 2nd-job, then high-tier gear (Lv 80-99)',ground:0x6a6a8a,sky:0x4a3a5a,boss:'Lord of Death:3a1a5a:demon',mobs:['Ghost Hound:8a8ab0:cat','Banshee:c0c0ff:blob','Death Knight:4a3a6a:demon','Bone Worm:d0d0c0:worm','Frost Wraith:9ad0ff:bunny','Soul Eater:5a2a7a:bug'],gear:GEAR[8]},
-{n:'Abyss',t:'Glast Heim · 3rd-job gear; ascended from Stage 6 (Lv 80-99)',ground:0x3a2a3a,sky:0x1a1020,boss:'Dark Lord:7a0a2a:demon',mobs:['Abyss Knight:5a1a3a:demon','Lava Slime:ff5a1a:blob','Chaos Imp:a02a6a:bug','Shadow Beast:2a1a3a:cat','Doom Tree:3a2a1a:tree','Hell Worm:c04a1a:worm'],gear:GEAR[9],gearUpgrade:ABYSS_ASCENDED}];
+{n:'Abyss',t:'Glast Heim · 3rd-job gear; ascended from Stage 6 (Lv 80-99)',ground:0x3a2a3a,sky:0x1a1020,boss:'Dark Lord:7a0a2a:demon',mobs:['Abyss Knight:5a1a3a:demon','Lava Slime:ff5a1a:blob','Chaos Imp:a02a6a:bug','Shadow Beast:2a1a3a:cat','Doom Tree:3a2a1a:tree','Hell Worm:c04a1a:worm'],gear:GEAR[9],gearUpgrade:ABYSS_ASCENDED},
+{n:'Astral Citadel',t:'Floating bridge · Ascension materials',ground:0x302b42,sky:0x100c23,boss:'Memory of Thanatos:ffffff:demon',mobs:['Retribution Angel:ffffff:demon','Despair Phantom:ffffff:demon','Tower Watcher:ffffff:demon','Death Whisperer:ffffff:demon','Agony Demon:ffffff:demon'],gear:ascensionGear('Astral')},
+{n:'Thor Volcano',t:'Volcanic fields · Primal Core',ground:0x231715,sky:0x230c10,boss:'Ifrit:ffffff:demon',mobs:['Magma Slag:ffffff:blob','Fire Imp:ffffff:demon','Kasa:ffffff:bug','Salamander:ffffff:cat','Obsidian Golem:ffffff:tree'],gear:ascensionGear('Primal')}];
 MAPS.forEach(mp=>{mp.mobs=mp.mobs.map(pm);mp.boss=pm(mp.boss)});
 // ---------- mastery index ----------
 // The index is a ledger of *individual species*, not one counter for "all monsters". Each
@@ -1642,8 +1649,8 @@ function repairMastery(f){
   if(!HUNT_TITLES.some(t=>t.id===f.equippedTitle&&safeCount(f.indexXp)>=t.xp))f.equippedTitle=null;
   return f;
 }
-const REC=['Lv 1-10','Lv 10-50','Lv 10-50','Lv 10-50','Lv 10-50','Lv 60-67','Lv 67-74','Lv 74-80','Lv 80-90','Lv 90-99'];
-MAPS.forEach((m,i)=>{m.b=[0,9,19,31,43,59,66,73,79,89][i];m.rec=REC[i]});
+const REC=['Lv 1-10','Lv 10-50','Lv 10-50','Lv 10-50','Lv 10-50','Lv 60-67','Lv 67-74','Lv 74-80','Lv 80-90','Lv 90-99','Lv 140-150','Lv 150'];
+MAPS.forEach((m,i)=>{m.b=[0,9,19,31,43,59,66,73,79,89,139,149][i];m.rec=REC[i]});
 // ---------- v76: the Nightmare band ----------
 // Field power STOPPED at Abyss Stage 10 (power 99) while the level cap is 150, so Base Lv 100-150
 // had nothing to climb. Every map now carries five more stages (11-15), a "Nightmare" version of
@@ -1661,7 +1668,11 @@ const NMLV=[120,140],NMBASE=130,NMSTEP=2,NMBASE2=160,NMGAP=3;
 const nmTierOf=m=>(m|0)<=4?0:1;
 // How many Nightmare tiers the character has unlocked right now (0-2). The GM switch opens both.
 const nmTierOpen=t=>{if(S&&S.gmnm)return true;return !!S&&(S.lv|0)>=NMLV[t]};
-const nmMapOpen=m=>nmTierOpen(nmTierOf(m));
+const nmMapOpen=m=>m<10&&nmTierOpen(nmTierOf(m));
+const ascensionOpen=m=>m<10||!!S&&(S.gmnm||S.lv>=(m===10?140:150)&&!!S.mapClears?.[m-1]);
+const normalStages=m=>m>=10?5:10;
+const bossStage=(m,l)=>l===normalStages(m)||(m<10&&l===15);
+const canTravel=(m,l)=>Number.isInteger(m)&&m>=0&&m<MAPS.length&&Number.isInteger(l)&&l>=1&&l<=15&&ascensionOpen(m)&&(m>=10?l<=normalStages(m)&&l<=(S.prog[m]||1):l<=nmMaxFor(m));
 const nmOpen=()=>{if(S&&S.gmnm)return 2;if(!S)return 0;let n=0;for(const v of NMLV)if((S.lv|0)>=v)n++;return n};
 const nmMaxFor=m=>nmMapOpen(m)?15:10;
 const nmMax=()=>nmOpen()?15:10;
@@ -1801,7 +1812,7 @@ function trialLobby(view){
   if(view==='pickmap'){
     body.innerHTML=`<div class="trial-hd"><b>Nightmare Gear Token</b><small>${TRIAL_STORE.find(x=>x.id==='nmgear').c} Echo Shards</small></div>
       <p>Choose a map to receive one item straight in your bag. The token selects from your class-compatible weapons when possible (armour is the fallback). Nightmare Prontera to Payon give the <b>Nightmare</b> row (section 4); Nightmare Comodo to Abyss give the <b>Abyssal</b> row (section 5). The map sets the quality cap, and the current selector is deterministic from your total kill count.</p>
-      <div class="mapgrid">${MAPS.map((m,i)=>`<button class="mapcard" data-nmmap="${i}"><b>${m.n}</b><small>${NMNAME[i]}</small></button>`).join('')}</div>
+      <div class="mapgrid">${MAPS.slice(0,10).map((m,i)=>`<button class="mapcard" data-nmmap="${i}"><b>${m.n}</b><small>${NMNAME[i]}</small></button>`).join('')}</div>
       <div class="trial-foot"><button data-trial="store">Back to Exchange</button></div>`;
     el.classList.add('on');return el}
   if(view==='result'){body.innerHTML=trialResultHtml();el.classList.add('on');return el}
@@ -2000,6 +2011,7 @@ function trialBuy(id,inline=false){
 function trialGrantNm(mapIndex){
   // Section 5 once the whole band is open, section 4 before that, and always a weapon the class can
   // actually swing (falling back to armour for a class with no listed weapon type).
+  if(!Number.isInteger(mapIndex)||mapIndex<0||mapIndex>=10)return;
   const sec=secField(mapIndex,12),T=gearPool(mapIndex,12),c=C();
   let pool=T.filter(x=>c.wt&&c.wt.includes(x.k));
   if(!pool.length)pool=T.filter(x=>x.k==='armor');
@@ -2018,7 +2030,7 @@ GEAR.forEach((row,m)=>{row.push(nmRow(m,0),nmRow(m,1))});
 // on stages 1-5, then Lv 20-50 on stages 6-10. Later maps keep their existing b+stage curve.
 const EARLY_FIELD_PWR=[[1,2,3,4,5,6,7,8,9,10],[10,12,15,17,20,20,28,35,43,50]];
 const nmPowerOf=(m,l)=>{const t=nmTierOf(m),j=Math.max(0,Math.min(9,m|0))-(t?5:0);return(t?NMBASE2:NMBASE)+j*NMSTEP+((l|0)-11)*NMGAP};
-const fieldPower=(m,l)=>(l|0)>10?nmPowerOf(m,l):(m===0?EARLY_FIELD_PWR[0][Math.max(1,Math.min(10,l|0))-1]:m<=4?EARLY_FIELD_PWR[1][Math.max(1,Math.min(10,l|0))-1]:MAPS[m].b+Math.max(1,Math.min(10,l|0)));
+const fieldPower=(m,l)=>(l|0)>10?nmPowerOf(m,l):(m>=10?MAPS[m].b+[1,3,6,9,10][Math.max(1,Math.min(5,l|0))-1]:m===0?EARLY_FIELD_PWR[0][Math.max(1,Math.min(10,l|0))-1]:m<=4?EARLY_FIELD_PWR[1][Math.max(1,Math.min(10,l|0))-1]:MAPS[m].b+Math.max(1,Math.min(10,l|0)));
 const pw=()=>fieldPower(S.mp,S.lvl),DR=1;
 const secOf=l=>l<=3?0:l<=7?1:l<=9?2:3,secOf0=l=>l<=3?0:l<=7?1:l<=9?2:3;
 // ---------- cards ----------
@@ -2044,9 +2056,11 @@ const CARD_STATS_BY_MAP=[
  ['hpPct','move','str','def','str','atk'],
  ['atk','def','move','dex','matk','mdef'],
  ['field','matk','atk','hpPct','mdef','cdm'],
- ['cdm','hpPct','matk','crit','def','atk']
+ ['cdm','hpPct','matk','crit','def','atk'],
+ ['matk','mdef','def','int','atk'],
+ ['hpPct','crit','matk','field','def']
 ];
-const CARD_BOSS_STATS=['hpPct','atk','matk','crit','atk','field','atk','matk','cdm','cdm'];
+const CARD_BOSS_STATS=['hpPct','atk','matk','crit','atk','field','atk','matk','cdm','cdm','matk','atk'];
 const CARD_FITS={str:['weapon','acc'],dex:['weapon','acc'],int:['weapon','head','acc'],luk:['acc'],agi:['armor','leg','acc'],vit:['armor','off','head'],hp:['head','armor'],hpPct:['armor','head','off'],atk:['weapon'],matk:['weapon','head'],crit:['weapon','acc'],cdm:['weapon','acc'],aspd:['armor','leg'],flee:['armor','off','leg'],move:['leg','acc'],def:['armor','off','leg'],mdef:['head','armor','off'],field:['weapon','acc']};
 const cardFamily=c=>String(c.family||c.n||'').replace(/^Nightmare /,'');
 const cardStars=c=>Math.max(0,Math.min(3,Math.floor(Number(c.stars)||0)));
@@ -2066,7 +2080,7 @@ function cardDefinition(m,j,nm=false){
  if(monster.n==='Mantis')effects.push({k:'atk',v:6});
  return{card:1,cardVersion:PROGRESSION_VERSION,cardKey:m+':'+j+':'+Number(nm),family,n:(nm?'Nightmare ':'')+family,stat,v,effects,fit:fit.slice(),g:boss?3:Math.min(2,band),bossCard:boss,map:m,nightmare:nm};
 }
-const CARD_CATALOG=MAPS.flatMap((mp,m)=>[false,true].flatMap(nm=>Array.from({length:mp.mobs.length+1},(_,j)=>cardDefinition(m,j,nm))));
+const CARD_CATALOG=MAPS.flatMap((mp,m)=>(m<10?[false,true]:[false]).flatMap(nm=>Array.from({length:mp.mobs.length+1},(_,j)=>cardDefinition(m,j,nm))));
 const newCard=d=>({...d,card:1,id:uid(),v:d.v??cardVal(d.g,d.stat),...(d.effects?{effects:d.effects.map(x=>({...x}))}:{}),...(d.fit?{fit:d.fit.slice()}:{})});
 const cardFits=(c,it)=>(c.fit||CARD_FITS[c.stat]||[]).includes(it.slot==='off'&&it.wt==='dagger'?'weapon':it.slot);
 const cardEffectText=e=>e.k==='cdm'?`Crit DMG +${(e.v/100).toFixed(2)}×`:`${({hpPct:'Max HP',matk:'Magic Power',field:'Ordinary monster damage',move:'Movement',def:'DEF',mdef:'MDEF'})[e.k]||AL[e.k]||SU(e.k)} +${e.v}${['hpPct','matk','field','move'].includes(e.k)?'%':''}`;
@@ -2213,7 +2227,7 @@ let PAGE_BOOT_AT=Date.now();   // a claim that starts before this moment covers 
 // bands: maps 1-2 Common, 3-4 Fine, 5-6 Rare, 7-10 Epic; only the Abyss Stage 10 MVP reaches
 // Legendary in the normal route. The drop preview carries the same fields as the item generator.
 // Pinned by gear_sim.js.
-const MAPTIER=[0,0,1,1,2,2,3,3,3,3];
+const MAPTIER=[0,0,1,1,2,2,3,3,3,3,3,3];
 // v57: every map owns a value band and a grade cap, so a low-level boss can never hand out
 // endgame gear. The owner's tiers: Prontera (Lv1-10) and the four class maps (Izlude, Geffen,
 // Morroc, Payon - Lv10-50) are EARLY; Comodo, Louyang, Amatsu and Niflheim (Lv60-99) are MID;
@@ -2222,8 +2236,8 @@ const MAPTIER=[0,0,1,1,2,2,3,3,3,3];
 // Nightmare sections are tagged with their own N rarity; they are not forced to Legendary.
 // MAPVAL is the value band: each map's items are worth about 15% more than the map below, so Abyss
 // Epic (2.8x1.15=3.22) beats the mid maps' best reachable normal grade by a wide margin.
-const MAPGRADE=[1,2,2,3,3,3,3,3,3,4];
-const MAPVAL=[0.34,0.40,0.47,0.56,0.66,0.72,0.78,0.84,0.92,1.15];
+const MAPGRADE=[1,2,2,3,3,3,3,3,3,4,4,4];
+const MAPVAL=[0.34,0.40,0.47,0.56,0.66,0.72,0.78,0.84,0.92,1.15,1.25,1.35];
 const dropTier=(m,l)=>Math.min(MAPGRADE[Math.max(0,Math.min(MAPGRADE.length-1,m|0))],l>=10?4:MAPTIER[Math.max(0,Math.min(MAPTIER.length-1,m|0))]);
 // The field's gear pool: every item an equipment drop on this map+level can be. Weapons first
 // (they are the ones a player is hunting), then body, headgear, optional shield, legwear and accessories.
@@ -2235,8 +2249,8 @@ const dropTier=(m,l)=>Math.min(MAPGRADE[Math.max(0,Math.min(MAPGRADE.length-1,m|
 // 2 to section 3 at Stage 6; and Abyss is section 3 throughout. Abyss Stage 6+ selects a stronger
 // section-3 variant, so its equip gate stays third-job while its base values and affixes improve.
 const secField=(m,l)=>(l|0)>10?(nmTierOf(m)?5:4):m===0?0:m<=4?(l<=5?0:l<=7?1:l<=9?2:3):m<=7?2:m===8?(l<=5?2:3):3;
-function gearPool(m,l){const sec=secField(m,l),tier=dropTier(m,l),enhanced=m===9&&sec===3&&l>=6&&l<=10,
-    sg=enhanced?MAPS[m].gearUpgrade:MAPS[m].gear[sec],quality=enhanced?ABYSS_ASCENDED_QUALITY:1,T=[];
+function gearPool(m,l){if(m>=10)return [];const sec=secField(m,l),tier=dropTier(m,l),enhanced=m===9&&sec===3&&l>=6&&l<=10,
+    sg=enhanced?MAPS[m].gearUpgrade:MAPS[m].gear[sec],quality=enhanced||m>=10?ABYSS_ASCENDED_QUALITY:1,T=[];
   // Each table entry carries its job section and field rarity separately. Abyss's upgraded set is
   // still section 3 (so it has the same class gate); its higher item quality never becomes a rarity.
   const add=(k,n)=>T.push({k,n,sec,tier,quality});
@@ -2246,7 +2260,13 @@ function gearPool(m,l){const sec=secField(m,l),tier=dropTier(m,l),enhanced=m===9
   add('leg',sg.l);add('acc',sg.ac);
   if(sg.ac2)add('acc',sg.ac2);
   return T}
-function fieldOf(m,l){const mp=MAPS[m],sec=secField(m,l),T=gearPool(m,l),n=T.length,ft=dropTier(m,l),gearSet=m===9&&sec===3&&l>=6&&l<=10?'abyss-ascended':'base';
+function fieldOf(m,l){if(m>=10){
+  if(!Number.isInteger(l)||l<1||l>normalStages(m))throw new RangeError('Ascension has five stages');
+  const mp=MAPS[m],tier=dropTier(m,l),entry=(mm,boss=false)=>({...mm,tier,drops:[],card:cardDefinition(m,boss?mp.mobs.length:mp.mobs.findIndex(x=>x.n===mm.n),false),cardCh:boss?.1:.15,ore:true,oreCh:boss?.025:l===5?.01:.005,...(boss?{critRes:bossCritRes(m,l)}:{})});
+  // Material fields keep every native species reachable, including the boss escorts.
+  const start=[0,2,3,4,0][l-1];
+  return {m,l,sec:3,tier,gearSet:'materials',mobs:[0,1].map(j=>entry(mp.mobs[(start+j)%mp.mobs.length])),boss:l===5?entry(mp.boss,true):null};
+} const mp=MAPS[m],sec=secField(m,l),T=gearPool(m,l),n=T.length,ft=dropTier(m,l),gearSet=m===9&&sec===3&&l>=6&&l<=10?'abyss-ascended':'base';
   // three gear rolls per mob; gear is the common drop and a card is the rare one. From Comodo on
   // the table is the 30% lighter v73 one (FIELD_GEAR_MID); maps 1-5 use the original. The
   // Nightmare band (v76.2) pays a third of whichever table its map would pay below stage 11.
@@ -2592,7 +2612,7 @@ function autoSellReason(it,state=S){
 const autoSellMatches=it=>!autoSellReason(it);
 // ---------- end auto-sell rules ----------
 
-const fresh=()=>({progressionVersion:PROGRESSION_VERSION,skillVersion:SKILL_VERSION,skillRefund:0,skillRespec:{},pets:[],bond:[],cls:'Novice',sex:'m',hair:0,appearance:null,lv:1,exp:0,hp:100,zeny:0,kills:0,indexXp:0,mobKills:{},equippedTitle:null,shards:0,refineScrolls:0,nmMatVersion:2,nmMat:[0,0,0,0,0],dps:0,trial:{day:trialDay(),used:0,best:0,runs:0},cardIndex:emptyCardIndex(),dmg:0,pts:10,jobs:{Novice:{jl:1,jx:0}},sk:{aid:1},skOff:{},skillPriority:[],skillCombos:{},dmgShort:true,dmgShow:true,cameraShake:true,base:{},mp:0,lvl:1,prog:[1,1,1,1,1],kl:0,auto:true,adv:true,feed:true,clickSell:false,bg:true,autoSell:[false,false,false,false,false,false,false],logOff:{},q:null,cards:[],ore:{ori:0,elu:0},offlineAt:0,offlineKph:0,offlineRateAt:0,offlineRateKills:0,offlineKillRemainder:0,gm:false,gmx:100,
+const fresh=()=>({progressionVersion:PROGRESSION_VERSION,skillVersion:SKILL_VERSION,skillRefund:0,skillRespec:{},pets:[],bond:[],cls:'Novice',sex:'m',hair:0,appearance:null,lv:1,exp:0,hp:100,zeny:0,kills:0,indexXp:0,mobKills:{},equippedTitle:null,shards:0,refineScrolls:0,nmMatVersion:2,nmMat:[0,0,0,0,0],dps:0,trial:{day:trialDay(),used:0,best:0,runs:0},cardIndex:emptyCardIndex(),dmg:0,pts:10,jobs:{Novice:{jl:1,jx:0}},sk:{aid:1},skOff:{},skillPriority:[],skillCombos:{},dmgShort:true,dmgShow:true,cameraShake:true,base:{},mp:0,lvl:1,prog:MAPS.map(()=>1),mapClears:MAPS.map(()=>false),ascensionMat:[0,0,0],ascensionStageVersion:1,kl:0,auto:true,adv:true,feed:true,clickSell:false,bg:true,autoSell:[false,false,false,false,false,false,false],logOff:{},q:null,cards:[],ore:{ori:0,elu:0},offlineAt:0,offlineKph:0,offlineRateAt:0,offlineRateKills:0,offlineKillRemainder:0,gm:false,gmx:100,
   st:{str:1,agi:1,dex:1,luk:1,int:1,vit:1},eq:{weapon:{id:1,slot:'weapon',wt:'dagger',tier:0,val:5,name:'Novice Knife',aff:[],slots:1,cards:[],sec:0},armor:null,head:null,off:null,leg:null,acc1:null,acc2:null},inv:[]});
 const saveKey=()=>'pg_save3_'+currentUser;
 // ---------- the save-owner stamp (v88.6) ----------
@@ -2647,7 +2667,20 @@ const s=JSON.parse(raw);if(s&&s.lv){const F=fresh(),f=Object.assign(F,s),hadInde
   f.offlineAt=Math.max(0,Math.floor(num_(f.offlineAt,0)));f.offlineKph=cl(num_(f.offlineKph,0),0,OFFLINE_RATE_CAP);f.offlineRateAt=Math.max(0,Math.floor(num_(f.offlineRateAt,0)));f.offlineRateKills=safeCount(f.offlineRateKills);f.offlineKillRemainder=cl(num_(f.offlineKillRemainder,0),0,.999999);
   if(!Array.isArray(f.prog)||!f.prog.length)f.prog=F.prog.slice();else f.prog=f.prog.map(v=>num_(v,1));
   while(f.prog.length<MAPS.length)f.prog.push(1);
-  f.mp=Math.max(0,Math.min(MAPS.length-1,Math.floor(f.mp||0)));f.lvl=Math.max(1,Math.min(15,Math.floor(f.lvl||1)));
+  f.mapClears=MAPS.map((_,i)=>f.mapClears?.[i]===true);
+  f.ascensionMat=[0,1,2].map(i=>safeCount(f.ascensionMat?.[i]));
+  // Compact the old ten-stage route once; saved clears and owned gear remain intact.
+  if(s.ascensionStageVersion!==1){
+    const compact=v=>{v=cl(Math.floor(num_(v,1)),1,10);return v<=3?Math.min(v,2):v<=6?3:v<=9?4:5};
+    for(let i=10;i<MAPS.length;i++)f.prog[i]=compact(f.prog[i]);
+    if(f.mp>=10)f.lvl=compact(f.lvl);
+    const key=String(f.offlineIncome?.key||'').split(':');
+    if(key.length===3&&[10,11].includes(Number(key[1]))&&Number.isInteger(Number(key[2]))&&Number(key[2])>=1&&Number(key[2])<=10){key[2]=String(compact(Number(key[2])));f.offlineIncome={...f.offlineIncome,key:key.join(':')};}
+  }
+  f.ascensionStageVersion=1;
+  for(let i=10;i<MAPS.length;i++)f.prog[i]=cl(Math.floor(f.prog[i]),1,5);
+  f.mp=Math.max(0,Math.min(MAPS.length-1,Math.floor(f.mp||0)));f.lvl=Math.max(1,Math.min(f.mp>=10?5:15,Math.floor(f.lvl||1)));
+  if(f.mp>=10&&!f.gmnm&&(f.lv<(f.mp===10?140:150)||!f.mapClears[f.mp-1])){f.mp=9;f.lvl=10;}
   if(!f.jobs||typeof f.jobs!=='object'||Array.isArray(f.jobs))f.jobs=F.jobs;
   for(const n of Object.keys(f.jobs)){
     const c=CLASSES[n],j=f.jobs[n];
@@ -2836,12 +2869,13 @@ function initSession(gm,newAccount=false){
   const elsewhere=saveRefusal(lsGet(saveKey()),currentUser);
   if(elsewhere){const who=currentUser;currentUser=null;showErr(saveBlockedText(who,elsewhere,false));return}
   try{
-    hudRate=null;zenyEarned=0;expEarned=0;S=load();S.gm=gm;if(S.q)qRefresh();if(!S.q)S.q=['kill','loot','boss'].map(newQuest);if(S.mp>=MAPS.length||S.lvl>15){S.mp=0;S.lvl=1}
+    hudRate=null;zenyEarned=0;expEarned=0;S=load();S.gm=gm;if(S.q)qRefresh();if(!S.q)S.q=['kill','loot','boss'].map(newQuest);if(S.mp>=MAPS.length||S.lvl>(S.mp>=10?5:15)){S.mp=0;S.lvl=1}
     // v74: a save made before the class-tier gate can be wearing gear its class may not use (a
     // Novice in High-tier armour). The sweep runs here too, so the rule holds from the first
     // frame of a session, not only from the next class change. `from=null` means no wearer label:
     // the class it is being taken off was never legally wearing it.
-    if((S.lvl|0)>10&&!nmMapOpen(S.mp|0))S.lvl=10;             // v76/v90.10: a save cannot sit in a locked Nightmare tier
+    if((S.lvl|0)>10&&!nmMapOpen(S.mp|0))S.lvl=10;
+    if(!ascensionOpen(S.mp)){S.mp=9;S.lvl=10;}             // v76/v90.10: a save cannot sit in a locked Nightmare tier
     if(typeof canUse==='function'&&typeof stowUnfit==='function')stowUnfit(null);
     if(typeof foldDupPets==='function')foldDupPets();        // v75: one pet per species, duplicates become Bond
     applyOfflineProgress();
@@ -3159,7 +3193,7 @@ async function cloudProbe(){
 function cloudStart(u,gm){
   S=load();S.gm=!!gm;
   if(S.q)qRefresh();if(!S.q)S.q=['kill','loot','boss'].map(newQuest);
-  if(S.mp>=MAPS.length||S.lvl>15){S.mp=0;S.lvl=1}
+  if(S.mp>=MAPS.length||S.lvl>(S.mp>=10?5:15)){S.mp=0;S.lvl=1}
   if(typeof canUse==='function'&&typeof stowUnfit==='function')stowUnfit(null);   // v74: same repair on a cloud login
   if(typeof foldDupPets==='function')foldDupPets();                                // v75: same fold on a cloud login
   cloudSession(u,gm);ui();$('loginOverlay').style.display='none';$('logoutBtn').style.display='inline-block';
@@ -3485,7 +3519,7 @@ const autoAllocateSkills=()=>{if(!S.sk||typeof S.sk!=='object')S.sk={};let bough
 // v90.8 (owner: Zeny sink): refine Zeny is x3 (REF_ZENY_MUL).
 const REF_ZENY_MUL=3,refCost=it=>Math.round(REF_ZENY_MUL*400*((it.r||0)+1)*(1+(it.sec||0)*.5)),REF_ORE=[1,1,2,2,5,10,10],refOre=it=>REF_ORE[rarIdx(it)],refCh=it=>[70,70,70,70,49,42,35,28,21,14][it.r||0];
 const affTxt=a=>`${AL[a.k]} +${a.v}`,cardTxt=c=>`${cardName(c)}${c.legacy?' [legacy]':''} (${cardEffects(c).map(cardEffectText).join(', ')})`,dtier=it=>it.card?GI[it.g]:it.ore?3:((it&&+it.sec>=5)?6:(it&&+it.sec>=4)?5:it.tier);
-const isBoss=()=>S.lvl===10||S.lvl===15,fieldName=()=>S.lvl>10?`Nightmare ${MAPS[S.mp].n} Stage ${S.lvl-10}`:`${MAPS[S.mp].n} Stage ${S.lvl}`;
+const isBoss=()=>bossStage(S.mp,S.lvl),fieldName=()=>S.lvl>10?`Nightmare ${MAPS[S.mp].n} Stage ${S.lvl-10}`:`${MAPS[S.mp].n} Stage ${S.lvl}`;
 // Curated original RO equipment art: progression follows the saved job section,
 // with robe and pendant variants selected by item type. All selected PNGs ship locally.
 const RO_ITEM_ICON_CANDIDATES={
@@ -3669,7 +3703,7 @@ function genGear(T,l,sec,boss,tier,sourceMap=S?.mp??0,sourceStage=S?.lvl??1){
   // biggest power source a character owns, and dividing the base divides it at every level.
   // Armor/head/shield/legwear/accessory keep their value: headgear (maxHp x4) and accessory
   // (maxHp x3) are the HP slots and armour/legs/shield carry DEF, which is the anti-death stat.
-  const val=Math.max(1,Math.round({weapon:2,armor:4,head:10,off:3,leg:3,acc:5}[slot]*[1,2.2,4,7,10.5,15][sec]*(1+l*.15)*RAR[t].m*quality*(sec>=4?MAPVAL[MAPVAL.length-1]:MAPVAL[Math.max(0,Math.min(MAPVAL.length-1,(sourceMap|0)))])*rnd(.9,1.12)));
+  const val=Math.max(1,Math.round({weapon:2,armor:4,head:10,off:3,leg:3,acc:5}[slot]*[1,2.2,4,7,10.5,15][sec]*(1+l*.15)*RAR[t].m*quality*(sec>=4?MAPVAL[9]:MAPVAL[Math.max(0,Math.min(MAPVAL.length-1,(sourceMap|0)))])*rnd(.9,1.12)));
   // v73 (owner): the cdm affix is a weapon/accessory roll, so "crit damage on all seven slots"
   // cannot exist any more. This follows the spirit of the cdm CARD's fit rule (CFIT['cdm'] puts
   // those cards on weapons), widened to accessories because both are the offensive slots. Every
@@ -3684,10 +3718,10 @@ function genGear(T,l,sec,boss,tier,sourceMap=S?.mp??0,sourceStage=S?.lvl??1){
 // a rolling real-time kill rate, credits at most four hours, and simulates half that many kills.
 function offlineMobForCurrentField(m=S.mp,stage=S.lvl){
   const F=fieldOf(m,stage),l=fieldPower(m,stage),nm1=stage>10,nz=nm1?nmZenyOf(stage)*nmPayOf(m,stage,2):1,bnz=nm1?NMZENY*nmPayOf(m,stage,2):1;
-  const regular=entry=>({...entry,mapIndex:m,boss:false,lvl:l,sec:F.sec,
+  const regular=entry=>({...entry,mapIndex:m,stage,boss:false,lvl:l,sec:F.sec,
     exp:fieldExpReward(m,stage),
     zeny:Math.max(ZMIN,Math.floor(ri(ZK[0],ZK[1])*l*l/1000*nz))});
-  if(F.boss&&Math.random()<1/(1+(m<5?3:5)))return{...F.boss,mapIndex:m,boss:true,lvl:l,sec:F.sec,
+  if(F.boss&&Math.random()<1/(1+(m<5?3:5)))return{...F.boss,mapIndex:m,stage,boss:true,lvl:l,sec:F.sec,
     exp:fieldExpReward(m,stage,true),
     zeny:Math.max(ZMIN,Math.floor(ri(BZK[0],BZK[1])*l*l/1000*bnz))};
   return regular(F.mobs[ri(0,F.mobs.length-1)]);
@@ -3735,6 +3769,8 @@ function offlineAwardKill(mob,r){
   if(!r.measured){addJob(Math.round(Math.round(mob.exp*.7)*expRate()));checkLevel();}
   for(const[T,ch]of mob.drops)if(Math.random()*100<ch)offlineStoreGear(genGear(T,mob.lvl,mob.sec,mob.boss,mob.tier,mob.mapIndex),r);
   if(Math.random()*100<mob.cardCh){const g=mob.card.g;S.cards.push(newCard(mob.card));questEvent('card');r.cards++;r.drops++}
+  for(const item of ascensionDrops(mob)){S.ascensionMat[item.ascMat]=safeCount(S.ascensionMat[item.ascMat])+1;r.drops++}
+  if(mob.boss)recordMapClear(mob.mapIndex??S.mp,mob.stage??S.lvl);
   if(mob.ore)for(const ore of['ori','elu'])if(Math.random()<mob.oreCh){S.ore[ore]=safeCount(S.ore[ore])+1;questEvent('ore');r[ore]++;r.drops++}
   if(mob.mat&&Math.random()*100<NM_MAT_CH){S.nmMat[mob.mat.m]=safeCount(S.nmMat[mob.mat.m])+1;r.drops++}
   if(Math.random()*100<(mob.boss?.5:.03)){
@@ -3745,17 +3781,17 @@ function offlineAwardKill(mob,r){
       else if(S.pets.length<40){const gifted=pickW(PET_SKILL_WEIGHTS);S.pets.push({id:ri(1e6,9e6),sp,mut:0,eq:[0,0,0],skills:[PET_SKILLS[gifted].id],on:S.pets.filter(x=>x.on).length<3});r.pets++}
       else{const refund=r.measured?0:Math.floor(EGG*(.3+rarity*.4));earnZeny(refund);r.zeny+=refund;r.petRefunds++}}
   }
-  if(!r.measured&&(mob.boss||(S.lvl<10&&S.kl>=MPS))){
+  if(!r.measured&&(mob.boss||(S.lvl<normalStages(S.mp)&&S.kl>=MPS))){
     S.kl=0;
-    if(mob.boss&&S.lvl===10&&S.adv&&S.mp<MAPS.length-1){S.mp++;S.lvl=1;mapM=S.mp;mapL=1;r.stages++}
+    if(mob.boss&&S.lvl===normalStages(S.mp)&&S.adv&&S.mp<MAPS.length-1&&ascensionOpen(S.mp+1)){S.mp++;S.lvl=1;mapM=S.mp;mapL=1;if(typeof mapSeason!=='undefined')mapSeason=S.mp>=10?'ascension':'atlas';r.stages++}
     // v88 (owner: "auto-advance sometimes does nothing"): with Auto-advance on, a player sitting
     // BELOW the unlocked frontier (an old map revisited, a stage farmed with the switch off, a map
     // arrived on whose stages were already unlocked) never moved - the old code only advanced at
     // exactly S.lvl>=S.prog. The unlock still needs the frontier, but the advance itself now always
     // fires when the switch is on, so the setting walks you forward again ("turn off to farm").
-    else if(S.lvl<10){
+    else if(S.lvl<normalStages(S.mp)){
       if(S.lvl>=S.prog[S.mp])S.prog[S.mp]=S.lvl+1;
-      if(S.adv&&S.lvl<10){S.lvl++;r.stages++}
+      if(S.adv&&S.lvl<normalStages(S.mp)){S.lvl++;r.stages++}
     }
   }
 }
@@ -3798,7 +3834,7 @@ function applyOfflineProgress(now=Date.now(),serverClaim=null){
   const r={...plan,show:!!plan.show&&!covered,covered,kills:0,drops:0,exp:0,zeny:0,items:0,storedItems:0,autoSold:0,overflow:0,cards:0,ori:0,elu:0,pets:0,petRefunds:0,petFolds:0,stages:0};
   if(plan.show&&!covered){
     const income=S.offlineIncome,source=String(income?.key||'').split(':'),sourceMap=Number(source[1]),sourceStage=Number(source[2]);
-    const valid=income&&income.version===1&&source.length===3&&Object.hasOwn(CLASSES,source[0])&&Number.isInteger(sourceMap)&&sourceMap>=0&&sourceMap<MAPS.length&&Number.isInteger(sourceStage)&&sourceStage>=1&&sourceStage<=15&&Number.isFinite(income.at)&&income.at<=Number(S.offlineAt)&&['xp','zeny','job','kph'].every(k=>Number.isFinite(income[k])&&income[k]>=0);
+    const valid=income&&income.version===1&&source.length===3&&Object.hasOwn(CLASSES,source[0])&&Number.isInteger(sourceMap)&&sourceMap>=0&&sourceMap<MAPS.length&&Number.isInteger(sourceStage)&&sourceStage>=1&&sourceStage<=(sourceMap>=10?5:15)&&Number.isFinite(income.at)&&income.at<=Number(S.offlineAt)&&['xp','zeny','job','kph'].every(k=>Number.isFinite(income[k])&&income[k]>=0);
     r.incomeSource=valid?MAPS[sourceMap].n+' Stage '+sourceStage:'';
     r.measured=true;r.xpMin=valid?income.xp:0;r.zenyMin=valid?income.zeny:0;
     const minutes=plan.creditedMs/60000*OFFLINE_REWARD_MULT;
@@ -4409,6 +4445,12 @@ function earnZeny(amount){const n=Math.max(0,Number(amount)||0);S.zeny+=n;zenyEa
 // v74: same idea for EXP, so the HUD's EXP/min is gross income (a level-up subtracts from S.exp,
 // a quest reward adds to it - both would confuse a reader of the save field itself).
 function earnExp(amount){const n=Math.max(0,Number(amount)||0);S.exp+=n;expEarned+=n}
+const ASCENSION_MATERIALS=['Astral Shard','Primal Catalyst',"Valkyrie's Sigil"];
+function ascensionDrops(mob){
+  const m=mob.mapIndex??S.mp;if(m<10)return [];
+  return [[m-10,.035],[2,mob.boss?.1:.0025]].filter(([,chance])=>Math.random()*100<chance).map(([ascMat])=>({ascMat,id:uid(),n:ASCENSION_MATERIALS[ascMat]}));
+}
+function recordMapClear(m,l){if(l===normalStages(m)){if(!S.mapClears)S.mapClears=MAPS.map(()=>false);S.mapClears[m]=true;}}
 function kill(o){const keep=mob;if(o)mob=o;if(!mob||!mobs.includes(mob)){mob=keep;return}
   const g=gx();S.kills++;recordMonsterKill(mob);S.kl++;qProg('kill');if(mob.boss)qProg('boss');
   const z=Math.round(mob.zeny*(1+pv('zeny')/100)*(1+petPassive('zeny')/100)*nmZenyRoll(mob))*g,xp=Math.round(mob.exp*expRate()*(1+petPassive('exp')/100));earnZeny(z);earnExp(xp);addJob(Math.round(Math.round(mob.exp*.7)*expRate()*(1+petPassive('exp')/100)));recordFarmIncome(xp,z,Math.round(Math.round(mob.exp*.7)*expRate()*(1+petPassive('exp')/100)));questEvent('hunt',1,mob.n);questEvent('maps',1,S.mp);if(S.lvl>10)questEvent('nightmare');
@@ -4419,6 +4461,7 @@ function kill(o){const keep=mob;if(o)mob=o;if(!mob||!mobs.includes(mob)){mob=kee
   for(const[T,ch]of mob.drops)if(Math.random()*100<ch*(1+petPassive('gear')/100))drops.push(mkDrop(genGear(T,mob.lvl,mob.sec,mob.boss,mob.tier)));
   if(Math.random()*100<mob.cardCh){const g2=mob.card.g;drops.push(mkDrop(newCard(mob.card)))}
   if(mob.ore)for(const o of['ori','elu'])if(Math.random()<mob.oreCh*(1+petPassive('ore')/100))drops.push(mkDrop({ore:o,id:uid(),n:ORE[o]}));
+  for(const item of ascensionDrops(mob))drops.push(mkDrop(item));
   if(mob.mat&&Math.random()*100<NM_MAT_CH)drops.push(mkDrop({mat:mob.mat.m,id:uid(),n:mob.mat.n}));
   if(Math.random()*100<(mob.boss?.5:.03)){const r=pickW(PW[Math.min(S.mp,9)]),c=PETS.filter(x=>x.r===r),sp=PETS.indexOf(c[ri(0,c.length-1)]),T=PET_TRAIT[sp];
     const own=S.pets.find(x=>x.sp===sp);
@@ -4431,26 +4474,28 @@ function kill(o){const keep=mob;if(o)mob=o;if(!mob||!mobs.includes(mob)){mob=kee
   // stage, and the boss wave still resets - the camps simply keep refilling around the player.
   if(mob.boss){
     mobs=[];camps=[];S.kl=0;
-    if(S.lvl===10){
+    if(S.lvl===normalStages(S.mp)){
+      recordMapClear(S.mp,S.lvl);
       const nextMap=S.mp+1,current=MAPS[S.mp].n;
       if(nextMap<MAPS.length){
-        log(`${current} Stage 10 cleared! ${MAPS[nextMap].n} Stage 1 is ready${S.adv?' — auto-advancing.':'.'}`,'r3');
-        if(S.adv){S.mp=nextMap;S.lvl=1;mapM=nextMap;mapL=1}
-      }else log(`${current} Stage 10 cleared! The normal map route is complete; Nightmare is a separate challenge.`,'r3');
+        log(`${current} Stage ${S.lvl} cleared! ${MAPS[nextMap].n}${ascensionOpen(nextMap)?' Stage 1 is ready'+(S.adv?' — auto-advancing.':'.'):' requires Base Lv '+(nextMap===10?140:150)+'.'}`,'r3');
+        if(S.adv&&ascensionOpen(nextMap)){S.mp=nextMap;S.lvl=1;mapM=nextMap;mapL=1;if(typeof mapSeason!=='undefined')mapSeason=nextMap>=10?'ascension':'atlas'}
+      }else log(`${current} Stage ${S.lvl} cleared! The Ascension route is complete. Turn Auto-advance off to farm this sanctuary.`,'r3');
     }
-  }else if(S.lvl<10&&S.kl>=MPS){
+  }else if(S.lvl<normalStages(S.mp)&&S.kl>=MPS){
     S.kl=0;
     // v88 (owner: "auto-advance sometimes does nothing"): same catch-up fix as the offline path -
     // the stage unlock still requires the frontier, but with Auto-advance on the player is always
     // walked forward, so being parked below the unlocked frontier no longer stalls the setting.
     if(S.lvl>=S.prog[S.mp]){S.prog[S.mp]=S.lvl+1;log(`${fieldName()} cleared! Stage ${S.lvl+1} unlocked.`,'r3')}
-    if(S.adv&&S.lvl<10)S.lvl++
+    if(S.adv&&S.lvl<normalStages(S.mp))S.lvl++
   }
   mobs=mobs.filter(x=>x!==mob);
   if(mobs.length&&!mobs.some(x=>x.pack===activePack))activePack=nearestPack();
   mob=packMob();respawn=.7;save();ui();
 }
 function collect(it){
+  if(it.ascMat!=null){S.ascensionMat[it.ascMat]=safeCount(S.ascensionMat[it.ascMat])+1;log(`Got ${it.n}!`,'r4','gear');ui();save();return}
   if(it.mat!=null){S.nmMat[it.mat]=safeCount(S.nmMat[it.mat])+1;log(`Got ${it.n}!`,'r4','gear');addFloat(pl.x,2.8,pl.z,it.n+'!','#6cd3ff',true);ui();return}
   if(it.card){S.cards.push(it);questEvent('card');log(`Got card: [${GRADE[it.g]}] ${cardTxt(it)}`,'r'+GI[it.g],'card');addFloat(pl.x,2.8,pl.z,'CARD!','#ffb020',true);ui();return}
   if(it.ore){S.ore[it.ore]++;questEvent('ore');log(`Got ${it.n}!`,'r4','gear');addFloat(pl.x,2.8,pl.z,it.n+'!','#6cd3ff',true);ui();return}
@@ -4622,22 +4667,22 @@ function reforgePanel(){const pending=validReforgeOffer(S),repeatItem=pending&&f
 // One live source index feeds both the journal and market guide. No copied drop descriptions.
 let guideMode='farm',guideTier='current',guideSourceCache;
 function guideSources(){if(guideSourceCache)return guideSourceCache;const gear=[],cards=new Map();
- for(let m=0;m<MAPS.length;m++)for(let l=1;l<=15;l++){const f=fieldOf(m,l);
+ for(let m=0;m<MAPS.length;m++)for(let l=1;l<=(m>=10?5:15);l++){const f=fieldOf(m,l);
   for(const mob of [...f.mobs,...(f.boss?[f.boss]:[])]){
    for(const [item,ch]of mob.drops)gear.push({m,l,item,ch,monster:mob.n,boss:mob===f.boss});
    const key=mob.card.cardKey;if(!cards.has(key))cards.set(key,[]);cards.get(key).push({m,l,ch:mob.cardCh,monster:mob.n,boss:mob===f.boss});}}
  return guideSourceCache={gear,cards};
 }
-function guideReachable(m,l){return l>10?nmMapOpen(m):l<=((S.prog||[])[m]||0);}
+function guideReachable(m,l){return (m<10||l<=5)&&ascensionOpen(m)&&(l>10?nmMapOpen(m):l<=((S.prog||[])[m]||0));}
 function guideLink(source){const {m,l,ch,monster}=source;return`<button data-a="guidemap" data-v="${m}:${l}">${MAPS[m].n} · ${l>10?'NM '+(l-10):'Stage '+l}</button> <small>${esc(monster)} · ${ch}% per kill${guideReachable(m,l)?'':' · locked'}</small>`;}
 function guideScore(c){const magic=INT_CLASSES.includes(S.cls),wanted=guideMode==='survive'?['hpPct','vit','def','mdef']:guideMode==='farm'?['move','field',magic?'matk':'atk',C().main,'aspd']:['cdm',magic?'matk':'atk',C().main,'crit'];
  return cardEffects(c).reduce((n,e)=>n+(wanted.includes(e.k)?(wanted.length-wanted.indexOf(e.k))*10+e.v/10:0),0);}
 function levelingGuide(){const sources=guideSources();return `<details open><summary>Level &amp; stage roadmap · ${esc(S.cls)}</summary><p>Start at Stages 1–3, move to 4–9 when kills stay quick, and farm Stage 10 only when its MVP is reliable. Compare a full minute of EXP/min and Zeny/min; a lower field can pay better. Turn Auto-advance off to camp a target.</p><div class="guide-grid">${MAPS.map((mp,m)=>{
- const [low,high]=m===0?[1,10]:m<5?[10,60]:m<8?[60,80]:[80,99];
+ const [low,high]=m>=10?[m===10?140:150,150]:m===0?[1,10]:m<5?[10,60]:m<8?[60,80]:[80,99];
  const weapon=sources.gear.find(x=>x.m===m&&x.l<=10&&C().wt.includes(x.item.k));
  const armor=sources.gear.find(x=>x.m===m&&x.l<=10&&['armor','head','leg'].includes(x.item.k));
  const cards=CARD_CATALOG.filter(c=>c.map===m&&!c.nightmare).sort((a,b)=>guideScore(b)-guideScore(a)).slice(0,2);
- return `<article class="mob-card"><b>Lv ${low}–${Math.max(low,high)} · ${mp.n}</b><p>${m>0&&m<5?'Lv 10–20: Stages 1–5 · Lv 20–50: Stages 6–9 · Lv 50–60: farm Stage 10 while preparing your second job.':'Stages 1–9: steady farming · Stage 10: MVP / rare drops'}</p>${[weapon,armor].filter(Boolean).map(x=>`<p>${esc(x.item.n)} ${guideLink(x)}</p>`).join('')}${cards.map(c=>{const source=sources.cards.get(c.cardKey)?.find(x=>x.l<=10);return source?`<p>${esc(c.n)} · ${c.effects.map(cardEffectText).join(', ')} ${guideLink(source)}</p>`:''}).join('')}</article>`;
+ return `<article class="mob-card"><b>Lv ${low}–${Math.max(low,high)} · ${mp.n}</b><p>${m>=10?'Stages 1–2: arrival · Stage 3: crossing · Stage 4: approach · Stage 5: MVP. Farm materials for N+ weapon evolution and Ascension skills; equipment does not drop here.':m>0&&m<5?'Lv 10–20: Stages 1–5 · Lv 20–50: Stages 6–9 · Lv 50–60: farm Stage 10 while preparing your second job.':'Stages 1–9: steady farming · Stage 10: MVP / rare drops'}</p>${[weapon,armor].filter(Boolean).map(x=>`<p>${esc(x.item.n)} ${guideLink(x)}</p>`).join('')}${cards.map(c=>{const source=sources.cards.get(c.cardKey)?.find(x=>x.l<=10);return source?`<p>${esc(c.n)} · ${c.effects.map(cardEffectText).join(', ')} ${guideLink(source)}</p>`:''}).join('')}</article>`;
  }).join('')}</div><p>Lv 100–119: farm Normal Stage 10 and improve your build. Lv ${NMLV[0]}–139: Nightmare Prontera–Payon offers N gear. Lv ${NMLV[1]}–150: Nightmare Comodo–Abyss offers N+ gear. Target NM 4–5 for equipment and NM 5 MVPs for map materials. Compare measured income against Normal Stage 10 and stay where you survive consistently.</p><p>Five Nightmare materials (old pairs combine without loss): ${NM_MAT.map((n,i)=>n+' — '+MAPS[i*2].n+' / '+MAPS[i*2+1].n).join('; ')}. ${DPS_MATS} of any mix craft one Refine Protection Scroll in Refine. Selected-affix reforges on N / N+ equipment use its map-pair material (2 for Double, 4 for Single); full reforges use Zeny only. Black Market materials cost ${BM_MAT_PRICE.toLocaleString()}z each.</p></details>`;}
 function buildGuide(market=false){const sources=guideSources(),phase=guideTier,eligible=(m,l)=>phase==='current'?guideReachable(m,l):phase==='normal'?l<=10:l>10;
  const allCards=[...S.cards,...items().flatMap(x=>x.cards||[])],worn=new Set(items().flatMap(x=>(x.cards||[]).map(c=>c.cardKey)));
@@ -4886,12 +4931,9 @@ function eclipseInventoryTools(){const known=new Set(eclipseInventoryState?.owne
 }
 // Map collection tabs are UI-only; never saved as farming-map IDs/unlocks.
 let mapSeason='atlas';
-function mapCollectionTabs(){return `<div class="atabs map-season-tabs" role="tablist" aria-label="Map collections">${[['atlas','World Atlas'],['season2','Season 2 Maps']].map(([id,label])=>`<button type="button" id="map-tab-${id}" role="tab" aria-selected="${mapSeason===id}" aria-controls="map-panel-${id}" tabindex="${mapSeason===id?0:-1}" class="${mapSeason===id?'on':''}" data-a="mapseason" data-v="${id}">${label}</button>`).join('')}</div>`;}
-function seasonTwoMapCards(){return `<section class="endgame-expeditions" aria-label="Season 2 Maps"><div class="endgame-intro"><span>BEYOND THE HORIZON</span><h3>Season 2 Maps</h3><p>Explore the new scenery. Native mobs and combat are still in development; these are not farming destinations yet.</p></div><div class="endgame-cards">
-      <button class="endgame-card astral" data-a="explore" data-v="astral"><span class="endgame-mark" aria-hidden="true">✧</span><span><small>FLOATING BRIDGE / 4 ZONES</small><b>Astral Citadel</b><em>Walk through the stars toward the far sanctuary.</em><strong>Explore scenery →</strong></span></button>
-      <button class="endgame-card thor" data-a="explore" data-v="thor"><span class="endgame-mark" aria-hidden="true">♨</span><span><small>VOLCANIC FIELDS / 4 DESIGNS</small><b>Thor Volcano</b><em>Inspect fractured basalt, molten spills and the Primal Core.</em><strong>Explore scenery →</strong></span></button></div><small class="endgame-disclaimer">Scenery inspection only · no drops or unlock changes · your current field keeps farming</small></section>`;}
+function mapCollectionTabs(){return `<div class="atabs map-season-tabs" role="tablist" aria-label="Map collections">${[['atlas','World Atlas'],['ascension','Ascension Map']].map(([id,label])=>`<button type="button" id="map-tab-${id}" role="tab" aria-selected="${mapSeason===id}" aria-controls="map-panel-${id}" tabindex="${mapSeason===id?0:-1}" class="${mapSeason===id?'on':''}" data-a="mapseason" data-v="${id}">${label}</button>`).join('')}<button type="button" id="map-tab-social" role="tab" aria-selected="false" aria-disabled="true" aria-label="Social Hub, locked, coming soon" tabindex="-1" disabled><span aria-hidden="true">&#128274; </span>Social Hub<small class="map-coming-soon">Coming Soon</small></button></div>`;}
 const V={
-  map(){const navigation=mapCollectionTabs();if(mapSeason==='season2')return navigation+seasonTwoMapCards();const F=fieldOf(mapM,mapL),mp=MAPS[mapM],pr=S.prog[mapM],nmo=nmMapOpen(mapM),cap=Math.max(pr,nmMaxFor(mapM));
+  map(){const navigation=mapCollectionTabs();const F=fieldOf(mapM,mapL),mp=MAPS[mapM],pr=S.prog[mapM],nmo=nmMapOpen(mapM),cap=mapM>=10?(ascensionOpen(mapM)?pr:0):Math.max(pr,nmMaxFor(mapM));
     // The map tab is a compact 450px, two-band panel: pick a map on the top band, walk its fields on the
     // next one, read the drop tables underneath. The field band is sticky, so the level you are
     // choosing stays on screen while the tables below it scroll - no scrolling down to find it.
@@ -4902,14 +4944,14 @@ const V={
     // and Endless Echo takes the whole destination row under the map grid. The Auto-advance switch
     // lives here too, next to the stages it walks you through.
     const fieldBand=`<div class="mapband fields">
-      <div class="mapband-t">${mp.n} <small>&middot; ${mp.t} &middot; rec. ${mp.rec} (not a limit) &middot; ${Math.min(pr-1,10)}/10 stages unlocked${nmo?' &middot; <b>Nightmare open</b>':' &middot; Nightmare unlocks at Base Lv '+NMLV[nmTierOf(mapM)]}</small>
+      <div class="mapband-t">${mp.n} <small>&middot; ${mp.t} &middot; rec. ${mp.rec} (not a limit) &middot; ${Math.min(pr,normalStages(mapM))}/${normalStages(mapM)} stages available${mapM>=10?(ascensionOpen(mapM)?' &middot; Ascension unlocked':' &middot; Requires Base Lv '+(mapM===10?140:150)+' and '+MAPS[mapM-1].n+' Stage '+normalStages(mapM-1)+' victory'):nmo?' &middot; <b>Nightmare open</b>':' &middot; Nightmare unlocks at Base Lv '+NMLV[nmTierOf(mapM)]}</small>
         <button class="go" data-a="go" ${mapL>cap?'disabled':''}>${S.mp===mapM&&S.lvl===mapL?'You are here':'Travel to '+mp.n+' Stage '+mapL}</button></div>
-      <div class="lvgrid">${Array.from({length:15},(_,i)=>{const l=i+1,nm=l>10,lock=l>cap;return`<button class="map-node${lock?' locked':''}${nm?' nm-node':''}${S.mp===mapM&&S.lvl===l?' active':''}${mapL===l?' picked':''}${l===10||l===15?' boss-node':''}${l===10?' normal-boss-node':''}" data-a="sell_" data-v="${l}" title="${nm?'Nightmare ':'Normal '}${nm?`Stage ${l-10}`:`Stage ${l}`}${l===10?' - normal mode MVP':''}${lock&&nm?' - locked until Base Lv '+NMLV[nmTierOf(mapM)]:''}"><b>${l===10||l===15?'💀 ':''}${nm?'NM '+((l-10)):'Stage '+l}</b></button>`}).join('')}</div>
-      <small class="map-stage-note"><b>Stages 1-10 are Normal</b>; Stage 10 is the normal MVP field. Purple nodes are Nightmare stages 11-15. ${nmOpen()<2?`Next unlock: ${nmOpen()<1?'Nightmare Prontera to Payon (maps 1-5) at Base Lv '+NMLV[0]:'Nightmare Comodo to Abyss (maps 6-10) at Base Lv '+NMLV[1]}.`:'Both Nightmare tiers are unlocked.'}</small>
+      <div class="lvgrid">${Array.from({length:mapM>=10?5:15},(_,i)=>{const l=i+1,nm=l>10,lock=l>cap;return`<button class="map-node${lock?' locked':''}${nm?' nm-node':''}${S.mp===mapM&&S.lvl===l?' active':''}${mapL===l?' picked':''}${bossStage(mapM,l)?' boss-node':''}${l===normalStages(mapM)?' normal-boss-node':''}" data-a="sell_" data-v="${l}" title="${nm?'Nightmare ':'Normal '}${nm?`Stage ${l-10}`:`Stage ${l}`}${l===normalStages(mapM)?' - normal mode MVP':''}${lock&&nm?' - locked until Base Lv '+NMLV[nmTierOf(mapM)]:''}"><b>${bossStage(mapM,l)?'💀 ':''}${nm?'NM '+((l-10)):'Stage '+l}</b></button>`}).join('')}</div>
+      <small class="map-stage-note">${mapM>=10?'Five Ascension stages · Stages 1–2 share a design; 3, 4 and 5 have distinct scenery. Stage 5 is an immediate MVP with five escorts. No equipment drops.':`<b>Stages 1-10 are Normal</b>; Stage 10 is the normal MVP field. Purple nodes are Nightmare stages 11-15. ${nmOpen()<2?`Next unlock: ${nmOpen()<1?'Nightmare Prontera to Payon (maps 1-5) at Base Lv '+NMLV[0]:'Nightmare Comodo to Abyss (maps 6-10) at Base Lv '+NMLV[1]}.`:'Both Nightmare tiers are unlocked.'}`}</small>
       <div class="row" style="align-items:center"><label><input type="checkbox" data-a="adv" ${S.adv!==false?'checked':''}> Auto-advance through stages and maps</label><small style="opacity:.75">turn off to farm where you stand</small></div></div>`;
     return`${navigation}<div class="mapband">
       <div class="mapband-t">Maps <small>&middot; click one to see its stages below</small></div>
-      <div class="mapgrid">${MAPS.map((m,i)=>{const cur=i===mapM,here=i===S.mp;
+      <div class="mapgrid">${MAPS.map((m,i)=>{if((i>=10)!==(mapSeason==='ascension'))return '';const cur=i===mapM,here=i===S.mp;
         return`<button class="mapcard${cur?' on':''}${here?' here':''}" data-a="selm" data-v="${i}" title="${m.n} - ${m.t}">
           <b>${m.n}</b><small>${here?'● ':''}${m.rec}</small></button>`}).join('')}</div>
       <div class="map-specials"><button class="mapcard dungeoncard" data-trial="lobby"
@@ -4922,26 +4964,26 @@ const V={
     ${fieldBand}
     <div class="mapcols">
       <div class="mob-card"><div class="hd">${mapL>10?'Nightmare ':''}${mp.n} Stage ${mapL>10?mapL-10:mapL}${mapM<5&&mapL<=5?`<br><small>${mapM===0?'Novice start · Base Lv 1–10':'Early class route · Base Lv 10–20'} · gentle packs</small>`:''}</div>
-        <div class="sec">Drops on this field <small>&middot; every drop is <b class="${rarCls({sec:F.sec,tier:F.tier})}">${rarOf({sec:F.sec,tier:F.tier}).n}</b> &middot; <b>${SECN[F.sec]}</b>, worn by ${gearUserOf({sec:F.sec})}${gearTierOK({sec:F.sec})?'':` &middot; <span class="r0">your ${S.cls} cannot wear this yet</span>`}</small></div>
-        ${(()=>{const d=F.mobs[0].drops,r4=v=>Math.round(v*1e4)/1e4,t=r4(d.reduce((a,x)=>a+x[1],0)),W=d.filter(x=>gearSlot(x[0])==='weapon'),wt=r4(W.reduce((a,x)=>a+x[1],0)),
+        <div class="sec">Drops on this field ${mapM>=10?'<small>Materials for N+ weapon evolution &amp; Ascension skills · no equipment drops</small>':`<small>&middot; every drop is <b class="${rarCls({sec:F.sec,tier:F.tier})}">${rarOf({sec:F.sec,tier:F.tier}).n}</b> &middot; <b>${SECN[F.sec]}</b>, worn by ${gearUserOf({sec:F.sec})}${gearTierOK({sec:F.sec})?'':` &middot; <span class="r0">your ${S.cls} cannot wear this yet</span>`}</small>`}</div>
+        ${mapM>=10?'<p>Collect Astral Shards and Primal Catalysts for N+ weapon evolution, and Valkyrie’s Sigils for Ascension skill growth. Upgrade recipes are coming later.</p>':(()=>{const d=F.mobs[0].drops,r4=v=>Math.round(v*1e4)/1e4,t=r4(d.reduce((a,x)=>a+x[1],0)),W=d.filter(x=>gearSlot(x[0])==='weapon'),wt=r4(W.reduce((a,x)=>a+x[1],0)),
           fam=W.length>1?` (${r4(W[0][1])}% each, ${W.length} families)`:'';
           return`<div class="dropline"><span>Gear chance per kill</span><b>${t}%</b></div>
           <small>Weapon <b>${wt}%</b>${fam} &middot; armour &amp; accessory <b>${r4(t-wt)}%</b> - ${d.length} independent rolls, so one kill can pay one piece, none, or several.</small>`})()}
         ${(()=>{const lines=F.mobs.flatMap(m=>m.drops.map(d=>[d,m.n])).filter(([d],i,a)=>a.findIndex(([e])=>e[0].n===d[0].n)===i),isW=([d])=>gearSlot(d[0])==='weapon',
           grp=(t,ls)=>`<div class="dropgrp"><small>${t}</small></div><div class="drop-list">`+ls.map(([d,n])=>dropTxt(d,n)).join('')+'</div>';
-          return grp('Weapons',lines.filter(isW))+grp('Armour &amp; accessories',lines.filter(l=>!isW(l)))
+          return (mapM>=10?'':grp('Weapons',lines.filter(isW))+grp('Armour &amp; accessories',lines.filter(l=>!isW(l))))
             +`<div class="dropgrp"><small>Cards &amp; ore</small></div>`
             +F.mobs.map(m=>`<div class="dropline"><span>🃏 ${m.card.n} <small>(${cardEffects(m.card).map(cardEffectText).join(', ')}, ${GRADE[m.card.g]})</small> <small class="dwho">${m.n}</small></span><b>${m.cardCh}%</b></div>`).join('')
             +(F.mobs[0].ore?`<div class="dropline ore"><span>🔶 Oridecon &middot; 🔷 Elunium</span><b>${F.mobs[0].oreCh*100}% each</b></div>`:'')
             +(!F.boss&&gearPool(mapM,mapL).length>lines.length?`<small>This field's monsters carry ${lines.length} of the ${gearPool(mapM,mapL).length} pieces on ${mp.n}'s shelf - the rest drop from the Stage 10 MVP, listed beside this card.</small>`:'')})()}</div>
-      <div class="mob-card"><div class="hd">MVP &amp; pets</div>${(mapL===10||mapL===15)?`<small>MVP fights immediately with ${mapM<5?3:5} monsters. Defeat the MVP to reset the fight.</small>`:''}
+      <div class="mob-card"><div class="hd">MVP &amp; pets</div>${bossStage(mapM,mapL)?`<small>MVP fights immediately with ${mapM<5?3:5} monsters. Defeat the MVP to reset the fight.</small>`:''}
         ${F.boss?`<div class="mobentry"><b class="r4">${F.boss.n}</b>
           <div class="poollist">${F.boss.drops.map(([T,ch])=>`<span class="poolitem">${poolIc(T)}<span class="drop-name">${T.n} <small class="${rarCls(T)}">${rarOf(T).n}</small></span><b>${ch}%</b></span>`).join('')}</div>
-          <small>Every MVP drop is <b class="${rarCls({sec:F.sec,tier:F.boss.tier})}">${rarOf({sec:F.sec,tier:F.boss.tier}).n}</b> with random affixes. Each item rolls independently; an MVP can drop zero or several pieces.</small>
+          ${mapM>=10?'<small>This MVP drops Ascension materials, cards, ore and pets. No equipment.</small>':`<small>Every MVP drop is <b class="${rarCls({sec:F.sec,tier:F.boss.tier})}">${rarOf({sec:F.sec,tier:F.boss.tier}).n}</b> with random affixes. Each item rolls independently; an MVP can drop zero or several pieces.</small>`}
           <div class="dropline"><span>🃏 ${F.boss.card.n} <small>(${cardEffects(F.boss.card).map(cardEffectText).join(', ')}, ${GRADE[F.boss.card.g]})</small></span><b>${F.boss.cardCh}%</b></div>
           <div class="dropline ore"><span>🔶 Oridecon &middot; 🔷 Elunium</span><b>${F.boss.oreCh*100}% each</b></div>
-        </div>`:`<small>MVP appears at ${mapL>10?'NM 5 (stage 15)':'Stage 10'}.</small>`}
-        <div class="sec">🐾 Pet drops</div><small>0.03% per kill, 0.5% from MVPs. Odds on ${mp.n}: ${PW[Math.min(mapM,9)].map((w,i)=>RN[i]+' '+w+'%').join(' &middot; ')}</small></div></div>`},
+        </div>`:`<small>MVP appears at ${mapL>10?'NM 5 (stage 15)':'Stage '+normalStages(mapM)}.</small>`}
+        ${mapM>=10?`<div class="sec">Ascension materials</div><p>${ASCENSION_MATERIALS[mapM-10]}: 0.035% per kill<br>Valkyrie's Sigil: 0.0025% per mob / 0.1% per MVP</p><small>Stored: ${ASCENSION_MATERIALS.map((n,i)=>esc(n)+' × '+safeCount(S.ascensionMat?.[i])).join(' · ')}</small>`:''}<div class="sec">🐾 Pet drops</div><small>0.03% per kill, 0.5% from MVPs. Odds on ${mp.n}: ${PW[Math.min(mapM,9)].map((w,i)=>RN[i]+' '+w+'%').join(' &middot; ')}</small></div></div>`},
   stats(){const c=C(),b=k=>bon(k)?` <small class="r1">+${bon(k)}</small>`:'',idxC=typeof indexCrit==='function'?indexCrit():0;
     return`<div class="hd">${S.cls} &middot; Base Lv ${S.lv} &middot; Job Lv ${jobOf().jl}/${c.mj}</div><div class="hd">Stat points: ${S.pts} <small>(max ${statCap()} each${S.lv<ELITELV?' &middot; '+MAXST+' unlocks at Base Lv '+ELITELV:''} &middot; max Base Lv 150)</small></div><div class="hd">🏆 Class collection: ${playedClasses()}/${t3Total()} transcendent classes at Base Lv 100+ &middot; <b>+${collDmg()}% damage</b> <small>(+1% each, permanent${playedClasses()?'':' - take a transcendent class to Base Lv 100 to earn it'})</small></div>`
     +(petBonusList().length?`<small><b>Pet bonuses</b> (the fighting pets): ${petBonusList().join(' &middot; ')}</small>`:'')
@@ -5053,7 +5095,7 @@ const V={
 // v90: the Black Market panel. Locked until Base Lv 100; ore is bought one at a time and a reforge is
 // offered for every worn piece that has an affix.
 V.guide=()=>buildGuide(true);
-function eclipseEchoPicker(){return `<div class="trial-hd"><b>Nightmare Gear Token</b><small>${TRIAL_STORE.find(x=>x.id==='nmgear').c} Echo Shards</small></div><p>Choose the source map for your class-compatible equipment.</p><div class="mapgrid">${MAPS.map((m,i)=>`<button class="mapcard" data-nmmap="${i}"><b>${m.n}</b><small>${NMNAME[i]}</small></button>`).join('')}</div><button data-a="echostore">Back to Echo store</button>`}
+function eclipseEchoPicker(){return `<div class="trial-hd"><b>Nightmare Gear Token</b><small>${TRIAL_STORE.find(x=>x.id==='nmgear').c} Echo Shards</small></div><p>Choose the source map for your class-compatible equipment.</p><div class="mapgrid">${MAPS.slice(0,10).map((m,i)=>`<button class="mapcard" data-nmmap="${i}"><b>${m.n}</b><small>${NMNAME[i]}</small></button>`).join('')}</div><button data-a="echostore">Back to Echo store</button>`}
 V.market=()=>{const navigation=`<div class="atabs"><button data-a="sub" data-v="market:supplies" class="${sub.market==='supplies'?'on':''}">Supplies</button><button data-a="sub" data-v="market:echo" class="${sub.market==='echo'?'on':''}">Echo store</button></div>`;if(sub.market==='echo')return navigation+(eclipseEchoPick?eclipseEchoPicker():trialShopHtml(true));const guide=navigation;if(!bmOpen())return guide+`<p>Black Market opens at Base Lv ${BM_LV}.</p>`;
 const ores=Object.entries(ORE).map(([o,n])=>`<div class="slot"><b>${n}</b><label>Quantity<input class="ore-quantity" id="oreQty-${o}" type="number" min="1" max="1000000" step="1" value="${esc(marketQty[o])}" aria-label="${n} quantity"></label><small>${BM_ORE.toLocaleString()}z each · <output id="oreTotal-${o}">${Number.isSafeInteger(Number(marketQty[o]))&&Number(marketQty[o])>0?(Number(marketQty[o])*BM_ORE).toLocaleString()+'z total':'Enter a whole quantity'}</output></small><button data-a="bmore" data-v="${o}" ${S.zeny<BM_ORE?'disabled':''}>Buy quantity</button></div>`).join('');
 const mats=NM_MAT.map((n,i)=>`<div class="slot"><b>${n}</b><button data-a="bmmat" data-v="${i}" ${S.zeny<BM_MAT_PRICE?'disabled':''}>Buy 1 · ${BM_MAT_PRICE.toLocaleString()}z</button></div>`).join('');
@@ -5199,7 +5241,7 @@ document.addEventListener('input',e=>{if(e.target.id?.startsWith('oreQty-')){con
 $('screenBtn').onclick=()=>{if(S)screenOptions()};
 $('screenOptions').onchange=e=>{const key=e.target.dataset.display;if(!['cameraShake','dmgShow','auraShow','feedShow','labelsShow','hideUI'].includes(key))return;S[key]=e.target.checked;applyDisplay();save()};
 function renderQ(){const e=$('qp'),rail=$('sideRail');if(!S){rail.style.display='none';return}rail.style.display='flex';rail.classList.toggle('with-panels',!!tabs.length);e.style.display='block';
-  $('eclipseMapCard').classList.toggle('other-map',S.mp!==0);$('eclipseMapName').textContent=MAPS[S.mp].n;$('eclipseMapStage').textContent=fieldName()+' · World atlas';
+  $('eclipseMapCard').classList.toggle('other-map',S.mp!==0);$('eclipseMapName').textContent=MAPS[S.mp].n;$('eclipseMapStage').textContent=fieldName()+' · '+(S.mp>=10?'Ascension Map':'World atlas');
   const questHTML=`<div class="qp-head"><b>${uiIcon('quest')} Quests</b><div class="qp-actions"><button data-q="t" aria-expanded="${qOpen}" aria-label="${qOpen?'Collapse':'Expand'} quests">${uiIcon(qOpen?'minus':'chevron')}</button></div></div>`+(qOpen?contractPanel(eclipseQuestAll?Infinity:3)+(S.q||[]).map((q,i)=>q.prog<q.goal?'':`<div class="quest-entry"><div>${qTxt(q)}</div><div class="pbar"><i style="width:${Math.min(100,q.prog/q.goal*100)}%"></i></div><div class="quest-reward"><small>${q.prog}/${q.goal} &middot; ${(q.z||0).toLocaleString()}z &middot; ${(q.xp||0).toLocaleString()}xp</small>${q.prog>=q.goal?`<button data-q="c${i}">Claim</button>`:''}</div></div>`).join(''):'');
   eclipseSetMarkup(e,questHTML+(qOpen?'<button class="eclipse-quest-all" data-q="viewall">'+(eclipseQuestAll?'Show compact journal':'View all objectives')+' →</button>':''));e.classList.toggle('expanded-journal',eclipseQuestAll);$('sideMenu').classList.toggle('eclipse-more-open',sideOpen);eclipseSetMarkup($('sideMenu'),qpSide());eclipsePositionMore();polishIcons(e)}
 $('sideRail').onclick=e=>{const d=e.target.closest('[data-t]');if(d){sideOpen=false;openTab(d.dataset.t);return}const b=e.target.closest('[data-q]');if(!b)return;const v=b.dataset.q;if(v==='viewall'){eclipseQuestAll=!eclipseQuestAll;renderQ();return}if(v==='daily'||v==='all'){questView=v;renderQ();return}if(v.startsWith('contract:')){claimContract(v.slice(9));return}if(v==='side'){sideOpen=!sideOpen;renderQ();return}if(v==='t'){qOpen=!qOpen;renderQ()}else ACT.claim(v.slice(1))};
@@ -5289,26 +5331,25 @@ function arrangePanel(k,root){
   const tabs=q('.atabs');if(tabs)root.prepend(tabs);
   const mode=k==='status'?sub.status:k==='bag'?sub.bag:k==='equip'?(sub.equip==='equip0'?'equip':sub.equip):k;
   root.dataset.view=mode;
-  const labels={reforge:['EQUIPMENT','Reforge affixes','Select affixes, review the cost, then keep or accept your offer.'],refine:['EQUIPMENT','Refinement workshop','Choose when to protect your equipment.'],map:mapSeason==='season2'?['EXPLORE / SEASON 2','Season 2 Maps','Astral Citadel and Thor Volcano · scenery exploration']:['EXPLORE','World atlas','Choose a destination, then a stage.'],stats:['CHARACTER',S.cls,'Base '+S.lv+' · Job '+jobOf().jl+' · '+S.pts+' stat points'],equip:['CHARACTER','Your loadout','Select a slot to compare, refine or socket.'],job:['PROGRESSION','Class paths','Browse a path. Inspect a class. Make your next move.'],skills:['COMBAT','Skill library',skpAvail()+' points available · '+S.cls],bag:['INVENTORY','Field kit',S.inv.length+' / '+BAGMAX+' items'+(S.inv.length>=BAGMAX?' · BAG FULL':'')+(clickSellOn()?' · CLICK-SELL ACTIVE':'')],cards:['INVENTORY','Card collection',(S.cards||[]).length+' loose cards · select one to socket or sell'],pet:['COMPANIONS','Your party',S.pets.filter(p=>p.on).length+' / 3 in battle · '+S.pets.length+' collected'],guide:['HANDBOOK','Build & Farming Guide','Plan your build. Find your next farming target.'],market:['TRADE','Black Market',S.zeny.toLocaleString()+' Zeny available'],index:['COLLECTION','Mastery journal','Track discoveries and permanent rewards.'],board:['COMMUNITY','Leaderboard','Your place among the adventurers.'],log:['SESSION','Activity feed','Filter your feed without interrupting the grind.'],set:['PREFERENCES','Make it yours','Appearance, combat display and account controls.'],gm:['ADMINISTRATION','Game tools','Test controls grouped by system.']};
+  const labels={reforge:['EQUIPMENT','Reforge affixes','Select affixes, review the cost, then keep or accept your offer.'],refine:['EQUIPMENT','Refinement workshop','Choose when to protect your equipment.'],map:mapSeason==='ascension'?['EXPLORE / ASCENSION','Ascension Map','Astral Citadel and Thor Volcano · combat & rare materials']:['EXPLORE','World atlas','Choose a destination, then a stage.'],stats:['CHARACTER',S.cls,'Base '+S.lv+' · Job '+jobOf().jl+' · '+S.pts+' stat points'],equip:['CHARACTER','Your loadout','Select a slot to compare, refine or socket.'],job:['PROGRESSION','Class paths','Browse a path. Inspect a class. Make your next move.'],skills:['COMBAT','Skill library',skpAvail()+' points available · '+S.cls],bag:['INVENTORY','Field kit',S.inv.length+' / '+BAGMAX+' items'+(S.inv.length>=BAGMAX?' · BAG FULL':'')+(clickSellOn()?' · CLICK-SELL ACTIVE':'')],cards:['INVENTORY','Card collection',(S.cards||[]).length+' loose cards · select one to socket or sell'],pet:['COMPANIONS','Your party',S.pets.filter(p=>p.on).length+' / 3 in battle · '+S.pets.length+' collected'],guide:['HANDBOOK','Build & Farming Guide','Plan your build. Find your next farming target.'],market:['TRADE','Black Market',S.zeny.toLocaleString()+' Zeny available'],index:['COLLECTION','Mastery journal','Track discoveries and permanent rewards.'],board:['COMMUNITY','Leaderboard','Your place among the adventurers.'],log:['SESSION','Activity feed','Filter your feed without interrupting the grind.'],set:['PREFERENCES','Make it yours','Appearance, combat display and account controls.'],gm:['ADMINISTRATION','Game tools','Test controls grouped by system.']};
   const info=labels[mode]||labels[k];
   if(info){const h=make('header','ui-hero');put(h,make('span','ui-eyebrow',info[0]),make('h2','',info[1]),make('p','',info[2]));root.insertBefore(h,body)}
   if(k==='map'){body.id='map-panel-'+mapSeason;body.setAttribute('role','tabpanel');body.setAttribute('aria-labelledby','map-tab-'+mapSeason);}
-  if(k==='map'&&mapSeason==='season2'){root.dataset.view='season2';const content=put(section('SEASON 2 / Destinations','ui-season-two'),q('.endgame-expeditions'));body.replaceChildren(content);
-  }else if(k==='map'){
+  if(k==='map'){
     const band=q('.mapband:not(.fields)'),maps=q('.mapgrid'),fields=q('.fields'),special=q('.map-specials'),drops=q('.mapcols');
     const destinations=section('01 / Destination','ui-destinations');put(destinations,maps);if(band)put(destinations,fold('About destinations',[...band.childNodes].filter(n=>n!==special),'destinations'));
-    maps?.querySelectorAll('.mapcard').forEach((card,i)=>card.prepend(make('span','eclipse-map-number',String(i+1).padStart(2,'0'))));
+    maps?.querySelectorAll('.mapcard').forEach((card,i)=>card.prepend(make('span','eclipse-map-number',String(+card.dataset.v+1).padStart(2,'0'))));
     const route=section('02 / Choose your stage','ui-route'),hero=make('div','eclipse-atlas-hero');
-    hero.innerHTML='<canvas id="eclipseAtlas" width="750" height="350" aria-label="Terrain preview for '+esc(MAPS[mapM].n)+'"></canvas><div><span class="ui-eyebrow">RUNE-MIDGARD / '+String(mapM+1).padStart(2,'0')+'</span><h2>'+esc(MAPS[mapM].n)+'</h2><p>'+esc(MAPS[mapM].t)+' · Recommended '+esc(MAPS[mapM].rec)+'</p></div>';
+    hero.innerHTML=(mapM>=10?'<img class="ascension-preview" src="'+(mapM===10?'assets/atlas/astral-citadel.png?v=156':'assets/atlas/thor-volcano.svg')+'" width="750" height="350" alt="'+(mapM===10?'Connected stone bridge through an indigo starfield, ruined arches and a luminous boss seal':'Volcanic peaks and rivers of glowing lava')+'">':'<canvas id="eclipseAtlas" width="750" height="350" aria-label="Terrain preview for '+esc(MAPS[mapM].n)+'"></canvas>')+'<div><span class="ui-eyebrow">'+(mapM>=10?'ASCENSION':'RUNE-MIDGARD')+' / '+String(mapM+1).padStart(2,'0')+'</span><h2>'+esc(MAPS[mapM].n)+'</h2><p>'+esc(MAPS[mapM].t)+' · Recommended '+esc(MAPS[mapM].rec)+'</p></div>';
     route.prepend(hero);put(route,fields);
     if(fields){const notes=[...fields.querySelectorAll('.map-stage-note,.mapband-t>small')],nodes=[...fields.querySelectorAll('.map-node')],grid=fields.querySelector('.lvgrid');
-      if(grid){const normal=make('div','eclipse-stages'),nightmare=make('div','eclipse-stages eclipse-nightmare');nodes.forEach((node,i)=>{node.querySelector('b').textContent=i<10?(i===9?'♛':String(i+1).padStart(2,'0')):'NM '+(i-9);node.setAttribute('aria-label',node.title);node.setAttribute('aria-pressed',String(mapL===i+1));put(i<10?normal:nightmare,node)});grid.replaceChildren(normal,nightmare)}
+      if(grid){const normal=make('div','eclipse-stages'),nightmare=make('div','eclipse-stages eclipse-nightmare');nodes.forEach((node,i)=>{node.querySelector('b').textContent=i<10?(i===normalStages(mapM)-1?'♛':String(i+1).padStart(2,'0')):'NM '+(i-9);node.setAttribute('aria-label',node.title);node.setAttribute('aria-pressed',String(mapL===i+1));put(i<10?normal:nightmare,node)});grid.replaceChildren(normal,nightmare)}
       const go=fields.querySelector('.go');if(go){go.textContent=S.mp===mapM&&S.lvl===mapL?'You are here · '+MAPS[mapM].n:'Travel to '+MAPS[mapM].n+' · '+(mapL>10?'NM '+(mapL-10):'Stage '+String(mapL).padStart(2,'0'))+' →';put(fields,put(make('div','ui-primary-action'),go))}
       put(fields,fold('Stage rules & requirements',notes,'stage-rules'));
     }
     if(special)put(route,put(section('CHALLENGE / Endless Echo','ui-challenge'),special));
     const intel=section('03 / Field intelligence','ui-field-guide');
-    if(drops){const field=fieldOf(mapM,mapL),mob=field.boss||field.mobs[0],encounter=make('div','eclipse-field-encounter');encounter.innerHTML='<img src="'+esc(mobSpriteUrl(mob.spriteId))+'" alt=""><div><b>'+esc(mob.n)+'</b><small>'+(field.boss?'MVP + escorts':'Normal field · independent loot rolls')+'</small></div>';drops.querySelector('.hd')?.after(encounter)}
+    if(drops){const field=fieldOf(mapM,mapL),mob=field.boss||field.mobs[0],encounter=make('div','eclipse-field-encounter');encounter.innerHTML='<img src="'+esc(ASCENSION_MOB_IDS.has(mob.spriteId)?'assets/mobs/v1/thumb-'+mob.spriteId+'.png':mobSpriteUrl(mob.spriteId))+'" alt=""><div><b>'+esc(mob.n)+'</b><small>'+(field.boss?'MVP + escorts':'Normal field · independent loot rolls')+'</small></div>';drops.querySelector('.hd')?.after(encounter)}
     intel.dataset.panelScroll='field-intelligence';put(intel,drops);body.replaceChildren(destinations,route,intel);
   }else if(mode==='stats'){
     const slots=direct().filter(e=>e.classList.contains('slot')),attrs=slots.filter(e=>e.querySelector('[data-a="stat"]')),combat=slots.find(e=>!e.querySelector('[data-a="stat"]')),reset=q('[data-a="rstat"]');
@@ -5542,6 +5583,19 @@ function eclipsePatch(current,next){
 function eclipseDrawMinimap(){
   const canvas=$('eclipseMinimap');if(!canvas||!S||document.body.classList.contains('clean-screen'))return;
   const g=canvas.getContext('2d'),w=canvas.width,h=canvas.height;if(!g)return;
+  if(S.mp>=10){
+    // Project the active Ascension floor instead of the hidden original-map terrain.
+    g.fillStyle=S.mp===10?'#0c1230':'#52200f';g.fillRect(0,0,w,h);
+    const world=ascensionWorld,span=S.mp===10?64:90,scale=w/span,center=(Z0+Z1)/2,point=(x,z)=>[(x+span/2)*scale,(z-center)*scale+h/2];
+    if(world){const outline=world.route?.outline||world.scenery.children.find(o=>o.userData.outline)?.userData.outline;
+      g.fillStyle=S.mp===10?'#78829e':'#342b2c';g.strokeStyle=S.mp===10?'#67dce5':'#db8246';g.lineWidth=2;g.beginPath();
+      if(outline){const offset=S.mp===10?center-world.view.focus:0;outline.forEach(([x,z],i)=>{const [px,py]=point(x,z+offset);i?g.lineTo(px,py):g.moveTo(px,py)});g.closePath();}
+      else{const [x,z]=point(0,-8);g.arc(x,z,27*scale,0,Math.PI*2);}
+      g.fill();g.stroke();
+    }
+    for(const actor of [...mobs.filter(m=>m.hp>0),{...pl,player:true}]){const [x,y]=point(actor.x,actor.z);g.beginPath();g.arc(x,y,actor.player?5:3,0,Math.PI*2);g.fillStyle=actor.player?'#fff0b3':'#eaa18e';g.fill();}
+    return;
+  }
   const terrain=KIT.ground?.material.map?.image;g.clearRect(0,0,w,h);
   if(!terrain){g.fillStyle='#182b29';g.fillRect(0,0,w,h);g.fillStyle='#a6b8cb';g.font='18px sans-serif';g.fillText('Terrain loading',16,h/2);return}
   const span=KIT_FAR,scale=w/span,visible=h/scale,center=(Z0+Z1)/2;
@@ -5645,12 +5699,13 @@ if($('wins')&&$('wins').addEventListener)$('wins').addEventListener('pointerdown
 const MAX_TABS=3;const openTab=k=>{if(k==='gm'&&!S.gm)return;const i=tabs.indexOf(k);if(i>=0&&expandedPanels.size&&!expandedPanels.has(k)){expandedPanels.clear();expandedPanels.add(k);renderWin();return}if(i<0)expandedPanels.clear();if(k==='skills'&&i>=0)selS=null;if(k!=='status')eqPick=null;if(i>=0)tabs.splice(i,1);else{if(tabs.length>=MAX_TABS)tabs.shift();tabs.push(k);
   // Reopening a window starts at its first sub-tab: Status shows Stats, Inventory shows Bag.
   if(k==='pet')sub.pet='party';if(k==='job')eclipseJobsBrowse=false;if(k==='status')sub.status='stats';if(k==='bag')sub.bag='bag';if(k==='equip')sub.equip='equip0';
-  if(k==='map'){mapSeason='atlas';mapM=S.mp;mapL=S.lvl}}renderWin();if(k==='board'&&tabs.includes('board'))boardRefresh(boardPeriod)};
+  if(k==='map'){mapSeason=S.mp>=10?'ascension':'atlas';mapM=S.mp;mapL=S.lvl}}renderWin();if(k==='board'&&tabs.includes('board'))boardRefresh(boardPeriod)};
 const gotoField=(m,l)=>{
+  if(!canTravel(m,l))return;
   // v77: travelling cancels a run. Leaving the arena is the same door as pressing Leave - a ranked
   // run that is abandoned is simply not paid.
   if(typeof TRIAL!=='undefined'&&TRIAL.on)trialExit();
-  S.mp=m;S.lvl=l;S.kl=0;mobs=[];mob=null;camps=[];respawn=.3;qRefresh();ui();save()};
+  lastKey='';S.mp=m;S.lvl=l;S.kl=0;mobs=[];mob=null;camps=[];respawn=.3;qRefresh();ui();save()};
 const ACT={
   workslot:v=>{if(EQK.some(([k])=>k===v)){selE=v;renderWin()}},
   echostore:()=>{eclipseEchoPick=false;renderWin()},
@@ -5661,16 +5716,15 @@ const ACT={
   openreforge:()=>{if(!tabs.includes('equip'))openTab('equip');sub.equip='reforge';renderWin()},
   boardperiod:v=>{if(!['daily','weekly','all'].includes(v))return;boardPeriod=v;boardError='';renderWin();boardRefresh(v)},
   boardrefresh:()=>boardRefresh(boardPeriod),
-  mapseason:v=>{if(!['atlas','season2'].includes(v)||!tabs.includes('map'))return;mapSeason=v;renderWin();$('wins').querySelector('.map-season-tabs [aria-selected="true"]')?.focus();},
-  explore:v=>{if(S&&window.PGMapExploration)PGMapExploration.open(v,{className:S.cls,appearance:typeof wardrobeAppearance==='function'?wardrobeAppearance():PGWardrobe.defaults(S.sex)});},
-  selm:v=>{mapM=+v;mapL=Math.min(mapL,Math.max(1,Math.max(S.prog[mapM],nmMaxFor(mapM))));renderWin('[data-win="map"] .mapcard.on')},
+  mapseason:v=>{if(!['atlas','ascension'].includes(v)||!tabs.includes('map'))return;mapSeason=v;if((mapM>=10)!==(v==='ascension')){mapM=v==='ascension'?10:0;mapL=1;}renderWin();$('wins').querySelector('.map-season-tabs [aria-selected="true"]')?.focus();},
+  selm:v=>{if(!Number.isInteger(+v)||+v<0||+v>=MAPS.length)return;mapM=+v;mapL=Math.min(mapL,mapM>=10?5:Math.max(1,Math.max(S.prog[mapM],nmMaxFor(mapM))));renderWin('[data-win="map"] .mapcard.on')},
   // v75 test control: feed the selected pet (or the first one) n duplicates and let petFold do
   // the rest, so the owner can watch a species' passive climb without farming 15 drops.
   gmnm:()=>{S.gmnm=true;S.lv=Math.max(S.lv,150);S.prog=MAPS.map(()=>10);S.hp=Math.min(S.hp,maxHp());
     log('Nightmare band unlocked: all five stages, Base Lv '+S.lv+'. Travel from the World Map (stages 11-15).','r4');ui();save()},
   gmbond:v=>{const p=gp(selP)||S.pets[0];if(!p)return log('No pet to bond with.','r0','pet');
     const n=Math.max(1,Math.min(15,+v||1));for(let i=0;i<n;i++)petFold(p,{sp:p.sp,mut:0,eq:[0,0,0],skills:[]});
-    log(`${PETS[p.sp].n} is Bond ${bondRank(p.sp)}/5 - ${PET_TRAIT[p.sp].n} ${PET_TRAIT[p.sp].d(traitVal(p.sp))}.`,'r3','pet');ui();save()}, sell_:v=>{mapL=+v;renderWin('[data-win="map"] .map-node.picked')},go:()=>{if(mapL<=Math.max(S.prog[mapM],nmMaxFor(mapM))){gotoField(mapM,mapL);log(`Traveled to ${fieldName()}.`)}},
+    log(`${PETS[p.sp].n} is Bond ${bondRank(p.sp)}/5 - ${PET_TRAIT[p.sp].n} ${PET_TRAIT[p.sp].d(traitVal(p.sp))}.`,'r3','pet');ui();save()}, sell_:v=>{if(!Number.isInteger(+v)||+v<1||+v>(mapM>=10?5:15))return;mapL=+v;renderWin('[data-win="map"] .map-node.picked')},go:()=>{if(canTravel(mapM,mapL)){gotoField(mapM,mapL);log(`Traveled to ${fieldName()}.`)}},
   stat:k=>{if(S.pts>=cost(k)&&S.st[k]<statCap()){S.pts-=cost(k);S.st[k]++;S.hp=Math.min(S.hp,maxHp());ui();save()}},
   stat5:k=>{for(let i=0;i<5;i++)if(S.pts>=cost(k)&&S.st[k]<statCap()){S.pts-=cost(k);S.st[k]++}S.hp=Math.min(S.hp,maxHp());ui();save()},
   jobview:v=>{eclipseJobsBrowse=v==='browse';renderWin()},selk:v=>{selK=v;eclipseJobsBrowse=true;renderWin('[data-win=job] .ui-inspector')},job:n=>{if(n==='Novice'&&S.cls!=='Novice')ask('Restart as Novice? You go back to Base Lv 25, job levels cleared, and your stats are refunded. Classes you leave keep their own Base Lv, stats and gear, so you can switch back to them later.',()=>changeClass(n));else changeClass(n)},
@@ -5721,7 +5775,7 @@ const ACT={
   indexall:name=>{const owner=S,count=Math.min(cardMasteryCardByName(String(name)).length,CARD_MASTERY_PER_CARD-cardMasteryLevel(String(name)));if(count<1)return;ask(`Permanently consume ${count} ${name} for the Card Index? These copies will be gone and cannot be equipped or merged. Each adds one Mastery rank and one token.`,()=>{if(S!==owner)return;const r=donateAllToMastery(String(name),count);if(!r.donated)return;S.hp=Math.min(S.hp,maxHp());
     log(`🃏 ${name}: dedicated ${r.donated} cop${r.donated===1?'y':'ies'} - mastery ${r.level}/${CARD_MASTERY_PER_CARD}${r.left?`, ${r.left} left in the bag`:''}.`,'r3','card');
     addFloat(pl.x,2.6,pl.z,`🃏 ${name} ${r.level}/${CARD_MASTERY_PER_CARD}`,'#ffd23f');ui();save()})},
-  refprotect:v=>{const n=Number(v);if(![0,1].includes(n))return;S.useRefineScroll=n===1;ui();save()},buyscroll:()=>buyRefineScroll(),refine:k=>refine(k),craftdps:()=>craftDps(),bmmat:o=>buyMat(+o),bmore:o=>buyOre(o,$('oreQty-'+o)?.value??1),bmref:v=>{const[k,mode]=v.split(':');reforge(k,mode==='all')},refpick:v=>{const[k,i]=v.split(':'),it=S.eq[k];if(!it)return;const a=reforgeSelection[it.id]||(reforgeSelection[it.id]=[]),n=+i,j=a.indexOf(n);j<0?a.push(n):a.splice(j,1);renderWin()},refagain:()=>keepAndReforge(),refaccept:v=>resolveReforge(v==='yes'),mergecard:id=>mergeCard(id),convertcard:id=>convertCard(id),guidemode:v=>{if(['farm','boss','survive'].includes(v))guideMode=v;renderWin()},guidetier:v=>{if(['current','normal','nightmare'].includes(v))guideTier=v;renderWin()},guidemap:v=>{const[m,l]=v.split(':').map(Number);if(!tabs.includes('map'))openTab('map');mapSeason='atlas';mapM=m;mapL=l;renderWin()},sub:v=>{const[t,k]=v.split(':');sub[t]=k;if(t==='bag'&&k!=='bag')eqPick=null;renderWin()},selp:v=>{selP=+v;petPreviewStance='idle';sub.pet='manage';renderWin()},
+  refprotect:v=>{const n=Number(v);if(![0,1].includes(n))return;S.useRefineScroll=n===1;ui();save()},buyscroll:()=>buyRefineScroll(),refine:k=>refine(k),craftdps:()=>craftDps(),bmmat:o=>buyMat(+o),bmore:o=>buyOre(o,$('oreQty-'+o)?.value??1),bmref:v=>{const[k,mode]=v.split(':');reforge(k,mode==='all')},refpick:v=>{const[k,i]=v.split(':'),it=S.eq[k];if(!it)return;const a=reforgeSelection[it.id]||(reforgeSelection[it.id]=[]),n=+i,j=a.indexOf(n);j<0?a.push(n):a.splice(j,1);renderWin()},refagain:()=>keepAndReforge(),refaccept:v=>resolveReforge(v==='yes'),mergecard:id=>mergeCard(id),convertcard:id=>convertCard(id),guidemode:v=>{if(['farm','boss','survive'].includes(v))guideMode=v;renderWin()},guidetier:v=>{if(['current','normal','nightmare'].includes(v))guideTier=v;renderWin()},guidemap:v=>{const[m,l]=v.split(':').map(Number);if(!Number.isInteger(m)||m<0||m>=MAPS.length||!Number.isInteger(l)||l<1||l>(m>=10?5:15))return;if(!tabs.includes('map'))openTab('map');mapSeason=m>=10?'ascension':'atlas';mapM=m;mapL=l;renderWin()},sub:v=>{const[t,k]=v.split(':');sub[t]=k;if(t==='bag'&&k!=='bag')eqPick=null;renderWin()},selp:v=>{selP=+v;petPreviewStance='idle';sub.pet='manage';renderWin()},
   petmotion:v=>{if(['idle','walk','attack'].includes(v)){petPreviewStance=v;renderWin()}},
   petretry:()=>{const p=gp(selP);if(p&&petSpriteStore){const id=PETS[p.sp].spriteId;petSpriteStore.retry(petAssetKey(id,petPreviewStance,0)).catch(()=>{})}},
   pswap:id=>{const pet=gp(id),select=$('wins').querySelector('[data-pet-replace="'+id+'"]'),previous=gp(select?.value);if(!pet||pet.on||!previous?.on)return;previous.on=false;pet.on=true;ui();save()},
@@ -5790,7 +5844,7 @@ $('sideMenu').onclick=$('sideRail').onclick;
 $('dock').onclick=e=>{const b=e.target.closest('[data-t]');if(b)openTab(b.dataset.t)};
 $('feedTab').onclick=()=>ACT.feed();
 $('wins').addEventListener('click',e=>{if(e.target.closest('[data-eclipse-refine]'))ACT.sub('equip:refine')});
-$('wins').addEventListener('keydown',e=>{if(e.target.matches('.map-season-tabs [role=tab]')&&['ArrowLeft','ArrowRight','Home','End'].includes(e.key)){e.preventDefault();const v=e.key==='Home'?'atlas':e.key==='End'?'season2':e.target.dataset.v==='atlas'?'season2':'atlas';ACT.mapseason(v);return}if((e.key==='Enter'||e.key===' ')&&e.target.matches('[role=button][data-a]')){e.preventDefault();e.target.click()}});
+$('wins').addEventListener('keydown',e=>{if(e.target.matches('.map-season-tabs [role=tab]')&&['ArrowLeft','ArrowRight','Home','End'].includes(e.key)){e.preventDefault();const v=e.key==='Home'?'atlas':e.key==='End'?'ascension':e.target.dataset.v==='atlas'?'ascension':'atlas';ACT.mapseason(v);return}if((e.key==='Enter'||e.key===' ')&&e.target.matches('[role=button][data-a]')){e.preventDefault();e.target.click()}});
 $('wins').addEventListener('input',e=>{if(e.target.hasAttribute('data-eclipse-search')){eclipseSearch=e.target.value;renderWin()}});
 $('wins').addEventListener('change',e=>{if(e.target.matches('[data-workslot]')){ACT.workslot(e.target.value);return}if(e.target.matches('[data-sell-field],[data-sell-affix],[data-sell-min]'))editSellFilter(e.target)});
 $('wins').onclick=e=>{const nav=e.target.closest('[data-t]');if(nav&&TABS[nav.dataset.t]){if(!tabs.includes(nav.dataset.t))openTab(nav.dataset.t);return}const expand=e.target.closest('[data-ui-expand]');if(expand){e.stopPropagation();chooserAtPointerDown=null;chooserPointerInside=false;skillPointerInside=false;skillCardPointerInside=false;const k=expand.dataset.uiExpand;const restore=expandedPanels.has(k);expandedPanels.clear();if(!restore)expandedPanels.add(k);renderWin();return}const x=e.target.closest('[data-x]');if(x){openTab(x.dataset.x);return}const b=e.target.closest('[data-a]');if(b&&b.dataset.a==='ssel'&&e.target.closest('.sk-autocast'))return;if(b&&!b.disabled&&ACT[b.dataset.a]){if(b.dataset.a==='idxmap'&&e.target.closest('summary'))e.preventDefault();ACT[b.dataset.a](b.dataset.v)}};
@@ -5819,7 +5873,7 @@ document.addEventListener('click',e=>{
       else if(v==='ranked'||v==='training'){if(!TRIAL.on)trialEnter(v)}
     }
     else if(tb.dataset.buy)trialBuy(tb.dataset.buy,!!tb.closest('[data-win=market]'));
-    else if(tb.dataset.nmmap!==undefined){const mi=Math.max(0,Math.min(MAPS.length-1,+tb.dataset.nmmap||0));
+    else if(tb.dataset.nmmap!==undefined){const mi=Math.max(0,Math.min(9,+tb.dataset.nmmap||0));
       const nmrow=TRIAL_STORE.find(x=>x.id==='nmgear');
       if(nmrow.lv&&safeCount(S.lv)<nmrow.lv){e.stopPropagation();e.preventDefault();return}
       if((S.shards|0)<nmrow.c){e.stopPropagation();e.preventDefault();return}
@@ -5835,14 +5889,12 @@ document.addEventListener('click',e=>{
 });
 addEventListener('pg-exploration-close',()=>{if(S)ui();});
 function escapeUI(){
-  if(window.PGMapExploration?.isOpen()){PGMapExploration.close();return}
   if($('modal').style.display==='flex'){$('mn').click();return}
   if(tabs.length){tabs.length=0;expandedPanels.clear();eqPick=null;selS=null;sideOpen=false;renderWin();return}
   if(sideOpen||!$('screenOptions').hidden){sideOpen=false;$('screenOptions').hidden=true;$('screenBtn').setAttribute('aria-expanded','false');renderQ();return}
   ask('Log out of Horizon Haven? Your progress will be saved.',()=>logout(),{yes:'Log out',no:'Stay'});
 }
 addEventListener('keydown',e=>{if(!S||e.ctrlKey||e.metaKey||e.altKey)return;const k=e.key.toUpperCase();
-  if(window.PGMapExploration?.isOpen()){if(k==='ESCAPE'){e.preventDefault();escapeUI();}return;}
   if(k==='F12'){e.preventDefault();if(e.repeat)return;toggleFullscreen();return}
   if(k==='ESCAPE'){e.preventDefault();escapeUI();return}if(/INPUT|TEXTAREA|SELECT/.test(e.target.tagName))return;if(k==='Q'){qOpen=!qOpen;renderQ();return}const X={R:['equip','refine'],C:['bag','cards']}[k];if(X){const same=tabs.includes(X[0])&&sub[X[0]]===X[1]&&(!expandedPanels.size||expandedPanels.has(X[0]));sub[X[0]]=X[1];if(same)openTab(X[0]);else{if(expandedPanels.size){expandedPanels.clear();expandedPanels.add(X[0])}if(!tabs.includes(X[0])){if(tabs.length>=MAX_TABS)tabs.shift();tabs.push(X[0])}renderWin()}return}const f=Object.entries(TABS).find(([,v])=>v[2]===k);if(f)openTab(f[0])});
 
@@ -5898,13 +5950,13 @@ const levelPct=(value,required,maxed=false)=>maxed?100:Math.min(100,Math.max(0,(
 function bars(){if(!S||simVisualsOff())return;applyDisplay();
   const rates=stepHudRate(hudRate,currentUser,S.kills,zenyEarned,performance.now(),S.dmg,expEarned);hudRate=rates.state;
   const j=jobOf(),c=C(),hp=levelPct(S.hp,maxHp()),jp=levelPct(j.jx,jneed(j.jl),j.jl>=c.mj),bp=levelPct(S.exp,need(),S.lv>=150);
-  if($('eclipseStageLabel'))$('eclipseStageLabel').textContent=(S.lvl>10?'Nightmare ':'Stage ')+(S.lvl>10?S.lvl-10:S.lvl)+' / '+(S.lvl>10?5:10);
+  if($('eclipseStageLabel'))$('eclipseStageLabel').textContent=(S.lvl>10?'Nightmare ':'Stage ')+(S.lvl>10?S.lvl-10:S.lvl)+' / '+(S.lvl>10?5:normalStages(S.mp));
   if($('eclipseShards'))$('eclipseShards').textContent=safeCount(S.shards).toLocaleString();
   if($('eclipseBaseValue'))$('eclipseBaseValue').textContent=S.exp.toLocaleString()+' / '+need().toLocaleString();
   if($('eclipseJobValue'))$('eclipseJobValue').textContent=j.jx.toLocaleString()+' / '+jneed(j.jl).toLocaleString();
   if($('eclipsePetStrip'))eclipseSetMarkup($('eclipsePetStrip'),(S.pets||[]).filter(p=>p.on).map(p=>'<button data-t="pet" title="'+esc(PETS[p.sp].n)+'">'+petIcon(PETS[p.sp],true)+'<small>+'+(p.mut||0)+'</small></button>').join(''));
   if($('eclipseJobFill')){$('eclipseJobFill').style.width=jp+'%';$('eclipseJobLevel').textContent=j.jl}
-  if($('eclipseStagePips')){const host=$('eclipseStagePips'),count=S.lvl>10?5:10,stage=S.lvl>10?S.lvl-10:S.lvl;if(host.children.length!==count)host.innerHTML='<i></i>'.repeat(count);[...host.children].forEach((el,i)=>{el.className=i<stage-1?'done':i===stage-1?'now':''});host.setAttribute('aria-label',(S.lvl>10?'Nightmare ':'')+'Stage '+stage+' of '+count)}
+  if($('eclipseStagePips')){const host=$('eclipseStagePips'),count=S.lvl>10?5:normalStages(S.mp),stage=S.lvl>10?S.lvl-10:S.lvl;if(host.children.length!==count)host.innerHTML='<i></i>'.repeat(count);[...host.children].forEach((el,i)=>{el.className=i<stage-1?'done':i===stage-1?'now':''});host.setAttribute('aria-label',(S.lvl>10?'Nightmare ':'')+'Stage '+stage+' of '+count)}
   if($('eclipsePlayerName'))$('eclipsePlayerName').textContent=currentUser||'Adventurer';if($('eclipseAdvance'))$('eclipseAdvance').setAttribute('aria-pressed',String(S.adv!==false));
   $('lv').textContent=S.lv;$('cls2').textContent=S.cls;$('jl').textContent=j.jl;$('zeny').textContent=(+S.zeny||0).toLocaleString();
   const title=HUNT_TITLES.find(t=>t.id===S.equippedTitle&&titleUnlocked(t)),titleLabel=$('titleLabel');if(titleLabel){titleLabel.textContent=title?'✦ '+title.name:'';titleLabel.style.display=title?'inline-block':'none';titleLabel.title=title?'Index title · '+(title.xp??title.kills).toLocaleString()+' Index XP':''}
@@ -6218,7 +6270,21 @@ function landmark(G,k,c1,c2,r){
   else if(k===7){mk(G,SP(1.1),c1,0,.9,0);mk(G,SP(.75),c1,.8,.7,.3);mk(G,SP(.6),c1,-.7,.6,-.3);mk(G,CY(.1,.14,.6),c2,0,.35,0)}
   else{mk(G,BX(2.2,1.6,1.8),c1,0,.8,0);mk(G,BX(1.5,1.1,1.3),c1,1.1,1.5,.4);mk(G,BX(1.2,.9,1.1),c2,-.9,1.3,-.5)}
 }
-function buildDeco(m){while(deco.children.length)deco.remove(deco.children[0]);
+let ascensionWorld=null,ascensionRoot=null,ascensionEpoch=0;
+function clearAscension(){ascensionEpoch++;if(ascensionRoot)scene.remove(ascensionRoot);ascensionRoot=null;if(ascensionWorld)ascensionWorld.dispose();ascensionWorld=null;ground.visible=true;hemi.intensity=.8;sun.intensity=.9;}
+function buildAscension(m,stage){
+  const epoch=ascensionEpoch;townObjs.forEach(o=>o.visible=false);road.visible=false;if(KIT.ground)KIT.ground.visible=false;
+  if(!window.PGAscension)return;
+  PGAscension.build(m,stage).then(world=>{
+    if(epoch!==ascensionEpoch||!S||S.mp!==m||S.lvl!==stage||TRIAL.on){world.dispose();return}
+    ascensionWorld=world;ascensionRoot=new THREE.Group();
+    ascensionRoot.position.z=m===10?(Z0+Z1)/2-world.view.focus:0;
+    for(const child of [...world.scene.children])ascensionRoot.add(child);
+    scene.add(ascensionRoot);scene.background=world.scene.background;scene.fog=world.scene.fog;ground.visible=false;hemi.intensity=0;sun.intensity=0;
+  }).catch(()=>{if(epoch===ascensionEpoch)log('Scenery could not load. Travel again to retry.','r0');});
+}
+function buildDeco(m){clearAscension();while(deco.children.length)deco.remove(deco.children[0]);
+  if(m>=10){buildAscension(m,S.lvl);return}
   // The kit dresses every map, Prontera included (v27). The block-built town, its cathedral and its
   // fountain are the **no-atlas fallback** now, kept for the case where the sheet cannot be
   // downloaded - that is why the owner used to see old buildings standing on the new field.
@@ -6889,6 +6955,7 @@ const STAGE_SCENES=[
   ]
 ];
 function stageSpec(m,stage){
+  if(m>=10)return {layout:'field',f:{}};
   const original=KIT_MAP[m];
   if(stage<=3)return original;
   const tier=stage<=6?0:stage<=9?1:2,c=STAGE_SCENES[m][tier],f={base:c.base,base2:c.base};
@@ -8023,7 +8090,7 @@ function requestMobTexture(id,overrideUrl){if(!id)return null;const key=override
   const url=overrideUrl||mobSpriteUrl(id),rec={state:'loading',texture:null};if(!url)return null;mobTextureCache.set(key,rec);
   const tex=mobTextureLoader.load(url,loaded=>{loaded.magFilter=loaded.minFilter=THREE.NearestFilter;loaded.generateMipmaps=false;loaded.needsUpdate=true;rec.texture=loaded;rec.state='ready'},undefined,()=>{rec.state='failed'});
   tex.magFilter=tex.minFilter=THREE.NearestFilter;tex.generateMipmaps=false;rec.texture=tex;return rec}
-function useMobTexture(v,texture){if(!texture||v.official)return;
+function useMobTexture(v,texture){if(!texture||v.official||v.nativeMob)return;
   const map=texture.clone();map.repeat.set(1,1);map.offset.set(0,0);map.magFilter=map.minFilter=THREE.NearestFilter;map.generateMipmaps=false;map.needsUpdate=true;
   v.spr.material.map=map;v.spr.material.needsUpdate=true;
   const im=map.image||texture.image,ratio=im&&im.height?im.width/im.height:2.05/3.05;
@@ -8053,7 +8120,15 @@ function mobMotion(m,clock){
   o.lunge=out*(m.boss?.62:.45)-hitS*.2+own*.45;
   o.dir=Math.atan2(pl.z-m.z,pl.x-m.x);
   return o}
-function syncMobImage(v,m,s){if(v.nativePet){if(v.image)v.image.style.display='none';v.spr.visible=true;return}const im=v.image,motion=mobMotion(m,t);
+function syncMobImage(v,m,s){if(v.nativeMob){
+    v.spr.visible=false;const im=v.image;if(!im)return;
+    const direction=viewDir(Math.atan2(pl.z-m.z,pl.x-m.x)),action=(m.atkAnim>0?16:m.run?8:0)+direction;
+    const url='assets/mobs/v1/'+m.spriteId+'-'+action+'.png';
+    if(v.nativeAction!==action){v.nativeAction=action;im.src=url;v.imageFailed=false;}
+    const ready=!v.imageFailed&&im.complete&&im.naturalWidth>0;im.style.display=ready?'block':'none';if(!ready)return;
+    const base=scr(m.x,0,m.z),top=scr(m.x,3.05*s,m.z),height=Math.max(1,Math.abs(base[1]-top[1]))*512/(window.PGNativeMobHeights?.[m.spriteId]||160);
+    im.style.left=base[0]+'px';im.style.top=base[1]+'px';im.style.width=height+'px';im.style.height=height+'px';im.style.transform='translate(-50%,-78.125%)';im.style.filter='none';im.style.zIndex=String(Math.max(1,Math.round(base[1])));return;
+  }if(v.nativePet){if(v.image)v.image.style.display='none';v.spr.visible=true;return}const im=v.image,motion=mobMotion(m,t);
   if(v.official){if(im)im.style.display='none';v.spr.visible=true;
     const lx=motion.lunge?Math.cos(motion.dir)*motion.lunge:0,lz=motion.lunge?Math.sin(motion.dir)*motion.lunge:0;
     v.spr.position.set(lx,motion.hop,lz);
@@ -8069,12 +8144,13 @@ function syncMobImage(v,m,s){if(v.nativePet){if(v.image)v.image.style.display='n
   im.style.filter=m.flash?`brightness(${1+m.flash*.55}) saturate(${1+m.flash})`:'none'}
 function buildMob(m){
   const G=new THREE.Group();
-  const tex=getSheet('m:'+m.shape+':'+m.c,(ctx,x,y,d,kind,fr)=>drawCritter(ctx,x,y,d,kind,fr,m.shape,m.c));
+  const nativeMob=ASCENSION_MOB_IDS.has(m.spriteId);
+  const tex=nativeMob?new THREE.Texture():getSheet('m:'+m.shape+':'+m.c,(ctx,x,y,d,kind,fr)=>drawCritter(ctx,x,y,d,kind,fr,m.shape,m.c));
   const spr=mkBillboard(tex,2.05,3.05);G.add(spr);mkShadow(G,.42);scene.add(G);
-  const v={G,spr,pending:null,monster:m,spriteId:m.spriteId||0,official:false,image:null,imageFailed:false};
+  const v={G,spr,pending:null,monster:m,spriteId:m.spriteId||0,nativeMob,official:false,image:null,imageFailed:false};
   const url=m.pet?'assets/pets/v1/thumb-'+v.spriteId+'.png':mobSpriteUrl(v.spriteId);
   if(url){const im=document.createElement('img');im.className='mob-sprite-img';im.alt='';im.draggable=false;im.decoding='async';im.style.display='none';
-    im.onerror=()=>{v.imageFailed=true;im.style.display='none'};im.src=url;mobSpriteLayer.appendChild(im);v.image=im;requestMobTexture(v.spriteId,m.pet?url:undefined)}
+    im.onerror=()=>{v.imageFailed=true;im.style.display='none'};im.src=url;mobSpriteLayer.appendChild(im);v.image=im;if(nativeMob){v.nativeAction=0;spr.visible=false;}else requestMobTexture(v.spriteId,m.pet?url:undefined)}
   return v}
 let slashM=null;
 // The uploaded attack animation is the whole swing.  The old melee cue - a white arc stroked in
@@ -8993,8 +9069,9 @@ function draw(){
   if(key!==lastKey){lastKey=key;
     // v77: the trial is a scene of its own. Entering and leaving changes the key, so the arena is
     // built on the way in and the real field is rebuilt on the way out - exactly like a map move.
-    if(TRIAL.on){const col=new THREE.Color(0x171020);scene.background=col;scene.fog=new THREE.Fog(col,22,64);ground.material.color.setHex(0x392d42);hemi.intensity=.52;sun.intensity=.48;trialArena()}
+    if(TRIAL.on){clearAscension();const col=new THREE.Color(0x171020);scene.background=col;scene.fog=new THREE.Fog(col,22,64);ground.material.color.setHex(0x392d42);hemi.intensity=.52;sun.intensity=.48;trialArena()}
     else{const col=new THREE.Color(bn?0x8a6bb0:mp.sky);scene.background=col;scene.fog=new THREE.Fog(col,35,80);ground.material.color.setHex(mp.ground);hemi.intensity=.8;sun.intensity=.9;buildDeco(S.mp);road.material.color.setHex(S.mp===3?0xe9d9a8:0xd8cdb4)}}
+  if(ascensionWorld)ascensionWorld.update(t,S.bg!==false);
   P.position.set(pl.x,0,pl.z);
   const w=S.eq.weapon,wt=heroWeaponType(c.n,c.wt,w&&w.wt),clothN=S.eq.armor?TC[rarIdx(S.eq.armor)]:c.col,hairN=S.eq.head?TC[rarIdx(S.eq.head)]:0xd0492c,metalN=w?TC[rarIdx(w)]:0xc0c0c0;
   ensureHero({cls:c.n,cloth:hx(clothN),clothN,cape:c.cape?hx(c.cape):'',hair:hx(hairN),hairN,hat:c.hat?hx(c.hat):'',wt,metal:hx(metalN),skin:'#ffd2a8',look:lookOf(c.n),tier:c.tier||0,sex:S.sex||'m',hair:S.hair|0,shield:!!(S.eq.off&&S.eq.off.slot==='off')});

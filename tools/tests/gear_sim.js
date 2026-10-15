@@ -73,6 +73,7 @@ const code = [
   pick(/const nmAffMapOf=[^\n]*/, 'nmAffMapOf'),
   pick(/const affixValue=\(k,section,tier,roll[^)]*\)=>\{[^}]+\};/, 'affixValue'),
   `function executeGearRoll(mob,roll){const old=Math.random;Math.random=()=>roll;const drops=[],mkDrop=it=>({it});try{${gearDropLoop}}finally{Math.random=old}return drops}`,
+  grab('const ASCENSION_MATERIALS=', 'function kill(o){'),
   grab('function canShield(){', 'function ekey(it)'),        // shield and single-katar class rules
   grab('function slotAccepts(k,it){', 'function equipChooser(k){'),
 ].join('\n');
@@ -103,9 +104,9 @@ const WEP = ['sword', 'dagger', 'katar', 'staff', 'bow', 'axe', 'mace'];
 
 // ---- 1. the catalogue itself -------------------------------------------------
 t('ten maps, four job sections each, all of them populated', () => {
-  assert.strictEqual(G.MAPS.length, 10, 'map count');
+  assert.strictEqual(G.MAPS.length, 12, 'map count');
   assert.strictEqual(G.GEAR.length, 10, 'gear set count - one per map');
-  G.MAPS.forEach((mp, i) => {
+  G.MAPS.slice(0,10).forEach((mp, i) => {
     assert.ok(mp.gear === G.GEAR[i], mp.n + ' must use GEAR[' + i + ']');
     // v79: the two Nightmare rows are appended to the same array at load, so a map's gear table
     // carries six rows: four job sections (0-3) plus sections 4-5, which only the Nightmare
@@ -251,7 +252,7 @@ const isWep = x => !ARM.includes(x.k);
 
 t('every weapon in a map pool is usable by a line that levels there', () => {
   G.MAPS.forEach((mp, m) => {
-    const allowed = new Set(MAP_LINES[m].flatMap(wtsOf));
+    const allowed = new Set((MAP_LINES[m]||MAP_LINES[9]).flatMap(wtsOf));
     for(let l=1;l<=10;l++)G.gearPool(m,l).filter(isWep).forEach(x=>
       assert.ok(allowed.has(x.k),mp.n+' stage '+l+' drops a '+x.k+' but no line there can use it'));
   });
@@ -259,7 +260,7 @@ t('every weapon in a map pool is usable by a line that levels there', () => {
 
 t('a themed map serves its own line in every section', () => {
   [0, 1, 2, 3, 4].forEach(m => {
-    const wt = new Set(MAP_LINES[m].flatMap(wtsOf));
+    const wt = new Set((MAP_LINES[m]||MAP_LINES[9]).flatMap(wtsOf));
     G.MAPS[m].gear.forEach((sg, sec) => {
       assert.ok(typesIn(G.MAPS[m], sec).some(k => wt.has(k)), G.MAPS[m].n + ' section ' + sec + ' has no weapon its line can use');
     });
@@ -268,7 +269,7 @@ t('a themed map serves its own line in every section', () => {
 
 t('the type a line can actually use is never missing from its map', () => {
   G.MAPS.forEach((mp, m) => {
-    const want = new Set(MAP_LINES[m].flatMap(wtsOf)), have = new Set(mp.gear.flatMap((sg, sec) => typesIn(mp, sec)));
+    const want = new Set((MAP_LINES[m]||MAP_LINES[9]).flatMap(wtsOf)), have = new Set(mp.gear.flatMap((sg, sec) => typesIn(mp, sec)));
     want.forEach(k => assert.ok(have.has(k), mp.n + ' never drops a ' + k + ', which its classes train in'));
   });
 });
@@ -317,7 +318,7 @@ t('a high-tier section never repeats a starter weapon name', () => {
 
 // ---- 3. the drop mix ---------------------------------------------------------
 t('gear outnumbers cards on every field', () => {
-  for (let m = 0; m < G.MAPS.length; m++) for (let l = 1; l <= 10; l++) {
+  for (let m = 0; m < 10; m++) for (let l = 1; l <= 10; l++) {
     const F = G.fieldOf(m, l);
     F.mobs.forEach(mob => {
       assert.strictEqual(mob.drops.length, 3, 'want three gear rolls per mob');
@@ -331,7 +332,7 @@ t('gear outnumbers cards on every field', () => {
 });
 
 t('the drop table: 3.6% a kill on maps 1-5, 2.52% from Comodo on, boss pools 6% / 4.2%', () => {
-  for (let m = 0; m < G.MAPS.length; m++) for (let l = 1; l <= 10; l++) {
+  for (let m = 0; m < 10; m++) for (let l = 1; l <= 10; l++) {
     const F = G.fieldOf(m, l), mid = m >= 5;
     F.mobs.forEach(mob => {
       // v57 (owner: "30 min of grinding gave a bunch of legendaries"): the field roll is a
@@ -383,7 +384,7 @@ t('every field allocates a weapon first, and never lists an item twice (v79)', (
   // its staves, Payon a sword beside its bows), so every field offers its mobs a real choice.
   // v89: stages 14-15 (the N+ rows) no longer walk the shelf - each mob lists every weapon family -
   // so that band has its own test below. This walk test covers the walked stages 1-13.
-  for (let m = 0; m < G.MAPS.length; m++) for (let l = 1; l <= 13; l++) {
+  for (let m = 0; m < 10; m++) for (let l = 1; l <= (m>=10?10:13); l++) {
     const F = G.fieldOf(m, l), where = G.MAPS[m].n + ' stage ' + l;
     const pool = G.gearPool(m, l), weapons = pool.filter(x => !['armor','head','off','leg','acc'].includes(x.k));
     for (const mob of F.mobs) {
@@ -420,7 +421,7 @@ t('N and N+ by tier (v90.10): the weapon walk is back on every map, and the N+ h
   // N+ halving (NMPLUS_DROP) is kept: the weapon chance is half the Nightmare table, and the MVP pool is half.
   const isW = T => !['armor', 'head', 'off', 'leg', 'acc'].includes(T.k);
   // v90.10: tier 1 (maps 0-4) is the N row, section 4; tier 2 (maps 5-9) is the N+ row, section 5, halved
-  for (let m = 0; m < G.MAPS.length; m++) for (const l of [14, 15]) {
+  for (let m = 0; m < 10; m++) for (const l of [14, 15]) {
     const wantSec = m >= 5 ? 5 : 4;
     const F = G.fieldOf(m, l), where = G.MAPS[m].n + ' Nightmare stage ' + l;
     const weapons = G.gearPool(m, l).filter(isW);
@@ -465,7 +466,7 @@ t('N+ flat affixes (v89): STR and Flee top out near the high-tier ceiling, the o
 });
 
 t('fieldOf only hands out items from that field pool', () => {
-  for (let m = 0; m < G.MAPS.length; m++) for (let l = 1; l <= 10; l++) {
+  for (let m = 0; m < 10; m++) for (let l = 1; l <= 10; l++) {
     const pool = G.gearPool(m, l).map(x => x.n), F = G.fieldOf(m, l);
     F.mobs.forEach(mob => mob.drops.forEach(d => assert.ok(pool.includes(d[0].n), d[0].n + ' is not in the ' + G.MAPS[m].n + ' Lv' + l + ' pool')));
     if (l === 10) {
@@ -477,7 +478,7 @@ t('fieldOf only hands out items from that field pool', () => {
 });
 
 t('the field table and live gear drops preserve each normal map rarity tier', () => {
-  for (let m = 0; m < G.MAPS.length; m++) for (let l = 1; l <= 10; l++) {
+  for (let m = 0; m < 10; m++) for (let l = 1; l <= 10; l++) {
     const F = G.fieldOf(m, l), expected = G.dropTier(m, l);
     for (const mob of F.mobs) for (const [item] of mob.drops) {
       assert.strictEqual(item.tier, expected, G.MAPS[m].n + ' Stage ' + l + ' drop-table tier');
@@ -499,7 +500,7 @@ t('the field table and live gear drops preserve each normal map rarity tier', ()
 });
 
 t('regular mobs drop both ores on every stage and Stage 10 keeps its stronger boss rate', () => {
-  for (let m = 0; m < G.MAPS.length; m++) {
+  for (let m = 0; m < 10; m++) {
     for (let l = 1; l < 10; l++) {
       const field = G.fieldOf(m, l);
       assert.ok(field.mobs.every(x => x.ore), G.MAPS[m].n + ' Stage ' + l + ' regular mobs must drop both ores');
@@ -516,7 +517,7 @@ t('regular mobs drop both ores on every stage and Stage 10 keeps its stronger bo
 });
 
 t('the pool is the routed stage set, with the requested progression on late maps', () => {
-  G.MAPS.forEach((mp, m) => {
+  G.MAPS.slice(0,10).forEach((mp, m) => {
     let prev = 0;
     for (let l = 1; l <= 10; l++) {
       const pool = G.gearPool(m, l), sec = G.secField(m, l);
@@ -524,7 +525,7 @@ t('the pool is the routed stage set, with the requested progression on late maps
       const names = Object.keys(set.w).map(k => set.w[k]).concat([set.a, set.h, set.o, set.l, set.ac, set.ac2].filter(Boolean));
       assert.strictEqual(pool.map(x => x.n).join('|'), names.join('|'), mp.n + ' Lv' + l + ' pool must be the routed gear set');
       assert.ok(pool.every(x=>x.sec===sec),mp.n+' Lv'+l+' item/job section mismatch');
-      assert.ok(pool.every(x=>x.quality===(m===9&&l>=6?1.25:1)),mp.n+' Lv'+l+' quality variant mismatch');
+      assert.ok(pool.every(x=>x.quality===(m>=10||m===9&&l>=6?1.25:1)),mp.n+' Lv'+l+' quality variant mismatch');
       // v80 (owner): the Thief line gives its dagger up for the Assassin katar, so Morroc's
       // 2nd-job and high-tier shelves carry one weapon family where the lower ones carry two.
       // A one-family section may therefore be one item shorter than the section below it.
@@ -544,7 +545,7 @@ t('the pool is the routed stage set, with the requested progression on late maps
     } else if (m === 8) {
       for(let l=1;l<=5;l++)assert.ok(G.gearPool(m,l).every(x=>x.sec===2),'Niflheim stages 1-5 are second-job gear');
       for(let l=6;l<=10;l++)assert.ok(G.gearPool(m,l).every(x=>x.sec===3),'Niflheim stages 6-10 are third-job gear');
-    } else {
+    } else if(m===9) {
       for(let l=1;l<=5;l++)assert.strictEqual(G.fieldOf(m,l).gearSet,'base','Abyss stages 1-5 use standard third-job gear');
       assert.notStrictEqual(G.gearPool(m,5).map(x=>x.n).join('|'),G.gearPool(m,6).map(x=>x.n).join('|'),'Abyss Stage 6 must start the higher third-job set');
     }
@@ -643,7 +644,7 @@ t('class tier gates gear: Novice and 1st jobs share the low band, transcendent g
   // drops match the gate: by the time a map hands out a section, its own ladder can wear it
   // (map 0 is Novice-only starter gear; maps 5-10 give high-tier from field level 3, and their
   // Base Lv bands are 60+, where the second/third jobs live)
-  for (let m = 0; m < G.MAPS.length; m++) for (let l = 1; l <= 10; l++) {
+  for (let m = 0; m < 10; m++) for (let l = 1; l <= 10; l++) {
     const sec = G.secField(m, l);
     assert.ok(sec <= G.MAPS[m].gear.length - 1, G.MAPS[m].n + ' level ' + l + ' asks for section ' + sec);
   }
@@ -679,23 +680,23 @@ t('every slot is offered exactly what the class may wear, and nothing else', () 
 
 t('drop rarity is capped by MAP: no low-level boss can print endgame gear', () => {
   const bands = G.MAPTIER, caps = G.MAPGRADE;
-  assert.deepStrictEqual(Array.from(bands), [0, 0, 1, 1, 2, 2, 3, 3, 3, 3], 'the per-map rarity ladder changed');
-  assert.deepStrictEqual(Array.from(caps), [1, 2, 2, 3, 3, 3, 3, 3, 3, 4], 'the per-map grade cap changed');
+  assert.deepStrictEqual(Array.from(bands), [0, 0, 1, 1, 2, 2, 3, 3, 3, 3, 3, 3], 'the per-map rarity ladder changed');
+  assert.deepStrictEqual(Array.from(caps), [1, 2, 2, 3, 3, 3, 3, 3, 3, 4, 4, 4], 'the per-map grade cap changed');
   // v57 owner tiers: Izlude/Geffen/Morroc/Payon are early, Comodo/Louyang/Amatsu/Niflheim mid,
   // and Abyss is the only endgame map - so only Abyss may reach Legendary.
-  assert.deepStrictEqual(Array.from(caps).map(c => c >= 4), [false,false,false,false,false,false,false,false,false,true],
-    'Abyss must be the only map that can drop Legendary gear');
+  assert.deepStrictEqual(Array.from(caps).map(c => c >= 4), [false,false,false,false,false,false,false,false,false,true,true,true],
+    'Abyss and Ascension maps can drop Legendary gear');
   assert.strictEqual(G.dropTier(8, 10), 3, 'Niflheim stage 10 tops out below Abyss');
   assert.strictEqual(G.dropTier(9, 10), 4, 'Abyss stage 10 is the Legendary source');
   assert.ok(G.MAPVAL[9] > G.MAPVAL[8] * 1.2, 'and the Abyss value band is a clear step above the mid maps');
   assert.strictEqual(G.BAGMAX, 1000, 'the bag holds 1000 items');
-  for (let m = 0; m < G.MAPS.length; m++) {
+  for (let m = 0; m < 10; m++) {
     // stages 1-9 keep the map's own band, now clamped by that map's cap
     const perMap = [...new Set([1, 2, 3, 4, 5, 6, 7, 8, 9].map(l => G.dropTier(m, l)))];
     assert.strictEqual(perMap.length, 1, G.MAPS[m].n + ' stages 1-9 must all sit on one band');
     assert.strictEqual(perMap[0], Math.min(caps[m], bands[m]), G.MAPS[m].n + ' stages 1-9 band');
   }
-  for (let m = 0; m < G.MAPS.length; m++) for (let l = 1; l <= 10; l++) {
+  for (let m = 0; m < 10; m++) for (let l = 1; l <= 10; l++) {
     const want = Math.min(caps[m], l >= 10 ? 4 : bands[m]);
     assert.strictEqual(G.dropTier(m, l), want, G.MAPS[m].n + ' stage ' + l + ' band');
     assert.ok(want <= caps[m], G.MAPS[m].n + ' stage ' + l + ' rolled past its cap');
