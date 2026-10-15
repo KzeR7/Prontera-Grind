@@ -5,6 +5,8 @@
 19 classes, 91 skills and the `haven-v152` build label. Nothing here is unlocked until the owner
 gives an explicit instruction (see [Go-live checklist](#go-live-checklist)).
 
+**Picking this up later? Read [HANDOFF.md](HANDOFF.md) first:** it lists where work stopped, what is verified and what is still open.
+
 This folder is the reference for that instruction. It does not replace the code: the code is the
 source of truth, and this file says what it should do and what is still open.
 
