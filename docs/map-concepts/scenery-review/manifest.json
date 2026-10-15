@@ -1,0 +1,180 @@
+{
+  "route": {
+    "image": "astral-route.png",
+    "bytes": 589483,
+    "sha256": "0515c22e9d1b43370f66111a3c14a6c5ae1cd9d80795a0e96e1f9f1aa7831e69",
+    "width": 900,
+    "height": 740
+  },
+  "schemaVersion": 3,
+  "status": "Actual scenery proposal captures; no enemies or combat",
+  "renderer": "Chromium WebGL 2 / ANGLE SwiftShader; not physical-device performance proof",
+  "sceneSourceSha256": "91e995bd735d54b7d82e2fa18b29ba0fde6b2716eb8a9878d23c2b314c4fd993",
+  "viewerSourceSha256": "d5b87b8a87a9fb2df08cc2a25cf4d63c3dafb13fb7e89780ed47f3b18659a36f",
+  "surfaces": [
+    {
+      "file": "weathered-stone.png",
+      "bytes": 2458238,
+      "sha256": "c460d84b20904a8b7c8da2448d4d5564af405b53f0624253e9b850f7d6d16bdb",
+      "kind": "Original AI-generated environment material; not native sprite art"
+    },
+    {
+      "file": "molten-basalt.png",
+      "bytes": 2573732,
+      "sha256": "929aca81925d06cef71c9a543788e55f18c30ca519a9ca6b89e6ff4a8892b1cc",
+      "kind": "Original AI-generated environment material; not native sprite art"
+    },
+    {
+      "file": "astral-void.png",
+      "bytes": 1491376,
+      "sha256": "55a0445257f23ddc84117162894dcce282d89c9c132c082f4092cf7dba7c97b1",
+      "kind": "Original AI-generated environment material; not native sprite art"
+    }
+  ],
+  "layouts": [
+    {
+      "destination": "astral",
+      "stage": 1,
+      "title": "Arrival Span",
+      "footprint": "bridge",
+      "features": [
+        "One continuous bridge through the astral void",
+        "Slender rails and a thin suspended deck",
+        "Broken arrival arches, not separate islands",
+        "The route continues toward the distant boss gate"
+      ],
+      "description": "The arrival section of one long floating bridge. Thin suspended stonework, ruined edge pillars and open space replace detached square platforms.",
+      "image": "astral-1.png",
+      "width": 900,
+      "height": 740,
+      "bytes": 804751,
+      "sha256": "90b55120ecfe6b34468c7f64f5cb28862b2f50d67017c7e21cda6bb187d12c2a"
+    },
+    {
+      "destination": "astral",
+      "stage": 4,
+      "title": "Ruined Crossing",
+      "footprint": "bridge",
+      "features": [
+        "The same bridge passing ruined gate pylons",
+        "Crumbling edge masonry and flying buttresses",
+        "No cathedral room or detached fighting platform",
+        "The far sanctuary stays connected by the bridge"
+      ],
+      "description": "The same uninterrupted bridge passing ruined gate pylons and crumbling edge masonry. This is a zone along the route, not a cathedral fighting room.",
+      "image": "astral-4.png",
+      "width": 900,
+      "height": 740,
+      "bytes": 829935,
+      "sha256": "8bd8fbcd0c4225ab2544569c51db96332ebb96de88fa6f73d9e0822116e48266"
+    },
+    {
+      "destination": "astral",
+      "stage": 7,
+      "title": "Celestial Approach",
+      "footprint": "bridge",
+      "features": [
+        "The final long span toward the sanctuary",
+        "A celestial armillary beside the route",
+        "Luminous edge inlay guides the approach",
+        "Continuous walkable paving into the boss terminus"
+      ],
+      "description": "A long celestial approach with luminous edge inlay, a nearby armillary and the sanctuary ahead. The paving remains connected from arrival to the boss.",
+      "image": "astral-7.png",
+      "width": 900,
+      "height": 740,
+      "bytes": 844484,
+      "sha256": "aab0ae3e88212bbdeb3ee994a829b4d91d2efe09c2092f6288cb4a2d0b7bdf64"
+    },
+    {
+      "destination": "astral",
+      "stage": 10,
+      "title": "Bridge-End Sanctuary",
+      "footprint": "bridge-terminus",
+      "features": [
+        "Widened sanctuary at the end of the bridge",
+        "The approach bridge remains visibly attached",
+        "Broken celestial gate beyond the boss position",
+        "Not an isolated circular arena or stone island"
+      ],
+      "description": "The bridge flares into a pointed end sanctuary with a flat ceremonial seal and broken celestial gate. The approach stays attached; this is not a separate round island.",
+      "image": "astral-10.png",
+      "width": 900,
+      "height": 740,
+      "bytes": 746326,
+      "sha256": "7acf480c92a2e0c32366302fde7f9cd2074a55214078c31520f253108e1f5a80"
+    },
+    {
+      "destination": "thor",
+      "stage": 1,
+      "title": "Outer Fissure",
+      "footprint": "natural-field",
+      "features": [
+        "Irregular cooled-lava shelf",
+        "One-sided molten fissure",
+        "Cooled spills & fractured basalt",
+        "Loose volcanic rubble"
+      ],
+      "description": "An exposed shelf beside an irregular molten fissure. Scattered short basalt outcrops and cooled spill tongues replace continuous walls and paired lava stripes.",
+      "image": "thor-1.png",
+      "width": 900,
+      "height": 740,
+      "bytes": 781807,
+      "sha256": "da1a1524923b37c683c4cbcce0b29354a41431a3168a91e910fc562e8fa3a35a"
+    },
+    {
+      "destination": "thor",
+      "stage": 4,
+      "title": "Magma Gallery",
+      "footprint": "natural-field",
+      "features": [
+        "Wide magma basin & twin cascades",
+        "Molten overflow around the side ledges",
+        "Crusted lava islands",
+        "Sheared cliff on the opposite bank"
+      ],
+      "description": "A large asymmetric magma basin with twin lava falls and crusted islands on one side, opposed by a sheared basalt cliff on the other.",
+      "image": "thor-4.png",
+      "width": 900,
+      "height": 740,
+      "bytes": 808877,
+      "sha256": "54388c873009c0670597e61fa368d322cb7ee46e539fedb21c9e123df11e9358"
+    },
+    {
+      "destination": "thor",
+      "stage": 7,
+      "title": "Core Approach",
+      "footprint": "natural-field",
+      "features": [
+        "Two active side calderas",
+        "Radial heat fractures & cooled spills",
+        "Obsidian ribs & glowing vents",
+        "Lava streams around the approach"
+      ],
+      "description": "An active caldera approach framed by two volcanic vents, molten spills, obsidian ribs and more severe floor damage. Not another waterfall-gallery layout.",
+      "image": "thor-7.png",
+      "width": 900,
+      "height": 740,
+      "bytes": 835631,
+      "sha256": "d58cca9dd6848f7f9ebb0a786474f5daa4ebe26ebee8de321401a8a2501b8905"
+    },
+    {
+      "destination": "thor",
+      "stage": 10,
+      "title": "Primal Core",
+      "footprint": "circle",
+      "features": [
+        "54-unit circular obsidian arena",
+        "Arena surrounded by a broad lava lake",
+        "Radial fractured basalt crown",
+        "Giant rear caldera & molten breach"
+      ],
+      "description": "A circular obsidian dais in a broad lava lake, encircled by a fractured basalt crown, with a giant volcanic caldera behind it. No rectangular causeway floor.",
+      "image": "thor-10.png",
+      "width": 900,
+      "height": 740,
+      "bytes": 950191,
+      "sha256": "398b42c2b028b3bdea6c15bd1796a807368f3504ed80dcec2d6caa8620ef144d"
+    }
+  ]
+}

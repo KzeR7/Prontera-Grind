@@ -1,0 +1,56 @@
+{
+  "status": "pass",
+  "sources": {
+    "index.html": "d00c6077e690ea106a142f26e95d04a2b2724bac04dc2880033e7c430c7e8b93",
+    "assets/map-exploration.js": "cc9b9fbc25c9d9e4cbcdb1880a95ae0f836991cc3ef33e3310b8268337d0e57c",
+    "tools/maps/build_game_exploration.js": "ba67e9738448d295c3bd33800efa1ce79073762fe24c12e1352274b490848d36",
+    "tools/maps/journey-hero.js": "befd05894b5b1285f6051ae27138f4eb061f51df20fde969e3f3fa70dd79502a"
+  },
+  "errors": [],
+  "warnings": [],
+  "unavailableOriginalArtwork": [
+    "https://static.divine-pride.net/images/mobs/png/1002.png",
+    "https://static.divine-pride.net/images/mobs/png/1002.png",
+    "https://static.divine-pride.net/images/mobs/png/1002.png",
+    "https://static.divine-pride.net/images/mobs/png/1007.png",
+    "https://static.divine-pride.net/images/mobs/png/1007.png",
+    "https://static.divine-pride.net/images/mobs/png/1007.png",
+    "https://static.divine-pride.net/images/mobs/png/1002.png",
+    "https://static.divine-pride.net/images/mobs/png/1007.png",
+    "https://static.divine-pride.net/images/mobs/png/1007.png",
+    "https://static.divine-pride.net/images/mobs/png/1002.png",
+    "https://static.divine-pride.net/images/mobs/png/1002.png",
+    "https://static.divine-pride.net/images/mobs/png/1007.png",
+    "https://static.divine-pride.net/images/mobs/png/1007.png",
+    "https://static.divine-pride.net/images/mobs/png/1002.png",
+    "https://static.divine-pride.net/images/mobs/png/1002.png",
+    "https://static.divine-pride.net/images/mobs/png/1002.png",
+    "https://static.divine-pride.net/images/mobs/png/1007.png",
+    "https://static.divine-pride.net/images/mobs/png/1007.png",
+    "https://static.divine-pride.net/images/mobs/png/1002.png"
+  ],
+  "renderer": "Actual Chromium WebGL / software ANGLE; CDN transport fulfilled with pinned local Three r128",
+  "checks": "World Atlas / Season 2 Maps right-hand tabs, separate map collections, mobile tab switching, Map UI cards, deferred runtime/images, saved female Archer appearance snapshot, continuous stage-7 walking without rebuild, unchanged farming/selection IDs (normal original-field rewards continue), continuing field simulation, destination title sync, reload preserving stage/appearance, in-frame Escape/close disposal, Thor boss/no overlay, phone bounds, no dev requests",
+  "captures": [
+    {
+      "file": "game-world-atlas.png",
+      "bytes": 1236895,
+      "sha256": "8427630ff6b2c26366fe690088388bb7d94d8e5f28407b962acaba5b7af000dc"
+    },
+    {
+      "file": "game-map-cards.png",
+      "bytes": 981564,
+      "sha256": "1cf39a1842b6d92c122db31eae087041b1cc8fdb31828a9f37be08cc564f92a7"
+    },
+    {
+      "file": "game-astral-exploration.png",
+      "bytes": 1267610,
+      "sha256": "dabf73116fc4f9d991b05c426dbc90a92b55b5c80aa0e2422a0869f91ae2fb6c"
+    },
+    {
+      "file": "game-thor-phone.png",
+      "bytes": 270498,
+      "sha256": "07c0a0e125b04ebdff9d043a2c70a5b55d174d34c452280d414739bfe023c747"
+    }
+  ]
+}

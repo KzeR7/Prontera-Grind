@@ -1,0 +1,168 @@
+{
+  "schemaVersion": 1,
+  "status": "Native artwork pending. These are identity records, not installed monsters.",
+  "identitySource": {
+    "repository": "rathena/rathena",
+    "commit": "d4b8e7b8f16061cc2496d377ac8f777ce72a4f39",
+    "path": "db/re/mob_db.yml",
+    "sha256": "fe79480381a98953a0281edafd775486926b5e186feec0a99816a95433907136"
+  },
+  "monsters": [
+    {
+      "id": 1366,
+      "name": "Lava Golem",
+      "aegisName": "LAVA_GOLEM",
+      "status": "missing-native-source",
+      "atlas": null,
+      "required": [
+        "Original ACT",
+        "Original SPR",
+        "Authorised provenance",
+        "Audited native frame export"
+      ]
+    },
+    {
+      "id": 1700,
+      "name": "Dame of Sentinel",
+      "aegisName": "OBSERVATION",
+      "status": "missing-native-source",
+      "atlas": null,
+      "required": [
+        "Original ACT",
+        "Original SPR",
+        "Authorised provenance",
+        "Audited native frame export"
+      ]
+    },
+    {
+      "id": 1702,
+      "name": "Baroness of Retribution",
+      "aegisName": "RETRIBUTION",
+      "status": "missing-native-source",
+      "atlas": null,
+      "required": [
+        "Original ACT",
+        "Original SPR",
+        "Authorised provenance",
+        "Audited native frame export"
+      ]
+    },
+    {
+      "id": 1705,
+      "name": "Despero of Thanatos",
+      "aegisName": "THA_DESPERO",
+      "status": "missing-native-source",
+      "atlas": null,
+      "required": [
+        "Original ACT",
+        "Original SPR",
+        "Authorised provenance",
+        "Audited native frame export"
+      ]
+    },
+    {
+      "id": 1706,
+      "name": "Maero of Thanatos",
+      "aegisName": "THA_MAERO",
+      "status": "missing-native-source",
+      "atlas": null,
+      "required": [
+        "Original ACT",
+        "Original SPR",
+        "Authorised provenance",
+        "Audited native frame export"
+      ]
+    },
+    {
+      "id": 1707,
+      "name": "Dolor of Thanatos",
+      "aegisName": "THA_DOLOR",
+      "status": "missing-native-source",
+      "atlas": null,
+      "required": [
+        "Original ACT",
+        "Original SPR",
+        "Authorised provenance",
+        "Audited native frame export"
+      ]
+    },
+    {
+      "id": 1708,
+      "name": "Thanatos Phantom",
+      "aegisName": "THANATOS",
+      "status": "missing-native-source",
+      "atlas": null,
+      "required": [
+        "Original ACT",
+        "Original SPR",
+        "Authorised provenance",
+        "Audited native frame export"
+      ]
+    },
+    {
+      "id": 1831,
+      "name": "Salamander",
+      "aegisName": "SALAMANDER",
+      "status": "missing-native-source",
+      "atlas": null,
+      "required": [
+        "Original ACT",
+        "Original SPR",
+        "Authorised provenance",
+        "Audited native frame export"
+      ]
+    },
+    {
+      "id": 1832,
+      "name": "Ifrit",
+      "aegisName": "IFRIT",
+      "status": "missing-native-source",
+      "atlas": null,
+      "required": [
+        "Original ACT",
+        "Original SPR",
+        "Authorised provenance",
+        "Audited native frame export"
+      ]
+    },
+    {
+      "id": 1833,
+      "name": "Kasa",
+      "aegisName": "KASA",
+      "status": "missing-native-source",
+      "atlas": null,
+      "required": [
+        "Original ACT",
+        "Original SPR",
+        "Authorised provenance",
+        "Audited native frame export"
+      ]
+    },
+    {
+      "id": 1836,
+      "name": "Magmaring",
+      "aegisName": "MAGMARING",
+      "status": "missing-native-source",
+      "atlas": null,
+      "required": [
+        "Original ACT",
+        "Original SPR",
+        "Authorised provenance",
+        "Audited native frame export"
+      ]
+    },
+    {
+      "id": 1837,
+      "name": "Imp",
+      "aegisName": "IMP",
+      "status": "missing-native-source",
+      "atlas": null,
+      "required": [
+        "Original ACT",
+        "Original SPR",
+        "Authorised provenance",
+        "Audited native frame export"
+      ]
+    }
+  ]
+}

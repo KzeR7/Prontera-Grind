@@ -1,0 +1,110 @@
+{
+  "schemaVersion": 1,
+  "delivery": {
+    "initialDestination": "astral",
+    "initialMaterialBytes": 2289304,
+    "initialMaterialRequests": [
+      "weathered-stone-b2af8375d71a.webp",
+      "astral-void-2821e53955c8.webp"
+    ],
+    "initialLocalResponseBodyBytes": 3318576,
+    "initialMaterialResponses": [
+      {
+        "path": "/tools/maps/textures/weathered-stone-b2af8375d71a.webp",
+        "status": 200,
+        "bodyBytes": 1372442
+      },
+      {
+        "path": "/tools/maps/textures/astral-void-2821e53955c8.webp",
+        "status": 200,
+        "bodyBytes": 916862
+      }
+    ],
+    "measurement": "Local HTTP Content-Length/request audit, not cloud-account usage or actual cached wire transfer",
+    "allMaterialBytes": 3734024,
+    "pixelChecks": [
+      {
+        "file": "weathered-stone-b2af8375d71a.webp",
+        "pixels": 1048576,
+        "identical": true
+      },
+      {
+        "file": "molten-basalt-33dab0df2735.webp",
+        "pixels": 1048576,
+        "identical": true
+      },
+      {
+        "file": "astral-void-2821e53955c8.webp",
+        "pixels": 1056768,
+        "identical": true
+      }
+    ]
+  },
+  "quickArrivalWallMs": 7919,
+  "quickTripWallMs": 10192,
+  "sources": {
+    "tools/map_journey.html": "82a5b380be5609e403e00d86cc9016b41bedd9279294d18538f764ccf9967f96",
+    "tools/maps/endgame-scenes.js": "91e995bd735d54b7d82e2fa18b29ba0fde6b2716eb8a9878d23c2b314c4fd993",
+    "tools/maps/journey-state.js": "7ed872e085e3de68104686f4e710e907c929c349076c757efb15ee4401ed20ca",
+    "tools/maps/journey-navigation.js": "72ae90859beaefbe9c9b50ead6cfdabe2199c9bfca525d75ab4eea373acae6b5",
+    "tools/maps/journey-materials.js": "d7b211f3657a8dc7435f016d6af22866100ab5c20ec09aa4c6094cf54b5f3051",
+    "tools/maps/textures/runtime-manifest.json": "5da24842da1d76f69c1f1a7089118064f1e40dfdb6cf70d0d623081c1a39b545",
+    "tools/maps/journey-details.js": "a7298c503af7074471e8d42b0bbb4c32cc2a5cfb371684c31c74412156d58e52",
+    "tools/maps/journey-hero.js": "befd05894b5b1285f6051ae27138f4eb061f51df20fde969e3f3fa70dd79502a",
+    "tools/maps/mob-catalog.json": "61e96471514ead01b75b2c7399198bb60bdb09089ebc02d1b3db8335c23f651c",
+    "assets/wardrobe.js": "4ecdf388504260033c2e09a228acaf3f71a4a381a0b7709ee5301c35753071f6",
+    "assets/wardrobe/v5/catalog.json": "8c5cb0c9fc0b709ce32d72c8bcf0daf10bfb9e2c13149772085b4442299eec87",
+    "tools/maps/textures/weathered-stone-b2af8375d71a.webp": "b2af8375d71a6184bec621d3e23e3050ea9435dbfb97637a104cdb651abb8872",
+    "tools/maps/textures/molten-basalt-33dab0df2735.webp": "33dab0df2735fcd5d7b6b8bbd6f2851da76279e3bb2c68775ece1c8af77b36e6",
+    "tools/maps/textures/astral-void-2821e53955c8.webp": "2821e53955c88de32a173af5f2277902cb127cb1d4a8b28f2cdb72d146ffab8f"
+  },
+  "graphics": {
+    "version": "WebGL 2.0 (OpenGL ES 3.0 Chromium)",
+    "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)"
+  },
+  "errors": [],
+  "failed": [],
+  "transportCompletionNotices": [
+    {
+      "url": "http://127.0.0.1:8000/assets/wardrobe/v5/poses-b1039314111bfacaaf2b.json",
+      "reason": "net::ERR_ABORTED"
+    },
+    {
+      "url": "http://127.0.0.1:8000/assets/wardrobe/v5/atlas-54e7b484dcfe15763a4a.png",
+      "reason": "net::ERR_ABORTED"
+    }
+  ],
+  "warnings": [],
+  "installedMobs": 0,
+  "checks": "Native hash-checked hero, real walking/idle directions, quick/normal stage travel, inactive encounters during travel, destination-only layout on arrival, no scene rebuild, camera following, arrival-only stage change, pause/resume, mid-route reversal, encounter layouts, explicit source-pending mobs, markers, detail/overview/checkpoint controls, on-screen phone travel, keyboard navigation, stage URLs, preserved Thor overlay, retained Astral position, native failure/retry, degraded-material/catalog fallback, direct Astral/Thor links and actual context loss. Software WebGL only.",
+  "captures": [
+    {
+      "image": "journey-walk.png",
+      "sha256": "f2370d0c2ac3af182d8e36357fc38ca2531e999f61da003e493e804da92fa797",
+      "bytes": 1043479,
+      "width": 930,
+      "height": 812
+    },
+    {
+      "image": "journey-overview.png",
+      "sha256": "4eab32a88acf574cefa039b5339177253c5e814cbe54fb7c20f32f514e97ec05",
+      "bytes": 636875,
+      "width": 930,
+      "height": 812
+    },
+    {
+      "image": "journey-astral-boss.png",
+      "sha256": "dc46aac6afde4ea6d968050d222848745fc022ef83746d2eaf794440362987b4",
+      "bytes": 875175,
+      "width": 930,
+      "height": 812
+    },
+    {
+      "image": "journey-thor.png",
+      "sha256": "231c51ba31f4f7cbba40257e19015717c5728a9861ff1b4ed4e2b12e69e55534",
+      "bytes": 1031850,
+      "width": 930,
+      "height": 812
+    }
+  ]
+}

@@ -1,0 +1,53 @@
+{
+  "schemaVersion": 1,
+  "encoding": "lossless-webp",
+  "note": "Pixel-identical environment delivery copies; PNG masters and native sprites unchanged.",
+  "destinations": {
+    "astral": [
+      "stone",
+      "space"
+    ],
+    "thor": [
+      "stone",
+      "lava"
+    ]
+  },
+  "textures": {
+    "stone": {
+      "file": "weathered-stone-b2af8375d71a.webp",
+      "bytes": 1372442,
+      "sha256": "b2af8375d71a6184bec621d3e23e3050ea9435dbfb97637a104cdb651abb8872",
+      "width": 1024,
+      "height": 1024,
+      "mode": "RGB",
+      "pixelSha256": "b263e5aeab6e708e83671e44013cb5da1d18ad88e9825e0bb379067ef4adc518",
+      "source": "weathered-stone.png",
+      "sourceBytes": 2458238,
+      "sourceSha256": "c460d84b20904a8b7c8da2448d4d5564af405b53f0624253e9b850f7d6d16bdb"
+    },
+    "lava": {
+      "file": "molten-basalt-33dab0df2735.webp",
+      "bytes": 1444720,
+      "sha256": "33dab0df2735fcd5d7b6b8bbd6f2851da76279e3bb2c68775ece1c8af77b36e6",
+      "width": 1024,
+      "height": 1024,
+      "mode": "RGB",
+      "pixelSha256": "ab13c1906f961db6f601b5414366123f81e07397c3b6d800bec932ad560144da",
+      "source": "molten-basalt.png",
+      "sourceBytes": 2573732,
+      "sourceSha256": "929aca81925d06cef71c9a543788e55f18c30ca519a9ca6b89e6ff4a8892b1cc"
+    },
+    "space": {
+      "file": "astral-void-2821e53955c8.webp",
+      "bytes": 916862,
+      "sha256": "2821e53955c88de32a173af5f2277902cb127cb1d4a8b28f2cdb72d146ffab8f",
+      "width": 1376,
+      "height": 768,
+      "mode": "RGB",
+      "pixelSha256": "3b325c460dcfa15d798eafb2cece0c7d1da9a9846f9d10f303bae759e8d8a629",
+      "source": "astral-void.png",
+      "sourceBytes": 1491376,
+      "sourceSha256": "55a0445257f23ddc84117162894dcce282d89c9c132c082f4092cf7dba7c97b1"
+    }
+  }
+}

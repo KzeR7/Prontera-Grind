@@ -1,0 +1,57 @@
+{
+  "checkedOn": "2026-10-15",
+  "outcome": "No matching original mob sprite pairs recovered; owner requested leaving mobs pending if recovery fails.",
+  "requiredNativeIds": [
+    1366,
+    1700,
+    1702,
+    1705,
+    1706,
+    1707,
+    1708,
+    1831,
+    1832,
+    1833,
+    1836,
+    1837
+  ],
+  "method": "GitHub recursive HEAD tree inspection; no truncated trees in these results. Metadata/search is not proof of artwork availability or permission.",
+  "repositories": [
+    {
+      "repository": "b1glord/ragnarokclientpatch",
+      "treeFiles": 86,
+      "actSprFiles": 0,
+      "matchingRequiredPaths": []
+    },
+    {
+      "repository": "Tombstonie/RagnarokClientNew",
+      "treeFiles": 24,
+      "actSprFiles": 0,
+      "matchingRequiredPaths": []
+    },
+    {
+      "repository": "eqbot/RagnarokClient",
+      "treeFiles": 323,
+      "actSprFiles": 0,
+      "matchingRequiredPaths": []
+    },
+    {
+      "repository": "Orkin/roBrowser",
+      "treeFiles": 250,
+      "actSprFiles": 0,
+      "matchingRequiredPaths": []
+    },
+    {
+      "repository": "adsonpleal/ragassets",
+      "treeFiles": 231,
+      "actSprFiles": 30,
+      "matchingRequiredPaths": []
+    }
+  ],
+  "notes": [
+    "ragassets native monster test fixtures include Poring, not the twelve required mobs.",
+    "The hosted native-animation service is outside the allowed outbound hosts; required mob exports were not downloaded or verified.",
+    "No generated/recoloured/substitute monster images were added.",
+    "Authorised complete native exports remain an alternative to raw ACT/SPR input."
+  ]
+}

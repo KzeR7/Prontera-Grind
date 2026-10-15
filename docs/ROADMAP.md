@@ -38,7 +38,7 @@ This roadmap outlines the next major evolutionary phase:
                                          ▼
                       ┌──────────────────────────────────────┐
                       │    Two New Maps (Maps 11 & 12)       │
-                      │ Thanatos Tower & Thor Volcano Fields │
+                      │ Astral Citadel & Thor Volcano Fields │
                       └──────────────────┬───────────────────┘
                                          │
                          ┌───────────────┴───────────────┐
@@ -184,10 +184,20 @@ Standard base stat allocation caps at 120 (costing 2,790 points out of 2,811 ava
 
 ## 4. Two New Progression Maps (Maps 11 & 12)
 
+Visual direction studies: [Map concept review](map-concepts/README.md). These are
+concept references, not implemented maps or production sprite assets.
+Owner direction (15 October 2026): four shared environment designs per destination
+for Stages 1–3, 4–6, 7–9 and Stage 10, with much higher scenery/mob detail.
+Latest correction: Astral must be a connected floating bridge in space toward its
+far-end boss; Thor ordinary fields must be natural terrain, not fighting boxes.
+The owner-approved Thor boss visual design is retained.
+The revised material probabilities below are provisional 100× reductions from the
+initial roadmap; final rates require measured farming-throughput validation.
+
 These two maps bridge the gap beyond Map 10 (Abyss) and provide the foundational farming loop for 3rd Job skills, boss summoning, and weapon ascension.
 
-### Map 11: Thanatos Tower (Ruins of the Fallen Citadel)
-* **Theme:** A shattered gothic sky-temple bathed in violet twilight, celestial debris, and haunted stone platforms.
+### Map 11: Astral Citadel (Ruins of the Fallen Citadel)
+* **Theme:** One continuous floating bridge through space, passing ruined celestial architecture and widening into a boss sanctuary at its far end. Stage groups are zones along the same route, not disconnected platforms.
 * **Level Recommendation:** Base Lv 140–150 (Transcendent & Awakening progression).
 * **Environment Palette:** Sky: `#18122B`, Ground: `#393053`, Ruins: `#443C68`, Accent: Celestial Lavender `#A7727D`.
 * **Monster Roster:**
@@ -220,13 +230,13 @@ Monsters in Maps 11 and 12 drop two vital materials that feed the entire endgame
 
 ```
     [Mobs in Map 11 & 12]
-          ├── Common Drop (~3.5%)  ──> [Item A: Astral Shard / Primal Catalyst]
+          ├── Common Drop (~0.035%)  ──> [Item A: Astral Shard / Primal Catalyst]
           │                                  │
           │                                  ▼
           │                            Craft [Class Skill Glyphs]
           │                            (Permanent Skill Enhancements)
           │
-          └── Rare Drop (~0.25%)   ──> [Item B: Valkyrie's Sigil / Ancient Blood]
+          └── Rare Drop (~0.0025%)   ──> [Item B: Valkyrie's Sigil / Ancient Blood]
                                              │
                                              ▼
                                        Consume in [The Boss Map]
@@ -242,7 +252,7 @@ Monsters in Maps 11 and 12 drop two vital materials that feed the entire endgame
 ```
 
 ### 1. Item A: "Astral Shard" (Map 11) / "Primal Catalyst" (Map 12)
-* **Drop Rate:** Standard uncommon drop (~3.5% per monster kill).
+* **Drop Rate:** Standard uncommon drop (~0.035% per monster kill).
 * **Purpose:** Crafting **Class Skill Glyphs (Item A)** in the Black Market.
 * **Skill Glyph Mechanics:**
   - Glyphs are permanent consumable socket enchants or talent unlockers that augment specific 3rd Job skills.
@@ -253,7 +263,7 @@ Monsters in Maps 11 and 12 drop two vital materials that feed the entire endgame
     - *Glyph of the Shadow:* Rolling Cutter momentum stacks now decay one by one instead of all at once.
 
 ### 2. Item B: "Valkyrie's Sigil" / "Blood of the Ancients"
-* **Drop Rate:** Rare drop (~0.25% from normal mobs, 10% guaranteed from Stage 10 MVPs).
+* **Drop Rate:** Rare drop (~0.0025% from normal mobs, 0.1% chance from Stage 10 MVPs; not guaranteed).
 * **Purpose:** Serves as the key currency required to enter and summon bosses inside **The Boss Map**.
 
 ### 3. Boss Drop: "Ascension Cores" (Mythic Essence)
@@ -388,7 +398,7 @@ To ensure seamless backward compatibility with existing saves and maintain all t
 When ready to implement, execute in these sequential milestones:
 
 * **Milestone 1 — Two New Maps & Material Loop (Maps 11 & 12)**
-  - Implement Map 11 (Thanatos Tower) and Map 12 (Thor Volcano) in `MAPS` and `TH`.
+  - Implement Map 11 (Astral Citadel) and Map 12 (Thor Volcano) in `MAPS` and `TH`.
   - Add mob drop tables for **Item A** (Astral Shard) and **Item B** (Valkyrie's Sigil).
   - Update World Map stage selection and navigation.
 
@@ -418,3 +428,14 @@ When ready to implement, execute in these sequential milestones:
   - 50-Floor instance logic, floor timer, and wave spawner.
   - Sector elevator checkpoints (every 10 floors).
   - Tower Exchange shop and milestone caches.
+
+
+### Local v146 map UI integration
+
+Astral Citadel and Thor Volcano can now be opened from the game's World Atlas
+under **Endgame exploration**, using the saved native character appearance and
+lazy lossless materials. This is isolated scenery inspection while the existing
+field continues farming—not a new progression unlock or implementation of the
+future Maps 11/12 combat/reward systems above. Mobs remain deferred. See the
+[current proposal](map-concepts/FULL-PROPOSAL.md) and
+[actual in-game UI captures](map-concepts/game-ui-review/manifest.json).

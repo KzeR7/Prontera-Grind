@@ -49,11 +49,17 @@ rm -rf "$OUT/assets/wardrobe/v1" "$OUT/assets/wardrobe/v3" "$OUT/assets/wardrobe
 mkdir -p "$OUT/Updates"
 cp -r "$ROOT/Updates/Sprite" "$OUT/Updates/Sprite"
 
+# Strip whitespace only from four ordinary map-kit JSON delivery copies.
+node "$ROOT/tools/optimize_delivery.js" "$OUT"
+node "$ROOT/tools/maps/build_game_exploration.js" "$OUT"
+# The selected vendored renderer ships with its complete MIT license.
+cp "$ROOT/tools/maps/vendor/THREE-LICENSE.txt" "$OUT/assets/endgame/THREE-LICENSE.txt"
+
 # A build that silently ships the wrong thing is worse than one that fails.
 for must in index.html gm.html _routes.json assets/sprite_pack_data.js assets/class_skins_data.js assets/weapon_joints_data.js; do
   [ -s "$OUT/$must" ] || { echo "BUILD BROKEN: $must is missing or empty in $OUT" >&2; exit 1; }
 done
-for forbidden in _login.html _shot.html logic2.js; do
+for forbidden in _login.html _shot.html logic2.js docs tools Sprite image-search; do
   [ -e "$OUT/$forbidden" ] && { echo "BUILD BROKEN: $forbidden must never be published" >&2; exit 1; }
 done
 [ -d "$OUT/tools" ] && { echo "BUILD BROKEN: tools/ leaked into the publish directory" >&2; exit 1; }
