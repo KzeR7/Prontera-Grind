@@ -2,7 +2,7 @@
 
 **Status (2026-10-15):** all six 4th-job classes and their 18 signature skills are built in
 `index.html` and tested, but **parked**. `FOURTH_JOBS_LIVE` is `false`, so the live game still has
-19 classes, 91 skills and the `haven-v152` build label. Nothing here is unlocked until the owner
+19 classes, 91 skills and the `haven-v157` build label (`main`'s). Nothing here is unlocked until the owner
 gives an explicit instruction (see [Go-live checklist](#go-live-checklist)).
 
 **Picking this up later? Read [HANDOFF.md](HANDOFF.md) first:** it lists where work stopped, what is verified and what is still open.
@@ -121,6 +121,8 @@ The owner clarified that **Lv 150 and above is not a Base Level increase.** It i
 **Ascension level with its own stats** to level up. Job level keeps running as normal. A later
 Ascension skill tab will raise skill boost. This is a design note only: no Ascension level, stat or
 tab is built here. Milestone 5 in `docs/ROADMAP.md` (the Ascension stats box) follows this note.
+
+**Update after the merge with `main` (v157):** `main` already ships an Ascension at Lv 150 (the Astral Citadel and Thor Volcano maps, with stages and ascension gear). That system is not this design note. Reconcile the two before building the Ascension track or the 4th-job unlock details that depend on it.
 
 The current `JOFF[4]=100` pacing maps Job Lv 1–50 to Base 101–150. That mapping stays as it is until
 the Ascension design is settled, because it only sets pacing. It does not say that Base Lv continues

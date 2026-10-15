@@ -256,7 +256,7 @@ t('drop-table items keep N section identity separate from map field quality', ()
   assert.strictEqual(N.dropTier(9, 15), 4, 'the Abyss map quality cap remains as tuned');
   assert.ok(src.includes("const RAR5={n:'N'}") && src.includes("RAR6={n:'N+'}") && src.includes("(it&&+it.sec>=5)?6:(it&&+it.sec>=4)?5"),
     'sections 4/5 select the separate N / N+ rarity regardless of the numeric map quality');
-  for (let m = 0; m < N.MAPS.length; m++) for (let l = 1; l <= 15; l++) {
+  for (let m = 0; m < N.MAPS.length; m++) for (let l = 1; l <= (m>=10?5:15); l++) {
     const F=N.fieldOf(m,l),tier=N.dropTier(m,l),sec=N.secField(m,l);
     for (const mob of F.mobs) for (const [item] of mob.drops) {
       assert.strictEqual(item.sec,sec,N.MAPS[m].n+' Stage '+l+' item section');
@@ -270,12 +270,12 @@ t('drop-table items keep N section identity separate from map field quality', ()
 });
 
 t('a save cannot be left standing in a locked Nightmare stage', () => {
-  assert.ok(src.includes('f.lvl=Math.max(1,Math.min(15,Math.floor(f.lvl||1)))'), 'load() accepts stage 15');
-  assert.ok(src.includes('if(S.mp>=MAPS.length||S.lvl>15){S.mp=0;S.lvl=1}'), 'and the sanitizer treats 15 as legal');
+  assert.ok(src.includes('f.lvl=Math.max(1,Math.min(f.mp>=10?5:15,Math.floor(f.lvl||1)))'), 'load() accepts stage 15');
+  assert.ok(src.includes('if(S.mp>=MAPS.length||S.lvl>(S.mp>=10?5:15)){S.mp=0;S.lvl=1}'), 'and the sanitizer treats 15 as legal');
   assert.ok(src.includes('if((S.lvl|0)>10&&!nmMapOpen(S.mp|0))S.lvl=10;'), 'initSession pulls a character out of a Nightmare tier it has not unlocked');
-  assert.ok(src.includes('go:()=>{if(mapL<=Math.max(S.prog[mapM],nmMaxFor(mapM)))'), 'travel allows an unlocked Nightmare stage on that map');
-  assert.ok(src.includes('nmo=nmMapOpen(mapM),cap=Math.max(pr,nmMaxFor(mapM))'), 'the map panel caps at the band of that map');
-  assert.ok(src.includes('mapL=Math.min(mapL,Math.max(1,Math.max(S.prog[mapM],nmMaxFor(mapM))))'), 'and the stage picker cannot be clamped below the band');
+  assert.ok(src.includes('go:()=>{if(canTravel(mapM,mapL))'), 'travel allows an unlocked Nightmare stage on that map');
+  assert.ok(src.includes('nmo=nmMapOpen(mapM),cap=mapM>=10?(ascensionOpen(mapM)?pr:0):Math.max(pr,nmMaxFor(mapM))'), 'the map panel caps at the band of that map');
+  assert.ok(src.includes('mapL=Math.min(mapL,mapM>=10?5:Math.max(1,Math.max(S.prog[mapM],nmMaxFor(mapM))))'), 'and the stage picker cannot be clamped below the band');
 });
 
 t('v90.3 (B): nominal reward per HP is equal before NM5 wave redistribution', () => {

@@ -14,6 +14,8 @@ const config = from('const BAGMAX=1000;', 'const MAPTIER=');
 // v88.6: save() is inside the span below and checks the save-owner stamp, so the stamp helpers come along.
 const stamp = from('// ---------- the save-owner stamp (v88.6) ----------', 'const num_= (v,d)');
 const helpers = from('let farmSession=null;', '// ---------- accounts (stored in this browser; real cross-device accounts need a server) ----------');
+const stageCode=src.match(/const normalStages=[^\n]*/)[0];
+const ascensionCode=from('const ASCENSION_MATERIALS=', 'function kill(o){')+'\n'+src.match(/const ascensionOpen=[^\n]*/)[0];
 const newCardCode=require('./helpers/progression')(src,'newCard');
 const reward = from('function fieldExpReward(', '// One field monster, before it is placed.');
 const simulation = from('function offlineMobForCurrentField(m=S.mp,stage=S.lvl){', '// ---------- skill effects: damage over time, stun, chain ----------');
@@ -52,7 +54,7 @@ function harness() {
     const cardVal = () => 1, uid = () => ++state.nextId;
     const pickW = () => 0, PW = [[100]], PETS = [], PET_SKILL_WEIGHTS = [], PET_SKILLS = [], EGG = 1;
   `;
-  const code = from('// ---------- auto-sell rules:', '// ---------- end auto-sell rules ----------') + '\n' + config + '\n' + stamp + '\n' + helpers + '\n' + newCardCode + '\n' + reward + '\n' + simulation + `
+  const code = from('// ---------- auto-sell rules:', '// ---------- end auto-sell rules ----------') + '\n' + config + '\n' + stamp + '\n' + helpers + '\n' + newCardCode + '\n' + reward + '\n' + stageCode + '\n' + ascensionCode + '\n' + simulation + `
     globalThis.api = {
       offlinePlan, offlineRateSample, applyOfflineProgress, offlineAwardKill,
       mapSelection(){return[mapM,mapL]},

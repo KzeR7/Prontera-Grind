@@ -13,7 +13,7 @@ editing. Many tests execute extracted pieces of the real page.
 | Combat and skill execution | `index.html`: `SKILLS`, `comboConfig`, `nextComboSkill`, `resolveSwing`, `tickCombatSkills`, `simAdvance`, `loop` | `combo_rotation_sim.js`, `skill_sim.js`, `skill_redesign_sim.js`, `combat_damage_sim.js`, `attack_sync_sim.js`, `field_loop_smoke.js` |
 | 4th-job classes and skills (Milestone 4, dark-launched behind `FOURTH_JOBS_LIVE`) | `index.html`: `CD4`/`FOURTH_JOBS_LIVE`, `ADV4_BASE_LV`, `classBlock()`, `JOFF`, `PACK_BODY`, `V.job()` tree rows, `SKILLS4` and the mechanic helpers beside `chainHit` (`castSkill`, `absorbSoak`), `katarOnly()` | `fourth_job_sim.js`, `fourth_job_skills_sim.js` (flag on, plus live-page checks); parked reference in `Updates/fourth-jobs/` |
 | Gear, class eligibility, cards, autosell | `index.html`: `genGear`, `canUse`, `stowUnfit`, `equipRec`, `CARD_FITS` | `gear_sim.js`, `dual_wield_sim.js`, `card_sim.js`, `autosell_sim.js` |
-| Endgame atlas scenery exploration | `assets/map-exploration.js`; `index.html`: `V.map`, `mapCollectionTabs`, `seasonTwoMapCards`, `ACT.mapseason`, `ACT.explore`, `simVisualsOff`; `tools/maps/build_game_exploration.js` | `publish_sim.js`, `panel_layout_smoke.js`, `tools/check_game_maps_browser.js` |
+| Ascension maps and native mobs | `assets/ascension.js`, `assets/astral-scenery.js`, `assets/mobs/v1/`; `index.html`: `MAPS`, `canTravel`, `ascensionDrops`, `recordMapClear`, `buildAscension`, `syncMobImage`, `V.map`, `ACT.mapseason`; `tools/maps/build_game_exploration.js` | `publish_sim.js`, `panel_layout_smoke.js`, `ascension_scene_sim.js`, `ascension_progression_sim.js`, `astral_scenery_sim.js`, `native_mob_assets.py` |
 | Map stages, scenery, Nightmare | `index.html`: `MAPS`, `fieldPlan`, `buildDeco`, `KIT_MAP` | `starter_sim.js`, `scene_sim.js`, `kit_sim.js`, `nightmare_sim.js` |
 | Endless Echo | `index.html`: `TRIAL`, `TRIAL_PAY`, `TRIAL_STORE` | `trial_sim.js` |
 | Pets and training | `index.html`: `PETS`, `petBuff`, `petR`; `assets/pets.js`, `assets/pets/v1/` | `pet_sim.js`, `pet_game_sim.js`, `pet_sprites_sim.js` |
@@ -89,6 +89,13 @@ Three renderer remains the fallback when the adapter is unavailable; its source
 backup is under `tools/skill-fx-backups/pre-afterglow/`.
 
 ## Development helpers and historical material
+
+- **Live Astral scenery:** `assets/astral-scenery.js` builds the current connected
+  battlefield: merged paving/mosaic/engraving layers, instanced edge ruins, and
+  independently fractured rock islands. `tools/maps/render_astral_preview.{js,py}`
+  exports/rasterizes this geometry for `assets/atlas/astral-citadel.png` and optional
+  area closeups. The runtime loader and atlas URL carry a build query for cache
+  refresh. Check `astral_scenery_sim.js` and `ascension_scene_sim.js`.
 
 - **New endgame map study (dev-only):** `tools/map_scene_preview.html`,
   `tools/maps/endgame-scenes.js`; see [scenery development](../tools/maps/README.md).

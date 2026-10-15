@@ -75,7 +75,8 @@ console.log('dark launch: the live roster is unchanged\n');
   assert.equal(r.hasRuneKnight, false, 'Rune Knight is not in the live roster');
   assert.equal(r.joff, '0,9,49,98', 'the live pacing table is unchanged');
   assert.equal(r.tree, 4, 'the live Class Tree keeps Novice plus its three tier rows');
-  assert.ok(r.build.startsWith('2026-10-15 haven-v152 '), 'the live build label is unchanged');
+  // The label is main's (haven-v157 after the Ascension merge); this branch must not change it.
+  assert.ok(r.build.startsWith('2026-10-15 haven-v157 '), 'the live build label is unchanged from main');
   console.log('ok   live page: 19 classes, no 4th job, JOFF/Class Tree/build unchanged');
   pass++;
 }

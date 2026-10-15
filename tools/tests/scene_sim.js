@@ -39,6 +39,7 @@ const THREE={Group,Mesh,Color:Col,MeshLambertMaterial:Mat,SphereGeometry:class e
   CylinderGeometry:class extends Geo{constructor(a,b,h,s){super('cyl',a,b,h,s)}},CircleGeometry:class extends Geo{constructor(r,s){super('circle',r,s)}},
   PlaneGeometry:class extends Geo{constructor(w,h){super('plane',w,h)}}};
 const scene=new Group(),deco=new Group();scene.add(deco);
+const ground={visible:true},hemi={intensity:.8},sun={intensity:.9};
 const townObjs=[],road={visible:true,position:new V3()};
 const BX_=13,Z0=-28,Z1=12;
 ${code}

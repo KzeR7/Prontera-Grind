@@ -9,7 +9,8 @@ what is verified, what is still open, and how to pick it up.
 - **Last commit:** `840758c` — "4th jobs: 18 signature skills and mechanics, parked". Local only.
   Not pushed, no PR, no merge, no deploy.
 - **Live game:** unchanged. `FOURTH_JOBS_LIVE = false` in `index.html`; 19 classes, 91 skills,
-  `BUILD = '2026-10-15 haven-v152 Season 2 Maps and chosen skill effects'`.
+  `BUILD = '2026-10-15 haven-v157 Ascension access and endgame balance'` (this is `main`'s label; this branch does not change it).
+- **Merged `main` (v157).** `main` shipped an Ascension at Lv 150 (Astral Citadel and Thor Volcano maps, stages, ascension gear). The Ascension note in this folder is a design note only, so it must be reconciled with `main`'s system before the Ascension track is built.
 - **Owner instruction still outstanding:** do **not** flip the flag or bump `BUILD` until the owner
   explicitly says to unlock the classes.
 

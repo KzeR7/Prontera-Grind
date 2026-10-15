@@ -1082,7 +1082,7 @@ body.clean-screen #eclipseCompanions{display:none}
 /* Atlas: destination list, selected terrain and stages, then live drop intelligence. */
 #wins .ui-panel[data-layout=map] .ui-content{display:grid;grid-template-columns:165px minmax(0,1fr) 260px;gap:0;padding:0;align-items:start}
 #wins .ui-panel[data-layout=map] .ui-content>.ui-section{grid-column:auto;grid-row:auto;margin:0;padding:18px 15px;min-width:0;border:0;border-radius:0;background:none}
-#wins .ui-panel[data-layout=map] .ui-route{border-inline:1px solid var(--e-line)!important}
+#wins .ui-panel[data-layout=map] .ui-route{border-inline:1px solid color-mix(in srgb,var(--gold) 55%,transparent)!important}
 #wins .ui-destinations .mapgrid{display:flex;flex-direction:column;gap:5px}
 #wins .ui-destinations .mapcard{display:grid;grid-template-columns:18px 1fr;gap:3px 5px;align-items:center;min-height:45px;padding:8px;text-align:left;border:1px solid transparent;background:none;border-radius:5px}
 #wins .ui-destinations .mapcard.on{color:var(--gold);background:var(--e-soft);border-color:color-mix(in srgb,var(--gold) 25%,transparent)}
@@ -1119,7 +1119,7 @@ body.clean-screen #eclipseCompanions{display:none}
 
 @container(max-width:850px){
 #wins .ui-panel[data-layout=map] .ui-content{grid-template-columns:145px minmax(0,1fr)}
-#wins .ui-panel[data-layout=map] .ui-field-guide{grid-column:1/-1;border-top:1px solid var(--e-line)}
+#wins .ui-panel[data-layout=map] .ui-field-guide{grid-column:1/-1;border-top:1px solid color-mix(in srgb,var(--gold) 55%,transparent)}
 #wins .ui-field-guide .mapcols{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px}
 .eclipse-class-lineage{gap:15px;padding:25px 5px}.eclipse-class-node{min-width:105px}.eclipse-class-node+.eclipse-class-node:before{left:-13px}
 .eclipse-companion-grid{gap:10px}.eclipse-companion-card{padding:14px}.eclipse-product-icon{width:35px}#wins .eclipse-product{padding:18px;gap:12px}
@@ -1127,7 +1127,7 @@ body.clean-screen #eclipseCompanions{display:none}
 @container(max-width:560px){
 .eclipse-class-lineage{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;min-height:0}.eclipse-class-node{min-width:0}.eclipse-class-node:before{display:none}.eclipse-class-info{padding:12px;margin-bottom:12px}.eclipse-class-browser>.ui-split{display:flex;flex-direction:column}#wins .ui-job-paths{width:100%;gap:8px}#wins .ui-job-path{padding:8px}#wins .ui-job-path .tn{flex-direction:column;align-items:start;gap:3px}
 .eclipse-companion-grid,.eclipse-market-grid{grid-template-columns:1fr}.eclipse-companion-card{padding:22px}.eclipse-companion-portrait{height:100px}.eclipse-companion-card .eclipse-primary{margin-top:16px}
-#wins .ui-panel[data-layout=map] .ui-content{grid-template-columns:1fr}#wins .ui-panel[data-layout=map] .ui-field-guide{grid-column:auto}#wins .ui-panel[data-layout=map] .ui-route{border:0!important;border-block:1px solid var(--e-line)!important}
+#wins .ui-panel[data-layout=map] .ui-content{grid-template-columns:1fr}#wins .ui-panel[data-layout=map] .ui-field-guide{grid-column:auto}#wins .ui-panel[data-layout=map] .ui-route{border:0!important;border-block:1px solid color-mix(in srgb,var(--gold) 55%,transparent)!important}
 #wins .ui-destinations .mapgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px}#wins .ui-destinations .mapcard{min-height:39px}#wins .ui-field-guide .mapcols{display:block}
 .eclipse-atlas-hero{height:140px}.eclipse-stages{gap:3px}#wins .eclipse-stages .map-node b{font-size:8px}
 #wins .ui-panel>.eclipse-pet-tabs button{font-size:9px;padding:12px 8px}

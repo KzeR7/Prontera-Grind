@@ -159,7 +159,7 @@ t('an emptied camp refills itself, and clearing the field no longer throws the m
  // the game must not clear the field when the kill counter fills: only a boss wave resets
  assert.ok(/if\(mob\.boss\)\{\n    mobs=\[\];camps=\[\];S\.kl=0;/.test(src),'only the boss wave resets the field');
  assert.ok(!/mobs=\[\];S\.kl=0;/.test(src),'the 15-kill field reset is gone (the offline model keeps its own, stage-only gate)');
- assert.ok(/else if\(S\.lvl<10&&S\.kl>=MPS\)\{/.test(src),'the 15-kill counter still opens the next stage');
+ assert.ok(/else if\(S\.lvl<normalStages\(S\.mp\)&&S\.kl>=MPS\)\{/.test(src),'the 15-kill counter still opens the next stage');
  // the refill timer is per camp and stable, so a watched camp comes back on a rhythm
  assert.strictEqual(H.campWait({x:2,z:3}),H.campWait({x:2,z:3}));
  const waits=Array.from({length:40},(_,i)=>H.campWait({x:i*.7-12,z:i*.31-4}));
@@ -204,7 +204,7 @@ t('clearing normal Stage 10 advances to the next map when Auto-advance is on',()
  const random=seededMath.random;seededMath.random=()=>.999999;
  try{H.kill(finalBoss)}finally{seededMath.random=random}
  assert.strictEqual(H.S.mp,9,'Abyss remains the last normal map');assert.strictEqual(H.S.lvl,10,'Stage 10 does not auto-jump into the Nightmare band');
- assert.ok(H.logs.slice(before).some(x=>x.includes('normal map route is complete')&&x.includes('Nightmare is a separate challenge')),'the last clear keeps Nightmare separate');
+ assert.ok(H.logs.slice(before).some(x=>x.includes('Astral Citadel')&&x.includes('requires Base Lv 140')),'the last clear keeps Nightmare separate');
 });
 t('stage 10 starts with boss plus 3 or 5 escorts and boss defeat resets the whole fight when farming',()=>{
  for(const m of [0,4,5,9]){

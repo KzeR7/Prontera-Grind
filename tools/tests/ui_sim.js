@@ -460,7 +460,7 @@ t('the Mastery Index tracks monster titles and consumes loose cards for permanen
   assert.strictEqual((h.match(/class="mastery-title tone-/g)||[]).length,10,'the ladder has ten designed rank seals');
   U.indexMode='cards';U.S.cardIndex={donated:1,byName:{'Poring Card':1},mastery:{'Poring Card':1},rewards:{},stats:{str:0,agi:0,dex:0,int:0,vit:0,luk:0}};
   h=U.V.index();
-  assert.ok(h.includes('1/90 cards discovered')&&h.includes('<b>1/450</b> card mastery ranks'),'the album and five-rank-per-card progress are visible');
+  assert.ok(h.includes('1/102 cards discovered')&&h.includes('<b>1/510</b> card mastery ranks'),'the album and five-rank-per-card progress are visible');
   assert.ok(h.includes('data-a="indexcard"')&&h.includes('Dedicate one'),'a loose card can advance an individual card');
   assert.ok(h.includes('data-a="cardroll"')&&h.includes('Token gacha'),'mastery ranks spend tokens on the gacha');
   assert.ok(h.includes('data-a="cardreset"'),'the gacha reset is offered once a Legendary card is loose');
@@ -662,6 +662,7 @@ t('HP flips at 30%; one split bar fills Base from left and Job from right with c
     const performance={now:()=>1000},job={jl:10,jx:45},jobOf=()=>job,C=()=>({mj:50}),maxHp=()=>100,
       jneed=()=>100,need=()=>200;
     const esc=s=>String(s),applyDisplay=()=>{},safeCount=n=>Math.max(0,Number(n)||0),eclipseSetMarkup=(node,html)=>{node.innerHTML=html};
+    ${pick(/const normalStages=[^\n]*/, 'normal stage count')}
     ${grab('const HUD_RATE_WINDOW=60000,HUD_IDLE_RESET=30000,HUD_RATE_REFRESH=1000;','function ui(anchor){')}
     bars();this.__h={nodes,S,job,bars};
   `,box);
@@ -806,6 +807,7 @@ t('Zeny and kill rates refresh every second using a rolling minute and reset aft
   vm.runInContext(`
     let S={zeny:200},zenyEarned=0,expEarned=0;
     ${grab('function earnZeny(amount){','function kill(o){')}
+    ${pick(/const normalStages=[^\n]*/, 'normal stage count')}
     ${grab('const HUD_RATE_WINDOW=60000,HUD_IDLE_RESET=30000,HUD_RATE_REFRESH=1000;','const levelPct=')}
     this.__r={stepHudRate,earnZeny,S,get earned(){return zenyEarned}};
   `,box);
@@ -857,6 +859,7 @@ t('v74: the HUD shows EXP/min beside the kill rate, on the same rolling minute',
   vm.runInContext(`
     let S={zeny:0,exp:0},zenyEarned=0,expEarned=0;
     ${grab('function earnZeny(amount){','function kill(o){')}
+    ${pick(/const normalStages=[^\n]*/, 'normal stage count')}
     ${grab('const HUD_RATE_WINDOW=60000,HUD_IDLE_RESET=30000,HUD_RATE_REFRESH=1000;','const levelPct=')}
     this.__r={stepHudRate,earnExp,S,get exp(){return expEarned}};
   `,box);
@@ -880,6 +883,7 @@ t('the DPS meter shares the rolling minute and resets with the save', () => {
   vm.runInContext(`
     let S={zeny:0},zenyEarned=0,expEarned=0;
     ${grab('function earnZeny(amount){','function kill(o){')}
+    ${pick(/const normalStages=[^\n]*/, 'normal stage count')}
     ${grab('const HUD_RATE_WINDOW=60000,HUD_IDLE_RESET=30000,HUD_RATE_REFRESH=1000;','const levelPct=')}
     this.__r={stepHudRate,S};
   `,box);
@@ -1444,6 +1448,7 @@ t('pet buffs are icon tiles above the status bar, and the description waits for 
     ${grab('const SKILL_PICTO=', '// The CDM affix stays in the roll pool')}
     ${grab('const PET_SKILLS=[', 'const petDmg=')}
     const esc=s=>String(s),applyDisplay=()=>{},safeCount=n=>Math.max(0,Number(n)||0),eclipseSetMarkup=(node,html)=>{node.innerHTML=html};
+    ${pick(/const normalStages=[^\n]*/, 'normal stage count')}
     ${grab('const HUD_RATE_WINDOW=60000,HUD_IDLE_RESET=30000,HUD_RATE_REFRESH=1000;', 'function ui(anchor){')}
     bars();this.__b={nodes};
   `, box);
@@ -1843,7 +1848,7 @@ t('the reset buttons explain themselves, refuse on screen, and survive a rebuild
   assert.ok(!src.includes('el.scrollIntoView('), 'nothing calls the browser scrollIntoView() any more');
   assert.ok(/body\.scrollTop\+=er\.top-br\.top/.test(src) && /body\.scrollTop\+=er\.bottom-br\.bottom/.test(src),
     'the pressed control is nudged inside its own window body when it fell outside');
-  assert.ok(src.includes("sell_:v=>{mapL=+v;renderWin('[data-win=\"map\"] .map-node.picked')}"), 'a stage click anchors itself');
+  assert.ok(src.includes("sell_:v=>{if(!Number.isInteger(+v)||+v<1||+v>(mapM>=10?5:15))return;mapL=+v;renderWin('[data-win=\"map\"] .map-node.picked')}"), 'a stage click anchors itself');
   assert.ok(src.includes("renderWin('[data-win=\"map\"] .mapcard.on')"), 'so does a map card click');
 
   assert.ok(/\$\('wins'\)\.addEventListener\('pointerdown'/.test(src), 'the guard arms on a window press');
