@@ -146,7 +146,7 @@ html, body { margin:0; padding:0; width:100vw; height:100vh; height:100dvh; over
 @media(max-width:560px){#hud{gap:6px 10px;padding:7px 10px;font-size:11px}.hud-health .bar{width:94px}.hud-health small{min-width:28px}#xp-track{height:22px}.xp-label,.xp-label.job{left:0;right:0;top:0;text-align:center;font-size:9px;line-height:10px}.xp-pct{top:10px;line-height:10px;font-size:9px}}
 .body{padding:8px;font-size:13px}
 .slot{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:5px 8px;border:1px solid var(--edge);background:#fffdf5;margin-bottom:4px;border-radius:4px;min-height:36px}
-.r0{color:#555}.r1{color:#2a9d3f}.r2{color:#2f6fd6}.r3{color:#a23fd6}.r4{color:#e07b00;font-weight:bold}.r5{color:#5b21b6;font-weight:bold}.r6{color:#c026d3;font-weight:bold}
+.r0{color:#555}.r1{color:#2a9d3f}.r2{color:#2f6fd6}.r3{color:#a23fd6}.r4{color:#e07b00;font-weight:bold}.r5{color:#5b21b6;font-weight:bold}.r6{color:#c026d3;font-weight:bold}.r7{color:#ff9500;font-weight:bold;text-shadow:0 0 10px rgba(255,149,0,.5),0 0 20px rgba(255,100,0,.3)}
 button{font:inherit;font-size:12px;background:linear-gradient(#fff,#efe0b8);border:1px solid var(--edge2);border-radius:3px;padding:3px 10px;cursor:pointer;color:var(--ink)}
 button:hover{background:#ffe9a8}button:focus-visible{outline:2px solid #2f6fd6}
 .wide{grid-column:1/-1}small{opacity:.7}button:disabled{opacity:.4;cursor:default}
@@ -473,7 +473,7 @@ a{color:var(--brass)}small{opacity:.85}summary{cursor:pointer}
 .slot,.job-card,.mob-card,.chip,.mapcard,.map-node,.tn,.mastery-summary,.mastery-progress-card,.mastery-stat,.mastery-card-row,.mastery-empty,.card-reward-legend,.mastery-map,.card-roll-recent,.offline-stat{background:var(--surface);border:1px solid var(--edge);box-shadow:none;color:var(--ink)}
 .hd{color:#e4e7d9}.sec{border-color:var(--edge);font-size:11px;padding-bottom:4px;color:#cbd8c5;letter-spacing:.3px}
 .chip{font-size:10px;border-radius:5px;padding:4px 7px}.row{gap:6px}.slot{padding:7px 8px;gap:7px}
-.r0{color:#b7c2b9}.r1{color:#96c6a2}.r2{color:#9ebedc}.r3{color:#c1a5db}.r4{color:#e1c180}.r5{color:#bba6ee}.r6{color:#efaad1}
+.r0{color:#b7c2b9}.r1{color:#96c6a2}.r2{color:#9ebedc}.r3{color:#c1a5db}.r4{color:#e1c180}.r5{color:#bba6ee}.r6{color:#efaad1}.r7{color:#ffa500;font-weight:bold;text-shadow:0 0 12px rgba(255,165,0,.6),0 0 24px rgba(255,120,0,.4)}
 .atabs button,.gt button,.mastery-tabs button,.board-periods button{background:transparent;border-color:var(--edge);color:#b4c4b6}
 .atabs button.on,.row button.on,.gt button.on,button.tick.on,.mastery-tabs button.on,.board-periods button.on{background:#465442;border-color:#bda773;color:#f1d9a4;box-shadow:none}
 #hud{background:#1c2b25;border-color:var(--edge);box-shadow:none;color:#a9bbac;font-size:11px;gap:8px 16px;padding:8px 12px}
@@ -895,7 +895,7 @@ const RAR=[{n:'Common',m:1,w:60},{n:'Fine',m:1.35,w:25},{n:'Rare',m:1.9,w:10},{n
 // section 5 (Abyssal Nightmare gear, worth 15/7x the high-tier row against section 4's 1.5x) is N+,
 // painted its own colour and given its own auto-sell tick - ticking "N" used to be able to eat the
 // better row on drop without the player ever seeing which one they had sold.
-const RAR5={n:'N'},RAR6={n:'N+'},RARALL=RAR.concat([RAR5,RAR6]),rarIdx=it=>((it&&+it.sec>=5)?6:(it&&+it.sec>=4)?5:Math.max(0,Math.min(RAR.length-1,(it&&it.tier)||0))),rarOf=it=>(rarIdx(it)===6?RAR6:rarIdx(it)===5?RAR5:RAR[rarIdx(it)]),rarCls=it=>'r'+rarIdx(it);
+const RAR5={n:'N'},RAR6={n:'N+'},RAR7={n:'Mythic'},RARALL=RAR.concat([RAR5,RAR6,RAR7]),rarIdx=it=>((it&&it.mythic)?7:(it&&+it.sec>=5)?6:(it&&+it.sec>=4)?5:Math.max(0,Math.min(RAR.length-1,(it&&it.tier)||0))),rarOf=it=>(rarIdx(it)===7?RAR7:rarIdx(it)===6?RAR6:rarIdx(it)===5?RAR5:RAR[rarIdx(it)]),rarCls=it=>'r'+rarIdx(it);
 // v38 balance, three constants at once:
 //   AM x1.7 - affix magnitude, the first give-back for the weapon cut (a Legendary ATK
 //             affix goes +21% -> +36%)
@@ -1064,8 +1064,8 @@ const AFFIX_CDM_SCALE=.7,scaleCritDamageAffix=v=>Math.max(1,Math.round(v*AFFIX_C
 // v90 (owner: a slightly harder nerf on Flee, ATK, ASPD and CRIT in the N and N+ rows): Flee drops
 // to x3.0 / x3.4 (was x3.5 / x4) and ATK %, ASPD % and Crit % drop to x4.2 / x5.0 (was x5 / x6).
 // STR, AGI, DEX, LUK and INT keep x3.5 / x4. Max HP and Crit DMG keep the plain 1+section.
-const NM_FLAT=['str','agi','dex','luk','int'],NM_FLAT_MUL=[3.5,4],NM_MUL={flee:[3,3.4],atk:[4.2,5],aspd:[4.2,5],crit:[4.2,5]};
-const nmMulOf=(k,section)=>{const i=Math.min(1,section-4);return NM_FLAT.includes(k)?NM_FLAT_MUL[i]:NM_MUL[k]?NM_MUL[k][i]:1+section};
+const NM_FLAT=['str','agi','dex','luk','int'],NM_FLAT_MUL=[3.5,4,5],NM_MUL={flee:[3,3.4,4],atk:[4.2,5,6],aspd:[4.2,5,6],crit:[4.2,5,6]};
+const nmMulOf=(k,section)=>{if(section<4)return 1+section;const i=Math.min(2,section-4);return NM_FLAT.includes(k)?NM_FLAT_MUL[i]:NM_MUL[k]?NM_MUL[k][i]:1+section};
 // v90.9 (owner): Abyss (map 9) affixes are slightly below Nightmare Prontera's (map 0). Map 0 is x1, map 9 is x0.95,
 // and the maps between ramp linearly. Only affixes move with the map; the item's base value is flat.
 const NM_ABYSS_AFF=1;
@@ -1097,7 +1097,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // give-back) and main's weapon-hold rendering work.
 let simCatchingUp=false;
 const simVisualsOff=()=>document.hidden||simCatchingUp;
-const BUILD='2026-10-15 haven-v157 Ascension access and endgame balance';   // shown on the login card - confirms which file you loaded
+const BUILD='2026-10-15 haven-v158 Ascension bug fixes and endgame difficulty';   // shown on the login card - confirms which file you loaded
 $('buildTag').textContent='build '+BUILD;
 
 // ---------- class tree: Novice -> 6 first jobs -> 6 second jobs -> 6 third jobs ----------
@@ -1222,7 +1222,7 @@ const SKILLS=[
  {"id":"basilica","n":"Final Judgment","max":5,"type":"act","col":"#fff3a0","text":"Strike with a holy seal that detonates after a short delay, damaging nearby enemies.","from":"High Priest","cd":5.0,"hits":1,"power":2.2,"shape":"splash","pulse":0.6,"delay":0.4},
  {"id":"meltdown","n":"Shatter Strike","max":10,"type":"act","col":"#ffa040","text":"A heavy strike with nearby splash. Deals 12% more damage against a target marked by Armor Crack.","from":"Whitesmith","cd":4.0,"hits":1,"power":1.244,"shape":"splash","shatter":0.12}
 ];
-// Milestone 4 (4th jobs): five core RO skills per class, dark-launched with the classes. They are
+// Milestone 4 (4th jobs): three signature skills per class, dark-launched with the classes. They are
 // joined to SKILLS only while FOURTH_JOBS_LIVE is true, so the live skill list, fixtures and combat
 // numbers stay exactly as they are. Mechanic fields (read by castSkill and its helpers below):
 //   gain {key,max}        a direct hit adds one self stack (12 s); stacks are spent by `spend`
@@ -1235,36 +1235,24 @@ const SKILLS=[
 //   absorb {pct,life}     raises a ward absorbing pct of max HP in incoming damage for life seconds
 //   stun                  flat stun on every target (existing field)
 const SKILLS4=[
- {"id":"rk_charge","n":"Sonic Wave","max":10,"type":"act","col":"#ffb45e","cd":3,"hits":1,"power":2.8,"shape":"single","icon":"bash","visual":"wave","rng":6,"text":"Send a cutting shockwave at a distant enemy.","from":"Rune Knight"},
- {"id":"rk_burst","n":"Ignition Break","max":10,"type":"act","col":"#ffb45e","cd":5,"hits":1,"power":3.8,"shape":"radial","icon":"bowl","visual":"fireburst","text":"Release a fiery explosion around the caster.","from":"Rune Knight"},
- {"id":"rk_ward","n":"Dragon Breath","max":10,"type":"act","col":"#ffb45e","cd":4,"hits":1,"power":3.2,"shape":"cone","icon":"fireball","visual":"breath","text":"Breathe fire in a cone toward the enemy.","from":"Rune Knight"},
- {"id":"rk_spear","n":"Hundred Spears","max":10,"type":"act","col":"#ffb45e","cd":5,"hits":5,"power":3.6,"shape":"single","icon":"spiral","visual":"cuts","text":"Drive a rapid sequence of spear strikes into one target.","from":"Rune Knight"},
- {"id":"rk_wind","n":"Wind Cutter","max":10,"type":"act","col":"#ffb45e","cd":2,"hits":1,"power":2.2,"shape":"radial","icon":"bowl","visual":"spin","text":"Sweep a blade of wind around the caster.","from":"Rune Knight"},
- {"id":"wl_chain","n":"Chain Lightning","max":10,"type":"act","col":"#bd9aff","cd":3,"hits":1,"power":2.6,"shape":"single","icon":"nap","visual":"lightning","bounce":{"n":3,"share":0.5},"text":"Lightning jumps from the target to three nearby enemies.","from":"Warlock"},
- {"id":"wl_seal","n":"Soul Expansion","max":10,"type":"act","col":"#bd9aff","cd":2,"hits":1,"power":2.2,"shape":"splash","icon":"sdestroy","visual":"detonate","text":"Expand spiritual energy through the target and nearby enemies.","from":"Warlock"},
- {"id":"wl_det","n":"Crimson Rock","max":10,"type":"act","col":"#bd9aff","cd":6,"hits":1,"power":3.5,"shape":"splash","icon":"meteor","visual":"meteor","stun":0.8,"text":"Drop a blazing rock onto an area, briefly stunning enemies.","from":"Warlock"},
- {"id":"wl_frost","n":"Jack Frost","max":10,"type":"act","col":"#bd9aff","cd":5,"hits":1,"power":2.8,"shape":"radial","icon":"fnova","visual":"frost","slow":0.35,"text":"A caster-centered frost wave damages and slows nearby enemies.","from":"Warlock"},
- {"id":"wl_comet","n":"Comet","max":10,"type":"act","col":"#bd9aff","cd":12,"hits":1,"power":5,"shape":"splash","icon":"meteor","visual":"comet","text":"Call down a large comet explosion over the target area.","from":"Warlock"},
- {"id":"rg_hunt","n":"Aimed Bolt","max":10,"type":"act","col":"#9ce5b0","cd":3,"hits":3,"power":2.8,"shape":"single","icon":"falcon","visual":"pounce","rng":7,"text":"Aim a concentrated multi-hit bow shot at one enemy.","from":"Ranger"},
- {"id":"rg_warg","n":"Warg Strike","max":10,"type":"act","col":"#9ce5b0","cd":3.5,"hits":1,"power":2.5,"shape":"single","icon":"beast","visual":"wolf","rng":7,"text":"Send the warg to strike a selected enemy.","from":"Ranger"},
- {"id":"rg_storm","n":"Arrow Storm","max":10,"type":"act","col":"#9ce5b0","cd":5,"hits":3,"power":3.6,"shape":"splash","icon":"ashower","visual":"arrows","rng":7,"text":"Rain a broad volley of arrows onto the target area.","from":"Ranger"},
- {"id":"rg_bite","n":"Warg Bite","max":10,"type":"act","col":"#9ce5b0","cd":7,"hits":1,"power":2,"shape":"single","icon":"beast","visual":"wolf","rng":7,"root":2,"text":"The warg bites and immobilizes the enemy; bosses resist roots.","from":"Ranger"},
- {"id":"rg_cluster","n":"Cluster Bomb","max":10,"type":"act","col":"#9ce5b0","cd":6,"hits":1,"power":3,"shape":"splash","icon":"landmine","visual":"bomb","rng":7,"delay":0.6,"pulse":0.65,"text":"Place a bomb at the target; its main blast follows after 0.6 seconds.","from":"Ranger"},
- {"id":"gc_cross","n":"Cross Impact","max":10,"type":"act","col":"#d89dff","cd":1,"hits":7,"power":3.2,"shape":"single","icon":"vdust","visual":"cross","text":"Seven rapid cuts focused on one target. Daggers count as katars.","from":"Guillotine Cross"},
- {"id":"gc_slip","n":"Dark Illusion","max":10,"type":"act","col":"#d89dff","cd":5,"hits":1,"power":1.8,"shape":"single","icon":"dodge","visual":"cuts","dash":5,"text":"Close the gap in shadow and strike the enemy.","from":"Guillotine Cross"},
- {"id":"gc_veil","n":"Hallucination Walk","max":10,"type":"buff","col":"#d89dff","cd":20,"hits":1,"power":0,"shape":"single","icon":"dodge","visual":"ward","text":"Heighten evasion for 8 seconds. Refreshes outside the offensive combo.","key":"block","flat":8,"rate":1.2,"duration":8,"from":"Guillotine Cross"},
- {"id":"gc_roll","n":"Rolling Cutter","max":10,"type":"act","col":"#d89dff","cd":0.2,"hits":1,"power":0.65,"shape":"radial","icon":"akatar","visual":"spin","spacing":0.2,"repeat":5,"castGain":{"key":"rolling","max":10,"life":10},"text":"Spin five times at 0.2-second spacing in one combo slot. Each spin adds a Rolling stack (max 10, lasts 10 seconds).","from":"Guillotine Cross"},
- {"id":"gc_ripper","n":"Cross Ripper Slasher","max":10,"type":"act","col":"#d89dff","cd":2,"hits":1,"power":2.4,"shape":"single","icon":"sdestroy","visual":"ripper","rng":7,"requiresStack":"rolling","spend":{"key":"rolling","per":0.2},"text":"Requires Rolling stacks. Throw a spinning blade, consuming all stacks for +20% damage each.","from":"Guillotine Cross"},
- {"id":"ab_chain","n":"Judex","max":10,"type":"act","col":"#fff0b7","cd":2,"hits":3,"power":2.2,"shape":"splash","icon":"judex","visual":"judgment","text":"Strike the target area with three pulses of holy light.","from":"Arch Bishop"},
- {"id":"ab_judge","n":"Adoramus","max":10,"type":"act","col":"#fff0b7","cd":5,"hits":1,"power":3.8,"shape":"single","icon":"holy","visual":"judgment","slow":0.3,"blind":0.15,"text":"A concentrated holy beam damages, slows and blinds one enemy.","from":"Arch Bishop"},
- {"id":"ab_ward","n":"Praefatio","max":10,"type":"buff","col":"#fff0b7","cd":12,"hits":1,"power":0,"shape":"single","icon":"kyrie","visual":"ward","absorb":{"pct":0.3,"life":8,"ranked":true},"text":"Raise a barrier absorbing up to 30% of max HP for 8 seconds. Refreshes independently of the combo.","key":"guard","flat":0,"rate":0,"duration":8,"from":"Arch Bishop"},
- {"id":"ab_duple","n":"Duple Light","max":10,"type":"buff","col":"#fff0b7","cd":15,"hits":1,"power":0,"shape":"single","icon":"holy","visual":"ward","text":"Two holy lights empower basic attacks for 12 seconds (adapted as a sacred damage bonus).","key":"sacred","flat":5,"rate":1.5,"duration":12,"from":"Arch Bishop"},
- {"id":"ab_highness","n":"Highness Heal","max":10,"type":"heal","col":"#fff0b7","cd":6,"hits":1,"power":0,"shape":"single","icon":"heal","visual":"ward","text":"Automatically restore 15–35% of max HP below half health. Does not occupy a combo slot.","healBase":0.15,"healRank":0.02,"from":"Arch Bishop"},
- {"id":"mc_gat","n":"Vulcan Arm","max":10,"type":"act","col":"#ffbd77","cd":2,"hits":3,"power":2,"shape":"single","icon":"hammer","visual":"gatling","rng":6,"text":"Fire a short burst from the Mado-mounted gun.","from":"Mechanic"},
- {"id":"mc_over","n":"Arm Cannon","max":10,"type":"act","col":"#ffbd77","cd":4,"hits":1,"power":3.6,"shape":"splash","icon":"fireball","visual":"cannon","rng":6,"text":"Fire a heavy cannon shell that explodes around the target.","from":"Mechanic"},
- {"id":"mc_rocket","n":"Axe Tornado","max":10,"type":"act","col":"#ffbd77","cd":4,"hits":1,"power":3.2,"shape":"radial","icon":"cart","visual":"spin","text":"Swing an axe in a full circle around the caster.","from":"Mechanic"},
- {"id":"mc_boomerang","n":"Axe Boomerang","max":10,"type":"act","col":"#ffbd77","cd":3,"hits":1,"power":2.5,"shape":"single","icon":"hammer","visual":"ripper","rng":6,"text":"Hurl a spinning axe at a distant enemy.","from":"Mechanic"},
- {"id":"mc_swing","n":"Power Swing","max":10,"type":"act","col":"#ffbd77","cd":2,"hits":1,"power":2.2,"shape":"single","icon":"hammer","visual":"burst","stun":0.6,"text":"Deliver a heavy axe blow with a brief stun.","from":"Mechanic"}
+ {"id":"rk_charge","n":"Rune Charge","max":10,"type":"act","col":"#ffd36e","text":"Dash to an enemy and strike three times. Each hit adds a Rune stack (up to 5, lasting 12 seconds).","from":"Rune Knight","cd":4.0,"hits":3,"power":2.3,"shape":"single","dash":4,"gain":{"key":"rune","max":5}},
+ {"id":"rk_burst","n":"Rune Burst","max":10,"type":"act","col":"#ff9d3d","text":"Spend every Rune stack for +25% damage each, in a radial burst around you.","from":"Rune Knight","cd":6.0,"hits":1,"power":2.6,"shape":"radial","spend":{"key":"rune","per":0.25}},
+ {"id":"rk_ward","n":"Rune Ward","max":10,"type":"act","col":"#fff3a0","text":"Strike, then raise a ward that absorbs up to 25% of your max HP in damage for 8 seconds.","from":"Rune Knight","cd":10.0,"hits":1,"power":1.2,"shape":"single","absorb":{"pct":0.25,"life":8}},
+ {"id":"wl_chain","n":"Chain Lightning","max":10,"type":"act","col":"#c9a0ff","text":"A lightning strike that bounces to three nearby enemies for half damage.","from":"Warlock","cd":3.0,"hits":1,"power":2.6,"shape":"single","bounce":{"n":3,"share":0.5}},
+ {"id":"wl_seal","n":"Soul Seal","max":10,"type":"act","col":"#8a5cff","text":"Brand the target with a soul seal. Each cast adds one seal stack (up to 5, lasting 8 seconds).","from":"Warlock","cd":4.0,"hits":1,"power":1.6,"shape":"single","tgtStack":{"key":"seal","max":5,"life":8}},
+ {"id":"wl_det","n":"Seal Detonation","max":10,"type":"act","col":"#ff5a8a","text":"Detonate the target's seals for +20% damage each, with splash to nearby enemies. Spending any seals also stuns the target for 0.8 seconds.","from":"Warlock","cd":6.0,"hits":1,"power":2.4,"shape":"splash","tgtSpend":{"key":"seal","per":0.2,"stun":0.8}},
+ {"id":"rg_hunt","n":"Hunting Pounce","max":10,"type":"act","col":"#7dff7d","text":"Leap at a distant enemy and shoot twice. Each hit adds a Quarry stack (up to 4, lasting 12 seconds).","from":"Ranger","cd":4.0,"hits":2,"power":2.2,"shape":"single","dash":6,"gain":{"key":"quarry","max":4}},
+ {"id":"rg_warg","n":"Warg Strike","max":10,"type":"act","col":"#b5ff6e","text":"Two warg-bolstered shots. Each hit has a 25% chance to stun for 1.5 seconds. Spends Quarry stacks for +15% damage each.","from":"Ranger","cd":3.5,"hits":2,"power":2.0,"shape":"single","spend":{"key":"quarry","per":0.15},"roulette":{"chance":25,"effect":"stun","value":1.5}},
+ {"id":"rg_storm","n":"Storm Arrows","max":10,"type":"act","col":"#8fe9ff","text":"An arrow volley on the target area that bounces to four more enemies for 40% damage.","from":"Ranger","cd":5.0,"hits":1,"power":2.4,"shape":"splash","bounce":{"n":4,"share":0.4}},
+ {"id":"gc_cross","n":"Cross Impact","max":10,"type":"act","col":"#c0c0ff","text":"Two crossing katar or dagger cuts. Spends the target's Bleed stacks for +12% each. Each cut has a 30% chance to add an extra cut for 60% of a cut's damage.","from":"Guillotine Cross","cd":3.5,"hits":2,"power":2.6,"shape":"cross","tgtSpend":{"key":"bleed","per":0.12},"roulette":{"chance":30,"effect":"strike","value":0.6}},
+ {"id":"gc_slip","n":"Shadow Slip","max":10,"type":"act","col":"#8080a8","text":"Slip in behind the target and cut three times. Each cut adds a Bleed stack to the target (up to 5, lasting 6 seconds).","from":"Guillotine Cross","cd":4.5,"hits":3,"power":2.0,"shape":"single","dash":5,"tgtStack":{"key":"bleed","max":5,"life":6}},
+ {"id":"gc_veil","n":"Venom Veil","max":10,"type":"act","col":"#7dff9d","text":"A quick cut, then a veil that absorbs up to 20% of your max HP in damage for 6 seconds.","from":"Guillotine Cross","cd":10.0,"hits":1,"power":1.1,"shape":"single","absorb":{"pct":0.2,"life":6}},
+ {"id":"ab_chain","n":"Holy Chain","max":10,"type":"act","col":"#fff3a0","text":"A holy strike that chains to two nearby enemies for half of one hit.","from":"Arch Bishop","cd":3.5,"hits":2,"power":1.8,"shape":"single","bounce":{"n":2,"share":0.5}},
+ {"id":"ab_judge","n":"Judgment Seal","max":10,"type":"act","col":"#ffe14d","text":"A seal of judgment that stuns the target for 1 second. Bosses resist repeat stuns.","from":"Arch Bishop","cd":6.0,"hits":1,"power":2.6,"shape":"single","stun":1.0},
+ {"id":"ab_ward","n":"Sanctuary Ward","max":10,"type":"act","col":"#fff8d0","text":"A holy ward that absorbs up to 30% of your max HP in damage for 8 seconds.","from":"Arch Bishop","cd":12.0,"hits":1,"power":1.0,"shape":"single","absorb":{"pct":0.3,"life":8}},
+ {"id":"mc_gat","n":"Gatling Fever","max":10,"type":"act","col":"#ffb347","text":"Six rapid cannon hits. Each hit adds a Heat stack (up to 5, lasting 12 seconds).","from":"Mechanic","cd":3.0,"hits":6,"power":2.8,"shape":"single","gain":{"key":"heat","max":5}},
+ {"id":"mc_over","n":"Overheat Cannon","max":10,"type":"act","col":"#ff5a2a","text":"Fire every Heat stack for +20% damage each, with splash to nearby enemies.","from":"Mechanic","cd":6.0,"hits":1,"power":2.6,"shape":"splash","spend":{"key":"heat","per":0.2}},
+ {"id":"mc_rocket","n":"Rocket Jump","max":10,"type":"act","col":"#ffd28a","text":"Rocket-leap at a distant enemy and shock nearby enemies, stunning them for 0.6 seconds.","from":"Mechanic","cd":5.0,"hits":1,"power":2.0,"shape":"splash","dash":6,"stun":0.6}
 ];
 if(FOURTH_JOBS_LIVE)SKILLS.push(...SKILLS4);
 for(const s of SKILLS){
@@ -1273,8 +1261,7 @@ for(const s of SKILLS){
   if(s.type==='act'){s.mul=L=>s.power*(.55+.45*Math.min(s.max,L)/s.max);s.aoe=s.shape!=='single';}
   if(s.type==='pas'||s.type==='buff')s.f=L=>(s.flat||0)+s.rate*(s.id==='thrust'?Math.min(5,L):L);
   s.d=L=>s.type==='act'?`${Math.round(s.mul(L)*100*(typeof skillTuning==='function'&&typeof S!=='undefined'&&S&&s.cls.includes(S.cls)?skillTuning(false,s,L)*skillStatScale(s,L):1))}% total ${s.magic?'magic':'physical'} power${s.hits>1?' across '+s.hits+' hits':''} · ${s.cd}s cooldown · ${s.shape}${s.rng?' · '+s.rng+' tiles range':''}${s.aoe&&s.areaScale?' · '+s.areaScale+'× area reach':''}. ${s.text}`:
-    s.type==='buff'&&s.absorb?`Auto: barrier absorbs ${Math.round(s.absorb.pct*(s.absorb.ranked?.5+.05*L:1)*100)}% max HP · ${s.duration}s duration / ${s.cd}s cooldown. ${s.text}`:
-    s.type==='heal'?`Auto: heals ${s.healBase?Math.round((s.healBase+s.healRank*L)*100):10+5*L}% HP below half · ${s.cd}s cooldown.`:
+    s.type==='heal'?`Auto: heals ${10+5*L}% HP below half · ${s.cd}s cooldown.`:
     `${s.text} ${s.key}: +${s.f(L).toFixed(1)}${['range','echo','momentum'].includes(s.key)?'':'%'}${s.type==='buff'?' · '+(s.id==='dpois'?5+L:['ovthrust','thrust'].includes(s.id)?8+2*Math.min(5,L):s.duration)+'s duration / '+rotationCooldown()+'s rotation cooldown':''}`;
   const describe=s.d;s.d=L=>describe(L)+(s.training?' Training: '+Object.entries(s.training).map(([key,rate])=>'+'+(rate*L).toFixed(1)+' '+key.toUpperCase()+(key==='def'?'':'%')).join(', ')+'.':'');
 }
@@ -1329,12 +1316,14 @@ const SKILL_VISUAL_REDESIGN={aura:'holyAura',mystic:'holyAura',sight:'windAura',
  env:'multiSlash',dodge:'multiSlash',sandat:'arrowRain',vdust:'multiSlash',vsplash:'shadow',sdestroy:'soulBolt',dpois:'frenzyAura',akatar:'multiSlash',
  heal:'holyBolt',signum:'holyNova',sanct:'holyBolt',kyrie:'holyBolt',judex:'holyBolt',assum:'holyNova',basilica:'holyNova',wperf:'impact',meltdown:'impact'};
 for(const [id,kind] of Object.entries(SKILL_VISUAL_REDESIGN))SKILL_VFX[id]={kind,at:SKILLS.find(s=>s.id===id).type==='buff'?'caster':'target',life:.6,redesigned:true};
-// Milestone 4 (dark-launched): the 30 4th-job skills reuse native icon art and existing effect kinds.
+// Milestone 4 (dark-launched): the 18 4th-job skills reuse native icon art and existing effect kinds.
 // No new sprites are painted; their own art is an open item for the owner (see Updates/fourth-jobs/).
 if(FOURTH_JOBS_LIVE){
+  const ART4={rk_charge:'bash',rk_burst:'bowl',rk_ward:'jointbeat',wl_chain:'nap',wl_seal:'sdestroy',wl_det:'storm',rg_hunt:'falcon',rg_warg:'beast',rg_storm:'ashower',gc_cross:'vdust',gc_slip:'dodge',gc_veil:'vsplash',ab_chain:'holy',ab_judge:'basilica',ab_ward:'sanct',mc_gat:'hammer',mc_over:'fireball',mc_rocket:'cart'};
+  const FX4={rk_charge:'multiSlash',rk_burst:'impact',rk_ward:'holyAura',wl_chain:'soulBolt',wl_seal:'shadow',wl_det:'impact',rg_hunt:'arrowRain',rg_warg:'multiSlash',rg_storm:'arrowRain',gc_cross:'multiSlash',gc_slip:'shadow',gc_veil:'shadow',ab_chain:'holyAura',ab_judge:'impact',ab_ward:'holyAura',mc_gat:'impact',mc_over:'impact',mc_rocket:'impact'};
   for(const sk of SKILLS4){
-    if(typeof PGSkillIcons!=='undefined'&&!PGSkillIcons[sk.id]&&PGSkillIcons[sk.icon])PGSkillIcons[sk.id]=PGSkillIcons[sk.icon];
-    SKILL_VFX[sk.id]={kind:sk.type==='act'?'impact':'holyAura',at:sk.type!=='act'||sk.shape==='radial'?'caster':'target',life:.6,redesigned:true};
+    if(typeof PGSkillIcons!=='undefined'&&!PGSkillIcons[sk.id]&&PGSkillIcons[ART4[sk.id]])PGSkillIcons[sk.id]=PGSkillIcons[ART4[sk.id]];
+    if(!SKILL_VFX[sk.id])SKILL_VFX[sk.id]={kind:FX4[sk.id],at:sk.absorb?'caster':'target',life:.6,redesigned:true};
   }
 }
 function skillFxSpec(id,color){const v=SKILL_VFX[id];return v?{id,kind:v.kind,at:v.at||'target',life:v.life||.65,color:color||'#fff'}:null}
@@ -1476,6 +1465,179 @@ const ABYSS_ASCENDED=G(['sword:Oblivion Edge','katar:Void Emperor Claw','staff:W
   'Eternal Abyss Mail','Void Sovereign Crown','World End Guard','Nightfall Greaves','Void Emperor Ring','Oblivion Pendant');
 const ABYSS_ASCENDED_QUALITY=1.25;
 const ascensionGear=prefix=>GEAR[9].map((row,sec)=>{const source=sec===3?ABYSS_ASCENDED:row;return Object.fromEntries(Object.entries(source).map(([key,value])=>[key,key==='w'?Object.fromEntries(Object.entries(value).map(([wt,name])=>[wt,prefix+' '+name])):value?prefix+' '+value:value]));});
+// haven-v158: Ascension combo sets — crafted from Astral Shards / Primal Catalysts + Valkyrie's
+// Sigils. Each set has 6 pieces (weapon, armor, head, shield, legs, accessory) and grants
+// escalating bonuses at 2, 4 and 6 pieces worn. Set bonuses are detected by ascensionSetBonuses()
+// and wired into the combat stat formulas (bon()).
+const ASC_SETS={
+  celestial:{
+    name:'Celestial',map:10,mat:0,
+    pieces:{
+      weapon:{sword:'Celestial Blade',katar:'Celestial Fang',staff:'Celestial Orb',dagger:'Celestial Spike',bow:'Celestial Longbow',axe:'Celestial Halberd',mace:'Celestial Gavel'},
+      armor:'Celestial Vestments',head:'Celestial Circlet',off:'Celestial Aegis',
+      leg:'Celestial Greaves',acc:'Celestial Signet'
+    },
+    // Set bonus thresholds and their effects (applied in ascensionSetBonuses)
+    bonuses:[
+      {count:2,stats:{atk:5,hpPct:5},desc:'+5% ATK, +5% Max HP'},
+      {count:4,stats:{atk:10,hpPct:10,aspd:5},desc:'+10% ATK, +10% Max HP, +5% ASPD'},
+      {count:6,stats:{atk:18,hpPct:15,aspd:8,cdm:12},desc:'+18% ATK, +15% Max HP, +8% ASPD, +12% Crit DMG'}
+    ],
+    // Crafting cost: [shards, sigils, zeny]
+    cost:{weapon:[25,3,100000000],armor:[20,2,80000000],head:[15,2,60000000],off:[15,1,50000000],leg:[15,1,50000000],acc:[18,2,70000000]}
+  },
+  voidwalker:{
+    name:'Voidwalker',map:10,mat:0,
+    pieces:{
+      weapon:{sword:'Voidwalker Edge',katar:'Voidwalker Claw',staff:'Voidwalker Focus',dagger:'Voidwalker Fang',bow:'Voidwalker String',axe:'Voidwalker Splitter',mace:'Voidwalker Hammer'},
+      armor:'Voidwalker Shroud',head:'Voidwalker Hood',off:'Voidwalker Guard',
+      leg:'Voidwalker Boots',acc:'Voidwalker Talisman'
+    },
+    bonuses:[
+      {count:2,stats:{crit:8,flee:5},desc:'+8% Crit, +5% Flee'},
+      {count:4,stats:{crit:15,flee:10,aspd:6},desc:'+15% Crit, +10% Flee, +6% ASPD'},
+      {count:6,stats:{crit:22,flee:15,aspd:10,cdm:15},desc:'+22% Crit, +15% Flee, +10% ASPD, +15% Crit DMG'}
+    ],
+    cost:{weapon:[28,3,110000000],armor:[22,2,90000000],head:[17,2,70000000],off:[16,1,56000000],leg:[16,1,56000000],acc:[20,2,76000000]}
+  },
+  ethereal:{
+    name:'Ethereal',map:10,mat:0,
+    pieces:{
+      weapon:{sword:'Ethereal Light',katar:'Ethereal Touch',staff:'Ethereal Core',dagger:'Ethereal Whisper',bow:'Ethereal Arc',axe:'Ethereal Split',mace:'Ethereal Toll'},
+      armor:'Ethereal Robes',head:'Ethereal Crown',off:'Ethereal Ward',
+      leg:'Ethereal Wraps',acc:'Ethereal Orb'
+    },
+    bonuses:[
+      {count:2,stats:{matk:6,mdef:8,hpPct:5},desc:'+6% MATK, +8% MDEF, +5% Max HP'},
+      {count:4,stats:{matk:12,mdef:15,hpPct:10},desc:'+12% MATK, +15% MDEF, +10% Max HP'},
+      {count:6,stats:{matk:20,mdef:22,hpPct:15,field:10},desc:'+20% MATK, +22% MDEF, +15% Max HP, +10% Field DMG'}
+    ],
+    cost:{weapon:[26,3,104000000],armor:[21,2,84000000],head:[16,2,64000000],off:[15,1,52000000],leg:[15,1,52000000],acc:[19,2,72000000]}
+  },
+  primal:{
+    name:'Primal',map:11,mat:1,
+    pieces:{
+      weapon:{sword:'Primal Slayer',katar:'Primal Rend',staff:'Primal Conduit',dagger:'Primal Shiv',bow:'Primal Recurve',axe:'Primal Cleaver',mace:'Primal Crusher'},
+      armor:'Primal Hide',head:'Primal Crown',off:'Primal Bulwark',
+      leg:'Primal Stompers',acc:'Primal Band'
+    },
+    bonuses:[
+      {count:2,stats:{matk:5,def:8},desc:'+5% Magic Power, +8% DEF'},
+      {count:4,stats:{matk:10,def:15,hpPct:8},desc:'+10% Magic Power, +15% DEF, +8% Max HP'},
+      {count:6,stats:{matk:18,def:20,hpPct:12,field:15},desc:'+18% Magic Power, +20% DEF, +12% Max HP, +15% Field DMG'}
+    ],
+    cost:{weapon:[30,3,120000000],armor:[25,2,100000000],head:[20,2,80000000],off:[18,1,60000000],leg:[18,1,60000000],acc:[22,2,80000000]}
+  },
+  molten:{
+    name:'Molten',map:11,mat:1,
+    pieces:{
+      weapon:{sword:'Molten Blade',katar:'Molten Claw',staff:'Molten Rod',dagger:'Molten Spike',bow:'Molten Bow',axe:'Molten Axe',mace:'Molten Maul'},
+      armor:'Molten Plate',head:'Molten Helm',off:'Molten Shield',
+      leg:'Molten Greaves',acc:'Molten Ring'
+    },
+    bonuses:[
+      {count:2,stats:{atk:6,def:10,hpPct:5},desc:'+6% ATK, +10% DEF, +5% Max HP'},
+      {count:4,stats:{atk:12,def:18,hpPct:10},desc:'+12% ATK, +18% DEF, +10% Max HP'},
+      {count:6,stats:{atk:20,def:25,hpPct:15,field:12},desc:'+20% ATK, +25% DEF, +15% Max HP, +12% Field DMG'}
+    ],
+    cost:{weapon:[32,3,130000000],armor:[27,2,110000000],head:[22,2,90000000],off:[20,1,70000000],leg:[20,1,70000000],acc:[24,2,90000000]}
+  },
+  infernal:{
+    name:'Infernal',map:11,mat:1,
+    pieces:{
+      weapon:{sword:'Infernal Edge',katar:'Infernal Fang',staff:'Infernal Focus',dagger:'Infernal Spike',bow:'Infernal String',axe:'Infernal Splitter',mace:'Infernal Hammer'},
+      armor:'Infernal Vest',head:'Infernal Mask',off:'Infernal Buckler',
+      leg:'Infernal Boots',acc:'Infernal Charm'
+    },
+    bonuses:[
+      {count:2,stats:{atk:7,cdm:8},desc:'+7% ATK, +8% Crit DMG'},
+      {count:4,stats:{atk:14,cdm:15,crit:10},desc:'+14% ATK, +15% Crit DMG, +10% Crit'},
+      {count:6,stats:{atk:22,cdm:22,crit:15,aspd:8},desc:'+22% ATK, +22% Crit DMG, +15% Crit, +8% ASPD'}
+    ],
+    cost:{weapon:[35,3,140000000],armor:[28,2,116000000],head:[23,2,96000000],off:[21,1,76000000],leg:[21,1,76000000],acc:[25,2,96000000]}
+  }
+};
+// The Ascension Forge panel: shows both sets, their pieces, costs, active set bonuses and craft buttons.
+function ascensionForgePanel(){
+  const c=C(),wt=c.wt||['sword'];
+  const active=typeof ascensionSetBonuses==='function'?ascensionSetBonuses():{};
+  let html=`<div class="hd">Ascension Forge</div><p>Craft <b class="r7">Mythic</b> combo-set equipment from Ascension materials. Wearing multiple pieces from the same set grants escalating bonuses.</p>`;
+  for(const [key,set] of Object.entries(ASC_SETS)){
+    const mat=ASCENSION_MATERIALS[set.mat],owned=S.ascensionMat?.[set.mat]||0,sigils=S.ascensionMat?.[2]||0;
+    const a=active[key];
+    html+=`<div class="sec">${set.name} Set <small>(${mat} · ${set.bonuses.map(b=>b.count+'-pc: '+b.desc).join(' · ')})</small></div>`;
+    if(a)html+=`<div class="r3" style="padding:6px 10px;border-radius:6px;background:rgba(168,143,229,.12);margin-bottom:8px"><b>${a.count}/${set.bonuses[set.bonuses.length-1].count} pieces active</b> — ${a.tier.desc}</div>`;
+    html+=`<small>Materials: ${mat} × ${owned} · Valkyrie's Sigils × ${sigils} · Zeny: ${S.zeny.toLocaleString()}</small><div class="bag-item-list">`;
+    for(const slot of ['weapon','armor','head','off','leg','acc']){
+      const cost=set.cost[slot];if(!cost)continue;
+      const [mats,sig,zeny]=cost;
+      let name=slot==='weapon'?Object.values(set.pieces.weapon).join(' / '):set.pieces[slot];
+      const canAfford=owned>=mats&&sigils>=sig&&S.zeny>=zeny;
+      html+=`<article class="mob-card"><b>${slot==='weapon'?'Mythic Weapon':('Mythic '+set.pieces[slot])}</b><small>${slot.toUpperCase()} · ${mats} ${mat} + ${sig} Sigils + ${zeny.toLocaleString()}z</small><button data-a="craftasc" data-v="${key}:${slot}" ${canAfford?'':'disabled'}>Craft</button></article>`;
+    }
+    html+=`</div>`;
+  }
+  return html;
+}
+// Detect how many pieces of each Ascension set are currently worn and return the active bonuses.
+function ascensionSetBonuses(){
+  const worn=Object.values(S.eq).filter(Boolean),active={};
+  for(const [key,set] of Object.entries(ASC_SETS)){
+    let count=0;
+    for(const it of worn){
+      if(!it||!it.ascSet)continue;
+      if(it.ascSet===key)count++;
+    }
+    if(count>=2){
+      const tier=set.bonuses.filter(b=>count>=b.count).pop();
+      if(tier)active[key]={count,tier,set};
+    }
+  }
+  return active;
+}
+// Build a crafted Ascension item. The item has Mythic rarity, the set tag, and strong base stats.
+function craftAscensionPiece(setKey,slot,weaponType){
+  const set=ASC_SETS[setKey];if(!set)return null;
+  const cost=set.cost[slot];if(!cost)return null;
+  const [mats,sigils,zeny]=cost;
+  if((S.ascensionMat?.[set.mat]||0)<mats)return{error:'Not enough '+ASCENSION_MATERIALS[set.mat]};
+  if((S.ascensionMat?.[2]||0)<sigils)return{error:"Not enough Valkyrie's Sigils"};
+  if(S.zeny<zeny)return{error:'Not enough Zeny ('+zeny.toLocaleString()+' needed)'};
+  S.ascensionMat[set.mat]-=mats;S.ascensionMat[2]-=sigils;S.zeny-=zeny;
+  const name=slot==='weapon'?set.pieces.weapon[weaponType]:set.pieces[slot];
+  if(!name)return{error:'Invalid weapon type for your class'};
+  const tier=4,val=Math.round({weapon:2,armor:4,head:10,off:3,leg:3,acc:5}[slot]*15*1.15*RAR[4].m*1.5*rnd(.95,1.05));
+  const profile={slot,wt:slot==='weapon'?weaponType:undefined,sec:6,tier,mp:set.map,quality:1.5};
+  const pool=affixPool(profile).slice(),aff=[];
+  for(let i=0;i<4;i++){const k=pool.splice(ri(0,pool.length-1),1)[0];aff.push(rollAffix(k,profile))}
+  const slots=slot==='weapon'&&(weaponType==='katar'||weaponType==='bow')?4:slot==='weapon'?3:1;
+  const item={id:uid(),slot,wt:slot==='weapon'?weaponType:undefined,tier,val,name:'Mythic '+name,aff,slots,cards:[],sec:6,lvl:150,quality:1.5,mp:set.map,mythic:true,ascSet:setKey};
+  return{item};
+}
+function transformToMythic(item,setKey){
+  const set=ASC_SETS[setKey];if(!set)return{error:'Invalid set'};
+  if(!item||item.sec!==5)return{error:'Only N+ equipment can be transformed'};
+  if(item.mythic)return{error:'Already Mythic'};
+  const slot=item.slot,weaponType=item.wt;
+  const cost=set.cost[slot];if(!cost)return{error:'Invalid slot for transformation'};
+  const [mats,sigils,zeny]=cost;
+  if((S.ascensionMat?.[set.mat]||0)<mats)return{error:'Not enough '+ASCENSION_MATERIALS[set.mat]};
+  if((S.ascensionMat?.[2]||0)<sigils)return{error:"Not enough Valkyrie's Sigils"};
+  if(S.zeny<zeny)return{error:'Not enough Zeny ('+zeny.toLocaleString()+' needed)'};
+  S.ascensionMat[set.mat]-=mats;S.ascensionMat[2]-=sigils;S.zeny-=zeny;
+  const name=slot==='weapon'?set.pieces.weapon[weaponType]:set.pieces[slot];
+  if(!name)return{error:'Invalid weapon type for your class'};
+  item.sec=6;item.mythic=true;item.ascSet=setKey;item.tier=4;item.quality=1.5;item.mp=set.map;item.lvl=150;
+  item.name='Mythic '+name;
+  // Preserve existing affixes - they keep their N+ values until reforged
+  // Only add 4th affix if missing
+  if((item.aff||[]).length<4){
+    const profile={slot,wt:weaponType,sec:6,tier:4,mp:set.map,quality:1.5};
+    const pool=affixPool(profile).filter(k=>!(item.aff||[]).some(a=>a.k===k));
+    if(pool.length){const k=pool[ri(0,pool.length-1)];item.aff.push({k,v:Math.round(affixValue(k,6,4,rnd(.95,1.05),set.map))})}
+  }
+  return{success:true,item};
+}
 const MAPS=[
 {n:'Prontera',t:'Novice start · easy Lv 1-10',ground:0x7cc46a,sky:0x8ecff5,boss:'Mastering:7ae86a:blob',
  mobs:['Poring:ff9ec4:blob','Fabre:b8e05a:worm','Lunatic:fff4f4:bunny','Drops:ffb84a:blob','Chonchon:7ab8f0:bug','Willow:7ac04a:tree','Rocker:c86a3a:bug','Poporing:9ae84a:blob','Savage Bebe:c09a5a:cat','Peco Peco:ffd850:bug'],
@@ -1863,6 +2025,7 @@ const trialState=()=>{
   const ch=Math.floor(+S.trial.chest);S.trial.chest=Number.isFinite(ch)?Math.max(0,Math.min(TRIAL_CHESTS.length,ch)):0;
   S.shards=Math.max(0,Math.floor(+S.shards||0));
   S.refineScrolls=safeCount(S.refineScrolls);
+  S.mythicScrolls=safeCount(S.mythicScrolls);
   return S.trial};
 const TRIAL={on:false,mode:'training',left:TRIAL_SECS,dmg:0,dmg0:0,dummy:null,shop:false};
 let hudTrial=false,hudTrialClock='';   // the HUD reads these instead of the field name while a run is on
@@ -2122,7 +2285,7 @@ const CARD_STATS_BY_MAP=[
  ['field','matk','atk','hpPct','mdef','cdm'],
  ['cdm','hpPct','matk','crit','def','atk'],
  ['matk','mdef','def','int','atk'],
- ['hpPct','crit','matk','field','def']
+ ['hpPct','field','matk','aspd','def']
 ];
 const CARD_BOSS_STATS=['hpPct','atk','matk','crit','atk','field','atk','matk','cdm','cdm','matk','atk'];
 const CARD_FITS={str:['weapon','acc'],dex:['weapon','acc'],int:['weapon','head','acc'],luk:['acc'],agi:['armor','leg','acc'],vit:['armor','off','head'],hp:['head','armor'],hpPct:['armor','head','off'],atk:['weapon'],matk:['weapon','head'],crit:['weapon','acc'],cdm:['weapon','acc'],aspd:['armor','leg'],flee:['armor','off','leg'],move:['leg','acc'],def:['armor','off','leg'],mdef:['head','armor','off'],field:['weapon','acc']};
@@ -2273,7 +2436,11 @@ function buyMat(m){if(!bmOpen()||!NM_MAT[m]){return}if(S.zeny<BM_MAT_PRICE){log(
 // resist nothing - their bosses are a first wall, not a crit check - and escorts, regular mobs
 // and pets are untouched. v74 (owner): the first pass was too steep (-20/-25/-30/-40), so the
 // ladder is -15/-15/-15/-20/-30 instead.
-const BOSS_CRIT_RES=[0,0,0,0,0,.15,.15,.15,.2,.3],NM_CRIT_RES=[.35,.35,.36,.36,.38,.38,.4,.4,.42,.45],bossCritRes=(m,l)=>(l|0)>10?NM_CRIT_RES[Math.max(0,Math.min(NM_CRIT_RES.length-1,m|0))]||0:BOSS_CRIT_RES[Math.max(0,Math.min(BOSS_CRIT_RES.length-1,m|0))]||0;
+const BOSS_CRIT_RES=[0,0,0,0,0,.15,.15,.15,.2,.3],NM_CRIT_RES=[.35,.35,.36,.36,.38,.38,.4,.4,.42,.45],
+  // haven-v158: Ascension bosses resist crit much harder than Nightmare (45–55% range).
+  // Astral ramps 45→50→52→55 across stages 1-5; Thor starts higher at 48→55.
+  ASC_CRIT_RES=[[.45,.47,.50,.52,.55],[.48,.50,.52,.54,.55]],
+  bossCritRes=(m,l)=>(m|0)>=10?ASC_CRIT_RES[(m|0)-10]?.[Math.max(1,Math.min(5,l|0))-1]||.5:(l|0)>10?NM_CRIT_RES[Math.max(0,Math.min(NM_CRIT_RES.length-1,m|0))]||0:BOSS_CRIT_RES[Math.max(0,Math.min(BOSS_CRIT_RES.length-1,m|0))]||0;
 // v73 (owner: "afk, it suddenly pops the offline reward of 1min"): the away window is now three
 // minutes, not one. A hidden tab only clamped to ~1s timers used to sync about once a minute, so
 // a perfectly ordinary background minute read as "away" and paid for time the tab had already
@@ -2326,7 +2493,7 @@ function gearPool(m,l){if(m>=10)return [];const sec=secField(m,l),tier=dropTier(
   return T}
 function fieldOf(m,l){if(m>=10){
   if(!Number.isInteger(l)||l<1||l>normalStages(m))throw new RangeError('Ascension has five stages');
-  const mp=MAPS[m],tier=dropTier(m,l),entry=(mm,boss=false)=>({...mm,tier,drops:[],card:cardDefinition(m,boss?mp.mobs.length:mp.mobs.findIndex(x=>x.n===mm.n),false),cardCh:boss?.1:.15,ore:true,oreCh:boss?.025:l===5?.01:.005,...(boss?{critRes:bossCritRes(m,l)}:{})});
+  const mp=MAPS[m],tier=dropTier(m,l),entry=(mm,boss=false)=>({...mm,tier,drops:[],card:cardDefinition(m,boss?mp.mobs.length:mp.mobs.findIndex(x=>x.n===mm.n),false),cardCh:boss?.1:.15,ore:true,oreCh:boss?.01:.005,...(boss?{critRes:bossCritRes(m,l)}:{})});
   // Material fields keep every native species reachable, including the boss escorts.
   const start=[0,2,3,4,0][l-1];
   return {m,l,sec:3,tier,gearSet:'materials',mobs:[0,1].map(j=>entry(mp.mobs[(start+j)%mp.mobs.length])),boss:l===5?entry(mp.boss,true):null};
@@ -2355,7 +2522,7 @@ function fieldOf(m,l){if(m>=10){
   // (NMPLUS_DROP, in gch and in the boss pool) stays.
   const mobs=[0,1].map(j=>{const mm=mp.mobs[(l>10?2*(l-11)+j:l-1+j)%mp.mobs.length],cg=l<=3?0:l<=7?1:2,
     wr=[[WP[(2*(l-1)+j)%nw],gch[0]]];   // v90 (owner): the N+ rows walk the shelf again (see the note above); the halved gch[0] is the N+ rate
-    return{...mm,tier:ft,drops:[...wr,[DF[(4*(l-1)+j*2)%nd],gch[1]],[DF[(4*(l-1)+j*2+1)%nd],gch[2]]],card:cardDefinition(m,mp.mobs.findIndex(x=>x.n===mm.n),l>10),cardCh:.15,ore:true,oreCh:l>10?.015:l===10?.01:.005}});
+    return{...mm,tier:ft,drops:[...wr,[DF[(4*(l-1)+j*2)%nd],gch[1]],[DF[(4*(l-1)+j*2+1)%nd],gch[2]]],card:cardDefinition(m,mp.mobs.findIndex(x=>x.n===mm.n),l>10),cardCh:.15,ore:true,oreCh:.005}});
   return{m,l,sec,tier:ft,gearSet,mobs,boss:(l===10||l===15)?{...mp.boss,tier:ft,
     // v57: the boss still lists its whole pool - every item stays obtainable - but the pool now
     // totals ~6% per boss instead of one 1% roll per entry (13 entries used to mean 13%). The
@@ -2363,7 +2530,7 @@ function fieldOf(m,l){if(m>=10){
     // v73: mid/endgame bosses (map index 5+) pay 30% less, so their pool totals ~4.2%; the
     // first five maps keep the original ~6%. A boss also carries its map's crit resistance.
     drops:T.map(x=>[x,Math.round(BOSS_POOL_TOTAL[l>10?2:(m>=5?1:0)]*(sec===5?NMPLUS_DROP:1)/n)/100]),critRes:bossCritRes(m,l),
-    card:cardDefinition(m,mp.mobs.length,l>10),cardCh:.1,ore:true,oreCh:.025,mat:l>13?{m:nmMatIndex(m),n:NM_MAT[nmMatIndex(m)]}:null}:null}}
+    card:cardDefinition(m,mp.mobs.length,l>10),cardCh:.1,ore:true,oreCh:.008,mat:l>13?{m:nmMatIndex(m),n:NM_MAT[nmMatIndex(m)]}:null}:null}}
 // One drop line for the map panel: icon + name + the field's fixed rarity + which monster carries
 // it, with the % on the right. v79: a piece the player's own class cannot wear is dimmed and says
 // why on hover - the class gate is part of choosing where to farm, not a surprise that only turns
@@ -2385,7 +2552,7 @@ const dropTxt=([T,ch],who)=>{const why=whyNot(T),worse=dropIsWorse(T),cls='dropl
 // 930 points. The grant curve 4+floor(l/5) pays 1352 by Lv99 and 2811 by Lv150 - exactly
 // three stats at 120 with a handful of points left over. Pinned by tools/tests/stat_sim.js.
 // Declared here (before fresh()/load()) so the save repair can clamp to MAXST too.
-const MAXST=120,BASECAP=99,ELITELV=100,statCap=()=>S.lv>=ELITELV?MAXST:BASECAP;
+const MAXST=120,ASCENSION_MAXST=150,BASECAP=99,ELITELV=100,ASCENSIONLV=150,statCap=()=>S.lv>=ASCENSIONLV&&items().some(it=>it.sec===6)?ASCENSION_MAXST:S.lv>=ELITELV?MAXST:BASECAP;
 
 // ---------- economy tuning ----------
 // v56 live pacing: the whole EXP economy reads at one tenth (EXP_RATE 7 is the old 70x),
@@ -2676,7 +2843,7 @@ function autoSellReason(it,state=S){
 const autoSellMatches=it=>!autoSellReason(it);
 // ---------- end auto-sell rules ----------
 
-const fresh=()=>({progressionVersion:PROGRESSION_VERSION,skillVersion:SKILL_VERSION,skillRefund:0,skillRespec:{},pets:[],bond:[],cls:'Novice',sex:'m',hair:0,appearance:null,lv:1,exp:0,hp:100,zeny:0,kills:0,indexXp:0,mobKills:{},equippedTitle:null,shards:0,refineScrolls:0,nmMatVersion:2,nmMat:[0,0,0,0,0],dps:0,trial:{day:trialDay(),used:0,best:0,runs:0},cardIndex:emptyCardIndex(),dmg:0,pts:10,jobs:{Novice:{jl:1,jx:0}},sk:{aid:1},skOff:{},skillPriority:[],skillCombos:{},dmgShort:true,dmgShow:true,cameraShake:true,base:{},mp:0,lvl:1,prog:MAPS.map(()=>1),mapClears:MAPS.map(()=>false),ascensionMat:[0,0,0],ascensionStageVersion:1,kl:0,auto:true,adv:true,feed:true,clickSell:false,bg:true,autoSell:[false,false,false,false,false,false,false],logOff:{},q:null,cards:[],ore:{ori:0,elu:0},offlineAt:0,offlineKph:0,offlineRateAt:0,offlineRateKills:0,offlineKillRemainder:0,gm:false,gmx:100,
+const fresh=()=>({progressionVersion:PROGRESSION_VERSION,skillVersion:SKILL_VERSION,skillRefund:0,skillRespec:{},pets:[],bond:[],cls:'Novice',sex:'m',hair:0,appearance:null,lv:1,exp:0,hp:100,zeny:0,kills:0,indexXp:0,mobKills:{},equippedTitle:null,shards:0,refineScrolls:0,mythicScrolls:0,nmMatVersion:2,nmMat:[0,0,0,0,0],dps:0,trial:{day:trialDay(),used:0,best:0,runs:0},cardIndex:emptyCardIndex(),dmg:0,pts:10,jobs:{Novice:{jl:1,jx:0}},sk:{aid:1},skOff:{},skillPriority:[],skillCombos:{},dmgShort:true,dmgShow:true,cameraShake:true,base:{},mp:0,lvl:1,prog:MAPS.map(()=>1),mapClears:MAPS.map(()=>false),ascensionMat:[0,0,0],ascensionStageVersion:1,kl:0,auto:true,adv:true,feed:true,clickSell:false,bg:true,autoSell:[false,false,false,false,false,false,false],logOff:{},q:null,cards:[],ore:{ori:0,elu:0},offlineAt:0,offlineKph:0,offlineRateAt:0,offlineRateKills:0,offlineKillRemainder:0,gm:false,gmx:100,
   st:{str:1,agi:1,dex:1,luk:1,int:1,vit:1},eq:{weapon:{id:1,slot:'weapon',wt:'dagger',tier:0,val:5,name:'Novice Knife',aff:[],slots:1,cards:[],sec:0},armor:null,head:null,off:null,leg:null,acc1:null,acc2:null},inv:[]});
 const saveKey=()=>'pg_save3_'+currentUser;
 // ---------- the save-owner stamp (v88.6) ----------
@@ -3464,7 +3631,7 @@ function comboRole(sk){return sk.mark||sk.follow||sk.blind?'Opener':sk.execute||
 function suggestedCombo(){const attacks=SKILLS.filter(s=>s.type==='act'&&lv(s.id)>0&&s.cls.includes(S.cls));
   const opener=attacks.find(s=>s.mark||s.follow||s.blind),picked=opener?[opener]:[];
   // Keep an inherited opener, then mix the newest attacks with the previous job's tools.
-  for(const from of lineOf(S.cls).slice().reverse())for(const sk of attacks.filter(s=>s.from===from).slice(0,FOURTH_JOBS_LIVE&&CLASSES[from]?.tier===4?5:2))if(!picked.includes(sk))picked.push(sk);
+  for(const from of lineOf(S.cls).slice().reverse())for(const sk of attacks.filter(s=>s.from===from).slice(0,2))if(!picked.includes(sk))picked.push(sk);
   for(const sk of attacks)if(!picked.includes(sk))picked.push(sk);
   return picked.slice(0,6).sort((a,b)=>(comboRole(a)==='Finisher')-(comboRole(b)==='Finisher')).map(s=>s.id);
 }
@@ -3479,7 +3646,7 @@ function rotationCooldown(){return 3;}
 function comboStatus(){const c=comboConfig(),r=skillState();if(!c.enabled)return 'Combo paused';if(t<(r.recoverUntil||0))return 'Recovering · '+Math.max(0,r.recoverUntil-t).toFixed(1)+'s';
   if(!rotationSkills().length)return 'Choose an attack to begin';return r.comboSlots?'Combo · '+Math.min(r.cursor+1,r.comboSlots.length)+' / '+r.comboSlots.length:'Ready for next combo';}
 function rotationBar(){const c=comboConfig(),available=SKILLS.filter(s=>s.type==='act'&&lv(s.id)>0&&s.cls.includes(S.cls));
-  return `<section class="skill-rotation"><div class="combo-heading"><div><span class="combo-eyebrow">YOUR COMBAT PLAN · ${esc(S.cls)}</span><h3>Build your combo</h3></div><button data-a="combopause" aria-pressed="${!c.enabled}">${c.enabled?'Pause combo':'Resume combo'}</button></div><p class="combo-help">Choose up to six attacks. They fire left to right, then recover for 3 seconds.${FOURTH_JOBS_LIVE&&S.cls==='Guillotine Cross'?' Rolling Cutter spins five times in its slot at 0.2s spacing.':' Each attack casts once.'} Buffs and First Aid run separately.</p><div class="combo-live"><span class="combo-pulse"></span><b data-combo-status>${comboStatus()}</b><small>0.5s cast spacing · basic attacks during recovery</small></div><div class="combo-slots">${c.slots.map((id,i)=>{const sk=available.find(s=>s.id===id);return `<article class="combo-slot${sk?' filled':''}" data-combo-index="${i}"><div class="combo-slot-top"><b>${String(i+1).padStart(2,'0')}</b><span>${sk?comboRole(sk):'Empty slot'}</span></div><div class="combo-icon">${sk?skillIcon(sk.id):'<span>＋</span>'}</div><label><span class="sr-only">Combo slot ${i+1}</span><select data-combo-slot="${i}" aria-label="Combo slot ${i+1}"><option value="">Choose attack</option>${available.map(a=>`<option value="${a.id}" ${a.id===id?'selected':''}>${esc(a.n)}${skOff(a.id)?' (paused)':''}</option>`).join('')}</select></label><small>${sk?esc(sk.from)+' · '+sk.cd+'s cooldown':'Learn attacks in your class line'}</small><div class="combo-slot-actions"><button data-a="combomove" data-v="${i}:-1" aria-label="Move slot ${i+1} left" ${i?'':'disabled'}>←</button><button data-a="combomove" data-v="${i}:1" aria-label="Move slot ${i+1} right" ${i<5?'':'disabled'}>→</button><button data-a="comboassign" data-v="${i}:" aria-label="Clear slot ${i+1}" ${id?'':'disabled'}>×</button></div></article>`}).join('')}</div><div class="combo-bottom"><button data-a="combofill">Auto-fill combo</button><small>Edits apply to the next combo. Skills on cooldown or out of range are skipped.</small><span class="combo-recovery">↻ 3s recovery</span></div></section>`;
+  return `<section class="skill-rotation"><div class="combo-heading"><div><span class="combo-eyebrow">YOUR COMBAT PLAN · ${esc(S.cls)}</span><h3>Build your combo</h3></div><button data-a="combopause" aria-pressed="${!c.enabled}">${c.enabled?'Pause combo':'Resume combo'}</button></div><p class="combo-help">Choose up to six attacks. They fire left to right, once each, then recover for 3 seconds. Buffs and First Aid run separately.</p><div class="combo-live"><span class="combo-pulse"></span><b data-combo-status>${comboStatus()}</b><small>0.5s cast spacing · basic attacks during recovery</small></div><div class="combo-slots">${c.slots.map((id,i)=>{const sk=available.find(s=>s.id===id);return `<article class="combo-slot${sk?' filled':''}" data-combo-index="${i}"><div class="combo-slot-top"><b>${String(i+1).padStart(2,'0')}</b><span>${sk?comboRole(sk):'Empty slot'}</span></div><div class="combo-icon">${sk?skillIcon(sk.id):'<span>＋</span>'}</div><label><span class="sr-only">Combo slot ${i+1}</span><select data-combo-slot="${i}" aria-label="Combo slot ${i+1}"><option value="">Choose attack</option>${available.map(a=>`<option value="${a.id}" ${a.id===id?'selected':''}>${esc(a.n)}${skOff(a.id)?' (paused)':''}</option>`).join('')}</select></label><small>${sk?esc(sk.from)+' · '+sk.cd+'s cooldown':'Learn attacks in your class line'}</small><div class="combo-slot-actions"><button data-a="combomove" data-v="${i}:-1" aria-label="Move slot ${i+1} left" ${i?'':'disabled'}>←</button><button data-a="combomove" data-v="${i}:1" aria-label="Move slot ${i+1} right" ${i<5?'':'disabled'}>→</button><button data-a="comboassign" data-v="${i}:" aria-label="Clear slot ${i+1}" ${id?'':'disabled'}>×</button></div></article>`}).join('')}</div><div class="combo-bottom"><button data-a="combofill">Auto-fill combo</button><small>Edits apply to the next combo. Skills on cooldown or out of range are skipped.</small><span class="combo-recovery">↻ 3s recovery</span></div></section>`;
 }
 // v39: the master auto-cast switch. It covers every learned skill of the current line that
 // auto-casts (everything except passives), reads ON only while ALL of them are ON, and clears
@@ -3493,7 +3660,7 @@ const statResetCost=()=>S.skillRespec&&S.skillRespec[S.cls]?0:rcost();
 const skMasterTile=()=>{const on=skAllOn(),n=skTog().length,done=skillsFullyAllocated();
   return`<div class="sk-tools"><label class="sk-master${on?'':' off'}" title="Switch the auto-cast of every learned skill on or off"><span class="sk-kind">ALL</span><div class="si" aria-hidden="true">&#9199;&#65039;</div><div class="sk-name">Auto-cast all</div><div class="sk-autocast"><input type="checkbox" data-a="skall" ${on?'checked':''} aria-label="Auto-cast every learned skill"> ${on?'ALL ON':'SOMETHING OFF'}</div><small>${n} skill${n===1?'':'s'} on this line</small></label><button class="sk-alloc" data-a="skalloc" ${done||skpAvail()<1?'disabled':''} title="Auto-allocate all available points: learn each available skill first, then improve ranks">⚡ Auto-allocate all skills<small>${done?'All skills maxed':'Learn every skill first'}</small></button></div>`};
 const skillDetailCard=sel=>{const SL=lv(sel.id),soff=!!(SL&&sel.type!=='pas'&&skOff(sel.id));
-  return`<div class="mob-card sk-detail-card" data-skill-detail="${sel.id}"><div class="sk-detail-head"><b>${sel.n}</b> <small>${sel.type==='pas'?'Passive':sel.type==='heal'?'Auto-heal':sel.type==='buff'?'Buff (auto-refresh)':comboRole(sel)}${sel.rng?' &middot; RANGED':''}${sel.aoe?' &middot; AREA':''}${sel.dot?' &middot; DOT':''}${sel.stun?' &middot; STUN':''}${sel.chain?' &middot; CHAIN':''}</small></div><div class="sk-detail-autocast">${SL&&sel.type!=='pas'?`<label class="sk-autocast"><input type="checkbox" data-a="sktog" data-v="${sel.id}" ${soff?'':'checked'} aria-label="Auto cast ${sel.n}"> Auto cast this skill</label><small class="${soff?'r0':''}">${soff?'Paused - it will not be used until you check this again.':'Used automatically when ready.'}</small>`:'<small>Passive or not learned yet - nothing to auto-cast.</small>'}</div>${sel.type==='act'?`<p class="combo-membership">${comboConfig().slots.includes(sel.id)?(sel.repeat?'In your combo · '+sel.repeat+' spins per slot.':'In your combo · casts once per cycle.'):'Choose this attack in a combo slot to use it.'}</p>`:''}<small>${sel.d(Math.max(1,SL))}</small>${SL&&SL<sel.max?`<br><small>Next: ${sel.d(SL+1)}</small>`:''}</div>`};
+  return`<div class="mob-card sk-detail-card" data-skill-detail="${sel.id}"><div class="sk-detail-head"><b>${sel.n}</b> <small>${sel.type==='pas'?'Passive':sel.type==='heal'?'Auto-heal':sel.type==='buff'?'Buff (auto-refresh)':comboRole(sel)}${sel.rng?' &middot; RANGED':''}${sel.aoe?' &middot; AREA':''}${sel.dot?' &middot; DOT':''}${sel.stun?' &middot; STUN':''}${sel.chain?' &middot; CHAIN':''}</small></div><div class="sk-detail-autocast">${SL&&sel.type!=='pas'?`<label class="sk-autocast"><input type="checkbox" data-a="sktog" data-v="${sel.id}" ${soff?'':'checked'} aria-label="Auto cast ${sel.n}"> Auto cast this skill</label><small class="${soff?'r0':''}">${soff?'Paused - it will not be used until you check this again.':'Used automatically when ready.'}</small>`:'<small>Passive or not learned yet - nothing to auto-cast.</small>'}</div>${sel.type==='act'?`<p class="combo-membership">${comboConfig().slots.includes(sel.id)?'In your combo · casts once per cycle.':'Choose this attack in a combo slot to use it.'}</p>`:''}<small>${sel.d(Math.max(1,SL))}</small>${SL&&SL<sel.max?`<br><small>Next: ${sel.d(SL+1)}</small>`:''}</div>`};
 const pv=k=>SKILLS.reduce((a,s)=>a+(skillOn(s.id)?(s.type==='pas'&&s.key===k?s.f(lv(s.id)):0)+(s.training&&s.training[k]||0)*lv(s.id):0),0)+(typeof skillBonus==='function'?skillBonus(k):0);
 // v81 dual wield (owner): "let set that assasin & assassin cross can wield daggers. 2 hands."
 // A two-handed katar is TWO_HANDED weapons and a left-hand dagger is DUAL of one, so a pair of
@@ -3502,7 +3669,10 @@ const pv=k=>SKILLS.reduce((a,s)=>a+(skillOn(s.id)?(s.type==='pas'&&s.key===k?s.f
 // atk(): it reads the left hand as eqv('off'), which is only non-zero for a dagger. A shield
 // still reads as its own DEF, which is why def() keeps its slot==='off' guard.
 const items=()=>Object.values(S.eq).filter(Boolean),ev=it=>Math.round(it.val*(1+(it.r||0)*.15)),iname=it=>(it.r?'+'+it.r+' ':'')+it.name,DUAL=.5,TWO_HANDED=1.5,eqv=k=>{const it=S.eq[k];return it?k==='off'&&it.wt==='dagger'?ev(it)*DUAL:ev(it)*(it.wt==='katar'?TWO_HANDED:1):0};
-const bon=k=>{let v=MASTER_STATS.includes(k)?cardMasteryStat(k):0;for(const it of items()){const f=it===S.eq.off&&it.wt==='dagger'?DUAL:1;for(const a of it.aff||[])if(a.k===k)v+=a.v*f;for(const c of it.cards||[])for(const e of cardEffects(c))if(e.k===k)v+=e.v*f}return v};
+const bon=k=>{let v=MASTER_STATS.includes(k)?cardMasteryStat(k):0;for(const it of items()){const f=it===S.eq.off&&it.wt==='dagger'?DUAL:1;for(const a of it.aff||[])if(a.k===k)v+=a.v*f;for(const c of it.cards||[])for(const e of cardEffects(c))if(e.k===k)v+=e.v*f}
+  // haven-v158: Ascension set bonuses add percentage stats on top of gear and cards.
+  if(typeof ascensionSetBonuses==='function')for(const a of Object.values(ascensionSetBonuses()))if(a.tier.stats[k])v+=a.tier.stats[k];
+  return v};
 // v74 (owner: "second class or 3rd class equipment cannot be worn by 1st class"): a piece belongs
 // to a class TIER, not just a slot. The tier ladder is the class tree's own (`c.tier`: Novice 0,
 // first jobs 1, second 2, third 3) and the gate is `gearTierOf(it) <= max(1, classTierOf(cls))`.
@@ -3527,17 +3697,17 @@ const matk=()=>Math.round((4+S.lv*2+eqv('weapon')*.8+st('int')*1.5+st('dex')*.25
 // owner asked for; class speed ordering is preserved until the floor). Typical endgame intervals:
 // Assassin Cross ~.14s, Sniper ~.15s, Lord Knight ~.20s before gear ASPD%; with gear ASPD% most
 // trans classes ride the .13 floor.
-const aspd=()=>Math.max(.13,.85*C().aspd*(1-Math.min(.68,st('agi')*.0058))/(1+(pv('aspd')+bon('aspd')+(typeof cardMasteryStat==='function'?cardMasteryStat('aspdPct'):0)+(tb.aspd||0))/100));
+const aspd=()=>{const floor=items().some(it=>it.sec===6)?.10:.13;return Math.max(floor,.85*C().aspd*(1-Math.min(.68,st('agi')*.0058))/(1+(pv('aspd')+bon('aspd')+(typeof cardMasteryStat==='function'?cardMasteryStat('aspdPct'):0)+(tb.aspd||0))/100))};
 // v73 crit retune (owner): reaching the 60% cap used to be a LUK dump - LUK 99 alone paid
 // 39.6%. LUK now pays 0.25 a point, the flat base is 2, and above 45% every further point from
 // stats, skills, gear and card mastery counts half. A Lv70 LUK dump with both Hunter/Sniper crit
 // passives lands ~51%, so the last stretch to 60 is a real build. Index Crit (above) is the only
 // source that passes the 60 cap, and the total stops at 100.
-const crit=()=>{const v=2+st('luk')*.25+pv('crit')+bon('crit')+(typeof cardMasteryStat==='function'?cardMasteryStat('critPct'):0),core=Math.min(60,v<=45?v:45+(v-45)*.5);return Math.min(100,core+(typeof indexCrit==='function'?indexCrit():0))},flee=()=>Math.min(60,st('agi')*.5+S.lv*.1+pv('flee')+bon('flee')+(typeof cardMasteryStat==='function'?cardMasteryStat('fleePct'):0)),missCh=()=>Math.max(0,15-st('dex')*.25);
+const crit=()=>{const hasMythic=items().some(it=>it.sec===6),baseCap=hasMythic?80:60;const v=2+st('luk')*.25+pv('crit')+bon('crit')+(typeof cardMasteryStat==='function'?cardMasteryStat('critPct'):0),core=Math.min(baseCap,v<=45?v:45+(v-45)*.5);return Math.min(100,core+(typeof indexCrit==='function'?indexCrit():0))},flee=()=>{const hasMythic=items().some(it=>it.sec===6),cap=hasMythic?80:60;return Math.min(cap,st('agi')*.5+S.lv*.1+pv('flee')+bon('flee')+(typeof cardMasteryStat==='function'?cardMasteryStat('fleePct'):0))},missCh=()=>Math.max(0,15-st('dex')*.25);
 // Movement before equipment is capped at 70% of the owner's 14.35 u/s reference.
 // Pets, movement buffs and long-distance running share the cap. Equipment/card movement
 // applies afterward, retaining its existing combined +20% limit.
-const heroMoveSpeedForAgi=agi=>5.3+Math.max(1,Number(agi)||1)*.025+Math.sqrt(Math.max(1,Number(agi)||1))*.035,moveSpd=(running=false)=>Math.min(MOVE_CAP,heroMoveSpeedForAgi(st('agi'))*(1+petPassive('move')/100)*(1+Math.min(25,typeof skillBonus==='function'?skillBonus('move'):0)/100)*(running?MOVE_RUN:1))*(1+equipmentMove()/100),MOVE_RUN=1.4,MOVE_CAP=10.045;
+const heroMoveSpeedForAgi=agi=>5.3+Math.max(1,Number(agi)||1)*.025+Math.sqrt(Math.max(1,Number(agi)||1))*.035,moveSpd=(running=false)=>{const hasMythic=items().some(it=>it.sec===6),cap=hasMythic?12.5:MOVE_CAP;return Math.min(cap,heroMoveSpeedForAgi(st('agi'))*(1+petPassive('move')/100)*(1+Math.min(25,typeof skillBonus==='function'?skillBonus('move'):0)/100)*(running?MOVE_RUN:1))*(1+equipmentMove()/100)},MOVE_RUN=1.4,MOVE_CAP=10.045;
 // v73 crit damage (owner: "cri damage is too overpowered"): the base multiplier drops 2.0 -> 1.9,
 // and the cdm route that fed it is slot-limited and lighter (see AB/genGear). LUK and DEX still
 // add a little on top, so a crit build stays the burst build - it just cannot stack seven slots.
@@ -3581,7 +3751,7 @@ const autoAllocateSkills=()=>{if(!S.sk||typeof S.sk!=='object')S.sk={};let bough
 // every attempt eats more ore the rarer the piece. v90.2 (owner): Legendary takes 5 ore a try, N and N+ take 10.
 // REF_ORE is indexed by rarIdx (Common, Fine, Rare, Epic, Legendary, N, N+); refOre() is the ore one attempt takes.
 // v90.8 (owner: Zeny sink): refine Zeny is x3 (REF_ZENY_MUL).
-const REF_ZENY_MUL=3,refCost=it=>Math.round(REF_ZENY_MUL*400*((it.r||0)+1)*(1+(it.sec||0)*.5)),REF_ORE=[1,1,2,2,5,10,10],refOre=it=>REF_ORE[rarIdx(it)],refCh=it=>[70,70,70,70,49,42,35,28,21,14][it.r||0];
+const REF_ZENY_MUL=3,refCost=it=>{const r=it.r||0;if(r>=10&&it.sec===6)return Math.round(REF_ZENY_MUL*400*(r+1)*(1+(it.sec||0)*.5)*5);return Math.round(REF_ZENY_MUL*400*(r+1)*(1+(it.sec||0)*.5))},REF_ORE=[1,1,2,2,5,10,10],refOre=it=>REF_ORE[rarIdx(it)],refCh=it=>{const r=it.r||0;if(r>=10&&it.sec===6)return[30,21,12,5][r-10]||0;return[70,70,70,70,49,42,35,28,21,14][r]};
 const affTxt=a=>`${AL[a.k]} +${a.v}`,cardTxt=c=>`${cardName(c)}${c.legacy?' [legacy]':''} (${cardEffects(c).map(cardEffectText).join(', ')})`,dtier=it=>it.card?GI[it.g]:it.ore?3:((it&&+it.sec>=5)?6:(it&&+it.sec>=4)?5:it.tier);
 const isBoss=()=>bossStage(S.mp,S.lvl),fieldName=()=>S.lvl>10?`Nightmare ${MAPS[S.mp].n} Stage ${S.lvl-10}`:`${MAPS[S.mp].n} Stage ${S.lvl}`;
 // Curated original RO equipment art: progression follows the saved job section,
@@ -3698,15 +3868,20 @@ function fieldExpReward(m,stage,boss=false){
   const escorts=m<5?3:5,budget=mvp+escorts*regular,escort=Math.floor(budget/(escorts+1.25));
   return boss?budget-escorts*escort:escort;
 }
-// Ascension starts 30% above Nightmare Abyss's final MVP, then ramps by stage.
+// Ascension starts well above Nightmare Abyss's final MVP, then ramps steeply by stage.
 // Both maps are parallel level-150 routes; Thor has the steeper later-stage curve.
+// haven-v158 balance: the old ramp ([1..2.5] Astral, [1..3.2] Thor at 1.3x base) let a 3rd-class
+// character with ~32M DPS and HP leech breeze through stage 4 with no real threat. These maps are
+// the endgame grind for 4th-class characters, so the floor is raised: base scale 2.0x and a much
+// steeper ramp per stage. Stage 1 is now a real fight for a 3rd-class; stage 5 boss is a 4th-class
+// checkpoint that demands the Ascension gear the map itself drops.
 function ascensionCombatStats(m,stage,boss=false){
   if(m<10)return {};
   const power=fieldPower(9,15),weight=1+9*.15+(9-4)*.2;
   const abyssHp=Math.floor(500*weight*Math.pow(power,HPE)*NMBOSSHP*nm15Of(15));
   const abyssAtk=Math.floor((8+power*6.5)*weight*NMATK*nm15Of(15)*eaOf(power));
-  const ramp=(m===10?[1,1.25,1.6,2,2.5]:[1,1.35,1.8,2.4,3.2])[stage-1];
-  const scale=1.3*ramp*(boss?4:1),hp=Math.floor(abyssHp*scale);
+  const ramp=(m===10?[2.5,4,6.5,10,15]:[3.5,5.5,9,14,20])[stage-1];
+  const scale=2.0*ramp*(boss?4:1),hp=Math.floor(abyssHp*scale);
   return {hp,max:hp,atk:Math.floor(abyssAtk*scale)};
 }
 // One field monster, before it is placed. Shared by the wave builder and by every camp refill, so a
@@ -3866,7 +4041,11 @@ function offlineAwardKill(mob,r){
     // fires when the switch is on, so the setting walks you forward again ("turn off to farm").
     else if(S.lvl<normalStages(S.mp)){
       if(S.lvl>=S.prog[S.mp])S.prog[S.mp]=S.lvl+1;
-      if(S.adv&&S.lvl<normalStages(S.mp)){S.lvl++;r.stages++}
+      if(S.adv&&S.lvl<normalStages(S.mp)){S.lvl++;r.stages++;
+        // haven-v158: same fix as the live path - when auto-advance reaches a boss stage on
+        // ascension maps or a normal boss stage, the field needs a full rebuild so the boss wave
+        // spawns. The offline sim doesn't keep live mobs, but the stage state must be correct.
+      }
     }
   }
 }
@@ -3937,7 +4116,7 @@ function chainHit(src,dmg,col,n,skill=false){if(!src||!(dmg>0)||mobs.length<2)re
 // Milestone 4 mechanics (dark-launched with SKILLS4). Each helper does nothing for a skill that lacks its field,
 // so the live skills never reach these lines' effects. Stacks expire against the game clock `t`.
 const SELF_STACK_LIFE=12;
-function addSelfStack(key,max,life=SELF_STACK_LIFE){const r=skillState();r.stacks=r.stacks||{};const e=r.stacks[key],n=e&&e.until>t?e.n:0;r.stacks[key]={n:Math.min(max,n+1),until:t+life}}
+function addSelfStack(key,max){const r=skillState();r.stacks=r.stacks||{};const e=r.stacks[key],n=e&&e.until>t?e.n:0;r.stacks[key]={n:Math.min(max,n+1),until:t+SELF_STACK_LIFE}}
 function takeSelfStacks(key){const r=skillState(),e=r.stacks&&r.stacks[key];if(!e)return 0;delete r.stacks[key];return e.until>t?e.n:0}
 function addTargetStack(o,a){o.stk=o.stk||{};const e=o.stk[a.key],n=e&&e.until>t?e.n:0;o.stk[a.key]={n:Math.min(a.max,n+1),until:t+a.life}}
 function takeTargetStacks(o,key){const e=o&&o.stk&&o.stk[key];if(!e)return 0;delete o.stk[key];return e.until>t?e.n:0}
@@ -3956,7 +4135,7 @@ function bounceStrike(from,sk,raw){const b=sk.bounce;
   for(const o of near){shots.push({x0:from.x,z0:from.z,x1:o.x,z1:o.z,t:0,col:sk.col||'#fff'});skillHit(o,raw*b.share/sk.hits,sk,true)}
 }
 // Absorb: a new ward replaces any ward still up. It soaks incoming player damage until spent or it expires.
-function startAbsorb(a,rank=10){const r=skillState();r.absorb={amount:maxHp()*a.pct*(a.ranked?.5+.05*rank:1),until:t+a.life}}
+function startAbsorb(a){const r=skillState();r.absorb={amount:maxHp()*a.pct,until:t+a.life}}
 function absorbSoak(d){const a=skillState().absorb;if(!a||!(a.until>t)||!(a.amount>0))return d;const soak=Math.min(d,a.amount);a.amount-=soak;return d-soak}
 const mkDrop=it=>({it,wx:mob.x+rnd(-.7,.7),wz:mob.z+rnd(-.7,.7),y:0,vy:-220,t:0});
 // v83.3 (owner): the number motion is v82's again - the owner had already tuned it and only wants to
@@ -4126,15 +4305,14 @@ const SWING_MIN_T=.14,SWING_MAX_T=.55;     // seconds: the shortest and longest 
 let skillRuntime;
 function resetSkillRuntime(keepBuffs=false){const previous=keepBuffs&&skillRuntime&&skillRuntime.owner===(S&&S.cls)&&skillRuntime.save===S?skillRuntime:null;
   skillRuntime={owner:S&&S.cls,save:S,buffs:previous?previous.buffs:{},events:[],casts:{},echo:0,momentum:0,lastHit:-99,follow:0,dash:0,approach:null,
-    repeatCount:previous?previous.repeatCount:0,comboSlots:previous?previous.comboSlots:null,cursor:previous?previous.cursor:0,nextCastAt:previous?previous.nextCastAt:0,recoverUntil:previous?previous.recoverUntil:0};}
+    comboSlots:previous?previous.comboSlots:null,cursor:previous?previous.cursor:0,nextCastAt:previous?previous.nextCastAt:0,recoverUntil:previous?previous.recoverUntil:0};}
 function skillState(){if(!skillRuntime||skillRuntime.owner!==(S&&S.cls)||skillRuntime.save!==S)resetSkillRuntime();return skillRuntime;}
-function finishCombo(r){r.comboSlots=null;r.cursor=0;r.repeatCount=0;r.recoverUntil=t+3;}
-function skillStackReady(sk){const e=skillState().stacks?.[sk.requiresStack];return !sk.requiresStack||!!(e&&e.n>0&&e.until>t);}
-function nextComboSkill(target){const r=skillState(),c=comboConfig();if(!c.enabled||t<r.recoverUntil||t+swingLength(Math.min(SKILLS.find(s=>s.id===r.comboSlots?.[r.cursor])?.spacing||.5,aspd()))*SWING_CONTACT+1e-8<r.nextCastAt)return null;
+function finishCombo(r){r.comboSlots=null;r.cursor=0;r.recoverUntil=t+3;}
+function nextComboSkill(target){const r=skillState(),c=comboConfig();if(!c.enabled||t<r.recoverUntil||t+swingLength(Math.min(.5,aspd()))*SWING_CONTACT<r.nextCastAt)return null;
   if(!r.comboSlots){r.comboSlots=rotationSkills().map(s=>s.id);r.cursor=0;if(!r.comboSlots.length){r.comboSlots=null;return null;}}
   while(r.cursor<r.comboSlots.length){const id=r.comboSlots[r.cursor],sk=SKILLS.find(s=>s.id===id);
-    if(sk&&skillOn(id)&&skillStackReady(sk)&&(skCd[id]||0)<=(sk.repeat?swingLength(Math.min(sk.spacing||.5,aspd()))*SWING_CONTACT+1e-8:0)&&Math.hypot(target.x-pl.x,target.z-pl.z)<=skillRange(sk,target)+.6)return sk;
-    r.cursor++;r.repeatCount=0;}
+    if(sk&&skillOn(id)&&(skCd[id]||0)<=0&&Math.hypot(target.x-pl.x,target.z-pl.z)<=skillRange(sk,target)+.6)return sk;
+    r.cursor++;}
   finishCombo(r);return null;
 }
 function skillBonus(key){const r=skillState();let sum=0;for(const id in r.buffs){const b=r.buffs[id];if((b.key===key||key==='aspd'&&b.key==='speed')&&skillOn(id))sum+=b.value;}return sum;}
@@ -4422,7 +4600,7 @@ function skillHit(target,raw,sk,proc=false){if(!target||target.hp<=0||!mobs.incl
   return damage;
 }
 function castSkill(sk,k){
-  const target=mob;if(!target||target.hp<=0||!mobs.includes(target)||!skillStackReady(sk))return;
+  const target=mob;if(!target||target.hp<=0||!mobs.includes(target))return;
   const r=skillState(),L=lv(sk.id);skillDash(sk,target);playSkillFx(sk.id,target,sk.col);
   const bonus=pv('damage')+(sk.falcon?pv('falcon'):0)+(['cart','cartrev','meltdown'].includes(sk.id)?Math.min(3,r.momentum)*pv('momentum'):0);
   // INT multiplies caster skills. Physical training is folded into rank coefficients
@@ -4434,8 +4612,7 @@ function castSkill(sk,k){
   if(sk.shatter&&target.skillMark&&target.skillMark.source==='wperf')raw*=1+sk.shatter;
   if(sk.spend)raw*=1+sk.spend.per*takeSelfStacks(sk.spend.key);
   let tgtSpent=0;if(sk.tgtSpend){tgtSpent=takeTargetStacks(target,sk.tgtSpend.key);raw*=1+sk.tgtSpend.per*tgtSpent;}
-  if(sk.absorb)startAbsorb(sk.absorb,L);
-  if(sk.castGain)addSelfStack(sk.castGain.key,sk.castGain.max,sk.castGain.life);
+  if(sk.absorb)startAbsorb(sk.absorb);
   const targets=skillTargets(sk,target),pulse=sk.pulse||0,death=sk.death||0;
   let dealt=0;for(const o of targets){const amount=raw*(o===target?1:.8*skillTuning(true,sk,L)/skillTuning(false,sk,L))*(1-pulse-death-(sk.dot||0));
     // Split the declared total; extra hits never become unrelated 1x strikes.
@@ -4466,11 +4643,7 @@ function tickCombatSkills(dt){const r=skillState();r.counter=Math.max(0,(r.count
   if(mobs.some(o=>o.hp>0))for(const sk of SKILLS){if(sk.type!=='buff'||!skillOn(sk.id)||(sk.id==='ovthrust'&&skillOn('thrust'))||(skCd[sk.id]||0)>0||(r.buffs[sk.id]&&r.buffs[sk.id].left>.5))continue;
     if(sk.id==='thrust')delete r.buffs.ovthrust;
     const duration=sk.id==='dpois'?5+lv(sk.id):['ovthrust','thrust'].includes(sk.id)?8+2*Math.min(5,lv(sk.id)):sk.duration;
-    if(sk.absorb)startAbsorb(sk.absorb,lv(sk.id));
     r.buffs[sk.id]={key:sk.key,value:sk.f(lv(sk.id)),left:duration};skCd[sk.id]=sk.cd;playSkillFx(sk.id,null,sk.col);
-  }
-  for(const sk of SKILLS4){if(!FOURTH_JOBS_LIVE||sk.type!=='heal'||!skillOn(sk.id)||S.hp>=maxHp()*.5||(skCd[sk.id]||0)>0)continue;
-    const h=Math.ceil(maxHp()*(sk.healBase+sk.healRank*lv(sk.id)));S.hp=Math.min(maxHp(),S.hp+h);skCd[sk.id]=sk.cd;playSkillFx(sk.id,null,sk.col);skillNameFloat(sk.n);addFloat(pl.x,2.6,pl.z,'+'+h,sk.col);
   }
   const events=r.events;r.events=[];for(const e of events){e.left-=dt;if(e.owner!==S.cls)continue;if(e.left<=0)e.fn();else r.events.push(e);}
   for(const o of mobs.slice()){
@@ -4513,7 +4686,7 @@ function playerAttack(){
   if(!mob)return;
   engageWait=0;   // a swing is the proof the fight is live: the walk-in wait starts again (v88.4)
   const far=Math.hypot(mob.x-pl.x,mob.z-pl.z)>heroStandoff(mob)+.6,sk=nextComboSkill(mob);
-  const interval=sk?(sk.spacing||.5):aspd();pAtkT=interval;atkAnim=1;swingDur=swingLength(Math.min(interval,aspd()));
+  const interval=sk?.5:aspd();pAtkT=interval;atkAnim=1;swingDur=swingLength(Math.min(interval,aspd()));
   const casts=sk?[sk]:[];
   const d=pv('dbl');
   swing={t:swingDur*SWING_CONTACT,target:mob,pack:mob.pack,casts:casts.map(sk=>({sk,k:1})),
@@ -4531,8 +4704,8 @@ function resolveSwing(s){
   if(!comboConfig().enabled||t<r.recoverUntil||t<r.nextCastAt)s.casts=[];
   if(s.casts.length){
     const c=s.casts[0];
-    if(skillOn(c.sk.id)&&skillStackReady(c.sk)&&r.comboSlots&&r.comboSlots[r.cursor]===c.sk.id&&mob.pack===s.pack&&Math.hypot(mob.x-pl.x,mob.z-pl.z)<=skillRange(c.sk,mob)+.6){
-      skCd[c.sk.id]=c.sk.cd;r.casts[c.sk.id]=t;r.nextCastAt=t+(c.sk.spacing||.5);r.repeatCount=(r.repeatCount||0)+1;if(r.repeatCount>=(c.sk.repeat||1)){r.cursor++;r.repeatCount=0;}skillNameFloat(c.sk.n);castSkill(c.sk,1);
+    if(skillOn(c.sk.id)&&r.comboSlots&&r.comboSlots[r.cursor]===c.sk.id&&mob.pack===s.pack&&Math.hypot(mob.x-pl.x,mob.z-pl.z)<=skillRange(c.sk,mob)+.6){
+      skCd[c.sk.id]=c.sk.cd;r.casts[c.sk.id]=t;r.nextCastAt=t+.5;r.cursor++;skillNameFloat(c.sk.n);castSkill(c.sk,1);
       if(r.cursor>=r.comboSlots.length)finishCombo(r);
     }
   }else if(!s.far){
@@ -4572,6 +4745,8 @@ function kill(o){const keep=mob;if(o)mob=o;if(!mob||!mobs.includes(mob)){mob=kee
   if(Math.random()*100<mob.cardCh){const g2=mob.card.g;drops.push(mkDrop(newCard(mob.card)))}
   if(mob.ore)for(const o of['ori','elu'])if(Math.random()<mob.oreCh*(1+petPassive('ore')/100))drops.push(mkDrop({ore:o,id:uid(),n:ORE[o]}));
   for(const item of ascensionDrops(mob))drops.push(mkDrop(item));
+  // Mythic Protection Scroll: very rare drop from Ascension map bosses only (not purchasable)
+  if(mob.boss&&S.mp>=10&&Math.random()<0.0005){S.mythicScrolls=safeCount(S.mythicScrolls)+1;log('Found a Mythic Protection Scroll!','r4','gear');addFloat(mob.x,3,mob.z,'MYTHIC SCROLL!','#ffa500',true);}
   if(mob.mat&&Math.random()*100<NM_MAT_CH)drops.push(mkDrop({mat:mob.mat.m,id:uid(),n:mob.mat.n}));
   if(Math.random()*100<(mob.boss?.5:.03)){const r=pickW(PW[Math.min(S.mp,9)]),c=PETS.filter(x=>x.r===r),sp=PETS.indexOf(c[ri(0,c.length-1)]),T=PET_TRAIT[sp];
     const own=S.pets.find(x=>x.sp===sp);
@@ -4589,7 +4764,9 @@ function kill(o){const keep=mob;if(o)mob=o;if(!mob||!mobs.includes(mob)){mob=kee
       const nextMap=S.mp+1,current=MAPS[S.mp].n;
       if(nextMap<MAPS.length){
         log(`${current} Stage ${S.lvl} cleared! ${MAPS[nextMap].n}${ascensionOpen(nextMap)?' Stage 1 is ready'+(S.adv?' — auto-advancing.':'.'):' requires Base Lv 150.'}`,'r3');
-        if(S.adv&&ascensionOpen(nextMap)){S.mp=nextMap;S.lvl=1;mapM=nextMap;mapL=1;if(typeof mapSeason!=='undefined')mapSeason=nextMap>=10?'ascension':'atlas'}
+        if(S.adv&&ascensionOpen(nextMap)){S.mp=nextMap;S.lvl=1;mapM=nextMap;mapL=1;if(typeof mapSeason!=='undefined')mapSeason=nextMap>=10?'ascension':'atlas';
+          // haven-v158: on ascension maps, position the hero at the entry for a walk-in transition
+          if(nextMap>=10){pl.x=0;pl.z=Z1-1.5;pl.wz=Z1-1.5;pl.wx=null;}}
       }else log(`${current} Stage ${S.lvl} cleared! The Ascension route is complete. Turn Auto-advance off to farm this sanctuary.`,'r3');
     }
   }else if(S.lvl<normalStages(S.mp)&&S.kl>=MPS){
@@ -4598,7 +4775,20 @@ function kill(o){const keep=mob;if(o)mob=o;if(!mob||!mobs.includes(mob)){mob=kee
     // the stage unlock still requires the frontier, but with Auto-advance on the player is always
     // walked forward, so being parked below the unlocked frontier no longer stalls the setting.
     if(S.lvl>=S.prog[S.mp]){S.prog[S.mp]=S.lvl+1;log(`${fieldName()} cleared! Stage ${S.lvl+1} unlocked.`,'r3')}
-    if(S.adv&&S.lvl<normalStages(S.mp))S.lvl++
+    if(S.adv&&S.lvl<normalStages(S.mp)){
+      const nextStage=S.lvl+1;
+      S.lvl=nextStage;
+      // haven-v158 fix #1: when auto-advance reaches a boss stage (stage 5 on ascension maps,
+      // stage 10/15 on normal maps), the old camps from the previous stage must be cleared so
+      // spawn() builds the boss wave. Without this the boss never appeared until the player
+      // rejoined the map. Also clear camps on ascension stage changes so the new zone's mobs
+      // populate correctly instead of old-stage camps persisting.
+      if(S.mp>=10||bossStage(S.mp,S.lvl)){mobs=[];camps=[];mob=null;activePack=0;engageTgt=null;
+        // haven-v158 fix #2: on ascension maps, position the hero near the field entry so the
+        // stage transition reads as walking into a new zone rather than teleporting. The hero
+        // walks forward from the entry while the new camps populate around them.
+        if(S.mp>=10){pl.z=Z1-1.5;pl.wz=Z1-1.5;pl.x=0;pl.wx=null;}}
+    }
   }
   mobs=mobs.filter(x=>x!==mob);
   if(mobs.length&&!mobs.some(x=>x.pack===activePack))activePack=nearestPack();
@@ -4687,12 +4877,14 @@ function qRefresh(){if(S)questBook();}
 const qTxt=q=>q.type==='kill'?`Defeat ${q.goal} monsters`:q.type==='loot'?`Collect ${q.goal} equipment drops`:`Defeat ${q.goal} MVP${q.goal>1?'s':''}`;
 // Older saves may retain refineScrollFrom; protection now has a single On/Off setting.
 const refineScrollFrom=()=>0;
-function refineProtectionUI(){return `<div class="sec">Refine Protection Scroll · ${safeCount(S.refineScrolls)} owned</div><div class="row">${[0,1].map(n=>`<button data-a="refprotect" data-v="${n}" class="${!!S.useRefineScroll===!!n?'on':''}" aria-pressed="${!!S.useRefineScroll===!!n}">${n?'On':'Off'}</button>`).join('')}</div><small>Only failures at current +5 or above can drop a rank. When On, one scroll is used per attempt, including success, and prevents rank loss. Below +5, we ask before spending a scroll because your rank is already safe. Success chance is unchanged. No scroll available: protected attempts are blocked.</small>`;}
-function refine(sl){const it=S.eq[sl];if(!it||(it.r||0)>=10)return;const o=it.slot==='weapon'?'ori':'elu',c=refCost(it),need=refOre(it);
+function refineProtectionUI(){return `<div class="sec">Refine Protection Scrolls</div><small>Regular: ${safeCount(S.refineScrolls)} (for +0 to +10 on all gear)</small><br><small>Mythic: ${safeCount(S.mythicScrolls)} (for +11 to +15 on Mythic gear, boss drop only)</small><div class="row">${[0,1].map(n=>`<button data-a="refprotect" data-v="${n}" class="${!!S.useRefineScroll===!!n?'on':''}" aria-pressed="${!!S.useRefineScroll===!!n}">${n?'On':'Off'}</button>`).join('')}</div><small>When On, one scroll is used per attempt, including success, and prevents rank loss. +10 is safe on Mythic gear (no scroll needed). Below +5 on regular gear, we ask before spending a scroll. Success chance is unchanged. No scroll available: protected attempts are blocked.</small>`;}
+function refine(sl){const it=S.eq[sl];const maxRef=it.sec===6?15:10;if(!it||(it.r||0)>=maxRef)return;const o=it.slot==='weapon'?'ori':'elu',c=refCost(it),need=refOre(it);
   if(S.ore[o]<need){log(`You need ${need} ${ORE[o]} for this piece. Regular mobs drop both ores at 0.5% on Stages 1-9 and 1% on Stage 10; the Stage 10 MVP drops them at 2.5%.`);return}if(S.zeny<c){log('Not enough Zeny.');return}
   const previousRank=it.r||0;let succeeded=false;const protectedAttempt=!!S.useRefineScroll;
-  if(protectedAttempt&&!safeCount(S.refineScrolls)){log('Refine Protection Scroll is enabled, but you have no scrolls. Buy one or turn protection off.');return;}
-  if(protectedAttempt&&previousRank<5&&arguments[1]!==it){
+  const needsMythicScroll=it.sec===6&&previousRank>=10;
+  if(protectedAttempt&&needsMythicScroll&&!safeCount(S.mythicScrolls)){log('Mythic Protection Scroll required for +11 to +15 refines. These drop from Ascension map bosses only.');return;}
+  if(protectedAttempt&&!needsMythicScroll&&!safeCount(S.refineScrolls)){log('Refine Protection Scroll is enabled, but you have no scrolls. Buy one or turn protection off.');return;}
+  if(protectedAttempt&&previousRank<5&&it.sec!==6&&arguments[1]!==it){
     const owner=S;let pending=true;
     ask('This equipment is below +5, so failure cannot drop its rank. Use one Refine Protection Scroll anyway? This attempt also costs '+c.toLocaleString()+'z and '+need+' '+ORE[o]+'.',()=>{
       if(!pending)return;pending=false;
@@ -4700,10 +4892,12 @@ function refine(sl){const it=S.eq[sl];if(!it||(it.r||0)>=10)return;const o=it.sl
       refine(sl,it);
     },{yes:'Use scroll & refine',no:'Cancel'});return;
   }
-  if(protectedAttempt)S.refineScrolls--;
+  if(protectedAttempt){if(needsMythicScroll)S.mythicScrolls--;else S.refineScrolls--;}
   S.ore[o]-=need;S.zeny-=c;questEvent('refine');if(Math.random()*100<refCh(it)){succeeded=true;it.r=(it.r||0)+1;log(`Refine success! ${iname(it)}`,'r3','gear');addFloat(pl.x,3,pl.z,'Refine +'+it.r,'#ffd23f')}
-  else{if(protectedAttempt){log(`Refine failed, but your Refine Protection Scroll kept +${it.r}.`,'r3','gear')}
-    else if(it.r>=5){it.r--;log(`Refine failed... dropped to +${it.r}.`,'r0','gear')}else log('Refine failed.','r0','gear');addFloat(pl.x,3,pl.z,'Failed','#ff6b6b')}ui();save();if(typeof eclipseRefineFeedback==='function')eclipseRefineFeedback(it,previousRank,succeeded)}
+  else{if(protectedAttempt){log(`Refine failed, but your ${needsMythicScroll?'Mythic ':''}Protection Scroll kept +${it.r}.`,'r3','gear')}
+    else if(it.r>=5&&it.sec!==6){it.r--;log(`Refine failed... dropped to +${it.r}.`,'r0','gear')}
+    else if(it.r>=10&&it.sec===6){log(`Refine failed, but +10 is safe on Mythic gear. Kept +${it.r}.`,'r3','gear')}
+    else log('Refine failed.','r0','gear');addFloat(pl.x,3,pl.z,'Failed','#ff6b6b')}ui();save();if(typeof eclipseRefineFeedback==='function')eclipseRefineFeedback(it,previousRank,succeeded)}
 // Outcome presentation follows the committed transaction; it never rolls or spends resources.
 let eclipseRefineTimer,eclipseRefineOutcome=null;
 function eclipseRefineFeedback(it,previousRank,succeeded){
@@ -4736,23 +4930,24 @@ function buyOre(o,quantity=1){const n=Number(quantity);if(!bmOpen()||!ORE[o]||!N
 // ---------- selected-affix reforge; paid offers survive save/reload ----------
 let reforgeSelection={};
 function reforgeQuote(it,n){const all=(it.aff||[]).length,full=n===all,fee=full?1:n===2?3:6;
- return{zeny:reforgeCost(it)*fee,ore:full?0:(rarIdx(it)+1)*(n===2?2:4),mat:it.sec>=4&&!full?(n===2?2:4):0,oreKey:it.slot==='weapon'?'ori':'elu',map:nmMatIndex(it.mp)};}
+ return{zeny:reforgeCost(it)*fee,ore:full?0:(rarIdx(it)+1)*(n===2?2:4),mat:it.sec>=4&&it.sec<6&&!full?(n===2?2:4):0,ascMat:it.sec===6&&!full?(n===2?3:5):0,ascMatType:it.ascSet?ASC_SETS[it.ascSet]?.mat:-1,oreKey:it.slot==='weapon'?'ori':'elu',map:nmMatIndex(it.mp)};}
 function affixRangeText(a,it){if(!it)return affTxt(a);const value=f=>a.k==='move'?Math.min(it.slot==='acc'?5:8,Math.max(1,Math.round(affixValue(a.k,it.sec,it.tier,f,it.mp)))):Math.max(1,Math.round(affixValue(a.k,it.sec,it.tier,f,it.mp)*(it.quality||1)));
  return `${affTxt(a)} [${value(.8)}~${value(1.25)}]`;}
 function reforge(sl,all=false,confirmed=null){
  if(!bmOpen()||S.reforgePending)return;const it=S.eq[sl];if(!it)return;
  const chosen=all?(it.aff||[]).map((_,i)=>i):(reforgeSelection[it.id]||[]).filter((x,i,a)=>Number.isInteger(x)&&x>=0&&x<it.aff.length&&a.indexOf(x)===i);
  if(!chosen.length||chosen.length>3)return;
- S.nmMat=nmMatCounts();const q=reforgeQuote(it,chosen.length),oreMissing=Math.max(0,q.ore-safeCount(S.ore[q.oreKey])),matMissing=Math.max(0,q.mat-S.nmMat[q.map]),extra=oreMissing*BM_ORE+matMissing*BM_MAT_PRICE;
- const signature=JSON.stringify([it.id,it.aff,chosen,q,oreMissing,matMissing]);
+ S.nmMat=nmMatCounts();const q=reforgeQuote(it,chosen.length),oreMissing=Math.max(0,q.ore-safeCount(S.ore[q.oreKey])),matMissing=Math.max(0,q.mat-S.nmMat[q.map]),ascMatMissing=q.ascMatType>=0?Math.max(0,q.ascMat-(S.ascensionMat?.[q.ascMatType]||0)):0,extra=oreMissing*BM_ORE+matMissing*BM_MAT_PRICE;
+ const signature=JSON.stringify([it.id,it.aff,chosen,q,oreMissing,matMissing,ascMatMissing]);
  if(confirmed&&confirmed!==signature){log('Equipment, selection or materials changed. Please review a new quote.','','gear');return;}
+ if(ascMatMissing>0){log(`Need ${ascMatMissing} more ${ASCENSION_MATERIALS[q.ascMatType]} to reforge Mythic gear.`,'','gear');return;}
  if(S.zeny<q.zeny+extra){log(`Need ${(q.zeny+extra).toLocaleString()}z including missing materials.`,'','zeny');return;}
  if(extra&&!confirmed){ask(`Buy missing ${oreMissing} ${ORE[q.oreKey]} and ${matMissing} ${NM_MAT[q.map]} for ${extra.toLocaleString()}z, then reforge for ${q.zeny.toLocaleString()}z? Total ${(q.zeny+extra).toLocaleString()}z.`,()=>reforge(sl,all,signature));return;}
 
  const aff=it.aff.map(a=>({...a})),used=new Set(aff.filter((_,i)=>!chosen.includes(i)).map(a=>a.k)),pool=affixPool(it).filter(k=>!used.has(k));
  if(pool.length<chosen.length)return;
  for(const i of chosen){const k=pool.splice(ri(0,pool.length-1),1)[0];aff[i]=rollAffix(k,it);}
- S.zeny-=q.zeny+extra;S.ore[q.oreKey]=safeCount(S.ore[q.oreKey])+oreMissing-q.ore;S.nmMat[q.map]+=matMissing-q.mat;questEvent('reforge');
+ S.zeny-=q.zeny+extra;S.ore[q.oreKey]=safeCount(S.ore[q.oreKey])+oreMissing-q.ore;S.nmMat[q.map]+=matMissing-q.mat;if(q.ascMatType>=0)S.ascensionMat[q.ascMatType]-=q.ascMat;questEvent('reforge');
  S.reforgePending={id:it.id,before:JSON.stringify(it.aff),after:aff,chosen};save();ui();
 }
 function validReforgeOffer(f){const p=f.reforgePending;if(!p||typeof p.before!=='string'||!Array.isArray(p.after))return null;
@@ -4769,9 +4964,9 @@ function resolveReforge(accept){const p=validReforgeOffer(S);if(!p){delete S.ref
 function reforgeRepeatSelection(p,it){const c=p.chosen;return Array.isArray(c)&&c.length>0&&c.length<=it.aff.length&&c.every((n,i)=>Number.isInteger(n)&&n>=0&&n<it.aff.length&&c.indexOf(n)===i)?c:it.aff.map((_,i)=>i);}
 function keepAndReforge(){const p=validReforgeOffer(S);if(!p)return;const slot=Object.keys(S.eq).find(k=>S.eq[k]?.id===p.id);if(!slot)return;const chosen=reforgeRepeatSelection(p,S.eq[slot]);reforgeSelection[p.id]=chosen;resolveReforge(false);reforge(slot,chosen.length===S.eq[slot].aff.length);}
 function reforgePanel(){const pending=validReforgeOffer(S),repeatItem=pending&&find(pending.id),repeat=repeatItem&&reforgeQuote(repeatItem,reforgeRepeatSelection(pending,repeatItem).length);
- const offer=pending?`<div class="mob-card reforge-offer"><b>Compare affixes · ${esc(iname(find(pending.id)))}</b><div class="reforge-comparison"><div class="reforge-comparison-row reforge-comparison-labels"><span>Current</span><span></span><span>New offer</span></div>${JSON.parse(pending.before).map((a,i)=>`<div class="reforge-comparison-row"><span>${affixRangeText(a,find(pending.id))}</span><span aria-hidden="true">→</span><strong>${affixRangeText(pending.after[i],find(pending.id))}</strong></div>`).join('')}</div><div class="reforge-decision"><button data-a="refaccept" data-v="no">Keep current</button><button data-a="refagain" ${items().some(it=>it.id===pending.id)?'':'disabled'}>Keep current &amp; ${pending.chosen?'reforge':'full reforge'} · ${repeat.zeny.toLocaleString()}z${repeat.ore?' + '+repeat.ore+' '+ORE[repeat.oreKey]:''}${repeat.mat?' + '+repeat.mat+' '+NM_MAT[repeat.map]:''}</button><button data-a="refaccept" data-v="yes">Replace with new</button></div><small>Already paid. Your current affixes stay until you choose Replace. This offer survives a reload. Keep & reforge pays for another roll; missing materials ask for confirmation.</small></div>`:'';
+ const offer=pending?`<div class="mob-card reforge-offer"><b>Compare affixes · ${esc(iname(find(pending.id)))}</b><div class="reforge-comparison"><div class="reforge-comparison-row reforge-comparison-labels"><span>Current</span><span></span><span>New offer</span></div>${JSON.parse(pending.before).map((a,i)=>`<div class="reforge-comparison-row"><span>${affixRangeText(a,find(pending.id))}</span><span aria-hidden="true">→</span><strong>${affixRangeText(pending.after[i],find(pending.id))}</strong></div>`).join('')}</div><div class="reforge-decision"><button data-a="refaccept" data-v="no">Keep current</button><button data-a="refagain" ${items().some(it=>it.id===pending.id)?'':'disabled'}>Keep current &amp; ${pending.chosen?'reforge':'full reforge'} · ${repeat.zeny.toLocaleString()}z${repeat.ore?' + '+repeat.ore+' '+ORE[repeat.oreKey]:''}${repeat.mat?' + '+repeat.mat+' '+NM_MAT[repeat.map]:''}${repeat.ascMat&&repeat.ascMatType>=0?' + '+repeat.ascMat+' '+ASCENSION_MATERIALS[repeat.ascMatType]:''}</button><button data-a="refaccept" data-v="yes">Replace with new</button></div><small>Already paid. Your current affixes stay until you choose Replace. This offer survives a reload. Keep & reforge pays for another roll; missing materials ask for confirmation.</small></div>`:'';
  return (pending&&!items().some(it=>it.id===pending.id)?offer:'')+EQK.filter(([k])=>S.eq[k]&&(S.eq[k].aff||[]).length).map(([slot,label])=>{const it=S.eq[slot],selected=reforgeSelection[it.id]||[],q=reforgeQuote(it,selected.length||it.aff.length),full=reforgeQuote(it,it.aff.length);
- return`<div class="slot" style="display:block"><b>${label} · ${esc(iname(it))}</b><div class="row">${it.aff.map((a,i)=>`<button data-a="refpick" data-v="${slot}:${i}" aria-pressed="${selected.includes(i)}" class="${selected.includes(i)?'on':''}">${selected.includes(i)?'✓ ':''}${affixRangeText(a,it)}</button>`).join('')}</div><small>Choose the affixes to replace; other affixes are protected. Full rerolls every affix.</small><div class="row"><button data-a="bmref" data-v="${slot}:all" ${pending?'disabled':''}>Full · ${full.zeny.toLocaleString()}z</button><button data-a="bmref" data-v="${slot}:selected" ${pending||!selected.length?'disabled':''}>${selected.length===1?'Single':selected.length===2?'Double':'Selected'} · ${q.zeny.toLocaleString()}z + ${q.ore} ${ORE[q.oreKey]}${q.mat?' + '+q.mat+' '+NM_MAT[q.map]:''}</button></div>${pending&&pending.id===it.id?offer:''}</div>`;
+ return`<div class="slot" style="display:block"><b>${label} · ${esc(iname(it))}</b><div class="row">${it.aff.map((a,i)=>`<button data-a="refpick" data-v="${slot}:${i}" aria-pressed="${selected.includes(i)}" class="${selected.includes(i)?'on':''}">${selected.includes(i)?'✓ ':''}${affixRangeText(a,it)}</button>`).join('')}</div><small>Choose the affixes to replace; other affixes are protected. Full rerolls every affix.</small><div class="row"><button data-a="bmref" data-v="${slot}:all" ${pending?'disabled':''}>Full · ${full.zeny.toLocaleString()}z</button><button data-a="bmref" data-v="${slot}:selected" ${pending||!selected.length?'disabled':''}>${selected.length===1?'Single':selected.length===2?'Double':'Selected'} · ${q.zeny.toLocaleString()}z + ${q.ore} ${ORE[q.oreKey]}${q.mat?' + '+q.mat+' '+NM_MAT[q.map]:''}${q.ascMat&&q.ascMatType>=0?' + '+q.ascMat+' '+ASCENSION_MATERIALS[q.ascMatType]:''}</button></div>${pending&&pending.id===it.id?offer:''}</div>`;
  }).join('');
 }
 // One live source index feeds both the journal and market guide. No copied drop descriptions.
@@ -5207,7 +5402,9 @@ const V={
 // offered for every worn piece that has an affix.
 V.guide=()=>buildGuide(true);
 function eclipseEchoPicker(){return `<div class="trial-hd"><b>Nightmare Gear Token</b><small>${TRIAL_STORE.find(x=>x.id==='nmgear').c} Echo Shards</small></div><p>Choose the source map for your class-compatible equipment.</p><div class="mapgrid">${MAPS.slice(0,10).map((m,i)=>`<button class="mapcard" data-nmmap="${i}"><b>${m.n}</b><small>${NMNAME[i]}</small></button>`).join('')}</div><button data-a="echostore">Back to Echo store</button>`}
-V.market=()=>{const navigation=`<div class="atabs"><button data-a="sub" data-v="market:supplies" class="${sub.market==='supplies'?'on':''}">Supplies</button><button data-a="sub" data-v="market:echo" class="${sub.market==='echo'?'on':''}">Echo store</button></div>`;if(sub.market==='echo')return navigation+(eclipseEchoPick?eclipseEchoPicker():trialShopHtml(true));const guide=navigation;if(!bmOpen())return guide+`<p>Black Market opens at Base Lv ${BM_LV}.</p>`;
+V.market=()=>{const navigation=`<div class="atabs"><button data-a="sub" data-v="market:supplies" class="${sub.market==='supplies'?'on':''}">Supplies</button><button data-a="sub" data-v="market:echo" class="${sub.market==='echo'?'on':''}">Echo store</button><button data-a="sub" data-v="market:ascension" class="${sub.market==='ascension'?'on':''}">Ascension Forge</button></div>`;
+if(sub.market==='ascension')return navigation+ascensionForgePanel();
+if(sub.market==='echo')return navigation+(eclipseEchoPick?eclipseEchoPicker():trialShopHtml(true));const guide=navigation;if(!bmOpen())return guide+`<p>Black Market opens at Base Lv ${BM_LV}.</p>`;
 const ores=Object.entries(ORE).map(([o,n])=>`<div class="slot"><b>${n}</b><label>Quantity<input class="ore-quantity" id="oreQty-${o}" type="number" min="1" max="1000000" step="1" value="${esc(marketQty[o])}" aria-label="${n} quantity"></label><small>${BM_ORE.toLocaleString()}z each · <output id="oreTotal-${o}">${Number.isSafeInteger(Number(marketQty[o]))&&Number(marketQty[o])>0?(Number(marketQty[o])*BM_ORE).toLocaleString()+'z total':'Enter a whole quantity'}</output></small><button data-a="bmore" data-v="${o}" ${S.zeny<BM_ORE?'disabled':''}>Buy quantity</button></div>`).join('');
 const mats=NM_MAT.map((n,i)=>`<div class="slot"><b>${n}</b><button data-a="bmmat" data-v="${i}" ${S.zeny<BM_MAT_PRICE?'disabled':''}>Buy 1 · ${BM_MAT_PRICE.toLocaleString()}z</button></div>`).join('');
 return guide+`<div class="hd">Black Market · ${S.zeny.toLocaleString()}z</div>`+ores+`<div class="slot"><b>Refine Protection Scroll</b><small>Enable On in Equipment → Refine. One scroll per attempt, including success; prevents rank loss on failure. Only +5 and above can lose a rank; below +5 asks for confirmation.</small><button data-a="buyscroll" ${S.zeny<BM_SCROLL?'disabled':''}>Buy 1 · 80,000,000z</button></div>`+'<div class="sec">Nightmare materials</div><small>3,000,000z each</small>'+mats+'<button data-a="openreforge" class="full">Equipment workshop → Reforge</button>'};
@@ -5260,7 +5457,8 @@ V.status=()=>subBar('status')+V[sub.status]();
 V.bagItems=()=>`<section class="bag-items"><div class="hd">Items &amp; materials</div><p>Equipment is managed in Loadout. Your crafting supplies and consumables are stored here.</p><div class="bag-item-list">${[
   ['Oridecon',S.ore.ori,'Refines weapons'],['Elunium',S.ore.elu,'Refines armor'],
   ['Refine Protection Scroll',S.refineScrolls,'Enable protection in Refine'],
-  ['Echo Shards',S.shards,'Spend in the Echo store'],...NM_MAT.map((n,i)=>[n,S.nmMat[i],'Nightmare crafting material'])
+  ['Echo Shards',S.shards,'Spend in the Echo store'],...NM_MAT.map((n,i)=>[n,S.nmMat[i],'Nightmare crafting material']),
+  ...ASCENSION_MATERIALS.map((n,i)=>[n,S.ascensionMat?.[i]||0,i===2?'Ascension skill growth':'N+ weapon evolution'])
 ].map(([n,count,help])=>`<article class="mob-card"><b>${n}</b><strong>${safeCount(count).toLocaleString()}</strong><small>${help}</small></article>`).join('')}</div><div class="row"><button data-t="equip">Open Loadout</button><button data-a="sub" data-v="bag:cards">Loose cards · ${S.cards.length}</button><button data-t="market">Get supplies</button></div></section>`;
 V.bag=()=>subBar('bag')+V[sub.bag==='bag'?'bagItems':sub.bag]();
 function renderTitleTrack(){
@@ -5356,7 +5554,7 @@ function renderQ(){const e=$('qp'),rail=$('sideRail');if(!S){rail.style.display=
   const questHTML=`<div class="qp-head"><b>${uiIcon('quest')} Quests</b><div class="qp-actions"><button data-q="t" aria-expanded="${qOpen}" aria-label="${qOpen?'Collapse':'Expand'} quests">${uiIcon(qOpen?'minus':'chevron')}</button></div></div>`+(qOpen?contractPanel(eclipseQuestAll?Infinity:3)+(S.q||[]).map((q,i)=>q.prog<q.goal?'':`<div class="quest-entry"><div>${qTxt(q)}</div><div class="pbar"><i style="width:${Math.min(100,q.prog/q.goal*100)}%"></i></div><div class="quest-reward"><small>${q.prog}/${q.goal} &middot; ${(q.z||0).toLocaleString()}z &middot; ${(q.xp||0).toLocaleString()}xp</small>${q.prog>=q.goal?`<button data-q="c${i}">Claim</button>`:''}</div></div>`).join(''):'');
   eclipseSetMarkup(e,questHTML+(qOpen?'<button class="eclipse-quest-all" data-q="viewall">'+(eclipseQuestAll?'Show compact journal':'View all objectives')+' →</button>':''));e.classList.toggle('expanded-journal',eclipseQuestAll);$('sideMenu').classList.toggle('eclipse-more-open',sideOpen);eclipseSetMarkup($('sideMenu'),qpSide());eclipsePositionMore();polishIcons(e)}
 $('sideRail').onclick=e=>{const d=e.target.closest('[data-t]');if(d){sideOpen=false;openTab(d.dataset.t);return}const b=e.target.closest('[data-q]');if(!b)return;const v=b.dataset.q;if(v==='viewall'){eclipseQuestAll=!eclipseQuestAll;renderQ();return}if(v==='daily'||v==='all'){questView=v;renderQ();return}if(v.startsWith('contract:')){claimContract(v.slice(9));return}if(v==='side'){sideOpen=!sideOpen;renderQ();return}if(v==='t'){qOpen=!qOpen;renderQ()}else ACT.claim(v.slice(1))};
-function refineUI(it,k){const r=it.r||0,o=it.slot==='weapon'?'ori':'elu',c=refCost(it),need=refOre(it);return`<div class="sec">Refine</div>${refineProtectionUI()}<small class="refine-item-summary"><span>${SLOTS[it.slot].stat} +${ev(it)} &rarr; +${Math.round(it.val*(1+(r+1)*.15))}</span><span>${r>=10?'MAX':'Success '+refCh(it)+'% &middot; '+c.toLocaleString()+'z + '+need+' '+ORE[o]}</span><span class="refine-owned" title="${safeCount(S.ore[o]).toLocaleString()} ${ORE[o]} owned">${safeCount(S.ore[o]).toLocaleString()} ${ORE[o]} owned</span></small><div class="row" style="margin-top:4px"><button data-a="refine" data-v="${k}" ${r>=10||S.ore[o]<need||S.zeny<c?'disabled':''}>Refine</button></div>`}
+function refineUI(it,k){const r=it.r||0,maxRef=it.sec===6?15:10,o=it.slot==='weapon'?'ori':'elu',c=refCost(it),need=refOre(it);return`<div class="sec">Refine</div>${refineProtectionUI()}<small class="refine-item-summary"><span>${SLOTS[it.slot].stat} +${ev(it)} &rarr; +${r>=maxRef?ev(it):Math.round(it.val*(1+(r+1)*.15))}</span><span>${r>=maxRef?'MAX':'Success '+refCh(it)+'% &middot; '+c.toLocaleString()+'z + '+need+' '+ORE[o]}</span><span class="refine-owned" title="${safeCount(S.ore[o]).toLocaleString()} ${ORE[o]} owned">${safeCount(S.ore[o]).toLocaleString()} ${ORE[o]} owned</span></small><div class="row" style="margin-top:4px"><button data-a="refine" data-v="${k}" ${r>=maxRef||S.ore[o]<need||S.zeny<c?'disabled':''}>Refine</button></div>`}
 // v75: one pet per species. petFold() takes a duplicate and folds it into the pet you already
 // own - the better mutation survives, each gear slot keeps its better level, a skill the older
 // pet was missing moves into its free slot, and the species gains +1 Bond. It returns what
@@ -5816,7 +6014,11 @@ const gotoField=(m,l)=>{
   // v77: travelling cancels a run. Leaving the arena is the same door as pressing Leave - a ranked
   // run that is abandoned is simply not paid.
   if(typeof TRIAL!=='undefined'&&TRIAL.on)trialExit();
-  lastKey='';S.mp=m;S.lvl=l;S.kl=0;mobs=[];mob=null;camps=[];respawn=.3;qRefresh();ui();save()};
+  lastKey='';S.mp=m;S.lvl=l;S.kl=0;mobs=[];mob=null;camps=[];respawn=.3;
+  // haven-v158: on ascension maps, place the hero at the field entry so they walk into the zone
+  // instead of appearing in the middle of it. The roam logic will then walk them forward.
+  if(m>=10){pl.x=0;pl.z=Z1-1.5;pl.wz=Z1-1.5;pl.wx=null;}
+  qRefresh();ui();save()};
 const ACT={
   workslot:v=>{if(EQK.some(([k])=>k===v)){selE=v;renderWin()}},
   echostore:()=>{eclipseEchoPick=false;renderWin()},
@@ -5886,7 +6088,7 @@ const ACT={
   indexall:name=>{const owner=S,count=Math.min(cardMasteryCardByName(String(name)).length,CARD_MASTERY_PER_CARD-cardMasteryLevel(String(name)));if(count<1)return;ask(`Permanently consume ${count} ${name} for the Card Index? These copies will be gone and cannot be equipped or merged. Each adds one Mastery rank and one token.`,()=>{if(S!==owner)return;const r=donateAllToMastery(String(name),count);if(!r.donated)return;S.hp=Math.min(S.hp,maxHp());
     log(`🃏 ${name}: dedicated ${r.donated} cop${r.donated===1?'y':'ies'} - mastery ${r.level}/${CARD_MASTERY_PER_CARD}${r.left?`, ${r.left} left in the bag`:''}.`,'r3','card');
     addFloat(pl.x,2.6,pl.z,`🃏 ${name} ${r.level}/${CARD_MASTERY_PER_CARD}`,'#ffd23f');ui();save()})},
-  refprotect:v=>{const n=Number(v);if(![0,1].includes(n))return;S.useRefineScroll=n===1;ui();save()},buyscroll:()=>buyRefineScroll(),refine:k=>refine(k),craftdps:()=>craftDps(),bmmat:o=>buyMat(+o),bmore:o=>buyOre(o,$('oreQty-'+o)?.value??1),bmref:v=>{const[k,mode]=v.split(':');reforge(k,mode==='all')},refpick:v=>{const[k,i]=v.split(':'),it=S.eq[k];if(!it)return;const a=reforgeSelection[it.id]||(reforgeSelection[it.id]=[]),n=+i,j=a.indexOf(n);j<0?a.push(n):a.splice(j,1);renderWin()},refagain:()=>keepAndReforge(),refaccept:v=>resolveReforge(v==='yes'),mergecard:id=>mergeCard(id),convertcard:id=>convertCard(id),guidemode:v=>{if(['farm','boss','survive'].includes(v))guideMode=v;renderWin()},guidetier:v=>{if(['current','normal','nightmare'].includes(v))guideTier=v;renderWin()},guidemap:v=>{const[m,l]=v.split(':').map(Number);if(!Number.isInteger(m)||m<0||m>=MAPS.length||!Number.isInteger(l)||l<1||l>(m>=10?5:15))return;if(!tabs.includes('map'))openTab('map');mapSeason=m>=10?'ascension':'atlas';mapM=m;mapL=l;renderWin()},sub:v=>{const[t,k]=v.split(':');sub[t]=k;if(t==='bag'&&k!=='bag')eqPick=null;renderWin()},selp:v=>{selP=+v;petPreviewStance='idle';sub.pet='manage';renderWin()},
+  refprotect:v=>{const n=Number(v);if(![0,1].includes(n))return;S.useRefineScroll=n===1;ui();save()},buyscroll:()=>buyRefineScroll(),refine:k=>refine(k),craftdps:()=>craftDps(),craftasc:v=>{const[setKey,slot]=v.split(':');const c=C(),wt=slot==='weapon'?(c.wt[0]||'sword'):undefined;const result=craftAscensionPiece(setKey,slot,wt);if(result.error){log(result.error,'r0');ui();return}if(S.inv.length>=BAGMAX){log('Bag is full — make room first.','r0');ui();return}S.inv.push(result.item);log(`Crafted ${result.item.name}!`,'r4','gear');addFloat(pl.x,2.8,pl.z,result.item.name+'!','#ff6bff',true);ui();save()},bmmat:o=>buyMat(+o),bmore:o=>buyOre(o,$('oreQty-'+o)?.value??1),bmref:v=>{const[k,mode]=v.split(':');reforge(k,mode==='all')},refpick:v=>{const[k,i]=v.split(':'),it=S.eq[k];if(!it)return;const a=reforgeSelection[it.id]||(reforgeSelection[it.id]=[]),n=+i,j=a.indexOf(n);j<0?a.push(n):a.splice(j,1);renderWin()},refagain:()=>keepAndReforge(),refaccept:v=>resolveReforge(v==='yes'),mergecard:id=>mergeCard(id),convertcard:id=>convertCard(id),guidemode:v=>{if(['farm','boss','survive'].includes(v))guideMode=v;renderWin()},guidetier:v=>{if(['current','normal','nightmare'].includes(v))guideTier=v;renderWin()},guidemap:v=>{const[m,l]=v.split(':').map(Number);if(!Number.isInteger(m)||m<0||m>=MAPS.length||!Number.isInteger(l)||l<1||l>(m>=10?5:15))return;if(!tabs.includes('map'))openTab('map');mapSeason=m>=10?'ascension':'atlas';mapM=m;mapL=l;renderWin()},sub:v=>{const[t,k]=v.split(':');sub[t]=k;if(t==='bag'&&k!=='bag')eqPick=null;renderWin()},selp:v=>{selP=+v;petPreviewStance='idle';sub.pet='manage';renderWin()},
   petmotion:v=>{if(['idle','walk','attack'].includes(v)){petPreviewStance=v;renderWin()}},
   petretry:()=>{const p=gp(selP);if(p&&petSpriteStore){const id=PETS[p.sp].spriteId;petSpriteStore.retry(petAssetKey(id,petPreviewStance,0)).catch(()=>{})}},
   pswap:id=>{const pet=gp(id),select=$('wins').querySelector('[data-pet-replace="'+id+'"]'),previous=gp(select?.value);if(!pet||pet.on||!previous?.on)return;previous.on=false;pet.on=true;ui();save()},
@@ -7942,7 +8144,7 @@ function skinWeaponPlacement(p,clsRec,view,fi){
 }
 // Cosmetic milestones; no stat bonuses and no changes to the source art.
 const LEVEL_AURAS=[{at:50,color:'#79dcff',pattern:'compass'},{at:99,color:'#b897ff',pattern:'arcane'},{at:150,color:'#ffd779',pattern:'sunburst'}];
-const REFINE_GLOWS=[{at:7,color:'#71ffae',edge:.65,alpha:.6},{at:9,color:'#ff7cbe',edge:1,alpha:.75},{at:10,color:'#ff3049',edge:1.4,alpha:.95}];
+const REFINE_GLOWS=[{at:7,color:'#71ffae',edge:.65,alpha:.6},{at:9,color:'#a78bfa',edge:1,alpha:.75},{at:10,color:'#ff3049',edge:1.4,alpha:.95},{at:11,color:'#ff9500',edge:1.6,alpha:1},{at:13,color:'#ffa500',edge:1.8,alpha:1},{at:15,color:'#ffcc00',edge:2,alpha:1}];
 const milestone=(rows,value)=>rows.filter(x=>value>=x.at).at(-1)||null;
 let levelAura=null;
 // Ribbon geometry keeps the sigil strokes crisp on both WebGL and mobile renderers.
@@ -9113,22 +9315,14 @@ function getSkillAfterglow(){
   canvas.setAttribute('aria-hidden','true');
   canvas.style.cssText='position:absolute;inset:0;pointer-events:none';
   const renderer=PGSkillAfterglow.create(canvas);if(!renderer)return null;
-  renderer.aura=(x,z,time)=>{
-    if(typeof PGFourthJobVisuals==='undefined')return;
-    const g=canvas.getContext('2d'),at=scr(x,.04,z),top=scr(x,3.05,z),ratio=Math.min(2,Math.max(1,devicePixelRatio||1));
-    g.save();g.setTransform(ratio,0,0,ratio,0,0);
-    PGFourthJobVisuals.aura(g,at[0],at[1],time,'#dfc582',Math.max(.01,Math.hypot(top[0]-at[0],top[1]-at[1])/120));g.restore();
-  };
   $('weaponSpriteLayer').after(canvas);skillAfterglow=renderer;return renderer;
 }
 function playSkillFx(id,target,color){
   if(simVisualsOff())return;
   const r=skillFxSpec(id,color);if(!r)return;
-  const skill=SKILLS.find(s=>s.id===id),ward=FOURTH_JOBS_LIVE&&SKILLS4.includes(skill)&&!!(skill.type!=='act'||skill.shape==='radial');
-  if(ward)target=null; // Fourth-job support and radial effects follow the caster.
   const fx={...r,x0:pl.x,z0:pl.z,x1:target&&Number.isFinite(target.x)?target.x:pl.x,
     z1:target&&Number.isFinite(target.z)?target.z:pl.z,age:0,group:null,parts:[]};
-  fx.magic=!!skill?.magic;fx.areaScale=skill?.shape!=='single'?(skill?.areaScale||1):1;
+  const skill=SKILLS.find(s=>s.id===id);fx.magic=!!skill?.magic;fx.areaScale=skill?.shape!=='single'?(skill?.areaScale||1):1;
   fx.targetScale=skill?.shape==='single'&&target&&typeof mobVisualScale==='function'&&(target.spriteScale||target.boss)?cl(mobVisualScale(target),.35,2):1;
   if(typeof PGSkillAfterglow!=='undefined'&&PGSkillAfterglow.has(id)&&getSkillAfterglow()){
     fx.afterglow=true;fx.life=PGSkillAfterglow.life;
@@ -9139,10 +9333,7 @@ function disposeSkillFx(fx){if(!fx||!fx.group)return;scene.remove(fx.group);fx.g
   if(o.material)o.material.dispose();if(o.userData&&o.userData.skillFxOwnGeometry&&o.geometry)o.geometry.dispose()});fx.group=null}
 function tickSkillFx(dt){for(let i=skillFx.length-1;i>=0;i--){const fx=skillFx[i];fx.age+=dt;if(fx.age>=fx.life){disposeSkillFx(fx);skillFx.splice(i,1)}}}
 function syncSkillFx(){
-  const ascended=FOURTH_JOBS_LIVE&&typeof S!=='undefined'&&S&&CLASSES[S.cls]?.tier===4;
-  if(ascended)getSkillAfterglow();
   if(skillAfterglow)skillAfterglow.draw(skillFx,R.domElement.clientWidth,R.domElement.clientHeight,scr,devicePixelRatio||1);
-  if(ascended)skillAfterglow?.aura(pl.x,pl.z,t);
   for(const fx of skillFx){if(fx.afterglow)continue;if(!fx.group)makeSkillFxNode(fx);const q=cl(fx.age/fx.life,0,1),ease=1-Math.pow(1-q,2);
     if(fx.at==='path')fx.group.position.set(fx.x0+(fx.x1-fx.x0)*ease,.95+Math.sin(q*Math.PI)*.34,fx.z0+(fx.z1-fx.z0)*ease);
     else{const x=fx.at==='caster'?fx.x0:fx.x1,z=fx.at==='caster'?fx.z0:fx.z1;fx.group.position.set(x,0,z)}
