@@ -1,0 +1,59 @@
+{
+  "thresholds": [
+    {
+      "gearAspd": 10,
+      "minimumAllocatedAgi": 93
+    },
+    {
+      "gearAspd": 20,
+      "minimumAllocatedAgi": 90
+    },
+    {
+      "gearAspd": 30,
+      "minimumAllocatedAgi": 87
+    },
+    {
+      "gearAspd": 50,
+      "minimumAllocatedAgi": 82
+    }
+  ],
+  "maxThreshold": 79,
+  "classes": [
+    {
+      "cls": "Lord Knight",
+      "interval": 0.13,
+      "attacksPerSecond": 7.692307692307692,
+      "skillAspd": 30
+    },
+    {
+      "cls": "High Wizard",
+      "interval": 0.18830769230769226,
+      "attacksPerSecond": 5.310457516339871,
+      "skillAspd": 0
+    },
+    {
+      "cls": "Sniper",
+      "interval": 0.13,
+      "attacksPerSecond": 7.692307692307692,
+      "skillAspd": 10
+    },
+    {
+      "cls": "Assassin Cross",
+      "interval": 0.13,
+      "attacksPerSecond": 7.692307692307692,
+      "skillAspd": 0
+    },
+    {
+      "cls": "High Priest",
+      "interval": 0.1500689655172414,
+      "attacksPerSecond": 6.66360294117647,
+      "skillAspd": 15
+    },
+    {
+      "cls": "Whitesmith",
+      "interval": 0.13,
+      "attacksPerSecond": 7.692307692307692,
+      "skillAspd": 25
+    }
+  ]
+}

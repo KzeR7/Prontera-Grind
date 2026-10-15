@@ -1,0 +1,221 @@
+{
+  "schemaVersion": 1,
+  "status": "proposed_not_implemented",
+  "timingContract": {
+    "clock": "simulation milliseconds relative to castSkill resolution; primaryContact=0",
+    "globalMultiplier": "No 1.65 multiplier for migrated pilots; keep legacy path for unmigrated skills.",
+    "anticipation": "Only through audited existing visual windup; optional and cancellable. Never introduce damage delay.",
+    "mainContactDeadlineMs": 33.4,
+    "warning": "All timing, scale and budget numbers are design targets pending visual verification, not RO measurements."
+  },
+  "comparisonFixtures": {
+    "viewportsPx": [
+      [
+        390,
+        844
+      ],
+      [
+        1440,
+        1100
+      ]
+    ],
+    "grounds": [
+      "ruin_cobble",
+      "grass_olive",
+      "grass_forest"
+    ],
+    "targets": [
+      "small regular mob",
+      "boss"
+    ],
+    "camera": [
+      "default",
+      "reversed",
+      "oblique"
+    ],
+    "simultaneousEffects": [
+      1,
+      8,
+      28
+    ],
+    "playback": [
+      1,
+      0.5
+    ],
+    "requiredArtifacts": [
+      "1x same-scene baseline/candidate comparison",
+      "contact sheet onset/contact/peak/decay",
+      "full battlefield capture where GPU available"
+    ]
+  },
+  "pilots": [
+    {
+      "id": "grim",
+      "priority": 1,
+      "observed": {
+        "name": "Grimtooth",
+        "hits": 1,
+        "shape": "line",
+        "currentTeeth": 26,
+        "paletteApproved": false
+      },
+      "proposed": {
+        "intent": "Small inward-facing teeth form a hungry worm-mouth around the selected monster; forceful ground emergence and bite. Gameplay line targeting remains unchanged.",
+        "assetIds": [
+          "grim_teeth",
+          "grim_ground",
+          "grim_contact",
+          "grim_dust",
+          "shared_grit"
+        ],
+        "teeth": {
+          "count": 26,
+          "rings": 2,
+          "variants": 3,
+          "heightToTargetHeight": [
+            0.18,
+            0.32
+          ],
+          "mawWidthToTargetWidth": [
+            1.35,
+            1.7
+          ],
+          "centerOpen": true,
+          "variation": "Deterministic height, spacing and lean; avoid uniform fence."
+        },
+        "phases": [
+          {
+            "startMs": 0,
+            "endMs": 33,
+            "action": "Primary contact/fissure compression immediately after cast resolution; optional existing windup can prepare rear roots only."
+          },
+          {
+            "startMs": 0,
+            "endMs": 110,
+            "action": "Teeth erupt and lean inward with staggered motion; cosmetic continuation of resolved contact."
+          },
+          {
+            "startMs": 110,
+            "endMs": 220,
+            "action": "Brief bite recoil/settle; keep center readable."
+          },
+          {
+            "startMs": 220,
+            "endMs": 460,
+            "action": "Teeth retract into roots; chips fall and dust settles."
+          },
+          {
+            "startMs": 460,
+            "endMs": 650,
+            "action": "Residual low dust only, then cleanup."
+          }
+        ],
+        "depth": "Ground/rear pass below native target; front teeth above. Partition in world/projected depth and inspect crowded pack.",
+        "acceptance": [
+          "26 small teeth retained at reduced detail",
+          "readable weathered material at game scale",
+          "monster visible through open center",
+          "rear teeth correctly occluded",
+          "no plastic gloss or neon fence",
+          "bite/contact apparent at 1x on bright cobblestone"
+        ]
+      }
+    },
+    {
+      "id": "sonic",
+      "priority": 2,
+      "observed": {
+        "name": "Sonic Blow",
+        "hits": 8,
+        "shape": "single"
+      },
+      "proposed": {
+        "intent": "Fast, sharp katar attack with compact contact and a decisive final cut; retain existing alternating direction.",
+        "assetIds": [
+          "sonic_cuts",
+          "sonic_contact",
+          "sonic_finish",
+          "steel_fragments"
+        ],
+        "cosmeticCutCount": 8,
+        "phases": [
+          {
+            "startMs": 0,
+            "endMs": 33,
+            "action": "Primary localized strike agrees with synchronous cast resolution."
+          },
+          {
+            "startMs": 0,
+            "endMs": 280,
+            "action": "Eight staggered cosmetic cut accents, alternating established directions; no extra damage events."
+          },
+          {
+            "startMs": 280,
+            "endMs": 350,
+            "action": "Distinct finishing cut and compact metal fragments."
+          },
+          {
+            "startMs": 350,
+            "endMs": 520,
+            "action": "Rapid trail decay; retain target readability."
+          }
+        ],
+        "acceptance": [
+          "cuts have solid tapered bodies",
+          "first hit is immediate and localized",
+          "not a rotating neon scribble",
+          "eight accents remain visually distinguishable at 1x without claiming timed gameplay hits"
+        ]
+      }
+    },
+    {
+      "id": "fire",
+      "priority": 3,
+      "observed": {
+        "name": "Fire Bolt",
+        "hits": 3,
+        "shape": "single",
+        "currentVisualBoltCount": 5,
+        "declaredDamageHitsScheduledIndividually": false
+      },
+      "proposed": {
+        "intent": "Three clear downward fire contacts with hot painted cores and darker soot; retain downward trajectory.",
+        "assetIds": [
+          "fire_body",
+          "fire_contact",
+          "fire_smoke"
+        ],
+        "visualContactCount": 3,
+        "phases": [
+          {
+            "startMs": 0,
+            "endMs": 33,
+            "action": "Primary contact cluster at target agrees with current damage resolution."
+          },
+          {
+            "startMs": 0,
+            "endMs": 160,
+            "action": "Three compact downward fire accents end in localized contacts; continuing motion is cosmetic, not delayed damage."
+          },
+          {
+            "startMs": 160,
+            "endMs": 320,
+            "action": "Hot flame folds collapse, separating from smoke."
+          },
+          {
+            "startMs": 320,
+            "endMs": 650,
+            "action": "Soot thins and embers die; no persistent pale blob."
+          }
+        ],
+        "timingFallback": "If pre-impact travel is essential to the visual, use an audited existing visual windup hook. Without it, start near contact; do not delay gameplay.",
+        "acceptance": [
+          "three visual contacts match declared hit identity",
+          "orange body survives bright ground",
+          "solid flame and darker soot separate",
+          "no target damage followed by long empty descent"
+        ]
+      }
+    }
+  ]
+}

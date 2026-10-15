@@ -23,6 +23,7 @@ account usage, provider billing or a guarantee about a hosting plan.
 | Item | Before | After | Meaning |
 | --- | ---: | ---: | --- |
 | Production static tree: adding in-game exploration | 39,769,265 B | 44,190,234 B | 1,195 files; about 44.19 MB / 42.14 MiB, not a visit's download |
+| Production static tree: latest main skill FX + exploration | 44,190,234 B | 44,603,321 B | 1,196 files; about 44.60 MB / 42.54 MiB; skill FX retained from main, exploration payload unchanged |
 | Three journey environment images | 6,523,346 B | 3,734,024 B | 42.8% smaller with exactly the same decoded pixels |
 | Astral opening: environment images | 6,523,346 B | 2,289,304 B | 64.9% smaller: stone + space only; lava deferred |
 | Thor opening: environment images | 6,523,346 B | 2,817,162 B | 56.8% smaller: stone + lava only; space deferred |

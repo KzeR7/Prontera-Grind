@@ -1,0 +1,59 @@
+{
+  "schemaVersion": 1,
+  "status": "technical_research_with_visual_playback_limitation",
+  "sources": [
+    {
+      "id": "str_format",
+      "url": "https://github.com/MrAntares/roBrowserLegacy/blob/d0449c2a36eff0210555fa5d086f625c5fd1e006/src/Loaders/Str.js",
+      "commit": "d0449c2a36eff0210555fa5d086f625c5fd1e006",
+      "kind": "community_client_source_not_Gravity_source",
+      "observed": "Per-layer textures/keyframes, fps, geometry, RGBA and blend factors.",
+      "sha256": "0d58004ad0d879166243001adb0ba9c5651a6fcbc90fd9ecad87b403d04f5164",
+      "httpVerified": 200,
+      "limitation": "Not proof of every original effect asset, parameter or timing."
+    },
+    {
+      "id": "str_renderer",
+      "url": "https://github.com/MrAntares/roBrowserLegacy/blob/d0449c2a36eff0210555fa5d086f625c5fd1e006/src/Renderer/Effects/StrEffect.js",
+      "commit": "d0449c2a36eff0210555fa5d086f625c5fd1e006",
+      "kind": "community_client_source_not_Gravity_source",
+      "observed": "Texture animation and per-key blend function selection.",
+      "sha256": "694b7cb65e6b4ec21dcaf6901805b8ffd172e5b48dae23b0f1c37f27ca2a5aa7",
+      "httpVerified": 200,
+      "limitation": "Not proof of every original effect asset, parameter or timing."
+    },
+    {
+      "id": "skill_dispatch",
+      "url": "https://github.com/MrAntares/roBrowserLegacy/blob/d0449c2a36eff0210555fa5d086f625c5fd1e006/src/DB/Skills/SkillEffect.js",
+      "commit": "d0449c2a36eff0210555fa5d086f625c5fd1e006",
+      "kind": "community_client_source_not_Gravity_source",
+      "observed": "Distinct release/caster/hit effect definitions, including Grimtooth and Sonic Blow.",
+      "sha256": "a1b8bd5f706b025f85481b088de20172bb272ec77c493fc6a67703b1052f69b9",
+      "httpVerified": 200,
+      "limitation": "Not proof of every original effect asset, parameter or timing."
+    },
+    {
+      "id": "effect_definitions",
+      "url": "https://github.com/MrAntares/roBrowserLegacy/blob/d0449c2a36eff0210555fa5d086f625c5fd1e006/src/DB/Effects/EffectTable.js",
+      "commit": "d0449c2a36eff0210555fa5d086f625c5fd1e006",
+      "kind": "community_client_source_not_Gravity_source",
+      "observed": "Mixed STR/2D/3D/trail effects; stone-textured Grimtooth spikes and separate fire-hit art.",
+      "sha256": "5ef637bc3cf39c9c5397aebaa4797d5f1c163c2049f34a0f7d7aace8b1a0998a",
+      "httpVerified": 200,
+      "limitation": "Not proof of every original effect asset, parameter or timing."
+    }
+  ],
+  "footageReference": {
+    "url": "https://www.youtube.com/watch?v=f0_2rH-k5NQ",
+    "title": "Ragnarok Online - (Grimtooth) mobbing Rachel Sanctuary",
+    "status": "page_loaded_playback_blocked",
+    "measuredFrames": false
+  },
+  "currentSourceHashes": {
+    "index.html": "9e674abde6446dcf2e2cced347dfced4d2a16a1eb16f9ff0738c71a54fac6ecb",
+    "tools/skill-fx-materials/runtime.js": "eb5296ea263033648b8ba6df3c8d97b0591c129b3aec6fc7e66dc0f85f56e052",
+    "assets/skill-afterglow.js": "1f0a1535aafd2f33e472f71c5748fa26a2c87d520a3330f9608357b46ac1088a",
+    "tools/skill-fx-proposals/afterglow-v8.html": "20057fbb6080c5b13d86dc5d0888168b123c07544611b3d93e68e23a729747af",
+    "tools/build_skill_materials.py": "e0666fb6a3e7f9ee1373f1f6a8b63cf68919234fb70c940e3af4fa91ebf15b48"
+  }
+}

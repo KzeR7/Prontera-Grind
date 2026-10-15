@@ -1,7 +1,7 @@
 {
   "status": "pass",
   "sources": {
-    "index.html": "d00c6077e690ea106a142f26e95d04a2b2724bac04dc2880033e7c430c7e8b93",
+    "index.html": "cc36012432c2614907656c993bb16053e834118e332705498606f133f30824d5",
     "assets/map-exploration.js": "cc9b9fbc25c9d9e4cbcdb1880a95ae0f836991cc3ef33e3310b8268337d0e57c",
     "tools/maps/build_game_exploration.js": "ba67e9738448d295c3bd33800efa1ce79073762fe24c12e1352274b490848d36",
     "tools/maps/journey-hero.js": "befd05894b5b1285f6051ae27138f4eb061f51df20fde969e3f3fa70dd79502a"
@@ -12,7 +12,17 @@
     "https://static.divine-pride.net/images/mobs/png/1002.png",
     "https://static.divine-pride.net/images/mobs/png/1002.png",
     "https://static.divine-pride.net/images/mobs/png/1002.png",
+    "https://static.divine-pride.net/images/mobs/png/1002.png",
     "https://static.divine-pride.net/images/mobs/png/1007.png",
+    "https://static.divine-pride.net/images/mobs/png/1007.png",
+    "https://static.divine-pride.net/images/mobs/png/1007.png",
+    "https://static.divine-pride.net/images/mobs/png/1007.png",
+    "https://static.divine-pride.net/images/mobs/png/1002.png",
+    "https://static.divine-pride.net/images/mobs/png/1007.png",
+    "https://static.divine-pride.net/images/mobs/png/1002.png",
+    "https://static.divine-pride.net/images/mobs/png/1007.png",
+    "https://static.divine-pride.net/images/mobs/png/1002.png",
+    "https://static.divine-pride.net/images/mobs/png/1002.png",
     "https://static.divine-pride.net/images/mobs/png/1007.png",
     "https://static.divine-pride.net/images/mobs/png/1007.png",
     "https://static.divine-pride.net/images/mobs/png/1002.png",
@@ -21,11 +31,7 @@
     "https://static.divine-pride.net/images/mobs/png/1002.png",
     "https://static.divine-pride.net/images/mobs/png/1002.png",
     "https://static.divine-pride.net/images/mobs/png/1007.png",
-    "https://static.divine-pride.net/images/mobs/png/1007.png",
     "https://static.divine-pride.net/images/mobs/png/1002.png",
-    "https://static.divine-pride.net/images/mobs/png/1002.png",
-    "https://static.divine-pride.net/images/mobs/png/1002.png",
-    "https://static.divine-pride.net/images/mobs/png/1007.png",
     "https://static.divine-pride.net/images/mobs/png/1007.png",
     "https://static.divine-pride.net/images/mobs/png/1002.png"
   ],
@@ -34,18 +40,18 @@
   "captures": [
     {
       "file": "game-world-atlas.png",
-      "bytes": 1236895,
-      "sha256": "8427630ff6b2c26366fe690088388bb7d94d8e5f28407b962acaba5b7af000dc"
+      "bytes": 1255561,
+      "sha256": "c660fe6b13f5401f0ac1a0543327b6d81b82ac1195d1855f5d4dde17f39bceb4"
     },
     {
       "file": "game-map-cards.png",
-      "bytes": 981564,
-      "sha256": "1cf39a1842b6d92c122db31eae087041b1cc8fdb31828a9f37be08cc564f92a7"
+      "bytes": 1075034,
+      "sha256": "a628a874cebb9113d920a487b95affa3568cde590500726e713bb69a9a153e6d"
     },
     {
       "file": "game-astral-exploration.png",
-      "bytes": 1267610,
-      "sha256": "dabf73116fc4f9d991b05c426dbc90a92b55b5c80aa0e2422a0869f91ae2fb6c"
+      "bytes": 1276199,
+      "sha256": "3a5f2ccb5063f67e23d21f28f74350ea2eaeed3d0047b1b7ec89b4eee9019fd9"
     },
     {
       "file": "game-thor-phone.png",

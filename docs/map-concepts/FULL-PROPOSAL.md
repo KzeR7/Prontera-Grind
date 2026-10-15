@@ -1,6 +1,6 @@
 # New Endgame Maps — Full Detailed Proposal
 
-**Astral Citadel & Thor Volcano / The Primal Forge**  
+**Astral Citadel & Thor Volcano / The Primal Forge**\
 **Map-preview completion pass · 15 October 2026**
 
 ## Resource budget update — 2026-10-15
@@ -413,9 +413,9 @@ current layout specification. Revision 2's detached Astral rooms are superseded.
 
 ## 12. Delivery status
 
-**Scenery proposal:** revised locally for full inspection.  
+**Scenery proposal:** revised locally for full inspection.\
 **Live review:** native-character walking prototype with small detail, plus the
-scenery studio, eight local views and full comparison board.  
-**Native monsters:** awaiting authorised original files; no substitutions.  
-**Live gameplay / animated mobs / final balance:** not implemented.  
+scenery studio, eight local views and full comparison board.\
+**Native monsters:** awaiting authorised original files; no substitutions.\
+**Live gameplay / animated mobs / final balance:** not implemented.\
 **Commit, push or production deployment:** none for this revision.

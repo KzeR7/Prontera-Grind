@@ -1,0 +1,662 @@
+{
+  "format": "prontera-skill-fx-choices",
+  "schemaVersion": 1,
+  "sources": {
+    "old": {
+      "path": "tools/skill-fx-proposals/afterglow-v7.html",
+      "sha256": "c3a87697fbde9e89d0042d417ab1cad521cb5586b7a4507a5e76553e83f619df"
+    },
+    "new": {
+      "path": "assets/afterglow-animations.js",
+      "sha256": "01a628b3677a7140d33f5ec3f09a2a93689c55f59372877f82a6ef0e82fe41cc"
+    },
+    "adapter": {
+      "path": "assets/skill-afterglow.js",
+      "sha256": "1f0a1535aafd2f33e472f71c5748fa26a2c87d520a3330f9608357b46ac1088a"
+    },
+    "materials": {
+      "path": "assets/skill-materials.js",
+      "sha256": "c47c315d2f1721afad202b9651179682b7294ab8ef09482f57c50e1ef7edbd1b"
+    }
+  },
+  "instruction": "Apply only explicit old/new FX choices. Leave undecided skills and combat mechanics unchanged.",
+  "skills": [
+    {
+      "id": "fire",
+      "name": "Fire Bolt",
+      "job": "Mage",
+      "choice": "new",
+      "notes": ""
+    },
+    {
+      "id": "dstr",
+      "name": "Double Strafe",
+      "job": "Archer",
+      "choice": "new",
+      "notes": ""
+    },
+    {
+      "id": "aid",
+      "name": "First Aid",
+      "job": "Novice",
+      "choice": "new",
+      "notes": ""
+    },
+    {
+      "id": "bash",
+      "name": "Bash",
+      "job": "Swordman",
+      "choice": "old",
+      "notes": ""
+    },
+    {
+      "id": "endure",
+      "name": "Rising Slash",
+      "job": "Swordman",
+      "choice": "new",
+      "notes": ""
+    },
+    {
+      "id": "provoke",
+      "name": "Provoke",
+      "job": "Swordman",
+      "choice": "new",
+      "notes": ""
+    },
+    {
+      "id": "bowl",
+      "name": "Bowling Bash",
+      "job": "Knight",
+      "choice": "old",
+      "notes": ""
+    },
+    {
+      "id": "pierce",
+      "name": "Sword Thrust",
+      "job": "Knight",
+      "choice": "old",
+      "notes": ""
+    },
+    {
+      "id": "quick",
+      "name": "Two-Hand Quicken",
+      "job": "Knight",
+      "choice": "new",
+      "notes": ""
+    },
+    {
+      "id": "spiral",
+      "name": "Spiral Slash",
+      "job": "Lord Knight",
+      "choice": "old",
+      "notes": ""
+    },
+    {
+      "id": "aura",
+      "name": "Aura Blade",
+      "job": "Lord Knight",
+      "choice": "new",
+      "notes": ""
+    },
+    {
+      "id": "jointbeat",
+      "name": "Parrying",
+      "job": "Lord Knight",
+      "choice": "old",
+      "notes": ""
+    },
+    {
+      "id": "nap",
+      "name": "Lightning Bolt",
+      "job": "Mage",
+      "choice": "new",
+      "notes": ""
+    },
+    {
+      "id": "coat",
+      "name": "Energy Coat",
+      "job": "Mage",
+      "choice": "new",
+      "notes": ""
+    },
+    {
+      "id": "fireball",
+      "name": "Fire Ball",
+      "job": "Mage",
+      "choice": "new",
+      "notes": ""
+    },
+    {
+      "id": "storm",
+      "name": "Storm Gust",
+      "job": "Wizard",
+      "choice": "new",
+      "notes": "i would want a floor casting range like ragnarok online"
+    },
+    {
+      "id": "jup",
+      "name": "Jupitel Thunder",
+      "job": "Wizard",
+      "choice": "undecided",
+      "notes": "make it better, it should be like thunder, why blue"
+    },
+    {
+      "id": "amp",
+      "name": "Meteor Storm",
+      "job": "Wizard",
+      "choice": "new",
+      "notes": ""
+    },
+    {
+      "id": "tstorm",
+      "name": "Heaven’s Drive",
+      "job": "Wizard",
+      "choice": "undecided",
+      "notes": "make stone more realistic"
+    },
+    {
+      "id": "meteor",
+      "name": "Magic Crasher",
+      "job": "High Wizard",
+      "choice": "undecided",
+      "notes": "too small cant see"
+    },
+    {
+      "id": "grav",
+      "name": "Gravity Well",
+      "job": "High Wizard",
+      "choice": "new",
+      "notes": ""
+    },
+    {
+      "id": "mystic",
+      "name": "Mystical Amplification",
+      "job": "High Wizard",
+      "choice": "new",
+      "notes": ""
+    },
+    {
+      "id": "napalm",
+      "name": "Napalm Vulcan",
+      "job": "High Wizard",
+      "choice": "new",
+      "notes": ""
+    },
+    {
+      "id": "iconc",
+      "name": "Improve Concentration",
+      "job": "Archer",
+      "choice": "new",
+      "notes": ""
+    },
+    {
+      "id": "blitz",
+      "name": "Blitz Beat",
+      "job": "Hunter",
+      "choice": "new",
+      "notes": ""
+    },
+    {
+      "id": "sharp",
+      "name": "Marked Shot",
+      "job": "Hunter",
+      "choice": "new",
+      "notes": "too small cant see"
+    },
+    {
+      "id": "falcon",
+      "name": "Falcon Assault",
+      "job": "Sniper",
+      "choice": "new",
+      "notes": ""
+    },
+    {
+      "id": "focus",
+      "name": "Sharp Shooting",
+      "job": "Sniper",
+      "choice": "new",
+      "notes": ""
+    },
+    {
+      "id": "sight",
+      "name": "True Sight",
+      "job": "Sniper",
+      "choice": "new",
+      "notes": ""
+    },
+    {
+      "id": "pharrow",
+      "name": "Snare Trap",
+      "job": "Sniper",
+      "choice": "undecided",
+      "notes": "too small cant see"
+    },
+    {
+      "id": "env",
+      "name": "Quick Cut",
+      "job": "Thief",
+      "choice": "undecided",
+      "notes": "cant see"
+    },
+    {
+      "id": "dodge",
+      "name": "Feint Slash",
+      "job": "Thief",
+      "choice": "new",
+      "notes": "cant see"
+    },
+    {
+      "id": "sonic",
+      "name": "Sonic Blow",
+      "job": "Assassin",
+      "choice": "old",
+      "notes": ""
+    },
+    {
+      "id": "grim",
+      "name": "Grimtooth",
+      "job": "Assassin",
+      "choice": "new",
+      "notes": "make it more realistic, and surround the mob"
+    },
+    {
+      "id": "vdust",
+      "name": "Cross Slash",
+      "job": "Assassin",
+      "choice": "new",
+      "notes": ""
+    },
+    {
+      "id": "mAss",
+      "name": "Meteor Assault",
+      "job": "Assassin Cross",
+      "choice": "old",
+      "notes": "make it better"
+    },
+    {
+      "id": "soulb",
+      "name": "Soul Breaker",
+      "job": "Assassin Cross",
+      "choice": "old",
+      "notes": ""
+    },
+    {
+      "id": "sdestroy",
+      "name": "Deathmark",
+      "job": "Assassin Cross",
+      "choice": "undecided",
+      "notes": "too small cant see"
+    },
+    {
+      "id": "holy",
+      "name": "Holy Light",
+      "job": "Acolyte",
+      "choice": "new",
+      "notes": ""
+    },
+    {
+      "id": "heal",
+      "name": "Searing Light",
+      "job": "Acolyte",
+      "choice": "new",
+      "notes": ""
+    },
+    {
+      "id": "bless",
+      "name": "Blessing",
+      "job": "Acolyte",
+      "choice": "new",
+      "notes": ""
+    },
+    {
+      "id": "iagi",
+      "name": "Zeal",
+      "job": "Acolyte",
+      "choice": "new",
+      "notes": ""
+    },
+    {
+      "id": "magnus",
+      "name": "Holy Nova",
+      "job": "Priest",
+      "choice": "new",
+      "notes": ""
+    },
+    {
+      "id": "sanct",
+      "name": "Judgment Pillar",
+      "job": "Priest",
+      "choice": "new",
+      "notes": ""
+    },
+    {
+      "id": "asp",
+      "name": "Sacred Weapon",
+      "job": "Priest",
+      "choice": "new",
+      "notes": ""
+    },
+    {
+      "id": "kyrie",
+      "name": "Penance",
+      "job": "Priest",
+      "choice": "new",
+      "notes": ""
+    },
+    {
+      "id": "judex",
+      "name": "Divine Barrage",
+      "job": "High Priest",
+      "choice": "new",
+      "notes": "too small cant see"
+    },
+    {
+      "id": "assum",
+      "name": "Consecration",
+      "job": "High Priest",
+      "choice": "new",
+      "notes": ""
+    },
+    {
+      "id": "gloria",
+      "name": "Gloria",
+      "job": "High Priest",
+      "choice": "new",
+      "notes": ""
+    },
+    {
+      "id": "mammo",
+      "name": "Mammonite",
+      "job": "Merchant",
+      "choice": "new",
+      "notes": ""
+    },
+    {
+      "id": "hammer",
+      "name": "Hammer Fall",
+      "job": "Blacksmith",
+      "choice": "new",
+      "notes": ""
+    },
+    {
+      "id": "adren",
+      "name": "Adrenaline Rush",
+      "job": "Blacksmith",
+      "choice": "new",
+      "notes": ""
+    },
+    {
+      "id": "wperf",
+      "name": "Armor Crack",
+      "job": "Blacksmith",
+      "choice": "new",
+      "notes": ""
+    },
+    {
+      "id": "cart",
+      "name": "Cart Termination",
+      "job": "Whitesmith",
+      "choice": "new",
+      "notes": ""
+    },
+    {
+      "id": "thrust",
+      "name": "Maximum Power Thrust",
+      "job": "Whitesmith",
+      "choice": "new",
+      "notes": ""
+    },
+    {
+      "id": "cboost",
+      "name": "Cart Boost",
+      "job": "Whitesmith",
+      "choice": "new",
+      "notes": ""
+    },
+    {
+      "id": "frenzy",
+      "name": "Frenzy",
+      "job": "Lord Knight",
+      "choice": "old",
+      "notes": ""
+    },
+    {
+      "id": "dpois",
+      "name": "Blade Frenzy",
+      "job": "Assassin Cross",
+      "choice": "new",
+      "notes": ""
+    },
+    {
+      "id": "ovthrust",
+      "name": "Overthrust",
+      "job": "Blacksmith",
+      "choice": "new",
+      "notes": ""
+    },
+    {
+      "id": "mbrk",
+      "name": "Magnum Break",
+      "job": "Swordman",
+      "choice": "new",
+      "notes": ""
+    },
+    {
+      "id": "fdiver",
+      "name": "Frost Diver",
+      "job": "Mage",
+      "choice": "new",
+      "notes": ""
+    },
+    {
+      "id": "fnova",
+      "name": "Lord of Vermilion",
+      "job": "Wizard",
+      "choice": "new",
+      "notes": ""
+    },
+    {
+      "id": "ashower",
+      "name": "Arrow Shower",
+      "job": "Archer",
+      "choice": "new",
+      "notes": ""
+    },
+    {
+      "id": "sandat",
+      "name": "Fan of Blades",
+      "job": "Thief",
+      "choice": "new",
+      "notes": ""
+    },
+    {
+      "id": "signum",
+      "name": "Radiant Sweep",
+      "job": "Acolyte",
+      "choice": "new",
+      "notes": ""
+    },
+    {
+      "id": "cartrev",
+      "name": "Cart Revolution",
+      "job": "Merchant",
+      "choice": "new",
+      "notes": ""
+    },
+    {
+      "id": "spearboom",
+      "name": "Counter Attack",
+      "job": "Knight",
+      "choice": "new",
+      "notes": "too small cant see"
+    },
+    {
+      "id": "tblow",
+      "name": "Traumatic Blow",
+      "job": "Lord Knight",
+      "choice": "new",
+      "notes": ""
+    },
+    {
+      "id": "landmine",
+      "name": "Land Mine",
+      "job": "Hunter",
+      "choice": "new",
+      "notes": "too small cant see"
+    },
+    {
+      "id": "wwalk",
+      "name": "Wind Walk",
+      "job": "Sniper",
+      "choice": "new",
+      "notes": ""
+    },
+    {
+      "id": "vsplash",
+      "name": "Shadow Dash",
+      "job": "Assassin",
+      "choice": "undecided",
+      "notes": "not clear, can see much"
+    },
+    {
+      "id": "akatar",
+      "name": "Phantom Rush",
+      "job": "Assassin Cross",
+      "choice": "undecided",
+      "notes": "not clear"
+    },
+    {
+      "id": "tundead",
+      "name": "Exorcism",
+      "job": "Priest",
+      "choice": "new",
+      "notes": ""
+    },
+    {
+      "id": "basilica",
+      "name": "Final Judgment",
+      "job": "High Priest",
+      "choice": "new",
+      "notes": ""
+    },
+    {
+      "id": "meltdown",
+      "name": "Shatter Strike",
+      "job": "Whitesmith",
+      "choice": "new",
+      "notes": ""
+    },
+    {
+      "id": "hprec",
+      "name": "HP Recovery",
+      "job": "Swordman",
+      "choice": "no-fx",
+      "notes": ""
+    },
+    {
+      "id": "spear",
+      "name": "Sword Training",
+      "job": "Knight",
+      "choice": "no-fx",
+      "notes": ""
+    },
+    {
+      "id": "owl",
+      "name": "Owl’s Eye",
+      "job": "Archer",
+      "choice": "no-fx",
+      "notes": ""
+    },
+    {
+      "id": "vult",
+      "name": "Vulture’s Eye",
+      "job": "Archer",
+      "choice": "no-fx",
+      "notes": ""
+    },
+    {
+      "id": "beast",
+      "name": "Beast Bane",
+      "job": "Hunter",
+      "choice": "no-fx",
+      "notes": ""
+    },
+    {
+      "id": "falconry",
+      "name": "Steel Crow",
+      "job": "Hunter",
+      "choice": "no-fx",
+      "notes": ""
+    },
+    {
+      "id": "dbl",
+      "name": "Twin Strike",
+      "job": "Thief",
+      "choice": "no-fx",
+      "notes": ""
+    },
+    {
+      "id": "steal",
+      "name": "Plunder",
+      "job": "Thief",
+      "choice": "no-fx",
+      "notes": ""
+    },
+    {
+      "id": "katm",
+      "name": "Edge Mastery",
+      "job": "Assassin",
+      "choice": "no-fx",
+      "notes": ""
+    },
+    {
+      "id": "meditatio",
+      "name": "Holy Echo",
+      "job": "High Priest",
+      "choice": "no-fx",
+      "notes": ""
+    },
+    {
+      "id": "greed",
+      "name": "Overcharge",
+      "job": "Merchant",
+      "choice": "no-fx",
+      "notes": ""
+    },
+    {
+      "id": "phys",
+      "name": "Pushcart",
+      "job": "Merchant",
+      "choice": "no-fx",
+      "notes": ""
+    },
+    {
+      "id": "discount",
+      "name": "Discount",
+      "job": "Merchant",
+      "choice": "no-fx",
+      "notes": ""
+    },
+    {
+      "id": "wresearch",
+      "name": "Weapon Research",
+      "job": "Blacksmith",
+      "choice": "no-fx",
+      "notes": ""
+    },
+    {
+      "id": "skin",
+      "name": "Cart Momentum",
+      "job": "Whitesmith",
+      "choice": "no-fx",
+      "notes": ""
+    },
+    {
+      "id": "vermilion",
+      "name": "Soul Drain",
+      "job": "High Wizard",
+      "choice": "no-fx",
+      "notes": ""
+    }
+  ]
+}

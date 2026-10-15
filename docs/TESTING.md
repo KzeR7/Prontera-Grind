@@ -72,10 +72,15 @@ inspect those boundaries and include the real dependencies. `pack_sim.js` now re
 its own block directly from the page; a separate `/tmp/pack_block.js` extraction is
 not required. `PACK_BLOCK` and `PACK_DATA` are optional explicit overrides.
 
-For skill FX changes, run `python3 tools/build_afterglow.py --check` and
+For skill FX changes, run `python3 tools/build_skill_materials.py --check`,
+`python3 tools/tests/skill_materials.py`, `python3 tools/build_afterglow.py --check` and
 `node tools/tests/afterglow_sim.js` alongside the affected combat checks. The latter
 exercises all 75 generated animations, the real cast lifecycle, projection at
 reversed/vertical camera angles, canvas state, resize, expiry and dense-cast limits.
+The material checks require Pillow 11.3.0 and numpy 2.0.2 in the selected Python
+environment; see the [material pipeline](../tools/skill-fx-materials/README.md).
+They decode all 64 cells and check alpha isolation, detail and the asset size budget.
+The animation simulation covers decoded, pending and failed atlas images.
 Its Canvas context records operations; it does not validate raster appearance or GPU
 performance. Use the actual browser for pixels and desktop/narrow layout checks.
 
