@@ -1,0 +1,165 @@
+diff --git a/docs/GAME-DESIGN.md b/docs/GAME-DESIGN.md
+index 38871e8..889e858 100644
+--- a/docs/GAME-DESIGN.md
++++ b/docs/GAME-DESIGN.md
+@@ -46,6 +46,10 @@ Base progression ends at 150. Do not copy earlier grant curves or pacing estimat
+ from historical notes: `totalPts()`, `statCap()`, `needAt()`, `jneed()` and the
+ progression/economy tests define current behavior.
+ 
++Movement from AGI, pets, skills and running shares a 10.045 units/second cap.
++Equipment and card movement is applied afterward and can exceed that cap; those
++bonuses retain their combined +20% limit.
++
+ ## Equipment, cards and currency
+ 
+ Gear eligibility depends on class, weapon family and progression tier. Switching
+diff --git a/docs/UPDATE-LOG.md b/docs/UPDATE-LOG.md
+index 5d67fbb..59d0eb6 100644
+--- a/docs/UPDATE-LOG.md
++++ b/docs/UPDATE-LOG.md
+@@ -6372,3 +6372,9 @@ The owner's second pass over v77, six notes, all built.
+ * **Try it:** Choose Ember or Moonstone, inspect Wardrobe/Pets/Refine, reorder learned skills, and repeat a reforge offer.
+ * **Checks:** Rotation regressions, combat timing, save ownership, wardrobe/pets, afterglow, UI, panel/field smoke, static publishing and generated-effect checks passed. The historical balance fixture was already stale at the starting revision. Shared browser can inspect panels but cannot initialize WebGL for battlefield verification.
+ * **Delivery:** Local changes only.
++
++### 2026-10-13 — `haven-v139 Movement cap`
++* **Changed:** Movement from AGI, pets, skills and running now caps at 10.045 units/second (30% below 14.35). Equipment and card movement applies after the cap, retaining its combined +20% limit. Pets follow the same travel calculation. Character and build-guide text explains the cap.
++* **Try it:** Open Character with a high-AGI build, then equip movement cards or affixes; those bonuses can raise movement above 10.045. Running alone cannot exceed it.
++* **Checks:** 31 progression checks, 64 UI checks, 19 pet checks, pet runtime integration and 5 crit checks passed. Attack-speed equipment audited; tuning awaits clarification of the intended AGI requirement. Browser movement appearance has not been verified.
++* **Delivery:** Local changes only.
+diff --git a/index.html b/index.html
+index bf52e41..4923415 100644
+--- a/index.html
++++ b/index.html
+@@ -1085,7 +1085,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
+ // give-back) and main's weapon-hold rendering work.
+ let simCatchingUp=false;
+ const simVisualsOff=()=>document.hidden||simCatchingUp;
+-const BUILD='2026-10-13 haven-v138 Themes & skill rotation';   // shown on the login card - confirms which file you loaded
++const BUILD='2026-10-13 haven-v139 Movement cap';   // shown on the login card - confirms which file you loaded
+ $('buildTag').textContent='build '+BUILD;
+ 
+ // ---------- class tree: Novice -> 6 first jobs -> 6 second jobs -> 6 third jobs ----------
+@@ -3397,11 +3397,10 @@ const aspd=()=>Math.max(.13,.85*C().aspd*(1-Math.min(.68,st('agi')*.0058))/(1+(p
+ // passives lands ~51%, so the last stretch to 60 is a real build. Index Crit (above) is the only
+ // source that passes the 60 cap, and the total stops at 100.
+ const crit=()=>{const v=2+st('luk')*.25+pv('crit')+bon('crit')+(typeof cardMasteryStat==='function'?cardMasteryStat('critPct'):0),core=Math.min(60,v<=45?v:45+(v-45)*.5);return Math.min(100,core+(typeof indexCrit==='function'?indexCrit():0))},flee=()=>Math.min(60,st('agi')*.5+S.lv*.1+pv('flee')+bon('flee')+(typeof cardMasteryStat==='function'?cardMasteryStat('fleePct'):0)),missCh=()=>Math.max(0,15-st('dex')*.25);
+-// v74 (owner: "add a movement speed description"): AGI is the only stat that moves the hero, and
+-// the curve used to be a private constant inside update(). It is one named function now, shown on
+-// the stat sheet as the world units per second the hero actually travels (the run multiplier
+-// applies past 3 units, which is why the sheet also prints the sprint figure). Pinned by ui_sim.
+-const heroMoveSpeedForAgi=agi=>5.3+Math.max(1,Number(agi)||1)*.025+Math.sqrt(Math.max(1,Number(agi)||1))*.035,moveSpd=()=>heroMoveSpeedForAgi(st('agi'))*(1+(petPassive('move')+equipmentMove())/100),MOVE_RUN=1.4;
++// Movement before equipment is capped at 70% of the owner's 14.35 u/s reference.
++// Pets, movement buffs and long-distance running share the cap. Equipment/card movement
++// applies afterward, retaining its existing combined +20% limit.
++const heroMoveSpeedForAgi=agi=>5.3+Math.max(1,Number(agi)||1)*.025+Math.sqrt(Math.max(1,Number(agi)||1))*.035,moveSpd=(running=false)=>Math.min(MOVE_CAP,heroMoveSpeedForAgi(st('agi'))*(1+petPassive('move')/100)*(1+Math.min(25,typeof skillBonus==='function'?skillBonus('move'):0)/100)*(running?MOVE_RUN:1))*(1+equipmentMove()/100),MOVE_RUN=1.4,MOVE_CAP=10.045;
+ // v73 crit damage (owner: "cri damage is too overpowered"): the base multiplier drops 2.0 -> 1.9,
+ // and the cdm route that fed it is slot-limited and lighter (see AB/genGear). LUK and DEX still
+ // add a little on top, so a crit build stays the burst build - it just cannot stack seven slots.
+@@ -4590,7 +4589,7 @@ function buildGuide(market=false){const sources=guideSources(),phase=guideTier,e
+  const weapons=sources.gear.filter(x=>eligible(x.m,x.l)&&C().wt.includes(x.item.k)&&gearTierOK(x.item)).sort((a,b)=>b.item.sec-a.item.sec||b.item.tier-a.item.tier||b.m-a.m||b.l-a.l);
+  const unique=weapons.filter((x,i,a)=>a.findIndex(y=>y.item.n===x.item.n)===i).slice(0,4);
+  const primary=INT_CLASSES.includes(S.cls)?'INT':C().main.toUpperCase();
+- return`<section class="build-guide">${levelingGuide()}<div class="hd">${market?'Upgrade planner':'Build & farming guide'} · ${esc(S.cls)}</div><p>Main stat: <b>${primary}</b>. ${INT_CLASSES.includes(S.cls)?'INT powers your attacks and skill multiplier.':'Physical skills gain damage from learned ranks; INT does not multiply them.'} Use AGI for speed, DEX for accuracy, LUK for criticals and VIT for survival. Three stats can reach 120 at Base 150.</p><div class="row">${['farm','boss','survive'].map(x=>`<button data-a="guidemode" data-v="${x}" aria-pressed="${guideMode===x}">${{farm:'Farming',boss:'Boss damage',survive:'Survival'}[x]}</button>`).join('')}</div><div class="row">${['current','normal','nightmare'].map(x=>`<button data-a="guidetier" data-v="${x}" aria-pressed="${phase===x}">${{current:'Accessible now',normal:'Normal targets',nightmare:'Nightmare targets'}[x]}</button>`).join('')}</div><p>Weapon choices: ${C().wt.join(', ')}${dualWield()?' · two daggers or a two-handed katar':''}. These are farming targets, not guaranteed DPS upgrades; compare cards and affixes.</p><div class="guide-grid">${unique.map(x=>`<article class="mob-card"><b>${esc(x.item.n)}</b><small>${SECN[x.item.sec]} · ${gearUserOf(x.item)}</small>${guideLink(x)}</article>`).join('')||'<p>Unlock more fields to see weapon targets.</p>'}</div><div class="sec">Cards for ${guideMode==='survive'?'survival':guideMode==='boss'?'boss damage':'farming'}</div><small>One card per monster family per item, up to two boss cards and two Crit DMG cards per item, with no build-wide boss limit. Normal and Nightmare variants share a family.</small><div class="guide-grid">${cardRows||'<p>No matching accessible sources. Browse normal targets to plan ahead.</p>'}</div>${market?`<div class="sec">Your next upgrades</div>${EQK.filter(([k])=>S.eq[k]).map(([k,n])=>{const it=S.eq[k],empty=Math.max(0,(it.slots||0)-(it.cards||[]).length);return`<p><b>${n}</b>: ${empty?empty+' empty socket(s): choose a compatible card above. ':'Sockets filled. '}${(it.r||0)<10?'Refine costs '+refCost(it).toLocaleString()+'z and '+refOre(it)+' '+ORE[it.slot==='weapon'?'ori':'elu']+'.':'Refinement complete.'} ${(it.aff||[]).length?'Use Single Reforge to protect your two best affixes on a three-affix item.':''}</p>`}).join('')}<small>Cards and weapons are farmed from the listed monsters. This market sells refinement supplies, not these equipment drops.</small>`:''}<details><summary>Caps, criticals and healing</summary><p>Ordinary crit caps at 60%; Index adds up to 40%. Boss resistance still reduces the final chance. Crit DMG applies to damaging skills. Each LUK adds 0.008× Crit DMG; each DEX adds 0.005×. ASPD cannot go below 0.13 seconds per attack. DEX 60 removes ordinary miss chance.</p><p>Equipment/card movement: ${equipmentMove()}% / 20%; movement pet bonuses are added separately.</p><p>HP Leech: ${cardMasteryStat('leech')*.5}% of actual basic-attack damage. Pet siphon: 0.5% of actual pet damage while active. Combined healing cannot exceed 2% Max HP per second. Overkill never heals; skill healing and regeneration are separate.</p></details></section>`;
++ return`<section class="build-guide">${levelingGuide()}<div class="hd">${market?'Upgrade planner':'Build & farming guide'} · ${esc(S.cls)}</div><p>Main stat: <b>${primary}</b>. ${INT_CLASSES.includes(S.cls)?'INT powers your attacks and skill multiplier.':'Physical skills gain damage from learned ranks; INT does not multiply them.'} Use AGI for speed, DEX for accuracy, LUK for criticals and VIT for survival. Three stats can reach 120 at Base 150.</p><div class="row">${['farm','boss','survive'].map(x=>`<button data-a="guidemode" data-v="${x}" aria-pressed="${guideMode===x}">${{farm:'Farming',boss:'Boss damage',survive:'Survival'}[x]}</button>`).join('')}</div><div class="row">${['current','normal','nightmare'].map(x=>`<button data-a="guidetier" data-v="${x}" aria-pressed="${phase===x}">${{current:'Accessible now',normal:'Normal targets',nightmare:'Nightmare targets'}[x]}</button>`).join('')}</div><p>Weapon choices: ${C().wt.join(', ')}${dualWield()?' · two daggers or a two-handed katar':''}. These are farming targets, not guaranteed DPS upgrades; compare cards and affixes.</p><div class="guide-grid">${unique.map(x=>`<article class="mob-card"><b>${esc(x.item.n)}</b><small>${SECN[x.item.sec]} · ${gearUserOf(x.item)}</small>${guideLink(x)}</article>`).join('')||'<p>Unlock more fields to see weapon targets.</p>'}</div><div class="sec">Cards for ${guideMode==='survive'?'survival':guideMode==='boss'?'boss damage':'farming'}</div><small>One card per monster family per item, up to two boss cards and two Crit DMG cards per item, with no build-wide boss limit. Normal and Nightmare variants share a family.</small><div class="guide-grid">${cardRows||'<p>No matching accessible sources. Browse normal targets to plan ahead.</p>'}</div>${market?`<div class="sec">Your next upgrades</div>${EQK.filter(([k])=>S.eq[k]).map(([k,n])=>{const it=S.eq[k],empty=Math.max(0,(it.slots||0)-(it.cards||[]).length);return`<p><b>${n}</b>: ${empty?empty+' empty socket(s): choose a compatible card above. ':'Sockets filled. '}${(it.r||0)<10?'Refine costs '+refCost(it).toLocaleString()+'z and '+refOre(it)+' '+ORE[it.slot==='weapon'?'ori':'elu']+'.':'Refinement complete.'} ${(it.aff||[]).length?'Use Single Reforge to protect your two best affixes on a three-affix item.':''}</p>`}).join('')}<small>Cards and weapons are farmed from the listed monsters. This market sells refinement supplies, not these equipment drops.</small>`:''}<details><summary>Caps, criticals and healing</summary><p>Ordinary crit caps at 60%; Index adds up to 40%. Boss resistance still reduces the final chance. Crit DMG applies to damaging skills. Each LUK adds 0.008× Crit DMG; each DEX adds 0.005×. ASPD cannot go below 0.13 seconds per attack. DEX 60 removes ordinary miss chance.</p><p>Movement before equipment caps at ${MOVE_CAP} u/s, including pets, skills and running. Equipment/card movement adds ${equipmentMove()}% / 20% after that cap.</p><p>HP Leech: ${cardMasteryStat('leech')*.5}% of actual basic-attack damage. Pet siphon: 0.5% of actual pet damage while active. Combined healing cannot exceed 2% Max HP per second. Overkill never heals; skill healing and regeneration are separate.</p></details></section>`;
+ }
+ 
+ // ---------- class change ----------
+@@ -4884,7 +4883,7 @@ const V={
+     +(petBonusList().length?`<small><b>Pet bonuses</b> (the fighting pets): ${petBonusList().join(' &middot; ')}</small>`:'')
+     +STATS.map(([k,l,d])=>`<div class="slot"><span><b>${l}</b> ${S.st[k]}${b(k)} <small>(${d})</small></span><span class="bts"><small>${cost(k)}pt</small><button data-a="stat" data-v="${k}" ${S.pts>=cost(k)&&S.st[k]<statCap()?'':'disabled'}>+1</button><button data-a="stat5" data-v="${k}" ${S.pts>=cost(k)&&S.st[k]<statCap()?'':'disabled'}>+5</button></span></div>`).join('')
+     +`<div class="slot" style="flex-wrap:wrap"><span>ATK <b>${atk()}</b></span><span>MATK <b>${matk()}</b></span><span>DEF <b>${def()}</b></span><span>ASPD <b>${Math.min(193,Math.round(144+5/Math.max(.13,aspd())))}</b> <small>${(1/aspd()).toFixed(2)}/s</small></span><span>Crit <b>${crit().toFixed(1)}%</b>${idxC?` <small>(+${idxC}% Index Crit)</small>`:''}</span><span>Crit DMG <b>x${critD().toFixed(2)}</b></span><span>MDEF <b>${mdef()}</b></span><span>Flee <b>${flee().toFixed(0)}%</b></span><span>HP <b>${maxHp()}</b></span><span>Movement speed <b>${moveSpd().toFixed(2)}</b> <small>u/s</small></span></div>
+-    <small><b>Movement speed</b> comes from AGI alone: ${heroMoveSpeedForAgi(st('agi')).toFixed(2)} units a second at AGI ${st('agi')}. Every point of AGI adds about 0.03 - it never touches damage, so it is a comfort stat.${petPassive('move')?` A fighting Peco Peco's Swift Mount adds ${petPassive('move')}%.`:''}</small>
++    <small><b>Movement speed</b> starts at ${heroMoveSpeedForAgi(st('agi')).toFixed(2)} u/s from AGI ${st('agi')}. Pets, skills and running share a ${MOVE_CAP} u/s cap. Equipment and cards add ${equipmentMove()}% afterward (up to 20%), allowing movement above the cap.${petPassive('move')?` A fighting Peco Peco's Swift Mount adds ${petPassive('move')}% before the cap.`:''}</small>
+     <small>Crit is capped at 60% from stats, skills, gear and card mastery; above 45% each further point counts half. <b>Index Crit</b> (+${idxC}% of +40 max, from Hunt Titles) is the only source that passes the cap, and the total stops at 100%.</small>
+     <small>Weapons: ${c.wt.join(', ')}${katarOnly()?' (a two-handed Katar, or a dagger in each hand)':''} &middot; Main stat: ${SU(c.main)}</small><button class="full" data-a="rstat" ${statResetCost()&&S.zeny<statResetCost()?'disabled title="You need '+rcost().toLocaleString()+' Zeny to reset stats"':''}>Reset stats (${statResetCost()?statResetCost()+'z':'free'})</button>`},
+   job(){const lines=[['Swordman','Knight','Lord Knight'],['Mage','Wizard','High Wizard'],['Archer','Hunter','Sniper'],['Thief','Assassin','Assassin Cross'],['Acolyte','Priest','High Priest'],['Merchant','Blacksmith','Whitesmith']];
+@@ -6009,11 +6008,11 @@ if(S.hp<=0){log('You were defeated... knocked back to the entrance.','r0','kills
+     const ex=(o?o.x+(i-1)*.8:pl.x-1.2)-r.x,ez=(o?o.z+1.2:pl.z+(i-1)*1.1)-r.z,ed=Math.hypot(ex,ez);r.run=ed>.2;
+     if(ed>.05){const v=Math.min(ed,petMoveSpeed(ed)*dt);r.face=Math.atan2(ez,ex);r.x+=ex/ed*v;r.z+=ez/ed*v}r.x=cl(r.x,-BX_,BX_);r.z=cl(r.z,Z0-1,Z1+1);r.lunge=Math.max(0,(r.lunge||0)-dt*4);
+     if(o&&bd<2.4){r.at-=dt;if(r.at<=0){r.at=petInt(p);r.lunge=1;r.face=Math.atan2(o.z-r.z,o.x-r.x);if(petAnimationState(PETS[p.sp].spriteId,r,viewDir(r.face||0)).stance!=='attack')r.attackStarted=skinNow();petHit(p,o)}}}
+-  const px=tx-pl.x,pz=tz-pl.z,pd=Math.hypot(px,pz),spd=moveSpd()*(1+Math.min(25,skillBonus('move'))/100);
++  const px=tx-pl.x,pz=tz-pl.z,pd=Math.hypot(px,pz),spd=moveSpd(pd>3);
+   // v77: in the arena the character stands still on purpose - the dummy and the player both stay
+   // put, so the three minutes measure damage and nothing else.
+   pl.run=pd>.15&&!TRIAL.on;
+-  if(pd>.05&&!TRIAL.on){const s=Math.min(pd,spd*dt*(pd>3?1.4:1));pl.x+=px/pd*s;pl.z+=pz/pd*s}
++  if(pd>.05&&!TRIAL.on){const s=Math.min(pd,spd*dt);pl.x+=px/pd*s;pl.z+=pz/pd*s}
+   pl.x=cl(pl.x,-BX_,BX_);pl.z=cl(pl.z,Z0,Z1);
+   if(mob)pl.ry=-Math.atan2(mob.z-pl.z,mob.x-pl.x);else if(pl.run)pl.ry=-Math.atan2(pz,px);
+   if(S.hp<maxHp()&&Math.floor(t*2)!==Math.floor((t-dt)*2))S.hp=Math.min(maxHp(),S.hp+Math.ceil(maxHp()*.008));
+@@ -8011,7 +8010,7 @@ function drawSlashFX(x,z,wt){
+ // Native frames retain relative timing; playback is calmer and measured bounds clear the ground.
+ const PET_VISUAL_SCALE=.42;
+ // Follow the hero's AGI, gear, pet and skill movement bonuses, with the same long-distance run boost.
+-const petMoveSpeed=distance=>moveSpd()*(1+Math.min(25,skillBonus('move'))/100)*.95*(distance>3?MOVE_RUN:1);
++const petMoveSpeed=distance=>moveSpd(distance>3)*.95;
+ // Visual time is real milliseconds, independent of x1/x2/x4 simulation speed.
+ const PET_ANIMATION_RATE=.2;
+ const petFrameTime=(view,ms)=>ms*Math.min(1,view.delay/(120*PET_ANIMATION_RATE));
+diff --git a/tools/tests/pet_sim.js b/tools/tests/pet_sim.js
+index 9db1b87..6f087b3 100644
+--- a/tools/tests/pet_sim.js
++++ b/tools/tests/pet_sim.js
+@@ -407,10 +407,10 @@ t('every signature passive is wired into the real game (v75)', () => {
+     boss: /mob\.boss\?1\+petPassive\('boss'\)\/100:1/,
+     hp: /maxHp=\(\)=>[^;]*\(1\+petPassive\('hp'\)\/100\)/,
+     dr: /\(1-cut\)\*\(1-petPassive\('dr'\)\/100\)/,
+-    move: /moveSpd=\(\)=>heroMoveSpeedForAgi\(st\('agi'\)\)\*\(1\+\(petPassive\('move'\)\+equipmentMove\(\)\)\/100\)/,
++    move: /moveSpd=\(running=false\)=>Math.min\(MOVE_CAP,[^\n]*petPassive\('move'\)/,
+   };
+   for(const k of Object.keys(sites)) assert.ok(sites[k].test(src), k + ' is never read by index.html');
+-  assert.ok(/spd=moveSpd\(\)/.test(src), 'the walk must call moveSpd(), or Swift Mount would only exist on the sheet');
++  assert.ok(/spd=moveSpd\(pd>3\)/.test(src), 'the walk must call moveSpd(), or Swift Mount would only exist on the sheet');
+   assert.strictEqual((src.match(/petPassive\('dr'\)/g) || []).length, 1, 'Divine Grace is read once, on the hit you take');
+   // Executioner is read on all three damaging paths - your swing, your pet's skill and your
+   // pet's auto-attack - and nowhere else
+diff --git a/tools/tests/progression_sim.js b/tools/tests/progression_sim.js
+index 88f9638..19c5952 100644
+--- a/tools/tests/progression_sim.js
++++ b/tools/tests/progression_sim.js
+@@ -17,6 +17,11 @@ test('player leech counts remaining enemy HP, not overkill',`S.lv=150;S.hp=1;S.c
+ test('player and pets share 2% max HP per rolling second; no stored heals',`S.lv=150;S.hp=1;const cap=maxHp()*.02;applyLeech(1e9,1.5);petBuff.leech=.5;petLeech(1e9);if(Math.abs(S.hp-(1+cap))>1e-8)return false;t=.9;applyLeech(1e9,1);if(Math.abs(S.hp-(1+cap))>1e-8)return false;t=1.01;applyLeech(1e9,1);return Math.abs(S.hp-(1+cap*2))<1e-8;`);
+ test('full-health leech is discarded and fractional healing never rounds up per hit',`S.hp=maxHp();applyLeech(1e9,1);S.hp-=10;applyLeech(1,.5);return Math.abs(S.hp-(maxHp()-10+.005))<1e-8;`);
+ test('movement cards and affixes share cap; pet bonus remains separate',`S.eq.acc1={id:5,slot:'acc',aff:[{k:'move',v:30}],cards:[]};const base=heroMoveSpeedForAgi(st('agi'));return equipmentMove()===20&&Math.abs(moveSpd()/base-1.2)<1e-8;`);
++test('high AGI and running share the 30% lower movement cap',`S.st.agi=1000;return Math.abs(moveSpd()-14.35*.7)<1e-9&&moveSpd(true)===moveSpd()&&Math.abs(petMoveSpeed(8)-moveSpd(true)*.95)<1e-9;`);
++test('real movement cards and affixes bypass the base cap together',`S.st.agi=1000;const c={...newCard(cardDefinition(0,4,true)),stars:3};S.eq.leg={id:5,slot:'leg',aff:[{k:'move',v:8}],cards:[c]};const bonus=8+cardEffects(c)[0].v;return equipmentMove()===bonus&&Math.abs(moveSpd()-10.045*(1+bonus/100))<1e-9&&moveSpd(true)===moveSpd();`);
++test('movement pets and active skills help below the cap but cannot bypass it',`S.cls='Sniper';S.sk.wwalk=10;resetSkillRuntime();const base=moveSpd();S.pets=[{id:1,sp:4,on:true}];const pet=moveSpd();skillState().buffs.wwalk={key:'move',value:10};const buffed=moveSpd();S.st.agi=1000;const capped=moveSpd()===10.045&&moveSpd(true)===10.045;resetSkillRuntime();return pet>base&&buffed>pet&&capped;`);
++test('equipment bypass retains the combined 20 percent limit',`S.st.agi=1000;S.eq.acc1={id:5,slot:'acc',aff:[{k:'move',v:30}],cards:[]};return Math.abs(moveSpd()-12.054)<1e-9&&moveSpd(true)===moveSpd();`);
++test('actual hero travel respects the cap and equipment bypass across frame sizes',`S.st.agi=1000;mobs=[];mob=null;camps=[];respawn=100;for(const bonus of [0,20]){S.eq.leg={id:5,slot:'leg',aff:[{k:'move',v:bonus}],cards:[]};for(const dt of [.05,.1,.2]){pl.x=0;pl.z=0;pl.wx=0;pl.wz=10;pl.wt=100;update(dt);if(Math.abs(pl.z-10.045*(1+bonus/100)*dt)>1e-8)return false;}}return true;`);
+ test('affix pools contain VIT/MATK and limit movement and crit damage slots',`return affixPool({slot:'weapon',wt:'staff'}).includes('matk')&&affixPool({slot:'armor'}).includes('vit')&&!affixPool({slot:'armor'}).includes('cdm')&&affixPool({slot:'acc'}).includes('move')&&!affixPool({slot:'head'}).includes('move');`);
+ test('single reforge protects other affixes; paid offer is persisted and discard costs resources',`S.lv=150;S.zeny=1e8;S.ore.ori=1000;S.eq.weapon={id:9,slot:'weapon',wt:'sword',tier:4,sec:3,quality:1.25,aff:[{k:'str',v:20},{k:'cdm',v:30},{k:'atk',v:10}]};const it=S.eq.weapon,before=S.zeny;reforgeSelection[it.id]=[0];reforge('weapon');const offer=S.reforgePending;if(!offer||offer.after[1].v!==30||offer.after[2].v!==10||S.zeny>=before)return false;const paid=S.zeny;resolveReforge(false);return !S.reforgePending&&it.aff[0].v===20&&S.zeny===paid;`);
+ test('all service prices increase with protection; insufficient funds do not mutate',`const it={id:3,slot:'weapon',wt:'sword',tier:4,sec:5,aff:[{k:'str',v:1},{k:'cdm',v:1},{k:'atk',v:1}]};S.lv=150;S.eq.weapon=it;reforgeSelection[3]=[0];reforge('weapon');return !S.reforgePending&&reforgeQuote(it,3).zeny<reforgeQuote(it,2).zeny&&reforgeQuote(it,2).zeny<reforgeQuote(it,1).zeny;`);
+diff --git a/tools/tests/ui_sim.js b/tools/tests/ui_sim.js
+index 821c1cd..088559f 100644
+--- a/tools/tests/ui_sim.js
++++ b/tools/tests/ui_sim.js
+@@ -44,7 +44,7 @@ const code = [
+   grab('const CD=[', 'const pm=s=>'),                       // classes + skills
+   pick(/const C=\(\)=>[^;]+;/, 'C()'),
+   pick(/const st=k=>[^\n]*canUse=it=>[^;]+;/, 'canUse'),
+-  pick(/const heroMoveSpeedForAgi=[^\n]*MOVE_RUN=[\d.]+;/, 'movement speed curve'),
++  pick(/const heroMoveSpeedForAgi=[^\n]+;/, 'movement speed curve'),
+   pick(/const maxHp=\(\)=>[^\n]*/, 'maxHp'),
+   pick(/const atk=\(\)=>[^\n]*/, 'atk'),
+   pick(/const matk=\(\)=>[^\n]*/, 'matk'),
+@@ -973,8 +973,8 @@ t('v88: the Character sheet names movement speed once, with no sprint figure (ow
+   const h = U.V.stats();
+   assert.ok(/Movement speed <b>[\d.]+<\/b> <small>u\/s/.test(h), 'a Movement speed readout must sit with ATK/ASPD/Crit (got ' +
+     (h.match(/Movement speed <b>[^<]*/) || ['none'])[0] + ')');
+-  assert.ok(h.includes('Movement speed</b> comes from AGI alone'), 'the sheet must name the only source');
+-  assert.ok(/at AGI \d+\./.test(h), 'it must print the AGI it is reading');
++  assert.ok(h.includes('10.045 u/s cap')&&h.includes('Equipment and cards add'), 'the sheet explains the cap and equipment bypass');
++  assert.ok(/from AGI \d+\./.test(h), 'it must print the AGI it is reading');
+   assert.ok(!/sprinting/.test(h), 'the sprint figure is gone - one speed, one number (owner)');
+   assert.ok(!/RO-style/.test(h), 'and the RO-style tag is gone from the ASPD readout (owner)');
+   // the number is the game's own curve, applied to the real st('agi')
+@@ -987,7 +987,7 @@ t('v88: the Character sheet names movement speed once, with no sprint figure (ow
+   // the curve is declared once, in the derived-stat block, and update() uses that copy
+   assert.ok(src.includes('const heroMoveSpeedForAgi=agi=>5.3+'), 'the curve must stay a single named function');
+   assert.strictEqual((src.match(/const heroMoveSpeedForAgi=/g) || []).length, 1, 'no duplicate curve');
+-  assert.ok(src.includes("Math.min(pd,spd*dt*(pd>3?1.4:1))"), 'the run multiplier itself still applies past 3 units in the world');
++  assert.ok(src.includes("spd=moveSpd(pd>3)")&&src.includes("Math.min(pd,spd*dt)"), 'running uses the capped speed without a second multiplier');
+   assert.ok(src.includes('MOVE_RUN=1.4'), 'and the sheet reads the same multiplier');
+ });
+ 

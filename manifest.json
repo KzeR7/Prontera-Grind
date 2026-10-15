@@ -1,0 +1,20 @@
+{
+  "HANDOFF.md": "faf5128935535f1c91b4ba07ee567b0318d641bc45015318b023ca0024724411",
+  "local-movement-changes.patch": "99ff04e1f89b5eaa593450c874d20533fec30f782638ac443fda74f807fade2d",
+  "original-research-scripts/prontera-aspd-proposal.js": "895125ccefb0f2123767deddcb3b8187b710d2dec66224e6bd4c07631e52d829",
+  "original-research-scripts/prontera-cap-check.js": "30827da33fabe084ffa133783b94d442871115a191a7efc1b7494582ff0c05b0",
+  "original-research-scripts/prontera-equipment-audit.js": "abc27a06e7b661ece8f9804dfac9b71ce8de33be64fd163102c54a5cf1c6622a",
+  "original-research-scripts/prontera-stat-cap-audit.js": "5391581a7b3032dd4cf9da6450eabfacdf4d9c55c84659d4ee5a534e1f88daa0",
+  "research/aspd-formulas.json": "0da975ea92b92b6ec41e95dcacfbbf65db825714d4c100dba493df7ba3c6bd30",
+  "research/cap-thresholds.json": "032e2764163723976edd09d1ceae3a90b620778cb83de85e70dcea92704a321c",
+  "research/compare-audit.js": "7104c61f1f99b94c4c2ba389d77b9c359e683154c970708efb6942e12e4ded24",
+  "research/comparison.json": "076b2b467312431414bcffc19e43fbe01ae640c7fc535f13a745477f44622b28",
+  "research/current-combat.json": "ea0e549bfd4410ce4318ce01c5922fe733a6fdf1ce7778dab65f833dfecdc4ea",
+  "research/extend-bosses.js": "bafaf4c91c84d09b0b440b900137845b5fd88a02c1f57a4874a7839fc8997537",
+  "research/gentler-combat.json": "4a24a216b12c725ff600e16c7a9d5520e6945d716a475e3267618a76f9c6a753",
+  "research/progression-audit.js": "2ca89db7654354b9dece636045a7a4178040c6989af4e7f6de65789d27c3b6f5",
+  "research/proposal-combat.json": "73f49a1ba3d02ed119cff4a2b6ae7b7856da09b1433d73baf267a3bdbfec4e58",
+  "research/report.md": "5ad2c639774396916b1c67469a98b5948165d6c642b7c5cb5ed97c50da17cd6a",
+  "research/revised-combat.json": "e9d7726fbf5d26cf949271bfafb2021886e4dcf3309184466d3111cf3c83ea05",
+  "validation-record.md": "42ceabe02aaa9eb05704956a415a0fe5084f270907a561651724f381def1aa62"
+}

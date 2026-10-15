@@ -1,0 +1,6 @@
+{
+  "current": "const aspd=()=>Math.max(.13,.85*C().aspd*(1-Math.min(.68,st('agi')*.0058))/(1+(pv('aspd')+bon('aspd')+(typeof cardMasteryStat==='function'?cardMasteryStat('aspdPct'):0)+(tb.aspd||0))/100));",
+  "proposal": "const aspd=()=>Math.max(.13,.85*C().aspd*(1-Math.min(.68,(S.st.agi+Math.min(25,bon('agi')*.1))*.0058))/(1+(pv('aspd')+bon('aspd')*.25+(typeof cardMasteryStat==='function'?cardMasteryStat('aspdPct'):0)+(tb.aspd||0))/100));",
+  "gentler": "const aspd=()=>Math.max(.13,.85*C().aspd*(1-Math.min(.68,(S.st.agi+Math.min(25,bon('agi')))*.0058))/(1+(pv('aspd')+Math.min(25,bon('aspd')*.5)+(typeof cardMasteryStat==='function'?cardMasteryStat('aspdPct'):0)+(tb.aspd||0))/100));",
+  "revised": "const aspd=()=>{const old=Math.max(.13,.85*C().aspd*(1-Math.min(.68,st('agi')*.0058))/(1+(pv('aspd')+bon('aspd')+(typeof cardMasteryStat==='function'?cardMasteryStat('aspdPct'):0)+(tb.aspd||0))/100));if(S.lv<100)return old;const next=Math.max(.13,.85*C().aspd*(1-Math.min(.68,(S.st.agi+Math.min(25,bon('agi')))*.0058))/(1+(pv('aspd')+Math.min(25,bon('aspd')*.5)+(typeof cardMasteryStat==='function'?cardMasteryStat('aspdPct'):0)+(tb.aspd||0))/100));return old+(next-old)*Math.min(1,(S.lv-99)/21)};"
+}
