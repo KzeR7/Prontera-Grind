@@ -87,6 +87,14 @@ t('only the two Assassin jobs wield a dagger alongside the katar, and only they 
   }
 });
 
+// Milestone 4: Guillotine Cross (dark-launched, not in the live roster above) follows the Assassin rule:
+// a katar, or a dagger in each hand. Daggers count as katars for katar skills (owner decision).
+t('Guillotine Cross (4th job, dark-launched) uses the katar-or-dagger rule like the Assassins', () => {
+  assert.ok(/\['Guillotine Cross','Assassin Cross',[^\n]*?\['katar','dagger'\]/.test(src), 'its roster row keeps katar then dagger');
+  assert.ok(H.katarOnly('Guillotine Cross'), 'it is a two-handed katar class, so a dagger pair is the same weapon value');
+  assert.ok(!H.katarOnly('Rune Knight') && !H.katarOnly('Thief'), 'other classes are unaffected');
+});
+
 t('the katar is still a two-handed weapon and never an off-hand item', () => {
   for (const cls of ['Assassin', 'Assassin Cross']) {
     const kat = katar();
