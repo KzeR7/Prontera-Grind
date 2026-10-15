@@ -54,8 +54,19 @@ an exhaustive test selection. Follow dependencies across systems and see
 Do not regenerate all art for an unrelated UI fix. Generated files and base64
 atlases are outputs, not useful first reads. Start with manifests and generators.
 
-The current Arcana effect source lives in `tools/skill-fx-proposals/afterglow-v8.html`; V7 is retained for comparison.
-Run `python3 tools/build_afterglow.py` after changing that source. The generated runtime
+The reviewed Arcana V7/V8 sources are preserved in `tools/skill-fx-proposals/`.
+`owner-choices.json` records the owner’s 9 Old / 58 New selections, 8 undecided
+casting effects, and notes. `owner-fx-old.js` and `owner-fx-new.js` refine the
+explicitly selected effects; `owner-fx-redo.js` contains the subsequent owner-requested
+redesigns for all eight originally undecided skills. The original report is preserved
+as history, and the runtime exposes those overrides through `redesigned`. Run `python3 tools/build_afterglow.py` after editing
+choices or refinements. It verifies source fingerprints, extracts selected V7
+animations with their own helpers, retains V8 for New skills, applies the authorized redo overrides, and emits
+`assets/afterglow-animations.js` plus the preserved V8 comparison module.
+`node tools/tests/owner_fx_sim.js` checks operation equivalence against reviewed
+sources for all effects without refinements, plus the warm lightning palette and
+all sixteen refinements/redesigns.
+The generated runtime
 excludes preview backgrounds, stand-ins, controls and the extra Venom Field concept.
 `assets/skill-afterglow.js` projects cast positions onto one transparent battlefield
 canvas. Local effects preserve uniform scale; traveling effects align the study's
@@ -76,6 +87,15 @@ Three renderer remains the fallback when the adapter is unavailable; its source
 backup is under `tools/skill-fx-backups/pre-afterglow/`.
 
 ## Development helpers and historical material
+
+- `tools/skill-fx-proposals/applied-fx-review.html`: native-sprite before/after
+  preview of the previous V8 baseline and applied effects. It opens with the eight
+  redone skills; Show → All 75 effects restores the full roster.
+- `tools/skill-fx-proposals/skill-fx-compare.html`: V7/V8 comparison and per-skill
+  choice editor, backed by `skill-fx-compare.js`. Exports a versioned JSON code
+  with source hashes, stable skill IDs, explicit choices and notes; import validates
+  the whole report before replacing local review progress. Passives have no FX choice.
+  Serve through the static preview; set `PREVIEW_PAGE` to this path to open it at `/`.
 
 - `tools/dev_server.js`: built static site plus actual API handlers and a SQLite
   D1 shim. Local development only, not the Cloudflare production runtime.

@@ -1,0 +1,58 @@
+<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Skill FX · Applied choices</title>
+<style>
+:root{color-scheme:dark}*{box-sizing:border-box}body{margin:0;background:#101719;color:#e9e4d6;font:14px/1.5 system-ui}main{max-width:1380px;margin:auto;padding:32px}header{display:flex;justify-content:space-between;gap:20px;align-items:end}h1{font:40px Georgia;margin:10px 0}p{color:#a3b1af;margin:6px 0 22px}small,.eyebrow{font:10px monospace;letter-spacing:2px;color:#b7c2b8}.controls{display:flex;gap:12px;align-items:end;flex-wrap:wrap;margin:20px 0}label{display:grid;gap:5px;font-size:11px;color:#b3c0bd}select,button,input[type=search]{font:14px system-ui;color:#e5e5d8;border:1px solid #536461;background:#23312f;border-radius:5px;padding:9px 12px}input[type=range]{width:100%;accent-color:#cae4d5}button{cursor:pointer}button:hover{background:#374c44}.views{display:grid;grid-template-columns:1fr 1fr;gap:16px}.view{background:#1c2925;border:1px solid #41594c;border-radius:8px;overflow:hidden}.view h2{font:11px monospace;letter-spacing:2px;margin:0;padding:15px 18px;background:#1a2424;display:flex;justify-content:space-between}.view h2 span{color:#8ba49a}.scene{position:relative;aspect-ratio:1.35;overflow:hidden;background:#314835}.scene canvas{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}.timeline{display:flex;gap:16px;align-items:center;margin:22px 0}.timeline span{font:12px monospace;white-space:nowrap}.caption{border-top:1px solid #394944;padding-top:15px;display:flex;justify-content:space-between;gap:24px}.caption p{max-width:720px;font-size:12px}#status{color:#a2b4ae;font:11px monospace}button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid #d1e2b3;outline-offset:3px}@media(max-width:760px){main{padding:18px}h1{font-size:30px}.views{grid-template-columns:1fr}.controls{gap:8px}.controls label{flex:1 1 140px;min-width:0}.controls input,.controls select{width:100%;min-width:0}.caption{display:block}.scene{aspect-ratio:1.15}header>small{display:none}}
+@media(max-width:760px){.views{grid-template-columns:1fr 1fr;gap:6px}.view h2{font-size:10px;padding:10px;display:block;letter-spacing:.5px}.view h2 span{display:block;font-size:9px}.scene{aspect-ratio:.8}}
+</style>
+<main><header><div><div class="eyebrow">PRONTERA GRIND / SKILL EFFECTS / V151</div><h1>Your selected effects.</h1><p>Previous V8 on the left. Your updated effects on the right. The eight previously undecided effects have new designs based on your notes.</p></div><small>LIVE RENDERER / CANVAS</small></header>
+<p><a href="/tools/skill-fx-proposals/skill-fx-compare.html" style="color:#c4dfcf">Open original Old/New choice editor →</a></p><div class="controls"><label>Search<input id="search" type="search" placeholder="Find a skill…"></label><label>Show<select id="scope"><option value="redo">8 redone skills</option><option value="all">All 75 effects</option></select></label><label>Skill<select id="skill"></select></label><label>Ground<select id="ground"><option value="grass_olive">Prontera grass</option><option value="ruin_cobble">Stone ruins</option><option value="grass_forest">Forest</option></select></label><label>Playback<select id="speed"><option value="1">1×</option><option value="0.5">0.5×</option><option value="2">2×</option></select></label><button id="toggle">Pause</button><button id="replay">Replay</button></div>
+<div class="views"><section class="view"><h2>BEFORE <span>V8 BASELINE</span></h2><div class="scene" id="before"><canvas class="world"></canvas><canvas class="fx"></canvas></div></section><section class="view"><h2>YOUR CHOICES <span>V151 / REDONE EFFECTS</span></h2><div class="scene" id="after"><canvas class="world"></canvas><canvas class="fx"></canvas></div></section></div>
+<label class="timeline"><span id="time">0.00 s</span><input id="timeline" type="range" min="0" max="2200" step="1" value="0" aria-label="Animation timeline"></label><div class="caption"><p id="description"></p><div id="status" role="status">Loading native sprites and materials…</div></div><p style="font-size:11px">Actual game effect modules with projected anchors and native sprite loaders. This comparison uses a Canvas ground plane; it is not the full WebGL battlefield.</p></main>
+<script src="/assets/skill-materials.js?v=147"></script><script src="/assets/afterglow-animations.js?v=151"></script><script src="/assets/skill-afterglow.js?v=147"></script><script src="/assets/wardrobe.js"></script><script src="/assets/pets.js"></script>
+<script>
+'use strict';
+const $=id=>document.getElementById(id),catalog=PGAfterglowAnimations.catalog;
+const redoDescriptions={jup:'Forked yellow-white electricity travels to the target and breaks into grounded lightning branches.',tstorm:'Fractured stone erupts in four staggered columns, with textured facets, natural cracks and low dust.',meteor:'A larger solid magic projectile leaves a violet trail and shatters into bright fragments at contact.',pharrow:'Dark iron jaws close around the target inside a clearly outlined steel trap.',env:'A broad silver cut crosses the target with a dark edge and a bright contact.',sdestroy:'A larger dark death mark has bright eyes, inward markers and a distinct activation flash.',vsplash:'A defined hooded shadow lunges along one path, ending in a visible piercing cut.',akatar:'Three solid shadow attackers converge from separate directions with bright forward blades.'};
+let elapsed=0,paused=matchMedia('(prefers-reduced-motion: reduce)').matches,look=null,pet=null,selected=catalog.find(f=>f.id==='jup'),last=0,lookRequest=0;
+const store=new PGWardrobe.Store({base:'/assets/wardrobe/v5/'}),pets=new PGPetSprites.Store({base:'/assets/pets/v1/'});
+const hero=document.createElement('canvas');hero.width=320;hero.height=280;const petCanvas=document.createElement('canvas');petCanvas.width=petCanvas.height=256;
+const views=['before','after'].map(id=>({node:$(id),world:$(id).querySelector('.world'),canvas:$(id).querySelector('.fx')}));
+views[1].renderer=PGSkillAfterglow.create(views[1].canvas);
+const terrain=new Image();terrain.src='/assets/kit/ro-spritesheet.png';let manifest=null;let skills=new Map(),ownerChoices=new Map();
+const patterns=new Map();
+function filter(){const q=$('search').value.toLowerCase();$('skill').replaceChildren();for(const f of catalog.filter(f=>($('scope').value==='all'||PGAfterglowAnimations.redesigned.includes(f.id))&&(f.name+' '+f.id+' '+f.from).toLowerCase().includes(q))){const opt=new Option(f.name+' · '+f.from,f.id);$('skill').add(opt)}if([...$('skill').options].some(o=>o.value===selected.id))$('skill').value=selected.id;else if($('skill').value)choose($('skill').value)}
+async function choose(id){selected=catalog.find(f=>f.id===id);$('skill').value=id;elapsed=0;const choice=ownerChoices.get(id);$('description').textContent=(redoDescriptions[id]||selected.description)+' · '+(PGAfterglowAnimations.redesigned.includes(id)?'Redone from your feedback':'Choice: '+(choice?.choice||'undecided'))+(choice?.notes?' · Your note: '+choice.notes:'');const request=++lookRequest;try{const next=await store.select('review',PGWardrobe.defaults('m'),selected.from);if(request===lookRequest)look=next}catch(e){$('status').textContent=e.message}}
+$('search').oninput=filter;$('scope').onchange=filter;$('skill').onchange=e=>choose(e.target.value);$('replay').onclick=()=>{elapsed=0;paused=false;syncPause()};function syncPause(){$('toggle').textContent=paused?'Play':'Pause'}$('toggle').onclick=()=>{paused=!paused;syncPause()};$('timeline').oninput=e=>{elapsed=+e.target.value;paused=true;syncPause();draw()};
+function draw(){
+  const ms=elapsed,age=ms/1000;
+  if(look)PGWardrobe.draw(hero.getContext('2d'),look,'attack',6,ms,Math.min(1,age/.5));
+  if(pet)PGPetSprites.draw(petCanvas.getContext('2d'),pet,'idle',2,ms);
+  for(const view of views){
+    const w=view.node.clientWidth,h=view.node.clientHeight,dpr=Math.min(devicePixelRatio||1,2),g=view.world.getContext('2d');
+    if(view.world.width!==Math.round(w*dpr))view.world.width=Math.round(w*dpr);if(view.world.height!==Math.round(h*dpr))view.world.height=Math.round(h*dpr);
+    g.setTransform(dpr,0,0,dpr,0,0);g.fillStyle='#314835';g.fillRect(0,0,w,h);
+    const tile=manifest?.tiles[$('ground').value];
+    if(tile&&terrain.complete&&terrain.naturalWidth){let sample=patterns.get($('ground').value);if(!sample){sample=document.createElement('canvas');sample.width=sample.height=128;sample.getContext('2d').drawImage(terrain,tile.x,tile.y,tile.w,tile.h,0,0,128,128);patterns.set($('ground').value,sample)}g.fillStyle=g.createPattern(sample,'repeat');g.fillRect(0,0,w,h)}
+    const shade=g.createLinearGradient(0,0,0,h);shade.addColorStop(0,'#14201c99');shade.addColorStop(1,'#14201c22');g.fillStyle=shade;g.fillRect(0,0,w,h);
+    const project=(x,y,z)=>[w*.22+x*w*.13,h*.74+z*12-y*Math.min(38,w*.075)];
+    const caster=project(0,0,0),target=project(4,0,0);g.imageSmoothingEnabled=false;
+    if(look){const sc=3.05*Math.min(38,w*.075)/look.base.figureHeight;g.drawImage(hero,caster[0]-160*sc,caster[1]-200*sc,320*sc,280*sc)}
+    if(pet){const sc=70/pet.figureHeight;g.drawImage(petCanvas,target[0]-128*sc,target[1]-192*sc,256*sc,256*sc)}
+    const spec=skills.get(selected.id);
+    const effects=age<2.2?[{id:selected.id,age,afterglow:true,x0:0,z0:0,x1:4,z1:0,magic:!!spec?.magic,areaScale:spec?.shape!=='single'?(spec?.areaScale||1):1,targetScale:spec?.shape==='single'?70/(3.05*Math.min(38,w*.075)):1}]:[];
+    view.renderer?.draw(effects,w,h,project,dpr);
+  }
+  $('time').textContent=age.toFixed(2)+' s';$('timeline').value=ms;
+}
+async function init(){try{
+  const [source,adapter,map,page]=await Promise.all([fetch('/tools/skill-fx-proposals/afterglow-v8-baseline.js').then(r=>r.text()),fetch('/assets/skill-afterglow.js').then(r=>r.text()),fetch('/assets/kit/ro-spritesheet.json').then(r=>r.json()),fetch('/index.html').then(r=>r.text())]);manifest=map;
+  const roster=page.slice(page.indexOf('const CD=['),page.indexOf('const pm=s=>'));skills=new Map(new Function(roster+';return SKILLS')().map(s=>[s.id,s]));
+  const oldAPI=new Function('PGSkillMaterials',source+';return PGAfterglowAnimations')(PGSkillMaterials);
+  const old=new Function('PGAfterglowAnimations','PGSkillMaterials',adapter+';return PGSkillAfterglow')(oldAPI,PGSkillMaterials);views[0].renderer=old.create(views[0].canvas);
+  const report=await fetch('/tools/skill-fx-proposals/owner-choices.json').then(r=>r.json());ownerChoices=new Map(report.skills.map(s=>[s.id,s]));
+  await pets.init();const id=pets.catalog.assets['1002-idle']?'1002-idle':'1002-idle-2';pet=await pets.request(id);
+  await choose(selected.id);$('status').textContent='Native sprites ready · 75 effects';
+}catch(e){$('status').textContent='Preview loading failed: '+e.message}}
+filter();init();syncPause();
+function tick(now){const delta=last?Math.min(now-last,60):0;last=now;if(!paused&&!document.hidden)elapsed=(elapsed+delta*+$('speed').value)%2600;draw();requestAnimationFrame(tick)}requestAnimationFrame(tick);
+window.fxReview={select:choose,seek(ms){elapsed=ms;paused=true;syncPause();draw()},get state(){return {id:selected.id,elapsed,paused,materials:PGSkillMaterials.ready(),native:!!look&&!!pet,old:!!views[0].renderer}},draw};
+</script></html>
