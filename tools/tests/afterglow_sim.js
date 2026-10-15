@@ -3,14 +3,14 @@ const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/st
 const path=require('node:path'),THREE=require('three');
 const root=path.resolve(__dirname,'../..'),src=fs.readFileSync(path.join(root,'index.html'),'utf8');
 const grab=(a,b)=>src.slice(src.indexOf(a),src.indexOf(b,src.indexOf(a)));
-let marks=0,transforms=[],depth=0,rasterMarks=0,atlasReady=true,atlasWidth=1024,toothDraws=[];
+let marks=0,transforms=[],depth=0,rasterMarks=0,atlasReady=true,atlasWidth=1024,toothDraws=[],stoneDraws=[];
 class MaterialImage{get complete(){return atlasReady}get naturalWidth(){return atlasWidth}get naturalHeight(){return atlasWidth}}
 function canvas(){
   const stack=[],ctx={globalAlpha:1,globalCompositeOperation:'source-over',
     save(){stack.push(this.globalAlpha);depth++},restore(){assert(stack.length);this.globalAlpha=stack.pop();depth--},
     setTransform(...args){assert(args.every(Number.isFinite));transforms.push(args)},
     clearRect(){},fill(){if(this.globalAlpha>0)marks++},stroke(){if(this.globalAlpha>0)marks++},
-    drawImage(...args){if(this.globalAlpha>0){if(args[0]?.width===192&&args[0]?.height===320)toothDraws.push(args);marks++;if(args.length===9)rasterMarks++}},fillRect(){},fillText(){},
+    drawImage(...args){if(this.globalAlpha>0){if(args[0]?.width===192&&args[0]?.height===320)toothDraws.push(args);if(args[0]?.width===192&&args[0]?.height===256)stoneDraws.push(args);marks++;if(args.length===9)rasterMarks++}},fillRect(){},fillText(){},
     createLinearGradient(){return {addColorStop(){}}},createRadialGradient(){return {addColorStop(){}}}};
   for(const name of ['translate','rotate','scale','moveTo','lineTo','bezierCurveTo','quadraticCurveTo','arc','ellipse'])
     ctx[name]=(...args)=>assert(args.every(Number.isFinite),name+' non-finite coordinates');
@@ -64,6 +64,14 @@ for(const detail of [1,.6,.35]){
   assert.equal(new Set(toothDraws.map(a=>a[0])).size,3,'tooth surfaces were rebuilt per frame');
   assert(toothDraws.every(a=>a[3]<=30&&a[4]<75),'oversized teeth returned');
 }
+// Heaven's Drive keeps four complete rocks at every detail level and reuses three surfaces.
+for(const detail of [1,.6,.35]){
+  stoneDraws=[];box.detail=detail;
+  ev('var earth=PGAfterglowAnimations.create(document.createElement("canvas").getContext("2d"));earth("tstorm",1,detail);earth("tstorm",1.1,detail)');
+  assert.equal(stoneDraws.length,8,'rock silhouettes lost at detail '+detail);
+  assert.equal(new Set(stoneDraws.map(a=>a[0])).size,3,'stone surfaces rebuilt every frame');
+  assert(stoneDraws.every(a=>a[3]===78&&a[4]>0&&a[4]<=138),'rock projection size drifted');
+}
 // The adapter compresses only artwork time, and the real lifecycle expires on simulation time.
 ev('var originalCreate=PGAfterglowAnimations.create; var paintTimes=[]; PGAfterglowAnimations.create=()=>((id,age,detail)=>paintTimes.push({id,age,detail}));');
 box.probe=canvas();ev('var probe=PGSkillAfterglow.create(probe); probe.draw([{id:"bash",afterglow:true,age:.5,x0:0,z0:0,x1:5,z1:-2}],390,700,scr,1)');
@@ -105,6 +113,6 @@ ev('syncSkillFx();tickSkillFx(4);syncSkillFx()');assert.equal(box.skillFx.length
 const narrow=canvas();box.narrow=narrow;ev('PGSkillAfterglow.create(narrow).draw([],390,700,scr,3)');
 assert.equal(narrow.width,780);assert.equal(narrow.height,1400);
 box.simVisualsOff=()=>true;ev('playSkillFx("fire",target)');assert.equal(box.skillFx.length,0);
-assert(src.includes('assets/afterglow-animations.js?v=149')&&src.includes('assets/skill-afterglow.js?v=147'));
+assert(src.includes('assets/afterglow-animations.js?v=151')&&src.includes('assets/skill-afterglow.js?v=147'));
 assert(src.includes(':not(#skillAfterglowLayer)'),'clean-screen hides effects');
 console.log('Afterglow: 75 skills, loaded/pending/failed materials, full/mobile/dense detail, compressed timing, drawing/state, projection/reversal/vertical paths, expiry, cap, resize, hidden catch-up passed (Canvas operations; no GPU).');

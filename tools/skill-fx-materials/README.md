@@ -38,13 +38,29 @@ and downsampled; transparent cell borders prevent sampling neighbors. The embedd
 atlas avoids separate effect texture requests. Tint canvases are created on demand
 and bounded to 96 entries. Pending or failed decoding uses vector fallback drawing.
 
-Choreography and its interactive atlas live in
-`tools/skill-fx-proposals/afterglow-v8.html`; regenerate with
-`python3 tools/build_afterglow.py`. The adapter in `assets/skill-afterglow.js`
+The reviewed choreography/atlases remain in
+`tools/skill-fx-proposals/afterglow-v7.html` and `afterglow-v8.html`. Owner selections
+are in `owner-choices.json`; `owner-fx-old.js` / `owner-fx-new.js` refine selected
+effects. `owner-fx-redo.js` contains the eight subsequently requested replacements:
+warm electrical Jupitel Thunder, cached fractured stone for Heaven’s Drive,
+larger Magic Crasher/Snare Trap/Quick Cut/Deathmark silhouettes and clearer shadow
+attackers for Shadow Dash/Phantom Rush. The original undecided votes remain historical
+in the owner report; the current runtime exposes their redo IDs separately.
+Regenerate the mixed runtime with `python3 tools/build_afterglow.py`.
+Do not edit reviewed sources to apply feedback: their source hashes pin the choices.
+The mixed build omits unused legacy animations/helpers and comment-only lines to
+retain the existing publishing size limit. `node tools/tests/owner_fx_sim.js`
+compares resulting drawing operations with the exact selected source.
+Current Grimtooth uses matte weathered chitin, wider surrounding rings and smaller
+rear teeth. Storm Gust has a visible floor boundary. Local scale/readability
+refinements affect Feint Slash, Marked Shot, Divine Barrage, Counter Attack and Land Mine;
+Meteor Assault retains its selected V7 blades with a stronger ground contact. The adapter in `assets/skill-afterglow.js`
 projects native battlefield anchors, applies single-target monster size, and keeps
 area coverage independent of monster size. The effect count and mobile particle
 limits still apply. Browser raster checks are needed in addition to operation tests;
 these checks do not establish whole-game GPU or physical phone performance.
 
-For native sprite comparisons open
-`/tools/skill-fx-proposals/arcana-v8-review.html` through the static preview server.
+For the applied selections open
+`/tools/skill-fx-proposals/applied-fx-review.html` through the static preview server.
+The original V7/V8 choice editor is `skill-fx-compare.html`; `arcana-v8-review.html`
+remains the historical V7/V8 comparison using the preserved V8 module.
