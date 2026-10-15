@@ -1,0 +1,13 @@
+# Paste into the new chat
+
+Implement the skill FX redesign in `docs/skill-fx-redesign/` in kingz0010/Prontera-Grind. Read its README, execution plan, art direction and JSON data first, then current AGENTS.md and repository docs. The goal is original PC Ragnarok Online quality of clarity, texture/material richness and impact, upgraded to fit our native sprites. Existing skill directions are approved; graphics and hit feel are not.
+
+Start with a finished Grimtooth pilot: many small inward-facing teeth surrounding the monster like a worm mouth, open center, textured solid material, convincing ground eruption, rear/front depth and a strong bite. Existing 26 teeth are a starting silhouette, not an excuse to keep the glossy fence appearance. Show a normal-speed comparison at actual gameplay size on native sprites before expanding. Then prove Sonic Blow and Fire Bolt and continue through all 75 rendered skills using the inventory. Material reuse is fine; generic recolored explosions are not.
+
+Preserve native sprite pixels/anchors/timing, stable IDs, balance, saves, hit counts, cooldowns, targeting, combo cadence and approved trajectories. Current damage is resolved synchronously in castSkill: do not reschedule damage to match animation. Primary visual contact must agree with cast resolution. Existing Fire Bolt art has five bolts but game has three hits; correct the visual discrepancy. Do not infer current skill behavior from old IDs.
+
+Create original authored effect assets, editable sources, provenance, frame/layer metadata and reproducible packed outputs. Preserve RGB shading; separate opaque body from light. Audit renderer stacking and implement only the necessary depth changes. No new sound system, camera shake, account/API changes or deployment in this scope.
+
+If this checkout lacks the prior dirty V149 baseline, use the attached handoff ZIP's RESTORE.md and hashes to recover safely. Do not blindly apply it over newer/unrelated changes. The proposal is ready; new artwork and implementation are not started. No PR has been created from the originating Manual-permission task. A new chat does not inherit its local files, permissions, dependencies or services automatically.
+
+Follow the phased visual acceptance and exact validation requirements. Test real pixels and full gameplay where GPU is available; do not call Canvas/stub checks GPU or phone verification. Keep validation records honest and report limitations. Source/generated files together; update log and BUILD for player-visible changes. Do not deploy or merge. Use this new task's assigned branch and delivery permissions.

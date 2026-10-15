@@ -853,8 +853,9 @@ body.clean-screen #screenBtn{visibility:visible!important}body.clean-screen #hud
 <link rel="stylesheet" href="assets/wardrobe.css?v=138">
 <script src="assets/wardrobe.js?v=134"></script>
 <script src="assets/skill-icons.js?v=130"></script>
-<script src="assets/afterglow-animations.js?v=136"></script>
-<script src="assets/skill-afterglow.js?v=138"></script>
+<script src="assets/skill-materials.js?v=147"></script>
+<script src="assets/afterglow-animations.js?v=149"></script>
+<script src="assets/skill-afterglow.js?v=147"></script>
 <script src="assets/pets.js?v=130"></script>
 <script src="assets/class_skins_data.js?v=2"></script>
 <script src="assets/weapon_joints_data.js?v=2"></script>
@@ -1086,7 +1087,7 @@ const GM_ROUNDS=20000,GM_PASS_HASH='495e2fe3851bfc48';
 // give-back) and main's weapon-hold rendering work.
 let simCatchingUp=false;
 const simVisualsOff=()=>document.hidden||simCatchingUp;
-const BUILD='2026-10-14 haven-v145 MVP reward parity';   // shown on the login card - confirms which file you loaded
+const BUILD='2026-10-15 haven-v149 Maw and impact';   // shown on the login card - confirms which file you loaded
 $('buildTag').textContent='build '+BUILD;
 
 // ---------- class tree: Novice -> 6 first jobs -> 6 second jobs -> 6 third jobs ----------
@@ -8910,6 +8911,7 @@ function playSkillFx(id,target,color){
   const fx={...r,x0:pl.x,z0:pl.z,x1:target&&Number.isFinite(target.x)?target.x:pl.x,
     z1:target&&Number.isFinite(target.z)?target.z:pl.z,age:0,group:null,parts:[]};
   const skill=SKILLS.find(s=>s.id===id);fx.magic=!!skill?.magic;fx.areaScale=skill?.shape!=='single'?(skill?.areaScale||1):1;
+  fx.targetScale=skill?.shape==='single'&&target&&typeof mobVisualScale==='function'&&(target.spriteScale||target.boss)?cl(mobVisualScale(target),.35,2):1;
   if(typeof PGSkillAfterglow!=='undefined'&&PGSkillAfterglow.has(id)&&getSkillAfterglow()){
     fx.afterglow=true;fx.life=PGSkillAfterglow.life;
   }

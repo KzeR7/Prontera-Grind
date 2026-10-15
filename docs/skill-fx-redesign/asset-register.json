@@ -1,0 +1,419 @@
+{
+  "schemaVersion": 1,
+  "status": "unproduced_asset_briefs",
+  "units": "cellPx is a proposed source-frame box; nominalFrames are starting art targets, not a fixed atlas layout.",
+  "proposedBudgets": {
+    "pilotEncodedBytesMax": 1572864,
+    "pilotResidentTextureBytesMax": 33554432,
+    "maxAtlasEdgePx": 2048,
+    "existingPublishedTreeLimitMiB": 38.5
+  },
+  "sourcePolicy": "Original effect artwork only. Preserve supplied character/icon assets. Keep editable sources, transparent frames, provenance and deterministic packed outputs together.",
+  "assets": [
+    {
+      "id": "grim_teeth",
+      "pilotId": "grim",
+      "status": "not_started",
+      "brief": "Three coherent hooked tooth variants with dark weathered roots, ivory-gray cutting ridges and restrained violet crevices.",
+      "proposed": {
+        "cellPx": [
+          256,
+          256
+        ],
+        "nominalFrames": 9,
+        "blend": "source-over",
+        "depthPass": "split_by_projected_depth",
+        "colorMode": "preserve",
+        "sourceDirectory": "tools/skill-fx-art/grim_teeth/",
+        "packedDirectory": "assets/skill-fx/",
+        "paddingPx": 4,
+        "pivot": "Authored per frame relative to stable ground or contact anchor; do not guess after trimming."
+      },
+      "requiredEvidence": [
+        "editable/source art",
+        "true alpha and clean edges",
+        "actual-size terrain comparison",
+        "provenance",
+        "packing manifest and hashes"
+      ]
+    },
+    {
+      "id": "grim_ground",
+      "pilotId": "grim",
+      "status": "not_started",
+      "brief": "Irregular fissure openings and compressed ground disturbance; original transparent artwork, no baked map tile.",
+      "proposed": {
+        "cellPx": [
+          256,
+          256
+        ],
+        "nominalFrames": 8,
+        "blend": "source-over",
+        "depthPass": "ground",
+        "colorMode": "preserve",
+        "sourceDirectory": "tools/skill-fx-art/grim_ground/",
+        "packedDirectory": "assets/skill-fx/",
+        "paddingPx": 4,
+        "pivot": "Authored per frame relative to stable ground or contact anchor; do not guess after trimming."
+      },
+      "requiredEvidence": [
+        "editable/source art",
+        "true alpha and clean edges",
+        "actual-size terrain comparison",
+        "provenance",
+        "packing manifest and hashes"
+      ]
+    },
+    {
+      "id": "grim_contact",
+      "pilotId": "grim",
+      "status": "not_started",
+      "brief": "Localized bite compression, pale hard core and short directional shards; no uniform starburst.",
+      "proposed": {
+        "cellPx": [
+          256,
+          256
+        ],
+        "nominalFrames": 6,
+        "blend": "screen",
+        "depthPass": "front",
+        "colorMode": "preserve",
+        "sourceDirectory": "tools/skill-fx-art/grim_contact/",
+        "packedDirectory": "assets/skill-fx/",
+        "paddingPx": 4,
+        "pivot": "Authored per frame relative to stable ground or contact anchor; do not guess after trimming."
+      },
+      "requiredEvidence": [
+        "editable/source art",
+        "true alpha and clean edges",
+        "actual-size terrain comparison",
+        "provenance",
+        "packing manifest and hashes"
+      ]
+    },
+    {
+      "id": "grim_dust",
+      "pilotId": "grim",
+      "status": "not_started",
+      "brief": "Low heavy dust with irregular opaque patches thinning into fine grit.",
+      "proposed": {
+        "cellPx": [
+          256,
+          256
+        ],
+        "nominalFrames": 10,
+        "blend": "source-over",
+        "depthPass": "split_by_projected_depth",
+        "colorMode": "preserve",
+        "sourceDirectory": "tools/skill-fx-art/grim_dust/",
+        "packedDirectory": "assets/skill-fx/",
+        "paddingPx": 4,
+        "pivot": "Authored per frame relative to stable ground or contact anchor; do not guess after trimming."
+      },
+      "requiredEvidence": [
+        "editable/source art",
+        "true alpha and clean edges",
+        "actual-size terrain comparison",
+        "provenance",
+        "packing manifest and hashes"
+      ]
+    },
+    {
+      "id": "sonic_cuts",
+      "pilotId": "sonic",
+      "status": "not_started",
+      "brief": "Eight directional katar cut forms with shaded bodies, tapered bright edges and limited violet accents.",
+      "proposed": {
+        "cellPx": [
+          256,
+          256
+        ],
+        "nominalFrames": 8,
+        "blend": "source-over",
+        "depthPass": "front",
+        "colorMode": "preserve",
+        "sourceDirectory": "tools/skill-fx-art/sonic_cuts/",
+        "packedDirectory": "assets/skill-fx/",
+        "paddingPx": 4,
+        "pivot": "Authored per frame relative to stable ground or contact anchor; do not guess after trimming."
+      },
+      "requiredEvidence": [
+        "editable/source art",
+        "true alpha and clean edges",
+        "actual-size terrain comparison",
+        "provenance",
+        "packing manifest and hashes"
+      ]
+    },
+    {
+      "id": "sonic_contact",
+      "pilotId": "sonic",
+      "status": "not_started",
+      "brief": "Small hard angular contact sparks with dark metal fragments and rapid decay.",
+      "proposed": {
+        "cellPx": [
+          128,
+          128
+        ],
+        "nominalFrames": 6,
+        "blend": "screen",
+        "depthPass": "front",
+        "colorMode": "preserve",
+        "sourceDirectory": "tools/skill-fx-art/sonic_contact/",
+        "packedDirectory": "assets/skill-fx/",
+        "paddingPx": 4,
+        "pivot": "Authored per frame relative to stable ground or contact anchor; do not guess after trimming."
+      },
+      "requiredEvidence": [
+        "editable/source art",
+        "true alpha and clean edges",
+        "actual-size terrain comparison",
+        "provenance",
+        "packing manifest and hashes"
+      ]
+    },
+    {
+      "id": "sonic_finish",
+      "pilotId": "sonic",
+      "status": "not_started",
+      "brief": "One asymmetric decisive crossed cut/contact; no oversized expanding circle.",
+      "proposed": {
+        "cellPx": [
+          256,
+          256
+        ],
+        "nominalFrames": 6,
+        "blend": "source-over",
+        "depthPass": "front",
+        "colorMode": "preserve",
+        "sourceDirectory": "tools/skill-fx-art/sonic_finish/",
+        "packedDirectory": "assets/skill-fx/",
+        "paddingPx": 4,
+        "pivot": "Authored per frame relative to stable ground or contact anchor; do not guess after trimming."
+      },
+      "requiredEvidence": [
+        "editable/source art",
+        "true alpha and clean edges",
+        "actual-size terrain comparison",
+        "provenance",
+        "packing manifest and hashes"
+      ]
+    },
+    {
+      "id": "fire_body",
+      "pilotId": "fire",
+      "status": "not_started",
+      "brief": "Coherent flame motion: pale core, saturated orange body and darker folded flame tongues.",
+      "proposed": {
+        "cellPx": [
+          256,
+          256
+        ],
+        "nominalFrames": 8,
+        "blend": "source-over",
+        "depthPass": "front",
+        "colorMode": "preserve",
+        "sourceDirectory": "tools/skill-fx-art/fire_body/",
+        "packedDirectory": "assets/skill-fx/",
+        "paddingPx": 4,
+        "pivot": "Authored per frame relative to stable ground or contact anchor; do not guess after trimming."
+      },
+      "requiredEvidence": [
+        "editable/source art",
+        "true alpha and clean edges",
+        "actual-size terrain comparison",
+        "provenance",
+        "packing manifest and hashes"
+      ]
+    },
+    {
+      "id": "fire_contact",
+      "pilotId": "fire",
+      "status": "not_started",
+      "brief": "Three reusable ground-hit variations: hot compact ignition, rising flame and ember ejecta.",
+      "proposed": {
+        "cellPx": [
+          256,
+          256
+        ],
+        "nominalFrames": 9,
+        "blend": "screen",
+        "depthPass": "front",
+        "colorMode": "preserve",
+        "sourceDirectory": "tools/skill-fx-art/fire_contact/",
+        "packedDirectory": "assets/skill-fx/",
+        "paddingPx": 4,
+        "pivot": "Authored per frame relative to stable ground or contact anchor; do not guess after trimming."
+      },
+      "requiredEvidence": [
+        "editable/source art",
+        "true alpha and clean edges",
+        "actual-size terrain comparison",
+        "provenance",
+        "packing manifest and hashes"
+      ]
+    },
+    {
+      "id": "fire_smoke",
+      "pilotId": "fire",
+      "status": "not_started",
+      "brief": "Gray-brown soot with varied density, evolving shape and low initial spread.",
+      "proposed": {
+        "cellPx": [
+          256,
+          256
+        ],
+        "nominalFrames": 10,
+        "blend": "source-over",
+        "depthPass": "front",
+        "colorMode": "preserve",
+        "sourceDirectory": "tools/skill-fx-art/fire_smoke/",
+        "packedDirectory": "assets/skill-fx/",
+        "paddingPx": 4,
+        "pivot": "Authored per frame relative to stable ground or contact anchor; do not guess after trimming."
+      },
+      "requiredEvidence": [
+        "editable/source art",
+        "true alpha and clean edges",
+        "actual-size terrain comparison",
+        "provenance",
+        "packing manifest and hashes"
+      ]
+    },
+    {
+      "id": "shared_grit",
+      "pilotId": null,
+      "status": "not_started",
+      "brief": "Reusable rough chips and fine dust components with directional variants.",
+      "proposed": {
+        "cellPx": [
+          128,
+          128
+        ],
+        "nominalFrames": 8,
+        "blend": "source-over",
+        "depthPass": "split_by_projected_depth",
+        "colorMode": "preserve",
+        "sourceDirectory": "tools/skill-fx-art/shared_grit/",
+        "packedDirectory": "assets/skill-fx/",
+        "paddingPx": 4,
+        "pivot": "Authored per frame relative to stable ground or contact anchor; do not guess after trimming."
+      },
+      "requiredEvidence": [
+        "editable/source art",
+        "true alpha and clean edges",
+        "actual-size terrain comparison",
+        "provenance",
+        "packing manifest and hashes"
+      ]
+    },
+    {
+      "id": "steel_fragments",
+      "pilotId": null,
+      "status": "not_started",
+      "brief": "Angular metallic fragments with dark faces and narrow light edges.",
+      "proposed": {
+        "cellPx": [
+          128,
+          128
+        ],
+        "nominalFrames": 8,
+        "blend": "source-over",
+        "depthPass": "front",
+        "colorMode": "preserve",
+        "sourceDirectory": "tools/skill-fx-art/steel_fragments/",
+        "packedDirectory": "assets/skill-fx/",
+        "paddingPx": 4,
+        "pivot": "Authored per frame relative to stable ground or contact anchor; do not guess after trimming."
+      },
+      "requiredEvidence": [
+        "editable/source art",
+        "true alpha and clean edges",
+        "actual-size terrain comparison",
+        "provenance",
+        "packing manifest and hashes"
+      ]
+    },
+    {
+      "id": "ice_fracture",
+      "pilotId": null,
+      "status": "not_started",
+      "brief": "Distinct cyan facets and sharp transparent shards, preserving painted RGB.",
+      "proposed": {
+        "cellPx": [
+          256,
+          256
+        ],
+        "nominalFrames": 8,
+        "blend": "source-over",
+        "depthPass": "front",
+        "colorMode": "preserve",
+        "sourceDirectory": "tools/skill-fx-art/ice_fracture/",
+        "packedDirectory": "assets/skill-fx/",
+        "paddingPx": 4,
+        "pivot": "Authored per frame relative to stable ground or contact anchor; do not guess after trimming."
+      },
+      "requiredEvidence": [
+        "editable/source art",
+        "true alpha and clean edges",
+        "actual-size terrain comparison",
+        "provenance",
+        "packing manifest and hashes"
+      ]
+    },
+    {
+      "id": "lightning_contact",
+      "pilotId": null,
+      "status": "not_started",
+      "brief": "Several irregular branching discharge contacts and brief residual arcs.",
+      "proposed": {
+        "cellPx": [
+          256,
+          256
+        ],
+        "nominalFrames": 8,
+        "blend": "screen",
+        "depthPass": "front",
+        "colorMode": "preserve",
+        "sourceDirectory": "tools/skill-fx-art/lightning_contact/",
+        "packedDirectory": "assets/skill-fx/",
+        "paddingPx": 4,
+        "pivot": "Authored per frame relative to stable ground or contact anchor; do not guess after trimming."
+      },
+      "requiredEvidence": [
+        "editable/source art",
+        "true alpha and clean edges",
+        "actual-size terrain comparison",
+        "provenance",
+        "packing manifest and hashes"
+      ]
+    },
+    {
+      "id": "holy_contact",
+      "pilotId": null,
+      "status": "not_started",
+      "brief": "Warm engraved structure with concentrated pale emission and a short graceful decay.",
+      "proposed": {
+        "cellPx": [
+          256,
+          256
+        ],
+        "nominalFrames": 8,
+        "blend": "screen",
+        "depthPass": "front",
+        "colorMode": "preserve",
+        "sourceDirectory": "tools/skill-fx-art/holy_contact/",
+        "packedDirectory": "assets/skill-fx/",
+        "paddingPx": 4,
+        "pivot": "Authored per frame relative to stable ground or contact anchor; do not guess after trimming."
+      },
+      "requiredEvidence": [
+        "editable/source art",
+        "true alpha and clean edges",
+        "actual-size terrain comparison",
+        "provenance",
+        "packing manifest and hashes"
+      ]
+    }
+  ]
+}
